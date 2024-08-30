@@ -1,0 +1,17 @@
+[project]
+name = "eco-evo-pop"
+version = "0.1.0"
+description = "Add a short description here"
+authors = ["mimavox <andreas.chatzopoulos@gmail.com>"]
+channels = ["conda-forge", "pytorch"]
+platforms = ["osx-arm64"]
+
+[tasks]
+start = { cmd = "python main.py" }
+
+[dependencies]
+numpy = ">=1.26.4,<1.27"
+python = "3.11"
+pygame = ">=2.6.0,<2.7"
+opensimplex = ">=0.4.5,<0.5"
+pytorch = ">=2.3.1,<2.4"
