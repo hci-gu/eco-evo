@@ -11,18 +11,8 @@ import torch
 
 if __name__ == "__main__":
     runner = Runner()
-    
-    runner.run()
-            
-        # batch_steps += 1
-        # # if batch_steps % 10 == 0:
-        # plot_biomass(screen, world, batch_steps)
-        # draw_world(screen, world)
-
-        # time_ended = time.time()
-        # seconds_elapsed = time_ended - time_started
-        # print(f"Time taken: {seconds_elapsed} seconds")
-        # draw_world(screen, world)
+    with torch.no_grad():
+        runner.run()
     
 
 

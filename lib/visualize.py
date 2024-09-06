@@ -7,10 +7,10 @@ import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import numpy as np
 
-WORLD_WIDTH = 600
-WORLD_HEIGHT = 600
+WORLD_WIDTH = 500
+WORLD_HEIGHT = 500
 GRAPH_WIDTH = 500
-GEN_GRAPH_HEIGHT = 300
+GEN_GRAPH_HEIGHT = 200
 CELL_SIZE = math.floor(WORLD_HEIGHT / WORLD_SIZE)
 
 SCREEN_WIDTH = WORLD_WIDTH + GRAPH_WIDTH
@@ -56,7 +56,7 @@ def reset_plot():
     agents_data.clear()
 
 def plot_generations():
-    plt.figure(figsize=(12, 3))  # Create a new figure for the plot
+    plt.figure(figsize=(9, 2))  # Create a new figure for the plot
 
     # List to store the average fitness for each generation
     average_fitness = []
@@ -87,7 +87,7 @@ def plot_generations():
     fitness_image = pygame.image.load('fitness_plot.png')
     
     # Display the plot at the bottom of the screen
-    image_rect = fitness_image.get_rect(center=(SCREEN_WIDTH // 2, WORLD_HEIGHT + 150))
+    image_rect = fitness_image.get_rect(center=(SCREEN_WIDTH // 2, WORLD_HEIGHT + 90))
     screen.blit(fitness_image, image_rect)
     pygame.display.update()
     
@@ -111,7 +111,7 @@ def plot_biomass(agent_index, world, step):
           f"Anchovy: {agents_data[agent_index]['anchovy_alive'][-1]}, Plankton: {agents_data[agent_index]['plankton_alive'][-1]}")
 
     
-    plt.figure(figsize=(5, 6))
+    plt.figure(figsize=(5, 5))
 
     # Get a colormap to differentiate agents
     colors = cm.get_cmap('tab10', len(agents_data))

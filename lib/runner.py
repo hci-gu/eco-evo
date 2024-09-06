@@ -24,7 +24,9 @@ class Runner():
             world = copy.deepcopy(self.starting_world)
             species_order = [Species.PLANKTON, Species.ANCHOVY, Species.COD]
 
+            time_started_gen = time.time()
             while world_is_alive(world) and fitness < MAX_STEPS:
+                time_started = time.time()
                 species_order = sorted(species_order, key=lambda x: random.random())
 
                 for species in species_order:
@@ -82,10 +84,20 @@ class Runner():
                             action_probability = action_values[action_index].item()
 
                             cell.perform_action(species, action, action_probability, x, y, world)
-                
-                plot_generations()
-                draw_world(world)
-                plot_biomass(agent_index, world, fitness)
+                time_ended = time.time()
+                seconds_elapsed = time_ended - time_started
+
+                print(f"Time taken: {seconds_elapsed} seconds")
+                if fitness > 0 and (fitness % 25) == 0:
+                    time_ended_gen = time.time()
+                    seconds_elapsed_gen = time_ended_gen - time_started_gen
+                    avg_seconds_per_step = seconds_elapsed_gen / fitness
+                    print(f"Time taken for 25 steps: {seconds_elapsed_gen} seconds, Avg time per step: {avg_seconds_per_step} seconds")
+                    
+
+                # plot_generations()
+                # draw_world(world)
+                # plot_biomass(agent_index, world, fitness)
 
                 fitness += 1
 
