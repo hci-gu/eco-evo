@@ -3,36 +3,50 @@ import torch.nn as nn
 import numpy as np
 
 class Model(nn.Module):
-    def __init__(self, chromosome=None):
+    def __init__(self, layer_sizes=[54, 200, 10], chromosome=None):
+        """
+        layer_sizes: List of integers where each element represents the number of neurons in each layer,
+                     including the input and output layers. For example, [54, 200, 10] means:
+                     - 54 input neurons
+                     - 200 neurons in the first hidden layer
+                     - 10 output neurons
+        chromosome: Optional dictionary containing pre-initialized weights and biases.
+        """
         super(Model, self).__init__()
-        self.fc1 = nn.Linear(54, 200)
-        self.fc2 = nn.Linear(200, 10)
+        
+        self.layers = nn.ModuleList()  # Create a ModuleList to store layers
+        
+        # Dynamically create layers based on layer_sizes
+        for i in range(len(layer_sizes) - 1):
+            self.layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
         
         # If chromosome (weights and biases) is passed, initialize with those
         if chromosome:
             self.set_weights(chromosome)
-    
+
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
+        # Pass input through all layers except the last one with ReLU activation
+        for i, layer in enumerate(self.layers[:-1]):
+            x = torch.relu(layer(x))
+        
+        # Pass through the last layer without activation
+        x = self.layers[-1](x)
+        
+        # Assuming the output layer is split for softmax activation for two different parts
         x[:, :5] = torch.softmax(x[:, :5], dim=1)
         x[:, 5:] = torch.softmax(x[:, 5:], dim=1)
         return x
     
     def get_weights(self):
-        # Retrieve the weights and biases as chromosome (dict)
-        weights = {
-            'W0': self.fc1.weight.detach().cpu().numpy(),
-            'b0': self.fc1.bias.detach().cpu().numpy(),
-            'W1': self.fc2.weight.detach().cpu().numpy(),
-            'b1': self.fc2.bias.detach().cpu().numpy(),
-        }
-        return weights
+        """
+        Retrieve the weights and biases as a chromosome (state_dict).
+        This uses PyTorch's built-in `state_dict()` method, which returns all model parameters.
+        """
+        return self.state_dict()
     
     def set_weights(self, chromosome):
-        # Set weights and biases from the chromosome (dict)
-        with torch.no_grad():
-            self.fc1.weight.copy_(torch.tensor(chromosome['W0']))
-            self.fc1.bias.copy_(torch.tensor(chromosome['b0']))
-            self.fc2.weight.copy_(torch.tensor(chromosome['W1']))
-            self.fc2.bias.copy_(torch.tensor(chromosome['b1']))
+        """
+        Set weights and biases from the chromosome (state_dict).
+        This uses PyTorch's built-in `load_state_dict()` method, which loads parameters into the model.
+        """
+        self.load_state_dict(chromosome)

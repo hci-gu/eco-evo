@@ -6,6 +6,10 @@ import torch.nn as nn
 import torch
 from lib.constants import BASE_BIOMASS_LOSS, PLANKTON_GROWTH_RATE, MAX_PLANKTON_IN_CELL, WORLD_SIZE, STARTING_BIOMASS_ANCHOVY, STARTING_BIOMASS_COD, STARTING_BIOMASS_PLANKTON, MIN_PERCENT_ALIVE, EAT_AMOUNT
 
+# device mps or cpu
+# device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+device = torch.device("cpu")
+
 class Terrain(Enum):
     LAND = 0
     WATER = 1
@@ -30,173 +34,199 @@ delta_for_action = {
     Action.RIGHT: (0, 1)
 }
 
-class Cell(object):
-    def __init__(self, terrain):
-        self.terrain = terrain
-        self.biomass = {
-            Species.PLANKTON: 0,
-            Species.ANCHOVY: 0,
-            Species.COD: 0
-        }
 
-    def plankton_growth(self):
-        self.biomass[Species.PLANKTON] *= (1 + PLANKTON_GROWTH_RATE)
-        self.biomass[Species.PLANKTON] = min(self.biomass[Species.PLANKTON], MAX_PLANKTON_IN_CELL)
+def perform_action(world_tensor, action_values_batch, species_batch, positions_tensor):
+    """
+    Perform batched actions on the world tensor, allowing for continuous action values and movement.
+    Prevents out-of-bounds movements and only moves biomass to valid water cells.
+    Applies a constant BASE_BIOMASS_LOSS to each cell that takes an action.
+    """
+    # Unpack positions (x and y coordinates)
+    x_batch = positions_tensor[:, 0]
+    y_batch = positions_tensor[:, 1]
 
-    def perform_action(self, species, action, action_value, x, y, world):
-        # species performing, action and world
-        if action == Action.EAT:
-            eat_amount = (self.biomass[species] * EAT_AMOUNT) * action_value
-            if species == Species.COD:
-                anchovy_available = self.biomass[Species.ANCHOVY]
-                eat_amount = min(eat_amount, anchovy_available)
-                self.biomass[Species.ANCHOVY] -= eat_amount
-                self.biomass[species] += eat_amount
-            elif species == Species.ANCHOVY:
-                plankton_available = self.biomass[Species.PLANKTON]
-                eat_amount = min(eat_amount, plankton_available)
-                self.biomass[Species.PLANKTON] -= eat_amount
-                self.biomass[species] += eat_amount
-        else:
-            dx, dy = delta_for_action[action]
-            new_x, new_y = x + dx, y + dy
-            if new_x < 0 or new_x >= WORLD_SIZE or new_y < 0 or new_y >= WORLD_SIZE:
-                self.biomass[species] *= (1 - BASE_BIOMASS_LOSS)
-                return
-            new_cell = world[new_x * WORLD_SIZE + new_y]
-            if new_cell.terrain == Terrain.LAND:
-                self.biomass[species] *= (1 - BASE_BIOMASS_LOSS)
-                return
-            
-            # biomass movement
-            move_amount = self.biomass[species] * action_value
-            self.biomass[species] -= move_amount
-            self.biomass[species] = max(self.biomass[species], 0)
-            
-            new_cell.biomass[species] += (move_amount * (1 - BASE_BIOMASS_LOSS))
+    # Extract the movement and eating actions from action values
+    move_up = action_values_batch[:, Action.UP.value]    # % to move up
+    move_down = action_values_batch[:, Action.DOWN.value]  # % to move down
+    move_left = action_values_batch[:, Action.LEFT.value]  # % to move left
+    move_right = action_values_batch[:, Action.RIGHT.value] # % to move right
+    eat = action_values_batch[:, Action.EAT.value]       # % to eat
+
+    # Get current biomass of the species at each position
+    current_biomass = world_tensor[x_batch, y_batch, species_batch + 3]
+
+    # Movement: Calculate how much biomass should move to each direction
+    biomass_up = current_biomass * move_up
+    biomass_down = current_biomass * move_down
+    biomass_left = current_biomass * move_left
+    biomass_right = current_biomass * move_right
+
+    # Valid movement masks
+    valid_up_mask = (x_batch > 0) & (world_tensor[x_batch - 1, y_batch, Terrain.WATER.value] == 1)
+    valid_down_mask = (x_batch < WORLD_SIZE - 1) & (world_tensor[x_batch + 1, y_batch, Terrain.WATER.value] == 1)
+    valid_left_mask = (y_batch > 0) & (world_tensor[x_batch, y_batch - 1, Terrain.WATER.value] == 1)
+    valid_right_mask = (y_batch < WORLD_SIZE - 1) & (world_tensor[x_batch, y_batch + 1, Terrain.WATER.value] == 1)
+
+    # Subtract biomass only for valid movements
+    total_valid_move = torch.zeros_like(current_biomass)
+
+    # Upward movement (only move if target is within bounds and water)
+    if valid_up_mask.any():
+        total_valid_move[valid_up_mask] += biomass_up[valid_up_mask]
+        world_tensor[x_batch[valid_up_mask] - 1, y_batch[valid_up_mask], species_batch[valid_up_mask] + 3] += biomass_up[valid_up_mask]
+
+    # Downward movement (only move if target is within bounds and water)
+    if valid_down_mask.any():
+        total_valid_move[valid_down_mask] += biomass_down[valid_down_mask]
+        world_tensor[x_batch[valid_down_mask] + 1, y_batch[valid_down_mask], species_batch[valid_down_mask] + 3] += biomass_down[valid_down_mask]
+
+    # Leftward movement (only move if target is within bounds and water)
+    if valid_left_mask.any():
+        total_valid_move[valid_left_mask] += biomass_left[valid_left_mask]
+        world_tensor[x_batch[valid_left_mask], y_batch[valid_left_mask] - 1, species_batch[valid_left_mask] + 3] += biomass_left[valid_left_mask]
+
+    # Rightward movement (only move if target is within bounds and water)
+    if valid_right_mask.any():
+        total_valid_move[valid_right_mask] += biomass_right[valid_right_mask]
+        world_tensor[x_batch[valid_right_mask], y_batch[valid_right_mask] + 1, species_batch[valid_right_mask] + 3] += biomass_right[valid_right_mask]
+
+    # Subtract the total valid movement from the current cell
+    world_tensor[x_batch, y_batch, species_batch + 3] -= total_valid_move
+
+    # Apply BASE_BIOMASS_LOSS to all action-taking cells (a constant percentage loss)
+    biomass_loss = current_biomass * BASE_BIOMASS_LOSS
+    world_tensor[x_batch, y_batch, species_batch + 3] -= biomass_loss
+
+    # Eating Logic
+    eat_amounts = current_biomass * eat * EAT_AMOUNT
+
+    for i, species in enumerate(species_batch):
+        if species == Species.COD.value:
+            # COD eats ANCHOVY in the current position
+            prey_biomass = world_tensor[x_batch[i], y_batch[i], Species.ANCHOVY.value + 3]
+            eat_amount = torch.min(prey_biomass, eat_amounts[i])  # Fix: ensure that this gets scalar
+            world_tensor[x_batch[i], y_batch[i], Species.ANCHOVY.value + 3] -= eat_amount  # Reduce anchovy biomass
+            world_tensor[x_batch[i], y_batch[i], Species.COD.value + 3] += eat_amount  # Add cod biomass
+
+        elif species == Species.ANCHOVY.value:
+            # ANCHOVY eats PLANKTON in the current position
+            prey_biomass = world_tensor[x_batch[i], y_batch[i], Species.PLANKTON.value + 3]
+            eat_amount = torch.min(prey_biomass, eat_amounts[i])  # Fix: ensure this gets scalar
+            world_tensor[x_batch[i], y_batch[i], Species.PLANKTON.value + 3] -= eat_amount  # Reduce plankton biomass
+            world_tensor[x_batch[i], y_batch[i], Species.ANCHOVY.value + 3] += eat_amount  # Add anchovy biomass
+
+    return world_tensor
 
 
-    def to_tensor(self):
-        terrain_tensor = torch.tensor(self.terrain.value)
-        land = nn.functional.one_hot(terrain_tensor, num_classes=3)
-        
-        biomass_values = [self.biomass[Species.PLANKTON], self.biomass[Species.ANCHOVY], self.biomass[Species.COD]]
-        biomass_tensor = torch.tensor(biomass_values, dtype=torch.float32)
-
-        return torch.cat((land, biomass_tensor))
-    
-    def toTensor3x3(self, x, y, world):
-        tensor = []
-        for i in range(-1, 2):
-            for j in range(-1, 2):
-                new_x, new_y = x + i, y + j
-                if new_x < 0 or new_x >= WORLD_SIZE or new_y < 0 or new_y >= WORLD_SIZE:
-                    tensor.append(torch.zeros(6))
-                else:
-                    cell = world[new_x * WORLD_SIZE + new_y]
-                    tensor.append(cell.to_tensor())
-        return torch.stack(tensor)
 
 def create_world():
     NOISE_SCALING = 4.5
-    # # random seed each time
     opensimplex.seed(int(random() * 100000))
 
-    world = []
-    water_cells = []  # List to store water cells and their coordinates for biomass distribution
+    # Create a tensor to represent the entire world
+    # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 6) -> 6 for terrain (3 one-hot) + biomass (3 species)
+    world_tensor = torch.zeros(WORLD_SIZE, WORLD_SIZE, 6, device=device)
+
     center_x, center_y = WORLD_SIZE // 2, WORLD_SIZE // 2
     max_distance = math.sqrt(center_x**2 + center_y**2)
 
-    # Define total biomass for each species
-    total_biomass_cod = STARTING_BIOMASS_COD  # Example: total biomass for cod
-    total_biomass_anchovy = STARTING_BIOMASS_ANCHOVY  # Example: total biomass for anchovy
-    total_biomass_plankton = STARTING_BIOMASS_PLANKTON  # Example: total biomass for plankton
+    total_biomass_cod = STARTING_BIOMASS_COD
+    total_biomass_anchovy = STARTING_BIOMASS_ANCHOVY
+    total_biomass_plankton = STARTING_BIOMASS_PLANKTON
 
-    # Variables to store the noise sum for each species
     noise_sum_cod = 0
     noise_sum_anchovy = 0
     noise_sum_plankton = 0
 
-    # First pass: create world and calculate the noise sum for normalization
+    # Iterate over the world grid and initialize cells directly into the tensor
     for x in range(WORLD_SIZE):
         for y in range(WORLD_SIZE):
             distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
             distance_factor = distance / max_distance
             noise_value = opensimplex.noise2(x * 0.15, y * 0.15)
             threshold = 0.6 * distance_factor + 0.1 * noise_value
-            terrain = Terrain.WATER if threshold < 0.5 else Terrain.LAND
-            cell = Cell(terrain)
-            
-            if terrain == Terrain.WATER:
-                # Store the water cell and its coordinates
-                water_cells.append((cell, x, y))
 
-                # Calculate noise values for clustering species
-                # Modify noise function to make it more clustered and steeper
-                noise_cod = (opensimplex.noise2(x * 0.3, y * 0.3) + 1) / 2  # Scale noise to range [0, 1]
+            # Determine if the cell is water or land
+            terrain = Terrain.WATER if threshold < 0.5 else Terrain.LAND
+            # terrain = Terrain.WATER
+
+            # Set terrain one-hot encoding
+            terrain_encoding = [0, 1, 0] if terrain == Terrain.WATER else [1, 0, 0]
+            world_tensor[x, y, :3] = torch.tensor(terrain_encoding, device=device)
+
+            if terrain == Terrain.WATER:
+                # Calculate noise values for species clustering
+                noise_cod = (opensimplex.noise2(x * 0.3, y * 0.3) + 1) / 2
                 noise_anchovy = (opensimplex.noise2(x * 0.2, y * 0.2) + 1) / 2
                 noise_plankton = (opensimplex.noise2(x * 0.1, y * 0.1) + 1) / 2
 
                 # Apply thresholds to zero-out biomass in certain regions
-                if noise_cod < 0.4:  # Low noise means no cod
-                    noise_cod = 0
-                if noise_anchovy < 0.3:  # Low noise means no anchovy
-                    noise_anchovy = 0
-                if noise_plankton < 0.35:  # Low noise means no plankton
-                    noise_plankton = 0
-                
-                # Apply more aggressive scaling to create larger biomass in high-noise areas
-                noise_cod = noise_cod ** NOISE_SCALING  # Steeper scaling for more clustering
+                if noise_cod < 0.4: noise_cod = 0
+                if noise_anchovy < 0.3: noise_anchovy = 0
+                if noise_plankton < 0.35: noise_plankton = 0
+
+                # Scale noise to create steeper clusters
+                noise_cod = noise_cod ** NOISE_SCALING
                 noise_anchovy = noise_anchovy ** NOISE_SCALING
                 noise_plankton = noise_plankton ** NOISE_SCALING
 
-                # Sum noise values for normalization in the next step
+                # Sum noise for normalization
                 noise_sum_cod += noise_cod
                 noise_sum_anchovy += noise_anchovy
                 noise_sum_plankton += noise_plankton
-                
-            world.append(cell)
 
-    # Second pass: distribute biomass based on the ratio of noise values to total noise sum
-    for cell, x, y in water_cells:
-        # Recalculate noise values for each species
-        noise_cod = (opensimplex.noise2(x * 0.3, y * 0.3) + 1) / 2
-        noise_anchovy = (opensimplex.noise2(x * 0.2, y * 0.2) + 1) / 2
-        noise_plankton = (opensimplex.noise2(x * 0.1, y * 0.1) + 1) / 2
+    # Second pass: distribute biomass across water cells based on noise values
+    for x in range(WORLD_SIZE):
+        for y in range(WORLD_SIZE):
+            if world_tensor[x, y, Terrain.WATER.value] == 1:
+                # Recalculate noise values for biomass
+                noise_cod = (opensimplex.noise2(x * 0.3, y * 0.3) + 1) / 2
+                noise_anchovy = (opensimplex.noise2(x * 0.2, y * 0.2) + 1) / 2
+                noise_plankton = (opensimplex.noise2(x * 0.1, y * 0.1) + 1) / 2
 
-        # Apply thresholds again
-        if noise_cod < 0.4:
-            noise_cod = 0
-        if noise_anchovy < 0.3:
-            noise_anchovy = 0
-        if noise_plankton < 0.35:
-            noise_plankton = 0
+                if noise_cod < 0.4: noise_cod = 0
+                if noise_anchovy < 0.3: noise_anchovy = 0
+                if noise_plankton < 0.35: noise_plankton = 0
 
-        # Steeper scaling for higher concentration in certain areas
-        noise_cod = noise_cod ** NOISE_SCALING
-        noise_anchovy = noise_anchovy ** NOISE_SCALING
-        noise_plankton = noise_plankton ** NOISE_SCALING
+                noise_cod = noise_cod ** NOISE_SCALING
+                noise_anchovy = noise_anchovy ** NOISE_SCALING
+                noise_plankton = noise_plankton ** NOISE_SCALING
 
-        # Ensure the total biomass is distributed proportionally based on noise values
-        if noise_sum_cod > 0:
-            cell.biomass[Species.COD] = (noise_cod / noise_sum_cod) * total_biomass_cod
-        if noise_sum_anchovy > 0:
-            cell.biomass[Species.ANCHOVY] = (noise_anchovy / noise_sum_anchovy) * total_biomass_anchovy
-        if noise_sum_plankton > 0:
-            cell.biomass[Species.PLANKTON] = (noise_plankton / noise_sum_plankton) * total_biomass_plankton
+                # Distribute biomass proportionally to the noise sums
+                if noise_sum_cod > 0:
+                    world_tensor[x, y, 5] = (noise_cod / noise_sum_cod) * total_biomass_cod
+                if noise_sum_anchovy > 0:
+                    world_tensor[x, y, 4] = (noise_anchovy / noise_sum_anchovy) * total_biomass_anchovy
+                if noise_sum_plankton > 0:
+                    world_tensor[x, y, 3] = (noise_plankton / noise_sum_plankton) * total_biomass_plankton
 
-    return world
+                # world_tensor[x, y, 5] = 0
+                # world_tensor[x, y, 4] = total_biomass_anchovy
+                # world_tensor[x, y, 3] = total_biomass_plankton
+
+    return world_tensor
 
 
-def world_is_alive(world):
-    cod_alive = sum([cell.biomass[Species.COD] for cell in world])
-    if cod_alive < (STARTING_BIOMASS_COD * MIN_PERCENT_ALIVE):
+def world_is_alive(world_tensor):
+    """
+    Checks if the world is still "alive" by verifying the biomass of the species in the world tensor.
+    The world tensor has shape (WORLD_SIZE, WORLD_SIZE, 6) where:
+    - The first 3 values represent the terrain (one-hot encoded).
+    - The last 3 values represent the biomass of plankton, anchovy, and cod, respectively.
+    """
+    # Extract biomass for cod, anchovy, and plankton
+    cod_biomass = world_tensor[:, :, 5].sum()  # Biomass for cod
+    anchovy_biomass = world_tensor[:, :, 4].sum()  # Biomass for anchovy
+    plankton_biomass = world_tensor[:, :, 3].sum()  # Biomass for plankton
+
+    print(f"Total biomass: Cod={cod_biomass}, Anchovy={anchovy_biomass}, Plankton={plankton_biomass}")
+    # Check if the total biomass for any species is below the survival threshold
+    if cod_biomass < (STARTING_BIOMASS_COD * MIN_PERCENT_ALIVE):
         return False
-    anchovy_alive = sum([cell.biomass[Species.ANCHOVY] for cell in world])
-    if anchovy_alive < (STARTING_BIOMASS_ANCHOVY * MIN_PERCENT_ALIVE):
+    if anchovy_biomass < (STARTING_BIOMASS_ANCHOVY * MIN_PERCENT_ALIVE):
         return False
-    plankton_alive = sum([cell.biomass[Species.PLANKTON] for cell in world])
-    if plankton_alive < (STARTING_BIOMASS_PLANKTON * MIN_PERCENT_ALIVE):
+    if plankton_biomass < (STARTING_BIOMASS_PLANKTON * MIN_PERCENT_ALIVE):
         return False
     
+
     return True

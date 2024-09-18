@@ -7,6 +7,7 @@ import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import numpy as np
 
+# Visualization settings
 WORLD_WIDTH = 500
 WORLD_HEIGHT = 500
 GRAPH_WIDTH = 500
@@ -16,6 +17,7 @@ CELL_SIZE = math.floor(WORLD_HEIGHT / WORLD_SIZE)
 SCREEN_WIDTH = WORLD_WIDTH + GRAPH_WIDTH
 SCREEN_HEIGHT = WORLD_HEIGHT + GEN_GRAPH_HEIGHT
 
+# Agent and generation data for visualization
 agents_data = {}
 generations_data = []
 
@@ -23,6 +25,11 @@ cod_alive = []
 anchovy_alive = []
 plankton_alive = []
 steps_list = []
+
+# Cache for terrain surface and graph surfaces
+terrain_surface_cache = None
+biomass_graph_cache = None
+generation_graph_cache = None
 
 def init_pygame():
     pygame.init()
@@ -32,31 +39,52 @@ def init_pygame():
 
 screen = init_pygame()
 
-def draw_terrain(world):
+def reset_terrain_cache():
+    global terrain_surface_cache
+    terrain_surface_cache = None
+
+# Cache and draw the terrain only once to optimize performance
+def draw_terrain(world_tensor):
+    global terrain_surface_cache
+    if terrain_surface_cache is not None:
+        return terrain_surface_cache
+
     terrain_surface = pygame.Surface((WORLD_WIDTH, WORLD_HEIGHT))
+    
     for x in range(WORLD_SIZE):
         for y in range(WORLD_SIZE):
-            cell = world[x * WORLD_SIZE + y]
-            color = (0, 0, 255) if cell.terrain == Terrain.WATER else (0, 255, 0)
+
+            # Extract terrain information from the tensor (one-hot encoded: first three values)
+            terrain = world_tensor[x, y, :3]
+            
+            # Determine if the cell is water or land based on the one-hot encoding
+            if terrain[Terrain.WATER.value] == 1:
+                color = (0, 0, 255)  # Blue for water
+            else:
+                color = (0, 255, 0)  # Green for land
+
+            # Draw the terrain
             pygame.draw.rect(terrain_surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+    
+    # Cache the terrain surface for reuse
+    terrain_surface_cache = terrain_surface
     return terrain_surface
 
-def initial_draw(world):
-    screen.fill((255, 255, 255))
-    terrain_surface = draw_terrain(screen, world)
-    screen.blit(terrain_surface, (WORLD_WIDTH, 0))
-    pygame.display.flip()
-
+# Update generation data
 def update_generations_data():
     fitness_values = [max(agent['steps']) for (key, agent) in agents_data.items()]
     generations_data.append(fitness_values)
 
 def reset_plot():
     update_generations_data()
+    reset_terrain_cache()
     agents_data.clear()
 
+# Plot and cache generations graph
 def plot_generations():
-    plt.figure(figsize=(9, 2))  # Create a new figure for the plot
+    global generation_graph_cache
+
+    plt.figure(figsize=(16, 12))  # Create a new figure for the plot
 
     # List to store the average fitness for each generation
     average_fitness = []
@@ -71,6 +99,7 @@ def plot_generations():
 
     # Plot the average fitness line
     plt.plot(range(len(average_fitness)), average_fitness, color='red', label='Average Fitness', linewidth=2)
+    plt.xticks(range(len(generations_data)))  # Set x-axis ticks to integers
 
     # Set plot labels and title
     plt.xlabel('Generation')
@@ -83,34 +112,13 @@ def plot_generations():
     plt.savefig('fitness_plot.png')
     plt.close()
 
-    # Load the saved plot image using Pygame
-    fitness_image = pygame.image.load('fitness_plot.png')
-    
-    # Display the plot at the bottom of the screen
-    image_rect = fitness_image.get_rect(center=(SCREEN_WIDTH // 2, WORLD_HEIGHT + 90))
-    screen.blit(fitness_image, image_rect)
-    pygame.display.update()
-    
-def plot_biomass(agent_index, world, step):
-    if agent_index not in agents_data:
-        # Initialize data for this agent if not already present
-        agents_data[agent_index] = {
-            'steps': [],
-            'cod_alive': [],
-            'anchovy_alive': [],
-            'plankton_alive': []
-        }
+    # Load the saved plot image using Pygame and cache it
+    generation_graph_cache = pygame.image.load('fitness_plot.png')
 
-    # Append current step and biomass data for this agent
-    agents_data[agent_index]['steps'].append(step)
-    agents_data[agent_index]['cod_alive'].append(sum([cell.biomass[Species.COD] for cell in world]))
-    agents_data[agent_index]['anchovy_alive'].append(sum([cell.biomass[Species.ANCHOVY] for cell in world]))
-    agents_data[agent_index]['plankton_alive'].append(sum([cell.biomass[Species.PLANKTON] for cell in world]))
+# Plot and cache biomass graph
+def plot_biomass():
+    global biomass_graph_cache
 
-    print(f"Agent: {agent_index}, Steps: {step}, Cod: {agents_data[agent_index]['cod_alive'][-1]}, "
-          f"Anchovy: {agents_data[agent_index]['anchovy_alive'][-1]}, Plankton: {agents_data[agent_index]['plankton_alive'][-1]}")
-
-    
     plt.figure(figsize=(5, 5))
 
     # Get a colormap to differentiate agents
@@ -135,21 +143,29 @@ def plot_biomass(agent_index, world, step):
     plt.savefig('world_graph.png')
     plt.close()
 
-    # Display the updated graph with pygame
-    graph_image = pygame.image.load('world_graph.png')
-    screen.blit(graph_image, (WORLD_WIDTH, 0))  # Adjust the position as needed
+    # Load the saved plot image using Pygame and cache it
+    biomass_graph_cache = pygame.image.load('world_graph.png')
 
-def draw_world(world):
+# Redraw the world with species biomass
+def draw_world(world_tensor):
+    # remove padding
+    world_tensor = world_tensor[1:-1, 1:-1]
+
+    """
+    Visualize the world based on the tensor representation.
+    The world_tensor has shape (WORLD_SIZE, WORLD_SIZE, 6) where:
+    - The first 3 values represent the terrain (one-hot encoded).
+    - The last 3 values represent the biomass of plankton, anchovy, and cod, respectively.
+    """
     screen.fill((255, 255, 255))
+
+    terrain_surface = draw_terrain(world_tensor)
+    screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
 
     for x in range(WORLD_SIZE):
         for y in range(WORLD_SIZE):
-            cell = world[x * WORLD_SIZE + y]
-            
-            # Draw terrain color first
-            color = (18, 53, 163) if cell.terrain == Terrain.WATER else (112, 180, 40)
-            pygame.draw.rect(screen, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-            
+            # x = x + 1
+            # y = y + 1
             # Initialize an offset position for each species in the same cell
             offsets = {
                 Species.PLANKTON: (-CELL_SIZE // 4, -CELL_SIZE // 4),
@@ -157,27 +173,76 @@ def draw_world(world):
                 Species.COD: (0, CELL_SIZE // 4)
             }
             
-            # Draw biomass for each species
-            for species in Species:
-                biomass = cell.biomass
+            # Extract biomass information for each species
+            plankton_biomass = world_tensor[x, y, 3].item()  # Biomass for plankton
+            anchovy_biomass = world_tensor[x, y, 4].item()  # Biomass for anchovy
+            cod_biomass = world_tensor[x, y, 5].item()  # Biomass for cod
 
-                if biomass[species] > 0:
-                    color = {
-                        Species.PLANKTON: (0, 255, 0),  # Green for plankton
-                        Species.ANCHOVY: (255, 0, 0),  # Red for anchovy
-                        Species.COD: (0, 0, 0)  # Black for cod
-                    }[species]
-                    
-                    # Use offsets to separate circles within the same cell
+            # Dictionary to map species to their biomass and color
+            species_biomass = {
+                Species.PLANKTON: (plankton_biomass, (0, 255, 0)),  # Green for plankton
+                Species.ANCHOVY: (anchovy_biomass, (255, 0, 0)),    # Red for anchovy
+                Species.COD: (cod_biomass, (0, 0, 0))               # Black for cod
+            }
+            
+            # Draw biomass for each species
+            for species, (biomass, color) in species_biomass.items():
+                if biomass > 0:
+                    # Calculate the circle center and radius based on biomass
                     offset_x, offset_y = offsets[species]
                     circle_center = (x * CELL_SIZE + CELL_SIZE // 2 + offset_x, y * CELL_SIZE + CELL_SIZE // 2 + offset_y)
-                    radius = min(CELL_SIZE // 2, int(math.sqrt(biomass[species]) * 0.4))
-                    
+                    radius = min(CELL_SIZE // 2, int(math.sqrt(biomass) * 0.75))
+
                     # Draw the circle representing species biomass
                     pygame.draw.circle(screen, color, circle_center, radius)
-            
+
+    # Draw cached biomass graph
+    if biomass_graph_cache:
+        screen.blit(biomass_graph_cache, (WORLD_WIDTH, 0))  # Adjust the position as needed
+
+    # Draw cached generations graph
+    # if generation_graph_cache:
+    #     image_rect = generation_graph_cache.get_rect(center=(SCREEN_WIDTH // 2, WORLD_HEIGHT + 90))
+    #     screen.blit(generation_graph_cache, image_rect)
+
+    # Perform screen update only once at the end
+    pygame.display.flip()
+
+# Main visualization function, optimized with reduced plotting frequency
+visualization_runs = 0
+def visualize(world, agent_index, step):
+    global visualization_runs
+    if agent_index not in agents_data:
+        # Initialize data for this agent if not already present
+        agents_data[agent_index] = {
+            'steps': [],
+            'cod_alive': [],
+            'anchovy_alive': [],
+            'plankton_alive': []
+        }
+
+    # Append current step and biomass data for this agent
+    agents_data[agent_index]['steps'].append(step)
+    agents_data[agent_index]['cod_alive'].append(world[:, :, 5].sum())
+    agents_data[agent_index]['anchovy_alive'].append(world[:, :, 4].sum())
+    agents_data[agent_index]['plankton_alive'].append(world[:, :, 3].sum())
+
+    print(f"Agent: {agent_index}, Steps: {step}, Cod: {agents_data[agent_index]['cod_alive'][-1]}, "
+          f"Anchovy: {agents_data[agent_index]['anchovy_alive'][-1]}, Plankton: {agents_data[agent_index]['plankton_alive'][-1]}")
+    
+    # Redraw the world
+    # if visualization_runs % 25 == 0:
+    draw_world(world)
+
+    # Only plot biomass and generations every 50 steps to optimize performance
+    # if visualization_runs % 50 == 0:
+    plot_biomass()
+    
+    if step == 0:
+        plot_generations()
+    
+    visualization_runs += 1
+
+# Quit pygame safely
 def quit_pygame():
     pygame.quit()
-
-
-
