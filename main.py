@@ -13,6 +13,7 @@ if __name__ == "__main__":
     runner = Runner()
     with torch.no_grad():
         runner.run()
+        # runner.run_test_case()
     
 
 

@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 class Model(nn.Module):
-    def __init__(self, layer_sizes=[54, 200, 10], chromosome=None):
+    def __init__(self, layer_sizes=[81, 18, 10], chromosome=None):
         """
         layer_sizes: List of integers where each element represents the number of neurons in each layer,
                      including the input and output layers. For example, [54, 200, 10] means:
@@ -24,7 +24,11 @@ class Model(nn.Module):
         if chromosome:
             self.set_weights(chromosome)
 
-    def forward(self, x):
+    def forward(self, x, species):
+        if species == 1:
+            return torch.tensor([[0.0, 0.0, 0.0, 0.0, 1]])
+        else:
+            return torch.tensor([[1.0, 0.0, 0.0, 0.0, 0.0]])
         # Pass input through all layers except the last one with ReLU activation
         for i, layer in enumerate(self.layers[:-1]):
             x = torch.relu(layer(x))
@@ -35,7 +39,11 @@ class Model(nn.Module):
         # Assuming the output layer is split for softmax activation for two different parts
         x[:, :5] = torch.softmax(x[:, :5], dim=1)
         x[:, 5:] = torch.softmax(x[:, 5:], dim=1)
-        return x
+        
+        if species == 1:
+            return x[:, :5]
+        else:
+            return x[:, 5:]
     
     def get_weights(self):
         """
