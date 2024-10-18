@@ -1,7 +1,7 @@
 # from lib.constants import WORLD_SIZE, NUM_AGENTS, MAX_STEPS, PLANKTON_GROWTH_RATE, MAX_PLANKTON_IN_CELL, TOURNAMENT_SELECTION, ELITISM_SELECTION
 import lib.constants as const
-from lib.world import create_world, perform_action, world_is_alive, Species, Action, Terrain
-from lib.visualize import visualize, reset_plot, draw_world_mask
+from lib.world import create_world, create_static_world, perform_action, world_is_alive, Species, Action, Terrain
+from lib.visualize import visualize, reset_plot, draw_world_mask, reset_visualization
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
 import lib.test as test
@@ -14,6 +14,7 @@ import copy
 # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 device = torch.device("cpu")
 
+# world_copy = create_world().to(device)
 
 class Runner():
     def __init__(self):
@@ -22,22 +23,24 @@ class Runner():
         self.running = False
         self.agents = [(Model().to(device), 0) for _ in range(const.NUM_AGENTS)]
         self.starting_world = None
+        reset_visualization()
     
     def run(self):
         # Create the world as a tensor from the start
-        self.starting_world = create_world().to(device)
+        # self.starting_world = create_world().to(device)
+        self.starting_world = create_static_world().to(device)
 
         # Pad the world with a 1-cell border of zeros
         padded_world = torch.nn.functional.pad(self.starting_world, (0, 0, 1, 1, 1, 1), "constant", 0)
 
         for agent_index, (agent, fitness) in enumerate(self.agents):
-            print(f"Running agent {agent_index} of generation {self.current_generation}")
+            # print(f"Running agent {agent_index} of generation {self.current_generation}")
             world = padded_world.clone()  # Clone the padded world tensor for each agent
             species_order = [Species.PLANKTON, Species.ANCHOVY, Species.COD]
 
-            time_started_gen = time.time()
+            # time_started_gen = time.time()
             while world_is_alive(world) and fitness < const.MAX_STEPS:
-                time_started = time.time()
+                # time_started = time.time()
                 species_order = sorted(species_order, key=lambda x: random.random())
 
                 for species in species_order:
@@ -106,17 +109,18 @@ class Runner():
                     species_batch = torch.full((batch_positions.shape[0],), species.value, device=device)
 
                     # Call perform_action_tensor to handle all actions in batch (this should be a new function)
-                    world = perform_action(world, action_values_batch, species_batch, batch_positions)
+                    world = perform_action(world, action_values_batch, species.value, batch_positions)
 
                 # Time logging for each step
-                time_ended = time.time()
-                seconds_elapsed = time_ended - time_started
-                print(f"Time taken: {seconds_elapsed} seconds")
+                # time_ended = time.time()
+                # seconds_elapsed = time_ended - time_started
+                # print(f"Time taken: {seconds_elapsed} seconds")
 
                 # Update the display after each step
                 visualize(world, agent_index, fitness)
 
                 fitness += 1
+                self.agents[agent_index] = (agent, fitness)
 
         self.next_generation()
 
@@ -125,6 +129,12 @@ class Runner():
         self.current_generation += 1
         
         fittest_agent = max(self.agents, key=lambda x: x[1])
+
+        print(f"Fittest agent of generation {self.current_generation} has fitness {fittest_agent[1]}")
+        if fittest_agent[1] > self.best_fitness:
+            self.best_fitness = fittest_agent[1]
+            print(f"New best fitness: {self.best_fitness}")
+            fittest_agent[0].save_to_file(f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_{self.best_fitness}.pt')
 
         elites = elitism_selection(self.agents, const.ELITISM_SELECTION)
         next_pop = []
@@ -151,7 +161,11 @@ class Runner():
         self.agents.append((fittest_agent[0], 0))
         self.agents.append((Model().to(device), 0))
         reset_plot()
-        self.run()
+
+        if (self.current_generation <= const.GENERATIONS_PER_RUN):
+            self.run()
+        else:
+            print('Simulation finished')
 
     def run_test_case(self):
         const.WORLD_SIZE = 3
@@ -162,25 +176,31 @@ class Runner():
         world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
 
         visualize(world, 0, 0)
-        # time.sleep(3)
+        time.sleep(1)
 
         agent = test.MockModel().to(device)
-        # agent = Model().to(device)
+
+        moves = [
+            ((1, 1), (0, 1)),
+            ((1, 1), (0, 1)),
+        ]
 
         cell_index = 4
         x, y = cell_index // const.WORLD_SIZE, cell_index % const.WORLD_SIZE
-        print(f"Cell index: {cell_index}, x: {x}, y: {y}")
 
         # Adjust for padding by shifting the x and y coordinates by 1
-        padded_x, padded_y = x, y
+        padded_x, padded_y = x + 1, y + 1
+        padded_x_2, padded_y_2 = padded_x - 1, padded_y
 
         # Get 3x3 tensor from the padded world (no need to check boundaries)
         tensor = world[padded_x:padded_x + 3, padded_y:padded_y + 3].reshape(1, -1).to(device)
+        tensor2 = world[padded_x_2:padded_x_2 + 3, padded_y_2:padded_y_2 + 3].reshape(1, -1).to(device)
 
-        print(tensor)
-
-        batch_tensors = [tensor]
-        batch_positions = [(padded_x, padded_y)]
+        batch_tensors = []
+        batch_tensors.append(tensor)
+        batch_tensors.append(tensor2)
+        
+        batch_positions = [(padded_x, padded_y), (padded_x_2, padded_y_2)]
 
         batch_tensor = torch.cat(batch_tensors, dim=0).to(device)
 
@@ -189,10 +209,10 @@ class Runner():
 
         # Process actions in batch for each species
         batch_positions = torch.tensor(batch_positions, dtype=torch.long, device=device)
-        species_batch = torch.full((batch_positions.shape[0],), Species.ANCHOVY.value, device=device)
+        # species_batch = torch.full((batch_positions.shape[0],), Species.ANCHOVY.value, device=device)
 
         # Call perform_action_tensor to handle all actions in batch (this should be a new function)
-        world = perform_action(world, action_values_batch, species_batch, batch_positions, draw_world_mask)
+        world = perform_action(world, action_values_batch, Species.ANCHOVY.value, batch_positions, draw_world_mask)
 
         visualize(world, 0, 0)
         time.sleep(3)

@@ -16,21 +16,31 @@ def create_test_world_3x3():
     world_tensor[0, 1, :3] = torch.tensor([0, 1, 0])  # Water
     world_tensor[0, 2, :3] = torch.tensor([0, 1, 0])  # Water
     world_tensor[1, 0, :3] = torch.tensor([0, 1, 0])  # Water
-    world_tensor[1, 1, :3] = torch.tensor([0, 1, 0])  # Land (center)
-    world_tensor[1, 2, :3] = torch.tensor([0, 1, 0])  # Water
+    world_tensor[1, 1, :3] = torch.tensor([0, 1, 0])  # Water
+    world_tensor[1, 2, :3] = torch.tensor([0, 1, 0])  # Land
     world_tensor[2, 0, :3] = torch.tensor([0, 1, 0])  # Water
     world_tensor[2, 1, :3] = torch.tensor([0, 1, 0])  # Water
-    world_tensor[2, 2, :3] = torch.tensor([0, 1, 0])  # Water
+    world_tensor[2, 2, :3] = torch.tensor([0, 1, 0])  # Land
+
+    for x in range(3):
+        for y in range(3):
+            world_tensor[x, y, const.OFFSETS_ENERGY_ANCHOVY] = 50
+            world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY] = 50
 
     # Set predefined biomass and energy for each species in the world
     # Assume some arbitrary values for plankton, anchovy, and cod
-    world_tensor[1, 1, const.OFFSETS_BIOMASS_ANCHOVY] = 50
-    world_tensor[1, 1, const.OFFSETS_ENERGY_ANCHOVY] = 100
+    world_tensor[1, 1, const.OFFSETS_BIOMASS_ANCHOVY] = 100
+    world_tensor[1, 1, const.OFFSETS_ENERGY_ANCHOVY] = 50
+    world_tensor[0, 1, const.OFFSETS_BIOMASS_ANCHOVY] = 100
+    world_tensor[0, 1, const.OFFSETS_ENERGY_ANCHOVY] = 50
+    world_tensor[1, 0, const.OFFSETS_BIOMASS_ANCHOVY] = 10
+    world_tensor[1, 0, const.OFFSETS_ENERGY_ANCHOVY] = 100
+    
+    world_tensor[1, 1, const.OFFSETS_ENERGY_COD] = 75
     world_tensor[1, 1, const.OFFSETS_BIOMASS_COD] = 50
-    world_tensor[1, 1, const.OFFSETS_ENERGY_COD] = 100
 
-    world_tensor[0, 1, const.OFFSETS_BIOMASS_ANCHOVY] = 50
-    world_tensor[0, 1, const.OFFSETS_ENERGY_ANCHOVY] = 100
+    # world_tensor[0, 1, const.OFFSETS_BIOMASS_ANCHOVY] = 50
+    # world_tensor[0, 1, const.OFFSETS_ENERGY_ANCHOVY] = 100
 
     # # Similar for other cells as needed
     # # Filling some default biomass and energy for other species and cells
@@ -40,6 +50,10 @@ def create_test_world_3x3():
     # world_tensor[2, 2, const.OFFSETS_ENERGY_COD] = 90
 
     return world_tensor
+
+
+# direction_to_tensor(direction):
+#     switch(direction):
 
 
 class MockModel(nn.Module):
@@ -60,7 +74,7 @@ class MockModel(nn.Module):
         
         print('species:', species)
         if species == 1:
-            return torch.tensor([[0.0, 1.0, 0.0, 0.0, 0.0]])
+            return torch.tensor([[1, 0, 0, 0, 0.0]])
         else:
             return torch.tensor([[0.0, 0.0, 0.0, 0.0, 0.0]])
         

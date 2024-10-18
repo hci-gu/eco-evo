@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 class Model(nn.Module):
-    def __init__(self, layer_sizes=[81, 18, 10], chromosome=None):
+    def __init__(self, layer_sizes=[81, 10, 10], chromosome=None):
         """
         layer_sizes: List of integers where each element represents the number of neurons in each layer,
                      including the input and output layers. For example, [54, 200, 10] means:
@@ -25,11 +25,6 @@ class Model(nn.Module):
             self.set_weights(chromosome)
 
     def forward(self, x, species):
-        if species == 1:
-            return torch.tensor([[0.0, 0.0, 0.0, 0.0, 1]])
-        else:
-            return torch.tensor([[1.0, 0.0, 0.0, 0.0, 0.0]])
-        # Pass input through all layers except the last one with ReLU activation
         for i, layer in enumerate(self.layers[:-1]):
             x = torch.relu(layer(x))
         
@@ -58,3 +53,9 @@ class Model(nn.Module):
         This uses PyTorch's built-in `load_state_dict()` method, which loads parameters into the model.
         """
         self.load_state_dict(chromosome)
+
+    def save_to_file(self, filename):
+        """
+        Save the model weights and biases to a file.
+        """
+        torch.save(self.state_dict(), filename)

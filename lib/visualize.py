@@ -110,11 +110,11 @@ def plot_generations():
     plt.tight_layout()
 
     # Save plot as an image
-    plt.savefig('fitness_plot.png')
+    plt.savefig(f'{const.CURRENT_FOLDER}/fitness_plot.png')
     plt.close()
 
     # Load the saved plot image using Pygame and cache it
-    generation_graph_cache = pygame.image.load('fitness_plot.png')
+    generation_graph_cache = pygame.image.load(f'{const.CURRENT_FOLDER}/fitness_plot.png')
 
 # Plot and cache biomass graph
 def plot_biomass():
@@ -210,11 +210,16 @@ def draw_world(world_tensor):
             anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()  # Biomass for anchovy
             cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()  # Biomass for cod
 
+            anchovy_energy = world_tensor[x, y, const.OFFSETS_ENERGY_ANCHOVY].item()  # Biomass for anchovy
+            cod_energy = world_tensor[x, y, const.OFFSETS_ENERGY_COD].item()  # Biomass for cod
+
             # Dictionary to map species to their biomass and color
+            # anchovy_opacity = min(255, max(0, int(anchovy_energy * 2.55)))
+            # cod_opacity = min(255, max(0, int(cod_energy * 2.55)))
             species_biomass = {
                 Species.PLANKTON: (plankton_biomass, (0, 255, 0)),  # Green for plankton
-                Species.ANCHOVY: (anchovy_biomass, (255, 0, 0)),    # Red for anchovy
-                Species.COD: (cod_biomass, (0, 0, 0))               # Black for cod
+                Species.ANCHOVY: (anchovy_biomass, (255, 0, 0)), # Red for anchovy
+                Species.COD: (cod_biomass, (0, 0, 0)) # Black for cod
             }
             
             # Draw biomass for each species
@@ -225,7 +230,7 @@ def draw_world(world_tensor):
                     circle_center = (x * CELL_SIZE + CELL_SIZE // 2 + offset_x, y * CELL_SIZE + CELL_SIZE // 2 + offset_y)
                     radius = min(CELL_SIZE // 2, int(math.sqrt(biomass) * 0.75))
 
-                    # Draw the circle representing species biomass
+                    # Draw the circle representing species biomass with opacity
                     pygame.draw.circle(screen, color, circle_center, radius)
 
     # Draw cached biomass graph
@@ -249,9 +254,6 @@ def draw_world_mask(world_tensor, mask):
         for y in range(const.WORLD_SIZE):
             if mask[x, y] == 1:
                 pygame.draw.rect(screen, (255, 0, 0), (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
-    
-    
-
 
 
 def draw_world_detailed(world_tensor):
@@ -349,17 +351,20 @@ def visualize(world, agent_index, step):
     agents_data[agent_index]['energy_anchovy'].append(world[:, :, const.OFFSETS_ENERGY_ANCHOVY].sum())
     agents_data[agent_index]['energy_cod'].append(world[:, :, const.OFFSETS_ENERGY_COD].sum())
 
-    print(f"Agent: {agent_index}, Steps: {step}, Cod: {agents_data[agent_index]['cod_alive'][-1]}, "
-          f"Anchovy: {agents_data[agent_index]['anchovy_alive'][-1]}, Plankton: {agents_data[agent_index]['plankton_alive'][-1]}")
+    # print(f"Agent: {agent_index}, Steps: {step}, Cod: {agents_data[agent_index]['cod_alive'][-1]}, "
+    #       f"Anchovy: {agents_data[agent_index]['anchovy_alive'][-1]}, Plankton: {agents_data[agent_index]['plankton_alive'][-1]}")
+    # print energy levels
+    # print(f"Energy - Cod: {agents_data[agent_index]['energy_cod'][-1]}, "
+    #       f"Anchovy: {agents_data[agent_index]['energy_anchovy'][-1]}, Plankton: {agents_data[agent_index]['energy_plankton'][-1]}")
     
     # Redraw the world
-    # if visualization_runs % 25 == 0:
-    draw_world(world)   
+    if visualization_runs % 50 == 0:
+        draw_world(world)
     # draw_world_detailed(world)
 
     # Only plot biomass and generations every 50 steps to optimize performance
-    # if visualization_runs % 50 == 0:
-    plot_biomass()
+    if visualization_runs % 50 == 0:
+        plot_biomass()
     # plot_energy()
     
     if step == 0:
@@ -370,3 +375,34 @@ def visualize(world, agent_index, step):
 # Quit pygame safely
 def quit_pygame():
     pygame.quit()
+
+def reset_visualization():
+    reset_plot()
+    reset_terrain_cache()
+    global cod_alive
+    global anchovy_alive
+    global plankton_alive
+    global steps_list
+    global visualization_runs
+    global agents_data
+    global generations_data
+    global terrain_surface_cache
+    global biomass_graph_cache
+    global energy_graph_cache
+    global generation_graph_cache
+
+    # Agent and generation data for visualization
+    agents_data = {}
+    generations_data = []
+    visualization_runs = 0
+
+    cod_alive = []
+    anchovy_alive = []
+    plankton_alive = []
+    steps_list = []
+
+    # Cache for terrain surface and graph surfaces
+    terrain_surface_cache = None
+    biomass_graph_cache = None
+    energy_graph_cache = None
+    generation_graph_cache = None

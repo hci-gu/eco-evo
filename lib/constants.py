@@ -1,20 +1,28 @@
+import os
 
-WORLD_SIZE = 40
+WORLD_SIZE = 20
 
-STARTING_BIOMASS_COD = 3000
+STARTING_BIOMASS_COD = 0
 STARTING_BIOMASS_ANCHOVY = 6400
 STARTING_BIOMASS_PLANKTON = 14800
-MIN_PERCENT_ALIVE = 0.5
-MAX_STEPS = 1600
+MIN_PERCENT_ALIVE = 0.2
+MAX_STEPS = 2000
 
-EAT_AMOUNT = 0.2
-BASE_BIOMASS_LOSS = 0.015
-PLANKTON_GROWTH_RATE = 0.0075
+EAT_AMOUNT = 0.25
+EAT_AMOUNT_ANCHOVY = 0.05
+EAT_AMOUNT_COD = 0.25
+BASE_BIOMASS_LOSS = 0.05
+BIOMASS_GROWTH_RATE = 0.1
+PLANKTON_GROWTH_RATE = 0
 MAX_PLANKTON_IN_CELL = (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 1.5
+ENERGY_FROM_BIOMASS = 0.1
+MAX_ENERGY = 100.0
 
-NUM_AGENTS = 16
+NUM_AGENTS = 8
 ELITISM_SELECTION = 8
 TOURNAMENT_SELECTION = 4
+BASE_ENERGY_COST = 1.5
+GENERATIONS_PER_RUN = 25
 
 OFFSETS_TERRAIN_LAND = 0
 OFFSETS_TERRAIN_WATER = 1
@@ -32,4 +40,47 @@ OFFSETS_ENERGY_PLANKTON = OFFSETS_ENERGY
 OFFSETS_ENERGY_ANCHOVY = OFFSETS_ENERGY + 1
 OFFSETS_ENERGY_COD = OFFSETS_ENERGY + 2
 
-BASE_ENERGY_COST = 0.5
+CURRENT_FOLDER = "results/run"
+
+def override_from_file(file_path):
+    global WORLD_SIZE
+    global STARTING_BIOMASS_COD
+    global STARTING_BIOMASS_ANCHOVY
+    global STARTING_BIOMASS_PLANKTON
+    global MIN_PERCENT_ALIVE
+    global MAX_STEPS
+    global EAT_AMOUNT
+    global EAT_AMOUNT_ANCHOVY
+    global EAT_AMOUNT_COD
+    global BASE_BIOMASS_LOSS
+    global BIOMASS_GROWTH_RATE
+    global PLANKTON_GROWTH_RATE
+    global MAX_PLANKTON_IN_CELL
+    global ENERGY_FROM_BIOMASS
+    global MAX_ENERGY
+    global NUM_AGENTS
+    global ELITISM_SELECTION
+    global TOURNAMENT_SELECTION
+    global BASE_ENERGY_COST
+    global GENERATIONS_PER_RUN
+    
+    global CURRENT_FOLDER
+    file_name = os.path.basename(file_path).split(".")[0]
+
+    CURRENT_FOLDER = f"results/{file_name}"
+    if not os.path.exists(CURRENT_FOLDER):
+        os.makedirs(CURRENT_FOLDER)
+        if not os.path.exists(f"{CURRENT_FOLDER}/agents"):
+            os.makedirs(f"{CURRENT_FOLDER}/agents")
+
+    with open(file_path, "r") as f:
+        for line in f:
+            key, value = line.strip().split("=")
+            if key in globals():
+                globals()[key] = type(globals()[key])(value)
+    
+    print(f"Overridden constants from file {file_path}")
+    print(f"NUM_AGENTS: {NUM_AGENTS}")
+
+
+
