@@ -358,12 +358,12 @@ def visualize(world, agent_index, step):
     #       f"Anchovy: {agents_data[agent_index]['energy_anchovy'][-1]}, Plankton: {agents_data[agent_index]['energy_plankton'][-1]}")
     
     # Redraw the world
-    if visualization_runs % 50 == 0:
+    if visualization_runs % 100 == 0:
         draw_world(world)
     # draw_world_detailed(world)
 
     # Only plot biomass and generations every 50 steps to optimize performance
-    if visualization_runs % 50 == 0:
+    if visualization_runs % 100 == 0:
         plot_biomass()
     # plot_energy()
     

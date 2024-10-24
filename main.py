@@ -20,11 +20,21 @@ def load_config_files(config_folder):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ecosystem simulation with neural networks.")
-    parser.add_argument("--config_folder", type=str, required=True,
+    parser.add_argument("--config_folder", type=str, required=False,
                         help="Path to the folder containing config files.")
+    parser.add_argument("--agent_file", type=str, required=False,
+                        help="Path to the .pt file containing the agent model.")
     
     # Parse arguments
     args = parser.parse_args()
+
+    if args.agent_file:
+        print(f"Loading agent from file: {args.agent_file}")
+        with torch.no_grad():
+            runner = Runner()
+            runner.simulate(agent_file=args.agent_file)
+        
+
 
     # Load config files
     config_files = load_config_files(args.config_folder)

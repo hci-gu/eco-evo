@@ -58,6 +58,34 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
     initial_biomass = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index]
     initial_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index]
 
+    # Apply energy loss to all cells
+    world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index] -= const.BASE_ENERGY_COST
+
+    # Apply BASE_BIOMASS_LOSS to all action-taking cells (a constant percentage loss)
+    biomass_loss = initial_biomass * const.BASE_BIOMASS_LOSS
+    # make it a minimum amount
+    # biomass_loss = torch.clamp(biomass_loss, min=1)
+    biomass_gain = initial_biomass * const.BIOMASS_GROWTH_RATE
+    # # only subtract if the energy is below 50%
+    energy_at_positions = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index]
+    # # Create a mask for cells where energy is below 50
+    energy_below_50_mask = energy_at_positions < 50
+    energy_above = energy_at_positions >= 75
+    
+    world_tensor[x_batch[energy_below_50_mask],
+             y_batch[energy_below_50_mask],
+             const.OFFSETS_BIOMASS + species_index] -= biomass_loss[energy_below_50_mask]
+    
+    # Apply biomass gain to cells where energy is above 50
+    world_tensor[x_batch[energy_above],
+             y_batch[energy_above],
+             const.OFFSETS_BIOMASS + species_index] += biomass_gain[energy_above]
+
+
+    initial_biomass = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index]
+    initial_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index]
+
+
     biomass_up = initial_biomass * move_up
     biomass_down = initial_biomass * move_down
     biomass_left = initial_biomass * move_left
@@ -174,37 +202,15 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
         energy_gain = eat_amount * const.ENERGY_FROM_BIOMASS
         new_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_ANCHOVY] + energy_gain
         world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_ANCHOVY] = torch.clamp(new_energy, max=const.MAX_ENERGY)
-
-
-    # Empty energy in cells where all biomass has left
-    empty_cells_mask = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index] == 0
-    world_tensor[x_batch[empty_cells_mask], y_batch[empty_cells_mask], const.OFFSETS_ENERGY + species_index] = 0
-
-    # Apply energy loss to all cells
-    world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index] -= const.BASE_ENERGY_COST
-
-    # Apply BASE_BIOMASS_LOSS to all action-taking cells (a constant percentage loss)
-    biomass_loss = initial_biomass * const.BASE_BIOMASS_LOSS
-    biomass_gain = initial_biomass * const.BIOMASS_GROWTH_RATE
-    # # only subtract if the energy is below 50%
-    energy_at_positions = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index]
-    # # Create a mask for cells where energy is below 50
-    energy_below_50_mask = energy_at_positions < 50
-    energy_above = energy_at_positions >= 75
-    
-    world_tensor[x_batch[energy_below_50_mask],
-             y_batch[energy_below_50_mask],
-             const.OFFSETS_BIOMASS + species_index] -= biomass_loss[energy_below_50_mask]
-    
-    # # Apply biomass gain to cells where energy is above 50
-    world_tensor[x_batch[energy_above],
-             y_batch[energy_above],
-             const.OFFSETS_BIOMASS + species_index] += biomass_gain[energy_above]
     
     # make sure biomass is not negative
     world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_PLANKTON] = torch.clamp(world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_PLANKTON], min=0)
     world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_ANCHOVY] = torch.clamp(world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_ANCHOVY], min=0)
     world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_COD] = torch.clamp(world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_COD], min=0)
+
+    # set all cells with 0 biomass to 0 energy
+    zero_biomass_mask = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index] == 0
+    world_tensor[x_batch[zero_biomass_mask], y_batch[zero_biomass_mask], const.OFFSETS_ENERGY + species_index] = 0
 
     return world_tensor
 
@@ -213,7 +219,7 @@ def create_world():
     opensimplex.seed(int(random() * 100000))
 
     # Create a tensor to represent the entire world
-    # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 6) -> 6 for terrain (3 one-hot) + biomass (3 species) + energy (3 species)
+    # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 9) -> 3 for terrain (3 one-hot) + biomass (3 species) + energy (3 species)
     world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 9, device=device)
 
     center_x, center_y = const.WORLD_SIZE // 2, const.WORLD_SIZE // 2
@@ -227,7 +233,7 @@ def create_world():
     noise_sum_anchovy = 0
     noise_sum_plankton = 0
 
-    initial_energy = MAX_ENERGY
+    initial_energy = const.MAX_ENERGY
 
     # Iterate over the world grid and initialize cells directly into the tensor
     for x in range(const.WORLD_SIZE):
@@ -347,12 +353,12 @@ def create_static_world():
 
                 # Scale noise to create steeper clusters
                 noise_cod = noise_cod ** NOISE_SCALING
-                noise_anchovy = noise_anchovy ** NOISE_SCALING
+                # noise_anchovy = noise_anchovy ** NOISE_SCALING
                 noise_plankton = noise_plankton ** NOISE_SCALING
 
                 # Sum noise for normalization
                 noise_sum_cod += noise_cod
-                noise_sum_anchovy += noise_anchovy
+                # noise_sum_anchovy += noise_anchovy
                 noise_sum_plankton += noise_plankton
 
     # Second pass: distribute biomass across water cells based on noise values
@@ -382,6 +388,9 @@ def create_static_world():
                 if noise_sum_plankton > 0:
                     world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON] = (noise_plankton / noise_sum_plankton) * total_biomass_plankton
                     world_tensor[x, y, const.OFFSETS_ENERGY_PLANKTON] = initial_energy
+
+    # put all anchovy in right center of the world
+    world_tensor[const.WORLD_SIZE - 1, const.WORLD_SIZE // 2, const.OFFSETS_BIOMASS_ANCHOVY] = total_biomass_anchovy
 
     return world_tensor
 

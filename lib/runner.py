@@ -24,8 +24,14 @@ class Runner():
         self.agents = [(Model().to(device), 0) for _ in range(const.NUM_AGENTS)]
         self.starting_world = None
         reset_visualization()
+
+    def simulate(self, agent_file):
+        agent = Model()
+        agent.load_state_dict(torch.load(agent_file))
+        self.agents = [(agent, 0)]
+        self.run(True)
     
-    def run(self):
+    def run(self, single_run=False):
         # Create the world as a tensor from the start
         # self.starting_world = create_world().to(device)
         self.starting_world = create_static_world().to(device)
@@ -122,6 +128,9 @@ class Runner():
                 fitness += 1
                 self.agents[agent_index] = (agent, fitness)
 
+        if single_run:
+            print('Simulation finished')
+            return
         self.next_generation()
 
     def next_generation(self):
@@ -129,10 +138,10 @@ class Runner():
         self.current_generation += 1
         
         fittest_agent = max(self.agents, key=lambda x: x[1])
+        average_fitness = sum([x[1] for x in self.agents]) / len(self.agents)
 
-        print(f"Fittest agent of generation {self.current_generation} has fitness {fittest_agent[1]}")
-        if fittest_agent[1] > self.best_fitness:
-            self.best_fitness = fittest_agent[1]
+        if average_fitness > self.best_fitness:
+            self.best_fitness = average_fitness
             print(f"New best fitness: {self.best_fitness}")
             fittest_agent[0].save_to_file(f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_{self.best_fitness}.pt')
 
