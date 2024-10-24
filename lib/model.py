@@ -39,6 +39,26 @@ class Model(nn.Module):
             return x[:, :5]
         else:
             return x[:, 5:]
+        
+    def debug_move_down_and_eat(self, x, species):
+
+        # random value between 0 and 1
+        # eat_value = np.random.rand()
+        eat_value = 0.75
+        move_value = 1 - eat_value
+
+        # random direction (index between 0 and 3)
+        random_direction = np.random.randint(0, 4)
+
+        base_tensor = torch.tensor([[0, 0, 0, 0, eat_value]])
+
+        # set move index to move value
+        base_tensor[0, random_direction] = move_value
+
+        return base_tensor
+        
+
+        
     
     def get_weights(self):
         """

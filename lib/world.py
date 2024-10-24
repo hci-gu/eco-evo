@@ -53,7 +53,6 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
     move_left = action_values_batch[:, Action.LEFT.value]
     move_right = action_values_batch[:, Action.RIGHT.value]
     eat = action_values_batch[:, Action.EAT.value]
-    # print(f"move_up: {move_up}, move_down: {move_down}, move_left: {move_left}, move_right: {move_right}, eat: {eat}")
 
     initial_biomass = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index]
     initial_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index]
@@ -184,12 +183,12 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
         prey_biomass = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_ANCHOVY]
         eat_amount = torch.min(prey_biomass, eat_amounts)
         world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_ANCHOVY] -= eat_amount # Reduce anchovy biomass
-        # world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_COD] += eat_amount # Add cod biomass
-        # apply cost of eating + gained energy from eating
-        energy_gain = eat_amount * const.ENERGY_FROM_BIOMASS
 
-        # Apply the cost of eating + energy gained from eating, make sure the values are scalars
-        new_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_COD] + energy_gain
+        reward_scaling_factor = torch.where(eat_amounts > 0, eat_amount / eat_amounts, torch.tensor(0.0, device=eat_amount.device))
+        # Clamp scaling factor between 0 and 1 to ensure it's in a valid range
+        reward_scaling_factor = torch.clamp(reward_scaling_factor, 0, 1)
+        energy_reward = reward_scaling_factor * const.ENERGY_REWARD_FOR_EATING * eat
+        new_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_COD] + energy_reward
         world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_COD] = torch.clamp(new_energy, max=const.MAX_ENERGY)
     elif species_index == Species.ANCHOVY.value:
         eat_amounts = initial_biomass * eat * const.EAT_AMOUNT_ANCHOVY
@@ -197,10 +196,13 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
         prey_biomass = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_PLANKTON]
         eat_amount = torch.min(prey_biomass, eat_amounts)  # Fix: ensure this gets scalar
         world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_PLANKTON] -= eat_amount  # Reduce plankton biomass
-        # world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_ANCHOVY] += eat_amount  # Add anchovy biomass
-        # apply cost of eating + gained energy from eating
-        energy_gain = eat_amount * const.ENERGY_FROM_BIOMASS
-        new_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_ANCHOVY] + energy_gain
+
+        reward_scaling_factor = torch.where(eat_amounts > 0, eat_amount / eat_amounts, torch.tensor(0.0, device=eat_amount.device))
+        # Clamp scaling factor between 0 and 1 to ensure it's in a valid range
+        reward_scaling_factor = torch.clamp(reward_scaling_factor, 0, 1)
+
+        energy_reward = reward_scaling_factor * const.ENERGY_REWARD_FOR_EATING * eat
+        new_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_ANCHOVY] + energy_reward
         world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY_ANCHOVY] = torch.clamp(new_energy, max=const.MAX_ENERGY)
     
     # make sure biomass is not negative
@@ -211,6 +213,11 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
     # set all cells with 0 biomass to 0 energy
     zero_biomass_mask = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index] == 0
     world_tensor[x_batch[zero_biomass_mask], y_batch[zero_biomass_mask], const.OFFSETS_ENERGY + species_index] = 0
+
+    # make sure biomass in a cell cannot be more than max for the species
+    if species_index == Species.ANCHOVY.value:
+        # ignore x_batch, y_batch, apply to all
+        world_tensor[:, :, const.OFFSETS_BIOMASS_ANCHOVY] = torch.clamp(world_tensor[:, :, const.OFFSETS_BIOMASS_ANCHOVY], max=const.MAX_ANCHOVY_IN_CELL)
 
     return world_tensor
 
@@ -416,5 +423,12 @@ def world_is_alive(world_tensor):
     if plankton_biomass < (const.STARTING_BIOMASS_PLANKTON * const.MIN_PERCENT_ALIVE):
         return False
     
+    # Check if the total biomass for any species is above reasonable threshold
+    # if cod_biomass > (const.STARTING_BIOMASS_COD * 100):
+    #     return False
+    # if anchovy_biomass > (const.STARTING_BIOMASS_ANCHOVY * 100):
+    #     return False
+    # if plankton_biomass > (const.STARTING_BIOMASS_PLANKTON * 100):
+    #     return False
 
     return True
