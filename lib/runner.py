@@ -156,8 +156,8 @@ class Runner():
 
             c1_weights, c2_weights = crossover(p1_weights, p2_weights)
 
-            mutation(c1_weights, 0.1, 0.1)
-            mutation(c2_weights, 0.1, 0.1)
+            mutation(c1_weights, 0.2, 0.2)
+            mutation(c2_weights, 0.2, 0.2)
 
             c1 = Model(chromosome=c1_weights).to(device)
             c2 = Model(chromosome=c2_weights).to(device)

@@ -70,7 +70,7 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
     energy_at_positions = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index]
     # # Create a mask for cells where energy is below 50
     energy_below_50_mask = energy_at_positions < 50
-    energy_above = energy_at_positions >= 75
+    energy_above = energy_at_positions >= 50
     
     world_tensor[x_batch[energy_below_50_mask],
              y_batch[energy_below_50_mask],
@@ -322,7 +322,7 @@ def create_static_world():
     noise_sum_anchovy = 0
     noise_sum_plankton = 0
 
-    initial_energy = const.MAX_ENERGY
+    initial_energy = const.MAX_ENERGY * 0.5
 
     # Iterate over the world grid and initialize cells directly into the tensor
     for x in range(const.WORLD_SIZE):
@@ -391,6 +391,7 @@ def create_static_world():
 
     # put all anchovy in right center of the world
     world_tensor[const.WORLD_SIZE - 1, const.WORLD_SIZE // 2, const.OFFSETS_BIOMASS_ANCHOVY] = total_biomass_anchovy
+    world_tensor[const.WORLD_SIZE - 1, const.WORLD_SIZE // 2, const.OFFSETS_ENERGY_ANCHOVY] = initial_energy
 
     return world_tensor
 
