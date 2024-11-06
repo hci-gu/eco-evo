@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
+import lib.constants as const
 import numpy as np
 
 class Model(nn.Module):
-    def __init__(self, layer_sizes=[81, 10, 10], chromosome=None):
+    def __init__(self, layer_sizes=[const.NETWORK_INPUT_SIZE, const.NETWORK_HIDDEN_SIZE, const.NETWORK_OUTPUT_SIZE], chromosome=None):
         """
         layer_sizes: List of integers where each element represents the number of neurons in each layer,
                      including the input and output layers. For example, [54, 200, 10] means:

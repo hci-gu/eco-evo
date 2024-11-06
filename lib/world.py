@@ -1,7 +1,7 @@
 from enum import Enum
 import opensimplex
 import math
-from random import random
+import random
 import torch.nn as nn
 import torch
 import lib.constants as const
@@ -41,6 +41,294 @@ def noop(_, __):
 def shift(tensor, delta):
     delta_x, delta_y = delta
     return torch.roll(torch.roll(tensor, delta_x, dims=0), delta_y, dims=1)
+
+def reset_plankton_cluster():
+    """
+    Resets the plankton cluster by deleting its stored position and movement attributes.
+    """
+    attributes = ['position', 'dx', 'dy', 'radius']
+    for attr in attributes:
+        if hasattr(move_plankton_cluster, attr):
+            delattr(move_plankton_cluster, attr)
+
+
+
+def move_plankton_cluster(world_tensor):
+    """
+    Moves a circular cluster of plankton around the world.
+    The cluster moves with constrained random movement, changing direction when it hits the edge.
+    """
+    # Remove all existing plankton biomass
+    world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON] = 0
+
+    # Get the actual size of the world from the tensor
+    world_size_x, world_size_y = world_tensor.shape[:2]
+
+    # Initialize cluster properties if they don't exist
+    if not hasattr(move_plankton_cluster, 'position'):
+        # Start at a random position within the world bounds, considering the radius
+        radius = 4
+        move_plankton_cluster.position = [
+            world_size_x - radius,
+            world_size_y / 2
+        ]
+        # Random initial movement direction
+        speed = 1  # Adjust speed as needed
+        angle = random.uniform(0, 2 * math.pi)
+        dx = speed * math.cos(angle)
+        dy = speed * math.sin(angle)
+        move_plankton_cluster.dx = dx
+        move_plankton_cluster.dy = dy
+        move_plankton_cluster.radius = radius
+
+    # Unpack position and movement components
+    x_pos, y_pos = move_plankton_cluster.position
+    dx = move_plankton_cluster.dx
+    dy = move_plankton_cluster.dy
+    radius = move_plankton_cluster.radius
+
+    # Introduce slight random variations to dx and dy
+    random_factor = 0.1  # Adjust as needed for randomness intensity
+    dx += random.uniform(-random_factor, random_factor)
+    dy += random.uniform(-random_factor, random_factor)
+
+    # Normalize the movement vector to maintain constant speed
+    speed = 1  # Adjust speed as needed
+    vector_length = math.sqrt(dx**2 + dy**2)
+    if vector_length != 0:
+        dx = (dx / vector_length) * speed
+        dy = (dy / vector_length) * speed
+    else:
+        # If vector_length is zero, choose a new random direction
+        angle = random.uniform(0, 2 * math.pi)
+        dx = speed * math.cos(angle)
+        dy = speed * math.sin(angle)
+
+    # Tentatively move the cluster position
+    new_x_pos = x_pos + dx
+    new_y_pos = y_pos + dy
+
+    # Check for collisions with the world edges and adjust position and direction
+    hit_edge = False
+    if new_x_pos - radius < 0 or new_x_pos + radius >= world_size_x:
+        # Reflect dx
+        dx = -dx
+        new_x_pos = x_pos + dx
+        hit_edge = True
+    if new_y_pos - radius < 0 or new_y_pos + radius >= world_size_y:
+        # Reflect dy
+        dy = -dy
+        new_y_pos = y_pos + dy
+        hit_edge = True
+
+    # Update movement components after adjusting for edges
+    move_plankton_cluster.dx = dx
+    move_plankton_cluster.dy = dy
+
+    # Ensure the new position keeps the cluster within bounds
+    new_x_pos = max(radius, min(new_x_pos, world_size_x - radius))
+    new_y_pos = max(radius, min(new_y_pos, world_size_y - radius))
+
+    # Update position
+    move_plankton_cluster.position = [new_x_pos, new_y_pos]
+
+    # Generate the circular cluster at the new position
+    xx, yy = torch.meshgrid(
+        torch.arange(world_size_x, device=world_tensor.device),
+        torch.arange(world_size_y, device=world_tensor.device),
+        indexing='ij'  # Specify indexing to avoid warnings
+    )
+    # Calculate distance from the center of the cluster
+    distances = torch.sqrt((xx - new_x_pos) ** 2 + (yy - new_y_pos) ** 2)
+    # Create a mask for cells within the radius
+    cluster_mask = distances <= radius
+
+    # Ensure plankton is only placed in water cells
+    water_mask = world_tensor[:, :, Terrain.WATER.value] == 1
+    valid_mask = cluster_mask & water_mask
+
+    # Check if there are valid water cells; if not, adjust position
+    num_valid_cells = valid_mask.sum().item()
+    if num_valid_cells == 0:
+        # Try moving the cluster back to the previous position
+        new_x_pos = x_pos
+        new_y_pos = y_pos
+        move_plankton_cluster.position = [new_x_pos, new_y_pos]
+        # Recalculate distances and valid_mask
+        distances = torch.sqrt((xx - new_x_pos) ** 2 + (yy - new_y_pos) ** 2)
+        cluster_mask = distances <= radius
+        valid_mask = cluster_mask & water_mask
+        num_valid_cells = valid_mask.sum().item()
+        if num_valid_cells == 0:
+            # If still no valid cells, reset the cluster
+            reset_plankton_cluster()
+            print("Plankton cluster reset due to no valid water cells.")
+            return world_tensor
+
+    # Get indices of valid cells
+    cluster_indices = torch.nonzero(valid_mask)
+
+    # Distribute total biomass equally among the cells
+    total_biomass_plankton = const.STARTING_BIOMASS_PLANKTON
+    biomass_per_cell = total_biomass_plankton / num_valid_cells
+
+    # Assign biomass to the cells
+    world_tensor[cluster_indices[:, 0], cluster_indices[:, 1], const.OFFSETS_BIOMASS_PLANKTON] = biomass_per_cell
+    return world_tensor
+
+def respawn_plankton(world_tensor):
+    """
+    Removes all plankton from the world and creates a cluster at the next side in a clockwise order.
+    """
+    # Sides in clockwise order
+    sides = ['east', 'south', 'west', 'north', ]
+
+    # Initialize the current side index if it doesn't exist
+    if not hasattr(respawn_plankton, 'current_side_index'):
+        respawn_plankton.current_side_index = 0
+
+    # Select the current side
+    side = sides[respawn_plankton.current_side_index]
+
+    # Update the index for the next call (cycle through the sides)
+    respawn_plankton.current_side_index = (respawn_plankton.current_side_index + 1) % len(sides)
+
+    # Remove all current plankton biomass
+    world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON] = 0
+
+    # Define cluster size (number of rows/columns from the edge)
+    cluster_size = math.floor(const.WORLD_SIZE / 10) + 1  # Adjust as needed
+
+    world_size = const.WORLD_SIZE
+
+    # Determine the cluster area based on the side
+    if side == 'north':
+        x_start, x_end = 0, cluster_size
+        y_start, y_end = 0, world_size
+    elif side == 'south':
+        x_start, x_end = world_size - cluster_size, world_size
+        y_start, y_end = 0, world_size
+    elif side == 'west':
+        x_start, x_end = 0, world_size
+        y_start, y_end = 0, cluster_size
+    elif side == 'east':
+        x_start, x_end = 0, world_size
+        y_start, y_end = world_size - cluster_size, world_size
+
+    # Get the mask of water cells in the cluster area
+    water_layer = world_tensor[:, :, Terrain.WATER.value]
+    cluster_mask = torch.zeros_like(water_layer, dtype=torch.bool)
+    cluster_mask[x_start:x_end, y_start:y_end] = True
+    water_mask = cluster_mask & (water_layer == 1)
+
+    # Get indices of water cells in the cluster area
+    cluster_indices = torch.nonzero(water_mask)
+
+    num_cells = cluster_indices.size(0)
+    if num_cells == 0:
+        # If no water cells in the cluster area, then we can't place plankton
+        print(f"No water cells found on the {side} side for plankton respawn.")
+        return world_tensor
+
+    # Distribute total biomass equally among the cells
+    total_biomass_plankton = const.STARTING_BIOMASS_PLANKTON
+    biomass_per_cell = total_biomass_plankton / num_cells
+
+    # Assign biomass to the cells
+    world_tensor[cluster_indices[:, 0], cluster_indices[:, 1], const.OFFSETS_BIOMASS_PLANKTON] = biomass_per_cell
+
+    print(f"Plankton respawned at the {side} side of the world.")
+    return world_tensor
+
+def move_plankton_based_on_current(world_tensor, world_data):
+    # Get the size of the world grid
+    world_size_x, world_size_y = world_tensor.shape[0], world_tensor.shape[1]
+
+    # Extract the plankton biomass layer
+    plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON]
+
+    # Extract the current angles
+    current_angles = world_data[:, :, 0]
+
+    # Initialize a buffer to accumulate new biomass positions
+    new_biomass = torch.zeros_like(plankton_biomass)
+
+    # Get indices of all cells (ensure they are of type torch.long)
+    x_indices = torch.arange(world_size_x, dtype=torch.long, device=world_tensor.device).view(-1, 1).expand(-1, world_size_y)
+    y_indices = torch.arange(world_size_y, dtype=torch.long, device=world_tensor.device).view(1, -1).expand(world_size_x, -1)
+
+    # Flatten the arrays for vectorized operations
+    x_indices_flat = x_indices.flatten()
+    y_indices_flat = y_indices.flatten()
+    plankton_biomass_flat = plankton_biomass.flatten()
+    current_angles_flat = current_angles.flatten()
+
+    # Filter cells that have plankton biomass greater than zero
+    mask = plankton_biomass_flat > 0
+    x_indices_flat = x_indices_flat[mask]
+    y_indices_flat = y_indices_flat[mask]
+    plankton_biomass_flat = plankton_biomass_flat[mask]
+    current_angles_flat = current_angles_flat[mask]
+
+    # Define possible movement directions (dx, dy) and their corresponding angles
+    movement_directions = [
+        (1, 0),    # East
+        (1, 1),    # Southeast
+        (0, 1),    # South
+        (-1, 1),   # Southwest
+        (-1, 0),   # West
+        (-1, -1),  # Northwest
+        (0, -1),   # North
+        (1, -1),   # Northeast
+    ]
+    movement_angles = torch.tensor([
+        0,                # East (0 degrees)
+        math.pi / 4,      # Southeast (45 degrees)
+        math.pi / 2,      # South (90 degrees)
+        3 * math.pi / 4,  # Southwest (135 degrees)
+        math.pi,          # West (180 degrees)
+        -3 * math.pi / 4, # Northwest (-135 degrees)
+        -math.pi / 2,     # North (-90 degrees)
+        -math.pi / 4,     # Northeast (-45 degrees)
+    ], device=world_tensor.device)
+
+    # For each plankton cell, attempt to move in the intended direction or the closest valid alternative
+    for i in range(len(x_indices_flat)):
+        x = x_indices_flat[i]
+        y = y_indices_flat[i]
+        biomass = plankton_biomass_flat[i]
+        angle = current_angles_flat[i]
+
+        # Calculate the difference between the current angle and the movement angles
+        angle_diffs = torch.remainder(movement_angles - angle + math.pi, 2 * math.pi) - math.pi
+        angle_diffs = torch.abs(angle_diffs)
+
+        # Sort movement directions based on the smallest angle difference (closest to intended direction)
+        sorted_indices = torch.argsort(angle_diffs)
+
+        moved = False
+        for idx in sorted_indices:
+            dx, dy = movement_directions[idx]
+            new_x = x + dx
+            new_y = y + dy
+
+            # Check if new position is within bounds
+            if 0 <= new_x < world_size_x and 0 <= new_y < world_size_y:
+                # Check if the terrain at the new position is water
+                if world_tensor[new_x, new_y, const.OFFSETS_TERRAIN_WATER] == 1:
+                    # Move the biomass to the new position
+                    new_biomass[new_x, new_y] += biomass
+                    moved = True
+                    break  # Exit the loop after successful movement
+
+        if not moved:
+            # If no valid movement was found, keep the biomass in the original position
+            new_biomass[x, y] += biomass
+
+    # Update the plankton biomass layer in world_tensor
+    world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON] = new_biomass
+
+    return world_tensor
 
 def perform_action(world_tensor, action_values_batch, species_index, positions_tensor, debug_visualize=noop):
     initial_tensor = world_tensor.clone()
@@ -221,13 +509,15 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
 
     return world_tensor
 
-def create_world():
+def create_world(static=False):
     NOISE_SCALING = 4.5
-    opensimplex.seed(int(random() * 100000))
+    seed = 1 if static else int(random.random() * 100000)
+    opensimplex.seed(seed)
 
     # Create a tensor to represent the entire world
     # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 9) -> 3 for terrain (3 one-hot) + biomass (3 species) + energy (3 species)
     world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 9, device=device)
+    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 1, device=device)
 
     center_x, center_y = const.WORLD_SIZE // 2, const.WORLD_SIZE // 2
     max_distance = math.sqrt(center_x**2 + center_y**2)
@@ -259,95 +549,15 @@ def create_world():
             world_tensor[x, y, :3] = torch.tensor(terrain_encoding, device=device)
 
             if terrain == Terrain.WATER:
-                # Calculate noise values for species clustering
-                noise_cod = (opensimplex.noise2(x * 0.3, y * 0.3) + 1) / 2
-                noise_anchovy = (opensimplex.noise2(x * 0.2, y * 0.2) + 1) / 2
-                noise_plankton = (opensimplex.noise2(x * 0.1, y * 0.1) + 1) / 2
+                # Calculate the angle of the current based on the cell's position relative to the center
+                # This ensures a clockwise rotation direction
+                dx = x - center_x
+                dy = y - center_y
+                current_angle = math.atan2(dy, dx) + math.pi / 2
 
-                # Apply thresholds to zero-out biomass in certain regions
-                if noise_cod < 0.4: noise_cod = 0
-                if noise_anchovy < 0.3: noise_anchovy = 0
-                if noise_plankton < 0.35: noise_plankton = 0
+                # Store the current angle in the tensor
+                world_data[x, y, 0] = current_angle  # Add current angle
 
-                # Scale noise to create steeper clusters
-                noise_cod = noise_cod ** NOISE_SCALING
-                noise_anchovy = noise_anchovy ** NOISE_SCALING
-                noise_plankton = noise_plankton ** NOISE_SCALING
-
-                # Sum noise for normalization
-                noise_sum_cod += noise_cod
-                noise_sum_anchovy += noise_anchovy
-                noise_sum_plankton += noise_plankton
-
-    # Second pass: distribute biomass across water cells based on noise values
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            if world_tensor[x, y, Terrain.WATER.value] == 1:
-                # Recalculate noise values for biomass
-                noise_cod = (opensimplex.noise2(x * 0.3, y * 0.3) + 1) / 2
-                noise_anchovy = (opensimplex.noise2(x * 0.2, y * 0.2) + 1) / 2
-                noise_plankton = (opensimplex.noise2(x * 0.1, y * 0.1) + 1) / 2
-
-                if noise_cod < 0.4: noise_cod = 0
-                if noise_anchovy < 0.3: noise_anchovy = 0
-                if noise_plankton < 0.35: noise_plankton = 0
-
-                noise_cod = noise_cod ** NOISE_SCALING
-                noise_anchovy = noise_anchovy ** NOISE_SCALING
-                noise_plankton = noise_plankton ** NOISE_SCALING
-
-                # Distribute biomass proportionally to the noise sums
-                if noise_sum_cod > 0:
-                    world_tensor[x, y, const.OFFSETS_BIOMASS_COD] = (noise_cod / noise_sum_cod) * total_biomass_cod
-                    world_tensor[x, y, const.OFFSETS_ENERGY_COD] = initial_energy
-                if noise_sum_anchovy > 0:
-                    world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY] = (noise_anchovy / noise_sum_anchovy) * total_biomass_anchovy
-                    world_tensor[x, y, const.OFFSETS_ENERGY_ANCHOVY] = initial_energy
-                if noise_sum_plankton > 0:
-                    world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON] = (noise_plankton / noise_sum_plankton) * total_biomass_plankton
-                    world_tensor[x, y, const.OFFSETS_ENERGY_PLANKTON] = initial_energy
-
-    return world_tensor
-
-
-def create_static_world():
-    NOISE_SCALING = 4.5
-    opensimplex.seed(1)
-
-    # Create a tensor to represent the entire world
-    # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 6) -> 6 for terrain (3 one-hot) + biomass (3 species) + energy (3 species)
-    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 9, device=device)
-
-    center_x, center_y = const.WORLD_SIZE // 2, const.WORLD_SIZE // 2
-    max_distance = math.sqrt(center_x**2 + center_y**2)
-
-    total_biomass_cod = const.STARTING_BIOMASS_COD
-    total_biomass_anchovy = const.STARTING_BIOMASS_ANCHOVY
-    total_biomass_plankton = const.STARTING_BIOMASS_PLANKTON
-
-    noise_sum_cod = 0
-    noise_sum_anchovy = 0
-    noise_sum_plankton = 0
-
-    initial_energy = const.MAX_ENERGY * 0.5
-
-    # Iterate over the world grid and initialize cells directly into the tensor
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-            distance_factor = distance / max_distance
-            noise_value = opensimplex.noise2(x * 0.15, y * 0.15)
-            threshold = 0.6 * distance_factor + 0.1 * noise_value
-
-            # Determine if the cell is water or land
-            terrain = Terrain.WATER if threshold < 0.5 else Terrain.LAND
-            # terrain = Terrain.WATER
-
-            # Set terrain one-hot encoding
-            terrain_encoding = [0, 1, 0] if terrain == Terrain.WATER else [1, 0, 0]
-            world_tensor[x, y, :3] = torch.tensor(terrain_encoding, device=device)
-
-            if terrain == Terrain.WATER:
                 # Calculate noise values for species clustering
                 noise_cod = (opensimplex.noise2(x * 0.3, y * 0.3) + 1) / 2
                 noise_anchovy = (opensimplex.noise2(x * 0.2, y * 0.2) + 1) / 2
@@ -400,7 +610,8 @@ def create_static_world():
     world_tensor[const.WORLD_SIZE - 1, const.WORLD_SIZE // 2, const.OFFSETS_BIOMASS_ANCHOVY] = total_biomass_anchovy
     world_tensor[const.WORLD_SIZE - 1, const.WORLD_SIZE // 2, const.OFFSETS_ENERGY_ANCHOVY] = initial_energy
 
-    return world_tensor
+    return world_tensor, world_data
+
 
 def world_is_alive(world_tensor):
     """

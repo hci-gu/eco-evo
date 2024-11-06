@@ -45,7 +45,7 @@ def reset_terrain_cache():
     terrain_surface_cache = None
 
 # Cache and draw the terrain only once to optimize performance
-def draw_terrain(world_tensor):
+def draw_terrain(world_tensor, world_data, display_current=False):
     global terrain_surface_cache
     if terrain_surface_cache is not None:
         return terrain_surface_cache
@@ -66,6 +66,21 @@ def draw_terrain(world_tensor):
 
             # Draw the terrain
             pygame.draw.rect(terrain_surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+
+            # If the display_current flag is True and the cell is water, draw an arrow for the current
+            if display_current and terrain[Terrain.WATER.value] == 1:
+                # Extract the current angle from the world tensor (index 9)
+                current_angle = world_data[x, y, 0]
+
+                # Compute the arrow direction based on the current angle
+                arrow_length = CELL_SIZE // 2
+                end_x = x * CELL_SIZE + CELL_SIZE // 2 + int(arrow_length * math.cos(current_angle))
+                end_y = y * CELL_SIZE + CELL_SIZE // 2 + int(arrow_length * math.sin(current_angle))
+
+                # Draw a simple arrow representing the current direction
+                pygame.draw.line(terrain_surface, (255, 255, 255), 
+                                 (x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2), 
+                                 (end_x, end_y), 2)
     
     # Cache the terrain surface for reuse
     terrain_surface_cache = terrain_surface
@@ -179,7 +194,7 @@ def plot_energy():
     energy_graph_cache = pygame.image.load('energy_graph.png')
 
 # Redraw the world with species biomass
-def draw_world(world_tensor):
+def draw_world(world_tensor, world_data):
     # remove padding
     world_tensor = world_tensor[1:-1, 1:-1]
 
@@ -191,7 +206,7 @@ def draw_world(world_tensor):
     """
     screen.fill((255, 255, 255))
 
-    terrain_surface = draw_terrain(world_tensor)
+    terrain_surface = draw_terrain(world_tensor, world_data, False)
     screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
 
     for x in range(const.WORLD_SIZE):
@@ -328,7 +343,7 @@ def draw_world_detailed(world_tensor):
 
 # Main visualization function, optimized with reduced plotting frequency
 visualization_runs = 0
-def visualize(world, agent_index, step):
+def visualize(world, world_data, agent_index, step):
     global visualization_runs
     if agent_index not in agents_data:
         # Initialize data for this agent if not already present
@@ -359,7 +374,7 @@ def visualize(world, agent_index, step):
     
     # Redraw the world
     if visualization_runs % 100 == 0:
-        draw_world(world)
+        draw_world(world, world_data)
     # draw_world_detailed(world)
 
     # Only plot biomass and generations every 50 steps to optimize performance

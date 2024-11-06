@@ -1,6 +1,6 @@
 # from lib.constants import WORLD_SIZE, NUM_AGENTS, MAX_STEPS, PLANKTON_GROWTH_RATE, MAX_PLANKTON_IN_CELL, TOURNAMENT_SELECTION, ELITISM_SELECTION
 import lib.constants as const
-from lib.world import create_world, create_static_world, perform_action, world_is_alive, Species, Action, Terrain
+from lib.world import create_world, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, perform_action, world_is_alive, Species, Action, Terrain
 from lib.visualize import visualize, reset_plot, draw_world_mask, reset_visualization
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
@@ -22,6 +22,7 @@ class Runner():
         self.best_fitness = 0
         self.running = False
         self.agents = [(Model().to(device), 0) for _ in range(const.NUM_AGENTS)]
+        self.best_agent = None
         self.starting_world = None
         reset_visualization()
 
@@ -34,10 +35,13 @@ class Runner():
     def run(self, single_run=False):
         # Create the world as a tensor from the start
         # self.starting_world = create_world().to(device)
-        self.starting_world = create_static_world().to(device)
+        world, world_data = create_world(True)
+        reset_plankton_cluster()
+        self.starting_world = world.to(device)
 
         # Pad the world with a 1-cell border of zeros
         padded_world = torch.nn.functional.pad(self.starting_world, (0, 0, 1, 1, 1, 1), "constant", 0)
+        world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
 
         for agent_index, (agent, fitness) in enumerate(self.agents):
             # print(f"Running agent {agent_index} of generation {self.current_generation}")
@@ -56,6 +60,10 @@ class Runner():
                         # Update only the plankton biomass (channel 3) using the mask
                         world[:, :, const.OFFSETS_BIOMASS_PLANKTON][plankton_mask] = torch.min(world[:, :, const.OFFSETS_BIOMASS_PLANKTON][plankton_mask] * (1 + const.PLANKTON_GROWTH_RATE),
                                                                 torch.tensor(const.MAX_PLANKTON_IN_CELL, device=device))
+                        if fitness % 20 == 0:
+                            move_plankton_cluster(world)
+                        #     spawn_plankton_debug(world)
+                        #     move_plankton_based_on_current(world, world_data)
                         continue
 
                     # Collect tensors for cells (batch the inputs)
@@ -123,7 +131,7 @@ class Runner():
                 # print(f"Time taken: {seconds_elapsed} seconds")
 
                 # Update the display after each step
-                visualize(world, agent_index, fitness)
+                visualize(world, world_data, agent_index, fitness)
 
                 fitness += 1
                 self.agents[agent_index] = (agent, fitness)
@@ -138,11 +146,12 @@ class Runner():
         self.current_generation += 1
         
         fittest_agent = max(self.agents, key=lambda x: x[1])
-        average_fitness = sum([x[1] for x in self.agents]) / len(self.agents)
 
+        average_fitness = sum([x[1] for x in self.agents]) / len(self.agents)
         if average_fitness > self.best_fitness:
             self.best_fitness = average_fitness
             print(f"New best fitness: {self.best_fitness}")
+            self.best_agent = copy.deepcopy(fittest_agent[0])
             fittest_agent[0].save_to_file(f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_{self.best_fitness}.pt')
 
         elites = elitism_selection(self.agents, const.ELITISM_SELECTION)
@@ -168,6 +177,7 @@ class Runner():
 
         self.agents = next_pop
         self.agents.append((fittest_agent[0], 0))
+        self.agents.append((self.best_agent, 0))
         self.agents.append((Model().to(device), 0))
         reset_plot()
 
