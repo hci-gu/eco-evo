@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import numpy as np
+from matplotlib.ticker import MaxNLocator
 
 # Visualization settings
 WORLD_WIDTH = 500
@@ -102,25 +103,49 @@ def plot_generations():
 
     plt.figure(figsize=(16, 12))  # Create a new figure for the plot
 
-    # List to store the average fitness for each generation
+    # Lists to store statistical measures for each generation
     average_fitness = []
+    median_fitness = []
+    top_percentiles = []
+    bottom_percentiles = []
+
+    percentiles = [10, 90]  # Define the percentiles to calculate
 
     # Plot each generation's fitness
     for generation, fitness_values in enumerate(generations_data):
-        plt.scatter([generation] * len(fitness_values), fitness_values, alpha=0.6, label='Fitness' if generation == 0 else "")
+        # Add jitter to x-coordinates to improve visualization
+        jitter = np.random.normal(0, 0.05, size=len(fitness_values))  # Adjust the standard deviation as needed
+        x_values = generation + jitter
+
+        plt.scatter(x_values, fitness_values, alpha=0.6, color='green', label='Fitness' if generation == 0 else "")
         
-        # Calculate and store the average fitness for this generation
+        # Calculate and store statistical measures
         avg_fitness = np.mean(fitness_values)
+        med_fitness = np.median(fitness_values)
+        bottom_percentile = np.percentile(fitness_values, percentiles[0])
+        top_percentile = np.percentile(fitness_values, percentiles[1])
+
         average_fitness.append(avg_fitness)
+        median_fitness.append(med_fitness)
+        bottom_percentiles.append(bottom_percentile)
+        top_percentiles.append(top_percentile)
 
     # Plot the average fitness line
     plt.plot(range(len(average_fitness)), average_fitness, color='red', label='Average Fitness', linewidth=2)
-    plt.xticks(range(len(generations_data)))  # Set x-axis ticks to integers
 
-    # Set plot labels and title
+    # Plot the median fitness line
+    plt.plot(range(len(median_fitness)), median_fitness, color='blue', label='Median Fitness', linewidth=2)
+
+    # Plot the top and bottom percentiles as a shaded area
+    plt.fill_between(range(len(average_fitness)), bottom_percentiles, top_percentiles, color='gray', alpha=0.2, label=f'{percentiles[0]}th to {percentiles[1]}th Percentile')
+
+    # Adjust x-axis ticks to prevent overcrowding
     plt.xlabel('Generation')
     plt.ylabel('Fitness')
     plt.title('Fitness of Agents Over Generations')
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))  # Adjust 'nbins' as needed
+
     plt.legend()
     plt.tight_layout()
 

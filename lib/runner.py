@@ -36,7 +36,6 @@ class Runner():
         # Create the world as a tensor from the start
         # self.starting_world = create_world().to(device)
         world, world_data = create_world(True)
-        reset_plankton_cluster()
         self.starting_world = world.to(device)
 
         # Pad the world with a 1-cell border of zeros
@@ -46,6 +45,7 @@ class Runner():
         for agent_index, (agent, fitness) in enumerate(self.agents):
             # print(f"Running agent {agent_index} of generation {self.current_generation}")
             world = padded_world.clone()  # Clone the padded world tensor for each agent
+            reset_plankton_cluster()
             species_order = [Species.PLANKTON, Species.ANCHOVY, Species.COD]
 
             # time_started_gen = time.time()
