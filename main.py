@@ -9,6 +9,7 @@ import time
 import random
 import math
 import torch
+import cProfile
 
 def load_config_files(config_folder):
     """Load all config files from the given folder."""
@@ -47,6 +48,14 @@ if __name__ == "__main__":
             time.sleep(1)
             runner = Runner()
             runner.run()
+            # cProfile.run('Runner().run(True)')
+
+            # start_time = time.time()
+            # runs = 5
+            # for i in range(runs):
+            #     print(f"Run {i+1}/{runs}")
+            #     Runner().run(True)
+            # print(f"Average time: {(time.time() - start_time) / runs}")
 
     
 

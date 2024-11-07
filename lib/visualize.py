@@ -89,7 +89,13 @@ def draw_terrain(world_tensor, world_data, display_current=False):
 
 # Update generation data
 def update_generations_data():
-    fitness_values = [max(agent['steps']) for (key, agent) in agents_data.items()]
+    fitness_values = []
+    for _, evals in agents_data.items():
+        total_fitness = 0
+        for _, data in evals.items():
+            fitness = max(data['steps'])
+            total_fitness += fitness
+        fitness_values.append(total_fitness / len(evals))
     generations_data.append(fitness_values)
 
 def reset_plot():
@@ -162,23 +168,29 @@ def plot_biomass():
 
     plt.figure(figsize=(5, 5))
 
-    # Get a colormap to differentiate agents
-    colors = cm.get_cmap('tab10', len(agents_data))
+    # Count total number of plots to get enough colors
+    total_plots = sum(len(evals) for evals in agents_data.values())
+
+    # Get a colormap to differentiate agents and evals
+    colors = cm.get_cmap('tab20', total_plots)
 
     # Plot each agent's data
     legend_patches = []
-    for idx, (agent, data) in enumerate(agents_data.items()):
-        plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent} COD', color=colors(idx))
-        plt.plot(data['steps'], data['anchovy_alive'], label=f'Agent {agent} ANCHOVY', color=colors(idx), linestyle='--')
-        plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent} PLANKTON', color=colors(idx), linestyle=':')
-        legend_patches.append(mpatches.Patch(color=colors(idx), label=f'Agent {agent}'))
-    
+    idx = 0  # Color index
+    for agent_index, evals in agents_data.items():
+        for eval_index, data in evals.items():
+            plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color=colors(idx))
+            plt.plot(data['steps'], data['anchovy_alive'], label=f'Agent {agent_index} Eval {eval_index} ANCHOVY', color=colors(idx), linestyle='--')
+            plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color=colors(idx), linestyle=':')
+            legend_patches.append(mpatches.Patch(color=colors(idx), label=f'Agent {agent_index} Eval {eval_index}'))
+            idx += 1
+
     plt.xlabel('Steps')
     plt.ylabel('Number of Species Alive')
     plt.title('Species Population Over Time')
 
     # Show the custom legend (ignoring linestyles or species)
-    plt.legend(handles=legend_patches, title="Agent Colors", loc='upper right')
+    plt.legend(handles=legend_patches, title="Agent Evaluations", loc='upper right')
 
     plt.tight_layout()
     plt.savefig('world_graph.png')
@@ -249,9 +261,6 @@ def draw_world(world_tensor, world_data):
             plankton_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON].item()  # Biomass for plankton
             anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()  # Biomass for anchovy
             cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()  # Biomass for cod
-
-            anchovy_energy = world_tensor[x, y, const.OFFSETS_ENERGY_ANCHOVY].item()  # Biomass for anchovy
-            cod_energy = world_tensor[x, y, const.OFFSETS_ENERGY_COD].item()  # Biomass for cod
 
             # Dictionary to map species to their biomass and color
             # anchovy_opacity = min(255, max(0, int(anchovy_energy * 2.55)))
@@ -368,11 +377,13 @@ def draw_world_detailed(world_tensor):
 
 # Main visualization function, optimized with reduced plotting frequency
 visualization_runs = 0
-def visualize(world, world_data, agent_index, step):
+def visualize(world, world_data, agent_index, eval_index, step):
     global visualization_runs
     if agent_index not in agents_data:
         # Initialize data for this agent if not already present
-        agents_data[agent_index] = {
+        agents_data[agent_index] = {}
+    if eval_index not in agents_data[agent_index]:
+        agents_data[agent_index][eval_index] = {
             'steps': [],
             'cod_alive': [],
             'anchovy_alive': [],
@@ -383,31 +394,30 @@ def visualize(world, world_data, agent_index, step):
         }
 
     # Append current step and biomass data for this agent
-    agents_data[agent_index]['steps'].append(step)
-    agents_data[agent_index]['plankton_alive'].append(world[:, :, const.OFFSETS_BIOMASS_PLANKTON].sum())
-    agents_data[agent_index]['anchovy_alive'].append(world[:, :, const.OFFSETS_BIOMASS_ANCHOVY].sum())
-    agents_data[agent_index]['cod_alive'].append(world[:, :, const.OFFSETS_BIOMASS_COD].sum())
-    agents_data[agent_index]['energy_plankton'].append(world[:, :, const.OFFSETS_ENERGY_PLANKTON].sum())
-    agents_data[agent_index]['energy_anchovy'].append(world[:, :, const.OFFSETS_ENERGY_ANCHOVY].sum())
-    agents_data[agent_index]['energy_cod'].append(world[:, :, const.OFFSETS_ENERGY_COD].sum())
+    agents_data[agent_index][eval_index]['steps'].append(step)
+    agents_data[agent_index][eval_index]['plankton_alive'].append(world[:, :, const.OFFSETS_BIOMASS_PLANKTON].sum())
+    agents_data[agent_index][eval_index]['anchovy_alive'].append(world[:, :, const.OFFSETS_BIOMASS_ANCHOVY].sum())
+    agents_data[agent_index][eval_index]['cod_alive'].append(world[:, :, const.OFFSETS_BIOMASS_COD].sum())
+    agents_data[agent_index][eval_index]['energy_plankton'].append(world[:, :, const.OFFSETS_ENERGY_PLANKTON].sum())
+    agents_data[agent_index][eval_index]['energy_anchovy'].append(world[:, :, const.OFFSETS_ENERGY_ANCHOVY].sum())
+    agents_data[agent_index][eval_index]['energy_cod'].append(world[:, :, const.OFFSETS_ENERGY_COD].sum())
 
     # print(f"Agent: {agent_index}, Steps: {step}, Cod: {agents_data[agent_index]['cod_alive'][-1]}, "
     #       f"Anchovy: {agents_data[agent_index]['anchovy_alive'][-1]}, Plankton: {agents_data[agent_index]['plankton_alive'][-1]}")
     # print energy levels
     # print(f"Energy - Cod: {agents_data[agent_index]['energy_cod'][-1]}, "
     #       f"Anchovy: {agents_data[agent_index]['energy_anchovy'][-1]}, Plankton: {agents_data[agent_index]['energy_plankton'][-1]}")
-    
     # Redraw the world
-    if visualization_runs % 100 == 0:
+    if visualization_runs % 500 == 0:
         draw_world(world, world_data)
     # draw_world_detailed(world)
 
     # Only plot biomass and generations every 50 steps to optimize performance
-    if visualization_runs % 100 == 0:
+    if visualization_runs % 500 == 0:
         plot_biomass()
     # plot_energy()
     
-    if step == 0:
+    if step == 0 and agent_index == 0 and eval_index == 0:
         plot_generations()
     
     visualization_runs += 1

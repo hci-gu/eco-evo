@@ -26,20 +26,18 @@ class Model(nn.Module):
             self.set_weights(chromosome)
 
     def forward(self, x, species):
-        for i, layer in enumerate(self.layers[:-1]):
+        for layer in self.layers[:-1]:
             x = torch.relu(layer(x))
         
-        # Pass through the last layer without activation
         x = self.layers[-1](x)
         
-        # Assuming the output layer is split for softmax activation for two different parts
-        x[:, :5] = torch.softmax(x[:, :5], dim=1)
-        x[:, 5:] = torch.softmax(x[:, 5:], dim=1)
-        
+        # Depending on species, compute softmax only on the required outputs
         if species == 1:
-            return x[:, :5]
+            output = torch.softmax(x[:, :5], dim=1)
         else:
-            return x[:, 5:]
+            output = torch.softmax(x[:, 5:], dim=1)
+        
+        return output
         
     def debug_move_down_and_eat(self, x, species):
 

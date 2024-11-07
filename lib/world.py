@@ -330,7 +330,124 @@ def move_plankton_based_on_current(world_tensor, world_data):
 
     return world_tensor
 
-def perform_action(world_tensor, action_values_batch, species_index, positions_tensor, debug_visualize=noop):
+
+def perform_action_optimized(world_tensor, action_values_batch, species_index, positions_tensor):
+    x_batch = positions_tensor[:, 0]
+    y_batch = positions_tensor[:, 1]
+
+    # Extract action values
+    actions = {
+        Action.UP: action_values_batch[:, Action.UP.value],
+        Action.DOWN: action_values_batch[:, Action.DOWN.value],
+        Action.LEFT: action_values_batch[:, Action.LEFT.value],
+        Action.RIGHT: action_values_batch[:, Action.RIGHT.value],
+        Action.EAT: action_values_batch[:, Action.EAT.value]
+    }
+
+    biomass_offset = const.OFFSETS_BIOMASS + species_index
+    energy_offset = const.OFFSETS_ENERGY + species_index
+
+    # Initial biomass and energy
+    initial_biomass = world_tensor[x_batch, y_batch, biomass_offset]
+    initial_energy = world_tensor[x_batch, y_batch, energy_offset]
+
+    # Apply base energy cost
+    world_tensor[x_batch, y_batch, energy_offset] -= const.BASE_ENERGY_COST
+
+    # Energy after base cost
+    energy_after_cost = world_tensor[x_batch, y_batch, energy_offset]
+
+    # Biomass gain or loss based on energy level
+    biomass_change = torch.where(
+        energy_after_cost >= 50,
+        initial_biomass * const.BIOMASS_GROWTH_RATE,  # Biomass gain
+        -initial_biomass * const.BASE_BIOMASS_LOSS   # Biomass loss
+    )
+    world_tensor[x_batch, y_batch, biomass_offset] += biomass_change
+
+    # Recompute biomass and energy after change
+    updated_biomass = world_tensor[x_batch, y_batch, biomass_offset]
+    updated_energy = world_tensor[x_batch, y_batch, energy_offset]
+
+    # Movement computations
+    # Movement directions and their corresponding delta positions
+    directions = {
+        Action.UP: (0, -1),
+        Action.DOWN: (0, 1),
+        Action.LEFT: (-1, 0),
+        Action.RIGHT: (1, 0)
+    }
+
+    total_biomass_moved = torch.zeros_like(initial_biomass)
+    total_energy_moved = torch.zeros_like(initial_energy)
+
+    for action, (dx, dy) in directions.items():
+        move_mask = actions[action] > 0
+        if move_mask.any():
+            # Compute new positions
+            new_x = x_batch[move_mask] + dx
+            new_y = y_batch[move_mask] + dy
+
+            # Check boundaries and terrain
+            valid_mask = (
+                (new_x >= 0) & (new_x < world_tensor.shape[0]) &
+                (new_y >= 0) & (new_y < world_tensor.shape[1]) &
+                (world_tensor[new_x, new_y, const.OFFSETS_TERRAIN_WATER] == 1)
+            )
+
+            if valid_mask.any():
+                idx = torch.nonzero(move_mask)[valid_mask]
+                move_indices = idx.squeeze()
+
+                move_biomass = updated_biomass[move_indices] * actions[action][move_mask][valid_mask]
+                move_energy = updated_energy[move_indices] * actions[action][move_mask][valid_mask] - const.BASE_ENERGY_COST
+
+                # Update source cells
+                total_biomass_moved[move_indices] += move_biomass
+                total_energy_moved[move_indices] += move_energy
+
+                # Update destination cells
+                dest_x = new_x[valid_mask]
+                dest_y = new_y[valid_mask]
+                world_tensor[dest_x, dest_y, biomass_offset] += move_biomass
+                world_tensor[dest_x, dest_y, energy_offset] += move_energy
+
+    # Subtract total biomass moved from source cells
+    world_tensor[x_batch, y_batch, biomass_offset] -= total_biomass_moved
+
+    # Clamping biomass to non-negative values
+    world_tensor[:, :, biomass_offset].clamp_(min=0)
+
+    # Eating Logic
+    if species_index in [Species.COD.value, Species.ANCHOVY.value]:
+        eat_action = actions[Action.EAT]
+        eat_mask = eat_action > 0
+        if eat_mask.any():
+            prey_species_offset = {
+                Species.COD.value: const.OFFSETS_BIOMASS_ANCHOVY,
+                Species.ANCHOVY.value: const.OFFSETS_BIOMASS_PLANKTON
+            }[species_index]
+
+            eat_amount = updated_biomass[eat_mask] * eat_action[eat_mask] * const.EAT_AMOUNT[species_index]
+            prey_biomass = world_tensor[x_batch[eat_mask], y_batch[eat_mask], prey_species_offset]
+            actual_eat_amount = torch.min(prey_biomass, eat_amount)
+
+            # Update prey biomass
+            world_tensor[x_batch[eat_mask], y_batch[eat_mask], prey_species_offset] -= actual_eat_amount
+
+            # Update predator energy
+            energy_gain = (actual_eat_amount / eat_amount) * const.ENERGY_REWARD_FOR_EATING * eat_action[eat_mask]
+            world_tensor[x_batch[eat_mask], y_batch[eat_mask], energy_offset] += energy_gain
+            # Clamp energy to maximum
+            world_tensor[x_batch[eat_mask], y_batch[eat_mask], energy_offset].clamp_(max=const.MAX_ENERGY)
+
+    # Set energy to zero where biomass is zero
+    zero_biomass_mask = world_tensor[:, :, biomass_offset] == 0
+    world_tensor[:, :, energy_offset][zero_biomass_mask] = 0
+
+    return world_tensor
+
+def perform_action(world_tensor, action_values_batch, species_index, positions_tensor):
     initial_tensor = world_tensor.clone()
 
     x_batch = positions_tensor[:, 0]
@@ -371,7 +488,6 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
 
     initial_biomass = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index]
     initial_energy = world_tensor[x_batch, y_batch, const.OFFSETS_ENERGY + species_index]
-
 
     biomass_up = initial_biomass * move_up
     biomass_down = initial_biomass * move_down
