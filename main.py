@@ -51,7 +51,7 @@ if __name__ == "__main__":
             # cProfile.run('Runner().run(True)')
 
             # start_time = time.time()
-            # runs = 5
+            # runs = 20
             # for i in range(runs):
             #     print(f"Run {i+1}/{runs}")
             #     Runner().run(True)

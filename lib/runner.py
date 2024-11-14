@@ -1,7 +1,7 @@
 # from lib.constants import WORLD_SIZE, NUM_AGENTS, MAX_STEPS, PLANKTON_GROWTH_RATE, MAX_PLANKTON_IN_CELL, TOURNAMENT_SELECTION, ELITISM_SELECTION
 import lib.constants as const
-from lib.world import create_world, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, perform_action, perform_action_optimized, world_is_alive, Species, Action, Terrain
-from lib.visualize import visualize, reset_plot, draw_world_mask, reset_visualization
+from lib.world import create_world, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, perform_action_optimized, world_is_alive, Species, Action, Terrain
+from lib.visualize import visualize, reset_plot, reset_terrain, draw_world_mask, reset_visualization
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
 import lib.test as test
@@ -9,12 +9,79 @@ import time
 import torch
 import random
 import copy
+import multiprocessing
 
 # device mps or cpu
 # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 device = torch.device("cpu")
 
 # world_copy = create_world().to(device)
+
+def evaluate_agent(agent, world, world_data, agent_index, evaluation_index):
+    fitness = 0
+    world = world.clone()  # Clone the padded world tensor for each agent
+    # reset_plankton_cluster()
+    species_order = [Species.PLANKTON, Species.ANCHOVY, Species.COD]
+
+    while world_is_alive(world) and fitness < const.MAX_STEPS:
+        species_order = sorted(species_order, key=lambda x: random.random())
+
+        for species in species_order:
+            if species == Species.PLANKTON:
+                spawn_plankton(world, world_data)
+                # if fitness % 25 == 0:
+                #     move_plankton_cluster(world)
+                #     spawn_plankton_debug(world)
+                    # move_plankton_based_on_current(world, world_data)
+                continue
+
+            grid_x, grid_y = torch.meshgrid(
+                torch.arange(const.WORLD_SIZE, device=device),
+                torch.arange(const.WORLD_SIZE, device=device),
+                indexing='ij'
+            )
+            set_a_mask = ((grid_x + grid_y) % 2 == 0)
+            set_b_mask = ~set_a_mask
+
+            # Step 2: Randomly select one set
+            selected_set_mask = random.choice([set_a_mask, set_b_mask])
+
+            # Step 3: Get positions of selected cells
+            selected_positions = selected_set_mask.nonzero(as_tuple=False)  # Shape: [Num_Selected_Cells, 2]
+            selected_positions_padded = selected_positions + 1  # Adjust for padding if necessary
+
+            # Step 4: Extract neighborhoods for selected cells
+            offsets = torch.tensor([
+                [-1, -1], [-1, 0], [-1, 1],
+                [ 0, -1], [ 0, 0], [ 0, 1],
+                [ 1, -1], [ 1, 0], [ 1, 1]
+            ], device=device)  # Shape: [9, 2]
+
+            neighbor_positions = selected_positions_padded.unsqueeze(1) + offsets.unsqueeze(0)  # Shape: [Num_Selected_Cells, 9, 2]
+            neighbor_positions = neighbor_positions.reshape(-1, 2)
+
+            # Ensure indices are within bounds
+            neighbor_x = neighbor_positions[:, 0].clamp(0, const.WORLD_SIZE + 1)
+            neighbor_y = neighbor_positions[:, 1].clamp(0, const.WORLD_SIZE + 1)
+
+            # Extract neighbor values
+            neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions.size(0), -1)
+
+            # Step 5: Prepare batch input
+            batch_tensor = neighbor_values  # Shape: [Num_Selected_Cells, Channels * 9]
+
+            # Step 6: Perform neural network forward pass
+            action_values_batch = agent.forward(batch_tensor, species.value)
+
+            # # Step 7: Perform actions
+            world = perform_action(world, action_values_batch, species.value, selected_positions_padded)
+
+        # Update the display after each step
+        visualize(world, world_data, agent_index, evaluation_index, fitness)
+
+        fitness += 1
+
+    return fitness
 
 class Runner():
     def __init__(self):
@@ -35,92 +102,41 @@ class Runner():
     def run(self, single_run=False):
         # Create the world as a tensor from the start
         # self.starting_world = create_world().to(device)
-        world, world_data = create_world(True)
-        self.starting_world = world.to(device)
+        worlds = []
+        for _ in range(const.AGENT_EVALUATIONS):
+            world, world_data = create_world()
+            # Pad the world with a 1-cell border of zeros
+            padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
+            padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
+            worlds.append((padded_world, padded_world_data))
 
-        # Pad the world with a 1-cell border of zeros
-        padded_world = torch.nn.functional.pad(self.starting_world, (0, 0, 1, 1, 1, 1), "constant", 0)
-        world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
+        # self.starting_world = world.to(device)
 
         for agent_index, (agent, _) in enumerate(self.agents):
+            
+            # args_list = [(agent, padded_world, world_data) for i, (agent, _) in enumerate(self.agents)]
+
+            # with multiprocessing.Pool() as pool:
+            #     fitness_list = pool.starmap(evaluate_agent, args_list)
+            # total_fitness = sum(fitness_list)
+            
+            # average_fitness = total_fitness / const.AGENT_EVALUATIONS
+            # self.agents[agent_index] = (agent, average_fitness)
+
             total_fitness = 0
             for evaluation_index in range(const.AGENT_EVALUATIONS):
-                fitness = 0
+                # take out a copy from the world list
+                w, wd = worlds[evaluation_index]
+                world = w.clone()
+                world_data = wd.clone()
 
                 print(f"Running agent {agent_index} of generation {self.current_generation}, evaluation {evaluation_index}")
-                world = padded_world.clone()  # Clone the padded world tensor for each agent
-                reset_plankton_cluster()
-                species_order = [Species.PLANKTON, Species.ANCHOVY]
-
-                while world_is_alive(world) and fitness < const.MAX_STEPS:
-                    species_order = sorted(species_order, key=lambda x: random.random())
-
-                    for species in species_order:
-                        if species == Species.PLANKTON:
-                            # Apply plankton growth to the entire world in a batched operation
-                            plankton_mask = (world[:, :, Terrain.WATER.value] == 1)  # 2D mask for water cells
-                            # Update only the plankton biomass (channel 3) using the mask
-                            world[:, :, const.OFFSETS_BIOMASS_PLANKTON][plankton_mask] = torch.min(world[:, :, const.OFFSETS_BIOMASS_PLANKTON][plankton_mask] * (1 + const.PLANKTON_GROWTH_RATE),
-                                                                    torch.tensor(const.MAX_PLANKTON_IN_CELL, device=device))
-                            if fitness % 20 == 0:
-                                move_plankton_cluster(world)
-                            #     spawn_plankton_debug(world)
-                            #     move_plankton_based_on_current(world, world_data)
-                            continue
-
-                        # Step 1: Generate Independent Sets
-                        grid_x, grid_y = torch.meshgrid(
-                            torch.arange(const.WORLD_SIZE, device=device),
-                            torch.arange(const.WORLD_SIZE, device=device),
-                            indexing='ij'
-                        )
-
-                        # Create two independent sets using a checkerboard pattern
-                        set_a_mask = ((grid_x + grid_y) % 2 == 0)
-                        set_b_mask = ~set_a_mask
-
-                        # Step 2: Randomly select one set
-                        selected_set_mask = random.choice([set_a_mask, set_b_mask])
-
-                        # Step 3: Get positions of selected cells
-                        selected_positions = selected_set_mask.nonzero(as_tuple=False)  # Shape: [Num_Selected_Cells, 2]
-                        selected_positions_padded = selected_positions + 1  # Adjust for padding if necessary
-
-                        # Step 4: Extract neighborhoods for selected cells
-                        offsets = torch.tensor([
-                            [-1, -1], [-1, 0], [-1, 1],
-                            [ 0, -1], [ 0, 0], [ 0, 1],
-                            [ 1, -1], [ 1, 0], [ 1, 1]
-                        ], device=device)  # Shape: [9, 2]
-
-                        neighbor_positions = selected_positions_padded.unsqueeze(1) + offsets.unsqueeze(0)  # Shape: [Num_Selected_Cells, 9, 2]
-                        neighbor_positions = neighbor_positions.reshape(-1, 2)
-
-                        # Ensure indices are within bounds
-                        neighbor_x = neighbor_positions[:, 0].clamp(0, const.WORLD_SIZE + 1)
-                        neighbor_y = neighbor_positions[:, 1].clamp(0, const.WORLD_SIZE + 1)
-
-                        # Extract neighbor values
-                        neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions.size(0), -1)
-
-                        # Step 5: Prepare batch input
-                        batch_tensor = neighbor_values  # Shape: [Num_Selected_Cells, Channels * 9]
-
-                        # Step 6: Perform neural network forward pass
-                        action_values_batch = agent.forward(batch_tensor, species.value)
-
-                        # Step 7: Perform actions
-                        world = perform_action(world, action_values_batch, species.value, selected_positions_padded)
-
-                    # Update the display after each step
-                    visualize(world, world_data, agent_index, evaluation_index, fitness)
-
-                    fitness += 1
-                    total_fitness += 1
-                    
+                fitness = evaluate_agent(agent, w, wd, agent_index, evaluation_index)
+                total_fitness += fitness
+                reset_terrain()
                 
-                average_fitness = total_fitness / const.AGENT_EVALUATIONS
-                self.agents[agent_index] = (agent, average_fitness)
+            average_fitness = total_fitness / const.AGENT_EVALUATIONS
+            self.agents[agent_index] = (agent, average_fitness)
 
         if single_run:
             print('Simulation finished')

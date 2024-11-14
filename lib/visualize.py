@@ -98,9 +98,11 @@ def update_generations_data():
         fitness_values.append(total_fitness / len(evals))
     generations_data.append(fitness_values)
 
+def reset_terrain():
+    reset_terrain_cache()
+
 def reset_plot():
     update_generations_data()
-    reset_terrain_cache()
     agents_data.clear()
 
 # Plot and cache generations graph
@@ -115,7 +117,7 @@ def plot_generations():
     top_percentiles = []
     bottom_percentiles = []
 
-    percentiles = [10, 90]  # Define the percentiles to calculate
+    percentiles = [25, 75]  # Define the percentiles to calculate
 
     # Plot each generation's fitness
     for generation, fitness_values in enumerate(generations_data):
@@ -232,54 +234,70 @@ def plot_energy():
 
 # Redraw the world with species biomass
 def draw_world(world_tensor, world_data):
-    # remove padding
+    # Remove padding if present
     world_tensor = world_tensor[1:-1, 1:-1]
 
-    """
-    Visualize the world based on the tensor representation.
-    The world_tensor has shape (WORLD_SIZE, WORLD_SIZE, 6) where:
-    - The first 3 values represent the terrain (one-hot encoded).
-    - The last 3 values represent the biomass of plankton, anchovy, and cod, respectively.
-    """
     screen.fill((255, 255, 255))
 
     terrain_surface = draw_terrain(world_tensor, world_data, False)
     screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
 
+    # Calculate maximum biomass for each species
+    max_biomass_plankton = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON].max().item()
+    max_biomass_anchovy = world_tensor[:, :, const.OFFSETS_BIOMASS_ANCHOVY].max().item()
+    max_biomass_cod = world_tensor[:, :, const.OFFSETS_BIOMASS_COD].max().item()
+
+    # Define minimum and maximum radius for the circles
+    min_radius = 1
+    max_radius = CELL_SIZE // 2  # Subtracting 2 to prevent overlap with cell borders
+
+    min_radius_plankton = 0
+    max_radius_plankton = CELL_SIZE // 4
+
+    # Loop over the world grid
     for x in range(const.WORLD_SIZE):
         for y in range(const.WORLD_SIZE):
-            # x = x + 1
-            # y = y + 1
-            # Initialize an offset position for each species in the same cell
+            # Define offsets for species visualization within the cell
             offsets = {
                 Species.PLANKTON: (-CELL_SIZE // 4, -CELL_SIZE // 4),
                 Species.ANCHOVY: (CELL_SIZE // 4, -CELL_SIZE // 4),
                 Species.COD: (0, CELL_SIZE // 4)
             }
-            
-            # Extract biomass information for each species
-            plankton_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON].item()  # Biomass for plankton
-            anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()  # Biomass for anchovy
-            cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()  # Biomass for cod
 
-            # Dictionary to map species to their biomass and color
-            # anchovy_opacity = min(255, max(0, int(anchovy_energy * 2.55)))
-            # cod_opacity = min(255, max(0, int(cod_energy * 2.55)))
+            # Extract biomass for each species at the current cell
+            plankton_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON].item()
+            anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()
+            cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()
+
+            # Create a dictionary for species properties
             species_biomass = {
-                Species.PLANKTON: (plankton_biomass, (0, 255, 0)),  # Green for plankton
-                Species.ANCHOVY: (anchovy_biomass, (255, 0, 0)), # Red for anchovy
-                Species.COD: (cod_biomass, (0, 0, 0)) # Black for cod
+                Species.PLANKTON: (plankton_biomass, (0, 255, 0), max_biomass_plankton),  # Green
+                Species.ANCHOVY: (anchovy_biomass, (255, 0, 0), max_biomass_anchovy),     # Red
+                Species.COD: (cod_biomass, (0, 0, 0), max_biomass_cod)                    # Black
             }
-            
-            # Draw biomass for each species
-            for species, (biomass, color) in species_biomass.items():
-                if biomass > 0:
-                    # Calculate the circle center and radius based on biomass
-                    offset_x, offset_y = offsets[species]
-                    circle_center = (x * CELL_SIZE + CELL_SIZE // 2 + offset_x, y * CELL_SIZE + CELL_SIZE // 2 + offset_y)
-                    radius = min(CELL_SIZE // 2, int(math.sqrt(biomass) * 0.75))
 
-                    # Draw the circle representing species biomass with opacity
+            # Draw biomass for each species
+            for species, (biomass, color, max_biomass) in species_biomass.items():
+                if biomass > 0:
+                    # Calculate the radius proportionally
+                    if max_biomass > 0:
+                        radius = min_radius + int((max_radius - min_radius) * (biomass / max_biomass))
+                    else:
+                        radius = min_radius  # Default to minimum radius if max_biomass is zero
+
+                    # Ensure radius is within bounds
+                    radius = max(min_radius, min(radius, max_radius))
+                    if species == Species.PLANKTON:
+                        radius = min_radius_plankton + int((max_radius_plankton - min_radius_plankton) * (biomass / max_biomass))
+
+                    # Calculate circle center based on offsets
+                    offset_x, offset_y = offsets[species]
+                    circle_center = (
+                        x * CELL_SIZE + CELL_SIZE // 2 + offset_x,
+                        y * CELL_SIZE + CELL_SIZE // 2 + offset_y
+                    )
+
+                    # Draw the circle representing the species biomass
                     pygame.draw.circle(screen, color, circle_center, radius)
 
     # Draw cached biomass graph

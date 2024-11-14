@@ -1,8 +1,10 @@
 from enum import Enum
+from noise import pnoise2  # Perlin noise function
 import opensimplex
 import math
 import random
 import torch.nn as nn
+import numpy as np
 import torch
 import lib.constants as const
 
@@ -330,6 +332,41 @@ def move_plankton_based_on_current(world_tensor, world_data):
 
     return world_tensor
 
+def spawn_plankton(world_tensor, world_data):
+    plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON]
+    plankton_flag = world_data[:, :, 1]  # Cells marked with 1 are initial plankton locations
+    plankton_counter = world_data[:, :, 2]  # Plankton respawn counter
+
+
+    # Create a mask for the cells that are initial plankton locations
+    plankton_cells = plankton_flag == 1
+
+    # For cells where there is existing plankton biomass, increase it
+    existing_plankton_mask = (plankton_biomass > 0) & plankton_cells
+
+    # For cells where there is no plankton biomass, but the plankton flag is set, add base amount
+    empty_plankton_mask = (plankton_biomass == 0) & plankton_cells
+
+    # Increase biomass in existing plankton cells
+    if existing_plankton_mask.any():
+        increased_biomass = plankton_biomass[existing_plankton_mask] * (1 + const.PLANKTON_GROWTH_RATE)
+        world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON][existing_plankton_mask] = torch.clamp(
+            increased_biomass, max=const.MAX_PLANKTON_IN_CELL
+        )
+        world_data[:, :, 2][existing_plankton_mask] = const.PLANKTON_RESPAWN_DELAY
+
+    # Add base biomass to empty plankton cells
+    if empty_plankton_mask.any():
+        # Decrease the counter by 1
+        plankton_counter[empty_plankton_mask] -= 1
+        # Ensure the counter doesn't go below zero
+        world_data[:, :, 2][empty_plankton_mask] = torch.clamp(plankton_counter[empty_plankton_mask], min=0)
+        # Check which counters have reached zero
+        respawn_mask = (world_data[:, :, 2] == 0) & empty_plankton_mask
+        if respawn_mask.any():
+            # Reset the counter to 100 and spawn plankton
+            world_data[:, :, 2][respawn_mask] = const.PLANKTON_RESPAWN_DELAY
+            world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON][respawn_mask] = const.BASE_PLANKTON_SPAWN_RATE
 
 def perform_action_optimized(world_tensor, action_values_batch, species_index, positions_tensor):
     x_batch = positions_tensor[:, 0]
@@ -614,6 +651,11 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
     world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_ANCHOVY] = torch.clamp(world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_ANCHOVY], min=0)
     world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_COD] = torch.clamp(world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS_COD], min=0)
 
+    biomass = world_tensor[:, :, const.OFFSETS_BIOMASS + species_index]
+
+    low_biomass_mask = biomass < const.MIN_BIOMASS_IN_CELL[species_index]
+    world_tensor[:, :, const.OFFSETS_BIOMASS + species_index][low_biomass_mask] = 0
+
     # set all cells with 0 biomass to 0 energy
     zero_biomass_mask = world_tensor[x_batch, y_batch, const.OFFSETS_BIOMASS + species_index] == 0
     world_tensor[x_batch[zero_biomass_mask], y_batch[zero_biomass_mask], const.OFFSETS_ENERGY + species_index] = 0
@@ -633,7 +675,7 @@ def create_world(static=False):
     # Create a tensor to represent the entire world
     # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 9) -> 3 for terrain (3 one-hot) + biomass (3 species) + energy (3 species)
     world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 9, device=device)
-    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 1, device=device)
+    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 3, device=device)
 
     center_x, center_y = const.WORLD_SIZE // 2, const.WORLD_SIZE // 2
     max_distance = math.sqrt(center_x**2 + center_y**2)
@@ -680,18 +722,18 @@ def create_world(static=False):
                 noise_plankton = (opensimplex.noise2(x * 0.1, y * 0.1) + 1) / 2
 
                 # Apply thresholds to zero-out biomass in certain regions
-                if noise_cod < 0.4: noise_cod = 0
-                if noise_anchovy < 0.3: noise_anchovy = 0
+                if noise_cod < 0.8: noise_cod = 0
+                if noise_anchovy < 0.6: noise_anchovy = 0
                 if noise_plankton < 0.35: noise_plankton = 0
 
                 # Scale noise to create steeper clusters
                 noise_cod = noise_cod ** NOISE_SCALING
-                # noise_anchovy = noise_anchovy ** NOISE_SCALING
+                noise_anchovy = noise_anchovy ** NOISE_SCALING
                 noise_plankton = noise_plankton ** NOISE_SCALING
 
                 # Sum noise for normalization
                 noise_sum_cod += noise_cod
-                # noise_sum_anchovy += noise_anchovy
+                noise_sum_anchovy += noise_anchovy
                 noise_sum_plankton += noise_plankton
 
     # Second pass: distribute biomass across water cells based on noise values
@@ -703,29 +745,32 @@ def create_world(static=False):
                 noise_anchovy = (opensimplex.noise2(x * 0.2, y * 0.2) + 1) / 2
                 noise_plankton = (opensimplex.noise2(x * 0.1, y * 0.1) + 1) / 2
 
-                if noise_cod < 0.4: noise_cod = 0
-                if noise_anchovy < 0.3: noise_anchovy = 0
-                if noise_plankton < 0.35: noise_plankton = 0
+                # print(f"noise_cod: {noise_cod}, noise_anchovy: {noise_anchovy}, noise_plankton: {noise_plankton}")
+
+                if noise_cod < 0.8: noise_cod = 0
+                if noise_anchovy < 0.6: noise_anchovy = 0
+                if noise_plankton < 0.35: 
+                    noise_plankton = 0
+                    world_data[x, y, 1] = 0
+                    world_data[x, y, 2] = 0
 
                 noise_cod = noise_cod ** NOISE_SCALING
                 noise_anchovy = noise_anchovy ** NOISE_SCALING
                 noise_plankton = noise_plankton ** NOISE_SCALING
 
                 # Distribute biomass proportionally to the noise sums
-                if noise_sum_cod > 0:
+                if noise_cod > 0:
                     world_tensor[x, y, const.OFFSETS_BIOMASS_COD] = (noise_cod / noise_sum_cod) * total_biomass_cod
                     world_tensor[x, y, const.OFFSETS_ENERGY_COD] = initial_energy
-                if noise_sum_anchovy > 0:
+                if noise_anchovy > 0:
                     world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY] = (noise_anchovy / noise_sum_anchovy) * total_biomass_anchovy
                     world_tensor[x, y, const.OFFSETS_ENERGY_ANCHOVY] = initial_energy
-                if noise_sum_plankton > 0:
+                if noise_plankton > 0:
                     world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON] = (noise_plankton / noise_sum_plankton) * total_biomass_plankton
                     world_tensor[x, y, const.OFFSETS_ENERGY_PLANKTON] = initial_energy
-
-    # put all anchovy in right center of the world
-    world_tensor[const.WORLD_SIZE - 1, const.WORLD_SIZE // 2, const.OFFSETS_BIOMASS_ANCHOVY] = total_biomass_anchovy
-    world_tensor[const.WORLD_SIZE - 1, const.WORLD_SIZE // 2, const.OFFSETS_ENERGY_ANCHOVY] = initial_energy
-
+                    world_data[x, y, 1] = 1  # Add plankton cluster flag
+                    world_data[x, y, 2] = const.PLANKTON_RESPAWN_DELAY # Add plankton respawn counter
+                    
     return world_tensor, world_data
 
 
@@ -736,26 +781,16 @@ def world_is_alive(world_tensor):
     - The first 3 values represent the terrain (one-hot encoded).
     - The last 3 values represent the biomass of plankton, anchovy, and cod, respectively.
     """
-    # Extract biomass for cod, anchovy, and plankton
     cod_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS_COD].sum()  # Biomass for cod
     anchovy_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS_ANCHOVY].sum()  # Biomass for anchovy
     plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON].sum()  # Biomass for plankton
 
-    # print(f"Total biomass: Cod={cod_biomass}, Anchovy={anchovy_biomass}, Plankton={plankton_biomass}")
-    # Check if the total biomass for any species is below the survival threshold
-    if cod_biomass < (const.STARTING_BIOMASS_COD * const.MIN_PERCENT_ALIVE):
+    # Check if the total biomass for any species is below the survival threshold or above the maximum threshold
+    if cod_biomass < (const.STARTING_BIOMASS_COD * const.MIN_PERCENT_ALIVE) or cod_biomass > (const.STARTING_BIOMASS_COD * const.MAX_PERCENT_ALIVE):
         return False
-    if anchovy_biomass < (const.STARTING_BIOMASS_ANCHOVY * const.MIN_PERCENT_ALIVE):
+    if anchovy_biomass < (const.STARTING_BIOMASS_ANCHOVY * const.MIN_PERCENT_ALIVE) or anchovy_biomass > (const.STARTING_BIOMASS_ANCHOVY * const.MAX_PERCENT_ALIVE):
         return False
-    if plankton_biomass < (const.STARTING_BIOMASS_PLANKTON * const.MIN_PERCENT_ALIVE):
+    if plankton_biomass < (const.STARTING_BIOMASS_PLANKTON * const.MIN_PERCENT_ALIVE) or plankton_biomass > (const.STARTING_BIOMASS_PLANKTON * const.MAX_PERCENT_ALIVE):
         return False
-    
-    # Check if the total biomass for any species is above reasonable threshold
-    # if cod_biomass > (const.STARTING_BIOMASS_COD * 100):
-    #     return False
-    # if anchovy_biomass > (const.STARTING_BIOMASS_ANCHOVY * 100):
-    #     return False
-    # if plankton_biomass > (const.STARTING_BIOMASS_PLANKTON * 100):
-    #     return False
 
     return True
