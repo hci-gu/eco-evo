@@ -3,13 +3,10 @@ from noise import pnoise2  # Perlin noise function
 import opensimplex
 import math
 import random
-import torch.nn as nn
-import numpy as np
 import torch
+import torch.nn.functional as F
 import lib.constants as const
 
-# device mps or cpu
-# device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 device = torch.device("cpu")
 
 class Terrain(Enum):
@@ -39,10 +36,43 @@ delta_for_action = {
 def noop(_, __):
     pass
 
+diffusion_kernel = torch.tensor([
+    [1/16, 1/8, 1/16],
+    [1/8,  1/4, 1/8],
+    [1/16, 1/8, 1/16]
+], device=device)
+
 # Define movement shifts for each direction
 def shift(tensor, delta):
     delta_x, delta_y = delta
     return torch.roll(torch.roll(tensor, delta_x, dims=0), delta_y, dims=1)
+
+def diffuse_smell(world):
+    # Prepare the smell channels for convolution
+    # Shape: [Batch_Size=1, Channels=3, Height, Width]
+    smell = world[:, :, const.OFFSETS_SMELL_PLANKTON:const.OFFSETS_SMELL_COD+1].permute(2, 0, 1).unsqueeze(0)
+    
+    # Expand the kernel to match the number of channels
+    kernel = diffusion_kernel.expand(smell.size(1), 1, 3, 3)
+    
+    # Apply convolution with padding to keep the same size
+    smell_diffused = F.conv2d(smell, kernel, padding=1, groups=smell.size(1))
+    
+    # Update the smell channels in the world tensor
+    world[:, :, const.OFFSETS_SMELL_PLANKTON:const.OFFSETS_SMELL_COD+1] = smell_diffused.squeeze(0).permute(1, 2, 0)
+
+def update_smell(world):
+    # Decay existing smell
+    world[:, :, const.OFFSETS_SMELL_PLANKTON] *= (1 - const.SMELL_DECAY_RATE)
+    world[:, :, const.OFFSETS_SMELL_ANCHOVY] *= (1 - const.SMELL_DECAY_RATE)
+    world[:, :, const.OFFSETS_SMELL_COD] *= (1 - const.SMELL_DECAY_RATE)
+
+    # Add emitted smell from current biomass
+    world[:, :, const.OFFSETS_SMELL_PLANKTON] += world[:, :, const.OFFSETS_BIOMASS_PLANKTON] * const.SMELL_EMISSION_RATE
+    world[:, :, const.OFFSETS_SMELL_ANCHOVY] += world[:, :, const.OFFSETS_BIOMASS_ANCHOVY] * const.SMELL_EMISSION_RATE
+    world[:, :, const.OFFSETS_SMELL_COD] += world[:, :, const.OFFSETS_BIOMASS_COD] * const.SMELL_EMISSION_RATE
+
+    diffuse_smell(world)
 
 def reset_plankton_cluster():
     """
@@ -256,8 +286,8 @@ def move_plankton_based_on_current(world_tensor, world_data):
     new_biomass = torch.zeros_like(plankton_biomass)
 
     # Get indices of all cells (ensure they are of type torch.long)
-    x_indices = torch.arange(world_size_x, dtype=torch.long, device=world_tensor.device).view(-1, 1).expand(-1, world_size_y)
-    y_indices = torch.arange(world_size_y, dtype=torch.long, device=world_tensor.device).view(1, -1).expand(world_size_x, -1)
+    x_indices = torch.arange(world_size_x, dtype=torch.long).view(-1, 1).expand(-1, world_size_y)
+    y_indices = torch.arange(world_size_y, dtype=torch.long).view(1, -1).expand(world_size_x, -1)
 
     # Flatten the arrays for vectorized operations
     x_indices_flat = x_indices.flatten()
@@ -667,14 +697,14 @@ def perform_action(world_tensor, action_values_batch, species_index, positions_t
 
     return world_tensor
 
-def create_world(static=False):
+def create_world(static=False):    
     NOISE_SCALING = 4.5
     seed = 1 if static else int(random.random() * 100000)
     opensimplex.seed(seed)
 
     # Create a tensor to represent the entire world
-    # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 9) -> 3 for terrain (3 one-hot) + biomass (3 species) + energy (3 species)
-    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 9, device=device)
+    # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 12) -> 3 for terrain (3 one-hot) + biomass (3 species) + energy (3 species) + smell (3 species)
+    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 12, device=device)
     world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 3, device=device)
 
     center_x, center_y = const.WORLD_SIZE // 2, const.WORLD_SIZE // 2
@@ -770,6 +800,10 @@ def create_world(static=False):
                     world_tensor[x, y, const.OFFSETS_ENERGY_PLANKTON] = initial_energy
                     world_data[x, y, 1] = 1  # Add plankton cluster flag
                     world_data[x, y, 2] = const.PLANKTON_RESPAWN_DELAY # Add plankton respawn counter
+
+    world_tensor[:, :, const.OFFSETS_SMELL_PLANKTON] = 0
+    world_tensor[:, :, const.OFFSETS_SMELL_ANCHOVY] = 0
+    world_tensor[:, :, const.OFFSETS_SMELL_COD] = 0
                     
     return world_tensor, world_data
 
