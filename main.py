@@ -2,20 +2,15 @@ import argparse
 import threading
 import os
 from lib.data_manager import data_loop, update_generations_data, process_data
-from lib.world import create_world, world_is_alive, Species, Action
-from lib.model import Model
 from lib.constants import override_from_file
 from lib.runner import Runner
 import time
-import random
-import math
 import torch
-import cProfile
 
 if __name__ == "__main__":
     import pygame
     from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
-    
+
 def load_config_files(config_folder):
     """Load all config files from the given folder."""
     config_files = []
@@ -52,7 +47,6 @@ if __name__ == "__main__":
                 pygame.time.wait(1)
             runner.simulate(agent_file=args.agent_file, visualize=visualize)
         
-
     # Load config files
     config_files = load_config_files(args.config_folder)
 
@@ -84,6 +78,9 @@ if __name__ == "__main__":
                     generations_data = update_generations_data(runner.current_generation)
                     plot_generations(generations_data)
 
+                    evaluation_thread = threading.Thread(target=runner.run)
+                    evaluation_thread.start()
+
                 # Update the display
                 # draw_plots()
                 pygame.display.flip()
@@ -102,8 +99,8 @@ if __name__ == "__main__":
             # for i in range(runs):
             #     print(f"Run {i+1}/{runs}")
             #     Runner().run(True)
-            # print(f"Average time: {(time.time() - start_time) / runs)")
+            # print(f"Average time: {(time.time() - start_time) / runs}")
 
-
+    
 
 

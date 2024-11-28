@@ -2,7 +2,8 @@
 import threading
 import torch.multiprocessing as mp
 import lib.constants as const
-from lib.world import create_world, update_smell, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, perform_action_optimized, world_is_alive, Species, Action, Terrain
+from lib.constants import Species
+from lib.world import update_smell, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
 from lib.data_manager import queue_data
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
@@ -115,8 +116,7 @@ class Runner():
 
     def simulate(self, agent_file, visualize):
         agent = torch.load(agent_file)
-        print(agent)
-        world, world_data = create_world()
+        world, world_data = create_map_from_noise()
         padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
         padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
         
@@ -129,7 +129,7 @@ class Runner():
         # self.starting_world = create_world().to(device)
         worlds = []
         for _ in range(const.AGENT_EVALUATIONS):
-            world, world_data = create_world()
+            world, world_data = create_map_from_noise()
             # Pad the world with a 1-cell border of zeros
             padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
             padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)

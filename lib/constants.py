@@ -1,4 +1,22 @@
 import os
+from enum import Enum
+
+class Terrain(Enum):
+    LAND = 0
+    WATER = 1
+    OUT_OF_BOUNDS = 2
+
+class Species(Enum):
+    PLANKTON = 0
+    ANCHOVY = 1
+    COD = 2
+
+class Action(Enum):
+    UP = 0
+    DOWN = 1
+    LEFT = 2
+    RIGHT = 3
+    EAT = 4
 
 WORLD_SIZE = 50
 
