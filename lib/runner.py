@@ -2,7 +2,6 @@
 import threading
 import torch.multiprocessing as mp
 import lib.constants as const
-from lib.constants import Species
 from lib.world import update_smell, read_map_from_file, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
 from lib.data_manager import queue_data
 from lib.model import Model
@@ -19,14 +18,14 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
     fitness = 0
     world = world.clone()  # Clone the padded world tensor for each agent
     # reset_plankton_cluster()
-    species_order = [Species.PLANKTON, Species.ANCHOVY, Species.COD]
-
+    species_order = [species for species in const.SPECIES_MAP.keys()]
+    
     while world_is_alive(world) and fitness < const.MAX_STEPS:
         update_smell(world)
         species_order = sorted(species_order, key=lambda x: random.random())
 
         for species in species_order:
-            if species == Species.PLANKTON:
+            if species == "plankton":
                 spawn_plankton(world, world_data)
                 # if fitness % 25 == 0:
                 #     move_plankton_cluster(world)
@@ -51,7 +50,7 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
 
             # # **Optimization Step: Filter out cells with zero biomass**
             # # Extract biomass values for the selected cells
-            biomass_offset = const.OFFSETS_BIOMASS + species.value
+            biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
             biomass_values = world[selected_positions_padded[:, 0], selected_positions_padded[:, 1], biomass_offset]
 
             # Create a mask for cells with non-zero biomass
@@ -87,10 +86,10 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
             batch_tensor = neighbor_values  # Shape: [Num_Selected_Cells, Channels * 9]
 
             # Step 6: Perform neural network forward pass
-            action_values_batch = agent.forward(batch_tensor, species.value)
+            action_values_batch = agent.forward(batch_tensor, species)
 
             # # Step 7: Perform actions
-            world = perform_action(world, action_values_batch, species.value, selected_positions_padded)
+            world = perform_action(world, action_values_batch, species, selected_positions_padded)
 
         # Update the display after each step
         if data_queue:

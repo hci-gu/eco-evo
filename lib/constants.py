@@ -6,11 +6,6 @@ class Terrain(Enum):
     WATER = 1
     OUT_OF_BOUNDS = 2
 
-class Species(Enum):
-    PLANKTON = 0
-    ANCHOVY = 1
-    COD = 2
-
 class Action(Enum):
     UP = 0
     DOWN = 1
@@ -20,16 +15,58 @@ class Action(Enum):
 
 WORLD_SIZE = 50
 NOISE_SCALING = 4.5
-
 STARTING_BIOMASS_COD = 3000
 STARTING_BIOMASS_ANCHOVY = 6400
 STARTING_BIOMASS_PLANKTON = 14800
-# STARTING_BIOMASS_COD = 3000
-# STARTING_BIOMASS_ANCHOVY = 6400
-# STARTING_BIOMASS_PLANKTON = 14800
 MIN_PERCENT_ALIVE = 0.2
 MAX_PERCENT_ALIVE = 3
-MAX_STEPS = 5000
+MAX_STEPS = 2000
+
+# Define species properties in a map
+SPECIES_MAP = {
+    "plankton": {
+        "index": 0,
+        "starting_biomass": STARTING_BIOMASS_PLANKTON,
+        "growth_rate": 0.0075,
+        "max_in_cell": STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) * 1.5,
+        "respawn_delay": 150,
+        "base_spawn_rate": STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) / 20,
+        "smell_emission_rate": 0.1,
+        "min_biomass_in_cell": 0,
+        "max_biomass_in_cell": (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 1.5
+    },
+    "anchovy": {
+        "index": 1,
+        "starting_biomass": STARTING_BIOMASS_ANCHOVY,
+        "max_in_cell": STARTING_BIOMASS_ANCHOVY / 2,
+        "smell_emission_rate": 0.1,
+        "min_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / (WORLD_SIZE * WORLD_SIZE) / 20,
+        "max_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / 2
+    },
+    "cod": {
+        "index": 2,
+        "starting_biomass": STARTING_BIOMASS_COD,
+        "max_in_cell": STARTING_BIOMASS_COD / 2,
+        "smell_emission_rate": 0.1,
+        "min_biomass_in_cell": STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE) / 20,
+        "max_biomass_in_cell": STARTING_BIOMASS_COD / 2
+    }
+}
+
+EATING_MAP = {
+    "plankton": {
+        "anchovy": {"success_rate": 0.0, "nutrition_amount": 0.0},
+        "cod": {"success_rate": 0.0, "nutrition_amount": 0.0},
+    },
+    "anchovy": {
+        "plankton": {"success_rate": 0.5, "nutrition_amount": 0.25},
+        "cod": {"success_rate": 0.0, "nutrition_amount": 0.0},
+    },
+    "cod": {
+        "plankton": {"success_rate": 0.25, "nutrition_amount": 0.25},
+        "anchovy": {"success_rate": 0.25, "nutrition_amount": 0.25},
+    }
+}
 
 HUNT_SUCCESS_RATE_ANCHOVY = 0.5
 HUNT_SUCCESS_RATE_COD = 0.25
@@ -38,18 +75,9 @@ EAT_AMOUNT_COD = 0.25
 BASE_BIOMASS_LOSS = 0.05
 BIOMASS_GROWTH_RATE = 0.075
 PLANKTON_GROWTH_RATE = 0.0075
-MAX_PLANKTON_IN_CELL = (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 1.5
-MIN_BIOMASS_IN_CELL = {
-    0: 0,
-    1: STARTING_BIOMASS_ANCHOVY / (WORLD_SIZE * WORLD_SIZE) / 20,
-    2: STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE) / 20
-}
 
 BASE_PLANKTON_SPAWN_RATE = STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) / 20
 PLANKTON_RESPAWN_DELAY = 150
-# MAX_PLANKTON_IN_CELL = 1000000000000000
-MAX_ANCHOVY_IN_CELL = STARTING_BIOMASS_ANCHOVY / 2
-MAX_COD_IN_CELL = STARTING_BIOMASS_COD / 2
 ENERGY_REWARD_FOR_EATING = 25
 MAX_ENERGY = 100.0
 
@@ -71,25 +99,30 @@ NETWORK_INPUT_SIZE = 108
 NETWORK_HIDDEN_SIZE = 10
 NETWORK_OUTPUT_SIZE = 10
 
+# Calculate offsets dynamically based on SPECIES_MAP
 OFFSETS_TERRAIN_LAND = 0
 OFFSETS_TERRAIN_WATER = 1
 OFFSETS_TERRAIN_OUT_OF_BOUNDS = 2
 
 OFFSETS_BIOMASS = OFFSETS_TERRAIN_OUT_OF_BOUNDS + 1
 
-OFFSETS_BIOMASS_PLANKTON = OFFSETS_BIOMASS
-OFFSETS_BIOMASS_ANCHOVY = OFFSETS_BIOMASS + 1
-OFFSETS_BIOMASS_COD = OFFSETS_BIOMASS + 2
+offset = OFFSETS_BIOMASS
+for species in SPECIES_MAP.keys():
+    SPECIES_MAP[species]["biomass_offset"] = offset
+    offset += 1
 
-OFFSETS_ENERGY = OFFSETS_BIOMASS_COD + 1
+OFFSETS_ENERGY = offset
+for species in SPECIES_MAP.keys():
+    SPECIES_MAP[species]["energy_offset"] = offset
+    offset += 1
 
-OFFSETS_ENERGY_PLANKTON = OFFSETS_ENERGY
-OFFSETS_ENERGY_ANCHOVY = OFFSETS_ENERGY + 1
-OFFSETS_ENERGY_COD = OFFSETS_ENERGY + 2
+OFFSETS_SMELL = offset
+for species in SPECIES_MAP.keys():
+    SPECIES_MAP[species]["smell_offset"] = offset
+    offset += 1
 
-OFFSETS_SMELL_PLANKTON = OFFSETS_ENERGY_COD + 1
-OFFSETS_SMELL_ANCHOVY = OFFSETS_SMELL_PLANKTON + 1
-OFFSETS_SMELL_COD = OFFSETS_SMELL_ANCHOVY + 1
+# Calculate the total required number of values in the world tensor
+TOTAL_TENSOR_VALUES = OFFSETS_SMELL + len(SPECIES_MAP)
 
 CURRENT_FOLDER = "results/run"
 

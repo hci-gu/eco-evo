@@ -2,8 +2,9 @@ import json
 from queue import Queue, Empty
 import pygame
 import math
-from lib.world import Terrain, Species
+from lib.world import Terrain
 import lib.constants as const
+from lib.constants import SPECIES_MAP  # Add this import
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
@@ -186,30 +187,19 @@ def draw_world(screen, world_tensor, world_data):
     smell_surface = pygame.Surface((WORLD_WIDTH, WORLD_HEIGHT), pygame.SRCALPHA)
 
     # Calculate maximum smell values for normalization
-    max_smell_plankton = world_tensor[:, :, const.OFFSETS_SMELL_PLANKTON].max().item() / 2
-    max_smell_anchovy = world_tensor[:, :, const.OFFSETS_SMELL_ANCHOVY].max().item() / 2
-    max_smell_cod = world_tensor[:, :, const.OFFSETS_SMELL_COD].max().item() / 2
+    max_smell_values = {species: world_tensor[:, :, properties["smell_offset"]].max().item() / 2 for species, properties in SPECIES_MAP.items()}
 
     # Loop over the world grid for smell visualization
     for x in range(const.WORLD_SIZE):
         for y in range(const.WORLD_SIZE):
             # Get smell values for each species
-            smell_plankton = world_tensor[x, y, const.OFFSETS_SMELL_PLANKTON].item()
-            smell_anchovy = world_tensor[x, y, const.OFFSETS_SMELL_ANCHOVY].item()
-            smell_cod = world_tensor[x, y, const.OFFSETS_SMELL_COD].item()
-
-            # Normalize smell values to [0, 1]
-            smell_values = {}
-            smell_values[Species.PLANKTON] = min(smell_plankton / max_smell_plankton, 1.0)
-            smell_values[Species.ANCHOVY] = min(smell_anchovy / max_smell_anchovy, 1.0)
-            smell_values[Species.COD] = min(smell_cod / max_smell_cod, 1.0)
-
+            smell_values = {species: min(world_tensor[x, y, properties["smell_offset"]].item() / max_smell_values[species], 1.0) for species, properties in SPECIES_MAP.items()}
 
             # Define colors for smells (RGBA with alpha for transparency)
             smell_colors = {
-                Species.PLANKTON: (0, 255, 0, int(smell_values[Species.PLANKTON] * 150)),  # Green with variable alpha
-                Species.ANCHOVY: (255, 0, 0, int(smell_values[Species.ANCHOVY] * 150)),    # Red with variable alpha
-                Species.COD: (0, 0, 0, int(smell_values[Species.COD] * 150))               # Black with variable alpha
+                species: (0, 255, 0, int(smell_values[species] * 150)) if species == "plankton" else
+                         (255, 0, 0, int(smell_values[species] * 150)) if species == "anchovy" else
+                         (0, 0, 0, int(smell_values[species] * 150)) for species in SPECIES_MAP.keys()
             }
 
             # Draw smell overlay
@@ -223,9 +213,7 @@ def draw_world(screen, world_tensor, world_data):
 
 
     # Calculate maximum biomass for each species
-    max_biomass_plankton = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON].max().item() / 2
-    max_biomass_anchovy = world_tensor[:, :, const.OFFSETS_BIOMASS_ANCHOVY].max().item() / 2
-    max_biomass_cod = world_tensor[:, :, const.OFFSETS_BIOMASS_COD].max().item() / 2
+    max_biomass_values = {species: world_tensor[:, :, properties["biomass_offset"]].max().item() / 2 for species, properties in SPECIES_MAP.items()}
 
     # Define minimum and maximum radius for the circles
     min_radius = 1
@@ -239,28 +227,19 @@ def draw_world(screen, world_tensor, world_data):
         for y in range(const.WORLD_SIZE):
             # Define offsets for species visualization within the cell
             offsets = {
-                Species.PLANKTON: (-CELL_SIZE // 4, -CELL_SIZE // 4),
-                Species.ANCHOVY: (CELL_SIZE // 4, -CELL_SIZE // 4),
-                Species.COD: (0, CELL_SIZE // 4)
+                species: (-CELL_SIZE // 4, -CELL_SIZE // 4) if species == "plankton" else
+                         (CELL_SIZE // 4, -CELL_SIZE // 4) if species == "anchovy" else
+                         (0, CELL_SIZE // 4) for species in SPECIES_MAP.keys()
             }
 
             # Extract biomass for each species at the current cell
-            plankton_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON].item()
-            anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()
-            cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()
-
-            # Create a dictionary for species properties
-            species_biomass = {
-                Species.PLANKTON: (plankton_biomass, (0, 255, 0), max_biomass_plankton),  # Green
-                Species.ANCHOVY: (anchovy_biomass, (255, 0, 0), max_biomass_anchovy),     # Red
-                Species.COD: (cod_biomass, (0, 0, 0), max_biomass_cod)                    # Black
-            }
+            species_biomass = {species: world_tensor[x, y, properties["biomass_offset"]].item() for species, properties in SPECIES_MAP.items()}
 
             # Draw biomass for each species
-            for species, (biomass, color, max_biomass) in species_biomass.items():
+            for species, biomass in species_biomass.items():
                 if biomass > 0:
                     # Determine min and max radius for the species
-                    if species == Species.PLANKTON:
+                    if species == "plankton":
                         min_r = min_radius_plankton
                         max_r = max_radius_plankton
                     else:
@@ -268,6 +247,7 @@ def draw_world(screen, world_tensor, world_data):
                         max_r = max_radius
 
                     # Calculate the radius proportionally
+                    max_biomass = max_biomass_values[species]
                     if max_biomass > 0:
                         radius = min_r + int((max_r - min_r) * (biomass / max_biomass))
                     else:
@@ -284,6 +264,7 @@ def draw_world(screen, world_tensor, world_data):
                     )
 
                     # Draw the circle representing the species biomass
+                    color = (0, 255, 0) if species == "plankton" else (255, 0, 0) if species == "anchovy" else (0, 0, 0)
                     pygame.draw.circle(screen, color, circle_center, radius)
 
     # Draw cached biomass graph
@@ -315,25 +296,20 @@ def draw_world_detailed(screen, world_tensor):
         for y in range(const.WORLD_SIZE):
             # Define horizontal positions for circles and bars within the cell
             species_positions = {
-                Species.PLANKTON: (-CELL_SIZE // 3, -CELL_SIZE // 4),  # Left circle
-                Species.ANCHOVY: (0, -CELL_SIZE // 4),                 # Center circle
-                Species.COD: (CELL_SIZE // 3, -CELL_SIZE // 4)         # Right circle
+                species: (-CELL_SIZE // 3, -CELL_SIZE // 4) if species == "plankton" else
+                         (0, -CELL_SIZE // 4) if species == "anchovy" else
+                         (CELL_SIZE // 3, -CELL_SIZE // 4) for species in SPECIES_MAP.keys()
             }
             
             # Extract biomass and energy information for each species
-            plankton_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON].item()  # Biomass for plankton
-            anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()  # Biomass for anchovy
-            cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()  # Biomass for cod
-
-            # plankton_energy = world_tensor[x, y, const.OFFSETS_ENERGY_PLANKTON].item()  # Energy for plankton
-            anchovy_energy = world_tensor[x, y, const.OFFSETS_ENERGY_ANCHOVY].item()  # Energy for anchovy
-            cod_energy = world_tensor[x, y, const.OFFSETS_ENERGY_COD].item()  # Energy for cod
+            species_biomass = {species: world_tensor[x, y, properties["biomass_offset"]].item() for species, properties in SPECIES_MAP.items()}
+            species_energy = {species: world_tensor[x, y, properties["energy_offset"]].item() for species, properties in SPECIES_MAP.items()}
 
             # Dictionary to map species to their biomass, energy, and colors
             species_data = {
-                # Species.PLANKTON: (plankton_biomass, plankton_energy, (0, 255, 0), (0, 200, 0)),  # Green for plankton biomass, darker green for energy
-                Species.ANCHOVY: (anchovy_biomass, anchovy_energy, (255, 0, 0), (200, 0, 0)),    # Red for anchovy biomass, darker red for energy
-                Species.COD: (cod_biomass, cod_energy, (0, 0, 0), (50, 50, 50))                 # Black for cod biomass, gray for energy
+                species: (species_biomass[species], species_energy[species], (0, 255, 0), (0, 200, 0)) if species == "plankton" else
+                         (species_biomass[species], species_energy[species], (255, 0, 0), (200, 0, 0)) if species == "anchovy" else
+                         (species_biomass[species], species_energy[species], (0, 0, 0), (50, 50, 50)) for species in SPECIES_MAP.keys()
             }
 
             # Draw biomass circles in a row at the top

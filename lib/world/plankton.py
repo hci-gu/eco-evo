@@ -2,7 +2,7 @@ import math
 import random
 import lib.constants as const
 import torch
-from lib.constants import Terrain, Species, Action
+from lib.constants import Terrain, Action
 
 def reset_plankton_cluster():
     """
@@ -191,11 +191,11 @@ def respawn_plankton(world_tensor):
         return world_tensor
 
     # Distribute total biomass equally among the cells
-    total_biomass_plankton = const.STARTING_BIOMASS_PLANKTON
+    total_biomass_plankton = const.SPECIES_MAP["plankton"]["starting_biomass"]
     biomass_per_cell = total_biomass_plankton / num_cells
 
     # Assign biomass to the cells
-    world_tensor[cluster_indices[:, 0], cluster_indices[:, 1], const.OFFSETS_BIOMASS_PLANKTON] = biomass_per_cell
+    world_tensor[cluster_indices[:, 0], cluster_indices[:, 1], const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]] = biomass_per_cell
 
     print(f"Plankton respawned at the {side} side of the world.")
     return world_tensor
@@ -205,7 +205,7 @@ def move_plankton_based_on_current(world_tensor, world_data):
     world_size_x, world_size_y = world_tensor.shape[0], world_tensor.shape[1]
 
     # Extract the plankton biomass layer
-    plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON]
+    plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]]
 
     # Extract the current angles
     current_angles = world_data[:, :, 0]
@@ -286,12 +286,12 @@ def move_plankton_based_on_current(world_tensor, world_data):
             new_biomass[x, y] += biomass
 
     # Update the plankton biomass layer in world_tensor
-    world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON] = new_biomass
+    world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]] = new_biomass
 
     return world_tensor
 
 def spawn_plankton(world_tensor, world_data):
-    plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON]
+    plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]]
     plankton_flag = world_data[:, :, 1]  # Cells marked with 1 are initial plankton locations
     plankton_counter = world_data[:, :, 2]  # Plankton respawn counter
 
@@ -306,11 +306,11 @@ def spawn_plankton(world_tensor, world_data):
 
     # Increase biomass in existing plankton cells
     if existing_plankton_mask.any():
-        increased_biomass = plankton_biomass[existing_plankton_mask] * (1 + const.PLANKTON_GROWTH_RATE)
-        world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON][existing_plankton_mask] = torch.clamp(
-            increased_biomass, max=const.MAX_PLANKTON_IN_CELL
+        increased_biomass = plankton_biomass[existing_plankton_mask] * (1 + const.SPECIES_MAP["plankton"]["growth_rate"])
+        world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][existing_plankton_mask] = torch.clamp(
+            increased_biomass, max=const.SPECIES_MAP["plankton"]["max_in_cell"]
         )
-        world_data[:, :, 2][existing_plankton_mask] = const.PLANKTON_RESPAWN_DELAY
+        world_data[:, :, 2][existing_plankton_mask] = const.SPECIES_MAP["plankton"]["respawn_delay"]
 
     # Add base biomass to empty plankton cells
     if empty_plankton_mask.any():
@@ -322,6 +322,6 @@ def spawn_plankton(world_tensor, world_data):
         respawn_mask = (world_data[:, :, 2] == 0) & empty_plankton_mask
         if respawn_mask.any():
             # Reset the counter to 100 and spawn plankton
-            world_data[:, :, 2][respawn_mask] = const.PLANKTON_RESPAWN_DELAY
-            world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON][respawn_mask] = const.BASE_PLANKTON_SPAWN_RATE
+            world_data[:, :, 2][respawn_mask] = const.SPECIES_MAP["plankton"]["respawn_delay"]
+            world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][respawn_mask] = const.SPECIES_MAP["plankton"]["base_spawn_rate"]
 

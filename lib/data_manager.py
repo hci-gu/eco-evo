@@ -52,19 +52,18 @@ def process_data(data):
     if eval_index not in agents_data[agent_index]:
         agents_data[agent_index][eval_index] = {
             'steps': [],
-            'plankton_alive': [],
-            'anchovy_alive': [],
-            'cod_alive': [],
         }
+        for species in const.SPECIES_MAP.keys():
+            agents_data[agent_index][eval_index][f'{species}_alive'] = []
 
     agents_data[agent_index][eval_index]['steps'].append(step)
 
     # check if world data exists
-    if ("world" in data):
+    if "world" in data:
         world = data['world']
-        agents_data[agent_index][eval_index]['plankton_alive'].append(world[:, :, const.OFFSETS_BIOMASS_PLANKTON].sum())
-        agents_data[agent_index][eval_index]['anchovy_alive'].append(world[:, :, const.OFFSETS_BIOMASS_ANCHOVY].sum())
-        agents_data[agent_index][eval_index]['cod_alive'].append(world[:, :, const.OFFSETS_BIOMASS_COD].sum())
+        for species, properties in const.SPECIES_MAP.items():
+            biomass_offset = properties["biomass_offset"]
+            agents_data[agent_index][eval_index][f'{species}_alive'].append(world[:, :, biomass_offset].sum())
 
     return agents_data
 

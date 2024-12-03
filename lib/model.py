@@ -10,10 +10,10 @@ class Model(nn.Module):
         if chromosome:
             self.set_weights(chromosome)
 
-    def forward(self, x: torch.Tensor, species: int) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, species_key: str) -> torch.Tensor:
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
-        if species == 1:
+        if species_key == "anchovy":
             output = torch.softmax(x[:, :5], dim=1)
         else:
             output = torch.softmax(x[:, 5:], dim=1)
