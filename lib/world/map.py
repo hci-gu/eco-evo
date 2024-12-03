@@ -68,9 +68,9 @@ def add_species_to_map(world_tensor, world_data):
                     if noise > 0:
                         world_tensor[x, y, properties["biomass_offset"]] = (noise / noise_sums[species]) * properties["starting_biomass"]
                         world_tensor[x, y, properties["energy_offset"]] = const.MAX_ENERGY
-                        if species == "plankton":
+                        if properties["hardcoded_logic"]:
                             world_data[x, y, 1] = 1  # Add plankton cluster flag
-                            world_data[x, y, 2] = properties["respawn_delay"]  # Add plankton respawn counter
+                            world_data[x, y, 2] = properties["hardcoded_rules"]["respawn_delay"]  # Add plankton respawn counter
 
     for species, properties in const.SPECIES_MAP.items():
         world_tensor[:, :, properties["smell_offset"]] = 0

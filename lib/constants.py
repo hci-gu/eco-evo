@@ -27,13 +27,19 @@ SPECIES_MAP = {
     "plankton": {
         "index": 0,
         "starting_biomass": STARTING_BIOMASS_PLANKTON,
-        "growth_rate": 0.0075,
         "max_in_cell": STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) * 1.5,
-        "respawn_delay": 150,
-        "base_spawn_rate": STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) / 20,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
-        "max_biomass_in_cell": (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 1.5
+        "max_biomass_in_cell": (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 1.5,
+        "hardcoded_logic": True,
+        "hardcoded_rules": {
+            "growth_rate": 0.0075,
+            "respawn_delay": 150,
+            "base_spawn_rate": STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) / 20,
+        },
+        "visualization": {
+            "color": [0, 255, 0]
+        }
     },
     "anchovy": {
         "index": 1,
@@ -41,7 +47,11 @@ SPECIES_MAP = {
         "max_in_cell": STARTING_BIOMASS_ANCHOVY / 2,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / (WORLD_SIZE * WORLD_SIZE) / 20,
-        "max_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / 2
+        "max_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / 2,
+        "hardcoded_logic": False,
+        "visualization": {
+            "color": [255, 0, 0]
+        }
     },
     "cod": {
         "index": 2,
@@ -49,7 +59,11 @@ SPECIES_MAP = {
         "max_in_cell": STARTING_BIOMASS_COD / 2,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE) / 20,
-        "max_biomass_in_cell": STARTING_BIOMASS_COD / 2
+        "max_biomass_in_cell": STARTING_BIOMASS_COD / 2,
+        "hardcoded_logic": False,
+        "visualization": {
+            "color": [0, 0, 0]
+        }
     }
 }
 
@@ -95,10 +109,6 @@ INITIAL_MUTATION_RATE = 0.15
 MIN_MUTATION_RATE = 0.01
 MUTATION_RATE_DECAY = 0.99
 
-NETWORK_INPUT_SIZE = 108
-NETWORK_HIDDEN_SIZE = 10
-NETWORK_OUTPUT_SIZE = 10
-
 # Calculate offsets dynamically based on SPECIES_MAP
 OFFSETS_TERRAIN_LAND = 0
 OFFSETS_TERRAIN_WATER = 1
@@ -123,6 +133,14 @@ for species in SPECIES_MAP.keys():
 
 # Calculate the total required number of values in the world tensor
 TOTAL_TENSOR_VALUES = OFFSETS_SMELL + len(SPECIES_MAP)
+
+NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9
+AVAILABLE_ACTIONS = len(Action)
+NETWORK_HIDDEN_SIZE = 10
+
+# number of species with hardcoded = False
+ACTION_TAKING_SPECIES = sum(1 for species in SPECIES_MAP.values() if not species["hardcoded_logic"])
+NETWORK_OUTPUT_SIZE = AVAILABLE_ACTIONS * ACTION_TAKING_SPECIES
 
 CURRENT_FOLDER = "results/run"
 

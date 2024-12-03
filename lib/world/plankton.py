@@ -306,11 +306,12 @@ def spawn_plankton(world_tensor, world_data):
 
     # Increase biomass in existing plankton cells
     if existing_plankton_mask.any():
-        increased_biomass = plankton_biomass[existing_plankton_mask] * (1 + const.SPECIES_MAP["plankton"]["growth_rate"])
+        growth_rate = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["growth_rate"]
+        increased_biomass = plankton_biomass[existing_plankton_mask] * (1 + growth_rate)
         world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][existing_plankton_mask] = torch.clamp(
             increased_biomass, max=const.SPECIES_MAP["plankton"]["max_in_cell"]
         )
-        world_data[:, :, 2][existing_plankton_mask] = const.SPECIES_MAP["plankton"]["respawn_delay"]
+        world_data[:, :, 2][existing_plankton_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
 
     # Add base biomass to empty plankton cells
     if empty_plankton_mask.any():
@@ -322,6 +323,6 @@ def spawn_plankton(world_tensor, world_data):
         respawn_mask = (world_data[:, :, 2] == 0) & empty_plankton_mask
         if respawn_mask.any():
             # Reset the counter to 100 and spawn plankton
-            world_data[:, :, 2][respawn_mask] = const.SPECIES_MAP["plankton"]["respawn_delay"]
-            world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][respawn_mask] = const.SPECIES_MAP["plankton"]["base_spawn_rate"]
+            world_data[:, :, 2][respawn_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
+            world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][respawn_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["base_spawn_rate"]
 
