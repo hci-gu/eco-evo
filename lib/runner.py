@@ -3,7 +3,7 @@ import threading
 import torch.multiprocessing as mp
 import lib.constants as const
 from lib.constants import Species
-from lib.world import update_smell, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
+from lib.world import update_smell, read_map_from_file, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
 from lib.data_manager import queue_data
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
@@ -116,7 +116,8 @@ class Runner():
 
     def simulate(self, agent_file, visualize):
         agent = torch.load(agent_file)
-        world, world_data = create_map_from_noise()
+        world, world_data = read_map_from_file('maps/baltic.png')
+        # world, world_data = create_map_from_noise()
         padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
         padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
         
