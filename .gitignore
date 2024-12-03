@@ -1,2 +1,7 @@
 lib/__pycache__
 .pixi
+
+results
+old
+runs
+*.png

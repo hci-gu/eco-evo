@@ -1,142 +1,195 @@
-from lib.constants import WORLD_SIZE, NUM_AGENTS, MAX_STEPS
-from lib.world import create_world, world_is_alive, Species, Action
-from lib.visualize import init_pygame, draw_world, plot_biomass, reset_plot, plot_generations
+# from lib.constants import WORLD_SIZE, NUM_AGENTS, MAX_STEPS, PLANKTON_GROWTH_RATE, MAX_PLANKTON_IN_CELL, TOURNAMENT_SELECTION, ELITISM_SELECTION
+import threading
+import torch.multiprocessing as mp
+import lib.constants as const
+from lib.constants import Species
+from lib.world import update_smell, read_map_from_file, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
+from lib.data_manager import queue_data
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
-import time
 import torch
 import random
 import copy
+
+device = torch.device("cpu")
+
+@torch.no_grad()
+def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index, data_queue, visualize = None):
+    agent = Model(chromosome=agent_dict)
+    fitness = 0
+    world = world.clone()  # Clone the padded world tensor for each agent
+    # reset_plankton_cluster()
+    species_order = [Species.PLANKTON, Species.ANCHOVY, Species.COD]
+
+    while world_is_alive(world) and fitness < const.MAX_STEPS:
+        update_smell(world)
+        species_order = sorted(species_order, key=lambda x: random.random())
+
+        for species in species_order:
+            if species == Species.PLANKTON:
+                spawn_plankton(world, world_data)
+                # if fitness % 25 == 0:
+                #     move_plankton_cluster(world)
+                #     spawn_plankton_debug(world)
+                    # move_plankton_based_on_current(world, world_data)
+                continue
+
+            grid_x, grid_y = torch.meshgrid(
+                torch.arange(const.WORLD_SIZE, device=device),
+                torch.arange(const.WORLD_SIZE, device=device),
+                indexing='ij'
+            )
+            set_a_mask = ((grid_x + grid_y) % 2 == 0)
+            set_b_mask = ~set_a_mask
+
+            # Step 2: Randomly select one set
+            selected_set_mask = random.choice([set_a_mask, set_b_mask])
+
+            # Step 3: Get positions of selected cells
+            selected_positions = selected_set_mask.nonzero(as_tuple=False)  # Shape: [Num_Selected_Cells, 2]
+            selected_positions_padded = selected_positions + 1  # Adjust for padding if necessary
+
+            # # **Optimization Step: Filter out cells with zero biomass**
+            # # Extract biomass values for the selected cells
+            biomass_offset = const.OFFSETS_BIOMASS + species.value
+            biomass_values = world[selected_positions_padded[:, 0], selected_positions_padded[:, 1], biomass_offset]
+
+            # Create a mask for cells with non-zero biomass
+            non_zero_biomass_mask = biomass_values > 0
+
+            # Filter positions based on the non-zero biomass mask
+            selected_positions_padded = selected_positions_padded[non_zero_biomass_mask]
+
+            # If no cells have non-zero biomass, skip to the next species
+            if selected_positions_padded.size(0) == 0:
+                continue
+
+            # Step 4: Extract neighborhoods for selected cells
+            offsets = torch.tensor([
+                [-1, -1], [-1, 0], [-1, 1],
+                [ 0, -1], [ 0, 0], [ 0, 1],
+                [ 1, -1], [ 1, 0], [ 1, 1]
+            ], device=device)  # Shape: [9, 2]
+
+            neighbor_positions = selected_positions_padded.unsqueeze(1) + offsets.unsqueeze(0)  # Shape: [Num_Selected_Cells, 9, 2]
+            neighbor_positions = neighbor_positions.reshape(-1, 2)
+
+            # Ensure indices are within bounds
+            neighbor_x = neighbor_positions[:, 0].clamp(0, const.WORLD_SIZE + 1)
+            neighbor_y = neighbor_positions[:, 1].clamp(0, const.WORLD_SIZE + 1)
+
+            # Extract neighbor values
+            # neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions.size(0), -1)
+            neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions_padded.size(0), -1)
+
+
+            # Step 5: Prepare batch input
+            batch_tensor = neighbor_values  # Shape: [Num_Selected_Cells, Channels * 9]
+
+            # Step 6: Perform neural network forward pass
+            action_values_batch = agent.forward(batch_tensor, species.value)
+
+            # # Step 7: Perform actions
+            world = perform_action(world, action_values_batch, species.value, selected_positions_padded)
+
+        # Update the display after each step
+        if data_queue:
+            queue_data(agent_index, evaluation_index, fitness, data_queue)
+        if visualize:
+            visualize(world, world_data, fitness)
+        fitness += 1
+
+    return (agent_index, evaluation_index, fitness)
+
+def evaluate_agent_wrapper(args):
+    return evaluate_agent(*args)
 
 class Runner():
     def __init__(self):
         self.current_generation = 0
         self.best_fitness = 0
         self.running = False
-        self.agents = [(Model(), 0) for _ in range(NUM_AGENTS)]
+        self.agents = [(Model().state_dict(), 0) for _ in range(const.NUM_AGENTS)]
+        self.best_agent = None
         self.starting_world = None
+        self.generation_finished = threading.Event()
 
-    def run(self):
-        self.starting_world = create_world()
+    def simulate(self, agent_file, visualize):
+        agent = torch.load(agent_file)
+        world, world_data = read_map_from_file('maps/baltic.png')
+        # world, world_data = create_map_from_noise()
+        padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
+        padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
         
-        for agent_index, (agent, fitness) in enumerate(self.agents):
-            print(f"Running agent {agent_index} of generation {self.current_generation}")
-            world = copy.deepcopy(self.starting_world)
-            species_order = [Species.PLANKTON, Species.ANCHOVY, Species.COD]
+        evaluate_agent(agent.state_dict(), padded_world, padded_world_data, 0, 0, None, visualize)
 
-            time_started_gen = time.time()
-            while world_is_alive(world) and fitness < MAX_STEPS:
-                time_started = time.time()
-                species_order = sorted(species_order, key=lambda x: random.random())
+        print("DONE")
+    
+    def run(self, single_run=False):
+        # Create the world as a tensor from the start
+        # self.starting_world = create_world().to(device)
+        worlds = []
+        for _ in range(const.AGENT_EVALUATIONS):
+            world, world_data = create_map_from_noise()
+            # Pad the world with a 1-cell border of zeros
+            padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
+            padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
+            worlds.append((padded_world, padded_world_data))
 
-                for species in species_order:
-                    if species == Species.PLANKTON:
-                        for cell in world:
-                            cell.plankton_growth()
-                        continue
+        # self.starting_world = world.to(device)
+        manager = mp.Manager()
+        data_queue = manager.Queue()
 
-                    batch_tensors = []
-                    batch_cells = []
-                    available_cells = set(range(WORLD_SIZE * WORLD_SIZE))  # Use a set for available cells
-                    
-                    while len(available_cells) > 0:
-                        cell_index = random.choice(list(available_cells))
+        with mp.Pool(processes=mp.cpu_count()) as pool:
+            tasks = [(agent, w, wd, agent_index, evaluation_index, data_queue)
+                 for agent_index, (agent, _) in enumerate(self.agents)
+                 for evaluation_index, (w, wd) in enumerate(worlds)]
+            results = pool.map(evaluate_agent_wrapper, tasks)
 
-                        # get tensor from cell
-                        cell = world[cell_index]
-                        x, y = cell_index // WORLD_SIZE, cell_index % WORLD_SIZE
-                        tensor = cell.toTensor3x3(x, y, world).view(1, -1)
-                        
-                        batch_tensors.append(tensor)
-                        batch_cells.append((cell, species, x, y))
+        self.data_queue = data_queue
 
-                        # Identify and remove the selected cell and its adjacent cells
-                        adjacent_indices = set()
-                        adjacent_indices.add(cell_index)  # Current cell
-                        
-                        # Check and add adjacent cells based on their position
-                        if y > 0:  # West
-                            adjacent_indices.add(cell_index - 1)
-                        if y < (WORLD_SIZE - 1):  # East
-                            adjacent_indices.add(cell_index + 1)
-                        if x > 0:  # North
-                            adjacent_indices.add(cell_index - WORLD_SIZE)
-                        if x < (WORLD_SIZE - 1):  # South
-                            adjacent_indices.add(cell_index + WORLD_SIZE)
-                        
-                        # Remove the selected cell and its adjacent cells from the available set
-                        available_cells -= adjacent_indices
-                    
-                    # Convert list of tensors to a batch tensor
-                    batch_tensor = torch.cat(batch_tensors, dim=0)
-                
-                    # Get action probabilities for the whole batch
-                    action_values_batch = agent.forward(batch_tensor)
-
-                    # Distribute the results back to the corresponding cells
-                    for i, (cell, species, x, y) in enumerate(batch_cells):
-                        action_values = action_values_batch[i]
-                        # action values is a tensor of size 10 where first 5 are for cod and next 5 are for anchovy
-                        # if we are processing cod, we will use first 5 values, else next 5 values
-                        action_values = action_values[:5] if species == Species.COD else action_values[5:]
-                        for action in Action:
-                            action_index = action.value
-                            action_probability = action_values[action_index].item()
-
-                            cell.perform_action(species, action, action_probability, x, y, world)
-                time_ended = time.time()
-                seconds_elapsed = time_ended - time_started
-
-                print(f"Time taken: {seconds_elapsed} seconds")
-                if fitness > 0 and (fitness % 25) == 0:
-                    time_ended_gen = time.time()
-                    seconds_elapsed_gen = time_ended_gen - time_started_gen
-                    avg_seconds_per_step = seconds_elapsed_gen / fitness
-                    print(f"Time taken for 25 steps: {seconds_elapsed_gen} seconds, Avg time per step: {avg_seconds_per_step} seconds")
-                    
-
-                # plot_generations()
-                # draw_world(world)
-                # plot_biomass(agent_index, world, fitness)
-
-                fitness += 1
-
-        self.next_generation()
-
+        agent_fitnesses = [0] * len(self.agents)
+        for i, result in enumerate(results):
+            agent_index, evaluation_index, fitness = result
+            agent_fitnesses[agent_index] += fitness
+        
+        for i, fitness in enumerate(agent_fitnesses):
+            self.agents[i] = (self.agents[i][0], fitness / const.AGENT_EVALUATIONS)
+        
+        self.generation_finished.set()
 
     def next_generation(self):
-        print('Next generation')
         self.current_generation += 1
         
         fittest_agent = max(self.agents, key=lambda x: x[1])
 
-        elites = elitism_selection(self.agents, 6)
+        average_fitness = sum([x[1] for x in self.agents]) / len(self.agents)
+        if average_fitness > self.best_fitness:
+            self.best_fitness = average_fitness
+            print(f"New best fitness: {self.best_fitness}")
+            self.best_agent = copy.deepcopy(fittest_agent[0])
+            model = torch.jit.script(Model(chromosome=fittest_agent[0]))
+            torch.jit.save(model, f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_{self.best_fitness}.pt')
+
+        elites = elitism_selection(self.agents, const.ELITISM_SELECTION)
         next_pop = []
 
-        while len(next_pop) < (NUM_AGENTS - 2):
-            (p1, _), (p2, _) = tournament_selection(elites, 2, 4)
+        while len(next_pop) < (const.NUM_AGENTS - 2):
+            (p1, _), (p2, _) = tournament_selection(elites, 2, const.TOURNAMENT_SELECTION)
 
-            p1_weights = p1.get_weights()
-            p2_weights = p2.get_weights()
+            c1_weights, c2_weights = crossover(p1, p2)
 
-            c1_W0, c2_W0, c1_b0, c2_b0, c1_W1, c2_W1, c1_b1, c2_b1 = crossover(p1_weights, p2_weights)
+            current_mutation_rate = max(const.MIN_MUTATION_RATE, const.INITIAL_MUTATION_RATE * (const.MUTATION_RATE_DECAY ** self.current_generation))
+            mutation(c1_weights, current_mutation_rate, current_mutation_rate)
+            mutation(c2_weights, current_mutation_rate, current_mutation_rate)
 
-            c1_params = {'W0': c1_W0, 'b0': c1_b0, 'W1': c1_W1, 'b1': c1_b1}
-            c2_params = {'W0': c2_W0, 'b0': c2_b0, 'W1': c2_W1, 'b1': c2_b1}
-
-            mutation(c1_params, 0.05, 0.2)
-            mutation(c2_params, 0.05, 0.2)
-
-            c1 = Model(chromosome=c1_params)
-            c2 = Model(chromosome=c2_params)
-
-            next_pop.append((c1, 0))
-            next_pop.append((c2, 0))
+            next_pop.append((c1_weights, 0))
+            next_pop.append((c2_weights, 0))
             
-
         self.agents = next_pop
-        self.agents.append(fittest_agent)
-        self.agents.append((Model(), 0))
-        reset_plot()
-        self.run()
+        self.agents.append((fittest_agent[0], 0))
+        self.agents.append((self.best_agent, 0))
+        self.agents.append((Model().state_dict(), 0))
+
+        self.generation_finished.clear()
 
