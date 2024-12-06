@@ -154,7 +154,8 @@ def plot_biomass(agents_data):
     for agent_index, evals in agents_data.items():
         for eval_index, data in evals.items():
             plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black")
-            plt.plot(data['steps'], data['anchovy_alive'], label=f'Agent {agent_index} Eval {eval_index} ANCHOVY', color="red", linestyle='--')
+            plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='--')
+            plt.plot(data['steps'], data['spat_alive'], label=f'Agent {agent_index} Eval {eval_index} SPAT', color="red", linestyle='--')
             plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle=':')
             legend_patches.append(mpatches.Patch(color=colors(idx), label=f'Agent {agent_index} Eval {eval_index}'))
             idx += 1
@@ -183,31 +184,31 @@ def draw_world(screen, world_tensor, world_data):
     terrain_surface = draw_terrain(world_tensor, world_data, False)
     screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
 
-    # Create a new surface for smell visualization
-    smell_surface = pygame.Surface((WORLD_WIDTH, WORLD_HEIGHT), pygame.SRCALPHA)
+    # # Create a new surface for smell visualization
+    # smell_surface = pygame.Surface((WORLD_WIDTH, WORLD_HEIGHT), pygame.SRCALPHA)
 
-    # Calculate maximum smell values for normalization
-    max_smell_values = {species: world_tensor[:, :, properties["smell_offset"]].max().item() / 2 for species, properties in SPECIES_MAP.items()}
+    # # Calculate maximum smell values for normalization
+    # max_smell_values = {species: world_tensor[:, :, properties["smell_offset"]].max().item() / 2 for species, properties in SPECIES_MAP.items()}
 
-    # Loop over the world grid for smell visualization
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            # Get smell values for each species
-            smell_values = {species: min(world_tensor[x, y, properties["smell_offset"]].item() / max_smell_values[species], 1.0) for species, properties in SPECIES_MAP.items()}
+    # # Loop over the world grid for smell visualization
+    # for x in range(const.WORLD_SIZE):
+    #     for y in range(const.WORLD_SIZE):
+    #         # Get smell values for each species
+    #         smell_values = {species: min(world_tensor[x, y, properties["smell_offset"]].item() / max_smell_values[species], 1.0) for species, properties in SPECIES_MAP.items()}
 
-            # Define colors for smells (RGBA with alpha for transparency)
-            smell_colors = {
-                species: tuple(SPECIES_MAP[species]["visualization"]["color"][:3] + [int(smell_values[species] * 150)]) for species in SPECIES_MAP.keys()
-            }
+    #         # Define colors for smells (RGBA with alpha for transparency)
+    #         smell_colors = {
+    #             species: tuple(SPECIES_MAP[species]["visualization"]["color"][:3] + [int(smell_values[species] * 150)]) for species in SPECIES_MAP.keys()
+    #         }
 
-            # Draw smell overlay
-            for species, color in smell_colors.items():
-                if smell_values[species] > 0:
-                    rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                    smell_surface.fill(color, rect)
+    #         # Draw smell overlay
+    #         for species, color in smell_colors.items():
+    #             if smell_values[species] > 0:
+    #                 rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+    #                 smell_surface.fill(color, rect)
 
-    # Blit the smell surface onto the main screen
-    screen.blit(smell_surface, (0, 0))
+    # # Blit the smell surface onto the main screen
+    # screen.blit(smell_surface, (0, 0))
 
 
     # Calculate maximum biomass for each species
@@ -226,7 +227,8 @@ def draw_world(screen, world_tensor, world_data):
             # Define offsets for species visualization within the cell
             offsets = {
                 species: (-CELL_SIZE // 4, -CELL_SIZE // 4) if species == "plankton" else
-                         (CELL_SIZE // 4, -CELL_SIZE // 4) if species == "anchovy" else
+                         (CELL_SIZE // 4, -CELL_SIZE // 4) if species == "herring" else
+                        (-CELL_SIZE // 4, CELL_SIZE // 4) if species == "spat" else
                          (0, CELL_SIZE // 4) for species in SPECIES_MAP.keys()
             }
 

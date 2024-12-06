@@ -26,7 +26,7 @@ def read_map_from_file(file_path):
     image = image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
     pixels = image.load()
     
-    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 12, device=device)
+    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES, device=device)
     world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 3, device=device)
 
     for x in range(const.WORLD_SIZE):
@@ -81,7 +81,7 @@ def create_map_from_noise(static=False):
 
     # Create a tensor to represent the entire world
     # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 12) -> 3 for terrain (3 one-hot) + biomass (3 species) + energy (3 species) + smell (3 species)
-    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 12, device=device)
+    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES, device=device)
     world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 3, device=device)
 
     center_x, center_y = const.WORLD_SIZE // 2, const.WORLD_SIZE // 2

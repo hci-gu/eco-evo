@@ -1,8 +1,7 @@
-# from lib.constants import WORLD_SIZE, NUM_AGENTS, MAX_STEPS, PLANKTON_GROWTH_RATE, MAX_PLANKTON_IN_CELL, TOURNAMENT_SELECTION, ELITISM_SELECTION
 import threading
 import torch.multiprocessing as mp
 import lib.constants as const
-from lib.world import update_smell, read_map_from_file, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
+from lib.world import update_smell, read_map_from_file, remove_species_from_fishing, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
 from lib.data_manager import queue_data
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
@@ -19,27 +18,25 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
     world = world.clone()  # Clone the padded world tensor for each agent
     # reset_plankton_cluster()
     species_order = [species for species in const.SPECIES_MAP.keys()]
+    grid_x, grid_y = torch.meshgrid(
+        torch.arange(const.WORLD_SIZE, device=device),
+        torch.arange(const.WORLD_SIZE, device=device),
+        indexing='ij'
+    )
+    set_a_mask = ((grid_x + grid_y) % 2 == 0)
+    set_b_mask = ~set_a_mask
     
     while world_is_alive(world) and fitness < const.MAX_STEPS:
         update_smell(world)
         species_order = sorted(species_order, key=lambda x: random.random())
 
+        if fitness % const.FISHING_OCCURRENCE == 0:
+            remove_species_from_fishing(world)
+
         for species in species_order:
             if species == "plankton":
                 spawn_plankton(world, world_data)
-                # if fitness % 25 == 0:
-                #     move_plankton_cluster(world)
-                #     spawn_plankton_debug(world)
-                    # move_plankton_based_on_current(world, world_data)
                 continue
-
-            grid_x, grid_y = torch.meshgrid(
-                torch.arange(const.WORLD_SIZE, device=device),
-                torch.arange(const.WORLD_SIZE, device=device),
-                indexing='ij'
-            )
-            set_a_mask = ((grid_x + grid_y) % 2 == 0)
-            set_b_mask = ~set_a_mask
 
             # Step 2: Randomly select one set
             selected_set_mask = random.choice([set_a_mask, set_b_mask])

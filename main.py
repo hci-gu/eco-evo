@@ -3,6 +3,7 @@ import threading
 import os
 from lib.data_manager import data_loop, update_generations_data, process_data
 from lib.constants import override_from_file
+import lib.constants as const
 from lib.runner import Runner
 import time
 import torch
@@ -59,16 +60,14 @@ if __name__ == "__main__":
             runner = Runner()
             simulation_thread = threading.Thread(target=runner.run)
             simulation_thread.start()
-
-            screen = init_pygame()
             
             running = True
-            while running:
+            while running and runner.current_generation < const.GENERATIONS_PER_RUN:
                 # Handle Pygame events
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        running = False
-                        break
+                # for event in pygame.event.get():
+                #     if event.type == pygame.QUIT:
+                #         running = False
+                #         break
                 # Process visualization data
                 if hasattr(runner, 'data_queue'):
                     data_loop(runner.data_queue)
@@ -80,14 +79,6 @@ if __name__ == "__main__":
 
                     evaluation_thread = threading.Thread(target=runner.run)
                     evaluation_thread.start()
-
-                # Update the display
-                # draw_plots()
-                pygame.display.flip()
-                pygame.time.wait(100)  # Adjust as needed
-
-            # Quit Pygame
-            pygame.quit()
 
             simulation_thread.join()
             # cProfile.run('Runner().run(True)')

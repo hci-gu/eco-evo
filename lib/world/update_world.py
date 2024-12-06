@@ -4,7 +4,6 @@ from lib.constants import Action
 
 def perform_action(world_tensor, action_values_batch, species_key, positions_tensor):
     initial_tensor = world_tensor.clone()
-
     x_batch = positions_tensor[:, 0]
     y_batch = positions_tensor[:, 1]
 
@@ -92,63 +91,51 @@ def perform_action(world_tensor, action_values_batch, species_key, positions_ten
                                       initial_tensor[new_x[direction_mask], new_y[direction_mask], biomass_offset])
 
             if biomass_increased_mask.any():
-                previous_biomass = initial_tensor[new_x[direction_mask][biomass_increased_mask], 
-                                                  new_y[direction_mask][biomass_increased_mask], 
-                                                  biomass_offset]
-                previous_energy = initial_tensor[new_x[direction_mask][biomass_increased_mask], 
-                                                 new_y[direction_mask][biomass_increased_mask], 
-                                                 energy_offset]
+                prev_biomass = initial_tensor[new_x[direction_mask][biomass_increased_mask], 
+                                          new_y[direction_mask][biomass_increased_mask], 
+                                          biomass_offset]
+                prev_energy = initial_tensor[new_x[direction_mask][biomass_increased_mask], 
+                                            new_y[direction_mask][biomass_increased_mask], 
+                                            energy_offset]
                 
-                destination_biomass = world_tensor[new_x[direction_mask][biomass_increased_mask], 
-                                                   new_y[direction_mask][biomass_increased_mask], 
-                                                   biomass_offset]
-                destination_energy = world_tensor[new_x[direction_mask][biomass_increased_mask], 
-                                                  new_y[direction_mask][biomass_increased_mask], 
-                                                  energy_offset]
+                dest_biomass = world_tensor[new_x[direction_mask][biomass_increased_mask], 
+                                            new_y[direction_mask][biomass_increased_mask], 
+                                            biomass_offset]
+                dest_energy = world_tensor[new_x[direction_mask][biomass_increased_mask], 
+                                        new_y[direction_mask][biomass_increased_mask], 
+                                        energy_offset]
 
                 moved_biomass = total_biomass_moved[direction_mask][biomass_increased_mask]
                 moved_energy = total_energy_moved[direction_mask][biomass_increased_mask]
 
-                non_zero_biomass_mask = destination_biomass != 0
+                numerator = prev_biomass * prev_energy + moved_biomass * moved_energy
+                denominator = dest_biomass + 1e-6  # Add epsilon to prevent division by zero
 
-                total_energy = torch.zeros_like(destination_biomass)
-                total_energy[non_zero_biomass_mask] = (
-                    (previous_biomass[non_zero_biomass_mask] / destination_biomass[non_zero_biomass_mask]) * previous_energy[non_zero_biomass_mask] +
-                    (moved_biomass[non_zero_biomass_mask] / destination_biomass[non_zero_biomass_mask]) * moved_energy[non_zero_biomass_mask]
-                )
+                total_energy = numerator / denominator
                 total_energy = torch.clamp(total_energy, 0, const.MAX_ENERGY)
 
                 world_tensor[new_x[direction_mask][biomass_increased_mask], 
-                             new_y[direction_mask][biomass_increased_mask], 
-                             energy_offset] = total_energy
+                            new_y[direction_mask][biomass_increased_mask], 
+                            energy_offset] = total_energy
 
-    # Eating Logic
-    if species_key == "cod":
-        eat_amounts = initial_biomass * eat * const.EAT_AMOUNT_COD
-        prey_biomass = world_tensor[x_batch, y_batch, const.SPECIES_MAP["anchovy"]["biomass_offset"]]
+    for prey_species, prey_info in const.EATING_MAP[species_key].items():
+        prey_biomass_offset = const.SPECIES_MAP[prey_species]["biomass_offset"]
+        prey_biomass = world_tensor[x_batch, y_batch, prey_biomass_offset]
+        eat_amounts = initial_biomass * eat
         eat_amount = torch.min(prey_biomass, eat_amounts)
-        world_tensor[x_batch, y_batch, const.SPECIES_MAP["anchovy"]["biomass_offset"]] -= eat_amount
-
-        reward_scaling_factor = torch.where(eat_amounts > 0, eat_amount / eat_amounts, torch.tensor(0.0, device=eat_amount.device))
+        world_tensor[x_batch, y_batch, prey_biomass_offset] -= eat_amount
+        
+        reward_scaling_factor = torch.where(eat_amounts > 0, eat_amount / eat_amounts, torch.tensor(0.0))
+        # Clamp scaling factor between 0 and 1 to ensure it's in a valid range
         reward_scaling_factor = torch.clamp(reward_scaling_factor, 0, 1)
-        energy_reward = reward_scaling_factor * const.ENERGY_REWARD_FOR_EATING * eat
-        new_energy = world_tensor[x_batch, y_batch, const.SPECIES_MAP["cod"]["energy_offset"]] + energy_reward
-        world_tensor[x_batch, y_batch, const.SPECIES_MAP["cod"]["energy_offset"]] = torch.clamp(new_energy, max=const.MAX_ENERGY)
-    elif species_key == "anchovy":
-        eat_amounts = initial_biomass * eat * const.EAT_AMOUNT_ANCHOVY
-        prey_biomass = world_tensor[x_batch, y_batch, const.SPECIES_MAP["plankton"]["biomass_offset"]]
-        eat_amount = torch.min(prey_biomass, eat_amounts)
-        world_tensor[x_batch, y_batch, const.SPECIES_MAP["plankton"]["biomass_offset"]] -= eat_amount
+        energy_reward = reward_scaling_factor * prey_info["nutrition_amount"] * eat
+        new_energy = world_tensor[x_batch, y_batch, species_properties["energy_offset"]] + energy_reward
+        world_tensor[x_batch, y_batch, species_properties["energy_offset"]] = torch.clamp(new_energy, max=const.MAX_ENERGY)
 
-        reward_scaling_factor = torch.where(eat_amounts > 0, eat_amount / eat_amounts, torch.tensor(0.0, device=eat_amount.device))
-        reward_scaling_factor = torch.clamp(reward_scaling_factor, 0, 1)
-        energy_reward = reward_scaling_factor * const.ENERGY_REWARD_FOR_EATING * eat
-        new_energy = world_tensor[x_batch, y_batch, const.SPECIES_MAP["anchovy"]["energy_offset"]] + energy_reward
-        world_tensor[x_batch, y_batch, const.SPECIES_MAP["anchovy"]["energy_offset"]] = torch.clamp(new_energy, max=const.MAX_ENERGY)
-    
-    world_tensor[x_batch, y_batch, const.SPECIES_MAP["plankton"]["biomass_offset"]] = torch.clamp(world_tensor[x_batch, y_batch, const.SPECIES_MAP["plankton"]["biomass_offset"]], min=0)
-    world_tensor[x_batch, y_batch, const.SPECIES_MAP["anchovy"]["biomass_offset"]] = torch.clamp(world_tensor[x_batch, y_batch, const.SPECIES_MAP["anchovy"]["biomass_offset"]], min=0)
-    world_tensor[x_batch, y_batch, const.SPECIES_MAP["cod"]["biomass_offset"]] = torch.clamp(world_tensor[x_batch, y_batch, const.SPECIES_MAP["cod"]["biomass_offset"]], min=0)
+
+    for species in const.SPECIES_MAP.keys():
+        biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
+        world_tensor[:, :, biomass_offset] = torch.clamp(world_tensor[:, :, biomass_offset], min=0, max=const.SPECIES_MAP[species]["max_biomass_in_cell"])
 
     biomass = world_tensor[:, :, biomass_offset]
 
@@ -158,10 +145,15 @@ def perform_action(world_tensor, action_values_batch, species_key, positions_ten
     zero_biomass_mask = world_tensor[x_batch, y_batch, biomass_offset] == 0
     world_tensor[x_batch[zero_biomass_mask], y_batch[zero_biomass_mask], energy_offset] = 0
 
-    if species_key == "anchovy":
-        world_tensor[:, :, const.SPECIES_MAP["anchovy"]["biomass_offset"]] = torch.clamp(world_tensor[:, :, const.SPECIES_MAP["anchovy"]["biomass_offset"]], max=species_properties["max_biomass_in_cell"])
-
     return world_tensor
+
+def remove_species_from_fishing(world_tensor):
+    for species in const.SPECIES_MAP.keys():
+        if species == "plankton":
+            continue
+
+        biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
+        world_tensor[:, :, biomass_offset] *= (1 - const.FISHING_AMOUNT)
 
 def world_is_alive(world_tensor):
     """
@@ -170,16 +162,11 @@ def world_is_alive(world_tensor):
     - The first 3 values represent the terrain (one-hot encoded).
     - The last 3 values represent the biomass of plankton, anchovy, and cod, respectively.
     """
-    cod_biomass = world_tensor[:, :, const.SPECIES_MAP["cod"]["biomass_offset"]].sum()  # Biomass for cod
-    anchovy_biomass = world_tensor[:, :, const.SPECIES_MAP["anchovy"]["biomass_offset"]].sum()  # Biomass for anchovy
-    plankton_biomass = world_tensor[:, :, const.SPECIES_MAP["plankton"]["biomass_offset"]].sum()  # Biomass for plankton
-
-    # Check if the total biomass for any species is below the survival threshold or above the maximum threshold
-    if cod_biomass < (const.STARTING_BIOMASS_COD * const.MIN_PERCENT_ALIVE) or cod_biomass > (const.STARTING_BIOMASS_COD * const.MAX_PERCENT_ALIVE):
-        return False
-    if anchovy_biomass < (const.STARTING_BIOMASS_ANCHOVY * const.MIN_PERCENT_ALIVE) or anchovy_biomass > (const.STARTING_BIOMASS_ANCHOVY * const.MAX_PERCENT_ALIVE):
-        return False
-    if plankton_biomass < (const.STARTING_BIOMASS_PLANKTON * const.MIN_PERCENT_ALIVE) or plankton_biomass > (const.STARTING_BIOMASS_PLANKTON * const.MAX_PERCENT_ALIVE):
-        return False
+    for species in const.SPECIES_MAP.keys():
+        properties = const.SPECIES_MAP[species]
+        biomass_offset = properties["biomass_offset"]
+        biomass = world_tensor[:, :, biomass_offset].sum()
+        if biomass < (properties["starting_biomass"] * const.MIN_PERCENT_ALIVE) or biomass > (properties["starting_biomass"] * const.MAX_PERCENT_ALIVE):
+            return False
 
     return True

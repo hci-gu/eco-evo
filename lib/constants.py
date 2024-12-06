@@ -41,25 +41,51 @@ SPECIES_MAP = {
             "color": [0, 255, 0]
         }
     },
-    "anchovy": {
+    "herring": {
         "index": 1,
         "starting_biomass": STARTING_BIOMASS_ANCHOVY,
         "max_in_cell": STARTING_BIOMASS_ANCHOVY / 2,
+        "average_weight": 7,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / (WORLD_SIZE * WORLD_SIZE) / 20,
         "max_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / 2,
+        "activity_metabolic_rate": 0.000215,
+        "standard_metabolic_rate": 0.000043,
+        "max_consumption_rate": 0.00526,
+        "natural_mortality_rate": 0.003,
         "hardcoded_logic": False,
         "visualization": {
             "color": [255, 0, 0]
         }
     },
-    "cod": {
+    "spat": {
         "index": 2,
+        "starting_biomass": STARTING_BIOMASS_ANCHOVY,
+        "max_in_cell": STARTING_BIOMASS_ANCHOVY / 2,
+        "average_weight": 7,
+        "smell_emission_rate": 0.1,
+        "min_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / (WORLD_SIZE * WORLD_SIZE) / 20,
+        "max_biomass_in_cell": STARTING_BIOMASS_ANCHOVY / 2,
+        "activity_metabolic_rate": 0.000215,
+        "standard_metabolic_rate": 0.000043,
+        "max_consumption_rate": 0.00526,
+        "natural_mortality_rate": 0.003,
+        "hardcoded_logic": False,
+        "visualization": {
+            "color": [255, 255, 0]
+        }
+    },
+    "cod": {
+        "index": 3,
         "starting_biomass": STARTING_BIOMASS_COD,
         "max_in_cell": STARTING_BIOMASS_COD / 2,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE) / 20,
         "max_biomass_in_cell": STARTING_BIOMASS_COD / 2,
+        "activity_metabolic_rate": 0.000215,
+        "standard_metabolic_rate": 0.000043,
+        "max_consumption_rate": 0.00526,
+        "natural_mortality_rate": 0.003,
         "hardcoded_logic": False,
         "visualization": {
             "color": [0, 0, 0]
@@ -68,31 +94,25 @@ SPECIES_MAP = {
 }
 
 EATING_MAP = {
-    "plankton": {
-        "anchovy": {"success_rate": 0.0, "nutrition_amount": 0.0},
-        "cod": {"success_rate": 0.0, "nutrition_amount": 0.0},
+    "plankton": {},
+    "herring": {
+        "plankton": {"success_rate": 0.5, "nutrition_amount": 25}
     },
-    "anchovy": {
-        "plankton": {"success_rate": 0.5, "nutrition_amount": 0.25},
-        "cod": {"success_rate": 0.0, "nutrition_amount": 0.0},
+    "spat": {
+        "plankton": {"success_rate": 0.5, "nutrition_amount": 25}
     },
     "cod": {
-        "plankton": {"success_rate": 0.25, "nutrition_amount": 0.25},
-        "anchovy": {"success_rate": 0.25, "nutrition_amount": 0.25},
+        "herring": {"success_rate": 0.25, "nutrition_amount": 25},
+        "spat": {"success_rate": 0.25, "nutrition_amount": 25},
     }
 }
 
-HUNT_SUCCESS_RATE_ANCHOVY = 0.5
-HUNT_SUCCESS_RATE_COD = 0.25
-EAT_AMOUNT_ANCHOVY = 0.25
-EAT_AMOUNT_COD = 0.25
+FISHING_AMOUNT = 0.1
+FISHING_OCCURRENCE = 100
+
 BASE_BIOMASS_LOSS = 0.05
 BIOMASS_GROWTH_RATE = 0.075
-PLANKTON_GROWTH_RATE = 0.0075
 
-BASE_PLANKTON_SPAWN_RATE = STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) / 20
-PLANKTON_RESPAWN_DELAY = 150
-ENERGY_REWARD_FOR_EATING = 25
 MAX_ENERGY = 100.0
 
 SMELL_EMISSION_RATE = 0.05
@@ -103,7 +123,7 @@ AGENT_EVALUATIONS = 4
 ELITISM_SELECTION = 8
 TOURNAMENT_SELECTION = 6
 BASE_ENERGY_COST = 0.5
-GENERATIONS_PER_RUN = 150
+GENERATIONS_PER_RUN = 175
 
 INITIAL_MUTATION_RATE = 0.15
 MIN_MUTATION_RATE = 0.01
@@ -151,12 +171,9 @@ def override_from_file(file_path):
     global STARTING_BIOMASS_PLANKTON
     global MIN_PERCENT_ALIVE
     global MAX_STEPS
-    global EAT_AMOUNT_ANCHOVY
-    global EAT_AMOUNT_COD
     global BASE_BIOMASS_LOSS
     global BIOMASS_GROWTH_RATE
     global PLANKTON_GROWTH_RATE
-    global MAX_PLANKTON_IN_CELL
     global MAX_ENERGY
     global NUM_AGENTS
     global ELITISM_SELECTION

@@ -13,8 +13,10 @@ class Model(nn.Module):
     def forward(self, x: torch.Tensor, species_key: str) -> torch.Tensor:
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
-        if species_key == "anchovy":
+        if species_key == "herring":
             output = torch.softmax(x[:, :5], dim=1)
+        elif species_key == "spat":
+            output = torch.softmax(x[:, 5:10], dim=1)
         else:
             output = torch.softmax(x[:, 5:], dim=1)
         return output
