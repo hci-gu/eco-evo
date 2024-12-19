@@ -2,6 +2,7 @@ import math
 import random
 import lib.constants as const
 import torch
+import numpy as np
 from lib.constants import Terrain, Action
 
 def reset_plankton_cluster():
@@ -290,6 +291,14 @@ def move_plankton_based_on_current(world_tensor, world_data):
 
     return world_tensor
 
+def plankton_growth(P, P_max, P_threshold, k):
+    """
+    Logistic growth function with numerical stability.
+    """
+    # Avoid overflow in exp by clamping the input
+    exp_input = torch.clamp(-k * (P - P_threshold), min=-100, max=100)
+    return P_max / (1 + torch.exp(exp_input))
+
 def spawn_plankton(world_tensor, world_data):
     plankton_biomass = world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]]
     plankton_flag = world_data[:, :, 1]  # Cells marked with 1 are initial plankton locations
@@ -298,22 +307,26 @@ def spawn_plankton(world_tensor, world_data):
     # Create a mask for the cells that are initial plankton locations
     plankton_cells = plankton_flag == 1
 
-    # For cells where there is existing plankton biomass, increase it
+    # For cells where there is existing plankton biomass, increase it using logistic growth
     existing_plankton_mask = (plankton_biomass > 0) & plankton_cells
+
+    if existing_plankton_mask.any():
+        P_max = const.SPECIES_MAP["plankton"]["max_in_cell"]
+        P_threshold = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["growth_threshold"]
+        k = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["growth_rate_constant"]
+
+        updated_biomass = plankton_growth(
+            plankton_biomass[existing_plankton_mask], P_max, P_threshold, k
+        )
+
+        world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][existing_plankton_mask] = torch.clamp(
+            updated_biomass, max=P_max
+        )
+        world_data[:, :, 2][existing_plankton_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
 
     # For cells where there is no plankton biomass, but the plankton flag is set, add base amount
     empty_plankton_mask = (plankton_biomass == 0) & plankton_cells
 
-    # Increase biomass in existing plankton cells
-    if existing_plankton_mask.any():
-        growth_rate = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["growth_rate"]
-        increased_biomass = plankton_biomass[existing_plankton_mask] * (1 + growth_rate)
-        world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][existing_plankton_mask] = torch.clamp(
-            increased_biomass, max=const.SPECIES_MAP["plankton"]["max_in_cell"]
-        )
-        world_data[:, :, 2][existing_plankton_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
-
-    # Add base biomass to empty plankton cells
     if empty_plankton_mask.any():
         # Decrease the counter by 1
         plankton_counter[empty_plankton_mask] -= 1
@@ -322,7 +335,6 @@ def spawn_plankton(world_tensor, world_data):
         # Check which counters have reached zero
         respawn_mask = (world_data[:, :, 2] == 0) & empty_plankton_mask
         if respawn_mask.any():
-            # Reset the counter to 100 and spawn plankton
+            # Reset the counter to the respawn delay and spawn plankton
             world_data[:, :, 2][respawn_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
-            world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][respawn_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["base_spawn_rate"]
-
+            world_tensor[:, :, const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]][respawn_mask] = const.SPECIES_MAP["plankton"]["max_in_cell"] * 0.1

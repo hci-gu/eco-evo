@@ -18,6 +18,7 @@ def load_config_files(config_folder):
     for file_name in os.listdir(config_folder):
         if file_name.endswith(".txt"):
             config_files.append(os.path.join(config_folder, file_name))
+    config_files.sort()
     return config_files
 
 if __name__ == "__main__":
@@ -56,7 +57,6 @@ if __name__ == "__main__":
     with torch.no_grad():
         for config_file in config_files:
             override_from_file(config_file)
-            time.sleep(1)
             runner = Runner()
             simulation_thread = threading.Thread(target=runner.run)
             simulation_thread.start()

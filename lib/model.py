@@ -14,11 +14,11 @@ class Model(nn.Module):
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
         if species_key == "herring":
-            output = torch.softmax(x[:, :5], dim=1)
+            output = torch.softmax(x[:, :6], dim=1)
         elif species_key == "spat":
-            output = torch.softmax(x[:, 5:10], dim=1)
+            output = torch.softmax(x[:, 6:12], dim=1)
         else:
-            output = torch.softmax(x[:, 5:], dim=1)
+            output = torch.softmax(x[:, 12:], dim=1)
         return output
         
     def set_weights(self, chromosome):

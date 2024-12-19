@@ -5,6 +5,7 @@ from lib.world import update_smell, read_map_from_file, remove_species_from_fish
 from lib.data_manager import queue_data
 from lib.model import Model
 from lib.evolution import elitism_selection, tournament_selection, crossover, mutation
+import time
 import torch
 import random
 import copy
@@ -25,13 +26,12 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
     )
     set_a_mask = ((grid_x + grid_y) % 2 == 0)
     set_b_mask = ~set_a_mask
+    max_biomass = world[..., 3:7].max()
+    max_smell = world[..., 7:11].max()
     
     while world_is_alive(world) and fitness < const.MAX_STEPS:
         update_smell(world)
         species_order = sorted(species_order, key=lambda x: random.random())
-
-        if fitness % const.FISHING_OCCURRENCE == 0:
-            remove_species_from_fishing(world)
 
         for species in species_order:
             if species == "plankton":
@@ -76,11 +76,24 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
 
             # Extract neighbor values
             # neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions.size(0), -1)
-            neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions_padded.size(0), -1)
+            # neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions_padded.size(0), -1)
+            neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions_padded.size(0), 9, const.TOTAL_TENSOR_VALUES)
+            
+            # Normalize the neighbor_values:
+            # Terrain: channels [0:3] (assume already normalized)
+            terrain = neighbor_values[..., 0:3]
 
+            # Biomass: channels [3:7]
+            biomass = neighbor_values[..., 3:7] / (max_biomass + 1e-8)
+
+            # Smell: channels [7:11]
+            smell = neighbor_values[..., 7:11] / (max_smell + 1e-8)
+
+            # Recombine normalized values
+            normalized_values = torch.cat([terrain, biomass, smell], dim=-1)  # Shape: [Num_Selected_Cells, 9, 11]
 
             # Step 5: Prepare batch input
-            batch_tensor = neighbor_values  # Shape: [Num_Selected_Cells, Channels * 9]
+            batch_tensor = normalized_values.view(selected_positions_padded.size(0), -1)
 
             # Step 6: Perform neural network forward pass
             action_values_batch = agent.forward(batch_tensor, species)
@@ -108,11 +121,14 @@ class Runner():
         self.agents = [(Model().state_dict(), 0) for _ in range(const.NUM_AGENTS)]
         self.best_agent = None
         self.starting_world = None
+        world, world_data = read_map_from_file('maps/baltic')
+        self.world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
+        self.world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
         self.generation_finished = threading.Event()
 
     def simulate(self, agent_file, visualize):
         agent = torch.load(agent_file)
-        world, world_data = read_map_from_file('maps/baltic.png')
+        world, world_data = read_map_from_file('maps/baltic')
         # world, world_data = create_map_from_noise()
         padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
         padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
@@ -122,24 +138,26 @@ class Runner():
         print("DONE")
     
     def run(self, single_run=False):
+        print("Running simulation")
         # Create the world as a tensor from the start
         # self.starting_world = create_world().to(device)
-        worlds = []
-        for _ in range(const.AGENT_EVALUATIONS):
-            world, world_data = create_map_from_noise()
-            # Pad the world with a 1-cell border of zeros
-            padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
-            padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
-            worlds.append((padded_world, padded_world_data))
+        # worlds = []
+        # for _ in range(const.AGENT_EVALUATIONS):
+        #     world, world_data = create_map_from_noise()
+        #     # Pad the world with a 1-cell border of zeros
+        #     padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
+        #     padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
+        #     worlds.append((padded_world, padded_world_data))
 
         # self.starting_world = world.to(device)
         manager = mp.Manager()
         data_queue = manager.Queue()
 
+        print("starting agents")
         with mp.Pool(processes=mp.cpu_count()) as pool:
-            tasks = [(agent, w, wd, agent_index, evaluation_index, data_queue)
+            tasks = [(agent, self.world, self.world_data, agent_index, evaluation_index, data_queue)
                  for agent_index, (agent, _) in enumerate(self.agents)
-                 for evaluation_index, (w, wd) in enumerate(worlds)]
+                 for evaluation_index, (_) in enumerate(range(const.AGENT_EVALUATIONS))]
             results = pool.map(evaluate_agent_wrapper, tasks)
 
         self.data_queue = data_queue

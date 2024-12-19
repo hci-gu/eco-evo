@@ -21,17 +21,24 @@ palette = {
     "snow": (179, 159, 225),
 }
 
-def read_map_from_file(file_path):
-    image = Image.open(file_path)
+def read_map_from_file(folder_path):
+    image = Image.open(folder_path + '/map.png')
     image = image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
     pixels = image.load()
+
+    depth_image = Image.open(folder_path + '/depth.png')
+    depth_image = depth_image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
+    depth_image = depth_image.convert('L')
+    depth_pixels = depth_image.load()
     
     world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES, device=device)
-    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 3, device=device)
+    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 4, device=device)
 
     for x in range(const.WORLD_SIZE):
         for y in range(const.WORLD_SIZE):
             color = pixels[x, y][:3]
+            depth_value = depth_pixels[x, y] / 255
+            world_data[x, y, 3] = depth_value
             if color == palette["water"]:
                 world_tensor[x, y, :3] = torch.tensor([0, 1, 0], device=device)
             else:
@@ -67,7 +74,6 @@ def add_species_to_map(world_tensor, world_data):
                     noise = noise ** const.NOISE_SCALING
                     if noise > 0:
                         world_tensor[x, y, properties["biomass_offset"]] = (noise / noise_sums[species]) * properties["starting_biomass"]
-                        world_tensor[x, y, properties["energy_offset"]] = const.MAX_ENERGY
                         if properties["hardcoded_logic"]:
                             world_data[x, y, 1] = 1  # Add plankton cluster flag
                             world_data[x, y, 2] = properties["hardcoded_rules"]["respawn_delay"]  # Add plankton respawn counter

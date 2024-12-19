@@ -5,4 +5,4 @@ lib/world/__pycache__
 results
 old
 runs
-*.png
+/*.png
