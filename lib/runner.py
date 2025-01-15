@@ -10,7 +10,7 @@ import torch
 import random
 import copy
 
-device = torch.device("cpu")
+device = torch.device(const.DEVICE)
 
 @torch.no_grad()
 def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index, data_queue, visualize = None):

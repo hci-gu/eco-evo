@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import lib.constants as const
 
-device = torch.device("cpu")
+device = torch.device(const.DEVICE)
 
 diffusion_kernel = torch.tensor([
     [1/16, 1/8, 1/16],

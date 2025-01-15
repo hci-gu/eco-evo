@@ -1,4 +1,5 @@
 import os
+import torch
 from enum import Enum
 
 class Terrain(Enum):
@@ -13,6 +14,8 @@ class Action(Enum):
     RIGHT = 3
     EAT = 4
     REST = 5
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 SPEED_MULTIPLIER = 3
 EAT_REWARD_BOOST = 10

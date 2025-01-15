@@ -7,7 +7,7 @@ import lib.constants as const
 from lib.constants import Terrain
 from PIL import Image  # Add this import
 
-device = torch.device("cpu")
+device = torch.device(const.DEVICE)
 
 palette = {
     "water": (65, 155, 223),
