@@ -134,15 +134,42 @@ class Runner():
         print("DONE")
     
     def run(self, single_run=False):
-        manager = mp.Manager()
-        data_queue = manager.Queue()
+        """
+        If running on CUDA, we evaluate agents in the main thread.
+        Otherwise, we fall back to CPU-based multiprocessing.
+        """
+        # Prepare tasks for evaluating each agent
+        tasks = [
+            (agent, self.world, self.world_data, agent_index, evaluation_index, None)
+            for agent_index, (agent, _) in enumerate(self.agents)
+            for evaluation_index, _ in enumerate(range(const.AGENT_EVALUATIONS))
+        ]
 
-        print("starting agents")
-        with mp.Pool(processes=mp.cpu_count()) as pool:
-            tasks = [(agent, self.world, self.world_data, agent_index, evaluation_index, data_queue)
-                 for agent_index, (agent, _) in enumerate(self.agents)
-                 for evaluation_index, (_) in enumerate(range(const.AGENT_EVALUATIONS))]
-            results = pool.map(evaluate_agent_wrapper, tasks)
+        if const.DEVICE.startswith("cuda"):
+            print("Running on CUDA - evaluating agents in the main thread...")
+            
+            # No multiprocessing: evaluate each task directly on the GPU
+            data_queue = None
+            results = []
+            for t in tasks:
+                results.append(evaluate_agent_wrapper(t))
+            
+        else:
+            print("Running on CPU - using multiprocessing for agent evaluation...")
+            
+            # Use CPU multiprocessing
+            manager = mp.Manager()
+            data_queue = manager.Queue()
+            
+            # Update tasks so the data_queue is passed in
+            tasks = [
+                (agent, self.world, self.world_data, agent_index, evaluation_index, data_queue)
+                for agent_index, (agent, _) in enumerate(self.agents)
+                for evaluation_index, _ in enumerate(range(const.AGENT_EVALUATIONS))
+            ]
+
+            with mp.Pool(processes=mp.cpu_count()) as pool:
+                results = pool.map(evaluate_agent_wrapper, tasks)
 
         self.data_queue = data_queue
 
