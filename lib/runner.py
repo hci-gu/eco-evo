@@ -114,42 +114,26 @@ def evaluate_agent_wrapper(args):
     return evaluate_agent(*args)
 
 class Runner():
-    def __init__(self):
+    def __init__(self, map_folder = 'maps/baltic'):
         self.current_generation = 0
         self.best_fitness = 0
         self.running = False
         self.agents = [(Model().state_dict(), 0) for _ in range(const.NUM_AGENTS)]
         self.best_agent = None
         self.starting_world = None
-        world, world_data = read_map_from_file('maps/baltic')
+        world, world_data = read_map_from_file(map_folder)
         self.world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
         self.world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
         self.generation_finished = threading.Event()
 
     def simulate(self, agent_file, visualize):
         agent = torch.load(agent_file)
-        world, world_data = read_map_from_file('maps/baltic')
-        # world, world_data = create_map_from_noise()
-        padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
-        padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
         
-        evaluate_agent(agent.state_dict(), padded_world, padded_world_data, 0, 0, None, visualize)
+        evaluate_agent(agent.state_dict(), self.world, self.world_data, 0, 0, None, visualize)
 
         print("DONE")
     
     def run(self, single_run=False):
-        print("Running simulation")
-        # Create the world as a tensor from the start
-        # self.starting_world = create_world().to(device)
-        # worlds = []
-        # for _ in range(const.AGENT_EVALUATIONS):
-        #     world, world_data = create_map_from_noise()
-        #     # Pad the world with a 1-cell border of zeros
-        #     padded_world = torch.nn.functional.pad(world, (0, 0, 1, 1, 1, 1), "constant", 0)
-        #     padded_world_data = torch.nn.functional.pad(world_data, (0, 0, 1, 1, 1, 1), "constant", 0)
-        #     worlds.append((padded_world, padded_world_data))
-
-        # self.starting_world = world.to(device)
         manager = mp.Manager()
         data_queue = manager.Queue()
 
