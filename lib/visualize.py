@@ -2,12 +2,14 @@ import json
 from queue import Queue, Empty
 import pygame
 import math
-from lib.world import Terrain, Species
+from lib.world import Terrain
 import lib.constants as const
+from lib.constants import SPECIES_MAP  # Add this import
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import numpy as np
+import random
 from matplotlib.ticker import MaxNLocator
 
 # Visualization settings
@@ -34,6 +36,12 @@ def init_pygame():
     pygame.display.set_caption("Ecosystem simulation")
     return screen
 
+def interpolate_color(value, color1, color2):
+    return tuple(
+        int(color1[i] + (color2[i] - color1[i]) * value)
+        for i in range(3)
+    )
+
 # Cache and draw the terrain only once to optimize performance
 def draw_terrain(world_tensor, world_data, display_current=False):
     global terrain_surface_cache
@@ -44,15 +52,22 @@ def draw_terrain(world_tensor, world_data, display_current=False):
     
     for x in range(const.WORLD_SIZE):
         for y in range(const.WORLD_SIZE):
+            # if (x == 0 or x == const.WORLD_SIZE - 1) or (y == 0 or y == const.WORLD_SIZE - 1):
+            #     continue
 
             # Extract terrain information from the tensor (one-hot encoded: first three values)
             terrain = world_tensor[x, y, :3]
+            depth_value = world_data[x, y, 3]
             
             # Determine if the cell is water or land based on the one-hot encoding
             if terrain[Terrain.WATER.value] == 1:
-                color = (0, 0, 255)  # Blue for water
+                shallow_color = (15, 79, 230)  # Light Blue
+                deep_color = (0, 0, 44)         # Dark Blue
+                color = interpolate_color(1 - depth_value, shallow_color, deep_color)
             else:
-                color = (0, 255, 0)  # Green for land
+                color = (84, 140, 47)  # Green for land
+                # add some noise to the land color
+                color = tuple(int(c + (random.random() - 0.5) * 20) for c in color)
 
             # Draw the terrain
             pygame.draw.rect(terrain_surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
@@ -139,6 +154,7 @@ def plot_generations(generations_data):
 def plot_biomass(agents_data):
     global biomass_graph_cache
 
+    plt.style.use('seaborn-v0_8-dark')
     plt.figure(figsize=(5, 5))
 
     # Count total number of plots to get enough colors
@@ -153,17 +169,22 @@ def plot_biomass(agents_data):
     for agent_index, evals in agents_data.items():
         for eval_index, data in evals.items():
             plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black")
-            plt.plot(data['steps'], data['anchovy_alive'], label=f'Agent {agent_index} Eval {eval_index} ANCHOVY', color="red", linestyle='--')
+            plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='--')
+            plt.plot(data['steps'], data['spat_alive'], label=f'Agent {agent_index} Eval {eval_index} SPAT', color="orange", linestyle='-.')
             plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle=':')
-            legend_patches.append(mpatches.Patch(color=colors(idx), label=f'Agent {agent_index} Eval {eval_index}'))
             idx += 1
+
+    # for each species
+    for species, properties in SPECIES_MAP.items():
+        color = properties["visualization"]["color"]
+        legend_patches.append(mpatches.Patch(color=[c/255 for c in color], label=species.capitalize()))
 
     plt.xlabel('Steps')
     plt.ylabel('Number of Species Alive')
     plt.title('Species Population Over Time')
 
     # Show the custom legend (ignoring linestyles or species)
-    plt.legend(handles=legend_patches, title="Agent Evaluations", loc='upper right')
+    plt.legend(handles=legend_patches, title="Species", loc='upper right')
 
     plt.tight_layout()
     plt.savefig('world_graph.png')
@@ -172,195 +193,142 @@ def plot_biomass(agents_data):
     # Load the saved plot image using Pygame and cache it
     biomass_graph_cache = pygame.image.load('world_graph.png')
 
-# Redraw the world with species biomass
 def draw_world(screen, world_tensor, world_data):
     # Remove padding if present
     world_tensor = world_tensor[1:-1, 1:-1]
+    world_data = world_data[1:-1, 1:-1]
 
     screen.fill((255, 255, 255))
 
     terrain_surface = draw_terrain(world_tensor, world_data, False)
-    screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
-
-    # Create a new surface for smell visualization
-    smell_surface = pygame.Surface((WORLD_WIDTH, WORLD_HEIGHT), pygame.SRCALPHA)
-
-    # Calculate maximum smell values for normalization
-    max_smell_plankton = world_tensor[:, :, const.OFFSETS_SMELL_PLANKTON].max().item() / 2
-    max_smell_anchovy = world_tensor[:, :, const.OFFSETS_SMELL_ANCHOVY].max().item() / 2
-    max_smell_cod = world_tensor[:, :, const.OFFSETS_SMELL_COD].max().item() / 2
-
-    # Loop over the world grid for smell visualization
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            # Get smell values for each species
-            smell_plankton = world_tensor[x, y, const.OFFSETS_SMELL_PLANKTON].item()
-            smell_anchovy = world_tensor[x, y, const.OFFSETS_SMELL_ANCHOVY].item()
-            smell_cod = world_tensor[x, y, const.OFFSETS_SMELL_COD].item()
-
-            # Normalize smell values to [0, 1]
-            smell_values = {}
-            smell_values[Species.PLANKTON] = min(smell_plankton / max_smell_plankton, 1.0)
-            smell_values[Species.ANCHOVY] = min(smell_anchovy / max_smell_anchovy, 1.0)
-            smell_values[Species.COD] = min(smell_cod / max_smell_cod, 1.0)
-
-
-            # Define colors for smells (RGBA with alpha for transparency)
-            smell_colors = {
-                Species.PLANKTON: (0, 255, 0, int(smell_values[Species.PLANKTON] * 150)),  # Green with variable alpha
-                Species.ANCHOVY: (255, 0, 0, int(smell_values[Species.ANCHOVY] * 150)),    # Red with variable alpha
-                Species.COD: (0, 0, 0, int(smell_values[Species.COD] * 150))               # Black with variable alpha
-            }
-
-            # Draw smell overlay
-            for species, color in smell_colors.items():
-                if smell_values[species] > 0:
-                    rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                    smell_surface.fill(color, rect)
-
-    # Blit the smell surface onto the main screen
-    screen.blit(smell_surface, (0, 0))
-
+    screen.blit(terrain_surface, (0, 0))  # Draw the terrain once
 
     # Calculate maximum biomass for each species
-    max_biomass_plankton = world_tensor[:, :, const.OFFSETS_BIOMASS_PLANKTON].max().item() / 2
-    max_biomass_anchovy = world_tensor[:, :, const.OFFSETS_BIOMASS_ANCHOVY].max().item() / 2
-    max_biomass_cod = world_tensor[:, :, const.OFFSETS_BIOMASS_COD].max().item() / 2
+    max_biomass_values = {}
+    for species, properties in SPECIES_MAP.items():
+        max_val = world_tensor[:, :, properties["biomass_offset"]].max().item()
+        max_biomass_values[species] = max_val if max_val > 0 else 1
 
-    # Define minimum and maximum radius for the circles
-    min_radius = 1
-    max_radius = CELL_SIZE // 2  # Subtracting 2 to prevent overlap with cell borders
-
-    min_radius_plankton = 0
+    # Define radius constraints
+    # We allow circles to be large enough to exceed cell boundaries.
+    # Keep a moderate max radius, but not too large.
+    min_radius = 0
+    max_radius = CELL_SIZE // 1.5
+    min_radius_plankton = 1
     max_radius_plankton = CELL_SIZE // 4
 
-    # Loop over the world grid
+    # Small offsets to differentiate species within a cell
+    offsets = {
+        "plankton": (-CELL_SIZE // 6, -CELL_SIZE // 6),
+        "herring": (CELL_SIZE // 6, -CELL_SIZE // 6),
+        "spat": (-CELL_SIZE // 6, CELL_SIZE // 6),
+        "cod": (CELL_SIZE // 6, CELL_SIZE // 6)
+    }
+
+    # We'll create a large surface for each circle to avoid cropping.
+    # For safety, let's make it 3x cell size.
+    LARGE_SURFACE_SIZE = CELL_SIZE * 3
+    half_ls = LARGE_SURFACE_SIZE // 2  # Half of large surface size
+    cell_center_offset = (CELL_SIZE // 2, CELL_SIZE // 2)
+
     for x in range(const.WORLD_SIZE):
         for y in range(const.WORLD_SIZE):
-            # Define offsets for species visualization within the cell
-            offsets = {
-                Species.PLANKTON: (-CELL_SIZE // 4, -CELL_SIZE // 4),
-                Species.ANCHOVY: (CELL_SIZE // 4, -CELL_SIZE // 4),
-                Species.COD: (0, CELL_SIZE // 4)
-            }
-
             # Extract biomass for each species at the current cell
-            plankton_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON].item()
-            anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()
-            cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()
-
-            # Create a dictionary for species properties
             species_biomass = {
-                Species.PLANKTON: (plankton_biomass, (0, 255, 0), max_biomass_plankton),  # Green
-                Species.ANCHOVY: (anchovy_biomass, (255, 0, 0), max_biomass_anchovy),     # Red
-                Species.COD: (cod_biomass, (0, 0, 0), max_biomass_cod)                    # Black
+                species: world_tensor[x, y, props["biomass_offset"]].item() 
+                for species, props in SPECIES_MAP.items()
             }
 
-            # Draw biomass for each species
-            for species, (biomass, color, max_biomass) in species_biomass.items():
+            # Calculate the cell center on the main screen
+            cell_center = (
+                x * CELL_SIZE + cell_center_offset[0],
+                y * CELL_SIZE + cell_center_offset[1]
+            )
+
+            # Draw each species in the cell
+            for species, biomass in species_biomass.items():
                 if biomass > 0:
                     # Determine min and max radius for the species
-                    if species == Species.PLANKTON:
+                    if species == "plankton":
                         min_r = min_radius_plankton
                         max_r = max_radius_plankton
                     else:
                         min_r = min_radius
                         max_r = max_radius
 
-                    # Calculate the radius proportionally
-                    if max_biomass > 0:
-                        radius = min_r + int((max_r - min_r) * (biomass / max_biomass))
-                    else:
-                        radius = min_r  # Default to minimum radius if max_biomass is zero
+                    max_biomass = max_biomass_values[species]
+                    # Use sqrt scaling again or linear if preferred
+                    radius = min_r + (max_r - min_r) * (math.sqrt(biomass / max_biomass))
+                    radius = int(radius)
 
-                    # Ensure radius is within bounds
-                    radius = max(min_r, min(radius, max_r))
-
-                    # Calculate circle center based on offsets
                     offset_x, offset_y = offsets[species]
-                    circle_center = (
-                        x * CELL_SIZE + CELL_SIZE // 2 + offset_x,
-                        y * CELL_SIZE + CELL_SIZE // 2 + offset_y
-                    )
 
-                    # Draw the circle representing the species biomass
-                    pygame.draw.circle(screen, color, circle_center, radius)
+                    # Create a large transparent surface
+                    circle_surface = pygame.Surface((LARGE_SURFACE_SIZE, LARGE_SURFACE_SIZE), pygame.SRCALPHA)
+                    circle_surface = circle_surface.convert_alpha()
+                    circle_surface.fill((0, 0, 0, 0))  # fully transparent background
 
-    # Draw cached biomass graph
+                    # Draw the circle at the center of this large surface
+                    # The circle center on the large surface:
+                    circle_center = (half_ls + offset_x, half_ls + offset_y)
+                    color = SPECIES_MAP[species]["visualization"]["color"]
+
+                    # Add partial transparency so overlapping species are visible
+                    # For example, alpha = 180 for semi-transparency
+                    # lerp opacity from 0 to 255 based on radius
+                    opacity = int(255 * (radius / max_radius))
+                    circle_color = (color[0], color[1], color[2], opacity)
+
+                    pygame.draw.circle(circle_surface, circle_color, circle_center, radius)
+
+                    # Now blit the large surface onto the screen
+                    # We must align large surface center with the cell center
+                    # Since large surface center is at half_ls, half_ls,
+                    # top-left corner should be cell_center - (half_ls, half_ls)
+                    blit_pos = (cell_center[0] - half_ls, cell_center[1] - half_ls)
+                    screen.blit(circle_surface, blit_pos)
+
+    # Draw cached biomass and energy graphs if they exist
     if biomass_graph_cache:
-        screen.blit(biomass_graph_cache, (WORLD_WIDTH, 0))  # Adjust the position as needed
+        screen.blit(biomass_graph_cache, (WORLD_WIDTH, 0))
     if energy_graph_cache:
         screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
 
-    # Perform screen update only once at the end
     pygame.display.flip()
 
-def draw_world_detailed(screen, world_tensor):
-    # remove padding
-    world_tensor = world_tensor[1:-1, 1:-1]
+    # # ---------------------
+    # # Add a legend (improvement #2)
+    # # ---------------------
+    # # We can draw a small panel on the right side or top.
+    # # Assume we have a font and the legend panel at right side of screen.
+    
+    # legend_x = WORLD_WIDTH + 20
+    # legend_y = 20
+    # font = pygame.font.SysFont('Arial', 14)  # Adjust as needed
 
-    """
-    Visualize the world based on the tensor representation, displaying both biomass and energy.
-    The world_tensor has shape (WORLD_SIZE, WORLD_SIZE, N) where:
-    - The first 3 values represent the terrain (one-hot encoded).
-    - The next 3 values represent the biomass of plankton, anchovy, and cod, respectively.
-    - The next 3 values represent the energy of plankton, anchovy, and cod, respectively.
-    """
-    screen.fill((255, 255, 255))
+    # legend_title = font.render("Legend:", True, (0, 0, 0))
+    # screen.blit(legend_title, (legend_x, legend_y))
+    # legend_y += 30
 
-    terrain_surface = draw_terrain(world_tensor)
-    screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
+    # for species, props in SPECIES_MAP.items():
+    #     # Draw a small reference circle
+    #     # Use a moderate biomass fraction to draw a sample circle
+    #     sample_biomass = max_biomass_values[species] / 2
+    #     radius = int(min_radius + (max_radius - min_radius) * (math.sqrt(sample_biomass / max_biomass_values[species])))
 
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            # Define horizontal positions for circles and bars within the cell
-            species_positions = {
-                Species.PLANKTON: (-CELL_SIZE // 3, -CELL_SIZE // 4),  # Left circle
-                Species.ANCHOVY: (0, -CELL_SIZE // 4),                 # Center circle
-                Species.COD: (CELL_SIZE // 3, -CELL_SIZE // 4)         # Right circle
-            }
-            
-            # Extract biomass and energy information for each species
-            plankton_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_PLANKTON].item()  # Biomass for plankton
-            anchovy_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_ANCHOVY].item()  # Biomass for anchovy
-            cod_biomass = world_tensor[x, y, const.OFFSETS_BIOMASS_COD].item()  # Biomass for cod
+    #     # Create a small surface to draw legend circles
+    #     sample_surf = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
+    #     sample_surf = sample_surf.convert_alpha()
+    #     # Outline
+    #     pygame.draw.circle(sample_surf, (0, 0, 0, 255), (CELL_SIZE//2, CELL_SIZE//2), radius+1)
+    #     # Fill
+    #     color = props["visualization"]["color"]
+    #     pygame.draw.circle(sample_surf, (color[0], color[1], color[2], 200), (CELL_SIZE//2, CELL_SIZE//2), radius)
 
-            # plankton_energy = world_tensor[x, y, const.OFFSETS_ENERGY_PLANKTON].item()  # Energy for plankton
-            anchovy_energy = world_tensor[x, y, const.OFFSETS_ENERGY_ANCHOVY].item()  # Energy for anchovy
-            cod_energy = world_tensor[x, y, const.OFFSETS_ENERGY_COD].item()  # Energy for cod
+    #     screen.blit(sample_surf, (legend_x, legend_y))
+    #     name_surface = font.render(species.capitalize(), True, (0,0,0))
+    #     screen.blit(name_surface, (legend_x + CELL_SIZE + 10, legend_y + CELL_SIZE//4))
+    #     legend_y += CELL_SIZE + 10
 
-            # Dictionary to map species to their biomass, energy, and colors
-            species_data = {
-                # Species.PLANKTON: (plankton_biomass, plankton_energy, (0, 255, 0), (0, 200, 0)),  # Green for plankton biomass, darker green for energy
-                Species.ANCHOVY: (anchovy_biomass, anchovy_energy, (255, 0, 0), (200, 0, 0)),    # Red for anchovy biomass, darker red for energy
-                Species.COD: (cod_biomass, cod_energy, (0, 0, 0), (50, 50, 50))                 # Black for cod biomass, gray for energy
-            }
-
-            # Draw biomass circles in a row at the top
-            for species, (biomass, energy, biomass_color, energy_color) in species_data.items():
-                offset_x, offset_y = species_positions[species]
-                center_x = x * CELL_SIZE + CELL_SIZE // 2 + offset_x
-                center_y = y * CELL_SIZE + CELL_SIZE // 2 + offset_y
-
-                # Draw biomass as circles (aligned in a row at the top)
-                if biomass > 0:
-                    radius = min(CELL_SIZE // 6, int(math.sqrt(biomass) * 0.75))  # Smaller circles to fit in a row
-                    pygame.draw.circle(screen, biomass_color, (center_x, center_y), radius)
-
-                # Draw energy bars in a row below the circles
-                if energy > 0:
-                    bar_height = int(CELL_SIZE * 0.1)  # Set bar height smaller to fit in the cell
-                    max_bar_width = CELL_SIZE // 3     # Max width per species to fit three bars in a row
-                    # set bar width based on energy level ( 100 max width, and 0 no width )
-                    bar_width = max(1, min(int(max_bar_width * (energy / 100)), max_bar_width))
-                    bar_rect = pygame.Rect(center_x - bar_width // 2, center_y + CELL_SIZE // 4, bar_width, bar_height)
-                    pygame.draw.rect(screen, energy_color, bar_rect)
-
-    # Draw cached biomass graph
-    if biomass_graph_cache:
-        screen.blit(biomass_graph_cache, (WORLD_WIDTH, 0))  # Adjust the position as needed
-    if energy_graph_cache:
-        screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
-
-    # Perform screen update only once at the end
-    pygame.display.flip()
+    # # Perform screen update once
+    # pygame.display.flip()
