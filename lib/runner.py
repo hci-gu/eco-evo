@@ -14,14 +14,14 @@ device = torch.device(const.DEVICE)
 
 @torch.no_grad()
 def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index, data_queue, visualize = None):
-    agent = Model(chromosome=agent_dict).to(device)
+    agent = Model(chromosome=agent_dict)
     fitness = 0
     world = world.clone()  # Clone the padded world tensor for each agent
     # reset_plankton_cluster()
     species_order = [species for species in const.SPECIES_MAP.keys()]
     grid_x, grid_y = torch.meshgrid(
-        torch.arange(const.WORLD_SIZE, device=device),
-        torch.arange(const.WORLD_SIZE, device=device),
+        torch.arange(const.WORLD_SIZE),
+        torch.arange(const.WORLD_SIZE),
         indexing='ij'
     )
     set_a_mask = ((grid_x + grid_y) % 2 == 0)
@@ -65,7 +65,7 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
                 [-1, -1], [-1, 0], [-1, 1],
                 [ 0, -1], [ 0, 0], [ 0, 1],
                 [ 1, -1], [ 1, 0], [ 1, 1]
-            ], device=device)  # Shape: [9, 2]
+            ])  # Shape: [9, 2]
 
             neighbor_positions = selected_positions_padded.unsqueeze(1) + offsets.unsqueeze(0)  # Shape: [Num_Selected_Cells, 9, 2]
             neighbor_positions = neighbor_positions.reshape(-1, 2)
@@ -93,7 +93,7 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
             normalized_values = torch.cat([terrain, biomass, smell], dim=-1)  # Shape: [Num_Selected_Cells, 9, 11]
 
             # Step 5: Prepare batch input
-            batch_tensor = normalized_values.view(selected_positions_padded.size(0), -1).to(device)
+            batch_tensor = normalized_values.view(selected_positions_padded.size(0), -1)
 
             # Step 6: Perform neural network forward pass
             action_values_batch = agent.forward(batch_tensor, species)
@@ -152,8 +152,7 @@ class Runner():
             data_queue = None
             results = []
             for t in tasks:
-                results.append(evaluate_agent_wrapper(t))
-            
+                results.append(evaluate_agent_wrapper(t))            
         else:
             print("Running on CPU - using multiprocessing for agent evaluation...")
             

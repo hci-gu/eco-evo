@@ -8,7 +8,7 @@ diffusion_kernel = torch.tensor([
     [1/16, 1/8, 1/16],
     [1/8,  1/4, 1/8],
     [1/16, 1/8, 1/16]
-], device=device)
+])
 
 def diffuse_smell(world):
     # Prepare the smell channels for convolution

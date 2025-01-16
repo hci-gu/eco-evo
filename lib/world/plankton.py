@@ -95,8 +95,8 @@ def move_plankton_cluster(world_tensor):
 
     # Generate the circular cluster at the new position
     xx, yy = torch.meshgrid(
-        torch.arange(world_size_x, device=world_tensor.device),
-        torch.arange(world_size_y, device=world_tensor.device),
+        torch.arange(world_size_x),
+        torch.arange(world_size_y),
         indexing='ij'  # Specify indexing to avoid warnings
     )
     # Calculate distance from the center of the cluster
@@ -251,7 +251,7 @@ def move_plankton_based_on_current(world_tensor, world_data):
         -3 * math.pi / 4, # Northwest (-135 degrees)
         -math.pi / 2,     # North (-90 degrees)
         -math.pi / 4,     # Northeast (-45 degrees)
-    ], device=world_tensor.device)
+    ])
 
     # For each plankton cell, attempt to move in the intended direction or the closest valid alternative
     for i in range(len(x_indices_flat)):
