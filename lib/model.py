@@ -13,7 +13,7 @@ class Model(nn.Module):
             self.set_weights(chromosome)
 
     def forward(self, x: torch.Tensor, species_key: str) -> torch.Tensor:
-        x = x.to(self.device)
+        x = x.to(device)
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
         if species_key == "herring":
