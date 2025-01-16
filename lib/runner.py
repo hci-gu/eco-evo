@@ -14,7 +14,7 @@ device = torch.device(const.DEVICE)
 
 @torch.no_grad()
 def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index, data_queue, visualize = None):
-    agent = Model(chromosome=agent_dict)
+    agent = Model(chromosome=agent_dict).to(device)
     fitness = 0
     world = world.clone()  # Clone the padded world tensor for each agent
     # reset_plankton_cluster()
@@ -93,7 +93,7 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
             normalized_values = torch.cat([terrain, biomass, smell], dim=-1)  # Shape: [Num_Selected_Cells, 9, 11]
 
             # Step 5: Prepare batch input
-            batch_tensor = normalized_values.view(selected_positions_padded.size(0), -1)
+            batch_tensor = normalized_values.view(selected_positions_padded.size(0), -1).to(device)
 
             # Step 6: Perform neural network forward pass
             action_values_batch = agent.forward(batch_tensor, species)
