@@ -15,7 +15,7 @@ torch = { cmd = "python torch_test.py" }
 [dependencies]
 numpy = ">=1.26.4,<1.27"
 python = "3.11"
-pygame = ">=2.6.0,<2.7"
+pygame = ">=2.1.0,<3.0"
 opensimplex = ">=0.4.5,<0.5"
 pytorch = ">=2.3.1,<2.4"
 pytorch-cuda = "12.4"        # Add explicit dependency for CUDA 12.4
