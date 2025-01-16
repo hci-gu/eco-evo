@@ -2,7 +2,7 @@
 name = "eco-evo-pop"
 version = "0.1.0"
 description = "Add a short description here"
-channels = ["pytorch", "conda-forge"]
+channels = ["pytorch-conda-forge"]
 platforms = [
     "linux-64",
 ] # Remove "osx-arm64" if running on a Linux machine with NVIDIA GPU
@@ -25,4 +25,4 @@ flask = ">=3.1.0,<3.2"
 flask_cors = ">=4.0.0,<4.1"
 
 [system-requirements]
-cuda = "12.4"
+cuda = "12.0"
