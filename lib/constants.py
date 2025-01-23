@@ -15,7 +15,7 @@ class Action(Enum):
     EAT = 4
     REST = 5
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda" if torch.cuda.is_available() else "mps"
 
 SPEED_MULTIPLIER = 3
 EAT_REWARD_BOOST = 10
@@ -35,7 +35,7 @@ STARTING_BIOMASS_SPRAT = 1525100
 STARTING_BIOMASS_PLANKTON = 5000000
 MIN_PERCENT_ALIVE = 0.2
 MAX_PERCENT_ALIVE = 3
-MAX_STEPS = 2500
+MAX_STEPS = 100
 
 EVAL_AGENT = './agents/test.pt'
 
@@ -113,6 +113,8 @@ SPECIES_MAP = {
         }
     }
 }
+# create a species map based on index with identical values
+SPECIES_MAP_INDEX = {species["index"]: species for species in SPECIES_MAP.values()}
 
 EATING_MAP = {
     "plankton": {},
@@ -127,6 +129,8 @@ EATING_MAP = {
         "spat": {},
     }
 }
+# create a eating map based on index with identical values
+EATING_MAP_INDEX = {species["index"]: species for species in EATING_MAP.values()}
 
 FISHING_AMOUNT = 0.1
 FISHING_OCCURRENCE = 100
@@ -137,7 +141,7 @@ BIOMASS_GROWTH_RATE = 0.075
 SMELL_EMISSION_RATE = 0.05
 SMELL_DECAY_RATE = 0.2
 
-NUM_AGENTS = 8
+NUM_AGENTS = 1
 AGENT_EVALUATIONS = 4
 ELITISM_SELECTION = 8
 TOURNAMENT_SELECTION = 6

@@ -13,7 +13,7 @@ def perform_action(world_tensor, action_values_batch, species_key, positions_ten
     eat = action_values_batch[:, Action.EAT.value]
     rest = action_values_batch[:, Action.REST.value]
 
-    species_properties = const.SPECIES_MAP[species_key]
+    species_properties = const.SPECIES_MAP_INDEX[species_key]
     biomass_offset = species_properties["biomass_offset"]
 
     total_activity = move_up + move_down + move_left + move_right + eat
@@ -61,10 +61,10 @@ def perform_action(world_tensor, action_values_batch, species_key, positions_ten
 
     world_tensor[x_batch, y_batch, biomass_offset] -= total_biomass_moved
 
-    for prey_species, prey_info in const.EATING_MAP[species_key].items():
-        prey_biomass_offset = const.SPECIES_MAP[prey_species]["biomass_offset"]
+    for prey_species, prey_info in const.EATING_MAP_INDEX[species_key].items():
+        prey_biomass_offset = const.SPECIES_MAP_INDEX[prey_species]["biomass_offset"]
         prey_biomass = world_tensor[x_batch, y_batch, prey_biomass_offset]
-        eat_amounts = initial_biomass * eat * const.SPECIES_MAP[species_key]["max_consumption_rate"]
+        eat_amounts = initial_biomass * eat * const.SPECIES_MAP_INDEX[species_key]["max_consumption_rate"]
         eat_amount = torch.min(prey_biomass, eat_amounts)
         world_tensor[x_batch, y_batch, prey_biomass_offset] -= (eat_amount * (const.EAT_REWARD_BOOST / 2))
         world_tensor[x_batch, y_batch, biomass_offset] += (eat_amount * const.EAT_REWARD_BOOST)

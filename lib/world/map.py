@@ -31,8 +31,8 @@ def read_map_from_file(folder_path):
     depth_image = depth_image.convert('L')
     depth_pixels = depth_image.load()
     
-    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES)
-    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 4)
+    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES, device=device)
+    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 4, device=device)
 
     for x in range(const.WORLD_SIZE):
         for y in range(const.WORLD_SIZE):
@@ -40,9 +40,9 @@ def read_map_from_file(folder_path):
             depth_value = depth_pixels[x, y] / 255
             world_data[x, y, 3] = depth_value
             if color == palette["water"]:
-                world_tensor[x, y, :3] = torch.tensor([0, 1, 0])
+                world_tensor[x, y, :3] = torch.tensor([0, 1, 0], device=device)
             else:
-                world_tensor[x, y, :3] = torch.tensor([1, 0, 0])
+                world_tensor[x, y, :3] = torch.tensor([1, 0, 0], device=device)
 
     add_species_to_map(world_tensor, world_data)
 
@@ -87,8 +87,8 @@ def create_map_from_noise(static=False):
 
     # Create a tensor to represent the entire world
     # Tensor dimensions: (WORLD_SIZE, WORLD_SIZE, 12) -> 3 for terrain (3 one-hot) + biomass (3 species) + energy (3 species) + smell (3 species)
-    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES)
-    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 3)
+    world_tensor = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES, device=device)
+    world_data = torch.zeros(const.WORLD_SIZE, const.WORLD_SIZE, 3, device=device)
 
     center_x, center_y = const.WORLD_SIZE // 2, const.WORLD_SIZE // 2
     max_distance = math.sqrt(center_x**2 + center_y**2)
@@ -106,7 +106,7 @@ def create_map_from_noise(static=False):
             
             # Set terrain one-hot encoding
             terrain_encoding = [0, 1, 0] if terrain == Terrain.WATER else [1, 0, 0]
-            world_tensor[x, y, :3] = torch.tensor(terrain_encoding)
+            world_tensor[x, y, :3] = torch.tensor(terrain_encoding, device=device)
 
             if terrain == Terrain.WATER:
                 # Calculate the angle of the current based on the cell's position relative to the center
