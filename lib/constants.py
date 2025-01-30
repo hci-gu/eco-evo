@@ -216,5 +216,29 @@ def override_from_file(file_path):
     print(f"Overridden constants from file {file_path}")
     print(f"NUM_AGENTS: {NUM_AGENTS}")
 
+def override_from_options(options):
+    global STARTING_BIOMASS_COD
+    global STARTING_BIOMASS_HERRING
+    global STARTING_BIOMASS_SPRAT
+    global MAX_STEPS
+    global MIN_PERCENT_ALIVE
+
+    MIN_PERCENT_ALIVE = 0.01
+
+    for species, amount in options["fishingAmounts"].items():
+        SPECIES_MAP[species]["fishing_mortality_rate"] = (amount / 100) * DAYS_PER_STEP
+
+    for species, amount in options["initialPopulation"].items():
+        biomass = amount * 1000
+        SPECIES_MAP[species]["starting_biomass"] = biomass
+        SPECIES_MAP[species]["max_in_cell"] = biomass / 2
+        SPECIES_MAP[species]["min_biomass_in_cell"] = biomass / (WORLD_SIZE * WORLD_SIZE) / 20
+
+    MAX_STEPS = options["maxSteps"]
+
+    
+    
+
+
 
 

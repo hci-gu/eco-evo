@@ -20,14 +20,14 @@ def perform_action(world_tensor, action_values_batch, species_key, positions_ten
     activity_mr_loss = total_activity * species_properties["activity_metabolic_rate"]
     resting_mr_loss = rest * species_properties["standard_metabolic_rate"]
     natural_mortality_loss = species_properties["natural_mortality_rate"]
-    # fishing_mortality_loss = species_properties["fishing_mortality_rate"]
+    fishing_mortality_loss = species_properties["fishing_mortality_rate"]
 
     initial_biomass = world_tensor[x_batch, y_batch, biomass_offset]
 
     world_tensor[x_batch, y_batch, biomass_offset] -= (initial_biomass * activity_mr_loss)
     world_tensor[x_batch, y_batch, biomass_offset] -= (initial_biomass * resting_mr_loss)
     world_tensor[x_batch, y_batch, biomass_offset] -= (initial_biomass * natural_mortality_loss)
-    # world_tensor[x_batch, y_batch, biomass_offset] -= (initial_biomass * fishing_mortality_loss)
+    world_tensor[x_batch, y_batch, biomass_offset] -= (initial_biomass * fishing_mortality_loss)
 
     biomass_after_loss = world_tensor[x_batch, y_batch, biomass_offset]
 
