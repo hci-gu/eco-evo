@@ -15,18 +15,19 @@ class Action(Enum):
     EAT = 4
     REST = 5
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda" if torch.cuda.is_available() else "mps"
 
 SPEED_MULTIPLIER = 3
 EAT_REWARD_BOOST = 10
 
 MAP_METER_SIZE = 300 * 1000
-WORLD_SIZE = 50
+WORLD_SIZE = 25
 # meters per second
 FISH_SWIM_SPEED = 0.025
 SECONDS_IN_DAY = 86400
 DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
 DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
+SCALE_FISHING = 0
 
 NOISE_SCALING = 4.5
 STARTING_BIOMASS_COD = 387941
@@ -35,7 +36,7 @@ STARTING_BIOMASS_SPRAT = 1525100
 STARTING_BIOMASS_PLANKTON = 5000000
 MIN_PERCENT_ALIVE = 0.2
 MAX_PERCENT_ALIVE = 3
-MAX_STEPS = 2500
+MAX_STEPS = 100
 
 EVAL_AGENT = './agents/test.pt'
 
@@ -71,7 +72,7 @@ SPECIES_MAP = {
         "standard_metabolic_rate": 0.00011180339 * DAYS_PER_STEP,
         "max_consumption_rate": 0.00132174564 * DAYS_PER_STEP,
         "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP,
-        "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP,
+        "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         "hardcoded_logic": False,
         "visualization": {
             "color": [255, 0, 0]
@@ -89,7 +90,7 @@ SPECIES_MAP = {
         "standard_metabolic_rate": 0.00006447419 * DAYS_PER_STEP,
         "max_consumption_rate": 0.00073367438 * DAYS_PER_STEP,
         "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP,
-        "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP,
+        "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         "hardcoded_logic": False,
         "visualization": {
             "color": [255, 100, 0]
@@ -106,7 +107,7 @@ SPECIES_MAP = {
         "standard_metabolic_rate": 0.000043 * DAYS_PER_STEP,
         "max_consumption_rate": 0.00526 * DAYS_PER_STEP,
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP,
-        "fishing_mortality_rate": 0.005413783 * DAYS_PER_STEP,
+        "fishing_mortality_rate": 0.005413783 * DAYS_PER_STEP * SCALE_FISHING,
         "hardcoded_logic": False,
         "visualization": {
             "color": [0, 0, 0]
@@ -137,7 +138,7 @@ BIOMASS_GROWTH_RATE = 0.075
 SMELL_EMISSION_RATE = 0.05
 SMELL_DECAY_RATE = 0.2
 
-NUM_AGENTS = 8
+NUM_AGENTS = 1
 AGENT_EVALUATIONS = 4
 ELITISM_SELECTION = 8
 TOURNAMENT_SELECTION = 6

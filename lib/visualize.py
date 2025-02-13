@@ -193,6 +193,27 @@ def plot_biomass(agents_data):
     # Load the saved plot image using Pygame and cache it
     biomass_graph_cache = pygame.image.load('world_graph.png')
 
+def draw_actions_values(screen, world_data):
+    # world_data = world_data[1:-1, 1:-1]
+    font = pygame.font.SysFont('Arial', 10)  # Adjust as needed
+
+    max_value = world_data[:, :, 4].max()
+
+    for x in range(const.WORLD_SIZE):
+        for y in range(const.WORLD_SIZE):
+            cell_center = (x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2)
+            number_of_actions = int(world_data[x, y, 4])
+
+            if number_of_actions > 0:
+                # color the text from red to green (if value is close to max its green, if its close to 0 its red)
+                closeness_to_max = number_of_actions / max_value
+                red_color = (255, 0, 0)
+                green_color = (0, 255, 0)
+                color = interpolate_color(closeness_to_max, red_color, green_color)
+                text = font.render(str(number_of_actions), True, color)
+
+                screen.blit(text, (cell_center[0] - 5, cell_center[1] - 5))
+
 def draw_world(screen, world_tensor, world_data):
     # Remove padding if present
     world_tensor = world_tensor[1:-1, 1:-1]
@@ -287,6 +308,8 @@ def draw_world(screen, world_tensor, world_data):
                     # top-left corner should be cell_center - (half_ls, half_ls)
                     blit_pos = (cell_center[0] - half_ls, cell_center[1] - half_ls)
                     screen.blit(circle_surface, blit_pos)
+
+    draw_actions_values(screen, world_data)
 
     # Draw cached biomass and energy graphs if they exist
     if biomass_graph_cache:

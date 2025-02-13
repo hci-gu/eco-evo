@@ -2,9 +2,11 @@ import torch
 import lib.constants as const
 from lib.constants import Action
 
-def perform_action(world_tensor, action_values_batch, species_key, positions_tensor):
+def perform_action(world_tensor, world_data, action_values_batch, species_key, positions_tensor):
     x_batch = positions_tensor[:, 0]
     y_batch = positions_tensor[:, 1]
+    
+    world_data[x_batch, y_batch, 4] += 1
 
     move_up = action_values_batch[:, Action.UP.value]
     move_down = action_values_batch[:, Action.DOWN.value]

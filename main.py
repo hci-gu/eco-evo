@@ -44,7 +44,7 @@ if __name__ == "__main__":
                     'world': world
                 })
                 draw_world(screen, world, world_data)
-                plot_biomass(agents_data)
+                # plot_biomass(agents_data)
                 pygame.display.flip()
                 pygame.time.wait(1)
             runner.simulate(agent_file=args.agent_file, visualize=visualize)
@@ -58,39 +58,38 @@ if __name__ == "__main__":
         for config_file in config_files:
             override_from_file(config_file)
             runner = Runner()
-            simulation_thread = threading.Thread(target=runner.run)
-            simulation_thread.start()
+            # simulation_thread = threading.Thread(target=runner.run)
+            # simulation_thread.start()
             
-            running = True
-            while running and runner.current_generation < const.GENERATIONS_PER_RUN:
-                # Handle Pygame events
-                # for event in pygame.event.get():
-                #     if event.type == pygame.QUIT:
-                #         running = False
-                #         break
-                # Process visualization data
-                if hasattr(runner, 'data_queue'):
-                    data_loop(runner.data_queue)
+            # running = True
+            # while running and runner.current_generation < const.GENERATIONS_PER_RUN:
+            #     # Handle Pygame events
+            #     # for event in pygame.event.get():
+            #     #     if event.type == pygame.QUIT:
+            #     #         running = False
+            #     #         break
+            #     # Process visualization data
+            #     if hasattr(runner, 'data_queue'):
+            #         data_loop(runner.data_queue)
 
-                if runner.generation_finished.is_set():
-                    runner.next_generation()
-                    generations_data = update_generations_data(runner.current_generation)
-                    plot_generations(generations_data)
+            #     if runner.generation_finished.is_set():
+            #         runner.next_generation()
+            #         generations_data = update_generations_data(runner.current_generation)
+            #         plot_generations(generations_data)
 
-                    evaluation_thread = threading.Thread(target=runner.run)
-                    evaluation_thread.start()
+            #         evaluation_thread = threading.Thread(target=runner.run)
+            #         evaluation_thread.start()
 
-            simulation_thread.join()
+            # simulation_thread.join()
             # cProfile.run('Runner().run(True)')
 
             
-            # create_world()
-            # start_time = time.time()
-            # runs = 5
-            # for i in range(runs):
-            #     print(f"Run {i+1}/{runs}")
-            #     Runner().run(True)
-            # print(f"Average time: {(time.time() - start_time) / runs}")
+            start_time = time.time()
+            runs = 5
+            for i in range(runs):
+                print(f"Run {i+1}/{runs}")
+                Runner().run(True)
+            print(f"Average time: {(time.time() - start_time) / runs}")
 
     
 

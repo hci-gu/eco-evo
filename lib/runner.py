@@ -14,18 +14,20 @@ device = torch.device(const.DEVICE)
 
 @torch.no_grad()
 def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index, data_queue, visualize = None):
-    agent = Model(chromosome=agent_dict)
+    agent = Model(chromosome=agent_dict).to(device)
     fitness = 0
     world = world.clone()  # Clone the padded world tensor for each agent
     # reset_plankton_cluster()
     species_order = [species for species in const.SPECIES_MAP.keys()]
+    # Create the grid coordinates:
     grid_x, grid_y = torch.meshgrid(
-        torch.arange(const.WORLD_SIZE),
-        torch.arange(const.WORLD_SIZE),
+        torch.arange(const.WORLD_SIZE, device=device),
+        torch.arange(const.WORLD_SIZE, device=device),
         indexing='ij'
     )
-    set_a_mask = ((grid_x + grid_y) % 2 == 0)
-    set_b_mask = ~set_a_mask
+
+    # Compute a 5-coloring of the grid using the function color = (i + 2*j) mod 5.
+    colors = (grid_x + 2 * grid_y) % 5
     max_biomass = world[..., 3:7].max()
     max_smell = world[..., 7:11].max()
     
@@ -38,22 +40,15 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
                 spawn_plankton(world, world_data)
                 continue
 
-            # Step 2: Randomly select one set
-            selected_set_mask = random.choice([set_a_mask, set_b_mask])
+             # Select a color and build a mask directly on the GPU
+            selected_color = random.choice([0, 1, 2, 3, 4])
+            selected_set_mask = (colors == selected_color)
+            selected_positions = selected_set_mask.nonzero(as_tuple=False)
+            selected_positions_padded = selected_positions + 1  # adjust if padding
 
-            # Step 3: Get positions of selected cells
-            selected_positions = selected_set_mask.nonzero(as_tuple=False)  # Shape: [Num_Selected_Cells, 2]
-            selected_positions_padded = selected_positions + 1  # Adjust for padding if necessary
-
-            # # **Optimization Step: Filter out cells with zero biomass**
-            # # Extract biomass values for the selected cells
             biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
             biomass_values = world[selected_positions_padded[:, 0], selected_positions_padded[:, 1], biomass_offset]
-
-            # Create a mask for cells with non-zero biomass
             non_zero_biomass_mask = biomass_values > 0
-
-            # Filter positions based on the non-zero biomass mask
             selected_positions_padded = selected_positions_padded[non_zero_biomass_mask]
 
             # If no cells have non-zero biomass, skip to the next species
@@ -65,41 +60,21 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
                 [-1, -1], [-1, 0], [-1, 1],
                 [ 0, -1], [ 0, 0], [ 0, 1],
                 [ 1, -1], [ 1, 0], [ 1, 1]
-            ])  # Shape: [9, 2]
+            ], device=device)
+            neighbor_positions = (selected_positions_padded.unsqueeze(1) + offsets.unsqueeze(0)).reshape(-1, 2)
+            neighbor_positions[:, 0].clamp_(0, const.WORLD_SIZE + 1)
+            neighbor_positions[:, 1].clamp_(0, const.WORLD_SIZE + 1)
 
-            neighbor_positions = selected_positions_padded.unsqueeze(1) + offsets.unsqueeze(0)  # Shape: [Num_Selected_Cells, 9, 2]
-            neighbor_positions = neighbor_positions.reshape(-1, 2)
+            neighbor_values = world[neighbor_positions[:, 0], neighbor_positions[:, 1]]
+            neighbor_values = neighbor_values.view(selected_positions_padded.size(0), 9, const.TOTAL_TENSOR_VALUES)
 
-            # Ensure indices are within bounds
-            neighbor_x = neighbor_positions[:, 0].clamp(0, const.WORLD_SIZE + 1)
-            neighbor_y = neighbor_positions[:, 1].clamp(0, const.WORLD_SIZE + 1)
-
-            # Extract neighbor values
-            # neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions.size(0), -1)
-            # neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions_padded.size(0), -1)
-            neighbor_values = world[neighbor_x, neighbor_y].view(selected_positions_padded.size(0), 9, const.TOTAL_TENSOR_VALUES)
-            
-            # Normalize the neighbor_values:
-            # Terrain: channels [0:3] (assume already normalized)
             terrain = neighbor_values[..., 0:3]
-
-            # Biomass: channels [3:7]
             biomass = neighbor_values[..., 3:7] / (max_biomass + 1e-8)
+            smell   = neighbor_values[..., 7:11] / (max_smell + 1e-8)
+            batch_tensor = torch.cat([terrain, biomass, smell], dim=-1).view(selected_positions_padded.size(0), -1)
 
-            # Smell: channels [7:11]
-            smell = neighbor_values[..., 7:11] / (max_smell + 1e-8)
-
-            # Recombine normalized values
-            normalized_values = torch.cat([terrain, biomass, smell], dim=-1)  # Shape: [Num_Selected_Cells, 9, 11]
-
-            # Step 5: Prepare batch input
-            batch_tensor = normalized_values.view(selected_positions_padded.size(0), -1)
-
-            # Step 6: Perform neural network forward pass
             action_values_batch = agent.forward(batch_tensor, species)
-
-            # # Step 7: Perform actions
-            world = perform_action(world, action_values_batch, species, selected_positions_padded)
+            world = perform_action(world, world_data, action_values_batch, species, selected_positions_padded)
 
         # Update the display after each step
         if data_queue:
@@ -107,6 +82,7 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
         if visualize:
             visualize(world, world_data, fitness)
         fitness += 1
+        # time.sleep(0.5)
 
     return (agent_index, evaluation_index, fitness)
 
@@ -127,7 +103,7 @@ class Runner():
         self.generation_finished = threading.Event()
 
     def simulate(self, agent_file, visualize):
-        agent = torch.load(agent_file)
+        agent = torch.jit.load(agent_file, map_location=device)
         
         evaluate_agent(agent.state_dict(), self.world, self.world_data, 0, 0, None, visualize)
 
@@ -145,8 +121,8 @@ class Runner():
             for evaluation_index, _ in enumerate(range(const.AGENT_EVALUATIONS))
         ]
 
-        if const.DEVICE.startswith("cuda"):
-            print("Running on CUDA - evaluating agents in the main thread...")
+        if const.DEVICE != 'cpu':
+            print("Running on CUDA/MPS - evaluating agents in the main thread...")
             
             # No multiprocessing: evaluate each task directly on the GPU
             data_queue = None
