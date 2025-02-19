@@ -106,8 +106,6 @@ class Runner():
         agent = torch.jit.load(agent_file, map_location=device)
         
         evaluate_agent(agent.state_dict(), self.world, self.world_data, 0, 0, None, visualize)
-
-        print("DONE")
     
     def run(self, single_run=False):
         """

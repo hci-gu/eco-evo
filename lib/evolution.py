@@ -4,7 +4,6 @@ import torch
 import numpy as np
 import random
 
-
 def elitism_selection(agents: List[Tuple[Model, int]], num_individuals: int) -> List[Tuple[Model, int]]:
     individuals = sorted(agents, key=lambda x: x[1], reverse=True)
     return individuals[:num_individuals]
