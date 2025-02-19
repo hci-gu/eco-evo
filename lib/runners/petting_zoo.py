@@ -56,7 +56,7 @@ class PettingZooRunner():
                 else:
                     # For species with hardcoded logic (like plankton), use a fixed rule or random action.
                     action = self.env.action_space(agent).sample()
-            
+
             # Step the environment using the batched action and positions from the observation.
             self.env.step({
                 "action": action["action"] if action is not None else None,

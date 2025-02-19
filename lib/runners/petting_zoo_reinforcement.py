@@ -75,11 +75,7 @@ class RLAgentWrapper(gym.Env):
         # Convert positions to a NumPy array with proper dtype.
         self.last_positions = np.array(obs["positions"], dtype=np.int32)
         # Convert observation field to NumPy array.
-        if isinstance(obs["observation"], torch.Tensor):
-            obs_np = obs["observation"].cpu().detach().numpy()
-        else:
-            obs_np = np.array(obs["observation"])
-        return obs_np, info
+        return obs, info
 
     def step(self, action):
         # Scale action from [-1, 1] to [0, 1].
@@ -90,11 +86,7 @@ class RLAgentWrapper(gym.Env):
         obs, reward, termination, truncation, info = self.env.last()
         # Update last_positions (convert to NumPy with correct dtype).
         self.last_positions = np.array(obs["positions"], dtype=np.int32)
-        if isinstance(obs["observation"], torch.Tensor):
-            obs_np = obs["observation"].cpu().detach().numpy()
-        else:
-            obs_np = np.array(obs["observation"])
-        return obs_np, reward, termination, truncation, info
+        return obs, reward, termination, truncation, info
 
     def render(self, mode="human"):
         return self.env.render(mode)
