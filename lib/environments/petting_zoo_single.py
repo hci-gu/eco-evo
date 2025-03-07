@@ -1,11 +1,11 @@
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 from gymnasium import spaces
 from lib.world import (
     update_smell,
     read_map_from_file,
+    perform_cell_action,
     remove_species_from_fishing,
     respawn_plankton,
     reset_plankton_cluster,
@@ -31,40 +31,19 @@ def env(render_mode=None):
     return env_instance
 
 class raw_env(AECEnv):
-    metadata = {"render_modes": ["human"], "name": "pettingzoo/Ecotwin-v0"}
+    metadata = {"render_modes": ["human"], "name": "pettingzoo/Ecotwin-single-v0"}
 
     def __init__(self, render_mode=None, map_folder='maps/baltic'):
-        # Define agents based on species keys.
-        self.plot_data = {}
-        self.possible_agents = list(const.SPECIES_MAP.keys())
-        self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.map_folder = map_folder
+        self.plot_data = {}
+        self.possible_agents = list([species for species in const.SPECIES_MAP.keys() if species != "plankton"])
+        self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.reset()
 
-        self.obs_vector_length = 11
-
-        self._observation_spaces = {
-            agent: spaces.Box(
-                low=0,
-                high=1,
-                shape=(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES, 3, 3),
-                dtype=np.float32
-            )
-            for agent in self.possible_agents
-        }
-        self._action_spaces = {
-            agent: spaces.Box(
-                low=0,
-                high=1,
-                shape=(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS),
-                dtype=np.float32
-            )
-            for agent in self.possible_agents
-        }
+        self._observation_spaces = spaces.Box(low=0, high=1, shape=(3, 3, 11), dtype=np.float32)
+        self._action_spaces = spaces.Discrete(6)
 
         self.render_mode = render_mode
-        if render_mode == "human":
-            self.screen = init_pygame()
 
     def observation_space(self, agent):
         return self._observation_spaces[agent]
@@ -73,21 +52,11 @@ class raw_env(AECEnv):
         return self._action_spaces[agent]
 
     def reset(self, seed=None, options=None):
-        # Use the NumPy version of your map loader.
         world, world_data = read_map_from_file(self.map_folder)
         # Pad the world and world_data arrays by 1 on each side.
         self.world = np.pad(world, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.world_data = np.pad(world_data, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
 
-        # Create a grid of coordinates (shape: (WORLD_SIZE, WORLD_SIZE)).
-        grid_x, grid_y = np.meshgrid(np.arange(const.WORLD_SIZE), np.arange(const.WORLD_SIZE), indexing='ij')
-        # Using modulo 3 in both dimensions to create 9 distinct classes.
-        self.colors = (grid_x % 3) + 3 * (grid_y % 3)
-        
-        self.step_count = 0
-        self.done = False
-
-        # Initialize bookkeeping dictionaries.
         self.agents = self.possible_agents[:]
         self.rewards = {agent: 0 for agent in self.agents}
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
@@ -95,66 +64,41 @@ class raw_env(AECEnv):
         self.truncations = {agent: False for agent in self.agents}
         self.infos = {agent: {} for agent in self.agents}
         self.state = {agent: None for agent in self.agents}
-        self.observations = {agent: self.observe(agent) for agent in self.agents}
+        self.observations = {agent: None for agent in self.agents}
         self.num_moves = 0
 
-        # Initialize the agent selector.
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.next()
 
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
-        self.color_order = []
 
     def observe(self, agent):
-        # Calculate maximum biomass and smell for normalization.
         max_biomass = self.world[..., 3:7].max()
         max_smell = self.world[..., 7:11].max()
+        # get a random position
+        x = random.randint(1, const.WORLD_SIZE)
+        y = random.randint(1, const.WORLD_SIZE)
 
-        terrain = self.world[..., 0:3]
-        biomass = self.world[..., 3:7] / (max_biomass + 1e-8)
-        smell   = self.world[..., 7:11] / (max_smell + 1e-8)
-        
-        observation = np.concatenate([terrain, biomass, smell], axis=-1)
+        # get the observation
+        observation = self.world[x-1:x+2, y-1:y+2]
 
-        patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
+        print("Observation:", observation)
+        # normalize the observation
+        terrain = observation[..., 0:3]
+        biomass = observation[..., 3:7] / (max_biomass + 1e-8)
+        smell   = observation[..., 7:11] / (max_smell + 1e-8)
 
-        return patches
-    
+        return np.concatenate([terrain, biomass, smell], axis=-1)
+
     def step(self, action):
-        if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
-            self._was_dead_step(action)
-            return self.observations, self.rewards, self.terminations, self.truncations, self.infos
-
-        agent = self.agent_selection
+        print("step")
+        # agent = self.agent_selection
         self.state[self.agent_selection] = action
 
-        # If the active agent is "plankton", use the hardcoded logic.
-        if agent == "plankton":
-            spawn_plankton(self.world, self.world_data)
-            self.state[agent] = None  # No action required from plankton.
-        else:
-            self.state[agent] = action
-
         if self._agent_selector.is_last():
-            # Update the world using the NumPy version of perform_action.
-            color_order = list(np.arange(9))
-            while len(color_order):
-                selected_color = color_order.pop()
-                selected_set_mask = (self.colors == selected_color)
-                selected_positions = np.argwhere(selected_set_mask)
-                selected_positions_padded = selected_positions + 1
-                selected_positions_padded = selected_positions_padded.astype(np.int32)
+            obs = self.observations[self.agent_selection]
+            perform_cell_action(obs, self.state)
 
-                action_part = action[selected_set_mask]
-                self.world = perform_action(
-                    self.world,
-                    self.world_data,
-                    action_part,
-                    agent,
-                    selected_positions_padded,
-                )
-            self.render()
-            # --- Check if the world is "alive" ---
             if not world_is_alive(self.world):
                 # Abort simulation by terminating all agents.
                 for ag in self.agents:
@@ -176,15 +120,16 @@ class raw_env(AECEnv):
             self.num_moves += 1
             self.truncations = {agent: self.num_moves >= const.MAX_STEPS for agent in self.agents}
 
+            # Update observations for all agents (this line mimics your original logic).
             for i in self.agents:
-                self.observations[i] = self.observe(i)
+                self.observations[i] = self.state[self.agents[1 - self.agent_name_mapping[i]]]
         else:
-            self.state[self.agents[1 - self.agent_name_mapping[agent]]] = None
+            self.state[self.agents[1 - self.agent_name_mapping[self.agent_selection]]] = None
             self._clear_rewards()
-
+        
         self.agent_selection = self._agent_selector.next()
         self._accumulate_rewards()
-    
+
     def render(self):
         if self.render_mode == "none":
             return
@@ -193,8 +138,8 @@ class raw_env(AECEnv):
             # print(self.plot_data)
             plot_biomass(self.plot_data)
             draw_world(self.screen, self.world, self.world_data)
+            self.render()
 
-    # Note: You must implement or override the helper methods below
     def _was_dead_step(self, action):
         if all(self.terminations[ag] or self.truncations[ag] for ag in self.agents):
             self.agents = []
@@ -209,3 +154,6 @@ class raw_env(AECEnv):
 
     def _accumulate_rewards(self):
         pass
+
+
+        

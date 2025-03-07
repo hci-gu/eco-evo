@@ -10,6 +10,8 @@ class SingleAgentGymRunner():
     def __init__(self):
         self.env = gym.make('gymnasium_env/Ecotwin-v0', render_mode="none")
 
+        self.empty_action = self.env.action_space.sample()
+
         self.current_generation = 0
         self.agents = [(Model().state_dict(), 0) for _ in range(const.NUM_AGENTS)]
         self.best_fitness = 0
@@ -22,37 +24,17 @@ class SingleAgentGymRunner():
         for idx, (agent_dict, _) in enumerate(self.agents):
             agent = Model(chromosome=agent_dict)
             for _ in range(const.AGENT_EVALUATIONS):
-                self.env.reset()
-                episode_done = False
+                obs, _ = self.env.reset()
+                done = False
 
-                while not episode_done:
-                    species_order = sorted(species_order, key=lambda x: random.random())
+                while not done:
+                    action = agent.forward(obs.reshape(-1, 99))
 
-                    for species in species_order:
-                        if episode_done:
-                            break
-                        if species == "plankton":
-                            self.env.step({
-                                "species": species,
-                                "action": None,
-                                "positions": None
-                            })
-                            continue
-                        # i need observation here, cant take previous one because its the observation of another species
-                        obs, selection = self.env.unwrapped.get_obs(species)
-                        
-                        action = agent.forward(obs, species)
-                        
-                        _, reward, done, truncated, info = self.env.step({
-                            "species": species,
-                            "action": action,
-                            "positions": selection
-                        })
-                        episode_done = done
-                        # print(reward, done, truncated, info)
+                    obs, reward, done, truncated, info = self.env.step(action)
                     self.env.render()
 
                     agent_fitnesses[idx] += reward
+                    print("idx", idx, "fitness", agent_fitnesses[idx])
                     self.env.unwrapped.step_count += 1
 
         for i, fitness in enumerate(agent_fitnesses):
@@ -92,4 +74,8 @@ class SingleAgentGymRunner():
         self.agents.append((fittest_agent[0], 0))
         self.agents.append((self.best_agent, 0))
         self.agents.append((Model().state_dict(), 0))
+
+    def train(self):
+        for _ in range(const.GENERATIONS_PER_RUN):
+            self.run_generation()
 

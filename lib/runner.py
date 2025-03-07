@@ -29,9 +29,8 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
     world = np.copy(world)  # Clone the padded world array
     species_order = list(const.SPECIES_MAP.keys())
     
-    # Create grid coordinates using NumPy.
     grid_x, grid_y = np.meshgrid(np.arange(const.WORLD_SIZE), np.arange(const.WORLD_SIZE), indexing='ij')
-    colors = (grid_x + 2 * grid_y) % 5
+    colors = (grid_x % 3) + 3 * (grid_y % 3)
     max_biomass = np.max(world[..., 3:7])
     max_smell = np.max(world[..., 7:11])
     
@@ -44,44 +43,47 @@ def evaluate_agent(agent_dict, world, world_data, agent_index, evaluation_index,
                 spawn_plankton(world, world_data)
                 continue
 
-            selected_color = random.choice([0, 1, 2, 3, 4])
-            selected_set_mask = (colors == selected_color)
-            selected_positions = np.argwhere(selected_set_mask)  # Shape (n,2)
-            selected_positions_padded = selected_positions + 1      # Adjust for padding
+            color_order = list(np.arange(9))
+            random.shuffle(color_order)
+            for selected_color in color_order:
+                # selected_color = random.choice(np.arange(9))
+                selected_set_mask = (colors == selected_color)
+                selected_positions = np.argwhere(selected_set_mask)  # Shape (n,2)
+                selected_positions_padded = selected_positions + 1      # Adjust for padding
 
-            biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
-            biomass_values = world[selected_positions_padded[:, 0], selected_positions_padded[:, 1], biomass_offset]
-            non_zero_biomass_mask = biomass_values > 0
-            selected_positions_padded = selected_positions_padded[non_zero_biomass_mask]
+                biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
+                biomass_values = world[selected_positions_padded[:, 0], selected_positions_padded[:, 1], biomass_offset]
+                non_zero_biomass_mask = biomass_values > 0
+                selected_positions_padded = selected_positions_padded[non_zero_biomass_mask]
 
-            if selected_positions_padded.shape[0] == 0:
-                continue
+                if selected_positions_padded.shape[0] == 0:
+                    continue
 
-            # Extract 3x3 neighborhoods.
-            offsets = np.array([
-                [-1, -1], [-1, 0], [-1, 1],
-                [ 0, -1], [ 0, 0], [ 0, 1],
-                [ 1, -1], [ 1, 0], [ 1, 1]
-            ])
-            neighbor_positions = selected_positions_padded[:, None, :] + offsets[None, :, :]
-            # Clip neighbors so indices remain within padded world.
-            neighbor_positions[:, :, 0] = np.clip(neighbor_positions[:, :, 0], 0, const.WORLD_SIZE + 1)
-            neighbor_positions[:, :, 1] = np.clip(neighbor_positions[:, :, 1], 0, const.WORLD_SIZE + 1)
-            n = selected_positions_padded.shape[0]
-            neighbor_positions = neighbor_positions.reshape(n * 9, 2)
-            neighbor_values = world[neighbor_positions[:, 0], neighbor_positions[:, 1]]
-            neighbor_values = neighbor_values.reshape(n, 9, const.TOTAL_TENSOR_VALUES)
+                # Extract 3x3 neighborhoods.
+                offsets = np.array([
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [ 0, -1], [ 0, 0], [ 0, 1],
+                    [ 1, -1], [ 1, 0], [ 1, 1]
+                ])
+                neighbor_positions = selected_positions_padded[:, None, :] + offsets[None, :, :]
+                # Clip neighbors so indices remain within padded world.
+                neighbor_positions[:, :, 0] = np.clip(neighbor_positions[:, :, 0], 0, const.WORLD_SIZE + 1)
+                neighbor_positions[:, :, 1] = np.clip(neighbor_positions[:, :, 1], 0, const.WORLD_SIZE + 1)
+                n = selected_positions_padded.shape[0]
+                neighbor_positions = neighbor_positions.reshape(n * 9, 2)
+                neighbor_values = world[neighbor_positions[:, 0], neighbor_positions[:, 1]]
+                neighbor_values = neighbor_values.reshape(n, 9, const.TOTAL_TENSOR_VALUES)
 
-            terrain = neighbor_values[..., 0:3]
-            biomass = neighbor_values[..., 3:7] / (max_biomass + 1e-8)
-            smell   = neighbor_values[..., 7:11] / (max_smell + 1e-8)
-            # Concatenate to get a (n, 9, 11) array, then flatten to (n, 99).
-            batch_tensor = np.concatenate([terrain, biomass, smell], axis=-1).reshape(n, -1)
-            
-            # Forward pass through the agent (assumes a NumPy-based forward).
-            action_values_batch = agent.forward(batch_tensor, species)
-            # Update the world using our NumPy version of perform_action.
-            world = perform_action(world, world_data, action_values_batch, species, selected_positions_padded)
+                terrain = neighbor_values[..., 0:3]
+                biomass = neighbor_values[..., 3:7] / (max_biomass + 1e-8)
+                smell   = neighbor_values[..., 7:11] / (max_smell + 1e-8)
+                # Concatenate to get a (n, 9, 11) array, then flatten to (n, 99).
+                batch_tensor = np.concatenate([terrain, biomass, smell], axis=-1).reshape(n, -1)
+                
+                # Forward pass through the agent (assumes a NumPy-based forward).
+                action_values_batch = agent.forward(batch_tensor, species)
+                # Update the world using our NumPy version of perform_action.
+                world = perform_action(world, world_data, action_values_batch, species, selected_positions_padded)
 
         if data_queue is not None:
             queue_data(agent_index, evaluation_index, fitness, data_queue)

@@ -5,8 +5,9 @@ import json
 agents_data = {}
 generations_data = []
 
-def queue_data(agent_index, eval_index, step, data_queue):
+def queue_data(agent_index, eval_index, step, data_queue, species=None):
     data = {
+        'species': species,
         'agent_index': agent_index,
         'eval_index': eval_index,
         'step': step,
@@ -22,9 +23,9 @@ def save_data_to_file(generation, agents_data_snapshot):
     with open(generations_file, 'w') as f:
         json.dump(generations_data, f, indent=4, default=str)
 
-def update_generations_data(generation):
-    global agents_data
+def update_generations_data(generation, agents_data=agents_data, generations_data=generations_data):
     fitness_values = []
+
     for _, evals in agents_data.items():
         total_fitness = 0
         for _, data in evals.items():
@@ -41,29 +42,40 @@ def update_generations_data(generation):
 
     return generations_data
 
-def process_data(data):
-    global agents_data
+def process_data(data, agents_data=agents_data):
     agent_index = data['agent_index']
     eval_index = data['eval_index']
     step = data['step']
+    agent_species = data.get('species', None)
 
-    if agent_index not in agents_data:
-        agents_data[agent_index] = {}
-    if eval_index not in agents_data[agent_index]:
-        agents_data[agent_index][eval_index] = {
+    curr_agents_data = agents_data
+    if (agent_species is not None):
+        if agent_species not in agents_data:
+            agents_data[agent_species] = {}
+        curr_agents_data = agents_data[agent_species]
+
+    if agent_index not in curr_agents_data:
+        curr_agents_data[agent_index] = {}
+    if eval_index not in curr_agents_data[agent_index]:
+        curr_agents_data[agent_index][eval_index] = {
             'steps': [],
         }
         for species in const.SPECIES_MAP.keys():
-            agents_data[agent_index][eval_index][f'{species}_alive'] = []
+            curr_agents_data[agent_index][eval_index][f'{species}_alive'] = []
 
-    agents_data[agent_index][eval_index]['steps'].append(step)
+    curr_agents_data[agent_index][eval_index]['steps'].append(step)
 
     # check if world data exists
     if "world" in data:
         world = data['world']
         for species, properties in const.SPECIES_MAP.items():
             biomass_offset = properties["biomass_offset"]
-            agents_data[agent_index][eval_index][f'{species}_alive'].append(world[:, :, biomass_offset].sum())
+            curr_agents_data[agent_index][eval_index][f'{species}_alive'].append(world[:, :, biomass_offset].sum())
+
+    if agent_species is not None:
+        agents_data[agent_species] = curr_agents_data
+    else:
+        agents_data = curr_agents_data
 
     return agents_data
 

@@ -16,7 +16,7 @@ class Model:
             self.fc2_weight = np.random.randn(hidden_size, output_size).astype(np.float32)
             self.fc2_bias = np.random.randn(output_size).astype(np.float32)
 
-    def forward(self, x, species_key):
+    def forward(self, x):
         """
         Forward pass through the network.
         
@@ -33,17 +33,9 @@ class Model:
 
         # Second layer: linear transformation.
         out = np.dot(h, self.fc2_weight) + self.fc2_bias
-
-        # Slice the output based on the species.
-        if species_key == "herring":
-            slice_out = out[:, :6]
-        elif species_key == "spat":
-            slice_out = out[:, 6:12]
-        else:
-            slice_out = out[:, 12:]
         
         # Compute softmax in a numerically stable way.
-        exp_vals = np.exp(slice_out - np.max(slice_out, axis=1, keepdims=True))
+        exp_vals = np.exp(out - np.max(out, axis=1, keepdims=True))
         softmax_output = exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
         return softmax_output
 
@@ -75,3 +67,23 @@ class Model:
         Save the model's parameters to a file.
         """
         np.savez(path, **self.state_dict())
+
+class SingleSpeciesModel(Model):
+    def __init__(self, 
+                 input_size=const.NETWORK_INPUT_SIZE, 
+                 hidden_size=const.NETWORK_HIDDEN_SIZE, 
+                 output_size=const.NETWORK_OUTPUT_SIZE_SINGLE_SPECIES, 
+                 chromosome=None):
+        super().__init__(input_size, hidden_size, output_size, chromosome)
+
+    def forward(self, x):
+        h = np.dot(x, self.fc1_weight) + self.fc1_bias
+        h = np.maximum(0, h)  # ReLU activation
+
+        # Second layer: linear transformation.
+        out = np.dot(h, self.fc2_weight) + self.fc2_bias
+        
+        # Compute softmax in a numerically stable way.
+        exp_vals = np.exp(out - np.max(out, axis=1, keepdims=True))
+        softmax_output = exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
+        return softmax_output
