@@ -1,8 +1,12 @@
 lib/__pycache__
 lib/world/__pycache__
+lib/runners/__pycache__
+lib/environments/__pycache__
 .pixi
 
 results
 old
 runs
 /*.png
+
+.DS_Store
