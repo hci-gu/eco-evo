@@ -380,13 +380,26 @@ def create_env():
 
 class RLRunner:
     def __init__(self, num_episodes=100, learning_rate=1e-3, gamma=0.99, log_dir="logs/models"):
-        self.env = create_env()
+        env = SubprocVecEnv([lambda: create_env() for i in range(6)])
+        self.env = env
 
         self.num_episodes = num_episodes
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.writer = SummaryWriter(log_dir=log_dir)
     
+    def evaluate(self, model_file, num_episodes=10):
+        model = PPO.load(model_file)
+        model.set_env(self.env)
+
+        # for episode in range(num_episodes):
+
+        # if normalize:
+        #     if norm_file is None:
+        #         print("A parameter file for the normalized values must be set.")
+        #         exit()
+        #     env = VecNormalize.load(norm_file, env.venv)
+
     def train(self):
         policy_kwargs = dict(
             features_extractor_class=PbmCnn,
@@ -402,7 +415,7 @@ class RLRunner:
             n_steps=256,
             tensorboard_log="logs/models",
             device="cpu",
-            learning_rate=get_lr(),
+            learning_rate=1e-4,
         )
 
         callback = [
@@ -410,11 +423,20 @@ class RLRunner:
             TensorboardCallback(),
         ]
 
-        model.learn(
-            total_timesteps=1000000,
-            reset_num_timesteps=False,
-            callback=callback,
-        )
+        
+        total_timesteps = 100000
+        interval = 10000  # number of timesteps per learning chunk
+        
+        timesteps_done = 0
+        while timesteps_done < total_timesteps:
+            model.learn(
+                total_timesteps=interval,
+                reset_num_timesteps=False,
+                callback=callback,
+            )
+            timesteps_done += interval
+            now = datetime.now().strftime("%Y%m%d-%H%M")
+            model.save(f"./models/model_{model.num_timesteps}_steps_{now}.pth")
         # for episode in range(self.num_episodes):
         #     self.env.reset()
         #     done = False

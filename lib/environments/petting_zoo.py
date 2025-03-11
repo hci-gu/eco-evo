@@ -131,11 +131,8 @@ class raw_env(AECEnv):
         # If the active agent is "plankton", use the hardcoded logic.
         if agent == "plankton":
             spawn_plankton(self.world, self.world_data)
-            self.state[agent] = None  # No action required from plankton.
         else:
             self.state[agent] = action
-
-        if self._agent_selector.is_last():
             # Update the world using the NumPy version of perform_action.
             color_order = list(np.arange(9))
             while len(color_order):
@@ -178,11 +175,11 @@ class raw_env(AECEnv):
 
             for i in self.agents:
                 self.observations[i] = self.observe(i)
-        else:
-            self.state[self.agents[1 - self.agent_name_mapping[agent]]] = None
-            self._clear_rewards()
+
+        update_smell(self.world)
 
         self.agent_selection = self._agent_selector.next()
+        
         self._accumulate_rewards()
     
     def render(self):

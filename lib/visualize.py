@@ -309,7 +309,7 @@ def draw_world(screen, world_tensor, world_data):
                     blit_pos = (cell_center[0] - half_ls, cell_center[1] - half_ls)
                     screen.blit(circle_surface, blit_pos)
 
-    draw_actions_values(screen, world_data)
+    # draw_actions_values(screen, world_data)
 
     # Draw cached biomass and energy graphs if they exist
     if biomass_graph_cache:

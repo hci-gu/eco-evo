@@ -1,7 +1,7 @@
 import lib.constants as const
 from lib.model import SingleSpeciesModel
 import lib.evolution as evolution  # Your NumPy-based evolution functions
-from lib.visualize import plot_generations
+from lib.visualize import plot_generations, plot_biomass
 from lib.data_manager import data_loop, update_generations_data, process_data
 import numpy as np
 import random
@@ -9,9 +9,9 @@ import copy
 from lib.environments.petting_zoo import env
 
 class PettingZooRunner():
-    def __init__(self):
+    def __init__(self, render_mode="none"):
         # Create the environment (render_mode can be "none" if visualization is not needed)
-        self.env = env(render_mode="none")
+        self.env = env(render_mode=render_mode)
         self.empty_action = self.env.action_space("plankton").sample()
         self.env.reset()
         self.current_generation = 0
@@ -26,6 +26,40 @@ class PettingZooRunner():
         # Track best fitness and best model for each species.
         self.best_fitness = {species: -float('inf') for species in self.species_list}
         self.best_agent = {species: None for species in self.species_list}
+        self.agent_index = 0
+        self.eval_index = 0
+
+    def run(self, candidates, callback=None):
+        self.env.reset()
+        fitness = 0
+
+        while not all(self.env.terminations.values()) and fitness < const.MAX_STEPS:
+            fitness += 1
+            agent = self.env.agent_selection
+            if agent == "plankton":
+                self.env.step(self.empty_action)
+            else:
+                obs, reward, termination, truncation, info = self.env.last()
+                candidate = candidates[agent]
+                action_values = candidate.forward(obs.reshape(-1, 99))
+                action_values = action_values.reshape(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS)
+
+                self.env.step(action_values)
+            
+            agents_data = process_data({
+                'agent_index': self.agent_index,
+                'eval_index': self.eval_index,
+                'step': fitness,
+                'world': self.env.world
+            }, self.env.plot_data)
+
+            if self.env.render_mode == "human":
+                plot_biomass(agents_data)
+                
+                
+        
+        return fitness
+
 
     def evaluate_population(self):
         """
@@ -37,6 +71,7 @@ class PettingZooRunner():
         fitnesses = {species: [] for species in self.species_list}
 
         for idx in range(const.NUM_AGENTS):
+            self.agent_index = idx
             evals_fitness = []
             for species in self.species_list:
                 evaluation_candidate = self.population[species][idx]
@@ -48,35 +83,15 @@ class PettingZooRunner():
                 }
 
                 for eval_index in range(const.AGENT_EVALUATIONS):
-                    self.env.reset()
-                    fitness = 0
-
+                    self.eval_index = eval_index
                     # pick random agent from other species
                     for other_species_name in other_species:
                         other_species_idx = random.randint(0, const.NUM_AGENTS - 1)
                         other_species_candidate = self.population[other_species_name][other_species_idx]
                         eval_species[other_species_name] = other_species_candidate
 
-
-                    while not all(self.env.terminations.values()) and fitness < const.MAX_STEPS:
-                        fitness += 1
-                        agent = self.env.agent_selection
-                        if agent == "plankton":
-                            self.env.step(self.empty_action)
-                        else:
-                            obs, reward, termination, truncation, info = self.env.last()
-                            candidate = eval_species[agent]
-                            action_values = candidate.forward(obs.reshape(-1, 99))
-                            action_values = action_values.reshape(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS)
-                            # print("action_values", action_values.shape)
-                            self.env.step(action_values)
-
-                    process_data({
-                        'agent_index': idx,
-                        'eval_index': eval_index,
-                        'step': fitness,
-                        'world': self.env.world
-                    }, self.env.plot_data)
+                    
+                    fitness = self.run(eval_species)
                     evals_fitness.append(fitness)
                     print("idx", idx, "eval", eval_index, "fitness", fitness)
                 
@@ -150,3 +165,15 @@ class PettingZooRunner():
         for _ in range(generations):
             self.run_generation()
             # Optionally, save best models or log additional statistics.
+
+    # array of model path/species pairs
+    def evaluate(self, model_paths = []):
+        candidates = {}
+        for model_path in model_paths:
+            model = SingleSpeciesModel(
+                chromosome=np.load(model_path['path'])
+            )
+            candidates[model_path['species']] = model
+
+        fitness = self.run(candidates)
+        print(f"Fitness: {fitness}")

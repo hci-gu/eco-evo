@@ -70,7 +70,7 @@ class EcosystemEnv(gym.Env):
         if self.done:
             raise RuntimeError("Episode is done. Call reset() to start a new episode.")
         
-        if (self.step_count % 3 == 0):
+        if (self.step_count % len(self.possible_species) == 0):
             spawn_plankton(self.world, self.world_data)
         
         color_order = list(np.arange(9))
