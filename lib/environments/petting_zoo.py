@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from numpy.lib.stride_tricks import sliding_window_view
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
@@ -11,7 +12,10 @@ from lib.world import (
     reset_plankton_cluster,
     move_plankton_cluster,
     move_plankton_based_on_current,
+    get_movement_delta,
+    apply_movement_delta,
     spawn_plankton,
+    perform_eating,
     perform_action,  # Make sure this is the NumPy version from the previous rewrite.
     world_is_alive,
     create_map_from_noise
@@ -74,10 +78,11 @@ class raw_env(AECEnv):
 
     def reset(self, seed=None, options=None):
         # Use the NumPy version of your map loader.
-        world, world_data = read_map_from_file(self.map_folder)
+        world, world_data, starting_biomasses = read_map_from_file(self.map_folder)
         # Pad the world and world_data arrays by 1 on each side.
         self.world = np.pad(world, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.world_data = np.pad(world_data, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
+        self.starting_biomasses = starting_biomasses
 
         # Create a grid of coordinates (shape: (WORLD_SIZE, WORLD_SIZE)).
         grid_x, grid_y = np.meshgrid(np.arange(const.WORLD_SIZE), np.arange(const.WORLD_SIZE), indexing='ij')
@@ -99,6 +104,7 @@ class raw_env(AECEnv):
         self.num_moves = 0
 
         # Initialize the agent selector.
+        random.shuffle(self.agents)
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.next()
 
@@ -134,6 +140,8 @@ class raw_env(AECEnv):
         else:
             self.state[agent] = action
             # Update the world using the NumPy version of perform_action.
+            total_movement_deltas = np.zeros_like(self.world)
+            # total_movement_deltas = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, 1), dtype=np.float32)
             color_order = list(np.arange(9))
             while len(color_order):
                 selected_color = color_order.pop()
@@ -143,15 +151,24 @@ class raw_env(AECEnv):
                 selected_positions_padded = selected_positions_padded.astype(np.int32)
 
                 action_part = action[selected_set_mask]
-                self.world = perform_action(
-                    self.world,
-                    self.world_data,
-                    action_part,
-                    agent,
-                    selected_positions_padded,
-                )
+                movement_deltas = get_movement_delta(self.world, self.world_data, agent, action_part, selected_positions_padded)
+                total_movement_deltas += movement_deltas
+            
+            apply_movement_delta(self.world, agent, total_movement_deltas)
+            
+            color_order = list(np.arange(9))
+            while len(color_order):
+                selected_color = color_order.pop()
+                selected_set_mask = (self.colors == selected_color)
+                selected_positions = np.argwhere(selected_set_mask)
+                selected_positions_padded = selected_positions + 1
+                selected_positions_padded = selected_positions_padded.astype(np.int32)
+
+                action_part = action[selected_set_mask]
+                perform_eating(self.world, agent, action_part, selected_positions_padded)
+
+            update_smell(self.world)
             self.render()
-            # --- Check if the world is "alive" ---
             if not world_is_alive(self.world):
                 # Abort simulation by terminating all agents.
                 for ag in self.agents:
@@ -178,6 +195,10 @@ class raw_env(AECEnv):
 
         update_smell(self.world)
 
+        if self._agent_selector.is_last():
+            # Re-shuffle agents for the next round.
+            random.shuffle(self.agents)
+            self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.next()
         
         self._accumulate_rewards()
@@ -191,6 +212,13 @@ class raw_env(AECEnv):
             plot_biomass(self.plot_data)
             draw_world(self.screen, self.world, self.world_data)
 
+    def get_fitness(self, agent):
+        biomass = self.world[..., const.SPECIES_MAP[agent]["biomass_offset"]]
+        # divide by starting biomass to get a percentage
+        biomass_growth = biomass.sum() / self.starting_biomasses[agent]
+
+        return np.log(1 + biomass_growth)
+    
     # Note: You must implement or override the helper methods below
     def _was_dead_step(self, action):
         if all(self.terminations[ag] or self.truncations[ag] for ag in self.agents):

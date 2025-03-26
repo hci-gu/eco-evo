@@ -34,26 +34,27 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
-    folder = "results/petting_zoo_19/agents"
-    files = os.listdir(folder)
-    files = [f for f in files if f.endswith(".npy.npz")]
-    files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
-    species = {}
-    for f in files:
-        s = f.split("_")[1].split(".")[0]
-        # remove $ from species name
-        s = s[1:] if s[0] == "$" else s
-        if s not in species:
-            species[s] = f
+    # folder = "results/petting_zoo_biomass_fitness_log_4/agents"
+    # files = os.listdir(folder)
+    # files = [f for f in files if f.endswith(".npy.npz")]
+    # files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
+    # species = {}
+    # for f in files:
+    #     s = f.split("_")[1].split(".")[0]
+    #     # remove $ from species name
+    #     s = s[1:] if s[0] == "$" else s
+    #     if s not in species:
+    #         species[s] = f
     
-    model_paths = []
-    for s, f in species.items():
-        model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
+    # model_paths = []
+    # for s, f in species.items():
+    #     model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
 
-    print("START EVAL")
-    runner = PettingZooRunner(render_mode="human")
-    runner.evaluate(model_paths)
-    print("EVAL DONE")
+    # print("START EVAL")
+    # runner = PettingZooRunner(render_mode="human")
+    # runner.evaluate(model_paths)
+    # print("EVAL DONE")
+
 
     # if args.agent_file:
     #     print(f"Loading agent from file: {args.agent_file}")

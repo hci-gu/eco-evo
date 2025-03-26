@@ -29,16 +29,17 @@ class SingleAgentGymRunner():
 
                 while not done:
                     action = agent.forward(obs.reshape(-1, 99))
+                    action = action.reshape(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS * 3)
 
                     obs, reward, done, truncated, info = self.env.step(action)
                     self.env.render()
 
-                    agent_fitnesses[idx] += reward
-                    print("idx", idx, "fitness", agent_fitnesses[idx])
+                    agent_fitnesses[idx] += 1
                     self.env.unwrapped.step_count += 1
+                print(f"Agent {idx} fitness: {agent_fitnesses[idx]}")
 
-        for i, fitness in enumerate(agent_fitnesses):
-            self.agents[i] = (self.agents[i][0], fitness / const.AGENT_EVALUATIONS)
+            for i, fitness in enumerate(agent_fitnesses):
+                self.agents[idx] = (self.agents[idx][0], fitness / const.AGENT_EVALUATIONS)
 
         self.next_generation()
 
@@ -46,14 +47,15 @@ class SingleAgentGymRunner():
         self.current_generation += 1
         
         fittest_agent = max(self.agents, key=lambda x: x[1])
+        # average_fitness = sum([x[1] for x in self.agents]) / len(self.agents)
+        print(f"Evolving with best fitness {fittest_agent[1]:.2f}, alltime best: {self.best_fitness:.2f}")
 
-        average_fitness = sum([x[1] for x in self.agents]) / len(self.agents)
-        if average_fitness > self.best_fitness:
-            self.best_fitness = average_fitness
-            print(f"New best fitness: {self.best_fitness}")
+        if fittest_agent[1] > self.best_fitness:
+            self.best_fitness = fittest_agent[1]
+            print(f"New best fitness: {fittest_agent[1]}")
             self.best_agent = copy.deepcopy(fittest_agent[0])
-            model = torch.jit.script(Model(chromosome=fittest_agent[0]))
-            torch.jit.save(model, f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_{self.best_fitness}.pt')
+            model = Model(chromosome=fittest_agent[0])
+            model.save(f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_{self.best_fitness}.npy')
 
         elites = evolution.elitism_selection(self.agents, const.ELITISM_SELECTION)
         next_pop = []
@@ -73,7 +75,6 @@ class SingleAgentGymRunner():
         self.agents = next_pop
         self.agents.append((fittest_agent[0], 0))
         self.agents.append((self.best_agent, 0))
-        self.agents.append((Model().state_dict(), 0))
 
     def train(self):
         for _ in range(const.GENERATIONS_PER_RUN):
