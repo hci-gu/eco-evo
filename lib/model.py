@@ -76,6 +76,17 @@ class SingleSpeciesModel(Model):
                  chromosome=None):
         super().__init__(input_size, hidden_size, output_size, chromosome)
 
+    # def forward(self, x):
+    #     batch_size = x.shape[0]
+    #     output_size = self.fc2_bias.shape[0]
+
+    #     # Generate a tensor of zeros
+    #     debug_output = np.zeros((batch_size, output_size), dtype=np.float32)
+        
+    #     debug_output[:, 1] = 1.0
+
+    #     return debug_output
+
     def forward(self, x):
         h = np.dot(x, self.fc1_weight) + self.fc1_bias
         h = np.maximum(0, h)  # ReLU activation

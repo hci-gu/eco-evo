@@ -103,12 +103,14 @@ class EcosystemEnv(gym.Env):
             )
 
         update_smell(self.world)
+        self.render()
+        self.step_count += 1
         
         if self.step_count >= const.MAX_STEPS or world_is_alive(self.world) == False:
             self.done = True
         
         info = {"step_count": self.step_count}
-        return self.get_obs(), total_biomass(self.world), self.done, False, info
+        return self.get_obs(), total_biomass(self.world) * self.step_count, self.done, False, info
     
     def render(self):
         if self.render_mode == "none":

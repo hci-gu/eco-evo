@@ -50,10 +50,18 @@ def upload_files():
 
     simulations[simulation_id] = {
         'steps': [],
-        'folder_path': folder_path
+        'folder_path': folder_path,
     }
 
     return jsonify({"id": simulation_id}), 200
+
+@app.route('/simulate/agents', methods=['GET'])
+def get_agents():
+    folder = "agents"
+    files = os.listdir(folder)
+    files = [f for f in files if f.endswith(".pt")]
+    
+    return jsonify(files)
 
 @app.route('/simulate/<simulation_id>', methods=['GET'])
 def stream_simulation(simulation_id):

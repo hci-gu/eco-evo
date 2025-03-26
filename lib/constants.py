@@ -19,11 +19,16 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 RUNNER = "rl_runner"
 
-SPEED_MULTIPLIER = 3
-EAT_REWARD_BOOST = 10
+# SPEED_MULTIPLIER = 2
+# EAT_REWARD_BOOST = 10
+# SURVIVAL_BOOST = 3
+SPEED_MULTIPLIER = 1
+EAT_REWARD_BOOST = 5
+COD_EAT_REWARD_BOOST = 6
+SURVIVAL_BOOST = 4
 
 MAP_METER_SIZE = 300 * 1000
-WORLD_SIZE = 24
+WORLD_SIZE = 48
 # meters per second
 FISH_SWIM_SPEED = 0.025
 SECONDS_IN_DAY = 86400
@@ -36,9 +41,9 @@ STARTING_BIOMASS_COD = 387941
 STARTING_BIOMASS_HERRING = 759392
 STARTING_BIOMASS_SPRAT = 1525100
 STARTING_BIOMASS_PLANKTON = 5000000
-MIN_PERCENT_ALIVE = 0.2
+MIN_PERCENT_ALIVE = 0.05
 MAX_PERCENT_ALIVE = 3
-MAX_STEPS = 5000
+MAX_STEPS = 7500
 
 EVAL_AGENT = './agents/test.pt'
 
@@ -47,16 +52,17 @@ MAX_PLANKTON_IN_CELL = (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) *
 SPECIES_MAP = {
     "plankton": {
         "index": 0,
+        "original_starting_biomass": STARTING_BIOMASS_PLANKTON,
         "starting_biomass": STARTING_BIOMASS_PLANKTON,
-        "max_in_cell": STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) * 1.5,
+        "max_in_cell": STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE) * 2,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
         "max_biomass_in_cell": MAX_PLANKTON_IN_CELL,
         "hardcoded_logic": True,
         "hardcoded_rules": {
-            "growth_rate_constant": 0.15,
-            "growth_threshold": MAX_PLANKTON_IN_CELL * 0.75,
-            "respawn_delay": 400,
+            "growth_rate_constant": 0.2,
+            "growth_threshold": MAX_PLANKTON_IN_CELL * 0.8,
+            "respawn_delay": 40,
         },
         "visualization": {
             "color": [0, 255, 0]
@@ -64,16 +70,17 @@ SPECIES_MAP = {
     },
     "herring": {
         "index": 1,
+        "original_starting_biomass": STARTING_BIOMASS_HERRING,
         "starting_biomass": STARTING_BIOMASS_HERRING,
         "max_in_cell": STARTING_BIOMASS_HERRING / 2,
         "average_weight": 7,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE) / 20,
         "max_biomass_in_cell": STARTING_BIOMASS_HERRING / 2,
-        "activity_metabolic_rate": 0.00055901699 * DAYS_PER_STEP,
-        "standard_metabolic_rate": 0.00011180339 * DAYS_PER_STEP,
-        "max_consumption_rate": 0.00132174564 * DAYS_PER_STEP,
-        "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP,
+        "activity_metabolic_rate": 0.022360679760000002 * DAYS_PER_STEP / SURVIVAL_BOOST,
+        "standard_metabolic_rate": 0.00447213596 * DAYS_PER_STEP / SURVIVAL_BOOST,
+        "max_consumption_rate": 0.0529 * DAYS_PER_STEP * EAT_REWARD_BOOST,
+        "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         "hardcoded_logic": False,
         "visualization": {
@@ -82,16 +89,17 @@ SPECIES_MAP = {
     },
     "spat": {
         "index": 2,
+        "original_starting_biomass": STARTING_BIOMASS_SPRAT,
         "starting_biomass": STARTING_BIOMASS_SPRAT,
         "max_in_cell": STARTING_BIOMASS_SPRAT / 2,
         "average_weight": 7,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE) / 20,
         "max_biomass_in_cell": STARTING_BIOMASS_SPRAT / 2,
-        "activity_metabolic_rate": 0.00032237098 * DAYS_PER_STEP,
-        "standard_metabolic_rate": 0.00006447419 * DAYS_PER_STEP,
-        "max_consumption_rate": 0.00073367438 * DAYS_PER_STEP,
-        "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP,
+        "activity_metabolic_rate": 0.02686424833333333 * DAYS_PER_STEP / SURVIVAL_BOOST,
+        "standard_metabolic_rate": 0.005372849666666666 * DAYS_PER_STEP / SURVIVAL_BOOST,
+        "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_REWARD_BOOST,
+        "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         "hardcoded_logic": False,
         "visualization": {
@@ -100,15 +108,16 @@ SPECIES_MAP = {
     },
     "cod": {
         "index": 3,
+        "original_starting_biomass": STARTING_BIOMASS_COD,
         "starting_biomass": STARTING_BIOMASS_COD,
         "max_in_cell": STARTING_BIOMASS_COD / 2,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE) / 20,
         "max_biomass_in_cell": STARTING_BIOMASS_COD / 2,
-        "activity_metabolic_rate": 0.000215 * DAYS_PER_STEP,
-        "standard_metabolic_rate": 0.000043 * DAYS_PER_STEP,
-        "max_consumption_rate": 0.00526 * DAYS_PER_STEP,
-        "natural_mortality_rate": 0.003 * DAYS_PER_STEP,
+        "activity_metabolic_rate": 0.014535768421428572 * DAYS_PER_STEP / SURVIVAL_BOOST,
+        "standard_metabolic_rate": 0.0029071536857142857 * DAYS_PER_STEP / SURVIVAL_BOOST,
+        "max_consumption_rate": 0.0376 * DAYS_PER_STEP * COD_EAT_REWARD_BOOST,
+        "natural_mortality_rate": 0.003 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "fishing_mortality_rate": 0.005413783 * DAYS_PER_STEP * SCALE_FISHING,
         "hardcoded_logic": False,
         "visualization": {
@@ -134,15 +143,12 @@ EATING_MAP = {
 FISHING_AMOUNT = 0.1
 FISHING_OCCURRENCE = 100
 
-BASE_BIOMASS_LOSS = 0.05
-BIOMASS_GROWTH_RATE = 0.075
-
 SMELL_EMISSION_RATE = 0.05
 SMELL_DECAY_RATE = 0.2
 
-NUM_AGENTS = 24
-AGENT_EVALUATIONS = 5
-ELITISM_SELECTION = 4
+NUM_AGENTS = 16
+AGENT_EVALUATIONS = 4
+ELITISM_SELECTION = 2
 TOURNAMENT_SELECTION = 2
 GENERATIONS_PER_RUN = 100
 
@@ -178,7 +184,7 @@ TOTAL_TENSOR_VALUES = OFFSETS_SMELL + len(SPECIES_MAP)
 
 NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9
 AVAILABLE_ACTIONS = len(Action)
-NETWORK_HIDDEN_SIZE = 12
+NETWORK_HIDDEN_SIZE = 24
 
 # number of species with hardcoded = False
 ACTION_TAKING_SPECIES = sum(1 for species in SPECIES_MAP.values() if not species["hardcoded_logic"])
@@ -194,8 +200,6 @@ def override_from_file(file_path):
     global STARTING_BIOMASS_PLANKTON
     global MIN_PERCENT_ALIVE
     global MAX_STEPS
-    global BASE_BIOMASS_LOSS
-    global BIOMASS_GROWTH_RATE
     global NUM_AGENTS
     global ELITISM_SELECTION
     global TOURNAMENT_SELECTION
@@ -227,8 +231,12 @@ def override_from_options(options):
     global STARTING_BIOMASS_SPRAT
     global MAX_STEPS
     global MIN_PERCENT_ALIVE
+    global EVAL_AGENT
 
     MIN_PERCENT_ALIVE = 0.01
+
+    if "agent" in options:
+        EVAL_AGENT = "./agents/" + options["agent"]
 
     for species, amount in options["fishingAmounts"].items():
         SPECIES_MAP[species]["fishing_mortality_rate"] = (amount / 100) * DAYS_PER_STEP

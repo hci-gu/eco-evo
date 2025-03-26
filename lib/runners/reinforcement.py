@@ -365,7 +365,7 @@ class DropPrimaryProducerAction(gym.ActionWrapper):
 
 
 def create_env():
-    env = gym.make('gymnasium_env/Ecotwin-v0', render_mode="none")
+    env = gym.make('gymnasium_env/Ecotwin-v0', render_mode="human")
     # aec_env = petting_zoo_env(render_mode="none")
     # aec_env.metadata["is_parallelizable"] = True
     # parallel_env = aec_to_parallel(aec_env)
@@ -380,8 +380,8 @@ def create_env():
 
 class RLRunner:
     def __init__(self, num_episodes=100, learning_rate=1e-3, gamma=0.99, log_dir="logs/models"):
-        env = SubprocVecEnv([lambda: create_env() for i in range(6)])
-        self.env = env
+        # env = SubprocVecEnv([lambda: create_env() for i in range(6)])
+        self.env = create_env()
 
         self.num_episodes = num_episodes
         self.learning_rate = learning_rate

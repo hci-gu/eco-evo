@@ -19,37 +19,26 @@ palette = {
     "snow": (179, 159, 225),
 }
 
-def read_map_from_file(folder_path):
-    image = Image.open(folder_path + '/map.png')
-    image = image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
-    pixels = image.load()
+def smooth_skewed_random():
+    """Returns a value between 0.25 and 4, skewed toward 0.5–2.0 with smooth falloff, using gamma sampling."""
+    alpha = 2.5
+    beta_param = 4.5
 
-    depth_image = Image.open(folder_path + '/depth.png')
-    depth_image = depth_image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
-    depth_image = depth_image.convert('L')
-    depth_pixels = depth_image.load()
-    
-    # Create numpy arrays for the world map and extra world data.
-    world_array = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES), dtype=np.float32)
-    world_data = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, 5), dtype=np.float32)
+    x = random.gammavariate(alpha, 1.0)
+    y = random.gammavariate(beta_param, 1.0)
 
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            color = pixels[x, y][:3]
-            depth_value = depth_pixels[x, y] / 255.0
-            world_data[x, y, 3] = depth_value
-            if color == palette["water"]:
-                world_array[x, y, :3] = np.array([0, 1, 0], dtype=np.float32)
-            else:
-                world_array[x, y, :3] = np.array([1, 0, 0], dtype=np.float32)
-
-    add_species_to_map(world_array, world_data)
-
-    return world_array, world_data
+    beta_sample = x / (x + y)
+    return beta_sample * (4 - 0.25) + 0.25
 
 def add_species_to_map(world_array, world_data):
+    opensimplex.seed(int(random.random() * 100000))
     # Calculate total noise sums for each species.
     noise_sums = {species: 0 for species in const.SPECIES_MAP.keys()}
+    starting_biomasses = {species: 0 for species in const.SPECIES_MAP.keys()}
+    for species, properties in const.SPECIES_MAP.items():
+        properties["starting_biomass"] = properties["original_starting_biomass"] 
+        starting_biomasses[species] = properties["starting_biomass"] * smooth_skewed_random()
+        properties["starting_biomass"] = starting_biomasses[species]
     world_data[:, :, 4] = 0
 
     # First pass: accumulate noise values.
@@ -76,7 +65,7 @@ def add_species_to_map(world_array, world_data):
                     noise = noise ** const.NOISE_SCALING
                     if noise > 0:
                         # Distribute biomass proportional to noise.
-                        world_array[x, y, properties["biomass_offset"]] = (noise / noise_sums[species]) * properties["starting_biomass"]
+                        world_array[x, y, properties["biomass_offset"]] = (noise / noise_sums[species]) * starting_biomasses[species]
                         if properties["hardcoded_logic"]:
                             world_data[x, y, 1] = 1  # Mark plankton cluster flag.
                             world_data[x, y, 2] = properties["hardcoded_rules"]["respawn_delay"]  # Set plankton respawn delay.
@@ -84,6 +73,36 @@ def add_species_to_map(world_array, world_data):
     # Set smell channels to 0.
     for species, properties in const.SPECIES_MAP.items():
         world_array[:, :, properties["smell_offset"]] = 0
+
+    return starting_biomasses
+
+def read_map_from_file(folder_path):
+    image = Image.open(folder_path + '/map.png')
+    image = image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
+    pixels = image.load()
+
+    depth_image = Image.open(folder_path + '/depth.png')
+    depth_image = depth_image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
+    depth_image = depth_image.convert('L')
+    depth_pixels = depth_image.load()
+    
+    # Create numpy arrays for the world map and extra world data.
+    world_array = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES), dtype=np.float32)
+    world_data = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, 5), dtype=np.float32)
+
+    for x in range(const.WORLD_SIZE):
+        for y in range(const.WORLD_SIZE):
+            color = pixels[x, y][:3]
+            depth_value = depth_pixels[x, y] / 255.0
+            world_data[x, y, 3] = depth_value
+            if color == palette["water"]:
+                world_array[x, y, :3] = np.array([0, 1, 0], dtype=np.float32)
+            else:
+                world_array[x, y, :3] = np.array([1, 0, 0], dtype=np.float32)
+
+    starting_biomasses = add_species_to_map(world_array, world_data)
+
+    return world_array, world_data, starting_biomasses
 
 def create_map_from_noise(static=False):
     seed = 1 if static else int(random.random() * 100000)
@@ -112,6 +131,6 @@ def create_map_from_noise(static=False):
                 current_angle = math.atan2(dy, dx) + math.pi / 2
                 world_data[x, y, 0] = current_angle  # Store the current angle.
 
-    add_species_to_map(world_array, world_data)
+    starting_biomasses = add_species_to_map(world_array, world_data)
 
-    return world_array, world_data
+    return world_array, world_data, starting_biomasses

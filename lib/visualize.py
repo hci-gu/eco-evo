@@ -97,58 +97,74 @@ def plot_generations(generations_data):
 
     plt.figure(figsize=(16, 12))  # Create a new figure for the plot
 
-    # Lists to store statistical measures for each generation
-    average_fitness = []
-    median_fitness = []
-    top_percentiles = []
-    bottom_percentiles = []
+    # Identify species from the first generation (assumes same keys across generations)
+    species_list = list(generations_data[0].keys())
 
-    percentiles = [25, 75]  # Define the percentiles to calculate
+    # Initialize dictionaries to store statistical measures for each species over generations
+    species_stats = {}
+    for sp in species_list:
+        species_stats[sp] = {
+            "average": [],
+            "median": [],
+            "bottom": [],
+            "top": []
+        }
 
-    # Plot each generation's fitness
-    for generation, fitness_values in enumerate(generations_data):
-        # Add jitter to x-coordinates to improve visualization
-        jitter = np.random.normal(0, 0.05, size=len(fitness_values))  # Adjust the standard deviation as needed
-        x_values = generation + jitter
+    # Assign a unique color for each species using a colormap
+    colors = plt.cm.tab10.colors  # A set of 10 distinct colors
+    species_colors = {sp: colors[i % len(colors)] for i, sp in enumerate(species_list)}
 
-        plt.scatter(x_values, fitness_values, alpha=0.6, color='green', label='Fitness' if generation == 0 else "")
-        
-        # Calculate and store statistical measures
-        avg_fitness = np.mean(fitness_values)
-        med_fitness = np.median(fitness_values)
-        bottom_percentile = np.percentile(fitness_values, percentiles[0])
-        top_percentile = np.percentile(fitness_values, percentiles[1])
+    # Plot each generation's fitness data for each species
+    for generation_index, generation in enumerate(generations_data):
+        for sp in species_list:
+            fitness_values = generation[sp]
+            # Add jitter to x-coordinates for better visualization
+            jitter = np.random.normal(0, 0.05, size=len(fitness_values))
+            x_values = generation_index + jitter
 
-        average_fitness.append(avg_fitness)
-        median_fitness.append(med_fitness)
-        bottom_percentiles.append(bottom_percentile)
-        top_percentiles.append(top_percentile)
+            # Plot scatter points for the species (only label on the first generation)
+            plt.scatter(x_values, fitness_values, alpha=0.6, color=species_colors[sp],
+                        label=sp if generation_index == 0 else "")
 
-    # Plot the average fitness line
-    plt.plot(range(len(average_fitness)), average_fitness, color='red', label='Average Fitness', linewidth=2)
+            # Compute statistical measures
+            avg_fitness = np.mean(fitness_values)
+            med_fitness = np.median(fitness_values)
+            bottom_percentile = np.percentile(fitness_values, 25)
+            top_percentile = np.percentile(fitness_values, 75)
 
-    # Plot the median fitness line
-    plt.plot(range(len(median_fitness)), median_fitness, color='blue', label='Median Fitness', linewidth=2)
+            # Append statistics for this generation
+            species_stats[sp]["average"].append(avg_fitness)
+            species_stats[sp]["median"].append(med_fitness)
+            species_stats[sp]["bottom"].append(bottom_percentile)
+            species_stats[sp]["top"].append(top_percentile)
 
-    # Plot the top and bottom percentiles as a shaded area
-    plt.fill_between(range(len(average_fitness)), bottom_percentiles, top_percentiles, color='gray', alpha=0.2, label=f'{percentiles[0]}th to {percentiles[1]}th Percentile')
+    # x-axis values corresponding to generations
+    generations = range(len(generations_data))
 
-    # Adjust x-axis ticks to prevent overcrowding
+    # Plot the average fitness line and fill between for each species
+    for sp in species_list:
+        plt.plot(generations, species_stats[sp]["average"], color=species_colors[sp],
+                 label=f"{sp} Avg", linewidth=2)
+        plt.fill_between(generations, species_stats[sp]["bottom"], species_stats[sp]["top"],
+                         color=species_colors[sp], alpha=0.2,
+                         label=f"{sp} 25th-75th Percentile")
+
+    # Configure axes and title
     plt.xlabel('Generation')
     plt.ylabel('Fitness')
     plt.title('Fitness of Agents Over Generations')
     ax = plt.gca()
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))  # Adjust 'nbins' as needed
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))  # Prevent overcrowding of x-axis ticks
 
     plt.legend()
     plt.tight_layout()
 
-    # Save plot as an image
+    # Save the plot as an image and update the cache
     plt.savefig(f'{const.CURRENT_FOLDER}/fitness_plot.png')
     plt.close()
 
-    # Load the saved plot image using Pygame and cache it
     generation_graph_cache = pygame.image.load(f'{const.CURRENT_FOLDER}/fitness_plot.png')
+
 
 # Plot and cache biomass graph
 def plot_biomass(agents_data):

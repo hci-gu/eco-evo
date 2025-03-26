@@ -24,21 +24,30 @@ def save_data_to_file(generation, agents_data_snapshot):
         json.dump(generations_data, f, indent=4, default=str)
 
 def update_generations_data(generation, agents_data=agents_data, generations_data=generations_data):
-    fitness_values = []
+    fitness_values = {}
 
-    for _, evals in agents_data.items():
-        total_fitness = 0
-        for _, data in evals.items():
-            fitness = max(data['steps'])
-            total_fitness += fitness
-        fitness_values.append(total_fitness / len(evals))
+    if len(agents_data.items()) == 3:
+        # we are working with species map
+        for species, _ in agents_data.items():
+            fitness_values[species] = []
+            for _, evals in agents_data[species].items():
+                total_fitness = 0
+                for _, data in evals.items():
+                    fitness = max(data['steps'])
+                    total_fitness += fitness
+                fitness_values[species].append(total_fitness / len(evals))
+    else:
+        for _, evals in agents_data.items():
+            total_fitness = 0
+            for _, data in evals.items():
+                fitness = max(data['steps'])
+                total_fitness += fitness
+            fitness_values.append(total_fitness / len(evals))
 
-    # fitness not empty
-    if len(fitness_values) > 0:
-        generations_data.append(fitness_values)
-        agents_data_snapshot = agents_data.copy()  # Take a snapshot of agents_data
-        agents_data.clear()
-        save_data_to_file(generation, agents_data_snapshot)  # Save data after clearing agents_data
+    generations_data.append(fitness_values)
+    agents_data_snapshot = agents_data.copy()  # Take a snapshot of agents_data
+    agents_data.clear()
+    save_data_to_file(generation, agents_data_snapshot)  # Save data after clearing agents_data
 
     return generations_data
 

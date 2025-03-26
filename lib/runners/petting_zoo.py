@@ -29,12 +29,13 @@ class PettingZooRunner():
         self.agent_index = 0
         self.eval_index = 0
 
-    def run(self, candidates, callback=None):
+    def run(self, candidates, species_being_evaluated = "", is_evaluation = False):
         self.env.reset()
+        steps = 0
         fitness = 0
 
         while not all(self.env.terminations.values()) and fitness < const.MAX_STEPS:
-            fitness += 1
+            steps += 1
             agent = self.env.agent_selection
             if agent == "plankton":
                 self.env.step(self.empty_action)
@@ -46,19 +47,20 @@ class PettingZooRunner():
 
                 self.env.step(action_values)
             
-            agents_data = process_data({
-                'agent_index': self.agent_index,
-                'eval_index': self.eval_index,
-                'step': fitness,
-                'world': self.env.world
-            }, self.env.plot_data)
-
-            if self.env.render_mode == "human":
-                plot_biomass(agents_data)
-                
-                
+            if steps % 4 == 0:
+                fitness += 1
+                agents_data = process_data({
+                    'species': species_being_evaluated if not is_evaluation else None,
+                    'agent_index': self.agent_index,
+                    'eval_index': self.eval_index,
+                    'step': fitness,
+                    'world': self.env.world
+                }, self.env.plot_data)
+                if self.env.render_mode == "human":
+                    plot_biomass(agents_data)
         
-        return fitness
+        species_biomass = self.env.get_fitness(species_being_evaluated)
+        return fitness * species_biomass, fitness
 
 
     def evaluate_population(self):
@@ -72,12 +74,12 @@ class PettingZooRunner():
 
         for idx in range(const.NUM_AGENTS):
             self.agent_index = idx
-            evals_fitness = []
             for species in self.species_list:
                 evaluation_candidate = self.population[species][idx]
                 other_species = copy.deepcopy(self.species_list)
                 other_species.remove(species)
 
+                evals_fitness = []
                 eval_species = {
                     species: evaluation_candidate
                 }
@@ -89,11 +91,10 @@ class PettingZooRunner():
                         other_species_idx = random.randint(0, const.NUM_AGENTS - 1)
                         other_species_candidate = self.population[other_species_name][other_species_idx]
                         eval_species[other_species_name] = other_species_candidate
-
                     
-                    fitness = self.run(eval_species)
+                    fitness, episode_length = self.run(eval_species, species)
                     evals_fitness.append(fitness)
-                    print("idx", idx, "eval", eval_index, "fitness", fitness)
+                    print("idx", idx, "eval", eval_index, "fitness", fitness, "episode_length", episode_length)
                 
                 avg_fitness = sum(evals_fitness) / len(evals_fitness)
                 fitnesses[species].append((evaluation_candidate.state_dict(), avg_fitness))
@@ -105,17 +106,29 @@ class PettingZooRunner():
         Given a dictionary of fitnesses (per species), evolve each species' population.
         """
         new_population = {}
+        fittest_agents_for_generation = {}
+        for species in self.species_list:
+            fittest_agent = max(fitnesses[species], key=lambda x: x[1])
+            fittest_agents_for_generation[species] = SingleSpeciesModel(chromosome=fittest_agent[0])
+        
+        # # run an episode length evaluation for each species and see if they should replace the best agent
+        # for species in self.species_list:
+        #     # print("EVALUATE")
+        #     # print(fittest_agents_for_generation)
+        #     _, episode_length = self.run(fittest_agents_for_generation, species)
+        #     if (episode_length > self.best_fitness[species]):
+        #         self.best_fitness[species] = episode_length
+        #         self.best_agent[species] = fittest_agents_for_generation[species]
+        #         model = self.best_agent[species]
+        #         model.save(f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_${species}_{self.best_fitness[species]}.npy')
+        #         # TODO compare with all time best not just generation best when doing evaluation like this
+
         for species in self.species_list:
             current_population = fitnesses[species]
-            fittest_agent = max(current_population, key=lambda x: x[1])
-            print(f"Evolving species {species} with best fitness {fittest_agent[1]:.2f}, alltime best: {self.best_fitness[species]:.2f}")
 
             # Select elites.
             elites = evolution.elitism_selection(current_population, const.ELITISM_SELECTION)
             next_pop = []
-            # Create children using tournament selection, crossover, and mutation.
-            # early_gen = self.current_generation < 10
-            # subtract = 2 if early_gen else 0
 
             while len(next_pop) < const.NUM_AGENTS:
                 (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, const.TOURNAMENT_SELECTION)
@@ -126,9 +139,6 @@ class PettingZooRunner():
                 evolution.mutation(c2_weights, current_mutation_rate, current_mutation_rate)
                 next_pop.append(c1_weights)
                 next_pop.append(c2_weights)
-            # if early_gen:
-            #     while len(next_pop) < const.NUM_AGENTS:
-            #         next_pop.append(SingleSpeciesModel().state_dict())
 
             # Update best fitness/agent.
             best_for_species = max(current_population, key=lambda x: x[1])
@@ -175,5 +185,5 @@ class PettingZooRunner():
             )
             candidates[model_path['species']] = model
 
-        fitness = self.run(candidates)
+        fitness = self.run(candidates, "", True)
         print(f"Fitness: {fitness}")
