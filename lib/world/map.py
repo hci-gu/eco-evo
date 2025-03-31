@@ -20,7 +20,10 @@ palette = {
 }
 
 def smooth_skewed_random():
-    """Returns a value between 0.25 and 4, skewed toward 0.5–2.0 with smooth falloff, using gamma sampling."""
+    if const.FIXED_BIOMASS:
+        return 1
+
+    """Returns a value between 0.25 and 4, skewed toward 0.5-2.0 with smooth falloff, using gamma sampling."""
     alpha = 2.5
     beta_param = 4.5
 

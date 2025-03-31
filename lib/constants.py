@@ -35,6 +35,7 @@ SECONDS_IN_DAY = 86400
 DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
 DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
 SCALE_FISHING = 0
+FIXED_BIOMASS = False
 
 NOISE_SCALING = 4.5
 STARTING_BIOMASS_COD = 387941
@@ -43,7 +44,7 @@ STARTING_BIOMASS_SPRAT = 1525100
 STARTING_BIOMASS_PLANKTON = 5000000
 MIN_PERCENT_ALIVE = 0.05
 MAX_PERCENT_ALIVE = 3
-MAX_STEPS = 7500
+MAX_STEPS = 100
 
 EVAL_AGENT = './agents/test.pt'
 
@@ -87,7 +88,7 @@ SPECIES_MAP = {
             "color": [255, 0, 0]
         }
     },
-    "spat": {
+    "sprat": {
         "index": 2,
         "original_starting_biomass": STARTING_BIOMASS_SPRAT,
         "starting_biomass": STARTING_BIOMASS_SPRAT,
@@ -131,12 +132,12 @@ EATING_MAP = {
     "herring": {
         "plankton": {}
     },
-    "spat": {
+    "sprat": {
         "plankton": {}
     },
     "cod": {
         "herring": {},
-        "spat": {},
+        "sprat": {},
     }
 }
 
@@ -168,10 +169,10 @@ for species in SPECIES_MAP.keys():
     SPECIES_MAP[species]["biomass_offset"] = offset
     offset += 1
 
-# OFFSETS_ENERGY = offset
-# for species in SPECIES_MAP.keys():
-#     SPECIES_MAP[species]["energy_offset"] = offset
-#     offset += 1
+OFFSETS_ENERGY = offset
+for species in SPECIES_MAP.keys():
+    SPECIES_MAP[species]["energy_offset"] = offset
+    offset += 1
 
 OFFSETS_SMELL = offset
 for species in SPECIES_MAP.keys():
@@ -179,8 +180,7 @@ for species in SPECIES_MAP.keys():
     offset += 1
 
 # Calculate the total required number of values in the world tensor
-TOTAL_TENSOR_VALUES = OFFSETS_SMELL + len(SPECIES_MAP)
-
+TOTAL_TENSOR_VALUES = offset + len(SPECIES_MAP)
 
 NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9
 AVAILABLE_ACTIONS = len(Action)

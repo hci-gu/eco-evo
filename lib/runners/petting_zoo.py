@@ -8,6 +8,9 @@ import random
 import copy
 from lib.environments.petting_zoo import env
 
+def noop(a, b):
+    pass
+
 class PettingZooRunner():
     def __init__(self, render_mode="none"):
         # Create the environment (render_mode can be "none" if visualization is not needed)
@@ -29,12 +32,14 @@ class PettingZooRunner():
         self.agent_index = 0
         self.eval_index = 0
 
-    def run(self, candidates, species_being_evaluated = "", is_evaluation = False):
+    def run(self, candidates, species_being_evaluated = "cod", is_evaluation = False, callback = noop):
         self.env.reset()
         steps = 0
+        episode_length = 0
         fitness = 0
+        callback(self.env.world, fitness)
 
-        while not all(self.env.terminations.values()) and fitness < const.MAX_STEPS:
+        while not all(self.env.terminations.values()) and not all(self.env.truncations.values()) and episode_length < const.MAX_STEPS:
             steps += 1
             agent = self.env.agent_selection
             if agent == "plankton":
@@ -48,19 +53,21 @@ class PettingZooRunner():
                 self.env.step(action_values)
             
             if steps % 4 == 0:
-                fitness += 1
+                episode_length += 1
+                species_biomass = self.env.get_fitness(species_being_evaluated)
+                fitness += species_biomass
                 agents_data = process_data({
                     'species': species_being_evaluated if not is_evaluation else None,
                     'agent_index': self.agent_index,
                     'eval_index': self.eval_index,
-                    'step': fitness,
+                    'step': episode_length,
                     'world': self.env.world
                 }, self.env.plot_data)
+                callback(self.env.world, fitness)
                 if self.env.render_mode == "human":
                     plot_biomass(agents_data)
         
-        species_biomass = self.env.get_fitness(species_being_evaluated)
-        return fitness * species_biomass, fitness
+        return fitness, episode_length
 
 
     def evaluate_population(self):
@@ -176,8 +183,7 @@ class PettingZooRunner():
             self.run_generation()
             # Optionally, save best models or log additional statistics.
 
-    # array of model path/species pairs
-    def evaluate(self, model_paths = []):
+    def evaluate(self, model_paths = [], callback = noop):
         candidates = {}
         for model_path in model_paths:
             model = SingleSpeciesModel(
@@ -185,5 +191,4 @@ class PettingZooRunner():
             )
             candidates[model_path['species']] = model
 
-        fitness = self.run(candidates, "", True)
-        print(f"Fitness: {fitness}")
+        return self.run(candidates, "cod", True, callback)

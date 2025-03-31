@@ -173,8 +173,7 @@ class raw_env(AECEnv):
                 # Abort simulation by terminating all agents.
                 for ag in self.agents:
                     self.terminations[ag] = True
-                # Optionally, you can also set rewards to 0 (or a penalty) here.
-                self.rewards = {ag: 0 for ag in self.agents}
+                print("terminated all agents")
             else:
                 # If the world is still alive, assign +1 reward to all surviving agents.
                 for ag in self.agents:
@@ -213,11 +212,9 @@ class raw_env(AECEnv):
             draw_world(self.screen, self.world, self.world_data)
 
     def get_fitness(self, agent):
-        biomass = self.world[..., const.SPECIES_MAP[agent]["biomass_offset"]]
-        # divide by starting biomass to get a percentage
-        biomass_growth = biomass.sum() / self.starting_biomasses[agent]
+        biomass = self.world[..., const.SPECIES_MAP[agent]["biomass_offset"]].sum()
 
-        return np.log(1 + biomass_growth)
+        return np.log(biomass)
     
     # Note: You must implement or override the helper methods below
     def _was_dead_step(self, action):
