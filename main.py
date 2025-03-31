@@ -1,6 +1,7 @@
 import argparse
 import threading
 import os
+import time
 from lib.visualize import plot_generations, init_pygame, draw_world, plot_biomass
 import pygame
 from lib.data_manager import data_loop, update_generations_data, process_data
@@ -14,6 +15,30 @@ from lib.runners.single_agent_gym import SingleAgentGymRunner
 import lib.constants as const
 from lib.runner import Runner
 
+def evaluate_model():
+    folder = "results/petting_zoo_biomass_fitness_log_5/agents"
+    files = os.listdir(folder)
+    files = [f for f in files if f.endswith(".npy.npz")]
+    files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
+    species = {}
+    for f in files:
+        s = f.split("_")[1].split(".")[0]
+        s = s[1:] if s[0] == "$" else s
+        if s == "spat":
+            s = "sprat"
+        if s not in species:
+            species[s] = f
+
+    model_paths = []
+    for s, f in species.items():
+        model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
+
+    start_time = time.time()
+    runner = PettingZooRunner()
+    runner.evaluate(model_paths)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    return elapsed_time
 
 def load_config_files(config_folder):
     """Load all config files from the given folder."""
@@ -34,27 +59,14 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
-    # folder = "results/petting_zoo_biomass_fitness_log_4/agents"
-    # files = os.listdir(folder)
-    # files = [f for f in files if f.endswith(".npy.npz")]
-    # files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
-    # species = {}
-    # for f in files:
-    #     s = f.split("_")[1].split(".")[0]
-    #     # remove $ from species name
-    #     s = s[1:] if s[0] == "$" else s
-    #     if s not in species:
-    #         species[s] = f
-    
-    # model_paths = []
-    # for s, f in species.items():
-    #     model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
-
-    # print("START EVAL")
-    # runner = PettingZooRunner(render_mode="human")
-    # runner.evaluate(model_paths)
-    # print("EVAL DONE")
-
+    total_elapsed_time = 0
+    for i in range(5):
+        elapsed_time = evaluate_model()
+        total_elapsed_time += elapsed_time
+        print(f"Elapsed time for run {i + 1}: {elapsed_time:.2f} seconds")
+    average_elapsed_time = total_elapsed_time / 5
+    print(f"Average elapsed time: {average_elapsed_time:.2f} seconds")
+    exit(0)
 
     # if args.agent_file:
     #     print(f"Loading agent from file: {args.agent_file}")
@@ -72,6 +84,25 @@ if __name__ == "__main__":
     #         pygame.display.flip()
     #         pygame.time.wait(1)
     #     runner.simulate(agent_file=args.agent_file, visualize=visualize)
+    # folder = "results/petting_zoo_biomass_fitness_log_5/agents"
+    # files = os.listdir(folder)
+    # files = [f for f in files if f.endswith(".npy.npz")]
+    # files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
+    # species = {}
+    # for f in files:
+    #     s = f.split("_")[1].split(".")[0]
+    #     s = s[1:] if s[0] == "$" else s
+    #     if s == "spat":
+    #         s = "sprat"
+    #     if s not in species:
+    #         species[s] = f
+
+    # model_paths = []
+    # for s, f in species.items():
+    #     model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
+
+    # runner = PettingZooRunner(render_mode="human")
+    # runner.evaluate(model_paths)
 
     # Load config files
     config_files = load_config_files(args.config_folder)

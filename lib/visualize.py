@@ -186,7 +186,7 @@ def plot_biomass(agents_data):
         for eval_index, data in evals.items():
             plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black")
             plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='--')
-            plt.plot(data['steps'], data['spat_alive'], label=f'Agent {agent_index} Eval {eval_index} SPAT', color="orange", linestyle='-.')
+            plt.plot(data['steps'], data['sprat_alive'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-.')
             plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle=':')
             idx += 1
 
@@ -258,7 +258,7 @@ def draw_world(screen, world_tensor, world_data):
     offsets = {
         "plankton": (-CELL_SIZE // 6, -CELL_SIZE // 6),
         "herring": (CELL_SIZE // 6, -CELL_SIZE // 6),
-        "spat": (-CELL_SIZE // 6, CELL_SIZE // 6),
+        "sprat": (-CELL_SIZE // 6, CELL_SIZE // 6),
         "cod": (CELL_SIZE // 6, CELL_SIZE // 6)
     }
 
