@@ -189,10 +189,10 @@ def plot_biomass(agents_data):
             plt.plot(data['steps'], data['sprat_alive'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-')
             plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle='-')
             
-            plt.plot(data['steps'], data['cod_energy'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black", linestyle='-.')
-            plt.plot(data['steps'], data['herring_energy'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-.')
-            plt.plot(data['steps'], data['sprat_energy'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-.')
-            plt.plot(data['steps'], data['plankton_energy'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle='-.')
+            # plt.plot(data['steps'], data['cod_energy'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black", linestyle='-.')
+            # plt.plot(data['steps'], data['herring_energy'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-.')
+            # plt.plot(data['steps'], data['sprat_energy'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-.')
+            # plt.plot(data['steps'], data['plankton_energy'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle='-.')
             idx += 1
 
     # for each species

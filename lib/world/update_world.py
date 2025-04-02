@@ -25,15 +25,22 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
     resting_mr_loss  = species_properties["standard_metabolic_rate"]
     natural_mortality_loss = species_properties["natural_mortality_rate"]
 
+    growth_rate = species_properties["growth_rate"]
+
     # --- Biomass updates ---
     initial_biomass = world[x_batch, y_batch, biomass_offset]
     energy_at_positions = world[x_batch, y_batch, energy_offset]
     below_threshold_mask = energy_at_positions < 50
+    above_threshold_mask = ~below_threshold_mask
 
     loss_factor = activity_mr_loss[below_threshold_mask] + resting_mr_loss + natural_mortality_loss
     world[x_batch[below_threshold_mask], y_batch[below_threshold_mask], biomass_offset] -= (
         initial_biomass[below_threshold_mask] * loss_factor
     )
+    world[x_batch[above_threshold_mask], y_batch[above_threshold_mask], biomass_offset] += (
+        initial_biomass[above_threshold_mask] * growth_rate
+    )
+
 
     biomass_after_loss = world[x_batch, y_batch, biomass_offset]
 
@@ -123,7 +130,7 @@ def perform_eating(world, species_key, action_values_batch, positions):
         prey_biomass = world[x_batch, y_batch, prey_biomass_offset]
         # Consume as much as possible, up to total_eat_amount.
         eat_amount = np.minimum(prey_biomass, total_eat_amount)
-        # Update prey and predator biomass.
+        # Reduce prey biomass.
         world[x_batch, y_batch, prey_biomass_offset] -= eat_amount
         total_eat_amount -= eat_amount
 

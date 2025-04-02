@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # profiler = cProfile.Profile()
     # profiler.enable()
 
-    evaluate_model()
+    # evaluate_model()
     # total_elapsed_time = 0
     # for i in range(5):
     #     elapsed_time = evaluate_model()

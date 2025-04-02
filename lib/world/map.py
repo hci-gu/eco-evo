@@ -69,7 +69,7 @@ def add_species_to_map(world_array, world_data):
                     if noise > 0:
                         # Distribute biomass proportional to noise.
                         world_array[x, y, properties["biomass_offset"]] = (noise / noise_sums[species]) * starting_biomasses[species]
-                        world_array[x, y, properties["energy_offset"]] = const.MAX_ENERGY
+                        world_array[x, y, properties["energy_offset"]] = 50 + random.random() * 50
                         if properties["hardcoded_logic"]:
                             world_data[x, y, 1] = 1  # Mark plankton cluster flag.
                             world_data[x, y, 2] = properties["hardcoded_rules"]["respawn_delay"]  # Set plankton respawn delay.

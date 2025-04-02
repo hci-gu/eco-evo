@@ -24,7 +24,7 @@ RUNNER = "rl_runner"
 SPEED_MULTIPLIER = 1
 EAT_REWARD_BOOST = 5
 COD_EAT_REWARD_BOOST = 5
-SURVIVAL_BOOST = 4
+SURVIVAL_BOOST = 0.5
 
 MAP_METER_SIZE = 300 * 1000
 WORLD_SIZE = 48
@@ -44,9 +44,9 @@ STARTING_BIOMASS_PLANKTON = 5000000
 MIN_PERCENT_ALIVE = 0.05
 MAX_PERCENT_ALIVE = 3
 MAX_ENERGY = 100
-BASE_ENERGY_COST = 5
-ENERGY_REWARD_FOR_EATING = 100
-MAX_STEPS = 100
+BASE_ENERGY_COST = 4
+ENERGY_REWARD_FOR_EATING = 25
+MAX_STEPS = 7500
 
 EVAL_AGENT = './agents/test.pt'
 
@@ -63,9 +63,9 @@ SPECIES_MAP = {
         "max_biomass_in_cell": MAX_PLANKTON_IN_CELL,
         "hardcoded_logic": True,
         "hardcoded_rules": {
-            "growth_rate_constant": 0.2,
-            "growth_threshold": MAX_PLANKTON_IN_CELL * 0.8,
-            "respawn_delay": 40,
+            "growth_rate_constant": 0.025,
+            "growth_threshold": MAX_PLANKTON_IN_CELL * 2,
+            "respawn_delay": 100,
         },
         "visualization": {
             "color": [0, 255, 0]

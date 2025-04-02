@@ -1,4 +1,5 @@
 from queue import Queue, Empty
+import numpy as np
 import lib.constants as const
 import json
 
@@ -81,8 +82,10 @@ def process_data(data, agents_data=agents_data):
         for species, properties in const.SPECIES_MAP.items():
             biomass_offset = properties["biomass_offset"]
             energy_offset = properties["energy_offset"]
+            cells_with_biomass = world[:, :, biomass_offset] > 0
+            average_energy = world[cells_with_biomass, energy_offset].mean() if np.any(cells_with_biomass) else 0
             curr_agents_data[agent_index][eval_index][f'{species}_alive'].append(world[:, :, biomass_offset].sum())
-            curr_agents_data[agent_index][eval_index][f'{species}_energy'].append(world[:, :, energy_offset].sum())
+            curr_agents_data[agent_index][eval_index][f'{species}_energy'].append(average_energy)
 
     if agent_species is not None:
         agents_data[agent_species] = curr_agents_data
