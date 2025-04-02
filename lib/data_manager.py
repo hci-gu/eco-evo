@@ -71,6 +71,7 @@ def process_data(data, agents_data=agents_data):
         }
         for species in const.SPECIES_MAP.keys():
             curr_agents_data[agent_index][eval_index][f'{species}_alive'] = []
+            curr_agents_data[agent_index][eval_index][f'{species}_energy'] = []
 
     curr_agents_data[agent_index][eval_index]['steps'].append(step)
 
@@ -79,7 +80,9 @@ def process_data(data, agents_data=agents_data):
         world = data['world']
         for species, properties in const.SPECIES_MAP.items():
             biomass_offset = properties["biomass_offset"]
+            energy_offset = properties["energy_offset"]
             curr_agents_data[agent_index][eval_index][f'{species}_alive'].append(world[:, :, biomass_offset].sum())
+            curr_agents_data[agent_index][eval_index][f'{species}_energy'].append(world[:, :, energy_offset].sum())
 
     if agent_species is not None:
         agents_data[agent_species] = curr_agents_data

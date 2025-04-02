@@ -2,9 +2,7 @@ import lib.constants as const
 from lib.model import Model
 import lib.evolution as evolution
 import gymnasium as gym
-import torch
 import copy
-import random
 
 class SingleAgentGymRunner():
     def __init__(self):
@@ -28,7 +26,7 @@ class SingleAgentGymRunner():
                 done = False
 
                 while not done:
-                    action = agent.forward(obs.reshape(-1, 99))
+                    action = agent.forward(obs.reshape(-1, 135))
                     action = action.reshape(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS * 3)
 
                     obs, reward, done, truncated, info = self.env.step(action)

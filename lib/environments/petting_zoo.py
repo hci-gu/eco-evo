@@ -7,18 +7,11 @@ from gymnasium import spaces
 from lib.world import (
     update_smell,
     read_map_from_file,
-    remove_species_from_fishing,
-    respawn_plankton,
-    reset_plankton_cluster,
-    move_plankton_cluster,
-    move_plankton_based_on_current,
     get_movement_delta,
     apply_movement_delta,
     spawn_plankton,
     perform_eating,
-    perform_action,  # Make sure this is the NumPy version from the previous rewrite.
     world_is_alive,
-    create_map_from_noise
 )
 from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
 import lib.constants as const
@@ -44,8 +37,6 @@ class raw_env(AECEnv):
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.map_folder = map_folder
         self.reset()
-
-        self.obs_vector_length = 11
 
         self._observation_spaces = {
             agent: spaces.Box(
@@ -113,14 +104,15 @@ class raw_env(AECEnv):
 
     def observe(self, agent):
         # Calculate maximum biomass and smell for normalization.
-        max_biomass = self.world[..., 3:7].max()
-        max_smell = self.world[..., 7:11].max()
+        max_biomass = self.world[..., const.OFFSETS_BIOMASS:const.OFFSETS_BIOMASS+4].max()
+        max_smell = self.world[..., const.OFFSETS_SMELL:const.OFFSETS_SMELL+4].max()
 
         terrain = self.world[..., 0:3]
-        biomass = self.world[..., 3:7] / (max_biomass + 1e-8)
-        smell   = self.world[..., 7:11] / (max_smell + 1e-8)
+        biomass = self.world[..., const.OFFSETS_BIOMASS:const.OFFSETS_BIOMASS+4] / (max_biomass + 1e-8)
+        energy = self.world[..., const.OFFSETS_ENERGY:const.OFFSETS_ENERGY+4] / (const.MAX_ENERGY + 1e-8)
+        smell = self.world[..., const.OFFSETS_SMELL:const.OFFSETS_SMELL+4] / (max_smell + 1e-8)
         
-        observation = np.concatenate([terrain, biomass, smell], axis=-1)
+        observation = np.concatenate([terrain, biomass, energy, smell], axis=-1)
 
         patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
 
@@ -173,7 +165,6 @@ class raw_env(AECEnv):
                 # Abort simulation by terminating all agents.
                 for ag in self.agents:
                     self.terminations[ag] = True
-                print("terminated all agents")
             else:
                 # If the world is still alive, assign +1 reward to all surviving agents.
                 for ag in self.agents:
@@ -187,12 +178,10 @@ class raw_env(AECEnv):
                 self.cumulative_rewards[ag] += self.rewards[ag]
             # self.rewards = {sp: 1 for sp in self.agents}
             self.num_moves += 1
-            self.truncations = {agent: self.num_moves >= const.MAX_STEPS for agent in self.agents}
+            self.truncations = {agent: self.num_moves >= (const.MAX_STEPS * 4) for agent in self.agents}
 
             for i in self.agents:
                 self.observations[i] = self.observe(i)
-
-        update_smell(self.world)
 
         if self._agent_selector.is_last():
             # Re-shuffle agents for the next round.
@@ -215,6 +204,9 @@ class raw_env(AECEnv):
         biomass = self.world[..., const.SPECIES_MAP[agent]["biomass_offset"]].sum()
 
         return np.log(biomass)
+    
+    def overwrite_world(self, world):
+        self.world = world
     
     # Note: You must implement or override the helper methods below
     def _was_dead_step(self, action):

@@ -5,15 +5,9 @@ import lib.constants as const
 from lib.world import (
     update_smell,
     read_map_from_file,
-    remove_species_from_fishing,
-    respawn_plankton,
-    reset_plankton_cluster,
-    move_plankton_cluster,
-    move_plankton_based_on_current,
     spawn_plankton,
-    perform_action,       # <-- This is now the NumPy version
+    perform_action,
     world_is_alive,
-    create_map_from_noise
 )
 from lib.data_manager import queue_data
 from lib.model import Model

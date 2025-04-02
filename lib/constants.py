@@ -1,5 +1,4 @@
 import os
-import torch
 from enum import Enum
 
 class Terrain(Enum):
@@ -15,7 +14,7 @@ class Action(Enum):
     EAT = 4
     REST = 5
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 RUNNER = "rl_runner"
 
@@ -24,7 +23,7 @@ RUNNER = "rl_runner"
 # SURVIVAL_BOOST = 3
 SPEED_MULTIPLIER = 1
 EAT_REWARD_BOOST = 5
-COD_EAT_REWARD_BOOST = 6
+COD_EAT_REWARD_BOOST = 5
 SURVIVAL_BOOST = 4
 
 MAP_METER_SIZE = 300 * 1000
@@ -44,7 +43,10 @@ STARTING_BIOMASS_SPRAT = 1525100
 STARTING_BIOMASS_PLANKTON = 5000000
 MIN_PERCENT_ALIVE = 0.05
 MAX_PERCENT_ALIVE = 3
-MAX_STEPS = 100
+MAX_ENERGY = 100
+BASE_ENERGY_COST = 4
+ENERGY_REWARD_FOR_EATING = 50
+MAX_STEPS = 7500
 
 EVAL_AGENT = './agents/test.pt'
 
@@ -179,8 +181,7 @@ for species in SPECIES_MAP.keys():
     SPECIES_MAP[species]["smell_offset"] = offset
     offset += 1
 
-# Calculate the total required number of values in the world tensor
-TOTAL_TENSOR_VALUES = offset + len(SPECIES_MAP)
+TOTAL_TENSOR_VALUES = offset
 
 NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9
 AVAILABLE_ACTIONS = len(Action)

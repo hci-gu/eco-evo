@@ -97,4 +97,5 @@ class SingleSpeciesModel(Model):
         # Compute softmax in a numerically stable way.
         exp_vals = np.exp(out - np.max(out, axis=1, keepdims=True))
         softmax_output = exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
+        # softmax_output /= np.sum(softmax_output, axis=1, keepdims=True)
         return softmax_output

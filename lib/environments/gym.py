@@ -2,11 +2,10 @@ import gymnasium as gym
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 import lib.constants as const
-from lib.world import update_smell, total_biomass, read_map_from_file, remove_species_from_fishing, respawn_plankton, reset_plankton_cluster, move_plankton_cluster, move_plankton_based_on_current, spawn_plankton, perform_action, world_is_alive, create_map_from_noise
+from lib.world import update_smell, total_biomass, read_map_from_file, spawn_plankton, perform_action, world_is_alive
 from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
 from gymnasium import spaces
 import pygame
-import torch
 import random
 
 class EcosystemEnv(gym.Env):

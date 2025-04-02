@@ -47,8 +47,17 @@ class PettingZooRunner():
             else:
                 obs, reward, termination, truncation, info = self.env.last()
                 candidate = candidates[agent]
-                action_values = candidate.forward(obs.reshape(-1, 99))
+                action_values = candidate.forward(obs.reshape(-1, 135))
+                # print the average action value
                 action_values = action_values.reshape(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS)
+                mean_action_values = action_values.mean(axis=(0, 1))
+
+                # Print it nicely
+                for i in enumerate(const.Action):
+                    action = i[1]
+                    val = mean_action_values[action.value]
+                    print(f"Action {action.name}: average value = {val:.4f}")
+                print('__________________________________________')
 
                 self.env.step(action_values)
             

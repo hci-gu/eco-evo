@@ -3,18 +3,9 @@ from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 from gymnasium import spaces
 from lib.world import (
-    update_smell,
     read_map_from_file,
     perform_cell_action,
-    remove_species_from_fishing,
-    respawn_plankton,
-    reset_plankton_cluster,
-    move_plankton_cluster,
-    move_plankton_based_on_current,
-    spawn_plankton,
-    perform_action,  # Make sure this is the NumPy version from the previous rewrite.
     world_is_alive,
-    create_map_from_noise
 )
 from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
 import lib.constants as const

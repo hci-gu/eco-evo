@@ -185,9 +185,14 @@ def plot_biomass(agents_data):
     for agent_index, evals in agents_data.items():
         for eval_index, data in evals.items():
             plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black")
-            plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='--')
-            plt.plot(data['steps'], data['sprat_alive'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-.')
-            plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle=':')
+            plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-')
+            plt.plot(data['steps'], data['sprat_alive'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-')
+            plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle='-')
+            
+            plt.plot(data['steps'], data['cod_energy'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black", linestyle='-.')
+            plt.plot(data['steps'], data['herring_energy'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-.')
+            plt.plot(data['steps'], data['sprat_energy'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-.')
+            plt.plot(data['steps'], data['plankton_energy'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle='-.')
             idx += 1
 
     # for each species
@@ -249,7 +254,7 @@ def draw_world(screen, world_tensor, world_data):
     # Define radius constraints
     # We allow circles to be large enough to exceed cell boundaries.
     # Keep a moderate max radius, but not too large.
-    min_radius = 0
+    min_radius = 0.5
     max_radius = CELL_SIZE // 1.5
     min_radius_plankton = 1
     max_radius_plankton = CELL_SIZE // 4
@@ -371,3 +376,68 @@ def draw_world(screen, world_tensor, world_data):
 
     # # Perform screen update once
     # pygame.display.flip()
+
+def draw_world_detailed(screen, world_tensor):
+    # remove padding
+    world_tensor = world_tensor[1:-1, 1:-1]
+
+    """
+    Visualize the world based on the tensor representation, displaying both biomass and energy.
+    The world_tensor has shape (WORLD_SIZE, WORLD_SIZE, N) where:
+    - The first 3 values represent the terrain (one-hot encoded).
+    - The next 3 values represent the biomass of plankton, anchovy, and cod, respectively.
+    - The next 3 values represent the energy of plankton, anchovy, and cod, respectively.
+    """
+    screen.fill((255, 255, 255))
+
+    terrain_surface = draw_terrain(world_tensor)
+    screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
+
+    for x in range(const.WORLD_SIZE):
+        for y in range(const.WORLD_SIZE):
+            # Define horizontal positions for circles and bars within the cell
+            species_positions = {
+                species: (-CELL_SIZE // 3, -CELL_SIZE // 4) if species == "plankton" else
+                         (0, -CELL_SIZE // 4) if species == "anchovy" else
+                         (CELL_SIZE // 3, -CELL_SIZE // 4) for species in SPECIES_MAP.keys()
+            }
+            
+            # Extract biomass and energy information for each species
+            species_biomass = {species: world_tensor[x, y, properties["biomass_offset"]].item() for species, properties in SPECIES_MAP.items()}
+            species_energy = {species: world_tensor[x, y, properties["energy_offset"]].item() for species, properties in SPECIES_MAP.items()}
+
+            # Dictionary to map species to their biomass, energy, and colors
+            species_data = {
+                species: (species_biomass[species], species_energy[species], (0, 255, 0), (0, 200, 0)) if species == "plankton" else
+                         (species_biomass[species], species_energy[species], (255, 0, 0), (200, 0, 0)) if species == "anchovy" else
+                         (species_biomass[species], species_energy[species], (0, 0, 0), (50, 50, 50)) for species in SPECIES_MAP.keys()
+            }
+
+            # Draw biomass circles in a row at the top
+            for species, (biomass, energy, biomass_color, energy_color) in species_data.items():
+                offset_x, offset_y = species_positions[species]
+                center_x = x * CELL_SIZE + CELL_SIZE // 2 + offset_x
+                center_y = y * CELL_SIZE + CELL_SIZE // 2 + offset_y
+
+                # Draw biomass as circles (aligned in a row at the top)
+                if biomass > 0:
+                    radius = min(CELL_SIZE // 6, int(math.sqrt(biomass) * 0.75))  # Smaller circles to fit in a row
+                    pygame.draw.circle(screen, biomass_color, (center_x, center_y), radius)
+
+                # Draw energy bars in a row below the circles
+                if energy > 0:
+                    bar_height = int(CELL_SIZE * 0.1)  # Set bar height smaller to fit in the cell
+                    max_bar_width = CELL_SIZE // 3     # Max width per species to fit three bars in a row
+                    # set bar width based on energy level ( 100 max width, and 0 no width )
+                    bar_width = max(1, min(int(max_bar_width * (energy / 100)), max_bar_width))
+                    bar_rect = pygame.Rect(center_x - bar_width // 2, center_y + CELL_SIZE // 4, bar_width, bar_height)
+                    pygame.draw.rect(screen, energy_color, bar_rect)
+
+    # Draw cached biomass graph
+    if biomass_graph_cache:
+        screen.blit(biomass_graph_cache, (WORLD_WIDTH, 0))  # Adjust the position as needed
+    if energy_graph_cache:
+        screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
+
+    # Perform screen update only once at the end
+    pygame.display.flip()

@@ -10,13 +10,13 @@ from lib.constants import override_from_file
 # from lib.runners.petting_zoo_reinforcement_old import RLRunner
 import lib.environments.gym
 from lib.runners.petting_zoo import PettingZooRunner
-from lib.runners.reinforcement import RLRunner
+# from lib.runners.reinforcement import RLRunner
 from lib.runners.single_agent_gym import SingleAgentGymRunner
 import lib.constants as const
 from lib.runner import Runner
 
 def evaluate_model():
-    folder = "results/petting_zoo_biomass_fitness_log_5/agents"
+    folder = "results/petting_zoo_energy_2/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
@@ -34,7 +34,7 @@ def evaluate_model():
         model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
 
     start_time = time.time()
-    runner = PettingZooRunner()
+    runner = PettingZooRunner(render_mode="human")
     runner.evaluate(model_paths)
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -59,14 +59,15 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
-    total_elapsed_time = 0
-    for i in range(5):
-        elapsed_time = evaluate_model()
-        total_elapsed_time += elapsed_time
-        print(f"Elapsed time for run {i + 1}: {elapsed_time:.2f} seconds")
-    average_elapsed_time = total_elapsed_time / 5
-    print(f"Average elapsed time: {average_elapsed_time:.2f} seconds")
-    exit(0)
+    evaluate_model()
+    # total_elapsed_time = 0
+    # for i in range(5):
+    #     elapsed_time = evaluate_model()
+    #     total_elapsed_time += elapsed_time
+    #     print(f"Elapsed time for run {i + 1}: {elapsed_time:.2f} seconds")
+    # average_elapsed_time = total_elapsed_time / 5
+    # print(f"Average elapsed time: {average_elapsed_time:.2f} seconds")
+    # exit(0)
 
     # if args.agent_file:
     #     print(f"Loading agent from file: {args.agent_file}")
@@ -113,8 +114,9 @@ if __name__ == "__main__":
         override_from_file(config_file)
 
         if const.RUNNER == "rl_runner":
-            runner = RLRunner()
-            runner.train()
+            pass
+            # runner = RLRunner()
+            # runner.train()
         elif const.RUNNER == "petting_zoo":
             runner = PettingZooRunner()
             runner.train()
