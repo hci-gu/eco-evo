@@ -3,9 +3,7 @@ from numba import njit
 import lib.constants as const
 from lib.constants import Action
 
-@njit
 def get_movement_delta(world, world_data, species_key, action_values_batch, positions):
-    # Create a grid that matches world to return the movement deltas
     movement_deltas = np.zeros_like(world)
 
     x_batch = positions[:, 0]
@@ -32,14 +30,9 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
     energy_at_positions = world[x_batch, y_batch, energy_offset]
     below_threshold_mask = energy_at_positions < 50
 
+    loss_factor = activity_mr_loss[below_threshold_mask] + resting_mr_loss + natural_mortality_loss
     world[x_batch[below_threshold_mask], y_batch[below_threshold_mask], biomass_offset] -= (
-        initial_biomass[below_threshold_mask] * activity_mr_loss[below_threshold_mask]
-    )
-    world[x_batch[below_threshold_mask], y_batch[below_threshold_mask], biomass_offset] -= (
-        initial_biomass[below_threshold_mask] * resting_mr_loss
-    )
-    world[x_batch[below_threshold_mask], y_batch[below_threshold_mask], biomass_offset] -= (
-        initial_biomass[below_threshold_mask] * natural_mortality_loss
+        initial_biomass[below_threshold_mask] * loss_factor
     )
 
     biomass_after_loss = world[x_batch, y_batch, biomass_offset]
@@ -67,12 +60,13 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
         (valid_right_mask, biomass_right, (1, 0))
     ]
 
-    for mask, biomass_direction, (x, y) in movement_masks:
+    for mask, biomass_direction, (dx, dy) in movement_masks:
         if mask.any():
+            x_target = x_batch[mask] + dx
+            y_target = y_batch[mask] + dy
             total_biomass_moved[mask] += biomass_direction[mask]
-            movement_deltas[x_batch[mask] + x, y_batch[mask] + y, biomass_offset] += biomass_direction[mask]
-
-            movement_deltas[x_batch[mask] + x, y_batch[mask] + y, energy_offset] += initial_energy[mask] * biomass_direction[mask]
+            np.add.at(movement_deltas[:, :, biomass_offset], (x_target, y_target), biomass_direction[mask])
+            np.add.at(movement_deltas[:, :, energy_offset], (x_target, y_target), initial_energy[mask] * biomass_direction[mask])
 
     movement_deltas[x_batch, y_batch, energy_offset] = initial_energy * biomass_stationary
     movement_deltas[x_batch, y_batch, biomass_offset] -= total_biomass_moved
@@ -93,6 +87,7 @@ def apply_movement_delta(world, species_key, movement_deltas):
 
 
 def perform_eating(world, species_key, action_values_batch, positions):
+    # Extract batch indices.
     x_batch = positions[:, 0]
     y_batch = positions[:, 1]
 
@@ -100,33 +95,41 @@ def perform_eating(world, species_key, action_values_batch, positions):
     biomass_offset = species_properties["biomass_offset"]
     energy_offset  = species_properties["energy_offset"]
 
+    # Get eating actions and metabolic cost.
     eat = action_values_batch[:, Action.EAT.value]
     activity_mr_loss = eat * species_properties["activity_metabolic_rate"]
 
+    # Cache biomass and energy at batch positions.
+    init_biomass = world[x_batch, y_batch, biomass_offset]
+    init_energy = world[x_batch, y_batch, energy_offset]
+
     # --- Biomass loss from metabolic cost of eating ---
-    initial_biomass = world[x_batch, y_batch, biomass_offset]
-    energy_at_positions = world[x_batch, y_batch, energy_offset]
-    below_threshold_mask = energy_at_positions < 50
-    world[x_batch[below_threshold_mask], y_batch[below_threshold_mask], biomass_offset] -= (initial_biomass[below_threshold_mask] * activity_mr_loss[below_threshold_mask])
+    below_thresh = init_energy < 50
+    if below_thresh.any():
+        loss = init_biomass[below_thresh] * activity_mr_loss[below_thresh]
+        world[x_batch[below_thresh], y_batch[below_thresh], biomass_offset] -= loss
 
-    initial_total_eat = initial_biomass * eat
+    # Compute total eat potential.
+    initial_total_eat = init_biomass * eat
     total_eat_amount = initial_total_eat.copy()
-    prey = list(const.EATING_MAP[species_key].items())
-    # Randomize the order of the prey
-    np.random.shuffle(prey)
 
-    for prey_species, _ in prey:
+    # Randomize prey order.
+    prey_list = list(const.EATING_MAP[species_key].items())
+    np.random.shuffle(prey_list)
+
+    # Process each prey species.
+    for prey_species, _ in prey_list:
         prey_biomass_offset = const.SPECIES_MAP[prey_species]["biomass_offset"]
         prey_biomass = world[x_batch, y_batch, prey_biomass_offset]
-        # Eat as much as available (up to total_eat_amount)
+        # Consume as much as possible, up to total_eat_amount.
         eat_amount = np.minimum(prey_biomass, total_eat_amount)
-        
+        # Update prey and predator biomass.
         world[x_batch, y_batch, prey_biomass_offset] -= eat_amount
-        world[x_batch, y_batch, biomass_offset] += eat_amount
         total_eat_amount -= eat_amount
-    
+
+    # Calculate actual eaten amount and compute eaten percentage safely.
     actual_eaten = initial_total_eat - total_eat_amount
-    # print(initial_total_eat)
+    # Avoid division by zero using np.where.
     eaten_percentage = np.divide(
         actual_eaten, 
         initial_total_eat, 
@@ -134,29 +137,28 @@ def perform_eating(world, species_key, action_values_batch, positions):
         where=initial_total_eat > 0
     )
     world[x_batch, y_batch, energy_offset] += const.ENERGY_REWARD_FOR_EATING * eaten_percentage
-    
 
     # --- Handle low biomass: if biomass falls below minimum, set it (and energy) to zero ---
-    biomass = world[:, :, biomass_offset]
-    low_biomass_mask = biomass < species_properties["min_biomass_in_cell"]
-    world[:, :, biomass_offset][low_biomass_mask] = 0
-    # If a cell has no biomass, it loses all energy.
-    zero_biomass_mask = world[x_batch, y_batch, biomass_offset] == 0
-    world[x_batch, y_batch, energy_offset][zero_biomass_mask] = 0
+    # Instead of indexing the entire grid, update only for batch positions.
+    current_biomass = world[x_batch, y_batch, biomass_offset]
+    low_biomass = current_biomass < species_properties["min_biomass_in_cell"]
+    if low_biomass.any():
+        world[x_batch[low_biomass], y_batch[low_biomass], biomass_offset] = 0
+        world[x_batch[low_biomass], y_batch[low_biomass], energy_offset] = 0
 
-    # --- Clamp biomass for every species ---
-    for species in const.SPECIES_MAP.keys():
-        species_biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
-        species_energy_offset = const.SPECIES_MAP[species]["energy_offset"]
-        world[:, :, species_biomass_offset] = np.clip(
-            world[:, :, species_biomass_offset],
-            a_min=0,
-            a_max=const.SPECIES_MAP[species]["max_biomass_in_cell"]
+    # --- Clamp biomass and energy for every species ---
+    for species, props in const.SPECIES_MAP.items():
+        species_biomass_offset = props["biomass_offset"]
+        species_energy_offset = props["energy_offset"]
+        world[..., species_biomass_offset] = np.clip(
+            world[..., species_biomass_offset],
+            0,
+            props["max_biomass_in_cell"]
         )
-        world[:, :, species_energy_offset] = np.clip(
-            world[:, :, species_energy_offset],
-            a_min=0,
-            a_max=const.MAX_ENERGY
+        world[..., species_energy_offset] = np.clip(
+            world[..., species_energy_offset],
+            0,
+            const.MAX_ENERGY
         )
 
 def perform_action(world, world_data, species_key, action_values_batch, positions):

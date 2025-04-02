@@ -68,7 +68,6 @@ class raw_env(AECEnv):
         return self._action_spaces[agent]
 
     def reset(self, seed=None, options=None):
-        # Use the NumPy version of your map loader.
         world, world_data, starting_biomasses = read_map_from_file(self.map_folder)
         # Pad the world and world_data arrays by 1 on each side.
         self.world = np.pad(world, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
@@ -131,33 +130,38 @@ class raw_env(AECEnv):
             spawn_plankton(self.world, self.world_data)
         else:
             self.state[agent] = action
-            # Update the world using the NumPy version of perform_action.
-            total_movement_deltas = np.zeros_like(self.world)
-            # total_movement_deltas = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, 1), dtype=np.float32)
-            color_order = list(np.arange(9))
-            while len(color_order):
-                selected_color = color_order.pop()
-                selected_set_mask = (self.colors == selected_color)
-                selected_positions = np.argwhere(selected_set_mask)
-                selected_positions_padded = selected_positions + 1
-                selected_positions_padded = selected_positions_padded.astype(np.int32)
 
-                action_part = action[selected_set_mask]
-                movement_deltas = get_movement_delta(self.world, self.world_data, agent, action_part, selected_positions_padded)
-                total_movement_deltas += movement_deltas
-            
+
+            precomputed = {}
+            for color in range(9):
+                mask = (self.colors == color)
+                if np.any(mask):
+                    positions = np.argwhere(mask)  # positions shape: (N, 2)
+                    # Pad positions by 1 in each coordinate.
+                    padded = positions + 1
+                    # Convert to int32 only once.
+                    precomputed[color] = (padded.astype(np.int32), mask)
+                else:
+                    precomputed[color] = (None, mask)
+
+
+            # Movement update.
+            total_movement_deltas = np.zeros_like(self.world)
+            for color in range(9):
+                pos_padded, mask = precomputed[color]
+                if pos_padded is not None:
+                    action_part = action[mask]
+                    movement_deltas = get_movement_delta(self.world, self.world_data, agent, action_part, pos_padded)
+                    total_movement_deltas += movement_deltas
+
             apply_movement_delta(self.world, agent, total_movement_deltas)
             
-            color_order = list(np.arange(9))
-            while len(color_order):
-                selected_color = color_order.pop()
-                selected_set_mask = (self.colors == selected_color)
-                selected_positions = np.argwhere(selected_set_mask)
-                selected_positions_padded = selected_positions + 1
-                selected_positions_padded = selected_positions_padded.astype(np.int32)
-
-                action_part = action[selected_set_mask]
-                perform_eating(self.world, agent, action_part, selected_positions_padded)
+            # Eating update.
+            for color in range(9):
+                pos_padded, mask = precomputed[color]
+                if pos_padded is not None:
+                    action_part = action[mask]
+                    perform_eating(self.world, agent, action_part, pos_padded)
 
             update_smell(self.world)
             self.render()

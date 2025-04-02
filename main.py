@@ -59,6 +59,9 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
+    # profiler = cProfile.Profile()
+    # profiler.enable()
+
     evaluate_model()
     # total_elapsed_time = 0
     # for i in range(5):
@@ -67,7 +70,10 @@ if __name__ == "__main__":
     #     print(f"Elapsed time for run {i + 1}: {elapsed_time:.2f} seconds")
     # average_elapsed_time = total_elapsed_time / 5
     # print(f"Average elapsed time: {average_elapsed_time:.2f} seconds")
-    # exit(0)
+
+    # profiler.disable()
+    # stats = pstats.Stats(profiler).strip_dirs().sort_stats('time')
+    # stats.print_stats(10)
 
     # if args.agent_file:
     #     print(f"Loading agent from file: {args.agent_file}")

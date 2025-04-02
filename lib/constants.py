@@ -44,9 +44,9 @@ STARTING_BIOMASS_PLANKTON = 5000000
 MIN_PERCENT_ALIVE = 0.05
 MAX_PERCENT_ALIVE = 3
 MAX_ENERGY = 100
-BASE_ENERGY_COST = 4
-ENERGY_REWARD_FOR_EATING = 50
-MAX_STEPS = 7500
+BASE_ENERGY_COST = 5
+ENERGY_REWARD_FOR_EATING = 100
+MAX_STEPS = 100
 
 EVAL_AGENT = './agents/test.pt'
 
@@ -85,6 +85,7 @@ SPECIES_MAP = {
         "max_consumption_rate": 0.0529 * DAYS_PER_STEP * EAT_REWARD_BOOST,
         "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
+        "growth_rate": 0.026 * DAYS_PER_STEP,
         "hardcoded_logic": False,
         "visualization": {
             "color": [255, 0, 0]
@@ -104,6 +105,7 @@ SPECIES_MAP = {
         "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_REWARD_BOOST,
         "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
+        "growth_rate": 0.029 * DAYS_PER_STEP,
         "hardcoded_logic": False,
         "visualization": {
             "color": [255, 100, 0]
@@ -122,6 +124,7 @@ SPECIES_MAP = {
         "max_consumption_rate": 0.0376 * DAYS_PER_STEP * COD_EAT_REWARD_BOOST,
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "fishing_mortality_rate": 0.005413783 * DAYS_PER_STEP * SCALE_FISHING,
+        "growth_rate": 0.02 * DAYS_PER_STEP,
         "hardcoded_logic": False,
         "visualization": {
             "color": [0, 0, 0]

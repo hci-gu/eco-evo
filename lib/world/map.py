@@ -75,13 +75,13 @@ def add_species_to_map(world_array, world_data):
                             world_data[x, y, 2] = properties["hardcoded_rules"]["respawn_delay"]  # Set plankton respawn delay.
 
     # print average biomass in each cell that is not empty per species
-    for species, properties in const.SPECIES_MAP.items():
-        biomass_offset = properties["biomass_offset"]
-        biomass = world_array[:, :, biomass_offset]
-        non_empty_cells = np.count_nonzero(biomass > 0)
-        if non_empty_cells > 0:
-            avg_biomass = np.sum(biomass) / non_empty_cells
-            print(f"Average biomass for {species}: {avg_biomass:.2f}")
+    # for species, properties in const.SPECIES_MAP.items():
+    #     biomass_offset = properties["biomass_offset"]
+    #     biomass = world_array[:, :, biomass_offset]
+    #     non_empty_cells = np.count_nonzero(biomass > 0)
+    #     if non_empty_cells > 0:
+    #         avg_biomass = np.sum(biomass) / non_empty_cells
+    #         #print(f"Average biomass for {species}: {avg_biomass:.2f}")
 
 
     # Set smell channels to 0.
@@ -116,7 +116,7 @@ def read_map_from_file(folder_path):
 
     starting_biomasses = add_species_to_map(world_array, world_data)
 
-    return world_array, world_data, starting_biomasses
+    return np.ascontiguousarray(world_array), np.ascontiguousarray(world_data), starting_biomasses
 
 def create_map_from_noise(static=False):
     seed = 1 if static else int(random.random() * 100000)
@@ -147,4 +147,4 @@ def create_map_from_noise(static=False):
 
     starting_biomasses = add_species_to_map(world_array, world_data)
 
-    return world_array, world_data, starting_biomasses
+    return np.ascontiguousarray(world_array), np.ascontiguousarray(world_data), starting_biomasses
