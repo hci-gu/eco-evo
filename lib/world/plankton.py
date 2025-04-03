@@ -4,21 +4,12 @@ import lib.constants as const
 import numpy as np
 from lib.constants import Terrain, Action
 
-def plankton_growth(P, P_max, P_threshold, k):
-    """
-    Logistic growth function using NumPy with improved numerical stability.
-    Computes logistic growth in float64 to avoid overflow issues, then casts back to float32.
-    """
-    # Convert inputs to float64 for stability.
-    P = np.asarray(P, dtype=np.float64)
-    P_max = np.float64(P_max)
-    P_threshold = np.float64(P_threshold)
-    k = np.float64(k)
-    
-    # Compute the exponent input and clip it.
-    exp_input = np.clip(-k * (P - P_threshold), -100, 100)
-    result = P_max / (1 + np.exp(exp_input))
-    return result.astype(np.float32)
+def plankton_growth(current, growth_rate=100, max_biomass=5000):
+    current = np.asarray(current)
+    growth = growth_rate * (1 - current / max_biomass)
+    growth = np.maximum(growth, 0)  # Prevent negative growth
+    updated = current + growth
+    return np.minimum(updated, max_biomass)
 
 
 def spawn_plankton(world, world_data):
@@ -34,11 +25,10 @@ def spawn_plankton(world, world_data):
       The updated world array.
     """
     # Determine the channel index for plankton biomass.
-    plankton_index = const.OFFSETS_BIOMASS + const.SPECIES_MAP["plankton"]["index"]
+    biomass_offset = const.SPECIES_MAP["plankton"]["biomass_offset"]
     # Extract the current plankton biomass and related flags/counters.
-    plankton_biomass = world[:, :, plankton_index]
+    plankton_biomass = world[:, :, biomass_offset]
     plankton_flag = world_data[:, :, 1]      # Cells with 1 are initial plankton locations.
-    plankton_counter = world_data[:, :, 2]     # Plankton respawn counter.
     
     # Create a mask for cells that are designated as plankton cells.
     plankton_cells = (plankton_flag == 1)
@@ -47,18 +37,16 @@ def spawn_plankton(world, world_data):
     existing_plankton_mask = (plankton_biomass > 0) & plankton_cells
     if np.any(existing_plankton_mask):
         P_max = const.SPECIES_MAP["plankton"]["max_in_cell"]
-        P_threshold = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["growth_threshold"]
         k = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["growth_rate_constant"]
         
-        # Calculate updated biomass using logistic growth.
-        updated_biomass = plankton_growth(plankton_biomass[existing_plankton_mask], P_max, P_threshold, k)
+        updated_biomass = plankton_growth(plankton_biomass[existing_plankton_mask], k, P_max)
         # Clamp the values to P_max.
-        updated_biomass = np.clip(updated_biomass, None, P_max)
+        # updated_biomass = np.clip(updated_biomass, None, P_max)
         
         # Safely update the biomass channel.
-        channel = world[:, :, plankton_index].copy()
+        channel = world[:, :, biomass_offset].copy()
         channel[existing_plankton_mask] = updated_biomass
-        world[:, :, plankton_index] = channel
+        world[:, :, biomass_offset] = channel
         
         # Reset the respawn counter for these cells.
         counter_channel = world_data[:, :, 2].copy()
@@ -78,8 +66,8 @@ def spawn_plankton(world, world_data):
         if np.any(respawn_mask):
             # Reset the counter and spawn new plankton biomass.
             world_data[:, :, 2][respawn_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
-            channel = world[:, :, plankton_index].copy()
+            channel = world[:, :, biomass_offset].copy()
             channel[respawn_mask] = const.SPECIES_MAP["plankton"]["max_in_cell"] * 0.1
-            world[:, :, plankton_index] = channel
+            world[:, :, biomass_offset] = channel
 
     return world

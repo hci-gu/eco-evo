@@ -16,7 +16,7 @@ import lib.constants as const
 from lib.runner import Runner
 
 def evaluate_model():
-    folder = "results/petting_zoo_energy_2/agents"
+    folder = "results/petting_zoo_energy_6/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)

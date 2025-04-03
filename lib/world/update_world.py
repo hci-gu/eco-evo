@@ -201,6 +201,6 @@ def world_is_alive(world):
         properties = const.SPECIES_MAP[species]
         biomass_offset = properties["biomass_offset"]
         biomass = world[:, :, biomass_offset].sum()
-        if biomass < (properties["starting_biomass"] * const.MIN_PERCENT_ALIVE):
+        if biomass < (properties["starting_biomass"] * const.MIN_PERCENT_ALIVE) or biomass > (properties["starting_biomass"] * const.MAX_PERCENT_ALIVE):
             return False
     return True

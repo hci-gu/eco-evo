@@ -81,7 +81,7 @@ def add_species_to_map(world_array, world_data):
     #     non_empty_cells = np.count_nonzero(biomass > 0)
     #     if non_empty_cells > 0:
     #         avg_biomass = np.sum(biomass) / non_empty_cells
-    #         #print(f"Average biomass for {species}: {avg_biomass:.2f}")
+    #         print(f"Average biomass for {species}: {avg_biomass:.2f}")
 
 
     # Set smell channels to 0.
