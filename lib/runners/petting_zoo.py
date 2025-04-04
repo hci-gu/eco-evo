@@ -196,7 +196,7 @@ class PettingZooRunner():
         candidates = {}
         for model_path in model_paths:
             model = SingleSpeciesModel(
-                # chromosome=np.load(model_path['path'])
+                chromosome=np.load(model_path['path'])
             )
             candidates[model_path['species']] = model
 

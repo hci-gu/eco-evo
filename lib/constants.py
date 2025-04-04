@@ -23,8 +23,7 @@ RUNNER = "petting_zoo"
 # SURVIVAL_BOOST = 3
 SPEED_MULTIPLIER = 1
 EAT_REWARD_BOOST = 5
-COD_EAT_REWARD_BOOST = 5
-SURVIVAL_BOOST = 0.5
+SURVIVAL_BOOST = 1
 
 MAP_METER_SIZE = 300 * 1000
 WORLD_SIZE = 48
@@ -35,14 +34,15 @@ DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
 DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
 SCALE_FISHING = 0
 FIXED_BIOMASS = False
+WORLD_SIZE = 18
 
-NOISE_SCALING = 4.5
+NOISE_SCALING = 12
 STARTING_BIOMASS_COD = 387941
 STARTING_BIOMASS_HERRING = 759392
 STARTING_BIOMASS_SPRAT = 1525100
 STARTING_BIOMASS_PLANKTON = 5000000    
 MIN_PERCENT_ALIVE = 0.05
-MAX_PERCENT_ALIVE = 3
+MAX_PERCENT_ALIVE = 5
 MAX_ENERGY = 100
 BASE_ENERGY_COST = 2 * DAYS_PER_STEP
 ENERGY_REWARD_FOR_EATING = 10 * DAYS_PER_STEP
@@ -77,8 +77,8 @@ SPECIES_MAP = {
         "max_in_cell": STARTING_BIOMASS_HERRING / 2,
         "average_weight": 7,
         "smell_emission_rate": 0.1,
-        "min_biomass_in_cell": STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE) / 20,
-        "max_biomass_in_cell": STARTING_BIOMASS_HERRING / 4,
+        "min_biomass_in_cell": STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE) / 40,
+        "max_biomass_in_cell": STARTING_BIOMASS_HERRING / 40,
         "activity_metabolic_rate": 0.022360679760000002 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "standard_metabolic_rate": 0.00447213596 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "max_consumption_rate": 0.0529 * DAYS_PER_STEP * EAT_REWARD_BOOST,
@@ -97,8 +97,8 @@ SPECIES_MAP = {
         "max_in_cell": STARTING_BIOMASS_SPRAT / 2,
         "average_weight": 7,
         "smell_emission_rate": 0.1,
-        "min_biomass_in_cell": STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE) / 20,
-        "max_biomass_in_cell": STARTING_BIOMASS_SPRAT / 4,
+        "min_biomass_in_cell": STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE) / 40,
+        "max_biomass_in_cell": STARTING_BIOMASS_SPRAT / 40,
         "activity_metabolic_rate": 0.02686424833333333 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "standard_metabolic_rate": 0.005372849666666666 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_REWARD_BOOST,
@@ -116,11 +116,11 @@ SPECIES_MAP = {
         "starting_biomass": STARTING_BIOMASS_COD,
         "max_in_cell": STARTING_BIOMASS_COD / 2,
         "smell_emission_rate": 0.1,
-        "min_biomass_in_cell": STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE) / 20,
-        "max_biomass_in_cell": STARTING_BIOMASS_COD / 4,
+        "min_biomass_in_cell": STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE) / 40,
+        "max_biomass_in_cell": STARTING_BIOMASS_COD / 40,
         "activity_metabolic_rate": 0.014535768421428572 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "standard_metabolic_rate": 0.0029071536857142857 * DAYS_PER_STEP / SURVIVAL_BOOST,
-        "max_consumption_rate": 0.0376 * DAYS_PER_STEP * COD_EAT_REWARD_BOOST,
+        "max_consumption_rate": 0.0376 * DAYS_PER_STEP * EAT_REWARD_BOOST,
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP / SURVIVAL_BOOST,
         "fishing_mortality_rate": 0.005413783 * DAYS_PER_STEP * SCALE_FISHING,
         "growth_rate": 0.02 * DAYS_PER_STEP,
