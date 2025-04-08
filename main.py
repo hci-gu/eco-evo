@@ -16,7 +16,7 @@ import lib.constants as const
 from lib.runner import Runner
 
 def evaluate_model():
-    folder = "results/petting_zoo_energy_6/agents"
+    folder = "results/petting_zoo_energy_8/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
@@ -63,6 +63,7 @@ if __name__ == "__main__":
     # profiler.enable()
 
     # evaluate_model()
+    # time.sleep(1000)
     # total_elapsed_time = 0
     # for i in range(5):
     #     elapsed_time = evaluate_model()

@@ -41,7 +41,6 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
         initial_biomass[above_threshold_mask] * growth_rate
     )
 
-
     biomass_after_loss = world[x_batch, y_batch, biomass_offset]
 
     # Biomass to move in each direction
@@ -143,6 +142,9 @@ def perform_eating(world, species_key, action_values_batch, positions):
         out=np.zeros_like(actual_eaten), 
         where=initial_total_eat > 0
     )
+    # log eaten percentage for cells with biomass
+    # eaten_percentage[init_biomass > 0] = np.log(eaten_percentage[init_biomass > 0] + 1e-8)
+
     world[x_batch, y_batch, energy_offset] += const.ENERGY_REWARD_FOR_EATING * eaten_percentage
 
     # --- Handle low biomass: if biomass falls below minimum, set it (and energy) to zero ---

@@ -131,19 +131,15 @@ class raw_env(AECEnv):
         else:
             self.state[agent] = action
 
-
             precomputed = {}
             for color in range(9):
                 mask = (self.colors == color)
                 if np.any(mask):
-                    positions = np.argwhere(mask)  # positions shape: (N, 2)
-                    # Pad positions by 1 in each coordinate.
+                    positions = np.argwhere(mask)
                     padded = positions + 1
-                    # Convert to int32 only once.
                     precomputed[color] = (padded.astype(np.int32), mask)
                 else:
                     precomputed[color] = (None, mask)
-
 
             # Movement update.
             total_movement_deltas = np.zeros_like(self.world)

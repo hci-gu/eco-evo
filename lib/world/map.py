@@ -23,7 +23,7 @@ def smooth_skewed_random():
     if const.FIXED_BIOMASS:
         return 1
 
-    """Returns a value between 0.25 and 4, skewed toward 0.5-2.0 with smooth falloff, using gamma sampling."""
+    """Returns a value between 0.75 and 2.0, skewed toward 0.5-2.0 with smooth falloff, using gamma sampling."""
     alpha = 2.5
     beta_param = 4.5
 
@@ -31,7 +31,7 @@ def smooth_skewed_random():
     y = random.gammavariate(beta_param, 1.0)
 
     beta_sample = x / (x + y)
-    return beta_sample * (4 - 0.25) + 0.25
+    return beta_sample * (2.0 - 0.75) + 0.75
 
 def add_species_to_map(world_array, world_data):
     opensimplex.seed(int(random.random() * 100000))

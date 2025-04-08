@@ -36,22 +36,18 @@ def spawn_plankton(world, world_data):
     # --- Existing plankton cells: apply logistic growth ---
     existing_plankton_mask = (plankton_biomass > 0) & plankton_cells
     if np.any(existing_plankton_mask):
-        P_max = const.SPECIES_MAP["plankton"]["max_in_cell"]
+        P_max = const.SPECIES_MAP["plankton"]["max_biomass_in_cell"]
         k = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["growth_rate_constant"]
         
+        # print("pgrowth", plankton_biomass[existing_plankton_mask])
         updated_biomass = plankton_growth(plankton_biomass[existing_plankton_mask], k, P_max)
-        # Clamp the values to P_max.
-        # updated_biomass = np.clip(updated_biomass, None, P_max)
         
         # Safely update the biomass channel.
-        channel = world[:, :, biomass_offset].copy()
-        channel[existing_plankton_mask] = updated_biomass
-        world[:, :, biomass_offset] = channel
+        # channel = world[:, :, biomass_offset].copy()
+        world[existing_plankton_mask, biomass_offset] = updated_biomass
+        # world[:, :, biomass_offset] = channel
         
-        # Reset the respawn counter for these cells.
-        counter_channel = world_data[:, :, 2].copy()
-        counter_channel[existing_plankton_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
-        world_data[:, :, 2] = counter_channel
+        world_data[:, :, 2] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
 
     # --- Empty plankton cells: decrement counter and spawn if counter reaches zero ---
     empty_plankton_mask = (plankton_biomass == 0) & plankton_cells
@@ -67,7 +63,7 @@ def spawn_plankton(world, world_data):
             # Reset the counter and spawn new plankton biomass.
             world_data[:, :, 2][respawn_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
             channel = world[:, :, biomass_offset].copy()
-            channel[respawn_mask] = const.SPECIES_MAP["plankton"]["max_in_cell"] * 0.1
+            channel[respawn_mask] = const.SPECIES_MAP["plankton"]["max_biomass_in_cell"] * 0.1
             world[:, :, biomass_offset] = channel
 
     return world
