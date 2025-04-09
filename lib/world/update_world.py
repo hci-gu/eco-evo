@@ -133,12 +133,12 @@ def perform_eating(world, species_key, action_values_batch, positions):
         world[x_batch, y_batch, prey_biomass_offset] -= eat_amount
         total_eat_amount -= eat_amount
 
-    # Calculate actual eaten amount and compute eaten percentage safely.
     actual_eaten = initial_total_eat - total_eat_amount
+    
     # Avoid division by zero using np.where.
     eaten_percentage = np.divide(
         actual_eaten, 
-        initial_total_eat, 
+        init_biomass, 
         out=np.zeros_like(actual_eaten), 
         where=initial_total_eat > 0
     )
