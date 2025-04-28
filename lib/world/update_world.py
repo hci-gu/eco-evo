@@ -10,11 +10,12 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
     y_batch = positions[:, 1]
     world_data[x_batch, y_batch, 4] += 1
 
-    move_up    = action_values_batch[:, Action.UP.value]
-    move_down  = action_values_batch[:, Action.DOWN.value]
-    move_left  = action_values_batch[:, Action.LEFT.value]
-    move_right = action_values_batch[:, Action.RIGHT.value]
-    stationary  = action_values_batch[:, Action.REST.value] + action_values_batch[:, Action.EAT.value]
+    move_up     = action_values_batch[:, Action.UP.value]
+    move_down   = action_values_batch[:, Action.DOWN.value]
+    move_left   = action_values_batch[:, Action.LEFT.value]
+    move_right  = action_values_batch[:, Action.RIGHT.value]
+
+    stationary  = action_values_batch[:, Action.EAT.value]
 
     species_properties = const.SPECIES_MAP[species_key]
     biomass_offset = species_properties["biomass_offset"]
@@ -24,6 +25,7 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
     activity_mr_loss = total_activity * species_properties["activity_metabolic_rate"]
     resting_mr_loss  = species_properties["standard_metabolic_rate"]
     natural_mortality_loss = species_properties["natural_mortality_rate"]
+    fishing_mortality_loss = species_properties["fishing_mortality_rate"]
 
     growth_rate = species_properties["growth_rate"]
 
@@ -34,6 +36,7 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
     above_threshold_mask = ~below_threshold_mask
 
     loss_factor = activity_mr_loss[below_threshold_mask] + resting_mr_loss + natural_mortality_loss
+    world[x_batch, y_batch, biomass_offset] -= fishing_mortality_loss
     world[x_batch[below_threshold_mask], y_batch[below_threshold_mask], biomass_offset] -= (
         initial_biomass[below_threshold_mask] * loss_factor
     )

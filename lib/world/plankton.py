@@ -47,23 +47,102 @@ def spawn_plankton(world, world_data):
         world[existing_plankton_mask, biomass_offset] = updated_biomass
         # world[:, :, biomass_offset] = channel
         
-        world_data[:, :, 2] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
+        world_data[:, :, 2][existing_plankton_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
 
     # --- Empty plankton cells: decrement counter and spawn if counter reaches zero ---
     empty_plankton_mask = (plankton_biomass == 0) & plankton_cells
     if np.any(empty_plankton_mask):
-        # Decrease the counter by 1 in these cells.
         world_data[:, :, 2][empty_plankton_mask] -= 1
-        # Ensure the counter doesn't drop below zero.
-        world_data[:, :, 2][empty_plankton_mask] = np.clip(world_data[:, :, 2][empty_plankton_mask], 0, None)
         
-        # Identify cells where the respawn counter has reached zero.
         respawn_mask = (world_data[:, :, 2] == 0) & empty_plankton_mask
         if np.any(respawn_mask):
             # Reset the counter and spawn new plankton biomass.
             world_data[:, :, 2][respawn_mask] = const.SPECIES_MAP["plankton"]["hardcoded_rules"]["respawn_delay"]
-            channel = world[:, :, biomass_offset].copy()
-            channel[respawn_mask] = const.SPECIES_MAP["plankton"]["max_biomass_in_cell"] * 0.1
-            world[:, :, biomass_offset] = channel
+            world[:, :, biomass_offset][respawn_mask] = const.SPECIES_MAP["plankton"]["max_biomass_in_cell"] * 0.25
 
     return world
+
+def randomwalk_plankton(world_array, world_data):
+    """
+    Moves all plankton cells to a randomly chosen adjacent water cell that does not
+    already have plankton. This function examines each cell in world_data flagged as
+    having plankton (world_data[:, :, 1] == 1) and moves its biomass, energy, and timer
+    from that cell to a random adjacent water cell if that cell is free of plankton.
+    If no adjacent free cell is found, the plankton stays in place.
+    
+    Note:
+      - This function does not consider any timers or delays—it simply moves all plankton.
+      - It relies on the "plankton" entry in const.SPECIES_MAP to determine the correct
+        channel indices for biomass, energy, and respawn timer.
+      - The destination cell must be within bounds, be water, and have no plankton.
+    """
+    # Retrieve plankton species properties.
+    plankton_props = const.SPECIES_MAP.get("plankton")
+    if plankton_props is None:
+        print("Plankton species is not defined in SPECIES_MAP.")
+        return
+
+    biomass_offset = plankton_props["biomass_offset"]
+    energy_offset = plankton_props["energy_offset"]
+
+    world_size = const.WORLD_SIZE
+
+    # Prepare new arrays for the updated plankton values.
+    new_biomass = np.copy(world_array[:, :, biomass_offset])
+    new_energy = np.copy(world_array[:, :, energy_offset])
+    new_flag = np.copy(world_data[:, :, 1])  # Plankton cluster flag.
+    new_timer = np.copy(world_data[:, :, 2])  # Respawn timer.
+
+    # Clear out existing plankton markings from the new arrays.
+    new_biomass[:, :] = 0
+    new_energy[:, :] = 0
+    new_flag[:, :] = 0
+    new_timer[:, :] = 0
+
+    # Define neighbor offsets (8-connected grid).
+    neighbor_offsets = [(-1, -1), (-1, 0), (-1, 1),
+                        (0, -1),           (0, 1),
+                        (1, -1),  (1, 0),  (1, 1)]
+
+    # Process each cell in the original grid that is flagged as plankton.
+    for x in range(world_size):
+        for y in range(world_size):
+            if world_data[x, y, 1] == 1:
+                # Shuffle the neighbor list to choose a random order.
+                offsets = neighbor_offsets.copy()
+                random.shuffle(offsets)
+                moved = False
+
+                # Try moving to one of the neighboring cells.
+                for dx, dy in offsets:
+                    nx, ny = x + dx, y + dy
+                    # Check bounds.
+                    if nx < 0 or nx >= world_size or ny < 0 or ny >= world_size:
+                        continue
+                    # Check if destination is water.
+                    if world_array[nx, ny, Terrain.WATER.value] != 1:
+                        continue
+                    # Ensure the destination does not already have plankton.
+                    if new_flag[nx, ny] == 1:
+                        continue
+
+                    # Valid move found: transfer biomass, energy, and timer.
+                    new_biomass[nx, ny] = world_array[x, y, biomass_offset]
+                    new_energy[nx, ny] = world_array[x, y, energy_offset]
+                    new_flag[nx, ny] = 1
+                    new_timer[nx, ny] = world_data[x, y, 2]
+                    moved = True
+                    break
+
+                # If no valid move was found, leave it in place (if not already filled).
+                if not moved and new_flag[x, y] == 0:
+                    new_biomass[x, y] = world_array[x, y, biomass_offset]
+                    new_energy[x, y] = world_array[x, y, energy_offset]
+                    new_flag[x, y] = 1
+                    new_timer[x, y] = world_data[x, y, 2]
+
+    # Write the updated values back to the original arrays.
+    world_array[:, :, biomass_offset] = new_biomass
+    world_array[:, :, energy_offset] = new_energy
+    world_data[:, :, 1] = new_flag
+    world_data[:, :, 2] = new_timer

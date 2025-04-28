@@ -10,6 +10,7 @@ from lib.world import (
     get_movement_delta,
     apply_movement_delta,
     spawn_plankton,
+    randomwalk_plankton,
     perform_eating,
     world_is_alive,
 )
@@ -68,7 +69,7 @@ class raw_env(AECEnv):
         return self._action_spaces[agent]
 
     def reset(self, seed=None, options=None):
-        world, world_data, starting_biomasses = read_map_from_file(self.map_folder)
+        world, world_data, starting_biomasses = read_map_from_file(self.map_folder, seed)
         # Pad the world and world_data arrays by 1 on each side.
         self.world = np.pad(world, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.world_data = np.pad(world_data, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
@@ -102,18 +103,22 @@ class raw_env(AECEnv):
         self.color_order = []
 
     def observe(self, agent):
-        # Calculate maximum biomass and smell for normalization.
-        max_biomass = self.world[..., const.OFFSETS_BIOMASS:const.OFFSETS_BIOMASS+4].max()
-        max_smell = self.world[..., const.OFFSETS_SMELL:const.OFFSETS_SMELL+4].max()
-
         terrain = self.world[..., 0:3]
-        biomass = self.world[..., const.OFFSETS_BIOMASS:const.OFFSETS_BIOMASS+4] / (max_biomass + 1e-8)
+        biomass = []
+        smell = []
+        for species in self.possible_agents:
+            # print("species: ", species, self.world[..., const.SPECIES_MAP[species]["biomass_offset"]].sum())
+            max_biomass = self.world[..., const.SPECIES_MAP[species]["biomass_offset"]].max()
+            max_smell = self.world[..., const.SPECIES_MAP[species]["smell_offset"]].max()
+            biomass.append(self.world[..., const.SPECIES_MAP[species]["biomass_offset"]] / (max_biomass + 1e-8))
+            smell.append(self.world[..., const.SPECIES_MAP[species]["smell_offset"]] / (max_smell + 1e-8))
+        biomass = np.stack(biomass, axis=-1)
+        smell = np.stack(smell, axis=-1)
         energy = self.world[..., const.OFFSETS_ENERGY:const.OFFSETS_ENERGY+4] / (const.MAX_ENERGY + 1e-8)
-        smell = self.world[..., const.OFFSETS_SMELL:const.OFFSETS_SMELL+4] / (max_smell + 1e-8)
-        
-        observation = np.concatenate([terrain, biomass, energy, smell], axis=-1)
-
+        observation = np.concatenate([terrain, biomass, smell, energy], axis=-1)
         patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
+        
+        patches = patches.reshape(-1, 3, 3, observation.shape[-1])
 
         return patches
     
@@ -128,6 +133,8 @@ class raw_env(AECEnv):
         # If the active agent is "plankton", use the hardcoded logic.
         if agent == "plankton":
             spawn_plankton(self.world, self.world_data)
+            if self.num_moves % 20 == 0:
+                randomwalk_plankton(self.world, self.world_data)
         else:
             self.state[agent] = action
 

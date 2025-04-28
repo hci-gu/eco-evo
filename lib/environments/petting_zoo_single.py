@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 from gymnasium import spaces
@@ -64,6 +65,23 @@ class raw_env(AECEnv):
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
 
     def observe(self, agent):
+        terrain = self.world[..., 0:3]
+        biomass = []
+        smell = []
+        for species in list(const.SPECIES_MAP.keys()):
+            max_biomass = self.world[..., const.SPECIES_MAP[species]["biomass_offset"]].max()
+            max_smell = self.world[..., const.SPECIES_MAP[species]["smell_offset"]].max()
+            biomass.append(self.world[..., const.SPECIES_MAP[species]["biomass_offset"]] / (max_biomass + 1e-8))
+            smell.append(self.world[..., const.SPECIES_MAP[species]["smell_offset"]] / (max_smell + 1e-8))
+        biomass = np.stack(biomass, axis=-1)
+        smell = np.stack(smell, axis=-1)
+        energy = self.world[..., const.OFFSETS_ENERGY:const.OFFSETS_ENERGY+4] / (const.MAX_ENERGY + 1e-8)
+        observation = np.concatenate([terrain, biomass, smell, energy], axis=-1)
+
+        patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
+
+        return patches
+
         max_biomass = self.world[..., 3:7].max()
         max_smell = self.world[..., 7:11].max()
         # get a random position

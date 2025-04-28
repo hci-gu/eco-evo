@@ -3,6 +3,7 @@ from lib.model import SingleSpeciesModel
 import lib.evolution as evolution  # Your NumPy-based evolution functions
 from lib.visualize import plot_generations, plot_biomass
 from lib.data_manager import data_loop, update_generations_data, process_data
+from lib.behaviour import run_all_scenarios
 import numpy as np
 import random
 import copy
@@ -32,8 +33,8 @@ class PettingZooRunner():
         self.agent_index = 0
         self.eval_index = 0
 
-    def run(self, candidates, species_being_evaluated = "cod", is_evaluation = False, callback = noop):
-        self.env.reset()
+    def run(self, candidates, species_being_evaluated = "cod", seed = None, is_evaluation = False, callback = noop):
+        self.env.reset(seed)
         steps = 0
         episode_length = 0
         fitness = 0
@@ -48,7 +49,6 @@ class PettingZooRunner():
                 obs, reward, termination, truncation, info = self.env.last()
                 candidate = candidates[agent]
                 action_values = candidate.forward(obs.reshape(-1, 135))
-                # print the average action value
                 action_values = action_values.reshape(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS)
                 # mean_action_values = action_values.mean(axis=(0, 1))
 
@@ -86,6 +86,7 @@ class PettingZooRunner():
         we use the best model from previous generations (if available) to decide their actions.
         Returns a dictionary mapping species to a list of (chromosome, fitness) tuples.
         """
+        eval_seeds = [int(random.random() * 100000) for _ in range(const.AGENT_EVALUATIONS)]
         fitnesses = {species: [] for species in self.species_list}
 
         for idx in range(const.NUM_AGENTS):
@@ -108,13 +109,21 @@ class PettingZooRunner():
                         other_species_candidate = self.population[other_species_name][other_species_idx]
                         eval_species[other_species_name] = other_species_candidate
                     
-                    fitness, episode_length = self.run(eval_species, species)
+                    fitness, episode_length = self.run(eval_species, species, eval_seeds[eval_index])
+                    while (episode_length == 0):
+                        print("something went wrong update this seed")
+                        eval_seeds[eval_index] = int(random.random() * 100000)
+                        fitness, episode_length = self.run(eval_species, species, eval_seeds[eval_index])
+                    
                     evals_fitness.append(fitness)
                     print("idx", idx, "eval", eval_index, "fitness", fitness, "episode_length", episode_length)
                 
                 avg_fitness = sum(evals_fitness) / len(evals_fitness)
+                behaviour_score = run_all_scenarios(evaluation_candidate, species, False)
+                avg_fitness = avg_fitness * behaviour_score
+
                 fitnesses[species].append((evaluation_candidate.state_dict(), avg_fitness))
-                print("finished eval for species", species, ", fitness", avg_fitness)
+                print("finished eval for species:", species, ", behaviour_score:", behaviour_score, ", fitness:", avg_fitness)
         return fitnesses
 
     def evolve_population(self, fitnesses):
@@ -126,18 +135,6 @@ class PettingZooRunner():
         for species in self.species_list:
             fittest_agent = max(fitnesses[species], key=lambda x: x[1])
             fittest_agents_for_generation[species] = SingleSpeciesModel(chromosome=fittest_agent[0])
-        
-        # # run an episode length evaluation for each species and see if they should replace the best agent
-        # for species in self.species_list:
-        #     # print("EVALUATE")
-        #     # print(fittest_agents_for_generation)
-        #     _, episode_length = self.run(fittest_agents_for_generation, species)
-        #     if (episode_length > self.best_fitness[species]):
-        #         self.best_fitness[species] = episode_length
-        #         self.best_agent[species] = fittest_agents_for_generation[species]
-        #         model = self.best_agent[species]
-        #         model.save(f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_${species}_{self.best_fitness[species]}.npy')
-        #         # TODO compare with all time best not just generation best when doing evaluation like this
 
         for species in self.species_list:
             current_population = fitnesses[species]
@@ -148,7 +145,7 @@ class PettingZooRunner():
 
             while len(next_pop) < const.NUM_AGENTS:
                 (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, const.TOURNAMENT_SELECTION)
-                c1_weights, c2_weights = evolution.crossover(p1, p2)
+                c1_weights, c2_weights = evolution.sbx_crossover(p1, p2)
                 current_mutation_rate = max(const.MIN_MUTATION_RATE,
                                             const.INITIAL_MUTATION_RATE * (const.MUTATION_RATE_DECAY ** self.current_generation))
                 evolution.mutation(c1_weights, current_mutation_rate, current_mutation_rate)

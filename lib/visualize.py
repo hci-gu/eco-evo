@@ -97,8 +97,13 @@ def plot_generations(generations_data):
 
     plt.figure(figsize=(16, 12))  # Create a new figure for the plot
 
-    # Identify species from the first generation (assumes same keys across generations)
-    species_list = list(generations_data[0].keys())
+    # Check if generations_data[0] is an object (dict) or an array (list)
+    if isinstance(generations_data[0], dict):
+        # Multiple species case
+        species_list = list(generations_data[0].keys())
+    else:
+        # Single species case
+        species_list = ["Single Species"]
 
     # Initialize dictionaries to store statistical measures for each species over generations
     species_stats = {}
@@ -117,7 +122,11 @@ def plot_generations(generations_data):
     # Plot each generation's fitness data for each species
     for generation_index, generation in enumerate(generations_data):
         for sp in species_list:
-            fitness_values = generation[sp]
+            fitness_values = []
+            if sp == "Single Species":
+                fitness_values = generation
+            else:
+                fitness_values = generation[sp]
             # Add jitter to x-coordinates for better visualization
             jitter = np.random.normal(0, 0.05, size=len(fitness_values))
             x_values = generation_index + jitter
@@ -254,8 +263,8 @@ def draw_world(screen, world_tensor, world_data):
     # Define radius constraints
     # We allow circles to be large enough to exceed cell boundaries.
     # Keep a moderate max radius, but not too large.
-    min_radius = 0.5
-    max_radius = CELL_SIZE // 1.5
+    min_radius = 1
+    max_radius = CELL_SIZE // 3
     min_radius_plankton = 1
     max_radius_plankton = CELL_SIZE // 4
 

@@ -5,13 +5,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import lib.constants as const
 from lib.runners.petting_zoo import PettingZooRunner
+from lib.runners.petting_zoo_single import PettingZooRunnerSingle
 
 # Enable interactive mode
 plt.ion()
 
+def get_runner_single():
+    folder = "results/single_agent_single_out_random_plankton_behavscore_6/agents"
+    files = [f for f in os.listdir(folder) if f.endswith(".npy.npz")]
+    files.sort(key=lambda f: float(f.split("_")[1].split(".")[0]), reverse=True)
+    print(files[0])
+    path = os.path.join(folder, files[0])
+    runner = PettingZooRunnerSingle()
+
+    return runner, path
+
 def get_runner():
     # folder = "results/knowledge_lab/agents"
-    folder = "results/petting_zoo_biomass_fitness_log_5/agents"
+    folder = "results/single_agent_single_out_random_plankton_behavscore_6/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
@@ -44,8 +55,6 @@ def update_initial_biomass():
     const.SPECIES_MAP["sprat"]["original_starting_biomass"] = inital_sprat
     const.MIN_PERCENT_ALIVE = 0
     const.MAX_PERCENT_ALIVE = 9999
-
-
 
 
 def render_plot(biomass_data):
@@ -133,7 +142,7 @@ def eval_callback(world, fitness):
 
 if __name__ == "__main__":
     update_initial_biomass()
-    runner, model_paths = get_runner()
+    runner, model_paths = get_runner_single()
     runner.evaluate(model_paths, eval_callback)
     print("Finished evaluation.")
     time.sleep(5000)

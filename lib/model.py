@@ -21,9 +21,11 @@ class Model:
         h = np.maximum(0, h)
 
         out = np.dot(h, self.fc2_weight) + self.fc2_bias
-        
-        exp_vals = np.exp(out - np.max(out, axis=1, keepdims=True))
+
+        out_max = np.max(out, axis=1, keepdims=True)
+        exp_vals = np.exp(out - out_max)
         softmax_output = exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
+
         return softmax_output
 
     def set_weights(self, chromosome):

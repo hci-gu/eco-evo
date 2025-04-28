@@ -38,6 +38,7 @@ def update_generations_data(generation, agents_data=agents_data, generations_dat
                     total_fitness += fitness
                 fitness_values[species].append(total_fitness / len(evals))
     else:
+        fitness_values = []
         for _, evals in agents_data.items():
             total_fitness = 0
             for _, data in evals.items():
@@ -84,7 +85,7 @@ def process_data(data, agents_data=agents_data):
             energy_offset = properties["energy_offset"]
             cells_with_biomass = world[:, :, biomass_offset] > 0
             average_energy = world[cells_with_biomass, energy_offset].mean() if np.any(cells_with_biomass) else 0
-            curr_agents_data[agent_index][eval_index][f'{species}_alive'].append(world[:, :, biomass_offset].sum())
+            curr_agents_data[agent_index][eval_index][f'{species}_alive'].append(world[..., biomass_offset].sum())
             curr_agents_data[agent_index][eval_index][f'{species}_energy'].append(average_energy)
 
     if agent_species is not None:

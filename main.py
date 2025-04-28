@@ -10,16 +10,17 @@ from lib.constants import override_from_file
 # from lib.runners.petting_zoo_reinforcement_old import RLRunner
 import lib.environments.gym
 from lib.runners.petting_zoo import PettingZooRunner
+from lib.runners.petting_zoo_single import PettingZooRunnerSingle
 # from lib.runners.reinforcement import RLRunner
 from lib.runners.single_agent_gym import SingleAgentGymRunner
 import lib.constants as const
 from lib.runner import Runner
 
 def evaluate_model():
-    folder = "results/petting_zoo_energy_8/agents"
+    folder = "results/back_to_multi_2/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
-    files.sort(key=lambda f: float(f.split("_")[2].split(".")[0]), reverse=True)
+    files.sort(key=lambda f: float(f.split("_")[2].split(".npy")[0]), reverse=True)
     species = {}
     for f in files:
         s = f.split("_")[1].split(".")[0]
@@ -39,6 +40,22 @@ def evaluate_model():
     end_time = time.time()
     elapsed_time = end_time - start_time
     return elapsed_time
+
+def evaluate_single_model():
+    folder = "results/single_agent_single_out_random_plankton_behavscore_6/agents"
+    files = os.listdir(folder)
+    files = [f for f in files if f.endswith(".npy.npz")]
+    files.sort(key=lambda f: float(f.split("_")[1].split(".npy")[0]), reverse=True)
+
+    file = files[0]
+    model_path = os.path.join(folder, file)
+    start_time = time.time()
+    runner = PettingZooRunnerSingle(render_mode="human")
+    runner.evaluate(model_path)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    return elapsed_time
+
 
 def load_config_files(config_folder):
     """Load all config files from the given folder."""
@@ -62,8 +79,8 @@ if __name__ == "__main__":
     # profiler = cProfile.Profile()
     # profiler.enable()
 
-    # evaluate_model()
-    # time.sleep(1000)
+    evaluate_single_model()
+    time.sleep(1000)
     # total_elapsed_time = 0
     # for i in range(5):
     #     elapsed_time = evaluate_model()
@@ -126,6 +143,9 @@ if __name__ == "__main__":
             # runner.train()
         elif const.RUNNER == "petting_zoo":
             runner = PettingZooRunner()
+            runner.train()
+        elif const.RUNNER == "petting_zoo_single":
+            runner = PettingZooRunnerSingle()
             runner.train()
         elif const.RUNNER == "gym":
             runner = SingleAgentGymRunner()
