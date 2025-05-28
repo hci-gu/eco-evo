@@ -100,7 +100,6 @@ class raw_env(AECEnv):
         return np.concatenate([terrain, biomass, smell], axis=-1)
 
     def step(self, action):
-        print("step")
         # agent = self.agent_selection
         self.state[self.agent_selection] = action
 
@@ -143,8 +142,6 @@ class raw_env(AECEnv):
         if self.render_mode == "none":
             return
         if self.render_mode == "human":
-            # print("Rendering...")
-            # print(self.plot_data)
             plot_biomass(self.plot_data)
             draw_world(self.screen, self.world, self.world_data)
             self.render()

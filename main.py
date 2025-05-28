@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # profiler.enable()
 
     evaluate_single_model()
-    time.sleep(1000)
+    time.sleep(10000)
     # total_elapsed_time = 0
     # for i in range(5):
     #     elapsed_time = evaluate_model()

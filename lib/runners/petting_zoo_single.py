@@ -112,11 +112,12 @@ class PettingZooRunnerSingle():
                 print("idx", idx, "eval", eval_index, "fitness", fitness, "episode_length", episode_length)
             
             avg_fitness = sum(evals_fitness) / len(evals_fitness)
-            behaviour_score = run_all_scenarios(evaluation_candidate, False)
-            avg_fitness = avg_fitness * behaviour_score
+            # behaviour_score = run_all_scenarios(evaluation_candidate, False)
+            # avg_fitness = avg_fitness * behaviour_score
             
             fitnesses.append((evaluation_candidate.state_dict(), avg_fitness))
-            print("finished eval, behaviour_score:", behaviour_score, ", fitness:", avg_fitness)
+            # print("finished eval, behaviour_score:", behaviour_score, ", fitness:", avg_fitness)
+            print("finished eval, fitness:", avg_fitness)
         return fitnesses
 
     def evolve_population(self, fitnesses):
@@ -181,10 +182,10 @@ class PettingZooRunnerSingle():
             self.run_generation()
             # Optionally, save best models or log additional statistics.
 
-    def evaluate(self, model_path = [], callback = noop):
+    def evaluate(self, model_path = [], callback = noop, seed = 1):
         candidate = Model(
             chromosome=np.load(model_path)
         )
 
-        return self.run(candidate, 1, True, callback)
+        return self.run(candidate, seed, True, callback)
         

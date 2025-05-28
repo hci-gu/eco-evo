@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import numpy as np
+import imageio
 import random
+import time
 from matplotlib.ticker import MaxNLocator
 
 # Visualization settings
@@ -29,6 +31,7 @@ energy_graph_cache = None
 generation_graph_cache = None
 
 visualization_queue = Queue()
+video_writer = imageio.get_writer("simulation.mp4", fps=30)
 
 def init_pygame():
     pygame.init()
@@ -244,7 +247,10 @@ def draw_actions_values(screen, world_data):
 
                 screen.blit(text, (cell_center[0] - 5, cell_center[1] - 5))
 
+
+counter = 0
 def draw_world(screen, world_tensor, world_data):
+    global counter
     # Remove padding if present
     world_tensor = world_tensor[1:-1, 1:-1]
     world_data = world_data[1:-1, 1:-1]
@@ -264,9 +270,9 @@ def draw_world(screen, world_tensor, world_data):
     # We allow circles to be large enough to exceed cell boundaries.
     # Keep a moderate max radius, but not too large.
     min_radius = 1
-    max_radius = CELL_SIZE // 3
+    max_radius = CELL_SIZE // 2.5
     min_radius_plankton = 1
-    max_radius_plankton = CELL_SIZE // 4
+    max_radius_plankton = CELL_SIZE // 3
 
     # Small offsets to differentiate species within a cell
     offsets = {
@@ -348,6 +354,21 @@ def draw_world(screen, world_tensor, world_data):
         screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
 
     pygame.display.flip()
+
+    pixels = pygame.surfarray.array3d(screen)
+    frame_rgb = np.transpose(pixels, (1, 0, 2))
+    cropped_frame = frame_rgb[0:688, 0:992] 
+
+    video_writer.append_data(cropped_frame)
+    counter += 1
+    print("Frame captured and added to video.", counter)
+    
+    if counter % 10000 == 0:
+        video_writer.close()
+
+    # save snapshot of the screen
+    # pygame.image.save(screen, "world_snapshot.png")
+    # time.sleep(1000)
 
     # # ---------------------
     # # Add a legend (improvement #2)

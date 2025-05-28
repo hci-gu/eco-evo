@@ -16,7 +16,7 @@ class Action(Enum):
 
 # DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-RUNNER = "petting_zoo"
+RUNNER = "petting_zoo_single"
 
 # SPEED_MULTIPLIER = 2
 # EAT_REWARD_BOOST = 10
@@ -32,31 +32,63 @@ FISH_SWIM_SPEED = 0.025
 SECONDS_IN_DAY = 86400
 DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
 DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
-SCALE_FISHING = 0
+SCALE_FISHING = 1
 FIXED_BIOMASS = True
-WORLD_SIZE = 12
+WORLD_SIZE = 48
 
-NOISE_SCALING = 12
-# STARTING_BIOMASS_COD = 44897
-# STARTING_BIOMASS_HERRING = 737356
-# STARTING_BIOMASS_SPRAT = 1359874
-# STARTING_BIOMASS_PLANKTON = 737356 / 2
-STARTING_BIOMASS_COD = 100
-STARTING_BIOMASS_HERRING = 200
-STARTING_BIOMASS_SPRAT = 200
-STARTING_BIOMASS_PLANKTON = 100
+NOISE_SCALING = 6
+STARTING_BIOMASS_COD = 44897
+STARTING_BIOMASS_HERRING = 737356
+STARTING_BIOMASS_SPRAT = 1359874
+STARTING_BIOMASS_PLANKTON = 1359874 * 2
+# STARTING_BIOMASS_COD = 100
+# STARTING_BIOMASS_HERRING = 200
+# STARTING_BIOMASS_SPRAT = 200
+# STARTING_BIOMASS_PLANKTON = 100
+# BASE_FISHING_VALUE_COD = 0.005414
+BASE_FISHING_VALUE_COD = 0.002651024
+BASE_FISHING_VALUE_HERRING = 0.002651024
+BASE_FISHING_VALUE_SPRAT = 0.002651024
 MIN_PERCENT_ALIVE = 0.025
 MAX_PERCENT_ALIVE = 8
 MAX_ENERGY = 100
 BASE_ENERGY_COST = 0.5 * DAYS_PER_STEP
-ENERGY_REWARD_FOR_EATING = 500
+ENERGY_REWARD_FOR_EATING = 250
+ENERGY_REWARD_FOR_EATING_COD = 500
 GROWTH_MULTIPLIER = 1
-MAX_STEPS = 5000
+print(f"Days per step: {DAYS_PER_STEP}")
+MAX_STEPS = 1000
+# print years for max steps
+print(f"Max steps: {MAX_STEPS} ({MAX_STEPS / 365} years)")
 
 EVAL_AGENT = './agents/test.pt'
 
 # Define species properties in a map
 MAX_PLANKTON_IN_CELL = (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 10
+def update_fishing_scaler(scalar):
+    global SCALE_FISHING
+    global SPECIES_MAP
+    global BASE_FISHING_VALUE_COD
+    global BASE_FISHING_VALUE_HERRING
+    global BASE_FISHING_VALUE_SPRAT
+    SCALE_FISHING = scalar
+
+    fishing_percent = -1
+    for species in SPECIES_MAP.keys():
+        if species == "plankton":
+            continue
+        base_fishing_amount = globals()[f"BASE_FISHING_VALUE_{species.upper()}"]
+        fishing_percent = base_fishing_amount * DAYS_PER_STEP * SCALE_FISHING
+        SPECIES_MAP[species]["fishing_mortality_rate"] = fishing_percent
+    
+    return fishing_percent
+        
+    
+def update_fishing_for_species(species, value):
+    global SPECIES_MAP
+
+    SPECIES_MAP[species]["fishing_mortality_rate"] = value * DAYS_PER_STEP * SCALE_FISHING
+
 SPECIES_MAP = {
     "plankton": {
         "index": 0,
@@ -68,11 +100,11 @@ SPECIES_MAP = {
         "hardcoded_logic": True,
         "hardcoded_rules": {
             "growth_rate_constant": 50,
-            "respawn_delay": 25,
+            "respawn_delay": 10,
         },
         "visualization": {
-            "color": [0, 255, 0],
-            "color_ones": [0, 1, 0]
+            "color": [100, 220, 100],
+            "color_ones": [100 / 255, 220 / 255, 100 / 255]
         },
         "noise_threshold": 0.35,
         "noise_scaling": NOISE_SCALING,
@@ -93,8 +125,8 @@ SPECIES_MAP = {
         "growth_rate": 0.026 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
         "visualization": {
-            "color": [255, 0, 0],
-            "color_ones": [1, 0, 0]
+            "color": [220, 60, 60],
+            "color_ones": [220 / 255, 60 / 255, 60 / 255]
         },
         "noise_threshold": 0.35,
         "noise_scaling": NOISE_SCALING,
@@ -115,8 +147,8 @@ SPECIES_MAP = {
         "growth_rate": 0.029 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
         "visualization": {
-            "color": [255, 100, 0],
-            "color_ones": [1, 100 / 255, 0]
+            "color": [240, 140, 60],
+            "color_ones": [240 / 255, 140 / 255, 60 / 255]
         },
         "noise_threshold": 0.35,
         "noise_scaling": NOISE_SCALING,
@@ -133,18 +165,17 @@ SPECIES_MAP = {
         "standard_metabolic_rate": 0.0029071536857142857 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "max_consumption_rate": 0.0376 * DAYS_PER_STEP * EAT_REWARD_BOOST,
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
-        "fishing_mortality_rate": 0.005413783 * DAYS_PER_STEP * SCALE_FISHING,
+        "fishing_mortality_rate": 0.005414 * DAYS_PER_STEP * SCALE_FISHING,
         "growth_rate": 0.02 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
         "visualization": {
-            "color": [0, 0, 0],
-            "color_ones": [0, 0, 0]
+            "color": [40, 40, 40],
+            "color_ones": [40 / 255, 40 / 255, 40 / 255]
         },
         "noise_threshold": 0.7,
         "noise_scaling": NOISE_SCALING * 5,
     }
 }
-print("Max in cells", SPECIES_MAP["plankton"]["max_biomass_in_cell"], SPECIES_MAP["herring"]["max_biomass_in_cell"], SPECIES_MAP["sprat"]["max_biomass_in_cell"], SPECIES_MAP["cod"]["max_biomass_in_cell"]) 
 
 EATING_MAP = {
     "plankton": {},
@@ -200,7 +231,7 @@ for species in SPECIES_MAP.keys():
 
 TOTAL_TENSOR_VALUES = offset
 
-NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9
+NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9 + 1
 AVAILABLE_ACTIONS = len(Action)
 NETWORK_HIDDEN_SIZE = 64
 
@@ -208,8 +239,6 @@ NETWORK_HIDDEN_SIZE = 64
 ACTION_TAKING_SPECIES = sum(1 for species in SPECIES_MAP.values() if not species["hardcoded_logic"])
 NETWORK_OUTPUT_SIZE = AVAILABLE_ACTIONS
 NETWORK_OUTPUT_SIZE_SINGLE_SPECIES = AVAILABLE_ACTIONS
-
-print(NETWORK_INPUT_SIZE, NETWORK_HIDDEN_SIZE, NETWORK_OUTPUT_SIZE)
 
 CURRENT_FOLDER = "results/run"
 

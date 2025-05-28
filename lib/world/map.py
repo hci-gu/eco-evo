@@ -157,6 +157,9 @@ def add_species_to_map_even(world_array, world_data, seed=None):
 
     world_data[:, :, 4] = 0  # Reset (e.g., plankton cluster marker layer)
     MIN_CELLS_WITH_BIOMASS = int(const.WORLD_SIZE * const.WORLD_SIZE * 0.15)
+    tiny_world = const.WORLD_SIZE <= 9
+    if tiny_world:
+        MIN_CELLS_WITH_BIOMASS = const.WORLD_SIZE * const.WORLD_SIZE
     COD_COVERAGE_FACTOR = 0.5
     PLANKTON_COVERAGE_FACTOR = 2.5
 
@@ -177,11 +180,11 @@ def add_species_to_map_even(world_array, world_data, seed=None):
 
         # Determine eligible placement cells
         eligible_mask = water_mask.copy()
-        if species in ("herring", "sprat"):
+        if not tiny_world and species in ("herring", "sprat"):
             for other_species, other_props in const.SPECIES_MAP.items():
                 if other_props.get("hardcoded_logic", False):  # e.g., plankton
                     eligible_mask &= world_array[:, :, other_props["biomass_offset"]] == 0
-
+        
         eligible_positions = np.argwhere(eligible_mask)
         if species == "cod":
             num_points = max(int(MIN_CELLS_WITH_BIOMASS * COD_COVERAGE_FACTOR), 1)
@@ -189,9 +192,9 @@ def add_species_to_map_even(world_array, world_data, seed=None):
             num_points = max(int(MIN_CELLS_WITH_BIOMASS * PLANKTON_COVERAGE_FACTOR), 1)
         else:
             num_points = max(MIN_CELLS_WITH_BIOMASS, 1)
+        num_points = min(num_points, eligible_positions.shape[0])
 
         if eligible_positions.shape[0] < num_points:
-            print(f"Warning: Not enough eligible positions for {species}")
             num_points = eligible_positions.shape[0]
 
         chosen = eligible_positions[rng.choice(eligible_positions.shape[0], size=num_points, replace=False)]
@@ -200,6 +203,7 @@ def add_species_to_map_even(world_array, world_data, seed=None):
         for x, y in chosen:
             world_array[x, y, biomass_offset] = biomass_per_cell
             world_array[x, y, energy_offset] = const.MAX_ENERGY
+            # world_array[x, y, energy_offset] = const.MAX_ENERGY * rng.uniform(0, 1)
             if hardcoded:
                 world_data[x, y, 1] = 1
                 world_data[x, y, 2] = properties["hardcoded_rules"]["respawn_delay"]
@@ -224,17 +228,23 @@ def read_map_from_file(folder_path, seed=None):
     world_array = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES), dtype=np.float32)
     world_data = np.zeros((const.WORLD_SIZE, const.WORLD_SIZE, 5), dtype=np.float32)
 
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            color = pixels[x, y][:3]
-            depth_value = depth_pixels[x, y] / 255.0
-            world_data[x, y, 3] = depth_value
-            if color == palette["water"]:
+    if const.WORLD_SIZE <= 9:
+        for x in range(const.WORLD_SIZE):
+            for y in range(const.WORLD_SIZE):
                 world_array[x, y, :3] = np.array([0, 1, 0], dtype=np.float32)
-            else:
-                world_array[x, y, :3] = np.array([1, 0, 0], dtype=np.float32)
+                world_data[x, y, 3] = 1
+    else:
+        for x in range(const.WORLD_SIZE):
+            for y in range(const.WORLD_SIZE):
+                color = pixels[x, y][:3]
+                depth_value = depth_pixels[x, y] / 255.0
+                world_data[x, y, 3] = depth_value
+                if color == palette["water"]:
+                    world_array[x, y, :3] = np.array([0, 1, 0], dtype=np.float32)
+                else:
+                    world_array[x, y, :3] = np.array([1, 0, 0], dtype=np.float32)
 
-    #starting_biomasses = add_species_to_map(world_array, world_data, seed=seed)
+    # starting_biomasses = add_species_to_map(world_array, world_data, seed=seed)
     starting_biomasses = add_species_to_map_even(world_array, world_data, seed=seed)
 
     return np.ascontiguousarray(world_array), np.ascontiguousarray(world_data), starting_biomasses

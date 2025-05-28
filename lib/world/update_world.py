@@ -36,7 +36,7 @@ def get_movement_delta(world, world_data, species_key, action_values_batch, posi
     above_threshold_mask = ~below_threshold_mask
 
     loss_factor = activity_mr_loss[below_threshold_mask] + resting_mr_loss + natural_mortality_loss
-    world[x_batch, y_batch, biomass_offset] -= fishing_mortality_loss
+    world[x_batch, y_batch, biomass_offset] *= 1 - fishing_mortality_loss
     world[x_batch[below_threshold_mask], y_batch[below_threshold_mask], biomass_offset] -= (
         initial_biomass[below_threshold_mask] * loss_factor
     )
@@ -94,7 +94,6 @@ def apply_movement_delta(world, species_key, movement_deltas):
     # reduce energy by base amount
     world[:, :, energy_offset] -= const.BASE_ENERGY_COST
 
-
 def perform_eating(world, species_key, action_values_batch, positions):
     # Extract batch indices.
     x_batch = positions[:, 0]
@@ -145,10 +144,11 @@ def perform_eating(world, species_key, action_values_batch, positions):
         out=np.zeros_like(actual_eaten), 
         where=initial_total_eat > 0
     )
-    # log eaten percentage for cells with biomass
-    # eaten_percentage[init_biomass > 0] = np.log(eaten_percentage[init_biomass > 0] + 1e-8)
 
-    world[x_batch, y_batch, energy_offset] += const.ENERGY_REWARD_FOR_EATING * eaten_percentage
+    if species_key == "cod":
+        world[x_batch, y_batch, energy_offset] += const.ENERGY_REWARD_FOR_EATING_COD * eaten_percentage
+    else:
+        world[x_batch, y_batch, energy_offset] += const.ENERGY_REWARD_FOR_EATING * eaten_percentage
 
     # --- Handle low biomass: if biomass falls below minimum, set it (and energy) to zero ---
     # Instead of indexing the entire grid, update only for batch positions.

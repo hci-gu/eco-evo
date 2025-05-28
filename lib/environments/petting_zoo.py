@@ -133,8 +133,8 @@ class raw_env(AECEnv):
         # If the active agent is "plankton", use the hardcoded logic.
         if agent == "plankton":
             spawn_plankton(self.world, self.world_data)
-            if self.num_moves % 20 == 0:
-                randomwalk_plankton(self.world, self.world_data)
+            # if self.num_moves % 20 == 0:
+            #     randomwalk_plankton(self.world, self.world_data)
         else:
             self.state[agent] = action
 
