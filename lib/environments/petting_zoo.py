@@ -8,10 +8,10 @@ from lib.world import (
     update_smell,
     read_map_from_file,
     all_movement_delta,
+    matrix_perform_eating,
     apply_movement_delta,
     spawn_plankton,
     randomwalk_plankton,
-    perform_eating,
     world_is_alive,
 )
 from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
@@ -163,24 +163,22 @@ class raw_env(AECEnv):
             matrix_movement_deltas = all_movement_delta( self.world, self.world_data, agent, action)
             apply_movement_delta(self.world, agent, matrix_movement_deltas)
 
-            precomputed = {}
-            for color in range(9):
-                mask = (self.colors == color)
-                if np.any(mask):
-                    positions = np.argwhere(mask)
-                    padded = positions + 1
-                    precomputed[color] = (padded.astype(np.int32), mask)
-                else:
-                    precomputed[color] = (None, mask)
+            # Check that the biomass stays within limit.
+            for species, props in const.SPECIES_MAP.items():
+                species_biomass_offset = props["biomass_offset"]
+                _max = props["max_biomass_in_cell"]
+                _min = props["min_biomass_in_cell"]
+                np.clip(
+                    self.world[..., species_biomass_offset],
+                    _min,
+                    _max,
+                    out=self.world[..., species_biomass_offset],
+                )
+                assert (self.world[..., species_biomass_offset] <= _max).all()
+                assert (self.world[..., species_biomass_offset] >= _min).all()
 
-
-            # Eating update.
-            for color in range(9):
-                pos_padded, mask = precomputed[color]
-                if pos_padded is not None:
-                    action_part = action[mask]
-                    perform_eating(self.world, agent, action_part, pos_padded)
-
+            matrix_perform_eating(self.world, agent, action)
+            
             update_smell(self.world)
             self.render()
             if not world_is_alive(self.world):

@@ -250,6 +250,79 @@ def perform_eating(world, species_key, action_values_batch, positions):
             const.MAX_ENERGY
         )
 
+def matrix_perform_eating(world, species_key, actions):
+
+    pad = 1
+    species_properties = const.SPECIES_MAP[species_key]
+    biomass_offset = species_properties["biomass_offset"]
+    energy_offset = species_properties["energy_offset"]
+
+    # Get eating actions and metabolic cost.
+    eat = actions[:, :, Action.EAT.value]
+    activity_mr_loss = eat * species_properties["activity_metabolic_rate"]
+
+    # Cache biomass and energy at batch positions.
+    init_biomass = world[pad:-pad, pad:-pad, biomass_offset].copy()
+    init_energy = world[pad:-pad, pad:-pad, energy_offset].copy()
+
+    # --- Biomass loss from metabolic cost of eating ---
+    world[pad:-pad, pad:-pad, biomass_offset] *= 1 - np.where(
+        init_energy < 50, activity_mr_loss, 0
+    )
+
+    # Compute total eat potential.
+    initial_total_eat = init_biomass * eat
+    still_left_to_eat = initial_total_eat.copy()
+
+    # Randomize prey order.
+    prey_list = list(const.EATING_MAP[species_key].items())
+    np.random.shuffle(prey_list)
+
+    # Process each prey species.
+    for prey_species, _ in prey_list:
+        prey_biomass_offset = const.SPECIES_MAP[prey_species]["biomass_offset"]
+        prey_biomass = world[pad:-pad, pad:-pad, prey_biomass_offset]
+        # Consume as much as possible, up to total_eat_amount.
+        eat_amount = np.minimum(prey_biomass, still_left_to_eat)
+        # Reduce prey biomass.
+        world[pad:-pad, pad:-pad, prey_biomass_offset] -= eat_amount
+        still_left_to_eat -= eat_amount
+
+    actual_eaten = initial_total_eat - still_left_to_eat
+
+    # Avoid division by zero using np.where.
+    eaten_percentage = np.divide(
+        actual_eaten,
+        init_biomass,
+        out=np.zeros_like(actual_eaten),
+        where=initial_total_eat > 0,
+    )
+
+    world[pad:-pad, pad:-pad, energy_offset] += (
+        const.ENERGY_REWARD_FOR_EATING * eaten_percentage
+    )
+
+    # --- Handle low biomass: if biomass falls below minimum, set it (and energy) to zero ---
+    low_biomass = world[..., biomass_offset] < species_properties["min_biomass_in_cell"]
+    world[low_biomass, biomass_offset] = 0
+    world[low_biomass, energy_offset] = 0
+
+    # TODO: Should this be done here?
+    np.clip(
+        world[pad:-pad, pad:-pad, biomass_offset],
+        0,
+        species_properties["max_biomass_in_cell"],
+        out=world[pad:-pad, pad:-pad, biomass_offset],
+    )
+    np.clip(
+        world[pad:-pad, pad:-pad, energy_offset],
+        0,
+        const.MAX_ENERGY,
+        out=world[pad:-pad, pad:-pad, energy_offset],
+    )
+
+    return world
+
 def perform_action(world, world_data, species_key, action_values_batch, positions):
     pass
 
