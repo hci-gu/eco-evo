@@ -7,7 +7,7 @@ from gymnasium import spaces
 from lib.world import (
     update_smell,
     read_map_from_file,
-    get_movement_delta,
+    all_movement_delta,
     apply_movement_delta,
     spawn_plankton,
     randomwalk_plankton,
@@ -159,6 +159,10 @@ class raw_env(AECEnv):
         else:
             self.state[agent] = action
 
+            # Movement update.
+            matrix_movement_deltas = all_movement_delta( self.world, self.world_data, agent, action)
+            apply_movement_delta(self.world, agent, matrix_movement_deltas)
+
             precomputed = {}
             for color in range(9):
                 mask = (self.colors == color)
@@ -169,17 +173,7 @@ class raw_env(AECEnv):
                 else:
                     precomputed[color] = (None, mask)
 
-            # Movement update.
-            total_movement_deltas = np.zeros_like(self.world)
-            for color in range(9):
-                pos_padded, mask = precomputed[color]
-                if pos_padded is not None:
-                    action_part = action[mask]
-                    movement_deltas = get_movement_delta(self.world, self.world_data, agent, action_part, pos_padded)
-                    total_movement_deltas += movement_deltas
 
-            apply_movement_delta(self.world, agent, total_movement_deltas)
-            
             # Eating update.
             for color in range(9):
                 pos_padded, mask = precomputed[color]
