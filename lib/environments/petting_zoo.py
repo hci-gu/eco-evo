@@ -17,6 +17,8 @@ from lib.world import (
 from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
 import lib.constants as const
 import random
+from numba import njit
+
 
 def env(render_mode=None):
     """
@@ -117,31 +119,15 @@ class raw_env(AECEnv):
         energy = self.world[..., const.OFFSETS_ENERGY:const.OFFSETS_ENERGY+4] / (const.MAX_ENERGY + 1e-8)
         observation = np.concatenate([terrain, biomass, smell, energy], axis=-1)
         patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
-        
+
         patches = patches.reshape(-1, 3, 3, observation.shape[-1])
 
         return patches
-    
+
     def observe(self, agent):
-        # Compute the ordering of the indices. If this is not needed we can just compute
-        # the observation like 
-        # observation =  self.world / (self.world.max(axis=(0, 1)) + 1e-8)
-        # which is substantially faster.
-        # If this ordering is necessary, it might be a good idea to precompute the
-        # indices for a 2-3 percent speed-up.
-        terrain_indices = tuple(range(3))
-        biomass_indices =  tuple((const.SPECIES_MAP[s]["biomass_offset"] for s in self.possible_agents))
-        smell_indices =  tuple((const.SPECIES_MAP[s]["smell_offset"] for s in self.possible_agents))
-        energy_indices =  tuple((const.SPECIES_MAP[s]["energy_offset"] for s in self.possible_agents))
-        idx = terrain_indices + biomass_indices + smell_indices + energy_indices
-        # idx = (0,1,2,3,4,5,6,11,12,13,14,7,8,9,10)
-        # assert idx == (0,1,2,3,4,5,6,11,12,13,14,7,8,9,10)
-        observation =  self.world[...,idx] / (self.world[...,idx].max(axis=(0, 1)) + 1e-8)
-        patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
-
-        patches = patches.reshape(-1, 3, 3, observation.shape[-1])
-
-        return patches
+        # This function uses the numba version. It does not sort the
+        # channels like the original observe.
+        return observe(self.world)
 
     def step(self, action):
         if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
@@ -243,3 +229,31 @@ class raw_env(AECEnv):
 
     def _accumulate_rewards(self):
         pass
+
+@njit
+def observe(world):
+    n, m, c = world.shape
+    max_vals = np.zeros(c, dtype=world.dtype)
+
+    # Compute max per channel.
+    for ch in range(c):
+        max_val = 0.0
+        for i in range(n):
+            for j in range(m):
+                max_val = max(max_val, world[i, j, ch])
+        max_vals[ch] = max_val + 1e-8
+
+    num_patches = (n - 2) * (m - 2)
+    patches = np.empty((num_patches, 3, 3, c), dtype=world.dtype)
+
+    patch_idx = 0
+    for i in range(n - 2):
+        for j in range(m - 2):
+            for di in range(3):
+                for dj in range(3):
+                    for ch in range(c):
+                        val = world[i + di, j + dj, ch] / max_vals[ch]
+                        patches[patch_idx, di, dj, ch] = val
+            patch_idx += 1
+
+    return patches
