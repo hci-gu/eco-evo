@@ -102,7 +102,7 @@ class raw_env(AECEnv):
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
         self.color_order = []
 
-    def observe(self, agent):
+    def old_observe(self, agent):
         terrain = self.world[..., 0:3]
         biomass = []
         smell = []
@@ -122,6 +122,27 @@ class raw_env(AECEnv):
 
         return patches
     
+    def observe(self, agent):
+        # Compute the ordering of the indices. If this is not needed we can just compute
+        # the observation like 
+        # observation =  self.world / (self.world.max(axis=(0, 1)) + 1e-8)
+        # which is substantially faster.
+        # If this ordering is necessary, it might be a good idea to precompute the
+        # indices for a 2-3 percent speed-up.
+        terrain_indices = tuple(range(3))
+        biomass_indices =  tuple((const.SPECIES_MAP[s]["biomass_offset"] for s in self.possible_agents))
+        smell_indices =  tuple((const.SPECIES_MAP[s]["smell_offset"] for s in self.possible_agents))
+        energy_indices =  tuple((const.SPECIES_MAP[s]["energy_offset"] for s in self.possible_agents))
+        idx = terrain_indices + biomass_indices + smell_indices + energy_indices
+        # idx = (0,1,2,3,4,5,6,11,12,13,14,7,8,9,10)
+        # assert idx == (0,1,2,3,4,5,6,11,12,13,14,7,8,9,10)
+        observation =  self.world[...,idx] / (self.world[...,idx].max(axis=(0, 1)) + 1e-8)
+        patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
+
+        patches = patches.reshape(-1, 3, 3, observation.shape[-1])
+
+        return patches
+
     def step(self, action):
         if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
             self._was_dead_step(action)
