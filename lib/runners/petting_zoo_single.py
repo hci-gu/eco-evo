@@ -12,9 +12,10 @@ from lib.environments.petting_zoo import env
 def noop(a, b):
     pass
 
-model_path = "results/pure_behav_1/agents/80_0.9999999792127552.npy.npz"
-base_chromosome = np.load(model_path)
-print("model_path", model_path)
+# model_path = "results/pure_behav_1/agents/80_0.9999999792127552.npy.npz"
+# base_chromosome = np.load(model_path)
+# print("model_path", model_path)
+base_chromosome = None
 
 class PettingZooRunnerSingle():
     def __init__(self, render_mode="none"):
