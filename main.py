@@ -79,8 +79,8 @@ if __name__ == "__main__":
     # profiler = cProfile.Profile()
     # profiler.enable()
 
-    evaluate_single_model()
-    time.sleep(10000)
+    # evaluate_single_model()
+    # time.sleep(10000)
     # total_elapsed_time = 0
     # for i in range(5):
     #     elapsed_time = evaluate_model()
@@ -143,13 +143,13 @@ if __name__ == "__main__":
             # runner.train()
         elif const.RUNNER == "petting_zoo":
             runner = PettingZooRunner()
-            runner.train()
+            runner.train(const.GENERATIONS_PER_RUN)
         elif const.RUNNER == "petting_zoo_single":
             runner = PettingZooRunnerSingle()
-            runner.train()
+            runner.train(const.GENERATIONS_PER_RUN)
         elif const.RUNNER == "gym":
             runner = SingleAgentGymRunner()
-            runner.train()
+            runner.train(const.GENERATIONS_PER_RUN)
         elif const.RUNNER == "old":
             runner = Runner()
             simulation_thread = threading.Thread(target=runner.run)
