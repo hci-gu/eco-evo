@@ -19,10 +19,10 @@ class Action(Enum):
 RUNNER = "petting_zoo_single"
 
 # SPEED_MULTIPLIER = 2
-# EAT_REWARD_BOOST = 10
+# EAT_AMOUNT_BOOST = 10
 # MULTIPLY_DEATH_RATE = 3
 SPEED_MULTIPLIER = 1
-EAT_REWARD_BOOST = 5
+EAT_AMOUNT_BOOST = 5
 MULTIPLY_DEATH_RATE = 1
 
 MAP_METER_SIZE = 300 * 1000
@@ -41,6 +41,7 @@ STARTING_BIOMASS_COD = 44897
 STARTING_BIOMASS_HERRING = 737356
 STARTING_BIOMASS_SPRAT = 1359874
 STARTING_BIOMASS_PLANKTON = 1359874 * 2
+# STARTING_BIOMASS_PLANKTON = 2000
 # STARTING_BIOMASS_COD = 100
 # STARTING_BIOMASS_HERRING = 200
 # STARTING_BIOMASS_SPRAT = 200
@@ -49,7 +50,7 @@ STARTING_BIOMASS_PLANKTON = 1359874 * 2
 BASE_FISHING_VALUE_COD = 0.002651024
 BASE_FISHING_VALUE_HERRING = 0.002651024
 BASE_FISHING_VALUE_SPRAT = 0.002651024
-MIN_PERCENT_ALIVE = 0.025
+MIN_PERCENT_ALIVE = 0
 MAX_PERCENT_ALIVE = 8
 MAX_ENERGY = 100
 BASE_ENERGY_COST = 0.5 * DAYS_PER_STEP
@@ -82,7 +83,37 @@ def update_fishing_scaler(scalar):
         SPECIES_MAP[species]["fishing_mortality_rate"] = fishing_percent
     
     return fishing_percent
-        
+
+def update_initial_biomass(species, value):
+    global SPECIES_MAP
+
+    if species not in SPECIES_MAP:
+        raise ValueError(f"Species '{species}' not found in SPECIES_MAP.")
+
+    if value < 0:
+        raise ValueError("Initial biomass cannot be negative.")
+
+    SPECIES_MAP[species]["starting_biomass"] = value
+    SPECIES_MAP[species]["original_starting_biomass"] = value
+    SPECIES_MAP[species]["max_biomass_in_cell"] = (value / (WORLD_SIZE * WORLD_SIZE)) * 20
+    # SPECIES_MAP[species]["max_biomass_in_cell"] = SPECIES_MAP[species]["max_biomass_in_cell"] * 100
+    SPECIES_MAP[species]["min_biomass_in_cell"] = 0
+
+def update_energy_params(energy_cost, energy_reward, energy_reward_cod, eat_amount_boost):
+    global BASE_ENERGY_COST
+    global ENERGY_REWARD_FOR_EATING
+    global ENERGY_REWARD_FOR_EATING_COD
+    global EAT_AMOUNT_BOOST
+
+    BASE_ENERGY_COST = energy_cost * DAYS_PER_STEP
+    ENERGY_REWARD_FOR_EATING = energy_reward
+    ENERGY_REWARD_FOR_EATING_COD = energy_reward_cod
+    EAT_AMOUNT_BOOST = eat_amount_boost
+
+    for species in SPECIES_MAP.keys():
+        if species == "plankton":
+            continue
+        SPECIES_MAP[species]["max_consumption_rate"] = SPECIES_MAP[species]["max_consumption_rate"] * EAT_AMOUNT_BOOST * DAYS_PER_STEP
     
 def update_fishing_for_species(species, value):
     global SPECIES_MAP
@@ -100,6 +131,7 @@ SPECIES_MAP = {
         "hardcoded_logic": True,
         "hardcoded_rules": {
             "growth_rate_constant": 50,
+            # "growth_rate_constant": 2.5,
             "respawn_delay": 10,
         },
         "visualization": {
@@ -119,7 +151,7 @@ SPECIES_MAP = {
         "max_biomass_in_cell": (STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE)) * 20,
         "activity_metabolic_rate": 0.022360679760000002 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.00447213596 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
-        "max_consumption_rate": 0.0529 * DAYS_PER_STEP * EAT_REWARD_BOOST,
+        "max_consumption_rate": 0.0529 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
         "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         "growth_rate": 0.026 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
@@ -141,7 +173,7 @@ SPECIES_MAP = {
         "max_biomass_in_cell": (STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE)) * 20,
         "activity_metabolic_rate": 0.02686424833333333 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.005372849666666666 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
-        "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_REWARD_BOOST,
+        "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
         "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         "growth_rate": 0.029 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
@@ -163,7 +195,7 @@ SPECIES_MAP = {
         "max_biomass_in_cell": (STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE)) * 50,
         "activity_metabolic_rate": 0.014535768421428572 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.0029071536857142857 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
-        "max_consumption_rate": 0.0376 * DAYS_PER_STEP * EAT_REWARD_BOOST,
+        "max_consumption_rate": 0.0376 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.005414 * DAYS_PER_STEP * SCALE_FISHING,
         "growth_rate": 0.02 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
@@ -254,7 +286,7 @@ def override_from_file(file_path):
     global TOURNAMENT_SELECTION
     global GENERATIONS_PER_RUN
     global SPEED_MULTIPLIER
-    global EAT_REWARD_BOOST
+    global EAT_AMOUNT_BOOST
     
     global CURRENT_FOLDER
     file_name = os.path.basename(file_path).split(".")[0]

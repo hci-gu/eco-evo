@@ -354,17 +354,17 @@ def draw_world(screen, world_tensor, world_data):
         screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
 
     pygame.display.flip()
+    # time.sleep(100)
 
-    pixels = pygame.surfarray.array3d(screen)
-    frame_rgb = np.transpose(pixels, (1, 0, 2))
-    cropped_frame = frame_rgb[0:688, 0:992] 
+    # pixels = pygame.surfarray.array3d(screen)
+    # frame_rgb = np.transpose(pixels, (1, 0, 2))
+    # cropped_frame = frame_rgb[0:688, 0:992] 
 
-    video_writer.append_data(cropped_frame)
-    counter += 1
-    print("Frame captured and added to video.", counter)
+    # video_writer.append_data(cropped_frame)
+    # counter += 1
     
-    if counter % 10000 == 0:
-        video_writer.close()
+    # if counter % 10000 == 0:
+    #     video_writer.close()
 
     # save snapshot of the screen
     # pygame.image.save(screen, "world_snapshot.png")

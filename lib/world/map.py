@@ -2,8 +2,10 @@ import opensimplex
 import math
 import random
 import numpy as np
+import pandas as pd
 import lib.constants as const
 from lib.constants import Terrain
+import scipy.ndimage
 from PIL import Image
 
 # Define a palette for the map colors.
@@ -19,6 +21,34 @@ palette = {
     "snow": (179, 159, 225),
 }
 
+def construct_species_grid_from_csv(csv_path, year, grid_size=10):
+    df = pd.read_csv(csv_path)
+    df_year = df[df["year"] == year]
+
+    lat_min, lat_max = df_year["lat"].min(), df_year["lat"].max()
+    lon_min, lon_max = df_year["lon"].min(), df_year["lon"].max()
+    lat_step = (lat_max - lat_min) / grid_size
+    lon_step = (lon_max - lon_min) / grid_size
+    print(f"Latitude range: {lat_min} to {lat_max}, Longitude range: {lon_min} to {lon_max}")
+    print(f"Grid size: {grid_size}x{grid_size}, Step: lat={lat_step}, lon={lon_step}")
+
+    species = [s for s in const.SPECIES_MAP.keys() if s != "plankton"]
+    biomass_grid = np.zeros((grid_size, grid_size, len(species)), dtype=np.float32)
+
+    for _, row in df_year.iterrows():
+        lat_idx = min(int((row["lat"] - lat_min) / lat_step), grid_size - 1)
+        lon_idx = min(int((row["lon"] - lon_min) / lon_step), grid_size - 1)
+
+        for i, s in enumerate(species):
+            kg_value = row[s]
+            if pd.isna(kg_value) or kg_value <= 0:
+                continue
+            print(f"Species: {s}, Lat: {row['lat']}, Lon: {row['lon']}, kg_value: {kg_value}")
+            tonnes = kg_value / 1000
+            biomass_grid[lat_idx, lon_idx, i] += tonnes
+
+    return biomass_grid
+
 def smooth_skewed_random():
     if const.FIXED_BIOMASS:
         return 1
@@ -32,6 +62,69 @@ def smooth_skewed_random():
 
     beta_sample = x / (x + y)
     return beta_sample * (2.0 - 0.75) + 0.75
+
+def resize_biomass_grid(grid, target_size):
+    """
+    Resizes a 10x10 biomass grid to (target_size x target_size) using bilinear interpolation.
+    """
+    zoom_y = target_size / grid.shape[0]
+    zoom_x = target_size / grid.shape[1]
+    resized = scipy.ndimage.zoom(grid, (zoom_y, zoom_x), order=1)
+
+    # Clip or pad to match exactly
+    resized = resized[:target_size, :target_size]
+    if resized.shape[0] < target_size or resized.shape[1] < target_size:
+        padded = np.zeros((target_size, target_size), dtype=resized.dtype)
+        padded[:resized.shape[0], :resized.shape[1]] = resized
+        resized = padded
+
+    return resized
+
+def add_species_from_biomass_grid(world_array, world_data, biomass_grid):
+    add_species_to_map_even(world_array, world_data)
+    world_size = const.WORLD_SIZE
+
+    species = [s for s in const.SPECIES_MAP.keys() if s != "plankton"]
+    for i, species in enumerate(species):
+        biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
+        energy_offset = const.SPECIES_MAP[species]["energy_offset"]
+
+        # zero biomass and energy layers for this species
+        world_array[:, :, biomass_offset] = 0
+        world_array[:, :, energy_offset] = 0
+
+        # Upscale the 10x10 biomass grid to match the world using bilinear interpolation
+        upscaled = resize_biomass_grid(biomass_grid[:, :, i], world_size)
+
+        # Ensure it's the same shape as the world (trim or pad if needed)
+        # upscaled = upscaled[:world_size, :world_size]
+
+        # Zero non-water cells
+        water_mask = (world_array[:, :, const.Terrain.WATER.value] == 1)
+        upscaled *= water_mask
+
+        # Normalize to keep total biomass the same
+        total_csv_biomass = biomass_grid[:, :, i].sum()
+        current_total = upscaled.sum()
+
+        if current_total > 0:
+            upscaled *= (total_csv_biomass / current_total)
+
+        # remove all nan values
+        upscaled = np.nan_to_num(upscaled, nan=0.0)
+        print(f"Species: {species}, Total biomass from CSV: {total_csv_biomass:.2f}, Current upscaled total: {current_total:.2f}")
+        const.update_initial_biomass(species, upscaled.sum())
+
+        # Assign to world array
+        world_array[:, :, biomass_offset] = upscaled
+        world_array[:, :, energy_offset] = const.MAX_ENERGY
+
+    # Set smell channels to 0
+    for species, props in const.SPECIES_MAP.items():
+        world_array[:, :, props["smell_offset"]] = 0
+
+    return {species: biomass_grid[:, :, i].sum() for i, species in enumerate(species)}
+
 
 def add_species_to_map(world_array, world_data, seed = None):
     if seed is None:
@@ -219,6 +312,11 @@ def read_map_from_file(folder_path, seed=None):
     image = image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
     pixels = image.load()
 
+    # csv_file = "fish_biomass_data.csv"  # Update path if needed
+    # selected_year = 2018
+    # species_grid_data = construct_species_grid_from_csv(csv_file, selected_year)
+    # print(f"Species grid data for year {selected_year}:\n{species_grid_data}")
+
     depth_image = Image.open(folder_path + '/depth.png')
     depth_image = depth_image.resize((const.WORLD_SIZE, const.WORLD_SIZE), resample=Image.NEAREST)
     depth_image = depth_image.convert('L')
@@ -246,6 +344,7 @@ def read_map_from_file(folder_path, seed=None):
 
     # starting_biomasses = add_species_to_map(world_array, world_data, seed=seed)
     starting_biomasses = add_species_to_map_even(world_array, world_data, seed=seed)
+    # starting_biomasses = add_species_from_biomass_grid(world_array, world_data, species_grid_data)
 
     return np.ascontiguousarray(world_array), np.ascontiguousarray(world_data), starting_biomasses
 

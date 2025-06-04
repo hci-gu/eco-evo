@@ -100,18 +100,18 @@ def eval_callback(world, step):
 if __name__ == "__main__":
     runner, model_paths = get_runner_single()
     num_evals = 1
-    # for i in range(num_evals):
-    #     years_rendered = -1
-    #     runner.evaluate(model_paths, eval_callback, i)
-    #     current_eval += 1
+    for i in range(num_evals):
+        years_rendered = -1
+        runner.evaluate(model_paths, eval_callback, i)
+        current_eval += 1
 
-    # # Save biomass data to CSV
-    # all_records = []
-    # for records in biomass_data.values():
-    #     all_records.extend(records)
-    # df = pd.DataFrame(all_records)
-    # df.to_csv(csv_output_path, index=False)
-    # print(f"Saved biomass data to {csv_output_path}")
+    # Save biomass data to CSV
+    all_records = []
+    for records in biomass_data.values():
+        all_records.extend(records)
+    df = pd.DataFrame(all_records)
+    df.to_csv(csv_output_path, index=False)
+    print(f"Saved biomass data to {csv_output_path}")
 
     render_plot(csv_output_path)
     print("Finished evaluation.")
