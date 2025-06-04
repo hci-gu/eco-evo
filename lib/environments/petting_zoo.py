@@ -7,16 +7,18 @@ from gymnasium import spaces
 from lib.world import (
     update_smell,
     read_map_from_file,
-    get_movement_delta,
+    all_movement_delta,
+    matrix_perform_eating,
     apply_movement_delta,
     spawn_plankton,
     randomwalk_plankton,
-    perform_eating,
     world_is_alive,
 )
 from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
 import lib.constants as const
 import random
+from numba import njit
+
 
 def env(render_mode=None):
     """
@@ -102,7 +104,7 @@ class raw_env(AECEnv):
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
         self.color_order = []
 
-    def observe(self, agent):
+    def old_observe(self, agent):
         terrain = self.world[..., 0:3]
         biomass = []
         smell = []
@@ -117,11 +119,16 @@ class raw_env(AECEnv):
         energy = self.world[..., const.OFFSETS_ENERGY:const.OFFSETS_ENERGY+4] / (const.MAX_ENERGY + 1e-8)
         observation = np.concatenate([terrain, biomass, smell, energy], axis=-1)
         patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
-        
+
         patches = patches.reshape(-1, 3, 3, observation.shape[-1])
 
         return patches
-    
+
+    def observe(self, agent):
+        # This function uses the numba version. It does not sort the
+        # channels like the original observe.
+        return observe(self.world)
+
     def step(self, action):
         if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
             self._was_dead_step(action)
@@ -138,34 +145,26 @@ class raw_env(AECEnv):
         else:
             self.state[agent] = action
 
-            precomputed = {}
-            for color in range(9):
-                mask = (self.colors == color)
-                if np.any(mask):
-                    positions = np.argwhere(mask)
-                    padded = positions + 1
-                    precomputed[color] = (padded.astype(np.int32), mask)
-                else:
-                    precomputed[color] = (None, mask)
-
             # Movement update.
-            total_movement_deltas = np.zeros_like(self.world)
-            for color in range(9):
-                pos_padded, mask = precomputed[color]
-                if pos_padded is not None:
-                    action_part = action[mask]
-                    movement_deltas = get_movement_delta(self.world, self.world_data, agent, action_part, pos_padded)
-                    total_movement_deltas += movement_deltas
+            matrix_movement_deltas = all_movement_delta( self.world, self.world_data, agent, action)
+            apply_movement_delta(self.world, agent, matrix_movement_deltas)
 
-            apply_movement_delta(self.world, agent, total_movement_deltas)
+            # Check that the biomass stays within limit.
+            for species, props in const.SPECIES_MAP.items():
+                species_biomass_offset = props["biomass_offset"]
+                _max = props["max_biomass_in_cell"]
+                _min = props["min_biomass_in_cell"]
+                np.clip(
+                    self.world[..., species_biomass_offset],
+                    _min,
+                    _max,
+                    out=self.world[..., species_biomass_offset],
+                )
+                assert (self.world[..., species_biomass_offset] <= _max).all()
+                assert (self.world[..., species_biomass_offset] >= _min).all()
+
+            matrix_perform_eating(self.world, agent, action)
             
-            # Eating update.
-            for color in range(9):
-                pos_padded, mask = precomputed[color]
-                if pos_padded is not None:
-                    action_part = action[mask]
-                    perform_eating(self.world, agent, action_part, pos_padded)
-
             update_smell(self.world)
             self.render()
             if not world_is_alive(self.world):
@@ -230,3 +229,31 @@ class raw_env(AECEnv):
 
     def _accumulate_rewards(self):
         pass
+
+@njit
+def observe(world):
+    n, m, c = world.shape
+    max_vals = np.zeros(c, dtype=world.dtype)
+
+    # Compute max per channel.
+    for ch in range(c):
+        max_val = 0.0
+        for i in range(n):
+            for j in range(m):
+                max_val = max(max_val, world[i, j, ch])
+        max_vals[ch] = max_val + 1e-8
+
+    num_patches = (n - 2) * (m - 2)
+    patches = np.empty((num_patches, 3, 3, c), dtype=world.dtype)
+
+    patch_idx = 0
+    for i in range(n - 2):
+        for j in range(m - 2):
+            for di in range(3):
+                for dj in range(3):
+                    for ch in range(c):
+                        val = world[i + di, j + dj, ch] / max_vals[ch]
+                        patches[patch_idx, di, dj, ch] = val
+            patch_idx += 1
+
+    return patches

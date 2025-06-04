@@ -7,6 +7,7 @@ from lib.behaviour import run_all_scenarios
 import numpy as np
 import random
 import copy
+import time
 from lib.environments.petting_zoo import env
 
 def noop(a, b):
@@ -76,6 +77,7 @@ class PettingZooRunner():
                 if self.env.render_mode == "human":
                     plot_biomass(agents_data)
         
+        
         return fitness, episode_length
 
 
@@ -102,6 +104,7 @@ class PettingZooRunner():
                 }
 
                 for eval_index in range(const.AGENT_EVALUATIONS):
+                    start_time = time.time()
                     self.eval_index = eval_index
                     # pick random agent from other species
                     for other_species_name in other_species:
@@ -116,14 +119,15 @@ class PettingZooRunner():
                         fitness, episode_length = self.run(eval_species, species, eval_seeds[eval_index])
                     
                     evals_fitness.append(fitness)
-                    print("idx", idx, "eval", eval_index, "fitness", fitness, "episode_length", episode_length)
+                    end_time = time.time()
+                    print(f'idx {idx}, eval {eval_index}, fitness {fitness:.1f}, episode_length {episode_length}, steps/sec {episode_length/(end_time - start_time):.2f}')
                 
                 avg_fitness = sum(evals_fitness) / len(evals_fitness)
                 behaviour_score = run_all_scenarios(evaluation_candidate, species, False)
                 avg_fitness = avg_fitness * behaviour_score
 
                 fitnesses[species].append((evaluation_candidate.state_dict(), avg_fitness))
-                print("finished eval for species:", species, ", behaviour_score:", behaviour_score, ", fitness:", avg_fitness)
+                print(f'finished eval for species: {species}, behaviour_score: {behaviour_score:.3f}, fitness: {avg_fitness:.1f}')
         return fitnesses
 
     def evolve_population(self, fitnesses):
