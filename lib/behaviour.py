@@ -4,9 +4,9 @@ import numpy as np
 from enum import Enum
 from lib.world import (
     update_smell,
-    get_movement_delta,
     apply_movement_delta,
-    perform_eating,
+    all_movement_delta,
+    matrix_perform_eating
 )
 import lib.constants as const
 from lib.model import Model, SingleSpeciesModel
@@ -39,12 +39,9 @@ def observe(world):
     return observation
 
 def take_step(world, world_data, species, action):
-    action_values_batch = np.array([action])
-    positions = np.array([[1, 1]])
-
-    movement_deltas = get_movement_delta(world, world_data, species, action_values_batch, positions)
+    movement_deltas = all_movement_delta(world, world_data, species, action)
     apply_movement_delta(world, species, movement_deltas)
-    perform_eating(world, species, action_values_batch, positions)
+    matrix_perform_eating(world, species, action)
 
 def get_action(candidate, species, world):
     obs = observe(world)
