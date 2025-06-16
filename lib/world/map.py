@@ -295,8 +295,8 @@ def add_species_to_map_even(world_array, world_data, seed=None):
 
         for x, y in chosen:
             world_array[x, y, biomass_offset] = biomass_per_cell
-            world_array[x, y, energy_offset] = const.MAX_ENERGY
-            # world_array[x, y, energy_offset] = const.MAX_ENERGY * rng.uniform(0, 1)
+            # world_array[x, y, energy_offset] = const.MAX_ENERGY
+            world_array[x, y, energy_offset] = const.MAX_ENERGY * rng.uniform(0, 1)
             if hardcoded:
                 world_data[x, y, 1] = 1
                 world_data[x, y, 2] = properties["hardcoded_rules"]["respawn_delay"]

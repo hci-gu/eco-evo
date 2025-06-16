@@ -19,10 +19,8 @@ class Action(Enum):
 RUNNER = "petting_zoo_single"
 
 # SPEED_MULTIPLIER = 2
-# EAT_AMOUNT_BOOST = 10
 # MULTIPLY_DEATH_RATE = 3
 SPEED_MULTIPLIER = 1
-EAT_AMOUNT_BOOST = 5
 MULTIPLY_DEATH_RATE = 1
 
 MAP_METER_SIZE = 300 * 1000
@@ -32,8 +30,8 @@ FISH_SWIM_SPEED = 0.025
 SECONDS_IN_DAY = 86400
 DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
 DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
-SCALE_FISHING = 1
-FIXED_BIOMASS = True
+SCALE_FISHING = 0
+FIXED_BIOMASS = False
 WORLD_SIZE = 48
 
 NOISE_SCALING = 6
@@ -50,15 +48,12 @@ STARTING_BIOMASS_PLANKTON = 1359874 * 2
 BASE_FISHING_VALUE_COD = 0.002651024
 BASE_FISHING_VALUE_HERRING = 0.002651024
 BASE_FISHING_VALUE_SPRAT = 0.002651024
-MIN_PERCENT_ALIVE = 0
+MIN_PERCENT_ALIVE = 0.1
 MAX_PERCENT_ALIVE = 8
 MAX_ENERGY = 100
-BASE_ENERGY_COST = 0.5 * DAYS_PER_STEP
-ENERGY_REWARD_FOR_EATING = 250
-ENERGY_REWARD_FOR_EATING_COD = 500
 GROWTH_MULTIPLIER = 1
 print(f"Days per step: {DAYS_PER_STEP}")
-MAX_STEPS = 1000
+MAX_STEPS = 10000
 # print years for max steps
 print(f"Max steps: {MAX_STEPS} ({MAX_STEPS / 365} years)")
 
@@ -99,21 +94,9 @@ def update_initial_biomass(species, value):
     # SPECIES_MAP[species]["max_biomass_in_cell"] = SPECIES_MAP[species]["max_biomass_in_cell"] * 100
     SPECIES_MAP[species]["min_biomass_in_cell"] = 0
 
-def update_energy_params(energy_cost, energy_reward, energy_reward_cod, eat_amount_boost):
-    global BASE_ENERGY_COST
-    global ENERGY_REWARD_FOR_EATING
-    global ENERGY_REWARD_FOR_EATING_COD
-    global EAT_AMOUNT_BOOST
-
-    BASE_ENERGY_COST = energy_cost * DAYS_PER_STEP
-    ENERGY_REWARD_FOR_EATING = energy_reward
-    ENERGY_REWARD_FOR_EATING_COD = energy_reward_cod
-    EAT_AMOUNT_BOOST = eat_amount_boost
-
-    for species in SPECIES_MAP.keys():
-        if species == "plankton":
-            continue
-        SPECIES_MAP[species]["max_consumption_rate"] = SPECIES_MAP[species]["max_consumption_rate"] * EAT_AMOUNT_BOOST * DAYS_PER_STEP
+def update_energy_params(species, energy_cost, energy_reward):
+    SPECIES_MAP[species]["energy_cost"] = energy_cost * DAYS_PER_STEP
+    SPECIES_MAP[species]["energy_reward"] = energy_reward * DAYS_PER_STEP
     
 def update_fishing_for_species(species, value):
     global SPECIES_MAP
@@ -148,12 +131,15 @@ SPECIES_MAP = {
         "average_weight": 7,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
-        "max_biomass_in_cell": (STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE)) * 20,
+        "max_biomass_in_cell": (STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE)) * 10,
         "activity_metabolic_rate": 0.022360679760000002 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.00447213596 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
-        "max_consumption_rate": 0.0529 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
         "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
+        # "energy_cost": 0.5 * DAYS_PER_STEP,
+        # "energy_reward": 250 * DAYS_PER_STEP,
+        "energy_cost": 1.5 * DAYS_PER_STEP,
+        "energy_reward": 500 * DAYS_PER_STEP,
         "growth_rate": 0.026 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
         "visualization": {
@@ -170,12 +156,16 @@ SPECIES_MAP = {
         "average_weight": 7,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
-        "max_biomass_in_cell": (STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE)) * 20,
+        "max_biomass_in_cell": (STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE)) * 10,
         "activity_metabolic_rate": 0.02686424833333333 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.005372849666666666 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
-        "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
+        # "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
         "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
+        # "energy_cost": 0.5 * DAYS_PER_STEP,
+        # "energy_reward": 250 * DAYS_PER_STEP,
+        "energy_cost": 1.6 * DAYS_PER_STEP,
+        "energy_reward": 500 * DAYS_PER_STEP,
         "growth_rate": 0.029 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
         "visualization": {
@@ -192,12 +182,16 @@ SPECIES_MAP = {
         "max_in_cell": STARTING_BIOMASS_COD / 2,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
-        "max_biomass_in_cell": (STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE)) * 50,
+        "max_biomass_in_cell": (STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE)) * 10,
         "activity_metabolic_rate": 0.014535768421428572 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.0029071536857142857 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
-        "max_consumption_rate": 0.0376 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
+        # "max_consumption_rate": 0.0376 * DAYS_PER_STEP * EAT_AMOUNT_BOOST,
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.005414 * DAYS_PER_STEP * SCALE_FISHING,
+        # "energy_cost": 0.5 * DAYS_PER_STEP,
+        # "energy_reward": 500 * DAYS_PER_STEP,
+        "energy_cost": 0.35 * DAYS_PER_STEP,
+        "energy_reward": 900 * DAYS_PER_STEP,
         "growth_rate": 0.02 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
         "visualization": {
@@ -263,7 +257,7 @@ for species in SPECIES_MAP.keys():
 
 TOTAL_TENSOR_VALUES = offset
 
-NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9
+NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9 + 1
 AVAILABLE_ACTIONS = len(Action)
 NETWORK_HIDDEN_SIZE = 64
 
@@ -286,7 +280,6 @@ def override_from_file(file_path):
     global TOURNAMENT_SELECTION
     global GENERATIONS_PER_RUN
     global SPEED_MULTIPLIER
-    global EAT_AMOUNT_BOOST
     
     global CURRENT_FOLDER
     file_name = os.path.basename(file_path).split(".")[0]
