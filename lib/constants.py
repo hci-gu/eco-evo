@@ -31,7 +31,8 @@ WORLD_SIZE = 48
 FISH_SWIM_SPEED = 0.025
 SECONDS_IN_DAY = 86400
 DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
-DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
+# DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
+DAYS_PER_STEP = 3
 SCALE_FISHING = 1
 FIXED_BIOMASS = True
 WORLD_SIZE = 48
@@ -49,7 +50,7 @@ STARTING_BIOMASS_PLANKTON = 1359874 * 2
 BASE_FISHING_VALUE_COD = 0.002651024
 BASE_FISHING_VALUE_HERRING = 0.002651024
 BASE_FISHING_VALUE_SPRAT = 0.002651024
-MIN_PERCENT_ALIVE = 0.025
+MIN_PERCENT_ALIVE = 0
 MAX_PERCENT_ALIVE = 8
 MAX_ENERGY = 100
 BASE_ENERGY_COST = 0.5 * DAYS_PER_STEP
@@ -57,15 +58,36 @@ ENERGY_REWARD_FOR_EATING = 250
 ENERGY_REWARD_FOR_EATING_COD = 500
 GROWTH_MULTIPLIER = 1
 print(f"Days per step: {DAYS_PER_STEP}")
-MAX_STEPS = 1000
+MAX_STEPS = 365 * 3 * DAYS_PER_STEP
 # print years for max steps
 print(f"Max steps: {MAX_STEPS} ({MAX_STEPS / 365} years)")
 
 EVAL_AGENT = './agents/test.pt'
 
+FISHING_AMOUNTS = {
+    "cod": 0.0,
+    "herring": 0.0,
+    "sprat": 0.0,
+}
+PREVIOUS_STEP_FISHING_AMOUNTS = {
+    "cod": 0.0,
+    "herring": 0.0,
+    "sprat": 0.0,
+}
+
+def update_fishing_amounts(species, amount):
+    global FISHING_AMOUNTS
+    global PREVIOUS_STEP_FISHING_AMOUNTS
+    if species not in FISHING_AMOUNTS:
+        raise ValueError(f"Species '{species}' not found in FISHING_AMOUNTS.")
+    PREVIOUS_STEP_FISHING_AMOUNTS[species] = amount
+    FISHING_AMOUNTS[species] += amount
+    
+
 # Define species properties in a map
 MAX_PLANKTON_IN_CELL = (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 10
 def update_fishing_scaler(scalar):
+    print("UPDATE FISHING SCALER", scalar)
     global SCALE_FISHING
     global SPECIES_MAP
     global BASE_FISHING_VALUE_COD
@@ -82,12 +104,21 @@ def update_fishing_scaler(scalar):
         SPECIES_MAP[species]["fishing_mortality_rate"] = fishing_percent
     
     return fishing_percent
-        
-    
-def update_fishing_for_species(species, value):
-    global SPECIES_MAP
 
-    SPECIES_MAP[species]["fishing_mortality_rate"] = value * DAYS_PER_STEP * SCALE_FISHING
+def update_fishing_scaler_for_species(species, scalar):
+    global SCALE_FISHING
+    global SPECIES_MAP
+    global BASE_FISHING_VALUE_COD
+    global BASE_FISHING_VALUE_HERRING
+    global BASE_FISHING_VALUE_SPRAT
+    SCALE_FISHING = scalar
+
+    base_fishing_amount = globals()[f"BASE_FISHING_VALUE_{species.upper()}"]
+    fishing_percent = base_fishing_amount * DAYS_PER_STEP * SCALE_FISHING
+    SPECIES_MAP[species]["fishing_mortality_rate"] = fishing_percent
+    
+    return fishing_percent
+
 
 SPECIES_MAP = {
     "plankton": {
@@ -115,14 +146,16 @@ SPECIES_MAP = {
         "starting_biomass": STARTING_BIOMASS_HERRING,
         "average_weight": 7,
         "smell_emission_rate": 0.1,
-        "min_biomass_in_cell": 0,
+        "min_biomass_in_cell": 0.01,
         "max_biomass_in_cell": (STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE)) * 20,
         "activity_metabolic_rate": 0.022360679760000002 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.00447213596 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "max_consumption_rate": 0.0529 * DAYS_PER_STEP * EAT_REWARD_BOOST,
         "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
-        "growth_rate": 0.026 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
+        "growth_rate": 0.026 * DAYS_PER_STEP * GROWTH_MULTIPLIER * 0.75,
+        "energy_cost": 0.5 * DAYS_PER_STEP,
+        "energy_reward": 250 * DAYS_PER_STEP,
         "hardcoded_logic": False,
         "visualization": {
             "color": [220, 60, 60],
@@ -137,14 +170,16 @@ SPECIES_MAP = {
         "starting_biomass": STARTING_BIOMASS_SPRAT,
         "average_weight": 7,
         "smell_emission_rate": 0.1,
-        "min_biomass_in_cell": 0,
+        "min_biomass_in_cell": 0.01,
         "max_biomass_in_cell": (STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE)) * 20,
         "activity_metabolic_rate": 0.02686424833333333 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.005372849666666666 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "max_consumption_rate": 0.0611 * DAYS_PER_STEP * EAT_REWARD_BOOST,
         "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
-        "growth_rate": 0.029 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
+        "growth_rate": 0.029 * DAYS_PER_STEP * GROWTH_MULTIPLIER * 0.75,
+        "energy_cost": 0.5 * DAYS_PER_STEP,
+        "energy_reward": 250 * DAYS_PER_STEP,
         "hardcoded_logic": False,
         "visualization": {
             "color": [240, 140, 60],
@@ -159,7 +194,7 @@ SPECIES_MAP = {
         "starting_biomass": STARTING_BIOMASS_COD,
         "max_in_cell": STARTING_BIOMASS_COD / 2,
         "smell_emission_rate": 0.1,
-        "min_biomass_in_cell": 0,
+        "min_biomass_in_cell": 0.01,
         "max_biomass_in_cell": (STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE)) * 50,
         "activity_metabolic_rate": 0.014535768421428572 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.0029071536857142857 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
@@ -167,6 +202,8 @@ SPECIES_MAP = {
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.005414 * DAYS_PER_STEP * SCALE_FISHING,
         "growth_rate": 0.02 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
+        "energy_cost": 0.5 * DAYS_PER_STEP,
+        "energy_reward": 500 * DAYS_PER_STEP,
         "hardcoded_logic": False,
         "visualization": {
             "color": [40, 40, 40],

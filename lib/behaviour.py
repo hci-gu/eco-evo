@@ -4,9 +4,7 @@ import numpy as np
 from enum import Enum
 from lib.world import (
     update_smell,
-    get_movement_delta,
     apply_movement_delta,
-    perform_eating,
 )
 import lib.constants as const
 from lib.model import Model, SingleSpeciesModel
