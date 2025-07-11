@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 import numpy as np
-import imageio
 import random
 import time
 from matplotlib.ticker import MaxNLocator
@@ -31,7 +30,6 @@ energy_graph_cache = None
 generation_graph_cache = None
 
 visualization_queue = Queue()
-video_writer = imageio.get_writer("simulation.mp4", fps=30)
 
 def init_pygame():
     pygame.init()
@@ -354,17 +352,6 @@ def draw_world(screen, world_tensor, world_data):
         screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
 
     pygame.display.flip()
-
-    pixels = pygame.surfarray.array3d(screen)
-    frame_rgb = np.transpose(pixels, (1, 0, 2))
-    cropped_frame = frame_rgb[0:688, 0:992] 
-
-    video_writer.append_data(cropped_frame)
-    counter += 1
-    print("Frame captured and added to video.", counter)
-    
-    if counter % 10000 == 0:
-        video_writer.close()
 
     # save snapshot of the screen
     # pygame.image.save(screen, "world_snapshot.png")
