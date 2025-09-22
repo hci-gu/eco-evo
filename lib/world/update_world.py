@@ -31,6 +31,9 @@ def all_movement_delta(world, world_data, species_key, actions):
     energy_at_positions = world[pad:-pad, pad:-pad, energy_offset]
 
     loss_factor = activity_mr_loss + standard_metabolic_rate + natural_mortality_loss
+    fished_amount = initial_biomass * fishing_mortality_loss
+    total_fished = np.sum(fished_amount)
+    const.update_fishing_amounts(species_key, total_fished)
     world[:, :, biomass_offset] *= 1 - fishing_mortality_loss
 
     logistic_delta = growth_rate * initial_biomass * (
@@ -100,7 +103,6 @@ def apply_movement_delta(world, species_key, movement_deltas):
     world[:, :, energy_offset] -= species_properties["energy_cost"]
 
 def matrix_perform_eating(world, species_key, actions):
-
     pad = 1
     species_properties = const.SPECIES_MAP[species_key]
     biomass_offset = species_properties["biomass_offset"]

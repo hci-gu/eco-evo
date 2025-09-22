@@ -6,7 +6,6 @@ from lib.world import (
     update_smell,
     read_map_from_file,
     spawn_plankton,
-    perform_action,
     world_is_alive,
 )
 from lib.data_manager import queue_data

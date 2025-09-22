@@ -50,7 +50,7 @@ def evaluate_single_model():
     file = files[0]
     model_path = os.path.join(folder, file)
     start_time = time.time()
-    runner = PettingZooRunnerSingle(render_mode="human")
+    runner = PettingZooRunnerSingle(render_mode="none")
     runner.evaluate(model_path)
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -80,6 +80,7 @@ if __name__ == "__main__":
     # profiler.enable()
 
     # evaluate_single_model()
+    # print(const.FISHING_AMOUNTS)
     # time.sleep(10000)
     # total_elapsed_time = 0
     # for i in range(5):

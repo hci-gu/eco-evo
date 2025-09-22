@@ -16,7 +16,7 @@ class Action(Enum):
 
 # DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-RUNNER = "petting_zoo_single"
+RUNNER = "petting_zoo"
 
 # SPEED_MULTIPLIER = 2
 # MULTIPLY_DEATH_RATE = 3
@@ -29,39 +29,75 @@ WORLD_SIZE = 48
 FISH_SWIM_SPEED = 0.025
 SECONDS_IN_DAY = 86400
 DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
-DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
+# DAYS_PER_STEP = (DAYS_TO_CROSS_MAP / WORLD_SIZE) * SPEED_MULTIPLIER
+DAYS_PER_STEP = 3
 SCALE_FISHING = 0
 FIXED_BIOMASS = False
-WORLD_SIZE = 48
+WORLD_SIZE = 18
 
 NOISE_SCALING = 6
 STARTING_BIOMASS_COD = 44897
 STARTING_BIOMASS_HERRING = 737356
 STARTING_BIOMASS_SPRAT = 1359874
 STARTING_BIOMASS_PLANKTON = 1359874 * 2
-# STARTING_BIOMASS_PLANKTON = 2000
-# STARTING_BIOMASS_COD = 100
-# STARTING_BIOMASS_HERRING = 200
-# STARTING_BIOMASS_SPRAT = 200
-# STARTING_BIOMASS_PLANKTON = 100
+
 # BASE_FISHING_VALUE_COD = 0.005414
 BASE_FISHING_VALUE_COD = 0.002651024
 BASE_FISHING_VALUE_HERRING = 0.002651024
 BASE_FISHING_VALUE_SPRAT = 0.002651024
-MIN_PERCENT_ALIVE = 0.1
-MAX_PERCENT_ALIVE = 8
+MIN_PERCENT_ALIVE = 0.2
+MAX_PERCENT_ALIVE = 4
 MAX_ENERGY = 100
 GROWTH_MULTIPLIER = 1
 print(f"Days per step: {DAYS_PER_STEP}")
-MAX_STEPS = 10000
+# 5 years
+MAX_STEPS = 365 * 5 * DAYS_PER_STEP
 # print years for max steps
-print(f"Max steps: {MAX_STEPS} ({MAX_STEPS / 365} years)")
+print(f"Max steps: {MAX_STEPS} ({MAX_STEPS / DAYS_PER_STEP / 365} years)")
+
+SPECIES = ["cod", "herring", "sprat"]
+def reset_constants():
+    update_fishing_for_species("cod", BASE_FISHING_VALUE_COD * DAYS_PER_STEP * SCALE_FISHING)
+    update_fishing_for_species("herring", BASE_FISHING_VALUE_HERRING * DAYS_PER_STEP * SCALE_FISHING)
+    update_fishing_for_species("sprat", BASE_FISHING_VALUE_SPRAT * DAYS_PER_STEP * SCALE_FISHING)
+
+    update_initial_biomass("cod", STARTING_BIOMASS_COD)
+    update_initial_biomass("herring", STARTING_BIOMASS_HERRING)
+    update_initial_biomass("sprat", STARTING_BIOMASS_SPRAT)
+
+    global MIN_PERCENT_ALIVE
+    global MAX_PERCENT_ALIVE
+    MIN_PERCENT_ALIVE = 0.2
+    MAX_PERCENT_ALIVE = 4
+    global MAX_STEPS
+    MAX_STEPS = 365 * 5 * DAYS_PER_STEP
 
 EVAL_AGENT = './agents/test.pt'
+
+FISHING_AMOUNTS = {
+    "cod": 0.0,
+    "herring": 0.0,
+    "sprat": 0.0,
+}
+PREVIOUS_STEP_FISHING_AMOUNTS = {
+    "cod": 0.0,
+    "herring": 0.0,
+    "sprat": 0.0,
+}
+
+def update_fishing_amounts(species, amount):
+    global FISHING_AMOUNTS
+    global PREVIOUS_STEP_FISHING_AMOUNTS
+    if species not in FISHING_AMOUNTS:
+        raise ValueError(f"Species '{species}' not found in FISHING_AMOUNTS.")
+    PREVIOUS_STEP_FISHING_AMOUNTS[species] = amount
+    FISHING_AMOUNTS[species] += amount
+    
 
 # Define species properties in a map
 MAX_PLANKTON_IN_CELL = (STARTING_BIOMASS_PLANKTON / (WORLD_SIZE * WORLD_SIZE)) * 10
 def update_fishing_scaler(scalar):
+    print("UPDATE FISHING SCALER", scalar)
     global SCALE_FISHING
     global SPECIES_MAP
     global BASE_FISHING_VALUE_COD
@@ -79,7 +115,23 @@ def update_fishing_scaler(scalar):
     
     return fishing_percent
 
+def update_fishing_scaler_for_species(species, scalar):
+    print("UPDATE FISHING SCALER FOR SPECIES", species, scalar)
+    global SCALE_FISHING
+    global SPECIES_MAP
+    global BASE_FISHING_VALUE_COD
+    global BASE_FISHING_VALUE_HERRING
+    global BASE_FISHING_VALUE_SPRAT
+    SCALE_FISHING = scalar
+
+    base_fishing_amount = globals()[f"BASE_FISHING_VALUE_{species.upper()}"]
+    fishing_percent = base_fishing_amount * DAYS_PER_STEP * SCALE_FISHING
+    SPECIES_MAP[species]["fishing_mortality_rate"] = fishing_percent
+    
+    return fishing_percent
+
 def update_initial_biomass(species, value):
+    print(f"UPDATE INITIAL BIOMASS FOR {species} TO {value}")
     global SPECIES_MAP
 
     if species not in SPECIES_MAP:
@@ -90,15 +142,16 @@ def update_initial_biomass(species, value):
 
     SPECIES_MAP[species]["starting_biomass"] = value
     SPECIES_MAP[species]["original_starting_biomass"] = value
-    SPECIES_MAP[species]["max_biomass_in_cell"] = (value / (WORLD_SIZE * WORLD_SIZE)) * 20
-    # SPECIES_MAP[species]["max_biomass_in_cell"] = SPECIES_MAP[species]["max_biomass_in_cell"] * 100
-    SPECIES_MAP[species]["min_biomass_in_cell"] = 0
+    SPECIES_MAP[species]["max_biomass_in_cell"] = (value / (WORLD_SIZE * WORLD_SIZE)) * 10
+    # SPECIES_MAP[species]["min_biomass_in_cell"] = 0
 
 def update_energy_params(species, energy_cost, energy_reward):
+    print(f"UPDATE ENERGY PARAMS FOR {species} TO COST: {energy_cost}, REWARD: {energy_reward}")
     SPECIES_MAP[species]["energy_cost"] = energy_cost * DAYS_PER_STEP
     SPECIES_MAP[species]["energy_reward"] = energy_reward * DAYS_PER_STEP
     
 def update_fishing_for_species(species, value):
+    print(f"UPDATE FISHING FOR {species} TO {value}")
     global SPECIES_MAP
 
     SPECIES_MAP[species]["fishing_mortality_rate"] = value * DAYS_PER_STEP * SCALE_FISHING
@@ -130,14 +183,14 @@ SPECIES_MAP = {
         "starting_biomass": STARTING_BIOMASS_HERRING,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
-        "max_biomass_in_cell": (STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE)) * 10,
+        "max_biomass_in_cell": (STARTING_BIOMASS_HERRING / (WORLD_SIZE * WORLD_SIZE)) * 50,
         "activity_metabolic_rate": 0.022360679760000002 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.00447213596 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "natural_mortality_rate": 0.001604815 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         # "energy_cost": 0.5 * DAYS_PER_STEP,
         # "energy_reward": 250 * DAYS_PER_STEP,
-        "energy_cost": 1.5 * DAYS_PER_STEP,
+        "energy_cost": 0.5 * DAYS_PER_STEP,
         "energy_reward": 500 * DAYS_PER_STEP,
         "growth_rate": 0.026 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
@@ -154,14 +207,14 @@ SPECIES_MAP = {
         "starting_biomass": STARTING_BIOMASS_SPRAT,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
-        "max_biomass_in_cell": (STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE)) * 10,
+        "max_biomass_in_cell": (STARTING_BIOMASS_SPRAT / (WORLD_SIZE * WORLD_SIZE)) * 50,
         "activity_metabolic_rate": 0.02686424833333333 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.005372849666666666 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "natural_mortality_rate": 0.001056525 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.002651024 * DAYS_PER_STEP * SCALE_FISHING,
         # "energy_cost": 0.5 * DAYS_PER_STEP,
         # "energy_reward": 250 * DAYS_PER_STEP,
-        "energy_cost": 1.6 * DAYS_PER_STEP,
+        "energy_cost": 0.5 * DAYS_PER_STEP,
         "energy_reward": 500 * DAYS_PER_STEP,
         "growth_rate": 0.029 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
@@ -179,16 +232,16 @@ SPECIES_MAP = {
         "max_in_cell": STARTING_BIOMASS_COD / 2,
         "smell_emission_rate": 0.1,
         "min_biomass_in_cell": 0,
-        "max_biomass_in_cell": (STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE)) * 10,
+        "max_biomass_in_cell": (STARTING_BIOMASS_COD / (WORLD_SIZE * WORLD_SIZE)) * 150,
         "activity_metabolic_rate": 0.014535768421428572 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "standard_metabolic_rate": 0.0029071536857142857 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "natural_mortality_rate": 0.003 * DAYS_PER_STEP * MULTIPLY_DEATH_RATE,
         "fishing_mortality_rate": 0.005414 * DAYS_PER_STEP * SCALE_FISHING,
         # "energy_cost": 0.5 * DAYS_PER_STEP,
         # "energy_reward": 500 * DAYS_PER_STEP,
-        "energy_cost": 0.35 * DAYS_PER_STEP,
-        "energy_reward": 900 * DAYS_PER_STEP,
-        "growth_rate": 0.02 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
+        "energy_cost": 0.3 * DAYS_PER_STEP,
+        "energy_reward": 1000 * DAYS_PER_STEP,
+        "growth_rate": 0.05 * DAYS_PER_STEP * GROWTH_MULTIPLIER,
         "hardcoded_logic": False,
         "visualization": {
             "color": [40, 40, 40],
@@ -223,7 +276,7 @@ NUM_AGENTS = 16
 AGENT_EVALUATIONS = 4
 ELITISM_SELECTION = 8
 TOURNAMENT_SELECTION = 4
-GENERATIONS_PER_RUN = 150
+GENERATIONS_PER_RUN = 200
 
 INITIAL_MUTATION_RATE = 0.15
 MIN_MUTATION_RATE = 0.01
@@ -253,7 +306,7 @@ for species in SPECIES_MAP.keys():
 
 TOTAL_TENSOR_VALUES = offset
 
-NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9 + 1
+NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9 
 AVAILABLE_ACTIONS = len(Action)
 NETWORK_HIDDEN_SIZE = 64
 

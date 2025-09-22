@@ -49,16 +49,17 @@ def construct_species_grid_from_csv(csv_path, year, grid_size=10):
 
     return biomass_grid
 
-def smooth_skewed_random():
+def smooth_skewed_random(seed):
     if const.FIXED_BIOMASS:
         return 1
 
     """Returns a value between 0.75 and 2.0, skewed toward 0.5-2.0 with smooth falloff, using gamma sampling."""
+    rng = random.Random(seed)
     alpha = 2.5
     beta_param = 4.5
 
-    x = random.gammavariate(alpha, 1.0)
-    y = random.gammavariate(beta_param, 1.0)
+    x = rng.gammavariate(alpha, 1.0)
+    y = rng.gammavariate(beta_param, 1.0)
 
     beta_sample = x / (x + y)
     return beta_sample * (2.0 - 0.75) + 0.75
@@ -136,7 +137,7 @@ def add_species_to_map(world_array, world_data, seed = None):
     starting_biomasses = {species: 0 for species in const.SPECIES_MAP.keys()}
     for species, properties in const.SPECIES_MAP.items():
         properties["starting_biomass"] = properties["original_starting_biomass"] 
-        starting_biomasses[species] = properties["starting_biomass"] * smooth_skewed_random()
+        starting_biomasses[species] = properties["starting_biomass"] * smooth_skewed_random(rng)
         properties["starting_biomass"] = starting_biomasses[species]
 
     world_data[:, :, 4] = 0
@@ -264,7 +265,7 @@ def add_species_to_map_even(world_array, world_data, seed=None):
     # First, place plankton (base species)
     for species, properties in const.SPECIES_MAP.items():
         properties["starting_biomass"] = properties["original_starting_biomass"]
-        starting_biomass = properties["starting_biomass"] * smooth_skewed_random()
+        starting_biomass = properties["starting_biomass"] * smooth_skewed_random(seed)
         starting_biomasses[species] = starting_biomass
 
         biomass_offset = properties["biomass_offset"]

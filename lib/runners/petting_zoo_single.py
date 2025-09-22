@@ -8,14 +8,14 @@ import numpy as np
 import random
 import copy
 from lib.environments.petting_zoo import env
+import datetime
 
 def noop(a, b):
     pass
 
-# model_path = "results/pure_behav_1/agents/80_0.9999999792127552.npy.npz"
-# base_chromosome = np.load(model_path)
-# print("model_path", model_path)
 base_chromosome = None
+
+species_without_plankton = [species for species in const.SPECIES_MAP.keys() if species != "plankton"]
 
 class PettingZooRunnerSingle():
     def __init__(self, render_mode="none"):
@@ -44,6 +44,12 @@ class PettingZooRunnerSingle():
             'step': episode_length,
             'world': self.env.world
         }, self.env.plot_data)
+
+
+        initial_biomass_map = {
+            species: np.sum(self.env.world[..., const.SPECIES_MAP[species]["biomass_offset"]]) for species in species_without_plankton
+        }
+        ratios = []
 
         while not all(self.env.terminations.values()) and not all(self.env.truncations.values()) and episode_length < const.MAX_STEPS:
             steps += 1
@@ -78,9 +84,24 @@ class PettingZooRunnerSingle():
                     'step': episode_length,
                     'world': self.env.world
                 }, self.env.plot_data)
+
+                biomass_map = {
+                    species: np.sum(self.env.world[..., const.SPECIES_MAP[species]["biomass_offset"]]) for species in species_without_plankton
+                }
+
+                for species in species_without_plankton:
+                    if initial_biomass_map[species] > 0:
+                        ratio = (biomass_map[species] / initial_biomass_map[species])
+                        ratios.append(ratio)
+                    else:
+                        ratios.append(0)
+
                 callback(self.env.world, fitness)
                 if self.env.render_mode == "human":
                     plot_biomass(agents_data)
+
+        avg_ratio = np.mean(ratios)
+        fitness *= avg_ratio + 1e-8
         
         return fitness, episode_length
 
@@ -102,12 +123,8 @@ class PettingZooRunnerSingle():
             evals_fitness = []
             for eval_index in range(const.AGENT_EVALUATIONS):
                 self.eval_index = eval_index
-                
+#                 
                 fitness, episode_length = self.run(evaluation_candidate, eval_seeds[eval_index])
-                while (episode_length == 0):
-                    print("something went wrong update this seed")
-                    eval_seeds[eval_index] = int(random.random() * 100000)
-                    fitness, episode_length = self.run(evaluation_candidate, eval_seeds[eval_index])
                 
                 evals_fitness.append(fitness)
                 print("idx", idx, "eval", eval_index, "fitness", fitness, "episode_length", episode_length)
@@ -158,7 +175,7 @@ class PettingZooRunnerSingle():
         # add best agent to the population
         next_pop.append(copy.deepcopy(self.best_agent))
         new_population = [Model(chromosome=chrom) for chrom in next_pop]
-        if (self.current_generation < 50):
+        if (self.current_generation < 25):
             new_population.append(Model(
                 # chromosome=base_chromosome.copy()
             ))
@@ -188,5 +205,79 @@ class PettingZooRunnerSingle():
             chromosome=np.load(model_path)
         )
 
+        def callback(world, fitness):
+            print(f"______________Fitness: {fitness}_________________________________")
+            for species, properties in const.SPECIES_MAP.items():
+                biomass_offset = properties["biomass_offset"]
+                print(f"Species: {species}, Biomass: {world[:, :, biomass_offset].sum().item()}")
+
         return self.run(candidate, seed, True, callback)
+    
+    def evaluate_with_plan(self, plan, model_path, callback=noop, seed=1):
+        candidate = Model(
+            chromosome=np.load(model_path)
+        )
+        
+        start_date = datetime.datetime.fromisoformat(plan.get("start", "1970-01-01"))
+        tasks = plan.get("tasks", [])
+        previous_day = {"value": -1}  # Use a mutable object to allow modification in nested function
+        steps_data = []
+        
+        def day_callback(world, fitness):
+            for species, properties in const.SPECIES_MAP.items():
+                biomass_offset = properties["biomass_offset"]
+                print(f"Species: {species}, Biomass: {world[:, :, biomass_offset].sum().item()}")
+
+
+            day = int(np.floor(fitness / const.DAYS_PER_STEP))
+            
+            data = {}
+            for species, properties in const.SPECIES_MAP.items():
+                biomass_offset = properties["biomass_offset"]
+                data[f'{species}'] = world[:, :, biomass_offset].sum().item()
+                fishing_value = const.PREVIOUS_STEP_FISHING_AMOUNTS.get(species, 0)
+                data[f'{species}_fishing'] = float(fishing_value)
+            steps_data.append(data)
+
+            if day == previous_day["value"]:
+                return
+            date = start_date + datetime.timedelta(days=day)
+
+            tasks_in_period = [
+                task for task in tasks if task.get("start") <= date.isoformat() <= task.get("end", "9999-12-31")
+            ]
+            fishing_tasks = [
+                task for task in tasks_in_period if task.get("type") == "fishingPolicy"
+            ]
+            if fishing_tasks:
+                fishing_task = fishing_tasks[0]
+                fishing_pressure = fishing_task.get("data", 0)
+                for species in fishing_pressure:
+                    const.update_fishing_scaler_for_species(species, fishing_pressure[species])
+            else:
+                for species in species_without_plankton:
+                    const.update_fishing_scaler_for_species(species, 0)
+
+            # get average biomass from values in steps_data
+            day_data = {}
+            for step in steps_data:
+                for species in species_without_plankton:
+                    if species not in day_data:
+                        day_data[species] = []
+                    day_data[species].append(step[species])
+            for species, values in day_data.items():
+                day_data[species] = np.mean(values)
+            # get total fishing amounts from values in steps_data
+            for species in species_without_plankton:
+                total_value = 0
+                for step in steps_data:
+                    value = step.get(f'{species}_fishing', 0)
+                    total_value += value
+                day_data[f'{species}_fishing'] = total_value
+
+            callback(world, day, day_data)
+            previous_day["value"] = day
+            steps_data.clear()
+
+        return self.run(candidate, seed, True, callback=day_callback)
         

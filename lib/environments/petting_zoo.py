@@ -149,20 +149,6 @@ class raw_env(AECEnv):
             matrix_movement_deltas = all_movement_delta( self.world, self.world_data, agent, action)
             apply_movement_delta(self.world, agent, matrix_movement_deltas)
 
-            # Check that the biomass stays within limit.
-            for species, props in const.SPECIES_MAP.items():
-                species_biomass_offset = props["biomass_offset"]
-                _max = props["max_biomass_in_cell"]
-                _min = props["min_biomass_in_cell"]
-                np.clip(
-                    self.world[..., species_biomass_offset],
-                    _min,
-                    _max,
-                    out=self.world[..., species_biomass_offset],
-                )
-                assert (self.world[..., species_biomass_offset] <= _max).all()
-                assert (self.world[..., species_biomass_offset] >= _min).all()
-
             matrix_perform_eating(self.world, agent, action)
             
             update_smell(self.world)
@@ -187,7 +173,7 @@ class raw_env(AECEnv):
             self.truncations = {agent: self.num_moves >= (const.MAX_STEPS * 4) for agent in self.agents}
 
             for i in self.agents:
-                self.observations[i] = self.observe(i)
+                self.observations[i] = self.old_observe(i)
 
         if self._agent_selector.is_last():
             # Re-shuffle agents for the next round.
