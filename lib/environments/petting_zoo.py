@@ -15,6 +15,7 @@ from lib.world import (
     world_is_alive,
 )
 from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
+from lib.config.settings import Settings
 import lib.constants as const
 import random
 from numba import njit
@@ -33,10 +34,11 @@ def env(render_mode=None):
 class raw_env(AECEnv):
     metadata = {"render_modes": ["human"], "name": "pettingzoo/Ecotwin-v0"}
 
-    def __init__(self, render_mode=None, map_folder='maps/baltic'):
+    def __init__(self, settings: Settings, render_mode=None, map_folder='maps/baltic'):
         # Define agents based on species keys.
+        self.settings = settings
         self.plot_data = {}
-        self.possible_agents = list(const.SPECIES_MAP.keys())
+        self.possible_agents = ["plankton", "herring", "sprat", "cod"]
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.map_folder = map_folder
         self.reset()
@@ -45,7 +47,7 @@ class raw_env(AECEnv):
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(const.WORLD_SIZE, const.WORLD_SIZE, const.TOTAL_TENSOR_VALUES, 3, 3),
+                shape=(self.settings.world_size, self.settings.world_size, const.TOTAL_TENSOR_VALUES, 3, 3),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -54,7 +56,7 @@ class raw_env(AECEnv):
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS),
+                shape=(self.settings.world_size, self.settings.world_size, const.AVAILABLE_ACTIONS),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -78,7 +80,7 @@ class raw_env(AECEnv):
         self.starting_biomasses = starting_biomasses
 
         # Create a grid of coordinates (shape: (WORLD_SIZE, WORLD_SIZE)).
-        grid_x, grid_y = np.meshgrid(np.arange(const.WORLD_SIZE), np.arange(const.WORLD_SIZE), indexing='ij')
+        grid_x, grid_y = np.meshgrid(np.arange(self.settings.world_size), np.arange(self.settings.world_size), indexing='ij')
         # Using modulo 3 in both dimensions to create 9 distinct classes.
         self.colors = (grid_x % 3) + 3 * (grid_y % 3)
         
@@ -104,29 +106,7 @@ class raw_env(AECEnv):
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
         self.color_order = []
 
-    def old_observe(self, agent):
-        terrain = self.world[..., 0:3]
-        biomass = []
-        smell = []
-        for species in self.possible_agents:
-            # print("species: ", species, self.world[..., const.SPECIES_MAP[species]["biomass_offset"]].sum())
-            max_biomass = self.world[..., const.SPECIES_MAP[species]["biomass_offset"]].max()
-            max_smell = self.world[..., const.SPECIES_MAP[species]["smell_offset"]].max()
-            biomass.append(self.world[..., const.SPECIES_MAP[species]["biomass_offset"]] / (max_biomass + 1e-8))
-            smell.append(self.world[..., const.SPECIES_MAP[species]["smell_offset"]] / (max_smell + 1e-8))
-        biomass = np.stack(biomass, axis=-1)
-        smell = np.stack(smell, axis=-1)
-        energy = self.world[..., const.OFFSETS_ENERGY:const.OFFSETS_ENERGY+4] / (const.MAX_ENERGY + 1e-8)
-        observation = np.concatenate([terrain, biomass, smell, energy], axis=-1)
-        patches = sliding_window_view(observation, (3, 3), axis=(0, 1))
-
-        patches = patches.reshape(-1, 3, 3, observation.shape[-1])
-
-        return patches
-
     def observe(self, agent):
-        # This function uses the numba version. It does not sort the
-        # channels like the original observe.
         return observe(self.world)
 
     def step(self, action):

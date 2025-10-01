@@ -1,8 +1,9 @@
-import lib.constants as const
+# import lib.constants as const
+from lib.config.settings import Settings
 from lib.model import SingleSpeciesModel
 import lib.evolution as evolution  # Your NumPy-based evolution functions
 from lib.visualize import plot_generations, plot_biomass
-from lib.data_manager import data_loop, update_generations_data, process_data
+from lib.data_manager import update_generations_data, process_data
 from lib.behaviour import run_all_scenarios
 from lib.evaluate import predict_years
 import numpy as np
@@ -16,18 +17,19 @@ def noop(a, b, c):
     pass
 
 class PettingZooRunner():
-    def __init__(self, render_mode="none"):
+    def __init__(self, settings: Settings, render_mode="none"):
         # Create the environment (render_mode can be "none" if visualization is not needed)
         self.env = env(render_mode=render_mode)
+        self.settings = settings
         self.empty_action = self.env.action_space("plankton").sample()
         self.env.reset()
         self.current_generation = 0
 
         # Use all species in the simulation (including plankton, if desired).
-        self.species_list = [species for species in const.SPECIES_MAP.keys() if species != "plankton"]
+        self.species_list = [species for species in ["cod", "herring", "sprat"]]
         # Create a population for each species.
         self.population = {
-            species: [SingleSpeciesModel() for _ in range(const.NUM_AGENTS)]
+            species: [SingleSpeciesModel() for _ in range(self.settings.num_agents)]
             for species in self.species_list
         }
         # Track best fitness and best model for each species.
@@ -43,7 +45,7 @@ class PettingZooRunner():
         fitness = 0
         callback(self.env.world, fitness, False)
 
-        while not all(self.env.terminations.values()) and not all(self.env.truncations.values()) and episode_length < const.MAX_STEPS:
+        while not all(self.env.terminations.values()) and not all(self.env.truncations.values()) and episode_length < self.settings.max_steps:
             steps += 1
             agent = self.env.agent_selection
             if agent == "plankton":
@@ -52,15 +54,8 @@ class PettingZooRunner():
                 obs, reward, termination, truncation, info = self.env.last()
                 candidate = candidates[agent]
                 action_values = candidate.forward(obs.reshape(-1, 135))
-                action_values = action_values.reshape(const.WORLD_SIZE, const.WORLD_SIZE, const.AVAILABLE_ACTIONS)
+                action_values = action_values.reshape(self.settings.world_size, self.settings.world_size, 5)
                 # mean_action_values = action_values.mean(axis=(0, 1))
-
-                # Print it nicely
-                # for i in enumerate(const.Action):
-                #     action = i[1]
-                #     val = mean_action_values[action.value]
-                #     print(f"Action {action.name}: average value = {val:.4f}")
-                # print('__________________________________________')
 
                 self.env.step(action_values)
             
@@ -85,53 +80,54 @@ class PettingZooRunner():
         return fitness, episode_length
 
     def optimize_params(self):
-        candidates = {species: [] for species in self.species_list}
-        for species in self.species_list:
-            if self.best_agent[species] is not None:
-                candidates[species] = SingleSpeciesModel(chromosome=self.best_agent[species])
-            else:
-                candidates[species] = self.population[species][0]
+        print("optimizing params")
+    #     candidates = {species: [] for species in self.species_list}
+    #     for species in self.species_list:
+    #         if self.best_agent[species] is not None:
+    #             candidates[species] = SingleSpeciesModel(chromosome=self.best_agent[species])
+    #         else:
+    #             candidates[species] = self.population[species][0]
 
-        rand_seed = int(random.random() * 100000)
+    #     rand_seed = int(random.random() * 100000)
 
-        def objective(trial):
-            energy_cost_sprat   = trial.suggest_float("energy_cost_sprat",   0.0, 10.0)
-            energy_reward_sprat = trial.suggest_float("energy_reward_sprat", 0.0, 1000.0)
-            energy_cost_cod     = trial.suggest_float("energy_cost_cod",     0.0, 10.0)
-            energy_reward_cod   = trial.suggest_float("energy_reward_cod",   0.0, 1000.0)
-            energy_cost_herring = trial.suggest_float("energy_cost_herring", 0.0, 10.0)
-            energy_reward_herring = trial.suggest_float("energy_reward_herring", 0.0, 1000.0)
+    #     def objective(trial):
+    #         energy_cost_sprat   = trial.suggest_float("energy_cost_sprat",   0.0, 10.0)
+    #         energy_reward_sprat = trial.suggest_float("energy_reward_sprat", 0.0, 1000.0)
+    #         energy_cost_cod     = trial.suggest_float("energy_cost_cod",     0.0, 10.0)
+    #         energy_reward_cod   = trial.suggest_float("energy_reward_cod",   0.0, 1000.0)
+    #         energy_cost_herring = trial.suggest_float("energy_cost_herring", 0.0, 10.0)
+    #         energy_reward_herring = trial.suggest_float("energy_reward_herring", 0.0, 1000.0)
 
-            for sp in self.species_list:
-                const.update_energy_params(
-                    sp,
-                    energy_cost_sprat   if sp == "sprat"   else
-                    energy_cost_cod     if sp == "cod"     else
-                    energy_cost_herring,
-                    energy_reward_sprat if sp == "sprat"   else
-                    energy_reward_cod   if sp == "cod"     else
-                    energy_reward_herring,
-                )
+    #         for sp in self.species_list:
+    #             const.update_energy_params(
+    #                 sp,
+    #                 energy_cost_sprat   if sp == "sprat"   else
+    #                 energy_cost_cod     if sp == "cod"     else
+    #                 energy_cost_herring,
+    #                 energy_reward_sprat if sp == "sprat"   else
+    #                 energy_reward_cod   if sp == "cod"     else
+    #                 energy_reward_herring,
+    #             )
 
-            def eval_function(callback):
-                print("eval function was called", callback)
-                self.run(candidates, "cod", rand_seed, True, callback)
+    #         def eval_function(callback):
+    #             print("eval function was called", callback)
+    #             self.run(candidates, "cod", rand_seed, True, callback)
 
-            err = predict_years(eval_function)
-            return err
+    #         err = predict_years(eval_function)
+    #         return err
 
-        sampler = optuna.samplers.TPESampler(multivariate=True, n_startup_trials=10)
-        study = optuna.create_study(sampler=sampler, direction="minimize")
-        study.optimize(objective, n_trials=50)
+    #     sampler = optuna.samplers.TPESampler(multivariate=True, n_startup_trials=10)
+    #     study = optuna.create_study(sampler=sampler, direction="minimize")
+    #     study.optimize(objective, n_trials=50)
 
-        out = study.best_params | {"best_value": study.best_value}
-        # set new rules
-        const.update_energy_params("cod", out["energy_cost_cod"], out["energy_reward_cod"])
-        const.update_energy_params("herring", out["energy_cost_herring"], out["energy_reward_herring"])
-        const.update_energy_params("sprat", out["energy_cost_sprat"], out["energy_reward_sprat"])
+    #     out = study.best_params | {"best_value": study.best_value}
+    #     # set new rules
+    #     const.update_energy_params("cod", out["energy_cost_cod"], out["energy_reward_cod"])
+    #     const.update_energy_params("herring", out["energy_cost_herring"], out["energy_reward_herring"])
+    #     const.update_energy_params("sprat", out["energy_cost_sprat"], out["energy_reward_sprat"])
 
-        # reset to defaults
-        const.reset_constants()
+    #     # reset to defaults
+    #     const.reset_constants()
 
     def evaluate_population(self):
         """
@@ -140,10 +136,10 @@ class PettingZooRunner():
         we use the best model from previous generations (if available) to decide their actions.
         Returns a dictionary mapping species to a list of (chromosome, fitness) tuples.
         """
-        eval_seeds = [int(random.random() * 100000) for _ in range(const.AGENT_EVALUATIONS)]
+        eval_seeds = [int(random.random() * 100000) for _ in range(self.settings.agent_evaluations)]
         fitnesses = {species: [] for species in self.species_list}
 
-        for idx in range(const.NUM_AGENTS):
+        for idx in range(self.settings.num_agents):
             self.agent_index = idx
             for species in self.species_list:
                 evaluation_candidate = self.population[species][idx]
@@ -155,12 +151,12 @@ class PettingZooRunner():
                     species: evaluation_candidate
                 }
 
-                for eval_index in range(const.AGENT_EVALUATIONS):
+                for eval_index in range(self.settings.agent_evaluations):
                     start_time = time.time()
                     self.eval_index = eval_index
                     # pick random agent from other species
                     for other_species_name in other_species:
-                        other_species_idx = random.randint(0, const.NUM_AGENTS - 1)
+                        other_species_idx = random.randint(0, self.settings.num_agents - 1)
                         other_species_candidate = self.population[other_species_name][other_species_idx]
                         eval_species[other_species_name] = other_species_candidate
                     
@@ -196,14 +192,13 @@ class PettingZooRunner():
             current_population = fitnesses[species]
 
             # Select elites.
-            elites = evolution.elitism_selection(current_population, const.ELITISM_SELECTION)
+            elites = evolution.elitism_selection(current_population, self.settings.elitism_selection)
             next_pop = []
 
-            while len(next_pop) < const.NUM_AGENTS:
-                (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, const.TOURNAMENT_SELECTION)
+            while len(next_pop) < self.settings.num_agents:
+                (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, self.settings.tournament_selectin)
                 c1_weights, c2_weights = evolution.sbx_crossover(p1, p2)
-                current_mutation_rate = max(const.MIN_MUTATION_RATE,
-                                            const.INITIAL_MUTATION_RATE * (const.MUTATION_RATE_DECAY ** self.current_generation))
+                current_mutation_rate = max(self.settings.mutation_rate_min, self.settings.mutation_rate * (self.settings.mutation_rate_decay ** self.current_generation))
                 evolution.mutation(c1_weights, current_mutation_rate, current_mutation_rate)
                 evolution.mutation(c2_weights, current_mutation_rate, current_mutation_rate)
                 next_pop.append(c1_weights)
@@ -215,7 +210,7 @@ class PettingZooRunner():
                 self.best_fitness[species] = best_for_species[1]
                 self.best_agent[species] = best_for_species[0]
                 model = SingleSpeciesModel(chromosome=fittest_agent[0])
-                model.save(f'{const.CURRENT_FOLDER}/agents/{self.current_generation}_${species}_{self.best_fitness[species]}.npy')
+                model.save(f'{self.settings.folder}/agents/{self.current_generation}_${species}_{self.best_fitness[species]}.npy')
 
             # add best agent to the population
             next_pop.append(self.best_agent[species])
@@ -240,7 +235,7 @@ class PettingZooRunner():
         # Evolve the population based on fitnesses.
         self.evolve_population(fitnesses)
 
-    def train(self, generations=const.GENERATIONS_PER_RUN):
+    def train(self, generations=100):
         for i in range(generations):
             self.run_generation()
             if i > 25 and i % 5 == 0:

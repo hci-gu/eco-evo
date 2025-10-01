@@ -309,6 +309,7 @@ TOTAL_TENSOR_VALUES = offset
 NETWORK_INPUT_SIZE = TOTAL_TENSOR_VALUES * 9 
 AVAILABLE_ACTIONS = len(Action)
 NETWORK_HIDDEN_SIZE = 64
+print(f"Network input size: {NETWORK_INPUT_SIZE}, hidden size: {NETWORK_HIDDEN_SIZE}, output size: {AVAILABLE_ACTIONS}")
 
 # number of species with hardcoded = False
 ACTION_TAKING_SPECIES = sum(1 for species in SPECIES_MAP.values() if not species["hardcoded_logic"])
