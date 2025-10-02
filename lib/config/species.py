@@ -21,8 +21,11 @@ class SpeciesParams:
     color: tuple[int, int, int]
     noise_threshold: float
     noise_scaling: float
+    hardcoded_rules: dict[str, float]
 
-def build_species_params(settings: Settings) -> Dict[str, SpeciesParams]:
+SpeciesMap = Dict[str, SpeciesParams]
+
+def build_species_map(settings: Settings) -> SpeciesMap:
     spd = settings.steps_per_day
     wsq = settings.world_size * settings.world_size
     # Use per-step scaling as per your intended semantics:
@@ -47,6 +50,11 @@ def build_species_params(settings: Settings) -> Dict[str, SpeciesParams]:
         energy_reward=100 * spd,
         growth_rate=0.2 * settings.growth_multiplier * spd,
         hardcoded_logic=True,
+        hardcoded_rules={
+            "growth_rate_constant": 50,
+            # "growth_rate_constant": 2.5,
+            "respawn_delay": 10,
+        },
         color=(0, 255, 0),
         noise_threshold=0.5,
         noise_scaling=6 * 5,
@@ -65,6 +73,7 @@ def build_species_params(settings: Settings) -> Dict[str, SpeciesParams]:
         energy_reward=500 * spd,
         growth_rate=0.1 * settings.growth_multiplier * spd,
         hardcoded_logic=False,
+        hardcoded_rules={},
         color=(0, 0, 255),
         noise_threshold=0.6,
         noise_scaling=6 * 5,
@@ -83,6 +92,7 @@ def build_species_params(settings: Settings) -> Dict[str, SpeciesParams]:
         energy_reward=500 * spd,
         growth_rate=0.1 * settings.growth_multiplier * spd,
         hardcoded_logic=False,
+        hardcoded_rules={},
         color=(255, 165, 0),
         noise_threshold=0.6,
         noise_scaling=6 * 5,
@@ -101,6 +111,7 @@ def build_species_params(settings: Settings) -> Dict[str, SpeciesParams]:
         energy_reward=1000 * spd,
         growth_rate=0.05 * settings.growth_multiplier * spd,
         hardcoded_logic=False,
+        hardcoded_rules={},
         color=(40, 40, 40),
         noise_threshold=0.7,
         noise_scaling=6 * 5,

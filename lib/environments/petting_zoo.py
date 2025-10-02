@@ -1,6 +1,4 @@
 import numpy as np
-import time
-from numpy.lib.stride_tricks import sliding_window_view
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 from gymnasium import spaces
@@ -11,22 +9,22 @@ from lib.world import (
     matrix_perform_eating,
     apply_movement_delta,
     spawn_plankton,
-    randomwalk_plankton,
     world_is_alive,
 )
-from lib.visualize import init_pygame, plot_generations, draw_world, plot_biomass
+from lib.visualize import init_pygame, draw_world, plot_biomass
+from lib.model import INPUT_SIZE, OUTPUT_SIZE
 from lib.config.settings import Settings
-import lib.constants as const
+from lib.config.species import SpeciesMap
+import lib.config.const as const
 import random
 from numba import njit
 
-
-def env(render_mode=None):
+def env(settings: Settings, species_map: SpeciesMap, render_mode=None):
     """
     Wraps the raw environment in PettingZoo wrappers.
     """
     internal_render_mode = render_mode if render_mode != "ansi" else "human"
-    env_instance = raw_env(render_mode=internal_render_mode)
+    env_instance = raw_env(settings=settings, species_map=species_map, render_mode=internal_render_mode)
     env_instance = wrappers.AssertOutOfBoundsWrapper(env_instance)
     env_instance = wrappers.OrderEnforcingWrapper(env_instance)
     return env_instance
@@ -34,11 +32,12 @@ def env(render_mode=None):
 class raw_env(AECEnv):
     metadata = {"render_modes": ["human"], "name": "pettingzoo/Ecotwin-v0"}
 
-    def __init__(self, settings: Settings, render_mode=None, map_folder='maps/baltic'):
+    def __init__(self, settings: Settings, species_map: SpeciesMap, render_mode=None, map_folder='maps/baltic'):
         # Define agents based on species keys.
         self.settings = settings
+        self.species_map = species_map
         self.plot_data = {}
-        self.possible_agents = ["plankton", "herring", "sprat", "cod"]
+        self.possible_agents = const.SPECIES
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.map_folder = map_folder
         self.reset()
@@ -47,7 +46,7 @@ class raw_env(AECEnv):
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(self.settings.world_size, self.settings.world_size, const.TOTAL_TENSOR_VALUES, 3, 3),
+                shape=(self.settings.world_size, self.settings.world_size, INPUT_SIZE, 3, 3),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -56,7 +55,7 @@ class raw_env(AECEnv):
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(self.settings.world_size, self.settings.world_size, const.AVAILABLE_ACTIONS),
+                shape=(self.settings.world_size, self.settings.world_size, OUTPUT_SIZE),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -73,7 +72,7 @@ class raw_env(AECEnv):
         return self._action_spaces[agent]
 
     def reset(self, seed=None, options=None):
-        world, world_data, starting_biomasses = read_map_from_file(self.map_folder, seed)
+        world, world_data, starting_biomasses = read_map_from_file(self.settings, self.species_map, self.map_folder, seed)
         # Pad the world and world_data arrays by 1 on each side.
         self.world = np.pad(world, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.world_data = np.pad(world_data, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)

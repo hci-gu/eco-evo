@@ -1,7 +1,28 @@
 import numpy as np
+import lib.config.const as const
+
+HIDDEN_SIZE = 64
+OUTPUT_SIZE = 5
+
+MODEL_OFFSETS = {
+    "terrain": {
+        "land": 0,
+        "water": 1,
+        "out_of_bounds": 2,
+    },
+}
+for i, species in enumerate(const.SPECIES):
+    MODEL_OFFSETS[species] = {
+        "biomass": 3 + i * 3,
+        "energy": 4 + i * 3,
+        "smell": 5 + i * 3,
+    }
+
+SINGLE_CELL_INPUT = 3 + len(const.SPECIES) * 3
+INPUT_SIZE = SINGLE_CELL_INPUT * 9  # 3x3 grid of cells
 
 class Model:
-    def __init__(self, input_size=135, hidden_size=64, output_size=5, chromosome=None):
+    def __init__(self, input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE, output_size=OUTPUT_SIZE, chromosome=None):
         if chromosome is not None:
             self.set_weights(chromosome)
         else:

@@ -1,7 +1,10 @@
-from queue import Queue, Empty
+from queue import Empty
+from lib.config.settings import Settings
 import numpy as np
 # import lib.constants as const
 import json
+
+from lib.config import const
 
 agents_data = {}
 generations_data = []
@@ -15,16 +18,16 @@ def queue_data(agent_index, eval_index, step, data_queue, species=None):
     }
     data_queue.put(data)
 
-def save_data_to_file(generation, agents_data_snapshot):
-    agents_file = f'{const.CURRENT_FOLDER}/agents_data_gen_{generation}.json'
-    generations_file = f'{const.CURRENT_FOLDER}/generations_data.json'
+def save_data_to_file(settings: Settings, generation, agents_data_snapshot):
+    agents_file = f'{settings.folder}/agents_data_gen_{generation}.json'
+    generations_file = f'{settings.folder}/generations_data.json'
     
     # with open(agents_file, 'w') as f:
     #     json.dump(agents_data_snapshot, f, indent=4, default=str)
     with open(generations_file, 'w') as f:
         json.dump(generations_data, f, indent=4, default=str)
 
-def update_generations_data(generation, agents_data=agents_data, generations_data=generations_data):
+def update_generations_data(settings: Settings, generation, agents_data=agents_data, generations_data=generations_data):
     fitness_values = {}
 
     if len(agents_data.items()) == 3:
@@ -49,7 +52,7 @@ def update_generations_data(generation, agents_data=agents_data, generations_dat
     generations_data.append(fitness_values)
     agents_data_snapshot = agents_data.copy()  # Take a snapshot of agents_data
     agents_data.clear()
-    save_data_to_file(generation, agents_data_snapshot)  # Save data after clearing agents_data
+    save_data_to_file(settings, generation, agents_data_snapshot)  # Save data after clearing agents_data
 
     return generations_data
 
@@ -71,7 +74,7 @@ def process_data(data, agents_data=agents_data):
         curr_agents_data[agent_index][eval_index] = {
             'steps': [],
         }
-        for species in const.SPECIES_MAP.keys():
+        for species in const.SPECIES.items():
             curr_agents_data[agent_index][eval_index][f'{species}_alive'] = []
             curr_agents_data[agent_index][eval_index][f'{species}_energy'] = []
 
@@ -80,7 +83,7 @@ def process_data(data, agents_data=agents_data):
     # check if world data exists
     if "world" in data:
         world = data['world']
-        for species, properties in const.SPECIES_MAP.items():
+        for species, properties in const.SPECIES.items():
             biomass_offset = properties["biomass_offset"]
             energy_offset = properties["energy_offset"]
             cells_with_biomass = world[:, :, biomass_offset] > 0

@@ -8,8 +8,7 @@ from lib.world import (
     all_movement_delta,
     matrix_perform_eating
 )
-import lib.constants as const
-from lib.model import Model, SingleSpeciesModel
+from lib.model import Model
 
 # Define the Action enum
 class Action(Enum):
@@ -49,14 +48,6 @@ def get_action(candidate, species, world):
 
     # single species
     return candidate.forward(obs)[0]
-
-    # Add species information as an extra feature.
-    species_index = const.SPECIES_MAP[species]["index"]
-    species_normalized = species_index / len(const.SPECIES_MAP)
-    obs = np.concatenate([np.full((obs.shape[0], 1), species_normalized), obs], axis=1)
-
-    # Forward pass of the candidate model returns a probability vector in the specified order.
-    return candidate.forward(obs, species)[0]
 
 # ---------------------------------------------------------------------------
 #  SCENARIOS  — 10 per species (Herring, Sprat, Cod)

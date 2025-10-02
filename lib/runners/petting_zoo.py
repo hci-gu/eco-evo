@@ -1,6 +1,8 @@
 # import lib.constants as const
+from lib.config import const
 from lib.config.settings import Settings
-from lib.model import SingleSpeciesModel
+from lib.config.species import build_species_map
+from lib.model import Model
 import lib.evolution as evolution  # Your NumPy-based evolution functions
 from lib.visualize import plot_generations, plot_biomass
 from lib.data_manager import update_generations_data, process_data
@@ -19,17 +21,18 @@ def noop(a, b, c):
 class PettingZooRunner():
     def __init__(self, settings: Settings, render_mode="none"):
         # Create the environment (render_mode can be "none" if visualization is not needed)
-        self.env = env(render_mode=render_mode)
+        self.species_map = build_species_map(settings)
+        self.env = env(settings=settings, species_map=self.species_map, render_mode=render_mode)
         self.settings = settings
         self.empty_action = self.env.action_space("plankton").sample()
         self.env.reset()
         self.current_generation = 0
 
         # Use all species in the simulation (including plankton, if desired).
-        self.species_list = [species for species in ["cod", "herring", "sprat"]]
+        self.species_list = [species for species in const.ACTING_SPECIES]
         # Create a population for each species.
         self.population = {
-            species: [SingleSpeciesModel() for _ in range(self.settings.num_agents)]
+            species: [Model() for _ in range(self.settings.num_agents)]
             for species in self.species_list
         }
         # Track best fitness and best model for each species.
@@ -186,7 +189,7 @@ class PettingZooRunner():
         fittest_agents_for_generation = {}
         for species in self.species_list:
             fittest_agent = max(fitnesses[species], key=lambda x: x[1])
-            fittest_agents_for_generation[species] = SingleSpeciesModel(chromosome=fittest_agent[0])
+            fittest_agents_for_generation[species] = Model(chromosome=fittest_agent[0])
 
         for species in self.species_list:
             current_population = fitnesses[species]
@@ -209,12 +212,12 @@ class PettingZooRunner():
             if best_for_species[1] > self.best_fitness[species]:
                 self.best_fitness[species] = best_for_species[1]
                 self.best_agent[species] = best_for_species[0]
-                model = SingleSpeciesModel(chromosome=fittest_agent[0])
+                model = Model(chromosome=fittest_agent[0])
                 model.save(f'{self.settings.folder}/agents/{self.current_generation}_${species}_{self.best_fitness[species]}.npy')
 
             # add best agent to the population
             next_pop.append(self.best_agent[species])
-            new_population[species] = [SingleSpeciesModel(chromosome=chrom) for chrom in next_pop]
+            new_population[species] = [Model(chromosome=chrom) for chrom in next_pop]
         
         for species in self.species_list:
             # shuffle the population
@@ -229,7 +232,7 @@ class PettingZooRunner():
         self.current_generation += 1
         print(f"Generation {self.current_generation} complete. Fitnesses: { {sp: max(fit, key=lambda x: x[1])[1] for sp, fit in fitnesses.items()} }")
         print(self.env.plot_data.keys())
-        generations_data = update_generations_data(self.current_generation, self.env.plot_data)
+        generations_data = update_generations_data(self.settings, self.current_generation, self.env.plot_data)
         plot_generations(generations_data)
         self.env.plot_data = {}
         # Evolve the population based on fitnesses.
@@ -245,7 +248,7 @@ class PettingZooRunner():
     def evaluate(self, model_paths = [], callback = noop):
         candidates = {}
         for model_path in model_paths:
-            model = SingleSpeciesModel(
+            model = Model(
                 chromosome=np.load(model_path['path'])
             )
             candidates[model_path['species']] = model

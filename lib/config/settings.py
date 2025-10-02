@@ -4,7 +4,7 @@ from typing import Final
 import os
 from dataclasses import fields
 from typing import get_origin, get_args
-from .settings import Settings
+# from .settings import Settings
 
 @dataclass(frozen=True)
 class Settings:
@@ -32,6 +32,10 @@ class Settings:
     mutation_rate_decay: float = 0.995
     mutation_rate_min: float = 0.01
 
+    smell_decay: float = 0.9
+    smell_emission_rate: float = 0.1
+
+    max_energy: float = 100.0
 
 def _coerce(value: str, target_type):
     """Coerce string env values to the dataclass field type."""

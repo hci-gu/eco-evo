@@ -1,34 +1,23 @@
-import os
 import math
-import json
-from pathlib import Path
-from collections import defaultdict
-
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter
-
-import lib.constants as const
-from lib.runners.petting_zoo_single import PettingZooRunnerSingle
-import optuna
+import lib.config.const as const
+from lib.config.settings import Settings
 
 DATA_FILE          = "data.csv"
 EVAL_YEAR_PAIRS    = []
-SPECIES            = ["cod", "herring", "sprat"]
+SPECIES            = const.ACTING_SPECIES
 DAYS_PER_YEAR      = 365
-STEPS_PER_YEAR     = math.ceil(DAYS_PER_YEAR / const.DAYS_PER_STEP)
-STEPS_TOTAL        = STEPS_PER_YEAR
 
-def set_starting_biomass(row: pd.Series) -> None:
-    """Overwrite initial biomass for one evaluation start year."""
-    const.FIXED_BIOMASS = True
-    for sp in SPECIES:
-        const.SPECIES_MAP[sp]["original_starting_biomass"] = row[sp]
+# def set_starting_biomass(row: pd.Series) -> None:
+#     """Overwrite initial biomass for one evaluation start year."""
+#     const.FIXED_BIOMASS = True
+#     for sp in SPECIES:
+#         const.SPECIES_MAP[sp]["original_starting_biomass"] = row[sp]
 
-    const.MIN_PERCENT_ALIVE = 0.1
-    const.MAX_PERCENT_ALIVE = 3
-    const.MAX_STEPS         = STEPS_TOTAL + 1      # N-year run
+#     const.MIN_PERCENT_ALIVE = 0.1
+#     const.MAX_PERCENT_ALIVE = 3
+#     const.MAX_STEPS         = STEPS_TOTAL + 1      # N-year run
 
 def set_fishing_pressure(row: pd.Series) -> None:
     """Apply year-specific fishing mortality for the whole horizon."""
@@ -56,8 +45,12 @@ def predict_years(eval_function = noop) -> float:
         target          = df.loc[df.year == y2].squeeze()
 
         # --- 3.1  Configure constants for this starting year ----------------
-        set_starting_biomass(starting_point)
+        settings = Settings()
+        # set_starting_biomass(starting_point)
         set_fishing_pressure(starting_point)
+
+        STEPS_PER_YEAR     = math.ceil(DAYS_PER_YEAR / settings.steps_per_day)
+        STEPS_TOTAL        = STEPS_PER_YEAR
 
         # --- 3.2  Run the model for exactly N simulated years --------------
         final_biomass, steps_seen = {}, 0

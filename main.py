@@ -1,15 +1,8 @@
 import argparse
-import threading
 import os
 import time
-from lib.visualize import plot_generations, init_pygame, draw_world, plot_biomass
-import pygame
-from lib.data_manager import data_loop, update_generations_data, process_data
-from lib.constants import override_from_file
 from lib.runners.petting_zoo import PettingZooRunner
-# import lib.constants as const
 from lib.config.settings import load_settings
-from lib.runner import Runner
 
 def evaluate_model():
     folder = "results/back_to_multi_2/agents"

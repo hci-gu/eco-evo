@@ -2,9 +2,10 @@ import json
 from queue import Queue, Empty
 import pygame
 import math
+from lib.config.settings import Settings
+from lib.config.const import SPECIES
 from lib.world import Terrain
-import lib.constants as const
-from lib.constants import SPECIES_MAP  # Add this import
+import lib.config.const as const
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
@@ -19,10 +20,16 @@ WORLD_WIDTH = 500
 WORLD_HEIGHT = 500
 GRAPH_WIDTH = 500
 GEN_GRAPH_HEIGHT = 200
-CELL_SIZE = math.floor(WORLD_HEIGHT / const.WORLD_SIZE)
 
 SCREEN_WIDTH = WORLD_WIDTH + GRAPH_WIDTH
 SCREEN_HEIGHT = WORLD_HEIGHT + GEN_GRAPH_HEIGHT
+
+SPECIES_COLORS = {
+    "plankton": [100, 220, 100],
+    "color": [220, 60, 60],
+    "sprat": [240, 140, 60],
+    "cod": [40, 40, 40]
+}
 
 # Cache for terrain surface and graph surfaces
 terrain_surface_cache = None
@@ -46,15 +53,16 @@ def interpolate_color(value, color1, color2):
     )
 
 # Cache and draw the terrain only once to optimize performance
-def draw_terrain(world_tensor, world_data, display_current=False):
+def draw_terrain(settings: Settings, world_tensor, world_data, display_current=False):
     global terrain_surface_cache
     if terrain_surface_cache is not None:
         return terrain_surface_cache
 
     terrain_surface = pygame.Surface((WORLD_WIDTH, WORLD_HEIGHT))
-    
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
+
+    CELL_SIZE = math.floor(WORLD_HEIGHT / settings.world_size)
+    for x in range(settings.world_size):
+        for y in range(settings.world_size):
             # if (x == 0 or x == const.WORLD_SIZE - 1) or (y == 0 or y == const.WORLD_SIZE - 1):
             #     continue
 
@@ -95,7 +103,7 @@ def draw_terrain(world_tensor, world_data, display_current=False):
     return terrain_surface
 
 # Plot and cache generations graph
-def plot_generations(generations_data):
+def plot_generations(settings: Settings, generations_data):
     global generation_graph_cache
 
     plt.figure(figsize=(16, 12))  # Create a new figure for the plot
@@ -172,10 +180,10 @@ def plot_generations(generations_data):
     plt.tight_layout()
 
     # Save the plot as an image and update the cache
-    plt.savefig(f'{const.CURRENT_FOLDER}/fitness_plot.png')
+    plt.savefig(f'{settings.folder}/fitness_plot.png')
     plt.close()
 
-    generation_graph_cache = pygame.image.load(f'{const.CURRENT_FOLDER}/fitness_plot.png')
+    generation_graph_cache = pygame.image.load(f'{settings.folder}/fitness_plot.png')
 
 
 # Plot and cache biomass graph
@@ -208,8 +216,8 @@ def plot_biomass(agents_data):
             idx += 1
 
     # for each species
-    for species, properties in SPECIES_MAP.items():
-        color = properties["visualization"]["color"]
+    for species in SPECIES:
+        color = SPECIES_COLORS[species]
         legend_patches.append(mpatches.Patch(color=[c/255 for c in color], label=species.capitalize()))
 
     plt.xlabel('Steps')
@@ -354,120 +362,4 @@ def draw_world(screen, world_tensor, world_data):
         screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
 
     pygame.display.flip()
-    # time.sleep(100)
 
-    # pixels = pygame.surfarray.array3d(screen)
-    # frame_rgb = np.transpose(pixels, (1, 0, 2))
-    # cropped_frame = frame_rgb[0:688, 0:992] 
-
-    # video_writer.append_data(cropped_frame)
-    # counter += 1
-    
-    # if counter % 10000 == 0:
-    #     video_writer.close()
-
-    # save snapshot of the screen
-    # pygame.image.save(screen, "world_snapshot.png")
-    # time.sleep(1000)
-
-    # # ---------------------
-    # # Add a legend (improvement #2)
-    # # ---------------------
-    # # We can draw a small panel on the right side or top.
-    # # Assume we have a font and the legend panel at right side of screen.
-    
-    # legend_x = WORLD_WIDTH + 20
-    # legend_y = 20
-    # font = pygame.font.SysFont('Arial', 14)  # Adjust as needed
-
-    # legend_title = font.render("Legend:", True, (0, 0, 0))
-    # screen.blit(legend_title, (legend_x, legend_y))
-    # legend_y += 30
-
-    # for species, props in SPECIES_MAP.items():
-    #     # Draw a small reference circle
-    #     # Use a moderate biomass fraction to draw a sample circle
-    #     sample_biomass = max_biomass_values[species] / 2
-    #     radius = int(min_radius + (max_radius - min_radius) * (math.sqrt(sample_biomass / max_biomass_values[species])))
-
-    #     # Create a small surface to draw legend circles
-    #     sample_surf = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
-    #     sample_surf = sample_surf.convert_alpha()
-    #     # Outline
-    #     pygame.draw.circle(sample_surf, (0, 0, 0, 255), (CELL_SIZE//2, CELL_SIZE//2), radius+1)
-    #     # Fill
-    #     color = props["visualization"]["color"]
-    #     pygame.draw.circle(sample_surf, (color[0], color[1], color[2], 200), (CELL_SIZE//2, CELL_SIZE//2), radius)
-
-    #     screen.blit(sample_surf, (legend_x, legend_y))
-    #     name_surface = font.render(species.capitalize(), True, (0,0,0))
-    #     screen.blit(name_surface, (legend_x + CELL_SIZE + 10, legend_y + CELL_SIZE//4))
-    #     legend_y += CELL_SIZE + 10
-
-    # # Perform screen update once
-    # pygame.display.flip()
-
-def draw_world_detailed(screen, world_tensor):
-    # remove padding
-    world_tensor = world_tensor[1:-1, 1:-1]
-
-    """
-    Visualize the world based on the tensor representation, displaying both biomass and energy.
-    The world_tensor has shape (WORLD_SIZE, WORLD_SIZE, N) where:
-    - The first 3 values represent the terrain (one-hot encoded).
-    - The next 3 values represent the biomass of plankton, anchovy, and cod, respectively.
-    - The next 3 values represent the energy of plankton, anchovy, and cod, respectively.
-    """
-    screen.fill((255, 255, 255))
-
-    terrain_surface = draw_terrain(world_tensor)
-    screen.blit(terrain_surface, (0, 0))  # Blit the terrain surface once
-
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            # Define horizontal positions for circles and bars within the cell
-            species_positions = {
-                species: (-CELL_SIZE // 3, -CELL_SIZE // 4) if species == "plankton" else
-                         (0, -CELL_SIZE // 4) if species == "anchovy" else
-                         (CELL_SIZE // 3, -CELL_SIZE // 4) for species in SPECIES_MAP.keys()
-            }
-            
-            # Extract biomass and energy information for each species
-            species_biomass = {species: world_tensor[x, y, properties["biomass_offset"]].item() for species, properties in SPECIES_MAP.items()}
-            species_energy = {species: world_tensor[x, y, properties["energy_offset"]].item() for species, properties in SPECIES_MAP.items()}
-
-            # Dictionary to map species to their biomass, energy, and colors
-            species_data = {
-                species: (species_biomass[species], species_energy[species], (0, 255, 0), (0, 200, 0)) if species == "plankton" else
-                         (species_biomass[species], species_energy[species], (255, 0, 0), (200, 0, 0)) if species == "anchovy" else
-                         (species_biomass[species], species_energy[species], (0, 0, 0), (50, 50, 50)) for species in SPECIES_MAP.keys()
-            }
-
-            # Draw biomass circles in a row at the top
-            for species, (biomass, energy, biomass_color, energy_color) in species_data.items():
-                offset_x, offset_y = species_positions[species]
-                center_x = x * CELL_SIZE + CELL_SIZE // 2 + offset_x
-                center_y = y * CELL_SIZE + CELL_SIZE // 2 + offset_y
-
-                # Draw biomass as circles (aligned in a row at the top)
-                if biomass > 0:
-                    radius = min(CELL_SIZE // 6, int(math.sqrt(biomass) * 0.75))  # Smaller circles to fit in a row
-                    pygame.draw.circle(screen, biomass_color, (center_x, center_y), radius)
-
-                # Draw energy bars in a row below the circles
-                if energy > 0:
-                    bar_height = int(CELL_SIZE * 0.1)  # Set bar height smaller to fit in the cell
-                    max_bar_width = CELL_SIZE // 3     # Max width per species to fit three bars in a row
-                    # set bar width based on energy level ( 100 max width, and 0 no width )
-                    bar_width = max(1, min(int(max_bar_width * (energy / 100)), max_bar_width))
-                    bar_rect = pygame.Rect(center_x - bar_width // 2, center_y + CELL_SIZE // 4, bar_width, bar_height)
-                    pygame.draw.rect(screen, energy_color, bar_rect)
-
-    # Draw cached biomass graph
-    if biomass_graph_cache:
-        screen.blit(biomass_graph_cache, (WORLD_WIDTH, 0))  # Adjust the position as needed
-    if energy_graph_cache:
-        screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
-
-    # Perform screen update only once at the end
-    pygame.display.flip()

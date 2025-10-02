@@ -1,21 +1,31 @@
 import numpy as np
+from enum import Enum
+from lib.model import MODEL_OFFSETS
+from lib.config.settings import Settings
+from lib.config.species import SpeciesMap
 from numba import njit
-import lib.constants as const
-from lib.constants import Action
 
-def all_movement_delta(world, world_data, species_key, actions):
+class Action(Enum):
+    UP = 0
+    DOWN = 1
+    LEFT = 2
+    RIGHT = 3
+    EAT = 4
+    # REST = 5
+
+def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, actions):
     pad = 1
     world_data[pad:-pad, pad:-pad, 4] += 1
 
-    species_properties = const.SPECIES_MAP[species_key]
-    biomass_offset = species_properties["biomass_offset"]
-    energy_offset = species_properties["energy_offset"]
-    activity_metabolic_rate = species_properties["activity_metabolic_rate"]
-    standard_metabolic_rate = species_properties["standard_metabolic_rate"]
-    natural_mortality_loss = species_properties["natural_mortality_rate"]
-    fishing_mortality_loss = species_properties["fishing_mortality_rate"]
-    growth_rate = species_properties["growth_rate"]
-    max_biomass = species_properties["max_biomass_in_cell"]
+    props = species_map[species_key]
+    biomass_offset = MODEL_OFFSETS[species_key]["biomass"]
+    energy_offset = MODEL_OFFSETS[species_key]["energy"]
+    activity_metabolic_rate = props.activity_metabolic_rate
+    standard_metabolic_rate = props.standard_metabolic_rate
+    natural_mortality_loss = props.natural_mortality_rate
+    fishing_mortality_loss = props.fishing_mortality_rate
+    growth_rate = props.growth_rate
+    max_biomass = props.max_biomass_in_cell
 
     move_up = actions[:, :, Action.UP.value]
     move_down = actions[:, :, Action.DOWN.value]
@@ -33,7 +43,7 @@ def all_movement_delta(world, world_data, species_key, actions):
     loss_factor = activity_mr_loss + standard_metabolic_rate + natural_mortality_loss
     fished_amount = initial_biomass * fishing_mortality_loss
     total_fished = np.sum(fished_amount)
-    const.update_fishing_amounts(species_key, total_fished)
+    # const.update_fishing_amounts(species_key, total_fished)
     world[:, :, biomass_offset] *= 1 - fishing_mortality_loss
 
     logistic_delta = growth_rate * initial_biomass * (
@@ -54,10 +64,11 @@ def all_movement_delta(world, world_data, species_key, actions):
     initial_energy = world[pad:-pad, pad:-pad, energy_offset]
 
     # --- Determine valid moves (based on terrain) ---
-    valid_left_mask = world[: -2 * pad, pad:-pad, const.OFFSETS_TERRAIN_WATER] == 1
-    valid_right_mask = world[2 * pad :, pad:-pad, const.OFFSETS_TERRAIN_WATER] == 1
-    valid_up_mask = world[pad:-pad, : -2 * pad, const.OFFSETS_TERRAIN_WATER] == 1
-    valid_down_mask = world[pad:-pad, 2 * pad :, const.OFFSETS_TERRAIN_WATER] == 1
+    water_offset = MODEL_OFFSETS["terrain"]["water"]
+    valid_left_mask = world[: -2 * pad, pad:-pad, water_offset] == 1
+    valid_right_mask = world[2 * pad :, pad:-pad, water_offset] == 1
+    valid_up_mask = world[pad:-pad, : -2 * pad, water_offset] == 1
+    valid_down_mask = world[pad:-pad, 2 * pad :, water_offset] == 1
 
     # Biomass to move in each direction
     biomass_up = biomass_after_loss * move_up * valid_up_mask
