@@ -1,12 +1,13 @@
 from queue import Empty
 from lib.config.settings import Settings
+from lib.config.const import SPECIES
+from lib.model import MODEL_OFFSETS
 import numpy as np
 # import lib.constants as const
 import json
 
-from lib.config import const
+# from lib.config import const
 
-agents_data = {}
 generations_data = []
 
 def queue_data(agent_index, eval_index, step, data_queue, species=None):
@@ -27,7 +28,7 @@ def save_data_to_file(settings: Settings, generation, agents_data_snapshot):
     with open(generations_file, 'w') as f:
         json.dump(generations_data, f, indent=4, default=str)
 
-def update_generations_data(settings: Settings, generation, agents_data=agents_data, generations_data=generations_data):
+def update_generations_data(settings: Settings, generation, agents_data):
     fitness_values = {}
 
     if len(agents_data.items()) == 3:
@@ -56,7 +57,7 @@ def update_generations_data(settings: Settings, generation, agents_data=agents_d
 
     return generations_data
 
-def process_data(data, agents_data=agents_data):
+def process_data(data, agents_data):
     agent_index = data['agent_index']
     eval_index = data['eval_index']
     step = data['step']
@@ -74,7 +75,7 @@ def process_data(data, agents_data=agents_data):
         curr_agents_data[agent_index][eval_index] = {
             'steps': [],
         }
-        for species in const.SPECIES.items():
+        for species in SPECIES:
             curr_agents_data[agent_index][eval_index][f'{species}_alive'] = []
             curr_agents_data[agent_index][eval_index][f'{species}_energy'] = []
 
@@ -83,9 +84,9 @@ def process_data(data, agents_data=agents_data):
     # check if world data exists
     if "world" in data:
         world = data['world']
-        for species, properties in const.SPECIES.items():
-            biomass_offset = properties["biomass_offset"]
-            energy_offset = properties["energy_offset"]
+        for species in SPECIES:
+            biomass_offset = MODEL_OFFSETS[species]["biomass"]
+            energy_offset = MODEL_OFFSETS[species]["energy"]
             cells_with_biomass = world[:, :, biomass_offset] > 0
             average_energy = world[cells_with_biomass, energy_offset].mean() if np.any(cells_with_biomass) else 0
             curr_agents_data[agent_index][eval_index][f'{species}_alive'].append(world[..., biomass_offset].sum())

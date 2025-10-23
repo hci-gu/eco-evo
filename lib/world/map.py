@@ -268,7 +268,6 @@ def add_species_to_map_even(settings: Settings, species_map: SpeciesMap, world_a
 
     # First, place plankton (base species)
     for species, properties in species_map.items():
-        properties.starting_biomass = properties.original_starting_biomass
         starting_biomass = properties.starting_biomass * smooth_skewed_random(seed)
         starting_biomasses[species] = starting_biomass
 

@@ -67,7 +67,7 @@ class PettingZooRunner():
                 species_biomass = self.env.get_fitness(species_being_evaluated)
                 fitness += species_biomass
                 if (is_evaluation == False):
-                    agents_data = process_data({
+                    process_data({
                         'species': species_being_evaluated if not is_evaluation else None,
                         'agent_index': self.agent_index,
                         'eval_index': self.eval_index,
@@ -75,12 +75,10 @@ class PettingZooRunner():
                         'world': self.env.world
                     }, self.env.plot_data)
                 callback(self.env.world, fitness, False)
-                if self.env.render_mode == "human":
-                    plot_biomass(agents_data)
         
         print("end of simulation", fitness, episode_length)
         callback(self.env.world, fitness, True)
-        return fitness, episode_length
+        return fitness, episode_length, self.env.reason
 
     def optimize_params(self):
         print("optimizing params")
@@ -142,6 +140,7 @@ class PettingZooRunner():
         eval_seeds = [int(random.random() * 100000) for _ in range(self.settings.agent_evaluations)]
         fitnesses = {species: [] for species in self.species_list}
 
+        end_reasons = []
         for idx in range(self.settings.num_agents):
             self.agent_index = idx
             for species in self.species_list:
@@ -163,7 +162,8 @@ class PettingZooRunner():
                         other_species_candidate = self.population[other_species_name][other_species_idx]
                         eval_species[other_species_name] = other_species_candidate
                     
-                    fitness, episode_length = self.run(eval_species, species, eval_seeds[eval_index])
+                    fitness, episode_length, end_reason = self.run(eval_species, species, eval_seeds[eval_index])
+                    end_reasons.append(end_reason)
                     while (episode_length == 0):
                         print("something went wrong update this seed")
                         eval_seeds[eval_index] = int(random.random() * 100000)
@@ -179,6 +179,8 @@ class PettingZooRunner():
 
                 fitnesses[species].append((evaluation_candidate.state_dict(), avg_fitness))
                 print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')
+
+        print("End reasons:", {reason: end_reasons.count(reason) for reason in set(end_reasons)})
         return fitnesses
 
     def evolve_population(self, fitnesses):
@@ -222,8 +224,7 @@ class PettingZooRunner():
         for species in self.species_list:
             # shuffle the population
             random.shuffle(new_population[species])
-        
-    
+
         self.population = new_population
 
     def run_generation(self):
@@ -233,7 +234,7 @@ class PettingZooRunner():
         print(f"Generation {self.current_generation} complete. Fitnesses: { {sp: max(fit, key=lambda x: x[1])[1] for sp, fit in fitnesses.items()} }")
         print(self.env.plot_data.keys())
         generations_data = update_generations_data(self.settings, self.current_generation, self.env.plot_data)
-        plot_generations(generations_data)
+        plot_generations(self.settings, generations_data)
         self.env.plot_data = {}
         # Evolve the population based on fitnesses.
         self.evolve_population(fitnesses)

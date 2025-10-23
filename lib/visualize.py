@@ -4,6 +4,7 @@ import pygame
 import math
 from lib.config.settings import Settings
 from lib.config.const import SPECIES
+from lib.model import MODEL_OFFSETS
 from lib.world import Terrain
 import lib.config.const as const
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ SCREEN_HEIGHT = WORLD_HEIGHT + GEN_GRAPH_HEIGHT
 
 SPECIES_COLORS = {
     "plankton": [100, 220, 100],
-    "color": [220, 60, 60],
+    "herring": [220, 60, 60],
     "sprat": [240, 140, 60],
     "cod": [40, 40, 40]
 }
@@ -203,7 +204,8 @@ def plot_biomass(agents_data):
     legend_patches = []
     idx = 0  # Color index
     for agent_index, evals in agents_data.items():
-        for eval_index, data in evals.items():
+        for eval_index, eval_data in evals.items():
+            data = eval_data[eval_index]
             plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black")
             plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-')
             plt.plot(data['steps'], data['sprat_alive'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-')
@@ -234,30 +236,30 @@ def plot_biomass(agents_data):
     # Load the saved plot image using Pygame and cache it
     biomass_graph_cache = pygame.image.load('world_graph.png')
 
-def draw_actions_values(screen, world_data):
-    # world_data = world_data[1:-1, 1:-1]
-    font = pygame.font.SysFont('Arial', 10)  # Adjust as needed
+# def draw_actions_values(screen, world_data):
+#     # world_data = world_data[1:-1, 1:-1]
+#     font = pygame.font.SysFont('Arial', 10)  # Adjust as needed
 
-    max_value = world_data[:, :, 4].max()
+#     max_value = world_data[:, :, 4].max()
 
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
-            cell_center = (x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2)
-            number_of_actions = int(world_data[x, y, 4])
+#     for x in range(const.WORLD_SIZE):
+#         for y in range(const.WORLD_SIZE):
+#             cell_center = (x * CELL_SIZE + CELL_SIZE // 2, y * CELL_SIZE + CELL_SIZE // 2)
+#             number_of_actions = int(world_data[x, y, 4])
 
-            if number_of_actions > 0:
-                # color the text from red to green (if value is close to max its green, if its close to 0 its red)
-                closeness_to_max = number_of_actions / max_value
-                red_color = (255, 0, 0)
-                green_color = (0, 255, 0)
-                color = interpolate_color(closeness_to_max, red_color, green_color)
-                text = font.render(str(number_of_actions), True, color)
+#             if number_of_actions > 0:
+#                 # color the text from red to green (if value is close to max its green, if its close to 0 its red)
+#                 closeness_to_max = number_of_actions / max_value
+#                 red_color = (255, 0, 0)
+#                 green_color = (0, 255, 0)
+#                 color = interpolate_color(closeness_to_max, red_color, green_color)
+#                 text = font.render(str(number_of_actions), True, color)
 
-                screen.blit(text, (cell_center[0] - 5, cell_center[1] - 5))
+#                 screen.blit(text, (cell_center[0] - 5, cell_center[1] - 5))
 
 
 counter = 0
-def draw_world(screen, world_tensor, world_data):
+def draw_world(settings: Settings,screen, world_tensor, world_data):
     global counter
     # Remove padding if present
     world_tensor = world_tensor[1:-1, 1:-1]
@@ -265,13 +267,15 @@ def draw_world(screen, world_tensor, world_data):
 
     screen.fill((255, 255, 255))
 
-    terrain_surface = draw_terrain(world_tensor, world_data, False)
+    terrain_surface = draw_terrain(settings, world_tensor, world_data, False)
     screen.blit(terrain_surface, (0, 0))  # Draw the terrain once
+
+    CELL_SIZE = math.floor(WORLD_HEIGHT / settings.world_size)
 
     # Calculate maximum biomass for each species
     max_biomass_values = {}
-    for species, properties in SPECIES_MAP.items():
-        max_val = world_tensor[:, :, properties["biomass_offset"]].max().item()
+    for species in SPECIES:
+        max_val = world_tensor[:, :, MODEL_OFFSETS[species]["biomass"]].max().item()
         max_biomass_values[species] = max_val if max_val > 0 else 1
 
     # Define radius constraints
@@ -296,12 +300,12 @@ def draw_world(screen, world_tensor, world_data):
     half_ls = LARGE_SURFACE_SIZE // 2  # Half of large surface size
     cell_center_offset = (CELL_SIZE // 2, CELL_SIZE // 2)
 
-    for x in range(const.WORLD_SIZE):
-        for y in range(const.WORLD_SIZE):
+    for x in range(settings.world_size):
+        for y in range(settings.world_size):
             # Extract biomass for each species at the current cell
             species_biomass = {
-                species: world_tensor[x, y, props["biomass_offset"]].item() 
-                for species, props in SPECIES_MAP.items()
+                species: world_tensor[x, y, MODEL_OFFSETS[species]["biomass"]].item() 
+                for species in SPECIES
             }
 
             # Calculate the cell center on the main screen
@@ -336,7 +340,7 @@ def draw_world(screen, world_tensor, world_data):
                     # Draw the circle at the center of this large surface
                     # The circle center on the large surface:
                     circle_center = (half_ls + offset_x, half_ls + offset_y)
-                    color = SPECIES_MAP[species]["visualization"]["color"]
+                    color = SPECIES_COLORS[species]
 
                     # Add partial transparency so overlapping species are visible
                     # For example, alpha = 180 for semi-transparency

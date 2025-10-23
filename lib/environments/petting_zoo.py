@@ -12,7 +12,7 @@ from lib.world import (
     world_is_alive,
 )
 from lib.visualize import init_pygame, draw_world, plot_biomass
-from lib.model import INPUT_SIZE, OUTPUT_SIZE
+from lib.model import INPUT_SIZE, OUTPUT_SIZE, MODEL_OFFSETS
 from lib.config.settings import Settings
 from lib.config.species import SpeciesMap
 import lib.config.const as const
@@ -40,6 +40,7 @@ class raw_env(AECEnv):
         self.possible_agents = const.SPECIES
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.map_folder = map_folder
+        self.reason = ""
         self.reset()
 
         self._observation_spaces = {
@@ -85,6 +86,7 @@ class raw_env(AECEnv):
         
         self.step_count = 0
         self.done = False
+        self.reason = ""
 
         # Initialize bookkeeping dictionaries.
         self.agents = self.possible_agents[:]
@@ -118,21 +120,23 @@ class raw_env(AECEnv):
 
         # If the active agent is "plankton", use the hardcoded logic.
         if agent == "plankton":
-            spawn_plankton(self.world, self.world_data)
+            spawn_plankton(self.species_map, self.world, self.world_data)
             # if self.num_moves % 20 == 0:
             #     randomwalk_plankton(self.world, self.world_data)
         else:
             self.state[agent] = action
 
             # Movement update.
-            matrix_movement_deltas = all_movement_delta( self.world, self.world_data, agent, action)
-            apply_movement_delta(self.world, agent, matrix_movement_deltas)
+            matrix_movement_deltas = all_movement_delta(self.species_map, self.world, self.world_data, agent, action)
+            apply_movement_delta(self.species_map, self.world, agent, matrix_movement_deltas)
 
-            matrix_perform_eating(self.world, agent, action)
+            matrix_perform_eating(self.settings, self.species_map, self.world, agent, action)
             
-            update_smell(self.world)
+            update_smell(self.settings, self.world)
             self.render()
-            if not world_is_alive(self.world):
+            alive, reason = world_is_alive(self.settings, self.species_map, self.world)
+            if not alive:
+                self.reason = reason
                 # Abort simulation by terminating all agents.
                 for ag in self.agents:
                     self.terminations[ag] = True
@@ -149,10 +153,10 @@ class raw_env(AECEnv):
                 self.cumulative_rewards[ag] += self.rewards[ag]
             # self.rewards = {sp: 1 for sp in self.agents}
             self.num_moves += 1
-            self.truncations = {agent: self.num_moves >= (const.MAX_STEPS * 4) for agent in self.agents}
+            self.truncations = {agent: self.num_moves >= (self.settings.max_steps * 4) for agent in self.agents}
 
             for i in self.agents:
-                self.observations[i] = self.old_observe(i)
+                self.observations[i] = self.observe(i)
 
         if self._agent_selector.is_last():
             # Re-shuffle agents for the next round.
@@ -166,13 +170,11 @@ class raw_env(AECEnv):
         if self.render_mode == "none":
             return
         if self.render_mode == "human":
-            # print("Rendering...")
-            # print(self.plot_data)
             plot_biomass(self.plot_data)
-            draw_world(self.screen, self.world, self.world_data)
+            draw_world(self.settings, self.screen, self.world, self.world_data)
 
     def get_fitness(self, agent):
-        biomass = self.world[..., const.SPECIES_MAP[agent]["biomass_offset"]].sum()
+        biomass = self.world[..., MODEL_OFFSETS[agent]["biomass"]].sum()
 
         return np.log(biomass)
     

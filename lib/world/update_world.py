@@ -1,6 +1,7 @@
 import numpy as np
 from enum import Enum
 from lib.model import MODEL_OFFSETS
+from lib.config.const import ACTING_SPECIES
 from lib.config.settings import Settings
 from lib.config.species import SpeciesMap
 from numba import njit
@@ -101,27 +102,27 @@ def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, 
 
     return movement_deltas
 
-def apply_movement_delta(world, species_key, movement_deltas):
-    species_properties = const.SPECIES_MAP[species_key]
-    biomass_offset = species_properties["biomass_offset"]
-    energy_offset  = species_properties["energy_offset"]
+def apply_movement_delta(species_map: SpeciesMap, world, species_key, movement_deltas):
+    props = species_map[species_key]
+    biomass_offset = MODEL_OFFSETS[species_key]["biomass"]
+    energy_offset = MODEL_OFFSETS[species_key]["energy"]
 
     # Apply the movement deltas to biomass and energy.
     world[:, :, biomass_offset] += movement_deltas[:, :, biomass_offset]
     denom = np.where(np.abs(world[:, :, biomass_offset]) == 0, 1, np.abs(world[:, :, biomass_offset]))
     world[:, :, energy_offset] = movement_deltas[:, :, energy_offset] / denom
     # reduce energy by base amount
-    world[:, :, energy_offset] -= species_properties["energy_cost"]
+    world[:, :, energy_offset] -= props.energy_cost
 
-def matrix_perform_eating(world, species_key, actions):
+def matrix_perform_eating(settings: Settings, species_map: SpeciesMap, world, species_key, actions):
     pad = 1
-    species_properties = const.SPECIES_MAP[species_key]
-    biomass_offset = species_properties["biomass_offset"]
-    energy_offset = species_properties["energy_offset"]
+    props = species_map[species_key]
+    biomass_offset = MODEL_OFFSETS[species_key]["biomass"]
+    energy_offset = MODEL_OFFSETS[species_key]["energy"]
 
     # Get eating actions and metabolic cost.
     eat = actions[:, :, Action.EAT.value]
-    activity_mr_loss = eat * species_properties["activity_metabolic_rate"]
+    activity_mr_loss = eat * props.activity_metabolic_rate
 
     # Cache biomass and energy at batch positions.
     init_biomass = world[pad:-pad, pad:-pad, biomass_offset].copy()
@@ -137,12 +138,12 @@ def matrix_perform_eating(world, species_key, actions):
     still_left_to_eat = initial_total_eat.copy()
 
     # Randomize prey order.
-    prey_list = list(const.EATING_MAP[species_key].items())
+    prey_list = props.prey.copy()
     np.random.shuffle(prey_list)
 
     # Process each prey species.
-    for prey_species, _ in prey_list:
-        prey_biomass_offset = const.SPECIES_MAP[prey_species]["biomass_offset"]
+    for prey_species in prey_list:
+        prey_biomass_offset = MODEL_OFFSETS[prey_species]["biomass"]
         prey_biomass = world[pad:-pad, pad:-pad, prey_biomass_offset]
         # Consume as much as possible, up to total_eat_amount.
         eat_amount = np.minimum(prey_biomass, still_left_to_eat)
@@ -161,53 +162,50 @@ def matrix_perform_eating(world, species_key, actions):
     )
 
     world[pad:-pad, pad:-pad, energy_offset] += (
-        species_properties["energy_reward"] * eaten_percentage
+        props.energy_reward * eaten_percentage
     )
 
     # --- Handle low biomass: if biomass falls below minimum, set it (and energy) to zero ---
-    low_biomass = world[..., biomass_offset] < species_properties["min_biomass_in_cell"]
+    low_biomass = world[..., biomass_offset] < props.min_biomass_in_cell
     world[low_biomass, biomass_offset] = 0
     world[low_biomass, energy_offset] = 0
 
     np.clip(
         world[pad:-pad, pad:-pad, energy_offset],
         0,
-        const.MAX_ENERGY,
+        settings.max_energy,
         out=world[pad:-pad, pad:-pad, energy_offset],
     )
 
     return world
 
-def remove_species_from_fishing(world):
-    for species in const.SPECIES_MAP.keys():
-        if species == "plankton":
-            continue
-        biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
-        world[:, :, biomass_offset] *= (1 - const.FISHING_AMOUNT)
-    return world
-
 def total_biomass(world):
     total = 0
-    for species in const.SPECIES_MAP.keys():
-        if species == "plankton":
-            continue
-        biomass_offset = const.SPECIES_MAP[species]["biomass_offset"]
+    for species in ACTING_SPECIES:
+        biomass_offset = MODEL_OFFSETS[species]["biomass"]
         total += world[:, :, biomass_offset].sum()
     return np.log(total + 1e-8)
 
-def world_is_alive(world):
+def world_is_alive(settings: Settings, species_map: SpeciesMap, world):
     """
     Checks if the world is still "alive" by verifying the biomass of the species in the world tensor.
     The world tensor has shape (WORLD_SIZE, WORLD_SIZE, TOTAL_CHANNELS) where:
       - The first 3 channels represent the terrain (one-hot encoded).
       - The subsequent channels represent the biomass for each species.
     """
-    for species in const.SPECIES_MAP.keys():
-        if species == "plankton":
-            continue
-        properties = const.SPECIES_MAP[species]
-        biomass_offset = properties["biomass_offset"]
+    reason = ""
+
+    for species in ACTING_SPECIES:
+        props = species_map[species]
+        biomass_offset = MODEL_OFFSETS[species]["biomass"]
         biomass = world[:, :, biomass_offset].sum()
-        if biomass < (properties["starting_biomass"] * const.MIN_PERCENT_ALIVE) or biomass > (properties["starting_biomass"] * const.MAX_PERCENT_ALIVE):
-            return False
-    return True
+        biomass_too_low = biomass < (props.starting_biomass * settings.min_percent_alive)
+        biomass_too_high = biomass > (props.starting_biomass * settings.max_percent_alive)
+        if biomass_too_low or biomass_too_high:
+            reason = f"{species} "
+            if biomass_too_low:
+                reason += f"low"
+            if biomass_too_high:
+                reason += f"high"
+            return False, reason
+    return True, ""

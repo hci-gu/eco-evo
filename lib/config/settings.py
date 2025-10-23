@@ -14,7 +14,7 @@ class Settings:
     steps_per_day: int = 3
     speed_multiplier: float = 1.0
     multiply_death_rate: float = 1.0
-    growth_multiplier: float = 1.0
+    growth_multiplier: float = 1
     min_percent_alive: float = 0.2
     max_percent_alive: float = 4.0
     max_years: int = 5
@@ -31,6 +31,7 @@ class Settings:
     mutation_rate: float = 0.1
     mutation_rate_decay: float = 0.995
     mutation_rate_min: float = 0.01
+    max_steps: int = 365 * 5 * 3
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1
