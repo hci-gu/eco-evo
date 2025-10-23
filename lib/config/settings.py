@@ -6,12 +6,15 @@ from dataclasses import fields
 from typing import get_origin, get_args
 # from .settings import Settings
 
+MAP_METER_SIZE = 300 * 1000
+FISH_SWIM_SPEED = 0.025
+SECONDS_IN_DAY = 86400
+
 @dataclass(frozen=True)
 class Settings:
     folder: str = "results/default"
 
     world_size: int = 18
-    steps_per_day: int = 3
     speed_multiplier: float = 1.0
     multiply_death_rate: float = 1.0
     growth_multiplier: float = 1
@@ -37,6 +40,11 @@ class Settings:
     smell_emission_rate: float = 0.1
 
     max_energy: float = 100.0
+
+    @property
+    def steps_per_day(self) -> int:
+        DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
+        return (DAYS_TO_CROSS_MAP / self.world_size) * self.speed_multiplier
 
 def _coerce(value: str, target_type):
     """Coerce string env values to the dataclass field type."""

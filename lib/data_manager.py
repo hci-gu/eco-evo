@@ -3,10 +3,7 @@ from lib.config.settings import Settings
 from lib.config.const import SPECIES
 from lib.model import MODEL_OFFSETS
 import numpy as np
-# import lib.constants as const
 import json
-
-# from lib.config import const
 
 generations_data = []
 
@@ -23,8 +20,6 @@ def save_data_to_file(settings: Settings, generation, agents_data_snapshot):
     agents_file = f'{settings.folder}/agents_data_gen_{generation}.json'
     generations_file = f'{settings.folder}/generations_data.json'
     
-    # with open(agents_file, 'w') as f:
-    #     json.dump(agents_data_snapshot, f, indent=4, default=str)
     with open(generations_file, 'w') as f:
         json.dump(generations_data, f, indent=4, default=str)
 
@@ -97,9 +92,7 @@ def process_data(data, agents_data):
     else:
         agents_data = curr_agents_data
 
-    return agents_data
-
-        
+    return agents_data        
 
 def data_loop(data_queue):
     try:

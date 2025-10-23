@@ -170,8 +170,8 @@ class raw_env(AECEnv):
         if self.render_mode == "none":
             return
         if self.render_mode == "human":
-            plot_biomass(self.plot_data)
             draw_world(self.settings, self.screen, self.world, self.world_data)
+            plot_biomass(self.plot_data)
 
     def get_fitness(self, agent):
         biomass = self.world[..., MODEL_OFFSETS[agent]["biomass"]].sum()

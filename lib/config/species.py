@@ -24,10 +24,15 @@ class SpeciesParams:
     hardcoded_rules: dict[str, float]
     prey: list[str]
 
+    @property
+    def color_ones(self) -> tuple[float, float, float]:
+        return (self.color[0] / 255.0, self.color[1] / 255.0, self.color[2] / 255.0)
+
 SpeciesMap = Dict[str, SpeciesParams]
 
 def build_species_map(settings: Settings) -> SpeciesMap:
     spd = settings.steps_per_day
+    print("settings.steps_per_day", settings.steps_per_day)
     wsq = settings.world_size * settings.world_size
     # Use per-step scaling as per your intended semantics:
     # per_step = per_day / steps_per_day
@@ -37,17 +42,19 @@ def build_species_map(settings: Settings) -> SpeciesMap:
     spr_start = 1359874
     pl_start = spr_start * 2
 
+    base_energy_cost = 0.66
+
     plankton = SpeciesParams(
         index=0,
         starting_biomass=pl_start,
         original_starting_biomass=pl_start,
         min_biomass_in_cell=0.0,
-        max_biomass_in_cell=(pl_start / wsq) * 150,
+        max_biomass_in_cell=(pl_start / wsq) * 2,
         activity_metabolic_rate=0.002 * spd,
         standard_metabolic_rate=0.0004 * spd,
         natural_mortality_rate=0.1 * spd,
         fishing_mortality_rate=0.0,
-        energy_cost=0.1 * spd,
+        energy_cost=base_energy_cost * spd,
         energy_reward=100 * spd,
         growth_rate=0.1 * settings.growth_multiplier * spd,
         hardcoded_logic=True,
@@ -71,9 +78,9 @@ def build_species_map(settings: Settings) -> SpeciesMap:
         standard_metabolic_rate=0.0014635768428571428 * spd,
         natural_mortality_rate=0.01 * spd,
         fishing_mortality_rate=settings.base_fishing_value_herring * settings.scale_fishing * spd,
-        energy_cost=0.75 * spd,
-        energy_reward=200 * spd,
-        growth_rate=0.05 * settings.growth_multiplier * spd,
+        energy_cost=base_energy_cost * spd,
+        energy_reward=100 * spd,
+        growth_rate=0.1 * settings.growth_multiplier * spd,
         hardcoded_logic=False,
         hardcoded_rules={},
         color=(0, 0, 255),
@@ -91,9 +98,9 @@ def build_species_map(settings: Settings) -> SpeciesMap:
         standard_metabolic_rate=0.0014635768428571428 * spd,
         natural_mortality_rate=0.01 * spd,
         fishing_mortality_rate=settings.base_fishing_value_sprat * settings.scale_fishing * spd,
-        energy_cost=0.75 * spd,
-        energy_reward=200 * spd,
-        growth_rate=0.05 * settings.growth_multiplier * spd,
+        energy_cost=base_energy_cost * spd,
+        energy_reward=100 * spd,
+        growth_rate=0.1 * settings.growth_multiplier * spd,
         hardcoded_logic=False,
         hardcoded_rules={},
         color=(255, 165, 0),
@@ -111,8 +118,8 @@ def build_species_map(settings: Settings) -> SpeciesMap:
         standard_metabolic_rate=0.0029071536857142857 * spd,
         natural_mortality_rate=0.003 * spd,
         fishing_mortality_rate=settings.base_fishing_value_cod * settings.scale_fishing * spd,
-        energy_cost=0.75 * spd,
-        energy_reward=300 * spd,
+        energy_cost=base_energy_cost * spd,
+        energy_reward=100 * spd,
         growth_rate=0.05 * settings.growth_multiplier * spd,
         hardcoded_logic=False,
         hardcoded_rules={},

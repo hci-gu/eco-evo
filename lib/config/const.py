@@ -1,2 +1,2 @@
-SPECIES = ['sprat', 'herring', 'cod', 'plankton']
+SPECIES = ['plankton','sprat', 'herring', 'cod']
 ACTING_SPECIES = ['sprat', 'herring', 'cod']

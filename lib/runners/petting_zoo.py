@@ -1,4 +1,6 @@
 # import lib.constants as const
+import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from lib.config import const
 from lib.config.settings import Settings
 from lib.config.species import build_species_map
@@ -14,6 +16,9 @@ import copy
 import time
 from lib.environments.petting_zoo import env
 import optuna
+
+# ---- Parallel worker plumbing ----
+_WORKER_RUNNER = None  # one runner per proces
 
 def noop(a, b, c):
     pass
@@ -66,7 +71,7 @@ class PettingZooRunner():
                 episode_length += 1
                 species_biomass = self.env.get_fitness(species_being_evaluated)
                 fitness += species_biomass
-                if (is_evaluation == False):
+                if (is_evaluation == False or self.env.render_mode != "none"):
                     process_data({
                         'species': species_being_evaluated if not is_evaluation else None,
                         'agent_index': self.agent_index,
@@ -79,56 +84,6 @@ class PettingZooRunner():
         print("end of simulation", fitness, episode_length)
         callback(self.env.world, fitness, True)
         return fitness, episode_length, self.env.reason
-
-    def optimize_params(self):
-        print("optimizing params")
-    #     candidates = {species: [] for species in self.species_list}
-    #     for species in self.species_list:
-    #         if self.best_agent[species] is not None:
-    #             candidates[species] = SingleSpeciesModel(chromosome=self.best_agent[species])
-    #         else:
-    #             candidates[species] = self.population[species][0]
-
-    #     rand_seed = int(random.random() * 100000)
-
-    #     def objective(trial):
-    #         energy_cost_sprat   = trial.suggest_float("energy_cost_sprat",   0.0, 10.0)
-    #         energy_reward_sprat = trial.suggest_float("energy_reward_sprat", 0.0, 1000.0)
-    #         energy_cost_cod     = trial.suggest_float("energy_cost_cod",     0.0, 10.0)
-    #         energy_reward_cod   = trial.suggest_float("energy_reward_cod",   0.0, 1000.0)
-    #         energy_cost_herring = trial.suggest_float("energy_cost_herring", 0.0, 10.0)
-    #         energy_reward_herring = trial.suggest_float("energy_reward_herring", 0.0, 1000.0)
-
-    #         for sp in self.species_list:
-    #             const.update_energy_params(
-    #                 sp,
-    #                 energy_cost_sprat   if sp == "sprat"   else
-    #                 energy_cost_cod     if sp == "cod"     else
-    #                 energy_cost_herring,
-    #                 energy_reward_sprat if sp == "sprat"   else
-    #                 energy_reward_cod   if sp == "cod"     else
-    #                 energy_reward_herring,
-    #             )
-
-    #         def eval_function(callback):
-    #             print("eval function was called", callback)
-    #             self.run(candidates, "cod", rand_seed, True, callback)
-
-    #         err = predict_years(eval_function)
-    #         return err
-
-    #     sampler = optuna.samplers.TPESampler(multivariate=True, n_startup_trials=10)
-    #     study = optuna.create_study(sampler=sampler, direction="minimize")
-    #     study.optimize(objective, n_trials=50)
-
-    #     out = study.best_params | {"best_value": study.best_value}
-    #     # set new rules
-    #     const.update_energy_params("cod", out["energy_cost_cod"], out["energy_reward_cod"])
-    #     const.update_energy_params("herring", out["energy_cost_herring"], out["energy_reward_herring"])
-    #     const.update_energy_params("sprat", out["energy_cost_sprat"], out["energy_reward_sprat"])
-
-    #     # reset to defaults
-    #     const.reset_constants()
 
     def evaluate_population(self):
         """
@@ -174,8 +129,8 @@ class PettingZooRunner():
                     print(f'idx {idx}, eval {eval_index}, fitness {fitness:.1f}, episode_length {episode_length}, steps/sec {episode_length/(end_time - start_time):.2f}')
                 
                 avg_fitness = sum(evals_fitness) / len(evals_fitness)
-                # behaviour_score = run_all_scenarios(evaluation_candidate, species, False)
-                avg_fitness = avg_fitness
+                behaviour_score = run_all_scenarios(self.settings, self.species_map, evaluation_candidate, species, False)
+                avg_fitness = avg_fitness + (behaviour_score * avg_fitness)
 
                 fitnesses[species].append((evaluation_candidate.state_dict(), avg_fitness))
                 print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')
@@ -242,8 +197,8 @@ class PettingZooRunner():
     def train(self, generations=100):
         for i in range(generations):
             self.run_generation()
-            if i > 25 and i % 5 == 0:
-                self.optimize_params()
+            # if i > 25 and i % 5 == 0:
+            #     self.optimize_params()
             # Optionally, save best models or log additional statistics.
 
     def evaluate(self, model_paths = [], callback = noop):

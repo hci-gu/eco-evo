@@ -1,11 +1,15 @@
 import argparse
 import os
+import sys
 import time
+import signal
+import matplotlib.pyplot as plt
+from lib.visualize import shutdown_pygame
 from lib.runners.petting_zoo import PettingZooRunner
-from lib.config.settings import load_settings
+from lib.config.settings import load_settings, Settings
 
 def evaluate_model():
-    folder = "results/back_to_multi_2/agents"
+    folder = "results/2025-10-16_7/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".npy")[0]), reverse=True)
@@ -23,8 +27,21 @@ def evaluate_model():
         model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
 
     start_time = time.time()
-    runner = PettingZooRunner(render_mode="human")
-    runner.evaluate(model_paths)
+    settings = Settings()
+    runner = PettingZooRunner(settings, render_mode="human")
+    try:
+        runner.evaluate(model_paths)
+    finally:
+        # Ensure UI resources are closed even on Ctrl+C
+        try:
+            runner.env.close()
+        except Exception:
+            pass
+        try:
+            plt.ioff()
+            plt.close('all')
+        except Exception:
+            pass
     end_time = time.time()
     elapsed_time = end_time - start_time
     return elapsed_time
@@ -48,6 +65,20 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
+    # Handle Ctrl+C cleanly: exit with code 0 to avoid macOS crash dialog
+    # try:
+    #     evaluate_model()
+    #     print("Model evaluation completed.")
+    # except KeyboardInterrupt:
+    #     print("Interrupted by user. Shutting down cleanly…")
+    #     try:
+    #         plt.ioff()
+    #         plt.close('all')
+    #         shutdown_pygame()
+    #     except Exception:
+    #         pass
+    #     sys.exit(0)
+
     # profiler = cProfile.Profile()
     # profiler.enable()
 
@@ -66,6 +97,7 @@ if __name__ == "__main__":
     config_files = load_config_files(args.config_folder)
 
     print("Running simulation with the following config files:" + str(config_files))
+    time.sleep(2)
 
     for config_file in config_files:
         settings = load_settings(config_file)

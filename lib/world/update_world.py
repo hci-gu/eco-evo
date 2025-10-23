@@ -42,8 +42,8 @@ def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, 
     energy_at_positions = world[pad:-pad, pad:-pad, energy_offset]
 
     loss_factor = activity_mr_loss + standard_metabolic_rate + natural_mortality_loss
-    fished_amount = initial_biomass * fishing_mortality_loss
-    total_fished = np.sum(fished_amount)
+    # fished_amount = initial_biomass * fishing_mortality_loss
+    # total_fished = np.sum(fished_amount)
     # const.update_fishing_amounts(species_key, total_fished)
     world[:, :, biomass_offset] *= 1 - fishing_mortality_loss
 

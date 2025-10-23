@@ -1,6 +1,8 @@
 import os
 import numpy as np
 from lib.model import Model
+from lib.config.settings import Settings
+from lib.config.species import build_species_map
 from lib.behaviour import run_all_scenarios
 
 def get_model_path():
@@ -14,7 +16,7 @@ def get_model_path():
     return os.path.join(folder, files[0])
 
 def get_multi_model_paths():
-    folder = "results/back_to_multi_1/agents"
+    folder = "results/2025-10-23_4/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".npy")[0]), reverse=True)
@@ -35,8 +37,6 @@ def get_multi_model_paths():
 
 # --- Main ---
 if __name__ == "__main__":
-
-
     # Uncomment the following lines to evaluate single model
     # model_path = get_model_path()
     # print("model_path", model_path)
@@ -48,9 +48,11 @@ if __name__ == "__main__":
     # Uncomment the following lines to evaluate multiple models
     model_paths = get_multi_model_paths()
     print("model_paths", model_paths)
+    settings =  Settings()
+    species_map = build_species_map(settings)
     for model in model_paths:
         candidate = Model(
             chromosome=np.load(model['path'])
         )
         print("model_path", model['path'])
-        run_all_scenarios(candidate, model['species'], True)
+        run_all_scenarios(settings, species_map, candidate, model['species'], False)

@@ -10,13 +10,31 @@ MODEL_OFFSETS = {
         "water": 1,
         "out_of_bounds": 2,
     },
+    # from to for the types
+    "terrain_range": [0, 2],
+
 }
+
 for i, species in enumerate(const.SPECIES):
+    print(i, species)
+    biomass_start = 3
+    energy_start = biomass_start + len(const.SPECIES)
+    smell_start = energy_start + len(const.SPECIES)
     MODEL_OFFSETS[species] = {
-        "biomass": 3 + i * 3,
-        "energy": 4 + i * 3,
-        "smell": 5 + i * 3,
+        "biomass": 3 + i,
+        "energy": energy_start + i,
+        "smell": smell_start + i,
     }
+
+MODEL_OFFSETS["biomass_range"] = [
+    3, 3 + len(const.SPECIES) - 1
+]
+MODEL_OFFSETS["energy_range"] = [
+    3 + len(const.SPECIES), 3 + len(const.SPECIES) * 2 - 1
+]
+MODEL_OFFSETS["smell_range"] = [
+    3 + len(const.SPECIES) * 2, 3 + len(const.SPECIES) * 3 - 1
+]
 
 SINGLE_CELL_INPUT = 3 + len(const.SPECIES) * 3
 INPUT_SIZE = SINGLE_CELL_INPUT * 9  # 3x3 grid of cells

@@ -38,14 +38,14 @@ biomass_graph_cache = None
 energy_graph_cache = None
 generation_graph_cache = None
 
-visualization_queue = Queue()
-video_writer = imageio.get_writer("simulation.mp4", fps=30)
-
 def init_pygame():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Ecosystem simulation")
     return screen
+
+def shutdown_pygame():
+    pygame.quit()
 
 def interpolate_color(value, color1, color2):
     return tuple(
@@ -204,8 +204,8 @@ def plot_biomass(agents_data):
     legend_patches = []
     idx = 0  # Color index
     for agent_index, evals in agents_data.items():
-        for eval_index, eval_data in evals.items():
-            data = eval_data[eval_index]
+        for eval_index, _ in evals.items():
+            data = evals[eval_index]
             plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black")
             plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-')
             plt.plot(data['steps'], data['sprat_alive'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-')
