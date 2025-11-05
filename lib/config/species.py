@@ -1,0 +1,137 @@
+# lib/config/species.py
+from dataclasses import dataclass
+from typing import Dict
+from .settings import Settings
+
+@dataclass(frozen=True)
+class SpeciesParams:
+    index: int
+    starting_biomass: float
+    original_starting_biomass: float
+    min_biomass_in_cell: float
+    max_biomass_in_cell: float
+    activity_metabolic_rate: float
+    standard_metabolic_rate: float
+    natural_mortality_rate: float
+    fishing_mortality_rate: float
+    energy_cost: float
+    energy_reward: float
+    growth_rate: float
+    hardcoded_logic: bool
+    color: tuple[int, int, int]
+    noise_threshold: float
+    noise_scaling: float
+    hardcoded_rules: dict[str, float]
+    prey: list[str]
+
+    @property
+    def color_ones(self) -> tuple[float, float, float]:
+        return (self.color[0] / 255.0, self.color[1] / 255.0, self.color[2] / 255.0)
+
+SpeciesMap = Dict[str, SpeciesParams]
+
+def build_species_map(settings: Settings) -> SpeciesMap:
+    spd = settings.steps_per_day
+    print("settings.steps_per_day", settings.steps_per_day)
+    wsq = settings.world_size * settings.world_size
+    # Use per-step scaling as per your intended semantics:
+    # per_step = per_day / steps_per_day
+    # or if empirically tuned, keep current behavior but document it.
+    cod_start = 44897
+    her_start = 737356
+    spr_start = 1359874
+    pl_start = spr_start * 2
+
+    base_energy_cost = 0.66
+
+    plankton = SpeciesParams(
+        index=0,
+        starting_biomass=pl_start,
+        original_starting_biomass=pl_start,
+        min_biomass_in_cell=0.0,
+        max_biomass_in_cell=(pl_start / wsq) * 2,
+        activity_metabolic_rate=0.002 * spd,
+        standard_metabolic_rate=0.0004 * spd,
+        natural_mortality_rate=0.1 * spd,
+        fishing_mortality_rate=0.0,
+        energy_cost=base_energy_cost * spd,
+        energy_reward=100 * spd,
+        growth_rate=0.1 * settings.growth_multiplier * spd,
+        hardcoded_logic=True,
+        hardcoded_rules={
+            "growth_rate_constant": 250,
+            # "growth_rate_constant": 2.5,
+            "respawn_delay": 10,
+        },
+        color=(0, 255, 0),
+        noise_threshold=0.5,
+        noise_scaling=6 * 5,
+        prey=[],
+    )
+    herring = SpeciesParams(
+        index=1,
+        starting_biomass=her_start,
+        original_starting_biomass=her_start,
+        min_biomass_in_cell=0.0,
+        max_biomass_in_cell=(her_start / wsq) * 2,
+        activity_metabolic_rate=0.007317884210714286 * spd,
+        standard_metabolic_rate=0.0014635768428571428 * spd,
+        natural_mortality_rate=0.01 * spd,
+        fishing_mortality_rate=settings.base_fishing_value_herring * settings.scale_fishing * spd,
+        energy_cost=base_energy_cost * spd,
+        energy_reward=100 * spd,
+        growth_rate=0.1 * settings.growth_multiplier * spd,
+        hardcoded_logic=False,
+        hardcoded_rules={},
+        color=(0, 0, 255),
+        noise_threshold=0.6,
+        noise_scaling=6 * 5,
+        prey=["plankton"],
+    )
+    sprat = SpeciesParams(
+        index=2,
+        starting_biomass=spr_start,
+        original_starting_biomass=spr_start,
+        min_biomass_in_cell=0.0,
+        max_biomass_in_cell=(spr_start / wsq) * 2,
+        activity_metabolic_rate=0.007317884210714286 * spd,
+        standard_metabolic_rate=0.0014635768428571428 * spd,
+        natural_mortality_rate=0.01 * spd,
+        fishing_mortality_rate=settings.base_fishing_value_sprat * settings.scale_fishing * spd,
+        energy_cost=base_energy_cost * spd,
+        energy_reward=100 * spd,
+        growth_rate=0.1 * settings.growth_multiplier * spd,
+        hardcoded_logic=False,
+        hardcoded_rules={},
+        color=(255, 165, 0),
+        noise_threshold=0.6,
+        noise_scaling=6 * 5,
+        prey=["plankton"],
+    )
+    cod = SpeciesParams(
+        index=3,
+        starting_biomass=cod_start,
+        original_starting_biomass=cod_start,
+        min_biomass_in_cell=0.0,
+        max_biomass_in_cell=(cod_start / wsq) * 2,
+        activity_metabolic_rate=0.014535768421428572 * spd,
+        standard_metabolic_rate=0.0029071536857142857 * spd,
+        natural_mortality_rate=0.003 * spd,
+        fishing_mortality_rate=settings.base_fishing_value_cod * settings.scale_fishing * spd,
+        energy_cost=base_energy_cost * spd,
+        energy_reward=100 * spd,
+        growth_rate=0.05 * settings.growth_multiplier * spd,
+        hardcoded_logic=False,
+        hardcoded_rules={},
+        color=(40, 40, 40),
+        noise_threshold=0.7,
+        noise_scaling=6 * 5,
+        prey=["herring", "sprat"],
+    )
+
+    return {
+        "plankton": plankton,
+        "herring": herring,
+        "sprat": sprat,
+        "cod": cod,
+    }

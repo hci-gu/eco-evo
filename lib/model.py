@@ -1,12 +1,46 @@
 import numpy as np
-import lib.constants as const
+import lib.config.const as const
+
+HIDDEN_SIZE = 64
+OUTPUT_SIZE = 5
+
+MODEL_OFFSETS = {
+    "terrain": {
+        "land": 0,
+        "water": 1,
+        "out_of_bounds": 2,
+    },
+    # from to for the types
+    "terrain_range": [0, 2],
+
+}
+
+for i, species in enumerate(const.SPECIES):
+    print(i, species)
+    biomass_start = 3
+    energy_start = biomass_start + len(const.SPECIES)
+    smell_start = energy_start + len(const.SPECIES)
+    MODEL_OFFSETS[species] = {
+        "biomass": 3 + i,
+        "energy": energy_start + i,
+        "smell": smell_start + i,
+    }
+
+MODEL_OFFSETS["biomass_range"] = [
+    3, 3 + len(const.SPECIES) - 1
+]
+MODEL_OFFSETS["energy_range"] = [
+    3 + len(const.SPECIES), 3 + len(const.SPECIES) * 2 - 1
+]
+MODEL_OFFSETS["smell_range"] = [
+    3 + len(const.SPECIES) * 2, 3 + len(const.SPECIES) * 3 - 1
+]
+
+SINGLE_CELL_INPUT = 3 + len(const.SPECIES) * 3
+INPUT_SIZE = SINGLE_CELL_INPUT * 9  # 3x3 grid of cells
 
 class Model:
-    def __init__(self, 
-                 input_size=const.NETWORK_INPUT_SIZE, 
-                 hidden_size=const.NETWORK_HIDDEN_SIZE, 
-                 output_size=const.NETWORK_OUTPUT_SIZE, 
-                 chromosome=None):
+    def __init__(self, input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE, output_size=OUTPUT_SIZE, chromosome=None):
         if chromosome is not None:
             self.set_weights(chromosome)
         else:
@@ -15,17 +49,6 @@ class Model:
             self.fc1_bias = np.ascontiguousarray(np.random.randn(hidden_size).astype(np.float32))
             self.fc2_weight = np.ascontiguousarray(np.random.randn(hidden_size, output_size).astype(np.float32))
             self.fc2_bias = np.ascontiguousarray(np.random.randn(output_size).astype(np.float32))
-
-    # def forward(self, x):
-    #     batch_size = x.shape[0]
-    #     output_size = self.fc2_bias.shape[0]
-
-    #     # Generate a tensor of zeros
-    #     debug_output = np.zeros((batch_size, output_size), dtype=np.float32)
-        
-    #     debug_output[:, 4] = 0.05
-
-    #     return debug_output
     
     def forward(self, x):
         h = np.dot(x, self.fc1_weight) + self.fc1_bias
@@ -61,24 +84,3 @@ class Model:
         Save the model's parameters to a file.
         """
         np.savez(path, **self.state_dict())
-
-class SingleSpeciesModel(Model):
-    def __init__(self, 
-                 input_size=const.NETWORK_INPUT_SIZE, 
-                 hidden_size=const.NETWORK_HIDDEN_SIZE, 
-                 output_size=const.NETWORK_OUTPUT_SIZE_SINGLE_SPECIES, 
-                 chromosome=None):
-        super().__init__(input_size, hidden_size, output_size, chromosome)
-
-    def forward(self, x):
-        h = np.dot(x, self.fc1_weight) + self.fc1_bias
-        h = np.maximum(0, h)  # ReLU activation
-
-        # Second layer: linear transformation.
-        out = np.dot(h, self.fc2_weight) + self.fc2_bias
-        
-        # Compute softmax in a numerically stable way.
-        out_max = np.max(out, axis=1, keepdims=True)
-        exp_vals = np.exp(out - out_max)
-        softmax_output = exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
-        return softmax_output

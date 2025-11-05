@@ -7,6 +7,7 @@ lib/environments/__pycache__
 results
 old
 runs
+out
 /*.png
 
 .DS_Store

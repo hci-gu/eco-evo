@@ -9,8 +9,7 @@ import queue
 from lib.world.update_world import world_is_alive
 from lib.world.map import read_map_from_file
 # from lib.runner import Runner
-from lib.runners.petting_zoo_single import PettingZooRunnerSingle
-import lib.constants as const
+from lib.runners.petting_zoo import PettingZooRunner
 
 app = Flask(__name__)
 CORS(app)
