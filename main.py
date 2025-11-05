@@ -66,18 +66,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Handle Ctrl+C cleanly: exit with code 0 to avoid macOS crash dialog
-    # try:
-    #     evaluate_model()
-    #     print("Model evaluation completed.")
-    # except KeyboardInterrupt:
-    #     print("Interrupted by user. Shutting down cleanly…")
-    #     try:
-    #         plt.ioff()
-    #         plt.close('all')
-    #         shutdown_pygame()
-    #     except Exception:
-    #         pass
-    #     sys.exit(0)
+    try:
+        evaluate_model()
+        print("Model evaluation completed.")
+    except KeyboardInterrupt:
+        print("Interrupted by user. Shutting down cleanly…")
+        try:
+            plt.ioff()
+            plt.close('all')
+            shutdown_pygame()
+        except Exception:
+            pass
+        sys.exit(0)
 
     # profiler = cProfile.Profile()
     # profiler.enable()

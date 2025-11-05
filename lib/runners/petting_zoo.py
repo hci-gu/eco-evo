@@ -130,7 +130,7 @@ class PettingZooRunner():
                 
                 avg_fitness = sum(evals_fitness) / len(evals_fitness)
                 behaviour_score = run_all_scenarios(self.settings, self.species_map, evaluation_candidate, species, False)
-                avg_fitness = avg_fitness + (behaviour_score * avg_fitness)
+                avg_fitness = avg_fitness * behaviour_score
 
                 fitnesses[species].append((evaluation_candidate.state_dict(), avg_fitness))
                 print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')
@@ -156,7 +156,7 @@ class PettingZooRunner():
             next_pop = []
 
             while len(next_pop) < self.settings.num_agents:
-                (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, self.settings.tournament_selectin)
+                (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, self.settings.tournament_selection)
                 c1_weights, c2_weights = evolution.sbx_crossover(p1, p2)
                 current_mutation_rate = max(self.settings.mutation_rate_min, self.settings.mutation_rate * (self.settings.mutation_rate_decay ** self.current_generation))
                 evolution.mutation(c1_weights, current_mutation_rate, current_mutation_rate)

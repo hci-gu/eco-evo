@@ -31,6 +31,7 @@ Outputs
 
 import os
 import math
+import json
 from pathlib import Path
 from collections import defaultdict
 
@@ -41,6 +42,8 @@ from matplotlib.ticker import FuncFormatter
 
 import lib.constants as const
 from lib.runners.petting_zoo_single import PettingZooRunnerSingle
+from lib.runners.petting_zoo import PettingZooRunner
+from lib.evaluate import predict_years
 import optuna
 
 
@@ -49,158 +52,83 @@ import optuna
 # --------------------------------------------------------------------------
 DATA_FILE          = "data.csv"
 AGENT_FOLDER       = "results/single_agent_single_out_random_plankton_behavscore_6/agents"
-EVAL_YEARS         = range(1993, 2003)          # feed 2006-2019 → predict 2007-2020
+EVAL_YEARS         = range(1993, 2006)          # feed 1993-2009 → predict 2010-2020
 SPECIES            = ["cod", "herring", "sprat"]
+YEARS_AHEAD        = 3                # predict y+1 from y
 DAYS_PER_YEAR      = 365
 STEPS_PER_YEAR     = math.ceil(DAYS_PER_YEAR / const.DAYS_PER_STEP)
+STEPS_TOTAL        = STEPS_PER_YEAR * YEARS_AHEAD
 
 def get_runner_single():
-    folder = "results/single_agent_single_out_random_plankton_behavscore_6/agents"
-    files = [f for f in os.listdir(folder) if f.endswith(".npy.npz")]
+    files = [
+        f for f in os.listdir(AGENT_FOLDER) if f.endswith(".npy.npz")
+    ]
     files.sort(key=lambda f: float(f.split("_")[1].split(".")[0]), reverse=True)
-    print(files[0])
-    path = os.path.join(folder, files[0])
+    model_path = os.path.join(AGENT_FOLDER, files[0])
     runner = PettingZooRunnerSingle()
+    return runner, model_path
 
-    return runner, path
+def get_runner():
+    runner = PettingZooRunner()
 
-# ---------------- Constants update helpers ------------------------------------
-def set_starting_biomass(row: pd.Series) -> None:
-    """Overwrite initial biomass for a single evaluation year."""
-    const.FIXED_BIOMASS = True
-    for sp in SPECIES:
-        const.SPECIES_MAP[sp]["original_starting_biomass"] = row[sp]
+    folder = "results/2025-09-08_1/agents"
+    files = os.listdir(folder)
+    files = [f for f in files if f.endswith(".npy.npz")]
+    files.sort(key=lambda f: float(f.split("_")[2].split(".npy")[0]), reverse=True)
+    species = {}
+    for f in files:
+        s = f.split("_")[1].split(".")[0]
+        s = s[1:] if s[0] == "$" else s
+        if s == "spat":
+            s = "sprat"
+        if s not in species:
+            species[s] = f
 
-    # allow any population size, limit sim length to one year
-    const.MIN_PERCENT_ALIVE = 0
-    const.MAX_PERCENT_ALIVE = 9_999
-    const.MAX_STEPS         = STEPS_PER_YEAR + 1
+    model_paths = []
+    for s, f in species.items():
+        model_paths.append({ 'path': os.path.join(folder, f), 'species': s })
 
-def set_fishing_pressure(row: pd.Series) -> None:
-    """Apply year-specific fishing mortality."""
-    for sp in SPECIES:
-        const.update_fishing_for_species(sp, row[f"fishing_{sp}"])
+    return runner, model_paths
 
-# ----------------  Error functions --------------------------------------------
-def mape(y_true, y_pred):
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100.0
-
-# --------------------------------------------------------------------------
-# 2. Evaluation loop
-# --------------------------------------------------------------------------
-def predict_years() -> None:
-    df = pd.read_csv(DATA_FILE).sort_values("year").reset_index(drop=True)
-
-    runner, model_path = get_runner_single()
-
-    # containers
-    pred_records = []
-
-    for y in EVAL_YEARS:
-        row_y       = df.loc[df.year == y].squeeze()
-        row_y_plus1 = df.loc[df.year == y + 1].squeeze()
-
-        # --- 2.1  Configure constants for this starting year -----------------
-        set_starting_biomass(row_y)          # biomass at year y
-        set_fishing_pressure(row_y)          # fish. mortality during (y → y+1)
-
-        # --- 2.2  Run the model for exactly one simulated year --------------
-        final_biomass = {}
-
-        steps_seen    = 0
-        def _callback(world, fitness):
-            nonlocal steps_seen, final_biomass
-            steps_seen += 1
-            if steps_seen >= STEPS_PER_YEAR:
-                # collect biomass at the end of the simulated year
-                for sp in SPECIES:
-                    offset = const.SPECIES_MAP[sp]["biomass_offset"]
-                    final_biomass[sp] = world[..., offset].sum()
-                return False   # stop the simulation
-            return True        # continue
-
-        runner.evaluate(model_path, _callback)
-
-        # --- 2.3  Store predictions & errors --------------------------------
-        record = {
-            "year": y + 1,   # forecast year
-            **{f"{sp}_pred": final_biomass[sp]        for sp in SPECIES},
-            **{f"{sp}_true": row_y_plus1[sp]          for sp in SPECIES},
-        }
-        for sp in SPECIES:
-            record[f"{sp}_abs_err"] = abs(record[f"{sp}_pred"] - record[f"{sp}_true"])
-            record[f"{sp}_pct_err"] = (
-                (record[f"{sp}_abs_err"] / record[f"{sp}_true"]) * 100.0
-                if record[f"{sp}_true"] != 0 else np.nan
-            )
-        pred_records.append(record)
-        print(f"[{y}->{y+1}] finished")
-
-    # ----------------------------------------------------------------------
-    # 3. Results: DataFrame, error statistics
-    # ----------------------------------------------------------------------
-    results = pd.DataFrame(pred_records)
-    results.to_csv("one_year_ahead_predictions.csv", index=False)
-
-    print("\nPer-year absolute % error")
-    print(results[["year"] + [f"{sp}_pct_err" for sp in SPECIES]].to_string(index=False))
-
-    avg_mape = {sp: mape(results[f"{sp}_true"], results[f"{sp}_pred"])
-                for sp in SPECIES}
-    avg_rmse = {sp: math.sqrt(
-                    ((results[f"{sp}_pred"] - results[f"{sp}_true"]) ** 2).mean())
-                for sp in SPECIES}
-
-    print("\nAverage error 2007-2020")
-    for sp in SPECIES:
-        print(f"{sp.capitalize():<8s}  MAPE: {avg_mape[sp]:6.2f}%   "
-              f"RMSE: {avg_rmse[sp]:,.0f}")
-
-    average_of_mape = np.mean(list(avg_mape.values()))
-    return average_of_mape
-    fig, axes = plt.subplots(len(SPECIES), 1, figsize=(10, 9), sharex=True)
-
-    species_colors = {              # use same palette as simulation UI
-        sp: const.SPECIES_MAP[sp]["visualization"]["color_ones"]
-        for sp in SPECIES
-    }
-
-    for idx, sp in enumerate(SPECIES):
-        ax = axes[idx]
-        ax.plot(results["year"], results[f"{sp}_true"],
-                label="Actual",  marker="o",
-                color=species_colors[sp])
-        ax.plot(results["year"], results[f"{sp}_pred"],
-                label="Predicted", marker="x", linestyle="--",
-                color=species_colors[sp])
-
-        ax.set_ylabel(f"{sp.capitalize()}\n(million t)")
-        ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _:
-                                                   f"{x*1e-6:.1f}"))
-        ax.grid(True, alpha=0.3)
-        if idx == 0:
-            ax.legend()
-
-    axes[-1].set_xlabel("Year")
-    plt.suptitle("One-Year-Ahead Biomass Prediction Accuracy (2007–2020)")
-    plt.tight_layout(rect=[0, 0.02, 1, 0.97])
-    plt.savefig("one_year_ahead_biomass_accuracy.png", dpi=300)
-    plt.show()
+def noop(a, b):
+    pass
 
 if __name__ == "__main__":
-    def objective(trial):
-        energy_cost = trial.suggest_float("energy_cost", 0.0, 10.0)
-        energy_reward = trial.suggest_float("energy_reward", 0.0, 500.0)
-        energy_reward_cod = trial.suggest_float("energy_reward_cod", 0.0, 1000.0)
-        eat_amount_boost = trial.suggest_float("eat_amount_boost", 0.0, 10.0)
+    runner, model_paths = get_runner()
 
-        const.update_energy_params(energy_cost, energy_reward, energy_reward_cod, eat_amount_boost)
+    for i in range(0, 25):
+        def objective(trial):
+            energy_cost_sprat     = trial.suggest_float("energy_cost_sprat",   0.0, 10.0)
+            energy_reward_sprat   = trial.suggest_float("energy_reward_sprat", 0.0, 1000.0)
+            energy_cost_cod       = trial.suggest_float("energy_cost_cod",     0.0, 10.0)
+            energy_reward_cod     = trial.suggest_float("energy_reward_cod",   0.0, 1000.0)
+            energy_cost_herring   = trial.suggest_float("energy_cost_herring", 0.0, 10.0)
+            energy_reward_herring = trial.suggest_float("energy_reward_herring", 0.0, 1000.0)
 
-        err = predict_years()
-        return err
-    
-    study = optuna.create_study()
-    study.optimize(objective, n_trials=100)
+            for sp in SPECIES:
+                const.update_energy_params(
+                    sp,
+                    energy_cost_sprat   if sp == "sprat"   else
+                    energy_cost_cod     if sp == "cod"     else
+                    energy_cost_herring,
+                    energy_reward_sprat if sp == "sprat"   else
+                    energy_reward_cod   if sp == "cod"     else
+                    energy_reward_herring,
+                )
 
-    print(study.best_params)
+            def eval_function(callback):
+                print("eval function was called", callback)
+                runner.evaluate(model_paths, callback)
 
+            err = predict_years(eval_function)
+            return err
+
+        sampler = optuna.samplers.TPESampler(multivariate=True, n_startup_trials=10)
+        study = optuna.create_study(sampler=sampler, direction="minimize")
+        study.optimize(objective, n_trials=50)
+
+        out = study.best_params | {"best_value": study.best_value}
+
+        Path("out").mkdir(parents=True, exist_ok=True)
+        with open(f"out/best_params_{i}.json", "w") as f:
+            json.dump(out, f, indent=4)

@@ -14,7 +14,7 @@ SECONDS_IN_DAY = 86400
 class Settings:
     folder: str = "results/default"
 
-    world_size: int = 18
+    world_size: int = 50
     speed_multiplier: float = 1.0
     multiply_death_rate: float = 1.0
     growth_multiplier: float = 1
@@ -26,12 +26,12 @@ class Settings:
     base_fishing_value_herring: float = 0.002651024
     base_fishing_value_sprat: float = 0.002651024
 
-    num_agents: int = 16
-    agent_evaluations: int = 3
-    elitism_selection: int = 8
-    tournament_selectin: int = 4
+    num_agents: int = 36
+    agent_evaluations: int = 4
+    elitism_selection: int = 12
+    tournament_selection: int = 6
     generations_per_run: int = 200
-    mutation_rate: float = 0.1
+    mutation_rate: float = 0.15
     mutation_rate_decay: float = 0.995
     mutation_rate_min: float = 0.01
     max_steps: int = 365 * 5 * 3

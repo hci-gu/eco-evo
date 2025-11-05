@@ -16,7 +16,7 @@ def get_model_path():
     return os.path.join(folder, files[0])
 
 def get_multi_model_paths():
-    folder = "results/2025-10-23_4/agents"
+    folder = "results/2025-10-23_8/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".npy")[0]), reverse=True)
