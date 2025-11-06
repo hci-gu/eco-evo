@@ -9,7 +9,7 @@ from lib.runners.petting_zoo import PettingZooRunner
 from lib.config.settings import load_settings, Settings
 
 def evaluate_model():
-    folder = "results/2025-10-16_7/agents"
+    folder = "results/2025-11-06_pure_behavscore/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".npy")[0]), reverse=True)
@@ -66,23 +66,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Handle Ctrl+C cleanly: exit with code 0 to avoid macOS crash dialog
-    try:
-        evaluate_model()
-        print("Model evaluation completed.")
-    except KeyboardInterrupt:
-        print("Interrupted by user. Shutting down cleanly…")
-        try:
-            plt.ioff()
-            plt.close('all')
-            shutdown_pygame()
-        except Exception:
-            pass
-        sys.exit(0)
+    # try:
+    #     evaluate_model()
+    #     print("Model evaluation completed.")
+    # except KeyboardInterrupt:
+    #     print("Interrupted by user. Shutting down cleanly…")
+    #     try:
+    #         plt.ioff()
+    #         plt.close('all')
+    #         shutdown_pygame()
+    #     except Exception:
+    #         pass
+    #     sys.exit(0)
 
     # profiler = cProfile.Profile()
     # profiler.enable()
 
-    # evaluate_single_model()
     # print(const.FISHING_AMOUNTS)
     # time.sleep(10000)
     # total_elapsed_time = 0
@@ -104,11 +103,3 @@ if __name__ == "__main__":
 
         runner = PettingZooRunner(settings)
         runner.train()
-
-
-
-        
-
-
-    
-

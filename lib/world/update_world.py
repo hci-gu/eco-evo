@@ -12,7 +12,6 @@ class Action(Enum):
     LEFT = 2
     RIGHT = 3
     EAT = 4
-    # REST = 5
 
 def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, actions):
     pad = 1

@@ -3,12 +3,12 @@ from typing import List, Tuple
 import numpy as np
 import random
 
-def elitism_selection(agents: List[Tuple[Model, int]], num_individuals: int) -> List[Tuple[Model, int]]:
+def elitism_selection(agents: List[Tuple[Model, float]], num_individuals: int) -> List[Tuple[Model, int]]:
     """Select the top individuals based on fitness."""
     individuals = sorted(agents, key=lambda x: x[1], reverse=True)
     return individuals[:num_individuals]
 
-def tournament_selection(agents: List[Tuple[Model, int]], num_individuals: int, tournament_size: int) -> List[Tuple[Model, int]]:
+def tournament_selection(agents: List[Tuple[Model, float]], num_individuals: int, tournament_size: int) -> List[Tuple[Model, int]]:
     """Perform tournament selection and return the winners."""
     selected_individuals = []
     for _ in range(num_individuals):
@@ -17,7 +17,7 @@ def tournament_selection(agents: List[Tuple[Model, int]], num_individuals: int, 
         selected_individuals.append(winner)
     return selected_individuals
 
-def sbx_crossover(p1_weights: dict, p2_weights: dict, eta: float = 10.0) -> Tuple[dict, dict]:
+def sbx_crossover(p1_weights: dict, p2_weights: dict, eta: float = 5.0) -> Tuple[dict, dict]:
     """
     Perform Simulated Binary Crossover (SBX) on two sets of weights.
     eta: distribution index (larger => children closer to parents).

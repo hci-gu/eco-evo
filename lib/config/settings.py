@@ -14,7 +14,7 @@ SECONDS_IN_DAY = 86400
 class Settings:
     folder: str = "results/default"
 
-    world_size: int = 50
+    world_size: int = 18
     speed_multiplier: float = 1.0
     multiply_death_rate: float = 1.0
     growth_multiplier: float = 1
@@ -26,15 +26,19 @@ class Settings:
     base_fishing_value_herring: float = 0.002651024
     base_fishing_value_sprat: float = 0.002651024
 
-    num_agents: int = 36
-    agent_evaluations: int = 4
-    elitism_selection: int = 12
-    tournament_selection: int = 6
+    num_agents: int = 24
+    agent_evaluations: int = 3
+    elitism_selection: int = 6
+    tournament_selection: int = 3
     generations_per_run: int = 200
-    mutation_rate: float = 0.15
-    mutation_rate_decay: float = 0.995
-    mutation_rate_min: float = 0.01
-    max_steps: int = 365 * 5 * 3
+    mutation_rate: float = 0.12
+    mutation_rate_decay: float = 0.996
+    mutation_rate_min: float = 0.02
+
+    sbx_eta: float = 5.0
+    sbx_eta_decay: float = 1.025
+    max_steps: int = 365 * 3 * 3
+    # max_steps: int = 1
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1
@@ -44,7 +48,7 @@ class Settings:
     @property
     def steps_per_day(self) -> int:
         DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
-        return (DAYS_TO_CROSS_MAP / self.world_size) * self.speed_multiplier
+        return (DAYS_TO_CROSS_MAP / 50) * self.speed_multiplier
 
 def _coerce(value: str, target_type):
     """Coerce string env values to the dataclass field type."""

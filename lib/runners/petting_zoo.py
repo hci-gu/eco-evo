@@ -155,9 +155,14 @@ class PettingZooRunner():
             elites = evolution.elitism_selection(current_population, self.settings.elitism_selection)
             next_pop = []
 
-            while len(next_pop) < self.settings.num_agents:
+            next_gen_agents = self.settings.num_agents - 1
+            if (self.current_generation < 25):
+                next_gen_agents = self.settings.num_agents - 1 - 2
+
+            while len(next_pop) < next_gen_agents:
                 (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, self.settings.tournament_selection)
-                c1_weights, c2_weights = evolution.sbx_crossover(p1, p2)
+                current_eta = min(10.0, self.settings.sbx_eta * (self.settings.sbx_eta_decay ** self.current_generation))
+                c1_weights, c2_weights = evolution.sbx_crossover(p1, p2, current_eta)
                 current_mutation_rate = max(self.settings.mutation_rate_min, self.settings.mutation_rate * (self.settings.mutation_rate_decay ** self.current_generation))
                 evolution.mutation(c1_weights, current_mutation_rate, current_mutation_rate)
                 evolution.mutation(c2_weights, current_mutation_rate, current_mutation_rate)
@@ -166,16 +171,21 @@ class PettingZooRunner():
 
             # Update best fitness/agent.
             best_for_species = max(current_population, key=lambda x: x[1])
-            if best_for_species[1] > self.best_fitness[species]:
+            if best_for_species[1] > self.best_fitness[species] + 0.01:
                 self.best_fitness[species] = best_for_species[1]
                 self.best_agent[species] = best_for_species[0]
-                model = Model(chromosome=fittest_agent[0])
+                model = Model(chromosome=self.best_agent[species])
                 model.save(f'{self.settings.folder}/agents/{self.current_generation}_${species}_{self.best_fitness[species]}.npy')
 
             # add best agent to the population
             next_pop.append(self.best_agent[species])
+
             new_population[species] = [Model(chromosome=chrom) for chrom in next_pop]
         
+            if (self.current_generation < 25):
+                new_population[species].append(Model())
+                new_population[species].append(Model())
+                
         for species in self.species_list:
             # shuffle the population
             random.shuffle(new_population[species])
@@ -187,15 +197,14 @@ class PettingZooRunner():
         fitnesses = self.evaluate_population()
         self.current_generation += 1
         print(f"Generation {self.current_generation} complete. Fitnesses: { {sp: max(fit, key=lambda x: x[1])[1] for sp, fit in fitnesses.items()} }")
-        print(self.env.plot_data.keys())
         generations_data = update_generations_data(self.settings, self.current_generation, self.env.plot_data)
         plot_generations(self.settings, generations_data)
         self.env.plot_data = {}
         # Evolve the population based on fitnesses.
         self.evolve_population(fitnesses)
 
-    def train(self, generations=100):
-        for i in range(generations):
+    def train(self):
+        for i in range(self.settings.generations_per_run):
             self.run_generation()
             # if i > 25 and i % 5 == 0:
             #     self.optimize_params()

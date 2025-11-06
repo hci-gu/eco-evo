@@ -12,7 +12,7 @@ from lib.environments.petting_zoo import observe
 from lib.config.const import SPECIES
 from lib.config.settings import Settings
 from lib.config.species import SpeciesMap
-from lib.model import Model, MODEL_OFFSETS, INPUT_SIZE, OUTPUT_SIZE
+from lib.model import Model, MODEL_OFFSETS, SINGLE_CELL_INPUT, OUTPUT_SIZE
 
 # Define the Action enum
 class Action(Enum):
@@ -22,34 +22,38 @@ class Action(Enum):
     RIGHT = 3
     EAT = 4
 
-ACTION_ORDER = [Action.LEFT, Action.RIGHT, Action.UP, Action.DOWN, Action.EAT]
+ACTION_ORDER = [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT, Action.EAT]
 
 def take_step(settings: Settings, species_map: SpeciesMap, world, world_data, species, actions):
-    movement_deltas = all_movement_delta(species_map, world, world_data, species, actions)
+    pad = 1
+    world_shape = world.shape[:2]
+    interior_shape = (world_shape[0] - 2 * pad, world_shape[1] - 2 * pad)
+
+    if actions.shape[:2] == world_shape:
+        action_grid = actions[pad:-pad, pad:-pad, :]
+    elif actions.shape[:2] == interior_shape:
+        action_grid = actions
+    else:
+        raise ValueError(
+            f"Action grid shape {actions.shape[:2]} does not match world shape {world_shape} or interior shape {interior_shape}"
+        )
+
+    movement_deltas = all_movement_delta(species_map, world, world_data, species, action_grid)
     apply_movement_delta(species_map, world, species, movement_deltas)
-    matrix_perform_eating(settings, species_map, world, species, actions)
+    matrix_perform_eating(settings, species_map, world, species, action_grid)
 
 def get_action(candidate, world):
     obs = observe(world)
-
-    # single species
-    return candidate.forward(obs.reshape(-1, 135)).reshape(3, 3, 5)
+    num_patches = obs.shape[0]
+    flat_obs = obs.reshape(num_patches, -1)
+    inner_height = world.shape[0] - 2
+    inner_width = world.shape[1] - 2
+    return candidate.forward(flat_obs).reshape(inner_height, inner_width, OUTPUT_SIZE)
 
 # ------------------------------ HERRING ------------------------------------
 def scenario_1():
     """Herring moves LEFT toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
-    world_data = np.zeros((3, 3, 5), dtype=np.float32)
-    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
-
-    world[1, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10
-    world[1, 0, MODEL_OFFSETS["plankton"]["biomass"]] = 10
-    return world, world_data
-
-
-def scenario_2():
-    """Herring moves UP toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -58,20 +62,20 @@ def scenario_2():
     return world, world_data
 
 
-def scenario_3():
-    """Herring moves RIGHT toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+def scenario_2():
+    """Herring moves UP toward Plankton."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10
-    world[1, 2, MODEL_OFFSETS["plankton"]["biomass"]] = 10
+    world[1, 0, MODEL_OFFSETS["plankton"]["biomass"]] = 10
     return world, world_data
 
 
-def scenario_4():
-    """Herring moves DOWN toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+def scenario_3():
+    """Herring moves RIGHT toward Plankton."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -80,9 +84,20 @@ def scenario_4():
     return world, world_data
 
 
+def scenario_4():
+    """Herring moves DOWN toward Plankton."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
+    world_data = np.zeros((3, 3, 5), dtype=np.float32)
+    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
+
+    world[1, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10
+    world[1, 2, MODEL_OFFSETS["plankton"]["biomass"]] = 10
+    return world, world_data
+
+
 def scenario_5():
     """Herring EATS Plankton when co-located."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -93,42 +108,42 @@ def scenario_5():
 
 def scenario_6():
     """Herring chooses the NEAREST of two Plankton, moves LEFT."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10
-    world[1, 0, MODEL_OFFSETS["plankton"]["biomass"]] = 10  # nearer
-    world[0, 2, MODEL_OFFSETS["plankton"]["biomass"]] = 10  # further
+    world[0, 1, MODEL_OFFSETS["plankton"]["biomass"]] = 10  # nearer
+    world[2, 2, MODEL_OFFSETS["plankton"]["biomass"]] = 10  # further
     return world, world_data
 
 
 def scenario_7():
     """Herring FLEES Cod to the RIGHT or DOWN (any away)."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10
     # threatening Cod on left
-    world[1, 0, MODEL_OFFSETS["cod"]["biomass"]] = 10
+    world[0, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_8():
     """Herring FLEES Cod located ABOVE, expected DOWN."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10
-    world[0, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
+    world[1, 0, MODEL_OFFSETS["cod"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_9():
     """Herring FLEES Cod when sharing a cell (any non-EAT movement)."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -140,7 +155,7 @@ def scenario_9():
 
 def scenario_10():
     """Herring EATS immediately when Plankton & Cod absent."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -152,18 +167,7 @@ def scenario_10():
 
 def scenario_11():
     """Sprat moves LEFT toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
-    world_data = np.zeros((3, 3, 5), dtype=np.float32)
-    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
-
-    world[1, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
-    world[1, 0, MODEL_OFFSETS["plankton"]["biomass"]] = 10
-    return world, world_data
-
-
-def scenario_12():
-    """Sprat moves UP toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -172,20 +176,20 @@ def scenario_12():
     return world, world_data
 
 
-def scenario_13():
-    """Sprat moves RIGHT toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+def scenario_12():
+    """Sprat moves UP toward Plankton."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
-    world[1, 2, MODEL_OFFSETS["plankton"]["biomass"]] = 10
+    world[1, 0, MODEL_OFFSETS["plankton"]["biomass"]] = 10
     return world, world_data
 
 
-def scenario_14():
-    """Sprat moves DOWN toward Plankton."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+def scenario_13():
+    """Sprat moves RIGHT toward Plankton."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -194,9 +198,20 @@ def scenario_14():
     return world, world_data
 
 
+def scenario_14():
+    """Sprat moves DOWN toward Plankton."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
+    world_data = np.zeros((3, 3, 5), dtype=np.float32)
+    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
+
+    world[1, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
+    world[1, 2, MODEL_OFFSETS["plankton"]["biomass"]] = 10
+    return world, world_data
+
+
 def scenario_15():
     """Sprat EATS Plankton when co-located."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -207,41 +222,41 @@ def scenario_15():
 
 def scenario_16():
     """Sprat FLEES Cod to LEFT/UP/DOWN (choose any safe)."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
-    world[1, 2, MODEL_OFFSETS["cod"]["biomass"]] = 10
+    world[2, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_17():
     """Sprat FLEES Cod ABOVE (expected DOWN)."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
-    world[0, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
+    world[1, 0, MODEL_OFFSETS["cod"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_18():
     """Sprat chooses NEAREST of two Plankton (expected LEFT)."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
-    world[1, 0, MODEL_OFFSETS["plankton"]["biomass"]] = 10
+    world[0, 1, MODEL_OFFSETS["plankton"]["biomass"]] = 10
     world[2, 2, MODEL_OFFSETS["plankton"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_19():
     """Sprat EATS when energy low and food present."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -253,42 +268,20 @@ def scenario_19():
 
 def scenario_20():
     """Sprat FLEES TWO Cod (one same cell, one adjacent)."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
     world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
-    world[0, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
+    world[1, 0, MODEL_OFFSETS["cod"]["biomass"]] = 10
     return world, world_data
 
 # ------------------------------ COD ----------------------------------------
 
 def scenario_21():
     """Cod moves LEFT toward Herring."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
-    world_data = np.zeros((3, 3, 5), dtype=np.float32)
-    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
-
-    world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
-    world[1, 0, MODEL_OFFSETS["herring"]["biomass"]] = 10
-    return world, world_data
-
-
-def scenario_22():
-    """Cod moves RIGHT toward Sprat."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
-    world_data = np.zeros((3, 3, 5), dtype=np.float32)
-    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
-
-    world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
-    world[1, 2, MODEL_OFFSETS["sprat"]["biomass"]] = 10
-    return world, world_data
-
-
-def scenario_23():
-    """Cod moves UP toward Herring."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -297,9 +290,9 @@ def scenario_23():
     return world, world_data
 
 
-def scenario_24():
-    """Cod moves DOWN toward Sprat."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+def scenario_22():
+    """Cod moves RIGHT toward Sprat."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -308,9 +301,31 @@ def scenario_24():
     return world, world_data
 
 
+def scenario_23():
+    """Cod moves UP toward Herring."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
+    world_data = np.zeros((3, 3, 5), dtype=np.float32)
+    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
+
+    world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
+    world[1, 0, MODEL_OFFSETS["herring"]["biomass"]] = 10
+    return world, world_data
+
+
+def scenario_24():
+    """Cod moves DOWN toward Sprat."""
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
+    world_data = np.zeros((3, 3, 5), dtype=np.float32)
+    world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
+
+    world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
+    world[1, 2, MODEL_OFFSETS["sprat"]["biomass"]] = 10
+    return world, world_data
+
+
 def scenario_25():
     """Cod EATS Sprat when co-located."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -321,55 +336,55 @@ def scenario_25():
 
 def scenario_26():
     """Cod chooses NEAREST of multiple prey, LEFT toward Herring."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
     # nearer Herring left
-    world[1, 0, MODEL_OFFSETS["herring"]["biomass"]] = 10
+    world[0, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10
     # farther Sprat up-right
-    world[0, 2, MODEL_OFFSETS["sprat"]["biomass"]] = 10
+    world[2, 0, MODEL_OFFSETS["sprat"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_27():
     """Cod moves RIGHT when prey diagonal but right-closest Sprat."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
-    world[0, 2, MODEL_OFFSETS["sprat"]["biomass"]] = 10
+    world[2, 0, MODEL_OFFSETS["sprat"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_28():
     """Cod FOLLOWS tailing Herring DOWN."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
-    world[0, 1, MODEL_OFFSETS["herring"]["biomass"]] = 10  # prey ahead
+    world[1, 2, MODEL_OFFSETS["herring"]["biomass"]] = 10  # prey ahead
     world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10  # cod centre
     return world, world_data
 
 
 def scenario_29():
     """Cod FLEES bigger Cod? (self) — Not applicable, instead stays chasing SPRAT LEFT."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
     world[1, 1, MODEL_OFFSETS["cod"]["biomass"]] = 10
-    world[1, 0, MODEL_OFFSETS["sprat"]["biomass"]] = 10
-    world[0, 2, MODEL_OFFSETS["herring"]["biomass"]] = 10
+    world[0, 1, MODEL_OFFSETS["sprat"]["biomass"]] = 10
+    world[2, 0, MODEL_OFFSETS["herring"]["biomass"]] = 10
     return world, world_data
 
 
 def scenario_30():
     """Cod EATS Herring when energy low."""
-    world = np.zeros((3, 3, INPUT_SIZE), dtype=np.float32)
+    world = np.zeros((3, 3, SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((3, 3, 5), dtype=np.float32)
     world[..., :3] = np.array([0, 1, 0], dtype=np.float32)
 
@@ -390,8 +405,8 @@ SCENARIOS = [
     {"name": "Herring moves DOWN toward Plankton", "creator": scenario_4, "species": "herring", "expected_actions": [Action.DOWN]},
     {"name": "Herring eats Plankton present", "creator": scenario_5, "species": "herring", "expected_actions": [Action.EAT]},
     {"name": "Herring chooses nearest Plankton LEFT", "creator": scenario_6, "species": "herring", "expected_actions": [Action.LEFT]},
-    {"name": "Herring flees Cod on LEFT", "creator": scenario_7, "species": "herring", "expected_actions": [Action.RIGHT, Action.DOWN]},
-    {"name": "Herring flees Cod ABOVE", "creator": scenario_8, "species": "herring", "expected_actions": [Action.DOWN]},
+    {"name": "Herring flees Cod on LEFT", "creator": scenario_7, "species": "herring", "expected_actions": [Action.RIGHT, Action.DOWN, Action.UP]},
+    {"name": "Herring flees Cod ABOVE", "creator": scenario_8, "species": "herring", "expected_actions": [Action.DOWN, Action.LEFT, Action.RIGHT]},
     {"name": "Herring flees Cod same cell", "creator": scenario_9, "species": "herring", "expected_actions": [Action.LEFT, Action.RIGHT, Action.UP, Action.DOWN]},
     {"name": "Herring eats when safe", "creator": scenario_10, "species": "herring", "expected_actions": [Action.EAT]},
 
@@ -402,7 +417,7 @@ SCENARIOS = [
     {"name": "Sprat moves DOWN toward Plankton", "creator": scenario_14, "species": "sprat", "expected_actions": [Action.DOWN]},
     {"name": "Sprat eats Plankton present", "creator": scenario_15, "species": "sprat", "expected_actions": [Action.EAT]},
     {"name": "Sprat flees Cod RIGHT", "creator": scenario_16, "species": "sprat", "expected_actions": [Action.LEFT, Action.UP, Action.DOWN]},
-    {"name": "Sprat flees Cod ABOVE", "creator": scenario_17, "species": "sprat", "expected_actions": [Action.DOWN]},
+    {"name": "Sprat flees Cod ABOVE", "creator": scenario_17, "species": "sprat", "expected_actions": [Action.DOWN, Action.LEFT, Action.RIGHT]},
     {"name": "Sprat chooses nearest Plankton LEFT", "creator": scenario_18, "species": "sprat", "expected_actions": [Action.LEFT]},
     {"name": "Sprat eats when energy low", "creator": scenario_19, "species": "sprat", "expected_actions": [Action.EAT]},
     {"name": "Sprat flees multiple Cod", "creator": scenario_20, "species": "sprat", "expected_actions": [Action.LEFT, Action.RIGHT, Action.UP, Action.DOWN]},
@@ -450,7 +465,9 @@ def run_all_scenarios(settings: Settings, species_map: SpeciesMap, model, specie
 
         # Get the model's predicted probability vector.
         actions = get_action(model, world)
-        action = actions[1, 1, :]  # Center cell action probabilities
+        center_y = actions.shape[0] // 2
+        center_x = actions.shape[1] // 2
+        action = actions[center_y, center_x, :]
 
         # --- Score Calculation ---
         expected = scenario.get("expected_actions", [])
@@ -459,7 +476,7 @@ def run_all_scenarios(settings: Settings, species_map: SpeciesMap, model, specie
         total_score += score
 
         # Apply the action to update the world.
-        # take_step(settings, species_map, world, world_data, scenario["species"], actions)
+        take_step(settings, species_map, world, world_data, scenario["species"], actions)
 
         if not visualize:
             continue
@@ -481,7 +498,7 @@ def run_all_scenarios(settings: Settings, species_map: SpeciesMap, model, specie
                     for i, species in enumerate(SPECIES):
                         offsets = MODEL_OFFSETS[species]
                         props = species_map[species]
-                        biomass = world[y, x, offsets["biomass"]]
+                        biomass = world[x, y, offsets["biomass"]]
                         if biomass > 0:
                             radius = 0.3 * (biomass / max_biomass)
                             offset_angle = 2 * np.pi * (i / len(SPECIES))
@@ -512,5 +529,3 @@ def run_all_scenarios(settings: Settings, species_map: SpeciesMap, model, specie
         plt.show()
 
     return total_score
-
-

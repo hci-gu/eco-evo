@@ -16,7 +16,7 @@ def get_model_path():
     return os.path.join(folder, files[0])
 
 def get_multi_model_paths():
-    folder = "results/2025-10-23_8/agents"
+    folder = "results/2025-11-06_pure_behavscore/agents"
     files = os.listdir(folder)
     files = [f for f in files if f.endswith(".npy.npz")]
     files.sort(key=lambda f: float(f.split("_")[2].split(".npy")[0]), reverse=True)
@@ -54,5 +54,5 @@ if __name__ == "__main__":
         candidate = Model(
             chromosome=np.load(model['path'])
         )
-        print("model_path", model['path'])
+        print("model_path", model['path'], "SPECIES:", model['species'])
         run_all_scenarios(settings, species_map, candidate, model['species'], False)

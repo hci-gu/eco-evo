@@ -1,7 +1,8 @@
+from enum import Enum
 import numpy as np
 import lib.config.const as const
 
-HIDDEN_SIZE = 64
+HIDDEN_SIZE = 48
 OUTPUT_SIZE = 5
 
 MODEL_OFFSETS = {
@@ -39,6 +40,13 @@ MODEL_OFFSETS["smell_range"] = [
 SINGLE_CELL_INPUT = 3 + len(const.SPECIES) * 3
 INPUT_SIZE = SINGLE_CELL_INPUT * 9  # 3x3 grid of cells
 
+class Action(Enum):
+    UP = 0
+    DOWN = 1
+    LEFT = 2
+    RIGHT = 3
+    EAT = 4
+
 class Model:
     def __init__(self, input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE, output_size=OUTPUT_SIZE, chromosome=None):
         if chromosome is not None:
@@ -61,6 +69,17 @@ class Model:
         softmax_output = exp_vals / np.sum(exp_vals, axis=1, keepdims=True)
 
         return softmax_output
+    
+    def hardcoded_single_action(self, x):
+        """
+        A hardcoded action function for testing purposes.
+        Always returns the action '2' (which could represent 'stay still').
+        """
+        batch_size = x.shape[0]
+        actions = np.full((batch_size, OUTPUT_SIZE), 0.0, dtype=np.float32)
+        actions[:, Action.UP.value] = 0.9  # Set action '2' to have probability 1
+        actions[:, Action.DOWN.value] = 0.1  # Set action '2' to have probability 1
+        return actions
 
     def set_weights(self, chromosome):
         self.fc1_weight = np.ascontiguousarray(chromosome["fc1_weight"], dtype=np.float32)
