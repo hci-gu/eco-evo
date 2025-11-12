@@ -1,0 +1,63 @@
+name: eco-evo-mixed
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  # Python: choose 3.11 for newer libs while keeping numba/gym/torch stable
+  - python=3.11
+
+  # Core numeric / scientific
+  - numpy>=1.26.4,<3
+  - scipy>=1.15.2,<1.16
+  - numba
+
+  # Visualization
+  - matplotlib>=3.9.2,<3.10
+  - seaborn
+
+  # Simulation / physics / env
+  - gymnasium>=1.0.0,<1.1
+  - pettingzoo>=1.24.3,<1.25
+  - stable-baselines3>=2.5.0,<2.6
+  - swig>=4.3.0,<4.4
+  - box2d-py>=2.3.8,<2.4
+
+  # PyTorch stack
+  - pytorch>=2.3.1,<2.4
+  - torchvision>=0.17
+  - torchinfo
+
+  # Math / noise / generation
+  - opensimplex>=0.4.5,<0.5
+  - noise>=1.2.2,<1.3
+
+  # Media / IO
+  - ffmpeg
+  - opencv
+
+  # Web / API
+  - flask>=3.1.0,<3.2
+  - flask-cors>=4.0.0,<4.1
+
+  # Utilities / logging / misc
+  - tensorboard
+  - click
+  - debugpy
+  - pyyaml
+  - bidict
+
+  # Others
+  - pygame>=2.6.0,<2.7
+  - pip
+
+  - pip:
+      # RL + env helpers
+      - supersuit
+      - sb3-contrib>=2.3
+      - gymnasium[atari]
+      - ale-py
+      - autorom
+      - autorom.accept-rom-license
+
+      # Audio (wheel recommended for newer MPS/CUDA)
+      - torchaudio>=2.2
