@@ -6,6 +6,7 @@ import signal
 import matplotlib.pyplot as plt
 from lib.visualize import shutdown_pygame
 from lib.runners.petting_zoo import PettingZooRunner
+from lib.runners.pbm import PBMRunner
 from lib.config.settings import load_settings, Settings
 
 def evaluate_model():
@@ -31,6 +32,39 @@ def evaluate_model():
     runner = PettingZooRunner(settings, render_mode="human")
     try:
         runner.evaluate(model_paths)
+    finally:
+        # Ensure UI resources are closed even on Ctrl+C
+        try:
+            runner.env.close()
+        except Exception:
+            pass
+        try:
+            plt.ioff()
+            plt.close('all')
+        except Exception:
+            pass
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    return elapsed_time
+
+def evaluate_pbm_model():
+    folder = "results/2025-11-12_PBM/agents"
+    files = os.listdir(folder)
+    files = [f for f in files if f.endswith(".npy.npz")]
+    files.sort(key=lambda f: float(f.split("_")[1].split(".npy")[0]), reverse=True)
+    
+    # Take only the highest fitness model
+    best_model = files[0]
+    model_path = os.path.join(folder, best_model)
+
+    start_time = time.time()
+    settings = Settings()
+    runner = PBMRunner(settings)
+    try:
+        def callback(info, b, c):
+            print(info)    
+
+        runner.evaluate(model_path, callback=callback)
     finally:
         # Ensure UI resources are closed even on Ctrl+C
         try:
@@ -92,14 +126,16 @@ if __name__ == "__main__":
     # average_elapsed_time = total_elapsed_time / 5
     # print(f"Average elapsed time: {average_elapsed_time:.2f} seconds")
 
+    evaluate_pbm_model()
+
     # Load config files
-    config_files = load_config_files(args.config_folder)
+    # config_files = load_config_files(args.config_folder)
 
-    print("Running simulation with the following config files:" + str(config_files))
-    time.sleep(2)
+    # print("Running simulation with the following config files:" + str(config_files))
+    # time.sleep(2)
 
-    for config_file in config_files:
-        settings = load_settings(config_file)
+    # for config_file in config_files:
+    #     settings = load_settings(config_file)
 
-        runner = PettingZooRunner(settings)
-        runner.train()
+    #     runner = PBMRunner(settings)
+    #     runner.train()

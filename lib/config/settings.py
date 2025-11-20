@@ -14,11 +14,11 @@ SECONDS_IN_DAY = 86400
 class Settings:
     folder: str = "results/default"
 
-    world_size: int = 18
+    world_size: int = 100
     speed_multiplier: float = 1.0
     multiply_death_rate: float = 1.0
     growth_multiplier: float = 1
-    min_percent_alive: float = 0.2
+    min_percent_alive: float = 0.01
     max_percent_alive: float = 4.0
     max_years: int = 5
     scale_fishing: float = 0.0
@@ -26,7 +26,7 @@ class Settings:
     base_fishing_value_herring: float = 0.002651024
     base_fishing_value_sprat: float = 0.002651024
 
-    num_agents: int = 24
+    num_agents: int = 16
     agent_evaluations: int = 3
     elitism_selection: int = 6
     tournament_selection: int = 3
@@ -37,8 +37,8 @@ class Settings:
 
     sbx_eta: float = 5.0
     sbx_eta_decay: float = 1.025
-    max_steps: int = 365 * 3 * 3
-    # max_steps: int = 1
+    # max_steps: int = 365 * 3 * 3
+    max_steps: int = 3000
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1
@@ -65,7 +65,7 @@ def _coerce(value: str, target_type):
     # default: string (paths are fine as str)
     return value
 
-def load_settings(file_path: str | None = None) -> Settings:
+def load_settings(file_path: str = None) -> Settings:
     file_name = os.path.basename(file_path).split(".")[0]
 
     folder = f"results/{file_name}"

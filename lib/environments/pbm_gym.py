@@ -63,7 +63,7 @@ def load_vecenv(file_name, venv):
                 # clip_obs=vec_normalize.clip_obs,
                 # clip_reward=vec_normalize.clip_reward,
                 # gamma=vec_normalize.gamma,
-                # epsilon=vec_normalize.epsilon,
+                # epsilon=vec_normalize.epsil
                 # use_sde=vec_normalize.use_sde,
                 # use_sde_at_warmup=vec_normalize.use_sde_at_warmup,
             )
@@ -87,7 +87,7 @@ def load_vecenv(file_name, venv):
 
 
 class PbmEnv(gym.Env):
-    MAX_STEPS = 254
+    MAX_STEPS = 5000
 
     # def __init__(self, grid_shape=(10, 10), seed=None) -> None:
     def __init__(self, **kwargs):
@@ -199,13 +199,6 @@ class PbmEnv(gym.Env):
         # )
 
         self.n_steps += 1
-        if False:
-            if self.n_steps and self.n_steps % 100 == 0:
-                print(
-                    f"System: {self.n_steps} steps, FGs alive: {np.nonzero(self._env.total_pop)[0].tolist()}"
-                )
-            if self.n_steps > self.MAX_STEPS:
-                print(f"Done @{self.n_steps}!")
         info = self.generate_info()
         return obs, reward, terminated, self.n_steps > self.MAX_STEPS, info
 

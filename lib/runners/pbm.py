@@ -17,13 +17,24 @@ class PBMRunner():
     def __init__(self, settings: Settings, render_mode="none"):
         self.env = env_factory()
         self.settings = settings
-        self.env.reset()
+        self._grid_shape = None
+        self._grid_cell_count = None
+        self._action_space_shape = None
+        self._per_cell_action_dim = None
+        self._action_batch_dim = None
+        self._configure_action_geometry()
+        initial_reset = self.env.reset()
+        initial_obs = initial_reset[0] if isinstance(initial_reset, tuple) else initial_reset
+        self._flat_obs_dim = self._flatten_obs(initial_obs).shape[1]
         self.current_generation = 0
 
         # Use all species in the simulation (including plankton, if desired).
         self.species_list = [species for species in const.ACTING_SPECIES]
         # Create a population for each species.
-        self.population = [Model() for _ in range(self.settings.num_agents)]
+        self.population = [
+            Model(input_size=self._flat_obs_dim, output_size=self._per_cell_action_dim)
+            for _ in range(self.settings.num_agents)
+        ]
         # Track best fitness and best model for each species.
         self.best_fitness = -float('inf')
         self.best_agent = None
@@ -32,7 +43,9 @@ class PBMRunner():
         self.plot_data = {}
 
     def run(self, candidate, seed = None, is_evaluation = False, callback = noop):
-        obs = self.env.reset(seed=seed)
+        reset_output = self.env.reset(seed=seed)
+        obs = reset_output[0] if isinstance(reset_output, tuple) else reset_output
+        flat_obs = self._flatten_obs(obs)
         steps = 0
         episode_length = 0
         fitness = 0
@@ -43,13 +56,10 @@ class PBMRunner():
 
         while not env_terminated and not env_truncated and episode_length < self.settings.max_steps:
             steps += 1
-            # action = candidate.forward(obs.reshape(-1, 135))
-            # obs, reward, termination, truncation, info = self.env.step(action)
-            # action_values = action_values.reshape(self.settings.world_size, self.settings.world_size, 5)
-            # mean_action_values = action_values.mean(axis=(0, 1))
-            print(obs)
-            action = candidate.forward(obs)
-            obs, reward, terminated, truncated, _ = self.env.step(action)
+            action_values = candidate.forward(flat_obs)
+            action = self._reshape_action(action_values)
+            obs, reward, terminated, truncated, infos = self.env.step(action)
+            flat_obs = self._flatten_obs(obs)
             env_terminated = terminated
             env_truncated = truncated
             
@@ -62,11 +72,82 @@ class PBMRunner():
                     'eval_index': self.eval_index,
                     'step': episode_length,
                 }, self.plot_data)
-            callback(None, fitness, False)
+            callback(infos, fitness, False)
         
         print("end of simulation", fitness, episode_length)
         callback(None, fitness, True)
         return fitness, episode_length, None
+
+    def _flatten_obs(self, obs):
+        """
+        Convert PBM observations (which may include channel-first tensors or nested tuples)
+        into a 2D array shaped (num_cells, features) expected by the simple Model.
+        """
+        if isinstance(obs, tuple):
+            obs = obs[0]
+        obs_array = np.asarray(obs, dtype=np.float32)
+        grid_shape = tuple(self._grid_shape) if self._grid_shape is not None else None
+        grid_cells = self._grid_cell_count
+
+        if obs_array.ndim == 3:
+            if grid_shape and obs_array.shape[1:] == grid_shape:
+                # Channel-first (C, H, W) -> (H, W, C)
+                obs_array = np.moveaxis(obs_array, 0, -1)
+            elif grid_shape and obs_array.shape[:2] != grid_shape:
+                raise ValueError(f"Unexpected observation shape {obs_array.shape} for grid {grid_shape}")
+
+        if obs_array.ndim >= 4 and grid_shape and obs_array.shape[:2] != grid_shape:
+            raise ValueError(f"Unexpected high-dimensional observation shape {obs_array.shape}")
+
+        if grid_cells is not None:
+            try:
+                return obs_array.reshape(grid_cells, -1)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Failed to reshape observation of shape {obs_array.shape} into ({grid_cells}, -1)"
+                ) from exc
+
+        if obs_array.ndim == 2:
+            return obs_array
+
+        return obs_array.reshape(obs_array.shape[0], -1)
+
+    def _configure_action_geometry(self):
+        shape = getattr(self.env.action_space, "shape", None)
+        if shape is None:
+            raise ValueError("PBM environment must expose a Box action space.")
+
+        self._action_space_shape = shape
+        if len(shape) == 3:
+            self._action_batch_dim = None
+            self._grid_shape = tuple(shape[:2])
+            self._per_cell_action_dim = shape[2]
+        elif len(shape) == 4:
+            self._action_batch_dim = shape[0]
+            self._grid_shape = tuple(shape[1:3])
+            self._per_cell_action_dim = shape[3]
+        else:
+            raise ValueError(f"Unsupported action space shape: {shape}")
+
+        if self._action_batch_dim not in (None, 1):
+            raise ValueError("PBMRunner currently supports only a single environment batch dimension.")
+
+        self._grid_cell_count = int(np.prod(self._grid_shape))
+
+    def _reshape_action(self, action_values):
+        action_array = np.asarray(action_values, dtype=np.float32)
+        try:
+            action_array = action_array.reshape(self._grid_cell_count, self._per_cell_action_dim)
+        except ValueError as exc:
+            raise ValueError(
+                f"Model output shape {action_array.shape} does not match expected "
+                f"({self._grid_cell_count}, {self._per_cell_action_dim})"
+            ) from exc
+
+        reshaped = action_array.reshape(*self._grid_shape, self._per_cell_action_dim)
+        if self._action_batch_dim:
+            reshaped = reshaped[np.newaxis, ...]
+        return reshaped
 
     def evaluate_population(self):
         """
@@ -131,8 +212,6 @@ class PBMRunner():
 
         # Update best fitness/agent.
         best_for_species = max(current_population, key=lambda x: x[1])
-        print("Best for species: ")
-        print(best_for_species)
         if best_for_species[1] > self.best_fitness + 0.01:
             self.best_fitness = best_for_species[1]
             self.best_agent = best_for_species[0]
@@ -145,8 +224,12 @@ class PBMRunner():
         new_population = [Model(chromosome=chrom) for chrom in next_pop]
     
         if (self.current_generation < 25):
-            new_population.append(Model())
-            new_population.append(Model())
+            new_population.append(
+                Model(input_size=self._flat_obs_dim, output_size=self._per_cell_action_dim)
+            )
+            new_population.append(
+                Model(input_size=self._flat_obs_dim, output_size=self._per_cell_action_dim)
+            )
 
         random.shuffle(new_population)
 
@@ -156,7 +239,7 @@ class PBMRunner():
         # Evaluate the current population.
         fitnesses = self.evaluate_population()
         self.current_generation += 1
-        print(f"Generation {self.current_generation} complete. Fitnesses: {fitnesses}")
+        print(f"Generation {self.current_generation} complete")
         generations_data = update_generations_data(self.settings, self.current_generation, self.plot_data)
         plot_generations(self.settings, generations_data)
         self.env.plot_data = {}
@@ -170,12 +253,10 @@ class PBMRunner():
             #     self.optimize_params()
             # Optionally, save best models or log additional statistics.
 
-    def evaluate(self, model_paths = [], callback = noop):
-        candidates = {}
-        for model_path in model_paths:
-            model = Model(
-                chromosome=np.load(model_path['path'])
-            )
-            candidates[model_path['species']] = model
+    def evaluate(self, model_path = '', callback = noop):
+        print(f"Evaluating PBM model from {model_path}")
+        model = Model(
+            chromosome=np.load(model_path)
+        )
 
-        return self.run(candidates, "cod", None, True, callback)
+        return self.run(model, None, True, callback)

@@ -123,6 +123,9 @@ class raw_env(AECEnv):
             spawn_plankton(self.species_map, self.world, self.world_data)
             # if self.num_moves % 20 == 0:
             #     randomwalk_plankton(self.world, self.world_data)
+            
+            for i in self.agents:
+                self.observations[i] = self.observe(i)
         else:
             self.state[agent] = action
 
@@ -137,6 +140,7 @@ class raw_env(AECEnv):
             alive, reason = world_is_alive(self.settings, self.species_map, self.world)
             if not alive:
                 self.reason = reason
+                print(f"[PettingZoo] Terminating: {reason}")
                 # Abort simulation by terminating all agents.
                 for ag in self.agents:
                     self.terminations[ag] = True
