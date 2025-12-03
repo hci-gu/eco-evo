@@ -1,9 +1,21 @@
+import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import numpy as np
 from lib.config.settings import Settings
 from lib.config.species import build_species_map
 import matplotlib.pyplot as plt
 import itertools
 import copy
+
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Simulation Config ---
 STEPS = 500

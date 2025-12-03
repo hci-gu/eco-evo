@@ -9,7 +9,7 @@ shift relative to the baseline.
 Example usage
 -------------
 
-  python biomass_stability_test.py \
+  python run_script.py biomass_stability \
       --model-dir results/2025-10-23_8/agents \
       --baseline-runs 5 \
       --warmup-steps 50 \
@@ -18,9 +18,20 @@ Example usage
 
 from __future__ import annotations
 
+import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 import argparse
 import math
-import os
 import random
 import re
 from dataclasses import dataclass, replace

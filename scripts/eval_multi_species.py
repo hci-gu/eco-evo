@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import numpy as np
 import matplotlib.pyplot as plt
 from stable_baselines3 import PPO
@@ -7,6 +15,9 @@ from lib.environments.petting_zoo import env as petting_zoo_env
 from lib.config.species import build_species_map
 from lib.model import MODEL_OFFSETS, OUTPUT_SIZE
 import lib.config.const as const
+
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def eval_multi_species():
     print("Setting up multi-species evaluation...")
@@ -104,7 +115,7 @@ def eval_multi_species():
     plt.legend()
     plt.grid(True)
     
-    plot_path = os.path.join(settings.folder, "eval_biomass_plot.png")
+    plot_path = os.path.join(OUTPUT_DIR, "eval_multi_species_biomass.png")
     plt.savefig(plot_path)
     print(f"Plot saved to {plot_path}")
     

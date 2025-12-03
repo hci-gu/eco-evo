@@ -1,10 +1,20 @@
 import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import numpy as np
 import matplotlib.pyplot as plt
 from lib.runners.pbm import PBMRunner
 from lib.config.settings import Settings
 
-OUTPUT_FILE = "biomass.png"
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "biomass.png")
 
 def get_model_path():
     folder = "results/2025-11-12_PBM/agents"

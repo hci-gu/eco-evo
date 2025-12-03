@@ -1,12 +1,22 @@
+import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import json
-import pygame
-import lib.constants as const
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
-json_file = "./results/single_agent_single_out_random_plankton_behavscore_6/generations_data.json"
-output_file = "generations_data.png"
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+json_file = os.path.join(PROJECT_ROOT, "results/single_agent_single_out_random_plankton_behavscore_6/generations_data.json")
+output_file = os.path.join(OUTPUT_DIR, "generations_data.png")
 
 def plot_generations(generations_data):
     global generation_graph_cache
