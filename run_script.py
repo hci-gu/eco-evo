@@ -35,6 +35,7 @@ os.chdir(PROJECT_ROOT)
 
 SCRIPTS = {
     "plot_biomass": "scripts/plot_biomass.py",
+    "plot_biomass_all": "scripts/plot_biomass_all.py",
     "plot_fish": "scripts/plot_fish.py",
     "plot_real_data": "scripts/plot_real_data.py",
     "gen_graph": "scripts/gen_graph.py",

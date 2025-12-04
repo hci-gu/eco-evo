@@ -5,7 +5,6 @@ from lib.environments.petting_zoo import env as petting_zoo_env
 from lib.config.settings import Settings
 from lib.config.species import build_species_map
 from lib.model import INPUT_SIZE, OUTPUT_SIZE, MODEL_OFFSETS, Action
-from lib.heuristics import get_heuristic_action
 
 class SB3Wrapper(VecEnv):
     def __init__(self, settings: Settings, species="cod", render_mode=None):
@@ -40,6 +39,7 @@ class SB3Wrapper(VecEnv):
         self.last_total_biomass = 0.0
 
     def set_species_models(self, models):
+        print("[SB3Wrapper] Setting species models for other species.")
         """
         Sets the models to use for other species.
         models: Dictionary mapping species name to SB3 model (or compatible predict method).
@@ -70,93 +70,26 @@ class SB3Wrapper(VecEnv):
 
     def _compute_local_rewards(self):
         """
-        Computes per-cell rewards based on local actions and state.
+        Simplified reward: log sum of the surrounding 3x3 grid biomass for the acting species.
         """
-        rewards = np.zeros(self.num_envs, dtype=np.float32)
+        # Get the 3x3 patch observations for the target species
+        # Shape: (N, 3, 3, C) where N = num_envs
+        raw_obs = self.env.observations[self.target_species]
         
-        # Get world state (W+2, W+2, C)
-        world = self.env.world
-        pad = 1
-        inner_world = world[pad:-pad, pad:-pad]
-        
-        # Get indices
-        rows, cols = np.unravel_index(np.arange(self.num_envs), (self.settings.world_size, self.settings.world_size))
-        
-        # Get actions taken (N,)
-        actions = self.actions
-        
-        # 1. Action Validity (Movement)
-        # Check if moving into land
-        terrain_water = MODEL_OFFSETS["terrain"]["water"]
-        
-        # Target coordinates
-        target_r = rows + pad
-        target_c = cols + pad
-        
-        is_move = actions < 4
-        
-        # Deltas: UP(0), DOWN(1), LEFT(2), RIGHT(3)
-        # Note: Action enum values: UP=0, DOWN=1, LEFT=2, RIGHT=3
-        dr = np.zeros_like(rows)
-        dc = np.zeros_like(cols)
-        
-        dr[actions == Action.UP.value] = -1
-        dr[actions == Action.DOWN.value] = 1
-        dc[actions == Action.LEFT.value] = -1
-        dc[actions == Action.RIGHT.value] = 1
-        
-        target_r_move = target_r + dr
-        target_c_move = target_c + dc
-        
-        # Check terrain at target
-        target_is_water = world[target_r_move, target_c_move, terrain_water] == 1.0
-        
-        # Penalty for hitting land/bounds (if not water)
-        rewards[is_move & (~target_is_water)] -= 0.5
-        
-        # 2. Eating Logic
-        is_eat = actions == Action.EAT.value
-        
-        prey_list = self.species_map[self.target_species].prey
-        has_prey = np.zeros(self.num_envs, dtype=bool)
-        
-        if prey_list:
-            flat_inner = inner_world.reshape(self.num_envs, -1)
-            for prey_name in prey_list:
-                prey_biomass_idx = MODEL_OFFSETS[prey_name]["biomass"]
-                has_prey |= (flat_inner[:, prey_biomass_idx] > 0.1)
-        
-        # Penalty for eating without prey
-        rewards[is_eat & (~has_prey)] -= 0.05
-        
-        # 3. Energy Level
-        energy_idx = MODEL_OFFSETS[self.target_species]["energy"]
-        flat_inner = inner_world.reshape(self.num_envs, -1)
-        energy_levels = flat_inner[:, energy_idx]
-        
-        max_energy = self.settings.max_energy
-        rewards += (energy_levels / max_energy) * 0.1
-        
-        # 4. Biomass Level (Survival)
+        # Get biomass channel index for target species
         biomass_idx = MODEL_OFFSETS[self.target_species]["biomass"]
-        biomass_levels = flat_inner[:, biomass_idx]
         
-        # Small local survival reward to differentiate living/dead agents
-        rewards[biomass_levels > 0] += 0.1
+        # Extract biomass from all 9 cells in the 3x3 patch for each agent
+        # Shape: (N, 3, 3)
+        biomass_patches = raw_obs[..., biomass_idx]
         
-        # 5. Global Ecosystem Health Bonus
-        # Reward if all key species are present in the world
-        # This is the PRIMARY objective: Keep the simulation running.
-        all_species_alive = True
-        for sp in ["cod", "herring", "sprat"]:
-            sp_biomass_idx = MODEL_OFFSETS[sp]["biomass"]
-            total_biomass = np.sum(world[..., sp_biomass_idx])
-            if total_biomass < 1.0: # Threshold for "alive"
-                all_species_alive = False
-                break
+        # Sum biomass across the 3x3 grid for each agent
+        # Shape: (N,)
+        total_biomass = np.sum(biomass_patches, axis=(1, 2))
         
-        if all_species_alive:
-            rewards += 1.0
+        # Add small epsilon to avoid log(0)
+        epsilon = 1e-6
+        rewards = np.log(total_biomass + epsilon).astype(np.float32)
         
         return rewards
 
@@ -252,7 +185,7 @@ class SB3Wrapper(VecEnv):
                 # We need to replicate that behavior or just pass zeros.
                 empty_action = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
                 self.env.step(empty_action)
-            else:
+            elif agent in self.species_models:
                 raw_obs = self.env.observations[agent] # Shape (N, 3, 3, C)
                 flat_obs = raw_obs.reshape(self.num_envs, -1)
                 
@@ -262,6 +195,15 @@ class SB3Wrapper(VecEnv):
                 actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
                 rows, cols = np.unravel_index(np.arange(self.num_envs), (self.settings.world_size, self.settings.world_size))
                 actions_grid[rows, cols, actions] = 1.0
+                
+                self.env.step(actions_grid)
+            else:
+                # No model provided, take random actions
+                random_actions = np.random.randint(0, OUTPUT_SIZE, size=self.num_envs)
+                
+                actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+                rows, cols = np.unravel_index(np.arange(self.num_envs), (self.settings.world_size, self.settings.world_size))
+                actions_grid[rows, cols, random_actions] = 1.0
                 
                 self.env.step(actions_grid)
 
