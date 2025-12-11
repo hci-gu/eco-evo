@@ -1,6 +1,11 @@
 from enum import Enum
 import numpy as np
+import warnings
 import lib.config.const as const
+
+# Suppress underflow warnings in softmax calculations
+np.seterr(under='ignore', divide='ignore', invalid='ignore')
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 HIDDEN_SIZE = 48
 OUTPUT_SIZE = 5

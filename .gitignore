@@ -2,6 +2,8 @@ lib/__pycache__
 lib/world/__pycache__
 lib/runners/__pycache__
 lib/environments/__pycache__
+lib/config/__pycache__
+lib/model/__pycache__
 .pixi
 
 results

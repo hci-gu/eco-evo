@@ -130,7 +130,7 @@ class raw_env(AECEnv):
             self.state[agent] = action
 
             # Movement update.
-            matrix_movement_deltas = all_movement_delta(self.species_map, self.world, self.world_data, agent, action)
+            matrix_movement_deltas = all_movement_delta(self.species_map, self.world, self.world_data, agent, action, self.num_moves)
             apply_movement_delta(self.species_map, self.world, agent, matrix_movement_deltas)
 
             matrix_perform_eating(self.settings, self.species_map, self.world, agent, action)

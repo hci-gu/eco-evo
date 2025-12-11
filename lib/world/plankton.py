@@ -2,6 +2,9 @@ import math
 import random
 import numpy as np
 
+# Suppress underflow warnings for plankton calculations
+np.seterr(under='ignore')
+
 from lib.config.settings import Settings
 from lib.model import MODEL_OFFSETS
 from lib.config.species import SpeciesMap

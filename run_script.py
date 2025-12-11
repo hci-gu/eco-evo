@@ -48,6 +48,7 @@ SCRIPTS = {
     "eval_prediction": "scripts/eval_prediction.py",
     "eval_regular": "scripts/eval_regular.py",
     "eval_unique": "scripts/eval_unique.py",
+    "energy_sanity_check": "scripts/energy_sanity_check.py",
 }
 
 

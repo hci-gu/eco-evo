@@ -14,7 +14,7 @@ SECONDS_IN_DAY = 86400
 class Settings:
     folder: str = "results/default"
 
-    world_size: int = 100
+    world_size: int = 16
     speed_multiplier: float = 1.0
     multiply_death_rate: float = 1.0
     growth_multiplier: float = 1

@@ -126,16 +126,16 @@ if __name__ == "__main__":
     # average_elapsed_time = total_elapsed_time / 5
     # print(f"Average elapsed time: {average_elapsed_time:.2f} seconds")
 
-    evaluate_pbm_model()
+    # evaluate_pbm_model()
 
     # Load config files
-    # config_files = load_config_files(args.config_folder)
+    config_files = load_config_files(args.config_folder)
 
-    # print("Running simulation with the following config files:" + str(config_files))
-    # time.sleep(2)
+    print("Running simulation with the following config files:" + str(config_files))
+    time.sleep(2)
 
-    # for config_file in config_files:
-    #     settings = load_settings(config_file)
+    for config_file in config_files:
+        settings = load_settings(config_file)
 
-    #     runner = PBMRunner(settings)
-    #     runner.train()
+        runner = PettingZooRunner(settings)
+        runner.train()
