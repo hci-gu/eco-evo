@@ -43,6 +43,18 @@ def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, 
     move_left = actions[:, :, Action.LEFT.value]
     move_right = actions[:, :, Action.RIGHT.value]
 
+    # Normalize movement fractions so total moved mass per cell <= 1
+    total_move = move_up + move_down + move_left + move_right
+    overfull_mask = total_move > 1.0
+    # Avoid divide by zero/overflow; clamp totals to a safe range
+    safe_total = np.where(total_move <= 0, 1.0, np.clip(total_move, 1e-6, 1e6))
+    with np.errstate(over='ignore', divide='ignore', invalid='ignore'):
+        scale = np.where(overfull_mask, 1.0 / safe_total, 1.0)
+    move_up *= scale
+    move_down *= scale
+    move_left *= scale
+    move_right *= scale
+
     total_activity = move_up + move_down + move_left + move_right
 
     # --- Energy updates (bioMARL style: metabolic costs reduce energy, not biomass) ---
@@ -70,9 +82,10 @@ def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, 
     # mortality = baseline + (1 - baseline) / (1 + exp(-k * (midpoint - energy)))
     # When energy is high: mortality ≈ baseline
     # When energy is low: mortality ≈ 1 (high death rate)
-    mortality_rate = baseline_mortality + (1.0 - baseline_mortality) / (
-        1.0 + np.exp(-mortality_k * (mortality_midpoint - current_energy))
-    )
+    # Clip the logistic exponent to avoid overflow when energy is high
+    # x = -k * (midpoint - energy); large positive x => exp(x) overflows
+    exp_arg = np.clip(-mortality_k * (mortality_midpoint - current_energy), -50.0, 50.0)
+    mortality_rate = baseline_mortality + (1.0 - baseline_mortality) / (1.0 + np.exp(exp_arg))
     
     # Additional death rate when energy < 1 (starvation)
     # death_prob = 1 - exp(-death_rate) when energy < 1
@@ -284,8 +297,8 @@ def world_is_alive(settings: Settings, species_map: SpeciesMap, world):
         if biomass_too_low or biomass_too_high:
             reason = f"{species} "
             if biomass_too_low:
-                reason += f"low"
+                reason += "low"
             if biomass_too_high:
-                reason += f"high"
+                reason += "high"
             return False, reason
     return True, ""

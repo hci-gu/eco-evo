@@ -19,7 +19,8 @@ class Settings:
     multiply_death_rate: float = 1.0
     growth_multiplier: float = 1
     min_percent_alive: float = 0.1
-    max_percent_alive: float = 4.0
+    # Permit growth but cap runaway biomass (relative to initial total biomass)
+    max_percent_alive: float = 10.0
     max_years: int = 5
     scale_fishing: float = 0.0
     base_fishing_value_cod: float = 0.002651024

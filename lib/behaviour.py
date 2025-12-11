@@ -24,7 +24,7 @@ class Action(Enum):
 
 ACTION_ORDER = [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT, Action.EAT]
 
-def take_step(settings: Settings, species_map: SpeciesMap, world, world_data, species, actions):
+def take_step(settings: Settings, species_map: SpeciesMap, world, world_data, species, actions, step_counter: int = 0):
     pad = 1
     world_shape = world.shape[:2]
     interior_shape = (world_shape[0] - 2 * pad, world_shape[1] - 2 * pad)
@@ -38,7 +38,7 @@ def take_step(settings: Settings, species_map: SpeciesMap, world, world_data, sp
             f"Action grid shape {actions.shape[:2]} does not match world shape {world_shape} or interior shape {interior_shape}"
         )
 
-    movement_deltas = all_movement_delta(species_map, world, world_data, species, action_grid)
+    movement_deltas = all_movement_delta(species_map, world, world_data, species, action_grid, step_counter)
     apply_movement_delta(species_map, world, species, movement_deltas)
     matrix_perform_eating(settings, species_map, world, species, action_grid)
 

@@ -129,8 +129,8 @@ class PettingZooRunner():
                     print(f'idx {idx}, eval {eval_index}, fitness {fitness:.1f}, episode_length {episode_length}, steps/sec {episode_length/(end_time - start_time):.2f}')
                 
                 avg_fitness = sum(evals_fitness) / len(evals_fitness)
-                behaviour_score = run_all_scenarios(self.settings, self.species_map, evaluation_candidate, species, False)
-                avg_fitness = avg_fitness * behaviour_score
+                # behaviour_score = run_all_scenarios(self.settings, self.species_map, evaluation_candidate, species, False)
+                # avg_fitness = avg_fitness * behaviour_score
 
                 fitnesses[species].append((evaluation_candidate.state_dict(), avg_fitness))
                 print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')

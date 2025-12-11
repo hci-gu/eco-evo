@@ -51,6 +51,9 @@ def build_species_map(settings: Settings) -> SpeciesMap:
     pl_start = spr_start * 2
 
     base_energy_cost = 0.5
+    # Target per-step base costs at speed_multiplier=1 (tuned for ~8–10% break-even):
+    fish_base_cost = 0.50   # herring, sprat
+    cod_base_cost = 0.80    # cod
 
     plankton = SpeciesParams(
         index=0,
@@ -92,15 +95,16 @@ def build_species_map(settings: Settings) -> SpeciesMap:
         standard_metabolic_rate=0.0014635768428571428 * spd,
         natural_mortality_rate=0.01 * spd,
         fishing_mortality_rate=settings.base_fishing_value_herring * settings.scale_fishing * spd,
-        energy_cost=base_energy_cost * spd,
+        # Lower base energy cost to roughly 0.7 energy/step at speed_multiplier=1
+        energy_cost=fish_base_cost * settings.speed_multiplier,
         individual_weight=0.1,  # Herring ~100g per individual
-        growth_rate=1.33,  # bioMARL: 33% multiplicative growth per reproduction
-        carrying_capacity=np.inf,  # bioMARL: uncapped (fg_k=inf)
-        reproduction_freq=5,  # bioMARL: fish reproduce every 5 steps
-        baseline_mortality=0.02,  # bioMARL-style baseline mortality
-        mortality_logistic_k=0.15,  # Steepness of mortality curve
-        mortality_energy_midpoint=30.0,  # Energy midpoint for mortality curve
-        low_energy_death_rate=1.0,  # Death rate when energy < 1
+        growth_rate=1.05,  # modest intrinsic growth
+        carrying_capacity=np.inf,  # no cap for fish
+        reproduction_freq=20,  # occasional reproduction
+        baseline_mortality=0.01,  # light background mortality
+        mortality_logistic_k=0.5,  # smoother rise as energy falls
+        mortality_energy_midpoint=5.0,
+        low_energy_death_rate=0.1,  # starvation ramp
         hardcoded_logic=False,
         hardcoded_rules={},
         color=(0, 0, 255),
@@ -118,15 +122,16 @@ def build_species_map(settings: Settings) -> SpeciesMap:
         standard_metabolic_rate=0.0014635768428571428 * spd,
         natural_mortality_rate=0.01 * spd,
         fishing_mortality_rate=settings.base_fishing_value_sprat * settings.scale_fishing * spd,
-        energy_cost=base_energy_cost * spd,
+        # Lower base energy cost to roughly 0.7 energy/step at speed_multiplier=1
+        energy_cost=fish_base_cost * settings.speed_multiplier,
         individual_weight=0.05,  # Sprat ~50g per individual (smaller than herring)
-        growth_rate=1.33,  # bioMARL: 33% multiplicative growth per reproduction
-        carrying_capacity=np.inf,  # bioMARL: uncapped (fg_k=inf)
-        reproduction_freq=5,  # bioMARL: fish reproduce every 5 steps
-        baseline_mortality=0.02,  # bioMARL-style baseline mortality
-        mortality_logistic_k=0.15,  # Steepness of mortality curve
-        mortality_energy_midpoint=30.0,  # Energy midpoint for mortality curve
-        low_energy_death_rate=1.0,  # Death rate when energy < 1
+        growth_rate=1.05,
+        carrying_capacity=np.inf,
+        reproduction_freq=20,
+        baseline_mortality=0.01,
+        mortality_logistic_k=0.5,
+        mortality_energy_midpoint=5.0,
+        low_energy_death_rate=0.1,
         hardcoded_logic=False,
         hardcoded_rules={},
         color=(255, 165, 0),
@@ -144,15 +149,16 @@ def build_species_map(settings: Settings) -> SpeciesMap:
         standard_metabolic_rate=0.0029071536857142857 * spd,
         natural_mortality_rate=0.003 * spd,
         fishing_mortality_rate=settings.base_fishing_value_cod * settings.scale_fishing * spd,
-        energy_cost=base_energy_cost * spd,
+        # Slightly higher base energy cost for cod (~1.2 energy/step at speed_multiplier=1)
+        energy_cost=cod_base_cost * settings.speed_multiplier,
         individual_weight=2.0,  # Cod ~2kg per individual (much larger than herring/sprat)
-        growth_rate=1.15,  # bioMARL: 15% multiplicative growth per reproduction (slow-growing apex predator)
-        carrying_capacity=np.inf,  # bioMARL: uncapped (fg_k=inf)
-        reproduction_freq=5,  # bioMARL: fish reproduce every 5 steps
-        baseline_mortality=0.01,  # Lower baseline mortality for apex predator
-        mortality_logistic_k=0.12,  # Steepness of mortality curve
-        mortality_energy_midpoint=35.0,  # Higher energy requirement for large predator
-        low_energy_death_rate=0.8,  # Death rate when energy < 1
+        growth_rate=1.02,  # slow apex growth
+        carrying_capacity=np.inf,
+        reproduction_freq=25,
+        baseline_mortality=0.008,
+        mortality_logistic_k=0.5,
+        mortality_energy_midpoint=6.0,
+        low_energy_death_rate=0.08,
         hardcoded_logic=False,
         hardcoded_rules={},
         color=(40, 40, 40),
@@ -176,8 +182,8 @@ def build_species_map(settings: Settings) -> SpeciesMap:
 # From bioMARL: [[0, 0, 0, 0], [3, 0, 0, 0], [2, 0, 0, 0], [1, 10, 5, 0]]
 FEEDING_ENERGY_REWARD = [
     [0, 0, 0, 0],      # plankton eats nothing
-    [3, 0, 0, 0],      # herring eats plankton (reward=3)
-    [2, 0, 0, 0],      # sprat eats plankton (reward=2)
+    [4, 0, 0, 0],      # herring eats plankton (reward=4)
+    [4, 0, 0, 0],      # sprat eats plankton (increased to match herring)
     [1, 10, 5, 0],     # cod eats plankton(1), herring(10), sprat(5)
 ]
 

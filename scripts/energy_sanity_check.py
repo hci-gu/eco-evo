@@ -60,12 +60,13 @@ SPECIES_CONFIGS = {
         index=1,
         activity_metabolic_rate_base=0.007317884210714286,
         standard_metabolic_rate_base=0.0014635768428571428,
-        energy_cost_base=0.5,
+        # Base cost tuned to ~0.50 energy/step at spd≈2.78
+        energy_cost_base=0.18,
         individual_weight=0.1,
-        baseline_mortality=0.02,
-        mortality_logistic_k=0.15,
-        mortality_energy_midpoint=30.0,
-        low_energy_death_rate=1.0,
+        baseline_mortality=0.01,
+        mortality_logistic_k=0.5,
+        mortality_energy_midpoint=5.0,
+        low_energy_death_rate=0.1,
         prey_indices=[0],  # plankton
     ),
     "sprat": SpeciesConfig(
@@ -73,12 +74,13 @@ SPECIES_CONFIGS = {
         index=2,
         activity_metabolic_rate_base=0.007317884210714286,
         standard_metabolic_rate_base=0.0014635768428571428,
-        energy_cost_base=0.5,
+        # Base cost tuned to ~0.50 energy/step at spd≈2.78
+        energy_cost_base=0.18,
         individual_weight=0.05,
-        baseline_mortality=0.02,
-        mortality_logistic_k=0.15,
-        mortality_energy_midpoint=30.0,
-        low_energy_death_rate=1.0,
+        baseline_mortality=0.01,
+        mortality_logistic_k=0.5,
+        mortality_energy_midpoint=5.0,
+        low_energy_death_rate=0.1,
         prey_indices=[0],  # plankton
     ),
     "cod": SpeciesConfig(
@@ -86,12 +88,13 @@ SPECIES_CONFIGS = {
         index=3,
         activity_metabolic_rate_base=0.014535768421428572,
         standard_metabolic_rate_base=0.0029071536857142857,
-        energy_cost_base=0.5,
+        # Base cost tuned to ~0.80 energy/step at spd≈2.78
+        energy_cost_base=0.288,
         individual_weight=2.0,
-        baseline_mortality=0.01,
-        mortality_logistic_k=0.12,
-        mortality_energy_midpoint=35.0,
-        low_energy_death_rate=0.8,
+        baseline_mortality=0.008,
+        mortality_logistic_k=0.5,
+        mortality_energy_midpoint=6.0,
+        low_energy_death_rate=0.08,
         prey_indices=[1, 2],  # herring, sprat
     ),
 }
@@ -412,7 +415,7 @@ DEFAULTS = {
     "prey_available": 2.0,  # Lowered from 10
     "include_mortality": True,
     "speed_multiplier": 1.0,
-    "max_energy": 200.0,  # Allow building reserves
+    "max_energy": 100.0,  # Keep aligned with Settings.max_energy
 }
 
 ENERGY_LEVELS = [100.0, 75.0, 50.0, 35.0, 25.0, 15.0, 10.0, 5.0, 1.0, 0.5, 0.1]
