@@ -118,68 +118,80 @@ class PettingZooRunner():
                 evaluation_candidate = self.population[species][idx]
                 other_species = [s for s in self.species_list if s != species]
 
+                evals = []
                 for eval_index in range(self.settings.agent_evaluations):
-                    eval_species = {
-                        species: evaluation_candidate.state_dict()
-                    }
+                    other_candidates = {}
                     # pick random agent from other species
                     for other_species_name in other_species:
                         other_species_idx = self.rng.randint(0, self.settings.num_agents - 1)
                         other_species_candidate = self.population[other_species_name][other_species_idx]
-                        eval_species[other_species_name] = other_species_candidate.state_dict()
+                        other_candidates[other_species_name] = other_species_candidate.state_dict()
 
-                    tasks.append({
-                        "agent_index": idx,
-                        "species": species,
+                    evals.append({
                         "eval_index": eval_index,
-                        "candidates": eval_species,
+                        "other_candidates": other_candidates,
                         "map_seed": eval_seeds[eval_index],
                         "python_random_seed": self.rng.randrange(2**32),
                     })
 
-        def _run_eval_task_local(task):
-            self.agent_index = task["agent_index"]
-            self.eval_index = task["eval_index"]
-            eval_species = {sp: Model(chromosome=state) for sp, state in task["candidates"].items()}
+                tasks.append({
+                    "agent_index": idx,
+                    "species": species,
+                    "self_candidate": evaluation_candidate.state_dict(),
+                    "evals": evals,
+                })
 
-            start_time = time.time()
-            fitness, episode_length, end_reason = self.run(
-                eval_species,
-                task["species"],
-                task["map_seed"],
-                is_evaluation=False,
-                callback=noop,
-                collect_plot_data=True,
-                python_random_seed=task["python_random_seed"],
-            )
-            while episode_length == 0:
-                print("something went wrong update this seed")
-                task["map_seed"] = random.randrange(100000)
-                task["python_random_seed"] = random.randrange(2**32)
+        def _run_eval_task_local(task):
+            self_model = Model(chromosome=task["self_candidate"])
+            results = []
+            for eval_task in task["evals"]:
+                self.agent_index = task["agent_index"]
+                self.eval_index = eval_task["eval_index"]
+                eval_species = {task["species"]: self_model}
+                for sp, state in eval_task["other_candidates"].items():
+                    eval_species[sp] = Model(chromosome=state)
+
+                start_time = time.time()
                 fitness, episode_length, end_reason = self.run(
                     eval_species,
                     task["species"],
-                    task["map_seed"],
+                    eval_task["map_seed"],
                     is_evaluation=False,
                     callback=noop,
                     collect_plot_data=True,
-                    python_random_seed=task["python_random_seed"],
+                    python_random_seed=eval_task["python_random_seed"],
                 )
+                while episode_length == 0:
+                    print("something went wrong update this seed")
+                    eval_task["map_seed"] = random.randrange(100000)
+                    eval_task["python_random_seed"] = random.randrange(2**32)
+                    fitness, episode_length, end_reason = self.run(
+                        eval_species,
+                        task["species"],
+                        eval_task["map_seed"],
+                        is_evaluation=False,
+                        callback=noop,
+                        collect_plot_data=True,
+                        python_random_seed=eval_task["python_random_seed"],
+                    )
 
-            end_time = time.time()
-            return {
-                "agent_index": task["agent_index"],
-                "species": task["species"],
-                "eval_index": task["eval_index"],
-                "fitness": fitness,
-                "episode_length": episode_length,
-                "end_reason": end_reason,
-                "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
-            }
+                end_time = time.time()
+                results.append({
+                    "agent_index": task["agent_index"],
+                    "species": task["species"],
+                    "eval_index": eval_task["eval_index"],
+                    "fitness": fitness,
+                    "episode_length": episode_length,
+                    "end_reason": end_reason,
+                    "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
+                })
+
+            return results
 
         results = []
         if self.settings.num_workers <= 1:
-            results = [_run_eval_task_local(task) for task in tasks]
+            for task in tasks:
+                results.extend(_run_eval_task_local(task))
         else:
             with ProcessPoolExecutor(
                 max_workers=self.settings.num_workers,
@@ -187,7 +199,7 @@ class PettingZooRunner():
                 initargs=(self.settings, self.env.render_mode, self.env.map_folder),
             ) as executor:
                 for res in executor.map(_run_eval_task_worker, tasks):
-                    results.append(res)
+                    results.extend(res)
 
         # Aggregate results in deterministic order.
         results_by_key = {(r["agent_index"], r["species"], r["eval_index"]): r for r in results}
@@ -314,39 +326,45 @@ def _init_worker(settings: Settings, render_mode: str, map_folder: str):
 def _run_eval_task_worker(task):
     global _WORKER_RUNNER
     runner = _WORKER_RUNNER
-
-    eval_species = {sp: Model(chromosome=state) for sp, state in task["candidates"].items()}
-    start_time = time.time()
-    fitness, episode_length, end_reason = runner.run(
-        eval_species,
-        task["species"],
-        task["map_seed"],
-        is_evaluation=False,
-        callback=noop,
-        collect_plot_data=False,
-        python_random_seed=task["python_random_seed"],
-    )
-    while episode_length == 0:
-        print("something went wrong update this seed")
-        task["map_seed"] = random.randrange(100000)
-        task["python_random_seed"] = random.randrange(2**32)
+    self_model = Model(chromosome=task["self_candidate"])
+    results = []
+    for eval_task in task["evals"]:
+        eval_species = {task["species"]: self_model}
+        for sp, state in eval_task["other_candidates"].items():
+            eval_species[sp] = Model(chromosome=state)
+        start_time = time.time()
         fitness, episode_length, end_reason = runner.run(
             eval_species,
             task["species"],
-            task["map_seed"],
+            eval_task["map_seed"],
             is_evaluation=False,
             callback=noop,
             collect_plot_data=False,
-            python_random_seed=task["python_random_seed"],
+            python_random_seed=eval_task["python_random_seed"],
         )
+        while episode_length == 0:
+            print("something went wrong update this seed")
+            eval_task["map_seed"] = random.randrange(100000)
+            eval_task["python_random_seed"] = random.randrange(2**32)
+            fitness, episode_length, end_reason = runner.run(
+                eval_species,
+                task["species"],
+                eval_task["map_seed"],
+                is_evaluation=False,
+                callback=noop,
+                collect_plot_data=False,
+                python_random_seed=eval_task["python_random_seed"],
+            )
 
-    end_time = time.time()
-    return {
-        "agent_index": task["agent_index"],
-        "species": task["species"],
-        "eval_index": task["eval_index"],
-        "fitness": fitness,
-        "episode_length": episode_length,
-        "end_reason": end_reason,
-        "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
-    }
+        end_time = time.time()
+        results.append({
+            "agent_index": task["agent_index"],
+            "species": task["species"],
+            "eval_index": eval_task["eval_index"],
+            "fitness": fitness,
+            "episode_length": episode_length,
+            "end_reason": end_reason,
+            "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
+        })
+
+    return results
