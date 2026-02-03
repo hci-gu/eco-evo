@@ -32,6 +32,9 @@ class Settings:
     elitism_selection: int = 8
     tournament_selection: int = 4
     generations_per_run: int = 200
+    num_workers: int = 1
+    # Set to a non-negative value for deterministic runs across processes.
+    seed: int = -1
     mutation_rate: float = 0.12
     mutation_rate_decay: float = 0.996
     mutation_rate_min: float = 0.02
