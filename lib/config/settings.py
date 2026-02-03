@@ -35,6 +35,9 @@ class Settings:
     num_workers: int = 1
     # Set to a non-negative value for deterministic runs across processes.
     seed: int = -1
+    # Performance toggles.
+    enable_logging: bool = True
+    enable_plotting: bool = True
     mutation_rate: float = 0.12
     mutation_rate_decay: float = 0.996
     mutation_rate_min: float = 0.02

@@ -19,6 +19,7 @@ import optuna
 
 # ---- Parallel worker plumbing ----
 _WORKER_RUNNER = None  # one runner per proces
+_WORKER_POPULATION_STATE = None
 
 def noop(a, b, c):
     pass
@@ -87,7 +88,7 @@ class PettingZooRunner():
                 episode_length += 1
                 species_biomass = self.env.get_fitness(species_being_evaluated)
                 fitness += species_biomass
-                if collect_plot_data and (is_evaluation == False or self.env.render_mode != "none"):
+                if collect_plot_data and self.settings.enable_plotting and (is_evaluation == False or self.env.render_mode != "none"):
                     process_data({
                         'species': species_being_evaluated if not is_evaluation else None,
                         'agent_index': self.agent_index,
@@ -97,7 +98,8 @@ class PettingZooRunner():
                     }, self.env.plot_data)
                 callback(self.env.world, fitness, False)
         
-        print("end of simulation", fitness, episode_length)
+        if self.settings.enable_logging:
+            print("end of simulation", fitness, episode_length)
         callback(self.env.world, fitness, True)
         return fitness, episode_length, self.env.reason
 
@@ -108,48 +110,60 @@ class PettingZooRunner():
         we use the best model from previous generations (if available) to decide their actions.
         Returns a dictionary mapping species to a list of (chromosome, fitness) tuples.
         """
-        eval_seeds = [self.rng.randrange(100000) for _ in range(self.settings.agent_evaluations)]
+        if self.settings.seed >= 0:
+            # Deterministic per-generation RNG for eval setup.
+            eval_rng = random.Random(self.settings.seed + self.current_generation * 1_000_003)
+        else:
+            eval_rng = self.rng
+
+        # Same eval seeds for every agent in the generation.
+        eval_seeds = [eval_rng.randrange(100000) for _ in range(self.settings.agent_evaluations)]
         fitnesses = {species: [] for species in self.species_list}
 
         end_reasons = []
         tasks = []
+        population_state = {
+            species: [m.state_dict() for m in self.population[species]]
+            for species in self.species_list
+        }
         for idx in range(self.settings.num_agents):
             for species in self.species_list:
-                evaluation_candidate = self.population[species][idx]
                 other_species = [s for s in self.species_list if s != species]
 
                 evals = []
                 for eval_index in range(self.settings.agent_evaluations):
-                    other_candidates = {}
+                    other_indices = {}
                     # pick random agent from other species
                     for other_species_name in other_species:
-                        other_species_idx = self.rng.randint(0, self.settings.num_agents - 1)
-                        other_species_candidate = self.population[other_species_name][other_species_idx]
-                        other_candidates[other_species_name] = other_species_candidate.state_dict()
+                        other_species_idx = eval_rng.randint(0, self.settings.num_agents - 1)
+                        other_indices[other_species_name] = other_species_idx
 
                     evals.append({
                         "eval_index": eval_index,
-                        "other_candidates": other_candidates,
+                        "other_indices": other_indices,
                         "map_seed": eval_seeds[eval_index],
-                        "python_random_seed": self.rng.randrange(2**32),
+                        "python_random_seed": eval_rng.randrange(2**32),
                     })
 
                 tasks.append({
                     "agent_index": idx,
                     "species": species,
-                    "self_candidate": evaluation_candidate.state_dict(),
+                    "self_candidate": population_state[species][idx],
                     "evals": evals,
                 })
 
         def _run_eval_task_local(task):
             self_model = Model(chromosome=task["self_candidate"])
-            results = []
+            other_models_by_eval = []
             for eval_task in task["evals"]:
+                eval_species = {task["species"]: self_model}
+                for sp, idx in eval_task["other_indices"].items():
+                    eval_species[sp] = Model(chromosome=population_state[sp][idx])
+                other_models_by_eval.append(eval_species)
+            results = []
+            for eval_task, eval_species in zip(task["evals"], other_models_by_eval):
                 self.agent_index = task["agent_index"]
                 self.eval_index = eval_task["eval_index"]
-                eval_species = {task["species"]: self_model}
-                for sp, state in eval_task["other_candidates"].items():
-                    eval_species[sp] = Model(chromosome=state)
 
                 start_time = time.time()
                 fitness, episode_length, end_reason = self.run(
@@ -162,7 +176,8 @@ class PettingZooRunner():
                     python_random_seed=eval_task["python_random_seed"],
                 )
                 while episode_length == 0:
-                    print("something went wrong update this seed")
+                    if self.settings.enable_logging:
+                        print("something went wrong update this seed")
                     eval_task["map_seed"] = random.randrange(100000)
                     eval_task["python_random_seed"] = random.randrange(2**32)
                     fitness, episode_length, end_reason = self.run(
@@ -196,9 +211,10 @@ class PettingZooRunner():
             with ProcessPoolExecutor(
                 max_workers=self.settings.num_workers,
                 initializer=_init_worker,
-                initargs=(self.settings, self.env.render_mode, self.env.map_folder),
+                initargs=(self.settings, self.env.render_mode, self.env.map_folder, population_state),
             ) as executor:
-                for res in executor.map(_run_eval_task_worker, tasks):
+                chunksize = max(1, len(tasks) // (self.settings.num_workers * 4))
+                for res in executor.map(_run_eval_task_worker, tasks, chunksize=chunksize):
                     results.extend(res)
 
         # Aggregate results in deterministic order.
@@ -212,10 +228,11 @@ class PettingZooRunner():
                     self.eval_index = eval_index
                     end_reasons.append(r["end_reason"])
                     evals_fitness.append(r["fitness"])
-                    print(f'idx {idx}, eval {eval_index}, fitness {r["fitness"]:.1f}, episode_length {r["episode_length"]}, steps/sec {r["steps_per_sec"]:.2f}')
+                    if self.settings.enable_logging:
+                        print(f'idx {idx}, eval {eval_index}, fitness {r["fitness"]:.1f}, episode_length {r["episode_length"]}, steps/sec {r["steps_per_sec"]:.2f}')
 
                     # Minimal plot data update for parallel runs (preserves generation stats).
-                    if self.settings.num_workers > 1:
+                    if self.settings.num_workers > 1 and self.settings.enable_plotting:
                         process_data({
                             'species': species,
                             'agent_index': idx,
@@ -225,9 +242,11 @@ class PettingZooRunner():
 
                 avg_fitness = sum(evals_fitness) / len(evals_fitness)
                 fitnesses[species].append((self.population[species][idx].state_dict(), avg_fitness))
-                print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')
+                if self.settings.enable_logging:
+                    print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')
 
-        print("End reasons:", {reason: end_reasons.count(reason) for reason in set(end_reasons)})
+        if self.settings.enable_logging:
+            print("End reasons:", {reason: end_reasons.count(reason) for reason in set(end_reasons)})
         return fitnesses
 
     def evolve_population(self, fitnesses):
@@ -288,9 +307,11 @@ class PettingZooRunner():
         # Evaluate the current population.
         fitnesses = self.evaluate_population()
         self.current_generation += 1
-        print(f"Generation {self.current_generation} complete. Fitnesses: { {sp: max(fit, key=lambda x: x[1])[1] for sp, fit in fitnesses.items()} }")
-        generations_data = update_generations_data(self.settings, self.current_generation, self.env.plot_data)
-        plot_generations(self.settings, generations_data)
+        if self.settings.enable_logging:
+            print(f"Generation {self.current_generation} complete. Fitnesses: { {sp: max(fit, key=lambda x: x[1])[1] for sp, fit in fitnesses.items()} }")
+        if self.settings.enable_plotting:
+            generations_data = update_generations_data(self.settings, self.current_generation, self.env.plot_data)
+            plot_generations(self.settings, generations_data)
         self.env.plot_data = {}
         # Evolve the population based on fitnesses.
         self.evolve_population(fitnesses)
@@ -313,25 +334,31 @@ class PettingZooRunner():
         return self.run(candidates, "cod", None, True, callback)
 
 
-def _init_worker(settings: Settings, render_mode: str, map_folder: str):
+def _init_worker(settings: Settings, render_mode: str, map_folder: str, population_state):
     global _WORKER_RUNNER
+    global _WORKER_POPULATION_STATE
     _WORKER_RUNNER = PettingZooRunner(
         settings=settings,
         render_mode=render_mode,
         map_folder=map_folder,
         build_population=False,
     )
+    _WORKER_POPULATION_STATE = population_state
 
 
 def _run_eval_task_worker(task):
     global _WORKER_RUNNER
+    global _WORKER_POPULATION_STATE
     runner = _WORKER_RUNNER
     self_model = Model(chromosome=task["self_candidate"])
-    results = []
+    other_models_by_eval = []
     for eval_task in task["evals"]:
         eval_species = {task["species"]: self_model}
-        for sp, state in eval_task["other_candidates"].items():
-            eval_species[sp] = Model(chromosome=state)
+        for sp, idx in eval_task["other_indices"].items():
+            eval_species[sp] = Model(chromosome=_WORKER_POPULATION_STATE[sp][idx])
+        other_models_by_eval.append(eval_species)
+    results = []
+    for eval_task, eval_species in zip(task["evals"], other_models_by_eval):
         start_time = time.time()
         fitness, episode_length, end_reason = runner.run(
             eval_species,
@@ -343,7 +370,8 @@ def _run_eval_task_worker(task):
             python_random_seed=eval_task["python_random_seed"],
         )
         while episode_length == 0:
-            print("something went wrong update this seed")
+            if runner.settings.enable_logging:
+                print("something went wrong update this seed")
             eval_task["map_seed"] = random.randrange(100000)
             eval_task["python_random_seed"] = random.randrange(2**32)
             fitness, episode_length, end_reason = runner.run(
