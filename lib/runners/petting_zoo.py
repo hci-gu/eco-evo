@@ -24,10 +24,21 @@ def noop(a, b, c):
     pass
 
 class PettingZooRunner():
-    def __init__(self, settings: Settings, render_mode="none"):
+    def __init__(
+        self,
+        settings: Settings,
+        render_mode: str = "none",
+        map_folder: str = "maps/baltic",
+        build_population: bool = True,
+    ):
         # Create the environment (render_mode can be "none" if visualization is not needed)
         self.species_map = build_species_map(settings)
-        self.env = env(settings=settings, species_map=self.species_map, render_mode=render_mode)
+        self.env = env(
+            settings=settings,
+            species_map=self.species_map,
+            render_mode=render_mode,
+            map_folder=map_folder,
+        )
         self.settings = settings
         self.empty_action = self.env.action_space("plankton").sample()
         self.env.reset()
@@ -35,11 +46,13 @@ class PettingZooRunner():
 
         # Use all species in the simulation (including plankton, if desired).
         self.species_list = [species for species in const.ACTING_SPECIES]
-        # Create a population for each species.
-        self.population = {
-            species: [Model() for _ in range(self.settings.num_agents)]
-            for species in self.species_list
-        }
+        # Create a population for each species (training only).
+        self.population = {}
+        if build_population:
+            self.population = {
+                species: [Model() for _ in range(self.settings.num_agents)]
+                for species in self.species_list
+            }
         # Track best fitness and best model for each species.
         self.best_fitness = {species: -float('inf') for species in self.species_list}
         self.best_agent = {species: None for species in self.species_list}

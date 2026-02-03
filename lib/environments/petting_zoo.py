@@ -19,12 +19,17 @@ import lib.config.const as const
 import random
 from numba import njit
 
-def env(settings: Settings, species_map: SpeciesMap, render_mode=None):
+def env(settings: Settings, species_map: SpeciesMap, render_mode=None, map_folder: str = "maps/baltic"):
     """
     Wraps the raw environment in PettingZoo wrappers.
     """
     internal_render_mode = render_mode if render_mode != "ansi" else "human"
-    env_instance = raw_env(settings=settings, species_map=species_map, render_mode=internal_render_mode)
+    env_instance = raw_env(
+        settings=settings,
+        species_map=species_map,
+        render_mode=internal_render_mode,
+        map_folder=map_folder,
+    )
     env_instance = wrappers.AssertOutOfBoundsWrapper(env_instance)
     env_instance = wrappers.OrderEnforcingWrapper(env_instance)
     return env_instance

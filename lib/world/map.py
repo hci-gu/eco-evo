@@ -1,4 +1,3 @@
-import opensimplex
 import math
 import random
 import numpy as np
@@ -133,6 +132,13 @@ def add_species_from_biomass_grid(settings: Settings, species_map: SpeciesMap, w
 
 
 def add_species_to_map(settings: Settings, species_map: SpeciesMap, world_array, world_data, seed = None):
+    try:
+        import opensimplex
+    except Exception as e:
+        raise RuntimeError(
+            "opensimplex is required for noise-based species placement. "
+            "Either install/fix the opensimplex dependency or use add_species_to_map_even/read_map_from_file."
+        ) from e
     if seed is None:
         seed = int(random.random() * 100000)
     rng = np.random.default_rng(seed)
@@ -351,6 +357,10 @@ def read_map_from_file(settings: Settings, species_map: SpeciesMap, folder_path,
     return np.ascontiguousarray(world_array), np.ascontiguousarray(world_data), starting_biomasses
 
 def create_map_from_noise(settings: Settings, static=False, seed_value=None):
+    try:
+        import opensimplex
+    except Exception as e:
+        raise RuntimeError("opensimplex is required to create a map from noise.") from e
     seed = 1 if static else int(random.random() * 100000)
 
     opensimplex.seed(seed)

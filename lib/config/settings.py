@@ -27,10 +27,10 @@ class Settings:
     base_fishing_value_herring: float = 0.002651024
     base_fishing_value_sprat: float = 0.002651024
 
-    num_agents: int = 16
-    agent_evaluations: int = 3
-    elitism_selection: int = 6
-    tournament_selection: int = 3
+    num_agents: int = 24
+    agent_evaluations: int = 4
+    elitism_selection: int = 8
+    tournament_selection: int = 4
     generations_per_run: int = 200
     mutation_rate: float = 0.12
     mutation_rate_decay: float = 0.996
@@ -39,7 +39,7 @@ class Settings:
     sbx_eta: float = 5.0
     sbx_eta_decay: float = 1.025
     # max_steps: int = 365 * 3 * 3
-    max_steps: int = 3000
+    max_steps: int = 5000
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1
