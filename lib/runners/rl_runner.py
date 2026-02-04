@@ -77,10 +77,10 @@ class RLRunner:
         info = {}
         world = self.env.env.world  # Access underlying petting_zoo world
         
-        # Map species to functional group indices
+        # Map base species to functional group indices
         species_to_fg = {
             'plankton': 0,
-            'sprat': 1, 
+            'sprat': 1,
             'herring': 2,
             'cod': 3
         }
@@ -90,11 +90,15 @@ class RLRunner:
         inner_world = world[pad:-pad, pad:-pad]
         n_cells = inner_world.shape[0] * inner_world.shape[1]
         
-        for species, fg_idx in species_to_fg.items():
-            if species in MODEL_OFFSETS:
-                biomass_channel = MODEL_OFFSETS[species]["biomass"]
-                total_biomass = inner_world[..., biomass_channel].sum()
-                # Store as population density (per cell) to match PBMRunner format
-                info[f"info--population/FG_{fg_idx}"] = total_biomass / n_cells
+        species_map = self.env.env.species_map
+        for base_species, fg_idx in species_to_fg.items():
+            total_biomass = 0.0
+            for species_name, props in species_map.items():
+                if props.base_species != base_species:
+                    continue
+                biomass_channel = MODEL_OFFSETS[species_name]["biomass"]
+                total_biomass += inner_world[..., biomass_channel].sum()
+            # Store as population density (per cell) to match PBMRunner format
+            info[f"info--population/FG_{fg_idx}"] = total_biomass / n_cells
         
         return info

@@ -52,6 +52,13 @@ class Settings:
 
     max_energy: float = 100.0
 
+    # Age-group settings (applies to all non-plankton species)
+    age_groups: int = 3
+    # Global interval (in environment cycles) to advance age groups
+    age_step_interval: int = 50
+    # Optional per-age distribution weights (comma-separated in settings file)
+    age_init_distribution: tuple[float, ...] = ()
+
     @property
     def steps_per_day(self) -> int:
         DAYS_TO_CROSS_MAP = MAP_METER_SIZE / (FISH_SWIM_SPEED * SECONDS_IN_DAY)
@@ -60,8 +67,18 @@ class Settings:
 def _coerce(value: str, target_type):
     """Coerce string env values to the dataclass field type."""
     origin = get_origin(target_type)
-    if origin is not None:  # Handles typing constructs if you add them later
+    if origin in (list, tuple):
+        target_type = origin
+    elif origin is not None:  # Handles typing constructs if you add them later
         target_type = get_args(target_type)[0]
+
+    if target_type in (list, tuple):
+        raw = value.strip()
+        if raw == "":
+            return [] if target_type is list else ()
+        parts = [p.strip() for p in raw.split(",") if p.strip() != ""]
+        values = [float(p) for p in parts]
+        return values if target_type is list else tuple(values)
 
     if target_type is int:
         return int(value)

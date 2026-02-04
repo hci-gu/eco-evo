@@ -16,34 +16,50 @@ MODEL_OFFSETS = {
         "water": 1,
         "out_of_bounds": 2,
     },
-    # from to for the types
     "terrain_range": [0, 2],
-
 }
-
-for i, species in enumerate(const.SPECIES):
-    print(i, species)
-    biomass_start = 3
-    energy_start = biomass_start + len(const.SPECIES)
-    smell_start = energy_start + len(const.SPECIES)
-    MODEL_OFFSETS[species] = {
-        "biomass": 3 + i,
-        "energy": energy_start + i,
-        "smell": smell_start + i,
-    }
-
-MODEL_OFFSETS["biomass_range"] = [
-    3, 3 + len(const.SPECIES) - 1
-]
-MODEL_OFFSETS["energy_range"] = [
-    3 + len(const.SPECIES), 3 + len(const.SPECIES) * 2 - 1
-]
-MODEL_OFFSETS["smell_range"] = [
-    3 + len(const.SPECIES) * 2, 3 + len(const.SPECIES) * 3 - 1
-]
 
 SINGLE_CELL_INPUT = 3 + len(const.SPECIES) * 3
 INPUT_SIZE = SINGLE_CELL_INPUT * 9  # 3x3 grid of cells
+
+def configure_species(species_list: list[str]) -> None:
+    """
+    Rebuild MODEL_OFFSETS and input sizes based on the provided species list.
+    This mutates MODEL_OFFSETS in-place so existing imports see updates.
+    """
+    global SINGLE_CELL_INPUT, INPUT_SIZE
+
+    # Remove old species/range entries but keep terrain entries.
+    for key in list(MODEL_OFFSETS.keys()):
+        if key not in ("terrain", "terrain_range"):
+            del MODEL_OFFSETS[key]
+
+    biomass_start = 3
+    energy_start = biomass_start + len(species_list)
+    smell_start = energy_start + len(species_list)
+
+    for i, species in enumerate(species_list):
+        MODEL_OFFSETS[species] = {
+            "biomass": biomass_start + i,
+            "energy": energy_start + i,
+            "smell": smell_start + i,
+        }
+
+    MODEL_OFFSETS["biomass_range"] = [
+        biomass_start, biomass_start + len(species_list) - 1
+    ]
+    MODEL_OFFSETS["energy_range"] = [
+        energy_start, energy_start + len(species_list) - 1
+    ]
+    MODEL_OFFSETS["smell_range"] = [
+        smell_start, smell_start + len(species_list) - 1
+    ]
+
+    SINGLE_CELL_INPUT = 3 + len(species_list) * 3
+    INPUT_SIZE = SINGLE_CELL_INPUT * 9
+
+# Initialize with current const.SPECIES (may be reconfigured later).
+configure_species(const.SPECIES)
 
 class Action(Enum):
     UP = 0
@@ -53,7 +69,9 @@ class Action(Enum):
     EAT = 4
 
 class Model:
-    def __init__(self, input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE, output_size=OUTPUT_SIZE, chromosome=None):
+    def __init__(self, input_size=None, hidden_size=HIDDEN_SIZE, output_size=OUTPUT_SIZE, chromosome=None):
+        if input_size is None:
+            input_size = INPUT_SIZE
         if chromosome is not None:
             self.set_weights(chromosome)
         else:

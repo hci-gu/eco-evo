@@ -4,7 +4,7 @@ from gymnasium import spaces
 from lib.environments.petting_zoo import env as petting_zoo_env
 from lib.config.settings import Settings
 from lib.config.species import build_species_map
-from lib.model import INPUT_SIZE, OUTPUT_SIZE, MODEL_OFFSETS, Action
+import lib.model as model
 
 class SB3Wrapper(VecEnv):
     def __init__(self, settings: Settings, species="cod", render_mode=None):
@@ -19,11 +19,11 @@ class SB3Wrapper(VecEnv):
         # Define spaces
         # Observation: Flattened 3x3 patch for each agent
         # INPUT_SIZE is already SINGLE_CELL_INPUT * 9
-        self.obs_dim = INPUT_SIZE
+        self.obs_dim = model.INPUT_SIZE
         observation_space = spaces.Box(low=0, high=1, shape=(self.obs_dim,), dtype=np.float32)
         
         # Action: Discrete(5) -> UP, DOWN, LEFT, RIGHT, EAT
-        action_space = spaces.Discrete(OUTPUT_SIZE)
+        action_space = spaces.Discrete(model.OUTPUT_SIZE)
         
         # Number of environments = number of grid cells
         # observe() returns (W)*(W) patches (if we consider padding is handled internally)
@@ -60,7 +60,7 @@ class SB3Wrapper(VecEnv):
         self._ensure_target_species_turn()
         
         # Initialize biomass tracking
-        biomass_channel = MODEL_OFFSETS[self.target_species]["biomass"]
+        biomass_channel = model.MODEL_OFFSETS[self.target_species]["biomass"]
         self.last_total_biomass = np.sum(self.env.world[..., biomass_channel])
         
         return self._get_obs()
@@ -77,7 +77,7 @@ class SB3Wrapper(VecEnv):
         raw_obs = self.env.observations[self.target_species]
         
         # Get biomass channel index for target species
-        biomass_idx = MODEL_OFFSETS[self.target_species]["biomass"]
+        biomass_idx = model.MODEL_OFFSETS[self.target_species]["biomass"]
         
         # Extract biomass from all 9 cells in the 3x3 patch for each agent
         # Shape: (N, 3, 3)
@@ -95,7 +95,7 @@ class SB3Wrapper(VecEnv):
 
     def step_wait(self):
         # Convert discrete actions (N,) to one-hot (W, W, 5)
-        actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+        actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE), dtype=np.float32)
         
         # Map flat indices back to (x, y)
         # actions is (N_envs,)
@@ -183,7 +183,7 @@ class SB3Wrapper(VecEnv):
                 # Plankton action is ignored/handled internally usually, but we need to pass something matching shape
                 # Actually `petting_zoo.py` line 60: `self.env.step(self.empty_action)`
                 # We need to replicate that behavior or just pass zeros.
-                empty_action = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+                empty_action = np.zeros((self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE), dtype=np.float32)
                 self.env.step(empty_action)
             elif agent in self.species_models:
                 raw_obs = self.env.observations[agent] # Shape (N, 3, 3, C)
@@ -192,16 +192,16 @@ class SB3Wrapper(VecEnv):
                 actions, _ = self.species_models[agent].predict(flat_obs, deterministic=True)
                 
                 # Convert to grid
-                actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+                actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE), dtype=np.float32)
                 rows, cols = np.unravel_index(np.arange(self.num_envs), (self.settings.world_size, self.settings.world_size))
                 actions_grid[rows, cols, actions] = 1.0
                 
                 self.env.step(actions_grid)
             else:
                 # No model provided, take random actions
-                random_actions = np.random.randint(0, OUTPUT_SIZE, size=self.num_envs)
+                random_actions = np.random.randint(0, model.OUTPUT_SIZE, size=self.num_envs)
                 
-                actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+                actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE), dtype=np.float32)
                 rows, cols = np.unravel_index(np.arange(self.num_envs), (self.settings.world_size, self.settings.world_size))
                 actions_grid[rows, cols, random_actions] = 1.0
                 

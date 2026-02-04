@@ -5,6 +5,7 @@ from lib.config import const
 from lib.config.settings import Settings
 from lib.config.species import build_species_map
 from lib.model import Model
+import lib.model as model
 import lib.evolution as evolution  # Your NumPy-based evolution functions
 from lib.visualize import plot_generations, plot_biomass
 from lib.data_manager import update_generations_data, process_data
@@ -79,7 +80,7 @@ class PettingZooRunner():
             else:
                 obs, reward, termination, truncation, info = self.env.last()
                 candidate = candidates[agent]
-                action_values = candidate.forward(obs.reshape(-1, 135))
+                action_values = candidate.forward(obs.reshape(-1, model.INPUT_SIZE))
                 action_values = action_values.reshape(self.settings.world_size, self.settings.world_size, 5)
                 # mean_action_values = action_values.mean(axis=(0, 1))
 

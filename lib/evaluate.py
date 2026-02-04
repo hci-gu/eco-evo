@@ -6,7 +6,7 @@ from lib.config.settings import Settings
 
 DATA_FILE          = "data.csv"
 EVAL_YEAR_PAIRS    = []
-SPECIES            = const.ACTING_SPECIES
+SPECIES            = const.ACTING_BASE_SPECIES
 DAYS_PER_YEAR      = 365
 
 # def set_starting_biomass(row: pd.Series) -> None:

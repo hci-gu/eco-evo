@@ -3,6 +3,7 @@ import warnings
 from enum import Enum
 from lib.model import MODEL_OFFSETS
 from lib.config.const import ACTING_SPECIES
+import lib.config.const as const
 from lib.config.settings import Settings
 from lib.config.species import SpeciesMap, get_feeding_energy_reward
 from numba import njit
@@ -28,9 +29,6 @@ def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, 
     activity_metabolic_rate = props.activity_metabolic_rate
     standard_metabolic_rate = props.standard_metabolic_rate
     fishing_mortality_loss = props.fishing_mortality_rate
-    growth_rate = props.growth_rate
-    carrying_capacity = props.carrying_capacity
-    reproduction_freq = props.reproduction_freq
     
     # bioMARL mortality parameters
     baseline_mortality = props.baseline_mortality
@@ -112,21 +110,7 @@ def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, 
     # Also reset energy to 0 for dead cells
     world[pad:-pad, pad:-pad, energy_offset] = np.maximum(current_energy, 0.0)
 
-    # --- bioMARL-style multiplicative growth ---
-    # Growth only occurs at reproduction_freq intervals
-    does_reproduce = (step_counter % reproduction_freq == 0)
-    
-    if does_reproduce:
-        # Multiplicative growth: B_new = B * growth_rate
-        current_biomass = world[pad:-pad, pad:-pad, biomass_offset]
-        growth_delta = current_biomass * (growth_rate - 1.0)
-        
-        # Apply carrying capacity cap only for species with finite capacity (plankton)
-        if carrying_capacity < np.inf:
-            growth_delta = np.clip(carrying_capacity - current_biomass, 0, growth_delta)
-        
-        world[pad:-pad, pad:-pad, biomass_offset] += growth_delta
-    # -----------------------------------------
+    # Reproduction is handled globally for age groups (see spawn_offspring).
 
     biomass_after_loss = world[pad:-pad, pad:-pad, biomass_offset]
     current_energy_for_movement = world[pad:-pad, pad:-pad, energy_offset]
@@ -180,6 +164,103 @@ def apply_movement_delta(species_map: SpeciesMap, world, species_key, movement_d
     world[:, :, energy_offset] = movement_deltas[:, :, energy_offset] / denom
     # reduce energy by base amount
     world[:, :, energy_offset] -= props.energy_cost
+
+def apply_age_transitions(species_map: SpeciesMap, world, step_counter: int) -> None:
+    if step_counter <= 0:
+        return
+
+    pad = 1
+    # Group species by base species to avoid cascading multi-step aging.
+    by_base = {}
+    for species_key, props in species_map.items():
+        if props.base_species not in by_base:
+            by_base[props.base_species] = []
+        by_base[props.base_species].append((species_key, props))
+
+    for base_name, groups in by_base.items():
+        # Plankton is single-age.
+        if base_name == "plankton":
+            continue
+
+        # Sort by age_index descending so new entrants don't age twice.
+        groups_sorted = sorted(groups, key=lambda item: item[1].age_index, reverse=True)
+        for species_key, props in groups_sorted:
+            if props.next_species is None:
+                continue
+            if props.age_steps <= 0:
+                continue
+            if step_counter % props.age_steps != 0:
+                continue
+
+            src_b = MODEL_OFFSETS[species_key]["biomass"]
+            src_e = MODEL_OFFSETS[species_key]["energy"]
+            dst_b = MODEL_OFFSETS[props.next_species]["biomass"]
+            dst_e = MODEL_OFFSETS[props.next_species]["energy"]
+
+            src_biomass = world[pad:-pad, pad:-pad, src_b]
+            src_energy = world[pad:-pad, pad:-pad, src_e]
+            dst_biomass = world[pad:-pad, pad:-pad, dst_b]
+            dst_energy = world[pad:-pad, pad:-pad, dst_e]
+
+            moved_biomass = src_biomass.copy()
+            if np.all(moved_biomass == 0):
+                continue
+
+            total_biomass = dst_biomass + moved_biomass
+            combined_energy = np.divide(
+                (dst_biomass * dst_energy + moved_biomass * src_energy),
+                total_biomass,
+                out=np.zeros_like(total_biomass),
+                where=total_biomass > 0,
+            )
+
+            world[pad:-pad, pad:-pad, dst_b] = total_biomass
+            world[pad:-pad, pad:-pad, dst_e] = combined_energy
+            world[pad:-pad, pad:-pad, src_b] = 0.0
+            world[pad:-pad, pad:-pad, src_e] = 0.0
+
+def spawn_offspring(settings: Settings, species_map: SpeciesMap, world, step_counter: int) -> None:
+    if step_counter <= 0:
+        return
+
+    pad = 1
+    for species_key, props in species_map.items():
+        if not props.is_mature:
+            continue
+        if props.reproduction_freq <= 0:
+            continue
+        if step_counter % props.reproduction_freq != 0:
+            continue
+        if props.offspring_species is None:
+            continue
+
+        src_b = MODEL_OFFSETS[species_key]["biomass"]
+        src_e = MODEL_OFFSETS[species_key]["energy"]
+        dst_b = MODEL_OFFSETS[props.offspring_species]["biomass"]
+        dst_e = MODEL_OFFSETS[props.offspring_species]["energy"]
+
+        parent_biomass = world[pad:-pad, pad:-pad, src_b]
+        parent_energy = world[pad:-pad, pad:-pad, src_e]
+        if np.all(parent_biomass == 0):
+            continue
+
+        growth_factor = max(props.growth_rate - 1.0, 0.0)
+        new_biomass = parent_biomass * growth_factor
+        if np.all(new_biomass == 0):
+            continue
+
+        offspring_biomass = world[pad:-pad, pad:-pad, dst_b]
+        offspring_energy = world[pad:-pad, pad:-pad, dst_e]
+        total_biomass = offspring_biomass + new_biomass
+        combined_energy = np.divide(
+            (offspring_biomass * offspring_energy + new_biomass * parent_energy),
+            total_biomass,
+            out=np.zeros_like(total_biomass),
+            where=total_biomass > 0,
+        )
+
+        world[pad:-pad, pad:-pad, dst_b] = total_biomass
+        world[pad:-pad, pad:-pad, dst_e] = np.clip(combined_energy, 0.0, settings.max_energy)
 
 def matrix_perform_eating(settings: Settings, species_map: SpeciesMap, world, species_key, actions):
     pad = 1
@@ -288,14 +369,26 @@ def world_is_alive(settings: Settings, species_map: SpeciesMap, world):
     """
     reason = ""
 
-    for species in ACTING_SPECIES:
-        props = species_map[species]
+    totals_by_base = {}
+    starting_by_base = {}
+    for species, props in species_map.items():
+        if props.base_species not in const.ACTING_BASE_SPECIES:
+            continue
         biomass_offset = MODEL_OFFSETS[species]["biomass"]
         biomass = world[:, :, biomass_offset].sum()
-        biomass_too_low = biomass < (props.starting_biomass * settings.min_percent_alive)
-        biomass_too_high = biomass > (props.starting_biomass * settings.max_percent_alive)
+        totals_by_base[props.base_species] = totals_by_base.get(props.base_species, 0.0) + biomass
+        starting_by_base[props.base_species] = (
+            starting_by_base.get(props.base_species, 0.0) + props.starting_biomass
+        )
+
+    for base_species, biomass in totals_by_base.items():
+        base_start = starting_by_base.get(base_species, 0.0)
+        if base_start <= 0:
+            continue
+        biomass_too_low = biomass < (base_start * settings.min_percent_alive)
+        biomass_too_high = biomass > (base_start * settings.max_percent_alive)
         if biomass_too_low or biomass_too_high:
-            reason = f"{species} "
+            reason = f"{base_species} "
             if biomass_too_low:
                 reason += "low"
             if biomass_too_high:

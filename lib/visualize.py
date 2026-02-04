@@ -32,6 +32,10 @@ SPECIES_COLORS = {
     "cod": [40, 40, 40]
 }
 
+def _get_species_color(species: str):
+    base = const.base_species_name(species) if hasattr(const, "base_species_name") else species
+    return SPECIES_COLORS.get(base, [128, 128, 128])
+
 # Cache for terrain surface and graph surfaces
 terrain_surface_cache = None
 biomass_graph_cache = None
@@ -218,8 +222,8 @@ def plot_biomass(agents_data):
             idx += 1
 
     # for each species
-    for species in SPECIES:
-        color = SPECIES_COLORS[species]
+    for species in const.BASE_SPECIES:
+        color = _get_species_color(species)
         legend_patches.append(mpatches.Patch(color=[c/255 for c in color], label=species.capitalize()))
 
     plt.xlabel('Steps')
@@ -340,7 +344,7 @@ def draw_world(settings: Settings,screen, world_tensor, world_data):
                     # Draw the circle at the center of this large surface
                     # The circle center on the large surface:
                     circle_center = (half_ls + offset_x, half_ls + offset_y)
-                    color = SPECIES_COLORS[species]
+                    color = _get_species_color(species)
 
                     # Add partial transparency so overlapping species are visible
                     # For example, alpha = 180 for semi-transparency
@@ -366,4 +370,3 @@ def draw_world(settings: Settings,screen, world_tensor, world_data):
         screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
 
     pygame.display.flip()
-

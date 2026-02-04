@@ -9,10 +9,12 @@ from lib.world import (
     matrix_perform_eating,
     apply_movement_delta,
     spawn_plankton,
+    apply_age_transitions,
+    spawn_offspring,
     world_is_alive,
 )
 from lib.visualize import init_pygame, draw_world, plot_biomass
-from lib.model import INPUT_SIZE, OUTPUT_SIZE, MODEL_OFFSETS
+import lib.model as model
 from lib.config.settings import Settings
 from lib.config.species import SpeciesMap
 import lib.config.const as const
@@ -52,7 +54,7 @@ class raw_env(AECEnv):
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(self.settings.world_size, self.settings.world_size, INPUT_SIZE, 3, 3),
+                shape=(self.settings.world_size, self.settings.world_size, model.INPUT_SIZE, 3, 3),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -61,7 +63,7 @@ class raw_env(AECEnv):
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(self.settings.world_size, self.settings.world_size, OUTPUT_SIZE),
+                shape=(self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -92,6 +94,7 @@ class raw_env(AECEnv):
         self.step_count = 0
         self.done = False
         self.reason = ""
+        self.cycle_count = 0
 
         # Initialize bookkeeping dictionaries.
         self.agents = self.possible_agents[:]
@@ -168,6 +171,13 @@ class raw_env(AECEnv):
                 self.observations[i] = self.observe(i)
 
         if self._agent_selector.is_last():
+            self.cycle_count += 1
+            if not any(self.terminations.values()) and not any(self.truncations.values()):
+                apply_age_transitions(self.species_map, self.world, self.cycle_count)
+                spawn_offspring(self.settings, self.species_map, self.world, self.cycle_count)
+                update_smell(self.settings, self.world)
+                for i in self.agents:
+                    self.observations[i] = self.observe(i)
             # Re-shuffle agents for the next round.
             random.shuffle(self.agents)
             self._agent_selector = agent_selector(self.agents)
@@ -183,7 +193,7 @@ class raw_env(AECEnv):
             plot_biomass(self.plot_data)
 
     def get_fitness(self, agent):
-        biomass = self.world[..., MODEL_OFFSETS[agent]["biomass"]].sum()
+        biomass = self.world[..., model.MODEL_OFFSETS[agent]["biomass"]].sum()
 
         return np.log(biomass)
     

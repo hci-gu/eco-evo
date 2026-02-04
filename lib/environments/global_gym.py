@@ -4,7 +4,7 @@ from gymnasium import spaces
 from lib.environments.petting_zoo import env as petting_zoo_env
 from lib.config.settings import Settings
 from lib.config.species import build_species_map
-from lib.model import INPUT_SIZE, OUTPUT_SIZE, MODEL_OFFSETS
+import lib.model as model
 
 class GlobalEcoEvoEnv(gym.Env):
     """
@@ -48,7 +48,7 @@ class GlobalEcoEvoEnv(gym.Env):
         # Action Space: One discrete action (0-4) for EVERY cell.
         # MultiDiscrete of shape (H * W)
         self.n_cells = self.settings.world_size * self.settings.world_size
-        self.action_space = spaces.MultiDiscrete(np.full(self.n_cells, OUTPUT_SIZE))
+        self.action_space = spaces.MultiDiscrete(np.full(self.n_cells, model.OUTPUT_SIZE))
         
         self.species_models = {}
         self.last_total_biomass = 0.0
@@ -61,7 +61,7 @@ class GlobalEcoEvoEnv(gym.Env):
         self._ensure_target_species_turn()
         
         # Initialize biomass tracking
-        biomass_channel = MODEL_OFFSETS[self.target_species]["biomass"]
+        biomass_channel = model.MODEL_OFFSETS[self.target_species]["biomass"]
         self.last_total_biomass = np.sum(self.env.env.world[..., biomass_channel])
         
         return self._get_obs(), {}
@@ -70,7 +70,7 @@ class GlobalEcoEvoEnv(gym.Env):
         # action is an array of shape (N_Cells,) with values 0-4
         
         # 1. Convert flat action vector to (W, W, 5) one-hot grid
-        actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+        actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE), dtype=np.float32)
         
         # Reshape action to (W, W)
         action_map = action.reshape(self.settings.world_size, self.settings.world_size)
@@ -88,7 +88,7 @@ class GlobalEcoEvoEnv(gym.Env):
         self._ensure_target_species_turn()
         
         # 4. Calculate Reward (Global Biomass Change)
-        biomass_channel = MODEL_OFFSETS[self.target_species]["biomass"]
+        biomass_channel = model.MODEL_OFFSETS[self.target_species]["biomass"]
         current_total_biomass = np.sum(self.env.env.world[..., biomass_channel])
         
         biomass_change = current_total_biomass - self.last_total_biomass
@@ -119,10 +119,10 @@ class GlobalEcoEvoEnv(gym.Env):
         obs = raw_world[1:-1, 1:-1, :].copy() # Copy to avoid modifying original world if we write to it
         
         # Normalize Biomass and Energy using log1p
-        b_start, b_end = MODEL_OFFSETS["biomass_range"]
+        b_start, b_end = model.MODEL_OFFSETS["biomass_range"]
         obs[..., b_start:b_end+1] = np.log1p(obs[..., b_start:b_end+1])
         
-        e_start, e_end = MODEL_OFFSETS["energy_range"]
+        e_start, e_end = model.MODEL_OFFSETS["energy_range"]
         obs[..., e_start:e_end+1] = np.log1p(obs[..., e_start:e_end+1])
         
         # Transpose to (C, H, W)
@@ -145,7 +145,7 @@ class GlobalEcoEvoEnv(gym.Env):
             agent = self.env.agent_selection
             
             if agent == "plankton":
-                empty_action = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+                empty_action = np.zeros((self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE), dtype=np.float32)
                 self.env.step(empty_action)
             else:
                 # Get global obs
@@ -159,7 +159,7 @@ class GlobalEcoEvoEnv(gym.Env):
                 
                 # Convert to grid
                 action_map = action.reshape(self.settings.world_size, self.settings.world_size)
-                actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, OUTPUT_SIZE), dtype=np.float32)
+                actions_grid = np.zeros((self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE), dtype=np.float32)
                 rows, cols = np.indices((self.settings.world_size, self.settings.world_size))
                 actions_grid[rows, cols, action_map] = 1.0
                 
