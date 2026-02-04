@@ -26,14 +26,18 @@ def save_data_to_file(settings: Settings, generation, agents_data_snapshot):
 def update_generations_data(settings: Settings, generation, agents_data):
     fitness_values = {}
 
-    if len(agents_data.items()) == 3:
-        # we are working with species map
+    is_species_map = bool(agents_data) and all(
+        isinstance(key, str) and key in SPECIES for key in agents_data.keys()
+    )
+
+    if is_species_map:
         for species, _ in agents_data.items():
             fitness_values[species] = []
             for _, evals in agents_data[species].items():
                 total_fitness = 0
                 for _, data in evals.items():
-                    fitness = max(data['steps'])
+                    steps = data.get('steps', [])
+                    fitness = max(steps) if steps else 0
                     total_fitness += fitness
                 fitness_values[species].append(total_fitness / len(evals))
     else:
@@ -41,7 +45,8 @@ def update_generations_data(settings: Settings, generation, agents_data):
         for _, evals in agents_data.items():
             total_fitness = 0
             for _, data in evals.items():
-                fitness = max(data['steps'])
+                steps = data.get('steps', [])
+                fitness = max(steps) if steps else 0
                 total_fitness += fitness
             fitness_values.append(total_fitness / len(evals))
 
