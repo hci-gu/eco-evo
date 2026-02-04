@@ -19,7 +19,15 @@ class Action(Enum):
     RIGHT = 3
     EAT = 4
 
-def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, actions, step_counter: int = 0):
+def all_movement_delta(
+    species_map: SpeciesMap,
+    world,
+    world_data,
+    species_key,
+    actions,
+    step_counter: int = 0,
+    movement_deltas=None,
+):
     pad = 1
     world_data[pad:-pad, pad:-pad, 4] += 1
 
@@ -130,8 +138,11 @@ def all_movement_delta(species_map: SpeciesMap, world, world_data, species_key, 
 
     total_biomass_moved = biomass_up + biomass_down + biomass_left + biomass_right
 
-    # Movements.
-    movement_deltas = np.zeros_like(world)
+    # Movements (reuse buffer when provided).
+    if movement_deltas is None:
+        movement_deltas = np.zeros_like(world)
+    else:
+        movement_deltas.fill(0.0)
     movement_deltas[pad:-pad, : -2 * pad, biomass_offset] += biomass_up
     movement_deltas[pad:-pad, : -2 * pad, energy_offset] += current_energy_for_movement * biomass_up
     movement_deltas[pad:-pad, 2 * pad :, biomass_offset] += biomass_down
@@ -164,6 +175,148 @@ def apply_movement_delta(species_map: SpeciesMap, world, species_key, movement_d
     world[:, :, energy_offset] = movement_deltas[:, :, energy_offset] / denom
     # reduce energy by base amount
     world[:, :, energy_offset] -= props.energy_cost
+
+def build_age_transition_table(species_map: SpeciesMap):
+    entries = []
+    for species_key, props in species_map.items():
+        if props.base_species == "plankton":
+            continue
+        if props.next_species is None:
+            continue
+        entries.append(
+            (
+                props.base_species,
+                props.age_index,
+                MODEL_OFFSETS[species_key]["biomass"],
+                MODEL_OFFSETS[species_key]["energy"],
+                MODEL_OFFSETS[props.next_species]["biomass"],
+                MODEL_OFFSETS[props.next_species]["energy"],
+                int(props.age_steps),
+            )
+        )
+    # Sort by base species then descending age_index to avoid cascading.
+    entries.sort(key=lambda item: (item[0], -item[1]))
+    src_b = np.array([e[2] for e in entries], dtype=np.int32)
+    src_e = np.array([e[3] for e in entries], dtype=np.int32)
+    dst_b = np.array([e[4] for e in entries], dtype=np.int32)
+    dst_e = np.array([e[5] for e in entries], dtype=np.int32)
+    age_steps = np.array([e[6] for e in entries], dtype=np.int32)
+    return src_b, src_e, dst_b, dst_e, age_steps
+
+def build_spawn_table(species_map: SpeciesMap):
+    entries = []
+    for species_key, props in species_map.items():
+        if not props.is_mature:
+            continue
+        if props.offspring_species is None:
+            continue
+        entries.append(
+            (
+                MODEL_OFFSETS[species_key]["biomass"],
+                MODEL_OFFSETS[species_key]["energy"],
+                MODEL_OFFSETS[props.offspring_species]["biomass"],
+                MODEL_OFFSETS[props.offspring_species]["energy"],
+                int(props.reproduction_freq),
+                float(props.growth_rate),
+            )
+        )
+    src_b = np.array([e[0] for e in entries], dtype=np.int32)
+    src_e = np.array([e[1] for e in entries], dtype=np.int32)
+    dst_b = np.array([e[2] for e in entries], dtype=np.int32)
+    dst_e = np.array([e[3] for e in entries], dtype=np.int32)
+    repro_freq = np.array([e[4] for e in entries], dtype=np.int32)
+    growth_rate = np.array([e[5] for e in entries], dtype=np.float32)
+    return src_b, src_e, dst_b, dst_e, repro_freq, growth_rate
+
+@njit
+def _apply_age_transitions_table(world, step_counter, src_b, src_e, dst_b, dst_e, age_steps):
+    if step_counter <= 0:
+        return
+    pad = 1
+    for i in range(src_b.shape[0]):
+        if age_steps[i] <= 0:
+            continue
+        if step_counter % age_steps[i] != 0:
+            continue
+        sb = src_b[i]
+        se = src_e[i]
+        db = dst_b[i]
+        de = dst_e[i]
+
+        for x in range(pad, world.shape[0] - pad):
+            for y in range(pad, world.shape[1] - pad):
+                moved_biomass = world[x, y, sb]
+                if moved_biomass <= 0:
+                    continue
+                dst_biomass = world[x, y, db]
+                total_biomass = dst_biomass + moved_biomass
+                if total_biomass > 0:
+                    combined_energy = (
+                        dst_biomass * world[x, y, de] + moved_biomass * world[x, y, se]
+                    ) / total_biomass
+                else:
+                    combined_energy = 0.0
+                world[x, y, db] = total_biomass
+                world[x, y, de] = combined_energy
+                world[x, y, sb] = 0.0
+                world[x, y, se] = 0.0
+
+@njit
+def _spawn_offspring_table(world, step_counter, src_b, src_e, dst_b, dst_e, repro_freq, growth_rate, max_energy):
+    if step_counter <= 0:
+        return
+    pad = 1
+    for i in range(src_b.shape[0]):
+        if repro_freq[i] <= 0:
+            continue
+        if step_counter % repro_freq[i] != 0:
+            continue
+        sb = src_b[i]
+        se = src_e[i]
+        db = dst_b[i]
+        de = dst_e[i]
+        grow = growth_rate[i] - 1.0
+        if grow <= 0:
+            continue
+
+        for x in range(pad, world.shape[0] - pad):
+            for y in range(pad, world.shape[1] - pad):
+                parent_biomass = world[x, y, sb]
+                if parent_biomass <= 0:
+                    continue
+                new_biomass = parent_biomass * grow
+                offspring_biomass = world[x, y, db]
+                total_biomass = offspring_biomass + new_biomass
+                if total_biomass > 0:
+                    combined_energy = (
+                        offspring_biomass * world[x, y, de] + new_biomass * world[x, y, se]
+                    ) / total_biomass
+                else:
+                    combined_energy = 0.0
+                if combined_energy > max_energy:
+                    combined_energy = max_energy
+                elif combined_energy < 0:
+                    combined_energy = 0.0
+                world[x, y, db] = total_biomass
+                world[x, y, de] = combined_energy
+
+def apply_age_transitions_table(world, step_counter, table):
+    if table is None:
+        return
+    src_b, src_e, dst_b, dst_e, age_steps = table
+    if src_b.size == 0:
+        return
+    _apply_age_transitions_table(world, step_counter, src_b, src_e, dst_b, dst_e, age_steps)
+
+def spawn_offspring_table(world, step_counter, table, max_energy):
+    if table is None:
+        return
+    src_b, src_e, dst_b, dst_e, repro_freq, growth_rate = table
+    if src_b.size == 0:
+        return
+    _spawn_offspring_table(
+        world, step_counter, src_b, src_e, dst_b, dst_e, repro_freq, growth_rate, max_energy
+    )
 
 def apply_age_transitions(species_map: SpeciesMap, world, step_counter: int) -> None:
     if step_counter <= 0:

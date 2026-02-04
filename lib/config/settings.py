@@ -49,6 +49,8 @@ class Settings:
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1
+    # Update smell every N environment actions (1 = every action).
+    smell_update_interval: int = 1
 
     max_energy: float = 100.0
 

@@ -9,8 +9,10 @@ from lib.world import (
     matrix_perform_eating,
     apply_movement_delta,
     spawn_plankton,
-    apply_age_transitions,
-    spawn_offspring,
+    build_age_transition_table,
+    build_spawn_table,
+    apply_age_transitions_table,
+    spawn_offspring_table,
     world_is_alive,
 )
 from lib.visualize import init_pygame, draw_world, plot_biomass
@@ -48,6 +50,8 @@ class raw_env(AECEnv):
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.map_folder = map_folder
         self.reason = ""
+        self.age_transition_table = build_age_transition_table(self.species_map)
+        self.spawn_table = build_spawn_table(self.species_map)
         self.reset()
 
         self._observation_spaces = {
@@ -95,6 +99,8 @@ class raw_env(AECEnv):
         self.done = False
         self.reason = ""
         self.cycle_count = 0
+        self._movement_deltas = np.zeros_like(self.world)
+        self._smell_step = 0
 
         # Initialize bookkeeping dictionaries.
         self.agents = self.possible_agents[:]
@@ -104,7 +110,8 @@ class raw_env(AECEnv):
         self.truncations = {agent: False for agent in self.agents}
         self.infos = {agent: {} for agent in self.agents}
         self.state = {agent: None for agent in self.agents}
-        self.observations = {agent: self.observe(agent) for agent in self.agents}
+        self.observations = {agent: None for agent in self.agents}
+        self._refresh_observations()
         self.num_moves = 0
 
         # Initialize the agent selector.
@@ -116,7 +123,22 @@ class raw_env(AECEnv):
         self.color_order = []
 
     def observe(self, agent):
-        return observe(self.world)
+        cached = self.observations.get(agent)
+        if cached is not None:
+            return cached
+        self._refresh_observations()
+        return self.observations[agent]
+
+    def _refresh_observations(self):
+        obs = observe(self.world)
+        for agent in self.agents:
+            self.observations[agent] = obs
+
+    def _maybe_update_smell(self):
+        interval = max(1, int(self.settings.smell_update_interval))
+        self._smell_step += 1
+        if self._smell_step % interval == 0:
+            update_smell(self.settings, self.world)
 
     def step(self, action):
         if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
@@ -126,24 +148,35 @@ class raw_env(AECEnv):
         agent = self.agent_selection
         self.state[self.agent_selection] = action
 
+        is_last = self._agent_selector.is_last()
+
         # If the active agent is "plankton", use the hardcoded logic.
         if agent == "plankton":
             spawn_plankton(self.species_map, self.world, self.world_data)
             # if self.num_moves % 20 == 0:
             #     randomwalk_plankton(self.world, self.world_data)
-            
-            for i in self.agents:
-                self.observations[i] = self.observe(i)
+            if not is_last:
+                self._maybe_update_smell()
+                self._refresh_observations()
         else:
             self.state[agent] = action
 
             # Movement update.
-            matrix_movement_deltas = all_movement_delta(self.species_map, self.world, self.world_data, agent, action, self.num_moves)
+            matrix_movement_deltas = all_movement_delta(
+                self.species_map,
+                self.world,
+                self.world_data,
+                agent,
+                action,
+                self.num_moves,
+                movement_deltas=self._movement_deltas,
+            )
             apply_movement_delta(self.species_map, self.world, agent, matrix_movement_deltas)
 
             matrix_perform_eating(self.settings, self.species_map, self.world, agent, action)
             
-            update_smell(self.settings, self.world)
+            if not is_last:
+                self._maybe_update_smell()
             self.render()
             alive, reason = world_is_alive(self.settings, self.species_map, self.world)
             if not alive:
@@ -167,17 +200,16 @@ class raw_env(AECEnv):
             self.num_moves += 1
             self.truncations = {agent: self.num_moves >= (self.settings.max_steps * 4) for agent in self.agents}
 
-            for i in self.agents:
-                self.observations[i] = self.observe(i)
+            if not is_last:
+                self._refresh_observations()
 
-        if self._agent_selector.is_last():
+        if is_last:
             self.cycle_count += 1
             if not any(self.terminations.values()) and not any(self.truncations.values()):
-                apply_age_transitions(self.species_map, self.world, self.cycle_count)
-                spawn_offspring(self.settings, self.species_map, self.world, self.cycle_count)
-                update_smell(self.settings, self.world)
-                for i in self.agents:
-                    self.observations[i] = self.observe(i)
+                apply_age_transitions_table(self.world, self.cycle_count, self.age_transition_table)
+                spawn_offspring_table(self.world, self.cycle_count, self.spawn_table, self.settings.max_energy)
+                self._maybe_update_smell()
+                self._refresh_observations()
             # Re-shuffle agents for the next round.
             random.shuffle(self.agents)
             self._agent_selector = agent_selector(self.agents)
