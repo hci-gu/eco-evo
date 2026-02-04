@@ -194,8 +194,7 @@ class raw_env(AECEnv):
 
     def get_fitness(self, agent):
         biomass = self.world[..., model.MODEL_OFFSETS[agent]["biomass"]].sum()
-
-        return np.log(biomass)
+        return np.log(biomass + 1e-8)
     
     def overwrite_world(self, world):
         self.world = world
