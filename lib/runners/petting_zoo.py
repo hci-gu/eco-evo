@@ -20,6 +20,7 @@ import optuna
 # ---- Parallel worker plumbing ----
 _WORKER_RUNNER = None  # one runner per proces
 _WORKER_POPULATION_STATE = None
+_WORKER_MODEL_CACHE = None
 
 def noop(a, b, c):
     pass
@@ -129,8 +130,6 @@ class PettingZooRunner():
         for idx in range(self.settings.num_agents):
             for species in self.species_list:
                 other_species = [s for s in self.species_list if s != species]
-
-                evals = []
                 for eval_index in range(self.settings.agent_evaluations):
                     other_indices = {}
                     # pick random agent from other species
@@ -138,84 +137,85 @@ class PettingZooRunner():
                         other_species_idx = eval_rng.randint(0, self.settings.num_agents - 1)
                         other_indices[other_species_name] = other_species_idx
 
-                    evals.append({
+                    tasks.append({
+                        "agent_index": idx,
+                        "species": species,
                         "eval_index": eval_index,
                         "other_indices": other_indices,
                         "map_seed": eval_seeds[eval_index],
                         "python_random_seed": eval_rng.randrange(2**32),
                     })
 
-                tasks.append({
-                    "agent_index": idx,
-                    "species": species,
-                    "self_candidate": population_state[species][idx],
-                    "evals": evals,
-                })
+        local_model_cache = {species: {} for species in self.species_list}
+
+        def _get_local_model(species, idx):
+            cache = local_model_cache[species]
+            model = cache.get(idx)
+            if model is None:
+                model = Model(chromosome=population_state[species][idx])
+                cache[idx] = model
+            return model
 
         def _run_eval_task_local(task):
-            self_model = Model(chromosome=task["self_candidate"])
-            other_models_by_eval = []
-            for eval_task in task["evals"]:
-                eval_species = {task["species"]: self_model}
-                for sp, idx in eval_task["other_indices"].items():
-                    eval_species[sp] = Model(chromosome=population_state[sp][idx])
-                other_models_by_eval.append(eval_species)
-            results = []
-            for eval_task, eval_species in zip(task["evals"], other_models_by_eval):
-                self.agent_index = task["agent_index"]
-                self.eval_index = eval_task["eval_index"]
+            self_model = _get_local_model(task["species"], task["agent_index"])
+            eval_species = {task["species"]: self_model}
+            for sp, idx in task["other_indices"].items():
+                eval_species[sp] = _get_local_model(sp, idx)
 
-                start_time = time.time()
+            self.agent_index = task["agent_index"]
+            self.eval_index = task["eval_index"]
+
+            map_seed = task["map_seed"]
+            python_random_seed = task["python_random_seed"]
+            start_time = time.time()
+            fitness, episode_length, end_reason = self.run(
+                eval_species,
+                task["species"],
+                map_seed,
+                is_evaluation=False,
+                callback=noop,
+                collect_plot_data=True,
+                python_random_seed=python_random_seed,
+            )
+            while episode_length == 0:
+                if self.settings.enable_logging:
+                    print("something went wrong update this seed")
+                map_seed = random.randrange(100000)
+                python_random_seed = random.randrange(2**32)
                 fitness, episode_length, end_reason = self.run(
                     eval_species,
                     task["species"],
-                    eval_task["map_seed"],
+                    map_seed,
                     is_evaluation=False,
                     callback=noop,
                     collect_plot_data=True,
-                    python_random_seed=eval_task["python_random_seed"],
+                    python_random_seed=python_random_seed,
                 )
-                while episode_length == 0:
-                    if self.settings.enable_logging:
-                        print("something went wrong update this seed")
-                    eval_task["map_seed"] = random.randrange(100000)
-                    eval_task["python_random_seed"] = random.randrange(2**32)
-                    fitness, episode_length, end_reason = self.run(
-                        eval_species,
-                        task["species"],
-                        eval_task["map_seed"],
-                        is_evaluation=False,
-                        callback=noop,
-                        collect_plot_data=True,
-                        python_random_seed=eval_task["python_random_seed"],
-                    )
 
-                end_time = time.time()
-                results.append({
-                    "agent_index": task["agent_index"],
-                    "species": task["species"],
-                    "eval_index": eval_task["eval_index"],
-                    "fitness": fitness,
-                    "episode_length": episode_length,
-                    "end_reason": end_reason,
-                    "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
-                })
-
-            return results
+            end_time = time.time()
+            return {
+                "agent_index": task["agent_index"],
+                "species": task["species"],
+                "eval_index": task["eval_index"],
+                "fitness": fitness,
+                "episode_length": episode_length,
+                "end_reason": end_reason,
+                "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
+            }
 
         results = []
         if self.settings.num_workers <= 1:
             for task in tasks:
-                results.extend(_run_eval_task_local(task))
+                results.append(_run_eval_task_local(task))
         else:
             with ProcessPoolExecutor(
                 max_workers=self.settings.num_workers,
                 initializer=_init_worker,
                 initargs=(self.settings, self.env.render_mode, self.env.map_folder, population_state),
             ) as executor:
-                chunksize = max(1, len(tasks) // (self.settings.num_workers * 4))
-                for res in executor.map(_run_eval_task_worker, tasks, chunksize=chunksize):
-                    results.extend(res)
+                # Small tasks improve load-balancing across workers.
+                for res in executor.map(_run_eval_task_worker, tasks, chunksize=1):
+                    results.append(res)
 
         # Aggregate results in deterministic order.
         results_by_key = {(r["agent_index"], r["species"], r["eval_index"]): r for r in results}
@@ -337,6 +337,7 @@ class PettingZooRunner():
 def _init_worker(settings: Settings, render_mode: str, map_folder: str, population_state):
     global _WORKER_RUNNER
     global _WORKER_POPULATION_STATE
+    global _WORKER_MODEL_CACHE
     _WORKER_RUNNER = PettingZooRunner(
         settings=settings,
         render_mode=render_mode,
@@ -344,55 +345,62 @@ def _init_worker(settings: Settings, render_mode: str, map_folder: str, populati
         build_population=False,
     )
     _WORKER_POPULATION_STATE = population_state
+    _WORKER_MODEL_CACHE = {species: {} for species in population_state}
 
 
 def _run_eval_task_worker(task):
     global _WORKER_RUNNER
     global _WORKER_POPULATION_STATE
+    global _WORKER_MODEL_CACHE
     runner = _WORKER_RUNNER
-    self_model = Model(chromosome=task["self_candidate"])
-    other_models_by_eval = []
-    for eval_task in task["evals"]:
-        eval_species = {task["species"]: self_model}
-        for sp, idx in eval_task["other_indices"].items():
-            eval_species[sp] = Model(chromosome=_WORKER_POPULATION_STATE[sp][idx])
-        other_models_by_eval.append(eval_species)
-    results = []
-    for eval_task, eval_species in zip(task["evals"], other_models_by_eval):
-        start_time = time.time()
+
+    def _get_worker_model(species, idx):
+        cache = _WORKER_MODEL_CACHE[species]
+        model = cache.get(idx)
+        if model is None:
+            model = Model(chromosome=_WORKER_POPULATION_STATE[species][idx])
+            cache[idx] = model
+        return model
+
+    self_model = _get_worker_model(task["species"], task["agent_index"])
+    eval_species = {task["species"]: self_model}
+    for sp, idx in task["other_indices"].items():
+        eval_species[sp] = _get_worker_model(sp, idx)
+
+    map_seed = task["map_seed"]
+    python_random_seed = task["python_random_seed"]
+    start_time = time.time()
+    fitness, episode_length, end_reason = runner.run(
+        eval_species,
+        task["species"],
+        map_seed,
+        is_evaluation=False,
+        callback=noop,
+        collect_plot_data=False,
+        python_random_seed=python_random_seed,
+    )
+    while episode_length == 0:
+        if runner.settings.enable_logging:
+            print("something went wrong update this seed")
+        map_seed = random.randrange(100000)
+        python_random_seed = random.randrange(2**32)
         fitness, episode_length, end_reason = runner.run(
             eval_species,
             task["species"],
-            eval_task["map_seed"],
+            map_seed,
             is_evaluation=False,
             callback=noop,
             collect_plot_data=False,
-            python_random_seed=eval_task["python_random_seed"],
+            python_random_seed=python_random_seed,
         )
-        while episode_length == 0:
-            if runner.settings.enable_logging:
-                print("something went wrong update this seed")
-            eval_task["map_seed"] = random.randrange(100000)
-            eval_task["python_random_seed"] = random.randrange(2**32)
-            fitness, episode_length, end_reason = runner.run(
-                eval_species,
-                task["species"],
-                eval_task["map_seed"],
-                is_evaluation=False,
-                callback=noop,
-                collect_plot_data=False,
-                python_random_seed=eval_task["python_random_seed"],
-            )
 
-        end_time = time.time()
-        results.append({
-            "agent_index": task["agent_index"],
-            "species": task["species"],
-            "eval_index": eval_task["eval_index"],
-            "fitness": fitness,
-            "episode_length": episode_length,
-            "end_reason": end_reason,
-            "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
-        })
-
-    return results
+    end_time = time.time()
+    return {
+        "agent_index": task["agent_index"],
+        "species": task["species"],
+        "eval_index": task["eval_index"],
+        "fitness": fitness,
+        "episode_length": episode_length,
+        "end_reason": end_reason,
+        "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
+    }
