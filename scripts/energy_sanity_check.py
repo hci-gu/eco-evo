@@ -60,13 +60,13 @@ SPECIES_CONFIGS = {
         index=1,
         activity_metabolic_rate_base=0.007317884210714286,
         standard_metabolic_rate_base=0.0014635768428571428,
-        # Base cost tuned to ~0.50 energy/step at spd≈2.78
-        energy_cost_base=0.18,
+        # Base cost tuned to ~0.35 energy/step at spd≈2.78
+        energy_cost_base=0.126,
         individual_weight=0.1,
-        baseline_mortality=0.01,
-        mortality_logistic_k=0.5,
+        baseline_mortality=0.0005,
+        mortality_logistic_k=0.25,
         mortality_energy_midpoint=5.0,
-        low_energy_death_rate=0.1,
+        low_energy_death_rate=0.05,
         prey_indices=[0],  # plankton
     ),
     "sprat": SpeciesConfig(
@@ -74,13 +74,13 @@ SPECIES_CONFIGS = {
         index=2,
         activity_metabolic_rate_base=0.007317884210714286,
         standard_metabolic_rate_base=0.0014635768428571428,
-        # Base cost tuned to ~0.50 energy/step at spd≈2.78
-        energy_cost_base=0.18,
+        # Base cost tuned to ~0.35 energy/step at spd≈2.78
+        energy_cost_base=0.126,
         individual_weight=0.05,
-        baseline_mortality=0.01,
-        mortality_logistic_k=0.5,
+        baseline_mortality=0.0005,
+        mortality_logistic_k=0.25,
         mortality_energy_midpoint=5.0,
-        low_energy_death_rate=0.1,
+        low_energy_death_rate=0.05,
         prey_indices=[0],  # plankton
     ),
     "cod": SpeciesConfig(
@@ -88,13 +88,13 @@ SPECIES_CONFIGS = {
         index=3,
         activity_metabolic_rate_base=0.014535768421428572,
         standard_metabolic_rate_base=0.0029071536857142857,
-        # Base cost tuned to ~0.80 energy/step at spd≈2.78
-        energy_cost_base=0.288,
+        # Base cost tuned to ~0.60 energy/step at spd≈2.78
+        energy_cost_base=0.216,
         individual_weight=2.0,
-        baseline_mortality=0.008,
-        mortality_logistic_k=0.5,
+        baseline_mortality=0.0003,
+        mortality_logistic_k=0.25,
         mortality_energy_midpoint=6.0,
-        low_energy_death_rate=0.08,
+        low_energy_death_rate=0.04,
         prey_indices=[1, 2],  # herring, sprat
     ),
 }
@@ -410,7 +410,7 @@ def print_mortality_analysis(config: SpeciesConfig):
 
 
 DEFAULTS = {
-    "steps": 1000,
+    "steps": 2500,
     "eating_rate": 0.2,  # 20% (more realistic for RL)
     "prey_available": 2.0,  # Lowered from 10
     "include_mortality": True,

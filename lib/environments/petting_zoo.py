@@ -15,7 +15,7 @@ from lib.world import (
     spawn_offspring_table,
     world_is_alive,
 )
-from lib.visualize import init_pygame, draw_world, plot_biomass
+from lib.visualize import init_pygame, draw_world, plot_biomass, poll_visualization_controls
 import lib.model as model
 from lib.config.settings import Settings
 from lib.config.species import SpeciesMap
@@ -221,12 +221,27 @@ class raw_env(AECEnv):
         if self.render_mode == "none":
             return
         if self.render_mode == "human":
-            draw_world(self.settings, self.screen, self.world, self.world_data)
+            poll_visualization_controls()
             plot_biomass(self.plot_data)
+            draw_world(self.settings, self.screen, self.world, self.world_data)
 
     def get_fitness(self, agent):
-        biomass = self.world[..., model.MODEL_OFFSETS[agent]["biomass"]].sum()
-        return np.log(biomass + 1e-8)
+        # Support both concrete species keys (e.g. cod__a2) and base species
+        # keys (e.g. cod) by aggregating matching age groups.
+        if agent in model.MODEL_OFFSETS:
+            biomass = self.world[..., model.MODEL_OFFSETS[agent]["biomass"]].sum()
+            return np.log(biomass + 1e-8)
+
+        total_biomass = 0.0
+        for species_name, props in self.species_map.items():
+            if props.base_species != agent:
+                continue
+            biomass_offset = model.MODEL_OFFSETS[species_name]["biomass"]
+            total_biomass += self.world[..., biomass_offset].sum()
+
+        if total_biomass <= 0:
+            return np.log(1e-8)
+        return np.log(total_biomass + 1e-8)
     
     def overwrite_world(self, world):
         self.world = world

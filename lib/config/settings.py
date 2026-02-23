@@ -59,7 +59,8 @@ class Settings:
     # Global interval (in environment cycles) to advance age groups
     age_step_interval: int = 50
     # Optional per-age distribution weights (comma-separated in settings file)
-    age_init_distribution: tuple[float, ...] = ()
+    # age_init_distribution: tuple[float, ...] = ()
+    age_init_distribution = (0.5, 0.3, 0.2)
 
     @property
     def steps_per_day(self) -> int:

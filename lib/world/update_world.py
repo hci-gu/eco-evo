@@ -236,16 +236,20 @@ def _apply_age_transitions_table(world, step_counter, src_b, src_e, dst_b, dst_e
     for i in range(src_b.shape[0]):
         if age_steps[i] <= 0:
             continue
-        if step_counter % age_steps[i] != 0:
-            continue
         sb = src_b[i]
         se = src_e[i]
         db = dst_b[i]
         de = dst_e[i]
+        # Continuous aging: move a fixed fraction each tick.
+        # age_steps works as a time constant; e.g. 50 => move 2% per tick.
+        transfer_fraction = 1.0 / age_steps[i]
+        if transfer_fraction > 1.0:
+            transfer_fraction = 1.0
 
         for x in range(pad, world.shape[0] - pad):
             for y in range(pad, world.shape[1] - pad):
-                moved_biomass = world[x, y, sb]
+                source_biomass = world[x, y, sb]
+                moved_biomass = source_biomass * transfer_fraction
                 if moved_biomass <= 0:
                     continue
                 dst_biomass = world[x, y, db]
@@ -258,8 +262,12 @@ def _apply_age_transitions_table(world, step_counter, src_b, src_e, dst_b, dst_e
                     combined_energy = 0.0
                 world[x, y, db] = total_biomass
                 world[x, y, de] = combined_energy
-                world[x, y, sb] = 0.0
-                world[x, y, se] = 0.0
+                remaining_biomass = source_biomass - moved_biomass
+                if remaining_biomass <= 1e-12:
+                    world[x, y, sb] = 0.0
+                    world[x, y, se] = 0.0
+                else:
+                    world[x, y, sb] = remaining_biomass
 
 @njit
 def _spawn_offspring_table(world, step_counter, src_b, src_e, dst_b, dst_e, repro_freq, growth_rate, max_energy):
