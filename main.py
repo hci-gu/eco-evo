@@ -167,17 +167,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Handle Ctrl+C cleanly: exit with code 0 to avoid macOS crash dialog
-    try:
-        evaluate_model()
-        print("Model evaluation completed.")
-    except KeyboardInterrupt:
-        print("Interrupted by user. Shutting down cleanly…")
-        try:
-            plt.ioff()
-            plt.close('all')
-            shutdown_pygame()
-        except Exception:
-            pass
+    # try:
+    #     evaluate_model()
+    #     print("Model evaluation completed.")
+    # except KeyboardInterrupt:
+    #     print("Interrupted by user. Shutting down cleanly…")
+    #     try:
+    #         plt.ioff()
+    #         plt.close('all')
+    #         shutdown_pygame()
+    #     except Exception:
+    #         pass
     #     sys.exit(0)
 
     # profiler = cProfile.Profile()
@@ -196,13 +196,13 @@ if __name__ == "__main__":
     # evaluate_pbm_model()
 
     # Load config files
-    # config_files = load_config_files(args.config_folder)
+    config_files = load_config_files(args.config_folder)
 
-    # print("Running simulation with the following config files:" + str(config_files))
-    # time.sleep(2)
+    print("Running simulation with the following config files:" + str(config_files))
+    time.sleep(2)
 
-    # for config_file in config_files:
-    #     settings = load_settings(config_file)
+    for config_file in config_files:
+        settings = load_settings(config_file)
 
-    #     runner = PettingZooRunner(settings)
-    #     runner.train()
+        runner = PettingZooRunner(settings)
+        runner.train()

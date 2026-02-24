@@ -71,6 +71,7 @@ class PBMRunner():
                     'agent_index': self.agent_index,
                     'eval_index': self.eval_index,
                     'step': episode_length,
+                    'fitness': fitness,
                 }, self.plot_data)
             callback(infos, fitness, False)
         

@@ -203,10 +203,11 @@ def draw_terrain(settings: Settings, world_tensor, world_data, display_current=F
     return terrain_surface
 
 # Plot and cache generations graph
-def plot_generations(settings: Settings, generations_data):
+def plot_generations(settings: Settings, generations_data, champion_progress=None):
     global generation_graph_cache
 
     plt.figure(figsize=(16, 12))  # Create a new figure for the plot
+    fitness_method = str(getattr(settings, "fitness_method", "simple")).strip().lower()
 
     # Check if generations_data[0] is an object (dict) or an array (list)
     if isinstance(generations_data[0], dict):
@@ -260,23 +261,47 @@ def plot_generations(settings: Settings, generations_data):
 
     # x-axis values corresponding to generations
     generations = range(len(generations_data))
+    ax = plt.gca()
 
     # Plot the average fitness line and fill between for each species
     for sp in species_list:
-        plt.plot(generations, species_stats[sp]["average"], color=species_colors[sp],
-                 label=f"{sp} Avg", linewidth=2)
-        plt.fill_between(generations, species_stats[sp]["bottom"], species_stats[sp]["top"],
-                         color=species_colors[sp], alpha=0.2,
-                         label=f"{sp} 25th-75th Percentile")
+        ax.plot(generations, species_stats[sp]["average"], color=species_colors[sp],
+                label=f"{sp} Avg", linewidth=2)
+        ax.fill_between(generations, species_stats[sp]["bottom"], species_stats[sp]["top"],
+                        color=species_colors[sp], alpha=0.2,
+                        label=f"{sp} 25th-75th Percentile")
+
+    # Optional benchmark line: long-horizon survival of generation champions.
+    ax_progress = None
+    if champion_progress is not None:
+        progress = np.asarray(champion_progress, dtype=np.float32)
+        valid = np.isfinite(progress)
+        if np.any(valid):
+            x = np.arange(progress.shape[0])[valid]
+            y = progress[valid]
+            label = f"Champion Survival ({int(getattr(settings, 'champion_progress_steps', 0))} step cap)"
+            ax_progress = ax.twinx()
+            ax_progress.plot(
+                x, y, color="black", linestyle="--", linewidth=2.4, marker="o", markersize=3.5, label=label
+            )
+            ax_progress.set_ylabel("Champion Survival (cycles)")
 
     # Configure axes and title
-    plt.xlabel('Generation')
-    plt.ylabel('Fitness')
-    plt.title('Fitness of Agents Over Generations')
-    ax = plt.gca()
+    ax.set_xlabel('Generation')
+    if fitness_method == "biomass_pct":
+        ax.set_ylabel('Fitness (% biomass change)')
+        ax.set_title('Policy Fitness Over Generations (Biomass %)')
+    else:
+        ax.set_ylabel('Fitness (survival cycles)')
+        ax.set_title('Policy Fitness Over Generations (Simple Survival)')
     ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))  # Prevent overcrowding of x-axis ticks
 
-    plt.legend()
+    handles, labels = ax.get_legend_handles_labels()
+    if ax_progress is not None:
+        h2, l2 = ax_progress.get_legend_handles_labels()
+        handles.extend(h2)
+        labels.extend(l2)
+    ax.legend(handles, labels)
     plt.tight_layout()
 
     # Save the plot as an image and update the cache

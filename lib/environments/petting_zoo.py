@@ -225,12 +225,11 @@ class raw_env(AECEnv):
             plot_biomass(self.plot_data)
             draw_world(self.settings, self.screen, self.world, self.world_data)
 
-    def get_fitness(self, agent):
+    def get_total_biomass(self, agent):
         # Support both concrete species keys (e.g. cod__a2) and base species
         # keys (e.g. cod) by aggregating matching age groups.
         if agent in model.MODEL_OFFSETS:
-            biomass = self.world[..., model.MODEL_OFFSETS[agent]["biomass"]].sum()
-            return np.log(biomass + 1e-8)
+            return float(self.world[..., model.MODEL_OFFSETS[agent]["biomass"]].sum())
 
         total_biomass = 0.0
         for species_name, props in self.species_map.items():
@@ -239,8 +238,10 @@ class raw_env(AECEnv):
             biomass_offset = model.MODEL_OFFSETS[species_name]["biomass"]
             total_biomass += self.world[..., biomass_offset].sum()
 
-        if total_biomass <= 0:
-            return np.log(1e-8)
+        return float(max(total_biomass, 0.0))
+
+    def get_fitness(self, agent):
+        total_biomass = self.get_total_biomass(agent)
         return np.log(total_biomass + 1e-8)
     
     def overwrite_world(self, world):

@@ -27,7 +27,7 @@ class Settings:
     base_fishing_value_herring: float = 0.002651024
     base_fishing_value_sprat: float = 0.002651024
 
-    num_agents: int = 24
+    num_agents: int = 16
     agent_evaluations: int = 4
     elitism_selection: int = 8
     tournament_selection: int = 4
@@ -46,6 +46,36 @@ class Settings:
     sbx_eta_decay: float = 1.025
     # max_steps: int = 365 * 3 * 3
     max_steps: int = 5000
+    # Fitness calculation mode for evolutionary evaluation:
+    #   simple      -> reward by episode length (longest survives)
+    #   biomass_pct -> % biomass change after fitness_eval_steps cycles
+    fitness_method: str = "biomass_pct"
+    fitness_eval_steps: int = 30
+    # Optional speed-up: end evaluation once only one acting base species remains.
+    # Disabled by default; candidate-level short-circuiting is usually safer.
+    stop_on_single_species_left: bool = False
+    alive_species_biomass_threshold: float = 1e-6
+    # Optional speed-up (single-worker mode): if the last candidate is already guaranteed
+    # to beat the current best under simple fitness, stop its remaining rollouts early.
+    stop_last_candidate_when_winner: bool = True
+    # Two-stage evaluation: quick screening then deeper re-eval of top candidates.
+    two_stage_eval_enabled: bool = False
+    short_eval_steps: int = 30
+    long_eval_steps: int = 200
+    long_eval_top_fraction: float = 0.2
+    long_eval_weight: float = 0.6
+    # Optional score normalization for short-horizon biomass objectives:
+    # use (candidate_fitness - baseline_random_fitness) per matched eval task.
+    relative_baseline_enabled: bool = True
+    relative_baseline_policy: str = "random"
+    # Optional harsher training-eval world (encourages eat-or-die behavior in short windows).
+    training_initial_energy_scale: float = 0.33
+    training_energy_decay_per_cycle: float = 0.1
+    # Progress tracking: evaluate per-generation champions on a longer fixed horizon.
+    champion_progress_enabled: bool = False
+    champion_progress_every: int = 1
+    champion_progress_steps: int = 1000
+    champion_progress_episodes: int = 1
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1
