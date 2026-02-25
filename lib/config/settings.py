@@ -77,6 +77,10 @@ class Settings:
     # use (candidate_fitness - baseline_random_fitness) per matched eval task.
     relative_baseline_enabled: bool = True
     relative_baseline_policy: str = "random"
+    # If baseline-adjusted scores collapse to near-constant, fall back to raw biomass
+    # fitness for that generation to preserve selection signal.
+    relative_baseline_fallback_to_raw_when_flat: bool = True
+    relative_baseline_flat_std_threshold: float = 0.25
     # Optional harsher training-eval world (encourages eat-or-die behavior in short windows).
     training_initial_energy_scale: float = 0.33
     training_energy_decay_per_cycle: float = 0.1

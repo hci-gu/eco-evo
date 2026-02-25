@@ -424,6 +424,12 @@ class PettingZooRunner():
                 f"Unsupported relative_baseline_policy '{self.settings.relative_baseline_policy}'. "
                 "Use 'random'."
             )
+        relative_baseline_fallback = bool(
+            getattr(self.settings, "relative_baseline_fallback_to_raw_when_flat", True)
+        )
+        relative_baseline_flat_std_threshold = float(
+            max(0.0, getattr(self.settings, "relative_baseline_flat_std_threshold", 0.25))
+        )
 
         initial_energy_scale = max(0.0, float(self.settings.training_initial_energy_scale))
         energy_decay_per_cycle = float(np.clip(self.settings.training_energy_decay_per_cycle, 0.0, 0.95))
@@ -480,6 +486,8 @@ class PettingZooRunner():
                 (r["agent_index"], r["species"], r["eval_index"]): float(r["fitness"])
                 for r in short_results
             }
+            short_raw_scores_by_key = dict(short_scores_by_key)
+            short_fallback_to_raw = False
 
             if relative_baseline_enabled:
                 baseline_short_tasks = []
@@ -498,6 +506,12 @@ class PettingZooRunner():
                     if baseline_result is None:
                         continue
                     short_scores_by_key[key] = score - float(baseline_result["fitness"])
+
+                if relative_baseline_fallback:
+                    adjusted_vals = np.asarray(list(short_scores_by_key.values()), dtype=np.float32)
+                    if adjusted_vals.size > 0 and float(np.std(adjusted_vals)) < relative_baseline_flat_std_threshold:
+                        short_scores_by_key = dict(short_raw_scores_by_key)
+                        short_fallback_to_raw = True
 
             short_avg = {}
             for idx in range(self.settings.num_agents):
@@ -518,6 +532,7 @@ class PettingZooRunner():
 
             long_by_key = {}
             long_scores_by_key = {}
+            long_fallback_to_raw = False
             if long_candidates:
                 long_tasks = []
                 for task in tasks:
@@ -536,6 +551,7 @@ class PettingZooRunner():
                     (r["agent_index"], r["species"], r["eval_index"]): float(r["fitness"])
                     for r in long_results
                 }
+                long_raw_scores_by_key = dict(long_scores_by_key)
 
                 if relative_baseline_enabled:
                     baseline_long_tasks = []
@@ -554,6 +570,12 @@ class PettingZooRunner():
                         if baseline_result is None:
                             continue
                         long_scores_by_key[key] = score - float(baseline_result["fitness"])
+
+                    if relative_baseline_fallback:
+                        adjusted_vals = np.asarray(list(long_scores_by_key.values()), dtype=np.float32)
+                        if adjusted_vals.size > 0 and float(np.std(adjusted_vals)) < relative_baseline_flat_std_threshold:
+                            long_scores_by_key = dict(long_raw_scores_by_key)
+                            long_fallback_to_raw = True
 
             for idx in range(self.settings.num_agents):
                 self.agent_index = idx
@@ -593,7 +615,9 @@ class PettingZooRunner():
                     f"Custom eval: short_steps={short_steps}, long_steps={long_steps}, "
                     f"top_n={top_n}, long_weight={long_weight:.2f}, "
                     f"energy_scale={initial_energy_scale:.2f}, energy_decay={energy_decay_per_cycle:.3f}, "
-                    f"relative_baseline={relative_baseline_enabled}"
+                    f"relative_baseline={relative_baseline_enabled}, "
+                    f"baseline_fallback_short={short_fallback_to_raw}, "
+                    f"baseline_fallback_long={long_fallback_to_raw}"
                 )
                 print("End reasons:", {reason: end_reasons.count(reason) for reason in set(end_reasons)})
             return fitnesses
