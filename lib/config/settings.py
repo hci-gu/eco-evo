@@ -50,6 +50,10 @@ class Settings:
     #   simple      -> reward by episode length (longest survives)
     #   biomass_pct -> % biomass change after fitness_eval_steps cycles
     fitness_method: str = "biomass_pct"
+    # For biomass_pct fitness:
+    #   agent        -> evaluate only the current acting species channel (legacy behavior)
+    #   base_species -> aggregate all age groups of the same base species (recommended)
+    biomass_fitness_scope: str = "base_species"
     fitness_eval_steps: int = 30
     # Optional speed-up: end evaluation once only one acting base species remains.
     # Disabled by default; candidate-level short-circuiting is usually safer.

@@ -165,6 +165,12 @@ class PettingZooRunner():
                 f"Unsupported fitness_method '{self.settings.fitness_method}'. "
                 "Use 'simple' or 'biomass_pct'."
             )
+        biomass_scope = str(getattr(self.settings, "biomass_fitness_scope", "agent")).strip().lower()
+        if biomass_scope not in {"agent", "base_species"}:
+            raise ValueError(
+                f"Unsupported biomass_fitness_scope '{self.settings.biomass_fitness_scope}'. "
+                "Use 'agent' or 'base_species'."
+            )
 
         if max_steps_override is not None:
             eval_horizon = max(1, int(max_steps_override))
@@ -175,7 +181,14 @@ class PettingZooRunner():
 
         self._scale_all_species_energy(initial_energy_scale)
 
-        initial_biomass = self.env.get_total_biomass(species_being_evaluated)
+        fitness_target_species = species_being_evaluated
+        if fitness_method == "biomass_pct" and biomass_scope == "base_species":
+            if species_being_evaluated in self.species_map:
+                fitness_target_species = self.species_map[species_being_evaluated].base_species
+            else:
+                fitness_target_species = const.base_species_name(species_being_evaluated)
+
+        initial_biomass = self.env.get_total_biomass(fitness_target_species)
         current_biomass = initial_biomass
         prev_cycle_count = self.env.cycle_count
         episode_length = 0
@@ -200,7 +213,7 @@ class PettingZooRunner():
                 episode_length = current_cycle_count
                 prev_cycle_count = current_cycle_count
                 self._apply_energy_decay(energy_decay_per_cycle)
-                current_biomass = self.env.get_total_biomass(species_being_evaluated)
+                current_biomass = self.env.get_total_biomass(fitness_target_species)
 
                 if fitness_method == "simple":
                     fitness = float(episode_length)
