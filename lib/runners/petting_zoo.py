@@ -456,6 +456,7 @@ class PettingZooRunner():
                     f"source_generation={self.opponent_snapshot_generation}"
                 )
         paired_eval = bool(getattr(self.settings, "paired_opponent_evaluation", True))
+        lock_same_base_teammates = bool(getattr(self.settings, "lock_same_base_teammates", True))
         paired_context = {}
         if paired_eval:
             for species in self.species_list:
@@ -477,11 +478,23 @@ class PettingZooRunner():
                         context = paired_context[(species, eval_index)]
                         other_indices = dict(context["other_indices"])
                         python_random_seed = int(context["python_random_seed"])
+                        if lock_same_base_teammates:
+                            species_base = self.species_map[species].base_species
+                            for other_species_name in other_species:
+                                if self.species_map[other_species_name].base_species == species_base:
+                                    other_indices[other_species_name] = idx
                     else:
                         other_indices = {}
                         # pick random agent from other species
                         for other_species_name in other_species:
-                            other_species_idx = eval_rng.randint(0, self.settings.num_agents - 1)
+                            if (
+                                lock_same_base_teammates
+                                and self.species_map[other_species_name].base_species
+                                == self.species_map[species].base_species
+                            ):
+                                other_species_idx = idx
+                            else:
+                                other_species_idx = eval_rng.randint(0, self.settings.num_agents - 1)
                             other_indices[other_species_name] = other_species_idx
                         python_random_seed = eval_rng.randrange(2**32)
 

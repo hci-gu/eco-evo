@@ -38,6 +38,9 @@ class Settings:
     # Keep opponent populations frozen for N generations to reduce moving-target noise.
     # 1 = refresh every generation (legacy behavior).
     opponent_snapshot_every: int = 5
+    # Evaluate each age-group candidate together with same-index teammates from the
+    # same base species (improves credit assignment for base-species objectives).
+    lock_same_base_teammates: bool = True
     # Set to a non-negative value for deterministic runs across processes.
     seed: int = -1
     # Performance toggles.
