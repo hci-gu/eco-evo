@@ -203,7 +203,13 @@ def draw_terrain(settings: Settings, world_tensor, world_data, display_current=F
     return terrain_surface
 
 # Plot and cache generations graph
-def plot_generations(settings: Settings, generations_data, champion_progress=None):
+def plot_generations(
+    settings: Settings,
+    generations_data,
+    champion_progress=None,
+    fixed_validation=None,
+    fixed_validation_metric="fitness",
+):
     global generation_graph_cache
 
     plt.figure(figsize=(16, 12))  # Create a new figure for the plot
@@ -285,6 +291,29 @@ def plot_generations(settings: Settings, generations_data, champion_progress=Non
                 x, y, color="black", linestyle="--", linewidth=2.4, marker="o", markersize=3.5, label=label
             )
             ax_progress.set_ylabel("Champion Survival (cycles)")
+
+    if fixed_validation is not None:
+        progress = np.asarray(fixed_validation, dtype=np.float32)
+        valid = np.isfinite(progress)
+        if np.any(valid):
+            x = np.arange(progress.shape[0])[valid]
+            y = progress[valid]
+            metric = str(fixed_validation_metric).strip().lower()
+            horizon = int(getattr(settings, "fixed_validation_steps", 0))
+            episodes = int(getattr(settings, "fixed_validation_episodes", 1))
+            if metric == "survival":
+                if ax_progress is None:
+                    ax_progress = ax.twinx()
+                    ax_progress.set_ylabel("Validation Survival (cycles)")
+                label = f"Fixed Validation Survival ({horizon} step cap, {episodes} ep)"
+                ax_progress.plot(
+                    x, y, color="#2f4f4f", linestyle="-.", linewidth=2.1, marker="s", markersize=3.5, label=label
+                )
+            else:
+                label = f"Fixed Validation Fitness ({horizon} steps, {episodes} ep)"
+                ax.plot(
+                    x, y, color="#2f4f4f", linestyle="-.", linewidth=2.1, marker="s", markersize=3.5, label=label
+                )
 
     # Configure axes and title
     ax.set_xlabel('Generation')

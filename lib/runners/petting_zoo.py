@@ -75,11 +75,29 @@ class PettingZooRunner():
         self.agent_index = 0
         self.eval_index = 0
         self.champion_progress_history = []
+        self.fixed_validation_history = []
+        self.fixed_validation_metric = str(
+            getattr(self.settings, "fixed_validation_metric", "fitness")
+        ).strip().lower()
+        if self.fixed_validation_metric not in {"fitness", "survival"}:
+            raise ValueError(
+                f"Unsupported fixed_validation_metric '{self.settings.fixed_validation_metric}'. "
+                "Use 'fitness' or 'survival'."
+            )
         if self.settings.seed >= 0:
             benchmark_rng = random.Random(self.settings.seed + 9_999_937)
             self.champion_progress_seed = benchmark_rng.randrange(100000)
         else:
             self.champion_progress_seed = 137
+            benchmark_rng = random.Random(self.champion_progress_seed)
+
+        configured_fixed_seed = int(getattr(self.settings, "fixed_validation_seed", 4242))
+        if configured_fixed_seed >= 0:
+            self.fixed_validation_seed = configured_fixed_seed
+        elif self.settings.seed >= 0:
+            self.fixed_validation_seed = benchmark_rng.randrange(2**31)
+        else:
+            self.fixed_validation_seed = 4242
 
     def _get_alive_base_species(self):
         threshold = float(self.settings.alive_species_biomass_threshold)
@@ -709,17 +727,7 @@ class PettingZooRunner():
 
         self.population = new_population
 
-    def _evaluate_generation_champions(self, fitnesses):
-        every = max(1, int(self.settings.champion_progress_every))
-        if (
-            not self.settings.champion_progress_enabled
-            or (self.current_generation % every) != 0
-        ):
-            self.champion_progress_history.append(np.nan)
-            return
-
-        # Build a single "champion benchmark" policy set:
-        # one globally best champion for this generation + strongest available opponents.
+    def _build_generation_champion_models(self, fitnesses):
         generation_best_states = {}
         best_species = None
         best_score = -float("inf")
@@ -740,36 +748,93 @@ class PettingZooRunner():
                 benchmark_state = generation_best_states[species]
             champion_models[species] = Model(chromosome=benchmark_state)
 
-        horizon = max(1, int(self.settings.champion_progress_steps))
-        seed = int(self.champion_progress_seed + self.current_generation * 9973)
-        _, episode_length, _ = self.run(
-            candidates=champion_models,
-            species_being_evaluated=best_species if best_species is not None else self.species_list[0],
-            seed=seed,
-            is_evaluation=True,
-            callback=noop,
-            collect_plot_data=False,
-            python_random_seed=seed,
-            max_steps_override=horizon,
-        )
+        return champion_models, best_species, best_score
 
-        self.champion_progress_history.append(float(episode_length))
+    def _evaluate_generation_champions(self, fitnesses):
+        every = max(1, int(self.settings.champion_progress_every))
+        if (
+            not self.settings.champion_progress_enabled
+            or (self.current_generation % every) != 0
+        ):
+            self.champion_progress_history.append(np.nan)
+            return
+
+        # Build a single "champion benchmark" policy set:
+        # one globally best champion for this generation + strongest available opponents.
+        champion_models, best_species, _ = self._build_generation_champion_models(fitnesses)
+
+        horizon = max(1, int(self.settings.champion_progress_steps))
+        episodes = max(1, int(getattr(self.settings, "champion_progress_episodes", 1)))
+        lengths = []
+        for episode_idx in range(episodes):
+            seed = int(self.champion_progress_seed + self.current_generation * 9973 + episode_idx * 101)
+            _, episode_length, _ = self.run(
+                candidates=champion_models,
+                species_being_evaluated=best_species if best_species is not None else self.species_list[0],
+                seed=seed,
+                is_evaluation=True,
+                callback=noop,
+                collect_plot_data=False,
+                python_random_seed=seed,
+                max_steps_override=horizon,
+            )
+            lengths.append(float(episode_length))
+
+        self.champion_progress_history.append(float(np.mean(lengths)))
+
+    def _evaluate_fixed_validation(self, fitnesses):
+        every = max(1, int(getattr(self.settings, "fixed_validation_every", 1)))
+        if (
+            not bool(getattr(self.settings, "fixed_validation_enabled", False))
+            or (self.current_generation % every) != 0
+        ):
+            self.fixed_validation_history.append(np.nan)
+            return
+
+        champion_models, best_species, _ = self._build_generation_champion_models(fitnesses)
+        horizon = max(1, int(getattr(self.settings, "fixed_validation_steps", self.settings.fitness_eval_steps)))
+        episodes = max(1, int(getattr(self.settings, "fixed_validation_episodes", 1)))
+        metric_values = []
+        for episode_idx in range(episodes):
+            seed = int(self.fixed_validation_seed + episode_idx * 9973)
+            fitness, episode_length, _ = self.run(
+                candidates=champion_models,
+                species_being_evaluated=best_species if best_species is not None else self.species_list[0],
+                seed=seed,
+                is_evaluation=True,
+                callback=noop,
+                collect_plot_data=False,
+                python_random_seed=seed,
+                max_steps_override=horizon,
+            )
+            if self.fixed_validation_metric == "survival":
+                metric_values.append(float(episode_length))
+            else:
+                metric_values.append(float(fitness))
+
+        self.fixed_validation_history.append(float(np.mean(metric_values)))
 
     def run_generation(self):
         # Evaluate the current population.
         fitnesses = self.evaluate_population()
         self.current_generation += 1
         self._evaluate_generation_champions(fitnesses)
+        self._evaluate_fixed_validation(fitnesses)
         if self.settings.enable_logging:
             print(f"Generation {self.current_generation} complete. Fitnesses: { {sp: max(fit, key=lambda x: x[1])[1] for sp, fit in fitnesses.items()} }")
             if self.champion_progress_history and np.isfinite(self.champion_progress_history[-1]):
                 print(f"Champion benchmark survival: {self.champion_progress_history[-1]:.1f}")
+            if self.fixed_validation_history and np.isfinite(self.fixed_validation_history[-1]):
+                fixed_label = "survival cycles" if self.fixed_validation_metric == "survival" else "fitness"
+                print(f"Fixed validation ({fixed_label}): {self.fixed_validation_history[-1]:.3f}")
         if self.settings.enable_plotting:
             generations_data = update_generations_data(self.settings, self.current_generation, self.env.plot_data)
             plot_generations(
                 self.settings,
                 generations_data,
                 champion_progress=self.champion_progress_history,
+                fixed_validation=self.fixed_validation_history,
+                fixed_validation_metric=self.fixed_validation_metric,
             )
         self.env.plot_data = {}
         # Evolve the population based on fitnesses.

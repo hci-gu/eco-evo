@@ -76,6 +76,15 @@ class Settings:
     champion_progress_every: int = 1
     champion_progress_steps: int = 1000
     champion_progress_episodes: int = 1
+    # Fixed validation benchmark (deterministic seeds and horizon per generation).
+    fixed_validation_enabled: bool = False
+    fixed_validation_every: int = 1
+    fixed_validation_steps: int = 200
+    fixed_validation_episodes: int = 3
+    fixed_validation_seed: int = 4242
+    # fixed_validation_metric: "fitness" uses the active fitness method score,
+    # "survival" uses episode length in cycles.
+    fixed_validation_metric: str = "fitness"
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1
