@@ -346,6 +346,9 @@ def plot_generations(
     if fitness_method == "biomass_pct":
         ax.set_ylabel('Fitness (% biomass change)')
         ax.set_title('Policy Fitness Over Generations (Biomass %)')
+    elif fitness_method == "trajectory_shaped":
+        ax.set_ylabel('Fitness (trajectory-shaped)')
+        ax.set_title('Policy Fitness Over Generations (Trajectory-Shaped)')
     else:
         ax.set_ylabel('Fitness (survival cycles)')
         ax.set_title('Policy Fitness Over Generations (Simple Survival)')

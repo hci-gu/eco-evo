@@ -119,6 +119,39 @@ class PettingZooRunner():
             totals[base_species] += float(world[..., biomass_offset].sum())
         return totals
 
+    def _resolve_fitness_target_species(self, species_being_evaluated: str, biomass_scope: str) -> str:
+        if biomass_scope != "base_species":
+            return species_being_evaluated
+        if species_being_evaluated in self.species_map:
+            return self.species_map[species_being_evaluated].base_species
+        return const.base_species_name(species_being_evaluated)
+
+    def _get_target_biomass_and_energy(self, target_species: str, world=None):
+        if world is None:
+            world = self.env.world
+
+        if target_species in model.MODEL_OFFSETS:
+            offsets = model.MODEL_OFFSETS[target_species]
+            biomass = world[..., offsets["biomass"]]
+            energy = world[..., offsets["energy"]]
+            total_biomass = float(np.sum(biomass))
+            weighted_energy = float(np.sum(biomass * energy) / max(total_biomass, 1e-8))
+            return total_biomass, weighted_energy
+
+        total_biomass = 0.0
+        total_energy_weighted = 0.0
+        for species_name, props in self.species_map.items():
+            if props.base_species != target_species:
+                continue
+            offsets = model.MODEL_OFFSETS[species_name]
+            biomass = world[..., offsets["biomass"]]
+            energy = world[..., offsets["energy"]]
+            bio_sum = float(np.sum(biomass))
+            total_biomass += bio_sum
+            total_energy_weighted += float(np.sum(biomass * energy))
+        weighted_energy = total_energy_weighted / max(total_biomass, 1e-8)
+        return float(total_biomass), float(weighted_energy)
+
     def _energy_channel_indices(self):
         indices = []
         for species_name in self.species_map.keys():
@@ -169,10 +202,10 @@ class PettingZooRunner():
             random.seed(python_random_seed)
         self.env.reset(seed)
         fitness_method = str(self.settings.fitness_method).strip().lower()
-        if fitness_method not in {"simple", "biomass_pct"}:
+        if fitness_method not in {"simple", "biomass_pct", "trajectory_shaped"}:
             raise ValueError(
                 f"Unsupported fitness_method '{self.settings.fitness_method}'. "
-                "Use 'simple' or 'biomass_pct'."
+                "Use 'simple', 'biomass_pct', or 'trajectory_shaped'."
             )
         biomass_scope = str(getattr(self.settings, "biomass_fitness_scope", "agent")).strip().lower()
         if biomass_scope not in {"agent", "base_species"}:
@@ -185,23 +218,30 @@ class PettingZooRunner():
             eval_horizon = max(1, int(max_steps_override))
         else:
             eval_horizon = self.settings.max_steps
-        if fitness_method == "biomass_pct" and max_steps_override is None:
+        if fitness_method in {"biomass_pct", "trajectory_shaped"} and max_steps_override is None:
             eval_horizon = max(1, min(self.settings.max_steps, int(self.settings.fitness_eval_steps)))
 
         self._scale_all_species_energy(initial_energy_scale)
 
-        fitness_target_species = species_being_evaluated
-        if fitness_method == "biomass_pct" and biomass_scope == "base_species":
-            if species_being_evaluated in self.species_map:
-                fitness_target_species = self.species_map[species_being_evaluated].base_species
-            else:
-                fitness_target_species = const.base_species_name(species_being_evaluated)
-
-        initial_biomass = self.env.get_total_biomass(fitness_target_species)
+        fitness_target_species = self._resolve_fitness_target_species(species_being_evaluated, biomass_scope)
+        initial_biomass, initial_energy = self._get_target_biomass_and_energy(fitness_target_species)
         current_biomass = initial_biomass
+        current_energy = initial_energy
         prev_cycle_count = self.env.cycle_count
         episode_length = 0
         fitness = 0.0
+        prev_biomass = initial_biomass
+        prev_energy = initial_energy
+        trajectory_return = 0.0
+        trajectory_discount = 1.0
+        trajectory_gamma = float(np.clip(getattr(self.settings, "trajectory_gamma", 0.98), 0.0, 1.0))
+        trajectory_weight_biomass = float(getattr(self.settings, "trajectory_weight_biomass_delta", 1.0))
+        trajectory_weight_energy = float(getattr(self.settings, "trajectory_weight_energy_delta", 0.05))
+        trajectory_weight_terminal = float(getattr(self.settings, "trajectory_weight_terminal_biomass", 0.5))
+        trajectory_crash_drop_pct = float(max(0.0, getattr(self.settings, "trajectory_crash_drop_pct", 8.0)))
+        trajectory_crash_penalty = float(max(0.0, getattr(self.settings, "trajectory_crash_penalty", 2.0)))
+        trajectory_low_floor_pct = float(max(0.0, getattr(self.settings, "trajectory_low_biomass_floor_pct", 30.0)))
+        trajectory_low_penalty = float(max(0.0, getattr(self.settings, "trajectory_low_biomass_penalty", 0.0)))
         callback(self.env.world, fitness, False)
 
         while not all(self.env.terminations.values()) and not all(self.env.truncations.values()) and episode_length < eval_horizon:
@@ -222,16 +262,47 @@ class PettingZooRunner():
                 episode_length = current_cycle_count
                 prev_cycle_count = current_cycle_count
                 self._apply_energy_decay(energy_decay_per_cycle)
-                current_biomass = self.env.get_total_biomass(fitness_target_species)
+                current_biomass, current_energy = self._get_target_biomass_and_energy(fitness_target_species)
 
                 if fitness_method == "simple":
                     fitness = float(episode_length)
-                else:
+                elif fitness_method == "biomass_pct":
                     fitness = (
                         100.0
                         * (current_biomass - initial_biomass)
                         / max(initial_biomass, 1e-8)
                     )
+                else:
+                    biomass_delta_pct = (
+                        100.0 * (current_biomass - prev_biomass) / max(initial_biomass, 1e-8)
+                    )
+                    energy_delta = current_energy - prev_energy
+                    step_reward = (
+                        trajectory_weight_biomass * biomass_delta_pct
+                        + trajectory_weight_energy * energy_delta
+                    )
+
+                    if trajectory_crash_drop_pct > 0.0 and prev_biomass > 1e-8:
+                        crash_drop = 100.0 * max(0.0, prev_biomass - current_biomass) / prev_biomass
+                        if crash_drop >= trajectory_crash_drop_pct:
+                            step_reward -= trajectory_crash_penalty * (crash_drop / trajectory_crash_drop_pct)
+
+                    if trajectory_low_penalty > 0.0 and trajectory_low_floor_pct > 0.0:
+                        current_pct_of_initial = 100.0 * current_biomass / max(initial_biomass, 1e-8)
+                        if current_pct_of_initial < trajectory_low_floor_pct:
+                            deficit = (trajectory_low_floor_pct - current_pct_of_initial) / max(
+                                trajectory_low_floor_pct, 1e-8
+                            )
+                            step_reward -= trajectory_low_penalty * deficit
+
+                    trajectory_return += trajectory_discount * step_reward
+                    trajectory_discount *= trajectory_gamma
+                    terminal_pct = (
+                        100.0 * (current_biomass - initial_biomass) / max(initial_biomass, 1e-8)
+                    )
+                    fitness = trajectory_return + trajectory_weight_terminal * terminal_pct
+                    prev_biomass = current_biomass
+                    prev_energy = current_energy
 
                 if collect_plot_data and self.settings.enable_plotting and (is_evaluation == False or self.env.render_mode != "none"):
                     process_data({
@@ -263,6 +334,11 @@ class PettingZooRunner():
                 * (current_biomass - initial_biomass)
                 / max(initial_biomass, 1e-8)
             )
+        elif fitness_method == "trajectory_shaped":
+            terminal_pct = (
+                100.0 * (current_biomass - initial_biomass) / max(initial_biomass, 1e-8)
+            )
+            fitness = trajectory_return + trajectory_weight_terminal * terminal_pct
 
         if self.settings.enable_logging:
             print("end of simulation", fitness, episode_length)
@@ -405,8 +481,9 @@ class PettingZooRunner():
         # 1) short eval for all candidates
         # 2) long eval for top candidates
         # 3) blended score for selection
-        two_stage_enabled = bool(self.settings.two_stage_eval_enabled) and fitness_method == "biomass_pct"
-        if fitness_method == "biomass_pct":
+        uses_biomass_style_fitness = fitness_method in {"biomass_pct", "trajectory_shaped"}
+        two_stage_enabled = bool(self.settings.two_stage_eval_enabled) and uses_biomass_style_fitness
+        if uses_biomass_style_fitness:
             short_steps = int(self.settings.fitness_eval_steps)
         else:
             short_steps = int(self.settings.max_steps)

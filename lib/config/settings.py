@@ -54,12 +54,24 @@ class Settings:
     # Fitness calculation mode for evolutionary evaluation:
     #   simple      -> reward by episode length (longest survives)
     #   biomass_pct -> % biomass change after fitness_eval_steps cycles
-    fitness_method: str = "biomass_pct"
+    #   trajectory_shaped -> dense per-cycle deltas + terminal biomass term
+    fitness_method: str = "trajectory_shaped"
     # For biomass_pct fitness:
     #   agent        -> evaluate only the current acting species channel (legacy behavior)
     #   base_species -> aggregate all age groups of the same base species (recommended)
     biomass_fitness_scope: str = "base_species"
-    fitness_eval_steps: int = 30
+    fitness_eval_steps: int = 40
+    # Dense short-horizon fitness shaping (used when fitness_method=trajectory_shaped).
+    trajectory_gamma: float = 0.98
+    trajectory_weight_biomass_delta: float = 1.0
+    trajectory_weight_energy_delta: float = 0.05
+    trajectory_weight_terminal_biomass: float = 0.5
+    # Penalize sharp biomass crashes between consecutive cycles.
+    trajectory_crash_drop_pct: float = 8.0
+    trajectory_crash_penalty: float = 2.0
+    # Optional extra penalty when biomass falls below a floor (% of initial biomass).
+    trajectory_low_biomass_floor_pct: float = 30.0
+    trajectory_low_biomass_penalty: float = 0.0
     # Optional speed-up: end evaluation once only one acting base species remains.
     # Disabled by default; candidate-level short-circuiting is usually safer.
     stop_on_single_species_left: bool = False
