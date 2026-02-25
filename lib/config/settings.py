@@ -35,6 +35,9 @@ class Settings:
     num_workers: int = 1
     # Use the same opponents/seeds for all candidates in a generation/eval slot.
     paired_opponent_evaluation: bool = True
+    # Keep opponent populations frozen for N generations to reduce moving-target noise.
+    # 1 = refresh every generation (legacy behavior).
+    opponent_snapshot_every: int = 5
     # Set to a non-negative value for deterministic runs across processes.
     seed: int = -1
     # Performance toggles.
@@ -72,6 +75,8 @@ class Settings:
     # Optional extra penalty when biomass falls below a floor (% of initial biomass).
     trajectory_low_biomass_floor_pct: float = 30.0
     trajectory_low_biomass_penalty: float = 0.0
+    # Print mean trajectory fitness components each generation while training.
+    trajectory_diagnostics_enabled: bool = True
     # Optional speed-up: end evaluation once only one acting base species remains.
     # Disabled by default; candidate-level short-circuiting is usually safer.
     stop_on_single_species_left: bool = False

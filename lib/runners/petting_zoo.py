@@ -21,7 +21,9 @@ import optuna
 # ---- Parallel worker plumbing ----
 _WORKER_RUNNER = None  # one runner per proces
 _WORKER_POPULATION_STATE = None
+_WORKER_OPPONENT_STATE = None
 _WORKER_MODEL_CACHE = None
+_WORKER_OPPONENT_MODEL_CACHE = None
 
 def noop(a, b, c):
     pass
@@ -79,6 +81,9 @@ class PettingZooRunner():
         self.fixed_validation_by_base_history = {
             base: [] for base in const.ACTING_BASE_SPECIES
         }
+        self.opponent_population_snapshot = None
+        self.opponent_snapshot_generation = None
+        self._last_run_diagnostics = {}
         self.fixed_validation_metric = str(
             getattr(self.settings, "fixed_validation_metric", "fitness")
         ).strip().lower()
@@ -184,6 +189,52 @@ class PettingZooRunner():
         world[..., energy_channels] *= keep
         np.clip(world[..., energy_channels], 0.0, self.settings.max_energy, out=world[..., energy_channels])
 
+    def _select_opponent_population_state(self, population_state):
+        snapshot_every = max(1, int(getattr(self.settings, "opponent_snapshot_every", 1)))
+        if snapshot_every <= 1:
+            self.opponent_population_snapshot = population_state
+            self.opponent_snapshot_generation = self.current_generation
+            return population_state
+
+        should_refresh = (
+            self.opponent_population_snapshot is None
+            or (self.current_generation % snapshot_every) == 0
+        )
+        if should_refresh:
+            self.opponent_population_snapshot = {
+                species: list(states)
+                for species, states in population_state.items()
+            }
+            self.opponent_snapshot_generation = self.current_generation
+        return self.opponent_population_snapshot
+
+    def _log_trajectory_diagnostics(self, result_rows, label: str):
+        if not bool(getattr(self.settings, "trajectory_diagnostics_enabled", True)):
+            return
+        diagnostics = []
+        for row in result_rows:
+            d = row.get("diagnostics")
+            if d:
+                diagnostics.append(d)
+        if not diagnostics:
+            return
+
+        def _mean(name):
+            vals = [float(d.get(name, 0.0)) for d in diagnostics if name in d]
+            if not vals:
+                return 0.0
+            return float(np.mean(vals))
+
+        print(
+            f"Trajectory diagnostics ({label}): "
+            f"bio={_mean('trajectory_component_biomass'):.3f}, "
+            f"energy={_mean('trajectory_component_energy'):.3f}, "
+            f"crash={_mean('trajectory_component_crash_penalty'):.3f}, "
+            f"low={_mean('trajectory_component_low_biomass_penalty'):.3f}, "
+            f"terminal={_mean('trajectory_component_terminal'):.3f}, "
+            f"total={_mean('trajectory_total'):.3f}"
+        )
+
     def run(
         self,
         candidates,
@@ -242,6 +293,11 @@ class PettingZooRunner():
         trajectory_crash_penalty = float(max(0.0, getattr(self.settings, "trajectory_crash_penalty", 2.0)))
         trajectory_low_floor_pct = float(max(0.0, getattr(self.settings, "trajectory_low_biomass_floor_pct", 30.0)))
         trajectory_low_penalty = float(max(0.0, getattr(self.settings, "trajectory_low_biomass_penalty", 0.0)))
+        trajectory_component_biomass = 0.0
+        trajectory_component_energy = 0.0
+        trajectory_component_crash_penalty = 0.0
+        trajectory_component_low_penalty = 0.0
+        trajectory_component_terminal = 0.0
         callback(self.env.world, fitness, False)
 
         while not all(self.env.terminations.values()) and not all(self.env.truncations.values()) and episode_length < eval_horizon:
@@ -281,11 +337,19 @@ class PettingZooRunner():
                         trajectory_weight_biomass * biomass_delta_pct
                         + trajectory_weight_energy * energy_delta
                     )
+                    trajectory_component_biomass += trajectory_discount * (
+                        trajectory_weight_biomass * biomass_delta_pct
+                    )
+                    trajectory_component_energy += trajectory_discount * (
+                        trajectory_weight_energy * energy_delta
+                    )
 
                     if trajectory_crash_drop_pct > 0.0 and prev_biomass > 1e-8:
                         crash_drop = 100.0 * max(0.0, prev_biomass - current_biomass) / prev_biomass
                         if crash_drop >= trajectory_crash_drop_pct:
-                            step_reward -= trajectory_crash_penalty * (crash_drop / trajectory_crash_drop_pct)
+                            crash_term = trajectory_crash_penalty * (crash_drop / trajectory_crash_drop_pct)
+                            step_reward -= crash_term
+                            trajectory_component_crash_penalty -= trajectory_discount * crash_term
 
                     if trajectory_low_penalty > 0.0 and trajectory_low_floor_pct > 0.0:
                         current_pct_of_initial = 100.0 * current_biomass / max(initial_biomass, 1e-8)
@@ -293,7 +357,9 @@ class PettingZooRunner():
                             deficit = (trajectory_low_floor_pct - current_pct_of_initial) / max(
                                 trajectory_low_floor_pct, 1e-8
                             )
-                            step_reward -= trajectory_low_penalty * deficit
+                            low_term = trajectory_low_penalty * deficit
+                            step_reward -= low_term
+                            trajectory_component_low_penalty -= trajectory_discount * low_term
 
                     trajectory_return += trajectory_discount * step_reward
                     trajectory_discount *= trajectory_gamma
@@ -334,11 +400,23 @@ class PettingZooRunner():
                 * (current_biomass - initial_biomass)
                 / max(initial_biomass, 1e-8)
             )
+            self._last_run_diagnostics = {}
         elif fitness_method == "trajectory_shaped":
             terminal_pct = (
                 100.0 * (current_biomass - initial_biomass) / max(initial_biomass, 1e-8)
             )
-            fitness = trajectory_return + trajectory_weight_terminal * terminal_pct
+            trajectory_component_terminal = trajectory_weight_terminal * terminal_pct
+            fitness = trajectory_return + trajectory_component_terminal
+            self._last_run_diagnostics = {
+                "trajectory_component_biomass": float(trajectory_component_biomass),
+                "trajectory_component_energy": float(trajectory_component_energy),
+                "trajectory_component_crash_penalty": float(trajectory_component_crash_penalty),
+                "trajectory_component_low_biomass_penalty": float(trajectory_component_low_penalty),
+                "trajectory_component_terminal": float(trajectory_component_terminal),
+                "trajectory_total": float(fitness),
+            }
+        else:
+            self._last_run_diagnostics = {}
 
         if self.settings.enable_logging:
             print("end of simulation", fitness, episode_length)
@@ -369,6 +447,14 @@ class PettingZooRunner():
             species: [m.state_dict() for m in self.population[species]]
             for species in self.species_list
         }
+        opponent_population_state = self._select_opponent_population_state(population_state)
+        if self.settings.enable_logging:
+            snapshot_every = max(1, int(getattr(self.settings, "opponent_snapshot_every", 1)))
+            if snapshot_every > 1:
+                print(
+                    f"Opponent snapshot: every={snapshot_every}, "
+                    f"source_generation={self.opponent_snapshot_generation}"
+                )
         paired_eval = bool(getattr(self.settings, "paired_opponent_evaluation", True))
         paired_context = {}
         if paired_eval:
@@ -409,12 +495,14 @@ class PettingZooRunner():
                     })
 
         local_model_cache = {species: {} for species in self.species_list}
+        local_opponent_model_cache = {species: {} for species in self.species_list}
 
-        def _get_local_model(species, idx):
-            cache = local_model_cache[species]
+        def _get_local_model(species, idx, for_opponent=False):
+            cache = local_opponent_model_cache[species] if for_opponent else local_model_cache[species]
             model = cache.get(idx)
             if model is None:
-                model = Model(chromosome=population_state[species][idx])
+                source_state = opponent_population_state if for_opponent else population_state
+                model = Model(chromosome=source_state[species][idx])
                 cache[idx] = model
             return model
 
@@ -426,7 +514,7 @@ class PettingZooRunner():
                 self_model = _get_local_model(task["species"], task["agent_index"])
             eval_species = {task["species"]: self_model}
             for sp, idx in task["other_indices"].items():
-                eval_species[sp] = _get_local_model(sp, idx)
+                eval_species[sp] = _get_local_model(sp, idx, for_opponent=True)
 
             self.agent_index = task["agent_index"]
             self.eval_index = task["eval_index"]
@@ -475,6 +563,7 @@ class PettingZooRunner():
                 "episode_length": episode_length,
                 "end_reason": end_reason,
                 "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
+                "diagnostics": dict(getattr(self, "_last_run_diagnostics", {})),
             }
 
         # Optional custom pipeline:
@@ -530,7 +619,13 @@ class PettingZooRunner():
                     with ProcessPoolExecutor(
                         max_workers=self.settings.num_workers,
                         initializer=_init_worker,
-                        initargs=(self.settings, self.env.render_mode, self.env.map_folder, population_state),
+                        initargs=(
+                            self.settings,
+                            self.env.render_mode,
+                            self.env.map_folder,
+                            population_state,
+                            opponent_population_state,
+                        ),
                     ) as executor:
                         for res in executor.map(_run_eval_task_worker, task_list, chunksize=1):
                             local_results.append(res)
@@ -557,6 +652,8 @@ class PettingZooRunner():
                 short_tasks.append(t)
 
             short_results = _execute_tasks(short_tasks)
+            if fitness_method == "trajectory_shaped" and self.settings.enable_logging:
+                self._log_trajectory_diagnostics(short_results, "short")
             short_by_key = {(r["agent_index"], r["species"], r["eval_index"]): r for r in short_results}
             end_reasons.extend([r["end_reason"] for r in short_results])
             short_scores_by_key = {
@@ -622,6 +719,8 @@ class PettingZooRunner():
                     t["energy_decay_per_cycle"] = energy_decay_per_cycle
                     long_tasks.append(t)
                 long_results = _execute_tasks(long_tasks)
+                if fitness_method == "trajectory_shaped" and self.settings.enable_logging:
+                    self._log_trajectory_diagnostics(long_results, "long")
                 long_by_key = {(r["agent_index"], r["species"], r["eval_index"]): r for r in long_results}
                 end_reasons.extend([r["end_reason"] for r in long_results])
                 long_scores_by_key = {
@@ -700,6 +799,7 @@ class PettingZooRunner():
             return fitnesses
 
         results = []
+        noncustom_rows = []
         if self.settings.num_workers <= 1:
             tasks_by_key = {
                 (task["agent_index"], task["species"], task["eval_index"]): task
@@ -742,6 +842,7 @@ class PettingZooRunner():
                             )
 
                         r = _run_eval_task_local(task, simple_win_threshold=simple_win_threshold)
+                        noncustom_rows.append(r)
                         end_reasons.append(r["end_reason"])
                         evals_fitness.append(r["fitness"])
                         if self.settings.enable_logging:
@@ -771,13 +872,21 @@ class PettingZooRunner():
                         print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')
 
             if self.settings.enable_logging:
+                if fitness_method == "trajectory_shaped":
+                    self._log_trajectory_diagnostics(noncustom_rows, "single_pass")
                 print("End reasons:", {reason: end_reasons.count(reason) for reason in set(end_reasons)})
             return fitnesses
         else:
             with ProcessPoolExecutor(
                 max_workers=self.settings.num_workers,
                 initializer=_init_worker,
-                initargs=(self.settings, self.env.render_mode, self.env.map_folder, population_state),
+                initargs=(
+                    self.settings,
+                    self.env.render_mode,
+                    self.env.map_folder,
+                    population_state,
+                    opponent_population_state,
+                ),
             ) as executor:
                 # Small tasks improve load-balancing across workers.
                 for res in executor.map(_run_eval_task_worker, tasks, chunksize=1):
@@ -813,6 +922,8 @@ class PettingZooRunner():
                     print(f'finished eval for species: {species}, fitness: {avg_fitness:.1f}')
 
         if self.settings.enable_logging:
+            if fitness_method == "trajectory_shaped":
+                self._log_trajectory_diagnostics(results, "parallel_pass")
             print("End reasons:", {reason: end_reasons.count(reason) for reason in set(end_reasons)})
         return fitnesses
 
@@ -1051,10 +1162,12 @@ class PettingZooRunner():
         return self.run(candidates, "cod", None, True, callback)
 
 
-def _init_worker(settings: Settings, render_mode: str, map_folder: str, population_state):
+def _init_worker(settings: Settings, render_mode: str, map_folder: str, population_state, opponent_population_state):
     global _WORKER_RUNNER
     global _WORKER_POPULATION_STATE
+    global _WORKER_OPPONENT_STATE
     global _WORKER_MODEL_CACHE
+    global _WORKER_OPPONENT_MODEL_CACHE
     _WORKER_RUNNER = PettingZooRunner(
         settings=settings,
         render_mode=render_mode,
@@ -1062,20 +1175,25 @@ def _init_worker(settings: Settings, render_mode: str, map_folder: str, populati
         build_population=False,
     )
     _WORKER_POPULATION_STATE = population_state
+    _WORKER_OPPONENT_STATE = opponent_population_state
     _WORKER_MODEL_CACHE = {species: {} for species in population_state}
+    _WORKER_OPPONENT_MODEL_CACHE = {species: {} for species in opponent_population_state}
 
 
 def _run_eval_task_worker(task):
     global _WORKER_RUNNER
     global _WORKER_POPULATION_STATE
+    global _WORKER_OPPONENT_STATE
     global _WORKER_MODEL_CACHE
+    global _WORKER_OPPONENT_MODEL_CACHE
     runner = _WORKER_RUNNER
 
-    def _get_worker_model(species, idx):
-        cache = _WORKER_MODEL_CACHE[species]
+    def _get_worker_model(species, idx, for_opponent=False):
+        cache = _WORKER_OPPONENT_MODEL_CACHE[species] if for_opponent else _WORKER_MODEL_CACHE[species]
         model = cache.get(idx)
         if model is None:
-            model = Model(chromosome=_WORKER_POPULATION_STATE[species][idx])
+            source_state = _WORKER_OPPONENT_STATE if for_opponent else _WORKER_POPULATION_STATE
+            model = Model(chromosome=source_state[species][idx])
             cache[idx] = model
         return model
 
@@ -1086,7 +1204,7 @@ def _run_eval_task_worker(task):
         self_model = _get_worker_model(task["species"], task["agent_index"])
     eval_species = {task["species"]: self_model}
     for sp, idx in task["other_indices"].items():
-        eval_species[sp] = _get_worker_model(sp, idx)
+        eval_species[sp] = _get_worker_model(sp, idx, for_opponent=True)
 
     map_seed = task["map_seed"]
     python_random_seed = task["python_random_seed"]
@@ -1130,4 +1248,5 @@ def _run_eval_task_worker(task):
         "episode_length": episode_length,
         "end_reason": end_reason,
         "steps_per_sec": episode_length / max(end_time - start_time, 1e-9),
+        "diagnostics": dict(getattr(runner, "_last_run_diagnostics", {})),
     }
