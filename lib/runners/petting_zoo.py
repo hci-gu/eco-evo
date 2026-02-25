@@ -772,7 +772,7 @@ class PettingZooRunner():
 
         self.population = new_population
 
-    def _build_generation_champion_models(self, fitnesses):
+    def _get_generation_best_states(self, fitnesses):
         generation_best_states = {}
         best_species = None
         best_score = -float("inf")
@@ -782,6 +782,10 @@ class PettingZooRunner():
             if best_species_score > best_score:
                 best_score = best_species_score
                 best_species = species
+        return generation_best_states, best_species, best_score
+
+    def _build_generation_champion_models(self, fitnesses):
+        generation_best_states, best_species, best_score = self._get_generation_best_states(fitnesses)
 
         champion_models = {}
         for species in self.species_list:
@@ -838,7 +842,11 @@ class PettingZooRunner():
                 self.fixed_validation_by_base_history[base].append(np.nan)
             return
 
-        champion_models, best_species, _ = self._build_generation_champion_models(fitnesses)
+        generation_best_states, best_species, _ = self._get_generation_best_states(fitnesses)
+        validation_models = {
+            species: Model(chromosome=state)
+            for species, state in generation_best_states.items()
+        }
         horizon = max(1, int(getattr(self.settings, "fixed_validation_steps", self.settings.fitness_eval_steps)))
         episodes = max(1, int(getattr(self.settings, "fixed_validation_episodes", 1)))
         overall_values = []
@@ -856,7 +864,7 @@ class PettingZooRunner():
                     end_totals = self._get_base_biomass_totals(world)
 
             fitness, episode_length, _ = self.run(
-                candidates=champion_models,
+                candidates=validation_models,
                 species_being_evaluated=best_species if best_species is not None else self.species_list[0],
                 seed=seed,
                 is_evaluation=True,
