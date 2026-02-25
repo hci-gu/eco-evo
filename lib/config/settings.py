@@ -33,6 +33,8 @@ class Settings:
     tournament_selection: int = 4
     generations_per_run: int = 200
     num_workers: int = 1
+    # Use the same opponents/seeds for all candidates in a generation/eval slot.
+    paired_opponent_evaluation: bool = True
     # Set to a non-negative value for deterministic runs across processes.
     seed: int = -1
     # Performance toggles.
@@ -41,6 +43,9 @@ class Settings:
     mutation_rate: float = 0.12
     mutation_rate_decay: float = 0.996
     mutation_rate_min: float = 0.02
+    # Optional random immigrant injection for diversity.
+    early_random_injection_count: int = 0
+    early_random_injection_generations: int = 0
 
     sbx_eta: float = 5.0
     sbx_eta_decay: float = 1.025
@@ -89,6 +94,8 @@ class Settings:
     # fixed_validation_metric: "fitness" uses the active fitness method score,
     # "survival" uses episode length in cycles.
     fixed_validation_metric: str = "fitness"
+    # Optional detail lines on plot for fixed validation by base species.
+    fixed_validation_show_species: bool = False
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1

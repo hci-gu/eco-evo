@@ -76,6 +76,9 @@ class PettingZooRunner():
         self.eval_index = 0
         self.champion_progress_history = []
         self.fixed_validation_history = []
+        self.fixed_validation_by_base_history = {
+            base: [] for base in const.ACTING_BASE_SPECIES
+        }
         self.fixed_validation_metric = str(
             getattr(self.settings, "fixed_validation_metric", "fitness")
         ).strip().lower()
@@ -101,14 +104,20 @@ class PettingZooRunner():
 
     def _get_alive_base_species(self):
         threshold = float(self.settings.alive_species_biomass_threshold)
+        totals = self._get_base_biomass_totals()
+        return [base_species for base_species, total in totals.items() if total > threshold]
+
+    def _get_base_biomass_totals(self, world=None):
+        if world is None:
+            world = self.env.world
         totals = {base_species: 0.0 for base_species in const.ACTING_BASE_SPECIES}
         for species_name, props in self.species_map.items():
             base_species = props.base_species
             if base_species not in totals:
                 continue
             biomass_offset = model.MODEL_OFFSETS[species_name]["biomass"]
-            totals[base_species] += float(self.env.world[..., biomass_offset].sum())
-        return [base_species for base_species, total in totals.items() if total > threshold]
+            totals[base_species] += float(world[..., biomass_offset].sum())
+        return totals
 
     def _energy_channel_indices(self):
         indices = []
@@ -284,15 +293,35 @@ class PettingZooRunner():
             species: [m.state_dict() for m in self.population[species]]
             for species in self.species_list
         }
-        for idx in range(self.settings.num_agents):
+        paired_eval = bool(getattr(self.settings, "paired_opponent_evaluation", True))
+        paired_context = {}
+        if paired_eval:
             for species in self.species_list:
                 other_species = [s for s in self.species_list if s != species]
                 for eval_index in range(self.settings.agent_evaluations):
                     other_indices = {}
-                    # pick random agent from other species
                     for other_species_name in other_species:
-                        other_species_idx = eval_rng.randint(0, self.settings.num_agents - 1)
-                        other_indices[other_species_name] = other_species_idx
+                        other_indices[other_species_name] = eval_rng.randint(0, self.settings.num_agents - 1)
+                    paired_context[(species, eval_index)] = {
+                        "other_indices": other_indices,
+                        "python_random_seed": eval_rng.randrange(2**32),
+                    }
+
+        for idx in range(self.settings.num_agents):
+            for species in self.species_list:
+                other_species = [s for s in self.species_list if s != species]
+                for eval_index in range(self.settings.agent_evaluations):
+                    if paired_eval:
+                        context = paired_context[(species, eval_index)]
+                        other_indices = dict(context["other_indices"])
+                        python_random_seed = int(context["python_random_seed"])
+                    else:
+                        other_indices = {}
+                        # pick random agent from other species
+                        for other_species_name in other_species:
+                            other_species_idx = eval_rng.randint(0, self.settings.num_agents - 1)
+                            other_indices[other_species_name] = other_species_idx
+                        python_random_seed = eval_rng.randrange(2**32)
 
                     tasks.append({
                         "agent_index": idx,
@@ -300,7 +329,7 @@ class PettingZooRunner():
                         "eval_index": eval_index,
                         "other_indices": other_indices,
                         "map_seed": eval_seeds[eval_index],
-                        "python_random_seed": eval_rng.randrange(2**32),
+                        "python_random_seed": python_random_seed,
                     })
 
         local_model_cache = {species: {} for species in self.species_list}
@@ -691,10 +720,9 @@ class PettingZooRunner():
         Given a dictionary of fitnesses (per species), evolve each species' population.
         """
         new_population = {}
-        fittest_agents_for_generation = {}
-        for species in self.species_list:
-            fittest_agent = max(fitnesses[species], key=lambda x: x[1])
-            fittest_agents_for_generation[species] = Model(chromosome=fittest_agent[0])
+        inject_count_cfg = max(0, int(getattr(self.settings, "early_random_injection_count", 0)))
+        inject_generations = max(0, int(getattr(self.settings, "early_random_injection_generations", 0)))
+        inject_active = self.current_generation < inject_generations
 
         for species in self.species_list:
             current_population = fitnesses[species]
@@ -702,12 +730,10 @@ class PettingZooRunner():
             # Select elites.
             elites = evolution.elitism_selection(current_population, self.settings.elitism_selection)
             next_pop = []
+            inject_count = min(inject_count_cfg if inject_active else 0, max(self.settings.num_agents - 1, 0))
+            offspring_target = max(0, self.settings.num_agents - 1 - inject_count)
 
-            next_gen_agents = self.settings.num_agents - 1
-            if (self.current_generation < 25):
-                next_gen_agents = self.settings.num_agents - 1 - 2
-
-            while len(next_pop) < next_gen_agents:
+            while len(next_pop) < offspring_target:
                 (p1, _), (p2, _) = evolution.tournament_selection(elites, 2, self.settings.tournament_selection)
                 current_eta = min(10.0, self.settings.sbx_eta * (self.settings.sbx_eta_decay ** self.current_generation))
                 c1_weights, c2_weights = evolution.sbx_crossover(p1, p2, current_eta)
@@ -715,7 +741,8 @@ class PettingZooRunner():
                 evolution.mutation(c1_weights, current_mutation_rate, current_mutation_rate)
                 evolution.mutation(c2_weights, current_mutation_rate, current_mutation_rate)
                 next_pop.append(c1_weights)
-                next_pop.append(c2_weights)
+                if len(next_pop) < offspring_target:
+                    next_pop.append(c2_weights)
 
             # Update best fitness/agent.
             best_for_species = max(current_population, key=lambda x: x[1])
@@ -724,16 +751,21 @@ class PettingZooRunner():
                 self.best_agent[species] = best_for_species[0]
                 model = Model(chromosome=self.best_agent[species])
                 model.save(f'{self.settings.folder}/agents/{self.current_generation}_${species}_{self.best_fitness[species]}.npy')
+            elif self.best_agent[species] is None:
+                self.best_agent[species] = best_for_species[0]
 
             # add best agent to the population
             next_pop.append(self.best_agent[species])
+            for _ in range(inject_count):
+                next_pop.append(Model().state_dict())
 
             new_population[species] = [Model(chromosome=chrom) for chrom in next_pop]
-        
-            if (self.current_generation < 25):
-                new_population[species].append(Model())
-                new_population[species].append(Model())
-                
+            if len(new_population[species]) != self.settings.num_agents:
+                raise RuntimeError(
+                    f"Population size mismatch for {species}: "
+                    f"{len(new_population[species])} != {self.settings.num_agents}"
+                )
+
         for species in self.species_list:
             # shuffle the population
             self.rng.shuffle(new_population[species])
@@ -802,30 +834,61 @@ class PettingZooRunner():
             or (self.current_generation % every) != 0
         ):
             self.fixed_validation_history.append(np.nan)
+            for base in const.ACTING_BASE_SPECIES:
+                self.fixed_validation_by_base_history[base].append(np.nan)
             return
 
         champion_models, best_species, _ = self._build_generation_champion_models(fitnesses)
         horizon = max(1, int(getattr(self.settings, "fixed_validation_steps", self.settings.fitness_eval_steps)))
         episodes = max(1, int(getattr(self.settings, "fixed_validation_episodes", 1)))
-        metric_values = []
+        overall_values = []
+        by_base_values = {base: [] for base in const.ACTING_BASE_SPECIES}
         for episode_idx in range(episodes):
             seed = int(self.fixed_validation_seed + episode_idx * 9973)
+            start_totals = None
+            end_totals = None
+
+            def _capture(world, _fitness, done):
+                nonlocal start_totals, end_totals
+                if start_totals is None:
+                    start_totals = self._get_base_biomass_totals(world)
+                if done:
+                    end_totals = self._get_base_biomass_totals(world)
+
             fitness, episode_length, _ = self.run(
                 candidates=champion_models,
                 species_being_evaluated=best_species if best_species is not None else self.species_list[0],
                 seed=seed,
                 is_evaluation=True,
-                callback=noop,
+                callback=_capture,
                 collect_plot_data=False,
                 python_random_seed=seed,
                 max_steps_override=horizon,
             )
             if self.fixed_validation_metric == "survival":
-                metric_values.append(float(episode_length))
+                episode_value = float(episode_length)
+                overall_values.append(episode_value)
+                for base in const.ACTING_BASE_SPECIES:
+                    by_base_values[base].append(episode_value)
             else:
-                metric_values.append(float(fitness))
+                if start_totals is None:
+                    start_totals = self._get_base_biomass_totals()
+                if end_totals is None:
+                    end_totals = self._get_base_biomass_totals()
 
-        self.fixed_validation_history.append(float(np.mean(metric_values)))
+                base_scores = []
+                for base in const.ACTING_BASE_SPECIES:
+                    b0 = float(start_totals.get(base, 0.0))
+                    b1 = float(end_totals.get(base, b0))
+                    score = 100.0 * (b1 - b0) / max(b0, 1e-8)
+                    by_base_values[base].append(score)
+                    base_scores.append(score)
+                overall_values.append(float(np.mean(base_scores)) if base_scores else float(fitness))
+
+        self.fixed_validation_history.append(float(np.mean(overall_values)))
+        for base in const.ACTING_BASE_SPECIES:
+            vals = by_base_values[base]
+            self.fixed_validation_by_base_history[base].append(float(np.mean(vals)) if vals else np.nan)
 
     def run_generation(self):
         # Evaluate the current population.
@@ -840,6 +903,13 @@ class PettingZooRunner():
             if self.fixed_validation_history and np.isfinite(self.fixed_validation_history[-1]):
                 fixed_label = "survival cycles" if self.fixed_validation_metric == "survival" else "fitness"
                 print(f"Fixed validation ({fixed_label}): {self.fixed_validation_history[-1]:.3f}")
+                if self.fixed_validation_metric == "fitness":
+                    by_base = ", ".join(
+                        f"{base}={self.fixed_validation_by_base_history[base][-1]:.2f}"
+                        for base in const.ACTING_BASE_SPECIES
+                        if self.fixed_validation_by_base_history[base]
+                    )
+                    print(f"Fixed validation by base: {by_base}")
         if self.settings.enable_plotting:
             generations_data = update_generations_data(self.settings, self.current_generation, self.env.plot_data)
             plot_generations(
@@ -848,6 +918,7 @@ class PettingZooRunner():
                 champion_progress=self.champion_progress_history,
                 fixed_validation=self.fixed_validation_history,
                 fixed_validation_metric=self.fixed_validation_metric,
+                fixed_validation_by_species=self.fixed_validation_by_base_history,
             )
         self.env.plot_data = {}
         # Evolve the population based on fitnesses.

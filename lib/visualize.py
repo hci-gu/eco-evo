@@ -209,6 +209,7 @@ def plot_generations(
     champion_progress=None,
     fixed_validation=None,
     fixed_validation_metric="fitness",
+    fixed_validation_by_species=None,
 ):
     global generation_graph_cache
 
@@ -314,6 +315,31 @@ def plot_generations(
                 ax.plot(
                     x, y, color="#2f4f4f", linestyle="-.", linewidth=2.1, marker="s", markersize=3.5, label=label
                 )
+
+    show_fixed_by_species = bool(getattr(settings, "fixed_validation_show_species", False))
+    if show_fixed_by_species and fixed_validation_by_species:
+        species_palette = {
+            "sprat": "#1b9e77",
+            "herring": "#d95f02",
+            "cod": "#7570b3",
+        }
+        metric = str(fixed_validation_metric).strip().lower()
+        for base, series in fixed_validation_by_species.items():
+            progress = np.asarray(series, dtype=np.float32)
+            valid = np.isfinite(progress)
+            if not np.any(valid):
+                continue
+            x = np.arange(progress.shape[0])[valid]
+            y = progress[valid]
+            color = species_palette.get(base, "black")
+            label = f"Fixed Validation {base}"
+            if metric == "survival":
+                if ax_progress is None:
+                    ax_progress = ax.twinx()
+                    ax_progress.set_ylabel("Validation Survival (cycles)")
+                ax_progress.plot(x, y, color=color, linestyle=":", linewidth=1.6, alpha=0.85, label=label)
+            else:
+                ax.plot(x, y, color=color, linestyle=":", linewidth=1.6, alpha=0.85, label=label)
 
     # Configure axes and title
     ax.set_xlabel('Generation')
