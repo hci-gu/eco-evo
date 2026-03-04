@@ -367,6 +367,12 @@ class PettingZooRunner():
         training_low_energy_penalty = float(
             max(0.0, getattr(self.settings, "training_low_energy_penalty", 0.0))
         )
+        training_energy_reference = float(self.settings.max_energy)
+        if not is_evaluation:
+            # In training we may down-scale initial energy. Evaluate "low energy" against
+            # that scaled budget so floor settings remain meaningful.
+            training_energy_reference *= max(float(initial_energy_scale), 1e-8)
+        training_energy_reference = max(training_energy_reference, 1e-8)
         trajectory_component_biomass = 0.0
         trajectory_component_energy = 0.0
         trajectory_component_crash_penalty = 0.0
@@ -441,7 +447,7 @@ class PettingZooRunner():
                         and training_low_energy_penalty > 0.0
                         and training_low_energy_floor_pct > 0.0
                     ):
-                        current_energy_pct = current_energy / max(float(self.settings.max_energy), 1e-8)
+                        current_energy_pct = current_energy / training_energy_reference
                         if current_energy_pct < training_low_energy_floor_pct:
                             deficit = (training_low_energy_floor_pct - current_energy_pct) / max(
                                 training_low_energy_floor_pct, 1e-8
