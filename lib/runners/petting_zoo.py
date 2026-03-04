@@ -189,6 +189,56 @@ class PettingZooRunner():
         world[..., energy_channels] *= keep
         np.clip(world[..., energy_channels], 0.0, self.settings.max_energy, out=world[..., energy_channels])
 
+    def _sparsify_plankton_for_training(
+        self,
+        cell_fraction: float,
+        biomass_scale: float,
+        rng_seed=None,
+    ):
+        cell_fraction = float(np.clip(cell_fraction, 0.0, 1.0))
+        biomass_scale = float(max(0.0, biomass_scale))
+        if cell_fraction >= 1.0 and abs(biomass_scale - 1.0) < 1e-9:
+            return
+
+        plankton_offsets = model.MODEL_OFFSETS.get("plankton")
+        if plankton_offsets is None:
+            return
+
+        world = self.env.world
+        world_data = self.env.world_data
+        plankton_biomass_idx = plankton_offsets["biomass"]
+        plankton_energy_idx = plankton_offsets["energy"]
+
+        active_cells = np.argwhere(world_data[:, :, 1] > 0.5)
+        if active_cells.size == 0:
+            return
+
+        rng = np.random.default_rng(None if rng_seed is None else int(rng_seed))
+        n_active = active_cells.shape[0]
+        keep_n = int(np.ceil(n_active * cell_fraction))
+        keep_n = min(max(keep_n, 0), n_active)
+        keep_mask = np.zeros(n_active, dtype=bool)
+        if keep_n > 0:
+            keep_indices = rng.choice(n_active, size=keep_n, replace=False)
+            keep_mask[keep_indices] = True
+
+        removed_cells = active_cells[~keep_mask]
+        if removed_cells.size > 0:
+            rx, ry = removed_cells[:, 0], removed_cells[:, 1]
+            world[rx, ry, plankton_biomass_idx] = 0.0
+            world[rx, ry, plankton_energy_idx] = 0.0
+            world_data[rx, ry, 1] = 0.0
+            world_data[rx, ry, 2] = 0.0
+
+        kept_cells = active_cells[keep_mask]
+        if kept_cells.size > 0 and abs(biomass_scale - 1.0) > 1e-9:
+            kx, ky = kept_cells[:, 0], kept_cells[:, 1]
+            world[kx, ky, plankton_biomass_idx] *= biomass_scale
+            world[kx, ky, plankton_energy_idx] *= biomass_scale
+            world[kx, ky, plankton_energy_idx] = np.clip(
+                world[kx, ky, plankton_energy_idx], 0.0, self.settings.max_energy
+            )
+
     def _select_opponent_population_state(self, population_state):
         snapshot_every = max(1, int(getattr(self.settings, "opponent_snapshot_every", 1)))
         if snapshot_every <= 1:
@@ -231,6 +281,7 @@ class PettingZooRunner():
             f"energy={_mean('trajectory_component_energy'):.3f}, "
             f"crash={_mean('trajectory_component_crash_penalty'):.3f}, "
             f"low={_mean('trajectory_component_low_biomass_penalty'):.3f}, "
+            f"low_energy={_mean('trajectory_component_low_energy_penalty'):.3f}, "
             f"terminal={_mean('trajectory_component_terminal'):.3f}, "
             f"total={_mean('trajectory_total'):.3f}"
         )
@@ -252,6 +303,23 @@ class PettingZooRunner():
         if python_random_seed is not None:
             random.seed(python_random_seed)
         self.env.reset(seed)
+        if not is_evaluation:
+            training_plankton_cell_fraction = float(
+                np.clip(getattr(self.settings, "training_plankton_cell_fraction", 1.0), 0.0, 1.0)
+            )
+            training_plankton_biomass_scale = float(
+                max(0.0, getattr(self.settings, "training_plankton_biomass_scale", 1.0))
+            )
+            if (
+                training_plankton_cell_fraction < 1.0
+                or abs(training_plankton_biomass_scale - 1.0) > 1e-9
+            ):
+                sparse_seed = seed if seed is not None else python_random_seed
+                self._sparsify_plankton_for_training(
+                    cell_fraction=training_plankton_cell_fraction,
+                    biomass_scale=training_plankton_biomass_scale,
+                    rng_seed=sparse_seed,
+                )
         fitness_method = str(self.settings.fitness_method).strip().lower()
         if fitness_method not in {"simple", "biomass_pct", "trajectory_shaped"}:
             raise ValueError(
@@ -293,10 +361,17 @@ class PettingZooRunner():
         trajectory_crash_penalty = float(max(0.0, getattr(self.settings, "trajectory_crash_penalty", 2.0)))
         trajectory_low_floor_pct = float(max(0.0, getattr(self.settings, "trajectory_low_biomass_floor_pct", 30.0)))
         trajectory_low_penalty = float(max(0.0, getattr(self.settings, "trajectory_low_biomass_penalty", 0.0)))
+        training_low_energy_floor_pct = float(
+            np.clip(getattr(self.settings, "training_low_energy_floor_pct", 0.0), 0.0, 1.0)
+        )
+        training_low_energy_penalty = float(
+            max(0.0, getattr(self.settings, "training_low_energy_penalty", 0.0))
+        )
         trajectory_component_biomass = 0.0
         trajectory_component_energy = 0.0
         trajectory_component_crash_penalty = 0.0
         trajectory_component_low_penalty = 0.0
+        trajectory_component_low_energy_penalty = 0.0
         trajectory_component_terminal = 0.0
         callback(self.env.world, fitness, False)
 
@@ -361,6 +436,22 @@ class PettingZooRunner():
                             step_reward -= low_term
                             trajectory_component_low_penalty -= trajectory_discount * low_term
 
+                    if (
+                        not is_evaluation
+                        and training_low_energy_penalty > 0.0
+                        and training_low_energy_floor_pct > 0.0
+                    ):
+                        current_energy_pct = current_energy / max(float(self.settings.max_energy), 1e-8)
+                        if current_energy_pct < training_low_energy_floor_pct:
+                            deficit = (training_low_energy_floor_pct - current_energy_pct) / max(
+                                training_low_energy_floor_pct, 1e-8
+                            )
+                            low_energy_term = training_low_energy_penalty * deficit
+                            step_reward -= low_energy_term
+                            trajectory_component_low_energy_penalty -= (
+                                trajectory_discount * low_energy_term
+                            )
+
                     trajectory_return += trajectory_discount * step_reward
                     trajectory_discount *= trajectory_gamma
                     terminal_pct = (
@@ -412,6 +503,9 @@ class PettingZooRunner():
                 "trajectory_component_energy": float(trajectory_component_energy),
                 "trajectory_component_crash_penalty": float(trajectory_component_crash_penalty),
                 "trajectory_component_low_biomass_penalty": float(trajectory_component_low_penalty),
+                "trajectory_component_low_energy_penalty": float(
+                    trajectory_component_low_energy_penalty
+                ),
                 "trajectory_component_terminal": float(trajectory_component_terminal),
                 "trajectory_total": float(fitness),
             }

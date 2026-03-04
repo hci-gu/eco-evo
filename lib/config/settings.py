@@ -104,6 +104,15 @@ class Settings:
     # Optional harsher training-eval world (encourages eat-or-die behavior in short windows).
     training_initial_energy_scale: float = 0.33
     training_energy_decay_per_cycle: float = 0.1
+    # Training-only food sparsity controls (plankton seeding).
+    # 1.0 keeps all initial plankton cells, 0.25 keeps only 25%.
+    training_plankton_cell_fraction: float = 1.0
+    # Scales initial biomass on kept plankton cells.
+    training_plankton_biomass_scale: float = 1.0
+    # Training-only steep penalty when weighted mean energy falls below floor.
+    # Floor is expressed as fraction of max_energy (e.g. 0.4 = 40%).
+    training_low_energy_floor_pct: float = 0.0
+    training_low_energy_penalty: float = 0.0
     # Progress tracking: evaluate per-generation champions on a longer fixed horizon.
     champion_progress_enabled: bool = False
     champion_progress_every: int = 1
