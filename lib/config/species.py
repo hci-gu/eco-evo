@@ -1,7 +1,7 @@
 # lib/config/species.py
 import numpy as np
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
 from .settings import Settings
 import lib.config.const as const
 import lib.model as model
@@ -37,8 +37,8 @@ class SpeciesParams:
     age_index: int
     age_steps: int
     is_mature: bool
-    next_species: str | None
-    offspring_species: str | None
+    next_species: Optional[str]
+    offspring_species: Optional[str]
 
     @property
     def color_ones(self) -> tuple[float, float, float]:
@@ -197,8 +197,8 @@ def build_species_map(settings: Settings) -> SpeciesMap:
         base_name: str,
         age_index: int,
         is_mature: bool,
-        next_species: str | None,
-        offspring_species: str | None,
+        next_species: Optional[str],
+        offspring_species: Optional[str],
         starting_biomass: float,
         original_starting_biomass: float,
         prey: list[str],

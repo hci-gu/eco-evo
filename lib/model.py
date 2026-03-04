@@ -76,10 +76,10 @@ class Model:
             self.set_weights(chromosome)
         else:
             # Random initialization of weights and biases.
-            self.fc1_weight = np.ascontiguousarray(np.random.randn(input_size, hidden_size).astype(np.float32))
-            self.fc1_bias = np.ascontiguousarray(np.random.randn(hidden_size).astype(np.float32))
-            self.fc2_weight = np.ascontiguousarray(np.random.randn(hidden_size, output_size).astype(np.float32))
-            self.fc2_bias = np.ascontiguousarray(np.random.randn(output_size).astype(np.float32))
+            self.fc1_weight = np.ascontiguousarray(np.random.randn(input_size, hidden_size).astype(np.float32) * 0.1)
+            self.fc1_bias = np.ascontiguousarray(np.random.randn(hidden_size).astype(np.float32) * 0.1)
+            self.fc2_weight = np.ascontiguousarray(np.random.randn(hidden_size, output_size).astype(np.float32) * 0.1)
+            self.fc2_bias = np.ascontiguousarray(np.random.randn(output_size).astype(np.float32) * 0.1)
     
     def forward(self, x):
         h = np.dot(x, self.fc1_weight) + self.fc1_bias
