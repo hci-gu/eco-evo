@@ -475,6 +475,16 @@ class PettingZooRunner():
         prey_species = set()
         for species_name in cod_species:
             prey_species.update(self.species_map[species_name].prey)
+        include_plankton = bool(
+            getattr(self.settings, "training_cod_prey_clear_include_plankton", False)
+        )
+        if not include_plankton:
+            prey_species = {
+                prey_name
+                for prey_name in prey_species
+                if self.species_map.get(prey_name) is not None
+                and self.species_map[prey_name].base_species != "plankton"
+            }
 
         rng = np.random.default_rng(None if rng_seed is None else int(rng_seed) + 13)
         for prey_species_name in prey_species:

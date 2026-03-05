@@ -121,6 +121,9 @@ class Settings:
     # Keep prey away from initial cod cells so movement toward food is required.
     # Uses Chebyshev distance in grid cells (0 disables clearing).
     training_cod_prey_clear_radius: int = 2
+    # If False, keep plankton near cod even when clearing cod prey radius.
+    # This avoids starving juvenile cod age groups that only eat plankton.
+    training_cod_prey_clear_include_plankton: bool = False
     # Training-only steep penalty when weighted mean energy falls below floor.
     # Floor is expressed as fraction of max_energy (e.g. 0.4 = 40%).
     training_low_energy_floor_pct: float = 0.0
