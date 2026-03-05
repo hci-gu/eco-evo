@@ -102,17 +102,36 @@ class Settings:
     relative_baseline_fallback_to_raw_when_flat: bool = True
     relative_baseline_flat_std_threshold: float = 0.25
     # Optional harsher training-eval world (encourages eat-or-die behavior in short windows).
-    training_initial_energy_scale: float = 0.33
-    training_energy_decay_per_cycle: float = 0.1
+    training_initial_energy_scale: float = 0.50
+    training_energy_decay_per_cycle: float = 0.05
     # Training-only food sparsity controls (plankton seeding).
-    # 1.0 keeps all initial plankton cells, 0.25 keeps only 25%.
-    training_plankton_cell_fraction: float = 1.0
+    # 1.0 keeps all initial plankton cells, 0.1 keeps 10%.
+    training_plankton_cell_fraction: float = 0.08
     # Scales initial biomass on kept plankton cells.
     training_plankton_biomass_scale: float = 1.0
+    # Training-only sparsity for non-plankton (acting) base species.
+    # Applied after map reset and before rollouts.
+    training_non_plankton_cell_fraction: float = 0.08
+    training_non_plankton_min_cells: int = 1
+    # Force cod to spawn in very few random cells (1 = single-cell cod start).
+    # Set to 0 to disable this override.
+    training_cod_spawn_cells: int = 1
+    # Keep prey away from initial cod cells so movement toward food is required.
+    # Uses Chebyshev distance in grid cells (0 disables clearing).
+    training_cod_prey_clear_radius: int = 2
     # Training-only steep penalty when weighted mean energy falls below floor.
     # Floor is expressed as fraction of max_energy (e.g. 0.4 = 40%).
     training_low_energy_floor_pct: float = 0.0
     training_low_energy_penalty: float = 0.0
+    # Training-only dynamics: extra biomass loss each cycle when energy is low.
+    # Loss fraction = training_low_energy_biomass_max_loss_per_cycle * deficit,
+    # where deficit = max(0, (floor_pct - energy_pct) / floor_pct).
+    training_low_energy_biomass_floor_pct: float = 0.4
+    training_low_energy_biomass_max_loss_per_cycle: float = 0.35
+    training_low_energy_biomass_target_only: bool = True
+    # Training-only multiplier on energy gained from eating.
+    # >1 encourages policies to seek and eat food sooner.
+    training_eating_reward_multiplier: float = 5.0
     # Progress tracking: evaluate per-generation champions on a longer fixed horizon.
     champion_progress_enabled: bool = False
     champion_progress_every: int = 1
@@ -129,6 +148,8 @@ class Settings:
     fixed_validation_metric: str = "fitness"
     # Optional detail lines on plot for fixed validation by base species.
     fixed_validation_show_species: bool = False
+    # Refresh biomass line chart every N simulation cycles when rendering.
+    biomass_plot_update_interval_steps: int = 1
 
     smell_decay: float = 0.9
     smell_emission_rate: float = 0.1

@@ -7,6 +7,7 @@ Usage:
     python run_script.py --list
 
 Available scripts:
+    play_as_agent        - Play manually as one PettingZoo species
     plot_biomass         - Plot biomass per functional group
     plot_fish            - Plot fish growth dynamics
     plot_real_data       - Interactive visualization of real biomass data
@@ -34,6 +35,7 @@ sys.path.insert(0, PROJECT_ROOT)
 os.chdir(PROJECT_ROOT)
 
 SCRIPTS = {
+    "play_as_agent": "scripts/play_as_agent.py",
     "plot_biomass": "scripts/plot_biomass.py",
     "plot_biomass_all": "scripts/plot_biomass_all.py",
     "plot_fish": "scripts/plot_fish.py",

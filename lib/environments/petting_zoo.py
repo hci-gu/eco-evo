@@ -1,6 +1,10 @@
 import numpy as np
 from pettingzoo import AECEnv
-from pettingzoo.utils import agent_selector, wrappers
+try:
+    from pettingzoo.utils.agent_selector import agent_selector
+    from pettingzoo.utils import wrappers
+except ImportError:
+    from pettingzoo.utils import agent_selector, wrappers
 from gymnasium import spaces
 from lib.world import (
     update_smell,
@@ -52,6 +56,9 @@ class raw_env(AECEnv):
         self.reason = ""
         self.age_transition_table = build_age_transition_table(self.species_map)
         self.spawn_table = build_spawn_table(self.species_map)
+        self.initial_max_biomass_per_species = {}
+        self._last_biomass_plot_cycle = -1
+        self.eating_reward_multiplier = 1.0
         self.reset()
 
         self._observation_spaces = {
@@ -89,6 +96,7 @@ class raw_env(AECEnv):
         self.world = np.pad(world, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.world_data = np.pad(world_data, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.starting_biomasses = starting_biomasses
+        self.refresh_visual_scale_reference()
 
         # Create a grid of coordinates (shape: (WORLD_SIZE, WORLD_SIZE)).
         grid_x, grid_y = np.meshgrid(np.arange(self.settings.world_size), np.arange(self.settings.world_size), indexing='ij')
@@ -101,6 +109,7 @@ class raw_env(AECEnv):
         self.cycle_count = 0
         self._movement_deltas = np.zeros_like(self.world)
         self._smell_step = 0
+        self._last_biomass_plot_cycle = -1
 
         # Initialize bookkeeping dictionaries.
         self.agents = self.possible_agents[:]
@@ -121,6 +130,19 @@ class raw_env(AECEnv):
 
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
         self.color_order = []
+
+    def refresh_visual_scale_reference(self):
+        core = self.world[1:-1, 1:-1, :]
+        self.initial_max_biomass_per_species = {}
+        for species in const.SPECIES:
+            offsets = model.MODEL_OFFSETS.get(species)
+            if offsets is None:
+                continue
+            b_idx = offsets["biomass"]
+            max_val = float(np.max(core[:, :, b_idx]))
+            if not np.isfinite(max_val):
+                max_val = 0.0
+            self.initial_max_biomass_per_species[species] = max(max_val, 1e-12)
 
     def observe(self, agent):
         cached = self.observations.get(agent)
@@ -173,7 +195,14 @@ class raw_env(AECEnv):
             )
             apply_movement_delta(self.species_map, self.world, agent, matrix_movement_deltas)
 
-            matrix_perform_eating(self.settings, self.species_map, self.world, agent, action)
+            matrix_perform_eating(
+                self.settings,
+                self.species_map,
+                self.world,
+                agent,
+                action,
+                eating_reward_multiplier=self.eating_reward_multiplier,
+            )
             
             if not is_last:
                 self._maybe_update_smell()
@@ -222,8 +251,23 @@ class raw_env(AECEnv):
             return
         if self.render_mode == "human":
             poll_visualization_controls()
-            plot_biomass(self.plot_data)
-            draw_world(self.settings, self.screen, self.world, self.world_data)
+            interval = max(1, int(getattr(self.settings, "biomass_plot_update_interval_steps", 1)))
+            current_cycle = int(self.cycle_count)
+            should_update_chart = (
+                self._last_biomass_plot_cycle < 0
+                or current_cycle != self._last_biomass_plot_cycle
+                and (current_cycle % interval == 0)
+            )
+            if should_update_chart:
+                plot_biomass(self.plot_data, settings=self.settings, species_map=self.species_map)
+                self._last_biomass_plot_cycle = current_cycle
+            draw_world(
+                self.settings,
+                self.screen,
+                self.world,
+                self.world_data,
+                species_scale_reference=self.initial_max_biomass_per_species,
+            )
 
     def get_total_biomass(self, agent):
         # Support both concrete species keys (e.g. cod__a2) and base species

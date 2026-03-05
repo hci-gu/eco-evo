@@ -423,7 +423,14 @@ def spawn_offspring(settings: Settings, species_map: SpeciesMap, world, step_cou
         world[pad:-pad, pad:-pad, dst_b] = total_biomass
         world[pad:-pad, pad:-pad, dst_e] = np.clip(combined_energy, 0.0, settings.max_energy)
 
-def matrix_perform_eating(settings: Settings, species_map: SpeciesMap, world, species_key, actions):
+def matrix_perform_eating(
+    settings: Settings,
+    species_map: SpeciesMap,
+    world,
+    species_key,
+    actions,
+    eating_reward_multiplier: float = 1.0,
+):
     pad = 1
     props = species_map[species_key]
     biomass_offset = MODEL_OFFSETS[species_key]["biomass"]
@@ -470,6 +477,10 @@ def matrix_perform_eating(settings: Settings, species_map: SpeciesMap, world, sp
         energy_per_prey = get_feeding_energy_reward(species_key, prey_species, species_map)
         # Total energy from eating this prey species
         total_energy_reward += prey_individuals_eaten * energy_per_prey
+
+    eating_reward_multiplier = float(max(0.0, eating_reward_multiplier))
+    if abs(eating_reward_multiplier - 1.0) > 1e-9:
+        total_energy_reward *= eating_reward_multiplier
 
     # Calculate number of predator individuals to distribute energy across
     # Using the eating biomass (individuals that attempted to eat)

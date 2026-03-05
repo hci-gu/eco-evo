@@ -189,6 +189,58 @@ class PettingZooRunner():
         world[..., energy_channels] *= keep
         np.clip(world[..., energy_channels], 0.0, self.settings.max_energy, out=world[..., energy_channels])
 
+    def _target_species_names(self, target_species: str, target_only: bool):
+        if not target_only:
+            return [s for s in self.species_map.keys() if self.species_map[s].base_species != "plankton"]
+        if target_species in self.species_map:
+            return [target_species]
+        return [
+            s for s, props in self.species_map.items()
+            if props.base_species == target_species
+        ]
+
+    def _apply_training_low_energy_biomass_loss(
+        self,
+        target_species: str,
+        energy_reference: float,
+        floor_pct: float,
+        max_loss_per_cycle: float,
+        target_only: bool,
+    ):
+        floor_pct = float(np.clip(floor_pct, 0.0, 1.0))
+        max_loss_per_cycle = float(np.clip(max_loss_per_cycle, 0.0, 1.0))
+        if floor_pct <= 0.0 or max_loss_per_cycle <= 0.0:
+            return
+
+        world = self.env.world
+        energy_reference = max(float(energy_reference), 1e-8)
+        species_names = self._target_species_names(target_species, target_only)
+        for species_name in species_names:
+            offsets = model.MODEL_OFFSETS.get(species_name)
+            if offsets is None:
+                continue
+            props = self.species_map.get(species_name)
+            if props is None:
+                continue
+
+            b_idx = offsets["biomass"]
+            e_idx = offsets["energy"]
+            biomass = world[..., b_idx]
+            energy = world[..., e_idx]
+            if not np.any(biomass > 0.0):
+                continue
+
+            energy_pct = energy / energy_reference
+            deficit = np.clip((floor_pct - energy_pct) / max(floor_pct, 1e-8), 0.0, 1.0)
+            loss_fraction = max_loss_per_cycle * deficit
+            if not np.any(loss_fraction > 0.0):
+                continue
+
+            biomass *= (1.0 - loss_fraction)
+            low_biomass = biomass < props.min_biomass_in_cell
+            biomass[low_biomass] = 0.0
+            energy[low_biomass] = 0.0
+
     def _sparsify_plankton_for_training(
         self,
         cell_fraction: float,
@@ -239,6 +291,193 @@ class PettingZooRunner():
                 world[kx, ky, plankton_energy_idx], 0.0, self.settings.max_energy
             )
 
+    def _get_training_core_views(self):
+        world = self.env.world
+        world_data = self.env.world_data
+        if world.shape[0] >= 3 and world.shape[1] >= 3:
+            world_core = world[1:-1, 1:-1, :]
+            world_data_core = world_data[1:-1, 1:-1, :]
+        else:
+            world_core = world
+            world_data_core = world_data
+        water_idx = model.MODEL_OFFSETS["terrain"]["water"]
+        water_mask = world_core[:, :, water_idx] > 0.5
+        return world_core, world_data_core, water_mask
+
+    def _sync_plankton_cluster_markers(self):
+        offsets = model.MODEL_OFFSETS.get("plankton")
+        if offsets is None or "plankton" not in self.species_map:
+            return
+        world_core, world_data_core, _ = self._get_training_core_views()
+        biomass = world_core[:, :, offsets["biomass"]]
+        has_plankton = biomass > 0.0
+        respawn_delay = float(
+            self.species_map["plankton"].hardcoded_rules.get("respawn_delay", 0.0)
+        )
+        world_data_core[:, :, 1] = has_plankton.astype(np.float32)
+        world_data_core[:, :, 2] = np.where(
+            has_plankton,
+            respawn_delay,
+            0.0,
+        ).astype(np.float32)
+
+    def _redistribute_species_to_mask(self, species_name: str, keep_mask):
+        offsets = model.MODEL_OFFSETS[species_name]
+        b_idx = offsets["biomass"]
+        e_idx = offsets["energy"]
+        world_core, _, _ = self._get_training_core_views()
+        biomass = world_core[:, :, b_idx]
+        energy = world_core[:, :, e_idx]
+
+        total_biomass = float(np.sum(biomass))
+        if total_biomass <= 0.0:
+            biomass.fill(0.0)
+            energy.fill(0.0)
+            return
+
+        weighted_energy = float(
+            np.sum(biomass * energy) / max(total_biomass, 1e-8)
+        )
+        biomass.fill(0.0)
+        energy.fill(0.0)
+
+        keep_n = int(np.count_nonzero(keep_mask))
+        if keep_n <= 0:
+            return
+
+        biomass[keep_mask] = total_biomass / float(keep_n)
+        energy_value = float(np.clip(weighted_energy, 0.0, self.settings.max_energy))
+        energy[keep_mask] = energy_value
+
+    def _sparsify_non_plankton_for_training(self, cell_fraction: float, min_cells: int, cod_spawn_cells: int, rng_seed=None):
+        cell_fraction = float(np.clip(cell_fraction, 0.0, 1.0))
+        min_cells = max(0, int(min_cells))
+        cod_spawn_cells = max(0, int(cod_spawn_cells))
+        if cell_fraction >= 1.0 and cod_spawn_cells == 0:
+            return
+
+        world_core, _, water_mask = self._get_training_core_views()
+        rng = np.random.default_rng(None if rng_seed is None else int(rng_seed))
+
+        base_to_species = {}
+        for species_name, props in self.species_map.items():
+            if props.base_species == "plankton":
+                continue
+            base_to_species.setdefault(props.base_species, []).append(species_name)
+
+        for base_species, species_names in base_to_species.items():
+            base_biomass = np.zeros(water_mask.shape, dtype=np.float32)
+            for species_name in species_names:
+                b_idx = model.MODEL_OFFSETS[species_name]["biomass"]
+                base_biomass += world_core[:, :, b_idx]
+
+            active_positions = np.argwhere((base_biomass > 0.0) & water_mask)
+            if active_positions.shape[0] == 0:
+                active_positions = np.argwhere(water_mask)
+            if active_positions.shape[0] == 0:
+                continue
+
+            if base_species == "cod" and cod_spawn_cells > 0:
+                keep_n = cod_spawn_cells
+            else:
+                keep_n = int(np.ceil(active_positions.shape[0] * cell_fraction))
+                keep_n = max(keep_n, min_cells)
+
+            keep_n = min(max(keep_n, 0), active_positions.shape[0])
+            keep_mask = np.zeros(water_mask.shape, dtype=bool)
+            if keep_n > 0:
+                selected = active_positions[
+                    rng.choice(active_positions.shape[0], size=keep_n, replace=False)
+                ]
+                keep_mask[selected[:, 0], selected[:, 1]] = True
+
+            for species_name in species_names:
+                self._redistribute_species_to_mask(species_name, keep_mask)
+
+    def _clear_prey_near_cod_for_training(self, clear_radius: int, rng_seed=None):
+        clear_radius = max(0, int(clear_radius))
+        if clear_radius <= 0:
+            return
+
+        world_core, _, water_mask = self._get_training_core_views()
+        cod_species = [
+            species_name
+            for species_name, props in self.species_map.items()
+            if props.base_species == "cod"
+        ]
+        if not cod_species:
+            return
+
+        cod_total = np.zeros(water_mask.shape, dtype=np.float32)
+        for species_name in cod_species:
+            b_idx = model.MODEL_OFFSETS[species_name]["biomass"]
+            cod_total += world_core[:, :, b_idx]
+        cod_positions = np.argwhere(cod_total > 0.0)
+        if cod_positions.shape[0] == 0:
+            return
+
+        close_mask = np.zeros(water_mask.shape, dtype=bool)
+        for x, y in cod_positions:
+            x0 = max(0, x - clear_radius)
+            x1 = min(close_mask.shape[0], x + clear_radius + 1)
+            y0 = max(0, y - clear_radius)
+            y1 = min(close_mask.shape[1], y + clear_radius + 1)
+            close_mask[x0:x1, y0:y1] = True
+
+        prey_species = set()
+        for species_name in cod_species:
+            prey_species.update(self.species_map[species_name].prey)
+
+        rng = np.random.default_rng(None if rng_seed is None else int(rng_seed) + 13)
+        for prey_species_name in prey_species:
+            offsets = model.MODEL_OFFSETS.get(prey_species_name)
+            if offsets is None:
+                continue
+
+            b_idx = offsets["biomass"]
+            e_idx = offsets["energy"]
+            biomass = world_core[:, :, b_idx]
+            energy = world_core[:, :, e_idx]
+
+            remove_mask = close_mask & (biomass > 0.0)
+            removed_biomass = float(np.sum(biomass[remove_mask]))
+            if removed_biomass <= 0.0:
+                continue
+
+            removed_energy = float(
+                np.sum(biomass[remove_mask] * energy[remove_mask])
+                / max(removed_biomass, 1e-8)
+            )
+            biomass[remove_mask] = 0.0
+            energy[remove_mask] = 0.0
+
+            eligible_far = water_mask & (~close_mask)
+            if not np.any(eligible_far):
+                continue
+
+            occupied_far = eligible_far & (biomass > 0.0)
+            target_positions = np.argwhere(occupied_far)
+            if target_positions.shape[0] == 0:
+                fallback_positions = np.argwhere(eligible_far)
+                if fallback_positions.shape[0] == 0:
+                    continue
+                target_positions = fallback_positions[
+                    rng.choice(fallback_positions.shape[0], size=1, replace=False)
+                ]
+
+            share = removed_biomass / float(target_positions.shape[0])
+            tx = target_positions[:, 0]
+            ty = target_positions[:, 1]
+            old_biomass = biomass[tx, ty].copy()
+            old_energy = energy[tx, ty].copy()
+            new_biomass = old_biomass + share
+            mixed_energy = np.divide(
+                old_biomass * old_energy + share * removed_energy,
+                np.maximum(new_biomass, 1e-8),
+            )
+            biomass[tx, ty] = new_biomass
+            energy[tx, ty] = np.clip(mixed_energy, 0.0, self.settings.max_energy)
+
     def _select_opponent_population_state(self, population_state):
         snapshot_every = max(1, int(getattr(self.settings, "opponent_snapshot_every", 1)))
         if snapshot_every <= 1:
@@ -286,6 +525,19 @@ class PettingZooRunner():
             f"total={_mean('trajectory_total'):.3f}"
         )
 
+    def _set_env_eating_reward_multiplier(self, multiplier: float):
+        value = float(max(0.0, multiplier))
+        try:
+            setattr(self.env, "eating_reward_multiplier", value)
+        except Exception:
+            pass
+        try:
+            base_env = getattr(self.env, "unwrapped", None)
+            if base_env is not None:
+                setattr(base_env, "eating_reward_multiplier", value)
+        except Exception:
+            pass
+
     def run(
         self,
         candidates,
@@ -303,7 +555,34 @@ class PettingZooRunner():
         if python_random_seed is not None:
             random.seed(python_random_seed)
         self.env.reset(seed)
+        training_eating_reward_multiplier = float(
+            max(0.0, getattr(self.settings, "training_eating_reward_multiplier", 1.0))
+        )
+        self._set_env_eating_reward_multiplier(
+            training_eating_reward_multiplier if not is_evaluation else 1.0
+        )
         if not is_evaluation:
+            sparse_seed = seed if seed is not None else python_random_seed
+            training_non_plankton_cell_fraction = float(
+                np.clip(getattr(self.settings, "training_non_plankton_cell_fraction", 1.0), 0.0, 1.0)
+            )
+            training_non_plankton_min_cells = int(
+                max(0, getattr(self.settings, "training_non_plankton_min_cells", 1))
+            )
+            training_cod_spawn_cells = int(
+                max(0, getattr(self.settings, "training_cod_spawn_cells", 0))
+            )
+            if (
+                training_non_plankton_cell_fraction < 1.0
+                or training_cod_spawn_cells > 0
+            ):
+                self._sparsify_non_plankton_for_training(
+                    cell_fraction=training_non_plankton_cell_fraction,
+                    min_cells=training_non_plankton_min_cells,
+                    cod_spawn_cells=training_cod_spawn_cells,
+                    rng_seed=sparse_seed,
+                )
+
             training_plankton_cell_fraction = float(
                 np.clip(getattr(self.settings, "training_plankton_cell_fraction", 1.0), 0.0, 1.0)
             )
@@ -314,12 +593,23 @@ class PettingZooRunner():
                 training_plankton_cell_fraction < 1.0
                 or abs(training_plankton_biomass_scale - 1.0) > 1e-9
             ):
-                sparse_seed = seed if seed is not None else python_random_seed
                 self._sparsify_plankton_for_training(
                     cell_fraction=training_plankton_cell_fraction,
                     biomass_scale=training_plankton_biomass_scale,
                     rng_seed=sparse_seed,
                 )
+
+            training_cod_prey_clear_radius = int(
+                max(0, getattr(self.settings, "training_cod_prey_clear_radius", 0))
+            )
+            if training_cod_prey_clear_radius > 0:
+                self._clear_prey_near_cod_for_training(
+                    clear_radius=training_cod_prey_clear_radius,
+                    rng_seed=sparse_seed,
+                )
+            self._sync_plankton_cluster_markers()
+            if hasattr(self.env, "refresh_visual_scale_reference"):
+                self.env.refresh_visual_scale_reference()
         fitness_method = str(self.settings.fitness_method).strip().lower()
         if fitness_method not in {"simple", "biomass_pct", "trajectory_shaped"}:
             raise ValueError(
@@ -367,6 +657,15 @@ class PettingZooRunner():
         training_low_energy_penalty = float(
             max(0.0, getattr(self.settings, "training_low_energy_penalty", 0.0))
         )
+        training_low_energy_biomass_floor_pct = float(
+            np.clip(getattr(self.settings, "training_low_energy_biomass_floor_pct", 0.0), 0.0, 1.0)
+        )
+        training_low_energy_biomass_max_loss_per_cycle = float(
+            np.clip(getattr(self.settings, "training_low_energy_biomass_max_loss_per_cycle", 0.0), 0.0, 1.0)
+        )
+        training_low_energy_biomass_target_only = bool(
+            getattr(self.settings, "training_low_energy_biomass_target_only", True)
+        )
         training_energy_reference = float(self.settings.max_energy)
         if not is_evaluation:
             # In training we may down-scale initial energy. Evaluate "low energy" against
@@ -399,6 +698,14 @@ class PettingZooRunner():
                 episode_length = current_cycle_count
                 prev_cycle_count = current_cycle_count
                 self._apply_energy_decay(energy_decay_per_cycle)
+                if not is_evaluation:
+                    self._apply_training_low_energy_biomass_loss(
+                        target_species=fitness_target_species,
+                        energy_reference=training_energy_reference,
+                        floor_pct=training_low_energy_biomass_floor_pct,
+                        max_loss_per_cycle=training_low_energy_biomass_max_loss_per_cycle,
+                        target_only=training_low_energy_biomass_target_only,
+                    )
                 current_biomass, current_energy = self._get_target_biomass_and_energy(fitness_target_species)
 
                 if fitness_method == "simple":
