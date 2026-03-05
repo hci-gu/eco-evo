@@ -14,7 +14,7 @@ SECONDS_IN_DAY = 86400
 class Settings:
     folder: str = "results/default"
 
-    world_size: int = 16
+    world_size: int = 12
     speed_multiplier: float = 1.0
     multiply_death_rate: float = 1.0
     growth_multiplier: float = 1
@@ -63,14 +63,16 @@ class Settings:
     #   trajectory_shaped -> dense per-cycle deltas + terminal biomass term
     fitness_method: str = "trajectory_shaped"
     # For biomass_pct fitness:
-    #   agent        -> evaluate only the current acting species channel (legacy behavior)
-    #   base_species -> aggregate all age groups of the same base species (recommended)
-    biomass_fitness_scope: str = "base_species"
+    #   agent        -> evaluate only the current acting species channel
+    #   base_species -> aggregate all age groups of the same base species
+    biomass_fitness_scope: str = "agent"
+    # Training-only: force per-agent (per-age-group) fitness scope.
+    training_force_agent_fitness_scope: bool = True
     fitness_eval_steps: int = 40
     # Dense short-horizon fitness shaping (used when fitness_method=trajectory_shaped).
     trajectory_gamma: float = 0.98
-    trajectory_weight_biomass_delta: float = 1.0
-    trajectory_weight_energy_delta: float = 0.05
+    trajectory_weight_biomass_delta: float = 0.5
+    trajectory_weight_energy_delta: float = 2.0
     trajectory_weight_terminal_biomass: float = 0.5
     # Penalize sharp biomass crashes between consecutive cycles.
     trajectory_crash_drop_pct: float = 8.0
@@ -106,12 +108,12 @@ class Settings:
     training_energy_decay_per_cycle: float = 0.05
     # Training-only food sparsity controls (plankton seeding).
     # 1.0 keeps all initial plankton cells, 0.1 keeps 10%.
-    training_plankton_cell_fraction: float = 0.08
+    training_plankton_cell_fraction: float = 0.15
     # Scales initial biomass on kept plankton cells.
     training_plankton_biomass_scale: float = 1.0
     # Training-only sparsity for non-plankton (acting) base species.
     # Applied after map reset and before rollouts.
-    training_non_plankton_cell_fraction: float = 0.08
+    training_non_plankton_cell_fraction: float = 0.1
     training_non_plankton_min_cells: int = 1
     # Force cod to spawn in very few random cells (1 = single-cell cod start).
     # Set to 0 to disable this override.
@@ -132,6 +134,10 @@ class Settings:
     # Training-only multiplier on energy gained from eating.
     # >1 encourages policies to seek and eat food sooner.
     training_eating_reward_multiplier: float = 5.0
+    # Training-only: set a very high reproduction frequency for non-plankton to
+    # effectively disable offspring spawning during short-horizon training.
+    # Set <=0 to disable this override.
+    training_reproduction_freq_override: int = 1000000
     # Progress tracking: evaluate per-generation champions on a longer fixed horizon.
     champion_progress_enabled: bool = False
     champion_progress_every: int = 1

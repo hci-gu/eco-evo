@@ -106,6 +106,54 @@ class PettingZooRunner():
             self.fixed_validation_seed = benchmark_rng.randrange(2**31)
         else:
             self.fixed_validation_seed = 4242
+        self._base_spawn_table = None
+        self._spawn_table_source_species = None
+        self._cache_spawn_table_template()
+
+    def _base_env(self):
+        return getattr(self.env, "unwrapped", self.env)
+
+    def _cache_spawn_table_template(self):
+        base_env = self._base_env()
+        table = getattr(base_env, "spawn_table", None)
+        if table is None:
+            self._base_spawn_table = None
+            self._spawn_table_source_species = None
+            return
+        self._base_spawn_table = tuple(np.array(arr, copy=True) for arr in table)
+        source_species = []
+        for species_name, props in self.species_map.items():
+            if not props.is_mature:
+                continue
+            if props.offspring_species is None:
+                continue
+            source_species.append(species_name)
+        self._spawn_table_source_species = source_species
+
+    def _set_training_reproduction_override(self, is_evaluation: bool):
+        if self._base_spawn_table is None:
+            return
+        base_env = self._base_env()
+        override_freq = int(getattr(self.settings, "training_reproduction_freq_override", 0))
+        if is_evaluation or override_freq <= 0:
+            base_env.spawn_table = tuple(np.array(arr, copy=True) for arr in self._base_spawn_table)
+            return
+
+        src_b, src_e, dst_b, dst_e, repro_freq, growth_rate = (
+            np.array(arr, copy=True) for arr in self._base_spawn_table
+        )
+
+        source_species = self._spawn_table_source_species or []
+        if len(source_species) == repro_freq.shape[0]:
+            for idx, species_name in enumerate(source_species):
+                if self.species_map[species_name].base_species == "plankton":
+                    continue
+                repro_freq[idx] = max(int(repro_freq[idx]), override_freq)
+        else:
+            # Fallback safety if table alignment changes.
+            repro_freq[:] = np.maximum(repro_freq, override_freq)
+
+        base_env.spawn_table = (src_b, src_e, dst_b, dst_e, repro_freq, growth_rate)
 
     def _get_alive_base_species(self):
         threshold = float(self.settings.alive_species_biomass_threshold)
@@ -555,6 +603,7 @@ class PettingZooRunner():
         if python_random_seed is not None:
             random.seed(python_random_seed)
         self.env.reset(seed)
+        self._set_training_reproduction_override(is_evaluation=is_evaluation)
         training_eating_reward_multiplier = float(
             max(0.0, getattr(self.settings, "training_eating_reward_multiplier", 1.0))
         )
@@ -617,6 +666,11 @@ class PettingZooRunner():
                 "Use 'simple', 'biomass_pct', or 'trajectory_shaped'."
             )
         biomass_scope = str(getattr(self.settings, "biomass_fitness_scope", "agent")).strip().lower()
+        if (
+            not is_evaluation
+            and bool(getattr(self.settings, "training_force_agent_fitness_scope", False))
+        ):
+            biomass_scope = "agent"
         if biomass_scope not in {"agent", "base_species"}:
             raise ValueError(
                 f"Unsupported biomass_fitness_scope '{self.settings.biomass_fitness_scope}'. "
