@@ -1,8 +1,20 @@
+import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import pandas as pd
 import plotly.graph_objects as go
 
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 # Load your CSV
-df = pd.read_csv("fish_biomass_data.csv")
+df = pd.read_csv(os.path.join(PROJECT_ROOT, "fish_biomass_data.csv"))
 
 # Melt the dataframe to long format
 df_melted = df.melt(id_vars=['X', 'Y', 'year'], value_vars=['cod', 'flounder', 'sprat', 'herring'],

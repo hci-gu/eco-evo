@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import time
 
 import pandas as pd
@@ -10,10 +18,13 @@ import random
 from lib.runners.petting_zoo import PettingZooRunner
 from lib.runners.petting_zoo_single import PettingZooRunnerSingle
 
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 # Enable interactive mode
 plt.ion()
 
-output_name = f"evaluated_run_long_world_size{const.WORLD_SIZE}"
+output_name = os.path.join(OUTPUT_DIR, f"evaluated_run_long_world_size{const.WORLD_SIZE}")
 csv_output_path = f"{output_name}.csv"
 
 def get_runner_single():
@@ -26,7 +37,7 @@ def get_runner_single():
 
     return runner, path
 
-csv_data = pd.read_csv("data.csv")
+csv_data = pd.read_csv(os.path.join(PROJECT_ROOT, "data.csv"))
 
 def render_plot(csv_path):
     species_colors = {

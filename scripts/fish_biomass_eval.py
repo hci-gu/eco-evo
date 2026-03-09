@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import time
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,6 +17,9 @@ import numpy as np
 import random
 from lib.runners.petting_zoo import PettingZooRunner
 from lib.runners.petting_zoo_single import PettingZooRunnerSingle
+
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Enable interactive mode
 plt.ion()
@@ -46,11 +57,11 @@ fishing_levels = [
 #     20
 # ]
 
-output_name = f"fishing_pressure_biomass"
-csv_output_file = f"{output_name}.csv"
+output_name = os.path.join(OUTPUT_DIR, "fishing_pressure_biomass")
+csv_output_file = os.path.join(OUTPUT_DIR, "fishing_pressure_biomass.csv")
 
 def update_initial_biomass(year=0):
-    csv_data = pd.read_csv("data.csv")
+    csv_data = pd.read_csv(os.path.join(PROJECT_ROOT, "data.csv"))
     inital_cod = csv_data['cod'].iloc[year]
     inital_herring = csv_data['herring'].iloc[year]
     inital_sprat = csv_data['sprat'].iloc[year]

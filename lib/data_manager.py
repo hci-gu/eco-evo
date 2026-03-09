@@ -25,15 +25,32 @@ def save_data_to_file(settings: Settings, generation, agents_data_snapshot):
 
 def update_generations_data(settings: Settings, generation, agents_data):
     fitness_values = {}
+    fitness_method = str(getattr(settings, "fitness_method", "simple")).strip().lower()
 
-    if len(agents_data.items()) == 3:
-        # we are working with species map
+    is_species_map = bool(agents_data) and all(
+        isinstance(key, str) and key in SPECIES for key in agents_data.keys()
+    )
+
+    def _fitness_for_eval(data):
+        # Prefer explicitly recorded fitness from runner/evaluator.
+        series = data.get('fitness', [])
+        if series:
+            return float(series[-1])
+        # Backward-compatible fallback for older runs.
+        steps = data.get('steps', [])
+        if not steps:
+            return 0.0
+        if fitness_method == "simple":
+            return float(steps[-1])
+        return float(max(steps))
+
+    if is_species_map:
         for species, _ in agents_data.items():
             fitness_values[species] = []
             for _, evals in agents_data[species].items():
                 total_fitness = 0
                 for _, data in evals.items():
-                    fitness = max(data['steps'])
+                    fitness = _fitness_for_eval(data)
                     total_fitness += fitness
                 fitness_values[species].append(total_fitness / len(evals))
     else:
@@ -41,7 +58,7 @@ def update_generations_data(settings: Settings, generation, agents_data):
         for _, evals in agents_data.items():
             total_fitness = 0
             for _, data in evals.items():
-                fitness = max(data['steps'])
+                fitness = _fitness_for_eval(data)
                 total_fitness += fitness
             fitness_values.append(total_fitness / len(evals))
 
@@ -69,12 +86,15 @@ def process_data(data, agents_data):
     if eval_index not in curr_agents_data[agent_index]:
         curr_agents_data[agent_index][eval_index] = {
             'steps': [],
+            'fitness': [],
         }
         for species in SPECIES:
             curr_agents_data[agent_index][eval_index][f'{species}_alive'] = []
             curr_agents_data[agent_index][eval_index][f'{species}_energy'] = []
 
     curr_agents_data[agent_index][eval_index]['steps'].append(step)
+    if "fitness" in data:
+        curr_agents_data[agent_index][eval_index]['fitness'].append(float(data["fitness"]))
 
     # check if world data exists
     if "world" in data:

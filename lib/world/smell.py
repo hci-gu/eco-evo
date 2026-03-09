@@ -4,6 +4,9 @@ from lib.config.settings import Settings
 from lib.config.const import SPECIES
 from lib.model import MODEL_OFFSETS
 
+# Suppress underflow warnings for smell calculations
+np.seterr(under='ignore')
+
 # Define the diffusion kernel as a NumPy array.
 diffusion_kernel = np.array([
     [1/16, 1/8, 1/16],

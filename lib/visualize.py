@@ -10,6 +10,7 @@ import lib.config.const as const
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 import numpy as np
 import imageio
 import random
@@ -19,7 +20,9 @@ from matplotlib.ticker import MaxNLocator
 # Visualization settings
 WORLD_WIDTH = 500
 WORLD_HEIGHT = 500
-GRAPH_WIDTH = 500
+GRAPH_PANEL_WIDTH = 500
+NUM_GRAPH_PANELS = 2
+GRAPH_WIDTH = GRAPH_PANEL_WIDTH * NUM_GRAPH_PANELS
 GEN_GRAPH_HEIGHT = 200
 
 SCREEN_WIDTH = WORLD_WIDTH + GRAPH_WIDTH
@@ -32,17 +35,116 @@ SPECIES_COLORS = {
     "cod": [40, 40, 40]
 }
 
+def _get_species_color(species: str):
+    base = const.base_species_name(species) if hasattr(const, "base_species_name") else species
+    return SPECIES_COLORS.get(base, [128, 128, 128])
+
+def _get_species_offsets(species_list, cell_size: int):
+    """
+    Spread species markers within a cell. Keep plankton centered and place
+    all other species/age-groups on a ring so arbitrary species counts work.
+    """
+    offsets = {}
+    if not species_list:
+        return offsets
+
+    ring_species = []
+    for species in species_list:
+        base = const.base_species_name(species) if hasattr(const, "base_species_name") else species
+        if base == "plankton":
+            offsets[species] = (0, 0)
+        else:
+            ring_species.append(species)
+
+    if not ring_species:
+        return offsets
+
+    ring_radius = max(1, cell_size // 3)
+    denom = max(1, len(ring_species))
+    for idx, species in enumerate(ring_species):
+        angle = (2.0 * math.pi * idx) / denom
+        offsets[species] = (
+            int(ring_radius * math.cos(angle)),
+            int(ring_radius * math.sin(angle)),
+        )
+
+    return offsets
+
 # Cache for terrain surface and graph surfaces
 terrain_surface_cache = None
 biomass_graph_cache = None
 energy_graph_cache = None
 generation_graph_cache = None
+selected_biomass_species = None  # None => show all base species
+species_control_buttons = []
+ui_font_cache = None
 
 def init_pygame():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Ecosystem simulation")
     return screen
+
+def _get_ui_font(size=16):
+    global ui_font_cache
+    if ui_font_cache is None:
+        ui_font_cache = pygame.font.SysFont("Arial", size)
+    return ui_font_cache
+
+def _build_species_control_buttons():
+    buttons = []
+    labels = [(None, "All")] + [(species, species.capitalize()) for species in const.BASE_SPECIES]
+    margin_x = 16
+    margin_y = 12
+    gap = 10
+    button_height = 34
+    panel_width = SCREEN_WIDTH - 2 * margin_x
+    button_width = max(80, (panel_width - gap * (len(labels) - 1)) // len(labels))
+    start_x = margin_x
+    y = WORLD_HEIGHT + margin_y
+
+    for idx, (species_key, label) in enumerate(labels):
+        x = start_x + idx * (button_width + gap)
+        rect = pygame.Rect(x, y, button_width, button_height)
+        buttons.append((species_key, label, rect))
+
+    return buttons
+
+def _handle_visualization_events():
+    global selected_biomass_species
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            raise KeyboardInterrupt
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            for species_key, _, rect in species_control_buttons:
+                if rect.collidepoint(event.pos):
+                    selected_biomass_species = species_key
+                    break
+
+def _draw_control_panel(screen):
+    panel_rect = pygame.Rect(0, WORLD_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - WORLD_HEIGHT)
+    pygame.draw.rect(screen, (24, 28, 38), panel_rect)
+    pygame.draw.line(screen, (80, 88, 108), (0, WORLD_HEIGHT), (SCREEN_WIDTH, WORLD_HEIGHT), 1)
+
+    font = _get_ui_font()
+    status = "All Species" if selected_biomass_species is None else f"{selected_biomass_species.capitalize()} (Age Groups)"
+    status_text = font.render(f"Biomass Graph: {status}", True, (220, 224, 235))
+    screen.blit(status_text, (16, WORLD_HEIGHT + 58))
+
+    for species_key, label, rect in species_control_buttons:
+        is_selected = species_key == selected_biomass_species
+        base_color = (70, 78, 100) if not is_selected else (116, 158, 214)
+        border_color = (120, 130, 158) if not is_selected else (160, 198, 242)
+        pygame.draw.rect(screen, base_color, rect, border_radius=8)
+        pygame.draw.rect(screen, border_color, rect, width=2, border_radius=8)
+        text = font.render(label, True, (245, 247, 250))
+        text_rect = text.get_rect(center=rect.center)
+        screen.blit(text, text_rect)
+
+def poll_visualization_controls():
+    global species_control_buttons
+    species_control_buttons = _build_species_control_buttons()
+    _handle_visualization_events()
 
 def shutdown_pygame():
     pygame.quit()
@@ -104,10 +206,18 @@ def draw_terrain(settings: Settings, world_tensor, world_data, display_current=F
     return terrain_surface
 
 # Plot and cache generations graph
-def plot_generations(settings: Settings, generations_data):
+def plot_generations(
+    settings: Settings,
+    generations_data,
+    champion_progress=None,
+    fixed_validation=None,
+    fixed_validation_metric="fitness",
+    fixed_validation_by_species=None,
+):
     global generation_graph_cache
 
     plt.figure(figsize=(16, 12))  # Create a new figure for the plot
+    fitness_method = str(getattr(settings, "fitness_method", "simple")).strip().lower()
 
     # Check if generations_data[0] is an object (dict) or an array (list)
     if isinstance(generations_data[0], dict):
@@ -161,23 +271,98 @@ def plot_generations(settings: Settings, generations_data):
 
     # x-axis values corresponding to generations
     generations = range(len(generations_data))
+    ax = plt.gca()
 
     # Plot the average fitness line and fill between for each species
     for sp in species_list:
-        plt.plot(generations, species_stats[sp]["average"], color=species_colors[sp],
-                 label=f"{sp} Avg", linewidth=2)
-        plt.fill_between(generations, species_stats[sp]["bottom"], species_stats[sp]["top"],
-                         color=species_colors[sp], alpha=0.2,
-                         label=f"{sp} 25th-75th Percentile")
+        ax.plot(generations, species_stats[sp]["average"], color=species_colors[sp],
+                label=f"{sp} Avg", linewidth=2)
+        ax.fill_between(generations, species_stats[sp]["bottom"], species_stats[sp]["top"],
+                        color=species_colors[sp], alpha=0.2,
+                        label=f"{sp} 25th-75th Percentile")
+
+    # Optional benchmark line: long-horizon survival of generation champions.
+    ax_progress = None
+    if champion_progress is not None:
+        progress = np.asarray(champion_progress, dtype=np.float32)
+        valid = np.isfinite(progress)
+        if np.any(valid):
+            x = np.arange(progress.shape[0])[valid]
+            y = progress[valid]
+            label = f"Champion Survival ({int(getattr(settings, 'champion_progress_steps', 0))} step cap)"
+            ax_progress = ax.twinx()
+            ax_progress.plot(
+                x, y, color="black", linestyle="--", linewidth=2.4, marker="o", markersize=3.5, label=label
+            )
+            ax_progress.set_ylabel("Champion Survival (cycles)")
+
+    if fixed_validation is not None:
+        progress = np.asarray(fixed_validation, dtype=np.float32)
+        valid = np.isfinite(progress)
+        if np.any(valid):
+            x = np.arange(progress.shape[0])[valid]
+            y = progress[valid]
+            metric = str(fixed_validation_metric).strip().lower()
+            horizon = int(getattr(settings, "fixed_validation_steps", 0))
+            episodes = int(getattr(settings, "fixed_validation_episodes", 1))
+            if metric == "survival":
+                if ax_progress is None:
+                    ax_progress = ax.twinx()
+                    ax_progress.set_ylabel("Validation Survival (cycles)")
+                label = f"Fixed Validation Survival ({horizon} step cap, {episodes} ep)"
+                ax_progress.plot(
+                    x, y, color="#2f4f4f", linestyle="-.", linewidth=2.1, marker="s", markersize=3.5, label=label
+                )
+            else:
+                label = f"Fixed Validation Fitness ({horizon} steps, {episodes} ep)"
+                ax.plot(
+                    x, y, color="#2f4f4f", linestyle="-.", linewidth=2.1, marker="s", markersize=3.5, label=label
+                )
+
+    show_fixed_by_species = bool(getattr(settings, "fixed_validation_show_species", False))
+    if show_fixed_by_species and fixed_validation_by_species:
+        species_palette = {
+            "sprat": "#1b9e77",
+            "herring": "#d95f02",
+            "cod": "#7570b3",
+        }
+        metric = str(fixed_validation_metric).strip().lower()
+        for base, series in fixed_validation_by_species.items():
+            progress = np.asarray(series, dtype=np.float32)
+            valid = np.isfinite(progress)
+            if not np.any(valid):
+                continue
+            x = np.arange(progress.shape[0])[valid]
+            y = progress[valid]
+            color = species_palette.get(base, "black")
+            label = f"Fixed Validation {base}"
+            if metric == "survival":
+                if ax_progress is None:
+                    ax_progress = ax.twinx()
+                    ax_progress.set_ylabel("Validation Survival (cycles)")
+                ax_progress.plot(x, y, color=color, linestyle=":", linewidth=1.6, alpha=0.85, label=label)
+            else:
+                ax.plot(x, y, color=color, linestyle=":", linewidth=1.6, alpha=0.85, label=label)
 
     # Configure axes and title
-    plt.xlabel('Generation')
-    plt.ylabel('Fitness')
-    plt.title('Fitness of Agents Over Generations')
-    ax = plt.gca()
+    ax.set_xlabel('Generation')
+    if fitness_method == "biomass_pct":
+        ax.set_ylabel('Fitness (% biomass change)')
+        ax.set_title('Policy Fitness Over Generations (Biomass %)')
+    elif fitness_method == "trajectory_shaped":
+        ax.set_ylabel('Fitness (trajectory-shaped)')
+        ax.set_title('Policy Fitness Over Generations (Trajectory-Shaped)')
+    else:
+        ax.set_ylabel('Fitness (survival cycles)')
+        ax.set_title('Policy Fitness Over Generations (Simple Survival)')
     ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))  # Prevent overcrowding of x-axis ticks
 
-    plt.legend()
+    handles, labels = ax.get_legend_handles_labels()
+    if ax_progress is not None:
+        h2, l2 = ax_progress.get_legend_handles_labels()
+        handles.extend(h2)
+        labels.extend(l2)
+    ax.legend(handles, labels)
     plt.tight_layout()
 
     # Save the plot as an image and update the cache
@@ -186,48 +371,227 @@ def plot_generations(settings: Settings, generations_data):
 
     generation_graph_cache = pygame.image.load(f'{settings.folder}/fitness_plot.png')
 
+def _iter_eval_data(store):
+    if not store:
+        return
+    sample_key = next(iter(store.keys()))
+    # Nested shape: {species: {agent_index: {eval_index: data}}}
+    if isinstance(sample_key, str) and sample_key in SPECIES:
+        for _, species_agents in store.items():
+            for _, evals in species_agents.items():
+                for _, data in evals.items():
+                    yield data
+    # Flat shape: {agent_index: {eval_index: data}}
+    else:
+        for _, evals in store.items():
+            for _, data in evals.items():
+                yield data
+
+def _age_index(species_name: str) -> int:
+    if not hasattr(const, "AGE_GROUP_SEPARATOR"):
+        return 0
+    sep = const.AGE_GROUP_SEPARATOR
+    if sep not in species_name:
+        return 0
+    suffix = species_name.split(sep, 1)[1]
+    try:
+        return int(suffix)
+    except Exception:
+        return 0
+
+def _mean_series(series_list):
+    if not series_list:
+        return None
+    min_len = min(arr.shape[0] for arr in series_list)
+    if min_len <= 0:
+        return None
+    stacked = np.stack([arr[:min_len] for arr in series_list], axis=0)
+    return stacked.mean(axis=0)
+
+def _age_group_color(base_rgb, age_idx: int, total_groups: int):
+    rgb = np.asarray(base_rgb, dtype=np.float32)
+    if total_groups <= 1:
+        return (rgb / 255.0).tolist()
+    t = age_idx / max(1, total_groups - 1)
+    factor = 0.6 + 0.5 * t
+    adjusted = np.clip(rgb * factor, 0.0, 255.0)
+    return (adjusted / 255.0).tolist()
+
+def _base_species_cutoffs(settings: Settings | None, species_map):
+    if settings is None or species_map is None:
+        return {}
+    min_alive = float(getattr(settings, "min_percent_alive", 0.0))
+    if min_alive <= 0.0:
+        return {}
+    cutoffs = {}
+    for _, props in species_map.items():
+        base = getattr(props, "base_species", None)
+        if base not in const.BASE_SPECIES:
+            continue
+        cutoffs[base] = cutoffs.get(base, 0.0) + float(props.starting_biomass) * min_alive
+    return cutoffs
+
+def _plot_energy_graph(agents_data):
+    global energy_graph_cache
+
+    plt.style.use('seaborn-v0_8-dark')
+    plt.figure(figsize=(5, 5))
+
+    legend_patches = []
+    for base_species in const.BASE_SPECIES:
+        grouped = []
+        steps_ref = None
+        for data in _iter_eval_data(agents_data):
+            steps = np.asarray(data.get("steps", []), dtype=np.float32)
+            if steps.size == 0:
+                continue
+            total = np.zeros(steps.shape[0], dtype=np.float32)
+            count = np.zeros(steps.shape[0], dtype=np.float32)
+            found = False
+            for key, values in data.items():
+                if not key.endswith("_energy"):
+                    continue
+                species_name = key[:-7]
+                base = const.base_species_name(species_name) if hasattr(const, "base_species_name") else species_name
+                if base != base_species:
+                    continue
+                arr = np.asarray(values, dtype=np.float32)
+                n = min(arr.shape[0], total.shape[0])
+                total[:n] += arr[:n]
+                count[:n] += 1.0
+                found = True
+            if found:
+                avg = np.divide(total, np.maximum(count, 1.0))
+                grouped.append(avg)
+                if steps_ref is None or steps.shape[0] < steps_ref.shape[0]:
+                    steps_ref = steps
+
+        mean_series = _mean_series(grouped)
+        if mean_series is None or steps_ref is None:
+            continue
+        n = min(steps_ref.shape[0], mean_series.shape[0])
+        color = np.asarray(_get_species_color(base_species), dtype=np.float32) / 255.0
+        plt.plot(steps_ref[:n], mean_series[:n], color=color, linewidth=2.0)
+        legend_patches.append(mpatches.Patch(color=color, label=base_species.capitalize()))
+
+    plt.xlabel('Steps')
+    plt.ylabel('Mean Energy')
+    plt.title('Species Energy Over Time')
+
+    if legend_patches:
+        plt.legend(handles=legend_patches, title="Species", loc='upper right')
+    else:
+        plt.text(0.5, 0.5, "No data yet", ha="center", va="center", transform=plt.gca().transAxes)
+
+    plt.tight_layout()
+    plt.savefig('energy_graph.png')
+    plt.close()
+
+    energy_graph_cache = pygame.image.load('energy_graph.png')
 
 # Plot and cache biomass graph
-def plot_biomass(agents_data):
+def plot_biomass(agents_data, settings: Settings | None = None, species_map=None):
     global biomass_graph_cache
 
     plt.style.use('seaborn-v0_8-dark')
     plt.figure(figsize=(5, 5))
 
-    # Count total number of plots to get enough colors
-    total_plots = sum(len(evals) for evals in agents_data.values())
-
-    # Get a colormap to differentiate agents and evals
-    colors = cm.get_cmap('tab20', total_plots)
-
-    # Plot each agent's data
     legend_patches = []
-    idx = 0  # Color index
-    for agent_index, evals in agents_data.items():
-        for eval_index, _ in evals.items():
-            data = evals[eval_index]
-            plt.plot(data['steps'], data['cod_alive'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black")
-            plt.plot(data['steps'], data['herring_alive'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-')
-            plt.plot(data['steps'], data['sprat_alive'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-')
-            plt.plot(data['steps'], data['plankton_alive'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle='-')
-            
-            # plt.plot(data['steps'], data['cod_energy'], label=f'Agent {agent_index} Eval {eval_index} COD', color="black", linestyle='-.')
-            # plt.plot(data['steps'], data['herring_energy'], label=f'Agent {agent_index} Eval {eval_index} HERRING', color="red", linestyle='-.')
-            # plt.plot(data['steps'], data['sprat_energy'], label=f'Agent {agent_index} Eval {eval_index} sprat', color="orange", linestyle='-.')
-            # plt.plot(data['steps'], data['plankton_energy'], label=f'Agent {agent_index} Eval {eval_index} PLANKTON', color="green", linestyle='-.')
-            idx += 1
+    cutoff_handles = []
+    cutoff_biomass = _base_species_cutoffs(settings, species_map)
+    if selected_biomass_species is None:
+        # Aggregate per base species across all eval traces.
+        for base_species in const.BASE_SPECIES:
+            grouped = []
+            steps_ref = None
+            for data in _iter_eval_data(agents_data):
+                steps = np.asarray(data.get("steps", []), dtype=np.float32)
+                if steps.size == 0:
+                    continue
+                total = np.zeros(steps.shape[0], dtype=np.float32)
+                found = False
+                for key, values in data.items():
+                    if not key.endswith("_alive"):
+                        continue
+                    species_name = key[:-6]
+                    base = const.base_species_name(species_name) if hasattr(const, "base_species_name") else species_name
+                    if base != base_species:
+                        continue
+                    arr = np.asarray(values, dtype=np.float32)
+                    n = min(arr.shape[0], total.shape[0])
+                    total[:n] += arr[:n]
+                    found = True
+                if found:
+                    grouped.append(total)
+                    if steps_ref is None or steps.shape[0] < steps_ref.shape[0]:
+                        steps_ref = steps
 
-    # for each species
-    for species in SPECIES:
-        color = SPECIES_COLORS[species]
-        legend_patches.append(mpatches.Patch(color=[c/255 for c in color], label=species.capitalize()))
+            mean_series = _mean_series(grouped)
+            if mean_series is None or steps_ref is None:
+                continue
+            n = min(steps_ref.shape[0], mean_series.shape[0])
+            color = np.asarray(_get_species_color(base_species), dtype=np.float32) / 255.0
+            plt.plot(steps_ref[:n], mean_series[:n], color=color, linewidth=2.0)
+            legend_patches.append(mpatches.Patch(color=color, label=base_species.capitalize()))
+            cutoff = float(cutoff_biomass.get(base_species, 0.0))
+            if cutoff > 0.0:
+                plt.axhline(y=cutoff, color=color, linestyle=":", linewidth=1.2, alpha=0.9)
+                cutoff_handles.append(
+                    mlines.Line2D([], [], color=color, linestyle=":", linewidth=1.6, label=f"{base_species} cutoff")
+                )
+    else:
+        # Selected base species: split graph by age groups.
+        selected = selected_biomass_species
+        age_species = [s for s in SPECIES if const.base_species_name(s) == selected]
+        age_species.sort(key=_age_index)
+
+        for idx, species_name in enumerate(age_species):
+            grouped = []
+            steps_ref = None
+            key = f"{species_name}_alive"
+            for data in _iter_eval_data(agents_data):
+                steps = np.asarray(data.get("steps", []), dtype=np.float32)
+                values = data.get(key)
+                if values is None or steps.size == 0:
+                    continue
+                arr = np.asarray(values, dtype=np.float32)
+                n = min(arr.shape[0], steps.shape[0])
+                if n <= 0:
+                    continue
+                grouped.append(arr[:n])
+                if steps_ref is None or steps.shape[0] < steps_ref.shape[0]:
+                    steps_ref = steps
+
+            mean_series = _mean_series(grouped)
+            if mean_series is None or steps_ref is None:
+                continue
+
+            color = _age_group_color(_get_species_color(species_name), idx, len(age_species))
+            n = min(steps_ref.shape[0], mean_series.shape[0])
+            plt.plot(steps_ref[:n], mean_series[:n], color=color, linewidth=2.0)
+            label = species_name if species_name != selected else f"{selected} (single age)"
+            legend_patches.append(mpatches.Patch(color=color, label=label))
+
+        cutoff = float(cutoff_biomass.get(selected, 0.0))
+        if cutoff > 0.0:
+            color = np.asarray(_get_species_color(selected), dtype=np.float32) / 255.0
+            plt.axhline(y=cutoff, color=color, linestyle=":", linewidth=1.2, alpha=0.9)
+            cutoff_handles.append(
+                mlines.Line2D([], [], color=color, linestyle=":", linewidth=1.6, label=f"{selected} cutoff")
+            )
 
     plt.xlabel('Steps')
-    plt.ylabel('Number of Species Alive')
-    plt.title('Species Population Over Time')
+    plt.ylabel('Total Biomass')
+    if selected_biomass_species is None:
+        plt.title('Species Population Over Time (All)')
+    else:
+        plt.title(f'{selected_biomass_species.capitalize()} by Age Group')
 
-    # Show the custom legend (ignoring linestyles or species)
-    plt.legend(handles=legend_patches, title="Species", loc='upper right')
+    if legend_patches:
+        handles = legend_patches + cutoff_handles
+        plt.legend(handles=handles, title="Species", loc='upper right')
+    else:
+        plt.text(0.5, 0.5, "No data yet", ha="center", va="center", transform=plt.gca().transAxes)
 
     plt.tight_layout()
     plt.savefig('world_graph.png')
@@ -235,6 +599,7 @@ def plot_biomass(agents_data):
 
     # Load the saved plot image using Pygame and cache it
     biomass_graph_cache = pygame.image.load('world_graph.png')
+    _plot_energy_graph(agents_data)
 
 # def draw_actions_values(screen, world_data):
 #     # world_data = world_data[1:-1, 1:-1]
@@ -259,8 +624,11 @@ def plot_biomass(agents_data):
 
 
 counter = 0
-def draw_world(settings: Settings,screen, world_tensor, world_data):
-    global counter
+def draw_world(settings: Settings,screen, world_tensor, world_data, species_scale_reference=None):
+    global counter, species_control_buttons
+    if not species_control_buttons:
+        species_control_buttons = _build_species_control_buttons()
+
     # Remove padding if present
     world_tensor = world_tensor[1:-1, 1:-1]
     world_data = world_data[1:-1, 1:-1]
@@ -272,27 +640,30 @@ def draw_world(settings: Settings,screen, world_tensor, world_data):
 
     CELL_SIZE = math.floor(WORLD_HEIGHT / settings.world_size)
 
-    # Calculate maximum biomass for each species
+    # Calculate biomass scale references for each species.
+    # If provided, use fixed per-species reference values captured at reset.
+    # This avoids auto-scaling each frame that can make tiny residual biomass look large.
     max_biomass_values = {}
     for species in SPECIES:
-        max_val = world_tensor[:, :, MODEL_OFFSETS[species]["biomass"]].max().item()
+        ref_val = None
+        if species_scale_reference is not None:
+            ref_val = species_scale_reference.get(species)
+        if ref_val is None:
+            max_val = world_tensor[:, :, MODEL_OFFSETS[species]["biomass"]].max().item()
+        else:
+            max_val = float(ref_val)
         max_biomass_values[species] = max_val if max_val > 0 else 1
 
     # Define radius constraints
     # We allow circles to be large enough to exceed cell boundaries.
     # Keep a moderate max radius, but not too large.
     min_radius = 1
-    max_radius = CELL_SIZE // 2.5
+    max_radius = max(1.0, CELL_SIZE / 2.5)
     min_radius_plankton = 1
-    max_radius_plankton = CELL_SIZE // 3
+    max_radius_plankton = max(1.0, CELL_SIZE / 3.0)
 
-    # Small offsets to differentiate species within a cell
-    offsets = {
-        "plankton": (-CELL_SIZE // 6, -CELL_SIZE // 6),
-        "herring": (CELL_SIZE // 6, -CELL_SIZE // 6),
-        "sprat": (-CELL_SIZE // 6, CELL_SIZE // 6),
-        "cod": (CELL_SIZE // 6, CELL_SIZE // 6)
-    }
+    # Dynamic offsets so age-group species names render without hardcoded keys.
+    offsets = _get_species_offsets(SPECIES, CELL_SIZE)
 
     # We'll create a large surface for each circle to avoid cropping.
     # For safety, let's make it 3x cell size.
@@ -318,7 +689,8 @@ def draw_world(settings: Settings,screen, world_tensor, world_data):
             for species, biomass in species_biomass.items():
                 if biomass > 0:
                     # Determine min and max radius for the species
-                    if species == "plankton":
+                    base = const.base_species_name(species) if hasattr(const, "base_species_name") else species
+                    if base == "plankton":
                         min_r = min_radius_plankton
                         max_r = max_radius_plankton
                     else:
@@ -326,11 +698,17 @@ def draw_world(settings: Settings,screen, world_tensor, world_data):
                         max_r = max_radius
 
                     max_biomass = max_biomass_values[species]
-                    # Use sqrt scaling again or linear if preferred
-                    radius = min_r + (max_r - min_r) * (math.sqrt(biomass / max_biomass))
-                    radius = int(radius)
+                    # Hide near-zero residual biomass so diffusion noise does not
+                    # visually fill the map.
+                    if biomass <= (max_biomass * 0.002):
+                        continue
+                    rel = float(biomass) / max(float(max_biomass), 1e-12)
+                    rel = max(0.0, min(rel, 1.0))
+                    # Use sqrt scaling for better low-end contrast while clamped to safe bounds.
+                    radius = min_r + (max_r - min_r) * math.sqrt(rel)
+                    radius = max(1, int(radius))
 
-                    offset_x, offset_y = offsets[species]
+                    offset_x, offset_y = offsets.get(species, (0, 0))
 
                     # Create a large transparent surface
                     circle_surface = pygame.Surface((LARGE_SURFACE_SIZE, LARGE_SURFACE_SIZE), pygame.SRCALPHA)
@@ -340,12 +718,13 @@ def draw_world(settings: Settings,screen, world_tensor, world_data):
                     # Draw the circle at the center of this large surface
                     # The circle center on the large surface:
                     circle_center = (half_ls + offset_x, half_ls + offset_y)
-                    color = SPECIES_COLORS[species]
+                    color = _get_species_color(species)
 
                     # Add partial transparency so overlapping species are visible
                     # For example, alpha = 180 for semi-transparency
                     # lerp opacity from 0 to 255 based on radius
-                    opacity = int(255 * (radius / max_radius))
+                    alpha_denom = max(float(max_r), 1.0)
+                    opacity = int(np.clip(255.0 * (float(radius) / alpha_denom), 0.0, 255.0))
                     circle_color = (color[0], color[1], color[2], opacity)
 
                     pygame.draw.circle(circle_surface, circle_color, circle_center, radius)
@@ -363,7 +742,8 @@ def draw_world(settings: Settings,screen, world_tensor, world_data):
     if biomass_graph_cache:
         screen.blit(biomass_graph_cache, (WORLD_WIDTH, 0))
     if energy_graph_cache:
-        screen.blit(energy_graph_cache, (WORLD_WIDTH, 0))
+        screen.blit(energy_graph_cache, (WORLD_WIDTH + GRAPH_PANEL_WIDTH, 0))
+
+    _draw_control_panel(screen)
 
     pygame.display.flip()
-

@@ -30,6 +30,14 @@ Outputs
 """
 
 import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import math
 import json
 from pathlib import Path
@@ -45,6 +53,9 @@ from lib.runners.petting_zoo_single import PettingZooRunnerSingle
 from lib.runners.petting_zoo import PettingZooRunner
 from lib.evaluate import predict_years
 import optuna
+
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 # --------------------------------------------------------------------------
@@ -129,6 +140,6 @@ if __name__ == "__main__":
 
         out = study.best_params | {"best_value": study.best_value}
 
-        Path("out").mkdir(parents=True, exist_ok=True)
-        with open(f"out/best_params_{i}.json", "w") as f:
+        Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+        with open(os.path.join(OUTPUT_DIR, f"best_params_{i}.json"), "w") as f:
             json.dump(out, f, indent=4)

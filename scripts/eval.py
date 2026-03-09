@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import time
 
 import pandas as pd
@@ -8,6 +16,9 @@ import lib.constants as const
 import random
 from lib.runners.petting_zoo import PettingZooRunner
 from lib.runners.petting_zoo_single import PettingZooRunnerSingle
+
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Enable interactive mode
 plt.ion()
@@ -107,7 +118,7 @@ def update_initial_biomass():
 #     plt.draw()
 #     plt.pause(0.001)
 
-csv_data = pd.read_csv("data.csv")
+csv_data = pd.read_csv(os.path.join(PROJECT_ROOT, "data.csv"))
 
 def render_plot(biomass_data):
     global csv_data
@@ -160,7 +171,7 @@ def render_plot(biomass_data):
     # Update the plot without blocking execution
     plt.draw()
     # save to file
-    plt.savefig("biomass_trends.png")
+    plt.savefig(os.path.join(OUTPUT_DIR, "biomass_trends.png"))
     # save the biomass data to a csv file
     if biomass_data:
         all_records = []
@@ -168,7 +179,7 @@ def render_plot(biomass_data):
             all_records.extend(records)
         if all_records:
             df = pd.DataFrame(all_records)
-            df.to_csv("evaluation_biomass_data.csv", index=False)
+            df.to_csv(os.path.join(OUTPUT_DIR, "evaluation_biomass_data.csv"), index=False)
     plt.pause(0.001)
 
 years_rendered = -1

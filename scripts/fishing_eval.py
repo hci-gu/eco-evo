@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Add project root to path for imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 import time
 import numpy as np
 import seaborn as sns
@@ -7,6 +15,9 @@ import pandas as pd
 
 import lib.constants as const
 from lib.runners.petting_zoo_single import PettingZooRunnerSingle
+
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "results", "plots")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Define simulation parameters
 fishing_levels = [
@@ -73,7 +84,7 @@ def main():
     plt.ylabel("Episode length")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("fishing_pressure_results.png")
+    plt.savefig(os.path.join(OUTPUT_DIR, "fishing_pressure_results.png"))
     plt.show()
 
 if __name__ == "__main__":

@@ -1,11 +1,10 @@
-import opensimplex
 import math
 import random
 import numpy as np
 import pandas as pd
 from lib.config.settings import Settings
 from lib.config.species import SpeciesParams, SpeciesMap
-from lib.model import MODEL_OFFSETS, SINGLE_CELL_INPUT
+import lib.model as model
 import lib.config.const as const
 from enum import Enum
 import scipy.ndimage
@@ -40,7 +39,7 @@ def construct_species_grid_from_csv(csv_path, year, grid_size=10):
     print(f"Latitude range: {lat_min} to {lat_max}, Longitude range: {lon_min} to {lon_max}")
     print(f"Grid size: {grid_size}x{grid_size}, Step: lat={lat_step}, lon={lon_step}")
 
-    species = [s for s in const.ACTING_SPECIES]
+    species = [s for s in const.ACTING_BASE_SPECIES]
     biomass_grid = np.zeros((grid_size, grid_size, len(species)), dtype=np.float32)
 
     for _, row in df_year.iterrows():
@@ -59,6 +58,8 @@ def construct_species_grid_from_csv(csv_path, year, grid_size=10):
 
 def smooth_skewed_random(seed):
     """Returns a value between 0.75 and 2.0, skewed toward 0.5-2.0 with smooth falloff, using gamma sampling."""
+    if seed is not None:
+        seed = int(seed)
     rng = random.Random(seed)
     alpha = 2.5
     beta_param = 4.5
@@ -87,26 +88,16 @@ def resize_biomass_grid(grid, target_size):
     return resized
 
 def add_species_from_biomass_grid(settings: Settings, species_map: SpeciesMap, world_array, world_data, biomass_grid):
-    add_species_to_map_even(world_array, world_data)
+    add_species_to_map_even(settings, species_map, world_array, world_data)
     world_size = settings.world_size
 
-    species = [s for s in const.ACTING_SPECIES]
-    for i, species in enumerate(species):
-        biomass_offset = MODEL_OFFSETS[species]["biomass"]
-        energy_offset = MODEL_OFFSETS[species]["energy"]
-
-        # zero biomass and energy layers for this species
-        world_array[:, :, biomass_offset] = 0
-        world_array[:, :, energy_offset] = 0
-
+    base_species = list(const.ACTING_BASE_SPECIES)
+    for i, base_name in enumerate(base_species):
         # Upscale the 10x10 biomass grid to match the world using bilinear interpolation
         upscaled = resize_biomass_grid(biomass_grid[:, :, i], world_size)
 
-        # Ensure it's the same shape as the world (trim or pad if needed)
-        # upscaled = upscaled[:world_size, :world_size]
-
         # Zero non-water cells
-        water_mask = (world_array[:, :, const.Terrain.WATER.value] == 1)
+        water_mask = (world_array[:, :, Terrain.WATER.value] == 1)
         upscaled *= water_mask
 
         # Normalize to keep total biomass the same
@@ -116,23 +107,37 @@ def add_species_from_biomass_grid(settings: Settings, species_map: SpeciesMap, w
         if current_total > 0:
             upscaled *= (total_csv_biomass / current_total)
 
-        # remove all nan values
         upscaled = np.nan_to_num(upscaled, nan=0.0)
-        print(f"Species: {species}, Total biomass from CSV: {total_csv_biomass:.2f}, Current upscaled total: {current_total:.2f}")
-        const.update_initial_biomass(species, upscaled.sum())
+        print(f"Species: {base_name}, Total biomass from CSV: {total_csv_biomass:.2f}, Current upscaled total: {current_total:.2f}")
 
-        # Assign to world array
-        world_array[:, :, biomass_offset] = upscaled
-        world_array[:, :, energy_offset] = settings.max_energy
+        # Distribute across age groups for this base species.
+        age_groups = [(name, props) for name, props in species_map.items() if props.base_species == base_name]
+        total_start = sum(props.starting_biomass for _, props in age_groups)
+        for name, props in age_groups:
+            weight = (props.starting_biomass / total_start) if total_start > 0 else (1.0 / len(age_groups))
+            biomass_offset = model.MODEL_OFFSETS[name]["biomass"]
+            energy_offset = model.MODEL_OFFSETS[name]["energy"]
+
+            world_array[:, :, biomass_offset] = 0
+            world_array[:, :, energy_offset] = 0
+            world_array[:, :, biomass_offset] = upscaled * weight
+            world_array[:, :, energy_offset] = settings.max_energy
 
     # Set smell channels to 0
     for species, props in species_map.items():
-        world_array[:, :, props.smell_offset] = 0
+        world_array[:, :, model.MODEL_OFFSETS[species]["smell"]] = 0
 
-    return {species: biomass_grid[:, :, i].sum() for i, species in enumerate(species)}
+    return {species: biomass_grid[:, :, i].sum() for i, species in enumerate(base_species)}
 
 
 def add_species_to_map(settings: Settings, species_map: SpeciesMap, world_array, world_data, seed = None):
+    try:
+        import opensimplex
+    except Exception as e:
+        raise RuntimeError(
+            "opensimplex is required for noise-based species placement. "
+            "Either install/fix the opensimplex dependency or use add_species_to_map_even/read_map_from_file."
+        ) from e
     if seed is None:
         seed = int(random.random() * 100000)
     rng = np.random.default_rng(seed)
@@ -140,10 +145,12 @@ def add_species_to_map(settings: Settings, species_map: SpeciesMap, world_array,
     # Calculate total noise sums for each species.
     noise_sums = {species: 0 for species in species_map.keys()}
     starting_biomasses = {species: 0 for species in species_map.keys()}
+    base_scale = {}
     for species, properties in species_map.items():
-        properties["starting_biomass"] = properties["original_starting_biomass"] 
-        starting_biomasses[species] = properties["starting_biomass"] * smooth_skewed_random(rng)
-        properties["starting_biomass"] = starting_biomasses[species]
+        base = properties.base_species
+        if base not in base_scale:
+            base_scale[base] = smooth_skewed_random(rng.integers(0, 100000))
+        starting_biomasses[species] = properties.starting_biomass * base_scale[base]
 
     world_data[:, :, 4] = 0
 
@@ -176,9 +183,8 @@ def add_species_to_map(settings: Settings, species_map: SpeciesMap, world_array,
                     noise = noise ** properties.noise_scaling
                     if noise > 0:
                         # Distribute biomass proportional to noise.
-                        world_array[x, y, MODEL_OFFSETS[species]["biomass"]] = (noise / noise_sums[species]) * starting_biomasses[species]
-                        # world_array[x, y, properties["energy_offset"]] = 60 + random.random() * 40
-                        world_array[x, y, MODEL_OFFSETS[species]["energy"]] = settings.max_energy
+                        world_array[x, y, model.MODEL_OFFSETS[species]["biomass"]] = (noise / noise_sums[species]) * starting_biomasses[species]
+                        world_array[x, y, model.MODEL_OFFSETS[species]["energy"]] = settings.max_energy
                         if properties.hardcoded_logic:
                             world_data[x, y, 1] = 1  # Mark plankton cluster flag.
                             world_data[x, y, 2] = properties.hardcoded_rules["respawn_delay"]  # Set plankton respawn delay.
@@ -186,8 +192,8 @@ def add_species_to_map(settings: Settings, species_map: SpeciesMap, world_array,
     # min cells should be 10% coverage of the world
     MIN_CELLS_WITH_BIOMASS = int(settings.world_size * settings.world_size * 0.1)
     for species, properties in species_map.items():
-        biomass_offset = properties.biomass_offset
-        energy_offset = properties.energy_offset
+        biomass_offset = model.MODEL_OFFSETS[species]["biomass"]
+        energy_offset = model.MODEL_OFFSETS[species]["energy"]
 
         biomass_layer = world_array[:, :, biomass_offset]
         total_biomass = np.sum(biomass_layer)
@@ -244,7 +250,7 @@ def add_species_to_map(settings: Settings, species_map: SpeciesMap, world_array,
 
     # Set smell channels to 0.
     for species, properties in species_map.items():
-        world_array[:, :, MODEL_OFFSETS[species]["smell"]] = 0
+        world_array[:, :, model.MODEL_OFFSETS[species]["smell"]] = 0
 
     return starting_biomasses
 
@@ -262,29 +268,34 @@ def add_species_to_map_even(settings: Settings, species_map: SpeciesMap, world_a
     PLANKTON_COVERAGE_FACTOR = 2.5
 
     starting_biomasses = {}
+    base_scale = {}
+    for species, props in species_map.items():
+        base = props.base_species
+        if base not in base_scale:
+            base_scale[base] = smooth_skewed_random(rng.integers(0, 100000))
 
     # Prepare masks
     water_mask = world_array[:, :, Terrain.WATER.value] == 1
 
     # First, place plankton (base species)
     for species, properties in species_map.items():
-        starting_biomass = properties.starting_biomass * smooth_skewed_random(seed)
+        starting_biomass = properties.starting_biomass * base_scale[properties.base_species]
         starting_biomasses[species] = starting_biomass
 
-        biomass_offset = MODEL_OFFSETS[species]["biomass"]
-        energy_offset = MODEL_OFFSETS[species]["energy"]
+        biomass_offset = model.MODEL_OFFSETS[species]["biomass"]
+        energy_offset = model.MODEL_OFFSETS[species]["energy"]
 
         # Determine eligible placement cells
         eligible_mask = water_mask.copy()
-        if not tiny_world and species in ("herring", "sprat"):
+        if not tiny_world and properties.base_species in ("herring", "sprat"):
             for other_species, other_props in species_map.items():
                 if other_props.hardcoded_logic:  # e.g., plankton
-                    eligible_mask &= world_array[:, :, MODEL_OFFSETS[other_species]["biomass"]] == 0
+                    eligible_mask &= world_array[:, :, model.MODEL_OFFSETS[other_species]["biomass"]] == 0
 
         eligible_positions = np.argwhere(eligible_mask)
-        if species == "cod":
+        if properties.base_species == "cod":
             num_points = max(int(MIN_CELLS_WITH_BIOMASS * COD_COVERAGE_FACTOR), 1)
-        elif species == "plankton":
+        elif properties.base_species == "plankton":
             num_points = max(int(MIN_CELLS_WITH_BIOMASS * PLANKTON_COVERAGE_FACTOR), 1)
         else:
             num_points = max(MIN_CELLS_WITH_BIOMASS, 1)
@@ -305,7 +316,7 @@ def add_species_to_map_even(settings: Settings, species_map: SpeciesMap, world_a
 
     # Reset smell channels
     for species, properties in species_map.items():
-        world_array[:, :, MODEL_OFFSETS[species]["smell"]] = 0
+        world_array[:, :, model.MODEL_OFFSETS[species]["smell"]] = 0
 
     return starting_biomasses
 
@@ -325,7 +336,7 @@ def read_map_from_file(settings: Settings, species_map: SpeciesMap, folder_path,
     depth_pixels = depth_image.load()
     
     # Create numpy arrays for the world map and extra world data.
-    world_array = np.zeros((settings.world_size, settings.world_size, SINGLE_CELL_INPUT), dtype=np.float32)
+    world_array = np.zeros((settings.world_size, settings.world_size, model.SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((settings.world_size, settings.world_size, 5), dtype=np.float32)
 
     if settings.world_size <= 9:
@@ -351,11 +362,15 @@ def read_map_from_file(settings: Settings, species_map: SpeciesMap, folder_path,
     return np.ascontiguousarray(world_array), np.ascontiguousarray(world_data), starting_biomasses
 
 def create_map_from_noise(settings: Settings, static=False, seed_value=None):
+    try:
+        import opensimplex
+    except Exception as e:
+        raise RuntimeError("opensimplex is required to create a map from noise.") from e
     seed = 1 if static else int(random.random() * 100000)
 
     opensimplex.seed(seed)
 
-    world_array = np.zeros((settings.world_size, settings.world_size, SINGLE_CELL_INPUT), dtype=np.float32)
+    world_array = np.zeros((settings.world_size, settings.world_size, model.SINGLE_CELL_INPUT), dtype=np.float32)
     world_data = np.zeros((settings.world_size, settings.world_size, 5), dtype=np.float32)
 
     center_x, center_y = settings.world_size // 2, settings.world_size // 2

@@ -1,6 +1,10 @@
 import numpy as np
 from pettingzoo import AECEnv
-from pettingzoo.utils import agent_selector, wrappers
+try:
+    from pettingzoo.utils.agent_selector import agent_selector
+    from pettingzoo.utils import wrappers
+except ImportError:
+    from pettingzoo.utils import agent_selector, wrappers
 from gymnasium import spaces
 from lib.world import (
     update_smell,
@@ -9,22 +13,31 @@ from lib.world import (
     matrix_perform_eating,
     apply_movement_delta,
     spawn_plankton,
+    build_age_transition_table,
+    build_spawn_table,
+    apply_age_transitions_table,
+    spawn_offspring_table,
     world_is_alive,
 )
-from lib.visualize import init_pygame, draw_world, plot_biomass
-from lib.model import INPUT_SIZE, OUTPUT_SIZE, MODEL_OFFSETS
+from lib.visualize import init_pygame, draw_world, plot_biomass, poll_visualization_controls
+import lib.model as model
 from lib.config.settings import Settings
 from lib.config.species import SpeciesMap
 import lib.config.const as const
 import random
 from numba import njit
 
-def env(settings: Settings, species_map: SpeciesMap, render_mode=None):
+def env(settings: Settings, species_map: SpeciesMap, render_mode=None, map_folder: str = "maps/baltic"):
     """
     Wraps the raw environment in PettingZoo wrappers.
     """
     internal_render_mode = render_mode if render_mode != "ansi" else "human"
-    env_instance = raw_env(settings=settings, species_map=species_map, render_mode=internal_render_mode)
+    env_instance = raw_env(
+        settings=settings,
+        species_map=species_map,
+        render_mode=internal_render_mode,
+        map_folder=map_folder,
+    )
     env_instance = wrappers.AssertOutOfBoundsWrapper(env_instance)
     env_instance = wrappers.OrderEnforcingWrapper(env_instance)
     return env_instance
@@ -41,13 +54,18 @@ class raw_env(AECEnv):
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.map_folder = map_folder
         self.reason = ""
+        self.age_transition_table = build_age_transition_table(self.species_map)
+        self.spawn_table = build_spawn_table(self.species_map)
+        self.initial_max_biomass_per_species = {}
+        self._last_biomass_plot_cycle = -1
+        self.eating_reward_multiplier = 1.0
         self.reset()
 
         self._observation_spaces = {
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(self.settings.world_size, self.settings.world_size, INPUT_SIZE, 3, 3),
+                shape=(self.settings.world_size, self.settings.world_size, model.INPUT_SIZE, 3, 3),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -56,7 +74,7 @@ class raw_env(AECEnv):
             agent: spaces.Box(
                 low=0,
                 high=1,
-                shape=(self.settings.world_size, self.settings.world_size, OUTPUT_SIZE),
+                shape=(self.settings.world_size, self.settings.world_size, model.OUTPUT_SIZE),
                 dtype=np.float32
             )
             for agent in self.possible_agents
@@ -78,6 +96,7 @@ class raw_env(AECEnv):
         self.world = np.pad(world, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.world_data = np.pad(world_data, pad_width=((1,1), (1,1), (0,0)), mode="constant", constant_values=0)
         self.starting_biomasses = starting_biomasses
+        self.refresh_visual_scale_reference()
 
         # Create a grid of coordinates (shape: (WORLD_SIZE, WORLD_SIZE)).
         grid_x, grid_y = np.meshgrid(np.arange(self.settings.world_size), np.arange(self.settings.world_size), indexing='ij')
@@ -87,6 +106,10 @@ class raw_env(AECEnv):
         self.step_count = 0
         self.done = False
         self.reason = ""
+        self.cycle_count = 0
+        self._movement_deltas = np.zeros_like(self.world)
+        self._smell_step = 0
+        self._last_biomass_plot_cycle = -1
 
         # Initialize bookkeeping dictionaries.
         self.agents = self.possible_agents[:]
@@ -96,7 +119,8 @@ class raw_env(AECEnv):
         self.truncations = {agent: False for agent in self.agents}
         self.infos = {agent: {} for agent in self.agents}
         self.state = {agent: None for agent in self.agents}
-        self.observations = {agent: self.observe(agent) for agent in self.agents}
+        self.observations = {agent: None for agent in self.agents}
+        self._refresh_observations()
         self.num_moves = 0
 
         # Initialize the agent selector.
@@ -107,8 +131,36 @@ class raw_env(AECEnv):
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
         self.color_order = []
 
+    def refresh_visual_scale_reference(self):
+        core = self.world[1:-1, 1:-1, :]
+        self.initial_max_biomass_per_species = {}
+        for species in const.SPECIES:
+            offsets = model.MODEL_OFFSETS.get(species)
+            if offsets is None:
+                continue
+            b_idx = offsets["biomass"]
+            max_val = float(np.max(core[:, :, b_idx]))
+            if not np.isfinite(max_val):
+                max_val = 0.0
+            self.initial_max_biomass_per_species[species] = max(max_val, 1e-12)
+
     def observe(self, agent):
-        return observe(self.world)
+        cached = self.observations.get(agent)
+        if cached is not None:
+            return cached
+        self._refresh_observations()
+        return self.observations[agent]
+
+    def _refresh_observations(self):
+        obs = observe(self.world)
+        for agent in self.agents:
+            self.observations[agent] = obs
+
+    def _maybe_update_smell(self):
+        interval = max(1, int(self.settings.smell_update_interval))
+        self._smell_step += 1
+        if self._smell_step % interval == 0:
+            update_smell(self.settings, self.world)
 
     def step(self, action):
         if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
@@ -118,25 +170,47 @@ class raw_env(AECEnv):
         agent = self.agent_selection
         self.state[self.agent_selection] = action
 
+        is_last = self._agent_selector.is_last()
+
         # If the active agent is "plankton", use the hardcoded logic.
         if agent == "plankton":
             spawn_plankton(self.species_map, self.world, self.world_data)
             # if self.num_moves % 20 == 0:
             #     randomwalk_plankton(self.world, self.world_data)
+            if not is_last:
+                self._maybe_update_smell()
+                self._refresh_observations()
         else:
             self.state[agent] = action
 
             # Movement update.
-            matrix_movement_deltas = all_movement_delta(self.species_map, self.world, self.world_data, agent, action)
+            matrix_movement_deltas = all_movement_delta(
+                self.species_map,
+                self.world,
+                self.world_data,
+                agent,
+                action,
+                self.num_moves,
+                movement_deltas=self._movement_deltas,
+            )
             apply_movement_delta(self.species_map, self.world, agent, matrix_movement_deltas)
 
-            matrix_perform_eating(self.settings, self.species_map, self.world, agent, action)
+            matrix_perform_eating(
+                self.settings,
+                self.species_map,
+                self.world,
+                agent,
+                action,
+                eating_reward_multiplier=self.eating_reward_multiplier,
+            )
             
-            update_smell(self.settings, self.world)
+            if not is_last:
+                self._maybe_update_smell()
             self.render()
             alive, reason = world_is_alive(self.settings, self.species_map, self.world)
             if not alive:
                 self.reason = reason
+                print(f"[PettingZoo] Terminating: {reason}")
                 # Abort simulation by terminating all agents.
                 for ag in self.agents:
                     self.terminations[ag] = True
@@ -155,10 +229,16 @@ class raw_env(AECEnv):
             self.num_moves += 1
             self.truncations = {agent: self.num_moves >= (self.settings.max_steps * 4) for agent in self.agents}
 
-            for i in self.agents:
-                self.observations[i] = self.observe(i)
+            if not is_last:
+                self._refresh_observations()
 
-        if self._agent_selector.is_last():
+        if is_last:
+            self.cycle_count += 1
+            if not any(self.terminations.values()) and not any(self.truncations.values()):
+                apply_age_transitions_table(self.world, self.cycle_count, self.age_transition_table)
+                spawn_offspring_table(self.world, self.cycle_count, self.spawn_table, self.settings.max_energy)
+                self._maybe_update_smell()
+                self._refresh_observations()
             # Re-shuffle agents for the next round.
             random.shuffle(self.agents)
             self._agent_selector = agent_selector(self.agents)
@@ -170,13 +250,43 @@ class raw_env(AECEnv):
         if self.render_mode == "none":
             return
         if self.render_mode == "human":
-            draw_world(self.settings, self.screen, self.world, self.world_data)
-            plot_biomass(self.plot_data)
+            poll_visualization_controls()
+            interval = max(1, int(getattr(self.settings, "biomass_plot_update_interval_steps", 1)))
+            current_cycle = int(self.cycle_count)
+            should_update_chart = (
+                self._last_biomass_plot_cycle < 0
+                or current_cycle != self._last_biomass_plot_cycle
+                and (current_cycle % interval == 0)
+            )
+            if should_update_chart:
+                plot_biomass(self.plot_data, settings=self.settings, species_map=self.species_map)
+                self._last_biomass_plot_cycle = current_cycle
+            draw_world(
+                self.settings,
+                self.screen,
+                self.world,
+                self.world_data,
+                species_scale_reference=self.initial_max_biomass_per_species,
+            )
+
+    def get_total_biomass(self, agent):
+        # Support both concrete species keys (e.g. cod__a2) and base species
+        # keys (e.g. cod) by aggregating matching age groups.
+        if agent in model.MODEL_OFFSETS:
+            return float(self.world[..., model.MODEL_OFFSETS[agent]["biomass"]].sum())
+
+        total_biomass = 0.0
+        for species_name, props in self.species_map.items():
+            if props.base_species != agent:
+                continue
+            biomass_offset = model.MODEL_OFFSETS[species_name]["biomass"]
+            total_biomass += self.world[..., biomass_offset].sum()
+
+        return float(max(total_biomass, 0.0))
 
     def get_fitness(self, agent):
-        biomass = self.world[..., MODEL_OFFSETS[agent]["biomass"]].sum()
-
-        return np.log(biomass)
+        total_biomass = self.get_total_biomass(agent)
+        return np.log(total_biomass + 1e-8)
     
     def overwrite_world(self, world):
         self.world = world
