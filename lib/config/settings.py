@@ -61,7 +61,10 @@ class Settings:
     #   simple      -> reward by episode length (longest survives)
     #   biomass_pct -> % biomass change after fitness_eval_steps cycles
     #   trajectory_shaped -> dense per-cycle deltas + terminal biomass term
-    fitness_method: str = "trajectory_shaped"
+    #
+    # Default to the simplest survival-based setup so a new user can train
+    # without needing to understand the short-horizon curriculum first.
+    fitness_method: str = "simple"
     # For biomass_pct fitness:
     #   agent        -> evaluate only the current acting species channel
     #   base_species -> aggregate all age groups of the same base species
@@ -97,30 +100,30 @@ class Settings:
     long_eval_weight: float = 0.6
     # Optional score normalization for short-horizon biomass objectives:
     # use (candidate_fitness - baseline_random_fitness) per matched eval task.
-    relative_baseline_enabled: bool = True
+    relative_baseline_enabled: bool = False
     relative_baseline_policy: str = "random"
     # If baseline-adjusted scores collapse to near-constant, fall back to raw biomass
     # fitness for that generation to preserve selection signal.
     relative_baseline_fallback_to_raw_when_flat: bool = True
     relative_baseline_flat_std_threshold: float = 0.25
     # Optional harsher training-eval world (encourages eat-or-die behavior in short windows).
-    training_initial_energy_scale: float = 0.50
-    training_energy_decay_per_cycle: float = 0.05
+    training_initial_energy_scale: float = 1.0
+    training_energy_decay_per_cycle: float = 0.0
     # Training-only food sparsity controls (plankton seeding).
     # 1.0 keeps all initial plankton cells, 0.1 keeps 10%.
-    training_plankton_cell_fraction: float = 0.15
+    training_plankton_cell_fraction: float = 1.0
     # Scales initial biomass on kept plankton cells.
     training_plankton_biomass_scale: float = 1.0
     # Training-only sparsity for non-plankton (acting) base species.
     # Applied after map reset and before rollouts.
-    training_non_plankton_cell_fraction: float = 0.1
+    training_non_plankton_cell_fraction: float = 1.0
     training_non_plankton_min_cells: int = 1
     # Force cod to spawn in very few random cells (1 = single-cell cod start).
     # Set to 0 to disable this override.
-    training_cod_spawn_cells: int = 1
+    training_cod_spawn_cells: int = 0
     # Keep prey away from initial cod cells so movement toward food is required.
     # Uses Chebyshev distance in grid cells (0 disables clearing).
-    training_cod_prey_clear_radius: int = 2
+    training_cod_prey_clear_radius: int = 0
     # If False, keep plankton near cod even when clearing cod prey radius.
     # This avoids starving juvenile cod age groups that only eat plankton.
     training_cod_prey_clear_include_plankton: bool = False
@@ -131,16 +134,16 @@ class Settings:
     # Training-only dynamics: extra biomass loss each cycle when energy is low.
     # Loss fraction = training_low_energy_biomass_max_loss_per_cycle * deficit,
     # where deficit = max(0, (floor_pct - energy_pct) / floor_pct).
-    training_low_energy_biomass_floor_pct: float = 0.4
-    training_low_energy_biomass_max_loss_per_cycle: float = 0.35
+    training_low_energy_biomass_floor_pct: float = 0.0
+    training_low_energy_biomass_max_loss_per_cycle: float = 0.0
     training_low_energy_biomass_target_only: bool = True
     # Training-only multiplier on energy gained from eating.
     # >1 encourages policies to seek and eat food sooner.
-    training_eating_reward_multiplier: float = 5.0
+    training_eating_reward_multiplier: float = 1.0
     # Training-only: set a very high reproduction frequency for non-plankton to
     # effectively disable offspring spawning during short-horizon training.
     # Set <=0 to disable this override.
-    training_reproduction_freq_override: int = 1000000
+    training_reproduction_freq_override: int = 0
     # Progress tracking: evaluate per-generation champions on a longer fixed horizon.
     champion_progress_enabled: bool = False
     champion_progress_every: int = 1
@@ -168,12 +171,12 @@ class Settings:
     max_energy: float = 100.0
 
     # Age-group settings (applies to all non-plankton species)
-    age_groups: int = 3
+    age_groups: int = 1
     # Global interval (in environment cycles) to advance age groups
     age_step_interval: int = 50
-    # Optional per-age distribution weights (comma-separated in settings file)
-    # age_init_distribution: tuple[float, ...] = ()
-    age_init_distribution = (0.5, 0.3, 0.2)
+    # Optional per-age distribution weights (comma-separated in settings file).
+    # Empty means "split evenly across however many age groups are configured".
+    age_init_distribution = ()
 
     @property
     def steps_per_day(self) -> int:

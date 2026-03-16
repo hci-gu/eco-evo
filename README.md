@@ -14,6 +14,7 @@ The project also contains older Stable-Baselines3 and bioMARL experiments. Those
 
 - The project is not packaged as a library. Work from the repo root and run scripts directly with `python ...`.
 - The main training loop is evolutionary, not PPO.
+- `python main.py` now runs a no-config beginner training path by default.
 - The most important configuration surface is the frozen `Settings` dataclass in `lib/config/settings.py`.
 - Training configs are plain `key=value` text files loaded by `load_settings(...)`.
 - Result folders are derived from the config file basename only. If two configs in different folders share the same filename, they will write to the same `results/<basename>/` directory.
@@ -42,7 +43,28 @@ If you prefer Conda instead of Micromamba, `conda env create -f env.yml` should 
 
 ## Quick start
 
-### 1. Run a real training config
+### 1. Run the default training with no config
+
+You can now start a beginner-friendly training run directly:
+
+```bash
+python main.py
+```
+
+That uses `Settings()` directly and intentionally defaults to the simplest path:
+
+- `fitness_method=simple`
+- `age_groups=1`
+- no relative-baseline adjustment
+- no short-horizon training modifiers
+
+Outputs are written to:
+
+```text
+results/default/
+```
+
+### 2. Run a real training config
 
 The easiest way to get started is to run one of the existing bundled configs:
 
@@ -64,7 +86,7 @@ Look for:
 - `generations_data.json`: summarized generation metrics
 - generated plots from `lib.visualize.plot_generations(...)`
 
-### 2. Run a very fast smoke-test training
+### 3. Run a very fast smoke-test training
 
 For debugging, create a small one-off config file with values like:
 
@@ -81,12 +103,10 @@ tournament_selection=2
 mutation_rate=0.18
 mutation_rate_decay=0.998
 mutation_rate_min=0.05
-fitness_method=biomass_pct
-biomass_fitness_scope=agent
-fitness_eval_steps=20
+fitness_method=simple
 two_stage_eval_enabled=False
 relative_baseline_enabled=False
-age_groups=3
+age_groups=1
 age_step_interval=20
 ```
 
@@ -104,7 +124,7 @@ Notes:
 - Smaller `num_agents`, `agent_evaluations`, and `generations_per_run` reduce runtime dramatically.
 - Disable plotting for faster local iteration.
 
-### 3. Play as an agent manually
+### 4. Play as an agent manually
 
 The fastest way to understand the environment is to control one species yourself:
 
@@ -116,14 +136,14 @@ python start_manual_agent.py \
 
 Useful options:
 
-- `--species cod` controls the final cod age group by default
+- `--species cod` controls cod directly under the default one-age-group setup
 - `--control-all-age-groups` controls every age group for a base species
 - `--max-steps 50` limits the run
 - `--map-seed 123` makes the reset deterministic
 
 Manual play writes CSV and plot outputs under `results/manual_play/`.
 
-### 4. Browse helper scripts
+### 5. Browse helper scripts
 
 There is a small script launcher:
 
@@ -177,8 +197,8 @@ scripts/                       Diagnostics, evaluation, and exploratory tooling
 
 `main.py`:
 
-1. reads every `.txt` file in `--config_folder`
-2. loads `Settings` from each file
+1. if `--config_folder` is provided, reads every `.txt` file in that folder
+2. otherwise, falls back to `Settings()` for a default run
 3. creates a `PettingZooRunner`
 4. calls `runner.train()`
 

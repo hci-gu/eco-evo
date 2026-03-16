@@ -149,6 +149,8 @@ def evaluate_pbm_model():
 
 def load_config_files(config_folder):
     """Load all config files from the given folder."""
+    if not config_folder:
+        return []
     config_files = []
     for file_name in os.listdir(config_folder):
         if file_name.endswith(".txt"):
@@ -195,14 +197,23 @@ if __name__ == "__main__":
 
     # evaluate_pbm_model()
 
-    # Load config files
     config_files = load_config_files(args.config_folder)
-
-    print("Running simulation with the following config files:" + str(config_files))
-    time.sleep(2)
-
-    for config_file in config_files:
-        settings = load_settings(config_file)
-
+    if not config_files:
+        settings = Settings()
+        print(
+            "No config folder provided; running a default beginner-friendly training run "
+            f"with Settings(): fitness_method={settings.fitness_method}, "
+            f"age_groups={settings.age_groups}, output={settings.folder}"
+        )
+        time.sleep(2)
         runner = PettingZooRunner(settings)
         runner.train()
+    else:
+        print("Running simulation with the following config files:" + str(config_files))
+        time.sleep(2)
+
+        for config_file in config_files:
+            settings = load_settings(config_file)
+
+            runner = PettingZooRunner(settings)
+            runner.train()

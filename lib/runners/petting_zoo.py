@@ -48,6 +48,7 @@ class PettingZooRunner():
         map_folder: str = "maps/baltic",
         build_population: bool = True,
     ):
+        os.makedirs(self._agents_folder(settings), exist_ok=True)
         # Create the environment (render_mode can be "none" if visualization is not needed)
         self.species_map = build_species_map(settings)
         self.env = env(
@@ -109,6 +110,10 @@ class PettingZooRunner():
         self._base_spawn_table = None
         self._spawn_table_source_species = None
         self._cache_spawn_table_template()
+
+    @staticmethod
+    def _agents_folder(settings: Settings) -> str:
+        return os.path.join(settings.folder, "agents")
 
     def _base_env(self):
         return getattr(self.env, "unwrapped", self.env)
