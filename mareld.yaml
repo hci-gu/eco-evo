@@ -1,0 +1,12 @@
+﻿project_metadata:
+  name: Mareld
+simulation_settings: {}
+functional_groups:
+  - group_id: herring
+  - group_id: cod
+  - group_id: porpoise
+impact_variables:
+  - impact_id: bottom_trawling
+  - impact_id: pelagic_trawling
+  - impact_id: windfarm_noise
+  - impact_id: ship_traffic
