@@ -8,6 +8,7 @@ class FunctionalGroup:
         # State variables (matrices)
         self.biomass = None  # B_X(c)
         self.energy_reserve = None  # R_X(c) = B_X(c) * E_X(c)
+        self.temp_energy_gains = None # Intermediate predation gains
         
         # Metadata from params
         self.is_decision_maker = params.get('is_decision_maker', False)
@@ -30,6 +31,7 @@ class FunctionalGroup:
         # E_X(c) = ratio * ME_X
         energy_per_ton = np.full(shape, initial_energy_ratio * self.max_energy_reserve)
         self.energy_reserve = self.biomass * energy_per_ton
+        self.temp_energy_gains = np.zeros(shape)
 
     @property
     def energy_level(self):

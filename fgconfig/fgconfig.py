@@ -407,6 +407,11 @@ class FGConfigApp:
                     config[key] = float(val or 0)
                 except ValueError:
                     config[key] = 0.0
+                # Clamp movement_speed to a physical maximum of 1.0 cell/tick
+                if key == "movement_speed":
+                    if config[key] > 1.0:
+                        config[key] = 1.0
+                        var.set("1.0")
                     
         self.current_fg_configs[fg_id] = config
         

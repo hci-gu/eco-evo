@@ -67,6 +67,48 @@ class EcosystemEnvironment:
                     num_actions = 5 + len(fg.params.get('menu', []))
                     probs = np.full((num_actions, self.grid.height, self.grid.width), 1.0 / num_actions)
                 
+                # Build action mask: disallow movement off-grid or into inaccessible cells.
+                # Mask shape per direction matches the grid; 1 = allowed, 0 = forbidden.
+                H, W = self.grid.height, self.grid.width
+                access_map = self.grid.get_map('accessibility')
+                move_mask = np.ones((4, H, W), dtype=probs.dtype)
+                # Direction order: 0=N, 1=E, 2=S, 3=W
+                move_mask[0, 0, :] = 0.0   # cannot move N from top row
+                move_mask[2, -1, :] = 0.0  # cannot move S from bottom row
+                move_mask[1, :, -1] = 0.0  # cannot move E from right column
+                move_mask[3, :, 0] = 0.0   # cannot move W from left column
+                if access_map is not None:
+                    # Block movement into inaccessible neighbor cells (and from inaccessible cells themselves)
+                    inacc_n = np.ones((H, W)); inacc_n[1:, :] = access_map[:-1, :]
+                    inacc_s = np.ones((H, W)); inacc_s[:-1, :] = access_map[1:, :]
+                    inacc_e = np.ones((H, W)); inacc_e[:, :-1] = access_map[:, 1:]
+                    inacc_w = np.ones((H, W)); inacc_w[:, 1:] = access_map[:, :-1]
+                    move_mask[0] *= (inacc_n > 0).astype(probs.dtype)
+                    move_mask[2] *= (inacc_s > 0).astype(probs.dtype)
+                    move_mask[1] *= (inacc_e > 0).astype(probs.dtype)
+                    move_mask[3] *= (inacc_w > 0).astype(probs.dtype)
+
+                # Apply mask to the move part of probs and renormalize across all actions.
+                num_actions = probs.shape[0]
+                full_mask = np.ones_like(probs)
+                full_mask[0:4] = move_mask
+                # Mask eat-actions cell-wise when the prey biomass in the cell is 0.
+                menu = fg.params.get('menu', [])
+                for i, prey_id in enumerate(menu):
+                    prey_fg = self.fgs.get(prey_id)
+                    if prey_fg is None:
+                        full_mask[5 + i] = 0.0
+                    else:
+                        full_mask[5 + i] = (prey_fg.biomass > 0).astype(probs.dtype)
+                masked = probs * full_mask
+                total = masked.sum(axis=0, keepdims=True)
+                # Fallback: if everything got masked (shouldn't happen since rest/eat remain), keep rest=1
+                zero_total = total <= 1e-12
+                if np.any(zero_total):
+                    masked[4] = np.where(zero_total[0], 1.0, masked[4])
+                    total = masked.sum(axis=0, keepdims=True)
+                probs = masked / total
+
                 self.pi[fg_id] = {
                     'move': probs[0:4],
                     'rest': probs[4],
@@ -77,7 +119,13 @@ class EcosystemEnvironment:
 
     def _apply_predation(self):
         # 3. Update biomass after predation.
-        # 4. Update reserve energy with intake and costs.
+        
+        # Reset energy gains
+        for fg in self.fgs.values():
+            if hasattr(fg, 'temp_energy_gains') and fg.temp_energy_gains is not None:
+                fg.temp_energy_gains.fill(0.0)
+            elif fg.is_decision_maker:
+                fg.temp_energy_gains = np.zeros_like(fg.biomass)
         
         # Track total demand for each prey
         total_demand = {fg_id: np.zeros((self.grid.height, self.grid.width)) for fg_id in self.fgs}
@@ -113,10 +161,10 @@ class EcosystemEnvironment:
                         actual_intake = d_xy * scale
                         actual_predator = self.fgs[pred_id]
                         
-                        # Update predator energy
+                        # Update predator energy gains (to be applied to stationary fraction)
                         inter_id = f'{pred_id}_preys_on_{prey_id}'
                         energy_gain = actual_predator.params['interaction'][inter_id]['energy_gain']
-                        actual_predator.energy_reserve += actual_intake * energy_gain
+                        actual_predator.temp_energy_gains += actual_intake * energy_gain
                         
                         # Update prey biomass and energy (proportional reduction)
                         # R_new = R_old * (B_new / B_old)
@@ -132,95 +180,94 @@ class EcosystemEnvironment:
                 pass # Already handled above by prey_fg.biomass -= actual_intake
 
     def _apply_metabolism(self):
-        for fg_id in self.ordered_fg_ids:
-            fg = self.fgs[fg_id]
-            if not fg.is_decision_maker: continue
-            
-            # Metabolism = Rest_X * (Action_Cost) * (1 + Noise_Sens * Noise)
-            # Action_Cost is a weighted average based on pi
-            pi = self.pi[fg_id]
-            
-            # Costs: movement_cost, feeding_cost, resting_cost
-            cost_move = fg.params.get('movement_cost', 3.0)
-            cost_eat = fg.params.get('feeding_cost', 3.0)
-            cost_rest = fg.params.get('resting_cost', 1.0)
-            
-            avg_action_cost = (
-                np.sum(pi['move'], axis=0) * cost_move +
-                np.sum(list(pi['eat'].values()), axis=0) * cost_eat +
-                pi['rest'] * cost_rest
-            )
-            
-            # Noise impact
-            noise = self.grid.get_map('windfarm_noise')
-            if noise is None:
-                noise = np.zeros_like(fg.biomass)
-            noise_sens = fg.params.get('impact', {}).get('windfarm_noise', {}).get('impact_sensitivity', 0.0)
-            noise_factor = 1.0 + noise_sens * noise
-            
-            total_metabolism = fg.resting_metabolism * avg_action_cost * noise_factor * fg.biomass
-            fg.energy_reserve -= total_metabolism
-            
-            # Clip energy
-            fg.energy_reserve = np.clip(fg.energy_reserve, 0.0, fg.biomass * fg.max_energy_reserve)
+        """
+        Energy metabolism is now handled within _apply_movement to correctly
+        attribute action-specific costs to the respective biomass fractions.
+        """
+        pass
 
     def _apply_movement(self):
         # 5. Move biomass and reserve energy between cells.
         # 6. Mix inflows in each cell.
+        # Now also handles metabolism per fraction.
         
+        noise = self.grid.get_map('windfarm_noise')
+        if noise is None:
+            noise = np.zeros((self.grid.height, self.grid.width))
+            
         for fg_id in self.ordered_fg_ids:
             fg = self.fgs[fg_id]
-            if not fg.is_decision_maker or fg.speed == 0:
+            if not fg.is_decision_maker:
                 continue
             
             pi = self.pi[fg_id]
             v = fg.speed
             
-            # B_out,d = B * pi_d * v * Access_d
-            # R_out,d = R * pi_d * v * Access_d
+            # Costs
+            cost_move = fg.params.get('movement_cost', 3.0)
+            cost_eat = fg.params.get('feeding_cost', 3.0)
+            cost_rest = fg.params.get('resting_cost', 1.0)
             
-            # Directions: 0=N, 1=E, 2=S, 3=W (assuming standard image coordinates: N is up/-y)
-            # Actually, let's define: N: (y-1), E: (x+1), S: (y+1), W: (x-1)
+            # Noise factor
+            noise_sens = fg.params.get('impact', {}).get('windfarm_noise', {}).get('impact_sensitivity', 0.0)
+            noise_factor = 1.0 + noise_sens * noise
+            
+            # 1. Apply metabolism per CHOICE fraction
+            # Rest fraction
+            m_rest = fg.biomass * pi['rest'] * fg.resting_metabolism * cost_rest * noise_factor
+            r_rest = np.maximum(0, fg.energy_reserve * pi['rest'] - m_rest)
+            b_rest = fg.biomass * pi['rest']
+            
+            # Eat fractions
+            r_eat_tot = np.zeros_like(fg.energy_reserve)
+            b_eat_tot = np.zeros_like(fg.biomass)
+            for prey_id, pi_val in pi['eat'].items():
+                m_eat = fg.biomass * pi_val * fg.resting_metabolism * cost_eat * noise_factor
+                r_eat_tot += np.maximum(0, fg.energy_reserve * pi_val - m_eat)
+                b_eat_tot += fg.biomass * pi_val
+            r_eat_tot += fg.temp_energy_gains # Gains go to eaters
+            
+            # Move fractions (Calculate energy/biomass for each move choice)
+            r_move_choices = []
+            b_move_choices = []
+            for d in range(4):
+                pi_d = pi['move'][d]
+                m_move = fg.biomass * pi_d * fg.resting_metabolism * cost_move * noise_factor
+                r_move_choices.append(np.maximum(0, fg.energy_reserve * pi_d - m_move))
+                b_move_choices.append(fg.biomass * pi_d)
+                
+            # 2. Flux-based movement
+            b_stay = b_rest + b_eat_tot
+            r_stay = r_rest + r_eat_tot
             
             b_total_in = np.zeros_like(fg.biomass)
             r_total_in = np.zeros_like(fg.energy_reserve)
             
-            b_stay = fg.biomass.copy()
-            r_stay = fg.energy_reserve.copy()
-            
-            # For each direction, calculate out-flow and where it goes
-            offsets = [(-1, 0), (0, 1), (1, 0), (0, -1)] # (dy, dx)
+            # Movement: illegal directions are already removed by the action mask in
+            # _calculate_decisions, so the entire move fraction is free to flow.
+            # The flux fraction reflects how much of the move-choice actually crosses
+            # the cell boundary within one tick, given the species' speed (cells/tick).
+            flux = float(np.clip(v, 0.0, 1.0))
+            offsets = [(-1, 0), (0, 1), (1, 0), (0, -1)] # N, E, S, W
             for d, (dy, dx) in enumerate(offsets):
-                pi_d = pi['move'][d]
-                # Accessibility (placeholder: 1 everywhere except edges)
-                access = np.ones_like(fg.biomass)
-                if dy == -1: access[0, :] = 0  # North edge
-                if dy == 1: access[-1, :] = 0 # South edge
-                if dx == -1: access[:, 0] = 0  # West edge
-                if dx == 1: access[:, -1] = 0 # East edge
-                
-                b_out = fg.biomass * pi_d * v * access
-                r_out = fg.energy_reserve * pi_d * v * access
-                
-                b_stay -= b_out
-                r_stay -= r_out
-                
-                # Move to neighbor
-                b_in = np.roll(b_out, (dy, dx), axis=(0, 1))
-                r_in = np.roll(r_out, (dy, dx), axis=(0, 1))
-                
-                b_total_in += b_in
-                r_total_in += r_in
+                b_out = b_move_choices[d] * flux
+                r_out = r_move_choices[d] * flux
+
+                b_stay += b_move_choices[d] * (1.0 - flux)
+                r_stay += r_move_choices[d] * (1.0 - flux)
+
+                b_total_in += np.roll(b_out, (dy, dx), axis=(0, 1))
+                r_total_in += np.roll(r_out, (dy, dx), axis=(0, 1))
                 
             fg.biomass = b_stay + b_total_in
-            fg.energy_reserve = r_stay + r_total_in
+            fg.energy_reserve = np.clip(r_stay + r_total_in, 0.0, fg.biomass * fg.max_energy_reserve)
 
     def _apply_growth_and_impact(self):
         # 7. Calculate net growth, mortality and impact.
         for fg_id in self.ordered_fg_ids:
             fg = self.fgs[fg_id]
-            if fg_id == 'phytoplankton' or fg_id == 'benthic_community':
-                # Logistic growth
+            if not fg.is_decision_maker:
+                # Logistic growth for groups whose energy is not modelled
                 cc = fg.params.get('max_carrying_capacity', 100.0)
                 mg = fg.growth_rate
                 growth = mg * fg.biomass * (1.0 - fg.biomass / (cc + 1e-9))
