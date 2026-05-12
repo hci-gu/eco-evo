@@ -2,27 +2,47 @@ import torch
 import numpy as np
 import os
 import argparse
+import re
 from lib.config.config_loader import setup_full_mareld_mvp, load_project_config
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.trainer import ARSTrainer
 
 # Global variable to store project path for env_builder
 PROJECT_PATH = None
+GRID_WIDTH = 60
+GRID_HEIGHT = 60
+
+def parse_grid_arg(value):
+    """Parses a --grid argument on the form n*m (or nxm). Both dims must be >= 3."""
+    if value is None:
+        return None
+    m = re.match(r'^\s*(\d+)\s*[\*xX]\s*(\d+)\s*$', value)
+    if not m:
+        raise argparse.ArgumentTypeError(
+            f"Invalid --grid format: '{value}'. Expected n*m (e.g. 30*30)."
+        )
+    n, k = int(m.group(1)), int(m.group(2))
+    if n < 3 or k < 3:
+        raise argparse.ArgumentTypeError(
+            f"Invalid --grid '{value}': both dimensions must be >= 3."
+        )
+    return n, k
 
 def env_builder():
     """
     Creates a new instance of the ecosystem for each rollout.
     This is required by the ARS algorithm to evaluate different perturbations (deltas).
     """
+    grid_size = (GRID_HEIGHT, GRID_WIDTH)
     if PROJECT_PATH:
-        fgs, impact_vars = load_project_config(PROJECT_PATH)
+        fgs, impact_vars = load_project_config(PROJECT_PATH, grid_size=grid_size)
     else:
-        fgs = setup_full_mareld_mvp()
+        fgs = setup_full_mareld_mvp(grid_size=grid_size)
         impact_vars = ['windfarm_noise']
         
     grid_config = {
-        'width': 60,
-        'height': 60,
+        'width': GRID_WIDTH,
+        'height': GRID_HEIGHT,
         'cell_size': 1000.0,
         'tick_duration': 6.0
     }
@@ -31,7 +51,7 @@ def env_builder():
     
     # Add necessary map layers as empty dummies for training
     for iv in impact_vars:
-        env.grid.add_map(iv, np.zeros((60, 60)))
+        env.grid.add_map(iv, np.zeros((GRID_HEIGHT, GRID_WIDTH)))
         
     return env
 
@@ -62,8 +82,15 @@ def main():
     parser.add_argument("--sigma", type=float, default=0.1, help="Exploration noise (default: 0.1).")
     parser.add_argument("--rollouts", type=int, default=4, help="Number of time steps per evaluation (default: 4).")
     parser.add_argument("--project", type=str, help="Path to project file (.yaml)")
+    parser.add_argument("--grid", type=parse_grid_arg, default=None,
+                        help="Grid dimensions as n*m (e.g. 30*30). Both dimensions must be >= 3. Default: 60*60.")
     
     args = parser.parse_args()
+
+    if args.grid is not None:
+        global GRID_WIDTH, GRID_HEIGHT
+        GRID_WIDTH, GRID_HEIGHT = args.grid
+        print(f"Grid size set to {GRID_WIDTH} x {GRID_HEIGHT}.")
 
     if not args.project:
         print("\nError: No project file specified.")

@@ -1,15 +1,16 @@
 ﻿project_metadata:
   name: Mareld2
 simulation_settings: {}
-functional_groups:
-  - group_id: phytoplankton
+decision_makers:
   - group_id: zooplankton
-  - group_id: benthic_community
   - group_id: pelagic_fish
   - group_id: gadoids
   - group_id: porpoises
   - group_id: seals
   - group_id: seabirds
+non_decision_makers:
+  - group_id: phytoplankton
+  - group_id: benthic_community
 impact_variables:
   - impact_id: bottom_trawling
   - impact_id: pelagic_trawling

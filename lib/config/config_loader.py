@@ -60,7 +60,14 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
     
-    project_fg_ids = [fg['group_id'] for fg in project.get('functional_groups', [])]
+    # Support both the new split (decision_makers / non_decision_makers) and the
+    # legacy unified functional_groups list for backward compatibility.
+    project_fg_ids = []
+    for key in ('decision_makers', 'non_decision_makers', 'functional_groups'):
+        for fg in project.get(key, []) or []:
+            gid = fg.get('group_id') if isinstance(fg, dict) else None
+            if gid and gid not in project_fg_ids:
+                project_fg_ids.append(gid)
     impact_vars = [iv['impact_id'] for iv in project.get('impact_variables', [])]
     
     fgs = {}

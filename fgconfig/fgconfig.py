@@ -41,7 +41,13 @@ class FGConfigApp:
                 "turbidity":        {"display_name": "Turbidity"},
             }
             self.save_yaml(self.global_library, self.library_path)
-        self.project_data = {"project_metadata": {"name": "New Project"}, "simulation_settings": {}, "functional_groups": [], "impact_variables": []}
+        self.project_data = {
+            "project_metadata": {"name": "New Project"},
+            "simulation_settings": {},
+            "decision_makers": [],
+            "non_decision_makers": [],
+            "impact_variables": []
+        }
         self.current_fg_configs = {} # local project configs for active FGs
 
         # Swedish name mapping for display (as requested)
@@ -59,22 +65,62 @@ class FGConfigApp:
         self.setup_ui()
 
     def _on_mousewheel(self, event):
-        """Handle mouse wheel and trackpad scroll events."""
-        # Determine scroll direction
-        if event.num == 4: # Linux scroll up
+        """Handle mouse wheel and trackpad scroll events (vertical)."""
+        if event.num == 4:
             delta = -1
-        elif event.num == 5: # Linux scroll down
+        elif event.num == 5:
             delta = 1
-        elif event.delta: # Windows/macOS
+        elif event.delta:
             delta = int(-1 * (event.delta / 120))
         else:
             return
 
-        # Apply scroll to matrix canvas if it exists
-        if hasattr(self, 'matrix_canvas') and self.matrix_canvas.winfo_exists():
-            # Check if the matrix tab is visible or if the event happened over the canvas
-            if self.notebook.index(self.notebook.select()) == 1:
+        try:
+            active_idx = self.notebook.index(self.notebook.select())
+        except Exception:
+            return
+        if active_idx == 0 and hasattr(self, 'project_canvas') and self.project_canvas.winfo_exists():
+            if self._canvas_is_scrollable(self.project_canvas, axis="y"):
+                self.project_canvas.yview_scroll(delta, "units")
+        elif active_idx == 1 and hasattr(self, 'matrix_canvas') and self.matrix_canvas.winfo_exists():
+            if self._canvas_is_scrollable(self.matrix_canvas, axis="y"):
                 self.matrix_canvas.yview_scroll(delta, "units")
+
+    def _on_shift_mousewheel(self, event):
+        """Handle horizontal scroll via Shift+wheel or trackpad horizontal gesture."""
+        if event.num == 4:
+            delta = -1
+        elif event.num == 5:
+            delta = 1
+        elif event.delta:
+            delta = int(-1 * (event.delta / 120))
+        else:
+            return
+
+        try:
+            active_idx = self.notebook.index(self.notebook.select())
+        except Exception:
+            return
+        if active_idx == 0 and hasattr(self, 'project_canvas') and self.project_canvas.winfo_exists():
+            if self._canvas_is_scrollable(self.project_canvas, axis="x"):
+                self.project_canvas.xview_scroll(delta, "units")
+        elif active_idx == 1 and hasattr(self, 'matrix_canvas') and self.matrix_canvas.winfo_exists():
+            if self._canvas_is_scrollable(self.matrix_canvas, axis="x"):
+                self.matrix_canvas.xview_scroll(delta, "units")
+
+    @staticmethod
+    def _canvas_is_scrollable(canvas, axis="y"):
+        """Return True only if content size exceeds the visible canvas size along the given axis."""
+        try:
+            bbox = canvas.bbox("all")
+            if not bbox:
+                return False
+            if axis == "y":
+                return (bbox[3] - bbox[1]) > canvas.winfo_height()
+            else:
+                return (bbox[2] - bbox[0]) > canvas.winfo_width()
+        except Exception:
+            return False
 
     def load_yaml(self, path):
         if not os.path.exists(path):
@@ -127,31 +173,86 @@ class FGConfigApp:
         self.setup_matrix_tab()
 
     def setup_project_tab(self):
+        # Scrollable container for the whole project tab
+        self.project_canvas = tk.Canvas(self.project_tab, highlightthickness=0)
+        self.project_scrollbar = ttk.Scrollbar(self.project_tab, orient="vertical", command=self.project_canvas.yview)
+        self.project_inner = ttk.Frame(self.project_canvas)
+
+        self.project_inner.bind(
+            "<Configure>",
+            lambda e: self.project_canvas.configure(scrollregion=self.project_canvas.bbox("all"))
+        )
+        inner_window = self.project_canvas.create_window((0, 0), window=self.project_inner, anchor="nw")
+        self.project_hscrollbar = ttk.Scrollbar(self.project_tab, orient="horizontal", command=self.project_canvas.xview)
+        self.project_canvas.configure(
+            yscrollcommand=self.project_scrollbar.set,
+            xscrollcommand=self.project_hscrollbar.set,
+        )
+
+        # Expand inner frame to canvas width only when it would otherwise be narrower,
+        # so horizontal scrolling kicks in when content is wider than the canvas.
+        def _on_canvas_configure(event, win=inner_window, cv=self.project_canvas, inner=self.project_inner):
+            req_w = inner.winfo_reqwidth()
+            cv.itemconfigure(win, width=max(event.width, req_w))
+        self.project_canvas.bind("<Configure>", _on_canvas_configure)
+
+        self.project_hscrollbar.pack(side="bottom", fill="x")
+        self.project_scrollbar.pack(side="right", fill="y")
+        self.project_canvas.pack(side="left", expand=True, fill="both")
+
         # Project Info
-        info_frame = ttk.LabelFrame(self.project_tab, text="Project Info")
+        info_frame = ttk.LabelFrame(self.project_inner, text="Project Info")
         info_frame.pack(fill="x", padx=10, pady=5)
         
         ttk.Label(info_frame, text="Project Name:").grid(row=0, column=0, sticky="w", padx=5)
         self.project_name_var = tk.StringVar(value="New Project")
         ttk.Entry(info_frame, textvariable=self.project_name_var).grid(row=0, column=1, sticky="ew", padx=5)
 
-        # FG List in Project
-        fg_frame = ttk.LabelFrame(self.project_tab, text="Functional Groups in Project")
-        fg_frame.pack(expand=True, fill="both", padx=10, pady=5)
+        # Two side-by-side FG frames: Decision Makers and Non Decision Makers
+        fg_container = ttk.Frame(self.project_inner)
+        fg_container.pack(expand=True, fill="both", padx=10, pady=5)
 
-        self.fg_listbox = tk.Listbox(fg_frame)
+        # --- Decision Makers ---
+        dm_frame = ttk.LabelFrame(fg_container, text="Decision Makers")
+        dm_frame.pack(side="left", expand=True, fill="both", padx=(0, 5))
+
+        self.fg_listbox = tk.Listbox(dm_frame, exportselection=False)
         self.fg_listbox.pack(side="left", expand=True, fill="both", padx=5, pady=5)
-        self.fg_listbox.bind("<<ListboxSelect>>", self.on_fg_select)
+        self.fg_listbox.bind("<<ListboxSelect>>",
+                             lambda e: self.on_fg_select("decision_makers"))
 
-        btn_frame = ttk.Frame(fg_frame)
-        btn_frame.pack(side="right", fill="y", padx=5, pady=5)
+        dm_btn_frame = ttk.Frame(dm_frame)
+        dm_btn_frame.pack(side="right", fill="y", padx=5, pady=5)
+        ttk.Button(dm_btn_frame, text="Add from Library",
+                   command=lambda: self.add_from_library("decision_makers")).pack(fill="x", pady=2)
+        ttk.Button(dm_btn_frame, text="Add New FG",
+                   command=lambda: self.add_new_fg("decision_makers")).pack(fill="x", pady=2)
+        ttk.Button(dm_btn_frame, text="Remove FG",
+                   command=lambda: self.remove_fg("decision_makers")).pack(fill="x", pady=2)
 
-        ttk.Button(btn_frame, text="Add from Library", command=self.add_from_library).pack(fill="x", pady=2)
-        ttk.Button(btn_frame, text="Add New FG", command=self.add_new_fg).pack(fill="x", pady=2)
-        ttk.Button(btn_frame, text="Remove FG", command=self.remove_fg).pack(fill="x", pady=2)
+        # --- Non Decision Makers ---
+        ndm_frame = ttk.LabelFrame(fg_container, text="Non Decision Makers")
+        ndm_frame.pack(side="left", expand=True, fill="both", padx=(5, 0))
+
+        self.ndm_listbox = tk.Listbox(ndm_frame, exportselection=False)
+        self.ndm_listbox.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+        self.ndm_listbox.bind("<<ListboxSelect>>",
+                              lambda e: self.on_fg_select("non_decision_makers"))
+
+        ndm_btn_frame = ttk.Frame(ndm_frame)
+        ndm_btn_frame.pack(side="right", fill="y", padx=5, pady=5)
+        ttk.Button(ndm_btn_frame, text="Add from Library",
+                   command=lambda: self.add_from_library("non_decision_makers")).pack(fill="x", pady=2)
+        ttk.Button(ndm_btn_frame, text="Add New FG",
+                   command=lambda: self.add_new_fg("non_decision_makers")).pack(fill="x", pady=2)
+        ttk.Button(ndm_btn_frame, text="Remove FG",
+                   command=lambda: self.remove_fg("non_decision_makers")).pack(fill="x", pady=2)
+
+        # Track which list the FG editor is currently bound to
+        self.active_fg_category = None
 
         # Impact Variables list in project
-        impact_frame = ttk.LabelFrame(self.project_tab, text="Impact Variables in Project")
+        impact_frame = ttk.LabelFrame(self.project_inner, text="Impact Variables in Project")
         impact_frame.pack(expand=True, fill="both", padx=10, pady=5)
 
         self.impact_listbox = tk.Listbox(impact_frame)
@@ -163,20 +264,18 @@ class FGConfigApp:
         ttk.Button(impact_btn_frame, text="Add from Library", command=self.add_impact_from_library).pack(fill="x", pady=2)
         ttk.Button(impact_btn_frame, text="Remove Impact", command=self.remove_impact).pack(fill="x", pady=2)
 
-        # FG Editor
-        self.editor_frame = ttk.LabelFrame(self.project_tab, text="FG Editor")
-        self.editor_frame.pack(fill="x", padx=10, pady=5)
-        
+        # FG Editor for Decision Makers
+        self.editor_frame = ttk.LabelFrame(self.project_inner, text="FG Editor")
+        # Note: not packed here; on_fg_select shows/hides editors based on category.
+
         self.prop_vars = {}
         main_props = [
-            ("Is Decision Maker", "is_decision_maker", "check"),
-            ("Growth Rate (GR_X)", "growth_rate", "entry"),
             ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry"),
             ("Energy Content (MJ/ton)", "energy_content", "entry"),
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry"),
             ("Movement Speed (cells/tick)", "movement_speed", "entry")
         ]
-        
+
         for i, (label, key, type) in enumerate(main_props):
             ttk.Label(self.editor_frame, text=label).grid(row=i, column=0, sticky="w", padx=5, pady=2)
             if type == "entry":
@@ -193,16 +292,16 @@ class FGConfigApp:
         # Action Costs on one row
         row_idx = len(main_props)
         ttk.Label(self.editor_frame, text="Action Costs").grid(row=row_idx, column=0, sticky="w", padx=5, pady=2)
-        
+
         costs_frame = ttk.Frame(self.editor_frame)
         costs_frame.grid(row=row_idx, column=1, sticky="w", padx=5, pady=2)
-        
+
         action_costs = [
             ("Eat:", "feeding_cost"),
             ("Rest:", "resting_cost"),
             ("Move:", "movement_cost")
         ]
-        
+
         for j, (label, key) in enumerate(action_costs):
             ttk.Label(costs_frame, text=label).pack(side="left", padx=(0, 2))
             var = tk.StringVar()
@@ -211,6 +310,26 @@ class FGConfigApp:
             self.prop_vars[key] = var
 
         ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(row=row_idx + 1, column=0, columnspan=2, pady=5)
+
+        # FG Editor for Non Decision Makers
+        self.ndm_editor_frame = ttk.LabelFrame(self.project_inner, text="FG Editor")
+        # Note: not packed here; on_fg_select shows/hides editors based on category.
+
+        self.ndm_prop_vars = {}
+        ndm_props = [
+            ("Max Growth (fraction/tick)", "growth_rate"),
+            ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity"),
+        ]
+        for i, (label, key) in enumerate(ndm_props):
+            ttk.Label(self.ndm_editor_frame, text=label).grid(row=i, column=0, sticky="w", padx=5, pady=2)
+            var = tk.StringVar()
+            ent = ttk.Entry(self.ndm_editor_frame, textvariable=var)
+            ent.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
+            self.ndm_prop_vars[key] = var
+
+        ttk.Button(self.ndm_editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
+            row=len(ndm_props), column=0, columnspan=2, pady=5
+        )
 
     def setup_matrix_tab(self):
         self.matrix_canvas = tk.Canvas(self.matrix_tab)
@@ -225,15 +344,23 @@ class FGConfigApp:
         )
 
         self.matrix_canvas.create_window((0, 0), window=self.matrix_container, anchor="nw")
-        self.matrix_canvas.configure(yscrollcommand=self.matrix_scrollbar.set)
+        self.matrix_hscrollbar = ttk.Scrollbar(self.matrix_tab, orient="horizontal", command=self.matrix_canvas.xview)
+        self.matrix_canvas.configure(
+            yscrollcommand=self.matrix_scrollbar.set,
+            xscrollcommand=self.matrix_hscrollbar.set,
+        )
 
-        self.matrix_canvas.pack(side="left", expand=True, fill="both")
+        self.matrix_hscrollbar.pack(side="bottom", fill="x")
         self.matrix_scrollbar.pack(side="right", fill="y")
-        
-        # Bind mouse wheel scrolling to the canvas and all its potential children
+        self.matrix_canvas.pack(side="left", expand=True, fill="both")
+
+        # Bind mouse wheel scrolling (vertical) and Shift+wheel (horizontal)
         self.matrix_canvas.bind_all("<MouseWheel>", self._on_mousewheel)
         self.matrix_canvas.bind_all("<Button-4>", self._on_mousewheel)
         self.matrix_canvas.bind_all("<Button-5>", self._on_mousewheel)
+        self.matrix_canvas.bind_all("<Shift-MouseWheel>", self._on_shift_mousewheel)
+        self.matrix_canvas.bind_all("<Shift-Button-4>", self._on_shift_mousewheel)
+        self.matrix_canvas.bind_all("<Shift-Button-5>", self._on_shift_mousewheel)
         
         self.refresh_matrix()
 
@@ -241,7 +368,7 @@ class FGConfigApp:
         for widget in self.matrix_container.winfo_children():
             widget.destroy()
 
-        fgs = [fg['group_id'] for fg in self.project_data['functional_groups']]
+        fgs = self._all_fg_ids()
         if not fgs:
             ttk.Label(self.matrix_container, text="Add FGs to the project to see interaction matrices.").pack(padx=10, pady=10)
             return
@@ -361,44 +488,93 @@ class FGConfigApp:
                     self.matrix_widgets[key] = {}
                 self.matrix_widgets[key][data_key] = widget
 
-    def on_fg_select(self, event):
-        selection = self.fg_listbox.curselection()
+    def _listbox_for(self, category):
+        return self.fg_listbox if category == "decision_makers" else self.ndm_listbox
+
+    def _all_fg_entries(self):
+        """Return list of (category, group_id) for every FG currently in the project."""
+        out = []
+        for cat in ("decision_makers", "non_decision_makers"):
+            for fg in self.project_data.get(cat, []) or []:
+                out.append((cat, fg['group_id']))
+        return out
+
+    def _all_fg_ids(self):
+        return [gid for _, gid in self._all_fg_entries()]
+
+    def _find_fg_category(self, fg_id):
+        for cat in ("decision_makers", "non_decision_makers"):
+            if any(fg['group_id'] == fg_id for fg in self.project_data.get(cat, []) or []):
+                return cat
+        return None
+
+    def on_fg_select(self, category):
+        listbox = self._listbox_for(category)
+        selection = listbox.curselection()
         if not selection:
             return
+        # Deselect the other listbox to avoid ambiguity
+        other = self.ndm_listbox if category == "decision_makers" else self.fg_listbox
+        other.selection_clear(0, "end")
+        self.active_fg_category = category
+
         idx = selection[0]
-        fgs = self.project_data['functional_groups']
+        fgs = self.project_data.get(category, [])
         if idx >= len(fgs):
             return
         fg_id = fgs[idx]['group_id']
         config = self.current_fg_configs.get(fg_id, {})
-        # Update editor title to include the FG name (English/Swedish)
-        self.editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
-        
-        for key, var in self.prop_vars.items():
-            val = config.get(key, "")
-            if isinstance(var, tk.BooleanVar):
-                var.set(bool(val))
-            else:
+
+        # Show the editor matching the FG category, hide the other.
+        if category == "decision_makers":
+            self.ndm_editor_frame.pack_forget()
+            if not self.editor_frame.winfo_ismapped():
+                self.editor_frame.pack(fill="x", padx=10, pady=5)
+            self.editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
+            for key, var in self.prop_vars.items():
+                val = config.get(key, "")
+                if isinstance(var, tk.BooleanVar):
+                    var.set(bool(val))
+                else:
+                    var.set(str(val))
+        else:
+            self.editor_frame.pack_forget()
+            if not self.ndm_editor_frame.winfo_ismapped():
+                self.ndm_editor_frame.pack(fill="x", padx=10, pady=5)
+            self.ndm_editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
+            for key, var in self.ndm_prop_vars.items():
+                val = config.get(key, "")
                 var.set(str(val))
 
     def apply_fg_changes(self):
-        selection = self.fg_listbox.curselection()
+        category = self.active_fg_category
+        if category is None:
+            messagebox.showwarning("No Selection", "Please select a Functional Group from the list.")
+            return
+        listbox = self._listbox_for(category)
+        selection = listbox.curselection()
         if not selection:
             messagebox.showwarning("No Selection", "Please select a Functional Group from the list.")
             return
         idx = selection[0]
-        fgs = self.project_data['functional_groups']
+        fgs = self.project_data.get(category, [])
         if idx >= len(fgs):
             return
         fg_id = fgs[idx]['group_id']
-        # Preserve existing display_name from current config / library
+        # Preserve existing display_name and is_decision_maker flag.
+        # The flag is driven by which list the FG belongs to, not by a checkbox.
         existing = self.current_fg_configs.get(fg_id, {})
         display_name = existing.get("display_name") if isinstance(existing, dict) else None
         if not display_name:
             display_name = self.global_library.get("species_definitions", {}).get(fg_id, {}).get("display_name", fg_id)
-        config = {"display_name": display_name}
-        
-        for key, var in self.prop_vars.items():
+        is_dm = (category == "decision_makers")
+        # Start from existing config so we preserve fields not shown in the active editor.
+        config = dict(existing) if isinstance(existing, dict) else {}
+        config["display_name"] = display_name
+        config["is_decision_maker"] = is_dm
+
+        prop_vars = self.prop_vars if is_dm else self.ndm_prop_vars
+        for key, var in prop_vars.items():
             val = var.get()
             if isinstance(var, tk.BooleanVar):
                 config[key] = val
@@ -447,10 +623,20 @@ class FGConfigApp:
         self.save_yaml(self.global_library, self.library_path)
         messagebox.showinfo("Success", "Updated interactions and saved to library.")
 
-    def add_from_library(self):
-        lib_fgs = list(self.global_library.get("species_definitions", {}).keys())
+    def add_from_library(self, category="decision_makers"):
+        all_lib_fgs = list(self.global_library.get("species_definitions", {}).keys())
+        # Filter what's selectable based on category:
+        # - Non Decision Makers: only phytoplankton may be added.
+        # - Decision Makers: phytoplankton is not selectable.
+        if category == "non_decision_makers":
+            lib_fgs = [fg for fg in all_lib_fgs if fg == "phytoplankton"]
+        else:
+            lib_fgs = [fg for fg in all_lib_fgs if fg != "phytoplankton"]
+        # Hide groups that are already part of the project (in any category).
+        existing_ids = set(self._all_fg_ids())
+        lib_fgs = [fg for fg in lib_fgs if fg not in existing_ids]
         if not lib_fgs:
-            messagebox.showinfo("Library Empty", "Global library is empty.")
+            messagebox.showinfo("Library Empty", "No selectable groups available for this category.")
             return
 
         top = tk.Toplevel(self.root)
@@ -486,10 +672,19 @@ class FGConfigApp:
             added = 0
             for i in selection:
                 fg_id = lib_fgs[i]
-                if not any(fg['group_id'] == fg_id for fg in self.project_data['functional_groups']):
-                    self.project_data['functional_groups'].append({'group_id': fg_id})
-                    self.current_fg_configs[fg_id] = self.global_library["species_definitions"][fg_id]
-                    added += 1
+                if fg_id in self._all_fg_ids():
+                    continue
+                self.project_data.setdefault(category, []).append({'group_id': fg_id})
+                self.current_fg_configs[fg_id] = self.global_library["species_definitions"][fg_id]
+                # Keep the library's is_decision_maker flag in sync with the
+                # category the user chose to add it to.
+                lib_entry = self.global_library["species_definitions"].get(fg_id, {})
+                desired_dm = (category == "decision_makers")
+                if lib_entry.get("is_decision_maker") != desired_dm:
+                    lib_entry["is_decision_maker"] = desired_dm
+                    self.global_library["species_definitions"][fg_id] = lib_entry
+                    self.save_yaml(self.global_library, self.library_path)
+                added += 1
             self.update_fg_list()
             self.refresh_matrix()
             top.destroy()
@@ -499,18 +694,19 @@ class FGConfigApp:
         ttk.Button(btn_frame, text="Add", command=do_add).pack(side="right", padx=5)
         lb.bind("<Double-Button-1>", lambda e: do_add())
 
-    def add_new_fg(self):
+    def add_new_fg(self, category="decision_makers"):
         import tkinter.simpledialog as sd
         fg_id = sd.askstring("New FG", "Enter ID for new Functional Group (English):")
         if fg_id:
-            if any(fg['group_id'] == fg_id for fg in self.project_data['functional_groups']):
+            if fg_id in self._all_fg_ids():
                 messagebox.showerror("Error", "FG ID already exists in project.")
                 return
-            
-            self.project_data['functional_groups'].append({'group_id': fg_id})
+
+            is_dm = (category == "decision_makers")
+            self.project_data.setdefault(category, []).append({'group_id': fg_id})
             self.current_fg_configs[fg_id] = {
                 "display_name": fg_id,
-                "is_decision_maker": False,
+                "is_decision_maker": is_dm,
                 "growth_rate": 0.0,
                 "max_energy_reserve": 0.0,
                 "resting_metabolism": 0.0,
@@ -528,18 +724,21 @@ class FGConfigApp:
             self.update_fg_list()
             self.refresh_matrix()
 
-    def remove_fg(self):
-        selection = self.fg_listbox.curselection()
+    def remove_fg(self, category="decision_makers"):
+        listbox = self._listbox_for(category)
+        selection = listbox.curselection()
         if not selection:
             return
         idx = selection[0]
-        fgs = self.project_data['functional_groups']
+        fgs = self.project_data.get(category, [])
         if idx >= len(fgs):
             return
         fg_id = fgs[idx]['group_id']
-        self.project_data['functional_groups'] = [fg for fg in fgs if fg['group_id'] != fg_id]
+        self.project_data[category] = [fg for fg in fgs if fg['group_id'] != fg_id]
         if fg_id in self.current_fg_configs:
             del self.current_fg_configs[fg_id]
+        if self.active_fg_category == category:
+            self.active_fg_category = None
         self.update_fg_list()
         self.refresh_matrix()
 
@@ -562,8 +761,12 @@ class FGConfigApp:
 
     def update_fg_list(self):
         self.fg_listbox.delete(0, "end")
-        for fg in self.project_data['functional_groups']:
+        for fg in self.project_data.get('decision_makers', []) or []:
             self.fg_listbox.insert("end", self.fg_display(fg['group_id']))
+        if hasattr(self, 'ndm_listbox'):
+            self.ndm_listbox.delete(0, "end")
+            for fg in self.project_data.get('non_decision_makers', []) or []:
+                self.ndm_listbox.insert("end", self.fg_display(fg['group_id']))
 
     def update_impact_list(self):
         self.impact_listbox.delete(0, "end")
@@ -574,8 +777,11 @@ class FGConfigApp:
 
     def add_impact_from_library(self):
         lib_impacts = list(self.global_library.get("impact_definitions", {}).keys())
+        # Hide impacts that are already part of the project.
+        existing_ids = {iv['impact_id'] for iv in self.project_data.get('impact_variables', []) or []}
+        lib_impacts = [imp for imp in lib_impacts if imp not in existing_ids]
         if not lib_impacts:
-            messagebox.showinfo("Library Empty", "No impact variables in global library.")
+            messagebox.showinfo("Library Empty", "No selectable impact variables available.")
             return
 
         top = tk.Toplevel(self.root)
@@ -636,8 +842,15 @@ class FGConfigApp:
         self.refresh_matrix()
 
     def new_project(self):
-        self.project_data = {"project_metadata": {"name": "New Project"}, "simulation_settings": {}, "functional_groups": [], "impact_variables": []}
+        self.project_data = {
+            "project_metadata": {"name": "New Project"},
+            "simulation_settings": {},
+            "decision_makers": [],
+            "non_decision_makers": [],
+            "impact_variables": []
+        }
         self.current_fg_configs = {}
+        self.active_fg_category = None
         self.project_name_var.set("New Project")
         self.update_fg_list()
         self.update_impact_list()
@@ -660,10 +873,31 @@ class FGConfigApp:
             self.project_data = data
             self.project_path = path
             self.project_name_var.set(data.get("project_metadata", {}).get("name", "Unnamed Project"))
+            # Backward compatibility: legacy projects had a single `functional_groups` list.
+            # Split it into decision/non-decision based on the library's is_decision_maker flag.
+            if 'functional_groups' in self.project_data and (
+                'decision_makers' not in self.project_data
+                and 'non_decision_makers' not in self.project_data
+            ):
+                dms, ndms = [], []
+                for fg in self.project_data.get('functional_groups', []) or []:
+                    gid = fg.get('group_id')
+                    if not gid:
+                        continue
+                    lib_entry = self.global_library.get("species_definitions", {}).get(gid, {})
+                    if lib_entry.get('is_decision_maker', False):
+                        dms.append({'group_id': gid})
+                    else:
+                        ndms.append({'group_id': gid})
+                self.project_data['decision_makers'] = dms
+                self.project_data['non_decision_makers'] = ndms
+                self.project_data.pop('functional_groups', None)
+            self.project_data.setdefault('decision_makers', [])
+            self.project_data.setdefault('non_decision_makers', [])
+            self.active_fg_category = None
             # Load configs for active FGs
             self.current_fg_configs = {}
-            for fg in self.project_data.get('functional_groups', []):
-                gid = fg['group_id']
+            for gid in self._all_fg_ids():
                 if gid in self.global_library.get("species_definitions", {}):
                     self.current_fg_configs[gid] = self.global_library["species_definitions"][gid]
                 else:
