@@ -28,6 +28,24 @@ def parse_grid_arg(value):
         )
     return n, k
 
+def _auto_workers(n_deltas):
+    """Pick a sensible default worker count.
+
+    Rules:
+    - Cap at the number of tasks per train_step (2 * n_deltas); more workers
+      give no speedup since pool.map is synchronous per step.
+    - Leave 1 core for the parent/OS to reduce context-switch overhead.
+    - Prefer sched_getaffinity (respects cgroups/taskset) when available.
+    - Return 1 (sequential) on tiny machines or when target < 2.
+    """
+    n_tasks = 2 * n_deltas
+    try:
+        cores = len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        cores = os.cpu_count() or 1
+    target = min(n_tasks, max(1, cores - 1))
+    return target if target >= 2 else 1
+
 def env_builder():
     """
     Creates a new instance of the ecosystem for each rollout.
@@ -85,8 +103,9 @@ def main():
     parser.add_argument("--project", type=str, help="Path to project file (.yaml)")
     parser.add_argument("--grid", type=parse_grid_arg, default=None,
                         help="Grid dimensions as n*m (e.g. 30*30). Both dimensions must be >= 3. Default: 60*60.")
-    parser.add_argument("--workers", type=int, default=1,
-                        help="Number of parallel rollout worker processes (default: 1 = sequential).")
+    parser.add_argument("--workers", type=int, default=0,
+                        help="Parallel rollout workers. 0 = auto (default, based on CPU cores and n_deltas), "
+                             "1 = sequential, N = use N workers.")
     
     args = parser.parse_args()
 
@@ -135,11 +154,22 @@ def main():
     print(f"Sigma:          {args.sigma}")
     print(f"------------------------------------------")
 
+    # Resolve worker count (0 = auto)
+    n_deltas = 8
+    if args.workers > 0:
+        n_workers = args.workers
+        workers_origin = "explicit"
+    else:
+        n_workers = _auto_workers(n_deltas)
+        workers_origin = "auto"
+
     # Create the trainer with all relevant policy dimensions
-    trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=8,
-                         n_workers=args.workers)
-    if args.workers > 1:
-        print(f"Parallel workers: {args.workers}")
+    trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
+                         n_workers=n_workers)
+    if n_workers > 1:
+        print(f"Parallel workers: {n_workers} ({workers_origin})")
+    else:
+        print(f"Parallel workers: 1 (sequential, {workers_origin})")
     
     for species in target_species:
         print(f"\n>>> Starting training for: {species.upper()}")
