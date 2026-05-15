@@ -22,7 +22,12 @@ class PolicyNetwork(nn.Module):
     def get_action_probs(self, state_tensor):
         # state_tensor shape: (H, W, input_dim)
         H, W, D = state_tensor.shape
-        flat_state = state_tensor.view(-1, D)
+        flat_state = state_tensor.reshape(-1, D)
         with torch.no_grad():
             probs = self.forward(flat_state)
         return probs.view(H, W, -1).permute(2, 0, 1).numpy()
+
+    def get_action_probs_torch(self, flat_state):
+        """Batched forward returning torch tensor (N, output_dim) without numpy round-trip."""
+        with torch.no_grad():
+            return self.forward(flat_state)

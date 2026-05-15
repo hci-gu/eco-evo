@@ -65,11 +65,12 @@ def get_dynamic_policy_params(fgs):
     # Total number of layers in the observation is n_fgs + 2
     in_dim = n_fgs + 2
     
+    # Output is now uniform across all decision makers: Move(4) + Rest(1) + Eat(N_fgs).
+    # Eat-slots are indexed by a globally sorted FG list; slots outside the
+    # predator's menu are permanently masked to 0 by the environment.
+    out_dim = 5 + n_fgs
     for fg_id, fg in fgs.items():
         if fg.is_decision_maker:
-            # Output: Move(4) + Rest(1) + Eat(N_prey)
-            menu_size = len(fg.params.get('menu', []))
-            out_dim = 5 + menu_size
             params[fg_id] = (in_dim, out_dim)
     return params
 
@@ -84,6 +85,8 @@ def main():
     parser.add_argument("--project", type=str, help="Path to project file (.yaml)")
     parser.add_argument("--grid", type=parse_grid_arg, default=None,
                         help="Grid dimensions as n*m (e.g. 30*30). Both dimensions must be >= 3. Default: 60*60.")
+    parser.add_argument("--workers", type=int, default=1,
+                        help="Number of parallel rollout worker processes (default: 1 = sequential).")
     
     args = parser.parse_args()
 
@@ -133,7 +136,10 @@ def main():
     print(f"------------------------------------------")
 
     # Create the trainer with all relevant policy dimensions
-    trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=8)
+    trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=8,
+                         n_workers=args.workers)
+    if args.workers > 1:
+        print(f"Parallel workers: {args.workers}")
     
     for species in target_species:
         print(f"\n>>> Starting training for: {species.upper()}")
@@ -153,6 +159,7 @@ def main():
     print(f"\n==========================================")
     print(f"Training completed for all selected groups.")
     print(f"==========================================")
+    trainer.close()
 
 if __name__ == "__main__":
     main()
