@@ -60,21 +60,29 @@ def _worker_init(env_builder, policy_params):
 
 
 def _evaluate_task(task):
-    """task = (fg_to_train, weights_dict, n_ticks, alpha, beta, seed)
-    weights_dict: dict[fg_id, np.ndarray] of flat weights for every policy.
-    alpha, beta: fitness weights for delta_b and delta_r respectively.
-    seed: optional int; when set, the env_builder uses it to deterministically
-          initialise the spatial biomass distribution (Common Random Numbers).
-    Returns: float fitness.
+    """task = (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack)
+
+    obs_pack: optional dict {'dm_ids': [...], 'mean': (N_dm,D) fp32,
+              'var': (N_dm,D) fp32} for ARS-V2 obs normalisation.
+              When provided, env.obs_mean/obs_var are installed and the env
+              accumulates raw-obs stats which are returned with the fitness.
+
+    Returns:
+        (fitness: float,
+         samples: None | (sum (N_dm,D) f64, sumsq (N_dm,D) f64, count int))
     """
     seed = None
-    if len(task) == 6:
+    obs_pack = None
+    if len(task) == 7:
+        fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack = task
+    elif len(task) == 6:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed = task
     elif len(task) == 5:
         fg_to_train, weights_dict, n_ticks, alpha, beta = task
     else:
         fg_to_train, weights_dict, n_ticks = task
         alpha, beta = 1.0, 1.0
+
     # Sync policy weights
     for fg_id, w in weights_dict.items():
         if fg_id in _POLICIES:
@@ -82,6 +90,20 @@ def _evaluate_task(task):
 
     env = _ENV_BUILDER(seed=seed) if seed is not None else _ENV_BUILDER()
     env.policies = _POLICIES
+
+    # Install obs-normalisation stats if provided.
+    if obs_pack is not None:
+        env._build_static_caches()
+        dm_ids = obs_pack['dm_ids']
+        mean = obs_pack['mean']
+        var = obs_pack['var']
+        if dm_ids == env.dm_ids:
+            env.obs_mean = mean
+            env.obs_var = var
+        else:
+            idx = [dm_ids.index(fid) for fid in env.dm_ids]
+            env.obs_mean = mean[idx]
+            env.obs_var = var[idx]
 
     b0 = env.fgs[fg_to_train].biomass.sum()
     r0 = env.fgs[fg_to_train].energy_reserve.sum()
@@ -96,4 +118,9 @@ def _evaluate_task(task):
     eps_r = max(1e-6 * r0, 1e-9)
     delta_b = np.log((bh + eps_b) / (b0 + eps_b))
     delta_r = np.log((rh + eps_r) / (r0 + eps_r))
-    return float(alpha * delta_b + beta * delta_r)
+    fitness = float(alpha * delta_b + beta * delta_r)
+
+    samples = None
+    if obs_pack is not None and getattr(env, '_obs_sum', None) is not None:
+        samples = (env._obs_sum.copy(), env._obs_sumsq.copy(), env._obs_count)
+    return (fitness, samples)

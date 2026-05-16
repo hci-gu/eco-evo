@@ -28,6 +28,24 @@ def parse_grid_arg(value):
         )
     return n, k
 
+def _save_checkpoint(trainer, fg_id, path):
+    """Save policy weights AND running obs-normalisation stats (if any).
+
+    Format: {'state_dict': ..., 'obs_stats': {'mean': ..., 'var': ..., 'count': N}}.
+    For backwards compatibility, code loading older .pth files (a bare
+    state_dict) should still work — torch.save preserves dict structure here.
+    """
+    payload = {'state_dict': trainer.policies[fg_id].state_dict()}
+    if getattr(trainer, 'obs_stats', None) and fg_id in trainer.obs_stats:
+        st = trainer.obs_stats[fg_id]
+        payload['obs_stats'] = {
+            'mean': st['mean'].astype(np.float32),
+            'var': st['var'].astype(np.float32),
+            'count': int(st['count']),
+        }
+    torch.save(payload, path)
+
+
 def _auto_workers(n_deltas):
     """Pick a sensible default worker count.
 
@@ -119,7 +137,13 @@ def main():
                              "1 = sequential, N = use N workers.")
     parser.add_argument("--n_deltas", type=int, default=10,
                         help="Number of ARS perturbation directions per iteration (default: 10).")
-    
+    parser.add_argument("--top_deltas", type=int, default=None,
+                        help="ARS-V2 top-b: keep only the best b delta pairs (sorted by "
+                             "max(r_pos, r_neg)) when forming the gradient. Default: n_deltas // 2. "
+                             "Set equal to --n_deltas to disable truncation.")
+    parser.add_argument("--no_obs_normalize", action="store_true",
+                        help="Disable ARS-V2 running observation normalisation (mean/std).")
+
     args = parser.parse_args()
 
     # Parse --generations: accept 'inf' or a positive integer.
@@ -209,6 +233,16 @@ def main():
     print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
     print(f"Beta  (delta_r):{_mark('beta', args.beta)}")
     print(f"N Deltas:       {_mark('n_deltas', args.n_deltas)}")
+    # Resolve top_deltas (None -> n_deltas // 2)
+    if args.top_deltas is None:
+        top_deltas_resolved = max(1, n_deltas // 2)
+        top_origin = f"default: n_deltas // 2 = {top_deltas_resolved}"
+    else:
+        top_deltas_resolved = max(1, min(args.top_deltas, n_deltas))
+        top_origin = "user"
+    print(f"Top Deltas:     {top_deltas_resolved} ({top_origin})")
+    obs_norm_enabled = not args.no_obs_normalize
+    print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:
@@ -217,7 +251,8 @@ def main():
 
     # Create the trainer with all relevant policy dimensions
     trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
-                         n_workers=n_workers, alpha=args.alpha, beta=args.beta)
+                         n_workers=n_workers, alpha=args.alpha, beta=args.beta,
+                         obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved)
     
     import itertools
     gen_iter = itertools.count() if generations_is_inf else range(generations_value)
@@ -238,7 +273,7 @@ def main():
 
                 # Save checkpoint after each generation so progress is preserved.
                 save_path = f"results/policy_{species}.pth"
-                torch.save(trainer.policies[species].state_dict(), save_path)
+                _save_checkpoint(trainer, species, save_path)
                 print(f"    Checkpoint saved to: {save_path}")
     except KeyboardInterrupt:
         print(f"\n\n[Interrupted by user] Stopping training after current step.")
@@ -251,7 +286,7 @@ def main():
         for species in target_species:
             save_path = f"results/policy_{species}.pth"
             try:
-                torch.save(trainer.policies[species].state_dict(), save_path)
+                _save_checkpoint(trainer, species, save_path)
                 print(f"    Final checkpoint saved to: {save_path}")
             except Exception as e:
                 print(f"    Could not save checkpoint for {species}: {e}")

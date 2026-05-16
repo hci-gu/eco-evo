@@ -205,6 +205,38 @@ class EcosystemEnvironment:
             return
 
         obs_np = self._build_observation_batch()
+        D = obs_np.shape[-1]
+
+        # Accumulate raw-obs statistics (sum, sumsq, count) per DM, per dim.
+        # These are returned to the trainer for a Welford parallel merge so the
+        # global running mean/var converges across rollouts (and across workers
+        # in the parallel path).
+        # Shapes: obs_np is (N_dm, H*W, D).
+        flat = obs_np.reshape(self.N_dm, -1, D)
+        nsamp = flat.shape[1]
+        sample_sum = flat.sum(axis=1, dtype=np.float64)              # (N_dm, D)
+        sample_sumsq = (flat.astype(np.float64) ** 2).sum(axis=1)    # (N_dm, D)
+        if not hasattr(self, '_obs_sum') or self._obs_sum is None:
+            self._obs_sum = np.zeros((self.N_dm, D), dtype=np.float64)
+            self._obs_sumsq = np.zeros((self.N_dm, D), dtype=np.float64)
+            self._obs_count = 0
+        self._obs_sum += sample_sum
+        self._obs_sumsq += sample_sumsq
+        self._obs_count += nsamp
+
+        # ARS-V2 observation normalisation: subtract running mean, divide by
+        # running std, clip to [-10, 10]. Stats are *frozen* during a rollout
+        # (set by the trainer via env.obs_mean / env.obs_var before stepping)
+        # so +delta and -delta rollouts see the same normalisation.
+        if (getattr(self, 'obs_mean', None) is not None
+                and getattr(self, 'obs_var', None) is not None
+                and self.obs_mean.shape == (self.N_dm, D)):
+            mean = self.obs_mean.astype(self.dtype, copy=False)
+            var = self.obs_var.astype(self.dtype, copy=False)
+            std = np.sqrt(var + np.float32(1e-8))
+            obs_np = (obs_np - mean[:, None, :]) / std[:, None, :]
+            obs_np = np.clip(obs_np, -10.0, 10.0).astype(self.dtype, copy=False)
+
         obs_t = torch.from_numpy(obs_np)
 
         if self._batched_ready and obs_np.shape[-1] == self._in_dim:
