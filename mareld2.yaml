@@ -3,14 +3,22 @@
 simulation_settings: {}
 decision_makers:
   - group_id: zooplankton
+    initial_biomass: 35000
   - group_id: pelagic_fish
+    initial_biomass: 12000
   - group_id: gadoids
+    initial_biomass: 2500
   - group_id: porpoises
+    initial_biomass: 12
   - group_id: seals
+    initial_biomass: 25
   - group_id: seabirds
+    initial_biomass: 25
 non_decision_makers:
   - group_id: phytoplankton
+    initial_biomass: 80000
   - group_id: benthic_community
+    initial_biomass: 160000
 impact_variables:
   - impact_id: bottom_trawling
   - impact_id: pelagic_trawling

@@ -32,6 +32,13 @@ def _set_weights_flat(policy, flat_weights):
 
 def _worker_init(env_builder, policy_params):
     global _ENV_BUILDER, _POLICIES
+    # Ignore SIGINT in workers so Ctrl+C is handled solely by the parent.
+    # Without this, every worker raises KeyboardInterrupt and spams tracebacks.
+    import signal
+    try:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+    except Exception:
+        pass
     # Single-threaded BLAS/torch in workers; parallelism comes from the pool.
     # Must be set before importing numpy heavy ops; torch we throttle explicitly.
     import os
@@ -53,17 +60,27 @@ def _worker_init(env_builder, policy_params):
 
 
 def _evaluate_task(task):
-    """task = (fg_to_train, weights_dict, n_ticks)
+    """task = (fg_to_train, weights_dict, n_ticks, alpha, beta, seed)
     weights_dict: dict[fg_id, np.ndarray] of flat weights for every policy.
+    alpha, beta: fitness weights for delta_b and delta_r respectively.
+    seed: optional int; when set, the env_builder uses it to deterministically
+          initialise the spatial biomass distribution (Common Random Numbers).
     Returns: float fitness.
     """
-    fg_to_train, weights_dict, n_ticks = task
+    seed = None
+    if len(task) == 6:
+        fg_to_train, weights_dict, n_ticks, alpha, beta, seed = task
+    elif len(task) == 5:
+        fg_to_train, weights_dict, n_ticks, alpha, beta = task
+    else:
+        fg_to_train, weights_dict, n_ticks = task
+        alpha, beta = 1.0, 1.0
     # Sync policy weights
     for fg_id, w in weights_dict.items():
         if fg_id in _POLICIES:
             _set_weights_flat(_POLICIES[fg_id], w)
 
-    env = _ENV_BUILDER()
+    env = _ENV_BUILDER(seed=seed) if seed is not None else _ENV_BUILDER()
     env.policies = _POLICIES
 
     b0 = env.fgs[fg_to_train].biomass.sum()
@@ -79,4 +96,4 @@ def _evaluate_task(task):
     eps_r = max(1e-6 * r0, 1e-9)
     delta_b = np.log((bh + eps_b) / (b0 + eps_b))
     delta_r = np.log((rh + eps_r) / (r0 + eps_r))
-    return float(delta_b + delta_r)
+    return float(alpha * delta_b + beta * delta_r)

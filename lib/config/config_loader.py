@@ -6,11 +6,12 @@ def load_config(path):
     with open(path, 'r') as f:
         return yaml.safe_load(f)
 
-def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60)):
+def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None):
     lib = load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
-    
+
+    rng = np.random.default_rng(seed) if seed is not None else np.random
     fgs = {}
     for sid, specs in spec_defs.items():
         # Merge specs with interaction data
@@ -31,43 +32,38 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                 params['impact'][impact_id] = idef
                 
         fg = FunctionalGroup(sid, params)
-        
-        # Initial biomass (from Mareld mini.pdf)
-        initial_totals = {
-            'phytoplankton': 80000,
-            'zooplankton': 35000,
-            'benthic_community': 160000,
-            'pelagic_fish': 12000,
-            'gadoids': 2500,
-            'seals': 25,
-            'porpoises': 12,
-            'seabirds': 25
-        }
-        
-        total_b = initial_totals.get(sid, 1000)
-        
+
+        # Initial total biomass: prefer library value, fallback to 1000.
+        total_b = float(specs.get('initial_biomass', 1000) or 0)
+
         # Random distribution for MVP demonstration
-        initial_b = np.random.rand(*grid_size)
+        initial_b = rng.random(grid_size) if seed is not None else np.random.rand(*grid_size)
         initial_b = (initial_b / (initial_b.sum() + 1e-9)) * total_b
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
     return fgs
 
-def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60)):
+def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None):
     project = load_config(project_path)
+    rng = np.random.default_rng(seed) if seed is not None else None
     lib = load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
     
     # Support both the new split (decision_makers / non_decision_makers) and the
     # legacy unified functional_groups list for backward compatibility.
+    # Also retain per-FG project overrides (e.g. initial_biomass).
     project_fg_ids = []
+    project_fg_overrides = {}
     for key in ('decision_makers', 'non_decision_makers', 'functional_groups'):
         for fg in project.get(key, []) or []:
-            gid = fg.get('group_id') if isinstance(fg, dict) else None
+            if not isinstance(fg, dict):
+                continue
+            gid = fg.get('group_id')
             if gid and gid not in project_fg_ids:
                 project_fg_ids.append(gid)
+                project_fg_overrides[gid] = fg
     impact_vars = [iv['impact_id'] for iv in project.get('impact_variables', [])]
     
     fgs = {}
@@ -92,20 +88,17 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 params['impact'][impact_id] = idef
                 
         fg = FunctionalGroup(sid, params)
-        
-        initial_totals = {
-            'phytoplankton': 80000,
-            'zooplankton': 35000,
-            'benthic_community': 160000,
-            'pelagic_fish': 12000,
-            'gadoids': 2500,
-            'seals': 25,
-            'porpoises': 12,
-            'seabirds': 25
-        }
-        total_b = initial_totals.get(sid, 1000)
-        
-        initial_b = np.random.rand(*grid_size)
+
+        # Initial total biomass: project override > library default > 1000.
+        override = project_fg_overrides.get(sid, {})
+        if 'initial_biomass' in override and override.get('initial_biomass') is not None:
+            total_b = float(override['initial_biomass'])
+        elif 'initial_biomass' in specs and specs.get('initial_biomass') is not None:
+            total_b = float(specs['initial_biomass'])
+        else:
+            total_b = 1000.0
+
+        initial_b = rng.random(grid_size) if rng is not None else np.random.rand(*grid_size)
         initial_b = (initial_b / (initial_b.sum() + 1e-9)) * total_b
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg

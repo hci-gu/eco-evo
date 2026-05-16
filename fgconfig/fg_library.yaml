@@ -8,6 +8,7 @@ species_definitions:
     max_carrying_capacity: 60.0
     energy_content: 600.0
     max_energy_reserve: 0.0
+    initial_biomass: 80000
   zooplankton:
     display_name: "Zooplankton"
     is_decision_maker: true
@@ -18,6 +19,7 @@ species_definitions:
     feeding_cost: 3.0
     movement_cost: 0.0
     energy_content: 2500.0
+    initial_biomass: 35000
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false
@@ -27,6 +29,7 @@ species_definitions:
     max_carrying_capacity: 120.0
     energy_content: 0.0
     max_energy_reserve: 0.0
+    initial_biomass: 160000
   pelagic_fish:
     display_name: "Pelagic Fish"
     is_decision_maker: true
@@ -37,6 +40,7 @@ species_definitions:
     feeding_cost: 3.0
     movement_cost: 3.0
     energy_content: 5000.0
+    initial_biomass: 12000
   gadoids:
     display_name: "Gadoids"
     is_decision_maker: true
@@ -47,6 +51,7 @@ species_definitions:
     feeding_cost: 3.0
     movement_cost: 3.0
     energy_content: 4000.0
+    initial_biomass: 2500
   porpoises:
     display_name: "Porpoises"
     is_decision_maker: true
@@ -56,6 +61,7 @@ species_definitions:
     resting_cost: 1.0
     feeding_cost: 3.0
     movement_cost: 3.0
+    initial_biomass: 12
   seals:
     display_name: "Seals"
     is_decision_maker: true
@@ -65,6 +71,7 @@ species_definitions:
     resting_cost: 1.0
     feeding_cost: 3.0
     movement_cost: 3.0
+    initial_biomass: 25
   seabirds:
     display_name: "Seabirds"
     is_decision_maker: true
@@ -74,6 +81,7 @@ species_definitions:
     resting_cost: 1.0
     feeding_cost: 4.0
     movement_cost: 8.0
+    initial_biomass: 25
 interaction_definitions:
   zooplankton_preys_on_phytoplankton:
     max_intake_rate: 0.1

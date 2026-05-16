@@ -10,6 +10,7 @@ All code, comments, variable names, configuration files, UI strings,
 print statements and documentation MUST be in English unless the user
 explicitly requests otherwise. Swedish display names exist only as an
 optional UI overlay (see sv_mapping in fgconfig.py).
+User communication (chat answers, status updates): Swedish.
 
 ================================================================
 1. REPOSITORY LAYOUT (project root: /home/simon/eco-evo)
@@ -22,27 +23,41 @@ optional UI overlay (see sv_mapping in fgconfig.py).
     fgconfig.py             Tkinter GUI for editing FGs, impacts, matrices.
     fg_library.yaml         CENTRAL biological library (single source of truth
                             for species_definitions, interaction_definitions,
-                            impact_definitions).
+                            impact_definitions). Holds library-default
+                            initial_biomass per species (fallback only).
     recent_projects.txt     GUI's "Open Recent" persistence.
   lib/
     world/grid.py           Grid(width, height, cell_size, tick_duration).
     world/functional_group.py
                             FunctionalGroup: biomass, energy_reserve,
-                            temp_energy_gains (for simultaneous predation),
-                            is_decision_maker flag, hunger h_X.
+                            temp_energy_gains, is_decision_maker, hunger.
+                            initialize_state: R = B * 0.7 * ME.
     environments/ecosystem.py
                             EcosystemEnvironment: "The Tick" pipeline.
-                            _calculate_decisions, _apply_predation,
-                            _apply_movement (metabolism merged here),
-                            _apply_growth_and_impact.
+                            HEAVILY OPTIMIZED — see section 13.
+                            _build_static_caches builds per-DM batched policy
+                            weights, eat-mask, move-mask, scalar caches.
+                            _batched_policy_forward runs all DMs via torch.bmm.
+                            Hot-path arrays are float32.
     config/config_loader.py setup_full_mareld_mvp + load_project_config.
-    runners/policy.py       Policy MLP network (dynamic in/out dims).
-    runners/trainer.py      ARS trainer.
-  make_*.py                 GIS helpers generating 60x60 PNG maps
-                            (djup, vindparker, farleder, pelagisk).
+                            Both accept optional `seed` for CRN.
+                            initial_biomass per FG: project override >
+                              library species_definitions.initial_biomass >
+                              1000 fallback. Hardcoded table REMOVED.
+    runners/policy.py       Policy MLP. Has get_action_probs (numpy I/O, legacy)
+                            and get_action_probs_torch (kept in torch).
+    runners/trainer.py      ARS trainer; sequential + parallel-pool paths.
+                            Supports CRN seeds per delta-pair, alpha/beta
+                            fitness weights, configurable n_deltas/n_workers.
+    runners/parallel_worker.py
+                            multiprocessing worker (spawn ctx).
+                            _worker_init: ignores SIGINT, throttles BLAS/torch
+                            to 1 thread, builds local policies.
+                            _evaluate_task: 6-tuple (fg, weights, n_ticks,
+                            alpha, beta, seed); backwards compat 3-/5-tuple.
+  make_*.py                 GIS helpers generating 60x60 PNG maps.
   *.png                     Geographic input layers (60x60 grayscale).
-  results/                  Trained policies (*.pth) and output graphs.
-                            NOT staged in git.
+  results/                  Trained policies (*.pth). NOT staged.
   Strategi.pdf, Mareld mini.pdf, MKB Mareld.pdf, Poseidon/
                             Source documents. Strategi.pdf is the
                             authoritative spec for "The Tick".
@@ -55,146 +70,135 @@ optional UI overlay (see sv_mapping in fgconfig.py).
   Non decision makers (logistic growth toward carrying capacity):
     phytoplankton, benthic_community
 
-  English IDs are canonical. Swedish names live only in
-  FGConfigApp.sv_mapping for display, e.g. "(Porpoises/Tumlare)".
+  English IDs are canonical. Swedish names only in FGConfigApp.sv_mapping.
 
 ================================================================
 3. "THE TICK" PIPELINE (lib/environments/ecosystem.py)
 ================================================================
-Random FG order each tick (random.sample) to avoid systematic bias.
-For each tick:
-  1. _calculate_decisions
-     - Build observation: own biomass, own energy_level, all other
-       FGs' biomass (fixed order), windfarm_noise (only this impact
-       map is currently fed to the policy - see Discrepancy list).
-     - Policy outputs softmax over [N, E, S, W, Rest, Eat_1..Eat_K].
-     - Action mask (applied BEFORE softmax renormalization):
-         * Move masked when target cell is outside grid or has
-           accessibility==0.
-         * Eat_i masked when prey i biomass in the cell is 0 or
-           prey i is absent from the ecosystem.
-       Probability mass is renormalized across the remaining actions.
-  2. _apply_predation
-     - First pass: compute desired_feeding D_XY for every predator
-       from snapshot at time t (so order is irrelevant).
-     - If total demand > prey biomass, scale proportionally.
-     - Predator gains stored in temp_energy_gains (NOT added to
-       energy_reserve yet) so that other predators in the same tick
-       still see the pre-eating energy density.
-     - Prey: biomass reduced; energy_reserve scaled proportionally
-       (R_new = R_old * (B_new/B_old)) to keep R/B for survivors.
-  3. _apply_movement (also includes metabolism, fraction-wise)
-     - Split each cell's biomass by action probabilities:
-       b_eat = B*pi_eat, b_rest = B*pi_rest, b_move[d] = B*pi_move[d].
-     - Each fraction pays its own metabolic cost
-       (feeding_cost, resting_cost, movement_cost) multiplied by
-       resting_metabolism and a noise_factor = 1 + sens*noise.
-     - Only the moving fractions actually flux to neighbours.
-       flux = clip(v, 0, 1); v = movement_speed (capped at 1.0 by GUI).
-     - Energy follows biomass proportionally (Eulerian transport).
-     - temp_energy_gains from predation is added to the stayers
-       (eating fraction) after metabolism.
+Random FG order each tick (random.sample). Per tick:
+  1. _calculate_decisions  (batched over all DMs)
+     - obs_batch (N_dm, H*W, D) built once. D = 2 + (N_fgs - 1) + 1.
+     - All DM policies in ONE batched torch.bmm forward (3 stacked weight
+       tensors built once in _build_static_caches: (N_dm, in, hid),
+       (N_dm, hid, hid), (N_dm, hid, out)). No per-DM loop, no numpy roundtrip.
+     - Output: pi_move (N_dm,4,H,W), pi_rest (N_dm,H,W),
+       pi_eat (N_dm,N_all,H,W).
+     - Mask BEFORE renormalization:
+         * Move masked by precomputed move_mask (accessibility + edges).
+         * Eat masked by static eat_mask AND (prey.biomass > 0).
+     - Renormalize across remaining actions.
+  2. _apply_predation  (fully vectorized)
+     - Stacked B (N_all,H,W), pi_eat (N_dm,N_all,H,W).
+     - max_intake_mat, energy_gain_mat: (N_dm,N_all) constants from init.
+     - D = B_pred[:,None]*pi_eat*max_intake[:,:,None,None]*hunger[:,None]
+     - total_demand=D.sum(0); scale=min(1, B_prey/(total_demand+eps))
+     - actual=D*scale; predator gain=(actual*energy_gain).sum(1)
+     - temp_energy_gains buffered (added AFTER metabolism on stayers).
+     - Prey biomass reduced; R scaled with B (R/B preserved).
+  3. _apply_movement  (slice-assign, vectorized over N_dm)
+     - Each cell's biomass split by action probs.
+     - Each fraction pays own metabolic cost * resting_metabolism *
+       (1 + sens*noise).
+     - Slice-assign instead of np.roll (no copies, no wrap-around;
+       edges already zeroed in _calculate_decisions).
+     - flux = clip(v, 0, 1). Energy follows biomass.
+     - temp_energy_gains added to stayers AFTER metabolism.
   4. _apply_growth_and_impact
-     - If fg.is_decision_maker is False (phyto/benthos):
-         logistic growth: dB = MG * B * (1 - B/CC).
-     - Else energy-based growth:
-         s = R / (B * ME), u = 0.3 (maintenance threshold).
-         q = s - u; if q>0 -> growth, if q<0 -> starvation.
-         B_new = B * (1 + MG * q).
-     - Mortality impacts (e.g. bottom_trawling, rotor):
-         mortality = sensitivity * impact_map (per-cell fraction).
-         B reduced; R scaled proportionally so survivors keep R/B.
-
-Energy-impact channel: noise/turbidity multiply metabolism (R drops).
-Biomass-impact channel: trawling/rotor reduce B directly; R follows.
+     - NDM (phyto/benthos): logistic dB = MG*B*(1 - B/CC).
+     - DM: s=R/(B*ME), u=0.3, q=s-u, B_new=B*(1+MG*q).
+     - Mortality: B reduced by sensitivity*impact_map; R scaled with B.
 
 ================================================================
 4. POLICY NETWORK DIMENSIONS
 ================================================================
-  Input  = 2 + (N_fgs - 1) + 1                  (own B, own energy_level,
-                                                 other FGs' B, noise)
-  Output = 5 + N_prey                           (4 moves, rest, eat per prey)
-  Computed dynamically in train.py:get_dynamic_policy_params.
-  Trained .pth files are NOT portable across projects with different
-  FG counts or menu sizes.
+  Input  = 2 + (N_fgs - 1) + 1
+  Output = 5 + N_all_fgs   (non-prey slots eat-masked)
+  Computed in train.py:get_dynamic_policy_params.
+  .pth files NOT portable across projects with different FG counts.
 
 ================================================================
-5. RUNNING THE SIMULATOR
+5. CLI — current flag set for train.py
 ================================================================
-  Training (project file is MANDATORY):
-    python3 train.py --project mareld2.yaml [--species all | name1 name2 ...]
-                     [--iterations N] [--lr X] [--sigma X] [--rollouts N]
-                     [--grid n*m]    (n,m >= 3; default 60*60)
-  Without --project the program prints a help message and exits.
-  --grid format accepts "n*m" or "nxm". Maps are auto-generated as
-  zero dummies of matching size during training.
+Mandatory: --project <path-to.yaml>
 
-  Full MVP run:        python3 run_mareld_mvp.py
-  Scenario compare:    python3 compare_scenarios.py
-  GUI:                 python3 fgconfig/fgconfig.py
+Flag                  Default       Meaning
+--species             ["all"]       "all" = all DMs.
+--generations         "inf"         Outer co-evolution loop; "inf" runs
+                                    until Ctrl+C. Round-robin over species.
+--iter-per-gen        20            ARS iterations per species per generation.
+                                    Alias: --iter_per_gen.
+--n_eval_ticks        2             env.step() ticks per rollout.
+                                    (Renamed from --rollouts.)
+--lr                  0.03          ARS learning rate.
+--sigma               0.1           Exploration noise.
+--alpha               1.0           Weight on delta_b.
+--beta                1.0           Weight on delta_r.
+                                    fitness = alpha*delta_b + beta*delta_r.
+--n_deltas            10            ARS delta directions; tasks=2*n_deltas.
+--workers             0 (auto)      0=auto, 1=sequential, N=explicit.
+                                    auto = min(2*n_deltas, max(1, cores-1)),
+                                    using sched_getaffinity when available.
+--grid                None (60x60)  "nxm" or "n*m", both dims >= 3.
+
+Session header prints every flag with "(default)"/"(user)" tag,
+plus resolved workers count and Project/Grid/Target Species.
+
+Other entry points:
+  python3 run_mareld_mvp.py
+  python3 compare_scenarios.py
+  python3 fgconfig/fgconfig.py
 
 ================================================================
 6. PROJECT FILE FORMAT (mareld2.yaml)
 ================================================================
   project_metadata: {name: ...}
   simulation_settings: {...}            # currently unused at runtime
-  decision_makers:     [{group_id: zooplankton}, ...]
-  non_decision_makers: [{group_id: phytoplankton}, {group_id: benthic_community}]
-  impact_variables:    [{impact_id: windfarm_noise}, {impact_id: bottom_trawling}, ...]
-  Legacy `functional_groups:` lists are still readable; the GUI
-  auto-splits them using fg_library's is_decision_maker flag.
+  decision_makers:
+    - {group_id: zooplankton, initial_biomass: 35000}
+    - ...
+  non_decision_makers:
+    - {group_id: phytoplankton, initial_biomass: 80000}
+    - {group_id: benthic_community, initial_biomass: 160000}
+  impact_variables:    [{impact_id: windfarm_noise}, ...]
+
+initial_biomass lives in the project file (editable from GUI).
+Resolution: project override > library default > 1000.
+Legacy `functional_groups:` lists still readable.
 
 ================================================================
-7. fgconfig.py - GUI STRUCTURE (CRITICAL FOR FUTURE WORK)
+7. fgconfig.py - GUI STRUCTURE
 ================================================================
 Tabs:
-  "Project & FGs"       Scrollable (vertical + horizontal). Sections:
-                          Project Info (name).
-                          fg_container with TWO side-by-side LabelFrames:
-                            - "Decision Makers"     (self.fg_listbox)
-                            - "Non Decision Makers" (self.ndm_listbox)
-                          Each has buttons: Add from Library / Add New FG / Remove FG.
-                          "Impact Variables in Project" (self.impact_listbox)
-                            with Add from Library / Remove Impact.
-                          TWO FG Editor frames, only one is packed at a time:
-                            self.editor_frame      (Decision Makers editor)
-                              fields: max_energy_reserve, energy_content,
-                                      resting_metabolism, movement_speed,
-                                      action costs (feeding/resting/movement)
-                                      on a single row.
-                            self.ndm_editor_frame  (Non Decision Makers editor)
-                              fields: growth_rate (Max Growth fraction/tick),
-                                      max_carrying_capacity (ton/cell).
-  "Interaction Matrix"  Scrollable both axes. Three matrices:
-                          Predation (boolean, diagonal allowed = cannibalism).
-                          Max Intake Rate I_XY (disabled unless preys_on).
-                          Impact Sensitivity 0..1 with slider+entry.
+  "Project & FGs"       Scrollable both axes.
+    Project Info (name).
+    fg_container with two side-by-side LabelFrames:
+      - "Decision Makers"     (self.fg_listbox)
+      - "Non Decision Makers" (self.ndm_listbox)
+    Each: Add from Library / Add New FG / Remove FG.
+    "Impact Variables in Project" (self.impact_listbox) with
+      Add from Library / Remove Impact.
+    TWO FG Editor frames, only one packed at a time:
+      self.editor_frame  (DM editor): max_energy_reserve, energy_content,
+        resting_metabolism, movement_speed,
+        action costs (feeding/resting/movement), initial_biomass (ton).
+      self.ndm_editor_frame (NDM editor): growth_rate,
+        max_carrying_capacity, initial_biomass (ton).
+  "Interaction Matrix"  Predation (bool), Max Intake Rate I_XY (disabled
+                        unless preys_on), Impact Sensitivity 0..1.
 
 Key behaviours:
-  - Add from Library filters:
-      * non_decision_makers: only phytoplankton selectable.
-      * decision_makers: phytoplankton hidden.
-      * Already-present FGs (in either category) are hidden in BOTH dialogs.
-      * Same hide-if-present rule for Add Impact from Library.
-  - on_fg_select(category) packs the matching editor and unpacks the other.
-  - apply_fg_changes uses the currently active editor's prop_vars, and
-    starts from existing config so fields not visible in that editor
-    (e.g. action costs while editing an NDM) are NOT wiped out.
-  - is_decision_maker is NOT shown as a checkbox; it is driven by the
-    category list the FG lives in. add_from_library / add_new_fg /
-    apply_fg_changes always sync this flag back to fg_library.yaml.
-  - movement_speed is clamped to 1.0 in apply_fg_changes (CFL limit;
-    Strategi.pdf "cell fraction leaving per tick").
-  - Scrolling:
-      _on_mousewheel (vertical) + _on_shift_mousewheel (horizontal),
-      both gated by _canvas_is_scrollable(canvas, axis) so scrolling
-      is disabled when content already fits along that axis.
-      project_canvas's inner window width =
-        max(event.width, inner.winfo_reqwidth()) so horizontal scroll
-      kicks in when content is wider than the canvas.
-  - Library writes: every meaningful edit writes back to
-    fgconfig/fg_library.yaml via ruamel.yaml (BOM + preserve quotes).
-    Recent projects persisted in fgconfig/recent_projects.txt.
+  - Add from Library filters: NDM dialog only shows phytoplankton; DM
+    dialog hides phytoplankton; already-present FGs hidden in both
+    dialogs; same hide-if-present rule for impacts.
+  - on_fg_select packs the matching editor; reads initial_biomass from
+    project FG entry, falls back to library default.
+  - apply_fg_changes uses active editor's prop_vars only; merges into
+    existing config (fields not visible NOT wiped). Writes initial_biomass
+    to PROJECT FG entry (not library).
+  - is_decision_maker driven by category list; synced back to library.
+  - movement_speed clamped to 1.0 (CFL).
+  - Scroll gated by _canvas_is_scrollable.
+  - Library writes via ruamel.yaml. Recent projects in recent_projects.txt.
 
 ================================================================
 8. fg_library.yaml - WHAT LIVES WHERE
@@ -202,62 +206,129 @@ Key behaviours:
   species_definitions:
     <fg_id>:
       display_name, is_decision_maker
-      growth_rate, max_carrying_capacity   (NDM only, used by GUI ndm editor)
+      initial_biomass                      (library-default fallback only)
+      growth_rate, max_carrying_capacity   (NDM only)
       max_energy_reserve, energy_content,
       resting_metabolism, movement_speed,
       feeding_cost, resting_cost, movement_cost
-      menu: [prey_id, ...]                 (decision makers only)
+      menu: [prey_id, ...]                 (DM only)
   interaction_definitions:
-    "<predator>_preys_on_<prey>":
-      preys_on: true/false, max_intake_rate, energy_gain
-    "<fg>_impacted_by_<impact_id>":
-      impact_sensitivity: 0..1
-  impact_definitions:
-    <impact_id>: {display_name: ...}
-    Defaults seeded by FGConfigApp.__init__ if missing:
-      bottom_trawling, pelagic_trawling, hunting, logging,
-      chemicals, windfarm_noise, ship_traffic, turbidity.
+    "<predator>_preys_on_<prey>":  {preys_on, max_intake_rate, energy_gain}
+    "<fg>_impacted_by_<impact>":   {impact_sensitivity}
+  impact_definitions:  bottom_trawling, pelagic_trawling, hunting, logging,
+                       chemicals, windfarm_noise, ship_traffic, turbidity.
 
 ================================================================
-9. KNOWN DISCREPANCIES vs Strategi.pdf (still open)
+9. ARS TRAINER (lib/runners/trainer.py)
+================================================================
+ARSTrainer(env_builder, policy_params,
+           sigma=0.1, lr=0.03, n_deltas=10,
+           n_workers=1, alpha=1.0, beta=1.0)
+  policies: persistent {fg_id: PolicyNetwork} — co-evolution-safe
+            (weights kept across generations).
+  _pool: spawn-context Pool when n_workers > 1.
+         close() uses pool.terminate()+join() (robust on Ctrl+C).
+
+train_step(fg_to_train, n_eval_ticks=2):
+  1. Sample n_deltas directions (torch.randn).
+  2. Draw pair_seeds[i] from np.random (one per delta pair).
+  3. For each i: evaluate +sigma*delta and -sigma*delta with the SAME
+     pair_seeds[i] — Common Random Numbers, variance reduction.
+  4. Sequential: in-process; restore parent weights after.
+     Parallel: 2*n_deltas tasks =
+       (fg, weights_snapshot_dict, n_eval_ticks, alpha, beta, seed)
+     dispatched via pool.map. base_weights snapshot includes ALL policies
+     so opponents are at current co-evolved state.
+  5. Fitness (in _evaluate / _evaluate_task):
+       b0,r0 = trained FG biomass.sum(), energy.sum() (post-build)
+       run env.step() n_eval_ticks times
+       bh,rh = same, post-run
+       delta_b = log((bh+eps)/(b0+eps)); delta_r similar
+       fitness = alpha*delta_b + beta*delta_r
+  6. Gradient: step = sum_i (r_pos[i]-r_neg[i]) * delta[i],
+              w_new = w + (lr/(n_deltas*sigma_f)) * step,
+              sigma_f = std([r_pos..., r_neg...]) + 1e-8.
+
+================================================================
+10. CO-EVOLUTION LOOP (train.py main)
+================================================================
+Round-robin (Variant A):
+  for gen in count() [or range(generations)]:
+      for species in target_species:
+          for i in range(iter_per_gen):
+              trainer.train_step(species, n_eval_ticks=...)
+          torch.save(policy_state, results/policy_<species>.pth)   # per gen
+
+KeyboardInterrupt (Ctrl+C):
+  - Workers ignore SIGINT (set in _worker_init); only parent catches it.
+  - On Ctrl+C: trainer.close() (terminates pool fast), save final
+    checkpoints per species, print "Training interrupted; partial
+    progress saved", return cleanly (exit 0).
+
+================================================================
+11. KNOWN DISCREPANCIES vs Strategi.pdf (still open)
 ================================================================
   1. Observation only includes windfarm_noise, not all active impact maps.
   2. Memory term N(c, t-1) not implemented.
-  3. Movement speed v > 1 cells/tick not supported (capped to 1.0
-     by GUI; multi-step propagation per tick not implemented).
-  4. Growth-with-additive "Påverkansdelta" not supported as positive
-     term (stocking/release); only mortality reduces B.
-  5. accessibility map only used for movement masking; not for
-     predation or initial biomass distribution.
-  Items 3 & 4 are accepted by user for now (v=1 is the global cap).
+  3. Movement speed v > 1 not supported (cap 1.0; accepted by user).
+  4. Positive "Påverkansdelta" (stocking) not supported (accepted).
+  5. accessibility map only used for movement masking.
 
 ================================================================
-10. GRID / MAP CONVENTIONS
+12. GRID / MAP CONVENTIONS
 ================================================================
-  Default 60x60, 1 km/cell, 6 h/tick. PNG maps are mode "L" grayscale.
+  Default 60x60, 1 km/cell, 6 h/tick. PNG maps mode "L".
   SWEREF 99 TM bbox: E 211000..271000, N 6414000..6474000.
   Row 0 = northernmost, column 0 = westernmost.
-  When --grid changes dimensions, real PNG maps must be regenerated;
-  during training, zero "dummy" maps are produced automatically.
+  Initial spatial: np.random.rand(H,W) normalized to total_b.
+  When seed given (CRN), uses np.random.default_rng(seed) instead.
+  Same total biomass per FG across rollouts; spatial varies (or seeded).
 
 ================================================================
-11. GIT / STAGING
+13. PERFORMANCE NOTES (already optimized — don't redo without measuring)
 ================================================================
-  Staged set (per user preference): code + configs + GIS scripts + PNGs.
-  NOT staged: results/, Poseidon/, *.pdf, .junie/, docs (resume,
-  implementation_plan, etc. unless explicitly requested).
-  Commit trailer when user asks to commit:
+Implemented:
+  - Batched policy inference for all DMs via torch.bmm.
+  - Vectorized predation over (N_dm, N_all, H, W) tensors.
+  - Slice-assign movement (no np.roll).
+  - Preallocated/cached masks (move_mask, eat_static_mask).
+  - float32 throughout hot path.
+  - Parallel rollouts via multiprocessing.Pool (spawn).
+  - OMP/MKL/OPENBLAS/torch threads = 1 in workers (without this,
+    BLAS contention can make parallel SLOWER than sequential).
+  - CRN: same world for +delta and -delta in each ARS pair; different
+    seeds between pairs.
+
+Measured (60x60, 6 DMs):
+  - 100 ticks: 1.257s -> 0.824s (1.53x).
+  - 15 iter pelagic_fish: 11.9s seq -> 5.34s @ 16 workers (24-core machine).
+
+Intentionally NOT done:
+  - Numba: hot path is numpy/torch vectorized; would win only at much
+    larger grids or for agent-based reformulation.
+  - GPU: too small (host-device copy dominates).
+  - Synchronous Nash-Q-like co-evolution snapshot.
+
+================================================================
+14. GIT / STAGING
+================================================================
+  Staged: code + configs + GIS scripts + PNGs.
+  NOT staged: results/, Poseidon/, *.pdf, .junie/, docs unless requested.
+  Commit ONLY on explicit user request, trailer:
     --trailer "Co-authored-by: Junie <junie@jetbrains.com>"
 
 ================================================================
-12. WHAT TO DO FIRST ON A FRESH CONTEXT
+15. WHAT TO DO FIRST ON A FRESH CONTEXT
 ================================================================
   1. Read this file end-to-end.
-  2. Skim Strategi.pdf section "Uppdateringsregler" (line ~283 in
-     pdftotext output) for the mathematical contract.
-  3. Open lib/environments/ecosystem.py and fgconfig/fgconfig.py
-     before making any change - they are the two hottest files.
+  2. Skim Strategi.pdf "Uppdateringsregler" for the math contract.
+  3. Open lib/environments/ecosystem.py, lib/runners/trainer.py,
+     lib/runners/parallel_worker.py, train.py, fgconfig/fgconfig.py.
   4. Validate any change with:
-       python3 -m py_compile fgconfig/fgconfig.py lib/environments/ecosystem.py
-       python3 train.py --project mareld2.yaml --species pelagic_fish --iterations 1
-  5. Never reintroduce Swedish text into code or configs.
+       python3 -m py_compile fgconfig/fgconfig.py \
+         lib/environments/ecosystem.py lib/runners/trainer.py \
+         lib/runners/parallel_worker.py train.py
+       python3 train.py --project mareld2.yaml --species pelagic_fish \
+         --generations 1 --iter-per-gen 1 --workers 1
+  5. Never reintroduce Swedish text into code or configs (chat answers
+     to user remain in Swedish).

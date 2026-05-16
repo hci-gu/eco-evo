@@ -46,16 +46,19 @@ def _auto_workers(n_deltas):
     target = min(n_tasks, max(1, cores - 1))
     return target if target >= 2 else 1
 
-def env_builder():
+def env_builder(seed=None):
     """
     Creates a new instance of the ecosystem for each rollout.
     This is required by the ARS algorithm to evaluate different perturbations (deltas).
+
+    If `seed` is given, the initial spatial biomass distribution is deterministic.
+    This enables Common Random Numbers in ARS (matching +delta and -delta worlds).
     """
     grid_size = (GRID_HEIGHT, GRID_WIDTH)
     if PROJECT_PATH:
-        fgs, impact_vars = load_project_config(PROJECT_PATH, grid_size=grid_size)
+        fgs, impact_vars = load_project_config(PROJECT_PATH, grid_size=grid_size, seed=seed)
     else:
-        fgs = setup_full_mareld_mvp(grid_size=grid_size)
+        fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
         impact_vars = ['windfarm_noise']
         
     grid_config = {
@@ -94,20 +97,45 @@ def get_dynamic_policy_params(fgs):
 
 def main():
     parser = argparse.ArgumentParser(description="Mareld Ecosystem Simulator - Training Module")
-    parser.add_argument("--species", nargs="+", default=["pelagic_fish"], 
-                        help="Which functional groups to train (e.g., pelagic_fish gadoids). Use 'all' for all decision makers.")
-    parser.add_argument("--iterations", type=int, default=15, help="Number of ARS iterations per species (default: 15).")
+    parser.add_argument("--species", nargs="+", default=["all"],
+                        help="Which functional groups to train (e.g., pelagic_fish gadoids). Use 'all' for all decision makers (default: all).")
+    parser.add_argument("--iter-per-gen", "--iter_per_gen", dest="iter_per_gen", type=int, default=20,
+                        help="ARS iterations per species per generation (default: 20).")
+    parser.add_argument("--generations", type=str, default="inf",
+                        help="Number of co-evolution generations (outer round-robin loop over species). "
+                             "Use 'inf' (default) to run until interrupted with Ctrl+C.")
     parser.add_argument("--lr", type=float, default=0.03, help="Learning rate (default: 0.03).")
     parser.add_argument("--sigma", type=float, default=0.1, help="Exploration noise (default: 0.1).")
-    parser.add_argument("--rollouts", type=int, default=4, help="Number of time steps per evaluation (default: 4).")
+    parser.add_argument("--n_eval_ticks", type=int, default=2, help="Number of time steps (ticks) per evaluation rollout (default: 2).")
     parser.add_argument("--project", type=str, help="Path to project file (.yaml)")
     parser.add_argument("--grid", type=parse_grid_arg, default=None,
                         help="Grid dimensions as n*m (e.g. 30*30). Both dimensions must be >= 3. Default: 60*60.")
+    parser.add_argument("--alpha", type=float, default=1.0,
+                        help="Weight for delta_b (biomass log-ratio) in fitness (default: 1.0).")
+    parser.add_argument("--beta", type=float, default=1.0,
+                        help="Weight for delta_r (energy log-ratio) in fitness (default: 1.0).")
     parser.add_argument("--workers", type=int, default=0,
                         help="Parallel rollout workers. 0 = auto (default, based on CPU cores and n_deltas), "
                              "1 = sequential, N = use N workers.")
+    parser.add_argument("--n_deltas", type=int, default=10,
+                        help="Number of ARS perturbation directions per iteration (default: 10).")
     
     args = parser.parse_args()
+
+    # Parse --generations: accept 'inf' or a positive integer.
+    gen_raw = str(args.generations).strip().lower()
+    if gen_raw in ("inf", "infinity", "infinite", "-1"):
+        generations_is_inf = True
+        generations_value = None
+    else:
+        try:
+            generations_value = int(gen_raw)
+            if generations_value < 1:
+                raise ValueError
+        except ValueError:
+            print(f"Error: --generations must be a positive integer or 'inf' (got: {args.generations!r}).")
+            return
+        generations_is_inf = False
 
     if args.grid is not None:
         global GRID_WIDTH, GRID_HEIGHT
@@ -144,18 +172,15 @@ def main():
         print(f"Error: No valid trainable species found. Available: {available}")
         return
 
-    print(f"==========================================")
-    print(f"      MARELD TRAINING SESSION             ")
-    print(f"==========================================")
-    print(f"Target Species: {', '.join(target_species)}")
-    print(f"Method:         ARS (Augmented Random Search)")
-    print(f"Iterations:     {args.iterations} per species")
-    print(f"Learning Rate:  {args.lr}")
-    print(f"Sigma:          {args.sigma}")
-    print(f"------------------------------------------")
+    # Build a map of parser defaults so we can flag which values are user-specified.
+    _parser_defaults = {a.dest: a.default for a in parser._actions if a.dest != "help"}
+    def _mark(name, value):
+        default_val = _parser_defaults.get(name, None)
+        is_default = (value == default_val)
+        return f"{value} {'(default)' if is_default else '(user)'}"
 
-    # Resolve worker count (0 = auto)
-    n_deltas = 8
+    # Resolve worker count (0 = auto) — done here so we can include it in the summary.
+    n_deltas = args.n_deltas
     if args.workers > 0:
         n_workers = args.workers
         workers_origin = "explicit"
@@ -163,28 +188,77 @@ def main():
         n_workers = _auto_workers(n_deltas)
         workers_origin = "auto"
 
+    grid_str = f"{GRID_WIDTH}x{GRID_HEIGHT}"
+    grid_is_default = (args.grid is None)
+    gen_display = "inf (Ctrl+C to stop)" if generations_is_inf else str(generations_value)
+    gen_is_default = (str(args.generations).strip().lower() == str(_parser_defaults.get("generations", "")).strip().lower())
+    species_is_default = (args.species == _parser_defaults.get("species"))
+
+    print(f"==========================================")
+    print(f"      MARELD TRAINING SESSION             ")
+    print(f"==========================================")
+    print(f"Project:        {args.project} (user)")
+    print(f"Grid:           {grid_str} {'(default)' if grid_is_default else '(user)'}")
+    print(f"Target Species: {', '.join(target_species)} {'(default: all)' if species_is_default else '(user)'}")
+    print(f"Method:         ARS (Augmented Random Search)")
+    print(f"Generations:    {gen_display} {'(default)' if gen_is_default else '(user)'}")
+    print(f"Iter/Gen:       {_mark('iter_per_gen', args.iter_per_gen)} per species per generation")
+    print(f"N Eval Ticks:   {_mark('n_eval_ticks', args.n_eval_ticks)} ticks per rollout")
+    print(f"Learning Rate:  {_mark('lr', args.lr)}")
+    print(f"Sigma:          {_mark('sigma', args.sigma)}")
+    print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
+    print(f"Beta  (delta_r):{_mark('beta', args.beta)}")
+    print(f"N Deltas:       {_mark('n_deltas', args.n_deltas)}")
+    if args.workers > 0:
+        print(f"Workers:        {n_workers} (user, explicit)")
+    else:
+        print(f"Workers:        {n_workers} (default: auto, resolved from {os.cpu_count()} CPUs and n_deltas={n_deltas})")
+    print(f"------------------------------------------")
+
     # Create the trainer with all relevant policy dimensions
     trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
-                         n_workers=n_workers)
-    if n_workers > 1:
-        print(f"Parallel workers: {n_workers} ({workers_origin})")
-    else:
-        print(f"Parallel workers: 1 (sequential, {workers_origin})")
+                         n_workers=n_workers, alpha=args.alpha, beta=args.beta)
     
-    for species in target_species:
-        print(f"\n>>> Starting training for: {species.upper()}")
-        print(f"    Input dim:  {policy_params[species][0]}")
-        print(f"    Output dim: {policy_params[species][1]}")
-        
-        for i in range(args.iterations):
-            # n_rollouts: how many time steps (ticks) each test run lasts
-            avg_reward = trainer.train_step(species, n_rollouts=args.rollouts)
-            print(f"    Iter {i+1:2d}/{args.iterations} | Avg Reward: {avg_reward:10.6f}")
+    import itertools
+    gen_iter = itertools.count() if generations_is_inf else range(generations_value)
+    gen_label_total = "inf" if generations_is_inf else str(generations_value)
 
-        # Save the trained model
-        save_path = f"results/policy_{species}.pth"
-        torch.save(trainer.policies[species].state_dict(), save_path)
-        print(f"    Training complete. Model saved to: {save_path}")
+    try:
+        for gen in gen_iter:
+            print(f"\n========== Generation {gen+1}/{gen_label_total} ==========")
+            for species in target_species:
+                print(f"\n>>> Training: {species.upper()} (gen {gen+1}/{gen_label_total})")
+                print(f"    Input dim:  {policy_params[species][0]}")
+                print(f"    Output dim: {policy_params[species][1]}")
+
+                for i in range(args.iter_per_gen):
+                    # n_eval_ticks: how many time steps (ticks) each test run lasts
+                    avg_reward = trainer.train_step(species, n_eval_ticks=args.n_eval_ticks)
+                    print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
+
+                # Save checkpoint after each generation so progress is preserved.
+                save_path = f"results/policy_{species}.pth"
+                torch.save(trainer.policies[species].state_dict(), save_path)
+                print(f"    Checkpoint saved to: {save_path}")
+    except KeyboardInterrupt:
+        print(f"\n\n[Interrupted by user] Stopping training after current step.")
+        # Terminate workers immediately so they don't keep computing while we
+        # save checkpoints; otherwise pool.map can still hold references.
+        try:
+            trainer.close()
+        except Exception:
+            pass
+        for species in target_species:
+            save_path = f"results/policy_{species}.pth"
+            try:
+                torch.save(trainer.policies[species].state_dict(), save_path)
+                print(f"    Final checkpoint saved to: {save_path}")
+            except Exception as e:
+                print(f"    Could not save checkpoint for {species}: {e}")
+        print(f"\n==========================================")
+        print(f"Training interrupted; partial progress saved.")
+        print(f"==========================================")
+        return
 
     print(f"\n==========================================")
     print(f"Training completed for all selected groups.")

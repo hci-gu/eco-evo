@@ -273,7 +273,8 @@ class FGConfigApp:
             ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry"),
             ("Energy Content (MJ/ton)", "energy_content", "entry"),
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry"),
-            ("Movement Speed (cells/tick)", "movement_speed", "entry")
+            ("Movement Speed (cells/tick)", "movement_speed", "entry"),
+            ("Initial Total Biomass (ton)", "initial_biomass", "entry")
         ]
 
         for i, (label, key, type) in enumerate(main_props):
@@ -319,6 +320,7 @@ class FGConfigApp:
         ndm_props = [
             ("Max Growth (fraction/tick)", "growth_rate"),
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity"),
+            ("Initial Total Biomass (ton)", "initial_biomass"),
         ]
         for i, (label, key) in enumerate(ndm_props):
             ttk.Label(self.ndm_editor_frame, text=label).grid(row=i, column=0, sticky="w", padx=5, pady=2)
@@ -522,8 +524,16 @@ class FGConfigApp:
         fgs = self.project_data.get(category, [])
         if idx >= len(fgs):
             return
-        fg_id = fgs[idx]['group_id']
+        fg_entry = fgs[idx]
+        fg_id = fg_entry['group_id']
         config = self.current_fg_configs.get(fg_id, {})
+
+        # initial_biomass is a per-project FG override (not a library field).
+        # Read from project FG entry first, then fall back to library default.
+        if 'initial_biomass' in fg_entry and fg_entry.get('initial_biomass') is not None:
+            init_b_val = fg_entry.get('initial_biomass')
+        else:
+            init_b_val = self.global_library.get("species_definitions", {}).get(fg_id, {}).get("initial_biomass", "")
 
         # Show the editor matching the FG category, hide the other.
         if category == "decision_makers":
@@ -532,6 +542,9 @@ class FGConfigApp:
                 self.editor_frame.pack(fill="x", padx=10, pady=5)
             self.editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
             for key, var in self.prop_vars.items():
+                if key == "initial_biomass":
+                    var.set("" if init_b_val in (None, "") else str(init_b_val))
+                    continue
                 val = config.get(key, "")
                 if isinstance(var, tk.BooleanVar):
                     var.set(bool(val))
@@ -543,6 +556,9 @@ class FGConfigApp:
                 self.ndm_editor_frame.pack(fill="x", padx=10, pady=5)
             self.ndm_editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
             for key, var in self.ndm_prop_vars.items():
+                if key == "initial_biomass":
+                    var.set("" if init_b_val in (None, "") else str(init_b_val))
+                    continue
                 val = config.get(key, "")
                 var.set(str(val))
 
@@ -574,8 +590,19 @@ class FGConfigApp:
         config["is_decision_maker"] = is_dm
 
         prop_vars = self.prop_vars if is_dm else self.ndm_prop_vars
+        initial_biomass_val = None  # captured separately; stored per-project, not in library
         for key, var in prop_vars.items():
             val = var.get()
+            if key == "initial_biomass":
+                # Per-project FG override; do not write to global library.
+                if val in (None, ""):
+                    initial_biomass_val = None
+                else:
+                    try:
+                        initial_biomass_val = float(val)
+                    except ValueError:
+                        initial_biomass_val = None
+                continue
             if isinstance(var, tk.BooleanVar):
                 config[key] = val
             else:
@@ -588,15 +615,25 @@ class FGConfigApp:
                     if config[key] > 1.0:
                         config[key] = 1.0
                         var.set("1.0")
-                    
+
+        # Strip initial_biomass from library-bound config; it lives on the
+        # project FG entry only.
+        config.pop("initial_biomass", None)
         self.current_fg_configs[fg_id] = config
-        
-        # Sync with global library
+
+        # Persist initial_biomass on the project FG entry (per-project value).
+        fg_entry = fgs[idx]
+        if initial_biomass_val is None:
+            fg_entry.pop("initial_biomass", None)
+        else:
+            fg_entry["initial_biomass"] = initial_biomass_val
+
+        # Sync remaining fields with global library
         if "species_definitions" not in self.global_library:
             self.global_library["species_definitions"] = {}
         self.global_library["species_definitions"][fg_id] = config
         self.save_yaml(self.global_library, self.library_path)
-        messagebox.showinfo("Success", f"Updated {fg_id} and saved to library.")
+        messagebox.showinfo("Success", f"Updated {fg_id}. Library updated; initial_biomass saved on project entry (remember to Save Project).")
 
     def apply_matrix_changes(self):
         if "interaction_definitions" not in self.global_library:
@@ -674,7 +711,14 @@ class FGConfigApp:
                 fg_id = lib_fgs[i]
                 if fg_id in self._all_fg_ids():
                     continue
-                self.project_data.setdefault(category, []).append({'group_id': fg_id})
+                lib_entry_initial = self.global_library.get("species_definitions", {}).get(fg_id, {}).get("initial_biomass")
+                new_entry = {'group_id': fg_id}
+                if lib_entry_initial is not None:
+                    try:
+                        new_entry['initial_biomass'] = float(lib_entry_initial)
+                    except (TypeError, ValueError):
+                        pass
+                self.project_data.setdefault(category, []).append(new_entry)
                 self.current_fg_configs[fg_id] = self.global_library["species_definitions"][fg_id]
                 # Keep the library's is_decision_maker flag in sync with the
                 # category the user chose to add it to.
@@ -703,7 +747,7 @@ class FGConfigApp:
                 return
 
             is_dm = (category == "decision_makers")
-            self.project_data.setdefault(category, []).append({'group_id': fg_id})
+            self.project_data.setdefault(category, []).append({'group_id': fg_id, 'initial_biomass': 0.0})
             self.current_fg_configs[fg_id] = {
                 "display_name": fg_id,
                 "is_decision_maker": is_dm,
