@@ -39,6 +39,12 @@ User communication (chat answers, status updates): Swedish.
                             weights, eat-mask, move-mask, scalar caches.
                             _batched_policy_forward runs all DMs via torch.bmm.
                             Hot-path arrays are float32.
+                            ARS-V2 obs normalisation: accumulates per-tick
+                            _obs_sum/_obs_sumsq/_obs_count on raw obs; when
+                            env.obs_mean/obs_var set, applies
+                            (obs-mean)/sqrt(var+eps) clipped to [-10,10]
+                            before policy forward. Stats are frozen during a
+                            rollout (set by trainer).
     config/config_loader.py setup_full_mareld_mvp + load_project_config.
                             Both accept optional `seed` for CRN.
                             initial_biomass per FG: project override >
@@ -48,16 +54,26 @@ User communication (chat answers, status updates): Swedish.
                             and get_action_probs_torch (kept in torch).
     runners/trainer.py      ARS trainer; sequential + parallel-pool paths.
                             Supports CRN seeds per delta-pair, alpha/beta
-                            fitness weights, configurable n_deltas/n_workers.
+                            fitness weights, configurable n_deltas/n_workers,
+                            ARS-V2 obs-normalisation (Welford parallel merge),
+                            and ARS-V2 top-b delta selection.
+                            obs_stats[fg_id] = {mean,var,count} persists across
+                            iterations and generations.
     runners/parallel_worker.py
                             multiprocessing worker (spawn ctx).
                             _worker_init: ignores SIGINT, throttles BLAS/torch
                             to 1 thread, builds local policies.
-                            _evaluate_task: 6-tuple (fg, weights, n_ticks,
-                            alpha, beta, seed); backwards compat 3-/5-tuple.
+                            _evaluate_task: 7-tuple (fg, weights, n_ticks,
+                            alpha, beta, seed, obs_pack); installs obs stats
+                            into env; returns (fitness, samples). Backwards
+                            compat with 3-/5-/6-tuple tasks.
   make_*.py                 GIS helpers generating 60x60 PNG maps.
   *.png                     Geographic input layers (60x60 grayscale).
   results/                  Trained policies (*.pth). NOT staged.
+                            Checkpoint format now:
+                              {'state_dict': ..., 'obs_stats': {mean,var,count}}.
+                            Older bare-state_dict files still load for
+                            inference (see section 16).
   Strategi.pdf, Mareld mini.pdf, MKB Mareld.pdf, Poseidon/
                             Source documents. Strategi.pdf is the
                             authoritative spec for "The Tick".
@@ -78,9 +94,12 @@ User communication (chat answers, status updates): Swedish.
 Random FG order each tick (random.sample). Per tick:
   1. _calculate_decisions  (batched over all DMs)
      - obs_batch (N_dm, H*W, D) built once. D = 2 + (N_fgs - 1) + 1.
+     - Raw-obs stats accumulated (sum, sumsq, count) for trainer merge.
+     - If env.obs_mean/obs_var set: obs <- clip((obs-mean)/sqrt(var+eps),
+       -10, 10) BEFORE the policy forward.
      - All DM policies in ONE batched torch.bmm forward (3 stacked weight
        tensors built once in _build_static_caches: (N_dm, in, hid),
-       (N_dm, hid, hid), (N_dm, hid, out)). No per-DM loop, no numpy roundtrip.
+       (N_dm, hid, hid), (N_dm, hid, out)).
      - Output: pi_move (N_dm,4,H,W), pi_rest (N_dm,H,W),
        pi_eat (N_dm,N_all,H,W).
      - Mask BEFORE renormalization:
@@ -121,27 +140,35 @@ Random FG order each tick (random.sample). Per tick:
 ================================================================
 Mandatory: --project <path-to.yaml>
 
-Flag                  Default       Meaning
---species             ["all"]       "all" = all DMs.
---generations         "inf"         Outer co-evolution loop; "inf" runs
-                                    until Ctrl+C. Round-robin over species.
---iter-per-gen        20            ARS iterations per species per generation.
-                                    Alias: --iter_per_gen.
---n_eval_ticks        2             env.step() ticks per rollout.
-                                    (Renamed from --rollouts.)
---lr                  0.03          ARS learning rate.
---sigma               0.1           Exploration noise.
---alpha               1.0           Weight on delta_b.
---beta                1.0           Weight on delta_r.
-                                    fitness = alpha*delta_b + beta*delta_r.
---n_deltas            10            ARS delta directions; tasks=2*n_deltas.
---workers             0 (auto)      0=auto, 1=sequential, N=explicit.
-                                    auto = min(2*n_deltas, max(1, cores-1)),
-                                    using sched_getaffinity when available.
---grid                None (60x60)  "nxm" or "n*m", both dims >= 3.
+Flag                  Default              Meaning
+--species             ["all"]              "all" = all DMs.
+--generations         "inf"                Outer co-evolution loop; "inf" runs
+                                           until Ctrl+C. Round-robin over species.
+--iter-per-gen        20                   ARS iterations per species per gen.
+                                           Alias: --iter_per_gen.
+--n_eval_ticks        2                    env.step() ticks per rollout.
+                                           (Renamed from --rollouts.)
+--lr                  0.03                 ARS learning rate.
+--sigma               0.1                  Exploration noise.
+--alpha               1.0                  Weight on delta_b.
+--beta                1.0                  Weight on delta_r.
+                                           fitness = alpha*delta_b + beta*delta_r.
+--n_deltas            10                   ARS delta directions; tasks=2*n_deltas.
+--top_deltas          None -> n_deltas//2  ARS-V2 top-b: keep only the best b
+                                           delta pairs (sorted by
+                                           max(r_pos, r_neg)) for the gradient.
+                                           Setting == n_deltas disables it.
+--no_obs_normalize    False                Disable ARS-V2 running observation
+                                           normalisation (mean/std per-DM
+                                           per-obs-dim).
+--workers             0 (auto)             0=auto, 1=sequential, N=explicit.
+                                           auto = min(2*n_deltas, max(1, cores-1)),
+                                           using sched_getaffinity when available.
+--grid                None (60x60)         "nxm" or "n*m", both dims >= 3.
 
 Session header prints every flag with "(default)"/"(user)" tag,
-plus resolved workers count and Project/Grid/Target Species.
+including "Top Deltas" and "Obs Normalize", plus resolved workers count
+and Project/Grid/Target Species.
 
 Other entry points:
   python3 run_mareld_mvp.py
@@ -222,32 +249,53 @@ Key behaviours:
 9. ARS TRAINER (lib/runners/trainer.py)
 ================================================================
 ARSTrainer(env_builder, policy_params,
-           sigma=0.1, lr=0.03, n_deltas=10,
-           n_workers=1, alpha=1.0, beta=1.0)
+           sigma=0.1, lr=0.02, n_deltas=8,
+           n_workers=1, alpha=1.0, beta=1.0,
+           obs_normalize=True, top_deltas=None)
   policies: persistent {fg_id: PolicyNetwork} — co-evolution-safe
             (weights kept across generations).
+  obs_stats: persistent {fg_id: {mean (D,), var (D,), count}} across
+             generations. Used to feed env.obs_mean/obs_var per rollout
+             (frozen during rollout). Updated via Welford parallel merge
+             after each train_step from samples returned by every rollout.
+  top_deltas: None -> all n_deltas used. When set, only the top-b pairs
+              (sorted by max(r_pos,r_neg)) contribute to gradient AND to
+              sigma_f.
   _pool: spawn-context Pool when n_workers > 1.
          close() uses pool.terminate()+join() (robust on Ctrl+C).
 
 train_step(fg_to_train, n_eval_ticks=2):
   1. Sample n_deltas directions (torch.randn).
   2. Draw pair_seeds[i] from np.random (one per delta pair).
-  3. For each i: evaluate +sigma*delta and -sigma*delta with the SAME
+  3. Build current (N_dm, D) obs_mean/obs_var arrays from obs_stats
+     (ordered by env.dm_ids); pack with dm_ids list.
+  4. For each i: evaluate +sigma*delta and -sigma*delta with the SAME
      pair_seeds[i] — Common Random Numbers, variance reduction.
-  4. Sequential: in-process; restore parent weights after.
+  5. Sequential: in-process; restore parent weights after.
      Parallel: 2*n_deltas tasks =
-       (fg, weights_snapshot_dict, n_eval_ticks, alpha, beta, seed)
+       (fg, weights_snapshot_dict, n_eval_ticks, alpha, beta, seed, obs_pack)
      dispatched via pool.map. base_weights snapshot includes ALL policies
      so opponents are at current co-evolved state.
-  5. Fitness (in _evaluate / _evaluate_task):
+     Each task returns (fitness, samples) where samples =
+       (sum (N_dm,D) f64, sumsq (N_dm,D) f64, count int).
+  6. Fitness (in _evaluate / _evaluate_task):
        b0,r0 = trained FG biomass.sum(), energy.sum() (post-build)
        run env.step() n_eval_ticks times
        bh,rh = same, post-run
        delta_b = log((bh+eps)/(b0+eps)); delta_r similar
        fitness = alpha*delta_b + beta*delta_r
-  6. Gradient: step = sum_i (r_pos[i]-r_neg[i]) * delta[i],
-              w_new = w + (lr/(n_deltas*sigma_f)) * step,
-              sigma_f = std([r_pos..., r_neg...]) + 1e-8.
+  7. Merge all rollout samples into obs_stats via Welford parallel:
+       n = n_a + n_b
+       new_mean = mean_a + (mean_b - mean_a) * n_b/n
+       M2 = M2_a + M2_b + (delta**2) * (n_a*n_b/n)
+       var = max(M2/n, 1e-8)
+  8. ARS update (ARS-V2 with top-b):
+       pair_scores = max(rewards_pos, rewards_neg)
+       top_idx = argsort(-pair_scores)[:b]
+       sigma_f = std(concat(r_pos[top], r_neg[top])) + 1e-8
+       step = sum_{i in top_idx} (r_pos[i]-r_neg[i]) * delta[i]
+       w_new = w + (lr/(b*sigma_f)) * step
+     With b==n_deltas this is exactly ARS-V1 behaviour (no truncation).
 
 ================================================================
 10. CO-EVOLUTION LOOP (train.py main)
@@ -257,7 +305,12 @@ Round-robin (Variant A):
       for species in target_species:
           for i in range(iter_per_gen):
               trainer.train_step(species, n_eval_ticks=...)
-          torch.save(policy_state, results/policy_<species>.pth)   # per gen
+          _save_checkpoint(trainer, species,
+                           f"results/policy_{species}.pth")        # per gen
+
+_save_checkpoint writes:
+  {'state_dict': policy.state_dict(),
+   'obs_stats': {'mean': fp32 (D,), 'var': fp32 (D,), 'count': int}}
 
 KeyboardInterrupt (Ctrl+C):
   - Workers ignore SIGINT (set in _worker_init); only parent catches it.
@@ -298,12 +351,18 @@ Implemented:
     BLAS contention can make parallel SLOWER than sequential).
   - CRN: same world for +delta and -delta in each ARS pair; different
     seeds between pairs.
+  - ARS-V2 obs normalisation: stats accumulated in env on raw obs,
+    merged across all rollouts via Welford parallel formula.
+  - ARS-V2 top-b deltas: reduces noise from low-reward pairs.
 
 Measured (60x60, 6 DMs):
   - 100 ticks: 1.257s -> 0.824s (1.53x).
   - 15 iter pelagic_fish: 11.9s seq -> 5.34s @ 16 workers (24-core machine).
 
 Intentionally NOT done:
+  - ARS reward baseline subtraction: a no-op for the diff-based update
+    (r' = r - b yields (r'+ - r'-) = (r+ - r-)) and std is translation-
+    invariant. Sigma_f normalisation already does the job.
   - Numba: hot path is numpy/torch vectorized; would win only at much
     larger grids or for agent-based reformulation.
   - GPU: too small (host-device copy dominates).
@@ -332,3 +391,39 @@ Intentionally NOT done:
          --generations 1 --iter-per-gen 1 --workers 1
   5. Never reintroduce Swedish text into code or configs (chat answers
      to user remain in Swedish).
+
+================================================================
+16. CHECKPOINT FORMAT COMPATIBILITY
+================================================================
+New format (saved by train.py via _save_checkpoint):
+    torch.save({'state_dict': policy.state_dict(),
+                'obs_stats': {'mean': fp32(D,), 'var': fp32(D,), 'count': int}},
+               path)
+
+Legacy format (older runs, before ARS-V2):
+    torch.save(policy.state_dict(), path)     # a plain OrderedDict
+
+Recommended loader pattern (apply to run_mareld_mvp.py and
+compare_scenarios.py when they need updating — currently still load as
+plain state_dict and ignore obs_stats):
+
+    ckpt = torch.load(path, weights_only=False)
+    if isinstance(ckpt, dict) and 'state_dict' in ckpt:
+        policy.load_state_dict(ckpt['state_dict'])
+        os = ckpt.get('obs_stats')
+        if os is not None and apply_obs_norm:
+            env.obs_mean = np.broadcast_to(os['mean'], (N_dm, D)).astype(np.float32).copy()
+            env.obs_var  = np.broadcast_to(os['var'],  (N_dm, D)).astype(np.float32).copy()
+    else:
+        policy.load_state_dict(ckpt)         # legacy file
+        # No obs_stats available; env will run un-normalised obs.
+
+Notes:
+- obs_stats are per-fg in the trainer's dict, but each .pth file stores
+  only one fg's stats (the file's own species). When loading multiple
+  policies for inference, fold each fg's stats into env.obs_mean/var
+  ordered by env.dm_ids.
+- During inference (no further updates), keep obs_stats frozen.
+- "warm-up": first iteration of a fresh training run sees obs_mean=0,
+  obs_var=1 (i.e. effectively un-normalised). Stats become meaningful
+  after the first train_step's Welford merge.
