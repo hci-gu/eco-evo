@@ -16,6 +16,11 @@ User communication (chat answers, status updates): Swedish.
 1. REPOSITORY LAYOUT (project root: /home/simon/eco-evo)
 ================================================================
   train.py                  Main ARS training entry point (requires --project).
+  inference.py              Inference runner for trained policies (draft).
+                            Loads results/policy_<fg>.pth checkpoints,
+                            installs frozen obs_mean/obs_var on env per-DM
+                            (aligned to env.dm_ids), supports legacy and
+                            new ckpt formats. See section 17.
   run_mareld_mvp.py         Runs a full MVP simulation scenario.
   compare_scenarios.py      Compares "noll" vs "projekt" scenarios.
   mareld.yaml, mareld2.yaml Project manifest files (the ones passed to --project).
@@ -32,6 +37,11 @@ User communication (chat answers, status updates): Swedish.
                             FunctionalGroup: biomass, energy_reserve,
                             temp_energy_gains, is_decision_maker, hunger.
                             initialize_state: R = B * 0.7 * ME.
+                            min_split_biomass: indivisible-weight threshold.
+                            YAML/GUI value is in KG; converted to TONNES at
+                            input boundary (divide by 1000). 0 = continuous
+                            biomass (no threshold). Used by ecosystem to
+                            mask move-actions when cell biomass < threshold.
     environments/ecosystem.py
                             EcosystemEnvironment: "The Tick" pipeline.
                             HEAVILY OPTIMIZED — see section 13.
@@ -114,6 +124,12 @@ Random FG order each tick (random.sample). Per tick:
      - actual=D*scale; predator gain=(actual*energy_gain).sum(1)
      - temp_energy_gains buffered (added AFTER metabolism on stayers).
      - Prey biomass reduced; R scaled with B (R/B preserved).
+  Move-action masking also includes the indivisible-weight threshold:
+  when self.dm_min_split[i] > 0, move-actions are zeroed in cells where
+  B_dm[i] < min_split. The existing zero-total fallback re-routes such
+  cells to rest via re-normalisation. Units: dm_min_split is in tonnes
+  (converted from kg at FunctionalGroup input).
+
   3. _apply_movement  (slice-assign, vectorized over N_dm)
      - Each cell's biomass split by action probs.
      - Each fraction pays own metabolic cost * resting_metabolism *
@@ -207,7 +223,9 @@ Tabs:
     TWO FG Editor frames, only one packed at a time:
       self.editor_frame  (DM editor): max_energy_reserve, energy_content,
         resting_metabolism, movement_speed,
-        action costs (feeding/resting/movement), initial_biomass (ton).
+        action costs (feeding/resting/movement),
+        "Indivisible Weight (kg)" (min_split_biomass; clamped 0..10000;
+        0 = continuous), initial_biomass (ton).
       self.ndm_editor_frame (NDM editor): growth_rate,
         max_carrying_capacity, initial_biomass (ton).
   "Interaction Matrix"  Predation (bool), Max Intake Rate I_XY (disabled
@@ -237,11 +255,20 @@ Key behaviours:
       growth_rate, max_carrying_capacity   (NDM only)
       max_energy_reserve, energy_content,
       resting_metabolism, movement_speed,
+      maintenance_level                     (u_X, fraction in [0,1],
+                                             default 0.3; growth break-even)
       feeding_cost, resting_cost, movement_cost
+      min_split_biomass                    (DM only; kg, 0 = continuous)
       menu: [prey_id, ...]                 (DM only)
   interaction_definitions:
     "<predator>_preys_on_<prey>":  {preys_on, max_intake_rate, energy_gain}
-    "<fg>_impacted_by_<impact>":   {impact_sensitivity}
+    "<fg>_impacted_by_<impact>":   {impact_affects: bool,
+                                    impact_table: [{value, biomass_factor,
+                                                    energy_factor}, ...]}
+        # impact_table: sorted by value; linear interpolation, clip to
+        # endpoints (no extrapolation). biomass_factor/energy_factor in [0,1];
+        # value range is unconstrained (matches the physical impact map unit).
+        # Old `impact_sensitivity` scalar is removed everywhere.
   impact_definitions:  bottom_trawling, pelagic_trawling, hunting, logging,
                        chemicals, windfarm_noise, ship_traffic, turbidity.
 
@@ -427,3 +454,35 @@ Notes:
 - "warm-up": first iteration of a fresh training run sees obs_mean=0,
   obs_var=1 (i.e. effectively un-normalised). Stats become meaningful
   after the first train_step's Welford merge.
+
+================================================================
+17. INFERENCE RUNNER (inference.py)
+================================================================
+Draft / scaffold; invoked as `python3 inference.py` with optional flags:
+  --project <path>     Project YAML (default: built-in MVP setup).
+  --checkpoints <dir>  Where policy_<fg>.pth lives (default: results).
+  --grid n*m           Grid dims (default: 60*60).
+  --ticks N            Number of env.step() ticks (default: 100).
+  --seed N             Seed for deterministic initial biomass.
+  --output PATH.npz    Save per-FG biomass history.
+  --quiet              Suppress progress prints.
+
+Key behaviours (takes the known pitfalls into account):
+  - Loads each DM's checkpoint, supports both new format
+    ({'state_dict','obs_stats'}) and legacy bare state_dict.
+  - Builds (N_dm, D) obs_mean/obs_var aligned to env.dm_ids via per-DM
+    lookup (not positional) so reordering between training & inference is
+    safe.
+  - Falls back to mean=0, var=1 for DMs with missing/empty obs_stats and
+    warns loudly (signals likely-degenerate policy behaviour).
+  - Calls env._build_static_caches() and env._rebuild_batched_weights()
+    so the batched torch.bmm fast path is used.
+  - Does NOT update obs_stats during inference (frozen); sigma_f is
+    irrelevant since no ARS updates are performed.
+  - Untrained DMs (no checkpoint) get a fresh PolicyNetwork and mean=0/
+    var=1; warning printed.
+
+Intentionally NOT included yet (extension points):
+  - Plotting / scenario comparison (just biomass-history .npz output).
+  - Map loading (uses zero impact maps like train.py's env_builder).
+  - Multi-seed averaging or batch inference.

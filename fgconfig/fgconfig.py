@@ -167,9 +167,14 @@ class FGConfigApp:
         self.notebook.add(self.project_tab, text="Project & FGs")
         self.setup_project_tab()
 
-        # Tab 2: Interaction Matrix
+        # Tab 2: FG Interactions
         self.matrix_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.matrix_tab, text="Interaction Matrix")
+        self.notebook.add(self.matrix_tab, text="FG Interactions")
+
+        # Tab 3: Impact Interactions
+        self.impact_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.impact_tab, text="Impact Interactions")
+
         self.setup_matrix_tab()
 
     def setup_project_tab(self):
@@ -273,6 +278,7 @@ class FGConfigApp:
             ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry"),
             ("Energy Content (MJ/ton)", "energy_content", "entry"),
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry"),
+            ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry"),
             ("Movement Speed (cells/tick)", "movement_speed", "entry"),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry"),
             ("Initial Total Biomass (ton)", "initial_biomass", "entry")
@@ -335,6 +341,7 @@ class FGConfigApp:
         )
 
     def setup_matrix_tab(self):
+        # Scrollable container for FG Interactions tab
         self.matrix_canvas = tk.Canvas(self.matrix_tab)
         self.matrix_scrollbar = ttk.Scrollbar(self.matrix_tab, orient="vertical", command=self.matrix_canvas.yview)
         self.matrix_container = ttk.Frame(self.matrix_canvas)
@@ -357,6 +364,29 @@ class FGConfigApp:
         self.matrix_scrollbar.pack(side="right", fill="y")
         self.matrix_canvas.pack(side="left", expand=True, fill="both")
 
+        # Scrollable container for Impact Interactions tab
+        self.impact_canvas = tk.Canvas(self.impact_tab)
+        self.impact_scrollbar = ttk.Scrollbar(self.impact_tab, orient="vertical", command=self.impact_canvas.yview)
+        self.impact_container = ttk.Frame(self.impact_canvas)
+
+        self.impact_container.bind(
+            "<Configure>",
+            lambda e: self.impact_canvas.configure(
+                scrollregion=self.impact_canvas.bbox("all")
+            )
+        )
+
+        self.impact_canvas.create_window((0, 0), window=self.impact_container, anchor="nw")
+        self.impact_hscrollbar = ttk.Scrollbar(self.impact_tab, orient="horizontal", command=self.impact_canvas.xview)
+        self.impact_canvas.configure(
+            yscrollcommand=self.impact_scrollbar.set,
+            xscrollcommand=self.impact_hscrollbar.set,
+        )
+
+        self.impact_hscrollbar.pack(side="bottom", fill="x")
+        self.impact_scrollbar.pack(side="right", fill="y")
+        self.impact_canvas.pack(side="left", expand=True, fill="both")
+
         # Bind mouse wheel scrolling (vertical) and Shift+wheel (horizontal)
         self.matrix_canvas.bind_all("<MouseWheel>", self._on_mousewheel)
         self.matrix_canvas.bind_all("<Button-4>", self._on_mousewheel)
@@ -370,25 +400,36 @@ class FGConfigApp:
     def refresh_matrix(self):
         for widget in self.matrix_container.winfo_children():
             widget.destroy()
+        for widget in self.impact_container.winfo_children():
+            widget.destroy()
 
-        fgs = self._all_fg_ids()
+        fgs = sorted(self._all_fg_ids(), key=lambda fg_id: self.fg_display(fg_id).lower())
         if not fgs:
             ttk.Label(self.matrix_container, text="Add FGs to the project to see interaction matrices.").pack(padx=10, pady=10)
+            ttk.Label(self.impact_container, text="Add FGs to the project to see impact interactions.").pack(padx=10, pady=10)
             return
 
         self.matrix_entries = {}
         self.matrix_widgets = {}
+        self.matrix_tables = {}
         
-        # Matrix 1: Predation (boolean: row eats column; cannibalism allowed on diagonal)
-        self.create_matrix_section("Predation (row eats column)", "preys_on", fgs, fgs, cell_type="bool")
+        # FG Interactions tab: Predation + Max Intake
+        self.create_matrix_section("Predation (row eats column)", "preys_on", fgs, fgs, cell_type="bool",
+                                   parent=self.matrix_container)
 
-        # Matrix 2: Max Intake
-        self.create_matrix_section("Max Intake Rate (I_XY) [ton prey / ton consumer]", "max_intake_rate", fgs, fgs)
+        self.create_matrix_section("Max Intake Rate (I_XY) [ton prey / ton consumer]", "max_intake_rate", fgs, fgs,
+                                   parent=self.matrix_container)
         
-        # Matrix 3: Impact Sensitivity (0..1 ratio with slider)
+        # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
+        impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
         if impacts:
-            self.create_matrix_section("Impact Sensitivity [0..1 = 0%..100%]", "impact_sensitivity", fgs, impacts, cell_type="ratio")
+            self.create_matrix_section("Impact Affects (row impacted by column)", "impact_affects", fgs, impacts,
+                                       cell_type="bool", parent=self.impact_container)
+            self.create_matrix_section("Impact Tables (value, biomass factor, energy factor)", "impact_table", fgs, impacts,
+                                       cell_type="table", parent=self.impact_container)
+        else:
+            ttk.Label(self.impact_container, text="Add impact variables to the project to see impact interactions.").pack(padx=10, pady=10)
 
         # Link predation checkboxes to max_intake_rate entry enable-state
         for key, data in self.matrix_entries.items():
@@ -411,17 +452,38 @@ class FGConfigApp:
             preys_var.trace_add("write", updater)
             updater()
 
-        ttk.Button(self.matrix_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
+        # Link impact_affects checkboxes to impact_table button enable-state
+        for key, data in self.matrix_entries.items():
+            affects_var = data.get("impact_affects")
+            if affects_var is None:
+                continue
+            table_widget = self.matrix_widgets.get(key, {}).get("impact_table")
+            if table_widget is None:
+                continue
+            def make_impact_updater(var=affects_var, widget=table_widget):
+                def update(*_):
+                    widget.configure(state="normal" if var.get() else "disabled")
+                return update
+            updater = make_impact_updater()
+            affects_var.trace_add("write", updater)
+            updater()
 
-    def create_matrix_section(self, title, data_key, row_ids, col_ids, cell_type="entry"):
-        frame = ttk.LabelFrame(self.matrix_container, text=title)
+        ttk.Button(self.matrix_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
+        if impacts:
+            ttk.Button(self.impact_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
+
+    def create_matrix_section(self, title, data_key, row_ids, col_ids, cell_type="entry", parent=None):
+        if parent is None:
+            parent = self.matrix_container
+        frame = ttk.LabelFrame(parent, text=title)
         frame.pack(fill="x", padx=10, pady=10)
 
+        impact_keys = ("impact_affects", "impact_table")
         # Headers
         ttk.Label(frame, text="Group \\ Var").grid(row=0, column=0, padx=5, pady=5)
         for j, col_id in enumerate(col_ids):
             # Use display_name from impact_definitions if available
-            if data_key == "impact_sensitivity":
+            if data_key in impact_keys:
                 label_text = self.global_library.get("impact_definitions", {}).get(col_id, {}).get("display_name", col_id)
             else:
                 label_text = self.fg_display(col_id)
@@ -432,7 +494,7 @@ class FGConfigApp:
             ttk.Label(frame, text=row_label).grid(row=i+1, column=0, padx=5, pady=5)
             for j, col_id in enumerate(col_ids):
                 # Unique key for storage
-                if data_key == "impact_sensitivity":
+                if data_key in impact_keys:
                     key = f"{row_id}_impacted_by_{col_id}"
                 else:
                     key = f"{row_id}_preys_on_{col_id}"
@@ -448,43 +510,26 @@ class FGConfigApp:
                     var = tk.BooleanVar(value=bool(val))
                     widget = ttk.Checkbutton(frame, variable=var)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
-                elif cell_type == "ratio":
-                    # Clamp initial value to [0, 1]
-                    try:
-                        init_val = float(val) if val not in ("", None, False) else 0.0
-                    except (TypeError, ValueError):
-                        init_val = 0.0
-                    init_val = max(0.0, min(1.0, init_val))
-                    var = tk.StringVar(value=f"{init_val:.2f}")
-                    cell = ttk.Frame(frame)
-                    cell.grid(row=i+1, column=j+1, padx=2, pady=2)
-                    entry = ttk.Entry(cell, textvariable=var, width=5)
-                    entry.pack(side="left")
-                    # Use DoubleVar for slider to avoid feedback loops
-                    slider_var = tk.DoubleVar(value=init_val)
-                    slider = ttk.Scale(cell, from_=0.0, to=1.0, orient="horizontal",
-                                       variable=slider_var, length=80)
-                    slider.pack(side="left", padx=(2, 0))
-                    # Sync slider -> entry
-                    def _on_slider(*_a, sv=slider_var, tv=var):
-                        tv.set(f"{sv.get():.2f}")
-                    slider_var.trace_add("write", _on_slider)
-                    # Sync entry -> slider (clamp)
-                    def _on_entry(*_a, sv=slider_var, tv=var):
-                        try:
-                            v = float(tv.get())
-                        except (TypeError, ValueError):
-                            return
-                        v = max(0.0, min(1.0, v))
-                        if abs(sv.get() - v) > 1e-9:
-                            sv.set(v)
-                    var.trace_add("write", _on_entry)
-                    widget = entry
+                elif cell_type == "table":
+                    # Load existing table (list of dicts) from library, if any
+                    existing_table = existing.get("impact_table")
+                    if not isinstance(existing_table, list):
+                        existing_table = []
+                    if not hasattr(self, "matrix_tables"):
+                        self.matrix_tables = {}
+                    self.matrix_tables[key] = [dict(row) for row in existing_table]
+                    var = None  # tables are not stored in a tk var
+                    widget = ttk.Button(
+                        frame, text="Edit Table…",
+                        command=lambda k=key, r=row_id, c=col_id: self.open_impact_table_editor(k, r, c),
+                    )
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 else:
                     var = tk.StringVar(value=str(val))
                     widget = ttk.Entry(frame, textvariable=var, width=10)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
-                self.matrix_entries[key][data_key] = var
+                if var is not None:
+                    self.matrix_entries[key][data_key] = var
                 if not hasattr(self, "matrix_widgets"):
                     self.matrix_widgets = {}
                 if key not in self.matrix_widgets:
@@ -616,6 +661,14 @@ class FGConfigApp:
                     if config[key] > 1.0:
                         config[key] = 1.0
                         var.set("1.0")
+                # Clamp maintenance level (u_X) to [0, 1].
+                if key == "maintenance_level":
+                    if config[key] < 0.0:
+                        config[key] = 0.0
+                        var.set("0.0")
+                    elif config[key] > 1.0:
+                        config[key] = 1.0
+                        var.set("1.0")
                 # Clamp indivisible weight to [0, 10000] kg. 0 = continuous.
                 if key == "min_split_biomass":
                     if config[key] < 0.0:
@@ -660,14 +713,164 @@ class FGConfigApp:
                     if val_str:
                         try:
                             val = float(val_str)
-                            if data_key == "impact_sensitivity":
-                                val = max(0.0, min(1.0, val))
                             self.global_library["interaction_definitions"][key][data_key] = val
                         except ValueError:
                             pass # skip invalid
-        
+
+        # Persist impact tables (list of {value, biomass_factor, energy_factor})
+        for key, table in getattr(self, "matrix_tables", {}).items():
+            if key not in self.global_library["interaction_definitions"]:
+                self.global_library["interaction_definitions"][key] = {}
+            self.global_library["interaction_definitions"][key]["impact_table"] = [
+                {
+                    "value": float(row.get("value", 0.0)),
+                    "biomass_factor": float(row.get("biomass_factor", 0.0)),
+                    "energy_factor": float(row.get("energy_factor", 0.0)),
+                }
+                for row in table
+            ]
+
         self.save_yaml(self.global_library, self.library_path)
         messagebox.showinfo("Success", "Updated interactions and saved to library.")
+
+    def open_impact_table_editor(self, key, fg_id, impact_id):
+        """Open a dialog to edit the impact table (value, biomass_factor, energy_factor) for (FG, impact).
+
+        All three columns are in [0, 1]. Linear interpolation is used at lookup, clipped to
+        last value at the boundaries (no extrapolation).
+        """
+        if not hasattr(self, "matrix_tables"):
+            self.matrix_tables = {}
+        current = [dict(r) for r in self.matrix_tables.get(key, [])]
+
+        impact_name = self.global_library.get("impact_definitions", {}).get(impact_id, {}).get("display_name", impact_id)
+        fg_name = self.fg_display(fg_id)
+
+        top = tk.Toplevel(self.root)
+        top.title(f"Impact Table — {fg_name} × {impact_name}")
+        top.transient(self.root)
+
+        info = ttk.Label(
+            top,
+            text=("'Value' has an undefined range (physical impact value). "
+                  "'Biomass factor' and 'Energy factor' must be in [0, 1]. "
+                  "Linear interpolation between rows; outside the range, "
+                  "the nearest endpoint value is used (no extrapolation)."),
+            wraplength=480, justify="left",
+        )
+        info.pack(padx=10, pady=(10, 5), anchor="w")
+
+        table_frame = ttk.Frame(top)
+        table_frame.pack(padx=10, pady=5, fill="both", expand=True)
+
+        headers = ("Value", "Biomass factor", "Energy factor")
+        for j, h in enumerate(headers):
+            ttk.Label(table_frame, text=h, font=("TkDefaultFont", 9, "bold")).grid(row=0, column=j, padx=4, pady=2)
+
+        row_vars = []  # list of (value_var, bf_var, ef_var)
+
+        # Live validators: 'value' accepts any numeric (or partial) string; the
+        # factor columns reject any intermediate string that cannot be the prefix
+        # of a number in [0, 1] (so values outside the unit interval cannot even
+        # be typed).
+        def _validate_value(proposed):
+            if proposed in ("", "-", "+", ".", "-.", "+."):
+                return True
+            try:
+                float(proposed)
+                return True
+            except ValueError:
+                return False
+
+        def _validate_unit(proposed):
+            # Allow empty / partial inputs that could still become a valid value in [0, 1].
+            if proposed in ("", "."):
+                return True
+            try:
+                v = float(proposed)
+            except ValueError:
+                return False
+            return 0.0 <= v <= 1.0
+
+        vcmd_value = (top.register(_validate_value), "%P")
+        vcmd_unit = (top.register(_validate_unit), "%P")
+
+        def add_row(value=0.0, bf=0.0, ef=0.0):
+            r = len(row_vars) + 1
+            v_var = tk.StringVar(value=f"{float(value):.4g}")
+            b_var = tk.StringVar(value=f"{float(bf):.4g}")
+            e_var = tk.StringVar(value=f"{float(ef):.4g}")
+            ttk.Entry(table_frame, textvariable=v_var, width=10,
+                      validate="key", validatecommand=vcmd_value).grid(row=r, column=0, padx=4, pady=2)
+            ttk.Entry(table_frame, textvariable=b_var, width=10,
+                      validate="key", validatecommand=vcmd_unit).grid(row=r, column=1, padx=4, pady=2)
+            ttk.Entry(table_frame, textvariable=e_var, width=10,
+                      validate="key", validatecommand=vcmd_unit).grid(row=r, column=2, padx=4, pady=2)
+            row_vars.append((v_var, b_var, e_var))
+
+        for row in current:
+            add_row(row.get("value", 0.0), row.get("biomass_factor", 0.0), row.get("energy_factor", 0.0))
+        if not row_vars:
+            add_row()
+
+        btns = ttk.Frame(top)
+        btns.pack(padx=10, pady=(2, 10), fill="x")
+
+        def on_add_row():
+            add_row()
+
+        def on_remove_last():
+            if not row_vars:
+                return
+            v, b, e = row_vars.pop()
+            # Remove the corresponding entry widgets (last row in the grid)
+            r = len(row_vars) + 1
+            for col in range(3):
+                w = table_frame.grid_slaves(row=r, column=col)
+                for wd in w:
+                    wd.destroy()
+
+        def _parse_float(s):
+            try:
+                return float(s)
+            except (TypeError, ValueError):
+                return None
+
+        def _parse_unit(s):
+            v = _parse_float(s)
+            if v is None or v < 0.0 or v > 1.0:
+                return None
+            return v
+
+        def on_save():
+            new_table = []
+            for v_var, b_var, e_var in row_vars:
+                v = _parse_float(v_var.get())
+                b = _parse_unit(b_var.get())
+                e = _parse_unit(e_var.get())
+                if v is None:
+                    messagebox.showwarning(
+                        "Invalid value",
+                        "'Value' cells must be numeric.", parent=top,
+                    )
+                    return
+                if b is None or e is None:
+                    messagebox.showwarning(
+                        "Invalid value",
+                        "'Biomass factor' and 'Energy factor' cells must be numeric values within [0, 1].",
+                        parent=top,
+                    )
+                    return
+                new_table.append({"value": v, "biomass_factor": b, "energy_factor": e})
+            # Sort by value for predictable interpolation
+            new_table.sort(key=lambda r: r["value"])
+            self.matrix_tables[key] = new_table
+            top.destroy()
+
+        ttk.Button(btns, text="Add Row", command=on_add_row).pack(side="left")
+        ttk.Button(btns, text="Remove Last", command=on_remove_last).pack(side="left", padx=5)
+        ttk.Button(btns, text="Cancel", command=top.destroy).pack(side="right")
+        ttk.Button(btns, text="Save", command=on_save).pack(side="right", padx=5)
 
     def add_from_library(self, category="decision_makers"):
         all_lib_fgs = list(self.global_library.get("species_definitions", {}).keys())
@@ -701,6 +904,7 @@ class FGConfigApp:
         lb.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
+        lib_fgs.sort(key=lambda fg: self.fg_display(fg).lower())
         for item in lib_fgs:
             lb.insert("end", self.fg_display(item))
 
@@ -763,6 +967,7 @@ class FGConfigApp:
                 "growth_rate": 0.0,
                 "max_energy_reserve": 0.0,
                 "resting_metabolism": 0.0,
+                "maintenance_level": 0.3,
                 "movement_speed": 0.0,
                 "movement_cost": 3.0,
                 "feeding_cost": 3.0,
@@ -813,6 +1018,14 @@ class FGConfigApp:
         return display
 
     def update_fg_list(self):
+        # Sort underlying project lists alphabetically so listbox indices map
+        # directly to project_data entries.
+        if self.project_data.get('decision_makers'):
+            self.project_data['decision_makers'].sort(
+                key=lambda fg: self.fg_display(fg['group_id']).lower())
+        if self.project_data.get('non_decision_makers'):
+            self.project_data['non_decision_makers'].sort(
+                key=lambda fg: self.fg_display(fg['group_id']).lower())
         self.fg_listbox.delete(0, "end")
         for fg in self.project_data.get('decision_makers', []) or []:
             self.fg_listbox.insert("end", self.fg_display(fg['group_id']))
@@ -822,11 +1035,14 @@ class FGConfigApp:
                 self.ndm_listbox.insert("end", self.fg_display(fg['group_id']))
 
     def update_impact_list(self):
+        def _impact_display(iv):
+            impact_id = iv['impact_id']
+            return self.global_library.get("impact_definitions", {}).get(impact_id, {}).get("display_name", impact_id)
+        if self.project_data.get('impact_variables'):
+            self.project_data['impact_variables'].sort(key=lambda iv: _impact_display(iv).lower())
         self.impact_listbox.delete(0, "end")
         for iv in self.project_data.get('impact_variables', []):
-            impact_id = iv['impact_id']
-            display = self.global_library.get("impact_definitions", {}).get(impact_id, {}).get("display_name", impact_id)
-            self.impact_listbox.insert("end", display)
+            self.impact_listbox.insert("end", _impact_display(iv))
 
     def add_impact_from_library(self):
         lib_impacts = list(self.global_library.get("impact_definitions", {}).keys())
@@ -853,6 +1069,7 @@ class FGConfigApp:
         lb.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
+        lib_impacts.sort(key=lambda imp: self.global_library["impact_definitions"][imp].get("display_name", imp).lower())
         for item in lib_impacts:
             display = self.global_library["impact_definitions"][item].get("display_name", item)
             lb.insert("end", display)

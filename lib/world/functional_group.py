@@ -15,6 +15,10 @@ class FunctionalGroup:
         self.max_energy_reserve = params.get('max_energy_reserve', 1000.0)  # ME_X
         self.resting_metabolism = params.get('resting_metabolism', 0.0)  # Rest_X
         self.growth_rate = params.get('growth_rate', 0.0)  # MG_X
+        # u_X: maintenance level. The relative energy fill ratio s_X required
+        # to break even (q_X = s_X - u_X = 0). Below u_X the population
+        # shrinks; above it, it grows. Method.pdf §6.
+        self.maintenance_level = float(params.get('maintenance_level', 0.3))
         self.speed = params.get('movement_speed', 0.0)  # V_X
         # Minimum biomass (per cell) required to split via movement actions.
         # YAML/GUI value is in kg; internal biomass units are tonnes, so

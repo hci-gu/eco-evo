@@ -90,11 +90,21 @@ class EcosystemEnvironment:
         self.dm_cost_rest = np.array([self.fgs[fid].params.get('resting_cost', 1.0) for fid in self.dm_ids], dtype=self.dtype)
         self.dm_resting_metabolism = np.array([self.fgs[fid].resting_metabolism for fid in self.dm_ids], dtype=self.dtype)
         self.dm_max_energy_reserve = np.array([self.fgs[fid].max_energy_reserve for fid in self.dm_ids], dtype=self.dtype)
-        self.dm_noise_sens = np.array(
-            [self.fgs[fid].params.get('impact', {}).get('windfarm_noise', {}).get('impact_sensitivity', 0.0)
-             for fid in self.dm_ids],
-            dtype=self.dtype,
-        )
+        # Per-DM cached impact tables for ALL impacts the FG is affected by.
+        # Each entry is a list of (impact_id, (xs, bf, ef)) tuples; impacts
+        # without `impact_affects=true` or with an empty/invalid table are
+        # omitted. Used by both _apply_movement (energy_factor → extra energy
+        # cost) and _apply_growth_and_impact (biomass_factor → mortality,
+        # energy_factor → reserve loss).
+        self.dm_impact_tables = []
+        for fid in self.dm_ids:
+            impacts = self.fgs[fid].params.get('impact', {}) or {}
+            entries = []
+            for imp_id, imp_def in impacts.items():
+                tbl = self._extract_impact_table(imp_def)
+                if tbl is not None:
+                    entries.append((imp_id, tbl))
+            self.dm_impact_tables.append(entries)
         # Per-DM minimum biomass for splitting via movement. 0 = no threshold.
         self.dm_min_split = np.array(
             [getattr(self.fgs[fid], 'min_split_biomass', 0.0) for fid in self.dm_ids],
@@ -339,17 +349,24 @@ class EcosystemEnvironment:
             return
 
         H, W = self.H, self.W
-        noise = self.grid.get_map('windfarm_noise')
-        if noise is None:
-            noise = np.zeros((H, W), dtype=self.dtype)
-        else:
-            noise = noise.astype(self.dtype, copy=False)
 
         B = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
         R = np.stack([self.fgs[fid].energy_reserve for fid in self.dm_ids], axis=0)
         TG = np.stack([self.fgs[fid].temp_energy_gains for fid in self.dm_ids], axis=0)
 
-        noise_factor = np.float32(1.0) + self.dm_noise_sens[:, None, None] * noise[None, :, :]
+        # Per-DM extra energy cost from all impacts the FG is affected by
+        # (sum of energy_factor lookups over every impact with a valid table).
+        # The factor (1 + Σ energy_factor) scales resting / feeding / movement
+        # metabolic costs.
+        impact_energy = np.zeros((self.N_dm, H, W), dtype=self.dtype)
+        for i, entries in enumerate(self.dm_impact_tables):
+            for imp_id, table in entries:
+                map_data = self.grid.get_map(imp_id)
+                if map_data is None:
+                    continue
+                _, ef_map = self._interp_impact(table, map_data.astype(self.dtype, copy=False))
+                impact_energy[i] += ef_map
+        cost_factor = np.float32(1.0) + impact_energy
         rm = self.dm_resting_metabolism[:, None, None]
         cost_rest = self.dm_cost_rest[:, None, None]
         cost_eat = self.dm_cost_eat[:, None, None]
@@ -357,19 +374,19 @@ class EcosystemEnvironment:
 
         # Rest
         pi_rest = self.pi_rest
-        m_rest = B * pi_rest * rm * cost_rest * noise_factor
+        m_rest = B * pi_rest * rm * cost_rest * cost_factor
         r_rest = np.maximum(0, R * pi_rest - m_rest)
         b_rest = B * pi_rest
 
         # Eat: pi_eat sums then uses shared scale (sum_j max(0, R*pi_j - B*pi_j*scale) = sum_j pi_j*max(0, R - B*scale))
         pi_eat_sum = self.pi_eat.sum(axis=1)
-        scale_eat = rm * cost_eat * noise_factor
+        scale_eat = rm * cost_eat * cost_factor
         r_eat_tot = pi_eat_sum * np.maximum(0, R - B * scale_eat) + TG
         b_eat_tot = B * pi_eat_sum
 
         # Move (4 directions)
         pi_move = self.pi_move
-        scale_move = rm * cost_move * noise_factor
+        scale_move = rm * cost_move * cost_factor
         r_after_move_meta = np.maximum(0, R - B * scale_move)
         r_move_choices = pi_move * r_after_move_meta[:, None, :, :]
         b_move_choices = pi_move * B[:, None, :, :]
@@ -407,6 +424,45 @@ class EcosystemEnvironment:
             self.fgs[fid].biomass = new_B[i].astype(self.dtype, copy=False)
             self.fgs[fid].energy_reserve = new_R[i].astype(self.dtype, copy=False)
 
+    @staticmethod
+    def _extract_impact_table(impact_def):
+        """Return (xs, biomass_factors, energy_factors) as float32 arrays sorted
+        by xs, or None if the FG is not affected by this impact or the table is
+        missing/empty."""
+        if not impact_def:
+            return None
+        if not impact_def.get('impact_affects', False):
+            return None
+        table = impact_def.get('impact_table') or []
+        if not table:
+            return None
+        try:
+            rows = sorted(
+                ((float(r['value']), float(r['biomass_factor']), float(r['energy_factor']))
+                 for r in table),
+                key=lambda t: t[0],
+            )
+        except (KeyError, TypeError, ValueError):
+            return None
+        if not rows:
+            return None
+        xs = np.array([r[0] for r in rows], dtype=np.float32)
+        bf = np.array([r[1] for r in rows], dtype=np.float32)
+        ef = np.array([r[2] for r in rows], dtype=np.float32)
+        return xs, bf, ef
+
+    @staticmethod
+    def _interp_impact(table, x):
+        """Linear interpolation against an impact table. Outside the support,
+        the nearest endpoint value is used (no extrapolation). `x` may be a
+        scalar or ndarray; returns (biomass_factor, energy_factor) with the
+        same shape as `x` (or scalars if `x` is scalar)."""
+        xs, bf, ef = table
+        x_arr = np.asarray(x, dtype=np.float32)
+        b = np.interp(x_arr, xs, bf, left=bf[0], right=bf[-1])
+        e = np.interp(x_arr, xs, ef, left=ef[0], right=ef[-1])
+        return b.astype(np.float32, copy=False), e.astype(np.float32, copy=False)
+
     def _apply_growth_and_impact(self):
         for fg_id in self.ordered_fg_ids:
             fg = self.fgs[fg_id]
@@ -417,18 +473,20 @@ class EcosystemEnvironment:
                 fg.biomass = np.clip(fg.biomass + growth, 0.0, cc).astype(self.dtype, copy=False)
             else:
                 s_x = fg.energy_level
-                u_x = 0.3
+                u_x = fg.maintenance_level
                 q_x = s_x - u_x
 
                 total_mortality_impact = np.zeros_like(fg.biomass)
                 if 'impact' in fg.params:
                     for impact_id, impact_def in fg.params['impact'].items():
-                        if impact_id == 'windfarm_noise':
-                            continue
                         map_data = self.grid.get_map(impact_id)
-                        if map_data is not None:
-                            sensitivity = impact_def.get('impact_sensitivity', 0.0)
-                            total_mortality_impact = total_mortality_impact + fg.biomass * map_data * sensitivity
+                        if map_data is None:
+                            continue
+                        table = self._extract_impact_table(impact_def)
+                        if table is None:
+                            continue
+                        bf_map, _ = self._interp_impact(table, map_data)
+                        total_mortality_impact = total_mortality_impact + fg.biomass * bf_map
 
                 growth = fg.biomass * fg.growth_rate * q_x
 

@@ -87,7 +87,8 @@
     feeding_cost: 4.0
     movement_cost: 8.0
     min_split_biomass: 0.0
-    initial_biomass: 25
+    energy_content: 0.0
+    maintenance_level: 0.0
 interaction_definitions:
   zooplankton_preys_on_phytoplankton:
     max_intake_rate: 0.1
@@ -113,20 +114,6 @@ interaction_definitions:
     max_intake_rate: 0.04
     energy_gain: 5000
     preys_on: true
-  pelagic_fish_impacted_by_windfarm_noise:
-    impact_sensitivity: 0.15
-  pelagic_fish_impacted_by_pelagic_trawling:
-    impact_sensitivity: 0.02
-  gadoids_impacted_by_windfarm_noise:
-    impact_sensitivity: 0.20
-  porpoises_impacted_by_windfarm_noise:
-    impact_sensitivity: 0.40
-  seals_impacted_by_windfarm_noise:
-    impact_sensitivity: 0.25
-  seabirds_impacted_by_windfarm_noise:
-    impact_sensitivity: 0.10
-  seabirds_impacted_by_rotor:
-    impact_sensitivity: 0.0001
 impact_definitions:
   bottom_trawling:
     display_name: "Bottom Trawling"
