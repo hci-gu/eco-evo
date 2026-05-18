@@ -274,6 +274,7 @@ class FGConfigApp:
             ("Energy Content (MJ/ton)", "energy_content", "entry"),
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry"),
             ("Movement Speed (cells/tick)", "movement_speed", "entry"),
+            ("Indivisible Weight (kg)", "min_split_biomass", "entry"),
             ("Initial Total Biomass (ton)", "initial_biomass", "entry")
         ]
 
@@ -615,6 +616,14 @@ class FGConfigApp:
                     if config[key] > 1.0:
                         config[key] = 1.0
                         var.set("1.0")
+                # Clamp indivisible weight to [0, 10000] kg. 0 = continuous.
+                if key == "min_split_biomass":
+                    if config[key] < 0.0:
+                        config[key] = 0.0
+                        var.set("0.0")
+                    elif config[key] > 10000.0:
+                        config[key] = 10000.0
+                        var.set("10000.0")
 
         # Strip initial_biomass from library-bound config; it lives on the
         # project FG entry only.

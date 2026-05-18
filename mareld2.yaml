@@ -9,9 +9,9 @@ decision_makers:
   - group_id: gadoids
     initial_biomass: 2500
   - group_id: porpoises
-    initial_biomass: 12
+    initial_biomass: 12.0
   - group_id: seals
-    initial_biomass: 25
+    initial_biomass: 25.0
   - group_id: seabirds
     initial_biomass: 25
 non_decision_makers:

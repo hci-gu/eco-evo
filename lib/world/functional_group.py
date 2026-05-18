@@ -16,6 +16,11 @@ class FunctionalGroup:
         self.resting_metabolism = params.get('resting_metabolism', 0.0)  # Rest_X
         self.growth_rate = params.get('growth_rate', 0.0)  # MG_X
         self.speed = params.get('movement_speed', 0.0)  # V_X
+        # Minimum biomass (per cell) required to split via movement actions.
+        # YAML/GUI value is in kg; internal biomass units are tonnes, so
+        # convert kg -> tonnes here at the input boundary.
+        # 0 = continuous biomass (no threshold).
+        self.min_split_biomass = float(params.get('min_split_biomass', 0.0)) / 1000.0
         
         # Costs
         self.movement_cost = params.get('movement_cost', 1.0)

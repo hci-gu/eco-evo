@@ -95,6 +95,11 @@ class EcosystemEnvironment:
              for fid in self.dm_ids],
             dtype=self.dtype,
         )
+        # Per-DM minimum biomass for splitting via movement. 0 = no threshold.
+        self.dm_min_split = np.array(
+            [getattr(self.fgs[fid], 'min_split_biomass', 0.0) for fid in self.dm_ids],
+            dtype=self.dtype,
+        )
 
         self._rebuild_batched_weights()
         self._static_built = True
@@ -263,6 +268,15 @@ class EcosystemEnvironment:
         B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
         prey_present = (B_all > 0).astype(self.dtype)
         full_mask[:, 5:5 + self.N_all] = self.eat_static_mask[:, :, None, None] * prey_present[None, :, :, :]
+
+        # Indivisible-weight threshold: mask out move actions in cells where
+        # the DM's biomass is below its minimum split mass. 0 = continuous
+        # (no threshold). The existing zero-total fallback below routes such
+        # cells to rest/eat via re-normalisation.
+        if np.any(self.dm_min_split > 0):
+            B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)  # (N_dm, H, W)
+            can_split = (B_dm >= self.dm_min_split[:, None, None]).astype(self.dtype)
+            full_mask[:, 0:4] *= can_split[:, None, :, :]
 
         masked = probs * full_mask
         total = masked.sum(axis=1, keepdims=True)
