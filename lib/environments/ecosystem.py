@@ -288,6 +288,13 @@ class EcosystemEnvironment:
             can_split = (B_dm >= self.dm_min_split[:, None, None]).astype(self.dtype)
             full_mask[:, 0:4] *= can_split[:, None, :, :]
 
+        # Disallow move actions entirely for DMs that cannot move
+        # (movement_speed <= 0, e.g. zooplankton per spec). The zero-total
+        # fallback below re-routes the freed probability mass to rest/eat.
+        cannot_move = (self.dm_v <= 0)  # (N_dm,)
+        if np.any(cannot_move):
+            full_mask[cannot_move, 0:4] = 0.0
+
         masked = probs * full_mask
         total = masked.sum(axis=1, keepdims=True)
         zero_total = total <= 1e-12

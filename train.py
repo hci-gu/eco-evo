@@ -46,6 +46,44 @@ def _save_checkpoint(trainer, fg_id, path):
     torch.save(payload, path)
 
 
+def _load_checkpoint(trainer, fg_id, path):
+    """Load policy weights (and obs-normalisation stats if present) for ``fg_id``.
+
+    Supports two on-disk formats:
+      * New: ``{'state_dict': ..., 'obs_stats': {'mean','var','count'}}``
+      * Legacy: a bare ``state_dict`` produced by an older training run.
+    Returns True on success, False if the file is unreadable / incompatible.
+    """
+    try:
+        payload = torch.load(path, map_location='cpu')
+    except Exception as e:
+        print(f"    [resume] Failed to read {path}: {e}")
+        return False
+
+    if isinstance(payload, dict) and 'state_dict' in payload:
+        state_dict = payload['state_dict']
+        obs_stats = payload.get('obs_stats')
+    else:
+        state_dict = payload
+        obs_stats = None
+
+    try:
+        trainer.policies[fg_id].load_state_dict(state_dict)
+    except Exception as e:
+        print(f"    [resume] Could not load weights for {fg_id} from {path}: {e}")
+        return False
+
+    if obs_stats is not None and getattr(trainer, 'obs_stats', None) is not None:
+        try:
+            mean = np.asarray(obs_stats['mean'], dtype=np.float64)
+            var = np.asarray(obs_stats['var'], dtype=np.float64)
+            count = int(obs_stats['count'])
+            trainer.obs_stats[fg_id] = {'mean': mean, 'var': var, 'count': count}
+        except Exception as e:
+            print(f"    [resume] Loaded weights but failed to restore obs_stats for {fg_id}: {e}")
+    return True
+
+
 def _auto_workers(n_deltas):
     """Pick a sensible default worker count.
 
@@ -143,6 +181,10 @@ def main():
                              "Set equal to --n_deltas to disable truncation.")
     parser.add_argument("--no_obs_normalize", action="store_true",
                         help="Disable ARS-V2 running observation normalisation (mean/std).")
+    parser.add_argument("--resume", action="store_true",
+                        help="Resume from previously saved checkpoints in results/policy_<fg>.pth "
+                             "for ALL decision makers (not only the trained ones). Missing "
+                             "checkpoints are silently skipped and start from random init.")
 
     args = parser.parse_args()
 
@@ -249,10 +291,46 @@ def main():
         print(f"Workers:        {n_workers} (default: auto, resolved from {os.cpu_count()} CPUs and n_deltas={n_deltas})")
     print(f"------------------------------------------")
 
+    # Prompt user to confirm parameters before starting training.
+    # Enter (empty) or 'y' continues; 'n' aborts. Loops on invalid input.
+    try:
+        while True:
+            resp = input("Continue with these parameters? [Y/n]: ").strip().lower()
+            if resp in ("", "y", "yes"):
+                break
+            if resp in ("n", "no"):
+                print("Aborted by user.")
+                return
+            print("Please answer 'y' or 'n' (or press Enter for default 'y').")
+    except EOFError:
+        # No interactive stdin available — proceed with defaults.
+        pass
+
     # Create the trainer with all relevant policy dimensions
     trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
                          n_workers=n_workers, alpha=args.alpha, beta=args.beta,
                          obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved)
+
+    # Optionally resume from previously saved checkpoints. We always load for
+    # ALL decision makers (not just the target species) so that single-species
+    # runs co-evolve against previously trained policies rather than random ones.
+    if args.resume:
+        print(f"Resume:         enabled (loading checkpoints for all DMs)")
+        loaded, missing = [], []
+        for fg_id in policy_params:
+            ckpt = f"results/policy_{fg_id}.pth"
+            if os.path.exists(ckpt):
+                if _load_checkpoint(trainer, fg_id, ckpt):
+                    loaded.append(fg_id)
+                else:
+                    missing.append(fg_id)
+            else:
+                missing.append(fg_id)
+        if loaded:
+            print(f"    Loaded checkpoints: {', '.join(loaded)}")
+        if missing:
+            print(f"    No checkpoint (random init): {', '.join(missing)}")
+        print(f"------------------------------------------")
     
     import itertools
     gen_iter = itertools.count() if generations_is_inf else range(generations_value)

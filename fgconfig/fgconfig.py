@@ -175,6 +175,11 @@ class FGConfigApp:
         self.impact_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.impact_tab, text="Impact Interactions")
 
+        # Tab 4: Inference
+        self.inference_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.inference_tab, text="Inference")
+        self.setup_inference_tab()
+
         self.setup_matrix_tab()
 
     def setup_project_tab(self):
@@ -281,7 +286,7 @@ class FGConfigApp:
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry"),
             ("Movement Speed (cells/tick)", "movement_speed", "entry"),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry"),
-            ("Initial Total Biomass (ton)", "initial_biomass", "entry")
+            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range")
         ]
 
         for i, (label, key, type) in enumerate(main_props):
@@ -296,6 +301,10 @@ class FGConfigApp:
                 chk = ttk.Checkbutton(self.editor_frame, variable=var)
                 chk.grid(row=i, column=1, sticky="w", padx=5, pady=2)
                 self.prop_vars[key] = var
+            elif type == "range":
+                min_var, max_var = self._build_biomass_range_row(self.editor_frame, i)
+                self.prop_vars["initial_biomass_min"] = min_var
+                self.prop_vars["initial_biomass_max"] = max_var
 
         # Action Costs on one row
         row_idx = len(main_props)
@@ -325,20 +334,104 @@ class FGConfigApp:
 
         self.ndm_prop_vars = {}
         ndm_props = [
-            ("Max Growth (fraction/tick)", "growth_rate"),
-            ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity"),
-            ("Initial Total Biomass (ton)", "initial_biomass"),
+            ("Max Growth (fraction/tick)", "growth_rate", "entry"),
+            ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry"),
+            ("Energy Content (MJ/ton)", "energy_content", "entry"),
+            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range"),
         ]
-        for i, (label, key) in enumerate(ndm_props):
+        for i, (label, key, type) in enumerate(ndm_props):
             ttk.Label(self.ndm_editor_frame, text=label).grid(row=i, column=0, sticky="w", padx=5, pady=2)
-            var = tk.StringVar()
-            ent = ttk.Entry(self.ndm_editor_frame, textvariable=var)
-            ent.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
-            self.ndm_prop_vars[key] = var
+            if type == "range":
+                min_var, max_var = self._build_biomass_range_row(self.ndm_editor_frame, i)
+                self.ndm_prop_vars["initial_biomass_min"] = min_var
+                self.ndm_prop_vars["initial_biomass_max"] = max_var
+            else:
+                var = tk.StringVar()
+                ent = ttk.Entry(self.ndm_editor_frame, textvariable=var)
+                ent.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
+                self.ndm_prop_vars[key] = var
 
         ttk.Button(self.ndm_editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
             row=len(ndm_props), column=0, columnspan=2, pady=5
         )
+
+    def _read_initial_biomass_range(self, fg_entry, fg_id):
+        """Read (min, max) initial biomass for a project FG entry.
+
+        The range is stored per-project on the FG entry as
+        ``initial_biomass_min``/``initial_biomass_max``. The library no longer
+        provides defaults.
+        Returns (min_or_None, max_or_None) as ints (or None when unset/invalid).
+        """
+        def _coerce_int(v):
+            if v is None or v == "":
+                return None
+            try:
+                iv = int(round(float(v)))
+                return iv if iv >= 0 else None
+            except (TypeError, ValueError):
+                return None
+
+        if isinstance(fg_entry, dict):
+            mn = _coerce_int(fg_entry.get("initial_biomass_min"))
+            mx = _coerce_int(fg_entry.get("initial_biomass_max"))
+            if mn is not None or mx is not None:
+                return mn, mx
+        return None, None
+
+    def _build_biomass_range_row(self, parent, row):
+        """Place a Min/Max entry pair side-by-side for the 'Initial Total Biomass Range (ton)' row.
+
+        Returns (min_var, max_var). Live validation accepts only non-negative integers
+        in each field, and forbids typing a max smaller than the current min (and vice
+        versa). Empty values are allowed during editing.
+        """
+        container = ttk.Frame(parent)
+        container.grid(row=row, column=1, sticky="w", padx=5, pady=2)
+
+        min_var = tk.StringVar()
+        max_var = tk.StringVar()
+
+        def _is_pos_int(s):
+            if s == "":
+                return True
+            if not s.isdigit():
+                return False
+            return True
+
+        def _validate_min(proposed):
+            if not _is_pos_int(proposed):
+                return False
+            if proposed == "":
+                return True
+            cur_max = max_var.get()
+            if cur_max.isdigit() and int(proposed) > int(cur_max):
+                return False
+            return True
+
+        def _validate_max(proposed):
+            if not _is_pos_int(proposed):
+                return False
+            if proposed == "":
+                return True
+            cur_min = min_var.get()
+            if cur_min.isdigit() and int(proposed) < int(cur_min):
+                return False
+            return True
+
+        vcmd_min = (parent.register(_validate_min), "%P")
+        vcmd_max = (parent.register(_validate_max), "%P")
+
+        ttk.Label(container, text="Min:").pack(side="left", padx=(0, 2))
+        min_entry = ttk.Entry(container, textvariable=min_var, width=10,
+                              validate="key", validatecommand=vcmd_min)
+        min_entry.pack(side="left", padx=(0, 8))
+        ttk.Label(container, text="Max:").pack(side="left", padx=(0, 2))
+        max_entry = ttk.Entry(container, textvariable=max_var, width=10,
+                              validate="key", validatecommand=vcmd_max)
+        max_entry.pack(side="left")
+
+        return min_var, max_var
 
     def setup_matrix_tab(self):
         # Scrollable container for FG Interactions tab
@@ -396,6 +489,117 @@ class FGConfigApp:
         self.matrix_canvas.bind_all("<Shift-Button-5>", self._on_shift_mousewheel)
         
         self.refresh_matrix()
+
+    def setup_inference_tab(self):
+        """Build the Inference tab: per-FG fixed initial biomass (ton) used by inference.py."""
+        self.inference_canvas = tk.Canvas(self.inference_tab, highlightthickness=0)
+        self.inference_vscroll = ttk.Scrollbar(self.inference_tab, orient="vertical",
+                                               command=self.inference_canvas.yview)
+        self.inference_inner = ttk.Frame(self.inference_canvas)
+        self.inference_inner.bind(
+            "<Configure>",
+            lambda e: self.inference_canvas.configure(scrollregion=self.inference_canvas.bbox("all"))
+        )
+        self.inference_canvas.create_window((0, 0), window=self.inference_inner, anchor="nw")
+        self.inference_canvas.configure(yscrollcommand=self.inference_vscroll.set)
+        self.inference_vscroll.pack(side="right", fill="y")
+        self.inference_canvas.pack(side="left", expand=True, fill="both")
+
+        info = ttk.Label(
+            self.inference_inner,
+            text=("Initial Biomass (ton) per Functional Group, used exclusively by inference.py "
+                  "when biomass is initially spawned spatially. No random sampling is performed."),
+            wraplength=700, justify="left",
+        )
+        info.pack(padx=10, pady=(10, 5), anchor="w")
+
+        self.inference_list_frame = ttk.LabelFrame(self.inference_inner, text="Initial Biomass per FG")
+        self.inference_list_frame.pack(fill="x", padx=10, pady=5)
+
+        # Per-FG StringVars indexed by group_id
+        self.inference_vars = {}
+
+        ttk.Button(self.inference_inner, text="Apply Inference Settings",
+                   command=self.apply_inference_changes).pack(pady=10)
+
+        self.refresh_inference_tab()
+
+    def refresh_inference_tab(self):
+        """Rebuild the per-FG input list to mirror the current project FGs."""
+        if not hasattr(self, "inference_list_frame"):
+            return
+        for w in self.inference_list_frame.winfo_children():
+            w.destroy()
+        self.inference_vars = {}
+
+        # Live validator: non-negative integer only (or empty during editing).
+        def _is_nonneg_int(s):
+            return s == "" or s.isdigit()
+        vcmd = (self.inference_list_frame.register(_is_nonneg_int), "%P")
+
+        entries = []
+        for cat in ("decision_makers", "non_decision_makers"):
+            for fg in self.project_data.get(cat, []) or []:
+                entries.append((cat, fg))
+        if not entries:
+            ttk.Label(self.inference_list_frame,
+                      text="(No FGs in project — add some in 'Project & FGs'.)").grid(
+                row=0, column=0, padx=10, pady=10, sticky="w")
+            return
+
+        ttk.Label(self.inference_list_frame, text="Functional Group",
+                  font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, sticky="w", padx=5, pady=4)
+        ttk.Label(self.inference_list_frame, text="Initial Biomass (ton)",
+                  font=("TkDefaultFont", 9, "bold")).grid(row=0, column=1, sticky="w", padx=5, pady=4)
+
+        # Sort alphabetically by display name within each category, DMs first.
+        def _sort_key(item):
+            cat, fg = item
+            return (0 if cat == "decision_makers" else 1,
+                    self.fg_display(fg['group_id']).lower())
+        entries.sort(key=_sort_key)
+
+        for i, (cat, fg) in enumerate(entries, start=1):
+            gid = fg['group_id']
+            ttk.Label(self.inference_list_frame,
+                      text=self.fg_display(gid, include_sv=True)).grid(
+                row=i, column=0, sticky="w", padx=5, pady=2)
+            var = tk.StringVar()
+            cur = fg.get("inference_initial_biomass")
+            if cur is not None and cur != "":
+                try:
+                    var.set(str(int(round(float(cur)))))
+                except (TypeError, ValueError):
+                    var.set("")
+            ttk.Entry(self.inference_list_frame, textvariable=var, width=14,
+                      validate="key", validatecommand=vcmd).grid(
+                row=i, column=1, sticky="w", padx=5, pady=2)
+            self.inference_vars[gid] = var
+
+    def apply_inference_changes(self):
+        """Persist the inference-tab values onto the project FG entries."""
+        # Build a lookup from group_id to its entry across both categories.
+        for cat in ("decision_makers", "non_decision_makers"):
+            for fg in self.project_data.get(cat, []) or []:
+                gid = fg.get('group_id')
+                if gid is None or gid not in self.inference_vars:
+                    continue
+                raw = self.inference_vars[gid].get()
+                if raw == "":
+                    fg.pop("inference_initial_biomass", None)
+                    continue
+                try:
+                    v = int(raw)
+                    if v < 0:
+                        v = 0
+                except ValueError:
+                    fg.pop("inference_initial_biomass", None)
+                    continue
+                fg["inference_initial_biomass"] = v
+        messagebox.showinfo(
+            "Success",
+            "Inference initial biomass updated on project entries. Remember to Save Project."
+        )
 
     def refresh_matrix(self):
         for widget in self.matrix_container.winfo_children():
@@ -574,12 +778,10 @@ class FGConfigApp:
         fg_id = fg_entry['group_id']
         config = self.current_fg_configs.get(fg_id, {})
 
-        # initial_biomass is a per-project FG override (not a library field).
-        # Read from project FG entry first, then fall back to library default.
-        if 'initial_biomass' in fg_entry and fg_entry.get('initial_biomass') is not None:
-            init_b_val = fg_entry.get('initial_biomass')
-        else:
-            init_b_val = self.global_library.get("species_definitions", {}).get(fg_id, {}).get("initial_biomass", "")
+        # initial_biomass range is a per-project FG override (not a library field).
+        # Read min/max from the project FG entry, with backward compatibility for
+        # legacy scalar `initial_biomass` (treated as min == max).
+        init_min_val, init_max_val = self._read_initial_biomass_range(fg_entry, fg_id)
 
         # Show the editor matching the FG category, hide the other.
         if category == "decision_makers":
@@ -588,8 +790,11 @@ class FGConfigApp:
                 self.editor_frame.pack(fill="x", padx=10, pady=5)
             self.editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
             for key, var in self.prop_vars.items():
-                if key == "initial_biomass":
-                    var.set("" if init_b_val in (None, "") else str(init_b_val))
+                if key == "initial_biomass_min":
+                    var.set("" if init_min_val is None else str(init_min_val))
+                    continue
+                if key == "initial_biomass_max":
+                    var.set("" if init_max_val is None else str(init_max_val))
                     continue
                 val = config.get(key, "")
                 if isinstance(var, tk.BooleanVar):
@@ -602,8 +807,11 @@ class FGConfigApp:
                 self.ndm_editor_frame.pack(fill="x", padx=10, pady=5)
             self.ndm_editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
             for key, var in self.ndm_prop_vars.items():
-                if key == "initial_biomass":
-                    var.set("" if init_b_val in (None, "") else str(init_b_val))
+                if key == "initial_biomass_min":
+                    var.set("" if init_min_val is None else str(init_min_val))
+                    continue
+                if key == "initial_biomass_max":
+                    var.set("" if init_max_val is None else str(init_max_val))
                     continue
                 val = config.get(key, "")
                 var.set(str(val))
@@ -636,18 +844,25 @@ class FGConfigApp:
         config["is_decision_maker"] = is_dm
 
         prop_vars = self.prop_vars if is_dm else self.ndm_prop_vars
-        initial_biomass_val = None  # captured separately; stored per-project, not in library
+        # initial_biomass range captured separately; stored per-project, not in library.
+        initial_biomass_min_val = None
+        initial_biomass_max_val = None
         for key, var in prop_vars.items():
             val = var.get()
-            if key == "initial_biomass":
-                # Per-project FG override; do not write to global library.
-                if val in (None, ""):
-                    initial_biomass_val = None
-                else:
+            if key in ("initial_biomass_min", "initial_biomass_max"):
+                # Per-project FG override (positive integers only); do not write to library.
+                parsed = None
+                if val not in (None, ""):
                     try:
-                        initial_biomass_val = float(val)
-                    except ValueError:
-                        initial_biomass_val = None
+                        parsed = int(val)
+                        if parsed < 0:
+                            parsed = None
+                    except (TypeError, ValueError):
+                        parsed = None
+                if key == "initial_biomass_min":
+                    initial_biomass_min_val = parsed
+                else:
+                    initial_biomass_max_val = parsed
                 continue
             if isinstance(var, tk.BooleanVar):
                 config[key] = val
@@ -678,24 +893,48 @@ class FGConfigApp:
                         config[key] = 10000.0
                         var.set("10000.0")
 
-        # Strip initial_biomass from library-bound config; it lives on the
+        # Validate biomass range: both must be set together, and max >= min.
+        if (initial_biomass_min_val is None) != (initial_biomass_max_val is None):
+            messagebox.showwarning(
+                "Invalid Biomass Range",
+                "Both Min and Max for 'Initial Total Biomass Range (ton)' must be set, or both left empty.",
+            )
+            return
+        if (
+            initial_biomass_min_val is not None
+            and initial_biomass_max_val is not None
+            and initial_biomass_max_val < initial_biomass_min_val
+        ):
+            messagebox.showwarning(
+                "Invalid Biomass Range",
+                "'Max' must be greater than or equal to 'Min' for the Initial Total Biomass Range.",
+            )
+            return
+
+        # Strip initial_biomass* from library-bound config; it lives on the
         # project FG entry only.
         config.pop("initial_biomass", None)
+        config.pop("initial_biomass_min", None)
+        config.pop("initial_biomass_max", None)
         self.current_fg_configs[fg_id] = config
 
-        # Persist initial_biomass on the project FG entry (per-project value).
+        # Persist initial_biomass range on the project FG entry (per-project value).
+        # Always remove the legacy scalar key so projects converge on the new schema.
         fg_entry = fgs[idx]
-        if initial_biomass_val is None:
-            fg_entry.pop("initial_biomass", None)
+        fg_entry.pop("initial_biomass", None)
+        if initial_biomass_min_val is None or initial_biomass_max_val is None:
+            fg_entry.pop("initial_biomass_min", None)
+            fg_entry.pop("initial_biomass_max", None)
         else:
-            fg_entry["initial_biomass"] = initial_biomass_val
+            fg_entry["initial_biomass_min"] = int(initial_biomass_min_val)
+            fg_entry["initial_biomass_max"] = int(initial_biomass_max_val)
 
         # Sync remaining fields with global library
         if "species_definitions" not in self.global_library:
             self.global_library["species_definitions"] = {}
         self.global_library["species_definitions"][fg_id] = config
         self.save_yaml(self.global_library, self.library_path)
-        messagebox.showinfo("Success", f"Updated {fg_id}. Library updated; initial_biomass saved on project entry (remember to Save Project).")
+        messagebox.showinfo("Success", f"Updated {fg_id}. Library updated; initial biomass range saved on project entry (remember to Save Project).")
 
     def apply_matrix_changes(self):
         if "interaction_definitions" not in self.global_library:
@@ -924,13 +1163,13 @@ class FGConfigApp:
                 fg_id = lib_fgs[i]
                 if fg_id in self._all_fg_ids():
                     continue
-                lib_entry_initial = self.global_library.get("species_definitions", {}).get(fg_id, {}).get("initial_biomass")
                 new_entry = {'group_id': fg_id}
-                if lib_entry_initial is not None:
-                    try:
-                        new_entry['initial_biomass'] = float(lib_entry_initial)
-                    except (TypeError, ValueError):
-                        pass
+                # Seed initial biomass range from library defaults (supports both
+                # the new min/max schema and the legacy scalar `initial_biomass`).
+                lib_mn, lib_mx = self._read_initial_biomass_range({}, fg_id)
+                if lib_mn is not None and lib_mx is not None:
+                    new_entry['initial_biomass_min'] = int(lib_mn)
+                    new_entry['initial_biomass_max'] = int(lib_mx)
                 self.project_data.setdefault(category, []).append(new_entry)
                 self.current_fg_configs[fg_id] = self.global_library["species_definitions"][fg_id]
                 # Keep the library's is_decision_maker flag in sync with the
@@ -960,14 +1199,16 @@ class FGConfigApp:
                 return
 
             is_dm = (category == "decision_makers")
-            self.project_data.setdefault(category, []).append({'group_id': fg_id, 'initial_biomass': 0.0})
+            self.project_data.setdefault(category, []).append(
+                {'group_id': fg_id, 'initial_biomass_min': 0, 'initial_biomass_max': 0}
+            )
             self.current_fg_configs[fg_id] = {
                 "display_name": fg_id,
                 "is_decision_maker": is_dm,
                 "growth_rate": 0.0,
                 "max_energy_reserve": 0.0,
                 "resting_metabolism": 0.0,
-                "maintenance_level": 0.3,
+                "maintenance_level": 0.0,
                 "movement_speed": 0.0,
                 "movement_cost": 3.0,
                 "feeding_cost": 3.0,
@@ -1033,6 +1274,10 @@ class FGConfigApp:
             self.ndm_listbox.delete(0, "end")
             for fg in self.project_data.get('non_decision_makers', []) or []:
                 self.ndm_listbox.insert("end", self.fg_display(fg['group_id']))
+        # Mirror the project FG list into the Inference tab so its inputs
+        # always reflect the current set of project FGs.
+        if hasattr(self, 'refresh_inference_tab'):
+            self.refresh_inference_tab()
 
     def update_impact_list(self):
         def _impact_display(iv):

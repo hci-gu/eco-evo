@@ -8,10 +8,10 @@
     max_carrying_capacity: 60.0
     energy_content: 600.0
     max_energy_reserve: 0.0
-    initial_biomass: 80000
   zooplankton:
     display_name: "Zooplankton"
     is_decision_maker: true
+    maintenance_level: 0.3
     max_energy_reserve: 50.0
     resting_metabolism: 0.3
     movement_speed: 0.0
@@ -20,7 +20,6 @@
     movement_cost: 0.0
     energy_content: 2500.0
     min_split_biomass: 0.0
-    initial_biomass: 35000
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false
@@ -30,10 +29,10 @@
     max_carrying_capacity: 120.0
     energy_content: 0.0
     max_energy_reserve: 0.0
-    initial_biomass: 160000
   pelagic_fish:
     display_name: "Pelagic Fish"
     is_decision_maker: true
+    maintenance_level: 0.3
     max_energy_reserve: 250.0
     resting_metabolism: 0.8
     movement_speed: 0.6
@@ -42,10 +41,10 @@
     movement_cost: 3.0
     energy_content: 5000.0
     min_split_biomass: 0.0
-    initial_biomass: 12000
   gadoids:
     display_name: "Gadoids"
     is_decision_maker: true
+    maintenance_level: 0.3
     max_energy_reserve: 300.0
     resting_metabolism: 1.0
     movement_speed: 0.8
@@ -54,10 +53,10 @@
     movement_cost: 3.0
     energy_content: 4000.0
     min_split_biomass: 0.0
-    initial_biomass: 2500
   porpoises:
     display_name: "Porpoises"
     is_decision_maker: true
+    maintenance_level: 0.3
     max_energy_reserve: 1000.0
     resting_metabolism: 16.0
     movement_speed: 1.0
@@ -69,6 +68,7 @@
   seals:
     display_name: "Seals"
     is_decision_maker: true
+    maintenance_level: 0.3
     max_energy_reserve: 1200.0
     resting_metabolism: 10.0
     movement_speed: 1.0
@@ -87,8 +87,8 @@
     feeding_cost: 4.0
     movement_cost: 8.0
     min_split_biomass: 0.0
+    maintenance_level: 0.3
     energy_content: 0.0
-    maintenance_level: 0.0
 interaction_definitions:
   zooplankton_preys_on_phytoplankton:
     max_intake_rate: 0.1
@@ -114,6 +114,206 @@ interaction_definitions:
     max_intake_rate: 0.04
     energy_gain: 5000
     preys_on: true
+  benthic_community_preys_on_benthic_community:
+    preys_on: false
+  benthic_community_preys_on_gadoids:
+    preys_on: false
+  benthic_community_preys_on_pelagic_fish:
+    preys_on: false
+  benthic_community_preys_on_phytoplankton:
+    preys_on: false
+  benthic_community_preys_on_porpoises:
+    preys_on: false
+  benthic_community_preys_on_seabirds:
+    preys_on: false
+  benthic_community_preys_on_seals:
+    preys_on: false
+  benthic_community_preys_on_zooplankton:
+    preys_on: false
+  gadoids_preys_on_benthic_community:
+    preys_on: false
+  gadoids_preys_on_gadoids:
+    preys_on: false
+  gadoids_preys_on_phytoplankton:
+    preys_on: false
+  gadoids_preys_on_porpoises:
+    preys_on: false
+  gadoids_preys_on_seabirds:
+    preys_on: false
+  gadoids_preys_on_seals:
+    preys_on: false
+  gadoids_preys_on_zooplankton:
+    preys_on: false
+  pelagic_fish_preys_on_benthic_community:
+    preys_on: false
+  pelagic_fish_preys_on_gadoids:
+    preys_on: false
+  pelagic_fish_preys_on_pelagic_fish:
+    preys_on: false
+  pelagic_fish_preys_on_phytoplankton:
+    preys_on: false
+  pelagic_fish_preys_on_porpoises:
+    preys_on: false
+  pelagic_fish_preys_on_seabirds:
+    preys_on: false
+  pelagic_fish_preys_on_seals:
+    preys_on: false
+  phytoplankton_preys_on_benthic_community:
+    preys_on: false
+  phytoplankton_preys_on_gadoids:
+    preys_on: false
+  phytoplankton_preys_on_pelagic_fish:
+    preys_on: false
+  phytoplankton_preys_on_phytoplankton:
+    preys_on: false
+  phytoplankton_preys_on_porpoises:
+    preys_on: false
+  phytoplankton_preys_on_seabirds:
+    preys_on: false
+  phytoplankton_preys_on_seals:
+    preys_on: false
+  phytoplankton_preys_on_zooplankton:
+    preys_on: false
+  porpoises_preys_on_benthic_community:
+    preys_on: false
+  porpoises_preys_on_gadoids:
+    preys_on: false
+  porpoises_preys_on_phytoplankton:
+    preys_on: false
+  porpoises_preys_on_porpoises:
+    preys_on: false
+  porpoises_preys_on_seabirds:
+    preys_on: false
+  porpoises_preys_on_seals:
+    preys_on: false
+  porpoises_preys_on_zooplankton:
+    preys_on: false
+  seabirds_preys_on_benthic_community:
+    preys_on: false
+  seabirds_preys_on_gadoids:
+    preys_on: false
+  seabirds_preys_on_phytoplankton:
+    preys_on: false
+  seabirds_preys_on_porpoises:
+    preys_on: false
+  seabirds_preys_on_seabirds:
+    preys_on: false
+  seabirds_preys_on_seals:
+    preys_on: false
+  seabirds_preys_on_zooplankton:
+    preys_on: false
+  seals_preys_on_benthic_community:
+    preys_on: false
+  seals_preys_on_pelagic_fish:
+    preys_on: false
+  seals_preys_on_phytoplankton:
+    preys_on: false
+  seals_preys_on_porpoises:
+    preys_on: false
+  seals_preys_on_seabirds:
+    preys_on: false
+  seals_preys_on_seals:
+    preys_on: false
+  seals_preys_on_zooplankton:
+    preys_on: false
+  zooplankton_preys_on_benthic_community:
+    preys_on: false
+  zooplankton_preys_on_gadoids:
+    preys_on: false
+  zooplankton_preys_on_pelagic_fish:
+    preys_on: false
+  zooplankton_preys_on_porpoises:
+    preys_on: false
+  zooplankton_preys_on_seabirds:
+    preys_on: false
+  zooplankton_preys_on_seals:
+    preys_on: false
+  zooplankton_preys_on_zooplankton:
+    preys_on: false
+  benthic_community_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  benthic_community_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  benthic_community_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  gadoids_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  gadoids_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  gadoids_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  pelagic_fish_impacted_by_pelagic_trawling:
+    impact_affects: true
+    impact_table: []
+  pelagic_fish_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  pelagic_fish_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  phytoplankton_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  phytoplankton_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  phytoplankton_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  porpoises_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  porpoises_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  porpoises_impacted_by_windfarm_noise:
+    impact_affects: true
+    impact_table:
+      - value: 60.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 80.0
+        biomass_factor: 0.0
+        energy_factor: 0.15
+      - value: 100.0
+        biomass_factor: 0.0
+        energy_factor: 0.4
+      - value: 120.0
+        biomass_factor: 0.0
+        energy_factor: 0.8
+  seabirds_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  seabirds_impacted_by_rotor:
+    impact_affects: true
+    impact_table: []
+  seabirds_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  seals_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  seals_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  seals_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  zooplankton_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  zooplankton_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  zooplankton_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
 impact_definitions:
   bottom_trawling:
     display_name: "Bottom Trawling"
