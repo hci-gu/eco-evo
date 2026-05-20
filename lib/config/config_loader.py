@@ -137,11 +137,18 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         for fg in project.get(key, []) or []:
             if not isinstance(fg, dict):
                 continue
+            # Skip muted FGs: they're soft-deleted and must be invisible to
+            # the simulation, while their YAML configuration is preserved so
+            # the user can quickly unmute them later.
+            if fg.get('muted'):
+                continue
             gid = fg.get('group_id')
             if gid and gid not in project_fg_ids:
                 project_fg_ids.append(gid)
                 project_fg_overrides[gid] = fg
-    impact_vars = [iv['impact_id'] for iv in project.get('impact_variables', [])]
+    # Likewise, muted impact variables are dropped from the active set.
+    impact_vars = [iv['impact_id'] for iv in project.get('impact_variables', [])
+                   if isinstance(iv, dict) and not iv.get('muted')]
     
     fgs = {}
     for sid in project_fg_ids:
@@ -153,15 +160,23 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         params['interaction'] = {}
         params['menu'] = []
         
+        active_fg_set = set(project_fg_ids)
+        active_impact_set = set(impact_vars)
         for iid, idef in inter_defs.items():
             if iid.startswith(f"{sid}_preys_on_"):
                 prey_id = iid.replace(f"{sid}_preys_on_", "")
+                # Skip predation relations whose prey is muted (or absent).
+                if prey_id not in active_fg_set:
+                    continue
                 if idef.get('preys_on', False):
                     params['menu'].append(prey_id)
                     params['interaction'][iid] = idef
             elif iid.startswith(f"{sid}_impacted_by_"):
-                if 'impact' not in params: params['impact'] = {}
                 impact_id = iid.replace(f"{sid}_impacted_by_", "")
+                # Skip impacts that are muted or not in the project.
+                if impact_id not in active_impact_set:
+                    continue
+                if 'impact' not in params: params['impact'] = {}
                 params['impact'][impact_id] = idef
                 
         fg = FunctionalGroup(sid, params)

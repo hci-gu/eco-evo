@@ -55,7 +55,7 @@ def build_env(project_path, grid_size, seed=None):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     if project_path:
-        fgs, impact_vars = load_project_config(project_path, grid_size=grid_size, seed=seed)
+        fgs, impact_vars = load_project_config(project_path, grid_size=grid_size, seed=seed, mode='inference')
     else:
         fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
         impact_vars = ['windfarm_noise']

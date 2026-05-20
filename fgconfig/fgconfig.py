@@ -239,6 +239,10 @@ class FGConfigApp:
                    command=lambda: self.add_new_fg("decision_makers")).pack(fill="x", pady=2)
         ttk.Button(dm_btn_frame, text="Remove FG",
                    command=lambda: self.remove_fg("decision_makers")).pack(fill="x", pady=2)
+        # Dynamic Mute/Unmute button: toggles the muted flag on the selected FG.
+        self.dm_mute_btn = ttk.Button(dm_btn_frame, text="Mute",
+                                      command=lambda: self.toggle_mute_fg("decision_makers"))
+        self.dm_mute_btn.pack(fill="x", pady=2)
 
         # --- Non Decision Makers ---
         ndm_frame = ttk.LabelFrame(fg_container, text="Non Decision Makers")
@@ -257,6 +261,9 @@ class FGConfigApp:
                    command=lambda: self.add_new_fg("non_decision_makers")).pack(fill="x", pady=2)
         ttk.Button(ndm_btn_frame, text="Remove FG",
                    command=lambda: self.remove_fg("non_decision_makers")).pack(fill="x", pady=2)
+        self.ndm_mute_btn = ttk.Button(ndm_btn_frame, text="Mute",
+                                       command=lambda: self.toggle_mute_fg("non_decision_makers"))
+        self.ndm_mute_btn.pack(fill="x", pady=2)
 
         # Track which list the FG editor is currently bound to
         self.active_fg_category = None
@@ -273,6 +280,11 @@ class FGConfigApp:
 
         ttk.Button(impact_btn_frame, text="Add from Library", command=self.add_impact_from_library).pack(fill="x", pady=2)
         ttk.Button(impact_btn_frame, text="Remove Impact", command=self.remove_impact).pack(fill="x", pady=2)
+        self.impact_mute_btn = ttk.Button(impact_btn_frame, text="Mute",
+                                          command=self.toggle_mute_impact)
+        self.impact_mute_btn.pack(fill="x", pady=2)
+        self.impact_listbox.bind("<<ListboxSelect>>",
+                                 lambda e: self._refresh_mute_button_labels())
 
         # FG Editor for Decision Makers
         self.editor_frame = ttk.LabelFrame(self.project_inner, text="FG Editor")
@@ -561,9 +573,14 @@ class FGConfigApp:
 
         for i, (cat, fg) in enumerate(entries, start=1):
             gid = fg['group_id']
-            ttk.Label(self.inference_list_frame,
-                      text=self.fg_display(gid, include_sv=True)).grid(
-                row=i, column=0, sticky="w", padx=5, pady=2)
+            muted = self._is_fg_muted(fg)
+            lbl_text = self.fg_display(gid, include_sv=True)
+            if muted:
+                lbl_text += "  (muted)"
+            lbl = tk.Label(self.inference_list_frame, text=lbl_text)
+            if muted:
+                lbl.configure(foreground=self.MUTED_FG_COLOR)
+            lbl.grid(row=i, column=0, sticky="w", padx=5, pady=2)
             var = tk.StringVar()
             cur = fg.get("inference_initial_biomass")
             if cur is not None and cur != "":
@@ -571,9 +588,11 @@ class FGConfigApp:
                     var.set(str(int(round(float(cur)))))
                 except (TypeError, ValueError):
                     var.set("")
-            ttk.Entry(self.inference_list_frame, textvariable=var, width=14,
-                      validate="key", validatecommand=vcmd).grid(
-                row=i, column=1, sticky="w", padx=5, pady=2)
+            ent = ttk.Entry(self.inference_list_frame, textvariable=var, width=14,
+                            validate="key", validatecommand=vcmd)
+            ent.grid(row=i, column=1, sticky="w", padx=5, pady=2)
+            if muted:
+                ent.configure(state="disabled")
             self.inference_vars[gid] = var
 
     def apply_inference_changes(self):
@@ -583,6 +602,9 @@ class FGConfigApp:
             for fg in self.project_data.get(cat, []) or []:
                 gid = fg.get('group_id')
                 if gid is None or gid not in self.inference_vars:
+                    continue
+                if self._is_fg_muted(fg):
+                    # Skip muted FGs entirely — their stored value is preserved.
                     continue
                 raw = self.inference_vars[gid].get()
                 if raw == "":
@@ -616,6 +638,8 @@ class FGConfigApp:
         self.matrix_entries = {}
         self.matrix_widgets = {}
         self.matrix_tables = {}
+        self.matrix_col_headers = {}
+        self.matrix_row_headers = {}
         
         # FG Interactions tab: Predation + Max Intake
         self.create_matrix_section("Predation (row eats column)", "preys_on", fgs, fgs, cell_type="bool",
@@ -672,6 +696,49 @@ class FGConfigApp:
             affects_var.trace_add("write", updater)
             updater()
 
+        # Disable widgets belonging to muted FGs (rows and columns) or muted
+        # impact variables (columns). Values stay visible but cannot be edited.
+        muted_fgs = {fid for fid in self._all_fg_ids() if self._is_fg_id_muted(fid)}
+        muted_impacts = {iv['impact_id'] for iv in self.project_data.get('impact_variables', []) or []
+                         if self._is_impact_muted(iv)}
+        for key, widgets in self.matrix_widgets.items():
+            # Parse row/col from the key.
+            if "_preys_on_" in key:
+                row_id, col_id = key.split("_preys_on_", 1)
+                disable = row_id in muted_fgs or col_id in muted_fgs
+            elif "_impacted_by_" in key:
+                row_id, col_id = key.split("_impacted_by_", 1)
+                disable = row_id in muted_fgs or col_id in muted_impacts
+            else:
+                disable = False
+            if not disable:
+                continue
+            for w in widgets.values():
+                try:
+                    w.configure(state="disabled")
+                except tk.TclError:
+                    pass
+
+        # Lighter header text for muted FGs/impacts (rows and columns).
+        for row_id, labels in self.matrix_row_headers.items():
+            color = self.MUTED_FG_COLOR if row_id in muted_fgs else "black"
+            for lbl in labels:
+                try:
+                    lbl.configure(foreground=color)
+                except tk.TclError:
+                    pass
+        for (kind, col_id), labels in self.matrix_col_headers.items():
+            if kind == "impact":
+                muted = col_id in muted_impacts
+            else:
+                muted = col_id in muted_fgs
+            color = self.MUTED_FG_COLOR if muted else "black"
+            for lbl in labels:
+                try:
+                    lbl.configure(foreground=color)
+                except tk.TclError:
+                    pass
+
         ttk.Button(self.matrix_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
         if impacts:
             ttk.Button(self.impact_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
@@ -683,19 +750,30 @@ class FGConfigApp:
         frame.pack(fill="x", padx=10, pady=10)
 
         impact_keys = ("impact_affects", "impact_table")
-        # Headers
-        ttk.Label(frame, text="Group \\ Var").grid(row=0, column=0, padx=5, pady=5)
+        # Track header labels so refresh_matrix can apply muted styling
+        # (lighter foreground) to entire row/column header text.
+        if not hasattr(self, "matrix_col_headers"):
+            self.matrix_col_headers = {}
+        if not hasattr(self, "matrix_row_headers"):
+            self.matrix_row_headers = {}
+        # Headers — use tk.Label so we can recolour per-label.
+        tk.Label(frame, text="Group \\ Var").grid(row=0, column=0, padx=5, pady=5)
         for j, col_id in enumerate(col_ids):
             # Use display_name from impact_definitions if available
             if data_key in impact_keys:
                 label_text = self.global_library.get("impact_definitions", {}).get(col_id, {}).get("display_name", col_id)
             else:
                 label_text = self.fg_display(col_id)
-            ttk.Label(frame, text=label_text).grid(row=0, column=j+1, padx=5, pady=5)
+            hdr = tk.Label(frame, text=label_text)
+            hdr.grid(row=0, column=j+1, padx=5, pady=5)
+            kind = "impact" if data_key in impact_keys else "fg"
+            self.matrix_col_headers.setdefault((kind, col_id), []).append(hdr)
 
         for i, row_id in enumerate(row_ids):
             row_label = self.fg_display(row_id)
-            ttk.Label(frame, text=row_label).grid(row=i+1, column=0, padx=5, pady=5)
+            rhdr = tk.Label(frame, text=row_label)
+            rhdr.grid(row=i+1, column=0, padx=5, pady=5)
+            self.matrix_row_headers.setdefault(row_id, []).append(rhdr)
             for j, col_id in enumerate(col_ids):
                 # Unique key for storage
                 if data_key in impact_keys:
@@ -712,7 +790,14 @@ class FGConfigApp:
 
                 if cell_type == "bool":
                     var = tk.BooleanVar(value=bool(val))
-                    widget = ttk.Checkbutton(frame, variable=var)
+                    # Use classic tk.Checkbutton (not ttk) because its
+                    # indicator visibly dims when state="disabled", which
+                    # makes muted rows/columns clearly inactive even when
+                    # the box is checked. ttk.Checkbutton's indicator is
+                    # theme-controlled and often looks identical when
+                    # checked+disabled vs checked+normal.
+                    widget = tk.Checkbutton(frame, variable=var,
+                                            disabledforeground=self.MUTED_FG_COLOR)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 elif cell_type == "table":
                     # Load existing table (list of dicts) from library, if any
@@ -739,6 +824,151 @@ class FGConfigApp:
                 if key not in self.matrix_widgets:
                     self.matrix_widgets[key] = {}
                 self.matrix_widgets[key][data_key] = widget
+
+    # ------------------------------------------------------------------
+    # Mute (soft-delete) helpers
+    # ------------------------------------------------------------------
+    # An FG or impact variable that is "muted" is semantically equivalent to
+    # being removed from the project (it does not exist for train.py /
+    # inference.py / config_loader), but its configuration is preserved so it
+    # can be unmuted later without re-entering values. The muted flag lives on
+    # the project FG/impact entry (per-project state), not in the library.
+
+    MUTED_FG_COLOR = "gray60"
+
+    def _is_fg_muted(self, fg_entry):
+        return bool(isinstance(fg_entry, dict) and fg_entry.get("muted"))
+
+    def _is_impact_muted(self, iv_entry):
+        return bool(isinstance(iv_entry, dict) and iv_entry.get("muted"))
+
+    def _find_fg_entry(self, fg_id):
+        for cat in ("decision_makers", "non_decision_makers"):
+            for fg in self.project_data.get(cat, []) or []:
+                if fg.get('group_id') == fg_id:
+                    return fg
+        return None
+
+    def _find_impact_entry(self, impact_id):
+        for iv in self.project_data.get('impact_variables', []) or []:
+            if iv.get('impact_id') == impact_id:
+                return iv
+        return None
+
+    def _is_fg_id_muted(self, fg_id):
+        e = self._find_fg_entry(fg_id)
+        return self._is_fg_muted(e) if e else False
+
+    def _is_impact_id_muted(self, impact_id):
+        e = self._find_impact_entry(impact_id)
+        return self._is_impact_muted(e) if e else False
+
+    def _apply_listbox_mute_styling(self):
+        """Recolour listbox rows so muted entries appear in a lighter colour."""
+        # DM list
+        if hasattr(self, 'fg_listbox'):
+            for i, fg in enumerate(self.project_data.get('decision_makers', []) or []):
+                color = self.MUTED_FG_COLOR if self._is_fg_muted(fg) else ""
+                try:
+                    self.fg_listbox.itemconfig(i, foreground=color)
+                except tk.TclError:
+                    pass
+        # NDM list
+        if hasattr(self, 'ndm_listbox'):
+            for i, fg in enumerate(self.project_data.get('non_decision_makers', []) or []):
+                color = self.MUTED_FG_COLOR if self._is_fg_muted(fg) else ""
+                try:
+                    self.ndm_listbox.itemconfig(i, foreground=color)
+                except tk.TclError:
+                    pass
+        # Impact list
+        if hasattr(self, 'impact_listbox'):
+            for i, iv in enumerate(self.project_data.get('impact_variables', []) or []):
+                color = self.MUTED_FG_COLOR if self._is_impact_muted(iv) else ""
+                try:
+                    self.impact_listbox.itemconfig(i, foreground=color)
+                except tk.TclError:
+                    pass
+
+    def _refresh_mute_button_labels(self):
+        """Update Mute/Unmute button text to reflect current selection state."""
+        def _label_for_fg(category, btn):
+            if not hasattr(self, btn.__class__.__name__):
+                pass
+            listbox = self._listbox_for(category)
+            sel = listbox.curselection()
+            fgs = self.project_data.get(category, []) or []
+            if not sel or sel[0] >= len(fgs):
+                btn.configure(text="Mute", state="disabled")
+                return
+            muted = self._is_fg_muted(fgs[sel[0]])
+            btn.configure(text="Unmute" if muted else "Mute", state="normal")
+
+        if hasattr(self, 'dm_mute_btn'):
+            _label_for_fg("decision_makers", self.dm_mute_btn)
+        if hasattr(self, 'ndm_mute_btn'):
+            _label_for_fg("non_decision_makers", self.ndm_mute_btn)
+        if hasattr(self, 'impact_mute_btn'):
+            sel = self.impact_listbox.curselection()
+            ivs = self.project_data.get('impact_variables', []) or []
+            if not sel or sel[0] >= len(ivs):
+                self.impact_mute_btn.configure(text="Mute", state="disabled")
+            else:
+                muted = self._is_impact_muted(ivs[sel[0]])
+                self.impact_mute_btn.configure(text="Unmute" if muted else "Mute", state="normal")
+
+    def _set_widget_tree_state(self, widget, enabled):
+        """Recursively enable/disable all leaf widgets that support a 'state' option."""
+        target = "normal" if enabled else "disabled"
+        for child in widget.winfo_children():
+            try:
+                child.configure(state=target)
+            except tk.TclError:
+                # Some containers (Frame, LabelFrame) don't support state — descend.
+                pass
+            self._set_widget_tree_state(child, enabled)
+
+    def toggle_mute_fg(self, category):
+        listbox = self._listbox_for(category)
+        sel = listbox.curselection()
+        if not sel:
+            messagebox.showwarning("No Selection",
+                                   "Please select a Functional Group from the list.")
+            return
+        fgs = self.project_data.get(category, []) or []
+        if sel[0] >= len(fgs):
+            return
+        fg_entry = fgs[sel[0]]
+        fg_entry['muted'] = not self._is_fg_muted(fg_entry)
+        if not fg_entry['muted']:
+            # Remove the key entirely when active to keep YAML tidy.
+            fg_entry.pop('muted', None)
+        # Refresh all views that depend on muted state.
+        self._apply_listbox_mute_styling()
+        self._refresh_mute_button_labels()
+        self.refresh_matrix()
+        if hasattr(self, 'refresh_inference_tab'):
+            self.refresh_inference_tab()
+        # If editor currently shows this FG, refresh its disabled state.
+        if self.active_fg_category == category:
+            self.on_fg_select(category)
+
+    def toggle_mute_impact(self):
+        sel = self.impact_listbox.curselection()
+        if not sel:
+            messagebox.showwarning("No Selection",
+                                   "Please select an Impact Variable from the list.")
+            return
+        ivs = self.project_data.get('impact_variables', []) or []
+        if sel[0] >= len(ivs):
+            return
+        iv = ivs[sel[0]]
+        iv['muted'] = not self._is_impact_muted(iv)
+        if not iv['muted']:
+            iv.pop('muted', None)
+        self._apply_listbox_mute_styling()
+        self._refresh_mute_button_labels()
+        self.refresh_matrix()
 
     def _listbox_for(self, category):
         return self.fg_listbox if category == "decision_makers" else self.ndm_listbox
@@ -777,6 +1007,7 @@ class FGConfigApp:
         fg_entry = fgs[idx]
         fg_id = fg_entry['group_id']
         config = self.current_fg_configs.get(fg_id, {})
+        is_muted = self._is_fg_muted(fg_entry)
 
         # initial_biomass range is a per-project FG override (not a library field).
         # Read min/max from the project FG entry, with backward compatibility for
@@ -788,7 +1019,10 @@ class FGConfigApp:
             self.ndm_editor_frame.pack_forget()
             if not self.editor_frame.winfo_ismapped():
                 self.editor_frame.pack(fill="x", padx=10, pady=5)
-            self.editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
+            title = f"FG Editor ({self.fg_display(fg_id, include_sv=True)})"
+            if is_muted:
+                title += " — MUTED"
+            self.editor_frame.configure(text=title)
             for key, var in self.prop_vars.items():
                 if key == "initial_biomass_min":
                     var.set("" if init_min_val is None else str(init_min_val))
@@ -805,7 +1039,10 @@ class FGConfigApp:
             self.editor_frame.pack_forget()
             if not self.ndm_editor_frame.winfo_ismapped():
                 self.ndm_editor_frame.pack(fill="x", padx=10, pady=5)
-            self.ndm_editor_frame.configure(text=f"FG Editor ({self.fg_display(fg_id, include_sv=True)})")
+            title = f"FG Editor ({self.fg_display(fg_id, include_sv=True)})"
+            if is_muted:
+                title += " — MUTED"
+            self.ndm_editor_frame.configure(text=title)
             for key, var in self.ndm_prop_vars.items():
                 if key == "initial_biomass_min":
                     var.set("" if init_min_val is None else str(init_min_val))
@@ -815,6 +1052,13 @@ class FGConfigApp:
                     continue
                 val = config.get(key, "")
                 var.set(str(val))
+
+        # Disable all editor widgets when the FG is muted (values are still
+        # visible/read-only). Active FGs get the editor enabled normally.
+        active_editor = self.editor_frame if category == "decision_makers" else self.ndm_editor_frame
+        self._set_widget_tree_state(active_editor, not is_muted)
+        # Keep mute-button labels in sync with the freshly selected row.
+        self._refresh_mute_button_labels()
 
     def apply_fg_changes(self):
         category = self.active_fg_category
@@ -831,6 +1075,12 @@ class FGConfigApp:
         if idx >= len(fgs):
             return
         fg_id = fgs[idx]['group_id']
+        if self._is_fg_muted(fgs[idx]):
+            messagebox.showinfo(
+                "Muted",
+                "This FG is muted. Unmute it before editing its properties.",
+            )
+            return
         # Preserve existing display_name and is_decision_maker flag.
         # The flag is driven by which list the FG belongs to, not by a checkbox.
         existing = self.current_fg_configs.get(fg_id, {})
@@ -1278,6 +1528,9 @@ class FGConfigApp:
         # always reflect the current set of project FGs.
         if hasattr(self, 'refresh_inference_tab'):
             self.refresh_inference_tab()
+        # Apply muted styling and refresh mute-button labels.
+        self._apply_listbox_mute_styling()
+        self._refresh_mute_button_labels()
 
     def update_impact_list(self):
         def _impact_display(iv):
@@ -1288,6 +1541,8 @@ class FGConfigApp:
         self.impact_listbox.delete(0, "end")
         for iv in self.project_data.get('impact_variables', []):
             self.impact_listbox.insert("end", _impact_display(iv))
+        self._apply_listbox_mute_styling()
+        self._refresh_mute_button_labels()
 
     def add_impact_from_library(self):
         lib_impacts = list(self.global_library.get("impact_definitions", {}).keys())

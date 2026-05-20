@@ -18,7 +18,7 @@ class FunctionalGroup:
         # u_X: maintenance level. The relative energy fill ratio s_X required
         # to break even (q_X = s_X - u_X = 0). Below u_X the population
         # shrinks; above it, it grows. Method.pdf §6.
-        self.maintenance_level = float(params.get('maintenance_level', 0.3))
+        self.maintenance_level = float(params.get('maintenance_level', 0.0))
         self.speed = params.get('movement_speed', 0.0)  # V_X
         # Minimum biomass (per cell) required to split via movement actions.
         # YAML/GUI value is in kg; internal biomass units are tonnes, so
