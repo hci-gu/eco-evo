@@ -305,10 +305,17 @@ class FGConfigApp:
         self.impact_value_min_var = ie_min_var
         self.impact_value_max_var = ie_max_var
 
+        ttk.Label(self.impact_editor_frame, text="Observable by policy").grid(
+            row=2, column=0, sticky="w", padx=5, pady=2)
+        self.impact_observable_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(self.impact_editor_frame,
+                        variable=self.impact_observable_var).grid(
+            row=2, column=1, sticky="w", padx=5, pady=2)
+
         self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
                                            text="Apply Changes",
                                            command=self.apply_impact_changes)
-        self.impact_apply_btn.grid(row=2, column=0, columnspan=2, pady=5)
+        self.impact_apply_btn.grid(row=3, column=0, columnspan=2, pady=5)
         # Track widgets so we can enable/disable the editor based on selection
         # and muted status.
         self._impact_editor_widgets = list(self.impact_editor_frame.winfo_children())
@@ -587,6 +594,7 @@ class FGConfigApp:
 
         self.impact_value_min_var.set(_fmt(entry.get('value_min')))
         self.impact_value_max_var.set(_fmt(entry.get('value_max')))
+        self.impact_observable_var.set(bool(entry.get('observable', False)))
         self._set_impact_editor_enabled(not entry.get('muted'))
 
     def apply_impact_changes(self):
@@ -614,8 +622,27 @@ class FGConfigApp:
             messagebox.showwarning("Invalid range",
                                    "Require 0 <= Min <= Max.")
             return
+        new_observable = bool(self.impact_observable_var.get())
+        old_observable = bool(entry.get('observable', False))
+        if new_observable != old_observable:
+            display = self.global_library.get("impact_definitions", {}).get(
+                entry.get('impact_id', ''), {}).get(
+                    "display_name", entry.get('impact_id', ''))
+            action = "added to" if new_observable else "removed from"
+            messagebox.showinfo(
+                "Observation data changed",
+                f"'{display}' will be {action} the policy network's "
+                f"observation input. This changes the input layer width of "
+                f"every decision-maker policy network, so existing "
+                f"checkpoints become incompatible and the policies must be "
+                f"retrained from scratch. Save the project for the change "
+                f"to take effect.")
         entry['value_min'] = mn
         entry['value_max'] = mx
+        if new_observable:
+            entry['observable'] = True
+        else:
+            entry.pop('observable', None)
 
     def setup_matrix_tab(self):
         # Scrollable container for FG Interactions tab
@@ -1154,6 +1181,10 @@ class FGConfigApp:
         self._apply_listbox_mute_styling()
         self._refresh_mute_button_labels()
         self.refresh_matrix()
+        # Refresh the Impact Editor so it enables/disables immediately
+        # following a mute/unmute toggle on the currently selected impact.
+        if hasattr(self, 'impact_editor_frame'):
+            self.on_impact_select()
 
     def _listbox_for(self, category):
         return self.fg_listbox if category == "decision_makers" else self.ndm_listbox
@@ -1420,18 +1451,43 @@ class FGConfigApp:
         impact_name = self.global_library.get("impact_definitions", {}).get(impact_id, {}).get("display_name", impact_id)
         fg_name = self.fg_display(fg_id)
 
+        # Look up the physical value range for this impact, set in the Impact
+        # Editor (Project & FGs tab) as value_min/value_max per project.
+        impact_entry = self._find_impact_entry(impact_id)
+        def _coerce_f(v):
+            try:
+                if v is None or v == "":
+                    return None
+                return float(v)
+            except (TypeError, ValueError):
+                return None
+        v_min = _coerce_f(impact_entry.get('value_min')) if impact_entry else None
+        v_max = _coerce_f(impact_entry.get('value_max')) if impact_entry else None
+        has_range = v_min is not None and v_max is not None and v_max >= v_min
+
         top = tk.Toplevel(self.root)
         top.title(f"Impact Table — {fg_name} × {impact_name}")
         top.transient(self.root)
 
-        info = ttk.Label(
-            top,
-            text=("'Value' has an undefined range (physical impact value). "
-                  "'Biomass factor' and 'Energy factor' must be in [0, 1]. "
-                  "Linear interpolation between rows; outside the range, "
-                  "the nearest endpoint value is used (no extrapolation)."),
-            wraplength=480, justify="left",
-        )
+        unit = self._impact_unit(impact_id)
+        if has_range:
+            info_text = (
+                f"'Value' must be in [{v_min:g}, {v_max:g}] {unit} "
+                f"(range set in the Impact Editor as Min/Max for this impact). "
+                "'Biomass factor' and 'Energy factor' must be in [0, 1]. "
+                "Linear interpolation between rows; outside the range, "
+                "the nearest endpoint value is used (no extrapolation)."
+            )
+        else:
+            info_text = (
+                "'Value' range is not set for this impact — open the Impact "
+                "Editor (Project & FGs tab) and set Min/Max to enable live "
+                "range validation here. "
+                "'Biomass factor' and 'Energy factor' must be in [0, 1]. "
+                "Linear interpolation between rows; outside the range, "
+                "the nearest endpoint value is used (no extrapolation)."
+            )
+        info = ttk.Label(top, text=info_text, wraplength=480, justify="left")
         info.pack(padx=10, pady=(10, 5), anchor="w")
 
         table_frame = ttk.Frame(top)
@@ -1448,13 +1504,18 @@ class FGConfigApp:
         # of a number in [0, 1] (so values outside the unit interval cannot even
         # be typed).
         def _validate_value(proposed):
+            # Allow empty / partial inputs that could still complete to a valid
+            # number; when a numeric range is set on the impact, also forbid
+            # typing anything outside [v_min, v_max].
             if proposed in ("", "-", "+", ".", "-.", "+."):
                 return True
             try:
-                float(proposed)
-                return True
+                v = float(proposed)
             except ValueError:
                 return False
+            if has_range:
+                return v_min <= v <= v_max
+            return True
 
         def _validate_unit(proposed):
             # Allow empty / partial inputs that could still become a valid value in [0, 1].
@@ -1526,6 +1587,13 @@ class FGConfigApp:
                     messagebox.showwarning(
                         "Invalid value",
                         "'Value' cells must be numeric.", parent=top,
+                    )
+                    return
+                if has_range and not (v_min <= v <= v_max):
+                    messagebox.showwarning(
+                        "Out of range",
+                        f"'Value' cells must be within [{v_min:g}, {v_max:g}] "
+                        f"for this impact.", parent=top,
                     )
                     return
                 if b is None or e is None:

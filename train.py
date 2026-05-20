@@ -140,11 +140,12 @@ class _EnvBuilder:
         grid_size = (GRID_HEIGHT, GRID_WIDTH)
         impact_ranges = {}
         if PROJECT_PATH:
-            fgs, impact_vars, impact_ranges = load_project_config(
+            fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
                 PROJECT_PATH, grid_size=grid_size, seed=seed)
         else:
             fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
             impact_vars = ['windfarm_noise']
+            observable_impact_vars = ['windfarm_noise']
 
         grid_config = {
             'width': GRID_WIDTH,
@@ -152,7 +153,8 @@ class _EnvBuilder:
             'cell_size': 1000.0,
             'tick_duration': 6.0,
         }
-        env = EcosystemEnvironment(grid_config, fgs, {})
+        env = EcosystemEnvironment(grid_config, fgs, {},
+                                   observable_impact_vars=observable_impact_vars)
 
         if self.impact_maps_snapshot is not None:
             for iv in impact_vars:
@@ -181,15 +183,19 @@ def _make_env_builder(impact_maps_snapshot=None):
 # specific env_builder via _make_env_builder(maps).
 env_builder = _make_env_builder(None)
 
-def get_dynamic_policy_params(fgs):
+def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     """
     Calculates policy network dimensions dynamically based on the state of the environment.
+
+    ``n_observable_impacts`` is the number of impact_ids flagged as observable
+    in the project (one observation channel per id). When zero, the policy
+    sees only biomass + energy + other-FG channels.
     """
     params = {}
     n_fgs = len(fgs)
-    # Input: Biomass(self), Energy(self), Biomass(all others), Noise(1)
-    # Total number of layers in the observation is n_fgs + 2
-    in_dim = n_fgs + 2
+    # Input: Biomass(self), Energy(self), Biomass(all others), one channel
+    # per observable impact. Total channels = n_fgs + 1 + n_observable_impacts.
+    in_dim = n_fgs + 1 + int(n_observable_impacts)
     
     # Output is now uniform across all decision makers: Move(4) + Rest(1) + Eat(N_fgs).
     # Eat-slots are indexed by a globally sorted FG list; slots outside the
@@ -273,7 +279,10 @@ def main():
 
     # Initialize a temporary environment to fetch functional group metadata
     temp_env = env_builder()
-    policy_params = get_dynamic_policy_params(temp_env.fgs)
+    policy_params = get_dynamic_policy_params(
+        temp_env.fgs,
+        n_observable_impacts=len(getattr(temp_env, 'observable_impact_vars', []) or []),
+    )
     
     # Handle species selection
     requested_species = args.species
@@ -384,7 +393,7 @@ def main():
     # Discover the project's active impact variables + their value ranges
     # once. These drive the per-generation impact map sampling below.
     if PROJECT_PATH:
-        _, _impact_vars_global, _impact_ranges_global = load_project_config(
+        _, _impact_vars_global, _impact_ranges_global, _ = load_project_config(
             PROJECT_PATH, grid_size=(GRID_HEIGHT, GRID_WIDTH), seed=0)
     else:
         _impact_vars_global = ['windfarm_noise']

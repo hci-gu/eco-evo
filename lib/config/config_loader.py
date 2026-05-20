@@ -149,6 +149,13 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     # Likewise, muted impact variables are dropped from the active set.
     impact_vars = [iv['impact_id'] for iv in project.get('impact_variables', [])
                    if isinstance(iv, dict) and not iv.get('muted')]
+    # Subset of impact_vars that the policy network observes as input layers
+    # (one channel per observable impact). Order matches ``impact_vars`` to
+    # keep the observation channel layout deterministic across runs.
+    observable_impact_vars = [
+        iv['impact_id'] for iv in project.get('impact_variables', [])
+        if isinstance(iv, dict) and not iv.get('muted') and iv.get('observable')
+    ]
 
     # Per-impact value range (vmin, vmax). Read from the project's
     # impact_variables entries: schema ``value_min`` / ``value_max``.
@@ -231,4 +238,4 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
-    return fgs, impact_vars, impact_ranges
+    return fgs, impact_vars, impact_ranges, observable_impact_vars

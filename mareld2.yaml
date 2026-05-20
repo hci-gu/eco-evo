@@ -45,3 +45,4 @@ impact_variables:
   - impact_id: windfarm_noise
     value_min: 0
     value_max: 140
+    observable: true

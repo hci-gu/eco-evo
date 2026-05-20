@@ -56,10 +56,12 @@ def build_env(project_path, grid_size, seed=None):
     H, W = grid_size
     impact_ranges = {}
     if project_path:
-        fgs, impact_vars, impact_ranges = load_project_config(project_path, grid_size=grid_size, seed=seed, mode='inference')
+        fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
+            project_path, grid_size=grid_size, seed=seed, mode='inference')
     else:
         fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
         impact_vars = ['windfarm_noise']
+        observable_impact_vars = ['windfarm_noise']
 
     grid_config = {
         'width': W,
@@ -67,7 +69,8 @@ def build_env(project_path, grid_size, seed=None):
         'cell_size': 1000.0,
         'tick_duration': 6.0,
     }
-    env = EcosystemEnvironment(grid_config, fgs, {})
+    env = EcosystemEnvironment(grid_config, fgs, {},
+                               observable_impact_vars=observable_impact_vars)
     # Impact maps are sampled uniformly per cell from the per-impact
     # [value_min, value_max] range configured in the project file.
     # PNG-based maps are no longer used by inference.
@@ -93,7 +96,8 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     dm_ids = list(env.dm_ids)
     N_all = env.N_all
     N_dm = env.N_dm
-    D = 2 + (N_all - 1) + 1
+    n_obs_imp = len(getattr(env, 'observable_impact_vars', []) or [])
+    D = 2 + (N_all - 1) + n_obs_imp
     in_dim = D
     out_dim = 5 + N_all
 

@@ -4,11 +4,17 @@ from lib.world.grid import Grid
 from lib.world.functional_group import FunctionalGroup
 
 class EcosystemEnvironment:
-    def __init__(self, grid_config, functional_groups, interactions, policies=None):
+    def __init__(self, grid_config, functional_groups, interactions, policies=None,
+                 observable_impact_vars=None):
         self.grid = Grid(**grid_config)
         self.fgs = functional_groups  # Dictionary: id -> FunctionalGroup
         self.interactions = interactions
         self.policies = policies or {} # Dictionary: id -> PolicyNetwork
+        # Ordered list of impact_ids that are exposed to the policy network as
+        # observation channels. One observation layer is appended per id (in
+        # this order) after biomass / energy / other-FG channels. Callers that
+        # don't specify it default to no observable impacts.
+        self.observable_impact_vars = list(observable_impact_vars or [])
         self.tick_count = 0
         # Stable global ordering of all functional groups. Used to give every
         # decision maker a uniform action space: 5 + N_all_fgs outputs, where
@@ -171,9 +177,13 @@ class EcosystemEnvironment:
         self.ordered_fg_ids = shuffled_ids
 
         self._calculate_decisions()
+        # Method.pdf §steg 1–6: direct impact mortality m_X^Impact is applied
+        # *before* predation, so prey biomass available to predators already
+        # reflects impact losses for this tick.
+        self._apply_impact_mortality()
         self._apply_predation()
         self._apply_movement()
-        self._apply_growth_and_impact()
+        self._apply_growth()
 
         self.tick_count += 1
 
@@ -183,13 +193,20 @@ class EcosystemEnvironment:
         H, W = self.H, self.W
         N_all = self.N_all
         B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0).astype(self.dtype, copy=False)
-        noise = self.grid.get_map('windfarm_noise')
-        if noise is None:
-            noise = np.zeros((H, W), dtype=self.dtype)
-        else:
-            noise = noise.astype(self.dtype, copy=False)
+        # One channel per impact_id flagged as observable in the project.
+        # Missing maps default to zero fields so the channel layout is stable
+        # even when an impact map hasn't been installed yet.
+        impact_layers = []
+        for iid in self.observable_impact_vars:
+            m = self.grid.get_map(iid)
+            if m is None:
+                m = np.zeros((H, W), dtype=self.dtype)
+            else:
+                m = m.astype(self.dtype, copy=False)
+            impact_layers.append(m)
+        n_obs_imp = len(impact_layers)
 
-        D = 2 + (N_all - 1) + 1  # B_own, E_own, others (N_all-1), noise
+        D = 2 + (N_all - 1) + n_obs_imp  # B_own, E_own, others, observable impacts
         obs = np.empty((self.N_dm, D, H, W), dtype=self.dtype)
 
         for i, pred_id in enumerate(self.dm_ids):
@@ -201,7 +218,8 @@ class EcosystemEnvironment:
                 obs[i, 2:2 + j_idx] = B_all[:j_idx]
             if j_idx < N_all - 1:
                 obs[i, 2 + j_idx:2 + (N_all - 1)] = B_all[j_idx + 1:]
-            obs[i, -1] = noise
+            for k, layer in enumerate(impact_layers):
+                obs[i, 2 + (N_all - 1) + k] = layer
 
         return obs.transpose(0, 2, 3, 1).reshape(self.N_dm, H * W, D)
 
@@ -470,7 +488,52 @@ class EcosystemEnvironment:
         e = np.interp(x_arr, xs, ef, left=ef[0], right=ef[-1])
         return b.astype(np.float32, copy=False), e.astype(np.float32, copy=False)
 
-    def _apply_growth_and_impact(self):
+    def _compute_impact_mortality(self, fg):
+        """Return total impact-induced biomass loss m_X^Impact for the given FG
+        as a per-cell array, or None if the FG has no active impact tables."""
+        if 'impact' not in fg.params:
+            return None
+        total_mortality_impact = None
+        for impact_id, impact_def in fg.params['impact'].items():
+            map_data = self.grid.get_map(impact_id)
+            if map_data is None:
+                continue
+            table = self._extract_impact_table(impact_def)
+            if table is None:
+                continue
+            bf_map, _ = self._interp_impact(table, map_data)
+            contribution = fg.biomass * bf_map
+            if total_mortality_impact is None:
+                total_mortality_impact = contribution
+            else:
+                total_mortality_impact = total_mortality_impact + contribution
+        return total_mortality_impact
+
+    def _apply_impact_mortality(self):
+        """Method.pdf §steg 1–6: apply m_X^Impact before predation. Only
+        decision-maker FGs carry impact tables in the current model."""
+        for fg_id in self.ordered_fg_ids:
+            fg = self.fgs[fg_id]
+            if not fg.is_decision_maker:
+                continue
+            total_mortality_impact = self._compute_impact_mortality(fg)
+            if total_mortality_impact is None:
+                continue
+
+            loss_mask = total_mortality_impact > 0
+            reduction = np.ones_like(fg.biomass)
+            reduction[loss_mask] = (
+                (fg.biomass[loss_mask] - total_mortality_impact[loss_mask])
+                / (fg.biomass[loss_mask] + 1e-9)
+            )
+            reduction = np.clip(reduction, 0.0, 1.0)
+
+            fg.energy_reserve = (fg.energy_reserve * reduction).astype(self.dtype, copy=False)
+            fg.biomass = np.maximum(
+                0.0, fg.biomass - total_mortality_impact
+            ).astype(self.dtype, copy=False)
+
+    def _apply_growth(self):
         for fg_id in self.ordered_fg_ids:
             fg = self.fgs[fg_id]
             if not fg.is_decision_maker:
@@ -483,28 +546,20 @@ class EcosystemEnvironment:
                 u_x = fg.maintenance_level
                 q_x = s_x - u_x
 
-                total_mortality_impact = np.zeros_like(fg.biomass)
-                if 'impact' in fg.params:
-                    for impact_id, impact_def in fg.params['impact'].items():
-                        map_data = self.grid.get_map(impact_id)
-                        if map_data is None:
-                            continue
-                        table = self._extract_impact_table(impact_def)
-                        if table is None:
-                            continue
-                        bf_map, _ = self._interp_impact(table, map_data)
-                        total_mortality_impact = total_mortality_impact + fg.biomass * bf_map
-
                 growth = fg.biomass * fg.growth_rate * q_x
 
-                total_loss = total_mortality_impact
-                if np.any(growth < 0):
-                    total_loss = total_loss - np.minimum(0.0, growth)
+                # Handle negative growth (shrinkage) as additional biomass loss
+                # that also drains energy reserve proportionally.
+                negative_growth = np.minimum(0.0, growth)
+                total_loss = -negative_growth
 
                 loss_mask = total_loss > 0
                 reduction = np.ones_like(fg.biomass)
-                reduction[loss_mask] = (fg.biomass[loss_mask] - total_loss[loss_mask]) / (fg.biomass[loss_mask] + 1e-9)
+                reduction[loss_mask] = (
+                    (fg.biomass[loss_mask] - total_loss[loss_mask])
+                    / (fg.biomass[loss_mask] + 1e-9)
+                )
                 reduction = np.clip(reduction, 0.0, 1.0)
 
                 fg.energy_reserve = (fg.energy_reserve * reduction).astype(self.dtype, copy=False)
-                fg.biomass = np.maximum(0.0, fg.biomass + (growth - total_mortality_impact)).astype(self.dtype, copy=False)
+                fg.biomass = np.maximum(0.0, fg.biomass + growth).astype(self.dtype, copy=False)
