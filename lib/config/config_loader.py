@@ -149,6 +149,36 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     # Likewise, muted impact variables are dropped from the active set.
     impact_vars = [iv['impact_id'] for iv in project.get('impact_variables', [])
                    if isinstance(iv, dict) and not iv.get('muted')]
+
+    # Per-impact value range (vmin, vmax). Read from the project's
+    # impact_variables entries: schema ``value_min`` / ``value_max``.
+    # Missing/invalid values fall back to (0.0, 0.0) so the resulting map is
+    # a zero field (preserving previous behaviour for unconfigured impacts).
+    def _as_float(v):
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            return None
+        return f if f >= 0 else None
+
+    impact_ranges = {}
+    for iv in project.get('impact_variables', []) or []:
+        if not isinstance(iv, dict) or iv.get('muted'):
+            continue
+        iid = iv.get('impact_id')
+        if not iid:
+            continue
+        vmin = _as_float(iv.get('value_min'))
+        vmax = _as_float(iv.get('value_max'))
+        if vmin is None and vmax is None:
+            vmin, vmax = 0.0, 0.0
+        elif vmin is None:
+            vmin = vmax
+        elif vmax is None:
+            vmax = vmin
+        if vmax < vmin:
+            vmin, vmax = vmax, vmin
+        impact_ranges[iid] = (vmin, vmax)
     
     fgs = {}
     for sid in project_fg_ids:
@@ -201,4 +231,4 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
-    return fgs, impact_vars
+    return fgs, impact_vars, impact_ranges

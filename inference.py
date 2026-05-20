@@ -54,8 +54,9 @@ def parse_grid_arg(value):
 def build_env(project_path, grid_size, seed=None):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
+    impact_ranges = {}
     if project_path:
-        fgs, impact_vars = load_project_config(project_path, grid_size=grid_size, seed=seed, mode='inference')
+        fgs, impact_vars, impact_ranges = load_project_config(project_path, grid_size=grid_size, seed=seed, mode='inference')
     else:
         fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
         impact_vars = ['windfarm_noise']
@@ -67,8 +68,17 @@ def build_env(project_path, grid_size, seed=None):
         'tick_duration': 6.0,
     }
     env = EcosystemEnvironment(grid_config, fgs, {})
+    # Impact maps are sampled uniformly per cell from the per-impact
+    # [value_min, value_max] range configured in the project file.
+    # PNG-based maps are no longer used by inference.
+    rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
     for iv in impact_vars:
-        env.grid.add_map(iv, np.zeros((H, W)))
+        vmin, vmax = impact_ranges.get(iv, (0.0, 0.0))
+        if vmax > vmin:
+            field = rng.uniform(vmin, vmax, size=(H, W))
+        else:
+            field = np.full((H, W), float(vmin))
+        env.grid.add_map(iv, field.astype(np.float32))
     return env
 
 

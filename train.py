@@ -11,6 +11,23 @@ from lib.runners.trainer import ARSTrainer
 PROJECT_PATH = None
 GRID_WIDTH = 60
 GRID_HEIGHT = 60
+def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None):
+    """Sample one impact field per active impact variable.
+
+    Each cell is drawn i.i.d. uniformly from the impact's configured
+    ``[value_min, value_max]`` range. Returns a dict ``{impact_id: np.ndarray}``.
+    """
+    H, W = grid_size
+    rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
+    maps = {}
+    for iv in impact_vars:
+        vmin, vmax = impact_ranges.get(iv, (0.0, 0.0))
+        if vmax > vmin:
+            field = rng.uniform(vmin, vmax, size=(H, W))
+        else:
+            field = np.full((H, W), float(vmin))
+        maps[iv] = field.astype(np.float32)
+    return maps
 
 def parse_grid_arg(value):
     """Parses a --grid argument on the form n*m (or nxm). Both dims must be >= 3."""
@@ -102,35 +119,67 @@ def _auto_workers(n_deltas):
     target = min(n_tasks, max(1, cores - 1))
     return target if target >= 2 else 1
 
-def env_builder(seed=None):
-    """
-    Creates a new instance of the ecosystem for each rollout.
-    This is required by the ARS algorithm to evaluate different perturbations (deltas).
+class _EnvBuilder:
+    """Picklable env_builder callable used by the training loop.
 
-    If `seed` is given, the initial spatial biomass distribution is deterministic.
-    This enables Common Random Numbers in ARS (matching +delta and -delta worlds).
+    When ``impact_maps_snapshot`` is provided, every env produced by this
+    callable installs *those exact* impact fields (gemensamma per
+    generation). When ``None``, fresh maps are sampled per call from the
+    project's impact ranges — used only for the initial temp_env probe
+    before the training loop starts.
+
+    Implemented as a top-level class (not a closure) so that the
+    multiprocessing 'spawn' start method can pickle it when it gets
+    passed to worker processes via ``trainer.env_builder``.
     """
-    grid_size = (GRID_HEIGHT, GRID_WIDTH)
-    if PROJECT_PATH:
-        fgs, impact_vars = load_project_config(PROJECT_PATH, grid_size=grid_size, seed=seed)
-    else:
-        fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
-        impact_vars = ['windfarm_noise']
-        
-    grid_config = {
-        'width': GRID_WIDTH,
-        'height': GRID_HEIGHT,
-        'cell_size': 1000.0,
-        'tick_duration': 6.0
-    }
-    # Interactions are loaded from FG parameters internally in the MVP version
-    env = EcosystemEnvironment(grid_config, fgs, {})
-    
-    # Add necessary map layers as empty dummies for training
-    for iv in impact_vars:
-        env.grid.add_map(iv, np.zeros((GRID_HEIGHT, GRID_WIDTH)))
-        
-    return env
+
+    def __init__(self, impact_maps_snapshot=None):
+        self.impact_maps_snapshot = impact_maps_snapshot
+
+    def __call__(self, seed=None):
+        grid_size = (GRID_HEIGHT, GRID_WIDTH)
+        impact_ranges = {}
+        if PROJECT_PATH:
+            fgs, impact_vars, impact_ranges = load_project_config(
+                PROJECT_PATH, grid_size=grid_size, seed=seed)
+        else:
+            fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
+            impact_vars = ['windfarm_noise']
+
+        grid_config = {
+            'width': GRID_WIDTH,
+            'height': GRID_HEIGHT,
+            'cell_size': 1000.0,
+            'tick_duration': 6.0,
+        }
+        env = EcosystemEnvironment(grid_config, fgs, {})
+
+        if self.impact_maps_snapshot is not None:
+            for iv in impact_vars:
+                field = self.impact_maps_snapshot.get(iv)
+                if field is None:
+                    field = np.zeros((GRID_HEIGHT, GRID_WIDTH), dtype=np.float32)
+                env.grid.add_map(iv, field)
+        else:
+            sampled = _sample_impact_maps(
+                impact_vars, impact_ranges,
+                (GRID_HEIGHT, GRID_WIDTH), seed=seed)
+            for iv in impact_vars:
+                env.grid.add_map(iv, sampled.get(
+                    iv, np.zeros((GRID_HEIGHT, GRID_WIDTH), dtype=np.float32)))
+        return env
+
+
+def _make_env_builder(impact_maps_snapshot=None):
+    """Factory kept for call-site compatibility; returns a picklable
+    ``_EnvBuilder`` instance."""
+    return _EnvBuilder(impact_maps_snapshot)
+
+
+# Default module-level env_builder: fresh impact maps per call. Used for
+# the initial temp_env probe before the main loop installs a generation-
+# specific env_builder via _make_env_builder(maps).
+env_builder = _make_env_builder(None)
 
 def get_dynamic_policy_params(fgs):
     """
@@ -332,6 +381,46 @@ def main():
             print(f"    No checkpoint (random init): {', '.join(missing)}")
         print(f"------------------------------------------")
     
+    # Discover the project's active impact variables + their value ranges
+    # once. These drive the per-generation impact map sampling below.
+    if PROJECT_PATH:
+        _, _impact_vars_global, _impact_ranges_global = load_project_config(
+            PROJECT_PATH, grid_size=(GRID_HEIGHT, GRID_WIDTH), seed=0)
+    else:
+        _impact_vars_global = ['windfarm_noise']
+        _impact_ranges_global = {}
+
+    def _install_generation_maps(gen_idx):
+        """Sample one shared set of impact maps for the whole generation
+        and install it via a fresh env_builder closure. Rebuilds the
+        worker pool (if any) so all workers see the new maps."""
+        gen_seed = int(np.random.randint(1, 2**31 - 1))
+        maps = _sample_impact_maps(_impact_vars_global, _impact_ranges_global,
+                                   (GRID_HEIGHT, GRID_WIDTH), seed=gen_seed)
+        new_builder = _make_env_builder(maps)
+        trainer.env_builder = new_builder
+        # Rebuild worker pool so spawn-workers receive the updated builder.
+        if trainer._pool is not None:
+            try:
+                trainer._pool.terminate()
+                trainer._pool.join()
+            except Exception:
+                pass
+            import multiprocessing as _mp
+            from lib.runners.parallel_worker import _worker_init
+            ctx = _mp.get_context('spawn')
+            trainer._pool = ctx.Pool(
+                processes=trainer.n_workers,
+                initializer=_worker_init,
+                initargs=(new_builder, trainer.policy_params),
+            )
+        if maps:
+            summary = ", ".join(
+                f"{k}=U[{_impact_ranges_global.get(k,(0,0))[0]:g},"
+                f"{_impact_ranges_global.get(k,(0,0))[1]:g}]"
+                for k in maps)
+            print(f"    Impact maps (shared this gen): {summary}")
+
     import itertools
     gen_iter = itertools.count() if generations_is_inf else range(generations_value)
     gen_label_total = "inf" if generations_is_inf else str(generations_value)
@@ -339,6 +428,7 @@ def main():
     try:
         for gen in gen_iter:
             print(f"\n========== Generation {gen+1}/{gen_label_total} ==========")
+            _install_generation_maps(gen)
             for species in target_species:
                 print(f"\n>>> Training: {species.upper()} (gen {gen+1}/{gen_label_total})")
                 print(f"    Input dim:  {policy_params[species][0]}")

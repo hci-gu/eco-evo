@@ -284,7 +284,35 @@ class FGConfigApp:
                                           command=self.toggle_mute_impact)
         self.impact_mute_btn.pack(fill="x", pady=2)
         self.impact_listbox.bind("<<ListboxSelect>>",
-                                 lambda e: self._refresh_mute_button_labels())
+                                 lambda e: (self._refresh_mute_button_labels(),
+                                            self.on_impact_select()))
+
+        # Impact Editor: per-impact value range used to sample the impact map
+        # uniformly per cell at training/inference time (replaces the old
+        # PNG-based maps and zero dummies).
+        self.impact_editor_frame = ttk.LabelFrame(self.project_inner, text="Impact Editor")
+        self.impact_editor_frame.pack(fill="x", padx=10, pady=5)
+
+        self.impact_editor_label_var = tk.StringVar(value="(no impact selected)")
+        ttk.Label(self.impact_editor_frame, textvariable=self.impact_editor_label_var,
+                  font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, columnspan=2,
+                                                          sticky="w", padx=5, pady=(5, 2))
+
+        ttk.Label(self.impact_editor_frame, text="Value Range").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2)
+        ie_min_var, ie_max_var = self._build_value_range_row(
+            self.impact_editor_frame, row=1)
+        self.impact_value_min_var = ie_min_var
+        self.impact_value_max_var = ie_max_var
+
+        self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
+                                           text="Apply Changes",
+                                           command=self.apply_impact_changes)
+        self.impact_apply_btn.grid(row=2, column=0, columnspan=2, pady=5)
+        # Track widgets so we can enable/disable the editor based on selection
+        # and muted status.
+        self._impact_editor_widgets = list(self.impact_editor_frame.winfo_children())
+        self._set_impact_editor_enabled(False)
 
         # FG Editor for Decision Makers
         self.editor_frame = ttk.LabelFrame(self.project_inner, text="FG Editor")
@@ -444,6 +472,150 @@ class FGConfigApp:
         max_entry.pack(side="left")
 
         return min_var, max_var
+
+    def _build_value_range_row(self, parent, row):
+        """Build a Min/Max entry pair (side by side) for an impact value range.
+
+        Accepts non-negative floats; live validation forbids typing a max
+        smaller than the current min (and vice versa). Empty values are
+        allowed during editing. Returns (min_var, max_var).
+        """
+        container = ttk.Frame(parent)
+        container.grid(row=row, column=1, sticky="w", padx=5, pady=2)
+
+        min_var = tk.StringVar()
+        max_var = tk.StringVar()
+
+        def _is_nonneg_float(s):
+            if s == "":
+                return True
+            try:
+                return float(s) >= 0
+            except ValueError:
+                return False
+
+        def _as_f(s):
+            try:
+                return float(s)
+            except (ValueError, TypeError):
+                return None
+
+        def _validate_min(proposed):
+            if not _is_nonneg_float(proposed):
+                return False
+            if proposed == "":
+                return True
+            cur_max = _as_f(max_var.get())
+            if cur_max is not None and float(proposed) > cur_max:
+                return False
+            return True
+
+        def _validate_max(proposed):
+            if not _is_nonneg_float(proposed):
+                return False
+            if proposed == "":
+                return True
+            cur_min = _as_f(min_var.get())
+            if cur_min is not None and float(proposed) < cur_min:
+                return False
+            return True
+
+        vcmd_min = (parent.register(_validate_min), "%P")
+        vcmd_max = (parent.register(_validate_max), "%P")
+
+        ttk.Label(container, text="Min:").pack(side="left", padx=(0, 2))
+        min_entry = ttk.Entry(container, textvariable=min_var, width=10,
+                              validate="key", validatecommand=vcmd_min)
+        min_entry.pack(side="left", padx=(0, 8))
+        ttk.Label(container, text="Max:").pack(side="left", padx=(0, 2))
+        max_entry = ttk.Entry(container, textvariable=max_var, width=10,
+                              validate="key", validatecommand=vcmd_max)
+        max_entry.pack(side="left")
+        return min_var, max_var
+
+    def _set_impact_editor_enabled(self, enabled):
+        state = "normal" if enabled else "disabled"
+        # Recursively walk the editor frame and disable inputs/buttons.
+        def _walk(w):
+            for c in w.winfo_children():
+                try:
+                    c.configure(state=state)
+                except tk.TclError:
+                    pass
+                _walk(c)
+        _walk(self.impact_editor_frame)
+
+    def _selected_impact_entry(self):
+        """Return the impact_variables entry currently selected, or None."""
+        try:
+            sel = self.impact_listbox.curselection()
+        except tk.TclError:
+            return None
+        if not sel:
+            return None
+        idx = sel[0]
+        ivs = self.project_data.get('impact_variables', []) or []
+        if idx >= len(ivs):
+            return None
+        return ivs[idx]
+
+    def on_impact_select(self):
+        entry = self._selected_impact_entry()
+        if entry is None:
+            self.impact_editor_label_var.set("(no impact selected)")
+            self.impact_value_min_var.set("")
+            self.impact_value_max_var.set("")
+            self._set_impact_editor_enabled(False)
+            return
+        impact_id = entry.get('impact_id', '')
+        display = self.global_library.get("impact_definitions", {}).get(
+            impact_id, {}).get("display_name", impact_id)
+        unit = self._impact_unit(impact_id)
+        title = f"Impact Editor — {display} ({unit})"
+        if entry.get('muted'):
+            title += " — MUTED"
+        self.impact_editor_label_var.set(title)
+
+        def _fmt(v):
+            if v is None or v == "":
+                return ""
+            try:
+                f = float(v)
+            except (TypeError, ValueError):
+                return ""
+            return ("%g" % f)
+
+        self.impact_value_min_var.set(_fmt(entry.get('value_min')))
+        self.impact_value_max_var.set(_fmt(entry.get('value_max')))
+        self._set_impact_editor_enabled(not entry.get('muted'))
+
+    def apply_impact_changes(self):
+        entry = self._selected_impact_entry()
+        if entry is None:
+            return
+        if entry.get('muted'):
+            messagebox.showinfo("Muted",
+                                "This impact is muted. Unmute it before editing.")
+            return
+        mn_s = self.impact_value_min_var.get().strip()
+        mx_s = self.impact_value_max_var.get().strip()
+        if mn_s == "" or mx_s == "":
+            messagebox.showwarning("Missing value",
+                                   "Both Min and Max must be set.")
+            return
+        try:
+            mn = float(mn_s)
+            mx = float(mx_s)
+        except ValueError:
+            messagebox.showwarning("Invalid value",
+                                   "Min and Max must be non-negative numbers.")
+            return
+        if mn < 0 or mx < 0 or mx < mn:
+            messagebox.showwarning("Invalid range",
+                                   "Require 0 <= Min <= Max.")
+            return
+        entry['value_min'] = mn
+        entry['value_max'] = mx
 
     def setup_matrix_tab(self):
         # Scrollable container for FG Interactions tab
@@ -835,6 +1007,19 @@ class FGConfigApp:
     # the project FG/impact entry (per-project state), not in the library.
 
     MUTED_FG_COLOR = "gray60"
+
+    # Display unit per impact_id (shown in parentheses after the impact's
+    # display name in the project's Impact Variables list and after the
+    # "Value" header in the impact-table editor under "Impact Interactions").
+    IMPACT_UNITS = {
+        "bottom_trawling": "MW-h/year",
+        "pelagic_trawling": "MW-h/year",
+        "windfarm_noise": "dB",
+        "rotor": "fraction/cell",
+    }
+
+    def _impact_unit(self, impact_id):
+        return self.IMPACT_UNITS.get(impact_id, "undefined")
 
     def _is_fg_muted(self, fg_entry):
         return bool(isinstance(fg_entry, dict) and fg_entry.get("muted"))
@@ -1252,7 +1437,7 @@ class FGConfigApp:
         table_frame = ttk.Frame(top)
         table_frame.pack(padx=10, pady=5, fill="both", expand=True)
 
-        headers = ("Value", "Biomass factor", "Energy factor")
+        headers = (f"Value ({self._impact_unit(impact_id)})", "Biomass factor", "Energy factor")
         for j, h in enumerate(headers):
             ttk.Label(table_frame, text=h, font=("TkDefaultFont", 9, "bold")).grid(row=0, column=j, padx=4, pady=2)
 
@@ -1536,13 +1721,17 @@ class FGConfigApp:
         def _impact_display(iv):
             impact_id = iv['impact_id']
             return self.global_library.get("impact_definitions", {}).get(impact_id, {}).get("display_name", impact_id)
+        def _impact_display_with_unit(iv):
+            return f"{_impact_display(iv)} ({self._impact_unit(iv['impact_id'])})"
         if self.project_data.get('impact_variables'):
             self.project_data['impact_variables'].sort(key=lambda iv: _impact_display(iv).lower())
         self.impact_listbox.delete(0, "end")
         for iv in self.project_data.get('impact_variables', []):
-            self.impact_listbox.insert("end", _impact_display(iv))
+            self.impact_listbox.insert("end", _impact_display_with_unit(iv))
         self._apply_listbox_mute_styling()
         self._refresh_mute_button_labels()
+        if hasattr(self, 'impact_editor_frame'):
+            self.on_impact_select()
 
     def add_impact_from_library(self):
         lib_impacts = list(self.global_library.get("impact_definitions", {}).keys())

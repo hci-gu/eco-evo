@@ -250,7 +250,13 @@ interaction_definitions:
     impact_table: []
   pelagic_fish_impacted_by_pelagic_trawling:
     impact_affects: true
-    impact_table: []
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 1000.0
+        biomass_factor: 1.0
+        energy_factor: 0.0
   pelagic_fish_impacted_by_rotor:
     impact_affects: false
     impact_table: []
@@ -292,7 +298,19 @@ interaction_definitions:
     impact_table: []
   seabirds_impacted_by_rotor:
     impact_affects: true
-    impact_table: []
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 0.25
+        biomass_factor: 0.005
+        energy_factor: 0.0
+      - value: 0.5
+        biomass_factor: 0.015
+        energy_factor: 0.0
+      - value: 1.0
+        biomass_factor: 0.03
+        energy_factor: 0.0
   seabirds_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []

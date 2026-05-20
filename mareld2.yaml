@@ -37,5 +37,11 @@ non_decision_makers:
     inference_initial_biomass: 80000
 impact_variables:
   - impact_id: pelagic_trawling
+    value_min: 0
+    value_max: 1000
   - impact_id: rotor
+    value_min: 0
+    value_max: 1
   - impact_id: windfarm_noise
+    value_min: 0
+    value_max: 140
