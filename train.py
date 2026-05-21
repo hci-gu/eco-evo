@@ -193,9 +193,17 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     """
     params = {}
     n_fgs = len(fgs)
-    # Input: Biomass(self), Energy(self), Biomass(all others), one channel
-    # per observable impact. Total channels = n_fgs + 1 + n_observable_impacts.
-    in_dim = n_fgs + 1 + int(n_observable_impacts)
+    # Per cell the policy sees the von Neumann neighbourhood (center + N/E/S/W)
+    # as prescribed by Method.pdf. The center contributes
+    #   center_dim = n_fgs + 1 + n_observable_impacts
+    # (B_own, E_own, B_others(N-1), observable impacts). Each of the four
+    # neighbours contributes the same set *minus* E_own:
+    #   nbr_dim    = n_fgs     + n_observable_impacts
+    # Total input dimension:
+    n_obs = int(n_observable_impacts)
+    center_dim = n_fgs + 1 + n_obs
+    nbr_dim = n_fgs + n_obs
+    in_dim = center_dim + 4 * nbr_dim
     
     # Output is now uniform across all decision makers: Move(4) + Rest(1) + Eat(N_fgs).
     # Eat-slots are indexed by a globally sorted FG list; slots outside the

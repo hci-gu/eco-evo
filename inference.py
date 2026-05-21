@@ -165,7 +165,12 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     N_all = env.N_all
     N_dm = env.N_dm
     n_obs_imp = len(getattr(env, 'observable_impact_vars', []) or [])
-    D = 2 + (N_all - 1) + n_obs_imp
+    # Per cell the policy sees the von Neumann neighbourhood (center + N/E/S/W)
+    # per Method.pdf. Center: B_own, E_own, B_others(N_all-1), observable
+    # impacts. Each neighbour: same minus E_own. Total:
+    center_dim = 2 + (N_all - 1) + n_obs_imp
+    nbr_dim = 1 + (N_all - 1) + n_obs_imp
+    D = center_dim + 4 * nbr_dim
     in_dim = D
     out_dim = 5 + N_all
 

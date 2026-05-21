@@ -189,13 +189,25 @@ class EcosystemEnvironment:
 
     # ---------- Observation builder (batched across all DMs) ----------
     def _build_observation_batch(self):
-        """Returns observation array of shape (N_dm, H*W, D), dtype float32."""
+        """Returns observation array of shape (N_dm, H*W, D), dtype float32.
+
+        Per cell the policy sees the von Neumann neighbourhood (center + 4
+        neighbours N, E, S, W) as prescribed by Method.pdf. Layout per cell:
+
+          center : [B_own, E_own, B_others (N_all-1), impacts (n_obs_imp)]
+          N      : [B_own,        B_others (N_all-1), impacts (n_obs_imp)]
+          E      : same as N
+          S      : same as N
+          W      : same as N
+
+        ``E_own`` (energy fill ratio s_X) is only included for the center cell;
+        neighbour energy levels are intentionally omitted. Out-of-bounds
+        neighbour values are zero-padded. Neighbour order is N, E, S, W
+        matching the AccessN/E/S/W convention in Method.pdf.
+        """
         H, W = self.H, self.W
         N_all = self.N_all
         B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0).astype(self.dtype, copy=False)
-        # One channel per impact_id flagged as observable in the project.
-        # Missing maps default to zero fields so the channel layout is stable
-        # even when an impact map hasn't been installed yet.
         impact_layers = []
         for iid in self.observable_impact_vars:
             m = self.grid.get_map(iid)
@@ -206,20 +218,53 @@ class EcosystemEnvironment:
             impact_layers.append(m)
         n_obs_imp = len(impact_layers)
 
-        D = 2 + (N_all - 1) + n_obs_imp  # B_own, E_own, others, observable impacts
-        obs = np.empty((self.N_dm, D, H, W), dtype=self.dtype)
+        center_dim = 2 + (N_all - 1) + n_obs_imp      # incl. E_own
+        nbr_dim = 1 + (N_all - 1) + n_obs_imp         # excl. E_own
+        D = center_dim + 4 * nbr_dim
+        obs = np.zeros((self.N_dm, D, H, W), dtype=self.dtype)
+
+        # Helper: shift a 2-D field by one cell in the given direction with
+        # zero padding for out-of-bounds neighbours.
+        def _shift(field, direction):
+            out = np.zeros_like(field)
+            if direction == 'N':       # neighbour to the north of (y,x) is (y-1,x)
+                out[1:, :] = field[:-1, :]
+            elif direction == 'S':
+                out[:-1, :] = field[1:, :]
+            elif direction == 'E':
+                out[:, :-1] = field[:, 1:]
+            elif direction == 'W':
+                out[:, 1:] = field[:, :-1]
+            return out
 
         for i, pred_id in enumerate(self.dm_ids):
             pred_fg = self.fgs[pred_id]
-            obs[i, 0] = pred_fg.biomass
-            obs[i, 1] = pred_fg.energy_level.astype(self.dtype, copy=False)
+            B_own = pred_fg.biomass.astype(self.dtype, copy=False)
+            E_own = pred_fg.energy_level.astype(self.dtype, copy=False)
             j_idx = int(self.dm_index_in_all[i])
-            if j_idx > 0:
-                obs[i, 2:2 + j_idx] = B_all[:j_idx]
-            if j_idx < N_all - 1:
-                obs[i, 2 + j_idx:2 + (N_all - 1)] = B_all[j_idx + 1:]
+            # Build (N_all - 1) "other FG" biomass stack in stable order.
+            if N_all > 1:
+                B_others = np.concatenate([B_all[:j_idx], B_all[j_idx + 1:]], axis=0)
+            else:
+                B_others = np.zeros((0, H, W), dtype=self.dtype)
+
+            # --- Center ---
+            obs[i, 0] = B_own
+            obs[i, 1] = E_own
+            if N_all > 1:
+                obs[i, 2:2 + (N_all - 1)] = B_others
             for k, layer in enumerate(impact_layers):
                 obs[i, 2 + (N_all - 1) + k] = layer
+
+            # --- Neighbours N, E, S, W ---
+            for d_idx, direction in enumerate(('N', 'E', 'S', 'W')):
+                base = center_dim + d_idx * nbr_dim
+                obs[i, base] = _shift(B_own, direction)
+                if N_all > 1:
+                    for kk in range(N_all - 1):
+                        obs[i, base + 1 + kk] = _shift(B_others[kk], direction)
+                for k, layer in enumerate(impact_layers):
+                    obs[i, base + 1 + (N_all - 1) + k] = _shift(layer, direction)
 
         return obs.transpose(0, 2, 3, 1).reshape(self.N_dm, H * W, D)
 
