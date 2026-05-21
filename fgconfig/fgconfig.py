@@ -716,6 +716,21 @@ class FGConfigApp:
         self.inference_vscroll.pack(side="right", fill="y")
         self.inference_canvas.pack(side="left", expand=True, fill="both")
 
+        # Catch-all DnD registration: when the user drops onto the scrollable
+        # canvas (which sits between the row widgets and the toplevel window),
+        # tkinterdnd2 reports the drop here instead of on the inner widgets.
+        # We forward it to ``_inference_on_drop(None, data)`` which figures out
+        # the target impact via the pointer location.
+        if self._dnd_available():
+            for w_ in (self.inference_canvas, self.inference_inner):
+                try:
+                    w_.drop_target_register("DND_Files")  # type: ignore[attr-defined]
+                    w_.dnd_bind("<<Drop>>",  # type: ignore[attr-defined]
+                                lambda e: self._inference_on_drop(None, e.data))
+                except Exception as e:
+                    print(f"[fgconfig] catch-all DnD registration failed on "
+                          f"{w_}: {e}")
+
         info = ttk.Label(
             self.inference_inner,
             text=("Initial Biomass (ton) per Functional Group, used exclusively by inference.py "
@@ -729,6 +744,29 @@ class FGConfigApp:
 
         # Per-FG StringVars indexed by group_id
         self.inference_vars = {}
+
+        # --- Impact maps section ---
+        impact_info = ttk.Label(
+            self.inference_inner,
+            text=("Impact maps used by inference.py. For each unmuted impact you can "
+                  "supply an .npz file containing a single 2-D float array (the key "
+                  "name does not matter). Drop the file onto any zone (requires the "
+                  "'tkinterdnd2' package) or click to browse. "
+                  "Missing maps are treated as an all-zero field at inference time. "
+                  "Biomass and energy maps are still randomly spawned from the configured "
+                  "initial biomass values."),
+            wraplength=700, justify="left",
+        )
+        impact_info.pack(padx=10, pady=(10, 5), anchor="w")
+
+        self.inference_impact_frame = ttk.LabelFrame(
+            self.inference_inner, text="Impact Maps (.npz) per Impact Variable")
+        self.inference_impact_frame.pack(fill="x", padx=10, pady=5)
+
+        # Per-impact GUI state: impact_id -> dict(path_var, status_var, thumb_label, drop_zone, ...)
+        self.inference_impact_widgets = {}
+        # Keep PhotoImage refs alive (Tk garbage-collects otherwise).
+        self._inference_thumb_refs = {}
 
         ttk.Button(self.inference_inner, text="Apply Inference Settings",
                    command=self.apply_inference_changes).pack(pady=10)
@@ -793,6 +831,368 @@ class FGConfigApp:
             if muted:
                 ent.configure(state="disabled")
             self.inference_vars[gid] = var
+
+        # Rebuild the impact-map zones as well.
+        self._refresh_inference_impact_maps()
+
+    # ------------------------------------------------------------------
+    # Inference impact maps (.npz loading + thumbnail preview)
+    # ------------------------------------------------------------------
+    def _dnd_available(self):
+        """Return True if the Tk root supports tkinterdnd2 drop targets."""
+        if getattr(self, "_dnd_available_cached", None) is not None:
+            return self._dnd_available_cached
+        ok = False
+        try:
+            import tkinterdnd2  # noqa: F401
+            # ``drop_target_register`` is only injected onto widgets when the
+            # root window was created via ``TkinterDnD.Tk()``.
+            ok = hasattr(self.root, "TkdndVersion") or hasattr(
+                tk.Frame(self.root), "drop_target_register")
+        except Exception:
+            ok = False
+        self._dnd_available_cached = bool(ok)
+        return self._dnd_available_cached
+
+    def _refresh_inference_impact_maps(self):
+        """Rebuild the per-impact .npz drop-zone rows under the Inference tab."""
+        if not hasattr(self, "inference_impact_frame"):
+            return
+        for w in self.inference_impact_frame.winfo_children():
+            w.destroy()
+        self.inference_impact_widgets = {}
+
+        ivs = [iv for iv in self.project_data.get('impact_variables', []) or []
+               if isinstance(iv, dict) and not iv.get('muted')]
+        if not ivs:
+            ttk.Label(self.inference_impact_frame,
+                      text="(No unmuted impact variables — add some in 'Project & FGs'.)").grid(
+                row=0, column=0, padx=10, pady=10, sticky="w")
+            return
+
+        # Sort alphabetically by display name.
+        def _disp(iv):
+            iid = iv.get('impact_id', '')
+            return self.global_library.get("impact_definitions", {}).get(
+                iid, {}).get("display_name", iid)
+        ivs.sort(key=lambda iv: _disp(iv).lower())
+
+        stored = (self.project_data.get('inference', {}) or {}).get('impact_maps', {}) or {}
+
+        for i, iv in enumerate(ivs):
+            iid = iv['impact_id']
+            disp = _disp(iv)
+
+            row_frame = ttk.Frame(self.inference_impact_frame)
+            row_frame.grid(row=i, column=0, sticky="ew", padx=5, pady=4)
+            self.inference_impact_frame.columnconfigure(0, weight=1)
+
+            ttk.Label(row_frame, text=disp,
+                      font=("TkDefaultFont", 9, "bold")).grid(
+                row=0, column=0, sticky="w", padx=(0, 8))
+
+            # Drop / browse zone — a sunken frame with status text.
+            zone = tk.Frame(row_frame, relief="groove", borderwidth=2,
+                            width=320, height=70, bg="#f4f4f4")
+            zone.grid(row=0, column=1, rowspan=2, sticky="w", padx=(0, 10))
+            zone.grid_propagate(False)
+            dnd_active = self._dnd_available()
+            default_msg = ("Drop .npz here or click to browse"
+                           if dnd_active else "Click to browse (.npz)")
+            status_var = tk.StringVar(value=default_msg)
+            status_lbl = tk.Label(zone, textvariable=status_var, bg="#f4f4f4",
+                                  wraplength=300, justify="center")
+            status_lbl.place(relx=0.5, rely=0.5, anchor="center")
+
+            # Bind click on the zone itself for browsing.
+            def _browse(_e=None, k=iid):
+                self._inference_browse_map(k)
+            zone.bind("<Button-1>", _browse)
+            status_lbl.bind("<Button-1>", _browse)
+
+            # Register the zone as a DnD drop target if the root is a
+            # TkinterDnD-enabled window. Without that the <<Drop>> event
+            # will never fire, so we silently skip registration and the
+            # user can still click to browse.
+            # Defer DnD registration until after thumb_lbl/btns exist so we can
+            # register the whole row — see below.
+            dnd_widgets_to_register = [zone, status_lbl]
+
+            # Thumbnail preview (PhotoImage installed on demand).
+            thumb_lbl = tk.Label(row_frame, bg="#ffffff", width=8, height=4,
+                                 relief="solid", borderwidth=1)
+            thumb_lbl.grid(row=0, column=2, rowspan=2, sticky="w", padx=(0, 10))
+
+            btns = ttk.Frame(row_frame)
+            btns.grid(row=0, column=3, sticky="w")
+            ttk.Button(btns, text="Browse…",
+                       command=lambda k=iid: self._inference_browse_map(k)).pack(side="left")
+            ttk.Button(btns, text="Clear",
+                       command=lambda k=iid: self._inference_clear_map(k)).pack(side="left", padx=4)
+
+            self.inference_impact_widgets[iid] = {
+                'status_var': status_var,
+                'thumb_lbl': thumb_lbl,
+                'zone': zone,
+                'path': None,
+            }
+
+            # Register DnD on every widget in the row so the <<Drop>> event
+            # fires no matter where on the row the user releases the file.
+            # This is necessary because the row lives inside a scrollable
+            # Canvas, where DnD events on inner widgets can otherwise be
+            # swallowed by the canvas window item.
+            if dnd_active:
+                for w_ in dnd_widgets_to_register + [thumb_lbl, row_frame, btns]:
+                    try:
+                        w_.drop_target_register("DND_Files")  # type: ignore[attr-defined]
+                        w_.dnd_bind("<<Drop>>",  # type: ignore[attr-defined]
+                                    lambda e, k=iid: self._inference_on_drop(k, e.data))
+                    except Exception as e:
+                        print(f"[fgconfig] DnD registration failed for "
+                              f"{iid} on {w_}: {e}")
+
+            # Load any previously stored path.
+            stored_path = stored.get(iid)
+            if stored_path:
+                resolved = self._resolve_inference_map_path(stored_path)
+                self._inference_set_map(iid, resolved, persist=False, store_path=stored_path)
+
+    def _inference_browse_map(self, impact_id):
+        path = filedialog.askopenfilename(
+            title=f"Select .npz file for '{impact_id}'",
+            filetypes=[("NumPy archive", "*.npz"), ("All files", "*.*")],
+        )
+        if path:
+            self._inference_set_map(impact_id, path, persist=True)
+
+    def _inference_clear_map(self, impact_id):
+        w = self.inference_impact_widgets.get(impact_id)
+        if w is None:
+            return
+        w['path'] = None
+        w['status_var'].set("Drop .npz here or click 'Browse…'")
+        w['thumb_lbl'].configure(image='', text='')
+        self._inference_thumb_refs.pop(impact_id, None)
+        # Remove from project_data
+        infer = self.project_data.setdefault('inference', {})
+        maps = infer.setdefault('impact_maps', {})
+        maps.pop(impact_id, None)
+        if not maps:
+            infer.pop('impact_maps', None)
+        if not infer:
+            self.project_data.pop('inference', None)
+
+    def _inference_impact_under_pointer(self):
+        """Return the impact_id whose row currently contains the mouse pointer.
+
+        Used as a fallback when DnD is registered on a shared parent widget
+        (canvas/root) rather than on each row. Walks up the widget hierarchy
+        from the widget under the pointer until it finds one of the per-row
+        zones registered in ``inference_impact_widgets``.
+        """
+        try:
+            x = self.root.winfo_pointerx()
+            y = self.root.winfo_pointery()
+            w = self.root.winfo_containing(x, y)
+        except Exception:
+            return None
+        # Build reverse lookup: widget -> impact_id.
+        zone_to_iid = {}
+        for iid, info in self.inference_impact_widgets.items():
+            zone = info.get('zone')
+            if zone is not None:
+                zone_to_iid[str(zone)] = iid
+                # Also map all descendants of the zone's parent row_frame.
+                parent = zone.master
+                if parent is not None:
+                    zone_to_iid[str(parent)] = iid
+                    for child in parent.winfo_children():
+                        zone_to_iid[str(child)] = iid
+        cur = w
+        while cur is not None:
+            key = str(cur)
+            if key in zone_to_iid:
+                return zone_to_iid[key]
+            try:
+                cur = cur.master
+            except Exception:
+                break
+        return None
+
+    def _inference_on_drop(self, impact_id, data):
+        """Handle tkinterdnd2 drop event (best-effort).
+
+        ``impact_id`` may be ``None`` when the drop was registered on a shared
+        widget (canvas/root); in that case we locate the row under the pointer.
+        """
+        if not data:
+            return
+        if impact_id is None:
+            impact_id = self._inference_impact_under_pointer()
+            if impact_id is None:
+                return
+        # tkinterdnd2 passes a brace-quoted, space-separated list of paths.
+        paths = []
+        cur, in_brace = [], False
+        for ch in data:
+            if ch == '{':
+                in_brace = True
+                continue
+            if ch == '}':
+                in_brace = False
+                paths.append(''.join(cur))
+                cur = []
+                continue
+            if ch == ' ' and not in_brace:
+                if cur:
+                    paths.append(''.join(cur))
+                    cur = []
+                continue
+            cur.append(ch)
+        if cur:
+            paths.append(''.join(cur))
+        if paths:
+            self._inference_set_map(impact_id, paths[0], persist=True)
+
+    def _resolve_inference_map_path(self, stored):
+        """Resolve a stored (possibly relative) path against the project file dir."""
+        if os.path.isabs(stored):
+            return stored
+        base = os.path.dirname(self.project_path) if self.project_path else os.getcwd()
+        return os.path.normpath(os.path.join(base, stored))
+
+    def _format_inference_map_path(self, abs_path):
+        """Return path stored in YAML: relative to project dir if inside, else absolute."""
+        if not self.project_path:
+            return abs_path
+        proj_dir = os.path.dirname(os.path.abspath(self.project_path))
+        ap = os.path.abspath(abs_path)
+        try:
+            common = os.path.commonpath([proj_dir, ap])
+        except ValueError:
+            return ap
+        if common == proj_dir:
+            return os.path.relpath(ap, proj_dir)
+        return ap
+
+    def _inference_set_map(self, impact_id, path, persist=True, store_path=None):
+        """Validate the .npz, update GUI (status + thumbnail), and (optionally) persist."""
+        import numpy as _np
+        w = self.inference_impact_widgets.get(impact_id)
+        if w is None:
+            return
+        if not path or not os.path.isfile(path):
+            messagebox.showwarning(
+                "File not found",
+                f"Could not open file:\n{path}")
+            w['status_var'].set("Drop .npz here or click 'Browse…'")
+            return
+        if not path.lower().endswith('.npz'):
+            messagebox.showwarning(
+                "Wrong file type",
+                f"Only .npz files are accepted (got: {os.path.basename(path)}).")
+            return
+        try:
+            with _np.load(path, allow_pickle=False) as data:
+                keys = list(data.files)
+                arr = None
+                # Priority 1: exact impact_id match.
+                if impact_id in keys:
+                    arr = data[impact_id]
+                else:
+                    # Priority 2: any 2-D array in the archive. Prefer the
+                    # first one; ignore non-2D arrays (e.g. metadata vectors).
+                    for k in keys:
+                        cand = data[k]
+                        if hasattr(cand, 'ndim') and cand.ndim == 2:
+                            arr = cand
+                            break
+                if arr is None:
+                    messagebox.showwarning(
+                        "No 2-D array in .npz",
+                        f"{os.path.basename(path)} does not contain any 2-D array "
+                        f"that can be used as an impact map.\nKeys present: {keys}")
+                    return
+                arr = _np.asarray(arr)
+        except Exception as e:
+            messagebox.showwarning("Invalid .npz",
+                                   f"Could not read '{impact_id}' from {os.path.basename(path)}:\n{e}")
+            return
+        if arr.ndim != 2:
+            messagebox.showwarning(
+                "Wrong shape",
+                f"Array '{impact_id}' must be 2-D (got shape {arr.shape}).")
+            return
+        try:
+            arr_f = arr.astype('float32', copy=False)
+        except Exception as e:
+            messagebox.showwarning("Invalid dtype",
+                                   f"Could not convert array to float32: {e}")
+            return
+        if not _np.isfinite(arr_f).all():
+            messagebox.showwarning(
+                "Non-finite values",
+                f"Array '{impact_id}' contains NaN or inf values; please clean before use.")
+            return
+
+        # Optional sanity-check against the per-impact [value_min, value_max].
+        ie = self._find_impact_entry(impact_id) or {}
+        vmin = ie.get('value_min')
+        vmax = ie.get('value_max')
+        try:
+            vmin_f = float(vmin) if vmin is not None and vmin != "" else None
+            vmax_f = float(vmax) if vmax is not None and vmax != "" else None
+        except (TypeError, ValueError):
+            vmin_f = vmax_f = None
+        amin, amax = float(arr_f.min()), float(arr_f.max())
+        warn_range = ""
+        if vmin_f is not None and amin < vmin_f - 1e-9:
+            warn_range = f"  ⚠ min={amin:g} below value_min={vmin_f:g}"
+        if vmax_f is not None and amax > vmax_f + 1e-9:
+            warn_range = (warn_range or "") + f"  ⚠ max={amax:g} above value_max={vmax_f:g}"
+
+        # Update GUI
+        w['path'] = os.path.abspath(path)
+        H, W_ = arr_f.shape
+        w['status_var'].set(
+            f"{os.path.basename(path)}\nshape={H}×{W_}  "
+            f"min={amin:g}  max={amax:g}{warn_range}")
+        self._render_inference_thumbnail(impact_id, arr_f)
+
+        # Persist into project_data (relative path if inside the project dir).
+        if persist:
+            stored = self._format_inference_map_path(w['path'])
+            infer = self.project_data.setdefault('inference', {})
+            maps = infer.setdefault('impact_maps', {})
+            maps[impact_id] = stored
+        elif store_path is not None:
+            # Keep whatever path was loaded from disk (no rewrite).
+            pass
+
+    def _render_inference_thumbnail(self, impact_id, arr):
+        """Render a small grayscale thumbnail of ``arr`` (min/max normalised for display only)."""
+        try:
+            from PIL import Image, ImageTk
+        except Exception:
+            return
+        a = arr.astype('float32', copy=False)
+        amin = float(a.min())
+        amax = float(a.max())
+        if amax > amin:
+            disp = (a - amin) / (amax - amin)
+        else:
+            disp = a * 0.0
+        disp = (disp * 255.0).clip(0, 255).astype('uint8')
+        img = Image.fromarray(disp, mode='L')
+        # Fit into ~80×64 pixels (preserve aspect).
+        img.thumbnail((80, 64))
+        photo = ImageTk.PhotoImage(img)
+        w = self.inference_impact_widgets.get(impact_id)
+        if w is None:
+            return
+        w['thumb_lbl'].configure(image=photo, text='', width=img.width, height=img.height)
+        self._inference_thumb_refs[impact_id] = photo  # prevent GC
 
     def apply_inference_changes(self):
         """Persist the inference-tab values onto the project FG entries."""
@@ -1185,6 +1585,9 @@ class FGConfigApp:
         # following a mute/unmute toggle on the currently selected impact.
         if hasattr(self, 'impact_editor_frame'):
             self.on_impact_select()
+        # Muting/unmuting changes the set of impacts shown on the Inference tab.
+        if hasattr(self, 'inference_impact_frame'):
+            self._refresh_inference_impact_maps()
 
     def _listbox_for(self, category):
         return self.fg_listbox if category == "decision_makers" else self.ndm_listbox
@@ -1800,6 +2203,8 @@ class FGConfigApp:
         self._refresh_mute_button_labels()
         if hasattr(self, 'impact_editor_frame'):
             self.on_impact_select()
+        if hasattr(self, 'inference_impact_frame'):
+            self._refresh_inference_impact_maps()
 
     def add_impact_from_library(self):
         lib_impacts = list(self.global_library.get("impact_definitions", {}).keys())
@@ -1992,6 +2397,24 @@ class FGConfigApp:
         self.refresh_recent_menu()
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    # Use a DnD-enabled root window when ``tkinterdnd2`` is installed so that
+    # the Inference-tab impact-map drop zones accept dragged files. Falls back
+    # to a regular ``tk.Tk()`` when the package is missing (drop zones then
+    # behave as click-to-browse only).
+    root = None
+    try:
+        from tkinterdnd2 import TkinterDnD
+        root = TkinterDnD.Tk()
+        print(f"[fgconfig] tkinterdnd2 active, TkdndVersion="
+              f"{getattr(root, 'TkdndVersion', '?')}")
+    except ImportError as e:
+        print(f"[fgconfig] tkinterdnd2 NOT installed ({e}); "
+              f"drop-zones will be click-to-browse only. "
+              f"Install with: pip install tkinterdnd2")
+    except Exception as e:
+        print(f"[fgconfig] tkinterdnd2 failed to initialise ({type(e).__name__}: {e}); "
+              f"falling back to plain Tk root.")
+    if root is None:
+        root = tk.Tk()
     app = FGConfigApp(root)
     root.mainloop()

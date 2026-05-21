@@ -45,6 +45,9 @@ User communication (chat answers, status updates): Swedish.
     environments/ecosystem.py
                             EcosystemEnvironment: "The Tick" pipeline.
                             HEAVILY OPTIMIZED — see section 13.
+                            Constructor takes ``observable_impact_vars`` (list
+                            of impact_ids exposed to the policy as one obs
+                            channel each, in order; default empty).
                             _build_static_caches builds per-DM batched policy
                             weights, eat-mask, move-mask, scalar caches.
                             _batched_policy_forward runs all DMs via torch.bmm.
@@ -60,6 +63,13 @@ User communication (chat answers, status updates): Swedish.
                             initial_biomass per FG: project override >
                               library species_definitions.initial_biomass >
                               1000 fallback. Hardcoded table REMOVED.
+                            load_project_config returns a 4-tuple:
+                              (fgs, impact_vars, impact_ranges,
+                               observable_impact_vars).
+                            Muted impacts and impacts without
+                            ``observable: true`` are dropped from
+                            observable_impact_vars; order matches
+                            impact_vars.
     runners/policy.py       Policy MLP. Has get_action_probs (numpy I/O, legacy)
                             and get_action_probs_torch (kept in torch).
     runners/trainer.py      ARS trainer; sequential + parallel-pool paths.
@@ -101,9 +111,19 @@ User communication (chat answers, status updates): Swedish.
 ================================================================
 3. "THE TICK" PIPELINE (lib/environments/ecosystem.py)
 ================================================================
-Random FG order each tick (random.sample). Per tick:
+Random FG order each tick (random.sample). Per tick — order follows
+Method.pdf §steg 1–6 (impact mortality applied BEFORE predation so
+predators see the post-impact prey biomass):
+  _calculate_decisions → _apply_impact_mortality → _apply_predation
+  → _apply_movement → _apply_growth
+
   1. _calculate_decisions  (batched over all DMs)
-     - obs_batch (N_dm, H*W, D) built once. D = 2 + (N_fgs - 1) + 1.
+     - obs_batch (N_dm, H*W, D) built once.
+       D = 2 + (N_fgs - 1) + n_observable_impacts, where
+       n_observable_impacts = len(env.observable_impact_vars).
+       Channel layout per DM: [B_own, E_own, B_others...,
+                               <one channel per observable impact, in order>].
+       Missing impact maps default to zero fields so the layout is stable.
      - Raw-obs stats accumulated (sum, sumsq, count) for trainer merge.
      - If env.obs_mean/obs_var set: obs <- clip((obs-mean)/sqrt(var+eps),
        -10, 10) BEFORE the policy forward.
@@ -116,7 +136,18 @@ Random FG order each tick (random.sample). Per tick:
          * Move masked by precomputed move_mask (accessibility + edges).
          * Eat masked by static eat_mask AND (prey.biomass > 0).
      - Renormalize across remaining actions.
-  2. _apply_predation  (fully vectorized)
+  2. _apply_impact_mortality  (Method.pdf step before predation)
+     - For each FG and each active impact map: look up
+       (biomass_factor, energy_factor) via linear interpolation in
+       the per-(fg, impact) `impact_table` (clip to endpoints; no
+       extrapolation).
+       Old scalar `impact_sensitivity` is fully removed.
+     - Apply direct mortality m_X^Impact: B reduced, R scaled
+       proportionally to the biomass loss (so E = R/B is preserved
+       for the surviving fraction).
+     - Implemented in _compute_impact_mortality + _apply_impact_mortality.
+
+  3. _apply_predation  (fully vectorized)
      - Stacked B (N_all,H,W), pi_eat (N_dm,N_all,H,W).
      - max_intake_mat, energy_gain_mat: (N_dm,N_all) constants from init.
      - D = B_pred[:,None]*pi_eat*max_intake[:,:,None,None]*hunger[:,None]
@@ -130,26 +161,40 @@ Random FG order each tick (random.sample). Per tick:
   cells to rest via re-normalisation. Units: dm_min_split is in tonnes
   (converted from kg at FunctionalGroup input).
 
-  3. _apply_movement  (slice-assign, vectorized over N_dm)
+  4. _apply_movement  (slice-assign, vectorized over N_dm)
      - Each cell's biomass split by action probs.
-     - Each fraction pays own metabolic cost * resting_metabolism *
-       (1 + sens*noise).
+     - Each fraction pays own metabolic cost * resting_metabolism.
      - Slice-assign instead of np.roll (no copies, no wrap-around;
        edges already zeroed in _calculate_decisions).
      - flux = clip(v, 0, 1). Energy follows biomass.
      - temp_energy_gains added to stayers AFTER metabolism.
-  4. _apply_growth_and_impact
-     - NDM (phyto/benthos): logistic dB = MG*B*(1 - B/CC).
-     - DM: s=R/(B*ME), u=0.3, q=s-u, B_new=B*(1+MG*q).
-     - Mortality: B reduced by sensitivity*impact_map; R scaled with B.
+  5. _apply_growth  (runs LAST; impact mortality has moved out)
+     - NDM (phyto/benthos): logistic dB = MG*B*(1 - B/CC); B clipped
+       to [0, CC]. R not updated for NDMs.
+     - DM: s = R/(B*ME), u = fg.maintenance_level (per-FG, default 0.3),
+       q = s - u, growth = B*MG*q.
+         * Positive growth: only B is updated (R unchanged) → implicit
+           energy dilution (Variant B): E(t+1) = R^mov / (B^mov + growth).
+           R = B·E is strictly conserved across the growth step; per-ton
+           energy is diluted by new biomass, which feeds back into q next
+           tick (self-regulating growth).
+         * Negative growth: B and R are scaled by the same factor so E
+           is preserved for the shrinking cell.
 
 ================================================================
 4. POLICY NETWORK DIMENSIONS
 ================================================================
-  Input  = 2 + (N_fgs - 1) + 1
+  Input  = 2 + (N_fgs - 1) + n_observable_impacts
+           = n_fgs + 1 + n_observable_impacts
   Output = 5 + N_all_fgs   (non-prey slots eat-masked)
-  Computed in train.py:get_dynamic_policy_params.
-  .pth files NOT portable across projects with different FG counts.
+  Computed in train.py:get_dynamic_policy_params(fgs, n_observable_impacts).
+  n_observable_impacts = number of impacts with ``observable: true`` in the
+  project's impact_variables list (mute-aware, order = project order).
+  Toggling the Impact Editor's "Observable by policy" checkbox changes
+  in_dim and therefore invalidates all existing .pth checkpoints — the
+  GUI shows an info dialog stating that retraining is required.
+  .pth files NOT portable across projects with different FG counts or
+  different observable-impact counts/orders.
 
 ================================================================
 5. CLI — current flag set for train.py
@@ -202,11 +247,23 @@ Other entry points:
   non_decision_makers:
     - {group_id: phytoplankton, initial_biomass: 80000}
     - {group_id: benthic_community, initial_biomass: 160000}
-  impact_variables:    [{impact_id: windfarm_noise}, ...]
+  impact_variables:
+    - impact_id: windfarm_noise
+      value_min: 0          # physical lower bound for sampling/validation
+      value_max: 140        # physical upper bound (e.g. dB); editable in GUI
+      observable: true      # if true, exposed as a policy obs channel
+      # muted: true         # optional; muted impacts are skipped at runtime
 
 initial_biomass lives in the project file (editable from GUI).
 Resolution: project override > library default > 1000.
 Legacy `functional_groups:` lists still readable.
+
+Per-impact value range (value_min/value_max) is per PROJECT (lives on
+the impact_variables entry), not in the library. It drives:
+  - random sampling of impact maps during training/inference
+    (uniform on [value_min, value_max] per cell);
+  - live range-validation in the Impact Table Editor's Value column;
+  - the descriptive help text in that editor.
 
 ================================================================
 7. fgconfig.py - GUI STRUCTURE
@@ -228,8 +285,30 @@ Tabs:
         0 = continuous), initial_biomass (ton).
       self.ndm_editor_frame (NDM editor): growth_rate,
         max_carrying_capacity, initial_biomass (ton).
+  Impact Editor (on the Project & FGs tab, below the impact listbox):
+    - Min value / Max value entries for the selected impact
+      (writes value_min/value_max on the project's impact_variables entry).
+    - "Observable by policy" checkbox — toggling shows a messagebox
+      explaining that the DM policy input width changes and existing
+      checkpoints become incompatible (retraining required). Writes
+      `observable: true` on the entry when checked; removes the key
+      when unchecked.
+    - Editor is disabled when the selected impact is muted.
+
+  Impact Table Editor (per (fg, impact) cell in the Interaction Matrix):
+    - Columns: value, biomass_factor, energy_factor.
+    - When value_min/value_max are set on the impact entry, the Value
+      column is live-capped to [value_min, value_max] (key validator
+      forbids typing out-of-range numbers) and on Save rows outside the
+      range are rejected with a warning. When the range is unset the
+      editor falls back to plain numeric validation and the help text
+      tells the user to set Min/Max in the Impact Editor.
+    - biomass_factor / energy_factor remain clamped to [0, 1].
+
   "Interaction Matrix"  Predation (bool), Max Intake Rate I_XY (disabled
-                        unless preys_on), Impact Sensitivity 0..1.
+                        unless preys_on), per-cell button opening the
+                        Impact Table Editor described above. The old
+                        scalar Impact Sensitivity column is GONE.
 
 Key behaviours:
   - Add from Library filters: NDM dialog only shows phytoplankton; DM
@@ -267,7 +346,10 @@ Key behaviours:
                                                     energy_factor}, ...]}
         # impact_table: sorted by value; linear interpolation, clip to
         # endpoints (no extrapolation). biomass_factor/energy_factor in [0,1];
-        # value range is unconstrained (matches the physical impact map unit).
+        # value column is bounded at runtime by the per-impact
+        # value_min/value_max set on the project's impact_variables entry
+        # (live-validated in the Impact Table Editor; rows outside the
+        # range are rejected on Save).
         # Old `impact_sensitivity` scalar is removed everywhere.
   impact_definitions:  bottom_trawling, pelagic_trawling, hunting, logging,
                        chemicals, windfarm_noise, ship_traffic, turbidity.
@@ -346,13 +428,24 @@ KeyboardInterrupt (Ctrl+C):
     progress saved", return cleanly (exit 0).
 
 ================================================================
-11. KNOWN DISCREPANCIES vs Strategi.pdf (still open)
+11. KNOWN DISCREPANCIES vs Strategi.pdf / Method.pdf (still open)
 ================================================================
-  1. Observation only includes windfarm_noise, not all active impact maps.
+  1. Observable impacts are now opt-in per project via the
+     "Observable by policy" flag (one obs channel per flagged impact).
+     Non-flagged impacts still affect the world but are invisible to
+     the policy. No longer a hardcoded windfarm_noise channel.
   2. Memory term N(c, t-1) not implemented.
   3. Movement speed v > 1 not supported (cap 1.0; accepted by user).
   4. Positive "Påverkansdelta" (stocking) not supported (accepted).
   5. accessibility map only used for movement masking.
+  6. No persistent M*-layers; ARS scaling wins over Method.pdf where
+     they differ. Suit_X(c) and four AccessN/E/S/W_X(c) layers
+     intentionally skipped for now.
+  7. No runtime slider 0–5 + back-scaling pipeline yet. The plan is
+     to take 5× headroom in training-map sampling and in the highest
+     impact_table breakpoint so explicit back-scaling becomes
+     unnecessary for linear impacts (dB impacts still need a
+     log/intensity conversion if a true 5× slider is wanted).
 
 ================================================================
 12. GRID / MAP CONVENTIONS

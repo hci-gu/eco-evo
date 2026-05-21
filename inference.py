@@ -51,7 +51,73 @@ def parse_grid_arg(value):
     return n, k
 
 
-def build_env(project_path, grid_size, seed=None):
+def _load_inference_map_paths(project_path):
+    """Return ``{impact_id: absolute_path}`` from the project's ``inference.impact_maps``.
+
+    Returns an empty dict when the project has no such section. Relative paths
+    are resolved against the project YAML file's directory.
+    """
+    if not project_path:
+        return {}
+    try:
+        import yaml as _yaml
+        with open(project_path, 'r') as f:
+            data = _yaml.safe_load(f) or {}
+    except Exception:
+        return {}
+    section = (data.get('inference') or {}).get('impact_maps') or {}
+    if not isinstance(section, dict):
+        return {}
+    base = os.path.dirname(os.path.abspath(project_path))
+    resolved = {}
+    for iid, p in section.items():
+        if not isinstance(p, str) or not p:
+            continue
+        resolved[iid] = p if os.path.isabs(p) else os.path.normpath(os.path.join(base, p))
+    return resolved
+
+
+def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
+    """Load a single (H, W) impact map from ``path[impact_id]`` with nearest-neighbor resampling.
+
+    Returns a ``float32`` array of shape (H, W), or ``None`` on failure (caller
+    should fall back to a zero field).
+    """
+    if not os.path.isfile(path):
+        if verbose:
+            print(f"  [warn] Impact map for '{impact_id}' not found at {path}; using zero field.")
+        return None
+    try:
+        with np.load(path, allow_pickle=False) as data:
+            if impact_id not in data.files:
+                if verbose:
+                    print(f"  [warn] '{impact_id}' missing from {os.path.basename(path)} "
+                          f"(keys: {list(data.files)}); using zero field.")
+                return None
+            arr = np.asarray(data[impact_id])
+    except Exception as e:
+        if verbose:
+            print(f"  [warn] Could not read '{impact_id}' from {path}: {e}; using zero field.")
+        return None
+    if arr.ndim != 2:
+        if verbose:
+            print(f"  [warn] '{impact_id}' array is not 2-D (shape={arr.shape}); using zero field.")
+        return None
+    arr = arr.astype(np.float32, copy=False)
+    Hs, Ws = arr.shape
+    if (Hs, Ws) != (H, W):
+        # Nearest-neighbor resample to the requested grid.
+        if Hs == 0 or Ws == 0:
+            return None
+        row_idx = (np.arange(H) * Hs / H).astype(np.int64)
+        col_idx = (np.arange(W) * Ws / W).astype(np.int64)
+        arr = arr[row_idx[:, None], col_idx[None, :]]
+        if verbose:
+            print(f"  [info] Resampled '{impact_id}' from {(Hs, Ws)} to {(H, W)} (nearest).")
+    return arr.astype(np.float32, copy=False)
+
+
+def build_env(project_path, grid_size, seed=None, verbose=True):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     impact_ranges = {}
@@ -71,17 +137,19 @@ def build_env(project_path, grid_size, seed=None):
     }
     env = EcosystemEnvironment(grid_config, fgs, {},
                                observable_impact_vars=observable_impact_vars)
-    # Impact maps are sampled uniformly per cell from the per-impact
-    # [value_min, value_max] range configured in the project file.
-    # PNG-based maps are no longer used by inference.
-    rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
+    # Impact maps are read from .npz files configured in the project's
+    # ``inference.impact_maps`` section (set via the fgconfig Inference tab).
+    # Missing entries — or files that fail validation — are treated as
+    # all-zero fields. Biomass / energy maps are still randomly spawned
+    # from the configured initial biomass values.
+    map_paths = _load_inference_map_paths(project_path)
     for iv in impact_vars:
-        vmin, vmax = impact_ranges.get(iv, (0.0, 0.0))
-        if vmax > vmin:
-            field = rng.uniform(vmin, vmax, size=(H, W))
-        else:
-            field = np.full((H, W), float(vmin))
-        env.grid.add_map(iv, field.astype(np.float32))
+        field = None
+        if iv in map_paths:
+            field = _load_impact_map_npz(map_paths[iv], iv, H, W, verbose=verbose)
+        if field is None:
+            field = np.zeros((H, W), dtype=np.float32)
+        env.grid.add_map(iv, field)
     return env
 
 
@@ -202,7 +270,7 @@ def main():
         print(f"Error: checkpoint directory does not exist: {args.checkpoints}", file=sys.stderr)
         return 1
 
-    env = build_env(args.project, args.grid, seed=args.seed)
+    env = build_env(args.project, args.grid, seed=args.seed, verbose=verbose)
     if verbose:
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
     policies, mean, var = load_policies_and_stats(env, args.checkpoints, verbose=verbose)
