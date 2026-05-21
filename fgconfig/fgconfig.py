@@ -722,14 +722,20 @@ class FGConfigApp:
         # We forward it to ``_inference_on_drop(None, data)`` which figures out
         # the target impact via the pointer location.
         if self._dnd_available():
-            for w_ in (self.inference_canvas, self.inference_inner):
+            # Register catch-all DnD on the scrollable canvas, the inner
+            # frame, and the toplevel root window. Drops sometimes land on
+            # the canvas window item or even the bare toplevel (especially
+            # over padding/empty areas), and without a toplevel-level
+            # handler the <<Drop>> event is silently dropped by Tk.
+            targets = [self.inference_canvas, self.inference_inner,
+                       self.inference_tab, self.root]
+            for w_ in targets:
                 try:
                     w_.drop_target_register("DND_Files")  # type: ignore[attr-defined]
                     w_.dnd_bind("<<Drop>>",  # type: ignore[attr-defined]
                                 lambda e: self._inference_on_drop(None, e.data))
-                except Exception as e:
-                    print(f"[fgconfig] catch-all DnD registration failed on "
-                          f"{w_}: {e}")
+                except Exception:
+                    pass
 
         info = ttk.Label(
             self.inference_inner,
@@ -879,22 +885,31 @@ class FGConfigApp:
 
         stored = (self.project_data.get('inference', {}) or {}).get('impact_maps', {}) or {}
 
+        # Configure consistent column widths so each row's name / zone /
+        # thumbnail / buttons line up vertically across all impacts.
+        self.inference_impact_frame.columnconfigure(0, minsize=160)
+        self.inference_impact_frame.columnconfigure(1, minsize=330)
+        self.inference_impact_frame.columnconfigure(2, minsize=90)
+        self.inference_impact_frame.columnconfigure(3, minsize=80)
+
         for i, iv in enumerate(ivs):
             iid = iv['impact_id']
             disp = _disp(iv)
 
-            row_frame = ttk.Frame(self.inference_impact_frame)
-            row_frame.grid(row=i, column=0, sticky="ew", padx=5, pady=4)
-            self.inference_impact_frame.columnconfigure(0, weight=1)
+            # A transparent ``row_frame`` is kept only as a logical handle for
+            # DnD registration (covers the whole row's area). The actual
+            # visible widgets are gridded directly into
+            # ``inference_impact_frame`` so their columns align across rows.
+            row_frame = self.inference_impact_frame
 
             ttk.Label(row_frame, text=disp,
                       font=("TkDefaultFont", 9, "bold")).grid(
-                row=0, column=0, sticky="w", padx=(0, 8))
+                row=i, column=0, sticky="w", padx=(5, 8), pady=4)
 
             # Drop / browse zone — a sunken frame with status text.
             zone = tk.Frame(row_frame, relief="groove", borderwidth=2,
                             width=320, height=70, bg="#f4f4f4")
-            zone.grid(row=0, column=1, rowspan=2, sticky="w", padx=(0, 10))
+            zone.grid(row=i, column=1, sticky="w", padx=(0, 10), pady=4)
             zone.grid_propagate(False)
             dnd_active = self._dnd_available()
             default_msg = ("Drop .npz here or click to browse"
@@ -921,14 +936,12 @@ class FGConfigApp:
             # Thumbnail preview (PhotoImage installed on demand).
             thumb_lbl = tk.Label(row_frame, bg="#ffffff", width=8, height=4,
                                  relief="solid", borderwidth=1)
-            thumb_lbl.grid(row=0, column=2, rowspan=2, sticky="w", padx=(0, 10))
+            thumb_lbl.grid(row=i, column=2, sticky="w", padx=(0, 10), pady=4)
 
             btns = ttk.Frame(row_frame)
-            btns.grid(row=0, column=3, sticky="w")
-            ttk.Button(btns, text="Browse…",
-                       command=lambda k=iid: self._inference_browse_map(k)).pack(side="left")
+            btns.grid(row=i, column=3, sticky="w", pady=4)
             ttk.Button(btns, text="Clear",
-                       command=lambda k=iid: self._inference_clear_map(k)).pack(side="left", padx=4)
+                       command=lambda k=iid: self._inference_clear_map(k)).pack(side="left")
 
             self.inference_impact_widgets[iid] = {
                 'status_var': status_var,
@@ -948,9 +961,8 @@ class FGConfigApp:
                         w_.drop_target_register("DND_Files")  # type: ignore[attr-defined]
                         w_.dnd_bind("<<Drop>>",  # type: ignore[attr-defined]
                                     lambda e, k=iid: self._inference_on_drop(k, e.data))
-                    except Exception as e:
-                        print(f"[fgconfig] DnD registration failed for "
-                              f"{iid} on {w_}: {e}")
+                    except Exception:
+                        pass
 
             # Load any previously stored path.
             stored_path = stored.get(iid)
@@ -2405,15 +2417,8 @@ if __name__ == "__main__":
     try:
         from tkinterdnd2 import TkinterDnD
         root = TkinterDnD.Tk()
-        print(f"[fgconfig] tkinterdnd2 active, TkdndVersion="
-              f"{getattr(root, 'TkdndVersion', '?')}")
-    except ImportError as e:
-        print(f"[fgconfig] tkinterdnd2 NOT installed ({e}); "
-              f"drop-zones will be click-to-browse only. "
-              f"Install with: pip install tkinterdnd2")
-    except Exception as e:
-        print(f"[fgconfig] tkinterdnd2 failed to initialise ({type(e).__name__}: {e}); "
-              f"falling back to plain Tk root.")
+    except Exception:
+        root = None
     if root is None:
         root = tk.Tk()
     app = FGConfigApp(root)

@@ -46,3 +46,6 @@ impact_variables:
     value_min: 0
     value_max: 140
     observable: true
+inference:
+  impact_maps:
+    rotor: vindparker.npz
