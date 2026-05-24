@@ -31,14 +31,29 @@ class FunctionalGroup:
         self.feeding_cost = params.get('feeding_cost', 1.0)
         self.resting_cost = params.get('resting_cost', 1.0)
 
-    def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7):
+    def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7,
+                         randomize_energy=False, rng=None):
         if initial_biomass is not None:
             self.biomass = initial_biomass.copy()
         else:
             self.biomass = np.zeros(shape)
-            
-        # E_X(c) = ratio * ME_X
-        energy_per_ton = np.full(shape, initial_energy_ratio * self.max_energy_reserve)
+
+        if randomize_energy:
+            # E_X(c) ~ Uniform(0, ME_X) per cell. Used during training so
+            # policies see varied initial energy fill levels.
+            if rng is not None and hasattr(rng, "random"):
+                ratios = rng.random(shape)
+            else:
+                ratios = np.random.rand(*shape)
+            # Skala ner uniform-samplet så E[s_X(0)] = 0.3 (= typiskt u_X)
+            # istället för 0.5. Bryter den triviala startgradienten där
+            # zooplankton/växare annars får gratis positiv reward de
+            # första tickarna oavsett policy.
+            ratios = ratios * np.float64(0.6)
+            energy_per_ton = ratios * self.max_energy_reserve
+        else:
+            # E_X(c) = ratio * ME_X (uniform across the grid).
+            energy_per_ton = np.full(shape, initial_energy_ratio * self.max_energy_reserve)
         self.energy_reserve = self.biomass * energy_per_ton
         self.temp_energy_gains = np.zeros(shape)
 

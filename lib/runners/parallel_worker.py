@@ -73,7 +73,22 @@ def _evaluate_task(task):
     """
     seed = None
     obs_pack = None
-    if len(task) == 7:
+    entropy_coef = 0.0
+    argmax_penalty = 0.0
+    softmax_temperature = 1.0
+    integral_reward = False
+    if len(task) == 11:
+        (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
+         entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+    elif len(task) == 10:
+        (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
+         entropy_coef, argmax_penalty, softmax_temperature) = task
+    elif len(task) == 9:
+        (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
+         entropy_coef, argmax_penalty) = task
+    elif len(task) == 8:
+        fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack, entropy_coef = task
+    elif len(task) == 7:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack = task
     elif len(task) == 6:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed = task
@@ -90,6 +105,7 @@ def _evaluate_task(task):
 
     env = _ENV_BUILDER(seed=seed) if seed is not None else _ENV_BUILDER()
     env.policies = _POLICIES
+    env.softmax_temperature = float(softmax_temperature)
 
     # Install obs-normalisation stats if provided.
     if obs_pack is not None:
@@ -108,19 +124,51 @@ def _evaluate_task(task):
     b0 = env.fgs[fg_to_train].biomass.sum()
     r0 = env.fgs[fg_to_train].energy_reserve.sum()
 
-    for _ in range(n_ticks):
-        env.step()
-
-    bh = env.fgs[fg_to_train].biomass.sum()
-    rh = env.fgs[fg_to_train].energy_reserve.sum()
+    # Integral-reward: medel över alla ticks istället för slutvärde.
+    if integral_reward and n_ticks > 0:
+        b_sum = 0.0; r_sum = 0.0
+        for _ in range(n_ticks):
+            env.step()
+            b_sum += float(env.fgs[fg_to_train].biomass.sum())
+            r_sum += float(env.fgs[fg_to_train].energy_reserve.sum())
+        bh = b_sum / n_ticks
+        rh = r_sum / n_ticks
+    else:
+        for _ in range(n_ticks):
+            env.step()
+        bh = env.fgs[fg_to_train].biomass.sum()
+        rh = env.fgs[fg_to_train].energy_reserve.sum()
 
     eps_b = max(1e-6 * b0, 1e-9)
     eps_r = max(1e-6 * r0, 1e-9)
     delta_b = np.log((bh + eps_b) / (b0 + eps_b))
     delta_r = np.log((rh + eps_r) / (r0 + eps_r))
+    # Return *raw* ecological fitness only. Entropy bonus and argmax-penalty
+    # are applied in the trainer *after* z-score normalisation of the
+    # ecological component across the 2*n_deltas batch, so that the
+    # bonus/penalty (which live on the [0,1] scale) have comparable weight
+    # for all species regardless of the absolute |delta_b+delta_r| magnitude.
     fitness = float(alpha * delta_b + beta * delta_r)
+    # entropy_coef / argmax_penalty arguments are accepted for backward
+    # compatibility with task-tuple length 8/9 but are intentionally unused
+    # here; the trainer applies them post hoc via act_diag.
+    _ = (entropy_coef, argmax_penalty)
 
     samples = None
     if obs_pack is not None and getattr(env, '_obs_sum', None) is not None:
         samples = (env._obs_sum.copy(), env._obs_sumsq.copy(), env._obs_count)
-    return (fitness, samples)
+    act_diag = None
+    if getattr(env, '_action_entropy_sum', None) is not None and env._action_entropy_count > 0:
+        try:
+            i = env.dm_ids.index(fg_to_train)
+            cnt = env._action_entropy_count
+            act_diag = {
+                'entropy': float(env._action_entropy_sum[i] / cnt),
+                'max_entropy': float(env._action_max_entropy),
+                'move_frac': float(env._action_move_frac[i] / cnt),
+                'rest_frac': float(env._action_rest_frac[i] / cnt),
+                'eat_frac': float(env._action_eat_frac[i] / cnt),
+            }
+        except (ValueError, AttributeError):
+            act_diag = None
+    return (fitness, samples, act_diag)

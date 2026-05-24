@@ -31,3 +31,13 @@ class PolicyNetwork(nn.Module):
         """Batched forward returning torch tensor (N, output_dim) without numpy round-trip."""
         with torch.no_grad():
             return self.forward(flat_state)
+
+    def get_action_logits_torch(self, flat_state):
+        """Batched forward returning pre-softmax logits (N, output_dim).
+
+        Used by the environment to apply masking *before* softmax, so that
+        invalid actions (e.g. eat with no prey present, move when DM cannot
+        move) contribute no probability mass and produce no gradient.
+        """
+        with torch.no_grad():
+            return self.net(flat_state)

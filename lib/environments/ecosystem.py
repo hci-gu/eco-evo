@@ -269,11 +269,13 @@ class EcosystemEnvironment:
         return obs.transpose(0, 2, 3, 1).reshape(self.N_dm, H * W, D)
 
     # ---------- Batched policy inference ----------
-    def _batched_policy_forward(self, obs_batch):
-        """obs_batch: torch tensor (N_dm, N, D) -> probs (N_dm, N, out_dim)."""
+    def _batched_policy_forward(self, obs_batch, return_logits=False):
+        """obs_batch: torch tensor (N_dm, N, D) -> probs or logits (N_dm, N, out_dim)."""
         h = torch.sigmoid(torch.bmm(obs_batch, self._W1) + self._b1.unsqueeze(1))
         h = torch.sigmoid(torch.bmm(h, self._W2) + self._b2.unsqueeze(1))
         logits = torch.bmm(h, self._W3) + self._b3.unsqueeze(1)
+        if return_logits:
+            return logits
         return torch.softmax(logits, dim=-1)
 
     def _calculate_decisions(self):
@@ -311,66 +313,129 @@ class EcosystemEnvironment:
                 and self.obs_mean.shape == (self.N_dm, D)):
             mean = self.obs_mean.astype(self.dtype, copy=False)
             var = self.obs_var.astype(self.dtype, copy=False)
-            std = np.sqrt(var + np.float32(1e-8))
+            # Var-golv: skydda mot lågvarianskanaler (obs_var spänner ~8
+            # storleksordningar i mareld2; kanaler med var ~ 1e-5 får
+            # annars ~300x förstärkning -> clip till +/-10 -> konstant
+            # input -> noll gradient). Golvet 1e-2 håller std >= 0.1 och
+            # låter välbeteende-kanaler (var >> 1e-2) passera oförändrade.
+            std = np.sqrt(np.maximum(var, np.float32(1e-2)))
             obs_np = (obs_np - mean[:, None, :]) / std[:, None, :]
             obs_np = np.clip(obs_np, -10.0, 10.0).astype(self.dtype, copy=False)
 
         obs_t = torch.from_numpy(obs_np)
 
+        # --- Build action validity mask BEFORE softmax ---
+        # Shape: (N_dm, num_actions, H, W). 1 = valid, 0 = invalid.
+        # Applying the mask pre-softmax (via additive -inf on logits) means
+        # invalid actions get zero probability AND zero gradient -- so ARS
+        # cannot mistakenly reinforce e.g. "eat where no prey exists".
         if self._batched_ready and obs_np.shape[-1] == self._in_dim:
-            with torch.no_grad():
-                probs_t = self._batched_policy_forward(obs_t)
-            probs = probs_t.numpy()
             num_actions = self._out_dim
         else:
             num_actions = 5 + self.N_all
-            probs = np.empty((self.N_dm, H * W, num_actions), dtype=self.dtype)
-            for i, fid in enumerate(self.dm_ids):
-                if fid in self.policies:
-                    p = self.policies[fid].get_action_probs_torch(obs_t[i]).numpy()
-                else:
-                    p = np.full((H * W, num_actions), 1.0 / num_actions, dtype=self.dtype)
-                probs[i] = p
 
-        probs = probs.transpose(0, 2, 1).reshape(self.N_dm, num_actions, H, W).astype(self.dtype, copy=False)
-
-        # Build full mask (N_dm, num_actions, H, W)
-        full_mask = np.ones_like(probs)
+        full_mask = np.ones((self.N_dm, num_actions, H, W), dtype=self.dtype)
         full_mask[:, 0:4] = self.move_mask
 
         B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
         prey_present = (B_all > 0).astype(self.dtype)
         full_mask[:, 5:5 + self.N_all] = self.eat_static_mask[:, :, None, None] * prey_present[None, :, :, :]
 
-        # Indivisible-weight threshold: mask out move actions in cells where
-        # the DM's biomass is below its minimum split mass. 0 = continuous
-        # (no threshold). The existing zero-total fallback below routes such
-        # cells to rest/eat via re-normalisation.
         if np.any(self.dm_min_split > 0):
-            B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)  # (N_dm, H, W)
+            B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
             can_split = (B_dm >= self.dm_min_split[:, None, None]).astype(self.dtype)
             full_mask[:, 0:4] *= can_split[:, None, :, :]
 
-        # Disallow move actions entirely for DMs that cannot move
-        # (movement_speed <= 0, e.g. zooplankton per spec). The zero-total
-        # fallback below re-routes the freed probability mass to rest/eat.
-        cannot_move = (self.dm_v <= 0)  # (N_dm,)
+        cannot_move = (self.dm_v <= 0)
         if np.any(cannot_move):
             full_mask[cannot_move, 0:4] = 0.0
 
-        masked = probs * full_mask
-        total = masked.sum(axis=1, keepdims=True)
-        zero_total = total <= 1e-12
-        if np.any(zero_total):
-            rest_slice = masked[:, 4:5]
-            rest_slice = np.where(zero_total, np.float32(1.0), rest_slice)
-            masked[:, 4:5] = rest_slice
-            total = masked.sum(axis=1, keepdims=True)
-        probs = masked / total
+        # Ensure each (DM, cell) has at least one valid action; otherwise
+        # force rest=1 in mask so the cell has a defined distribution.
+        # full_mask layout: (N_dm, num_actions, H, W); reshape to put actions last.
+        mask_dch = full_mask  # already (N_dm, A, H, W)
+        any_valid = mask_dch.sum(axis=1, keepdims=True) > 0  # (N_dm, 1, H, W)
+        if not np.all(any_valid):
+            # Where no valid action -> set rest (index 4) to 1.
+            mask_dch[:, 4:5] = np.where(any_valid, mask_dch[:, 4:5], np.float32(1.0))
+            full_mask = mask_dch
+
+        # Compute logits and apply mask additively (-inf where invalid).
+        if self._batched_ready and obs_np.shape[-1] == self._in_dim:
+            with torch.no_grad():
+                logits_t = self._batched_policy_forward(obs_t, return_logits=True)  # (N_dm, H*W, A)
+            logits = logits_t.numpy()
+        else:
+            logits = np.empty((self.N_dm, H * W, num_actions), dtype=self.dtype)
+            for i, fid in enumerate(self.dm_ids):
+                if fid in self.policies:
+                    lg = self.policies[fid].get_action_logits_torch(obs_t[i]).numpy()
+                else:
+                    lg = np.zeros((H * W, num_actions), dtype=self.dtype)
+                logits[i] = lg
+
+        # logits: (N_dm, H*W, A) -> reshape to (N_dm, A, H, W).
+        logits = logits.transpose(0, 2, 1).reshape(self.N_dm, num_actions, H, W).astype(self.dtype, copy=False)
+
+        # Additive mask: 0 -> -inf, 1 -> 0.
+        neg_inf = np.float32(-1e9)
+        add_mask = np.where(full_mask > 0, np.float32(0.0), neg_inf).astype(self.dtype, copy=False)
+        logits = logits + add_mask
+
+        # Temperatur-annealing: hög T -> jämnare softmax (utforskning),
+        # T=1 -> normal. Sätts av trainer via env.softmax_temperature.
+        T = float(getattr(self, 'softmax_temperature', 1.0) or 1.0)
+        if T != 1.0:
+            logits = logits / np.float32(T)
+
+        # Stable softmax along action axis.
+        logits_max = np.max(logits, axis=1, keepdims=True)
+        e = np.exp(logits - logits_max)
+        probs = e / np.sum(e, axis=1, keepdims=True)
 
         self.pi_move = probs[:, 0:4]
         self.pi_rest = probs[:, 4]
         self.pi_eat  = probs[:, 5:5 + self.N_all]
+
+        # --- Action-entropy diagnostics ---
+        # Compute per-DM mean Shannon entropy H(pi) averaged over cells with
+        # any biomass for that DM (so empty cells, where the action choice is
+        # irrelevant, don't dominate the mean). Logged via env._action_entropy.
+        # probs shape: (N_dm, num_actions, H, W); already mask-normalised.
+        eps = np.float32(1e-12)
+        ent_cell = -np.sum(probs * np.log(probs + eps), axis=1)  # (N_dm, H, W)
+        B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
+        active = (B_dm > 0).astype(self.dtype)  # (N_dm, H, W)
+        active_sum = active.sum(axis=(1, 2))    # (N_dm,)
+        ent_mean = np.where(
+            active_sum > 0,
+            (ent_cell * active).sum(axis=(1, 2)) / np.maximum(active_sum, 1.0),
+            ent_cell.mean(axis=(1, 2)),
+        )
+        # Argmax-action distribution (over active cells) for fraction-of-cells
+        # taking each action category (move/rest/eat).
+        argmax = probs.argmax(axis=1)  # (N_dm, H, W)
+        n_act = probs.shape[1]
+        max_entropy = float(np.log(n_act))
+        if not hasattr(self, '_action_entropy_sum') or self._action_entropy_sum is None:
+            self._action_entropy_sum = np.zeros(self.N_dm, dtype=np.float64)
+            self._action_entropy_count = 0
+            self._action_move_frac = np.zeros(self.N_dm, dtype=np.float64)
+            self._action_rest_frac = np.zeros(self.N_dm, dtype=np.float64)
+            self._action_eat_frac = np.zeros(self.N_dm, dtype=np.float64)
+            self._action_max_entropy = max_entropy
+        self._action_entropy_sum += ent_mean.astype(np.float64)
+        self._action_entropy_count += 1
+        # Action category fractions over active cells
+        for i in range(self.N_dm):
+            mask_i = active[i] > 0
+            if mask_i.sum() == 0:
+                continue
+            a = argmax[i][mask_i]
+            tot = float(a.size)
+            self._action_move_frac[i] += float(np.sum(a < 4)) / tot
+            self._action_rest_frac[i] += float(np.sum(a == 4)) / tot
+            self._action_eat_frac[i] += float(np.sum(a >= 5)) / tot
 
         # Keep self.pi for non-DM consumers (always None entries here)
         self.pi = {fid: None for fid in self.fgs if not self.fgs[fid].is_decision_maker}

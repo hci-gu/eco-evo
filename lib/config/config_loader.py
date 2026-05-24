@@ -235,7 +235,12 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
 
         initial_b = rng.random(grid_size) if rng is not None else np.random.rand(*grid_size)
         initial_b = (initial_b / (initial_b.sum() + 1e-9)) * total_b
-        fg.initialize_state(grid_size, initial_biomass=initial_b)
+        # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
+        # initial energy fill levels. Inference keeps the deterministic
+        # 0.7 * ME_X default for reproducible scenario comparisons.
+        randomize_energy = (mode == 'train')
+        fg.initialize_state(grid_size, initial_biomass=initial_b,
+                            randomize_energy=randomize_energy, rng=rng)
         fgs[sid] = fg
-        
+
     return fgs, impact_vars, impact_ranges, observable_impact_vars

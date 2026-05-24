@@ -225,7 +225,7 @@ def main():
                              "Use 'inf' (default) to run until interrupted with Ctrl+C.")
     parser.add_argument("--lr", type=float, default=0.03, help="Learning rate (default: 0.03).")
     parser.add_argument("--sigma", type=float, default=0.1, help="Exploration noise (default: 0.1).")
-    parser.add_argument("--n_eval_ticks", type=int, default=2, help="Number of time steps (ticks) per evaluation rollout (default: 2).")
+    parser.add_argument("--n_eval_ticks", type=int, default=15, help="Number of time steps (ticks) per evaluation rollout (default: 15).")
     parser.add_argument("--project", type=str, help="Path to project file (.yaml)")
     parser.add_argument("--grid", type=parse_grid_arg, default=None,
                         help="Grid dimensions as n*m (e.g. 30*30). Both dimensions must be >= 3. Default: 60*60.")
@@ -244,6 +244,29 @@ def main():
                              "Set equal to --n_deltas to disable truncation.")
     parser.add_argument("--no_obs_normalize", action="store_true",
                         help="Disable ARS-V2 running observation normalisation (mean/std).")
+    parser.add_argument("--entropy_coef", type=float, default=0.1,
+                        help="Entropy bonus weight in fitness: fitness += entropy_coef * H(pi)/H_max. "
+                             "Motverkar att softmax-policyn kollapsar till en konstant action. "
+                             "0.0 = av (default: 0.1).")
+    parser.add_argument("--argmax_penalty", type=float, default=0.3,
+                        help="Argmax-penalty weight: fitness -= argmax_penalty * max_argmax_frac, "
+                             "där max_argmax_frac = max(move,rest,eat)-fraktion över aktiva celler. "
+                             "Straffar direkt degenererade en-action-policyer. 0.0 = av (default: 0.3).")
+    parser.add_argument("--temp_start", type=float, default=3.0,
+                        help="Softmax-temperatur vid generation 1. Hög T -> jämnare softmax -> "
+                             "tvingad utforskning. Annealas linjärt till --temp_end. Default: 3.0.")
+    parser.add_argument("--temp_end", type=float, default=1.0,
+                        help="Softmax-temperatur vid sista generationen (default: 1.0).")
+    parser.add_argument("--integral_reward", action="store_true", default=True,
+                        help="Använd medel-biomassa/medel-energy över hela rolloutet istället "
+                             "för slutvärdet i fitness-beräkningen. Ger \"ät alltid\" negativ "
+                             "gradient i sig själv via byteskollaps under rolloutet. Default: True.")
+    parser.add_argument("--no_integral_reward", dest="integral_reward", action="store_false",
+                        help="Stäng av integral-reward, använd klassisk slutvärde-fitness.")
+    parser.add_argument("--temp_anneal_gens", type=int, default=10,
+                        help="Antal generationer över vilka temperaturen annealas linjärt "
+                             "från --temp_start till --temp_end. Efter detta håller den --temp_end. "
+                             "Default: 10.")
     parser.add_argument("--resume", action="store_true",
                         help="Resume from previously saved checkpoints in results/policy_<fg>.pth "
                              "for ALL decision makers (not only the trained ones). Missing "
@@ -375,7 +398,9 @@ def main():
     # Create the trainer with all relevant policy dimensions
     trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
                          n_workers=n_workers, alpha=args.alpha, beta=args.beta,
-                         obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved)
+                         obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved,
+                         entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
+                         integral_reward=args.integral_reward)
 
     # Optionally resume from previously saved checkpoints. We always load for
     # ALL decision makers (not just the target species) so that single-species
@@ -444,7 +469,13 @@ def main():
 
     try:
         for gen in gen_iter:
-            print(f"\n========== Generation {gen+1}/{gen_label_total} ==========")
+            # Linear softmax-temperature annealing from temp_start -> temp_end
+            # over the first temp_anneal_gens generations.
+            anneal_n = max(1, int(args.temp_anneal_gens))
+            frac = min(1.0, gen / max(1, anneal_n - 1)) if anneal_n > 1 else 1.0
+            T = float(args.temp_start + (args.temp_end - args.temp_start) * frac)
+            trainer.softmax_temperature = T
+            print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ==========")
             _install_generation_maps(gen)
             for species in target_species:
                 print(f"\n>>> Training: {species.upper()} (gen {gen+1}/{gen_label_total})")
