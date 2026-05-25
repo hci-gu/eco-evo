@@ -267,6 +267,14 @@ def main():
                         help="Antal generationer över vilka temperaturen annealas linjärt "
                              "från --temp_start till --temp_end. Efter detta håller den --temp_end. "
                              "Default: 10.")
+    parser.add_argument("--coevolution", action="store_true",
+                        help="Aktivera co-evolution (spår C i konvergensproblem.txt): "
+                             "träna ALLA target_species samtidigt i en gemensam rollout per "
+                             "delta-par istället för round-robin. Detta skapar negativ feedback "
+                             "mellan predator-/byte-policys (predator 'ät alltid' -> byteskollaps "
+                             "-> predator-reward sjunker i SAMMA rollout) som round-robin inte ser. "
+                             "Per iteration utvärderas n_deltas * 2 gemensamma rollouts, och varje "
+                             "arts vikter ARS-uppdateras självständigt med dess egen reward-vektor.")
     parser.add_argument("--resume", action="store_true",
                         help="Resume from previously saved checkpoints in results/policy_<fg>.pth "
                              "for ALL decision makers (not only the trained ones). Missing "
@@ -374,6 +382,7 @@ def main():
     print(f"Top Deltas:     {top_deltas_resolved} ({top_origin})")
     obs_norm_enabled = not args.no_obs_normalize
     print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
+    print(f"Co-evolution:   {args.coevolution} {'(user)' if args.coevolution else '(default: off, round-robin)'}")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:
@@ -477,20 +486,40 @@ def main():
             trainer.softmax_temperature = T
             print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ==========")
             _install_generation_maps(gen)
-            for species in target_species:
-                print(f"\n>>> Training: {species.upper()} (gen {gen+1}/{gen_label_total})")
-                print(f"    Input dim:  {policy_params[species][0]}")
-                print(f"    Output dim: {policy_params[species][1]}")
-
+            if args.coevolution:
+                # Co-evolution: alla arter tränas samtidigt per iteration
+                # i en GEMENSAM rollout. Ingen inre round-robin-loop.
+                print(f"\n>>> Co-evolving: {', '.join(s.upper() for s in target_species)} "
+                      f"(gen {gen+1}/{gen_label_total})")
+                for species in target_species:
+                    print(f"    {species}: in={policy_params[species][0]} "
+                          f"out={policy_params[species][1]}")
                 for i in range(args.iter_per_gen):
-                    # n_eval_ticks: how many time steps (ticks) each test run lasts
-                    avg_reward = trainer.train_step(species, n_eval_ticks=args.n_eval_ticks)
-                    print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
+                    means = trainer.train_step_coevolution(
+                        target_species, n_eval_ticks=args.n_eval_ticks)
+                    summary = " | ".join(
+                        f"{fid}={means[fid]:+.4f}" for fid in target_species)
+                    print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
+                # Spara checkpoints för alla samtränande arter.
+                for species in target_species:
+                    save_path = f"results/policy_{species}.pth"
+                    _save_checkpoint(trainer, species, save_path)
+                    print(f"    Checkpoint saved to: {save_path}")
+            else:
+                for species in target_species:
+                    print(f"\n>>> Training: {species.upper()} (gen {gen+1}/{gen_label_total})")
+                    print(f"    Input dim:  {policy_params[species][0]}")
+                    print(f"    Output dim: {policy_params[species][1]}")
 
-                # Save checkpoint after each generation so progress is preserved.
-                save_path = f"results/policy_{species}.pth"
-                _save_checkpoint(trainer, species, save_path)
-                print(f"    Checkpoint saved to: {save_path}")
+                    for i in range(args.iter_per_gen):
+                        # n_eval_ticks: how many time steps (ticks) each test run lasts
+                        avg_reward = trainer.train_step(species, n_eval_ticks=args.n_eval_ticks)
+                        print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
+
+                    # Save checkpoint after each generation so progress is preserved.
+                    save_path = f"results/policy_{species}.pth"
+                    _save_checkpoint(trainer, species, save_path)
+                    print(f"    Checkpoint saved to: {save_path}")
     except KeyboardInterrupt:
         print(f"\n\n[Interrupted by user] Stopping training after current step.")
         # Terminate workers immediately so they don't keep computing while we

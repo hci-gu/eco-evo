@@ -59,6 +59,103 @@ def _worker_init(env_builder, policy_params):
         _POLICIES[fg_id] = PolicyNetwork(in_dim, out_dim)
 
 
+def _evaluate_coevo_task(task):
+    """Co-evolution task: evaluate ONE shared rollout and return fitness for
+    EVERY species in `fg_list`. All policies are perturbed simultaneously,
+    so each species sees the others' perturbed behaviour. This creates the
+    feedback loop (predator "ät alltid" -> prey collapse -> predator reward
+    drops within the same rollout) that the single-species ARS round-robin
+    can never see.
+
+    task = (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
+            entropy_coef, argmax_penalty, softmax_temperature,
+            integral_reward)
+
+    Returns:
+        (fitness_dict: {fg_id -> float},
+         samples: None | (sum (N_dm,D) f64, sumsq (N_dm,D) f64, count int),
+         act_diag_dict: {fg_id -> act_diag} | None)
+    """
+    (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
+     entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+    _ = (entropy_coef, argmax_penalty)
+
+    # Sync ALL policy weights
+    for fg_id, w in weights_dict.items():
+        if fg_id in _POLICIES:
+            _set_weights_flat(_POLICIES[fg_id], w)
+
+    env = _ENV_BUILDER(seed=seed) if seed is not None else _ENV_BUILDER()
+    env.policies = _POLICIES
+    env.softmax_temperature = float(softmax_temperature)
+
+    if obs_pack is not None:
+        env._build_static_caches()
+        dm_ids = obs_pack['dm_ids']
+        mean = obs_pack['mean']
+        var = obs_pack['var']
+        if dm_ids == env.dm_ids:
+            env.obs_mean = mean
+            env.obs_var = var
+        else:
+            idx = [dm_ids.index(fid) for fid in env.dm_ids]
+            env.obs_mean = mean[idx]
+            env.obs_var = var[idx]
+
+    # Initial state per evaluated species.
+    b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
+    r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+
+    if integral_reward and n_ticks > 0:
+        b_sum = {fid: 0.0 for fid in fg_list}
+        r_sum = {fid: 0.0 for fid in fg_list}
+        for _ in range(n_ticks):
+            env.step()
+            for fid in fg_list:
+                b_sum[fid] += float(env.fgs[fid].biomass.sum())
+                r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
+        bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
+        rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
+    else:
+        for _ in range(n_ticks):
+            env.step()
+        bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
+        rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+
+    fitness = {}
+    for fid in fg_list:
+        eps_b = max(1e-6 * b0[fid], 1e-9)
+        eps_r = max(1e-6 * r0[fid], 1e-9)
+        delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
+        delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
+        fitness[fid] = float(alpha * delta_b + beta * delta_r)
+
+    samples = None
+    if obs_pack is not None and getattr(env, '_obs_sum', None) is not None:
+        samples = (env._obs_sum.copy(), env._obs_sumsq.copy(), env._obs_count)
+
+    act_diag_dict = None
+    if getattr(env, '_action_entropy_sum', None) is not None and env._action_entropy_count > 0:
+        act_diag_dict = {}
+        cnt = env._action_entropy_count
+        for fid in fg_list:
+            try:
+                i = env.dm_ids.index(fid)
+                act_diag_dict[fid] = {
+                    'entropy': float(env._action_entropy_sum[i] / cnt),
+                    'max_entropy': float(env._action_max_entropy),
+                    'move_frac': float(env._action_move_frac[i] / cnt),
+                    'rest_frac': float(env._action_rest_frac[i] / cnt),
+                    'eat_frac': float(env._action_eat_frac[i] / cnt),
+                }
+            except (ValueError, AttributeError):
+                pass
+        if not act_diag_dict:
+            act_diag_dict = None
+
+    return (fitness, samples, act_diag_dict)
+
+
 def _evaluate_task(task):
     """task = (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack)
 

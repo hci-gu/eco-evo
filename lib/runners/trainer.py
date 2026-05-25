@@ -3,7 +3,7 @@ import numpy as np
 import multiprocessing as mp
 from lib.runners.policy import PolicyNetwork
 from lib.environments.ecosystem import EcosystemEnvironment
-from lib.runners.parallel_worker import _worker_init, _evaluate_task
+from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_coevo_task
 
 class ARSTrainer:
     """ARS trainer with optional ARS-V2 extensions:
@@ -453,3 +453,289 @@ class ARSTrainer:
             except (ValueError, AttributeError):
                 act_diag = None
         return fitness, samples, act_diag
+
+    # ================================================================
+    # Co-evolution (spår C i konvergensproblem.txt)
+    # ----------------------------------------------------------------
+    # Tränar ALLA decision makers samtidigt: per delta-par perturberas
+    # varje arts vikter med en oberoende delta (gemensam pair_seed),
+    # och en GEMENSAM rollout returnerar fitness för varje art.
+    # Därmed ser predator-policyn byteskollapsen som dess "ät alltid"
+    # orsakar -- och byte-policyn ser predationstrycket. Den negativa
+    # feedback som saknas i round-robin-träningen materialiseras nu
+    # som en del av gradienten.
+    # ================================================================
+    def _evaluate_coevo(self, fg_list, n_ticks, seed=None,
+                        obs_mean=None, obs_var=None, dm_ids_for_norm=None):
+        """Sequential co-evolution rollout: returnerar fitness per art ur
+        en enda gemensam simulering."""
+        env = self.env_builder(seed=seed) if seed is not None else self.env_builder()
+        env.policies = self.policies
+        env.softmax_temperature = float(self.softmax_temperature)
+
+        if obs_mean is not None and obs_var is not None:
+            env._build_static_caches()
+            if dm_ids_for_norm == env.dm_ids:
+                env.obs_mean = obs_mean
+                env.obs_var = obs_var
+            else:
+                idx = [dm_ids_for_norm.index(fid) for fid in env.dm_ids]
+                env.obs_mean = obs_mean[idx]
+                env.obs_var = obs_var[idx]
+
+        b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
+        r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+
+        if self.integral_reward and n_ticks > 0:
+            b_sum = {fid: 0.0 for fid in fg_list}
+            r_sum = {fid: 0.0 for fid in fg_list}
+            for _ in range(n_ticks):
+                env.step()
+                for fid in fg_list:
+                    b_sum[fid] += float(env.fgs[fid].biomass.sum())
+                    r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
+            bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
+            rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
+        else:
+            for _ in range(n_ticks):
+                env.step()
+            bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
+            rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+
+        fitness = {}
+        for fid in fg_list:
+            eps_b = max(1e-6 * b0[fid], 1e-9)
+            eps_r = max(1e-6 * r0[fid], 1e-9)
+            delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
+            delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
+            fitness[fid] = float(self.alpha * delta_b + self.beta * delta_r)
+
+        samples = None
+        if obs_mean is not None and getattr(env, '_obs_sum', None) is not None:
+            samples = (env._obs_sum.copy(), env._obs_sumsq.copy(), env._obs_count)
+
+        act_diag_dict = None
+        if getattr(env, '_action_entropy_sum', None) is not None and env._action_entropy_count > 0:
+            act_diag_dict = {}
+            cnt = env._action_entropy_count
+            for fid in fg_list:
+                try:
+                    i = env.dm_ids.index(fid)
+                    act_diag_dict[fid] = {
+                        'entropy': float(env._action_entropy_sum[i] / cnt),
+                        'max_entropy': float(env._action_max_entropy),
+                        'move_frac': float(env._action_move_frac[i] / cnt),
+                        'rest_frac': float(env._action_rest_frac[i] / cnt),
+                        'eat_frac': float(env._action_eat_frac[i] / cnt),
+                    }
+                except (ValueError, AttributeError):
+                    pass
+            if not act_diag_dict:
+                act_diag_dict = None
+
+        return fitness, samples, act_diag_dict
+
+    def train_step_coevolution(self, target_species, n_eval_ticks=15):
+        """Co-evolution training step (spår C).
+
+        Perturberar ALLA arter i `target_species` samtidigt per delta-par
+        och kör en gemensam rollout. Varje art får sin egen fitness ur
+        samma simulering, varefter ARS-uppdateringen sker självständigt
+        per art med rewards-batchen från denna iteration.
+
+        Args:
+            target_species: list[str] -- arter som ska tränas samtidigt.
+            n_eval_ticks: int -- ticks per rollout.
+
+        Returns:
+            dict[fg_id -> float] -- medel-reward per art över batchen.
+        """
+        # Snapshot av nuvarande vikter och deltas per art.
+        base_weights = {}     # fg_id -> torch.Tensor (1D)
+        deltas = {}           # fg_id -> list[torch.Tensor]
+        for fid in target_species:
+            w = self._get_weights(self.policies[fid])
+            base_weights[fid] = w
+            deltas[fid] = [torch.randn_like(w) for _ in range(self.n_deltas)]
+
+        # CRN-seeds per delta-par (samma rollout-seed för +/- för en
+        # given i -> identiska impact-/start-fält).
+        pair_seeds = [int(np.random.randint(1, 2**31 - 1)) for _ in range(self.n_deltas)]
+
+        # Obs-stats setup (samma som i train_step).
+        obs_mean = obs_var = None
+        dm_ids_for_norm = None
+        D = None
+        if self.obs_normalize:
+            dm_ids_for_norm, D = self._get_dm_ids_and_dim()
+            self._ensure_obs_stats(dm_ids_for_norm, D)
+            obs_mean, obs_var = self._build_obs_arrays(dm_ids_for_norm, D)
+
+        agg_sum = None; agg_sumsq = None; agg_count = 0
+
+        # Vikter för OTRÄNADE arter (icke decision makers + arter utanför
+        # target_species men med policy) -- används som baseline i alla
+        # rollouts.
+        non_target_weights = {
+            fg_id: self._get_weights(p).numpy().copy()
+            for fg_id, p in self.policies.items()
+            if fg_id not in target_species
+        }
+
+        # rewards_pos[i] / rewards_neg[i] = dict fg_id -> float
+        # act_pos[i] / act_neg[i]         = dict fg_id -> act_diag
+        rewards_pos = [None] * self.n_deltas
+        rewards_neg = [None] * self.n_deltas
+        act_pos = [None] * self.n_deltas
+        act_neg = [None] * self.n_deltas
+
+        def _build_weights_dict(sign, idx):
+            """Bygg vikt-dict för alla policys, perturberat per art (delta-par idx)."""
+            wd = dict(non_target_weights)
+            for fid in target_species:
+                wd[fid] = base_weights[fid].numpy() + sign * self.sigma * deltas[fid][idx].numpy()
+            return wd
+
+        if self._pool is None:
+            # Sekventiell väg.
+            for i in range(self.n_deltas):
+                s = pair_seeds[i]
+                for sign, store_r, store_a in (
+                    (+1.0, rewards_pos, act_pos),
+                    (-1.0, rewards_neg, act_neg),
+                ):
+                    # Sätt vikter på lokala policys.
+                    for fid in target_species:
+                        w = base_weights[fid] + sign * self.sigma * deltas[fid][i]
+                        self._set_weights(self.policies[fid], w)
+                    fit, samples, act_d = self._evaluate_coevo(
+                        target_species, n_eval_ticks, seed=s,
+                        obs_mean=obs_mean, obs_var=obs_var,
+                        dm_ids_for_norm=dm_ids_for_norm,
+                    )
+                    store_r[i] = fit
+                    store_a[i] = act_d
+                    if samples is not None:
+                        s_sum, s_sumsq, s_cnt = samples
+                        if agg_sum is None:
+                            agg_sum = s_sum.copy(); agg_sumsq = s_sumsq.copy()
+                        else:
+                            agg_sum += s_sum; agg_sumsq += s_sumsq
+                        agg_count += s_cnt
+            # Återställ till baseline-vikter innan ARS-uppdatering.
+            for fid in target_species:
+                self._set_weights(self.policies[fid], base_weights[fid])
+        else:
+            # Parallell väg.
+            obs_pack = None
+            if self.obs_normalize:
+                obs_pack = {'dm_ids': dm_ids_for_norm,
+                            'mean': obs_mean, 'var': obs_var}
+            tasks = []
+            for i in range(self.n_deltas):
+                wd_pos = _build_weights_dict(+1.0, i)
+                tasks.append((list(target_species), wd_pos, n_eval_ticks,
+                              self.alpha, self.beta, pair_seeds[i], obs_pack,
+                              self.entropy_coef, self.argmax_penalty,
+                              self.softmax_temperature, self.integral_reward))
+            for i in range(self.n_deltas):
+                wd_neg = _build_weights_dict(-1.0, i)
+                tasks.append((list(target_species), wd_neg, n_eval_ticks,
+                              self.alpha, self.beta, pair_seeds[i], obs_pack,
+                              self.entropy_coef, self.argmax_penalty,
+                              self.softmax_temperature, self.integral_reward))
+            results = self._pool.map(_evaluate_coevo_task, tasks)
+            for k, (fit, samples, act_d) in enumerate(results):
+                if k < self.n_deltas:
+                    rewards_pos[k] = fit; act_pos[k] = act_d
+                else:
+                    rewards_neg[k - self.n_deltas] = fit
+                    act_neg[k - self.n_deltas] = act_d
+                if samples is not None:
+                    s_sum, s_sumsq, s_cnt = samples
+                    if agg_sum is None:
+                        agg_sum = s_sum.copy(); agg_sumsq = s_sumsq.copy()
+                    else:
+                        agg_sum += s_sum; agg_sumsq += s_sumsq
+                    agg_count += s_cnt
+
+        # Merge obs-stats (gemensamt för alla arter i samma rollout).
+        if self.obs_normalize and agg_count > 0 and dm_ids_for_norm is not None:
+            self._merge_obs_stats(dm_ids_for_norm, agg_sum, agg_sumsq, agg_count)
+
+        # ARS-uppdatering per art med dess egen reward-vektor.
+        out_means = {}
+        for fid in target_species:
+            r_pos = np.array([rewards_pos[i][fid] for i in range(self.n_deltas)], dtype=np.float64)
+            r_neg = np.array([rewards_neg[i][fid] for i in range(self.n_deltas)], dtype=np.float64)
+
+            # Z-score + entropy/argmax bonus per art (samma logik som train_step).
+            if self.entropy_coef != 0.0 or self.argmax_penalty != 0.0:
+                eco_all = np.concatenate([r_pos, r_neg])
+                eco_mean = float(np.mean(eco_all))
+                eco_std = float(np.std(eco_all)) + 1e-8
+
+                def _mod(r_arr, act_arr):
+                    out = np.empty_like(r_arr, dtype=np.float64)
+                    for k in range(len(r_arr)):
+                        rn = (float(r_arr[k]) - eco_mean) / eco_std
+                        a = act_arr[k].get(fid) if act_arr[k] is not None else None
+                        bonus = 0.0
+                        if a is not None:
+                            if self.entropy_coef != 0.0:
+                                Hm = a['max_entropy'] or 1.0
+                                bonus += self.entropy_coef * (a['entropy'] / Hm)
+                            if self.argmax_penalty != 0.0:
+                                mf = max(a['move_frac'], a['rest_frac'], a['eat_frac'])
+                                bonus -= self.argmax_penalty * mf
+                        out[k] = rn + bonus
+                    return out
+
+                r_pos = _mod(r_pos, act_pos)
+                r_neg = _mod(r_neg, act_neg)
+
+            # ARS update (top-b).
+            pair_scores = np.maximum(r_pos, r_neg)
+            b = self.top_deltas
+            if b < self.n_deltas:
+                top_idx = np.argsort(-pair_scores)[:b]
+            else:
+                top_idx = np.arange(self.n_deltas)
+            sel_rewards = np.concatenate([r_pos[top_idx], r_neg[top_idx]])
+            sigma_f = np.std(sel_rewards) + 1e-8
+
+            w0 = base_weights[fid].numpy()
+            step = np.zeros_like(w0)
+            for i in top_idx:
+                step += (r_pos[i] - r_neg[i]) * deltas[fid][i].numpy()
+            new_w = w0 + (self.lr / (b * sigma_f)) * step
+            self._set_weights(self.policies[fid], torch.from_numpy(new_w))
+
+            r_mean = float(np.mean(np.concatenate([r_pos, r_neg])))
+            r_std = float(np.std(np.concatenate([r_pos, r_neg])))
+            rel = r_std / (abs(r_mean) + 1e-12)
+            out_means[fid] = r_mean
+
+            # Per-art action-entropi från denna iteration.
+            act_str = ""
+            H_sum = 0.0; mv_sum = 0.0; rs_sum = 0.0; et_sum = 0.0; n_act = 0
+            H_max_seen = None
+            for arr in (act_pos, act_neg):
+                for d in arr:
+                    if d is None or fid not in d:
+                        continue
+                    a = d[fid]
+                    H_sum += a['entropy']; mv_sum += a['move_frac']
+                    rs_sum += a['rest_frac']; et_sum += a['eat_frac']
+                    H_max_seen = a['max_entropy']; n_act += 1
+            if n_act > 0:
+                Hm = H_max_seen or 1.0
+                Hmean = H_sum / n_act
+                mv = mv_sum / n_act; rs = rs_sum / n_act; et = et_sum / n_act
+                act_str = (f" H_act={Hmean:.3f}/{Hm:.3f} ({Hmean/Hm:.0%})"
+                           f" mv/rs/et={mv:.2f}/{rs:.2f}/{et:.2f}")
+
+            print(f"  [coevo {fid}] r_mean={r_mean:+.4e} r_std={r_std:.4e} "
+                  f"rel_std={rel:.3%} sigma_f={sigma_f:.4e}" + act_str)
+
+        return out_means

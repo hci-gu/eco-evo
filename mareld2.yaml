@@ -3,27 +3,27 @@
 simulation_settings: {}
 decision_makers:
   - group_id: gadoids
-    initial_biomass_min: 0
+    initial_biomass_min: 1250
     initial_biomass_max: 5000
     inference_initial_biomass: 2500
   - group_id: pelagic_fish
-    initial_biomass_min: 0
+    initial_biomass_min: 6000
     initial_biomass_max: 24000
     inference_initial_biomass: 12000
   - group_id: porpoises
-    initial_biomass_min: 0
+    initial_biomass_min: 6
     initial_biomass_max: 24
     inference_initial_biomass: 12
   - group_id: seabirds
-    initial_biomass_min: 0
+    initial_biomass_min: 12
     initial_biomass_max: 50
     inference_initial_biomass: 25
   - group_id: seals
-    initial_biomass_min: 0
+    initial_biomass_min: 12
     initial_biomass_max: 50
     inference_initial_biomass: 25
   - group_id: zooplankton
-    initial_biomass_min: 0
+    initial_biomass_min: 17500
     initial_biomass_max: 70000
     inference_initial_biomass: 35000
 non_decision_makers:
@@ -32,7 +32,7 @@ non_decision_makers:
     initial_biomass_max: 320000
     inference_initial_biomass: 16000
   - group_id: phytoplankton
-    initial_biomass_min: 0
+    initial_biomass_min: 40000
     initial_biomass_max: 160000
     inference_initial_biomass: 80000
 impact_variables:
