@@ -16,11 +16,20 @@ User communication (chat answers, status updates): Swedish.
 1. REPOSITORY LAYOUT (project root: /home/simon/eco-evo)
 ================================================================
   train.py                  Main ARS training entry point (requires --project).
-  inference.py              Inference runner for trained policies (draft).
-                            Loads results/policy_<fg>.pth checkpoints,
-                            installs frozen obs_mean/obs_var on env per-DM
-                            (aligned to env.dm_ids), supports legacy and
-                            new ckpt formats. See section 17.
+                            Co-evolution is default-on (--no_coevolution to
+                            opt out). --run-name <name> (default "default")
+                            isolates checkpoints in results/<name>/.
+                            See sections 18 (run-name), 19 (profiles +
+                            action-hack flags), 20 (spawn/sub-threshold fix).
+  inference.py              Inference runner for trained policies.
+                            Loads results/<run-name>/policy_<fg>.pth
+                            checkpoints (--run-name mirrors train.py;
+                            --checkpoints overrides). Installs frozen
+                            obs_mean/obs_var on env per-DM (aligned to
+                            env.dm_ids), supports legacy and new ckpt
+                            formats. .npz impact-map loader is now
+                            key-agnostic (any 2-D array works). See
+                            section 17.
   run_mareld_mvp.py         Runs a full MVP simulation scenario.
   compare_scenarios.py      Compares "noll" vs "projekt" scenarios.
   mareld.yaml, mareld2.yaml Project manifest files (the ones passed to --project).
@@ -40,8 +49,13 @@ User communication (chat answers, status updates): Swedish.
                             min_split_biomass: indivisible-weight threshold.
                             YAML/GUI value is in KG; converted to TONNES at
                             input boundary (divide by 1000). 0 = continuous
-                            biomass (no threshold). Used by ecosystem to
-                            mask move-actions when cell biomass < threshold.
+                            biomass (no threshold).
+                            See section 20 for the post-fix semantics:
+                            move-actions are NO LONGER masked off in
+                            sub-threshold cells; instead the env collapses
+                            sub-threshold cells to a one-hot argmax over
+                            all 11 actions (the group acts as a single
+                            unit, including migration).
     environments/ecosystem.py
                             EcosystemEnvironment: "The Tick" pipeline.
                             HEAVILY OPTIMIZED — see section 13.
@@ -63,6 +77,12 @@ User communication (chat answers, status updates): Swedish.
                             initial_biomass per FG: project override >
                               library species_definitions.initial_biomass >
                               1000 fallback. Hardcoded table REMOVED.
+                            Spawn uses _spawn_biomass_distribution()
+                            (cluster-spawn with per-cell floor
+                            10*min_split_biomass, leftover merged into a
+                            seeded cell; falls back to legacy uniform
+                            Dirichlet for FGs with min_split=0). See
+                            section 20.
                             load_project_config returns a 4-tuple:
                               (fgs, impact_vars, impact_ranges,
                                observable_impact_vars).
@@ -89,11 +109,12 @@ User communication (chat answers, status updates): Swedish.
                             compat with 3-/5-/6-tuple tasks.
   make_*.py                 GIS helpers generating 60x60 PNG maps.
   *.png                     Geographic input layers (60x60 grayscale).
-  results/                  Trained policies (*.pth). NOT staged.
-                            Checkpoint format now:
+  results/<run-name>/       Per-run trained policies (*.pth). NOT staged.
+                            Default run-name is "default". Checkpoint format:
                               {'state_dict': ..., 'obs_stats': {mean,var,count}}.
                             Older bare-state_dict files still load for
-                            inference (see section 16).
+                            inference (see section 16). Subfolders such as
+                            results/coev_*_eval/ are kept eval snapshots.
   Strategi.pdf, Mareld mini.pdf, MKB Mareld.pdf, Poseidon/
                             Source documents. Strategi.pdf is the
                             authoritative spec for "The Tick".
@@ -155,11 +176,15 @@ predators see the post-impact prey biomass):
      - actual=D*scale; predator gain=(actual*energy_gain).sum(1)
      - temp_energy_gains buffered (added AFTER metabolism on stayers).
      - Prey biomass reduced; R scaled with B (R/B preserved).
-  Move-action masking also includes the indivisible-weight threshold:
-  when self.dm_min_split[i] > 0, move-actions are zeroed in cells where
-  B_dm[i] < min_split. The existing zero-total fallback re-routes such
-  cells to rest via re-normalisation. Units: dm_min_split is in tonnes
-  (converted from kg at FunctionalGroup input).
+  Sub-threshold cells (0 < B_dm[i] < dm_min_split[i]) are NO LONGER
+  mask-restricted (move was previously zeroed and policy renormalised
+  to rest/eat — that hard rule turned out to be the dominant cause of
+  the seals/porpoises "rest=100%" attractor). Instead, after softmax
+  the env replaces those cells' distribution with a one-hot argmax
+  over the full 11-action set; the whole sub-threshold group performs
+  one action on 100% of the cell biomass (variant 2 — small groups
+  may migrate as a unit). Units: dm_min_split is in tonnes (converted
+  from kg at FunctionalGroup input). See section 20.
 
   4. _apply_movement  (slice-assign, vectorized over N_dm)
      - Each cell's biomass split by action probs.
@@ -202,9 +227,22 @@ predators see the post-impact prey biomass):
 Mandatory: --project <path-to.yaml>
 
 Flag                  Default              Meaning
+--run-name            "default"            results/<run-name>/ is used for
+                                           saving and resuming checkpoints.
+                                           Mirror on inference.py.
+--coevolution         True                 Joint rollout co-evo (all DMs
+                                           perturbed in same rollout). Use
+                                           --no_coevolution for round-robin.
+--profile             None                 sanity | info | deep. Trumps any
+                                           conflicting explicit flags after
+                                           a [Y/n] override prompt. Profiles
+                                           set argmax_penalty=0, entropy_coef=0,
+                                           temp_start=temp_end=1.0,
+                                           uniform_bias_init=False (action-hack-
+                                           free; biology-driven).
 --species             ["all"]              "all" = all DMs.
 --generations         "inf"                Outer co-evolution loop; "inf" runs
-                                           until Ctrl+C. Round-robin over species.
+                                           until Ctrl+C.
 --iter-per-gen        20                   ARS iterations per species per gen.
                                            Alias: --iter_per_gen.
 --n_eval_ticks        2                    env.step() ticks per rollout.
@@ -226,6 +264,22 @@ Flag                  Default              Meaning
                                            auto = min(2*n_deltas, max(1, cores-1)),
                                            using sched_getaffinity when available.
 --grid                None (60x60)         "nxm" or "n*m", both dims >= 3.
+--argmax_penalty      0.3 (CLI default)    Optional action-hack: fitness
+                                           penalty proportional to argmax-
+                                           action fraction. Profiles force
+                                           0.0. See section 19.
+--entropy_coef        0.1 (CLI default)    Optional action-hack: fitness bonus
+                                           proportional to softmax entropy.
+                                           Profiles force 0.0.
+--temp_start/--temp_end/--temp_anneal_gens
+                       3.0 / 1.0 / 10      Optional softmax temperature
+                                           annealing. Profiles force 1.0/1.0.
+--uniform_bias_init   False                Optional: zero output bias and
+                                           scale output weights by 0.01 so
+                                           gen-1 softmax is ~uniform. Profiles
+                                           force False.
+--resume              False                Load existing checkpoints from
+                                           results/<run-name>/ before training.
 
 Session header prints every flag with "(default)"/"(user)" tag,
 including "Top Deltas" and "Obs Normalize", plus resolved workers count
@@ -551,14 +605,26 @@ Notes:
 ================================================================
 17. INFERENCE RUNNER (inference.py)
 ================================================================
-Draft / scaffold; invoked as `python3 inference.py` with optional flags:
+Invoked as `python3 inference.py` with optional flags:
   --project <path>     Project YAML (default: built-in MVP setup).
-  --checkpoints <dir>  Where policy_<fg>.pth lives (default: results).
+  --run-name <name>    Loads from results/<name>/ (default "default").
+  --checkpoints <dir>  Explicit override of the checkpoint dir; if set,
+                       it trumps --run-name.
   --grid n*m           Grid dims (default: 60*60).
   --ticks N            Number of env.step() ticks (default: 100).
   --seed N             Seed for deterministic initial biomass.
   --output PATH.npz    Save per-FG biomass history.
   --quiet              Suppress progress prints.
+
+Impact-map .npz loader (_load_impact_map_npz) is key-agnostic:
+  1. If the requested impact_id is a key in the archive AND that array
+     is 2-D, use it.
+  2. Otherwise pick the first 2-D array in the archive and use it
+     (prints a small [info] note naming the actual key).
+  3. Only fall back to a zero field when the archive contains no 2-D
+     arrays at all.
+This means impact-map .npz files in the project YAML can use any
+internal key; the mapping is YAML-id -> file, not -> key-inside-file.
 
 Key behaviours (takes the known pitfalls into account):
   - Loads each DM's checkpoint, supports both new format
@@ -579,3 +645,190 @@ Intentionally NOT included yet (extension points):
   - Plotting / scenario comparison (just biomass-history .npz output).
   - Map loading (uses zero impact maps like train.py's env_builder).
   - Multi-seed averaging or batch inference.
+
+================================================================
+18. RUN-NAME / CHECKPOINT ISOLATION
+================================================================
+Both train.py and inference.py accept --run-name (default "default").
+Effect:
+  - train.py saves every per-generation checkpoint to
+      results/<run-name>/policy_<fg>.pth
+    (created if missing). KeyboardInterrupt save and --resume read
+    from the same directory. There is NO timestamp/uid in the path:
+    re-running with the same --run-name OVERWRITES.
+  - inference.py loads from results/<run-name>/ unless --checkpoints
+    is given explicitly (then --checkpoints trumps --run-name).
+  - Old loose checkpoints at results/policy_*.pth (pre-run-name) are
+    NOT auto-migrated. Move them to results/default/ if you want them
+    to be the default-run baseline.
+  - Backup-by-move pattern (`mkdir results/_backup_pre_X && mv
+    results/policy_*.pth ...`) is OBSOLETE — use a fresh --run-name
+    instead, that's the whole point of the flag.
+
+================================================================
+19. ACTION-HACK FLAGS + PROFILES (action-distribution shaping)
+================================================================
+The trainer can apply four "action-distribution hacks" on top of the
+biology-driven fitness (alpha*delta_b + beta*delta_r). Per
+konvergensproblem.txt's "INSIKT 2" these are symptom-painting and
+should NOT be the main force; the profiles therefore disable all of
+them and let biology drive.
+
+Flags (all live in train.py, all behave as no-ops when zero/off):
+  --argmax_penalty F        Subtract F * argmax_fraction from fitness.
+                            CLI default 0.3; profiles force 0.0.
+  --entropy_coef F          Add F * (H/H_max) to fitness. CLI default
+                            0.1; profiles force 0.0.
+  --temp_start T0
+  --temp_end   T1
+  --temp_anneal_gens G      Softmax temperature linearly annealed from
+                            T0 to T1 over G generations, then held at
+                            T1. CLI defaults 3.0/1.0/10; profiles
+                            force T0=T1=1.0 (no shaping).
+  --uniform_bias_init       PolicyNetwork.__init__ zeros the output
+                            bias and multiplies the output weights by
+                            0.01, so gen-1 softmax is ~uniform across
+                            actions. Verified to change seals gen-1
+                            sampling from rs=84-92% to rs=27% — but
+                            does NOT prevent the rest-attractor from
+                            reforming over a few ARS iterations.
+                            Tests: tests/test_uniform_bias_init.py
+                            (16/16). Off by default; profiles keep off.
+
+Profiles (--profile sanity|info|deep) — recommended hyperparameter
+stacks; profile values trump explicit conflicting flags after a
+[Y/n] override prompt that lists each overridden value:
+  sanity  generations=10, iter_per_gen=15, n_deltas=16,
+          n_eval_ticks=100, temp_anneal_gens=8
+  info    generations=40, iter_per_gen=20, n_deltas=16,
+          n_eval_ticks=150, temp_anneal_gens=30
+  deep    generations=80, iter_per_gen=20, n_deltas=20,
+          n_eval_ticks=200, temp_anneal_gens=60
+All three set coevolution=True, argmax_penalty=0.0, entropy_coef=0.0,
+temp_start=temp_end=1.0, uniform_bias_init=False.
+
+================================================================
+20. SPAWN / SUB-THRESHOLD FIX (structural, not action-hack)
+================================================================
+Discovered cause of the seals/porpoises "rest=100%" attractor:
+min_split_biomass=50 kg in fg_library.yaml for seals AND porpoises
+combined with seals total=25 ton / 60x60 grid = 6.94 kg/cell means
+the vast majority of seal cells were under-threshold from tick 1.
+The OLD rule zeroed the 4 move-actions in those cells; the rest/eat
+renormalisation, plus the zero-total fallback (forced rest=1 in cells
+without prey), made rest=100% a HARD RULE, not a learned policy.
+
+Two coordinated fixes implemented:
+
+DEL 1 — Cluster-spawn in lib/config/config_loader.py:
+  New helper _spawn_biomass_distribution(grid, total_b, min_per_cell,
+  allowed_mask, rng):
+    * Eligible cells = allowed_mask>0 (None => full grid).
+    * Per-cell floor = 10 * min_split_biomass (so predation/mortality
+      doesn't immediately drop a cell under the threshold).
+    * Loop: random cell pick (no replacement), biomass drawn uniformly
+      in [floor, min(total_b, remaining)], assign, repeat while
+      remaining >= floor.
+    * Leftover (<floor) is merged into a randomly chosen already-
+      seeded cell — total biomass exactly preserved.
+    * Edge cases: if floor==0 (e.g. zooplankton/gadoids), falls back
+      to legacy uniform-Dirichlet spread. If no seed could be placed
+      (total < floor), dumps everything in one random cell.
+  allowed_mask is currently passed as None (mareld2.yaml has no
+  accessibility map yet); the hook is wired and ready.
+  Both setup_full_mareld_mvp and load_project_config use the helper.
+
+DEL 2 — Sub-threshold collapse in lib/environments/ecosystem.py:
+  * Removed the 4-action move-mask zeroing on B < min_split.
+  * After softmax, compute sub_thr_mask = (B>0) & (B<min_split),
+    take argmax over the full 11-action distribution per such cell,
+    and replace that cell's distribution with a one-hot. Whole group
+    performs one action on 100% of the cell biomass (including move,
+    so small groups CAN migrate together — "variant 2" in design).
+  * Reward path unchanged (eat still grants energy, move still moves
+    biomass, etc.).
+
+Verified empirically (20-gen, no action-hacks, --profile info-ish):
+  seals gen-1 iter-1 sampling: 44/28/28 H=54% (move-dominant!) vs
+  pre-fix 08/12/84-92 H=07%. Mechanically the fix works. However
+  ARS still drags seals to rs=100% from gen 2 onward — proving the
+  remaining attractor is STRUCTURAL (no predator above seals = no
+  channel-b feedback; slow population dynamics = weak channel-a),
+  not mask-driven. Same for porpoises after the fix.
+
+================================================================
+21. CO-EVOLUTION (default training mode)
+================================================================
+Implemented in lib/runners/trainer.py::train_step_coevolution and
+lib/runners/parallel_worker.py::_evaluate_coevo_task. Default ON
+(--no_coevolution to fall back to round-robin).
+
+Mechanics:
+  * Per ARS iteration: sample one independent delta per species, share
+    a common rollout seed (CRN) across the +/- halves.
+  * Build 2*n_deltas joint rollouts where ALL DM policies are
+    perturbed simultaneously (+sigma*delta_fid for the + half,
+    -sigma*delta_fid for the - half). Each rollout returns one
+    fitness per species.
+  * ARS update is per-species, using THAT species' own deltas and
+    its own r_pos/r_neg vector. No cross-species delta leakage.
+  * Effect (vs round-robin): predator/prey feedback materialises
+    inside the same rollout instead of being averaged out against a
+    frozen opponent. Documented "channel (b)" in konvergensproblem.txt.
+
+Empirical signature (reproducible across hyperparameter configs):
+  * Zooplankton "escape" from rest=100% to ~rs/et=40/60 around gen
+    13-20 once pelagic_fish predation pressure ramps up. Observed
+    in 3+ independent runs (with and without action-hacks, with and
+    without spawn-fix). The mechanism is robust.
+  * Seals/porpoises rest=100% attractor: structural, robust to every
+    intervention tried (argmax_penalty, entropy_coef, temp, uniform-
+    bias-init, spawn-fix, adding pelagic_fish as seal prey). Likely
+    a genuine ARS optimum for a sated top-predator on 150-tick
+    rollouts without a predator above them.
+  * Gadoids reach POSITIVE reward (+0.04..+0.07) once hacks are off
+    — the only species that does, indicating they have a sustainable
+    rest/eat mix on the current biology.
+  * Pelagic_fish converges to mv-dominant (74-98%) "flee" policy;
+    the exact level depends on co-evolution kaskad effects (mildare
+    with longer rollouts and other species' policies in flux).
+
+Kept eval snapshots: results/coev_5gen_100ticks_eval,
+results/coev_20gen_100ticks_eval, results/coev_info_profile_40gen,
+results/coev_20gen_noHacks, results/coev_info_20gen_postSpawnFix.
+
+================================================================
+22. DESIGN PRINCIPLE: BIOLOGY DRIVES, NOT ACTION-HACKS
+================================================================
+Crystallised in konvergensproblem.txt (read that file for the long
+story; this section is the operational summary).
+
+Rule of thumb when adding a fix:
+  1. If it shapes the action distribution (penalty/bonus on action
+     fractions, entropy, temperature, eps-greedy, action bias init)
+     it is an ACTION-HACK. Hide behind a flag and keep OFF in
+     profiles. Use only for diagnostics, never as the primary force.
+  2. If it changes the biological/structural setup (spawn
+     distribution, min_split rule semantics, food web edges in
+     fg_library.yaml, impact mortality tables, integral-reward
+     formulation, co-evolution rollout structure) it is a
+     STRUCTURAL fix. Prefer these.
+
+The "evaluate by action histogram" lens (mv/rs/et fractions =
+quality) is officially deprecated. Quality must be evaluated by
+biomass trajectories over long inference rollouts, predator-prey
+cycles, response to impact fields, and comparison against
+Baltic-Sea field data. The next major work item is building that
+ecosystem-validation pipeline, NOT more hyperparameter sweeps.
+
+Known open structural items (likely worth attacking next):
+  * benthic_community grows 27x over 10000-tick inference because no
+    DM predates it and its K is soft — an fg_library.yaml/ecology
+    question, not training.
+  * No predator above seals/porpoises in mareld2.yaml -> top-
+    predator rest-attractor is mechanistically rational. Either
+    accept as biology (verify with long-rollout biomass plots) or
+    add a hunting/disease impact map.
+  * accessibility map exists in code (movement masking) but is NOT
+    yet threaded to _spawn_biomass_distribution.allowed_mask. Hook
+    is ready in lib/config/config_loader.py.

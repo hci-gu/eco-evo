@@ -99,7 +99,7 @@ interaction_definitions:
     energy_gain: 2500
     preys_on: true
   gadoids_preys_on_pelagic_fish:
-    max_intake_rate: 0.01
+    max_intake_rate: 0.005
     energy_gain: 5000
     preys_on: true
   porpoises_preys_on_pelagic_fish:
@@ -205,7 +205,8 @@ interaction_definitions:
   seals_preys_on_benthic_community:
     preys_on: false
   seals_preys_on_pelagic_fish:
-    preys_on: false
+    preys_on: true
+    max_intake_rate: 0.005
   seals_preys_on_phytoplankton:
     preys_on: false
   seals_preys_on_porpoises:

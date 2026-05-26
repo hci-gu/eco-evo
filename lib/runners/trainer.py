@@ -17,7 +17,7 @@ class ARSTrainer:
     """
     def __init__(self, env_builder, policy_params, sigma=0.1, lr=0.02, n_deltas=8, n_workers=1,
                  alpha=1.0, beta=1.0, obs_normalize=True, top_deltas=None, entropy_coef=0.0,
-                 argmax_penalty=0.0, integral_reward=False):
+                 argmax_penalty=0.0, integral_reward=False, uniform_bias_init=False):
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma
@@ -28,25 +28,25 @@ class ARSTrainer:
         self.beta = float(beta)
         self.obs_normalize = bool(obs_normalize)
         # Entropy bonus in fitness: fitness += entropy_coef * H(pi)/H_max.
-        # Belönar policyer som bibehåller utforskning -> motverkar att
-        # softmax kollapsar till en konstant action ("ät alltid" /
-        # "rest alltid") under de första generationerna.
+        # Rewards policies that maintain exploration -> counteracts softmax
+        # collapse to a constant action ("eat always" / "rest always")
+        # during the first generations.
         self.entropy_coef = float(entropy_coef)
-        # Argmax-penalty: fitness -= argmax_penalty * max_argmax_frac, där
-        # max_argmax_frac = max(move_frac, rest_frac, eat_frac) över aktiva
-        # celler. Straffar direkt degenererade en-action-policyer ("ät
-        # alltid" / "rest alltid"); kompletterar entropy-bonus som bara
-        # mäter softmax-spridning, inte argmax-degeneration.
+        # Argmax-penalty: fitness -= argmax_penalty * max_argmax_frac, where
+        # max_argmax_frac = max(move_frac, rest_frac, eat_frac) across active
+        # cells. Directly penalises degenerate single-action policies ("eat
+        # always" / "rest always"); complements entropy-bonus which only
+        # measures softmax spread, not argmax degeneration.
         self.argmax_penalty = float(argmax_penalty)
-        # Softmax-temperatur, sätts externt per generation (linjär annealing
-        # från temp_start -> temp_end). Hög T -> jämnare softmax -> tvingar
-        # utforskning. Skiljer sig från entropy-bonus genom att påverka
-        # action-distributionen *direkt* istället för fitness.
+        # Softmax temperature, set externally per generation (linear annealing
+        # from temp_start -> temp_end). High T -> flatter softmax -> forces
+        # exploration. Differs from entropy-bonus by affecting the
+        # action distribution *directly* instead of fitness.
         self.softmax_temperature = 1.0
-        # Integral-baserad reward: använd medel-biomassa/medel-energy över
-        # hela rolloutet istället för slutvärdet. Tanken: "ät alltid" som
-        # leder till byteskollaps under rolloutet får sänkt reward eftersom
-        # genomsnittet sjunker, även om slutvärdet hade varit jämförbart.
+        # Integral-based reward: use mean biomass / mean energy over the
+        # whole rollout instead of the final value. Idea: "eat always" which
+        # leads to prey collapse during the rollout gets lower reward because
+        # the average drops, even if the final value would have been comparable.
         self.integral_reward = bool(integral_reward)
         # Default: use all deltas (no truncation). When set, must be in [1, n_deltas].
         if top_deltas is None:
@@ -55,9 +55,11 @@ class ARSTrainer:
             self.top_deltas = max(1, min(int(top_deltas), self.n_deltas))
 
         # Initialize policies (parent-side; workers hold their own copies)
+        self.uniform_bias_init = bool(uniform_bias_init)
         self.policies = {}
         for fg_id, (in_dim, out_dim) in policy_params.items():
-            self.policies[fg_id] = PolicyNetwork(in_dim, out_dim)
+            self.policies[fg_id] = PolicyNetwork(in_dim, out_dim,
+                                                 uniform_bias_init=self.uniform_bias_init)
 
         # Observation running statistics, lazily-shaped on first task return.
         # Shape per fg: mean (D,), var (D,), count int.
@@ -72,7 +74,7 @@ class ARSTrainer:
             self._pool = ctx.Pool(
                 processes=self.n_workers,
                 initializer=_worker_init,
-                initargs=(env_builder, policy_params),
+                initargs=(env_builder, policy_params, self.uniform_bias_init),
             )
 
     def close(self):
@@ -408,8 +410,8 @@ class ARSTrainer:
         b0 = env.fgs[fg_id].biomass.sum()
         r0 = env.fgs[fg_id].energy_reserve.sum()
 
-        # Integral-reward: ackumulera bh/rh per tick och dela med antal
-        # ticks i slutet. Annars: använd bara slutvärdet (klassisk).
+        # Integral-reward: accumulate bh/rh per tick and divide by tick
+        # count at the end. Otherwise: use only the final value (classic).
         if self.integral_reward and n_ticks > 0:
             b_sum = 0.0; r_sum = 0.0
             for _ in range(n_ticks):
@@ -455,20 +457,20 @@ class ARSTrainer:
         return fitness, samples, act_diag
 
     # ================================================================
-    # Co-evolution (spår C i konvergensproblem.txt)
+    # Co-evolution (track C in konvergensproblem.txt)
     # ----------------------------------------------------------------
-    # Tränar ALLA decision makers samtidigt: per delta-par perturberas
-    # varje arts vikter med en oberoende delta (gemensam pair_seed),
-    # och en GEMENSAM rollout returnerar fitness för varje art.
-    # Därmed ser predator-policyn byteskollapsen som dess "ät alltid"
-    # orsakar -- och byte-policyn ser predationstrycket. Den negativa
-    # feedback som saknas i round-robin-träningen materialiseras nu
-    # som en del av gradienten.
+    # Trains ALL decision makers simultaneously: per delta pair each
+    # species' weights are perturbed with an independent delta (shared
+    # pair_seed), and a SHARED rollout returns fitness for every species.
+    # Thus the predator policy sees the prey collapse its "eat always"
+    # causes -- and the prey policy sees the predation pressure. The
+    # negative feedback missing in round-robin training now materialises
+    # as part of the gradient.
     # ================================================================
     def _evaluate_coevo(self, fg_list, n_ticks, seed=None,
                         obs_mean=None, obs_var=None, dm_ids_for_norm=None):
-        """Sequential co-evolution rollout: returnerar fitness per art ur
-        en enda gemensam simulering."""
+        """Sequential co-evolution rollout: returns fitness per species
+        from a single shared simulation."""
         env = self.env_builder(seed=seed) if seed is not None else self.env_builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
@@ -536,21 +538,22 @@ class ARSTrainer:
         return fitness, samples, act_diag_dict
 
     def train_step_coevolution(self, target_species, n_eval_ticks=15):
-        """Co-evolution training step (spår C).
+        """Co-evolution training step (track C).
 
-        Perturberar ALLA arter i `target_species` samtidigt per delta-par
-        och kör en gemensam rollout. Varje art får sin egen fitness ur
-        samma simulering, varefter ARS-uppdateringen sker självständigt
-        per art med rewards-batchen från denna iteration.
+        Perturbs ALL species in `target_species` simultaneously per delta
+        pair and runs a shared rollout. Each species receives its own
+        fitness from the same simulation, after which the ARS update is
+        performed independently per species with the reward batch from
+        this iteration.
 
         Args:
-            target_species: list[str] -- arter som ska tränas samtidigt.
+            target_species: list[str] -- species to train simultaneously.
             n_eval_ticks: int -- ticks per rollout.
 
         Returns:
-            dict[fg_id -> float] -- medel-reward per art över batchen.
+            dict[fg_id -> float] -- mean reward per species over the batch.
         """
-        # Snapshot av nuvarande vikter och deltas per art.
+        # Snapshot of current weights and per-species deltas.
         base_weights = {}     # fg_id -> torch.Tensor (1D)
         deltas = {}           # fg_id -> list[torch.Tensor]
         for fid in target_species:
@@ -558,11 +561,11 @@ class ARSTrainer:
             base_weights[fid] = w
             deltas[fid] = [torch.randn_like(w) for _ in range(self.n_deltas)]
 
-        # CRN-seeds per delta-par (samma rollout-seed för +/- för en
-        # given i -> identiska impact-/start-fält).
+        # CRN seeds per delta pair (same rollout seed for +/- for a
+        # given i -> identical impact / initial fields).
         pair_seeds = [int(np.random.randint(1, 2**31 - 1)) for _ in range(self.n_deltas)]
 
-        # Obs-stats setup (samma som i train_step).
+        # Obs-stats setup (same as in train_step).
         obs_mean = obs_var = None
         dm_ids_for_norm = None
         D = None
@@ -573,9 +576,9 @@ class ARSTrainer:
 
         agg_sum = None; agg_sumsq = None; agg_count = 0
 
-        # Vikter för OTRÄNADE arter (icke decision makers + arter utanför
-        # target_species men med policy) -- används som baseline i alla
-        # rollouts.
+        # Weights for UNTRAINED species (non decision makers + species
+        # outside target_species but with a policy) -- used as baseline
+        # in all rollouts.
         non_target_weights = {
             fg_id: self._get_weights(p).numpy().copy()
             for fg_id, p in self.policies.items()
@@ -590,21 +593,21 @@ class ARSTrainer:
         act_neg = [None] * self.n_deltas
 
         def _build_weights_dict(sign, idx):
-            """Bygg vikt-dict för alla policys, perturberat per art (delta-par idx)."""
+            """Build a weight dict for all policies, perturbed per species (delta-pair idx)."""
             wd = dict(non_target_weights)
             for fid in target_species:
                 wd[fid] = base_weights[fid].numpy() + sign * self.sigma * deltas[fid][idx].numpy()
             return wd
 
         if self._pool is None:
-            # Sekventiell väg.
+            # Sequential path.
             for i in range(self.n_deltas):
                 s = pair_seeds[i]
                 for sign, store_r, store_a in (
                     (+1.0, rewards_pos, act_pos),
                     (-1.0, rewards_neg, act_neg),
                 ):
-                    # Sätt vikter på lokala policys.
+                    # Set weights on local policies.
                     for fid in target_species:
                         w = base_weights[fid] + sign * self.sigma * deltas[fid][i]
                         self._set_weights(self.policies[fid], w)
@@ -622,11 +625,11 @@ class ARSTrainer:
                         else:
                             agg_sum += s_sum; agg_sumsq += s_sumsq
                         agg_count += s_cnt
-            # Återställ till baseline-vikter innan ARS-uppdatering.
+            # Restore baseline weights before ARS update.
             for fid in target_species:
                 self._set_weights(self.policies[fid], base_weights[fid])
         else:
-            # Parallell väg.
+            # Parallel path.
             obs_pack = None
             if self.obs_normalize:
                 obs_pack = {'dm_ids': dm_ids_for_norm,
@@ -659,17 +662,17 @@ class ARSTrainer:
                         agg_sum += s_sum; agg_sumsq += s_sumsq
                     agg_count += s_cnt
 
-        # Merge obs-stats (gemensamt för alla arter i samma rollout).
+        # Merge obs-stats (shared across all species in the same rollout).
         if self.obs_normalize and agg_count > 0 and dm_ids_for_norm is not None:
             self._merge_obs_stats(dm_ids_for_norm, agg_sum, agg_sumsq, agg_count)
 
-        # ARS-uppdatering per art med dess egen reward-vektor.
+        # ARS update per species with its own reward vector.
         out_means = {}
         for fid in target_species:
             r_pos = np.array([rewards_pos[i][fid] for i in range(self.n_deltas)], dtype=np.float64)
             r_neg = np.array([rewards_neg[i][fid] for i in range(self.n_deltas)], dtype=np.float64)
 
-            # Z-score + entropy/argmax bonus per art (samma logik som train_step).
+            # Z-score + entropy/argmax bonus per species (same logic as train_step).
             if self.entropy_coef != 0.0 or self.argmax_penalty != 0.0:
                 eco_all = np.concatenate([r_pos, r_neg])
                 eco_mean = float(np.mean(eco_all))
@@ -716,7 +719,7 @@ class ARSTrainer:
             rel = r_std / (abs(r_mean) + 1e-12)
             out_means[fid] = r_mean
 
-            # Per-art action-entropi från denna iteration.
+            # Per-species action entropy from this iteration.
             act_str = ""
             H_sum = 0.0; mv_sum = 0.0; rs_sum = 0.0; et_sum = 0.0; n_act = 0
             H_max_seen = None

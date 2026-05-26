@@ -59,6 +59,110 @@ def _sample_total_biomass(min_b, max_b, rng):
         return float(rng.integers(lo, hi + 1))
     return float(np.random.randint(lo, hi + 1))
 
+def _spawn_biomass_distribution(grid_size, total_b, min_per_cell, allowed_mask=None, rng=None):
+    """Distribute ``total_b`` over the grid following the cluster-spawn spec.
+
+    Rules:
+      * Eligible cells are those where ``allowed_mask`` is truthy. If
+        ``allowed_mask`` is None, every cell is eligible.
+      * Each picked cell receives a biomass drawn uniformly from
+        ``[min_per_cell, total_b]`` (or ``min_per_cell .. remaining`` if less
+        biomass than ``total_b`` is left). The pick continues until the
+        running remainder drops below ``min_per_cell``.
+      * Any leftover (< ``min_per_cell``) is merged into one of the already
+        seeded cells so total biomass is preserved exactly.
+      * If the number of eligible cells is too small to fit
+        ``ceil(total_b / total_b)``-many cells while honouring the floor,
+        cells are allowed to receive more than ``total_b`` (i.e. the
+        remainder is absorbed and the loop exits naturally).
+      * When ``min_per_cell`` is 0 or non-positive the function falls back
+        to the legacy uniform-Dirichlet spread over all eligible cells.
+    """
+    H, W = grid_size
+    if rng is None:
+        rng = np.random
+    initial_b = np.zeros(grid_size, dtype=np.float64)
+    if total_b <= 0:
+        return initial_b
+
+    # Determine the eligible cell pool.
+    if allowed_mask is None:
+        flat_idx = np.arange(H * W)
+    else:
+        mask = np.asarray(allowed_mask).reshape(H, W)
+        flat_idx = np.flatnonzero(mask > 0)
+        if flat_idx.size == 0:
+            # No accessible cell — fall back to the full grid so that biomass
+            # never silently vanishes when accessibility is not configured.
+            flat_idx = np.arange(H * W)
+
+    # Legacy path: no clustering threshold, spread biomass across the full
+    # eligible pool with a uniform Dirichlet-like draw. Preserves prior
+    # behaviour for FGs whose min_split_biomass == 0.
+    if min_per_cell is None or min_per_cell <= 0:
+        if hasattr(rng, "random"):
+            draws = rng.random(flat_idx.size)
+        else:
+            draws = np.random.rand(flat_idx.size)
+        draws = (draws / (draws.sum() + 1e-9)) * total_b
+        flat = initial_b.reshape(-1)
+        flat[flat_idx] = draws
+        return initial_b
+
+    # Cluster-spawn path: pick cells one at a time, assign biomass uniformly
+    # in [min_per_cell, total_b] (capped at remainder), repeat until the
+    # remainder is below the floor; merge the leftover into a seeded cell.
+    flat = initial_b.reshape(-1)
+    seeded = []
+    remaining = float(total_b)
+    available = list(flat_idx)
+    # `available` is the pool of eligible cells that have not yet received
+    # biomass. Picking without replacement keeps the seed cells distinct.
+    while remaining >= min_per_cell and available:
+        # Random pick from the available pool.
+        if hasattr(rng, "integers"):
+            i = int(rng.integers(0, len(available)))
+        else:
+            i = int(np.random.randint(0, len(available)))
+        cell = available.pop(i)
+        # Draw biomass uniformly in [min_per_cell, min(total_b, remaining)].
+        hi = min(float(total_b), remaining)
+        # `hi` can equal `min_per_cell` near the end; np.random.uniform is OK
+        # with hi == lo, but guard against a tiny numerical underflow.
+        if hi <= min_per_cell:
+            amount = remaining  # absorb the remainder, exit next iteration
+        else:
+            if hasattr(rng, "uniform"):
+                amount = float(rng.uniform(min_per_cell, hi))
+            else:
+                amount = float(np.random.uniform(min_per_cell, hi))
+        amount = min(amount, remaining)
+        flat[cell] = amount
+        seeded.append(cell)
+        remaining -= amount
+
+    # Edge case: no seed could be placed (e.g. total_b < min_per_cell). Put
+    # all biomass into a single random eligible cell so it isn't lost. This
+    # also allows the cell to exceed ``total_b`` if needed — see spec point 3.
+    if not seeded:
+        if hasattr(rng, "integers"):
+            i = int(rng.integers(0, flat_idx.size))
+        else:
+            i = int(np.random.randint(0, flat_idx.size))
+        flat[flat_idx[i]] = float(total_b)
+        return initial_b
+
+    # Merge leftover (< min_per_cell) into a randomly chosen seeded cell.
+    if remaining > 0:
+        if hasattr(rng, "integers"):
+            j = int(rng.integers(0, len(seeded)))
+        else:
+            j = int(np.random.randint(0, len(seeded)))
+        flat[seeded[j]] += remaining
+
+    return initial_b
+
+
 def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None):
     lib = load_config(library_path)
     spec_defs = lib['species_definitions']
@@ -92,9 +196,14 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         sample_rng = rng if seed is not None else None
         total_b = _sample_total_biomass(min_b, max_b, sample_rng)
 
-        # Random distribution for MVP demonstration
-        initial_b = rng.random(grid_size) if seed is not None else np.random.rand(*grid_size)
-        initial_b = (initial_b / (initial_b.sum() + 1e-9)) * total_b
+        # Cluster-aware spawn: enforce a per-cell floor of 10 * min_split
+        # (kg -> tonnes already applied inside FG.__init__) so that newly
+        # spawned cells start well above the sub-threshold mask. For FGs
+        # with min_split == 0 this collapses to the legacy uniform spread.
+        min_per_cell = 10.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        initial_b = _spawn_biomass_distribution(
+            grid_size, total_b, min_per_cell,
+            allowed_mask=None, rng=rng)
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
@@ -233,8 +342,15 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             min_b, max_b = _resolve_initial_biomass_range(override, specs)
             total_b = _sample_total_biomass(min_b, max_b, rng)
 
-        initial_b = rng.random(grid_size) if rng is not None else np.random.rand(*grid_size)
-        initial_b = (initial_b / (initial_b.sum() + 1e-9)) * total_b
+        # Cluster-aware spawn (see _spawn_biomass_distribution): per-cell
+        # floor 10 * min_split_biomass eliminates the sub-threshold mask
+        # lock-in that affected seals/porpoises. accessibility filtering is
+        # threaded in once accessibility maps become part of the project
+        # config; for now allowed_mask=None means the full grid is eligible.
+        min_per_cell = 10.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        initial_b = _spawn_biomass_distribution(
+            grid_size, total_b, min_per_cell,
+            allowed_mask=None, rng=rng)
         # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
         # initial energy fill levels. Inference keeps the deterministic
         # 0.7 * ME_X default for reproducible scenario comparisons.

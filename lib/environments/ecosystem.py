@@ -341,10 +341,17 @@ class EcosystemEnvironment:
         prey_present = (B_all > 0).astype(self.dtype)
         full_mask[:, 5:5 + self.N_all] = self.eat_static_mask[:, :, None, None] * prey_present[None, :, :, :]
 
+        # Sub-threshold cells (B < min_split_biomass) are NOT mask-restricted
+        # to {rest, eat} any more — they keep access to all 11 actions in the
+        # logits, but their post-softmax distribution is collapsed to a
+        # one-hot argmax later in this function so the whole sub-threshold
+        # group acts as a single unit (no splitting). See ``sub_thr_mask``
+        # below for the deterministic collapse.
         if np.any(self.dm_min_split > 0):
             B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
-            can_split = (B_dm >= self.dm_min_split[:, None, None]).astype(self.dtype)
-            full_mask[:, 0:4] *= can_split[:, None, :, :]
+            sub_thr_mask = (B_dm > 0) & (B_dm < self.dm_min_split[:, None, None])
+        else:
+            sub_thr_mask = None
 
         cannot_move = (self.dm_v <= 0)
         if np.any(cannot_move):
@@ -392,6 +399,22 @@ class EcosystemEnvironment:
         logits_max = np.max(logits, axis=1, keepdims=True)
         e = np.exp(logits - logits_max)
         probs = e / np.sum(e, axis=1, keepdims=True)
+
+        # Sub-threshold cells: collapse the action distribution to a one-hot
+        # argmax so the whole group performs a single action (variant 2 of
+        # the spawn/sub-threshold spec). The argmax is taken over the full
+        # 11-action distribution including move directions, allowing small
+        # groups to migrate as a unit instead of being forced into rest/eat.
+        if sub_thr_mask is not None and np.any(sub_thr_mask):
+            # (N_dm, H, W) -> broadcast over the action axis.
+            argmax_idx = np.argmax(probs, axis=1)  # (N_dm, H, W)
+            one_hot = np.zeros_like(probs)
+            d_idx, h_idx, w_idx = np.where(sub_thr_mask)
+            a_idx = argmax_idx[d_idx, h_idx, w_idx]
+            one_hot[d_idx, a_idx, h_idx, w_idx] = np.float32(1.0)
+            # Replace probs only in sub-threshold cells.
+            mask3 = sub_thr_mask[:, None, :, :]
+            probs = np.where(mask3, one_hot, probs)
 
         self.pi_move = probs[:, 0:4]
         self.pi_rest = probs[:, 4]

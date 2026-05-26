@@ -246,41 +246,170 @@ def main():
                         help="Disable ARS-V2 running observation normalisation (mean/std).")
     parser.add_argument("--entropy_coef", type=float, default=0.1,
                         help="Entropy bonus weight in fitness: fitness += entropy_coef * H(pi)/H_max. "
-                             "Motverkar att softmax-policyn kollapsar till en konstant action. "
-                             "0.0 = av (default: 0.1).")
+                             "Counteracts softmax-policy collapse to a constant action. "
+                             "0.0 = off (default: 0.1).")
     parser.add_argument("--argmax_penalty", type=float, default=0.3,
                         help="Argmax-penalty weight: fitness -= argmax_penalty * max_argmax_frac, "
-                             "där max_argmax_frac = max(move,rest,eat)-fraktion över aktiva celler. "
-                             "Straffar direkt degenererade en-action-policyer. 0.0 = av (default: 0.3).")
+                             "where max_argmax_frac = max(move,rest,eat) fraction across active cells. "
+                             "Directly penalises degenerate single-action policies. 0.0 = off (default: 0.3).")
     parser.add_argument("--temp_start", type=float, default=3.0,
-                        help="Softmax-temperatur vid generation 1. Hög T -> jämnare softmax -> "
-                             "tvingad utforskning. Annealas linjärt till --temp_end. Default: 3.0.")
+                        help="Softmax temperature at generation 1. High T -> flatter softmax -> "
+                             "forced exploration. Linearly annealed to --temp_end. Default: 3.0.")
     parser.add_argument("--temp_end", type=float, default=1.0,
-                        help="Softmax-temperatur vid sista generationen (default: 1.0).")
+                        help="Softmax temperature at the last generation (default: 1.0).")
     parser.add_argument("--integral_reward", action="store_true", default=True,
-                        help="Använd medel-biomassa/medel-energy över hela rolloutet istället "
-                             "för slutvärdet i fitness-beräkningen. Ger \"ät alltid\" negativ "
-                             "gradient i sig själv via byteskollaps under rolloutet. Default: True.")
+                        help="Use mean biomass / mean energy over the whole rollout instead "
+                             "of the final value in the fitness computation. Gives \"eat always\" a "
+                             "negative gradient on its own via prey collapse during the rollout. Default: True.")
     parser.add_argument("--no_integral_reward", dest="integral_reward", action="store_false",
-                        help="Stäng av integral-reward, använd klassisk slutvärde-fitness.")
+                        help="Disable integral reward, use classic final-value fitness.")
     parser.add_argument("--temp_anneal_gens", type=int, default=10,
-                        help="Antal generationer över vilka temperaturen annealas linjärt "
-                             "från --temp_start till --temp_end. Efter detta håller den --temp_end. "
+                        help="Number of generations over which the temperature is annealed linearly "
+                             "from --temp_start to --temp_end. After that it stays at --temp_end. "
                              "Default: 10.")
-    parser.add_argument("--coevolution", action="store_true",
-                        help="Aktivera co-evolution (spår C i konvergensproblem.txt): "
-                             "träna ALLA target_species samtidigt i en gemensam rollout per "
-                             "delta-par istället för round-robin. Detta skapar negativ feedback "
-                             "mellan predator-/byte-policys (predator 'ät alltid' -> byteskollaps "
-                             "-> predator-reward sjunker i SAMMA rollout) som round-robin inte ser. "
-                             "Per iteration utvärderas n_deltas * 2 gemensamma rollouts, och varje "
-                             "arts vikter ARS-uppdateras självständigt med dess egen reward-vektor.")
+    parser.add_argument("--coevolution", action="store_true", default=True,
+                        help="Enable co-evolution (track C in konvergensproblem.txt): "
+                             "train ALL target_species simultaneously in a shared rollout per "
+                             "delta pair instead of round-robin. This creates negative feedback "
+                             "between predator/prey policies (predator 'eat always' -> prey collapse "
+                             "-> predator reward drops in the SAME rollout) that round-robin cannot see. "
+                             "Per iteration n_deltas * 2 shared rollouts are evaluated, and each "
+                             "species' weights are ARS-updated independently with its own reward vector. "
+                             "Default: True. Use --no_coevolution to fall back to round-robin.")
+    parser.add_argument("--no_coevolution", dest="coevolution", action="store_false",
+                        help="Disable co-evolution and fall back to round-robin training (one species at a time).")
     parser.add_argument("--resume", action="store_true",
                         help="Resume from previously saved checkpoints in results/policy_<fg>.pth "
                              "for ALL decision makers (not only the trained ones). Missing "
                              "checkpoints are silently skipped and start from random init.")
+    parser.add_argument("--run-name", "--run_name", dest="run_name", type=str, default="default",
+                        help="Name of the run. Checkpoints are saved to results/<run-name>/policy_<fg>.pth. "
+                             "The same name can be used at inference via inference.py --run-name <name>. "
+                             "Default: 'default'.")
+    parser.add_argument("--uniform_bias_init", action="store_true", default=False,
+                        help="Enable uniform-bias init on the output layer: bias=0 + "
+                             "weights*0.01 so that softmax starts ~uniform at gen 1. "
+                             "OFF by default in line with konvergensproblem.txt - use only "
+                             "if a specific species (e.g. seals) is locked in a saturated "
+                             "action attractor already at gen 1.")
+    parser.add_argument("--profile", type=str, default=None,
+                        choices=["sanity", "info", "deep"],
+                        help="Preset hyperparameter profile for co-evolution: "
+                             "'sanity' (~15 min quick check), 'info' (~1-2h standard run), "
+                             "'deep' (~6-10h publication quality). The profile OVERRIDES explicitly "
+                             "given flags - on conflict a message with a [Y/n] prompt is shown "
+                             "listing the overridden values.")
 
     args = parser.parse_args()
+
+    # --- Profile application -----------------------------------------------
+    # Each profile defines a fixed hyperparameter recipe. If --profile is set,
+    # those values override any conflicting explicitly-given CLI flags. The
+    # user is informed which flags were overridden via a [Y/n] prompt.
+    # The profiles NOW run without argmax-penalty, without entropy-bonus,
+    # without softmax-temperature annealing (T=1.0 at both ends) and without
+    # uniform-bias init - in line with konvergensproblem.txt's conclusion
+    # to let the biological rules drive behaviour instead of
+    # action-distribution hacks. The flags remain and can be enabled
+    # manually without --profile.
+    PROFILES = {
+        "sanity": {
+            "coevolution": True,
+            "generations": "10",
+            "iter_per_gen": 15,
+            "n_deltas": 16,
+            "n_eval_ticks": 100,
+            "temp_anneal_gens": 8,
+            "argmax_penalty": 0.0,
+            "entropy_coef": 0.0,
+            "temp_start": 1.0,
+            "temp_end": 1.0,
+            "uniform_bias_init": False,
+        },
+        "info": {
+            "coevolution": True,
+            "generations": "40",
+            "iter_per_gen": 20,
+            "n_deltas": 16,
+            "n_eval_ticks": 150,
+            "temp_anneal_gens": 30,
+            "argmax_penalty": 0.0,
+            "entropy_coef": 0.0,
+            "temp_start": 1.0,
+            "temp_end": 1.0,
+            "uniform_bias_init": False,
+        },
+        "deep": {
+            "coevolution": True,
+            "generations": "80",
+            "iter_per_gen": 20,
+            "n_deltas": 20,
+            "n_eval_ticks": 200,
+            "temp_anneal_gens": 60,
+            "argmax_penalty": 0.0,
+            "entropy_coef": 0.0,
+            "temp_start": 1.0,
+            "temp_end": 1.0,
+            "uniform_bias_init": False,
+        },
+    }
+    if args.profile is not None:
+        prof = PROFILES[args.profile]
+        # Determine which args were explicitly supplied on the command line by
+        # re-parsing with all defaults set to a sentinel.
+        import sys as _sys
+        _sentinel = object()
+        _sentinel_parser = argparse.ArgumentParser(add_help=False)
+        for a in parser._actions:
+            if a.dest == "help" or not a.option_strings:
+                continue
+            kwargs = {"dest": a.dest, "default": _sentinel}
+            if isinstance(a, argparse._StoreTrueAction):
+                kwargs["action"] = "store_const"; kwargs["const"] = True
+            elif isinstance(a, argparse._StoreFalseAction):
+                kwargs["action"] = "store_const"; kwargs["const"] = False
+            else:
+                kwargs["nargs"] = a.nargs
+                kwargs["type"] = a.type
+                kwargs["choices"] = a.choices
+            _sentinel_parser.add_argument(*a.option_strings, **kwargs)
+        _ns, _ = _sentinel_parser.parse_known_args()
+        explicit = {k: v for k, v in vars(_ns).items() if v is not _sentinel}
+
+        conflicts = []
+        for key, prof_val in prof.items():
+            if key in explicit and explicit[key] != prof_val:
+                conflicts.append((key, explicit[key], prof_val))
+
+        # Apply profile values (override unconditionally).
+        for key, prof_val in prof.items():
+            setattr(args, key, prof_val)
+
+        print(f"==========================================")
+        print(f"  PROFILE ACTIVE: --profile {args.profile}")
+        print(f"==========================================")
+        print(f"Profile values applied:")
+        for key, prof_val in prof.items():
+            print(f"  --{key.replace('_','-')} = {prof_val}")
+        if conflicts:
+            print(f"\n[!] PROFILE OVERRIDES - the following explicitly given flags "
+                  f"were overridden by profile '{args.profile}':")
+            for key, user_val, prof_val in conflicts:
+                print(f"  --{key.replace('_','-')}: you specified {user_val!r}, "
+                      f"profile uses {prof_val!r}")
+            try:
+                while True:
+                    resp = input("Continue with profile values? [Y/n]: ").strip().lower()
+                    if resp in ("", "y", "yes"):
+                        break
+                    if resp in ("n", "no"):
+                        print("Aborted by user.")
+                        return
+                    print("Please answer 'y' or 'n' (Enter = 'y').")
+            except EOFError:
+                pass
+        print(f"------------------------------------------")
+    # -----------------------------------------------------------------------
 
     # Parse --generations: accept 'inf' or a positive integer.
     gen_raw = str(args.generations).strip().lower()
@@ -312,9 +441,10 @@ def main():
     global PROJECT_PATH
     PROJECT_PATH = args.project
 
-    # Ensure results directory exists
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    # Ensure run directory exists: results/<run-name>/
+    run_dir = os.path.join('results', args.run_name)
+    if not os.path.exists(run_dir):
+        os.makedirs(run_dir)
 
     # Initialize a temporary environment to fetch functional group metadata
     temp_env = env_builder()
@@ -382,7 +512,7 @@ def main():
     print(f"Top Deltas:     {top_deltas_resolved} ({top_origin})")
     obs_norm_enabled = not args.no_obs_normalize
     print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
-    print(f"Co-evolution:   {args.coevolution} {'(user)' if args.coevolution else '(default: off, round-robin)'}")
+    print(f"Co-evolution:   {args.coevolution} {'(default: on)' if args.coevolution else '(user, disabled -> round-robin)'}")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:
@@ -409,7 +539,8 @@ def main():
                          n_workers=n_workers, alpha=args.alpha, beta=args.beta,
                          obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved,
                          entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
-                         integral_reward=args.integral_reward)
+                         integral_reward=args.integral_reward,
+                         uniform_bias_init=args.uniform_bias_init)
 
     # Optionally resume from previously saved checkpoints. We always load for
     # ALL decision makers (not just the target species) so that single-species
@@ -418,7 +549,7 @@ def main():
         print(f"Resume:         enabled (loading checkpoints for all DMs)")
         loaded, missing = [], []
         for fg_id in policy_params:
-            ckpt = f"results/policy_{fg_id}.pth"
+            ckpt = os.path.join(run_dir, f"policy_{fg_id}.pth")
             if os.path.exists(ckpt):
                 if _load_checkpoint(trainer, fg_id, ckpt):
                     loaded.append(fg_id)
@@ -463,7 +594,8 @@ def main():
             trainer._pool = ctx.Pool(
                 processes=trainer.n_workers,
                 initializer=_worker_init,
-                initargs=(new_builder, trainer.policy_params),
+                initargs=(new_builder, trainer.policy_params,
+                          trainer.uniform_bias_init),
             )
         if maps:
             summary = ", ".join(
@@ -487,8 +619,8 @@ def main():
             print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ==========")
             _install_generation_maps(gen)
             if args.coevolution:
-                # Co-evolution: alla arter tränas samtidigt per iteration
-                # i en GEMENSAM rollout. Ingen inre round-robin-loop.
+                # Co-evolution: all species are trained simultaneously per iteration
+                # in a SHARED rollout. No inner round-robin loop.
                 print(f"\n>>> Co-evolving: {', '.join(s.upper() for s in target_species)} "
                       f"(gen {gen+1}/{gen_label_total})")
                 for species in target_species:
@@ -500,9 +632,9 @@ def main():
                     summary = " | ".join(
                         f"{fid}={means[fid]:+.4f}" for fid in target_species)
                     print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
-                # Spara checkpoints för alla samtränande arter.
+                # Save checkpoints for all co-trained species.
                 for species in target_species:
-                    save_path = f"results/policy_{species}.pth"
+                    save_path = os.path.join(run_dir, f"policy_{species}.pth")
                     _save_checkpoint(trainer, species, save_path)
                     print(f"    Checkpoint saved to: {save_path}")
             else:
@@ -517,7 +649,7 @@ def main():
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
 
                     # Save checkpoint after each generation so progress is preserved.
-                    save_path = f"results/policy_{species}.pth"
+                    save_path = os.path.join(run_dir, f"policy_{species}.pth")
                     _save_checkpoint(trainer, species, save_path)
                     print(f"    Checkpoint saved to: {save_path}")
     except KeyboardInterrupt:
@@ -529,7 +661,7 @@ def main():
         except Exception:
             pass
         for species in target_species:
-            save_path = f"results/policy_{species}.pth"
+            save_path = os.path.join(run_dir, f"policy_{species}.pth")
             try:
                 _save_checkpoint(trainer, species, save_path)
                 print(f"    Final checkpoint saved to: {save_path}")

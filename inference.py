@@ -89,19 +89,37 @@ def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
         return None
     try:
         with np.load(path, allow_pickle=False) as data:
-            if impact_id not in data.files:
+            keys = list(data.files)
+            arr = None
+            # Priority 1: exact impact_id match (back-compat with archives
+            # whose key happens to be named after the impact).
+            if impact_id in keys:
+                cand = np.asarray(data[impact_id])
+                if cand.ndim == 2:
+                    arr = cand
+            # Priority 2: the first 2-D array in the archive. This makes
+            # impact-map .npz files key-agnostic — any 2-D array works,
+            # regardless of what it is called inside the archive. Mirrors
+            # the loader used by fgconfig's Inference tab.
+            if arr is None:
+                for k in keys:
+                    cand = np.asarray(data[k])
+                    if cand.ndim == 2:
+                        arr = cand
+                        if verbose and k != impact_id:
+                            print(f"  [info] Using array '{k}' from "
+                                  f"{os.path.basename(path)} as impact map "
+                                  f"for '{impact_id}' (key-agnostic load).")
+                        break
+            if arr is None:
                 if verbose:
-                    print(f"  [warn] '{impact_id}' missing from {os.path.basename(path)} "
-                          f"(keys: {list(data.files)}); using zero field.")
+                    print(f"  [warn] No 2-D array found in "
+                          f"{os.path.basename(path)} (keys: {keys}); "
+                          f"using zero field for '{impact_id}'.")
                 return None
-            arr = np.asarray(data[impact_id])
     except Exception as e:
         if verbose:
             print(f"  [warn] Could not read '{impact_id}' from {path}: {e}; using zero field.")
-        return None
-    if arr.ndim != 2:
-        if verbose:
-            print(f"  [warn] '{impact_id}' array is not 2-D (shape={arr.shape}); using zero field.")
         return None
     arr = arr.astype(np.float32, copy=False)
     Hs, Ws = arr.shape
@@ -245,8 +263,12 @@ def main():
     )
     parser.add_argument("--project", type=str, default=None,
                         help="Path to project YAML file. If omitted, uses setup_full_mareld_mvp.")
-    parser.add_argument("--checkpoints", type=str, default="results",
-                        help="Directory containing policy_<fg>.pth checkpoints (default: results).")
+    parser.add_argument("--checkpoints", type=str, default=None,
+                        help="Directory containing policy_<fg>.pth checkpoints. "
+                             "If omitted, results/<run-name>/ is used (see --run-name).")
+    parser.add_argument("--run-name", "--run_name", dest="run_name", type=str, default="default",
+                        help="Name of the run whose checkpoints to load (results/<run-name>/). "
+                             "Default: 'default'. Ignored if --checkpoints is given explicitly.")
     parser.add_argument("--grid", type=parse_grid_arg, default=(60, 60),
                         help="Grid dimensions as n*m (default: 60*60).")
     parser.add_argument("--ticks", type=int, default=100,
@@ -259,12 +281,15 @@ def main():
 
     args = parser.parse_args()
     verbose = not args.quiet
+    if args.checkpoints is None:
+        args.checkpoints = os.path.join("results", args.run_name)
 
     if verbose:
         print("==========================================")
         print("      MARELD INFERENCE SESSION            ")
         print("==========================================")
         print(f"Project:      {args.project or '(built-in MVP)'}")
+        print(f"Run name:     {args.run_name}")
         print(f"Checkpoints:  {args.checkpoints}")
         print(f"Grid:         {args.grid[0]}x{args.grid[1]}")
         print(f"Ticks:        {args.ticks}")

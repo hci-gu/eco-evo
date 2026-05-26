@@ -30,8 +30,9 @@ def _set_weights_flat(policy, flat_weights):
         idx += n
 
 
-def _worker_init(env_builder, policy_params):
-    global _ENV_BUILDER, _POLICIES
+def _worker_init(env_builder, policy_params, uniform_bias_init=False):
+    global _ENV_BUILDER, _POLICIES, _UNIFORM_BIAS_INIT
+    _UNIFORM_BIAS_INIT = bool(uniform_bias_init)
     # Ignore SIGINT in workers so Ctrl+C is handled solely by the parent.
     # Without this, every worker raises KeyboardInterrupt and spams tracebacks.
     import signal
@@ -56,7 +57,8 @@ def _worker_init(env_builder, policy_params):
     torch.manual_seed(seed)
     np.random.seed(seed & 0x7FFFFFFF)
     for fg_id, (in_dim, out_dim) in policy_params.items():
-        _POLICIES[fg_id] = PolicyNetwork(in_dim, out_dim)
+        _POLICIES[fg_id] = PolicyNetwork(in_dim, out_dim,
+                                         uniform_bias_init=_UNIFORM_BIAS_INIT)
 
 
 def _evaluate_coevo_task(task):

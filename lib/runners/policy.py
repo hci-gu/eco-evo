@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_dim, output_dim, hidden_dim=30):
+    def __init__(self, input_dim, output_dim, hidden_dim=30, uniform_bias_init=False):
         super(PolicyNetwork, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
@@ -13,6 +13,23 @@ class PolicyNetwork(nn.Module):
             nn.Linear(hidden_dim, output_dim)
         )
         self.softmax = nn.Softmax(dim=-1)
+
+        # Optional uniform-bias init on the output layer (off by default,
+        # enabled via --uniform_bias_init in train.py):
+        #   - bias = 0  -> no action preferred a priori
+        #   - weights downscaled by 0.01 -> input*W ~= 0 on average regardless
+        #     of input distribution or activation asymmetry
+        # Result: logits ~= 0 at gen 1 -> softmax ~= uniform. Prevents
+        # species with systematically asymmetric input (e.g. seals) from
+        # locking into a saturated rest=100% attractor already at gen 1.
+        # Default OFF: in line with konvergensproblem.txt's recommendation
+        # to let the biological rules drive behaviour without
+        # hacks that mask symptoms.
+        if uniform_bias_init:
+            with torch.no_grad():
+                output_layer = self.net[-1]
+                output_layer.bias.zero_()
+                output_layer.weight.mul_(0.01)
 
     def forward(self, x):
         # x shape: (Batch, input_dim)
