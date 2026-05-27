@@ -824,7 +824,8 @@ ecosystem-validation pipeline, NOT more hyperparameter sweeps.
 Known open structural items (likely worth attacking next):
   * benthic_community grows 27x over 10000-tick inference because no
     DM predates it and its K is soft — an fg_library.yaml/ecology
-    question, not training.
+    question, not training. Still present after the latest YAML
+    update (all `*_preys_on_benthic_community: false`).
   * No predator above seals/porpoises in mareld2.yaml -> top-
     predator rest-attractor is mechanistically rational. Either
     accept as biology (verify with long-rollout biomass plots) or
@@ -832,3 +833,106 @@ Known open structural items (likely worth attacking next):
   * accessibility map exists in code (movement masking) but is NOT
     yet threaded to _spawn_biomass_distribution.allowed_mask. Hook
     is ready in lib/config/config_loader.py.
+  * min_split_biomass=50 kg still set for porpoises and seals in the
+    current fg_library.yaml. Cluster-spawn + sub-threshold collapse
+    (section 20) mitigates the old hard rest-attractor, but the
+    one-hot argmax fallback is still constantly active for top
+    predators if typical per-cell biomass < threshold.
+  * Dead parameter: `seals_preys_on_pelagic_fish` has
+    `preys_on: false` but a leftover `max_intake_rate: 0.012` —
+    harmless at runtime, worth cleaning for clarity.
+
+================================================================
+23. BIOLOGICAL SANITY CHECK FORMULA (one-liner gate before training)
+================================================================
+Per Strategi.pdf + konvergensproblem.txt "Kritisk insikt 4". For each
+DM species, compute per-tick energy balance at full hunger (h=1) and
+require netto_eat > rest_cost; otherwise `rest` is the structural
+global optimum regardless of how ARS is trained ("rest-always-
+collapse"). Cross-check `move` for top predators too.
+
+  intake_at_h1 = max_intake_rate * energy_gain         # of best prey
+  feed_cost    = feeding_cost    * resting_metabolism
+  rest_cost    = resting_cost    * resting_metabolism  # resting_cost=1
+  move_cost    = movement_cost   * resting_metabolism  # per tick moving
+
+  netto_eat = intake_at_h1 - feed_cost                 # MUST be > 0
+  Hard gate:        netto_eat > rest_cost
+  Soft gate (move): netto_eat > move_cost              (else move always
+                                                        suboptimal vs rest+eat)
+
+History on mareld2.yaml / fg_library.yaml:
+  * Pre-update (see previous review): porpoises -148, seabirds -133,
+    seals -38.75 (all MJ/tick at h=1). Eat structurally worse than
+    rest -> rest=100% attractor was a parameter bug, not an ML bug.
+  * Post-update (current YAML, sanity script in section 24):
+        zooplankton  netto_eat=+101.4  eat-rest=+98.9   eat-move=+101.4
+        pelagic_fish netto_eat=+84.8   eat-rest=+76.8   eat-move=+67.6
+        gadoids      netto_eat=+564.5  eat-rest=+558.5  eat-move=+553.4
+        porpoises    netto_eat=+95.0   eat-rest=+33.0   eat-move=-91.0 *
+        seals        netto_eat=+147.5  eat-rest=+122.5  eat-move=+85.0
+        seabirds     netto_eat=+493.5  eat-rest=+403.5  eat-move=+133.5
+    All DMs pass the hard gate (eat > rest). PORPOISES fails the
+    soft gate (move 186 > eat 95) — a single move tick costs more
+    than a single eat tick yields, so move is only justified by
+    paying back over several eat ticks in a better cell. Risk of
+    blocked exploration on short rollouts. Not a rest-collapse but
+    worth watching.
+
+================================================================
+24. SANITY-CHECK SNIPPET (run before every training session)
+================================================================
+Standalone python snippet (paste into a shell). Pull I, E_prey,
+feeding_cost, resting_metabolism, resting_cost, movement_cost from
+fg_library.yaml for each DM and its best prey:
+
+  rows = [
+    # (name, I, E_prey, feeding_cost, SMR, resting_cost, movement_cost)
+    ('zooplankton',  0.175, 600,  1.45, 2.5, 1.0, 0.0 ),
+    ('pelagic_fish', 0.04,  2500, 1.9,  8.0, 1.0, 2.15),
+    ('gadoids',      0.115, 5000, 1.75, 6.0, 1.0, 1.85),
+    ('porpoises',    0.05,  5000, 2.5,  62., 1.0, 3.0 ),
+    ('seals',        0.05,  4000, 2.1,  25., 1.0, 2.5 ),
+    ('seabirds',     0.15,  5000, 2.85, 90., 1.0, 4.0 ),
+  ]
+  for n,I,E,fc,smr,rc,mc in rows:
+      intake = I*E; feed = fc*smr; netto = intake - feed
+      rest = rc*smr; move = mc*smr
+      print(f"{n:14} netto={netto:8.1f} eat-rest={netto-rest:8.1f} "
+            f"eat-move={netto-move:8.1f}")
+
+Acceptance criterion: every line must have netto>0 and eat-rest>0.
+eat-move<0 is a warning, not a stop, but flag it.
+
+================================================================
+25. RUNNING TRAINING/INFERENCE NON-INTERACTIVELY (gotcha)
+================================================================
+train.py has TWO interactive prompts that block in any non-tty
+environment (CI, agent bg shell, nohup without redirected stdin):
+  * train.py:418  "Continue with profile values? [Y/n]:" — only fires
+                  when explicit flags conflict with --profile.
+  * train.py:542  "Continue with these parameters? [Y/n]:" — always
+                  fires after the session header.
+Both default to "yes" on empty Enter. If you launch the process
+without a real stdin you'll see the header, the prompt line, and
+then NOTHING (process sleeps in `input()` at ~0.8% CPU, no workers
+spawned). Workaround for unattended runs:
+
+    yes "" | python -u train.py --profile info --project mareld2.yaml \
+                                --run-name <name>
+
+  * `yes ""` feeds an endless stream of empty lines (each accepted as
+    the default "yes").
+  * `python -u` is REQUIRED — otherwise stdout is fully buffered
+    when stdout is a pipe and no progress is visible until the
+    buffer fills (hundreds of MB later).
+
+EXPLICIT FLAGS CAN'T OVERRIDE A PROFILE: profile values are applied
+unconditionally after the [Y/n] override prompt. To run "info" with
+a different generation count, EDIT the PROFILES dict in train.py
+(around line 345) — not the CLI flag. Example: changed
+PROFILES["info"]["generations"] from "40" to "10" for the 10-gen
+sanity inference session.
+
+Inference (inference.py) has no interactive prompts; safe to run
+non-interactively with default stdin.

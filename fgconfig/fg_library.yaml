@@ -4,21 +4,21 @@
     is_decision_maker: false
     resting_metabolism: 0.1
     movement_speed: 0.0
-    growth_rate: 0.01
-    max_carrying_capacity: 60.0
-    energy_content: 600.0
+    growth_rate: 0.125
+    max_carrying_capacity: 20.0
+    energy_content: 2750.0
     max_energy_reserve: 0.0
   zooplankton:
     display_name: "Zooplankton"
     is_decision_maker: true
-    maintenance_level: 0.3
-    max_energy_reserve: 50.0
-    resting_metabolism: 1.5
+    maintenance_level: 0.5
+    max_energy_reserve: 375.0
+    resting_metabolism: 2.5
     movement_speed: 0.0
     resting_cost: 1.0
-    feeding_cost: 5.0
+    feeding_cost: 1.45
     movement_cost: 0.0
-    energy_content: 2500.0
+    energy_content: 3500.0
     min_split_biomass: 0.0
   benthic_community:
     display_name: "Benthic Community"
@@ -32,86 +32,86 @@
   pelagic_fish:
     display_name: "Pelagic Fish"
     is_decision_maker: true
-    maintenance_level: 0.3
-    max_energy_reserve: 250.0
-    resting_metabolism: 0.8
+    maintenance_level: 0.5
+    max_energy_reserve: 1300.0
+    resting_metabolism: 8.0
     movement_speed: 1.0
     resting_cost: 1.0
-    feeding_cost: 5.0
-    movement_cost: 2.0
-    energy_content: 5000.0
+    feeding_cost: 1.9
+    movement_cost: 2.15
+    energy_content: 7000.0
     min_split_biomass: 0.0
   gadoids:
     display_name: "Gadoids"
     is_decision_maker: true
-    maintenance_level: 0.3
-    max_energy_reserve: 300.0
-    resting_metabolism: 0.2
+    maintenance_level: 0.5
+    max_energy_reserve: 800.0
+    resting_metabolism: 6.0
     movement_speed: 0.25
     resting_cost: 1.0
-    feeding_cost: 2.0
-    movement_cost: 3.0
+    feeding_cost: 1.75
+    movement_cost: 1.85
     energy_content: 4000.0
     min_split_biomass: 0.0
   porpoises:
     display_name: "Porpoises"
     is_decision_maker: true
-    maintenance_level: 0.3
-    max_energy_reserve: 1000.0
-    resting_metabolism: 16.0
+    maintenance_level: 0.5
+    max_energy_reserve: 2550.0
+    resting_metabolism: 62.0
     movement_speed: 1.0
     resting_cost: 1.0
-    feeding_cost: 3.0
+    feeding_cost: 2.5
     movement_cost: 3.0
     min_split_biomass: 50.0
     energy_content: 0.0
   seals:
     display_name: "Seals"
     is_decision_maker: true
-    maintenance_level: 0.3
-    max_energy_reserve: 1200.0
-    resting_metabolism: 10.0
+    maintenance_level: 0.5
+    max_energy_reserve: 4675.0
+    resting_metabolism: 25.0
     movement_speed: 1.0
     resting_cost: 1.0
-    feeding_cost: 5.0
+    feeding_cost: 2.1
     movement_cost: 2.5
     min_split_biomass: 50.0
     energy_content: 0.0
   seabirds:
     display_name: "Seabirds"
     is_decision_maker: true
-    max_energy_reserve: 600.0
-    resting_metabolism: 12.0
+    max_energy_reserve: 2650.0
+    resting_metabolism: 90.0
     movement_speed: 1.0
     resting_cost: 1.0
-    feeding_cost: 4.0
-    movement_cost: 8.0
+    feeding_cost: 2.85
+    movement_cost: 4.0
     min_split_biomass: 0.0
-    maintenance_level: 0.3
+    maintenance_level: 0.5
     energy_content: 0.0
 interaction_definitions:
   zooplankton_preys_on_phytoplankton:
-    max_intake_rate: 0.1
+    max_intake_rate: 0.175
     energy_gain: 600
     preys_on: true
   pelagic_fish_preys_on_zooplankton:
-    max_intake_rate: 0.02
+    max_intake_rate: 0.04
     energy_gain: 2500
     preys_on: true
   gadoids_preys_on_pelagic_fish:
-    max_intake_rate: 0.005
+    max_intake_rate: 0.115
     energy_gain: 5000
     preys_on: true
   porpoises_preys_on_pelagic_fish:
-    max_intake_rate: 0.02
+    max_intake_rate: 0.05
     energy_gain: 5000
     preys_on: true
   seals_preys_on_gadoids:
-    max_intake_rate: 0.01
+    max_intake_rate: 0.05
     energy_gain: 4000
     preys_on: true
   seabirds_preys_on_pelagic_fish:
-    max_intake_rate: 0.04
+    max_intake_rate: 0.15
     energy_gain: 5000
     preys_on: true
   benthic_community_preys_on_benthic_community:
@@ -205,8 +205,8 @@ interaction_definitions:
   seals_preys_on_benthic_community:
     preys_on: false
   seals_preys_on_pelagic_fish:
-    preys_on: true
-    max_intake_rate: 0.005
+    preys_on: false
+    max_intake_rate: 0.012
   seals_preys_on_phytoplankton:
     preys_on: false
   seals_preys_on_porpoises:

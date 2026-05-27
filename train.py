@@ -133,23 +133,40 @@ class _EnvBuilder:
     passed to worker processes via ``trainer.env_builder``.
     """
 
-    def __init__(self, impact_maps_snapshot=None):
+    def __init__(self, impact_maps_snapshot=None, grid_size=None, project_path=None):
         self.impact_maps_snapshot = impact_maps_snapshot
+        # Bake grid dims into the instance so worker processes (which
+        # reimport train.py via 'spawn' and would otherwise see the
+        # module-level 60x60 defaults) build env with the correct shape.
+        # Falls back to the module globals when not supplied.
+        if grid_size is None:
+            grid_size = (GRID_HEIGHT, GRID_WIDTH)
+        self.grid_height = int(grid_size[0])
+        self.grid_width = int(grid_size[1])
+        # Bake project path into the instance as well. Spawn-workers reimport
+        # train.py, which resets the module-level ``PROJECT_PATH`` global to
+        # ``None``, causing the worker to fall back to ``setup_full_mareld_mvp``
+        # (different FG set + a hardcoded observable impact) and producing an
+        # obs-dim mismatch with the parent's policy_params -> crash inside
+        # the policy forward (RuntimeError: mat1 and mat2 shapes cannot be
+        # multiplied). Falls back to the module global when not supplied.
+        self.project_path = project_path if project_path is not None else PROJECT_PATH
 
     def __call__(self, seed=None):
-        grid_size = (GRID_HEIGHT, GRID_WIDTH)
+        H, W = self.grid_height, self.grid_width
+        grid_size = (H, W)
         impact_ranges = {}
-        if PROJECT_PATH:
+        if self.project_path:
             fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
-                PROJECT_PATH, grid_size=grid_size, seed=seed)
+                self.project_path, grid_size=grid_size, seed=seed)
         else:
             fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
             impact_vars = ['windfarm_noise']
             observable_impact_vars = ['windfarm_noise']
 
         grid_config = {
-            'width': GRID_WIDTH,
-            'height': GRID_HEIGHT,
+            'width': W,
+            'height': H,
             'cell_size': 1000.0,
             'tick_duration': 6.0,
         }
@@ -160,22 +177,32 @@ class _EnvBuilder:
             for iv in impact_vars:
                 field = self.impact_maps_snapshot.get(iv)
                 if field is None:
-                    field = np.zeros((GRID_HEIGHT, GRID_WIDTH), dtype=np.float32)
+                    field = np.zeros((H, W), dtype=np.float32)
+                # Defensive: if a snapshot field has the wrong shape
+                # (e.g. parent sampled at a different grid before the
+                # builder was rebuilt), fall back to zeros instead of
+                # crashing inside env.grid.add_map.
+                elif field.shape != (H, W):
+                    field = np.zeros((H, W), dtype=np.float32)
                 env.grid.add_map(iv, field)
         else:
             sampled = _sample_impact_maps(
                 impact_vars, impact_ranges,
-                (GRID_HEIGHT, GRID_WIDTH), seed=seed)
+                (H, W), seed=seed)
             for iv in impact_vars:
                 env.grid.add_map(iv, sampled.get(
-                    iv, np.zeros((GRID_HEIGHT, GRID_WIDTH), dtype=np.float32)))
+                    iv, np.zeros((H, W), dtype=np.float32)))
         return env
 
 
-def _make_env_builder(impact_maps_snapshot=None):
+def _make_env_builder(impact_maps_snapshot=None, grid_size=None, project_path=None):
     """Factory kept for call-site compatibility; returns a picklable
-    ``_EnvBuilder`` instance."""
-    return _EnvBuilder(impact_maps_snapshot)
+    ``_EnvBuilder`` instance with an explicit ``grid_size`` and
+    ``project_path`` baked in so 'spawn' workers don't fall back to the
+    module-level defaults (which are reset to ``None``/60x60 inside the
+    worker after reimport)."""
+    return _EnvBuilder(impact_maps_snapshot, grid_size=grid_size,
+                      project_path=project_path)
 
 
 # Default module-level env_builder: fresh impact maps per call. Used for
@@ -328,7 +355,7 @@ def main():
         },
         "info": {
             "coevolution": True,
-            "generations": "40",
+            "generations": "10",
             "iter_per_gen": 20,
             "n_deltas": 16,
             "n_eval_ticks": 150,
@@ -579,7 +606,7 @@ def main():
         gen_seed = int(np.random.randint(1, 2**31 - 1))
         maps = _sample_impact_maps(_impact_vars_global, _impact_ranges_global,
                                    (GRID_HEIGHT, GRID_WIDTH), seed=gen_seed)
-        new_builder = _make_env_builder(maps)
+        new_builder = _make_env_builder(maps, grid_size=(GRID_HEIGHT, GRID_WIDTH))
         trainer.env_builder = new_builder
         # Rebuild worker pool so spawn-workers receive the updated builder.
         if trainer._pool is not None:

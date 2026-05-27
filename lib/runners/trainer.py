@@ -17,7 +17,7 @@ class ARSTrainer:
     """
     def __init__(self, env_builder, policy_params, sigma=0.1, lr=0.02, n_deltas=8, n_workers=1,
                  alpha=1.0, beta=1.0, obs_normalize=True, top_deltas=None, entropy_coef=0.0,
-                 argmax_penalty=0.0, integral_reward=False, uniform_bias_init=False):
+                 argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False):
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma

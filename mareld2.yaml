@@ -39,13 +39,16 @@ impact_variables:
   - impact_id: pelagic_trawling
     value_min: 0
     value_max: 1000
+    muted: true
   - impact_id: rotor
     value_min: 0
     value_max: 1
+    muted: true
   - impact_id: windfarm_noise
     value_min: 0
     value_max: 140
     observable: true
+    muted: true
 inference:
   impact_maps:
     rotor: vindparker.npz
