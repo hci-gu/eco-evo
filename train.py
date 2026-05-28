@@ -473,8 +473,13 @@ def main():
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
 
-    # Initialize a temporary environment to fetch functional group metadata
-    temp_env = env_builder()
+    # Initialize a temporary environment to fetch functional group metadata.
+    # Build a fresh env_builder here (rather than reusing the module-level
+    # one) so PROJECT_PATH set above is baked into the instance, ensuring
+    # spawn-workers later receive the correct project path.
+    env_builder_local = _make_env_builder(
+        None, grid_size=(GRID_HEIGHT, GRID_WIDTH), project_path=PROJECT_PATH)
+    temp_env = env_builder_local()
     policy_params = get_dynamic_policy_params(
         temp_env.fgs,
         n_observable_impacts=len(getattr(temp_env, 'observable_impact_vars', []) or []),
@@ -562,7 +567,7 @@ def main():
         pass
 
     # Create the trainer with all relevant policy dimensions
-    trainer = ARSTrainer(env_builder, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
+    trainer = ARSTrainer(env_builder_local, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
                          n_workers=n_workers, alpha=args.alpha, beta=args.beta,
                          obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved,
                          entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
@@ -606,7 +611,8 @@ def main():
         gen_seed = int(np.random.randint(1, 2**31 - 1))
         maps = _sample_impact_maps(_impact_vars_global, _impact_ranges_global,
                                    (GRID_HEIGHT, GRID_WIDTH), seed=gen_seed)
-        new_builder = _make_env_builder(maps, grid_size=(GRID_HEIGHT, GRID_WIDTH))
+        new_builder = _make_env_builder(maps, grid_size=(GRID_HEIGHT, GRID_WIDTH),
+                                        project_path=PROJECT_PATH)
         trainer.env_builder = new_builder
         # Rebuild worker pool so spawn-workers receive the updated builder.
         if trainer._pool is not None:
