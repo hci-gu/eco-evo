@@ -277,6 +277,36 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             return None
         return f if f >= 0 else None
 
+    # Reference-grid scaling: biomass values entered in the FG editor and the
+    # Inference tab are defined relative to a reference grid (Rx x Ry cells)
+    # stored under project_metadata.reference_grid_{width,height}. When the
+    # actual runtime grid (grid_size = (H, W)) differs in cell count, all
+    # initial biomass values (training range min/max and inference fixed
+    # value) are scaled linearly by (H*W) / (Ry*Rx). A hard floor of 1 ton
+    # applies to the scaled lower bound and to the scaled inference value so
+    # tiny grids never produce zero-biomass spawns. The reference defaults
+    # to 60 x 60 (the historical mareld2 grid) when unspecified.
+    pmeta = project.get('project_metadata', {}) or {}
+    # Runtime floor: reference grid must be at least 3x3 (matches the
+    # live-validation rule in fgconfig). Sub-floor values from legacy /
+    # hand-edited project files are rounded up so downstream scaling math
+    # is always well-defined.
+    _MIN_REF = 3
+    def _as_pos_int(v, default):
+        try:
+            iv = int(v)
+        except (TypeError, ValueError):
+            return default
+        if iv < _MIN_REF:
+            return _MIN_REF
+        return iv
+    ref_w = _as_pos_int(pmeta.get('reference_grid_width'), 60)
+    ref_h = _as_pos_int(pmeta.get('reference_grid_height'), 60)
+    H_act, W_act = int(grid_size[0]), int(grid_size[1])
+    ref_cells = ref_w * ref_h
+    act_cells = H_act * W_act
+    biomass_scale = (act_cells / ref_cells) if ref_cells > 0 else 1.0
+
     impact_ranges = {}
     for iv in project.get('impact_variables', []) or []:
         if not isinstance(iv, dict) or iv.get('muted'):
@@ -335,12 +365,25 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         if mode == 'inference':
             # Inference uses the per-FG fixed value entered in the FG config
             # tool's "Inference" tab. No random sampling: the exact value is
-            # spread spatially. Missing values fall back to 0.0.
+            # spread spatially. Missing values fall back to 0.0. The value
+            # is scaled by the reference-grid factor with a 1-ton floor.
             fixed = _resolve_inference_initial_biomass(override)
-            total_b = 0.0 if fixed is None else float(fixed)
+            if fixed is None:
+                total_b = 0.0
+            else:
+                scaled = float(fixed) * biomass_scale
+                total_b = max(scaled, 1.0) if float(fixed) > 0 else 0.0
         else:
             min_b, max_b = _resolve_initial_biomass_range(override, specs)
-            total_b = _sample_total_biomass(min_b, max_b, rng)
+            # Scale the training range by the reference-grid factor. The
+            # scaled lower bound is clamped to >= 1 ton so degenerate small
+            # grids cannot produce zero-biomass spawns.
+            if min_b is not None and max_b is not None:
+                min_b_s = max(min_b * biomass_scale, 1.0)
+                max_b_s = max(max_b * biomass_scale, min_b_s)
+                total_b = _sample_total_biomass(min_b_s, max_b_s, rng)
+            else:
+                total_b = _sample_total_biomass(min_b, max_b, rng)
 
         # Cluster-aware spawn (see _spawn_biomass_distribution): per-cell
         # floor 10 * min_split_biomass eliminates the sub-threshold mask
