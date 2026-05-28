@@ -233,9 +233,13 @@ Flag                  Default              Meaning
 --coevolution         True                 Joint rollout co-evo (all DMs
                                            perturbed in same rollout). Use
                                            --no_coevolution for round-robin.
---profile             None                 sanity | info | deep. Trumps any
-                                           conflicting explicit flags after
-                                           a [Y/n] override prompt. Profiles
+--profile             None                 sanity | info | deep. EXPLICIT CLI
+                                           flags override profile values
+                                           (explicit > profile > parser
+                                           default). Profile only fills in
+                                           keys NOT given on the command line;
+                                           overridden keys are listed as an
+                                           info note (no [Y/n] prompt). Profiles
                                            set argmax_penalty=0, entropy_coef=0,
                                            temp_start=temp_end=1.0,
                                            uniform_bias_init=False (action-hack-
@@ -324,7 +328,14 @@ the impact_variables entry), not in the library. It drives:
 ================================================================
 Tabs:
   "Project & FGs"       Scrollable both axes.
-    Project Info (name).
+    Project Info: project name + Reference Grid (cells, X x Y, min 3).
+      The reference grid is the (Rx, Ry) coordinate system in which all
+      biomass values (FG editor's training range + inference_initial_biomass)
+      are expressed. Stored in project_metadata.reference_grid_width/height
+      (default 60 x 60 for legacy projects). Live-validated: both fields
+      turn red + status label appears when value is empty or < 3; save and
+      load both clamp to >= 3 silently. See section 12b for the runtime
+      scaling rule.
     fg_container with two side-by-side LabelFrames:
       - "Decision Makers"     (self.fg_listbox)
       - "Non Decision Makers" (self.ndm_listbox)
@@ -379,6 +390,37 @@ Key behaviours:
   - Library writes via ruamel.yaml. Recent projects in recent_projects.txt.
 
 ================================================================
+12b. REFERENCE GRID & BIOMASS SCALING (project_metadata)
+================================================================
+Each project stores a reference grid (Rx, Ry) in
+project_metadata.reference_grid_width / reference_grid_height. All
+biomass values entered in fgconfig (FG editor's initial_biomass_min/
+max and the Inference tab's inference_initial_biomass) are defined
+for that reference grid.
+
+At runtime in lib/config/config_loader.py:load_project_config the
+actual grid (H_act, W_act) is compared to (Rx, Ry) and a linear
+scale is applied:
+
+    biomass_scale = (H_act * W_act) / (Rx * Ry)
+
+* mode='train':  min_b *= scale; max_b *= scale; min_b clamped to
+                 >= 1.0 ton; max_b clamped to >= min_b.
+* mode='inference': total_b = max(inference_initial_biomass * scale, 1.0).
+
+Hard floor: the scaled min of the training range AND the scaled
+inference value are clamped to >= 1.0 ton regardless of how small
+the grid is. The scaled max of the training range is NOT clamped
+(intentional; if you want symmetric clamping, two-line change in
+config_loader.py).
+
+Legacy projects without the reference_grid_* keys fall back to
+60 x 60 in both the GUI (load_project_from_path) and the runtime
+(_as_pos_int with default 60). Sub-3 values from hand-edited YAML
+are rounded up to 3 by _as_pos_int — matches the GUI live-validation
+rule. Values are written to the project file next time the user saves.
+
+================================================================
 8. fg_library.yaml - WHAT LIVES WHERE
 ================================================================
   species_definitions:
@@ -390,7 +432,15 @@ Key behaviours:
       resting_metabolism, movement_speed,
       maintenance_level                     (u_X, fraction in [0,1],
                                              default 0.3; growth break-even)
-      feeding_cost, resting_cost, movement_cost
+      feeding_cost, movement_cost          (resting_cost was removed
+                                             this session — it is
+                                             hardcoded to 1.0 in the
+                                             biology; runtime callers
+                                             use params.get('resting_cost',
+                                             1.0) as a defensive fallback.
+                                             The Rest field is GONE from
+                                             the FG editor and the key is
+                                             stripped from fg_library.yaml.)
       min_split_biomass                    (DM only; kg, 0 = continuous)
       menu: [prey_id, ...]                 (DM only)
   interaction_definitions:
@@ -414,7 +464,12 @@ Key behaviours:
 ARSTrainer(env_builder, policy_params,
            sigma=0.1, lr=0.02, n_deltas=8,
            n_workers=1, alpha=1.0, beta=1.0,
-           obs_normalize=True, top_deltas=None)
+           obs_normalize=True, top_deltas=None,
+           entropy_coef=0.0, argmax_penalty=0.0,
+           integral_reward=True, uniform_bias_init=False)
+  NOTE: integral_reward default is True in the constructor — synced
+  with train.py's CLI default (was False, fixed this session). Direct
+  instantiations from tests/inference scripts now match production.
   policies: persistent {fg_id: PolicyNetwork} — co-evolution-safe
             (weights kept across generations).
   obs_stats: persistent {fg_id: {mean (D,), var (D,), count}} across
@@ -842,6 +897,38 @@ Known open structural items (likely worth attacking next):
     `preys_on: false` but a leftover `max_intake_rate: 0.012` —
     harmless at runtime, worth cleaning for clarity.
 
+LATE-SESSION ADDITIONS (see konvergensproblem.txt for full story):
+  * KRITISK INSIKT 7: 150-tick rollouts HIDE ecosystem collapse.
+    Inference of info_10gen_no_impacts checkpoints over 2000 ticks
+    (5 seeds, impacts muted) showed deterministic zooplankton
+    extinction around tick ~620-700, pelagic_fish -87%, benthic_
+    community +565% with no saturation, and frozen top predators
+    (porpoises/seabirds/seals biomass exactly constant 12/25/25 t
+    over 2000 ticks). Positive training reward (5/6 DM positive)
+    does NOT imply biological sustainability — integral reward
+    over 150 ticks is biologically too short to stress-test
+    predator-prey stability. The mirrored eat=1.0 attractor when
+    all impacts are muted is just as degenerate as the rest=1.0
+    attractor that appears with impacts active.
+  * Bugfix this session: `_EnvBuilder` in train.py did NOT bake in
+    PROJECT_PATH. With spawn-context multiprocessing, each worker
+    re-imports train.py which resets the module-global to None,
+    making workers fall back to setup_full_mareld_mvp (hardcodes
+    observable_impact_vars=['windfarm_noise']) while the parent
+    reads mareld2.yaml — bmm-shape-mismatch when impact-mute config
+    diverges. Fix: bake project_path into the _EnvBuilder instance
+    (same pattern as grid_size); _install_generation_maps also
+    passes PROJECT_PATH through.
+  * Verified this session: inference.py DOES honour indivisible
+    weight. load_project_config(mode='inference') runs the SAME
+    cluster-spawn (floor 10*min_split) as training. The only
+    mode-difference is total_b (fixed inference_initial_biomass
+    vs uniform range) and randomize_energy (off vs on). The frozen
+    top-predator state in inference is NOT a spawn-mask bug — it
+    is the learned policy (move=0 + tiny absolute biomass in only
+    1-2 active cells) exposed over a 2000-tick horizon that
+    training never saw. Don't spend time re-investigating spawn.
+
 ================================================================
 23. BIOLOGICAL SANITY CHECK FORMULA (one-liner gate before training)
 ================================================================
@@ -907,13 +994,16 @@ eat-move<0 is a warning, not a stop, but flag it.
 ================================================================
 25. RUNNING TRAINING/INFERENCE NON-INTERACTIVELY (gotcha)
 ================================================================
-train.py has TWO interactive prompts that block in any non-tty
-environment (CI, agent bg shell, nohup without redirected stdin):
-  * train.py:418  "Continue with profile values? [Y/n]:" — only fires
-                  when explicit flags conflict with --profile.
-  * train.py:542  "Continue with these parameters? [Y/n]:" — always
-                  fires after the session header.
-Both default to "yes" on empty Enter. If you launch the process
+train.py has ONE remaining interactive prompt that blocks in any
+non-tty environment (CI, agent bg shell, nohup without redirected
+stdin):
+  * "Continue with these parameters? [Y/n]:" — always fires after
+    the session header.
+The old profile-conflict [Y/n] prompt was REMOVED this session — the
+new semantics (explicit CLI > profile) makes a confirmation prompt
+unnecessary; overridden profile values are now just listed under
+"EXPLICIT CLI FLAGS OVERRIDE PROFILE" as informational text.
+Defaults to "yes" on empty Enter. If you launch the process
 without a real stdin you'll see the header, the prompt line, and
 then NOTHING (process sleeps in `input()` at ~0.8% CPU, no workers
 spawned). Workaround for unattended runs:
@@ -927,12 +1017,12 @@ spawned). Workaround for unattended runs:
     when stdout is a pipe and no progress is visible until the
     buffer fills (hundreds of MB later).
 
-EXPLICIT FLAGS CAN'T OVERRIDE A PROFILE: profile values are applied
-unconditionally after the [Y/n] override prompt. To run "info" with
-a different generation count, EDIT the PROFILES dict in train.py
-(around line 345) — not the CLI flag. Example: changed
-PROFILES["info"]["generations"] from "40" to "10" for the 10-gen
-sanity inference session.
+EXPLICIT CLI FLAGS NOW OVERRIDE PROFILE (changed this session).
+Precedence is explicit > profile > parser default. To run "info"
+with a different generation count, just pass --generations N on
+the command line — the profile leaves that key alone. The PROFILES
+dict in train.py only needs editing when you want to change the
+default recipe itself, not for one-off overrides.
 
 Inference (inference.py) has no interactive prompts; safe to run
 non-interactively with default stdin.

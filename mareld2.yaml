@@ -1,5 +1,7 @@
 ﻿project_metadata:
   name: Mareld2
+  reference_grid_width: 60
+  reference_grid_height: 60
 simulation_settings: {}
 decision_makers:
   - group_id: gadoids

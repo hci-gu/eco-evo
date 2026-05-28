@@ -214,9 +214,102 @@ class FGConfigApp:
         info_frame = ttk.LabelFrame(self.project_inner, text="Project Info")
         info_frame.pack(fill="x", padx=10, pady=5)
         
+        # Layout: rad 0 = Project Name, rad 1 = Reference Grid.
+        # Båda raderna delar samma kolumn-struktur i info_frame så att
+        # Entry-fälten linjerar vertikalt:
+        #   col 0: huvud-label ("Project Name:" / "Reference Grid ...:")
+        #   col 1: "X:"-prefix (tom på namn-raden)
+        #   col 2: första Entry (Project Name / X-värde)
+        #   col 3: "Y:"-prefix (endast rad 1)
+        #   col 4: andra Entry (Y-värde, endast rad 1)
+        #   col 5: status-label (endast rad 1)
         ttk.Label(info_frame, text="Project Name:").grid(row=0, column=0, sticky="w", padx=5)
         self.project_name_var = tk.StringVar(value="New Project")
-        ttk.Entry(info_frame, textvariable=self.project_name_var).grid(row=0, column=1, sticky="ew", padx=5)
+        # Project Name-Entry spänner över kolumnerna 2..4 så att fältet täcker
+        # bägge X/Y-Entry-fälten nedan (inkl. "Y:"-prefix-label) och slutar
+        # vid samma högerkant som Y-Entry. sticky="ew" gör att Entry:n växer
+        # till hela columnspan-bredden.
+        ttk.Entry(info_frame, textvariable=self.project_name_var).grid(
+            row=0, column=2, columnspan=3, sticky="ew", padx=(0, 8))
+
+        # Reference grid size. All biomass values entered in the FG editor
+        # ("Initial Total Biomass Range") and the Inference tab
+        # ("Initial Biomass") are interpreted as if the simulation runs on a
+        # grid of exactly reference_grid_width x reference_grid_height cells.
+        # When train.py / inference.py are run on a grid of a different size,
+        # the runtime (`load_project_config`) scales those values linearly by
+        # (actual_cells / reference_cells), with a hard floor of 1 ton on the
+        # scaled lower bound and on the scaled inference initial biomass.
+        ttk.Label(info_frame, text="Reference Grid (cells, X x Y, min 3):").grid(
+            row=1, column=0, sticky="w", padx=5, pady=(4, 0))
+        self.ref_grid_w_var = tk.StringVar(value="60")
+        self.ref_grid_h_var = tk.StringVar(value="60")
+
+        # Live validation: only positive-integer input is accepted on keypress
+        # (empty allowed as a transient state during editing). A separate
+        # visual cue (red background + status label) flags values < 3 in real
+        # time without blocking the typing — the user must still type "30"
+        # via "3" then "0", and we cannot block "1" or "2" outright because
+        # those are valid prefixes of "10", "20", etc. Clamping to >= 3
+        # happens at save_project() and at load_project_from_path().
+        MIN_REF = 3
+        self.ref_grid_min = MIN_REF
+
+        def _pos_int(s):
+            return s == "" or (s.isdigit() and (s == "0" or not s.startswith("0")))
+        vcmd_ref = (info_frame.register(_pos_int), "%P")
+        ttk.Label(info_frame, text="X:").grid(row=1, column=1, sticky="w", padx=(0, 2), pady=(4, 0))
+        self.ref_grid_w_entry = ttk.Entry(
+            info_frame, textvariable=self.ref_grid_w_var, width=10,
+            validate="key", validatecommand=vcmd_ref)
+        self.ref_grid_w_entry.grid(row=1, column=2, sticky="w", padx=(0, 8), pady=(4, 0))
+        ttk.Label(info_frame, text="Y:").grid(row=1, column=3, sticky="w", padx=(0, 2), pady=(4, 0))
+        self.ref_grid_h_entry = ttk.Entry(
+            info_frame, textvariable=self.ref_grid_h_var, width=10,
+            validate="key", validatecommand=vcmd_ref)
+        self.ref_grid_h_entry.grid(row=1, column=4, sticky="w", padx=(0, 8), pady=(4, 0))
+
+        # Status label that turns red when either field is < 3 (or empty).
+        self.ref_grid_status_var = tk.StringVar(value="")
+        self.ref_grid_status_lbl = tk.Label(
+            info_frame, textvariable=self.ref_grid_status_var,
+            fg="red", font=("TkDefaultFont", 9, "italic"))
+        self.ref_grid_status_lbl.grid(row=1, column=5, sticky="w", padx=(8, 0), pady=(4, 0))
+
+        # tk.Entry supports a 'background' option that ttk.Entry does not.
+        # We toggle a ttk style instead.
+        try:
+            _style = ttk.Style()
+            _style.configure("Invalid.TEntry", fieldbackground="#ffd6d6")
+        except Exception:
+            pass
+
+        def _validate_ref_live(*_args):
+            def _state(val):
+                if val == "":
+                    return "empty"
+                try:
+                    iv = int(val)
+                except ValueError:
+                    return "bad"
+                return "ok" if iv >= MIN_REF else "low"
+            sw = _state(self.ref_grid_w_var.get())
+            sh = _state(self.ref_grid_h_var.get())
+            self.ref_grid_w_entry.configure(
+                style="Invalid.TEntry" if sw != "ok" else "TEntry")
+            self.ref_grid_h_entry.configure(
+                style="Invalid.TEntry" if sh != "ok" else "TEntry")
+            msgs = []
+            if sw == "empty" or sh == "empty":
+                msgs.append("ange värde")
+            if sw == "low" or sh == "low":
+                msgs.append(f"min {MIN_REF}×{MIN_REF}")
+            self.ref_grid_status_var.set("; ".join(msgs))
+
+        self._validate_ref_live = _validate_ref_live
+        self.ref_grid_w_var.trace_add("write", _validate_ref_live)
+        self.ref_grid_h_var.trace_add("write", _validate_ref_live)
+        _validate_ref_live()
 
         # Two side-by-side FG frames: Decision Makers and Non Decision Makers
         fg_container = ttk.Frame(self.project_inner)
@@ -362,7 +455,6 @@ class FGConfigApp:
 
         action_costs = [
             ("Eat:", "feeding_cost"),
-            ("Rest:", "resting_cost"),
             ("Move:", "movement_cost")
         ]
 
@@ -2130,7 +2222,6 @@ class FGConfigApp:
                 "movement_speed": 0.0,
                 "movement_cost": 3.0,
                 "feeding_cost": 3.0,
-                "resting_cost": 1.0
             }
             # Add to global library immediately
             if "species_definitions" not in self.global_library:
@@ -2287,7 +2378,11 @@ class FGConfigApp:
 
     def new_project(self):
         self.project_data = {
-            "project_metadata": {"name": "New Project"},
+            "project_metadata": {
+                "name": "New Project",
+                "reference_grid_width": 60,
+                "reference_grid_height": 60,
+            },
             "simulation_settings": {},
             "decision_makers": [],
             "non_decision_makers": [],
@@ -2296,6 +2391,9 @@ class FGConfigApp:
         self.current_fg_configs = {}
         self.active_fg_category = None
         self.project_name_var.set("New Project")
+        if hasattr(self, 'ref_grid_w_var'):
+            self.ref_grid_w_var.set("60")
+            self.ref_grid_h_var.set("60")
         self.update_fg_list()
         self.update_impact_list()
         self.refresh_matrix()
@@ -2317,6 +2415,26 @@ class FGConfigApp:
             self.project_data = data
             self.project_path = path
             self.project_name_var.set(data.get("project_metadata", {}).get("name", "Unnamed Project"))
+            # Load reference grid (default 60x60 for legacy projects that
+            # predate this field).
+            pmeta = data.get("project_metadata", {}) or {}
+            # Clamp to MIN_REF (3) — values below the live-validation floor
+            # in legacy / hand-edited project files are rounded up so the
+            # runtime never sees a sub-3 reference grid.
+            _MIN_REF = getattr(self, 'ref_grid_min', 3)
+            def _coerce_pos_int(v, default):
+                try:
+                    iv = int(v)
+                except (TypeError, ValueError):
+                    return default
+                if iv < _MIN_REF:
+                    return _MIN_REF
+                return iv
+            rw = _coerce_pos_int(pmeta.get("reference_grid_width"), 60)
+            rh = _coerce_pos_int(pmeta.get("reference_grid_height"), 60)
+            if hasattr(self, 'ref_grid_w_var'):
+                self.ref_grid_w_var.set(str(rw))
+                self.ref_grid_h_var.set(str(rh))
             # Backward compatibility: legacy projects had a single `functional_groups` list.
             # Split it into decision/non-decision based on the library's is_decision_maker flag.
             if 'functional_groups' in self.project_data and (
@@ -2358,6 +2476,26 @@ class FGConfigApp:
             self.project_path = filedialog.asksaveasfilename(defaultextension=".yaml", filetypes=[("YAML files", "*.yaml")])
         if self.project_path:
             self.project_data["project_metadata"]["name"] = self.project_name_var.get()
+            # Persist reference grid. Empty / invalid -> 60. Positive but
+            # below MIN_REF (3) -> clamped to MIN_REF so the saved file is
+            # always consistent with the live-validation rule.
+            _MIN_REF = getattr(self, 'ref_grid_min', 3)
+            def _coerce_pos_int(v, default):
+                try:
+                    iv = int(v)
+                except (TypeError, ValueError):
+                    return default
+                if iv < _MIN_REF:
+                    return _MIN_REF
+                return iv
+            rw = _coerce_pos_int(self.ref_grid_w_var.get(), 60)
+            rh = _coerce_pos_int(self.ref_grid_h_var.get(), 60)
+            self.project_data["project_metadata"]["reference_grid_width"] = rw
+            self.project_data["project_metadata"]["reference_grid_height"] = rh
+            # Reflect the clamped value back into the UI so the user sees what
+            # was actually saved.
+            self.ref_grid_w_var.set(str(rw))
+            self.ref_grid_h_var.set(str(rh))
             self.save_yaml(self.project_data, self.project_path)
             self.add_to_recent(self.project_path)
             messagebox.showinfo("Success", f"Project saved to {self.project_path}")

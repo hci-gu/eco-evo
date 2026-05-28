@@ -323,16 +323,17 @@ def main():
                         choices=["sanity", "info", "deep"],
                         help="Preset hyperparameter profile for co-evolution: "
                              "'sanity' (~15 min quick check), 'info' (~1-2h standard run), "
-                             "'deep' (~6-10h publication quality). The profile OVERRIDES explicitly "
-                             "given flags - on conflict a message with a [Y/n] prompt is shown "
-                             "listing the overridden values.")
+                             "'deep' (~6-10h publication quality). Explicitly given CLI flags "
+                             "OVERRIDE the profile values - the profile only fills in values "
+                             "not specified on the command line.")
 
     args = parser.parse_args()
 
     # --- Profile application -----------------------------------------------
     # Each profile defines a fixed hyperparameter recipe. If --profile is set,
-    # those values override any conflicting explicitly-given CLI flags. The
-    # user is informed which flags were overridden via a [Y/n] prompt.
+    # the profile fills in values for any flag NOT explicitly given on the
+    # command line. Explicitly given CLI flags always take precedence over
+    # the profile (explicit > profile > parser default).
     # The profiles NOW run without argmax-penalty, without entropy-bonus,
     # without softmax-temperature annealing (T=1.0 at both ends) and without
     # uniform-bias init - in line with konvergensproblem.txt's conclusion
@@ -403,38 +404,38 @@ def main():
         _ns, _ = _sentinel_parser.parse_known_args()
         explicit = {k: v for k, v in vars(_ns).items() if v is not _sentinel}
 
-        conflicts = []
+        # Explicit CLI flags take precedence: only apply profile values for
+        # keys that the user did NOT specify on the command line. Track which
+        # profile values were skipped due to an explicit override so the user
+        # gets clear feedback.
+        applied = {}
+        overridden = []
         for key, prof_val in prof.items():
-            if key in explicit and explicit[key] != prof_val:
-                conflicts.append((key, explicit[key], prof_val))
-
-        # Apply profile values (override unconditionally).
-        for key, prof_val in prof.items():
-            setattr(args, key, prof_val)
+            if key in explicit:
+                # User-specified value wins; do not touch args.<key>.
+                if explicit[key] != prof_val:
+                    overridden.append((key, explicit[key], prof_val))
+            else:
+                setattr(args, key, prof_val)
+                applied[key] = prof_val
 
         print(f"==========================================")
         print(f"  PROFILE ACTIVE: --profile {args.profile}")
         print(f"==========================================")
-        print(f"Profile values applied:")
-        for key, prof_val in prof.items():
-            print(f"  --{key.replace('_','-')} = {prof_val}")
-        if conflicts:
-            print(f"\n[!] PROFILE OVERRIDES - the following explicitly given flags "
-                  f"were overridden by profile '{args.profile}':")
-            for key, user_val, prof_val in conflicts:
-                print(f"  --{key.replace('_','-')}: you specified {user_val!r}, "
-                      f"profile uses {prof_val!r}")
-            try:
-                while True:
-                    resp = input("Continue with profile values? [Y/n]: ").strip().lower()
-                    if resp in ("", "y", "yes"):
-                        break
-                    if resp in ("n", "no"):
-                        print("Aborted by user.")
-                        return
-                    print("Please answer 'y' or 'n' (Enter = 'y').")
-            except EOFError:
-                pass
+        if applied:
+            print(f"Profile values applied (no explicit CLI override):")
+            for key, prof_val in applied.items():
+                print(f"  --{key.replace('_','-')} = {prof_val}")
+        else:
+            print(f"Profile '{args.profile}': every profile key was "
+                  f"overridden by an explicit CLI flag.")
+        if overridden:
+            print(f"\n[i] EXPLICIT CLI FLAGS OVERRIDE PROFILE - the following "
+                  f"profile values were NOT applied because you specified them "
+                  f"explicitly on the command line:")
+            for key, user_val, prof_val in overridden:
+                print(f"  --{key.replace('_','-')}: using your value {user_val!r} "
+                      f"(profile '{args.profile}' would have used {prof_val!r})")
         print(f"------------------------------------------")
     # -----------------------------------------------------------------------
 
