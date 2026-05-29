@@ -12,112 +12,107 @@ explicitly requests otherwise. Swedish display names exist only as an
 optional UI overlay (see sv_mapping in fgconfig.py).
 User communication (chat answers, status updates): Swedish.
 
+ASCII-ONLY RULE for this resume file (mareld_resume.txt):
+Use plain ASCII characters only inside THIS file. Do NOT use
+em-dash (U+2014), section sign (U+00A7), Swedish letters
+(a-ring U+00E5, a-umlaut U+00E4, o-umlaut U+00F6) or other
+non-ASCII glyphs HERE - they render as mojibake in some viewers.
+Use "-" instead of em-dash, "Section N" instead of "SectionN"
+with the section sign, and transliterate Swedish words (e.g.
+"Paverkansdelta" instead of "Paverkansdelta" with a-ring).
+Verify with:
+    python3 -c "print(sum(1 for b in open('mareld_resume.txt','rb').read() if b>127))"
+which must print 0.
+
+IMPORTANT SCOPE: this ASCII-only restriction applies ONLY to
+mareld_resume.txt. Swedish characters (a-ring, a-umlaut, o-umlaut,
+etc.) MUST continue to work everywhere else - in user-facing chat
+answers, in other documentation files, in GUI display strings
+(e.g. sv_mapping in fgconfig.py), and in any text the user writes.
+Do not strip or transliterate Swedish letters outside this file.
+
 ================================================================
 1. REPOSITORY LAYOUT (project root: /home/simon/eco-evo)
 ================================================================
   train.py                  Main ARS training entry point (requires --project).
-                            Co-evolution is default-on (--no_coevolution to
-                            opt out). --run-name <name> (default "default")
-                            isolates checkpoints in results/<name>/.
-                            See sections 18 (run-name), 19 (profiles +
-                            action-hack flags), 20 (spawn/sub-threshold fix).
-  inference.py              Inference runner for trained policies.
-                            Loads results/<run-name>/policy_<fg>.pth
-                            checkpoints (--run-name mirrors train.py;
-                            --checkpoints overrides). Installs frozen
-                            obs_mean/obs_var on env per-DM (aligned to
-                            env.dm_ids), supports legacy and new ckpt
-                            formats. .npz impact-map loader is now
-                            key-agnostic (any 2-D array works). See
-                            section 17.
+                            Co-evolution default-on (--no_coevolution to opt
+                            out). --run-name <name> isolates checkpoints in
+                            results/<name>/. Per-generation snapshots: both
+                            impact maps AND spawn biomass layouts are locked
+                            for the whole generation via independent
+                            gen_seed / gen_spawn_seed drawn in
+                            _install_generation_maps (see section 27).
+  inference.py              Inference runner for trained policies. Loads
+                            results/<run-name>/policy_<fg>.pth (--run-name
+                            mirrors train.py; --checkpoints overrides).
+                            Installs frozen obs_mean/obs_var on env per-DM.
+                            .npz impact-map loader is key-agnostic. See Section 17.
   run_mareld_mvp.py         Runs a full MVP simulation scenario.
   compare_scenarios.py      Compares "noll" vs "projekt" scenarios.
-  mareld.yaml, mareld2.yaml Project manifest files (the ones passed to --project).
+  mareld.yaml, mareld2.yaml Project manifest files (--project value).
   fgconfig/
-    fgconfig.py             Tkinter GUI for editing FGs, impacts, matrices.
-    fg_library.yaml         CENTRAL biological library (single source of truth
-                            for species_definitions, interaction_definitions,
-                            impact_definitions). Holds library-default
-                            initial_biomass per species (fallback only).
-    recent_projects.txt     GUI's "Open Recent" persistence.
+    fgconfig.py             Tkinter GUI for editing FGs, impacts, matrices
+                            AND per-FG spawn strategies (live preview).
+                            See section 7.
+    fg_library.yaml         Central biological library (species_definitions,
+                            interaction_definitions, impact_definitions).
+                            Holds library-default initial_biomass and
+                            optional library-default `spawn:` block.
+    recent_projects.txt     GUI "Open Recent" persistence.
   lib/
     world/grid.py           Grid(width, height, cell_size, tick_duration).
     world/functional_group.py
                             FunctionalGroup: biomass, energy_reserve,
                             temp_energy_gains, is_decision_maker, hunger.
                             initialize_state: R = B * 0.7 * ME.
-                            min_split_biomass: indivisible-weight threshold.
-                            YAML/GUI value is in KG; converted to TONNES at
-                            input boundary (divide by 1000). 0 = continuous
-                            biomass (no threshold).
-                            See section 20 for the post-fix semantics:
-                            move-actions are NO LONGER masked off in
-                            sub-threshold cells; instead the env collapses
-                            sub-threshold cells to a one-hot argmax over
-                            all 11 actions (the group acts as a single
-                            unit, including migration).
+                            min_split_biomass: indivisible-weight threshold
+                            (kg in YAML/GUI; tonnes internally; 0 = continuous).
+                            See section 20 for sub-threshold semantics.
     environments/ecosystem.py
                             EcosystemEnvironment: "The Tick" pipeline.
-                            HEAVILY OPTIMIZED — see section 13.
-                            Constructor takes ``observable_impact_vars`` (list
-                            of impact_ids exposed to the policy as one obs
-                            channel each, in order; default empty).
-                            _build_static_caches builds per-DM batched policy
-                            weights, eat-mask, move-mask, scalar caches.
-                            _batched_policy_forward runs all DMs via torch.bmm.
-                            Hot-path arrays are float32.
-                            ARS-V2 obs normalisation: accumulates per-tick
-                            _obs_sum/_obs_sumsq/_obs_count on raw obs; when
-                            env.obs_mean/obs_var set, applies
-                            (obs-mean)/sqrt(var+eps) clipped to [-10,10]
-                            before policy forward. Stats are frozen during a
-                            rollout (set by trainer).
+                            Heavily optimized (section 13). Constructor takes
+                            ``observable_impact_vars``. _build_static_caches,
+                            _batched_policy_forward via torch.bmm, float32
+                            hot path. ARS-V2 obs normalisation.
     config/config_loader.py setup_full_mareld_mvp + load_project_config.
-                            Both accept optional `seed` for CRN.
-                            initial_biomass per FG: project override >
-                              library species_definitions.initial_biomass >
-                              1000 fallback. Hardcoded table REMOVED.
-                            Spawn uses _spawn_biomass_distribution()
-                            (cluster-spawn with per-cell floor
-                            10*min_split_biomass, leftover merged into a
-                            seeded cell; falls back to legacy uniform
-                            Dirichlet for FGs with min_split=0). See
-                            section 20.
-                            load_project_config returns a 4-tuple:
-                              (fgs, impact_vars, impact_ranges,
-                               observable_impact_vars).
-                            Muted impacts and impacts without
-                            ``observable: true`` are dropped from
-                            observable_impact_vars; order matches
-                            impact_vars.
-    runners/policy.py       Policy MLP. Has get_action_probs (numpy I/O, legacy)
-                            and get_action_probs_torch (kept in torch).
-    runners/trainer.py      ARS trainer; sequential + parallel-pool paths.
-                            Supports CRN seeds per delta-pair, alpha/beta
-                            fitness weights, configurable n_deltas/n_workers,
-                            ARS-V2 obs-normalisation (Welford parallel merge),
-                            and ARS-V2 top-b delta selection.
-                            obs_stats[fg_id] = {mean,var,count} persists across
-                            iterations and generations.
+                            Both accept optional `seed` (CRN) AND optional
+                            `spawn_seed` (per-generation biomass snapshot,
+                            section 27). initial_biomass per FG: project
+                            override > library default > 1000. Spawn
+                            dispatches between (a) the new strategy-driven
+                            path (lib/spawn/, section 26) when a `spawn:`
+                            block exists, (b) legacy cluster-spawn with
+                            per-cell floor 10*min_split_biomass otherwise.
+                            New helpers: _build_spawn_spec(spawn_cfg,
+                            default_seed) and _derive_fg_spawn_seed(base,
+                            fg_id) (adler32-based per-FG sub-seed).
+    runners/policy.py       Policy MLP.
+    runners/trainer.py      ARS trainer; sequential + parallel paths.
+                            CRN per delta-pair; alpha/beta fitness; ARS-V2
+                            obs-norm (Welford merge) and top-b deltas;
+                            persistent obs_stats[fg_id].
     runners/parallel_worker.py
-                            multiprocessing worker (spawn ctx).
-                            _worker_init: ignores SIGINT, throttles BLAS/torch
-                            to 1 thread, builds local policies.
-                            _evaluate_task: 7-tuple (fg, weights, n_ticks,
-                            alpha, beta, seed, obs_pack); installs obs stats
-                            into env; returns (fitness, samples). Backwards
-                            compat with 3-/5-/6-tuple tasks.
-  make_*.py                 GIS helpers generating 60x60 PNG maps.
+                            multiprocessing worker (spawn ctx); ignores
+                            SIGINT, throttles BLAS to 1 thread.
+  lib/spawn/                NEW spawn-strategy package (section 26).
+    __init__.py             Public API: StrategySpec, make_weights,
+                            distribute_with_floor.
+    strategies.py           Four strategies: uniform, perlin, colony,
+                            env_driven. Pure numpy, ~434 lines.
+    allocator.py            distribute_with_floor: per-cell floor +
+                            sum-preserving leftover redistribution.
+  tests/                    38 tests, all green.
+    test_allocator.py             17 tests (floor, sum, edges, determinism).
+    test_spawn_integration.py     5 tests (legacy unchanged, YAML build,
+                                  colony, uniform).
+    test_uniform_bias_init.py     16 tests (bias init opt-in).
+  make_*.py                 GIS helpers (60x60 PNG generators).
   *.png                     Geographic input layers (60x60 grayscale).
-  results/<run-name>/       Per-run trained policies (*.pth). NOT staged.
-                            Default run-name is "default". Checkpoint format:
-                              {'state_dict': ..., 'obs_stats': {mean,var,count}}.
-                            Older bare-state_dict files still load for
-                            inference (see section 16). Subfolders such as
-                            results/coev_*_eval/ are kept eval snapshots.
+  results/<run-name>/       Per-run trained policies. Checkpoint format:
+                            {'state_dict': ..., 'obs_stats': {...}}.
   Strategi.pdf, Mareld mini.pdf, MKB Mareld.pdf, Poseidon/
-                            Source documents. Strategi.pdf is the
-                            authoritative spec for "The Tick".
+                            Source documents. Strategi.pdf is authoritative
+                            for "The Tick".
 
 ================================================================
 2. THE 8 FUNCTIONAL GROUPS (Mareld MVP)
@@ -132,162 +127,84 @@ User communication (chat answers, status updates): Swedish.
 ================================================================
 3. "THE TICK" PIPELINE (lib/environments/ecosystem.py)
 ================================================================
-Random FG order each tick (random.sample). Per tick — order follows
-Method.pdf §steg 1–6 (impact mortality applied BEFORE predation so
-predators see the post-impact prey biomass):
-  _calculate_decisions → _apply_impact_mortality → _apply_predation
-  → _apply_movement → _apply_growth
+Random FG order each tick. Per tick - order per Method.pdf Section steg 1-6
+(impact mortality applied BEFORE predation):
+  _calculate_decisions -> _apply_impact_mortality -> _apply_predation
+  -> _apply_movement -> _apply_growth
 
   1. _calculate_decisions  (batched over all DMs)
-     - obs_batch (N_dm, H*W, D) built once.
-       D = 2 + (N_fgs - 1) + n_observable_impacts, where
-       n_observable_impacts = len(env.observable_impact_vars).
-       Channel layout per DM: [B_own, E_own, B_others...,
-                               <one channel per observable impact, in order>].
-       Missing impact maps default to zero fields so the layout is stable.
-     - Raw-obs stats accumulated (sum, sumsq, count) for trainer merge.
-     - If env.obs_mean/obs_var set: obs <- clip((obs-mean)/sqrt(var+eps),
-       -10, 10) BEFORE the policy forward.
-     - All DM policies in ONE batched torch.bmm forward (3 stacked weight
-       tensors built once in _build_static_caches: (N_dm, in, hid),
-       (N_dm, hid, hid), (N_dm, hid, out)).
-     - Output: pi_move (N_dm,4,H,W), pi_rest (N_dm,H,W),
-       pi_eat (N_dm,N_all,H,W).
-     - Mask BEFORE renormalization:
-         * Move masked by precomputed move_mask (accessibility + edges).
-         * Eat masked by static eat_mask AND (prey.biomass > 0).
-     - Renormalize across remaining actions.
-  2. _apply_impact_mortality  (Method.pdf step before predation)
-     - For each FG and each active impact map: look up
-       (biomass_factor, energy_factor) via linear interpolation in
-       the per-(fg, impact) `impact_table` (clip to endpoints; no
-       extrapolation).
-       Old scalar `impact_sensitivity` is fully removed.
-     - Apply direct mortality m_X^Impact: B reduced, R scaled
-       proportionally to the biomass loss (so E = R/B is preserved
-       for the surviving fraction).
-     - Implemented in _compute_impact_mortality + _apply_impact_mortality.
-
+     - obs_batch (N_dm, H*W, D); D = 2 + (N_fgs - 1) + n_observable_impacts.
+     - Channel layout per DM: [B_own, E_own, B_others..., impact_channels].
+     - Raw-obs stats accumulated for trainer merge.
+     - If env.obs_mean/obs_var set: obs clipped/normalised before forward.
+     - All DM policies in one batched torch.bmm forward.
+     - Output: pi_move (N_dm,4,H,W), pi_rest (N_dm,H,W), pi_eat
+       (N_dm,N_all,H,W). Masked before renormalisation.
+  2. _apply_impact_mortality
+     - Per (FG, impact): linear interpolation in impact_table; clip to
+       endpoints. B reduced, R scaled so E=R/B preserved on survivors.
   3. _apply_predation  (fully vectorized)
-     - Stacked B (N_all,H,W), pi_eat (N_dm,N_all,H,W).
-     - max_intake_mat, energy_gain_mat: (N_dm,N_all) constants from init.
-     - D = B_pred[:,None]*pi_eat*max_intake[:,:,None,None]*hunger[:,None]
-     - total_demand=D.sum(0); scale=min(1, B_prey/(total_demand+eps))
-     - actual=D*scale; predator gain=(actual*energy_gain).sum(1)
-     - temp_energy_gains buffered (added AFTER metabolism on stayers).
-     - Prey biomass reduced; R scaled with B (R/B preserved).
-  Sub-threshold cells (0 < B_dm[i] < dm_min_split[i]) are NO LONGER
-  mask-restricted (move was previously zeroed and policy renormalised
-  to rest/eat — that hard rule turned out to be the dominant cause of
-  the seals/porpoises "rest=100%" attractor). Instead, after softmax
-  the env replaces those cells' distribution with a one-hot argmax
-  over the full 11-action set; the whole sub-threshold group performs
-  one action on 100% of the cell biomass (variant 2 — small groups
-  may migrate as a unit). Units: dm_min_split is in tonnes (converted
-  from kg at FunctionalGroup input). See section 20.
-
-  4. _apply_movement  (slice-assign, vectorized over N_dm)
-     - Each cell's biomass split by action probs.
-     - Each fraction pays own metabolic cost * resting_metabolism.
-     - Slice-assign instead of np.roll (no copies, no wrap-around;
-       edges already zeroed in _calculate_decisions).
-     - flux = clip(v, 0, 1). Energy follows biomass.
-     - temp_energy_gains added to stayers AFTER metabolism.
-  5. _apply_growth  (runs LAST; impact mortality has moved out)
-     - NDM (phyto/benthos): logistic dB = MG*B*(1 - B/CC); B clipped
-       to [0, CC]. R not updated for NDMs.
-     - DM: s = R/(B*ME), u = fg.maintenance_level (per-FG, default 0.3),
-       q = s - u, growth = B*MG*q.
-         * Positive growth: only B is updated (R unchanged) → implicit
-           energy dilution (Variant B): E(t+1) = R^mov / (B^mov + growth).
-           R = B·E is strictly conserved across the growth step; per-ton
-           energy is diluted by new biomass, which feeds back into q next
-           tick (self-regulating growth).
-         * Negative growth: B and R are scaled by the same factor so E
-           is preserved for the shrinking cell.
+     - D = B_pred*pi_eat*max_intake*hunger; scale by B_prey/total_demand;
+       predator energy gain buffered to temp_energy_gains.
+  Sub-threshold cells: NO move-mask zeroing. Instead env replaces those
+  cells' distribution with a one-hot argmax over the full 11-action set.
+  See section 20.
+  4. _apply_movement  (slice-assign over N_dm)
+     - Per-action fraction pays metabolic cost * resting_metabolism.
+     - Slice-assign (no np.roll). Energy follows biomass. temp_energy_gains
+       added to stayers AFTER metabolism.
+  5. _apply_growth
+     - NDM: logistic dB = MG*B*(1 - B/CC); B clipped to [0, CC].
+     - DM: s=R/(B*ME), u=maintenance_level (default 0.3), q=s-u,
+           growth=B*MG*q.
+         * Positive: only B updated (Variant B) -> energy dilution.
+         * Negative: B and R scaled identically (E preserved).
 
 ================================================================
 4. POLICY NETWORK DIMENSIONS
 ================================================================
   Input  = 2 + (N_fgs - 1) + n_observable_impacts
-           = n_fgs + 1 + n_observable_impacts
   Output = 5 + N_all_fgs   (non-prey slots eat-masked)
-  Computed in train.py:get_dynamic_policy_params(fgs, n_observable_impacts).
-  n_observable_impacts = number of impacts with ``observable: true`` in the
-  project's impact_variables list (mute-aware, order = project order).
-  Toggling the Impact Editor's "Observable by policy" checkbox changes
-  in_dim and therefore invalidates all existing .pth checkpoints — the
-  GUI shows an info dialog stating that retraining is required.
-  .pth files NOT portable across projects with different FG counts or
-  different observable-impact counts/orders.
+  Computed in train.py:get_dynamic_policy_params.
+  Toggling "Observable by policy" in the GUI changes in_dim and
+  invalidates existing .pth checkpoints (retraining required).
 
 ================================================================
-5. CLI — current flag set for train.py
+5. CLI - current flag set for train.py
 ================================================================
 Mandatory: --project <path-to.yaml>
 
 Flag                  Default              Meaning
---run-name            "default"            results/<run-name>/ is used for
-                                           saving and resuming checkpoints.
-                                           Mirror on inference.py.
---coevolution         True                 Joint rollout co-evo (all DMs
-                                           perturbed in same rollout). Use
+--run-name            "default"            results/<run-name>/ for save/resume.
+--coevolution         True                 Joint rollout co-evo. Use
                                            --no_coevolution for round-robin.
---profile             None                 sanity | info | deep. EXPLICIT CLI
-                                           flags override profile values
-                                           (explicit > profile > parser
-                                           default). Profile only fills in
-                                           keys NOT given on the command line;
-                                           overridden keys are listed as an
-                                           info note (no [Y/n] prompt). Profiles
-                                           set argmax_penalty=0, entropy_coef=0,
-                                           temp_start=temp_end=1.0,
-                                           uniform_bias_init=False (action-hack-
-                                           free; biology-driven).
---species             ["all"]              "all" = all DMs.
---generations         "inf"                Outer co-evolution loop; "inf" runs
-                                           until Ctrl+C.
---iter-per-gen        20                   ARS iterations per species per gen.
-                                           Alias: --iter_per_gen.
---n_eval_ticks        2                    env.step() ticks per rollout.
-                                           (Renamed from --rollouts.)
---lr                  0.03                 ARS learning rate.
---sigma               0.1                  Exploration noise.
---alpha               1.0                  Weight on delta_b.
---beta                1.0                  Weight on delta_r.
-                                           fitness = alpha*delta_b + beta*delta_r.
---n_deltas            10                   ARS delta directions; tasks=2*n_deltas.
---top_deltas          None -> n_deltas//2  ARS-V2 top-b: keep only the best b
-                                           delta pairs (sorted by
-                                           max(r_pos, r_neg)) for the gradient.
-                                           Setting == n_deltas disables it.
---no_obs_normalize    False                Disable ARS-V2 running observation
-                                           normalisation (mean/std per-DM
-                                           per-obs-dim).
---workers             0 (auto)             0=auto, 1=sequential, N=explicit.
-                                           auto = min(2*n_deltas, max(1, cores-1)),
-                                           using sched_getaffinity when available.
---grid                None (60x60)         "nxm" or "n*m", both dims >= 3.
---argmax_penalty      0.3 (CLI default)    Optional action-hack: fitness
-                                           penalty proportional to argmax-
-                                           action fraction. Profiles force
-                                           0.0. See section 19.
---entropy_coef        0.1 (CLI default)    Optional action-hack: fitness bonus
-                                           proportional to softmax entropy.
-                                           Profiles force 0.0.
+--profile             None                 sanity | info | deep. Explicit CLI
+                                           flags override profile values.
+                                           Profiles force action-hack-free
+                                           settings (argmax_penalty=0,
+                                           entropy_coef=0, temp=1.0/1.0,
+                                           uniform_bias_init=False).
+--species             ["all"]
+--generations         "inf"
+--iter-per-gen        20
+--n_eval_ticks        2
+--lr                  0.03
+--sigma               0.1
+--alpha               1.0
+--beta                1.0
+--n_deltas            10
+--top_deltas          None -> n_deltas//2  ARS-V2 top-b.
+--no_obs_normalize    False
+--workers             0 (auto)
+--grid                None (60x60)
+--argmax_penalty      0.3 (CLI default)    Profiles force 0.0.
+--entropy_coef        0.1 (CLI default)    Profiles force 0.0.
 --temp_start/--temp_end/--temp_anneal_gens
-                       3.0 / 1.0 / 10      Optional softmax temperature
-                                           annealing. Profiles force 1.0/1.0.
---uniform_bias_init   False                Optional: zero output bias and
-                                           scale output weights by 0.01 so
-                                           gen-1 softmax is ~uniform. Profiles
-                                           force False.
---resume              False                Load existing checkpoints from
-                                           results/<run-name>/ before training.
+                       3.0 / 1.0 / 10      Profiles force 1.0/1.0.
+--uniform_bias_init   False
+--resume              False
 
-Session header prints every flag with "(default)"/"(user)" tag,
-including "Top Deltas" and "Obs Normalize", plus resolved workers count
-and Project/Grid/Target Species.
+Session header prints every flag with "(default)"/"(user)" tag.
 
 Other entry points:
   python3 run_mareld_mvp.py
@@ -297,100 +214,109 @@ Other entry points:
 ================================================================
 6. PROJECT FILE FORMAT (mareld2.yaml)
 ================================================================
-  project_metadata: {name: ...}
-  simulation_settings: {...}            # currently unused at runtime
+  project_metadata: {name: ..., reference_grid_width: 60,
+                     reference_grid_height: 60}
+  simulation_settings: {...}
   decision_makers:
-    - {group_id: zooplankton, initial_biomass: 35000}
+    - group_id: zooplankton
+      initial_biomass: 35000
+      spawn:                        # OPTIONAL per-FG spawn override
+        mode: perlin                # uniform|perlin|colony|env_driven
+        scale: 12.0
+        octaves: 4
+        persistence: 0.5
+        lacunarity: 2.0
+        threshold: 0.0
+        # seed: 42                  # optional; if omitted, derived per
+                                    # generation from gen_spawn_seed
     - ...
   non_decision_makers:
     - {group_id: phytoplankton, initial_biomass: 80000}
     - {group_id: benthic_community, initial_biomass: 160000}
   impact_variables:
     - impact_id: windfarm_noise
-      value_min: 0          # physical lower bound for sampling/validation
-      value_max: 140        # physical upper bound (e.g. dB); editable in GUI
-      observable: true      # if true, exposed as a policy obs channel
-      # muted: true         # optional; muted impacts are skipped at runtime
+      value_min: 0
+      value_max: 140
+      observable: true
+      # muted: true                 # optional
 
 initial_biomass lives in the project file (editable from GUI).
 Resolution: project override > library default > 1000.
-Legacy `functional_groups:` lists still readable.
+Spawn block resolution: project FG override > library
+species_definitions.<id>.spawn > legacy uniform Dirichlet.
 
-Per-impact value range (value_min/value_max) is per PROJECT (lives on
-the impact_variables entry), not in the library. It drives:
-  - random sampling of impact maps during training/inference
-    (uniform on [value_min, value_max] per cell);
+Per-impact value range (value_min/value_max) is per PROJECT and drives:
+  - random sampling of impact maps during training/inference;
   - live range-validation in the Impact Table Editor's Value column;
-  - the descriptive help text in that editor.
+  - help text in that editor.
 
 ================================================================
 7. fgconfig.py - GUI STRUCTURE
 ================================================================
 Tabs:
   "Project & FGs"       Scrollable both axes.
-    Project Info: project name + Reference Grid (cells, X x Y, min 3).
-      The reference grid is the (Rx, Ry) coordinate system in which all
-      biomass values (FG editor's training range + inference_initial_biomass)
-      are expressed. Stored in project_metadata.reference_grid_width/height
-      (default 60 x 60 for legacy projects). Live-validated: both fields
-      turn red + status label appears when value is empty or < 3; save and
-      load both clamp to >= 3 silently. See section 12b for the runtime
-      scaling rule.
+    Project Info: project name + Reference Grid (X x Y, min 3).
     fg_container with two side-by-side LabelFrames:
       - "Decision Makers"     (self.fg_listbox)
       - "Non Decision Makers" (self.ndm_listbox)
     Each: Add from Library / Add New FG / Remove FG.
-    "Impact Variables in Project" (self.impact_listbox) with
-      Add from Library / Remove Impact.
+    "Impact Variables in Project" (self.impact_listbox).
     TWO FG Editor frames, only one packed at a time:
-      self.editor_frame  (DM editor): max_energy_reserve, energy_content,
-        resting_metabolism, movement_speed,
-        action costs (feeding/resting/movement),
-        "Indivisible Weight (kg)" (min_split_biomass; clamped 0..10000;
-        0 = continuous), initial_biomass (ton).
-      self.ndm_editor_frame (NDM editor): growth_rate,
+      self.editor_frame  (DM): max_energy_reserve, energy_content,
+        resting_metabolism, movement_speed, action costs
+        (feeding/movement), "Indivisible Weight (kg)"
+        (min_split_biomass), initial_biomass (ton).
+      self.ndm_editor_frame (NDM): growth_rate,
         max_carrying_capacity, initial_biomass (ton).
-  Impact Editor (on the Project & FGs tab, below the impact listbox):
-    - Min value / Max value entries for the selected impact
-      (writes value_min/value_max on the project's impact_variables entry).
-    - "Observable by policy" checkbox — toggling shows a messagebox
-      explaining that the DM policy input width changes and existing
-      checkpoints become incompatible (retraining required). Writes
-      `observable: true` on the entry when checked; removes the key
-      when unchecked.
-    - Editor is disabled when the selected impact is muted.
+      Both contain Apply Changes button followed by a NESTED
+      "Spawn Strategy" LabelFrame (see below).
 
-  Impact Table Editor (per (fg, impact) cell in the Interaction Matrix):
+  Spawn Strategy (nested LabelFrame inside each FG Editor):
+    - Mode dropdown showing capitalised display labels
+      ("Uniform", "Perlin", "Colony", "Env-driven") backed by
+      SPAWN_MODE_LABELS / SPAWN_MODE_KEYS; internal YAML keys remain
+      lowercase ("uniform", "perlin", "colony", "env_driven").
+    - Dynamic parameter pane (per-mode via SPAWN_PARAM_SCHEMA).
+      Parameter names in the Info panel are capitalised (Scale,
+      Octaves, Persistence, Lacunarity, Threshold, N_colonies,
+      Sigma_cells, Anchor, Floor, Noise_amp, Noise_scale).
+    - 120x120 live preview canvas, debounced re-render via
+      lib.spawn.make_weights -> Tk PhotoImage. Reacts to mode and
+      param changes.
+    - Info panel (English help text per mode) from SPAWN_MODE_HELP.
+    - apply_fg_changes writes the spawn block back to:
+        * DM:  the project FG entry's `spawn:` key
+        * NDM: the library species_definitions entry (via the same
+          _collect_spawn_dict helper).
+    Implementation helpers: _build_spawn_editor, _rebuild_spawn_params,
+    _collect_spawn_dict, _populate_spawn_editor, _update_spawn_help.
+
+  Impact Editor (below the impact listbox):
+    - Min/Max value entries for the selected impact.
+    - "Observable by policy" checkbox; toggling shows messagebox
+      stating retraining is required.
+    - Disabled when the selected impact is muted.
+
+  Impact Table Editor (per (fg, impact) cell):
     - Columns: value, biomass_factor, energy_factor.
-    - When value_min/value_max are set on the impact entry, the Value
-      column is live-capped to [value_min, value_max] (key validator
-      forbids typing out-of-range numbers) and on Save rows outside the
-      range are rejected with a warning. When the range is unset the
-      editor falls back to plain numeric validation and the help text
-      tells the user to set Min/Max in the Impact Editor.
-    - biomass_factor / energy_factor remain clamped to [0, 1].
+    - value clamped to [value_min, value_max] when set.
+    - biomass_factor / energy_factor clamped to [0, 1].
 
-  "Interaction Matrix"  Predation (bool), Max Intake Rate I_XY (disabled
-                        unless preys_on), per-cell button opening the
-                        Impact Table Editor described above. The old
-                        scalar Impact Sensitivity column is GONE.
+  "Interaction Matrix"  Predation (bool), Max Intake Rate I_XY,
+                        per-cell button opening the Impact Table Editor.
 
 Key behaviours:
-  - Add from Library filters: NDM dialog only shows phytoplankton; DM
-    dialog hides phytoplankton; already-present FGs hidden in both
-    dialogs; same hide-if-present rule for impacts.
-  - on_fg_select packs the matching editor; reads initial_biomass from
-    project FG entry, falls back to library default.
-  - apply_fg_changes uses active editor's prop_vars only; merges into
-    existing config (fields not visible NOT wiped). Writes initial_biomass
-    to PROJECT FG entry (not library).
-  - is_decision_maker driven by category list; synced back to library.
-  - movement_speed clamped to 1.0 (CFL).
-  - Scroll gated by _canvas_is_scrollable.
-  - Library writes via ruamel.yaml. Recent projects in recent_projects.txt.
+  - Add from Library filters by category; already-present FGs/impacts
+    hidden in dialogs.
+  - on_fg_select packs the matching editor; the nested spawn frame is
+    a child of that editor and follows automatically.
+  - _set_widget_tree_state recursively disables editor + spawn frame
+    when the FG is muted.
+  - Library writes via ruamel.yaml. Recent projects in
+    recent_projects.txt.
 
 ================================================================
-12b. REFERENCE GRID & BIOMASS SCALING (project_metadata)
+7b. REFERENCE GRID & BIOMASS SCALING (project_metadata)
 ================================================================
 Each project stores a reference grid (Rx, Ry) in
 project_metadata.reference_grid_width / reference_grid_height. All
@@ -398,9 +324,7 @@ biomass values entered in fgconfig (FG editor's initial_biomass_min/
 max and the Inference tab's inference_initial_biomass) are defined
 for that reference grid.
 
-At runtime in lib/config/config_loader.py:load_project_config the
-actual grid (H_act, W_act) is compared to (Rx, Ry) and a linear
-scale is applied:
+At runtime in load_project_config:
 
     biomass_scale = (H_act * W_act) / (Rx * Ry)
 
@@ -408,17 +332,8 @@ scale is applied:
                  >= 1.0 ton; max_b clamped to >= min_b.
 * mode='inference': total_b = max(inference_initial_biomass * scale, 1.0).
 
-Hard floor: the scaled min of the training range AND the scaled
-inference value are clamped to >= 1.0 ton regardless of how small
-the grid is. The scaled max of the training range is NOT clamped
-(intentional; if you want symmetric clamping, two-line change in
-config_loader.py).
-
-Legacy projects without the reference_grid_* keys fall back to
-60 x 60 in both the GUI (load_project_from_path) and the runtime
-(_as_pos_int with default 60). Sub-3 values from hand-edited YAML
-are rounded up to 3 by _as_pos_int — matches the GUI live-validation
-rule. Values are written to the project file next time the user saves.
+Legacy projects without reference_grid_* keys fall back to 60x60.
+Sub-3 values are rounded up to 3 by _as_pos_int.
 
 ================================================================
 8. fg_library.yaml - WHAT LIVES WHERE
@@ -430,31 +345,23 @@ rule. Values are written to the project file next time the user saves.
       growth_rate, max_carrying_capacity   (NDM only)
       max_energy_reserve, energy_content,
       resting_metabolism, movement_speed,
-      maintenance_level                     (u_X, fraction in [0,1],
-                                             default 0.3; growth break-even)
-      feeding_cost, movement_cost          (resting_cost was removed
-                                             this session — it is
-                                             hardcoded to 1.0 in the
-                                             biology; runtime callers
-                                             use params.get('resting_cost',
-                                             1.0) as a defensive fallback.
-                                             The Rest field is GONE from
-                                             the FG editor and the key is
-                                             stripped from fg_library.yaml.)
+      maintenance_level                    (u_X, default 0.3)
+      feeding_cost, movement_cost          (resting_cost is hardcoded to
+                                            1.0; stripped from YAML)
       min_split_biomass                    (DM only; kg, 0 = continuous)
       menu: [prey_id, ...]                 (DM only)
+      spawn:                               # OPTIONAL library default
+        mode: uniform|perlin|colony|env_driven
+        # mode-specific params (Scale, Octaves, N_colonies, Sigma_cells,
+        # Floor, Noise_amp, Noise_scale, ...)
+        # seed: <int>                      # optional pin
   interaction_definitions:
     "<predator>_preys_on_<prey>":  {preys_on, max_intake_rate, energy_gain}
     "<fg>_impacted_by_<impact>":   {impact_affects: bool,
                                     impact_table: [{value, biomass_factor,
                                                     energy_factor}, ...]}
         # impact_table: sorted by value; linear interpolation, clip to
-        # endpoints (no extrapolation). biomass_factor/energy_factor in [0,1];
-        # value column is bounded at runtime by the per-impact
-        # value_min/value_max set on the project's impact_variables entry
-        # (live-validated in the Impact Table Editor; rows outside the
-        # range are rejected on Save).
-        # Old `impact_sensitivity` scalar is removed everywhere.
+        # endpoints. Old `impact_sensitivity` scalar removed everywhere.
   impact_definitions:  bottom_trawling, pelagic_trawling, hunting, logging,
                        chemicals, windfarm_noise, ship_traffic, turbidity.
 
@@ -467,143 +374,115 @@ ARSTrainer(env_builder, policy_params,
            obs_normalize=True, top_deltas=None,
            entropy_coef=0.0, argmax_penalty=0.0,
            integral_reward=True, uniform_bias_init=False)
-  NOTE: integral_reward default is True in the constructor — synced
-  with train.py's CLI default (was False, fixed this session). Direct
-  instantiations from tests/inference scripts now match production.
-  policies: persistent {fg_id: PolicyNetwork} — co-evolution-safe
-            (weights kept across generations).
+
+  policies: persistent {fg_id: PolicyNetwork} across generations.
   obs_stats: persistent {fg_id: {mean (D,), var (D,), count}} across
-             generations. Used to feed env.obs_mean/obs_var per rollout
-             (frozen during rollout). Updated via Welford parallel merge
-             after each train_step from samples returned by every rollout.
-  top_deltas: None -> all n_deltas used. When set, only the top-b pairs
-              (sorted by max(r_pos,r_neg)) contribute to gradient AND to
-              sigma_f.
+             generations; frozen during a rollout, updated via Welford
+             parallel merge after each train_step.
+  top_deltas: None -> all n_deltas used.
   _pool: spawn-context Pool when n_workers > 1.
-         close() uses pool.terminate()+join() (robust on Ctrl+C).
 
 train_step(fg_to_train, n_eval_ticks=2):
-  1. Sample n_deltas directions (torch.randn).
-  2. Draw pair_seeds[i] from np.random (one per delta pair).
-  3. Build current (N_dm, D) obs_mean/obs_var arrays from obs_stats
-     (ordered by env.dm_ids); pack with dm_ids list.
-  4. For each i: evaluate +sigma*delta and -sigma*delta with the SAME
-     pair_seeds[i] — Common Random Numbers, variance reduction.
-  5. Sequential: in-process; restore parent weights after.
-     Parallel: 2*n_deltas tasks =
-       (fg, weights_snapshot_dict, n_eval_ticks, alpha, beta, seed, obs_pack)
-     dispatched via pool.map. base_weights snapshot includes ALL policies
-     so opponents are at current co-evolved state.
-     Each task returns (fitness, samples) where samples =
-       (sum (N_dm,D) f64, sumsq (N_dm,D) f64, count int).
-  6. Fitness (in _evaluate / _evaluate_task):
-       b0,r0 = trained FG biomass.sum(), energy.sum() (post-build)
-       run env.step() n_eval_ticks times
-       bh,rh = same, post-run
-       delta_b = log((bh+eps)/(b0+eps)); delta_r similar
-       fitness = alpha*delta_b + beta*delta_r
-  7. Merge all rollout samples into obs_stats via Welford parallel:
-       n = n_a + n_b
-       new_mean = mean_a + (mean_b - mean_a) * n_b/n
-       M2 = M2_a + M2_b + (delta**2) * (n_a*n_b/n)
-       var = max(M2/n, 1e-8)
-  8. ARS update (ARS-V2 with top-b):
-       pair_scores = max(rewards_pos, rewards_neg)
-       top_idx = argsort(-pair_scores)[:b]
-       sigma_f = std(concat(r_pos[top], r_neg[top])) + 1e-8
-       step = sum_{i in top_idx} (r_pos[i]-r_neg[i]) * delta[i]
-       w_new = w + (lr/(b*sigma_f)) * step
-     With b==n_deltas this is exactly ARS-V1 behaviour (no truncation).
+  1. Sample n_deltas directions.
+  2. Draw pair_seeds[i] (one per delta pair).
+  3. Build (N_dm, D) obs_mean/obs_var from obs_stats.
+  4. Evaluate +sigma*delta and -sigma*delta with SAME pair_seed (CRN).
+  5. Parallel tasks: (fg, weights_snapshot, n_eval_ticks, alpha, beta,
+     seed, obs_pack). Return (fitness, samples).
+  6. Fitness: delta_b = log((bh+eps)/(b0+eps)), delta_r similar,
+              fitness = alpha*delta_b + beta*delta_r.
+  7. Welford parallel merge of obs_stats.
+  8. ARS-V2 update with top-b sigma normalisation.
 
 ================================================================
 10. CO-EVOLUTION LOOP (train.py main)
 ================================================================
-Round-robin (Variant A):
-  for gen in count() [or range(generations)]:
-      for species in target_species:
-          for i in range(iter_per_gen):
-              trainer.train_step(species, n_eval_ticks=...)
-          _save_checkpoint(trainer, species,
-                           f"results/policy_{species}.pth")        # per gen
+Round-robin per species OR joint-rollout coevolution (default).
+For each gen:
+  - _install_generation_maps(gen) draws:
+      * gen_seed -> impact map snapshot baked into _EnvBuilder
+        (impact_maps_snapshot)
+      * gen_spawn_seed -> per-generation spawn snapshot baked into
+        _EnvBuilder (spawn_seed). Forwarded into load_project_config /
+        setup_full_mareld_mvp so all deltas/workers in this generation
+        see identical biomass maps per FG.
+  - Worker pool rebuilt so spawn-workers receive the updated builder.
+  - For species in target_species: iter_per_gen train_step calls.
+  - _save_checkpoint writes {'state_dict','obs_stats'} per generation.
 
-_save_checkpoint writes:
-  {'state_dict': policy.state_dict(),
-   'obs_stats': {'mean': fp32 (D,), 'var': fp32 (D,), 'count': int}}
-
-KeyboardInterrupt (Ctrl+C):
-  - Workers ignore SIGINT (set in _worker_init); only parent catches it.
-  - On Ctrl+C: trainer.close() (terminates pool fast), save final
-    checkpoints per species, print "Training interrupted; partial
-    progress saved", return cleanly (exit 0).
+KeyboardInterrupt: workers ignore SIGINT; parent catches it, calls
+trainer.close() (terminates pool fast), saves final checkpoints,
+returns cleanly.
 
 ================================================================
 11. KNOWN DISCREPANCIES vs Strategi.pdf / Method.pdf (still open)
 ================================================================
-  1. Observable impacts are now opt-in per project via the
-     "Observable by policy" flag (one obs channel per flagged impact).
-     Non-flagged impacts still affect the world but are invisible to
-     the policy. No longer a hardcoded windfarm_noise channel.
+  1. Observable impacts are opt-in per project (one obs channel each).
   2. Memory term N(c, t-1) not implemented.
-  3. Movement speed v > 1 not supported (cap 1.0; accepted by user).
-  4. Positive "Påverkansdelta" (stocking) not supported (accepted).
-  5. accessibility map only used for movement masking.
-  6. No persistent M*-layers; ARS scaling wins over Method.pdf where
-     they differ. Suit_X(c) and four AccessN/E/S/W_X(c) layers
-     intentionally skipped for now.
-  7. No runtime slider 0–5 + back-scaling pipeline yet. The plan is
-     to take 5× headroom in training-map sampling and in the highest
-     impact_table breakpoint so explicit back-scaling becomes
-     unnecessary for linear impacts (dB impacts still need a
-     log/intensity conversion if a true 5× slider is wanted).
+  3. Movement speed v > 1 not supported (cap 1.0).
+  4. Positive "Paverkansdelta" (stocking) not supported.
+  5. accessibility map: still only wired to movement masking. It IS
+     plumbed through to spawn via distribute_with_floor(allowed_mask=...)
+     and make_weights(context={'allowed_mask': ...}), but the caller in
+     config_loader currently passes None until the project ships an
+     accessibility/depth map.
+  6. No persistent M*-layers; ARS scaling wins over Method.pdf.
+  7. No runtime slider 0-5 + back-scaling pipeline yet.
 
 ================================================================
 12. GRID / MAP CONVENTIONS
 ================================================================
-  Default 60x60, 1 km/cell, 6 h/tick. PNG maps mode "L".
-  SWEREF 99 TM bbox: E 211000..271000, N 6414000..6474000.
-  Row 0 = northernmost, column 0 = westernmost.
-  Initial spatial: np.random.rand(H,W) normalized to total_b.
-  When seed given (CRN), uses np.random.default_rng(seed) instead.
-  Same total biomass per FG across rollouts; spatial varies (or seeded).
+Default 60x60, 1 km/cell, 6 h/tick. PNG maps mode "L".
+SWEREF 99 TM bbox: E 211000..271000, N 6414000..6474000.
+Row 0 = northernmost, column 0 = westernmost.
+
+Initial spatial layout per FG:
+  - If a `spawn:` block is present (project override > library
+    default): lib.spawn.make_weights(StrategySpec, (H,W), context, seed)
+    -> (H,W) weights -> distribute_with_floor(weights, total_b,
+    min_per_cell=10*min_split_biomass, allowed_mask=None) -> initial
+    biomass map.
+  - Otherwise: legacy cluster-spawn (uniform Dirichlet + per-cell floor).
+Same total biomass per FG within a rollout; layout deterministic from
+spawn_seed when train.py supplies one (per-generation snapshot, Section 27).
 
 ================================================================
-13. PERFORMANCE NOTES (already optimized — don't redo without measuring)
+13. PERFORMANCE NOTES (don't redo without measuring)
 ================================================================
 Implemented:
-  - Batched policy inference for all DMs via torch.bmm.
+  - Batched policy inference (torch.bmm).
   - Vectorized predation over (N_dm, N_all, H, W) tensors.
   - Slice-assign movement (no np.roll).
-  - Preallocated/cached masks (move_mask, eat_static_mask).
-  - float32 throughout hot path.
+  - Preallocated/cached masks. float32 hot path.
   - Parallel rollouts via multiprocessing.Pool (spawn).
-  - OMP/MKL/OPENBLAS/torch threads = 1 in workers (without this,
-    BLAS contention can make parallel SLOWER than sequential).
-  - CRN: same world for +delta and -delta in each ARS pair; different
-    seeds between pairs.
-  - ARS-V2 obs normalisation: stats accumulated in env on raw obs,
-    merged across all rollouts via Welford parallel formula.
-  - ARS-V2 top-b deltas: reduces noise from low-reward pairs.
-
-Measured (60x60, 6 DMs):
-  - 100 ticks: 1.257s -> 0.824s (1.53x).
-  - 15 iter pelagic_fish: 11.9s seq -> 5.34s @ 16 workers (24-core machine).
+  - OMP/MKL/OPENBLAS/torch threads = 1 in workers.
+  - CRN: same world for +delta and -delta in each ARS pair.
+  - ARS-V2 obs normalisation + top-b deltas.
+  - lib/spawn/ strategies are pure-numpy vectorised (no Numba/GPU
+    needed at MVP grid sizes).
 
 Intentionally NOT done:
-  - ARS reward baseline subtraction: a no-op for the diff-based update
-    (r' = r - b yields (r'+ - r'-) = (r+ - r-)) and std is translation-
-    invariant. Sigma_f normalisation already does the job.
-  - Numba: hot path is numpy/torch vectorized; would win only at much
-    larger grids or for agent-based reformulation.
-  - GPU: too small (host-device copy dominates).
-  - Synchronous Nash-Q-like co-evolution snapshot.
+  - ARS reward baseline subtraction (no-op for diff update).
+  - Numba / GPU at current grid sizes.
+  - Synchronous Nash-Q-like co-evolution.
 
 ================================================================
 14. GIT / STAGING
 ================================================================
-  Staged: code + configs + GIS scripts + PNGs.
-  NOT staged: results/, Poseidon/, *.pdf, .junie/, docs unless requested.
   Commit ONLY on explicit user request, trailer:
     --trailer "Co-authored-by: Junie <junie@jetbrains.com>"
+  Latest committed work on branch `coev`:
+    2ef39f4 feat(spawn): add configurable spawn strategies
+             (uniform/perlin/colony/env_driven) - adds lib/spawn/,
+             tests/test_allocator.py + test_spawn_integration.py,
+             integrates with config_loader and fgconfig.
+    6a05b2a (earlier) config_loader fix.
+  Likely uncommitted as of this resume's last update:
+    - fgconfig.py GUI reorganisation (Spawn Strategy nested inside
+      FG Editor; capitalised dropdown labels).
+    - train.py + config_loader.py per-generation spawn snapshot
+      (spawn_seed parameter, _derive_fg_spawn_seed, gen_spawn_seed
+      in _install_generation_maps).
 
 ================================================================
 15. WHAT TO DO FIRST ON A FRESH CONTEXT
@@ -611,8 +490,10 @@ Intentionally NOT done:
   1. Read this file end-to-end.
   2. Skim Strategi.pdf "Uppdateringsregler" for the math contract.
   3. Open lib/environments/ecosystem.py, lib/runners/trainer.py,
-     lib/runners/parallel_worker.py, train.py, fgconfig/fgconfig.py.
+     lib/runners/parallel_worker.py, train.py, fgconfig/fgconfig.py,
+     lib/spawn/strategies.py, lib/config/config_loader.py.
   4. Validate any change with:
+       python3 -m pytest tests/ -q          # 38 tests must pass
        python3 -m py_compile fgconfig/fgconfig.py \
          lib/environments/ecosystem.py lib/runners/trainer.py \
          lib/runners/parallel_worker.py train.py
@@ -624,229 +505,148 @@ Intentionally NOT done:
 ================================================================
 16. CHECKPOINT FORMAT COMPATIBILITY
 ================================================================
-New format (saved by train.py via _save_checkpoint):
+New format (saved by train.py):
     torch.save({'state_dict': policy.state_dict(),
-                'obs_stats': {'mean': fp32(D,), 'var': fp32(D,), 'count': int}},
-               path)
+                'obs_stats': {'mean': fp32(D,), 'var': fp32(D,),
+                              'count': int}}, path)
 
-Legacy format (older runs, before ARS-V2):
-    torch.save(policy.state_dict(), path)     # a plain OrderedDict
+Legacy format (older runs, pre-ARS-V2):
+    torch.save(policy.state_dict(), path)
 
-Recommended loader pattern (apply to run_mareld_mvp.py and
-compare_scenarios.py when they need updating — currently still load as
-plain state_dict and ignore obs_stats):
-
+Recommended loader pattern:
     ckpt = torch.load(path, weights_only=False)
     if isinstance(ckpt, dict) and 'state_dict' in ckpt:
         policy.load_state_dict(ckpt['state_dict'])
         os = ckpt.get('obs_stats')
         if os is not None and apply_obs_norm:
-            env.obs_mean = np.broadcast_to(os['mean'], (N_dm, D)).astype(np.float32).copy()
-            env.obs_var  = np.broadcast_to(os['var'],  (N_dm, D)).astype(np.float32).copy()
+            env.obs_mean = np.broadcast_to(os['mean'], (N_dm,D)).astype(
+                np.float32).copy()
+            env.obs_var  = np.broadcast_to(os['var'],  (N_dm,D)).astype(
+                np.float32).copy()
     else:
         policy.load_state_dict(ckpt)         # legacy file
-        # No obs_stats available; env will run un-normalised obs.
 
 Notes:
-- obs_stats are per-fg in the trainer's dict, but each .pth file stores
-  only one fg's stats (the file's own species). When loading multiple
-  policies for inference, fold each fg's stats into env.obs_mean/var
-  ordered by env.dm_ids.
-- During inference (no further updates), keep obs_stats frozen.
-- "warm-up": first iteration of a fresh training run sees obs_mean=0,
-  obs_var=1 (i.e. effectively un-normalised). Stats become meaningful
-  after the first train_step's Welford merge.
+- obs_stats: each .pth stores only its own species' stats.
+- During inference, keep obs_stats frozen.
+- Warm-up: first iteration sees obs_mean=0, obs_var=1.
 
 ================================================================
 17. INFERENCE RUNNER (inference.py)
 ================================================================
-Invoked as `python3 inference.py` with optional flags:
-  --project <path>     Project YAML (default: built-in MVP setup).
+Flags:
+  --project <path>     Project YAML (default: built-in MVP).
   --run-name <name>    Loads from results/<name>/ (default "default").
-  --checkpoints <dir>  Explicit override of the checkpoint dir; if set,
-                       it trumps --run-name.
-  --grid n*m           Grid dims (default: 60*60).
-  --ticks N            Number of env.step() ticks (default: 100).
-  --seed N             Seed for deterministic initial biomass.
+  --checkpoints <dir>  Overrides --run-name.
+  --grid n*m           Grid dims (default 60*60).
+  --ticks N            (default 100)
+  --seed N             Deterministic initial biomass.
   --output PATH.npz    Save per-FG biomass history.
-  --quiet              Suppress progress prints.
+  --quiet
 
-Impact-map .npz loader (_load_impact_map_npz) is key-agnostic:
-  1. If the requested impact_id is a key in the archive AND that array
-     is 2-D, use it.
-  2. Otherwise pick the first 2-D array in the archive and use it
-     (prints a small [info] note naming the actual key).
-  3. Only fall back to a zero field when the archive contains no 2-D
-     arrays at all.
-This means impact-map .npz files in the project YAML can use any
-internal key; the mapping is YAML-id -> file, not -> key-inside-file.
+Impact-map .npz loader (_load_impact_map_npz) is key-agnostic: matches
+by id, otherwise picks first 2-D array, otherwise zero field.
 
-Key behaviours (takes the known pitfalls into account):
-  - Loads each DM's checkpoint, supports both new format
-    ({'state_dict','obs_stats'}) and legacy bare state_dict.
-  - Builds (N_dm, D) obs_mean/obs_var aligned to env.dm_ids via per-DM
-    lookup (not positional) so reordering between training & inference is
-    safe.
-  - Falls back to mean=0, var=1 for DMs with missing/empty obs_stats and
-    warns loudly (signals likely-degenerate policy behaviour).
-  - Calls env._build_static_caches() and env._rebuild_batched_weights()
-    so the batched torch.bmm fast path is used.
-  - Does NOT update obs_stats during inference (frozen); sigma_f is
-    irrelevant since no ARS updates are performed.
-  - Untrained DMs (no checkpoint) get a fresh PolicyNetwork and mean=0/
-    var=1; warning printed.
-
-Intentionally NOT included yet (extension points):
-  - Plotting / scenario comparison (just biomass-history .npz output).
-  - Map loading (uses zero impact maps like train.py's env_builder).
-  - Multi-seed averaging or batch inference.
+Key behaviours:
+  - Supports both new + legacy ckpt formats.
+  - obs_mean/obs_var per-DM lookup (not positional) -> reorder-safe.
+  - mean=0/var=1 fallback with loud warning for missing/empty stats.
+  - Calls _build_static_caches() + _rebuild_batched_weights().
+  - Does NOT update obs_stats during inference.
+  - Inference path uses the SAME spawn dispatch as training
+    (mode='inference', spawn_seed=None unless --seed sets one).
 
 ================================================================
 18. RUN-NAME / CHECKPOINT ISOLATION
 ================================================================
 Both train.py and inference.py accept --run-name (default "default").
-Effect:
-  - train.py saves every per-generation checkpoint to
-      results/<run-name>/policy_<fg>.pth
-    (created if missing). KeyboardInterrupt save and --resume read
-    from the same directory. There is NO timestamp/uid in the path:
-    re-running with the same --run-name OVERWRITES.
+  - train.py saves per-generation ckpts to results/<run-name>/
+    policy_<fg>.pth (overwrites).
   - inference.py loads from results/<run-name>/ unless --checkpoints
-    is given explicitly (then --checkpoints trumps --run-name).
-  - Old loose checkpoints at results/policy_*.pth (pre-run-name) are
-    NOT auto-migrated. Move them to results/default/ if you want them
-    to be the default-run baseline.
-  - Backup-by-move pattern (`mkdir results/_backup_pre_X && mv
-    results/policy_*.pth ...`) is OBSOLETE — use a fresh --run-name
-    instead, that's the whole point of the flag.
+    is given.
+  - Old loose checkpoints at results/policy_*.pth are NOT auto-migrated.
 
 ================================================================
-19. ACTION-HACK FLAGS + PROFILES (action-distribution shaping)
+19. ACTION-HACK FLAGS + PROFILES
 ================================================================
-The trainer can apply four "action-distribution hacks" on top of the
-biology-driven fitness (alpha*delta_b + beta*delta_r). Per
-konvergensproblem.txt's "INSIKT 2" these are symptom-painting and
-should NOT be the main force; the profiles therefore disable all of
-them and let biology drive.
+Per konvergensproblem.txt's "INSIKT 2": action-shaping hacks are
+symptom-painting; profiles disable them all.
 
-Flags (all live in train.py, all behave as no-ops when zero/off):
-  --argmax_penalty F        Subtract F * argmax_fraction from fitness.
-                            CLI default 0.3; profiles force 0.0.
-  --entropy_coef F          Add F * (H/H_max) to fitness. CLI default
-                            0.1; profiles force 0.0.
-  --temp_start T0
-  --temp_end   T1
-  --temp_anneal_gens G      Softmax temperature linearly annealed from
-                            T0 to T1 over G generations, then held at
-                            T1. CLI defaults 3.0/1.0/10; profiles
-                            force T0=T1=1.0 (no shaping).
-  --uniform_bias_init       PolicyNetwork.__init__ zeros the output
-                            bias and multiplies the output weights by
-                            0.01, so gen-1 softmax is ~uniform across
-                            actions. Verified to change seals gen-1
-                            sampling from rs=84-92% to rs=27% — but
-                            does NOT prevent the rest-attractor from
-                            reforming over a few ARS iterations.
-                            Tests: tests/test_uniform_bias_init.py
-                            (16/16). Off by default; profiles keep off.
+Flags (all no-ops when zero/off):
+  --argmax_penalty F        Profiles force 0.0.
+  --entropy_coef F          Profiles force 0.0.
+  --temp_start/--temp_end/--temp_anneal_gens
+                            Profiles force T0=T1=1.0.
+  --uniform_bias_init       Profiles keep off.
+                            Tests: tests/test_uniform_bias_init.py (16/16).
 
-Profiles (--profile sanity|info|deep) — recommended hyperparameter
-stacks; profile values trump explicit conflicting flags after a
-[Y/n] override prompt that lists each overridden value:
+Profiles (--profile sanity|info|deep):
   sanity  generations=10, iter_per_gen=15, n_deltas=16,
           n_eval_ticks=100, temp_anneal_gens=8
   info    generations=40, iter_per_gen=20, n_deltas=16,
           n_eval_ticks=150, temp_anneal_gens=30
   deep    generations=80, iter_per_gen=20, n_deltas=20,
           n_eval_ticks=200, temp_anneal_gens=60
-All three set coevolution=True, argmax_penalty=0.0, entropy_coef=0.0,
-temp_start=temp_end=1.0, uniform_bias_init=False.
+All three set coevolution=True and force action-hack-free settings.
 
 ================================================================
-20. SPAWN / SUB-THRESHOLD FIX (structural, not action-hack)
+20. SPAWN / SUB-THRESHOLD FIX (structural)
 ================================================================
-Discovered cause of the seals/porpoises "rest=100%" attractor:
-min_split_biomass=50 kg in fg_library.yaml for seals AND porpoises
-combined with seals total=25 ton / 60x60 grid = 6.94 kg/cell means
-the vast majority of seal cells were under-threshold from tick 1.
-The OLD rule zeroed the 4 move-actions in those cells; the rest/eat
-renormalisation, plus the zero-total fallback (forced rest=1 in cells
-without prey), made rest=100% a HARD RULE, not a learned policy.
+Discovered cause of seals/porpoises "rest=100%" attractor:
+min_split_biomass=50 kg combined with seals total=25 ton / 60x60 grid
+= 6.94 kg/cell meant most cells were under-threshold; the old rule
+zeroed move-actions, forcing rest=100%.
 
-Two coordinated fixes implemented:
+Two coordinated fixes:
 
-DEL 1 — Cluster-spawn in lib/config/config_loader.py:
-  New helper _spawn_biomass_distribution(grid, total_b, min_per_cell,
-  allowed_mask, rng):
-    * Eligible cells = allowed_mask>0 (None => full grid).
-    * Per-cell floor = 10 * min_split_biomass (so predation/mortality
-      doesn't immediately drop a cell under the threshold).
-    * Loop: random cell pick (no replacement), biomass drawn uniformly
-      in [floor, min(total_b, remaining)], assign, repeat while
-      remaining >= floor.
-    * Leftover (<floor) is merged into a randomly chosen already-
-      seeded cell — total biomass exactly preserved.
-    * Edge cases: if floor==0 (e.g. zooplankton/gadoids), falls back
-      to legacy uniform-Dirichlet spread. If no seed could be placed
-      (total < floor), dumps everything in one random cell.
-  allowed_mask is currently passed as None (mareld2.yaml has no
-  accessibility map yet); the hook is wired and ready.
-  Both setup_full_mareld_mvp and load_project_config use the helper.
+DEL 1 - Cluster-spawn helper _spawn_biomass_distribution (legacy):
+  * Eligible cells = allowed_mask>0 (None => full grid).
+  * Per-cell floor = 10 * min_split_biomass.
+  * Loop: random cell pick, biomass drawn uniformly in
+    [floor, min(total_b, remaining)], assign, repeat.
+  * Leftover (<floor) merged into a randomly chosen seeded cell.
+  * If floor==0 -> legacy uniform Dirichlet.
 
-DEL 2 — Sub-threshold collapse in lib/environments/ecosystem.py:
-  * Removed the 4-action move-mask zeroing on B < min_split.
-  * After softmax, compute sub_thr_mask = (B>0) & (B<min_split),
-    take argmax over the full 11-action distribution per such cell,
-    and replace that cell's distribution with a one-hot. Whole group
-    performs one action on 100% of the cell biomass (including move,
-    so small groups CAN migrate together — "variant 2" in design).
-  * Reward path unchanged (eat still grants energy, move still moves
-    biomass, etc.).
+DEL 1b - Strategy-driven spawn (lib/spawn/):
+  When a `spawn:` block exists in project (per-FG) or library
+  (per-species default), the helper goes through the new path:
+    weights = make_weights(spec, (H,W), context, seed)
+    initial_b = distribute_with_floor(weights, total_b,
+                                      min_per_cell, allowed_mask=None)
+  The allocator's floor semantics are unchanged so existing
+  guarantees (no cell under floor; total preserved) still hold.
+  See section 26 for the strategies.
 
-Verified empirically (20-gen, no action-hacks, --profile info-ish):
-  seals gen-1 iter-1 sampling: 44/28/28 H=54% (move-dominant!) vs
-  pre-fix 08/12/84-92 H=07%. Mechanically the fix works. However
-  ARS still drags seals to rs=100% from gen 2 onward — proving the
-  remaining attractor is STRUCTURAL (no predator above seals = no
-  channel-b feedback; slow population dynamics = weak channel-a),
-  not mask-driven. Same for porpoises after the fix.
+DEL 2 - Sub-threshold collapse in ecosystem.py:
+  * Removed move-mask zeroing on B < min_split.
+  * After softmax, sub_thr_mask = (B>0) & (B<min_split) cells get a
+    one-hot argmax over the full 11-action distribution. Whole group
+    performs one action (including move) - small groups can migrate
+    as a unit ("variant 2").
 
 ================================================================
 21. CO-EVOLUTION (default training mode)
 ================================================================
-Implemented in lib/runners/trainer.py::train_step_coevolution and
-lib/runners/parallel_worker.py::_evaluate_coevo_task. Default ON
-(--no_coevolution to fall back to round-robin).
+Implemented in trainer.train_step_coevolution and worker
+_evaluate_coevo_task. Default ON.
 
 Mechanics:
-  * Per ARS iteration: sample one independent delta per species, share
-    a common rollout seed (CRN) across the +/- halves.
-  * Build 2*n_deltas joint rollouts where ALL DM policies are
-    perturbed simultaneously (+sigma*delta_fid for the + half,
-    -sigma*delta_fid for the - half). Each rollout returns one
-    fitness per species.
+  * Per ARS iteration: one independent delta per species; CRN
+    rollout seed across the +/- halves.
+  * 2*n_deltas joint rollouts with ALL DM policies perturbed
+    simultaneously. Each rollout returns one fitness per species.
   * ARS update is per-species, using THAT species' own deltas and
     its own r_pos/r_neg vector. No cross-species delta leakage.
-  * Effect (vs round-robin): predator/prey feedback materialises
-    inside the same rollout instead of being averaged out against a
-    frozen opponent. Documented "channel (b)" in konvergensproblem.txt.
+  * Predator/prey feedback materialises in the same rollout instead
+    of being averaged out against frozen opponents.
 
-Empirical signature (reproducible across hyperparameter configs):
+Empirical signature (reproducible):
   * Zooplankton "escape" from rest=100% to ~rs/et=40/60 around gen
-    13-20 once pelagic_fish predation pressure ramps up. Observed
-    in 3+ independent runs (with and without action-hacks, with and
-    without spawn-fix). The mechanism is robust.
+    13-20 once pelagic_fish predation pressure ramps up.
   * Seals/porpoises rest=100% attractor: structural, robust to every
-    intervention tried (argmax_penalty, entropy_coef, temp, uniform-
-    bias-init, spawn-fix, adding pelagic_fish as seal prey). Likely
-    a genuine ARS optimum for a sated top-predator on 150-tick
-    rollouts without a predator above them.
-  * Gadoids reach POSITIVE reward (+0.04..+0.07) once hacks are off
-    — the only species that does, indicating they have a sustainable
-    rest/eat mix on the current biology.
-  * Pelagic_fish converges to mv-dominant (74-98%) "flee" policy;
-    the exact level depends on co-evolution kaskad effects (mildare
-    with longer rollouts and other species' policies in flux).
+    intervention tried.
+  * Gadoids reach POSITIVE reward once hacks are off.
+  * Pelagic_fish converges to mv-dominant (74-98%) "flee" policy.
 
 Kept eval snapshots: results/coev_5gen_100ticks_eval,
 results/coev_20gen_100ticks_eval, results/coev_info_profile_40gen,
@@ -855,124 +655,67 @@ results/coev_20gen_noHacks, results/coev_info_20gen_postSpawnFix.
 ================================================================
 22. DESIGN PRINCIPLE: BIOLOGY DRIVES, NOT ACTION-HACKS
 ================================================================
-Crystallised in konvergensproblem.txt (read that file for the long
-story; this section is the operational summary).
-
 Rule of thumb when adding a fix:
   1. If it shapes the action distribution (penalty/bonus on action
-     fractions, entropy, temperature, eps-greedy, action bias init)
-     it is an ACTION-HACK. Hide behind a flag and keep OFF in
-     profiles. Use only for diagnostics, never as the primary force.
+     fractions, entropy, temperature, eps-greedy, action bias init) ->
+     ACTION-HACK. Hide behind a flag and keep OFF in profiles.
   2. If it changes the biological/structural setup (spawn
-     distribution, min_split rule semantics, food web edges in
-     fg_library.yaml, impact mortality tables, integral-reward
-     formulation, co-evolution rollout structure) it is a
-     STRUCTURAL fix. Prefer these.
+     distribution, min_split semantics, food web edges in
+     fg_library.yaml, impact mortality tables, integral-reward,
+     co-evolution rollout structure) -> STRUCTURAL fix. Prefer these.
 
-The "evaluate by action histogram" lens (mv/rs/et fractions =
-quality) is officially deprecated. Quality must be evaluated by
-biomass trajectories over long inference rollouts, predator-prey
-cycles, response to impact fields, and comparison against
-Baltic-Sea field data. The next major work item is building that
-ecosystem-validation pipeline, NOT more hyperparameter sweeps.
+The "evaluate by action histogram" lens is officially deprecated.
+Quality must be evaluated by biomass trajectories over long inference
+rollouts, predator-prey cycles, response to impact fields, and
+comparison against Baltic-Sea field data.
 
-Known open structural items (likely worth attacking next):
+Known open structural items:
   * benthic_community grows 27x over 10000-tick inference because no
-    DM predates it and its K is soft — an fg_library.yaml/ecology
-    question, not training. Still present after the latest YAML
-    update (all `*_preys_on_benthic_community: false`).
-  * No predator above seals/porpoises in mareld2.yaml -> top-
-    predator rest-attractor is mechanistically rational. Either
-    accept as biology (verify with long-rollout biomass plots) or
-    add a hunting/disease impact map.
-  * accessibility map exists in code (movement masking) but is NOT
-    yet threaded to _spawn_biomass_distribution.allowed_mask. Hook
-    is ready in lib/config/config_loader.py.
-  * min_split_biomass=50 kg still set for porpoises and seals in the
-    current fg_library.yaml. Cluster-spawn + sub-threshold collapse
-    (section 20) mitigates the old hard rest-attractor, but the
-    one-hot argmax fallback is still constantly active for top
-    predators if typical per-cell biomass < threshold.
-  * Dead parameter: `seals_preys_on_pelagic_fish` has
-    `preys_on: false` but a leftover `max_intake_rate: 0.012` —
-    harmless at runtime, worth cleaning for clarity.
+    DM predates it and its K is soft.
+  * No predator above seals/porpoises in mareld2.yaml -> top-predator
+    rest-attractor is mechanistically rational.
+  * accessibility map: plumbed into spawn (allowed_mask param +
+    make_weights context) but currently passed as None at the caller.
+  * min_split_biomass=50 kg still set for porpoises and seals.
+  * Dead parameter: seals_preys_on_pelagic_fish has preys_on:false but
+    leftover max_intake_rate: 0.012.
 
 LATE-SESSION ADDITIONS (see konvergensproblem.txt for full story):
   * KRITISK INSIKT 7: 150-tick rollouts HIDE ecosystem collapse.
-    Inference of info_10gen_no_impacts checkpoints over 2000 ticks
-    (5 seeds, impacts muted) showed deterministic zooplankton
-    extinction around tick ~620-700, pelagic_fish -87%, benthic_
-    community +565% with no saturation, and frozen top predators
-    (porpoises/seabirds/seals biomass exactly constant 12/25/25 t
-    over 2000 ticks). Positive training reward (5/6 DM positive)
-    does NOT imply biological sustainability — integral reward
-    over 150 ticks is biologically too short to stress-test
-    predator-prey stability. The mirrored eat=1.0 attractor when
-    all impacts are muted is just as degenerate as the rest=1.0
-    attractor that appears with impacts active.
-  * Bugfix this session: `_EnvBuilder` in train.py did NOT bake in
-    PROJECT_PATH. With spawn-context multiprocessing, each worker
-    re-imports train.py which resets the module-global to None,
-    making workers fall back to setup_full_mareld_mvp (hardcodes
-    observable_impact_vars=['windfarm_noise']) while the parent
-    reads mareld2.yaml — bmm-shape-mismatch when impact-mute config
-    diverges. Fix: bake project_path into the _EnvBuilder instance
-    (same pattern as grid_size); _install_generation_maps also
-    passes PROJECT_PATH through.
-  * Verified this session: inference.py DOES honour indivisible
-    weight. load_project_config(mode='inference') runs the SAME
-    cluster-spawn (floor 10*min_split) as training. The only
-    mode-difference is total_b (fixed inference_initial_biomass
-    vs uniform range) and randomize_energy (off vs on). The frozen
-    top-predator state in inference is NOT a spawn-mask bug — it
-    is the learned policy (move=0 + tiny absolute biomass in only
-    1-2 active cells) exposed over a 2000-tick horizon that
-    training never saw. Don't spend time re-investigating spawn.
+    2000-tick inference showed deterministic zooplankton extinction
+    ~tick 620-700 even when training reward was positive.
+  * Bugfix: _EnvBuilder now bakes in PROJECT_PATH (workers re-import
+    train.py under spawn ctx and would otherwise fall back to MVP
+    defaults).
 
 ================================================================
-23. BIOLOGICAL SANITY CHECK FORMULA (one-liner gate before training)
+23. BIOLOGICAL SANITY CHECK FORMULA
 ================================================================
 Per Strategi.pdf + konvergensproblem.txt "Kritisk insikt 4". For each
-DM species, compute per-tick energy balance at full hunger (h=1) and
-require netto_eat > rest_cost; otherwise `rest` is the structural
-global optimum regardless of how ARS is trained ("rest-always-
-collapse"). Cross-check `move` for top predators too.
+DM, compute per-tick energy balance at full hunger (h=1) and require
+netto_eat > rest_cost.
 
-  intake_at_h1 = max_intake_rate * energy_gain         # of best prey
+  intake_at_h1 = max_intake_rate * energy_gain         # best prey
   feed_cost    = feeding_cost    * resting_metabolism
   rest_cost    = resting_cost    * resting_metabolism  # resting_cost=1
-  move_cost    = movement_cost   * resting_metabolism  # per tick moving
+  move_cost    = movement_cost   * resting_metabolism
 
   netto_eat = intake_at_h1 - feed_cost                 # MUST be > 0
   Hard gate:        netto_eat > rest_cost
-  Soft gate (move): netto_eat > move_cost              (else move always
-                                                        suboptimal vs rest+eat)
+  Soft gate (move): netto_eat > move_cost
 
-History on mareld2.yaml / fg_library.yaml:
-  * Pre-update (see previous review): porpoises -148, seabirds -133,
-    seals -38.75 (all MJ/tick at h=1). Eat structurally worse than
-    rest -> rest=100% attractor was a parameter bug, not an ML bug.
-  * Post-update (current YAML, sanity script in section 24):
-        zooplankton  netto_eat=+101.4  eat-rest=+98.9   eat-move=+101.4
-        pelagic_fish netto_eat=+84.8   eat-rest=+76.8   eat-move=+67.6
-        gadoids      netto_eat=+564.5  eat-rest=+558.5  eat-move=+553.4
-        porpoises    netto_eat=+95.0   eat-rest=+33.0   eat-move=-91.0 *
-        seals        netto_eat=+147.5  eat-rest=+122.5  eat-move=+85.0
-        seabirds     netto_eat=+493.5  eat-rest=+403.5  eat-move=+133.5
-    All DMs pass the hard gate (eat > rest). PORPOISES fails the
-    soft gate (move 186 > eat 95) — a single move tick costs more
-    than a single eat tick yields, so move is only justified by
-    paying back over several eat ticks in a better cell. Risk of
-    blocked exploration on short rollouts. Not a rest-collapse but
-    worth watching.
+Post-update (current YAML):
+  zooplankton  netto_eat=+101.4  eat-rest=+98.9   eat-move=+101.4
+  pelagic_fish netto_eat=+84.8   eat-rest=+76.8   eat-move=+67.6
+  gadoids      netto_eat=+564.5  eat-rest=+558.5  eat-move=+553.4
+  porpoises    netto_eat=+95.0   eat-rest=+33.0   eat-move=-91.0 *
+  seals        netto_eat=+147.5  eat-rest=+122.5  eat-move=+85.0
+  seabirds     netto_eat=+493.5  eat-rest=+403.5  eat-move=+133.5
+All DMs pass the hard gate. Porpoises fails the soft gate (move > eat).
 
 ================================================================
-24. SANITY-CHECK SNIPPET (run before every training session)
+24. SANITY-CHECK SNIPPET
 ================================================================
-Standalone python snippet (paste into a shell). Pull I, E_prey,
-feeding_cost, resting_metabolism, resting_cost, movement_cost from
-fg_library.yaml for each DM and its best prey:
-
   rows = [
     # (name, I, E_prey, feeding_cost, SMR, resting_cost, movement_cost)
     ('zooplankton',  0.175, 600,  1.45, 2.5, 1.0, 0.0 ),
@@ -988,41 +731,135 @@ fg_library.yaml for each DM and its best prey:
       print(f"{n:14} netto={netto:8.1f} eat-rest={netto-rest:8.1f} "
             f"eat-move={netto-move:8.1f}")
 
-Acceptance criterion: every line must have netto>0 and eat-rest>0.
-eat-move<0 is a warning, not a stop, but flag it.
+Acceptance: every line must have netto>0 and eat-rest>0.
 
 ================================================================
 25. RUNNING TRAINING/INFERENCE NON-INTERACTIVELY (gotcha)
 ================================================================
-train.py has ONE remaining interactive prompt that blocks in any
-non-tty environment (CI, agent bg shell, nohup without redirected
-stdin):
-  * "Continue with these parameters? [Y/n]:" — always fires after
-    the session header.
-The old profile-conflict [Y/n] prompt was REMOVED this session — the
-new semantics (explicit CLI > profile) makes a confirmation prompt
-unnecessary; overridden profile values are now just listed under
-"EXPLICIT CLI FLAGS OVERRIDE PROFILE" as informational text.
-Defaults to "yes" on empty Enter. If you launch the process
-without a real stdin you'll see the header, the prompt line, and
-then NOTHING (process sleeps in `input()` at ~0.8% CPU, no workers
-spawned). Workaround for unattended runs:
+train.py has one remaining interactive prompt that blocks in non-tty
+environments: "Continue with these parameters? [Y/n]:" - defaults to
+yes on Enter. Unattended workaround:
 
     yes "" | python -u train.py --profile info --project mareld2.yaml \
                                 --run-name <name>
 
-  * `yes ""` feeds an endless stream of empty lines (each accepted as
-    the default "yes").
-  * `python -u` is REQUIRED — otherwise stdout is fully buffered
-    when stdout is a pipe and no progress is visible until the
-    buffer fills (hundreds of MB later).
+`python -u` is REQUIRED - otherwise stdout is fully buffered when
+stdout is a pipe.
 
-EXPLICIT CLI FLAGS NOW OVERRIDE PROFILE (changed this session).
-Precedence is explicit > profile > parser default. To run "info"
-with a different generation count, just pass --generations N on
-the command line — the profile leaves that key alone. The PROFILES
-dict in train.py only needs editing when you want to change the
-default recipe itself, not for one-off overrides.
+Explicit CLI flags > profile > parser default. Inference has no
+interactive prompts.
 
-Inference (inference.py) has no interactive prompts; safe to run
-non-interactively with default stdin.
+================================================================
+26. SPAWN STRATEGIES PACKAGE (lib/spawn/)
+================================================================
+New subsystem (commit 2ef39f4) replacing the legacy uniform spread
+for any FG that ships a `spawn:` YAML block.
+
+Public API (lib/spawn/__init__.py):
+  StrategySpec(mode, params, refs, seed)
+  make_weights(spec, shape, context=None, project_seed=None) -> (H,W)
+  distribute_with_floor(weights, total, min_per_cell,
+                        allowed_mask=None) -> (H,W) biomass map
+
+StrategySpec fields:
+  mode    : "uniform" | "perlin" | "colony" | "env_driven"
+  params  : mode-specific scalar dict (see schema below)
+  refs    : list of {name, weight, transform} (env_driven only)
+  seed    : optional int; when None, falls back to project_seed
+            (which, in train.py's per-generation snapshot mode, is the
+            adler32 of (gen_spawn_seed, fg_id)).
+
+Strategies (lib/spawn/strategies.py):
+  uniform     : equal weight per cell -> equivalent to legacy Dirichlet.
+                No params.
+  perlin      : fractal-sum Perlin noise on the cell grid.
+                Params: Scale (cells/wavelength), Octaves (1-6),
+                Persistence (0-1, amplitude falloff), Lacunarity (~2.0,
+                frequency mult), Threshold (clamp-to-zero before
+                normalisation). Pure numpy vectorised gradient noise.
+  colony      : N Gaussian blobs of width sigma_cells around N random
+                anchor cells.
+                Params: N_colonies (int), Sigma_cells (float),
+                Anchor ("free"|"coast"|"open_water"; reserved - anchor
+                cells currently chosen uniformly until depth/coast map
+                is wired in).
+  env_driven  : weighted sum of existing env layers from `refs:`, plus
+                optional Perlin overlay.
+                Params: Floor (per-cell minimum before normalisation),
+                Noise_amp (overlay amplitude), Noise_scale (overlay
+                wavelength). Refs are looked up from
+                context['env_layers'] by name; missing refs are filtered
+                out at config_loader level.
+
+Allocator (lib/spawn/allocator.py):
+  distribute_with_floor implements:
+    1. Ignore cells with allowed_mask==0.
+    2. Pick n_active = clamp(int(total/min_per_cell), 1, n_eligible)
+       cells by weight (deterministic argpartition + RNG tiebreak).
+    3. Allocate floor=min_per_cell to each.
+    4. Distribute the remainder proportionally to weights[active].
+    5. Edge cases handled: total<floor (single cell), zero weights
+       (uniform over allowed), allowed_mask all-zero (returns zeros),
+       min_per_cell=0 (no floor; pure weighted distribution).
+  Invariants verified by tests/test_allocator.py:
+    - sum(map) == total (within fp eps)
+    - all active cells >= min_per_cell
+    - shape == requested shape, dtype float32
+    - deterministic under same RNG seed
+
+Integration (lib/config/config_loader.py):
+  _build_spawn_spec(spawn_cfg, default_seed) parses YAML -> StrategySpec
+  or returns None (legacy path).
+  _derive_fg_spawn_seed(base, fg_id) -> adler32(f"{base}::{fg_id}")
+  guarantees per-FG diversity under a shared generation-wide seed.
+  Both setup_full_mareld_mvp and load_project_config call the same
+  helper and accept `spawn_seed`.
+
+Tests:
+  tests/test_allocator.py            17 tests
+  tests/test_spawn_integration.py     5 tests
+  tests/test_uniform_bias_init.py    16 tests
+  Total: 38, all green.
+
+================================================================
+27. PER-GENERATION SPAWN SNAPSHOT (train.py)
+================================================================
+Goal: every delta/worker within ONE generation sees the same biomass
+maps per FG (same total AND same spatial layout), analogous to the
+impact-map snapshot. Across generations the layout still varies.
+
+Mechanism:
+  _EnvBuilder grew a `spawn_seed` attribute. _make_env_builder accepts
+  spawn_seed and passes it into both load_project_config and
+  setup_full_mareld_mvp.
+  _install_generation_maps(gen_idx) now draws two INDEPENDENT seeds:
+      gen_seed       = randint(1, 2**31-1)   # impact maps
+      gen_spawn_seed = randint(1, 2**31-1)   # spawn snapshot
+  The new builder is created with both, then the worker pool is
+  rebuilt so spawn-workers receive the updated env_builder.
+
+In load_project_config / setup_full_mareld_mvp:
+  spawn_rng_base = spawn_seed if spawn_seed is not None else seed
+  fg_spawn_seed  = _derive_fg_spawn_seed(spawn_rng_base, fg_id)
+  spawn_spec     = _build_spawn_spec(cfg, default_seed=fg_spawn_seed)
+  spawn_rng      = np.random.default_rng(fg_spawn_seed) if spawn_seed
+                   else rng
+  initial_b      = _spawn_biomass_distribution(grid, total_b,
+                       min_per_cell, allowed_mask=None, rng=spawn_rng,
+                       spawn_spec=spawn_spec,
+                       project_seed=fg_spawn_seed)
+When spawn_seed is set, total_b for the FG is also sampled from a
+deterministic per-FG RNG so the ENTIRE biomass map (sum + shape) is
+identical across rollouts in the generation. Without spawn_seed,
+legacy per-rollout behaviour is preserved bit-for-bit.
+
+Verified empirically (sanity script):
+  (1) same spawn_seed + different rollout seed -> identical biomass maps.
+  (2) different spawn_seed -> maps differ.
+  (3) no spawn_seed -> legacy behaviour (maps vary per rollout).
+  (4) within one spawn_seed: 28 distinct per-FG layouts across the 8
+      FGs of mareld2 (no two FGs share an identical pattern).
+
+Inference mode unchanged: total_b is already deterministic from
+inference_initial_biomass, so spawn_seed only affects the spatial
+layout via _build_spawn_spec there.

@@ -133,8 +133,13 @@ class _EnvBuilder:
     passed to worker processes via ``trainer.env_builder``.
     """
 
-    def __init__(self, impact_maps_snapshot=None, grid_size=None, project_path=None):
+    def __init__(self, impact_maps_snapshot=None, grid_size=None, project_path=None, spawn_seed=None):
         self.impact_maps_snapshot = impact_maps_snapshot
+        # Per-generation spawn seed: when set, every env built by this
+        # callable produces *identical* biomass maps for all FGs (shared
+        # across deltas/workers), analogous to ``impact_maps_snapshot``.
+        # ``None`` falls back to per-rollout sampling (legacy).
+        self.spawn_seed = spawn_seed
         # Bake grid dims into the instance so worker processes (which
         # reimport train.py via 'spawn' and would otherwise see the
         # module-level 60x60 defaults) build env with the correct shape.
@@ -158,9 +163,11 @@ class _EnvBuilder:
         impact_ranges = {}
         if self.project_path:
             fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
-                self.project_path, grid_size=grid_size, seed=seed)
+                self.project_path, grid_size=grid_size, seed=seed,
+                spawn_seed=self.spawn_seed)
         else:
-            fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
+            fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
+                                        spawn_seed=self.spawn_seed)
             impact_vars = ['windfarm_noise']
             observable_impact_vars = ['windfarm_noise']
 
@@ -195,14 +202,20 @@ class _EnvBuilder:
         return env
 
 
-def _make_env_builder(impact_maps_snapshot=None, grid_size=None, project_path=None):
+def _make_env_builder(impact_maps_snapshot=None, grid_size=None, project_path=None, spawn_seed=None):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
     module-level defaults (which are reset to ``None``/60x60 inside the
-    worker after reimport)."""
+    worker after reimport).
+
+    ``spawn_seed`` (optional): when set, all envs built by the returned
+    callable share the same biomass spawn layout (per FG). Used by
+    ``_install_generation_maps`` to lock the spawn pattern for one
+    generation, just like ``impact_maps_snapshot`` does for impacts.
+    """
     return _EnvBuilder(impact_maps_snapshot, grid_size=grid_size,
-                      project_path=project_path)
+                      project_path=project_path, spawn_seed=spawn_seed)
 
 
 # Default module-level env_builder: fresh impact maps per call. Used for
@@ -612,8 +625,14 @@ def main():
         gen_seed = int(np.random.randint(1, 2**31 - 1))
         maps = _sample_impact_maps(_impact_vars_global, _impact_ranges_global,
                                    (GRID_HEIGHT, GRID_WIDTH), seed=gen_seed)
+        # Independent generation-wide spawn seed: locks biomass spawn
+        # layout across all deltas/workers in this generation while still
+        # varying generation-to-generation. Drawn separately from
+        # ``gen_seed`` so impact and spawn snapshots remain decoupled.
+        gen_spawn_seed = int(np.random.randint(1, 2**31 - 1))
         new_builder = _make_env_builder(maps, grid_size=(GRID_HEIGHT, GRID_WIDTH),
-                                        project_path=PROJECT_PATH)
+                                        project_path=PROJECT_PATH,
+                                        spawn_seed=gen_spawn_seed)
         trainer.env_builder = new_builder
         # Rebuild worker pool so spawn-workers receive the updated builder.
         if trainer._pool is not None:

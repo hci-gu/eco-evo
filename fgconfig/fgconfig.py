@@ -465,12 +465,14 @@ class FGConfigApp:
             ent.pack(side="left", padx=(0, 10))
             self.prop_vars[key] = var
 
-        # Spawn editor section (DM)
-        self.spawn_vars = {}
-        spawn_row = row_idx + 1
-        self._build_spawn_editor(self.editor_frame, self.spawn_vars, spawn_row)
+        ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(row=row_idx + 1, column=0, columnspan=2, pady=5)
 
-        ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(row=spawn_row + 1, column=0, columnspan=2, pady=5)
+        # Spawn Strategy editor (DM) — nested LabelFrame inside FG Editor
+        self.spawn_frame = ttk.LabelFrame(self.editor_frame, text="Spawn Strategy")
+        self.spawn_frame.grid(row=row_idx + 2, column=0, columnspan=2,
+                              sticky="ew", padx=5, pady=(8, 5))
+        self.spawn_vars = {}
+        self._build_spawn_editor(self.spawn_frame, self.spawn_vars)
 
         # FG Editor for Non Decision Makers
         self.ndm_editor_frame = ttk.LabelFrame(self.project_inner, text="FG Editor")
@@ -495,81 +497,100 @@ class FGConfigApp:
                 ent.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
                 self.ndm_prop_vars[key] = var
 
-        # Spawn editor section (NDM)
-        self.ndm_spawn_vars = {}
-        ndm_spawn_row = len(ndm_props)
-        self._build_spawn_editor(self.ndm_editor_frame, self.ndm_spawn_vars, ndm_spawn_row)
-
         ttk.Button(self.ndm_editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
-            row=ndm_spawn_row + 1, column=0, columnspan=2, pady=5
+            row=len(ndm_props), column=0, columnspan=2, pady=5
         )
+
+        # Spawn Strategy editor (NDM) — nested LabelFrame inside FG Editor
+        self.ndm_spawn_frame = ttk.LabelFrame(self.ndm_editor_frame, text="Spawn Strategy")
+        self.ndm_spawn_frame.grid(row=len(ndm_props) + 1, column=0, columnspan=2,
+                                  sticky="ew", padx=5, pady=(8, 5))
+        self.ndm_spawn_vars = {}
+        self._build_spawn_editor(self.ndm_spawn_frame, self.ndm_spawn_vars)
 
     # ------------------------------------------------------------------
     # Spawn-strategy editor (per-FG)
     # ------------------------------------------------------------------
     SPAWN_MODES = ("uniform", "perlin", "colony", "env_driven")
+    # Display labels shown in the dropdown; internal keys remain lowercase.
+    SPAWN_MODE_LABELS = {
+        "uniform": "Uniform",
+        "perlin": "Perlin",
+        "colony": "Colony",
+        "env_driven": "Env-driven",
+    }
+    SPAWN_MODE_KEYS = {v: k for k, v in {
+        "uniform": "Uniform",
+        "perlin": "Perlin",
+        "colony": "Colony",
+        "env_driven": "Env-driven",
+    }.items()}
     SPAWN_MODE_HELP = {
         "uniform": (
             "Uniform\n"
             "\n"
-            "Sprider biomassan jämnt över alla tillåtna celler "
-            "(Dirichlet-stil), utan rumslig korrelation. Detta är "
-            "default-beteendet och bryter inte mot några tidigare "
-            "kontrakt. Per-cell-golvet (10·min_split) appliceras "
-            "fortfarande av allokatorn.\n"
+            "Spreads biomass evenly across all allowed cells "
+            "(Dirichlet-style), with no spatial correlation. This is "
+            "the default behaviour and does not break any previous "
+            "contracts. The per-cell floor (10·min_split) is still "
+            "applied by the allocator.\n"
             "\n"
-            "Parametrar: inga."
+            "Parameters: none."
         ),
         "perlin": (
             "Perlin / fBm\n"
             "\n"
-            "Skapar sammanhängande fält genom att summera lågpass-"
-            "filtrerade brus-lager (fraktal Brownsk rörelse). Lämpligt "
-            "för plankton, bottensamhällen och fiskstim där biologin "
-            "bildar klumpar snarare än jämn matta.\n"
+            "Creates coherent fields by summing low-pass filtered "
+            "noise layers (fractal Brownian motion). Suitable for "
+            "plankton, benthic communities and fish schools where "
+            "the biology forms patches rather than an even mat.\n"
             "\n"
-            "scale: våglängd i celler — styr klumpstorleken. Större = "
-            "färre, större klumpar.\n"
-            "octaves: antal frekvenslager (1-6). Fler = mer fin "
-            "struktur ovanpå grundklumpen.\n"
-            "persistence: amplitud-fall per oktav (0-1). Lägre = "
-            "renare lågfrekvens.\n"
-            "lacunarity: frekvens-multiplikator per oktav (~2.0).\n"
-            "threshold: cellvärden under detta clamps till noll innan "
-            "normalisering (för skarpare patch-kanter)."
+            "Scale: wavelength in cells — controls patch size. "
+            "Larger = fewer, bigger patches.\n"
+            "Octaves: number of frequency layers (1-6). More = finer "
+            "structure on top of the base patches.\n"
+            "Persistence: amplitude falloff per octave (0-1). Lower "
+            "= cleaner low frequency.\n"
+            "Lacunarity: frequency multiplier per octave (~2.0).\n"
+            "Threshold: cell values below this are clamped to zero "
+            "before normalisation (for sharper patch edges)."
         ),
         "colony": (
             "Colony\n"
             "\n"
-            "Placerar N kolonicentrum och smetar ut biomassan med en "
-            "Gaussisk kärna runt varje centrum. Avsett för topp-"
-            "predatorer (säl, tumlare, sjöfågel) som har små "
-            "populationer i lokala aggregat, och adresserar den "
-            "dokumenterade 'frusen topp-predator'-effekten där "
-            "utspridd spawn ger sub-tröskel one-hot-låsning.\n"
+            "Places N colony centres and smears the biomass with a "
+            "Gaussian kernel around each centre. Intended for apex "
+            "predators (seals, porpoises, seabirds) which have small "
+            "populations in local aggregates, and addresses the "
+            "documented 'frozen apex predator' effect where "
+            "scattered spawning produces sub-threshold one-hot "
+            "lock-in.\n"
             "\n"
-            "n_colonies: antal kolonicentrum.\n"
-            "sigma_cells: Gaussisk bredd i celler runt varje centrum.\n"
-            "anchor: free / coast / open_water. Reserverad parameter "
-            "— tas i bruk när officiell djupkarta är inkopplad; just "
-            "nu väljs centrum uniformt oavsett anchor."
+            "N_colonies: number of colony centres.\n"
+            "Sigma_cells: Gaussian width in cells around each centre.\n"
+            "Anchor: free / coast / open_water. Reserved parameter "
+            "— will be used once the official depth map is wired in; "
+            "for now centres are chosen uniformly regardless of "
+            "anchor."
         ),
         "env_driven": (
             "Env-driven\n"
             "\n"
-            "Vikten per cell är en linjär kombination av referens-"
-            "fält (t.ex. annan FG:s biomassa, framtida djup/ljus/"
-            "näringssalter) plus en valfri Perlin-overlay. Användbart "
-            "när en arts utbredning ska följa redan beräknade lager "
-            "— t.ex. zooplankton som följer fytoplankton.\n"
+            "The per-cell weight is a linear combination of "
+            "reference fields (e.g. another FG's biomass, future "
+            "depth/light/nutrients) plus an optional Perlin overlay. "
+            "Useful when a species' distribution should follow "
+            "already computed layers — e.g. zooplankton following "
+            "phytoplankton.\n"
             "\n"
-            "floor: minsta vikt per cell innan normalisering.\n"
-            "noise_amp: amplitud på Perlin-overlay (0 = ingen).\n"
-            "noise_scale: våglängd för overlay i celler.\n"
+            "Floor: minimum weight per cell before normalisation.\n"
+            "Noise_amp: amplitude of the Perlin overlay (0 = none).\n"
+            "Noise_scale: wavelength of the overlay in cells.\n"
             "\n"
-            "Refs (namn/weight/transform) sätts i YAML — GUI:t "
-            "exponerar bara skalär-parametrarna än så länge. Refs "
-            "till 'depth' filtreras bort tills djupkartan aktiverats."
+            "Refs (name/weight/transform) are set in YAML — the GUI "
+            "only exposes the scalar parameters for now. Refs to "
+            "'depth' are filtered out until the depth map has been "
+            "activated."
         ),
     }
     SPAWN_PARAM_SCHEMA = {
@@ -593,32 +614,28 @@ class FGConfigApp:
         ],
     }
 
-    def _build_spawn_editor(self, parent, vars_store, base_row):
-        """Build the per-FG spawn strategy editor under the FG editor.
+    def _build_spawn_editor(self, parent, vars_store):
+        """Build the per-FG spawn strategy editor inside ``parent``.
 
-        Layout (single grid row in parent, column 0 label / column 1 contents):
-            row=base_row, col 0: "Spawn"
-            row=base_row, col 1: inner frame with:
-                - mode dropdown
-                - dynamic parameter sub-frame (rebuilt on mode change)
-                - 120x120 preview canvas
+        ``parent`` is expected to be a dedicated container (e.g. a LabelFrame)
+        that this method fills via ``pack``. Layout:
+            - top row: mode dropdown
+            - content row: parameters (left) | preview (middle) | Info (right)
         ``vars_store`` is populated with::
             'mode_var', 'param_vars' (dict key->tk.StringVar/BooleanVar),
             'param_frame', 'preview_canvas', '_preview_image' (kept alive),
             '_preview_after_id' (debounce token).
         """
-        ttk.Label(parent, text="Spawn").grid(row=base_row, column=0, sticky="nw", padx=5, pady=2)
-
         outer = ttk.Frame(parent)
-        outer.grid(row=base_row, column=1, sticky="w", padx=5, pady=2)
+        outer.pack(side="top", fill="x", anchor="w", padx=8, pady=6)
 
         # Mode row
         mode_row = ttk.Frame(outer)
         mode_row.pack(side="top", fill="x", anchor="w")
         ttk.Label(mode_row, text="Mode:").pack(side="left", padx=(0, 4))
-        mode_var = tk.StringVar(value="uniform")
+        mode_var = tk.StringVar(value=self.SPAWN_MODE_LABELS["uniform"])
         mode_cb = ttk.Combobox(mode_row, textvariable=mode_var,
-                               values=list(self.SPAWN_MODES),
+                               values=[self.SPAWN_MODE_LABELS[m] for m in self.SPAWN_MODES],
                                state="readonly", width=12)
         mode_cb.pack(side="left", padx=(0, 8))
 
@@ -671,7 +688,7 @@ class FGConfigApp:
         lbl = vars_store.get("help_label")
         if lbl is None:
             return
-        mode = vars_store["mode_var"].get()
+        mode = self.SPAWN_MODE_KEYS.get(vars_store["mode_var"].get(), vars_store["mode_var"].get())
         text = self.SPAWN_MODE_HELP.get(mode, "")
         try:
             lbl.configure(text=text)
@@ -689,7 +706,7 @@ class FGConfigApp:
         vars_store["_param_widgets"] = []
         vars_store["param_vars"] = {}
 
-        mode = vars_store["mode_var"].get()
+        mode = self.SPAWN_MODE_KEYS.get(vars_store["mode_var"].get(), vars_store["mode_var"].get())
         schema = self.SPAWN_PARAM_SCHEMA.get(mode, [])
         if not schema:
             placeholder = ttk.Label(frame, text="(no parameters)",
@@ -733,7 +750,7 @@ class FGConfigApp:
 
     def _collect_spawn_dict(self, vars_store):
         """Collect current editor state into a YAML-shaped dict."""
-        mode = vars_store["mode_var"].get()
+        mode = self.SPAWN_MODE_KEYS.get(vars_store["mode_var"].get(), vars_store["mode_var"].get())
         out = {"mode": mode}
         for key, (var, ptype) in vars_store.get("param_vars", {}).items():
             raw = var.get()
@@ -850,7 +867,7 @@ class FGConfigApp:
         if mode not in self.SPAWN_MODES:
             mode = "uniform"
         # Setting mode_var triggers _rebuild_spawn_params via trace
-        vars_store["mode_var"].set(mode)
+        vars_store["mode_var"].set(self.SPAWN_MODE_LABELS[mode])
         # After rebuild, fill in any matching params
         for key, (var, ptype) in vars_store.get("param_vars", {}).items():
             if key in spawn_cfg:
@@ -2153,7 +2170,9 @@ class FGConfigApp:
         # Disable all editor widgets when the FG is muted (values are still
         # visible/read-only). Active FGs get the editor enabled normally.
         active_editor = self.editor_frame if category == "decision_makers" else self.ndm_editor_frame
+        active_spawn = self.spawn_frame if category == "decision_makers" else self.ndm_spawn_frame
         self._set_widget_tree_state(active_editor, not is_muted)
+        self._set_widget_tree_state(active_spawn, not is_muted)
         # Keep mute-button labels in sync with the freshly selected row.
         self._refresh_mute_button_labels()
 

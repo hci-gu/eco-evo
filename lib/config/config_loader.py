@@ -60,6 +60,23 @@ def _sample_total_biomass(min_b, max_b, rng):
         return float(rng.integers(lo, hi + 1))
     return float(np.random.randint(lo, hi + 1))
 
+def _derive_fg_spawn_seed(base_seed, fg_id):
+    """Derive a deterministic, FG-specific spawn seed from a base seed.
+
+    Used so that a generation-wide ``spawn_seed`` produces *different* but
+    reproducible per-FG patterns (otherwise every FG would share the same
+    Perlin/colony layout). Returns None if ``base_seed`` is None so legacy
+    callers keep their previous behaviour.
+    """
+    if base_seed is None:
+        return None
+    # Mix base seed and FG id into a 32-bit positive integer. zlib.adler32
+    # is cheap and deterministic across Python versions/platforms.
+    import zlib
+    key = f"{int(base_seed)}::{fg_id}".encode("utf-8")
+    return int(zlib.adler32(key)) & 0x7FFFFFFF
+
+
 def _build_spawn_spec(spawn_cfg, default_seed=None):
     """Bygg en `StrategySpec` från ett YAML `spawn:`-block (eller None).
 
@@ -217,12 +234,13 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
     return initial_b
 
 
-def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None):
+def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None):
     lib = load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
 
     rng = np.random.default_rng(seed) if seed is not None else np.random
+    spawn_rng_base = spawn_seed if spawn_seed is not None else seed
     fgs = {}
     for sid, specs in spec_defs.items():
         # Merge specs with interaction data
@@ -259,11 +277,15 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         # use the new strategy-driven path; otherwise fall back to the
         # legacy cluster-spawn so existing projects are bit-for-bit
         # preserved.
-        spawn_spec = _build_spawn_spec(params.get('spawn'), default_seed=seed)
+        fg_spawn_seed = _derive_fg_spawn_seed(spawn_rng_base, sid)
+        spawn_spec = _build_spawn_spec(params.get('spawn'), default_seed=fg_spawn_seed)
+        spawn_rng = (np.random.default_rng(fg_spawn_seed)
+                     if (spawn_seed is not None and fg_spawn_seed is not None)
+                     else rng)
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
-            allowed_mask=None, rng=rng,
-            spawn_spec=spawn_spec, project_seed=seed)
+            allowed_mask=None, rng=spawn_rng,
+            spawn_spec=spawn_spec, project_seed=fg_spawn_seed)
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
@@ -290,9 +312,23 @@ def _resolve_inference_initial_biomass(*sources):
     return None
 
 
-def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train'):
+def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train', spawn_seed=None):
+    """Load a project config and build its FunctionalGroups.
+
+    ``spawn_seed`` (optional) controls the per-cell biomass distribution
+    independently of ``seed`` (which drives total-biomass / energy sampling).
+    When set, every FG's spawn map is fully determined by ``(spawn_seed,
+    fg_id)`` — used by ``train.py`` to share *identical* biomass maps across
+    all deltas/workers within one generation (analogous to the impact-map
+    snapshot). When ``None``, falls back to ``seed`` (legacy behaviour: each
+    rollout gets its own spawn layout).
+    """
     project = load_config(project_path)
     rng = np.random.default_rng(seed) if seed is not None else None
+    # Spawn RNG base: spawn_seed overrides seed for the spatial layout, so
+    # that a whole generation can share one map even though individual
+    # rollouts still vary in total biomass / starting energy via ``seed``.
+    spawn_rng_base = spawn_seed if spawn_seed is not None else seed
     lib = load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
@@ -435,15 +471,22 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 total_b = max(scaled, 1.0) if float(fixed) > 0 else 0.0
         else:
             min_b, max_b = _resolve_initial_biomass_range(override, specs)
+            # When a generation-wide ``spawn_seed`` is supplied, also draw
+            # ``total_b`` from a deterministic per-FG RNG so the *whole*
+            # biomass map (sum + shape) is identical across rollouts in
+            # the generation. Otherwise use ``rng`` (legacy: varies per
+            # rollout).
+            _tb_rng = (np.random.default_rng(_derive_fg_spawn_seed(spawn_rng_base, sid))
+                       if spawn_seed is not None else rng)
             # Scale the training range by the reference-grid factor. The
             # scaled lower bound is clamped to >= 1 ton so degenerate small
             # grids cannot produce zero-biomass spawns.
             if min_b is not None and max_b is not None:
                 min_b_s = max(min_b * biomass_scale, 1.0)
                 max_b_s = max(max_b * biomass_scale, min_b_s)
-                total_b = _sample_total_biomass(min_b_s, max_b_s, rng)
+                total_b = _sample_total_biomass(min_b_s, max_b_s, _tb_rng)
             else:
-                total_b = _sample_total_biomass(min_b, max_b, rng)
+                total_b = _sample_total_biomass(min_b, max_b, _tb_rng)
 
         # Cluster-aware spawn (see _spawn_biomass_distribution): per-cell
         # floor 10 * min_split_biomass eliminates the sub-threshold mask
@@ -456,11 +499,23 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         spawn_cfg = override.get('spawn') if isinstance(override, dict) else None
         if spawn_cfg is None:
             spawn_cfg = specs.get('spawn')
-        spawn_spec = _build_spawn_spec(spawn_cfg, default_seed=seed)
+        # Per-FG sub-seed derived deterministically from (spawn_rng_base,
+        # sid). This guarantees that two FGs do not share the exact same
+        # Perlin/colony pattern even when they all inherit the same
+        # generation-wide ``spawn_seed``.
+        fg_spawn_seed = _derive_fg_spawn_seed(spawn_rng_base, sid)
+        spawn_spec = _build_spawn_spec(spawn_cfg, default_seed=fg_spawn_seed)
+        # When ``spawn_seed`` was supplied we also drive the legacy
+        # cluster-spawn RNG from the derived per-FG seed so its random
+        # cell picks are identical across rollouts in the generation.
+        # Otherwise we keep the shared ``rng`` (legacy behaviour).
+        spawn_rng = (np.random.default_rng(fg_spawn_seed)
+                     if (spawn_seed is not None and fg_spawn_seed is not None)
+                     else rng)
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
-            allowed_mask=None, rng=rng,
-            spawn_spec=spawn_spec, project_seed=seed)
+            allowed_mask=None, rng=spawn_rng,
+            spawn_spec=spawn_spec, project_seed=fg_spawn_seed)
         # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
         # initial energy fill levels. Inference keeps the deterministic
         # 0.7 * ME_X default for reproducible scenario comparisons.
