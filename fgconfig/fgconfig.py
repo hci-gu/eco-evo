@@ -465,7 +465,12 @@ class FGConfigApp:
             ent.pack(side="left", padx=(0, 10))
             self.prop_vars[key] = var
 
-        ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(row=row_idx + 1, column=0, columnspan=2, pady=5)
+        # Spawn editor section (DM)
+        self.spawn_vars = {}
+        spawn_row = row_idx + 1
+        self._build_spawn_editor(self.editor_frame, self.spawn_vars, spawn_row)
+
+        ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(row=spawn_row + 1, column=0, columnspan=2, pady=5)
 
         # FG Editor for Non Decision Makers
         self.ndm_editor_frame = ttk.LabelFrame(self.project_inner, text="FG Editor")
@@ -490,9 +495,367 @@ class FGConfigApp:
                 ent.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
                 self.ndm_prop_vars[key] = var
 
+        # Spawn editor section (NDM)
+        self.ndm_spawn_vars = {}
+        ndm_spawn_row = len(ndm_props)
+        self._build_spawn_editor(self.ndm_editor_frame, self.ndm_spawn_vars, ndm_spawn_row)
+
         ttk.Button(self.ndm_editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
-            row=len(ndm_props), column=0, columnspan=2, pady=5
+            row=ndm_spawn_row + 1, column=0, columnspan=2, pady=5
         )
+
+    # ------------------------------------------------------------------
+    # Spawn-strategy editor (per-FG)
+    # ------------------------------------------------------------------
+    SPAWN_MODES = ("uniform", "perlin", "colony", "env_driven")
+    SPAWN_MODE_HELP = {
+        "uniform": (
+            "Uniform\n"
+            "\n"
+            "Sprider biomassan jämnt över alla tillåtna celler "
+            "(Dirichlet-stil), utan rumslig korrelation. Detta är "
+            "default-beteendet och bryter inte mot några tidigare "
+            "kontrakt. Per-cell-golvet (10·min_split) appliceras "
+            "fortfarande av allokatorn.\n"
+            "\n"
+            "Parametrar: inga."
+        ),
+        "perlin": (
+            "Perlin / fBm\n"
+            "\n"
+            "Skapar sammanhängande fält genom att summera lågpass-"
+            "filtrerade brus-lager (fraktal Brownsk rörelse). Lämpligt "
+            "för plankton, bottensamhällen och fiskstim där biologin "
+            "bildar klumpar snarare än jämn matta.\n"
+            "\n"
+            "scale: våglängd i celler — styr klumpstorleken. Större = "
+            "färre, större klumpar.\n"
+            "octaves: antal frekvenslager (1-6). Fler = mer fin "
+            "struktur ovanpå grundklumpen.\n"
+            "persistence: amplitud-fall per oktav (0-1). Lägre = "
+            "renare lågfrekvens.\n"
+            "lacunarity: frekvens-multiplikator per oktav (~2.0).\n"
+            "threshold: cellvärden under detta clamps till noll innan "
+            "normalisering (för skarpare patch-kanter)."
+        ),
+        "colony": (
+            "Colony\n"
+            "\n"
+            "Placerar N kolonicentrum och smetar ut biomassan med en "
+            "Gaussisk kärna runt varje centrum. Avsett för topp-"
+            "predatorer (säl, tumlare, sjöfågel) som har små "
+            "populationer i lokala aggregat, och adresserar den "
+            "dokumenterade 'frusen topp-predator'-effekten där "
+            "utspridd spawn ger sub-tröskel one-hot-låsning.\n"
+            "\n"
+            "n_colonies: antal kolonicentrum.\n"
+            "sigma_cells: Gaussisk bredd i celler runt varje centrum.\n"
+            "anchor: free / coast / open_water. Reserverad parameter "
+            "— tas i bruk när officiell djupkarta är inkopplad; just "
+            "nu väljs centrum uniformt oavsett anchor."
+        ),
+        "env_driven": (
+            "Env-driven\n"
+            "\n"
+            "Vikten per cell är en linjär kombination av referens-"
+            "fält (t.ex. annan FG:s biomassa, framtida djup/ljus/"
+            "näringssalter) plus en valfri Perlin-overlay. Användbart "
+            "när en arts utbredning ska följa redan beräknade lager "
+            "— t.ex. zooplankton som följer fytoplankton.\n"
+            "\n"
+            "floor: minsta vikt per cell innan normalisering.\n"
+            "noise_amp: amplitud på Perlin-overlay (0 = ingen).\n"
+            "noise_scale: våglängd för overlay i celler.\n"
+            "\n"
+            "Refs (namn/weight/transform) sätts i YAML — GUI:t "
+            "exponerar bara skalär-parametrarna än så länge. Refs "
+            "till 'depth' filtreras bort tills djupkartan aktiverats."
+        ),
+    }
+    SPAWN_PARAM_SCHEMA = {
+        "uniform": [],
+        "perlin": [
+            ("scale", "Scale (cells)", "float", 12.0),
+            ("octaves", "Octaves", "int", 4),
+            ("persistence", "Persistence", "float", 0.5),
+            ("lacunarity", "Lacunarity", "float", 2.0),
+            ("threshold", "Threshold", "float", 0.0),
+        ],
+        "colony": [
+            ("n_colonies", "N colonies", "int", 3),
+            ("sigma_cells", "Sigma (cells)", "float", 2.5),
+            ("anchor", "Anchor", "choice:free,coast,open_water", "free"),
+        ],
+        "env_driven": [
+            ("floor", "Floor", "float", 0.0),
+            ("noise_amp", "Noise amplitude", "float", 0.0),
+            ("noise_scale", "Noise scale (cells)", "float", 4.0),
+        ],
+    }
+
+    def _build_spawn_editor(self, parent, vars_store, base_row):
+        """Build the per-FG spawn strategy editor under the FG editor.
+
+        Layout (single grid row in parent, column 0 label / column 1 contents):
+            row=base_row, col 0: "Spawn"
+            row=base_row, col 1: inner frame with:
+                - mode dropdown
+                - dynamic parameter sub-frame (rebuilt on mode change)
+                - 120x120 preview canvas
+        ``vars_store`` is populated with::
+            'mode_var', 'param_vars' (dict key->tk.StringVar/BooleanVar),
+            'param_frame', 'preview_canvas', '_preview_image' (kept alive),
+            '_preview_after_id' (debounce token).
+        """
+        ttk.Label(parent, text="Spawn").grid(row=base_row, column=0, sticky="nw", padx=5, pady=2)
+
+        outer = ttk.Frame(parent)
+        outer.grid(row=base_row, column=1, sticky="w", padx=5, pady=2)
+
+        # Mode row
+        mode_row = ttk.Frame(outer)
+        mode_row.pack(side="top", fill="x", anchor="w")
+        ttk.Label(mode_row, text="Mode:").pack(side="left", padx=(0, 4))
+        mode_var = tk.StringVar(value="uniform")
+        mode_cb = ttk.Combobox(mode_row, textvariable=mode_var,
+                               values=list(self.SPAWN_MODES),
+                               state="readonly", width=12)
+        mode_cb.pack(side="left", padx=(0, 8))
+
+        # Content row: params on left, preview on right
+        content = ttk.Frame(outer)
+        content.pack(side="top", fill="x", anchor="w", pady=(4, 0))
+
+        param_frame = ttk.Frame(content)
+        param_frame.pack(side="left", anchor="nw", padx=(0, 12))
+
+        preview_frame = ttk.Frame(content)
+        preview_frame.pack(side="left", anchor="nw")
+        ttk.Label(preview_frame, text="Preview", font=("TkDefaultFont", 8)).pack(anchor="w")
+        preview_canvas = tk.Canvas(preview_frame, width=120, height=120,
+                                   bg="#202020", highlightthickness=1,
+                                   highlightbackground="#888888")
+        preview_canvas.pack(anchor="w")
+
+        # Help panel to the right of the preview, inside the FG editor frame.
+        help_frame = ttk.LabelFrame(content, text="Info")
+        help_frame.pack(side="left", anchor="nw", padx=(12, 0), fill="y")
+        help_label = ttk.Label(help_frame, text="", justify="left",
+                               wraplength=260, anchor="nw",
+                               font=("TkDefaultFont", 8))
+        help_label.pack(side="top", anchor="nw", padx=6, pady=4)
+
+        vars_store["mode_var"] = mode_var
+        vars_store["param_vars"] = {}
+        vars_store["param_frame"] = param_frame
+        vars_store["preview_canvas"] = preview_canvas
+        vars_store["help_label"] = help_label
+        vars_store["_preview_image"] = None
+        vars_store["_preview_after_id"] = None
+        vars_store["_param_widgets"] = []
+
+        def _on_mode_change(*_a):
+            self._rebuild_spawn_params(vars_store)
+            self._update_spawn_help(vars_store)
+            self._schedule_spawn_preview(vars_store)
+
+        mode_var.trace_add("write", _on_mode_change)
+
+        # Initial build (uniform → empty param frame, but still schedules preview)
+        self._rebuild_spawn_params(vars_store)
+        self._update_spawn_help(vars_store)
+        self._schedule_spawn_preview(vars_store)
+
+    def _update_spawn_help(self, vars_store):
+        """Update the help panel text for the currently selected spawn mode."""
+        lbl = vars_store.get("help_label")
+        if lbl is None:
+            return
+        mode = vars_store["mode_var"].get()
+        text = self.SPAWN_MODE_HELP.get(mode, "")
+        try:
+            lbl.configure(text=text)
+        except Exception:
+            pass
+
+    def _rebuild_spawn_params(self, vars_store):
+        """Rebuild the parameter sub-frame to match the current mode."""
+        frame = vars_store["param_frame"]
+        for w in vars_store.get("_param_widgets", []):
+            try:
+                w.destroy()
+            except Exception:
+                pass
+        vars_store["_param_widgets"] = []
+        vars_store["param_vars"] = {}
+
+        mode = vars_store["mode_var"].get()
+        schema = self.SPAWN_PARAM_SCHEMA.get(mode, [])
+        if not schema:
+            placeholder = ttk.Label(frame, text="(no parameters)",
+                                    foreground="#888888")
+            placeholder.grid(row=0, column=0, sticky="w")
+            vars_store["_param_widgets"].append(placeholder)
+            return
+
+        for i, (key, label, ptype, default) in enumerate(schema):
+            lbl = ttk.Label(frame, text=label + ":")
+            lbl.grid(row=i, column=0, sticky="w", padx=(0, 4), pady=1)
+            vars_store["_param_widgets"].append(lbl)
+
+            if ptype.startswith("choice:"):
+                choices = ptype.split(":", 1)[1].split(",")
+                var = tk.StringVar(value=str(default))
+                w = ttk.Combobox(frame, textvariable=var, values=choices,
+                                 state="readonly", width=12)
+            else:
+                var = tk.StringVar(value=str(default))
+                w = ttk.Entry(frame, textvariable=var, width=10)
+            w.grid(row=i, column=1, sticky="w", pady=1)
+            vars_store["_param_widgets"].append(w)
+            vars_store["param_vars"][key] = (var, ptype)
+            # Live-update preview on edit
+            var.trace_add("write", lambda *_a, vs=vars_store: self._schedule_spawn_preview(vs))
+
+    def _schedule_spawn_preview(self, vars_store, delay_ms=250):
+        """Debounce preview re-rendering so we don't recompute on every keystroke."""
+        canvas = vars_store.get("preview_canvas")
+        if canvas is None or not canvas.winfo_exists():
+            return
+        prev_id = vars_store.get("_preview_after_id")
+        if prev_id is not None:
+            try:
+                canvas.after_cancel(prev_id)
+            except Exception:
+                pass
+        vars_store["_preview_after_id"] = canvas.after(
+            delay_ms, lambda: self._render_spawn_preview(vars_store))
+
+    def _collect_spawn_dict(self, vars_store):
+        """Collect current editor state into a YAML-shaped dict."""
+        mode = vars_store["mode_var"].get()
+        out = {"mode": mode}
+        for key, (var, ptype) in vars_store.get("param_vars", {}).items():
+            raw = var.get()
+            if ptype == "int":
+                try:
+                    out[key] = int(float(raw))
+                except (TypeError, ValueError):
+                    continue
+            elif ptype == "float":
+                try:
+                    out[key] = float(raw)
+                except (TypeError, ValueError):
+                    continue
+            else:
+                # choice or unknown → store as string
+                if raw != "":
+                    out[key] = raw
+        return out
+
+    def _get_reference_grid(self):
+        """Return (W, H) reference grid from project_metadata, defaulting to 60x60."""
+        try:
+            w = int(self.ref_grid_w_var.get())
+        except (AttributeError, TypeError, ValueError):
+            w = 60
+        try:
+            h = int(self.ref_grid_h_var.get())
+        except (AttributeError, TypeError, ValueError):
+            h = 60
+        if w < 3:
+            w = 60
+        if h < 3:
+            h = 60
+        return w, h
+
+    def _render_spawn_preview(self, vars_store):
+        """Compute weights via lib.spawn.make_weights and draw on the preview canvas."""
+        canvas = vars_store.get("preview_canvas")
+        if canvas is None or not canvas.winfo_exists():
+            return
+        try:
+            import os, sys
+            # Ensure project root is on sys.path so `lib.spawn` is importable
+            # regardless of cwd (fgconfig.py may run from fgconfig/ or root).
+            _here = os.path.dirname(os.path.abspath(__file__))
+            _root = os.path.dirname(_here)
+            if _root not in sys.path:
+                sys.path.insert(0, _root)
+            import numpy as np
+            from lib.spawn import make_weights
+            from lib.spawn.strategies import StrategySpec
+        except Exception as exc:
+            canvas.delete("all")
+            canvas.create_text(60, 60, text=f"preview error\n{type(exc).__name__}: {str(exc)[:30]}",
+                               fill="#cccccc", font=("TkDefaultFont", 7),
+                               justify="center")
+            return
+
+        ref_w, ref_h = self._get_reference_grid()
+        spec_dict = self._collect_spawn_dict(vars_store)
+        try:
+            spec = StrategySpec.from_dict(spec_dict)
+            ctx = {"biomass_scale": 1.0}
+            weights = make_weights(spec, (ref_h, ref_w), project_seed=0, context=ctx)
+        except Exception as exc:
+            canvas.delete("all")
+            canvas.create_text(60, 60,
+                               text=f"{type(exc).__name__}\n{str(exc)[:40]}",
+                               fill="#ffaaaa", font=("TkDefaultFont", 7),
+                               justify="center")
+            return
+
+        # Normalize to [0,1] for grayscale rendering
+        w_max = float(weights.max()) if weights.size else 0.0
+        if w_max <= 0:
+            norm = np.zeros_like(weights, dtype=float)
+        else:
+            norm = weights / w_max
+
+        # Build a 120x120 PhotoImage by nearest-neighbour upscaling
+        out_size = 120
+        H, W = norm.shape
+        # Build PPM (P6) header + bytes — fastest reliable Tk image format
+        scale_x = W / out_size
+        scale_y = H / out_size
+        # Vectorized resample
+        xs = (np.arange(out_size) * scale_x).astype(int).clip(0, W - 1)
+        ys = (np.arange(out_size) * scale_y).astype(int).clip(0, H - 1)
+        resampled = norm[ys[:, None], xs[None, :]]
+        # Apply a simple viridis-like colormap (dark blue → green → yellow)
+        r = np.clip(resampled * 1.4 - 0.4, 0, 1)
+        g = np.clip(resampled * 1.2, 0, 1)
+        b = np.clip(0.6 - resampled * 0.6 + 0.2, 0, 1)
+        rgb = (np.stack([r, g, b], axis=-1) * 255).astype(np.uint8)
+        header = f"P6 {out_size} {out_size} 255 ".encode("ascii")
+        ppm = header + rgb.tobytes()
+        try:
+            img = tk.PhotoImage(data=ppm, format="PPM")
+        except tk.TclError:
+            # Fallback: tiny fallback message if Tk lacks PPM support
+            canvas.delete("all")
+            canvas.create_text(60, 60, text="PPM unsupported",
+                               fill="#cccccc", font=("TkDefaultFont", 7))
+            return
+        canvas.delete("all")
+        canvas.create_image(0, 0, anchor="nw", image=img)
+        vars_store["_preview_image"] = img  # keep ref alive
+
+    def _populate_spawn_editor(self, vars_store, spawn_cfg):
+        """Populate the spawn editor from a YAML-shaped spawn dict."""
+        if not isinstance(spawn_cfg, dict):
+            spawn_cfg = {}
+        mode = spawn_cfg.get("mode", "uniform")
+        if mode not in self.SPAWN_MODES:
+            mode = "uniform"
+        # Setting mode_var triggers _rebuild_spawn_params via trace
+        vars_store["mode_var"].set(mode)
+        # After rebuild, fill in any matching params
+        for key, (var, ptype) in vars_store.get("param_vars", {}).items():
+            if key in spawn_cfg:
+                var.set(str(spawn_cfg[key]))
+        self._schedule_spawn_preview(vars_store, delay_ms=50)
 
     def _read_initial_biomass_range(self, fg_entry, fg_id):
         """Read (min, max) initial biomass for a project FG entry.
@@ -1776,6 +2139,17 @@ class FGConfigApp:
                 val = config.get(key, "")
                 var.set(str(val))
 
+        # Populate the per-FG spawn editor from config['spawn'] (or library default).
+        spawn_cfg = None
+        if isinstance(config, dict):
+            spawn_cfg = config.get("spawn")
+        if not isinstance(spawn_cfg, dict):
+            lib_entry = self.global_library.get("species_definitions", {}).get(fg_id, {})
+            if isinstance(lib_entry, dict):
+                spawn_cfg = lib_entry.get("spawn")
+        spawn_store = self.spawn_vars if category == "decision_makers" else self.ndm_spawn_vars
+        self._populate_spawn_editor(spawn_store, spawn_cfg or {})
+
         # Disable all editor widgets when the FG is muted (values are still
         # visible/read-only). Active FGs get the editor enabled normally.
         active_editor = self.editor_frame if category == "decision_makers" else self.ndm_editor_frame
@@ -1889,6 +2263,17 @@ class FGConfigApp:
         config.pop("initial_biomass", None)
         config.pop("initial_biomass_min", None)
         config.pop("initial_biomass_max", None)
+
+        # Capture the spawn block from the active editor.
+        spawn_store = self.spawn_vars if is_dm else self.ndm_spawn_vars
+        spawn_dict = self._collect_spawn_dict(spawn_store)
+        # Mode='uniform' with no extra params is the default → keep it omitted
+        # so legacy library entries stay clean. Anything else is persisted.
+        if spawn_dict.get("mode") == "uniform" and len(spawn_dict) == 1:
+            config.pop("spawn", None)
+        else:
+            config["spawn"] = spawn_dict
+
         self.current_fg_configs[fg_id] = config
 
         # Persist initial_biomass range on the project FG entry (per-project value).

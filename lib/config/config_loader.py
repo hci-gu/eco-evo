@@ -1,6 +1,7 @@
 import yaml
 import numpy as np
 from lib.world.functional_group import FunctionalGroup
+from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
     with open(path, 'r') as f:
@@ -59,10 +60,48 @@ def _sample_total_biomass(min_b, max_b, rng):
         return float(rng.integers(lo, hi + 1))
     return float(np.random.randint(lo, hi + 1))
 
-def _spawn_biomass_distribution(grid_size, total_b, min_per_cell, allowed_mask=None, rng=None):
-    """Distribute ``total_b`` over the grid following the cluster-spawn spec.
+def _build_spawn_spec(spawn_cfg, default_seed=None):
+    """Bygg en `StrategySpec` från ett YAML `spawn:`-block (eller None).
 
-    Rules:
+    Returnerar None om ``spawn_cfg`` saknas / är felaktigt (då används
+    legacy-vägen). Mode-fältet defaultar till 'uniform' om enbart `params`
+    anges men inget mode — det ger samma utseende som legacy-vägen.
+    """
+    if not isinstance(spawn_cfg, dict):
+        return None
+    mode = str(spawn_cfg.get('mode', 'uniform')).strip().lower()
+    if not mode:
+        return None
+    params = {k: v for k, v in spawn_cfg.items() if k not in ('mode', 'seed')}
+    seed = spawn_cfg.get('seed', default_seed)
+    try:
+        return StrategySpec(mode=mode, params=params, seed=seed)
+    except Exception:
+        return None
+
+
+def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
+                                allowed_mask=None, rng=None,
+                                spawn_spec=None, env_context=None,
+                                project_seed=None):
+    """Distribute ``total_b`` over the grid.
+
+    Two code paths:
+
+    1. **New strategy-driven path** (when ``spawn_spec`` is not None):
+       compute per-cell weights via ``lib.spawn.make_weights`` and allocate
+       biomass via ``lib.spawn.distribute_with_floor`` (greedy fill +
+       per-cell floor). Keeps the same sum/floor contract as the legacy
+       path but supports arbitrary weight strategies (uniform, perlin,
+       colony, env_driven).
+
+    2. **Legacy cluster-spawn path** (default, ``spawn_spec is None``):
+       random pick of cells, biomass drawn uniformly in
+       ``[min_per_cell, remaining]`` until the remainder drops below the
+       floor. Preserved bit-for-bit so existing projects without a
+       ``spawn:`` block produce identical output.
+
+    Rules (legacy path):
       * Eligible cells are those where ``allowed_mask`` is truthy. If
         ``allowed_mask`` is None, every cell is eligible.
       * Each picked cell receives a biomass drawn uniformly from
@@ -78,6 +117,21 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell, allowed_mask=N
       * When ``min_per_cell`` is 0 or non-positive the function falls back
         to the legacy uniform-Dirichlet spread over all eligible cells.
     """
+    # ---- New strategy-driven path -----------------------------------------
+    if spawn_spec is not None:
+        H, W = grid_size
+        if total_b <= 0:
+            return np.zeros((H, W), dtype=np.float64)
+        ctx = dict(env_context) if env_context else {}
+        if allowed_mask is not None and 'allowed_mask' not in ctx:
+            ctx['allowed_mask'] = np.asarray(allowed_mask).reshape(H, W).astype(bool)
+        weights = make_weights(spawn_spec, (H, W), context=ctx,
+                               project_seed=project_seed)
+        return distribute_with_floor(weights, float(total_b),
+                                     float(min_per_cell),
+                                     allowed_mask=ctx.get('allowed_mask'))
+
+    # ---- Legacy cluster-spawn path (unchanged) ----------------------------
     H, W = grid_size
     if rng is None:
         rng = np.random
@@ -201,9 +255,15 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         # spawned cells start well above the sub-threshold mask. For FGs
         # with min_split == 0 this collapses to the legacy uniform spread.
         min_per_cell = 10.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        # Opt-in: if the species defines a ``spawn:`` block (mode + params),
+        # use the new strategy-driven path; otherwise fall back to the
+        # legacy cluster-spawn so existing projects are bit-for-bit
+        # preserved.
+        spawn_spec = _build_spawn_spec(params.get('spawn'), default_seed=seed)
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
-            allowed_mask=None, rng=rng)
+            allowed_mask=None, rng=rng,
+            spawn_spec=spawn_spec, project_seed=seed)
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
@@ -391,9 +451,16 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # threaded in once accessibility maps become part of the project
         # config; for now allowed_mask=None means the full grid is eligible.
         min_per_cell = 10.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        # Opt-in strategy-driven spawn: project override > library spec.
+        # Missing block on both sides -> legacy cluster-spawn (unchanged).
+        spawn_cfg = override.get('spawn') if isinstance(override, dict) else None
+        if spawn_cfg is None:
+            spawn_cfg = specs.get('spawn')
+        spawn_spec = _build_spawn_spec(spawn_cfg, default_seed=seed)
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
-            allowed_mask=None, rng=rng)
+            allowed_mask=None, rng=rng,
+            spawn_spec=spawn_spec, project_seed=seed)
         # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
         # initial energy fill levels. Inference keeps the deterministic
         # 0.7 * ME_X default for reproducible scenario comparisons.

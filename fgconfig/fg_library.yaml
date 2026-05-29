@@ -8,6 +8,13 @@
     max_carrying_capacity: 20.0
     energy_content: 2750.0
     max_energy_reserve: 0.0
+    spawn:
+      mode: perlin
+      scale: 12
+      octaves: 4
+      persistence: 0.55
+      lacunarity: 2.0
+      threshold: 0.0
   zooplankton:
     display_name: "Zooplankton"
     is_decision_maker: true
@@ -19,6 +26,13 @@
     movement_cost: 0.0
     energy_content: 3500.0
     min_split_biomass: 0.0
+    spawn:
+      mode: perlin
+      scale: 6
+      octaves: 3
+      persistence: 0.6
+      lacunarity: 2.0
+      threshold: 0.0
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false
@@ -28,6 +42,13 @@
     max_carrying_capacity: 120.0
     energy_content: 0.0
     max_energy_reserve: 0.0
+    spawn:
+      mode: perlin
+      scale: 18
+      octaves: 3
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
   pelagic_fish:
     display_name: "Pelagic Fish"
     is_decision_maker: true
@@ -39,6 +60,13 @@
     movement_cost: 2.15
     energy_content: 7000.0
     min_split_biomass: 0.5
+    spawn:
+      mode: perlin
+      scale: 8
+      octaves: 3
+      persistence: 0.6
+      lacunarity: 2.0
+      threshold: 0.0
   gadoids:
     display_name: "Gadoids"
     is_decision_maker: true
@@ -50,6 +78,13 @@
     movement_cost: 1.85
     energy_content: 4000.0
     min_split_biomass: 0.5
+    spawn:
+      mode: perlin
+      scale: 12
+      octaves: 3
+      persistence: 0.55
+      lacunarity: 2.0
+      threshold: 0.0
   porpoises:
     display_name: "Porpoises"
     is_decision_maker: true
@@ -61,6 +96,11 @@
     movement_cost: 3.0
     min_split_biomass: 50.0
     energy_content: 0.0
+    spawn:
+      mode: colony
+      n_colonies: 2
+      sigma_cells: 3.0
+      anchor: open_water
   seals:
     display_name: "Seals"
     is_decision_maker: true
@@ -72,6 +112,11 @@
     movement_cost: 2.5
     min_split_biomass: 80.0
     energy_content: 0.0
+    spawn:
+      mode: colony
+      n_colonies: 3
+      sigma_cells: 2.5
+      anchor: coast
   seabirds:
     display_name: "Seabirds"
     is_decision_maker: true
@@ -83,6 +128,11 @@
     min_split_biomass: 1.0
     maintenance_level: 0.3
     energy_content: 0.0
+    spawn:
+      mode: colony
+      n_colonies: 4
+      sigma_cells: 2.0
+      anchor: coast
 interaction_definitions:
   zooplankton_preys_on_phytoplankton:
     max_intake_rate: 0.175
