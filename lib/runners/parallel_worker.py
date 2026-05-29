@@ -73,13 +73,34 @@ def _evaluate_coevo_task(task):
             entropy_coef, argmax_penalty, softmax_temperature,
             integral_reward)
 
+    STEP 3 (multi-world averaging): task may also be a dict with the same
+    fields plus an optional ``env_builder`` override (one of the M world
+    builders for this iteration). When the override is present it is
+    used in place of ``_ENV_BUILDER``; otherwise the worker-local default
+    is used so legacy single-world callers keep working unchanged.
+
     Returns:
         (fitness_dict: {fg_id -> float},
          samples: None | (sum (N_dm,D) f64, sumsq (N_dm,D) f64, count int),
          act_diag_dict: {fg_id -> act_diag} | None)
     """
-    (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
-     entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+    builder_override = None
+    if isinstance(task, dict):
+        fg_list = task['fg_list']
+        weights_dict = task['weights_dict']
+        n_ticks = task['n_ticks']
+        alpha = task['alpha']
+        beta = task['beta']
+        seed = task.get('seed')
+        obs_pack = task.get('obs_pack')
+        entropy_coef = task.get('entropy_coef', 0.0)
+        argmax_penalty = task.get('argmax_penalty', 0.0)
+        softmax_temperature = task.get('softmax_temperature', 1.0)
+        integral_reward = task.get('integral_reward', False)
+        builder_override = task.get('env_builder')
+    else:
+        (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
+         entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
     _ = (entropy_coef, argmax_penalty)
 
     # Sync ALL policy weights
@@ -87,7 +108,8 @@ def _evaluate_coevo_task(task):
         if fg_id in _POLICIES:
             _set_weights_flat(_POLICIES[fg_id], w)
 
-    env = _ENV_BUILDER(seed=seed) if seed is not None else _ENV_BUILDER()
+    builder = builder_override if builder_override is not None else _ENV_BUILDER
+    env = builder(seed=seed) if seed is not None else builder()
     env.policies = _POLICIES
     env.softmax_temperature = float(softmax_temperature)
 
@@ -176,7 +198,25 @@ def _evaluate_task(task):
     argmax_penalty = 0.0
     softmax_temperature = 1.0
     integral_reward = False
-    if len(task) == 11:
+    builder_override = None
+    if isinstance(task, dict):
+        # STEP 3 dict-format task: same fields as tuple-format plus an
+        # optional ``env_builder`` override carrying a per-world builder
+        # for the multi-world averaging path. Falls back to _ENV_BUILDER
+        # when not provided so single-world callers stay unchanged.
+        fg_to_train = task['fg_to_train']
+        weights_dict = task['weights_dict']
+        n_ticks = task['n_ticks']
+        alpha = task.get('alpha', 1.0)
+        beta = task.get('beta', 1.0)
+        seed = task.get('seed')
+        obs_pack = task.get('obs_pack')
+        entropy_coef = task.get('entropy_coef', 0.0)
+        argmax_penalty = task.get('argmax_penalty', 0.0)
+        softmax_temperature = task.get('softmax_temperature', 1.0)
+        integral_reward = task.get('integral_reward', False)
+        builder_override = task.get('env_builder')
+    elif len(task) == 11:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
     elif len(task) == 10:
@@ -202,7 +242,8 @@ def _evaluate_task(task):
         if fg_id in _POLICIES:
             _set_weights_flat(_POLICIES[fg_id], w)
 
-    env = _ENV_BUILDER(seed=seed) if seed is not None else _ENV_BUILDER()
+    builder = builder_override if builder_override is not None else _ENV_BUILDER
+    env = builder(seed=seed) if seed is not None else builder()
     env.policies = _POLICIES
     env.softmax_temperature = float(softmax_temperature)
 

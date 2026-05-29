@@ -54,6 +54,16 @@ class ARSTrainer:
         else:
             self.top_deltas = max(1, min(int(top_deltas), self.n_deltas))
 
+        # STEP 3 (multi-world averaging): per-iteration world list, set
+        # externally by train.py. Each entry is (impact_seed, spawn_seed)
+        # describing one of the M independent worlds that every delta-pair
+        # is evaluated against. Empty list -> legacy single-world path
+        # (M=1) using ``self.env_builder`` exactly as before. When
+        # len(world_list) > 1, the rollout loop averages fitness/act over
+        # the M worlds, using ``self.env_builder.with_world(...)`` to
+        # build per-world sibling builders.
+        self.world_list = []
+
         # Initialize policies (parent-side; workers hold their own copies)
         self.uniform_bias_init = bool(uniform_bias_init)
         self.policies = {}
@@ -150,6 +160,31 @@ class ARSTrainer:
             st['var'] = np.maximum(M2 / n, 1e-8)
             st['count'] = n
 
+    def _resolve_world_builders(self):
+        """STEP 3 helper: return the list of (per-world) env builders for
+        this iteration.
+
+        - Empty / len==1 ``world_list``: returns ``[self.env_builder]``;
+          the M=1 legacy path used by both train_step and
+          train_step_coevolution. No ``with_world`` call is made so the
+          single-world builder installed by train.py
+          ``_install_generation_worlds`` is used verbatim (and worker
+          tasks can omit the override entirely).
+        - len > 1: builds M sibling builders via
+          ``self.env_builder.with_world(impact_seed, spawn_seed)``,
+          one per world in ``self.world_list``.
+
+        Returns:
+            list[callable] of length M.
+        """
+        wl = list(self.world_list) if self.world_list else []
+        if len(wl) <= 1:
+            return [self.env_builder]
+        builders = []
+        for (imp_s, sp_s) in wl:
+            builders.append(self.env_builder.with_world(int(imp_s), int(sp_s)))
+        return builders
+
     def train_step(self, fg_to_train, n_eval_ticks=2):
         policy = self.policies[fg_to_train]
         weights = self._get_weights(policy)
@@ -158,6 +193,10 @@ class ARSTrainer:
 
         # CRN seeds per delta pair
         pair_seeds = [int(np.random.randint(1, 2**31 - 1)) for _ in range(self.n_deltas)]
+
+        # STEP 3: per-iteration world builders (M=1 legacy or M>1 multi-world).
+        world_builders = self._resolve_world_builders()
+        M = len(world_builders)
 
         # Prepare observation stats (only if normalisation is enabled).
         obs_mean = obs_var = None
@@ -183,43 +222,72 @@ class ARSTrainer:
         # Per-rollout act_diag, kept aligned with rewards_pos / rewards_neg
         # so we can apply entropy bonus / argmax-penalty per rollout *after*
         # z-score normalisation of the ecological component.
+        # STEP 3: when M>1, ``act_pos[i]`` holds the *averaged* act_diag
+        # across the M worlds for delta i; ``rewards_pos[i]`` is the
+        # M-averaged fitness. CRN: world m for +delta and -delta share
+        # the exact same (impact_seed, spawn_seed, pair_seeds[i]).
         act_pos = []
         act_neg = []
+
+        def _avg_act_diags(diags):
+            """Average a list of act_diag dicts (skipping Nones).
+            Returns None if all are None."""
+            valid = [d for d in diags if d is not None]
+            if not valid:
+                return None
+            keys = ('entropy', 'move_frac', 'rest_frac', 'eat_frac')
+            out = {k: float(np.mean([d[k] for d in valid])) for k in keys}
+            out['max_entropy'] = valid[0]['max_entropy']
+            return out
+
         if self._pool is None:
             rewards_pos = []
             rewards_neg = []
             for i, delta in enumerate(deltas):
                 s = pair_seeds[i]
-                self._set_weights(policy, weights + self.sigma * delta)
-                r, samples, act = self._evaluate(fg_to_train, n_eval_ticks, seed=s,
-                                            obs_mean=obs_mean, obs_var=obs_var,
-                                            dm_ids_for_norm=dm_ids_for_norm)
-                rewards_pos.append(r); act_pos.append(act)
-                if samples is not None:
-                    s_sum, s_sumsq, s_cnt = samples
-                    if agg_sum is None:
-                        agg_sum = s_sum.copy(); agg_sumsq = s_sumsq.copy()
-                    else:
-                        agg_sum += s_sum; agg_sumsq += s_sumsq
-                    agg_count += s_cnt
-                if act is not None:
-                    act_entropy_sum += act['entropy']; act_move_sum += act['move_frac']
-                    act_rest_sum += act['rest_frac']; act_eat_sum += act['eat_frac']
-                    act_max_entropy = act['max_entropy']; act_n += 1
+                # Per-world averaging within this delta pair.
+                rp_world = []; rn_world = []
+                ap_world = []; an_world = []
+                for m in range(M):
+                    builder_m = world_builders[m]
+                    self._set_weights(policy, weights + self.sigma * delta)
+                    r, samples, act = self._evaluate(
+                        fg_to_train, n_eval_ticks, seed=s,
+                        obs_mean=obs_mean, obs_var=obs_var,
+                        dm_ids_for_norm=dm_ids_for_norm,
+                        env_builder=builder_m)
+                    rp_world.append(r); ap_world.append(act)
+                    if samples is not None:
+                        s_sum, s_sumsq, s_cnt = samples
+                        if agg_sum is None:
+                            agg_sum = s_sum.copy(); agg_sumsq = s_sumsq.copy()
+                        else:
+                            agg_sum += s_sum; agg_sumsq += s_sumsq
+                        agg_count += s_cnt
+                    if act is not None:
+                        act_entropy_sum += act['entropy']; act_move_sum += act['move_frac']
+                        act_rest_sum += act['rest_frac']; act_eat_sum += act['eat_frac']
+                        act_max_entropy = act['max_entropy']; act_n += 1
 
-                self._set_weights(policy, weights - self.sigma * delta)
-                r, samples, act = self._evaluate(fg_to_train, n_eval_ticks, seed=s,
-                                            obs_mean=obs_mean, obs_var=obs_var,
-                                            dm_ids_for_norm=dm_ids_for_norm)
-                rewards_neg.append(r); act_neg.append(act)
-                if samples is not None:
-                    s_sum, s_sumsq, s_cnt = samples
-                    agg_sum += s_sum; agg_sumsq += s_sumsq
-                    agg_count += s_cnt
-                if act is not None:
-                    act_entropy_sum += act['entropy']; act_move_sum += act['move_frac']
-                    act_rest_sum += act['rest_frac']; act_eat_sum += act['eat_frac']
-                    act_max_entropy = act['max_entropy']; act_n += 1
+                    self._set_weights(policy, weights - self.sigma * delta)
+                    r, samples, act = self._evaluate(
+                        fg_to_train, n_eval_ticks, seed=s,
+                        obs_mean=obs_mean, obs_var=obs_var,
+                        dm_ids_for_norm=dm_ids_for_norm,
+                        env_builder=builder_m)
+                    rn_world.append(r); an_world.append(act)
+                    if samples is not None:
+                        s_sum, s_sumsq, s_cnt = samples
+                        agg_sum += s_sum; agg_sumsq += s_sumsq
+                        agg_count += s_cnt
+                    if act is not None:
+                        act_entropy_sum += act['entropy']; act_move_sum += act['move_frac']
+                        act_rest_sum += act['rest_frac']; act_eat_sum += act['eat_frac']
+                        act_max_entropy = act['max_entropy']; act_n += 1
+                rewards_pos.append(float(np.mean(rp_world)))
+                rewards_neg.append(float(np.mean(rn_world)))
+                act_pos.append(_avg_act_diags(ap_world))
+                act_neg.append(_avg_act_diags(an_world))
             rewards_pos = np.array(rewards_pos)
             rewards_neg = np.array(rewards_neg)
         else:
@@ -238,32 +306,53 @@ class ARSTrainer:
                     'var': obs_var,
                 }
 
+            # STEP 3: when M>1, emit 2*n_deltas*M tasks; for each (i, sign, m)
+            # the worker uses builder_m via the dict-task override. For M=1
+            # we keep the original tuple-task format (no override needed)
+            # so the worker stays on its byte-identical legacy code path.
             tasks = []
-            for i, delta in enumerate(deltas):
-                d = delta.numpy()
-                w_pos = dict(base_weights)
-                w_pos[fg_to_train] = base_train + self.sigma * d
-                tasks.append((fg_to_train, w_pos, n_eval_ticks, self.alpha, self.beta,
-                              pair_seeds[i], obs_pack, self.entropy_coef, self.argmax_penalty,
-                              self.softmax_temperature, self.integral_reward))
-            for i, delta in enumerate(deltas):
-                d = delta.numpy()
-                w_neg = dict(base_weights)
-                w_neg[fg_to_train] = base_train - self.sigma * d
-                tasks.append((fg_to_train, w_neg, n_eval_ticks, self.alpha, self.beta,
-                              pair_seeds[i], obs_pack, self.entropy_coef, self.argmax_penalty,
-                              self.softmax_temperature, self.integral_reward))
+            if M == 1:
+                for sign in (+1, -1):
+                    for i, delta in enumerate(deltas):
+                        d = delta.numpy()
+                        w = dict(base_weights)
+                        w[fg_to_train] = base_train + sign * self.sigma * d
+                        tasks.append((fg_to_train, w, n_eval_ticks, self.alpha, self.beta,
+                                      pair_seeds[i], obs_pack, self.entropy_coef,
+                                      self.argmax_penalty, self.softmax_temperature,
+                                      self.integral_reward))
+            else:
+                for sign in (+1, -1):
+                    for i, delta in enumerate(deltas):
+                        d = delta.numpy()
+                        w = dict(base_weights)
+                        w[fg_to_train] = base_train + sign * self.sigma * d
+                        for m in range(M):
+                            tasks.append({
+                                'fg_to_train': fg_to_train,
+                                'weights_dict': w,
+                                'n_ticks': n_eval_ticks,
+                                'alpha': self.alpha,
+                                'beta': self.beta,
+                                'seed': pair_seeds[i],
+                                'obs_pack': obs_pack,
+                                'entropy_coef': self.entropy_coef,
+                                'argmax_penalty': self.argmax_penalty,
+                                'softmax_temperature': self.softmax_temperature,
+                                'integral_reward': self.integral_reward,
+                                'env_builder': world_builders[m],
+                            })
 
             results = self._pool.map(_evaluate_task, tasks)
-            # results: list of (fitness, samples_or_None, act_diag_or_None)
-            rewards = []
-            acts_all = []
+            # Unpack & accumulate obs / act stats over ALL rollouts.
+            rewards_flat = []
+            acts_flat = []
             for item in results:
                 if len(item) == 3:
                     fit, samples, act = item
                 else:
                     fit, samples = item; act = None
-                rewards.append(fit); acts_all.append(act)
+                rewards_flat.append(fit); acts_flat.append(act)
                 if samples is not None:
                     s_sum, s_sumsq, s_cnt = samples
                     if agg_sum is None:
@@ -275,10 +364,22 @@ class ARSTrainer:
                     act_entropy_sum += act['entropy']; act_move_sum += act['move_frac']
                     act_rest_sum += act['rest_frac']; act_eat_sum += act['eat_frac']
                     act_max_entropy = act['max_entropy']; act_n += 1
-            rewards_pos = np.array(rewards[:self.n_deltas])
-            rewards_neg = np.array(rewards[self.n_deltas:])
-            act_pos = acts_all[:self.n_deltas]
-            act_neg = acts_all[self.n_deltas:]
+
+            # Reshape: task layout is [sign(+), sign(-)] outer, then for
+            # each sign: i in [0..n_deltas), then m in [0..M).
+            n = self.n_deltas
+            pos_block = rewards_flat[:n * M]
+            neg_block = rewards_flat[n * M:]
+            act_pos_block = acts_flat[:n * M]
+            act_neg_block = acts_flat[n * M:]
+            rewards_pos = np.array([
+                float(np.mean(pos_block[i * M:(i + 1) * M])) for i in range(n)
+            ])
+            rewards_neg = np.array([
+                float(np.mean(neg_block[i * M:(i + 1) * M])) for i in range(n)
+            ])
+            act_pos = [_avg_act_diags(act_pos_block[i * M:(i + 1) * M]) for i in range(n)]
+            act_neg = [_avg_act_diags(act_neg_block[i * M:(i + 1) * M]) for i in range(n)]
 
             self._set_weights(policy, weights)
 
@@ -389,8 +490,12 @@ class ARSTrainer:
             idx += p_size
 
     def _evaluate(self, fg_id, n_ticks, seed=None,
-                  obs_mean=None, obs_var=None, dm_ids_for_norm=None):
-        env = self.env_builder(seed=seed) if seed is not None else self.env_builder()
+                  obs_mean=None, obs_var=None, dm_ids_for_norm=None,
+                  env_builder=None):
+        # STEP 3: optional per-world builder override. Falls back to
+        # self.env_builder so legacy callers (M=1 path) are unchanged.
+        builder = env_builder if env_builder is not None else self.env_builder
+        env = builder(seed=seed) if seed is not None else builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
 
@@ -468,10 +573,16 @@ class ARSTrainer:
     # as part of the gradient.
     # ================================================================
     def _evaluate_coevo(self, fg_list, n_ticks, seed=None,
-                        obs_mean=None, obs_var=None, dm_ids_for_norm=None):
+                        obs_mean=None, obs_var=None, dm_ids_for_norm=None,
+                        env_builder=None):
         """Sequential co-evolution rollout: returns fitness per species
-        from a single shared simulation."""
-        env = self.env_builder(seed=seed) if seed is not None else self.env_builder()
+        from a single shared simulation.
+
+        STEP 3: ``env_builder`` is an optional per-world builder override
+        used by the multi-world averaging path; default None means use
+        ``self.env_builder`` (M=1 legacy)."""
+        builder = env_builder if env_builder is not None else self.env_builder
+        env = builder(seed=seed) if seed is not None else builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
 
@@ -565,6 +676,10 @@ class ARSTrainer:
         # given i -> identical impact / initial fields).
         pair_seeds = [int(np.random.randint(1, 2**31 - 1)) for _ in range(self.n_deltas)]
 
+        # STEP 3: per-iteration world builders (M=1 legacy or M>1 multi-world).
+        world_builders = self._resolve_world_builders()
+        M = len(world_builders)
+
         # Obs-stats setup (same as in train_step).
         obs_mean = obs_var = None
         dm_ids_for_norm = None
@@ -599,6 +714,28 @@ class ARSTrainer:
                 wd[fid] = base_weights[fid].numpy() + sign * self.sigma * deltas[fid][idx].numpy()
             return wd
 
+        def _avg_fit_dicts(fits):
+            """Average a list of {fg_id -> float} dicts."""
+            keys = fits[0].keys()
+            return {k: float(np.mean([d[k] for d in fits])) for k in keys}
+
+        def _avg_act_dicts(acts):
+            """Average a list of {fg_id -> act_diag} dicts (skipping
+            Nones / missing keys). Returns None if all are None."""
+            valid = [d for d in acts if d is not None]
+            if not valid:
+                return None
+            keys = ('entropy', 'move_frac', 'rest_frac', 'eat_frac')
+            out = {}
+            for fid in valid[0].keys():
+                rows = [d[fid] for d in valid if fid in d]
+                if not rows:
+                    continue
+                a = {k: float(np.mean([r[k] for r in rows])) for k in keys}
+                a['max_entropy'] = rows[0]['max_entropy']
+                out[fid] = a
+            return out if out else None
+
         if self._pool is None:
             # Sequential path.
             for i in range(self.n_deltas):
@@ -611,20 +748,25 @@ class ARSTrainer:
                     for fid in target_species:
                         w = base_weights[fid] + sign * self.sigma * deltas[fid][i]
                         self._set_weights(self.policies[fid], w)
-                    fit, samples, act_d = self._evaluate_coevo(
-                        target_species, n_eval_ticks, seed=s,
-                        obs_mean=obs_mean, obs_var=obs_var,
-                        dm_ids_for_norm=dm_ids_for_norm,
-                    )
-                    store_r[i] = fit
-                    store_a[i] = act_d
-                    if samples is not None:
-                        s_sum, s_sumsq, s_cnt = samples
-                        if agg_sum is None:
-                            agg_sum = s_sum.copy(); agg_sumsq = s_sumsq.copy()
-                        else:
-                            agg_sum += s_sum; agg_sumsq += s_sumsq
-                        agg_count += s_cnt
+                    # STEP 3: per-world averaging within this delta pair.
+                    fit_world = []; act_world = []
+                    for m in range(M):
+                        fit, samples, act_d = self._evaluate_coevo(
+                            target_species, n_eval_ticks, seed=s,
+                            obs_mean=obs_mean, obs_var=obs_var,
+                            dm_ids_for_norm=dm_ids_for_norm,
+                            env_builder=world_builders[m],
+                        )
+                        fit_world.append(fit); act_world.append(act_d)
+                        if samples is not None:
+                            s_sum, s_sumsq, s_cnt = samples
+                            if agg_sum is None:
+                                agg_sum = s_sum.copy(); agg_sumsq = s_sumsq.copy()
+                            else:
+                                agg_sum += s_sum; agg_sumsq += s_sumsq
+                            agg_count += s_cnt
+                    store_r[i] = _avg_fit_dicts(fit_world)
+                    store_a[i] = _avg_act_dicts(act_world)
             # Restore baseline weights before ARS update.
             for fid in target_species:
                 self._set_weights(self.policies[fid], base_weights[fid])
@@ -635,25 +777,47 @@ class ARSTrainer:
                 obs_pack = {'dm_ids': dm_ids_for_norm,
                             'mean': obs_mean, 'var': obs_var}
             tasks = []
-            for i in range(self.n_deltas):
-                wd_pos = _build_weights_dict(+1.0, i)
-                tasks.append((list(target_species), wd_pos, n_eval_ticks,
-                              self.alpha, self.beta, pair_seeds[i], obs_pack,
-                              self.entropy_coef, self.argmax_penalty,
-                              self.softmax_temperature, self.integral_reward))
-            for i in range(self.n_deltas):
-                wd_neg = _build_weights_dict(-1.0, i)
-                tasks.append((list(target_species), wd_neg, n_eval_ticks,
-                              self.alpha, self.beta, pair_seeds[i], obs_pack,
-                              self.entropy_coef, self.argmax_penalty,
-                              self.softmax_temperature, self.integral_reward))
+            if M == 1:
+                # M=1 legacy: keep tuple-format tasks (byte-identical to pre-STEP-3 path).
+                for i in range(self.n_deltas):
+                    wd_pos = _build_weights_dict(+1.0, i)
+                    tasks.append((list(target_species), wd_pos, n_eval_ticks,
+                                  self.alpha, self.beta, pair_seeds[i], obs_pack,
+                                  self.entropy_coef, self.argmax_penalty,
+                                  self.softmax_temperature, self.integral_reward))
+                for i in range(self.n_deltas):
+                    wd_neg = _build_weights_dict(-1.0, i)
+                    tasks.append((list(target_species), wd_neg, n_eval_ticks,
+                                  self.alpha, self.beta, pair_seeds[i], obs_pack,
+                                  self.entropy_coef, self.argmax_penalty,
+                                  self.softmax_temperature, self.integral_reward))
+            else:
+                # M>1: dict-tasks with per-world env_builder override. Layout:
+                # outer = sign (+, -), then i in [0..n_deltas), then m in [0..M).
+                for sign in (+1.0, -1.0):
+                    for i in range(self.n_deltas):
+                        wd = _build_weights_dict(sign, i)
+                        for m in range(M):
+                            tasks.append({
+                                'fg_list': list(target_species),
+                                'weights_dict': wd,
+                                'n_ticks': n_eval_ticks,
+                                'alpha': self.alpha,
+                                'beta': self.beta,
+                                'seed': pair_seeds[i],
+                                'obs_pack': obs_pack,
+                                'entropy_coef': self.entropy_coef,
+                                'argmax_penalty': self.argmax_penalty,
+                                'softmax_temperature': self.softmax_temperature,
+                                'integral_reward': self.integral_reward,
+                                'env_builder': world_builders[m],
+                            })
             results = self._pool.map(_evaluate_coevo_task, tasks)
-            for k, (fit, samples, act_d) in enumerate(results):
-                if k < self.n_deltas:
-                    rewards_pos[k] = fit; act_pos[k] = act_d
-                else:
-                    rewards_neg[k - self.n_deltas] = fit
-                    act_neg[k - self.n_deltas] = act_d
+            # Drain samples for obs-stats accumulation regardless of M.
+            fits_flat = []
+            acts_flat = []
+            for (fit, samples, act_d) in results:
+                fits_flat.append(fit); acts_flat.append(act_d)
                 if samples is not None:
                     s_sum, s_sumsq, s_cnt = samples
                     if agg_sum is None:
@@ -661,6 +825,24 @@ class ARSTrainer:
                     else:
                         agg_sum += s_sum; agg_sumsq += s_sumsq
                     agg_count += s_cnt
+            if M == 1:
+                # Same layout as before: first n_deltas = +sign, next n_deltas = -sign.
+                for k in range(self.n_deltas):
+                    rewards_pos[k] = fits_flat[k]
+                    act_pos[k] = acts_flat[k]
+                    rewards_neg[k] = fits_flat[k + self.n_deltas]
+                    act_neg[k] = acts_flat[k + self.n_deltas]
+            else:
+                n = self.n_deltas
+                pos_block = fits_flat[:n * M]
+                neg_block = fits_flat[n * M:]
+                ap_block = acts_flat[:n * M]
+                an_block = acts_flat[n * M:]
+                for i in range(n):
+                    rewards_pos[i] = _avg_fit_dicts(pos_block[i * M:(i + 1) * M])
+                    rewards_neg[i] = _avg_fit_dicts(neg_block[i * M:(i + 1) * M])
+                    act_pos[i] = _avg_act_dicts(ap_block[i * M:(i + 1) * M])
+                    act_neg[i] = _avg_act_dicts(an_block[i * M:(i + 1) * M])
 
         # Merge obs-stats (shared across all species in the same rollout).
         if self.obs_normalize and agg_count > 0 and dm_ids_for_norm is not None:

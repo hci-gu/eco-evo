@@ -125,16 +125,33 @@ class _EnvBuilder:
     When ``impact_maps_snapshot`` is provided, every env produced by this
     callable installs *those exact* impact fields (gemensamma per
     generation). When ``None``, fresh maps are sampled per call from the
-    project's impact ranges — used only for the initial temp_env probe
+    project's impact ranges - used only for the initial temp_env probe
     before the training loop starts.
+
+    STEP 2 (multi-world averaging scaffold): the builder also carries
+    the (impact_seed, spawn_seed) pair that defines one *world* from the
+    iteration's WorldList. ``with_world(impact_seed, spawn_seed)``
+    produces a fresh sibling builder bound to a different world, sharing
+    the same impact_vars / ranges / grid / project. This is what the
+    M>1 rollout loop in train_step will consume in Step 3; for now only
+    world index 0 is honoured by the legacy single-rollout path, so
+    semantics remain effectively unchanged.
 
     Implemented as a top-level class (not a closure) so that the
     multiprocessing 'spawn' start method can pickle it when it gets
     passed to worker processes via ``trainer.env_builder``.
     """
 
-    def __init__(self, impact_maps_snapshot=None, grid_size=None, project_path=None, spawn_seed=None):
+    def __init__(self, impact_maps_snapshot=None, grid_size=None,
+                 project_path=None, spawn_seed=None,
+                 impact_vars=None, impact_ranges=None, impact_seed=None):
         self.impact_maps_snapshot = impact_maps_snapshot
+        # Step 2: keep the raw impact recipe so ``with_world`` can
+        # re-sample maps for a different impact_seed without needing
+        # access to module globals (which are reset in spawn-workers).
+        self.impact_vars = list(impact_vars) if impact_vars is not None else None
+        self.impact_ranges = dict(impact_ranges) if impact_ranges is not None else None
+        self.impact_seed = impact_seed
         # Per-generation spawn seed: when set, every env built by this
         # callable produces *identical* biomass maps for all FGs (shared
         # across deltas/workers), analogous to ``impact_maps_snapshot``.
@@ -156,6 +173,34 @@ class _EnvBuilder:
         # the policy forward (RuntimeError: mat1 and mat2 shapes cannot be
         # multiplied). Falls back to the module global when not supplied.
         self.project_path = project_path if project_path is not None else PROJECT_PATH
+
+    def with_world(self, impact_seed, spawn_seed):
+        """Return a fresh sibling builder bound to a different world.
+
+        Used by the multi-world averaging path (Step 3): the trainer
+        picks world ``m`` from the WorldList and obtains a builder whose
+        impact_maps_snapshot is freshly sampled from ``impact_seed`` and
+        whose spawn layout is locked by ``spawn_seed``. All other state
+        (grid, project, impact recipe) is inherited. Returns a new
+        picklable ``_EnvBuilder`` instance; the original is untouched.
+        """
+        if self.impact_vars is None or self.impact_ranges is None:
+            raise RuntimeError(
+                "_EnvBuilder.with_world requires impact_vars/impact_ranges "
+                "to be baked in (use _make_env_builder with the project's "
+                "impact recipe).")
+        maps = _sample_impact_maps(
+            self.impact_vars, self.impact_ranges,
+            (self.grid_height, self.grid_width), seed=int(impact_seed))
+        return _EnvBuilder(
+            impact_maps_snapshot=maps,
+            grid_size=(self.grid_height, self.grid_width),
+            project_path=self.project_path,
+            spawn_seed=int(spawn_seed),
+            impact_vars=self.impact_vars,
+            impact_ranges=self.impact_ranges,
+            impact_seed=int(impact_seed),
+        )
 
     def __call__(self, seed=None):
         H, W = self.grid_height, self.grid_width
@@ -202,7 +247,9 @@ class _EnvBuilder:
         return env
 
 
-def _make_env_builder(impact_maps_snapshot=None, grid_size=None, project_path=None, spawn_seed=None):
+def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
+                      project_path=None, spawn_seed=None,
+                      impact_vars=None, impact_ranges=None, impact_seed=None):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
@@ -215,7 +262,9 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None, project_path=No
     generation, just like ``impact_maps_snapshot`` does for impacts.
     """
     return _EnvBuilder(impact_maps_snapshot, grid_size=grid_size,
-                      project_path=project_path, spawn_seed=spawn_seed)
+                      project_path=project_path, spawn_seed=spawn_seed,
+                      impact_vars=impact_vars, impact_ranges=impact_ranges,
+                      impact_seed=impact_seed)
 
 
 # Default module-level env_builder: fresh impact maps per call. Used for
@@ -332,6 +381,34 @@ def main():
                              "OFF by default in line with konvergensproblem.txt - use only "
                              "if a specific species (e.g. seals) is locked in a saturated "
                              "action attractor already at gen 1.")
+    # --- Multi-world averaging per delta (variance reduction) ---
+    # Implemented across STEPS 1-3 of the ARS-evolution plan in
+    # mareld_resume.txt: CLI + seed bookkeeping (STEP 1), per-world
+    # env builders via _EnvBuilder.with_world (STEP 2), and M-averaging
+    # in ARSTrainer.train_step / train_step_coevolution (STEP 3). With
+    # M=1 (default) the legacy single-world tuple-task path is used
+    # byte-identically to pre-STEP-3 behaviour.
+    parser.add_argument("--rollouts_per_delta", type=int, default=1, metavar="M",
+                        help="Number of independent worlds (impact + spawn snapshots) "
+                             "averaged per delta evaluation. M=1 reproduces the "
+                             "legacy single-world path exactly. Typical useful "
+                             "range: 3-5. Cost scales linearly: 2*n_deltas*M "
+                             "rollouts per iteration. Within an iteration, +delta "
+                             "and -delta share the SAME M worlds (CRN coupling) "
+                             "so Var(r_pos - r_neg) drops faster than 1/M. "
+                             "Default: 1.")
+    parser.add_argument("--worlds_refresh", choices=["generation", "iteration"],
+                        default="iteration",
+                        help="When to resample the M worlds. 'generation' = lock M worlds "
+                             "for the whole generation. 'iteration' = resample at the "
+                             "start of every ARS iteration (recommended; avoids "
+                             "over-fitting the gradient to a fixed world set). "
+                             "Default: iteration.")
+    parser.add_argument("--rollouts_per_delta_schedule", type=str, default=None,
+                        metavar="SPEC",
+                        help="Optional schedule, e.g. '1@0,3@10,5@50' meaning M=1 for "
+                             "gen 0-9, M=3 for gen 10-49, M=5 from gen 50 onwards. "
+                             "Overrides --rollouts_per_delta when given.")
     parser.add_argument("--profile", type=str, default=None,
                         choices=["sanity", "info", "deep"],
                         help="Preset hyperparameter profile for co-evolution: "
@@ -366,6 +443,7 @@ def main():
             "temp_start": 1.0,
             "temp_end": 1.0,
             "uniform_bias_init": False,
+            "rollouts_per_delta": 3,
         },
         "info": {
             "coevolution": True,
@@ -379,6 +457,7 @@ def main():
             "temp_start": 1.0,
             "temp_end": 1.0,
             "uniform_bias_init": False,
+            "rollouts_per_delta": 3,
         },
         "deep": {
             "coevolution": True,
@@ -392,6 +471,7 @@ def main():
             "temp_start": 1.0,
             "temp_end": 1.0,
             "uniform_bias_init": False,
+            "rollouts_per_delta": 3,
         },
     }
     if args.profile is not None:
@@ -556,6 +636,12 @@ def main():
         top_deltas_resolved = max(1, min(args.top_deltas, n_deltas))
         top_origin = "user"
     print(f"Top Deltas:     {top_deltas_resolved} ({top_origin})")
+    if args.rollouts_per_delta_schedule:
+        print(f"Rollouts/Delta: schedule={args.rollouts_per_delta_schedule} "
+              f"(refresh={args.worlds_refresh}) (user)")
+    else:
+        print(f"Rollouts/Delta: {_mark('rollouts_per_delta', args.rollouts_per_delta)} "
+              f"(refresh={args.worlds_refresh})")
     obs_norm_enabled = not args.no_obs_normalize
     print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
     print(f"Co-evolution:   {args.coevolution} {'(default: on)' if args.coevolution else '(user, disabled -> round-robin)'}")
@@ -618,21 +704,131 @@ def main():
         _impact_vars_global = ['windfarm_noise']
         _impact_ranges_global = {}
 
-    def _install_generation_maps(gen_idx):
-        """Sample one shared set of impact maps for the whole generation
-        and install it via a fresh env_builder closure. Rebuilds the
-        worker pool (if any) so all workers see the new maps."""
-        gen_seed = int(np.random.randint(1, 2**31 - 1))
+    # -----------------------------------------------------------------
+    # STEP 1: Multi-world averaging scaffold (CLI + seed bookkeeping)
+    # -----------------------------------------------------------------
+    # ``world_rng`` is the single source of randomness for the WorldList
+    # (impact_seed, spawn_seed) pairs introduced by --rollouts_per_delta.
+    # It is seeded independently from numpy's global RNG so future M>1
+    # work can reproduce world sequences without disturbing the rest of
+    # training. STEP 1 only generates and logs WorldList entries; the
+    # actual M>1 averaging in train_step is not yet active and only the
+    # first world (index 0) drives the legacy single-rollout path below.
+    _world_rng = np.random.default_rng()
+
+    def _parse_M_schedule(spec):
+        """Parse '1@0,3@10,5@50' -> sorted [(gen, M), ...].
+        Returns None when spec is None/empty."""
+        if not spec:
+            return None
+        out = []
+        for chunk in str(spec).split(','):
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            if '@' not in chunk:
+                raise ValueError(
+                    f"--rollouts_per_delta_schedule: invalid entry {chunk!r}, "
+                    f"expected 'M@gen' (e.g. '3@10').")
+            m_str, gen_str = chunk.split('@', 1)
+            out.append((int(gen_str), int(m_str)))
+        out.sort(key=lambda x: x[0])
+        if not out or out[0][0] != 0:
+            raise ValueError(
+                "--rollouts_per_delta_schedule must include an entry at gen 0 "
+                "(e.g. '1@0,3@10').")
+        return out
+
+    _M_schedule = _parse_M_schedule(args.rollouts_per_delta_schedule)
+
+    def _resolve_M(gen_idx):
+        """Return the active M for this generation, honouring the schedule
+        when given, otherwise the static --rollouts_per_delta value."""
+        if _M_schedule is None:
+            return max(1, int(args.rollouts_per_delta))
+        M = _M_schedule[0][1]
+        for g_thresh, m_val in _M_schedule:
+            if gen_idx >= g_thresh:
+                M = m_val
+        return max(1, int(M))
+
+    def _sample_world_list(M):
+        """Draw M independent (impact_seed, spawn_seed) pairs from the
+        dedicated world_rng. Each seed is a positive int32."""
+        return [
+            (int(_world_rng.integers(1, 2**31 - 1)),
+             int(_world_rng.integers(1, 2**31 - 1)))
+            for _ in range(M)
+        ]
+
+    # Cache of the current iteration's WorldList. Updated by
+    # ``_refresh_world_list_if_needed`` according to --worlds_refresh.
+    # STEP 1: read-only consumer is ``_install_generation_maps`` which
+    # picks world[0] for the legacy single-world snapshot, preserving
+    # exact byte-for-byte behaviour when M=1.
+    _current_world_list = []  # list[tuple[int, int]]
+    _last_world_gen = [-1]    # mutable holder so closure can write to it
+
+    def _refresh_world_list_if_needed(gen_idx, iter_idx):
+        """Refresh ``_current_world_list`` according to the configured
+        policy. iteration -> always refresh; generation -> only on the
+        first iter of a new generation. Returns True iff the list was
+        (re)sampled in this call (Step 2 uses this to decide whether to
+        re-install the env builder / rebuild the worker pool)."""
+        nonlocal _current_world_list
+        M = _resolve_M(gen_idx)
+        need_refresh = (
+            not _current_world_list
+            or args.worlds_refresh == "iteration"
+            or _last_world_gen[0] != gen_idx
+        )
+        if need_refresh:
+            _current_world_list = _sample_world_list(M)
+            _last_world_gen[0] = gen_idx
+            # STEP 3: publish the WorldList to the trainer so train_step /
+            # train_step_coevolution can average per delta over M worlds.
+            # Empty / len==1 -> trainer keeps the legacy single-world path
+            # (uses self.env_builder verbatim, no with_world() call).
+            try:
+                trainer.world_list = list(_current_world_list)
+            except NameError:
+                # trainer not yet constructed (first refresh happens before
+                # the training loop builds it). The very first refresh in
+                # main() is invoked AFTER trainer is set up, so this branch
+                # is defensive-only.
+                pass
+            if M > 1 or args.rollouts_per_delta_schedule is not None:
+                pairs = ", ".join(
+                    f"(imp={imp},sp={sp})" for imp, sp in _current_world_list)
+                print(f"    Worlds (M={M}, refresh={args.worlds_refresh}): {pairs}")
+        return need_refresh
+
+    def _install_generation_worlds(gen_idx):
+        """Install ``trainer.env_builder`` from world index 0 of the
+        current WorldList. Rebuilds the worker pool (if any) so all
+        workers see the new builder.
+
+        STEP 2: impact/spawn seeds now come from ``_current_world_list[0]``
+        (sampled by ``_refresh_world_list_if_needed`` from the dedicated
+        ``_world_rng``), instead of numpy's global RNG. The legacy
+        single-rollout path still consumes only world[0]; the M>1
+        averaging loop in train_step will be wired in Step 3.
+        """
+        assert _current_world_list, (
+            "_install_generation_worlds called before "
+            "_refresh_world_list_if_needed populated the WorldList.")
+        impact_seed, spawn_seed = _current_world_list[0]
         maps = _sample_impact_maps(_impact_vars_global, _impact_ranges_global,
-                                   (GRID_HEIGHT, GRID_WIDTH), seed=gen_seed)
-        # Independent generation-wide spawn seed: locks biomass spawn
-        # layout across all deltas/workers in this generation while still
-        # varying generation-to-generation. Drawn separately from
-        # ``gen_seed`` so impact and spawn snapshots remain decoupled.
-        gen_spawn_seed = int(np.random.randint(1, 2**31 - 1))
-        new_builder = _make_env_builder(maps, grid_size=(GRID_HEIGHT, GRID_WIDTH),
-                                        project_path=PROJECT_PATH,
-                                        spawn_seed=gen_spawn_seed)
+                                   (GRID_HEIGHT, GRID_WIDTH), seed=impact_seed)
+        new_builder = _make_env_builder(
+            maps,
+            grid_size=(GRID_HEIGHT, GRID_WIDTH),
+            project_path=PROJECT_PATH,
+            spawn_seed=spawn_seed,
+            impact_vars=_impact_vars_global,
+            impact_ranges=_impact_ranges_global,
+            impact_seed=impact_seed,
+        )
         trainer.env_builder = new_builder
         # Rebuild worker pool so spawn-workers receive the updated builder.
         if trainer._pool is not None:
@@ -655,11 +851,22 @@ def main():
                 f"{k}=U[{_impact_ranges_global.get(k,(0,0))[0]:g},"
                 f"{_impact_ranges_global.get(k,(0,0))[1]:g}]"
                 for k in maps)
-            print(f"    Impact maps (shared this gen): {summary}")
+            print(f"    Impact maps (shared this gen, seed={impact_seed}): {summary}")
+
+    # Backwards-compatible alias: older code/log searches expect this name.
+    _install_generation_maps = _install_generation_worlds
 
     import itertools
+    import time as _time
     gen_iter = itertools.count() if generations_is_inf else range(generations_value)
     gen_label_total = "inf" if generations_is_inf else str(generations_value)
+    _training_start_ts = _time.monotonic()
+
+    def _fmt_elapsed(seconds: float) -> str:
+        total = int(seconds)
+        h, rem = divmod(total, 3600)
+        m, s = divmod(rem, 60)
+        return f"{h:02d}:{m:02d}:{s:02d}"
 
     try:
         for gen in gen_iter:
@@ -669,8 +876,16 @@ def main():
             frac = min(1.0, gen / max(1, anneal_n - 1)) if anneal_n > 1 else 1.0
             T = float(args.temp_start + (args.temp_end - args.temp_start) * frac)
             trainer.softmax_temperature = T
-            print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ==========")
-            _install_generation_maps(gen)
+            _elapsed = _fmt_elapsed(_time.monotonic() - _training_start_ts)
+            print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ({_elapsed}) ==========")
+            # Step 2: WorldList must be populated before world[0] can be
+            # installed. ``_refresh_world_list_if_needed(gen, 0)`` returns
+            # True on the first iter of each generation (both policies),
+            # so we always install at least once per generation here. The
+            # per-iter loops below may refresh again (iteration policy)
+            # and re-install via ``_maybe_reinstall_worlds``.
+            _refresh_world_list_if_needed(gen, 0)
+            _install_generation_worlds(gen)
             if args.coevolution:
                 # Co-evolution: all species are trained simultaneously per iteration
                 # in a SHARED rollout. No inner round-robin loop.
@@ -680,6 +895,8 @@ def main():
                     print(f"    {species}: in={policy_params[species][0]} "
                           f"out={policy_params[species][1]}")
                 for i in range(args.iter_per_gen):
+                    if i > 0 and _refresh_world_list_if_needed(gen, i):
+                        _install_generation_worlds(gen)
                     means = trainer.train_step_coevolution(
                         target_species, n_eval_ticks=args.n_eval_ticks)
                     summary = " | ".join(
@@ -697,6 +914,8 @@ def main():
                     print(f"    Output dim: {policy_params[species][1]}")
 
                     for i in range(args.iter_per_gen):
+                        if i > 0 and _refresh_world_list_if_needed(gen, i):
+                            _install_generation_worlds(gen)
                         # n_eval_ticks: how many time steps (ticks) each test run lasts
                         avg_reward = trainer.train_step(species, n_eval_ticks=args.n_eval_ticks)
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
