@@ -72,7 +72,12 @@ def _load_checkpoint(trainer, fg_id, path):
     Returns True on success, False if the file is unreadable / incompatible.
     """
     try:
-        payload = torch.load(path, map_location='cpu')
+        # ``weights_only=False`` is required because our checkpoints embed
+        # numpy arrays (obs_stats mean/var) which PyTorch 2.6+ refuses to
+        # unpickle under the new default ``weights_only=True``. These files
+        # are produced by this same training script, so trusting them is
+        # equivalent to trusting our own code.
+        payload = torch.load(path, map_location='cpu', weights_only=False)
     except Exception as e:
         print(f"    [resume] Failed to read {path}: {e}")
         return False
@@ -247,6 +252,153 @@ class _EnvBuilder:
         return env
 
 
+class _ProbeEnvBuilder:
+    """Picklable env builder dedicated to the *probe rollout* — a fixed,
+    deterministic world used to track per-FG biomass evolution as policies
+    train. Distinguishes itself from ``_EnvBuilder`` in two ways:
+
+      1. Uses ``mode='inference'`` when loading the project config, so
+         initial biomass per FG is taken from ``inference_initial_biomass``
+         (a fixed value) rather than sampled from
+         ``initial_biomass_min/max``.
+      2. Loads impact maps from the project's ``inference.impact_maps``
+         section (real .npz files configured via fgconfig's Inference tab)
+         instead of sampling fresh fields per call.
+
+    The probe seed is fixed (``probe_seed``); every call returns an env
+    whose spawn layout and impact field are identical, so the only
+    variable across iterations is the policy. Mirrors ``inference.py``'s
+    ``build_env`` semantics.
+    """
+
+    PROBE_SEED = 20260530
+
+    def __init__(self, project_path, grid_size):
+        self.project_path = project_path
+        self.grid_height = int(grid_size[0])
+        self.grid_width = int(grid_size[1])
+        # Resolve inference impact-map paths once at construction (read
+        # from project YAML's ``inference.impact_maps``); per-call we
+        # re-load the .npz so updates to the underlying file take effect
+        # without rebuilding the trainer.
+        from inference import _load_inference_map_paths, _load_impact_map_npz
+        self._load_paths = _load_inference_map_paths
+        self._load_npz = _load_impact_map_npz
+
+    def __call__(self, seed=None):
+        H, W = self.grid_height, self.grid_width
+        grid_size = (H, W)
+        # Always use the fixed probe seed: the spawn layout and any
+        # remaining stochastic choices inside load_project_config(mode=
+        # 'inference') must be deterministic across iterations.
+        s = self.PROBE_SEED
+        if self.project_path:
+            fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
+                self.project_path, grid_size=grid_size, seed=s,
+                mode='inference', spawn_seed=s)
+        else:
+            fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=s, spawn_seed=s)
+            impact_vars = ['windfarm_noise']
+            observable_impact_vars = ['windfarm_noise']
+
+        grid_config = {
+            'width': W,
+            'height': H,
+            'cell_size': 1000.0,
+            'tick_duration': 6.0,
+        }
+        env = EcosystemEnvironment(grid_config, fgs, {},
+                                   observable_impact_vars=observable_impact_vars)
+        # Inference-tab impact maps (silent: avoid spamming "[info] Using
+        # array ..." messages once per probe).
+        map_paths = self._load_paths(self.project_path) if self.project_path else {}
+        for iv in impact_vars:
+            field = None
+            if iv in map_paths:
+                field = self._load_npz(map_paths[iv], iv, H, W, verbose=False)
+            if field is None:
+                field = np.zeros((H, W), dtype=np.float32)
+            env.grid.add_map(iv, field)
+        return env
+
+
+def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
+                   compact=True):
+    """Run a probe rollout with the trainer's current policies and log
+    per-FG biomass evolution.
+
+    The rollout uses ``probe_builder`` (deterministic inference world)
+    so that any variation in ``log10(bh/b0)`` reflects *policy* change,
+    not environmental noise. Frozen obs-norm stats are installed from
+    ``trainer.obs_stats`` exactly as in ``_evaluate``.
+
+    Writes one JSONL line per call to ``jsonl_path`` (results dir) and,
+    when ``compact`` is True, prints a single-line summary to stdout.
+    """
+    import json
+    env = probe_builder()
+    env.policies = trainer.policies
+    env.softmax_temperature = float(trainer.softmax_temperature)
+
+    # Freeze obs-norm stats (same path as _evaluate / _evaluate_coevo).
+    if trainer.obs_normalize and trainer.obs_stats:
+        env._build_static_caches()
+        dm_ids = list(env.dm_ids)
+        # Build (N_dm, D) stacks aligned with env.dm_ids; fall back to
+        # mean=0/var=1 for DMs without stats yet (first iteration).
+        D = None
+        for fid in dm_ids:
+            if fid in trainer.obs_stats:
+                D = int(trainer.obs_stats[fid]['mean'].shape[0])
+                break
+        if D is not None:
+            mean = np.zeros((len(dm_ids), D), dtype=np.float32)
+            var = np.ones((len(dm_ids), D), dtype=np.float32)
+            for i, fid in enumerate(dm_ids):
+                st = trainer.obs_stats.get(fid)
+                if st is not None and int(st.get('count', 0)) > 0:
+                    mean[i] = st['mean'].astype(np.float32, copy=False)
+                    var[i] = st['var'].astype(np.float32, copy=False)
+            env.obs_mean = mean
+            env.obs_var = var
+
+    fg_ids = list(env.fgs.keys())
+    b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
+    for _ in range(int(n_ticks)):
+        env.step()
+    bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
+
+    log_ratio = {}
+    ratio = {}
+    for fid in fg_ids:
+        denom = max(b0[fid], 1e-9)
+        r = max(bh[fid], 1e-12) / denom
+        ratio[fid] = float(r)
+        log_ratio[fid] = float(np.log10(r))
+
+    if compact:
+        # Human-readable percent in stdout (e.g. '120%'); JSONL keeps
+        # both ratio and log10_ratio for downstream analysis.
+        parts = [f"{fid}: {ratio[fid]*100:.0f}%" for fid in fg_ids]
+        print(f"    [probe gen={gen+1}] " + " | ".join(parts))
+
+    record = {
+        'gen': int(gen + 1),
+        'iter': int(it + 1),
+        'n_ticks': int(n_ticks),
+        'b0': b0,
+        'bh': bh,
+        'ratio': ratio,
+        'log10_ratio': log_ratio,
+    }
+    try:
+        with open(jsonl_path, 'a') as f:
+            f.write(json.dumps(record) + "\n")
+    except Exception as e:
+        print(f"    [probe] WARN: failed to append to {jsonl_path}: {e}")
+    return record
+
+
 def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       project_path=None, spawn_seed=None,
                       impact_vars=None, impact_ranges=None, impact_seed=None):
@@ -304,6 +456,21 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     return params
 
 def main():
+    # Detach from the controlling terminal's foreground process group so that
+    # Ctrl+C (SIGINT from the TTY) is delivered ONLY to this parent process,
+    # not broadcast to every spawned worker. Without this, when workers are
+    # mid-bootstrap (importing torch etc., before our ``_worker_init`` had a
+    # chance to install ``signal.SIG_IGN``), each of them prints its own
+    # multi-page traceback to the same terminal -- producing the giant
+    # interleaved "Traceback (most recent call last) ... import torch ..."
+    # blaffa the user saw. With our own pgid the workers inherit it and the
+    # foreground TTY signal only hits us; we then terminate the pool cleanly
+    # in the KeyboardInterrupt handler below.
+    try:
+        os.setpgrp()
+    except (AttributeError, OSError):
+        # Not available on Windows / already a session leader; harmless.
+        pass
     parser = argparse.ArgumentParser(description="Mareld Ecosystem Simulator - Training Module")
     parser.add_argument("--species", nargs="+", default=["all"],
                         help="Which functional groups to train (e.g., pelagic_fish gadoids). Use 'all' for all decision makers (default: all).")
@@ -566,6 +733,17 @@ def main():
     run_dir = os.path.join('results', args.run_name)
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
+
+    # Probe rollout setup: a deterministic inference-world env used to
+    # log per-FG biomass evolution as policies train. Mirrors the
+    # inference.py scenario (fixed initial biomass + .npz impact maps)
+    # so that the trajectory log10(bh/b0) is directly comparable to
+    # what the trained policy will face at inference time.
+    probe_builder = _ProbeEnvBuilder(
+        project_path=PROJECT_PATH,
+        grid_size=(GRID_HEIGHT, GRID_WIDTH),
+    )
+    probe_jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
 
     # Initialize a temporary environment to fetch functional group metadata.
     # Build a fresh env_builder here (rather than reusing the module-level
@@ -902,6 +1080,16 @@ def main():
                     summary = " | ".join(
                         f"{fid}={means[fid]:+.4f}" for fid in target_species)
                     print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
+                    # Probe: deterministic inference-world rollout with the
+                    # updated theta. log10(bh/b0) per FG; JSONL row + compact
+                    # stdout line. Fixed seed -> only policy varies across iters.
+                    try:
+                        _probe_biomass(trainer, probe_builder,
+                                       n_ticks=args.n_eval_ticks,
+                                       gen=gen, it=i,
+                                       jsonl_path=probe_jsonl_path)
+                    except Exception as _e:
+                        print(f"    [probe] WARN: probe rollout failed: {_e}")
                 # Save checkpoints for all co-trained species.
                 for species in target_species:
                     save_path = os.path.join(run_dir, f"policy_{species}.pth")
@@ -919,6 +1107,16 @@ def main():
                         # n_eval_ticks: how many time steps (ticks) each test run lasts
                         avg_reward = trainer.train_step(species, n_eval_ticks=args.n_eval_ticks)
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
+                        # Probe: deterministic inference-world rollout with the
+                        # updated theta. log10(bh/b0) per FG; JSONL row + compact
+                        # stdout line. Fixed seed -> only policy varies across iters.
+                        try:
+                            _probe_biomass(trainer, probe_builder,
+                                           n_ticks=args.n_eval_ticks,
+                                           gen=gen, it=i,
+                                           jsonl_path=probe_jsonl_path)
+                        except Exception as _e:
+                            print(f"    [probe] WARN: probe rollout failed: {_e}")
 
                     # Save checkpoint after each generation so progress is preserved.
                     save_path = os.path.join(run_dir, f"policy_{species}.pth")

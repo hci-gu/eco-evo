@@ -203,8 +203,23 @@ Flag                  Default              Meaning
                        3.0 / 1.0 / 10      Profiles force 1.0/1.0.
 --uniform_bias_init   False
 --resume              False
+--rollouts_per_delta  1 (CLI default)      Number of independent worlds
+                                           (impact + spawn snapshots) averaged
+                                           per delta. Profiles sanity/info/deep
+                                           force 3. M=1 is byte-identical to
+                                           legacy single-world path. See
+                                           Section 28.
+--worlds_refresh      "iteration"          When to resample WorldList:
+                                           "iteration" (new M worlds each ARS
+                                           iter, recommended) or "generation"
+                                           (lock M worlds for whole gen).
+--rollouts_per_delta_schedule
+                      None                 e.g. "1@0,3@10,5@50": M=1 gen 0-9,
+                                           M=3 gen 10-49, M=5 from gen 50.
+                                           Overrides --rollouts_per_delta.
 
-Session header prints every flag with "(default)"/"(user)" tag.
+Session header prints every flag with "(default)"/"(user)" tag, including
+a "Rollouts/Delta" line that shows M (or the schedule) plus refresh policy.
 
 Other entry points:
   python3 run_mareld_mvp.py
@@ -399,20 +414,36 @@ train_step(fg_to_train, n_eval_ticks=2):
 ================================================================
 Round-robin per species OR joint-rollout coevolution (default).
 For each gen:
-  - _install_generation_maps(gen) draws:
-      * gen_seed -> impact map snapshot baked into _EnvBuilder
-        (impact_maps_snapshot)
-      * gen_spawn_seed -> per-generation spawn snapshot baked into
-        _EnvBuilder (spawn_seed). Forwarded into load_project_config /
-        setup_full_mareld_mvp so all deltas/workers in this generation
-        see identical biomass maps per FG.
-  - Worker pool rebuilt so spawn-workers receive the updated builder.
+  - _refresh_world_list_if_needed(gen, iter) (re)samples WorldList =
+    [(impact_seed_m, spawn_seed_m), ...] of length M, governed by
+    --worlds_refresh (iteration|generation). Published to
+    trainer.world_list and exposed as _current_world_list[0] for the
+    legacy single-world install path.
+  - _install_generation_worlds(gen) consumes _current_world_list[0]
+    and builds _EnvBuilder with:
+      * impact_seed -> impact map snapshot (impact_maps_snapshot)
+      * spawn_seed  -> per-generation spawn snapshot, forwarded into
+        load_project_config / setup_full_mareld_mvp so all
+        deltas/workers in this generation see identical biomass maps
+        per FG.
+    _install_generation_maps is kept as a backward-compatible alias.
+  - Worker pool rebuilt only when the WorldList actually (re)sampled.
   - For species in target_species: iter_per_gen train_step calls.
+    Trainer's M-loop reads trainer.world_list and runs M rollouts per
+    (delta, sign) pair with CRN coupling (see Section 28).
+  - Generation header prints elapsed wall time, e.g.
+    "========== Generation 2/100 (T=1.000) (01:14:55) ==========".
+    Elapsed clock starts just before the first generation (after the
+    interactive prompt), formatted as HH:MM:SS.
   - _save_checkpoint writes {'state_dict','obs_stats'} per generation.
 
-KeyboardInterrupt: workers ignore SIGINT; parent catches it, calls
-trainer.close() (terminates pool fast), saves final checkpoints,
-returns cleanly.
+KeyboardInterrupt handling: train.py calls os.setpgrp() at startup so
+the parent process gets its own process group. TTY-delivered SIGINT
+then only hits the parent (never the spawn-bootstrapping workers,
+which would otherwise each dump a multi-page traceback during their
+`import torch`). Workers also install signal.SIG_IGN in _worker_init
+as backup. The parent catches KeyboardInterrupt, calls trainer.close()
+(terminates pool fast), saves final checkpoints, returns cleanly.
 
 ================================================================
 11. KNOWN DISCREPANCIES vs Strategi.pdf / Method.pdf (still open)
@@ -444,7 +475,10 @@ Initial spatial layout per FG:
     biomass map.
   - Otherwise: legacy cluster-spawn (uniform Dirichlet + per-cell floor).
 Same total biomass per FG within a rollout; layout deterministic from
-spawn_seed when train.py supplies one (per-generation snapshot, Section 27).
+spawn_seed when train.py supplies one (per-generation snapshot,
+Section 27). With M>1 (Section 28), each of the M worlds in the
+WorldList has its own (impact_seed_m, spawn_seed_m) pair, so M
+distinct biomass maps are evaluated per delta-pair.
 
 ================================================================
 13. PERFORMANCE NOTES (don't redo without measuring)
@@ -472,17 +506,27 @@ Intentionally NOT done:
   Commit ONLY on explicit user request, trailer:
     --trailer "Co-authored-by: Junie <junie@jetbrains.com>"
   Latest committed work on branch `coev`:
+    a1484cd feat(train): multi-world averaging per delta for ARS
+             variance reduction. CLI flags --rollouts_per_delta,
+             --worlds_refresh, --rollouts_per_delta_schedule;
+             _world_rng + WorldList helpers; _EnvBuilder.with_world;
+             _install_generation_worlds; M-averaging in
+             ARSTrainer.train_step / train_step_coevolution with CRN;
+             dict task format in workers; profile defaults M=3;
+             elapsed-time in generation header. M=1 byte-identical.
     2ef39f4 feat(spawn): add configurable spawn strategies
              (uniform/perlin/colony/env_driven) - adds lib/spawn/,
              tests/test_allocator.py + test_spawn_integration.py,
              integrates with config_loader and fgconfig.
     6a05b2a (earlier) config_loader fix.
   Likely uncommitted as of this resume's last update:
-    - fgconfig.py GUI reorganisation (Spawn Strategy nested inside
-      FG Editor; capitalised dropdown labels).
-    - train.py + config_loader.py per-generation spawn snapshot
-      (spawn_seed parameter, _derive_fg_spawn_seed, gen_spawn_seed
-      in _install_generation_maps).
+    - train.py: _load_checkpoint uses torch.load(weights_only=False)
+      to avoid PyTorch 2.6+ resume warning on numpy obs_stats.
+    - train.py: os.setpgrp() at main() entry to detach from the TTY
+      foreground group, suppressing interleaved worker tracebacks on
+      Ctrl+C during spawn-bootstrap.
+    - Possibly: untracked GIS helpers (make_*.py, *.png), resume.md,
+      konvergensproblem.txt, PDFs. Not part of agent's scope.
 
 ================================================================
 15. WHAT TO DO FIRST ON A FRESH CONTEXT
@@ -863,3 +907,171 @@ Verified empirically (sanity script):
 Inference mode unchanged: total_b is already deterministic from
 inference_initial_biomass, so spawn_seed only affects the spatial
 layout via _build_spawn_spec there.
+
+================================================================
+28. MULTI-WORLD AVERAGING PER DELTA (ARS variance reduction)
+================================================================
+Committed in a1484cd. Implements multi-world averaging per delta to
+reduce gradient-estimate variance from the stochastic world
+distribution (impact realisation + spawn layout). With M=1 the legacy
+single-world path is byte-identical to pre-a1484cd behaviour.
+
+Concept:
+  Each ARS iteration draws a WorldList of length M:
+      WorldList = [(impact_seed_1, spawn_seed_1), ..., (imp_M, sp_M)]
+  For every delta i and every sign in {+, -}, the trainer evaluates
+  M independent rollouts (one per world) and averages reward + act
+  diagnostics:
+      r_pos_i = mean_m R(theta + sigma*delta_i, world_m)
+      r_neg_i = mean_m R(theta - sigma*delta_i, world_m)
+  CRN coupling: +delta and -delta for the SAME (i, m) pair share the
+  SAME world AND the SAME pair_seed[i]. This makes Var(r_pos - r_neg)
+  drop faster than 1/M (world-wise anti-correlation).
+  Top-b ranking happens on the M-averaged r_pos/r_neg vectors, so it
+  is much less brittle than under the world noise of M=1.
+
+CLI (Section 5):
+  --rollouts_per_delta M       Static M. Profiles force 3; default 1.
+  --worlds_refresh POLICY      "iteration" (default; resample each
+                               ARS iter) or "generation" (lock for
+                               whole gen).
+  --rollouts_per_delta_schedule "M0@G0,M1@G1,..."
+                               e.g. "1@0,3@10,5@50". Overrides
+                               --rollouts_per_delta.
+
+Seed bookkeeping (train.py):
+  _world_rng = np.random.default_rng()  (independent of np global RNG)
+  _sample_world_list(M) -> [(impact_seed, spawn_seed), ...] drawn
+      from _world_rng (so future --seed plumbing is trivial).
+  _resolve_M(gen, args) -> int (schedule lookup or static).
+  _parse_M_schedule(spec) -> sorted [(gen_threshold, M), ...].
+  _refresh_world_list_if_needed(gen, iter) -> bool
+      Returns True iff the WorldList actually (re)sampled. Publishes
+      to _current_world_list AND trainer.world_list. Refresh rules:
+        * iter == 0 within a generation -> always (re)sample.
+        * worlds_refresh == "iteration" -> resample every iter.
+        * worlds_refresh == "generation" -> no resample for iter>0.
+
+Trainer integration (lib/runners/trainer.py):
+  self.world_list = []                    (populated by train.py)
+  _resolve_world_builders(): returns [self.env_builder] when M<=1
+      (legacy tuple-task path), otherwise [env_builder.with_world(imp,
+      sp) for imp, sp in world_list] -> M sibling builders.
+  train_step / train_step_coevolution: M-loop wraps the existing
+      (delta_i, sign) loop. Tasks are dict-format when M>1 carrying
+      'env_builder' override per task; tuple-format when M==1 for
+      byte-identical legacy worker path.
+  Averaging helpers (null-tolerant): _avg_act_diags, _avg_act_dicts,
+      _avg_fit_dicts. Reward and act_diag are averaged over M; fitness
+      shape unchanged so the rest of the ARS update is intact.
+
+Worker (lib/runners/parallel_worker.py):
+  _evaluate_task / _evaluate_coevo_task accept BOTH tuple and dict
+  task formats. Dict format may carry an 'env_builder' override per
+  task; falls back to module-global _ENV_BUILDER (legacy) otherwise.
+
+_EnvBuilder.with_world(impact_seed, spawn_seed):
+  Returns a fresh sibling builder with re-sampled impact maps and a
+  locked spawn_seed; all other state (grid, project, impact recipe)
+  is inherited. Picklable for spawn-context workers.
+
+Profile defaults: sanity / info / deep all set rollouts_per_delta=3.
+Override via explicit --rollouts_per_delta on the CLI.
+
+Pre-prompt header (train.py): prints a "Rollouts/Delta" line showing
+either the static M (with user/default/profile marking) or the
+schedule string, plus the worlds_refresh policy.
+
+Cost: total rollouts per iteration = 2 * n_deltas * M. The worker
+pool's _auto_workers cap at 2*n_deltas means M>1 utilises more
+parallelism than M=1, so wall-time scales sub-linearly with M up to
+the CPU core count.
+
+Open follow-ups (not implemented yet):
+  * Adaptive M based on gradient-norm CV or top-b rank instability
+    (sketched in Section 28 of the original design discussion).
+  * A/B variance-reduction test (M=1 vs M=5) on a deterministic seed
+    sequence to quantify the empirical win.
+  * --seed plumbing into _world_rng for fully reproducible WorldLists.
+
+================================================================
+29. PROBE BIOMASS LOGGING & DIAGNOSTICS UPDATES
+================================================================
+Late-session additions on top of Sections 27/28. Purely diagnostic;
+no change to ARS math or env semantics.
+
+29.1 Per-iteration probe rollout (train.py)
+  * Helper _ProbeEnvBuilder builds a deterministic "reference world"
+    using load_project_config(..., mode='inference') so spawn totals
+    come from inference_initial_biomass (scaled to runtime grid via
+    biomass_scale, see Section 7b) and impact maps are loaded from
+    inference.impact_maps (.npz files) instead of being sampled.
+  * Fixed PROBE_SEED = 20260530; same env state every iteration so
+    bh/b0 reflects policy change only (CRN-style isolation from
+    training's WorldList variance).
+  * Helper _probe_biomass(trainer, probe_builder, n_ticks, gen, it,
+    jsonl_path) installs current theta + frozen obs-norm stats from
+    trainer.obs_stats, runs n_ticks ticks, and emits:
+      - stdout (compact percent format):
+          [probe gen=N] fid: NN% | fid: NN% | ...
+      - JSONL append at results/<run-name>/biomass.jsonl with fields
+        {gen, iter, n_ticks, b0, bh, ratio, log10_ratio}.
+  * Called after each ARS iteration in both round-robin and co-evo
+    paths.
+
+29.2 Soft action-mass diagnostics (ecosystem.py)
+  * Earlier mv/rs/et accounting used argmax (winner-takes-all per
+    cell), which can be misleading when the policy spreads mass
+    across categories. The predation/movement modules use the SOFT
+    pi_move / pi_rest / pi_eat distributions directly, not argmax.
+  * _action_move/rest/eat_frac now accumulate per-cell category mass:
+      move = sum_{0..3} probs (4 move dirs)
+      rest = probs[4]
+      eat  = sum_{5..5+N_all-1} probs (all prey eat-nodes)
+    averaged over active cells (mask = biomass>0) per tick.
+  * Denominator is _action_active_ticks[i] (per-DM, Section "alt-1"
+    fix), so mv+rs+et == 1 exactly per DM and H_act is conditional
+    entropy given the FG is alive somewhere.
+  * Consumer format strings in trainer.py / parallel_worker.py are
+    unchanged - field names kept.
+
+29.3 present_frac in coevo status line (trainer.py)
+  * _avg_act_dicts propagates 'present_frac' across the M-world
+    average when present in all per-world act_diag entries.
+  * [coevo fid] line now prints "present=NN%" after the H_act block
+    when data is available, exposing FG absence/extinction during
+    rollouts in the live log. Format example:
+      [coevo zooplankton] mv/rs/et=0.00/0.88/0.12
+        H_act=0.27/2.565 (11%) present=98%
+        r_mean=+1.4e+00 r_std=... rel_std=... sigma_f=...
+  * Order of fields in both [diag ...] (round-robin) and [coevo ...]
+    is now: act_str (mv/rs/et then H_act, optionally present) first,
+    then reward stats.
+
+29.4 Probe stdout format
+  * Changed from log10(bh/b0) to human-readable percent per FG with
+    " | " separators. JSONL retains both ratio and log10_ratio for
+    downstream analysis (symmetric scales, geometric means).
+
+29.5 growth_rate (MG_X) wiring for decision makers
+  * Per Method.pdf p.18/p.29, MG_X is required for all energy-modeled
+    groups (= all DMs), used in B(t+1) = clip(B*(1 + MG_X*q_X), 0, inf).
+  * fg_library.yaml previously omitted growth_rate for DMs, making
+    params.get('growth_rate', 0.0) the silent default and disabling
+    the starvation/growth branch entirely. Now populated:
+      zooplankton 0.05, pelagic_fish 0.01, gadoids 0.005,
+      porpoises/seals/seabirds 0.002 (initial values; user may have
+      since multiplied top-predator values by 5x to bring the
+      starvation channel onto the rollout time scale).
+  * fgconfig/fgconfig.py: DM editor main_props now exposes
+      ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry")
+    so the field is editable in the GUI for DMs (it was already
+    present for NDMs).
+
+29.6 Open structural items (still applicable)
+  * benthic_community grows unbounded (no DM predates it).
+  * min_split_biomass=50 kg kept for seals/porpoises; cluster-spawn
+    + sub-threshold one-hot collapse (Section 20) handles it during
+    training, but per-cell density is sensitive on small grids.
+  * Eat fraction is logged as the sum over all prey eat-nodes; split
+    per prey is available in probs but not currently surfaced.

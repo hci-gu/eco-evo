@@ -435,30 +435,44 @@ class EcosystemEnvironment:
             (ent_cell * active).sum(axis=(1, 2)) / np.maximum(active_sum, 1.0),
             ent_cell.mean(axis=(1, 2)),
         )
-        # Argmax-action distribution (over active cells) for fraction-of-cells
-        # taking each action category (move/rest/eat).
-        argmax = probs.argmax(axis=1)  # (N_dm, H, W)
+        # Soft action-mass distribution (mean over active cells) for the
+        # fraction of the population's action mass going to each category.
+        # This reflects what the predation/movement modules actually use
+        # (the soft pi_move / pi_rest / pi_eat distributions), unlike a
+        # winner-takes-all argmax bookkeeping which can be misleading when
+        # the distribution is spread out.
         n_act = probs.shape[1]
         max_entropy = float(np.log(n_act))
+        # Per-cell category masses: move = sum over 4 move dirs,
+        # rest = pi_rest, eat = sum over all prey eat-nodes.
+        move_mass = probs[:, 0:4].sum(axis=1)            # (N_dm, H, W)
+        rest_mass = probs[:, 4]                          # (N_dm, H, W)
+        eat_mass  = probs[:, 5:5 + self.N_all].sum(axis=1)  # (N_dm, H, W)
         if not hasattr(self, '_action_entropy_sum') or self._action_entropy_sum is None:
             self._action_entropy_sum = np.zeros(self.N_dm, dtype=np.float64)
             self._action_entropy_count = 0
+            self._action_active_ticks = np.zeros(self.N_dm, dtype=np.int64)
             self._action_move_frac = np.zeros(self.N_dm, dtype=np.float64)
             self._action_rest_frac = np.zeros(self.N_dm, dtype=np.float64)
             self._action_eat_frac = np.zeros(self.N_dm, dtype=np.float64)
             self._action_max_entropy = max_entropy
-        self._action_entropy_sum += ent_mean.astype(np.float64)
         self._action_entropy_count += 1
-        # Action category fractions over active cells
+        # Per-DM accumulation: only count ticks where the FG has any biomass,
+        # so mv+rs+et==1 per DM (since pi_move+pi_rest+pi_eat == 1 per cell)
+        # and H_act is conditional entropy given the FG is alive somewhere.
+        # _action_entropy_count is kept as a global tick counter for backward
+        # compatibility.
         for i in range(self.N_dm):
             mask_i = active[i] > 0
-            if mask_i.sum() == 0:
+            n_cells = int(mask_i.sum())
+            if n_cells == 0:
                 continue
-            a = argmax[i][mask_i]
-            tot = float(a.size)
-            self._action_move_frac[i] += float(np.sum(a < 4)) / tot
-            self._action_rest_frac[i] += float(np.sum(a == 4)) / tot
-            self._action_eat_frac[i] += float(np.sum(a >= 5)) / tot
+            self._action_active_ticks[i] += 1
+            self._action_entropy_sum[i] += float(ent_mean[i])
+            inv = 1.0 / float(n_cells)
+            self._action_move_frac[i] += float(move_mass[i][mask_i].sum()) * inv
+            self._action_rest_frac[i] += float(rest_mass[i][mask_i].sum()) * inv
+            self._action_eat_frac[i]  += float(eat_mass[i][mask_i].sum())  * inv
 
         # Keep self.pi for non-DM consumers (always None entries here)
         self.pi = {fid: None for fid in self.fgs if not self.fgs[fid].is_decision_maker}

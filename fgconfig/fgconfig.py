@@ -424,6 +424,7 @@ class FGConfigApp:
             ("Energy Content (MJ/ton)", "energy_content", "entry"),
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry"),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry"),
+            ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry"),
             ("Movement Speed (cells/tick)", "movement_speed", "entry"),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry"),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range")

@@ -162,15 +162,20 @@ def _evaluate_coevo_task(task):
     if getattr(env, '_action_entropy_sum', None) is not None and env._action_entropy_count > 0:
         act_diag_dict = {}
         cnt = env._action_entropy_count
+        active_ticks = getattr(env, '_action_active_ticks', None)
         for fid in fg_list:
             try:
                 i = env.dm_ids.index(fid)
+                denom_i = int(active_ticks[i]) if active_ticks is not None else cnt
+                if denom_i <= 0:
+                    denom_i = 1
                 act_diag_dict[fid] = {
-                    'entropy': float(env._action_entropy_sum[i] / cnt),
+                    'entropy': float(env._action_entropy_sum[i] / denom_i),
                     'max_entropy': float(env._action_max_entropy),
-                    'move_frac': float(env._action_move_frac[i] / cnt),
-                    'rest_frac': float(env._action_rest_frac[i] / cnt),
-                    'eat_frac': float(env._action_eat_frac[i] / cnt),
+                    'move_frac': float(env._action_move_frac[i] / denom_i),
+                    'rest_frac': float(env._action_rest_frac[i] / denom_i),
+                    'eat_frac': float(env._action_eat_frac[i] / denom_i),
+                    'present_frac': float(denom_i / max(cnt, 1)),
                 }
             except (ValueError, AttributeError):
                 pass

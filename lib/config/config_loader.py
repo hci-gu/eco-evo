@@ -268,11 +268,12 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         sample_rng = rng if seed is not None else None
         total_b = _sample_total_biomass(min_b, max_b, sample_rng)
 
-        # Cluster-aware spawn: enforce a per-cell floor of 10 * min_split
-        # (kg -> tonnes already applied inside FG.__init__) so that newly
-        # spawned cells start well above the sub-threshold mask. For FGs
-        # with min_split == 0 this collapses to the legacy uniform spread.
-        min_per_cell = 10.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        # Cluster-aware spawn: enforce a per-cell floor of
+        # 5 * min_split_biomass (kg -> tonnes already applied inside
+        # FG.__init__) so newly spawned cells start safely above the
+        # sub-threshold mask. For FGs with min_split == 0 this collapses
+        # to the legacy uniform spread.
+        min_per_cell = 5.0 * float(getattr(fg, 'min_split_biomass', 0.0))
         # Opt-in: if the species defines a ``spawn:`` block (mode + params),
         # use the new strategy-driven path; otherwise fall back to the
         # legacy cluster-spawn so existing projects are bit-for-bit
@@ -489,11 +490,12 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 total_b = _sample_total_biomass(min_b, max_b, _tb_rng)
 
         # Cluster-aware spawn (see _spawn_biomass_distribution): per-cell
-        # floor 10 * min_split_biomass eliminates the sub-threshold mask
-        # lock-in that affected seals/porpoises. accessibility filtering is
-        # threaded in once accessibility maps become part of the project
-        # config; for now allowed_mask=None means the full grid is eligible.
-        min_per_cell = 10.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        # floor = 5 * min_split_biomass pushes spawned cells safely above
+        # the sub-threshold mask (which lock-in previously affected
+        # seals/porpoises). accessibility filtering is threaded in once
+        # accessibility maps become part of the project config; for now
+        # allowed_mask=None means the full grid is eligible.
+        min_per_cell = 5.0 * float(getattr(fg, 'min_split_biomass', 0.0))
         # Opt-in strategy-driven spawn: project override > library spec.
         # Missing block on both sides -> legacy cluster-spawn (unchanged).
         spawn_cfg = override.get('spawn') if isinstance(override, dict) else None

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import multiprocessing as mp
+import signal
 from lib.runners.policy import PolicyNetwork
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_coevo_task
@@ -77,15 +78,33 @@ class ARSTrainer:
         # env.dm_ids ordering and hand it to env/workers.
         self.obs_stats = {}  # fg_id -> dict(mean, var, count)
 
-        # Lazy-initialized worker pool
+        # Lazy-initialized worker pool.
+        #
+        # Ctrl+C handling: SIGINT from the TTY is delivered to every member
+        # of the foreground process group, including freshly spawned workers
+        # that are still mid-bootstrap (``import torch`` etc., before our
+        # ``_worker_init`` had a chance to install ``signal.SIG_IGN``).
+        # Each of those workers would otherwise dump a multi-page traceback
+        # to the same terminal, producing the giant interleaved
+        # "Traceback ... import torch ..." blaffa the user saw.
+        #
+        # Fix: install SIG_IGN in the parent BEFORE forking/spawning the
+        # workers so they inherit SIG_IGN as their default SIGINT handler
+        # right from process creation. Once the Pool is up, restore the
+        # parent's previous SIGINT handler so the user's Ctrl+C still
+        # raises ``KeyboardInterrupt`` here in train.py's main loop.
         self._pool = None
         if self.n_workers > 1:
             ctx = mp.get_context('spawn')
-            self._pool = ctx.Pool(
-                processes=self.n_workers,
-                initializer=_worker_init,
-                initargs=(env_builder, policy_params, self.uniform_bias_init),
-            )
+            prev_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
+            try:
+                self._pool = ctx.Pool(
+                    processes=self.n_workers,
+                    initializer=_worker_init,
+                    initargs=(env_builder, policy_params, self.uniform_bias_init),
+                )
+            finally:
+                signal.signal(signal.SIGINT, prev_sigint)
 
     def close(self):
         if self._pool is not None:
@@ -464,18 +483,18 @@ class ARSTrainer:
             H_mean = act_entropy_sum / act_n
             H_max = act_max_entropy or 1.0
             mv = act_move_sum / act_n; rs = act_rest_sum / act_n; et = act_eat_sum / act_n
-            act_str = (f" H_act={H_mean:.3f}/{H_max:.3f} ({H_mean/H_max:.0%})"
-                       f" mv/rs/et={mv:.2f}/{rs:.2f}/{et:.2f}")
-        # Print compact line
-        print(f"  [diag {fg_to_train}] r_mean={r_mean:+.4e} r_std={r_std:.4e} "
+            act_str = (f"mv/rs/et={mv:.2f}/{rs:.2f}/{et:.2f}"
+                       f" H_act={H_mean:.3f}/{H_max:.3f} ({H_mean/H_max:.0%}) ")
+        # Print compact line (action distribution first, then reward stats).
+        print(f"  [diag {fg_to_train}] {act_str}"
+              f"r_mean={r_mean:+.4e} r_std={r_std:.4e} "
               f"rel_std={rel:.3%} sigma_f={sigma_f:.4e}"
               + (f" obs_var[min={diag.get('obs_var_min',float('nan')):.2e},"
                  f" mean={diag.get('obs_var_mean',float('nan')):.2e},"
                  f" max={diag.get('obs_var_max',float('nan')):.2e},"
                  f" near0={diag.get('obs_var_n_near_zero',0)}/{diag.get('obs_var_dim',0)},"
                  f" cnt={diag.get('obs_count',0)}]"
-                 if 'obs_var_min' in diag else "")
-              + act_str)
+                 if 'obs_var_min' in diag else ""))
 
         return float(np.mean(rewards_pos + rewards_neg))
 
@@ -550,12 +569,17 @@ class ARSTrainer:
             try:
                 i = env.dm_ids.index(fg_id)
                 cnt = env._action_entropy_count
+                active_ticks = getattr(env, '_action_active_ticks', None)
+                denom_i = int(active_ticks[i]) if active_ticks is not None else cnt
+                if denom_i <= 0:
+                    denom_i = 1
                 act_diag = {
-                    'entropy': float(env._action_entropy_sum[i] / cnt),
+                    'entropy': float(env._action_entropy_sum[i] / denom_i),
                     'max_entropy': float(env._action_max_entropy),
-                    'move_frac': float(env._action_move_frac[i] / cnt),
-                    'rest_frac': float(env._action_rest_frac[i] / cnt),
-                    'eat_frac': float(env._action_eat_frac[i] / cnt),
+                    'move_frac': float(env._action_move_frac[i] / denom_i),
+                    'rest_frac': float(env._action_rest_frac[i] / denom_i),
+                    'eat_frac': float(env._action_eat_frac[i] / denom_i),
+                    'present_frac': float(denom_i / max(cnt, 1)),
                 }
             except (ValueError, AttributeError):
                 act_diag = None
@@ -631,15 +655,20 @@ class ARSTrainer:
         if getattr(env, '_action_entropy_sum', None) is not None and env._action_entropy_count > 0:
             act_diag_dict = {}
             cnt = env._action_entropy_count
+            active_ticks = getattr(env, '_action_active_ticks', None)
             for fid in fg_list:
                 try:
                     i = env.dm_ids.index(fid)
+                    denom_i = int(active_ticks[i]) if active_ticks is not None else cnt
+                    if denom_i <= 0:
+                        denom_i = 1
                     act_diag_dict[fid] = {
-                        'entropy': float(env._action_entropy_sum[i] / cnt),
+                        'entropy': float(env._action_entropy_sum[i] / denom_i),
                         'max_entropy': float(env._action_max_entropy),
-                        'move_frac': float(env._action_move_frac[i] / cnt),
-                        'rest_frac': float(env._action_rest_frac[i] / cnt),
-                        'eat_frac': float(env._action_eat_frac[i] / cnt),
+                        'move_frac': float(env._action_move_frac[i] / denom_i),
+                        'rest_frac': float(env._action_rest_frac[i] / denom_i),
+                        'eat_frac': float(env._action_eat_frac[i] / denom_i),
+                        'present_frac': float(denom_i / max(cnt, 1)),
                     }
                 except (ValueError, AttributeError):
                     pass
@@ -733,6 +762,10 @@ class ARSTrainer:
                     continue
                 a = {k: float(np.mean([r[k] for r in rows])) for k in keys}
                 a['max_entropy'] = rows[0]['max_entropy']
+                # Propagate present_frac (average across worlds) when available.
+                pf_rows = [r['present_frac'] for r in rows if 'present_frac' in r]
+                if pf_rows:
+                    a['present_frac'] = float(np.mean(pf_rows))
                 out[fid] = a
             return out if out else None
 
@@ -904,6 +937,7 @@ class ARSTrainer:
             # Per-species action entropy from this iteration.
             act_str = ""
             H_sum = 0.0; mv_sum = 0.0; rs_sum = 0.0; et_sum = 0.0; n_act = 0
+            pf_sum = 0.0; pf_n = 0
             H_max_seen = None
             for arr in (act_pos, act_neg):
                 for d in arr:
@@ -913,14 +947,20 @@ class ARSTrainer:
                     H_sum += a['entropy']; mv_sum += a['move_frac']
                     rs_sum += a['rest_frac']; et_sum += a['eat_frac']
                     H_max_seen = a['max_entropy']; n_act += 1
+                    if 'present_frac' in a:
+                        pf_sum += a['present_frac']; pf_n += 1
             if n_act > 0:
                 Hm = H_max_seen or 1.0
                 Hmean = H_sum / n_act
                 mv = mv_sum / n_act; rs = rs_sum / n_act; et = et_sum / n_act
-                act_str = (f" H_act={Hmean:.3f}/{Hm:.3f} ({Hmean/Hm:.0%})"
-                           f" mv/rs/et={mv:.2f}/{rs:.2f}/{et:.2f}")
+                act_str = (f"mv/rs/et={mv:.2f}/{rs:.2f}/{et:.2f}"
+                           f" H_act={Hmean:.3f}/{Hm:.3f} ({Hmean/Hm:.0%}) ")
+                if pf_n > 0:
+                    pf = pf_sum / pf_n
+                    act_str += f"present={pf:.0%} "
 
-            print(f"  [coevo {fid}] r_mean={r_mean:+.4e} r_std={r_std:.4e} "
-                  f"rel_std={rel:.3%} sigma_f={sigma_f:.4e}" + act_str)
+            print(f"  [coevo {fid}] {act_str}"
+                  f"r_mean={r_mean:+.4e} r_std={r_std:.4e} "
+                  f"rel_std={rel:.3%} sigma_f={sigma_f:.4e}")
 
         return out_means
