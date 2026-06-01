@@ -28,12 +28,14 @@
     min_split_biomass: 0.0
     growth_rate: 0.0085
     spawn:
-      mode: perlin
-      scale: 6.0
-      octaves: 3
-      persistence: 0.6
-      lacunarity: 2.0
-      threshold: 0.0
+      mode: env_driven
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      refs:
+        - name: phytoplankton
+          weight: 1.0
+          transform: linear
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false

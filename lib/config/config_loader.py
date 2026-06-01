@@ -241,8 +241,43 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
 
     rng = np.random.default_rng(seed) if seed is not None else np.random
     spawn_rng_base = spawn_seed if spawn_seed is not None else seed
+
+    # Topo-sort FG ids by env_driven refs so dependencies spawn first.
+    _all_ids = list(spec_defs.keys())
+    _id_set = set(_all_ids)
+    _deps = {sid: [] for sid in _all_ids}
+    for sid in _all_ids:
+        cfg = spec_defs[sid].get('spawn') if isinstance(spec_defs[sid], dict) else None
+        if not isinstance(cfg, dict):
+            continue
+        if str(cfg.get('mode', '')).strip().lower() != 'env_driven':
+            continue
+        for ref in (cfg.get('refs') or []):
+            if isinstance(ref, dict):
+                name = ref.get('name')
+                if name and name in _id_set and name != sid:
+                    _deps[sid].append(name)
+    _remaining = list(_all_ids)
+    _ordered = []
+    _done = set()
+    _safety = 0
+    while _remaining and _safety < len(_all_ids) + 5:
+        _safety += 1
+        progressed = False
+        nxt = []
+        for sid in _remaining:
+            if all(d in _done for d in _deps[sid]):
+                _ordered.append(sid); _done.add(sid); progressed = True
+            else:
+                nxt.append(sid)
+        _remaining = nxt
+        if not progressed:
+            _ordered.extend(_remaining); break
+
+    env_fields = {}
     fgs = {}
-    for sid, specs in spec_defs.items():
+    for sid in _ordered:
+        specs = spec_defs[sid]
         # Merge specs with interaction data
         params = specs.copy()
         params['interaction'] = {}
@@ -286,7 +321,9 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
             allowed_mask=None, rng=spawn_rng,
-            spawn_spec=spawn_spec, project_seed=fg_spawn_seed)
+            spawn_spec=spawn_spec, project_seed=fg_spawn_seed,
+            env_context={'env_fields': env_fields})
+        env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
@@ -423,8 +460,73 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             vmin, vmax = vmax, vmin
         impact_ranges[iid] = (vmin, vmax)
     
-    fgs = {}
+    # ------------------------------------------------------------------
+    # Topological ordering of spawn for env_driven refs
+    # ------------------------------------------------------------------
+    # Some FGs may declare spawn mode=env_driven and reference other FGs
+    # via ``refs: [{name: <other_fg_id>, ...}]`` (e.g. zooplankton following
+    # phytoplankton). Those references are resolved at runtime by exposing
+    # the dependency's *already spawned* biomass map under
+    # ``context['env_fields'][<name>]``. To make this work we must spawn
+    # the dependency before the dependant. Below we build the dependency
+    # graph (only on currently active FGs) and topologically sort it.
+    # Cycles and missing references fall back to the project's declared
+    # order with the missing refs silently ignored by ``weights_env_driven``.
+    def _spawn_cfg_for(sid):
+        ovr = project_fg_overrides.get(sid, {}) if isinstance(
+            project_fg_overrides.get(sid, {}), dict) else {}
+        cfg = ovr.get('spawn') if isinstance(ovr, dict) else None
+        if cfg is None:
+            cfg = spec_defs.get(sid, {}).get('spawn')
+        return cfg if isinstance(cfg, dict) else None
+
+    _active_set = set(project_fg_ids)
+    _deps = {sid: [] for sid in project_fg_ids}
     for sid in project_fg_ids:
+        cfg = _spawn_cfg_for(sid)
+        if not cfg:
+            continue
+        if str(cfg.get('mode', '')).strip().lower() != 'env_driven':
+            continue
+        for ref in (cfg.get('refs') or []):
+            if not isinstance(ref, dict):
+                continue
+            name = ref.get('name')
+            if name and name in _active_set and name != sid:
+                _deps[sid].append(name)
+
+    # Kahn's algorithm: stable topo-sort preserving the original FG order
+    # for ties so non-env_driven FGs keep their legacy spawn order.
+    _remaining = list(project_fg_ids)
+    _spawn_order = []
+    _spawned_set = set()
+    _safety = 0
+    while _remaining and _safety < len(project_fg_ids) + 5:
+        _safety += 1
+        progressed = False
+        new_remaining = []
+        for sid in _remaining:
+            if all(d in _spawned_set for d in _deps.get(sid, [])):
+                _spawn_order.append(sid)
+                _spawned_set.add(sid)
+                progressed = True
+            else:
+                new_remaining.append(sid)
+        _remaining = new_remaining
+        if not progressed:
+            # Cycle detected: append the rest in declared order so the
+            # simulation still runs; env_driven refs that aren't satisfied
+            # yet will simply be ignored by weights_env_driven.
+            _spawn_order.extend(_remaining)
+            break
+
+    # Accumulator: env_fields[<fg_id>] -> (H, W) initial biomass array.
+    # Passed into _spawn_biomass_distribution via env_context so that
+    # env_driven strategies can use it via context['env_fields'][name].
+    env_fields = {}
+
+    fgs = {}
+    for sid in _spawn_order:
         if sid not in spec_defs:
             continue
             
@@ -517,7 +619,11 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
             allowed_mask=None, rng=spawn_rng,
-            spawn_spec=spawn_spec, project_seed=fg_spawn_seed)
+            spawn_spec=spawn_spec, project_seed=fg_spawn_seed,
+            env_context={'env_fields': env_fields})
+        # Expose this FG's freshly spawned biomass map to subsequent FGs
+        # (env_driven refs use the already-spawned dependencies).
+        env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
         # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
         # initial energy fill levels. Inference keeps the deterministic
         # 0.7 * ME_X default for reproducible scenario comparisons.

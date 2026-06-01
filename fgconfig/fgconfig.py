@@ -588,10 +588,12 @@ class FGConfigApp:
             "Noise_amp: amplitude of the Perlin overlay (0 = none).\n"
             "Noise_scale: wavelength of the overlay in cells.\n"
             "\n"
-            "Refs (name/weight/transform) are set in YAML — the GUI "
-            "only exposes the scalar parameters for now. Refs to "
-            "'depth' are filtered out until the depth map has been "
-            "activated."
+            "Refs: each row references another FG's freshly spawned "
+            "biomass field. Name = FG id (e.g. 'phytoplankton'), "
+            "Weight = signed multiplier (negative inverts), Transform "
+            "= linear/exp/invert/gauss_smooth. Use this to make "
+            "zooplankton follow phytoplankton. Refs to 'depth' are "
+            "filtered out until the depth map has been activated."
         ),
     }
     SPAWN_PARAM_SCHEMA = {
@@ -614,6 +616,9 @@ class FGConfigApp:
             ("noise_scale", "Noise scale (cells)", "float", 4.0),
         ],
     }
+    # Transform options available for env_driven refs (mirrors
+    # lib/spawn/strategies.py: weights_env_driven).
+    SPAWN_REF_TRANSFORMS = ("linear", "exp", "invert", "gauss_smooth")
 
     def _build_spawn_editor(self, parent, vars_store):
         """Build the per-FG spawn strategy editor inside ``parent``.
@@ -706,16 +711,21 @@ class FGConfigApp:
                 pass
         vars_store["_param_widgets"] = []
         vars_store["param_vars"] = {}
+        # Reset refs-editor state; only env_driven repopulates it below.
+        vars_store["refs_rows"] = []
+        vars_store["refs_frame"] = None
 
         mode = self.SPAWN_MODE_KEYS.get(vars_store["mode_var"].get(), vars_store["mode_var"].get())
         schema = self.SPAWN_PARAM_SCHEMA.get(mode, [])
-        if not schema:
+
+        if not schema and mode != "env_driven":
             placeholder = ttk.Label(frame, text="(no parameters)",
                                     foreground="#888888")
             placeholder.grid(row=0, column=0, sticky="w")
             vars_store["_param_widgets"].append(placeholder)
             return
 
+        next_row = 0
         for i, (key, label, ptype, default) in enumerate(schema):
             lbl = ttk.Label(frame, text=label + ":")
             lbl.grid(row=i, column=0, sticky="w", padx=(0, 4), pady=1)
@@ -734,6 +744,113 @@ class FGConfigApp:
             vars_store["param_vars"][key] = (var, ptype)
             # Live-update preview on edit
             var.trace_add("write", lambda *_a, vs=vars_store: self._schedule_spawn_preview(vs))
+            next_row = i + 1
+
+        # Env-driven: build refs editor under the scalar params.
+        if mode == "env_driven":
+            self._build_refs_editor(frame, vars_store, start_row=next_row)
+
+    def _build_refs_editor(self, parent, vars_store, start_row):
+        """Build the env_driven refs editor (list of {name, weight, transform}).
+
+        Each row exposes:
+          - Name: dropdown of currently known FG ids (project + library)
+          - Weight: signed float
+          - Transform: linear / exp / invert / gauss_smooth
+          - Remove button (X)
+        Plus an "Add ref" button below the rows.
+        """
+        # Header
+        header = ttk.Label(parent, text="Refs (env layers):",
+                          font=("TkDefaultFont", 9, "bold"))
+        header.grid(row=start_row, column=0, columnspan=4,
+                    sticky="w", pady=(6, 2))
+        vars_store["_param_widgets"].append(header)
+
+        refs_frame = ttk.Frame(parent)
+        refs_frame.grid(row=start_row + 1, column=0, columnspan=4,
+                        sticky="w")
+        vars_store["_param_widgets"].append(refs_frame)
+        vars_store["refs_frame"] = refs_frame
+
+        # Sub-header row inside refs_frame
+        ttk.Label(refs_frame, text="Name", font=("TkDefaultFont", 8)).grid(
+            row=0, column=0, sticky="w", padx=(0, 4))
+        ttk.Label(refs_frame, text="Weight", font=("TkDefaultFont", 8)).grid(
+            row=0, column=1, sticky="w", padx=(0, 4))
+        ttk.Label(refs_frame, text="Transform", font=("TkDefaultFont", 8)).grid(
+            row=0, column=2, sticky="w", padx=(0, 4))
+
+        add_btn = ttk.Button(parent, text="+ Add ref",
+                             command=lambda vs=vars_store: self._add_ref_row(vs))
+        add_btn.grid(row=start_row + 2, column=0, columnspan=2,
+                     sticky="w", pady=(4, 2))
+        vars_store["_param_widgets"].append(add_btn)
+
+    def _known_fg_ids(self):
+        """Return the list of FG ids known to the project, then library."""
+        ids = []
+        for fg in (self.project_data.get("decision_makers", []) or []):
+            gid = fg.get("group_id") if isinstance(fg, dict) else None
+            if gid and gid not in ids:
+                ids.append(gid)
+        for fg in (self.project_data.get("non_decision_makers", []) or []):
+            gid = fg.get("group_id") if isinstance(fg, dict) else None
+            if gid and gid not in ids:
+                ids.append(gid)
+        # Add any library entries not yet in the project (helps the user
+        # pre-configure refs before the dependency FG is added).
+        for sid in (self.global_library.get("species_definitions", {}) or {}):
+            if sid not in ids:
+                ids.append(sid)
+        return ids
+
+    def _add_ref_row(self, vars_store, name="", weight=1.0, transform="linear"):
+        """Append a new ref row to the env_driven refs editor."""
+        refs_frame = vars_store.get("refs_frame")
+        if refs_frame is None or not refs_frame.winfo_exists():
+            return
+        rows = vars_store.setdefault("refs_rows", [])
+        row_idx = len(rows) + 1  # row 0 is the header
+        name_var = tk.StringVar(value=str(name))
+        weight_var = tk.StringVar(value=str(weight))
+        transform_var = tk.StringVar(value=str(transform))
+        name_cb = ttk.Combobox(refs_frame, textvariable=name_var,
+                                values=self._known_fg_ids(), width=18)
+        name_cb.grid(row=row_idx, column=0, sticky="w", padx=(0, 4), pady=1)
+        weight_ent = ttk.Entry(refs_frame, textvariable=weight_var, width=8)
+        weight_ent.grid(row=row_idx, column=1, sticky="w", padx=(0, 4), pady=1)
+        transform_cb = ttk.Combobox(refs_frame, textvariable=transform_var,
+                                    values=list(self.SPAWN_REF_TRANSFORMS),
+                                    state="readonly", width=12)
+        transform_cb.grid(row=row_idx, column=2, sticky="w", padx=(0, 4), pady=1)
+        row_data = {
+            "name_var": name_var, "weight_var": weight_var,
+            "transform_var": transform_var,
+            "widgets": [name_cb, weight_ent, transform_cb],
+        }
+        # Remove button
+        def _remove(rd=row_data, vs=vars_store):
+            try:
+                for w in rd["widgets"]:
+                    w.destroy()
+                if rd.get("remove_btn") is not None:
+                    rd["remove_btn"].destroy()
+            except Exception:
+                pass
+            try:
+                vs["refs_rows"].remove(rd)
+            except ValueError:
+                pass
+            self._schedule_spawn_preview(vs)
+        rm_btn = ttk.Button(refs_frame, text="X", width=2, command=_remove)
+        rm_btn.grid(row=row_idx, column=3, sticky="w", pady=1)
+        row_data["remove_btn"] = rm_btn
+        rows.append(row_data)
+        # Live preview updates
+        for v in (name_var, weight_var, transform_var):
+            v.trace_add("write", lambda *_a, vs=vars_store: self._schedule_spawn_preview(vs))
+        self._schedule_spawn_preview(vars_store)
 
     def _schedule_spawn_preview(self, vars_store, delay_ms=250):
         """Debounce preview re-rendering so we don't recompute on every keystroke."""
@@ -769,6 +886,23 @@ class FGConfigApp:
                 # choice or unknown → store as string
                 if raw != "":
                     out[key] = raw
+        # env_driven: serialise the refs list. Rows with empty name are
+        # silently dropped; invalid weights default to 1.0.
+        if mode == "env_driven":
+            refs_out = []
+            for rd in vars_store.get("refs_rows", []) or []:
+                name = rd["name_var"].get().strip()
+                if not name:
+                    continue
+                try:
+                    weight = float(rd["weight_var"].get())
+                except (TypeError, ValueError):
+                    weight = 1.0
+                transform = rd["transform_var"].get().strip() or "linear"
+                refs_out.append({"name": name, "weight": weight,
+                                 "transform": transform})
+            if refs_out:
+                out["refs"] = refs_out
         return out
 
     def _get_reference_grid(self):
@@ -815,6 +949,23 @@ class FGConfigApp:
         try:
             spec = StrategySpec.from_dict(spec_dict)
             ctx = {"biomass_scale": 1.0}
+            # For env_driven previews: synthesize a smooth dummy field for
+            # every referenced FG so the user can visualise how the chosen
+            # refs/weights/transforms shape the resulting distribution. Each
+            # ref name gets a distinct Perlin-style pattern (seeded by the
+            # hash of the name) so different refs are clearly visible.
+            if spec_dict.get("mode") == "env_driven" and spec_dict.get("refs"):
+                from lib.spawn.strategies import _gaussian_random_field
+                env_fields_preview = {}
+                for r in spec_dict.get("refs", []):
+                    nm = r.get("name") if isinstance(r, dict) else None
+                    if not nm:
+                        continue
+                    seed = (abs(hash(nm)) & 0x7FFFFFFF) or 1
+                    env_fields_preview[nm] = _gaussian_random_field(
+                        ref_h, ref_w, scale=12.0, octaves=4,
+                        persistence=0.5, lacunarity=2.0, seed=seed)
+                ctx["env_fields"] = env_fields_preview
             weights = make_weights(spec, (ref_h, ref_w), project_seed=0, context=ctx)
         except Exception as exc:
             canvas.delete("all")
@@ -873,6 +1024,17 @@ class FGConfigApp:
         for key, (var, ptype) in vars_store.get("param_vars", {}).items():
             if key in spawn_cfg:
                 var.set(str(spawn_cfg[key]))
+        # env_driven: rebuild refs rows from YAML list
+        if mode == "env_driven":
+            refs = spawn_cfg.get("refs") or []
+            for ref in refs:
+                if not isinstance(ref, dict):
+                    continue
+                name = ref.get("name", "")
+                weight = ref.get("weight", 1.0)
+                transform = ref.get("transform", "linear")
+                self._add_ref_row(vars_store, name=name, weight=weight,
+                                  transform=transform)
         self._schedule_spawn_preview(vars_store, delay_ms=50)
 
     def _read_initial_biomass_range(self, fg_entry, fg_id):
