@@ -2294,6 +2294,112 @@ class FGConfigApp:
         else:
             config["spawn"] = spawn_dict
 
+        # Biological sanity gate (per mareld_resume.txt Section 23, "Hard gate"):
+        # for decision makers, the hypothetical per-tick energy balance at full
+        # hunger from a single eat action must exceed the resting cost.
+        #   intake_at_h1 = max_intake_rate * energy_gain   (best prey)
+        #   feed_cost    = feeding_cost    * resting_metabolism
+        #   rest_cost    = resting_cost(=1.0) * resting_metabolism
+        #   netto_eat    = intake_at_h1 - feed_cost
+        #   Hard gate:   netto_eat > rest_cost
+        # If the hard gate is violated, abort the apply.
+        #
+        # NOTE on data-integrity: ``energy_gain`` is, by definition, the prey's
+        # ``energy_content`` (MJ/ton). The matrix editor under "FG Interactions"
+        # only exposes ``preys_on`` and ``max_intake_rate``; it never writes
+        # ``energy_gain``. To prevent silent zero-intake when a hand-edited or
+        # legacy YAML row lacks ``energy_gain``, we resolve intake using the
+        # prey's ``energy_content`` from ``species_definitions`` as the
+        # authoritative source. Any per-interaction ``energy_gain`` override
+        # is honoured if present (back-compat), but missing values no longer
+        # silently collapse to 0.
+        if is_dm:
+            feeding_cost = float(config.get("feeding_cost", 0.0) or 0.0)
+            resting_metabolism = float(config.get("resting_metabolism", 0.0) or 0.0)
+            feed_cost = feeding_cost * resting_metabolism
+            rest_cost = 1.0 * resting_metabolism  # resting_cost is hardcoded to 1.0
+            interactions = self.global_library.get("interaction_definitions", {}) or {}
+            species_defs = self.global_library.get("species_definitions", {}) or {}
+            best_intake = 0.0
+            best_prey = None
+            missing_energy = []  # prey_ids where energy_content is also missing
+            prefix = f"{fg_id}_preys_on_"
+            for key, entry in interactions.items():
+                if not key.startswith(prefix):
+                    continue
+                if not isinstance(entry, dict) or not entry.get("preys_on"):
+                    continue
+                prey_id = key[len(prefix):]
+                try:
+                    mir = float(entry.get("max_intake_rate", 0.0) or 0.0)
+                except (TypeError, ValueError):
+                    mir = 0.0
+                # Resolve energy gain: explicit override > prey energy_content.
+                eg = None
+                if "energy_gain" in entry and entry.get("energy_gain") not in (None, ""):
+                    try:
+                        eg = float(entry.get("energy_gain"))
+                    except (TypeError, ValueError):
+                        eg = None
+                if eg is None:
+                    prey_def = species_defs.get(prey_id, {}) or {}
+                    ec = prey_def.get("energy_content")
+                    if ec not in (None, ""):
+                        try:
+                            eg = float(ec)
+                        except (TypeError, ValueError):
+                            eg = None
+                if eg is None:
+                    eg = 0.0
+                    if mir > 0.0:
+                        missing_energy.append(prey_id)
+                intake = mir * eg
+                if intake > best_intake:
+                    best_intake = intake
+                    best_prey = prey_id
+            if missing_energy:
+                messagebox.showinfo(
+                    "Missing Energy Data",
+                    (
+                        f"Cannot evaluate energy balance for '{fg_id}': the "
+                        f"following prey species have neither an explicit "
+                        f"'energy_gain' on the interaction nor an "
+                        f"'energy_content' in species_definitions:\n  "
+                        + ", ".join(missing_energy)
+                        + "\n\nLibrary and project entry have NOT been "
+                        "updated. Set 'energy_content' on each prey FG "
+                        "(FG Editor → Energy Content) before applying."
+                    ),
+                )
+                return
+            netto_eat = best_intake - feed_cost
+            eat_minus_rest = netto_eat - rest_cost
+            if eat_minus_rest <= 0.0:
+                prey_txt = best_prey if best_prey else "(no prey with preys_on: true found)"
+                messagebox.showinfo(
+                    "Invalid Energy Balance",
+                    (
+                        f"Changes not accepted for '{fg_id}'.\n\n"
+                        f"The hypothetical per-tick energy balance fails the "
+                        f"hard gate (netto_eat must exceed rest_cost):\n"
+                        f"  intake = max_intake_rate * energy_gain"
+                        f" = {best_intake:.3f}\n"
+                        f"  feed_cost = feeding_cost * resting_metabolism"
+                        f" = {feed_cost:.3f}\n"
+                        f"  rest_cost = resting_cost(1.0) * resting_metabolism"
+                        f" = {rest_cost:.3f}\n"
+                        f"  netto_eat = intake - feed_cost = {netto_eat:.3f}\n"
+                        f"  netto_eat - rest_cost = {eat_minus_rest:.3f}"
+                        f"  (must be > 0)\n\n"
+                        f"Best prey considered: {prey_txt}.\n"
+                        "Library and project entry have NOT been updated. "
+                        "Adjust feeding_cost, resting_metabolism, or the "
+                        "predation max_intake_rate / energy_gain so that "
+                        "netto_eat > rest_cost."
+                    ),
+                )
+                return
+
         self.current_fg_configs[fg_id] = config
 
         # Persist initial_biomass range on the project FG entry (per-project value).

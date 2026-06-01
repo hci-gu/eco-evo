@@ -229,6 +229,7 @@ interaction_definitions:
   porpoises_preys_on_gadoids:
     preys_on: true
     max_intake_rate: 0.05
+    energy_gain: 5500
   porpoises_preys_on_phytoplankton:
     preys_on: false
   porpoises_preys_on_porpoises:
@@ -258,6 +259,7 @@ interaction_definitions:
   seals_preys_on_pelagic_fish:
     preys_on: true
     max_intake_rate: 0.05
+    energy_gain: 6500
   seals_preys_on_phytoplankton:
     preys_on: false
   seals_preys_on_porpoises:
