@@ -241,8 +241,15 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     return policies, mean, var
 
 
-def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True):
-    """Install policies + frozen stats and step the environment ``n_ticks`` times."""
+def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
+                  viz=None):
+    """Install policies + frozen stats and step the environment ``n_ticks`` times.
+
+    If ``viz`` is a :class:`lib.viz.LiveVisualizer`, biomass heatmaps and a
+    rolling per-FG total-biomass plot are updated every tick. The visualiser
+    is allowed to abort the run early by returning False from ``pump_events``;
+    in that case the partial history collected so far is returned.
+    """
     env.policies = dict(policies)
     env.obs_mean = obs_mean
     env.obs_var = obs_var
@@ -256,6 +263,14 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True):
             history[fid].append(float(fg.biomass.sum()))
         if verbose and (t % max(1, n_ticks // 10) == 0):
             print(f"    tick {t+1}/{n_ticks}")
+        if viz is not None:
+            viz.update_biomass(env.fgs, tick=t)
+            for fid, h in history.items():
+                viz.update_reward(fid, h[-1], step=t)
+            if not viz.pump_events():
+                if verbose:
+                    print("    [viz] window closed; stopping early.")
+                break
     return history
 
 
@@ -284,6 +299,10 @@ def main():
                         help="Toggle the artificial (density-independent) natural "
                              "mortality term applied to decision-maker FGs each tick. "
                              "Default: off.")
+    parser.add_argument("--visual", action="store_true",
+                        help="Open a live pygame window with per-FG biomass heatmaps "
+                             "and a rolling total-biomass plot. Requires pygame; if "
+                             "unavailable the flag is silently ignored.")
 
     args = parser.parse_args()
     verbose = not args.quiet
@@ -313,9 +332,25 @@ def main():
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
     policies, mean, var = load_policies_and_stats(env, args.checkpoints, verbose=verbose)
 
+    viz = None
+    if args.visual:
+        try:
+            from lib.viz import LiveVisualizer
+            viz = LiveVisualizer(fg_ids=list(env.fgs.keys()),
+                                 grid_shape=args.grid,
+                                 mode="inference")
+        except Exception as e:
+            print(f"[viz] failed to start visualiser: {e!r}", file=sys.stderr)
+            viz = None
+
     if verbose:
         print(f"Running {args.ticks} ticks...")
-    history = run_inference(env, policies, mean, var, args.ticks, verbose=verbose)
+    try:
+        history = run_inference(env, policies, mean, var, args.ticks,
+                                verbose=verbose, viz=viz)
+    finally:
+        if viz is not None:
+            viz.close()
 
     if args.output:
         os.makedirs(os.path.dirname(args.output) or '.', exist_ok=True)

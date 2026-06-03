@@ -340,7 +340,7 @@ class _ProbeEnvBuilder:
 
 
 def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
-                   compact=True):
+                   compact=True, viz=None, viz_extra=None):
     """Run a probe rollout with the trainer's current policies and log
     per-FG biomass evolution.
 
@@ -381,8 +381,24 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
 
     fg_ids = list(env.fgs.keys())
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
-    for _ in range(int(n_ticks)):
+    if viz is not None:
+        # Snapshot at t=0 so the user sees the starting state.
+        try:
+            viz.update_biomass(env.fgs, tick=0, extra=viz_extra)
+            viz.pump_events()
+        except Exception:
+            pass
+    for _t in range(int(n_ticks)):
         env.step()
+        if viz is not None:
+            try:
+                viz.update_biomass(env.fgs, tick=_t + 1, extra=viz_extra)
+                if not viz.pump_events():
+                    # User closed the window; don't fail training, just stop
+                    # feeding the visualiser for the rest of this probe.
+                    viz = None
+            except Exception:
+                viz = None
     bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
 
     log_ratio = {}
@@ -599,6 +615,11 @@ def main():
                         help="Optional schedule, e.g. '1@0,3@10,5@50' meaning M=1 for "
                              "gen 0-9, M=3 for gen 10-49, M=5 from gen 50 onwards. "
                              "Overrides --rollouts_per_delta when given.")
+    parser.add_argument("--visual", action="store_true",
+                        help="Open a live pygame window with per-FG biomass heatmaps "
+                             "(from the deterministic probe rollout) and a rolling "
+                             "reward plot. Requires pygame; if unavailable the flag "
+                             "is silently ignored. Main-process only.")
     parser.add_argument("--profile", type=str, default=None,
                         choices=["sanity", "info", "deep"],
                         help="Preset hyperparameter profile for co-evolution: "
@@ -791,6 +812,24 @@ def main():
         available = ", ".join(policy_params.keys())
         print(f"Error: No valid trainable species found. Available: {available}")
         return
+
+    # Live visualiser (main process only). When --visual is not set, this
+    # stays None and all viz call-sites become trivial no-ops.
+    viz = None
+    if getattr(args, 'visual', False):
+        try:
+            from lib.viz import LiveVisualizer
+            _dm_ids = [fid for fid, fg in temp_env.fgs.items()
+                       if getattr(fg, 'is_decision_maker', False)]
+            viz = LiveVisualizer(
+                fg_ids=list(temp_env.fgs.keys()),
+                grid_shape=(GRID_HEIGHT, GRID_WIDTH),
+                mode="train",
+                plot_fg_ids=_dm_ids or None,
+            )
+        except Exception as _e:
+            print(f"[viz] failed to start visualiser: {_e!r}")
+            viz = None
 
     # Build a map of parser defaults so we can flag which values are user-specified.
     _parser_defaults = {a.dest: a.default for a in parser._actions if a.dest != "help"}
@@ -1104,6 +1143,10 @@ def main():
                     summary = " | ".join(
                         f"{fid}={means[fid]:+.4f}" for fid in target_species)
                     print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
+                    if viz is not None:
+                        _step = gen * args.iter_per_gen + i
+                        for fid in target_species:
+                            viz.update_reward(fid, float(means[fid]), step=_step)
                     # Probe: deterministic inference-world rollout with the
                     # updated theta. log10(bh/b0) per FG; JSONL row + compact
                     # stdout line. Fixed seed -> only policy varies across iters.
@@ -1111,9 +1154,20 @@ def main():
                         _probe_biomass(trainer, probe_builder,
                                        n_ticks=args.n_eval_ticks,
                                        gen=gen, it=i,
-                                       jsonl_path=probe_jsonl_path)
+                                       jsonl_path=probe_jsonl_path,
+                                       viz=viz,
+                                       viz_extra={"gen": gen + 1,
+                                                  "iter": i + 1,
+                                                  "T": T})
                     except Exception as _e:
                         print(f"    [probe] WARN: probe rollout failed: {_e}")
+                    if viz is not None and not viz.pump_events():
+                        print("    [viz] window closed; visualiser disabled.")
+                        try:
+                            viz.close()
+                        except Exception:
+                            pass
+                        viz = None
                 # Save checkpoints for all co-trained species.
                 for species in target_species:
                     save_path = os.path.join(run_dir, f"policy_{species}.pth")
@@ -1131,6 +1185,9 @@ def main():
                         # n_eval_ticks: how many time steps (ticks) each test run lasts
                         avg_reward = trainer.train_step(species, n_eval_ticks=args.n_eval_ticks)
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
+                        if viz is not None:
+                            viz.update_reward(species, float(avg_reward),
+                                              step=gen * args.iter_per_gen + i)
                         # Probe: deterministic inference-world rollout with the
                         # updated theta. log10(bh/b0) per FG; JSONL row + compact
                         # stdout line. Fixed seed -> only policy varies across iters.
@@ -1138,9 +1195,20 @@ def main():
                             _probe_biomass(trainer, probe_builder,
                                            n_ticks=args.n_eval_ticks,
                                            gen=gen, it=i,
-                                           jsonl_path=probe_jsonl_path)
+                                           jsonl_path=probe_jsonl_path,
+                                           viz=viz,
+                                           viz_extra={"gen": gen + 1,
+                                                      "iter": i + 1,
+                                                      "T": T})
                         except Exception as _e:
                             print(f"    [probe] WARN: probe rollout failed: {_e}")
+                        if viz is not None and not viz.pump_events():
+                            print("    [viz] window closed; visualiser disabled.")
+                            try:
+                                viz.close()
+                            except Exception:
+                                pass
+                            viz = None
 
                     # Save checkpoint after each generation so progress is preserved.
                     save_path = os.path.join(run_dir, f"policy_{species}.pth")
@@ -1170,6 +1238,11 @@ def main():
     print(f"Training completed for all selected groups.")
     print(f"==========================================")
     trainer.close()
+    if viz is not None:
+        try:
+            viz.close()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()
