@@ -15,6 +15,14 @@ class FunctionalGroup:
         self.max_energy_reserve = params.get('max_energy_reserve', 1000.0)  # ME_X
         self.resting_metabolism = params.get('resting_metabolism', 0.0)  # Rest_X
         self.growth_rate = params.get('growth_rate', 0.0)  # MG_X
+        # Densitetsoberoende naturlig mortalitet per tick (DM). Modellerar
+        # senescens, sjukdom, "hidden predation" från icke-modellerade arter,
+        # mekanisk skada m.m. — oberoende av svälttermen via q_x.
+        self.natural_mortality = float(params.get('natural_mortality', 0.0))
+        # Rekolonisations-floor för NDM: andel av max_carrying_capacity som
+        # tillförs per tick i alla celler. Representerar dvalceller / inflöde
+        # och förhindrar permanent global utrotning.
+        self.seed_rate = float(params.get('seed_rate', 0.0))
         # u_X: maintenance level. The relative energy fill ratio s_X required
         # to break even (q_X = s_X - u_X = 0). Below u_X the population
         # shrinks; above it, it grows. Method.pdf §6.

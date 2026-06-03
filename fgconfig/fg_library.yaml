@@ -2,12 +2,11 @@
   phytoplankton:
     display_name: "Phytoplankton"
     is_decision_maker: false
-    resting_metabolism: 0.1
     movement_speed: 0.0
     growth_rate: 0.125
     max_carrying_capacity: 20.0
     energy_content: 1150.0
-    max_energy_reserve: 0.0
+    seed_rate: 0.001
     spawn:
       mode: perlin
       scale: 12.0
@@ -20,13 +19,15 @@
     is_decision_maker: true
     maintenance_level: 0.5
     max_energy_reserve: 375.0
-    resting_metabolism: 2.5
+    resting_metabolism: 8.0
     movement_speed: 0.0
-    feeding_cost: 1.45
+    feeding_cost: 1.2
     movement_cost: 0.0
     energy_content: 4500.0
     min_split_biomass: 0.0
-    growth_rate: 0.0085
+    growth_rate: 0.05
+    natural_mortality: 0.005
+    max_intake_rate: 0.4
     spawn:
       mode: env_driven
       floor: 0.0
@@ -39,12 +40,10 @@
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false
-    resting_metabolism: 0.2
     movement_speed: 0.0
     growth_rate: 0.001
     max_carrying_capacity: 120.0
     energy_content: 0.0
-    max_energy_reserve: 0.0
     spawn:
       mode: perlin
       scale: 18
@@ -64,6 +63,8 @@
     energy_content: 6500.0
     min_split_biomass: 0.5
     growth_rate: 0.0004
+    natural_mortality: 0.0005
+    max_intake_rate: 0.04
     spawn:
       mode: perlin
       scale: 8.0
@@ -83,6 +84,8 @@
     energy_content: 5500.0
     min_split_biomass: 0.5
     growth_rate: 0.00025
+    natural_mortality: 0.0002
+    max_intake_rate: 0.04
     spawn:
       mode: perlin
       scale: 12.0
@@ -102,6 +105,8 @@
     min_split_biomass: 50.0
     energy_content: 0.0
     growth_rate: 0.0001
+    natural_mortality: 0.00005
+    max_intake_rate: 0.05
     spawn:
       mode: colony
       n_colonies: 10
@@ -119,6 +124,8 @@
     min_split_biomass: 80.0
     energy_content: 0.0
     growth_rate: 0.0001
+    natural_mortality: 0.00004
+    max_intake_rate: 0.05
     spawn:
       mode: colony
       n_colonies: 7
@@ -136,156 +143,234 @@
     maintenance_level: 0.5
     energy_content: 0.0
     growth_rate: 0.0001
+    natural_mortality: 0.0002
+    max_intake_rate: 0.15
     spawn:
       mode: colony
       n_colonies: 4
       sigma_cells: 2.0
       anchor: coast
 interaction_definitions:
+  # NOTE on grazing-parametrarna nedan (zoo→phyto):
+  # `max_intake_rate` (a) tolkas enligt Method.pdf som *fysiologiskt 6h-tak*
+  # för intag uttryckt som ton byte / ton predator / tick — alltså vad en
+  # FG fysiskt kan stoppa i sig vid obegränsad bytesdensitet, INTE ett
+  # snittintag i fält. Med den tolkningen är a=0.4 (160 % WW/dygn max)
+  # försvarbart på individnivå för en copepod: gut throughput ~30–60 min
+  # vid mättnad ger teoretisk maxkapacitet ~150–180 % WW/dygn (Frost 1972,
+  # Mauchline 1998, Kiørboe 2011 — max-takskattning, inte snitt).
+  #
+  # `handling_time: 2.5` är satt så att Holling Type II-taket
+  # 1/h = 0.4 = a sammanfaller med fysiologiska maxet. Det är den
+  # kanoniska Type II-tolkningen: mättnaden landar PÅ a vid hög P,
+  # inte över. Tidigare värde 0.1 gav 1/h = 10 ton/(ton zoo·tick),
+  # alltså ett tak 25× ovanför fysiologiska maxet — vilket gjorde
+  # mättnaden effektivt avstängd vid alla relevanta bytesdensiteter.
+  # Med h=2.5 dämpar Type II faktiskt intaget när P är riklig, vilket
+  # är hela poängen med Fix 2.
   zooplankton_preys_on_phytoplankton:
-    max_intake_rate: 0.25
-    energy_gain: 600
+    energy_gain: 1150
+    handling_time: 2.5
     preys_on: true
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_zooplankton:
-    max_intake_rate: 0.04
-    energy_gain: 2500
+    energy_gain: 4500
     preys_on: true
+    assimilation_factor: 1.0
   gadoids_preys_on_pelagic_fish:
-    max_intake_rate: 0.115
-    energy_gain: 5000
+    energy_gain: 6500
     preys_on: true
+    assimilation_factor: 1.0
   porpoises_preys_on_pelagic_fish:
-    max_intake_rate: 0.05
-    energy_gain: 5000
+    energy_gain: 6500
     preys_on: true
+    assimilation_factor: 1.0
   seals_preys_on_gadoids:
-    max_intake_rate: 0.05
-    energy_gain: 4000
+    energy_gain: 5500
     preys_on: true
+    assimilation_factor: 1.0
   seabirds_preys_on_pelagic_fish:
-    max_intake_rate: 0.15
-    energy_gain: 5000
+    energy_gain: 6500
     preys_on: true
+    assimilation_factor: 1.0
   benthic_community_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_preys_on_gadoids:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_preys_on_pelagic_fish:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_preys_on_phytoplankton:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_preys_on_zooplankton:
     preys_on: false
+    assimilation_factor: 1.0
   gadoids_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   gadoids_preys_on_gadoids:
     preys_on: false
+    assimilation_factor: 1.0
   gadoids_preys_on_phytoplankton:
     preys_on: false
+    assimilation_factor: 1.0
   gadoids_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   gadoids_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   gadoids_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   gadoids_preys_on_zooplankton:
     preys_on: false
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_gadoids:
     preys_on: false
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_pelagic_fish:
     preys_on: false
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_phytoplankton:
     preys_on: false
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   pelagic_fish_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_gadoids:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_pelagic_fish:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_phytoplankton:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   phytoplankton_preys_on_zooplankton:
     preys_on: false
+    assimilation_factor: 1.0
   porpoises_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   porpoises_preys_on_gadoids:
     preys_on: true
     max_intake_rate: 0.05
     energy_gain: 5500
+    assimilation_factor: 1.0
   porpoises_preys_on_phytoplankton:
     preys_on: false
+    assimilation_factor: 1.0
   porpoises_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   porpoises_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   porpoises_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   porpoises_preys_on_zooplankton:
     preys_on: false
+    assimilation_factor: 1.0
   seabirds_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   seabirds_preys_on_gadoids:
     preys_on: false
+    assimilation_factor: 1.0
   seabirds_preys_on_phytoplankton:
     preys_on: false
+    assimilation_factor: 1.0
   seabirds_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   seabirds_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   seabirds_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   seabirds_preys_on_zooplankton:
     preys_on: false
+    assimilation_factor: 1.0
   seals_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   seals_preys_on_pelagic_fish:
     preys_on: true
     max_intake_rate: 0.05
     energy_gain: 6500
+    assimilation_factor: 1.0
   seals_preys_on_phytoplankton:
     preys_on: false
+    assimilation_factor: 1.0
   seals_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   seals_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   seals_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   seals_preys_on_zooplankton:
     preys_on: false
+    assimilation_factor: 1.0
   zooplankton_preys_on_benthic_community:
     preys_on: false
+    assimilation_factor: 1.0
   zooplankton_preys_on_gadoids:
     preys_on: false
+    assimilation_factor: 1.0
   zooplankton_preys_on_pelagic_fish:
     preys_on: false
+    assimilation_factor: 1.0
   zooplankton_preys_on_porpoises:
     preys_on: false
+    assimilation_factor: 1.0
   zooplankton_preys_on_seabirds:
     preys_on: false
+    assimilation_factor: 1.0
   zooplankton_preys_on_seals:
     preys_on: false
+    assimilation_factor: 1.0
   zooplankton_preys_on_zooplankton:
     preys_on: false
+    assimilation_factor: 1.0
   benthic_community_impacted_by_pelagic_trawling:
     impact_affects: false
     impact_table: []

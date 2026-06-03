@@ -5,8 +5,11 @@ from lib.world.functional_group import FunctionalGroup
 
 class EcosystemEnvironment:
     def __init__(self, grid_config, functional_groups, interactions, policies=None,
-                 observable_impact_vars=None):
+                 observable_impact_vars=None, apply_natural_mortality=True):
         self.grid = Grid(**grid_config)
+        # När False appliceras inte den artificiella (densitetsoberoende)
+        # natural_mortality-termen i _apply_growth. Default True = legacy.
+        self.apply_natural_mortality = bool(apply_natural_mortality)
         self.fgs = functional_groups  # Dictionary: id -> FunctionalGroup
         self.interactions = interactions
         self.policies = policies or {} # Dictionary: id -> PolicyNetwork
@@ -71,10 +74,33 @@ class EcosystemEnvironment:
         eat_static = np.zeros((self.N_dm, self.N_all), dtype=self.dtype)
         max_intake = np.zeros((self.N_dm, self.N_all), dtype=self.dtype)
         energy_gain = np.zeros((self.N_dm, self.N_all), dtype=self.dtype)
+        # Holling Type II handlingstid per (predator, prey). 0 = ren Type I
+        # (linjär respons, legacy-beteende). >0 ger mättad respons:
+        # intake = a*P / (1 + a*h*P) per predator-enhet.
+        #
+        # KALIBRERINGSANMÄRKNING: enligt Method.pdf är `max_intake_rate`
+        # (a = I_XY) ett **fysiologiskt 6h-tak** för intag uttryckt som ton
+        # byte per ton predator per tick — dvs maximalt fysiologiskt möjligt
+        # intag vid mättad bytestillgång, INTE ett genomsnittligt fältintag.
+        # För canonical Holling Type II ska därför `1/h` (asymptotiskt tak)
+        # sammanfalla med `a`, vilket innebär att `handling_time = 1/a`.
+        # För zoo→phyto: a=0.4 → h=2.5 (se fg_library.yaml). Då dämpar Type II
+        # intaget mjukt upp mot fysiologiska maxet vid hög P, vilket är hela
+        # poängen med Fix 2. Att sätta h << 1/a (t.ex. 0.1) ger 1/h >> a och
+        # gör mättnaden effektivt avstängd vid biologiskt relevanta densiteter.
+        # Litteraturens individnivå-snitt (Frost 1972, Mauchline 1998,
+        # Kiørboe 2011) ligger på ~0.015–0.05 ton/(ton·tick) men avser
+        # realiserade snitt, inte fysiologiska tak — `a` ska kalibreras mot
+        # GER/gut-throughput-max, inte mot sustained grazing-snitt.
+        handling_time = np.zeros((self.N_dm, self.N_all), dtype=self.dtype)
         for i, pred_id in enumerate(self.dm_ids):
             pred_fg = self.fgs[pred_id]
             menu = pred_fg.params.get('menu', [])
             interaction = pred_fg.params.get('interaction', {})
+            # Predatorns generella maxintag per tick (ton byte / ton predator).
+            # Tidigare hämtades värdet per (predator, prey) via I_XY-matrisen
+            # i interaction_definitions; nu är det en egenskap hos predator-FG.
+            pred_max_intake = float(pred_fg.params.get('max_intake_rate', 0.0))
             for j, prey_id in enumerate(self.global_fg_order):
                 if prey_id not in menu:
                     continue
@@ -83,11 +109,26 @@ class EcosystemEnvironment:
                 if not inter_def.get('preys_on', True):
                     continue
                 eat_static[i, j] = 1.0
-                max_intake[i, j] = float(inter_def.get('max_intake_rate', 0.0))
-                energy_gain[i, j] = float(inter_def.get('energy_gain', 0.0))
+                max_intake[i, j] = pred_max_intake
+                # Assimilationsfaktor [0, 1]: bytets energiinnehåll multipliceras
+                # med denna faktor vid energiupptag. Saknas i YAML → default 1.0
+                # (full assimilation, bakåtkompatibelt).
+                assim = inter_def.get('assimilation_factor', 1.0)
+                try:
+                    assim_f = float(assim) if assim not in (None, "") else 1.0
+                except (TypeError, ValueError):
+                    assim_f = 1.0
+                if assim_f < 0.0:
+                    assim_f = 0.0
+                elif assim_f > 1.0:
+                    assim_f = 1.0
+                energy_gain[i, j] = float(inter_def.get('energy_gain', 0.0)) * assim_f
+                handling_time[i, j] = float(inter_def.get('handling_time', 0.0))
         self.eat_static_mask = eat_static
         self.max_intake_mat = max_intake
         self.energy_gain_mat = energy_gain
+        self.handling_time_mat = handling_time
+        self._has_holling2 = bool(np.any(handling_time > 0.0))
 
         # Per-DM cached scalar params
         self.dm_v = np.array([float(np.clip(self.fgs[fid].speed, 0.0, 1.0)) for fid in self.dm_ids], dtype=self.dtype)
@@ -486,10 +527,21 @@ class EcosystemEnvironment:
         hunger = np.stack([self.fgs[fid].get_hunger().astype(self.dtype, copy=False) for fid in self.dm_ids], axis=0)
         B_prey_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
 
+        a = self.max_intake_mat[:, :, None, None]  # (N_dm, N_all, 1, 1)
+        if getattr(self, '_has_holling2', False):
+            # Fix 2: Holling Type II. Effektiv attack-rate deflateras lokalt
+            # av handling-tid * lokal byte-biomassa, så intake per predator
+            # mättas i stället för att skena vid hög P.
+            h = self.handling_time_mat[:, :, None, None]
+            Bp = B_prey_all[None, :, :, :]
+            a_eff = a / (1.0 + a * h * Bp)
+        else:
+            a_eff = a
+
         D = (
             B_pred[:, None, :, :]
             * self.pi_eat
-            * self.max_intake_mat[:, :, None, None]
+            * a_eff
             * hunger[:, None, :, :]
         )
 
@@ -687,8 +739,24 @@ class EcosystemEnvironment:
                 cc = fg.params.get('max_carrying_capacity', 100.0)
                 mg = fg.growth_rate
                 growth = mg * fg.biomass * (1.0 - fg.biomass / (cc + 1e-9))
+                # Fix 1: rekolonisations-floor. Tillsätter en konstant andel
+                # av cc per tick i alla celler så NDM aldrig kan utrotas
+                # globalt (dvalceller / inflöde). seed_rate=0 ⇒ legacy.
+                seed_rate = float(getattr(fg, 'seed_rate', 0.0) or 0.0)
+                if seed_rate > 0.0:
+                    growth = growth + np.float32(seed_rate * cc)
                 fg.biomass = np.clip(fg.biomass + growth, 0.0, cc).astype(self.dtype, copy=False)
             else:
+                # Fix 3: densitetsoberoende naturlig mortalitet (senescens,
+                # sjukdom, hidden predation). Appliceras före growth-termen
+                # så den drar ner biomassan även när q_x > 0. natural_mortality=0
+                # ⇒ legacy-beteende (ren energi-driven dynamik).
+                nm = float(getattr(fg, 'natural_mortality', 0.0) or 0.0)
+                if nm > 0.0 and self.apply_natural_mortality:
+                    keep = np.float32(max(0.0, 1.0 - nm))
+                    fg.energy_reserve = (fg.energy_reserve * keep).astype(self.dtype, copy=False)
+                    fg.biomass = (fg.biomass * keep).astype(self.dtype, copy=False)
+
                 s_x = fg.energy_level
                 u_x = fg.maintenance_level
                 q_x = s_x - u_x

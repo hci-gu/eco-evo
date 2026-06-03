@@ -425,6 +425,8 @@ class FGConfigApp:
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry"),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry"),
             ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry"),
+            ("Natural Mortality (fraction/tick)", "natural_mortality", "entry"),
+            ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry"),
             ("Movement Speed (cells/tick)", "movement_speed", "entry"),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry"),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range")
@@ -484,6 +486,7 @@ class FGConfigApp:
             ("Max Growth (fraction/tick)", "growth_rate", "entry"),
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry"),
             ("Energy Content (MJ/ton)", "energy_content", "entry"),
+            ("Seed Rate (fraction of cc/tick)", "seed_rate", "entry"),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range"),
         ]
         for i, (label, key, type) in enumerate(ndm_props):
@@ -866,8 +869,18 @@ class FGConfigApp:
         vars_store["_preview_after_id"] = canvas.after(
             delay_ms, lambda: self._render_spawn_preview(vars_store))
 
-    def _collect_spawn_dict(self, vars_store):
-        """Collect current editor state into a YAML-shaped dict."""
+    def _collect_spawn_dict(self, vars_store, errors=None):
+        """Collect current editor state into a YAML-shaped dict.
+
+        If ``errors`` is a list it is populated with human-readable
+        descriptions of any unparseable inputs (spawn params or ref
+        weights). Callers that pass a list should treat a non-empty
+        result as a hard validation failure (do not silently save).
+        When ``errors`` is None we preserve the legacy lenient behaviour
+        for the live preview path so typing intermediate values like
+        '0.' doesn't blank the canvas.
+        """
+        strict = errors is not None
         mode = self.SPAWN_MODE_KEYS.get(vars_store["mode_var"].get(), vars_store["mode_var"].get())
         out = {"mode": mode}
         for key, (var, ptype) in vars_store.get("param_vars", {}).items():
@@ -876,27 +889,42 @@ class FGConfigApp:
                 try:
                     out[key] = int(float(raw))
                 except (TypeError, ValueError):
+                    if strict and str(raw).strip() != "":
+                        errors.append(
+                            f"Spawn parameter '{key}' is not a valid integer: {raw!r}"
+                        )
                     continue
             elif ptype == "float":
                 try:
                     out[key] = float(raw)
                 except (TypeError, ValueError):
+                    if strict and str(raw).strip() != "":
+                        errors.append(
+                            f"Spawn parameter '{key}' is not a valid number: {raw!r}"
+                        )
                     continue
             else:
                 # choice or unknown → store as string
                 if raw != "":
                     out[key] = raw
         # env_driven: serialise the refs list. Rows with empty name are
-        # silently dropped; invalid weights default to 1.0.
+        # silently dropped; invalid weights are reported in strict mode
+        # (Apply) and default to 1.0 only in lenient mode (live preview).
         if mode == "env_driven":
             refs_out = []
             for rd in vars_store.get("refs_rows", []) or []:
                 name = rd["name_var"].get().strip()
                 if not name:
                     continue
+                raw_w = rd["weight_var"].get()
                 try:
-                    weight = float(rd["weight_var"].get())
+                    weight = float(raw_w)
                 except (TypeError, ValueError):
+                    if strict:
+                        errors.append(
+                            f"Ref '{name}' has an invalid weight: {raw_w!r}"
+                        )
+                        continue
                     weight = 1.0
                 transform = rd["transform_var"].get().strip() or "linear"
                 refs_out.append({"name": name, "weight": weight,
@@ -1887,13 +1915,21 @@ class FGConfigApp:
         self.matrix_col_headers = {}
         self.matrix_row_headers = {}
         
-        # FG Interactions tab: Predation + Max Intake
+        # FG Interactions tab: Predation only. The previous per-(predator, prey)
+        # ``max_intake_rate`` matrix (I_XY) has been removed; the value is now a
+        # general per-predator property, edited in the FG Editor on the
+        # "Project & FGs" tab and stored in ``species_definitions``.
         self.create_matrix_section("Predation (row eats column)", "preys_on", fgs, fgs, cell_type="bool",
                                    parent=self.matrix_container)
 
-        self.create_matrix_section("Max Intake Rate (I_XY) [ton prey / ton consumer]", "max_intake_rate", fgs, fgs,
-                                   parent=self.matrix_container)
-        
+        # Assimilation Factor matrix: fraktion av bytets energiinnehåll
+        # som faktiskt tas upp vid predation. Värden i [0, 1], default 1.0.
+        # Dynamiskt kopplad till predationsmatrisen: en cell är aktiv
+        # endast om motsvarande preys_on=True.
+        self.create_matrix_section(
+            "Assimilation Factor (row eats column)", "assimilation_factor",
+            fgs, fgs, cell_type="unit_slider", parent=self.matrix_container)
+
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
@@ -1905,24 +1941,27 @@ class FGConfigApp:
         else:
             ttk.Label(self.impact_container, text="Add impact variables to the project to see impact interactions.").pack(padx=10, pady=10)
 
-        # Link predation checkboxes to max_intake_rate entry enable-state
+
+        # Link predation checkboxes to assimilation_factor entry+slider enable-state.
+        # x preys on y = false => motsvarande fg-par i assimilationsmatrisen deaktiveras.
         for key, data in self.matrix_entries.items():
             preys_var = data.get("preys_on")
             if preys_var is None:
                 continue
-            intake_widget = self.matrix_widgets.get(key, {}).get("max_intake_rate")
-            if intake_widget is None:
+            assim_widget = self.matrix_widgets.get(key, {}).get("assimilation_factor")
+            if assim_widget is None:
                 continue
-            def make_updater(var=preys_var, widget=intake_widget, k=key):
+            def make_assim_updater(var=preys_var, cell=assim_widget):
                 def update(*_):
-                    if var.get():
-                        widget.configure(state="normal")
-                    else:
-                        # Clear value and disable
-                        self.matrix_entries[k]["max_intake_rate"].set("")
-                        widget.configure(state="disabled")
+                    enabled = bool(var.get())
+                    target = "normal" if enabled else "disabled"
+                    try:
+                        cell.configure(state=target)
+                    except tk.TclError:
+                        pass
+                    self._set_widget_tree_state(cell, enabled)
                 return update
-            updater = make_updater()
+            updater = make_assim_updater()
             preys_var.trace_add("write", updater)
             updater()
 
@@ -1963,7 +2002,9 @@ class FGConfigApp:
                 try:
                     w.configure(state="disabled")
                 except tk.TclError:
-                    pass
+                    # Container widgets (ttk.Frame) don't support 'state';
+                    # disable all leaf children recursively instead.
+                    self._set_widget_tree_state(w, False)
 
         # Lighter header text for muted FGs/impacts (rows and columns).
         for row_id, labels in self.matrix_row_headers.items():
@@ -2032,7 +2073,13 @@ class FGConfigApp:
 
                 # Look for existing value in library
                 existing = self.global_library.get("interaction_definitions", {}).get(key, {})
-                val = existing.get(data_key, "" if cell_type == "entry" else False)
+                if cell_type == "entry":
+                    _default = ""
+                elif cell_type == "unit_slider":
+                    _default = 1.0
+                else:
+                    _default = False
+                val = existing.get(data_key, _default)
 
                 if cell_type == "bool":
                     var = tk.BooleanVar(value=bool(val))
@@ -2044,6 +2091,34 @@ class FGConfigApp:
                     # checked+disabled vs checked+normal.
                     widget = tk.Checkbutton(frame, variable=var,
                                             disabledforeground=self.MUTED_FG_COLOR)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "unit_slider":
+                    # Enkelt entry-fält med värde i [0, 1]. Default = 1.0
+                    # (full assimilation). Live-validering: bara värden i
+                    # [0, 1] accepteras i entry-fältet. (Sliders borttagna
+                    # på användarens begäran.)
+                    cur_val = val
+                    if cur_val == "" or cur_val is None:
+                        cur_val = 1.0
+                    try:
+                        cur_f = float(cur_val)
+                    except (TypeError, ValueError):
+                        cur_f = 1.0
+                    cur_f = max(0.0, min(1.0, cur_f))
+                    var = tk.StringVar(value=f"{cur_f:g}")
+
+                    def _validate_unit(proposed):
+                        if proposed in ("", "."):
+                            return True
+                        try:
+                            v = float(proposed)
+                        except ValueError:
+                            return False
+                        return 0.0 <= v <= 1.0
+                    vcmd = (frame.register(_validate_unit), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=6,
+                                       validate="key", validatecommand=vcmd)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 elif cell_type == "table":
                     # Load existing table (list of dicts) from library, if any
@@ -2396,10 +2471,22 @@ class FGConfigApp:
             if isinstance(var, tk.BooleanVar):
                 config[key] = val
             else:
-                try:
-                    config[key] = float(val or 0)
-                except ValueError:
+                raw_val = val
+                if raw_val in (None, ""):
+                    # Empty field → treat as 0.0 (legacy behaviour for
+                    # optional numeric fields).
                     config[key] = 0.0
+                else:
+                    try:
+                        config[key] = float(raw_val)
+                    except (TypeError, ValueError):
+                        messagebox.showerror(
+                            "Invalid value",
+                            f"Field '{key}' is not a valid number: {raw_val!r}.\n\n"
+                            "Use '.' as decimal separator (e.g. 1.5, not 1,5). "
+                            "No changes were saved.",
+                        )
+                        return
                 # Clamp movement_speed to a physical maximum of 1.0 cell/tick
                 if key == "movement_speed":
                     if config[key] > 1.0:
@@ -2446,9 +2533,20 @@ class FGConfigApp:
         config.pop("initial_biomass_min", None)
         config.pop("initial_biomass_max", None)
 
-        # Capture the spawn block from the active editor.
+        # Capture the spawn block from the active editor. Use strict mode
+        # so unparseable spawn params / ref weights surface as an error
+        # dialog instead of being silently dropped or coerced to 1.0.
         spawn_store = self.spawn_vars if is_dm else self.ndm_spawn_vars
-        spawn_dict = self._collect_spawn_dict(spawn_store)
+        spawn_errors = []
+        spawn_dict = self._collect_spawn_dict(spawn_store, errors=spawn_errors)
+        if spawn_errors:
+            messagebox.showerror(
+                "Invalid spawn settings",
+                "The spawn editor has invalid values:\n\n  - "
+                + "\n  - ".join(spawn_errors)
+                + "\n\nNo changes were saved.",
+            )
+            return
         # Mode='uniform' with no extra params is the default → keep it omitted
         # so legacy library entries stay clean. Anything else is persisted.
         if spawn_dict.get("mode") == "uniform" and len(spawn_dict) == 1:
@@ -2468,18 +2566,23 @@ class FGConfigApp:
         #
         # NOTE on data-integrity: ``energy_gain`` is, by definition, the prey's
         # ``energy_content`` (MJ/ton). The matrix editor under "FG Interactions"
-        # only exposes ``preys_on`` and ``max_intake_rate``; it never writes
-        # ``energy_gain``. To prevent silent zero-intake when a hand-edited or
-        # legacy YAML row lacks ``energy_gain``, we resolve intake using the
-        # prey's ``energy_content`` from ``species_definitions`` as the
-        # authoritative source. Any per-interaction ``energy_gain`` override
-        # is honoured if present (back-compat), but missing values no longer
-        # silently collapse to 0.
+        # only exposes ``preys_on``; it never writes ``energy_gain``. To
+        # prevent silent zero-intake when a hand-edited or legacy YAML row
+        # lacks ``energy_gain``, we resolve intake using the prey's
+        # ``energy_content`` from ``species_definitions`` as the authoritative
+        # source. Any per-interaction ``energy_gain`` override is honoured if
+        # present (back-compat), but missing values no longer silently
+        # collapse to 0. ``max_intake_rate`` is now a per-predator property
+        # read from the FG Editor (config[...]) rather than per-interaction.
         if is_dm:
             feeding_cost = float(config.get("feeding_cost", 0.0) or 0.0)
             resting_metabolism = float(config.get("resting_metabolism", 0.0) or 0.0)
             feed_cost = feeding_cost * resting_metabolism
             rest_cost = 1.0 * resting_metabolism  # resting_cost is hardcoded to 1.0
+            try:
+                mir = float(config.get("max_intake_rate", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                mir = 0.0
             interactions = self.global_library.get("interaction_definitions", {}) or {}
             species_defs = self.global_library.get("species_definitions", {}) or {}
             best_intake = 0.0
@@ -2492,10 +2595,6 @@ class FGConfigApp:
                 if not isinstance(entry, dict) or not entry.get("preys_on"):
                     continue
                 prey_id = key[len(prefix):]
-                try:
-                    mir = float(entry.get("max_intake_rate", 0.0) or 0.0)
-                except (TypeError, ValueError):
-                    mir = 0.0
                 # Resolve energy gain: explicit override > prey energy_content.
                 eg = None
                 if "energy_gain" in entry and entry.get("energy_gain") not in (None, ""):
@@ -2579,8 +2678,62 @@ class FGConfigApp:
         if "species_definitions" not in self.global_library:
             self.global_library["species_definitions"] = {}
         self.global_library["species_definitions"][fg_id] = config
+
+        # Invariant: for every interaction ``<predator>_preys_on_<fg_id>``,
+        # ``energy_gain`` MUST equal this FG's ``energy_content`` (MJ/ton).
+        # The matrix editor never writes ``energy_gain`` (it's a legacy field
+        # only read by the hard-gate validator with fallback to
+        # ``prey.energy_content``). If we don't sync it here, raising
+        # ``energy_content`` in the FG Editor leaves stale ``energy_gain``
+        # values on every predator relation — exactly the drift that
+        # produced the 6/8 mismatches we cleaned up earlier.
+        synced_refs = []
+        new_ec = config.get("energy_content")
+        if new_ec not in (None, ""):
+            try:
+                new_ec_f = float(new_ec)
+            except (TypeError, ValueError):
+                new_ec_f = None
+            if new_ec_f is not None:
+                interactions = self.global_library.setdefault(
+                    "interaction_definitions", {})
+                suffix = f"_preys_on_{fg_id}"
+                for ikey, entry in interactions.items():
+                    if not ikey.endswith(suffix):
+                        continue
+                    if not isinstance(entry, dict):
+                        continue
+                    if not entry.get("preys_on"):
+                        continue
+                    old = entry.get("energy_gain")
+                    try:
+                        old_f = float(old) if old not in (None, "") else None
+                    except (TypeError, ValueError):
+                        old_f = None
+                    if old_f != new_ec_f:
+                        entry["energy_gain"] = new_ec_f
+                        synced_refs.append((ikey, old, new_ec_f))
+
         self.save_yaml(self.global_library, self.library_path)
-        messagebox.showinfo("Success", f"Updated {fg_id}. Library updated; initial biomass range saved on project entry (remember to Save Project).")
+        if synced_refs:
+            details = "\n".join(
+                f"  - {k}.energy_gain: {old!r} → {new}"
+                for k, old, new in synced_refs
+            )
+            messagebox.showinfo(
+                "Success",
+                f"Updated {fg_id}. Library updated; initial biomass range "
+                f"saved on project entry (remember to Save Project).\n\n"
+                f"Auto-synced energy_gain on {len(synced_refs)} predation "
+                f"relation(s) to match this FG's energy_content="
+                f"{new_ec_f}:\n{details}",
+            )
+        else:
+            messagebox.showinfo(
+                "Success",
+                f"Updated {fg_id}. Library updated; initial biomass range "
+                f"saved on project entry (remember to Save Project).",
+            )
 
     def apply_matrix_changes(self):
         if "interaction_definitions" not in self.global_library:

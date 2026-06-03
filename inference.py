@@ -135,7 +135,8 @@ def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
     return arr.astype(np.float32, copy=False)
 
 
-def build_env(project_path, grid_size, seed=None, verbose=True):
+def build_env(project_path, grid_size, seed=None, verbose=True,
+              apply_natural_mortality=False):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     impact_ranges = {}
@@ -154,7 +155,8 @@ def build_env(project_path, grid_size, seed=None, verbose=True):
         'tick_duration': 6.0,
     }
     env = EcosystemEnvironment(grid_config, fgs, {},
-                               observable_impact_vars=observable_impact_vars)
+                               observable_impact_vars=observable_impact_vars,
+                               apply_natural_mortality=apply_natural_mortality)
     # Impact maps are read from .npz files configured in the project's
     # ``inference.impact_maps`` section (set via the fgconfig Inference tab).
     # Missing entries — or files that fail validation — are treated as
@@ -278,6 +280,10 @@ def main():
     parser.add_argument("--output", type=str, default=None,
                         help="Optional path to save per-FG biomass history as .npz.")
     parser.add_argument("--quiet", action="store_true", help="Suppress per-step output.")
+    parser.add_argument("--mortality", choices=["on", "off"], default="off",
+                        help="Toggle the artificial (density-independent) natural "
+                             "mortality term applied to decision-maker FGs each tick. "
+                             "Default: off.")
 
     args = parser.parse_args()
     verbose = not args.quiet
@@ -294,13 +300,15 @@ def main():
         print(f"Grid:         {args.grid[0]}x{args.grid[1]}")
         print(f"Ticks:        {args.ticks}")
         print(f"Seed:         {args.seed}")
+        print(f"Mortality:    {args.mortality}")
         print("------------------------------------------")
 
     if not os.path.isdir(args.checkpoints):
         print(f"Error: checkpoint directory does not exist: {args.checkpoints}", file=sys.stderr)
         return 1
 
-    env = build_env(args.project, args.grid, seed=args.seed, verbose=verbose)
+    env = build_env(args.project, args.grid, seed=args.seed, verbose=verbose,
+                    apply_natural_mortality=(args.mortality == "on"))
     if verbose:
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
     policies, mean, var = load_policies_and_stats(env, args.checkpoints, verbose=verbose)

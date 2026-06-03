@@ -1075,3 +1075,320 @@ no change to ARS math or env semantics.
     training, but per-cell density is sensitive on small grids.
   * Eat fraction is logged as the sum over all prey eat-nodes; split
     per prey is available in probs but not currently surfaced.
+
+================================================================
+30. ENV_DRIVEN REFS (zoo follows phyto in spawn)
+================================================================
+Feature implemented earlier this arc: any FG can now spawn following
+another FG's biomass layout via `spawn.refs`. Works in BOTH training
+and inference (load_project_config is mode-agnostic for the refs
+pipeline).
+
+YAML format (per-FG override in project OR library default):
+  spawn:
+    mode: env_driven
+    floor: 0.0
+    noise_amp: 0.0
+    noise_scale: 12.0
+    refs:
+      - {name: phytoplankton, weight: 1.0, transform: linear}
+      # transform: linear | exp | invert | gauss_smooth
+
+Pipeline (lib/config/config_loader.py):
+  * Topological sort over FG-spawn DAG built from env_driven refs.
+    Cycles degrade gracefully to declared order (warning only).
+  * env_fields accumulator passed via env_context={'env_fields': dict}
+    to _spawn_biomass_distribution. After each FG is spawned its
+    initial_b is published as env_fields[fg_id] so downstream env_driven
+    FGs see it.
+  * Verified empirically: zoo with refs=[{phytoplankton, 1.0}] gets
+    corr(zoo_layout, phyto_layout) = 1.000 in both train and inference.
+
+GUI (fgconfig/fgconfig.py):
+  * env_driven mode shows a refs-editor (FG-name dropdown + signed
+    weight + transform dropdown + Add/Remove buttons).
+  * _collect_spawn_dict serialises `refs:` to YAML; _populate_spawn_editor
+    reads back. Live preview uses synthetic Perlin-per-ref so the user
+    sees topology before saving.
+
+================================================================
+31. ENERGY_GAIN INVARIANT (auto-sync in FG editor)
+================================================================
+Invariant: interaction.energy_gain MUST equal prey.energy_content. The
+field is a redundant copy and was the cause of historical drift in
+fg_library.yaml (6/8 relations had energy_gain != prey.energy_content
+before the fix).
+
+State of the field:
+  * NO write path in fgconfig.py creates/updates energy_gain via the
+    matrix editor (that editor only exposes preys_on + max_intake_rate).
+  * Only TWO reads: apply_fg_changes hard-gate (rad ~2549-2551) uses
+    energy_gain if present, else falls back to prey.energy_content.
+  * Runtime (config_loader, ecosystem) uses the same fallback.
+
+Auto-sync (apply_fg_changes in fgconfig.py):
+  After writing species_definitions[fg_id], iterates all
+  *_preys_on_<fg_id>-entries in interaction_definitions with
+  preys_on=true and rewrites energy_gain to the new energy_content.
+  Reports synced relations via messagebox.
+
+When new FG is added: no energy_gain is written by any path (matrix
+editor doesn't have the column). Relations rely on the fallback
+prey.energy_content. Self-healing only kicks in next time the prey
+FG's energy_content is changed via FG editor - fine because new
+relations were never in drift to begin with.
+
+Open: a hypothetical "Fix B" (strip energy_gain entirely from YAML +
+all reads, rely solely on prey.energy_content) was discussed but not
+implemented. Current state is invariant-safe via auto-sync.
+
+================================================================
+32. FG EDITOR SILENT-OVERRIDE FIXES
+================================================================
+Three silent data-loss paths in apply_fg_changes / _collect_spawn_dict
+were closed:
+
+Fix 1 (spawn params parse failure):
+  _collect_spawn_dict accepts optional `errors=[]`. When set, int/float
+  parse failures append to errors instead of dropping the param via
+  `continue`. apply_fg_changes calls with errors=[] and aborts via
+  messagebox.showerror if non-empty.
+
+Fix 2 (env_driven ref weight):
+  Same `errors` mechanism - invalid weight no longer silently coerces
+  to 1.0; aborts apply with explicit error message.
+
+Fix 3 (FG property parse, e.g. "1,5" Swedish comma):
+  apply_fg_changes property loop: parse failure now shows
+  messagebox.showerror and refuses to save. Empty string still maps
+  to 0.0 (legacy contract for blanked fields).
+
+Live preview path uses lenient mode (no errors=) so mid-edit values
+like "0." don't spam warnings.
+
+Open (lower priority, not fixed):
+  * Silent clamps in apply_fg_changes (movement_speed > 1 -> 1, etc.)
+  * Library vs project file sync (Apply writes library only; project
+    needs manual "Save Project").
+  * Spawn mode-switch defaults overwrite previous values.
+  * Schema defaults written to YAML on Apply even if user changed
+    nothing.
+  * Initial biomass range live validation can block keystrokes.
+
+================================================================
+33. NDM CLEANUP: resting_metabolism/max_energy_reserve REMOVED
+================================================================
+Discovery: `_apply_growth` non-DM branch uses ONLY growth_rate and
+max_carrying_capacity (logistic). It NEVER reads resting_metabolism,
+max_energy_reserve, feeding_cost, etc. Cleaned up dead data from YAML:
+
+  fgconfig/fg_library.yaml:
+    phytoplankton: removed resting_metabolism: 0.1 + max_energy_reserve: 0.0
+    benthic_community: removed resting_metabolism: 0.2 + max_energy_reserve: 0.0
+
+GUI ndm_props deliberately does NOT expose resting_metabolism - design
+choice consistent with runtime semantics.
+
+================================================================
+34. PHYTO+ZOO SANITY TESTS
+================================================================
+New testfile tests/test_phyto_zoo_sanity.py (4 tests, all green). Builds
+a minimal phyto+zoo system via setup_full_mareld_mvp and runs 200 ticks.
+
+Contracts (deliberately tolerant - designed to catch gross errors,
+not enforce LV-cycles):
+  1. phyto-only bounded by max_carrying_capacity
+  2. zoo neither collapses nor explodes (ratio in [0.05, 100])
+  3. predation suppresses phyto in two-FG system. **Compares
+     TIME-INTEGRATED mean** (not endpoint) because Holling Type II
+     + seed_rate floor saturate near cc; transient mid-rollout
+     suppression is the real diagnostic.
+  4. no NaN / negative / inf biomass.
+
+After Fix 1/2/3 (Section 35) total testcount = 42/42 green.
+
+================================================================
+35. ECOLOGICAL MODEL FIXES (seed_rate, natural_mortality, Holling II)
+================================================================
+Three structural model fixes addressing the long-standing "9x zoo
+runaway / total ecosystem collapse" artefacts in closed phyto+zoo
+rollouts. All three are opt-in (defaults preserve legacy behaviour).
+
+35.1 Fix 1 - Recolonisation floor for NDM (seed_rate)
+  * lib/world/functional_group.py: new attribute `seed_rate` (NDM),
+    float, default 0.0.
+  * lib/environments/ecosystem.py _apply_growth NDM branch:
+      growth += seed_rate * cc
+    Constant additive recolonisation term, representing dormant
+    cells / external influx. Prevents permanent global extinction.
+  * fg_library.yaml: phytoplankton.seed_rate: 0.001 (~0.1% of cc/tick).
+  * GUI: new NDM field "Seed Rate (fraction of cc/tick)".
+
+35.2 Fix 2 - Holling Type II saturation in predation
+  * lib/environments/ecosystem.py _build_static_caches: new
+    `handling_time_mat` (N_dm, N_all) from interaction_definitions.
+    `_has_holling2` flag = any(h > 0).
+  * _apply_predation: when flag is True,
+      a_eff = a / (1 + a * h * B_prey_local)
+    replacing the linear `a * B_prey`. Asymptotic ceiling 1/h ton
+    prey per ton predator per tick.
+  * fg_library.yaml: zooplankton_preys_on_phytoplankton.handling_time: 2.5
+    (canonical Type II: 1/h = a = 0.4, ceiling at physiological max).
+  * NO GUI editor - set via direct YAML edit. The matrix editor in
+    fgconfig.py still only exposes preys_on + max_intake_rate.
+
+35.3 Fix 3 - Density-independent natural mortality for DM
+  * lib/world/functional_group.py: new attribute `natural_mortality`
+    (DM), float, default 0.0.
+  * lib/environments/ecosystem.py _apply_growth DM branch, BEFORE
+    growth term:
+      keep = max(0, 1 - natural_mortality)
+      biomass *= keep
+      energy_reserve *= keep
+    Constant per-tick fraction removed - represents senescence,
+    hidden predation, disease, mechanical damage, sedimentation.
+    INDEPENDENT of the energy-driven q_x<0 starvation term.
+  * fg_library.yaml allometric scaling (~M^-0.25):
+      zooplankton 0.005, pelagic_fish 0.0005, gadoids 0.0002,
+      seabirds 0.0002, porpoises 0.00005, seals 0.00004
+  * GUI: new DM field "Natural Mortality (fraction/tick)".
+
+35.4 Verification
+  * 1500-tick rollout x 3 seeds on mareld2.yaml (phyto+zoo only):
+    P-peak ~17000, Z-peak ~57000, both survive, 3 Z-turning-points
+    per seed -> genuine predator-prey cycles instead of monotone
+    collapse-to-zero (the pre-fix baseline).
+  * A/B-test script ab_test_fixes.py in repo root: 4 variants
+    (baseline / seed_rate only / holling2 only / both). Fix 1 alone
+    eliminates total extinction; Fix 2 alone dampens but still
+    extinguishes; both together give stable coexistence (no true
+    cycles without Fix 3 added).
+
+================================================================
+36. CALIBRATION NOTE - max_intake_rate IS PHYSIOLOGICAL CEILING
+================================================================
+Per Method.pdf, `max_intake_rate` (a = I_XY) is defined as a
+*physiological 6h ceiling* on intake (ton prey per ton predator per
+tick) - the maximum the FG can physically ingest at saturating prey
+density, NOT a sustained field average.
+
+For zooplankton_preys_on_phytoplankton:
+  max_intake_rate = 0.4   (160 % WW/day maximum)
+  handling_time   = 2.5   (canonical Type II: 1/h = a)
+
+The Type II ceiling 1/h is set to equal a so that the saturated
+response lands AT the physiological maximum, not above it. Previously
+h was 0.1 (1/h = 10, i.e. 25x above the ceiling), which effectively
+disabled saturation at all biologically relevant prey densities - the
+opposite of the intended Fix 2 effect.
+
+Why a=0.4 is defensible at individual level (max interpretation):
+  * Copepod gut throughput at saturation ~30-60 min -> theoretical max
+    ~150-180 % WW/day (Frost 1972, Mauchline 1998, Kiorboe 2011 as
+    max-capacity estimates, NOT sustained grazing).
+  * Earlier "cell-aggregation upscaling" rationalisation was a post hoc
+    fit; the max-ceiling interpretation removes the need for it.
+
+Note on literature comparisons:
+  * Sustained field grazing averages (5-20 % WW/day for copepods) are
+    typically 3-5x lower than physiological maxima (GER/gut throughput).
+  * Comparing `a` against sustained averages systematically
+    underestimates "rimliga" YAML values by the same 3-5x factor.
+
+Documentation locations:
+  * fg_library.yaml: comment block above
+    zooplankton_preys_on_phytoplankton explaining max-ceiling rationale.
+  * lib/environments/ecosystem.py: comment in _build_static_caches
+    documenting the canonical Type II convention (h = 1/a).
+
+Implication for other predation relations in fg_library.yaml:
+  * Under max-interpretation, most upper-trophic-level a values
+    (pelagic_fish, porpoises, seals, seabirds) are defensible as
+    physiological ceilings (3-5x sustained-litt.).
+  * `gadoids_preys_on_pelagic_fish` was previously 0.115 (46 %/day,
+    ~3x even max-literature for adult cod ~15 %/day) - currently set
+    to 0.04 in fg_library.yaml. Still worth A/B-testing if upper
+    trophic levels are activated.
+
+Implication for future modifications:
+  * If physiological max changes (different species, life stage, temp),
+    both `a` and `h = 1/a` must be updated together.
+  * Adding horizontal movement only affects realised intake, not the
+    ceiling itself.
+
+Sanity-test impact:
+  * test_zoo_bounded_in_closed_phyto_zoo_system tolerance widened
+    from [0.05, 100] to [0.03, 100] because tighter saturation
+    suppresses zoo more after 200 ticks than under h=0.1.
+
+================================================================
+37. ZOO+PHYTO SYSTEM-LEVEL UNRESOLVED PROBLEMS
+================================================================
+After all fixes in Sections 30-36, the closed phyto+zoo system still
+has these biological/architectural deficiencies (documented but NOT
+fixed):
+
+  1. DM growth has no logistic cap. Non-DM has (1-B/cc); DM is purely
+     energy-bounded. Only constraints on B_zoo upward: q_x<0 (energy
+     starvation) and natural_mortality (Fix 3).
+  2. q_x saturates: s_x = R/(B*ME) is a normalised fill ratio.
+     Once R is full, q_x is decoupled from local prey density. LV
+     coupling g(P)*Z is only weakly approximated.
+  3. Phyto carrying capacity cc is static per cell; no nutrient
+     budget / no nutrient recycling from dead zoo. seed_rate fixes
+     the "extinction" symptom but not the underlying open-energy
+     issue.
+  4. zoo.movement_speed = 0 means no spatial refuge can develop;
+     zoo spawns on phyto via env_driven refs (Section 30), so any
+     zoo cell is immediately adjacent to its food.
+  5. No diapause for zoo (real copepods enter dormancy at low food).
+  6. Reward horizon in train.py (--n_eval_ticks default 2, info
+     profile 150) is much shorter than zoo collapse timescale
+     (~700 ticks in baseline rollouts). Training optimises a horizon
+     that doesn't see long-term consequences.
+
+Open follow-up ideas (not implemented):
+  * Holling Type II GUI exposure in matrix editor.
+  * Strip energy_gain entirely + always read prey.energy_content.
+  * Diffusion / horizontal advection of NDM biomass for proper
+    spatial refuges.
+  * Nutrient pool tied to cc with explicit zoo-mortality -> nutrient
+    return flux.
+
+================================================================
+38. TRAINING ENTRYPOINT GOTCHA (stdin prompt)
+================================================================
+Re-confirmed: train.py blocks on "Continue with these parameters? [Y/n]"
+in non-interactive runs. Workaround for scripted runs:
+
+  python3 train.py ... < /dev/null      # accepts default Y
+  # OR
+  yes "" | python -u train.py ...        # explicit + unbuffered
+
+Both work; the `< /dev/null` form was used for the info-training and
+A/B-tests this arc.
+
+================================================================
+39. SESSION ARTIFACTS (not committed)
+================================================================
+Helper scripts created this arc, left in project root:
+  * ab_test_fixes.py        - A/B test 4 variants x N seeds for the
+                              Section 35 model fixes (seed_rate /
+                              holling2 / both / baseline).
+  * ab_test_literature.py   - A/B test current cell-level vs
+                              literature individual-level grazing
+                              parameters. Demonstrated extinction
+                              under literature values, motivating
+                              Section 36 calibration caveat.
+
+Test additions (committed-eligible):
+  * tests/test_phyto_zoo_sanity.py (4 tests; total 42/42).
+
+YAML/code changes from this arc that are uncommitted but functional:
+  * fgconfig/fg_library.yaml: handling_time, natural_mortality,
+    seed_rate values + comment blocks.
+  * lib/world/functional_group.py: new attributes.
+  * lib/environments/ecosystem.py: Fix 1/2/3 implementations + cache
+    + calibration comment.
+  * fgconfig/fgconfig.py: new GUI fields + auto-sync of energy_gain
+    + silent-override aborts.

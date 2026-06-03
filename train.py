@@ -11,6 +11,9 @@ from lib.runners.trainer import ARSTrainer
 PROJECT_PATH = None
 GRID_WIDTH = 60
 GRID_HEIGHT = 60
+# Toggle for the artificial (density-independent) natural mortality term.
+# Default off; overridden by --mortality on the CLI.
+APPLY_NATURAL_MORTALITY = False
 def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None):
     """Sample one impact field per active impact variable.
 
@@ -149,8 +152,15 @@ class _EnvBuilder:
 
     def __init__(self, impact_maps_snapshot=None, grid_size=None,
                  project_path=None, spawn_seed=None,
-                 impact_vars=None, impact_ranges=None, impact_seed=None):
+                 impact_vars=None, impact_ranges=None, impact_seed=None,
+                 apply_natural_mortality=None):
         self.impact_maps_snapshot = impact_maps_snapshot
+        # Bakas in i instansen så spawn-workers (som reimport:ar train.py
+        # och nollställer modul-globalen) får rätt värde.
+        self.apply_natural_mortality = (
+            APPLY_NATURAL_MORTALITY if apply_natural_mortality is None
+            else bool(apply_natural_mortality)
+        )
         # Step 2: keep the raw impact recipe so ``with_world`` can
         # re-sample maps for a different impact_seed without needing
         # access to module globals (which are reset in spawn-workers).
@@ -205,6 +215,7 @@ class _EnvBuilder:
             impact_vars=self.impact_vars,
             impact_ranges=self.impact_ranges,
             impact_seed=int(impact_seed),
+            apply_natural_mortality=self.apply_natural_mortality,
         )
 
     def __call__(self, seed=None):
@@ -228,7 +239,8 @@ class _EnvBuilder:
             'tick_duration': 6.0,
         }
         env = EcosystemEnvironment(grid_config, fgs, {},
-                                   observable_impact_vars=observable_impact_vars)
+                                   observable_impact_vars=observable_impact_vars,
+                                   apply_natural_mortality=self.apply_natural_mortality)
 
         if self.impact_maps_snapshot is not None:
             for iv in impact_vars:
@@ -273,10 +285,14 @@ class _ProbeEnvBuilder:
 
     PROBE_SEED = 20260530
 
-    def __init__(self, project_path, grid_size):
+    def __init__(self, project_path, grid_size, apply_natural_mortality=None):
         self.project_path = project_path
         self.grid_height = int(grid_size[0])
         self.grid_width = int(grid_size[1])
+        self.apply_natural_mortality = (
+            APPLY_NATURAL_MORTALITY if apply_natural_mortality is None
+            else bool(apply_natural_mortality)
+        )
         # Resolve inference impact-map paths once at construction (read
         # from project YAML's ``inference.impact_maps``); per-call we
         # re-load the .npz so updates to the underlying file take effect
@@ -308,7 +324,8 @@ class _ProbeEnvBuilder:
             'tick_duration': 6.0,
         }
         env = EcosystemEnvironment(grid_config, fgs, {},
-                                   observable_impact_vars=observable_impact_vars)
+                                   observable_impact_vars=observable_impact_vars,
+                                   apply_natural_mortality=self.apply_natural_mortality)
         # Inference-tab impact maps (silent: avoid spamming "[info] Using
         # array ..." messages once per probe).
         map_paths = self._load_paths(self.project_path) if self.project_path else {}
@@ -401,7 +418,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
 
 def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       project_path=None, spawn_seed=None,
-                      impact_vars=None, impact_ranges=None, impact_seed=None):
+                      impact_vars=None, impact_ranges=None, impact_seed=None,
+                      apply_natural_mortality=None):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
@@ -416,7 +434,8 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
     return _EnvBuilder(impact_maps_snapshot, grid_size=grid_size,
                       project_path=project_path, spawn_seed=spawn_seed,
                       impact_vars=impact_vars, impact_ranges=impact_ranges,
-                      impact_seed=impact_seed)
+                      impact_seed=impact_seed,
+                      apply_natural_mortality=apply_natural_mortality)
 
 
 # Default module-level env_builder: fresh impact maps per call. Used for
@@ -542,6 +561,10 @@ def main():
                         help="Name of the run. Checkpoints are saved to results/<run-name>/policy_<fg>.pth. "
                              "The same name can be used at inference via inference.py --run-name <name>. "
                              "Default: 'default'.")
+    parser.add_argument("--mortality", choices=["on", "off"], default="off",
+                        help="Toggle the artificial (density-independent) natural "
+                             "mortality term applied to decision-maker FGs each tick. "
+                             "Default: off.")
     parser.add_argument("--uniform_bias_init", action="store_true", default=False,
                         help="Enable uniform-bias init on the output layer: bias=0 + "
                              "weights*0.01 so that softmax starts ~uniform at gen 1. "
@@ -717,7 +740,6 @@ def main():
     if args.grid is not None:
         global GRID_WIDTH, GRID_HEIGHT
         GRID_WIDTH, GRID_HEIGHT = args.grid
-        print(f"Grid size set to {GRID_WIDTH} x {GRID_HEIGHT}.")
 
     if not args.project:
         print("\nError: No project file specified.")
@@ -726,8 +748,9 @@ def main():
         return
 
     # Set project globally so env_builder can find it
-    global PROJECT_PATH
+    global PROJECT_PATH, APPLY_NATURAL_MORTALITY
     PROJECT_PATH = args.project
+    APPLY_NATURAL_MORTALITY = (args.mortality == "on")
 
     # Ensure run directory exists: results/<run-name>/
     run_dir = os.path.join('results', args.run_name)
@@ -823,6 +846,7 @@ def main():
     obs_norm_enabled = not args.no_obs_normalize
     print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
     print(f"Co-evolution:   {args.coevolution} {'(default: on)' if args.coevolution else '(user, disabled -> round-robin)'}")
+    print(f"Mortality:      {args.mortality} {'(default)' if args.mortality == 'off' else '(user)'}")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:
