@@ -1392,3 +1392,104 @@ YAML/code changes from this arc that are uncommitted but functional:
     + calibration comment.
   * fgconfig/fgconfig.py: new GUI fields + auto-sync of energy_gain
     + silent-override aborts.
+
+================================================================
+40. LIVE PYGAME VISUALISER (--visual)
+================================================================
+New optional real-time visualiser for both train.py and inference.py.
+Off by default; activated with the --visual CLI flag on either entry
+point. Pure additive feature: when disabled (or when pygame is not
+installed), zero overhead and zero behavioural change.
+
+Files (all uncommitted at time of writing):
+  * lib/viz/__init__.py            - re-exports LiveVisualizer.
+  * lib/viz/pygame_viz.py          - the visualiser (~636 lines).
+  * train.py                       - adds --visual flag + hooks.
+  * inference.py                   - adds --visual flag + viz= arg.
+
+Public API (lib/viz/pygame_viz.py):
+  class LiveVisualizer:
+      def __init__(fg_ids, grid_shape, mode="train"|"inference",
+                   reward_window=500, cell_px=6, fps_cap=30,
+                   title=None, plot_fg_ids=None): ...
+      def update_biomass(fgs, tick, extra=None): ...
+      def update_reward(fg_id, value, step): ...
+      def pump_events() -> bool   # False => user requested quit
+      def close(): ...
+
+  ``plot_fg_ids`` (optional) restricts the right-pane time-series plot
+  + legend to a subset of FGs (heatmaps still cover all FGs).
+  train.py passes the DM-only subset so phytoplankton/benthic_community
+  don't appear in the "reward" plot legend.
+
+Window layout (one window):
+  * Top status bar: mode, tick, gen, iter, T, [PAUSED], hm:log,
+    plot:log, solo=<fid>, fps.
+  * Heatmap grid (cols=min(4,N), rows=ceil(N/cols)): per-FG
+    biomass heatmap, 60x60 cells x cell_px=6, viridis LUT (analytic
+    approx, no matplotlib dep). Per-panel title is two lines:
+      line 1: display name (e.g. "Pelagic fish" - underscores
+              stripped, first letter capitalised)
+      line 2: "B0=...  B=..." (rollout-start total + current total)
+    Below each heatmap: a colorbar gradient strip with "0" (left)
+    and a compact vmax label (right; e.g. "12.3k" or "log1p<=...").
+    Normalisation is PER-FG (otherwise phyto/benthos dominate).
+  * Right pane: rolling line plot.
+      train mode: per-DM ARS reward (means[fid] per ARS iter).
+      inference mode: per-FG total biomass over ticks.
+    Legend rendered with display names (max 18 chars).
+
+Key bindings (handled in pump_events):
+  space     pause / resume
+  l         toggle log1p scale on heatmaps
+  r         toggle log10 scale on plot
+  1..9      solo-focus FG by index (toggle off with same key)
+  q / esc   close visualiser (training/inference continues)
+
+Defensive design (do not regress):
+  * Headless fallback: __new__ sets SDL_VIDEODRIVER=dummy if DISPLAY
+    is unset and SDL_VIDEODRIVER isn't already set.
+  * If pygame import fails: __new__ returns a _NullViz singleton with
+    no-op methods (so --visual on a box without pygame is a silent
+    no-op + one stderr line).
+  * Every public method is wrapped in try/except + _log_once; never
+    propagates to the training/inference loop.
+  * pump_events() returns False on QUIT; callers must respect that
+    and set viz=None for the remainder of the run (both train.py and
+    inference.py do).
+
+Integration in train.py:
+  * Visualiser is instantiated in the MAIN PROCESS ONLY (workers
+    never import lib.viz). Lives as `viz` local in main().
+  * update_reward(fid, means[fid], step=gen*iter_per_gen+i) after
+    every ARS iter (round-robin and coevolution paths both wired).
+  * _probe_biomass(...) accepts viz= + viz_extra= and renders the
+    deterministic probe rollout tick-by-tick (perfect heatmap source
+    since it's CRN-locked).
+  * If pump_events() returns False mid-loop, viz.close() is called
+    once and viz=None for the rest of the run.
+
+Integration in inference.py:
+  * --visual creates LiveVisualizer(mode="inference"); run_inference
+    accepts viz= and updates both heatmap (env.fgs) and per-FG
+    biomass time series (history[fid]) every tick.
+  * Closed in a finally block so the window always tears down cleanly.
+
+Performance budget:
+  * fps_cap=30; render only when (now - last_frame_ts) >= 1/fps_cap.
+  * 8 heatmaps * 60x60 + line plot @ 30 FPS ~ 2-3 ms/frame.
+  * Train: rendering is at probe-tick granularity (already CRN-cheap),
+    not per ARS-rollout-tick, so no measurable training slowdown.
+
+Dependency:
+  * pygame is NOT in requirements.txt by design; install manually
+    (`pip install pygame`) on machines where the visualiser is wanted.
+  * Without pygame: --visual prints a one-line stderr warning and
+    runs as a no-op (verified path).
+
+Git status for this feature:
+  * lib/viz/__init__.py, lib/viz/pygame_viz.py - untracked, ready
+    to `git add`.
+  * train.py, inference.py - modified, contain the --visual hooks.
+  * Suggested commit message: "Add real-time pygame visualiser
+    (--visual) for train.py and inference.py".
