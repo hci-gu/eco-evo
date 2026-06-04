@@ -3,10 +3,10 @@
     display_name: "Phytoplankton"
     is_decision_maker: false
     movement_speed: 0.0
-    growth_rate: 0.125
-    max_carrying_capacity: 20.0
+    growth_rate: 0.02
+    max_carrying_capacity: 12.0
     energy_content: 1150.0
-    seed_rate: 0.001
+    seed_rate: 0.00005
     spawn:
       mode: perlin
       scale: 12.0
@@ -27,6 +27,7 @@
     min_split_biomass: 0.0
     growth_rate: 0.05
     natural_mortality: 0.005
+    starvation_mortality: 0.03
     max_intake_rate: 0.4
     spawn:
       mode: env_driven
@@ -64,6 +65,7 @@
     min_split_biomass: 0.5
     growth_rate: 0.0004
     natural_mortality: 0.0005
+    starvation_mortality: 0.008
     max_intake_rate: 0.04
     spawn:
       mode: perlin
@@ -85,6 +87,7 @@
     min_split_biomass: 0.5
     growth_rate: 0.00025
     natural_mortality: 0.0002
+    starvation_mortality: 0.006
     max_intake_rate: 0.04
     spawn:
       mode: perlin
@@ -106,6 +109,7 @@
     energy_content: 0.0
     growth_rate: 0.0001
     natural_mortality: 0.00005
+    starvation_mortality: 0.012
     max_intake_rate: 0.05
     spawn:
       mode: colony
@@ -125,6 +129,7 @@
     energy_content: 0.0
     growth_rate: 0.0001
     natural_mortality: 0.00004
+    starvation_mortality: 0.006
     max_intake_rate: 0.05
     spawn:
       mode: colony
@@ -144,6 +149,7 @@
     energy_content: 0.0
     growth_rate: 0.0001
     natural_mortality: 0.0002
+    starvation_mortality: 0.02
     max_intake_rate: 0.15
     spawn:
       mode: colony
