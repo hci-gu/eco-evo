@@ -744,7 +744,16 @@ class EcosystemEnvironment:
                 # globalt (dvalceller / inflöde). seed_rate=0 ⇒ legacy.
                 seed_rate = float(getattr(fg, 'seed_rate', 0.0) or 0.0)
                 if seed_rate > 0.0:
-                    growth = growth + np.float32(seed_rate * cc)
+                    # Per-cell, per-tick log-uniform multiplikator i [0.1, 10.0]
+                    # modellerar lokal variabilitet i rekolonisation (dvalceller,
+                    # advektion, sporpulser). Log-uniform => lika sannolikt att
+                    # minska med faktor 10 som att öka med faktor 10; geometriskt
+                    # medelvärde = 1.0 (symmetrisk runt ren konstant seed_rate).
+                    seed_mult = np.power(
+                        10.0,
+                        np.random.uniform(-1.0, 1.0, size=fg.biomass.shape),
+                    ).astype(np.float32, copy=False)
+                    growth = growth + np.float32(seed_rate * cc) * seed_mult
                 fg.biomass = np.clip(fg.biomass + growth, 0.0, cc).astype(self.dtype, copy=False)
             else:
                 # Fix 3: densitetsoberoende naturlig mortalitet (senescens,

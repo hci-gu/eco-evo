@@ -133,7 +133,15 @@ class LiveVisualizer:
         else:
             self.plot_fg_ids = [f for f in plot_fg_ids if f in self.fg_ids]
         self.grid_h, self.grid_w = int(grid_shape[0]), int(grid_shape[1])
-        self.cell_px = int(cell_px)
+        # Heatmaps ska alltid renderas i samma fysiska storlek som ett
+        # 32x32-rutnt hade haft. Referens: cell_px=6 vid 32x32 -> 192 px.
+        # For andra gridstorlekar skalar vi cell_px sa block-storleken
+        # (cell_px * max(grid_w, grid_h)) halls konstant ~ 32 * cell_px.
+        _ref_grid = 32
+        _ref_cell_px = int(cell_px)
+        _ref_block_px = _ref_grid * _ref_cell_px
+        _max_dim = max(self.grid_w, self.grid_h, 1)
+        self.cell_px = max(1, int(round(_ref_block_px / _max_dim)))
         self.reward_window = int(reward_window)
         self._MIN_FRAME_INTERVAL = 1.0 / max(1, int(fps_cap))
 
@@ -405,6 +413,7 @@ class LiveVisualizer:
             parts.append("plot:log")
         if self._solo:
             parts.append(f"solo={self._solo}")
+        parts.append(f"grid={self.grid_w}x{self.grid_h}")
         parts.append(f"fps={self._fps_value:4.1f}")
         text = "  ".join(parts)
         surf = self._font_big.render(text, True, (230, 230, 235))

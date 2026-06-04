@@ -1930,6 +1930,12 @@ class FGConfigApp:
             "Assimilation Factor (row eats column)", "assimilation_factor",
             fgs, fgs, cell_type="unit_slider", parent=self.matrix_container)
 
+        # Handling time matrix (Holling Type II 'h'). Non-negativ float,
+        # default 0.0 (= pure Type I). Cell aktiv endast om preys_on=True.
+        self.create_matrix_section(
+            "Handling time (row eats column)", "handling_time",
+            fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
+
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
@@ -1948,22 +1954,23 @@ class FGConfigApp:
             preys_var = data.get("preys_on")
             if preys_var is None:
                 continue
-            assim_widget = self.matrix_widgets.get(key, {}).get("assimilation_factor")
-            if assim_widget is None:
-                continue
-            def make_assim_updater(var=preys_var, cell=assim_widget):
-                def update(*_):
-                    enabled = bool(var.get())
-                    target = "normal" if enabled else "disabled"
-                    try:
-                        cell.configure(state=target)
-                    except tk.TclError:
-                        pass
-                    self._set_widget_tree_state(cell, enabled)
-                return update
-            updater = make_assim_updater()
-            preys_var.trace_add("write", updater)
-            updater()
+            for dep_key in ("assimilation_factor", "handling_time"):
+                dep_widget = self.matrix_widgets.get(key, {}).get(dep_key)
+                if dep_widget is None:
+                    continue
+                def make_updater(var=preys_var, cell=dep_widget):
+                    def update(*_):
+                        enabled = bool(var.get())
+                        target = "normal" if enabled else "disabled"
+                        try:
+                            cell.configure(state=target)
+                        except tk.TclError:
+                            pass
+                        self._set_widget_tree_state(cell, enabled)
+                    return update
+                updater = make_updater()
+                preys_var.trace_add("write", updater)
+                updater()
 
         # Link impact_affects checkboxes to impact_table button enable-state
         for key, data in self.matrix_entries.items():
@@ -2077,6 +2084,8 @@ class FGConfigApp:
                     _default = ""
                 elif cell_type == "unit_slider":
                     _default = 1.0
+                elif cell_type == "nonneg_float":
+                    _default = 0.0
                 else:
                     _default = False
                 val = existing.get(data_key, _default)
@@ -2116,6 +2125,33 @@ class FGConfigApp:
                             return False
                         return 0.0 <= v <= 1.0
                     vcmd = (frame.register(_validate_unit), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=6,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "nonneg_float":
+                    # Icke-negativt float-fält (t.ex. handling_time).
+                    # Default = 0.0. Live-validering: bara >=0 accepteras.
+                    cur_val = val
+                    if cur_val == "" or cur_val is None:
+                        cur_val = 0.0
+                    try:
+                        cur_f = float(cur_val)
+                    except (TypeError, ValueError):
+                        cur_f = 0.0
+                    if cur_f < 0.0:
+                        cur_f = 0.0
+                    var = tk.StringVar(value=f"{cur_f:g}")
+
+                    def _validate_nonneg(proposed):
+                        if proposed in ("", "."):
+                            return True
+                        try:
+                            v = float(proposed)
+                        except ValueError:
+                            return False
+                        return v >= 0.0
+                    vcmd = (frame.register(_validate_nonneg), "%P")
 
                     widget = ttk.Entry(frame, textvariable=var, width=6,
                                        validate="key", validatecommand=vcmd)
