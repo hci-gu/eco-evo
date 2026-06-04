@@ -789,12 +789,23 @@ def main():
     )
     probe_jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
 
+    # Discover the project's active impact variables + their value ranges once.
+    # These drive per-world impact-map sampling in both the parent and workers.
+    if PROJECT_PATH:
+        _, _impact_vars_global, _impact_ranges_global, _ = load_project_config(
+            PROJECT_PATH, grid_size=(GRID_HEIGHT, GRID_WIDTH), seed=0)
+    else:
+        _impact_vars_global = ['windfarm_noise']
+        _impact_ranges_global = {}
+
     # Initialize a temporary environment to fetch functional group metadata.
     # Build a fresh env_builder here (rather than reusing the module-level
     # one) so PROJECT_PATH set above is baked into the instance, ensuring
     # spawn-workers later receive the correct project path.
     env_builder_local = _make_env_builder(
-        None, grid_size=(GRID_HEIGHT, GRID_WIDTH), project_path=PROJECT_PATH)
+        None, grid_size=(GRID_HEIGHT, GRID_WIDTH), project_path=PROJECT_PATH,
+        impact_vars=_impact_vars_global,
+        impact_ranges=_impact_ranges_global)
     temp_env = env_builder_local()
     policy_params = get_dynamic_policy_params(
         temp_env.fgs,
@@ -936,15 +947,6 @@ def main():
             print(f"    No checkpoint (random init): {', '.join(missing)}")
         print(f"------------------------------------------")
     
-    # Discover the project's active impact variables + their value ranges
-    # once. These drive the per-generation impact map sampling below.
-    if PROJECT_PATH:
-        _, _impact_vars_global, _impact_ranges_global, _ = load_project_config(
-            PROJECT_PATH, grid_size=(GRID_HEIGHT, GRID_WIDTH), seed=0)
-    else:
-        _impact_vars_global = ['windfarm_noise']
-        _impact_ranges_global = {}
-
     # -----------------------------------------------------------------
     # STEP 1: Multi-world averaging scaffold (CLI + seed bookkeeping)
     # -----------------------------------------------------------------

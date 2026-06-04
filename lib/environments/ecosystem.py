@@ -13,6 +13,7 @@ class EcosystemEnvironment:
         self.fgs = functional_groups  # Dictionary: id -> FunctionalGroup
         self.interactions = interactions
         self.policies = policies or {} # Dictionary: id -> PolicyNetwork
+        self.collect_action_diagnostics = True
         # Ordered list of impact_ids that are exposed to the policy network as
         # observation channels. One observation layer is appended per id (in
         # this order) after biomass / energy / other-FG channels. Callers that
@@ -264,19 +265,22 @@ class EcosystemEnvironment:
         D = center_dim + 4 * nbr_dim
         obs = np.zeros((self.N_dm, D, H, W), dtype=self.dtype)
 
-        # Helper: shift a 2-D field by one cell in the given direction with
-        # zero padding for out-of-bounds neighbours.
-        def _shift(field, direction):
-            out = np.zeros_like(field)
-            if direction == 'N':       # neighbour to the north of (y,x) is (y-1,x)
-                out[1:, :] = field[:-1, :]
-            elif direction == 'S':
-                out[:-1, :] = field[1:, :]
-            elif direction == 'E':
-                out[:, :-1] = field[:, 1:]
-            elif direction == 'W':
-                out[:, 1:] = field[:, :-1]
-            return out
+        # Shift every layer once per tick. Previously each DM rebuilt the same
+        # shifted "other FG" and impact layers repeatedly.
+        shifted_B = np.zeros((4, N_all, H, W), dtype=self.dtype)
+        shifted_B[0, :, 1:, :] = B_all[:, :-1, :]   # N
+        shifted_B[1, :, :, :-1] = B_all[:, :, 1:]   # E
+        shifted_B[2, :, :-1, :] = B_all[:, 1:, :]   # S
+        shifted_B[3, :, :, 1:] = B_all[:, :, :-1]   # W
+        if n_obs_imp:
+            impacts = np.stack(impact_layers, axis=0).astype(self.dtype, copy=False)
+            shifted_impacts = np.zeros((4, n_obs_imp, H, W), dtype=self.dtype)
+            shifted_impacts[0, :, 1:, :] = impacts[:, :-1, :]
+            shifted_impacts[1, :, :, :-1] = impacts[:, :, 1:]
+            shifted_impacts[2, :, :-1, :] = impacts[:, 1:, :]
+            shifted_impacts[3, :, :, 1:] = impacts[:, :, :-1]
+        else:
+            shifted_impacts = None
 
         for i, pred_id in enumerate(self.dm_ids):
             pred_fg = self.fgs[pred_id]
@@ -298,14 +302,16 @@ class EcosystemEnvironment:
                 obs[i, 2 + (N_all - 1) + k] = layer
 
             # --- Neighbours N, E, S, W ---
-            for d_idx, direction in enumerate(('N', 'E', 'S', 'W')):
+            for d_idx in range(4):
                 base = center_dim + d_idx * nbr_dim
-                obs[i, base] = _shift(B_own, direction)
+                obs[i, base] = shifted_B[d_idx, j_idx]
                 if N_all > 1:
-                    for kk in range(N_all - 1):
-                        obs[i, base + 1 + kk] = _shift(B_others[kk], direction)
-                for k, layer in enumerate(impact_layers):
-                    obs[i, base + 1 + (N_all - 1) + k] = _shift(layer, direction)
+                    obs[i, base + 1:base + 1 + (N_all - 1)] = np.concatenate(
+                        [shifted_B[d_idx, :j_idx], shifted_B[d_idx, j_idx + 1:]],
+                        axis=0,
+                    )
+                if shifted_impacts is not None:
+                    obs[i, base + 1 + (N_all - 1):base + 1 + (N_all - 1) + n_obs_imp] = shifted_impacts[d_idx]
 
         return obs.transpose(0, 2, 3, 1).reshape(self.N_dm, H * W, D)
 
@@ -460,6 +466,10 @@ class EcosystemEnvironment:
         self.pi_move = probs[:, 0:4]
         self.pi_rest = probs[:, 4]
         self.pi_eat  = probs[:, 5:5 + self.N_all]
+
+        if not getattr(self, 'collect_action_diagnostics', True):
+            self.pi = {fid: None for fid in self.fgs if not self.fgs[fid].is_decision_maker}
+            return
 
         # --- Action-entropy diagnostics ---
         # Compute per-DM mean Shannon entropy H(pi) averaged over cells with

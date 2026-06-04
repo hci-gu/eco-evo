@@ -85,6 +85,7 @@ def _evaluate_coevo_task(task):
          act_diag_dict: {fg_id -> act_diag} | None)
     """
     builder_override = None
+    world_ref = None
     if isinstance(task, dict):
         fg_list = task['fg_list']
         weights_dict = task['weights_dict']
@@ -97,10 +98,13 @@ def _evaluate_coevo_task(task):
         argmax_penalty = task.get('argmax_penalty', 0.0)
         softmax_temperature = task.get('softmax_temperature', 1.0)
         integral_reward = task.get('integral_reward', False)
+        collect_action_diagnostics = task.get('collect_action_diagnostics', True)
         builder_override = task.get('env_builder')
+        world_ref = task.get('world')
     else:
         (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+        collect_action_diagnostics = True
     _ = (entropy_coef, argmax_penalty)
 
     # Sync ALL policy weights
@@ -108,10 +112,17 @@ def _evaluate_coevo_task(task):
         if fg_id in _POLICIES:
             _set_weights_flat(_POLICIES[fg_id], w)
 
-    builder = builder_override if builder_override is not None else _ENV_BUILDER
+    if builder_override is not None:
+        builder = builder_override
+    elif world_ref is not None:
+        imp_s, sp_s = world_ref
+        builder = _ENV_BUILDER.with_world(int(imp_s), int(sp_s))
+    else:
+        builder = _ENV_BUILDER
     env = builder(seed=seed) if seed is not None else builder()
     env.policies = _POLICIES
     env.softmax_temperature = float(softmax_temperature)
+    env.collect_action_diagnostics = bool(collect_action_diagnostics)
 
     if obs_pack is not None:
         env._build_static_caches()
@@ -204,6 +215,7 @@ def _evaluate_task(task):
     softmax_temperature = 1.0
     integral_reward = False
     builder_override = None
+    world_ref = None
     if isinstance(task, dict):
         # STEP 3 dict-format task: same fields as tuple-format plus an
         # optional ``env_builder`` override carrying a per-world builder
@@ -220,37 +232,54 @@ def _evaluate_task(task):
         argmax_penalty = task.get('argmax_penalty', 0.0)
         softmax_temperature = task.get('softmax_temperature', 1.0)
         integral_reward = task.get('integral_reward', False)
+        collect_action_diagnostics = task.get('collect_action_diagnostics', True)
         builder_override = task.get('env_builder')
+        world_ref = task.get('world')
     elif len(task) == 11:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+        collect_action_diagnostics = True
     elif len(task) == 10:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature) = task
+        collect_action_diagnostics = True
     elif len(task) == 9:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty) = task
+        collect_action_diagnostics = True
     elif len(task) == 8:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack, entropy_coef = task
+        collect_action_diagnostics = True
     elif len(task) == 7:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack = task
+        collect_action_diagnostics = True
     elif len(task) == 6:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed = task
+        collect_action_diagnostics = True
     elif len(task) == 5:
         fg_to_train, weights_dict, n_ticks, alpha, beta = task
+        collect_action_diagnostics = True
     else:
         fg_to_train, weights_dict, n_ticks = task
         alpha, beta = 1.0, 1.0
+        collect_action_diagnostics = True
 
     # Sync policy weights
     for fg_id, w in weights_dict.items():
         if fg_id in _POLICIES:
             _set_weights_flat(_POLICIES[fg_id], w)
 
-    builder = builder_override if builder_override is not None else _ENV_BUILDER
+    if builder_override is not None:
+        builder = builder_override
+    elif world_ref is not None:
+        imp_s, sp_s = world_ref
+        builder = _ENV_BUILDER.with_world(int(imp_s), int(sp_s))
+    else:
+        builder = _ENV_BUILDER
     env = builder(seed=seed) if seed is not None else builder()
     env.policies = _POLICIES
     env.softmax_temperature = float(softmax_temperature)
+    env.collect_action_diagnostics = bool(collect_action_diagnostics)
 
     # Install obs-normalisation stats if provided.
     if obs_pack is not None:

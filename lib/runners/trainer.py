@@ -39,6 +39,9 @@ class ARSTrainer:
         # always" / "rest always"); complements entropy-bonus which only
         # measures softmax spread, not argmax degeneration.
         self.argmax_penalty = float(argmax_penalty)
+        self.collect_action_diagnostics = (
+            self.entropy_coef != 0.0 or self.argmax_penalty != 0.0
+        )
         # Softmax temperature, set externally per generation (linear annealing
         # from temp_start -> temp_end). High T -> flatter softmax -> forces
         # exploration. Differs from entropy-bonus by affecting the
@@ -204,6 +207,13 @@ class ARSTrainer:
             builders.append(self.env_builder.with_world(int(imp_s), int(sp_s)))
         return builders
 
+    def _resolve_world_refs(self):
+        """Return compact per-world seed refs for worker-side world creation."""
+        wl = list(self.world_list) if self.world_list else []
+        if not wl:
+            return [None]
+        return [(int(imp_s), int(sp_s)) for (imp_s, sp_s) in wl]
+
     def train_step(self, fg_to_train, n_eval_ticks=2):
         policy = self.policies[fg_to_train]
         weights = self._get_weights(policy)
@@ -324,6 +334,7 @@ class ARSTrainer:
                     'mean': obs_mean,
                     'var': obs_var,
                 }
+            world_refs = self._resolve_world_refs()
 
             # STEP 3: emit tasks with an explicit env_builder override even
             # for M=1. That keeps the current-world semantics while allowing
@@ -347,7 +358,8 @@ class ARSTrainer:
                             'argmax_penalty': self.argmax_penalty,
                             'softmax_temperature': self.softmax_temperature,
                             'integral_reward': self.integral_reward,
-                            'env_builder': world_builders[0],
+                            'collect_action_diagnostics': self.collect_action_diagnostics,
+                            'world': world_refs[0],
                         })
             else:
                 for sign in (+1, -1):
@@ -368,7 +380,8 @@ class ARSTrainer:
                                 'argmax_penalty': self.argmax_penalty,
                                 'softmax_temperature': self.softmax_temperature,
                                 'integral_reward': self.integral_reward,
-                                'env_builder': world_builders[m],
+                                'collect_action_diagnostics': self.collect_action_diagnostics,
+                                'world': world_refs[m],
                             })
 
             results = self._pool.map(_evaluate_task, tasks)
@@ -526,6 +539,7 @@ class ARSTrainer:
         env = builder(seed=seed) if seed is not None else builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
+        env.collect_action_diagnostics = self.collect_action_diagnostics
 
         # Install obs-normalisation stats (frozen during this rollout).
         if obs_mean is not None and obs_var is not None:
@@ -618,6 +632,7 @@ class ARSTrainer:
         env = builder(seed=seed) if seed is not None else builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
+        env.collect_action_diagnostics = self.collect_action_diagnostics
 
         if obs_mean is not None and obs_var is not None:
             env._build_static_caches()
@@ -818,6 +833,7 @@ class ARSTrainer:
             if self.obs_normalize:
                 obs_pack = {'dm_ids': dm_ids_for_norm,
                             'mean': obs_mean, 'var': obs_var}
+            world_refs = self._resolve_world_refs()
             tasks = []
             if M == 1:
                 # M=1 still carries the current env_builder so workers can
@@ -836,7 +852,8 @@ class ARSTrainer:
                         'argmax_penalty': self.argmax_penalty,
                         'softmax_temperature': self.softmax_temperature,
                         'integral_reward': self.integral_reward,
-                        'env_builder': world_builders[0],
+                        'collect_action_diagnostics': self.collect_action_diagnostics,
+                        'world': world_refs[0],
                     })
                 for i in range(self.n_deltas):
                     wd_neg = _build_weights_dict(-1.0, i)
@@ -852,7 +869,8 @@ class ARSTrainer:
                         'argmax_penalty': self.argmax_penalty,
                         'softmax_temperature': self.softmax_temperature,
                         'integral_reward': self.integral_reward,
-                        'env_builder': world_builders[0],
+                        'collect_action_diagnostics': self.collect_action_diagnostics,
+                        'world': world_refs[0],
                     })
             else:
                 # M>1: dict-tasks with per-world env_builder override. Layout:
@@ -873,7 +891,8 @@ class ARSTrainer:
                                 'argmax_penalty': self.argmax_penalty,
                                 'softmax_temperature': self.softmax_temperature,
                                 'integral_reward': self.integral_reward,
-                                'env_builder': world_builders[m],
+                                'collect_action_diagnostics': self.collect_action_diagnostics,
+                                'world': world_refs[m],
                             })
             results = self._pool.map(_evaluate_coevo_task, tasks)
             # Drain samples for obs-stats accumulation regardless of M.
