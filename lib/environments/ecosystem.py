@@ -14,6 +14,7 @@ class EcosystemEnvironment:
         self.interactions = interactions
         self.policies = policies or {} # Dictionary: id -> PolicyNetwork
         self.collect_action_diagnostics = True
+        self.active_inference_threshold = 0.8
         # Ordered list of impact_ids that are exposed to the policy network as
         # observation channels. One observation layer is appended per id (in
         # this order) after biomass / energy / other-FG channels. Callers that
@@ -39,6 +40,7 @@ class EcosystemEnvironment:
         self.dm_ids = [fid for fid in self.global_fg_order if self.fgs[fid].is_decision_maker]
         self.N_dm = len(self.dm_ids)
         self.N_all = len(self.global_fg_order)
+        self.dm_id_to_idx = {fid: i for i, fid in enumerate(self.dm_ids)}
         self.dm_index_in_all = np.array(
             [self.global_fg_order.index(fid) for fid in self.dm_ids], dtype=np.int64
         )
@@ -153,6 +155,20 @@ class EcosystemEnvironment:
                 if tbl is not None:
                     entries.append((imp_id, tbl))
             self.dm_impact_tables.append(entries)
+        self.dm_impact_biomass_factor = np.zeros((self.N_dm, H, W), dtype=self.dtype)
+        self.dm_impact_energy_factor = np.zeros((self.N_dm, H, W), dtype=self.dtype)
+        self.dm_has_impact_factor = np.zeros(self.N_dm, dtype=bool)
+        for i, entries in enumerate(self.dm_impact_tables):
+            for imp_id, table in entries:
+                map_data = self.grid.get_map(imp_id)
+                if map_data is None:
+                    continue
+                bf_map, ef_map = self._interp_impact(
+                    table, map_data.astype(self.dtype, copy=False)
+                )
+                self.dm_impact_biomass_factor[i] += bf_map
+                self.dm_impact_energy_factor[i] += ef_map
+                self.dm_has_impact_factor[i] = True
         # Per-DM minimum biomass for splitting via movement. 0 = no threshold.
         self.dm_min_split = np.array(
             [getattr(self.fgs[fid], 'min_split_biomass', 0.0) for fid in self.dm_ids],
@@ -250,6 +266,8 @@ class EcosystemEnvironment:
         H, W = self.H, self.W
         N_all = self.N_all
         B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0).astype(self.dtype, copy=False)
+        self._decision_B_all = B_all
+        self._decision_B_dm = B_all[self.dm_index_in_all]
         impact_layers = []
         for iid in self.observable_impact_vars:
             m = self.grid.get_map(iid)
@@ -384,7 +402,9 @@ class EcosystemEnvironment:
         full_mask = np.ones((self.N_dm, num_actions, H, W), dtype=self.dtype)
         full_mask[:, 0:4] = self.move_mask
 
-        B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
+        B_all = getattr(self, '_decision_B_all', None)
+        if B_all is None:
+            B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
         prey_present = (B_all > 0).astype(self.dtype)
         full_mask[:, 5:5 + self.N_all] = self.eat_static_mask[:, :, None, None] * prey_present[None, :, :, :]
 
@@ -394,8 +414,10 @@ class EcosystemEnvironment:
         # one-hot argmax later in this function so the whole sub-threshold
         # group acts as a single unit (no splitting). See ``sub_thr_mask``
         # below for the deterministic collapse.
+        B_dm = getattr(self, '_decision_B_dm', None)
+        if B_dm is None:
+            B_dm = B_all[self.dm_index_in_all]
         if np.any(self.dm_min_split > 0):
-            B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
             sub_thr_mask = (B_dm > 0) & (B_dm < self.dm_min_split[:, None, None])
         else:
             sub_thr_mask = None
@@ -416,9 +438,34 @@ class EcosystemEnvironment:
 
         # Compute logits and apply mask additively (-inf where invalid).
         if self._batched_ready and obs_np.shape[-1] == self._in_dim:
+            active_flat = (B_dm.reshape(self.N_dm, -1) > 0)
+            active_counts = active_flat.sum(axis=1)
+            sparse = active_counts < int(active_flat.shape[1] * float(self.active_inference_threshold))
+            dense = ~sparse
+            logits = np.zeros((self.N_dm, H * W, num_actions), dtype=self.dtype)
             with torch.no_grad():
-                logits_t = self._batched_policy_forward(obs_t, return_logits=True)  # (N_dm, H*W, A)
-            logits = logits_t.numpy()
+                if np.any(dense):
+                    idx_np = np.flatnonzero(dense)
+                    idx_t = torch.as_tensor(idx_np, dtype=torch.long)
+                    obs_dense = obs_t[idx_t]
+                    h = torch.sigmoid(
+                        torch.bmm(obs_dense, self._W1[idx_t])
+                        + self._b1[idx_t].unsqueeze(1)
+                    )
+                    h = torch.sigmoid(
+                        torch.bmm(h, self._W2[idx_t])
+                        + self._b2[idx_t].unsqueeze(1)
+                    )
+                    logits_dense = torch.bmm(h, self._W3[idx_t]) + self._b3[idx_t].unsqueeze(1)
+                    logits[idx_np] = logits_dense.numpy()
+                for i in np.flatnonzero(sparse):
+                    cells = np.flatnonzero(active_flat[i])
+                    if cells.size == 0:
+                        continue
+                    fid = self.dm_ids[int(i)]
+                    logits[i, cells] = self.policies[fid].get_action_logits_torch(
+                        obs_t[int(i), cells]
+                    ).numpy()
         else:
             logits = np.empty((self.N_dm, H * W, num_actions), dtype=self.dtype)
             for i, fid in enumerate(self.dm_ids):
@@ -478,7 +525,6 @@ class EcosystemEnvironment:
         # probs shape: (N_dm, num_actions, H, W); already mask-normalised.
         eps = np.float32(1e-12)
         ent_cell = -np.sum(probs * np.log(probs + eps), axis=1)  # (N_dm, H, W)
-        B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
         active = (B_dm > 0).astype(self.dtype)  # (N_dm, H, W)
         active_sum = active.sum(axis=(1, 2))    # (N_dm,)
         ent_mean = np.where(
@@ -592,15 +638,7 @@ class EcosystemEnvironment:
         # (sum of energy_factor lookups over every impact with a valid table).
         # The factor (1 + Σ energy_factor) scales resting / feeding / movement
         # metabolic costs.
-        impact_energy = np.zeros((self.N_dm, H, W), dtype=self.dtype)
-        for i, entries in enumerate(self.dm_impact_tables):
-            for imp_id, table in entries:
-                map_data = self.grid.get_map(imp_id)
-                if map_data is None:
-                    continue
-                _, ef_map = self._interp_impact(table, map_data.astype(self.dtype, copy=False))
-                impact_energy[i] += ef_map
-        cost_factor = np.float32(1.0) + impact_energy
+        cost_factor = np.float32(1.0) + self.dm_impact_energy_factor
         rm = self.dm_resting_metabolism[:, None, None]
         cost_rest = self.dm_cost_rest[:, None, None]
         cost_eat = self.dm_cost_eat[:, None, None]
@@ -700,6 +738,11 @@ class EcosystemEnvironment:
     def _compute_impact_mortality(self, fg):
         """Return total impact-induced biomass loss m_X^Impact for the given FG
         as a per-cell array, or None if the FG has no active impact tables."""
+        idx = getattr(self, 'dm_id_to_idx', {}).get(getattr(fg, 'group_id', None))
+        if idx is not None and getattr(self, 'dm_has_impact_factor', None) is not None:
+            if self.dm_has_impact_factor[idx]:
+                return fg.biomass * self.dm_impact_biomass_factor[idx]
+            return None
         if 'impact' not in fg.params:
             return None
         total_mortality_impact = None
