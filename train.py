@@ -517,6 +517,9 @@ def main():
     parser.add_argument("--lr", type=float, default=0.03, help="Learning rate (default: 0.03).")
     parser.add_argument("--sigma", type=float, default=0.1, help="Exploration noise (default: 0.1).")
     parser.add_argument("--n_eval_ticks", type=int, default=15, help="Number of time steps (ticks) per evaluation rollout (default: 15).")
+    parser.add_argument("--probe_interval", "--probe-interval", dest="probe_interval", type=int, default=1,
+                        help="Run the deterministic probe rollout every N training iterations. "
+                             "Default: 1 (probe every iteration).")
     parser.add_argument("--project", type=str, help="Path to project file (.yaml)")
     parser.add_argument("--grid", type=parse_grid_arg, default=None,
                         help="Grid dimensions as n*m (e.g. 30*30). Both dimensions must be >= 3. Default: 60*60.")
@@ -874,6 +877,7 @@ def main():
     print(f"Generations:    {gen_display} {'(default)' if gen_is_default else '(user)'}")
     print(f"Iter/Gen:       {_mark('iter_per_gen', args.iter_per_gen)} per species per generation")
     print(f"N Eval Ticks:   {_mark('n_eval_ticks', args.n_eval_ticks)} ticks per rollout")
+    print(f"Probe Interval: {_mark('probe_interval', args.probe_interval)}")
     print(f"Learning Rate:  {_mark('lr', args.lr)}")
     print(f"Sigma:          {_mark('sigma', args.sigma)}")
     print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
@@ -958,6 +962,11 @@ def main():
     # actual M>1 averaging in train_step is not yet active and only the
     # first world (index 0) drives the legacy single-rollout path below.
     _world_rng = np.random.default_rng()
+
+    probe_interval = max(1, int(args.probe_interval))
+
+    def _should_probe(iter_idx):
+        return (iter_idx % probe_interval) == 0
 
     def _parse_M_schedule(spec):
         """Parse '1@0,3@10,5@50' -> sorted [(gen, M), ...].
@@ -1136,17 +1145,18 @@ def main():
                     # Probe: deterministic inference-world rollout with the
                     # updated theta. log10(bh/b0) per FG; JSONL row + compact
                     # stdout line. Fixed seed -> only policy varies across iters.
-                    try:
-                        _probe_biomass(trainer, probe_builder,
-                                       n_ticks=args.n_eval_ticks,
-                                       gen=gen, it=i,
-                                       jsonl_path=probe_jsonl_path,
-                                       viz=viz,
-                                       viz_extra={"gen": gen + 1,
-                                                  "iter": i + 1,
-                                                  "T": T})
-                    except Exception as _e:
-                        print(f"    [probe] WARN: probe rollout failed: {_e}")
+                    if _should_probe(i):
+                        try:
+                            _probe_biomass(trainer, probe_builder,
+                                           n_ticks=args.n_eval_ticks,
+                                           gen=gen, it=i,
+                                           jsonl_path=probe_jsonl_path,
+                                           viz=viz,
+                                           viz_extra={"gen": gen + 1,
+                                                      "iter": i + 1,
+                                                      "T": T})
+                        except Exception as _e:
+                            print(f"    [probe] WARN: probe rollout failed: {_e}")
                     if viz is not None and not viz.pump_events():
                         print("    [viz] window closed; visualiser disabled.")
                         try:
@@ -1177,17 +1187,18 @@ def main():
                         # Probe: deterministic inference-world rollout with the
                         # updated theta. log10(bh/b0) per FG; JSONL row + compact
                         # stdout line. Fixed seed -> only policy varies across iters.
-                        try:
-                            _probe_biomass(trainer, probe_builder,
-                                           n_ticks=args.n_eval_ticks,
-                                           gen=gen, it=i,
-                                           jsonl_path=probe_jsonl_path,
-                                           viz=viz,
-                                           viz_extra={"gen": gen + 1,
-                                                      "iter": i + 1,
-                                                      "T": T})
-                        except Exception as _e:
-                            print(f"    [probe] WARN: probe rollout failed: {_e}")
+                        if _should_probe(i):
+                            try:
+                                _probe_biomass(trainer, probe_builder,
+                                               n_ticks=args.n_eval_ticks,
+                                               gen=gen, it=i,
+                                               jsonl_path=probe_jsonl_path,
+                                               viz=viz,
+                                               viz_extra={"gen": gen + 1,
+                                                          "iter": i + 1,
+                                                          "T": T})
+                            except Exception as _e:
+                                print(f"    [probe] WARN: probe rollout failed: {_e}")
                         if viz is not None and not viz.pump_events():
                             print("    [viz] window closed; visualiser disabled.")
                             try:

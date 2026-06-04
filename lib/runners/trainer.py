@@ -80,6 +80,7 @@ class ARSTrainer:
         # During a train_step, we materialise an (N_dm, D) view aligned with
         # env.dm_ids ordering and hand it to env/workers.
         self.obs_stats = {}  # fg_id -> dict(mean, var, count)
+        self._dm_ids_dim_cache = None
 
         # Lazy-initialized worker pool.
         #
@@ -129,15 +130,21 @@ class ARSTrainer:
 
     # ---- obs stats helpers ----
     def _get_dm_ids_and_dim(self):
-        """Build a fresh env once to discover dm_ids and obs-dim."""
+        """Discover and cache dm_ids and observation dimension."""
+        if self._dm_ids_dim_cache is not None:
+            return self._dm_ids_dim_cache
         env = self.env_builder()
         env.policies = self.policies
         # Trigger lazy build by running a single forward pass through
         # _build_static_caches without stepping the simulation.
         env._build_static_caches()
         n_all = env.N_all
-        D = 2 + (n_all - 1) + 1
-        return list(env.dm_ids), D
+        n_obs = len(getattr(env, 'observable_impact_vars', []) or [])
+        center_dim = n_all + 1 + n_obs
+        nbr_dim = n_all + n_obs
+        D = center_dim + 4 * nbr_dim
+        self._dm_ids_dim_cache = (list(env.dm_ids), D)
+        return self._dm_ids_dim_cache
 
     def _ensure_obs_stats(self, dm_ids, D):
         for fid in dm_ids:
@@ -384,7 +391,8 @@ class ARSTrainer:
                                 'world': world_refs[m],
                             })
 
-            results = self._pool.map(_evaluate_task, tasks)
+            chunksize = max(1, (len(tasks) + self.n_workers - 1) // self.n_workers)
+            results = self._pool.map(_evaluate_task, tasks, chunksize=chunksize)
             # Unpack & accumulate obs / act stats over ALL rollouts.
             rewards_flat = []
             acts_flat = []
@@ -894,7 +902,8 @@ class ARSTrainer:
                                 'collect_action_diagnostics': self.collect_action_diagnostics,
                                 'world': world_refs[m],
                             })
-            results = self._pool.map(_evaluate_coevo_task, tasks)
+            chunksize = max(1, (len(tasks) + self.n_workers - 1) // self.n_workers)
+            results = self._pool.map(_evaluate_coevo_task, tasks, chunksize=chunksize)
             # Drain samples for obs-stats accumulation regardless of M.
             fits_flat = []
             acts_flat = []

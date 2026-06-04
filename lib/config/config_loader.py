@@ -5,6 +5,13 @@ from lib.world.functional_group import FunctionalGroup
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 _CONFIG_CACHE = {}
+_SPAWN_MAP_CACHE = {}
+
+
+def _config_cache_key(path):
+    abs_path = os.path.abspath(path)
+    st = os.stat(abs_path)
+    return abs_path, st.st_mtime_ns, st.st_size
 
 
 def load_config(path):
@@ -14,9 +21,8 @@ def load_config(path):
 
 def _load_config_cached(path):
     """Load YAML with mtime/size invalidation for hot rollout construction."""
-    abs_path = os.path.abspath(path)
-    st = os.stat(abs_path)
-    key = (abs_path, st.st_mtime_ns, st.st_size)
+    key = _config_cache_key(path)
+    abs_path = key[0]
     cached = _CONFIG_CACHE.get(abs_path)
     if cached is not None and cached[0] == key:
         return cached[1]
@@ -387,6 +393,20 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     lib = _load_config_cached(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
+    spawn_cache_key = None
+    cached_spawn_maps = None
+    spawn_maps_to_cache = None
+    if spawn_seed is not None:
+        spawn_cache_key = (
+            _config_cache_key(project_path),
+            _config_cache_key(library_path),
+            (int(grid_size[0]), int(grid_size[1])),
+            str(mode),
+            int(spawn_seed),
+        )
+        cached_spawn_maps = _SPAWN_MAP_CACHE.get(spawn_cache_key)
+        if cached_spawn_maps is None:
+            spawn_maps_to_cache = {}
     
     # Support both the new split (decision_makers / non_decision_makers) and the
     # legacy unified functional_groups list for backward compatibility.
@@ -573,6 +593,15 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 
         fg = FunctionalGroup(sid, params)
 
+        if cached_spawn_maps is not None and sid in cached_spawn_maps:
+            initial_b = np.asarray(cached_spawn_maps[sid], dtype=np.float64).copy()
+            env_fields[sid] = initial_b
+            randomize_energy = (mode == 'train')
+            fg.initialize_state(grid_size, initial_biomass=initial_b,
+                                randomize_energy=randomize_energy, rng=rng)
+            fgs[sid] = fg
+            continue
+
         # Initial total biomass: per-project override range > library range >
         # 1000 fallback. The actual scalar `total_b` is sampled uniformly from
         # [min, max] on every call so each spatial layout varies even when the
@@ -641,6 +670,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # Expose this FG's freshly spawned biomass map to subsequent FGs
         # (env_driven refs use the already-spawned dependencies).
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
+        if spawn_maps_to_cache is not None:
+            spawn_maps_to_cache[sid] = env_fields[sid].copy()
         # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
         # initial energy fill levels. Inference keeps the deterministic
         # 0.7 * ME_X default for reproducible scenario comparisons.
@@ -648,5 +679,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         fg.initialize_state(grid_size, initial_biomass=initial_b,
                             randomize_energy=randomize_energy, rng=rng)
         fgs[sid] = fg
+
+    if spawn_cache_key is not None and spawn_maps_to_cache is not None:
+        _SPAWN_MAP_CACHE[spawn_cache_key] = spawn_maps_to_cache
 
     return fgs, impact_vars, impact_ranges, observable_impact_vars

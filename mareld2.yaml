@@ -35,9 +35,9 @@ non_decision_makers:
     inference_initial_biomass: 16000
     muted: true
   - group_id: phytoplankton
-    initial_biomass_min: 25000
-    initial_biomass_max: 55000
-    inference_initial_biomass: 36000
+    initial_biomass_min: 40000
+    initial_biomass_max: 160000
+    inference_initial_biomass: 80000
 impact_variables:
   - impact_id: pelagic_trawling
     value_min: 0

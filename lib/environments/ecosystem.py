@@ -814,26 +814,12 @@ class EcosystemEnvironment:
                 u_x = fg.maintenance_level
                 q_x = s_x - u_x
 
-                starvation_mortality = getattr(fg, 'starvation_mortality', None)
-                if starvation_mortality is None:
-                    growth = fg.biomass * fg.growth_rate * q_x
-                    # Legacy: negative growth doubles as starvation loss.
-                    negative_growth = np.minimum(0.0, growth)
-                    total_loss = -negative_growth
-                    biomass_delta = growth
-                else:
-                    # New model: growth_rate controls fed growth only, while
-                    # starvation_mortality controls biomass loss below
-                    # maintenance. At s_x=0, the full per-tick rate applies;
-                    # at s_x=u_x, starvation loss is zero.
-                    growth = fg.biomass * fg.growth_rate * np.maximum(0.0, q_x)
-                    sm = np.float32(max(0.0, float(starvation_mortality)))
-                    if u_x > 0.0 and sm > 0.0:
-                        deficit = np.clip((u_x - s_x) / (u_x + 1e-9), 0.0, 1.0)
-                        total_loss = fg.biomass * sm * deficit
-                    else:
-                        total_loss = np.zeros_like(fg.biomass)
-                    biomass_delta = growth - total_loss
+                growth = fg.biomass * fg.growth_rate * q_x
+
+                # Handle negative growth (shrinkage) as additional biomass loss
+                # that also drains energy reserve proportionally.
+                negative_growth = np.minimum(0.0, growth)
+                total_loss = -negative_growth
 
                 loss_mask = total_loss > 0
                 reduction = np.ones_like(fg.biomass)
@@ -844,4 +830,4 @@ class EcosystemEnvironment:
                 reduction = np.clip(reduction, 0.0, 1.0)
 
                 fg.energy_reserve = (fg.energy_reserve * reduction).astype(self.dtype, copy=False)
-                fg.biomass = np.maximum(0.0, fg.biomass + biomass_delta).astype(self.dtype, copy=False)
+                fg.biomass = np.maximum(0.0, fg.biomass + growth).astype(self.dtype, copy=False)
