@@ -258,7 +258,13 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
 
     history = {fid: [] for fid in env.fgs}
     for t in range(n_ticks):
-        env.step()
+        try:
+            env.step()
+        except KeyboardInterrupt:
+            if verbose:
+                print(f"\n    interrupted at tick {t+1}/{n_ticks}; "
+                      f"returning partial history.")
+            break
         for fid, fg in env.fgs.items():
             history[fid].append(float(fg.biomass.sum()))
         if verbose and (t % max(1, n_ticks // 10) == 0):

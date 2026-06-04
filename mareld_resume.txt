@@ -58,6 +58,12 @@ Do not strip or transliterate Swedish letters outside this file.
                             interaction_definitions, impact_definitions).
                             Holds library-default initial_biomass and
                             optional library-default `spawn:` block.
+                            Per-FG: max_intake_rate (a), natural_mortality
+                            (DM), seed_rate (NDM). Per-interaction:
+                            assimilation_factor [0,1], handling_time (h),
+                            preys_on, energy_gain (redundant, see Section
+                            31). NOTE: max_intake_rate is no longer per
+                            interaction (commit 9317a54).
     recent_projects.txt     GUI "Open Recent" persistence.
   lib/
     world/grid.py           Grid(width, height, cell_size, tick_duration).
@@ -101,11 +107,23 @@ Do not strip or transliterate Swedish letters outside this file.
                             env_driven. Pure numpy, ~434 lines.
     allocator.py            distribute_with_floor: per-cell floor +
                             sum-preserving leftover redistribution.
-  tests/                    38 tests, all green.
-    test_allocator.py             17 tests (floor, sum, edges, determinism).
+  lib/viz/                  Live pygame visualiser package (Section 40).
+                            Imported in main process only; never by workers.
+    __init__.py             Re-exports LiveVisualizer.
+    pygame_viz.py           LiveVisualizer class: per-FG biomass heatmaps
+                            (viridis LUT, per-FG normalisation, optional
+                            log1p) + colorbar strip + rolling reward/biomass
+                            plot. Headless fallback (SDL_VIDEODRIVER=dummy)
+                            and _NullViz no-op when pygame is not installed.
+                            All public methods wrapped in try/except so
+                            --visual never breaks train/inference.
+  tests/                    42 tests, all green.
+    test_allocator.py             14 tests (floor, sum, edges, determinism).
     test_spawn_integration.py     5 tests (legacy unchanged, YAML build,
                                   colony, uniform).
-    test_uniform_bias_init.py     16 tests (bias init opt-in).
+    test_uniform_bias_init.py     6 tests (bias init opt-in).
+    test_phyto_zoo_sanity.py      5 tests (cc-bound, ratio bound,
+                                  predation suppression, no NaN).
   make_*.py                 GIS helpers (60x60 PNG generators).
   *.png                     Geographic input layers (60x60 grayscale).
   results/<run-name>/       Per-run trained policies. Checkpoint format:
@@ -163,11 +181,71 @@ Random FG order each tick. Per tick - order per Method.pdf Section steg 1-6
 ================================================================
 4. POLICY NETWORK DIMENSIONS
 ================================================================
-  Input  = 2 + (N_fgs - 1) + n_observable_impacts
-  Output = 5 + N_all_fgs   (non-prey slots eat-masked)
-  Computed in train.py:get_dynamic_policy_params.
-  Toggling "Observable by policy" in the GUI changes in_dim and
-  invalidates existing .pth checkpoints (retraining required).
+Per cell the policy sees the von Neumann neighbourhood (the cell
+itself + its 4 cardinal neighbours N, E, S, W) per Method.pdf. Out-
+of-bounds neighbours are zero-padded. Neighbour order is fixed
+N, E, S, W (matches AccessN/E/S/W in Method.pdf). Built by
+lib/environments/ecosystem.py:_build_observation_batch and the
+matching dimension calc is train.py:get_dynamic_policy_params.
+
+Input layout (one observation vector per cell, per DM):
+
+  center : [B_own, E_own, B_others (N_all - 1), impacts (n_obs)]
+  N      : [B_own,        B_others (N_all - 1), impacts (n_obs)]
+  E      : same shape as N
+  S      : same shape as N
+  W      : same shape as N
+
+  center_dim = 1 + 1 + (N_all - 1) + n_obs   # B_own + E_own + others + impacts
+  nbr_dim    = 1     + (N_all - 1) + n_obs   # B_own + others + impacts (no E)
+  in_dim     = center_dim + 4 * nbr_dim
+
+Channel semantics:
+  B_own      Own-FG biomass at that cell (tonnes; raw, before obs
+             normalisation). Tells the policy "how many of me are
+             here / next door".
+  E_own      Own-FG energy fill ratio s_X = R / (B * ME) at the
+             center cell, in [0, 1]. Only on the center (neighbour
+             energy is intentionally NOT exposed - Method.pdf).
+             Drives hunger: low s_X -> hungrier -> stronger Eat.
+  B_others   Biomass of every OTHER FG (all N_all - 1, decision
+             makers AND non-decision makers), in a stable global
+             order set by env.global_fg_order with own-FG removed.
+             Same channels appear on center and on each of the 4
+             neighbours so the policy can compare prey/predator
+             density locally vs. one step away.
+  impacts    Values of every impact_id flagged "Observable by
+             policy" in the project (one channel per id, e.g.
+             windfarm_noise). Raw map values; muted/unobservable
+             impacts are excluded from the input but still applied
+             in _apply_impact_mortality.
+
+Output layout (one logit vector per cell, per DM):
+
+  out_dim = 5 + N_all_fgs
+          = [Move_N, Move_E, Move_S, Move_W, Rest, Eat_<fg1>, ...
+             Eat_<fgN>]
+
+  The 4 Move slots correspond to the same N, E, S, W order as the
+  neighbour observation channels. The Eat block has one slot per
+  FG in global_fg_order; slots outside the predator's menu are
+  permanently masked to 0 by the environment (so the network can
+  emit them but they never fire). Final action probabilities come
+  from softmax(logits / T), with T annealed from --temp_start to
+  --temp_end over --temp_anneal_gens generations.
+
+Backwards-compat note: an earlier resume revision listed
+  in_dim = 2 + (N_fgs - 1) + n_observable_impacts
+which is exactly center_dim above. That formula was incomplete -
+it ignored the 4 * nbr_dim contribution from the von Neumann
+neighbours. Current (and correct) formula is the one above.
+
+Checkpoint invalidation: toggling "Observable by policy" in the
+GUI (changing n_obs), adding/removing an FG (changing N_all), or
+changing the grid in a way that affects per-cell layout changes
+in_dim and invalidates existing .pth checkpoints (full retraining
+required). The 4x neighbour expansion means even one new
+observable impact bumps in_dim by 5, not 1.
 
 ================================================================
 5. CLI - current flag set for train.py
@@ -175,6 +253,12 @@ Random FG order each tick. Per tick - order per Method.pdf Section steg 1-6
 Mandatory: --project <path-to.yaml>
 
 Flag                  Default              Meaning
+--visual              False                Live pygame visualiser (heatmaps
+                                           + per-DM reward plot). See Sec 40.
+--mortality           off                  on|off. Apply density-independent
+                                           natural_mortality term in
+                                           _apply_growth DM branch. Default
+                                           OFF (Section 35.3 opt-in).
 --run-name            "default"            results/<run-name>/ for save/resume.
 --coevolution         True                 Joint rollout co-evo. Use
                                            --no_coevolution for round-robin.
@@ -358,11 +442,19 @@ Sub-3 values are rounded up to 3 by _as_pos_int.
       display_name, is_decision_maker
       initial_biomass                      (library-default fallback only)
       growth_rate, max_carrying_capacity   (NDM only)
+      seed_rate                            (NDM only; fraction of cc/tick)
       max_energy_reserve, energy_content,
       resting_metabolism, movement_speed,
       maintenance_level                    (u_X, default 0.3)
       feeding_cost, movement_cost          (resting_cost is hardcoded to
                                             1.0; stripped from YAML)
+      max_intake_rate                      (DM only; a, physiological
+                                            ceiling, ton prey / ton pred /
+                                            tick; moved from interaction in
+                                            commit 9317a54)
+      natural_mortality                    (DM only; fraction/tick;
+                                            density-independent, see
+                                            --mortality flag, default OFF)
       min_split_biomass                    (DM only; kg, 0 = continuous)
       menu: [prey_id, ...]                 (DM only)
       spawn:                               # OPTIONAL library default
@@ -371,7 +463,15 @@ Sub-3 values are rounded up to 3 by _as_pos_int.
         # Floor, Noise_amp, Noise_scale, ...)
         # seed: <int>                      # optional pin
   interaction_definitions:
-    "<predator>_preys_on_<prey>":  {preys_on, max_intake_rate, energy_gain}
+    "<predator>_preys_on_<prey>":  {preys_on, energy_gain,
+                                    assimilation_factor (0..1, default 1.0),
+                                    handling_time (h; 0 = pure Type I)}
+        # max_intake_rate has been MOVED to species_definitions.<predator>
+        # (commit 9317a54). Effective intake per (predator,prey) is:
+        #   intake = a_pred * pi_eat * hunger * B_pred,
+        # with energy gain = energy_gain * assimilation_factor.
+        # When handling_time>0 anywhere, Type II saturation kicks in
+        # globally (see Section 35.2).
     "<fg>_impacted_by_<impact>":   {impact_affects: bool,
                                     impact_table: [{value, biomass_factor,
                                                     energy_factor}, ...]}
@@ -503,30 +603,36 @@ Intentionally NOT done:
 ================================================================
 14. GIT / STAGING
 ================================================================
+  Latest commits on branch `coev` (newest first):
+    06ddda0 Forgot mareld_resume.txt
+    4e45e74 Visualisation tool for training and inference.
+            (lib/viz/__init__.py, lib/viz/pygame_viz.py, train.py,
+             inference.py: --visual flag, LiveVisualizer. Section 40.)
+    9317a54 Assimilation matrix.
+            (max_intake_rate moved to species_definitions; new
+             assimilation_factor per interaction; handling_time per
+             interaction; natural_mortality + seed_rate on FG;
+             --mortality CLI flag in train/inference; GUI fields.)
+    1b3f79c Env_driven ref available in config tool. Section 30.
+    be6916d Sanity gate in FG Editor. New growth rates. Section 32.
+    e61a447 Probe biomass logging, soft action diagnostics, FMR
+            calibration. Section 29.
+    a1484cd feat(train): multi-world averaging per delta. Section 28.
+    fa1f93f All deltas in a generation see the same biomass maps.
+            Section 27.
+    2ef39f4 feat(spawn): configurable spawn strategies. Section 26.
+
+  Likely uncommitted as of this resume's last update: only the model-
+  fix arc (Sections 35-37) YAML/code edits + tests/test_phyto_zoo_sanity
+  (now 42 tests green). Check `git status` before committing.
+
+=== LEGACY GIT NOTES (kept for reference) ===
   Commit ONLY on explicit user request, trailer:
     --trailer "Co-authored-by: Junie <junie@jetbrains.com>"
-  Latest committed work on branch `coev`:
-    a1484cd feat(train): multi-world averaging per delta for ARS
-             variance reduction. CLI flags --rollouts_per_delta,
-             --worlds_refresh, --rollouts_per_delta_schedule;
-             _world_rng + WorldList helpers; _EnvBuilder.with_world;
-             _install_generation_worlds; M-averaging in
-             ARSTrainer.train_step / train_step_coevolution with CRN;
-             dict task format in workers; profile defaults M=3;
-             elapsed-time in generation header. M=1 byte-identical.
-    2ef39f4 feat(spawn): add configurable spawn strategies
-             (uniform/perlin/colony/env_driven) - adds lib/spawn/,
-             tests/test_allocator.py + test_spawn_integration.py,
-             integrates with config_loader and fgconfig.
-    6a05b2a (earlier) config_loader fix.
-  Likely uncommitted as of this resume's last update:
-    - train.py: _load_checkpoint uses torch.load(weights_only=False)
-      to avoid PyTorch 2.6+ resume warning on numpy obs_stats.
-    - train.py: os.setpgrp() at main() entry to detach from the TTY
-      foreground group, suppressing interleaved worker tracebacks on
-      Ctrl+C during spawn-bootstrap.
-    - Possibly: untracked GIS helpers (make_*.py, *.png), resume.md,
-      konvergensproblem.txt, PDFs. Not part of agent's scope.
+  See top of Section 14 for current commit list (06ddda0 .. 2ef39f4).
+  Untracked artifacts not in agent scope: make_*.py + *.png GIS
+  helpers, resume.md, konvergensproblem.txt, ab_test_*.py scripts,
+  PDFs, results/<run-name>/ folders.
 
 ================================================================
 15. WHAT TO DO FIRST ON A FRESH CONTEXT
@@ -537,7 +643,7 @@ Intentionally NOT done:
      lib/runners/parallel_worker.py, train.py, fgconfig/fgconfig.py,
      lib/spawn/strategies.py, lib/config/config_loader.py.
   4. Validate any change with:
-       python3 -m pytest tests/ -q          # 38 tests must pass
+       python3 -m pytest tests/ -q          # 42 tests must pass
        python3 -m py_compile fgconfig/fgconfig.py \
          lib/environments/ecosystem.py lib/runners/trainer.py \
          lib/runners/parallel_worker.py train.py
@@ -739,7 +845,13 @@ Per Strategi.pdf + konvergensproblem.txt "Kritisk insikt 4". For each
 DM, compute per-tick energy balance at full hunger (h=1) and require
 netto_eat > rest_cost.
 
-  intake_at_h1 = max_intake_rate * energy_gain         # best prey
+IMPORTANT (commit 9317a54): `max_intake_rate` (a) is now on the
+species_definitions level (one per predator FG), not per interaction.
+Assimilation is captured via per-interaction `assimilation_factor`
+[0,1]. The energy intake per (pred, prey) is:
+
+  intake_at_h1 = a_pred * energy_gain_pred_prey *
+                 assimilation_factor_pred_prey       # best prey
   feed_cost    = feeding_cost    * resting_metabolism
   rest_cost    = resting_cost    * resting_metabolism  # resting_cost=1
   move_cost    = movement_cost   * resting_metabolism
@@ -747,6 +859,9 @@ netto_eat > rest_cost.
   netto_eat = intake_at_h1 - feed_cost                 # MUST be > 0
   Hard gate:        netto_eat > rest_cost
   Soft gate (move): netto_eat > move_cost
+
+The numbers below are pre-9317a54 baselines and need recomputation
+against the new YAML; the inequalities themselves are unchanged.
 
 Post-update (current YAML):
   zooplankton  netto_eat=+101.4  eat-rest=+98.9   eat-move=+101.4
@@ -1237,11 +1352,14 @@ rollouts. All three are opt-in (defaults preserve legacy behaviour).
   * NO GUI editor - set via direct YAML edit. The matrix editor in
     fgconfig.py still only exposes preys_on + max_intake_rate.
 
-35.3 Fix 3 - Density-independent natural mortality for DM
+35.3 Fix 3 - Density-independent natural mortality for DM (OPT-IN)
   * lib/world/functional_group.py: new attribute `natural_mortality`
     (DM), float, default 0.0.
-  * lib/environments/ecosystem.py _apply_growth DM branch, BEFORE
-    growth term:
+  * lib/environments/ecosystem.py constructor now takes
+    `apply_natural_mortality` (default True for legacy callers).
+    train.py and inference.py both default this OFF and expose a
+    `--mortality on|off` CLI flag (commit 9317a54).
+  * When enabled, _apply_growth DM branch applies BEFORE growth term:
       keep = max(0, 1 - natural_mortality)
       biomass *= keep
       energy_reserve *= keep
@@ -1488,8 +1606,6 @@ Dependency:
     runs as a no-op (verified path).
 
 Git status for this feature:
-  * lib/viz/__init__.py, lib/viz/pygame_viz.py - untracked, ready
-    to `git add`.
-  * train.py, inference.py - modified, contain the --visual hooks.
-  * Suggested commit message: "Add real-time pygame visualiser
-    (--visual) for train.py and inference.py".
+  * Committed in 4e45e74 + 06ddda0 (June 2026). All four files
+    (lib/viz/__init__.py, lib/viz/pygame_viz.py, train.py,
+    inference.py) are tracked. No further action needed.
