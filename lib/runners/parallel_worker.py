@@ -30,9 +30,12 @@ def _set_weights_flat(policy, flat_weights):
         idx += n
 
 
-def _worker_init(env_builder, policy_params, uniform_bias_init=False):
+def _worker_init(env_builder, policy_params, uniform_bias_init=False,
+                 hidden_layers=2, hidden_dim=30):
     global _ENV_BUILDER, _POLICIES, _UNIFORM_BIAS_INIT
     _UNIFORM_BIAS_INIT = bool(uniform_bias_init)
+    _HIDDEN_LAYERS = max(1, int(hidden_layers))
+    _HIDDEN_DIM = max(1, int(hidden_dim))
     # Ignore SIGINT in workers so Ctrl+C is handled solely by the parent.
     # Without this, every worker raises KeyboardInterrupt and spams tracebacks.
     import signal
@@ -58,6 +61,8 @@ def _worker_init(env_builder, policy_params, uniform_bias_init=False):
     np.random.seed(seed & 0x7FFFFFFF)
     for fg_id, (in_dim, out_dim) in policy_params.items():
         _POLICIES[fg_id] = PolicyNetwork(in_dim, out_dim,
+                                         hidden_dim=_HIDDEN_DIM,
+                                         hidden_layers=_HIDDEN_LAYERS,
                                          uniform_bias_init=_UNIFORM_BIAS_INIT)
 
 

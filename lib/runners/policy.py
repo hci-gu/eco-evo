@@ -3,15 +3,22 @@ import torch.nn as nn
 import numpy as np
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_dim, output_dim, hidden_dim=30, uniform_bias_init=False):
+    def __init__(self, input_dim, output_dim, hidden_dim=30, uniform_bias_init=False,
+                 hidden_layers=2):
         super(PolicyNetwork, self).__init__()
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.Sigmoid(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Sigmoid(),
-            nn.Linear(hidden_dim, output_dim)
-        )
+        # ``hidden_layers`` = number of hidden Linear layers (each followed by
+        # Sigmoid). ``hidden_dim`` = nodes per hidden layer. The output layer
+        # is always a final Linear(hidden_dim, output_dim). Default 2x30
+        # reproduces the legacy two-hidden-layer architecture exactly.
+        n_hidden = max(1, int(hidden_layers))
+        layers = []
+        prev = input_dim
+        for _ in range(n_hidden):
+            layers.append(nn.Linear(prev, hidden_dim))
+            layers.append(nn.Sigmoid())
+            prev = hidden_dim
+        layers.append(nn.Linear(prev, output_dim))
+        self.net = nn.Sequential(*layers)
         self.softmax = nn.Softmax(dim=-1)
 
         # Optional uniform-bias init on the output layer (off by default,

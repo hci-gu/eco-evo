@@ -37,6 +37,36 @@ from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.policy import PolicyNetwork
 
 
+class RandomPolicy:
+    """Drop-in replacement for :class:`PolicyNetwork` that returns uniform
+    pre-softmax logits (zeros) for every cell. After the env applies its
+    action mask + softmax this yields a uniform distribution over the
+    currently-legal actions — i.e. random actions sampled fresh every tick.
+
+    Only the methods used by :meth:`EcosystemEnvironment.step` are
+    implemented (no ``parameters()``, no ``state_dict()``); the batched
+    forward path is intentionally bypassed by setting
+    ``env._batched_ready = False`` on the rnd env, forcing the per-DM
+    Python loop that calls ``get_action_logits_torch``.
+    """
+
+    def __init__(self, in_dim, out_dim):
+        self.in_dim = int(in_dim)
+        self.out_dim = int(out_dim)
+
+    def get_action_logits_torch(self, flat_state):
+        n = flat_state.shape[0]
+        return torch.zeros((n, self.out_dim), dtype=torch.float32)
+
+    def get_action_probs_torch(self, flat_state):
+        n = flat_state.shape[0]
+        return torch.full((n, self.out_dim), 1.0 / self.out_dim,
+                          dtype=torch.float32)
+
+    def eval(self):
+        return self
+
+
 def parse_grid_arg(value):
     m = re.fullmatch(r"\s*(\d+)\s*\*\s*(\d+)\s*", value)
     if not m:
@@ -173,12 +203,46 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     return env
 
 
+class PolicyCheckpointMismatchError(Exception):
+    """Raised when the checkpoints on disk do not match the project's DM set
+    or have an incompatible architecture / input dimension."""
+
+
+def _infer_arch_from_state_dict(sd):
+    """Inspect a PolicyNetwork state_dict and return (in_dim, out_dim,
+    hidden_dim, hidden_layers). The PolicyNetwork stores its layers inside
+    an ``nn.Sequential`` named ``net`` with alternating Linear+Sigmoid and
+    a final Linear; weight keys look like ``net.0.weight``, ``net.2.weight``,
+    ..., ``net.<2k>.weight``. Returns None on unrecognised layouts.
+    """
+    try:
+        linear_keys = sorted(
+            (int(k.split('.')[1]), k) for k in sd.keys()
+            if k.startswith('net.') and k.endswith('.weight')
+        )
+        if not linear_keys:
+            return None
+        shapes = [tuple(sd[k].shape) for _, k in linear_keys]
+        in_dim = shapes[0][1]
+        out_dim = shapes[-1][0]
+        hidden_dim = shapes[0][0] if len(shapes) > 1 else None
+        hidden_layers = len(shapes) - 1
+        return in_dim, out_dim, hidden_dim, hidden_layers
+    except Exception:
+        return None
+
+
 def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     """Load all DM policy checkpoints from ``checkpoint_dir``.
 
     Returns (policies_dict, obs_mean, obs_var) where obs_mean/obs_var are
     aligned with env.dm_ids ordering. Falls back to (mean=0, var=1) for
     DMs without usable stats.
+
+    Raises :class:`PolicyCheckpointMismatchError` if the set of
+    ``policy_<fg>.pth`` files in ``checkpoint_dir`` does not match the
+    project's decision makers, or if any checkpoint has an incompatible
+    architecture (e.g. trained on a different grid / FG set / hidden size).
     """
     env._build_static_caches()
     dm_ids = list(env.dm_ids)
@@ -194,19 +258,44 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     in_dim = D
     out_dim = 5 + N_all
 
+    # ---- Cross-check checkpoint files against project's DM set ----------
+    # Find every ``policy_<id>.pth`` file currently in the checkpoint dir.
+    found_ids = set()
+    try:
+        for name in os.listdir(checkpoint_dir):
+            m = re.fullmatch(r"policy_(.+)\.pth", name)
+            if m:
+                found_ids.add(m.group(1))
+    except OSError as e:
+        raise PolicyCheckpointMismatchError(
+            f"Could not list checkpoint directory '{checkpoint_dir}': {e}"
+        )
+    expected_ids = set(dm_ids)
+    missing = sorted(expected_ids - found_ids)
+    extra = sorted(found_ids - expected_ids)
+    if missing or extra:
+        lines = [
+            f"Policy checkpoints in '{checkpoint_dir}' do not match the "
+            f"project's decision makers."
+        ]
+        lines.append(f"  Expected ({len(expected_ids)}): "
+                     f"{sorted(expected_ids)}")
+        lines.append(f"  Found    ({len(found_ids)}): "
+                     f"{sorted(found_ids)}")
+        if missing:
+            lines.append(f"  Missing checkpoint(s): {missing}")
+        if extra:
+            lines.append(f"  Unexpected checkpoint(s): {extra}")
+        lines.append("  Hint: make sure --run-name / --checkpoints points at "
+                     "a run trained with the same project file, or retrain.")
+        raise PolicyCheckpointMismatchError("\n".join(lines))
+
     mean = np.zeros((N_dm, D), dtype=np.float32)
     var = np.ones((N_dm, D), dtype=np.float32)
 
     policies = {}
     for i, fid in enumerate(dm_ids):
         ckpt_path = os.path.join(checkpoint_dir, f"policy_{fid}.pth")
-        if not os.path.exists(ckpt_path):
-            if verbose:
-                print(f"  [warn] No checkpoint for '{fid}' at {ckpt_path}; "
-                      f"using untrained policy and mean=0/var=1 (likely degenerate).")
-            policies[fid] = PolicyNetwork(in_dim, out_dim)
-            continue
-
         ckpt = torch.load(ckpt_path, map_location='cpu', weights_only=False)
         # Support both formats: bare state_dict (legacy) and new dict payload.
         if isinstance(ckpt, dict) and 'state_dict' in ckpt:
@@ -216,8 +305,38 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
             sd = ckpt
             os_stats = None
 
-        net = PolicyNetwork(in_dim, out_dim)
-        net.load_state_dict(sd)
+        # Cross-check architecture against the env that we're about to run
+        # inference on. Mismatch usually means the checkpoint was trained
+        # with a different project (different FG count -> different in_dim
+        # / out_dim) or with a different --policynetwork.
+        arch = _infer_arch_from_state_dict(sd)
+        if arch is None:
+            raise PolicyCheckpointMismatchError(
+                f"Checkpoint '{ckpt_path}' has an unrecognised layout "
+                f"(state_dict keys: {list(sd.keys())[:6]}...)."
+            )
+        ck_in, ck_out, ck_hidden, ck_layers = arch
+        if ck_in != in_dim or ck_out != out_dim:
+            raise PolicyCheckpointMismatchError(
+                f"Checkpoint '{ckpt_path}' has incompatible input/output "
+                f"dimensions: file has (in={ck_in}, out={ck_out}) but the "
+                f"current project expects (in={in_dim}, out={out_dim}).\n"
+                f"  Hint: this checkpoint was trained against a different "
+                f"set of functional groups or observable impacts. Use the "
+                f"matching project YAML, or retrain."
+            )
+
+        net = PolicyNetwork(in_dim, out_dim,
+                            hidden_dim=ck_hidden if ck_hidden else 30,
+                            hidden_layers=max(1, ck_layers))
+        try:
+            net.load_state_dict(sd)
+        except Exception as e:
+            raise PolicyCheckpointMismatchError(
+                f"Could not load weights from '{ckpt_path}' into a "
+                f"PolicyNetwork(in={in_dim}, out={out_dim}, "
+                f"hidden_dim={ck_hidden}, hidden_layers={ck_layers}): {e}"
+            )
         net.eval()
         policies[fid] = net
 
@@ -242,7 +361,7 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
 
 
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
-                  viz=None):
+                  viz=None, rnd_env=None):
     """Install policies + frozen stats and step the environment ``n_ticks`` times.
 
     If ``viz`` is a :class:`lib.viz.LiveVisualizer`, biomass heatmaps and a
@@ -256,10 +375,32 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     # Rebuild batched weight tensors used by the fast inference path.
     env._rebuild_batched_weights()
 
+    # Install uniform-random policies on the parallel baseline env, if any.
+    if rnd_env is not None:
+        rnd_env._build_static_caches()
+        out_dim_rnd = 5 + rnd_env.N_all
+        in_dim_rnd = env.obs_mean.shape[1] if env.obs_mean.ndim == 2 else 0
+        rnd_env.policies = {
+            fid: RandomPolicy(in_dim_rnd, out_dim_rnd) for fid in rnd_env.dm_ids
+        }
+        # Frozen mean=0 / var=1 (we want true uniform actions, no obs
+        # normalisation pulling the masked logits anywhere). Logits are
+        # constant zero anyway so this is pure bookkeeping.
+        rnd_env.obs_mean = np.zeros_like(env.obs_mean)
+        rnd_env.obs_var = np.ones_like(env.obs_var)
+        # Force the per-DM Python path so RandomPolicy.get_action_logits_torch
+        # is actually called (the batched path needs stacked Linear weights).
+        rnd_env._batched_ready = False
+
     history = {fid: [] for fid in env.fgs}
+    energy_history = {fid: [] for fid in env.fgs}
+    rnd_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
+    rnd_energy_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
     for t in range(n_ticks):
         try:
             env.step()
+            if rnd_env is not None:
+                rnd_env.step()
         except KeyboardInterrupt:
             if verbose:
                 print(f"\n    interrupted at tick {t+1}/{n_ticks}; "
@@ -267,13 +408,41 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             break
         for fid, fg in env.fgs.items():
             history[fid].append(float(fg.biomass.sum()))
+            er = getattr(fg, 'energy_reserve', None)
+            energy_history[fid].append(float(er.sum()) if er is not None else 0.0)
+        if rnd_env is not None:
+            for fid, fg in rnd_env.fgs.items():
+                rnd_history[fid].append(float(fg.biomass.sum()))
+                er = getattr(fg, 'energy_reserve', None)
+                rnd_energy_history[fid].append(
+                    float(er.sum()) if er is not None else 0.0)
+        # Per-FG biomass/energy ratio (current / initial) as a percentage.
+        # The first tick is by definition 100 %. ``history[fid][0]`` /
+        # ``energy_history[fid][0]`` are the post-tick-0 baselines shown in
+        # the live plot's tabs.
+        pct_bio = {}
+        pct_eng = {}
+        for fid in history.keys():
+            b0 = history[fid][0] if history[fid] else 0.0
+            pct_bio[fid] = (100.0 * history[fid][-1] / b0) if b0 > 0.0 else 0.0
+            e0 = energy_history[fid][0] if energy_history[fid] else 0.0
+            pct_eng[fid] = (100.0 * energy_history[fid][-1] / e0) if e0 > 0.0 else 0.0
         if verbose and (t % max(1, n_ticks // 10) == 0):
             print(f"    tick {t+1}/{n_ticks}")
         if viz is not None:
             try:
                 viz.update_biomass(env.fgs, tick=t)
-                for fid, h in history.items():
-                    viz.update_reward(fid, h[-1], step=t)
+                for fid in history.keys():
+                    viz.update_series("biomass", fid, pct_bio[fid], step=t)
+                    viz.update_series("energy", fid, pct_eng[fid], step=t)
+                if rnd_env is not None:
+                    for fid in rnd_history.keys():
+                        b0 = rnd_history[fid][0] if rnd_history[fid] else 0.0
+                        e0 = rnd_energy_history[fid][0] if rnd_energy_history[fid] else 0.0
+                        pb = (100.0 * rnd_history[fid][-1] / b0) if b0 > 0.0 else 0.0
+                        pe = (100.0 * rnd_energy_history[fid][-1] / e0) if e0 > 0.0 else 0.0
+                        viz.update_series("biomass", fid + "_rnd", pb, step=t)
+                        viz.update_series("energy", fid + "_rnd", pe, step=t)
                 if not viz.pump_events():
                     if verbose:
                         print("    [viz] window closed; stopping early.")
@@ -311,6 +480,13 @@ def main():
                         help="Toggle the artificial (density-independent) natural "
                              "mortality term applied to decision-maker FGs each tick. "
                              "Default: off.")
+    parser.add_argument("--rnd-baseline", "--rnd_baseline", dest="rnd_baseline",
+                        action="store_true",
+                        help="Run a parallel rollout where each DM acts uniformly "
+                             "at random (mask-respecting) and overlay its biomass%% "
+                             "/ energy%% in the live plot as a baseline. Legend "
+                             "entries are suffixed with '_rnd'. No heatmaps for "
+                             "the random agents.")
     parser.add_argument("--visual", action="store_true",
                         help="Open a live pygame window with per-FG biomass heatmaps "
                              "and a rolling total-biomass plot. Requires pygame; if "
@@ -342,15 +518,33 @@ def main():
                     apply_natural_mortality=(args.mortality == "on"))
     if verbose:
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
-    policies, mean, var = load_policies_and_stats(env, args.checkpoints, verbose=verbose)
+    try:
+        policies, mean, var = load_policies_and_stats(env, args.checkpoints, verbose=verbose)
+    except PolicyCheckpointMismatchError as e:
+        print("Error: policy checkpoint mismatch.", file=sys.stderr)
+        print(str(e), file=sys.stderr)
+        return 1
+
+    # Parallel random-action baseline environment. Built with the same
+    # project + seed as the trained env so initial biomass / impacts /
+    # spawn layout match exactly; the only difference is the policies
+    # (uniform random) installed inside run_inference.
+    rnd_env = None
+    if args.rnd_baseline:
+        rnd_env = build_env(args.project, args.grid, seed=args.seed,
+                            verbose=False,
+                            apply_natural_mortality=(args.mortality == "on"))
 
     viz = None
     if args.visual:
         try:
             from lib.viz import LiveVisualizer
+            extra = ([fid + "_rnd" for fid in env.fgs.keys()]
+                     if rnd_env is not None else None)
             viz = LiveVisualizer(fg_ids=list(env.fgs.keys()),
                                  grid_shape=args.grid,
-                                 mode="inference")
+                                 mode="inference",
+                                 extra_plot_ids=extra)
         except Exception as e:
             print(f"[viz] failed to start visualiser: {e!r}", file=sys.stderr)
             viz = None
@@ -359,7 +553,7 @@ def main():
         print(f"Running {args.ticks} ticks...")
     try:
         history = run_inference(env, policies, mean, var, args.ticks,
-                                verbose=verbose, viz=viz)
+                                verbose=verbose, viz=viz, rnd_env=rnd_env)
     finally:
         if viz is not None:
             viz.close()

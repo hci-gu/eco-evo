@@ -78,6 +78,7 @@ class _NullViz:
 
     def update_biomass(self, *a, **kw): pass
     def update_reward(self, *a, **kw): pass
+    def update_series(self, *a, **kw): pass
     def update_status(self, *a, **kw): pass
     def pump_events(self): return True
     def close(self): pass
@@ -118,6 +119,7 @@ class LiveVisualizer:
         fps_cap: int = 30,
         title: Optional[str] = None,
         plot_fg_ids: Optional[Sequence[str]] = None,
+        extra_plot_ids: Optional[Sequence[str]] = None,
     ):
         import pygame
         self._pg = pygame
@@ -132,6 +134,14 @@ class LiveVisualizer:
             self.plot_fg_ids = list(self.fg_ids)
         else:
             self.plot_fg_ids = [f for f in plot_fg_ids if f in self.fg_ids]
+        # ``extra_plot_ids`` are extra series shown in the plot panel only —
+        # no heatmap, no totals/B0 tracking. Used e.g. by --rnd-baseline to
+        # overlay random-action baselines (named ``<fid>_rnd``) alongside
+        # the trained policies in the biomass/energy tabs.
+        self._extra_plot_ids: list = list(extra_plot_ids or [])
+        for eid in self._extra_plot_ids:
+            if eid not in self.plot_fg_ids:
+                self.plot_fg_ids.append(eid)
         self.grid_h, self.grid_w = int(grid_shape[0]), int(grid_shape[1])
         # Heatmaps ska alltid renderas i samma fysiska storlek som ett
         # 32x32-rutnt hade haft. Referens: cell_px=6 vid 32x32 -> 192 px.
@@ -145,10 +155,41 @@ class LiveVisualizer:
         self.reward_window = int(reward_window)
         self._MIN_FRAME_INTERVAL = 1.0 / max(1, int(fps_cap))
 
-        # Per-FG rolling buffers: (step, value) for the line plot.
-        self._reward_buf: Dict[str, deque] = {
-            fid: deque(maxlen=self.reward_window) for fid in self.fg_ids
+        # Tabs: each tab is an independent time series shown in the plot
+        # panel. The user cycles through tabs with TAB / Shift+TAB. The
+        # primary tab depends on mode:
+        #   train     -> reward, biomass%, energy%
+        #   inference -> biomass%, energy%
+        # Each tab has its own per-FG rolling buffer of (step, value).
+        if self.mode == "train":
+            self._tabs = ["reward", "biomass", "energy"]
+        else:
+            self._tabs = ["biomass", "energy"]
+        self._tab_labels = {
+            "reward": "reward",
+            "biomass": "biomass (% of start)",
+            "energy": "energy (% of start)",
         }
+        self._active_tab = 0
+        # Per-FG enable flag for plot panel (checkbox state). Toggled via
+        # legend click; applies globally across all plot tabs.
+        self._plot_enabled: Dict[str, bool] = {
+            fid: True for fid in (list(self.fg_ids) + list(self._extra_plot_ids))
+        }
+        self._legend_rects: list = []
+        _all_series_ids = list(self.fg_ids) + [
+            eid for eid in self._extra_plot_ids if eid not in self.fg_ids
+        ]
+        self._series: Dict[str, Dict[str, deque]] = {
+            tab: {fid: deque(maxlen=self.reward_window) for fid in _all_series_ids}
+            for tab in self._tabs
+        }
+        # Back-compat alias: legacy callers (and internal code) treat the
+        # ``reward`` tab buffer as the historical _reward_buf. In inference
+        # mode the first tab is biomass, so update_reward writes there.
+        self._reward_buf: Dict[str, deque] = self._series[self._tabs[0]]
+        # Click hit-boxes for tab headers, recomputed each frame.
+        self._tab_rects: list = []
         # Latest biomass arrays + totals for heatmap rendering.
         self._biomass: Dict[str, np.ndarray] = {}
         self._totals: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
@@ -161,6 +202,16 @@ class LiveVisualizer:
             fid: _fg_colour_for(i, len(self.fg_ids))
             for i, fid in enumerate(self.fg_ids)
         }
+        # ``_rnd``-baseline series inherit the base FG colour but dimmed so
+        # they're visually distinguishable from the trained-policy curve.
+        for eid in self._extra_plot_ids:
+            base = eid[:-4] if eid.endswith("_rnd") else None
+            if base and base in self._fg_colour:
+                r, g, b = self._fg_colour[base]
+                self._fg_colour[eid] = (max(0, r - 90), max(0, g - 90), max(0, b - 90))
+            else:
+                self._fg_colour[eid] = _fg_colour_for(
+                    len(self._fg_colour), len(self._fg_colour) + 1)
 
         # State.
         self._paused = False
@@ -191,7 +242,15 @@ class LiveVisualizer:
         self._panel_h = hm_h + title_h + cbar_h + 2 * pad
         heatmap_block_w = self._cols * self._panel_w
         heatmap_block_h = self._rows * self._panel_h
-        plot_w = max(360, heatmap_block_w // 2)
+        # Reserve enough horizontal room in the plot panel for the legend:
+        # roughly 7 px per character of the longest FG id, plus the swatch
+        # and gutter. This avoids the legend overflowing the window with
+        # long names like ``pelagic_fish_rnd``.
+        all_legend_ids = list(self.plot_fg_ids) or list(self.fg_ids)
+        max_name_len = max((len(self._display_name(fid))
+                            for fid in all_legend_ids), default=8)
+        self._legend_w = 38 + 7 * max_name_len + 8  # checkbox + swatch + text + pad
+        plot_w = max(420, heatmap_block_w // 2 + self._legend_w)
         plot_h = heatmap_block_h
         status_h = 26
         log_h = 0
@@ -263,14 +322,27 @@ class LiveVisualizer:
             self._log_once(f"update_biomass failed: {e!r}")
 
     def update_reward(self, fg_id: str, value: float, step: int) -> None:
+        # Back-compat shim: writes into the first tab's buffer (which is
+        # ``reward`` in train mode and ``biomass`` in inference mode).
+        self.update_series(self._tabs[0] if self.enabled else "reward",
+                           fg_id, value, step)
+
+    def update_series(self, tab: str, fg_id: str, value: float, step: int) -> None:
+        """Append ``(step, value)`` to the named tab's buffer for ``fg_id``.
+
+        Unknown tab names are silently ignored so callers can push data for
+        tabs that may or may not exist in the current mode (e.g. ``reward``
+        only exists in train mode).
+        """
         if not self.enabled:
             return
         try:
-            if fg_id not in self._reward_buf:
+            buf = self._series.get(tab)
+            if buf is None or fg_id not in buf:
                 return
-            self._reward_buf[fg_id].append((int(step), float(value)))
+            buf[fg_id].append((int(step), float(value)))
         except Exception as e:
-            self._log_once(f"update_reward failed: {e!r}")
+            self._log_once(f"update_series failed: {e!r}")
 
     def update_status(self, **kw) -> None:
         if not self.enabled:
@@ -288,6 +360,8 @@ class LiveVisualizer:
                     self._quit = True
                 elif event.type == pg.KEYDOWN:
                     self._handle_key(event.key)
+                elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                    self._handle_click(event.pos)
             # While paused, keep the window responsive without spinning.
             while self._paused and not self._quit:
                 for event in pg.event.get():
@@ -295,6 +369,8 @@ class LiveVisualizer:
                         self._quit = True
                     elif event.type == pg.KEYDOWN:
                         self._handle_key(event.key)
+                    elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                        self._handle_click(event.pos)
                 self._render_full()
                 pg.time.wait(50)
             return not self._quit
@@ -367,11 +443,35 @@ class LiveVisualizer:
             self._log_heatmap = not self._log_heatmap
         elif key == pg.K_r:
             self._log_plot = not self._log_plot
+        elif key == pg.K_TAB:
+            mods = self._pg.key.get_mods()
+            n = len(self._tabs)
+            if mods & self._pg.KMOD_SHIFT:
+                self._active_tab = (self._active_tab - 1) % n
+            else:
+                self._active_tab = (self._active_tab + 1) % n
         elif pg.K_1 <= key <= pg.K_9:
             idx = key - pg.K_1
             if idx < len(self.fg_ids):
                 target = self.fg_ids[idx]
                 self._solo = None if self._solo == target else target
+
+    def _handle_click(self, pos) -> None:
+        try:
+            mx, my = pos
+        except Exception:
+            return
+        for rect, i in self._tab_rects:
+            rx, ry, rw, rh = rect
+            if rx <= mx < rx + rw and ry <= my < ry + rh:
+                self._active_tab = int(i)
+                return
+        # Legend checkbox toggles (global across tabs).
+        for rect, fid in getattr(self, "_legend_rects", []):
+            rx, ry, rw, rh = rect
+            if rx <= mx < rx + rw and ry <= my < ry + rh:
+                self._plot_enabled[fid] = not self._plot_enabled.get(fid, True)
+                return
 
     def _maybe_render(self) -> None:
         now = time.monotonic()
@@ -525,25 +625,44 @@ class LiveVisualizer:
         pg.draw.rect(self._screen, (24, 24, 30), (x, y, w, h))
         pg.draw.rect(self._screen, (60, 60, 70), (x, y, w, h), 1)
 
-        # Choose data source per mode.
-        if self.mode == "train":
-            buffers = self._reward_buf
-            ylabel = "reward (log10 ratio)" if self._log_plot else "reward"
+        # Choose data source from the active tab. Each tab has its own
+        # per-FG buffer; callers push values via update_series(tab, ...).
+        active = self._tabs[self._active_tab]
+        buffers = self._series[active]
+        base_label = self._tab_labels.get(active, active)
+        if active == "reward" and self._log_plot:
+            ylabel = "reward (log10 ratio)"
         else:
-            # Inference: synthesise from biomass totals over recent ticks.
-            # Reuse _reward_buf as a generic time series; train uses reward,
-            # inference can push biomass via update_reward(fid, total, t).
-            buffers = self._reward_buf
-            ylabel = "total biomass"
+            ylabel = base_label
 
-        # Title.
+        # ---- Tab headers (clickable) -------------------------------------
+        pg.draw.rect(self._screen, (24, 24, 30), (x, y, w, 18))
+        tab_x = x + 6
+        self._tab_rects = []
+        for i, tab in enumerate(self._tabs):
+            label = tab
+            is_active = (i == self._active_tab)
+            col = (240, 240, 250) if is_active else (140, 140, 150)
+            surf = self._font.render(label, True, col)
+            tw = surf.get_width() + 10
+            rect = (tab_x, y + 2, tw, 14)
+            if is_active:
+                pg.draw.rect(self._screen, (45, 45, 60), rect)
+            pg.draw.rect(self._screen, (60, 60, 70), rect, 1)
+            self._screen.blit(surf, (tab_x + 5, y + 3))
+            self._tab_rects.append((rect, i))
+            tab_x += tw + 4
+
+        # Title (under tab strip).
         tsurf = self._font.render(ylabel, True, (200, 200, 210))
-        self._screen.blit(tsurf, (x + 6, y + 4))
+        self._screen.blit(tsurf, (x + 6, y + 20))
 
         # Determine y-range across all buffers.
         all_vals: list = []
         for fid in self.plot_fg_ids:
             if self._solo is not None and self._solo != fid:
+                continue
+            if not self._plot_enabled.get(fid, True):
                 continue
             for _, v in buffers[fid]:
                 all_vals.append(v)
@@ -564,6 +683,8 @@ class LiveVisualizer:
         for fid in self.plot_fg_ids:
             if self._solo is not None and self._solo != fid:
                 continue
+            if not self._plot_enabled.get(fid, True):
+                continue
             if buffers[fid]:
                 xmins.append(buffers[fid][0][0])
                 xmaxs.append(buffers[fid][-1][0])
@@ -575,8 +696,8 @@ class LiveVisualizer:
             xmax = xmin + 1
 
         plot_pad_l = 36
-        plot_pad_r = 110  # room for legend
-        plot_pad_t = 22
+        plot_pad_r = getattr(self, "_legend_w", 110)  # room for legend
+        plot_pad_t = 38  # tab strip (18) + ylabel line
         plot_pad_b = 16
         px0 = x + plot_pad_l
         py0 = y + plot_pad_t
@@ -603,6 +724,8 @@ class LiveVisualizer:
         for fid in self.plot_fg_ids:
             if self._solo is not None and self._solo != fid:
                 continue
+            if not self._plot_enabled.get(fid, True):
+                continue
             buf = buffers[fid]
             if len(buf) < 2:
                 continue
@@ -620,16 +743,28 @@ class LiveVisualizer:
             except Exception:
                 pg.draw.lines(self._screen, self._fg_colour[fid], False, pts, 1)
 
-        # Legend.
+        # Legend with a per-FG checkbox that toggles plotting across all tabs.
         lx = px0 + pw + 8
         ly = py0
+        self._legend_rects = []
         for fid in self.plot_fg_ids:
             col = self._fg_colour[fid]
             faded = (self._solo is not None and self._solo != fid)
-            c = tuple(int(v * (0.3 if faded else 1.0)) for v in col)
-            pg.draw.rect(self._screen, c, (lx, ly + 4, 10, 10))
-            lab = self._font.render(self._display_name(fid)[:18], True, c)
-            self._screen.blit(lab, (lx + 14, ly))
+            enabled = self._plot_enabled.get(fid, True)
+            c = tuple(int(v * (0.3 if faded or not enabled else 1.0)) for v in col)
+            # Checkbox.
+            cb_rect = (lx, ly + 3, 12, 12)
+            pg.draw.rect(self._screen, (200, 200, 210), cb_rect, 1)
+            if enabled:
+                pg.draw.line(self._screen, (220, 220, 230),
+                             (lx + 2, ly + 9), (lx + 5, ly + 12), 2)
+                pg.draw.line(self._screen, (220, 220, 230),
+                             (lx + 5, ly + 12), (lx + 11, ly + 4), 2)
+            self._legend_rects.append((cb_rect, fid))
+            # Colour swatch.
+            pg.draw.rect(self._screen, c, (lx + 16, ly + 4, 10, 10))
+            lab = self._font.render(self._display_name(fid), True, c)
+            self._screen.blit(lab, (lx + 30, ly))
             ly += 14
             if ly > y + h - 14:
                 break

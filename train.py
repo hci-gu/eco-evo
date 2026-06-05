@@ -340,7 +340,8 @@ class _ProbeEnvBuilder:
 
 
 def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
-                   compact=True, viz=None, viz_extra=None):
+                   compact=True, viz=None, viz_extra=None, viz_step=None,
+                   rnd_builder=None):
     """Run a probe rollout with the trainer's current policies and log
     per-FG biomass evolution.
 
@@ -381,6 +382,44 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
 
     fg_ids = list(env.fgs.keys())
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
+    e0 = {fid: (float(env.fgs[fid].energy_reserve.sum())
+                if getattr(env.fgs[fid], 'energy_reserve', None) is not None
+                else 0.0)
+          for fid in fg_ids}
+
+    # Parallel random-action baseline env (same deterministic probe world).
+    # Built fresh per probe so biomass/energy histories restart at 100 %
+    # together with the main env's curves on every iteration.
+    rnd_env = None
+    rnd_b0 = {}
+    rnd_e0 = {}
+    if rnd_builder is not None:
+        try:
+            from inference import RandomPolicy
+            rnd_env = rnd_builder()
+            rnd_env._build_static_caches()
+            out_dim_rnd = 5 + rnd_env.N_all
+            in_dim_rnd = (env.obs_mean.shape[1]
+                          if getattr(env, 'obs_mean', None) is not None
+                          and env.obs_mean.ndim == 2 else 0)
+            rnd_env.policies = {fid: RandomPolicy(in_dim_rnd, out_dim_rnd)
+                                for fid in rnd_env.dm_ids}
+            rnd_env.obs_mean = np.zeros_like(env.obs_mean) \
+                if getattr(env, 'obs_mean', None) is not None else None
+            rnd_env.obs_var = np.ones_like(env.obs_var) \
+                if getattr(env, 'obs_var', None) is not None else None
+            rnd_env._batched_ready = False
+            rnd_env.softmax_temperature = float(trainer.softmax_temperature)
+            rnd_b0 = {fid: float(rnd_env.fgs[fid].biomass.sum())
+                      for fid in rnd_env.fgs}
+            rnd_e0 = {fid: (float(rnd_env.fgs[fid].energy_reserve.sum())
+                            if getattr(rnd_env.fgs[fid], 'energy_reserve', None) is not None
+                            else 0.0)
+                      for fid in rnd_env.fgs}
+        except Exception as _e:
+            print(f"    [probe] WARN: rnd baseline init failed: {_e}")
+            rnd_env = None
+
     if viz is not None:
         # Snapshot at t=0 so the user sees the starting state.
         try:
@@ -390,6 +429,12 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             pass
     for _t in range(int(n_ticks)):
         env.step()
+        if rnd_env is not None:
+            try:
+                rnd_env.step()
+            except Exception as _e:
+                print(f"    [probe] WARN: rnd baseline step failed: {_e}")
+                rnd_env = None
         if viz is not None:
             try:
                 viz.update_biomass(env.fgs, tick=_t + 1, extra=viz_extra)
@@ -400,14 +445,48 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             except Exception:
                 viz = None
     bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
+    eh = {fid: (float(env.fgs[fid].energy_reserve.sum())
+                if getattr(env.fgs[fid], 'energy_reserve', None) is not None
+                else 0.0)
+          for fid in fg_ids}
 
     log_ratio = {}
     ratio = {}
+    energy_ratio = {}
     for fid in fg_ids:
         denom = max(b0[fid], 1e-9)
         r = max(bh[fid], 1e-12) / denom
         ratio[fid] = float(r)
         log_ratio[fid] = float(np.log10(r))
+        edenom = e0[fid] if e0[fid] > 0.0 else 0.0
+        energy_ratio[fid] = float(eh[fid] / edenom) if edenom > 0.0 else 0.0
+
+    # Push end-of-probe biomass% / energy% into the visualiser's tabbed
+    # plot. ``viz_step`` should be the global ARS step (gen*iter+iter)
+    # so the points align with the reward tab pushed by the main loop.
+    if viz is not None and viz_step is not None:
+        try:
+            for fid in fg_ids:
+                viz.update_series("biomass", fid, ratio[fid] * 100.0,
+                                  step=int(viz_step))
+                viz.update_series("energy", fid, energy_ratio[fid] * 100.0,
+                                  step=int(viz_step))
+            if rnd_env is not None:
+                for fid in rnd_env.fgs:
+                    b0r = rnd_b0.get(fid, 0.0)
+                    e0r = rnd_e0.get(fid, 0.0)
+                    bhr = float(rnd_env.fgs[fid].biomass.sum())
+                    ehr = (float(rnd_env.fgs[fid].energy_reserve.sum())
+                           if getattr(rnd_env.fgs[fid], 'energy_reserve', None) is not None
+                           else 0.0)
+                    pb = (100.0 * bhr / b0r) if b0r > 0.0 else 0.0
+                    pe = (100.0 * ehr / e0r) if e0r > 0.0 else 0.0
+                    viz.update_series("biomass", fid + "_rnd", pb,
+                                      step=int(viz_step))
+                    viz.update_series("energy", fid + "_rnd", pe,
+                                      step=int(viz_step))
+        except Exception:
+            pass
 
     if compact:
         # Human-readable percent in stdout (e.g. '120%'); JSONL keeps
@@ -615,6 +694,19 @@ def main():
                         help="Optional schedule, e.g. '1@0,3@10,5@50' meaning M=1 for "
                              "gen 0-9, M=3 for gen 10-49, M=5 from gen 50 onwards. "
                              "Overrides --rollouts_per_delta when given.")
+    parser.add_argument("--policynetwork", nargs=2, type=int, default=[2, 30],
+                        metavar=("LAYERS", "NODES"),
+                        help="Policy network architecture: number of hidden layers "
+                             "and number of nodes per hidden layer. "
+                             "Default: 2 30 (two hidden layers of 30 nodes each).")
+    parser.add_argument("--rnd-baseline", "--rnd_baseline", dest="rnd_baseline",
+                        action="store_true",
+                        help="Run a parallel probe rollout where each DM acts "
+                             "uniformly at random (mask-respecting) and overlay "
+                             "its biomass / energy (%% of start) in the live plot "
+                             "as a baseline. Legend entries are suffixed with "
+                             "'_rnd'. No heatmaps for the random agents. "
+                             "Requires --visual to have any visible effect.")
     parser.add_argument("--visual", action="store_true",
                         help="Open a live pygame window with per-FG biomass heatmaps "
                              "(from the deterministic probe rollout) and a rolling "
@@ -821,11 +913,14 @@ def main():
             from lib.viz import LiveVisualizer
             _dm_ids = [fid for fid, fg in temp_env.fgs.items()
                        if getattr(fg, 'is_decision_maker', False)]
+            _extra = ([fid + "_rnd" for fid in temp_env.fgs.keys()]
+                      if getattr(args, 'rnd_baseline', False) else None)
             viz = LiveVisualizer(
                 fg_ids=list(temp_env.fgs.keys()),
                 grid_shape=(GRID_HEIGHT, GRID_WIDTH),
                 mode="train",
                 plot_fg_ids=_dm_ids or None,
+                extra_plot_ids=_extra,
             )
         except Exception as _e:
             print(f"[viz] failed to start visualiser: {_e!r}")
@@ -913,7 +1008,9 @@ def main():
                          obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved,
                          entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
                          integral_reward=args.integral_reward,
-                         uniform_bias_init=args.uniform_bias_init)
+                         uniform_bias_init=args.uniform_bias_init,
+                         hidden_layers=int(args.policynetwork[0]),
+                         hidden_dim=int(args.policynetwork[1]))
 
     # Optionally resume from previously saved checkpoints. We always load for
     # ALL decision makers (not just the target species) so that single-species
@@ -1085,7 +1182,8 @@ def main():
                 processes=trainer.n_workers,
                 initializer=_worker_init,
                 initargs=(new_builder, trainer.policy_params,
-                          trainer.uniform_bias_init),
+                          trainer.uniform_bias_init,
+                          trainer.hidden_layers, trainer.hidden_dim),
             )
         if maps:
             summary = ", ".join(
@@ -1158,7 +1256,11 @@ def main():
                                        viz=viz,
                                        viz_extra={"gen": gen + 1,
                                                   "iter": i + 1,
-                                                  "T": T})
+                                                  "T": T},
+                                       viz_step=gen * args.iter_per_gen + i,
+                                       rnd_builder=(probe_builder
+                                                    if getattr(args, 'rnd_baseline', False)
+                                                    else None))
                     except Exception as _e:
                         print(f"    [probe] WARN: probe rollout failed: {_e}")
                     if viz is not None and not viz.pump_events():
@@ -1199,7 +1301,11 @@ def main():
                                            viz=viz,
                                            viz_extra={"gen": gen + 1,
                                                       "iter": i + 1,
-                                                      "T": T})
+                                                      "T": T},
+                                           viz_step=gen * args.iter_per_gen + i,
+                                           rnd_builder=(probe_builder
+                                                        if getattr(args, 'rnd_baseline', False)
+                                                        else None))
                         except Exception as _e:
                             print(f"    [probe] WARN: probe rollout failed: {_e}")
                         if viz is not None and not viz.pump_events():

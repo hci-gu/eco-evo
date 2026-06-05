@@ -18,7 +18,8 @@ class ARSTrainer:
     """
     def __init__(self, env_builder, policy_params, sigma=0.1, lr=0.02, n_deltas=8, n_workers=1,
                  alpha=1.0, beta=1.0, obs_normalize=True, top_deltas=None, entropy_coef=0.0,
-                 argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False):
+                 argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False,
+                 hidden_layers=2, hidden_dim=30):
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma
@@ -67,9 +68,13 @@ class ARSTrainer:
 
         # Initialize policies (parent-side; workers hold their own copies)
         self.uniform_bias_init = bool(uniform_bias_init)
+        self.hidden_layers = max(1, int(hidden_layers))
+        self.hidden_dim = max(1, int(hidden_dim))
         self.policies = {}
         for fg_id, (in_dim, out_dim) in policy_params.items():
             self.policies[fg_id] = PolicyNetwork(in_dim, out_dim,
+                                                 hidden_dim=self.hidden_dim,
+                                                 hidden_layers=self.hidden_layers,
                                                  uniform_bias_init=self.uniform_bias_init)
 
         # Observation running statistics, lazily-shaped on first task return.
@@ -101,7 +106,8 @@ class ARSTrainer:
                 self._pool = ctx.Pool(
                     processes=self.n_workers,
                     initializer=_worker_init,
-                    initargs=(env_builder, policy_params, self.uniform_bias_init),
+                    initargs=(env_builder, policy_params, self.uniform_bias_init,
+                              self.hidden_layers, self.hidden_dim),
                 )
             finally:
                 signal.signal(signal.SIGINT, prev_sigint)
