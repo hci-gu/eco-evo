@@ -13,7 +13,6 @@ decision_makers:
     initial_biomass_min: 6000
     initial_biomass_max: 24000
     inference_initial_biomass: 12000
-    muted: true
   - group_id: porpoises
     initial_biomass_min: 6
     initial_biomass_max: 24

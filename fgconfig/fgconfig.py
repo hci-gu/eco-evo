@@ -487,6 +487,8 @@ class FGConfigApp:
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry"),
             ("Energy Content (MJ/ton)", "energy_content", "entry"),
             ("Seed Rate (fraction of cc/tick)", "seed_rate", "entry"),
+            ("Seasonal Amplitude (fraction of growth_rate, 0=off)", "seasonal_amplitude", "entry"),
+            ("Seasonal Period (ticks)", "seasonal_period", "entry"),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range"),
         ]
         for i, (label, key, type) in enumerate(ndm_props):

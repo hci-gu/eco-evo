@@ -270,12 +270,18 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
         if verbose and (t % max(1, n_ticks // 10) == 0):
             print(f"    tick {t+1}/{n_ticks}")
         if viz is not None:
-            viz.update_biomass(env.fgs, tick=t)
-            for fid, h in history.items():
-                viz.update_reward(fid, h[-1], step=t)
-            if not viz.pump_events():
+            try:
+                viz.update_biomass(env.fgs, tick=t)
+                for fid, h in history.items():
+                    viz.update_reward(fid, h[-1], step=t)
+                if not viz.pump_events():
+                    if verbose:
+                        print("    [viz] window closed; stopping early.")
+                    break
+            except KeyboardInterrupt:
                 if verbose:
-                    print("    [viz] window closed; stopping early.")
+                    print(f"\n    interrupted at tick {t+1}/{n_ticks} "
+                          f"(during viz update); returning partial history.")
                 break
     return history
 

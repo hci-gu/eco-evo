@@ -23,6 +23,11 @@ class FunctionalGroup:
         # tillförs per tick i alla celler. Representerar dvalceller / inflöde
         # och förhindrar permanent global utrotning.
         self.seed_rate = float(params.get('seed_rate', 0.0))
+        # Säsongsmodulering av growth_rate (NDM): r_eff(t) = r * (1 + AMP *
+        # sin(2π*(t+phase)/PERIOD)). seasonal_amplitude=0 ⇒ ingen modulering
+        # (legacy). seasonal_period<=0 tolkas som av/off i ecosystem.
+        self.seasonal_amplitude = float(params.get('seasonal_amplitude', 0.0) or 0.0)
+        self.seasonal_period = float(params.get('seasonal_period', 0.0) or 0.0)
         # u_X: maintenance level. The relative energy fill ratio s_X required
         # to break even (q_X = s_X - u_X = 0). Below u_X the population
         # shrinks; above it, it grows. Method.pdf §6.

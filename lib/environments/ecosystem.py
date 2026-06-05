@@ -29,6 +29,16 @@ class EcosystemEnvironment:
         # Cached static structures (built lazily on first step)
         self._static_built = False
 
+        # Säsongsmodulering av NDM growth_rate. Per-FG opt-in via
+        # `seasonal_amplitude` (fraktion av r) och `seasonal_period` (ticks).
+        # r_eff(t) = r * (1 + AMP * sin(2π * (tick + phase) / PERIOD)).
+        # Slumpad startfas per FG och env-instans så olika rollouter ser
+        # olika säsongsfas. AMP=0 eller PERIOD<=0 ⇒ ingen modulering.
+        self._season_phase = {
+            fid: float(np.random.uniform(0.0, max(1.0, float(getattr(fg, 'seasonal_period', 0.0) or 0.0))))
+            for fid, fg in self.fgs.items()
+        }
+
     # ---------- Static caches (built once) ----------
     def _build_static_caches(self):
         H, W = self.grid.height, self.grid.width
@@ -738,6 +748,17 @@ class EcosystemEnvironment:
             if not fg.is_decision_maker:
                 cc = fg.params.get('max_carrying_capacity', 100.0)
                 mg = fg.growth_rate
+                # Säsongsmodulering: opt-in per NDM via FG-fälten
+                # seasonal_amplitude och seasonal_period (se fgconfig).
+                # r_eff = r * (1 + AMP * sin(2π * (tick + phase) / PERIOD)).
+                # AMP=0 eller PERIOD<=0 ⇒ legacy (ingen modulering).
+                amp = float(getattr(fg, 'seasonal_amplitude', 0.0) or 0.0)
+                period = float(getattr(fg, 'seasonal_period', 0.0) or 0.0)
+                if amp != 0.0 and period > 0.0:
+                    phase = self._season_phase.get(fg_id, 0.0)
+                    phase_t = (self.tick_count + phase) / period
+                    season = 1.0 + amp * float(np.sin(2.0 * np.pi * phase_t))
+                    mg = mg * season
                 growth = mg * fg.biomass * (1.0 - fg.biomass / (cc + 1e-9))
                 # Fix 1: rekolonisations-floor. Tillsätter en konstant andel
                 # av cc per tick i alla celler så NDM aldrig kan utrotas

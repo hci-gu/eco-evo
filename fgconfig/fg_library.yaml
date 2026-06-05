@@ -7,6 +7,8 @@
     max_carrying_capacity: 20.0
     energy_content: 2000.0
     seed_rate: 1e-05
+    seasonal_amplitude: 0.5
+    seasonal_period: 500.0
     spawn:
       mode: perlin
       scale: 12.0
@@ -20,7 +22,7 @@
     maintenance_level: 0.5
     max_energy_reserve: 375.0
     resting_metabolism: 3.5
-    movement_speed: 0.1
+    movement_speed: 0.0
     feeding_cost: 1.2
     movement_cost: 1.4
     energy_content: 4500.0
