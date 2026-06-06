@@ -81,6 +81,7 @@ class _NullViz:
     def update_series(self, *a, **kw): pass
     def update_status(self, *a, **kw): pass
     def pump_events(self): return True
+    def wait_for_close(self, *a, **kw): pass
     def close(self): pass
 
 
@@ -377,6 +378,46 @@ class LiveVisualizer:
         except Exception as e:
             self._log_once(f"pump_events failed: {e!r}")
             return True
+
+    def wait_for_close(self, banner: Optional[str] = None) -> None:
+        """Block until the user closes the window (or presses Q/ESC).
+
+        Used at the end of train/inference --visual runs so the final
+        frame stays on screen instead of the window disappearing
+        immediately. Ctrl+C in the terminal still aborts (KeyboardInterrupt
+        propagates out).
+        """
+        if not self.enabled or self._quit:
+            return
+        pg = self._pg
+        try:
+            # Stash a banner the status bar can pick up, if desired.
+            self._final_banner = banner or "run finished — close window to exit (Q/ESC)"
+            # Render one last full frame so the banner is visible.
+            try:
+                self._render_full()
+            except Exception:
+                pass
+            while not self._quit:
+                for event in pg.event.get():
+                    if event.type == pg.QUIT:
+                        self._quit = True
+                    elif event.type == pg.KEYDOWN:
+                        if event.key in (pg.K_q, pg.K_ESCAPE):
+                            self._quit = True
+                        else:
+                            self._handle_key(event.key)
+                    elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                        self._handle_click(event.pos)
+                try:
+                    self._render_full()
+                except Exception:
+                    pass
+                pg.time.wait(50)
+        except KeyboardInterrupt:
+            # Ctrl+C: let it propagate after we mark the window for closing.
+            self._quit = True
+            raise
 
     def close(self) -> None:
         if not self.enabled:

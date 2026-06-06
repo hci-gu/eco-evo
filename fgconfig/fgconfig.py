@@ -419,60 +419,81 @@ class FGConfigApp:
         # Note: not packed here; on_fg_select shows/hides editors based on category.
 
         self.prop_vars = {}
+        # (label, key, type, lo, hi)
+        # lo/hi define the allowed range; rows show "[lo, hi]" label and a
+        # slider next to the Entry. For type=="range" the range applies to
+        # both Min and Max sub-fields.
         main_props = [
-            ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry"),
-            ("Energy Content (MJ/ton)", "energy_content", "entry"),
-            ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry"),
-            ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry"),
-            ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry"),
-            ("Natural Mortality (fraction/tick)", "natural_mortality", "entry"),
-            ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry"),
-            ("Movement Speed (cells/tick)", "movement_speed", "entry"),
-            ("Indivisible Weight (kg)", "min_split_biomass", "entry"),
-            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range")
+            ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry", 0.0, 10000.0),
+            ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
+            ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry", 0.0, 1000.0),
+            ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
+            ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry", 0.0, 1.0),
+            ("Natural Mortality (fraction/tick)", "natural_mortality", "entry", 0.0, 1.0),
+            ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry", 0.0, 1.0),
+            ("Movement Speed (cells/tick)", "movement_speed", "entry", 0.0, 1.0),
+            ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
+            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
         ]
 
-        for i, (label, key, type) in enumerate(main_props):
-            ttk.Label(self.editor_frame, text=label).grid(row=i, column=0, sticky="w", padx=5, pady=2)
+        # Add a thin separator under every variable/input row so the eye
+        # can easily follow which Entry belongs to which label. Rows are
+        # consumed sequentially via ``grow`` so multi-row entries (biomass
+        # range, action costs) can take more than one row without a
+        # separator between their sub-rows.
+        self.editor_frame.columnconfigure(1, weight=1)
+        grow = 0
+        for (label, key, type, lo, hi) in main_props:
+            ttk.Label(self.editor_frame, text=label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
             if type == "entry":
-                var = tk.StringVar()
-                ent = ttk.Entry(self.editor_frame, textvariable=var)
-                ent.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
+                var = self._build_ranged_entry(self.editor_frame, grow, lo, hi)
                 self.prop_vars[key] = var
-            elif type == "check":
-                var = tk.BooleanVar()
-                chk = ttk.Checkbutton(self.editor_frame, variable=var)
-                chk.grid(row=i, column=1, sticky="w", padx=5, pady=2)
-                self.prop_vars[key] = var
+                grow += 1
             elif type == "range":
-                min_var, max_var = self._build_biomass_range_row(self.editor_frame, i)
+                # Min on its own row, Max on the next; sub-row labels go
+                # into column 0 so the range-label/Entry/slider columns
+                # line up with every other property row above.
+                ttk.Label(self.editor_frame, text="  Min:").grid(
+                    row=grow + 1, column=0, sticky="w", padx=5, pady=2)
+                ttk.Label(self.editor_frame, text="  Max:").grid(
+                    row=grow + 2, column=0, sticky="w", padx=5, pady=2)
+                min_var = self._build_ranged_entry(
+                    self.editor_frame, grow + 1, lo, hi, is_int=True)
+                max_var = self._build_ranged_entry(
+                    self.editor_frame, grow + 2, lo, hi, is_int=True)
+                self._link_minmax(min_var, max_var)
                 self.prop_vars["initial_biomass_min"] = min_var
                 self.prop_vars["initial_biomass_max"] = max_var
+                grow += 3
+            ttk.Separator(self.editor_frame, orient="horizontal").grid(
+                row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+            grow += 1
 
-        # Action Costs on one row
-        row_idx = len(main_props)
-        ttk.Label(self.editor_frame, text="Action Costs").grid(row=row_idx, column=0, sticky="w", padx=5, pady=2)
-
-        costs_frame = ttk.Frame(self.editor_frame)
-        costs_frame.grid(row=row_idx, column=1, sticky="w", padx=5, pady=2)
-
+        # Action Costs: header on its own row, Eat and Move each on their
+        # own row matching the standard ranged-entry column layout. No
+        # separators between the three sub-rows.
+        ttk.Label(self.editor_frame, text="Action Costs").grid(row=grow, column=0, sticky="w", padx=5, pady=2)
         action_costs = [
-            ("Eat:", "feeding_cost"),
-            ("Move:", "movement_cost")
+            ("  Eat:", "feeding_cost", 1.0, 10.0),
+            ("  Move:", "movement_cost", 1.0, 10.0),
         ]
-
-        for j, (label, key) in enumerate(action_costs):
-            ttk.Label(costs_frame, text=label).pack(side="left", padx=(0, 2))
-            var = tk.StringVar()
-            ent = ttk.Entry(costs_frame, textvariable=var, width=8)
-            ent.pack(side="left", padx=(0, 10))
+        for j, (label, key, lo, hi) in enumerate(action_costs):
+            ttk.Label(self.editor_frame, text=label).grid(
+                row=grow + 1 + j, column=0, sticky="w", padx=5, pady=2)
+            var = self._build_ranged_entry(self.editor_frame, grow + 1 + j, lo, hi)
             self.prop_vars[key] = var
+        grow += 1 + len(action_costs)
 
-        ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(row=row_idx + 1, column=0, columnspan=2, pady=5)
+        ttk.Separator(self.editor_frame, orient="horizontal").grid(
+            row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+        grow += 1
+        ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
+            row=grow, column=0, columnspan=2, pady=5)
+        grow += 1
 
         # Spawn Strategy editor (DM) — nested LabelFrame inside FG Editor
         self.spawn_frame = ttk.LabelFrame(self.editor_frame, text="Spawn Strategy")
-        self.spawn_frame.grid(row=row_idx + 2, column=0, columnspan=2,
+        self.spawn_frame.grid(row=grow, column=0, columnspan=2,
                               sticky="ew", padx=5, pady=(8, 5))
         self.spawn_vars = {}
         self._build_spawn_editor(self.spawn_frame, self.spawn_vars)
@@ -482,34 +503,49 @@ class FGConfigApp:
         # Note: not packed here; on_fg_select shows/hides editors based on category.
 
         self.ndm_prop_vars = {}
+        # (label, key, type, lo, hi)
         ndm_props = [
-            ("Max Growth (fraction/tick)", "growth_rate", "entry"),
-            ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry"),
-            ("Energy Content (MJ/ton)", "energy_content", "entry"),
-            ("Seed Rate (fraction of cc/tick)", "seed_rate", "entry"),
-            ("Seasonal Amplitude (fraction of growth_rate, 0=off)", "seasonal_amplitude", "entry"),
-            ("Seasonal Period (ticks)", "seasonal_period", "entry"),
-            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range"),
+            ("Max Growth (fraction/tick)", "growth_rate", "entry", 0.0, 1.0),
+            ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry", 0.0, 100000.0),
+            ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
+            ("Seed Rate (fraction of cc/tick)", "seed_rate", "entry", 0.0, 1.0),
+            ("Seasonal Amplitude (fraction of growth_rate, 0=off)", "seasonal_amplitude", "entry", 0.0, 10.0),
+            ("Seasonal Period (ticks)", "seasonal_period", "entry", 0.0, 10000.0),
+            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
         ]
-        for i, (label, key, type) in enumerate(ndm_props):
-            ttk.Label(self.ndm_editor_frame, text=label).grid(row=i, column=0, sticky="w", padx=5, pady=2)
+        self.ndm_editor_frame.columnconfigure(1, weight=1)
+        grow = 0
+        for (label, key, type, lo, hi) in ndm_props:
+            ttk.Label(self.ndm_editor_frame, text=label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
             if type == "range":
-                min_var, max_var = self._build_biomass_range_row(self.ndm_editor_frame, i)
+                ttk.Label(self.ndm_editor_frame, text="  Min:").grid(
+                    row=grow + 1, column=0, sticky="w", padx=5, pady=2)
+                ttk.Label(self.ndm_editor_frame, text="  Max:").grid(
+                    row=grow + 2, column=0, sticky="w", padx=5, pady=2)
+                min_var = self._build_ranged_entry(
+                    self.ndm_editor_frame, grow + 1, lo, hi, is_int=True)
+                max_var = self._build_ranged_entry(
+                    self.ndm_editor_frame, grow + 2, lo, hi, is_int=True)
+                self._link_minmax(min_var, max_var)
                 self.ndm_prop_vars["initial_biomass_min"] = min_var
                 self.ndm_prop_vars["initial_biomass_max"] = max_var
+                grow += 3
             else:
-                var = tk.StringVar()
-                ent = ttk.Entry(self.ndm_editor_frame, textvariable=var)
-                ent.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
+                var = self._build_ranged_entry(self.ndm_editor_frame, grow, lo, hi)
                 self.ndm_prop_vars[key] = var
+                grow += 1
+            ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
+                row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+            grow += 1
 
         ttk.Button(self.ndm_editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
-            row=len(ndm_props), column=0, columnspan=2, pady=5
+            row=grow, column=0, columnspan=2, pady=5
         )
+        grow += 1
 
         # Spawn Strategy editor (NDM) — nested LabelFrame inside FG Editor
         self.ndm_spawn_frame = ttk.LabelFrame(self.ndm_editor_frame, text="Spawn Strategy")
-        self.ndm_spawn_frame.grid(row=len(ndm_props) + 1, column=0, columnspan=2,
+        self.ndm_spawn_frame.grid(row=grow, column=0, columnspan=2,
                                   sticky="ew", padx=5, pady=(8, 5))
         self.ndm_spawn_vars = {}
         self._build_spawn_editor(self.ndm_spawn_frame, self.ndm_spawn_vars)
@@ -1091,28 +1127,35 @@ class FGConfigApp:
                 return mn, mx
         return None, None
 
-    def _build_biomass_range_row(self, parent, row):
+    def _build_biomass_range_row(self, parent, row, lo=0.0, hi=100000.0):
         """Place a Min/Max entry pair side-by-side for the 'Initial Total Biomass Range (ton)' row.
 
-        Returns (min_var, max_var). Live validation accepts only non-negative integers
-        in each field, and forbids typing a max smaller than the current min (and vice
-        versa). Empty values are allowed during editing.
+        Each sub-field has its own ``[lo, hi]`` range label and slider on the
+        right. Returns (min_var, max_var). Live validation: non-negative
+        integers within [lo, hi], with the cross-constraint min <= max.
         """
         container = ttk.Frame(parent)
-        container.grid(row=row, column=1, sticky="w", padx=5, pady=2)
+        container.grid(row=row, column=1, sticky="ew", padx=5, pady=2)
 
         min_var = tk.StringVar()
         max_var = tk.StringVar()
 
-        def _is_pos_int(s):
+        lo_i = int(lo)
+        hi_i = int(hi)
+
+        def _is_pos_int_in_range(s):
             if s == "":
                 return True
             if not s.isdigit():
                 return False
-            return True
+            try:
+                v = int(s)
+            except ValueError:
+                return False
+            return lo_i <= v <= hi_i
 
         def _validate_min(proposed):
-            if not _is_pos_int(proposed):
+            if not _is_pos_int_in_range(proposed):
                 return False
             if proposed == "":
                 return True
@@ -1122,7 +1165,7 @@ class FGConfigApp:
             return True
 
         def _validate_max(proposed):
-            if not _is_pos_int(proposed):
+            if not _is_pos_int_in_range(proposed):
                 return False
             if proposed == "":
                 return True
@@ -1135,15 +1178,189 @@ class FGConfigApp:
         vcmd_max = (parent.register(_validate_max), "%P")
 
         ttk.Label(container, text="Min:").pack(side="left", padx=(0, 2))
+        ttk.Label(container, text=f"[{lo_i}, {hi_i}]",
+                  foreground="#666666", anchor="e", width=14
+                  ).pack(side="left", padx=(0, 2))
         min_entry = ttk.Entry(container, textvariable=min_var, width=10,
                               validate="key", validatecommand=vcmd_min)
-        min_entry.pack(side="left", padx=(0, 8))
+        min_entry.pack(side="left", padx=(0, 4))
+        min_slider = ttk.Scale(container, from_=lo_i, to=hi_i,
+                               orient="horizontal", length=120)
+        min_slider.pack(side="left", padx=(0, 12))
+        self._bind_slider_entry(min_var, min_slider, lo_i, hi_i, is_int=True)
+
         ttk.Label(container, text="Max:").pack(side="left", padx=(0, 2))
+        ttk.Label(container, text=f"[{lo_i}, {hi_i}]",
+                  foreground="#666666", anchor="e", width=14
+                  ).pack(side="left", padx=(0, 2))
         max_entry = ttk.Entry(container, textvariable=max_var, width=10,
                               validate="key", validatecommand=vcmd_max)
-        max_entry.pack(side="left")
+        max_entry.pack(side="left", padx=(0, 4))
+        max_slider = ttk.Scale(container, from_=lo_i, to=hi_i,
+                               orient="horizontal", length=120)
+        max_slider.pack(side="left")
+        self._bind_slider_entry(max_var, max_slider, lo_i, hi_i, is_int=True)
 
         return min_var, max_var
+
+    def _bind_slider_entry(self, var, slider, lo, hi, is_int=False):
+        """Two-way binding between a tk.StringVar (Entry) and a ttk.Scale.
+
+        Updates the slider position when the Entry changes (if the value
+        parses and falls within [lo, hi]), and writes back to the Entry
+        when the slider is dragged. Live in-range validation already
+        happens on the Entry side; this method only mirrors values.
+        """
+        state = {"sync": False}
+
+        def _entry_to_slider(*_a):
+            if state["sync"]:
+                return
+            raw = var.get()
+            try:
+                v = float(raw)
+            except (TypeError, ValueError):
+                return
+            if v < lo or v > hi:
+                return
+            state["sync"] = True
+            try:
+                slider.set(v)
+            finally:
+                state["sync"] = False
+
+        def _slider_to_entry(val):
+            if state["sync"]:
+                return
+            try:
+                v = float(val)
+            except (TypeError, ValueError):
+                return
+            if is_int:
+                v = int(round(v))
+                txt = str(v)
+            else:
+                # Render with reasonable precision; %g trims trailing zeros.
+                txt = f"{v:.4g}"
+            state["sync"] = True
+            try:
+                var.set(txt)
+            finally:
+                state["sync"] = False
+
+        var.trace_add("write", _entry_to_slider)
+        slider.configure(command=_slider_to_entry)
+        # Initial sync (if var already holds a value).
+        _entry_to_slider()
+
+    def _build_ranged_entry(self, parent, row, lo, hi, is_int=None):
+        """Build a [lo, hi] range label + Entry + slider triple in column 1.
+
+        Returns the tk.StringVar bound to the Entry (kept as StringVar so
+        the existing apply_fg_changes / on_fg_select code paths continue
+        to read/write it untouched). Live validation rejects typed values
+        outside [lo, hi]; the slider is kept in sync both directions.
+        """
+        container = ttk.Frame(parent)
+        container.grid(row=row, column=1, sticky="ew", padx=5, pady=2)
+        container.columnconfigure(1, weight=1)
+        return self._build_inline_ranged_entry(container, lo, hi,
+                                               pack=False, width=12,
+                                               is_int=is_int)
+
+    def _link_minmax(self, min_var, max_var):
+        """Enforce min <= max across two StringVars on every write.
+
+        Uses ``trace_add('write', ...)`` to clamp the offending side once
+        a constraint violation appears. This complements the per-field
+        live validation (which only sees its own field's proposed value).
+        """
+        state = {"sync": False}
+
+        def _as_f(s):
+            try:
+                return float(s)
+            except (ValueError, TypeError):
+                return None
+
+        def _on_min(*_a):
+            if state["sync"]:
+                return
+            lo = _as_f(min_var.get())
+            hi = _as_f(max_var.get())
+            if lo is not None and hi is not None and lo > hi:
+                state["sync"] = True
+                try:
+                    max_var.set(min_var.get())
+                finally:
+                    state["sync"] = False
+
+        def _on_max(*_a):
+            if state["sync"]:
+                return
+            lo = _as_f(min_var.get())
+            hi = _as_f(max_var.get())
+            if lo is not None and hi is not None and hi < lo:
+                state["sync"] = True
+                try:
+                    min_var.set(max_var.get())
+                finally:
+                    state["sync"] = False
+
+        min_var.trace_add("write", _on_min)
+        max_var.trace_add("write", _on_max)
+
+    def _build_inline_ranged_entry(self, container, lo, hi, *,
+                                   pack=True, width=12, is_int=None):
+        """Place a [lo, hi] label + Entry + slider into ``container``.
+
+        ``pack=True`` uses .pack() (for the Action Costs row that itself
+        uses pack), ``pack=False`` uses .grid() (for the multi-row FG
+        editor where the outer container has columnconfigure).
+        Returns the tk.StringVar bound to the Entry.
+        """
+        var = tk.StringVar()
+
+        def _validate(proposed):
+            if proposed in ("", ".", "-", "-.", "+", "+."):
+                return True
+            try:
+                v = float(proposed)
+            except ValueError:
+                return False
+            return lo <= v <= hi
+
+        vcmd = (container.register(_validate), "%P")
+
+        # Right-align the range label inside a fixed-width slot so that
+        # the Entry columns line up across rows regardless of how wide the
+        # "[lo, hi]" text is.
+        lbl = ttk.Label(container, text=f"[{lo:g}, {hi:g}]",
+                        foreground="#666666", anchor="e", width=16)
+        ent = ttk.Entry(container, textvariable=var, width=width,
+                        validate="key", validatecommand=vcmd)
+        scl = ttk.Scale(container, from_=lo, to=hi,
+                        orient="horizontal", length=140)
+
+        if pack:
+            lbl.pack(side="left", padx=(0, 4))
+            ent.pack(side="left", padx=(0, 4))
+            scl.pack(side="left", padx=(0, 10))
+        else:
+            lbl.grid(row=0, column=0, sticky="e", padx=(0, 4))
+            ent.grid(row=0, column=1, sticky="ew", padx=(0, 4))
+            scl.grid(row=0, column=2, sticky="ew", padx=(0, 4))
+            container.columnconfigure(2, weight=2)
+
+        # Use integer-rounding either when explicitly requested, or as a
+        # fallback heuristic for wide integer ranges (e.g. action costs).
+        if is_int is None:
+            is_int_range = (lo == int(lo) and hi == int(hi) and (hi - lo) >= 1.0
+                            and hi >= 10)
+        else:
+            is_int_range = bool(is_int)
+        self._bind_slider_entry(var, scl, lo, hi, is_int=is_int_range)
+        return var
 
     def _build_value_range_row(self, parent, row):
         """Build a Min/Max entry pair (side by side) for an impact value range.
@@ -3424,4 +3641,12 @@ if __name__ == "__main__":
     if root is None:
         root = tk.Tk()
     app = FGConfigApp(root)
+    # Auto-load the most recently used project, if any still exists on disk.
+    try:
+        for _recent in list(app.recent_projects):
+            if os.path.exists(_recent):
+                app.load_project_from_path(_recent)
+                break
+    except Exception as _e:
+        print(f"Could not auto-load recent project: {_e}")
     root.mainloop()

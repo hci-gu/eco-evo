@@ -1345,6 +1345,12 @@ def main():
     print(f"==========================================")
     trainer.close()
     if viz is not None:
+        # Keep the final frame on screen until the user closes the
+        # window (Q/ESC or window close). Ctrl+C aborts the wait.
+        try:
+            viz.wait_for_close(banner="training finished — close window to exit (Q/ESC)")
+        except KeyboardInterrupt:
+            print("\n[Interrupted by user] closing window.")
         try:
             viz.close()
         except Exception:

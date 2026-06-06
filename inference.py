@@ -551,10 +551,25 @@ def main():
 
     if verbose:
         print(f"Running {args.ticks} ticks...")
+    interrupted = False
     try:
         history = run_inference(env, policies, mean, var, args.ticks,
                                 verbose=verbose, viz=viz, rnd_env=rnd_env)
+    except KeyboardInterrupt:
+        interrupted = True
+        if verbose:
+            print("\nInterrupted by user (Ctrl+C).")
+        history = {fid: [0.0] for fid in env.fgs}
     finally:
+        if viz is not None and not interrupted:
+            # Keep the final frame on screen until the user closes the
+            # window (or hits Q/ESC). Ctrl+C in the terminal aborts the
+            # wait and proceeds to close immediately.
+            try:
+                viz.wait_for_close(banner="inference finished — close window to exit (Q/ESC)")
+            except KeyboardInterrupt:
+                if verbose:
+                    print("\nInterrupted by user (Ctrl+C); closing window.")
         if viz is not None:
             viz.close()
 
