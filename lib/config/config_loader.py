@@ -537,6 +537,16 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         
         active_fg_set = set(project_fg_ids)
         active_impact_set = set(impact_vars)
+        # Observability: list of FG ids that this DM can see in its input
+        # space. Built from interaction_definitions entries of the form
+        # ``{sid}_observes_{other_id}`` with ``observes: True``. Observed FGs
+        # that are muted are intentionally KEPT in the list (the policy still
+        # gets an input slot for them, fed with 0 at runtime — see
+        # EcosystemEnvironment._build_static_caches). If no observability
+        # entries exist for this sid (legacy projects), we fall back to "see
+        # everything" for backward compatibility.
+        observes_list = []
+        observes_seen_any = False
         for iid, idef in inter_defs.items():
             if iid.startswith(f"{sid}_preys_on_"):
                 prey_id = iid.replace(f"{sid}_preys_on_", "")
@@ -546,6 +556,15 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 if idef.get('preys_on', False):
                     params['menu'].append(prey_id)
                     params['interaction'][iid] = idef
+            elif iid.startswith(f"{sid}_observes_"):
+                obs_id = iid.replace(f"{sid}_observes_", "")
+                # Track that at least one observability entry exists for sid,
+                # so we know to use the explicit list instead of the
+                # see-everything fallback.
+                if 'observes' in idef:
+                    observes_seen_any = True
+                if idef.get('observes', False):
+                    observes_list.append(obs_id)
             elif iid.startswith(f"{sid}_impacted_by_"):
                 impact_id = iid.replace(f"{sid}_impacted_by_", "")
                 # Skip impacts that are muted or not in the project.
@@ -553,6 +572,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                     continue
                 if 'impact' not in params: params['impact'] = {}
                 params['impact'][impact_id] = idef
+        params['observes'] = observes_list if observes_seen_any else None
                 
         fg = FunctionalGroup(sid, params)
 

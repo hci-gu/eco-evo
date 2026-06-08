@@ -151,19 +151,35 @@ Random FG order each tick. Per tick - order per Method.pdf Section steg 1-6
   -> _apply_movement -> _apply_growth
 
   1. _calculate_decisions  (batched over all DMs)
-     - obs_batch (N_dm, H*W, D); D = 2 + (N_fgs - 1) + n_observable_impacts.
-     - Channel layout per DM: [B_own, E_own, B_others..., impact_channels].
+     - obs_batch (N_dm, max_in_dim, H, W). Each DM i writes a compact
+       per-DM layout in the top per_dm_in_dim[i] slots; remaining slots
+       are 0-padded. See Section 4 and Section 41 for the per-DM
+       formula driven by the Observability matrix.
+     - B_others channels for OTHER DMs use VISIBLE biomass
+       B_visible = B_all * (1 - prev_hidden_frac), where
+       prev_hidden_frac is the previous tick's pi_rest. ``Rest`` is a
+       hide action (Section 41); the rested fraction is invisible to
+       other FGs in the next tick. B_own (the observer itself) uses
+       FULL biomass; an FG always sees its own full mass.
      - Raw-obs stats accumulated for trainer merge.
      - If env.obs_mean/obs_var set: obs clipped/normalised before forward.
-     - All DM policies in one batched torch.bmm forward.
+     - All DM policies in one batched torch.bmm forward (weights padded
+       to max_in_dim with zero columns for per-DM compact layout).
      - Output: pi_move (N_dm,4,H,W), pi_rest (N_dm,H,W), pi_eat
        (N_dm,N_all,H,W). Masked before renormalisation.
+     - After pi_rest is finalised, prev_hidden_frac is rewritten to the
+       current tick's pi_rest for use in the NEXT tick's observation.
   2. _apply_impact_mortality
      - Per (FG, impact): linear interpolation in impact_table; clip to
        endpoints. B reduced, R scaled so E=R/B preserved on survivors.
   3. _apply_predation  (fully vectorized)
-     - D = B_pred*pi_eat*max_intake*hunger; scale by B_prey/total_demand;
-       predator energy gain buffered to temp_energy_gains.
+     - hidden_frac_now = current tick's pi_rest (per DM-prey, NDMs=0).
+       B_prey_visible = B_prey_all * (1 - hidden_frac_now). The hidden
+       (rested) fraction is fully protected this tick.
+     - D = B_pred*pi_eat*max_intake*hunger; with Holling-II,
+       a_eff = a / (1 + a*h*B_prey_visible). Demand-cap uses
+       B_prey_visible. Predator energy gain buffered to
+       temp_energy_gains. See Section 41 for tick-asymmetry rationale.
   Sub-threshold cells: NO move-mask zeroing. Instead env replaces those
   cells' distribution with a one-hot argmax over the full 11-action set.
   See section 20.
@@ -188,17 +204,25 @@ N, E, S, W (matches AccessN/E/S/W in Method.pdf). Built by
 lib/environments/ecosystem.py:_build_observation_batch and the
 matching dimension calc is train.py:get_dynamic_policy_params.
 
-Input layout (one observation vector per cell, per DM):
+Input layout (one observation vector per cell, per DM i):
 
-  center : [B_own, E_own, B_others (N_all - 1), impacts (n_obs)]
-  N      : [B_own,        B_others (N_all - 1), impacts (n_obs)]
+  Let k_i = number of OTHER FGs that DM i observes per the Observability
+  matrix (Section 41). Self is always implicitly observed via B_own and
+  is NOT counted in k_i. Legacy projects without any _observes_ keys in
+  interaction_definitions fall back to k_i = N_all - 1 (sees everyone),
+  which is byte-identical to the pre-observability formula.
+
+  center : [B_own, E_own, B_obs (k_i), impacts (n_obs)]
+  N      : [B_own,        B_obs (k_i), impacts (n_obs)]
   E      : same shape as N
   S      : same shape as N
   W      : same shape as N
 
-  center_dim = 1 + 1 + (N_all - 1) + n_obs   # B_own + E_own + others + impacts
-  nbr_dim    = 1     + (N_all - 1) + n_obs   # B_own + others + impacts (no E)
-  in_dim     = center_dim + 4 * nbr_dim
+  center_dim_i = 1 + 1 + k_i + n_obs   # B_own + E_own + obs + impacts
+  nbr_dim_i    = 1     + k_i + n_obs   # B_own + obs + impacts (no E)
+  in_dim_i     = center_dim_i + 4 * nbr_dim_i
+
+  max_in_dim   = max over DMs of in_dim_i (used for batched bmm padding)
 
 Channel semantics:
   B_own      Own-FG biomass at that cell (tonnes; raw, before obs
@@ -208,12 +232,18 @@ Channel semantics:
              center cell, in [0, 1]. Only on the center (neighbour
              energy is intentionally NOT exposed - Method.pdf).
              Drives hunger: low s_X -> hungrier -> stronger Eat.
-  B_others   Biomass of every OTHER FG (all N_all - 1, decision
-             makers AND non-decision makers), in a stable global
-             order set by env.global_fg_order with own-FG removed.
-             Same channels appear on center and on each of the 4
-             neighbours so the policy can compare prey/predator
-             density locally vs. one step away.
+  B_obs      Biomass of every OTHER FG the DM is configured to
+             observe (k_i channels), in stable global order
+             (env.obs_others_idx[i] indexes into global_fg_order).
+             Includes both DMs and NDMs that this DM observes;
+             excludes self (covered by B_own) and any FG that this
+             DM does NOT observe per the Observability matrix.
+             Same k_i channels appear on center and on each of the
+             4 neighbours so the policy can compare local vs
+             one-step-away density. VALUES are visible biomass
+             B_visible = B * (1 - prev_hidden_frac) (Section 41):
+             the fraction of the observed FG that rested last tick
+             is invisible.
   impacts    Values of every impact_id flagged "Observable by
              policy" in the project (one channel per id, e.g.
              windfarm_noise). Raw map values; muted/unobservable
@@ -236,16 +266,25 @@ Output layout (one logit vector per cell, per DM):
 
 Backwards-compat note: an earlier resume revision listed
   in_dim = 2 + (N_fgs - 1) + n_observable_impacts
-which is exactly center_dim above. That formula was incomplete -
-it ignored the 4 * nbr_dim contribution from the von Neumann
-neighbours. Current (and correct) formula is the one above.
+which is exactly center_dim above with k_i=N_all-1. That formula
+was incomplete - it ignored the 4 * nbr_dim contribution from the
+von Neumann neighbours. Current (and correct) formula is the
+per-DM one above; setting k_i = N_all - 1 reproduces the legacy
+"see everyone" behaviour bit-for-bit.
 
-Checkpoint invalidation: toggling "Observable by policy" in the
-GUI (changing n_obs), adding/removing an FG (changing N_all), or
-changing the grid in a way that affects per-cell layout changes
-in_dim and invalidates existing .pth checkpoints (full retraining
-required). The 4x neighbour expansion means even one new
-observable impact bumps in_dim by 5, not 1.
+Batched bmm with per-DM in_dim_i: env._rebuild_batched_weights pads
+each DM's W1 to (max_in_dim, hid) with zero rows for the unused
+top slots. Since the observation tensor also pads those slots with
+0, the padded rows contribute nothing to any DM's forward. Hidden
+width and out_dim remain uniform across DMs (out_dim = 5 + N_all).
+
+Checkpoint invalidation: changing the Observability matrix (k_i
+shifts), toggling "Observable by policy" on impacts (changing
+n_obs), adding/removing an FG (changing N_all), or changing the
+grid in a way that affects per-cell layout changes in_dim_i and
+invalidates existing .pth checkpoints (full retraining required).
+The 4x neighbour expansion means even one new observable impact
+bumps in_dim_i by 5, not 1.
 
 ================================================================
 5. CLI - current flag set for train.py
@@ -401,8 +440,27 @@ Tabs:
     - value clamped to [value_min, value_max] when set.
     - biomass_factor / energy_factor clamped to [0, 1].
 
-  "Interaction Matrix"  Predation (bool), Max Intake Rate I_XY,
-                        per-cell button opening the Impact Table Editor.
+  "FG Interactions"     Tab containing per-(predator,prey) matrices:
+                        Predation (bool, row eats column),
+                        Observability (bool, row observes column -
+                        see Section 41),
+                        Assimilation Factor (float [0,1]),
+                        Handling time (nonneg float).
+                        Non-decision-makers appear as COLUMNS only
+                        (potential prey / observable targets); they
+                        never appear as rows (no policy network).
+                        Self-references in Observability are forced
+                        True and disabled (a DM always sees itself).
+                        Predation cells are linked to Observability:
+                        x preys_on y forces x observes y = True and
+                        disables that observability cell.
+                        Muted FGs grey out both row- and column-cells
+                        in all matrices, consistent with predation.
+
+  "Impact Interactions" Impact Affects (bool, row impacted by column;
+                        NDMs as columns only) + per-cell Impact Table
+                        Editor button (value/biomass_factor/
+                        energy_factor).
 
 Key behaviours:
   - Add from Library filters by category; already-present FGs/impacts
@@ -463,6 +521,13 @@ Sub-3 values are rounded up to 3 by _as_pos_int.
         # Floor, Noise_amp, Noise_scale, ...)
         # seed: <int>                      # optional pin
   interaction_definitions:
+    "<observer>_observes_<target>": {observes: bool}
+        # Per-(observer, target) bit driving the policy input space.
+        # Section 41. Self-pairs are implicitly True and not
+        # editable in the GUI. Muted observer or target is excluded
+        # entirely (muting == FG does not exist) - same semantics
+        # as predation. If NO _observes_ keys exist for an observer
+        # at all, legacy fallback applies (sees every other FG).
     "<predator>_preys_on_<prey>":  {preys_on, energy_gain,
                                     assimilation_factor (0..1, default 1.0),
                                     handling_time (h; 0 = pure Type I)}
@@ -549,6 +614,9 @@ as backup. The parent catches KeyboardInterrupt, calls trainer.close()
 11. KNOWN DISCREPANCIES vs Strategi.pdf / Method.pdf (still open)
 ================================================================
   1. Observable impacts are opt-in per project (one obs channel each).
+     Per-FG observability of OTHER FGs is also opt-in via the
+     Observability matrix (Section 41); legacy projects without
+     _observes_ keys default to "sees everyone".
   2. Memory term N(c, t-1) not implemented.
   3. Movement speed v > 1 not supported (cap 1.0).
   4. Positive "Paverkansdelta" (stocking) not supported.
@@ -608,6 +676,17 @@ Intentionally NOT done:
     4e45e74 Visualisation tool for training and inference.
             (lib/viz/__init__.py, lib/viz/pygame_viz.py, train.py,
              inference.py: --visual flag, LiveVisualizer. Section 40.)
+    (uncommitted) Observability matrix + hide-action (Section 41).
+            (fgconfig.py: new "Observability (row observes column)"
+             matrix in FG Interactions tab, linked to Predation,
+             self-references forced True+disabled, muted rows/cols
+             greyed. config_loader: parses _observes_ keys into
+             fg.params['observes']. ecosystem.py: per-DM in_dim_i
+             with compact obs_others_idx + max_in_dim padding;
+             prev_hidden_frac buffer; visible-biomass in observation
+             and predation. train.py::get_dynamic_policy_params:
+             per-DM in_dim_i formula. trainer._get_dm_ids_and_dim
+             uses env.max_in_dim.)
     9317a54 Assimilation matrix.
             (max_intake_rate moved to species_definitions; new
              assimilation_factor per interaction; handling_time per
@@ -1609,3 +1688,131 @@ Git status for this feature:
   * Committed in 4e45e74 + 06ddda0 (June 2026). All four files
     (lib/viz/__init__.py, lib/viz/pygame_viz.py, train.py,
     inference.py) are tracked. No further action needed.
+
+================================================================
+41. OBSERVABILITY MATRIX + HIDE-ACTION (Rest)
+================================================================
+New subsystem (uncommitted at time of writing) combining a per-DM
+input-space restriction (Observability matrix) with a per-DM hide
+behaviour wired to the existing Rest action. Both halves are driven
+from fgconfig.py and propagate through config_loader, train.py and
+ecosystem.py.
+
+41.1 Observability matrix (GUI)
+  * New matrix in fgconfig.py "FG Interactions" tab, rendered
+    directly below Predation: "Observability (row observes column)".
+    Cell semantics: row_fg observes col_fg if checked.
+  * Rows are decision_makers only (NDMs have no policy network and
+    no input space); columns are all FGs.
+  * Self-cells (row == col) are forced True and disabled - a DM
+    always sees its own B_own/E_own by construction.
+  * Muting greys out both the row and the column of the muted FG,
+    same semantics as Predation (muted == FG does not exist).
+  * Linked to Predation: setting x preys_on y forces
+    x observes y = True AND disables the corresponding observability
+    cell (predator must see its prey). Unchecking predation re-
+    enables the observability cell (unless self/muted).
+  * Persisted to fg_library.yaml interaction_definitions as
+    "<observer>_observes_<target>": {observes: bool} entries.
+
+41.2 Runtime: per-DM input space
+  * lib/config/config_loader.py parses _observes_ keys into
+    fg.params['observes'] = [target_id, ...] (excludes muted FGs).
+    If NO _observes_ keys exist for a DM, params['observes'] is None
+    and the legacy "see everyone" fallback is used.
+  * train.py::get_dynamic_policy_params returns a per-DM in_dim_i
+    based on k_i = number of observed OTHER FGs (Section 4 formula).
+  * ecosystem.py::_build_static_caches builds:
+      - obs_others_idx[i] : (k_i,) j-indices into global_fg_order
+                            for DM i (excluding self).
+      - per_dm_in_dim[i]  : int, the compact in_dim_i.
+      - max_in_dim        : int, max over all DMs (used for padding).
+  * ecosystem.py::_build_observation_batch writes a compact per-DM
+    layout into the top per_dm_in_dim[i] slots of a
+    (N_dm, max_in_dim, H, W) tensor; remaining slots are 0.
+  * ecosystem.py::_rebuild_batched_weights pads each policy's W1
+    to (max_in_dim, hid) with zero rows. Since the obs tensor is
+    also zero in padding slots, padded rows contribute nothing.
+  * trainer.py::_get_dm_ids_and_dim reads env.max_in_dim for
+    batched-tensor sizing.
+
+41.3 Hide-action (Rest is also a hide action)
+  * "Rest" action 4: pi_rest[i, h, w] is the fraction of DM i's
+    biomass that rests in cell (h, w) this tick.
+  * Hide semantics: that fraction is (a) FULLY PROTECTED from
+    predation this tick AND (b) INVISIBLE to other FGs observing
+    this DM in their NEXT tick's observation.
+  * Self-observation is NOT attenuated: B_own always uses full
+    biomass (a DM knows its own total mass, hidden or not).
+  * NDMs have no action policy and therefore never hide - their
+    biomass is always fully edible and fully visible.
+
+41.4 Implementation (ecosystem.py)
+  * prev_hidden_frac : (N_all, H, W) cache, initialised to 0 in
+    _build_static_caches. Indexed by global_fg_order. NDM rows
+    stay 0 permanently.
+  * _build_observation_batch: B_visible_all = B_all *
+    (1 - prev_hidden_frac); B_obs = B_visible_all[obs_others_idx[i]]
+    is used for the observer's center + 4 neighbour B-channels.
+    B_own is taken from full B_all unmodified.
+  * _calculate_decisions (end): prev_hidden_frac is rewritten from
+    THIS tick's pi_rest so that the NEXT tick's observation sees
+    the just-decided hidden mass.
+  * _apply_predation: hidden_frac_now is built from THIS tick's
+    pi_rest. B_prey_visible = B_prey_all * (1 - hidden_frac_now).
+    Holling-II uses B_prey_visible in a_eff; the demand-cap uses
+    B_prey_visible. The hidden fraction never enters predator
+    accounting this tick.
+
+41.5 Tick-asymmetry (intentional; only causally consistent ordering)
+  Within one tick:
+    1. _build_observation_batch uses prev_hidden_frac
+       (= pi_rest from tick t-1).
+    2. _calculate_decisions produces pi_rest_t.
+    3. _apply_predation uses pi_rest_t directly (hidden_frac_now).
+    4. prev_hidden_frac <- pi_rest_t (for tick t+1).
+  Observers therefore see "what was hidden last tick" while
+  protection is determined by the active hide-choice this tick.
+  The reverse (observers seeing pi_rest_t) would be circular -
+  policies decide pi_rest_t based on the observation that would
+  need pi_rest_t as input. Using pi_rest_{t-1} for predation would
+  delay the protective effect of hide by one tick (incoherent).
+  Edge cases:
+    * First tick: prev_hidden_frac = 0 -> nothing hidden, correct
+      (no decisions taken yet).
+    * Stationary pi_rest*: asymmetry vanishes (pi_rest_t = pi_rest_{t-1}).
+    * NDMs: hidden_frac stays 0 in both buffers -> no asymmetry.
+
+41.6 Backwards compatibility
+  * Legacy projects (no _observes_ keys, no Rest hide expectation):
+    k_i = N_all - 1, prev_hidden_frac stays 0 from the start (it is
+    populated only after first _calculate_decisions). Numerically
+    the FIRST tick is byte-identical to the pre-hide path; from
+    tick 2 onward, observers see attenuated B_obs whenever any DM
+    chose nonzero pi_rest in the previous tick. Trained policies
+    from before this change are dimensionally compatible only if
+    no _observes_ keys are present; the semantic shift of B_obs
+    (visible vs raw) generally warrants retraining when hide
+    behaviour matters.
+  * Checkpoint invalidation: any change to the Observability matrix
+    shifts k_i and invalidates .pth files for affected DMs.
+
+41.7 Verification
+  * python3 -m pytest tests/ -q -> 42 passed.
+  * Manual on mareld2.yaml (10x10 grid):
+      - explicit observability (zoo sees only phyto):
+        zooplankton.in_dim = 11, pelagic_fish.in_dim = 16,
+        max_in_dim = 16, env.step() OK.
+      - legacy (no _observes_): in_dim = 16 for all DMs (unchanged).
+      - forced pi_rest = 1 for zooplankton: predation biomass delta
+        on zooplankton = 0.000 (fully protected).
+      - forced pi_rest = 0: predation biomass delta = 0.92 (normal).
+      - prev_hidden_frac after one tick: phytoplankton (NDM) mean=0,
+        zooplankton (DM) mean=0.505, pelagic_fish (DM) mean=0.181.
+
+41.8 Open follow-ups
+  * No GUI editor for the asymmetry (it is hard-coded).
+  * Predators cannot anticipate prey hide-decisions in a feed-
+    forward policy (no memory) - would need RNN / history-stack.
+  * Observability changes invalidate checkpoints; no migration
+    helper is provided.

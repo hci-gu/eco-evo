@@ -132,14 +132,18 @@ class ARSTrainer:
 
     # ---- obs stats helpers ----
     def _get_dm_ids_and_dim(self):
-        """Build a fresh env once to discover dm_ids and obs-dim."""
+        """Build a fresh env once to discover dm_ids and obs-dim.
+
+        With the Observability matrix, each DM has its own ``in_dim`` and
+        the env pads the batched observation tensor to ``max_in_dim``. Use
+        that padded width here so obs_stats arrays are correctly shaped.
+        """
         env = self.env_builder()
         env.policies = self.policies
         # Trigger lazy build by running a single forward pass through
         # _build_static_caches without stepping the simulation.
         env._build_static_caches()
-        n_all = env.N_all
-        D = 2 + (n_all - 1) + 1
+        D = int(env.max_in_dim)
         return list(env.dm_ids), D
 
     def _ensure_obs_stats(self, dm_ids, D):

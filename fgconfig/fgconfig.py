@@ -2123,6 +2123,12 @@ class FGConfigApp:
             widget.destroy()
 
         fgs = sorted(self._all_fg_ids(), key=lambda fg_id: self.fg_display(fg_id).lower())
+        # Row IDs are restricted to decision-making FGs: non-decision-makers
+        # have no policy/interaction choices to configure, so they only ever
+        # appear as columns (potential prey / observable / impact targets).
+        dm_ids = {fg['group_id']
+                  for fg in (self.project_data.get('decision_makers', []) or [])}
+        dm_fgs = [fid for fid in fgs if fid in dm_ids]
         if not fgs:
             ttk.Label(self.matrix_container, text="Add FGs to the project to see interaction matrices.").pack(padx=10, pady=10)
             ttk.Label(self.impact_container, text="Add FGs to the project to see impact interactions.").pack(padx=10, pady=10)
@@ -2138,8 +2144,18 @@ class FGConfigApp:
         # ``max_intake_rate`` matrix (I_XY) has been removed; the value is now a
         # general per-predator property, edited in the FG Editor on the
         # "Project & FGs" tab and stored in ``species_definitions``.
-        self.create_matrix_section("Predation (row eats column)", "preys_on", fgs, fgs, cell_type="bool",
+        self.create_matrix_section("Predation (row eats column)", "preys_on", dm_fgs, fgs, cell_type="bool",
                                    parent=self.matrix_container)
+
+        # Observability matrix: definierar vilka FGs varje FG kan observera i
+        # sitt input space. Muteade rader/kolumner gråmarkeras och
+        # deaktiveras precis som i predationsmatrisen. Om en observerad FG
+        # är muteed matas 0 in i policynätverket vid träning/inferens.
+        # Placerad direkt under predationsmatrisen eftersom de är tätt
+        # kopplade (preys_on => observes forceras True).
+        self.create_matrix_section(
+            "Observability (row observes column)", "observes",
+            dm_fgs, fgs, cell_type="bool", parent=self.matrix_container)
 
         # Assimilation Factor matrix: fraktion av bytets energiinnehåll
         # som faktiskt tas upp vid predation. Värden i [0, 1], default 1.0.
@@ -2147,21 +2163,21 @@ class FGConfigApp:
         # endast om motsvarande preys_on=True.
         self.create_matrix_section(
             "Assimilation Factor (row eats column)", "assimilation_factor",
-            fgs, fgs, cell_type="unit_slider", parent=self.matrix_container)
+            dm_fgs, fgs, cell_type="unit_slider", parent=self.matrix_container)
 
         # Handling time matrix (Holling Type II 'h'). Non-negativ float,
         # default 0.0 (= pure Type I). Cell aktiv endast om preys_on=True.
         self.create_matrix_section(
             "Handling time (row eats column)", "handling_time",
-            fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
+            dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
 
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
         if impacts:
-            self.create_matrix_section("Impact Affects (row impacted by column)", "impact_affects", fgs, impacts,
+            self.create_matrix_section("Impact Affects (row impacted by column)", "impact_affects", dm_fgs, impacts,
                                        cell_type="bool", parent=self.impact_container)
-            self.create_matrix_section("Impact Tables (value, biomass factor, energy factor)", "impact_table", fgs, impacts,
+            self.create_matrix_section("Impact Tables (value, biomass factor, energy factor)", "impact_table", dm_fgs, impacts,
                                        cell_type="table", parent=self.impact_container)
         else:
             ttk.Label(self.impact_container, text="Add impact variables to the project to see impact interactions.").pack(padx=10, pady=10)
@@ -2191,6 +2207,52 @@ class FGConfigApp:
                 preys_var.trace_add("write", updater)
                 updater()
 
+        # Link predation checkboxes to observability matrix:
+        # x preys on y  ==>  x observes y is forced True and the
+        # observability checkbox is disabled (the user cannot uncheck
+        # observability of a prey). When predation is cleared the
+        # observability cell becomes editable again (its previous value
+        # is preserved unless it was forced on by this link — in which
+        # case it stays True so the user can manually clear it if
+        # desired). Self-references and muted-row/col cases are handled
+        # by their own disable-paths (later in this method) and are
+        # still respected: they may add more disabled-state on top but
+        # cannot override the True+disabled set here.
+        for key, data in self.matrix_entries.items():
+            preys_var = data.get("preys_on")
+            if preys_var is None:
+                continue
+            if "_preys_on_" not in key:
+                continue
+            row_id, col_id = key.split("_preys_on_", 1)
+            obs_key = f"{row_id}_observes_{col_id}"
+            obs_entry = self.matrix_entries.get(obs_key, {})
+            obs_var = obs_entry.get("observes")
+            obs_widget = self.matrix_widgets.get(obs_key, {}).get("observes")
+            if obs_var is None or obs_widget is None:
+                continue
+            def make_obs_updater(pvar=preys_var, ovar=obs_var, owid=obs_widget,
+                                 r=row_id, c=col_id):
+                def update(*_):
+                    if bool(pvar.get()):
+                        ovar.set(True)
+                        try:
+                            owid.configure(state="disabled")
+                        except tk.TclError:
+                            pass
+                    else:
+                        # Re-enable only if not a self-reference (which
+                        # is permanently disabled by create_matrix_section).
+                        if r != c:
+                            try:
+                                owid.configure(state="normal")
+                            except tk.TclError:
+                                pass
+                return update
+            obs_updater = make_obs_updater()
+            preys_var.trace_add("write", obs_updater)
+            obs_updater()
+
         # Link impact_affects checkboxes to impact_table button enable-state
         for key, data in self.matrix_entries.items():
             affects_var = data.get("impact_affects")
@@ -2214,7 +2276,10 @@ class FGConfigApp:
                          if self._is_impact_muted(iv)}
         for key, widgets in self.matrix_widgets.items():
             # Parse row/col from the key.
-            if "_preys_on_" in key:
+            if "_observes_" in key:
+                row_id, col_id = key.split("_observes_", 1)
+                disable = row_id in muted_fgs or col_id in muted_fgs
+            elif "_preys_on_" in key:
                 row_id, col_id = key.split("_preys_on_", 1)
                 disable = row_id in muted_fgs or col_id in muted_fgs
             elif "_impacted_by_" in key:
@@ -2291,6 +2356,8 @@ class FGConfigApp:
                 # Unique key for storage
                 if data_key in impact_keys:
                     key = f"{row_id}_impacted_by_{col_id}"
+                elif data_key == "observes":
+                    key = f"{row_id}_observes_{col_id}"
                 else:
                     key = f"{row_id}_preys_on_{col_id}"
                 
@@ -2310,6 +2377,14 @@ class FGConfigApp:
                 val = existing.get(data_key, _default)
 
                 if cell_type == "bool":
+                    # Self-reference in the Observability matrix: a DM
+                    # always observes itself (B_own/E_own are part of the
+                    # center observation by construction). Force the cell
+                    # to True and disable it so the user cannot toggle it
+                    # off. This is independent of mute state.
+                    force_self_observe = (data_key == "observes" and row_id == col_id)
+                    if force_self_observe:
+                        val = True
                     var = tk.BooleanVar(value=bool(val))
                     # Use classic tk.Checkbutton (not ttk) because its
                     # indicator visibly dims when state="disabled", which
@@ -2320,6 +2395,8 @@ class FGConfigApp:
                     widget = tk.Checkbutton(frame, variable=var,
                                             disabledforeground=self.MUTED_FG_COLOR)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                    if force_self_observe:
+                        widget.configure(state="disabled")
                 elif cell_type == "unit_slider":
                     # Enkelt entry-fält med värde i [0, 1]. Default = 1.0
                     # (full assimilation). Live-validering: bara värden i

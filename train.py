@@ -540,33 +540,52 @@ env_builder = _make_env_builder(None)
 
 def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     """
-    Calculates policy network dimensions dynamically based on the state of the environment.
+    Calculates policy network dimensions dynamically based on the state of
+    the environment AND the per-FG Observability matrix.
 
-    ``n_observable_impacts`` is the number of impact_ids flagged as observable
-    in the project (one observation channel per id). When zero, the policy
-    sees only biomass + energy + other-FG channels.
+    Each decision maker has its OWN ``in_dim``, determined by how many other
+    FGs it observes (set in ``fgs[fid].params['observes']``). Non-observed
+    FGs are completely removed from the DM's input space (no slot). Per DM
+    ``i`` with ``k_i`` observed others and ``n_obs_imp`` observable impact
+    channels:
+
+        center_dim_i = 2 + k_i + n_obs_imp      # B_own, E_own, B_obs, impacts
+        nbr_dim_i    = 1 + k_i + n_obs_imp      # B_own, B_obs, impacts
+        in_dim_i     = center_dim_i + 4 * nbr_dim_i
+
+    Legacy behaviour: when ``params['observes']`` is None (no observability
+    matrix in the project YAML) the DM observes all other FGs, recovering
+    the pre-observability ``in_dim = n_fgs + 1 + n_obs_imp + 4*(n_fgs + n_obs_imp)``
+    formula exactly.
+
+    Output is uniform across DMs: Move(4) + Rest(1) + Eat(N_fgs).
+    Eat-slots are indexed by a globally sorted FG list; slots outside the
+    predator's menu are permanently masked to 0 by the environment.
+
+    ``n_observable_impacts`` is the number of impact_ids flagged as
+    observable in the project (one observation channel per id).
     """
     params = {}
     n_fgs = len(fgs)
-    # Per cell the policy sees the von Neumann neighbourhood (center + N/E/S/W)
-    # as prescribed by Method.pdf. The center contributes
-    #   center_dim = n_fgs + 1 + n_observable_impacts
-    # (B_own, E_own, B_others(N-1), observable impacts). Each of the four
-    # neighbours contributes the same set *minus* E_own:
-    #   nbr_dim    = n_fgs     + n_observable_impacts
-    # Total input dimension:
-    n_obs = int(n_observable_impacts)
-    center_dim = n_fgs + 1 + n_obs
-    nbr_dim = n_fgs + n_obs
-    in_dim = center_dim + 4 * nbr_dim
-    
-    # Output is now uniform across all decision makers: Move(4) + Rest(1) + Eat(N_fgs).
-    # Eat-slots are indexed by a globally sorted FG list; slots outside the
-    # predator's menu are permanently masked to 0 by the environment.
+    n_obs_imp = int(n_observable_impacts)
     out_dim = 5 + n_fgs
     for fg_id, fg in fgs.items():
-        if fg.is_decision_maker:
-            params[fg_id] = (in_dim, out_dim)
+        if not fg.is_decision_maker:
+            continue
+        observes = fg.params.get('observes')
+        if observes is None:
+            # Legacy: see every other FG.
+            k_i = max(0, n_fgs - 1)
+        else:
+            # Count observed FGs other than self. Filter against the
+            # currently-active FG set so observed FGs that have been muted
+            # (and therefore removed from ``fgs``) don't inflate the input
+            # dimension.
+            k_i = sum(1 for oid in observes if oid != fg_id and oid in fgs)
+        center_dim_i = 2 + k_i + n_obs_imp
+        nbr_dim_i = 1 + k_i + n_obs_imp
+        in_dim_i = center_dim_i + 4 * nbr_dim_i
+        params[fg_id] = (in_dim_i, out_dim)
     return params
 
 def main():

@@ -168,11 +168,81 @@ class EcosystemEnvironment:
             dtype=self.dtype,
         )
 
+        # Observability: per-DM list of j-indices (into ``global_fg_order``)
+        # of OTHER FGs that this DM observes. The DM's own slot is handled
+        # separately (always part of the observation via B_own / E_own) and
+        # is NOT included in obs_others_idx. Non-observed FGs are
+        # COMPLETELY REMOVED from this DM's input space — there is no
+        # input slot allocated for them at all. This shrinks the per-DM
+        # observation dimension. Because the batched bmm forward pass
+        # requires a common D over all DMs, the observation tensor is
+        # padded to ``self.max_in_dim`` and W1 weight columns for the
+        # padding slots are zero (set in _rebuild_batched_weights), so
+        # padded slots have no effect on any DM's network.
+        #
+        # When a DM's ``observes`` param is None (legacy projects without
+        # an observability matrix) the DM sees ALL other FGs.
+        self.obs_others_idx = []  # list[np.ndarray[int]], len N_dm
+        for i, fid in enumerate(self.dm_ids):
+            j_own = int(self.dm_index_in_all[i])
+            observes = self.fgs[fid].params.get('observes')
+            if observes is None:
+                # Legacy: see all other FGs in stable global order.
+                idx = [j for j in range(self.N_all) if j != j_own]
+            else:
+                observed_set = set(observes)
+                idx = [j for j, other_id in enumerate(self.global_fg_order)
+                       if j != j_own and other_id in observed_set]
+            self.obs_others_idx.append(np.asarray(idx, dtype=np.int64))
+
+        # Number of impact observation channels (matches train.py's
+        # get_dynamic_policy_params formula). Stored here so observation
+        # dim calculations stay consistent in one place.
+        n_obs_imp = len(self.observable_impact_vars)
+        # Per-DM input dimension. Each DM sees:
+        #   center : [B_own, E_own, B_obs_others (k_i), impacts (n_obs_imp)]
+        #   neighbour (N/E/S/W) : [B_own, B_obs_others (k_i), impacts (n_obs_imp)]
+        # so center_dim_i = 2 + k_i + n_obs_imp and nbr_dim_i = 1 + k_i + n_obs_imp.
+        self.per_dm_in_dim = np.zeros(self.N_dm, dtype=np.int64)
+        for i in range(self.N_dm):
+            k_i = int(self.obs_others_idx[i].shape[0])
+            center_dim_i = 2 + k_i + n_obs_imp
+            nbr_dim_i = 1 + k_i + n_obs_imp
+            self.per_dm_in_dim[i] = center_dim_i + 4 * nbr_dim_i
+        self.max_in_dim = int(self.per_dm_in_dim.max()) if self.N_dm > 0 else 0
+        self.n_obs_imp = n_obs_imp
+
+        # Hide-action support: ``Rest`` is now also a hide action. The
+        # fraction of each DM's biomass that chose rest in cell (h, w)
+        # last tick is invisible to every OTHER FG observing it and is
+        # also protected from predation this tick (set in
+        # _apply_predation using the *current* tick's pi_rest).
+        #
+        # ``prev_hidden_frac`` shape: (N_all, H, W). Row j corresponds to
+        # global_fg_order[j]. NDMs have no action policy and therefore
+        # never hide -> their rows stay 0. The observation builder uses
+        # this to attenuate B_obs_others for other DMs; B_own stays full.
+        self.prev_hidden_frac = np.zeros((self.N_all, self.H, self.W), dtype=self.dtype)
+
         self._rebuild_batched_weights()
         self._static_built = True
 
     def _rebuild_batched_weights(self):
-        """Stack per-DM PolicyNetwork weights into batched tensors for bmm-based forward."""
+        """Stack per-DM PolicyNetwork weights into batched tensors for bmm-based forward.
+
+        With variable per-DM in_dim (driven by the Observability matrix —
+        non-observed FGs are removed from the input space entirely), each
+        policy may have a different ``layers[0].in_features``. To keep the
+        batched ``torch.bmm`` forward path we pad every W1 row-block to
+        ``max_in_dim = max_i(in_dim_i)`` with zero columns at the bottom.
+        The observation tensor is then padded to ``max_in_dim`` in
+        _build_observation_batch (padding values are 0), so the padding
+        slots contribute exactly 0 to each DM's hidden activation —
+        semantically identical to having no input slot at all.
+
+        Hidden width and out_dim must still be uniform across DMs (they
+        are, by construction in train.py).
+        """
         self._batched_ready = False
         if self.N_dm == 0:
             return
@@ -183,10 +253,21 @@ class EcosystemEnvironment:
             layers = [m for m in first.net if isinstance(m, torch.nn.Linear)]
             if len(layers) != 3:
                 return
-            in_dim = layers[0].in_features
             hid = layers[0].out_features
             out_dim = layers[2].out_features
-            W1 = torch.empty(self.N_dm, in_dim, hid)
+            max_in_dim = int(self.max_in_dim)
+            # Sanity: each policy's in_dim must equal this DM's expected
+            # per-DM in_dim (built from observes + impacts). Otherwise the
+            # policies were sized inconsistently with the env's
+            # observability config — fall back to non-batched path.
+            for i, fid in enumerate(self.dm_ids):
+                lin = [m for m in self.policies[fid].net if isinstance(m, torch.nn.Linear)]
+                if (lin[0].in_features != int(self.per_dm_in_dim[i])
+                        or lin[0].out_features != hid
+                        or lin[1].in_features != hid or lin[1].out_features != hid
+                        or lin[2].in_features != hid or lin[2].out_features != out_dim):
+                    return
+            W1 = torch.zeros(self.N_dm, max_in_dim, hid)
             b1 = torch.empty(self.N_dm, hid)
             W2 = torch.empty(self.N_dm, hid, hid)
             b2 = torch.empty(self.N_dm, hid)
@@ -195,11 +276,11 @@ class EcosystemEnvironment:
             for i, fid in enumerate(self.dm_ids):
                 net = self.policies[fid].net
                 lin = [m for m in net if isinstance(m, torch.nn.Linear)]
-                if (lin[0].in_features != in_dim or lin[0].out_features != hid
-                        or lin[1].in_features != hid or lin[1].out_features != hid
-                        or lin[2].in_features != hid or lin[2].out_features != out_dim):
-                    return
-                W1[i] = lin[0].weight.detach().t()
+                in_dim_i = int(self.per_dm_in_dim[i])
+                # PyTorch Linear weight is (out, in); .t() -> (in, out).
+                # Place this DM's W1 in the top-left in_dim_i rows; the
+                # remaining (max_in_dim - in_dim_i) rows stay zero.
+                W1[i, :in_dim_i, :] = lin[0].weight.detach().t()
                 b1[i] = lin[0].bias.detach()
                 W2[i] = lin[1].weight.detach().t()
                 b2[i] = lin[1].bias.detach()
@@ -208,7 +289,7 @@ class EcosystemEnvironment:
             self._W1, self._b1 = W1, b1
             self._W2, self._b2 = W2, b2
             self._W3, self._b3 = W3, b3
-            self._in_dim = in_dim
+            self._in_dim = max_in_dim
             self._out_dim = out_dim
             self._batched_ready = True
         except Exception:
@@ -240,25 +321,42 @@ class EcosystemEnvironment:
 
     # ---------- Observation builder (batched across all DMs) ----------
     def _build_observation_batch(self):
-        """Returns observation array of shape (N_dm, H*W, D), dtype float32.
+        """Returns observation array of shape (N_dm, H*W, max_D), float32.
 
-        Per cell the policy sees the von Neumann neighbourhood (center + 4
-        neighbours N, E, S, W) as prescribed by Method.pdf. Layout per cell:
+        Per cell each DM sees its von Neumann neighbourhood (center + 4
+        neighbours N, E, S, W). Layout per DM ``i`` with ``k_i`` observed
+        other FGs (from the Observability matrix) and ``n_obs_imp`` impact
+        layers:
 
-          center : [B_own, E_own, B_others (N_all-1), impacts (n_obs_imp)]
-          N      : [B_own,        B_others (N_all-1), impacts (n_obs_imp)]
-          E      : same as N
-          S      : same as N
-          W      : same as N
+          center  : [B_own, E_own, B_obs_others (k_i), impacts (n_obs_imp)]
+          N/E/S/W : [B_own,        B_obs_others (k_i), impacts (n_obs_imp)]
 
-        ``E_own`` (energy fill ratio s_X) is only included for the center cell;
-        neighbour energy levels are intentionally omitted. Out-of-bounds
-        neighbour values are zero-padded. Neighbour order is N, E, S, W
-        matching the AccessN/E/S/W convention in Method.pdf.
+        ``E_own`` (energy fill ratio s_X) is only included for the center
+        cell; neighbour energy levels are intentionally omitted. Non-observed
+        FGs are COMPLETELY REMOVED from the layout (no slot allocated) —
+        this is the semantic difference from the previous "0-mask" approach.
+
+        Because ``torch.bmm`` requires a common D over all DMs, each DM's
+        compact layout is written into the top ``per_dm_in_dim[i]`` slots
+        of a ``(N_dm, max_in_dim, H, W)`` tensor; the remaining padding
+        slots stay 0. W1's bottom rows are also 0 (see
+        _rebuild_batched_weights), so padding contributes nothing.
+
+        Out-of-bounds neighbour values are zero-padded. Neighbour order
+        is N, E, S, W matching the AccessN/E/S/W convention in
+        Method.pdf.
         """
         H, W = self.H, self.W
-        N_all = self.N_all
-        B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0).astype(self.dtype, copy=False)
+        B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order],
+                         axis=0).astype(self.dtype, copy=False)
+        # Visible biomass: the rest-action is a hide action, so the
+        # fraction of each FG that rested last tick is invisible to
+        # observers. ``prev_hidden_frac`` is initialised to 0 (first tick
+        # -> everything visible) and updated at the end of
+        # _calculate_decisions. Self-observation (B_own) intentionally
+        # uses the *full* biomass (the FG always sees its full mass,
+        # hidden or not).
+        B_visible_all = B_all * (np.float32(1.0) - self.prev_hidden_frac)
         impact_layers = []
         for iid in self.observable_impact_vars:
             m = self.grid.get_map(iid)
@@ -269,10 +367,8 @@ class EcosystemEnvironment:
             impact_layers.append(m)
         n_obs_imp = len(impact_layers)
 
-        center_dim = 2 + (N_all - 1) + n_obs_imp      # incl. E_own
-        nbr_dim = 1 + (N_all - 1) + n_obs_imp         # excl. E_own
-        D = center_dim + 4 * nbr_dim
-        obs = np.zeros((self.N_dm, D, H, W), dtype=self.dtype)
+        max_D = int(self.max_in_dim)
+        obs = np.zeros((self.N_dm, max_D, H, W), dtype=self.dtype)
 
         # Helper: shift a 2-D field by one cell in the given direction with
         # zero padding for out-of-bounds neighbours.
@@ -288,36 +384,48 @@ class EcosystemEnvironment:
                 out[:, 1:] = field[:, :-1]
             return out
 
+        # Pre-shift impact layers once (shared across all DMs).
+        impact_shifts = {d: [_shift(layer, d) for layer in impact_layers]
+                         for d in ('N', 'E', 'S', 'W')}
+
         for i, pred_id in enumerate(self.dm_ids):
             pred_fg = self.fgs[pred_id]
             B_own = pred_fg.biomass.astype(self.dtype, copy=False)
             E_own = pred_fg.energy_level.astype(self.dtype, copy=False)
-            j_idx = int(self.dm_index_in_all[i])
-            # Build (N_all - 1) "other FG" biomass stack in stable order.
-            if N_all > 1:
-                B_others = np.concatenate([B_all[:j_idx], B_all[j_idx + 1:]], axis=0)
+            obs_idx = self.obs_others_idx[i]  # j-indices into global_fg_order
+            k_i = int(obs_idx.shape[0])
+
+            # Compact "observed others" stack (k_i, H, W) using fancy
+            # index. Uses VISIBLE biomass (hidden/rested fraction of
+            # each observed FG is removed). B_own (this DM) is handled
+            # separately below and uses the full biomass.
+            if k_i > 0:
+                B_obs = B_visible_all[obs_idx]
             else:
-                B_others = np.zeros((0, H, W), dtype=self.dtype)
+                B_obs = np.zeros((0, H, W), dtype=self.dtype)
+
+            center_dim_i = 2 + k_i + n_obs_imp
+            nbr_dim_i = 1 + k_i + n_obs_imp
 
             # --- Center ---
             obs[i, 0] = B_own
             obs[i, 1] = E_own
-            if N_all > 1:
-                obs[i, 2:2 + (N_all - 1)] = B_others
-            for k, layer in enumerate(impact_layers):
-                obs[i, 2 + (N_all - 1) + k] = layer
+            if k_i > 0:
+                obs[i, 2:2 + k_i] = B_obs
+            for kk, layer in enumerate(impact_layers):
+                obs[i, 2 + k_i + kk] = layer
 
             # --- Neighbours N, E, S, W ---
             for d_idx, direction in enumerate(('N', 'E', 'S', 'W')):
-                base = center_dim + d_idx * nbr_dim
+                base = center_dim_i + d_idx * nbr_dim_i
                 obs[i, base] = _shift(B_own, direction)
-                if N_all > 1:
-                    for kk in range(N_all - 1):
-                        obs[i, base + 1 + kk] = _shift(B_others[kk], direction)
-                for k, layer in enumerate(impact_layers):
-                    obs[i, base + 1 + (N_all - 1) + k] = _shift(layer, direction)
+                if k_i > 0:
+                    for kk in range(k_i):
+                        obs[i, base + 1 + kk] = _shift(B_obs[kk], direction)
+                for kk, layer_shift in enumerate(impact_shifts[direction]):
+                    obs[i, base + 1 + k_i + kk] = layer_shift
 
-        return obs.transpose(0, 2, 3, 1).reshape(self.N_dm, H * W, D)
+        return obs.transpose(0, 2, 3, 1).reshape(self.N_dm, H * W, max_D)
 
     # ---------- Batched policy inference ----------
     def _batched_policy_forward(self, obs_batch, return_logits=False):
@@ -528,6 +636,18 @@ class EcosystemEnvironment:
         # Keep self.pi for non-DM consumers (always None entries here)
         self.pi = {fid: None for fid in self.fgs if not self.fgs[fid].is_decision_maker}
 
+        # --- Update prev_hidden_frac for NEXT tick's observation. ---
+        # ``Rest`` is a hide action: the fraction of each DM that chose
+        # rest in cell (h, w) this tick is invisible to other FGs in
+        # their next observation. Stored on the (N_all, H, W) grid;
+        # NDM rows (no policy / no pi_rest) remain 0 -> always fully
+        # visible. Predation in the current tick uses ``self.pi_rest``
+        # directly (see _apply_predation), independent of this cache.
+        self.prev_hidden_frac = np.zeros((self.N_all, self.H, self.W), dtype=self.dtype)
+        for i, fid in enumerate(self.dm_ids):
+            j = int(self.dm_index_in_all[i])
+            self.prev_hidden_frac[j] = self.pi_rest[i].astype(self.dtype, copy=False)
+
     # ---------- Predation (fully vectorized) ----------
     def _apply_predation(self):
         if self.N_dm == 0:
@@ -537,13 +657,34 @@ class EcosystemEnvironment:
         hunger = np.stack([self.fgs[fid].get_hunger().astype(self.dtype, copy=False) for fid in self.dm_ids], axis=0)
         B_prey_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
 
+        # ``Rest`` is a hide action: the fraction of each DM-prey that
+        # chose rest THIS tick is fully protected from predation. Build
+        # a (N_all, H, W) hidden-fraction array using the current tick's
+        # pi_rest for DMs (NDMs stay 0 -> always fully edible). Predators
+        # can only attack the visible fraction. Note: this uses the
+        # CURRENT tick's pi_rest (just computed in _calculate_decisions),
+        # while the observation that drove those decisions used the
+        # PREVIOUS tick's pi_rest (prev_hidden_frac) -- semantically:
+        # observers see what was hidden last tick, while protection is
+        # determined by the active hide-choice this tick.
+        hidden_frac_now = np.zeros((self.N_all, self.H, self.W), dtype=self.dtype)
+        for i, fid in enumerate(self.dm_ids):
+            j = int(self.dm_index_in_all[i])
+            hidden_frac_now[j] = self.pi_rest[i].astype(self.dtype, copy=False)
+        visible_frac = np.float32(1.0) - hidden_frac_now
+        B_prey_visible = B_prey_all * visible_frac
+
         a = self.max_intake_mat[:, :, None, None]  # (N_dm, N_all, 1, 1)
         if getattr(self, '_has_holling2', False):
             # Fix 2: Holling Type II. Effektiv attack-rate deflateras lokalt
             # av handling-tid * lokal byte-biomassa, så intake per predator
             # mättas i stället för att skena vid hög P.
             h = self.handling_time_mat[:, :, None, None]
-            Bp = B_prey_all[None, :, :, :]
+            # Holling-II saturation uses the *visible* prey biomass:
+            # hidden prey is functionally inaccessible this tick, so it
+            # neither contributes to attack-rate saturation nor to total
+            # available intake.
+            Bp = B_prey_visible[None, :, :, :]
             a_eff = a / (1.0 + a * h * Bp)
         else:
             a_eff = a
@@ -556,9 +697,11 @@ class EcosystemEnvironment:
         )
 
         total_demand = D.sum(axis=0)  # (N_all, H, W)
+        # Demand is capped at the *visible* prey biomass: the hidden
+        # (rested) fraction is protected entirely this tick.
         scale = np.where(
-            total_demand > B_prey_all,
-            B_prey_all / (total_demand + np.float32(1e-9)),
+            total_demand > B_prey_visible,
+            B_prey_visible / (total_demand + np.float32(1e-9)),
             np.float32(1.0),
         ).astype(self.dtype, copy=False)
         actual = D * scale[None, :, :, :]

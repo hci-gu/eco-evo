@@ -538,6 +538,102 @@ interaction_definitions:
   zooplankton_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
+  gadoids_observes_benthic_community:
+    observes: false
+  gadoids_observes_gadoids:
+    observes: true
+  gadoids_observes_pelagic_fish:
+    observes: true
+  gadoids_observes_phytoplankton:
+    observes: false
+  gadoids_observes_porpoises:
+    observes: true
+  gadoids_observes_seabirds:
+    observes: false
+  gadoids_observes_seals:
+    observes: true
+  gadoids_observes_zooplankton:
+    observes: false
+  pelagic_fish_observes_benthic_community:
+    observes: false
+  pelagic_fish_observes_gadoids:
+    observes: true
+  pelagic_fish_observes_pelagic_fish:
+    observes: true
+  pelagic_fish_observes_phytoplankton:
+    observes: false
+  pelagic_fish_observes_porpoises:
+    observes: true
+  pelagic_fish_observes_seabirds:
+    observes: true
+  pelagic_fish_observes_seals:
+    observes: true
+  pelagic_fish_observes_zooplankton:
+    observes: true
+  porpoises_observes_benthic_community:
+    observes: false
+  porpoises_observes_gadoids:
+    observes: true
+  porpoises_observes_pelagic_fish:
+    observes: true
+  porpoises_observes_phytoplankton:
+    observes: false
+  porpoises_observes_porpoises:
+    observes: true
+  porpoises_observes_seabirds:
+    observes: false
+  porpoises_observes_seals:
+    observes: true
+  porpoises_observes_zooplankton:
+    observes: false
+  seabirds_observes_benthic_community:
+    observes: false
+  seabirds_observes_gadoids:
+    observes: false
+  seabirds_observes_pelagic_fish:
+    observes: true
+  seabirds_observes_phytoplankton:
+    observes: false
+  seabirds_observes_porpoises:
+    observes: false
+  seabirds_observes_seabirds:
+    observes: true
+  seabirds_observes_seals:
+    observes: false
+  seabirds_observes_zooplankton:
+    observes: false
+  seals_observes_benthic_community:
+    observes: false
+  seals_observes_gadoids:
+    observes: true
+  seals_observes_pelagic_fish:
+    observes: true
+  seals_observes_phytoplankton:
+    observes: false
+  seals_observes_porpoises:
+    observes: true
+  seals_observes_seabirds:
+    observes: true
+  seals_observes_seals:
+    observes: true
+  seals_observes_zooplankton:
+    observes: false
+  zooplankton_observes_benthic_community:
+    observes: false
+  zooplankton_observes_gadoids:
+    observes: false
+  zooplankton_observes_pelagic_fish:
+    observes: false
+  zooplankton_observes_phytoplankton:
+    observes: true
+  zooplankton_observes_porpoises:
+    observes: false
+  zooplankton_observes_seabirds:
+    observes: false
+  zooplankton_observes_seals:
+    observes: false
+  zooplankton_observes_zooplankton:
+    observes: true
 impact_definitions:
   bottom_trawling:
     display_name: "Bottom Trawling"
