@@ -248,14 +248,13 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     dm_ids = list(env.dm_ids)
     N_all = env.N_all
     N_dm = env.N_dm
-    n_obs_imp = len(getattr(env, 'observable_impact_vars', []) or [])
-    # Per cell the policy sees the von Neumann neighbourhood (center + N/E/S/W)
-    # per Method.pdf. Center: B_own, E_own, B_others(N_all-1), observable
-    # impacts. Each neighbour: same minus E_own. Total:
-    center_dim = 2 + (N_all - 1) + n_obs_imp
-    nbr_dim = 1 + (N_all - 1) + n_obs_imp
-    D = center_dim + 4 * nbr_dim
-    in_dim = D
+    # With the Observability matrix each DM has its own compact ``in_dim``
+    # (see Section 4 / Section 41 in mareld_resume.txt). ``env.max_in_dim``
+    # is the padded width used for the batched bmm tensor and is what
+    # ``obs_stats`` arrays must match. Per-DM checkpoints are saved with
+    # their own compact ``per_dm_in_dim[i]``, which we cross-check below.
+    D = int(env.max_in_dim)
+    per_dm_in_dim = list(env.per_dm_in_dim)
     out_dim = 5 + N_all
 
     # ---- Cross-check checkpoint files against project's DM set ----------
@@ -316,17 +315,32 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
                 f"(state_dict keys: {list(sd.keys())[:6]}...)."
             )
         ck_in, ck_out, ck_hidden, ck_layers = arch
-        if ck_in != in_dim or ck_out != out_dim:
+        # Per-DM expected in_dim: the Observability matrix gives each DM
+        # its own compact input layout (Section 4 / Section 41). The
+        # checkpoint was saved with that compact dim, not with the
+        # padded ``max_in_dim``.
+        expected_in = int(per_dm_in_dim[i])
+        if ck_in != expected_in or ck_out != out_dim:
+            obs_list = env.fgs[fid].params.get('observes')
+            if obs_list is None:
+                obs_desc = ("legacy 'see all other FGs' (no _observes_ "
+                            "entries for this DM)")
+            else:
+                others = [o for o in obs_list if o != fid and o in env.fgs]
+                obs_desc = (f"{len(others)} other FG(s): {sorted(others)}")
             raise PolicyCheckpointMismatchError(
                 f"Checkpoint '{ckpt_path}' has incompatible input/output "
                 f"dimensions: file has (in={ck_in}, out={ck_out}) but the "
-                f"current project expects (in={in_dim}, out={out_dim}).\n"
+                f"current project expects (in={expected_in}, out={out_dim}).\n"
+                f"  Current Observability config for '{fid}': observes "
+                f"{obs_desc}.\n"
                 f"  Hint: this checkpoint was trained against a different "
-                f"set of functional groups or observable impacts. Use the "
-                f"matching project YAML, or retrain."
+                f"Observability matrix, FG set, or observable impacts. "
+                f"Adjust the Observability matrix in fgconfig so '{fid}' "
+                f"yields in_dim={ck_in}, or retrain."
             )
 
-        net = PolicyNetwork(in_dim, out_dim,
+        net = PolicyNetwork(expected_in, out_dim,
                             hidden_dim=ck_hidden if ck_hidden else 30,
                             hidden_layers=max(1, ck_layers))
         try:
@@ -334,7 +348,7 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
         except Exception as e:
             raise PolicyCheckpointMismatchError(
                 f"Could not load weights from '{ckpt_path}' into a "
-                f"PolicyNetwork(in={in_dim}, out={out_dim}, "
+                f"PolicyNetwork(in={expected_in}, out={out_dim}, "
                 f"hidden_dim={ck_hidden}, hidden_layers={ck_layers}): {e}"
             )
         net.eval()
@@ -541,10 +555,13 @@ def main():
             from lib.viz import LiveVisualizer
             extra = ([fid + "_rnd" for fid in env.fgs.keys()]
                      if rnd_env is not None else None)
+            ndm_ids = [fid for fid, fg in env.fgs.items()
+                       if not getattr(fg, 'is_decision_maker', False)]
             viz = LiveVisualizer(fg_ids=list(env.fgs.keys()),
                                  grid_shape=args.grid,
                                  mode="inference",
-                                 extra_plot_ids=extra)
+                                 extra_plot_ids=extra,
+                                 ndm_ids=ndm_ids or None)
         except Exception as e:
             print(f"[viz] failed to start visualiser: {e!r}", file=sys.stderr)
             viz = None

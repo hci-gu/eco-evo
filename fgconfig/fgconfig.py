@@ -2167,9 +2167,12 @@ class FGConfigApp:
 
         # Handling time matrix (Holling Type II 'h'). Non-negativ float,
         # default 0.0 (= pure Type I). Cell aktiv endast om preys_on=True.
-        self.create_matrix_section(
-            "Handling time (row eats column)", "handling_time",
-            dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
+        # Dold på användarens begäran — värdena bevaras i library YAML
+        # och i interaction_definitions, men matrisen renderas inte i
+        # GUI:t. Avkommentera raderna nedan för att återaktivera.
+        # self.create_matrix_section(
+        #     "Handling time (row eats column)", "handling_time",
+        #     dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
 
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]

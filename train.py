@@ -934,12 +934,15 @@ def main():
                        if getattr(fg, 'is_decision_maker', False)]
             _extra = ([fid + "_rnd" for fid in temp_env.fgs.keys()]
                       if getattr(args, 'rnd_baseline', False) else None)
+            _ndm_ids = [fid for fid, fg in temp_env.fgs.items()
+                        if not getattr(fg, 'is_decision_maker', False)]
             viz = LiveVisualizer(
                 fg_ids=list(temp_env.fgs.keys()),
                 grid_shape=(GRID_HEIGHT, GRID_WIDTH),
                 mode="train",
                 plot_fg_ids=_dm_ids or None,
                 extra_plot_ids=_extra,
+                ndm_ids=_ndm_ids or None,
             )
         except Exception as _e:
             print(f"[viz] failed to start visualiser: {_e!r}")

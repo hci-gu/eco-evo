@@ -121,6 +121,7 @@ class LiveVisualizer:
         title: Optional[str] = None,
         plot_fg_ids: Optional[Sequence[str]] = None,
         extra_plot_ids: Optional[Sequence[str]] = None,
+        ndm_ids: Optional[Sequence[str]] = None,
     ):
         import pygame
         self._pg = pygame
@@ -143,6 +144,11 @@ class LiveVisualizer:
         for eid in self._extra_plot_ids:
             if eid not in self.plot_fg_ids:
                 self.plot_fg_ids.append(eid)
+        # Non-decision-makers: only shown on the 'biomass' tab. On every
+        # other tab (reward, energy, ...) they are filtered out by
+        # ``_active_plot_ids``. ``_rnd``-baseline series follow the same
+        # rule based on their stripped base id.
+        self._ndm_ids: set = set(ndm_ids or [])
         self.grid_h, self.grid_w = int(grid_shape[0]), int(grid_shape[1])
         # Heatmaps ska alltid renderas i samma fysiska storlek som ett
         # 32x32-rutnt hade haft. Referens: cell_px=6 vid 32x32 -> 192 px.
@@ -659,6 +665,24 @@ class LiveVisualizer:
             (hm_x + cbar_w - max_lbl.get_width(),
              cbar_y + cbar_strip_h + 1))
 
+    def _active_plot_ids(self) -> list:
+        """Return ``plot_fg_ids`` filtered for the active tab.
+
+        Non-decision-makers (``self._ndm_ids``) only appear on the
+        ``biomass`` tab; on every other tab they are filtered out. The
+        same filter applies to their ``<id>_rnd`` baseline counterparts.
+        """
+        active = self._tabs[self._active_tab]
+        if active == "biomass" or not self._ndm_ids:
+            return list(self.plot_fg_ids)
+        out = []
+        for fid in self.plot_fg_ids:
+            base = fid[:-4] if fid.endswith("_rnd") else fid
+            if base in self._ndm_ids:
+                continue
+            out.append(fid)
+        return out
+
     def _draw_plot(self) -> None:
         pg = self._pg
         x, y, w, h = self._plot_rect
@@ -698,9 +722,11 @@ class LiveVisualizer:
         tsurf = self._font.render(ylabel, True, (200, 200, 210))
         self._screen.blit(tsurf, (x + 6, y + 20))
 
+        active_ids = self._active_plot_ids()
+
         # Determine y-range across all buffers.
         all_vals: list = []
-        for fid in self.plot_fg_ids:
+        for fid in active_ids:
             if self._solo is not None and self._solo != fid:
                 continue
             if not self._plot_enabled.get(fid, True):
@@ -721,7 +747,7 @@ class LiveVisualizer:
 
         # Determine x-range (use sample index per buffer; aligned by step).
         xmins, xmaxs = [], []
-        for fid in self.plot_fg_ids:
+        for fid in active_ids:
             if self._solo is not None and self._solo != fid:
                 continue
             if not self._plot_enabled.get(fid, True):
@@ -762,7 +788,7 @@ class LiveVisualizer:
                          (px0, yy), (px0 + pw, yy), 1)
 
         # Plot lines.
-        for fid in self.plot_fg_ids:
+        for fid in active_ids:
             if self._solo is not None and self._solo != fid:
                 continue
             if not self._plot_enabled.get(fid, True):
@@ -788,7 +814,7 @@ class LiveVisualizer:
         lx = px0 + pw + 8
         ly = py0
         self._legend_rects = []
-        for fid in self.plot_fg_ids:
+        for fid in active_ids:
             col = self._fg_colour[fid]
             faded = (self._solo is not None and self._solo != fid)
             enabled = self._plot_enabled.get(fid, True)
