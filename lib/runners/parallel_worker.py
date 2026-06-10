@@ -15,6 +15,12 @@ import numpy as np
 import torch
 
 from lib.runners.policy import PolicyNetwork
+from lib.runners.early_extinction import (
+    check_early_extinction,
+    early_extinction_penalty,
+    init_early_extinction_state,
+    normalize_early_extinction_config,
+)
 
 # Module-level globals, populated by _worker_init in each worker process.
 _ENV_BUILDER = None
@@ -102,10 +108,13 @@ def _evaluate_coevo_task(task):
         argmax_penalty = task.get('argmax_penalty', 0.0)
         softmax_temperature = task.get('softmax_temperature', 1.0)
         integral_reward = task.get('integral_reward', False)
+        early_extinction = normalize_early_extinction_config(
+            task.get('early_extinction'))
         builder_override = task.get('env_builder')
     else:
         (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+        early_extinction = normalize_early_extinction_config(None)
     _ = (entropy_coef, argmax_penalty)
 
     # Sync ALL policy weights
@@ -134,30 +143,48 @@ def _evaluate_coevo_task(task):
     # Initial state per evaluated species.
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
     r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+    early_state = init_early_extinction_state(env, fg_list, early_extinction)
+    elapsed_ticks = 0
+    collapsed_species = []
 
     if integral_reward and n_ticks > 0:
         b_sum = {fid: 0.0 for fid in fg_list}
         r_sum = {fid: 0.0 for fid in fg_list}
         for _ in range(n_ticks):
             env.step()
+            elapsed_ticks += 1
             for fid in fg_list:
                 b_sum[fid] += float(env.fgs[fid].biomass.sum())
                 r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
-        bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
-        rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
+            collapsed_species = check_early_extinction(
+                env, early_state, elapsed_ticks)
+            if collapsed_species:
+                break
+        denom = max(1, elapsed_ticks)
+        bh = {fid: b_sum[fid] / denom for fid in fg_list}
+        rh = {fid: r_sum[fid] / denom for fid in fg_list}
     else:
         for _ in range(n_ticks):
             env.step()
+            elapsed_ticks += 1
+            collapsed_species = check_early_extinction(
+                env, early_state, elapsed_ticks)
+            if collapsed_species:
+                break
         bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
 
     fitness = {}
+    collapse_penalty = (
+        early_extinction_penalty(early_state, elapsed_ticks, n_ticks)
+        if collapsed_species else 0.0
+    )
     for fid in fg_list:
         eps_b = max(1e-6 * b0[fid], 1e-9)
         eps_r = max(1e-6 * r0[fid], 1e-9)
         delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
         delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
-        fitness[fid] = float(alpha * delta_b + beta * delta_r)
+        fitness[fid] = float(alpha * delta_b + beta * delta_r - collapse_penalty)
 
     samples = None
     if obs_pack is not None and getattr(env, '_obs_sum', None) is not None:
@@ -182,6 +209,9 @@ def _evaluate_coevo_task(task):
                     'eat_frac': float(env._action_eat_frac[i] / denom_i),
                     'present_frac': float(denom_i / max(cnt, 1)),
                 }
+                if collapsed_species:
+                    act_diag_dict[fid]['early_stop_tick'] = int(elapsed_ticks)
+                    act_diag_dict[fid]['collapsed_species'] = ",".join(collapsed_species)
             except (ValueError, AttributeError):
                 pass
         if not act_diag_dict:
@@ -225,27 +255,37 @@ def _evaluate_task(task):
         argmax_penalty = task.get('argmax_penalty', 0.0)
         softmax_temperature = task.get('softmax_temperature', 1.0)
         integral_reward = task.get('integral_reward', False)
+        early_extinction = normalize_early_extinction_config(
+            task.get('early_extinction'))
         builder_override = task.get('env_builder')
     elif len(task) == 11:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+        early_extinction = normalize_early_extinction_config(None)
     elif len(task) == 10:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature) = task
+        early_extinction = normalize_early_extinction_config(None)
     elif len(task) == 9:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty) = task
+        early_extinction = normalize_early_extinction_config(None)
     elif len(task) == 8:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack, entropy_coef = task
+        early_extinction = normalize_early_extinction_config(None)
     elif len(task) == 7:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack = task
+        early_extinction = normalize_early_extinction_config(None)
     elif len(task) == 6:
         fg_to_train, weights_dict, n_ticks, alpha, beta, seed = task
+        early_extinction = normalize_early_extinction_config(None)
     elif len(task) == 5:
         fg_to_train, weights_dict, n_ticks, alpha, beta = task
+        early_extinction = normalize_early_extinction_config(None)
     else:
         fg_to_train, weights_dict, n_ticks = task
         alpha, beta = 1.0, 1.0
+        early_extinction = normalize_early_extinction_config(None)
 
     # Sync policy weights
     for fg_id, w in weights_dict.items():
@@ -273,19 +313,34 @@ def _evaluate_task(task):
 
     b0 = env.fgs[fg_to_train].biomass.sum()
     r0 = env.fgs[fg_to_train].energy_reserve.sum()
+    early_state = init_early_extinction_state(
+        env, [fg_to_train], early_extinction)
+    elapsed_ticks = 0
+    collapsed_species = []
 
     # Integral-reward: medel över alla ticks istället för slutvärde.
     if integral_reward and n_ticks > 0:
         b_sum = 0.0; r_sum = 0.0
         for _ in range(n_ticks):
             env.step()
+            elapsed_ticks += 1
             b_sum += float(env.fgs[fg_to_train].biomass.sum())
             r_sum += float(env.fgs[fg_to_train].energy_reserve.sum())
-        bh = b_sum / n_ticks
-        rh = r_sum / n_ticks
+            collapsed_species = check_early_extinction(
+                env, early_state, elapsed_ticks)
+            if collapsed_species:
+                break
+        denom = max(1, elapsed_ticks)
+        bh = b_sum / denom
+        rh = r_sum / denom
     else:
         for _ in range(n_ticks):
             env.step()
+            elapsed_ticks += 1
+            collapsed_species = check_early_extinction(
+                env, early_state, elapsed_ticks)
+            if collapsed_species:
+                break
         bh = env.fgs[fg_to_train].biomass.sum()
         rh = env.fgs[fg_to_train].energy_reserve.sum()
 
@@ -299,6 +354,8 @@ def _evaluate_task(task):
     # bonus/penalty (which live on the [0,1] scale) have comparable weight
     # for all species regardless of the absolute |delta_b+delta_r| magnitude.
     fitness = float(alpha * delta_b + beta * delta_r)
+    if collapsed_species:
+        fitness -= early_extinction_penalty(early_state, elapsed_ticks, n_ticks)
     # entropy_coef / argmax_penalty arguments are accepted for backward
     # compatibility with task-tuple length 8/9 but are intentionally unused
     # here; the trainer applies them post hoc via act_diag.
@@ -319,6 +376,9 @@ def _evaluate_task(task):
                 'rest_frac': float(env._action_rest_frac[i] / cnt),
                 'eat_frac': float(env._action_eat_frac[i] / cnt),
             }
+            if collapsed_species:
+                act_diag['early_stop_tick'] = int(elapsed_ticks)
+                act_diag['collapsed_species'] = ",".join(collapsed_species)
         except (ValueError, AttributeError):
             act_diag = None
     return (fitness, samples, act_diag)

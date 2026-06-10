@@ -652,6 +652,28 @@ def main():
                              "negative gradient on its own via prey collapse during the rollout. Default: True.")
     parser.add_argument("--no_integral_reward", dest="integral_reward", action="store_false",
                         help="Disable integral reward, use classic final-value fitness.")
+    parser.add_argument("--early-extinction-threshold", "--early_extinction_threshold",
+                        dest="early_extinction_threshold", type=float, default=0.1,
+                        help="Early-stop a rollout when any monitored species falls "
+                             "to this fraction of its starting biomass. Set 0 to "
+                             "disable. Default: 0.1.")
+    parser.add_argument("--early-extinction-penalty", "--early_extinction_penalty",
+                        dest="early_extinction_penalty", type=float, default=10.0,
+                        help="Fitness penalty applied when early extinction triggers. "
+                             "The effective penalty is scaled from 2x early in the "
+                             "rollout down to 1x near the end. Default: 10.0.")
+    parser.add_argument("--early-extinction-monitor", "--early_extinction_monitor",
+                        dest="early_extinction_monitor",
+                        choices=["all", "decision_makers", "trained"],
+                        default="all",
+                        help="Species set monitored for early extinction. 'all' "
+                             "includes non-decision-makers such as phytoplankton; "
+                             "'decision_makers' monitors only trainable species; "
+                             "'trained' monitors only target species. Default: all.")
+    parser.add_argument("--early-extinction-grace-ticks", "--early_extinction_grace_ticks",
+                        dest="early_extinction_grace_ticks", type=int, default=0,
+                        help="Ticks to ignore before early-extinction checks begin. "
+                             "Default: 0.")
     parser.add_argument("--temp_anneal_gens", type=int, default=10,
                         help="Number of generations over which the temperature is annealed linearly "
                              "from --temp_start to --temp_end. After that it stays at --temp_end. "
@@ -1003,6 +1025,13 @@ def main():
     print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
     print(f"Co-evolution:   {args.coevolution} {'(default: on)' if args.coevolution else '(user, disabled -> round-robin)'}")
     print(f"Mortality:      {args.mortality} {'(default)' if args.mortality == 'off' else '(user)'}")
+    if args.early_extinction_threshold > 0 and args.early_extinction_penalty > 0:
+        print(f"Early Extinct:  threshold={args.early_extinction_threshold:g} "
+              f"penalty={args.early_extinction_penalty:g} "
+              f"monitor={args.early_extinction_monitor} "
+              f"grace={max(0, args.early_extinction_grace_ticks)}")
+    else:
+        print("Early Extinct:  disabled")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:
@@ -1025,6 +1054,12 @@ def main():
         pass
 
     # Create the trainer with all relevant policy dimensions
+    early_extinction_cfg = {
+        'threshold': args.early_extinction_threshold,
+        'penalty': args.early_extinction_penalty,
+        'monitor': args.early_extinction_monitor,
+        'grace_ticks': args.early_extinction_grace_ticks,
+    }
     trainer = ARSTrainer(env_builder_local, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
                          n_workers=n_workers, alpha=args.alpha, beta=args.beta,
                          obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved,
@@ -1032,7 +1067,8 @@ def main():
                          integral_reward=args.integral_reward,
                          uniform_bias_init=args.uniform_bias_init,
                          hidden_layers=int(args.policynetwork[0]),
-                         hidden_dim=int(args.policynetwork[1]))
+                         hidden_dim=int(args.policynetwork[1]),
+                         early_extinction=early_extinction_cfg)
 
     # Optionally resume from previously saved checkpoints. We always load for
     # ALL decision makers (not just the target species) so that single-species

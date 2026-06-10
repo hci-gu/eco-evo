@@ -1,0 +1,16 @@
+python3 train.py \
+    --project mareld2.yaml \
+    --profile info \
+    --worlds_refresh iteration \
+    --grid '16*16' \
+    --iter-per-gen 50 \
+    --n_eval_ticks 5000 \
+    --n_deltas 16 \
+    --run-name allminussb \
+    --visual \
+    --mortality on \
+    --policynetwork 1 30 \
+    --early-extinction-threshold 0.1 \
+    --early-extinction-penalty 10 \
+    --early-extinction-monitor all \
+    --early-extinction-grace-ticks 0

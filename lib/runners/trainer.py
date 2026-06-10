@@ -5,6 +5,12 @@ import signal
 from lib.runners.policy import PolicyNetwork
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_coevo_task
+from lib.runners.early_extinction import (
+    check_early_extinction,
+    early_extinction_penalty,
+    init_early_extinction_state,
+    normalize_early_extinction_config,
+)
 
 class ARSTrainer:
     """ARS trainer with optional ARS-V2 extensions:
@@ -19,7 +25,7 @@ class ARSTrainer:
     def __init__(self, env_builder, policy_params, sigma=0.1, lr=0.02, n_deltas=8, n_workers=1,
                  alpha=1.0, beta=1.0, obs_normalize=True, top_deltas=None, entropy_coef=0.0,
                  argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False,
-                 hidden_layers=2, hidden_dim=30):
+                 hidden_layers=2, hidden_dim=30, early_extinction=None):
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma
@@ -50,6 +56,7 @@ class ARSTrainer:
         # leads to prey collapse during the rollout gets lower reward because
         # the average drops, even if the final value would have been comparable.
         self.integral_reward = bool(integral_reward)
+        self.early_extinction = normalize_early_extinction_config(early_extinction)
         # Default: use all deltas (no truncation). When set, must be in [1, n_deltas].
         if top_deltas is None:
             self.top_deltas = self.n_deltas
@@ -267,6 +274,13 @@ class ARSTrainer:
             keys = ('entropy', 'move_frac', 'rest_frac', 'eat_frac')
             out = {k: float(np.mean([d[k] for d in valid])) for k in keys}
             out['max_entropy'] = valid[0]['max_entropy']
+            stopped = [d for d in valid if 'early_stop_tick' in d]
+            if stopped:
+                out['early_stop_count'] = len(stopped)
+                out['early_stop_total'] = len(valid)
+                out['early_stop_tick'] = float(np.mean([
+                    d['early_stop_tick'] for d in stopped
+                ]))
             return out
 
         if self._pool is None:
@@ -357,6 +371,7 @@ class ARSTrainer:
                             'softmax_temperature': self.softmax_temperature,
                             'integral_reward': self.integral_reward,
                             'env_builder': world_builders[0],
+                            'early_extinction': self.early_extinction,
                         })
             else:
                 for sign in (+1, -1):
@@ -378,6 +393,7 @@ class ARSTrainer:
                                 'softmax_temperature': self.softmax_temperature,
                                 'integral_reward': self.integral_reward,
                                 'env_builder': world_builders[m],
+                                'early_extinction': self.early_extinction,
                             })
 
             results = self._pool.map(_evaluate_task, tasks)
@@ -503,6 +519,15 @@ class ARSTrainer:
             mv = act_move_sum / act_n; rs = act_rest_sum / act_n; et = act_eat_sum / act_n
             act_str = (f"mv/rs/et={mv:.2f}/{rs:.2f}/{et:.2f}"
                        f" H_act={H_mean:.3f}/{H_max:.3f} ({H_mean/H_max:.0%}) ")
+            stopped = [
+                d for d in (act_pos + act_neg)
+                if d is not None and 'early_stop_count' in d
+            ]
+            if stopped:
+                stop_n = sum(int(d['early_stop_count']) for d in stopped)
+                stop_total = sum(int(d['early_stop_total']) for d in stopped)
+                stop_tick = float(np.mean([d['early_stop_tick'] for d in stopped]))
+                act_str += f"early_stop={stop_n}/{stop_total}@{stop_tick:.0f} "
         # Print compact line (action distribution first, then reward stats).
         print(f"  [diag {fg_to_train}] {act_str}"
               f"r_mean={r_mean:+.4e} r_std={r_std:.4e} "
@@ -551,6 +576,10 @@ class ARSTrainer:
 
         b0 = env.fgs[fg_id].biomass.sum()
         r0 = env.fgs[fg_id].energy_reserve.sum()
+        early_state = init_early_extinction_state(
+            env, [fg_id], self.early_extinction)
+        elapsed_ticks = 0
+        collapsed_species = []
 
         # Integral-reward: accumulate bh/rh per tick and divide by tick
         # count at the end. Otherwise: use only the final value (classic).
@@ -558,13 +587,24 @@ class ARSTrainer:
             b_sum = 0.0; r_sum = 0.0
             for _ in range(n_ticks):
                 env.step()
+                elapsed_ticks += 1
                 b_sum += float(env.fgs[fg_id].biomass.sum())
                 r_sum += float(env.fgs[fg_id].energy_reserve.sum())
-            bh = b_sum / n_ticks
-            rh = r_sum / n_ticks
+                collapsed_species = check_early_extinction(
+                    env, early_state, elapsed_ticks)
+                if collapsed_species:
+                    break
+            denom = max(1, elapsed_ticks)
+            bh = b_sum / denom
+            rh = r_sum / denom
         else:
             for _ in range(n_ticks):
                 env.step()
+                elapsed_ticks += 1
+                collapsed_species = check_early_extinction(
+                    env, early_state, elapsed_ticks)
+                if collapsed_species:
+                    break
             bh = env.fgs[fg_id].biomass.sum()
             rh = env.fgs[fg_id].energy_reserve.sum()
 
@@ -577,6 +617,9 @@ class ARSTrainer:
         # in train_step *after* z-score normalisation of the ecological
         # component across the 2*n_deltas batch (principled scaling).
         fitness = self.alpha * delta_b + self.beta * delta_r
+        if collapsed_species:
+            fitness -= early_extinction_penalty(
+                early_state, elapsed_ticks, n_ticks)
 
         samples = None
         if obs_mean is not None and getattr(env, '_obs_sum', None) is not None:
@@ -599,6 +642,9 @@ class ARSTrainer:
                     'eat_frac': float(env._action_eat_frac[i] / denom_i),
                     'present_frac': float(denom_i / max(cnt, 1)),
                 }
+                if collapsed_species:
+                    act_diag['early_stop_tick'] = int(elapsed_ticks)
+                    act_diag['collapsed_species'] = ",".join(collapsed_species)
             except (ValueError, AttributeError):
                 act_diag = None
         return fitness, samples, act_diag
@@ -640,30 +686,51 @@ class ARSTrainer:
 
         b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+        early_state = init_early_extinction_state(
+            env, fg_list, self.early_extinction)
+        elapsed_ticks = 0
+        collapsed_species = []
 
         if self.integral_reward and n_ticks > 0:
             b_sum = {fid: 0.0 for fid in fg_list}
             r_sum = {fid: 0.0 for fid in fg_list}
             for _ in range(n_ticks):
                 env.step()
+                elapsed_ticks += 1
                 for fid in fg_list:
                     b_sum[fid] += float(env.fgs[fid].biomass.sum())
                     r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
-            bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
-            rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
+                collapsed_species = check_early_extinction(
+                    env, early_state, elapsed_ticks)
+                if collapsed_species:
+                    break
+            denom = max(1, elapsed_ticks)
+            bh = {fid: b_sum[fid] / denom for fid in fg_list}
+            rh = {fid: r_sum[fid] / denom for fid in fg_list}
         else:
             for _ in range(n_ticks):
                 env.step()
+                elapsed_ticks += 1
+                collapsed_species = check_early_extinction(
+                    env, early_state, elapsed_ticks)
+                if collapsed_species:
+                    break
             bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
             rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
 
         fitness = {}
+        collapse_penalty = (
+            early_extinction_penalty(early_state, elapsed_ticks, n_ticks)
+            if collapsed_species else 0.0
+        )
         for fid in fg_list:
             eps_b = max(1e-6 * b0[fid], 1e-9)
             eps_r = max(1e-6 * r0[fid], 1e-9)
             delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
             delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
-            fitness[fid] = float(self.alpha * delta_b + self.beta * delta_r)
+            fitness[fid] = float(
+                self.alpha * delta_b + self.beta * delta_r - collapse_penalty
+            )
 
         samples = None
         if obs_mean is not None and getattr(env, '_obs_sum', None) is not None:
@@ -688,6 +755,9 @@ class ARSTrainer:
                         'eat_frac': float(env._action_eat_frac[i] / denom_i),
                         'present_frac': float(denom_i / max(cnt, 1)),
                     }
+                    if collapsed_species:
+                        act_diag_dict[fid]['early_stop_tick'] = int(elapsed_ticks)
+                        act_diag_dict[fid]['collapsed_species'] = ",".join(collapsed_species)
                 except (ValueError, AttributeError):
                     pass
             if not act_diag_dict:
@@ -784,6 +854,13 @@ class ARSTrainer:
                 pf_rows = [r['present_frac'] for r in rows if 'present_frac' in r]
                 if pf_rows:
                     a['present_frac'] = float(np.mean(pf_rows))
+                stopped = [r for r in rows if 'early_stop_tick' in r]
+                if stopped:
+                    a['early_stop_count'] = len(stopped)
+                    a['early_stop_total'] = len(rows)
+                    a['early_stop_tick'] = float(np.mean([
+                        r['early_stop_tick'] for r in stopped
+                    ]))
                 out[fid] = a
             return out if out else None
 
@@ -846,6 +923,7 @@ class ARSTrainer:
                         'softmax_temperature': self.softmax_temperature,
                         'integral_reward': self.integral_reward,
                         'env_builder': world_builders[0],
+                        'early_extinction': self.early_extinction,
                     })
                 for i in range(self.n_deltas):
                     wd_neg = _build_weights_dict(-1.0, i)
@@ -862,6 +940,7 @@ class ARSTrainer:
                         'softmax_temperature': self.softmax_temperature,
                         'integral_reward': self.integral_reward,
                         'env_builder': world_builders[0],
+                        'early_extinction': self.early_extinction,
                     })
             else:
                 # M>1: dict-tasks with per-world env_builder override. Layout:
@@ -883,6 +962,7 @@ class ARSTrainer:
                                 'softmax_temperature': self.softmax_temperature,
                                 'integral_reward': self.integral_reward,
                                 'env_builder': world_builders[m],
+                                'early_extinction': self.early_extinction,
                             })
             results = self._pool.map(_evaluate_coevo_task, tasks)
             # Drain samples for obs-stats accumulation regardless of M.
@@ -977,6 +1057,7 @@ class ARSTrainer:
             act_str = ""
             H_sum = 0.0; mv_sum = 0.0; rs_sum = 0.0; et_sum = 0.0; n_act = 0
             pf_sum = 0.0; pf_n = 0
+            stop_n = 0; stop_total = 0; stop_ticks = []
             H_max_seen = None
             for arr in (act_pos, act_neg):
                 for d in arr:
@@ -988,6 +1069,10 @@ class ARSTrainer:
                     H_max_seen = a['max_entropy']; n_act += 1
                     if 'present_frac' in a:
                         pf_sum += a['present_frac']; pf_n += 1
+                    if 'early_stop_count' in a:
+                        stop_n += int(a['early_stop_count'])
+                        stop_total += int(a['early_stop_total'])
+                        stop_ticks.append(float(a['early_stop_tick']))
             if n_act > 0:
                 Hm = H_max_seen or 1.0
                 Hmean = H_sum / n_act
@@ -997,6 +1082,11 @@ class ARSTrainer:
                 if pf_n > 0:
                     pf = pf_sum / pf_n
                     act_str += f"present={pf:.0%} "
+                if stop_n > 0:
+                    act_str += (
+                        f"early_stop={stop_n}/{stop_total}"
+                        f"@{float(np.mean(stop_ticks)):.0f} "
+                    )
 
             print(f"  [coevo {fid}] {act_str}"
                   f"r_mean={r_mean:+.4e} r_std={r_std:.4e} "
