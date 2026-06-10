@@ -254,7 +254,22 @@ class EcosystemEnvironment:
         self.prev_hidden_frac = np.zeros((self.N_all, self.H, self.W), dtype=self.dtype)
 
         self._rebuild_batched_weights()
+        self._apply_accessibility_biomass_mask()
         self._static_built = True
+
+    def _apply_accessibility_biomass_mask(self):
+        """Keep biomass/energy off inaccessible cells when an accessibility map exists."""
+        access_map = self.grid.get_map('accessibility')
+        if access_map is None:
+            return
+        habitat = (access_map > 0).astype(self.dtype, copy=False)
+        for fg in self.fgs.values():
+            if fg.biomass is not None:
+                fg.biomass = (fg.biomass * habitat).astype(self.dtype, copy=False)
+            if fg.energy_reserve is not None:
+                fg.energy_reserve = (fg.energy_reserve * habitat).astype(self.dtype, copy=False)
+            if fg.temp_energy_gains is not None:
+                fg.temp_energy_gains = (fg.temp_energy_gains * habitat).astype(self.dtype, copy=False)
 
     def _rebuild_batched_weights(self):
         """Stack per-DM PolicyNetwork weights into batched tensors for bmm-based forward.
@@ -364,6 +379,7 @@ class EcosystemEnvironment:
         self._apply_predation()
         self._apply_movement()
         self._apply_growth()
+        self._apply_accessibility_biomass_mask()
 
         self.tick_count += 1
 

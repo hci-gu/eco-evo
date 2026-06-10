@@ -234,13 +234,17 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
     return initial_b
 
 
-def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None):
+def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None,
+                          allowed_mask=None):
     lib = load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
 
     rng = np.random.default_rng(seed) if seed is not None else np.random
     spawn_rng_base = spawn_seed if spawn_seed is not None else seed
+    spawn_allowed_mask = None
+    if allowed_mask is not None:
+        spawn_allowed_mask = np.asarray(allowed_mask).reshape(grid_size).astype(bool)
 
     # Topo-sort FG ids by env_driven refs so dependencies spawn first.
     _all_ids = list(spec_defs.keys())
@@ -320,9 +324,9 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                      else rng)
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
-            allowed_mask=None, rng=spawn_rng,
+            allowed_mask=spawn_allowed_mask, rng=spawn_rng,
             spawn_spec=spawn_spec, project_seed=fg_spawn_seed,
-            env_context={'env_fields': env_fields})
+            env_context={'env_fields': env_fields, 'allowed_mask': spawn_allowed_mask})
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
@@ -423,7 +427,8 @@ def load_impact_spawn_specs(project_path):
     return out
 
 
-def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train', spawn_seed=None):
+def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
+                        spawn_seed=None, allowed_mask=None):
     """Load a project config and build its FunctionalGroups.
 
     ``spawn_seed`` (optional) controls the per-cell biomass distribution
@@ -440,6 +445,9 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     # that a whole generation can share one map even though individual
     # rollouts still vary in total biomass / starting energy via ``seed``.
     spawn_rng_base = spawn_seed if spawn_seed is not None else seed
+    spawn_allowed_mask = None
+    if allowed_mask is not None:
+        spawn_allowed_mask = np.asarray(allowed_mask).reshape(grid_size).astype(bool)
     lib = load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
@@ -687,9 +695,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # Cluster-aware spawn (see _spawn_biomass_distribution): per-cell
         # floor = 5 * min_split_biomass pushes spawned cells safely above
         # the sub-threshold mask (which lock-in previously affected
-        # seals/porpoises). accessibility filtering is threaded in once
-        # accessibility maps become part of the project config; for now
-        # allowed_mask=None means the full grid is eligible.
+        # seals/porpoises). When an inference/API caller supplies an
+        # allowed_mask, spawning is restricted to those cells.
         min_per_cell = 5.0 * float(getattr(fg, 'min_split_biomass', 0.0))
         # Opt-in strategy-driven spawn: project override > library spec.
         # Missing block on both sides -> legacy cluster-spawn (unchanged).
@@ -711,9 +718,9 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                      else rng)
         initial_b = _spawn_biomass_distribution(
             grid_size, total_b, min_per_cell,
-            allowed_mask=None, rng=spawn_rng,
+            allowed_mask=spawn_allowed_mask, rng=spawn_rng,
             spawn_spec=spawn_spec, project_seed=fg_spawn_seed,
-            env_context={'env_fields': env_fields})
+            env_context={'env_fields': env_fields, 'allowed_mask': spawn_allowed_mask})
         # Expose this FG's freshly spawned biomass map to subsequent FGs
         # (env_driven refs use the already-spawned dependencies).
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
