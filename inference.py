@@ -166,15 +166,20 @@ def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
 
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
-              apply_natural_mortality=False):
+              apply_natural_mortality=False, allowed_mask=None):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
+    accessibility = None
+    if allowed_mask is not None:
+        accessibility = np.asarray(allowed_mask).reshape(H, W).astype(np.float32)
     impact_ranges = {}
     if project_path:
         fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
-            project_path, grid_size=grid_size, seed=seed, mode='inference')
+            project_path, grid_size=grid_size, seed=seed, mode='inference',
+            allowed_mask=accessibility)
     else:
-        fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed)
+        fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
+                                    allowed_mask=accessibility)
         impact_vars = ['windfarm_noise']
         observable_impact_vars = ['windfarm_noise']
 
@@ -187,6 +192,8 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     env = EcosystemEnvironment(grid_config, fgs, {},
                                observable_impact_vars=observable_impact_vars,
                                apply_natural_mortality=apply_natural_mortality)
+    if accessibility is not None:
+        env.grid.add_map('accessibility', accessibility)
     # Impact maps are read from .npz files configured in the project's
     # ``inference.impact_maps`` section (set via the fgconfig Inference tab).
     # Missing entries — or files that fail validation — are treated as
