@@ -7,11 +7,11 @@ decision_makers:
   - group_id: gadoids
     initial_biomass_min: 1250
     initial_biomass_max: 5000
-    inference_initial_biomass: 2500
+    inference_initial_biomass: 5000
   - group_id: pelagic_fish
     initial_biomass_min: 6000
     initial_biomass_max: 24000
-    inference_initial_biomass: 12000
+    inference_initial_biomass: 24000
   - group_id: porpoises
     initial_biomass_min: 1
     initial_biomass_max: 120
@@ -20,7 +20,6 @@ decision_makers:
     initial_biomass_min: 12
     initial_biomass_max: 50
     inference_initial_biomass: 25
-    muted: true
   - group_id: seals
     initial_biomass_min: 5
     initial_biomass_max: 30
@@ -41,18 +40,30 @@ non_decision_makers:
     inference_initial_biomass: 80000
 impact_variables:
   - impact_id: pelagic_trawling
-    value_min: 0
-    value_max: 1000
-    muted: true
+    value_min: 0.0
+    value_max: 1000.0
+    spawn:
+      mode: perlin
+      scale: 12.0
+      octaves: 4
+      persistence: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
   - impact_id: rotor
     value_min: 0
     value_max: 1
-    muted: true
   - impact_id: windfarm_noise
-    value_min: 0
-    value_max: 140
+    value_min: 0.0
+    value_max: 140.0
     observable: true
-    muted: true
+    spawn:
+      mode: colony
+      n_colonies: 5
+      sigma_cells: 8.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
 inference:
   impact_maps:
     rotor: vindparker.npz

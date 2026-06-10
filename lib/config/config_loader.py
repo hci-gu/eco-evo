@@ -350,6 +350,32 @@ def _resolve_inference_initial_biomass(*sources):
     return None
 
 
+def load_impact_spawn_specs(project_path):
+    """Return ``{impact_id: StrategySpec}`` for impacts that declare a
+    ``spawn:`` block in the project file.
+
+    Impacts without a ``spawn:`` block — or with an empty / uniform block
+    without explicit parameters — are omitted. The caller (``train.py``
+    ``_sample_impact_maps``) treats those as legacy i.i.d. uniform sampling
+    in ``[value_min, value_max]``. Muted impacts are skipped.
+    """
+    project = load_config(project_path)
+    out = {}
+    for iv in project.get('impact_variables', []) or []:
+        if not isinstance(iv, dict) or iv.get('muted'):
+            continue
+        iid = iv.get('impact_id')
+        if not iid:
+            continue
+        spawn_cfg = iv.get('spawn')
+        if not isinstance(spawn_cfg, dict):
+            continue
+        spec = _build_spawn_spec(spawn_cfg, default_seed=None)
+        if spec is not None:
+            out[iid] = spec
+    return out
+
+
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train', spawn_seed=None):
     """Load a project config and build its FunctionalGroups.
 

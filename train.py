@@ -3,7 +3,8 @@ import numpy as np
 import os
 import argparse
 import re
-from lib.config.config_loader import setup_full_mareld_mvp, load_project_config
+from lib.config.config_loader import setup_full_mareld_mvp, load_project_config, load_impact_spawn_specs
+from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.trainer import ARSTrainer
 
@@ -14,17 +15,82 @@ GRID_HEIGHT = 60
 # Toggle for the artificial (density-independent) natural mortality term.
 # Default off; overridden by --mortality on the CLI.
 APPLY_NATURAL_MORTALITY = False
-def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None):
+def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
+                        impact_spawn_specs=None,
+                        observable_impact_vars=None):
     """Sample one impact field per active impact variable.
 
-    Each cell is drawn i.i.d. uniformly from the impact's configured
-    ``[value_min, value_max]`` range. Returns a dict ``{impact_id: np.ndarray}``.
+    Two code paths per impact:
+
+    * Legacy (no ``spawn:`` block in the project): each cell is drawn
+      i.i.d. uniformly from ``[value_min, value_max]``.
+    * Spawn-strategy (when ``impact_spawn_specs[iv]`` is set): per-cell
+      weights are produced by ``lib.spawn.make_weights`` (uniform / perlin /
+      colony / env_driven, same set as for FG biomass spawn). The weights
+      are normalised to ``[0, 1]`` (min->0, max->1) and then affinely
+      mapped to ``[value_min, value_max]`` so the field still respects the
+      configured value range. Constant weights collapse to ``value_min`` to
+      preserve the legacy behaviour for ``vmax == vmin``.
+
+    When ``observable_impact_vars`` is provided, any impact NOT in that set
+    is forced to an all-zero field. Non-observable impacts contribute no
+    information to the policy network and (per project decision) are
+    treated as absent during training.
+
+    Returns a dict ``{impact_id: np.ndarray}``.
     """
     H, W = grid_size
     rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
+    specs = impact_spawn_specs or {}
+    obs_set = (set(observable_impact_vars)
+               if observable_impact_vars is not None else None)
     maps = {}
     for iv in impact_vars:
+        if obs_set is not None and iv not in obs_set:
+            # Non-observable impact: zero field (ignored by the policy
+            # network anyway; this also keeps any downstream env logic
+            # that references the map from seeing stale random values).
+            maps[iv] = np.zeros((H, W), dtype=np.float32)
+            continue
         vmin, vmax = impact_ranges.get(iv, (0.0, 0.0))
+        spec = specs.get(iv)
+        if spec is not None and vmax > vmin:
+            # Per-impact sub-seed so two impacts with the same spec still
+            # get different realisations within one snapshot.
+            sub_seed = None
+            if seed is not None:
+                import zlib
+                sub_seed = int(zlib.adler32(
+                    f"{int(seed)}::impact::{iv}".encode("utf-8"))) & 0x7FFFFFFF
+            try:
+                w = make_weights(spec, (H, W), context=None,
+                                 project_seed=sub_seed)
+            except Exception:
+                w = None
+            if w is not None:
+                w = np.asarray(w, dtype=np.float64)
+                # Colony+jitter returnerar fältet redan i [0,1]-skala där
+                # amplituderna kodar relativ källstyrka (per-koloni
+                # Uniform(amp_min, amp_max)). Bypassa min-max-stretchen så
+                # heterogena källstyrkor bevaras (annars skulle den
+                # starkaste cellen alltid klättra upp till vmax).
+                bypass_stretch = (
+                    spec.mode == "colony"
+                    and str(spec.params.get("amplitude_mode",
+                                            "uniform")).lower() == "jitter"
+                )
+                if bypass_stretch:
+                    w01 = np.clip(w, 0.0, 1.0)
+                else:
+                    w_min = float(w.min())
+                    w_max = float(w.max())
+                    if w_max > w_min:
+                        w01 = (w - w_min) / (w_max - w_min)
+                    else:
+                        w01 = np.zeros_like(w)
+                field = vmin + (vmax - vmin) * w01
+                maps[iv] = field.astype(np.float32)
+                continue
         if vmax > vmin:
             field = rng.uniform(vmin, vmax, size=(H, W))
         else:
@@ -153,8 +219,24 @@ class _EnvBuilder:
     def __init__(self, impact_maps_snapshot=None, grid_size=None,
                  project_path=None, spawn_seed=None,
                  impact_vars=None, impact_ranges=None, impact_seed=None,
-                 apply_natural_mortality=None):
+                 apply_natural_mortality=None,
+                 impact_spawn_specs=None,
+                 observable_impact_vars=None):
         self.impact_maps_snapshot = impact_maps_snapshot
+        # List of impact_ids that are flagged ``observable: true`` in the
+        # project. Non-observable impacts get a zero field at sampling
+        # time (see _sample_impact_maps). ``None`` = legacy behaviour
+        # (all impacts sampled).
+        self.observable_impact_vars = (
+            list(observable_impact_vars)
+            if observable_impact_vars is not None else None)
+        # Per-impact spawn strategies (see fgconfig Impact Editor "Spawn
+        # Strategy" panel). When set, _sample_impact_maps shapes the
+        # impact field via lib.spawn.make_weights (uniform/perlin/colony/
+        # env_driven) instead of pure i.i.d. uniform per cell. Missing
+        # entries fall back to legacy uniform sampling.
+        self.impact_spawn_specs = (
+            dict(impact_spawn_specs) if impact_spawn_specs is not None else None)
         # Bakas in i instansen så spawn-workers (som reimport:ar train.py
         # och nollställer modul-globalen) får rätt värde.
         self.apply_natural_mortality = (
@@ -206,7 +288,9 @@ class _EnvBuilder:
                 "impact recipe).")
         maps = _sample_impact_maps(
             self.impact_vars, self.impact_ranges,
-            (self.grid_height, self.grid_width), seed=int(impact_seed))
+            (self.grid_height, self.grid_width), seed=int(impact_seed),
+            impact_spawn_specs=self.impact_spawn_specs,
+            observable_impact_vars=self.observable_impact_vars)
         return _EnvBuilder(
             impact_maps_snapshot=maps,
             grid_size=(self.grid_height, self.grid_width),
@@ -216,6 +300,8 @@ class _EnvBuilder:
             impact_ranges=self.impact_ranges,
             impact_seed=int(impact_seed),
             apply_natural_mortality=self.apply_natural_mortality,
+            impact_spawn_specs=self.impact_spawn_specs,
+            observable_impact_vars=self.observable_impact_vars,
         )
 
     def __call__(self, seed=None):
@@ -257,7 +343,12 @@ class _EnvBuilder:
         else:
             sampled = _sample_impact_maps(
                 impact_vars, impact_ranges,
-                (H, W), seed=seed)
+                (H, W), seed=seed,
+                impact_spawn_specs=self.impact_spawn_specs,
+                observable_impact_vars=(
+                    self.observable_impact_vars
+                    if self.observable_impact_vars is not None
+                    else observable_impact_vars))
             for iv in impact_vars:
                 env.grid.add_map(iv, sampled.get(
                     iv, np.zeros((H, W), dtype=np.float32)))
@@ -471,6 +562,17 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                                   step=int(viz_step))
                 viz.update_series("energy", fid, energy_ratio[fid] * 100.0,
                                   step=int(viz_step))
+            # Push end-of-probe mean action fractions (move/rest/eat) per DM
+            # into the dedicated action tabs. Uses the same per-iter
+            # ``viz_step`` so curves align with the reward / biomass tabs.
+            try:
+                from inference import _push_action_fracs
+                _push_action_fracs(viz, env, step=int(viz_step))
+                if rnd_env is not None:
+                    _push_action_fracs(viz, rnd_env, step=int(viz_step),
+                                       suffix="_rnd")
+            except Exception:
+                pass
             if rnd_env is not None:
                 for fid in rnd_env.fgs:
                     b0r = rnd_b0.get(fid, 0.0)
@@ -514,7 +616,9 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
 def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       project_path=None, spawn_seed=None,
                       impact_vars=None, impact_ranges=None, impact_seed=None,
-                      apply_natural_mortality=None):
+                      apply_natural_mortality=None,
+                      impact_spawn_specs=None,
+                      observable_impact_vars=None):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
@@ -530,7 +634,9 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       project_path=project_path, spawn_seed=spawn_seed,
                       impact_vars=impact_vars, impact_ranges=impact_ranges,
                       impact_seed=impact_seed,
-                      apply_natural_mortality=apply_natural_mortality)
+                      apply_natural_mortality=apply_natural_mortality,
+                      impact_spawn_specs=impact_spawn_specs,
+                      observable_impact_vars=observable_impact_vars)
 
 
 # Default module-level env_builder: fresh impact maps per call. Used for
@@ -1058,11 +1164,22 @@ def main():
     # Discover the project's active impact variables + their value ranges
     # once. These drive the per-generation impact map sampling below.
     if PROJECT_PATH:
-        _, _impact_vars_global, _impact_ranges_global, _ = load_project_config(
+        (_, _impact_vars_global, _impact_ranges_global,
+         _observable_impact_vars_global) = load_project_config(
             PROJECT_PATH, grid_size=(GRID_HEIGHT, GRID_WIDTH), seed=0)
+        # Per-impact spawn-strategy specs (Impact Editor "Spawn Strategy").
+        # Empty dict when no impact has a spawn block; _sample_impact_maps
+        # then falls back to legacy i.i.d. uniform sampling per cell.
+        try:
+            _impact_spawn_specs_global = load_impact_spawn_specs(PROJECT_PATH)
+        except Exception as _e:
+            print(f"    [warn] could not load impact spawn specs: {_e!r}")
+            _impact_spawn_specs_global = {}
     else:
         _impact_vars_global = ['windfarm_noise']
         _impact_ranges_global = {}
+        _impact_spawn_specs_global = {}
+        _observable_impact_vars_global = ['windfarm_noise']
 
     # -----------------------------------------------------------------
     # STEP 1: Multi-world averaging scaffold (CLI + seed bookkeeping)
@@ -1179,7 +1296,9 @@ def main():
             "_refresh_world_list_if_needed populated the WorldList.")
         impact_seed, spawn_seed = _current_world_list[0]
         maps = _sample_impact_maps(_impact_vars_global, _impact_ranges_global,
-                                   (GRID_HEIGHT, GRID_WIDTH), seed=impact_seed)
+                                   (GRID_HEIGHT, GRID_WIDTH), seed=impact_seed,
+                                   impact_spawn_specs=_impact_spawn_specs_global,
+                                   observable_impact_vars=_observable_impact_vars_global)
         new_builder = _make_env_builder(
             maps,
             grid_size=(GRID_HEIGHT, GRID_WIDTH),
@@ -1188,6 +1307,8 @@ def main():
             impact_vars=_impact_vars_global,
             impact_ranges=_impact_ranges_global,
             impact_seed=impact_seed,
+            impact_spawn_specs=_impact_spawn_specs_global,
+            observable_impact_vars=_observable_impact_vars_global,
         )
         trainer.env_builder = new_builder
         # Rebuild worker pool so spawn-workers receive the updated builder.

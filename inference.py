@@ -374,6 +374,36 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     return policies, mean, var
 
 
+def _push_action_fracs(viz, env, step, suffix=""):
+    """Push per-DM mean (over rollout-so-far) action fractions into the
+    visualiser's move/rest/eat tabs.
+
+    ``env._action_move_frac`` / ``_rest_frac`` / ``_eat_frac`` are running
+    sums per DM (indexed by ``env.dm_ids``) over ticks where the DM has
+    any biomass; ``env._action_active_ticks[i]`` is that DM's active-tick
+    counter. The plotted value is the running mean = sum / max(1, count).
+    """
+    if viz is None:
+        return
+    mv = getattr(env, '_action_move_frac', None)
+    rs = getattr(env, '_action_rest_frac', None)
+    et = getattr(env, '_action_eat_frac', None)
+    cnt = getattr(env, '_action_active_ticks', None)
+    if mv is None or rs is None or et is None or cnt is None:
+        return
+    try:
+        for i, fid in enumerate(env.dm_ids):
+            c = float(cnt[i]) if cnt[i] > 0 else 0.0
+            if c <= 0.0:
+                continue
+            key = fid + suffix
+            viz.update_series("move", key, 100.0 * float(mv[i]) / c, step=step)
+            viz.update_series("rest", key, 100.0 * float(rs[i]) / c, step=step)
+            viz.update_series("eat",  key, 100.0 * float(et[i]) / c, step=step)
+    except Exception:
+        pass
+
+
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                   viz=None, rnd_env=None):
     """Install policies + frozen stats and step the environment ``n_ticks`` times.
@@ -449,6 +479,9 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 for fid in history.keys():
                     viz.update_series("biomass", fid, pct_bio[fid], step=t)
                     viz.update_series("energy", fid, pct_eng[fid], step=t)
+                _push_action_fracs(viz, env, step=t)
+                if rnd_env is not None:
+                    _push_action_fracs(viz, rnd_env, step=t, suffix="_rnd")
                 if rnd_env is not None:
                     for fid in rnd_history.keys():
                         b0 = rnd_history[fid][0] if rnd_history[fid] else 0.0

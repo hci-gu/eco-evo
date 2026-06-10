@@ -169,13 +169,16 @@ class LiveVisualizer:
         #   inference -> biomass%, energy%
         # Each tab has its own per-FG rolling buffer of (step, value).
         if self.mode == "train":
-            self._tabs = ["reward", "biomass", "energy"]
+            self._tabs = ["reward", "biomass", "energy", "move", "rest", "eat"]
         else:
-            self._tabs = ["biomass", "energy"]
+            self._tabs = ["biomass", "energy", "move", "rest", "eat"]
         self._tab_labels = {
             "reward": "reward",
             "biomass": "biomass (% of start)",
             "energy": "energy (% of start)",
+            "move": "move action (%)",
+            "rest": "rest action (%)",
+            "eat": "eat action (%)",
         }
         self._active_tab = 0
         # Per-FG enable flag for plot panel (checkbox state). Toggled via
@@ -671,6 +674,8 @@ class LiveVisualizer:
         Non-decision-makers (``self._ndm_ids``) only appear on the
         ``biomass`` tab; on every other tab they are filtered out. The
         same filter applies to their ``<id>_rnd`` baseline counterparts.
+        On the action tabs (move/rest/eat) only DMs have meaningful data,
+        so NDMs are likewise filtered out there.
         """
         active = self._tabs[self._active_tab]
         if active == "biomass" or not self._ndm_ids:

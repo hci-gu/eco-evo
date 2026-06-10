@@ -310,19 +310,60 @@ def weights_colony(grid_size: Tuple[int, int],
                                 centrum-valet just nu — depth_map konsumeras
                                 inte. Implementeras i ett senare steg när en
                                 officiell depth-karta finns att referera till.
+        amplitude_mode (str):   'uniform' (default, legacy) | 'jitter'.
+                                I 'jitter'-läge får varje koloni en
+                                oberoende centrum-amplitud Uniform(
+                                amplitude_min, amplitude_max) och kolonier
+                                kombineras med max (ej summa). Fältet
+                                returneras *utan* sum-normalisering så
+                                amplituderna bevaras i [0, amplitude_max].
+                                Avsett för impacts (ljudkällor m.m.) där
+                                varje källa har en egen styrka och summa-
+                                bevarande inte är meningsfullt.
+        amplitude_min (float):  Undre gräns för per-centrum-amplitud i
+                                'jitter'-läge, relativt vmax (default 0.0).
+        amplitude_max (float):  Övre gräns för per-centrum-amplitud i
+                                'jitter'-läge, relativt vmax (default 1.0).
     """
     p = _apply_grid_scaling(params, context)
     H, W = grid_size
     n = int(p.get("n_colonies", 3))
     sigma = float(p.get("sigma_cells", 2.0))
     anchor = str(p.get("anchor", "free"))
+    amplitude_mode = str(p.get("amplitude_mode", "uniform")).lower()
+    amp_min = float(p.get("amplitude_min", 0.0))
+    amp_max = float(p.get("amplitude_max", 1.0))
+    # Sanity: clamp to [0,1] and ensure min<=max.
+    amp_min = min(max(amp_min, 0.0), 1.0)
+    amp_max = min(max(amp_max, 0.0), 1.0)
+    if amp_max < amp_min:
+        amp_min, amp_max = amp_max, amp_min
 
     # Välj kolonicentrum från eligible-pool (eller hela griden).
     centers = _pick_colony_centers(grid_size, n, anchor, context, rng)
 
     yy, xx = np.indices((H, W))
-    field = np.zeros((H, W), dtype=np.float64)
     inv_two_sigma2 = 1.0 / (2.0 * max(1e-6, sigma) ** 2)
+    if amplitude_mode == "jitter":
+        # Per-centrum-amplitud + max-kombination. Returnera fältet utan
+        # _finalize-summa-normalisering (men respektera allowed_mask).
+        field = np.zeros((H, W), dtype=np.float64)
+        for (cy, cx) in centers:
+            if amp_max > amp_min:
+                amp = float(rng.uniform(amp_min, amp_max))
+            else:
+                amp = float(amp_min)
+            d2 = (yy - cy) ** 2 + (xx - cx) ** 2
+            bulge = amp * np.exp(-d2 * inv_two_sigma2)
+            field = np.maximum(field, bulge)
+        if context and "allowed_mask" in context and context["allowed_mask"] is not None:
+            mask = np.asarray(context["allowed_mask"]).reshape(field.shape).astype(bool)
+            field = np.where(mask, field, 0.0)
+        # Klampa numeriskt brus.
+        return np.clip(field, 0.0, 1.0)
+    # Legacy uniform-amplitud-läge: alla centrum bidrar med amplitud 1.0,
+    # summa-kombination, sum-normalisering (biomassa-kontrakt).
+    field = np.zeros((H, W), dtype=np.float64)
     for (cy, cx) in centers:
         d2 = (yy - cy) ** 2 + (xx - cx) ** 2
         field += np.exp(-d2 * inv_two_sigma2)

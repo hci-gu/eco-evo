@@ -18,8 +18,13 @@ yaml.indent(mapping=2, sequence=4, offset=2)
 class FGConfigApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Ecosystem FG Configuration Tool")
+        self._base_title = "Ecosystem FG Configuration Tool"
+        self.root.title(self._base_title)
         self.root.geometry("1000x700")
+        # Dirty-tracking: True when in-memory project_data has unsaved
+        # changes vs. the YAML file on disk. The title bar gets a leading
+        # '*' marker, and closing the window prompts to save.
+        self._dirty = False
 
         self.library_path = os.path.join(os.path.dirname(__file__), "fg_library.yaml")
         self.recent_path = os.path.join(os.path.dirname(__file__), "recent_projects.txt")
@@ -63,6 +68,23 @@ class FGConfigApp:
         }
 
         self.setup_ui()
+
+        # Hook window close (X button) to the save-prompt flow.
+        try:
+            self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+        except Exception:
+            pass
+
+        # Tk-variable traces so editing the project name or reference grid
+        # in the header row marks the project as dirty (these fields are
+        # only persisted via save_project, but unsaved edits should still
+        # be flagged).
+        try:
+            self.project_name_var.trace_add("write", lambda *_: self._mark_dirty())
+            self.ref_grid_w_var.trace_add("write", lambda *_: self._mark_dirty())
+            self.ref_grid_h_var.trace_add("write", lambda *_: self._mark_dirty())
+        except Exception:
+            pass
 
     def _on_mousewheel(self, event):
         """Handle mouse wheel and trackpad scroll events (vertical)."""
@@ -143,6 +165,54 @@ class FGConfigApp:
         except Exception as e:
             messagebox.showerror("Save Error", f"Could not save to {path}: {e}")
 
+    # ------------------------------------------------------------------
+    # Dirty-tracking helpers. The window title reflects the dirty state:
+    #   "* <base> — <project_basename>"   when there are unsaved changes
+    #   "<base> — <project_basename>"     when clean
+    # When closing the window (X button or File>Exit) we prompt the user
+    # to save / discard / cancel via _on_close.
+    # ------------------------------------------------------------------
+    def _update_title(self):
+        title = self._base_title
+        if getattr(self, 'project_path', None):
+            title = f"{title} — {os.path.basename(self.project_path)}"
+        if getattr(self, '_dirty', False):
+            title = "* " + title
+        try:
+            self.root.title(title)
+        except Exception:
+            pass
+
+    def _mark_dirty(self, *_args):
+        if not getattr(self, '_dirty', False):
+            self._dirty = True
+            self._update_title()
+
+    def _clear_dirty(self):
+        if getattr(self, '_dirty', False):
+            self._dirty = False
+        self._update_title()
+
+    def _on_close(self):
+        """Window close / Exit handler. Prompts to save unsaved changes."""
+        if not getattr(self, '_dirty', False):
+            self.root.destroy()
+            return
+        resp = messagebox.askyesnocancel(
+            "Unsaved Changes",
+            "You have unsaved changes in this project.\n\n"
+            "Do you want to save them before exiting?",
+        )
+        if resp is None:
+            # Cancel — don't close.
+            return
+        if resp:
+            saved = self.save_project()
+            if not saved:
+                # User cancelled the file dialog — abort close.
+                return
+        self.root.destroy()
+
     def setup_ui(self):
         # Menu
         menubar = tk.Menu(self.root)
@@ -153,7 +223,7 @@ class FGConfigApp:
         self.recent_menu = tk.Menu(filemenu, tearoff=0)
         filemenu.add_cascade(label="Open Recent", menu=self.recent_menu)
         filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.root.quit)
+        filemenu.add_command(label="Exit", command=self._on_close)
         menubar.add_cascade(label="File", menu=filemenu)
         self.root.config(menu=menubar)
         self.refresh_recent_menu()
@@ -365,7 +435,7 @@ class FGConfigApp:
         impact_frame = ttk.LabelFrame(self.project_inner, text="Impact Variables in Project")
         impact_frame.pack(expand=True, fill="both", padx=10, pady=5)
 
-        self.impact_listbox = tk.Listbox(impact_frame)
+        self.impact_listbox = tk.Listbox(impact_frame, exportselection=False)
         self.impact_listbox.pack(side="left", expand=True, fill="both", padx=5, pady=5)
 
         impact_btn_frame = ttk.Frame(impact_frame)
@@ -402,13 +472,31 @@ class FGConfigApp:
             row=2, column=0, sticky="w", padx=5, pady=2)
         self.impact_observable_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(self.impact_editor_frame,
-                        variable=self.impact_observable_var).grid(
+                        variable=self.impact_observable_var,
+                        command=self._on_impact_observable_toggled).grid(
             row=2, column=1, sticky="w", padx=5, pady=2)
 
         self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
                                            text="Apply Changes",
                                            command=self.apply_impact_changes)
         self.impact_apply_btn.grid(row=3, column=0, columnspan=2, pady=5)
+
+        # Spawn-strategy editor for impact maps. Mirrors the per-FG spawn
+        # editor (mode/parameters/preview/info) but writes back to the
+        # impact_variables[i].spawn block. Used at training time to shape
+        # the random impact field (still scaled to [value_min, value_max]).
+        self.impact_spawn_frame = ttk.LabelFrame(
+            self.impact_editor_frame, text="Spawn Strategy")
+        self.impact_spawn_frame.grid(row=4, column=0, columnspan=2,
+                                     sticky="ew", padx=5, pady=5)
+        self.impact_spawn_vars = {}
+        self._build_spawn_editor(self.impact_spawn_frame, self.impact_spawn_vars)
+        # Hidden by default; shown only for observable impacts. The Spawn
+        # Strategy only governs how observable impact maps are populated;
+        # non-observable impacts are zero-filled at training time, so the
+        # editor is meaningless for them.
+        self.impact_spawn_frame.grid_remove()
+
         # Track widgets so we can enable/disable the editor based on selection
         # and muted status.
         self._impact_editor_widgets = list(self.impact_editor_frame.winfo_children())
@@ -613,7 +701,25 @@ class FGConfigApp:
             "Anchor: free / coast / open_water. Reserved parameter "
             "— will be used once the official depth map is wired in; "
             "for now centres are chosen uniformly regardless of "
-            "anchor."
+            "anchor.\n"
+            "\n"
+            "Amplitude_mode:\n"
+            "  uniform (default, legacy): every centre contributes "
+            "amplitude 1.0, colonies combine by SUM, and the field is "
+            "min-max stretched so the strongest cell hits vmax. Best "
+            "for biomass (sum-preserving).\n"
+            "  jitter: every centre gets an INDEPENDENT amplitude "
+            "Uniform(amplitude_min, amplitude_max) · vmax, colonies "
+            "combine by MAX (not sum), and the field is NOT stretched "
+            "— isolated centres land at exactly amp·vmax. Best for "
+            "impacts that represent physical sources of different "
+            "strength (e.g. noise sources at different dB levels) so "
+            "the policy is trained against a heterogeneous mix of "
+            "source intensities.\n"
+            "Amplitude_min / amplitude_max: relative bounds in [0, 1] "
+            "for the per-centre amplitude in jitter mode. Each colony "
+            "centre value lies in [amplitude_min·vmax, amplitude_max·"
+            "vmax]."
         ),
         "env_driven": (
             "Env-driven\n"
@@ -650,6 +756,10 @@ class FGConfigApp:
             ("n_colonies", "N colonies", "int", 3),
             ("sigma_cells", "Sigma (cells)", "float", 2.5),
             ("anchor", "Anchor", "choice:free,coast,open_water", "free"),
+            ("amplitude_mode", "Amplitude mode",
+             "choice:uniform,jitter", "uniform"),
+            ("amplitude_min", "Amplitude min (rel.)", "float", 0.0),
+            ("amplitude_max", "Amplitude max (rel.)", "float", 1.0),
         ],
         "env_driven": [
             ("floor", "Floor", "float", 0.0),
@@ -1422,6 +1532,27 @@ class FGConfigApp:
         max_entry.pack(side="left")
         return min_var, max_var
 
+    def _sync_impact_spawn_visibility(self):
+        """Show the Spawn Strategy frame iff the impact is observable.
+
+        Non-observable impacts are zero-filled at training time, so the
+        spawn-strategy parameters would have no effect — we hide the
+        whole LabelFrame to make this clear.
+        """
+        if not hasattr(self, 'impact_spawn_frame'):
+            return
+        try:
+            if bool(self.impact_observable_var.get()):
+                self.impact_spawn_frame.grid()
+            else:
+                self.impact_spawn_frame.grid_remove()
+        except tk.TclError:
+            pass
+
+    def _on_impact_observable_toggled(self):
+        """Checkbox callback: toggle Spawn-Strategy visibility live."""
+        self._sync_impact_spawn_visibility()
+
     def _set_impact_editor_enabled(self, enabled):
         state = "normal" if enabled else "disabled"
         # Recursively walk the editor frame and disable inputs/buttons.
@@ -1477,6 +1608,13 @@ class FGConfigApp:
         self.impact_value_min_var.set(_fmt(entry.get('value_min')))
         self.impact_value_max_var.set(_fmt(entry.get('value_max')))
         self.impact_observable_var.set(bool(entry.get('observable', False)))
+        # Populate the spawn-strategy editor from the impact's spawn block
+        # (project override). Missing/invalid blocks fall back to uniform.
+        spawn_cfg = entry.get('spawn') if isinstance(entry, dict) else None
+        self._populate_spawn_editor(self.impact_spawn_vars,
+                                    spawn_cfg if isinstance(spawn_cfg, dict) else {})
+        # Show/hide the Spawn Strategy frame based on the observable flag.
+        self._sync_impact_spawn_visibility()
         self._set_impact_editor_enabled(not entry.get('muted'))
 
     def apply_impact_changes(self):
@@ -1519,12 +1657,51 @@ class FGConfigApp:
                 f"checkpoints become incompatible and the policies must be "
                 f"retrained from scratch. Save the project for the change "
                 f"to take effect.")
+        # Collect the spawn-strategy block strictly so unparseable entries
+        # abort Apply (mirrors the per-FG spawn editor behaviour). The
+        # block is only persisted for non-uniform modes or when explicit
+        # parameters are present; uniform with no params is the default
+        # and is omitted to keep YAML diffs minimal.
+        spawn_errors = []
+        spawn_dict = self._collect_spawn_dict(self.impact_spawn_vars,
+                                              errors=spawn_errors)
+        if spawn_errors:
+            messagebox.showerror(
+                "Invalid spawn parameters",
+                "Could not apply impact changes:\n\n" + "\n".join(spawn_errors))
+            return
+
         entry['value_min'] = mn
         entry['value_max'] = mx
         if new_observable:
             entry['observable'] = True
         else:
             entry.pop('observable', None)
+        # Persist spawn block. Drop the entry entirely when the mode is
+        # uniform with no extra params (legacy i.i.d. uniform sampling).
+        if isinstance(spawn_dict, dict) and spawn_dict:
+            mode = spawn_dict.get('mode', 'uniform')
+            extra_keys = [k for k in spawn_dict.keys() if k != 'mode']
+            if mode == 'uniform' and not extra_keys:
+                entry.pop('spawn', None)
+            else:
+                entry['spawn'] = spawn_dict
+        else:
+            entry.pop('spawn', None)
+        self._mark_dirty()
+        # Refresh the listbox so the [observable] suffix tracks the
+        # checkbox state. Preserve the current selection so the editor
+        # doesn't deselect on Apply.
+        try:
+            sel = self.impact_listbox.curselection()
+            self.update_impact_list()
+            if sel:
+                self.impact_listbox.selection_clear(0, "end")
+                self.impact_listbox.selection_set(sel[0])
+                self.impact_listbox.activate(sel[0])
+                self.on_impact_select()
+        except tk.TclError:
+            pass
 
     def setup_matrix_tab(self):
         # Scrollable container for FG Interactions tab
@@ -2111,6 +2288,7 @@ class FGConfigApp:
                     fg.pop("inference_initial_biomass", None)
                     continue
                 fg["inference_initial_biomass"] = v
+        self._mark_dirty()
         messagebox.showinfo(
             "Success",
             "Inference initial biomass updated on project entries. Remember to Save Project."
@@ -2612,6 +2790,7 @@ class FGConfigApp:
         if not fg_entry['muted']:
             # Remove the key entirely when active to keep YAML tidy.
             fg_entry.pop('muted', None)
+        self._mark_dirty()
         # Refresh all views that depend on muted state.
         self._apply_listbox_mute_styling()
         self._refresh_mute_button_labels()
@@ -2635,6 +2814,7 @@ class FGConfigApp:
         iv['muted'] = not self._is_impact_muted(iv)
         if not iv['muted']:
             iv.pop('muted', None)
+        self._mark_dirty()
         self._apply_listbox_mute_styling()
         self._refresh_mute_button_labels()
         self.refresh_matrix()
@@ -3050,6 +3230,10 @@ class FGConfigApp:
                         synced_refs.append((ikey, old, new_ec_f))
 
         self.save_yaml(self.global_library, self.library_path)
+        # FG editor writes initial_biomass min/max and spawn block onto the
+        # project FG entry — these are NOT persisted by the library save
+        # above and require Save Project.
+        self._mark_dirty()
         if synced_refs:
             details = "\n".join(
                 f"  - {k}.energy_gain: {old!r} → {new}"
@@ -3354,6 +3538,8 @@ class FGConfigApp:
                 added += 1
             self.update_fg_list()
             self.refresh_matrix()
+            if added:
+                self._mark_dirty()
             top.destroy()
 
         ttk.Button(btn_frame, text="Select All", command=select_all).pack(side="left")
@@ -3392,6 +3578,7 @@ class FGConfigApp:
             
             self.update_fg_list()
             self.refresh_matrix()
+            self._mark_dirty()
 
     def remove_fg(self, category="decision_makers"):
         listbox = self._listbox_for(category)
@@ -3410,6 +3597,7 @@ class FGConfigApp:
             self.active_fg_category = None
         self.update_fg_list()
         self.refresh_matrix()
+        self._mark_dirty()
 
     def fg_display(self, fg_id, include_sv=False):
         """Return display label for a functional group with capitalized first letter."""
@@ -3457,7 +3645,12 @@ class FGConfigApp:
             impact_id = iv['impact_id']
             return self.global_library.get("impact_definitions", {}).get(impact_id, {}).get("display_name", impact_id)
         def _impact_display_with_unit(iv):
-            return f"{_impact_display(iv)} ({self._impact_unit(iv['impact_id'])})"
+            base = f"{_impact_display(iv)} ({self._impact_unit(iv['impact_id'])})"
+            # Append [observable] marker so the project list makes it obvious
+            # which impacts feed into the policy network's input layer.
+            if iv.get('observable'):
+                base = f"{base} [observable]"
+            return base
         if self.project_data.get('impact_variables'):
             self.project_data['impact_variables'].sort(key=lambda iv: _impact_display(iv).lower())
         self.impact_listbox.delete(0, "end")
@@ -3517,6 +3710,7 @@ class FGConfigApp:
                     self.project_data.setdefault('impact_variables', []).append({'impact_id': impact_id})
             self.update_impact_list()
             self.refresh_matrix()
+            self._mark_dirty()
             top.destroy()
 
         ttk.Button(btn_frame, text="Select All", command=select_all).pack(side="left")
@@ -3536,6 +3730,7 @@ class FGConfigApp:
         self.project_data['impact_variables'] = [iv for iv in impact_vars if iv['impact_id'] != impact_id]
         self.update_impact_list()
         self.refresh_matrix()
+        self._mark_dirty()
 
     def new_project(self):
         self.project_data = {
@@ -3558,6 +3753,9 @@ class FGConfigApp:
         self.update_fg_list()
         self.update_impact_list()
         self.refresh_matrix()
+        # Fresh project starts clean (the project_name_var trace fires
+        # during set() above and would otherwise mark dirty).
+        self._clear_dirty()
 
     def open_project(self):
         path = filedialog.askopenfilename(filetypes=[("YAML files", "*.yaml")])
@@ -3631,8 +3829,14 @@ class FGConfigApp:
             self.update_impact_list()
             self.refresh_matrix()
             self.add_to_recent(path)
+            # Loading from disk = clean state. Done after all .set()
+            # calls above so the Tk-variable traces don't leave the
+            # project marked dirty.
+            self._clear_dirty()
 
     def save_project(self):
+        """Persist project_data to YAML. Returns True on success, False if
+        the user cancelled the path dialog or the save did not happen."""
         if not self.project_path:
             self.project_path = filedialog.asksaveasfilename(defaultextension=".yaml", filetypes=[("YAML files", "*.yaml")])
         if self.project_path:
@@ -3659,7 +3863,10 @@ class FGConfigApp:
             self.ref_grid_h_var.set(str(rh))
             self.save_yaml(self.project_data, self.project_path)
             self.add_to_recent(self.project_path)
+            self._clear_dirty()
             messagebox.showinfo("Success", f"Project saved to {self.project_path}")
+            return True
+        return False
 
     def load_recent_projects(self):
         if not os.path.exists(self.recent_path):
