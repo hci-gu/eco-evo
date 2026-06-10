@@ -28,6 +28,8 @@
     energy_content: 4500.0
     min_split_biomass: 0.0
     growth_rate: 0.01
+    max_carrying_capacity: 8.5
+    starvation_rate: 0.02
     natural_mortality: 0.0025
     max_intake_rate: 0.25
     spawn:
@@ -65,6 +67,7 @@
     energy_content: 6500.0
     min_split_biomass: 0.5
     growth_rate: 0.0004
+    starvation_rate: 0.01
     natural_mortality: 0.0005
     max_intake_rate: 0.04
     spawn:
@@ -86,6 +89,7 @@
     energy_content: 5500.0
     min_split_biomass: 0.5
     growth_rate: 0.00025
+    starvation_rate: 0.01
     natural_mortality: 0.0002
     max_intake_rate: 0.04
     spawn:
@@ -107,6 +111,7 @@
     min_split_biomass: 50.0
     energy_content: 0.0
     growth_rate: 0.0001
+    starvation_rate: 0.005
     natural_mortality: 5e-05
     max_intake_rate: 0.05
     spawn:
@@ -126,6 +131,7 @@
     min_split_biomass: 80.0
     energy_content: 0.0
     growth_rate: 0.0001
+    starvation_rate: 0.005
     natural_mortality: 4e-05
     max_intake_rate: 0.05
     spawn:
@@ -145,6 +151,7 @@
     maintenance_level: 0.5
     energy_content: 0.0
     growth_rate: 0.0001
+    starvation_rate: 0.01
     natural_mortality: 0.0002
     max_intake_rate: 0.15
     spawn:

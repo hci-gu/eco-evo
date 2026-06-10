@@ -7,7 +7,7 @@ decision_makers:
   - group_id: gadoids
     initial_biomass_min: 1250
     initial_biomass_max: 5000
-    inference_initial_biomass: 2500
+    inference_initial_biomass: 250
   - group_id: pelagic_fish
     initial_biomass_min: 6000
     initial_biomass_max: 24000

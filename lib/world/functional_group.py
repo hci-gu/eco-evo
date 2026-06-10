@@ -15,6 +15,10 @@ class FunctionalGroup:
         self.max_energy_reserve = params.get('max_energy_reserve', 1000.0)  # ME_X
         self.resting_metabolism = params.get('resting_metabolism', 0.0)  # Rest_X
         self.growth_rate = params.get('growth_rate', 0.0)  # MG_X
+        # Maximum biomass loss fraction per tick at zero energy reserve.
+        # Kept separate from growth_rate because starvation should not be
+        # capped by the much smaller positive population growth rate.
+        self.starvation_rate = float(params.get('starvation_rate', self.growth_rate))
         # Densitetsoberoende naturlig mortalitet per tick (DM). Modellerar
         # senescens, sjukdom, "hidden predation" från icke-modellerade arter,
         # mekanisk skada m.m. — oberoende av svälttermen via q_x.

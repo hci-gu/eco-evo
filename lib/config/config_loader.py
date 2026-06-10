@@ -1,11 +1,28 @@
 import yaml
 import numpy as np
+import os
 from lib.world.functional_group import FunctionalGroup
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
+
+_CONFIG_CACHE = {}
+
 
 def load_config(path):
     with open(path, 'r') as f:
         return yaml.safe_load(f)
+
+
+def _load_config_cached(path):
+    """Load YAML with mtime/size invalidation for hot rollout construction."""
+    abs_path = os.path.abspath(path)
+    st = os.stat(abs_path)
+    key = (abs_path, st.st_mtime_ns, st.st_size)
+    cached = _CONFIG_CACHE.get(abs_path)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    data = load_config(abs_path)
+    _CONFIG_CACHE[abs_path] = (key, data)
+    return data
 
 
 def _resolve_initial_biomass_range(*sources):
@@ -236,7 +253,7 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
 
 def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None,
                           allowed_mask=None):
-    lib = load_config(library_path)
+    lib = _load_config_cached(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
 
@@ -366,7 +383,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     snapshot). When ``None``, falls back to ``seed`` (legacy behaviour: each
     rollout gets its own spawn layout).
     """
-    project = load_config(project_path)
+    project = _load_config_cached(project_path)
     rng = np.random.default_rng(seed) if seed is not None else None
     # Spawn RNG base: spawn_seed overrides seed for the spatial layout, so
     # that a whole generation can share one map even though individual
@@ -375,7 +392,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     spawn_allowed_mask = None
     if allowed_mask is not None:
         spawn_allowed_mask = np.asarray(allowed_mask).reshape(grid_size).astype(bool)
-    lib = load_config(library_path)
+    lib = _load_config_cached(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
     

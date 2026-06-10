@@ -1165,8 +1165,8 @@ def main():
 
     def _install_generation_worlds(gen_idx):
         """Install ``trainer.env_builder`` from world index 0 of the
-        current WorldList. Rebuilds the worker pool (if any) so all
-        workers see the new builder.
+        current WorldList. Parallel workers receive this builder through each
+        task payload, so the worker pool can stay alive across world refreshes.
 
         STEP 2: impact/spawn seeds now come from ``_current_world_list[0]``
         (sampled by ``_refresh_world_list_if_needed`` from the dedicated
@@ -1190,23 +1190,6 @@ def main():
             impact_seed=impact_seed,
         )
         trainer.env_builder = new_builder
-        # Rebuild worker pool so spawn-workers receive the updated builder.
-        if trainer._pool is not None:
-            try:
-                trainer._pool.terminate()
-                trainer._pool.join()
-            except Exception:
-                pass
-            import multiprocessing as _mp
-            from lib.runners.parallel_worker import _worker_init
-            ctx = _mp.get_context('spawn')
-            trainer._pool = ctx.Pool(
-                processes=trainer.n_workers,
-                initializer=_worker_init,
-                initargs=(new_builder, trainer.policy_params,
-                          trainer.uniform_bias_init,
-                          trainer.hidden_layers, trainer.hidden_dim),
-            )
         if maps:
             summary = ", ".join(
                 f"{k}=U[{_impact_ranges_global.get(k,(0,0))[0]:g},"

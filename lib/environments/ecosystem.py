@@ -19,6 +19,9 @@ class EcosystemEnvironment:
         # don't specify it default to no observable impacts.
         self.observable_impact_vars = list(observable_impact_vars or [])
         self.tick_count = 0
+        self.collect_obs_stats = True
+        self.collect_action_stats = True
+        self.active_inference_threshold = 0.8
         # Stable global ordering of all functional groups. Used to give every
         # decision maker a uniform action space: 5 + N_all_fgs outputs, where
         # eat-slot i refers to global_fg_order[i]. Slots not on the predator's
@@ -48,6 +51,7 @@ class EcosystemEnvironment:
         self.dm_ids = [fid for fid in self.global_fg_order if self.fgs[fid].is_decision_maker]
         self.N_dm = len(self.dm_ids)
         self.N_all = len(self.global_fg_order)
+        self.dm_id_to_idx = {fid: i for i, fid in enumerate(self.dm_ids)}
         self.dm_index_in_all = np.array(
             [self.global_fg_order.index(fid) for fid in self.dm_ids], dtype=np.int64
         )
@@ -162,6 +166,22 @@ class EcosystemEnvironment:
                 if tbl is not None:
                     entries.append((imp_id, tbl))
             self.dm_impact_tables.append(entries)
+        self.dm_impact_factor_maps = []
+        self.dm_impact_biomass_factor = np.zeros((self.N_dm, H, W), dtype=self.dtype)
+        self.dm_impact_energy_factor = np.zeros((self.N_dm, H, W), dtype=self.dtype)
+        for i, entries in enumerate(self.dm_impact_tables):
+            maps_for_dm = {}
+            for imp_id, table in entries:
+                map_data = self.grid.get_map(imp_id)
+                if map_data is None:
+                    continue
+                bf_map, ef_map = self._interp_impact(
+                    table, map_data.astype(self.dtype, copy=False)
+                )
+                maps_for_dm[imp_id] = (bf_map, ef_map)
+                self.dm_impact_biomass_factor[i] += bf_map
+                self.dm_impact_energy_factor[i] += ef_map
+            self.dm_impact_factor_maps.append(maps_for_dm)
         # Per-DM minimum biomass for splitting via movement. 0 = no threshold.
         self.dm_min_split = np.array(
             [getattr(self.fgs[fid], 'min_split_biomass', 0.0) for fid in self.dm_ids],
@@ -342,7 +362,14 @@ class EcosystemEnvironment:
         np.random.shuffle(shuffled_ids)
         self.ordered_fg_ids = shuffled_ids
 
+        ledger = getattr(self, 'biomass_ledger', None)
+        if ledger is not None:
+            ledger.begin_tick()
+
         self._calculate_decisions()
+        if ledger is not None and self.N_dm > 0:
+            B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
+            ledger.record_actions(B_dm, self.pi_move, self.pi_rest, self.pi_eat)
         # Method.pdf §steg 1–6: direct impact mortality m_X^Impact is applied
         # *before* predation, so prey biomass available to predators already
         # reflects impact losses for this tick.
@@ -351,6 +378,9 @@ class EcosystemEnvironment:
         self._apply_movement()
         self._apply_growth()
         self._apply_accessibility_biomass_mask()
+
+        if ledger is not None:
+            ledger.end_tick()
 
         self.tick_count += 1
 
@@ -384,6 +414,8 @@ class EcosystemEnvironment:
         H, W = self.H, self.W
         B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order],
                          axis=0).astype(self.dtype, copy=False)
+        self._decision_B_all = B_all
+        self._decision_B_dm = B_all[self.dm_index_in_all]
         # Visible biomass: the rest-action is a hide action, so the
         # fraction of each FG that rested last tick is invisible to
         # observers. ``prev_hidden_frac`` is initialised to 0 (first tick
@@ -419,12 +451,22 @@ class EcosystemEnvironment:
                 out[:, 1:] = field[:, :-1]
             return out
 
+        B_all_shifts = {
+            d: np.stack([_shift(B_all[j], d) for j in range(self.N_all)], axis=0)
+            for d in ('N', 'E', 'S', 'W')
+        }
+        B_visible_shifts = {
+            d: np.stack([_shift(B_visible_all[j], d) for j in range(self.N_all)], axis=0)
+            for d in ('N', 'E', 'S', 'W')
+        }
+
         # Pre-shift impact layers once (shared across all DMs).
         impact_shifts = {d: [_shift(layer, d) for layer in impact_layers]
                          for d in ('N', 'E', 'S', 'W')}
 
         for i, pred_id in enumerate(self.dm_ids):
             pred_fg = self.fgs[pred_id]
+            j_own = int(self.dm_index_in_all[i])
             B_own = pred_fg.biomass.astype(self.dtype, copy=False)
             E_own = pred_fg.energy_level.astype(self.dtype, copy=False)
             obs_idx = self.obs_others_idx[i]  # j-indices into global_fg_order
@@ -453,10 +495,9 @@ class EcosystemEnvironment:
             # --- Neighbours N, E, S, W ---
             for d_idx, direction in enumerate(('N', 'E', 'S', 'W')):
                 base = center_dim_i + d_idx * nbr_dim_i
-                obs[i, base] = _shift(B_own, direction)
+                obs[i, base] = B_all_shifts[direction][j_own]
                 if k_i > 0:
-                    for kk in range(k_i):
-                        obs[i, base + 1 + kk] = _shift(B_obs[kk], direction)
+                    obs[i, base + 1:base + 1 + k_i] = B_visible_shifts[direction][obs_idx]
                 for kk, layer_shift in enumerate(impact_shifts[direction]):
                     obs[i, base + 1 + k_i + kk] = layer_shift
 
@@ -490,22 +531,23 @@ class EcosystemEnvironment:
         obs_np = self._build_observation_batch()
         D = obs_np.shape[-1]
 
-        # Accumulate raw-obs statistics (sum, sumsq, count) per DM, per dim.
-        # These are returned to the trainer for a Welford parallel merge so the
-        # global running mean/var converges across rollouts (and across workers
-        # in the parallel path).
-        # Shapes: obs_np is (N_dm, H*W, D).
-        flat = obs_np.reshape(self.N_dm, -1, D)
-        nsamp = flat.shape[1]
-        sample_sum = flat.sum(axis=1, dtype=np.float64)              # (N_dm, D)
-        sample_sumsq = (flat.astype(np.float64) ** 2).sum(axis=1)    # (N_dm, D)
-        if not hasattr(self, '_obs_sum') or self._obs_sum is None:
-            self._obs_sum = np.zeros((self.N_dm, D), dtype=np.float64)
-            self._obs_sumsq = np.zeros((self.N_dm, D), dtype=np.float64)
-            self._obs_count = 0
-        self._obs_sum += sample_sum
-        self._obs_sumsq += sample_sumsq
-        self._obs_count += nsamp
+        if getattr(self, 'collect_obs_stats', True):
+            # Accumulate raw-obs statistics (sum, sumsq, count) per DM, per dim.
+            # These are returned to the trainer for a Welford parallel merge so the
+            # global running mean/var converges across rollouts (and across workers
+            # in the parallel path).
+            # Shapes: obs_np is (N_dm, H*W, D).
+            flat = obs_np.reshape(self.N_dm, -1, D)
+            nsamp = flat.shape[1]
+            sample_sum = flat.sum(axis=1, dtype=np.float64)              # (N_dm, D)
+            sample_sumsq = (flat.astype(np.float64) ** 2).sum(axis=1)    # (N_dm, D)
+            if not hasattr(self, '_obs_sum') or self._obs_sum is None:
+                self._obs_sum = np.zeros((self.N_dm, D), dtype=np.float64)
+                self._obs_sumsq = np.zeros((self.N_dm, D), dtype=np.float64)
+                self._obs_count = 0
+            self._obs_sum += sample_sum
+            self._obs_sumsq += sample_sumsq
+            self._obs_count += nsamp
 
         # ARS-V2 observation normalisation: subtract running mean, divide by
         # running std, clip to [-10, 10]. Stats are *frozen* during a rollout
@@ -540,7 +582,9 @@ class EcosystemEnvironment:
         full_mask = np.ones((self.N_dm, num_actions, H, W), dtype=self.dtype)
         full_mask[:, 0:4] = self.move_mask
 
-        B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
+        B_all = getattr(self, '_decision_B_all', None)
+        if B_all is None:
+            B_all = np.stack([self.fgs[fid].biomass for fid in self.global_fg_order], axis=0)
         prey_present = (B_all > 0).astype(self.dtype)
         full_mask[:, 5:5 + self.N_all] = self.eat_static_mask[:, :, None, None] * prey_present[None, :, :, :]
 
@@ -550,8 +594,10 @@ class EcosystemEnvironment:
         # one-hot argmax later in this function so the whole sub-threshold
         # group acts as a single unit (no splitting). See ``sub_thr_mask``
         # below for the deterministic collapse.
+        B_dm = getattr(self, '_decision_B_dm', None)
+        if B_dm is None:
+            B_dm = B_all[self.dm_index_in_all]
         if np.any(self.dm_min_split > 0):
-            B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
             sub_thr_mask = (B_dm > 0) & (B_dm < self.dm_min_split[:, None, None])
         else:
             sub_thr_mask = None
@@ -572,9 +618,41 @@ class EcosystemEnvironment:
 
         # Compute logits and apply mask additively (-inf where invalid).
         if self._batched_ready and obs_np.shape[-1] == self._in_dim:
+            active_flat = B_dm.reshape(self.N_dm, -1) > 0
+            logits = np.zeros((self.N_dm, H * W, num_actions), dtype=self.dtype)
             with torch.no_grad():
-                logits_t = self._batched_policy_forward(obs_t, return_logits=True)  # (N_dm, H*W, A)
-            logits = logits_t.numpy()
+                use_sparse = active_flat.shape[1] >= 1024
+                if use_sparse:
+                    active_counts = active_flat.sum(axis=1)
+                    threshold = int(active_flat.shape[1] * float(self.active_inference_threshold))
+                    sparse = active_counts < threshold
+                    dense = ~sparse
+                else:
+                    sparse = np.zeros(self.N_dm, dtype=bool)
+                    dense = np.ones(self.N_dm, dtype=bool)
+                if np.any(dense):
+                    idx_np = np.flatnonzero(dense)
+                    idx_t = torch.as_tensor(idx_np, dtype=torch.long)
+                    h = obs_t[idx_t]
+                    for layer_idx in range(len(self._Ws) - 1):
+                        h = torch.sigmoid(
+                            torch.bmm(h, self._Ws[layer_idx][idx_t])
+                            + self._bs[layer_idx][idx_t].unsqueeze(1)
+                        )
+                    logits_dense = (
+                        torch.bmm(h, self._Ws[-1][idx_t])
+                        + self._bs[-1][idx_t].unsqueeze(1)
+                    )
+                    logits[idx_np] = logits_dense.numpy()
+                for i in np.flatnonzero(sparse):
+                    cells = np.flatnonzero(active_flat[i])
+                    if cells.size == 0:
+                        continue
+                    fid = self.dm_ids[int(i)]
+                    d_i = int(self.per_dm_in_dim[int(i)])
+                    logits[i, cells] = self.policies[fid].get_action_logits_torch(
+                        obs_t[int(i), cells, :d_i]
+                    ).numpy()
         else:
             logits = np.empty((self.N_dm, H * W, num_actions), dtype=self.dtype)
             for i, fid in enumerate(self.dm_ids):
@@ -617,11 +695,9 @@ class EcosystemEnvironment:
         # 11-action distribution including move directions, allowing small
         # groups to migrate as a unit instead of being forced into rest/eat.
         if sub_thr_mask is not None and np.any(sub_thr_mask):
-            # (N_dm, H, W) -> broadcast over the action axis.
-            argmax_idx = np.argmax(probs, axis=1)  # (N_dm, H, W)
             one_hot = np.zeros_like(probs)
             d_idx, h_idx, w_idx = np.where(sub_thr_mask)
-            a_idx = argmax_idx[d_idx, h_idx, w_idx]
+            a_idx = np.argmax(probs[d_idx, :, h_idx, w_idx], axis=1)
             one_hot[d_idx, a_idx, h_idx, w_idx] = np.float32(1.0)
             # Replace probs only in sub-threshold cells.
             mask3 = sub_thr_mask[:, None, :, :]
@@ -631,59 +707,59 @@ class EcosystemEnvironment:
         self.pi_rest = probs[:, 4]
         self.pi_eat  = probs[:, 5:5 + self.N_all]
 
-        # --- Action-entropy diagnostics ---
-        # Compute per-DM mean Shannon entropy H(pi) averaged over cells with
-        # any biomass for that DM (so empty cells, where the action choice is
-        # irrelevant, don't dominate the mean). Logged via env._action_entropy.
-        # probs shape: (N_dm, num_actions, H, W); already mask-normalised.
-        eps = np.float32(1e-12)
-        ent_cell = -np.sum(probs * np.log(probs + eps), axis=1)  # (N_dm, H, W)
-        B_dm = np.stack([self.fgs[fid].biomass for fid in self.dm_ids], axis=0)
-        active = (B_dm > 0).astype(self.dtype)  # (N_dm, H, W)
-        active_sum = active.sum(axis=(1, 2))    # (N_dm,)
-        ent_mean = np.where(
-            active_sum > 0,
-            (ent_cell * active).sum(axis=(1, 2)) / np.maximum(active_sum, 1.0),
-            ent_cell.mean(axis=(1, 2)),
-        )
-        # Soft action-mass distribution (mean over active cells) for the
-        # fraction of the population's action mass going to each category.
-        # This reflects what the predation/movement modules actually use
-        # (the soft pi_move / pi_rest / pi_eat distributions), unlike a
-        # winner-takes-all argmax bookkeeping which can be misleading when
-        # the distribution is spread out.
-        n_act = probs.shape[1]
-        max_entropy = float(np.log(n_act))
-        # Per-cell category masses: move = sum over 4 move dirs,
-        # rest = pi_rest, eat = sum over all prey eat-nodes.
-        move_mass = probs[:, 0:4].sum(axis=1)            # (N_dm, H, W)
-        rest_mass = probs[:, 4]                          # (N_dm, H, W)
-        eat_mass  = probs[:, 5:5 + self.N_all].sum(axis=1)  # (N_dm, H, W)
-        if not hasattr(self, '_action_entropy_sum') or self._action_entropy_sum is None:
-            self._action_entropy_sum = np.zeros(self.N_dm, dtype=np.float64)
-            self._action_entropy_count = 0
-            self._action_active_ticks = np.zeros(self.N_dm, dtype=np.int64)
-            self._action_move_frac = np.zeros(self.N_dm, dtype=np.float64)
-            self._action_rest_frac = np.zeros(self.N_dm, dtype=np.float64)
-            self._action_eat_frac = np.zeros(self.N_dm, dtype=np.float64)
-            self._action_max_entropy = max_entropy
-        self._action_entropy_count += 1
-        # Per-DM accumulation: only count ticks where the FG has any biomass,
-        # so mv+rs+et==1 per DM (since pi_move+pi_rest+pi_eat == 1 per cell)
-        # and H_act is conditional entropy given the FG is alive somewhere.
-        # _action_entropy_count is kept as a global tick counter for backward
-        # compatibility.
-        for i in range(self.N_dm):
-            mask_i = active[i] > 0
-            n_cells = int(mask_i.sum())
-            if n_cells == 0:
-                continue
-            self._action_active_ticks[i] += 1
-            self._action_entropy_sum[i] += float(ent_mean[i])
-            inv = 1.0 / float(n_cells)
-            self._action_move_frac[i] += float(move_mass[i][mask_i].sum()) * inv
-            self._action_rest_frac[i] += float(rest_mass[i][mask_i].sum()) * inv
-            self._action_eat_frac[i]  += float(eat_mass[i][mask_i].sum())  * inv
+        if getattr(self, 'collect_action_stats', True):
+            # --- Action-entropy diagnostics ---
+            # Compute per-DM mean Shannon entropy H(pi) averaged over cells with
+            # any biomass for that DM (so empty cells, where the action choice is
+            # irrelevant, don't dominate the mean). Logged via env._action_entropy.
+            # probs shape: (N_dm, num_actions, H, W); already mask-normalised.
+            eps = np.float32(1e-12)
+            ent_cell = -np.sum(probs * np.log(probs + eps), axis=1)  # (N_dm, H, W)
+            active = (B_dm > 0).astype(self.dtype)  # (N_dm, H, W)
+            active_sum = active.sum(axis=(1, 2))    # (N_dm,)
+            ent_mean = np.where(
+                active_sum > 0,
+                (ent_cell * active).sum(axis=(1, 2)) / np.maximum(active_sum, 1.0),
+                ent_cell.mean(axis=(1, 2)),
+            )
+            # Soft action-mass distribution (mean over active cells) for the
+            # fraction of the population's action mass going to each category.
+            # This reflects what the predation/movement modules actually use
+            # (the soft pi_move / pi_rest / pi_eat distributions), unlike a
+            # winner-takes-all argmax bookkeeping which can be misleading when
+            # the distribution is spread out.
+            n_act = probs.shape[1]
+            max_entropy = float(np.log(n_act))
+            # Per-cell category masses: move = sum over 4 move dirs,
+            # rest = pi_rest, eat = sum over all prey eat-nodes.
+            move_mass = probs[:, 0:4].sum(axis=1)            # (N_dm, H, W)
+            rest_mass = probs[:, 4]                          # (N_dm, H, W)
+            eat_mass  = probs[:, 5:5 + self.N_all].sum(axis=1)  # (N_dm, H, W)
+            if not hasattr(self, '_action_entropy_sum') or self._action_entropy_sum is None:
+                self._action_entropy_sum = np.zeros(self.N_dm, dtype=np.float64)
+                self._action_entropy_count = 0
+                self._action_active_ticks = np.zeros(self.N_dm, dtype=np.int64)
+                self._action_move_frac = np.zeros(self.N_dm, dtype=np.float64)
+                self._action_rest_frac = np.zeros(self.N_dm, dtype=np.float64)
+                self._action_eat_frac = np.zeros(self.N_dm, dtype=np.float64)
+                self._action_max_entropy = max_entropy
+            self._action_entropy_count += 1
+            # Per-DM accumulation: only count ticks where the FG has any biomass,
+            # so mv+rs+et==1 per DM (since pi_move+pi_rest+pi_eat == 1 per cell)
+            # and H_act is conditional entropy given the FG is alive somewhere.
+            # _action_entropy_count is kept as a global tick counter for backward
+            # compatibility.
+            for i in range(self.N_dm):
+                mask_i = active[i] > 0
+                n_cells = int(mask_i.sum())
+                if n_cells == 0:
+                    continue
+                self._action_active_ticks[i] += 1
+                self._action_entropy_sum[i] += float(ent_mean[i])
+                inv = 1.0 / float(n_cells)
+                self._action_move_frac[i] += float(move_mass[i][mask_i].sum()) * inv
+                self._action_rest_frac[i] += float(rest_mass[i][mask_i].sum()) * inv
+                self._action_eat_frac[i]  += float(eat_mass[i][mask_i].sum())  * inv
 
         # Keep self.pi for non-DM consumers (always None entries here)
         self.pi = {fid: None for fid in self.fgs if not self.fgs[fid].is_decision_maker}
@@ -758,6 +834,10 @@ class EcosystemEnvironment:
         ).astype(self.dtype, copy=False)
         actual = D * scale[None, :, :, :]
 
+        ledger = getattr(self, 'biomass_ledger', None)
+        if ledger is not None:
+            ledger.record_predation(actual, self.energy_gain_mat)
+
         gains = (actual * self.energy_gain_mat[:, :, None, None]).sum(axis=1)  # (N_dm, H, W)
         for i, fid in enumerate(self.dm_ids):
             self.fgs[fid].temp_energy_gains = gains[i]
@@ -771,6 +851,8 @@ class EcosystemEnvironment:
             reduction = np.where(B_old > eps, (B_old - intake_j) / (B_old + eps), np.float32(0.0))
             prey_fg.energy_reserve = (prey_fg.energy_reserve * reduction).astype(self.dtype, copy=False)
             prey_fg.biomass = (B_old - intake_j).astype(self.dtype, copy=False)
+            if ledger is not None:
+                ledger.reduce_dm_energy_sources(prey_id, reduction)
 
     # ---------- Movement (vectorized + slice-assign) ----------
     def _apply_movement(self):
@@ -787,15 +869,7 @@ class EcosystemEnvironment:
         # (sum of energy_factor lookups over every impact with a valid table).
         # The factor (1 + Σ energy_factor) scales resting / feeding / movement
         # metabolic costs.
-        impact_energy = np.zeros((self.N_dm, H, W), dtype=self.dtype)
-        for i, entries in enumerate(self.dm_impact_tables):
-            for imp_id, table in entries:
-                map_data = self.grid.get_map(imp_id)
-                if map_data is None:
-                    continue
-                _, ef_map = self._interp_impact(table, map_data.astype(self.dtype, copy=False))
-                impact_energy[i] += ef_map
-        cost_factor = np.float32(1.0) + impact_energy
+        cost_factor = np.float32(1.0) + self.dm_impact_energy_factor
         rm = self.dm_resting_metabolism[:, None, None]
         cost_rest = self.dm_cost_rest[:, None, None]
         cost_eat = self.dm_cost_eat[:, None, None]
@@ -810,7 +884,8 @@ class EcosystemEnvironment:
         # Eat: pi_eat sums then uses shared scale (sum_j max(0, R*pi_j - B*pi_j*scale) = sum_j pi_j*max(0, R - B*scale))
         pi_eat_sum = self.pi_eat.sum(axis=1)
         scale_eat = rm * cost_eat * cost_factor
-        r_eat_tot = pi_eat_sum * np.maximum(0, R - B * scale_eat) + TG
+        r_eat_base = pi_eat_sum * np.maximum(0, R - B * scale_eat)
+        r_eat_tot = r_eat_base + TG
         b_eat_tot = B * pi_eat_sum
 
         # Move (4 directions)
@@ -848,6 +923,13 @@ class EcosystemEnvironment:
         new_B = b_total_in
         max_R = new_B * self.dm_max_energy_reserve[:, None, None]
         new_R = np.clip(r_total_in, 0.0, max_R)
+
+        ledger = getattr(self, 'biomass_ledger', None)
+        if ledger is not None:
+            ledger.apply_energy_movement(
+                R, pi_rest, pi_eat_sum, pi_move, r_rest, r_eat_base,
+                r_after_move_meta, self.dm_v, new_R,
+            )
 
         for i, fid in enumerate(self.dm_ids):
             self.fgs[fid].biomass = new_B[i].astype(self.dtype, copy=False)
@@ -895,9 +977,29 @@ class EcosystemEnvironment:
     def _compute_impact_mortality(self, fg):
         """Return total impact-induced biomass loss m_X^Impact for the given FG
         as a per-cell array, or None if the FG has no active impact tables."""
-        if 'impact' not in fg.params:
+        by_impact = self._compute_impact_mortality_by_impact(fg)
+        if not by_impact:
             return None
         total_mortality_impact = None
+        for contribution in by_impact.values():
+            if total_mortality_impact is None:
+                total_mortality_impact = contribution
+            else:
+                total_mortality_impact = total_mortality_impact + contribution
+        return total_mortality_impact
+
+    def _compute_impact_mortality_by_impact(self, fg):
+        """Return ``{impact_id: per-cell biomass loss}`` before clipping."""
+        idx = getattr(self, 'dm_id_to_idx', {}).get(getattr(fg, 'group_id', None))
+        factor_maps = getattr(self, 'dm_impact_factor_maps', None)
+        if idx is not None and factor_maps is not None:
+            return {
+                impact_id: fg.biomass * bf_map
+                for impact_id, (bf_map, _ef_map) in factor_maps[idx].items()
+            }
+        if 'impact' not in fg.params:
+            return {}
+        by_impact = {}
         for impact_id, impact_def in fg.params['impact'].items():
             map_data = self.grid.get_map(impact_id)
             if map_data is None:
@@ -907,27 +1009,41 @@ class EcosystemEnvironment:
                 continue
             bf_map, _ = self._interp_impact(table, map_data)
             contribution = fg.biomass * bf_map
-            if total_mortality_impact is None:
-                total_mortality_impact = contribution
-            else:
-                total_mortality_impact = total_mortality_impact + contribution
-        return total_mortality_impact
+            by_impact[impact_id] = contribution
+        return by_impact
 
     def _apply_impact_mortality(self):
         """Method.pdf §steg 1–6: apply m_X^Impact before predation. Only
         decision-maker FGs carry impact tables in the current model."""
+        ledger = getattr(self, 'biomass_ledger', None)
         for fg_id in self.ordered_fg_ids:
             fg = self.fgs[fg_id]
             if not fg.is_decision_maker:
                 continue
-            total_mortality_impact = self._compute_impact_mortality(fg)
-            if total_mortality_impact is None:
+            by_impact = self._compute_impact_mortality_by_impact(fg)
+            if not by_impact:
                 continue
+            total_mortality_impact = None
+            for contribution in by_impact.values():
+                if total_mortality_impact is None:
+                    total_mortality_impact = contribution
+                else:
+                    total_mortality_impact = total_mortality_impact + contribution
 
             loss_mask = total_mortality_impact > 0
+            actual_total_loss = np.minimum(fg.biomass, total_mortality_impact)
+            if ledger is not None:
+                split_scale = np.divide(
+                    actual_total_loss,
+                    total_mortality_impact,
+                    out=np.zeros_like(total_mortality_impact),
+                    where=total_mortality_impact > np.float32(1e-9),
+                )
+                for impact_id, contribution in by_impact.items():
+                    ledger.record_impact_loss(fg_id, impact_id, contribution * split_scale)
             reduction = np.ones_like(fg.biomass)
             reduction[loss_mask] = (
-                (fg.biomass[loss_mask] - total_mortality_impact[loss_mask])
+                (fg.biomass[loss_mask] - actual_total_loss[loss_mask])
                 / (fg.biomass[loss_mask] + 1e-9)
             )
             reduction = np.clip(reduction, 0.0, 1.0)
@@ -936,8 +1052,11 @@ class EcosystemEnvironment:
             fg.biomass = np.maximum(
                 0.0, fg.biomass - total_mortality_impact
             ).astype(self.dtype, copy=False)
+            if ledger is not None:
+                ledger.reduce_dm_energy_sources(fg_id, reduction)
 
     def _apply_growth(self):
+        ledger = getattr(self, 'biomass_ledger', None)
         for fg_id in self.ordered_fg_ids:
             fg = self.fgs[fg_id]
             if not fg.is_decision_maker:
@@ -954,7 +1073,9 @@ class EcosystemEnvironment:
                     phase_t = (self.tick_count + phase) / period
                     season = 1.0 + amp * float(np.sin(2.0 * np.pi * phase_t))
                     mg = mg * season
-                growth = mg * fg.biomass * (1.0 - fg.biomass / (cc + 1e-9))
+                intrinsic_growth = mg * fg.biomass * (1.0 - fg.biomass / (cc + 1e-9))
+                growth = intrinsic_growth
+                seed_growth = None
                 # Fix 1: rekolonisations-floor. Tillsätter en konstant andel
                 # av cc per tick i alla celler så NDM aldrig kan utrotas
                 # globalt (dvalceller / inflöde). seed_rate=0 ⇒ legacy.
@@ -969,8 +1090,17 @@ class EcosystemEnvironment:
                         10.0,
                         np.random.uniform(-1.0, 1.0, size=fg.biomass.shape),
                     ).astype(np.float32, copy=False)
-                    growth = growth + np.float32(seed_rate * cc) * seed_mult
-                fg.biomass = np.clip(fg.biomass + growth, 0.0, cc).astype(self.dtype, copy=False)
+                    seed_growth = np.float32(seed_rate * cc) * seed_mult
+                    growth = growth + seed_growth
+                old_b = fg.biomass
+                new_b = np.clip(old_b + growth, 0.0, cc).astype(self.dtype, copy=False)
+                if ledger is not None:
+                    ledger.record_ndm_growth(
+                        fg_id, intrinsic_growth,
+                        seed_growth=seed_growth,
+                        effective_delta=new_b - old_b,
+                    )
+                fg.biomass = new_b
             else:
                 # Fix 3: densitetsoberoende naturlig mortalitet (senescens,
                 # sjukdom, hidden predation). Appliceras före growth-termen
@@ -979,14 +1109,35 @@ class EcosystemEnvironment:
                 nm = float(getattr(fg, 'natural_mortality', 0.0) or 0.0)
                 if nm > 0.0 and self.apply_natural_mortality:
                     keep = np.float32(max(0.0, 1.0 - nm))
+                    if ledger is not None:
+                        ledger.record_natural_mortality(fg_id, fg.biomass * (1.0 - keep))
                     fg.energy_reserve = (fg.energy_reserve * keep).astype(self.dtype, copy=False)
                     fg.biomass = (fg.biomass * keep).astype(self.dtype, copy=False)
+                    if ledger is not None:
+                        ledger.reduce_dm_energy_sources(fg_id, np.full_like(fg.biomass, keep))
 
                 s_x = fg.energy_level
                 u_x = fg.maintenance_level
                 q_x = s_x - u_x
 
-                growth = fg.biomass * fg.growth_rate * q_x
+                positive_growth = fg.biomass * fg.growth_rate * np.maximum(q_x, 0.0)
+                cc = fg.params.get('max_carrying_capacity')
+                if cc is not None:
+                    cc = np.float32(max(0.0, float(cc)))
+                    positive_growth = positive_growth * np.maximum(
+                        0.0, 1.0 - fg.biomass / (cc + np.float32(1e-9))
+                    )
+                    positive_growth = np.maximum(positive_growth, 0.0)
+                starvation_scale = np.divide(
+                    np.maximum(u_x - s_x, 0.0),
+                    np.float32(max(u_x, 1e-9)),
+                    out=np.zeros_like(s_x),
+                    where=u_x > 0.0,
+                )
+                starvation_loss = fg.biomass * fg.starvation_rate * starvation_scale
+                growth = positive_growth - starvation_loss
+                if ledger is not None:
+                    ledger.record_dm_growth(fg_id, growth)
 
                 # Handle negative growth (shrinkage) as additional biomass loss
                 # that also drains energy reserve proportionally.
@@ -1003,3 +1154,5 @@ class EcosystemEnvironment:
 
                 fg.energy_reserve = (fg.energy_reserve * reduction).astype(self.dtype, copy=False)
                 fg.biomass = np.maximum(0.0, fg.biomass + growth).astype(self.dtype, copy=False)
+                if ledger is not None:
+                    ledger.reduce_dm_energy_sources(fg_id, reduction)

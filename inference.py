@@ -393,6 +393,8 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     env.policies = dict(policies)
     env.obs_mean = obs_mean
     env.obs_var = obs_var
+    env.collect_obs_stats = False
+    env.collect_action_stats = False
     # Rebuild batched weight tensors used by the fast inference path.
     env._rebuild_batched_weights()
 
@@ -409,6 +411,8 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
         # constant zero anyway so this is pure bookkeeping.
         rnd_env.obs_mean = np.zeros_like(env.obs_mean)
         rnd_env.obs_var = np.ones_like(env.obs_var)
+        rnd_env.collect_obs_stats = False
+        rnd_env.collect_action_stats = False
         # Force the per-DM Python path so RandomPolicy.get_action_logits_torch
         # is actually called (the batched path needs stacked Linear weights).
         rnd_env._batched_ready = False
@@ -496,6 +500,10 @@ def main():
                         help="Seed for deterministic initial biomass distribution.")
     parser.add_argument("--output", type=str, default=None,
                         help="Optional path to save per-FG biomass history as .npz.")
+    parser.add_argument("--biomass-ledger", "--biomass_ledger", dest="biomass_ledger",
+                        type=str, default=None,
+                        help="Optional path to save an opt-in biomass-flow ledger "
+                             "as .npz. A same-stem .csv event table is also written.")
     parser.add_argument("--quiet", action="store_true", help="Suppress per-step output.")
     parser.add_argument("--mortality", choices=["on", "off"], default="off",
                         help="Toggle the artificial (density-independent) natural "
@@ -512,8 +520,13 @@ def main():
                         help="Open a live pygame window with per-FG biomass heatmaps "
                              "and a rolling total-biomass plot. Requires pygame; if "
                              "unavailable the flag is silently ignored.")
+    parser.add_argument("--torch-threads", type=int, default=None,
+                        help="Optional torch CPU thread count. Small inference "
+                             "networks can be faster with fewer threads, e.g. 4.")
 
     args = parser.parse_args()
+    if args.torch_threads is not None:
+        torch.set_num_threads(max(1, int(args.torch_threads)))
     verbose = not args.quiet
     if args.checkpoints is None:
         args.checkpoints = os.path.join("results", args.run_name)
@@ -545,6 +558,12 @@ def main():
         print("Error: policy checkpoint mismatch.", file=sys.stderr)
         print(str(e), file=sys.stderr)
         return 1
+
+    if args.biomass_ledger:
+        from lib.diagnostics.biomass_ledger import BiomassLedger
+        env.biomass_ledger = BiomassLedger.from_env(env)
+        if verbose:
+            print(f"Biomass ledger: {args.biomass_ledger}")
 
     # Parallel random-action baseline environment. Built with the same
     # project + seed as the trained env so initial biomass / impacts /
@@ -602,6 +621,12 @@ def main():
         np.savez(args.output, **{fid: np.asarray(h, dtype=np.float64) for fid, h in history.items()})
         if verbose:
             print(f"Saved biomass history to {args.output}")
+
+    if args.biomass_ledger and getattr(env, 'biomass_ledger', None) is not None:
+        csv_path = env.biomass_ledger.save(args.biomass_ledger)
+        if verbose:
+            print(f"Saved biomass ledger to {args.biomass_ledger}")
+            print(f"Saved biomass ledger events to {csv_path}")
 
     if verbose:
         print("\nFinal totals (tonnes):")

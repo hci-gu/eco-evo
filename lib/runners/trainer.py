@@ -335,10 +335,8 @@ class ARSTrainer:
                     'var': obs_var,
                 }
 
-            # STEP 3: when M>1, emit 2*n_deltas*M tasks; for each (i, sign, m)
-            # the worker uses builder_m via the dict-task override. For M=1
-            # we keep the original tuple-task format (no override needed)
-            # so the worker stays on its byte-identical legacy code path.
+            # Emit an explicit env_builder override even for M=1. That lets
+            # train.py refresh worlds without respawning the worker pool.
             tasks = []
             if M == 1:
                 for sign in (+1, -1):
@@ -346,10 +344,20 @@ class ARSTrainer:
                         d = delta.numpy()
                         w = dict(base_weights)
                         w[fg_to_train] = base_train + sign * self.sigma * d
-                        tasks.append((fg_to_train, w, n_eval_ticks, self.alpha, self.beta,
-                                      pair_seeds[i], obs_pack, self.entropy_coef,
-                                      self.argmax_penalty, self.softmax_temperature,
-                                      self.integral_reward))
+                        tasks.append({
+                            'fg_to_train': fg_to_train,
+                            'weights_dict': w,
+                            'n_ticks': n_eval_ticks,
+                            'alpha': self.alpha,
+                            'beta': self.beta,
+                            'seed': pair_seeds[i],
+                            'obs_pack': obs_pack,
+                            'entropy_coef': self.entropy_coef,
+                            'argmax_penalty': self.argmax_penalty,
+                            'softmax_temperature': self.softmax_temperature,
+                            'integral_reward': self.integral_reward,
+                            'env_builder': world_builders[0],
+                        })
             else:
                 for sign in (+1, -1):
                     for i, delta in enumerate(deltas):
@@ -821,19 +829,40 @@ class ARSTrainer:
                             'mean': obs_mean, 'var': obs_var}
             tasks = []
             if M == 1:
-                # M=1 legacy: keep tuple-format tasks (byte-identical to pre-STEP-3 path).
+                # M=1 still carries the current env_builder so workers can
+                # reuse the existing pool when train.py refreshes worlds.
                 for i in range(self.n_deltas):
                     wd_pos = _build_weights_dict(+1.0, i)
-                    tasks.append((list(target_species), wd_pos, n_eval_ticks,
-                                  self.alpha, self.beta, pair_seeds[i], obs_pack,
-                                  self.entropy_coef, self.argmax_penalty,
-                                  self.softmax_temperature, self.integral_reward))
+                    tasks.append({
+                        'fg_list': list(target_species),
+                        'weights_dict': wd_pos,
+                        'n_ticks': n_eval_ticks,
+                        'alpha': self.alpha,
+                        'beta': self.beta,
+                        'seed': pair_seeds[i],
+                        'obs_pack': obs_pack,
+                        'entropy_coef': self.entropy_coef,
+                        'argmax_penalty': self.argmax_penalty,
+                        'softmax_temperature': self.softmax_temperature,
+                        'integral_reward': self.integral_reward,
+                        'env_builder': world_builders[0],
+                    })
                 for i in range(self.n_deltas):
                     wd_neg = _build_weights_dict(-1.0, i)
-                    tasks.append((list(target_species), wd_neg, n_eval_ticks,
-                                  self.alpha, self.beta, pair_seeds[i], obs_pack,
-                                  self.entropy_coef, self.argmax_penalty,
-                                  self.softmax_temperature, self.integral_reward))
+                    tasks.append({
+                        'fg_list': list(target_species),
+                        'weights_dict': wd_neg,
+                        'n_ticks': n_eval_ticks,
+                        'alpha': self.alpha,
+                        'beta': self.beta,
+                        'seed': pair_seeds[i],
+                        'obs_pack': obs_pack,
+                        'entropy_coef': self.entropy_coef,
+                        'argmax_penalty': self.argmax_penalty,
+                        'softmax_temperature': self.softmax_temperature,
+                        'integral_reward': self.integral_reward,
+                        'env_builder': world_builders[0],
+                    })
             else:
                 # M>1: dict-tasks with per-world env_builder override. Layout:
                 # outer = sign (+, -), then i in [0..n_deltas), then m in [0..M).
