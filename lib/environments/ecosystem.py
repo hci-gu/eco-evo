@@ -240,55 +240,74 @@ class EcosystemEnvironment:
         slots contribute exactly 0 to each DM's hidden activation —
         semantically identical to having no input slot at all.
 
-        Hidden width and out_dim must still be uniform across DMs (they
-        are, by construction in train.py).
+        Hidden width and out_dim must be uniform across DMs (they are, by
+        construction in train.py). The *number* of hidden layers is
+        arbitrary: we stack each Linear layer into its own batched
+        (N_dm, in, out) weight tensor + (N_dm, out) bias, stored as lists
+        ``self._Ws`` / ``self._bs`` in net order. The forward pass applies
+        Sigmoid after every layer except the last (matching PolicyNetwork).
         """
         self._batched_ready = False
+        self._Ws = None
+        self._bs = None
         if self.N_dm == 0:
             return
         if not all(fid in self.policies for fid in self.dm_ids):
             return
         try:
             first = self.policies[self.dm_ids[0]]
-            layers = [m for m in first.net if isinstance(m, torch.nn.Linear)]
-            if len(layers) != 3:
+            layers0 = [m for m in first.net if isinstance(m, torch.nn.Linear)]
+            n_layers = len(layers0)
+            if n_layers < 2:
+                # Need at least one hidden + one output layer.
                 return
-            hid = layers[0].out_features
-            out_dim = layers[2].out_features
+            # Reference shapes from the first DM's net (excluding in_features
+            # of layer 0, which varies per DM and is padded to max_in_dim).
+            ref_shapes = [(lin.in_features, lin.out_features) for lin in layers0]
+            out_dim = ref_shapes[-1][1]
             max_in_dim = int(self.max_in_dim)
-            # Sanity: each policy's in_dim must equal this DM's expected
-            # per-DM in_dim (built from observes + impacts). Otherwise the
-            # policies were sized inconsistently with the env's
-            # observability config — fall back to non-batched path.
+            # Sanity: each policy must match ref_shapes except layer 0's
+            # in_features, which must equal this DM's per_dm_in_dim[i].
             for i, fid in enumerate(self.dm_ids):
                 lin = [m for m in self.policies[fid].net if isinstance(m, torch.nn.Linear)]
-                if (lin[0].in_features != int(self.per_dm_in_dim[i])
-                        or lin[0].out_features != hid
-                        or lin[1].in_features != hid or lin[1].out_features != hid
-                        or lin[2].in_features != hid or lin[2].out_features != out_dim):
+                if len(lin) != n_layers:
                     return
-            W1 = torch.zeros(self.N_dm, max_in_dim, hid)
-            b1 = torch.empty(self.N_dm, hid)
-            W2 = torch.empty(self.N_dm, hid, hid)
-            b2 = torch.empty(self.N_dm, hid)
-            W3 = torch.empty(self.N_dm, hid, out_dim)
-            b3 = torch.empty(self.N_dm, out_dim)
+                if lin[0].in_features != int(self.per_dm_in_dim[i]):
+                    return
+                if lin[0].out_features != ref_shapes[0][1]:
+                    return
+                for k in range(1, n_layers):
+                    if (lin[k].in_features != ref_shapes[k][0]
+                            or lin[k].out_features != ref_shapes[k][1]):
+                        return
+            # Allocate batched tensors per layer.
+            Ws = []
+            bs = []
+            for k, (in_k, out_k) in enumerate(ref_shapes):
+                if k == 0:
+                    W = torch.zeros(self.N_dm, max_in_dim, out_k)
+                else:
+                    W = torch.empty(self.N_dm, in_k, out_k)
+                b = torch.empty(self.N_dm, out_k)
+                Ws.append(W)
+                bs.append(b)
             for i, fid in enumerate(self.dm_ids):
-                net = self.policies[fid].net
-                lin = [m for m in net if isinstance(m, torch.nn.Linear)]
+                lin = [m for m in self.policies[fid].net if isinstance(m, torch.nn.Linear)]
                 in_dim_i = int(self.per_dm_in_dim[i])
-                # PyTorch Linear weight is (out, in); .t() -> (in, out).
-                # Place this DM's W1 in the top-left in_dim_i rows; the
-                # remaining (max_in_dim - in_dim_i) rows stay zero.
-                W1[i, :in_dim_i, :] = lin[0].weight.detach().t()
-                b1[i] = lin[0].bias.detach()
-                W2[i] = lin[1].weight.detach().t()
-                b2[i] = lin[1].bias.detach()
-                W3[i] = lin[2].weight.detach().t()
-                b3[i] = lin[2].bias.detach()
-            self._W1, self._b1 = W1, b1
-            self._W2, self._b2 = W2, b2
-            self._W3, self._b3 = W3, b3
+                # Layer 0: pad W1 rows to max_in_dim (top in_dim_i rows used).
+                Ws[0][i, :in_dim_i, :] = lin[0].weight.detach().t()
+                bs[0][i] = lin[0].bias.detach()
+                for k in range(1, n_layers):
+                    Ws[k][i] = lin[k].weight.detach().t()
+                    bs[k][i] = lin[k].bias.detach()
+            self._Ws = Ws
+            self._bs = bs
+            # Legacy aliases (kept so external callers / debugging that read
+            # _W1/_W2/_W3 still work for the default 2-hidden architecture).
+            if n_layers == 3:
+                self._W1, self._b1 = Ws[0], bs[0]
+                self._W2, self._b2 = Ws[1], bs[1]
+                self._W3, self._b3 = Ws[2], bs[2]
             self._in_dim = max_in_dim
             self._out_dim = out_dim
             self._batched_ready = True
@@ -429,10 +448,19 @@ class EcosystemEnvironment:
 
     # ---------- Batched policy inference ----------
     def _batched_policy_forward(self, obs_batch, return_logits=False):
-        """obs_batch: torch tensor (N_dm, N, D) -> probs or logits (N_dm, N, out_dim)."""
-        h = torch.sigmoid(torch.bmm(obs_batch, self._W1) + self._b1.unsqueeze(1))
-        h = torch.sigmoid(torch.bmm(h, self._W2) + self._b2.unsqueeze(1))
-        logits = torch.bmm(h, self._W3) + self._b3.unsqueeze(1)
+        """obs_batch: torch tensor (N_dm, N, D) -> probs or logits (N_dm, N, out_dim).
+
+        Generalised over arbitrary number of hidden layers. Mirrors
+        PolicyNetwork.forward: Sigmoid after every Linear except the last,
+        which produces raw logits.
+        """
+        Ws = self._Ws
+        bs = self._bs
+        n_layers = len(Ws)
+        h = obs_batch
+        for k in range(n_layers - 1):
+            h = torch.sigmoid(torch.bmm(h, Ws[k]) + bs[k].unsqueeze(1))
+        logits = torch.bmm(h, Ws[-1]) + bs[-1].unsqueeze(1)
         if return_logits:
             return logits
         return torch.softmax(logits, dim=-1)
@@ -535,7 +563,15 @@ class EcosystemEnvironment:
             logits = np.empty((self.N_dm, H * W, num_actions), dtype=self.dtype)
             for i, fid in enumerate(self.dm_ids):
                 if fid in self.policies:
-                    lg = self.policies[fid].get_action_logits_torch(obs_t[i]).numpy()
+                    # obs_t is padded along the feature axis to max_in_dim so
+                    # that all DMs share a common (N_dm, H*W, max_in_dim)
+                    # tensor for the batched fast-path. The per-DM policies,
+                    # however, have layers[0].in_features == per_dm_in_dim[i]
+                    # (the un-padded width). Slice the top per_dm_in_dim[i]
+                    # feature slots — that's exactly where _build_observation_batch
+                    # wrote this DM's real features; the rest are zero padding.
+                    d_i = int(self.per_dm_in_dim[i])
+                    lg = self.policies[fid].get_action_logits_torch(obs_t[i, :, :d_i]).numpy()
                 else:
                     lg = np.zeros((H * W, num_actions), dtype=self.dtype)
                 logits[i] = lg

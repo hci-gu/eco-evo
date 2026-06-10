@@ -4,7 +4,7 @@
     is_decision_maker: false
     movement_speed: 0.0
     growth_rate: 0.125
-    max_carrying_capacity: 20.0
+    max_carrying_capacity: 27.0
     energy_content: 2000.0
     seed_rate: 1e-05
     seasonal_amplitude: 0.5
@@ -28,7 +28,7 @@
     energy_content: 4500.0
     min_split_biomass: 0.0
     growth_rate: 0.01
-    natural_mortality: 0.001
+    natural_mortality: 0.0025
     max_intake_rate: 0.25
     spawn:
       mode: env_driven
@@ -107,7 +107,7 @@
     min_split_biomass: 50.0
     energy_content: 0.0
     growth_rate: 0.0001
-    natural_mortality: 0.00005
+    natural_mortality: 5e-05
     max_intake_rate: 0.05
     spawn:
       mode: colony
@@ -126,7 +126,7 @@
     min_split_biomass: 80.0
     energy_content: 0.0
     growth_rate: 0.0001
-    natural_mortality: 0.00004
+    natural_mortality: 4e-05
     max_intake_rate: 0.05
     spawn:
       mode: colony
@@ -178,22 +178,22 @@ interaction_definitions:
   pelagic_fish_preys_on_zooplankton:
     energy_gain: 4500
     preys_on: true
-    assimilation_factor: 1.0
+    assimilation_factor: 0.8
     handling_time: 0.0
   gadoids_preys_on_pelagic_fish:
     energy_gain: 6500
     preys_on: true
-    assimilation_factor: 1.0
+    assimilation_factor: 0.8
     handling_time: 0.0
   porpoises_preys_on_pelagic_fish:
     energy_gain: 6500
     preys_on: true
-    assimilation_factor: 1.0
+    assimilation_factor: 0.9
     handling_time: 0.0
   seals_preys_on_gadoids:
     energy_gain: 5500
     preys_on: true
-    assimilation_factor: 1.0
+    assimilation_factor: 0.86
     handling_time: 0.0
   seabirds_preys_on_pelagic_fish:
     energy_gain: 6500
@@ -328,7 +328,7 @@ interaction_definitions:
     preys_on: true
     max_intake_rate: 0.05
     energy_gain: 5500
-    assimilation_factor: 1.0
+    assimilation_factor: 0.84
     handling_time: 0.0
   porpoises_preys_on_phytoplankton:
     preys_on: false
@@ -386,7 +386,7 @@ interaction_definitions:
     preys_on: true
     max_intake_rate: 0.05
     energy_gain: 6500
-    assimilation_factor: 1.0
+    assimilation_factor: 0.92
     handling_time: 0.0
   seals_preys_on_phytoplankton:
     preys_on: false
