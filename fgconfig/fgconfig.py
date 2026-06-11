@@ -237,20 +237,103 @@ class FGConfigApp:
         self.notebook.add(self.project_tab, text="Project & FGs")
         self.setup_project_tab()
 
-        # Tab 2: FG Interactions
+        # Tab 2: Impacts (impact variables list + per-impact editor)
+        self.impacts_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.impacts_tab, text="Impacts")
+        self.setup_impacts_tab()
+
+        # Tab 3: FG Interactions
         self.matrix_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.matrix_tab, text="FG Interactions")
 
-        # Tab 3: Impact Interactions
+        # Tab 4: Impact Interactions
         self.impact_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.impact_tab, text="Impact Interactions")
 
-        # Tab 4: Inference
+        # Tab 5: Inference
         self.inference_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.inference_tab, text="Inference")
         self.setup_inference_tab()
 
         self.setup_matrix_tab()
+
+    def setup_impacts_tab(self):
+        # Dedicated tab hosting the "Impact Variables in Project" list and
+        # the per-impact editor (value range, observable flag, spawn-strategy).
+        # Layout mirrors the structure these widgets used to have inside the
+        # Project tab before they were moved here.
+        parent = self.impacts_tab
+
+        # Impact Variables list in project
+        impact_frame = ttk.LabelFrame(parent, text="Impact Variables in Project")
+        impact_frame.pack(expand=False, fill="x", padx=10, pady=5)
+
+        self.impact_listbox = tk.Listbox(impact_frame, exportselection=False, height=8)
+        self.impact_listbox.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+
+        impact_btn_frame = ttk.Frame(impact_frame)
+        impact_btn_frame.pack(side="right", fill="y", padx=5, pady=5)
+
+        ttk.Button(impact_btn_frame, text="Add from Library", command=self.add_impact_from_library).pack(fill="x", pady=2)
+        ttk.Button(impact_btn_frame, text="Remove Impact", command=self.remove_impact).pack(fill="x", pady=2)
+        self.impact_mute_btn = ttk.Button(impact_btn_frame, text="Mute",
+                                          command=self.toggle_mute_impact)
+        self.impact_mute_btn.pack(fill="x", pady=2)
+        self.impact_listbox.bind("<<ListboxSelect>>",
+                                 lambda e: (self._refresh_mute_button_labels(),
+                                            self.on_impact_select()))
+
+        # Impact Editor: per-impact value range used to sample the impact map
+        # uniformly per cell at training/inference time (replaces the old
+        # PNG-based maps and zero dummies).
+        self.impact_editor_frame = ttk.LabelFrame(parent, text="Impact Editor")
+        self.impact_editor_frame.pack(fill="x", padx=10, pady=5)
+
+        self.impact_editor_label_var = tk.StringVar(value="(no impact selected)")
+        ttk.Label(self.impact_editor_frame, textvariable=self.impact_editor_label_var,
+                  font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, columnspan=2,
+                                                          sticky="w", padx=5, pady=(5, 2))
+
+        ttk.Label(self.impact_editor_frame, text="Value Range").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2)
+        ie_min_var, ie_max_var = self._build_value_range_row(
+            self.impact_editor_frame, row=1)
+        self.impact_value_min_var = ie_min_var
+        self.impact_value_max_var = ie_max_var
+
+        ttk.Label(self.impact_editor_frame, text="Observable by policy").grid(
+            row=2, column=0, sticky="w", padx=5, pady=2)
+        self.impact_observable_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(self.impact_editor_frame,
+                        variable=self.impact_observable_var,
+                        command=self._on_impact_observable_toggled).grid(
+            row=2, column=1, sticky="w", padx=5, pady=2)
+
+        self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
+                                           text="Apply Changes",
+                                           command=self.apply_impact_changes)
+        self.impact_apply_btn.grid(row=3, column=0, columnspan=2, pady=5)
+
+        # Spawn-strategy editor for impact maps. Mirrors the per-FG spawn
+        # editor (mode/parameters/preview/info) but writes back to the
+        # impact_variables[i].spawn block. Used at training time to shape
+        # the random impact field (still scaled to [value_min, value_max]).
+        self.impact_spawn_frame = ttk.LabelFrame(
+            self.impact_editor_frame, text="Spawn Strategy")
+        self.impact_spawn_frame.grid(row=4, column=0, columnspan=2,
+                                     sticky="ew", padx=5, pady=5)
+        self.impact_spawn_vars = {}
+        self._build_spawn_editor(self.impact_spawn_frame, self.impact_spawn_vars)
+        # Hidden by default; shown only for observable impacts. The Spawn
+        # Strategy only governs how observable impact maps are populated;
+        # non-observable impacts are zero-filled at training time, so the
+        # editor is meaningless for them.
+        self.impact_spawn_frame.grid_remove()
+
+        # Track widgets so we can enable/disable the editor based on selection
+        # and muted status.
+        self._impact_editor_widgets = list(self.impact_editor_frame.winfo_children())
+        self._set_impact_editor_enabled(False)
 
     def setup_project_tab(self):
         # Scrollable container for the whole project tab
@@ -430,77 +513,6 @@ class FGConfigApp:
 
         # Track which list the FG editor is currently bound to
         self.active_fg_category = None
-
-        # Impact Variables list in project
-        impact_frame = ttk.LabelFrame(self.project_inner, text="Impact Variables in Project")
-        impact_frame.pack(expand=True, fill="both", padx=10, pady=5)
-
-        self.impact_listbox = tk.Listbox(impact_frame, exportselection=False)
-        self.impact_listbox.pack(side="left", expand=True, fill="both", padx=5, pady=5)
-
-        impact_btn_frame = ttk.Frame(impact_frame)
-        impact_btn_frame.pack(side="right", fill="y", padx=5, pady=5)
-
-        ttk.Button(impact_btn_frame, text="Add from Library", command=self.add_impact_from_library).pack(fill="x", pady=2)
-        ttk.Button(impact_btn_frame, text="Remove Impact", command=self.remove_impact).pack(fill="x", pady=2)
-        self.impact_mute_btn = ttk.Button(impact_btn_frame, text="Mute",
-                                          command=self.toggle_mute_impact)
-        self.impact_mute_btn.pack(fill="x", pady=2)
-        self.impact_listbox.bind("<<ListboxSelect>>",
-                                 lambda e: (self._refresh_mute_button_labels(),
-                                            self.on_impact_select()))
-
-        # Impact Editor: per-impact value range used to sample the impact map
-        # uniformly per cell at training/inference time (replaces the old
-        # PNG-based maps and zero dummies).
-        self.impact_editor_frame = ttk.LabelFrame(self.project_inner, text="Impact Editor")
-        self.impact_editor_frame.pack(fill="x", padx=10, pady=5)
-
-        self.impact_editor_label_var = tk.StringVar(value="(no impact selected)")
-        ttk.Label(self.impact_editor_frame, textvariable=self.impact_editor_label_var,
-                  font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, columnspan=2,
-                                                          sticky="w", padx=5, pady=(5, 2))
-
-        ttk.Label(self.impact_editor_frame, text="Value Range").grid(
-            row=1, column=0, sticky="w", padx=5, pady=2)
-        ie_min_var, ie_max_var = self._build_value_range_row(
-            self.impact_editor_frame, row=1)
-        self.impact_value_min_var = ie_min_var
-        self.impact_value_max_var = ie_max_var
-
-        ttk.Label(self.impact_editor_frame, text="Observable by policy").grid(
-            row=2, column=0, sticky="w", padx=5, pady=2)
-        self.impact_observable_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(self.impact_editor_frame,
-                        variable=self.impact_observable_var,
-                        command=self._on_impact_observable_toggled).grid(
-            row=2, column=1, sticky="w", padx=5, pady=2)
-
-        self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
-                                           text="Apply Changes",
-                                           command=self.apply_impact_changes)
-        self.impact_apply_btn.grid(row=3, column=0, columnspan=2, pady=5)
-
-        # Spawn-strategy editor for impact maps. Mirrors the per-FG spawn
-        # editor (mode/parameters/preview/info) but writes back to the
-        # impact_variables[i].spawn block. Used at training time to shape
-        # the random impact field (still scaled to [value_min, value_max]).
-        self.impact_spawn_frame = ttk.LabelFrame(
-            self.impact_editor_frame, text="Spawn Strategy")
-        self.impact_spawn_frame.grid(row=4, column=0, columnspan=2,
-                                     sticky="ew", padx=5, pady=5)
-        self.impact_spawn_vars = {}
-        self._build_spawn_editor(self.impact_spawn_frame, self.impact_spawn_vars)
-        # Hidden by default; shown only for observable impacts. The Spawn
-        # Strategy only governs how observable impact maps are populated;
-        # non-observable impacts are zero-filled at training time, so the
-        # editor is meaningless for them.
-        self.impact_spawn_frame.grid_remove()
-
-        # Track widgets so we can enable/disable the editor based on selection
-        # and muted status.
-        self._impact_editor_widgets = list(self.impact_editor_frame.winfo_children())
-        self._set_impact_editor_enabled(False)
 
         # FG Editor for Decision Makers
         self.editor_frame = ttk.LabelFrame(self.project_inner, text="FG Editor")

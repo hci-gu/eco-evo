@@ -132,6 +132,39 @@ def _save_checkpoint(trainer, fg_id, path):
     torch.save(payload, path)
 
 
+def _regenerate_biomass_html(run_dir):
+    """Regenerate ``<run_dir>/plots.html`` from the current
+    ``biomass.jsonl``. Called right after each checkpoint save (incl.
+    on KeyboardInterrupt) so the user always has a clickable, up-to-date
+    interactive plot in the run folder. Fully best-effort: any failure
+    is swallowed with a short warning so it can never block training or
+    final checkpoint persistence.
+    """
+    try:
+        jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
+        if not os.path.isfile(jsonl_path):
+            return
+        # Import lazily so a missing/broken tools/ dir can't break train.py.
+        import importlib.util
+        tool_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'tools', 'biomass_html.py')
+        spec = importlib.util.spec_from_file_location(
+            '_biomass_html', tool_path)
+        if spec is None or spec.loader is None:
+            return
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        out_path = os.path.join(run_dir, 'plots.html')
+        records = mod._load_jsonl(jsonl_path)
+        if not records:
+            return
+        html = mod._build_html(run_dir, records)
+        with open(out_path, 'w') as f:
+            f.write(html)
+    except Exception as _e:
+        print(f"    [biomass_html] WARN: could not regenerate HTML: {_e}")
+
+
 def _load_checkpoint(trainer, fg_id, path):
     """Load policy weights (and obs-normalisation stats if present) for ``fg_id``.
 
@@ -552,6 +585,48 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         edenom = e0[fid] if e0[fid] > 0.0 else 0.0
         energy_ratio[fid] = float(eh[fid] / edenom) if edenom > 0.0 else 0.0
 
+    # Per-DM mean action fractions (move/rest/eat) over the probe rollout.
+    # Mirrors what ``_push_action_fracs`` pushes to the live viz tabs:
+    # value = 100 * sum(frac) / max(1, active_ticks).
+    def _collect_action_fracs(_env):
+        mv = getattr(_env, '_action_move_frac', None)
+        rs = getattr(_env, '_action_rest_frac', None)
+        et = getattr(_env, '_action_eat_frac', None)
+        cnt = getattr(_env, '_action_active_ticks', None)
+        out_move, out_rest, out_eat = {}, {}, {}
+        if mv is None or rs is None or et is None or cnt is None:
+            return out_move, out_rest, out_eat
+        try:
+            for i, fid in enumerate(_env.dm_ids):
+                c = float(cnt[i]) if cnt[i] > 0 else 0.0
+                if c <= 0.0:
+                    continue
+                out_move[fid] = 100.0 * float(mv[i]) / c
+                out_rest[fid] = 100.0 * float(rs[i]) / c
+                out_eat[fid] = 100.0 * float(et[i]) / c
+        except Exception:
+            pass
+        return out_move, out_rest, out_eat
+
+    move_frac, rest_frac, eat_frac = _collect_action_fracs(env)
+
+    # Optional parallel random-action baseline (same keys with ``_rnd``
+    # suffix in the live viz). Persist the same way for offline parity.
+    rnd_ratio: dict = {}
+    rnd_energy_ratio: dict = {}
+    rnd_move, rnd_rest, rnd_eat = {}, {}, {}
+    if rnd_env is not None:
+        for fid in rnd_env.fgs:
+            b0r = rnd_b0.get(fid, 0.0)
+            e0r = rnd_e0.get(fid, 0.0)
+            bhr = float(rnd_env.fgs[fid].biomass.sum())
+            ehr = (float(rnd_env.fgs[fid].energy_reserve.sum())
+                   if getattr(rnd_env.fgs[fid], 'energy_reserve', None) is not None
+                   else 0.0)
+            rnd_ratio[fid] = (bhr / b0r) if b0r > 0.0 else 0.0
+            rnd_energy_ratio[fid] = (ehr / e0r) if e0r > 0.0 else 0.0
+        rnd_move, rnd_rest, rnd_eat = _collect_action_fracs(rnd_env)
+
     # Push end-of-probe biomass% / energy% into the visualiser's tabbed
     # plot. ``viz_step`` should be the global ARS step (gen*iter+iter)
     # so the points align with the reward tab pushed by the main loop.
@@ -604,7 +679,22 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         'bh': bh,
         'ratio': ratio,
         'log10_ratio': log_ratio,
+        # New: persist the same series the live viz shows in its tabs,
+        # so an offline HTML plot can reproduce them 1:1.
+        'energy_ratio': energy_ratio,   # eh / e0 per FG
+        'move_frac': move_frac,         # mean move-action % per DM
+        'rest_frac': rest_frac,         # mean rest-action % per DM
+        'eat_frac':  eat_frac,          # mean eat-action  % per DM
     }
+    # Random-action baseline mirror (only when rnd_env was provided).
+    if rnd_env is not None:
+        record['rnd'] = {
+            'ratio': rnd_ratio,
+            'energy_ratio': rnd_energy_ratio,
+            'move_frac': rnd_move,
+            'rest_frac': rnd_rest,
+            'eat_frac':  rnd_eat,
+        }
     try:
         with open(jsonl_path, 'a') as f:
             f.write(json.dumps(record) + "\n")
@@ -1140,6 +1230,23 @@ def main():
                          hidden_layers=int(args.policynetwork[0]),
                          hidden_dim=int(args.policynetwork[1]))
 
+    # Wire the visualiser into the trainer so the pygame event queue gets
+    # pumped from the main thread every ~50 ms while we wait on the
+    # worker pool inside train_step. Without this the OS marks the
+    # window as "not responding" since the main thread blocks for many
+    # seconds per ARS iteration. Calling pump_events here is safe
+    # because we are still on the main thread (which created the SDL
+    # display); SDL on Linux/X11 requires that.
+    if viz is not None:
+        def _viz_pump():
+            try:
+                if not viz.pump_events():
+                    # User closed the window — disable further pumping.
+                    trainer.pump_callback = None
+            except Exception:
+                trainer.pump_callback = None
+        trainer.pump_callback = _viz_pump
+
     # Optionally resume from previously saved checkpoints. We always load for
     # ALL decision makers (not just the target species) so that single-species
     # runs co-evolve against previously trained policies rather than random ones.
@@ -1418,6 +1525,7 @@ def main():
                     save_path = os.path.join(run_dir, f"policy_{species}.pth")
                     _save_checkpoint(trainer, species, save_path)
                     print(f"    Checkpoint saved to: {save_path}")
+                _regenerate_biomass_html(run_dir)
             else:
                 for species in target_species:
                     print(f"\n>>> Training: {species.upper()} (gen {gen+1}/{gen_label_total})")
@@ -1463,6 +1571,7 @@ def main():
                     save_path = os.path.join(run_dir, f"policy_{species}.pth")
                     _save_checkpoint(trainer, species, save_path)
                     print(f"    Checkpoint saved to: {save_path}")
+                    _regenerate_biomass_html(run_dir)
     except KeyboardInterrupt:
         print(f"\n\n[Interrupted by user] Stopping training after current step.")
         # Terminate workers immediately so they don't keep computing while we
@@ -1478,6 +1587,9 @@ def main():
                 print(f"    Final checkpoint saved to: {save_path}")
             except Exception as e:
                 print(f"    Could not save checkpoint for {species}: {e}")
+        # Also refresh the interactive HTML one last time so the user
+        # has up-to-date plots even after Ctrl+C.
+        _regenerate_biomass_html(run_dir)
         print(f"\n==========================================")
         print(f"Training interrupted; partial progress saved.")
         print(f"==========================================")

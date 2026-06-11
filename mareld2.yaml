@@ -62,7 +62,7 @@ impact_variables:
       sigma_cells: 8.0
       anchor: free
       amplitude_mode: jitter
-      amplitude_min: 0.0
+      amplitude_min: 0.3
       amplitude_max: 1.0
 inference:
   impact_maps:

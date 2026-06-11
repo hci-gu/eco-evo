@@ -113,7 +113,10 @@
       mode: colony
       n_colonies: 10
       sigma_cells: 3.0
-      anchor: open_water
+      anchor: free
+      amplitude_mode: uniform
+      amplitude_min: 0.0
+      amplitude_max: 1.0
   seals:
     display_name: "Seals"
     is_decision_maker: true
@@ -132,7 +135,10 @@
       mode: colony
       n_colonies: 7
       sigma_cells: 2.5
-      anchor: coast
+      anchor: free
+      amplitude_mode: uniform
+      amplitude_min: 0.0
+      amplitude_max: 1.0
   seabirds:
     display_name: "Seabirds"
     is_decision_maker: true
@@ -151,7 +157,10 @@
       mode: colony
       n_colonies: 4
       sigma_cells: 2.0
-      anchor: coast
+      anchor: free
+      amplitude_mode: uniform
+      amplitude_min: 0.0
+      amplitude_max: 1.0
 interaction_definitions:
   # NOTE on grazing-parametrarna nedan (zoo→phyto):
   # `max_intake_rate` (a) tolkas enligt Method.pdf som *fysiologiskt 6h-tak*

@@ -98,6 +98,14 @@ class ARSTrainer:
         # right from process creation. Once the Pool is up, restore the
         # parent's previous SIGINT handler so the user's Ctrl+C still
         # raises ``KeyboardInterrupt`` here in train.py's main loop.
+        # Optional callback invoked periodically while we wait on the
+        # worker pool. Used by ``train.py`` to pump the visualiser's
+        # pygame event queue so the OS doesn't mark the window as "not
+        # responding" during long-running train_step calls. The callback
+        # is invoked in the main thread (where SDL expects all event
+        # handling on Linux/X11). Set to a no-arg callable; the return
+        # value is ignored. ``None`` disables pumping.
+        self.pump_callback = None
         self._pool = None
         if self.n_workers > 1:
             ctx = mp.get_context('spawn')
@@ -111,6 +119,46 @@ class ARSTrainer:
                 )
             finally:
                 signal.signal(signal.SIGINT, prev_sigint)
+
+    def _pool_map(self, func, tasks):
+        """Run ``self._pool.map(func, tasks)`` while pumping the optional
+        ``pump_callback`` from the main thread.
+
+        Equivalent to ``self._pool.map(...)`` in result/order, but lets
+        the caller (e.g. the live visualiser) process GUI events every
+        ~50 ms instead of being blocked for the full duration of the
+        rollout batch. Falls back to a plain ``map`` when no callback
+        is set, to keep the hot path lean.
+        """
+        cb = self.pump_callback
+        if cb is None:
+            return self._pool.map(func, tasks)
+        async_res = self._pool.map_async(func, tasks)
+        while not async_res.ready():
+            try:
+                cb()
+            except Exception:
+                # Never let a buggy UI callback break training.
+                pass
+            async_res.wait(timeout=0.05)
+        return async_res.get()
+
+    def _pump(self):
+        """Invoke the optional ``pump_callback`` once, swallowing errors.
+
+        Used from within ``train_step`` between heavy numpy post-processing
+        blocks so user clicks/keypresses are picked up even when no
+        ``_pool_map`` is currently running (those blocks can each cost
+        50-200 ms and were previously the main remaining source of
+        "lost" clicks).
+        """
+        cb = self.pump_callback
+        if cb is None:
+            return
+        try:
+            cb()
+        except Exception:
+            pass
 
     def close(self):
         if self._pool is not None:
@@ -372,7 +420,8 @@ class ARSTrainer:
                                 'env_builder': world_builders[m],
                             })
 
-            results = self._pool.map(_evaluate_task, tasks)
+            results = self._pool_map(_evaluate_task, tasks)
+            self._pump()
             # Unpack & accumulate obs / act stats over ALL rollouts.
             rewards_flat = []
             acts_flat = []
@@ -506,6 +555,7 @@ class ARSTrainer:
                  f" cnt={diag.get('obs_count',0)}]"
                  if 'obs_var_min' in diag else ""))
 
+        self._pump()
         return float(np.mean(rewards_pos + rewards_neg))
 
     def _get_weights(self, policy):
@@ -855,7 +905,8 @@ class ARSTrainer:
                                 'integral_reward': self.integral_reward,
                                 'env_builder': world_builders[m],
                             })
-            results = self._pool.map(_evaluate_coevo_task, tasks)
+            results = self._pool_map(_evaluate_coevo_task, tasks)
+            self._pump()
             # Drain samples for obs-stats accumulation regardless of M.
             fits_flat = []
             acts_flat = []
@@ -973,4 +1024,5 @@ class ARSTrainer:
                   f"r_mean={r_mean:+.4e} r_std={r_std:.4e} "
                   f"rel_std={rel:.3%} sigma_f={sigma_f:.4e}")
 
+        self._pump()
         return out_means

@@ -294,6 +294,7 @@ class LiveVisualizer:
         # Initial paint.
         self._render_full()
 
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -360,18 +361,54 @@ class LiveVisualizer:
         self._status.update(kw)
 
     def pump_events(self) -> bool:
-        """Process pygame events; return False if user asked to quit viz."""
+        """Process pygame events; return False if user asked to quit viz.
+
+        Must be called from the main thread (the one that created the
+        SDL display). ``train.py`` wires this up via
+        ``trainer.pump_callback`` so the queue is drained every ~50 ms
+        while the worker pool runs, which is what stops the OS from
+        marking the window as "not responding".
+
+        We also call :meth:`_maybe_render` after draining the queue so
+        that user actions taken mid-iteration (e.g. switching tabs by
+        click or TAB key, toggling legend entries, pausing) become
+        visible immediately rather than only after the current
+        ``train_step`` returns. ``_maybe_render`` is frame-rate capped
+        via ``_MIN_FRAME_INTERVAL`` so repeated pump calls do not
+        starve the worker pool.
+        """
         if not self.enabled:
             return True
         try:
             pg = self._pg
+            # ALWAYS pump SDL first — this answers the WM ping and
+            # transfers OS-level events into pygame's queue. Doing this
+            # before ``event.get()`` minimises the window in which a
+            # click can sit unseen in the OS layer.
+            pg.event.pump()
+            interacted = False
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self._quit = True
                 elif event.type == pg.KEYDOWN:
                     self._handle_key(event.key)
+                    interacted = True
                 elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     self._handle_click(event.pos)
+                    interacted = True
+            # Only render on actual user interaction here — a full
+            # heatmap+plot redraw can easily cost 50-150 ms and during
+            # that time the main thread is blocked, which is the main
+            # reason subsequent clicks felt "lost". The trainer pumps
+            # us every ~50 ms via ``pump_callback``; the regular live
+            # preview render happens between iterations from train.py.
+            if interacted:
+                self._last_frame_ts = 0.0
+                self._render_full()
+                # Pump again right after the redraw so any clicks the
+                # user issued while we were drawing are picked up on
+                # the very next pump tick instead of next iteration.
+                pg.event.pump()
             # While paused, keep the window responsive without spinning.
             while self._paused and not self._quit:
                 for event in pg.event.get():
