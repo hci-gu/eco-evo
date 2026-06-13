@@ -529,6 +529,7 @@ class FGConfigApp:
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry", 0.0, 1000.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
             ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry", 0.0, 1.0),
+            ("Starve Rate (catabolism, fraction/tick)", "starve_rate", "entry", 0.0, 1.0),
             ("Natural Mortality (fraction/tick)", "natural_mortality", "entry", 0.0, 1.0),
             ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry", 0.0, 1.0),
             ("Movement Speed (cells/tick)", "movement_speed", "entry", 0.0, 1.0),

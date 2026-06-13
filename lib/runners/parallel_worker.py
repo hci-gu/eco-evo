@@ -31,11 +31,12 @@ def _set_weights_flat(policy, flat_weights):
 
 
 def _worker_init(env_builder, policy_params, uniform_bias_init=False,
-                 hidden_layers=2, hidden_dim=30):
+                 hidden_layers=2, hidden_dim=30, activation="sig"):
     global _ENV_BUILDER, _POLICIES, _UNIFORM_BIAS_INIT
     _UNIFORM_BIAS_INIT = bool(uniform_bias_init)
     _HIDDEN_LAYERS = max(1, int(hidden_layers))
     _HIDDEN_DIM = max(1, int(hidden_dim))
+    _ACTIVATION = str(activation).lower()
     # Ignore SIGINT in workers so Ctrl+C is handled solely by the parent.
     # Without this, every worker raises KeyboardInterrupt and spams tracebacks.
     import signal
@@ -63,7 +64,8 @@ def _worker_init(env_builder, policy_params, uniform_bias_init=False,
         _POLICIES[fg_id] = PolicyNetwork(in_dim, out_dim,
                                          hidden_dim=_HIDDEN_DIM,
                                          hidden_layers=_HIDDEN_LAYERS,
-                                         uniform_bias_init=_UNIFORM_BIAS_INIT)
+                                         uniform_bias_init=_UNIFORM_BIAS_INIT,
+                                         activation=_ACTIVATION)
 
 
 def _evaluate_coevo_task(task):
@@ -103,9 +105,13 @@ def _evaluate_coevo_task(task):
         softmax_temperature = task.get('softmax_temperature', 1.0)
         integral_reward = task.get('integral_reward', False)
         builder_override = task.get('env_builder')
+        survival_bonus = float(task.get('survival_bonus', 0.0))
+        survival_threshold = float(task.get('survival_threshold', 0.01))
     else:
         (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
+        survival_bonus = 0.0
+        survival_threshold = 0.01
     _ = (entropy_coef, argmax_penalty)
 
     # Sync ALL policy weights
@@ -135,19 +141,30 @@ def _evaluate_coevo_task(task):
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
     r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
 
+    # Section 48 Variant B: per-FG time-to-death tracking.
+    t_survive = {fid: n_ticks for fid in fg_list}
+    b_thr = {fid: survival_threshold * b0[fid] for fid in fg_list}
     if integral_reward and n_ticks > 0:
         b_sum = {fid: 0.0 for fid in fg_list}
         r_sum = {fid: 0.0 for fid in fg_list}
-        for _ in range(n_ticks):
+        for t in range(n_ticks):
             env.step()
             for fid in fg_list:
-                b_sum[fid] += float(env.fgs[fid].biomass.sum())
+                b_cur = float(env.fgs[fid].biomass.sum())
+                b_sum[fid] += b_cur
                 r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
+                if t_survive[fid] == n_ticks and b_cur < b_thr[fid]:
+                    t_survive[fid] = t
         bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
         rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
     else:
-        for _ in range(n_ticks):
+        for t in range(n_ticks):
             env.step()
+            for fid in fg_list:
+                if t_survive[fid] == n_ticks:
+                    b_cur = float(env.fgs[fid].biomass.sum())
+                    if b_cur < b_thr[fid]:
+                        t_survive[fid] = t
         bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
 
@@ -157,7 +174,10 @@ def _evaluate_coevo_task(task):
         eps_r = max(1e-6 * r0[fid], 1e-9)
         delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
         delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
-        fitness[fid] = float(alpha * delta_b + beta * delta_r)
+        f = alpha * delta_b + beta * delta_r
+        if survival_bonus > 0.0 and n_ticks > 0:
+            f = f + survival_bonus * (t_survive[fid] / float(n_ticks))
+        fitness[fid] = float(f)
 
     samples = None
     if obs_pack is not None and getattr(env, '_obs_sum', None) is not None:
@@ -209,6 +229,8 @@ def _evaluate_task(task):
     softmax_temperature = 1.0
     integral_reward = False
     builder_override = None
+    survival_bonus = 0.0
+    survival_threshold = 0.01
     if isinstance(task, dict):
         # STEP 3 dict-format task: same fields as tuple-format plus an
         # optional ``env_builder`` override carrying a per-world builder
@@ -226,6 +248,8 @@ def _evaluate_task(task):
         softmax_temperature = task.get('softmax_temperature', 1.0)
         integral_reward = task.get('integral_reward', False)
         builder_override = task.get('env_builder')
+        survival_bonus = float(task.get('survival_bonus', 0.0))
+        survival_threshold = float(task.get('survival_threshold', 0.01))
     elif len(task) == 11:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
@@ -275,17 +299,27 @@ def _evaluate_task(task):
     r0 = env.fgs[fg_to_train].energy_reserve.sum()
 
     # Integral-reward: medel över alla ticks istället för slutvärde.
+    # Section 48 Variant B: track t_survive for survival bonus.
+    t_survive = n_ticks
+    b_thr = survival_threshold * float(b0)
     if integral_reward and n_ticks > 0:
         b_sum = 0.0; r_sum = 0.0
-        for _ in range(n_ticks):
+        for t in range(n_ticks):
             env.step()
-            b_sum += float(env.fgs[fg_to_train].biomass.sum())
+            b_cur = float(env.fgs[fg_to_train].biomass.sum())
+            b_sum += b_cur
             r_sum += float(env.fgs[fg_to_train].energy_reserve.sum())
+            if t_survive == n_ticks and b_cur < b_thr:
+                t_survive = t
         bh = b_sum / n_ticks
         rh = r_sum / n_ticks
     else:
-        for _ in range(n_ticks):
+        for t in range(n_ticks):
             env.step()
+            if t_survive == n_ticks:
+                b_cur = float(env.fgs[fg_to_train].biomass.sum())
+                if b_cur < b_thr:
+                    t_survive = t
         bh = env.fgs[fg_to_train].biomass.sum()
         rh = env.fgs[fg_to_train].energy_reserve.sum()
 
@@ -299,6 +333,8 @@ def _evaluate_task(task):
     # bonus/penalty (which live on the [0,1] scale) have comparable weight
     # for all species regardless of the absolute |delta_b+delta_r| magnitude.
     fitness = float(alpha * delta_b + beta * delta_r)
+    if survival_bonus > 0.0 and n_ticks > 0:
+        fitness = fitness + float(survival_bonus) * (t_survive / float(n_ticks))
     # entropy_coef / argmax_penalty arguments are accepted for backward
     # compatibility with task-tuple length 8/9 but are intentionally unused
     # here; the trainer applies them post hoc via act_diag.

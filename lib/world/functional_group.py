@@ -15,6 +15,11 @@ class FunctionalGroup:
         self.max_energy_reserve = params.get('max_energy_reserve', 1000.0)  # ME_X
         self.resting_metabolism = params.get('resting_metabolism', 0.0)  # Rest_X
         self.growth_rate = params.get('growth_rate', 0.0)  # MG_X
+        # Catabolism-rate vid svält (q_x < 0). Frikopplad från growth_rate
+        # (anabolism) eftersom biologisk biomass-uppbyggnad sker över
+        # år medan svältdöd sker över dagar–veckor. starve_rate=0 ⇒
+        # legacy (samma rate som growth_rate i båda riktningarna).
+        self.starve_rate = float(params.get('starve_rate', 0.0) or 0.0)
         # Densitetsoberoende naturlig mortalitet per tick (DM). Modellerar
         # senescens, sjukdom, "hidden predation" från icke-modellerade arter,
         # mekanisk skada m.m. — oberoende av svälttermen via q_x.
@@ -52,17 +57,23 @@ class FunctionalGroup:
             self.biomass = np.zeros(shape)
 
         if randomize_energy:
-            # E_X(c) ~ Uniform(0, ME_X) per cell. Used during training so
-            # policies see varied initial energy fill levels.
+            # s_X(0) ~ Uniform[u_X - w, u_X + w] per cell, clippad till
+            # [0, 1]. Centrerad på maintenance-nivån u_X så att
+            # E[q_X(0)] = s_X(0) - u_X ≈ 0 (break-even) — det neutraliserar
+            # ARS-bias från miljö-drift vid t=0 utan att smalna av
+            # observationsstödet i s_X-dimensionen (som den gamla
+            # *0.6-skalningen gjorde när u_X != 0.3). w = 0.3 ger ett
+            # brett, symmetriskt stöd kring u_X. Per-FG: använder
+            # self.maintenance_level så formeln auto-anpassar sig om
+            # olika FGs får olika u_X.
             if rng is not None and hasattr(rng, "random"):
-                ratios = rng.random(shape)
+                u = rng.random(shape)
             else:
-                ratios = np.random.rand(*shape)
-            # Skala ner uniform-samplet så E[s_X(0)] = 0.3 (= typiskt u_X)
-            # istället för 0.5. Bryter den triviala startgradienten där
-            # zooplankton/växare annars får gratis positiv reward de
-            # första tickarna oavsett policy.
-            ratios = ratios * np.float64(0.6)
+                u = np.random.rand(*shape)
+            w = 0.3
+            lo = max(0.0, float(self.maintenance_level) - w)
+            hi = min(1.0, float(self.maintenance_level) + w)
+            ratios = lo + (hi - lo) * u
             energy_per_ton = ratios * self.max_energy_reserve
         else:
             # E_X(c) = ratio * ME_X (uniform across the grid).

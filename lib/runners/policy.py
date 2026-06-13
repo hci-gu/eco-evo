@@ -4,18 +4,32 @@ import numpy as np
 
 class PolicyNetwork(nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim=30, uniform_bias_init=False,
-                 hidden_layers=2):
+                 hidden_layers=2, activation="sig"):
         super(PolicyNetwork, self).__init__()
         # ``hidden_layers`` = number of hidden Linear layers (each followed by
-        # Sigmoid). ``hidden_dim`` = nodes per hidden layer. The output layer
-        # is always a final Linear(hidden_dim, output_dim). Default 2x30
+        # the activation specified by ``activation``: 'sig' -> Sigmoid (default,
+        # legacy), 'relu' -> ReLU, 'tanh' -> Tanh). ``hidden_dim`` = nodes per
+        # hidden layer. The output layer is always a final
+        # Linear(hidden_dim, output_dim). Default 2x30 with sigmoid
         # reproduces the legacy two-hidden-layer architecture exactly.
         n_hidden = max(1, int(hidden_layers))
+        act_key = str(activation).lower()
+        if act_key in ("sig", "sigmoid"):
+            act_cls = nn.Sigmoid
+        elif act_key == "relu":
+            act_cls = nn.ReLU
+        elif act_key == "tanh":
+            act_cls = nn.Tanh
+        else:
+            raise ValueError(
+                f"PolicyNetwork: unknown activation {activation!r}; "
+                f"expected one of 'sig', 'relu', 'tanh'.")
+        self.activation = act_key
         layers = []
         prev = input_dim
         for _ in range(n_hidden):
             layers.append(nn.Linear(prev, hidden_dim))
-            layers.append(nn.Sigmoid())
+            layers.append(act_cls())
             prev = hidden_dim
         layers.append(nn.Linear(prev, output_dim))
         self.net = nn.Sequential(*layers)

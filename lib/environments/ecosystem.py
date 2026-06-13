@@ -970,7 +970,15 @@ class EcosystemEnvironment:
                 u_x = fg.maintenance_level
                 q_x = s_x - u_x
 
-                growth = fg.biomass * fg.growth_rate * q_x
+                # Frikoppla anabolism (q_x >= 0, ren tillväxt) från
+                # katabolism (q_x < 0, svältdöd). Biologiskt: biomass-
+                # uppbyggnad sker över år medan svältdöd sker över
+                # dagar–veckor. starve_rate=0 ⇒ legacy: katabolism
+                # använder samma rate som growth_rate (anabolism).
+                r_pos = np.float32(fg.growth_rate)
+                r_starve = np.float32(fg.starve_rate) if fg.starve_rate > 0.0 else r_pos
+                rate = np.where(q_x >= 0.0, r_pos, r_starve).astype(self.dtype, copy=False)
+                growth = fg.biomass * rate * q_x
 
                 # Handle negative growth (shrinkage) as additional biomass loss
                 # that also drains energy reserve proportionally.

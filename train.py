@@ -568,8 +568,17 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     viz = None
             except Exception:
                 viz = None
-    bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_ids}
-    eh = {fid: (float(env.fgs[fid].energy_reserve.sum())
+    # Clamp tiny tails (subnormal float32 residue, ~1e-44, can occur when a
+    # FG has effectively collapsed but lingering near-zero biomass survives
+    # the multiplicative shrink loop). Without this, JSONL logs values like
+    # ``6.4e-44`` which are not biologically meaningful and confuse plotting
+    # and downstream analysis. Threshold matches the ratio-clamp on line 582
+    # (1e-12 ton ~ 1 microgram of total biomass).
+    _ZERO_FLOOR = 1e-12
+    def _floor(v: float) -> float:
+        return 0.0 if (not np.isfinite(v) or v < _ZERO_FLOOR) else float(v)
+    bh = {fid: _floor(float(env.fgs[fid].biomass.sum())) for fid in fg_ids}
+    eh = {fid: (_floor(float(env.fgs[fid].energy_reserve.sum()))
                 if getattr(env.fgs[fid], 'energy_reserve', None) is not None
                 else 0.0)
           for fid in fg_ids}
@@ -619,8 +628,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         for fid in rnd_env.fgs:
             b0r = rnd_b0.get(fid, 0.0)
             e0r = rnd_e0.get(fid, 0.0)
-            bhr = float(rnd_env.fgs[fid].biomass.sum())
-            ehr = (float(rnd_env.fgs[fid].energy_reserve.sum())
+            bhr = _floor(float(rnd_env.fgs[fid].biomass.sum()))
+            ehr = (_floor(float(rnd_env.fgs[fid].energy_reserve.sum()))
                    if getattr(rnd_env.fgs[fid], 'energy_reserve', None) is not None
                    else 0.0)
             rnd_ratio[fid] = (bhr / b0r) if b0r > 0.0 else 0.0
@@ -842,6 +851,17 @@ def main():
                              "forced exploration. Linearly annealed to --temp_end. Default: 3.0.")
     parser.add_argument("--temp_end", type=float, default=1.0,
                         help="Softmax temperature at the last generation (default: 1.0).")
+    parser.add_argument("--cappa", type=float, default=1.0,
+                        help="Section 48 Variant B: survival-time bonus in fitness: "
+                             "fitness += cappa * (t_survive / n_ticks), where t_survive "
+                             "is the first tick at which biomass drops below survival_threshold*b0 "
+                             "(or n_ticks if it never does). Default 1.0. Set to 0.0 for "
+                             "byte-identical legacy parity (off). Recommended in [0.5, 2.0] "
+                             "to break ARS gradient saturation in dead-zones where log(bh/b0) "
+                             "is clipped across all deltas.")
+    parser.add_argument("--survival_threshold", type=float, default=0.01,
+                        help="Threshold fraction of b0 below which biomass is considered 'dead' "
+                             "for the survival_bonus tracking (default 0.01 = 1%% of start).")
     parser.add_argument("--integral_reward", action="store_true", default=True,
                         help="Use mean biomass / mean energy over the whole rollout instead "
                              "of the final value in the fitness computation. Gives \"eat always\" a "
@@ -909,11 +929,14 @@ def main():
                         help="Optional schedule, e.g. '1@0,3@10,5@50' meaning M=1 for "
                              "gen 0-9, M=3 for gen 10-49, M=5 from gen 50 onwards. "
                              "Overrides --rollouts_per_delta when given.")
-    parser.add_argument("--policynetwork", nargs=2, type=int, default=[2, 30],
-                        metavar=("LAYERS", "NODES"),
-                        help="Policy network architecture: number of hidden layers "
-                             "and number of nodes per hidden layer. "
-                             "Default: 2 30 (two hidden layers of 30 nodes each).")
+    parser.add_argument("--policynetwork", nargs="+", default=["2", "30", "sig"],
+                        metavar="LAYERS NODES [ACTIVATION]",
+                        help="Policy network architecture: number of hidden layers, "
+                             "number of nodes per hidden layer, and hidden-layer "
+                             "activation function (one of 'sig', 'relu', 'tanh'). "
+                             "Activation may be omitted and defaults to 'sig' "
+                             "(sigmoid). Default: 2 30 sig (two hidden layers of "
+                             "30 nodes each with sigmoid activations).")
     parser.add_argument("--rnd-baseline", "--rnd_baseline", dest="rnd_baseline",
                         action="store_true",
                         help="Run a parallel probe rollout where each DM acts "
@@ -1096,6 +1119,21 @@ def main():
     )
     probe_jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
 
+    # Truncate the per-run biomass log on a fresh start (no --resume).
+    # The probe-logger opens this file in append-mode, so re-running
+    # train.py with the same --run-name without --resume would otherwise
+    # concatenate the new run's records onto the previous run's log,
+    # producing a confusing mixed-n_ticks/gen-restart file. ``--resume``
+    # only governs checkpoint loading, not log truncation, so we handle
+    # the log explicitly here. Safe best-effort: any IO failure is
+    # swallowed so it can never block training startup.
+    if not args.resume and os.path.isfile(probe_jsonl_path):
+        try:
+            os.remove(probe_jsonl_path)
+            print(f"    [fresh start] removed previous {probe_jsonl_path}")
+        except Exception as _e:
+            print(f"    [fresh start] WARN: could not remove {probe_jsonl_path}: {_e!r}")
+
     # Initialize a temporary environment to fetch functional group metadata.
     # Build a fresh env_builder here (rather than reusing the module-level
     # one) so PROJECT_PATH set above is baked into the instance, ensuring
@@ -1180,6 +1218,7 @@ def main():
     print(f"Sigma:          {_mark('sigma', args.sigma)}")
     print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
     print(f"Beta  (delta_r):{_mark('beta', args.beta)}")
+    print(f"Cappa (survive):{_mark('cappa', args.cappa)} (threshold={args.survival_threshold})")
     print(f"N Deltas:       {_mark('n_deltas', args.n_deltas)}")
     # Resolve top_deltas (None -> n_deltas // 2)
     if args.top_deltas is None:
@@ -1220,6 +1259,27 @@ def main():
         # No interactive stdin available — proceed with defaults.
         pass
 
+    # Parse --policynetwork: [LAYERS, NODES] or [LAYERS, NODES, ACTIVATION].
+    # ACTIVATION defaults to 'sig' (sigmoid, legacy behaviour) when omitted;
+    # accepted values are 'sig', 'relu', 'tanh'.
+    _pn = list(args.policynetwork)
+    if len(_pn) < 2 or len(_pn) > 3:
+        print(f"Error: --policynetwork takes 2 or 3 args (LAYERS NODES [ACTIVATION]); "
+              f"got {len(_pn)}: {_pn!r}")
+        return
+    try:
+        _pn_layers = int(_pn[0])
+        _pn_nodes = int(_pn[1])
+    except ValueError:
+        print(f"Error: --policynetwork LAYERS and NODES must be integers; "
+              f"got {_pn[0]!r}, {_pn[1]!r}")
+        return
+    _pn_activation = (str(_pn[2]).lower() if len(_pn) == 3 else "sig")
+    if _pn_activation not in ("sig", "relu", "tanh"):
+        print(f"Error: --policynetwork ACTIVATION must be one of "
+              f"'sig', 'relu', 'tanh'; got {_pn[2]!r}")
+        return
+
     # Create the trainer with all relevant policy dimensions
     trainer = ARSTrainer(env_builder_local, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
                          n_workers=n_workers, alpha=args.alpha, beta=args.beta,
@@ -1227,8 +1287,11 @@ def main():
                          entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
                          integral_reward=args.integral_reward,
                          uniform_bias_init=args.uniform_bias_init,
-                         hidden_layers=int(args.policynetwork[0]),
-                         hidden_dim=int(args.policynetwork[1]))
+                         hidden_layers=_pn_layers,
+                         hidden_dim=_pn_nodes,
+                         activation=_pn_activation,
+                         survival_bonus=args.cappa,
+                         survival_threshold=args.survival_threshold)
 
     # Wire the visualiser into the trainer so the pygame event queue gets
     # pumped from the main thread every ~50 ms while we wait on the
@@ -1433,7 +1496,8 @@ def main():
                 initializer=_worker_init,
                 initargs=(new_builder, trainer.policy_params,
                           trainer.uniform_bias_init,
-                          trainer.hidden_layers, trainer.hidden_dim),
+                          trainer.hidden_layers, trainer.hidden_dim,
+                          trainer.activation),
             )
         if maps:
             summary = ", ".join(

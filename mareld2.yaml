@@ -25,7 +25,7 @@ decision_makers:
     initial_biomass_max: 30
     inference_initial_biomass: 15
   - group_id: zooplankton
-    initial_biomass_min: 10000
+    initial_biomass_min: 1000
     initial_biomass_max: 30000
     inference_initial_biomass: 25000
 non_decision_makers:
@@ -49,9 +49,11 @@ impact_variables:
       persistence: 0.5
       lacunarity: 2.0
       threshold: 0.0
+    muted: true
   - impact_id: rotor
     value_min: 0
     value_max: 1
+    muted: true
   - impact_id: windfarm_noise
     value_min: 0.0
     value_max: 140.0
@@ -64,6 +66,7 @@ impact_variables:
       amplitude_mode: jitter
       amplitude_min: 0.3
       amplitude_max: 1.0
+    muted: true
 inference:
   impact_maps:
     rotor: vindparker.npz

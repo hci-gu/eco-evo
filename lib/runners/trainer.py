@@ -19,7 +19,8 @@ class ARSTrainer:
     def __init__(self, env_builder, policy_params, sigma=0.1, lr=0.02, n_deltas=8, n_workers=1,
                  alpha=1.0, beta=1.0, obs_normalize=True, top_deltas=None, entropy_coef=0.0,
                  argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False,
-                 hidden_layers=2, hidden_dim=30):
+                 hidden_layers=2, hidden_dim=30, activation="sig",
+                 survival_bonus=0.0, survival_threshold=0.01):
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma
@@ -50,6 +51,17 @@ class ARSTrainer:
         # leads to prey collapse during the rollout gets lower reward because
         # the average drops, even if the final value would have been comparable.
         self.integral_reward = bool(integral_reward)
+        # Section 48 (Variant B): time-to-death survival bonus added to
+        # fitness as gamma * (t_survive / n_ticks), where t_survive is the
+        # first tick at which bh drops below ``survival_threshold * b0``
+        # (or n_ticks if it never does). Guarantees a nonzero ARS gradient
+        # in the dead-zone where log(bh/b0) is saturated/clipped across
+        # all deltas, by rewarding policies that delay collapse even when
+        # eventual outcome is the same. Default 0.0 -> byte-identical
+        # legacy parity (off). Recommended gamma in [0.5, 2.0] when
+        # enabled. Independent of integral_reward (works with both).
+        self.survival_bonus = float(survival_bonus)
+        self.survival_threshold = float(survival_threshold)
         # Default: use all deltas (no truncation). When set, must be in [1, n_deltas].
         if top_deltas is None:
             self.top_deltas = self.n_deltas
@@ -70,12 +82,16 @@ class ARSTrainer:
         self.uniform_bias_init = bool(uniform_bias_init)
         self.hidden_layers = max(1, int(hidden_layers))
         self.hidden_dim = max(1, int(hidden_dim))
+        # Hidden-layer activation: 'sig' (default, legacy sigmoid), 'relu',
+        # or 'tanh'. Plumbed through to workers via _worker_init.
+        self.activation = str(activation).lower()
         self.policies = {}
         for fg_id, (in_dim, out_dim) in policy_params.items():
             self.policies[fg_id] = PolicyNetwork(in_dim, out_dim,
                                                  hidden_dim=self.hidden_dim,
                                                  hidden_layers=self.hidden_layers,
-                                                 uniform_bias_init=self.uniform_bias_init)
+                                                 uniform_bias_init=self.uniform_bias_init,
+                                                 activation=self.activation)
 
         # Observation running statistics, lazily-shaped on first task return.
         # Shape per fg: mean (D,), var (D,), count int.
@@ -115,7 +131,7 @@ class ARSTrainer:
                     processes=self.n_workers,
                     initializer=_worker_init,
                     initargs=(env_builder, policy_params, self.uniform_bias_init,
-                              self.hidden_layers, self.hidden_dim),
+                              self.hidden_layers, self.hidden_dim, self.activation),
                 )
             finally:
                 signal.signal(signal.SIGINT, prev_sigint)
@@ -417,6 +433,8 @@ class ARSTrainer:
                                 'argmax_penalty': self.argmax_penalty,
                                 'softmax_temperature': self.softmax_temperature,
                                 'integral_reward': self.integral_reward,
+                                'survival_bonus': self.survival_bonus,
+                                'survival_threshold': self.survival_threshold,
                                 'env_builder': world_builders[m],
                             })
 
@@ -596,17 +614,29 @@ class ARSTrainer:
 
         # Integral-reward: accumulate bh/rh per tick and divide by tick
         # count at the end. Otherwise: use only the final value (classic).
+        # Section 48: track first tick at which biomass drops below
+        # survival_threshold * b0. ``t_survive`` defaults to n_ticks
+        # (survived the whole rollout). Used only when survival_bonus>0.
+        t_survive = n_ticks
+        b_thr = float(self.survival_threshold) * float(b0)
         if self.integral_reward and n_ticks > 0:
             b_sum = 0.0; r_sum = 0.0
-            for _ in range(n_ticks):
+            for t in range(n_ticks):
                 env.step()
-                b_sum += float(env.fgs[fg_id].biomass.sum())
+                b_cur = float(env.fgs[fg_id].biomass.sum())
+                b_sum += b_cur
                 r_sum += float(env.fgs[fg_id].energy_reserve.sum())
+                if t_survive == n_ticks and b_cur < b_thr:
+                    t_survive = t
             bh = b_sum / n_ticks
             rh = r_sum / n_ticks
         else:
-            for _ in range(n_ticks):
+            for t in range(n_ticks):
                 env.step()
+                if t_survive == n_ticks:
+                    b_cur = float(env.fgs[fg_id].biomass.sum())
+                    if b_cur < b_thr:
+                        t_survive = t
             bh = env.fgs[fg_id].biomass.sum()
             rh = env.fgs[fg_id].energy_reserve.sum()
 
@@ -619,6 +649,9 @@ class ARSTrainer:
         # in train_step *after* z-score normalisation of the ecological
         # component across the 2*n_deltas batch (principled scaling).
         fitness = self.alpha * delta_b + self.beta * delta_r
+        # Section 48 Variant B: additive survival bonus (off by default).
+        if self.survival_bonus > 0.0 and n_ticks > 0:
+            fitness = fitness + self.survival_bonus * (t_survive / float(n_ticks))
 
         samples = None
         if obs_mean is not None and getattr(env, '_obs_sum', None) is not None:
@@ -683,19 +716,30 @@ class ARSTrainer:
         b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
 
+        # Section 48: per-FG time-to-death tracking for Variant B bonus.
+        t_survive = {fid: n_ticks for fid in fg_list}
+        b_thr = {fid: float(self.survival_threshold) * float(b0[fid]) for fid in fg_list}
         if self.integral_reward and n_ticks > 0:
             b_sum = {fid: 0.0 for fid in fg_list}
             r_sum = {fid: 0.0 for fid in fg_list}
-            for _ in range(n_ticks):
+            for t in range(n_ticks):
                 env.step()
                 for fid in fg_list:
-                    b_sum[fid] += float(env.fgs[fid].biomass.sum())
+                    b_cur = float(env.fgs[fid].biomass.sum())
+                    b_sum[fid] += b_cur
                     r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
+                    if t_survive[fid] == n_ticks and b_cur < b_thr[fid]:
+                        t_survive[fid] = t
             bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
             rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
         else:
-            for _ in range(n_ticks):
+            for t in range(n_ticks):
                 env.step()
+                for fid in fg_list:
+                    if t_survive[fid] == n_ticks:
+                        b_cur = float(env.fgs[fid].biomass.sum())
+                        if b_cur < b_thr[fid]:
+                            t_survive[fid] = t
             bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
             rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
 
@@ -705,7 +749,10 @@ class ARSTrainer:
             eps_r = max(1e-6 * r0[fid], 1e-9)
             delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
             delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
-            fitness[fid] = float(self.alpha * delta_b + self.beta * delta_r)
+            f = self.alpha * delta_b + self.beta * delta_r
+            if self.survival_bonus > 0.0 and n_ticks > 0:
+                f = f + self.survival_bonus * (t_survive[fid] / float(n_ticks))
+            fitness[fid] = float(f)
 
         samples = None
         if obs_mean is not None and getattr(env, '_obs_sum', None) is not None:
@@ -903,6 +950,8 @@ class ARSTrainer:
                                 'argmax_penalty': self.argmax_penalty,
                                 'softmax_temperature': self.softmax_temperature,
                                 'integral_reward': self.integral_reward,
+                                'survival_bonus': self.survival_bonus,
+                                'survival_threshold': self.survival_threshold,
                                 'env_builder': world_builders[m],
                             })
             results = self._pool_map(_evaluate_coevo_task, tasks)

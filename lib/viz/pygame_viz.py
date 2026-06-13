@@ -632,7 +632,17 @@ class LiveVisualizer:
         tcol = tuple(int(c * (0.35 if dim else 1.0)) for c in colour)
         name_surf = self._font.render(self._display_name(fid), True, tcol)
         self._screen.blit(name_surf, (px + pad, py + 1))
-        info_txt = (f"B0={b0:,.0f}  B={total:,.0f}").replace(",", " ")
+        def _fmt_b(v: float) -> str:
+            # <10 -> 2 decimaler, <100 -> 1 decimal, annars 0.
+            a = abs(v)
+            if a < 10.0:
+                s = f"{v:,.2f}"
+            elif a < 100.0:
+                s = f"{v:,.1f}"
+            else:
+                s = f"{v:,.0f}"
+            return s.replace(",", " ")
+        info_txt = f"B0={_fmt_b(b0)}  B={_fmt_b(total)}"
         info_col = (180, 180, 190) if not dim else (90, 90, 95)
         info_surf = self._font.render(info_txt, True, info_col)
         self._screen.blit(info_surf, (px + pad, py + 1 + name_surf.get_height()))
