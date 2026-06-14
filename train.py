@@ -545,6 +545,14 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             rnd_env = None
 
     if viz is not None:
+        # Starta inspelning av probe-rollouten innan första snapshotten;
+        # ``update_biomass`` capturar då varje tick som en frame i
+        # ``viz._pending_rollout``. Knapparna blir låsta tills
+        # ``end_rollout_recording`` kallas efter sista tick.
+        try:
+            viz.begin_rollout_recording()
+        except Exception:
+            pass
         # Snapshot at t=0 so the user sees the starting state.
         try:
             viz.update_biomass(env.fgs, tick=0, extra=viz_extra)
@@ -878,6 +886,13 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         try:
             viz._last_frame_ts = 0.0
             viz.update_biomass(env.fgs, tick=int(n_ticks_done), extra=viz_extra)
+            # Avsluta inspelningen: ``_pending_rollout`` flyttas till
+            # ``_current_rollout`` och uppspelningsknapparna blinkar för
+            # att signalera att en ny film är tillgänglig.
+            try:
+                viz.end_rollout_recording()
+            except Exception:
+                pass
             viz.pump_events()
         except Exception:
             pass

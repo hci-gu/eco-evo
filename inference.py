@@ -460,6 +460,14 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     energy_history = {fid: [] for fid in env.fgs}
     rnd_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
     rnd_energy_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
+    # Spela in hela inference-rollouten som en uppspelningsbar "film" i
+    # viz. Frames capturas vid varje ``update_biomass``; vid loop-slut
+    # kallas ``end_rollout_recording`` så användaren kan spela upp/stega.
+    if viz is not None:
+        try:
+            viz.begin_rollout_recording()
+        except Exception:
+            pass
     for t in range(n_ticks):
         try:
             env.step()
@@ -630,6 +638,14 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     print(f"\n    interrupted at tick {t+1}/{n_ticks} "
                           f"(during viz update); returning partial history.")
                 break
+    # Avsluta rollout-inspelningen så uppspelningsknapparna blir aktiva
+    # i ``wait_for_close``-loopen. Säker att kalla även vid early-break
+    # (KI eller ecosystem_dead) — vi får då en partiell film.
+    if viz is not None:
+        try:
+            viz.end_rollout_recording()
+        except Exception:
+            pass
     return history
 
 

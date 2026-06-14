@@ -62,7 +62,7 @@
     resting_metabolism: 8.0
     movement_speed: 1.0
     feeding_cost: 1.5
-    movement_cost: 1.2
+    movement_cost: 1.6
     energy_content: 6500.0
     min_split_biomass: 0.5
     growth_rate: 0.004

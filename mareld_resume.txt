@@ -2681,3 +2681,90 @@ Properties:
     0.5 * 0.0005 = 0.00025 ton = 0.25 kg = 250 g (NOT 0.25 g, as a
     stale comment once read). Far below realistic biomass, many
     orders of magnitude above float32 subnormals (~1e-38).
+
+================================================================
+55. IN-RAM PROBE REPLAY + PLAYBACK BAR
+================================================================
+Adds an in-memory "film" of the last probe (train) or inference
+rollout that the user can re-watch / step through while training
+continues in the background. New playback bar sits under the
+heatmap grid; plot tabs are intentionally NOT rewound (per user
+choice - tabs keep showing global series).
+
+55.1 Frame capture (lib/viz/pygame_viz.py)
+  * New state on LiveVisualizer: ``_pending_rollout`` (list of
+    frame snapshots, grows during recording), ``_current_rollout``
+    (atomically swapped in when recording ends), ``_playback_mode``
+    in {"live", "paused", "playing"}, ``_playback_idx``,
+    ``_playback_fps`` (adjustable 1..60), ``_playback_blink_until``
+    (yellow flash ~3 s when a new film becomes available).
+  * Public API: ``begin_rollout_recording()`` /
+    ``end_rollout_recording()`` (no-ops on ``_NullViz``). Each
+    ``update_biomass`` call during recording deep-copies the
+    current per-FG state (biomass, totals, b0, loss_breakdown,
+    diet, action_fracs, tick) into ``_pending_rollout``. Cap
+    5000 frames per rollout with even decimation if exceeded.
+  * ``_render_full`` swaps the snapshot's state into the heatmap
+    drawing path when ``_playback_mode != "live"`` so headers +
+    pixels match the replayed frame. Plot tabs read their normal
+    series (not rewound).
+
+55.2 Playback bar (under heatmaps)
+  * Drawn by ``_draw_playback_bar``; ``_win_h += 32`` to fit it.
+  * Buttons (all modes): ``<<`` step back, ``|>`` play/pause,
+    ``>>`` step forward, ``-`` / ``+`` speed (delta 1 below 10 fps,
+    delta 5 at and above), frame indicator ``frame = i / N`` (or
+    ``live`` / ``recording...``).
+  * Train-mode only buttons: ``live`` / ``replay`` (jump back to
+    live view), ``pause train`` / ``resume train`` (toggles
+    ``self._paused`` which gates the existing pump_events block in
+    train.py between ARS iterations). In inference mode there is
+    no live view nor training loop to pause, so both buttons are
+    omitted from the bar.
+  * Buttons grey out while ``_recording`` is true or no film
+    exists; ``toggle_train_pause`` is always active so the user
+    can freeze training before the first probe completes.
+  * Yellow blink (2 Hz, 3 s) on the whole bar when
+    ``end_rollout_recording`` runs and a fresh film replaces the
+    previous one. Blink suppresses on first user click.
+
+55.3 Auto-advance (three places must stay in sync)
+  Playback auto-advance (advance ``_playback_idx`` by 1 every
+  ``1 / _playback_fps`` seconds, switch to ``paused`` on last
+  frame) MUST run in three loops:
+    * ``pump_events`` (normal train tick).
+    * The blocking ``while self._paused`` loop inside
+      ``pump_events`` (so playback still works after the user
+      clicked ``pause train``).
+    * ``wait_for_close`` (inference's post-rollout idle loop -
+      without it, pressing play after inference finished did
+      nothing).
+  Pressing play while ``_playback_idx >= n - 1`` (clip already
+  played out) resets ``_playback_idx = 0`` first; otherwise the
+  next auto-advance tick would immediately flip back to paused.
+
+55.4 train.py / inference.py wiring
+  * ``train.py::_probe_biomass``: calls
+    ``viz.begin_rollout_recording()`` before the tick=0 snapshot
+    and ``viz.end_rollout_recording()`` after the end-of-probe
+    ``update_biomass``. Each per-tick ``update_biomass`` therefore
+    becomes a frame in ``_pending_rollout``.
+  * ``inference.py::run_inference``: same wrap around the tick
+    loop. End-of-recording also runs on early break paths
+    (KeyboardInterrupt, ``ecosystem_dead``) so partial films are
+    still playable in ``wait_for_close``.
+
+55.5 Design notes
+  * Plot tabs are NOT rewound when scrubbing a frame - they show
+    global training/inference curves, not per-rollout series.
+  * Frame snapshots are dicts of numpy arrays (deep-copied);
+    typical Mareld rollout sits comfortably under 100 MB.
+  * No multithreading: rendering / replay still runs synchronously
+    between ARS iterations via the existing pump_events route.
+
+55.6 Offline-HTML follow-up (tools/biomass_html.py)
+  Independent of the replay feature but landed in the same arc:
+  the tab strip was rebalanced (Section 53.5) to drop ``bh`` /
+  ``b0`` and add ``predation`` / ``starvation`` / ``impacts``.
+  The KI-handler robustness in train.py (Section 53.6) also dates
+  from the same session.

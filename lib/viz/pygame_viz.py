@@ -83,6 +83,8 @@ class _NullViz:
     def update_diet_breakdown(self, *a, **kw): pass
     def update_action_fracs(self, *a, **kw): pass
     def update_status(self, *a, **kw): pass
+    def begin_rollout_recording(self, *a, **kw): pass
+    def end_rollout_recording(self, *a, **kw): pass
     def pump_events(self): return True
     def wait_for_close(self, *a, **kw): pass
     def close(self): pass
@@ -294,18 +296,51 @@ class LiveVisualizer:
         max_name_len = max((len(self._display_name(fid))
                             for fid in all_legend_ids), default=8)
         self._legend_w = 38 + 7 * max_name_len + 8  # checkbox + swatch + text + pad
-        plot_w = max(420, heatmap_block_w // 2 + self._legend_w)
+        # Bredd för tab-strippen: approximera font-bredden till ~7 px per
+        # tecken och lägg på 10 px padding + 4 px gutter per flik, plus
+        # en startmarginal. Denna bredd måste rymmas inom plot-panelens
+        # legend-fria område, annars wrappar/försvinner flikar. Vi
+        # garanterar därför att plot_w är minst så stor att hela
+        # tab-strippen (+ legend + några pixlar marginal) ryms på en rad.
+        tab_strip_w = 6 + sum(7 * len(t) + 10 + 4 for t in self._tabs) + 8
+        plot_w = max(420, heatmap_block_w // 2 + self._legend_w,
+                     tab_strip_w + self._legend_w + 4)
         plot_h = heatmap_block_h
         status_h = 26
         log_h = 0
+        # Playback bar (under heatmaps) for replaying the most recent
+        # probe/inference rollout. Holds the buttons << / >> / play / pause
+        # / speed +/- and a frame indicator. Allokeras alltid (även när
+        # ingen film ännu finns) så fönsterstorleken är konstant.
+        playback_h = 32
+        self._playback_h = playback_h
         self._win_w = heatmap_block_w + plot_w + pad
-        self._win_h = status_h + heatmap_block_h + pad + log_h
+        self._win_h = status_h + heatmap_block_h + playback_h + pad + log_h
         self._heatmap_origin = (0, status_h)
         self._plot_rect = (heatmap_block_w + pad // 2,
                            status_h,
                            plot_w - pad // 2,
                            plot_h)
         self._status_rect = (0, 0, self._win_w, status_h)
+        self._playback_rect = (0, status_h + heatmap_block_h,
+                               heatmap_block_w, playback_h)
+        # ---- Playback state ----------------------------------------------
+        # Den senast färdigställda rollouten lagras som en lista av frame-
+        # snapshots (dicts med biomass/totals/b0/loss_breakdown/diet_breakdown/
+        # action_fracs/tick/status). Under live-träningens probe-rollout
+        # ackumuleras frames i ``_pending_rollout``; när ``end_rollout_recording``
+        # kallas flyttas listan över till ``_current_rollout`` och knapparna
+        # blinkar tills användaren klickar (eller en ny film tar över).
+        self._recording = False
+        self._pending_rollout: list = []
+        self._current_rollout: list = []
+        self._playback_mode = "live"  # "live" | "paused" | "playing"
+        self._playback_idx = 0
+        self._playback_fps = 10.0  # justerbar via knappar (1..60)
+        self._playback_last_advance = 0.0
+        self._playback_blink = False
+        self._playback_blink_until = 0.0
+        self._playback_rects: list = []  # [(rect, action_name)]
 
         # ---- Init pygame --------------------------------------------------
         try:
@@ -383,6 +418,19 @@ class LiveVisualizer:
                     self._b0[fid] = total
             if extra:
                 self._status.update(extra)
+            # Spela in en frame om vi är mitt i en rollout-inspelning.
+            # Capture tas EFTER att all state uppdaterats men FÖRE
+            # _maybe_render så snapshotten reflekterar samma frame som
+            # live-renderingen visar.
+            if self._recording:
+                try:
+                    self._pending_rollout.append(self._capture_frame())
+                    # Säkerhetscap mot oavsiktligt obegränsade rollouts.
+                    if len(self._pending_rollout) > 5000:
+                        # Behåll var k:te frame så minnet inte exploderar.
+                        self._pending_rollout = self._pending_rollout[::2]
+                except Exception as e:
+                    self._log_once(f"frame capture failed: {e!r}")
             self._maybe_render()
         except Exception as e:
             self._log_once(f"update_biomass failed: {e!r}")
@@ -489,6 +537,65 @@ class LiveVisualizer:
             return
         self._status.update(kw)
 
+    # ---- Rollout recording / playback --------------------------------
+    def begin_rollout_recording(self) -> None:
+        """Starta inspelning av en ny probe/inference-rollout.
+
+        Frames samlas i ``_pending_rollout`` via :meth:`update_biomass`
+        (en snapshot per anrop). Vid :meth:`end_rollout_recording`
+        flyttas listan över till ``_current_rollout`` och uppspelnings-
+        knapparna blir aktiva. Under inspelningen är knapparna låsta
+        (gråa); klick ignoreras.
+        """
+        if not self.enabled:
+            return
+        self._recording = True
+        self._pending_rollout = []
+
+    def end_rollout_recording(self) -> None:
+        """Avsluta inspelning; den nya filmen tar över ``_current_rollout``."""
+        if not self.enabled:
+            return
+        self._recording = False
+        if self._pending_rollout:
+            self._current_rollout = self._pending_rollout
+            self._pending_rollout = []
+            # Blinka knapparna ett par sekunder så användaren ser att en
+            # ny film är tillgänglig; auto-hoppa INTE in i replay-läget
+            # (per användarens önskemål) — live-vyn fortsätter visas tills
+            # användaren själv klickar play/step.
+            try:
+                self._playback_blink_until = time.monotonic() + 3.0
+            except Exception:
+                self._playback_blink_until = 0.0
+            # Återställ replay-position så ett nytt klick startar från
+            # frame 0 av nya filmen.
+            self._playback_idx = 0
+            if self._playback_mode != "live":
+                # Var i replay tidigare → fortsätt i pausat läge på nya
+                # filmens frame 0.
+                self._playback_mode = "paused"
+
+    def _capture_frame(self) -> dict:
+        """Bygg en snapshot av all state som ``_draw_one_heatmap`` läser."""
+        # Kopior är essentiella: live-state muteras efter capture.
+        biomass = {fid: arr.copy() for fid, arr in self._biomass.items()}
+        totals = dict(self._totals)
+        b0 = dict(self._b0)
+        loss = {fid: dict(v) for fid, v in self._loss_breakdown.items()}
+        diet = {fid: dict(v) for fid, v in self._diet_breakdown.items()}
+        actf = {fid: dict(v) for fid, v in self._action_fracs.items()}
+        return {
+            "biomass": biomass,
+            "totals": totals,
+            "b0": b0,
+            "loss_breakdown": loss,
+            "diet_breakdown": diet,
+            "action_fracs": actf,
+            "tick": int(self._tick),
+            "status": dict(self._status),
+        }
+
     def pump_events(self) -> bool:
         """Process pygame events; return False if user asked to quit viz.
 
@@ -538,7 +645,35 @@ class LiveVisualizer:
                 # user issued while we were drawing are picked up on
                 # the very next pump tick instead of next iteration.
                 pg.event.pump()
+            # Auto-advance vid replay-play: stega frame när play-fps
+            # tidsbudgeten passerats. Render-anrop sker via _render_full
+            # direkt så användaren ser framgång även mellan ARS-steg.
+            if (self._playback_mode == "playing"
+                    and self._current_rollout
+                    and not self._recording):
+                now = time.monotonic()
+                dt = max(1.0 / 60.0, 1.0 / max(1.0, self._playback_fps))
+                if (now - self._playback_last_advance) >= dt:
+                    self._playback_last_advance = now
+                    if self._playback_idx + 1 < len(self._current_rollout):
+                        self._playback_idx += 1
+                    else:
+                        # Nått slutet — pausa på sista framen.
+                        self._playback_mode = "paused"
+                    self._last_frame_ts = 0.0
+                    self._render_full()
+                    pg.event.pump()
+            # Blinkning: rendera om ungefär 4 Hz medan blinkningen är
+            # aktiv så användaren faktiskt ser knapparna pulsa.
+            if (self._playback_blink_until > time.monotonic()
+                    and not self._recording):
+                if (time.monotonic() - self._last_frame_ts) > 0.25:
+                    self._last_frame_ts = 0.0
+                    self._render_full()
             # While paused, keep the window responsive without spinning.
+            # Playback-knapparna (inkl. step/play/speed) ska fortsätta
+            # fungera medan träningen är pausad, så vi gör samma
+            # auto-advance + render som ovanför.
             while self._paused and not self._quit:
                 for event in pg.event.get():
                     if event.type == pg.QUIT:
@@ -547,6 +682,18 @@ class LiveVisualizer:
                         self._handle_key(event.key)
                     elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                         self._handle_click(event.pos)
+                if (self._playback_mode == "playing"
+                        and self._current_rollout
+                        and not self._recording):
+                    now = time.monotonic()
+                    dt = max(1.0 / 60.0, 1.0 / max(1.0, self._playback_fps))
+                    if (now - self._playback_last_advance) >= dt:
+                        self._playback_last_advance = now
+                        if self._playback_idx + 1 < len(self._current_rollout):
+                            self._playback_idx += 1
+                        else:
+                            self._playback_mode = "paused"
+                self._last_frame_ts = 0.0
                 self._render_full()
                 pg.time.wait(50)
             return not self._quit
@@ -584,6 +731,21 @@ class LiveVisualizer:
                             self._handle_key(event.key)
                     elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                         self._handle_click(event.pos)
+                # Playback auto-advance (samma logik som i pump_events),
+                # annars händer ingenting när användaren trycker play efter
+                # att inference-rollouten är klar.
+                if (self._playback_mode == "playing"
+                        and self._current_rollout
+                        and not self._recording):
+                    now = time.monotonic()
+                    dt = max(1.0 / 60.0, 1.0 / max(1.0, self._playback_fps))
+                    if (now - self._playback_last_advance) >= dt:
+                        self._playback_last_advance = now
+                        if self._playback_idx + 1 < len(self._current_rollout):
+                            self._playback_idx += 1
+                        else:
+                            self._playback_mode = "paused"
+                self._last_frame_ts = 0.0
                 try:
                     self._render_full()
                 except Exception:
@@ -688,6 +850,67 @@ class LiveVisualizer:
             if rx <= mx < rx + rw and ry <= my < ry + rh:
                 self._plot_enabled[fid] = not self._plot_enabled.get(fid, True)
                 return
+        # Playback-knappar. ``toggle_train_pause`` är alltid aktiv;
+        # övriga är gråade/inaktiva under pågående probe / utan film.
+        disabled = self._recording or not self._current_rollout
+        for rect, action in getattr(self, "_playback_rects", []):
+            rx, ry, rw, rh = rect
+            if rx <= mx < rx + rw and ry <= my < ry + rh:
+                if disabled and action != "toggle_train_pause":
+                    return
+                self._handle_playback_action(action)
+                return
+
+    def _handle_playback_action(self, action: str) -> None:
+        # Träningspausen är oberoende av om någon film finns — hantera
+        # den först så knappen fungerar även innan första probe-rollouten
+        # är klar.
+        if action == "toggle_train_pause":
+            self._paused = not self._paused
+            self._playback_blink_until = 0.0
+            return
+        n = len(self._current_rollout)
+        if n == 0:
+            return
+        # Klick stänger av blinkningen.
+        self._playback_blink_until = 0.0
+        if action == "toggle_play":
+            if self._playback_mode == "playing":
+                self._playback_mode = "paused"
+            else:
+                # Gå in i replay vid första play-klick (eller fortsätt
+                # från nuvarande frame om vi redan var i replay). Om vi
+                # står på sista framen (klippet har spelats klart),
+                # börja om från frame 0 — annars skulle play omedelbart
+                # studsa tillbaka till "paused" via auto-advance.
+                if self._playback_mode == "live":
+                    self._playback_idx = 0
+                elif self._playback_idx >= n - 1:
+                    self._playback_idx = 0
+                self._playback_mode = "playing"
+                self._playback_last_advance = time.monotonic()
+        elif action == "step_fwd":
+            if self._playback_mode == "live":
+                self._playback_idx = 0
+            else:
+                self._playback_idx = min(n - 1, self._playback_idx + 1)
+            self._playback_mode = "paused"
+        elif action == "step_back":
+            if self._playback_mode == "live":
+                self._playback_idx = n - 1
+            else:
+                self._playback_idx = max(0, self._playback_idx - 1)
+            self._playback_mode = "paused"
+        elif action == "speed_up":
+            self._playback_fps = min(60.0, self._playback_fps + 1.0
+                                     if self._playback_fps < 10
+                                     else self._playback_fps + 5.0)
+        elif action == "speed_down":
+            self._playback_fps = max(1.0, self._playback_fps - 1.0
+                                     if self._playback_fps <= 10
+                                     else self._playback_fps - 5.0)
+        elif action == "to_live":
+            self._playback_mode = "live"
 
     def _maybe_render(self) -> None:
         now = time.monotonic()
@@ -707,9 +930,168 @@ class LiveVisualizer:
         screen = self._screen
         screen.fill((18, 18, 22))
         self._draw_status_bar()
-        self._draw_heatmaps()
+        # Replay-state-swap: när vi inte är i live-läget ritar
+        # heatmap-griden frame N av ``_current_rollout`` i stället för
+        # live-state. Vi swappar in snapshotten innan ``_draw_heatmaps``
+        # och återställer efteråt, så plot-panelen och status-baren
+        # förblir oförändrade (plot-flikarna lämnas medvetet orörda enligt
+        # användarens önskemål — de visar globala kurvor över hela körningen).
+        swap = None
+        if (self._playback_mode != "live"
+                and self._current_rollout
+                and 0 <= self._playback_idx < len(self._current_rollout)):
+            swap = self._swap_in_frame(self._current_rollout[self._playback_idx])
+        try:
+            self._draw_heatmaps()
+        finally:
+            if swap is not None:
+                self._swap_out_frame(swap)
         self._draw_plot()
+        self._draw_playback_bar()
         self._pg.display.flip()
+
+    def _swap_in_frame(self, frame: dict) -> dict:
+        """Tillfälligt ersätt live-state med en snapshot. Returnerar
+        ett ``saved``-dict som ``_swap_out_frame`` använder för att
+        återställa."""
+        saved = {
+            "biomass": self._biomass,
+            "totals": self._totals,
+            "b0": self._b0,
+            "loss_breakdown": self._loss_breakdown,
+            "diet_breakdown": self._diet_breakdown,
+            "action_fracs": self._action_fracs,
+            "tick": self._tick,
+        }
+        self._biomass = frame.get("biomass", {})
+        self._totals = frame.get("totals", {})
+        self._b0 = frame.get("b0", {})
+        self._loss_breakdown = frame.get("loss_breakdown", {})
+        self._diet_breakdown = frame.get("diet_breakdown", {})
+        self._action_fracs = frame.get("action_fracs", {})
+        self._tick = int(frame.get("tick", 0))
+        return saved
+
+    def _swap_out_frame(self, saved: dict) -> None:
+        self._biomass = saved["biomass"]
+        self._totals = saved["totals"]
+        self._b0 = saved["b0"]
+        self._loss_breakdown = saved["loss_breakdown"]
+        self._diet_breakdown = saved["diet_breakdown"]
+        self._action_fracs = saved["action_fracs"]
+        self._tick = saved["tick"]
+
+    def _draw_playback_bar(self) -> None:
+        """Rita uppspelningskontroller under heatmap-griden.
+
+        Layout: [<<] [play/pause] [>>] [-]  speed=X fps  [+]   live/replay
+                frame = i/N  (blinkar när ny film finns)
+
+        Knapparna är gråa (disabled) medan en probe pågår
+        (``_recording = True``) eller om ingen film finns ännu.
+        """
+        pg = self._pg
+        x, y, w, h = self._playback_rect
+        # Bakgrund.
+        pg.draw.rect(self._screen, (22, 22, 28), (x, y, w, h))
+        pg.draw.line(self._screen, (50, 50, 60),
+                     (x, y), (x + w, y), 1)
+
+        disabled = self._recording or not self._current_rollout
+        # Blink-effekt på hela rad när ny rollout precis blivit klar och
+        # användaren ännu inte interagerat. Toggle 2 Hz.
+        blinking = (not disabled
+                    and self._playback_blink_until > time.monotonic()
+                    and self._playback_mode == "live")
+        blink_on = blinking and (int(time.monotonic() * 2) % 2 == 0)
+
+        # Knapp-spec: (label, action_id, width).
+        is_playing = (self._playback_mode == "playing")
+        buttons = [
+            ("<<", "step_back", 32),
+            ("|>" if not is_playing else "||", "toggle_play", 32),
+            (">>", "step_fwd", 32),
+            ("-", "speed_down", 24),
+            (f"{self._playback_fps:.0f} fps", None, 60),
+            ("+", "speed_up", 24),
+        ]
+        # ``live``/``replay``-knappen är bara meningsfull i train-läge,
+        # där en pågående probe-rollout kan "ta över" bufferten och
+        # användaren vill kunna hoppa tillbaka till live-vyn. Vid
+        # inferens finns ingen live-vy att återgå till — filmen ÄR
+        # rolloutten — så vi döljer knappen där.
+        if self.mode == "train":
+            buttons.append(
+                ("live" if self._playback_mode == "live" else "replay",
+                 "to_live", 56)
+            )
+        # Paus/resume av själva träningsloopen visas endast i train-läge.
+        # Vid inferens finns ingen träning att pausa — inference-loopen
+        # är redan klar när ``wait_for_close`` körs och uppspelnings-
+        # kontrollerna (|>, <<, >>) räcker för att granska filmen.
+        if self.mode == "train":
+            buttons.append(
+                ("resume train" if self._paused else "pause train",
+                 "toggle_train_pause", 100)
+            )
+
+        self._playback_rects = []
+        bx = x + 8
+        by = y + (h - 22) // 2
+        for label, action, bw in buttons:
+            rect = (bx, by, bw, 22)
+            if action is None:
+                # Etikett (speed-indikator) — ingen klickzon, ingen ram.
+                col = (210, 210, 220)
+                surf = self._font.render(label, True, col)
+                self._screen.blit(surf,
+                                  (bx + (bw - surf.get_width()) // 2,
+                                   by + (22 - surf.get_height()) // 2))
+                bx += bw + 4
+                continue
+            # Knappfärg. ``toggle_train_pause`` är alltid aktiv (även
+            # under recording / utan film), så den hanteras separat.
+            always_active = (action == "toggle_train_pause")
+            if disabled and not always_active:
+                bg = (40, 40, 46)
+                fg = (110, 110, 120)
+                border = (60, 60, 70)
+            else:
+                if blink_on and not always_active:
+                    bg = (90, 70, 30)
+                    border = (220, 180, 60)
+                else:
+                    bg = (50, 50, 60)
+                    border = (90, 90, 105)
+                fg = (235, 235, 245)
+                # Highlight aktiv play-toggle.
+                if action == "toggle_play" and is_playing:
+                    bg = (60, 90, 60)
+                # Highlight när träningen är pausad.
+                if action == "toggle_train_pause" and self._paused:
+                    bg = (90, 50, 50)
+                    border = (200, 100, 100)
+            pg.draw.rect(self._screen, bg, rect)
+            pg.draw.rect(self._screen, border, rect, 1)
+            surf = self._font.render(label, True, fg)
+            self._screen.blit(surf,
+                              (bx + (bw - surf.get_width()) // 2,
+                               by + (22 - surf.get_height()) // 2))
+            self._playback_rects.append((rect, action))
+            bx += bw + 4
+
+        # Frame-indikator till höger.
+        n = len(self._current_rollout)
+        if self._playback_mode == "live":
+            ind = f"live  (saved frames: {n})"
+        else:
+            ind = f"frame = {self._playback_idx + 1}/{n}"
+        if self._recording:
+            ind = f"recording... ({len(self._pending_rollout)} frames)"
+        ind_surf = self._font.render(ind, True, (200, 200, 215))
+        self._screen.blit(ind_surf,
+                          (x + w - ind_surf.get_width() - 10,
+                           y + (h - ind_surf.get_height()) // 2))
 
     def _draw_status_bar(self) -> None:
         x, y, w, h = self._status_rect
@@ -988,26 +1370,34 @@ class LiveVisualizer:
             ylabel = base_label
 
         # ---- Tab headers (clickable) -------------------------------------
-        pg.draw.rect(self._screen, (24, 24, 30), (x, y, w, 18))
-        tab_x = x + 6
+        # Alla flikar ritas på en och samma rad. Plot-panelens bredd
+        # (``plot_w`` i ``__init__``) är dimensionerad så att hela
+        # tab-strippen ryms inom det legend-fria området, oavsett antal
+        # flikar (8 i inference-läget, 9 i train-läget).
+        row_h = 16
+        tab_pad_x = 6
+        tab_x = x + tab_pad_x
+        tab_y = y + 2
         self._tab_rects = []
+        strip_h = row_h + 2
+        pg.draw.rect(self._screen, (24, 24, 30), (x, y, w, strip_h), 0)
         for i, tab in enumerate(self._tabs):
-            label = tab
             is_active = (i == self._active_tab)
             col = (240, 240, 250) if is_active else (140, 140, 150)
-            surf = self._font.render(label, True, col)
+            surf = self._font.render(tab, True, col)
             tw = surf.get_width() + 10
-            rect = (tab_x, y + 2, tw, 14)
+            rect = (tab_x, tab_y, tw, 14)
             if is_active:
                 pg.draw.rect(self._screen, (45, 45, 60), rect)
             pg.draw.rect(self._screen, (60, 60, 70), rect, 1)
-            self._screen.blit(surf, (tab_x + 5, y + 3))
+            self._screen.blit(surf, (tab_x + 5, tab_y + 1))
             self._tab_rects.append((rect, i))
             tab_x += tw + 4
 
         # Title (under tab strip).
+        title_y = y + strip_h + 2
         tsurf = self._font.render(ylabel, True, (200, 200, 210))
-        self._screen.blit(tsurf, (x + 6, y + 20))
+        self._screen.blit(tsurf, (x + 6, title_y))
 
         active_ids = self._active_plot_ids()
 
@@ -1018,7 +1408,7 @@ class LiveVisualizer:
         # enable any series without blindly guessing checkbox positions.
         plot_pad_l = 36
         plot_pad_r = getattr(self, "_legend_w", 110)  # room for legend
-        plot_pad_t = 38  # tab strip (18) + ylabel line
+        plot_pad_t = strip_h + 20  # tab strip (variable rows) + ylabel line
         plot_pad_b = 16
         px0 = x + plot_pad_l
         py0 = y + plot_pad_t
