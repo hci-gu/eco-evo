@@ -582,6 +582,71 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 rnd_env = None
         if viz is not None:
             try:
+                # Push mv/rs/et per tick till heatmap-headern (via
+                # ``update_action_fracs``) så raden ``mv/rs/et = …``
+                # uppdateras lika ofta som biomassan. Vi pushar INTE till
+                # plot-serierna ``move``/``rest``/``eat`` här — de matas
+                # bara end-of-probe med ``viz_step`` så graferna får samma
+                # monotona x-skala som biomass/energy-flikarna (annars
+                # blandas tick-skala och ARS-skala i samma buffer och
+                # linjerna zig-zag:ar).
+                def _push_hdr_fracs(_env, _suffix=""):
+                    mv_a = getattr(_env, '_action_move_frac', None)
+                    rs_a = getattr(_env, '_action_rest_frac', None)
+                    et_a = getattr(_env, '_action_eat_frac', None)
+                    cnt = getattr(_env, '_action_active_ticks', None)
+                    if (mv_a is None or rs_a is None or et_a is None
+                            or cnt is None):
+                        return
+                    for _i, _fid in enumerate(_env.dm_ids):
+                        _c = float(cnt[_i]) if cnt[_i] > 0 else 0.0
+                        if _c <= 0.0:
+                            continue
+                        viz.update_action_fracs(
+                            _fid + _suffix,
+                            100.0 * float(mv_a[_i]) / _c,
+                            100.0 * float(rs_a[_i]) / _c,
+                            100.0 * float(et_a[_i]) / _c,
+                        )
+                try:
+                    _push_hdr_fracs(env)
+                    if rnd_env is not None:
+                        _push_hdr_fracs(rnd_env, _suffix="_rnd")
+                except Exception:
+                    pass
+                _lb_tick = {}
+                for fid in env.fgs:
+                    ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
+                    lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
+                    li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
+                    _tot = ls + lp + li
+                    if _tot > 0.0:
+                        _lb_tick[fid] = {
+                            'predation':  lp / _tot,
+                            'starvation': ls / _tot,
+                            'impact':     li / _tot,
+                        }
+                    else:
+                        _lb_tick[fid] = {'predation': 0.0,
+                                         'starvation': 0.0,
+                                         'impact': 0.0}
+                viz.update_loss_breakdown(_lb_tick)
+                # Diet-uppdelning per DM-predator: läs env-ackumulatorn
+                # ``intake_by_pred_prey`` (ton intagen prey-biomassa över
+                # rollouten) och normalisera per predator. Heatmap-headern
+                # ritar då en rad '<abbr>/… = X/…%' ovanför heatmapen.
+                _diet_tick = {}
+                _ipp = getattr(env, 'intake_by_pred_prey', None) or {}
+                for pred_id, prey_map in _ipp.items():
+                    tot = float(sum(prey_map.values()))
+                    if tot <= 0.0:
+                        continue
+                    _diet_tick[pred_id] = {
+                        pid: float(v) / tot for pid, v in prey_map.items()
+                        if float(v) > 0.0
+                    }
+                if _diet_tick:
+                    viz.update_diet_breakdown(_diet_tick)
                 viz.update_biomass(env.fgs, tick=_t + 1, extra=viz_extra)
                 if not viz.pump_events():
                     # User closed the window; don't fail training, just stop
@@ -668,6 +733,27 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             rnd_ratio[fid] = (bhr / b0r) if b0r > 0.0 else 0.0
             rnd_energy_ratio[fid] = (ehr / e0r) if e0r > 0.0 else 0.0
         rnd_move, rnd_rest, rnd_eat = _collect_action_fracs(rnd_env)
+        # Mirror av huvud-envs ``loss_breakdown`` för random-action
+        # baseline, så att offline-html-grafer kan visa samma
+        # predation/starvation/impacts-tabbar för ``_rnd``-serierna.
+        rnd_loss_breakdown: dict = {}
+        for fid in rnd_env.fgs:
+            ls = float(getattr(rnd_env, 'loss_starvation', {}).get(fid, 0.0))
+            lp = float(getattr(rnd_env, 'loss_predation', {}).get(fid, 0.0))
+            li = float(getattr(rnd_env, 'loss_impact', {}).get(fid, 0.0))
+            tot = ls + lp + li
+            if tot > 0.0:
+                rnd_loss_breakdown[fid] = {
+                    'starvation': ls / tot,
+                    'predation':  lp / tot,
+                    'impact':     li / tot,
+                    'total':      tot,
+                }
+            else:
+                rnd_loss_breakdown[fid] = {
+                    'starvation': 0.0, 'predation': 0.0,
+                    'impact': 0.0, 'total': 0.0,
+                }
 
     # Push end-of-probe biomass% / energy% into the visualiser's tabbed
     # plot. ``viz_step`` should be the global ARS step (gen*iter+iter)
@@ -680,9 +766,12 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                                   step=int(viz_step))
                 viz.update_series("energy", fid, avg_energy_ratio[fid] * 100.0,
                                   step=int(viz_step))
-            # Push end-of-probe mean action fractions (move/rest/eat) per DM
-            # into the dedicated action tabs. Uses the same per-iter
-            # ``viz_step`` so curves align with the reward / biomass tabs.
+            # Push end-of-probe-medel av move/rest/eat till plot-flikarna
+            # med global ARS-step (``viz_step``), så att x-skalan matchar
+            # biomass/energy-flikarna (en punkt per probe, monotont
+            # ökande). Per-tick-loopen ovan pushar inte längre till dessa
+            # serier — den uppdaterar bara headerns ``mv/rs/et``-rad via
+            # ``update_action_fracs``, vilket inte rör plot-buffrarna.
             try:
                 from inference import _push_action_fracs
                 _push_action_fracs(viz, env, step=int(viz_step))
@@ -707,11 +796,114 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         except Exception:
             pass
 
+    # Per-FG förlustuppdelning över probe-rollouten. Ackumulatorerna
+    # ``loss_starvation`` / ``loss_predation`` / ``loss_impact`` sätts i
+    # EcosystemEnvironment och summerar faktisk avdragen biomass per
+    # orsak under hela rollouten. Andelarna nedan är fraktioner av den
+    # totala förlusten (summan av alla tre); summan är därför 1.0 när
+    # det fanns någon förlust alls, annars 0.0 för alla orsaker.
+    loss_breakdown = {}
+    for fid in fg_ids:
+        ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
+        lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
+        li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
+        tot = ls + lp + li
+        if tot > 0.0:
+            loss_breakdown[fid] = {
+                'starvation': ls / tot,
+                'predation':  lp / tot,
+                'impact':     li / tot,
+                'total':      tot,
+            }
+        else:
+            loss_breakdown[fid] = {
+                'starvation': 0.0,
+                'predation':  0.0,
+                'impact':     0.0,
+                'total':      0.0,
+            }
+
+    # Push loss-breakdown to the live visualiser so the 'pr/st/im=X/Y/Z%'
+    # line above each heatmap reflects the just-finished probe rollout.
+    if viz is not None:
+        try:
+            viz.update_loss_breakdown(loss_breakdown)
+        except Exception:
+            pass
+
+    # Push end-of-probe predation/starvation/impacts shares (0..100%) to
+    # the dedicated plot tabs, one point per probe — same x-scale (global
+    # ARS ``viz_step``) som biomass/energy. Detta speglar headern
+    # ``pr/st/im=…`` men över tid. NDM ingår: även de förlorar biomass
+    # till predation och impacts.
+    if viz is not None and viz_step is not None:
+        try:
+            for fid in fg_ids:
+                lb = loss_breakdown.get(fid) or {}
+                viz.update_series("predation", fid,
+                                  100.0 * float(lb.get('predation', 0.0)),
+                                  step=int(viz_step))
+                viz.update_series("starvation", fid,
+                                  100.0 * float(lb.get('starvation', 0.0)),
+                                  step=int(viz_step))
+                viz.update_series("impacts", fid,
+                                  100.0 * float(lb.get('impact', 0.0)),
+                                  step=int(viz_step))
+            if rnd_env is not None:
+                for fid in rnd_env.fgs:
+                    ls = float(getattr(rnd_env, 'loss_starvation', {}).get(fid, 0.0))
+                    lp = float(getattr(rnd_env, 'loss_predation', {}).get(fid, 0.0))
+                    li = float(getattr(rnd_env, 'loss_impact', {}).get(fid, 0.0))
+                    tot = ls + lp + li
+                    if tot > 0.0:
+                        pp, ss, ii = (lp / tot, ls / tot, li / tot)
+                    else:
+                        pp = ss = ii = 0.0
+                    viz.update_series("predation", fid + "_rnd",
+                                      100.0 * pp, step=int(viz_step))
+                    viz.update_series("starvation", fid + "_rnd",
+                                      100.0 * ss, step=int(viz_step))
+                    viz.update_series("impacts", fid + "_rnd",
+                                      100.0 * ii, step=int(viz_step))
+        except Exception:
+            pass
+
+    # Force an immediate re-render so the freshly pushed mv/rs/et and
+    # pr/st/im values above each heatmap become visible as soon as this
+    # probe finishes, rather than only at the start of the next probe's
+    # rollout (when the next ``update_biomass`` triggers a render). The
+    # frame-rate cap on ``_maybe_render`` is bypassed by resetting
+    # ``_last_frame_ts`` so this end-of-probe paint always lands.
+    if viz is not None:
+        try:
+            viz._last_frame_ts = 0.0
+            viz.update_biomass(env.fgs, tick=int(n_ticks_done), extra=viz_extra)
+            viz.pump_events()
+        except Exception:
+            pass
+
     if compact:
         # Human-readable percent in stdout (e.g. '120%'); JSONL keeps
         # both ratio and log10_ratio for downstream analysis.
         parts = [f"{fid}: {ratio[fid]*100:.0f}%" for fid in fg_ids]
         print(f"    [probe gen={gen+1}] " + " | ".join(parts))
+        # Loss-breakdown rad per FG som faktiskt förlorat biomassa under
+        # rollouten (ratio < 1). FG som vuxit eller står stilla utelämnas
+        # för att hålla utskriften kompakt.
+        loss_parts = []
+        for fid in fg_ids:
+            if ratio[fid] >= 1.0:
+                continue
+            lb = loss_breakdown[fid]
+            if lb['total'] <= 0.0:
+                continue
+            loss_parts.append(
+                f"{fid}: starv {lb['starvation']*100:.0f}% / "
+                f"pred {lb['predation']*100:.0f}% / "
+                f"imp {lb['impact']*100:.0f}%"
+            )
+        if loss_parts:
+            print(f"    [probe gen={gen+1} loss] " + " | ".join(loss_parts))
 
     record = {
         'gen': int(gen + 1),
@@ -727,6 +919,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         'move_frac': move_frac,         # mean move-action % per DM
         'rest_frac': rest_frac,         # mean rest-action % per DM
         'eat_frac':  eat_frac,          # mean eat-action  % per DM
+        # Andel av total biomassaförlust under rollouten per FG, uppdelat
+        # på orsak (svält / predation / impact). 'total' = absolut summa i
+        # ton; andelarna summerar till 1.0 när total > 0.
+        'loss_breakdown': loss_breakdown,
     }
     # Random-action baseline mirror (only when rnd_env was provided).
     if rnd_env is not None:
@@ -736,12 +932,17 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             'move_frac': rnd_move,
             'rest_frac': rnd_rest,
             'eat_frac':  rnd_eat,
+            'loss_breakdown': rnd_loss_breakdown,
         }
     try:
         with open(jsonl_path, 'a') as f:
             f.write(json.dumps(record) + "\n")
     except Exception as e:
         print(f"    [probe] WARN: failed to append to {jsonl_path}: {e}")
+    # HTML-regenerering sker enbart vid checkpoint-skrivning (per
+    # generation) och en sista gång i KeyboardInterrupt-handlern —
+    # inte per iter, då det är onödigt kostsamt och de tidigare
+    # rapporterade missarna visade sig vara en stale fil-vy.
     return record
 
 
@@ -1689,20 +1890,40 @@ def main():
         print(f"\n\n[Interrupted by user] Stopping training after current step.")
         # Terminate workers immediately so they don't keep computing while we
         # save checkpoints; otherwise pool.map can still hold references.
+        # Wrappa varje steg i sin egen ``try`` så att en andra Ctrl+C (eller
+        # ett krasch i ett tidigt steg, t.ex. trainer.close() som hänger på
+        # en pool-worker) inte hindrar de senare stegen — särskilt
+        # ``_regenerate_biomass_html`` som annars hoppas över helt om
+        # ``trainer.close()`` eller checkpoint-skrivningen avbryts.
         try:
-            trainer.close()
-        except Exception:
-            pass
-        for species in target_species:
-            save_path = os.path.join(run_dir, f"policy_{species}.pth")
             try:
-                _save_checkpoint(trainer, species, save_path)
-                print(f"    Final checkpoint saved to: {save_path}")
-            except Exception as e:
-                print(f"    Could not save checkpoint for {species}: {e}")
-        # Also refresh the interactive HTML one last time so the user
-        # has up-to-date plots even after Ctrl+C.
-        _regenerate_biomass_html(run_dir)
+                trainer.close()
+            except BaseException as _e:
+                print(f"    [interrupt] trainer.close() failed: {_e!r}")
+            for species in target_species:
+                save_path = os.path.join(run_dir, f"policy_{species}.pth")
+                try:
+                    _save_checkpoint(trainer, species, save_path)
+                    print(f"    Final checkpoint saved to: {save_path}")
+                except BaseException as e:
+                    print(f"    Could not save checkpoint for {species}: {e}")
+            # Also refresh the interactive HTML one last time so the user
+            # has up-to-date plots even after Ctrl+C. Körs alltid, även om
+            # ovanstående steg failade, så länge ``biomass.jsonl`` finns.
+            try:
+                _regenerate_biomass_html(run_dir)
+                print(f"    Interactive HTML regenerated: "
+                      f"{os.path.join(run_dir, 'plots.html')}")
+            except BaseException as _e:
+                print(f"    [interrupt] HTML regen failed: {_e!r}")
+        except KeyboardInterrupt:
+            # En andra Ctrl+C under cleanup — försök ändå regenerera HTML
+            # som sista åtgärd innan vi släpper igenom.
+            print(f"\n[Interrupted again] attempting HTML regen before exit…")
+            try:
+                _regenerate_biomass_html(run_dir)
+            except BaseException:
+                pass
         print(f"\n==========================================")
         print(f"Training interrupted; partial progress saved.")
         print(f"==========================================")

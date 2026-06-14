@@ -39,6 +39,21 @@ class EcosystemEnvironment:
             for fid, fg in self.fgs.items()
         }
 
+        # Per-FG ackumulerad biomassaförlust uppdelat på orsak. Används av
+        # probe-rollouten i train.py för att rapportera hur stor andel av
+        # förlusten under rollouten som berodde på svält, predation resp.
+        # impacts. Nollställs aldrig automatiskt — anroparen (probe) kan
+        # läsa dem efter rollouten. Nycklar: alla FG-id (även NDM, men
+        # endast DM får impact/starvation-bidrag i nuläget).
+        self.loss_impact = {fid: 0.0 for fid in self.fgs}
+        self.loss_predation = {fid: 0.0 for fid in self.fgs}
+        self.loss_starvation = {fid: 0.0 for fid in self.fgs}
+
+        # Per (predator-DM, prey) ackumulerat intake (ton) över rollouten.
+        # Används för att rapportera dietuppdelning i visualiseraren
+        # ('pf/sb/gd = …%'). Endast DM-predatorer; nycklar fylls i lat.
+        self.intake_by_pred_prey: dict = {fid: {} for fid in self.fgs}
+
     # ---------- Static caches (built once) ----------
     def _build_static_caches(self):
         H, W = self.grid.height, self.grid.width
@@ -787,11 +802,27 @@ class EcosystemEnvironment:
             self.fgs[fid].temp_energy_gains = gains[i]
 
         total_intake = actual.sum(axis=0)  # (N_all, H, W)
+        # Spårning för diet-rapporten: ackumulera intake per (predator, prey)
+        # över hela rollouten. Summan över griden ger total intagen byte-
+        # biomassa (ton) som predator-FG i åt av prey-FG j i denna tick.
+        intake_pp = actual.sum(axis=(2, 3))  # (N_dm, N_all)
+        for i, pred_id in enumerate(self.dm_ids):
+            row = self.intake_by_pred_prey.setdefault(pred_id, {})
+            for j, prey_id in enumerate(self.global_fg_order):
+                v = float(intake_pp[i, j])
+                if v != 0.0:
+                    row[prey_id] = float(row.get(prey_id, 0.0)) + v
         eps = np.float32(1e-9)
         for j, prey_id in enumerate(self.global_fg_order):
             prey_fg = self.fgs[prey_id]
             B_old = prey_fg.biomass
             intake_j = total_intake[j]
+            # Spårning för probe-rapporten: ackumulera totalt predationsuttag
+            # per byte-FG över hela rollouten.
+            self.loss_predation[prey_id] = (
+                float(self.loss_predation.get(prey_id, 0.0))
+                + float(intake_j.sum())
+            )
             reduction = np.where(B_old > eps, (B_old - intake_j) / (B_old + eps), np.float32(0.0))
             prey_fg.energy_reserve = (prey_fg.energy_reserve * reduction).astype(self.dtype, copy=False)
             prey_fg.biomass = (B_old - intake_j).astype(self.dtype, copy=False)
@@ -956,6 +987,15 @@ class EcosystemEnvironment:
             )
             reduction = np.clip(reduction, 0.0, 1.0)
 
+            # Faktisk biomassaförlust = min(efterfrågad mortalitet, befintlig
+            # biomass) — clampas på samma sätt som biomass-uppdateringen nedan
+            # (np.maximum(0, ...)). Spårning för probe-rapporten i train.py.
+            actual_impact_loss = np.minimum(total_mortality_impact, fg.biomass)
+            self.loss_impact[fg_id] = (
+                float(self.loss_impact.get(fg_id, 0.0))
+                + float(actual_impact_loss.sum())
+            )
+
             fg.energy_reserve = (fg.energy_reserve * reduction).astype(self.dtype, copy=False)
             fg.biomass = np.maximum(
                 0.0, fg.biomass - total_mortality_impact
@@ -1024,6 +1064,14 @@ class EcosystemEnvironment:
                 # that also drains energy reserve proportionally.
                 negative_growth = np.minimum(0.0, growth)
                 total_loss = -negative_growth
+                # Spårning för probe-rapporten: faktiskt avdragen biomass är
+                # min(total_loss, fg.biomass) eftersom biomass clampas till 0
+                # i raden ``fg.biomass = np.maximum(0.0, fg.biomass + growth)``.
+                actual_starve_loss = np.minimum(total_loss, fg.biomass)
+                self.loss_starvation[fg_id] = (
+                    float(self.loss_starvation.get(fg_id, 0.0))
+                    + float(actual_starve_loss.sum())
+                )
 
                 loss_mask = total_loss > 0
                 reduction = np.ones_like(fg.biomass)

@@ -406,9 +406,20 @@ def _push_action_fracs(viz, env, step, suffix=""):
             if c <= 0.0:
                 continue
             key = fid + suffix
-            viz.update_series("move", key, 100.0 * float(mv[i]) / c, step=step)
-            viz.update_series("rest", key, 100.0 * float(rs[i]) / c, step=step)
-            viz.update_series("eat",  key, 100.0 * float(et[i]) / c, step=step)
+            _mv_pct = 100.0 * float(mv[i]) / c
+            _rs_pct = 100.0 * float(rs[i]) / c
+            _et_pct = 100.0 * float(et[i]) / c
+            viz.update_series("move", key, _mv_pct, step=step)
+            viz.update_series("rest", key, _rs_pct, step=step)
+            viz.update_series("eat",  key, _et_pct, step=step)
+            # Pusha även till heatmap-headerns dedikerade state så raden
+            # ``mv/rs/et = …`` läser från ``_action_fracs`` (frikopplat
+            # från plot-serierna, vilket är nödvändigt för att headern och
+            # plot-flikarna ska kunna ha olika x-skalor under träning).
+            try:
+                viz.update_action_fracs(key, _mv_pct, _rs_pct, _et_pct)
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -469,6 +480,44 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 er = getattr(fg, 'energy_reserve', None)
                 rnd_energy_history[fid].append(
                     float(er.sum()) if er is not None else 0.0)
+        # Avbryt loopen tidigt om all biomassa har kollapsat till 0 i
+        # samtliga FG (och, om rnd_env används, även där). Annars fortsätter
+        # visualiseringen att uppdateras med b = 0.00 tick efter tick utan
+        # att något kan hända i ekosystemet. Den sista frame:n som ritats
+        # speglar redan kollapsen; vi gör en sista paint nedan och stannar.
+        # Använd en absolut epsilon-tröskel i stället för == 0. När all
+        # biomassa kollapsar lämnar upprepad multiplikation med decay-
+        # faktorer kvar float32-subnormaler (ned mot ~1.4e-45) som aldrig
+        # når exakt 0. Sådana värden saknar biologisk innebörd men gör att
+        # heatmapens normalisering (max-värde per frame) fortsätter
+        # fluktuera vilt mellan subnormaler.
+        #
+        # ``DEAD_EPS`` sätts till 50 % av minsta positiva ``min_split_biomass``
+        # över alla FG i env (lagras i ton i ``FunctionalGroup``, dvs kg/1000).
+        # Det är den minsta odelbara enheten i ekosystemet: när total biomass
+        # underskrider halva den nivån finns inte ens en halv odelbar individ
+        # kvar någonstans, och rollouten kan tryggt avbrytas. Om ingen FG har
+        # ``min_split_biomass > 0`` (helt kontinuerligt läge) faller vi tillbaka
+        # på en liten numerisk tröskel som bara fångar float32-subnormaler.
+        _msb_values = [
+            float(getattr(fg, 'min_split_biomass', 0.0))
+            for fg in env.fgs.values()
+        ]
+        if rnd_env is not None:
+            _msb_values.extend(
+                float(getattr(fg, 'min_split_biomass', 0.0))
+                for fg in rnd_env.fgs.values()
+            )
+        _msb_pos = [v for v in _msb_values if v > 0.0]
+        DEAD_EPS = 0.5 * min(_msb_pos) if _msb_pos else 1e-9
+        total_b = sum(float(fg.biomass.sum()) for fg in env.fgs.values())
+        total_b_rnd = (
+            sum(float(fg.biomass.sum()) for fg in rnd_env.fgs.values())
+            if rnd_env is not None else 0.0
+        )
+        ecosystem_dead = (total_b <= DEAD_EPS) and (
+            rnd_env is None or total_b_rnd <= DEAD_EPS
+        )
         # Per-FG average-biomass / average-energy ratio over the rollout
         # so far, expressed as a percentage of the initial value. ``b0``
         # is the post-tick-0 baseline (history[fid][0]); the value plotted
@@ -497,6 +546,58 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     viz.update_series("biomass", fid, pct_bio[fid], step=t)
                     viz.update_series("energy", fid, pct_eng[fid], step=t)
                 _push_action_fracs(viz, env, step=t)
+                # Per-FG biomass-loss breakdown (pr/st/im) so far,
+                # computed from the env's running accumulators. Each
+                # value is a fraction in [0, 1] summing to 1.0 when
+                # there has been any loss for that FG.
+                _lb = {}
+                for fid in env.fgs:
+                    ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
+                    lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
+                    li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
+                    _tot = ls + lp + li
+                    if _tot > 0.0:
+                        _lb[fid] = {
+                            'predation':  lp / _tot,
+                            'starvation': ls / _tot,
+                            'impact':     li / _tot,
+                        }
+                    else:
+                        _lb[fid] = {'predation': 0.0,
+                                    'starvation': 0.0,
+                                    'impact': 0.0}
+                viz.update_loss_breakdown(_lb)
+                # Push the same fractions (×100%) to the dedicated plot
+                # tabs ``predation``/``starvation``/``impacts`` per tick,
+                # mirroring how biomass/energy is fed in inference. Detta
+                # gör att kurvorna visar hur andelarna utvecklas över
+                # rollouten — speglar headern ``pr/st/im=…`` över tid.
+                for fid, _br in _lb.items():
+                    viz.update_series("predation", fid,
+                                      100.0 * float(_br.get('predation', 0.0)),
+                                      step=t)
+                    viz.update_series("starvation", fid,
+                                      100.0 * float(_br.get('starvation', 0.0)),
+                                      step=t)
+                    viz.update_series("impacts", fid,
+                                      100.0 * float(_br.get('impact', 0.0)),
+                                      step=t)
+                # Per-DM diet breakdown: läs env-ackumulatorn
+                # ``intake_by_pred_prey`` (ton intagen prey-biomassa över
+                # rollouten) och normalisera per predator. Heatmap-headern
+                # ritar då en rad '<abbr>/… = X/…%' ovanför heatmapen.
+                _diet = {}
+                _ipp = getattr(env, 'intake_by_pred_prey', None) or {}
+                for pred_id, prey_map in _ipp.items():
+                    _tot_d = float(sum(prey_map.values()))
+                    if _tot_d <= 0.0:
+                        continue
+                    _diet[pred_id] = {
+                        pid: float(v) / _tot_d for pid, v in prey_map.items()
+                        if float(v) > 0.0
+                    }
+                if _diet:
+                    viz.update_diet_breakdown(_diet)
                 if rnd_env is not None:
                     _push_action_fracs(viz, rnd_env, step=t, suffix="_rnd")
                 if rnd_env is not None:
@@ -518,6 +619,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 if not viz.pump_events():
                     if verbose:
                         print("    [viz] window closed; stopping early.")
+                    break
+                if ecosystem_dead:
+                    if verbose:
+                        print(f"    [inference] all biomass has collapsed to 0 "
+                              f"at tick {t+1}/{n_ticks}; stopping early.")
                     break
             except KeyboardInterrupt:
                 if verbose:

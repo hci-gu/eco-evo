@@ -79,6 +79,9 @@ class _NullViz:
     def update_biomass(self, *a, **kw): pass
     def update_reward(self, *a, **kw): pass
     def update_series(self, *a, **kw): pass
+    def update_loss_breakdown(self, *a, **kw): pass
+    def update_diet_breakdown(self, *a, **kw): pass
+    def update_action_fracs(self, *a, **kw): pass
     def update_status(self, *a, **kw): pass
     def pump_events(self): return True
     def wait_for_close(self, *a, **kw): pass
@@ -169,9 +172,11 @@ class LiveVisualizer:
         #   inference -> biomass%, energy%
         # Each tab has its own per-FG rolling buffer of (step, value).
         if self.mode == "train":
-            self._tabs = ["reward", "biomass", "energy", "move", "rest", "eat"]
+            self._tabs = ["reward", "biomass", "energy", "move", "rest", "eat",
+                          "predation", "starvation", "impacts"]
         else:
-            self._tabs = ["biomass", "energy", "move", "rest", "eat"]
+            self._tabs = ["biomass", "energy", "move", "rest", "eat",
+                          "predation", "starvation", "impacts"]
         self._tab_labels = {
             "reward": "reward",
             "biomass": "avg biomass (% of start)",
@@ -179,6 +184,9 @@ class LiveVisualizer:
             "move": "move action (%)",
             "rest": "rest action (%)",
             "eat": "eat action (%)",
+            "predation": "predation share of total loss (%)",
+            "starvation": "starvation share of total loss (%)",
+            "impacts": "impact share of total loss (%)",
         }
         self._active_tab = 0
         # Per-FG enable flag for plot panel (checkbox state). Toggled via
@@ -207,6 +215,26 @@ class LiveVisualizer:
         # the title can display 'B0=... B=...' for context. Reset each new
         # rollout (train probe runs fresh per ARS-iter, inference is one run).
         self._b0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
+        # Per-FG biomassaförlustfraktioner (predation/starvation/impact)
+        # som visas som en fjärde textrad ovanför heatmapen, på formatet
+        # ``pr/st/im=X/Y/Z%``. Uppdateras via :meth:`update_loss_breakdown`
+        # från probe-rollouten i train.py och från inference.py per tick.
+        # Varje värde är en fraktion i [0, 1]; saknas FG → ingen rad ritas.
+        self._loss_breakdown: Dict[str, Dict[str, float]] = {}
+        # Per-FG dietuppdelning (predator-DM → {prey_id: andel}) som visas
+        # som en femte textrad ovanför heatmapen, på formatet
+        # ``<abbr1>/<abbr2>/… = X/Y/…%``. Uppdateras via
+        # :meth:`update_diet_breakdown` från probe-rollouten i train.py och
+        # från inference.py per tick. Värden är fraktioner i [0, 1] som
+        # summerar till 1 när någon konsumtion skett (annars saknas FG).
+        self._diet_breakdown: Dict[str, Dict[str, float]] = {}
+        # Per-FG senaste move/rest/eat-fraktioner (procent 0..100) som
+        # heatmap-headern visar på raden ``mv/rs/et = X/Y/Z%``. Detta är
+        # separerat från ``_series['move'|'rest'|'eat']`` så att plot-
+        # flikarna kan matas med en annan x-skala (t.ex. en gång per probe
+        # med global ARS-step) medan headern fortfarande uppdateras per
+        # tick under rollouten. Uppdateras via ``update_action_fracs``.
+        self._action_fracs: Dict[str, Dict[str, float]] = {}
         # Stable colour per FG (used for the plot legend).
         self._fg_colour: Dict[str, tuple] = {
             fid: _fg_colour_for(i, len(self.fg_ids))
@@ -244,7 +272,13 @@ class LiveVisualizer:
         self._rows = (n + self._cols - 1) // self._cols
         hm_w = self.grid_w * self.cell_px
         hm_h = self.grid_h * self.cell_px
-        title_h = 32  # two lines: FG id + 'B0=… B=…'
+        # Five info lines above the heatmap: FG id, 'B0 = … B = …',
+        # 'mv/rs/et = …' (DM only), 'pr/st/im = …' (DM only) and the
+        # diet breakdown '<abbr>/<abbr>/… = X/Y/…%' (DM only), followed
+        # by one blank line beneath the last info line. NDM panels leave
+        # the three action/loss/diet lines blank to keep the heatmap
+        # origin aligned across panels.
+        title_h = 84
         cbar_h = 16  # colorbar strip (gradient + 0/max labels)
         pad = 8
         self._cbar_h = cbar_h
@@ -321,8 +355,29 @@ class LiveVisualizer:
                 obj = fgs[fid]
                 arr = obj.biomass if hasattr(obj, "biomass") else obj
                 arr = np.asarray(arr, dtype=np.float32)
-                self._biomass[fid] = arr
+                # När en FG-cell kollapsat lämnar upprepade decay-multiplikationer
+                # kvar pyttesmå rester (ofta float32-subnormaler ~1e-45, men
+                # även "normala" mikrovärden långt under realistisk biomass).
+                # Heatmapens per-frame max-normalisering förstoras då upp till
+                # full skala och fluktuerar visuellt brusigt mellan tickar
+                # trots att cellen i praktiken är död. Vi nollar därför **per
+                # cell** så snart biomassan understiger en tröskel kopplad till
+                # FG:ns minsta odelbara enhet (``min_split_biomass`` i ton;
+                # halva den nivån = mindre än en halv odelbar individ kvar i
+                # cellen). Saknas ``min_split_biomass`` (kontinuerligt läge)
+                # använder vi en liten numerisk tröskel som bara fångar
+                # subnormaler/brus.
+                msb = float(getattr(obj, 'min_split_biomass', 0.0)) \
+                    if hasattr(obj, 'biomass') else 0.0
+                dead_eps = 0.5 * msb if msb > 0.0 else 1e-20
+                if dead_eps > 0.0:
+                    # Kopiera först för att inte mutera env:s underliggande
+                    # array; nolla sedan alla celler under tröskeln.
+                    arr = np.where(arr <= dead_eps,
+                                   np.float32(0.0), arr).astype(np.float32,
+                                                                copy=False)
                 total = float(arr.sum())
+                self._biomass[fid] = arr
                 self._totals[fid] = total
                 if new_rollout:
                     self._b0[fid] = total
@@ -354,6 +409,80 @@ class LiveVisualizer:
             buf[fg_id].append((int(step), float(value)))
         except Exception as e:
             self._log_once(f"update_series failed: {e!r}")
+
+    def update_loss_breakdown(
+        self,
+        breakdown: Mapping[str, Mapping[str, float]],
+    ) -> None:
+        """Record per-FG biomass-loss fractions (predation/starvation/impact).
+
+        ``breakdown`` maps fg_id -> {'predation': p, 'starvation': s,
+        'impact': i} where each value is a fraction in [0, 1] summing to
+        1.0 when there was any loss at all (else all zero). Unknown keys
+        are tolerated. Used to draw a ``pr/st/im=X/Y/Z%`` line above each
+        heatmap.
+        """
+        if not self.enabled:
+            return
+        try:
+            for fid, lb in breakdown.items():
+                if not isinstance(lb, Mapping):
+                    continue
+                self._loss_breakdown[fid] = {
+                    'predation':  float(lb.get('predation', 0.0)),
+                    'starvation': float(lb.get('starvation', 0.0)),
+                    'impact':     float(lb.get('impact', 0.0)),
+                }
+        except Exception as e:
+            self._log_once(f"update_loss_breakdown failed: {e!r}")
+
+    def update_diet_breakdown(
+        self,
+        breakdown: Mapping[str, Mapping[str, float]],
+    ) -> None:
+        """Record per-DM diet fractions (which prey FG was eaten how much).
+
+        ``breakdown`` maps predator_fg_id -> {prey_fg_id: fraction in [0,1]}.
+        Fractions are normalised over the predator's prey set so the menu
+        in the rendered ``<abbr>/… = X/…%`` line sums to ~100% when any
+        intake has occurred. Predators with no recorded intake are simply
+        omitted (no diet line is drawn for them).
+        """
+        if not self.enabled:
+            return
+        try:
+            for pred_id, prey_map in breakdown.items():
+                if not isinstance(prey_map, Mapping):
+                    continue
+                self._diet_breakdown[pred_id] = {
+                    str(k): float(v) for k, v in prey_map.items()
+                }
+        except Exception as e:
+            self._log_once(f"update_diet_breakdown failed: {e!r}")
+
+    def update_action_fracs(
+        self,
+        fid: str,
+        move: float,
+        rest: float,
+        eat: float,
+    ) -> None:
+        """Record latest per-FG action fractions (procent 0..100) för
+        heatmap-headerns ``mv/rs/et``-rad. Frikopplat från plot-serierna
+        så att flikarna ``move``/``rest``/``eat`` kan matas med en annan
+        x-skala (t.ex. en gång per probe med ``viz_step``) utan att
+        headern slutar uppdateras per tick.
+        """
+        if not self.enabled:
+            return
+        try:
+            self._action_fracs[str(fid)] = {
+                'move': float(move),
+                'rest': float(rest),
+                'eat':  float(eat),
+            }
+        except Exception as e:
+            self._log_once(f"update_action_fracs failed: {e!r}")
 
     def update_status(self, **kw) -> None:
         if not self.enabled:
@@ -584,14 +713,14 @@ class LiveVisualizer:
 
     def _draw_status_bar(self) -> None:
         x, y, w, h = self._status_rect
-        parts = [f"mode={self.mode}", f"tick={self._tick}"]
+        parts = [f"mode = {self.mode}", f"tick = {self._tick}"]
         for k in ("gen", "iter", "T"):
             if k in self._status:
                 v = self._status[k]
                 if isinstance(v, float):
-                    parts.append(f"{k}={v:.3f}")
+                    parts.append(f"{k} = {v:.3f}")
                 else:
-                    parts.append(f"{k}={v}")
+                    parts.append(f"{k} = {v}")
         if self._paused:
             parts.append("[PAUSED]")
         if self._log_heatmap:
@@ -599,9 +728,9 @@ class LiveVisualizer:
         if self._log_plot:
             parts.append("plot:log")
         if self._solo:
-            parts.append(f"solo={self._solo}")
-        parts.append(f"grid={self.grid_w}x{self.grid_h}")
-        parts.append(f"fps={self._fps_value:4.1f}")
+            parts.append(f"solo = {self._solo}")
+        parts.append(f"grid = {self.grid_w}x{self.grid_h}")
+        parts.append(f"fps = {self._fps_value:4.1f}")
         text = "  ".join(parts)
         surf = self._font_big.render(text, True, (230, 230, 235))
         self._screen.blit(surf, (x + 6, y + 5))
@@ -615,13 +744,46 @@ class LiveVisualizer:
             py = oy + row * self._panel_h
             self._draw_one_heatmap(fid, px, py)
 
+    @staticmethod
+    def _abbrev_fg(name: str) -> str:
+        """Förkortning för FG-namn enligt diet-radens regler.
+
+        - Mer än ett ord (separerat på ``_`` eller mellanslag):
+          begynnelsebokstav per ord, t.ex. ``pelagic_fish`` → ``pf``.
+        - Ett enda ord skrivet i singular (slutar ej på 's'):
+          första och sista bokstaven, t.ex. ``cod`` → ``cd``.
+        - Ett enda ord i plural (slutar på 's'):
+          första och näst sista bokstaven, t.ex. ``gadoids`` → ``gd``.
+
+        Resultatet är gemener. Tomt namn → tom sträng.
+        """
+        if not name:
+            return ""
+        s = str(name).strip().lower()
+        # Dela på understreck och mellanslag.
+        parts = [p for p in s.replace('-', '_').replace(' ', '_').split('_')
+                 if p]
+        if len(parts) > 1:
+            return ''.join(p[0] for p in parts if p)
+        word = parts[0]
+        if len(word) == 1:
+            return word
+        if word.endswith('s'):
+            # Plural → första + näst sista bokstaven.
+            return word[0] + word[-2]
+        # Singular → första + sista bokstaven.
+        return word[0] + word[-1]
+
     def _draw_one_heatmap(self, fid: str, px: int, py: int) -> None:
         pg = self._pg
         pad = 4
-        # Three info lines above the heatmap: FG name, 'B0=… B=…' and the
-        # action distribution 'mv/rs/et=…' (blank for NDMs). title_h must
-        # leave room for all three or the heatmap would overlap the text.
-        title_h = 44
+        # Five info lines above the heatmap: FG name, 'B0 = … B = …', the
+        # action distribution 'mv/rs/et = …', biomass-loss breakdown
+        # 'pr/st/im = …' and the diet breakdown '<abbr>/… = X/…%' (last
+        # three blank for NDMs), följt av en tom rad så det blir luft
+        # mellan sista info-raden och heatmapen. title_h måste rymma alla
+        # fem rader + den tomma raden.
+        title_h = 84
         arr = self._biomass.get(fid)
         # Panel background.
         pg.draw.rect(self._screen, (28, 28, 34),
@@ -645,7 +807,7 @@ class LiveVisualizer:
             else:
                 s = f"{v:,.0f}"
             return s.replace(",", " ")
-        info_txt = f"B0={_fmt_b(b0)}  B={_fmt_b(total)}"
+        info_txt = f"B0 = {_fmt_b(b0)}  B = {_fmt_b(total)}"
         info_col = (180, 180, 190) if not dim else (90, 90, 95)
         info_surf = self._font.render(info_txt, True, info_col)
         info_y = py + 1 + name_surf.get_height()
@@ -653,27 +815,68 @@ class LiveVisualizer:
 
         # Third info line: action distribution mv/rs/et for DMs. The
         # numbers come from the same per-tab rolling buffers that feed
-        # the move/rest/eat plot tabs (stored as percent 0..100), so we
-        # divide by 100 to mirror the 'mv/rs/et=0.xx/0.yy/0.zz' format
-        # printed in the terminal by the trainer. NDMs have no policy
-        # actions, so we render a blank line to keep the heatmap origin
-        # aligned across panels.
+        # the move/rest/eat plot tabs (stored as percent 0..100) och
+        # visas som heltalsprocent ('mv/rs/et=X/Y/Z%') för att matcha
+        # stilen i 'pr/st/im'-raden nedanför. NDMs har ingen policy och
+        # får en tom rad så heatmap-origin förblir aligned.
         act_y = info_y + info_surf.get_height()
         is_ndm = fid in self._ndm_ids
         if not is_ndm:
-            def _last(tab: str) -> Optional[float]:
-                buf = self._series.get(tab, {}).get(fid)
-                if not buf:
-                    return None
-                return float(buf[-1][1])
-            mv = _last("move")
-            rs = _last("rest")
-            et = _last("eat")
+            # Header läser senaste mv/rs/et från ``_action_fracs`` (uppdateras
+            # per tick via ``update_action_fracs``) i stället för från plot-
+            # serie-buffrarna. Det gör att plot-flikarna kan matas med en
+            # annan x-skala (t.ex. end-of-probe med ``viz_step``) utan att
+            # headern slutar uppdateras per tick.
+            _af = self._action_fracs.get(fid)
+            if _af is not None:
+                mv = float(_af.get('move', 0.0))
+                rs = float(_af.get('rest', 0.0))
+                et = float(_af.get('eat',  0.0))
+            else:
+                mv = rs = et = None
             if mv is not None and rs is not None and et is not None:
-                act_txt = (f"mv/rs/et={mv / 100.0:.2f}/"
-                           f"{rs / 100.0:.2f}/{et / 100.0:.2f}")
+                act_txt = (f"mv/rs/et = {mv:.0f}/{rs:.0f}/{et:.0f}%")
                 act_surf = self._font.render(act_txt, True, info_col)
                 self._screen.blit(act_surf, (px + pad, act_y))
+                # Fourth info line: biomass-loss breakdown pr/st/im as
+                # percentages. Only rendered when a loss-breakdown record
+                # exists for this FG (probe rollout or inference tick has
+                # pushed it). NDMs always skip this line.
+                lb = self._loss_breakdown.get(fid)
+                if lb is not None:
+                    pr = float(lb.get('predation', 0.0)) * 100.0
+                    st = float(lb.get('starvation', 0.0)) * 100.0
+                    im = float(lb.get('impact', 0.0)) * 100.0
+                    loss_txt = (f"pr/st/im = {pr:.0f}/{st:.0f}/{im:.0f}%")
+                    loss_surf = self._font.render(loss_txt, True, info_col)
+                    loss_y = act_y + act_surf.get_height()
+                    self._screen.blit(loss_surf, (px + pad, loss_y))
+                    # Fifth info line: diet breakdown — vilka byten den
+                    # här DM-FG:n har ätit under rollouten, normaliserat
+                    # till procentandelar. Formateras dynamiskt utifrån
+                    # antalet byten med >0 intake: '<a1>/<a2>/… = X/Y/…%'.
+                    diet = self._diet_breakdown.get(fid)
+                    if diet:
+                        items = [(pid, float(v)) for pid, v in diet.items()
+                                 if float(v) > 0.0]
+                        if items:
+                            tot = sum(v for _, v in items)
+                            if tot > 0.0:
+                                items.sort(key=lambda kv: kv[1], reverse=True)
+                                abbrs = [self._abbrev_fg(pid)
+                                         for pid, _ in items]
+                                pcts = [v / tot * 100.0 for _, v in items]
+                                diet_txt = (
+                                    "/".join(abbrs)
+                                    + " = "
+                                    + "/".join(f"{p:.0f}" for p in pcts)
+                                    + "%"
+                                )
+                                diet_surf = self._font.render(
+                                    diet_txt, True, info_col)
+                                diet_y = loss_y + loss_surf.get_height()
+                                self._screen.blit(
+                                    diet_surf, (px + pad, diet_y))
 
         if arr is None:
             return
@@ -753,7 +956,11 @@ class LiveVisualizer:
         so NDMs are likewise filtered out there.
         """
         active = self._tabs[self._active_tab]
-        if active == "biomass" or not self._ndm_ids:
+        # NDMs ingår på biomass-tabben och på loss-tabbarna (de kan
+        # förlora biomass både till predation och impacts även utan
+        # eget beslutsfattande). Övriga tabbar filtreras till DMs.
+        if (active in ("biomass", "predation", "starvation", "impacts")
+                or not self._ndm_ids):
             return list(self.plot_fg_ids)
         out = []
         for fid in self.plot_fg_ids:

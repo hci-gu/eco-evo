@@ -2507,3 +2507,177 @@ strictly dominant local optimum.
   * Manual: with floor=0.2 and forced pi_rest=1.0, predation
     biomass delta on the prey is exactly 0.2 * (legacy with
     pi_rest=0) - confirmed numerically.
+
+================================================================
+52. PER-CAUSE BIOMASS-LOSS TRACKING (predation/starvation/impact)
+================================================================
+Adds per-FG accumulators in EcosystemEnvironment that decompose
+biomass loss by cause over a rollout. Used by training stdout, the
+JSONL log, the live pygame viz (header rows + dedicated plot tabs)
+and the offline HTML viewer.
+
+52.1 Env accumulators (lib/environments/ecosystem.py)
+  Three dicts on the env instance, keyed by fg_id, values in tonnes:
+    * loss_starvation  - DM-only; populated in _apply_growth's
+                         q_x<0 branch using min(total_loss, biomass)
+                         so the clamp at zero is respected.
+    * loss_predation   - any prey; populated in _apply_predation as
+                         the sum over (predator, grid) of actual
+                         intake per prey FG per tick.
+    * loss_impact      - any FG with mortality_impact > 0; populated
+                         in _apply_impact_mortality, clamped to the
+                         pre-impact biomass.
+  Never reset during a rollout; since env is freshly built per
+  probe/ARS-rollout this naturally yields cumulative totals from
+  rollout start to "now".
+
+52.2 Probe path (train.py::_probe_biomass)
+  Per-tick: derives fractions
+    pr = loss_predation / total
+    st = loss_starvation / total
+    im = loss_impact     / total
+  per FG (total = pr+st+im), pushed to the live viz via
+  ``update_loss_breakdown(...)`` so the heatmap header refreshes
+  per tick. End-of-probe writes a compact stdout line
+    [probe gen=N loss] fid: starv X% / pred Y% / imp Z%
+  (only FG with total>0 and ratio<1) and persists a full
+  ``loss_breakdown[fid] = {predation, starvation, impact, total}``
+  block in biomass.jsonl (fractions 0..1; ``total`` in tonnes).
+  Random-action baseline (rnd_env) is mirrored as
+  ``rnd_loss_breakdown`` under ``record["rnd"]["loss_breakdown"]``
+  so offline HTML can render dashed _rnd traces on the loss tabs.
+
+52.3 Inference path (inference.py::run_inference)
+  Same computation per tick from env.loss_* accumulators, pushed via
+  ``viz.update_loss_breakdown(...)`` and to the dedicated plot tabs
+  (Section 53.3). No JSONL persistence in inference mode.
+
+52.4 Semantics caveat
+  Fractions are shares of the SUM of the three loss causes; positive
+  growth (q_x>0) is NOT a loss and does not enter the denominator.
+  Cells where loss > biomass are clamped (min(loss, biomass)) so the
+  reported total never exceeds biologically available mass.
+
+================================================================
+53. LIVE VIZ HEADERS + PLOT TABS (mv/rs/et, pr/st/im, diet)
+================================================================
+Cumulative late-session arc on top of Section 40. The header above
+each per-FG heatmap grew from one line to FIVE info-lines, and the
+plot-tab strip got three additional cause-of-loss tabs that mirror
+the live header semantics. Also: an offline-HTML parity update so
+the static plots.html shows the same tab strip as the live viz.
+
+53.1 Heatmap header (lib/viz/pygame_viz.py::_draw_one_heatmap)
+  Five lines (separated by " = " with spaces around the equals sign),
+  followed by a blank line before the heatmap pixels:
+    line 1  : display name (capitalised, underscores stripped)
+    line 2  : ``B0 = ...  B = ...`` (adaptive _fmt_b, Section 45)
+    line 3  : ``mv/rs/et = X/Y/Z%``   (DM only; integer percent)
+    line 4  : ``pr/st/im = X/Y/Z%``   (any FG with mv/rs/et present)
+    line 5  : ``<abbr_prey1>/<abbr_prey2>/... = X/Y/...%`` (DM only)
+  ``title_h`` raised 44 -> 56 -> 70 -> 84 cumulatively to fit the
+  extra lines + a blank separator row.
+  All values are CUMULATIVE shares/means from probe start to "now":
+    * ``mv/rs/et``: per-DM mean over active ticks of per-tick mean
+      over active cells; active = biomass > 0 (strict, no eps).
+    * ``pr/st/im``: cumulative fraction of the three loss accumulators
+      (Section 52). Computed in train probe / inference per tick.
+    * Diet line (line 5): cumulative shares of
+      ``env.intake_by_pred_prey[pred_id][prey_id]`` (ton intaken
+      prey, summed over rollout), normalised per predator. Only prey
+      with >0 intake are shown, sorted descending by share.
+
+53.2 FG-name abbreviation rules (_abbrev_fg)
+  Used for the diet line's prey labels and any other compact
+  display:
+    * >1 word           -> initials, lowercase ("pelagic_fish" -> "pf")
+    * 1 word, singular  -> first + last letter ("cod" -> "cd")
+    * 1 word, plural    -> first + 2nd-to-last  ("gadoids" -> "gd")
+  Plural detected by trailing 's'. Collisions (e.g. "porpoise" and
+  "porpoises" both -> "pe") are permitted; the rules are
+  intentionally lossy.
+
+53.3 New plot tabs: predation / starvation / impacts
+  Three tabs added to BOTH train and inference tab strips, with the
+  same plotting semantics as biomass/energy/move/rest/eat:
+    * train mode: end-of-probe push (one point per probe, x =
+      global ARS ``viz_step``), values = 100 * cumulative fraction
+      per FG (same number as headers' ``pr/st/im``).
+    * inference mode: per-tick push (x = tick).
+  ``_active_plot_ids`` now also permits NDMs on these three tabs,
+  since NDMs lose biomass to predation and impacts even though they
+  do not make decisions. Move/rest/eat remain DM-only.
+
+53.4 Update-frequency convention (train vs inference)
+  Identical to biomass/energy:
+    * Headers (mv/rs/et, pr/st/im, diet) refresh PER TICK in both
+      modes - the train probe loop pushes ``update_action_fracs``,
+      ``update_loss_breakdown`` and ``update_diet_breakdown`` after
+      each tick.
+    * Plot series get ONE point per probe in train (ARS x-scale,
+      pushed end-of-probe alongside biomass/energy) and ONE point
+      per tick in inference. Mixing the two scales in the same
+      deque produced sawtooth/zigzag plots; the cleanup keeps
+      train's per-tick path strictly to headers and pushes plot
+      series only at end-of-probe.
+  A forced re-render (clearing ``viz._last_frame_ts`` + one final
+  ``update_biomass``) is done at end-of-probe so the header values
+  are visible immediately, not only when the next probe starts.
+
+53.5 Offline HTML parity (tools/biomass_html.py)
+  Tabs in the generated plots.html now mirror the live train tab
+  strip 1:1: reward, biomass, energy, move, rest, eat, predation,
+  starvation, impacts. ``bh`` and ``b0`` removed (no live-viz
+  equivalents). New helper ``_extract_field`` understands both flat
+  fields ("ratio") and nested loss-breakdown paths
+  ("loss_breakdown.predation") and scales loss fractions x100 to
+  percent so y-axes match the live viz. ``_rnd`` traces read
+  ``record["rnd"]["loss_breakdown"][fid][<cause>]`` (persisted from
+  53.6 below).
+  Regen policy (Section 42): plots.html is rebuilt only on
+  checkpoint writes (per generation) and once more in the
+  KeyboardInterrupt handler. Per-iter regen was tried briefly and
+  reverted as unnecessary overhead - the perceived "missing HTML"
+  on a short interrupted run turned out to be a stale file view.
+
+53.6 KI-handler robustness (train.py)
+  The KeyboardInterrupt branch wraps each cleanup step
+  (``trainer.close()``, per-species ``_save_checkpoint``,
+  ``_regenerate_biomass_html``) in its own ``try/except
+  BaseException`` so a failure in one step (or a second Ctrl+C
+  during cleanup) cannot bypass HTML regen. An outer
+  ``except KeyboardInterrupt`` attempts one final regen on
+  double-Ctrl+C. Prints "Interactive HTML regenerated: <path>" as
+  acknowledgement so the log shows HTML actually got written.
+
+================================================================
+54. VIZ PER-CELL DEAD-CLAMP (sub min_split_biomass/2)
+================================================================
+The global early-exit in inference.py (DEAD_EPS = 0.5 * min positive
+``min_split_biomass`` across all FGs, fallback 1e-9) triggers only
+when ALL FG totals are below DEAD_EPS. Individual FGs (e.g.
+porpoises) can leave float32 subnormal residue (~1e-45) per cell
+that keeps the per-FG max-normalised heatmap fluctuating after the
+FG has effectively collapsed.
+
+Fix in lib/viz/pygame_viz.py::update_biomass (visual-only):
+  Before caching/rendering, each FG's biomass array is passed
+  through
+    arr = np.where(arr <= dead_eps_fg, 0, arr)
+  with ``dead_eps_fg = 0.5 * min_split_biomass`` per FG (fallback
+  1e-20 for continuous mode where min_split_biomass=0). This is
+  PER CELL, not per FG total - the original intent was that any cell
+  below half an indivisible weight is "ghost mass" and should not
+  influence the visualisation.
+
+Properties:
+  * ``np.where`` returns a new array; the underlying env biomass
+    field is NOT mutated. Env stepping, biomass.jsonl logging and
+    accumulators remain unaffected.
+  * The global ``DEAD_EPS`` early-exit in inference.py is unchanged
+    and still applies when EVERY FG has collapsed.
+  * Conversion check: min_split_biomass = 0.5 kg in fg_library
+    units -> 0.5 / 1000 = 0.0005 ton internally; dead_eps_fg =
+    0.5 * 0.0005 = 0.00025 ton = 0.25 kg = 250 g (NOT 0.25 g, as a
+    stale comment once read). Far below realistic biomass, many
+    orders of magnitude above float32 subnormals (~1e-38).

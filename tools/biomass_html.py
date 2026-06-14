@@ -11,9 +11,13 @@ output HTML uses Plotly via CDN, so it works offline only after the
 first load (Plotly's JS is fetched once). It mirrors the live pygame
 plot panel:
 
-  * Tabs (sub-plots) for the metrics actually present in the file:
-    ``log10_ratio`` (matches the live ``reward`` tab), ``ratio``,
-    ``bh`` (end biomass) and ``b0`` (start biomass).
+  * Tabs (sub-plots) for the metrics actually present in the file,
+    matching the live pygame visualiser's tab strip exactly (train
+    mode): ``reward`` (= log10_ratio), ``biomass`` (= ratio %),
+    ``energy``, ``move``, ``rest``, ``eat``, ``predation``,
+    ``starvation``, ``impacts``. The last three read the nested
+    ``loss_breakdown[fid][<cause>]`` field and plot it as a percentage
+    of total biomass loss per FG.
   * One trace per functional group (FG); legend entries are
     click-toggleable (same UX as the live plot's per-FG checkboxes).
   * X-axis = sample index across the file (each JSONL line is one
@@ -34,24 +38,57 @@ from typing import Dict, List, Tuple
 
 
 # Metrics we know how to plot, in the order they should appear as tabs.
-# Order mirrors the live pygame visualiser's tab strip:
-#   reward (= log10_ratio), biomass (= ratio %), energy, move, rest, eat
-# plus two extra raw tabs (bh, b0) that the live view doesn't show but
-# are cheap to include offline. ``rnd_path`` points at the matching
-# random-action baseline series inside the optional ``rnd`` sub-dict
-# of each JSONL record (``None`` if no baseline is available for that
-# metric).
+# Order mirrors the live pygame visualiser's tab strip (train mode) 1:1:
+#   reward (= log10_ratio), biomass (= ratio %), energy, move, rest,
+#   eat, predation, starvation, impacts.
+# The fourth tuple element points at the matching random-action
+# baseline series inside the optional ``rnd`` sub-dict of each JSONL
+# record (empty string if no baseline is available for that metric).
 _METRICS: Tuple[Tuple[str, str, str, str], ...] = (
     # (tab key, top-level JSONL field, plot title,        rnd sub-field)
-    ("reward",  "log10_ratio",  "log10(bh / b0) per FG — reward tab", ""),
-    ("biomass", "ratio",        "bh / b0 per FG — biomass tab",       "ratio"),
-    ("energy",  "energy_ratio", "eh / e0 per FG — energy tab",        "energy_ratio"),
-    ("move",    "move_frac",    "mean move-action % per DM",          "move_frac"),
-    ("rest",    "rest_frac",    "mean rest-action % per DM",          "rest_frac"),
-    ("eat",     "eat_frac",     "mean eat-action % per DM",           "eat_frac"),
-    ("bh",      "bh",           "End biomass (bh) per FG",            ""),
-    ("b0",      "b0",           "Start biomass (b0) per FG",          ""),
+    # Speglar live-viz-flikarna i ``lib/viz/pygame_viz.py`` exakt
+    # (train-mode): reward, biomass, energy, move, rest, eat,
+    # predation, starvation, impacts. ``bh``/``b0`` är borttagna då de
+    # inte finns som flikar i live-viz. De tre loss-flikarna läser
+    # nested-fält ``loss_breakdown[fid][<cause>]`` (fraktion 0..1) och
+    # skalas ×100 till procent — samma semantik som live-vizens plot-
+    # serier ``predation``/``starvation``/``impacts``.
+    ("reward",     "log10_ratio",            "log10(bh / b0) per FG — reward tab", ""),
+    ("biomass",    "ratio",                  "bh / b0 per FG — biomass tab",       "ratio"),
+    ("energy",     "energy_ratio",           "eh / e0 per FG — energy tab",        "energy_ratio"),
+    ("move",       "move_frac",              "mean move-action % per DM",          "move_frac"),
+    ("rest",       "rest_frac",              "mean rest-action % per DM",          "rest_frac"),
+    ("eat",        "eat_frac",               "mean eat-action % per DM",           "eat_frac"),
+    ("predation",  "loss_breakdown.predation",  "predation share of total loss (%) per FG",  "loss_breakdown.predation"),
+    ("starvation", "loss_breakdown.starvation", "starvation share of total loss (%) per FG", "loss_breakdown.starvation"),
+    ("impacts",    "loss_breakdown.impact",     "impact share of total loss (%) per FG",     "loss_breakdown.impact"),
 )
+
+
+def _extract_field(record: dict, field: str, rnd: bool = False) -> dict:
+    """Hämtar ett ``{fid: value}``-dict från en JSONL-record.
+
+    Stöder två sorters fält:
+      * Platt fält, t.ex. ``"ratio"`` → ``record["ratio"]`` (eller
+        ``record["rnd"]["ratio"]`` om ``rnd=True``).
+      * Nested loss-breakdown, t.ex. ``"loss_breakdown.predation"`` →
+        bygger ``{fid: record["loss_breakdown"][fid]["predation"] * 100}``.
+        Värdena skalas till procent (0..100) här, så att y-axeln matchar
+        live-vizens plot-flikar ``predation``/``starvation``/``impacts``.
+    """
+    root = (record.get("rnd") or {}) if rnd else record
+    if "." not in field:
+        d = root.get(field) or {}
+        return d if isinstance(d, dict) else {}
+    parent, child = field.split(".", 1)
+    pd = root.get(parent) or {}
+    if not isinstance(pd, dict):
+        return {}
+    out: Dict[str, float] = {}
+    for fid, sub in pd.items():
+        if isinstance(sub, dict) and isinstance(sub.get(child), (int, float)):
+            out[fid] = float(sub[child]) * 100.0
+    return out
 
 
 def _load_jsonl(path: str) -> List[dict]:
@@ -80,12 +117,12 @@ def _collect_keys(records: List[dict], field: str,
     """
     seen: Dict[str, None] = {}
     for r in records:
-        d = r.get(field) or {}
+        d = _extract_field(r, field, rnd=False)
         for k in d.keys():
             if k not in seen:
                 seen[k] = None
         if rnd_field:
-            rd = (r.get("rnd") or {}).get(rnd_field) or {}
+            rd = _extract_field(r, rnd_field, rnd=True)
             for k in rd.keys():
                 if k not in seen:
                     seen[k] = None
@@ -143,7 +180,7 @@ def _build_traces(records: List[dict], field: str, fg_ids: List[str],
         col = _fg_colour_for(colour_index.get(fid, 0))
         ys: List[object] = []
         for r in records:
-            d = r.get(field) or {}
+            d = _extract_field(r, field, rnd=False)
             v = d.get(fid, None)
             ys.append(v if isinstance(v, (int, float)) else None)
         traces.append({
@@ -163,7 +200,7 @@ def _build_traces(records: List[dict], field: str, fg_ids: List[str],
     if rnd_field:
         any_rnd = False
         for r in records:
-            rd = (r.get("rnd") or {}).get(rnd_field) or {}
+            rd = _extract_field(r, rnd_field, rnd=True)
             if any(isinstance(v, (int, float)) for v in rd.values()):
                 any_rnd = True
                 break
@@ -172,7 +209,7 @@ def _build_traces(records: List[dict], field: str, fg_ids: List[str],
                 col = _fg_rnd_colour_for(colour_index.get(fid, 0))
                 ys = []
                 for r in records:
-                    rd = (r.get("rnd") or {}).get(rnd_field) or {}
+                    rd = _extract_field(r, rnd_field, rnd=True)
                     v = rd.get(fid, None)
                     ys.append(v if isinstance(v, (int, float)) else None)
                 traces.append({
@@ -230,8 +267,9 @@ def _build_html(run_dir: str, records: List[dict]) -> str:
 
     if not metric_blocks:
         raise SystemExit("No known metric fields found in biomass.jsonl "
-                         "(expected one of: b0, bh, ratio, log10_ratio, "
-                         "energy_ratio, move_frac, rest_frac, eat_frac).")
+                         "(expected one of: ratio, log10_ratio, "
+                         "energy_ratio, move_frac, rest_frac, eat_frac, "
+                         "loss_breakdown).")
 
     # Summary line for the page header.
     n_records = len(records)
