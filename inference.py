@@ -272,7 +272,17 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     expected_ids = set(dm_ids)
     missing = sorted(expected_ids - found_ids)
     extra = sorted(found_ids - expected_ids)
-    if missing or extra:
+    # ``extra`` = checkpoint files for FGs that are NOT active DMs in the
+    # current project (either removed entirely, marked ``muted: true`` in
+    # the YAML, or demoted from DM to NDM). These are silently ignored
+    # rather than treated as an error so that a single run-name directory
+    # can be reused across project variants (e.g. mareld2.yaml muting
+    # most FGs while a sibling project trains them all). Only ``missing``
+    # — an active DM without a checkpoint — is still a hard failure.
+    if extra and verbose:
+        print(f"  [inference] Ignoring {len(extra)} checkpoint(s) for "
+              f"FGs not active in this project: {extra}")
+    if missing:
         lines = [
             f"Policy checkpoints in '{checkpoint_dir}' do not match the "
             f"project's decision makers."
@@ -281,10 +291,9 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
                      f"{sorted(expected_ids)}")
         lines.append(f"  Found    ({len(found_ids)}): "
                      f"{sorted(found_ids)}")
-        if missing:
-            lines.append(f"  Missing checkpoint(s): {missing}")
+        lines.append(f"  Missing checkpoint(s): {missing}")
         if extra:
-            lines.append(f"  Unexpected checkpoint(s): {extra}")
+            lines.append(f"  Ignored (not active DMs): {extra}")
         lines.append("  Hint: make sure --run-name / --checkpoints points at "
                      "a run trained with the same project file, or retrain.")
         raise PolicyCheckpointMismatchError("\n".join(lines))
@@ -460,17 +469,25 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 er = getattr(fg, 'energy_reserve', None)
                 rnd_energy_history[fid].append(
                     float(er.sum()) if er is not None else 0.0)
-        # Per-FG biomass/energy ratio (current / initial) as a percentage.
-        # The first tick is by definition 100 %. ``history[fid][0]`` /
-        # ``energy_history[fid][0]`` are the post-tick-0 baselines shown in
-        # the live plot's tabs.
+        # Per-FG average-biomass / average-energy ratio over the rollout
+        # so far, expressed as a percentage of the initial value. ``b0``
+        # is the post-tick-0 baseline (history[fid][0]); the value plotted
+        # is ``100 * mean(history[fid]) / b0`` (and analogously for energy).
         pct_bio = {}
         pct_eng = {}
         for fid in history.keys():
             b0 = history[fid][0] if history[fid] else 0.0
-            pct_bio[fid] = (100.0 * history[fid][-1] / b0) if b0 > 0.0 else 0.0
+            if b0 > 0.0 and history[fid]:
+                avg_b = sum(history[fid]) / len(history[fid])
+                pct_bio[fid] = 100.0 * avg_b / b0
+            else:
+                pct_bio[fid] = 0.0
             e0 = energy_history[fid][0] if energy_history[fid] else 0.0
-            pct_eng[fid] = (100.0 * energy_history[fid][-1] / e0) if e0 > 0.0 else 0.0
+            if e0 > 0.0 and energy_history[fid]:
+                avg_e = sum(energy_history[fid]) / len(energy_history[fid])
+                pct_eng[fid] = 100.0 * avg_e / e0
+            else:
+                pct_eng[fid] = 0.0
         if verbose and (t % max(1, n_ticks // 10) == 0):
             print(f"    tick {t+1}/{n_ticks}")
         if viz is not None:
@@ -486,8 +503,16 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     for fid in rnd_history.keys():
                         b0 = rnd_history[fid][0] if rnd_history[fid] else 0.0
                         e0 = rnd_energy_history[fid][0] if rnd_energy_history[fid] else 0.0
-                        pb = (100.0 * rnd_history[fid][-1] / b0) if b0 > 0.0 else 0.0
-                        pe = (100.0 * rnd_energy_history[fid][-1] / e0) if e0 > 0.0 else 0.0
+                        if b0 > 0.0 and rnd_history[fid]:
+                            avg_b = sum(rnd_history[fid]) / len(rnd_history[fid])
+                            pb = 100.0 * avg_b / b0
+                        else:
+                            pb = 0.0
+                        if e0 > 0.0 and rnd_energy_history[fid]:
+                            avg_e = sum(rnd_energy_history[fid]) / len(rnd_energy_history[fid])
+                            pe = 100.0 * avg_e / e0
+                        else:
+                            pe = 0.0
                         viz.update_series("biomass", fid + "_rnd", pb, step=t)
                         viz.update_series("energy", fid + "_rnd", pe, step=t)
                 if not viz.pump_events():

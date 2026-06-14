@@ -551,11 +551,32 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             viz.pump_events()
         except Exception:
             pass
+    # Accumulate per-tick biomass / energy sums so that the biomass and
+    # energy graphs can display avg(b)/b0 (and avg(e)/e0) over the whole
+    # rollout instead of the final-tick ratio.
+    b_sum = {fid: 0.0 for fid in fg_ids}
+    e_sum = {fid: 0.0 for fid in fg_ids}
+    rnd_b_sum = {fid: 0.0 for fid in (rnd_env.fgs if rnd_env is not None else {})}
+    rnd_e_sum = {fid: 0.0 for fid in (rnd_env.fgs if rnd_env is not None else {})}
+    n_ticks_done = 0
+    rnd_n_ticks_done = 0
     for _t in range(int(n_ticks)):
         env.step()
+        n_ticks_done += 1
+        for fid in fg_ids:
+            b_sum[fid] += float(env.fgs[fid].biomass.sum())
+            er = getattr(env.fgs[fid], 'energy_reserve', None)
+            if er is not None:
+                e_sum[fid] += float(er.sum())
         if rnd_env is not None:
             try:
                 rnd_env.step()
+                rnd_n_ticks_done += 1
+                for fid in rnd_env.fgs:
+                    rnd_b_sum[fid] += float(rnd_env.fgs[fid].biomass.sum())
+                    er = getattr(rnd_env.fgs[fid], 'energy_reserve', None)
+                    if er is not None:
+                        rnd_e_sum[fid] += float(er.sum())
             except Exception as _e:
                 print(f"    [probe] WARN: rnd baseline step failed: {_e}")
                 rnd_env = None
@@ -586,6 +607,12 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     log_ratio = {}
     ratio = {}
     energy_ratio = {}
+    # Average-over-rollout ratios used for the live viz biomass / energy
+    # tabs (avg(b)/b0 and avg(e)/e0). The JSONL/stdout 'ratio' fields keep
+    # the end-of-rollout semantics for backwards compatibility.
+    avg_ratio = {}
+    avg_energy_ratio = {}
+    _nt = max(1, int(n_ticks_done))
     for fid in fg_ids:
         denom = max(b0[fid], 1e-9)
         r = max(bh[fid], 1e-12) / denom
@@ -593,6 +620,12 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         log_ratio[fid] = float(np.log10(r))
         edenom = e0[fid] if e0[fid] > 0.0 else 0.0
         energy_ratio[fid] = float(eh[fid] / edenom) if edenom > 0.0 else 0.0
+        avg_b = b_sum[fid] / _nt
+        avg_ratio[fid] = float(avg_b / denom)
+        if edenom > 0.0:
+            avg_energy_ratio[fid] = float((e_sum[fid] / _nt) / edenom)
+        else:
+            avg_energy_ratio[fid] = 0.0
 
     # Per-DM mean action fractions (move/rest/eat) over the probe rollout.
     # Mirrors what ``_push_action_fracs`` pushes to the live viz tabs:
@@ -642,9 +675,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     if viz is not None and viz_step is not None:
         try:
             for fid in fg_ids:
-                viz.update_series("biomass", fid, ratio[fid] * 100.0,
+                # Live viz: avg(b)/b0 och avg(e)/e0 över hela rollouten.
+                viz.update_series("biomass", fid, avg_ratio[fid] * 100.0,
                                   step=int(viz_step))
-                viz.update_series("energy", fid, energy_ratio[fid] * 100.0,
+                viz.update_series("energy", fid, avg_energy_ratio[fid] * 100.0,
                                   step=int(viz_step))
             # Push end-of-probe mean action fractions (move/rest/eat) per DM
             # into the dedicated action tabs. Uses the same per-iter
@@ -658,15 +692,14 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             except Exception:
                 pass
             if rnd_env is not None:
+                _rnt = max(1, int(rnd_n_ticks_done))
                 for fid in rnd_env.fgs:
                     b0r = rnd_b0.get(fid, 0.0)
                     e0r = rnd_e0.get(fid, 0.0)
-                    bhr = float(rnd_env.fgs[fid].biomass.sum())
-                    ehr = (float(rnd_env.fgs[fid].energy_reserve.sum())
-                           if getattr(rnd_env.fgs[fid], 'energy_reserve', None) is not None
-                           else 0.0)
-                    pb = (100.0 * bhr / b0r) if b0r > 0.0 else 0.0
-                    pe = (100.0 * ehr / e0r) if e0r > 0.0 else 0.0
+                    avg_br = rnd_b_sum.get(fid, 0.0) / _rnt
+                    avg_er = rnd_e_sum.get(fid, 0.0) / _rnt
+                    pb = (100.0 * avg_br / b0r) if b0r > 0.0 else 0.0
+                    pe = (100.0 * avg_er / e0r) if e0r > 0.0 else 0.0
                     viz.update_series("biomass", fid + "_rnd", pb,
                                       step=int(viz_step))
                     viz.update_series("energy", fid + "_rnd", pe,
@@ -1170,11 +1203,15 @@ def main():
                       if getattr(args, 'rnd_baseline', False) else None)
             _ndm_ids = [fid for fid, fg in temp_env.fgs.items()
                         if not getattr(fg, 'is_decision_maker', False)]
+            # Include NDMs in plot_fg_ids so they appear in the biomass tab.
+            # _active_plot_ids in pygame_viz filters them out from the
+            # other tabs (reward/energy/move/rest/eat) automatically.
+            _plot_ids = (_dm_ids or []) + (_ndm_ids or [])
             viz = LiveVisualizer(
                 fg_ids=list(temp_env.fgs.keys()),
                 grid_shape=(GRID_HEIGHT, GRID_WIDTH),
                 mode="train",
-                plot_fg_ids=_dm_ids or None,
+                plot_fg_ids=_plot_ids or None,
                 extra_plot_ids=_extra,
                 ndm_ids=_ndm_ids or None,
             )
@@ -1489,16 +1526,28 @@ def main():
             except Exception:
                 pass
             import multiprocessing as _mp
+            import signal as _signal
             from lib.runners.parallel_worker import _worker_init
             ctx = _mp.get_context('spawn')
-            trainer._pool = ctx.Pool(
-                processes=trainer.n_workers,
-                initializer=_worker_init,
-                initargs=(new_builder, trainer.policy_params,
-                          trainer.uniform_bias_init,
-                          trainer.hidden_layers, trainer.hidden_dim,
-                          trainer.activation),
-            )
+            # Install SIG_IGN in the parent BEFORE spawning workers so they
+            # inherit SIG_IGN as their default SIGINT handler from process
+            # creation. Otherwise a Ctrl+C arriving during the workers'
+            # bootstrap (``import torch`` etc., before ``_worker_init`` has
+            # a chance to install SIG_IGN itself) would dump a multi-page
+            # traceback per worker to the shared TTY. Restored immediately
+            # after Pool() returns so KeyboardInterrupt still works here.
+            _prev_sigint = _signal.signal(_signal.SIGINT, _signal.SIG_IGN)
+            try:
+                trainer._pool = ctx.Pool(
+                    processes=trainer.n_workers,
+                    initializer=_worker_init,
+                    initargs=(new_builder, trainer.policy_params,
+                              trainer.uniform_bias_init,
+                              trainer.hidden_layers, trainer.hidden_dim,
+                              trainer.activation),
+                )
+            finally:
+                _signal.signal(_signal.SIGINT, _prev_sigint)
         if maps:
             summary = ", ".join(
                 f"{k}=U[{_impact_ranges_global.get(k,(0,0))[0]:g},"

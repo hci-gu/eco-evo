@@ -20,6 +20,18 @@ class FunctionalGroup:
         # år medan svältdöd sker över dagar–veckor. starve_rate=0 ⇒
         # legacy (samma rate som growth_rate i båda riktningarna).
         self.starve_rate = float(params.get('starve_rate', 0.0) or 0.0)
+        # Visibility floor for the hide-action (Section 48 follow-up):
+        # the fraction of the rest-population that is STILL visible to
+        # predators even when pi_rest = 1.0. With floor=f the effective
+        # visible fraction is max(1 - pi_rest, f), so a fully-hiding FG
+        # still exposes f of its biomass per tick. Default 0.0 ⇒ legacy
+        # behaviour (perfect hide). Recommended 0.05–0.20 for biological
+        # realism (no animal aggregation is perfectly cryptic).
+        self.visibility_floor = float(params.get('visibility_floor', 0.0) or 0.0)
+        if self.visibility_floor < 0.0:
+            self.visibility_floor = 0.0
+        elif self.visibility_floor > 1.0:
+            self.visibility_floor = 1.0
         # Densitetsoberoende naturlig mortalitet per tick (DM). Modellerar
         # senescens, sjukdom, "hidden predation" från icke-modellerade arter,
         # mekanisk skada m.m. — oberoende av svälttermen via q_x.

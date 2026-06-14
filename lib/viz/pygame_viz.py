@@ -174,8 +174,8 @@ class LiveVisualizer:
             self._tabs = ["biomass", "energy", "move", "rest", "eat"]
         self._tab_labels = {
             "reward": "reward",
-            "biomass": "biomass (% of start)",
-            "energy": "energy (% of start)",
+            "biomass": "avg biomass (% of start)",
+            "energy": "avg energy (% of start)",
             "move": "move action (%)",
             "rest": "rest action (%)",
             "eat": "eat action (%)",
@@ -618,7 +618,10 @@ class LiveVisualizer:
     def _draw_one_heatmap(self, fid: str, px: int, py: int) -> None:
         pg = self._pg
         pad = 4
-        title_h = 32
+        # Three info lines above the heatmap: FG name, 'B0=… B=…' and the
+        # action distribution 'mv/rs/et=…' (blank for NDMs). title_h must
+        # leave room for all three or the heatmap would overlap the text.
+        title_h = 44
         arr = self._biomass.get(fid)
         # Panel background.
         pg.draw.rect(self._screen, (28, 28, 34),
@@ -645,7 +648,32 @@ class LiveVisualizer:
         info_txt = f"B0={_fmt_b(b0)}  B={_fmt_b(total)}"
         info_col = (180, 180, 190) if not dim else (90, 90, 95)
         info_surf = self._font.render(info_txt, True, info_col)
-        self._screen.blit(info_surf, (px + pad, py + 1 + name_surf.get_height()))
+        info_y = py + 1 + name_surf.get_height()
+        self._screen.blit(info_surf, (px + pad, info_y))
+
+        # Third info line: action distribution mv/rs/et for DMs. The
+        # numbers come from the same per-tab rolling buffers that feed
+        # the move/rest/eat plot tabs (stored as percent 0..100), so we
+        # divide by 100 to mirror the 'mv/rs/et=0.xx/0.yy/0.zz' format
+        # printed in the terminal by the trainer. NDMs have no policy
+        # actions, so we render a blank line to keep the heatmap origin
+        # aligned across panels.
+        act_y = info_y + info_surf.get_height()
+        is_ndm = fid in self._ndm_ids
+        if not is_ndm:
+            def _last(tab: str) -> Optional[float]:
+                buf = self._series.get(tab, {}).get(fid)
+                if not buf:
+                    return None
+                return float(buf[-1][1])
+            mv = _last("move")
+            rs = _last("rest")
+            et = _last("eat")
+            if mv is not None and rs is not None and et is not None:
+                act_txt = (f"mv/rs/et={mv / 100.0:.2f}/"
+                           f"{rs / 100.0:.2f}/{et / 100.0:.2f}")
+                act_surf = self._font.render(act_txt, True, info_col)
+                self._screen.blit(act_surf, (px + pad, act_y))
 
         if arr is None:
             return
@@ -776,44 +804,11 @@ class LiveVisualizer:
 
         active_ids = self._active_plot_ids()
 
-        # Determine y-range across all buffers.
-        all_vals: list = []
-        for fid in active_ids:
-            if self._solo is not None and self._solo != fid:
-                continue
-            if not self._plot_enabled.get(fid, True):
-                continue
-            for _, v in buffers[fid]:
-                all_vals.append(v)
-        if not all_vals:
-            return
-        arr = np.asarray(all_vals, dtype=np.float64)
-        if self._log_plot:
-            arr = np.sign(arr) * np.log10(np.abs(arr) + 1e-12)
-        ymin = float(arr.min())
-        ymax = float(arr.max())
-        if not np.isfinite(ymin) or not np.isfinite(ymax):
-            return
-        if ymax - ymin < 1e-9:
-            ymax = ymin + 1.0
-
-        # Determine x-range (use sample index per buffer; aligned by step).
-        xmins, xmaxs = [], []
-        for fid in active_ids:
-            if self._solo is not None and self._solo != fid:
-                continue
-            if not self._plot_enabled.get(fid, True):
-                continue
-            if buffers[fid]:
-                xmins.append(buffers[fid][0][0])
-                xmaxs.append(buffers[fid][-1][0])
-        if not xmins:
-            return
-        xmin = min(xmins)
-        xmax = max(xmaxs)
-        if xmax - xmin < 1:
-            xmax = xmin + 1
-
+        # Plot area geometry — computed up-front so the legend is always
+        # drawn (and clickable) even when there is no data to plot, e.g.
+        # when every FG has been toggled off. Otherwise the legend would
+        # disappear together with the lines and the user couldn't re-
+        # enable any series without blindly guessing checkbox positions.
         plot_pad_l = 36
         plot_pad_r = getattr(self, "_legend_w", 110)  # room for legend
         plot_pad_t = 38  # tab strip (18) + ylabel line
@@ -825,44 +820,89 @@ class LiveVisualizer:
         if pw <= 4 or ph <= 4:
             return
 
-        # Y-axis tick labels (min, mid, max).
-        for frac, val in ((0.0, ymax), (0.5, (ymin + ymax) / 2), (1.0, ymin)):
-            yy = int(py0 + frac * ph)
-            pg.draw.line(self._screen, (50, 50, 60),
-                         (px0, yy), (px0 + pw, yy), 1)
-            lab = self._font.render(f"{val:+.3g}", True, (160, 160, 170))
-            self._screen.blit(lab, (x + 2, yy - 7))
-
-        # Zero line if in range.
-        if ymin < 0.0 < ymax:
-            yy = int(py0 + (ymax - 0.0) / (ymax - ymin) * ph)
-            pg.draw.line(self._screen, (90, 90, 110),
-                         (px0, yy), (px0 + pw, yy), 1)
-
-        # Plot lines.
+        # Determine y-range across all buffers (only from enabled series).
+        all_vals: list = []
         for fid in active_ids:
             if self._solo is not None and self._solo != fid:
                 continue
             if not self._plot_enabled.get(fid, True):
                 continue
-            buf = buffers[fid]
-            if len(buf) < 2:
-                continue
-            pts = []
-            for step, val in buf:
-                v = val
-                if self._log_plot:
-                    v = float(np.sign(v) * np.log10(abs(v) + 1e-12))
-                fx = (step - xmin) / (xmax - xmin)
-                fy = (ymax - v) / (ymax - ymin)
-                pts.append((int(px0 + fx * pw),
-                            int(py0 + fy * ph)))
-            try:
-                pg.draw.aalines(self._screen, self._fg_colour[fid], False, pts)
-            except Exception:
-                pg.draw.lines(self._screen, self._fg_colour[fid], False, pts, 1)
+            for _, v in buffers[fid]:
+                all_vals.append(v)
+        have_data = bool(all_vals)
+        ymin = ymax = xmin = xmax = 0.0
+        if have_data:
+            arr = np.asarray(all_vals, dtype=np.float64)
+            if self._log_plot:
+                arr = np.sign(arr) * np.log10(np.abs(arr) + 1e-12)
+            ymin = float(arr.min())
+            ymax = float(arr.max())
+            if not np.isfinite(ymin) or not np.isfinite(ymax):
+                have_data = False
+            elif ymax - ymin < 1e-9:
+                ymax = ymin + 1.0
 
-        # Legend with a per-FG checkbox that toggles plotting across all tabs.
+        if have_data:
+            # Determine x-range (use sample index per buffer; aligned by step).
+            xmins, xmaxs = [], []
+            for fid in active_ids:
+                if self._solo is not None and self._solo != fid:
+                    continue
+                if not self._plot_enabled.get(fid, True):
+                    continue
+                if buffers[fid]:
+                    xmins.append(buffers[fid][0][0])
+                    xmaxs.append(buffers[fid][-1][0])
+            if xmins:
+                xmin = min(xmins)
+                xmax = max(xmaxs)
+                if xmax - xmin < 1:
+                    xmax = xmin + 1
+            else:
+                have_data = False
+
+        if have_data:
+            # Y-axis tick labels (min, mid, max).
+            for frac, val in ((0.0, ymax), (0.5, (ymin + ymax) / 2), (1.0, ymin)):
+                yy = int(py0 + frac * ph)
+                pg.draw.line(self._screen, (50, 50, 60),
+                             (px0, yy), (px0 + pw, yy), 1)
+                lab = self._font.render(f"{val:+.3g}", True, (160, 160, 170))
+                self._screen.blit(lab, (x + 2, yy - 7))
+
+            # Zero line if in range.
+            if ymin < 0.0 < ymax:
+                yy = int(py0 + (ymax - 0.0) / (ymax - ymin) * ph)
+                pg.draw.line(self._screen, (90, 90, 110),
+                             (px0, yy), (px0 + pw, yy), 1)
+
+            # Plot lines.
+            for fid in active_ids:
+                if self._solo is not None and self._solo != fid:
+                    continue
+                if not self._plot_enabled.get(fid, True):
+                    continue
+                buf = buffers[fid]
+                if len(buf) < 2:
+                    continue
+                pts = []
+                for step, val in buf:
+                    v = val
+                    if self._log_plot:
+                        v = float(np.sign(v) * np.log10(abs(v) + 1e-12))
+                    fx = (step - xmin) / (xmax - xmin)
+                    fy = (ymax - v) / (ymax - ymin)
+                    pts.append((int(px0 + fx * pw),
+                                int(py0 + fy * ph)))
+                try:
+                    pg.draw.aalines(self._screen, self._fg_colour[fid], False, pts)
+                except Exception:
+                    pg.draw.lines(self._screen, self._fg_colour[fid], False, pts, 1)
+
+        # Legend with a per-FG checkbox that toggles plotting across all
+        # tabs. Drawn unconditionally so users can always re-enable a
+        # series that they previously toggled off (even when *all* series
+        # are currently disabled and there is nothing to plot).
         lx = px0 + pw + 8
         ly = py0
         self._legend_rects = []

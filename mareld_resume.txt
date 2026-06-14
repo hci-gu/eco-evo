@@ -433,8 +433,10 @@ Tabs:
     "Impacts" tab; see below.)
     TWO FG Editor frames, only one packed at a time:
       self.editor_frame  (DM): max_energy_reserve, energy_content,
-        resting_metabolism, movement_speed, action costs
-        (feeding/movement), "Indivisible Weight (kg)"
+        resting_metabolism, maintenance_level, growth_rate,
+        starve_rate, visibility_floor (Section 51),
+        natural_mortality, max_intake_rate, movement_speed, action
+        costs (feeding/movement), "Indivisible Weight (kg)"
         (min_split_biomass), initial_biomass (ton).
       self.ndm_editor_frame (NDM): growth_rate,
         max_carrying_capacity, initial_biomass (ton).
@@ -723,7 +725,13 @@ Intentionally NOT done:
 14. GIT / STAGING
 ================================================================
   Latest commits on branch `coev` (newest first):
-    (uncommitted, current arc) Starvation calibration + reward shaping.
+    (uncommitted, current arc) Starvation calibration, reward
+            shaping + imperfect-hide (visibility_floor).
+            * Per-DM visibility_floor breaks the "perfect hide"
+              attractor: visible_frac = 1 - pi_rest * (1 - floor)
+              applied symmetrically in _apply_predation AND
+              _build_observation_batch. FG editor field added.
+              Default 0.0 = legacy parity. (Section 51.)
             * Decoupled anabolism/catabolism in DM _apply_growth via
               per-FG starve_rate (Section 46).
             * ME_X + starve_rate baseline table per FG mapped to
@@ -1891,6 +1899,16 @@ ecosystem.py.
   * Observability changes invalidate checkpoints; no migration
     helper is provided.
 
+41.9 Imperfect hide via visibility_floor
+  Per-DM `visibility_floor` (default 0.0 = legacy perfect hide)
+  attenuates the hide effect proportionally:
+    visible_frac = 1 - pi_rest * (1 - floor)
+  Applied symmetrically in both _apply_predation (predators eat
+  floor * pi_rest of hidden mass) and _build_observation_batch
+  (observers see floor * prev_hidden of last tick's hidden mass).
+  Editable per FG via the FG editor. See Section 51 for full
+  details, calibration guidance and verification.
+
 ================================================================
 42. OFFLINE INTERACTIVE PLOTS (plots.html) + VIZ RESPONSIVENESS
 ================================================================
@@ -2390,3 +2408,102 @@ changed from the previous run, the appended rows will carry the
 new n_ticks while older rows have the old value. This is expected
 behaviour: --resume means "continue", not "continue with identical
 config". Filter on n_ticks downstream if needed.
+
+================================================================
+51. VISIBILITY FLOOR - IMPERFECT HIDE (PER-DM)
+================================================================
+Per-DM `visibility_floor` attribute breaks the "perfect hide"
+attractor identified in late-session diagnostics (Section 41 +
+biomass.jsonl analyses): with the original implementation
+visible_frac = 1 - pi_rest could collapse to 0 when a DM converged
+to pi_rest -> 1, giving total predation immunity + total invisibility
+at zero metabolic premium. Pelagic_fish ended up at pi_rest ~= 0.57
+in trained runs (43 %% visible, 57 %% hidden) because hide was a
+strictly dominant local optimum.
+
+51.1 Semantics (proportional, active for ANY pi_rest > 0)
+  With floor=f, the hide-fraction itself is attenuated by (1-f):
+    effective_hidden = pi_rest * (1 - f)
+    visible_frac     = 1 - effective_hidden
+                     = (1 - pi_rest) + pi_rest * f
+  Examples (floor=0.2):
+    pi_rest=0.0 -> visible 1.00 (no one hides)
+    pi_rest=0.1 -> visible 0.92 (10 %% hides, 20 %% of them seen)
+    pi_rest=0.5 -> visible 0.60
+    pi_rest=0.57 -> visible 0.544 (vs 0.43 legacy) -> +12 pp
+                    exposure even at the trained-policy regime
+    pi_rest=0.9 -> visible 0.28
+    pi_rest=1.0 -> visible 0.20 (floor active at saturation)
+  At floor=0.0 the formula reduces to legacy 1 - pi_rest
+  (byte-identical parity). At floor=1.0 hide is fully disabled.
+  Earlier draft used max(1 - pi_rest, floor); rejected because it
+  only activated at pi_rest > 1 - floor, leaving the dominant
+  pelagic_fish regime (rs=0.57) untouched.
+
+51.2 Symmetric: floor also applies to observability
+  The floor acts on BOTH sides of hide:
+    * Predation (_apply_predation): predators see + can eat
+      floor * pi_rest of the hidden mass per tick.
+    * Observation (_build_observation_batch): observer DMs see
+      floor * prev_hidden of the previous tick's hidden mass
+      in the B_obs channels of their neighbours.
+  Implementation uses a shared cache `_all_visibility_floor`
+  (N_all-vector, 0 for NDMs which never hide). The observation
+  formula becomes:
+    visible_for_obs = 1 - prev_hidden_frac * (1 - floor)
+  Mirroring _apply_predation exactly. Predators with floor>0 prey
+  also gain a partial leak in their input distribution, so they
+  CAN learn to track/stalk hiding prey instead of treating them
+  as truly absent.
+
+51.3 Implementation locations
+  * lib/world/functional_group.py::FunctionalGroup.__init__:
+    new `self.visibility_floor` attribute, read from
+    params.get('visibility_floor', 0.0), clamped to [0, 1].
+  * lib/environments/ecosystem.py::__init__:
+    `self.dm_visibility_floor` (per-DM) and
+    `self._all_visibility_floor` (N_all-aligned, 0 for NDMs)
+    caches built once and reused.
+  * lib/environments/ecosystem.py::_apply_predation: uses
+    `prey_vis_floor` (N_all-vector) to compute
+    one_minus_floor = 1 - prey_vis_floor; then
+    effective_hidden = hidden_frac_now * one_minus_floor[:,None,None]
+    visible_frac     = 1 - effective_hidden
+  * lib/environments/ecosystem.py::_build_observation_batch:
+    one_minus_floor_obs = 1 - self._all_visibility_floor[:,None,None]
+    B_visible_all       = B_all * (1 - prev_hidden_frac
+                                       * one_minus_floor_obs)
+  * fgconfig/fgconfig.py: new DM editor field
+    "Visibility Floor (min visible fraction when hiding)"
+    between Starve Rate and Natural Mortality, range [0, 1].
+    Persisted via the generic prop_vars loop.
+
+51.4 Defaults & calibration guidance
+  Default visibility_floor=0.0 => legacy byte-identical parity
+  (perfect hide). Not yet written into fg_library.yaml or
+  mareld2.yaml; set per FG via the FG editor for retraining.
+  Recommended starting values for biological realism:
+    zooplankton    0.10 - 0.20  (swarming, fast detection)
+    pelagic_fish   0.10 - 0.20  (schooling does not hide perfectly)
+    gadoids        0.05 - 0.15
+    porpoises      0.05 - 0.10  (acoustic detection limits)
+    seals          0.05 - 0.10
+    seabirds       0.10 - 0.20  (visible silhouette)
+  Floor only addresses the rs->1 attractor; for milder hide regimes
+  (rs ~= 0.5) the marginal exposure increase is modest (+10-15 pp),
+  which acts as a soft pressure rather than a hard cap.
+
+51.5 Checkpoint compatibility
+  Floor does NOT change policy I/O shapes - existing .pth files
+  load unchanged. Behaviour does shift quantitatively when floor>0:
+  predators see more of hiding prey (observation distribution
+  changes), so pre-floor checkpoints are sub-optimal but still
+  runnable. No migration tool needed.
+
+51.6 Verification
+  * python3 -m pytest tests/ -q -> 42/42 green (incl. previously
+    flaky test_predation_visibly_suppresses_phyto - the floor at
+    default 0.0 leaves the legacy code path byte-identical).
+  * Manual: with floor=0.2 and forced pi_rest=1.0, predation
+    biomass delta on the prey is exactly 0.2 * (legacy with
+    pi_rest=0) - confirmed numerically.

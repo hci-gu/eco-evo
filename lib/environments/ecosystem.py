@@ -146,6 +146,20 @@ class EcosystemEnvironment:
         self.dm_cost_eat  = np.array([self.fgs[fid].params.get('feeding_cost', 3.0) for fid in self.dm_ids], dtype=self.dtype)
         self.dm_cost_rest = np.array([self.fgs[fid].params.get('resting_cost', 1.0) for fid in self.dm_ids], dtype=self.dtype)
         self.dm_resting_metabolism = np.array([self.fgs[fid].resting_metabolism for fid in self.dm_ids], dtype=self.dtype)
+        # Per-DM visibility floor: minimum visible fraction even at pi_rest=1.0.
+        # Used in _apply_predation to break the "perfect hide" attractor.
+        # Default 0.0 ⇒ legacy parity (hide gives total predation immunity).
+        self.dm_visibility_floor = np.array(
+            [float(getattr(self.fgs[fid], 'visibility_floor', 0.0))
+             for fid in self.dm_ids], dtype=self.dtype)
+        # N_all-aligned visibility floor: 0 for NDMs (never hide), DM's
+        # configured floor otherwise. Used both in _apply_predation
+        # (predation-side visibility) and _build_observation_batch
+        # (observer-side visibility) so the floor is symmetric.
+        self._all_visibility_floor = np.zeros(self.N_all, dtype=self.dtype)
+        for i, fid in enumerate(self.dm_ids):
+            j = int(self.dm_index_in_all[i])
+            self._all_visibility_floor[j] = self.dm_visibility_floor[i]
         self.dm_max_energy_reserve = np.array([self.fgs[fid].max_energy_reserve for fid in self.dm_ids], dtype=self.dtype)
         # Per-DM cached impact tables for ALL impacts the FG is affected by.
         # Each entry is a list of (impact_id, (xs, bf, ef)) tuples; impacts
@@ -375,7 +389,19 @@ class EcosystemEnvironment:
         # _calculate_decisions. Self-observation (B_own) intentionally
         # uses the *full* biomass (the FG always sees its full mass,
         # hidden or not).
-        B_visible_all = B_all * (np.float32(1.0) - self.prev_hidden_frac)
+        #
+        # Per-FG visibility floor (Section 48 follow-up): the floor acts
+        # on the hiding fraction itself, so a population fraction
+        # prev_hidden that chose to hide last tick is only (1 - floor)
+        # effectively hidden to observers, while floor * prev_hidden
+        # remains observable. Hence
+        #   visible = 1 - prev_hidden * (1 - floor)
+        # which matches the symmetric predation-side formulation in
+        # _apply_predation. Default floor=0 ⇒ legacy parity.
+        one_minus_floor_obs = (np.float32(1.0)
+                               - self._all_visibility_floor[:, None, None])
+        B_visible_all = B_all * (np.float32(1.0)
+                                 - self.prev_hidden_frac * one_minus_floor_obs)
         impact_layers = []
         for iid in self.observable_impact_vars:
             m = self.grid.get_map(iid)
@@ -704,10 +730,24 @@ class EcosystemEnvironment:
         # observers see what was hidden last tick, while protection is
         # determined by the active hide-choice this tick.
         hidden_frac_now = np.zeros((self.N_all, self.H, self.W), dtype=self.dtype)
+        # Per-prey (N_all) visibility floor — 0 for NDMs (always fully
+        # visible) and the FG's configured floor for DMs. The floor acts
+        # ON the hiding fraction itself: a population fraction pi_rest
+        # that chooses to hide is only (1 - floor) effectively hidden,
+        # while floor * pi_rest stays visible. Hence
+        #   visible_frac = 1 - pi_rest * (1 - floor)
+        #               = (1 - pi_rest) + pi_rest * floor
+        # which means the floor is active for ANY pi_rest > 0, not only
+        # at saturation (pi_rest -> 1). At floor=0 this reduces to the
+        # legacy 1 - pi_rest; at floor=1 hide is fully disabled.
+        prey_vis_floor = np.zeros(self.N_all, dtype=self.dtype)
         for i, fid in enumerate(self.dm_ids):
             j = int(self.dm_index_in_all[i])
             hidden_frac_now[j] = self.pi_rest[i].astype(self.dtype, copy=False)
-        visible_frac = np.float32(1.0) - hidden_frac_now
+            prey_vis_floor[j] = self.dm_visibility_floor[i]
+        one_minus_floor = np.float32(1.0) - prey_vis_floor[:, None, None]
+        effective_hidden = hidden_frac_now * one_minus_floor
+        visible_frac = np.float32(1.0) - effective_hidden
         B_prey_visible = B_prey_all * visible_frac
 
         a = self.max_intake_mat[:, :, None, None]  # (N_dm, N_all, 1, 1)
