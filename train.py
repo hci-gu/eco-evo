@@ -421,9 +421,15 @@ class _ProbeEnvBuilder:
         # from project YAML's ``inference.impact_maps``); per-call we
         # re-load the .npz so updates to the underlying file take effect
         # without rebuilding the trainer.
-        from inference import _load_inference_map_paths, _load_impact_map_npz
+        from inference import (_load_inference_map_paths, _load_impact_map_npz,
+                                apply_b0_overrides as _apply_b0)
         self._load_paths = _load_inference_map_paths
         self._load_npz = _load_impact_map_npz
+        self._apply_b0 = _apply_b0
+        # Per-FG b0-overrides (ton) som ska appliceras innan första env.step().
+        # Sätts av ``_probe_biomass`` strax innan varje probe-anrop utifrån
+        # viz.get_b0_overrides(); tomt dict = ingen override.
+        self.b0_overrides: dict = {}
 
     def __call__(self, seed=None):
         H, W = self.grid_height, self.grid_width
@@ -460,6 +466,14 @@ class _ProbeEnvBuilder:
             if field is None:
                 field = np.zeros((H, W), dtype=np.float32)
             env.grid.add_map(iv, field)
+        # Applicera ev. b0-overrides från visualiseraren innan första
+        # env.step(). Skalar varje FG:s biomass-fält så totalsumman möter
+        # slider-värdet (spatial form bevarad).
+        if self.b0_overrides:
+            try:
+                self._apply_b0(env, self.b0_overrides)
+            except Exception:
+                pass
         return env
 
 
@@ -478,6 +492,29 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     when ``compact`` is True, prints a single-line summary to stdout.
     """
     import json
+    # Hämta aktuella b0-overrides från visualiseraren (om någon viz är
+    # ansluten) och stoppa in dem i probe_builder så de appliceras innan
+    # första env.step(). Tomt/ingen viz = ingen override.
+    if viz is not None:
+        try:
+            overrides = viz.get_b0_overrides()
+            probe_builder.b0_overrides = overrides or {}
+            if rnd_builder is not None and rnd_builder is not probe_builder:
+                try:
+                    rnd_builder.b0_overrides = overrides or {}
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        # Rollout-längd-override: använd slidervärdet om det är satt,
+        # annars behåll CLI-värdet (n_ticks). Slidern påverkar varje
+        # probe från och med nästa anrop.
+        try:
+            t_ovr = viz.get_ticks_override()
+            if t_ovr is not None:
+                n_ticks = int(t_ovr)
+        except Exception:
+            pass
     env = probe_builder()
     env.policies = trainer.policies
     env.softmax_temperature = float(trainer.softmax_temperature)
@@ -1431,6 +1468,30 @@ def main():
                 extra_plot_ids=_extra,
                 ndm_ids=_ndm_ids or None,
             )
+            # b0-slider defaults per FG: gridskaleberäknat
+            # inference_initial_biomass läst från projektets YAML.
+            # Slider-rangen blir [0, 4 * default], mittposition = default.
+            try:
+                from lib.config.config_loader import compute_inference_b0_defaults
+                _b0_defaults = compute_inference_b0_defaults(
+                    PROJECT_PATH, (GRID_HEIGHT, GRID_WIDTH))
+                if _b0_defaults:
+                    viz.set_b0_defaults(_b0_defaults)
+            except Exception as _e:
+                print(f"[viz] could not compute b0 defaults: {_e!r}")
+            # Rollout-längd-slider: registrera CLI-värdet (n_eval_ticks)
+            # som default. Slidervärdet konsumeras av varje probe via
+            # _probe_biomass innan rollouten startar.
+            try:
+                viz.set_ticks_default(int(args.n_eval_ticks))
+            except Exception:
+                pass
+            # Separat slider för n_eval_ticks (ARS rollout-längd).
+            # Konsumeras säkert mellan ARS-iterationer i huvudloopen.
+            try:
+                viz.set_neval_ticks_default(int(args.n_eval_ticks))
+            except Exception:
+                pass
         except Exception as _e:
             print(f"[viz] failed to start visualiser: {_e!r}")
             viz = None
@@ -1815,8 +1876,19 @@ def main():
                 for i in range(args.iter_per_gen):
                     if i > 0 and _refresh_world_list_if_needed(gen, i):
                         _install_generation_worlds(gen)
+                    # Läs n_eval_ticks-slidern (om sliz finns). Värdet
+                    # tillämpas mellan iterationer för att hålla
+                    # rollout-budgeten konsistent inom samma iteration.
+                    _neval = int(args.n_eval_ticks)
+                    if viz is not None:
+                        try:
+                            _ovr = viz.get_neval_ticks_override()
+                            if _ovr is not None:
+                                _neval = int(_ovr)
+                        except Exception:
+                            pass
                     means = trainer.train_step_coevolution(
-                        target_species, n_eval_ticks=args.n_eval_ticks)
+                        target_species, n_eval_ticks=_neval)
                     summary = " | ".join(
                         f"{fid}={means[fid]:+.4f}" for fid in target_species)
                     print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
@@ -1864,8 +1936,17 @@ def main():
                     for i in range(args.iter_per_gen):
                         if i > 0 and _refresh_world_list_if_needed(gen, i):
                             _install_generation_worlds(gen)
+                        # Läs n_eval_ticks-slidern (säkert mellan iter).
+                        _neval = int(args.n_eval_ticks)
+                        if viz is not None:
+                            try:
+                                _ovr = viz.get_neval_ticks_override()
+                                if _ovr is not None:
+                                    _neval = int(_ovr)
+                            except Exception:
+                                pass
                         # n_eval_ticks: how many time steps (ticks) each test run lasts
-                        avg_reward = trainer.train_step(species, n_eval_ticks=args.n_eval_ticks)
+                        avg_reward = trainer.train_step(species, n_eval_ticks=_neval)
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
                         if viz is not None:
                             viz.update_reward(species, float(avg_reward),

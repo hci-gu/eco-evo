@@ -2768,3 +2768,125 @@ choice - tabs keep showing global series).
   ``b0`` and add ``predation`` / ``starvation`` / ``impacts``.
   The KI-handler robustness in train.py (Section 53.6) also dates
   from the same session.
+
+================================================================
+56. INTERACTIVE SLIDERS IN --visual (B0 / ROLLOUT TICKS / N_EVAL_TICKS)
+================================================================
+Late-session arc adding three classes of user-controllable sliders
+to the live pygame visualiser (lib/viz/pygame_viz.py). All sliders
+are read-only state on LiveVisualizer; consumers (train.py and
+inference.py) poll them between rollouts and override the relevant
+runtime parameter. In inference mode an override on any slider
+triggers a re-recording of the rollout via ``wait_for_close``.
+
+56.1 Per-FG B0 slider (initial biomass)
+  * One slider per heatmap, placed BETWEEN the info text lines
+    (Section 53.1) and the heatmap pixels themselves. ``title_h``
+    raised 84 -> 104 to fit.
+  * Range: [0, 4 * default], where ``default`` is the grid-scaled
+    inference_initial_biomass for that FG (see Section 7b).
+    Default-position marker (vertical tick) sits at 1/4 of track
+    width = the unedited initial value.
+  * Disabled (grey placeholder) for FGs that lack
+    inference_initial_biomass in the project file.
+  * Public API on LiveVisualizer:
+      set_b0_defaults(defaults: dict)   # per-FG grid-scaled default
+      get_b0_override(fid) -> float|None
+      get_b0_overrides() -> dict
+      consume_b0_change() -> bool       # one-shot dirty flag
+    Stubs on ``_NullViz`` return None / False so headless paths
+    are no-ops.
+  * Helper in lib/config/config_loader.py:
+      compute_inference_b0_defaults(project_path, grid_size) ->
+        {fg_id: inference_initial_biomass * biomass_scale}
+    with a 1-ton floor. Called by inference.py main() to seed
+    the viz before the first rollout.
+  * Application path (inference.py): ``apply_b0_overrides(env,
+    overrides)`` scales each FG's biomass field uniformly so the
+    new total = override, preserving spatial layout. NDM cc and
+    energy reserves left untouched (energy ratio s_X is preserved
+    on DM by scaling R the same factor as B).
+  * Application path (train.py): ``_ProbeEnvBuilder`` takes an
+    ``b0_overrides`` dict and applies it at probe-env build time.
+    ``_probe_biomass`` reads overrides from viz before each probe,
+    so changes apply on the NEXT probe (current probe runs to
+    completion).
+  * Inference rerun loop: after each rollout, ``main()`` calls
+    ``viz.wait_for_close()`` which blocks until user drags any
+    slider (b0 or ticks) or closes the window. On a dirty change
+    a fresh env is built, b0 overrides re-applied, and a new
+    rollout is recorded. CRITICAL: second+ iterations must call
+    ``env._build_static_caches()`` after building the new env -
+    in iteration 1 ``load_policies_and_stats`` set up the caches,
+    but a fresh env without caches crashes
+    ``_rebuild_batched_weights`` with
+    ``AttributeError: 'EcosystemEnvironment' object has no
+    attribute 'N_dm'``.
+
+56.2 Rollout-ticks slider (probe / inference rollout length)
+  * Sits in the status-bar above the heatmap grid. Log-scaled
+    range [3, 10000]; default-marker shows the CLI/--ticks value.
+    Status-bar height grew 26 -> 44 px to fit this row.
+  * Track width clamped on the right so the slider stops at the
+    plot pane's left edge (not at the window's right edge).
+  * Public API: set_ticks_default, get_ticks, get_ticks_override,
+    consume_ticks_change. Stubs on ``_NullViz``.
+  * Train: consumed by ``_probe_biomass`` only - overrides the
+    probe's ``n_ticks`` local variable. ARS's ``n_eval_ticks`` is
+    NOT affected (would corrupt gradient estimate if changed
+    mid-iteration; see Section 21 design rule).
+  * Inference: ``main()`` reads ``viz.get_ticks()`` per rerun
+    iteration and passes to ``run_inference(..., ticks, ...)``.
+
+56.3 n_eval_ticks slider (ARS delta-evaluation rollout length)
+  * Second row in the status-bar (status_h 44 -> 62 px in train
+    mode). Same log-scale [3, 10000] as the ticks slider, with
+    an analogous public API (set_neval_ticks_default,
+    get_neval_ticks, get_neval_ticks_override,
+    consume_neval_ticks_change).
+  * Train: read at the START of each ARS iteration (both
+    coevolution and round-robin paths) and passed to
+    ``trainer.train_step(_coevolution)`` as ``n_eval_ticks``.
+    Safe because the value is locked for the duration of one
+    iteration (no mid-iter changes).
+  * INFERENCE-MODE HIDDEN: ``status_h`` reverts to 44 px and the
+    n_eval_ticks row is not drawn (``_neval_track_rect=None``).
+    Click hit-tests on None are no-ops, so handling is safe.
+
+56.4 Click-to-lock icons (train mode only)
+  * Both ticks- and n_eval_ticks-sliders have a clickable padlock
+    icon directly right of the track. Default state: LOCKED.
+    Slider drag is blocked while locked - click the padlock to
+    toggle.
+  * Implementation: ``_draw_lock_icon(x,y,size,locked)`` renders
+    a small body+shackle glyph (yellow when unlocked, grey when
+    locked) and returns the hit-rect. ``_handle_click`` toggles
+    state on icon hit and short-circuits drag-init when the
+    corresponding lock is engaged.
+  * In INFERENCE mode both lock icons are suppressed entirely
+    and ``_ticks_locked`` is forced False (no padlock visible,
+    slider always usable).
+
+56.5 Plot-buffer reset (avoid cross-rollout line artefacts)
+  * ``begin_rollout_recording`` clears per-FG plot series buffers
+    ONLY in inference mode (where x = tick is re-used across
+    rollouts; stale samples from the previous rollout with
+    "future" step values caused ``pg.draw.aalines`` to draw long
+    diagonal lines across heatmap panels because the function
+    has no clipping against plot_rect).
+  * Train mode SKIPS the reset (``mode`` startswith "infer"
+    gate): ARS step is monotonically increasing across all
+    probes, so the historical buffer must be preserved for the
+    plot to accumulate over generations. Clearing it left only
+    one point per probe, and aalines (which needs >=2 points)
+    drew nothing.
+
+56.6 Event-loop integration
+  Mouse drag handling lives in both ``pump_events`` (normal
+  training loop) and ``wait_for_close`` (inference idle / rerun
+  trigger). Drag-state flags: ``_dragging_b0`` (per-FG via
+  ``_drag_fg``), ``_dragging_ticks``, ``_dragging_neval``.
+  MOUSEUP clears the flag; MOUSEMOTION while flagged updates
+  the corresponding override and sets the dirty flag.
+  ``wait_for_close`` returns on b0-dirty OR ticks-dirty so the
+  inference rerun fires for either slider type.

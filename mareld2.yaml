@@ -8,7 +8,6 @@ decision_makers:
     initial_biomass_min: 1250
     initial_biomass_max: 5000
     inference_initial_biomass: 5000
-    muted: true
   - group_id: pelagic_fish
     initial_biomass_min: 6000
     initial_biomass_max: 24000

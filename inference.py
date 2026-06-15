@@ -32,7 +32,8 @@ import sys
 import numpy as np
 import torch
 
-from lib.config.config_loader import load_project_config, setup_full_mareld_mvp
+from lib.config.config_loader import (load_project_config, setup_full_mareld_mvp,
+                                       compute_inference_b0_defaults)
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.policy import PolicyNetwork
 
@@ -163,6 +164,46 @@ def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
         if verbose:
             print(f"  [info] Resampled '{impact_id}' from {(Hs, Ws)} to {(H, W)} (nearest).")
     return arr.astype(np.float32, copy=False)
+
+
+def apply_b0_overrides(env, b0_overrides):
+    """Skala om varje FG:s spawnade biomass-fält så att totalsumman
+    matchar det användardefinierade ``b0_overrides[fg_id]`` (ton).
+
+    Bevarar den spatiala fördelningen (formen). FGs som saknas i
+    ``b0_overrides`` eller har None lämnas orörda. Om en FG:s nuvarande
+    totalsumma är 0 (tom karta) sprids målvärdet jämnt över alla celler.
+    Anropas direkt efter att env är byggd och innan första
+    ``env.step()`` så ``b0``-baseline blir det nya värdet.
+    """
+    if not b0_overrides:
+        return
+    for fid, target in b0_overrides.items():
+        if target is None:
+            continue
+        fg = env.fgs.get(fid)
+        if fg is None:
+            continue
+        try:
+            target_t = float(target)
+        except (TypeError, ValueError):
+            continue
+        if target_t < 0.0:
+            target_t = 0.0
+        arr = np.asarray(fg.biomass, dtype=np.float64)
+        cur = float(arr.sum())
+        if target_t == 0.0:
+            new_arr = np.zeros_like(arr, dtype=np.float32)
+        elif cur > 0.0:
+            new_arr = (arr * (target_t / cur)).astype(np.float32, copy=False)
+        else:
+            # Tom karta: sprid jämnt över hela griden.
+            H, W = arr.shape
+            new_arr = np.full((H, W), target_t / float(H * W), dtype=np.float32)
+        # Skriv tillbaka till FG. ``biomass`` är en ndarray; vi
+        # ersätter innehållet in-place så övriga referenser i env
+        # (caches osv) följer med.
+        fg.biomass[...] = new_arr
 
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
@@ -719,22 +760,12 @@ def main():
         print(str(e), file=sys.stderr)
         return 1
 
-    # Parallel random-action baseline environment. Built with the same
-    # project + seed as the trained env so initial biomass / impacts /
-    # spawn layout match exactly; the only difference is the policies
-    # (uniform random) installed inside run_inference.
-    rnd_env = None
-    if args.rnd_baseline:
-        rnd_env = build_env(args.project, args.grid, seed=args.seed,
-                            verbose=False,
-                            apply_natural_mortality=(args.mortality == "on"))
-
     viz = None
     if args.visual:
         try:
             from lib.viz import LiveVisualizer
             extra = ([fid + "_rnd" for fid in env.fgs.keys()]
-                     if rnd_env is not None else None)
+                     if args.rnd_baseline else None)
             ndm_ids = [fid for fid, fg in env.fgs.items()
                        if not getattr(fg, 'is_decision_maker', False)]
             viz = LiveVisualizer(fg_ids=list(env.fgs.keys()),
@@ -742,6 +773,22 @@ def main():
                                  mode="inference",
                                  extra_plot_ids=extra,
                                  ndm_ids=ndm_ids or None)
+            # b0-slider defaults: gridskaleberäknat inference_initial_biomass
+            # per FG, läst direkt från projekt-YAML. Slider-rangen blir
+            # ``[0, 4 * default]`` per FG, mittposition = default.
+            try:
+                b0_defaults = compute_inference_b0_defaults(
+                    args.project, args.grid)
+                if b0_defaults:
+                    viz.set_b0_defaults(b0_defaults)
+            except Exception as _e:
+                print(f"[viz] could not compute b0 defaults: {_e!r}",
+                      file=sys.stderr)
+            # Rollout-längd-slider: registrera CLI-värdet som default.
+            try:
+                viz.set_ticks_default(int(args.ticks))
+            except Exception:
+                pass
         except Exception as e:
             print(f"[viz] failed to start visualiser: {e!r}", file=sys.stderr)
             viz = None
@@ -749,24 +796,98 @@ def main():
     if verbose:
         print(f"Running {args.ticks} ticks...")
     interrupted = False
+    history = None
+    # Rerun-loop: så länge användaren drar i en b0-slider efter rollouten
+    # spelas en ny inspelning in med det nya värdet. Första iterationen
+    # använder ``env``/``rnd_env`` som redan byggts ovan (med eventuella
+    # initiala overrides från en sparad slider-state, som dock i praktiken
+    # är tomma i runda 1). Efterföljande iterationer bygger om från grunden
+    # så biomass/impact-fält återställs.
+    first_iteration = True
     try:
-        history = run_inference(env, policies, mean, var, args.ticks,
-                                verbose=verbose, viz=viz, rnd_env=rnd_env)
+        while True:
+            if not first_iteration:
+                env = build_env(args.project, args.grid, seed=args.seed,
+                                verbose=False,
+                                apply_natural_mortality=(args.mortality == "on"))
+                # Återbygg de statiska caches som ``load_policies_and_stats``
+                # satte upp i runda 1 (N_dm, N_all, dm_ids, per_dm_in_dim,
+                # max_in_dim m.fl.). Utan dessa kraschar
+                # ``_rebuild_batched_weights`` med ``AttributeError: N_dm``.
+                env._build_static_caches()
+            # b0-overrides från slidrarna (om viz finns) appliceras på env
+            # innan första env.step() — total biomass per FG skalas så
+            # totalsumman matchar slider-värdet. Bevarar spatial form.
+            b0_overrides = (viz.get_b0_overrides() if viz is not None else {})
+            if b0_overrides:
+                apply_b0_overrides(env, b0_overrides)
+                if verbose:
+                    print(f"    [b0 override] Applied: "
+                          + ", ".join(f"{k}={v:.1f}" for k, v in
+                                       b0_overrides.items()))
+
+            rnd_env = None
+            if args.rnd_baseline:
+                rnd_env = build_env(args.project, args.grid, seed=args.seed,
+                                    verbose=False,
+                                    apply_natural_mortality=(args.mortality == "on"))
+                if b0_overrides:
+                    apply_b0_overrides(rnd_env, b0_overrides)
+
+            # Konsumera ev. dirty-flaggor som råkade vara satta vid start
+            # av ny iteration — vi vill bara reagera på drag som sker EFTER
+            # denna rollout är klar.
+            if viz is not None:
+                viz.consume_b0_change()
+                viz.consume_ticks_change()
+
+            # Rollout-längd: använd slider-värdet om det är satt, annars
+            # CLI-default. Slidern kan ändras efter rolloutens slut, vilket
+            # triggar en ny inspelning via rerun-loopen.
+            ticks_this_run = (viz.get_ticks() if viz is not None
+                              else int(args.ticks))
+            if verbose and ticks_this_run != int(args.ticks):
+                print(f"    [ticks override] rollout length = {ticks_this_run}")
+            history = run_inference(env, policies, mean, var, ticks_this_run,
+                                    verbose=verbose, viz=viz,
+                                    rnd_env=rnd_env)
+            first_iteration = False
+
+            if viz is None:
+                break
+            # wait_for_close returnerar tidigt om användaren dragit i en
+            # slider (musen släpps -> dirty=True). Vid stängning av
+            # fönstret (Q/ESC eller window-close) blir ``self._quit=True``
+            # och loopen avslutas.
+            try:
+                viz.wait_for_close(
+                    banner="inference finished — drag a slider (b0 or "
+                           "rollout ticks) to re-record, or close window "
+                           "to exit (Q/ESC)")
+            except KeyboardInterrupt:
+                if verbose:
+                    print("\nInterrupted by user (Ctrl+C); closing window.")
+                break
+            b0_changed = viz.consume_b0_change()
+            ticks_changed = viz.consume_ticks_change()
+            if not (b0_changed or ticks_changed):
+                # Ingen slider-ändring — användaren stängde fönstret.
+                break
+            if verbose:
+                reasons = []
+                if b0_changed:
+                    reasons.append("b0")
+                if ticks_changed:
+                    reasons.append("ticks")
+                print(f"\n[slider] {'/'.join(reasons)} changed — "
+                      f"re-recording rollout…")
     except KeyboardInterrupt:
         interrupted = True
         if verbose:
             print("\nInterrupted by user (Ctrl+C).")
-        history = {fid: [0.0] for fid in env.fgs}
+        if history is None:
+            history = {fid: [0.0] for fid in env.fgs}
     finally:
-        if viz is not None and not interrupted:
-            # Keep the final frame on screen until the user closes the
-            # window (or hits Q/ESC). Ctrl+C in the terminal aborts the
-            # wait and proceeds to close immediately.
-            try:
-                viz.wait_for_close(banner="inference finished — close window to exit (Q/ESC)")
-            except KeyboardInterrupt:
-                if verbose:
-                    print("\nInterrupted by user (Ctrl+C); closing window.")
         if viz is not None:
             viz.close()
 

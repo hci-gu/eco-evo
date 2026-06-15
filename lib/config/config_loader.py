@@ -350,6 +350,53 @@ def _resolve_inference_initial_biomass(*sources):
     return None
 
 
+def compute_inference_b0_defaults(project_path, grid_size):
+    """Return ``{fg_id: b0_default_in_tonnes}`` for every active FG in the
+    project, beräknat på exakt samma sätt som :func:`load_project_config`
+    gör i ``mode='inference'``:
+
+        b0_default = max(inference_initial_biomass * biomass_scale, 1.0)
+
+    där ``biomass_scale = (H*W) / (ref_H * ref_W)`` med referens-griden
+    läst från ``project_metadata.reference_grid_{width,height}``.
+
+    Muted FGs och FGs utan ``inference_initial_biomass`` (eller 0) utelämnas.
+    Används av visualiseraren (``--visual``) för att initiera b0-slidrarna
+    så slider-rangen ``[0, 4 * b0_default]`` matchar exakt det b0-värde
+    en probe/inference-rollout faktiskt startar på vid mittposition.
+    """
+    if not project_path:
+        return {}
+    project = load_config(project_path)
+    pmeta = project.get('project_metadata', {}) or {}
+    _MIN_REF = 3
+    def _as_pos_int(v, default):
+        try:
+            iv = int(v)
+        except (TypeError, ValueError):
+            return default
+        return _MIN_REF if iv < _MIN_REF else iv
+    ref_w = _as_pos_int(pmeta.get('reference_grid_width'), 60)
+    ref_h = _as_pos_int(pmeta.get('reference_grid_height'), 60)
+    H_act, W_act = int(grid_size[0]), int(grid_size[1])
+    ref_cells = ref_w * ref_h
+    act_cells = H_act * W_act
+    biomass_scale = (act_cells / ref_cells) if ref_cells > 0 else 1.0
+    out = {}
+    for key in ('decision_makers', 'non_decision_makers', 'functional_groups'):
+        for fg in project.get(key, []) or []:
+            if not isinstance(fg, dict) or fg.get('muted'):
+                continue
+            gid = fg.get('group_id')
+            if not gid:
+                continue
+            fixed = _resolve_inference_initial_biomass(fg)
+            if fixed is None or fixed <= 0.0:
+                continue
+            out[gid] = max(float(fixed) * biomass_scale, 1.0)
+    return out
+
+
 def load_impact_spawn_specs(project_path):
     """Return ``{impact_id: StrategySpec}`` for impacts that declare a
     ``spawn:`` block in the project file.

@@ -85,6 +85,17 @@ class _NullViz:
     def update_status(self, *a, **kw): pass
     def begin_rollout_recording(self, *a, **kw): pass
     def end_rollout_recording(self, *a, **kw): pass
+    def set_b0_defaults(self, *a, **kw): pass
+    def get_b0_override(self, *a, **kw): return None
+    def get_b0_overrides(self, *a, **kw): return {}
+    def consume_b0_change(self, *a, **kw): return False
+    def set_ticks_default(self, *a, **kw): pass
+    def get_ticks_override(self, *a, **kw): return None
+    def consume_ticks_change(self, *a, **kw): return False
+    def set_neval_ticks_default(self, *a, **kw): pass
+    def get_neval_ticks_override(self, *a, **kw): return None
+    def get_neval_ticks(self, *a, **kw): return None
+    def consume_neval_ticks_change(self, *a, **kw): return False
     def pump_events(self): return True
     def wait_for_close(self, *a, **kw): pass
     def close(self): pass
@@ -237,6 +248,60 @@ class LiveVisualizer:
         # med global ARS-step) medan headern fortfarande uppdateras per
         # tick under rollouten. Uppdateras via ``update_action_fracs``.
         self._action_fracs: Dict[str, Dict[str, float]] = {}
+        # Per-FG startbiomass-slider (issue: b0-slider per heatmap). Tre dicts:
+        # ``_b0_defaults`` är det gridskaleberäknade b0 (= inference_initial_biomass
+        # * biomass_scale, med 1-ton-floor) som härleds från projektfilen och
+        # sätts av train.py/inference.py via :meth:`set_b0_defaults`. Värdet
+        # används som referens: slider-range = [0, 4 * default]; sliderns
+        # mittposition motsvarar default. ``_b0_overrides[fid]`` är det
+        # aktuella, av användaren satta värdet (None = använd default).
+        # ``_b0_dirty`` sätts varje gång slidern släpps på ett nytt värde
+        # och konsumeras av ``consume_b0_change`` så inference.py vet att
+        # en ny inspelning ska startas.
+        self._b0_defaults: Dict[str, float] = {}
+        self._b0_overrides: Dict[str, float] = {}
+        self._b0_dirty: bool = False
+        # Slider-rektanglar registreras varje frame i ``_draw_one_heatmap``
+        # och konsumeras av mus-handlerna (click/motion/up) i ``pump_events``.
+        # Varje entry är (track_rect, fid).
+        self._slider_rects: list = []
+        self._dragging_slider: Optional[str] = None
+        # Rollout-längd-slider (ticks). ``_ticks_default`` är värdet från
+        # CLI (--ticks i inference / --n_eval_ticks i train), satt av
+        # ``set_ticks_default``. ``_ticks_override`` är användarens valda
+        # värde via slidern (None = default). ``_ticks_dirty`` sätts när
+        # slidern släpps på ett nytt värde; konsumeras av inference.py.
+        # Range = [3, 10000] med log-skala mappning för bättre kontroll.
+        # ``_ticks_track_rect`` är (x, y, w, h) för den enda track-rect:en,
+        # registrerad varje frame av ``_draw_status_bar``.
+        self._ticks_min: int = 3
+        self._ticks_max: int = 10000
+        self._ticks_default: int = 200
+        self._ticks_override: Optional[int] = None
+        self._ticks_dirty: bool = False
+        self._ticks_track_rect: Optional[tuple] = None
+        self._dragging_ticks: bool = False
+        # Lås för ticks-slidern. Default låst — användaren måste klicka
+        # på låsikonen för att kunna ändra värdet. Rect lagras vid varje
+        # frame för hit-test.
+        self._ticks_locked: bool = True
+        self._ticks_lock_rect: Optional[tuple] = None
+        # Separat slider för ARS-träningens ``n_eval_ticks`` (rollout-
+        # längd per delta-evaluering). Endast meningsfull i träningsläget,
+        # men staten finns alltid så API:t kan anropas oberoende av mode.
+        # Range = [3, 10000] log-skala, samma som ticks-slidern. Värdet
+        # konsumeras av train.py **mellan** ARS-iterationer (säkert),
+        # inte mitt i en iteration.
+        self._neval_min: int = 3
+        self._neval_max: int = 10000
+        self._neval_default: int = 15
+        self._neval_override: Optional[int] = None
+        self._neval_dirty: bool = False
+        self._neval_track_rect: Optional[tuple] = None
+        self._dragging_neval: bool = False
+        # Lås för n_eval_ticks-slidern (default låst).
+        self._neval_locked: bool = True
+        self._neval_lock_rect: Optional[tuple] = None
         # Stable colour per FG (used for the plot legend).
         self._fg_colour: Dict[str, tuple] = {
             fid: _fg_colour_for(i, len(self.fg_ids))
@@ -277,10 +342,13 @@ class LiveVisualizer:
         # Five info lines above the heatmap: FG id, 'B0 = … B = …',
         # 'mv/rs/et = …' (DM only), 'pr/st/im = …' (DM only) and the
         # diet breakdown '<abbr>/<abbr>/… = X/Y/…%' (DM only), followed
-        # by one blank line beneath the last info line. NDM panels leave
-        # the three action/loss/diet lines blank to keep the heatmap
-        # origin aligned across panels.
-        title_h = 84
+        # av en horisontell b0-slider mellan info-blocket och heatmapen.
+        # NDM panels leave the three action/loss/diet lines blank to keep
+        # heatmap origin aligned across panels.
+        # title_h = 5 textrader (~14 px var) + slider (~22 px) + luft.
+        title_h = 104
+        self._slider_h = 16
+        self._slider_margin = 4
         cbar_h = 16  # colorbar strip (gradient + 0/max labels)
         pad = 8
         self._cbar_h = cbar_h
@@ -306,7 +374,14 @@ class LiveVisualizer:
         plot_w = max(420, heatmap_block_w // 2 + self._legend_w,
                      tab_strip_w + self._legend_w + 4)
         plot_h = heatmap_block_h
-        status_h = 26
+        # Status-baren rymmer textraden, rollout-längd-slidern och
+        # n_eval_ticks-slidern. ~18 px per slider-rad + 22 px för
+        # textraden ⇒ 62 px räcker för alla tre. I inference-läget visas
+        # ingen n_eval_ticks-slider, så raden tas bort (44 px räcker).
+        if str(mode).lower().startswith("infer"):
+            status_h = 44
+        else:
+            status_h = 62
         log_h = 0
         # Playback bar (under heatmaps) for replaying the most recent
         # probe/inference rollout. Holds the buttons << / >> / play / pause
@@ -537,6 +612,142 @@ class LiveVisualizer:
             return
         self._status.update(kw)
 
+    # ---- b0-slider API -----------------------------------------------
+    def set_b0_defaults(self, defaults: Mapping[str, float]) -> None:
+        """Registrera per-FG gridskaleberäknad startbiomass (b0_default).
+
+        Värdet kommer från projektfilens ``inference_initial_biomass``
+        (under fliken Inference i fgconfig) multiplicerat med
+        ``biomass_scale = (H*W)/(ref_H*ref_W)`` och med 1-ton-floor — se
+        ``lib/config/config_loader.py``. Slidern ritas med range
+        ``[0, 4 * default]`` och mittposition motsvarar default.
+        FGs utan default (eller default <= 0) får en disabled placeholder.
+        """
+        if not self.enabled:
+            return
+        for fid, v in dict(defaults).items():
+            try:
+                self._b0_defaults[str(fid)] = float(v)
+            except (TypeError, ValueError):
+                continue
+
+    def get_b0_override(self, fid: str) -> Optional[float]:
+        """Returnera användarens valda b0 för FG, eller None om slidern
+        står på default-positionen (ingen explicit override)."""
+        return self._b0_overrides.get(str(fid))
+
+    def get_b0_overrides(self) -> Dict[str, float]:
+        """Returnera en kopia av alla aktiva b0-overrides."""
+        return dict(self._b0_overrides)
+
+    def consume_b0_change(self) -> bool:
+        """Returnera True och nollställ dirty-flaggan om slidern dragits
+        sedan senaste anrop. Används av ``inference.py`` för att veta att
+        en ny inspelning ska startas."""
+        if not self.enabled:
+            return False
+        dirty = bool(self._b0_dirty)
+        self._b0_dirty = False
+        return dirty
+
+    # ---- ticks-slider API (rollout length) ----------------------------
+    def set_ticks_default(self, ticks: int) -> None:
+        """Registrera CLI-värdet (default) för rollout-längd.
+
+        Klampas till ``[_ticks_min, _ticks_max]`` = [3, 10000]. Anropas
+        en gång av train.py (``--n_eval_ticks``) och inference.py
+        (``--ticks``) när viz initieras.
+        """
+        if not self.enabled:
+            return
+        try:
+            v = int(ticks)
+        except (TypeError, ValueError):
+            return
+        self._ticks_default = max(self._ticks_min,
+                                  min(self._ticks_max, v))
+
+    def get_ticks_override(self) -> Optional[int]:
+        """Returnera användarens valda rollout-längd, eller None om
+        slidern står på default-positionen."""
+        return self._ticks_override
+
+    def get_ticks(self) -> int:
+        """Effektiv rollout-längd: override om satt, annars default."""
+        if self._ticks_override is not None:
+            return int(self._ticks_override)
+        return int(self._ticks_default)
+
+    def consume_ticks_change(self) -> bool:
+        """Returnera True och nollställ dirty-flaggan om ticks-slidern
+        dragits sedan senaste anrop. Används av ``inference.py`` för att
+        veta att en ny inspelning ska startas."""
+        if not self.enabled:
+            return False
+        dirty = bool(self._ticks_dirty)
+        self._ticks_dirty = False
+        return dirty
+
+    def _ticks_pos_from_value(self, v: int) -> float:
+        """Log-skala mappning value -> position-frac i [0, 1]."""
+        lo, hi = float(self._ticks_min), float(self._ticks_max)
+        v = max(lo, min(hi, float(v)))
+        import math
+        return (math.log(v) - math.log(lo)) / (math.log(hi) - math.log(lo))
+
+    def _ticks_value_from_pos(self, frac: float) -> int:
+        """Log-skala mappning position-frac i [0, 1] -> value (int)."""
+        frac = max(0.0, min(1.0, float(frac)))
+        import math
+        lo, hi = float(self._ticks_min), float(self._ticks_max)
+        v = math.exp(math.log(lo) + frac * (math.log(hi) - math.log(lo)))
+        return int(round(max(lo, min(hi, v))))
+
+    # ---- n_eval_ticks-slider API (ARS rollout length) ----------------
+    def set_neval_ticks_default(self, ticks: int) -> None:
+        """Registrera CLI-värdet (--n_eval_ticks) som default för
+        ARS-rollout-längd. Anropas en gång av train.py när viz initieras."""
+        if not self.enabled:
+            return
+        try:
+            v = int(ticks)
+        except (TypeError, ValueError):
+            return
+        self._neval_default = max(self._neval_min,
+                                  min(self._neval_max, v))
+
+    def get_neval_ticks_override(self) -> Optional[int]:
+        """Returnera användarens valda n_eval_ticks, eller None."""
+        return self._neval_override
+
+    def get_neval_ticks(self) -> int:
+        """Effektivt n_eval_ticks: override om satt, annars default."""
+        if self._neval_override is not None:
+            return int(self._neval_override)
+        return int(self._neval_default)
+
+    def consume_neval_ticks_change(self) -> bool:
+        """Returnera True och nollställ dirty om slidern dragits sedan
+        senaste anrop."""
+        if not self.enabled:
+            return False
+        dirty = bool(self._neval_dirty)
+        self._neval_dirty = False
+        return dirty
+
+    def _neval_pos_from_value(self, v: int) -> float:
+        lo, hi = float(self._neval_min), float(self._neval_max)
+        v = max(lo, min(hi, float(v)))
+        import math
+        return (math.log(v) - math.log(lo)) / (math.log(hi) - math.log(lo))
+
+    def _neval_value_from_pos(self, frac: float) -> int:
+        frac = max(0.0, min(1.0, float(frac)))
+        import math
+        lo, hi = float(self._neval_min), float(self._neval_max)
+        v = math.exp(math.log(lo) + frac * (math.log(hi) - math.log(lo)))
+        return int(round(max(lo, min(hi, v))))
+
     # ---- Rollout recording / playback --------------------------------
     def begin_rollout_recording(self) -> None:
         """Starta inspelning av en ny probe/inference-rollout.
@@ -551,6 +762,25 @@ class LiveVisualizer:
             return
         self._recording = True
         self._pending_rollout = []
+        # Rensa per-FG plot-serier mellan inspelningar — MEN endast i
+        # inference-läge. I inference används ``step=tick`` (0..N) som
+        # x-värde och varje ny rollout startar om från 0, så gamla par
+        # från förra rolloutens slut + nya pars start gör att
+        # ``pg.draw.aalines`` (utan clipping mot plot-rect) ritar
+        # långa fel-linjer tvärs över skärmen in i heatmap-området.
+        # I träningsläget pushas däremot en punkt per probe med
+        # globalt monotont ökande ``viz_step`` (ARS-step) och hela
+        # historiken över probes ska vara synlig i grafritarrutan —
+        # där får vi INTE rensa, annars ritas ingenting (endast 1
+        # punkt kvar per probe, och aalines kräver ≥2 punkter).
+        if str(self.mode).lower().startswith("infer"):
+            try:
+                for tab_buf in self._series.values():
+                    for fid in tab_buf:
+                        tab_buf[fid].clear()
+            except Exception as e:
+                self._log_once(
+                    f"begin_rollout_recording series-reset failed: {e!r}")
 
     def end_rollout_recording(self) -> None:
         """Avsluta inspelning; den nya filmen tar över ``_current_rollout``."""
@@ -631,6 +861,40 @@ class LiveVisualizer:
                     interacted = True
                 elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     self._handle_click(event.pos)
+                    interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_slider is not None:
+                    fid = self._dragging_slider
+                    v = self._slider_value_from_x(fid, event.pos[0])
+                    if v is not None:
+                        self._b0_overrides[fid] = float(v)
+                        interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_ticks:
+                    v = self._ticks_value_from_x(event.pos[0])
+                    if v is not None:
+                        self._ticks_override = int(v)
+                        interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_neval:
+                    v = self._neval_value_from_x(event.pos[0])
+                    if v is not None:
+                        self._neval_override = int(v)
+                        interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_slider is not None:
+                    # Släppt: markera dirty så inference.py kan trigga ny
+                    # inspelning. För train.py konsumeras värdet av nästa
+                    # probe utan att läsa flaggan.
+                    self._dragging_slider = None
+                    self._b0_dirty = True
+                    interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_ticks:
+                    self._dragging_ticks = False
+                    self._ticks_dirty = True
+                    interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_neval:
+                    self._dragging_neval = False
+                    self._neval_dirty = True
                     interacted = True
             # Only render on actual user interaction here — a full
             # heatmap+plot redraw can easily cost 50-150 ms and during
@@ -731,6 +995,47 @@ class LiveVisualizer:
                             self._handle_key(event.key)
                     elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                         self._handle_click(event.pos)
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_slider is not None):
+                        fid = self._dragging_slider
+                        v = self._slider_value_from_x(fid, event.pos[0])
+                        if v is not None:
+                            self._b0_overrides[fid] = float(v)
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_ticks):
+                        v = self._ticks_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._ticks_override = int(v)
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_neval):
+                        v = self._neval_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._neval_override = int(v)
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_slider is not None):
+                        self._dragging_slider = None
+                        self._b0_dirty = True
+                        # Avbryt wait_for_close-loopen så inference.py kan
+                        # läsa dirty-flaggan och spela in en ny rollout.
+                        return
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_ticks):
+                        self._dragging_ticks = False
+                        self._ticks_dirty = True
+                        # Avbryt wait_for_close-loopen så inference.py
+                        # spelar in en ny rollout med nya ticks-värdet.
+                        return
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_neval):
+                        self._dragging_neval = False
+                        self._neval_dirty = True
+                        # n_eval_ticks-slidern påverkar bara träning;
+                        # i inference-läget triggar den ingen re-recording
+                        # (vi avbryter inte wait-loopen för den här).
+                        # Men vi avbryter ändå för konsistens — main()
+                        # i inference.py reagerar bara om en relevant
+                        # slider är dirty, så detta är ofarligt.
+                        pass
                 # Playback auto-advance (samma logik som i pump_events),
                 # annars händer ingenting när användaren trycker play efter
                 # att inference-rollouten är klar.
@@ -834,10 +1139,188 @@ class LiveVisualizer:
                 target = self.fg_ids[idx]
                 self._solo = None if self._solo == target else target
 
+    def _slider_value_from_x(self, fid: str, mx: int) -> Optional[float]:
+        """Map mouse x-coordinate to a b0-värde för denna FG:s slider.
+
+        Returnerar None om FG saknar default (slidern är disabled).
+        """
+        b0_default = self._b0_defaults.get(fid)
+        if b0_default is None or b0_default <= 0.0:
+            return None
+        # Slider-tracken börjar vid panel_x + 4 (pad) och har bredden
+        # grid_w * cell_px. Vi söker upp track-rektangeln via senaste
+        # registrerade hit_rect så vi inte måste duplicera layout-mat.
+        for rect, rfid in self._slider_rects:
+            if rfid != fid:
+                continue
+            rx, _ry, rw, _rh = rect
+            # Justera tillbaka för det 2-px padding vi la till runt hit_rect.
+            track_x = rx + 2
+            track_w = rw - 4
+            frac = (mx - track_x) / max(1.0, float(track_w))
+            frac = max(0.0, min(1.0, frac))
+            return frac * 4.0 * float(b0_default)
+        return None
+
+    def _draw_lock_icon(self, x: int, y: int, size: int,
+                        locked: bool) -> tuple:
+        """Rita en liten lås-ikon med övre vänstra hörnet i (x, y).
+
+        Returnerar hit-rect (x, y, size, size). Färgschema: gul/orange
+        låsöra + ljus kropp om olåst, dämpat grått om låst.
+        """
+        pg = self._pg
+        s = int(size)
+        # Kropp (rektangel i nedre delen).
+        body_h = int(s * 0.55)
+        body_y = y + s - body_h
+        body_x = x + 1
+        body_w = s - 2
+        # Bygel (ovan kroppen).
+        sh_w = int(s * 0.6)
+        sh_x = x + (s - sh_w) // 2
+        sh_y = y + 1
+        sh_h = int(s * 0.55)
+        if locked:
+            body_col = (160, 160, 170)
+            shackle_col = (160, 160, 170)
+        else:
+            body_col = (230, 200, 90)
+            shackle_col = (230, 200, 90)
+        # Bygel: rita som en ofylld halvcirkel/rektangel-ring.
+        pg.draw.rect(self._screen, shackle_col,
+                     (sh_x, sh_y, sh_w, sh_h), 2,
+                     border_radius=max(2, sh_w // 2))
+        if not locked:
+            # Olåst: bryt bygeln på höger sida genom att täcka med
+            # bakgrundsfärg (status-bar bakgrund ≈ (20,20,28) i panelen).
+            # Vi ritar ett litet avsnitt som "öppnar" bygeln.
+            pg.draw.rect(self._screen, (28, 28, 36),
+                         (sh_x + sh_w - 3, sh_y + sh_h // 2 - 1,
+                          3, sh_h // 2 + 2))
+        # Kropp.
+        pg.draw.rect(self._screen, body_col,
+                     (body_x, body_y, body_w, body_h),
+                     border_radius=2)
+        pg.draw.rect(self._screen, (30, 30, 36),
+                     (body_x, body_y, body_w, body_h), 1,
+                     border_radius=2)
+        # Litet nyckelhål.
+        kh_x = body_x + body_w // 2
+        kh_y = body_y + body_h // 2
+        pg.draw.circle(self._screen, (30, 30, 36), (kh_x, kh_y), 1)
+        return (x, y, s, s)
+
+    @staticmethod
+    def _hit_rect(rect, pos) -> bool:
+        if rect is None:
+            return False
+        try:
+            mx, my = pos
+        except Exception:
+            return False
+        rx, ry, rw, rh = rect
+        return rx <= mx < rx + rw and ry <= my < ry + rh
+
+    def _hit_slider(self, pos) -> Optional[str]:
+        try:
+            mx, my = pos
+        except Exception:
+            return None
+        for rect, fid in self._slider_rects:
+            rx, ry, rw, rh = rect
+            if rx <= mx < rx + rw and ry <= my < ry + rh:
+                return fid
+        return None
+
+    def _hit_ticks_slider(self, pos) -> bool:
+        """True om klicket landade i ticks-sliderns track-rect."""
+        rect = self._ticks_track_rect
+        if rect is None:
+            return False
+        try:
+            mx, my = pos
+        except Exception:
+            return False
+        rx, ry, rw, rh = rect
+        return rx <= mx < rx + rw and ry <= my < ry + rh
+
+    def _ticks_value_from_x(self, mx: int) -> Optional[int]:
+        """Mappa mus-x till ticks-värde via tracken (log-skala)."""
+        rect = self._ticks_track_rect
+        if rect is None:
+            return None
+        rx, _ry, rw, _rh = rect
+        track_x = rx + 2
+        track_w = max(1, rw - 4)
+        frac = (mx - track_x) / float(track_w)
+        return self._ticks_value_from_pos(frac)
+
+    def _hit_neval_slider(self, pos) -> bool:
+        rect = self._neval_track_rect
+        if rect is None:
+            return False
+        try:
+            mx, my = pos
+        except Exception:
+            return False
+        rx, ry, rw, rh = rect
+        return rx <= mx < rx + rw and ry <= my < ry + rh
+
+    def _neval_value_from_x(self, mx: int) -> Optional[int]:
+        rect = self._neval_track_rect
+        if rect is None:
+            return None
+        rx, _ry, rw, _rh = rect
+        track_x = rx + 2
+        track_w = max(1, rw - 4)
+        frac = (mx - track_x) / float(track_w)
+        return self._neval_value_from_pos(frac)
+
     def _handle_click(self, pos) -> None:
         try:
             mx, my = pos
         except Exception:
+            return
+        # Lås-ikoner: togglar lås-state. Klick på låsikon ska aldrig
+        # routas vidare till slidern eller heatmaps.
+        if self._hit_rect(self._ticks_lock_rect, pos):
+            self._ticks_locked = not self._ticks_locked
+            return
+        if self._hit_rect(self._neval_lock_rect, pos):
+            self._neval_locked = not self._neval_locked
+            return
+        # Ticks-slider: kolla först av allt (sitter i status-baren ovanför
+        # heatmapsen och får inte routas vidare som heatmap/tab-klick).
+        # Slidern är aktiv endast om låset är upplåst.
+        if self._hit_ticks_slider(pos):
+            if self._ticks_locked:
+                return
+            v = self._ticks_value_from_x(mx)
+            if v is not None:
+                self._ticks_override = int(v)
+                self._dragging_ticks = True
+            return
+        # n_eval_ticks-slider: samma princip (separat rad i status-baren).
+        if self._hit_neval_slider(pos):
+            if self._neval_locked:
+                return
+            v = self._neval_value_from_x(mx)
+            if v is not None:
+                self._neval_override = int(v)
+                self._dragging_neval = True
+            return
+        # b0-slidrar: kolla först om klicket landade i en slider — då
+        # initieras dragning och vi hoppar över övrig klick-routing.
+        fid = self._hit_slider(pos)
+        if fid is not None:
+            v = self._slider_value_from_x(fid, mx)
+            if v is not None:
+                self._b0_overrides[fid] = float(v)
+                self._dragging_slider = fid
+                # Markera inte ``_b0_dirty`` förrän musen släpps; annars
+                # skulle inference.py kunna trigga en ny inspelning för
+                # varje liten mus-darrning under dragningen.
             return
         for rect, i in self._tab_rects:
             rx, ry, rw, rh = rect
@@ -1094,6 +1577,7 @@ class LiveVisualizer:
                            y + (h - ind_surf.get_height()) // 2))
 
     def _draw_status_bar(self) -> None:
+        pg = self._pg
         x, y, w, h = self._status_rect
         parts = [f"mode = {self.mode}", f"tick = {self._tick}"]
         for k in ("gen", "iter", "T"):
@@ -1115,10 +1599,162 @@ class LiveVisualizer:
         parts.append(f"fps = {self._fps_value:4.1f}")
         text = "  ".join(parts)
         surf = self._font_big.render(text, True, (230, 230, 235))
-        self._screen.blit(surf, (x + 6, y + 5))
+        self._screen.blit(surf, (x + 6, y + 3))
+
+        # ---- Rollout-längd-slider (rad 2 i status-baren) -------------
+        # Layout: vänster label "rollout ticks = N", track, höger gränser.
+        # Range = [_ticks_min, _ticks_max] (log-skala). Vid drag visas
+        # det realtidsuppdaterade värdet inline.
+        cur = self.get_ticks()
+        marker = "*" if self._ticks_override is not None else ""
+        label = f"rollout ticks{marker} = {cur}"
+        lbl_surf = self._font.render(label, True, (210, 210, 220))
+        row2_y = y + 22
+        row2_h = 18
+        self._screen.blit(lbl_surf, (x + 6, row2_y + 2))
+        lo_surf = self._font.render(str(self._ticks_min), True, (150, 150, 160))
+        hi_surf = self._font.render(str(self._ticks_max), True, (150, 150, 160))
+        # Track-rect: börjar efter label (+ liten gutter), slutar före
+        # hi-label (+ gutter). Mappar mot fönsterbredden.
+        track_x = x + 6 + lbl_surf.get_width() + 12 + lo_surf.get_width() + 6
+        # Begränsa sliderns högerkant så att den slutar där plot-rutan
+        # börjar (annars sträcker den sig över hela fönsterbredden och
+        # täcker grafritarrutan, vilket ser fult ut och är onödigt långt).
+        try:
+            plot_left = int(self._plot_rect[0])
+        except Exception:
+            plot_left = x + w
+        # Lämna plats för låsikon (16 px + 6 px gutter) mellan track och
+        # hi-label. I inference-läget döljs låsikonerna och
+        # n_eval_ticks-slidern helt, så ingen plats reserveras.
+        _is_inference = str(self.mode).lower().startswith("infer")
+        if _is_inference:
+            # Tvinga ticks-slidern olåst när låset inte är synligt.
+            self._ticks_locked = False
+            lock_size = 0
+            lock_gutter = 0
+        else:
+            lock_size = 14
+            lock_gutter = 6
+        right_limit = (plot_left - (hi_surf.get_width() + 6) - 4
+                       - (lock_size + lock_gutter))
+        track_w_max = right_limit - track_x
+        track_w = max(80, track_w_max)
+        track_y = row2_y + (row2_h - 6) // 2
+        track_h = 6
+        # Lo-label strax före tracken; hi-label strax efter.
+        self._screen.blit(lo_surf, (track_x - 6 - lo_surf.get_width(),
+                                    row2_y + 2))
+        # Hi-label hamnar efter låsikonen (track + gutter + lock + gutter).
+        self._screen.blit(hi_surf,
+                          (track_x + track_w + lock_gutter + lock_size + 6,
+                           row2_y + 2))
+        # Track-bakgrund.
+        pg.draw.rect(self._screen, (60, 60, 70),
+                     (track_x, track_y, track_w, track_h))
+        pg.draw.rect(self._screen, (110, 110, 125),
+                     (track_x, track_y, track_w, track_h), 1)
+        # Default-markering (liten tick).
+        try:
+            df = self._ticks_pos_from_value(self._ticks_default)
+            dx = int(track_x + df * (track_w - 1))
+            pg.draw.line(self._screen, (140, 140, 150),
+                         (dx, track_y - 2), (dx, track_y + track_h + 2), 1)
+        except Exception:
+            pass
+        # Handle på aktuell position.
+        try:
+            frac = self._ticks_pos_from_value(cur)
+        except Exception:
+            frac = 0.0
+        hx = int(track_x + frac * (track_w - 1))
+        hcol = (220, 220, 90) if self._ticks_override is not None else (200, 200, 210)
+        pg.draw.circle(self._screen, hcol, (hx, track_y + track_h // 2), 6)
+        pg.draw.circle(self._screen, (40, 40, 50),
+                       (hx, track_y + track_h // 2), 6, 1)
+        # Spara track-rect för hit-test (vi gör hit-rect lite tjockare).
+        self._ticks_track_rect = (track_x - 2, track_y - 6,
+                                  track_w + 4, track_h + 12)
+        # Lås-ikon direkt höger om tracken (mellan track och hi-label).
+        # Döljs i inference-läget.
+        if _is_inference:
+            self._ticks_lock_rect = None
+        else:
+            lock_x = track_x + track_w + lock_gutter
+            lock_y = row2_y + (row2_h - lock_size) // 2
+            self._ticks_lock_rect = self._draw_lock_icon(
+                lock_x, lock_y, lock_size, self._ticks_locked)
+
+        # ---- n_eval_ticks-slider (rad 3 i status-baren) --------------
+        # Endast meningsfull under träning — döljs helt i inference.
+        if _is_inference:
+            self._neval_track_rect = None
+            self._neval_lock_rect = None
+            return
+        # Identisk layout som ticks-slidern men med "n_eval_ticks" som
+        # label. Aktiv främst under träning; värdet konsumeras av
+        # train.py mellan ARS-iterationer.
+        cur2 = self.get_neval_ticks()
+        marker2 = "*" if self._neval_override is not None else ""
+        label2 = f"n_eval_ticks{marker2} = {cur2}"
+        lbl2_surf = self._font.render(label2, True, (210, 210, 220))
+        row3_y = y + 40
+        row3_h = 18
+        self._screen.blit(lbl2_surf, (x + 6, row3_y + 2))
+        lo2_surf = self._font.render(str(self._neval_min), True,
+                                     (150, 150, 160))
+        hi2_surf = self._font.render(str(self._neval_max), True,
+                                     (150, 150, 160))
+        track2_x = (x + 6 + lbl2_surf.get_width() + 12
+                    + lo2_surf.get_width() + 6)
+        right_limit2 = (plot_left - (hi2_surf.get_width() + 6) - 4
+                        - (lock_size + lock_gutter))
+        track2_w_max = right_limit2 - track2_x
+        track2_w = max(80, track2_w_max)
+        track2_y = row3_y + (row3_h - 6) // 2
+        track2_h = 6
+        self._screen.blit(lo2_surf,
+                          (track2_x - 6 - lo2_surf.get_width(),
+                           row3_y + 2))
+        self._screen.blit(
+            hi2_surf,
+            (track2_x + track2_w + lock_gutter + lock_size + 6, row3_y + 2))
+        pg.draw.rect(self._screen, (60, 60, 70),
+                     (track2_x, track2_y, track2_w, track2_h))
+        pg.draw.rect(self._screen, (110, 110, 125),
+                     (track2_x, track2_y, track2_w, track2_h), 1)
+        try:
+            df2 = self._neval_pos_from_value(self._neval_default)
+            dx2 = int(track2_x + df2 * (track2_w - 1))
+            pg.draw.line(self._screen, (140, 140, 150),
+                         (dx2, track2_y - 2),
+                         (dx2, track2_y + track2_h + 2), 1)
+        except Exception:
+            pass
+        try:
+            frac2 = self._neval_pos_from_value(cur2)
+        except Exception:
+            frac2 = 0.0
+        hx2 = int(track2_x + frac2 * (track2_w - 1))
+        hcol2 = ((220, 220, 90) if self._neval_override is not None
+                 else (200, 200, 210))
+        pg.draw.circle(self._screen, hcol2,
+                       (hx2, track2_y + track2_h // 2), 6)
+        pg.draw.circle(self._screen, (40, 40, 50),
+                       (hx2, track2_y + track2_h // 2), 6, 1)
+        self._neval_track_rect = (track2_x - 2, track2_y - 6,
+                                  track2_w + 4, track2_h + 12)
+        # Lås-ikon för n_eval_ticks-slidern.
+        lock2_x = track2_x + track2_w + lock_gutter
+        lock2_y = row3_y + (row3_h - lock_size) // 2
+        self._neval_lock_rect = self._draw_lock_icon(
+            lock2_x, lock2_y, lock_size, self._neval_locked)
 
     def _draw_heatmaps(self) -> None:
         ox, oy = self._heatmap_origin
+        # Slider-rektangellistan byggs om varje frame så stale entries
+        # från föregående layout aldrig kan trigga drag i fel panel.
+        self._slider_rects = []
         for idx, fid in enumerate(self.fg_ids):
             row = idx // self._cols
             col = idx % self._cols
@@ -1162,10 +1798,9 @@ class LiveVisualizer:
         # Five info lines above the heatmap: FG name, 'B0 = … B = …', the
         # action distribution 'mv/rs/et = …', biomass-loss breakdown
         # 'pr/st/im = …' and the diet breakdown '<abbr>/… = X/…%' (last
-        # three blank for NDMs), följt av en tom rad så det blir luft
-        # mellan sista info-raden och heatmapen. title_h måste rymma alla
-        # fem rader + den tomma raden.
-        title_h = 84
+        # three blank for NDMs), följt av en b0-slider mellan info-blocket
+        # och heatmapen. title_h måste rymma alla fem rader + slider.
+        title_h = 104
         arr = self._biomass.get(fid)
         # Panel background.
         pg.draw.rect(self._screen, (28, 28, 34),
@@ -1189,7 +1824,18 @@ class LiveVisualizer:
             else:
                 s = f"{v:,.0f}"
             return s.replace(",", " ")
-        info_txt = f"B0 = {_fmt_b(b0)}  B = {_fmt_b(total)}"
+        # När användaren satt en b0-override via slidern visas det
+        # värdet i info-raden (markerat med ``*``); annars visas den
+        # senast registrerade rollout-starten ``self._b0[fid]``.
+        b0_default = self._b0_defaults.get(fid)
+        b0_override = self._b0_overrides.get(fid)
+        if b0_override is not None:
+            b0_shown = b0_override
+            b0_marker = "*"
+        else:
+            b0_shown = b0
+            b0_marker = ""
+        info_txt = f"B0{b0_marker} = {_fmt_b(b0_shown)}  B = {_fmt_b(total)}"
         info_col = (180, 180, 190) if not dim else (90, 90, 95)
         info_surf = self._font.render(info_txt, True, info_col)
         info_y = py + 1 + name_surf.get_height()
@@ -1259,6 +1905,55 @@ class LiveVisualizer:
                                 diet_y = loss_y + loss_surf.get_height()
                                 self._screen.blit(
                                     diet_surf, (px + pad, diet_y))
+
+        # ---- b0-slider --------------------------------------------------
+        # Horisontell slider placerad mellan info-blocket ovanför och själva
+        # heatmapen nedanför. Range = [0, 4 * b0_default]; mittposition
+        # motsvarar projektets gridskalade default. När ingen default är
+        # satt (FG saknar inference_initial_biomass) ritas en disabled
+        # placeholder så heatmap-origin förblir aligned med andra paneler.
+        slider_h = int(getattr(self, '_slider_h', 16))
+        slider_y = py + title_h - slider_h - 4
+        slider_x = px + pad
+        slider_w = self.grid_w * self.cell_px
+        track_y = slider_y + slider_h // 2 - 2
+        track_h = 4
+        # Track-rektangel registreras alltid (även för disabled-sliders),
+        # men dragning aktiveras endast när b0_default > 0 (annars ingen
+        # meningsfull range).
+        if b0_default is not None and b0_default > 0.0:
+            v_max = 4.0 * float(b0_default)
+            v_cur = float(b0_override if b0_override is not None else b0_default)
+            v_cur = max(0.0, min(v_max, v_cur))
+            frac = v_cur / v_max if v_max > 0.0 else 0.0
+            track_col = (60, 60, 80) if not dim else (40, 40, 50)
+            fill_col = tuple(int(c * (0.35 if dim else 0.7)) for c in colour)
+            knob_col = tuple(int(c * (0.35 if dim else 1.0)) for c in colour)
+            pg.draw.rect(self._screen, track_col,
+                         (slider_x, track_y, slider_w, track_h))
+            pg.draw.rect(self._screen, fill_col,
+                         (slider_x, track_y, int(slider_w * frac), track_h))
+            knob_x = int(slider_x + slider_w * frac)
+            knob_r = max(4, slider_h // 2)
+            pg.draw.circle(self._screen, knob_col,
+                           (knob_x, track_y + track_h // 2), knob_r)
+            # Markera default-positionen (= oediterat initialvärde) med
+            # ett litet streck så användaren ser var "ursprungsvärdet"
+            # ligger. Range är [0, 4 × default], så default-fraktionen är
+            # 1/4 av tracken (inte mitten).
+            def_x = int(slider_x + slider_w * 0.25)
+            pg.draw.line(self._screen, (220, 220, 230),
+                         (def_x, track_y - 3),
+                         (def_x, track_y + track_h + 3), 1)
+            # Hit-rektangel för mus: täcker hela slider-raden, inte bara
+            # tracken, så det är lätt att klicka.
+            hit_rect = (slider_x - 2, slider_y - 2,
+                        slider_w + 4, slider_h + 4)
+            self._slider_rects.append((hit_rect, fid))
+        else:
+            # Disabled placeholder.
+            pg.draw.rect(self._screen, (40, 40, 50),
+                         (slider_x, track_y, slider_w, track_h))
 
         if arr is None:
             return

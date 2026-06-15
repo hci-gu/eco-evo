@@ -13,9 +13,9 @@
       mode: perlin
       scale: 12.0
       octaves: 4
-      persistence: 0.55
-      lacunarity: 2.0
-      threshold: 0.0
+      persistence: 0.5
+      lacunarity: 4.0
+      threshold: 0.5
   zooplankton:
     display_name: "Zooplankton"
     is_decision_maker: true
