@@ -1886,8 +1886,49 @@ def main():
 
     import itertools
     import time as _time
-    gen_iter = itertools.count() if generations_is_inf else range(generations_value)
-    gen_label_total = "inf" if generations_is_inf else str(generations_value)
+
+    # --resume: continue gen-numbering seamlessly where the previous
+    # invocation left off. We inspect the run's ``biomass.jsonl`` (the
+    # per-probe log, written with ``'gen': gen+1``) and pick up at the
+    # next gen-index. ``--generations N`` always means "N more gens
+    # from here", so the total range covered by the log after resume
+    # spans ``[last_logged_gen + 1, last_logged_gen + N]`` (1-indexed).
+    # On a fresh run (no log, or unreadable), start_gen stays 0 and the
+    # legacy behaviour is preserved exactly.
+    start_gen = 0
+    if args.resume and os.path.isfile(probe_jsonl_path):
+        try:
+            import json as _json_resume
+            _max_gen_logged = 0
+            with open(probe_jsonl_path, 'r') as _f:
+                for _line in _f:
+                    _line = _line.strip()
+                    if not _line:
+                        continue
+                    try:
+                        _rec = _json_resume.loads(_line)
+                    except Exception:
+                        continue
+                    _g = _rec.get('gen')
+                    if isinstance(_g, (int, float)) and int(_g) > _max_gen_logged:
+                        _max_gen_logged = int(_g)
+            if _max_gen_logged > 0:
+                # ``gen`` is 0-indexed internally; JSONL stores ``gen+1``.
+                # Resume on the next gen after the last logged one.
+                start_gen = _max_gen_logged
+                print(f"    [resume] biomass.jsonl reached gen "
+                      f"{_max_gen_logged}; continuing at gen "
+                      f"{start_gen + 1}.")
+        except Exception as _e:
+            print(f"    [resume] WARN: could not read {probe_jsonl_path} "
+                  f"for gen offset: {_e!r}")
+
+    if generations_is_inf:
+        gen_iter = itertools.count(start_gen)
+    else:
+        gen_iter = range(start_gen, start_gen + generations_value)
+    gen_label_total = ("inf" if generations_is_inf
+                       else str(start_gen + generations_value))
     _training_start_ts = _time.monotonic()
 
     def _fmt_elapsed(seconds: float) -> str:
