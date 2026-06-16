@@ -35,7 +35,7 @@
       n_colonies: 25
       sigma_cells: 1.0
       anchor: free
-      amplitude_mode: uniform
+      amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.2

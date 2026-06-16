@@ -96,6 +96,10 @@ class _NullViz:
     def get_neval_ticks_override(self, *a, **kw): return None
     def get_neval_ticks(self, *a, **kw): return None
     def consume_neval_ticks_change(self, *a, **kw): return False
+    def set_spawn_templates(self, *a, **kw): pass
+    def set_spawn_defaults(self, *a, **kw): pass
+    def get_spawn_overrides(self, *a, **kw): return {}
+    def consume_spawn_change(self, *a, **kw): return False
     def pump_events(self): return True
     def wait_for_close(self, *a, **kw): pass
     def close(self): pass
@@ -302,6 +306,45 @@ class LiveVisualizer:
         # Lås för n_eval_ticks-slidern (default låst).
         self._neval_locked: bool = True
         self._neval_lock_rect: Optional[tuple] = None
+        # Uppspelnings-scrub-slider (timeline). Placeras i playback-baren
+        # mellan speed-knapparna och frame-indikatorn. ``_playback_track_rect``
+        # sätts varje frame av ``_draw_playback_bar`` (None när slidern
+        # är disabled). ``_dragging_playback`` följer drag-state.
+        self._playback_track_rect: Optional[tuple] = None
+        self._dragging_playback: bool = False
+        # Per-FG spawn-strategi-overrides (issue: dropdowns under varje
+        # heatmap). ``_spawn_templates`` är hela det globala
+        # ``project_data['spawn_templates']``-trädet:
+        # ``{<mode>: {<name>: {<params>}}}``. ``_spawn_modes`` är
+        # listan över tillgängliga modes (samma som fgconfig).
+        # ``_spawn_overrides[fid]`` = {"mode": <mode_str>, "template": <name_or_None>}.
+        # ``template=None`` innebär att FG:n behåller projektfilens
+        # spawn-konfiguration (default-läget) — då ignoreras även
+        # ``mode``-fältet. ``_spawn_dirty`` sätts vid val och konsumeras
+        # av inference.py mellan rollouts (samma mönster som b0/ticks).
+        self._spawn_templates: Dict[str, Dict[str, dict]] = {}
+        self._spawn_modes: tuple = (
+            "uniform", "perlin", "colony", "env_driven")
+        self._spawn_mode_labels: Dict[str, str] = {
+            "uniform": "Uniform", "perlin": "Perlin",
+            "colony": "Colony", "env_driven": "Env-driven",
+        }
+        self._spawn_overrides: Dict[str, Dict[str, Optional[str]]] = {}
+        # Per-FG default-mode från projektfilens spawn-block. Visas i
+        # Mode-dropdownen när användaren inte aktivt valt något annat
+        # (dvs ingen entry i ``_spawn_overrides`` för fid). När
+        # användaren aktivt väljer "(default)" registreras fid i
+        # ``_spawn_explicit_default`` så vi kan rita "(default)"
+        # istället för default-modets namn.
+        self._spawn_defaults: Dict[str, str] = {}
+        self._spawn_explicit_default: set = set()
+        self._spawn_dirty: bool = False
+        # Hit-rects per FG, registrerade varje frame av _draw_one_heatmap:
+        # (rect, fid, which) där which='mode'|'template'.
+        self._spawn_dropdown_rects: list = []
+        # Aktiv popup: (fid, which, options, rect_anchor) eller None.
+        self._spawn_popup: Optional[dict] = None
+        self._spawn_popup_item_rects: list = []
         # Stable colour per FG (used for the plot legend).
         self._fg_colour: Dict[str, tuple] = {
             fid: _fg_colour_for(i, len(self.fg_ids))
@@ -350,10 +393,14 @@ class LiveVisualizer:
         self._slider_h = 16
         self._slider_margin = 4
         cbar_h = 16  # colorbar strip (gradient + 0/max labels)
+        # Två extra rader under colorbaren: "Mode: …" och "Tpl: …".
+        # Varje rad ~14 px text + 2 px padding ⇒ 32 px för båda.
+        spawn_dd_h = 34
+        self._spawn_dd_h = spawn_dd_h
         pad = 8
         self._cbar_h = cbar_h
         self._panel_w = hm_w + 2 * pad
-        self._panel_h = hm_h + title_h + cbar_h + 2 * pad
+        self._panel_h = hm_h + title_h + cbar_h + spawn_dd_h + 2 * pad
         heatmap_block_w = self._cols * self._panel_w
         heatmap_block_h = self._rows * self._panel_h
         # Reserve enough horizontal room in the plot panel for the legend:
@@ -651,6 +698,77 @@ class LiveVisualizer:
         return dirty
 
     # ---- ticks-slider API (rollout length) ----------------------------
+    # ------------------------------------------------------------------
+    # Spawn-strategy overrides (per-FG dropdowns under each heatmap)
+    # ------------------------------------------------------------------
+    def set_spawn_templates(self, templates: Mapping[str, Mapping[str, dict]]) -> None:
+        """Install the global ``spawn_templates`` tree from the project file.
+
+        Structure mirrors what fgconfig writes::
+
+            {<mode>: {<name>: {<params>}}}
+
+        Used to populate the per-FG "Tpl" dropdown under each heatmap.
+        Modes with no templates still appear in the Mode dropdown but
+        the Tpl dropdown will be empty (only "(default)" available).
+        Safe to call before or after `__init__`; an empty mapping
+        clears all stored templates.
+        """
+        if not isinstance(templates, Mapping):
+            self._spawn_templates = {}
+            return
+        out: Dict[str, Dict[str, dict]] = {}
+        for mode, by_name in templates.items():
+            if not isinstance(by_name, Mapping):
+                continue
+            mode_key = str(mode)
+            cleaned: Dict[str, dict] = {}
+            for name, params in by_name.items():
+                if isinstance(params, Mapping):
+                    cleaned[str(name)] = dict(params)
+            if cleaned:
+                out[mode_key] = cleaned
+        self._spawn_templates = out
+
+    def set_spawn_defaults(self, defaults: Mapping[str, str]) -> None:
+        """Registrera varje FG:s default-spawn-mode från projektfilen.
+
+        ``defaults`` är ``{fid: <mode_str>}``. Modet visas i Mode-
+        dropdownen så länge användaren inte aktivt valt något annat
+        (dvs ingen entry i ``_spawn_overrides``). Användaren kan
+        fortfarande aktivt välja "(default)" — då visas "(default)"
+        som etikett och projektfilens spawn-block används (samma
+        beteende som tidigare).
+        """
+        if not isinstance(defaults, Mapping):
+            self._spawn_defaults = {}
+            return
+        out: Dict[str, str] = {}
+        for fid, mode in defaults.items():
+            if mode is None:
+                continue
+            m = str(mode)
+            if m in self._spawn_modes:
+                out[str(fid)] = m
+        self._spawn_defaults = out
+
+    def get_spawn_overrides(self) -> Dict[str, Dict[str, Optional[str]]]:
+        """Return a copy of per-FG spawn-strategy overrides.
+
+        Entry ``{"mode": <m>, "template": <name>}`` means: respawn FG
+        ``fid`` using the template ``<name>`` stored under ``<m>``.
+        FGs absent from the dict (or with ``template`` == None) keep
+        the project file's spawn configuration.
+        """
+        return {fid: dict(ov) for fid, ov in self._spawn_overrides.items()
+                if ov.get("template")}
+
+    def consume_spawn_change(self) -> bool:
+        """Return True iff a spawn dropdown was changed since the last call."""
+        d = bool(self._spawn_dirty)
+        self._spawn_dirty = False
+        return d
+
     def set_ticks_default(self, ticks: int) -> None:
         """Registrera CLI-värdet (default) för rollout-längd.
 
@@ -878,6 +996,16 @@ class LiveVisualizer:
                     if v is not None:
                         self._neval_override = int(v)
                         interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_playback:
+                    idx = self._playback_idx_from_x(event.pos[0])
+                    if idx is not None:
+                        self._playback_idx = idx
+                        self._playback_mode = "paused"
+                        interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_playback:
+                    self._dragging_playback = False
+                    interacted = True
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_slider is not None:
                     # Släppt: markera dirty så inference.py kan trigga ny
@@ -995,6 +1123,12 @@ class LiveVisualizer:
                             self._handle_key(event.key)
                     elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                         self._handle_click(event.pos)
+                        # Klick på en spawn-dropdown/popup-item kan ha
+                        # satt ``_spawn_dirty`` — i så fall ska vi
+                        # bryta wait-loopen så inference.py får spela
+                        # in en ny rollout med den nya spawn-strategin.
+                        if self._spawn_dirty:
+                            return
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_slider is not None):
                         fid = self._dragging_slider
@@ -1011,6 +1145,17 @@ class LiveVisualizer:
                         v = self._neval_value_from_x(event.pos[0])
                         if v is not None:
                             self._neval_override = int(v)
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_playback):
+                        idx = self._playback_idx_from_x(event.pos[0])
+                        if idx is not None:
+                            self._playback_idx = idx
+                            self._playback_mode = "paused"
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_playback):
+                        self._dragging_playback = False
+                        # Avbryt INTE wait-loopen — scrubbing är en
+                        # ren visuell operation, ingen ny rollout behövs.
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_slider is not None):
                         self._dragging_slider = None
@@ -1282,6 +1427,23 @@ class LiveVisualizer:
             mx, my = pos
         except Exception:
             return
+        # Aktiv spawn-popup: klick inuti = val, klick utanför = stäng.
+        if self._spawn_popup is not None:
+            for rect, value in self._spawn_popup_item_rects:
+                rx, ry, rw, rh = rect
+                if rx <= mx < rx + rw and ry <= my < ry + rh:
+                    self._apply_spawn_popup_selection(value)
+                    return
+            # Klick utanför stänger popup utan att välja.
+            self._spawn_popup = None
+            self._spawn_popup_item_rects = []
+            return
+        # Spawn-dropdown-rektanglar (Mode / Tpl per FG).
+        for rect, fid, which in self._spawn_dropdown_rects:
+            rx, ry, rw, rh = rect
+            if rx <= mx < rx + rw and ry <= my < ry + rh:
+                self._open_spawn_popup(fid, which, rect)
+                return
         # Lås-ikoner: togglar lås-state. Klick på låsikon ska aldrig
         # routas vidare till slidern eller heatmaps.
         if self._hit_rect(self._ticks_lock_rect, pos):
@@ -1336,6 +1498,16 @@ class LiveVisualizer:
         # Playback-knappar. ``toggle_train_pause`` är alltid aktiv;
         # övriga är gråade/inaktiva under pågående probe / utan film.
         disabled = self._recording or not self._current_rollout
+        # Scrub-slider (timeline): klick + ev. drag-start. Endast aktiv
+        # när film finns och recording inte pågår.
+        if self._hit_playback_slider(pos) and not disabled:
+            idx = self._playback_idx_from_x(mx)
+            if idx is not None:
+                self._playback_idx = idx
+                self._playback_mode = "paused"
+                self._playback_blink_until = 0.0
+                self._dragging_playback = True
+            return
         for rect, action in getattr(self, "_playback_rects", []):
             rx, ry, rw, rh = rect
             if rx <= mx < rx + rw and ry <= my < ry + rh:
@@ -1343,6 +1515,160 @@ class LiveVisualizer:
                     return
                 self._handle_playback_action(action)
                 return
+
+    def _open_spawn_popup(self, fid: str, which: str, anchor_rect) -> None:
+        """Öppna en popup-meny med val för Mode eller Tpl för FG ``fid``.
+
+        För ``which='mode'`` listas alla SPAWN_MODES.
+        För ``which='template'`` listas "(default)" + alla namn som är
+        sparade under aktuellt valt mode (eller "uniform" om inget mode
+        är valt än).
+        """
+        if which == "mode":
+            # "(default)" ligger nu under Mode — väljs den återgår FG:n
+            # till projektfilens spawn-konfiguration (template-valet
+            # nollställs och en ny probe triggas).
+            options = [("(default)", None)]
+            for m in self._spawn_modes:
+                options.append((self._spawn_mode_labels.get(m, m), m))
+        else:
+            ov = self._spawn_overrides.get(fid, {})
+            # Använd aktivt valt mode; annars FG:s default-mode från
+            # projektfilen så Tpl-popupen filtrerar mot rätt strategi
+            # redan innan användaren rört Mode-dropdownen.
+            cur_mode = (ov.get("mode")
+                        or self._spawn_defaults.get(fid)
+                        or "uniform")
+            # Templates-popupen listar enbart sparade mallar för aktuellt
+            # mode. "(default)" har flyttats till Mode-dropdownen.
+            options = []
+            mode_tpls = self._spawn_templates.get(cur_mode, {})
+            for name in sorted(mode_tpls.keys()):
+                options.append((name, name))
+        self._spawn_popup = {
+            "fid": fid,
+            "which": which,
+            "options": options,
+            "anchor": tuple(anchor_rect),
+        }
+        self._spawn_popup_item_rects = []
+
+    def _apply_spawn_popup_selection(self, value) -> None:
+        """Apply the user's choice from the active spawn popup."""
+        pop = self._spawn_popup
+        if not pop:
+            return
+        fid = pop["fid"]
+        which = pop["which"]
+        ov = dict(self._spawn_overrides.get(fid, {}))
+        trigger_probe = False
+        if which == "mode":
+            if value is None:
+                # "(default)" valt under Mode → återgå till projekt-
+                # filens spawn-konfiguration. Detta är ett aktivt val
+                # och triggar en ny probe. Markera FG som "explicit
+                # default" så etiketten visar "(default)" istället för
+                # FG:s sparade strategi-namn.
+                ov["mode"] = None
+                ov["template"] = None
+                self._spawn_explicit_default.add(fid)
+                trigger_probe = True
+            else:
+                # Användaren har aktivt valt ett mode (≠ default) → ta
+                # bort ev. explicit-default-flagga.
+                self._spawn_explicit_default.discard(fid)
+                ov["mode"] = str(value)
+                # Byte av mode återställer template-valet — sparade
+                # templates är per-mode och gamla namnet är inte garanterat
+                # giltigt under det nya moden.
+                ov["template"] = None
+                # Edge case: om det bara finns exakt ett template
+                # sparat för det nyvalda moden, auto-välj det och
+                # trigga probe direkt.
+                mode_tpls = self._spawn_templates.get(str(value), {})
+                if len(mode_tpls) == 1:
+                    only_name = next(iter(mode_tpls.keys()))
+                    ov["template"] = only_name
+                    trigger_probe = True
+                # Annars: bara byte av mode (filterval) — ingen probe.
+        else:
+            # Aktivt template-val triggar alltid en probe.
+            self._spawn_explicit_default.discard(fid)
+            ov["template"] = value
+            if value is not None and not ov.get("mode"):
+                # Om mode inte var explicit satt, ärv FG:ns default-mode
+                # från projektfilen så Tpl-listan filtrerats korrekt.
+                ov["mode"] = (self._spawn_defaults.get(fid) or "uniform")
+            trigger_probe = True
+        self._spawn_overrides[fid] = ov
+        if trigger_probe:
+            self._spawn_dirty = True
+        self._spawn_popup = None
+        self._spawn_popup_item_rects = []
+
+    def _draw_spawn_popup(self) -> None:
+        """Render the active spawn-popup overlay (called after heatmaps)."""
+        pop = self._spawn_popup
+        if not pop:
+            return
+        pg = self._pg
+        options = pop["options"]
+        if not options:
+            return
+        ax, ay, aw, ah = pop["anchor"]
+        item_h = 16
+        pad_x = 6
+        # Width: max text width + padding, but at least the anchor width.
+        font = self._font
+        label_widths = [font.size(lbl)[0] for lbl, _ in options]
+        menu_w = max(aw, max(label_widths) + pad_x * 2 + 4)
+        menu_h = item_h * len(options) + 2
+        # Anchor below the dropdown rect; clamp inside window.
+        mx0 = max(0, min(ax, self._win_w - menu_w))
+        my0 = ay + ah
+        if my0 + menu_h > self._win_h:
+            my0 = max(0, ay - menu_h)
+        # Background.
+        pg.draw.rect(self._screen, (50, 50, 62), (mx0, my0, menu_w, menu_h))
+        pg.draw.rect(self._screen, (160, 160, 180),
+                     (mx0, my0, menu_w, menu_h), 1)
+        self._spawn_popup_item_rects = []
+        for i, (label, value) in enumerate(options):
+            ry = my0 + 1 + i * item_h
+            item_rect = (mx0 + 1, ry, menu_w - 2, item_h)
+            # Highlight current selection.
+            cur = self._spawn_overrides.get(pop["fid"], {})
+            if pop["which"] == "mode":
+                is_current = (cur.get("mode") or "uniform") == value
+            else:
+                is_current = cur.get("template") == value
+            if is_current:
+                pg.draw.rect(self._screen, (75, 85, 110), item_rect)
+            txt = font.render(label, True, (230, 230, 240))
+            self._screen.blit(txt, (mx0 + pad_x, ry + 1))
+            self._spawn_popup_item_rects.append((item_rect, value))
+
+    def _hit_playback_slider(self, pos) -> bool:
+        return self._hit_rect(self._playback_track_rect, pos)
+
+    def _playback_idx_from_x(self, mx: int) -> Optional[int]:
+        """Mappar muspos x till en frame-index i ``_current_rollout``.
+
+        Returnerar None om slidern är inaktiv (ingen film eller
+        recording pågår) eller ingen track finns registrerad.
+        """
+        if self._playback_track_rect is None:
+            return None
+        n = len(self._current_rollout)
+        if n == 0 or self._recording:
+            return None
+        rx, _ry, rw, _rh = self._playback_track_rect
+        # Trackens "riktiga" bredd är rw - 4 (vi padda hit-rect 2 px på var sida).
+        track_x = rx + 2
+        track_w = max(1, rw - 4)
+        frac = (mx - track_x) / float(track_w)
+        frac = max(0.0, min(1.0, frac))
+        return int(round(frac * (n - 1)))
 
     def _handle_playback_action(self, action: str) -> None:
         # Träningspausen är oberoende av om någon film finns — hantera
@@ -1419,8 +1745,14 @@ class LiveVisualizer:
         # och återställer efteråt, så plot-panelen och status-baren
         # förblir oförändrade (plot-flikarna lämnas medvetet orörda enligt
         # användarens önskemål — de visar globala kurvor över hela körningen).
+        # Under pågående inspelning visar vi alltid live-state, även om
+        # användaren tidigare hade pausat/spelat upp en gammal rollout
+        # med uppspelningsverktygen. Annars skulle nyinspelade frames
+        # inte synas förrän rolloutten är klar (eller alls, i inference
+        # där "live"-knappen saknas).
         swap = None
-        if (self._playback_mode != "live"
+        if (not self._recording
+                and self._playback_mode != "live"
                 and self._current_rollout
                 and 0 <= self._playback_idx < len(self._current_rollout)):
             swap = self._swap_in_frame(self._current_rollout[self._playback_idx])
@@ -1431,6 +1763,8 @@ class LiveVisualizer:
                 self._swap_out_frame(swap)
         self._draw_plot()
         self._draw_playback_bar()
+        # Spawn-popup ritas sist så den ligger ovanpå allt annat.
+        self._draw_spawn_popup()
         self._pg.display.flip()
 
     def _swap_in_frame(self, frame: dict) -> dict:
@@ -1572,9 +1906,48 @@ class LiveVisualizer:
         if self._recording:
             ind = f"recording... ({len(self._pending_rollout)} frames)"
         ind_surf = self._font.render(ind, True, (200, 200, 215))
+        ind_x = x + w - ind_surf.get_width() - 10
         self._screen.blit(ind_surf,
-                          (x + w - ind_surf.get_width() - 10,
+                          (ind_x,
                            y + (h - ind_surf.get_height()) // 2))
+
+        # Scrub-slider (timeline) mellan knapparna och frame-indikatorn.
+        # Disabled samma villkor som transport-knapparna (recording eller
+        # ingen film). Klick/drag sätter ``_playback_idx`` och pausar.
+        track_x = bx + 8
+        track_right = ind_x - 10
+        track_w = track_right - track_x
+        track_h = 6
+        track_y = y + (h - track_h) // 2
+        if track_w >= 60:
+            # Bakgrund.
+            pg.draw.rect(self._screen, (50, 50, 60),
+                         (track_x, track_y, track_w, track_h))
+            border_col = (60, 60, 70) if disabled else (110, 110, 125)
+            pg.draw.rect(self._screen, border_col,
+                         (track_x, track_y, track_w, track_h), 1)
+            # Filled del (progress) + handle, om vi har en film.
+            if n > 0 and not self._recording:
+                if self._playback_mode == "live":
+                    idx_for_pos = n - 1
+                else:
+                    idx_for_pos = max(0, min(n - 1, self._playback_idx))
+                frac = (idx_for_pos / max(1, n - 1)) if n > 1 else 0.0
+                fill_w = int(round(frac * track_w))
+                fill_col = (90, 140, 200) if not disabled else (70, 80, 95)
+                if fill_w > 0:
+                    pg.draw.rect(self._screen, fill_col,
+                                 (track_x, track_y, fill_w, track_h))
+                hx = track_x + fill_w
+                hy = track_y + track_h // 2
+                knob_col = (230, 230, 240) if not disabled else (110, 110, 120)
+                pg.draw.circle(self._screen, knob_col, (hx, hy), 6)
+                pg.draw.circle(self._screen, (30, 30, 40), (hx, hy), 6, 1)
+            # Hit-rect (lite tjockare för enkel klick).
+            self._playback_track_rect = (track_x - 2, track_y - 8,
+                                         track_w + 4, track_h + 16)
+        else:
+            self._playback_track_rect = None
 
     def _draw_status_bar(self) -> None:
         pg = self._pg
@@ -1755,6 +2128,8 @@ class LiveVisualizer:
         # Slider-rektangellistan byggs om varje frame så stale entries
         # från föregående layout aldrig kan trigga drag i fel panel.
         self._slider_rects = []
+        # Samma sak för spawn-dropdown-rektanglarna.
+        self._spawn_dropdown_rects = []
         for idx, fid in enumerate(self.fg_ids):
             row = idx // self._cols
             col = idx % self._cols
@@ -2022,6 +2397,65 @@ class LiveVisualizer:
             max_lbl,
             (hm_x + cbar_w - max_lbl.get_width(),
              cbar_y + cbar_strip_h + 1))
+
+        # ---- Spawn-strategi-dropdowns under heatmapen ---------------------
+        # Två rader: Mode och Tpl. Klick öppnar popup-meny som hanteras
+        # av _handle_click. Default-läget visar "(default)" och betyder
+        # att projektfilens spawn-konfiguration behålls vid nästa probe.
+        dd_y0 = cbar_y + cbar_strip_h + 1 + self._font.get_height() + 4
+        dd_w = cbar_w
+        dd_row_h = 15
+        ov = self._spawn_overrides.get(fid, {})
+        cur_mode_raw = ov.get("mode")
+        cur_tpl = ov.get("template")
+        # Etikett-logik:
+        #   * Användaren har aktivt valt "(default)" → visa "(default)".
+        #   * Användaren har valt en mode/template → visa modets etikett.
+        #   * Annars (ingen override) → visa FG:s default-mode från
+        #     projektfilen om känt, annars "(default)".
+        if fid in self._spawn_explicit_default:
+            mode_label = "(default)"
+            tpl_label = "—"
+        elif cur_mode_raw is None:
+            default_mode = self._spawn_defaults.get(fid)
+            if default_mode:
+                mode_label = self._spawn_mode_labels.get(
+                    default_mode, default_mode)
+            else:
+                mode_label = "(default)"
+            tpl_label = "—"
+        else:
+            mode_label = self._spawn_mode_labels.get(cur_mode_raw, cur_mode_raw)
+            tpl_label = cur_tpl if cur_tpl else "—"
+        dd_bg = (38, 38, 48) if not dim else (28, 28, 35)
+        dd_border = (90, 90, 105) if not dim else (50, 50, 60)
+        dd_text = (210, 210, 220) if not dim else (110, 110, 120)
+        for i, (label_prefix, value_text, which) in enumerate(
+                (("Mode: ", mode_label, "mode"),
+                 ("Tpl:  ", tpl_label, "template"))):
+            rx, ry = hm_x, dd_y0 + i * (dd_row_h + 2)
+            rect = (rx, ry, dd_w, dd_row_h)
+            pg.draw.rect(self._screen, dd_bg, rect)
+            pg.draw.rect(self._screen, dd_border, rect, 1)
+            txt = f"{label_prefix}{value_text}"
+            # Truncate to fit.
+            max_w = dd_w - 14
+            txt_surf = self._font.render(txt, True, dd_text)
+            if txt_surf.get_width() > max_w:
+                # Crude truncation.
+                while len(txt) > 4 and txt_surf.get_width() > max_w:
+                    txt = txt[:-2]
+                    txt_surf = self._font.render(txt + "…", True, dd_text)
+                txt = txt + "…"
+            self._screen.blit(txt_surf, (rx + 4, ry + 1))
+            # Triangle indicator on the right.
+            tri_x = rx + dd_w - 10
+            tri_y = ry + dd_row_h // 2
+            pg.draw.polygon(self._screen, dd_text,
+                            [(tri_x, tri_y - 2),
+                             (tri_x + 6, tri_y - 2),
+                             (tri_x + 3, tri_y + 2)])
+            self._spawn_dropdown_rects.append((rect, fid, which))
 
     def _active_plot_ids(self) -> list:
         """Return ``plot_fg_ids`` filtered for the active tab.

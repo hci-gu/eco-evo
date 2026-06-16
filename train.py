@@ -422,14 +422,23 @@ class _ProbeEnvBuilder:
         # re-load the .npz so updates to the underlying file take effect
         # without rebuilding the trainer.
         from inference import (_load_inference_map_paths, _load_impact_map_npz,
-                                apply_b0_overrides as _apply_b0)
+                                apply_b0_overrides as _apply_b0,
+                                apply_spawn_overrides as _apply_spawn,
+                                _load_spawn_templates as _load_spawn_tpls)
         self._load_paths = _load_inference_map_paths
         self._load_npz = _load_impact_map_npz
         self._apply_b0 = _apply_b0
+        self._apply_spawn = _apply_spawn
+        self._load_spawn_tpls = _load_spawn_tpls
         # Per-FG b0-overrides (ton) som ska appliceras innan första env.step().
         # Sätts av ``_probe_biomass`` strax innan varje probe-anrop utifrån
         # viz.get_b0_overrides(); tomt dict = ingen override.
         self.b0_overrides: dict = {}
+        # Per-FG spawn-strategi-overrides från visualiseraren. Samma
+        # struktur som inference.py:s ``apply_spawn_overrides`` förväntar:
+        # ``{fid: {"mode": <m>, "template": <name>}}``. Tomt = inga
+        # overrides (projektfilens spawn används).
+        self.spawn_overrides: dict = {}
 
     def __call__(self, seed=None):
         H, W = self.grid_height, self.grid_width
@@ -474,6 +483,18 @@ class _ProbeEnvBuilder:
                 self._apply_b0(env, self.b0_overrides)
             except Exception:
                 pass
+        # Applicera ev. spawn-strategi-overrides från visualiserarens
+        # per-heatmap-dropdowns. Görs EFTER b0-skalningen så totala
+        # biomassan är den användaren förväntar sig och endast den
+        # spatiala fördelningen byts ut.
+        if self.spawn_overrides:
+            try:
+                tpls = (self._load_spawn_tpls(self.project_path)
+                        if self.project_path else {})
+                self._apply_spawn(env, self.spawn_overrides, tpls,
+                                  seed=self.PROBE_SEED)
+            except Exception as _e:
+                print(f"    [probe] WARN: spawn override failed: {_e!r}")
         return env
 
 
@@ -504,6 +525,20 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     rnd_builder.b0_overrides = overrides or {}
                 except Exception:
                     pass
+        except Exception:
+            pass
+        # Spawn-strategi-overrides per FG (templates valda i
+        # heatmap-dropdownen). Konsumera ändringsflaggan så loopen inte
+        # triggar en extra omkörning på samma val.
+        try:
+            sp_overrides = viz.get_spawn_overrides()
+            probe_builder.spawn_overrides = sp_overrides or {}
+            if rnd_builder is not None and rnd_builder is not probe_builder:
+                try:
+                    rnd_builder.spawn_overrides = sp_overrides or {}
+                except Exception:
+                    pass
+            viz.consume_spawn_change()
         except Exception:
             pass
         # Rollout-längd-override: använd slidervärdet om det är satt,
@@ -1492,6 +1527,20 @@ def main():
                 viz.set_neval_ticks_default(int(args.n_eval_ticks))
             except Exception:
                 pass
+            # Spawn-strategi-templates till per-heatmap-dropdownen.
+            try:
+                from inference import _load_spawn_templates as _lst
+                viz.set_spawn_templates(_lst(PROJECT_PATH))
+            except Exception as _e:
+                print(f"[viz] could not load spawn templates: {_e!r}")
+            # Per-FG default-spawn-mode från projektfilen — Mode-dropdownen
+            # förinställs till den strategi som är sparad för respektive
+            # FG istället för det generiska "(default)".
+            try:
+                from inference import _load_spawn_defaults as _lsd
+                viz.set_spawn_defaults(_lsd(PROJECT_PATH))
+            except Exception as _e:
+                print(f"[viz] could not load spawn defaults: {_e!r}")
         except Exception as _e:
             print(f"[viz] failed to start visualiser: {_e!r}")
             viz = None

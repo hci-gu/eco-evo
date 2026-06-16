@@ -2890,3 +2890,154 @@ triggers a re-recording of the rollout via ``wait_for_close``.
   the corresponding override and sets the dirty flag.
   ``wait_for_close`` returns on b0-dirty OR ticks-dirty so the
   inference rerun fires for either slider type.
+
+================================================================
+57. SPAWN-STRATEGY TEMPLATES + PER-FG MODE/TPL DROPDOWNS IN --visual
+================================================================
+Late-session arc adding (a) saveable per-mode spawn-strategy
+templates to the fgconfig.py GUI with global storage in the project
+YAML, (b) per-FG Mode + Templates dropdowns under each heatmap in
+the live pygame visualiser (lib/viz/pygame_viz.py) that respawn the
+FG's biomass layout at the next probe, and (c) a fix for the live
+view going stale during recording after the user had scrubbed an
+earlier rollout with the playback bar (Section 55).
+
+57.1 GUI: Templates row in spawn editor (fgconfig/fgconfig.py)
+  * New row directly under Mode in each FG/impact spawn editor:
+      Templates: [<combobox>]  [Save]  [Delete]
+    Combobox is readonly; Save opens a name dialog and stores the
+    current GUI values via the existing strict-parse helper
+    ``_collect_spawn_dict``; Delete removes the selected template
+    (with confirmation).
+  * Selecting a template populates the configurable fields in the
+    GUI (``_populate_spawn_editor``); the user still clicks Apply
+    Changes to write the values to the FG's/impact's own
+    ``spawn:`` block.
+  * Mode-filtering: ``_refresh_spawn_template_list`` re-runs when
+    Mode changes and when a FG/impact is selected; only templates
+    saved under the currently selected Mode are listed. Switching
+    Mode also clears the selected template name in the combobox.
+  * Helpers: ``_get_spawn_templates_dict(create=False)``,
+    ``_refresh_spawn_template_list``, ``_on_save_spawn_template``,
+    ``_on_delete_spawn_template``, ``_on_apply_spawn_template``.
+    ``_mark_dirty()`` is called on Save/Delete so the project can
+    be saved normally.
+
+57.2 Project YAML storage (global; top-level)
+  Templates are stored GLOBALLY on the project (not per FG/impact),
+  shared between all spawn editors. Structure on
+  ``project_data["spawn_templates"]``:
+      spawn_templates:
+        perlin:
+          coastal: {scale: 12.0, octaves: 4, persistence: 0.5, ...}
+          wide_patches: {scale: 24.0, octaves: 3, ...}
+        colony:
+          five_blobs: {n_colonies: 5, sigma_cells: 8.0, anchor: free}
+  The outer ``<mode>`` key implicitly carries the spawn mode, so
+  the inner payload does NOT repeat ``mode:``. Empty containers
+  are cleaned up on Delete so the YAML stays tidy.
+  ``load_project_config`` ignores ``spawn_templates`` entirely -
+  the runtime helper ``_build_spawn_spec`` only reads the per-
+  FG/impact ``spawn:`` block. Projects without
+  ``spawn_templates`` are unaffected.
+  Earlier per-FG/impact storage layout (``spawn_templates`` nested
+  inside each entry) was reverted; mareld2.yaml was migrated to
+  the top-level form.
+
+57.3 Visualiser: per-FG Mode + Templates dropdowns
+  * Two clickable text rows ("Mode: ...", "Tpl: ...") drawn under
+    each per-FG colorbar. Clicking either opens a popup overlay
+    listing the available options.
+  * Mode popup options: "(default)" + all SPAWN_MODES (uniform,
+    perlin, colony, env_driven). Tpl popup options: saved
+    templates for the FG's currently selected mode (no
+    "(default)" entry under Tpl - that lives under Mode now).
+  * Public API on LiveVisualizer:
+      set_spawn_templates(templates: dict)
+        # global templates dict {<mode>: {<name>: {<params>}}}
+      set_spawn_defaults(defaults: dict)
+        # {fid: <mode_str>} from project YAML (Section 57.5)
+      get_spawn_overrides() -> dict
+      consume_spawn_change() -> bool
+    Stubs on ``_NullViz`` return None / False.
+  * Probe-trigger semantics (tight): a fresh probe rerun is
+    triggered only when:
+      (a) user picks "(default)" under Mode -> probe with project
+          spawn block (mode=None override),
+      (b) user actively picks a template under Tpl,
+      (c) EDGE CASE: user picks a Mode for which exactly ONE
+          template is saved -> auto-select that template and
+          trigger probe.
+    Plain Mode changes (with 0 or >1 templates available) only
+    re-filter the Tpl list; ``get_spawn_overrides`` filters out
+    entries lacking a template so the rerun-loop sees no override
+    in that case.
+
+57.4 Application path (inference.py + train.py)
+  * ``_load_spawn_templates(project_path)``: reads top-level
+    ``spawn_templates`` from the project YAML.
+  * ``apply_spawn_overrides(env, overrides, templates, seed)``:
+    rebuilds a ``StrategySpec`` via ``_build_spawn_spec`` from the
+    selected template payload (re-injecting ``mode`` so the spec
+    builder accepts the dict), then respawns each affected FG via
+    ``_spawn_biomass_distribution`` while PRESERVING the FG's
+    total biomass (sum + per-cell floor invariants intact). Called
+    after ``apply_b0_overrides`` in inference's rerun loop and in
+    ``_ProbeEnvBuilder`` in train.py.
+  * train.py main(): viz is seeded with both
+    ``set_spawn_templates(_load_spawn_templates(PROJECT_PATH))``
+    and ``set_spawn_defaults(_load_spawn_defaults(PROJECT_PATH))``
+    directly after the visualiser is created.
+
+57.5 Mode default-label (`_load_spawn_defaults`)
+  ``_load_spawn_defaults(project_path)`` in inference.py builds
+  the ``{fid: mode}`` map that pre-fills the Mode dropdown for
+  each FG/impact. Resolution order matches
+  ``load_project_config``'s override chain:
+    1. Project YAML per-FG/impact ``spawn.mode`` (if present).
+    2. FG library spawn block (``fg_library.yaml`` ->
+       ``species_definitions[fid].spawn.mode``) - applies only
+       to FGs, not impacts. Helper searches
+       ``<projdir>/fgconfig/fg_library.yaml``,
+       ``<projdir>/fg_library.yaml``, then
+       ``fgconfig/fg_library.yaml`` (cwd).
+    3. Fallback ``'uniform'`` (mirrors ``_build_spawn_spec`` when
+       no spawn block exists at all).
+  The visualiser shows the resolved mode's display name as long
+  as no override is active. Picking "(default)" under Mode marks
+  the FG as "explicit default" (``_spawn_explicit_default`` set)
+  so the label becomes "(default)" verbatim and the project's
+  spawn block is used at probe time.
+  Verification:
+    python3 -c "from inference import _load_spawn_defaults; \
+      d=_load_spawn_defaults('mareld2.yaml'); \
+      print(d['zooplankton'], d['phytoplankton'], d['windfarm_noise'])"
+    -> colony perlin colony  (matches library + project file).
+
+57.6 Live-during-recording fix (Section 55 interaction)
+  Bug: once the user had paused or scrubbed an earlier rollout via
+  the playback bar (Section 55), the live view stopped showing new
+  frames during the NEXT recording - playback state was "sticky"
+  and ``_render_full`` kept swapping in the old replay frame
+  instead of the live env.
+  Fix in ``lib/viz/pygame_viz.py::_render_full``: skip the replay-
+  state swap whenever ``self._recording == True``. While a probe
+  or inference rollout is being captured, live state is always
+  drawn regardless of ``_playback_mode``. After
+  ``end_rollout_recording`` the previous behaviour resumes - the
+  user can still scrub the just-finished film. Fix is agnostic to
+  whether a live/replay toggle button exists (so it works in both
+  inference.py and train.py paths).
+
+57.7 Notes / caveats
+  * Templates apply only to spatial distribution; per-FG total
+    biomass (from project's initial_biomass or the b0 slider) is
+    preserved at respawn time.
+  * Old projects where ``spawn_templates`` was inadvertently
+    stored per-FG/impact are NOT auto-migrated; the runtime
+    config_loader ignores those blocks and they will not appear
+    in the dropdown. mareld2.yaml was manually migrated to the
+    top-level form.
+  * The unused ``_owner_kind`` flag on spawn-editor ``vars_store``
+    entries is a remnant from the per-FG storage attempt; it does
+    no harm and may be cleaned up later.

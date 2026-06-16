@@ -323,6 +323,7 @@ class FGConfigApp:
         self.impact_spawn_frame.grid(row=4, column=0, columnspan=2,
                                      sticky="ew", padx=5, pady=5)
         self.impact_spawn_vars = {}
+        self.impact_spawn_vars["_owner_kind"] = "impact"
         self._build_spawn_editor(self.impact_spawn_frame, self.impact_spawn_vars)
         # Hidden by default; shown only for observable impacts. The Spawn
         # Strategy only governs how observable impact maps are populated;
@@ -598,6 +599,7 @@ class FGConfigApp:
         self.spawn_frame.grid(row=grow, column=0, columnspan=2,
                               sticky="ew", padx=5, pady=(8, 5))
         self.spawn_vars = {}
+        self.spawn_vars["_owner_kind"] = "dm_fg"
         self._build_spawn_editor(self.spawn_frame, self.spawn_vars)
 
         # FG Editor for Non Decision Makers
@@ -650,6 +652,7 @@ class FGConfigApp:
         self.ndm_spawn_frame.grid(row=grow, column=0, columnspan=2,
                                   sticky="ew", padx=5, pady=(8, 5))
         self.ndm_spawn_vars = {}
+        self.ndm_spawn_vars["_owner_kind"] = "ndm_fg"
         self._build_spawn_editor(self.ndm_spawn_frame, self.ndm_spawn_vars)
 
     # ------------------------------------------------------------------
@@ -810,6 +813,39 @@ class FGConfigApp:
                                state="readonly", width=12)
         mode_cb.pack(side="left", padx=(0, 8))
 
+        # Templates row: dropdown filtered by current mode + Save / Delete.
+        # Templates are stored per (FG or impact) and per spawn mode in the
+        # project file under ``spawn_templates: {<mode>: {<name>: {...}}}``;
+        # see _on_save_spawn_template / _on_delete_spawn_template.
+        tpl_row = ttk.Frame(outer)
+        tpl_row.pack(side="top", fill="x", anchor="w", pady=(4, 0))
+        ttk.Label(tpl_row, text="Templates:").pack(side="left", padx=(0, 4))
+        template_var = tk.StringVar(value="")
+        template_cb = ttk.Combobox(tpl_row, textvariable=template_var,
+                                   values=[], state="readonly", width=20)
+        template_cb.pack(side="left", padx=(0, 8))
+        save_btn = ttk.Button(
+            tpl_row, text="Save",
+            command=lambda vs=vars_store: self._on_save_spawn_template(vs))
+        save_btn.pack(side="left", padx=(0, 4))
+        delete_btn = ttk.Button(
+            tpl_row, text="Delete",
+            command=lambda vs=vars_store: self._on_delete_spawn_template(vs))
+        delete_btn.pack(side="left")
+
+        vars_store["template_var"] = template_var
+        vars_store["template_cb"] = template_cb
+        vars_store["template_save_btn"] = save_btn
+        vars_store["template_delete_btn"] = delete_btn
+
+        def _on_template_pick(*_a):
+            name = template_var.get()
+            if not name:
+                return
+            self._on_apply_spawn_template(vars_store, name)
+
+        template_cb.bind("<<ComboboxSelected>>", _on_template_pick)
+
         # Content row: params on left, preview on right
         content = ttk.Frame(outer)
         content.pack(side="top", fill="x", anchor="w", pady=(4, 0))
@@ -846,6 +882,9 @@ class FGConfigApp:
             self._rebuild_spawn_params(vars_store)
             self._update_spawn_help(vars_store)
             self._schedule_spawn_preview(vars_store)
+            # Templates are per-mode: refresh the dropdown so only
+            # entries saved under the current mode are listed.
+            self._refresh_spawn_template_list(vars_store)
 
         mode_var.trace_add("write", _on_mode_change)
 
@@ -853,6 +892,7 @@ class FGConfigApp:
         self._rebuild_spawn_params(vars_store)
         self._update_spawn_help(vars_store)
         self._schedule_spawn_preview(vars_store)
+        self._refresh_spawn_template_list(vars_store)
 
     def _update_spawn_help(self, vars_store):
         """Update the help panel text for the currently selected spawn mode."""
@@ -1226,6 +1266,177 @@ class FGConfigApp:
                 self._add_ref_row(vars_store, name=name, weight=weight,
                                   transform=transform)
         self._schedule_spawn_preview(vars_store, delay_ms=50)
+        # Refresh the Templates dropdown for the (newly selected) owner.
+        self._refresh_spawn_template_list(vars_store)
+
+    # ------------------------------------------------------------------
+    # Spawn templates (global, per-mode)
+    # ------------------------------------------------------------------
+    # Templates are stored globally in the project file at the top level
+    # under ``spawn_templates``, keyed by spawn mode
+    # (uniform / perlin / colony / env_driven), then by user-chosen name.
+    # The value is the spawn parameter dict (without the ``mode`` key,
+    # which is implied by the parent key). Example::
+    #
+    #     spawn_templates:
+    #       perlin:
+    #         coastal: {scale: 12.0, octaves: 4, persistence: 0.5, ...}
+    #       colony:
+    #         five_blobs: {n_colonies: 5, sigma_cells: 8.0, ...}
+    #
+    # Templates are shared across all FGs and impacts. Only templates
+    # saved under the currently-selected Mode appear in the Templates
+    # dropdown.
+
+    def _get_spawn_templates_dict(self, create=False):
+        """Return the global ``project_data['spawn_templates']`` dict, or {}.
+
+        When ``create`` is True, the key is added to ``project_data``
+        if missing.
+        """
+        if not isinstance(getattr(self, "project_data", None), dict):
+            return {}
+        tpl = self.project_data.get("spawn_templates")
+        if not isinstance(tpl, dict):
+            if create:
+                tpl = {}
+                self.project_data["spawn_templates"] = tpl
+            else:
+                return {}
+        return tpl
+
+    def _refresh_spawn_template_list(self, vars_store):
+        """Repopulate the Templates dropdown for the current owner+mode."""
+        cb = vars_store.get("template_cb")
+        var = vars_store.get("template_var")
+        if cb is None or var is None:
+            return
+        try:
+            if not cb.winfo_exists():
+                return
+        except Exception:
+            return
+        mode = self.SPAWN_MODE_KEYS.get(
+            vars_store["mode_var"].get(), vars_store["mode_var"].get())
+        names = []
+        tpl_root = self._get_spawn_templates_dict()
+        mode_tpls = tpl_root.get(mode)
+        if isinstance(mode_tpls, dict):
+            names = sorted(mode_tpls.keys())
+        try:
+            cb.configure(values=names)
+        except Exception:
+            pass
+        # Clear current selection — picking a template is an explicit
+        # user action; we never auto-apply on refresh.
+        var.set("")
+
+    def _on_save_spawn_template(self, vars_store):
+        """Save the current GUI spawn settings as a named template."""
+        mode = self.SPAWN_MODE_KEYS.get(
+            vars_store["mode_var"].get(), vars_store["mode_var"].get())
+        # Use strict mode so invalid GUI values surface as an error
+        # instead of being silently dropped from the saved template.
+        errors = []
+        spec = self._collect_spawn_dict(vars_store, errors=errors)
+        if errors:
+            messagebox.showerror(
+                "Invalid spawn settings",
+                "Cannot save template — the spawn editor has invalid values:\n\n  - "
+                + "\n  - ".join(errors))
+            return
+        # The mode is implied by the parent dict key; strip it from the
+        # stored payload to keep YAML diffs clean.
+        spec.pop("mode", None)
+
+        # Ask for a name. Pre-fill with the current dropdown value if any.
+        from tkinter import simpledialog
+        current = vars_store["template_var"].get().strip()
+        name = simpledialog.askstring(
+            "Save template",
+            f"Template name (mode={mode}):",
+            initialvalue=current,
+            parent=self.root if hasattr(self, "root") else None)
+        if name is None:
+            return
+        name = name.strip()
+        if not name:
+            messagebox.showwarning("Empty name",
+                                   "Template name cannot be empty.")
+            return
+
+        tpl_root = self._get_spawn_templates_dict(create=True)
+        mode_tpls = tpl_root.get(mode)
+        if not isinstance(mode_tpls, dict):
+            mode_tpls = {}
+            tpl_root[mode] = mode_tpls
+        if name in mode_tpls:
+            if not messagebox.askyesno(
+                    "Overwrite template",
+                    f"A template named '{name}' already exists for mode "
+                    f"'{mode}'. Overwrite?"):
+                return
+        mode_tpls[name] = spec
+        self._mark_dirty()
+        self._refresh_spawn_template_list(vars_store)
+        try:
+            vars_store["template_var"].set(name)
+        except Exception:
+            pass
+
+    def _on_delete_spawn_template(self, vars_store):
+        """Delete the currently-selected global template."""
+        name = vars_store["template_var"].get().strip()
+        if not name:
+            messagebox.showinfo(
+                "No template selected",
+                "Pick a template from the dropdown before deleting.")
+            return
+        mode = self.SPAWN_MODE_KEYS.get(
+            vars_store["mode_var"].get(), vars_store["mode_var"].get())
+        tpl_root = self._get_spawn_templates_dict()
+        mode_tpls = tpl_root.get(mode) if isinstance(tpl_root, dict) else None
+        if not isinstance(mode_tpls, dict) or name not in mode_tpls:
+            return
+        if not messagebox.askyesno(
+                "Delete template",
+                f"Delete template '{name}' (mode={mode})?"):
+            return
+        del mode_tpls[name]
+        # Clean up empty containers so YAML stays tidy.
+        if not mode_tpls:
+            tpl_root.pop(mode, None)
+        if isinstance(tpl_root, dict) and not tpl_root:
+            self.project_data.pop("spawn_templates", None)
+        self._mark_dirty()
+        self._refresh_spawn_template_list(vars_store)
+
+    def _on_apply_spawn_template(self, vars_store, name):
+        """Apply the named template's values to the editor (GUI only).
+
+        The user must still click ``Apply Changes`` to persist the
+        values onto the FG / impact's own ``spawn`` block.
+        """
+        mode = self.SPAWN_MODE_KEYS.get(
+            vars_store["mode_var"].get(), vars_store["mode_var"].get())
+        tpl_root = self._get_spawn_templates_dict()
+        mode_tpls = tpl_root.get(mode) if isinstance(tpl_root, dict) else None
+        if not isinstance(mode_tpls, dict):
+            return
+        spec = mode_tpls.get(name)
+        if not isinstance(spec, dict):
+            return
+        # Reconstruct a full spawn dict (mode is implied by the parent key).
+        full = {"mode": mode}
+        full.update(spec)
+        # _populate_spawn_editor will set mode_var (no-op here, same mode)
+        # and refresh params / preview / template list. To preserve the
+        # current selection in the dropdown, restore template_var after.
+        self._populate_spawn_editor(vars_store, full)
+        try:
+            vars_store["template_var"].set(name)
+        except Exception:
+            pass
 
     def _read_initial_biomass_range(self, fg_entry, fg_id):
         """Read (min, max) initial biomass for a project FG entry.

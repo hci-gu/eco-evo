@@ -33,7 +33,9 @@ import numpy as np
 import torch
 
 from lib.config.config_loader import (load_project_config, setup_full_mareld_mvp,
-                                       compute_inference_b0_defaults)
+                                       compute_inference_b0_defaults,
+                                       _build_spawn_spec,
+                                       _spawn_biomass_distribution)
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.policy import PolicyNetwork
 
@@ -164,6 +166,171 @@ def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
         if verbose:
             print(f"  [info] Resampled '{impact_id}' from {(Hs, Ws)} to {(H, W)} (nearest).")
     return arr.astype(np.float32, copy=False)
+
+
+def _load_spawn_templates(project_path):
+    """Read the global ``spawn_templates`` block from the project YAML.
+
+    Returns ``{<mode>: {<name>: {<params>}}}`` or ``{}`` when the project
+    has no templates (or no project file at all). Used to populate the
+    per-FG dropdowns under each heatmap in the live visualiser.
+    """
+    if not project_path:
+        return {}
+    try:
+        import yaml as _yaml
+        with open(project_path, 'r') as f:
+            data = _yaml.safe_load(f) or {}
+    except Exception:
+        return {}
+    tpls = data.get('spawn_templates')
+    if not isinstance(tpls, dict):
+        return {}
+    out = {}
+    for mode, by_name in tpls.items():
+        if not isinstance(by_name, dict):
+            continue
+        cleaned = {}
+        for name, params in by_name.items():
+            if isinstance(params, dict):
+                cleaned[str(name)] = dict(params)
+        if cleaned:
+            out[str(mode)] = cleaned
+    return out
+
+
+def _load_spawn_defaults(project_path):
+    """Read each FG/impact's default spawn mode from the project YAML.
+
+    Returns ``{fid: <mode_str>}`` mapping FG-id (decision_makers,
+    non_decision_makers) and observable impact-id to the ``mode`` stored
+    in their ``spawn:`` block in the project file. Used by the live
+    visualiser to pre-fill the per-heatmap Mode dropdown so the user
+    sees the strategy that is actually configured for each FG instead
+    of a generic "(default)" placeholder.
+    """
+    if not project_path:
+        return {}
+    try:
+        import yaml as _yaml
+        with open(project_path, 'r') as f:
+            data = _yaml.safe_load(f) or {}
+    except Exception:
+        return {}
+
+    # Load the FG library (fg_library.yaml) for fallback. ``load_project_config``
+    # mergar projektets per-FG ``spawn:``-override med library-specens
+    # ``spawn:``-block; om projektfilen saknar block (vanligt) styrs spawn
+    # alltså av library. Spegla samma resolution här så Mode-dropdownen
+    # i visualiseraren visar den strategi som faktiskt körs.
+    lib_specs = {}
+    try:
+        import os as _os
+        candidates = []
+        proj_dir = _os.path.dirname(_os.path.abspath(project_path))
+        candidates.append(_os.path.join(proj_dir, 'fgconfig', 'fg_library.yaml'))
+        candidates.append(_os.path.join(proj_dir, 'fg_library.yaml'))
+        candidates.append('fgconfig/fg_library.yaml')
+        for lib_path in candidates:
+            if _os.path.isfile(lib_path):
+                with open(lib_path, 'r') as f:
+                    lib_data = _yaml.safe_load(f) or {}
+                lib_specs = lib_data.get('species_definitions', {}) or {}
+                break
+    except Exception:
+        lib_specs = {}
+
+    out = {}
+    def _extract(entries, id_key, use_library):
+        if not isinstance(entries, list):
+            return
+        for e in entries:
+            if not isinstance(e, dict):
+                continue
+            fid = e.get(id_key)
+            if not fid:
+                continue
+            sp = e.get('spawn')
+            mode = None
+            if isinstance(sp, dict):
+                mode = sp.get('mode')
+            # Fallback 1: leta upp library-specens spawn-block (gäller bara
+            # FGs — impacts har inget motsvarande library).
+            if not mode and use_library:
+                lib_sp = (lib_specs.get(str(fid), {}) or {}).get('spawn')
+                if isinstance(lib_sp, dict):
+                    mode = lib_sp.get('mode')
+            # Fallback 2: ``_build_spawn_spec`` i config_loader använder
+            # ``'uniform'`` när inget block finns alls. Spegla det.
+            if not mode:
+                mode = 'uniform'
+            out[str(fid)] = str(mode)
+    _extract(data.get('decision_makers'), 'group_id', True)
+    _extract(data.get('non_decision_makers'), 'group_id', True)
+    _extract(data.get('impact_variables'), 'impact_id', False)
+    return out
+
+
+def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
+    """Respawn each FG's biomass field according to user-chosen templates.
+
+    ``spawn_overrides`` is ``{fid: {"mode": <m>, "template": <name>}}``
+    from the visualiser. For every FG in this dict we rebuild a
+    :class:`StrategySpec` from the corresponding template parameters,
+    recompute a weight field via the same code path used by
+    :func:`load_project_config`, and overwrite ``fg.biomass`` while
+    preserving the FG's current total biomass (so per-FG b0 sliders and
+    project defaults still govern the magnitude).
+
+    Called after :func:`build_env` (and any :func:`apply_b0_overrides`)
+    so the spatial layout is the only thing that changes. FGs without
+    an override entry — or with ``template == None`` — keep the spawn
+    configuration loaded from the project file.
+    """
+    if not spawn_overrides:
+        return
+    H, W = None, None
+    for fid, ov in spawn_overrides.items():
+        if not isinstance(ov, dict):
+            continue
+        name = ov.get("template")
+        mode = ov.get("mode")
+        if not name or not mode:
+            continue  # (default) → leave projektfilens spawn untouched
+        params = (spawn_templates.get(mode, {}) or {}).get(name)
+        if not isinstance(params, dict):
+            continue
+        fg = env.fgs.get(fid)
+        if fg is None:
+            continue
+        arr = np.asarray(fg.biomass, dtype=np.float64)
+        if H is None:
+            H, W = arr.shape
+        total_b = float(arr.sum())
+        if total_b <= 0.0:
+            continue
+        spawn_cfg = {"mode": mode}
+        spawn_cfg.update(params)
+        spec = _build_spawn_spec(spawn_cfg, default_seed=seed)
+        if spec is None:
+            continue
+        # Reuse the existing env_fields of all currently-spawned FGs as
+        # the env_driven context, so refs (if any) can resolve.
+        env_fields = {sid: np.asarray(f.biomass, dtype=np.float64)
+                      for sid, f in env.fgs.items()}
+        rng = np.random.default_rng(seed) if seed is not None else None
+        min_per_cell = 5.0 * float(getattr(fg, 'min_split_biomass', 0.0))
+        try:
+            new_arr = _spawn_biomass_distribution(
+                arr.shape, total_b, min_per_cell,
+                allowed_mask=None, rng=rng,
+                spawn_spec=spec, project_seed=seed,
+                env_context={'env_fields': env_fields})
+        except Exception as e:
+            print(f"  [spawn override] {fid}: failed to apply "
+                  f"template '{name}' ({mode}): {e!r}")
+            continue
+        fg.biomass[...] = np.asarray(new_arr, dtype=np.float32)
 
 
 def apply_b0_overrides(env, b0_overrides):
@@ -789,6 +956,20 @@ def main():
                 viz.set_ticks_default(int(args.ticks))
             except Exception:
                 pass
+            # Spawn-strategi-templates till per-heatmap-dropdownen.
+            try:
+                viz.set_spawn_templates(_load_spawn_templates(args.project))
+            except Exception as _e:
+                print(f"[viz] could not load spawn templates: {_e!r}",
+                      file=sys.stderr)
+            # Per-FG default-spawn-mode från projektfilen — Mode-dropdownen
+            # förinställs till den strategi som är sparad för respektive FG
+            # istället för det generiska "(default)".
+            try:
+                viz.set_spawn_defaults(_load_spawn_defaults(args.project))
+            except Exception as _e:
+                print(f"[viz] could not load spawn defaults: {_e!r}",
+                      file=sys.stderr)
         except Exception as e:
             print(f"[viz] failed to start visualiser: {e!r}", file=sys.stderr)
             viz = None
@@ -825,6 +1006,22 @@ def main():
                     print(f"    [b0 override] Applied: "
                           + ", ".join(f"{k}={v:.1f}" for k, v in
                                        b0_overrides.items()))
+            # Spawn-strategi-overrides från drop-downsen under varje
+            # heatmap. Applicera EFTER b0-skalningen så totalvärdet är
+            # det användaren förväntar sig och bara den spatiala
+            # fördelningen byts ut.
+            spawn_overrides = (viz.get_spawn_overrides()
+                               if viz is not None else {})
+            spawn_tpls_now = (_load_spawn_templates(args.project)
+                              if spawn_overrides else {})
+            if spawn_overrides:
+                apply_spawn_overrides(env, spawn_overrides, spawn_tpls_now,
+                                      seed=args.seed)
+                if verbose:
+                    print(f"    [spawn override] Applied: "
+                          + ", ".join(
+                              f"{k}={v.get('template')}({v.get('mode')})"
+                              for k, v in spawn_overrides.items()))
 
             rnd_env = None
             if args.rnd_baseline:
@@ -833,6 +1030,9 @@ def main():
                                     apply_natural_mortality=(args.mortality == "on"))
                 if b0_overrides:
                     apply_b0_overrides(rnd_env, b0_overrides)
+                if spawn_overrides:
+                    apply_spawn_overrides(rnd_env, spawn_overrides,
+                                          spawn_tpls_now, seed=args.seed)
 
             # Konsumera ev. dirty-flaggor som råkade vara satta vid start
             # av ny iteration — vi vill bara reagera på drag som sker EFTER
@@ -840,6 +1040,7 @@ def main():
             if viz is not None:
                 viz.consume_b0_change()
                 viz.consume_ticks_change()
+                viz.consume_spawn_change()
 
             # Rollout-längd: använd slider-värdet om det är satt, annars
             # CLI-default. Slidern kan ändras efter rolloutens slut, vilket
@@ -870,8 +1071,9 @@ def main():
                 break
             b0_changed = viz.consume_b0_change()
             ticks_changed = viz.consume_ticks_change()
-            if not (b0_changed or ticks_changed):
-                # Ingen slider-ändring — användaren stängde fönstret.
+            spawn_changed = viz.consume_spawn_change()
+            if not (b0_changed or ticks_changed or spawn_changed):
+                # Inget ändrades — användaren stängde fönstret.
                 break
             if verbose:
                 reasons = []
@@ -879,7 +1081,9 @@ def main():
                     reasons.append("b0")
                 if ticks_changed:
                     reasons.append("ticks")
-                print(f"\n[slider] {'/'.join(reasons)} changed — "
+                if spawn_changed:
+                    reasons.append("spawn")
+                print(f"\n[change] {'/'.join(reasons)} changed — "
                       f"re-recording rollout…")
     except KeyboardInterrupt:
         interrupted = True
