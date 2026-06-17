@@ -20,7 +20,8 @@ class ARSTrainer:
                  alpha=1.0, beta=1.0, obs_normalize=True, top_deltas=None, entropy_coef=0.0,
                  argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False,
                  hidden_layers=2, hidden_dim=30, activation="sig",
-                 survival_bonus=0.0, survival_threshold=0.01):
+                 survival_bonus=0.0, survival_threshold=0.01,
+                 legacy_reward=False):
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma
@@ -62,6 +63,16 @@ class ARSTrainer:
         # enabled. Independent of integral_reward (works with both).
         self.survival_bonus = float(survival_bonus)
         self.survival_threshold = float(survival_threshold)
+        # Reward-konstruktion. Standardvärdet (False) använder den nya
+        # totala-energi-rewardfunktionen:
+        #     E_total(t) = B(t) * energy_content + R(t)         (MJ)
+        #     fitness    = mean_t( log( (E_total(t)+eps) / (E0+eps) ) )
+        # Detta är ekologiskt motiverat (en enda fysikalisk storhet)
+        # och gör alpha/beta/cappa redundanta. När ``legacy_reward=True``
+        # används den gamla linjärkombinationen
+        # ``alpha*delta_b + beta*delta_r + cappa*(t_survive/n_ticks)``
+        # exakt som tidigare för byte-identisk back-compat.
+        self.legacy_reward = bool(legacy_reward)
         # Default: use all deltas (no truncation). When set, must be in [1, n_deltas].
         if top_deltas is None:
             self.top_deltas = self.n_deltas
@@ -404,7 +415,10 @@ class ARSTrainer:
             # we keep the original tuple-task format (no override needed)
             # so the worker stays on its byte-identical legacy code path.
             tasks = []
-            if M == 1:
+            if M == 1 and self.legacy_reward:
+                # Byte-identisk legacy tuple-task-path bevaras enbart för
+                # legacy_reward=True. Nya energi-rewarden kräver dict-task
+                # (workern måste se ``legacy_reward=False``-flaggan).
                 for sign in (+1, -1):
                     for i, delta in enumerate(deltas):
                         d = delta.numpy()
@@ -414,6 +428,29 @@ class ARSTrainer:
                                       pair_seeds[i], obs_pack, self.entropy_coef,
                                       self.argmax_penalty, self.softmax_temperature,
                                       self.integral_reward))
+            elif M == 1:
+                # Nya rewarden: dict-task utan env_builder-override (M=1).
+                for sign in (+1, -1):
+                    for i, delta in enumerate(deltas):
+                        d = delta.numpy()
+                        w = dict(base_weights)
+                        w[fg_to_train] = base_train + sign * self.sigma * d
+                        tasks.append({
+                            'fg_to_train': fg_to_train,
+                            'weights_dict': w,
+                            'n_ticks': n_eval_ticks,
+                            'alpha': self.alpha,
+                            'beta': self.beta,
+                            'seed': pair_seeds[i],
+                            'obs_pack': obs_pack,
+                            'entropy_coef': self.entropy_coef,
+                            'argmax_penalty': self.argmax_penalty,
+                            'softmax_temperature': self.softmax_temperature,
+                            'integral_reward': self.integral_reward,
+                            'survival_bonus': self.survival_bonus,
+                            'survival_threshold': self.survival_threshold,
+                            'legacy_reward': self.legacy_reward,
+                        })
             else:
                 for sign in (+1, -1):
                     for i, delta in enumerate(deltas):
@@ -435,6 +472,7 @@ class ARSTrainer:
                                 'integral_reward': self.integral_reward,
                                 'survival_bonus': self.survival_bonus,
                                 'survival_threshold': self.survival_threshold,
+                                'legacy_reward': self.legacy_reward,
                                 'env_builder': world_builders[m],
                             })
 
@@ -609,23 +647,32 @@ class ARSTrainer:
                 env.obs_mean = obs_mean[idx]
                 env.obs_var = obs_var[idx]
 
-        b0 = env.fgs[fg_id].biomass.sum()
-        r0 = env.fgs[fg_id].energy_reserve.sum()
+        b0 = float(env.fgs[fg_id].biomass.sum())
+        r0 = float(env.fgs[fg_id].energy_reserve.sum())
+        # Total-energi-reward: ec (MJ/ton) är konstant per FG.
+        ec = float(env.fgs[fg_id].params.get('energy_content', 0.0) or 0.0)
+        e0 = b0 * ec + r0
 
-        # Integral-reward: accumulate bh/rh per tick and divide by tick
-        # count at the end. Otherwise: use only the final value (classic).
-        # Section 48: track first tick at which biomass drops below
-        # survival_threshold * b0. ``t_survive`` defaults to n_ticks
-        # (survived the whole rollout). Used only when survival_bonus>0.
+        # Integral-reward: accumulate bh/rh (legacy) eller log_e_sum (ny)
+        # per tick och dela med tick-antal vid slutet. Annars: använd
+        # slutvärde (klassiskt). Section 48: track first tick at which
+        # biomass drops below survival_threshold * b0. ``t_survive``
+        # defaults to n_ticks (survived the whole rollout). Used only
+        # when survival_bonus>0 (legacy-pathen).
         t_survive = n_ticks
-        b_thr = float(self.survival_threshold) * float(b0)
+        b_thr = float(self.survival_threshold) * b0
+        eps_e = max(1e-6 * e0, 1e-9)
+        log_e_sum = 0.0
         if self.integral_reward and n_ticks > 0:
             b_sum = 0.0; r_sum = 0.0
             for t in range(n_ticks):
                 env.step()
                 b_cur = float(env.fgs[fg_id].biomass.sum())
+                r_cur = float(env.fgs[fg_id].energy_reserve.sum())
                 b_sum += b_cur
-                r_sum += float(env.fgs[fg_id].energy_reserve.sum())
+                r_sum += r_cur
+                e_cur = b_cur * ec + r_cur
+                log_e_sum += np.log((e_cur + eps_e) / (e0 + eps_e))
                 if t_survive == n_ticks and b_cur < b_thr:
                     t_survive = t
             bh = b_sum / n_ticks
@@ -637,21 +684,26 @@ class ARSTrainer:
                     b_cur = float(env.fgs[fg_id].biomass.sum())
                     if b_cur < b_thr:
                         t_survive = t
-            bh = env.fgs[fg_id].biomass.sum()
-            rh = env.fgs[fg_id].energy_reserve.sum()
+            bh = float(env.fgs[fg_id].biomass.sum())
+            rh = float(env.fgs[fg_id].energy_reserve.sum())
+            eh = bh * ec + rh
+            log_e_sum = np.log((eh + eps_e) / (e0 + eps_e))
 
-        eps_b = max(1e-6 * b0, 1e-9)
-        eps_r = max(1e-6 * r0, 1e-9)
-
-        delta_b = np.log((bh + eps_b) / (b0 + eps_b))
-        delta_r = np.log((rh + eps_r) / (r0 + eps_r))
-        # Raw ecological fitness. Entropy bonus / argmax-penalty are applied
-        # in train_step *after* z-score normalisation of the ecological
-        # component across the 2*n_deltas batch (principled scaling).
-        fitness = self.alpha * delta_b + self.beta * delta_r
-        # Section 48 Variant B: additive survival bonus (off by default).
-        if self.survival_bonus > 0.0 and n_ticks > 0:
-            fitness = fitness + self.survival_bonus * (t_survive / float(n_ticks))
+        if self.legacy_reward:
+            eps_b = max(1e-6 * b0, 1e-9)
+            eps_r = max(1e-6 * r0, 1e-9)
+            delta_b = np.log((bh + eps_b) / (b0 + eps_b))
+            delta_r = np.log((rh + eps_r) / (r0 + eps_r))
+            fitness = self.alpha * delta_b + self.beta * delta_r
+            if self.survival_bonus > 0.0 and n_ticks > 0:
+                fitness = fitness + self.survival_bonus * (t_survive / float(n_ticks))
+        else:
+            # mean(log(E_total/E0)) — en enda fysikalisk storhet (MJ).
+            # B·ec-termen ger ett naturligt nedre golv så länge B>0,
+            # vilket dämpar dead-zone-eps-mättnad jämfört med ren
+            # log(R/R0)-reward.
+            denom = float(n_ticks) if (self.integral_reward and n_ticks > 0) else 1.0
+            fitness = float(log_e_sum / denom)
 
         samples = None
         if obs_mean is not None and getattr(env, '_obs_sum', None) is not None:
@@ -715,10 +767,16 @@ class ARSTrainer:
 
         b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+        # Total-energi-reward: ec konstant per FG.
+        ec = {fid: float(env.fgs[fid].params.get('energy_content', 0.0) or 0.0)
+              for fid in fg_list}
+        e0 = {fid: b0[fid] * ec[fid] + r0[fid] for fid in fg_list}
+        eps_e = {fid: max(1e-6 * e0[fid], 1e-9) for fid in fg_list}
 
         # Section 48: per-FG time-to-death tracking for Variant B bonus.
         t_survive = {fid: n_ticks for fid in fg_list}
         b_thr = {fid: float(self.survival_threshold) * float(b0[fid]) for fid in fg_list}
+        log_e_sum = {fid: 0.0 for fid in fg_list}
         if self.integral_reward and n_ticks > 0:
             b_sum = {fid: 0.0 for fid in fg_list}
             r_sum = {fid: 0.0 for fid in fg_list}
@@ -726,8 +784,11 @@ class ARSTrainer:
                 env.step()
                 for fid in fg_list:
                     b_cur = float(env.fgs[fid].biomass.sum())
+                    r_cur = float(env.fgs[fid].energy_reserve.sum())
                     b_sum[fid] += b_cur
-                    r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
+                    r_sum[fid] += r_cur
+                    e_cur = b_cur * ec[fid] + r_cur
+                    log_e_sum[fid] += np.log((e_cur + eps_e[fid]) / (e0[fid] + eps_e[fid]))
                     if t_survive[fid] == n_ticks and b_cur < b_thr[fid]:
                         t_survive[fid] = t
             bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
@@ -742,16 +803,23 @@ class ARSTrainer:
                             t_survive[fid] = t
             bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
             rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+            for fid in fg_list:
+                eh = bh[fid] * ec[fid] + rh[fid]
+                log_e_sum[fid] = np.log((eh + eps_e[fid]) / (e0[fid] + eps_e[fid]))
 
         fitness = {}
+        denom = float(n_ticks) if (self.integral_reward and n_ticks > 0) else 1.0
         for fid in fg_list:
-            eps_b = max(1e-6 * b0[fid], 1e-9)
-            eps_r = max(1e-6 * r0[fid], 1e-9)
-            delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
-            delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
-            f = self.alpha * delta_b + self.beta * delta_r
-            if self.survival_bonus > 0.0 and n_ticks > 0:
-                f = f + self.survival_bonus * (t_survive[fid] / float(n_ticks))
+            if self.legacy_reward:
+                eps_b = max(1e-6 * b0[fid], 1e-9)
+                eps_r = max(1e-6 * r0[fid], 1e-9)
+                delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
+                delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
+                f = self.alpha * delta_b + self.beta * delta_r
+                if self.survival_bonus > 0.0 and n_ticks > 0:
+                    f = f + self.survival_bonus * (t_survive[fid] / float(n_ticks))
+            else:
+                f = log_e_sum[fid] / denom
             fitness[fid] = float(f)
 
         samples = None
@@ -917,8 +985,9 @@ class ARSTrainer:
                 obs_pack = {'dm_ids': dm_ids_for_norm,
                             'mean': obs_mean, 'var': obs_var}
             tasks = []
-            if M == 1:
-                # M=1 legacy: keep tuple-format tasks (byte-identical to pre-STEP-3 path).
+            if M == 1 and self.legacy_reward:
+                # Byte-identisk legacy tuple-task-path; nya energi-rewarden
+                # kräver dict-task så att workern ser ``legacy_reward=False``.
                 for i in range(self.n_deltas):
                     wd_pos = _build_weights_dict(+1.0, i)
                     tasks.append((list(target_species), wd_pos, n_eval_ticks,
@@ -931,6 +1000,27 @@ class ARSTrainer:
                                   self.alpha, self.beta, pair_seeds[i], obs_pack,
                                   self.entropy_coef, self.argmax_penalty,
                                   self.softmax_temperature, self.integral_reward))
+            elif M == 1:
+                # Nya rewarden: dict-tasks utan env_builder-override (M=1).
+                for sign in (+1.0, -1.0):
+                    for i in range(self.n_deltas):
+                        wd = _build_weights_dict(sign, i)
+                        tasks.append({
+                            'fg_list': list(target_species),
+                            'weights_dict': wd,
+                            'n_ticks': n_eval_ticks,
+                            'alpha': self.alpha,
+                            'beta': self.beta,
+                            'seed': pair_seeds[i],
+                            'obs_pack': obs_pack,
+                            'entropy_coef': self.entropy_coef,
+                            'argmax_penalty': self.argmax_penalty,
+                            'softmax_temperature': self.softmax_temperature,
+                            'integral_reward': self.integral_reward,
+                            'survival_bonus': self.survival_bonus,
+                            'survival_threshold': self.survival_threshold,
+                            'legacy_reward': self.legacy_reward,
+                        })
             else:
                 # M>1: dict-tasks with per-world env_builder override. Layout:
                 # outer = sign (+, -), then i in [0..n_deltas), then m in [0..M).
@@ -952,6 +1042,7 @@ class ARSTrainer:
                                 'integral_reward': self.integral_reward,
                                 'survival_bonus': self.survival_bonus,
                                 'survival_threshold': self.survival_threshold,
+                                'legacy_reward': self.legacy_reward,
                                 'env_builder': world_builders[m],
                             })
             results = self._pool_map(_evaluate_coevo_task, tasks)

@@ -843,6 +843,28 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     if verbose:
                         print("    [viz] window closed; stopping early.")
                     break
+                # Live re-trigger: om användaren ändrat b0, rollout-ticks
+                # eller spawn-template medan inspelningen pågår, avbryt
+                # nuvarande probe direkt så main-loopens rerun startar en
+                # ny inspelning. Flaggorna inspekteras utan att konsumeras
+                # — main-loopen kallar ``consume_*_change`` precis efter
+                # ``run_inference`` returnerat och får då rätt orsak. Endast
+                # i inference.py (train.py har egen probe-pipeline).
+                if (getattr(viz, '_b0_dirty', False)
+                        or getattr(viz, '_ticks_dirty', False)
+                        or getattr(viz, '_spawn_dirty', False)):
+                    if verbose:
+                        reasons = []
+                        if getattr(viz, '_b0_dirty', False):
+                            reasons.append("b0")
+                        if getattr(viz, '_ticks_dirty', False):
+                            reasons.append("ticks")
+                        if getattr(viz, '_spawn_dirty', False):
+                            reasons.append("spawn")
+                        print(f"    [change] {'/'.join(reasons)} changed "
+                              f"mid-rollout at tick {t+1}/{n_ticks} — "
+                              f"aborting probe to restart.")
+                    break
                 if ecosystem_dead:
                     if verbose:
                         print(f"    [inference] all biomass has collapsed to 0 "
@@ -1063,19 +1085,29 @@ def main():
 
             if viz is None:
                 break
-            # wait_for_close returnerar tidigt om användaren dragit i en
-            # slider (musen släpps -> dirty=True). Vid stängning av
-            # fönstret (Q/ESC eller window-close) blir ``self._quit=True``
-            # och loopen avslutas.
-            try:
-                viz.wait_for_close(
-                    banner="inference finished — drag a slider (b0 or "
-                           "rollout ticks) to re-record, or close window "
-                           "to exit (Q/ESC)")
-            except KeyboardInterrupt:
-                if verbose:
-                    print("\nInterrupted by user (Ctrl+C); closing window.")
-                break
+            # Om rollouten avbröts mid-flight pga en parameter-ändring
+            # (b0/ticks/spawn) är respektive dirty-flagga redan satt.
+            # Hoppa då direkt till rerun utan att blocka på
+            # ``wait_for_close`` — användaren har redan signalerat att
+            # en ny inspelning ska starta.
+            _mid_flight_change = (
+                getattr(viz, '_b0_dirty', False)
+                or getattr(viz, '_ticks_dirty', False)
+                or getattr(viz, '_spawn_dirty', False))
+            if not _mid_flight_change:
+                # wait_for_close returnerar tidigt om användaren dragit i en
+                # slider (musen släpps -> dirty=True). Vid stängning av
+                # fönstret (Q/ESC eller window-close) blir ``self._quit=True``
+                # och loopen avslutas.
+                try:
+                    viz.wait_for_close(
+                        banner="inference finished — drag a slider (b0 or "
+                               "rollout ticks) to re-record, or close window "
+                               "to exit (Q/ESC)")
+                except KeyboardInterrupt:
+                    if verbose:
+                        print("\nInterrupted by user (Ctrl+C); closing window.")
+                    break
             b0_changed = viz.consume_b0_change()
             ticks_changed = viz.consume_ticks_change()
             spawn_changed = viz.consume_spawn_change()

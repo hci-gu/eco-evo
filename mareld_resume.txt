@@ -2330,7 +2330,12 @@ recorded here as the menu for future use:
   Con:  changes reward magnitude/scale -> may need to re-tune
         alpha/beta and re-run from scratch (existing checkpoints
         trained against log(mean) become sub-optimal).
-  Status: NOT implemented.
+  Status: IMPLEMENTED as part of the new total-energy reward
+          (default), see Section 58. The form used is
+          mean(log(E_total/E0)) where E_total = B*ec + R.
+          The original alpha*log(mean(B)/B0) + beta*log(mean(R)/R0)
+          + cappa*survive path is preserved verbatim behind the
+          --legacyreward flag.
 
 Recommendation order if dead-zone gradient becomes a measurable
 problem in next training runs (Section 46 calibration with
@@ -3041,3 +3046,164 @@ earlier rollout with the playback bar (Section 55).
   * The unused ``_owner_kind`` flag on spawn-editor ``vars_store``
     entries is a remnant from the per-FG storage attempt; it does
     no harm and may be cleaned up later.
+
+================================================================
+58. TOTAL-ENERGY REWARD (E_total = B*ec + R) + --legacyreward
+================================================================
+New default reward formulation that replaces the alpha/beta/cappa
+linear combination with a single physically-grounded scalar:
+
+    E_total(t) = B(t) * energy_content + R(t)        [MJ]
+    fitness    = mean_t [ log( (E_total(t) + eps) / (E0 + eps) ) ]
+
+i.e. the per-tick log-ratio averaged over the rollout (Section
+48.C form, "mean(log)"), applied to total chemical energy bound
+in the FG. Biomass is now implicit in the reward via the B*ec
+structural-energy term - no separate alpha is needed, and the
+B*ec floor (as long as the population is alive) naturally
+counteracts the eps-saturation that made mean(log(R/R0)) on its
+own untenable. See discussion in the chat arc preceding this
+section for full motivation; key points:
+
+  * Degenerate "few fat individuals" attractors are eliminated:
+    B -> 0 collapses E_total even if E = R/B stays high, because
+    B*ec dominates the sum.
+  * Variant B-asymmetry in _apply_growth (R scaled with B on
+    starvation) no longer "hides" collapse - E_total reacts on
+    both terms simultaneously.
+  * Predation conserves system-level E_total modulo metabolism +
+    assimilation losses: a true co-evolutionary zero-sum signal.
+
+58.1 CLI: --legacyreward
+  New flag in train.py:
+    --legacyreward (alias --legacy_reward)   default: False
+  When False (default): the new total-energy reward is used.
+  When True:            the old linear-combination reward
+                        (alpha*delta_b + beta*delta_r +
+                        cappa*survive) runs byte-identical to
+                        pre-Section-58 behaviour.
+  The training banner now prints either:
+    "Reward: total-energy mean(log(E_total/E0))"
+  or, in legacy mode, the existing Alpha/Beta/Cappa lines.
+
+58.2 Implementation
+  * lib/runners/trainer.py: ARSTrainer.__init__ takes
+    ``legacy_reward`` (default False at constructor-level; train.py
+    sets it from args.legacy_reward). Both _evaluate and
+    _evaluate_coevo compute BOTH the legacy delta_b/delta_r and
+    the new log_e_sum/E0 paths in the rollout loop, then select
+    the final fitness via the flag. When ``legacy_reward=True``
+    the worker task path stays in tuple-format for byte-identical
+    legacy parity; when False, M=1 also uses dict-format tasks
+    so the workers can read ``legacy_reward`` per task.
+  * lib/runners/parallel_worker.py: both _evaluate_task and
+    _evaluate_coevo_task read ``legacy_reward`` (default True in
+    the tuple-task code path for back-compat) and per FG:
+        ec      = float(env.fgs[fid].params.get('energy_content', 0.0))
+        e0      = b0 * ec + r0
+        eps_e   = max(1e-6 * e0, 1e-9)
+        # accumulated each tick:
+        log_e_sum += log((b_cur*ec + r_cur + eps_e) / (e0 + eps_e))
+        # final:
+        fitness = log_e_sum / n_ticks         # mean(log)
+    The legacy branch is unchanged.
+  * train.py: --legacyreward parsed, propagated to ARSTrainer,
+    and shown in the parameter-summary banner.
+
+58.3 Silent-no-op warning (CLI guardrail)
+  Without this guardrail, users specifying --alpha/--beta/--cappa/
+  --survival_bonus without also setting --legacyreward would get
+  a tyst no-op (values reach the trainer but the new reward path
+  ignores them). train.py now prints, directly after argparse:
+    [WARNING] Ignoring --alpha=... --beta=...: the new
+    total-energy reward (default) does not use alpha/beta/cappa/
+    survival_bonus. Add --legacyreward to enable the linear-
+    combination reward.
+  Detection uses _parser_defaults (compares against argparse
+  defaults), so passing the same value as the default is not
+  flagged.
+
+58.4 Removal of legacy energy_gain fallback (Section 31 update)
+  ``energy_gain`` is no longer readable via any path. Concretely:
+    * lib/environments/ecosystem.py _build_static_caches: predation
+      energy gain now reads ``prey_fg.params['energy_content']``
+      directly (was: interaction's energy_gain with fallback).
+    * fgconfig/fgconfig.py hard-gate validator: the energy_gain
+      override branch removed; always uses
+      species_definitions[prey].energy_content.
+    * fgconfig/fgconfig.py FG-save: the auto-sync block that
+      previously wrote ``energy_gain`` into all matching
+      interactions is replaced by a one-shot CLEANUP pass that
+      STRIPS any legacy ``energy_gain:`` field from
+      interaction_definitions on every FG save. Old YAMLs
+      converge to the new schema automatically.
+    * fgconfig/fg_library.yaml: all 8 stale ``energy_gain:`` lines
+      removed (all matched preys energy_content, so removal is
+      behaviour-neutral).
+  Net effect: bytets ``energy_content`` is the single source of
+  truth for predation energy transfer; the assimilation_factor
+  still applies on top. Assimilation-faktorn pa kvarstaende
+  predation-energi ar oforandrad. Eventuella icke-konsistenta
+  override-varden i gamla YAML:er kan inte langre bryta E_total-
+  bokforingens nollsumma.
+
+58.5 Literature values for top-predator energy_content
+  Currently fg_library.yaml has energy_content=0.0 for porpoises,
+  seals and seabirds, which would collapse E_total to R for those
+  FGs. Recommended literature values (MJ/ton WW; see Section 8
+  for the units convention) collected in this session:
+    porpoises  8500  (Lockyer 2007; McLellan et al. 2002;
+                     Spitz et al. 2010)
+    seals      10000 (Reilly & Fedak 1990; Maartensson et al. 1996;
+                     Spitz et al. 2010)
+    seabirds   7000  (Schmidt-Nielsen 1997; Hilton et al. 2000;
+                     Spitz et al. 2010)
+  Values are NOT yet written to fg_library.yaml - the user has the
+  recommendations but has chosen to enter them via the FG editor
+  (or accept defaults) at training time. Without these set, the
+  new reward effectively reduces to mean(log(R/R0)) for the three
+  top predators (legacy energy-only signal, which is exactly the
+  pathology Section 58 was designed to fix).
+
+58.6 Compatibility & caveats
+  * Checkpoint shapes: unchanged - no policy I/O change.
+  * Numerical scale: the new reward typically sits in
+    [-log(1/eps), +log(few)] ~ [-14, +1] but in practice the
+    B*ec-floor keeps mean(log) much closer to 0 than mean(log(R/R0))
+    would. Hyperparameters --lr / --sigma may want a modest
+    re-tune; --cappa / --alpha / --beta are simply unused.
+  * Predation flow: predator energy gain now strictly equals
+    prey.energy_content * assimilation_factor (Section 58.4). Set
+    energy_content > 0 on every prey FG or the predator gets zero
+    energy from it.
+  * Sanity-test (Section 23) inequalities still apply - they
+    reference max_intake_rate and energy_content, which the new
+    reward depends on at least as much as the legacy reward did.
+  * Banner / probe / HTML: unchanged. The probe path (Section 29)
+    still reports B and R fractions; downstream consumers do not
+    see fitness directly.
+
+58.7 Verification
+  * Syntax: python -c "ast.parse(...)" on train.py,
+    lib/runners/trainer.py, lib/runners/parallel_worker.py -> OK.
+  * Legacy parity: with --legacyreward set, the tuple-task path
+    in parallel_worker.py is byte-identical to pre-Section-58
+    (same eps formulas, same survival_bonus assembly).
+  * Field check: 8 removed ``energy_gain:`` lines in
+    fg_library.yaml verified to equal each prey's
+    ``energy_content`` before removal (phyto 2000, zoo 4500,
+    pelagic 6500, gadoids 5500); removal is behaviour-neutral.
+  * mareld2.yaml inspected: no interaction_definitions or
+    energy_gain entries; no migration needed there.
+
+58.8 Open follow-ups
+  * Write the Section 58.5 literature values into fg_library.yaml
+    before running any extended training under the new reward.
+  * Empirically measure the B*ec vs R contribution split per FG
+    over a typical rollout. If B*ec dominates >95 %, the new
+    reward is in practice ``log(mean(B)) + constant`` and the
+    information advantage over the legacy alpha-only signal is
+    small (it is still a single hyperparameter-free scalar though).
+  * No A/B test of new vs legacy reward has been run yet; do at
+    least a short sanity-profile comparison before long training
+    sessions.

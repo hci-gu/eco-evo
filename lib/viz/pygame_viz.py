@@ -1906,6 +1906,25 @@ class LiveVisualizer:
         if self._recording:
             ind = f"recording... ({len(self._pending_rollout)} frames)"
         ind_surf = self._font.render(ind, True, (200, 200, 215))
+        # Reservera stabil bredd för indikator-zonen så att scrub-
+        # slidern inte ändrar storlek när texten växlar mellan
+        # "live ...", "frame = i/N" och "recording... (...)". Vi
+        # beräknar maxbredden av samtliga möjliga varianter med
+        # de nuvarande räknarvärdena och använder den för att
+        # placera scrub-slidens högerkant.
+        _max_n = max(n, 1)
+        _max_pending = len(self._pending_rollout)
+        _ind_variants = [
+            f"live  (saved frames: {_max_n})",
+            f"frame = {_max_n}/{_max_n}",
+            f"recording... ({_max_pending} frames)",
+        ]
+        _ind_reserve_w = max(
+            self._font.render(s, True, (200, 200, 215)).get_width()
+            for s in _ind_variants)
+        ind_zone_left = x + w - _ind_reserve_w - 10
+        # Höger-justera den faktiska texten inom den reserverade zonen
+        # så att den alltid hamnar vid samma högerkant.
         ind_x = x + w - ind_surf.get_width() - 10
         self._screen.blit(ind_surf,
                           (ind_x,
@@ -1915,7 +1934,11 @@ class LiveVisualizer:
         # Disabled samma villkor som transport-knapparna (recording eller
         # ingen film). Klick/drag sätter ``_playback_idx`` och pausar.
         track_x = bx + 8
-        track_right = ind_x - 10
+        # Använd den reserverade indikator-zonens vänsterkant (stabil)
+        # istället för den dynamiska ``ind_x`` (som flyttar sig när
+        # indikator-texten ändras), så scrub-slidern behåller exakt
+        # samma bredd oavsett playback-mode/recording-state.
+        track_right = ind_zone_left - 10
         track_w = track_right - track_x
         track_h = 6
         track_y = y + (h - track_h) // 2
@@ -1980,16 +2003,35 @@ class LiveVisualizer:
         # det realtidsuppdaterade värdet inline.
         cur = self.get_ticks()
         marker = "*" if self._ticks_override is not None else ""
-        label = f"rollout ticks{marker} = {cur}"
+        label = f"Probe ticks{marker} = {cur}"
         lbl_surf = self._font.render(label, True, (210, 210, 220))
         row2_y = y + 22
         row2_h = 18
         self._screen.blit(lbl_surf, (x + 6, row2_y + 2))
         lo_surf = self._font.render(str(self._ticks_min), True, (150, 150, 160))
         hi_surf = self._font.render(str(self._ticks_max), True, (150, 150, 160))
+        # Gemensam label-bredd så att Probe-ticks- och Perturbation-
+        # ticks-slidrarna får exakt samma track-startposition (och
+        # därmed samma längd). Vi mäter "Perturbation ticks"-etiketten
+        # här utan markör/värde-suffix — den faktiska etiketten kan
+        # variera i längd p.g.a. ``*``-markören och värdet, men vi
+        # vill ha en stabil, gemensam baseline. Använd max av båda
+        # rendererade bredderna nedan.
+        cur2_preview = self.get_neval_ticks()
+        marker2_preview = "*" if self._neval_override is not None else ""
+        lbl2_preview = self._font.render(
+            f"Perturbation ticks{marker2_preview} = {cur2_preview}",
+            True, (210, 210, 220))
+        _label_w = max(lbl_surf.get_width(), lbl2_preview.get_width())
         # Track-rect: börjar efter label (+ liten gutter), slutar före
         # hi-label (+ gutter). Mappar mot fönsterbredden.
-        track_x = x + 6 + lbl_surf.get_width() + 12 + lo_surf.get_width() + 6
+        try:
+            _lo2_preview_w = self._font.render(
+                str(self._neval_min), True, (150, 150, 160)).get_width()
+        except Exception:
+            _lo2_preview_w = lo_surf.get_width()
+        _lo_w = max(lo_surf.get_width(), _lo2_preview_w)
+        track_x = x + 6 + _label_w + 12 + _lo_w + 6
         # Begränsa sliderns högerkant så att den slutar där plot-rutan
         # börjar (annars sträcker den sig över hela fönsterbredden och
         # täcker grafritarrutan, vilket ser fult ut och är onödigt långt).
@@ -2009,7 +2051,15 @@ class LiveVisualizer:
         else:
             lock_size = 14
             lock_gutter = 6
-        right_limit = (plot_left - (hi_surf.get_width() + 6) - 4
+        # Använd max av båda hi-labels bredd så att högerkanten
+        # (och därmed track-längden) blir identisk för båda raderna.
+        try:
+            _hi2_preview_w = self._font.render(
+                str(self._neval_max), True, (150, 150, 160)).get_width()
+        except Exception:
+            _hi2_preview_w = hi_surf.get_width()
+        _hi_w = max(hi_surf.get_width(), _hi2_preview_w)
+        right_limit = (plot_left - (_hi_w + 6) - 4
                        - (lock_size + lock_gutter))
         track_w_max = right_limit - track_x
         track_w = max(80, track_w_max)
@@ -2069,7 +2119,7 @@ class LiveVisualizer:
         # train.py mellan ARS-iterationer.
         cur2 = self.get_neval_ticks()
         marker2 = "*" if self._neval_override is not None else ""
-        label2 = f"n_eval_ticks{marker2} = {cur2}"
+        label2 = f"Perturbation ticks{marker2} = {cur2}"
         lbl2_surf = self._font.render(label2, True, (210, 210, 220))
         row3_y = y + 40
         row3_h = 18
@@ -2078,9 +2128,15 @@ class LiveVisualizer:
                                      (150, 150, 160))
         hi2_surf = self._font.render(str(self._neval_max), True,
                                      (150, 150, 160))
-        track2_x = (x + 6 + lbl2_surf.get_width() + 12
-                    + lo2_surf.get_width() + 6)
-        right_limit2 = (plot_left - (hi2_surf.get_width() + 6) - 4
+        # Använd samma gemensamma label-bredd som rad 2 så att
+        # track-startpositionen (och därmed sliderlängden) blir
+        # identisk för Probe- och Perturbation-ticks-slidrarna.
+        _label2_w = max(lbl2_surf.get_width(), lbl_surf.get_width())
+        _lo2_w = max(lo2_surf.get_width(), lo_surf.get_width())
+        track2_x = (x + 6 + _label2_w + 12
+                    + _lo2_w + 6)
+        _hi2_w = max(hi2_surf.get_width(), hi_surf.get_width())
+        right_limit2 = (plot_left - (_hi2_w + 6) - 4
                         - (lock_size + lock_gutter))
         track2_w_max = right_limit2 - track2_x
         track2_w = max(80, track2_w_max)

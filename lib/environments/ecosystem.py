@@ -147,7 +147,18 @@ class EcosystemEnvironment:
                     assim_f = 0.0
                 elif assim_f > 1.0:
                     assim_f = 1.0
-                energy_gain[i, j] = float(inter_def.get('energy_gain', 0.0)) * assim_f
+                # ``energy_gain`` är, per definition, bytets ``energy_content``
+                # (MJ/ton). Det legacy-fältet ``energy_gain`` på interaktionen
+                # läses inte längre — vi använder alltid prey-FG:ns
+                # ``energy_content`` (från species_definitions) som
+                # auktoritativ källa.
+                prey_fg = self.fgs[prey_id]
+                prey_ec = prey_fg.params.get('energy_content', 0.0)
+                try:
+                    prey_ec_f = float(prey_ec) if prey_ec not in (None, "") else 0.0
+                except (TypeError, ValueError):
+                    prey_ec_f = 0.0
+                energy_gain[i, j] = prey_ec_f * assim_f
                 handling_time[i, j] = float(inter_def.get('handling_time', 0.0))
         self.eat_static_mask = eat_static
         self.max_intake_mat = max_intake

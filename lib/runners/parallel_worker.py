@@ -107,11 +107,15 @@ def _evaluate_coevo_task(task):
         builder_override = task.get('env_builder')
         survival_bonus = float(task.get('survival_bonus', 0.0))
         survival_threshold = float(task.get('survival_threshold', 0.01))
+        # Default True för tuple-tasks (back-compat); dict-tasks är
+        # explicita och skickar med True/False.
+        legacy_reward = bool(task.get('legacy_reward', True))
     else:
         (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
         survival_bonus = 0.0
         survival_threshold = 0.01
+        legacy_reward = True
     _ = (entropy_coef, argmax_penalty)
 
     # Sync ALL policy weights
@@ -140,10 +144,15 @@ def _evaluate_coevo_task(task):
     # Initial state per evaluated species.
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
     r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+    ec = {fid: float(env.fgs[fid].params.get('energy_content', 0.0) or 0.0)
+          for fid in fg_list}
+    e0 = {fid: b0[fid] * ec[fid] + r0[fid] for fid in fg_list}
+    eps_e = {fid: max(1e-6 * e0[fid], 1e-9) for fid in fg_list}
 
     # Section 48 Variant B: per-FG time-to-death tracking.
     t_survive = {fid: n_ticks for fid in fg_list}
     b_thr = {fid: survival_threshold * b0[fid] for fid in fg_list}
+    log_e_sum = {fid: 0.0 for fid in fg_list}
     if integral_reward and n_ticks > 0:
         b_sum = {fid: 0.0 for fid in fg_list}
         r_sum = {fid: 0.0 for fid in fg_list}
@@ -151,8 +160,11 @@ def _evaluate_coevo_task(task):
             env.step()
             for fid in fg_list:
                 b_cur = float(env.fgs[fid].biomass.sum())
+                r_cur = float(env.fgs[fid].energy_reserve.sum())
                 b_sum[fid] += b_cur
-                r_sum[fid] += float(env.fgs[fid].energy_reserve.sum())
+                r_sum[fid] += r_cur
+                e_cur = b_cur * ec[fid] + r_cur
+                log_e_sum[fid] += np.log((e_cur + eps_e[fid]) / (e0[fid] + eps_e[fid]))
                 if t_survive[fid] == n_ticks and b_cur < b_thr[fid]:
                     t_survive[fid] = t
         bh = {fid: b_sum[fid] / n_ticks for fid in fg_list}
@@ -167,16 +179,23 @@ def _evaluate_coevo_task(task):
                         t_survive[fid] = t
         bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
+        for fid in fg_list:
+            eh = bh[fid] * ec[fid] + rh[fid]
+            log_e_sum[fid] = np.log((eh + eps_e[fid]) / (e0[fid] + eps_e[fid]))
 
     fitness = {}
+    denom = float(n_ticks) if (integral_reward and n_ticks > 0) else 1.0
     for fid in fg_list:
-        eps_b = max(1e-6 * b0[fid], 1e-9)
-        eps_r = max(1e-6 * r0[fid], 1e-9)
-        delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
-        delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
-        f = alpha * delta_b + beta * delta_r
-        if survival_bonus > 0.0 and n_ticks > 0:
-            f = f + survival_bonus * (t_survive[fid] / float(n_ticks))
+        if legacy_reward:
+            eps_b = max(1e-6 * b0[fid], 1e-9)
+            eps_r = max(1e-6 * r0[fid], 1e-9)
+            delta_b = np.log((bh[fid] + eps_b) / (b0[fid] + eps_b))
+            delta_r = np.log((rh[fid] + eps_r) / (r0[fid] + eps_r))
+            f = alpha * delta_b + beta * delta_r
+            if survival_bonus > 0.0 and n_ticks > 0:
+                f = f + survival_bonus * (t_survive[fid] / float(n_ticks))
+        else:
+            f = log_e_sum[fid] / denom
         fitness[fid] = float(f)
 
     samples = None
@@ -231,6 +250,7 @@ def _evaluate_task(task):
     builder_override = None
     survival_bonus = 0.0
     survival_threshold = 0.01
+    legacy_reward = True
     if isinstance(task, dict):
         # STEP 3 dict-format task: same fields as tuple-format plus an
         # optional ``env_builder`` override carrying a per-world builder
@@ -250,6 +270,7 @@ def _evaluate_task(task):
         builder_override = task.get('env_builder')
         survival_bonus = float(task.get('survival_bonus', 0.0))
         survival_threshold = float(task.get('survival_threshold', 0.01))
+        legacy_reward = bool(task.get('legacy_reward', True))
     elif len(task) == 11:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
@@ -295,20 +316,27 @@ def _evaluate_task(task):
             env.obs_mean = mean[idx]
             env.obs_var = var[idx]
 
-    b0 = env.fgs[fg_to_train].biomass.sum()
-    r0 = env.fgs[fg_to_train].energy_reserve.sum()
+    b0 = float(env.fgs[fg_to_train].biomass.sum())
+    r0 = float(env.fgs[fg_to_train].energy_reserve.sum())
+    ec = float(env.fgs[fg_to_train].params.get('energy_content', 0.0) or 0.0)
+    e0 = b0 * ec + r0
+    eps_e = max(1e-6 * e0, 1e-9)
 
     # Integral-reward: medel över alla ticks istället för slutvärde.
     # Section 48 Variant B: track t_survive for survival bonus.
     t_survive = n_ticks
-    b_thr = survival_threshold * float(b0)
+    b_thr = survival_threshold * b0
+    log_e_sum = 0.0
     if integral_reward and n_ticks > 0:
         b_sum = 0.0; r_sum = 0.0
         for t in range(n_ticks):
             env.step()
             b_cur = float(env.fgs[fg_to_train].biomass.sum())
+            r_cur = float(env.fgs[fg_to_train].energy_reserve.sum())
             b_sum += b_cur
-            r_sum += float(env.fgs[fg_to_train].energy_reserve.sum())
+            r_sum += r_cur
+            e_cur = b_cur * ec + r_cur
+            log_e_sum += np.log((e_cur + eps_e) / (e0 + eps_e))
             if t_survive == n_ticks and b_cur < b_thr:
                 t_survive = t
         bh = b_sum / n_ticks
@@ -320,21 +348,28 @@ def _evaluate_task(task):
                 b_cur = float(env.fgs[fg_to_train].biomass.sum())
                 if b_cur < b_thr:
                     t_survive = t
-        bh = env.fgs[fg_to_train].biomass.sum()
-        rh = env.fgs[fg_to_train].energy_reserve.sum()
+        bh = float(env.fgs[fg_to_train].biomass.sum())
+        rh = float(env.fgs[fg_to_train].energy_reserve.sum())
+        eh = bh * ec + rh
+        log_e_sum = np.log((eh + eps_e) / (e0 + eps_e))
 
-    eps_b = max(1e-6 * b0, 1e-9)
-    eps_r = max(1e-6 * r0, 1e-9)
-    delta_b = np.log((bh + eps_b) / (b0 + eps_b))
-    delta_r = np.log((rh + eps_r) / (r0 + eps_r))
-    # Return *raw* ecological fitness only. Entropy bonus and argmax-penalty
-    # are applied in the trainer *after* z-score normalisation of the
-    # ecological component across the 2*n_deltas batch, so that the
-    # bonus/penalty (which live on the [0,1] scale) have comparable weight
-    # for all species regardless of the absolute |delta_b+delta_r| magnitude.
-    fitness = float(alpha * delta_b + beta * delta_r)
-    if survival_bonus > 0.0 and n_ticks > 0:
-        fitness = fitness + float(survival_bonus) * (t_survive / float(n_ticks))
+    if legacy_reward:
+        eps_b = max(1e-6 * b0, 1e-9)
+        eps_r = max(1e-6 * r0, 1e-9)
+        delta_b = np.log((bh + eps_b) / (b0 + eps_b))
+        delta_r = np.log((rh + eps_r) / (r0 + eps_r))
+        # Return *raw* ecological fitness only. Entropy bonus and
+        # argmax-penalty are applied in the trainer *after* z-score
+        # normalisation of the ecological component across the 2*n_deltas
+        # batch, so that the bonus/penalty (which live on the [0,1] scale)
+        # have comparable weight for all species regardless of the
+        # absolute |delta_b+delta_r| magnitude.
+        fitness = float(alpha * delta_b + beta * delta_r)
+        if survival_bonus > 0.0 and n_ticks > 0:
+            fitness = fitness + float(survival_bonus) * (t_survive / float(n_ticks))
+    else:
+        denom = float(n_ticks) if (integral_reward and n_ticks > 0) else 1.0
+        fitness = float(log_e_sum / denom)
     # entropy_coef / argmax_penalty arguments are accepted for backward
     # compatibility with task-tuple length 8/9 but are intentionally unused
     # here; the trainer applies them post hoc via act_diag.

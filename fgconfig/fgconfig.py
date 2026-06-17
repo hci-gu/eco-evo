@@ -3335,21 +3335,17 @@ class FGConfigApp:
                 if not isinstance(entry, dict) or not entry.get("preys_on"):
                     continue
                 prey_id = key[len(prefix):]
-                # Resolve energy gain: explicit override > prey energy_content.
+                # ``energy_gain`` är legacy och kan inte längre matas in via
+                # UI:t. Vi använder alltid bytets ``energy_content`` från
+                # ``species_definitions`` som auktoritativ källa.
                 eg = None
-                if "energy_gain" in entry and entry.get("energy_gain") not in (None, ""):
+                prey_def = species_defs.get(prey_id, {}) or {}
+                ec = prey_def.get("energy_content")
+                if ec not in (None, ""):
                     try:
-                        eg = float(entry.get("energy_gain"))
+                        eg = float(ec)
                     except (TypeError, ValueError):
                         eg = None
-                if eg is None:
-                    prey_def = species_defs.get(prey_id, {}) or {}
-                    ec = prey_def.get("energy_content")
-                    if ec not in (None, ""):
-                        try:
-                            eg = float(ec)
-                        except (TypeError, ValueError):
-                            eg = None
                 if eg is None:
                     eg = 0.0
                     if mir > 0.0:
@@ -3419,58 +3415,38 @@ class FGConfigApp:
             self.global_library["species_definitions"] = {}
         self.global_library["species_definitions"][fg_id] = config
 
-        # Invariant: for every interaction ``<predator>_preys_on_<fg_id>``,
-        # ``energy_gain`` MUST equal this FG's ``energy_content`` (MJ/ton).
-        # The matrix editor never writes ``energy_gain`` (it's a legacy field
-        # only read by the hard-gate validator with fallback to
-        # ``prey.energy_content``). If we don't sync it here, raising
-        # ``energy_content`` in the FG Editor leaves stale ``energy_gain``
-        # values on every predator relation — exactly the drift that
-        # produced the 6/8 mismatches we cleaned up earlier.
-        synced_refs = []
-        new_ec = config.get("energy_content")
-        if new_ec not in (None, ""):
-            try:
-                new_ec_f = float(new_ec)
-            except (TypeError, ValueError):
-                new_ec_f = None
-            if new_ec_f is not None:
-                interactions = self.global_library.setdefault(
-                    "interaction_definitions", {})
-                suffix = f"_preys_on_{fg_id}"
-                for ikey, entry in interactions.items():
-                    if not ikey.endswith(suffix):
-                        continue
-                    if not isinstance(entry, dict):
-                        continue
-                    if not entry.get("preys_on"):
-                        continue
-                    old = entry.get("energy_gain")
-                    try:
-                        old_f = float(old) if old not in (None, "") else None
-                    except (TypeError, ValueError):
-                        old_f = None
-                    if old_f != new_ec_f:
-                        entry["energy_gain"] = new_ec_f
-                        synced_refs.append((ikey, old, new_ec_f))
+        # ``energy_gain`` är legacy och varken läses av runtime
+        # (``lib/environments/ecosystem.py`` läser numera bytets
+        # ``energy_content`` direkt) eller av hard-gate-validatorn ovan.
+        # Auto-syncen som tidigare skrev ``energy_gain`` på varje
+        # ``*_preys_on_<fg_id>``-interaktion behövs inte längre och har
+        # tagits bort. Om gamla bibliotek innehåller stale ``energy_gain``-
+        # värden så ignoreras de i fortsättningen.
+
+        # Passa på att städa bort eventuella legacy ``energy_gain``-fält
+        # från interaktioner på biblioteket vid varje FG-spara — då
+        # konvergerar gamla YAML:er mot den nya schema-formen utan att
+        # användaren behöver redigera dem för hand.
+        removed_legacy = 0
+        interactions = self.global_library.get("interaction_definitions", {}) or {}
+        for ikey, entry in interactions.items():
+            if isinstance(entry, dict) and "energy_gain" in entry:
+                entry.pop("energy_gain", None)
+                removed_legacy += 1
 
         self.save_yaml(self.global_library, self.library_path)
         # FG editor writes initial_biomass min/max and spawn block onto the
         # project FG entry — these are NOT persisted by the library save
         # above and require Save Project.
         self._mark_dirty()
-        if synced_refs:
-            details = "\n".join(
-                f"  - {k}.energy_gain: {old!r} → {new}"
-                for k, old, new in synced_refs
-            )
+        if removed_legacy:
             messagebox.showinfo(
                 "Success",
                 f"Updated {fg_id}. Library updated; initial biomass range "
                 f"saved on project entry (remember to Save Project).\n\n"
-                f"Auto-synced energy_gain on {len(synced_refs)} predation "
-                f"relation(s) to match this FG's energy_content="
-                f"{new_ec_f}:\n{details}",
+                f"Removed {removed_legacy} legacy 'energy_gain' field(s) "
+                f"from interaction_definitions (runtime now reads prey "
+                f"'energy_content' directly).",
             )
         else:
             messagebox.showinfo(

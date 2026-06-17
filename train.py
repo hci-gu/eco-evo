@@ -626,11 +626,23 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         except Exception:
             pass
         # Snapshot at t=0 so the user sees the starting state.
+        # Vi pausar inspelningen runt detta anrop: t=0-snapshotten är
+        # bara "startbilden" som live-visas innan första tickens steg,
+        # och representerar ingen verklig probe-tick. Skulle den
+        # capturas hamnar den som frame 0 i filmen och rolloutens
+        # totala frame-count blir n_ticks + 1 (501 vid 500 ticks),
+        # vilket är förvirrande för användaren.
+        _was_recording0 = bool(getattr(viz, '_recording', False))
+        if _was_recording0:
+            viz._recording = False
         try:
             viz.update_biomass(env.fgs, tick=0, extra=viz_extra)
             viz.pump_events()
         except Exception:
             pass
+        finally:
+            if _was_recording0:
+                viz._recording = True
     # Accumulate per-tick biomass / energy sums so that the biomass and
     # energy graphs can display avg(b)/b0 (and avg(e)/e0) over the whole
     # rollout instead of the final-tick ratio.
@@ -957,7 +969,21 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     if viz is not None:
         try:
             viz._last_frame_ts = 0.0
-            viz.update_biomass(env.fgs, tick=int(n_ticks_done), extra=viz_extra)
+            # Den sista ``update_biomass`` här är ett rent repaint för att
+            # rad mv/rs/et + pr/st/im ovanför heatmapen skall hinna
+            # uppdateras innan användaren ser slutbilden — den visar
+            # samma state som redan capturades som sista frame i
+            # tick-loopen (``_t = n_ticks - 1``). Om vi låter recordern
+            # spela in den också får filmen +1 dubblettframe (502 vid
+            # 500 ticks). Pausa därför inspelningen runt anropet.
+            _was_recording = bool(getattr(viz, '_recording', False))
+            if _was_recording:
+                viz._recording = False
+            try:
+                viz.update_biomass(env.fgs, tick=int(n_ticks_done), extra=viz_extra)
+            finally:
+                if _was_recording:
+                    viz._recording = True
             # Avsluta inspelningen: ``_pending_rollout`` flyttas till
             # ``_current_rollout`` och uppspelningsknapparna blinkar för
             # att signalera att en ny film är tillgänglig.
@@ -1183,6 +1209,16 @@ def main():
     parser.add_argument("--survival_threshold", type=float, default=0.01,
                         help="Threshold fraction of b0 below which biomass is considered 'dead' "
                              "for the survival_bonus tracking (default 0.01 = 1%% of start).")
+    parser.add_argument("--legacyreward", "--legacy_reward", dest="legacy_reward",
+                        action="store_true", default=False,
+                        help="Använd den gamla linjärkombinations-rewardfunktionen "
+                             "alpha*log(mean(B)/B0) + beta*log(mean(R)/R0) + "
+                             "cappa*(t_survive/n_ticks). Default (utan flaggan) "
+                             "används den nya totala-energi-rewarden "
+                             "mean_t(log((B*energy_content + R + eps) / (E0 + eps))), "
+                             "där E0 = B0*energy_content + R0. Den nya rewarden "
+                             "är en enda fysikalisk storhet (MJ) och gör "
+                             "alpha/beta/cappa redundanta.")
     parser.add_argument("--integral_reward", action="store_true", default=True,
                         help="Use mean biomass / mean energy over the whole rollout instead "
                              "of the final value in the fitness computation. Gives \"eat always\" a "
@@ -1552,6 +1588,22 @@ def main():
         is_default = (value == default_val)
         return f"{value} {'(default)' if is_default else '(user)'}"
 
+    # Varna explicit om användaren har angett alpha/beta/cappa/survival_bonus
+    # på kommandoraden utan att samtidigt ha aktiverat --legacy_reward.
+    # I nya total-energi-rewarden (default) ignoreras dessa parametrar helt,
+    # och en tyst no-op är förvirrande för användaren.
+    if not args.legacy_reward:
+        _ignored = []
+        for _name in ('alpha', 'beta', 'cappa', 'survival_bonus'):
+            _def = _parser_defaults.get(_name, None)
+            _val = getattr(args, _name, _def)
+            if _val != _def:
+                _ignored.append(f"--{_name}={_val}")
+        if _ignored:
+            print(f"[WARNING] Ignoring {' '.join(_ignored)}: the new total-energy "
+                  f"reward (default) does not use alpha/beta/cappa/survival_bonus. "
+                  f"Add --legacyreward to enable the linear-combination reward.")
+
     # Resolve worker count (0 = auto) — done here so we can include it in the summary.
     n_deltas = args.n_deltas
     if args.workers > 0:
@@ -1579,9 +1631,14 @@ def main():
     print(f"N Eval Ticks:   {_mark('n_eval_ticks', args.n_eval_ticks)} ticks per rollout")
     print(f"Learning Rate:  {_mark('lr', args.lr)}")
     print(f"Sigma:          {_mark('sigma', args.sigma)}")
-    print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
-    print(f"Beta  (delta_r):{_mark('beta', args.beta)}")
-    print(f"Cappa (survive):{_mark('cappa', args.cappa)} (threshold={args.survival_threshold})")
+    if args.legacy_reward:
+        print(f"Reward:         legacy linear (alpha*delta_b + beta*delta_r + cappa*survive) (user)")
+        print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
+        print(f"Beta  (delta_r):{_mark('beta', args.beta)}")
+        print(f"Cappa (survive):{_mark('cappa', args.cappa)} (threshold={args.survival_threshold})")
+    else:
+        print(f"Reward:         mean(log(E_total/E0)), E_total=B*energy_content+R (default)")
+        print(f"                (alpha/beta/cappa ignored; use --legacyreward to enable)")
     print(f"N Deltas:       {_mark('n_deltas', args.n_deltas)}")
     # Resolve top_deltas (None -> n_deltas // 2)
     if args.top_deltas is None:
@@ -1654,7 +1711,8 @@ def main():
                          hidden_dim=_pn_nodes,
                          activation=_pn_activation,
                          survival_bonus=args.cappa,
-                         survival_threshold=args.survival_threshold)
+                         survival_threshold=args.survival_threshold,
+                         legacy_reward=args.legacy_reward)
 
     # Wire the visualiser into the trainer so the pygame event queue gets
     # pumped from the main thread every ~50 ms while we wait on the

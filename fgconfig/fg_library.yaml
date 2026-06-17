@@ -110,7 +110,7 @@
     feeding_cost: 1.4
     movement_cost: 1.6
     min_split_biomass: 50.0
-    energy_content: 0.0
+    energy_content: 8500.0
     growth_rate: 0.001
     natural_mortality: 5e-05
     max_intake_rate: 0.05
@@ -123,6 +123,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.5
+    visibility_floor: 0.0
   seals:
     display_name: "Seals"
     is_decision_maker: true
@@ -133,7 +134,7 @@
     feeding_cost: 1.3
     movement_cost: 1.5
     min_split_biomass: 80.0
-    energy_content: 0.0
+    energy_content: 10000.0
     growth_rate: 0.001
     natural_mortality: 4e-05
     max_intake_rate: 0.05
@@ -146,6 +147,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.03
+    visibility_floor: 0.0
   seabirds:
     display_name: "Seabirds"
     is_decision_maker: true
@@ -156,7 +158,7 @@
     movement_cost: 2.8
     min_split_biomass: 1.0
     maintenance_level: 0.5
-    energy_content: 0.0
+    energy_content: 7000.0
     growth_rate: 0.001
     natural_mortality: 0.0002
     max_intake_rate: 0.15
@@ -169,6 +171,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.2
+    visibility_floor: 0.0
 interaction_definitions:
   # NOTE on grazing-parametrarna nedan (zoo→phyto):
   # `max_intake_rate` (a) tolkas enligt Method.pdf som *fysiologiskt 6h-tak*
@@ -188,32 +191,26 @@ interaction_definitions:
   # Med h=2.5 dämpar Type II faktiskt intaget när P är riklig, vilket
   # är hela poängen med Fix 2.
   zooplankton_preys_on_phytoplankton:
-    energy_gain: 2000.0
     handling_time: 0.0
     preys_on: true
     assimilation_factor: 0.65
   pelagic_fish_preys_on_zooplankton:
-    energy_gain: 4500
     preys_on: true
     assimilation_factor: 0.8
     handling_time: 0.0
   gadoids_preys_on_pelagic_fish:
-    energy_gain: 6500
     preys_on: true
     assimilation_factor: 0.8
     handling_time: 0.0
   porpoises_preys_on_pelagic_fish:
-    energy_gain: 6500
     preys_on: true
     assimilation_factor: 0.9
     handling_time: 0.0
   seals_preys_on_gadoids:
-    energy_gain: 5500
     preys_on: true
     assimilation_factor: 0.86
     handling_time: 0.0
   seabirds_preys_on_pelagic_fish:
-    energy_gain: 6500
     preys_on: true
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -344,7 +341,6 @@ interaction_definitions:
   porpoises_preys_on_gadoids:
     preys_on: true
     max_intake_rate: 0.05
-    energy_gain: 5500
     assimilation_factor: 0.84
     handling_time: 0.0
   porpoises_preys_on_phytoplankton:
@@ -402,7 +398,6 @@ interaction_definitions:
   seals_preys_on_pelagic_fish:
     preys_on: true
     max_intake_rate: 0.05
-    energy_gain: 6500
     assimilation_factor: 0.92
     handling_time: 0.0
   seals_preys_on_phytoplankton:
