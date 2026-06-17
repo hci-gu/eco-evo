@@ -548,9 +548,18 @@ class LiveVisualizer:
                 try:
                     self._pending_rollout.append(self._capture_frame())
                     # Säkerhetscap mot oavsiktligt obegränsade rollouts.
-                    if len(self._pending_rollout) > 5000:
-                        # Behåll var k:te frame så minnet inte exploderar.
-                        self._pending_rollout = self._pending_rollout[::2]
+                    # Capen är primärt en säkerhetsventil mot oavsiktligt
+                    # obegränsade rollouts — den verkliga läckan (gamla
+                    # filmer som hängde kvar mellan probes) åtgärdas i
+                    # ``end_rollout_recording`` via explicit frigöring +
+                    # ``gc.collect()``. 10000 frames ≈ 1.1 GB per film på
+                    # 8 FG / 60×60 vilket är acceptabelt så länge bara en
+                    # film lever åt gången.
+                    if len(self._pending_rollout) > 10000:
+                        # In-place decimering (var 2:a frame) så att den
+                        # gamla listan kan frigöras direkt istället för att
+                        # leva kvar parallellt med en ny kopia.
+                        del self._pending_rollout[1::2]
                 except Exception as e:
                     self._log_once(f"frame capture failed: {e!r}")
             self._maybe_render()
@@ -906,8 +915,30 @@ class LiveVisualizer:
             return
         self._recording = False
         if self._pending_rollout:
+            # Frigör föregående films frame-listor EXPLICIT innan vi byter
+            # in den nya. Utan detta kunde två filmer (gamla + nya) leva
+            # parallellt en stund — och om replay-state höll en referens
+            # till den gamla via t.ex. ``_playback_idx``-rendering kunde
+            # CPython:s ref-cykel försena frigöringen ytterligare. Detta
+            # var en huvudkomponent av den minnesläcka som rapporterades.
+            try:
+                old = self._current_rollout
+                self._current_rollout = []
+                if old:
+                    old.clear()
+                del old
+            except Exception:
+                pass
             self._current_rollout = self._pending_rollout
             self._pending_rollout = []
+            # Tvinga generationell GC så att de gamla numpy-buffertarna
+            # faktiskt återlämnas till allokatorn istället för att vänta
+            # på nästa triggernivå. Billigt jämfört med en typisk probe.
+            try:
+                import gc
+                gc.collect()
+            except Exception:
+                pass
             # Blinka knapparna ett par sekunder så användaren ser att en
             # ny film är tillgänglig; auto-hoppa INTE in i replay-läget
             # (per användarens önskemål) — live-vyn fortsätter visas tills
