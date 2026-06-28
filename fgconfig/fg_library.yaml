@@ -7,7 +7,7 @@
     max_carrying_capacity: 27.0
     energy_content: 2000.0
     seed_rate: 1e-06
-    seasonal_amplitude: 0.0
+    seasonal_amplitude: 0.5
     seasonal_period: 500.0
     spawn:
       mode: perlin
@@ -39,7 +39,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.2
-    visibility_floor: 0.2
+    visibility_floor: 0.05
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false

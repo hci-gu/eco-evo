@@ -316,6 +316,14 @@ Flag                  Default              Meaning
                                            natural_mortality term in
                                            _apply_growth DM branch. Default
                                            OFF (Section 35.3 opt-in).
+--migration           off                  on|off. When 'on', movement out
+                                           through grid edges is not masked;
+                                           out-of-grid mass is interpreted
+                                           as emigration + immigration over
+                                           edge cells (proportional to
+                                           accessibility). Default OFF
+                                           (Section 59 opt-in). Mirrored on
+                                           inference.py.
 --run-name            "default"            results/<run-name>/ for save/resume.
 --coevolution         True                 Joint rollout co-evo. Use
                                            --no_coevolution for round-robin.
@@ -673,9 +681,10 @@ as backup. The parent catches KeyboardInterrupt, calls trainer.close()
   2. Memory term N(c, t-1) not implemented.
   3. Movement speed v > 1 not supported (cap 1.0).
   4. Positive "Paverkansdelta" (stocking) not supported.
-  5. accessibility map: still only wired to movement masking. It IS
-     plumbed through to spawn via distribute_with_floor(allowed_mask=...)
-     and make_weights(context={'allowed_mask': ...}), but the caller in
+  5. accessibility map: wired to movement masking AND (when --migration
+     on, Section 59) to the edge-cell immigration weights. It IS plumbed
+     through to spawn via distribute_with_floor(allowed_mask=...) and
+     make_weights(context={'allowed_mask': ...}), but the caller in
      config_loader currently passes None until the project ships an
      accessibility/depth map.
   6. No persistent M*-layers; ARS scaling wins over Method.pdf.
@@ -3207,3 +3216,215 @@ section for full motivation; key points:
   * No A/B test of new vs legacy reward has been run yet; do at
     least a short sanity-profile comparison before long training
     sessions.
+
+================================================================
+59. MIGRATION MODE (--migration on|off)
+================================================================
+New opt-in mode that reinterprets out-of-grid movement as biological
+migration instead of masking it away. Default OFF preserves the
+legacy behaviour byte-for-byte (edge directions of move_mask are
+zeroed so pi_move cannot assign mass over the boundary).
+
+59.1 Semantics
+  When --migration on:
+    * Edge-zeroing of move_mask in ecosystem._build_static_caches
+      is skipped. pi_move can therefore route biomass northward
+      from row 0, eastward from the last column, etc.
+    * In _apply_movement, the slice-assigns that would otherwise
+      drop the out-of-grid b_out/r_out slices instead aggregate
+      them per DM into emigration totals b_emig, r_emig (one
+      scalar per DM, summed over the 4 edge slices).
+    * The same totals are immediately redistributed as IMMIGRATION
+      across the grid's edge cells, proportionally to
+      self._edge_imm_weights (a (H, W) array normalised to sum=1
+      over the edge ring; non-edge cells have weight 0).
+    * Total biomass per DM is conserved modulo the metabolic cost
+      already subtracted in r_after_move_meta (i.e. modulo the
+      normal cost-of-moving). Energy reserve R follows biomass.
+
+59.2 Immigration weights
+  Built once in _build_static_caches as self._edge_imm_weights:
+    edge_mask         = 1 on the outermost ring, 0 elsewhere
+    edge_weights      = edge_mask * clip(accessibility, 0, None)
+                        (or edge_mask if no accessibility map)
+    _edge_imm_weights = edge_weights / sum(edge_weights)
+  Fallback (all-zero accessibility on the edge): uniform over
+  edge cells via edge_mask / count(edge). The weights are FG-
+  independent (one global edge layout); per-FG modulation (e.g.
+  seasonal migration directions) is an open follow-up.
+
+59.3 Implementation locations
+  * lib/environments/ecosystem.py:
+      - __init__ takes new ``migration`` kwarg (default False).
+      - _build_static_caches: conditional edge-zeroing of
+        move_mask; always builds self._edge_imm_weights.
+      - _apply_movement: when self.migration, accumulates
+        b_emig / r_emig from the 4 edge slices and adds
+        b_emig[:, None, None] * imm_w[None, :, :] to b_total_in
+        (same for R).
+  * train.py:
+      - New module global APPLY_MIGRATION (default False), set
+        from args.migration in main().
+      - --migration on|off CLI flag (default off).
+      - _EnvBuilder, _ProbeEnvBuilder and _make_env_builder all
+        accept and propagate ``migration`` (same pattern as
+        APPLY_NATURAL_MORTALITY), baked into the instance so
+        spawn-context workers don't lose it on re-import.
+      - _EnvBuilder.with_world copies the flag to siblings.
+  * inference.py:
+      - --migration on|off CLI flag (default off).
+      - build_env takes ``migration`` and forwards to
+        EcosystemEnvironment. All three build_env call sites
+        (initial, rerun, rnd_baseline) pass it through.
+      - Banner prints ``Migration: on|off`` alongside Mortality.
+
+59.4 Conservation properties
+  Per DM, per tick: sum(B_after_move) == sum(B_before_move)
+  modulo metabolic cost (the per-action ``cost * rm`` deduction
+  applied BEFORE the slice-assigns). The migration loop neither
+  amplifies nor leaks mass: emigration is computed as the EXACT
+  sum of the slice-assigns that would otherwise be dropped, and
+  immigration weights sum to 1 over the edge cells.
+
+59.5 Verification
+  * python3 -m py_compile lib/environments/ecosystem.py train.py
+    inference.py -> OK.
+  * python3 -m pytest tests/ -q -> 42/42 green.
+  * Empirical sanity (pi_move[N]=1 forced for all DMs):
+      - migration=False: DMs that move toward an edge collapse to
+        B ~ 0 over a few ticks (legacy mass-loss to the void).
+      - migration=True: total biomass per DM stays essentially
+        constant; the only residual decay is metabolic starvation
+        (intended), not edge leakage.
+
+59.6 Notes & open follow-ups
+  * Immigration is symmetric across all DMs but independent per
+    FG: each FG's emigration immigrates back as the SAME FG (no
+    cross-FG flows). Per-FG migration patterns (e.g. seasonal
+    directionality, FG-specific edge preferences) are out of
+    scope for this issue.
+  * Migration is independent of the spawn pipeline (Section 26):
+    spawn sets up t=0 layouts, migration only acts on the per-
+    tick movement flux at the grid edge.
+  * No GUI toggle yet; --migration is CLI-only. Per-FG enabling
+    (e.g. only zooplankton/pelagic_fish migrate, top-predators
+    don't) is an obvious extension.
+  * Checkpoint compatibility: no policy I/O shape change.
+    Policies trained with migration=off may behave sub-optimally
+    when run with migration=on (and vice versa) because the
+    effective move_mask differs at the edge, but they load and
+    execute without modification.
+
+================================================================
+60. --visual MEMORY LEAK FIXES (SDL/pygame native allocations)
+================================================================
+Long-running --visual training sessions OOM'd the main process
+(~16 GB RSS) on a 32 GB box after many hours. Diagnosis arc went
+through psutil per-generation RSS logging, tracemalloc, objgraph,
+and finally memray --native --trace-python-allocators. Key data:
+with --visual main grew ~0.17 GB/gen linearly; without --visual
+main was stable at 0.62 GB over 24 generations. objgraph showed
+"(no growth)" - i.e. zero Python-object accumulation. Leak was
+100% in the C/SDL layer triggered only by the visualiser.
+
+60.1 Confirmed leak sources (all fixed in lib/viz/pygame_viz.py)
+
+  Fix A - font.render().get_width() antipattern
+    Two call sites allocated a full SDL Surface via TTF_Render_
+    Internal -> AllocateAlignedPixels -> SDL_malloc just to
+    measure text width, then discarded the Surface. SDL never
+    returned the pixel buffers.
+      * _draw_playback_bar: ~218 MB leaked over the memray run.
+        Replaced with self._font.size(s)[0] (returns (w,h) as
+        ints, no Surface allocation).
+      * _draw_status_bar: ~228 MB leaked. Three render(...).
+        get_width() calls replaced with self._font.size(...)[0].
+
+  Fix B - pygame.init() pulls in SDL audio + PulseAudio thread
+    memray summary showed ~201 MB across 565 thread creations
+    rooted in pa_mainloop_iterate / pa_mainloop_run /
+    internal_thread_func / start_thread (pthread_create). The
+    PulseAudio mainloop runs in its own thread and leaks per
+    iteration on some setups. We never use audio.
+    Fix: replaced pygame.init() with pygame.display.init() +
+    pygame.font.init() in LiveVisualizer.__init__. SDL audio
+    subsystem is now never initialised, so the PulseAudio thread
+    never spawns.
+
+  Fix C - SDL2 GL-texture path on display.flip()
+    memray summary showed ~230 MB via pg_flip ->
+    SDL_UpdateWindowSurface_REAL -> SDL_UpdateWindowTexture ->
+    GL_UpdateTexture (278 flips, but only 108 GL_UpdateTexture
+    calls returned memory on this driver).
+    Fix: pygame.display.set_mode((W, H), pygame.SWSURFACE) forces
+    a pure software surface, bypassing the GL-backed window path
+    entirely. SDL_UpdateRects is used instead.
+    Trade-off: CPU does the per-frame pixel copy on flip. For
+    Mareld's small window + low render frequency this is
+    invisible; large/high-FPS UIs would feel it. See discussion
+    in chat arc for the full downside analysis.
+
+  Fix D - breakdown-dict clear in begin_rollout_recording
+    Defensive: self._loss_breakdown / _diet_breakdown /
+    _action_fracs were filled via dict.update each tick but
+    never cleared between probes. If FG ids vary across
+    generations (spawn variants), keys could accumulate. The
+    helpers now self.<dict>.clear() at the start of each
+    recording. Empirically not the dominant leak source (the
+    dicts stayed at 3-4k entries with --visual instrumentation
+    on), but cheap insurance.
+
+60.2 Investigation tools (all temporary, all removed)
+
+  Lived in train.py inside a single [MEM_INSTRUMENTATION] block
+  tagged in code so it could be grepped out in one sweep:
+    * _log_mem(tag)        psutil RSS per generation (main +
+                           sum-of-children) -> memlog.txt.
+    * _log_viz_sizes       deep sys.getsizeof + recursion over
+                           viz._pending_rollout, _current_rollout,
+                           _series (deques), _loss_breakdown,
+                           _diet_breakdown, _action_fracs etc.
+    * _log_objgrowth       objgraph.show_growth(limit=20) since
+                           previous baseline -> showed "(no
+                           growth)" confirming non-Python leak.
+    * _log_tracemalloc     wrapper around tracemalloc.start(n)
+                           with snapshot diff; abandoned (~10x
+                           slowdown at depth=10, missed C
+                           allocations anyway).
+  All deleted in the final cleanup (search MEM_INSTRUMENTATION
+  in train.py -> ALL CLEAR).
+
+  External tool that actually solved it: memray with
+    /home/simon/micromamba/envs/eco-evo-mixed/bin/python3 -m
+      memray run --native --trace-python-allocators
+      --follow-fork --aggregate -o profile_agg.bin train.py
+      --visual ...
+  Followed by either flamegraph --leaks -o leaks.html or
+  summary for plain text. --aggregate keeps the bin file
+  manageable (raw bin was 28 GB for 5 generations; aggregate
+  is ~MB).
+
+60.3 Verification
+
+  * python3 -m py_compile lib/viz/pygame_viz.py train.py -> OK.
+  * grep -n MEM_INSTRUMENTATION train.py -> empty (all clean).
+  * Empirical: user confirmed the leak as resolved after the
+    SWSURFACE fix landed.
+
+60.4 Notes / open follow-ups
+
+  * Fix C (SWSURFACE) is the only fix with a real downside
+    (CPU-side blit). If a future user needs hardware-accel
+    rendering for a denser viz, prefer setting
+    SDL_RENDER_DRIVER=software via env var instead - same
+    effect, less invasive.
+  * Fix B drops audio entirely. If anyone later wants to play
+    a tick sound or beep on KeyboardInterrupt, they need to
+    pygame.mixer.init() explicitly (and accept the PulseAudio
+    leak on affected systems).
+  * memray + --native is now the established diagnostic for
+    any future native-side leak. tracemalloc/objgraph were
+    dead ends for this class of bug.
+  * Leftover artefact in CWD: memlog.txt (last diagnostic
+    session). Can be deleted manually; train.py no longer
+    writes to it.

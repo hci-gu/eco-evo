@@ -466,10 +466,24 @@ class LiveVisualizer:
 
         # ---- Init pygame --------------------------------------------------
         try:
-            pygame.init()
+            # MEMORY LEAK FIX: undvik full ``pygame.init()`` som ocksa drar
+            # igang SDL audio-subsystemet (mixer + PulseAudio-mainloop i
+            # egen trad). Memray summary visade ~201 MB lackt minne via
+            # ``pa_mainloop_iterate`` / ``pa_mainloop_run`` / ``thread`` ->
+            # ``internal_thread_func`` -> ``start_thread`` (565 trad-
+            # skapelser under sessionen). Vi anvander aldrig ljud, sa
+            # initiera bara display + font.
             pygame.display.init()
             pygame.font.init()
-            self._screen = pygame.display.set_mode((self._win_w, self._win_h))
+            # MEMORY LEAK FIX: tvinga ren software-surface i stallet for
+            # SDL2:s default GL-backed window. Memray summary visade att
+            # ~230 MB lackt minne kom fran pg_flip -> SDL_UpdateWindowSurface
+            # -> SDL_UpdateWindowTexture -> GL_UpdateTexture (278 flips,
+            # bara 108 GL_UpdateTexture-anrop returnerar minnet). Med
+            # SWSURFACE-flaggan gar flip via SDL_UpdateRects istallet och
+            # undviker hela GL-texture-pathen som lacker pa manga drivers.
+            self._screen = pygame.display.set_mode(
+                (self._win_w, self._win_h), pygame.SWSURFACE)
             pygame.display.set_caption(
                 title or f"Mareld viz [{mode}]")
             self._font = pygame.font.SysFont("dejavusansmono,monospace", 12)
@@ -908,6 +922,21 @@ class LiveVisualizer:
             except Exception as e:
                 self._log_once(
                     f"begin_rollout_recording series-reset failed: {e!r}")
+        # MEMORY LEAK FIX (blind, riktad): rensa per-FG breakdown-dicts
+        # mellan probes. update_loss_breakdown / update_diet_breakdown /
+        # update_action_fracs gör ``dict.update`` med nya nycklar varje
+        # tick utan att rensa gamla. Om FG-id varierar mellan generationer
+        # (t.ex. spawn-varianter) ackumuleras nycklar. Dessutom innehåller
+        # _diet_breakdown nästlade dicts (predator -> {prey: frac}) där
+        # prey-set kan växa. Eftersom probe-rolloutsen är ENDA källan
+        # till dessa data i train-läget är det säkert att nolla dem här.
+        try:
+            self._loss_breakdown.clear()
+            self._diet_breakdown.clear()
+            self._action_fracs.clear()
+        except Exception as e:
+            self._log_once(
+                f"begin_rollout_recording breakdown-reset failed: {e!r}")
 
     def end_rollout_recording(self) -> None:
         """Avsluta inspelning; den nya filmen tar över ``_current_rollout``."""
@@ -1950,9 +1979,16 @@ class LiveVisualizer:
             f"frame = {_max_n}/{_max_n}",
             f"recording... ({_max_pending} frames)",
         ]
+        # MEMORY LEAK FIX: anvand font.size()[0] istallet for
+        # font.render(...).get_width(). Memray --leaks-flamegraph visade
+        # att denna callsite ensam stod for 218 MB lackt SDL-minne
+        # (TTF_Render_Internal -> AllocateAlignedPixels -> SDL_malloc)
+        # eftersom den allokerar en full Surface per anrop bara for att
+        # mata textbredden, och Surface-objektet kastas direkt utan att
+        # SDL aterlamnar pixelbufferten. font.size() returnerar (w,h)
+        # utan att allokera nagon Surface alls.
         _ind_reserve_w = max(
-            self._font.render(s, True, (200, 200, 215)).get_width()
-            for s in _ind_variants)
+            self._font.size(s)[0] for s in _ind_variants)
         ind_zone_left = x + w - _ind_reserve_w - 10
         # Höger-justera den faktiska texten inom den reserverade zonen
         # så att den alltid hamnar vid samma högerkant.
@@ -2050,15 +2086,18 @@ class LiveVisualizer:
         # rendererade bredderna nedan.
         cur2_preview = self.get_neval_ticks()
         marker2_preview = "*" if self._neval_override is not None else ""
-        lbl2_preview = self._font.render(
-            f"Perturbation ticks{marker2_preview} = {cur2_preview}",
-            True, (210, 210, 220))
-        _label_w = max(lbl_surf.get_width(), lbl2_preview.get_width())
+        # MEMORY LEAK FIX: anvand font.size()[0] istallet for
+        # font.render(...).get_width() for ren matning. Memray --leaks
+        # visade att _draw_status_bar stod for 228 MB lackt SDL-minne
+        # via TTF_Render_Internal -> AllocateAlignedPixels -> SDL_malloc
+        # (samma antipattern som redan fixad _draw_playback_bar:1968).
+        _lbl2_preview_w = self._font.size(
+            f"Perturbation ticks{marker2_preview} = {cur2_preview}")[0]
+        _label_w = max(lbl_surf.get_width(), _lbl2_preview_w)
         # Track-rect: börjar efter label (+ liten gutter), slutar före
         # hi-label (+ gutter). Mappar mot fönsterbredden.
         try:
-            _lo2_preview_w = self._font.render(
-                str(self._neval_min), True, (150, 150, 160)).get_width()
+            _lo2_preview_w = self._font.size(str(self._neval_min))[0]
         except Exception:
             _lo2_preview_w = lo_surf.get_width()
         _lo_w = max(lo_surf.get_width(), _lo2_preview_w)
@@ -2084,9 +2123,9 @@ class LiveVisualizer:
             lock_gutter = 6
         # Använd max av båda hi-labels bredd så att högerkanten
         # (och därmed track-längden) blir identisk för båda raderna.
+        # MEMORY LEAK FIX: font.size() istallet for font.render().get_width().
         try:
-            _hi2_preview_w = self._font.render(
-                str(self._neval_max), True, (150, 150, 160)).get_width()
+            _hi2_preview_w = self._font.size(str(self._neval_max))[0]
         except Exception:
             _hi2_preview_w = hi_surf.get_width()
         _hi_w = max(hi_surf.get_width(), _hi2_preview_w)

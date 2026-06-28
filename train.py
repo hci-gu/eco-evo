@@ -1,4 +1,9 @@
 import torch
+# ARS är gradient-fritt: ingen .backward() någonstans. Global no-grad
+# förhindrar att autograd-grafer ackumuleras (misstänkt OOM-källa när
+# tracemalloc inte såg läckan i Python-heapen -> läckan ligger i
+# PyTorchs egen allokator / autograd-grafer utanför CPython).
+torch.set_grad_enabled(False)
 import numpy as np
 import os
 import argparse
@@ -15,6 +20,12 @@ GRID_HEIGHT = 60
 # Toggle for the artificial (density-independent) natural mortality term.
 # Default off; overridden by --mortality on the CLI.
 APPLY_NATURAL_MORTALITY = False
+# Toggle for migration mode (immigration/emigration via grid edges).
+# Default off; overridden by --migration on the CLI. När True släpps
+# maskningen av förflyttningar utanför kantceller i ecosystem, och
+# motsvarande massflöde tolkas som emigration + immigration över
+# kantcellerna proportionellt mot accessibility.
+APPLY_MIGRATION = False
 def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
                         impact_spawn_specs=None,
                         observable_impact_vars=None):
@@ -253,6 +264,7 @@ class _EnvBuilder:
                  project_path=None, spawn_seed=None,
                  impact_vars=None, impact_ranges=None, impact_seed=None,
                  apply_natural_mortality=None,
+                 migration=None,
                  impact_spawn_specs=None,
                  observable_impact_vars=None):
         self.impact_maps_snapshot = impact_maps_snapshot
@@ -275,6 +287,13 @@ class _EnvBuilder:
         self.apply_natural_mortality = (
             APPLY_NATURAL_MORTALITY if apply_natural_mortality is None
             else bool(apply_natural_mortality)
+        )
+        # Bakas in i instansen på samma sätt som apply_natural_mortality
+        # eftersom spawn-workers reimporterar train.py och nollställer
+        # APPLY_MIGRATION-modulglobalen.
+        self.migration = (
+            APPLY_MIGRATION if migration is None
+            else bool(migration)
         )
         # Step 2: keep the raw impact recipe so ``with_world`` can
         # re-sample maps for a different impact_seed without needing
@@ -333,6 +352,7 @@ class _EnvBuilder:
             impact_ranges=self.impact_ranges,
             impact_seed=int(impact_seed),
             apply_natural_mortality=self.apply_natural_mortality,
+            migration=self.migration,
             impact_spawn_specs=self.impact_spawn_specs,
             observable_impact_vars=self.observable_impact_vars,
         )
@@ -359,7 +379,8 @@ class _EnvBuilder:
         }
         env = EcosystemEnvironment(grid_config, fgs, {},
                                    observable_impact_vars=observable_impact_vars,
-                                   apply_natural_mortality=self.apply_natural_mortality)
+                                   apply_natural_mortality=self.apply_natural_mortality,
+                                   migration=self.migration)
 
         if self.impact_maps_snapshot is not None:
             for iv in impact_vars:
@@ -409,13 +430,18 @@ class _ProbeEnvBuilder:
 
     PROBE_SEED = 20260530
 
-    def __init__(self, project_path, grid_size, apply_natural_mortality=None):
+    def __init__(self, project_path, grid_size, apply_natural_mortality=None,
+                 migration=None):
         self.project_path = project_path
         self.grid_height = int(grid_size[0])
         self.grid_width = int(grid_size[1])
         self.apply_natural_mortality = (
             APPLY_NATURAL_MORTALITY if apply_natural_mortality is None
             else bool(apply_natural_mortality)
+        )
+        self.migration = (
+            APPLY_MIGRATION if migration is None
+            else bool(migration)
         )
         # Resolve inference impact-map paths once at construction (read
         # from project YAML's ``inference.impact_maps``); per-call we
@@ -464,7 +490,8 @@ class _ProbeEnvBuilder:
         }
         env = EcosystemEnvironment(grid_config, fgs, {},
                                    observable_impact_vars=observable_impact_vars,
-                                   apply_natural_mortality=self.apply_natural_mortality)
+                                   apply_natural_mortality=self.apply_natural_mortality,
+                                   migration=self.migration)
         # Inference-tab impact maps (silent: avoid spamming "[info] Using
         # array ..." messages once per probe).
         map_paths = self._load_paths(self.project_path) if self.project_path else {}
@@ -1063,6 +1090,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       project_path=None, spawn_seed=None,
                       impact_vars=None, impact_ranges=None, impact_seed=None,
                       apply_natural_mortality=None,
+                      migration=None,
                       impact_spawn_specs=None,
                       observable_impact_vars=None):
     """Factory kept for call-site compatibility; returns a picklable
@@ -1081,6 +1109,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       impact_vars=impact_vars, impact_ranges=impact_ranges,
                       impact_seed=impact_seed,
                       apply_natural_mortality=apply_natural_mortality,
+                      migration=migration,
                       impact_spawn_specs=impact_spawn_specs,
                       observable_impact_vars=observable_impact_vars)
 
@@ -1252,6 +1281,14 @@ def main():
                         help="Toggle the artificial (density-independent) natural "
                              "mortality term applied to decision-maker FGs each tick. "
                              "Default: off.")
+    parser.add_argument("--migration", choices=["on", "off"], default="off",
+                        help="Migration mode. When 'on', movement out through grid "
+                             "edges is no longer masked away — instead it is "
+                             "interpreted as emigration, and an equal mass "
+                             "immigrates somewhere on the grid's edge cells, "
+                             "distributed proportionally to those cells' "
+                             "accessibility (uniform over edge cells if no "
+                             "accessibility map is provided). Default: off.")
     parser.add_argument("--uniform_bias_init", action="store_true", default=False,
                         help="Enable uniform-bias init on the output layer: bias=0 + "
                              "weights*0.01 so that softmax starts ~uniform at gen 1. "
@@ -1456,9 +1493,10 @@ def main():
         return
 
     # Set project globally so env_builder can find it
-    global PROJECT_PATH, APPLY_NATURAL_MORTALITY
+    global PROJECT_PATH, APPLY_NATURAL_MORTALITY, APPLY_MIGRATION
     PROJECT_PATH = args.project
     APPLY_NATURAL_MORTALITY = (args.mortality == "on")
+    APPLY_MIGRATION = (args.migration == "on")
 
     # Ensure run directory exists: results/<run-name>/
     run_dir = os.path.join('results', args.run_name)

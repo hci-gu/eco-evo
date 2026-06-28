@@ -374,7 +374,8 @@ def apply_b0_overrides(env, b0_overrides):
 
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
-              apply_natural_mortality=False, allowed_mask=None):
+              apply_natural_mortality=False, allowed_mask=None,
+              migration=False):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     accessibility = None
@@ -399,7 +400,8 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     }
     env = EcosystemEnvironment(grid_config, fgs, {},
                                observable_impact_vars=observable_impact_vars,
-                               apply_natural_mortality=apply_natural_mortality)
+                               apply_natural_mortality=apply_natural_mortality,
+                               migration=migration)
     if accessibility is not None:
         env.grid.add_map('accessibility', accessibility)
     # Impact maps are read from .npz files configured in the project's
@@ -911,6 +913,14 @@ def main():
                         help="Toggle the artificial (density-independent) natural "
                              "mortality term applied to decision-maker FGs each tick. "
                              "Default: off.")
+    parser.add_argument("--migration", choices=["on", "off"], default="off",
+                        help="Migration mode. When 'on', movement out through grid "
+                             "edges is no longer masked away — instead it is "
+                             "interpreted as emigration, and an equal mass "
+                             "immigrates somewhere on the grid's edge cells, "
+                             "distributed proportionally to those cells' "
+                             "accessibility (uniform over edge cells if no "
+                             "accessibility map is provided). Default: off.")
     parser.add_argument("--rnd-baseline", "--rnd_baseline", dest="rnd_baseline",
                         action="store_true",
                         help="Run a parallel rollout where each DM acts uniformly "
@@ -939,6 +949,7 @@ def main():
         print(f"Ticks:        {args.ticks}")
         print(f"Seed:         {args.seed}")
         print(f"Mortality:    {args.mortality}")
+        print(f"Migration:    {args.migration}")
         print("------------------------------------------")
 
     if not os.path.isdir(args.checkpoints):
@@ -946,7 +957,8 @@ def main():
         return 1
 
     env = build_env(args.project, args.grid, seed=args.seed, verbose=verbose,
-                    apply_natural_mortality=(args.mortality == "on"))
+                    apply_natural_mortality=(args.mortality == "on"),
+                    migration=(args.migration == "on"))
     if verbose:
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
     try:
@@ -1019,7 +1031,8 @@ def main():
             if not first_iteration:
                 env = build_env(args.project, args.grid, seed=args.seed,
                                 verbose=False,
-                                apply_natural_mortality=(args.mortality == "on"))
+                                apply_natural_mortality=(args.mortality == "on"),
+                                migration=(args.migration == "on"))
                 # Återbygg de statiska caches som ``load_policies_and_stats``
                 # satte upp i runda 1 (N_dm, N_all, dm_ids, per_dm_in_dim,
                 # max_in_dim m.fl.). Utan dessa kraschar
@@ -1056,7 +1069,8 @@ def main():
             if args.rnd_baseline:
                 rnd_env = build_env(args.project, args.grid, seed=args.seed,
                                     verbose=False,
-                                    apply_natural_mortality=(args.mortality == "on"))
+                                    apply_natural_mortality=(args.mortality == "on"),
+                                    migration=(args.migration == "on"))
                 if b0_overrides:
                     apply_b0_overrides(rnd_env, b0_overrides)
                 if spawn_overrides:

@@ -5,11 +5,19 @@ from lib.world.functional_group import FunctionalGroup
 
 class EcosystemEnvironment:
     def __init__(self, grid_config, functional_groups, interactions, policies=None,
-                 observable_impact_vars=None, apply_natural_mortality=True):
+                 observable_impact_vars=None, apply_natural_mortality=True,
+                 migration=False):
         self.grid = Grid(**grid_config)
         # När False appliceras inte den artificiella (densitetsoberoende)
         # natural_mortality-termen i _apply_growth. Default True = legacy.
         self.apply_natural_mortality = bool(apply_natural_mortality)
+        # Migration-läge: när True maskas INTE förflyttningar utanför griden
+        # i `move_mask`. Istället tolkas sådan utflöde i `_apply_movement` som
+        # emigration, och en lika stor immigrationsmassa redistribueras
+        # över gridens kantceller proportionellt mot accessibility (eller
+        # uniformt över kantceller om ingen accessibility-map finns).
+        # Default False = legacy (utflödet maskas bort före softmax).
+        self.migration = bool(migration)
         self.fgs = functional_groups  # Dictionary: id -> FunctionalGroup
         self.interactions = interactions
         self.policies = policies or {} # Dictionary: id -> PolicyNetwork
@@ -79,10 +87,17 @@ class EcosystemEnvironment:
         # Accessibility-based movement mask: constant across ticks.
         access_map = self.grid.get_map('accessibility')
         move_mask = np.ones((4, H, W), dtype=self.dtype)
-        move_mask[0, 0, :] = 0.0
-        move_mask[2, -1, :] = 0.0
-        move_mask[1, :, -1] = 0.0
-        move_mask[3, :, 0] = 0.0
+        # Kantmaskning: i legacy-läge (migration=False) maskas riktningar
+        # som skulle gå utanför griden bort så att `pi_move` aldrig
+        # tilldelar massa över kanten. I migration-läge behålls dessa
+        # riktningar tillåtna; out-of-grid-flödet samlas in i
+        # `_apply_movement` och redistribueras som immigration över
+        # kantcellerna (se `self._edge_imm_weights`).
+        if not self.migration:
+            move_mask[0, 0, :] = 0.0
+            move_mask[2, -1, :] = 0.0
+            move_mask[1, :, -1] = 0.0
+            move_mask[3, :, 0] = 0.0
         if access_map is not None:
             am = access_map.astype(self.dtype)
             inacc_n = np.ones((H, W), dtype=self.dtype); inacc_n[1:, :] = am[:-1, :]
@@ -94,6 +109,34 @@ class EcosystemEnvironment:
             move_mask[1] *= (inacc_e > 0).astype(self.dtype)
             move_mask[3] *= (inacc_w > 0).astype(self.dtype)
         self.move_mask = move_mask  # (4, H, W)
+
+        # Immigration-vikter över kantceller (endast aktivt vid
+        # `self.migration=True`). Varje kantcell får en vikt proportionell
+        # mot accessibility (1.0 om ingen accessibility-map finns); icke-
+        # kantceller har vikt 0. Vikterna normaliseras till summa=1 så
+        # `imm_weights * out_total` redistribuerar exakt det emigrerade
+        # biomass-/energiflödet tillbaka över kantcellerna.
+        edge_mask = np.zeros((H, W), dtype=self.dtype)
+        edge_mask[0, :] = 1.0
+        edge_mask[-1, :] = 1.0
+        edge_mask[:, 0] = 1.0
+        edge_mask[:, -1] = 1.0
+        if access_map is not None:
+            edge_weights = edge_mask * np.clip(access_map.astype(self.dtype),
+                                               0.0, None)
+        else:
+            edge_weights = edge_mask
+        edge_sum = float(edge_weights.sum())
+        if edge_sum > 0.0:
+            self._edge_imm_weights = (edge_weights / edge_sum).astype(self.dtype)
+        else:
+            # Fallback: alla kantceller har accessibility 0. Uniform över
+            # kantmasken så vi inte tappar massa numeriskt.
+            n_edge = float(edge_mask.sum())
+            if n_edge > 0.0:
+                self._edge_imm_weights = (edge_mask / n_edge).astype(self.dtype)
+            else:
+                self._edge_imm_weights = np.zeros((H, W), dtype=self.dtype)
 
         # Static eat-mask + intake/gain matrices (N_dm, N_all)
         eat_static = np.zeros((self.N_dm, self.N_all), dtype=self.dtype)
@@ -926,6 +969,31 @@ class EcosystemEnvironment:
         # W: dest[:, :-1] += source[:, 1:]
         b_total_in[:, :, :-1] += b_out[:, 3, :, 1:]
         r_total_in[:, :, :-1] += r_out[:, 3, :, 1:]
+
+        # Migration: när `self.migration=True` är `move_mask` INTE
+        # edge-maskad, så policyn kan tilldela rörelser ut över griden.
+        # De kantflöden som slice-assignen ovan tyst skulle tappa (t.ex.
+        # b_out[:, 0, 0, :] = norrut från översta raden) samlas in här
+        # som emigration per DM, och en lika stor immigrationsmassa
+        # redistribueras över gridens kantceller proportionellt mot
+        # accessibility (`self._edge_imm_weights`). Total biomassa per
+        # DM bevaras (modulo metabolic cost som redan dragits av i
+        # r_after_move_meta).
+        if self.migration:
+            # Emigration per DM: summa över de rader/kolumner vars
+            # destinationsceller ligger utanför griden.
+            b_emig = (b_out[:, 0, 0, :].sum(axis=1)   # N från översta raden
+                      + b_out[:, 2, -1, :].sum(axis=1)  # S från nedersta raden
+                      + b_out[:, 1, :, -1].sum(axis=1)  # E från östersta kolumnen
+                      + b_out[:, 3, :, 0].sum(axis=1))  # W från västersta kolumnen
+            r_emig = (r_out[:, 0, 0, :].sum(axis=1)
+                      + r_out[:, 2, -1, :].sum(axis=1)
+                      + r_out[:, 1, :, -1].sum(axis=1)
+                      + r_out[:, 3, :, 0].sum(axis=1))
+            # (N_dm,) totalmassor; redistribuera över (H, W) kantvikter.
+            imm_w = self._edge_imm_weights  # (H, W), summa = 1 över kanten
+            b_total_in += b_emig[:, None, None] * imm_w[None, :, :]
+            r_total_in += r_emig[:, None, None] * imm_w[None, :, :]
 
         new_B = b_total_in
         max_R = new_B * self.dm_max_energy_reserve[:, None, None]
