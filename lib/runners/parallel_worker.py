@@ -68,6 +68,24 @@ def _worker_init(env_builder, policy_params, uniform_bias_init=False,
                                          activation=_ACTIVATION)
 
 
+def _set_env_builder_task(new_builder):
+    """Broadcast helper: replace this worker's module-global ``_ENV_BUILDER``.
+
+    Dispatched once per worker (via ``pool.map`` with N copies of the same
+    builder) whenever the parent rotates worlds. This eliminates the very
+    expensive pool.terminate() + ctx.Pool() rebuild cycle (each rebuild
+    re-pays ``import torch``/spawn cost across N workers, typically
+    1-3 s per ARS iteration with --worlds_refresh iteration).
+
+    Returns the new worker pid so the parent can sanity-check that every
+    worker actually received the update.
+    """
+    global _ENV_BUILDER
+    _ENV_BUILDER = new_builder
+    import os as _os
+    return _os.getpid()
+
+
 def _evaluate_coevo_task(task):
     """Co-evolution task: evaluate ONE shared rollout and return fitness for
     EVERY species in `fg_list`. All policies are perturbed simultaneously,

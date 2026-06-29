@@ -1940,42 +1940,82 @@ def main():
             observable_impact_vars=_observable_impact_vars_global,
         )
         trainer.env_builder = new_builder
-        # Rebuild worker pool so spawn-workers receive the updated builder.
+        # PRESTANDA: tidigare rev vi hela ``ctx.Pool`` här och byggde om
+        # den med _worker_init varje gång WorldList:en uppdaterades. Med
+        # ``--worlds_refresh iteration`` (default) skedde det en gång per
+        # ARS-iteration -> N workers × (spawn + ``import torch`` + policy
+        # rebuild) ≈ 1-3 s ren overhead per iter (≈ 240 s/gen vid
+        # iter_per_gen=20, workers=8). Workers behöver dock bara veta om
+        # den nya ``env_builder``-referensen — policy-instanser, BLAS-
+        # threading och seed:ar är oförändrade. Vi broadcast:ar därför
+        # bara den nya buildern via en lightweight task (en per worker)
+        # och låter poolen leva vidare över hela träningen.
         if trainer._pool is not None:
+            from lib.runners.parallel_worker import _set_env_builder_task
+            n = trainer.n_workers
+            # En task per worker; eftersom poolen distribuerar map() i
+            # ordning (chunksize=1) ser varje worker minst en av dessa.
+            # Vi använder N×oversample för att vara säkra på täckning
+            # även när någon worker fortfarande är upptagen med en
+            # tidigare uppgift (osannolikt här eftersom vi just
+            # synkroniserat på föregående train_step).
             try:
-                trainer._pool.terminate()
-                trainer._pool.join()
-            except Exception:
-                pass
-            import multiprocessing as _mp
-            import signal as _signal
-            from lib.runners.parallel_worker import _worker_init
-            ctx = _mp.get_context('spawn')
-            # Install SIG_IGN in the parent BEFORE spawning workers so they
-            # inherit SIG_IGN as their default SIGINT handler from process
-            # creation. Otherwise a Ctrl+C arriving during the workers'
-            # bootstrap (``import torch`` etc., before ``_worker_init`` has
-            # a chance to install SIG_IGN itself) would dump a multi-page
-            # traceback per worker to the shared TTY. Restored immediately
-            # after Pool() returns so KeyboardInterrupt still works here.
-            _prev_sigint = _signal.signal(_signal.SIGINT, _signal.SIG_IGN)
-            try:
-                trainer._pool = ctx.Pool(
-                    processes=trainer.n_workers,
-                    initializer=_worker_init,
-                    initargs=(new_builder, trainer.policy_params,
-                              trainer.uniform_bias_init,
-                              trainer.hidden_layers, trainer.hidden_dim,
-                              trainer.activation),
-                )
-            finally:
-                _signal.signal(_signal.SIGINT, _prev_sigint)
+                trainer._pool.map(_set_env_builder_task,
+                                  [new_builder] * (n * 4),
+                                  chunksize=1)
+            except Exception as _e:
+                print(f"    [pool] WARN: env_builder broadcast failed: {_e!r}; "
+                      f"falling back to pool rebuild.")
+                try:
+                    trainer._pool.terminate(); trainer._pool.join()
+                except Exception:
+                    pass
+                import multiprocessing as _mp
+                import signal as _signal
+                from lib.runners.parallel_worker import _worker_init
+                ctx = _mp.get_context('spawn')
+                _prev_sigint = _signal.signal(_signal.SIGINT, _signal.SIG_IGN)
+                try:
+                    trainer._pool = ctx.Pool(
+                        processes=trainer.n_workers,
+                        initializer=_worker_init,
+                        initargs=(new_builder, trainer.policy_params,
+                                  trainer.uniform_bias_init,
+                                  trainer.hidden_layers, trainer.hidden_dim,
+                                  trainer.activation),
+                    )
+                finally:
+                    _signal.signal(_signal.SIGINT, _prev_sigint)
         if maps:
             summary = ", ".join(
                 f"{k}=U[{_impact_ranges_global.get(k,(0,0))[0]:g},"
                 f"{_impact_ranges_global.get(k,(0,0))[1]:g}]"
                 for k in maps)
             print(f"    Impact maps (shared this gen, seed={impact_seed}): {summary}")
+
+    # PRESTANDA-INSTRUMENTERING: ackumulera tid spenderad i
+    # ``_install_generation_worlds`` (impact-map-sampling + env_builder
+    # rebuild + worker-broadcast). Före brodcast-fixen var detta typiskt
+    # 1–3 s per ARS-iteration; efter fixen bör det vara <100 ms. Skriver
+    # ut första gången, var 10:e iteration, samt en sammanställning vid
+    # slutet av varje generation.
+    import time as _time_install
+    _install_stats = {'count': 0, 'total': 0.0, 'last_print_count': 0}
+    _install_orig = _install_generation_worlds
+
+    def _install_generation_worlds(gen_idx):
+        t0 = _time_install.monotonic()
+        _install_orig(gen_idx)
+        dt = _time_install.monotonic() - t0
+        _install_stats['count'] += 1
+        _install_stats['total'] += dt
+        # Logga första anropet (varmstart spawn) + var 10:e för att
+        # synliggöra eventuella regressioner utan att spamma loggen.
+        c = _install_stats['count']
+        if c == 1 or c % 10 == 0:
+            avg_ms = 1000.0 * _install_stats['total'] / c
+            print(f"    [install_worlds] call #{c}: {dt*1000:.1f} ms "
+                  f"(avg {avg_ms:.1f} ms over {c} calls)")
 
     # Backwards-compatible alias: older code/log searches expect this name.
     _install_generation_maps = _install_generation_worlds

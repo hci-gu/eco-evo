@@ -134,6 +134,9 @@ class ARSTrainer:
         # value is ignored. ``None`` disables pumping.
         self.pump_callback = None
         self._pool = None
+        # ``--workers 1``: kör helt sekventiellt (``self._pool is None``)
+        # och slipper därmed all spawn-/import-overhead. Bra fallback för
+        # benchmarks och deterministiska repro-körningar.
         if self.n_workers > 1:
             ctx = mp.get_context('spawn')
             prev_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -159,6 +162,10 @@ class ARSTrainer:
         """
         cb = self.pump_callback
         if cb is None:
+            # Snabb väg: ingen viz → ingen 50 ms poll-loop. train.py sätter
+            # ``pump_callback = None`` när ``viz is None`` (samt nollar den
+            # om viz-fönstret stängs), så headless-träning betalar aldrig
+            # för wakeup-loopen nedan.
             return self._pool.map(func, tasks)
         async_res = self._pool.map_async(func, tasks)
         while not async_res.ready():
