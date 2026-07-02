@@ -56,6 +56,11 @@ class EcosystemEnvironment:
         self.loss_impact = {fid: 0.0 for fid in self.fgs}
         self.loss_predation = {fid: 0.0 for fid in self.fgs}
         self.loss_starvation = {fid: 0.0 for fid in self.fgs}
+        # Antal per-cell utrotningshändelser under rollouten (celler där
+        # 0 < B < extinction_threshold_factor * min_split_biomass nollställts
+        # i slutet av ett tick). Bokförs per FG och används som diagnostik
+        # i trainern så att man kan följa hur ofta tröskeln triggas.
+        self._extinction_events = {fid: 0 for fid in self.fgs}
 
         # Per (predator-DM, prey) ackumulerat intake (ton) över rollouten.
         # Används för att rapportera dietuppdelning i visualiseraren
@@ -434,6 +439,10 @@ class EcosystemEnvironment:
         self._apply_movement()
         self._apply_growth()
         self._apply_accessibility_biomass_mask()
+        # Extinction-tröskel: nollställ celler där biomassan har krympt
+        # under en halv odelbar enhet efter alla shrink-steg. Görs sist
+        # så nästa ticks observation inte ser float32-subnormaler.
+        self._apply_extinction_threshold()
 
         self.tick_count += 1
 
@@ -1095,6 +1104,50 @@ class EcosystemEnvironment:
             fg.biomass = np.maximum(
                 0.0, fg.biomass - total_mortality_impact
             ).astype(self.dtype, copy=False)
+
+    def _apply_extinction_threshold(self):
+        """Nollställ celler där ``0 < B < extinction_threshold_factor * min_split_biomass``.
+
+        Under ``min_split_biomass`` kollapsas action-fördelningen redan till
+        one-hot argmax (se ``_calculate_decisions``); när biomassan sedan
+        skalas ner multiplikativt av predation/svält/impact hamnar den snabbt
+        i float32-subnormaler (~1e-38 till 1e-45) som saknar biologisk
+        mening men skapar brus i observationer, loss-breakdown och reward.
+        Vi tolkar "mindre än en halv odelbar individ" som lokalt utrotad
+        och bokför den försvunna biomassan som svält-förlust (samt räknar
+        händelserna i ``_extinction_events``).
+
+        Endast FG med ``min_split_biomass > 0`` OCH ``extinction_threshold_factor
+        > 0`` påverkas. Kontinuerliga FG (t.ex. plankton, msb=0) är opåverkade.
+        """
+        for fg_id, fg in self.fgs.items():
+            msb = float(getattr(fg, 'min_split_biomass', 0.0) or 0.0)
+            factor = float(getattr(fg, 'extinction_threshold_factor', 0.0) or 0.0)
+            if msb <= 0.0 or factor <= 0.0:
+                continue
+            thr = np.float32(factor * msb)
+            B = fg.biomass
+            if B is None:
+                continue
+            dead_mask = (B > 0.0) & (B < thr)
+            if not np.any(dead_mask):
+                continue
+            lost = float(B[dead_mask].sum())
+            # Bokför förlusten som svält (närmast semantiskt: cellen har
+            # för lite biomassa för att utgöra en livskraftig enhet).
+            self.loss_starvation[fg_id] = (
+                float(self.loss_starvation.get(fg_id, 0.0)) + lost
+            )
+            self._extinction_events[fg_id] = (
+                int(self._extinction_events.get(fg_id, 0)) + int(dead_mask.sum())
+            )
+            # Nollställ biomass och associerad energi-reserv i samma celler.
+            fg.biomass = np.where(dead_mask, np.float32(0.0), B).astype(
+                self.dtype, copy=False)
+            if fg.energy_reserve is not None:
+                fg.energy_reserve = np.where(
+                    dead_mask, np.float32(0.0), fg.energy_reserve
+                ).astype(self.dtype, copy=False)
 
     def _apply_growth(self):
         for fg_id in self.ordered_fg_ids:

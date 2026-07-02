@@ -55,7 +55,19 @@ class FunctionalGroup:
         # convert kg -> tonnes here at the input boundary.
         # 0 = continuous biomass (no threshold).
         self.min_split_biomass = float(params.get('min_split_biomass', 0.0)) / 1000.0
-        
+        # Extinction-tröskel (Section 20 follow-up): per-cell nollställning
+        # när ``0 < B < extinction_threshold_factor * min_split_biomass``.
+        # Faktorn ``0.5`` matchar ``DEAD_EPS = 0.5 * min_split`` som används
+        # för rollout-terminering i ``inference.py`` — "mindre än en halv
+        # odelbar individ" räknas som utrotad i cellen. Nollställd biomassa
+        # bokförs i ``loss_starvation`` för diagnostik. Sätt till 0.0 för
+        # att stänga av mekanismen (legacy). Ingen effekt när
+        # ``min_split_biomass == 0`` (rent kontinuerligt läge).
+        self.extinction_threshold_factor = float(
+            params.get('extinction_threshold_factor', 0.5) or 0.0)
+        if self.extinction_threshold_factor < 0.0:
+            self.extinction_threshold_factor = 0.0
+
         # Costs
         self.movement_cost = params.get('movement_cost', 1.0)
         self.feeding_cost = params.get('feeding_cost', 1.0)

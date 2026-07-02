@@ -536,6 +536,7 @@ class FGConfigApp:
             ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry", 0.0, 1.0),
             ("Movement Speed (cells/tick)", "movement_speed", "entry", 0.0, 1.0),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
+            ("Extinction Threshold (× indiv. weight, 0=off)", "extinction_threshold_factor", "entry", 0.0, 5.0),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
         ]
 
@@ -3110,6 +3111,13 @@ class FGConfigApp:
                     continue
                 if key == "initial_biomass_max":
                     var.set("" if init_max_val is None else str(init_max_val))
+                    continue
+                # Default 0.5 för DM extinction-tröskelfaktorn när fältet
+                # saknas i YAML (matchar FunctionalGroup-defaulten och
+                # gör att befintliga project-filer får rimligt förvalt
+                # värde i Entry:t utan att en tom sträng visas).
+                if key == "extinction_threshold_factor" and key not in config:
+                    var.set("0.5")
                     continue
                 val = config.get(key, "")
                 if isinstance(var, tk.BooleanVar):

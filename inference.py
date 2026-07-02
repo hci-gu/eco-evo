@@ -724,6 +724,16 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
         # kvar någonstans, och rollouten kan tryggt avbrytas. Om ingen FG har
         # ``min_split_biomass > 0`` (helt kontinuerligt läge) faller vi tillbaka
         # på en liten numerisk tröskel som bara fångar float32-subnormaler.
+        #
+        # OBS: detta är enbart en *rollout-termineringsregel* för
+        # visualiseringen. Den kompletterar — men överlappar inte —
+        # ``EcosystemEnvironment._apply_extinction_threshold`` (se
+        # ``lib/environments/ecosystem.py``), som per FG och per cell
+        # nollställer biomassa när ``0 < B < extinction_threshold_factor
+        # * min_split_biomass`` (default 0.5). Den mekanismen kör redan
+        # inne i ``env.step()`` för både träning och inference; här bryter
+        # vi bara loopen när totalen är så låg att inte ens en halv
+        # odelbar individ finns kvar någonstans.
         _msb_values = [
             float(getattr(fg, 'min_split_biomass', 0.0))
             for fg in env.fgs.values()

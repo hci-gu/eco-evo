@@ -3428,3 +3428,124 @@ main was stable at 0.62 GB over 24 generations. objgraph showed
   * Leftover artefact in CWD: memlog.txt (last diagnostic
     session). Can be deleted manually; train.py no longer
     writes to it.
+
+================================================================
+61. PER-CELL EXTINCTION THRESHOLD (0.5 * min_split_biomass)
+================================================================
+Follow-up on Section 20's sub-threshold semantics. Adds a per-FG,
+per-cell extinction threshold that zeros out biomass in cells
+where 0 < B < factor * min_split_biomass at the end of each tick.
+Motivation: below min_split_biomass action distributions already
+collapse to one-hot argmax (Section 20), but the ecosystem engine
+did not previously kill off tiny residuals. Predation / starvation
+/ impact shrink biomass multiplicatively, so cells can drift into
+float32 subnormals (~1e-38 to 1e-45). Those values are not
+biologically meaningful (fractions of one indivisible individual)
+but they pollute observations, loss-breakdown percentages and
+reward. Interpretation: "less than half an indivisible individual
+in this cell" -> extinct locally.
+
+61.1 Semantics
+  * Applied per FG, per cell, after all shrink steps
+    (predation/starvation/impact/movement/accessibility).
+  * Threshold: extinction_threshold_factor * min_split_biomass
+    (both stored in tonnes internally; min_split_biomass in the
+    GUI/YAML is in kg per Section 8).
+  * Default factor: 0.5, matching DEAD_EPS in inference.py
+    (Section 17, rollout-termination) - "half the minimum
+    indivisible unit" is the shared "dead" semantics between
+    per-cell (engine) and global (inference loop) mechanisms.
+  * Factor = 0.0 disables the mechanism (legacy behaviour).
+  * No effect when min_split_biomass == 0 (continuous FGs, e.g.
+    plankton) - the check short-circuits at msb <= 0.
+
+61.2 Implementation
+  * lib/world/functional_group.py: FunctionalGroup.__init__ reads
+    ``extinction_threshold_factor`` from params (default 0.5,
+    clamped to >= 0.0). Stored on the FG instance.
+  * lib/environments/ecosystem.py:
+      - New per-FG accumulator ``self._extinction_events`` (int
+        count of cells zeroed during the rollout), initialised
+        alongside loss_predation / loss_starvation / loss_impact.
+      - New method ``_apply_extinction_threshold()``:
+            for fid, fg in self.fgs.items():
+                msb    = fg.min_split_biomass
+                factor = fg.extinction_threshold_factor
+                if msb <= 0 or factor <= 0:
+                    continue
+                thr  = factor * msb
+                dead = (fg.biomass > 0) & (fg.biomass < thr)
+                lost = fg.biomass[dead].sum()
+                loss_starvation[fid] += lost
+                _extinction_events[fid] += dead.sum()
+                fg.biomass[dead]        = 0
+                fg.energy_reserve[dead] = 0
+        Called last in step(), AFTER _apply_accessibility_
+        biomass_mask, so nasta ticks observation aldrig ser
+        subnormaler.
+      - Lost biomass is booked in ``loss_starvation`` (closest
+        semantic match: cell has too little mass to be a viable
+        unit). No new pr/st/im category is exposed yet - the
+        loss-breakdown (Section 52) simply attributes it to st.
+  * fgconfig/fgconfig.py: new field in the DM editor's
+    ``main_props`` list:
+      ("Extinction Threshold (x indiv. weight, 0=off)",
+       "extinction_threshold_factor", "entry", 0.0, 5.0)
+    ``on_fg_select`` defaults the Entry to "0.5" when the key is
+    absent in the project YAML so pre-existing projects show the
+    correct default value in the GUI without persisting it.
+
+61.3 Scope
+  * Only DMs are exposed in the GUI (main_props is DM-only), in
+    line with ``min_split_biomass`` being a DM concept. NDMs
+    typically have msb=0 so the mechanism would be a no-op there
+    anyway.
+  * Per-FG override via YAML/GUI. Set to 0.0 per FG to return to
+    legacy behaviour for that species.
+
+61.4 Relationship to DEAD_EPS (inference.py)
+  Section 17's DEAD_EPS check is a *rollout-termination* rule:
+  when TOTAL biomass across ALL FGs falls below
+  0.5 * min(min_split_biomass_positive), the inference loop
+  breaks so the visualiser doesn't render meaningless subnormal
+  noise. It is:
+    * global (sum across all FGs), not per-cell / per-FG,
+    * present ONLY in inference.py (never in training - Section 21
+      argues an early ``break`` would skew ARS reward variance
+      between seeds),
+    * complementary to the per-cell threshold, not redundant.
+  The DEAD_EPS comment in inference.py was updated to point at
+  ``_apply_extinction_threshold`` so future readers don't confuse
+  the two.
+
+  Training has NO equivalent global early-exit and should not gain
+  one - the per-cell threshold suffices to keep observations clean.
+
+61.5 Design notes / caveats
+  * Non-differentiable cliff at the threshold. ARS is gradient-
+    free so it doesn't hurt directly, but the reward landscape
+    gains a small discontinuity. Mitigated by the low default
+    (0.5 * msb) and the fact that starvation reaches that level
+    only after significant shrinkage has already occurred.
+  * Can hide real bugs: if a FG always collapses to subnormals,
+    the mechanism masks the symptom. Track via
+    ``_extinction_events`` (diagnostic counter) if you suspect
+    excessive triggering.
+  * Reproduction / respawn: once a cell is zeroed it stays zero
+    unless something else populates it (movement inflow, spawn on
+    reset). For FGs with msb=50 kg that's biologically desirable
+    (5 kg tumlare can't reproduce locally anyway).
+  * Baseline fairness: the mechanism lives in the engine and
+    therefore applies uniformly to trainer rollouts, probe
+    rollouts, inference rollouts and the random-action rnd
+    baseline - no risk of asymmetric treatment.
+
+61.6 Verification
+  * FunctionalGroup constructor: extinction_threshold_factor=0.5
+    default when key absent; explicit 0.0 disables.
+  * EcosystemEnvironment._apply_extinction_threshold present as
+    method and wired into step().
+  * fgconfig.py parses (with utf-8-sig; BOM was pre-existing).
+  * No tests added yet for the mechanism itself; the low default
+    factor and no-op behaviour when msb=0 preserve existing test
+    outcomes (42/42 unchanged expected).
