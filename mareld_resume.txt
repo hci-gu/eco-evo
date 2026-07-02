@@ -3540,6 +3540,34 @@ in this cell" -> extinct locally.
     rollouts, inference rollouts and the random-action rnd
     baseline - no risk of asymmetric treatment.
 
+61.8 Edge-immigration top-k concentration (migration=True)
+  When ``self.migration=True`` emigration off the grid edges is
+  redistributed over ``self._edge_imm_weights`` (O(H+W) cells).
+  A naive split can dilute each recipient cell far below thr,
+  which the per-cell extinction check then zeros -> the entire
+  emigration silently vanishes as "starvation". Unlike ordinary
+  N/E/S/W movement, the recipient distribution is engine-owned
+  (not policy-owned), so it is legitimate for the engine to
+  concentrate it. In ``_apply_movement`` the emigration branch
+  now performs a greedy top-k concentration per DM:
+    * Sort edge cells by descending weight (shared across DMs).
+    * For each DM with msb>0 and factor>0, pick the largest k
+      such that the smallest resulting per-cell inflow
+      (``emig * w_sorted[k-1] / cum_w[k-1]``) is >= thr.
+    * If no such k exists (emigration itself < thr), leave the
+      original imm_w distribution intact; the extinction check
+      then books the loss uniformly.
+    * If all edge cells qualify, no change (fast path).
+    * Otherwise renormalise the kept weights so mass is exactly
+      preserved within the chosen subset.
+  Rationale: recipients are variable in count and motor-owned,
+  the residual ``b_stay`` (policy-driven fragmentation) is left
+  untouched. Cost is O(K log K) per tick with K = |edge cells|
+  (typically 2*(H+W)); negligible vs the rest of step().
+  Does NOT alter mass conservation: either everything moves to
+  the concentrated subset, or the original spread stands and
+  the extinction check accounts for the losses.
+
 61.6 Verification
   * FunctionalGroup constructor: extinction_threshold_factor=0.5
     default when key absent; explicit 0.0 disables.

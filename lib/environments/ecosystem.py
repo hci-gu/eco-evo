@@ -1001,8 +1001,67 @@ class EcosystemEnvironment:
                       + r_out[:, 3, :, 0].sum(axis=1))
             # (N_dm,) totalmassor; redistribuera över (H, W) kantvikter.
             imm_w = self._edge_imm_weights  # (H, W), summa = 1 över kanten
-            b_total_in += b_emig[:, None, None] * imm_w[None, :, :]
-            r_total_in += r_emig[:, None, None] * imm_w[None, :, :]
+            # Top-k-koncentration per DM: när emigration sprids över *många*
+            # kantceller (O(H+W)) kan varje mottagarcell hamna långt under
+            # extinction-tröskeln och nollställas av _apply_extinction_
+            # threshold i slutet av ticket -> hela emigrationen försvinner
+            # tyst (bokförs som svält). Vi motverkar detta genom att
+            # koncentrera immigrationen till de k tyngsta kantcellerna
+            # så att varje faktiskt inflöde ligger >= thr = factor * msb.
+            # Om ingen sådan k finns (emigrationen är i sig < thr) faller
+            # vi tillbaka till den ursprungliga fördelningen -- då gör
+            # extinction-checken sitt jobb och bokför förlusten enhetligt.
+            # Massa bevaras exakt inom den valda kant-delmängden.
+            imm_w_flat = imm_w.reshape(-1)
+            edge_idx = np.flatnonzero(imm_w_flat > 0.0)
+            b_imm = b_emig[:, None, None] * imm_w[None, :, :]
+            r_imm = r_emig[:, None, None] * imm_w[None, :, :]
+            if edge_idx.size > 0:
+                # Sortera kantceller efter fallande vikt (samma ordning
+                # gäller alla DM, eftersom imm_w är gemensam).
+                w_edge = imm_w_flat[edge_idx]
+                order = np.argsort(-w_edge)
+                w_sorted = w_edge[order]              # (K,)
+                cum_w = np.cumsum(w_sorted)           # (K,)
+                for i, fid in enumerate(self.dm_ids):
+                    msb = float(self.fgs[fid].min_split_biomass or 0.0)
+                    factor = float(
+                        getattr(self.fgs[fid], 'extinction_threshold_factor', 0.0) or 0.0)
+                    if msb <= 0.0 or factor <= 0.0:
+                        continue
+                    thr = factor * msb
+                    b_e = float(b_emig[i])
+                    if b_e <= 0.0:
+                        continue
+                    # För top-k (k = 1..K) blir varje behållen cells andel
+                    # b_e * w_sorted[j] / cum_w[k-1] (j < k). Den minsta
+                    # av dessa är i cell k-1 (lägst vikt av de kvarhållna),
+                    # dvs b_e * w_sorted[k-1] / cum_w[k-1]. Vi väljer
+                    # största k så att detta minimum >= thr.
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        min_per_cell = b_e * w_sorted / np.maximum(cum_w, 1e-30)
+                    viable = np.flatnonzero(min_per_cell >= thr)
+                    if viable.size == 0:
+                        # Ingen fördelning håller ens en cell över thr.
+                        # Lämna imm_w-fördelningen orörd; extinction-
+                        # checken bokför förlusten senare.
+                        continue
+                    k = int(viable.max()) + 1  # största viable k
+                    if k >= edge_idx.size:
+                        # Alla kantceller kvalificerar -- ingen ändring.
+                        continue
+                    keep_local = order[:k]
+                    keep_flat = edge_idx[keep_local]
+                    # Bygg ny per-cell-fördelning (endast för DM i).
+                    new_w = np.zeros_like(imm_w_flat)
+                    kw = imm_w_flat[keep_flat]
+                    new_w[keep_flat] = kw / kw.sum()
+                    new_w2d = new_w.reshape(imm_w.shape)
+                    # Skriv över raden för DM i i b_imm / r_imm.
+                    b_imm[i] = b_e * new_w2d
+                    r_imm[i] = float(r_emig[i]) * new_w2d
+            b_total_in += b_imm
+            r_total_in += r_imm
 
         new_B = b_total_in
         max_R = new_B * self.dm_max_energy_reserve[:, None, None]
