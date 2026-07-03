@@ -1050,6 +1050,17 @@ def main():
                 viz.set_ticks_default(int(args.ticks))
             except Exception:
                 pass
+            # Default-katalog för "Save plot HTML"-dialogen: peka på den
+            # mapp användaren angav med --run-name (``args.checkpoints``
+            # sätts till ``results/<run-name>/`` ovan om --checkpoints
+            # inte gavs). Om användaren angav en egen ``--checkpoints``
+            # används den istället, vilket är rimligt: dialogen öppnas
+            # då i samma katalog som körningen läser från.
+            try:
+                viz.set_save_dir(args.checkpoints)
+            except Exception as _e:
+                print(f"[viz] could not set save dir: {_e!r}",
+                      file=sys.stderr)
             # Spawn-strategi-templates till per-heatmap-dropdownen.
             try:
                 viz.set_spawn_templates(_load_spawn_templates(args.project))

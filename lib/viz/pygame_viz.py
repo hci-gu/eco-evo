@@ -98,6 +98,7 @@ class _NullViz:
     def consume_neval_ticks_change(self, *a, **kw): return False
     def set_spawn_templates(self, *a, **kw): pass
     def set_spawn_defaults(self, *a, **kw): pass
+    def set_save_dir(self, *a, **kw): pass
     def get_spawn_overrides(self, *a, **kw): return {}
     def consume_spawn_change(self, *a, **kw): return False
     def pump_events(self): return True
@@ -240,8 +241,17 @@ class LiveVisualizer:
         _all_series_ids = list(self.fg_ids) + [
             eid for eid in self._extra_plot_ids if eid not in self.fg_ids
         ]
+        # I inference-läge sparas hela rollouten (obegränsad deque) så
+        # att scrollbaren under plot-arean kan panorera tillbaka till
+        # tick 0 utan att tidiga punkter tappats. I träningsläget
+        # behålls ``reward_window`` som maxlen — där pushas en punkt
+        # per ARS-step och rolling-fönster undviker minnesläckor över
+        # långa körningar.
+        _series_maxlen = (None
+                          if str(self.mode).lower().startswith("infer")
+                          else self.reward_window)
         self._series: Dict[str, Dict[str, deque]] = {
-            tab: {fid: deque(maxlen=self.reward_window) for fid in _all_series_ids}
+            tab: {fid: deque(maxlen=_series_maxlen) for fid in _all_series_ids}
             for tab in self._tabs
         }
         # Back-compat alias: legacy callers (and internal code) treat the
@@ -488,6 +498,30 @@ class LiveVisualizer:
         self._playback_blink = False
         self._playback_blink_until = 0.0
         self._playback_rects: list = []  # [(rect, action_name)]
+
+        # ---- Plot horizontal scroll --------------------------------------
+        # I inference-läget: när rolloutens x-axel är längre än ett fast
+        # fönster (``_plot_window_width`` ticks) ritas en horisontell
+        # scrollbar under plot-arean; ``_plot_scroll_offset`` är vänsterkant
+        # (i tick-koordinater) för det synliga fönstret. ``None`` = auto
+        # (följ senaste data-änden, dvs. samma beteende som tidigare).
+        self._plot_window_width: int = 100
+        self._plot_scroll_offset: Optional[float] = None
+        self._plot_scroll_track_rect: Optional[tuple] = None
+        self._plot_scroll_thumb_rect: Optional[tuple] = None
+        self._dragging_plot_scroll: bool = False
+        self._plot_scroll_drag_dx: float = 0.0
+        # "Save plot HTML"-knapp under plot-arean (endast inference).
+        # Sätts av ``_draw_plot`` varje frame; klick-test i ``_handle_click``
+        # ropar ``_save_inference_plot_html`` som öppnar en Tk-fildialog och
+        # skriver samma format som train-lägets ``plots.html``.
+        self._save_plot_button_rect: Optional[tuple] = None
+        self._save_plot_button_flash_until: float = 0.0
+        self._save_plot_button_flash_msg: str = ""
+        # Default-katalog för "Save plot HTML"-dialogen. Sätts av
+        # ``set_save_dir`` (t.ex. från inference.py med ``args.checkpoints``
+        # = ``results/<run-name>/``) så Tk-fildialogen startar där.
+        self._save_dir: Optional[str] = None
 
         # ---- Init pygame --------------------------------------------------
         try:
@@ -817,6 +851,18 @@ class LiveVisualizer:
         self._spawn_dirty = False
         return d
 
+    def set_save_dir(self, path: Optional[str]) -> None:
+        """Registrera default-katalog för "Save plot HTML"-dialogen.
+
+        Anropas typiskt från ``inference.py`` med ``args.checkpoints``
+        (``results/<run-name>/``) så att Tk-fildialogen öppnas i den
+        mapp som användaren angav med ``--run-name``. ``None`` eller
+        icke-existerande katalog ignoreras och Tk faller tillbaka till
+        sin egen default (CWD)."""
+        if not self.enabled:
+            return
+        self._save_dir = str(path) if path else None
+
     def set_ticks_default(self, ticks: int) -> None:
         """Registrera CLI-värdet (default) för rollout-längd.
 
@@ -947,6 +993,10 @@ class LiveVisualizer:
             except Exception as e:
                 self._log_once(
                     f"begin_rollout_recording series-reset failed: {e!r}")
+            # Nollställ plot-scroll så nya rolloutens fönster startar i
+            # auto-läge (följer senaste data) tills användaren själv drar.
+            self._plot_scroll_offset = None
+            self._dragging_plot_scroll = False
         # MEMORY LEAK FIX (blind, riktad): rensa per-FG breakdown-dicts
         # mellan probes. update_loss_breakdown / update_diet_breakdown /
         # update_action_fracs gör ``dict.update`` med nya nycklar varje
@@ -1093,6 +1143,15 @@ class LiveVisualizer:
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_playback:
                     self._dragging_playback = False
+                    interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_plot_scroll:
+                    new_off = self._plot_scroll_offset_from_x(event.pos[0])
+                    if new_off is not None:
+                        self._plot_scroll_offset = float(new_off)
+                        interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_plot_scroll:
+                    self._dragging_plot_scroll = False
                     interacted = True
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_slider is not None:
@@ -1244,6 +1303,15 @@ class LiveVisualizer:
                         self._dragging_playback = False
                         # Avbryt INTE wait-loopen — scrubbing är en
                         # ren visuell operation, ingen ny rollout behövs.
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_plot_scroll):
+                        new_off = self._plot_scroll_offset_from_x(event.pos[0])
+                        if new_off is not None:
+                            self._plot_scroll_offset = float(new_off)
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_plot_scroll):
+                        self._dragging_plot_scroll = False
+                        # Ren visuell operation; avbryt inte wait-loopen.
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_slider is not None):
                         self._dragging_slider = None
@@ -1572,6 +1640,43 @@ class LiveVisualizer:
                 # skulle inference.py kunna trigga en ny inspelning för
                 # varje liten mus-darrning under dragningen.
             return
+        # Save-plot-HTML-knapp (inference): kollas före scrollbaren så
+        # den fångas även om rect överlappar i pixel-marginalerna.
+        if self._save_plot_button_rect is not None \
+                and self._hit_rect(self._save_plot_button_rect, pos):
+            try:
+                self._save_inference_plot_html()
+            except Exception as e:
+                self._log_once(f"save_inference_plot_html failed: {e!r}")
+                self._save_plot_button_flash_msg = f"Save failed: {e}"
+                import time as _t
+                self._save_plot_button_flash_until = _t.time() + 3.0
+            return
+        # Plot horisontell scrollbar: klick på thumb startar drag, klick
+        # utanför thumb men i tracken paginerar ett fönster åt vänster/höger.
+        hit_ps = self._hit_plot_scroll(pos)
+        if hit_ps:
+            thumb = self._plot_scroll_thumb_rect
+            span = getattr(self, "_plot_scroll_span_cache", None)
+            if hit_ps == "thumb" and thumb is not None:
+                self._plot_scroll_drag_dx = float(mx - thumb[0])
+                self._dragging_plot_scroll = True
+            elif hit_ps == "track" and span is not None and thumb is not None:
+                # Klick vid sidan om thumb: paginera med ~fönsterbredd.
+                thumb_x = thumb[0]
+                step_x = float(self._plot_window_width)
+                data_xmin, data_xmax = span
+                cur = (self._plot_scroll_offset
+                       if self._plot_scroll_offset is not None
+                       else float(data_xmax) - float(self._plot_window_width))
+                if mx < thumb_x:
+                    cur -= step_x
+                else:
+                    cur += step_x
+                max_off = float(data_xmax) - float(self._plot_window_width)
+                cur = max(float(data_xmin), min(max_off, cur))
+                self._plot_scroll_offset = float(cur)
+            return
         for rect, i in self._tab_rects:
             rx, ry, rw, rh = rect
             if rx <= mx < rx + rw and ry <= my < ry + rh:
@@ -1738,6 +1843,43 @@ class LiveVisualizer:
 
     def _hit_playback_slider(self, pos) -> bool:
         return self._hit_rect(self._playback_track_rect, pos)
+
+    def _hit_plot_scroll(self, pos) -> str:
+        """Returnera 'thumb', 'track' eller '' beroende på var klicket
+        landade i plot-scrollbaren."""
+        thumb = self._plot_scroll_thumb_rect
+        track = self._plot_scroll_track_rect
+        if thumb is not None and self._hit_rect(thumb, pos):
+            return "thumb"
+        if track is not None and self._hit_rect(track, pos):
+            return "track"
+        return ""
+
+    def _plot_scroll_offset_from_x(self, mx: int) -> Optional[float]:
+        """Mappa musens x-koord till en ny plot-scroll-offset (tick-koord
+        för fönstrets vänsterkant). Använder cachad data-span från senaste
+        ``_draw_plot``. Returnerar ``None`` om scroll inte är aktiv."""
+        track = self._plot_scroll_track_rect
+        thumb = self._plot_scroll_thumb_rect
+        span = getattr(self, "_plot_scroll_span_cache", None)
+        if track is None or thumb is None or not span:
+            return None
+        tx, _ty, tw, _th = track
+        thw = thumb[2]
+        data_xmin, data_xmax = span
+        full_span = float(data_xmax - data_xmin)
+        win_w_x = float(self._plot_window_width)
+        if full_span <= win_w_x:
+            return None
+        # Placera thumb så att muspekaren behåller sitt grepp om thumb
+        # (drag_dx = mx_down - thumb_x lagras vid klick).
+        new_thumb_x = mx - int(self._plot_scroll_drag_dx)
+        max_x = tx + tw - thw
+        new_thumb_x = max(tx, min(max_x, new_thumb_x))
+        denom = max(1, tw - thw)
+        frac = (new_thumb_x - tx) / float(denom)
+        frac = max(0.0, min(1.0, frac))
+        return float(data_xmin) + frac * (full_span - win_w_x)
 
     def _playback_idx_from_x(self, mx: int) -> Optional[int]:
         """Mappar muspos x till en frame-index i ``_current_rollout``.
@@ -2635,6 +2777,182 @@ class LiveVisualizer:
             out.append(fid)
         return out
 
+    def _save_inference_plot_html(self) -> None:
+        """Bygger en interaktiv HTML-plot i samma format som
+        ``<run_dir>/plots.html`` (från ``tools/biomass_html.py``) men från
+        de per-tick-serier som live-viz:en har buffrat under den senaste
+        inference-rolloutens gång. Öppnar en Tk-fildialog med default-
+        filnamnet ``inferenceplot.html``.
+
+        Enhetskonvertering (viz-serier -> jsonl-schema):
+          * ``biomass`` / ``energy``: viz lagrar 100·ratio (procent);
+            skrivs som ``ratio`` / ``energy_ratio`` i 0..1.
+          * ``move`` / ``rest`` / ``eat``: viz lagrar procent; skrivs
+            direkt som ``move_frac`` / ``rest_frac`` / ``eat_frac`` i %.
+          * ``predation`` / ``starvation`` / ``impacts``: viz lagrar %;
+            skrivs som ``loss_breakdown[fid][<cause>]`` i fraktion 0..1
+            (``_extract_field`` multiplicerar med 100 vid rendering).
+        """
+        # Bygg tick-indexerad union av alla stegkoordinater som finns i
+        # någon serie. Varje record motsvarar en tick.
+        series = self._series
+        all_steps: set = set()
+        for tab in ("biomass", "energy", "move", "rest", "eat",
+                    "predation", "starvation", "impacts"):
+            if tab not in series:
+                continue
+            for fid, buf in series[tab].items():
+                for step, _v in buf:
+                    all_steps.add(int(step))
+        if not all_steps:
+            self._save_plot_button_flash_msg = "No data to save"
+            import time as _t
+            self._save_plot_button_flash_until = _t.time() + 2.5
+            return
+        steps_sorted = sorted(all_steps)
+
+        # Per-(tab, fid) dict: step -> value, för snabb slagning.
+        def _index(tab: str) -> Dict[str, Dict[int, float]]:
+            out: Dict[str, Dict[int, float]] = {}
+            if tab not in series:
+                return out
+            for fid, buf in series[tab].items():
+                d: Dict[int, float] = {}
+                for step, v in buf:
+                    d[int(step)] = float(v)
+                out[fid] = d
+            return out
+
+        bio = _index("biomass")
+        eng = _index("energy")
+        mv = _index("move")
+        rs = _index("rest")
+        et = _index("eat")
+        pr = _index("predation")
+        st = _index("starvation")
+        im = _index("impacts")
+
+        records = []
+        for step in steps_sorted:
+            rec: dict = {"iter": int(step)}
+            ratio: Dict[str, float] = {}
+            energy_ratio: Dict[str, float] = {}
+            move_frac: Dict[str, float] = {}
+            rest_frac: Dict[str, float] = {}
+            eat_frac: Dict[str, float] = {}
+            loss_breakdown: Dict[str, Dict[str, float]] = {}
+            for fid, d in bio.items():
+                if step in d:
+                    ratio[fid] = d[step] / 100.0
+            for fid, d in eng.items():
+                if step in d:
+                    energy_ratio[fid] = d[step] / 100.0
+            for fid, d in mv.items():
+                if step in d:
+                    move_frac[fid] = d[step]
+            for fid, d in rs.items():
+                if step in d:
+                    rest_frac[fid] = d[step]
+            for fid, d in et.items():
+                if step in d:
+                    eat_frac[fid] = d[step]
+            all_fids = set(pr) | set(st) | set(im)
+            for fid in all_fids:
+                lp = pr.get(fid, {}).get(step)
+                ls = st.get(fid, {}).get(step)
+                li = im.get(fid, {}).get(step)
+                if lp is None and ls is None and li is None:
+                    continue
+                loss_breakdown[fid] = {
+                    "predation":  (lp / 100.0) if lp is not None else 0.0,
+                    "starvation": (ls / 100.0) if ls is not None else 0.0,
+                    "impact":     (li / 100.0) if li is not None else 0.0,
+                }
+            if ratio:
+                rec["ratio"] = ratio
+                # OBS: ``log10_ratio`` (reward-fliken) och ``b0``/``bh``
+                # utelämnas medvetet i inference-läget — inferens har
+                # ingen reward-signal, så reward-fliken ska inte dyka
+                # upp i den sparade HTML:en. FG-ordning härleds istället
+                # från ``ratio`` (``_build_html`` fallback:ar dit).
+            if energy_ratio:
+                rec["energy_ratio"] = energy_ratio
+            if move_frac:
+                rec["move_frac"] = move_frac
+            if rest_frac:
+                rec["rest_frac"] = rest_frac
+            if eat_frac:
+                rec["eat_frac"] = eat_frac
+            if loss_breakdown:
+                rec["loss_breakdown"] = loss_breakdown
+            records.append(rec)
+
+        # Fildialog (Tk). Kör i samma tråd; pygame-fönstret pausar under
+        # dialogen, vilket är acceptabelt eftersom knappen bara går att
+        # klicka på när ingen inspelning pågår.
+        default_name = "inferenceplot.html"
+        out_path = self._ask_save_path(default_name)
+        if not out_path:
+            return
+        # Ladda tools/biomass_html som modul (samma trick som train.py).
+        import importlib.util, os
+        tool_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "..", "tools", "biomass_html.py")
+        tool_path = os.path.normpath(tool_path)
+        spec = importlib.util.spec_from_file_location(
+            "_biomass_html_inference", tool_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"cannot load {tool_path}")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        run_dir = os.path.dirname(os.path.abspath(out_path)) or "."
+        html = mod._build_html(run_dir, records)
+        with open(out_path, "w") as f:
+            f.write(html)
+        import time as _t
+        self._save_plot_button_flash_msg = f"Saved: {os.path.basename(out_path)}"
+        self._save_plot_button_flash_until = _t.time() + 3.0
+
+    def _ask_save_path(self, default_name: str) -> str:
+        """Öppnar en Tk ``asksaveasfilename``-dialog. Returnerar tom
+        sträng om användaren avbryter eller om Tk inte är tillgängligt."""
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+        except Exception as e:
+            self._log_once(f"tkinter unavailable: {e!r}")
+            return ""
+        root = tk.Tk()
+        try:
+            root.withdraw()
+            root.update_idletasks()
+            # ``initialdir`` sätts från ``_save_dir`` (typiskt
+            # ``results/<run-name>/`` via ``set_save_dir`` från
+            # inference.py). Om katalogen inte finns eller inte satts
+            # låter vi Tk välja sin egen default (CWD).
+            initial_dir = ""
+            if self._save_dir:
+                import os as _os
+                if _os.path.isdir(self._save_dir):
+                    initial_dir = self._save_dir
+            kwargs = dict(
+                parent=root,
+                title="Save inference plot as HTML",
+                initialfile=default_name,
+                defaultextension=".html",
+                filetypes=[("HTML files", "*.html"), ("All files", "*.*")],
+            )
+            if initial_dir:
+                kwargs["initialdir"] = initial_dir
+            path = filedialog.asksaveasfilename(**kwargs)
+        finally:
+            try:
+                root.destroy()
+            except Exception:
+                pass
+        return path or ""
+
     def _draw_plot(self) -> None:
         pg = self._pg
         x, y, w, h = self._plot_rect
@@ -2692,7 +3010,13 @@ class LiveVisualizer:
         plot_pad_l = 36
         plot_pad_r = getattr(self, "_legend_w", 110)  # room for legend
         plot_pad_t = strip_h + 20  # tab strip (variable rows) + ylabel line
-        plot_pad_b = 16
+        # Reservera ~14 px längst ned för horisontell scrollbar (inference).
+        # I train-läget används inte scrollbaren; behåll ursprunglig padding.
+        scroll_bar_h = 12 if str(self.mode).lower().startswith("infer") else 0
+        # Save-knappen (inference) ritas under scrollbaren; reservera 22 px.
+        save_btn_h = 22 if str(self.mode).lower().startswith("infer") else 0
+        plot_pad_b = 16 + (scroll_bar_h + 4 if scroll_bar_h else 0) \
+            + (save_btn_h + 4 if save_btn_h else 0)
         px0 = x + plot_pad_l
         py0 = y + plot_pad_t
         pw = w - plot_pad_l - plot_pad_r
@@ -2700,46 +3024,75 @@ class LiveVisualizer:
         if pw <= 4 or ph <= 4:
             return
 
-        # Determine y-range across all buffers (only from enabled series).
-        all_vals: list = []
+        # First pass: full data x-range across all enabled buffers.
+        data_xmin = None
+        data_xmax = None
         for fid in active_ids:
             if self._solo is not None and self._solo != fid:
                 continue
             if not self._plot_enabled.get(fid, True):
                 continue
-            for _, v in buffers[fid]:
-                all_vals.append(v)
-        have_data = bool(all_vals)
-        ymin = ymax = xmin = xmax = 0.0
-        if have_data:
-            arr = np.asarray(all_vals, dtype=np.float64)
-            if self._log_plot:
-                arr = np.sign(arr) * np.log10(np.abs(arr) + 1e-12)
-            ymin = float(arr.min())
-            ymax = float(arr.max())
-            if not np.isfinite(ymin) or not np.isfinite(ymax):
-                have_data = False
-            elif ymax - ymin < 1e-9:
-                ymax = ymin + 1.0
+            if buffers[fid]:
+                bx0 = buffers[fid][0][0]
+                bx1 = buffers[fid][-1][0]
+                data_xmin = bx0 if data_xmin is None else min(data_xmin, bx0)
+                data_xmax = bx1 if data_xmax is None else max(data_xmax, bx1)
+        have_data = data_xmin is not None
+        xmin = xmax = 0.0
+        ymin = ymax = 0.0
+        # Aktivera scrollbaren när data-intervallet överstiger fönstret
+        # och läget är inference. Annars visar vi hela intervallet som förut.
+        scroll_active = False
+        if have_data and scroll_bar_h > 0:
+            full_span = float(data_xmax - data_xmin)
+            if full_span > float(self._plot_window_width):
+                scroll_active = True
 
         if have_data:
-            # Determine x-range (use sample index per buffer; aligned by step).
-            xmins, xmaxs = [], []
+            if scroll_active:
+                win_w_x = float(self._plot_window_width)
+                max_off = float(data_xmax) - win_w_x
+                if self._plot_scroll_offset is None:
+                    # Följ senaste data (samma beteende som förut / live).
+                    off = max_off
+                else:
+                    off = float(self._plot_scroll_offset)
+                off = max(float(data_xmin), min(max_off, off))
+                # Om vi var i auto-läge, håll det (så under pågående record
+                # följer fönstret senaste ticket automatiskt).
+                if self._plot_scroll_offset is not None:
+                    self._plot_scroll_offset = off
+                xmin = off
+                xmax = off + win_w_x
+            else:
+                xmin = float(data_xmin)
+                xmax = float(data_xmax)
+                if xmax - xmin < 1:
+                    xmax = xmin + 1
+
+            # Y-range: bara från punkter inom det synliga x-intervallet så
+            # skalan följer det som faktiskt syns i fönstret.
+            all_vals: list = []
             for fid in active_ids:
                 if self._solo is not None and self._solo != fid:
                     continue
                 if not self._plot_enabled.get(fid, True):
                     continue
-                if buffers[fid]:
-                    xmins.append(buffers[fid][0][0])
-                    xmaxs.append(buffers[fid][-1][0])
-            if xmins:
-                xmin = min(xmins)
-                xmax = max(xmaxs)
-                if xmax - xmin < 1:
-                    xmax = xmin + 1
-            else:
+                for s, v in buffers[fid]:
+                    if xmin <= s <= xmax:
+                        all_vals.append(v)
+            if not all_vals:
                 have_data = False
+            else:
+                arr = np.asarray(all_vals, dtype=np.float64)
+                if self._log_plot:
+                    arr = np.sign(arr) * np.log10(np.abs(arr) + 1e-12)
+                ymin = float(arr.min())
+                ymax = float(arr.max())
+                if not np.isfinite(ymin) or not np.isfinite(ymax):
+                    have_data = False
+                elif ymax - ymin < 1e-9:
+                    ymax = ymin + 1.0
 
         if have_data:
             # Y-axis tick labels (5 st: max, 3/4, mid, 1/4, min).
@@ -2762,7 +3115,9 @@ class LiveVisualizer:
                 pg.draw.line(self._screen, (90, 90, 110),
                              (px0, yy), (px0 + pw, yy), 1)
 
-            # Plot lines.
+            # Plot lines. Klipp till synligt x-fönster med en padding-punkt
+            # på varje sida så linjesegment som skär fönstrets kanter
+            # fortfarande når hela vägen ut.
             for fid in active_ids:
                 if self._solo is not None and self._solo != fid:
                     continue
@@ -2771,19 +3126,111 @@ class LiveVisualizer:
                 buf = buffers[fid]
                 if len(buf) < 2:
                     continue
+                # Bygg indexlista av synliga punkter + en granne på varje
+                # sida (för att linjen ska nå fönsterkanten).
+                start_i = 0
+                end_i = len(buf) - 1
+                for i, (s, _v) in enumerate(buf):
+                    if s >= xmin:
+                        start_i = max(0, i - 1)
+                        break
+                for j in range(len(buf) - 1, -1, -1):
+                    if buf[j][0] <= xmax:
+                        end_i = min(len(buf) - 1, j + 1)
+                        break
                 pts = []
-                for step, val in buf:
+                for k in range(start_i, end_i + 1):
+                    step, val = buf[k]
                     v = val
                     if self._log_plot:
                         v = float(np.sign(v) * np.log10(abs(v) + 1e-12))
                     fx = (step - xmin) / (xmax - xmin)
                     fy = (ymax - v) / (ymax - ymin)
-                    pts.append((int(px0 + fx * pw),
-                                int(py0 + fy * ph)))
+                    xi = int(px0 + fx * pw)
+                    yi = int(py0 + fy * ph)
+                    # Klipp x till plot-arean så linjer inte spiller över.
+                    if xi < px0:
+                        xi = px0
+                    elif xi > px0 + pw:
+                        xi = px0 + pw
+                    pts.append((xi, yi))
+                if len(pts) < 2:
+                    continue
                 try:
                     pg.draw.aalines(self._screen, self._fg_colour[fid], False, pts)
                 except Exception:
                     pg.draw.lines(self._screen, self._fg_colour[fid], False, pts, 1)
+
+        # ---- Horisontell scrollbar (inference) ---------------------------
+        # Ritas alltid när scroll_bar_h > 0 (reserverar utrymme), men blir
+        # bara interaktiv/synlig thumb när data-intervallet överstiger
+        # fönstret (scroll_active). ``_plot_scroll_track_rect`` sätts alltid
+        # så hit-tests kan avgöra klick även vid mindre data.
+        self._plot_scroll_track_rect = None
+        self._plot_scroll_thumb_rect = None
+        # Cacha data-span för scrollbar-drag (används av
+        # ``_plot_scroll_offset_from_x`` mellan render-anrop).
+        if have_data and scroll_active:
+            self._plot_scroll_span_cache = (float(data_xmin), float(data_xmax))
+        else:
+            self._plot_scroll_span_cache = None
+        if scroll_bar_h > 0 and pw > 4:
+            sb_y = py0 + ph + 4
+            sb_h = scroll_bar_h
+            track = (px0, sb_y, pw, sb_h)
+            pg.draw.rect(self._screen, (30, 30, 38), track)
+            pg.draw.rect(self._screen, (60, 60, 70), track, 1)
+            if scroll_active:
+                full_span = float(data_xmax - data_xmin)
+                win_w_x = float(self._plot_window_width)
+                thumb_w = max(20, int(pw * (win_w_x / full_span)))
+                # Position i track baserat på offset.
+                off_frac = (float(xmin) - float(data_xmin)) / max(
+                    1e-9, full_span - win_w_x)
+                off_frac = max(0.0, min(1.0, off_frac))
+                thumb_x = int(px0 + off_frac * (pw - thumb_w))
+                thumb_rect = (thumb_x, sb_y + 1, thumb_w, sb_h - 2)
+                pg.draw.rect(self._screen, (110, 110, 130), thumb_rect)
+                pg.draw.rect(self._screen, (170, 170, 190), thumb_rect, 1)
+                self._plot_scroll_thumb_rect = thumb_rect
+                self._plot_scroll_track_rect = track
+            else:
+                # Ingen scrollning möjlig — rita en tunn markör som fyller
+                # hela tracken (visar att allt data är synligt).
+                inner = (px0 + 1, sb_y + 1, pw - 2, sb_h - 2)
+                pg.draw.rect(self._screen, (55, 55, 65), inner)
+
+        # ---- Save-plot-HTML-knapp (inference) ---------------------------
+        # Ritas under scrollbaren. Enabled endast när inspelning INTE
+        # pågår OCH det finns data att spara. Vid klick öppnas en
+        # Tk-fildialog med default-filnamn ``inferenceplot.html``.
+        self._save_plot_button_rect = None
+        if save_btn_h > 0 and pw > 4:
+            btn_y = py0 + ph + 4 + (scroll_bar_h + 4 if scroll_bar_h else 0)
+            btn_w = min(180, pw)
+            btn_x = px0
+            btn_rect = (btn_x, btn_y, btn_w, save_btn_h)
+            enabled = bool(have_data) and not self._recording
+            bg = (50, 70, 55) if enabled else (35, 35, 42)
+            border = (100, 160, 120) if enabled else (70, 70, 80)
+            pg.draw.rect(self._screen, bg, btn_rect)
+            pg.draw.rect(self._screen, border, btn_rect, 1)
+            # Text: normal etikett, eller flash-meddelande efter save.
+            import time as _t
+            now = _t.time()
+            if now < self._save_plot_button_flash_until \
+                    and self._save_plot_button_flash_msg:
+                label = self._save_plot_button_flash_msg
+                col = (220, 230, 210)
+            else:
+                label = "Save plot as HTML..."
+                col = (220, 230, 220) if enabled else (120, 120, 130)
+            surf = self._font.render(label, True, col)
+            tx = btn_x + max(4, (btn_w - surf.get_width()) // 2)
+            ty = btn_y + (save_btn_h - surf.get_height()) // 2
+            self._screen.blit(surf, (tx, ty))
+            if enabled:
+                self._save_plot_button_rect = btn_rect
 
         # Legend with a per-FG checkbox that toggles plotting across all
         # tabs. Drawn unconditionally so users can always re-enable a
