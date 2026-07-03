@@ -194,17 +194,36 @@ class LiveVisualizer:
         else:
             self._tabs = ["biomass", "energy", "move", "rest", "eat",
                           "predation", "starvation", "impacts"]
-        self._tab_labels = {
-            "reward": "reward",
-            "biomass": "avg biomass (% of start)",
-            "energy": "avg energy (% of start)",
-            "move": "move action (%)",
-            "rest": "rest action (%)",
-            "eat": "eat action (%)",
-            "predation": "predation share of total loss (%)",
-            "starvation": "starvation share of total loss (%)",
-            "impacts": "impact share of total loss (%)",
-        }
+        # Fliketiketterna beror på läget: i inference matas nu ögonblicks-
+        # värden per tick till alla serier (biomass/energy/move/rest/eat +
+        # predation/starvation/impacts), så "avg"/"share of total" är
+        # missvisande där. I train pushas fortfarande medelvärden över
+        # probe-rollouten (en punkt per ARS-step), så där behåller vi
+        # medelvärdes-formuleringen.
+        if self.mode == "train":
+            self._tab_labels = {
+                "reward": "reward",
+                "biomass": "avg biomass (% of start)",
+                "energy": "avg energy (% of start)",
+                "move": "avg move action (%)",
+                "rest": "avg rest action (%)",
+                "eat": "avg eat action (%)",
+                "predation": "predation share of total loss (%)",
+                "starvation": "starvation share of total loss (%)",
+                "impacts": "impact share of total loss (%)",
+            }
+        else:
+            self._tab_labels = {
+                "reward": "reward",
+                "biomass": "biomass (% of start)",
+                "energy": "energy (% of start)",
+                "move": "move action (%)",
+                "rest": "rest action (%)",
+                "eat": "eat action (%)",
+                "predation": "predation share of tick loss (%)",
+                "starvation": "starvation share of tick loss (%)",
+                "impacts": "impact share of tick loss (%)",
+            }
         self._active_tab = 0
         # Per-FG enable flag for plot panel (checkbox state). Toggled via
         # legend click; applies globally across all plot tabs.
@@ -2723,8 +2742,14 @@ class LiveVisualizer:
                 have_data = False
 
         if have_data:
-            # Y-axis tick labels (min, mid, max).
-            for frac, val in ((0.0, ymax), (0.5, (ymin + ymax) / 2), (1.0, ymin)):
+            # Y-axis tick labels (5 st: max, 3/4, mid, 1/4, min).
+            for frac, val in (
+                (0.0,  ymax),
+                (0.25, ymin + 0.75 * (ymax - ymin)),
+                (0.5,  (ymin + ymax) / 2),
+                (0.75, ymin + 0.25 * (ymax - ymin)),
+                (1.0,  ymin),
+            ):
                 yy = int(py0 + frac * ph)
                 pg.draw.line(self._screen, (50, 50, 60),
                              (px0, yy), (px0 + pw, yy), 1)

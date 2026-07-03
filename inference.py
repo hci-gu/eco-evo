@@ -600,14 +600,17 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     return policies, mean, var
 
 
-def _push_action_fracs(viz, env, step, suffix=""):
-    """Push per-DM mean (over rollout-so-far) action fractions into the
-    visualiser's move/rest/eat tabs.
+def _push_action_fracs(viz, env, step, suffix="", prev=None):
+    """Push per-DM PER-TICK (instantaneous) action fractions into viz.
 
-    ``env._action_move_frac`` / ``_rest_frac`` / ``_eat_frac`` are running
-    sums per DM (indexed by ``env.dm_ids``) over ticks where the DM has
-    any biomass; ``env._action_active_ticks[i]`` is that DM's active-tick
-    counter. The plotted value is the running mean = sum / max(1, count).
+    ``env._action_move_frac`` / ``_rest_frac`` / ``_eat_frac`` är
+    kumulativa summor per DM över aktiva ticks. För att få ögonblicks-
+    värdet för just denna tick tar vi delta mot föregående ticks värden
+    (``prev`` = snapshot-dict från förra anropet), delat med delta i
+    ``_action_active_ticks`` (typiskt 1 om DM var aktiv denna tick).
+
+    ``prev`` uppdateras in-place (samma dict returneras/muteras) så att
+    anroparen bara skickar in samma objekt varje tick.
     """
     if viz is None:
         return
@@ -617,15 +620,28 @@ def _push_action_fracs(viz, env, step, suffix=""):
     cnt = getattr(env, '_action_active_ticks', None)
     if mv is None or rs is None or et is None or cnt is None:
         return
+    if prev is None:
+        prev = {}
     try:
         for i, fid in enumerate(env.dm_ids):
-            c = float(cnt[i]) if cnt[i] > 0 else 0.0
-            if c <= 0.0:
+            c_now = float(cnt[i])
+            c_prev = float(prev.get((i, 'c'), 0.0))
+            dc = c_now - c_prev
+            # Uppdatera snapshot innan ev. continue så prev alltid
+            # speglar env:s aktuella tillstånd.
+            prev[(i, 'c')] = c_now
+            mv_prev = float(prev.get((i, 'mv'), 0.0))
+            rs_prev = float(prev.get((i, 'rs'), 0.0))
+            et_prev = float(prev.get((i, 'et'), 0.0))
+            prev[(i, 'mv')] = float(mv[i])
+            prev[(i, 'rs')] = float(rs[i])
+            prev[(i, 'et')] = float(et[i])
+            if dc <= 0.0:
                 continue
             key = fid + suffix
-            _mv_pct = 100.0 * float(mv[i]) / c
-            _rs_pct = 100.0 * float(rs[i]) / c
-            _et_pct = 100.0 * float(et[i]) / c
+            _mv_pct = 100.0 * (float(mv[i]) - mv_prev) / dc
+            _rs_pct = 100.0 * (float(rs[i]) - rs_prev) / dc
+            _et_pct = 100.0 * (float(et[i]) - et_prev) / dc
             viz.update_series("move", key, _mv_pct, step=step)
             viz.update_series("rest", key, _rs_pct, step=step)
             viz.update_series("eat",  key, _et_pct, step=step)
@@ -677,6 +693,13 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     energy_history = {fid: [] for fid in env.fgs}
     rnd_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
     rnd_energy_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
+    # Snapshots för att omvandla env:s kumulativa ackumulatorer till
+    # per-tick ögonblicksvärden i viz (headertexter + grafer). Nycklarna
+    # matchar de env-attribut vi läser nedan.
+    _prev_loss = {fid: {'s': 0.0, 'p': 0.0, 'i': 0.0} for fid in env.fgs}
+    _prev_diet = {}  # pred_id -> {prey_id: cumulative intake}
+    _prev_act = {}
+    _prev_act_rnd = {}
     # Spela in hela inference-rollouten som en uppspelningsbar "film" i
     # viz. Frames capturas vid varje ``update_biomass``; vid loop-slut
     # kallas ``end_rollout_recording`` så användaren kan spela upp/stega.
@@ -757,19 +780,21 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
         # so far, expressed as a percentage of the initial value. ``b0``
         # is the post-tick-0 baseline (history[fid][0]); the value plotted
         # is ``100 * mean(history[fid]) / b0`` (and analogously for energy).
+        # Ögonblicksvärden per tick: senaste biomass/energy relativt b0/e0,
+        # inte medelvärdet över hela rolloutens historik. Så matchar
+        # graferna heatmap-headerns momentana ``b = …`` istället för att
+        # visa löpande medelvärden.
         pct_bio = {}
         pct_eng = {}
         for fid in history.keys():
             b0 = history[fid][0] if history[fid] else 0.0
             if b0 > 0.0 and history[fid]:
-                avg_b = sum(history[fid]) / len(history[fid])
-                pct_bio[fid] = 100.0 * avg_b / b0
+                pct_bio[fid] = 100.0 * history[fid][-1] / b0
             else:
                 pct_bio[fid] = 0.0
             e0 = energy_history[fid][0] if energy_history[fid] else 0.0
             if e0 > 0.0 and energy_history[fid]:
-                avg_e = sum(energy_history[fid]) / len(energy_history[fid])
-                pct_eng[fid] = 100.0 * avg_e / e0
+                pct_eng[fid] = 100.0 * energy_history[fid][-1] / e0
             else:
                 pct_eng[fid] = 0.0
         if verbose and (t % max(1, n_ticks // 10) == 0):
@@ -780,22 +805,31 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 for fid in history.keys():
                     viz.update_series("biomass", fid, pct_bio[fid], step=t)
                     viz.update_series("energy", fid, pct_eng[fid], step=t)
-                _push_action_fracs(viz, env, step=t)
+                _push_action_fracs(viz, env, step=t, prev=_prev_act)
                 # Per-FG biomass-loss breakdown (pr/st/im) so far,
                 # computed from the env's running accumulators. Each
                 # value is a fraction in [0, 1] summing to 1.0 when
                 # there has been any loss for that FG.
+                # Ögonblicks-loss per tick: delta mot förra tickens
+                # kumulativa ackumulatorer, sedan normaliserat inom denna
+                # tick. Fördelningen speglar därför vad som just hände
+                # nu istället för hela rolloutens sammanlagda historik.
                 _lb = {}
                 for fid in env.fgs:
                     ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
                     lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
                     li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
-                    _tot = ls + lp + li
+                    prev = _prev_loss.get(fid, {'s': 0.0, 'p': 0.0, 'i': 0.0})
+                    dls = ls - prev['s']
+                    dlp = lp - prev['p']
+                    dli = li - prev['i']
+                    _prev_loss[fid] = {'s': ls, 'p': lp, 'i': li}
+                    _tot = dls + dlp + dli
                     if _tot > 0.0:
                         _lb[fid] = {
-                            'predation':  lp / _tot,
-                            'starvation': ls / _tot,
-                            'impact':     li / _tot,
+                            'predation':  dlp / _tot,
+                            'starvation': dls / _tot,
+                            'impact':     dli / _tot,
                         }
                     else:
                         _lb[fid] = {'predation': 0.0,
@@ -821,32 +855,41 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 # ``intake_by_pred_prey`` (ton intagen prey-biomassa över
                 # rollouten) och normalisera per predator. Heatmap-headern
                 # ritar då en rad '<abbr>/… = X/…%' ovanför heatmapen.
+                # Diet per tick (ögonblick): delta i ``intake_by_pred_prey``
+                # sedan förra tick, normaliserat per predator. Utan delta
+                # visar raden hela rolloutens diet-mix.
                 _diet = {}
                 _ipp = getattr(env, 'intake_by_pred_prey', None) or {}
                 for pred_id, prey_map in _ipp.items():
-                    _tot_d = float(sum(prey_map.values()))
+                    prev_map = _prev_diet.get(pred_id, {})
+                    deltas = {}
+                    for pid, v in prey_map.items():
+                        dv = float(v) - float(prev_map.get(pid, 0.0))
+                        if dv > 0.0:
+                            deltas[pid] = dv
+                    # Uppdatera snapshot till senaste kumulativa värden.
+                    _prev_diet[pred_id] = {pid: float(v) for pid, v in prey_map.items()}
+                    _tot_d = float(sum(deltas.values()))
                     if _tot_d <= 0.0:
                         continue
-                    _diet[pred_id] = {
-                        pid: float(v) / _tot_d for pid, v in prey_map.items()
-                        if float(v) > 0.0
-                    }
+                    _diet[pred_id] = {pid: dv / _tot_d for pid, dv in deltas.items()}
                 if _diet:
                     viz.update_diet_breakdown(_diet)
                 if rnd_env is not None:
-                    _push_action_fracs(viz, rnd_env, step=t, suffix="_rnd")
+                    _push_action_fracs(viz, rnd_env, step=t, suffix="_rnd",
+                                       prev=_prev_act_rnd)
                 if rnd_env is not None:
                     for fid in rnd_history.keys():
                         b0 = rnd_history[fid][0] if rnd_history[fid] else 0.0
                         e0 = rnd_energy_history[fid][0] if rnd_energy_history[fid] else 0.0
+                        # Ögonblick: senaste tickens biomass/energy
+                        # relativt initialvärdet, inte löpande medel.
                         if b0 > 0.0 and rnd_history[fid]:
-                            avg_b = sum(rnd_history[fid]) / len(rnd_history[fid])
-                            pb = 100.0 * avg_b / b0
+                            pb = 100.0 * rnd_history[fid][-1] / b0
                         else:
                             pb = 0.0
                         if e0 > 0.0 and rnd_energy_history[fid]:
-                            avg_e = sum(rnd_energy_history[fid]) / len(rnd_energy_history[fid])
-                            pe = 100.0 * avg_e / e0
+                            pe = 100.0 * rnd_energy_history[fid][-1] / e0
                         else:
                             pe = 0.0
                         viz.update_series("biomass", fid + "_rnd", pb, step=t)
