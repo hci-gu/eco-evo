@@ -1204,29 +1204,28 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     # ``_last_frame_ts`` so this end-of-probe paint always lands.
     if viz is not None:
         try:
+            # Avsluta inspelningen FÖRE det avslutande repaint-anropet.
+            # Om vi gör repaint först ritas slidern med den GAMLA filmens
+            # frame-antal (handtag vid gamla n-1), och när
+            # ``end_rollout_recording`` sedan swappar in nya filmen får
+            # nästa render en förskjuten slider-position — det uppfattas
+            # som ett hack vid rolloutens slut ("sista framen visas
+            # först när slidern flyttas till slutet"). Genom att swappa
+            # först ritas live-state och nya filmens slider-läge (n_new-1)
+            # i samma frame → sömlös övergång.
+            try:
+                viz.end_rollout_recording()
+            except Exception:
+                pass
             viz._last_frame_ts = 0.0
             # Den sista ``update_biomass`` här är ett rent repaint för att
             # rad mv/rs/et + pr/st/im ovanför heatmapen skall hinna
             # uppdateras innan användaren ser slutbilden — den visar
             # samma state som redan capturades som sista frame i
-            # tick-loopen (``_t = n_ticks - 1``). Om vi låter recordern
-            # spela in den också får filmen +1 dubblettframe (502 vid
-            # 500 ticks). Pausa därför inspelningen runt anropet.
-            _was_recording = bool(getattr(viz, '_recording', False))
-            if _was_recording:
-                viz._recording = False
-            try:
-                viz.update_biomass(env.fgs, tick=int(n_ticks_done), extra=viz_extra)
-            finally:
-                if _was_recording:
-                    viz._recording = True
-            # Avsluta inspelningen: ``_pending_rollout`` flyttas till
-            # ``_current_rollout`` och uppspelningsknapparna blinkar för
-            # att signalera att en ny film är tillgänglig.
-            try:
-                viz.end_rollout_recording()
-            except Exception:
-                pass
+            # tick-loopen (``_t = n_ticks - 1``). ``_recording`` är
+            # redan False efter ``end_rollout_recording``, så inga extra
+            # dubblettframes riskeras.
+            viz.update_biomass(env.fgs, tick=int(n_ticks_done), extra=viz_extra)
             viz.pump_events()
         except Exception:
             pass

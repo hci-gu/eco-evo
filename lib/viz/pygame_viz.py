@@ -982,13 +982,16 @@ class LiveVisualizer:
                 self._playback_blink_until = time.monotonic() + 3.0
             except Exception:
                 self._playback_blink_until = 0.0
-            # Återställ replay-position så ett nytt klick startar från
-            # frame 0 av nya filmen.
-            self._playback_idx = 0
+            # Om användaren tidigare rört slidern under träningen befann
+            # vi oss i replay-läge (paused/playing). Nya filmen ska då
+            # visa rolloutsens SISTA steg (samma tillstånd som live-vyn
+            # visar om slidern aldrig rörts), inte hoppa till frame 1.
+            n_new = len(self._current_rollout)
             if self._playback_mode != "live":
-                # Var i replay tidigare → fortsätt i pausat läge på nya
-                # filmens frame 0.
+                self._playback_idx = max(0, n_new - 1)
                 self._playback_mode = "paused"
+            else:
+                self._playback_idx = 0
 
     def _capture_frame(self) -> dict:
         """Bygg en snapshot av all state som ``_draw_one_heatmap`` läser."""
