@@ -53,7 +53,17 @@ _METRICS: Tuple[Tuple[str, str, str, str], ...] = (
     # nested-fält ``loss_breakdown[fid][<cause>]`` (fraktion 0..1) och
     # skalas ×100 till procent — samma semantik som live-vizens plot-
     # serier ``predation``/``starvation``/``impacts``.
-    ("reward",     "log10_ratio",            "log10(bh / b0) per FG — reward tab", ""),
+    # OBS: titlarna nedan är TRAIN-lägets titlar (probe-medelvärden per
+    # ARS-step). I inference-läget överlagras de av ``_INFER_TITLES``
+    # nedan (per-tick ögonblicksvärden). ``_build_html(..., mode=...)``
+    # väljer set.
+    # ``reward``-fliken: pekar nu på ``record["reward"]`` (den faktiska
+    # ARS-rewarden per-FG som skrivs av ``_probe_biomass``). Fallback:
+    # om ``reward`` saknas i alla records används ``log10_ratio`` som
+    # bakåtkompatibilitet för gamla jsonl-filer. Titeln är generisk här
+    # och byts dynamiskt i ``_build_html`` baserat på ``__meta__``-
+    # headern (reward-formel) om den finns.
+    ("reward",     "reward",                 "ARS reward per FG",                  ""),
     ("biomass",    "ratio",                  "bh / b0 per FG — biomass tab",       "ratio"),
     ("energy",     "energy_ratio",           "eh / e0 per FG — energy tab",        "energy_ratio"),
     ("move",       "move_frac",              "mean move-action % per DM",          "move_frac"),
@@ -63,6 +73,24 @@ _METRICS: Tuple[Tuple[str, str, str, str], ...] = (
     ("starvation", "loss_breakdown.starvation", "starvation share of total loss (%) per FG", "loss_breakdown.starvation"),
     ("impacts",    "loss_breakdown.impact",     "impact share of total loss (%) per FG",     "loss_breakdown.impact"),
 )
+
+
+# Inference-lägets plot-titlar. Speglar ``_tab_labels`` i
+# ``lib/viz/pygame_viz.py`` när ``mode="inference"``: värdena är per-tick
+# ögonblick, inte medelvärden/kumulativa andelar. reward-fliken finns
+# inte i inference (ingen reward-signal) men lämnas kvar för robusthet
+# ifall någon record ändå har ``log10_ratio``.
+_INFER_TITLES: Dict[str, str] = {
+    "reward":     "log10(bh / b0) per FG — reward tab",
+    "biomass":    "bh / b0 per FG — biomass tab (per-tick)",
+    "energy":     "eh / e0 per FG — energy tab (per-tick)",
+    "move":       "move-action % per DM (per-tick)",
+    "rest":       "rest-action % per DM (per-tick)",
+    "eat":        "eat-action % per DM (per-tick)",
+    "predation":  "predation share of tick loss (%) per FG",
+    "starvation": "starvation share of tick loss (%) per FG",
+    "impacts":    "impact share of tick loss (%) per FG",
+}
 
 
 def _extract_field(record: dict, field: str, rnd: bool = False) -> dict:
@@ -92,18 +120,42 @@ def _extract_field(record: dict, field: str, rnd: bool = False) -> dict:
 
 
 def _load_jsonl(path: str) -> List[dict]:
+    """Läs biomass.jsonl. ``__meta__``-rader (fresh-start-header med
+    reward-formel-flaggor) filtreras bort ur den returnerade listan;
+    använd ``_load_jsonl_with_meta`` om du behöver meta-headern."""
+    records, _meta = _load_jsonl_with_meta(path)
+    return records
+
+
+def _load_jsonl_with_meta(path: str) -> Tuple[List[dict], dict]:
+    """Läs biomass.jsonl och returnera ``(records, meta)``.
+
+    ``meta`` är det senaste ``__meta__``-objektet som setts i filen
+    (typiskt skrivet som första rad av ``train.py`` vid fresh start med
+    reward-formel-flaggor: ``legacy_reward``, ``integral_reward``,
+    ``alpha``/``beta``/``cappa``/``survival_bonus``). Saknas ``__meta__``
+    (gamla jsonl-filer) returneras ``{}``.
+    """
     records: List[dict] = []
+    meta: dict = {}
     with open(path, "r") as f:
         for ln, line in enumerate(f, 1):
             line = line.strip()
             if not line:
                 continue
             try:
-                records.append(json.loads(line))
+                obj = json.loads(line)
             except json.JSONDecodeError as e:
                 print(f"WARN: skipping malformed line {ln}: {e}",
                       file=sys.stderr)
-    return records
+                continue
+            if isinstance(obj, dict) and "__meta__" in obj:
+                m = obj.get("__meta__")
+                if isinstance(m, dict):
+                    meta = m
+                continue
+            records.append(obj)
+    return records, meta
 
 
 def _collect_keys(records: List[dict], field: str,
@@ -226,7 +278,54 @@ def _build_traces(records: List[dict], field: str, fg_ids: List[str],
     return traces
 
 
-def _build_html(run_dir: str, records: List[dict]) -> str:
+def _reward_title_from_meta(meta: dict) -> str:
+    """Bygg en reward-flik-titel som beskriver den aktiva rewardformeln.
+
+    ``meta`` kommer från ``__meta__``-headern i biomass.jsonl (skriven
+    av ``train.py`` vid fresh start). Om headern saknas eller är tom
+    faller vi tillbaka till en generisk titel.
+    """
+    if not isinstance(meta, dict) or not meta:
+        return "ARS reward per FG"
+    legacy = bool(meta.get("legacy_reward", False))
+    integral = bool(meta.get("integral_reward", True))
+    if legacy:
+        # Legacy linjärkombination: α·Δlog b + β·survival − γ·loss.
+        alpha = meta.get("alpha")
+        beta = meta.get("beta")
+        cappa = meta.get("cappa")
+        parts = []
+        if alpha is not None:
+            parts.append(f"α={alpha}")
+        if beta is not None:
+            parts.append(f"β={beta}")
+        if cappa is not None:
+            parts.append(f"γ={cappa}")
+        pstr = f" ({', '.join(parts)})" if parts else ""
+        return ("ARS reward per FG — legacy "
+                "(α·Δlog b + β·survival − γ·loss)" + pstr)
+    # Ny total-energi-reward.
+    kind = "integral" if integral else "final-value"
+    return f"ARS reward per FG — total-energy ({kind})"
+
+
+def _build_html(run_dir: str, records: List[dict],
+                mode: str = "train",
+                meta: dict | None = None) -> str:
+    """Bygg standalone HTML-plot.
+
+    ``mode`` styr flik-titlar, sidhuvud och x-axel-etikett:
+      * ``"train"`` (default): probe-medelvärden per ARS-step, en
+        record per rollout — samma semantik som ``biomass.jsonl`` från
+        ``train.py``. Titlar från ``_METRICS`` (t.ex. "mean move-action
+        % per DM", "predation share of total loss (%)"). X-axel =
+        "sample index (one per probe rollout)".
+      * ``"inference"``: per-tick ögonblick, en record per tick — samma
+        semantik som live-vizen i inference-läget. Titlar från
+        ``_INFER_TITLES`` (t.ex. "move-action % per DM (per-tick)",
+        "predation share of tick loss (%)"). X-axel = "tick".
+    """
+    is_infer = str(mode).lower().startswith("infer")
     # Build a stable global FG-id -> colour index, shared across all
     # tabs so the same FG keeps the same colour everywhere AND matches
     # the live pygame visualiser (which keys colours off the position
@@ -258,12 +357,36 @@ def _build_html(run_dir: str, records: List[dict]) -> str:
     # Which metrics actually exist in this file? Skip empty ones.
     metric_blocks: List[Tuple[str, str, List[str], List[dict]]] = []
     for tab_key, field, label, rnd_field in _METRICS:
-        fg_ids = _collect_keys(records, field, rnd_field=rnd_field)
+        eff_field = field
+        # ``reward``-fliken: primärt fält ``reward`` (den faktiska ARS-
+        # rewarden som skrivs av ``_probe_biomass`` i nya train.py).
+        # Om ingen record har det (gamla jsonl-filer) faller vi
+        # tillbaka till ``log10_ratio`` så gamla filer fortsätter
+        # plotta något meningsfullt under reward-fliken.
+        if tab_key == "reward":
+            has_reward = any(
+                isinstance(r.get("reward"), dict) and r.get("reward")
+                for r in records
+            )
+            if not has_reward:
+                eff_field = "log10_ratio"
+        fg_ids = _collect_keys(records, eff_field, rnd_field=rnd_field)
         if not fg_ids:
             continue
-        traces = _build_traces(records, field, fg_ids, rnd_field=rnd_field,
+        traces = _build_traces(records, eff_field, fg_ids, rnd_field=rnd_field,
                                colour_index=colour_index)
-        metric_blocks.append((tab_key, label, fg_ids, traces))
+        # Titel: reward-fliken får dynamisk titel från ``meta`` (vilken
+        # rewardformel som var aktiv). Övriga flikar behåller sina
+        # _METRICS/_INFER_TITLES-defaulttitlar.
+        if tab_key == "reward" and not is_infer:
+            effective_label = _reward_title_from_meta(meta or {})
+            if eff_field == "log10_ratio":
+                # Visa att vi fallade tillbaka pga saknad meta/reward-data.
+                effective_label += " — log10(bh/b0) fallback"
+        else:
+            effective_label = (_INFER_TITLES.get(tab_key, label)
+                               if is_infer else label)
+        metric_blocks.append((tab_key, effective_label, fg_ids, traces))
 
     if not metric_blocks:
         raise SystemExit("No known metric fields found in biomass.jsonl "
@@ -290,13 +413,41 @@ def _build_html(run_dir: str, records: List[dict]) -> str:
             for (k, l, fg, tr) in metric_blocks
         ],
     }
-    payload_json = json.dumps(payload)
+    # ``ensure_ascii=False`` gör att unicode-tecken (α, β, γ, Δ, · osv.
+    # i reward-flikens titel) hamnar som läsbara UTF-8-tecken i den
+    # genererade HTML:en istället för ``\uXXXX``-escapes. Sidan
+    # deklarerar ``<meta charset="utf-8">`` så det renderas korrekt.
+    payload_json = json.dumps(payload, ensure_ascii=False)
+
+    # Mode-beroende texter i sidhuvudet. Train-läget pratar om
+    # "records" (en per probe-rollout) och "gen/iter"; inference-läget
+    # har en record per tick så vi visar "ticks" och döljer gen-raden.
+    page_title = (f"Inference plots — {run_name}" if is_infer
+                  else f"Biomass training plots — {run_name}")
+    header_h1 = page_title
+    if is_infer:
+        header_meta = (f"{n_records} ticks · tick range {iter_range} · "
+                       "per-tick snapshots (no averaging) · click a legend "
+                       "entry to toggle that FG on/off · double-click to "
+                       "isolate it")
+        xaxis_title = "tick"
+        footer_src = (f"Generated from live inference viz buffer "
+                      f"(run dir: {run_dir}).")
+    else:
+        header_meta = (f"{n_records} records · gen {gen_range} · iter "
+                       f"{iter_range} · click a legend entry to toggle that "
+                       "FG on/off · double-click to isolate it (hide all "
+                       "others) — same as the live visualiser's per-FG "
+                       "checkboxes")
+        xaxis_title = "sample index (one per probe rollout)"
+        footer_src = (f"Generated from "
+                      f"<code>{os.path.join(run_dir, 'biomass.jsonl')}</code>.")
 
     html = f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Biomass training plots — {run_name}</title>
+<title>{page_title}</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   body {{
@@ -344,18 +495,13 @@ def _build_html(run_dir: str, records: List[dict]) -> str:
 </head>
 <body>
 <header>
-  <h1>Biomass training plots — {run_name}</h1>
-  <div class="meta">
-    {n_records} records · gen {gen_range} · iter {iter_range} ·
-    click a legend entry to toggle that FG on/off · double-click to
-    isolate it (hide all others) — same as the live visualiser's
-    per-FG checkboxes
-  </div>
+  <h1>{header_h1}</h1>
+  <div class="meta">{header_meta}</div>
 </header>
 <div id="tabs"></div>
 <div id="plot"></div>
 <div class="footer">
-  Generated from <code>{os.path.join(run_dir, 'biomass.jsonl')}</code>.
+  {footer_src}
   Plotly via CDN; works offline after first load.
 </div>
 
@@ -374,7 +520,7 @@ function layoutFor(metric) {{
     margin: {{ l: 60, r: 20, t: 40, b: 50 }},
     title: {{ text: metric.label, font: {{ size: 14 }} }},
     xaxis: {{
-      title: "sample index (one per probe rollout)",
+      title: {json.dumps(xaxis_title)},
       gridcolor: "#3a3a48",
       zerolinecolor: "#3a3a48",
     }},
@@ -446,12 +592,12 @@ def main(argv: List[str]) -> int:
         print(f"ERROR: missing biomass.jsonl in {run_dir}", file=sys.stderr)
         return 2
 
-    records = _load_jsonl(jsonl)
+    records, meta = _load_jsonl_with_meta(jsonl)
     if not records:
         print(f"ERROR: no records in {jsonl}", file=sys.stderr)
         return 1
 
-    html = _build_html(run_dir, records)
+    html = _build_html(run_dir, records, meta=meta)
     out = args.output or os.path.join(run_dir, "plots.html")
     with open(out, "w") as f:
         f.write(html)

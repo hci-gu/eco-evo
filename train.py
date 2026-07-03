@@ -166,10 +166,23 @@ def _regenerate_biomass_html(run_dir):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         out_path = os.path.join(run_dir, 'plots.html')
-        records = mod._load_jsonl(jsonl_path)
+        # Läs meta-headern (reward-formel-flaggor skrivna vid fresh
+        # start) så reward-flikens titel i den regenererade HTML:en
+        # speglar den faktiska rewardformeln. Faller tillbaka till
+        # ``_load_jsonl`` om den gamla varianten importeras (gammal
+        # tools/biomass_html.py utan meta-stöd).
+        if hasattr(mod, '_load_jsonl_with_meta'):
+            records, meta = mod._load_jsonl_with_meta(jsonl_path)
+        else:
+            records = mod._load_jsonl(jsonl_path)
+            meta = {}
         if not records:
             return
-        html = mod._build_html(run_dir, records)
+        try:
+            html = mod._build_html(run_dir, records, meta=meta)
+        except TypeError:
+            # Bakåtkompatibilitet: gammal signatur utan ``meta``.
+            html = mod._build_html(run_dir, records)
         with open(out_path, 'w') as f:
             f.write(html)
     except Exception as _e:
@@ -528,7 +541,8 @@ class _ProbeEnvBuilder:
 def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    compact=True, viz=None, viz_extra=None, viz_step=None,
                    rnd_builder=None,
-                   rnd_mode="all"):
+                   rnd_mode="all",
+                   reward_by_fid=None):
     """Run a probe rollout with the trainer's current policies and log
     per-FG biomass evolution.
 
@@ -1272,6 +1286,18 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         # ton; andelarna summerar till 1.0 när total > 0.
         'loss_breakdown': loss_breakdown,
     }
+    # Actual ARS reward per FG for this iter (as seen by the optimiser).
+    # ``coevolution``: dict {fid: means[fid]}; single-species: {species:
+    # avg_reward}. Skrivs bara om callern skickat in värden — annars
+    # utelämnas fältet så gamla anrop fortsätter fungera oförändrat.
+    if reward_by_fid:
+        try:
+            _rbf = {str(k): float(v) for k, v in reward_by_fid.items()
+                    if isinstance(v, (int, float))}
+            if _rbf:
+                record['reward'] = _rbf
+        except Exception:
+            pass
     # Random-action baseline mirror (only when rnd_env was provided).
     if rnd_env is not None:
         record['rnd'] = {
@@ -1749,6 +1775,31 @@ def main():
         except Exception as _e:
             print(f"    [fresh start] WARN: could not remove {probe_jsonl_path}: {_e!r}")
 
+    # Skriv en engångs-``__meta__``-header överst i biomass.jsonl vid
+    # fresh start (dvs. inte vid --resume). Metan används av
+    # ``tools/biomass_html.py`` för att sätta en beskrivande titel på
+    # reward-fliken i den genererade plots.html:en (t.ex. "total-energi
+    # (integral)" vs. "legacy (α·Δlog b + β·survival − γ·loss)"). Vid
+    # --resume behålls den befintliga headern (första raden) orörd.
+    if not args.resume:
+        try:
+            meta = {
+                "__meta__": {
+                    "legacy_reward": bool(getattr(args, "legacy_reward", False)),
+                    "integral_reward": bool(getattr(args, "integral_reward", True)),
+                    "alpha": getattr(args, "alpha", None),
+                    "beta": getattr(args, "beta", None),
+                    "cappa": getattr(args, "cappa", None),
+                    "survival_bonus": getattr(args, "survival_bonus", None),
+                    "n_eval_ticks": int(getattr(args, "n_eval_ticks", 0) or 0),
+                }
+            }
+            with open(probe_jsonl_path, "a") as _f:
+                _f.write(json.dumps(meta) + "\n")
+        except Exception as _e:
+            print(f"    [fresh start] WARN: could not write biomass.jsonl "
+                  f"meta header: {_e!r}")
+
     # Initialize a temporary environment to fetch functional group metadata.
     # Build a fresh env_builder here (rather than reusing the module-level
     # one) so PROJECT_PATH set above is baked into the instance, ensuring
@@ -1808,6 +1859,28 @@ def main():
                 extra_plot_ids=_extra,
                 ndm_ids=_ndm_ids or None,
             )
+            # Reward-flikens y-axel-/rubriktext ska spegla den aktiva
+            # rewardformeln, precis som titeln i plots.html. Vi återanvänder
+            # ``_reward_title_from_meta`` från tools/biomass_html.py för att
+            # hålla live-vizen och den sparade HTML:en synkroniserade.
+            try:
+                import importlib.util as _ilu
+                _tool_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                          'tools', 'biomass_html.py')
+                _spec = _ilu.spec_from_file_location('biomass_html', _tool_path)
+                _mod = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+                _reward_meta = {
+                    "legacy_reward": bool(getattr(args, "legacy_reward", False)),
+                    "integral_reward": bool(getattr(args, "integral_reward", True)),
+                    "alpha": getattr(args, "alpha", None),
+                    "beta": getattr(args, "beta", None),
+                    "cappa": getattr(args, "cappa", None),
+                    "survival_bonus": getattr(args, "survival_bonus", None),
+                }
+                viz.set_reward_label(_mod._reward_title_from_meta(_reward_meta))
+            except Exception as _e:
+                print(f"[viz] could not set reward-tab label: {_e!r}")
             # b0-slider defaults per FG: gridskaleberäknat
             # inference_initial_biomass läst från projektets YAML.
             # Slider-rangen blir [0, 4 * default], mittposition = default.
@@ -2369,7 +2442,8 @@ def main():
                                        rnd_builder=(probe_builder
                                                     if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
                                                     else None),
-                                       rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower())
+                                       rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower(),
+                                       reward_by_fid={fid: float(means[fid]) for fid in target_species})
                     except Exception as _e:
                         print(f"    [probe] WARN: probe rollout failed: {_e}")
                     if viz is not None and not viz.pump_events():
@@ -2425,7 +2499,8 @@ def main():
                                            rnd_builder=(probe_builder
                                                         if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
                                                         else None),
-                                           rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower())
+                                           rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower(),
+                                           reward_by_fid={species: float(avg_reward)})
                         except Exception as _e:
                             print(f"    [probe] WARN: probe rollout failed: {_e}")
                         if viz is not None and not viz.pump_events():

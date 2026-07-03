@@ -99,6 +99,7 @@ class _NullViz:
     def set_spawn_templates(self, *a, **kw): pass
     def set_spawn_defaults(self, *a, **kw): pass
     def set_save_dir(self, *a, **kw): pass
+    def set_reward_label(self, *a, **kw): pass
     def get_spawn_overrides(self, *a, **kw): return {}
     def consume_spawn_change(self, *a, **kw): return False
     def pump_events(self): return True
@@ -850,6 +851,19 @@ class LiveVisualizer:
         d = bool(self._spawn_dirty)
         self._spawn_dirty = False
         return d
+
+    def set_reward_label(self, text: Optional[str]) -> None:
+        """Sätt reward-flikens y-axel-/rubriktext (t.ex. "ARS reward per
+        FG — total-energi (integral)"). Anropas typiskt av train.py
+        efter LiveVisualizer-init så plot-panelens rubrik speglar den
+        aktiva rewardformeln istället för det generiska "reward"."""
+        if not self.enabled:
+            return
+        try:
+            if text:
+                self._tab_labels["reward"] = str(text)
+        except Exception:
+            pass
 
     def set_save_dir(self, path: Optional[str]) -> None:
         """Registrera default-katalog för "Save plot HTML"-dialogen.
@@ -2907,7 +2921,10 @@ class LiveVisualizer:
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
         run_dir = os.path.dirname(os.path.abspath(out_path)) or "."
-        html = mod._build_html(run_dir, records)
+        # ``mode="inference"`` byter flik-titlar/sidhuvud/x-axel-etikett
+        # från train-lägets "mean … per DM" / "sample index" till
+        # per-tick-semantik ("… per-tick", "tick") som matchar live-vizen.
+        html = mod._build_html(run_dir, records, mode="inference")
         with open(out_path, "w") as f:
             f.write(html)
         import time as _t
