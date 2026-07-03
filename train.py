@@ -527,7 +527,8 @@ class _ProbeEnvBuilder:
 
 def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    compact=True, viz=None, viz_extra=None, viz_step=None,
-                   rnd_builder=None):
+                   rnd_builder=None,
+                   rnd_mode="all"):
     """Run a probe rollout with the trainer's current policies and log
     per-FG biomass evolution.
 
@@ -610,38 +611,109 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 else 0.0)
           for fid in fg_ids}
 
-    # Parallel random-action baseline env (same deterministic probe world).
+    # Parallel random-action baseline env(s) (same deterministic probe world).
     # Built fresh per probe so biomass/energy histories restart at 100 %
     # together with the main env's curves on every iteration.
+    #
+    # Two modes (controlled by ``rnd_mode``):
+    #   'all'  — ONE probe env where ALL DM-FGs act uniformly at random.
+    #            All FGs in the env contribute _rnd-series (incl. NDMs).
+    #   'solo' — ONE probe env per DM-FG (leave-one-out): in env_k, only
+    #            FG k acts randomly; the other DMs use the trained policy.
+    #            Only DM-FGs contribute _rnd-series (from their own env_k).
+    #
+    # ``rnd_env_for_fid`` maps each reported _rnd-FG -> the env whose state
+    # should be read for that FG's curves. ``unique_rnd_envs`` is the list
+    # of distinct envs to ``.step()`` each tick (1 for 'all', N for 'solo').
     rnd_env = None
+    rnd_env_for_fid = {}
+    unique_rnd_envs = []
     rnd_b0 = {}
     rnd_e0 = {}
+    rnd_ec = {}
+    rnd_e0_tot = {}
     if rnd_builder is not None:
         try:
             from inference import RandomPolicy
-            rnd_env = rnd_builder()
-            rnd_env._build_static_caches()
-            out_dim_rnd = 5 + rnd_env.N_all
-            in_dim_rnd = (env.obs_mean.shape[1]
+
+            def _make_rnd_env(random_fids):
+                """Build one rnd probe env where ``random_fids`` (iterable
+                of DM-FG ids) act uniformly at random; the remaining DMs
+                use ``trainer.policies``. Frozen obs-norm from main env."""
+                e = rnd_builder()
+                e._build_static_caches()
+                out_dim = 5 + e.N_all
+                in_dim = (env.obs_mean.shape[1]
                           if getattr(env, 'obs_mean', None) is not None
                           and env.obs_mean.ndim == 2 else 0)
-            rnd_env.policies = {fid: RandomPolicy(in_dim_rnd, out_dim_rnd)
-                                for fid in rnd_env.dm_ids}
-            rnd_env.obs_mean = np.zeros_like(env.obs_mean) \
-                if getattr(env, 'obs_mean', None) is not None else None
-            rnd_env.obs_var = np.ones_like(env.obs_var) \
-                if getattr(env, 'obs_var', None) is not None else None
-            rnd_env._batched_ready = False
-            rnd_env.softmax_temperature = float(trainer.softmax_temperature)
-            rnd_b0 = {fid: float(rnd_env.fgs[fid].biomass.sum())
-                      for fid in rnd_env.fgs}
-            rnd_e0 = {fid: (float(rnd_env.fgs[fid].energy_reserve.sum())
-                            if getattr(rnd_env.fgs[fid], 'energy_reserve', None) is not None
-                            else 0.0)
-                      for fid in rnd_env.fgs}
+                pols = {}
+                rand_set = set(random_fids)
+                for fid in e.dm_ids:
+                    if fid in rand_set:
+                        pols[fid] = RandomPolicy(in_dim, out_dim)
+                    else:
+                        # Trained policy for the non-randomised DMs. Fall
+                        # back to RandomPolicy if trainer has no policy
+                        # for that fid (shouldn't happen in coevo).
+                        tp = (trainer.policies.get(fid)
+                              if getattr(trainer, 'policies', None) else None)
+                        pols[fid] = tp if tp is not None else RandomPolicy(in_dim, out_dim)
+                e.policies = pols
+                # Obs-norm: for random FGs use identity; for trained FGs
+                # install trainer's frozen stats so their behaviour matches
+                # the main probe env exactly.
+                if getattr(env, 'obs_mean', None) is not None:
+                    _m = np.zeros_like(env.obs_mean)
+                    _v = np.ones_like(env.obs_var)
+                    if trainer.obs_normalize and trainer.obs_stats:
+                        for _i, _fid in enumerate(e.dm_ids):
+                            if _fid in rand_set:
+                                continue
+                            _st = trainer.obs_stats.get(_fid)
+                            if _st is not None and int(_st.get('count', 0)) > 0:
+                                _m[_i] = _st['mean'].astype(np.float32, copy=False)
+                                _v[_i] = _st['var'].astype(np.float32, copy=False)
+                    e.obs_mean = _m
+                    e.obs_var = _v
+                else:
+                    e.obs_mean = None
+                    e.obs_var = None
+                e._batched_ready = False
+                e.softmax_temperature = float(trainer.softmax_temperature)
+                return e
+
+            _mode = str(rnd_mode or 'all').lower()
+            if _mode == 'solo':
+                # One env per DM-FG; report only that DM-FG's curves from it.
+                for _k in list(env.dm_ids):
+                    _ek = _make_rnd_env([_k])
+                    rnd_env_for_fid[_k] = _ek
+                    unique_rnd_envs.append(_ek)
+                rnd_env = unique_rnd_envs[0] if unique_rnd_envs else None
+            else:
+                # 'all': single env, all DMs random, report every FG.
+                _ea = _make_rnd_env(list(env.dm_ids))
+                unique_rnd_envs.append(_ea)
+                rnd_env = _ea
+                for _fid in _ea.fgs:
+                    rnd_env_for_fid[_fid] = _ea
+
+            # Per-FG baselines (B0/R0/ec/E0_tot) read from each reporting env.
+            for _fid, _e in rnd_env_for_fid.items():
+                _fg = _e.fgs[_fid]
+                _b0 = float(_fg.biomass.sum())
+                _er = getattr(_fg, 'energy_reserve', None)
+                _r0 = float(_er.sum()) if _er is not None else 0.0
+                _ecf = float(_fg.params.get('energy_content', 0.0) or 0.0)
+                rnd_b0[_fid] = _b0
+                rnd_e0[_fid] = _r0
+                rnd_ec[_fid] = _ecf
+                rnd_e0_tot[_fid] = _b0 * _ecf + _r0
         except Exception as _e:
             print(f"    [probe] WARN: rnd baseline init failed: {_e}")
             rnd_env = None
+            rnd_env_for_fid = {}
+            unique_rnd_envs = []
 
     if viz is not None:
         # Starta inspelning av probe-rollouten innan första snapshotten;
@@ -675,8 +747,17 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     # rollout instead of the final-tick ratio.
     b_sum = {fid: 0.0 for fid in fg_ids}
     e_sum = {fid: 0.0 for fid in fg_ids}
-    rnd_b_sum = {fid: 0.0 for fid in (rnd_env.fgs if rnd_env is not None else {})}
-    rnd_e_sum = {fid: 0.0 for fid in (rnd_env.fgs if rnd_env is not None else {})}
+    rnd_b_sum = {fid: 0.0 for fid in rnd_env_for_fid}
+    rnd_e_sum = {fid: 0.0 for fid in rnd_env_for_fid}
+    # Per-tick ackumulerad log((E_total+eps)/(E0+eps)) för rnd-reward,
+    # identiskt med trainer._evaluate (integral_reward-pathen).
+    rnd_log_e_sum = {fid: 0.0 for fid in rnd_env_for_fid}
+    # Per-FG tick-till-död för legacy-reward survival_bonus. Initieras
+    # till n_ticks ("överlevde hela rollouten") och sätts till första
+    # tick där B < survival_threshold*B0.
+    rnd_t_survive = {fid: int(n_ticks) for fid in rnd_env_for_fid}
+    rnd_b_thr = {fid: float(getattr(trainer, 'survival_threshold', 0.0)) * float(rnd_b0.get(fid, 0.0))
+                 for fid in rnd_env_for_fid}
     n_ticks_done = 0
     rnd_n_ticks_done = 0
     for _t in range(int(n_ticks)):
@@ -687,18 +768,37 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             er = getattr(env.fgs[fid], 'energy_reserve', None)
             if er is not None:
                 e_sum[fid] += float(er.sum())
-        if rnd_env is not None:
+        if unique_rnd_envs:
             try:
-                rnd_env.step()
+                # Step each distinct rnd env once per tick. In 'all' mode
+                # this is a single env; in 'solo' mode it's N envs (one
+                # per DM-FG). Ordering is stable across ticks.
+                for _re in unique_rnd_envs:
+                    _re.step()
                 rnd_n_ticks_done += 1
-                for fid in rnd_env.fgs:
-                    rnd_b_sum[fid] += float(rnd_env.fgs[fid].biomass.sum())
-                    er = getattr(rnd_env.fgs[fid], 'energy_reserve', None)
+                # Read per-FG state from its designated reporting env.
+                for fid, _re in rnd_env_for_fid.items():
+                    b_cur = float(_re.fgs[fid].biomass.sum())
+                    rnd_b_sum[fid] += b_cur
+                    er = getattr(_re.fgs[fid], 'energy_reserve', None)
+                    r_cur = float(er.sum()) if er is not None else 0.0
                     if er is not None:
-                        rnd_e_sum[fid] += float(er.sum())
+                        rnd_e_sum[fid] += r_cur
+                    # Reward-ackumulering identisk med trainer._evaluate:
+                    #   log_e_sum += log((B*ec + R + eps) / (E0 + eps))
+                    # med eps = max(1e-6*E0, 1e-9).
+                    _e0t = float(rnd_e0_tot.get(fid, 0.0))
+                    _eps_e = max(1e-6 * _e0t, 1e-9)
+                    _e_cur = b_cur * float(rnd_ec.get(fid, 0.0)) + r_cur
+                    rnd_log_e_sum[fid] += float(np.log((_e_cur + _eps_e) / (_e0t + _eps_e)))
+                    # Legacy survival-bonus: första tick där B<thr.
+                    if rnd_t_survive.get(fid, 0) == int(n_ticks) and b_cur < rnd_b_thr.get(fid, 0.0):
+                        rnd_t_survive[fid] = int(_t)
             except Exception as _e:
                 print(f"    [probe] WARN: rnd baseline step failed: {_e}")
                 rnd_env = None
+                rnd_env_for_fid = {}
+                unique_rnd_envs = []
         if viz is not None:
             try:
                 # Push mv/rs/et per tick till heatmap-headern (via
@@ -729,8 +829,37 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                         )
                 try:
                     _push_hdr_fracs(env)
-                    if rnd_env is not None:
-                        _push_hdr_fracs(rnd_env, _suffix="_rnd")
+                    # In 'solo' mode each DM-FG has its own rnd env; we
+                    # must only push mv/rs/et for the FG that IS random
+                    # in each env (the others use trainer.policies and
+                    # would duplicate the main env's fractions). Filter
+                    # by fid so only the reporting FG per env is pushed.
+                    _seen = set()
+                    for _fid_rep, _re in rnd_env_for_fid.items():
+                        if id(_re) in _seen:
+                            continue
+                        _seen.add(id(_re))
+                        # Push only fids reported from THIS env.
+                        _report_here = {f for f, e in rnd_env_for_fid.items() if e is _re}
+                        mv_a = getattr(_re, '_action_move_frac', None)
+                        rs_a = getattr(_re, '_action_rest_frac', None)
+                        et_a = getattr(_re, '_action_eat_frac', None)
+                        cnt = getattr(_re, '_action_active_ticks', None)
+                        if (mv_a is None or rs_a is None or et_a is None
+                                or cnt is None):
+                            continue
+                        for _i, _fid in enumerate(_re.dm_ids):
+                            if _fid not in _report_here:
+                                continue
+                            _c = float(cnt[_i]) if cnt[_i] > 0 else 0.0
+                            if _c <= 0.0:
+                                continue
+                            viz.update_action_fracs(
+                                _fid + "_rnd",
+                                100.0 * float(mv_a[_i]) / _c,
+                                100.0 * float(rs_a[_i]) / _c,
+                                100.0 * float(et_a[_i]) / _c,
+                            )
                 except Exception:
                     pass
                 _lb_tick = {}
@@ -841,25 +970,33 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     rnd_ratio: dict = {}
     rnd_energy_ratio: dict = {}
     rnd_move, rnd_rest, rnd_eat = {}, {}, {}
-    if rnd_env is not None:
-        for fid in rnd_env.fgs:
+    rnd_loss_breakdown: dict = {}
+    if rnd_env_for_fid:
+        for fid, _re in rnd_env_for_fid.items():
             b0r = rnd_b0.get(fid, 0.0)
             e0r = rnd_e0.get(fid, 0.0)
-            bhr = _floor(float(rnd_env.fgs[fid].biomass.sum()))
-            ehr = (_floor(float(rnd_env.fgs[fid].energy_reserve.sum()))
-                   if getattr(rnd_env.fgs[fid], 'energy_reserve', None) is not None
+            bhr = _floor(float(_re.fgs[fid].biomass.sum()))
+            ehr = (_floor(float(_re.fgs[fid].energy_reserve.sum()))
+                   if getattr(_re.fgs[fid], 'energy_reserve', None) is not None
                    else 0.0)
             rnd_ratio[fid] = (bhr / b0r) if b0r > 0.0 else 0.0
             rnd_energy_ratio[fid] = (ehr / e0r) if e0r > 0.0 else 0.0
-        rnd_move, rnd_rest, rnd_eat = _collect_action_fracs(rnd_env)
+        # Collect action fractions across unique envs; keep only the fid
+        # that is actually random in each env (see header-frac push).
+        for _re in unique_rnd_envs:
+            _report_here = {f for f, e in rnd_env_for_fid.items() if e is _re}
+            _mv, _rs, _et = _collect_action_fracs(_re)
+            for _fid in _report_here:
+                if _fid in _mv: rnd_move[_fid] = _mv[_fid]
+                if _fid in _rs: rnd_rest[_fid] = _rs[_fid]
+                if _fid in _et: rnd_eat[_fid] = _et[_fid]
         # Mirror av huvud-envs ``loss_breakdown`` för random-action
         # baseline, så att offline-html-grafer kan visa samma
         # predation/starvation/impacts-tabbar för ``_rnd``-serierna.
-        rnd_loss_breakdown: dict = {}
-        for fid in rnd_env.fgs:
-            ls = float(getattr(rnd_env, 'loss_starvation', {}).get(fid, 0.0))
-            lp = float(getattr(rnd_env, 'loss_predation', {}).get(fid, 0.0))
-            li = float(getattr(rnd_env, 'loss_impact', {}).get(fid, 0.0))
+        for fid, _re in rnd_env_for_fid.items():
+            ls = float(getattr(_re, 'loss_starvation', {}).get(fid, 0.0))
+            lp = float(getattr(_re, 'loss_predation', {}).get(fid, 0.0))
+            li = float(getattr(_re, 'loss_impact', {}).get(fid, 0.0))
             tot = ls + lp + li
             if tot > 0.0:
                 rnd_loss_breakdown[fid] = {
@@ -894,14 +1031,43 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             try:
                 from inference import _push_action_fracs
                 _push_action_fracs(viz, env, step=int(viz_step))
-                if rnd_env is not None:
-                    _push_action_fracs(viz, rnd_env, step=int(viz_step),
-                                       suffix="_rnd")
+                # Push per-FG action fracs to plot tabs from each unique
+                # rnd env, but only for the fids that are actually random
+                # in that env (avoid duplicating the trained fids).
+                for _re in unique_rnd_envs:
+                    _report_here = {f for f, e in rnd_env_for_fid.items() if e is _re}
+                    # ``_push_action_fracs`` pushes for ALL dm_ids of the
+                    # env; we call it and rely on the fact that in 'all'
+                    # mode _report_here == all dm_ids so nothing filters,
+                    # while in 'solo' mode we need per-fid filtering. Do
+                    # the pushing manually here so we can filter.
+                    mv_a = getattr(_re, '_action_move_frac', None)
+                    rs_a = getattr(_re, '_action_rest_frac', None)
+                    et_a = getattr(_re, '_action_eat_frac', None)
+                    cnt = getattr(_re, '_action_active_ticks', None)
+                    if (mv_a is None or rs_a is None or et_a is None
+                            or cnt is None):
+                        continue
+                    for _i, _fid in enumerate(_re.dm_ids):
+                        if _fid not in _report_here:
+                            continue
+                        _c = float(cnt[_i]) if cnt[_i] > 0 else 0.0
+                        if _c <= 0.0:
+                            continue
+                        viz.update_series("move", _fid + "_rnd",
+                                          100.0 * float(mv_a[_i]) / _c,
+                                          step=int(viz_step))
+                        viz.update_series("rest", _fid + "_rnd",
+                                          100.0 * float(rs_a[_i]) / _c,
+                                          step=int(viz_step))
+                        viz.update_series("eat", _fid + "_rnd",
+                                          100.0 * float(et_a[_i]) / _c,
+                                          step=int(viz_step))
             except Exception:
                 pass
-            if rnd_env is not None:
+            if rnd_env_for_fid:
                 _rnt = max(1, int(rnd_n_ticks_done))
-                for fid in rnd_env.fgs:
+                for fid, _re in rnd_env_for_fid.items():
                     b0r = rnd_b0.get(fid, 0.0)
                     e0r = rnd_e0.get(fid, 0.0)
                     avg_br = rnd_b_sum.get(fid, 0.0) / _rnt
@@ -911,6 +1077,49 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     viz.update_series("biomass", fid + "_rnd", pb,
                                       step=int(viz_step))
                     viz.update_series("energy", fid + "_rnd", pe,
+                                      step=int(viz_step))
+                    # Reward för random-action-baselinen på ``reward``-
+                    # tabben, IDENTISK formel som huvudpolicyn i
+                    # ``ARSTrainer._evaluate``. Formeln styrs av
+                    # kommandotolks-flaggorna som trainer:n redan har
+                    # parsat: ``--legacy_reward`` (alpha·Δlog b +
+                    # beta·Δlog r + survival_bonus·t_surv/n) resp.
+                    # ny reward mean_t(log(E/E0)); och
+                    # ``--integral_reward`` / ``--no_integral_reward``
+                    # som avgör om reward tas som medel över alla ticks
+                    # eller bara ur slut-tickens tillstånd.
+                    _legacy = bool(getattr(trainer, 'legacy_reward', False))
+                    _integral = bool(getattr(trainer, 'integral_reward', True))
+                    _b0r = float(b0r)
+                    _r0r = float(e0r)
+                    _ecf = float(rnd_ec.get(fid, 0.0))
+                    _e0t = float(rnd_e0_tot.get(fid, 0.0))
+                    _eps_e = max(1e-6 * _e0t, 1e-9)
+                    if _integral:
+                        _bh = float(avg_br)
+                        _rh = float(avg_er)
+                        _log_e_mean = float(rnd_log_e_sum.get(fid, 0.0) / _rnt)
+                    else:
+                        # Snapshot: sista tickens B/R (från fid:ens env).
+                        _bh = float(_re.fgs[fid].biomass.sum())
+                        _er = getattr(_re.fgs[fid], 'energy_reserve', None)
+                        _rh = float(_er.sum()) if _er is not None else 0.0
+                        _eh = _bh * _ecf + _rh
+                        _log_e_mean = float(np.log((_eh + _eps_e) / (_e0t + _eps_e)))
+                    if _legacy:
+                        _eps_b = max(1e-6 * _b0r, 1e-9)
+                        _eps_r = max(1e-6 * _r0r, 1e-9)
+                        _db = float(np.log((_bh + _eps_b) / (_b0r + _eps_b)))
+                        _dr = float(np.log((_rh + _eps_r) / (_r0r + _eps_r)))
+                        _alpha = float(getattr(trainer, 'alpha', 1.0))
+                        _beta = float(getattr(trainer, 'beta', 0.0))
+                        _sb = float(getattr(trainer, 'survival_bonus', 0.0))
+                        _rr = _alpha * _db + _beta * _dr
+                        if _sb > 0.0 and int(n_ticks) > 0:
+                            _rr = _rr + _sb * (float(rnd_t_survive.get(fid, int(n_ticks))) / float(n_ticks))
+                    else:
+                        _rr = _log_e_mean
+                    viz.update_series("reward", fid + "_rnd", float(_rr),
                                       step=int(viz_step))
         except Exception:
             pass
@@ -968,11 +1177,11 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 viz.update_series("impacts", fid,
                                   100.0 * float(lb.get('impact', 0.0)),
                                   step=int(viz_step))
-            if rnd_env is not None:
-                for fid in rnd_env.fgs:
-                    ls = float(getattr(rnd_env, 'loss_starvation', {}).get(fid, 0.0))
-                    lp = float(getattr(rnd_env, 'loss_predation', {}).get(fid, 0.0))
-                    li = float(getattr(rnd_env, 'loss_impact', {}).get(fid, 0.0))
+            if rnd_env_for_fid:
+                for fid, _re in rnd_env_for_fid.items():
+                    ls = float(getattr(_re, 'loss_starvation', {}).get(fid, 0.0))
+                    lp = float(getattr(_re, 'loss_predation', {}).get(fid, 0.0))
+                    li = float(getattr(_re, 'loss_impact', {}).get(fid, 0.0))
                     tot = ls + lp + li
                     if tot > 0.0:
                         pp, ss, ii = (lp / tot, ls / tot, li / tot)
@@ -1332,12 +1541,24 @@ def main():
                              "(sigmoid). Default: 2 30 sig (two hidden layers of "
                              "30 nodes each with sigmoid activations).")
     parser.add_argument("--rnd-baseline", "--rnd_baseline", dest="rnd_baseline",
-                        action="store_true",
-                        help="Run a parallel probe rollout where each DM acts "
-                             "uniformly at random (mask-respecting) and overlay "
-                             "its biomass / energy (%% of start) in the live plot "
-                             "as a baseline. Legend entries are suffixed with "
-                             "'_rnd'. No heatmaps for the random agents. "
+                        nargs="?", const="all", default="none",
+                        choices=["all", "solo", "none"],
+                        help="Run a parallel probe rollout with random-action "
+                             "baseline(s) and overlay biomass/energy/reward "
+                             "(%% of start) in the live plot. Legend entries "
+                             "are suffixed with '_rnd'. Modes: "
+                             "'all' (default when the flag is given alone): "
+                             "ALL decision-maker FGs act uniformly at random "
+                             "simultaneously in a single probe env — shows "
+                             "ecosystem collapse without any learned policy. "
+                             "'solo': leave-one-out — for each DM-FG k, a "
+                             "separate probe env is run where only k acts "
+                             "randomly while the other DMs use the trained "
+                             "policy. Shows how each FG stands against the "
+                             "trained rest. Cost: N extra probe envs per "
+                             "iteration (N = #DM-FGs). "
+                             "'none' (default): no random baseline. "
+                             "No heatmaps for the random agents. "
                              "Requires --visual to have any visible effect.")
     parser.add_argument("--visual", action="store_true",
                         help="Open a live pygame window with per-FG biomass heatmaps "
@@ -1561,8 +1782,19 @@ def main():
             from lib.viz import LiveVisualizer
             _dm_ids = [fid for fid, fg in temp_env.fgs.items()
                        if getattr(fg, 'is_decision_maker', False)]
-            _extra = ([fid + "_rnd" for fid in temp_env.fgs.keys()]
-                      if getattr(args, 'rnd_baseline', False) else None)
+            _rnd_mode = str(getattr(args, 'rnd_baseline', 'none') or 'none').lower()
+            if _rnd_mode == 'all':
+                # Alla FG:er (inkl. NDMs som phyto som får en trofisk-
+                # kaskad-baseline) får en _rnd-serie.
+                _extra = [fid + "_rnd" for fid in temp_env.fgs.keys()]
+            elif _rnd_mode == 'solo':
+                # Leave-one-out: bara DM-FG:er får _rnd-serier (NDMs har
+                # ingen policy att slumpa och skulle vara identiska med
+                # huvudprobet i den envet där just DEN NDM inte var
+                # slumpad — dvs meningslöst att visa).
+                _extra = [fid + "_rnd" for fid in _dm_ids]
+            else:
+                _extra = None
             _ndm_ids = [fid for fid, fg in temp_env.fgs.items()
                         if not getattr(fg, 'is_decision_maker', False)]
             # Include NDMs in plot_fg_ids so they appear in the biomass tab.
@@ -2136,8 +2368,9 @@ def main():
                                                   "T": T},
                                        viz_step=gen * args.iter_per_gen + i,
                                        rnd_builder=(probe_builder
-                                                    if getattr(args, 'rnd_baseline', False)
-                                                    else None))
+                                                    if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
+                                                    else None),
+                                       rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower())
                     except Exception as _e:
                         print(f"    [probe] WARN: probe rollout failed: {_e}")
                     if viz is not None and not viz.pump_events():
@@ -2191,8 +2424,9 @@ def main():
                                                       "T": T},
                                            viz_step=gen * args.iter_per_gen + i,
                                            rnd_builder=(probe_builder
-                                                        if getattr(args, 'rnd_baseline', False)
-                                                        else None))
+                                                        if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
+                                                        else None),
+                                           rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower())
                         except Exception as _e:
                             print(f"    [probe] WARN: probe rollout failed: {_e}")
                         if viz is not None and not viz.pump_events():

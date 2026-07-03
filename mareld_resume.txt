@@ -379,6 +379,20 @@ Flag                  Default              Meaning
                       None                 e.g. "1@0,3@10,5@50": M=1 gen 0-9,
                                            M=3 gen 10-49, M=5 from gen 50.
                                            Overrides --rollouts_per_delta.
+--rnd_baseline        "none"               [all|solo|none], optional meta-arg.
+                                           Bare --rnd_baseline == "all" for
+                                           back-compat. 'all': single probe
+                                           env where every DM acts uniformly
+                                           at random simultaneously; all FGs
+                                           (incl. NDMs) get an _rnd trace via
+                                           trophic cascade. 'solo': leave-
+                                           one-out - one probe env per DM-FG,
+                                           only that FG is randomised, the
+                                           others use trainer.policies; only
+                                           DM-FGs get _rnd traces. 'none':
+                                           disabled (default). Requires
+                                           --visual to be visible. See
+                                           Section 62.
 
 Session header prints every flag with "(default)"/"(user)" tag, including
 a "Rollouts/Delta" line that shows M (or the schedule) plus refresh policy.
@@ -3577,3 +3591,112 @@ in this cell" -> extinct locally.
   * No tests added yet for the mechanism itself; the low default
     factor and no-op behaviour when msb=0 preserve existing test
     outcomes (42/42 unchanged expected).
+
+================================================================
+62. RND BASELINE SEMANTICS (--rnd_baseline [all|solo|none])
+================================================================
+The random-action baseline is a probe-side comparison that overlays
+"_rnd"-suffixed traces on the live viz + biomass.jsonl + plots.html
+so the trained policy can be visually compared against a policy-free
+control in the SAME deterministic probe world.
+
+62.1 CLI semantics
+  --rnd_baseline is nargs='?' with choices [all|solo|none] and
+  const='all', default='none'. This preserves back-compat: bare
+  --rnd_baseline (no arg) is treated as 'all'. Modes:
+
+  * 'all'  (single-env, ALL DMs random)
+      One extra probe env is built alongside the main probe env.
+      Every DM-FG in that env is bound to RandomPolicy so all DMs
+      act uniformly at random SIMULTANEOUSLY. NDMs (phytoplankton,
+      benthic_community) have no policy and behave identically to
+      the main env; they still get _rnd traces because their
+      biomass differs via trophic cascade from the random
+      predators/grazers. Interpretation: "ecosystem collapse under
+      no learning at all" - worst-case baseline.
+
+  * 'solo' (leave-one-out, N envs)
+      For each DM-FG k, a SEPARATE probe env is built where ONLY
+      k acts randomly; the other DMs use trainer.policies (with
+      frozen obs-norm from the main env, so their behaviour
+      matches the main probe env exactly modulo k's actions).
+      Only DM-FGs get _rnd traces, each read from its own env_k.
+      Interpretation: "how does FG k stand against the trained
+      rest?" - fair per-agent ablation. Cost: N extra probe envs
+      per iteration where N = len(env.dm_ids).
+
+  * 'none' (default)
+      No random baseline. No _rnd traces, no extra envs, no cost.
+
+62.2 Implementation (train.py::_probe_biomass)
+  * Signature: _probe_biomass(..., rnd_builder=None, rnd_mode='all').
+    Callers pass rnd_builder=probe_builder and rnd_mode=<CLI arg>
+    when the mode != 'none'; otherwise rnd_builder=None disables
+    the whole block.
+  * Helper _make_rnd_env(random_fids) builds one rnd env whose
+    dm_ids in random_fids get RandomPolicy and the rest get
+    trainer.policies[fid]. Obs-norm: identity for random FGs,
+    trainer.obs_stats for trained FGs (so their input distribution
+    matches the main probe env).
+  * unique_rnd_envs = [envs to .step() per tick]; rnd_env_for_fid
+    = {fid: env-to-read-from}. In 'all' mode both contain one
+    entry; in 'solo' mode unique_rnd_envs has N envs and
+    rnd_env_for_fid maps each DM-FG to its dedicated env_k.
+  * Per-tick: step every env in unique_rnd_envs once, then read
+    B/R/E_total from each fid's designated env for the _rnd
+    trace accumulators (b_sum, e_sum, log_e_sum, t_survive).
+  * All downstream pushes (heatmap-header mv/rs/et and pr/st/im,
+    plot tabs move/rest/eat/predation/starvation/impacts,
+    reward-tab rnd-reward, biomass/energy tabs) filter by fid so
+    only the FG that is actually random in each env contributes.
+    Prevents duplicating trained-policy fids across N solo envs.
+
+62.3 Viz setup (train.py main)
+  * _extra (extra legend ids passed to LiveVisualizer) is chosen
+    from rnd_mode:
+      'all'  -> [fid + '_rnd' for fid in env.fgs]  (all FGs)
+      'solo' -> [fid + '_rnd' for fid in dm_ids]   (DMs only)
+      'none' -> None
+  * Legend entries for '_rnd' are UNCHECKED at startup (Section 40
+    conventions) so the plot is not cluttered by default. User
+    toggles them on via legend clicks.
+
+62.4 Reward-tab formula (identical to trainer._evaluate)
+  The _rnd reward pushed to the 'reward' tab follows exactly the
+  same formula as the trained policy's ARS reward, driven by
+  trainer.legacy_reward / trainer.integral_reward /
+  trainer.alpha / trainer.beta / trainer.survival_bonus /
+  trainer.survival_threshold. See Section 58 for the two branches.
+  Same formula-parity holds for both 'all' and 'solo' modes.
+
+62.5 NDM in 'solo' mode
+  NDMs (phytoplankton, benthic_community) are NOT included in
+  _extra when rnd_mode='solo' because they have no policy to
+  randomise; in every env_k the NDM behaves identically to the
+  main probe env's NDM (modulo cascade from the one random DM_k),
+  making per-env NDM traces ambiguous/misleading. In 'all' mode
+  NDMs DO get _rnd traces because "all DMs random" gives one
+  well-defined cascade signal per NDM.
+
+62.6 Verification
+  * python3 -m py_compile train.py -> OK.
+  * Resume run with --rnd_baseline solo (16x16, 1 gen, 1 iter,
+    n_eval_ticks=5, n_deltas=2): no probe WARN; N=3 rnd envs
+    stepped per tick as expected; plots.html regenerated with
+    dashed _rnd traces per DM only.
+  * Same command with bare --rnd_baseline (=all) and with the
+    flag absent (=none): no tracebacks; legend content matches
+    _extra selection above.
+
+62.7 Notes / caveats
+  * 'solo' cost scales as N*rollout_ticks per probe. For 3 DMs
+    this is ~3x the probe cost of 'all'. Probe is not on the
+    ARS training critical path (runs once per iter for
+    diagnostics), so wall-time impact is modest.
+  * In 'solo' mode, the interpretation of an FG's _rnd trace is
+    "this FG random, the rest trained" - NOT "this FG random,
+    everything else also random". Documented in the CLI help
+    string in train.py.
+  * Legacy: pre-Section-62 behaviour ('all' mode via bare
+    --rnd_baseline store_true) is preserved as the const default
+    when the flag is passed without an argument.

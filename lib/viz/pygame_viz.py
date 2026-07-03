@@ -208,9 +208,15 @@ class LiveVisualizer:
         self._active_tab = 0
         # Per-FG enable flag for plot panel (checkbox state). Toggled via
         # legend click; applies globally across all plot tabs.
-        self._plot_enabled: Dict[str, bool] = {
-            fid: True for fid in (list(self.fg_ids) + list(self._extra_plot_ids))
-        }
+        # Default: alla huvud-FG-serier ikryssade, alla ``_rnd``-baseline-
+        # serier okryssade vid uppstart. Användaren kan enkelt aktivera
+        # dem via legend-klick när de vill jämföra mot random-action-
+        # baselinen, utan att grafen blir plottrig från start.
+        self._plot_enabled: Dict[str, bool] = {}
+        for fid in self.fg_ids:
+            self._plot_enabled[fid] = True
+        for eid in self._extra_plot_ids:
+            self._plot_enabled[eid] = not str(eid).endswith("_rnd")
         self._legend_rects: list = []
         _all_series_ids = list(self.fg_ids) + [
             eid for eid in self._extra_plot_ids if eid not in self.fg_ids
