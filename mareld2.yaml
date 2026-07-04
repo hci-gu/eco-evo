@@ -86,6 +86,7 @@ spawn_templates:
       persistence: 0.5
       lacunarity: 2.0
       threshold: 0.0
+      min_frac_of_max: 0.1
   uniform:
     Uniform: {}
   env_driven:
@@ -93,6 +94,7 @@ spawn_templates:
       floor: 0.0
       noise_amp: 0.0
       noise_scale: 4.0
+      min_frac_of_max: 0.1
       refs:
         - name: phytoplankton
           weight: 1.0

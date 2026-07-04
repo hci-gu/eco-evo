@@ -7,15 +7,16 @@
     max_carrying_capacity: 27.0
     energy_content: 2000.0
     seed_rate: 1e-06
-    seasonal_amplitude: 0.5
+    seasonal_amplitude: 0.0
     seasonal_period: 500.0
     spawn:
       mode: perlin
       scale: 12.0
       octaves: 4
       persistence: 0.5
-      lacunarity: 4.0
-      threshold: 0.5
+      lacunarity: 2.0
+      threshold: 0.0
+      min_frac_of_max: 0.1
   zooplankton:
     display_name: "Zooplankton"
     is_decision_maker: true
@@ -31,15 +32,18 @@
     natural_mortality: 0.0025
     max_intake_rate: 0.25
     spawn:
-      mode: colony
-      n_colonies: 25
-      sigma_cells: 1.0
-      anchor: free
-      amplitude_mode: jitter
-      amplitude_min: 0.0
-      amplitude_max: 1.0
+      mode: env_driven
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.1
+      refs:
+        - name: phytoplankton
+          weight: 1.0
+          transform: linear
     starve_rate: 0.2
     visibility_floor: 0.05
+    extinction_threshold_factor: 0.5
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false

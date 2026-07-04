@@ -67,6 +67,114 @@ def _viridis_lut() -> np.ndarray:
     return _VIRIDIS_256
 
 
+# ---------------------------------------------------------------------------
+# Rollout-frame compression.
+#
+# Varje "frame" i ``_pending_rollout`` / ``_current_rollout`` dominerar RAM-
+# fotavtrycket via sina ``biomass``-arrays (en per FG, form H×W). För en
+# typisk rollout (t.ex. 5000 frames × 6 FG × 128×128 × float64 ≈ 3.7 GB) är
+# det värt att både (1) casta ner till float32 och (2) lossless-komprimera
+# arrays som lagras i historien. Live-state (``self._biomass``) rörs inte;
+# endast frame-snapshots komprimeras och dekomprimeras on demand vid
+# scrubbing/playback via ``_swap_in_frame``.
+#
+# Codec-val styrs av env-flaggan ``ECO_ROLLOUT_COMPRESS`` (``zstd`` (default
+# om tillgängligt), ``lz4``, eller ``none``). Om det önskade biblioteket
+# saknas faller vi tyst tillbaka till nästa alternativ.
+# ---------------------------------------------------------------------------
+
+
+def _select_rollout_compressor() -> Optional[tuple]:
+    """Välj (codec_name, compress_fn, decompress_fn) enligt env, eller None.
+
+    ``compress_fn(bytes) -> bytes`` och ``decompress_fn(bytes) -> bytes``.
+    Returnerar ``None`` om användaren begärt ``none`` eller inget lib finns.
+    """
+    want = os.environ.get("ECO_ROLLOUT_COMPRESS", "zstd").strip().lower()
+    if want in ("none", "off", "0", "false", ""):
+        return None
+    candidates = []
+    if want == "zstd":
+        candidates = ["zstd", "lz4"]
+    elif want == "lz4":
+        candidates = ["lz4", "zstd"]
+    else:
+        candidates = [want]
+    for codec in candidates:
+        if codec == "zstd":
+            try:
+                import zstandard as zstd  # type: ignore
+                cctx = zstd.ZstdCompressor(level=3)
+                dctx = zstd.ZstdDecompressor()
+                return ("zstd", cctx.compress, dctx.decompress)
+            except Exception:
+                continue
+        if codec == "lz4":
+            try:
+                import lz4.block as _lz4b  # type: ignore
+                return ("lz4", _lz4b.compress, _lz4b.decompress)
+            except Exception:
+                try:
+                    import lz4.frame as _lz4f  # type: ignore
+                    return ("lz4", _lz4f.compress, _lz4f.decompress)
+                except Exception:
+                    continue
+    return None
+
+
+_ROLLOUT_COMPRESSOR: Optional[tuple] = _select_rollout_compressor()
+
+
+class _CompressedArray:
+    """En lat, lossless-komprimerad numpy-array-container.
+
+    Lagrar komprimerade bytes + shape/dtype och rekonstruerar arrayen först
+    när ``.array`` läses. Storleken i minnet reduceras typiskt 5–20× för
+    glesa/spatialt korrelerade biomassa-fält. Trådsäker för läsning
+    (dekompression skapar en ny buffer per anrop, ingen delad muterbar
+    state).
+    """
+
+    __slots__ = ("_shape", "_dtype", "_buf", "_decompress")
+
+    def __init__(self, arr: np.ndarray, compressor: tuple) -> None:
+        # ``arr`` förväntas redan vara i önskad dtype (t.ex. float32).
+        # Se till att den är C-contig för att .tobytes() ska bli oambigu.
+        if not arr.flags["C_CONTIGUOUS"]:
+            arr = np.ascontiguousarray(arr)
+        _codec, compress_fn, decompress_fn = compressor
+        self._shape = arr.shape
+        self._dtype = arr.dtype
+        self._buf = compress_fn(arr.tobytes())
+        self._decompress = decompress_fn
+
+    @property
+    def array(self) -> np.ndarray:
+        raw = self._decompress(self._buf)
+        return np.frombuffer(raw, dtype=self._dtype).reshape(self._shape)
+
+    # Bekvämlighet: många call-sites gör ``arr.shape`` / ``arr.dtype`` innan
+    # de bryr sig om värdena.
+    @property
+    def shape(self):
+        return self._shape
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+
+def _maybe_unwrap_array(v):
+    """Returnera underliggande ndarray om ``v`` är en ``_CompressedArray``.
+
+    Anropas i ``_swap_in_frame`` så resten av ritkoden alltid ser vanliga
+    numpy-arrays och inte behöver bry sig om lagringsformatet.
+    """
+    if isinstance(v, _CompressedArray):
+        return v.array
+    return v
+
+
 class _NullViz:
     """Drop-in replacement when pygame is unavailable or init failed.
 
@@ -512,6 +620,11 @@ class LiveVisualizer:
         self._plot_scroll_thumb_rect: Optional[tuple] = None
         self._dragging_plot_scroll: bool = False
         self._plot_scroll_drag_dx: float = 0.0
+        # "Live"-knapp bredvid plot-scrollbaren (endast inference).
+        # Klick sätter ``_plot_scroll_offset = None`` så plotten återgår
+        # att följa senaste tick automatiskt. Sätts av ``_draw_plot``
+        # varje frame; None när scroll inte är aktiv.
+        self._live_button_rect: Optional[tuple] = None
         # "Save plot HTML"-knapp under plot-arean (endast inference).
         # Sätts av ``_draw_plot`` varje frame; klick-test i ``_handle_click``
         # ropar ``_save_inference_plot_html`` som öppnar en Tk-fildialog och
@@ -1077,9 +1190,40 @@ class LiveVisualizer:
                 self._playback_idx = 0
 
     def _capture_frame(self) -> dict:
-        """Bygg en snapshot av all state som ``_draw_one_heatmap`` läser."""
-        # Kopior är essentiella: live-state muteras efter capture.
-        biomass = {fid: arr.copy() for fid, arr in self._biomass.items()}
+        """Bygg en snapshot av all state som ``_draw_one_heatmap`` läser.
+
+        RAM-optimering (steg 1 + 2):
+          1. Biomass-arrays castas till ``float32`` (halverar minnet mot
+             float64; visualiseringen kvantiserar ändå till 256 färg-nivåer
+             så precisionsförlusten är osynlig).
+          2. Om en lossless kompressor finns (``ECO_ROLLOUT_COMPRESS``)
+             wrappas varje array i en ``_CompressedArray`` som håller
+             komprimerade bytes i minnet och dekomprimerar först när
+             frame:t swappas in för visning. Glesa/spatialt korrelerade
+             biomassa-fält komprimerar typiskt 5–20× med zstd-3.
+        """
+        # Kopior/casts är essentiella: live-state muteras efter capture.
+        comp = _ROLLOUT_COMPRESSOR
+        biomass: Dict[str, object] = {}
+        for fid, arr in self._biomass.items():
+            # Downcast float64 → float32 (lossless i praktiken för viz).
+            # Andra dtypes lämnas orörda (int-masker etc. förekommer inte
+            # här idag, men vi vill inte tvinga fram cast om de dyker upp).
+            if arr.dtype == np.float64:
+                a32 = arr.astype(np.float32, copy=True)
+            elif arr.dtype == np.float32:
+                a32 = arr.copy()
+            else:
+                a32 = arr.copy()
+            if comp is not None and a32.dtype in (np.float32, np.float64):
+                try:
+                    biomass[fid] = _CompressedArray(a32, comp)
+                    continue
+                except Exception:
+                    # Om kompressorn strular av någon anledning: fallback
+                    # till rå array, aldrig krascha rollout-inspelningen.
+                    pass
+            biomass[fid] = a32
         totals = dict(self._totals)
         b0 = dict(self._b0)
         loss = {fid: dict(v) for fid, v in self._loss_breakdown.items()}
@@ -1132,6 +1276,13 @@ class LiveVisualizer:
                 elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     self._handle_click(event.pos)
                     interacted = True
+                elif (event.type == pg.MOUSEBUTTONDOWN
+                      and event.button == 3
+                      and self._hit_plot_scroll(event.pos)):
+                    # Högerklick på plot-scrollbaren → gå live.
+                    self._plot_scroll_offset = None
+                    self._dragging_plot_scroll = False
+                    interacted = True
                 elif event.type == pg.MOUSEMOTION and self._dragging_slider is not None:
                     fid = self._dragging_slider
                     v = self._slider_value_from_x(fid, event.pos[0])
@@ -1166,6 +1317,9 @@ class LiveVisualizer:
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_plot_scroll:
                     self._dragging_plot_scroll = False
+                    # Om thumb släpptes vid trackens högerkant → återgå
+                    # till live-läge så plotten följer senaste tick igen.
+                    self._plot_scroll_snap_to_live_if_at_end()
                     interacted = True
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_slider is not None:
@@ -1235,6 +1389,58 @@ class LiveVisualizer:
                         self._handle_key(event.key)
                     elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                         self._handle_click(event.pos)
+                    elif (event.type == pg.MOUSEBUTTONDOWN
+                          and event.button == 3
+                          and self._hit_plot_scroll(event.pos)):
+                        # Högerklick på plot-scrollbaren → gå live.
+                        self._plot_scroll_offset = None
+                        self._dragging_plot_scroll = False
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_slider is not None):
+                        fid = self._dragging_slider
+                        v = self._slider_value_from_x(fid, event.pos[0])
+                        if v is not None:
+                            self._b0_overrides[fid] = float(v)
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_ticks):
+                        v = self._ticks_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._ticks_override = int(v)
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_neval):
+                        v = self._neval_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._neval_override = int(v)
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_playback):
+                        idx = self._playback_idx_from_x(event.pos[0])
+                        if idx is not None:
+                            self._playback_idx = idx
+                            self._playback_mode = "paused"
+                    elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_plot_scroll):
+                        new_off = self._plot_scroll_offset_from_x(event.pos[0])
+                        if new_off is not None:
+                            self._plot_scroll_offset = float(new_off)
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_playback):
+                        self._dragging_playback = False
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_plot_scroll):
+                        self._dragging_plot_scroll = False
+                        self._plot_scroll_snap_to_live_if_at_end()
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_slider is not None):
+                        self._dragging_slider = None
+                        self._b0_dirty = True
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_ticks):
+                        self._dragging_ticks = False
+                        self._ticks_dirty = True
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_neval):
+                        self._dragging_neval = False
+                        self._neval_dirty = True
                 if (self._playback_mode == "playing"
                         and self._current_rollout
                         and not self._recording):
@@ -1290,6 +1496,12 @@ class LiveVisualizer:
                         # in en ny rollout med den nya spawn-strategin.
                         if self._spawn_dirty:
                             return
+                    elif (event.type == pg.MOUSEBUTTONDOWN
+                          and event.button == 3
+                          and self._hit_plot_scroll(event.pos)):
+                        # Högerklick på plot-scrollbaren → gå live.
+                        self._plot_scroll_offset = None
+                        self._dragging_plot_scroll = False
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_slider is not None):
                         fid = self._dragging_slider
@@ -1325,6 +1537,7 @@ class LiveVisualizer:
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_plot_scroll):
                         self._dragging_plot_scroll = False
+                        self._plot_scroll_snap_to_live_if_at_end()
                         # Ren visuell operation; avbryt inte wait-loopen.
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_slider is not None):
@@ -1666,6 +1879,13 @@ class LiveVisualizer:
                 import time as _t
                 self._save_plot_button_flash_until = _t.time() + 3.0
             return
+        # Live-knapp bredvid plot-scrollbaren: nollställer scroll-offset
+        # så plotten återgår till att följa senaste tick automatiskt.
+        if self._live_button_rect is not None \
+                and self._hit_rect(self._live_button_rect, pos):
+            self._plot_scroll_offset = None
+            self._dragging_plot_scroll = False
+            return
         # Plot horisontell scrollbar: klick på thumb startar drag, klick
         # utanför thumb men i tracken paginerar ett fönster åt vänster/höger.
         hit_ps = self._hit_plot_scroll(pos)
@@ -1895,6 +2115,37 @@ class LiveVisualizer:
         frac = max(0.0, min(1.0, frac))
         return float(data_xmin) + frac * (full_span - win_w_x)
 
+    def _plot_scroll_snap_to_live_if_at_end(self) -> None:
+        """Om nuvarande ``_plot_scroll_offset`` ligger på (eller mycket nära)
+        det maxvärde där thumb sitter i trackens högerkant, nolla offset så
+        plotten återgår till att följa senaste tick automatiskt ("live").
+
+        Utan den här snap-mekaniken hamnar användaren i ett fruset visnings-
+        fönster så snart hen dragit i scrollbaren en enda gång — även om
+        thumb dras hela vägen till högerkanten fortsätter offset att vara
+        satt till ``max_off`` och sluter sig från live-uppdateringar
+        eftersom nya data (större xmax) fortsätter komma in. Att sätta
+        ``_plot_scroll_offset = None`` ger tillbaka "follow-latest"-läget.
+        """
+        if self._plot_scroll_offset is None:
+            return
+        span = getattr(self, "_plot_scroll_span_cache", None)
+        if not span:
+            return
+        data_xmin, data_xmax = span
+        win_w_x = float(self._plot_window_width)
+        full_span = float(data_xmax - data_xmin)
+        if full_span <= win_w_x:
+            # Scroll är inte aktiv → återgå direkt till live.
+            self._plot_scroll_offset = None
+            return
+        max_off = float(data_xmax) - win_w_x
+        # Snap-tröskel: 2% av synligt fönster (min 1 tick). Ger användaren
+        # ett generöst mål-område i trackens högerkant för att gå live.
+        snap_eps = max(1.0, 0.02 * win_w_x)
+        if float(self._plot_scroll_offset) >= max_off - snap_eps:
+            self._plot_scroll_offset = None
+
     def _playback_idx_from_x(self, mx: int) -> Optional[int]:
         """Mappar muspos x till en frame-index i ``_current_rollout``.
 
@@ -2024,7 +2275,13 @@ class LiveVisualizer:
             "action_fracs": self._action_fracs,
             "tick": self._tick,
         }
-        self._biomass = frame.get("biomass", {})
+        # Dekomprimera biomass-fält on demand: om ``_capture_frame``
+        # lagrat ``_CompressedArray``-wrappers packar vi upp dem här så
+        # ritkoden nedströms alltid ser vanliga ndarrays.
+        raw_biomass = frame.get("biomass", {})
+        self._biomass = {
+            fid: _maybe_unwrap_array(v) for fid, v in raw_biomass.items()
+        }
         self._totals = frame.get("totals", {})
         self._b0 = frame.get("b0", {})
         self._loss_breakdown = frame.get("loss_breakdown", {})
@@ -3027,9 +3284,11 @@ class LiveVisualizer:
         plot_pad_l = 36
         plot_pad_r = getattr(self, "_legend_w", 110)  # room for legend
         plot_pad_t = strip_h + 20  # tab strip (variable rows) + ylabel line
-        # Reservera ~14 px längst ned för horisontell scrollbar (inference).
-        # I train-läget används inte scrollbaren; behåll ursprunglig padding.
-        scroll_bar_h = 12 if str(self.mode).lower().startswith("infer") else 0
+        # Reservera ~14 px längst ned för horisontell scrollbar. Används
+        # i både inference- och train-läget så att användaren kan
+        # scrolla tillbaka i graferna även under träning (och gå live
+        # igen via Live-knappen eller genom att dra thumb till högerkant).
+        scroll_bar_h = 12
         # Save-knappen (inference) ritas under scrollbaren; reservera 22 px.
         save_btn_h = 22 if str(self.mode).lower().startswith("infer") else 0
         plot_pad_b = 16 + (scroll_bar_h + 4 if scroll_bar_h else 0) \
@@ -3191,30 +3450,63 @@ class LiveVisualizer:
             self._plot_scroll_span_cache = (float(data_xmin), float(data_xmax))
         else:
             self._plot_scroll_span_cache = None
+        self._live_button_rect = None
         if scroll_bar_h > 0 and pw > 4:
             sb_y = py0 + ph + 4
             sb_h = scroll_bar_h
-            track = (px0, sb_y, pw, sb_h)
+            # Reservera plats till höger för "Live"-knappen så den ligger
+            # bredvid scrollbaren (bara när scroll faktiskt är aktiv och
+            # utrymmet räcker; annars använder tracken hela bredden).
+            live_btn_w = 42
+            live_gap = 4
+            if scroll_active and pw > live_btn_w + live_gap + 20:
+                track_w = pw - live_btn_w - live_gap
+            else:
+                track_w = pw
+            track = (px0, sb_y, track_w, sb_h)
             pg.draw.rect(self._screen, (30, 30, 38), track)
             pg.draw.rect(self._screen, (60, 60, 70), track, 1)
             if scroll_active:
                 full_span = float(data_xmax - data_xmin)
                 win_w_x = float(self._plot_window_width)
-                thumb_w = max(20, int(pw * (win_w_x / full_span)))
+                thumb_w = max(20, int(track_w * (win_w_x / full_span)))
                 # Position i track baserat på offset.
                 off_frac = (float(xmin) - float(data_xmin)) / max(
                     1e-9, full_span - win_w_x)
                 off_frac = max(0.0, min(1.0, off_frac))
-                thumb_x = int(px0 + off_frac * (pw - thumb_w))
+                thumb_x = int(px0 + off_frac * (track_w - thumb_w))
                 thumb_rect = (thumb_x, sb_y + 1, thumb_w, sb_h - 2)
                 pg.draw.rect(self._screen, (110, 110, 130), thumb_rect)
                 pg.draw.rect(self._screen, (170, 170, 190), thumb_rect, 1)
                 self._plot_scroll_thumb_rect = thumb_rect
                 self._plot_scroll_track_rect = track
+                # Live-knapp: highlightas grönt när plotten redan följer
+                # senaste tick (``_plot_scroll_offset is None``); annars
+                # dämpad så användaren ser att ett klick kommer att
+                # återta live-läget. Placeras direkt till höger om track.
+                lb_x = px0 + track_w + live_gap
+                lb_rect = (lb_x, sb_y, live_btn_w, sb_h)
+                is_live = self._plot_scroll_offset is None
+                if is_live:
+                    bg = (55, 90, 60)
+                    border = (110, 180, 130)
+                    txt_col = (220, 240, 220)
+                else:
+                    bg = (55, 55, 65)
+                    border = (120, 130, 145)
+                    txt_col = (210, 220, 230)
+                pg.draw.rect(self._screen, bg, lb_rect)
+                pg.draw.rect(self._screen, border, lb_rect, 1)
+                label = "● Live" if is_live else "Live"
+                surf = self._font.render(label, True, txt_col)
+                tx = lb_x + max(2, (live_btn_w - surf.get_width()) // 2)
+                ty = sb_y + (sb_h - surf.get_height()) // 2
+                self._screen.blit(surf, (tx, ty))
+                self._live_button_rect = lb_rect
             else:
                 # Ingen scrollning möjlig — rita en tunn markör som fyller
                 # hela tracken (visar att allt data är synligt).
-                inner = (px0 + 1, sb_y + 1, pw - 2, sb_h - 2)
+                inner = (px0 + 1, sb_y + 1, track_w - 2, sb_h - 2)
                 pg.draw.rect(self._screen, (55, 55, 65), inner)
 
         # ---- Save-plot-HTML-knapp (inference) ---------------------------

@@ -701,7 +701,13 @@ class FGConfigApp:
             "= cleaner low frequency.\n"
             "Lacunarity: frequency multiplier per octave (~2.0).\n"
             "Threshold: cell values below this are clamped to zero "
-            "before normalisation (for sharper patch edges)."
+            "before normalisation (for sharper patch edges).\n"
+            "Min frac of max: relative floor for surviving cells. "
+            "After threshold, any non-zero cell is lifted to at "
+            "least this fraction of the strongest cell (0 = off, "
+            "0.1 = no active cell below 10% of the max). Cells "
+            "already zeroed by threshold stay zero. High values "
+            "(>0.5) flatten the field towards uniform."
         ),
         "colony": (
             "Colony\n"
@@ -752,6 +758,10 @@ class FGConfigApp:
             "Floor: minimum weight per cell before normalisation.\n"
             "Noise_amp: amplitude of the Perlin overlay (0 = none).\n"
             "Noise_scale: wavelength of the overlay in cells.\n"
+            "Min frac of max: relative floor for surviving cells. "
+            "Any non-zero cell is lifted to at least this fraction "
+            "of the strongest cell (0 = off). Cells zeroed by the "
+            "floor parameter stay zero.\n"
             "\n"
             "Refs: each row references another FG's freshly spawned "
             "biomass field. Name = FG id (e.g. 'phytoplankton'), "
@@ -769,6 +779,7 @@ class FGConfigApp:
             ("persistence", "Persistence", "float", 0.5),
             ("lacunarity", "Lacunarity", "float", 2.0),
             ("threshold", "Threshold", "float", 0.0),
+            ("min_frac_of_max", "Min frac of max", "float", 0.0),
         ],
         "colony": [
             ("n_colonies", "N colonies", "int", 3),
@@ -783,6 +794,7 @@ class FGConfigApp:
             ("floor", "Floor", "float", 0.0),
             ("noise_amp", "Noise amplitude", "float", 0.0),
             ("noise_scale", "Noise scale (cells)", "float", 4.0),
+            ("min_frac_of_max", "Min frac of max", "float", 0.0),
         ],
     }
     # Transform options available for env_driven refs (mirrors

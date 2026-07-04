@@ -156,6 +156,39 @@ def _apply_grid_scaling(params: dict, context: Optional[dict]) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Gemensamt vikt-golv: lyft alla *överlevande* celler till en relativ andel
+# av maxvikten. Endast celler > 0 påverkas — celler som nollats av threshold
+# eller allowed_mask förblir noll. Avsett att motverka extremt tunna svansar
+# i t.ex. perlin/env_driven-fördelningar utan att bryta biomassa-kontraktet.
+# ---------------------------------------------------------------------------
+
+def _apply_min_frac_of_max(field: np.ndarray, min_frac: Any) -> np.ndarray:
+    """Klämm upp alla positiva celler till minst ``min_frac * max(field)``.
+
+    Om ``min_frac <= 0`` returneras fältet oförändrat. Celler som redan är
+    0 (t.ex. utnollade av threshold) förblir 0 — golvet gäller bara den
+    *aktiva* delen av fältet.
+    """
+    try:
+        frac = float(min_frac)
+    except (TypeError, ValueError):
+        return field
+    if frac <= 0.0:
+        return field
+    frac = min(frac, 1.0)
+    mx = float(field.max()) if field.size else 0.0
+    if mx <= 0.0:
+        return field
+    floor_val = frac * mx
+    active = field > 0.0
+    if not active.any():
+        return field
+    out = field.copy()
+    out[active] = np.maximum(out[active], floor_val)
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Gemensam efterbehandling: applicera allowed_mask och normalisera till sum 1.
 # ---------------------------------------------------------------------------
 
@@ -251,6 +284,7 @@ def weights_perlin(grid_size: Tuple[int, int],
     else:
         field = np.zeros_like(field)
     field = np.clip(field - threshold, 0.0, None)
+    field = _apply_min_frac_of_max(field, p.get("min_frac_of_max", 0.0))
     return _finalize(field, context)
 
 
@@ -453,6 +487,7 @@ def weights_env_driven(grid_size: Tuple[int, int],
         )
     floor = float(params.get("floor", 0.0))
     out = np.clip(out - floor, 0.0, None)
+    out = _apply_min_frac_of_max(out, params.get("min_frac_of_max", 0.0))
     return _finalize(out, context)
 
 
