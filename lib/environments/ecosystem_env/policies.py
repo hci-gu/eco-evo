@@ -2,15 +2,12 @@ import numpy as np
 import torch
 
 from lib.environments.ecosystem_env import decisions
-from lib.environments.ecosystem_env.state import ActionProbabilities
 
 
 def rebuild_batched_weights(env):
     env._batched_ready = False
     env._Ws = None
     env._bs = None
-    if env.N_dm == 0:
-        return
     if not all(fid in env.policies for fid in env.dm_ids):
         return
 
@@ -94,13 +91,6 @@ class PolicyController:
 
     def forward(self, observation):
         env = self.env
-        if env.N_dm == 0:
-            return ActionProbabilities(
-                move=observation.action_mask[:, 0:4],
-                rest=observation.action_mask[:, 4],
-                eat=observation.action_mask[:, 5:5 + env.N_all],
-            )
-
         obs_np = observation.features
         obs_t = torch.from_numpy(obs_np)
         num_actions = observation.action_mask.shape[1]

@@ -4,9 +4,6 @@ from lib.environments.ecosystem_env import interactions
 
 
 def apply_predation(env, actions):
-    if env.N_dm == 0:
-        return
-
     predator_biomass = np.stack(
         [env.fgs[fid].biomass for fid in env.dm_ids], axis=0)
     hunger = np.stack(

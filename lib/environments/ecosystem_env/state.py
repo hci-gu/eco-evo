@@ -46,6 +46,14 @@ class ActionProbabilities:
 
 
 @dataclass
+class ActionSettlement:
+    stationary_biomass: np.ndarray
+    stationary_reserve: np.ndarray
+    moving_biomass: np.ndarray
+    moving_reserve: np.ndarray
+
+
+@dataclass
 class ObservationBatch:
     features: np.ndarray
     raw_features: np.ndarray
@@ -180,7 +188,7 @@ def build_static_caches(env):
         center_dim_i = 2 + k_i + env.n_obs_imp
         nbr_dim_i = 1 + k_i + env.n_obs_imp
         env.per_dm_in_dim[i] = center_dim_i + 4 * nbr_dim_i
-    env.max_in_dim = int(env.per_dm_in_dim.max()) if env.N_dm > 0 else 0
+    env.max_in_dim = int(env.per_dm_in_dim.max())
 
     env.prev_hidden_frac = np.zeros((env.N_all, H, W), dtype=env.dtype)
 

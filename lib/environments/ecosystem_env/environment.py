@@ -69,9 +69,10 @@ class EcosystemEnvironment:
         self.ordered_fg_ids = list(self.fgs.keys())
         np.random.shuffle(self.ordered_fg_ids)
 
-        # impacts.apply_impact_mortality(self)
+        # impacts.apply_impact_mortality(self) currently just empty maps so we can skip it for now
         predation.apply_predation(self, actions)
-        movement.apply_movement(self, actions)
+        action_settlement = movement.apply_energy_costs(self, actions)
+        movement.apply_movement(self, action_settlement)
         population_change.apply_population_change(self)
 
         decisions.update_hidden_state(self, actions)

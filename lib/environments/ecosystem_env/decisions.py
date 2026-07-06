@@ -161,18 +161,6 @@ def build_observation(env):
     if not env._static_built:
         env.build_static_caches()
 
-    if env.N_dm == 0:
-        raw_features = np.zeros((0, env.H * env.W, 0), dtype=env.dtype)
-        return ObservationBatch(
-            features=raw_features,
-            raw_features=raw_features,
-            action_mask=np.zeros((0, EAT_START + env.N_all, env.H, env.W),
-                                 dtype=env.dtype),
-            subthreshold_mask=None,
-            dm_ids=list(env.dm_ids),
-            global_fg_order=list(env.global_fg_order),
-        )
-
     obs_np = observations.build_observation_batch(env)
     raw_obs = obs_np.copy()
     accumulate_observation_stats(env, raw_obs)

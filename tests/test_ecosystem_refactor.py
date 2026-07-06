@@ -9,9 +9,12 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 from lib.environments.ecosystem import EcosystemEnvironment  # noqa: E402
-from lib.environments.ecosystem_env.constants import MOVE_SLICE  # noqa: E402
-from lib.environments.ecosystem_env import impacts, population_change, predation  # noqa: E402
-from lib.environments.ecosystem_env.state import ActionProbabilities  # noqa: E402
+from lib.environments.ecosystem_env.constants import MOVE_SLICE, NORTH  # noqa: E402
+from lib.environments.ecosystem_env import impacts, movement, population_change, predation  # noqa: E402
+from lib.environments.ecosystem_env.state import (  # noqa: E402
+    ActionProbabilities,
+    ActionSettlement,
+)
 from lib.world.functional_group import FunctionalGroup  # noqa: E402
 
 
@@ -153,6 +156,89 @@ def test_predation_respects_current_hide_visibility_floor():
     assert env.fgs["prey"].biomass[0, 0] == pytest.approx(5.0)
     assert env.loss_predation["prey"] == pytest.approx(5.0)
     assert env.intake_by_pred_prey["pred"]["prey"] == pytest.approx(5.0)
+
+
+def test_energy_costs_settle_actions_without_moving_biomass():
+    fgs = {
+        "dm": _fg(
+            "dm",
+            {
+                "is_decision_maker": True,
+                "movement_speed": 1.0,
+                "max_energy_reserve": 10.0,
+                "resting_metabolism": 1.0,
+                "resting_cost": 1.0,
+                "feeding_cost": 2.0,
+                "movement_cost": 3.0,
+            },
+            [[10.0]],
+            energy_ratio=1.0,
+        )
+    }
+    env = EcosystemEnvironment({"width": 1, "height": 1}, fgs)
+    env.build_static_caches()
+    env.fgs["dm"].temp_energy_gains[...] = 3.0
+
+    move = np.zeros((1, 4, 1, 1), dtype=np.float32)
+    move[0, NORTH, 0, 0] = 0.5
+    eat = np.zeros((1, 1, 1, 1), dtype=np.float32)
+    eat[0, 0, 0, 0] = 0.3
+    actions = ActionProbabilities(
+        move=move,
+        rest=np.full((1, 1, 1), 0.2, dtype=np.float32),
+        eat=eat,
+    )
+
+    settlement = movement.apply_energy_costs(env, actions)
+
+    assert env.fgs["dm"].biomass[0, 0] == pytest.approx(10.0)
+    assert env.fgs["dm"].energy_reserve[0, 0] == pytest.approx(100.0)
+    assert settlement.stationary_biomass[0, 0, 0] == pytest.approx(5.0)
+    assert settlement.stationary_reserve[0, 0, 0] == pytest.approx(45.0)
+    assert settlement.moving_biomass[0, NORTH, 0, 0] == pytest.approx(5.0)
+    assert settlement.moving_reserve[0, NORTH, 0, 0] == pytest.approx(35.0)
+
+
+def test_apply_movement_only_moves_settled_moving_partition():
+    fgs = {
+        "dm": _fg(
+            "dm",
+            {
+                "is_decision_maker": True,
+                "movement_speed": 1.0,
+                "max_energy_reserve": 10.0,
+            },
+            np.zeros((3, 3), dtype=np.float32),
+        )
+    }
+    env = EcosystemEnvironment({"width": 3, "height": 3}, fgs)
+    env.build_static_caches()
+
+    stationary_biomass = np.zeros((1, 3, 3), dtype=np.float32)
+    stationary_reserve = np.zeros((1, 3, 3), dtype=np.float32)
+    moving_biomass = np.zeros((1, 4, 3, 3), dtype=np.float32)
+    moving_reserve = np.zeros((1, 4, 3, 3), dtype=np.float32)
+    stationary_biomass[0, 1, 1] = 2.0
+    stationary_reserve[0, 1, 1] = 4.0
+    moving_biomass[0, NORTH, 1, 1] = 3.0
+    moving_reserve[0, NORTH, 1, 1] = 6.0
+
+    settlement = ActionSettlement(
+        stationary_biomass=stationary_biomass,
+        stationary_reserve=stationary_reserve,
+        moving_biomass=moving_biomass,
+        moving_reserve=moving_reserve,
+    )
+    movement.apply_movement(env, settlement)
+
+    expected_biomass = np.zeros((3, 3), dtype=np.float32)
+    expected_reserve = np.zeros((3, 3), dtype=np.float32)
+    expected_biomass[0, 1] = 3.0
+    expected_biomass[1, 1] = 2.0
+    expected_reserve[0, 1] = 6.0
+    expected_reserve[1, 1] = 4.0
+    np.testing.assert_allclose(env.fgs["dm"].biomass, expected_biomass)
+    np.testing.assert_allclose(env.fgs["dm"].energy_reserve, expected_reserve)
 
 
 def test_get_observation_returns_features_and_action_mask():

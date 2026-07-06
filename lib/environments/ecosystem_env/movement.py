@@ -2,6 +2,7 @@ import numpy as np
 
 from lib.environments.ecosystem_env import impacts
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
+from lib.environments.ecosystem_env.state import ActionSettlement
 
 
 def _impact_energy_cost(env):
@@ -102,10 +103,7 @@ def _concentrate_immigration(env, b_emig, r_emig, base_weights):
     return b_imm, r_imm
 
 
-def apply_movement(env, actions):
-    if env.N_dm == 0:
-        return
-
+def apply_energy_costs(env, actions):
     biomass = np.stack([env.fgs[fid].biomass for fid in env.dm_ids], axis=0)
     reserve = np.stack(
         [env.fgs[fid].energy_reserve for fid in env.dm_ids], axis=0)
@@ -140,14 +138,23 @@ def apply_movement(env, actions):
     move_reserve_choices = actions.move * reserve_after_move[:, None, :, :]
     move_biomass_choices = actions.move * biomass[:, None, :, :]
 
-    flux = env.dm_v[:, None, None, None]
-    b_out = move_biomass_choices * flux
-    r_out = move_reserve_choices * flux
-    b_keep = move_biomass_choices - b_out
-    r_keep = move_reserve_choices - r_out
+    return ActionSettlement(
+        stationary_biomass=rest_biomass + eat_biomass,
+        stationary_reserve=rest_reserve + eat_reserve,
+        moving_biomass=move_biomass_choices,
+        moving_reserve=move_reserve_choices,
+    )
 
-    b_stay = rest_biomass + eat_biomass + b_keep.sum(axis=1)
-    r_stay = rest_reserve + eat_reserve + r_keep.sum(axis=1)
+
+def apply_movement(env, settlement):
+    flux = env.dm_v[:, None, None, None]
+    b_out = settlement.moving_biomass * flux
+    r_out = settlement.moving_reserve * flux
+    b_keep = settlement.moving_biomass - b_out
+    r_keep = settlement.moving_reserve - r_out
+
+    b_stay = settlement.stationary_biomass + b_keep.sum(axis=1)
+    r_stay = settlement.stationary_reserve + r_keep.sum(axis=1)
 
     b_total, r_total = _transfer_to_neighbours(b_stay, r_stay, b_out, r_out)
 
