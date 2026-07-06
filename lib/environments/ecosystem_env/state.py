@@ -69,7 +69,6 @@ class Diagnostics:
     loss_impact: Dict[str, float]
     loss_predation: Dict[str, float]
     loss_starvation: Dict[str, float]
-    extinction_events: Dict[str, int]
     intake_by_pred_prey: Dict[str, Dict[str, float]]
 
 

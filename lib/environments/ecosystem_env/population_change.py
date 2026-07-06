@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def _seasonal_growth_rate(env, fg_id, fg):
+def _seasonal_population_rate(env, fg_id, fg):
     growth_rate = fg.growth_rate
     amplitude = float(getattr(fg, "seasonal_amplitude", 0.0) or 0.0)
     period = float(getattr(fg, "seasonal_period", 0.0) or 0.0)
@@ -14,11 +14,11 @@ def _seasonal_growth_rate(env, fg_id, fg):
     return growth_rate * season
 
 
-def _apply_non_decision_maker_growth(env, fg_id, fg):
+def _apply_non_decision_maker_population_change(env, fg_id, fg):
     carrying_capacity = fg.params.get("max_carrying_capacity", 100.0)
-    growth_rate = _seasonal_growth_rate(env, fg_id, fg)
-    growth = (
-        growth_rate
+    population_rate = _seasonal_population_rate(env, fg_id, fg)
+    biomass_delta = (
+        population_rate
         * fg.biomass
         * (1.0 - fg.biomass / (carrying_capacity + 1e-9))
     )
@@ -29,14 +29,17 @@ def _apply_non_decision_maker_growth(env, fg_id, fg):
             10.0,
             np.random.uniform(-1.0, 1.0, size=fg.biomass.shape),
         ).astype(np.float32, copy=False)
-        growth = growth + np.float32(seed_rate * carrying_capacity) * seed_mult
+        biomass_delta = (
+            biomass_delta
+            + np.float32(seed_rate * carrying_capacity) * seed_mult
+        )
 
     fg.biomass = np.clip(
-        fg.biomass + growth, 0.0, carrying_capacity
+        fg.biomass + biomass_delta, 0.0, carrying_capacity
     ).astype(env.dtype, copy=False)
 
 
-def _apply_decision_maker_growth(env, fg_id, fg):
+def _apply_decision_maker_population_change(env, fg_id, fg):
     natural_mortality = float(getattr(fg, "natural_mortality", 0.0) or 0.0)
     if natural_mortality > 0.0 and env.apply_natural_mortality:
         keep = np.float32(max(0.0, 1.0 - natural_mortality))
@@ -53,9 +56,9 @@ def _apply_decision_maker_growth(env, fg_id, fg):
     )
     rate = np.where(energy_surplus >= 0.0, growth_rate, starve_rate).astype(
         env.dtype, copy=False)
-    growth = fg.biomass * rate * energy_surplus
+    biomass_delta = fg.biomass * rate * energy_surplus
 
-    total_loss = -np.minimum(0.0, growth)
+    total_loss = -np.minimum(0.0, biomass_delta)
     actual_starve_loss = np.minimum(total_loss, fg.biomass)
     env.loss_starvation[fg_id] = (
         float(env.loss_starvation.get(fg_id, 0.0))
@@ -72,14 +75,36 @@ def _apply_decision_maker_growth(env, fg_id, fg):
 
     fg.energy_reserve = (fg.energy_reserve * reduction).astype(
         env.dtype, copy=False)
-    fg.biomass = np.maximum(0.0, fg.biomass + growth).astype(
+    fg.biomass = np.maximum(0.0, fg.biomass + biomass_delta).astype(
         env.dtype, copy=False)
 
 
-def apply_growth(env):
+def _clip_biomass_based_on_min_thresholds(env):
+    for fg in env.fgs.values():
+        biomass = fg.biomass
+
+        min_split = float(getattr(fg, "min_split_biomass", 0.0) or 0.0)
+        factor = float(getattr(fg, "extinction_threshold_factor", 0.0) or 0.0)
+        threshold = np.float32(max(0.0, min_split * factor))
+        biomass = np.where(biomass < threshold, 0.0, biomass).astype(
+            env.dtype, copy=False)
+        fg.biomass = biomass
+
+def _zero_energy_in_empty_cells(env):
+    for fg in env.fgs.values():
+        fg.energy_reserve = np.where(
+                fg.biomass <= 0.0,
+                np.float32(0.0),
+                fg.energy_reserve,
+            ).astype(env.dtype, copy=False)
+
+
+def apply_population_change(env):
     for fg_id in env.ordered_fg_ids:
         fg = env.fgs[fg_id]
         if fg.is_decision_maker:
-            _apply_decision_maker_growth(env, fg_id, fg)
+            _apply_decision_maker_population_change(env, fg_id, fg)
         else:
-            _apply_non_decision_maker_growth(env, fg_id, fg)
+            _apply_non_decision_maker_population_change(env, fg_id, fg)
+    _clip_biomass_based_on_min_thresholds(env)
+    _zero_energy_in_empty_cells(env)

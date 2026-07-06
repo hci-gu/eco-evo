@@ -3,12 +3,11 @@ import numpy as np
 from lib.world.grid import Grid
 from lib.environments.ecosystem_env import (
     decisions,
-    extinction,
     grid_masks,
-    growth,
     impacts,
     movement,
     policies as policy_module,
+    population_change,
     predation,
     state,
 )
@@ -52,7 +51,6 @@ class EcosystemEnvironment:
         self.loss_impact = {fid: 0.0 for fid in self.fgs}
         self.loss_predation = {fid: 0.0 for fid in self.fgs}
         self.loss_starvation = {fid: 0.0 for fid in self.fgs}
-        self._extinction_events = {fid: 0 for fid in self.fgs}
         self.intake_by_pred_prey = {fid: {} for fid in self.fgs}
 
     def build_static_caches(self):
@@ -67,16 +65,16 @@ class EcosystemEnvironment:
     def step(self, actions):
         if not self._static_built:
             self.build_static_caches()
-        decisions.sync_last_actions(self, actions)
 
         self.ordered_fg_ids = list(self.fgs.keys())
         np.random.shuffle(self.ordered_fg_ids)
 
-        impacts.apply_impact_mortality(self)
+        # impacts.apply_impact_mortality(self)
         predation.apply_predation(self, actions)
         movement.apply_movement(self, actions)
-        growth.apply_growth(self)
-        extinction.apply_extinction_threshold(self)
+        population_change.apply_population_change(self)
+
+        decisions.update_hidden_state(self, actions)
         self.tick_count += 1
 
     def tick(self):

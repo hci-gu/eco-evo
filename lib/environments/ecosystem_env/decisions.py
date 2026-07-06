@@ -148,14 +148,7 @@ def update_action_diagnostics(env, probs):
         env._action_eat_frac[i] += float(eat_mass[i][mask_i].sum()) * inv
 
 
-def sync_last_actions(env, actions):
-    env.pi_move = actions.move
-    env.pi_rest = actions.rest
-    env.pi_eat = actions.eat
-    env.pi = {
-        fid: None for fid in env.fgs
-        if not env.fgs[fid].is_decision_maker
-    }
+def update_hidden_state(env, actions):
     env.prev_hidden_frac = np.zeros(
         (env.N_all, env.H, env.W), dtype=env.dtype)
     for i, _fid in enumerate(env.dm_ids):

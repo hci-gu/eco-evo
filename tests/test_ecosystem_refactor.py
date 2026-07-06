@@ -10,7 +10,7 @@ if _ROOT not in sys.path:
 
 from lib.environments.ecosystem import EcosystemEnvironment  # noqa: E402
 from lib.environments.ecosystem_env.constants import MOVE_SLICE  # noqa: E402
-from lib.environments.ecosystem_env import extinction, impacts, predation  # noqa: E402
+from lib.environments.ecosystem_env import impacts, population_change, predation  # noqa: E402
 from lib.environments.ecosystem_env.state import ActionProbabilities  # noqa: E402
 from lib.world.functional_group import FunctionalGroup  # noqa: E402
 
@@ -76,7 +76,7 @@ def test_impact_table_is_sorted_and_interpolated():
     assert energy.tolist() == pytest.approx([0.0, 0.1, 0.2, 0.2])
 
 
-def test_extinction_threshold_zeroes_biomass_and_tracks_loss():
+def test_population_change_clears_nonviable_biomass_and_empty_energy():
     fgs = {
         "dm": _fg(
             "dm",
@@ -85,19 +85,21 @@ def test_extinction_threshold_zeroes_biomass_and_tracks_loss():
                 "min_split_biomass": 1000.0,
                 "extinction_threshold_factor": 0.5,
             },
-            [[0.25, 1.0]],
+            [[0.0, 0.25, 1.0]],
             energy_ratio=0.5,
         )
     }
-    env = EcosystemEnvironment({"width": 2, "height": 1}, fgs)
+    env = EcosystemEnvironment({"width": 3, "height": 1}, fgs)
     env.build_static_caches()
+    env.ordered_fg_ids = list(env.fgs.keys())
+    env.fgs["dm"].energy_reserve[0, 0] = 99.0
 
-    extinction.apply_extinction_threshold(env)
+    population_change.apply_population_change(env)
 
-    np.testing.assert_allclose(env.fgs["dm"].biomass, [[0.0, 1.0]])
+    np.testing.assert_allclose(env.fgs["dm"].biomass, [[0.0, 0.0, 1.0]])
     assert env.fgs["dm"].energy_reserve[0, 0] == pytest.approx(0.0)
-    assert env.loss_starvation["dm"] == pytest.approx(0.25)
-    assert env._extinction_events["dm"] == 1
+    assert env.fgs["dm"].energy_reserve[0, 1] == pytest.approx(0.0)
+    assert env.loss_starvation["dm"] == pytest.approx(0.0)
 
 
 def test_predation_respects_current_hide_visibility_floor():
@@ -318,9 +320,11 @@ def test_step_runs_through_extracted_environment_from_public_import():
     env.step(actions)
 
     assert env.tick_count == 1
-    assert env.pi_move.shape == (1, 4, 2, 2)
-    assert env.pi_rest.shape == (1, 2, 2)
-    assert env.pi_eat.shape == (1, 2, 2, 2)
+    assert env.prev_hidden_frac.shape == (2, 2, 2)
+    np.testing.assert_allclose(
+        env.prev_hidden_frac[env.global_fg_order.index("consumer")],
+        actions.rest[env.dm_ids.index("consumer")],
+    )
     for fg in env.fgs.values():
         assert np.isfinite(fg.biomass).all()
         assert np.isfinite(fg.energy_reserve).all()
