@@ -6,7 +6,7 @@ from lib.environments.ecosystem import EcosystemEnvironment
 def run_sim(with_noise=False, ticks=40):
     fgs = setup_full_mareld_mvp()
     grid_config = {'width': 60, 'height': 60, 'cell_size': 1000.0, 'tick_duration': 6.0}
-    env = EcosystemEnvironment(grid_config, fgs, {})
+    env = EcosystemEnvironment(grid_config, fgs)
     
     if with_noise:
         # Load windfarm noise proxy

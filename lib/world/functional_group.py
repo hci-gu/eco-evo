@@ -68,11 +68,6 @@ class FunctionalGroup:
         if self.extinction_threshold_factor < 0.0:
             self.extinction_threshold_factor = 0.0
 
-        # Costs
-        self.movement_cost = params.get('movement_cost', 1.0)
-        self.feeding_cost = params.get('feeding_cost', 1.0)
-        self.resting_cost = params.get('resting_cost', 1.0)
-
     def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7,
                          randomize_energy=False, rng=None):
         if initial_biomass is not None:
@@ -118,12 +113,3 @@ class FunctionalGroup:
         """h_X = max(0, 1 - s_X / 0.8)"""
         s_x = self.energy_level
         return np.maximum(0.0, 1.0 - s_x / 0.8)
-
-    def calculate_metabolism(self, actions_mask, noise_impact=None):
-        """
-        Calculates energy loss per tick.
-        Rest_X * (Action_Cost) * (1 + Noise_Sens * Noise)
-        """
-        # For simplicity in MVP, we can assume a mean cost if actions are distributed,
-        # or calculate per-action cost in the simulation loop.
-        pass

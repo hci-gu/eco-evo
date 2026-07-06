@@ -38,7 +38,7 @@ import os
 import sys
 import time
 from collections import deque
-from typing import Dict, Iterable, Mapping, Optional, Sequence
+from typing import Dict, Mapping, Optional, Sequence
 
 import numpy as np
 
@@ -535,14 +535,11 @@ class LiveVisualizer:
         # title_h = 5 textrader (~14 px var) + slider (~22 px) + luft.
         title_h = 104
         self._slider_h = 16
-        self._slider_margin = 4
         cbar_h = 16  # colorbar strip (gradient + 0/max labels)
         # Två extra rader under colorbaren: "Mode: …" och "Tpl: …".
         # Varje rad ~14 px text + 2 px padding ⇒ 32 px för båda.
         spawn_dd_h = 34
-        self._spawn_dd_h = spawn_dd_h
         pad = 8
-        self._cbar_h = cbar_h
         self._panel_w = hm_w + 2 * pad
         self._panel_h = hm_h + title_h + cbar_h + spawn_dd_h + 2 * pad
         heatmap_block_w = self._cols * self._panel_w
@@ -579,7 +576,6 @@ class LiveVisualizer:
         # / speed +/- and a frame indicator. Allokeras alltid (även när
         # ingen film ännu finns) så fönsterstorleken är konstant.
         playback_h = 32
-        self._playback_h = playback_h
         self._win_w = heatmap_block_w + plot_w + pad
         self._win_h = status_h + heatmap_block_h + playback_h + pad + log_h
         self._heatmap_origin = (0, status_h)
@@ -604,7 +600,6 @@ class LiveVisualizer:
         self._playback_idx = 0
         self._playback_fps = 10.0  # justerbar via knappar (1..60)
         self._playback_last_advance = 0.0
-        self._playback_blink = False
         self._playback_blink_until = 0.0
         self._playback_rects: list = []  # [(rect, action_name)]
 
@@ -1472,8 +1467,6 @@ class LiveVisualizer:
             return
         pg = self._pg
         try:
-            # Stash a banner the status bar can pick up, if desired.
-            self._final_banner = banner or "run finished — close window to exit (Q/ESC)"
             # Render one last full frame so the banner is visible.
             try:
                 self._render_full()

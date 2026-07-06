@@ -1,10 +1,9 @@
 import numpy as np
 import torch
 from lib.world.grid import Grid
-from lib.world.functional_group import FunctionalGroup
 
 class EcosystemEnvironment:
-    def __init__(self, grid_config, functional_groups, interactions, policies=None,
+    def __init__(self, grid_config, functional_groups, policies=None,
                  observable_impact_vars=None, apply_natural_mortality=True,
                  migration=False):
         self.grid = Grid(**grid_config)
@@ -19,7 +18,6 @@ class EcosystemEnvironment:
         # Default False = legacy (utflödet maskas bort före softmax).
         self.migration = bool(migration)
         self.fgs = functional_groups  # Dictionary: id -> FunctionalGroup
-        self.interactions = interactions
         self.policies = policies or {} # Dictionary: id -> PolicyNetwork
         # Ordered list of impact_ids that are exposed to the policy network as
         # observation channels. One observation layer is appended per id (in

@@ -61,11 +61,6 @@ class RandomPolicy:
         n = flat_state.shape[0]
         return torch.zeros((n, self.out_dim), dtype=torch.float32)
 
-    def get_action_probs_torch(self, flat_state):
-        n = flat_state.shape[0]
-        return torch.full((n, self.out_dim), 1.0 / self.out_dim,
-                          dtype=torch.float32)
-
     def eval(self):
         return self
 
@@ -398,7 +393,7 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
         'cell_size': 1000.0,
         'tick_duration': 6.0,
     }
-    env = EcosystemEnvironment(grid_config, fgs, {},
+    env = EcosystemEnvironment(grid_config, fgs,
                                observable_impact_vars=observable_impact_vars,
                                apply_natural_mortality=apply_natural_mortality,
                                migration=migration)
@@ -1081,7 +1076,6 @@ def main():
 
     if verbose:
         print(f"Running {args.ticks} ticks...")
-    interrupted = False
     history = None
     # Rerun-loop: så länge användaren drar i en b0-slider efter rollouten
     # spelas en ny inspelning in med det nya värdet. Första iterationen
@@ -1203,7 +1197,6 @@ def main():
                 print(f"\n[change] {'/'.join(reasons)} changed — "
                       f"re-recording rollout…")
     except KeyboardInterrupt:
-        interrupted = True
         if verbose:
             print("\nInterrupted by user (Ctrl+C).")
         if history is None:

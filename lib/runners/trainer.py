@@ -3,7 +3,6 @@ import numpy as np
 import multiprocessing as mp
 import signal
 from lib.runners.policy import PolicyNetwork
-from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_coevo_task
 
 class ARSTrainer:

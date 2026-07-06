@@ -331,9 +331,6 @@ class FGConfigApp:
         # editor is meaningless for them.
         self.impact_spawn_frame.grid_remove()
 
-        # Track widgets so we can enable/disable the editor based on selection
-        # and muted status.
-        self._impact_editor_widgets = list(self.impact_editor_frame.winfo_children())
         self._set_impact_editor_enabled(False)
 
     def setup_project_tab(self):
@@ -1474,82 +1471,6 @@ class FGConfigApp:
             if mn is not None or mx is not None:
                 return mn, mx
         return None, None
-
-    def _build_biomass_range_row(self, parent, row, lo=0.0, hi=100000.0):
-        """Place a Min/Max entry pair side-by-side for the 'Initial Total Biomass Range (ton)' row.
-
-        Each sub-field has its own ``[lo, hi]`` range label and slider on the
-        right. Returns (min_var, max_var). Live validation: non-negative
-        integers within [lo, hi], with the cross-constraint min <= max.
-        """
-        container = ttk.Frame(parent)
-        container.grid(row=row, column=1, sticky="ew", padx=5, pady=2)
-
-        min_var = tk.StringVar()
-        max_var = tk.StringVar()
-
-        lo_i = int(lo)
-        hi_i = int(hi)
-
-        def _is_pos_int_in_range(s):
-            if s == "":
-                return True
-            if not s.isdigit():
-                return False
-            try:
-                v = int(s)
-            except ValueError:
-                return False
-            return lo_i <= v <= hi_i
-
-        def _validate_min(proposed):
-            if not _is_pos_int_in_range(proposed):
-                return False
-            if proposed == "":
-                return True
-            cur_max = max_var.get()
-            if cur_max.isdigit() and int(proposed) > int(cur_max):
-                return False
-            return True
-
-        def _validate_max(proposed):
-            if not _is_pos_int_in_range(proposed):
-                return False
-            if proposed == "":
-                return True
-            cur_min = min_var.get()
-            if cur_min.isdigit() and int(proposed) < int(cur_min):
-                return False
-            return True
-
-        vcmd_min = (parent.register(_validate_min), "%P")
-        vcmd_max = (parent.register(_validate_max), "%P")
-
-        ttk.Label(container, text="Min:").pack(side="left", padx=(0, 2))
-        ttk.Label(container, text=f"[{lo_i}, {hi_i}]",
-                  foreground="#666666", anchor="e", width=14
-                  ).pack(side="left", padx=(0, 2))
-        min_entry = ttk.Entry(container, textvariable=min_var, width=10,
-                              validate="key", validatecommand=vcmd_min)
-        min_entry.pack(side="left", padx=(0, 4))
-        min_slider = ttk.Scale(container, from_=lo_i, to=hi_i,
-                               orient="horizontal", length=120)
-        min_slider.pack(side="left", padx=(0, 12))
-        self._bind_slider_entry(min_var, min_slider, lo_i, hi_i, is_int=True)
-
-        ttk.Label(container, text="Max:").pack(side="left", padx=(0, 2))
-        ttk.Label(container, text=f"[{lo_i}, {hi_i}]",
-                  foreground="#666666", anchor="e", width=14
-                  ).pack(side="left", padx=(0, 2))
-        max_entry = ttk.Entry(container, textvariable=max_var, width=10,
-                              validate="key", validatecommand=vcmd_max)
-        max_entry.pack(side="left", padx=(0, 4))
-        max_slider = ttk.Scale(container, from_=lo_i, to=hi_i,
-                               orient="horizontal", length=120)
-        max_slider.pack(side="left")
-        self._bind_slider_entry(max_var, max_slider, lo_i, hi_i, is_int=True)
-
-        return min_var, max_var
 
     def _bind_slider_entry(self, var, slider, lo, hi, is_int=False):
         """Two-way binding between a tk.StringVar (Entry) and a ttk.Scale.
@@ -2944,10 +2865,6 @@ class FGConfigApp:
         e = self._find_fg_entry(fg_id)
         return self._is_fg_muted(e) if e else False
 
-    def _is_impact_id_muted(self, impact_id):
-        e = self._find_impact_entry(impact_id)
-        return self._is_impact_muted(e) if e else False
-
     def _apply_listbox_mute_styling(self):
         """Recolour listbox rows so muted entries appear in a lighter colour."""
         # DM list
@@ -3077,12 +2994,6 @@ class FGConfigApp:
 
     def _all_fg_ids(self):
         return [gid for _, gid in self._all_fg_entries()]
-
-    def _find_fg_category(self, fg_id):
-        for cat in ("decision_makers", "non_decision_makers"):
-            if any(fg['group_id'] == fg_id for fg in self.project_data.get(cat, []) or []):
-                return cat
-        return None
 
     def on_fg_select(self, category):
         listbox = self._listbox_for(category)
@@ -3449,7 +3360,7 @@ class FGConfigApp:
         # användaren behöver redigera dem för hand.
         removed_legacy = 0
         interactions = self.global_library.get("interaction_definitions", {}) or {}
-        for ikey, entry in interactions.items():
+        for entry in interactions.values():
             if isinstance(entry, dict) and "energy_gain" in entry:
                 entry.pop("energy_gain", None)
                 removed_legacy += 1

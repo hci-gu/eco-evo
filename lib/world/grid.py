@@ -24,9 +24,3 @@ class Grid:
             data = 255.0 - data
         data = (data / 255.0) * scale
         self.add_map(name, data)
-
-    def get_neighborhood(self, x, y):
-        # Return indices of N, E, S, W neighbors with boundary handling (clamping)
-        # In this model, we might prefer periodic or zero-flow boundaries.
-        # Strategi.pdf says accessibility is 0 at boundaries.
-        pass

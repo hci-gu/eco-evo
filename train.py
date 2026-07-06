@@ -390,7 +390,7 @@ class _EnvBuilder:
             'cell_size': 1000.0,
             'tick_duration': 6.0,
         }
-        env = EcosystemEnvironment(grid_config, fgs, {},
+        env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
                                    migration=self.migration)
@@ -501,7 +501,7 @@ class _ProbeEnvBuilder:
             'cell_size': 1000.0,
             'tick_duration': 6.0,
         }
-        env = EcosystemEnvironment(grid_config, fgs, {},
+        env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
                                    migration=self.migration)
@@ -1348,11 +1348,6 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       observable_impact_vars=observable_impact_vars)
 
 
-# Default module-level env_builder: fresh impact maps per call. Used for
-# the initial temp_env probe before the main loop installs a generation-
-# specific env_builder via _make_env_builder(maps).
-env_builder = _make_env_builder(None)
-
 def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     """
     Calculates policy network dimensions dynamically based on the state of
@@ -1659,7 +1654,6 @@ def main():
         prof = PROFILES[args.profile]
         # Determine which args were explicitly supplied on the command line by
         # re-parsing with all defaults set to a sentinel.
-        import sys as _sys
         _sentinel = object()
         _sentinel_parser = argparse.ArgumentParser(add_help=False)
         for a in parser._actions:
@@ -1950,10 +1944,8 @@ def main():
     n_deltas = args.n_deltas
     if args.workers > 0:
         n_workers = args.workers
-        workers_origin = "explicit"
     else:
         n_workers = _auto_workers(n_deltas)
-        workers_origin = "auto"
 
     grid_str = f"{GRID_WIDTH}x{GRID_HEIGHT}"
     grid_is_default = (args.grid is None)
@@ -2179,10 +2171,10 @@ def main():
     _current_world_list = []  # list[tuple[int, int]]
     _last_world_gen = [-1]    # mutable holder so closure can write to it
 
-    def _refresh_world_list_if_needed(gen_idx, iter_idx):
+    def _refresh_world_list_if_needed(gen_idx):
         """Refresh ``_current_world_list`` according to the configured
-        policy. iteration -> always refresh; generation -> only on the
-        first iter of a new generation. Returns True iff the list was
+        policy. iteration -> always refresh; generation -> once per
+        generation. Returns True iff the list was
         (re)sampled in this call (Step 2 uses this to decide whether to
         re-install the env builder / rebuild the worker pool)."""
         nonlocal _current_world_list
@@ -2388,12 +2380,12 @@ def main():
             _elapsed = _fmt_elapsed(_time.monotonic() - _training_start_ts)
             print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ({_elapsed}) ==========")
             # Step 2: WorldList must be populated before world[0] can be
-            # installed. ``_refresh_world_list_if_needed(gen, 0)`` returns
+            # installed. ``_refresh_world_list_if_needed(gen)`` returns
             # True on the first iter of each generation (both policies),
             # so we always install at least once per generation here. The
             # per-iter loops below may refresh again (iteration policy)
             # and re-install via ``_maybe_reinstall_worlds``.
-            _refresh_world_list_if_needed(gen, 0)
+            _refresh_world_list_if_needed(gen)
             _install_generation_worlds(gen)
             if args.coevolution:
                 # Co-evolution: all species are trained simultaneously per iteration
@@ -2404,7 +2396,7 @@ def main():
                     print(f"    {species}: in={policy_params[species][0]} "
                           f"out={policy_params[species][1]}")
                 for i in range(args.iter_per_gen):
-                    if i > 0 and _refresh_world_list_if_needed(gen, i):
+                    if i > 0 and _refresh_world_list_if_needed(gen):
                         _install_generation_worlds(gen)
                     # Läs n_eval_ticks-slidern (om sliz finns). Värdet
                     # tillämpas mellan iterationer för att hålla
@@ -2466,7 +2458,7 @@ def main():
                     print(f"    Output dim: {policy_params[species][1]}")
 
                     for i in range(args.iter_per_gen):
-                        if i > 0 and _refresh_world_list_if_needed(gen, i):
+                        if i > 0 and _refresh_world_list_if_needed(gen):
                             _install_generation_worlds(gen)
                         # Läs n_eval_ticks-slidern (säkert mellan iter).
                         _neval = int(args.n_eval_ticks)

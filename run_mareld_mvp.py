@@ -14,7 +14,7 @@ def main():
         'tick_duration': 6.0
     }
     
-    env = EcosystemEnvironment(grid_config, fgs, {})
+    env = EcosystemEnvironment(grid_config, fgs)
     
     # Load maps
     try:
