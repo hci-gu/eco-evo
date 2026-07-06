@@ -568,6 +568,11 @@ def _run_one_replicate(
             LOGGER.warning("run %s visualization could not start: %r", run_id, exc)
             viz = None
 
+    visual_b0 = {
+        fid: max(float(fg.biomass.sum()), 1e-12)
+        for fid, fg in env.fgs.items()
+    }
+
     frames: list[np.ndarray] = []
     steps: list[int] = []
     progress_interval = max(1, max_steps // 20) if max_steps else 1
@@ -604,7 +609,9 @@ def _run_one_replicate(
             viz.update_biomass(env.fgs, tick=step, extra={"run": run_id})
             for fid, fg in env.fgs.items():
                 total = float(fg.biomass.sum())
-                viz.update_series("biomass", fid, total, step=step)
+                viz.update_series("biomass", fid,
+                                  100.0 * total / visual_b0[fid],
+                                  step=step)
             if not viz.pump_events():
                 LOGGER.info("run %s visualization window closed at step %d; inference continues", run_id, step)
                 viz.close()

@@ -376,6 +376,19 @@ class LiveVisualizer:
         # the title can display 'B0=... B=...' for context. Reset each new
         # rollout (train probe runs fresh per ARS-iter, inference is one run).
         self._b0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
+        # Rollout-start per-cell maxima used for heatmap colour scaling.
+        # Heatmaps deliberately do NOT rescale to each frame's current max:
+        # near-extinct species should stay dark instead of becoming full
+        # yellow because their tiny remaining biomass is the frame max.
+        self._heatmap_vmax0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
+        # One global visual biomass scale for inference. 1.0 means:
+        # heatmap max = rollout-start per-cell max, biomass plot max = 100%
+        # of rollout-start total. Dragging the slider zooms both together.
+        self._biomass_display_scale: float = 5.0
+        self._biomass_scale_min: float = 0.05
+        self._biomass_scale_max: float = 5.0
+        self._biomass_scale_track_rect: Optional[tuple] = None
+        self._dragging_biomass_scale: bool = False
         # Per-FG biomassaförlustfraktioner (predation/starvation/impact)
         # som visas som en fjärde textrad ovanför heatmapen, på formatet
         # ``pr/st/im=X/Y/Z%``. Uppdateras via :meth:`update_loss_breakdown`
@@ -562,12 +575,10 @@ class LiveVisualizer:
         plot_w = max(420, heatmap_block_w // 2 + self._legend_w,
                      tab_strip_w + self._legend_w + 4)
         plot_h = heatmap_block_h
-        # Status-baren rymmer textraden, rollout-längd-slidern och
-        # n_eval_ticks-slidern. ~18 px per slider-rad + 22 px för
-        # textraden ⇒ 62 px räcker för alla tre. I inference-läget visas
-        # ingen n_eval_ticks-slider, så raden tas bort (44 px räcker).
+        # Status-baren rymmer textraden och två slider-rader. I training är
+        # rad 3 n_eval_ticks; i inference är rad 3 biomass display scale.
         if str(mode).lower().startswith("infer"):
-            status_h = 44
+            status_h = 62
         else:
             status_h = 62
         log_h = 0
@@ -720,6 +731,10 @@ class LiveVisualizer:
                 self._totals[fid] = total
                 if new_rollout:
                     self._b0[fid] = total
+                    try:
+                        self._heatmap_vmax0[fid] = max(float(arr.max()), 1e-12)
+                    except Exception:
+                        self._heatmap_vmax0[fid] = 1e-12
             if extra:
                 self._status.update(extra)
             # Spela in en frame om vi är mitt i en rollout-inspelning.
@@ -1221,6 +1236,7 @@ class LiveVisualizer:
             biomass[fid] = a32
         totals = dict(self._totals)
         b0 = dict(self._b0)
+        heatmap_vmax0 = dict(self._heatmap_vmax0)
         loss = {fid: dict(v) for fid, v in self._loss_breakdown.items()}
         diet = {fid: dict(v) for fid, v in self._diet_breakdown.items()}
         actf = {fid: dict(v) for fid, v in self._action_fracs.items()}
@@ -1228,6 +1244,7 @@ class LiveVisualizer:
             "biomass": biomass,
             "totals": totals,
             "b0": b0,
+            "heatmap_vmax0": heatmap_vmax0,
             "loss_breakdown": loss,
             "diet_breakdown": diet,
             "action_fracs": actf,
@@ -1294,6 +1311,11 @@ class LiveVisualizer:
                     if v is not None:
                         self._neval_override = int(v)
                         interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_biomass_scale:
+                    v = self._biomass_scale_value_from_x(event.pos[0])
+                    if v is not None:
+                        self._biomass_display_scale = float(v)
+                        interacted = True
                 elif event.type == pg.MOUSEMOTION and self._dragging_playback:
                     idx = self._playback_idx_from_x(event.pos[0])
                     if idx is not None:
@@ -1333,6 +1355,10 @@ class LiveVisualizer:
                         and self._dragging_neval:
                     self._dragging_neval = False
                     self._neval_dirty = True
+                    interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_biomass_scale:
+                    self._dragging_biomass_scale = False
                     interacted = True
             # Only render on actual user interaction here — a full
             # heatmap+plot redraw can easily cost 50-150 ms and during
@@ -1407,6 +1433,11 @@ class LiveVisualizer:
                         if v is not None:
                             self._neval_override = int(v)
                     elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_biomass_scale):
+                        v = self._biomass_scale_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._biomass_display_scale = float(v)
+                    elif (event.type == pg.MOUSEMOTION
                           and self._dragging_playback):
                         idx = self._playback_idx_from_x(event.pos[0])
                         if idx is not None:
@@ -1436,6 +1467,9 @@ class LiveVisualizer:
                           and self._dragging_neval):
                         self._dragging_neval = False
                         self._neval_dirty = True
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_biomass_scale):
+                        self._dragging_biomass_scale = False
                 if (self._playback_mode == "playing"
                         and self._current_rollout
                         and not self._recording):
@@ -1512,6 +1546,11 @@ class LiveVisualizer:
                         if v is not None:
                             self._neval_override = int(v)
                     elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_biomass_scale):
+                        v = self._biomass_scale_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._biomass_display_scale = float(v)
+                    elif (event.type == pg.MOUSEMOTION
                           and self._dragging_playback):
                         idx = self._playback_idx_from_x(event.pos[0])
                         if idx is not None:
@@ -1557,6 +1596,9 @@ class LiveVisualizer:
                         # i inference.py reagerar bara om en relevant
                         # slider är dirty, så detta är ofarligt.
                         pass
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_biomass_scale):
+                        self._dragging_biomass_scale = False
                 # Playback auto-advance (samma logik som i pump_events),
                 # annars händer ingenting när användaren trycker play efter
                 # att inference-rollouten är klar.
@@ -1798,6 +1840,33 @@ class LiveVisualizer:
         frac = (mx - track_x) / float(track_w)
         return self._neval_value_from_pos(frac)
 
+    def _biomass_scale_pos_from_value(self, value: float) -> float:
+        import math
+        lo = max(1e-6, float(self._biomass_scale_min))
+        hi = max(lo * 1.0001, float(self._biomass_scale_max))
+        v = max(lo, min(hi, float(value)))
+        return (math.log(v) - math.log(lo)) / (math.log(hi) - math.log(lo))
+
+    def _biomass_scale_value_from_pos(self, frac: float) -> float:
+        import math
+        lo = max(1e-6, float(self._biomass_scale_min))
+        hi = max(lo * 1.0001, float(self._biomass_scale_max))
+        f = max(0.0, min(1.0, float(frac)))
+        return math.exp(math.log(lo) + f * (math.log(hi) - math.log(lo)))
+
+    def _hit_biomass_scale_slider(self, pos) -> bool:
+        return self._hit_rect(self._biomass_scale_track_rect, pos)
+
+    def _biomass_scale_value_from_x(self, mx: int) -> Optional[float]:
+        rect = self._biomass_scale_track_rect
+        if rect is None:
+            return None
+        rx, _ry, rw, _rh = rect
+        track_x = rx + 2
+        track_w = max(1, rw - 4)
+        frac = (mx - track_x) / float(track_w)
+        return self._biomass_scale_value_from_pos(frac)
+
     def _handle_click(self, pos) -> None:
         try:
             mx, my = pos
@@ -1847,6 +1916,12 @@ class LiveVisualizer:
             if v is not None:
                 self._neval_override = int(v)
                 self._dragging_neval = True
+            return
+        if self._hit_biomass_scale_slider(pos):
+            v = self._biomass_scale_value_from_x(mx)
+            if v is not None:
+                self._biomass_display_scale = float(v)
+                self._dragging_biomass_scale = True
             return
         # b0-slidrar: kolla först om klicket landade i en slider — då
         # initieras dragning och vi hoppar över övrig klick-routing.
@@ -2263,6 +2338,7 @@ class LiveVisualizer:
             "biomass": self._biomass,
             "totals": self._totals,
             "b0": self._b0,
+            "heatmap_vmax0": self._heatmap_vmax0,
             "loss_breakdown": self._loss_breakdown,
             "diet_breakdown": self._diet_breakdown,
             "action_fracs": self._action_fracs,
@@ -2277,6 +2353,7 @@ class LiveVisualizer:
         }
         self._totals = frame.get("totals", {})
         self._b0 = frame.get("b0", {})
+        self._heatmap_vmax0 = frame.get("heatmap_vmax0", self._heatmap_vmax0)
         self._loss_breakdown = frame.get("loss_breakdown", {})
         self._diet_breakdown = frame.get("diet_breakdown", {})
         self._action_fracs = frame.get("action_fracs", {})
@@ -2287,6 +2364,7 @@ class LiveVisualizer:
         self._biomass = saved["biomass"]
         self._totals = saved["totals"]
         self._b0 = saved["b0"]
+        self._heatmap_vmax0 = saved["heatmap_vmax0"]
         self._loss_breakdown = saved["loss_breakdown"]
         self._diet_breakdown = saved["diet_breakdown"]
         self._action_fracs = saved["action_fracs"]
@@ -2511,6 +2589,7 @@ class LiveVisualizer:
         self._screen.blit(lbl_surf, (x + 6, row2_y + 2))
         lo_surf = self._font.render(str(self._ticks_min), True, (150, 150, 160))
         hi_surf = self._font.render(str(self._ticks_max), True, (150, 150, 160))
+        _is_inference = str(self.mode).lower().startswith("infer")
         # Gemensam label-bredd så att Probe-ticks- och Perturbation-
         # ticks-slidrarna får exakt samma track-startposition (och
         # därmed samma längd). Vi mäter "Perturbation ticks"-etiketten
@@ -2527,14 +2606,19 @@ class LiveVisualizer:
         # (samma antipattern som redan fixad _draw_playback_bar:1968).
         _lbl2_preview_w = self._font.size(
             f"Perturbation ticks{marker2_preview} = {cur2_preview}")[0]
-        _label_w = max(lbl_surf.get_width(), _lbl2_preview_w)
+        _bio_label = f"Biomass scale = {self._biomass_display_scale:.2f}x"
+        _bio_label_w = self._font.size(_bio_label)[0] if _is_inference else 0
+        _label_w = max(lbl_surf.get_width(), _lbl2_preview_w, _bio_label_w)
         # Track-rect: börjar efter label (+ liten gutter), slutar före
         # hi-label (+ gutter). Mappar mot fönsterbredden.
         try:
             _lo2_preview_w = self._font.size(str(self._neval_min))[0]
         except Exception:
             _lo2_preview_w = lo_surf.get_width()
-        _lo_w = max(lo_surf.get_width(), _lo2_preview_w)
+        _bio_lo_txt = f"{self._biomass_scale_min:.2g}x"
+        _bio_hi_txt = f"{self._biomass_scale_max:.0f}x"
+        _bio_lo_w = self._font.size(_bio_lo_txt)[0] if _is_inference else 0
+        _lo_w = max(lo_surf.get_width(), _lo2_preview_w, _bio_lo_w)
         track_x = x + 6 + _label_w + 12 + _lo_w + 6
         # Begränsa sliderns högerkant så att den slutar där plot-rutan
         # börjar (annars sträcker den sig över hela fönsterbredden och
@@ -2546,7 +2630,6 @@ class LiveVisualizer:
         # Lämna plats för låsikon (16 px + 6 px gutter) mellan track och
         # hi-label. I inference-läget döljs låsikonerna och
         # n_eval_ticks-slidern helt, så ingen plats reserveras.
-        _is_inference = str(self.mode).lower().startswith("infer")
         if _is_inference:
             # Tvinga ticks-slidern olåst när låset inte är synligt.
             self._ticks_locked = False
@@ -2562,7 +2645,8 @@ class LiveVisualizer:
             _hi2_preview_w = self._font.size(str(self._neval_max))[0]
         except Exception:
             _hi2_preview_w = hi_surf.get_width()
-        _hi_w = max(hi_surf.get_width(), _hi2_preview_w)
+        _bio_hi_w = self._font.size(_bio_hi_txt)[0] if _is_inference else 0
+        _hi_w = max(hi_surf.get_width(), _hi2_preview_w, _bio_hi_w)
         right_limit = (plot_left - (_hi_w + 6) - 4
                        - (lock_size + lock_gutter))
         track_w_max = right_limit - track_x
@@ -2617,7 +2701,47 @@ class LiveVisualizer:
         if _is_inference:
             self._neval_track_rect = None
             self._neval_lock_rect = None
+            row3_y = y + 40
+            row3_h = 18
+            bio_lbl = self._font.render(
+                f"Biomass scale = {self._biomass_display_scale:.2f}x",
+                True, (210, 210, 220))
+            lo3_surf = self._font.render(_bio_lo_txt, True, (150, 150, 160))
+            hi3_surf = self._font.render(_bio_hi_txt, True, (150, 150, 160))
+            self._screen.blit(bio_lbl, (x + 6, row3_y + 2))
+            track3_y = row3_y + (row3_h - 6) // 2
+            track3_h = 6
+            self._screen.blit(lo3_surf,
+                              (track_x - 6 - lo3_surf.get_width(),
+                               row3_y + 2))
+            self._screen.blit(hi3_surf,
+                              (track_x + track_w + 6, row3_y + 2))
+            pg.draw.rect(self._screen, (60, 60, 70),
+                         (track_x, track3_y, track_w, track3_h))
+            pg.draw.rect(self._screen, (110, 110, 125),
+                         (track_x, track3_y, track_w, track3_h), 1)
+            try:
+                df3 = self._biomass_scale_pos_from_value(1.0)
+                dx3 = int(track_x + df3 * (track_w - 1))
+                pg.draw.line(self._screen, (140, 140, 150),
+                             (dx3, track3_y - 2),
+                             (dx3, track3_y + track3_h + 2), 1)
+            except Exception:
+                pass
+            try:
+                frac3 = self._biomass_scale_pos_from_value(
+                    self._biomass_display_scale)
+            except Exception:
+                frac3 = self._biomass_scale_pos_from_value(1.0)
+            hx3 = int(track_x + frac3 * (track_w - 1))
+            pg.draw.circle(self._screen, (120, 205, 170),
+                           (hx3, track3_y + track3_h // 2), 6)
+            pg.draw.circle(self._screen, (40, 40, 50),
+                           (hx3, track3_y + track3_h // 2), 6, 1)
+            self._biomass_scale_track_rect = (
+                track_x - 2, track3_y - 6, track_w + 4, track3_h + 12)
             return
+        self._biomass_scale_track_rect = None
         # Identisk layout som ticks-slidern men med "n_eval_ticks" som
         # label. Aktiv främst under träning; värdet konsumeras av
         # train.py mellan ARS-iterationer.
@@ -2901,9 +3025,15 @@ class LiveVisualizer:
             return
 
         v = arr.astype(np.float32, copy=False)
+        raw_vmax = float(self._heatmap_vmax0.get(fid, 0.0) or 0.0)
+        if raw_vmax <= 1e-12:
+            raw_vmax = float(np.max(v)) if v.size else 0.0
+        raw_vmax = max(raw_vmax * float(self._biomass_display_scale), 1e-12)
         if self._log_heatmap:
             v = np.log1p(np.maximum(v, 0.0))
-        vmax = float(v.max())
+            vmax = float(np.log1p(raw_vmax))
+        else:
+            vmax = raw_vmax
         if vmax <= 1e-12:
             idx = np.zeros_like(v, dtype=np.uint8)
         else:
@@ -2925,8 +3055,10 @@ class LiveVisualizer:
 
         # ---- Colorbar legend under the heatmap ----------------------------
         # Per-FG normalisation: shows what the colour gradient maps to,
-        # from 0 (left, dark) to vmax (right, bright). vmax reflects the
-        # *current* per-FG max biomass in this tick (log1p when hm:log is on).
+        # from 0 (left, dark) to the rollout-start per-cell max times the
+        # global biomass display scale. It intentionally stays fixed over
+        # time so near-extinct species remain dark instead of being
+        # re-expanded to full yellow.
         cbar_y = hm_y + H * self.cell_px + 3
         cbar_w = W * self.cell_px
         cbar_strip_h = 6
@@ -2949,7 +3081,7 @@ class LiveVisualizer:
         lbl_col = (170, 170, 180) if not dim else (90, 90, 95)
         zero_lbl = self._font.render("0", True, lbl_col)
         self._screen.blit(zero_lbl, (hm_x, cbar_y + cbar_strip_h + 1))
-        max_txt = self._fmt_compact(vmax)
+        max_txt = self._fmt_compact(raw_vmax)
         if self._log_heatmap:
             max_txt = f"log1p≤{max_txt}"
         max_lbl = self._font.render(max_txt, True, lbl_col)
@@ -3232,7 +3364,12 @@ class LiveVisualizer:
         active = self._tabs[self._active_tab]
         buffers = self._series[active]
         base_label = self._tab_labels.get(active, active)
-        if active == "reward" and self._log_plot:
+        use_log_plot = bool(self._log_plot and active != "biomass")
+        if active == "biomass":
+            ylabel = (
+                f"{base_label}  display max = "
+                f"{100.0 * float(self._biomass_display_scale):.0f}%")
+        elif active == "reward" and use_log_plot:
             ylabel = "reward (log10 ratio)"
         else:
             ylabel = base_label
@@ -3339,29 +3476,33 @@ class LiveVisualizer:
                 if xmax - xmin < 1:
                     xmax = xmin + 1
 
-            # Y-range: bara från punkter inom det synliga x-intervallet så
-            # skalan följer det som faktiskt syns i fönstret.
-            all_vals: list = []
-            for fid in active_ids:
-                if self._solo is not None and self._solo != fid:
-                    continue
-                if not self._plot_enabled.get(fid, True):
-                    continue
-                for s, v in buffers[fid]:
-                    if xmin <= s <= xmax:
-                        all_vals.append(v)
-            if not all_vals:
-                have_data = False
+            if active == "biomass":
+                ymin = 0.0
+                ymax = max(1.0, 100.0 * float(self._biomass_display_scale))
             else:
-                arr = np.asarray(all_vals, dtype=np.float64)
-                if self._log_plot:
-                    arr = np.sign(arr) * np.log10(np.abs(arr) + 1e-12)
-                ymin = float(arr.min())
-                ymax = float(arr.max())
-                if not np.isfinite(ymin) or not np.isfinite(ymax):
+                # Y-range: bara från punkter inom det synliga x-intervallet så
+                # skalan följer det som faktiskt syns i fönstret.
+                all_vals: list = []
+                for fid in active_ids:
+                    if self._solo is not None and self._solo != fid:
+                        continue
+                    if not self._plot_enabled.get(fid, True):
+                        continue
+                    for s, v in buffers[fid]:
+                        if xmin <= s <= xmax:
+                            all_vals.append(v)
+                if not all_vals:
                     have_data = False
-                elif ymax - ymin < 1e-9:
-                    ymax = ymin + 1.0
+                else:
+                    arr = np.asarray(all_vals, dtype=np.float64)
+                    if use_log_plot:
+                        arr = np.sign(arr) * np.log10(np.abs(arr) + 1e-12)
+                    ymin = float(arr.min())
+                    ymax = float(arr.max())
+                    if not np.isfinite(ymin) or not np.isfinite(ymax):
+                        have_data = False
+                    elif ymax - ymin < 1e-9:
+                        ymax = ymin + 1.0
 
         if have_data:
             # Y-axis tick labels (5 st: max, 3/4, mid, 1/4, min).
@@ -3375,7 +3516,8 @@ class LiveVisualizer:
                 yy = int(py0 + frac * ph)
                 pg.draw.line(self._screen, (50, 50, 60),
                              (px0, yy), (px0 + pw, yy), 1)
-                lab = self._font.render(f"{val:+.3g}", True, (160, 160, 170))
+                lab_txt = f"{val:.3g}" if active == "biomass" else f"{val:+.3g}"
+                lab = self._font.render(lab_txt, True, (160, 160, 170))
                 self._screen.blit(lab, (x + 2, yy - 7))
 
             # Zero line if in range.
@@ -3411,7 +3553,7 @@ class LiveVisualizer:
                 for k in range(start_i, end_i + 1):
                     step, val = buf[k]
                     v = val
-                    if self._log_plot:
+                    if use_log_plot:
                         v = float(np.sign(v) * np.log10(abs(v) + 1e-12))
                     fx = (step - xmin) / (xmax - xmin)
                     fy = (ymax - v) / (ymax - ymin)
@@ -3422,6 +3564,10 @@ class LiveVisualizer:
                         xi = px0
                     elif xi > px0 + pw:
                         xi = px0 + pw
+                    if yi < py0:
+                        yi = py0
+                    elif yi > py0 + ph:
+                        yi = py0 + ph
                     pts.append((xi, yi))
                 if len(pts) < 2:
                     continue
