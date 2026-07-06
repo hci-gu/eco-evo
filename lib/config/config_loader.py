@@ -623,7 +623,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # ``{sid}_observes_{other_id}`` with ``observes: True``. Observed FGs
         # that are muted are intentionally KEPT in the list (the policy still
         # gets an input slot for them, fed with 0 at runtime — see
-        # EcosystemEnvironment._build_static_caches). If no observability
+        # EcosystemEnvironment.build_static_caches). If no observability
         # entries exist for this sid (legacy projects), we fall back to "see
         # everything" for backward compatibility.
         observes_list = []

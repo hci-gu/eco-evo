@@ -23,7 +23,9 @@ def run_sim(with_noise=False, ticks=40):
     
     history = {fid: [] for fid in env.fgs}
     for t in range(ticks):
-        env.step()
+        observation = env.get_observation()
+        actions = env.policy_controller.forward(observation)
+        env.step(actions)
         for fid, fg in env.fgs.items():
             history[fid].append(fg.biomass.sum())
     return history

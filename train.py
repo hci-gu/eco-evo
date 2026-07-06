@@ -469,14 +469,12 @@ class _ProbeEnvBuilder:
         self._apply_b0 = _apply_b0
         self._apply_spawn = _apply_spawn
         self._load_spawn_tpls = _load_spawn_tpls
-        # Per-FG b0-overrides (ton) som ska appliceras innan första env.step().
-        # Sätts av ``_probe_biomass`` strax innan varje probe-anrop utifrån
-        # viz.get_b0_overrides(); tomt dict = ingen override.
+        # Per-FG b0 overrides in tons, set by ``_probe_biomass`` from
+        # ``viz.get_b0_overrides()`` before each probe call.
         self.b0_overrides: dict = {}
-        # Per-FG spawn-strategi-overrides från visualiseraren. Samma
-        # struktur som inference.py:s ``apply_spawn_overrides`` förväntar:
-        # ``{fid: {"mode": <m>, "template": <name>}}``. Tomt = inga
-        # overrides (projektfilens spawn används).
+        # Per-FG spawn strategy overrides from the visualizer. The structure
+        # matches ``inference.apply_spawn_overrides``:
+        # ``{fid: {"mode": <m>, "template": <name>}}``.
         self.spawn_overrides: dict = {}
 
     def __call__(self, seed=None):
@@ -515,18 +513,15 @@ class _ProbeEnvBuilder:
             if field is None:
                 field = np.zeros((H, W), dtype=np.float32)
             env.grid.add_map(iv, field)
-        # Applicera ev. b0-overrides från visualiseraren innan första
-        # env.step(). Skalar varje FG:s biomass-fält så totalsumman möter
-        # slider-värdet (spatial form bevarad).
+        # Apply visualizer b0 overrides before the first environment
+        # transition, preserving each FG's spatial biomass distribution.
         if self.b0_overrides:
             try:
                 self._apply_b0(env, self.b0_overrides)
             except Exception:
                 pass
-        # Applicera ev. spawn-strategi-overrides från visualiserarens
-        # per-heatmap-dropdowns. Görs EFTER b0-skalningen så totala
-        # biomassan är den användaren förväntar sig och endast den
-        # spatiala fördelningen byts ut.
+        # Apply visualizer spawn-strategy overrides after b0 scaling so only
+        # the spatial distribution changes.
         if self.spawn_overrides:
             try:
                 tpls = (self._load_spawn_tpls(self.project_path)
@@ -555,9 +550,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     when ``compact`` is True, prints a single-line summary to stdout.
     """
     import json
-    # Hämta aktuella b0-overrides från visualiseraren (om någon viz är
-    # ansluten) och stoppa in dem i probe_builder så de appliceras innan
-    # första env.step(). Tomt/ingen viz = ingen override.
+    # Pull current visualizer b0 overrides into the probe builders before
+    # their first environment transition.
     if viz is not None:
         try:
             overrides = viz.get_b0_overrides()
@@ -598,7 +592,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
 
     # Freeze obs-norm stats (same path as _evaluate / _evaluate_coevo).
     if trainer.obs_normalize and trainer.obs_stats:
-        env._build_static_caches()
+        env.build_static_caches()
         dm_ids = list(env.dm_ids)
         # Build (N_dm, D) stacks aligned with env.dm_ids; fall back to
         # mean=0/var=1 for DMs without stats yet (first iteration).
@@ -638,7 +632,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     #
     # ``rnd_env_for_fid`` maps each reported _rnd-FG -> the env whose state
     # should be read for that FG's curves. ``unique_rnd_envs`` is the list
-    # of distinct envs to ``.step()`` each tick (1 for 'all', N for 'solo').
+    # of distinct envs to transition each tick (1 for 'all', N for 'solo').
     rnd_env = None
     rnd_env_for_fid = {}
     unique_rnd_envs = []
@@ -655,7 +649,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 of DM-FG ids) act uniformly at random; the remaining DMs
                 use ``trainer.policies``. Frozen obs-norm from main env."""
                 e = rnd_builder()
-                e._build_static_caches()
+                e.build_static_caches()
                 out_dim = 5 + e.N_all
                 in_dim = (env.obs_mean.shape[1]
                           if getattr(env, 'obs_mean', None) is not None
@@ -775,7 +769,9 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     n_ticks_done = 0
     rnd_n_ticks_done = 0
     for _t in range(int(n_ticks)):
-        env.step()
+        observation = env.get_observation()
+        actions = env.policy_controller.forward(observation)
+        env.step(actions)
         n_ticks_done += 1
         for fid in fg_ids:
             b_sum[fid] += float(env.fgs[fid].biomass.sum())
@@ -788,7 +784,9 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 # this is a single env; in 'solo' mode it's N envs (one
                 # per DM-FG). Ordering is stable across ticks.
                 for _re in unique_rnd_envs:
-                    _re.step()
+                    observation = _re.get_observation()
+                    actions = _re.policy_controller.forward(observation)
+                    _re.step(actions)
                 rnd_n_ticks_done += 1
                 # Read per-FG state from its designated reporting env.
                 for fid, _re in rnd_env_for_fid.items():

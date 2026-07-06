@@ -222,8 +222,8 @@ class ARSTrainer:
         env = self.env_builder()
         env.policies = self.policies
         # Trigger lazy build by running a single forward pass through
-        # _build_static_caches without stepping the simulation.
-        env._build_static_caches()
+        # build_static_caches without stepping the simulation.
+        env.build_static_caches()
         D = int(env.max_in_dim)
         return list(env.dm_ids), D
 
@@ -644,7 +644,7 @@ class ARSTrainer:
         if obs_mean is not None and obs_var is not None:
             # Reorder if env.dm_ids differs from dm_ids_for_norm; in practice
             # both come from the same config, but guard against future changes.
-            env._build_static_caches()
+            env.build_static_caches()
             if dm_ids_for_norm == env.dm_ids:
                 env.obs_mean = obs_mean
                 env.obs_var = obs_var
@@ -672,7 +672,9 @@ class ARSTrainer:
         if self.integral_reward and n_ticks > 0:
             b_sum = 0.0; r_sum = 0.0
             for t in range(n_ticks):
-                env.step()
+                observation = env.get_observation()
+                actions = env.policy_controller.forward(observation)
+                env.step(actions)
                 b_cur = float(env.fgs[fg_id].biomass.sum())
                 r_cur = float(env.fgs[fg_id].energy_reserve.sum())
                 b_sum += b_cur
@@ -685,7 +687,9 @@ class ARSTrainer:
             rh = r_sum / n_ticks
         else:
             for t in range(n_ticks):
-                env.step()
+                observation = env.get_observation()
+                actions = env.policy_controller.forward(observation)
+                env.step(actions)
                 if t_survive == n_ticks:
                     b_cur = float(env.fgs[fg_id].biomass.sum())
                     if b_cur < b_thr:
@@ -762,7 +766,7 @@ class ARSTrainer:
         env.softmax_temperature = float(self.softmax_temperature)
 
         if obs_mean is not None and obs_var is not None:
-            env._build_static_caches()
+            env.build_static_caches()
             if dm_ids_for_norm == env.dm_ids:
                 env.obs_mean = obs_mean
                 env.obs_var = obs_var
@@ -787,7 +791,9 @@ class ARSTrainer:
             b_sum = {fid: 0.0 for fid in fg_list}
             r_sum = {fid: 0.0 for fid in fg_list}
             for t in range(n_ticks):
-                env.step()
+                observation = env.get_observation()
+                actions = env.policy_controller.forward(observation)
+                env.step(actions)
                 for fid in fg_list:
                     b_cur = float(env.fgs[fid].biomass.sum())
                     r_cur = float(env.fgs[fid].energy_reserve.sum())
@@ -801,7 +807,9 @@ class ARSTrainer:
             rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
         else:
             for t in range(n_ticks):
-                env.step()
+                observation = env.get_observation()
+                actions = env.policy_controller.forward(observation)
+                env.step(actions)
                 for fid in fg_list:
                     if t_survive[fid] == n_ticks:
                         b_cur = float(env.fgs[fid].biomass.sum())

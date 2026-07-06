@@ -48,7 +48,7 @@ def build_environment():
         True
     )
 
-    env._build_static_caches()
+    env.build_static_caches()
     output_dim = 5 + env.N_all
     env.policies = {fid: RandomPolicy(output_dim) for fid in env.dm_ids}
     env._batched_ready = False
@@ -127,7 +127,7 @@ def main():
         viz.begin_rollout_recording()
         push_visual_frame(0)
         for tick in range(1, TICKS + 1):
-            env.step()
+            env.tick()
             push_visual_frame(tick)
             update_action_fractions(viz, env, tick, previous_actions)
             if not viz.pump_events():

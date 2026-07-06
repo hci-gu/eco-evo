@@ -147,7 +147,7 @@ def _evaluate_coevo_task(task):
     env.softmax_temperature = float(softmax_temperature)
 
     if obs_pack is not None:
-        env._build_static_caches()
+        env.build_static_caches()
         dm_ids = obs_pack['dm_ids']
         mean = obs_pack['mean']
         var = obs_pack['var']
@@ -175,7 +175,9 @@ def _evaluate_coevo_task(task):
         b_sum = {fid: 0.0 for fid in fg_list}
         r_sum = {fid: 0.0 for fid in fg_list}
         for t in range(n_ticks):
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             for fid in fg_list:
                 b_cur = float(env.fgs[fid].biomass.sum())
                 r_cur = float(env.fgs[fid].energy_reserve.sum())
@@ -189,7 +191,9 @@ def _evaluate_coevo_task(task):
         rh = {fid: r_sum[fid] / n_ticks for fid in fg_list}
     else:
         for t in range(n_ticks):
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             for fid in fg_list:
                 if t_survive[fid] == n_ticks:
                     b_cur = float(env.fgs[fid].biomass.sum())
@@ -322,7 +326,7 @@ def _evaluate_task(task):
 
     # Install obs-normalisation stats if provided.
     if obs_pack is not None:
-        env._build_static_caches()
+        env.build_static_caches()
         dm_ids = obs_pack['dm_ids']
         mean = obs_pack['mean']
         var = obs_pack['var']
@@ -348,7 +352,9 @@ def _evaluate_task(task):
     if integral_reward and n_ticks > 0:
         b_sum = 0.0; r_sum = 0.0
         for t in range(n_ticks):
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             b_cur = float(env.fgs[fg_to_train].biomass.sum())
             r_cur = float(env.fgs[fg_to_train].energy_reserve.sum())
             b_sum += b_cur
@@ -361,7 +367,9 @@ def _evaluate_task(task):
         rh = r_sum / n_ticks
     else:
         for t in range(n_ticks):
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             if t_survive == n_ticks:
                 b_cur = float(env.fgs[fg_to_train].biomass.sum())
                 if b_cur < b_thr:

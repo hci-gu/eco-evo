@@ -329,14 +329,12 @@ def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
 
 
 def apply_b0_overrides(env, b0_overrides):
-    """Skala om varje FG:s spawnade biomass-fält så att totalsumman
-    matchar det användardefinierade ``b0_overrides[fg_id]`` (ton).
+    """Scale spawned biomass fields to user-provided b0 totals in tons.
 
-    Bevarar den spatiala fördelningen (formen). FGs som saknas i
-    ``b0_overrides`` eller har None lämnas orörda. Om en FG:s nuvarande
-    totalsumma är 0 (tom karta) sprids målvärdet jämnt över alla celler.
-    Anropas direkt efter att env är byggd och innan första
-    ``env.step()`` så ``b0``-baseline blir det nya värdet.
+    Spatial distribution is preserved. FGs missing from ``b0_overrides`` or
+    set to ``None`` are left unchanged. Empty fields receive a uniform
+    distribution. Call this before the first environment transition so the
+    ``b0`` baseline uses the overridden value.
     """
     if not b0_overrides:
         return
@@ -456,7 +454,7 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     project's decision makers, or if any checkpoint has an incompatible
     architecture (e.g. trained on a different grid / FG set / hidden size).
     """
-    env._build_static_caches()
+    env.build_static_caches()
     dm_ids = list(env.dm_ids)
     N_all = env.N_all
     N_dm = env.N_dm
@@ -665,11 +663,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     env.obs_mean = obs_mean
     env.obs_var = obs_var
     # Rebuild batched weight tensors used by the fast inference path.
-    env._rebuild_batched_weights()
+    env.rebuild_batched_weights()
 
     # Install uniform-random policies on the parallel baseline env, if any.
     if rnd_env is not None:
-        rnd_env._build_static_caches()
+        rnd_env.build_static_caches()
         out_dim_rnd = 5 + rnd_env.N_all
         in_dim_rnd = env.obs_mean.shape[1] if env.obs_mean.ndim == 2 else 0
         rnd_env.policies = {
@@ -705,9 +703,13 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             pass
     for t in range(n_ticks):
         try:
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             if rnd_env is not None:
-                rnd_env.step()
+                rnd_observation = rnd_env.get_observation()
+                rnd_actions = rnd_env.policy_controller.forward(rnd_observation)
+                rnd_env.step(rnd_actions)
         except KeyboardInterrupt:
             if verbose:
                 print(f"\n    interrupted at tick {t+1}/{n_ticks}; "
@@ -723,35 +725,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 er = getattr(fg, 'energy_reserve', None)
                 rnd_energy_history[fid].append(
                     float(er.sum()) if er is not None else 0.0)
-        # Avbryt loopen tidigt om all biomassa har kollapsat till 0 i
-        # samtliga FG (och, om rnd_env används, även där). Annars fortsätter
-        # visualiseringen att uppdateras med b = 0.00 tick efter tick utan
-        # att något kan hända i ekosystemet. Den sista frame:n som ritats
-        # speglar redan kollapsen; vi gör en sista paint nedan och stannar.
-        # Använd en absolut epsilon-tröskel i stället för == 0. När all
-        # biomassa kollapsar lämnar upprepad multiplikation med decay-
-        # faktorer kvar float32-subnormaler (ned mot ~1.4e-45) som aldrig
-        # når exakt 0. Sådana värden saknar biologisk innebörd men gör att
-        # heatmapens normalisering (max-värde per frame) fortsätter
-        # fluktuera vilt mellan subnormaler.
-        #
-        # ``DEAD_EPS`` sätts till 50 % av minsta positiva ``min_split_biomass``
-        # över alla FG i env (lagras i ton i ``FunctionalGroup``, dvs kg/1000).
-        # Det är den minsta odelbara enheten i ekosystemet: när total biomass
-        # underskrider halva den nivån finns inte ens en halv odelbar individ
-        # kvar någonstans, och rollouten kan tryggt avbrytas. Om ingen FG har
-        # ``min_split_biomass > 0`` (helt kontinuerligt läge) faller vi tillbaka
-        # på en liten numerisk tröskel som bara fångar float32-subnormaler.
-        #
-        # OBS: detta är enbart en *rollout-termineringsregel* för
-        # visualiseringen. Den kompletterar — men överlappar inte —
-        # ``EcosystemEnvironment._apply_extinction_threshold`` (se
-        # ``lib/environments/ecosystem.py``), som per FG och per cell
-        # nollställer biomassa när ``0 < B < extinction_threshold_factor
-        # * min_split_biomass`` (default 0.5). Den mekanismen kör redan
-        # inne i ``env.step()`` för både träning och inference; här bryter
-        # vi bara loopen när totalen är så låg att inte ens en halv
-        # odelbar individ finns kvar någonstans.
+        # Stop visualization once all tracked biomass has collapsed. Use an
+        # absolute epsilon instead of exact zero because repeated float32
+        # decay can leave subnormal values with no biological meaning.
+        # When min-split biomass exists, half of the smallest min-split value
+        # is the cutoff; otherwise only float32 residue is ignored.
         _msb_values = [
             float(getattr(fg, 'min_split_biomass', 0.0))
             for fg in env.fgs.values()
@@ -1091,14 +1069,11 @@ def main():
                                 verbose=False,
                                 apply_natural_mortality=(args.mortality == "on"),
                                 migration=(args.migration == "on"))
-                # Återbygg de statiska caches som ``load_policies_and_stats``
-                # satte upp i runda 1 (N_dm, N_all, dm_ids, per_dm_in_dim,
-                # max_in_dim m.fl.). Utan dessa kraschar
-                # ``_rebuild_batched_weights`` med ``AttributeError: N_dm``.
-                env._build_static_caches()
-            # b0-overrides från slidrarna (om viz finns) appliceras på env
-            # innan första env.step() — total biomass per FG skalas så
-            # totalsumman matchar slider-värdet. Bevarar spatial form.
+                # Rebuild the static cache fields needed before refreshing
+                # batched policy weights.
+                env.build_static_caches()
+            # Apply visualizer b0 overrides before the first environment
+            # transition, preserving each FG's spatial biomass distribution.
             b0_overrides = (viz.get_b0_overrides() if viz is not None else {})
             if b0_overrides:
                 apply_b0_overrides(env, b0_overrides)

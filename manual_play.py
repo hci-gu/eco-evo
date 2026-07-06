@@ -94,7 +94,7 @@ def build_environment():
         True,
     )
 
-    env._build_static_caches()
+    env.build_static_caches()
     put_gadoids_in_center(env)
 
     output_dim = 5 + env.N_all
@@ -317,7 +317,9 @@ def main():
                 before_biomass = float(env.fgs[CONTROLLED_FG].biomass.sum())
                 env.policies[CONTROLLED_FG].set_action(action_index)
                 last_action = action_label
-                env.step()
+                observation = env.get_observation()
+                actions = env.policy_controller.forward(observation)
+                env.step(actions)
                 tick += 1
                 update_visualization(viz, env, tick, start_biomass,
                                      start_energy, previous_actions,

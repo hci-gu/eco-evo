@@ -448,7 +448,7 @@ def validate_pressures(request: dict[str, Any], masks_by_id: dict[str, np.ndarra
                 422,
                 "UNSUPPORTED_PRESSURE",
                 "Only pressures active for the entire run are currently supported.",
-                {"todo": "Add per-step pressure schedule application inside EcosystemEnvironment.step()."},
+                {"todo": "Add pressure schedule application inside the environment transition."},
             )
 
         scope = pressure.get("scope") or {}
@@ -543,7 +543,7 @@ def _run_one_replicate(
     env.policies = dict(policies)
     env.obs_mean = obs_mean
     env.obs_var = obs_var
-    env._rebuild_batched_weights()
+    env.rebuild_batched_weights()
 
     viz = None
     if visualize:
@@ -625,7 +625,9 @@ def _run_one_replicate(
         update_progress(0, force_log=True)
         update_visual(0)
         for step in range(1, max_steps + 1):
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             if step % sample_every == 0:
                 sample(step)
             update_progress(step)

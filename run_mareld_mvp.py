@@ -34,7 +34,9 @@ def main():
     for t in range(100):
         if t % 10 == 0:
             print(f"Tick {t}...")
-        env.step()
+        observation = env.get_observation()
+        actions = env.policy_controller.forward(observation)
+        env.step(actions)
         for fid, fg in env.fgs.items():
             history[fid].append(fg.biomass.sum())
             
