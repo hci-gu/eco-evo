@@ -10,7 +10,7 @@ if _ROOT not in sys.path:
 
 from lib.environments.ecosystem import EcosystemEnvironment  # noqa: E402
 from lib.environments.ecosystem_env.constants import MOVE_SLICE, NORTH  # noqa: E402
-from lib.environments.ecosystem_env import impacts, movement, population_change, predation  # noqa: E402
+from lib.environments.ecosystem_env import movement, population_change, predation  # noqa: E402
 from lib.environments.ecosystem_env.state import (  # noqa: E402
     ActionProbabilities,
     ActionSettlement,
@@ -61,22 +61,6 @@ def test_cache_keeps_edge_moves_available_when_migration_enabled():
     assert np.all(env.move_mask[2, -1, :] == 1.0)
     assert np.all(env.move_mask[1, :, -1] == 1.0)
     assert np.all(env.move_mask[3, :, 0] == 1.0)
-
-
-def test_impact_table_is_sorted_and_interpolated():
-    table = impacts.extract_impact_table({
-        "impact_affects": True,
-        "impact_table": [
-            {"value": 10, "biomass_factor": 0.4, "energy_factor": 0.2},
-            {"value": 0, "biomass_factor": 0.0, "energy_factor": 0.0},
-        ],
-    })
-
-    biomass, energy = impacts.interp_impact(
-        table, np.asarray([0.0, 5.0, 10.0, 20.0], dtype=np.float32))
-
-    assert biomass.tolist() == pytest.approx([0.0, 0.2, 0.4, 0.4])
-    assert energy.tolist() == pytest.approx([0.0, 0.1, 0.2, 0.2])
 
 
 def test_population_change_clears_nonviable_biomass_and_empty_energy():

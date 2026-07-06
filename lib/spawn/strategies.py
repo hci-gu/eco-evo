@@ -329,35 +329,31 @@ def weights_colony(grid_size: Tuple[int, int],
                    params: dict,
                    rng: np.random.Generator,
                    context: Optional[dict] = None) -> np.ndarray:
-    """N kolonicentrum, gaussian-utsmetade. Avsedd för topp-predatorer.
+    """N Gaussian-smoothed colony centers, primarily for top predators.
 
-    Adresserar frusen-topp-predator-fyndet: 12 t porpoises på 24 utspridda
-    celler ger ingen rörelse-frihet; samma 12 t på 1 koloni à 5–10 sammanhängande
-    celler ger en meningsfull lokal patch som policy `move` kan agera på.
+    A small total biomass spread across many isolated cells gives the policy
+    little useful movement signal. Concentrating the same biomass into one or
+    more contiguous patches gives `move` a meaningful local gradient.
 
     Params:
-        n_colonies (int):       antal kolonicentrum (default 3).
-        sigma_cells (float):    gaussian-spridning per koloni i celler (default 2.0).
+        n_colonies (int):       number of colony centers (default 3).
+        sigma_cells (float):    Gaussian spread per colony in cells (default 2.0).
         anchor (str):           'free' | 'coast' | 'open_water'. Default 'free'.
-                                NOTE: djup-baserade ankare ('coast'/'open_water')
-                                accepteras som parameter men påverkar inte
-                                centrum-valet just nu — depth_map konsumeras
-                                inte. Implementeras i ett senare steg när en
-                                officiell depth-karta finns att referera till.
+                                Depth-based anchors are accepted but currently
+                                do not affect center selection because no
+                                depth map is consumed here.
         amplitude_mode (str):   'uniform' (default, legacy) | 'jitter'.
-                                I 'jitter'-läge får varje koloni en
-                                oberoende centrum-amplitud Uniform(
-                                amplitude_min, amplitude_max) och kolonier
-                                kombineras med max (ej summa). Fältet
-                                returneras *utan* sum-normalisering så
-                                amplituderna bevaras i [0, amplitude_max].
-                                Avsett för impacts (ljudkällor m.m.) där
-                                varje källa har en egen styrka och summa-
-                                bevarande inte är meningsfullt.
-        amplitude_min (float):  Undre gräns för per-centrum-amplitud i
-                                'jitter'-läge, relativt vmax (default 0.0).
-        amplitude_max (float):  Övre gräns för per-centrum-amplitud i
-                                'jitter'-läge, relativt vmax (default 1.0).
+                                In 'jitter' mode each colony receives an
+                                independent center amplitude drawn from
+                                Uniform(amplitude_min, amplitude_max), and
+                                colonies are combined with max instead of
+                                sum. The field is returned without
+                                sum-normalization so amplitudes are preserved
+                                in [0, amplitude_max].
+        amplitude_min (float):  lower per-center amplitude bound in
+                                'jitter' mode, relative to vmax (default 0.0).
+        amplitude_max (float):  upper per-center amplitude bound in
+                                'jitter' mode, relative to vmax (default 1.0).
     """
     p = _apply_grid_scaling(params, context)
     H, W = grid_size

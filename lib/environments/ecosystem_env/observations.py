@@ -30,20 +30,6 @@ def build_observation_batch(env):
     )
     visible_biomass_all = biomass_all * visible_fraction
 
-    impact_layers = []
-    for impact_id in env.observable_impact_vars:
-        map_data = env.grid.get_map(impact_id)
-        if map_data is None:
-            map_data = np.zeros((H, W), dtype=env.dtype)
-        else:
-            map_data = map_data.astype(env.dtype, copy=False)
-        impact_layers.append(map_data)
-
-    impact_shifts = {
-        direction: [shift_field(layer, direction) for layer in impact_layers]
-        for direction in DIRECTIONS
-    }
-
     max_dim = int(env.max_in_dim)
     obs = np.zeros((env.N_dm, max_dim, H, W), dtype=env.dtype)
 
@@ -59,15 +45,13 @@ def build_observation_batch(env):
         else:
             observed_biomass = np.zeros((0, H, W), dtype=env.dtype)
 
-        center_dim = 2 + n_other + len(impact_layers)
-        neighbor_dim = 1 + n_other + len(impact_layers)
+        center_dim = 2 + n_other
+        neighbor_dim = 1 + n_other
 
         obs[i, 0] = own_biomass
         obs[i, 1] = own_energy
         if n_other > 0:
             obs[i, 2:2 + n_other] = observed_biomass
-        for k, layer in enumerate(impact_layers):
-            obs[i, 2 + n_other + k] = layer
 
         for direction_index, direction in enumerate(DIRECTIONS):
             base = center_dim + direction_index * neighbor_dim
@@ -76,7 +60,5 @@ def build_observation_batch(env):
                 for k in range(n_other):
                     obs[i, base + 1 + k] = shift_field(
                         observed_biomass[k], direction)
-            for k, shifted_layer in enumerate(impact_shifts[direction]):
-                obs[i, base + 1 + n_other + k] = shifted_layer
 
     return obs.transpose(0, 2, 3, 1).reshape(env.N_dm, H * W, max_dim)

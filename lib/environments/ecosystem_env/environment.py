@@ -3,8 +3,6 @@ import numpy as np
 from lib.world.grid import Grid
 from lib.environments.ecosystem_env import (
     decisions,
-    grid_masks,
-    impacts,
     movement,
     policies as policy_module,
     population_change,
@@ -19,7 +17,6 @@ class EcosystemEnvironment:
         grid_config,
         functional_groups,
         policies=None,
-        observable_impact_vars=None,
         apply_natural_mortality=True,
         migration=False,
     ):
@@ -29,7 +26,6 @@ class EcosystemEnvironment:
         self.fgs = functional_groups
         self.policies = policies or {}
         self.policy_controller = policy_module.PolicyController(self)
-        self.observable_impact_vars = list(observable_impact_vars or [])
         self.tick_count = 0
         self.global_fg_order = sorted(self.fgs.keys())
         self._static_built = False
@@ -48,10 +44,10 @@ class EcosystemEnvironment:
             for fid, fg in self.fgs.items()
         }
 
-        self.loss_impact = {fid: 0.0 for fid in self.fgs}
         self.loss_predation = {fid: 0.0 for fid in self.fgs}
         self.loss_starvation = {fid: 0.0 for fid in self.fgs}
         self.intake_by_pred_prey = {fid: {} for fid in self.fgs}
+        self.build_static_caches()
 
     def build_static_caches(self):
         state.build_static_caches(self)
@@ -63,13 +59,9 @@ class EcosystemEnvironment:
         return decisions.build_observation(self)
 
     def step(self, actions):
-        if not self._static_built:
-            self.build_static_caches()
-
         self.ordered_fg_ids = list(self.fgs.keys())
         np.random.shuffle(self.ordered_fg_ids)
 
-        # impacts.apply_impact_mortality(self) currently just empty maps so we can skip it for now
         predation.apply_predation(self, actions)
         action_settlement = movement.apply_energy_costs(self, actions)
         movement.apply_movement(self, action_settlement)

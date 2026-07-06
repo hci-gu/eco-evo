@@ -88,10 +88,9 @@ def build_environment():
             "tick_duration": 6.0,
         },
         fgs,
-        None,
-        None,
-        None,
-        True,
+        policies=None,
+        apply_natural_mortality=False,
+        migration=True,
     )
 
     env.build_static_caches()

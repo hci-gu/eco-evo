@@ -78,14 +78,13 @@ class ARSTrainer:
         else:
             self.top_deltas = max(1, min(int(top_deltas), self.n_deltas))
 
-        # STEP 3 (multi-world averaging): per-iteration world list, set
-        # externally by train.py. Each entry is (impact_seed, spawn_seed)
-        # describing one of the M independent worlds that every delta-pair
-        # is evaluated against. Empty list -> legacy single-world path
-        # (M=1) using ``self.env_builder`` exactly as before. When
-        # len(world_list) > 1, the rollout loop averages fitness/act over
-        # the M worlds, using ``self.env_builder.with_world(...)`` to
-        # build per-world sibling builders.
+        # STEP 3 (multi-world averaging): per-iteration spawn-world list,
+        # set externally by train.py. Each entry is a spawn seed describing
+        # one independent world that every delta-pair is evaluated against.
+        # Empty list -> legacy single-world path (M=1) using
+        # ``self.env_builder`` exactly as before. When len(world_list) > 1,
+        # the rollout loop averages fitness/act over the M worlds, using
+        # ``self.env_builder.with_world(...)`` to build per-world builders.
         self.world_list = []
 
         # Initialize policies (parent-side; workers hold their own copies)
@@ -281,8 +280,8 @@ class ARSTrainer:
           ``_install_generation_worlds`` is used verbatim (and worker
           tasks can omit the override entirely).
         - len > 1: builds M sibling builders via
-          ``self.env_builder.with_world(impact_seed, spawn_seed)``,
-          one per world in ``self.world_list``.
+          ``self.env_builder.with_world(spawn_seed)``, one per world in
+          ``self.world_list``.
 
         Returns:
             list[callable] of length M.
@@ -291,8 +290,8 @@ class ARSTrainer:
         if len(wl) <= 1:
             return [self.env_builder]
         builders = []
-        for (imp_s, sp_s) in wl:
-            builders.append(self.env_builder.with_world(int(imp_s), int(sp_s)))
+        for spawn_seed in wl:
+            builders.append(self.env_builder.with_world(int(spawn_seed)))
         return builders
 
     def train_step(self, fg_to_train, n_eval_ticks=2):
@@ -335,7 +334,7 @@ class ARSTrainer:
         # STEP 3: when M>1, ``act_pos[i]`` holds the *averaged* act_diag
         # across the M worlds for delta i; ``rewards_pos[i]`` is the
         # M-averaged fitness. CRN: world m for +delta and -delta share
-        # the exact same (impact_seed, spawn_seed, pair_seeds[i]).
+        # the exact same (spawn_seed, pair_seeds[i]).
         act_pos = []
         act_neg = []
 
@@ -891,7 +890,7 @@ class ARSTrainer:
             deltas[fid] = [torch.randn_like(w) for _ in range(self.n_deltas)]
 
         # CRN seeds per delta pair (same rollout seed for +/- for a
-        # given i -> identical impact / initial fields).
+        # given i -> identical initial fields).
         pair_seeds = [int(np.random.randint(1, 2**31 - 1)) for _ in range(self.n_deltas)]
 
         # STEP 3: per-iteration world builders (M=1 legacy or M>1 multi-world).

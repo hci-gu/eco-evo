@@ -1,21 +1,7 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import impacts
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 from lib.environments.ecosystem_env.state import ActionSettlement
-
-
-def _impact_energy_cost(env):
-    impact_energy = np.zeros((env.N_dm, env.H, env.W), dtype=env.dtype)
-    for i, entries in enumerate(env.dm_impact_tables):
-        for impact_id, table in entries:
-            map_data = env.grid.get_map(impact_id)
-            if map_data is None:
-                continue
-            _, energy_factor = impacts.interp_impact(
-                table, map_data.astype(env.dtype, copy=False))
-            impact_energy[i] += energy_factor
-    return np.float32(1.0) + impact_energy
 
 
 def _transfer_to_neighbours(b_stay, r_stay, b_out, r_out):
@@ -110,7 +96,6 @@ def apply_energy_costs(env, actions):
     temp_gains = np.stack(
         [env.fgs[fid].temp_energy_gains for fid in env.dm_ids], axis=0)
 
-    cost_factor = _impact_energy_cost(env)
     resting_metabolism = env.dm_resting_metabolism[:, None, None]
     cost_rest = env.dm_cost_rest[:, None, None]
     cost_eat = env.dm_cost_eat[:, None, None]
@@ -120,20 +105,20 @@ def apply_energy_costs(env, actions):
     rest_reserve = np.maximum(
         0,
         reserve * actions.rest
-        - biomass * actions.rest * resting_metabolism * cost_rest * cost_factor,
+        - biomass * actions.rest * resting_metabolism * cost_rest,
     )
 
     eat_fraction = actions.eat.sum(axis=1)
     reserve_after_eat = np.maximum(
         0,
-        reserve - biomass * resting_metabolism * cost_eat * cost_factor,
+        reserve - biomass * resting_metabolism * cost_eat,
     )
     eat_reserve = eat_fraction * reserve_after_eat + temp_gains
     eat_biomass = biomass * eat_fraction
 
     reserve_after_move = np.maximum(
         0,
-        reserve - biomass * resting_metabolism * cost_move * cost_factor,
+        reserve - biomass * resting_metabolism * cost_move,
     )
     move_reserve_choices = actions.move * reserve_after_move[:, None, :, :]
     move_biomass_choices = actions.move * biomass[:, None, :, :]

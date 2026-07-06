@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import torch
 
-from lib.environments.ecosystem_env import grid_masks, impacts, interactions
+from lib.environments.ecosystem_env import grid_masks, interactions
 
 
 @dataclass
@@ -30,12 +30,10 @@ class EcosystemCache:
     dm_visibility_floor: np.ndarray
     all_visibility_floor: np.ndarray
     dm_max_energy_reserve: np.ndarray
-    dm_impact_tables: List[Any]
     dm_min_split: np.ndarray
     obs_others_idx: List[np.ndarray]
     per_dm_in_dim: np.ndarray
     max_in_dim: int
-    n_obs_imp: int
 
 
 @dataclass
@@ -74,7 +72,6 @@ class PolicyBatch:
 
 @dataclass
 class Diagnostics:
-    loss_impact: Dict[str, float]
     loss_predation: Dict[str, float]
     loss_starvation: Dict[str, float]
     intake_by_pred_prey: Dict[str, Dict[str, float]]
@@ -153,15 +150,6 @@ def build_static_caches(env):
         dtype=env.dtype,
     )
 
-    env.dm_impact_tables = []
-    for fid in env.dm_ids:
-        entries = []
-        for imp_id, imp_def in (env.fgs[fid].params.get("impact", {}) or {}).items():
-            table = impacts.extract_impact_table(imp_def)
-            if table is not None:
-                entries.append((imp_id, table))
-        env.dm_impact_tables.append(entries)
-
     env.dm_min_split = np.array(
         [getattr(env.fgs[fid], "min_split_biomass", 0.0) for fid in env.dm_ids],
         dtype=env.dtype,
@@ -181,12 +169,11 @@ def build_static_caches(env):
             ]
         env.obs_others_idx.append(np.asarray(idx, dtype=np.int64))
 
-    env.n_obs_imp = len(env.observable_impact_vars)
     env.per_dm_in_dim = np.zeros(env.N_dm, dtype=np.int64)
     for i in range(env.N_dm):
         k_i = int(env.obs_others_idx[i].shape[0])
-        center_dim_i = 2 + k_i + env.n_obs_imp
-        nbr_dim_i = 1 + k_i + env.n_obs_imp
+        center_dim_i = 2 + k_i
+        nbr_dim_i = 1 + k_i
         env.per_dm_in_dim[i] = center_dim_i + 4 * nbr_dim_i
     env.max_in_dim = int(env.per_dm_in_dim.max())
 
@@ -214,12 +201,10 @@ def build_static_caches(env):
         dm_visibility_floor=env.dm_visibility_floor,
         all_visibility_floor=env._all_visibility_floor,
         dm_max_energy_reserve=env.dm_max_energy_reserve,
-        dm_impact_tables=env.dm_impact_tables,
         dm_min_split=env.dm_min_split,
         obs_others_idx=env.obs_others_idx,
         per_dm_in_dim=env.per_dm_in_dim,
         max_in_dim=env.max_in_dim,
-        n_obs_imp=env.n_obs_imp,
     )
 
     from lib.environments.ecosystem_env import policies
