@@ -615,6 +615,21 @@ class LiveVisualizer:
         # (i tick-koordinater) för det synliga fönstret. ``None`` = auto
         # (följ senaste data-änden, dvs. samma beteende som tidigare).
         self._plot_window_width: int = 100
+        # Panorerings-steg (andel av synligt fönster per ``event.x``-enhet)
+        # när användaren scrollar horisontellt via touchpad-gest eller
+        # horisontellt scrollhjul. 0.15 = ~15 % av fönstret per "notch",
+        # vilket motsvarar ett par pixlar smidig touchpad-panorering.
+        self._plot_pan_step_frac: float = 0.15
+        # Grafens plot-area (px0, py0, pw, ph) — sätts av ``_draw_plot``
+        # varje frame och används av MOUSEWHEEL-hanteringen för att
+        # avgöra om användaren scrollar över graf-fönstret (i så fall
+        # tolkas hjulet som zoom, inte som fönster-scroll).
+        self._plot_area_rect: Optional[tuple] = None
+        # Min/max på graf-fönstrets bredd i tick-koordinater. Min
+        # sätts så att grafen inte kan bli trivialt smal; max lyfts
+        # dynamiskt till full data-span vid zoom-ut så användaren kan
+        # se hela historiken. Se ``_handle_plot_wheel_zoom``.
+        self._plot_window_width_min: int = 10
         self._plot_scroll_offset: Optional[float] = None
         self._plot_scroll_track_rect: Optional[tuple] = None
         self._plot_scroll_thumb_rect: Optional[tuple] = None
@@ -1283,6 +1298,18 @@ class LiveVisualizer:
                     self._plot_scroll_offset = None
                     self._dragging_plot_scroll = False
                     interacted = True
+                elif event.type == pg.MOUSEWHEEL:
+                    # Scrollhjul över graf-arean: vertikalt (event.y) →
+                    # zoom in/ut, horisontellt (event.x, touchpad-gest
+                    # eller horisontellt hjul) → panorera i tid.
+                    try:
+                        mpos = pg.mouse.get_pos()
+                    except Exception:
+                        mpos = (0, 0)
+                    if self._handle_plot_wheel_zoom(mpos, int(event.y)):
+                        interacted = True
+                    if self._handle_plot_wheel_pan(mpos, int(getattr(event, "x", 0))):
+                        interacted = True
                 elif event.type == pg.MOUSEMOTION and self._dragging_slider is not None:
                     fid = self._dragging_slider
                     v = self._slider_value_from_x(fid, event.pos[0])
@@ -1395,6 +1422,15 @@ class LiveVisualizer:
                         # Högerklick på plot-scrollbaren → gå live.
                         self._plot_scroll_offset = None
                         self._dragging_plot_scroll = False
+                    elif event.type == pg.MOUSEWHEEL:
+                        # Vertikalt hjul → zoom, horisontellt (touchpad
+                        # eller horisontellt hjul) → panorera i tid.
+                        try:
+                            mpos = pg.mouse.get_pos()
+                        except Exception:
+                            mpos = (0, 0)
+                        self._handle_plot_wheel_zoom(mpos, int(event.y))
+                        self._handle_plot_wheel_pan(mpos, int(getattr(event, "x", 0)))
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_slider is not None):
                         fid = self._dragging_slider
@@ -1502,6 +1538,15 @@ class LiveVisualizer:
                         # Högerklick på plot-scrollbaren → gå live.
                         self._plot_scroll_offset = None
                         self._dragging_plot_scroll = False
+                    elif event.type == pg.MOUSEWHEEL:
+                        # Vertikalt hjul → zoom, horisontellt (touchpad
+                        # eller horisontellt hjul) → panorera i tid.
+                        try:
+                            mpos = pg.mouse.get_pos()
+                        except Exception:
+                            mpos = (0, 0)
+                        self._handle_plot_wheel_zoom(mpos, int(event.y))
+                        self._handle_plot_wheel_pan(mpos, int(getattr(event, "x", 0)))
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_slider is not None):
                         fid = self._dragging_slider
@@ -2145,6 +2190,132 @@ class LiveVisualizer:
         snap_eps = max(1.0, 0.02 * win_w_x)
         if float(self._plot_scroll_offset) >= max_off - snap_eps:
             self._plot_scroll_offset = None
+
+    def _hit_plot_area(self, pos) -> bool:
+        """Retur True om ``pos`` ligger inom plot-arean (linjerna, ej
+        tab-strip/scrollbar/legend). Används av MOUSEWHEEL för att
+        avgöra om hjulet ska tolkas som zoom av graf-fönstret."""
+        rect = self._plot_area_rect
+        if not rect:
+            return False
+        mx, my = pos
+        px0, py0, pw, ph = rect
+        return (px0 <= mx <= px0 + pw) and (py0 <= my <= py0 + ph)
+
+    def _handle_plot_wheel_zoom(self, pos, dy: int) -> bool:
+        """Zooma graf-fönstret runt musens x-position.
+
+        ``dy`` > 0 = zoom in (mindre fönster), ``dy`` < 0 = zoom ut.
+        Behåller den datapunkt musen pekar på under muspekaren så
+        zoom känns naturlig. Returnerar True om något ändrades.
+        """
+        if dy == 0 or not self._hit_plot_area(pos):
+            return False
+        span = getattr(self, "_plot_scroll_span_cache", None)
+        rect = self._plot_area_rect
+        if not span or not rect:
+            return False
+        data_xmin, data_xmax = span
+        full_span = float(data_xmax) - float(data_xmin)
+        if full_span <= 0.0:
+            return False
+        px0, _py0, pw, _ph = rect
+        if pw <= 4:
+            return False
+        # Nuvarande synligt x-fönster.
+        old_win = float(self._plot_window_width)
+        # Om vi för närvarande visar hela data-spannet (scroll ej aktiv),
+        # använd det som utgångspunkt så zoom-in från "hela historiken"
+        # känns naturligt.
+        if full_span <= old_win:
+            old_win = full_span
+        if self._plot_scroll_offset is None:
+            # Live-läge: högerkanten är vid data_xmax.
+            old_xmin = float(data_xmax) - old_win
+        else:
+            old_xmin = float(self._plot_scroll_offset)
+        old_xmax = old_xmin + old_win
+        # Muspos i tick-koordinater (var vi vill hålla kvar under pekaren).
+        mx = float(pos[0])
+        frac = (mx - float(px0)) / float(pw)
+        frac = max(0.0, min(1.0, frac))
+        anchor_x = old_xmin + frac * old_win
+        # Ny fönsterbredd — 1.2x per tick, klampad.
+        factor = 1.0 / 1.2 if dy > 0 else 1.2
+        new_win = old_win * factor
+        min_win = float(self._plot_window_width_min)
+        max_win = max(min_win, full_span)
+        new_win = max(min_win, min(max_win, new_win))
+        if abs(new_win - old_win) < 1e-6:
+            return False
+        new_xmin = anchor_x - frac * new_win
+        new_xmax = new_xmin + new_win
+        # Klampa mot data-spannet.
+        if new_xmin < float(data_xmin):
+            new_xmin = float(data_xmin)
+            new_xmax = new_xmin + new_win
+        if new_xmax > float(data_xmax):
+            new_xmax = float(data_xmax)
+            new_xmin = new_xmax - new_win
+        self._plot_window_width = max(1, int(round(new_win)))
+        # Om nya fönstret täcker hela data → gå live (ingen scroll behövs).
+        if new_win >= full_span - 1e-6:
+            self._plot_scroll_offset = None
+        else:
+            # Om högerkanten sammanfaller med data_xmax → gå live.
+            if new_xmax >= float(data_xmax) - 1e-6:
+                self._plot_scroll_offset = None
+            else:
+                self._plot_scroll_offset = float(new_xmin)
+        return True
+
+    def _handle_plot_wheel_pan(self, pos, dx: int) -> bool:
+        """Panorera graf-fönstret horisontellt via touchpad-gest eller
+        horisontellt scrollhjul.
+
+        ``dx`` > 0 = scroll åt höger → framåt i tid (mot data-slutet).
+        ``dx`` < 0 = scroll åt vänster → bakåt i tid (mot data-början).
+        Returnerar True om något ändrades.
+        """
+        if dx == 0 or not self._hit_plot_area(pos):
+            return False
+        span = getattr(self, "_plot_scroll_span_cache", None)
+        rect = self._plot_area_rect
+        if not span or not rect:
+            return False
+        data_xmin, data_xmax = span
+        full_span = float(data_xmax) - float(data_xmin)
+        if full_span <= 0.0:
+            return False
+        win_w = float(self._plot_window_width)
+        if full_span <= win_w:
+            # Hela historiken syns redan → inget att panorera.
+            return False
+        # Nuvarande vänsterkant.
+        if self._plot_scroll_offset is None:
+            # Live-läge: vänsterkanten ligger vid data_xmax - win_w.
+            old_xmin = float(data_xmax) - win_w
+        else:
+            old_xmin = float(self._plot_scroll_offset)
+        step = float(self._plot_pan_step_frac) * win_w * float(dx)
+        new_xmin = old_xmin + step
+        # Klampa till giltigt intervall.
+        max_off = float(data_xmax) - win_w
+        min_off = float(data_xmin)
+        if new_xmin < min_off:
+            new_xmin = min_off
+        if new_xmin > max_off:
+            new_xmin = max_off
+        if abs(new_xmin - old_xmin) < 1e-6 and self._plot_scroll_offset is not None:
+            return False
+        # Om högerkanten sammanfaller med data-slutet → gå live.
+        if new_xmin >= max_off - 1e-6:
+            if self._plot_scroll_offset is None:
+                return False
+            self._plot_scroll_offset = None
+        else:
+            self._plot_scroll_offset = float(new_xmin)
+        return True
 
     def _playback_idx_from_x(self, mx: int) -> Optional[int]:
         """Mappar muspos x till en frame-index i ``_current_rollout``.
@@ -3429,6 +3600,14 @@ class LiveVisualizer:
                         xi = px0
                     elif xi > px0 + pw:
                         xi = px0 + pw
+                    # Klipp även y: annars kan padding-grannar (som ligger
+                    # utanför synligt x-fönster men vars värden är utanför
+                    # det synliga y-intervallet) rita linjer som spiller
+                    # över tab-strippen ovanför eller scrollbaren nedanför.
+                    if yi < py0:
+                        yi = py0
+                    elif yi > py0 + ph:
+                        yi = py0 + ph
                     pts.append((xi, yi))
                 if len(pts) < 2:
                     continue
@@ -3446,10 +3625,15 @@ class LiveVisualizer:
         self._plot_scroll_thumb_rect = None
         # Cacha data-span för scrollbar-drag (används av
         # ``_plot_scroll_offset_from_x`` mellan render-anrop).
-        if have_data and scroll_active:
+        if have_data:
+            # Cacha alltid full data-span (även när scroll inte är aktiv)
+            # så att MOUSEWHEEL-zoom kan använda den för att beräkna
+            # ny fönsterbredd och ev. aktivera scrollbaren vid inzoomning.
             self._plot_scroll_span_cache = (float(data_xmin), float(data_xmax))
         else:
             self._plot_scroll_span_cache = None
+        # Spara plot-arean för MOUSEWHEEL hit-test.
+        self._plot_area_rect = (int(px0), int(py0), int(pw), int(ph))
         self._live_button_rect = None
         if scroll_bar_h > 0 and pw > 4:
             sb_y = py0 + ph + 4

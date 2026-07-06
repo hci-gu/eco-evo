@@ -73,14 +73,16 @@
     natural_mortality: 0.0005
     max_intake_rate: 0.04
     spawn:
-      mode: perlin
-      scale: 8.0
-      octaves: 3
-      persistence: 0.6
-      lacunarity: 2.0
-      threshold: 0.0
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
     starve_rate: 0.025
     visibility_floor: 0.2
+    extinction_threshold_factor: 0.5
   gadoids:
     display_name: "Gadoids"
     is_decision_maker: true
@@ -96,14 +98,16 @@
     natural_mortality: 0.0002
     max_intake_rate: 0.04
     spawn:
-      mode: perlin
-      scale: 12.0
-      octaves: 3
-      persistence: 0.55
-      lacunarity: 2.0
-      threshold: 0.0
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
     starve_rate: 0.012
     visibility_floor: 0.2
+    extinction_threshold_factor: 0.5
   porpoises:
     display_name: "Porpoises"
     is_decision_maker: true

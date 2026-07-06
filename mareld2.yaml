@@ -7,11 +7,11 @@ decision_makers:
   - group_id: gadoids
     initial_biomass_min: 1250
     initial_biomass_max: 5000
-    inference_initial_biomass: 5000
+    inference_initial_biomass: 2500
   - group_id: pelagic_fish
     initial_biomass_min: 6000
     initial_biomass_max: 24000
-    inference_initial_biomass: 24000
+    inference_initial_biomass: 12000
   - group_id: porpoises
     initial_biomass_min: 1
     initial_biomass_max: 120
@@ -28,9 +28,9 @@ decision_makers:
     inference_initial_biomass: 15
     muted: true
   - group_id: zooplankton
-    initial_biomass_min: 1000
-    initial_biomass_max: 30000
-    inference_initial_biomass: 25000
+    initial_biomass_min: 8750
+    initial_biomass_max: 35000
+    inference_initial_biomass: 35000
 non_decision_makers:
   - group_id: benthic_community
     initial_biomass_min: 0
