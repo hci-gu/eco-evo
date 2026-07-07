@@ -213,6 +213,17 @@ class EcosystemEnvironment:
         self.energy_gain_mat = energy_gain
         self.handling_time_mat = handling_time
         self._has_holling2 = bool(np.any(handling_time > 0.0))
+        # Holling Type III aktiveras automatiskt per predator som har fler
+        # än ett byte på sin meny (generalister ⇒ prey switching / search
+        # image). Specialister med exakt ett byte behåller Type II.
+        # ``_type3_pred_mask`` har form (N_dm, 1, 1, 1) och används som
+        # broadcastbar float-mask (1.0 = Type III, 0.0 = Type II) vid
+        # attack-rate-beräkningen i ``_apply_predation``.
+        n_prey_per_pred = eat_static.sum(axis=1)  # (N_dm,)
+        self._type3_pred_mask = (
+            (n_prey_per_pred > 1).astype(self.dtype).reshape(self.N_dm, 1, 1, 1)
+        )
+        self._has_holling3 = bool(np.any(self._type3_pred_mask > 0.0))
 
         # Per-DM cached scalar params
         self.dm_v = np.array([float(np.clip(self.fgs[fid].speed, 0.0, 1.0)) for fid in self.dm_ids], dtype=self.dtype)
@@ -845,17 +856,30 @@ class EcosystemEnvironment:
         B_prey_visible = B_prey_all * visible_frac
 
         a = self.max_intake_mat[:, :, None, None]  # (N_dm, N_all, 1, 1)
-        if getattr(self, '_has_holling2', False):
-            # Fix 2: Holling Type II. Effektiv attack-rate deflateras lokalt
-            # av handling-tid * lokal byte-biomassa, så intake per predator
-            # mättas i stället för att skena vid hög P.
+        if getattr(self, '_has_holling2', False) or getattr(self, '_has_holling3', False):
+            # Holling functional response. Type II (specialister, 1 byte)
+            # respektive Type III (generalister, ≥2 byten) väljs automatiskt
+            # per predator via ``_type3_pred_mask`` (byggd i
+            # ``_build_static_caches``). Type III ger prey switching /
+            # search image och stabiliserar dynamiken vid låga bytestätheter.
+            #
+            #   Type II:  f(B) = a·B  / (1 + a·h·B)      ⇒ a_eff_II = a       / (1 + a·h·B)
+            #   Type III: f(B) = a·B² / (1 + a·h·B²)     ⇒ a_eff_III= a·B     / (1 + a·h·B²)
+            #
+            # Båda uttrycken byggs och kombineras via masken; predatorns
+            # per-tick-demand är sedan ``B_pred · pi_eat · a_eff · hunger``,
+            # vilket bevarar existerande demand/scale-flöde nedan.
             h = self.handling_time_mat[:, :, None, None]
-            # Holling-II saturation uses the *visible* prey biomass:
-            # hidden prey is functionally inaccessible this tick, so it
-            # neither contributes to attack-rate saturation nor to total
-            # available intake.
+            # Holling saturation uses the *visible* prey biomass: hidden
+            # prey is functionally inaccessible this tick, so it neither
+            # contributes to attack-rate saturation nor to total available
+            # intake.
             Bp = B_prey_visible[None, :, :, :]
-            a_eff = a / (1.0 + a * h * Bp)
+            Bp2 = Bp * Bp
+            a_eff_ii = a / (1.0 + a * h * Bp)
+            a_eff_iii = (a * Bp) / (1.0 + a * h * Bp2)
+            m3 = self._type3_pred_mask  # (N_dm, 1, 1, 1)
+            a_eff = m3 * a_eff_iii + (1.0 - m3) * a_eff_ii
         else:
             a_eff = a
 

@@ -2297,7 +2297,12 @@ class LiveVisualizer:
             old_xmin = float(data_xmax) - win_w
         else:
             old_xmin = float(self._plot_scroll_offset)
-        step = float(self._plot_pan_step_frac) * win_w * float(dx)
+        # Flippat tecken: användaren förväntar sig att två-finger-drag åt
+        # höger (positiv ``dx`` i pygame på deras system) ska panorera
+        # bakåt i tid (dokumentliknande gest — innehållet flyttas åt
+        # höger, dvs. äldre data kommer in från vänster). Tidigare
+        # gjorde vi tvärtom.
+        step = -float(self._plot_pan_step_frac) * win_w * float(dx)
         new_xmin = old_xmin + step
         # Klampa till giltigt intervall.
         max_off = float(data_xmax) - win_w
