@@ -7,7 +7,7 @@
     max_carrying_capacity: 27.0
     energy_content: 2000.0
     seed_rate: 1e-07
-    seasonal_amplitude: 0.7
+    seasonal_amplitude: 0.0
     seasonal_period: 1460.0
     spawn:
       mode: perlin
@@ -42,7 +42,7 @@
           weight: 1.0
           transform: linear
     starve_rate: 0.2
-    visibility_floor: 0.05
+    visibility_floor: 0.0
     extinction_threshold_factor: 0.5
   benthic_community:
     display_name: "Benthic Community"
@@ -81,7 +81,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.025
-    visibility_floor: 0.2
+    visibility_floor: 0.0
     extinction_threshold_factor: 0.5
   gadoids:
     display_name: "Gadoids"

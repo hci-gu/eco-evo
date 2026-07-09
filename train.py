@@ -983,9 +983,12 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     # suffix in the live viz). Persist the same way for offline parity.
     rnd_ratio: dict = {}
     rnd_energy_ratio: dict = {}
+    rnd_avg_ratio: dict = {}
+    rnd_avg_energy_ratio: dict = {}
     rnd_move, rnd_rest, rnd_eat = {}, {}, {}
     rnd_loss_breakdown: dict = {}
     if rnd_env_for_fid:
+        _rnt_r = max(1, int(rnd_n_ticks_done))
         for fid, _re in rnd_env_for_fid.items():
             b0r = rnd_b0.get(fid, 0.0)
             e0r = rnd_e0.get(fid, 0.0)
@@ -995,6 +998,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    else 0.0)
             rnd_ratio[fid] = (bhr / b0r) if b0r > 0.0 else 0.0
             rnd_energy_ratio[fid] = (ehr / e0r) if e0r > 0.0 else 0.0
+            _avg_br = rnd_b_sum.get(fid, 0.0) / _rnt_r
+            _avg_er = rnd_e_sum.get(fid, 0.0) / _rnt_r
+            rnd_avg_ratio[fid] = (_avg_br / b0r) if b0r > 0.0 else 0.0
+            rnd_avg_energy_ratio[fid] = (_avg_er / e0r) if e0r > 0.0 else 0.0
         # Collect action fractions across unique envs; keep only the fid
         # that is actually random in each env (see header-frac push).
         for _re in unique_rnd_envs:
@@ -1031,10 +1038,13 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     if viz is not None and viz_step is not None:
         try:
             for fid in fg_ids:
-                # Live viz: avg(b)/b0 och avg(e)/e0 över hela rollouten.
-                viz.update_series("biomass", fid, avg_ratio[fid] * 100.0,
+                # Live viz: bh/b0 och eh/e0 vid rollout-slutet (i procent).
+                # Detta matchar heatmap-headerns värden byte-för-byte och
+                # ar oberoende av --n_eval_ticks (till skillnad fran
+                # avg-over-rollout, som skalar med rollout-langden).
+                viz.update_series("biomass", fid, ratio[fid] * 100.0,
                                   step=int(viz_step))
-                viz.update_series("energy", fid, avg_energy_ratio[fid] * 100.0,
+                viz.update_series("energy", fid, energy_ratio[fid] * 100.0,
                                   step=int(viz_step))
             # Push end-of-probe-medel av move/rest/eat till plot-flikarna
             # med global ARS-step (``viz_step``), så att x-skalan matchar
@@ -1086,8 +1096,11 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     e0r = rnd_e0.get(fid, 0.0)
                     avg_br = rnd_b_sum.get(fid, 0.0) / _rnt
                     avg_er = rnd_e_sum.get(fid, 0.0) / _rnt
-                    pb = (100.0 * avg_br / b0r) if b0r > 0.0 else 0.0
-                    pe = (100.0 * avg_er / e0r) if e0r > 0.0 else 0.0
+                    # End-of-rollout bh/b0 och eh/e0 (procent) — samma
+                    # semantik som huvud-policyns biomass/energy-tabbar,
+                    # dvs. bh/b0 i procent (matchar heatmap-headern).
+                    pb = 100.0 * float(rnd_ratio.get(fid, 0.0))
+                    pe = 100.0 * float(rnd_energy_ratio.get(fid, 0.0))
                     viz.update_series("biomass", fid + "_rnd", pb,
                                       step=int(viz_step))
                     viz.update_series("energy", fid + "_rnd", pe,
@@ -1275,6 +1288,12 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         'bh': bh,
         'ratio': ratio,
         'log10_ratio': log_ratio,
+        # Avg-over-rollout ratios: SAMMA värden som live viz pushar till
+        # biomass/energy-flikarna. Behövs för att --resume-hydreringen
+        # ska matcha graferna byte-för-byte (istället för att approximera
+        # via end-of-rollout 'ratio' som ger fel y-värde).
+        'avg_ratio': avg_ratio,
+        'avg_energy_ratio': avg_energy_ratio,
         # New: persist the same series the live viz shows in its tabs,
         # so an offline HTML plot can reproduce them 1:1.
         'energy_ratio': energy_ratio,   # eh / e0 per FG
@@ -1303,6 +1322,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         record['rnd'] = {
             'ratio': rnd_ratio,
             'energy_ratio': rnd_energy_ratio,
+            'avg_ratio': rnd_avg_ratio,
+            'avg_energy_ratio': rnd_avg_energy_ratio,
             'move_frac': rnd_move,
             'rest_frac': rnd_rest,
             'eat_frac':  rnd_eat,
@@ -1474,14 +1495,14 @@ def main():
                              "for the survival_bonus tracking (default 0.01 = 1%% of start).")
     parser.add_argument("--legacyreward", "--legacy_reward", dest="legacy_reward",
                         action="store_true", default=False,
-                        help="Använd den gamla linjärkombinations-rewardfunktionen "
+                        help="Use the legacy linear-combination reward function "
                              "alpha*log(mean(B)/B0) + beta*log(mean(R)/R0) + "
-                             "cappa*(t_survive/n_ticks). Default (utan flaggan) "
-                             "används den nya totala-energi-rewarden "
+                             "cappa*(t_survive/n_ticks). Without this flag the "
+                             "default is the new total-energy reward "
                              "mean_t(log((B*energy_content + R + eps) / (E0 + eps))), "
-                             "där E0 = B0*energy_content + R0. Den nya rewarden "
-                             "är en enda fysikalisk storhet (MJ) och gör "
-                             "alpha/beta/cappa redundanta.")
+                             "where E0 = B0*energy_content + R0. The new reward "
+                             "is a single physical quantity (MJ) and makes "
+                             "alpha/beta/cappa redundant.")
     parser.add_argument("--integral_reward", action="store_true", default=True,
                         help="Use mean biomass / mean energy over the whole rollout instead "
                              "of the final value in the fitness computation. Gives \"eat always\" a "
@@ -2336,6 +2357,7 @@ def main():
     # On a fresh run (no log, or unreadable), start_gen stays 0 and the
     # legacy behaviour is preserved exactly.
     start_gen = 0
+    _last_logged_n_ticks = None
     if args.resume and os.path.isfile(probe_jsonl_path):
         try:
             import json as _json_resume
@@ -2352,6 +2374,9 @@ def main():
                     _g = _rec.get('gen')
                     if isinstance(_g, (int, float)) and int(_g) > _max_gen_logged:
                         _max_gen_logged = int(_g)
+                    _nt_rec = _rec.get('n_ticks')
+                    if isinstance(_nt_rec, (int, float)):
+                        _last_logged_n_ticks = int(_nt_rec)
             if _max_gen_logged > 0:
                 # ``gen`` is 0-indexed internally; JSONL stores ``gen+1``.
                 # Resume on the next gen after the last logged one.
@@ -2359,6 +2384,21 @@ def main():
                 print(f"    [resume] biomass.jsonl reached gen "
                       f"{_max_gen_logged}; continuing at gen "
                       f"{start_gen + 1}.")
+            # Varna om --n_eval_ticks skiljer sig fran senaste loggade
+            # rolloutens n_ticks. Det andrar bade avg_ratio (medel over
+            # rollout, som live viz pushar till biomass/energy-flikarna)
+            # OCH reward-signalen for --integral_reward, sa graferna far
+            # en synlig brytpunkt vid resume och optimeringens objective
+            # skiftar effektivt.
+            if (_last_logged_n_ticks is not None
+                    and _last_logged_n_ticks != int(args.n_eval_ticks)):
+                print(f"    [resume] WARN: --n_eval_ticks="
+                      f"{int(args.n_eval_ticks)} skiljer sig fran senaste "
+                      f"loggade n_ticks={_last_logged_n_ticks}. Detta "
+                      f"andrar avg-over-rollout serierna (biomass/energy) "
+                      f"och integral-reward-signalen; forvanta dig en "
+                      f"brytpunkt i graferna och ett effektivt byte av "
+                      f"optimeringens objective.")
         except Exception as _e:
             print(f"    [resume] WARN: could not read {probe_jsonl_path} "
                   f"for gen offset: {_e!r}")
@@ -2426,12 +2466,9 @@ def main():
                             except Exception:
                                 pass
                     # ``_probe_biomass`` pushar biomass/energy som
-                    # ``avg_ratio * 100`` (avg-b/b0 över rollouten),
-                    # medan JSONL bara sparar ``ratio`` (bh/b0 i
-                    # slutpunkten) och ``energy_ratio`` (eh/e0). Vi
-                    # använder dessa som bästa approximation vid
-                    # resume — inte identiskt med live-värdet men
-                    # rätt storleksordning och rätt kurvform.
+                    # ``ratio * 100`` (bh/b0 i procent vid rollout-slut),
+                    # vilket matchar heatmap-headern och ar oberoende
+                    # av --n_eval_ticks.
                     _push("biomass", _rec.get('ratio'), _scale=100.0)
                     _push("energy",  _rec.get('energy_ratio'), _scale=100.0)
                     # Action-fraktioner (redan i procent, 0..100).

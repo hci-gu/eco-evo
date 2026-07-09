@@ -3809,6 +3809,17 @@ starves despite phyto sitting at carrying capacity.
   tick_days in ecosystem.py:847. Not implemented.
 
 63.5 Diagnosed failure mode: zoo starves at phyto=CC
+  NOTE (superseded in part by Section 64): the "pelagic starves
+  when zoo is abundant" symptom that motivated much of this
+  section turned out to be caused primarily by a sign-inverted
+  Holling II/III attack-rate formula in ``_apply_predation``
+  (see Section 64). The policy-parameter mismatch discussion
+  below is still valid for legacy checkpoints, but the DOMINANT
+  cause of the observed starvation-at-abundance was the missing
+  ``B_prey`` factor in ``a_eff``, not policy staleness alone.
+  Retraining after the Section 64 fix is required for meaningful
+  inference on any pre-fix checkpoint.
+
   Symptom: with the Section 63.3 calibration applied and a
   legacy checkpoint (pzpg248ed) trained under the OLD parameters
   (growth_rate=0.125, h=0, no season), zoo dies of starvation
@@ -3881,3 +3892,146 @@ starves despite phyto sitting at carrying capacity.
   * feeding_cost -> actual-intake proportionality (Section
     63.5.C). Simple code change, but should be paired with a
     fresh training arc rather than dropped into a legacy run.
+
+================================================================
+64. HOLLING II/III BUGFIX - MISSING B_prey FACTOR IN a_eff
+================================================================
+Structural bug in ``lib/environments/ecosystem.py::_apply_predation``
+diagnosed and fixed this session. The Holling II/III attack-rate
+expressions were sign-inverted in the prey-density dependence:
+``a_eff`` FELL toward 0 at high prey density instead of saturating
+toward the physiological ceiling ``1/h``. Symptom that led to
+diagnosis: pelagic_fish starving to an asymptote near 25 % of
+starting energy during inference on run ``pzpg248hmovf0``, even
+with gadoids=0 (no top-down pressure), phyto/zoo at max spawn
+biomass, and a trained policy at pi_eat ~= 1.
+
+64.1 What the code did (wrong)
+
+At the Holling II/III branch of _apply_predation the attack-rate
+per predator-unit was built as:
+
+    a_eff_ii  = a / (1 + a*h*Bp)              # WRONG: missing *Bp
+    a_eff_iii = (a*Bp) / (1 + a*h*Bp2)        # WRONG: missing one *Bp
+
+with predator demand:
+
+    D = B_pred * pi_eat * a_eff * hunger
+
+The comment directly above these lines stated the INTENDED form:
+``f(B) = a*B / (1 + a*h*B)`` (Type II) and ``f(B) = a*B^2 / (1 +
+a*h*B^2)`` (Type III), i.e. classical Holling. Code and comment
+were inconsistent - the code had lost the B_prey numerator factor.
+
+64.2 Consequences
+
+With the buggy Type II expression ``a_eff = a/(1 + a*h*B)``:
+  * B_prey -> 0    ==> a_eff -> a        (full "trying to eat"
+                                          signal in empty cells)
+  * B_prey -> inf  ==> a_eff -> 0        (ZERO try when abundant -
+                                          exact opposite of saturation)
+
+For pelagic_fish (a=0.04, h=25, energy_content_zoo=4500,
+assim=0.8, feeding_cost=1.5, resting_metabolism=8) at a typical
+zoo colony B_prey ~= 100 ton/cell:
+  * a_eff_old = 0.04 / (1 + 0.04*25*100) = 0.04/101 ~ 3.96e-4
+  * Energy in per ton_pred/tick
+      ~ pi_eat * a_eff * assim * ec = 1 * 3.96e-4 * 3600 ~ 1.4 MJ
+  * Feeding cost per ton_pred/tick
+      = pi_eat * feeding_cost * rm = 1 * 1.5 * 8 = 12 MJ
+  * Net: -10.6 MJ/tick - exact match for the rapid energy decay
+    the user observed.
+
+The 25 % asymptote arises when s_x drops below 0.8 (hunger
+clamp in get_hunger) and hunger starts rising linearly, partially
+compensating the vanishing a_eff. The two effects balance at a
+low, stable energy fraction (~25 % in the observed run).
+
+zooplankton -> phytoplankton escaped the symptom in visible
+training because a*h = 0.25*4 = 1 gave milder scaling in
+practice, but the same bug was present there too.
+
+64.3 Fix
+
+In ``lib/environments/ecosystem.py::_apply_predation`` (post-fix):
+
+    a_eff_ii  = (a * Bp)  / (1.0 + a * h * Bp)     # canonical Type II
+    a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2)    # canonical Type III
+
+Numerical verification for a=0.04, h=25 (asymptote 1/h = a = 0.04):
+
+    B_prey   a_eff_II (fix)   a_eff_III (fix)
+    0.01     0.00040          0.00000004
+    1.0      0.02000          0.02000
+    10.0     0.03636          0.03960
+    100.0    0.03960          0.04000
+
+a_eff now saturates toward 1/h = a at high B (canonical Section
+36 calibration) and drops toward 0 at low B (as intended). At
+B_prey ~= 100 ton/cell pelagic_fish now gets ~143 MJ/ton_pred/tick
+in intake vs 12 MJ in feeding_cost - a comfortable positive
+energy budget.
+
+Type I branch (``else: a_eff = a``) is unchanged. Demand
+formula ``D = B_pred * pi_eat * a_eff * hunger`` is now
+consistent: Type I attempts linear ``a*B_pred`` (hard-capped by
+``scale`` against ``B_prey_visible`` later), Type II/III attempts
+saturated ``f(B_prey)*B_pred``.
+
+64.4 Buggfix note in the code
+
+A BUGGFIX comment block was added directly above the corrected
+expressions in _apply_predation. Text (Swedish, retained here
+verbatim for grep-ability):
+
+    "BUGGFIX: tidigare implementering saknade *Bp i taljaren
+    for Type II och en *Bp for Type III, vilket gjorde att
+    ``a_eff`` FALLADE mot 0 vid hog bytestathet -- motsatsen
+    till avsedd mattnad. Symptom: pelagisk fisk svalt vid
+    riklig zoo (max startbiomassa) fastan pi_eat ~= 1."
+
+Purpose: prevent reintroduction during future refactoring.
+
+64.5 Verification
+
+  * python3 -m pytest tests/ -q -> 42/42 green (incl.
+    test_phyto_zoo_sanity.py which exercises the predation
+    signal).
+  * Numerical sanity per-B_prey table (Section 64.3) verified
+    by hand.
+  * Existing tests passed even under the buggy formula - they
+    were too tolerant to catch a sign-error in the saturation
+    curve. Recommended regression test to add: verify that
+    a_eff is MONOTONICALLY INCREASING in B_prey per (predator,
+    prey) whenever handling_time > 0. Not implemented yet.
+
+64.6 Consequences for existing checkpoints
+
+  * ALL pre-fix checkpoints were trained under inverted
+    dynamics. Policies learned to "try to eat" in empty cells
+    (where a_eff was highest under the bug) and to abstain in
+    full cells (where a_eff was near zero). Post-fix that
+    behaviour is grossly suboptimal.
+  * Retraining is required for meaningful inference after this
+    fix (in particular pzpg248hmovf0, which motivated the
+    diagnosis).
+  * Section 63.5 previously attributed the "zoo starves at
+    phyto=CC" symptom to a policy-parameter mismatch after the
+    Section 63.3 phyto calibration. Part of that story was in
+    fact this same bug, not just hunger/feeding_cost dynamics.
+  * The sanity formula in Sections 23-24 (netto_eat = a *
+    energy_gain * assim - feeding_cost * rm) computes the
+    INTENDED balance at saturation; after the fix, live runs
+    match that calculation again. Pre-fix runs did not.
+
+64.7 Follow-ups
+
+  * Add a regression test asserting a_eff monotonicity in
+    B_prey for any (pred, prey) with h > 0.
+  * Retrain mareld2 baselines under the fixed dynamics before
+    running any long-form inference or diagnostics; discard
+    pre-fix policy conclusions in Section 21 / 22 that assumed
+    the pre-fix landscape.
+  * Consider strengthening tests/test_phyto_zoo_sanity.py so a
+    future sign-inversion of the saturation curve is caught
+    automatically.

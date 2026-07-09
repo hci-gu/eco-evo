@@ -863,12 +863,22 @@ class EcosystemEnvironment:
             # ``_build_static_caches``). Type III ger prey switching /
             # search image och stabiliserar dynamiken vid låga bytestätheter.
             #
-            #   Type II:  f(B) = a·B  / (1 + a·h·B)      ⇒ a_eff_II = a       / (1 + a·h·B)
-            #   Type III: f(B) = a·B² / (1 + a·h·B²)     ⇒ a_eff_III= a·B     / (1 + a·h·B²)
+            #   Type II:  f(B) = a·B  / (1 + a·h·B)
+            #   Type III: f(B) = a·B² / (1 + a·h·B²)
             #
-            # Båda uttrycken byggs och kombineras via masken; predatorns
-            # per-tick-demand är sedan ``B_pred · pi_eat · a_eff · hunger``,
-            # vilket bevarar existerande demand/scale-flöde nedan.
+            # ``a_eff`` uttrycks här som intag per predator-enhet
+            # (ton_prey per ton_pred per tick), dvs f(B) självt — inte
+            # f(B)/B. Predatorns per-tick-demand blir då
+            # ``D = B_pred · pi_eat · a_eff · hunger``, konsistent med
+            # Type I-grenen (else) där ``a_eff = a`` ger en linjär
+            # "försök att äta a*B_pred"-demand som sedan cappas av
+            # ``B_prey_visible`` via ``scale`` nedan.
+            #
+            # BUGGFIX: tidigare implementering saknade *Bp i täljaren
+            # för Type II och en *Bp för Type III, vilket gjorde att
+            # ``a_eff`` FALLADE mot 0 vid hög bytestäthet — motsatsen
+            # till avsedd mättnad. Symptom: pelagisk fisk svalt vid
+            # riklig zoo (max startbiomassa) fastän pi_eat ≈ 1.
             h = self.handling_time_mat[:, :, None, None]
             # Holling saturation uses the *visible* prey biomass: hidden
             # prey is functionally inaccessible this tick, so it neither
@@ -876,8 +886,8 @@ class EcosystemEnvironment:
             # intake.
             Bp = B_prey_visible[None, :, :, :]
             Bp2 = Bp * Bp
-            a_eff_ii = a / (1.0 + a * h * Bp)
-            a_eff_iii = (a * Bp) / (1.0 + a * h * Bp2)
+            a_eff_ii = (a * Bp) / (1.0 + a * h * Bp)
+            a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2)
             m3 = self._type3_pred_mask  # (N_dm, 1, 1, 1)
             a_eff = m3 * a_eff_iii + (1.0 - m3) * a_eff_ii
         else:
