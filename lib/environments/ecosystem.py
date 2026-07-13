@@ -975,17 +975,30 @@ class EcosystemEnvironment:
         r_rest = np.maximum(0, R * pi_rest - m_rest)
         b_rest = B * pi_rest
 
-        # Eat: pi_eat sums then uses shared scale (sum_j max(0, R*pi_j - B*pi_j*scale) = sum_j pi_j*max(0, R - B*scale))
+        # Eat: metabolic cost scales with the fraction that actually feeds
+        # (pi_eat_sum). Semantically consistent with the rest branch above:
+        # only the sub-population performing the action pays its cost.
         pi_eat_sum = self.pi_eat.sum(axis=1)
         scale_eat = rm * cost_eat * cost_factor
-        r_eat_tot = pi_eat_sum * np.maximum(0, R - B * scale_eat) + TG
+        m_eat = B * pi_eat_sum * scale_eat
+        r_eat_tot = np.maximum(0, R * pi_eat_sum - m_eat) + TG
         b_eat_tot = B * pi_eat_sum
 
-        # Move (4 directions)
+        # Move (4 directions). Metabolic cost scales with the fraction that
+        # actually moves (sum of pi_move over the 4 directions). dm_v
+        # (movement_speed) intentionally NOT included here — only the
+        # action-choice fraction is applied at this stage.
         pi_move = self.pi_move
+        pi_move_sum = pi_move.sum(axis=1)  # (N_dm, H, W)
         scale_move = rm * cost_move * cost_factor
-        r_after_move_meta = np.maximum(0, R - B * scale_move)
-        r_move_choices = pi_move * r_after_move_meta[:, None, :, :]
+        m_move = B * pi_move_sum * scale_move
+        r_move_pool = np.maximum(0, R * pi_move_sum - m_move)
+        # Distribute the (already cost-adjusted) reserve pool across the 4
+        # directions in proportion to pi_move / pi_move_sum. Guard against
+        # divide-by-zero where pi_move_sum == 0 (no move chosen).
+        safe_sum = np.where(pi_move_sum > 0, pi_move_sum, np.float32(1.0))
+        move_dir_frac = pi_move / safe_sum[:, None, :, :]
+        r_move_choices = move_dir_frac * r_move_pool[:, None, :, :]
         b_move_choices = pi_move * B[:, None, :, :]
 
         flux_b = self.dm_v[:, None, None, None]  # (N_dm,1,1,1)

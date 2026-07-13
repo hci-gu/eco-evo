@@ -24,8 +24,8 @@
     max_energy_reserve: 450.0
     resting_metabolism: 3.5
     movement_speed: 0.02
-    feeding_cost: 1.2
-    movement_cost: 1.4
+    feeding_cost: 1.45
+    movement_cost: 1.2
     energy_content: 4500.0
     min_split_biomass: 0.0
     growth_rate: 0.01
@@ -42,7 +42,7 @@
           weight: 1.0
           transform: linear
     starve_rate: 0.2
-    visibility_floor: 0.0
+    visibility_floor: 0.2
     extinction_threshold_factor: 0.5
   benthic_community:
     display_name: "Benthic Community"
@@ -65,8 +65,8 @@
     max_energy_reserve: 2400.0
     resting_metabolism: 8.0
     movement_speed: 1.0
-    feeding_cost: 1.5
-    movement_cost: 1.6
+    feeding_cost: 1.9
+    movement_cost: 1.5
     energy_content: 6500.0
     min_split_biomass: 0.5
     growth_rate: 0.004
@@ -81,7 +81,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.025
-    visibility_floor: 0.0
+    visibility_floor: 0.2
     extinction_threshold_factor: 0.5
   gadoids:
     display_name: "Gadoids"
@@ -90,8 +90,8 @@
     max_energy_reserve: 2500.0
     resting_metabolism: 6.0
     movement_speed: 0.25
-    feeding_cost: 1.5
-    movement_cost: 1.5
+    feeding_cost: 1.75
+    movement_cost: 2.0
     energy_content: 5500.0
     min_split_biomass: 0.5
     growth_rate: 0.0025

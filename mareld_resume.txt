@@ -4035,3 +4035,159 @@ Purpose: prevent reintroduction during future refactoring.
   * Consider strengthening tests/test_phyto_zoo_sanity.py so a
     future sign-inversion of the saturation curve is caught
     automatically.
+
+================================================================
+65. ACTION-COST SCALING BY POLICY FRACTION (pi_eat_sum / pi_move_sum)
+================================================================
+Semantic fix in lib/environments/ecosystem.py::_apply_movement so
+that eat/move metabolic costs are paid only by the sub-population
+that actually performs the action. Motivated by user clarification
+of move semantics: movement_cost is a per-action transport cost,
+not a continuous cruise overhead; pi_move / pi_eat represent the
+fractions of the cell population that choose those actions.
+
+65.1 Pre-fix behaviour (asymmetric, inconsistent with rest branch)
+
+  * rest branch: m_rest = B * pi_rest * rm * cost_rest * cost_factor
+                 -> cost correctly scaled with pi_rest.
+  * eat  branch: r_eat_tot = pi_eat_sum * max(0, R - B * scale_eat) + TG
+                 -> full B-cost dragged off R FIRST, then pi_eat_sum
+                    applied to what remained.
+  * move branch: r_after_move_meta = max(0, R - B * scale_move); then
+                 r_move_choices = pi_move * r_after_move_meta[..., None, :, :]
+                 -> same "full B-cost first, scale later" pattern.
+                 dm_v (movement_speed) irrelevant for cost.
+
+Effect: total metabolic cost per ton biomass was independent of
+whether the policy actually chose eat/move, breaking the semantic
+"only actors pay". Especially harmful for pi_rest > 0 strategies
+in prey species: pelagic_fish / zooplankton paid full activity
+cost even when the policy tried to have them rest.
+
+65.2 Post-fix (this session)
+
+  * eat:  m_eat        = B * pi_eat_sum  * rm * cost_eat  * cost_factor
+          r_eat_tot    = max(0, R * pi_eat_sum  - m_eat)   + TG
+          b_eat_tot    = B * pi_eat_sum
+  * move: pi_move_sum  = pi_move.sum(axis=1)
+          m_move       = B * pi_move_sum * rm * cost_move * cost_factor
+          r_move_pool  = max(0, R * pi_move_sum - m_move)
+          safe_sum     = where(pi_move_sum > 0, pi_move_sum, 1.0)
+          move_dir_frac= pi_move / safe_sum[:, None, :, :]
+          r_move_choices = move_dir_frac * r_move_pool[:, None, :, :]
+          b_move_choices = pi_move * B[:, None, :, :]         # unchanged
+  * rest branch: unchanged.
+  * flux (dm_v) : unchanged - deliberately left OUT of cost scaling
+                  per user instruction ("lamna dm_v utanfor tills
+                  vidare"). movement_speed still governs only the
+                  fraction that leaves the cell (b_out / r_out).
+
+Divide-by-zero guard: safe_sum replaces pi_move_sum with 1.0 in
+cells where no direction was chosen; since r_move_pool is also
+zero there, the resulting r_move_choices contribution is zero.
+
+65.3 Semantic table (post-fix)
+
+  Action  | Metabolic cost scaled by
+  --------|-------------------------
+  rest    | pi_rest
+  eat     | pi_eat_sum
+  move    | pi_move_sum (sum over N/E/S/W)
+
+feeding_cost / movement_cost multipliers are now biologically
+interpretable as PER-ACTION SMR overhead rather than fixed
+per-tick activity fees. This restores consistency between the
+YAML parameter semantics (Section 23-24) and the actual runtime.
+
+65.4 A/B verification (ab_test_action_cost.py, this session)
+
+Script monkey-patches _apply_movement with the exact pre-fix
+variant (Section 65.1) and runs mareld2.yaml untrained for
+1500 ticks x 3 seeds, comparing per-FG biomass trajectories.
+
+Result: PRE and POST are bit-identical for every FG:
+  zooplankton   mean/b0=0.634  end/b0=0.486  min~4255  turns=0
+  pelagic_fish  mean/b0=0.212  end/b0=0.001  min~2.4   turns=0  (extinct)
+  gadoids       mean/b0=0.365  end/b0=0.001  min~0.9   turns=0
+  phytoplankton mean/b0=1.180  end/b0=1.194  min~18700 turns=0
+
+Interpretation (expected, not a script bug):
+  * Untrained/uniform policies concentrate probability mass on a
+    single action per state (softmax over initialised logits is
+    typically near-argmax). At pi_eat_sum ~= 1 (or ~= 0) the
+    pre-fix formula PRE = pi_eat_sum * max(0, R - B*scale) and
+    post-fix formula POST = max(0, R*pi_eat_sum - B*pi_eat_sum*scale)
+    collapse to the same value. Same argument for move.
+  * The fix's effect is a strict TRAINING ARTEFACT: it only
+    matters when ARS learns to blend actions (in particular
+    pi_rest > 0 for prey under predation pressure). Uniform
+    rollouts show no delta.
+
+Consequences:
+  * Fix is safe (no regression, no NaN, no negative reserves,
+    bit-identical baseline). Checkpoint-compatible.
+  * Verification of biological effect REQUIRES a real training
+    run (e.g. 30-50 gens x 10 iter x 1000 tick) to compare
+    per-FG mean/b0 with vs without the fix.
+  * The A/B script is retained as ab_test_action_cost.py for
+    future regression testing if _apply_movement is touched.
+
+65.5 Recommended movement_cost / feeding_cost multipliers
+
+Discussion in this session against literature and against the
+new per-action semantics (Section 65.3), corrected for:
+  * gadoids have HIGHER cost-of-transport per km than pelagic
+    fish (Steinhausen et al. 2005: ~2.5-4 J/kg/m for cod vs
+    ~1.5-2.5 J/kg/m for herring). Earlier draft that put
+    gadoids below pelagic was a semantic mix-up (confused
+    move FREQUENCY with move EFFICIENCY).
+  * feeding_cost covers SDA + hunt; Section 24 values still
+    hold (herring ~1.9 continuous filtration, cod ~1.75
+    sit-and-wait ambush).
+
+Draft table (for consideration, NOT yet applied to YAML):
+
+  FG            feeding_cost   movement_cost
+  zooplankton   1.45           1.2
+  pelagic_fish  1.9            1.5   (or 1.6 unchanged)
+  gadoids       1.75           1.8   (or 2.0 to match COT-ratio strictly)
+
+Guardrail: max_intake_rate (Section 36), handling_time (Section
+36), natural_mortality (Section 35.3) and resting_metabolism
+(SMR-calibrated, Section 23-24) are literature-calibrated and
+MUST NOT be tweaked to compensate for dynamics problems. Only
+dimensionless activity multipliers (feeding_cost, movement_cost)
+are legitimate tuning knobs, and even those only within the
+Section 24 sanity-check range.
+
+65.6 Outstanding levers for the pzpg248hmovfgzbf2 dead-equilibrium
+
+After Section 64 (Holling numerator bugfix) and Section 65
+(action-cost scaling), the remaining recommended actions for
+sustainable ecosystems over long horizons - in priority order:
+
+  P1. seed_rate on DM species (recolonisation floor). Currently
+      only NDM (phytoplankton) has seed_rate wired into
+      _apply_growth. Extend to DM branch with a small refuge
+      influx term. Directly addresses "prey never bounces back".
+  P2. Type III functional response for pelagic->zoo and
+      gadoids->pelagic (already available in code per Section 64,
+      set handling_time-with-type-III-flag in YAML). Provides
+      low-density prey refuge without touching a or h.
+  P3. Reward rebalancing:
+        --cappa 0.0 to disable "live but starve" attractor
+          (Section 48.B Con).
+        Total-energy reward mean(log(E_total/E0)) already default
+          per Section 58 - verify it was in use for pzpg248...
+        Optional: alpha_gadoids < alpha_pelagic ~= alpha_zoo so
+          the top predator is not unboundedly rewarded for growth.
+  P6. Longer eval rollouts (--n_eval_ticks 3000-5000) if predator-
+      prey cycle time exceeds the fitness window, otherwise ARS
+      converges to the flat equilibrium.
+
+Rejected levers (would violate literature calibration):
+  ~~P4~~ raise gadoids natural_mortality - biologically wrong
+        direction (cod M ~ 0.2/yr < herring M ~ 0.3-0.5/yr per
+        allometry).
+  ~~P5~~ lower max_intake_rate or raise handling_time on
+        gadoids - both are Section 36 physiological ceilings.
