@@ -16,7 +16,6 @@ decision_makers:
     initial_biomass_min: 1
     initial_biomass_max: 120
     inference_initial_biomass: 40
-    muted: true
   - group_id: seabirds
     initial_biomass_min: 12
     initial_biomass_max: 50

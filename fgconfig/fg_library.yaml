@@ -4,7 +4,7 @@
     is_decision_maker: false
     movement_speed: 0.0
     growth_rate: 0.0375
-    max_carrying_capacity: 27.0
+    max_carrying_capacity: 24.0
     energy_content: 2000.0
     seed_rate: 1e-07
     seasonal_amplitude: 0.0
@@ -81,7 +81,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.025
-    visibility_floor: 0.2
+    visibility_floor: 0.35
     extinction_threshold_factor: 0.5
   gadoids:
     display_name: "Gadoids"
@@ -106,7 +106,7 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     starve_rate: 0.012
-    visibility_floor: 0.2
+    visibility_floor: 0.6
     extinction_threshold_factor: 0.5
   porpoises:
     display_name: "Porpoises"
@@ -217,7 +217,7 @@ interaction_definitions:
   seals_preys_on_gadoids:
     preys_on: true
     assimilation_factor: 0.86
-    handling_time: 0.0
+    handling_time: 20.0
   seabirds_preys_on_pelagic_fish:
     preys_on: true
     assimilation_factor: 1.0
@@ -407,7 +407,7 @@ interaction_definitions:
     preys_on: true
     max_intake_rate: 0.05
     assimilation_factor: 0.92
-    handling_time: 0.0
+    handling_time: 20.0
   seals_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0

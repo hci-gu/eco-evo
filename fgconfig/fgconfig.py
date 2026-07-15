@@ -86,49 +86,75 @@ class FGConfigApp:
         except Exception:
             pass
 
-    def _on_mousewheel(self, event):
-        """Handle mouse wheel and trackpad scroll events (vertical)."""
-        if event.num == 4:
-            delta = -1
-        elif event.num == 5:
-            delta = 1
-        elif event.delta:
-            delta = int(-1 * (event.delta / 120))
-        else:
-            return
+    def _wheel_delta(self, event):
+        """Normalisera ett scroll-event till en heltalsdelta (Linux Button-4/5,
+        Windows/Mac <MouseWheel>). Returnerar None om eventet inte kan tolkas."""
+        if getattr(event, "num", None) == 4:
+            return -1
+        if getattr(event, "num", None) == 5:
+            return 1
+        d = getattr(event, "delta", 0)
+        if d:
+            # På Windows är delta multiplar av 120; på macOS är den vanligen
+            # +/-1..3. Klampa till minst 1 unit i rätt riktning.
+            step = int(-1 * (d / 120)) if abs(d) >= 120 else (-1 if d > 0 else 1)
+            if step == 0:
+                step = -1 if d > 0 else 1
+            return step
+        return None
 
+    def _active_scroll_canvas(self):
+        """Returnera den tk.Canvas som är scrollbar i den aktiva notebook-tabben,
+        eller None om ingen finns / tabben inte har någon känd canvas.
+
+        Mappningen speglar notebook-ordningen i ``setup_ui``:
+          idx 0  Project & FGs      -> self.project_canvas
+          idx 1  Impacts            -> (ingen scrollable canvas)
+          idx 2  FG Interactions    -> self.matrix_canvas
+          idx 3  Impact Interactions-> self.impact_canvas
+          idx 4  Inference          -> self.inference_canvas
+        """
         try:
             active_idx = self.notebook.index(self.notebook.select())
         except Exception:
+            return None
+        cv_name = {
+            0: "project_canvas",
+            2: "matrix_canvas",
+            3: "impact_canvas",
+            4: "inference_canvas",
+        }.get(active_idx)
+        if cv_name is None:
+            return None
+        cv = getattr(self, cv_name, None)
+        try:
+            if cv is not None and cv.winfo_exists():
+                return cv
+        except Exception:
+            pass
+        return None
+
+    def _on_mousewheel(self, event):
+        """Handle mouse wheel and trackpad scroll events (vertical)."""
+        delta = self._wheel_delta(event)
+        if delta is None:
             return
-        if active_idx == 0 and hasattr(self, 'project_canvas') and self.project_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.project_canvas, axis="y"):
-                self.project_canvas.yview_scroll(delta, "units")
-        elif active_idx == 1 and hasattr(self, 'matrix_canvas') and self.matrix_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.matrix_canvas, axis="y"):
-                self.matrix_canvas.yview_scroll(delta, "units")
+        cv = self._active_scroll_canvas()
+        if cv is None:
+            return
+        if self._canvas_is_scrollable(cv, axis="y"):
+            cv.yview_scroll(delta, "units")
 
     def _on_shift_mousewheel(self, event):
         """Handle horizontal scroll via Shift+wheel or trackpad horizontal gesture."""
-        if event.num == 4:
-            delta = -1
-        elif event.num == 5:
-            delta = 1
-        elif event.delta:
-            delta = int(-1 * (event.delta / 120))
-        else:
+        delta = self._wheel_delta(event)
+        if delta is None:
             return
-
-        try:
-            active_idx = self.notebook.index(self.notebook.select())
-        except Exception:
+        cv = self._active_scroll_canvas()
+        if cv is None:
             return
-        if active_idx == 0 and hasattr(self, 'project_canvas') and self.project_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.project_canvas, axis="x"):
-                self.project_canvas.xview_scroll(delta, "units")
-        elif active_idx == 1 and hasattr(self, 'matrix_canvas') and self.matrix_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.matrix_canvas, axis="x"):
-                self.matrix_canvas.xview_scroll(delta, "units")
+        if self._canvas_is_scrollable(cv, axis="x"):
+            cv.xview_scroll(delta, "units")
 
     @staticmethod
     def _canvas_is_scrollable(canvas, axis="y"):

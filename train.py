@@ -1805,6 +1805,32 @@ def main():
     # --resume behålls den befintliga headern (första raden) orörd.
     if not args.resume:
         try:
+            # Bygg en engångs-env för att kunna extrahera DM-status per FG.
+            # Detta gör att tools/biomass_html.py kan filtrera bort NDMs
+            # (t.ex. phytoplankton) från energy-fliken på samma sätt som
+            # live-vizens ``_active_plot_ids`` redan gör. Undvik att låta
+            # ett fel här blockera meta-skrivningen — vid problem hoppas
+            # ``dm_ids`` bara över och offline-plotten behåller sitt gamla
+            # (osäkra) beteende.
+            _dm_ids_meta = None
+            _ndm_ids_meta = None
+            try:
+                _tmp_env = _make_env_builder(
+                    None,
+                    grid_size=(GRID_HEIGHT, GRID_WIDTH),
+                    project_path=PROJECT_PATH,
+                )()
+                _dm_ids_meta = [
+                    fid for fid, fg in _tmp_env.fgs.items()
+                    if getattr(fg, 'is_decision_maker', False)
+                ]
+                _ndm_ids_meta = [
+                    fid for fid, fg in _tmp_env.fgs.items()
+                    if not getattr(fg, 'is_decision_maker', False)
+                ]
+            except Exception as _e:
+                print(f"    [fresh start] WARN: could not derive DM/NDM "
+                      f"ids for meta header: {_e!r}")
             meta = {
                 "__meta__": {
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
@@ -1814,6 +1840,8 @@ def main():
                     "cappa": getattr(args, "cappa", None),
                     "survival_bonus": getattr(args, "survival_bonus", None),
                     "n_eval_ticks": int(getattr(args, "n_eval_ticks", 0) or 0),
+                    "dm_ids": _dm_ids_meta,
+                    "ndm_ids": _ndm_ids_meta,
                 }
             }
             with open(probe_jsonl_path, "a") as _f:

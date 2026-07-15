@@ -1059,6 +1059,19 @@ All DMs pass the hard gate. Porpoises fails the soft gate (move > eat).
 ================================================================
 24. SANITY-CHECK SNIPPET
 ================================================================
+SCOPE: This snippet checks the ENERGY-BALANCE gates only, in the
+absence of predation pressure. It is a necessary but NOT sufficient
+condition for the YAML to be well-tuned. For DMs that are prey to
+another DM and have visibility_floor < 1, the effective marginal
+comparison eat-vs-rest ALSO includes a predation-avoidance term
+(see 24.B below); rest may then be marginally preferred even when
+eat-rest > 0 in pure energy terms. Do NOT use this snippet as an
+isolated pass/fail verdict on rest-heavy policies for such DMs
+(e.g. zooplankton with floor=0.2 under pelagic_fish predation, as
+observed in run pzpg248nrnac).
+
+24.A ENERGY-BALANCE GATES (no predation)
+
   rows = [
     # (name, I, E_prey, feeding_cost, SMR, resting_cost, movement_cost)
     ('zooplankton',  0.175, 600,  1.45, 2.5, 1.0, 0.0 ),
@@ -1074,7 +1087,67 @@ All DMs pass the hard gate. Porpoises fails the soft gate (move > eat).
       print(f"{n:14} netto={netto:8.1f} eat-rest={netto-rest:8.1f} "
             f"eat-move={netto-move:8.1f}")
 
-Acceptance: every line must have netto>0 and eat-rest>0.
+Acceptance (hard gate)  : netto > 0             for every DM.
+Acceptance (soft gate)  : eat-rest > 0          for every DM.
+Note: porpoises may fail eat-move; that is a known accepted
+outlier (see Section 23).
+
+24.B PREDATION-AVOIDANCE CORRECTION (visibility_floor < 1)
+
+For a DM X that is prey to predator Y and has visibility_floor
+= floor_X < 1, the fraction of X visible to Y at pi_rest is:
+
+  visible_frac(X) = 1 - pi_rest_X * (1 - floor_X)
+
+Resting therefore has a hidden marginal benefit: undelivered
+predation loss. The FULL marginal comparison per ton per tick is:
+
+  Value(eat)  =  netto_eat_X  -  predation_rate_at_active
+  Value(rest) =  -rest_cost   -  predation_rate_at_active * floor_X
+
+  Value(eat) - Value(rest)
+       =  netto_eat_X + rest_cost
+          - (1 - floor_X) * predation_rate_at_active
+
+where predation_rate_at_active is the per-ton, per-tick loss
+suffered by fully-visible X-biomass under current predator
+biomass B_Y (Holling-II saturated):
+
+  predation_rate_at_active
+       ~  B_Y * a_Y * assim_Y * E_X / (1 + a_Y * h_Y * B_X_visible)
+
+Rest is marginally preferred (rest wins over eat) when
+
+  (1 - floor_X) * predation_rate_at_active  >  netto_eat_X + rest_cost
+
+For zooplankton in pzpg248nrnac (floor=0.2, pelagic_ratio~=0.26,
+Type II near saturation on zoo), the RHS = 101.4 + 2.5 = 103.9
+per ton per tick; the LHS reaches ~100-200 at equilibrium B_pel,
+so rest%~=72% is the ecologically optimal predator-avoidance
+strategy, not a YAML artefact. The pure 24.A gates falsely
+flagged this as suspicious - which is exactly the pitfall this
+subsection exists to prevent.
+
+24.C USAGE GUIDELINES
+
+  * Run 24.A on any YAML change to feeding_cost / movement_cost /
+    resting_cost / max_intake_rate / assimilation / energy_content.
+    Reject changes that break the hard gate for any DM.
+  * If a soft-gate breach is observed in a training run, FIRST
+    check whether 24.B could explain it (prey DM with floor < 1
+    under non-trivial predator biomass). Only if 24.B does not
+    explain the rest-heaviness should the YAML costs be revisited.
+  * 24.A alone is sufficient for top predators (no predator ->
+    predation_rate_at_active = 0 -> 24.B collapses to 24.A) and
+    for DMs with visibility_floor >= 1.0 (no refuge, 24.B collapses
+    to 24.A). Currently that covers gadoids, porpoises, seals and
+    seabirds.
+  * The predation-avoidance term is NOT wired into a runnable
+    check; it is intentionally left as a manual back-of-envelope
+    step because B_Y, B_X_visible and pi_rest_X are runtime
+    quantities. If a future regression test is desired, snapshot
+    them from a converged rollout and evaluate the inequality
+    offline.
 
 ================================================================
 25. RUNNING TRAINING/INFERENCE NON-INTERACTIVELY (gotcha)

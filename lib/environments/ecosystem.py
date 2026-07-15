@@ -213,15 +213,25 @@ class EcosystemEnvironment:
         self.energy_gain_mat = energy_gain
         self.handling_time_mat = handling_time
         self._has_holling2 = bool(np.any(handling_time > 0.0))
-        # Holling Type III aktiveras automatiskt per predator som har fler
-        # än ett byte på sin meny (generalister ⇒ prey switching / search
-        # image). Specialister med exakt ett byte behåller Type II.
+        # Holling Type III aktiveras automatiskt per predator som har
+        # EXAKT ETT byte på sin meny (specialister ⇒ patch-driven
+        # söktröskel: när det enda bytet är glest lönar det sig inte
+        # att jaga). Generalister med fler än ett byte behåller Type II
+        # eftersom prey switching redan hanteras av policyns fördelning
+        # av ``pi_eat`` mellan tillgängliga byten, och litteraturen på
+        # marina toppredatorer (säl, tumlare, sjöfågel) rapporterar
+        # Type II per byte snarare än Type III (Smout & Lindstrom 2007;
+        # Santos & Pierce 2003). Villkoret är alltså INVERTERAT jämfört
+        # med den tidigare implementationen (som gav Type III till
+        # generalister utifrån ett "search image"-argument som inte
+        # håller för denna modell — se Section 65-diskussionen i
+        # mareld_resume.txt).
         # ``_type3_pred_mask`` har form (N_dm, 1, 1, 1) och används som
         # broadcastbar float-mask (1.0 = Type III, 0.0 = Type II) vid
         # attack-rate-beräkningen i ``_apply_predation``.
         n_prey_per_pred = eat_static.sum(axis=1)  # (N_dm,)
         self._type3_pred_mask = (
-            (n_prey_per_pred > 1).astype(self.dtype).reshape(self.N_dm, 1, 1, 1)
+            (n_prey_per_pred == 1).astype(self.dtype).reshape(self.N_dm, 1, 1, 1)
         )
         self._has_holling3 = bool(np.any(self._type3_pred_mask > 0.0))
 
@@ -857,11 +867,14 @@ class EcosystemEnvironment:
 
         a = self.max_intake_mat[:, :, None, None]  # (N_dm, N_all, 1, 1)
         if getattr(self, '_has_holling2', False) or getattr(self, '_has_holling3', False):
-            # Holling functional response. Type II (specialister, 1 byte)
-            # respektive Type III (generalister, ≥2 byten) väljs automatiskt
-            # per predator via ``_type3_pred_mask`` (byggd i
-            # ``_build_static_caches``). Type III ger prey switching /
-            # search image och stabiliserar dynamiken vid låga bytestätheter.
+            # Holling functional response. Type III (specialister med
+            # exakt 1 byte) respektive Type II (generalister, ≥2 byten)
+            # väljs automatiskt per predator via ``_type3_pred_mask``
+            # (byggd i ``_build_static_caches``). Type III för
+            # specialister modellerar patch-driven söktröskel: vid låg
+            # bytestäthet ger a·B² en refug som stabiliserar dynamiken.
+            # Generalister behåller Type II eftersom prey switching
+            # redan hanteras av policyns pi_eat-fördelning mellan byten.
             #
             #   Type II:  f(B) = a·B  / (1 + a·h·B)
             #   Type III: f(B) = a·B² / (1 + a·h·B²)
