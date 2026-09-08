@@ -1,0 +1,37 @@
+[project]
+name = "eco-evo"
+version = "0.1.0"
+description = "Ecosystem simulation and CPU/GPU ARS co-evolution training"
+readme = "README.md"
+# The existing API uses cgi (removed in 3.13), and NumPy 1.x supports <=3.12.
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy>=1.24,<2",
+    # 2.2.2 is the last Torch release with Intel macOS wheels.
+    "torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    # Keep native and CUDA installations on the same release for validation.
+    "torch==2.11.0; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "PyYAML>=6.0",
+    "Pillow>=10.0",
+    "matplotlib>=3.7",
+    "pygame>=2.5",
+    "ruamel.yaml>=0.18",
+]
+
+[dependency-groups]
+dev = ["pytest>=7.0"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+# Use the same CUDA-capable Torch for BOTH CPU and GPU benchmark backends.
+# macOS uses PyPI's native wheels. No manual pip install or extra flag is needed.
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

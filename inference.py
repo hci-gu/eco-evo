@@ -1,7 +1,7 @@
 """Inference runner for trained Mareld policies.
 
 Usage:
-    python3 inference.py [flags]
+    uv run inference.py [flags]
 
 This is a draft / scaffold meant to be extended. It implements the inference
 pipeline sketched out previously and takes the known pitfalls into account:

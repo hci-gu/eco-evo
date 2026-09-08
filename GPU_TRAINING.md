@@ -4,20 +4,22 @@
 
 The implementation is in `lib/gpu/`. It also runs on CPU tensors for numerical validation. CPU reference comparisons, full-graph tracing, checkpoint/resume, and command-line smoke tests can run without a GPU. CUDA execution and performance must be verified on an NVIDIA machine; they were not available on the development machine.
 
-Use Python 3.10 or newer on Linux. Install a CUDA-enabled PyTorch build using the [official installation selector](https://pytorch.org/get-started/locally/), choosing a CUDA runtime supported by your driver. Then, from the repository root:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (0.5.9 or newer). On the NVIDIA machine, use Linux with a driver compatible with CUDA 12.8. From the repository root:
 
 ```bash
-python -m pip install -r requirements-gpu.txt
-python -c "import torch; assert torch.cuda.is_available(); print(torch.__version__, torch.version.cuda, torch.cuda.get_device_name())"
-python -m pytest -q
+uv sync --locked
+uv run --locked python -c "import torch; assert torch.cuda.is_available(); print(torch.__version__, torch.version.cuda, torch.cuda.get_device_name())"
+uv run --locked python -m pytest -q
 ```
 
-The tests automatically enable CUDA cases when a device is available. These compare CUDA eager, CUDA Graph, and compiled execution, including replay after reset, changing rollout horizons, and numerical agreement with the CPU equations. The compile tests can take longer on their first invocation. Local development used PyTorch 2.2.2; benchmark reports record the exact version installed on the target machine.
+uv manages Python 3.12 and the locked dependencies. On Linux/Windows, `pyproject.toml` explicitly selects the official PyTorch CUDA 12.8 index for both benchmark backends; macOS uses native PyPI wheels. No manual Torch installation, extra flags, or environment activation is needed. `uv run` also syncs the environment, so the initial `uv sync` is optional. The lockfile pins Torch 2.11.0 (2.2.2 on Intel Macs) and the CUDA runtime packages. See the [project README](README.md) for the other entry points and dependency maintenance.
+
+The tests automatically enable CUDA cases when a device is available. These compare CUDA eager, CUDA Graph, and compiled execution, including replay after reset, changing rollout horizons, and numerical agreement with the CPU equations. The compile tests can take longer on their first invocation. Benchmark reports record the exact version installed on the target machine.
 
 Start with this comparison:
 
 ```bash
-python benchmark_gpu.py \
+uv run --locked benchmark_gpu.py \
   --project mareld2.yaml --grid 60x60 \
   --n-deltas 16 --worlds 3 --ticks 150 \
   --workers 0 --warmup 2 --repeats 5 \
@@ -39,7 +41,7 @@ Warmup iterations do update the policies. Both implementations start from the sa
 To investigate kernel fusion after the initial CUDA Graph benchmark:
 
 ```bash
-python benchmark_gpu.py \
+uv run --locked benchmark_gpu.py \
   --project mareld2.yaml --grid 60x60 \
   --n-deltas 16 --worlds 3 --ticks 150 \
   --backends gpu --execution compile-graph \
@@ -63,7 +65,7 @@ Use `--pairs-per-batch 4` if the full candidate batch exceeds VRAM. Both perturb
 Train and save policies with:
 
 ```bash
-python train_gpu.py \
+uv run --locked train_gpu.py \
   --project mareld2.yaml --grid 60x60 \
   --n-deltas 16 --worlds 3 --ticks 150 \
   --generations 10 --iter-per-gen 20 \
@@ -79,7 +81,7 @@ Training defaults match the ordinary CPU CLI's reward modifiers: entropy coeffic
 Resume with the same numerical/configuration options and output directory:
 
 ```bash
-python train_gpu.py \
+uv run --locked train_gpu.py \
   --project mareld2.yaml --grid 60x60 \
   --n-deltas 16 --worlds 3 --ticks 150 \
   --generations 10 --iter-per-gen 20 \
@@ -97,10 +99,10 @@ python train_gpu.py \
 For a quick check on a machine without CUDA:
 
 ```bash
-python train_gpu.py --project mareld2.yaml --device cpu --execution eager \
+uv run --locked train_gpu.py --project mareld2.yaml --device cpu --execution eager \
   --grid 6x6 --n-deltas 2 --worlds 2 --ticks 5 \
   --generations 1 --iter-per-gen 2 --output /tmp/eco-evo-smoke
-python benchmark_gpu.py --project mareld2.yaml --grid 6x6 \
+uv run --locked benchmark_gpu.py --project mareld2.yaml --grid 6x6 \
   --n-deltas 2 --worlds 2 --ticks 5 --workers 2 \
   --backends cpu tensor-cpu --warmup 1 --repeats 2 \
   --output /tmp/eco-evo-benchmark.json

@@ -1,6 +1,6 @@
 """Compare complete CPU and GPU ARS iterations, including world reset.
 
-Example: python benchmark_gpu.py --project mareld2.yaml --ticks 150
+Example: uv run benchmark_gpu.py --project mareld2.yaml --ticks 150
          --n-deltas 16 --worlds 3 --repeats 5 --output benchmark.json
 """
 

@@ -7,7 +7,7 @@ try:
 except ImportError:
     import sys
     print("Error: The 'ruamel.yaml' library is required.")
-    print("Please install it using: pip install ruamel.yaml")
+    print("Run from the repository root with: uv run fgconfig/fgconfig.py")
     sys.exit(1)
 
 # Initialize YAML handler

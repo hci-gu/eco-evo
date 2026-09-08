@@ -3,7 +3,7 @@
 
 Usage
 -----
-    python tools/biomass_html.py <run_dir> [-o <out.html>]
+    uv run tools/biomass_html.py <run_dir> [-o <out.html>]
 
 ``<run_dir>`` is a directory inside ``results/`` (or anywhere) that
 contains a ``biomass.jsonl`` produced by ``train.py``'s probe. The

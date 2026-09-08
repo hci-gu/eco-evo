@@ -2,7 +2,7 @@
 
 Run with:
 
-    python manual_play.py
+    uv run manual_play.py
 
 Click/focus the pygame window, then use:
 

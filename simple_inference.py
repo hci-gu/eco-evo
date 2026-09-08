@@ -3,7 +3,7 @@
 No CLI arguments, no checkpoint loading, no project files, no progress logs.
 Run with:
 
-    python simple_inference.py
+    uv run simple_inference.py
 """
 
 import numpy as np

@@ -1513,7 +1513,7 @@ def main():
     if not args.project:
         print("\nError: No project file specified.")
         print("You must specify a project file with the --project flag to start training.")
-        print("Example: python3 train.py --project mareld2.yaml\n")
+        print("Example: uv run train.py --project mareld2.yaml\n")
         return
 
     # Set project globally so env_builder can find it
