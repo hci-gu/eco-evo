@@ -3,12 +3,12 @@
     display_name: "Phytoplankton"
     is_decision_maker: false
     movement_speed: 0.0
-    growth_rate: 0.125
-    max_carrying_capacity: 27.0
+    growth_rate: 0.0375
+    max_carrying_capacity: 24.0
     energy_content: 2000.0
-    seed_rate: 1e-06
+    seed_rate: 1e-07
     seasonal_amplitude: 0.0
-    seasonal_period: 500.0
+    seasonal_period: 1460.0
     spawn:
       mode: perlin
       scale: 12.0
@@ -24,8 +24,8 @@
     max_energy_reserve: 450.0
     resting_metabolism: 3.5
     movement_speed: 0.02
-    feeding_cost: 1.2
-    movement_cost: 1.4
+    feeding_cost: 1.45
+    movement_cost: 1.2
     energy_content: 4500.0
     min_split_biomass: 0.0
     growth_rate: 0.01
@@ -42,22 +42,26 @@
           weight: 1.0
           transform: linear
     starve_rate: 0.2
-    visibility_floor: 0.05
+    visibility_floor: 0.2
     extinction_threshold_factor: 0.5
   benthic_community:
     display_name: "Benthic Community"
     is_decision_maker: false
     movement_speed: 0.0
     growth_rate: 0.001
-    max_carrying_capacity: 120.0
-    energy_content: 0.0
+    max_carrying_capacity: 10.0
+    energy_content: 3000.0
     spawn:
       mode: perlin
-      scale: 18
+      scale: 18.0
       octaves: 3
       persistence: 0.5
       lacunarity: 2.0
       threshold: 0.0
+      min_frac_of_max: 0.0
+    seed_rate: 1e-06
+    seasonal_amplitude: 0.0
+    seasonal_period: 0.0
   pelagic_fish:
     display_name: "Pelagic Fish"
     is_decision_maker: true
@@ -65,22 +69,24 @@
     max_energy_reserve: 2400.0
     resting_metabolism: 8.0
     movement_speed: 1.0
-    feeding_cost: 1.5
-    movement_cost: 1.6
+    feeding_cost: 1.9
+    movement_cost: 1.5
     energy_content: 6500.0
     min_split_biomass: 0.5
     growth_rate: 0.004
     natural_mortality: 0.0005
     max_intake_rate: 0.04
     spawn:
-      mode: perlin
-      scale: 8.0
-      octaves: 3
-      persistence: 0.6
-      lacunarity: 2.0
-      threshold: 0.0
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
     starve_rate: 0.025
-    visibility_floor: 0.2
+    visibility_floor: 0.35
+    extinction_threshold_factor: 0.5
   gadoids:
     display_name: "Gadoids"
     is_decision_maker: true
@@ -88,22 +94,24 @@
     max_energy_reserve: 2500.0
     resting_metabolism: 6.0
     movement_speed: 0.25
-    feeding_cost: 1.5
-    movement_cost: 1.5
+    feeding_cost: 1.75
+    movement_cost: 2.0
     energy_content: 5500.0
     min_split_biomass: 0.5
     growth_rate: 0.0025
     natural_mortality: 0.0002
     max_intake_rate: 0.04
     spawn:
-      mode: perlin
-      scale: 12.0
-      octaves: 3
-      persistence: 0.55
-      lacunarity: 2.0
-      threshold: 0.0
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
     starve_rate: 0.012
-    visibility_floor: 0.2
+    visibility_floor: 0.6
+    extinction_threshold_factor: 0.5
   porpoises:
     display_name: "Porpoises"
     is_decision_maker: true
@@ -195,17 +203,17 @@ interaction_definitions:
   # Med h=2.5 dämpar Type II faktiskt intaget när P är riklig, vilket
   # är hela poängen med Fix 2.
   zooplankton_preys_on_phytoplankton:
-    handling_time: 0.0
+    handling_time: 4.0
     preys_on: true
     assimilation_factor: 0.65
   pelagic_fish_preys_on_zooplankton:
     preys_on: true
     assimilation_factor: 0.8
-    handling_time: 0.0
+    handling_time: 25.0
   gadoids_preys_on_pelagic_fish:
     preys_on: true
     assimilation_factor: 0.8
-    handling_time: 0.0
+    handling_time: 25.0
   porpoises_preys_on_pelagic_fish:
     preys_on: true
     assimilation_factor: 0.9
@@ -213,7 +221,7 @@ interaction_definitions:
   seals_preys_on_gadoids:
     preys_on: true
     assimilation_factor: 0.86
-    handling_time: 0.0
+    handling_time: 20.0
   seabirds_preys_on_pelagic_fish:
     preys_on: true
     assimilation_factor: 1.0
@@ -251,9 +259,9 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   gadoids_preys_on_benthic_community:
-    preys_on: false
-    assimilation_factor: 1.0
-    handling_time: 0.0
+    preys_on: true
+    assimilation_factor: 0.7
+    handling_time: 25.0
   gadoids_preys_on_gadoids:
     preys_on: false
     assimilation_factor: 1.0
@@ -403,7 +411,7 @@ interaction_definitions:
     preys_on: true
     max_intake_rate: 0.05
     assimilation_factor: 0.92
-    handling_time: 0.0
+    handling_time: 20.0
   seals_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
@@ -555,7 +563,7 @@ interaction_definitions:
     impact_affects: false
     impact_table: []
   gadoids_observes_benthic_community:
-    observes: false
+    observes: true
   gadoids_observes_gadoids:
     observes: true
   gadoids_observes_pelagic_fish:

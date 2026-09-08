@@ -366,6 +366,22 @@ def _build_html(run_dir: str, records: List[dict],
             if not has_reward:
                 eff_field = "log10_ratio"
         fg_ids = _collect_keys(records, eff_field, rnd_field=rnd_field)
+        # ``energy``-fliken ska bara visa DMs — NDMs (t.ex. phytoplankton)
+        # har ett ``energy_reserve`` som sätts vid init men aldrig
+        # uppdateras i tick-loopen (ingen policy, inga action-kostnader,
+        # ingen predator-intag-bokföring), så deras ``eh/e0``-linje är i
+        # praktiken en konstant artefakt av initialtillståndet. Live-vizen
+        # filtrerar redan bort dem via ``_active_plot_ids`` i
+        # ``lib/viz/pygame_viz.py`` — samma regel appliceras här på
+        # offline-plotten för att hålla de två synkroniserade. NDM-listan
+        # läses från ``__meta__``-headern (skriven av train.py vid fresh
+        # start); saknas den (gamla jsonl-filer utan dm_ids-fält) behålls
+        # det gamla beteendet.
+        if tab_key == "energy" and meta:
+            _ndm_ids = meta.get("ndm_ids") if isinstance(meta, dict) else None
+            if isinstance(_ndm_ids, list) and _ndm_ids:
+                _ndm_set = set(_ndm_ids)
+                fg_ids = [fid for fid in fg_ids if fid not in _ndm_set]
         if not fg_ids:
             continue
         traces = _build_traces(records, eff_field, fg_ids, rnd_field=rnd_field,

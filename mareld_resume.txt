@@ -1059,6 +1059,19 @@ All DMs pass the hard gate. Porpoises fails the soft gate (move > eat).
 ================================================================
 24. SANITY-CHECK SNIPPET
 ================================================================
+SCOPE: This snippet checks the ENERGY-BALANCE gates only, in the
+absence of predation pressure. It is a necessary but NOT sufficient
+condition for the YAML to be well-tuned. For DMs that are prey to
+another DM and have visibility_floor < 1, the effective marginal
+comparison eat-vs-rest ALSO includes a predation-avoidance term
+(see 24.B below); rest may then be marginally preferred even when
+eat-rest > 0 in pure energy terms. Do NOT use this snippet as an
+isolated pass/fail verdict on rest-heavy policies for such DMs
+(e.g. zooplankton with floor=0.2 under pelagic_fish predation, as
+observed in run pzpg248nrnac).
+
+24.A ENERGY-BALANCE GATES (no predation)
+
   rows = [
     # (name, I, E_prey, feeding_cost, SMR, resting_cost, movement_cost)
     ('zooplankton',  0.175, 600,  1.45, 2.5, 1.0, 0.0 ),
@@ -1074,7 +1087,67 @@ All DMs pass the hard gate. Porpoises fails the soft gate (move > eat).
       print(f"{n:14} netto={netto:8.1f} eat-rest={netto-rest:8.1f} "
             f"eat-move={netto-move:8.1f}")
 
-Acceptance: every line must have netto>0 and eat-rest>0.
+Acceptance (hard gate)  : netto > 0             for every DM.
+Acceptance (soft gate)  : eat-rest > 0          for every DM.
+Note: porpoises may fail eat-move; that is a known accepted
+outlier (see Section 23).
+
+24.B PREDATION-AVOIDANCE CORRECTION (visibility_floor < 1)
+
+For a DM X that is prey to predator Y and has visibility_floor
+= floor_X < 1, the fraction of X visible to Y at pi_rest is:
+
+  visible_frac(X) = 1 - pi_rest_X * (1 - floor_X)
+
+Resting therefore has a hidden marginal benefit: undelivered
+predation loss. The FULL marginal comparison per ton per tick is:
+
+  Value(eat)  =  netto_eat_X  -  predation_rate_at_active
+  Value(rest) =  -rest_cost   -  predation_rate_at_active * floor_X
+
+  Value(eat) - Value(rest)
+       =  netto_eat_X + rest_cost
+          - (1 - floor_X) * predation_rate_at_active
+
+where predation_rate_at_active is the per-ton, per-tick loss
+suffered by fully-visible X-biomass under current predator
+biomass B_Y (Holling-II saturated):
+
+  predation_rate_at_active
+       ~  B_Y * a_Y * assim_Y * E_X / (1 + a_Y * h_Y * B_X_visible)
+
+Rest is marginally preferred (rest wins over eat) when
+
+  (1 - floor_X) * predation_rate_at_active  >  netto_eat_X + rest_cost
+
+For zooplankton in pzpg248nrnac (floor=0.2, pelagic_ratio~=0.26,
+Type II near saturation on zoo), the RHS = 101.4 + 2.5 = 103.9
+per ton per tick; the LHS reaches ~100-200 at equilibrium B_pel,
+so rest%~=72% is the ecologically optimal predator-avoidance
+strategy, not a YAML artefact. The pure 24.A gates falsely
+flagged this as suspicious - which is exactly the pitfall this
+subsection exists to prevent.
+
+24.C USAGE GUIDELINES
+
+  * Run 24.A on any YAML change to feeding_cost / movement_cost /
+    resting_cost / max_intake_rate / assimilation / energy_content.
+    Reject changes that break the hard gate for any DM.
+  * If a soft-gate breach is observed in a training run, FIRST
+    check whether 24.B could explain it (prey DM with floor < 1
+    under non-trivial predator biomass). Only if 24.B does not
+    explain the rest-heaviness should the YAML costs be revisited.
+  * 24.A alone is sufficient for top predators (no predator ->
+    predation_rate_at_active = 0 -> 24.B collapses to 24.A) and
+    for DMs with visibility_floor >= 1.0 (no refuge, 24.B collapses
+    to 24.A). Currently that covers gadoids, porpoises, seals and
+    seabirds.
+  * The predation-avoidance term is NOT wired into a runnable
+    check; it is intentionally left as a manual back-of-envelope
+    step because B_Y, B_X_visible and pi_rest_X are runtime
+    quantities. If a future regression test is desired, snapshot
+    them from a converged rollout and evaluate the inequality
+    offline.
 
 ================================================================
 25. RUNNING TRAINING/INFERENCE NON-INTERACTIVELY (gotcha)
@@ -3700,3 +3773,494 @@ control in the SAME deterministic probe world.
   * Legacy: pre-Section-62 behaviour ('all' mode via bare
     --rnd_baseline store_true) is preserved as the const default
     when the flag is passed without an argument.
+
+================================================================
+63. HOLLING TYPE II/III AUTO-SELECTION + PHYTO CALIBRATION ARC
+================================================================
+Late-session arc covering: (a) automatic Type II vs Type III
+choice per predator based on menu length, (b) GUI exposure of the
+handling_time matrix with Auto-fill buttons, (c) recommended
+literature-based phyto calibration and its downstream effects, and
+(d) a diagnosed policy-mismatch failure mode where zooplankton
+starves despite phyto sitting at carrying capacity.
+
+63.1 Type II vs Type III auto-selection (ecosystem.py)
+  Per predator, the functional response is chosen structurally
+  from the menu size (no YAML flag):
+    * n_prey_per_pred == 1 -> Holling Type II (specialist,
+      hyperbolic saturation, standard filter feeder).
+    * n_prey_per_pred >= 2 -> Holling Type III (generalist,
+      sigmoid; models prey switching / search image /
+      low-density refuge -> stabilising at low prey).
+  Implementation in _build_static_caches:
+      n_prey_per_pred = eat_static.sum(axis=1)             # (N_dm,)
+      self._type3_pred_mask = (
+          (n_prey_per_pred > 1).astype(self.dtype)
+          .reshape(self.N_dm, 1, 1, 1)
+      )
+      self._has_holling3 = bool(np.any(self._type3_pred_mask > 0.0))
+  In _apply_predation both a_eff variants are built and mixed via
+  the mask:
+      a_eff_ii  = a / (1 + a*h*B)          # f_II  = a*B  / (1+ahB)
+      a_eff_iii = a*B / (1 + a*h*B*B)      # f_III = a*B^2/(1+ahB^2)
+      a_eff = m3*a_eff_iii + (1 - m3)*a_eff_ii
+  Same 1/h asymptote for both types; only the low-density slope
+  differs. B here is B_prey_visible (Section 41 hide semantics).
+  No configuration change needed - a, h and max_intake_rate keep
+  their meaning. In mareld2.yaml this puts pelagic_fish + gadoids
+  on Type III (multiple prey); zooplankton stays on Type II.
+  Verified via tests/test_phyto_zoo_sanity.py (4/4 green).
+
+63.2 handling_time matrix + Auto-fill buttons in FG Editor
+  Previously commented out; re-exposed in the "FG Interactions"
+  tab under Predation and Observability. Cells are non-negative
+  floats, active only when preys_on=True (linked disable via
+  existing matrix wiring, muted rows/cols greyed).
+  New auto-fill helper panel below the matrix:
+    * One "Auto" button per predator row -> fills all active
+      cells in that row with h = 1 / max_intake_rate (rounded
+      via "%g"). Skips muted/disabled cells and rows where the
+      predator has no positive max_intake_rate (info dialog).
+    * One "Auto All Rows" button -> runs the row helper for
+      every predator, reports total filled cells.
+  Implementation (fgconfig.py):
+    * create_matrix_section("Handling time (row eats column)",
+      "handling_time", dm_fgs, fgs, cell_type="nonneg_float")
+      restored; followed by _add_handling_time_auto_buttons.
+    * _autofill_handling_time_row(pred_id, col_ids): writes to
+      self.matrix_entries[key]["handling_time"] StringVar for
+      each active cell; persists via the existing "Apply All
+      Matrix Changes" flow.
+  Rationale for keeping h as a first-class editable field even
+  though h = 1/max_intake_rate is the physiologically consistent
+  default:
+    * h is per (predator, prey) - the physiological "handling
+      difficulty" is prey-specific (catching phyto != catching
+      fish). max_intake_rate is per predator (physiological
+      ceiling, common to all its prey).
+    * Literature usually reports a and h separately; the Auto
+      button fills the consistent relation h = 1/I_max but the
+      user can deviate deliberately to model per-prey ceilings
+      (I_max_effective = 1/h_ij).
+    * Inconsistency risk: setting h > 0 without matching
+      max_intake_rate re-creates the "Holling I + clip" pathology
+      (Section 36). GUI does NOT yet validate this - future
+      follow-up could warn if abs(1/h - max_intake_rate)/max >
+      0.05 per active cell.
+
+63.3 Phyto calibration recommendation (literature-based)
+  For temperate coastal / Baltic pelagial phytoplankton on a
+  1 km^2 cell with 6 h tick (mareld2.yaml defaults):
+    growth_rate         = 0.0375   (net mu ~ 0.15/day, HELCOM avg)
+    seasonal_amplitude  = 0.7      (5-6x seasonal mu ratio)
+    seasonal_period     = 1460     (365 days x 4 tick/day)
+  Motivation:
+    * growth_rate 0.125/tick (~0.5/day) is Eppley physiological
+      max, not sustained net - drives phyto to CC and masks
+      grazing signal. 0.0375 lands in the middle of HELCOM /
+      Behrenfeld-Falkowski net growth for temperate zones.
+    * seasonal_period 500 has no biological analogue; the year
+      cycle is the dominant timescale (spring/autumn blooms).
+    * seasonal_amplitude 0.7 gives winter mu ~ 0.011/tick
+      (~0.045/day) and summer peak ~ 0.064/tick (~0.26/day) -
+      matches Baltic 5-6x seasonal biomass variation (after CC
+      damping). Avoid A>=1.0 (negative growth in winter breaks
+      logistic recovery).
+  Companion recommendation: keep handling_time = 4.0 for
+  zooplankton_preys_on_phytoplankton (matches Auto-fill from
+  max_intake_rate = 0.25), consistent with Section 36.
+
+63.4 Cell-area caveat
+  a, h and max_intake_rate in the code are tick-normalised rates
+  in ton_per_cell units (not ton/m^2). The 1 km^2 cell mapping
+  works for the current a=0.25/h=4/CC=27 numbers by coincidence
+  of calibration - halving cell area breaks the density-based
+  dynamics because a stays constant while B scales with area.
+  If cell area is ever changed, a and CC must be re-derived from
+  ton/m^2 literature values, not just re-used. Future refactor:
+  store a in ton/(g_prey/m^2 * day) and multiply by cell_area *
+  tick_days in ecosystem.py:847. Not implemented.
+
+63.5 Diagnosed failure mode: zoo starves at phyto=CC
+  NOTE (superseded in part by Section 64): the "pelagic starves
+  when zoo is abundant" symptom that motivated much of this
+  section turned out to be caused primarily by a sign-inverted
+  Holling II/III attack-rate formula in ``_apply_predation``
+  (see Section 64). The policy-parameter mismatch discussion
+  below is still valid for legacy checkpoints, but the DOMINANT
+  cause of the observed starvation-at-abundance was the missing
+  ``B_prey`` factor in ``a_eff``, not policy staleness alone.
+  Retraining after the Section 64 fix is required for meaningful
+  inference on any pre-fix checkpoint.
+
+  Symptom: with the Section 63.3 calibration applied and a
+  legacy checkpoint (pzpg248ed) trained under the OLD parameters
+  (growth_rate=0.125, h=0, no season), zoo dies of starvation
+  during inference even after phyto stabilises at CC across the
+  whole grid.
+  Root cause chain (verified against code, not hypothetical):
+    1. Legacy policy learnt pi_eat ~= 1 everywhere - trivial
+       optimum under Holling I + always-saturated phyto.
+    2. hunger clamp in functional_group.py::get_hunger:
+         hunger = max(0, 1 - s_x/0.8)   with s_x = R/(B*ME)
+       Above s_x=0.8, hunger=0 => intake=0 regardless of pi_eat
+       (D = B_pred * pi_eat * a_eff * hunger).
+    3. In _apply_movement, feeding_cost * resting_metabolism is
+       paid proportionally to pi_eat_sum, NOT proportionally to
+       actual intake. So a "trying to eat" cell with hunger=0
+       still pays feed_cost = 1.2 * rm per tick.
+    4. Reserve overshoots 80%, hunger drops, intake stops, but
+       pi_eat is still ~1 (frozen policy). Net drain 4.2 MJ/tick
+       vs 0 intake pulls s_x below 0.8; hunger reappears at
+       epsilon level, insufficient to compensate.
+    5. When s_x < u_x = 0.5, q_x < 0 and starve_rate = 0.2 in
+       _apply_growth begins shrinking biomass (Section 46).
+       Combined with natural_mortality = 0.0025/tick (when
+       --mortality on), zoo collapses over ~hundreds of ticks
+       despite phyto being at 100% availability.
+  Not a bug in the ecology code - the mechanics are correct.
+  The issue is policy-parameter mismatch: pzpg248ed was trained
+  in a world where hunger=0 was rare (fast phyto recovery, so
+  pi_eat=1 didn't waste feeding_cost in empty cells).
+  Recommended remedies (in order):
+    (A) Retrain the policy under the new phyto parameters +
+        Holling II - the only genuine fix. A fresh policy learns
+        pi_rest -> 1 when s_x is near 1.0.
+    (B) Diagnostic instrumentation: log medians of s_x, hunger,
+        pi_eat, and count "eating with hunger=0" cells for the
+        first N ticks (snippet in Section 51/63 discussion).
+    (C) Consider making feeding_cost scale with actual intake
+        rather than pi_eat (ecosystem.py::_apply_movement rad
+        ~968-971). This would make suboptimal policies robust
+        against paying-for-nothing, but changes the training
+        landscape - requires retraining anyway. Discussed, NOT
+        implemented.
+    (D) Sanity-run without season first (seasonal_amplitude=0)
+        and check spawn.min_frac_of_max for phyto to guarantee
+        food at t=0 during transition.
+
+63.6 Verification of this arc
+  * tests/test_phyto_zoo_sanity.py: 4/4 green after Type III
+    auto-selection added (specialists unchanged; generalists
+    activate Type III without config touch).
+  * ecosystem.py: python -c "import lib.environments.ecosystem"
+    -> import ok.
+  * fgconfig.py: matrix + auto-buttons parse and populate in
+    both fresh projects and legacy YAML.
+  * The retraining implication in 63.5 is unresolved: the user
+    has not yet retrained pzpg248ed under the new parameters, so
+    the "zoo starves at CC" symptom persists in inference. This
+    is documented, not fixed.
+
+63.7 Follow-ups / open items
+  * GUI validator that warns when h != 1/max_intake_rate per
+    active cell (Section 63.2). Cheap; not done.
+  * Optional per-(pred,prey) attack_rate field decoupled from
+    max_intake_rate, so a and 1/h can be varied independently
+    (currently a := max_intake_mat in ecosystem.py rad ~847).
+    Ecologically clean but requires code + GUI + calibration
+    workflow rework.
+  * Cell-area-aware a rescaling (Section 63.4). Only relevant
+    if grid resolution ever changes.
+  * feeding_cost -> actual-intake proportionality (Section
+    63.5.C). Simple code change, but should be paired with a
+    fresh training arc rather than dropped into a legacy run.
+
+================================================================
+64. HOLLING II/III BUGFIX - MISSING B_prey FACTOR IN a_eff
+================================================================
+Structural bug in ``lib/environments/ecosystem.py::_apply_predation``
+diagnosed and fixed this session. The Holling II/III attack-rate
+expressions were sign-inverted in the prey-density dependence:
+``a_eff`` FELL toward 0 at high prey density instead of saturating
+toward the physiological ceiling ``1/h``. Symptom that led to
+diagnosis: pelagic_fish starving to an asymptote near 25 % of
+starting energy during inference on run ``pzpg248hmovf0``, even
+with gadoids=0 (no top-down pressure), phyto/zoo at max spawn
+biomass, and a trained policy at pi_eat ~= 1.
+
+64.1 What the code did (wrong)
+
+At the Holling II/III branch of _apply_predation the attack-rate
+per predator-unit was built as:
+
+    a_eff_ii  = a / (1 + a*h*Bp)              # WRONG: missing *Bp
+    a_eff_iii = (a*Bp) / (1 + a*h*Bp2)        # WRONG: missing one *Bp
+
+with predator demand:
+
+    D = B_pred * pi_eat * a_eff * hunger
+
+The comment directly above these lines stated the INTENDED form:
+``f(B) = a*B / (1 + a*h*B)`` (Type II) and ``f(B) = a*B^2 / (1 +
+a*h*B^2)`` (Type III), i.e. classical Holling. Code and comment
+were inconsistent - the code had lost the B_prey numerator factor.
+
+64.2 Consequences
+
+With the buggy Type II expression ``a_eff = a/(1 + a*h*B)``:
+  * B_prey -> 0    ==> a_eff -> a        (full "trying to eat"
+                                          signal in empty cells)
+  * B_prey -> inf  ==> a_eff -> 0        (ZERO try when abundant -
+                                          exact opposite of saturation)
+
+For pelagic_fish (a=0.04, h=25, energy_content_zoo=4500,
+assim=0.8, feeding_cost=1.5, resting_metabolism=8) at a typical
+zoo colony B_prey ~= 100 ton/cell:
+  * a_eff_old = 0.04 / (1 + 0.04*25*100) = 0.04/101 ~ 3.96e-4
+  * Energy in per ton_pred/tick
+      ~ pi_eat * a_eff * assim * ec = 1 * 3.96e-4 * 3600 ~ 1.4 MJ
+  * Feeding cost per ton_pred/tick
+      = pi_eat * feeding_cost * rm = 1 * 1.5 * 8 = 12 MJ
+  * Net: -10.6 MJ/tick - exact match for the rapid energy decay
+    the user observed.
+
+The 25 % asymptote arises when s_x drops below 0.8 (hunger
+clamp in get_hunger) and hunger starts rising linearly, partially
+compensating the vanishing a_eff. The two effects balance at a
+low, stable energy fraction (~25 % in the observed run).
+
+zooplankton -> phytoplankton escaped the symptom in visible
+training because a*h = 0.25*4 = 1 gave milder scaling in
+practice, but the same bug was present there too.
+
+64.3 Fix
+
+In ``lib/environments/ecosystem.py::_apply_predation`` (post-fix):
+
+    a_eff_ii  = (a * Bp)  / (1.0 + a * h * Bp)     # canonical Type II
+    a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2)    # canonical Type III
+
+Numerical verification for a=0.04, h=25 (asymptote 1/h = a = 0.04):
+
+    B_prey   a_eff_II (fix)   a_eff_III (fix)
+    0.01     0.00040          0.00000004
+    1.0      0.02000          0.02000
+    10.0     0.03636          0.03960
+    100.0    0.03960          0.04000
+
+a_eff now saturates toward 1/h = a at high B (canonical Section
+36 calibration) and drops toward 0 at low B (as intended). At
+B_prey ~= 100 ton/cell pelagic_fish now gets ~143 MJ/ton_pred/tick
+in intake vs 12 MJ in feeding_cost - a comfortable positive
+energy budget.
+
+Type I branch (``else: a_eff = a``) is unchanged. Demand
+formula ``D = B_pred * pi_eat * a_eff * hunger`` is now
+consistent: Type I attempts linear ``a*B_pred`` (hard-capped by
+``scale`` against ``B_prey_visible`` later), Type II/III attempts
+saturated ``f(B_prey)*B_pred``.
+
+64.4 Buggfix note in the code
+
+A BUGGFIX comment block was added directly above the corrected
+expressions in _apply_predation. Text (Swedish, retained here
+verbatim for grep-ability):
+
+    "BUGGFIX: tidigare implementering saknade *Bp i taljaren
+    for Type II och en *Bp for Type III, vilket gjorde att
+    ``a_eff`` FALLADE mot 0 vid hog bytestathet -- motsatsen
+    till avsedd mattnad. Symptom: pelagisk fisk svalt vid
+    riklig zoo (max startbiomassa) fastan pi_eat ~= 1."
+
+Purpose: prevent reintroduction during future refactoring.
+
+64.5 Verification
+
+  * python3 -m pytest tests/ -q -> 42/42 green (incl.
+    test_phyto_zoo_sanity.py which exercises the predation
+    signal).
+  * Numerical sanity per-B_prey table (Section 64.3) verified
+    by hand.
+  * Existing tests passed even under the buggy formula - they
+    were too tolerant to catch a sign-error in the saturation
+    curve. Recommended regression test to add: verify that
+    a_eff is MONOTONICALLY INCREASING in B_prey per (predator,
+    prey) whenever handling_time > 0. Not implemented yet.
+
+64.6 Consequences for existing checkpoints
+
+  * ALL pre-fix checkpoints were trained under inverted
+    dynamics. Policies learned to "try to eat" in empty cells
+    (where a_eff was highest under the bug) and to abstain in
+    full cells (where a_eff was near zero). Post-fix that
+    behaviour is grossly suboptimal.
+  * Retraining is required for meaningful inference after this
+    fix (in particular pzpg248hmovf0, which motivated the
+    diagnosis).
+  * Section 63.5 previously attributed the "zoo starves at
+    phyto=CC" symptom to a policy-parameter mismatch after the
+    Section 63.3 phyto calibration. Part of that story was in
+    fact this same bug, not just hunger/feeding_cost dynamics.
+  * The sanity formula in Sections 23-24 (netto_eat = a *
+    energy_gain * assim - feeding_cost * rm) computes the
+    INTENDED balance at saturation; after the fix, live runs
+    match that calculation again. Pre-fix runs did not.
+
+64.7 Follow-ups
+
+  * Add a regression test asserting a_eff monotonicity in
+    B_prey for any (pred, prey) with h > 0.
+  * Retrain mareld2 baselines under the fixed dynamics before
+    running any long-form inference or diagnostics; discard
+    pre-fix policy conclusions in Section 21 / 22 that assumed
+    the pre-fix landscape.
+  * Consider strengthening tests/test_phyto_zoo_sanity.py so a
+    future sign-inversion of the saturation curve is caught
+    automatically.
+
+================================================================
+65. ACTION-COST SCALING BY POLICY FRACTION (pi_eat_sum / pi_move_sum)
+================================================================
+Semantic fix in lib/environments/ecosystem.py::_apply_movement so
+that eat/move metabolic costs are paid only by the sub-population
+that actually performs the action. Motivated by user clarification
+of move semantics: movement_cost is a per-action transport cost,
+not a continuous cruise overhead; pi_move / pi_eat represent the
+fractions of the cell population that choose those actions.
+
+65.1 Pre-fix behaviour (asymmetric, inconsistent with rest branch)
+
+  * rest branch: m_rest = B * pi_rest * rm * cost_rest * cost_factor
+                 -> cost correctly scaled with pi_rest.
+  * eat  branch: r_eat_tot = pi_eat_sum * max(0, R - B * scale_eat) + TG
+                 -> full B-cost dragged off R FIRST, then pi_eat_sum
+                    applied to what remained.
+  * move branch: r_after_move_meta = max(0, R - B * scale_move); then
+                 r_move_choices = pi_move * r_after_move_meta[..., None, :, :]
+                 -> same "full B-cost first, scale later" pattern.
+                 dm_v (movement_speed) irrelevant for cost.
+
+Effect: total metabolic cost per ton biomass was independent of
+whether the policy actually chose eat/move, breaking the semantic
+"only actors pay". Especially harmful for pi_rest > 0 strategies
+in prey species: pelagic_fish / zooplankton paid full activity
+cost even when the policy tried to have them rest.
+
+65.2 Post-fix (this session)
+
+  * eat:  m_eat        = B * pi_eat_sum  * rm * cost_eat  * cost_factor
+          r_eat_tot    = max(0, R * pi_eat_sum  - m_eat)   + TG
+          b_eat_tot    = B * pi_eat_sum
+  * move: pi_move_sum  = pi_move.sum(axis=1)
+          m_move       = B * pi_move_sum * rm * cost_move * cost_factor
+          r_move_pool  = max(0, R * pi_move_sum - m_move)
+          safe_sum     = where(pi_move_sum > 0, pi_move_sum, 1.0)
+          move_dir_frac= pi_move / safe_sum[:, None, :, :]
+          r_move_choices = move_dir_frac * r_move_pool[:, None, :, :]
+          b_move_choices = pi_move * B[:, None, :, :]         # unchanged
+  * rest branch: unchanged.
+  * flux (dm_v) : unchanged - deliberately left OUT of cost scaling
+                  per user instruction ("lamna dm_v utanfor tills
+                  vidare"). movement_speed still governs only the
+                  fraction that leaves the cell (b_out / r_out).
+
+Divide-by-zero guard: safe_sum replaces pi_move_sum with 1.0 in
+cells where no direction was chosen; since r_move_pool is also
+zero there, the resulting r_move_choices contribution is zero.
+
+65.3 Semantic table (post-fix)
+
+  Action  | Metabolic cost scaled by
+  --------|-------------------------
+  rest    | pi_rest
+  eat     | pi_eat_sum
+  move    | pi_move_sum (sum over N/E/S/W)
+
+feeding_cost / movement_cost multipliers are now biologically
+interpretable as PER-ACTION SMR overhead rather than fixed
+per-tick activity fees. This restores consistency between the
+YAML parameter semantics (Section 23-24) and the actual runtime.
+
+65.4 A/B verification (ab_test_action_cost.py, this session)
+
+Script monkey-patches _apply_movement with the exact pre-fix
+variant (Section 65.1) and runs mareld2.yaml untrained for
+1500 ticks x 3 seeds, comparing per-FG biomass trajectories.
+
+Result: PRE and POST are bit-identical for every FG:
+  zooplankton   mean/b0=0.634  end/b0=0.486  min~4255  turns=0
+  pelagic_fish  mean/b0=0.212  end/b0=0.001  min~2.4   turns=0  (extinct)
+  gadoids       mean/b0=0.365  end/b0=0.001  min~0.9   turns=0
+  phytoplankton mean/b0=1.180  end/b0=1.194  min~18700 turns=0
+
+Interpretation (expected, not a script bug):
+  * Untrained/uniform policies concentrate probability mass on a
+    single action per state (softmax over initialised logits is
+    typically near-argmax). At pi_eat_sum ~= 1 (or ~= 0) the
+    pre-fix formula PRE = pi_eat_sum * max(0, R - B*scale) and
+    post-fix formula POST = max(0, R*pi_eat_sum - B*pi_eat_sum*scale)
+    collapse to the same value. Same argument for move.
+  * The fix's effect is a strict TRAINING ARTEFACT: it only
+    matters when ARS learns to blend actions (in particular
+    pi_rest > 0 for prey under predation pressure). Uniform
+    rollouts show no delta.
+
+Consequences:
+  * Fix is safe (no regression, no NaN, no negative reserves,
+    bit-identical baseline). Checkpoint-compatible.
+  * Verification of biological effect REQUIRES a real training
+    run (e.g. 30-50 gens x 10 iter x 1000 tick) to compare
+    per-FG mean/b0 with vs without the fix.
+  * The A/B script is retained as ab_test_action_cost.py for
+    future regression testing if _apply_movement is touched.
+
+65.5 Recommended movement_cost / feeding_cost multipliers
+
+Discussion in this session against literature and against the
+new per-action semantics (Section 65.3), corrected for:
+  * gadoids have HIGHER cost-of-transport per km than pelagic
+    fish (Steinhausen et al. 2005: ~2.5-4 J/kg/m for cod vs
+    ~1.5-2.5 J/kg/m for herring). Earlier draft that put
+    gadoids below pelagic was a semantic mix-up (confused
+    move FREQUENCY with move EFFICIENCY).
+  * feeding_cost covers SDA + hunt; Section 24 values still
+    hold (herring ~1.9 continuous filtration, cod ~1.75
+    sit-and-wait ambush).
+
+Draft table (for consideration, NOT yet applied to YAML):
+
+  FG            feeding_cost   movement_cost
+  zooplankton   1.45           1.2
+  pelagic_fish  1.9            1.5   (or 1.6 unchanged)
+  gadoids       1.75           1.8   (or 2.0 to match COT-ratio strictly)
+
+Guardrail: max_intake_rate (Section 36), handling_time (Section
+36), natural_mortality (Section 35.3) and resting_metabolism
+(SMR-calibrated, Section 23-24) are literature-calibrated and
+MUST NOT be tweaked to compensate for dynamics problems. Only
+dimensionless activity multipliers (feeding_cost, movement_cost)
+are legitimate tuning knobs, and even those only within the
+Section 24 sanity-check range.
+
+65.6 Outstanding levers for the pzpg248hmovfgzbf2 dead-equilibrium
+
+After Section 64 (Holling numerator bugfix) and Section 65
+(action-cost scaling), the remaining recommended actions for
+sustainable ecosystems over long horizons - in priority order:
+
+  P1. seed_rate on DM species (recolonisation floor). Currently
+      only NDM (phytoplankton) has seed_rate wired into
+      _apply_growth. Extend to DM branch with a small refuge
+      influx term. Directly addresses "prey never bounces back".
+  P2. Type III functional response for pelagic->zoo and
+      gadoids->pelagic (already available in code per Section 64,
+      set handling_time-with-type-III-flag in YAML). Provides
+      low-density prey refuge without touching a or h.
+  P3. Reward rebalancing:
+        --cappa 0.0 to disable "live but starve" attractor
+          (Section 48.B Con).
+        Total-energy reward mean(log(E_total/E0)) already default
+          per Section 58 - verify it was in use for pzpg248...
+        Optional: alpha_gadoids < alpha_pelagic ~= alpha_zoo so
+          the top predator is not unboundedly rewarded for growth.
+  P6. Longer eval rollouts (--n_eval_ticks 3000-5000) if predator-
+      prey cycle time exceeds the fitness window, otherwise ARS
+      converges to the flat equilibrium.
+
+Rejected levers (would violate literature calibration):
+  ~~P4~~ raise gadoids natural_mortality - biologically wrong
+        direction (cod M ~ 0.2/yr < herring M ~ 0.3-0.5/yr per
+        allometry).
+  ~~P5~~ lower max_intake_rate or raise handling_time on
+        gadoids - both are Section 36 physiological ceilings.

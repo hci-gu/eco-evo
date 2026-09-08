@@ -183,6 +183,110 @@ def test_energy_costs_settle_actions_without_moving_biomass():
     assert settlement.moving_reserve[0, NORTH, 0, 0] == pytest.approx(35.0)
 
 
+@pytest.mark.parametrize("prey_count, sparse_intake", [(1, 0.004950495), (2, 0.045454545)])
+def test_holling_intake_increases_and_saturates_with_prey_density(prey_count, sparse_intake):
+    density = np.array([[0.1, 1.0, 100.0, 1000.0]], dtype=np.float32)
+    prey_ids = [f"prey_{i}" for i in range(prey_count)]
+    fgs = {fid: _fg(fid, {}, density) for fid in prey_ids}
+    fgs["pred"] = _fg(
+        "pred",
+        {
+            "is_decision_maker": True,
+            "max_intake_rate": 0.5,
+            "menu": prey_ids,
+            "interaction": {
+                f"pred_preys_on_{fid}": {"handling_time": 2.0}
+                for fid in prey_ids
+            },
+        },
+        np.ones_like(density),
+        energy_ratio=0.0,
+    )
+    env = EcosystemEnvironment({"width": 4, "height": 1}, fgs)
+    eat = np.zeros((1, env.N_all, 1, 4), dtype=np.float32)
+    eat[0, env.global_fg_order.index("prey_0")] = 1.0
+    actions = ActionProbabilities(
+        move=np.zeros((1, 4, 1, 4), dtype=np.float32),
+        rest=np.zeros((1, 1, 4), dtype=np.float32),
+        eat=eat,
+    )
+
+    predation.apply_predation(env, actions)
+
+    intake = density - env.fgs["prey_0"].biomass
+    assert np.all(np.diff(intake[0]) > 0.0)
+    assert intake[0, 0] == pytest.approx(sparse_intake)
+    assert intake[0, -1] == pytest.approx(0.5, rel=0.002)
+    assert np.all(intake <= 0.5)
+    assert env.cache.has_holling3 == (prey_count == 1)
+
+
+@pytest.mark.parametrize("prey_count, expected_intake", [(1, 0.00005), (2, 0.005)])
+def test_zero_handling_time_keeps_specialist_response_and_type_i_fallback(
+    prey_count, expected_intake
+):
+    prey_ids = [f"prey_{i}" for i in range(prey_count)]
+    fgs = {fid: _fg(fid, {}, [[0.1]]) for fid in prey_ids}
+    fgs["pred"] = _fg(
+        "pred",
+        {"is_decision_maker": True, "max_intake_rate": 0.5, "menu": prey_ids},
+        [[0.01]],
+        energy_ratio=0.0,
+    )
+    env = EcosystemEnvironment({"width": 1, "height": 1}, fgs)
+    eat = np.zeros((1, env.N_all, 1, 1), dtype=np.float32)
+    eat[0, env.global_fg_order.index("prey_0")] = 1.0
+    actions = ActionProbabilities(
+        move=np.zeros((1, 4, 1, 1), dtype=np.float32),
+        rest=np.zeros((1, 1, 1), dtype=np.float32),
+        eat=eat,
+    )
+
+    predation.apply_predation(env, actions)
+
+    assert env.intake_by_pred_prey["pred"]["prey_0"] == pytest.approx(expected_intake)
+
+
+@pytest.mark.parametrize("energy_ratio", [0.1, 1.0])
+@pytest.mark.parametrize("move_fraction", [0.0, 0.4])
+def test_action_costs_scale_with_chosen_fraction_before_movement(energy_ratio, move_fraction):
+    fg = _fg(
+        "dm",
+        {
+            "is_decision_maker": True,
+            "max_energy_reserve": 10.0,
+            "resting_metabolism": 1.0,
+            "resting_cost": 1.0,
+            "feeding_cost": 2.0,
+            "movement_cost": 3.0,
+            "movement_speed": 0.25,
+        },
+        [[10.0]],
+        energy_ratio=energy_ratio,
+    )
+    env = EcosystemEnvironment({"width": 1, "height": 1}, {"dm": fg})
+    fg.temp_energy_gains[...] = 3.0
+    actions = ActionProbabilities(
+        move=np.array([0.25, 0.75, 0.0, 0.0], dtype=np.float32).reshape(1, 4, 1, 1)
+        * move_fraction,
+        rest=np.full((1, 1, 1), 0.7 - move_fraction, dtype=np.float32),
+        eat=np.full((1, 1, 1, 1), 0.3, dtype=np.float32),
+    )
+
+    settlement = movement.apply_energy_costs(env, actions)
+
+    if energy_ratio == 1.0:
+        expected_stationary = 54.0 if move_fraction == 0.4 else 90.0
+        expected_moving = [7.0, 21.0, 0.0, 0.0] if move_fraction == 0.4 else [0.0] * 4
+    else:
+        expected_stationary = 3.0
+        expected_moving = [0.0] * 4
+    np.testing.assert_allclose(settlement.stationary_reserve, expected_stationary)
+    np.testing.assert_allclose(settlement.moving_reserve.ravel(), expected_moving)
+    assert fg.biomass[0, 0] == pytest.approx(10.0)
+    assert fg.energy_reserve[0, 0] == pytest.approx(100.0 * energy_ratio)
+
+
 def test_apply_movement_only_moves_settled_moving_partition():
     fgs = {
         "dm": _fg(

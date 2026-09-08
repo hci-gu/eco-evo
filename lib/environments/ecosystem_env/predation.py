@@ -17,11 +17,24 @@ def apply_predation(env, actions):
         env, prey_biomass, actions)
 
     intake_rate = env.max_intake_mat[:, :, None, None]
-    if getattr(env, "_has_holling2", False):
+    if env._has_holling2 or env._has_holling3:
         handling_time = env.handling_time_mat[:, :, None, None]
+        prey_visible = visible_biomass[None, :, :, :]
+        prey_visible_squared = prey_visible * prey_visible
+        # Intake per predator saturates at high prey density. Specialists
+        # use a quadratic response, giving sparse prey a Type III refuge.
+        intake_type_ii = (
+            intake_rate * prey_visible
+            / (1.0 + intake_rate * handling_time * prey_visible)
+        )
+        intake_type_iii = (
+            intake_rate * prey_visible_squared
+            / (1.0 + intake_rate * handling_time * prey_visible_squared)
+        )
+        type3_mask = env._type3_pred_mask
         effective_intake_rate = (
-            intake_rate
-            / (1.0 + intake_rate * handling_time * visible_biomass[None, :, :, :])
+            type3_mask * intake_type_iii
+            + (1.0 - type3_mask) * intake_type_ii
         )
     else:
         effective_intake_rate = intake_rate

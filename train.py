@@ -7,6 +7,7 @@ torch.set_grad_enabled(False)
 import numpy as np
 import os
 import argparse
+import json
 import re
 from lib.config.config_loader import setup_full_mareld_mvp, load_project_config
 from lib.environments.ecosystem import EcosystemEnvironment
@@ -780,9 +781,12 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     # suffix in the live viz). Persist the same way for offline parity.
     rnd_ratio: dict = {}
     rnd_energy_ratio: dict = {}
+    rnd_avg_ratio: dict = {}
+    rnd_avg_energy_ratio: dict = {}
     rnd_move, rnd_rest, rnd_eat = {}, {}, {}
     rnd_loss_breakdown: dict = {}
     if rnd_env_for_fid:
+        _rnt_r = max(1, int(rnd_n_ticks_done))
         for fid, _re in rnd_env_for_fid.items():
             b0r = rnd_b0.get(fid, 0.0)
             e0r = rnd_e0.get(fid, 0.0)
@@ -792,6 +796,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    else 0.0)
             rnd_ratio[fid] = (bhr / b0r) if b0r > 0.0 else 0.0
             rnd_energy_ratio[fid] = (ehr / e0r) if e0r > 0.0 else 0.0
+            _avg_br = rnd_b_sum.get(fid, 0.0) / _rnt_r
+            _avg_er = rnd_e_sum.get(fid, 0.0) / _rnt_r
+            rnd_avg_ratio[fid] = (_avg_br / b0r) if b0r > 0.0 else 0.0
+            rnd_avg_energy_ratio[fid] = (_avg_er / e0r) if e0r > 0.0 else 0.0
         # Collect action fractions across unique envs; keep only the fid
         # that is actually random in each env (see header-frac push).
         for _re in unique_rnd_envs:
@@ -825,10 +833,13 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     if viz is not None and viz_step is not None:
         try:
             for fid in fg_ids:
-                # Live viz: avg(b)/b0 och avg(e)/e0 över hela rollouten.
-                viz.update_series("biomass", fid, avg_ratio[fid] * 100.0,
+                # Live viz: bh/b0 och eh/e0 vid rollout-slutet (i procent).
+                # Detta matchar heatmap-headerns värden byte-för-byte och
+                # ar oberoende av --n_eval_ticks (till skillnad fran
+                # avg-over-rollout, som skalar med rollout-langden).
+                viz.update_series("biomass", fid, ratio[fid] * 100.0,
                                   step=int(viz_step))
-                viz.update_series("energy", fid, avg_energy_ratio[fid] * 100.0,
+                viz.update_series("energy", fid, energy_ratio[fid] * 100.0,
                                   step=int(viz_step))
             # Push end-of-probe-medel av move/rest/eat till plot-flikarna
             # med global ARS-step (``viz_step``), så att x-skalan matchar
@@ -880,8 +891,11 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     e0r = rnd_e0.get(fid, 0.0)
                     avg_br = rnd_b_sum.get(fid, 0.0) / _rnt
                     avg_er = rnd_e_sum.get(fid, 0.0) / _rnt
-                    pb = (100.0 * avg_br / b0r) if b0r > 0.0 else 0.0
-                    pe = (100.0 * avg_er / e0r) if e0r > 0.0 else 0.0
+                    # End-of-rollout bh/b0 och eh/e0 (procent) — samma
+                    # semantik som huvud-policyns biomass/energy-tabbar,
+                    # dvs. bh/b0 i procent (matchar heatmap-headern).
+                    pb = 100.0 * float(rnd_ratio.get(fid, 0.0))
+                    pe = 100.0 * float(rnd_energy_ratio.get(fid, 0.0))
                     viz.update_series("biomass", fid + "_rnd", pb,
                                       step=int(viz_step))
                     viz.update_series("energy", fid + "_rnd", pe,
@@ -1054,6 +1068,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         'bh': bh,
         'ratio': ratio,
         'log10_ratio': log_ratio,
+        # Preserve rollout averages alongside the final ratios used by
+        # live plots, resume hydration, and offline HTML.
+        'avg_ratio': avg_ratio,
+        'avg_energy_ratio': avg_energy_ratio,
         # New: persist the same series the live viz shows in its tabs,
         # so an offline HTML plot can reproduce them 1:1.
         'energy_ratio': energy_ratio,   # eh / e0 per FG
@@ -1081,6 +1099,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         record['rnd'] = {
             'ratio': rnd_ratio,
             'energy_ratio': rnd_energy_ratio,
+            'avg_ratio': rnd_avg_ratio,
+            'avg_energy_ratio': rnd_avg_energy_ratio,
             'move_frac': rnd_move,
             'rest_frac': rnd_rest,
             'eat_frac':  rnd_eat,
@@ -1233,14 +1253,14 @@ def main():
                              "for the survival_bonus tracking (default 0.01 = 1%% of start).")
     parser.add_argument("--legacyreward", "--legacy_reward", dest="legacy_reward",
                         action="store_true", default=False,
-                        help="Använd den gamla linjärkombinations-rewardfunktionen "
+                        help="Use the legacy linear-combination reward function "
                              "alpha*log(mean(B)/B0) + beta*log(mean(R)/R0) + "
-                             "cappa*(t_survive/n_ticks). Default (utan flaggan) "
-                             "används den nya totala-energi-rewarden "
+                             "cappa*(t_survive/n_ticks). Without this flag the "
+                             "default is the new total-energy reward "
                              "mean_t(log((B*energy_content + R + eps) / (E0 + eps))), "
-                             "där E0 = B0*energy_content + R0. Den nya rewarden "
-                             "är en enda fysikalisk storhet (MJ) och gör "
-                             "alpha/beta/cappa redundanta.")
+                             "where E0 = B0*energy_content + R0. The new reward "
+                             "is a single physical quantity (MJ) and makes "
+                             "alpha/beta/cappa redundant.")
     parser.add_argument("--integral_reward", action="store_true", default=True,
                         help="Use mean biomass / mean energy over the whole rollout instead "
                              "of the final value in the fitness computation. Gives \"eat always\" a "
@@ -1541,6 +1561,31 @@ def main():
     # --resume behålls den befintliga headern (första raden) orörd.
     if not args.resume:
         try:
+            # Bygg en engångs-env för att kunna extrahera DM-status per FG.
+            # Detta gör att tools/biomass_html.py kan filtrera bort NDMs
+            # (t.ex. phytoplankton) från energy-fliken på samma sätt som
+            # live-vizens ``_active_plot_ids`` redan gör. Undvik att låta
+            # ett fel här blockera meta-skrivningen — vid problem hoppas
+            # ``dm_ids`` bara över och offline-plotten behåller sitt gamla
+            # (osäkra) beteende.
+            _dm_ids_meta = None
+            _ndm_ids_meta = None
+            try:
+                _tmp_env = _make_env_builder(
+                    grid_size=(GRID_HEIGHT, GRID_WIDTH),
+                    project_path=PROJECT_PATH,
+                )()
+                _dm_ids_meta = [
+                    fid for fid, fg in _tmp_env.fgs.items()
+                    if getattr(fg, 'is_decision_maker', False)
+                ]
+                _ndm_ids_meta = [
+                    fid for fid, fg in _tmp_env.fgs.items()
+                    if not getattr(fg, 'is_decision_maker', False)
+                ]
+            except Exception as _e:
+                print(f"    [fresh start] WARN: could not derive DM/NDM "
+                      f"ids for meta header: {_e!r}")
             meta = {
                 "__meta__": {
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
@@ -1550,6 +1595,8 @@ def main():
                     "cappa": getattr(args, "cappa", None),
                     "survival_bonus": getattr(args, "survival_bonus", None),
                     "n_eval_ticks": int(getattr(args, "n_eval_ticks", 0) or 0),
+                    "dm_ids": _dm_ids_meta,
+                    "ndm_ids": _ndm_ids_meta,
                 }
             }
             with open(probe_jsonl_path, "a") as _f:
@@ -2023,13 +2070,6 @@ def main():
         dt = _time_install.monotonic() - t0
         _install_stats['count'] += 1
         _install_stats['total'] += dt
-        # Logga första anropet (varmstart spawn) + var 10:e för att
-        # synliggöra eventuella regressioner utan att spamma loggen.
-        c = _install_stats['count']
-        if c == 1 or c % 10 == 0:
-            avg_ms = 1000.0 * _install_stats['total'] / c
-            print(f"    [install_worlds] call #{c}: {dt*1000:.1f} ms "
-                  f"(avg {avg_ms:.1f} ms over {c} calls)")
 
     # Backwards-compatible alias: older code/log searches expect this name.
     _install_generation_maps = _install_generation_worlds
@@ -2046,6 +2086,7 @@ def main():
     # On a fresh run (no log, or unreadable), start_gen stays 0 and the
     # legacy behaviour is preserved exactly.
     start_gen = 0
+    _last_logged_n_ticks = None
     if args.resume and os.path.isfile(probe_jsonl_path):
         try:
             import json as _json_resume
@@ -2062,6 +2103,9 @@ def main():
                     _g = _rec.get('gen')
                     if isinstance(_g, (int, float)) and int(_g) > _max_gen_logged:
                         _max_gen_logged = int(_g)
+                    _nt_rec = _rec.get('n_ticks')
+                    if isinstance(_nt_rec, (int, float)):
+                        _last_logged_n_ticks = int(_nt_rec)
             if _max_gen_logged > 0:
                 # ``gen`` is 0-indexed internally; JSONL stores ``gen+1``.
                 # Resume on the next gen after the last logged one.
@@ -2069,9 +2113,162 @@ def main():
                 print(f"    [resume] biomass.jsonl reached gen "
                       f"{_max_gen_logged}; continuing at gen "
                       f"{start_gen + 1}.")
+            # A changed rollout length affects saved rollout averages
+            # and the integral reward used during optimization.
+            if (_last_logged_n_ticks is not None
+                    and _last_logged_n_ticks != int(args.n_eval_ticks)):
+                print(f"    [resume] WARN: --n_eval_ticks="
+                      f"{int(args.n_eval_ticks)} skiljer sig fran senaste "
+                      f"loggade n_ticks={_last_logged_n_ticks}. Detta "
+                      f"andrar sparade avg-over-rollout varden "
+                      f"och integral-reward-signalen; forvanta dig en "
+                      f"brytpunkt i graferna och ett effektivt byte av "
+                      f"optimeringens objective.")
         except Exception as _e:
             print(f"    [resume] WARN: could not read {probe_jsonl_path} "
                   f"for gen offset: {_e!r}")
+
+    # --resume: ladda in tidigare graf-historik i viz-fönstret så att
+    # plot-flikarna (reward/biomass/energy/move/rest/eat/predation/
+    # starvation) inte startar tomma. Vi läser samma
+    # ``biomass.jsonl`` som redan används för gen-numreringen och
+    # pushar en punkt per (gen, iter) via ``viz.update_series`` /
+    # ``viz.update_reward`` med samma x-koordinat (``viz_step =
+    # gen * iter_per_gen + iter``, 0-indexerat) som tränings-loopen
+    # använder — så nya punkter fortsätter sömlöst där de gamla slutar.
+    # Notera: vi använder den *nuvarande* ``iter_per_gen`` från args
+    # för x-mappningen. Om värdet har ändrats mellan körningar blir
+    # x-avståndet mellan gamla punkter en approximation, men det är
+    # bättre än ingen historik alls.
+    if (args.resume and viz is not None
+            and os.path.isfile(probe_jsonl_path)):
+        try:
+            import json as _json_hydrate
+            _ipg = max(1, int(args.iter_per_gen))
+            _n_hydrated = 0
+            with open(probe_jsonl_path, 'r') as _f:
+                for _line in _f:
+                    _line = _line.strip()
+                    if not _line:
+                        continue
+                    try:
+                        _rec = _json_hydrate.loads(_line)
+                    except Exception:
+                        continue
+                    # Hoppa över ``__meta__``-headern och rader utan gen/iter.
+                    _g = _rec.get('gen')
+                    _it = _rec.get('iter')
+                    if not (isinstance(_g, (int, float))
+                            and isinstance(_it, (int, float))):
+                        continue
+                    # JSONL lagrar 1-indexerat; tränings-loopen använder
+                    # 0-indexerat ``gen * iter_per_gen + i``. Konvertera.
+                    _gz = int(_g) - 1
+                    _iz = int(_it) - 1
+                    if _gz < 0 or _iz < 0:
+                        continue
+                    _step = _gz * _ipg + _iz
+
+                    def _push(_tab, _mapping, _scale=1.0):
+                        if not isinstance(_mapping, dict):
+                            return
+                        for _fid, _v in _mapping.items():
+                            try:
+                                viz.update_series(
+                                    _tab, str(_fid),
+                                    float(_v) * float(_scale),
+                                    step=int(_step))
+                            except Exception:
+                                pass
+
+                    # Reward per FG (om loggad).
+                    _rw = _rec.get('reward')
+                    if isinstance(_rw, dict):
+                        for _fid, _v in _rw.items():
+                            try:
+                                viz.update_reward(
+                                    str(_fid), float(_v), step=int(_step))
+                            except Exception:
+                                pass
+                    # ``_probe_biomass`` pushar biomass/energy som
+                    # ``ratio * 100`` (bh/b0 i procent vid rollout-slut),
+                    # vilket matchar heatmap-headern och ar oberoende
+                    # av --n_eval_ticks.
+                    _push("biomass", _rec.get('ratio'), _scale=100.0)
+                    _push("energy",  _rec.get('energy_ratio'), _scale=100.0)
+                    # Action-fraktioner (redan i procent, 0..100).
+                    _push("move", _rec.get('move_frac'))
+                    _push("rest", _rec.get('rest_frac'))
+                    _push("eat",  _rec.get('eat_frac'))
+                    # Loss-breakdown: samma 0..100%-skala som live-push.
+                    _lb = _rec.get('loss_breakdown')
+                    if isinstance(_lb, dict):
+                        for _fid, _parts in _lb.items():
+                            if not isinstance(_parts, dict):
+                                continue
+                            try:
+                                viz.update_series(
+                                    "predation", str(_fid),
+                                    100.0 * float(_parts.get('predation', 0.0)),
+                                    step=int(_step))
+                                viz.update_series(
+                                    "starvation", str(_fid),
+                                    100.0 * float(_parts.get('starvation', 0.0)),
+                                    step=int(_step))
+                            except Exception:
+                                pass
+                    # Random-action baseline (om loggad) — samma serier
+                    # men med ``_rnd``-suffix, precis som live-push.
+                    _rnd = _rec.get('rnd')
+                    if isinstance(_rnd, dict):
+                        def _push_rnd(_tab, _mapping, _scale=1.0):
+                            if not isinstance(_mapping, dict):
+                                return
+                            for _fid, _v in _mapping.items():
+                                try:
+                                    viz.update_series(
+                                        _tab, str(_fid) + "_rnd",
+                                        float(_v) * float(_scale),
+                                        step=int(_step))
+                                except Exception:
+                                    pass
+                        _push_rnd("biomass", _rnd.get('ratio'), _scale=100.0)
+                        _push_rnd("energy",  _rnd.get('energy_ratio'), _scale=100.0)
+                        _push_rnd("move", _rnd.get('move_frac'))
+                        _push_rnd("rest", _rnd.get('rest_frac'))
+                        _push_rnd("eat",  _rnd.get('eat_frac'))
+                        _lbr = _rnd.get('loss_breakdown')
+                        if isinstance(_lbr, dict):
+                            for _fid, _parts in _lbr.items():
+                                if not isinstance(_parts, dict):
+                                    continue
+                                try:
+                                    viz.update_series(
+                                        "predation", str(_fid) + "_rnd",
+                                        100.0 * float(_parts.get('predation', 0.0)),
+                                        step=int(_step))
+                                    viz.update_series(
+                                        "starvation", str(_fid) + "_rnd",
+                                        100.0 * float(_parts.get('starvation', 0.0)),
+                                        step=int(_step))
+                                except Exception:
+                                    pass
+                    _n_hydrated += 1
+            if _n_hydrated > 0:
+                print(f"    [resume] hydrated viz plots with "
+                      f"{_n_hydrated} probe records from "
+                      f"{probe_jsonl_path}.")
+                # Tvinga ett omedelbart repaint så användaren ser
+                # historiken direkt (annars visas den först vid
+                # första ``update_biomass`` i tränings-loopen).
+                try:
+                    viz._last_frame_ts = 0.0
+                    viz.pump_events()
+                except Exception:
+                    pass
+        except Exception as _e:
+            print(f"    [resume] WARN: could not hydrate viz plots "
+                  f"from {probe_jsonl_path}: {_e!r}")
 
     if generations_is_inf:
         gen_iter = itertools.count(start_gen)

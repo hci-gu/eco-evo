@@ -86,49 +86,75 @@ class FGConfigApp:
         except Exception:
             pass
 
-    def _on_mousewheel(self, event):
-        """Handle mouse wheel and trackpad scroll events (vertical)."""
-        if event.num == 4:
-            delta = -1
-        elif event.num == 5:
-            delta = 1
-        elif event.delta:
-            delta = int(-1 * (event.delta / 120))
-        else:
-            return
+    def _wheel_delta(self, event):
+        """Normalisera ett scroll-event till en heltalsdelta (Linux Button-4/5,
+        Windows/Mac <MouseWheel>). Returnerar None om eventet inte kan tolkas."""
+        if getattr(event, "num", None) == 4:
+            return -1
+        if getattr(event, "num", None) == 5:
+            return 1
+        d = getattr(event, "delta", 0)
+        if d:
+            # På Windows är delta multiplar av 120; på macOS är den vanligen
+            # +/-1..3. Klampa till minst 1 unit i rätt riktning.
+            step = int(-1 * (d / 120)) if abs(d) >= 120 else (-1 if d > 0 else 1)
+            if step == 0:
+                step = -1 if d > 0 else 1
+            return step
+        return None
 
+    def _active_scroll_canvas(self):
+        """Returnera den tk.Canvas som är scrollbar i den aktiva notebook-tabben,
+        eller None om ingen finns / tabben inte har någon känd canvas.
+
+        Mappningen speglar notebook-ordningen i ``setup_ui``:
+          idx 0  Project & FGs      -> self.project_canvas
+          idx 1  Impacts            -> (ingen scrollable canvas)
+          idx 2  FG Interactions    -> self.matrix_canvas
+          idx 3  Impact Interactions-> self.impact_canvas
+          idx 4  Inference          -> self.inference_canvas
+        """
         try:
             active_idx = self.notebook.index(self.notebook.select())
         except Exception:
+            return None
+        cv_name = {
+            0: "project_canvas",
+            2: "matrix_canvas",
+            3: "impact_canvas",
+            4: "inference_canvas",
+        }.get(active_idx)
+        if cv_name is None:
+            return None
+        cv = getattr(self, cv_name, None)
+        try:
+            if cv is not None and cv.winfo_exists():
+                return cv
+        except Exception:
+            pass
+        return None
+
+    def _on_mousewheel(self, event):
+        """Handle mouse wheel and trackpad scroll events (vertical)."""
+        delta = self._wheel_delta(event)
+        if delta is None:
             return
-        if active_idx == 0 and hasattr(self, 'project_canvas') and self.project_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.project_canvas, axis="y"):
-                self.project_canvas.yview_scroll(delta, "units")
-        elif active_idx == 1 and hasattr(self, 'matrix_canvas') and self.matrix_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.matrix_canvas, axis="y"):
-                self.matrix_canvas.yview_scroll(delta, "units")
+        cv = self._active_scroll_canvas()
+        if cv is None:
+            return
+        if self._canvas_is_scrollable(cv, axis="y"):
+            cv.yview_scroll(delta, "units")
 
     def _on_shift_mousewheel(self, event):
         """Handle horizontal scroll via Shift+wheel or trackpad horizontal gesture."""
-        if event.num == 4:
-            delta = -1
-        elif event.num == 5:
-            delta = 1
-        elif event.delta:
-            delta = int(-1 * (event.delta / 120))
-        else:
+        delta = self._wheel_delta(event)
+        if delta is None:
             return
-
-        try:
-            active_idx = self.notebook.index(self.notebook.select())
-        except Exception:
+        cv = self._active_scroll_canvas()
+        if cv is None:
             return
-        if active_idx == 0 and hasattr(self, 'project_canvas') and self.project_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.project_canvas, axis="x"):
-                self.project_canvas.xview_scroll(delta, "units")
-        elif active_idx == 1 and hasattr(self, 'matrix_canvas') and self.matrix_canvas.winfo_exists():
-            if self._canvas_is_scrollable(self.matrix_canvas, axis="x"):
-                self.matrix_canvas.xview_scroll(delta, "units")
+        if self._canvas_is_scrollable(cv, axis="x"):
+            cv.xview_scroll(delta, "units")
 
     @staticmethod
     def _canvas_is_scrollable(canvas, axis="y"):
@@ -2504,12 +2530,10 @@ class FGConfigApp:
 
         # Handling time matrix (Holling Type II 'h'). Non-negativ float,
         # default 0.0 (= pure Type I). Cell aktiv endast om preys_on=True.
-        # Dold på användarens begäran — värdena bevaras i library YAML
-        # och i interaction_definitions, men matrisen renderas inte i
-        # GUI:t. Avkommentera raderna nedan för att återaktivera.
-        # self.create_matrix_section(
-        #     "Handling time (row eats column)", "handling_time",
-        #     dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
+        self.create_matrix_section(
+            "Handling time (row eats column)", "handling_time",
+            dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
+        self._add_handling_time_auto_buttons(dm_fgs, fgs)
 
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
@@ -2660,6 +2684,88 @@ class FGConfigApp:
         ttk.Button(self.matrix_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
         if impacts:
             ttk.Button(self.impact_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
+
+    def _autofill_handling_time_row(self, pred_id, col_ids):
+        """Fill handling_time cells for a single predator row.
+
+        For each column (prey) where preys_on is True and the cell widget is
+        currently editable, set the entry to ``1 / max_intake_rate`` of the
+        predator (rounded to a compact ``%g`` string). If ``max_intake_rate``
+        is missing/zero, the row is skipped with a message.
+        """
+        species_defs = self.global_library.get("species_definitions", {}) or {}
+        mir_raw = (species_defs.get(pred_id, {}) or {}).get("max_intake_rate")
+        try:
+            mir = float(mir_raw)
+        except (TypeError, ValueError):
+            mir = 0.0
+        if mir <= 0.0:
+            messagebox.showinfo(
+                "Auto-fill handling time",
+                (
+                    f"'{self.fg_display(pred_id)}' has no positive "
+                    f"max_intake_rate set — cannot auto-fill 1/I_max. "
+                    f"Set it in the FG Editor first."
+                ),
+            )
+            return 0
+        h_val = 1.0 / mir
+        h_str = f"{h_val:g}"
+        n_filled = 0
+        for col_id in col_ids:
+            key = f"{pred_id}_preys_on_{col_id}"
+            entry = self.matrix_entries.get(key, {})
+            preys_var = entry.get("preys_on")
+            if preys_var is None or not bool(preys_var.get()):
+                continue
+            h_var = entry.get("handling_time")
+            h_widget = self.matrix_widgets.get(key, {}).get("handling_time")
+            if h_var is None or h_widget is None:
+                continue
+            # Skip cells disabled by muting; a disabled widget indicates the
+            # cell cannot be edited (muted row/col, or preys_on=False).
+            try:
+                if str(h_widget.cget("state")) == "disabled":
+                    continue
+            except tk.TclError:
+                pass
+            h_var.set(h_str)
+            n_filled += 1
+        return n_filled
+
+    def _add_handling_time_auto_buttons(self, row_ids, col_ids):
+        """Render a small helper panel under the handling_time matrix with an
+        Auto button per predator row and one global Auto All button. Each
+        button fills h = 1 / max_intake_rate for every active (preys_on=True)
+        cell in the corresponding row(s).
+        """
+        panel = ttk.LabelFrame(
+            self.matrix_container,
+            text="Auto-fill handling time  (h = 1 / max_intake_rate)",
+        )
+        panel.pack(fill="x", padx=10, pady=(0, 10))
+
+        def make_row_cmd(pid):
+            return lambda: self._autofill_handling_time_row(pid, col_ids)
+
+        for i, row_id in enumerate(row_ids):
+            ttk.Label(panel, text=self.fg_display(row_id)).grid(
+                row=i, column=0, sticky="w", padx=5, pady=2)
+            ttk.Button(panel, text="Auto", width=8,
+                       command=make_row_cmd(row_id)).grid(
+                row=i, column=1, padx=5, pady=2)
+
+        def _auto_all():
+            total = 0
+            for rid in row_ids:
+                total += self._autofill_handling_time_row(rid, col_ids) or 0
+            messagebox.showinfo(
+                "Auto-fill handling time",
+                f"Filled {total} cell(s) with 1 / max_intake_rate.",
+            )
+
+        ttk.Button(panel, text="Auto All Rows", command=_auto_all).grid(
+            row=len(row_ids), column=0, columnspan=2, pady=(6, 4))
 
     def create_matrix_section(self, title, data_key, row_ids, col_ids, cell_type="entry", parent=None):
         if parent is None:

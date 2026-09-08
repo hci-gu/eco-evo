@@ -109,18 +109,24 @@ def apply_energy_costs(env, actions):
     )
 
     eat_fraction = actions.eat.sum(axis=1)
-    reserve_after_eat = np.maximum(
+    eat_cost = biomass * eat_fraction * resting_metabolism * cost_eat
+    eat_reserve = np.maximum(
         0,
-        reserve - biomass * resting_metabolism * cost_eat,
-    )
-    eat_reserve = eat_fraction * reserve_after_eat + temp_gains
+        reserve * eat_fraction - eat_cost,
+    ) + temp_gains
     eat_biomass = biomass * eat_fraction
 
-    reserve_after_move = np.maximum(
+    # Charge only the fraction choosing movement. Movement speed is
+    # applied later when the settled population moves between cells.
+    move_fraction = actions.move.sum(axis=1)
+    move_cost = biomass * move_fraction * resting_metabolism * cost_move
+    move_reserve_pool = np.maximum(
         0,
-        reserve - biomass * resting_metabolism * cost_move,
+        reserve * move_fraction - move_cost,
     )
-    move_reserve_choices = actions.move * reserve_after_move[:, None, :, :]
+    safe_fraction = np.where(move_fraction > 0, move_fraction, np.float32(1.0))
+    direction_fraction = actions.move / safe_fraction[:, None, :, :]
+    move_reserve_choices = direction_fraction * move_reserve_pool[:, None, :, :]
     move_biomass_choices = actions.move * biomass[:, None, :, :]
 
     return ActionSettlement(

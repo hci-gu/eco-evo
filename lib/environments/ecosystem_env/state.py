@@ -22,6 +22,8 @@ class EcosystemCache:
     energy_gain: np.ndarray
     handling_time: np.ndarray
     has_holling2: bool
+    type3_pred_mask: np.ndarray
+    has_holling3: bool
     dm_v: np.ndarray
     dm_cost_move: np.ndarray
     dm_cost_eat: np.ndarray
@@ -114,6 +116,15 @@ def build_static_caches(env):
     env.energy_gain_mat = energy_gain
     env.handling_time_mat = handling_time
     env._has_holling2 = bool(np.any(handling_time > 0.0))
+    # Specialists (exactly one active prey) use Type III; generalists
+    # retain Type II because their policy already handles prey switching.
+    n_prey_per_predator = eat_static.sum(axis=1)
+    env._type3_pred_mask = (
+        (n_prey_per_predator == 1)
+        .astype(env.dtype)
+        .reshape(env.N_dm, 1, 1, 1)
+    )
+    env._has_holling3 = bool(np.any(env._type3_pred_mask > 0.0))
 
     env.dm_v = np.array(
         [float(np.clip(env.fgs[fid].speed, 0.0, 1.0)) for fid in env.dm_ids],
@@ -193,6 +204,8 @@ def build_static_caches(env):
         energy_gain=env.energy_gain_mat,
         handling_time=env.handling_time_mat,
         has_holling2=env._has_holling2,
+        type3_pred_mask=env._type3_pred_mask,
+        has_holling3=env._has_holling3,
         dm_v=env.dm_v,
         dm_cost_move=env.dm_cost_move,
         dm_cost_eat=env.dm_cost_eat,
