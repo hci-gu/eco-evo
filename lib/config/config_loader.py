@@ -4,7 +4,10 @@ from lib.world.functional_group import FunctionalGroup
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
-    with open(path, 'r') as f:
+    # The editor writes UTF-8 with a BOM. Using the host encoding on Windows
+    # turns that BOM into "ï»¿" in the first key (e.g. species_definitions).
+    # utf-8-sig accepts both editor output and ordinary UTF-8 YAML.
+    with open(path, 'r', encoding='utf-8-sig') as f:
         return yaml.safe_load(f)
 
 

@@ -32,7 +32,7 @@ import sys
 import numpy as np
 import torch
 
-from lib.config.config_loader import (load_project_config, setup_full_mareld_mvp,
+from lib.config.config_loader import (load_config, load_project_config, setup_full_mareld_mvp,
                                        compute_inference_b0_defaults,
                                        _build_spawn_spec,
                                        _spawn_biomass_distribution)
@@ -89,9 +89,7 @@ def _load_spawn_templates(project_path):
     if not project_path:
         return {}
     try:
-        import yaml as _yaml
-        with open(project_path, 'r') as f:
-            data = _yaml.safe_load(f) or {}
+        data = load_config(project_path) or {}
     except Exception:
         return {}
     tpls = data.get('spawn_templates')
@@ -122,9 +120,7 @@ def _load_spawn_defaults(project_path):
     if not project_path:
         return {}
     try:
-        import yaml as _yaml
-        with open(project_path, 'r') as f:
-            data = _yaml.safe_load(f) or {}
+        data = load_config(project_path) or {}
     except Exception:
         return {}
 
@@ -142,8 +138,7 @@ def _load_spawn_defaults(project_path):
         candidates.append('fgconfig/fg_library.yaml')
         for lib_path in candidates:
             if _os.path.isfile(lib_path):
-                with open(lib_path, 'r') as f:
-                    lib_data = _yaml.safe_load(f) or {}
+                lib_data = load_config(lib_path) or {}
                 lib_specs = lib_data.get('species_definitions', {}) or {}
                 break
     except Exception:
