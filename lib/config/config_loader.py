@@ -294,11 +294,6 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                 if idef.get('preys_on', False):
                     params['menu'].append(prey_id)
                     params['interaction'][iid] = idef
-            elif iid.startswith(f"{sid}_impacted_by_"):
-                if 'impact' not in params: params['impact'] = {}
-                impact_id = iid.replace(f"{sid}_impacted_by_", "")
-                params['impact'][impact_id] = idef
-                
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: prefer library range (min/max or legacy scalar),
@@ -401,32 +396,6 @@ def compute_inference_b0_defaults(project_path, grid_size):
     return out
 
 
-def load_impact_spawn_specs(project_path):
-    """Return ``{impact_id: StrategySpec}`` for impacts that declare a
-    ``spawn:`` block in the project file.
-
-    Impacts without a ``spawn:`` block — or with an empty / uniform block
-    without explicit parameters — are omitted. The caller (``train.py``
-    ``_sample_impact_maps``) treats those as legacy i.i.d. uniform sampling
-    in ``[value_min, value_max]``. Muted impacts are skipped.
-    """
-    project = load_config(project_path)
-    out = {}
-    for iv in project.get('impact_variables', []) or []:
-        if not isinstance(iv, dict) or iv.get('muted'):
-            continue
-        iid = iv.get('impact_id')
-        if not iid:
-            continue
-        spawn_cfg = iv.get('spawn')
-        if not isinstance(spawn_cfg, dict):
-            continue
-        spec = _build_spawn_spec(spawn_cfg, default_seed=None)
-        if spec is not None:
-            out[iid] = spec
-    return out
-
-
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
                         spawn_seed=None, allowed_mask=None):
     """Load a project config and build its FunctionalGroups.
@@ -435,9 +404,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     independently of ``seed`` (which drives total-biomass / energy sampling).
     When set, every FG's spawn map is fully determined by ``(spawn_seed,
     fg_id)`` — used by ``train.py`` to share *identical* biomass maps across
-    all deltas/workers within one generation (analogous to the impact-map
-    snapshot). When ``None``, falls back to ``seed`` (legacy behaviour: each
-    rollout gets its own spawn layout).
+    all deltas/workers within one generation. When ``None``, falls back to
+    ``seed`` so each rollout gets its own spawn layout.
     """
     project = load_config(project_path)
     rng = np.random.default_rng(seed) if seed is not None else None
@@ -470,27 +438,9 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             if gid and gid not in project_fg_ids:
                 project_fg_ids.append(gid)
                 project_fg_overrides[gid] = fg
-    # Likewise, muted impact variables are dropped from the active set.
-    impact_vars = [iv['impact_id'] for iv in project.get('impact_variables', [])
-                   if isinstance(iv, dict) and not iv.get('muted')]
-    # Subset of impact_vars that the policy network observes as input layers
-    # (one channel per observable impact). Order matches ``impact_vars`` to
-    # keep the observation channel layout deterministic across runs.
-    observable_impact_vars = [
-        iv['impact_id'] for iv in project.get('impact_variables', [])
-        if isinstance(iv, dict) and not iv.get('muted') and iv.get('observable')
-    ]
-
-    # Per-impact value range (vmin, vmax). Read from the project's
-    # impact_variables entries: schema ``value_min`` / ``value_max``.
-    # Missing/invalid values fall back to (0.0, 0.0) so the resulting map is
-    # a zero field (preserving previous behaviour for unconfigured impacts).
-    def _as_float(v):
-        try:
-            f = float(v)
-        except (TypeError, ValueError):
-            return None
-        return f if f >= 0 else None
+    # Keep empty metadata slots for callers that still unpack the legacy
+    # four-value shape.
+    inactive_metadata = ([], {}, [])
 
     # Reference-grid scaling: biomass values entered in the FG editor and the
     # Inference tab are defined relative to a reference grid (Rx x Ry cells)
@@ -522,25 +472,6 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     act_cells = H_act * W_act
     biomass_scale = (act_cells / ref_cells) if ref_cells > 0 else 1.0
 
-    impact_ranges = {}
-    for iv in project.get('impact_variables', []) or []:
-        if not isinstance(iv, dict) or iv.get('muted'):
-            continue
-        iid = iv.get('impact_id')
-        if not iid:
-            continue
-        vmin = _as_float(iv.get('value_min'))
-        vmax = _as_float(iv.get('value_max'))
-        if vmin is None and vmax is None:
-            vmin, vmax = 0.0, 0.0
-        elif vmin is None:
-            vmin = vmax
-        elif vmax is None:
-            vmax = vmin
-        if vmax < vmin:
-            vmin, vmax = vmax, vmin
-        impact_ranges[iid] = (vmin, vmax)
-    
     # ------------------------------------------------------------------
     # Topological ordering of spawn for env_driven refs
     # ------------------------------------------------------------------
@@ -617,13 +548,12 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         params['menu'] = []
         
         active_fg_set = set(project_fg_ids)
-        active_impact_set = set(impact_vars)
         # Observability: list of FG ids that this DM can see in its input
         # space. Built from interaction_definitions entries of the form
         # ``{sid}_observes_{other_id}`` with ``observes: True``. Observed FGs
         # that are muted are intentionally KEPT in the list (the policy still
         # gets an input slot for them, fed with 0 at runtime — see
-        # EcosystemEnvironment._build_static_caches). If no observability
+        # EcosystemEnvironment.build_static_caches). If no observability
         # entries exist for this sid (legacy projects), we fall back to "see
         # everything" for backward compatibility.
         observes_list = []
@@ -646,13 +576,6 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                     observes_seen_any = True
                 if idef.get('observes', False):
                     observes_list.append(obs_id)
-            elif iid.startswith(f"{sid}_impacted_by_"):
-                impact_id = iid.replace(f"{sid}_impacted_by_", "")
-                # Skip impacts that are muted or not in the project.
-                if impact_id not in active_impact_set:
-                    continue
-                if 'impact' not in params: params['impact'] = {}
-                params['impact'][impact_id] = idef
         params['observes'] = observes_list if observes_seen_any else None
                 
         fg = FunctionalGroup(sid, params)
@@ -732,4 +655,4 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                             randomize_energy=randomize_energy, rng=rng)
         fgs[sid] = fg
 
-    return fgs, impact_vars, impact_ranges, observable_impact_vars
+    return fgs, *inactive_metadata

@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from lib.config.config_loader import setup_full_mareld_mvp
 from lib.environments.ecosystem import EcosystemEnvironment
@@ -14,19 +13,14 @@ def main():
         'tick_duration': 6.0
     }
     
-    env = EcosystemEnvironment(grid_config, fgs, {})
+    env = EcosystemEnvironment(grid_config, fgs)
     
-    # Load maps
+    # Load optional context maps. The current environment transition does
+    # not consume pressure maps, so only neutral spatial context is loaded.
     try:
-        env.grid.load_map_from_png('djup', 'djup.png', scale=100.0) # Depth in meters
-        env.grid.load_map_from_png('windfarm_noise', 'vindparker.png', scale=1.0) # Using windfarm as noise proxy
+        env.grid.load_map_from_png('djup', 'djup.png', scale=100.0)  # Depth in meters.
     except Exception as e:
         print(f"Warning: Could not load some maps: {e}")
-        env.grid.add_map('windfarm_noise', np.zeros((60, 60)))
-    
-    env.grid.add_map('bottom_trawling', np.zeros((60, 60)))
-    env.grid.add_map('pelagic_trawling', np.zeros((60, 60)))
-    env.grid.add_map('rotor', np.zeros((60, 60)))
     
     history = {fid: [] for fid in env.fgs}
     
@@ -34,7 +28,9 @@ def main():
     for t in range(100):
         if t % 10 == 0:
             print(f"Tick {t}...")
-        env.step()
+        observation = env.get_observation()
+        actions = env.policy_controller.forward(observation)
+        env.step(actions)
         for fid, fg in env.fgs.items():
             history[fid].append(fg.biomass.sum())
             

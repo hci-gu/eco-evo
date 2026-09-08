@@ -71,16 +71,6 @@ API_TO_INTERNAL_SPECIES = {
     "benthic_community": "benthic_community",
 }
 
-# These scalar pressures can be represented by the current static impact-map
-# mechanism when they apply for the entire run. Time-varying pressure windows
-# need scheduler support in EcosystemEnvironment and are rejected with 422.
-STATIC_PRESSURE_MAPS = {
-    "rotor_pressure": "rotor",
-    "noise_pressure": "windfarm_noise",
-    "trawling_pressure": "bottom_trawling",
-    "construction_disturbance": "construction_disturbance",
-}
-
 UNSUPPORTED_TODOS = [
     {
         "feature": "asynchronous execution queue",
@@ -92,7 +82,7 @@ UNSUPPORTED_TODOS = [
     },
     {
         "feature": "time-varying pressure windows",
-        "todo": "Thread pressure schedules into the environment step loop and update impact maps per tick.",
+        "todo": "Add pressure effects to the environment transition before accepting pressure inputs.",
     },
     {
         "feature": "texture/depth ecological semantics",
@@ -203,7 +193,7 @@ def discover_models() -> list[ModelConfig]:
 def model_payload(model: ModelConfig) -> dict[str, Any]:
     species: list[str] = []
     try:
-        fgs, _impact_vars, _impact_ranges, _observable = load_project_config(
+        fgs, _, _, _ = load_project_config(
             model.project_path, grid_size=(60, 60), mode="inference"
         )
         species = _api_species(list(fgs.keys()))
@@ -408,56 +398,14 @@ def validate_required_request_fields(request: dict[str, Any]) -> None:
         raise ApiError(422, "UNSUPPORTED_MODEL_INPUT", "output.replicates must be >= 1.")
 
 
-def _pressure_intensity(pressure: dict[str, Any]) -> float:
-    params = pressure.get("parameters") or {}
-    for key in ("intensity", "value", "scalar"):
-        if key in params:
-            try:
-                value = float(params[key])
-            except Exception as exc:
-                raise ApiError(422, "UNSUPPORTED_PRESSURE", f"Pressure {pressure.get('id')} has non-numeric {key}.") from exc
-            if value < 0:
-                raise ApiError(422, "UNSUPPORTED_PRESSURE", "Pressure intensity must be non-negative.")
-            return value
-    raise ApiError(
-        422,
-        "UNSUPPORTED_PRESSURE",
-        f"Pressure {pressure.get('id')} needs parameters.intensity, parameters.value, or parameters.scalar.",
-    )
-
-
 def validate_pressures(request: dict[str, Any], masks_by_id: dict[str, np.ndarray]) -> None:
-    max_steps = int(request["time"]["max_steps"])
     for pressure in request.get("pressures") or []:
-        ptype = pressure.get("type")
-        if ptype == "species_effort_multiplier":
-            raise ApiError(
-                422,
-                "UNSUPPORTED_PRESSURE",
-                "species_effort_multiplier is not supported by the current inference model.",
-                {"todo": "Add species-scoped effort controls to the environment/policy execution path."},
-            )
-        if ptype not in STATIC_PRESSURE_MAPS:
-            raise ApiError(422, "UNSUPPORTED_PRESSURE", f"Unsupported pressure type: {ptype!r}")
-
-        window = pressure.get("time_window") or {}
-        start = int(window.get("start_step", 0))
-        end = int(window.get("end_step", max_steps))
-        if start != 0 or end < max_steps:
-            raise ApiError(
-                422,
-                "UNSUPPORTED_PRESSURE",
-                "Only pressures active for the entire run are currently supported.",
-                {"todo": "Add per-step pressure schedule application inside EcosystemEnvironment.step()."},
-            )
-
-        scope = pressure.get("scope") or {}
-        kind = scope.get("kind", "whole_grid")
-        if kind == "mask" and scope.get("mask_id") not in masks_by_id:
-            raise ApiError(422, "UNSUPPORTED_PRESSURE", f"Unknown pressure mask_id: {scope.get('mask_id')!r}")
-        if kind not in ("whole_grid", "mask"):
-            raise ApiError(422, "UNSUPPORTED_PRESSURE", f"Unsupported pressure scope kind: {kind!r}")
-        _pressure_intensity(pressure)
+        raise ApiError(
+            422,
+            "UNSUPPORTED_PRESSURE",
+            f"Pressure inputs are disabled in the current inference model: {pressure.get('type')!r}.",
+            {"todo": "Add pressure effects to the environment transition before accepting pressure inputs."},
+        )
 
 
 def apply_uploaded_inputs(env: Any, texture: np.ndarray, depth: np.ndarray, request: dict[str, Any], masks_by_id: dict[str, np.ndarray]) -> None:
@@ -466,24 +414,6 @@ def apply_uploaded_inputs(env: Any, texture: np.ndarray, depth: np.ndarray, requ
     env.grid.add_map("texture", texture)
     env.grid.add_map("depth", depth)
 
-    height = int(request["grid"]["height"])
-    width = int(request["grid"]["width"])
-    for pressure in request.get("pressures") or []:
-        impact_id = STATIC_PRESSURE_MAPS[pressure["type"]]
-        intensity = _pressure_intensity(pressure)
-        scope = pressure.get("scope") or {}
-        if scope.get("kind", "whole_grid") == "mask":
-            scope_mask = masks_by_id[scope["mask_id"]]
-        else:
-            scope_mask = np.ones((height, width), dtype=bool)
-
-        current = env.grid.get_map(impact_id)
-        if current is None:
-            current = np.zeros((height, width), dtype=np.float32)
-        else:
-            current = np.asarray(current, dtype=np.float32).copy()
-        current[scope_mask] = intensity
-        env.grid.add_map(impact_id, current)
 
 
 def _capture_tensor(env: Any, internal_species: list[str]) -> np.ndarray:
@@ -543,7 +473,7 @@ def _run_one_replicate(
     env.policies = dict(policies)
     env.obs_mean = obs_mean
     env.obs_var = obs_var
-    env._rebuild_batched_weights()
+    env.rebuild_batched_weights()
 
     viz = None
     if visualize:
@@ -567,6 +497,11 @@ def _run_one_replicate(
         except Exception as exc:
             LOGGER.warning("run %s visualization could not start: %r", run_id, exc)
             viz = None
+
+    visual_b0 = {
+        fid: max(float(fg.biomass.sum()), 1e-12)
+        for fid, fg in env.fgs.items()
+    }
 
     frames: list[np.ndarray] = []
     steps: list[int] = []
@@ -604,7 +539,9 @@ def _run_one_replicate(
             viz.update_biomass(env.fgs, tick=step, extra={"run": run_id})
             for fid, fg in env.fgs.items():
                 total = float(fg.biomass.sum())
-                viz.update_series("biomass", fid, total, step=step)
+                viz.update_series("biomass", fid,
+                                  100.0 * total / visual_b0[fid],
+                                  step=step)
             if not viz.pump_events():
                 LOGGER.info("run %s visualization window closed at step %d; inference continues", run_id, step)
                 viz.close()
@@ -618,7 +555,9 @@ def _run_one_replicate(
         update_progress(0, force_log=True)
         update_visual(0)
         for step in range(1, max_steps + 1):
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             if step % sample_every == 0:
                 sample(step)
             update_progress(step)

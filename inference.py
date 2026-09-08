@@ -61,11 +61,6 @@ class RandomPolicy:
         n = flat_state.shape[0]
         return torch.zeros((n, self.out_dim), dtype=torch.float32)
 
-    def get_action_probs_torch(self, flat_state):
-        n = flat_state.shape[0]
-        return torch.full((n, self.out_dim), 1.0 / self.out_dim,
-                          dtype=torch.float32)
-
     def eval(self):
         return self
 
@@ -82,90 +77,6 @@ def parse_grid_arg(value):
             f"Invalid --grid '{value}': both dimensions must be >= 3."
         )
     return n, k
-
-
-def _load_inference_map_paths(project_path):
-    """Return ``{impact_id: absolute_path}`` from the project's ``inference.impact_maps``.
-
-    Returns an empty dict when the project has no such section. Relative paths
-    are resolved against the project YAML file's directory.
-    """
-    if not project_path:
-        return {}
-    try:
-        import yaml as _yaml
-        with open(project_path, 'r') as f:
-            data = _yaml.safe_load(f) or {}
-    except Exception:
-        return {}
-    section = (data.get('inference') or {}).get('impact_maps') or {}
-    if not isinstance(section, dict):
-        return {}
-    base = os.path.dirname(os.path.abspath(project_path))
-    resolved = {}
-    for iid, p in section.items():
-        if not isinstance(p, str) or not p:
-            continue
-        resolved[iid] = p if os.path.isabs(p) else os.path.normpath(os.path.join(base, p))
-    return resolved
-
-
-def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
-    """Load a single (H, W) impact map from ``path[impact_id]`` with nearest-neighbor resampling.
-
-    Returns a ``float32`` array of shape (H, W), or ``None`` on failure (caller
-    should fall back to a zero field).
-    """
-    if not os.path.isfile(path):
-        if verbose:
-            print(f"  [warn] Impact map for '{impact_id}' not found at {path}; using zero field.")
-        return None
-    try:
-        with np.load(path, allow_pickle=False) as data:
-            keys = list(data.files)
-            arr = None
-            # Priority 1: exact impact_id match (back-compat with archives
-            # whose key happens to be named after the impact).
-            if impact_id in keys:
-                cand = np.asarray(data[impact_id])
-                if cand.ndim == 2:
-                    arr = cand
-            # Priority 2: the first 2-D array in the archive. This makes
-            # impact-map .npz files key-agnostic — any 2-D array works,
-            # regardless of what it is called inside the archive. Mirrors
-            # the loader used by fgconfig's Inference tab.
-            if arr is None:
-                for k in keys:
-                    cand = np.asarray(data[k])
-                    if cand.ndim == 2:
-                        arr = cand
-                        if verbose and k != impact_id:
-                            print(f"  [info] Using array '{k}' from "
-                                  f"{os.path.basename(path)} as impact map "
-                                  f"for '{impact_id}' (key-agnostic load).")
-                        break
-            if arr is None:
-                if verbose:
-                    print(f"  [warn] No 2-D array found in "
-                          f"{os.path.basename(path)} (keys: {keys}); "
-                          f"using zero field for '{impact_id}'.")
-                return None
-    except Exception as e:
-        if verbose:
-            print(f"  [warn] Could not read '{impact_id}' from {path}: {e}; using zero field.")
-        return None
-    arr = arr.astype(np.float32, copy=False)
-    Hs, Ws = arr.shape
-    if (Hs, Ws) != (H, W):
-        # Nearest-neighbor resample to the requested grid.
-        if Hs == 0 or Ws == 0:
-            return None
-        row_idx = (np.arange(H) * Hs / H).astype(np.int64)
-        col_idx = (np.arange(W) * Ws / W).astype(np.int64)
-        arr = arr[row_idx[:, None], col_idx[None, :]]
-        if verbose:
-            print(f"  [info] Resampled '{impact_id}' from {(Hs, Ws)} to {(H, W)} (nearest).")
-    return arr.astype(np.float32, copy=False)
 
 
 def _load_spawn_templates(project_path):
@@ -200,14 +111,13 @@ def _load_spawn_templates(project_path):
 
 
 def _load_spawn_defaults(project_path):
-    """Read each FG/impact's default spawn mode from the project YAML.
+    """Read each FG's default spawn mode from the project YAML.
 
-    Returns ``{fid: <mode_str>}`` mapping FG-id (decision_makers,
-    non_decision_makers) and observable impact-id to the ``mode`` stored
-    in their ``spawn:`` block in the project file. Used by the live
-    visualiser to pre-fill the per-heatmap Mode dropdown so the user
-    sees the strategy that is actually configured for each FG instead
-    of a generic "(default)" placeholder.
+    Returns ``{fid: <mode_str>}`` mapping FG-id to the ``mode`` stored in
+    its ``spawn:`` block. Used by the live visualiser to pre-fill the
+    per-heatmap Mode dropdown so the user sees the strategy that is
+    actually configured for each FG instead of a generic "(default)"
+    placeholder.
     """
     if not project_path:
         return {}
@@ -218,11 +128,10 @@ def _load_spawn_defaults(project_path):
     except Exception:
         return {}
 
-    # Load the FG library (fg_library.yaml) for fallback. ``load_project_config``
-    # mergar projektets per-FG ``spawn:``-override med library-specens
-    # ``spawn:``-block; om projektfilen saknar block (vanligt) styrs spawn
-    # alltså av library. Spegla samma resolution här så Mode-dropdownen
-    # i visualiseraren visar den strategi som faktiskt körs.
+    # Load the FG library (fg_library.yaml) for fallback. load_project_config
+    # merges project per-FG spawn overrides with the library spawn block;
+    # mirror that resolution so the Mode dropdown shows the strategy that
+    # is actually used.
     lib_specs = {}
     try:
         import os as _os
@@ -254,8 +163,7 @@ def _load_spawn_defaults(project_path):
             mode = None
             if isinstance(sp, dict):
                 mode = sp.get('mode')
-            # Fallback 1: leta upp library-specens spawn-block (gäller bara
-            # FGs — impacts har inget motsvarande library).
+            # Fallback 1: look up the library spawn block.
             if not mode and use_library:
                 lib_sp = (lib_specs.get(str(fid), {}) or {}).get('spawn')
                 if isinstance(lib_sp, dict):
@@ -267,7 +175,6 @@ def _load_spawn_defaults(project_path):
             out[str(fid)] = str(mode)
     _extract(data.get('decision_makers'), 'group_id', True)
     _extract(data.get('non_decision_makers'), 'group_id', True)
-    _extract(data.get('impact_variables'), 'impact_id', False)
     return out
 
 
@@ -334,14 +241,12 @@ def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
 
 
 def apply_b0_overrides(env, b0_overrides):
-    """Skala om varje FG:s spawnade biomass-fält så att totalsumman
-    matchar det användardefinierade ``b0_overrides[fg_id]`` (ton).
+    """Scale spawned biomass fields to user-provided b0 totals in tons.
 
-    Bevarar den spatiala fördelningen (formen). FGs som saknas i
-    ``b0_overrides`` eller har None lämnas orörda. Om en FG:s nuvarande
-    totalsumma är 0 (tom karta) sprids målvärdet jämnt över alla celler.
-    Anropas direkt efter att env är byggd och innan första
-    ``env.step()`` så ``b0``-baseline blir det nya värdet.
+    Spatial distribution is preserved. FGs missing from ``b0_overrides`` or
+    set to ``None`` are left unchanged. Empty fields receive a uniform
+    distribution. Call this before the first environment transition so the
+    ``b0`` baseline uses the overridden value.
     """
     if not b0_overrides:
         return
@@ -381,16 +286,13 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     accessibility = None
     if allowed_mask is not None:
         accessibility = np.asarray(allowed_mask).reshape(H, W).astype(np.float32)
-    impact_ranges = {}
     if project_path:
-        fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
+        fgs, _, _, _ = load_project_config(
             project_path, grid_size=grid_size, seed=seed, mode='inference',
             allowed_mask=accessibility)
     else:
         fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
                                     allowed_mask=accessibility)
-        impact_vars = ['windfarm_noise']
-        observable_impact_vars = ['windfarm_noise']
 
     grid_config = {
         'width': W,
@@ -398,25 +300,11 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
         'cell_size': 1000.0,
         'tick_duration': 6.0,
     }
-    env = EcosystemEnvironment(grid_config, fgs, {},
-                               observable_impact_vars=observable_impact_vars,
+    env = EcosystemEnvironment(grid_config, fgs,
                                apply_natural_mortality=apply_natural_mortality,
                                migration=migration)
     if accessibility is not None:
         env.grid.add_map('accessibility', accessibility)
-    # Impact maps are read from .npz files configured in the project's
-    # ``inference.impact_maps`` section (set via the fgconfig Inference tab).
-    # Missing entries — or files that fail validation — are treated as
-    # all-zero fields. Biomass / energy maps are still randomly spawned
-    # from the configured initial biomass values.
-    map_paths = _load_inference_map_paths(project_path)
-    for iv in impact_vars:
-        field = None
-        if iv in map_paths:
-            field = _load_impact_map_npz(map_paths[iv], iv, H, W, verbose=verbose)
-        if field is None:
-            field = np.zeros((H, W), dtype=np.float32)
-        env.grid.add_map(iv, field)
     return env
 
 
@@ -461,7 +349,7 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     project's decision makers, or if any checkpoint has an incompatible
     architecture (e.g. trained on a different grid / FG set / hidden size).
     """
-    env._build_static_caches()
+    env.build_static_caches()
     dm_ids = list(env.dm_ids)
     N_all = env.N_all
     N_dm = env.N_dm
@@ -561,7 +449,7 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
                 f"  Current Observability config for '{fid}': observes "
                 f"{obs_desc}.\n"
                 f"  Hint: this checkpoint was trained against a different "
-                f"Observability matrix, FG set, or observable impacts. "
+                f"Observability matrix or FG set. "
                 f"Adjust the Observability matrix in fgconfig so '{fid}' "
                 f"yields in_dim={ck_in}, or retrain."
             )
@@ -670,11 +558,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     env.obs_mean = obs_mean
     env.obs_var = obs_var
     # Rebuild batched weight tensors used by the fast inference path.
-    env._rebuild_batched_weights()
+    env.rebuild_batched_weights()
 
     # Install uniform-random policies on the parallel baseline env, if any.
     if rnd_env is not None:
-        rnd_env._build_static_caches()
+        rnd_env.build_static_caches()
         out_dim_rnd = 5 + rnd_env.N_all
         in_dim_rnd = env.obs_mean.shape[1] if env.obs_mean.ndim == 2 else 0
         rnd_env.policies = {
@@ -710,9 +598,13 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             pass
     for t in range(n_ticks):
         try:
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             if rnd_env is not None:
-                rnd_env.step()
+                rnd_observation = rnd_env.get_observation()
+                rnd_actions = rnd_env.policy_controller.forward(rnd_observation)
+                rnd_env.step(rnd_actions)
         except KeyboardInterrupt:
             if verbose:
                 print(f"\n    interrupted at tick {t+1}/{n_ticks}; "
@@ -728,35 +620,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 er = getattr(fg, 'energy_reserve', None)
                 rnd_energy_history[fid].append(
                     float(er.sum()) if er is not None else 0.0)
-        # Avbryt loopen tidigt om all biomassa har kollapsat till 0 i
-        # samtliga FG (och, om rnd_env används, även där). Annars fortsätter
-        # visualiseringen att uppdateras med b = 0.00 tick efter tick utan
-        # att något kan hända i ekosystemet. Den sista frame:n som ritats
-        # speglar redan kollapsen; vi gör en sista paint nedan och stannar.
-        # Använd en absolut epsilon-tröskel i stället för == 0. När all
-        # biomassa kollapsar lämnar upprepad multiplikation med decay-
-        # faktorer kvar float32-subnormaler (ned mot ~1.4e-45) som aldrig
-        # når exakt 0. Sådana värden saknar biologisk innebörd men gör att
-        # heatmapens normalisering (max-värde per frame) fortsätter
-        # fluktuera vilt mellan subnormaler.
-        #
-        # ``DEAD_EPS`` sätts till 50 % av minsta positiva ``min_split_biomass``
-        # över alla FG i env (lagras i ton i ``FunctionalGroup``, dvs kg/1000).
-        # Det är den minsta odelbara enheten i ekosystemet: när total biomass
-        # underskrider halva den nivån finns inte ens en halv odelbar individ
-        # kvar någonstans, och rollouten kan tryggt avbrytas. Om ingen FG har
-        # ``min_split_biomass > 0`` (helt kontinuerligt läge) faller vi tillbaka
-        # på en liten numerisk tröskel som bara fångar float32-subnormaler.
-        #
-        # OBS: detta är enbart en *rollout-termineringsregel* för
-        # visualiseringen. Den kompletterar — men överlappar inte —
-        # ``EcosystemEnvironment._apply_extinction_threshold`` (se
-        # ``lib/environments/ecosystem.py``), som per FG och per cell
-        # nollställer biomassa när ``0 < B < extinction_threshold_factor
-        # * min_split_biomass`` (default 0.5). Den mekanismen kör redan
-        # inne i ``env.step()`` för både träning och inference; här bryter
-        # vi bara loopen när totalen är så låg att inte ens en halv
-        # odelbar individ finns kvar någonstans.
+        # Stop visualization once all tracked biomass has collapsed. Use an
+        # absolute epsilon instead of exact zero because repeated float32
+        # decay can leave subnormal values with no biological meaning.
+        # When min-split biomass exists, half of the smallest min-split value
+        # is the cutoff; otherwise only float32 residue is ignored.
         _msb_values = [
             float(getattr(fg, 'min_split_biomass', 0.0))
             for fg in env.fgs.values()
@@ -806,50 +674,36 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     viz.update_series("biomass", fid, pct_bio[fid], step=t)
                     viz.update_series("energy", fid, pct_eng[fid], step=t)
                 _push_action_fracs(viz, env, step=t, prev=_prev_act)
-                # Per-FG biomass-loss breakdown (pr/st/im) so far,
-                # computed from the env's running accumulators. Each
-                # value is a fraction in [0, 1] summing to 1.0 when
-                # there has been any loss for that FG.
-                # Ögonblicks-loss per tick: delta mot förra tickens
-                # kumulativa ackumulatorer, sedan normaliserat inom denna
-                # tick. Fördelningen speglar därför vad som just hände
-                # nu istället för hela rolloutens sammanlagda historik.
+                # Per-FG biomass-loss breakdown for the current tick.
+                # We diff the cumulative starvation/predation accumulators
+                # against the previous tick, then normalize within this tick.
                 _lb = {}
                 for fid in env.fgs:
                     ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
                     lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
-                    li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
-                    prev = _prev_loss.get(fid, {'s': 0.0, 'p': 0.0, 'i': 0.0})
+                    prev = _prev_loss.get(fid, {'s': 0.0, 'p': 0.0})
                     dls = ls - prev['s']
                     dlp = lp - prev['p']
-                    dli = li - prev['i']
-                    _prev_loss[fid] = {'s': ls, 'p': lp, 'i': li}
-                    _tot = dls + dlp + dli
+                    _prev_loss[fid] = {'s': ls, 'p': lp}
+                    _tot = dls + dlp
                     if _tot > 0.0:
                         _lb[fid] = {
                             'predation':  dlp / _tot,
                             'starvation': dls / _tot,
-                            'impact':     dli / _tot,
                         }
                     else:
                         _lb[fid] = {'predation': 0.0,
-                                    'starvation': 0.0,
-                                    'impact': 0.0}
+                                    'starvation': 0.0}
                 viz.update_loss_breakdown(_lb)
                 # Push the same fractions (×100%) to the dedicated plot
-                # tabs ``predation``/``starvation``/``impacts`` per tick,
-                # mirroring how biomass/energy is fed in inference. Detta
-                # gör att kurvorna visar hur andelarna utvecklas över
-                # rollouten — speglar headern ``pr/st/im=…`` över tid.
+                # tabs ``predation``/``starvation`` per tick, mirroring
+                # how biomass/energy is fed in inference.
                 for fid, _br in _lb.items():
                     viz.update_series("predation", fid,
                                       100.0 * float(_br.get('predation', 0.0)),
                                       step=t)
                     viz.update_series("starvation", fid,
                                       100.0 * float(_br.get('starvation', 0.0)),
-                                      step=t)
-                    viz.update_series("impacts", fid,
-                                      100.0 * float(_br.get('impact', 0.0)),
                                       step=t)
                 # Per-DM diet breakdown: läs env-ackumulatorn
                 # ``intake_by_pred_prey`` (ton intagen prey-biomassa över
@@ -1081,14 +935,10 @@ def main():
 
     if verbose:
         print(f"Running {args.ticks} ticks...")
-    interrupted = False
     history = None
-    # Rerun-loop: så länge användaren drar i en b0-slider efter rollouten
-    # spelas en ny inspelning in med det nya värdet. Första iterationen
-    # använder ``env``/``rnd_env`` som redan byggts ovan (med eventuella
-    # initiala overrides från en sparad slider-state, som dock i praktiken
-    # är tomma i runda 1). Efterföljande iterationer bygger om från grunden
-    # så biomass/impact-fält återställs.
+    # Rerun loop: if the user changes a b0 slider after the rollout,
+    # record a new rollout with the updated value. Later iterations rebuild
+    # from scratch so biomass fields reset.
     first_iteration = True
     try:
         while True:
@@ -1097,14 +947,11 @@ def main():
                                 verbose=False,
                                 apply_natural_mortality=(args.mortality == "on"),
                                 migration=(args.migration == "on"))
-                # Återbygg de statiska caches som ``load_policies_and_stats``
-                # satte upp i runda 1 (N_dm, N_all, dm_ids, per_dm_in_dim,
-                # max_in_dim m.fl.). Utan dessa kraschar
-                # ``_rebuild_batched_weights`` med ``AttributeError: N_dm``.
-                env._build_static_caches()
-            # b0-overrides från slidrarna (om viz finns) appliceras på env
-            # innan första env.step() — total biomass per FG skalas så
-            # totalsumman matchar slider-värdet. Bevarar spatial form.
+                # Rebuild the static cache fields needed before refreshing
+                # batched policy weights.
+                env.build_static_caches()
+            # Apply visualizer b0 overrides before the first environment
+            # transition, preserving each FG's spatial biomass distribution.
             b0_overrides = (viz.get_b0_overrides() if viz is not None else {})
             if b0_overrides:
                 apply_b0_overrides(env, b0_overrides)
@@ -1203,7 +1050,6 @@ def main():
                 print(f"\n[change] {'/'.join(reasons)} changed — "
                       f"re-recording rollout…")
     except KeyboardInterrupt:
-        interrupted = True
         if verbose:
             print("\nInterrupted by user (Ctrl+C).")
         if history is None:

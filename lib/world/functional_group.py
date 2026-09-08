@@ -15,34 +15,25 @@ class FunctionalGroup:
         self.max_energy_reserve = params.get('max_energy_reserve', 1000.0)  # ME_X
         self.resting_metabolism = params.get('resting_metabolism', 0.0)  # Rest_X
         self.growth_rate = params.get('growth_rate', 0.0)  # MG_X
-        # Catabolism-rate vid svält (q_x < 0). Frikopplad från growth_rate
-        # (anabolism) eftersom biologisk biomass-uppbyggnad sker över
-        # år medan svältdöd sker över dagar–veckor. starve_rate=0 ⇒
-        # legacy (samma rate som growth_rate i båda riktningarna).
+        # Starvation catabolism rate when q_x < 0. Kept separate from
+        # growth_rate because biomass gain and starvation loss can operate
+        # on different time scales.
         self.starve_rate = float(params.get('starve_rate', 0.0) or 0.0)
-        # Visibility floor for the hide-action (Section 48 follow-up):
-        # the fraction of the rest-population that is STILL visible to
-        # predators even when pi_rest = 1.0. With floor=f the effective
-        # visible fraction is max(1 - pi_rest, f), so a fully-hiding FG
-        # still exposes f of its biomass per tick. Default 0.0 ⇒ legacy
-        # behaviour (perfect hide). Recommended 0.05–0.20 for biological
-        # realism (no animal aggregation is perfectly cryptic).
+        # Visibility floor for rest/hide: with floor=f, the effective visible
+        # fraction is 1 - rest * (1 - f), so a fully resting FG still exposes
+        # f of its biomass per tick.
         self.visibility_floor = float(params.get('visibility_floor', 0.0) or 0.0)
         if self.visibility_floor < 0.0:
             self.visibility_floor = 0.0
         elif self.visibility_floor > 1.0:
             self.visibility_floor = 1.0
-        # Densitetsoberoende naturlig mortalitet per tick (DM). Modellerar
-        # senescens, sjukdom, "hidden predation" från icke-modellerade arter,
-        # mekanisk skada m.m. — oberoende av svälttermen via q_x.
+        # Density-independent natural mortality per tick.
         self.natural_mortality = float(params.get('natural_mortality', 0.0))
-        # Rekolonisations-floor för NDM: andel av max_carrying_capacity som
-        # tillförs per tick i alla celler. Representerar dvalceller / inflöde
-        # och förhindrar permanent global utrotning.
+        # Recolonisation floor for non-decision makers: fraction of
+        # max_carrying_capacity added per tick in every cell.
         self.seed_rate = float(params.get('seed_rate', 0.0))
-        # Säsongsmodulering av growth_rate (NDM): r_eff(t) = r * (1 + AMP *
-        # sin(2π*(t+phase)/PERIOD)). seasonal_amplitude=0 ⇒ ingen modulering
-        # (legacy). seasonal_period<=0 tolkas som av/off i ecosystem.
+        # Seasonal modulation of non-decision-maker growth rate:
+        # r_eff(t) = r * (1 + AMP * sin(2*pi*(t+phase)/PERIOD)).
         self.seasonal_amplitude = float(params.get('seasonal_amplitude', 0.0) or 0.0)
         self.seasonal_period = float(params.get('seasonal_period', 0.0) or 0.0)
         # u_X: maintenance level. The relative energy fill ratio s_X required
@@ -55,23 +46,14 @@ class FunctionalGroup:
         # convert kg -> tonnes here at the input boundary.
         # 0 = continuous biomass (no threshold).
         self.min_split_biomass = float(params.get('min_split_biomass', 0.0)) / 1000.0
-        # Extinction-tröskel (Section 20 follow-up): per-cell nollställning
-        # när ``0 < B < extinction_threshold_factor * min_split_biomass``.
-        # Faktorn ``0.5`` matchar ``DEAD_EPS = 0.5 * min_split`` som används
-        # för rollout-terminering i ``inference.py`` — "mindre än en halv
-        # odelbar individ" räknas som utrotad i cellen. Nollställd biomassa
-        # bokförs i ``loss_starvation`` för diagnostik. Sätt till 0.0 för
-        # att stänga av mekanismen (legacy). Ingen effekt när
-        # ``min_split_biomass == 0`` (rent kontinuerligt läge).
+        # Per-cell extinction threshold: cells with biomass below
+        # extinction_threshold_factor * min_split_biomass are cleared and
+        # recorded in starvation diagnostics. A value of 0 disables the
+        # threshold; no threshold applies when min_split_biomass is 0.
         self.extinction_threshold_factor = float(
             params.get('extinction_threshold_factor', 0.5) or 0.0)
         if self.extinction_threshold_factor < 0.0:
             self.extinction_threshold_factor = 0.0
-
-        # Costs
-        self.movement_cost = params.get('movement_cost', 1.0)
-        self.feeding_cost = params.get('feeding_cost', 1.0)
-        self.resting_cost = params.get('resting_cost', 1.0)
 
     def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7,
                          randomize_energy=False, rng=None):
@@ -118,12 +100,3 @@ class FunctionalGroup:
         """h_X = max(0, 1 - s_X / 0.8)"""
         s_x = self.energy_level
         return np.maximum(0.0, 1.0 - s_x / 0.8)
-
-    def calculate_metabolism(self, actions_mask, noise_impact=None):
-        """
-        Calculates energy loss per tick.
-        Rest_X * (Action_Cost) * (1 + Noise_Sens * Noise)
-        """
-        # For simplicity in MVP, we can assume a mean cost if actions are distributed,
-        # or calculate per-action cost in the simulation loop.
-        pass

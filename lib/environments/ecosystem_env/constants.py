@@ -1,0 +1,10 @@
+MOVE_SLICE = slice(0, 4)
+REST_INDEX = 4
+EAT_START = 5
+
+NORTH = 0
+EAST = 1
+SOUTH = 2
+WEST = 3
+
+DIRECTIONS = ("N", "E", "S", "W")
