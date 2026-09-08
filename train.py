@@ -2363,13 +2363,6 @@ def main():
         dt = _time_install.monotonic() - t0
         _install_stats['count'] += 1
         _install_stats['total'] += dt
-        # Logga första anropet (varmstart spawn) + var 10:e för att
-        # synliggöra eventuella regressioner utan att spamma loggen.
-        c = _install_stats['count']
-        if c == 1 or c % 10 == 0:
-            avg_ms = 1000.0 * _install_stats['total'] / c
-            print(f"    [install_worlds] call #{c}: {dt*1000:.1f} ms "
-                  f"(avg {avg_ms:.1f} ms over {c} calls)")
 
     # Backwards-compatible alias: older code/log searches expect this name.
     _install_generation_maps = _install_generation_worlds
