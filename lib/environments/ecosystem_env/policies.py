@@ -12,6 +12,9 @@ def rebuild_batched_weights(env):
         return
 
     first = env.policies[env.dm_ids[0]]
+    activation = getattr(first, "activation", "sig")
+    if any(getattr(env.policies[fid], "activation", "sig") != activation for fid in env.dm_ids):
+        return
     layers0 = [module for module in first.net if isinstance(module, torch.nn.Linear)]
     n_layers = len(layers0)
     if n_layers < 2:
@@ -71,6 +74,7 @@ def rebuild_batched_weights(env):
     env._in_dim = max_in_dim
     env._out_dim = out_dim
     env._batched_ready = True
+    env._activation = activation
 
 
 def batched_policy_forward(env, obs_batch, return_logits=False):
@@ -78,7 +82,14 @@ def batched_policy_forward(env, obs_batch, return_logits=False):
     biases = env._bs
     h = obs_batch
     for k in range(len(weights) - 1):
-        h = torch.sigmoid(torch.bmm(h, weights[k]) + biases[k].unsqueeze(1))
+        h = torch.bmm(h, weights[k]) + biases[k].unsqueeze(1)
+        activation = getattr(env, "_activation", "sig")
+        if activation == "relu":
+            h = torch.relu(h)
+        elif activation == "tanh":
+            h = torch.tanh(h)
+        else:
+            h = torch.sigmoid(h)
     logits = torch.bmm(h, weights[-1]) + biases[-1].unsqueeze(1)
     if return_logits:
         return logits

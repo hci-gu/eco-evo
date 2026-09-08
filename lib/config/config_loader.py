@@ -235,8 +235,8 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
 
 
 def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None,
-                          allowed_mask=None):
-    lib = load_config(library_path)
+                          allowed_mask=None, library_config=None):
+    lib = library_config if library_config is not None else load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
 
@@ -397,7 +397,7 @@ def compute_inference_b0_defaults(project_path, grid_size):
 
 
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
-                        spawn_seed=None, allowed_mask=None):
+                        spawn_seed=None, allowed_mask=None, project_config=None, library_config=None):
     """Load a project config and build its FunctionalGroups.
 
     ``spawn_seed`` (optional) controls the per-cell biomass distribution
@@ -407,7 +407,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     all deltas/workers within one generation. When ``None``, falls back to
     ``seed`` so each rollout gets its own spawn layout.
     """
-    project = load_config(project_path)
+    project = project_config if project_config is not None else load_config(project_path)
     rng = np.random.default_rng(seed) if seed is not None else None
     # Spawn RNG base: spawn_seed overrides seed for the spatial layout, so
     # that a whole generation can share one map even though individual
@@ -416,7 +416,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     spawn_allowed_mask = None
     if allowed_mask is not None:
         spawn_allowed_mask = np.asarray(allowed_mask).reshape(grid_size).astype(bool)
-    lib = load_config(library_path)
+    lib = library_config if library_config is not None else load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
     
