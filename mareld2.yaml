@@ -13,8 +13,8 @@ decision_makers:
     initial_biomass_max: 24000
     inference_initial_biomass: 12000
   - group_id: porpoises
-    initial_biomass_min: 1
-    initial_biomass_max: 120
+    initial_biomass_min: 20
+    initial_biomass_max: 80
     inference_initial_biomass: 40
   - group_id: seabirds
     initial_biomass_min: 12
@@ -95,6 +95,15 @@ spawn_templates:
       min_frac_of_max: 0.1
       refs:
         - name: phytoplankton
+          weight: 1.0
+          transform: linear
+    Followfish:
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.0
+      refs:
+        - name: pelagic_fish
           weight: 1.0
           transform: linear
 inference:

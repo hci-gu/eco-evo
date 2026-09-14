@@ -804,9 +804,14 @@ Intentionally NOT done:
   calibration arc (Sections 46-49) + reward-shaping (Section 48).
   Always run `git status` before committing.
 
-  Test status: 42 tests in tests/; 41 green, 1 flaky
-  (test_predation_visibly_suppresses_phyto in test_phyto_zoo_sanity.py).
-  The flake predates this arc - verified by stash+rerun on clean tree.
+  Test status: 88 tests in tests/; 87 green + 1 INTENTIONALLY RED
+  after Section 67 (test_live_project_decision_makers_can_break_even
+  fails on porpoises - that red is the point, see Section 67.4).
+  Section 66 added 31 Holling regression tests, Section 67 added 15
+  energy-balance gate tests. Historical note: 42 tests with
+  1 flaky (test_predation_visibly_suppresses_phyto in
+  test_phyto_zoo_sanity.py); the flake predates that arc - verified
+  by stash+rerun on clean tree.
 
 === LEGACY GIT NOTES (kept for reference) ===
   Commit ONLY on explicit user request, trailer:
@@ -1029,6 +1034,13 @@ Per Strategi.pdf + konvergensproblem.txt "Kritisk insikt 4". For each
 DM, compute per-tick energy balance at full hunger (h=1) and require
 netto_eat > rest_cost.
 
+SUPERSEDED BY SECTION 67: evaluating the intake side at h=1 is
+invalid, because h=1 requires s_X=0 (an empty reserve - a state the
+animal does not survive in). The gate must be evaluated at the
+MAINTENANCE LEVEL u_X, where h(u_X) = 1 - u_X/0.8. The h=1 form
+below is kept as the legacy back-compat gate only; the binding
+condition is now netto_eat(u_X) > 0. See Section 67.
+
 IMPORTANT (commit 9317a54): `max_intake_rate` (a) is now on the
 species_definitions level (one per predator FG), not per interaction.
 Assimilation is captured via per-interaction `assimilation_factor`
@@ -1091,6 +1103,14 @@ Acceptance (hard gate)  : netto > 0             for every DM.
 Acceptance (soft gate)  : eat-rest > 0          for every DM.
 Note: porpoises may fail eat-move; that is a known accepted
 outlier (see Section 23).
+
+OBSOLETE - DO NOT USE THIS SNIPPET AS THE GATE. It evaluates the
+intake at h=1 and therefore passes configurations that starve at
+their own maintenance level (porpoises: netto=+166.5 at h=1 but
+-16.3 at u_X). Replaced by lib/world/energy_balance.py +
+tests/test_energy_balance_gate.py; run pytest instead of pasting
+this snippet. See Section 67. The 24.B correction below is
+unaffected and still applies on top of the u_X-based gate.
 
 24.B PREDATION-AVOIDANCE CORRECTION (visibility_floor < 1)
 
@@ -4034,10 +4054,15 @@ In ``lib/environments/ecosystem.py::_apply_predation`` (post-fix):
 Numerical verification for a=0.04, h=25 (asymptote 1/h = a = 0.04):
 
     B_prey   a_eff_II (fix)   a_eff_III (fix)
-    0.01     0.00040          0.00000004
+    0.01     0.00039604       0.0000039996
     1.0      0.02000          0.02000
     10.0     0.03636          0.03960
     100.0    0.03960          0.04000
+
+(Corrected in Section 66: an earlier version of this table printed
+0.00040 and 4e-8 in the B_prey=0.01 row. The exact values are
+0.00039604 and 3.9996e-06; a*B^2 = 0.04*1e-4 = 4e-6, not 4e-8. The
+values above are the ones asserted by tests/test_holling_response.py.)
 
 a_eff now saturates toward 1/h = a at high B (canonical Section
 36 calibration) and drops toward 0 at low B (as intended). At
@@ -4074,9 +4099,9 @@ Purpose: prevent reintroduction during future refactoring.
     by hand.
   * Existing tests passed even under the buggy formula - they
     were too tolerant to catch a sign-error in the saturation
-    curve. Recommended regression test to add: verify that
-    a_eff is MONOTONICALLY INCREASING in B_prey per (predator,
-    prey) whenever handling_time > 0. Not implemented yet.
+    curve. The recommended regression test (a_eff strictly
+    increasing in B_prey per (predator, prey) whenever
+    handling_time > 0) is now IMPLEMENTED - see Section 66.
 
 64.6 Consequences for existing checkpoints
 
@@ -4099,8 +4124,8 @@ Purpose: prevent reintroduction during future refactoring.
 
 64.7 Follow-ups
 
-  * Add a regression test asserting a_eff monotonicity in
-    B_prey for any (pred, prey) with h > 0.
+  * DONE (Section 66): regression test asserting a_eff
+    monotonicity in B_prey for any (pred, prey) with h > 0.
   * Retrain mareld2 baselines under the fixed dynamics before
     running any long-form inference or diagnostics; discard
     pre-fix policy conclusions in Section 21 / 22 that assumed
@@ -4264,3 +4289,1387 @@ Rejected levers (would violate literature calibration):
         allometry).
   ~~P5~~ lower max_intake_rate or raise handling_time on
         gadoids - both are Section 36 physiological ceilings.
+
+================================================================
+66. HOLLING REGRESSION TEST + _holling_a_eff EXTRACTION
+================================================================
+Closes the Section 64.7 follow-up: the shape of the functional
+response is now locked by a unit test so the Section 64 sign
+inversion (missing B_prey factor in the numerator) cannot be
+reintroduced by a refactoring.
+
+66.1 Refactor (lib/environments/ecosystem.py)
+
+The inline Holling expressions in _apply_predation were extracted
+into a pure static helper placed directly above _apply_predation:
+
+    @staticmethod
+    def _holling_a_eff(a, h, Bp, m3):
+        Bp2 = Bp * Bp
+        a_eff_ii  = (a * Bp)  / (1.0 + a * h * Bp)
+        a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2)
+        return m3 * a_eff_iii + (1.0 - m3) * a_eff_ii
+
+_apply_predation now does:
+
+    Bp = B_prey_visible[None, :, :, :]
+    m3 = self._type3_pred_mask               # (N_dm, 1, 1, 1)
+    a_eff = self._holling_a_eff(a, h, Bp, m3)
+
+Identical arithmetic, same vectorised expressions, one extra
+function call per tick (negligible; the array work dominates).
+The BUGGFIX comment block (Section 64.4) is retained in
+_apply_predation and the helper docstring points back to it.
+Note: the helper is dtype-agnostic - the env hot path feeds it
+float32 arrays, the tests feed float64.
+
+66.2 tests/test_holling_response.py (31 tests, all green)
+
+Contracts asserted (parametrised over (a,h) = (0.25,4),
+(0.04,25), (0.02,50) and an off-calibration control (0.1,3),
+times m3 in {0,1}):
+
+  1. Zero point:      a_eff(0) == 0 exactly.
+                      (Buggy Type II gave a_eff = a at B=0.)
+  2. Monotonicity:    strictly increasing over
+                      np.geomspace(1e-3, 1e4, 400).
+                      (Buggy Type II was strictly decreasing.)
+  3. Asymptote:       a_eff <= 1/h everywhere, and
+                      a_eff(1e9) ~= 1/h within rel 1e-4.
+  4. Type III shape:  at B = 1/(10*a*h) the Type III response is
+                      strictly BELOW Type II but > 0 (low-density
+                      refuge), while both hit the same 1/h
+                      ceiling at high B. Catches a Bp/Bp2 mix-up.
+
+Plus three structural tests:
+  * test_section_64_numeric_table - the Section 64.3 table.
+  * test_mixture_mask_selects_per_predator_branch - the
+    (N_dm,1,1,1) mask picks Type III per predator ROW (verified
+    against pure Type II / Type III curves).
+  * test_live_project_matrices_satisfy_the_contracts - builds the
+    real project env (8x8 grid, setup_full_mareld_mvp), calls
+    _build_static_caches() and re-asserts zero-point-positivity,
+    monotonicity and the 1/h ceiling for EVERY (pred, prey) pair
+    with a > 0 and h > 0, using the live max_intake_mat /
+    handling_time_mat / _type3_pred_mask. Fails loudly if no such
+    pair exists (guards against a vacuous test).
+
+66.3 Guard actually catches the bug (verified)
+
+The pre-fix expressions were monkey-patched over
+_holling_a_eff in a throw-away session script:
+
+    m3=0 (Type II):  a_eff(0) = 0.04  (should be 0)  -> FAIL
+                     monotone = False                -> FAIL
+    m3=1 (Type III): monotone = False                -> FAIL
+
+So contracts 1 and 2 both fire on the historical bug. This is the
+property tests/test_phyto_zoo_sanity.py could not see: its bands
+(0.03 <= ratio <= 100, suppression > 0.003) admit both the buggy
+and the correct formula.
+
+66.4 Resume table correction (Section 64.3)
+
+Writing the numeric-table test exposed two wrong reference values
+in the Section 64.3 table at B_prey = 0.01:
+  * Type II:  0.00039604    (table said 0.00040 - rounding, ok)
+  * Type III: 3.9996e-06    (table said 4e-08 - factor-100 typo;
+                             a*B^2 = 0.04 * 1e-4 = 4e-6)
+The code was correct; only the resume table was wrong. Section
+64.3 now carries the exact values and a correction note.
+
+66.5 Verification
+
+  * python3 -m pytest tests/ -q -> 73 passed (42 pre-existing +
+    31 new). test_predation_visibly_suppresses_phyto, previously
+    flagged flaky, passed in this run.
+  * python3 -m py_compile lib/environments/ecosystem.py -> OK.
+  * No behaviour change: the extraction is arithmetic-identical,
+    so checkpoints and A/B baselines are unaffected.
+
+66.6 Not covered by this test
+
+  * It is NOT an ecological calibration test. It says nothing
+    about whether a and h are plausible - that remains Section 36
+    plus tools/starve_calibration.py.
+  * It does not exercise the hunger clamp, visible_frac (Section
+    41) or the `scale` capping in _apply_predation; those are
+    downstream of a_eff and unchanged.
+  * The still-open Section 63.7 item (GUI validator warning when
+    h != 1/max_intake_rate) is untouched.
+
+================================================================
+67. ENERGY-BALANCE GATE MOVED TO THE MAINTENANCE LEVEL
+================================================================
+The Section 23 / 24.A gate evaluated the intake side at FULL
+hunger:
+
+    intake_at_h1 = max_intake_rate * energy_content * assim
+
+But the hunger gate is h_X = max(0, 1 - s_X / 0.8), so h = 1
+requires s_X = 0 - an empty energy reserve, a state the animal
+does not survive in. The gate therefore answered a question no
+population is ever in a position to ask.
+
+The correct evaluation point is the MAINTENANCE LEVEL u_X, where
+growth flips sign (q_X = s_X - u_X). That is the attractor the
+population sits at, and there the gate only lets through
+
+    h(u_X) = max(0, 1 - u_X / 0.8)          # = 0.375 at u_X = 0.5
+
+of the physiological ceiling. Break-even at u_X:
+
+    h(u_X) * ceiling  >  feeding_cost * resting_metabolism
+    <=>  ceiling / Rest_X  >  feeding_cost / h(u_X)
+
+67.1 lib/world/energy_balance.py (new, GUI-free)
+
+  HUNGER_SATIATION_SCALE = 0.8   # single source of truth
+  REFERENCE_RESTING_COST = 1.0
+  hunger_at(s_x, scale)          # scalar mirror of get_hunger
+  evaluate_energy_balance(...) -> EnergyBalance
+
+EnergyBalance carries the whole derivation (h(u_X), realized
+intake, feed/rest/move cost, net_eat, net_eat_at_h1,
+eat_minus_rest, eat_minus_move, headroom_ratio = ceiling/Rest_X,
+required_ratio = fc/h(u_X), max_feeding_cost) plus .ok,
+.failures, .warnings and a .report() breakdown.
+
+Blocking gates:
+  G1  feeding_cost >= resting_cost. feeding_cost is an ACTIVITY
+      MULTIPLIER relative to rest (see the cost model in
+      _apply_movement: rest/eat/move are mutually exclusive
+      population shares, each paying rm * its own multiplier).
+      fc < cr would mean hunting burns less than lying still.
+  G2  h(u_X) > 0, i.e. u_X < HUNGER_SATIATION_SCALE.
+  G3  net_eat(u_X) > 0  -- the new binding condition.
+  G4  net_eat(h=1) > rest_cost -- the legacy Section 23 gate,
+      retained so previously valid libraries stay valid.
+Non-blocking warnings:
+  W1  eat_minus_rest > 0 (eating should beat doing nothing).
+  W2  eat_minus_move > 0 (only possible to violate when
+      movement_cost < feeding_cost).
+
+lib/world/functional_group.py: get_hunger() now reads
+HUNGER_SATIATION_SCALE instead of a literal 0.8, so runtime, GUI
+and tests cannot drift apart.
+
+67.2 fgconfig/fgconfig.py wiring
+
+apply_fg_changes() no longer computes the balance inline; it calls
+evaluate_energy_balance() and shows the full .report() in the
+"Invalid Energy Balance" dialog when a blocking gate fires
+(apply aborted, as before). New: a non-blocking "Weak Energy
+Balance" askokcancel dialog for W1/W2. The intake ceiling now
+also multiplies by the interaction's assimilation_factor, matching
+energy_gain_mat in ecosystem.py (previously the GUI used the raw
+energy_content and thus overestimated the ceiling by 1/assim).
+The module also inserts the project root into sys.path so the
+editor can import lib/ when launched from fgconfig/.
+
+67.3 tests/test_energy_balance_gate.py (15 tests)
+
+  * hunger_at() == FunctionalGroup.get_hunger() elementwise.
+  * h = 1 only at s_X = 0; h(0.8) = h(1.0) = 0.
+  * the evaluation point is h(u_X), realized < ceiling.
+  * G1 rejects fc < cr; G2 rejects u_X >= 0.8.
+  * test_gate_catches_the_porpoise_failure_mode: the exact
+    Section 67 case - net_eat_at_h1 = +166.5 (old gate PASSES)
+    while net_eat(u_X) = -16.3125 (new gate FAILS),
+    max_feeding_cost = 1.21875.
+  * net_eat > 0 <=> headroom_ratio > required_ratio over an fc
+    sweep; max_feeding_cost is the exact boundary (+/- 1e-9).
+  * net_eat monotone in the intake ceiling.
+  * soft gates quiet when healthy, both fire when starving.
+  * three live-project tests over env.dm_ids using
+    max_intake_mat * energy_gain_mat: break-even, fc >= cr, and a
+    vacuity guard (every DM needs a positive ceiling).
+
+67.4 EXPECTED RED: porpoises  [RESOLVED in Section 69]
+
+test_live_project_decision_makers_can_break_even FAILED on the
+fg_library.yaml of the time. This was intentional - the gate was
+added to make the defect visible before choosing a knob. Section
+69 fixed the parameters (herring energy_content 6500 -> 7500 and
+a per-FG porpoise satiation_scale 0.9), so the test is GREEN now
+and tests/ has no intentional red. The derivation below is kept
+because it is the diagnosis, not the state:
+
+    porpoises   best prey = pelagic_fish
+    ceiling  = 0.05 * 6500 * 0.9      = 292.500
+    h(u_X)   = 1 - 0.5/0.8            =   0.375
+    realized = 0.375 * 292.5          = 109.688
+    feed     = 1.40 * 90              = 126.000
+    net_eat                           = -16.312   <- < 0
+    ceiling/Rest_X = 3.250  vs  fc/h(u_X) = 3.733
+    max allowed feeding_cost          =   1.219
+
+All five other DMs pass with no warnings:
+
+    FG            net_eat(u_X)   max fc   configured fc
+    zooplankton      +116.80      34.82        1.45
+    gadoids           +67.50      13.00        1.75
+    seabirds          +68.63       2.71        2.20
+    pelagic_fish      +38.80       6.75        1.90
+    seals             +53.63       2.49        1.30
+    porpoises         -16.31       1.22        1.40   FAIL
+
+Confirmed live: a 1-generation pelagic_fish run reports
+"porpoises: 2% | ... [loss] porpoises: starv 100% / pred 0%".
+
+DO NOT weaken the assertion. The permitted fc window for
+porpoises is [1.00, 1.219) - the floor from G1, the ceiling from
+G3 - and an activity multiplier of ~1.0-1.2 for a continuously
+swimming, echolocating odontocete is not defensible (FMR/RMR for
+hunting toothed whales is ~1.5-2.5). Candidate knobs, in order:
+  1. HUNGER_SATIATION_SCALE 0.8 -> 1.0. Pure model constant with
+     no literature anchor; h(u_X) 0.375 -> 0.5, max fc 1.625,
+     margin +0.22 at fc = 1.40. Scales all FGs proportionally so
+     the relative calibration between species is preserved, but
+     it changes the dynamics for everyone and invalidates all
+     checkpoints.
+  2. pelagic_fish energy_content 6500 -> 7500-8000 (autumn
+     Skagerrak/Kattegat herring at 10-20% fat is 7-9 MJ/kg wet).
+     At 8000: max fc 1.50, margin +0.10. Also touches gadoids,
+     seals, seabirds and the reward scale.
+  3. porpoise ME_X 2800 -> higher, which loosens the starvation
+     anchor and permits a lower rm. Most physiologically correct
+     but ME_X sits in the observation vector via s_x and requires
+     recalibrating the whole Section 46 table.
+Ruled out: feeding_cost < 1.0 (violates G1), maintenance_level
+0.5 -> 0.35 (pushes T_total out of the 3-5 day Koopman window;
+see the u_X sweep - lowering u_X INCREASES starvation time
+because max drain rate starve_rate * u_X falls proportionally),
+and raising max_intake_rate / lowering resting_metabolism (both
+are Section 36 literature ceilings).
+
+67.5 Verification
+
+  * python3 -m pytest tests/ -q -> 87 passed, 1 failed
+    (the intentional porpoise red in 67.4). 14 of the 15 new
+    tests pass.
+  * python3 -m py_compile fgconfig/fgconfig.py
+    lib/world/energy_balance.py lib/world/functional_group.py
+    -> OK.
+  * python3 train.py --project mareld2.yaml --species
+    pelagic_fish --generations 1 --iter-per-gen 1 --workers 1
+    < /dev/null -> completes; the get_hunger refactor is
+    behaviour-neutral (same 0.8, now via a named constant).
+  * No YAML parameter was changed in this arc; no checkpoint is
+    invalidated. NOTE: the verification run overwrote
+    results/default/policy_pelagic_fish.pth (a pre-Holling-fix
+    checkpoint, worthless per Section 64.6).
+
+67.6 Follow-ups
+
+  * DONE in Section 69: the knob for porpoises was decided and
+    the red test is green.
+  * Section 24.B (predation-avoidance correction) has NOT been
+    folded into the gate; it is an additive term on the soft
+    eat-vs-rest comparison, not on the hard break-even gate.
+  * The gate uses the BEST prey row only. A DM whose best prey is
+    absent from a cell can still starve locally; that is a
+    spatial-mismatch question (Section 22), not a gate question.
+  * Still open from Section 63.7: GUI validator warning when
+    handling_time != 1/max_intake_rate.
+
+================================================================
+68. HUNGER SCALE x HERRING ENERGY: ROLLOUT EVIDENCE (Section 67
+    follow-up). NO PARAMETER CHANGED YET.
+================================================================
+
+Purpose: before picking the knob for the porpoise energy-balance
+failure (67.4), measure the two leading candidates in an actual
+rollout instead of on paper. The candidates are
+HUNGER_SATIATION_SCALE 0.8 -> 0.9 and pelagic_fish
+energy_content 6500 -> 7500 MJ/ton, and the four variants are
+the 2x2 cross:
+
+  A_current      scale 0.8   ec 6500   (as on disk)
+  B_hunger09     scale 0.9   ec 6500
+  C_herring7500  scale 0.8   ec 7500
+  D_both         scale 0.9   ec 7500
+
+68.1 Predicted requirement (why both changes, not one)
+
+The gate in Section 67 is evaluated at a_eff = a, i.e. infinite
+visible prey. Since a*h = 0.05*20 = 1 for porpoises on herring,
+a_eff/a = B_vis/(1 + B_vis), so the gate condition
+a_eff/a >= fc/fc_max translates into a minimum visible herring
+biomass per cell:
+
+  variant          fc_max   needed a_eff/a   B_vis needed
+  B_hunger09        1.444        0.969          31 t/cell
+  C_herring7500     1.406        0.996         231 t/cell
+  D_both            1.667        0.840         5.3 t/cell
+
+Prediction: each change alone is cosmetic (it moves net_eat above
+zero but demands a herring density that does not occur), while
+the combination is multiplicative and lands at flock density.
+
+68.2 Tool
+
+ab_test_hunger_energy.py (new, root, alongside the other
+ab_test_*.py). Uses train.py's _ProbeEnvBuilder, so the world is
+the deterministic inference world with the real impact maps -
+identical to the probe rollout logged during training. Nothing is
+written to YAML: HUNGER_SATIATION_SCALE is monkey-patched on
+lib.world.functional_group and energy_content is rewritten on the
+FG params dict via a wrapper around load_project_config, both
+before EcosystemEnvironment builds its static caches.
+
+Two additions worth keeping:
+
+  * Loss attribution. Every stage of the tick pipeline is wrapped
+    and the per-FG biomass delta accumulated, so a decline can be
+    attributed to predation vs. the growth/starvation term vs.
+    the sub-threshold extinction sweep. This is what turned the
+    porpoise diagnosis around (68.4).
+  * --policy {uniform,greedy}. See 68.3 - the choice of surrogate
+    policy dominates every other factor in the experiment.
+
+68.3 METHODOLOGICAL TRAP: an untrained rollout divides pi_eat by
+     ~11
+
+With no policy loaded every logit is 0, so the masked softmax is
+uniform over the ~11 valid actions and pi_eat for the best prey
+is only about 1/11. The energy-balance gate is derived for
+pi_eat = 1. A "policy-neutral" rollout therefore understates
+realized intake by an order of magnitude, and EVERY decision
+maker starves regardless of the parameters: with --policy uniform
+pelagic_fish dies at t~1900-2060 and gadoids at t~2590-2950 in
+all four variants. Such a run cannot answer a survival question.
+
+Direct proof: placing the entire porpoise biomass in the 10
+richest herring cells (144 t/cell) did not help at all - death at
+t16 instead of t17, total herring intake 1.06 t where pi_eat = 1
+would give ~12 t.
+
+Hence --policy greedy: in every cell the whole population eats
+the available prey with the highest max_intake_rate*energy_gain
+and rests where nothing is available; no move actions. That is
+the regime the gate assumes, and it also removes dispersal, the
+movement cost and the extinction sweep, so the energy balance is
+isolated from the spatial mechanics. Report both brackets; the
+uniform run is the lower bound, greedy the upper bound.
+
+68.4 Porpoises: the extinction sweep, not starvation
+
+Per-stage attribution of the 40 t of porpoises, --policy uniform,
+identical in all four variants (dead at t16-17):
+
+  growth/starvation term   -14.9 t   (37%)
+  extinction sweep         -25.1 t   (63%)
+  predation on them          0.0 t
+  total herring eaten      0.2-0.3 t over the whole life
+
+40 t spread over 267 cells at spawn, and every move action splits
+a cell four ways, so cells fall below
+extinction_threshold_factor * min_split_biomass = 0.5 * 50 =
+25 kg and are zeroed. The sweep bleeds ~3.6%/tick - more than the
+2.2%/tick starvation rate derived in Section 66-67. So under
+diffusion the porpoise failure is dominated by the sub-threshold
+sweep (the min_split_biomass = 50 item open since Section 22),
+NOT by the energy balance. The energy-balance fix is necessary
+but not sufficient.
+
+68.5 Results, --policy greedy, 3000 ticks, 60x60
+
+Porpoise survival (tick of first zero) and lifetime herring
+intake:
+
+  variant          t_zero    herring eaten
+  A_current           112          5.6 t
+  C_herring7500       321         12.2 t
+  B_hunger09          376         17.0 t
+  D_both             1744         52.3 t
+
+68.1 CONFIRMED, and more strongly than predicted: D is 15.6x
+A on survival and 9.3x on intake, while each single change gives
+only 2.9x / 3.4x. The effect is clearly superadditive - exactly
+the multiplicative B_vis argument. Porpoises still die
+eventually, because herring itself declines to near zero (68.6).
+
+68.6 The herring risk was misdiagnosed
+
+Section 67-era worry: the two changes add top-down pressure on
+herring (four herring eaters get both a gate and an energy boost)
+while herring's own budget only gets the gate, since it eats
+zooplankton. The rollout does not support this.
+
+  * Herring dies of ITS OWN starvation, not of predation.
+    Cumulative pelagic_fish biomass delta, --policy greedy:
+    growth -11441 t vs. predation -558 t. Predation is 5% of the
+    loss (21% with --policy uniform). Herring collapses BOTTOM-UP
+    because zooplankton collapses.
+  * energy_content 6500 -> 7500 is dynamically almost a no-op.
+    Variant C matches A to within 1% on every FG. The reason is
+    the opposite of the assumed one: more MJ per ton of prey means
+    LESS prey biomass has to be removed per unit of energy, so
+    gadoid intake of herring even falls slightly (552.7 ->
+    508.1 t). It buys porpoise margin without costing herring
+    biomass.
+  * mareld2.yaml has no seals and no seabirds. The "four herring
+    eaters" are gadoids and porpoises only, so that part of the
+    Section 67 risk analysis did not apply to this project at all.
+
+68.7 The real risk: the hunger scale amplifies the phyto-zoo
+     overshoot
+
+scale 0.9 makes every FG eat harder at a given satiation, and the
+bottom of the web is where that bites. --policy greedy:
+
+  quantity                 A (0.8)      B/D (0.9)
+  zooplankton peak         1.67e5       1.81e5    (higher)
+  zooplankton peak tick       634          492    (earlier)
+  zooplankton trough        470.6        333.3    (deeper)
+  zooplankton end          9596 t       3475 t    (0.36x)
+  phytoplankton trough    21838 t      15312 t    (0.70x)
+
+Classic overshoot-crash amplification: zooplankton grazes phyto
+down harder and faster, then crashes deeper, and herring starves
+in the trough (pelagic_fish reaches exactly 0 at t2796/2874 under
+0.9 vs. 0.1 t remaining under 0.8). Note the sign flip between
+brackets - with --policy uniform, scale 0.9 makes zooplankton
+5.0x BETTER at t3000 - which is another reason not to read too
+much into either bracket alone.
+
+tests/test_phyto_zoo_sanity.py passes with the scale
+monkey-patched to 0.9 (4 passed), so the change does not break
+the documented phyto-zoo contract; the effect above is a
+quantitative shift in the oscillation, not a broken invariant.
+
+68.8 Conclusions and what is NOT decided
+
+  1. The 0.9 + 7500 combination works as intended and is the
+     only variant that materially helps porpoises. The
+     multiplicative argument in 68.1 is empirically confirmed.
+  2. energy_content 7500 is nearly free: no herring cost, real
+     porpoise benefit. It is the safer half of the pair.
+  3. HUNGER_SATIATION_SCALE 0.9 is the half that carries the
+     risk, and the risk is NOT herring predation - it is
+     amplification of the phyto-zoo overshoot at the base of the
+     web.
+  4. Neither variant produces a persistent system under either
+     surrogate policy. That is a pre-existing baseline problem
+     (no trained policies exist post-Holling-fix, and there is
+     still no seed_rate floor for DM species - P1), not something
+     caused by these two changes.
+  5. The porpoise fix ALSO needs the sub-threshold sweep
+     addressed (68.4): min_split_biomass = 50 with
+     extinction_threshold_factor = 0.5 costs more biomass than
+     starvation does once the population diffuses.
+
+NO parameter was changed IN THIS SECTION. SUPERSEDED by Section
+69, which applied a per-FG variant instead of the global
+D_both: pelagic_fish energy_content 6500 -> 7500 plus
+porpoises satiation_scale 0.9, with HUNGER_SATIATION_SCALE left
+at 0.8 as the default for everyone else. The tables above were
+measured BEFORE the sub-threshold split fix (69.1) existed and
+are not directly comparable to later runs; use --variants
+A0_prefix to reproduce this movement path.
+
+68.9 Reproduce
+
+  python3 ab_test_hunger_energy.py --ticks 3000 --policy greedy
+  python3 ab_test_hunger_energy.py --ticks 3000 --policy uniform
+  (~30 s per variant at 60x60; --variants selects a subset.)
+
+================================================================
+69. APPLIED: SUB-THRESHOLD SPLIT SUPPRESSION + HERRING ENERGY +
+    PER-FG SATIATION SCALE (Section 68 follow-up)
+================================================================
+
+Three changes, decided on the Section 68 rollout data. Steps 1-3
+of the proposal, plus the verification run.
+
+  1. STRUCTURAL: movement splits may no longer create cells below
+     the extinction threshold.
+  2. PARAMETER: pelagic_fish energy_content 6500 -> 7500 MJ/ton.
+  3. PARAMETER: satiation_scale becomes PER-FG (default 0.8);
+     porpoises get 0.9. NOT the global 0.8 -> 0.9 of variant
+     D_both.
+
+Why per-FG and not global: Section 68 showed the benefit of 0.9
+is concentrated in ONE FG (porpoises, whose ceiling/Rest_X
+headroom is 3.25) while the damage is concentrated in another
+(zooplankton/phytoplankton overshoot, 68.7). The stated argument
+for going global - "it preserves the relative calibration between
+species" - does not survive inspection: the headroom column spans
+3.25 to 92.9, a factor of 28, so there is no cross-species
+calibration to preserve. It is an accident that every FG carried
+the same constant. Physiologically per-FG is also the more
+correct reading: 0.8 means "stops eating when the reserve is 80%
+full", and a blubber-dependent animal in temperate water tops up
+further before it stops hunting than a copepod does. It is the
+same kind of species-specific parameter maintenance_level already
+is.
+
+69.1 Change 1: _suppress_subthreshold_splits
+
+lib/environments/ecosystem.py. A move action splits the moving
+share of a cell over up to 4 directions; _apply_extinction_
+threshold then zeroes every cell ending the tick below
+thr = extinction_threshold_factor * min_split_biomass. For
+porpoises (50 kg * 0.5 = 25 kg/cell) a diffusing population bled
+biomass through that sweep faster than through starvation
+(68.4: 25.1 of 40 ton to the sweep, 14.9 ton to starvation).
+
+The variant chosen (the user's pick of the two proposed): an
+outflow whose DESTINATION would still end up below thr after
+receiving it is CANCELLED and returned to the source cell. Not
+"lower min_split_biomass" - the threshold semantics are kept.
+
+  * New cache _dm_split_thr / _dm_split_thr_any in
+    _build_static_caches, reading the SAME product the sweep
+    applies, so the two cannot drift apart.
+  * The correction runs at the end of _apply_movement, after the
+    migration immigration has been added, so edge cells are
+    judged on their true post-tick total. Off-grid directions are
+    treated as unblocked - migration keeps its own top-k
+    concentration path (unchanged).
+  * Destination totals are read per direction with the same
+    slice offsets as the forward transfer, then subtracted with
+    the sign flipped. Mass-conserving by construction.
+
+Why a single pass is enough (this is the key property): the only
+cells that lose inflow are cells that were below thr WITH all
+inflows applied - i.e. cells the sweep was going to zero anyway.
+Viable destinations keep every inflow, and source cells only
+gain. Therefore the number of sub-threshold cells cannot
+increase and retained biomass cannot decrease. The fix strictly
+dominates the old behaviour for every FG, which is why it needed
+no per-species opt-in. thr = 0 (all continuous FGs) disables it,
+matching the sweep's own opt-out.
+
+69.2 Change 2 + 3: the parameters
+
+  fgconfig/fg_library.yaml
+    pelagic_fish.energy_content   6500.0 -> 7500.0
+    porpoises.satiation_scale     (absent) -> 0.9
+
+mareld2.yaml needed NO edit: it carries only group_id and
+biomass ranges. Every FG parameter comes from
+fgconfig/fg_library.yaml, so there is no project/library drift
+risk here (a claim made earlier in this arc that turned out to
+be wrong).
+
+  lib/world/energy_balance.py
+    HUNGER_SATIATION_SCALE is now the DEFAULT, not the value.
+    New resolve_satiation_scale(value): None / "" / <= 0 /
+    unparseable -> the default, so legacy FGs are bit-identical.
+    hunger_at(s_x, scale=None) and evaluate_energy_balance(...,
+    hunger_scale=None) both route through it.
+  lib/world/functional_group.py
+    self.satiation_scale = params.get('satiation_scale', None),
+    resolved at every get_hunger() call (NOT cached in __init__)
+    so a test or A/B script can patch the module default in
+    place.
+  fgconfig/fgconfig.py
+    New DM field "Satiation Scale (hunger gate, 0=default 0.8)".
+    0 / empty is stripped from the saved config rather than
+    persisted as 0.0, and the value is threaded into
+    evaluate_energy_balance(hunger_scale=...) so the GUI gate
+    evaluates the same h(u_X) the runtime will.
+
+Resulting porpoise balance:
+
+    ceiling  = 0.05 * 7500 * 0.9      = 337.500
+    h(u_X)   = 1 - 0.5/0.9            =   0.444
+    realized = 0.4444 * 337.5         = 150.000
+    feed     = 1.40 * 90              = 126.000
+    net_eat                           = +24.000
+    max allowed feeding_cost          =   1.667
+    required B_vis (a_eff/a >= 0.84)  = 5.3 t/cell
+
+feeding_cost stays 1.40, u_X stays 0.50, ME_X stays 2800,
+resting_metabolism and max_intake_rate untouched. No Section 36
+literature ceiling and no Section 46 starvation anchor is
+touched: the hunger gate does not enter
+tools/starve_calibration.py, which drains rm * resting_cost from
+s_x(0) = u_X.
+
+69.3 Verification rollout (ab_test_hunger_energy.py)
+
+Two new variants: E_perfg (what was applied) and A0_prefix
+(split_fix=OFF, i.e. the pre-69 movement path) so the structural
+fix can be isolated. Note that A_current now INCLUDES change 1,
+so the A-D rows are no longer directly comparable to the
+Section 68 tables. Each variant also resets every per-FG
+satiation_scale before applying its own, so a row means the same
+thing before and after a fix is committed to the library.
+
+--policy greedy (pi_eat = 1, no move actions at all):
+
+  variant         porpoise t_zero   herring end   zoo end/B0
+  A0_prefix              112          0.1 t         0.274
+  A_current              112          0.1 t         0.274
+  B_hunger09             376          0 (t2796)     0.099
+  C_herring7500          321          0.1 t         0.273
+  D_both                1744          0 (t2874)     0.100
+  E_perfg               1088          0.1 t         0.274
+
+Porpoise herring intake over the rollout: 5.6 t (A) -> 45.8 t
+(E_perfg) -> 52.3 t (D_both).
+
+THE DECISIVE RESULT: E_perfg gives porpoises 9.7x the survival
+of the baseline (112 -> 1088 ticks) while leaving zooplankton at
+0.274 (identical to baseline) and herring alive. D_both buys
+another 60% of porpoise survival but DRIVES HERRING EXTINCT at
+t2874 and cuts zooplankton to 0.100. Choosing per-FG was not a
+cosmetic refinement - the global variant kills the porpoises'
+own prey species. That was visible in 68.7 as an overshoot
+amplification; here it shows up as an extinction.
+
+--policy uniform (pi_eat ~ 1/11, the pessimistic bracket):
+
+  variant       gadoids t_zero   herring t_zero   porpoise t_zero
+  A0_prefix          2585            1989              16
+  A_current          -  (alive)      2699              19
+  E_perfg            -  (alive)      2613              20
+  D_both             -  (alive)      -                 20
+
+  porpoise loss attribution (ton, of 40 initial):
+                    growth(starv)   extinct(sweep)
+  A0_prefix             -14.9           -25.1
+  A_current             -30.1            -9.9
+
+This is the honest reading of change 1. Per-FG sweep loss:
+porpoises 25.1 -> 9.9 t (-61%), gadoids 5.4 -> 0.8 t, herring
+2.9 -> 0.2 t. Global persistence improves measurably: gadoids go
+from extinct at t2585 to alive at t3000, herring from t1989 to
+t2699 (+36%). But for porpoises in THIS bracket the retained
+biomass merely starves instead of being swept (total still 40 t,
+t_zero 16 -> 19), because a uniform forager cannot break even at
+all - see 68.6. And in the greedy bracket the fix is invisible
+because that surrogate never emits a move action.
+
+So: change 1 is worth real biomass for every FG with an
+indivisible weight, and it is provably never harmful (69.1), but
+its benefit for porpoises specifically cannot be measured until
+a policy exists that BOTH moves and forages competently. Neither
+surrogate does.
+
+69.4 Tests
+
+  tests/test_split_threshold.py (new, 9 tests). Six contracts:
+    1. Retention: a four-way split entirely below thr keeps all
+       its biomass instead of being swept to zero.
+    2. The pre-fix behaviour, asserted explicitly (whole
+       population lost, 4 extinction events) so the test cannot
+       go vacuous.
+    3. No suppression when viable - ordinary dispersal untouched.
+    4. Viability is judged on the destination TOTAL: the same
+       small outflow is blocked into an empty cell and allowed
+       into an already-populated one. This is what makes the rule
+       "do not CREATE sub-threshold cells" rather than "do not
+       send small amounts".
+    5. Mass and reserve conservation (metabolic costs off).
+    6. Monotone dominance over the pre-fix path on 25 random
+       states: never less biomass, never more sub-threshold
+       cells.
+    Plus thr-cache == sweep bound, and the thr = 0 opt-out.
+
+  tests/test_energy_balance_gate.py: 15 -> 22 tests.
+    * resolve_satiation_scale fallbacks and overrides.
+    * get_hunger uses the FG's OWN scale (the coupling that
+      makes the gate meaningful at all).
+    * h(u_X) monotone in the scale, so the knob has an
+      unambiguous sign.
+    * the 69.2 porpoise numbers pinned (net_eat +24.000,
+      max_fc 1.6667).
+    * porpoises must CARRY a scale override on the live project -
+      guards against reverting the library only.
+    * NEW GATE: every live DM needs net_eat > 5% of feed_cost.
+      Rationale: the gate assumes a_eff = a, so a margin of
+      +0.56 (what energy_content 7500 alone gives) demands ~231 t
+      of visible herring per cell, which never occurs, while
+      +24.0 demands ~5.3 t - one school cell. A sign-only gate
+      would have accepted variant C.
+    * _balance_for now threads hunger_scale from the FG params;
+      without it the suite went green on the +0.56 margin, i.e.
+      for the wrong reason. Worth remembering: a structural test
+      that does not read the same parameter the runtime reads can
+      pass for a reason that does not exist.
+
+TRAP WORTH REMEMBERING (cost an hour): in a hand-built
+_apply_movement test the action distribution MUST sum to 1 per
+cell. pi_rest + pi_eat + pi_move is the only biomass carried
+over; anything unallocated is silently deleted. Edge cells need
+rest padding because move_mask zeroes off-grid directions.
+
+69.5 Verification commands
+
+  python3 -m pytest tests/ -q
+    -> 104 passed, 0 failed  (88 before + 9 split + 7 gate).
+       The Section 67.4 intentional red is now GREEN.
+  python3 -m py_compile lib/environments/ecosystem.py
+    lib/world/energy_balance.py lib/world/functional_group.py
+    fgconfig/fgconfig.py -> OK
+  python3 ab_test_hunger_energy.py --ticks 3000 --policy greedy
+  python3 ab_test_hunger_energy.py --ticks 3000 --policy uniform
+    (~25 s per variant at 60x60)
+  python3 train.py --project mareld2.yaml --species porpoises
+    --generations 1 --iter-per-gen 1 --workers 1
+    --run-name sec69_smoke < /dev/null
+    -> completes. Probe reports "porpoises: 22%" against the
+       "porpoises: 2%" recorded in 67.5 for the same command,
+       i.e. 11x the surviving biomass at the end of the probe
+       rollout. Loss is still "starv 100% / pred 0%", as
+       expected: the porpoise now loses ground more slowly but
+       an untrained policy still cannot forage. The throwaway
+       results/sec69_smoke/ checkpoint was deleted afterwards.
+
+ALL CHECKPOINTS ARE INVALIDATED by changes 1-3 (the hunger gate
+sits in the intake for porpoises, the movement operator changed
+for every FG with an indivisible weight, and herring energy
+enters both energy_gain_mat and the reward). This is not a new
+cost: mareld2 policies had to be retrained after the Holling fix
+anyway (64.6/64.7). Nothing was committed.
+
+69.6 What is still open
+
+  * P1: seed_rate for DM species. 68.8 point 4 still stands -
+    NO variant produces a persistent system in either bracket.
+    The recolonisation floor exists only for NDMs, and it is the
+    point that directly addresses "prey never recovers". Without
+    it, any retraining teaches the policies to live in a dying
+    world.
+  * Retrain the mareld2 reference policies (the three DMs in
+    results/<run-name>/). Only after that can anything be said
+    about long-term persistence: the uniform and greedy brackets
+    gave OPPOSITE signs for zooplankton under scale 0.9 (5.0x
+    better vs. 0.36x worse), so neither is a substitute for a
+    real policy. Steps 1-3 were decidable on current data only
+    because they concern energy balance at u_X and biomass
+    accounting, both policy-independent.
+  * starve_rate / growth_rate asymmetry (500x for porpoises,
+    30x seals, 6x herring, 4.8x gadoids). Real, worth its own
+    section: it makes every starvation dip effectively
+    irreversible (~1400 ticks to recover). It aggravates
+    recovery, it does not create the defect, and it was
+    deliberately kept out of this change set.
+  * Spatial mismatch at spawn (herring colony sigma=1 vs.
+    porpoise sigma=3): most porpoise biomass still starts in
+    cells with zero herring. Unaffected by any of the above.
+  * Still open from 63.7: GUI validator warning when
+    handling_time != 1/max_intake_rate.
+
+================================================================
+SECTION 70 - REFERENCE-GRID SPAWN INVARIANCE (--grid 16*16)
+================================================================
+
+Trigger: a training run
+
+  python3 train.py --project mareld2.yaml --run-name
+    pzbpgp248nsrpfix --migration on --mortality on
+    --generations inf --profile info --iter-per-gen 50
+    --n_eval_ticks 1000 --n_deltas 16 --grid 16*16
+    --worlds_refresh iteration --policynetwork 2 48 tanh
+    --lr 0.03 --sigma 0.05 --visual
+
+reported that porpoises still die immediately, despite Section
+69. They do - but not because Section 69 failed. On a 16x16 grid
+there was literally NO cell in the entire world where a porpoise
+could break even.
+
+70.1 Mechanism
+
+mareld2.yaml declares reference_grid_width/height = 60, and
+config_loader scales every FG's initial TOTAL biomass by
+
+  biomass_scale = (H_act * W_act) / (ref_H * ref_W)
+
+For 16x16 that is 256/3600 = 0.0711, i.e. 14x less biomass.
+cell_size is hard-coded to 1000 m in train.py, so the cells are
+the same physical size - the WORLD is smaller, not coarser.
+Density per cell should therefore be unchanged, and for uniform
+/ env_driven FGs it is (zooplankton median 9.04 t/cell at 60x60
+vs. 9.19 at 16x16).
+
+But pelagic_fish and gadoids use mode: colony with
+n_colonies: 25, and the colony COUNT did not scale with the
+area. You still got 25 herring schools - sharing one fourteenth
+of the fish.
+
+  grid    herring total   max t/cell   cells where a porpoise
+                                       can break even
+  60x60    7700-23100      103-305      151-330 of 3600
+  16x16      551-1647     10.9-32.5       0 of 256 (4/5 seeds)
+
+(Measured over spawn seeds 1-5 at actual env construction.)
+
+The Section 69 requirement is a_eff/a >= 0.84, and since
+a*h = 0.05*20 = 1 for porpoise->herring, a_eff/a = B_vis/(1+B_vis),
+i.e. 5.3 t of VISIBLE herring per cell. Herring has
+visibility_floor = 0.35, so the best 16x16 cell (10.92 t) shows
+3.82 t -> a_eff/a = 0.79. Below threshold, in the best cell on
+the whole map. At 60x60 the same cell is 103 t -> 36 t visible
+-> 0.973.
+
+70.2 Two defects in lib/spawn/strategies.py
+
+Defect 1 - the invariance mechanism was DEAD CODE.
+_apply_grid_scaling reads context['biomass_scale'], but
+config_loader._spawn_biomass_distribution was only ever passed
+{'env_fields', 'allowed_mask'}. The key had never existed.
+Verified by spying on the call: context keys seen were
+['allowed_mask', 'env_fields'] on every invocation.
+
+Defect 2 - the rule was WRONG even if it had fired. It scaled
+`scale` and `sigma_cells` by sqrt(biomass_scale) and left
+n_colonies alone. Under constant cell_size a colony of
+sigma_cells = 1 is the same PHYSICAL size on every grid, so the
+lengths must not be touched; what is extensive in area is the
+COUNT of colonies. The sqrt rule on sigma is only correct if the
+reference grid covers a fixed physical domain, i.e. if cell_size
+varied with the grid - it does not.
+
+70.3 The fix
+
+  1. config_loader (load_project_config) now passes
+     'biomass_scale': biomass_scale in the spawn env_context.
+     The library-only path setup_full_mareld_mvp deliberately
+     does NOT: it has no project reference grid, so total_b is
+     not area-scaled there either, and the colony count must
+     track whatever the biomass does.
+  2. _apply_grid_scaling now scales n_colonies by biomass_scale
+     (area), floored at 1, and returns early when
+     biomass_scale == 1.0 so the reference grid is bit-for-bit
+     preserved.
+  3. The sqrt scaling of `scale` / `sigma_cells` is REMOVED.
+     Since it had never been active, no existing run changes
+     behaviour because of this.
+
+Effect on herring spawn (seeds 1-5, cells clearing the 0.84
+requirement WITH the visibility floor applied):
+
+  BEFORE  16x16: max/cell = 11, 13, 14, 33, 13
+                 viable   =  0,  0,  0, 37,  0
+  AFTER   16x16: max/cell = 72, 64, 66, 276, 84
+                 viable   = 15, 14, 18,  19, 10
+  60x60 (control, unchanged): viable = 177, 175, 182, 330, 151
+
+As a fraction of the world: 4.2-9.2 % at 60x60, 3.9-7.4 % at
+16x16, 4.2-9.3 % at 30x30. The invariant is restored.
+
+70.4 tests/test_spawn_grid_invariance.py (new, 24 tests)
+
+Six contracts, same kind of structural guard as Section 66
+(Holling) and 67 (energy balance):
+
+  1. Wiring - the real loader puts biomass_scale in the spawn
+     context, and its value is the area ratio. This is the one
+     that catches Defect 1.
+  2. Count scales with area, floored at 1, monotone.
+  3. sigma_cells / scale come out EXACTLY as configured. Direct
+     regression guard against the old sqrt rule.
+  4. biomass_scale == 1.0 is a no-op (60x60 untouched); missing
+     context, non-colony params and an unparseable n_colonies
+     are all no-ops rather than raising.
+  5. Density invariance, synthetic: same colony spec, same
+     fraction of cells above a given t/cell, and a comparable
+     peak density.
+  6. Density invariance, live project: the fraction of cells
+     where a porpoise clears the Section 69 requirement is
+     within a factor of 2 between 16x16 and 60x60, and is
+     nonzero on every seed.
+
+Verified to FAIL against the pre-fix behaviour (the no-op
+_apply_grid_scaling that was actually running):
+  contract 6 -> viable fractions [0, 0, 0, 0.145, 0]
+  contract 5 -> peak 15.4 t/cell vs. reference 144.3
+
+Note: the pre-fix rule as WRITTEN (sqrt on sigma, nothing on the
+count) would have passed contracts 5 and 6 by accident - a
+narrower sigma concentrates the same biomass into fewer cells,
+which raises the peak. It fails contract 3, which is why that
+contract is asserted separately rather than being folded into
+the density checks.
+
+70.5 Rollouts - and an uncomfortable result
+
+E_perfg parameters (the live YAML state: default satiation
+scale 0.8, porpoises 0.9, herring energy_content 7500),
+3000 ticks, tick-zero = first tick with total biomass < 1e-3:
+
+  policy   case      grid    porpoises  herring   gadoids
+  greedy   pre-fix   16x16    t0=970    alive     alive
+  greedy   fixed     16x16    t0=22     t0=2508   alive
+  greedy   pre-fix   60x60    t0=1088   alive     alive
+  greedy   fixed     60x60    t0=1088   alive     alive
+  uniform  pre-fix   16x16    t0=19     alive     alive
+  uniform  fixed     16x16    t0=17     alive     t0=2985
+  uniform  pre-fix   60x60    t0=20     t0=2613   alive
+  uniform  fixed     60x60    t0=20     t0=2613   alive
+
+Two readings:
+
+  * 60x60 is BIT-IDENTICAL before and after, in both brackets.
+    That is the guarantee the early return at biomass_scale ==
+    1.0 buys, and it means no 60x60 result in Sections 68-69
+    needs revisiting.
+  * On 16x16 the fix does NOT extend porpoise survival - in the
+    greedy bracket it shortens it (970 -> 22). This is real and
+    it is not a defect in the fix. The greedy forager never
+    moves (pi_move = 0 by construction, see 68.6), and before
+    the fix herring was smeared thinly over 251 of 256 cells, so
+    a stationary porpoise always had SOMETHING in its own cell.
+    After the fix the herring sits in 2 schools and the porpoise
+    cells are empty. Ecologically the second world is the
+    correct one - a porpoise should have to find the school -
+    but it means the greedy bracket cannot measure this fix, for
+    the same reason 69.6 records that it cannot measure the
+    split fix.
+
+Overlap at spawn, which is what actually decides the outcome
+(share of porpoise biomass starting in a viable cell, seeds 1-5):
+
+  pre-fix 16x16: viable cells [0,0,0,37,0]    overlap 0-11 %
+  fixed   16x16: viable cells [15,14,18,19,10] overlap 0-9 %
+  60x60 (both):  viable cells [177,175,182,330,151] overlap 0-12 %
+
+So 16x16 is now STRUCTURALLY comparable to 60x60 - same viable
+fraction, same overlap - and the remaining difference is
+population size: 60x60 puts porpoises in 11-317 cells, 16x16 in
+3-21. With three occupied cells the chance of any one of them
+landing in a school is small, and there is no law of large
+numbers to rescue it. That is a small-population artefact of the
+1-ton biomass floor plus min_per_cell = 5 * min_split_biomass =
+250 kg, not a density bug.
+
+70.6 Practical recommendation
+
+  (SUPERSEDED in part by Section 71.5: after this fix the
+  density is grid-invariant, so the grid is no longer the
+  binding constraint. 60x60 buys t0 = 205 against 16x16's 158 -
+  worth having, but not a fix. The --n_eval_ticks advice below
+  is also superseded: porpoises die at tick 158-205, well
+  inside a 1000-tick horizon.)
+
+  * Use --grid 60*60. It is the grid mareld2 is calibrated for
+    and the only one where the porpoise population is large
+    enough for the Section 69 margin to be sampled at all.
+  * Raise --n_eval_ticks to 2000-3000. The best measured
+    porpoise survival after Section 69 is 1088 ticks (60x60,
+    greedy, 40 t), so at 1000 ticks the reward sees a dying
+    species no matter what the policy does - there is no
+    gradient to learn from.
+  * --migration on weighs more heavily on a small grid: edge
+    cells are 23 % of 16x16 against 6.6 % of 60x60.
+
+70.7 Verification commands
+
+  python3 -m pytest tests/ -q
+    -> 128 passed, 0 failed  (104 before + 24 new).
+  python3 -m py_compile lib/spawn/strategies.py
+    lib/config/config_loader.py -> OK
+
+70.8 What this does NOT fix
+
+  * Porpoise spatial mismatch at spawn is unchanged and is now
+    the binding constraint on small grids: colony n=10,
+    sigma=3 for porpoises against n=25, sigma=1 for herring
+    means most porpoise biomass starts away from the schools on
+    EVERY grid (overlap 0-12 % even at 60x60). Open since
+    Section 22, now quantified.
+  * P1 seed_rate for DM species, retraining of the mareld2
+    reference policies, and the starve_rate/growth_rate
+    asymmetry all remain open exactly as listed in 69.6.
+  * Nothing was committed.
+
+================================================================
+SECTION 71 - PORPOISES: THE PURSUIT RACE AND THE ACTION-
+SIMPLEX ARTEFACT (diagnosis only - NO code changed)
+================================================================
+
+Trigger: a follow-up training run
+
+  python3 train.py --project mareld2.yaml --run-name
+    pzbpgp248nsrpfix7 --migration on --mortality off
+    --generations inf --profile info --iter-per-gen 50
+    --n_eval_ticks 1000 --n_deltas 16 --grid 16*16
+    --worlds_refresh iteration --policynetwork 2 48 tanh
+    --lr 0.03 --sigma 0.05 --visual
+
+with porpoises respawned via env_driven so they start ON TOP of
+the herring colonies. Porpoises still die almost immediately,
+after nine generations, with mortality off.
+
+Verdict: the run is not misconfigured and Sections 69/70 are
+working. Porpoises now spawn essentially perfectly on the
+herring (a_eff/a = 0.949 at tick 0) and the policy has learned
+exactly the right thing (eat_frac 93.7 % -> 99.98 %, move_frac
+5.05 % -> 0.02 %). They die anyway, because THE SCHOOL MOVES AND
+THE PORPOISE CANNOT FOLLOW IT.
+
+71.1 The structural cause
+
+In _apply_movement (lib/environments/ecosystem.py):
+
+  b_out = pi_move * B * dm_v
+
+Movement is a PROPORTIONAL FOUR-WAY SPLIT of a continuous field,
+not a directed translocation. There is no action meaning "move
+the population one step". Therefore:
+
+  * stay put  -> the school walks away from you;
+  * move      -> 3 of 4 directions are worse than the cell you
+                 are in, so every move dilutes the population.
+
+Both paths end below u_X. It is a trap with no exit for the one
+FG whose margin (s* - u_X = +0.064, Section 69) is too thin to
+survive a halving of a_eff.
+
+71.2 Measurements with the user's own checkpoints
+
+All four policy_*.pth from results/pzbpgp248nsrpfix7 (including
+obs_stats) loaded into the probe world, traced tick by tick.
+
+As trained, 16x16:
+
+  tick  B_porp  cells   s_x   pi_eat  herring   a_eff/a
+                                      in cell
+     0   2.844      7     -        -    36.3     0.949
+     2   2.845     19  0.619    0.387   19.1     0.723
+     5   2.822     25  0.540    0.818    4.66    0.505
+    10   2.666     25  0.464    0.949    3.70    0.457
+    40   0.242      5  0.406    0.972    3.01    0.451
+
+They smear from 7 to 26 cells in the first five ticks and
+a_eff/a halves from 0.95 to 0.44, against the 0.84 requirement.
+After that s_x is permanently below u_X = 0.5 and they starve.
+t_zero = 158.
+
+With movement zeroed (pi_move := 0, same policy, 16x16):
+
+  tick  B_porp  cells   s_x   herring in    a_eff/a
+                              START cells
+     1   2.845      7  0.680      311.3      0.925
+     4   2.846      7  0.629      117.8      0.721
+     8   2.846      7  0.561       57.6      0.443
+    20   2.045      7  0.384       52.1      0.295
+    58   0.000      0      -        5.65         -
+
+The porpoises stay; the herring in their cells falls 311 -> 57 t
+in eight ticks (-82 %) and they die at tick 58 - FASTER than if
+they move.
+
+  case            16x16      60x60
+  as trained      t0 = 158   t0 = 205
+  pi_move := 0    t0 =  57   t0 = 337
+
+71.3 Herring is not the problem - it keeps its schools
+
+This was the earlier suspicion and it is wrong:
+
+  tick  herring   mean/cell   max/cell   cells >= 15 t
+     0    853.3      3.33        81.4        18
+    10    858.8      3.35       187.8        12
+    40    866.1      3.38       120.8         9
+
+Herring grows slightly and CONCENTRATES harder. But the schools
+change cell: herring runs move_frac = 67 % in the user's log.
+The structure survives, it just relocates.
+
+71.4 The quantitative core
+
+Section 69 requirement: a_eff/a >= 0.84. With
+a*h = 0.05*20 = 1 that is 5.3 t of VISIBLE herring per cell, and
+with herring visibility_floor = 0.35, 15.1 t TOTAL herring per
+cell.
+
+Mean density is 853.3/256 = 3.33 t/cell at 16x16 and
+12000/3600 = 3.33 t/cell at 60x60 - IDENTICAL (that is Section
+70 working). So the porpoise must permanently occupy cells at
+4.5x the mean density, i.e. the top 4-7 % of the map, and must
+follow them when they move.
+
+71.5 Correction to 70.6
+
+Since density is now grid-invariant, the grid is no longer the
+binding constraint: 60x60 buys 205 ticks against 158. The
+earlier "run 60x60" recommendation is not wrong, but it is not
+a fix. Likewise --n_eval_ticks 1000 is NOT the problem in this
+diagnosis - death occurs at tick 158-205.
+
+71.6 ARS is not the problem either
+
+From results/pzbpgp248nsrpfix7/biomass.jsonl:
+
+  gen   eat%    move%   avg_ratio  rew_mean  rew_std
+    1  93.68    5.05      0.034     -11.67     0.87
+    3  99.53    0.44      0.136     -10.43     0.97
+    5  99.90    0.10      0.149     -10.46     0.88
+    9  99.98    0.02      0.066     -11.25     1.21
+
+The gradient exists (rew_std 0.87-1.5), learning works, and the
+policy converges on the optimum it CAN reach: always eat, never
+move. bh = 0 in 438 of 438 evaluations, starvation = 1.0,
+impact = 0.0 (so --mortality off was never relevant).
+move_frac -> 0.02 % is not a failure, it is the right answer to
+the wrong problem.
+
+71.7 What "dilution" means, precisely
+
+pi_move is four separate probabilities (N/E/S/W) out of the
+softmax over 11 actions. Each direction gets its OWN share of
+the cell's biomass, delivered to four DIFFERENT neighbours. A
+cell with B = 0.6 t and pi_rest 0.1 / pi_eat 0.5 /
+pi_move [.1,.1,.1,.1] keeps 0.36 t and ships 0.06 t to each of
+four neighbours. Mass is conserved; it now sits in five cells.
+Measured: 7 cells -> 26 cells in five ticks at constant total.
+
+Three reasons it kills the porpoise:
+  1. a_eff depends on PREY density in the cell, and 3 of 4
+     directions are by definition worse than the best cell.
+  2. Even the fraction that stays loses value, because the
+     herring moves away.
+  3. The extinction sweep bites the tails: split-off crumbs
+     below extinction_threshold_factor * min_split_biomass are
+     zeroed, so mass sent in a bad direction does not come back
+     (mitigated but not removed by the Section 69 suppression).
+
+Note this is NOT an arithmetic bug. Proportional four-way spread
+is the correct description of a genuinely diffuse population
+(phyto, zooplankton). The mismatch is that the SAME
+representation is used for a schooling apex predator with ~26
+individuals in the whole world.
+
+71.8 One-hot is representable, and it is not enough
+
+The user's objection is correct on its own terms: pi_move =
+[1,0,0,0] IS representable (softmax logits are unbounded, and
+--profile info sets argmax_penalty = 0.0, entropy_coef = 0.0,
+temp_start = temp_end = 1.0, so nothing penalises a sharp
+distribution). And cost depends only on pi_move_sum, not on how
+the mass is spread:
+
+  m_move = B * pi_move_sum * rm * cost_move * cost_factor
+
+so [1,0,0,0] and [.25,.25,.25,.25] cost the SAME and one-hot
+delivers to one cell instead of four. One-hot is strictly better
+per MJ spent. (Earlier framing of coherent_movement as a COST
+relief was wrong - it is a DELIVERY relief.)
+
+But move, rest and eat live on the SAME simplex, so
+pi_move_sum = 1 implies pi_eat = 0: a coherent move is not
+"relocate", it is "starve for one tick and relocate". And
+_apply_predation runs BEFORE _apply_movement in step(), so the
+mass that moves does not eat in the destination cell either.
+
+Sustainable move duty cycle = net_eat / (net_eat + move_cost),
+computed on the live runtime matrices (max_intake_mat *
+energy_gain_mat, 60x60):
+
+  FG            sat  h(u_X)  net_eat  move   eat:move  duty   speed  cells/
+                                      cost   ticks     max           tick
+  zooplankton  0.80  0.375   +116.8    4.2    0.04    0.965  0.02   0.019
+  gadoids      0.80  0.375    +79.5   12.0    0.15    0.869  0.25   0.217
+  pelagic_fish 0.80  0.375    +38.8   12.0    0.31    0.764  1.0    0.764
+  porpoises    0.90  0.444    +24.0  144.0    6.00    0.143  1.0    0.143
+
+The porpoise must eat SIX ticks to pay for ONE move tick. Its
+sustainable search speed is 0.143 cells/tick; herring's budget
+is 0.764 cells/tick and its log shows move_frac = 67 %, i.e. it
+is essentially at its ceiling. FACTOR 5.3 AGAINST. No policy in
+the action space - one-hot or not - can follow a school moving
+five times faster than the pursuer.
+
+Search radius: from s_x = u_X the reserve funds
+0.5 * 2800 / 144 = 9.7 pure move ticks. With 4-7 % viable cells
+the mean distance to the nearest viable cell is 2-3 cells, i.e.
+14-21 ticks of travelling at 0.143 cells/tick - the entire
+reserve. Even a STATIONARY prey field is effectively out of
+reach.
+
+Conclusion: this is not a learning problem. The optimal
+representable policy dies too. Learning difficulty is secondary
+but real (the optimal policy today is a duty cycle with
+hysteresis conditioned on s_x; ARS perturbs weights globally, so
+a delta sharpening the move logits sharpens them in all 3600
+cells, where the cost is immediate and the gain deferred and
+diluted through the integral reward - expected value negative,
+which is exactly the observed move_frac 5.05 % -> 0.02 %).
+
+71.9 Proposed fix A: separate the movement head from the
+     activity simplex
+
+Today _calculate_decisions builds num_actions = 5 + N_all logits
+and runs ONE softmax:
+
+  index   0    1    2    3     4      5 ... 5+N_all-1
+         mvN  mvE  mvS  mvW   rest   eat_prey_0 ... eat_prey_k
+
+so pi_move_sum + pi_rest + pi_eat_sum == 1 per cell.
+
+Proposal: two independent distributions, two softmaxes.
+
+  head A (activity):    1 + N_all logits -> pi_rest, pi_eat[..]
+  head B (relocation):  1 + 4    logits -> pi_stay, pi_move[4]
+
+out_dim goes from 5 + N_all to 6 + N_all - ONE extra logit, not
+a new architecture. Semantics: every ton makes an activity
+choice AND a relocation choice in the same tick. A porpoise
+swims and echolocates during the same six-hour tick; making
+those mutually exclusive is a modelling artefact, not biology.
+
+Cost becomes ADDITIVE instead of a shared share:
+
+  m_act  = B * (pi_rest*cost_rest + pi_eat_sum*cost_eat)
+                * rm * cost_factor
+  m_relo = B * pi_move_sum * cost_move * rm * cost_factor
+
+b_out = pi_move * B * dm_v is unchanged, and _apply_predation
+needs no change at all - pi_eat is merely normalised
+differently.
+
+New sustainable share:
+
+  h(u_X)*gain > rm * (cost_eat + p_move*cost_move)
+  150.0       > 126 + 144 * p_move    ->  p_move < 0.167
+
+i.e. 0.143 -> 0.167 under the NAIVE (absolute) reading of
+movement_cost. Only +17 %. What actually changes is (a)
+movement stops being a sawtooth drop in the reserve - ds becomes
+a smooth function of p_move, positive everywhere below the
+ceiling - and therefore (b) the optimal policy becomes a
+CONSTANT p_move instead of a time-varying duty cycle, which lies
+in a flat direction ARS can find with a single delta.
+
+71.10 The three decisions this forces (must be settled BEFORE
+      any code is written)
+
+Surfaced by the test case "rest = 1, move = [0.5, 0.5, 0, 0]",
+which under separation means: relocate the whole population
+without foraging, splitting it N/E. Well-defined - passive
+transit - and it exposes three hidden choices.
+
+DECISION 1: is movement_cost ABSOLUTE or an INCREMENT over
+rest? Today move = 1 implies rest = eat = 0, so a pure move tick
+costs 90*1.6 = 144. Under separation the activity head always
+sums to 1, so you always pay a baseline on top: 234 MJ/ton.
+Physiologically the increment reading is correct
+(FMR = RMR + activity surcharge), and it dominates the result:
+
+  reading      cost_move   eat+move cost   sustainable p_move
+  absolute        1.6      90*(1.4+1.6)=270   24/144 = 0.167
+  increment       0.6      90*(1.4+0.6)=180   24/54  = 0.444
+
+0.444 cells/tick against herring's 0.764 is a factor 1.7
+against, not 5.3. THE REAL GAIN OF SEPARATION SITS HERE, not in
+the 0.143 -> 0.167 computed in 71.9.
+
+DECISION 2: hidden_frac = pi_rest, or pi_rest * pi_stay? In
+_apply_predation the hidden share is exactly pi_rest:
+
+  visible_frac = 1 - pi_rest * (1 - visibility_floor)
+
+Today "hide" and "flee" are mutually exclusive on one simplex.
+Separated, a prey FG gets rest = 1 plus a move distribution =
+maximum invisibility AND full mobility in the same tick, at the
+price of zero intake. That re-introduces the "perfect hide"
+attractor visibility_floor was built to break, in a mobile
+variant. Fix is one line - hidden_frac = pi_rest * pi_stay
+(whoever swims is seen) - but it MUST ship in the same change,
+otherwise separation is a net regression for the herring
+balance.
+
+DECISION 3: should coherent_movement force one-hot on the
+RELOCATION head? Separation makes movement payable; it does not
+make it concentrated ([0.5,0.5,0,0] still fragments). The
+one-hot collapse already exists in _calculate_decisions for
+cells below min_split_biomass; the change is to OR in a per-FG
+flag. See 71.11.
+
+71.11 Proposed fix B: coherent_movement per FG
+
+The mechanism already exists. In _calculate_decisions, cells
+with 0 < B < dm_min_split have their distribution collapsed to
+a one-hot argmax, precisely so small groups migrate as a unit.
+For porpoises min_split_biomass = 50.0 kg = 0.05 t while the
+occupied cells hold 0.27-0.62 t, so the collapse NEVER fires for
+them (verified: all sub-threshold = False).
+
+Four small places:
+  1. fg_library.yaml: coherent_movement: true on porpoises.
+  2. functional_group.py: read it in __init__ like
+     satiation_scale (a flag, no unit conversion).
+  3. ecosystem._build_static_caches: cache dm_coherent next to
+     dm_min_split.
+  4. _calculate_decisions: widen the mask to
+     sub_thr | (B_dm > 0) & dm_coherent[:, None, None].
+     The argmax / one_hot / np.where block is unchanged.
+     ~12 lines total.
+
+Cheap proxy (no code): set porpoise min_split_biomass to
+1000-2000 kg so every cell is sub-threshold. But
+_dm_split_thr = min_split_biomass * extinction_threshold_factor
+would move the sweep from 25 kg to 500 kg and wipe the
+population, so extinction_threshold_factor must drop to ~0.02 in
+the same test - which mixes two effects in one experiment. That
+is why fix B proper is the clean variant: min_split_biomass
+keeps meaning "indivisible unit / extinction floor",
+coherent_movement means "moves as a school".
+
+Costs of A + B: all checkpoints fall (already invalid since the
+Holling fix); move_frac + rest_frac + eat_frac no longer sum to
+1, so move_frac becomes an independent number in [0,1] and
+ent_cell must become two entropies - the 99.98 % eat_frac from
+pzbpgp248nsrpfix7 will not be comparable; argmax_penalty and
+entropy_coef must be computed per head; move masking
+(full_mask[:, 0:4]) moves to the relocation block and pi_stay
+must always be valid (it replaces "no legal action -> rest");
+out_dim must be updated in train.py / trainer.py /
+parallel_worker.py.
+
+71.12 Proposed fix C: visibility_floor as a (predator, prey)
+      property
+
+This is the one that lowers the REQUIREMENT rather than raising
+the capability, and it has the strongest literature argument in
+the whole chain. Herring's 0.35 turns the 5.3 t visible/cell
+requirement into 15.1 t total/cell. visibility_floor models
+VISUAL refuge; a porpoise uses high-frequency biosonar, not
+sight. With full visibility for porpoise->herring the
+requirement drops back to 5.3 t/cell, which the school edges
+deliver - multiplying the number of viable cells and shrinking
+the distance that has to be travelled. It is a single matrix
+value.
+
+Recommended order: C first (lowers the requirement), then A
+(makes movement payable and learnable), then B (makes it
+concentrated). A alone does not win the pursuit race.
+
+71.13 Reproduction
+
+Scratch diagnostics used for this section (not committed, they
+live only in the session scratch dir - recreate as needed):
+  porp_ckpt.py   - loads results/<run>/policy_*.pth into
+                   train._ProbeEnvBuilder and traces B, cells,
+                   s_x, pi_eat/pi_move/pi_rest, herring in cell
+                   and a_eff/a per tick.
+  porp_trace.py  - same trace on the live YAML state with the
+                   uniform/greedy brackets plus per-stage loss
+                   attribution from ab_test_hunger_energy.
+  policy_gate.py - p_eat_min / p_move_max per DM from the live
+                   max_intake_mat * energy_gain_mat; this is
+                   where the 71.8 table comes from.
+
+71.14 Status
+
+  * NOTHING was changed in this section. No code, no YAML, no
+    tests. Diagnosis only. Test suite is unchanged at 128
+    passed.
+  * Noted in passing: phytoplankton.seed_rate has been set from
+    1e-07 to 0.0 in the working copy. That removes the
+    recolonisation floor at the base of the food web. Not the
+    porpoise cause, but it is exactly the P1 item behind "prey
+    never recovers" and it will bite beyond ~1000 ticks.
+  * Still open, unchanged from 69.6 / 70.8: P1 seed_rate for DM
+    species, retraining of the mareld2 reference policies, the
+    starve_rate/growth_rate asymmetry, spatial mismatch at
+    spawn, and the GUI validator for
+    handling_time != 1/max_intake_rate.
+  * Next action requires a user decision: pick C, A or B (and,
+    if A, settle Decisions 1-3 in 71.10 first).

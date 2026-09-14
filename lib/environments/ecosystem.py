@@ -276,6 +276,19 @@ class EcosystemEnvironment:
             [getattr(self.fgs[fid], 'min_split_biomass', 0.0) for fid in self.dm_ids],
             dtype=self.dtype,
         )
+        # Per-DM extinction threshold thr = extinction_threshold_factor *
+        # min_split_biomass, i.e. the exact bound
+        # ``_apply_extinction_threshold`` sweeps below. Used by
+        # ``_suppress_subthreshold_splits`` so a move action never splits
+        # biomass into cells that would immediately be zeroed. 0 = off,
+        # matching the extinction sweep's own opt-out.
+        self._dm_split_thr = np.array(
+            [(getattr(self.fgs[fid], 'min_split_biomass', 0.0) or 0.0)
+             * (getattr(self.fgs[fid], 'extinction_threshold_factor', 0.0) or 0.0)
+             for fid in self.dm_ids],
+            dtype=self.dtype,
+        )
+        self._dm_split_thr_any = bool(np.any(self._dm_split_thr > 0.0))
 
         # Observability: per-DM list of j-indices (into ``global_fg_order``)
         # of OTHER FGs that this DM observes. The DM's own slot is handled
@@ -826,6 +839,28 @@ class EcosystemEnvironment:
             self.prev_hidden_frac[j] = self.pi_rest[i].astype(self.dtype, copy=False)
 
     # ---------- Predation (fully vectorized) ----------
+    @staticmethod
+    def _holling_a_eff(a, h, Bp, m3):
+        """Effective per-predator-unit intake rate f(B_prey) [ton_prey per
+        ton_pred per tick] for the Holling Type II / Type III mixture.
+
+            Type II:  f(B) = a*B  / (1 + a*h*B)
+            Type III: f(B) = a*B^2 / (1 + a*h*B^2)
+            f = m3 * f_III + (1 - m3) * f_II
+
+        ``m3`` is the per-predator Type III mask (1.0 = Type III,
+        0.0 = Type II) and must broadcast against ``Bp``.
+
+        Contract (locked by tests/test_holling_response.py): for h > 0 the
+        result is zero at B=0, strictly increasing in B and bounded by the
+        physiological ceiling 1/h. Do NOT drop the B factor in the
+        numerator - see the BUGGFIX note in ``_apply_predation``.
+        """
+        Bp2 = Bp * Bp
+        a_eff_ii = (a * Bp) / (1.0 + a * h * Bp)
+        a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2)
+        return m3 * a_eff_iii + (1.0 - m3) * a_eff_ii
+
     def _apply_predation(self):
         if self.N_dm == 0:
             return
@@ -898,11 +933,8 @@ class EcosystemEnvironment:
             # contributes to attack-rate saturation nor to total available
             # intake.
             Bp = B_prey_visible[None, :, :, :]
-            Bp2 = Bp * Bp
-            a_eff_ii = (a * Bp) / (1.0 + a * h * Bp)
-            a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2)
             m3 = self._type3_pred_mask  # (N_dm, 1, 1, 1)
-            a_eff = m3 * a_eff_iii + (1.0 - m3) * a_eff_ii
+            a_eff = self._holling_a_eff(a, h, Bp, m3)
         else:
             a_eff = a
 
@@ -1123,6 +1155,27 @@ class EcosystemEnvironment:
             b_total_in += b_imm
             r_total_in += r_imm
 
+        # Sub-threshold split suppression (Section 69). A move action
+        # splits the moving share of a cell across up to 4 directions, and
+        # ``_apply_extinction_threshold`` zeroes every cell that ends the
+        # tick below ``thr = extinction_threshold_factor *
+        # min_split_biomass``. A diffusing DM therefore bleeds biomass
+        # through the sweep at a rate that can dominate its starvation
+        # term (measured for porpoises in Section 68.4: 25.1 of 40 ton
+        # lost to the sweep vs. 14.9 ton to starvation).
+        #
+        # Fix: an outflow whose DESTINATION would still end up below thr
+        # after receiving it is cancelled and returned to the source cell.
+        # This is monotone-safe: sources only gain biomass, and the only
+        # cells that lose inflow are ones that were going to be zeroed
+        # anyway, so the number of sub-threshold cells cannot increase and
+        # no viable cell is made non-viable. Same principle as the top-k
+        # immigration concentration above, generalized to the ordinary
+        # 4-direction split.
+        if self._dm_split_thr_any:
+            b_total_in, r_total_in = self._suppress_subthreshold_splits(
+                b_out, r_out, b_total_in, r_total_in)
+
         new_B = b_total_in
         max_R = new_B * self.dm_max_energy_reserve[:, None, None]
         new_R = np.clip(r_total_in, 0.0, max_R)
@@ -1130,6 +1183,60 @@ class EcosystemEnvironment:
         for i, fid in enumerate(self.dm_ids):
             self.fgs[fid].biomass = new_B[i].astype(self.dtype, copy=False)
             self.fgs[fid].energy_reserve = new_R[i].astype(self.dtype, copy=False)
+
+    def _suppress_subthreshold_splits(self, b_out, r_out, b_total_in,
+                                      r_total_in):
+        """Cancel move outflows that would land in a still-sub-threshold cell.
+
+        ``b_out[i, d, y, x]`` is the biomass leaving cell (y, x) of DM ``i``
+        in direction ``d`` (0=N, 1=E, 2=S, 3=W), and ``b_total_in`` is the
+        tentative post-movement biomass with every transfer applied. For
+        each DM with ``thr = extinction_threshold_factor *
+        min_split_biomass > 0`` we look up the tentative total of the
+        destination cell; where that total is below ``thr`` the transfer is
+        undone -- the biomass (and its energy reserve) stays in the source
+        cell instead of being swept away by
+        ``_apply_extinction_threshold`` at the end of the tick.
+
+        Only in-grid destinations are considered. Off-grid directions are
+        treated as unblocked so the migration emigration/immigration path
+        (which has its own top-k concentration) is left untouched.
+
+        Returns the corrected ``(b_total_in, r_total_in)``.
+        """
+        thr = self._dm_split_thr[:, None, None, None]    # (N_dm,1,1,1)
+        inf = np.array(np.inf, dtype=self.dtype)
+        # Tentative destination totals, per direction, aligned on the
+        # SOURCE cell. Mirrors the slice-assign offsets used above.
+        dest = np.full(b_out.shape, inf, dtype=self.dtype)
+        dest[:, 0, 1:, :] = b_total_in[:, :-1, :]        # N: (y,x) -> (y-1,x)
+        dest[:, 1, :, :-1] = b_total_in[:, :, 1:]        # E: (y,x) -> (y,x+1)
+        dest[:, 2, :-1, :] = b_total_in[:, 1:, :]        # S: (y,x) -> (y+1,x)
+        dest[:, 3, :, 1:] = b_total_in[:, :, :-1]        # W: (y,x) -> (y,x-1)
+
+        blocked = (b_out > 0.0) & (dest < thr)
+        if not np.any(blocked):
+            return b_total_in, r_total_in
+
+        b_cancel = np.where(blocked, b_out, np.float32(0.0))
+        r_cancel = np.where(blocked, r_out, np.float32(0.0))
+        # Source keeps what it was going to send away.
+        b_total_in = b_total_in + b_cancel.sum(axis=1)
+        r_total_in = r_total_in + r_cancel.sum(axis=1)
+        # Destination no longer receives it (same offsets as the forward
+        # transfer, with the sign flipped).
+        b_total_in[:, :-1, :] -= b_cancel[:, 0, 1:, :]
+        r_total_in[:, :-1, :] -= r_cancel[:, 0, 1:, :]
+        b_total_in[:, :, 1:] -= b_cancel[:, 1, :, :-1]
+        r_total_in[:, :, 1:] -= r_cancel[:, 1, :, :-1]
+        b_total_in[:, 1:, :] -= b_cancel[:, 2, :-1, :]
+        r_total_in[:, 1:, :] -= r_cancel[:, 2, :-1, :]
+        b_total_in[:, :, :-1] -= b_cancel[:, 3, :, 1:]
+        r_total_in[:, :, :-1] -= r_cancel[:, 3, :, 1:]
+        # float32 round-off on the +/- pair can leave tiny negatives.
+        np.maximum(b_total_in, 0.0, out=b_total_in)
+        np.maximum(r_total_in, 0.0, out=r_total_in)
+        return b_total_in, r_total_in
 
     @staticmethod
     def _extract_impact_table(impact_def):

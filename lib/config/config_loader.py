@@ -326,6 +326,10 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
             grid_size, total_b, min_per_cell,
             allowed_mask=spawn_allowed_mask, rng=spawn_rng,
             spawn_spec=spawn_spec, project_seed=fg_spawn_seed,
+            # No ``biomass_scale`` here on purpose: this library-only path
+            # has no project reference grid, so ``total_b`` is NOT scaled
+            # by area either. Colony counts must track whatever the biomass
+            # does, and here both stay at their library values.
             env_context={'env_fields': env_fields, 'allowed_mask': spawn_allowed_mask})
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
         fg.initialize_state(grid_size, initial_biomass=initial_b)
@@ -720,7 +724,17 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             grid_size, total_b, min_per_cell,
             allowed_mask=spawn_allowed_mask, rng=spawn_rng,
             spawn_spec=spawn_spec, project_seed=fg_spawn_seed,
-            env_context={'env_fields': env_fields, 'allowed_mask': spawn_allowed_mask})
+            env_context={'env_fields': env_fields,
+                         'allowed_mask': spawn_allowed_mask,
+                         # Reference-grid invariance (Section 70). The spawn
+                         # strategies scale ``n_colonies`` with this factor,
+                         # i.e. with the AREA ratio, exactly as ``total_b``
+                         # is scaled above. Without it a smaller grid keeps
+                         # the full colony count while sharing a fraction of
+                         # the biomass, which collapses peak density per
+                         # cell. The key was missing since the mechanism was
+                         # written, so ``_apply_grid_scaling`` was dead code.
+                         'biomass_scale': biomass_scale})
         # Expose this FG's freshly spawned biomass map to subsequent FGs
         # (env_driven refs use the already-spawned dependencies).
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)

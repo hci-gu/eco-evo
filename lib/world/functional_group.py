@@ -1,5 +1,7 @@
 import numpy as np
 
+from lib.world.energy_balance import resolve_satiation_scale
+
 class FunctionalGroup:
     def __init__(self, group_id, params):
         self.group_id = group_id
@@ -49,6 +51,12 @@ class FunctionalGroup:
         # to break even (q_X = s_X - u_X = 0). Below u_X the population
         # shrinks; above it, it grows. Method.pdf §6.
         self.maintenance_level = float(params.get('maintenance_level', 0.0))
+        # Per-FG saturation scale of the hunger gate (Section 69):
+        # h_X = max(0, 1 - s_X / satiation_scale). Missing / 0 falls back to
+        # HUNGER_SATIATION_SCALE, so legacy FGs are unchanged. Read at every
+        # get_hunger() call rather than cached here so a test or A/B script
+        # can patch the module default in place.
+        self.satiation_scale = params.get('satiation_scale', None)
         self.speed = params.get('movement_speed', 0.0)  # V_X
         # Minimum biomass (per cell) required to split via movement actions.
         # YAML/GUI value is in kg; internal biomass units are tonnes, so
@@ -115,9 +123,17 @@ class FunctionalGroup:
         return e_x / self.max_energy_reserve
 
     def get_hunger(self):
-        """h_X = max(0, 1 - s_X / 0.8)"""
+        """h_X = max(0, 1 - s_X / satiation_scale)
+
+        The scale defaults to ``HUNGER_SATIATION_SCALE`` in
+        ``lib/world/energy_balance.py`` and can be overridden per FG via
+        the ``satiation_scale`` param, so the GUI sanity gate and
+        tests/test_energy_balance_gate.py evaluate the realized intake at
+        the same satiation as the runtime does.
+        """
         s_x = self.energy_level
-        return np.maximum(0.0, 1.0 - s_x / 0.8)
+        scale = resolve_satiation_scale(self.satiation_scale)
+        return np.maximum(0.0, 1.0 - s_x / scale)
 
     def calculate_metabolism(self, actions_mask, noise_impact=None):
         """

@@ -19,10 +19,13 @@ Designprinciper
 - Strategier producerar *vikter*, inte ton. Total-biomass-skalning + golv
   hanteras av en separat allokator (`distribute_with_floor` i nästa steg,
   som ersätter `_spawn_biomass_distribution`s cluster-loop).
-- Reference-grid-invarians: `scale`-parametern (i celler) tolkas i
-  referens-grid-koordinater. Vid faktisk grid (H_act, W_act) skalas den
-  med `sqrt(biomass_scale)` så fysisk klumpstorlek bevaras. Detta
-  appliceras i `_apply_grid_scaling` innan strategi-anropet.
+- Reference-grid invariance: `cell_size` is a fixed physical length, so a
+  non-reference grid is a smaller/larger WORLD, not a re-sampling of the
+  same one. Length params (`scale`, `sigma_cells`) are therefore already
+  grid-independent and are left alone, while the COUNT of colonies scales
+  with `biomass_scale = (H_act*W_act)/(Rx*Ry)` -- the same factor the
+  loader applies to total biomass, so density per cell is preserved.
+  Applied in `_apply_grid_scaling` before the strategy call.
 - Determinism: alla strategier tar en `rng` (numpy Generator). Samma
   `spawn_seed` + samma params + samma grid → identisk karta.
 - Stoikiometri: vikterna normaliseras alltid till summan 1 i slutet av
@@ -133,25 +136,58 @@ def get_strategy(name: str) -> Callable[..., np.ndarray]:
 
 
 # ---------------------------------------------------------------------------
-# Reference-grid-invarians: skala längdparametrar med sqrt(biomass_scale).
+# Reference-grid invariance: scale the NUMBER of colonies with the area
+# ratio, not the width of each colony (Section 70).
 # ---------------------------------------------------------------------------
 
 def _apply_grid_scaling(params: dict, context: Optional[dict]) -> dict:
-    """Returnera en kopia av params där `scale`/`sigma_cells` skalats med
-    sqrt(biomass_scale) så fysisk klumpstorlek är invariant mot grid-upplösning.
+    """Return a copy of ``params`` made invariant to the grid resolution.
 
-    `biomass_scale = (H_act·W_act)/(Rx·Ry)` förväntas i `context['biomass_scale']`.
+    ``biomass_scale = (H_act*W_act)/(Rx*Ry)`` is expected in
+    ``context['biomass_scale']`` and is the SAME factor that
+    ``config_loader`` applies to the initial total biomass. Both must move
+    together, otherwise density per cell is not preserved across grids.
+
+    What scales and why
+    -------------------
+    ``cell_size`` is a fixed physical length (1000 m in ``train.py``), so a
+    smaller grid is a SMALLER WORLD at the same resolution -- not the same
+    world sampled more coarsely. Under that convention:
+
+      * ``n_colonies`` IS an extensive quantity: a fixed number of herring
+        schools per unit area, so it scales with ``biomass_scale`` (area).
+        Floored at 1 so a small grid still gets a school.
+      * ``sigma_cells`` / ``scale`` are NOT: a school of ``sigma_cells = 1``
+        is physically the same size on every grid, so these must be left
+        alone.
+
+    History: this function used to scale ``scale``/``sigma_cells`` by
+    ``sqrt(biomass_scale)`` and did not touch ``n_colonies``. That was
+    wrong on both counts under constant ``cell_size``, and it was also
+    dead code -- ``config_loader`` never put ``biomass_scale`` into the
+    context, so the branch never fired. With ``n_colonies`` held constant
+    while total biomass shrank with the area, a 16x16 grid spread 1/14 of
+    the herring over the full 25 schools: peak density fell from ~103
+    t/cell to ~11 t/cell, and NO cell in the whole world cleared the
+    porpoise break-even requirement of ~5.3 t visible herring (Section
+    69). Fixing the rule restores the invariant: 15/256 viable cells on
+    16x16 against 177/3600 on 60x60.
     """
     if not context:
         return dict(params)
-    scale_factor = float(context.get("biomass_scale", 1.0)) ** 0.5
     out = dict(params)
-    for key in ("scale", "sigma_cells"):
-        if key in out and out[key] is not None:
-            try:
-                out[key] = max(1e-6, float(out[key]) * scale_factor)
-            except (TypeError, ValueError):
-                pass
+    try:
+        biomass_scale = float(context.get("biomass_scale", 1.0))
+    except (TypeError, ValueError):
+        return out
+    if biomass_scale <= 0.0 or biomass_scale == 1.0:
+        return out
+    if out.get("n_colonies") is not None:
+        try:
+            out["n_colonies"] = max(1, int(round(float(out["n_colonies"])
+                                                 * biomass_scale)))
+        except (TypeError, ValueError):
+            pass
     return out
 
 

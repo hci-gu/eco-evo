@@ -2,13 +2,25 @@
 from tkinter import ttk, messagebox, filedialog
 import os
 import codecs
+import sys
 try:
     from ruamel.yaml import YAML
 except ImportError:
-    import sys
     print("Error: The 'ruamel.yaml' library is required.")
     print("Please install it using: pip install ruamel.yaml")
     sys.exit(1)
+
+# The editor is launched from inside fgconfig/, so make the project root
+# importable to share the energy-balance gate with the runtime and tests
+# (Section 67) instead of duplicating the formula here.
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from lib.world.energy_balance import (  # noqa: E402
+    REFERENCE_RESTING_COST,
+    evaluate_energy_balance,
+)
 
 # Initialize YAML handler
 yaml = YAML()
@@ -555,6 +567,7 @@ class FGConfigApp:
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
             ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry", 0.0, 1000.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
+            ("Satiation Scale (hunger gate, 0=default 0.8)", "satiation_scale", "entry", 0.0, 1.0),
             ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry", 0.0, 1.0),
             ("Starve Rate (catabolism, fraction/tick)", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (min visible fraction when hiding)", "visibility_floor", "entry", 0.0, 1.0),
@@ -3366,6 +3379,16 @@ class FGConfigApp:
                     elif config[key] > 1.0:
                         config[key] = 1.0
                         var.set("1.0")
+                # Clamp the hunger-gate satiation scale to [0, 1]. 0 means
+                # "use the default" (HUNGER_SATIATION_SCALE), so the key is
+                # stripped below rather than persisted as 0.0.
+                if key == "satiation_scale":
+                    if config[key] < 0.0:
+                        config[key] = 0.0
+                        var.set("0.0")
+                    elif config[key] > 1.0:
+                        config[key] = 1.0
+                        var.set("1.0")
                 # Clamp indivisible weight to [0, 10000] kg. 0 = continuous.
                 if key == "min_split_biomass":
                     if config[key] < 0.0:
@@ -3399,6 +3422,12 @@ class FGConfigApp:
         config.pop("initial_biomass_min", None)
         config.pop("initial_biomass_max", None)
 
+        # satiation_scale = 0 (or an empty field) means "inherit the module
+        # default". Omit the key entirely so legacy library entries stay
+        # clean and resolve_satiation_scale() supplies 0.8.
+        if not float(config.get("satiation_scale", 0.0) or 0.0):
+            config.pop("satiation_scale", None)
+
         # Capture the spawn block from the active editor. Use strict mode
         # so unparseable spawn params / ref weights surface as an error
         # dialog instead of being silently dropped or coerced to 1.0.
@@ -3420,15 +3449,24 @@ class FGConfigApp:
         else:
             config["spawn"] = spawn_dict
 
-        # Biological sanity gate (per mareld_resume.txt Section 23, "Hard gate"):
-        # for decision makers, the hypothetical per-tick energy balance at full
-        # hunger from a single eat action must exceed the resting cost.
-        #   intake_at_h1 = max_intake_rate * energy_gain   (best prey)
-        #   feed_cost    = feeding_cost    * resting_metabolism
-        #   rest_cost    = resting_cost(=1.0) * resting_metabolism
-        #   netto_eat    = intake_at_h1 - feed_cost
-        #   Hard gate:   netto_eat > rest_cost
-        # If the hard gate is violated, abort the apply.
+        # Biological sanity gate (per mareld_resume.txt Section 23 + 67).
+        # For decision makers the per-tick energy balance from a single eat
+        # action is evaluated at the MAINTENANCE LEVEL u_X, not at full
+        # hunger:
+        #   ceiling   = max_intake_rate * energy_content * assim (best prey)
+        #   h(u_X)    = max(0, 1 - u_X / satiation_scale)   [default 0.8]
+        #   realized  = h(u_X) * ceiling
+        #   feed_cost = feeding_cost   * resting_metabolism
+        #   rest_cost = resting_cost   * resting_metabolism
+        #   Gate:  realized - feed_cost > 0            (break even at u_X)
+        #     and  ceiling  - feed_cost > rest_cost    (legacy Section 23)
+        #     and  feeding_cost >= resting_cost        (activity multiplier)
+        # Evaluating only at h = 1 (the pre-Section-67 behaviour) hides the
+        # failure mode where an FG passes on paper yet shrinks with
+        # unlimited prey available, because h = 1 requires s_X = 0 - a
+        # state the animal does not survive in. The arithmetic lives in
+        # lib/world/energy_balance.py so tests assert the same formula.
+        # If any blocking gate is violated, abort the apply.
         #
         # NOTE on data-integrity: ``energy_gain`` is, by definition, the prey's
         # ``energy_content`` (MJ/ton). The matrix editor under "FG Interactions"
@@ -3441,10 +3479,6 @@ class FGConfigApp:
         # collapse to 0. ``max_intake_rate`` is now a per-predator property
         # read from the FG Editor (config[...]) rather than per-interaction.
         if is_dm:
-            feeding_cost = float(config.get("feeding_cost", 0.0) or 0.0)
-            resting_metabolism = float(config.get("resting_metabolism", 0.0) or 0.0)
-            feed_cost = feeding_cost * resting_metabolism
-            rest_cost = 1.0 * resting_metabolism  # resting_cost is hardcoded to 1.0
             try:
                 mir = float(config.get("max_intake_rate", 0.0) or 0.0)
             except (TypeError, ValueError):
@@ -3476,7 +3510,16 @@ class FGConfigApp:
                     eg = 0.0
                     if mir > 0.0:
                         missing_energy.append(prey_id)
-                intake = mir * eg
+                # Mirror the runtime: ``energy_gain_mat`` in
+                # ``lib/environments/ecosystem.py`` stores
+                # ``energy_content * assimilation_factor``.
+                try:
+                    assim = entry.get("assimilation_factor", 1.0)
+                    assim_f = float(assim) if assim not in (None, "") else 1.0
+                except (TypeError, ValueError):
+                    assim_f = 1.0
+                assim_f = min(max(assim_f, 0.0), 1.0)
+                intake = mir * eg * assim_f
                 if intake > best_intake:
                     best_intake = intake
                     best_prey = prey_id
@@ -3495,33 +3538,50 @@ class FGConfigApp:
                     ),
                 )
                 return
-            netto_eat = best_intake - feed_cost
-            eat_minus_rest = netto_eat - rest_cost
-            if eat_minus_rest <= 0.0:
-                prey_txt = best_prey if best_prey else "(no prey with preys_on: true found)"
+            balance = evaluate_energy_balance(
+                fg_id,
+                intake_ceiling=best_intake,
+                resting_metabolism=config.get("resting_metabolism", 0.0),
+                maintenance_level=config.get("maintenance_level", 0.0),
+                feeding_cost=config.get("feeding_cost", 0.0),
+                resting_cost=config.get("resting_cost", REFERENCE_RESTING_COST),
+                movement_cost=config.get("movement_cost"),
+                best_prey=best_prey,
+                # Per-FG override (Section 69); None/0 -> the module default,
+                # exactly as FunctionalGroup.get_hunger resolves it.
+                hunger_scale=config.get("satiation_scale"),
+            )
+            if not balance.ok:
                 messagebox.showinfo(
                     "Invalid Energy Balance",
                     (
                         f"Changes not accepted for '{fg_id}'.\n\n"
-                        f"The hypothetical per-tick energy balance fails the "
-                        f"hard gate (netto_eat must exceed rest_cost):\n"
-                        f"  intake = max_intake_rate * energy_gain"
-                        f" = {best_intake:.3f}\n"
-                        f"  feed_cost = feeding_cost * resting_metabolism"
-                        f" = {feed_cost:.3f}\n"
-                        f"  rest_cost = resting_cost(1.0) * resting_metabolism"
-                        f" = {rest_cost:.3f}\n"
-                        f"  netto_eat = intake - feed_cost = {netto_eat:.3f}\n"
-                        f"  netto_eat - rest_cost = {eat_minus_rest:.3f}"
-                        f"  (must be > 0)\n\n"
-                        f"Best prey considered: {prey_txt}.\n"
-                        "Library and project entry have NOT been updated. "
-                        "Adjust feeding_cost, resting_metabolism, or the "
-                        "predation max_intake_rate / energy_gain so that "
-                        "netto_eat > rest_cost."
+                        f"The per-tick energy balance at the maintenance "
+                        f"level fails {len(balance.failures)} gate(s):\n\n"
+                        + "\n\n".join(f"  - {msg}"
+                                      for msg in balance.failures)
+                        + "\n\n"
+                        + balance.report()
+                        + "\n\nLibrary and project entry have NOT been "
+                        "updated. Adjust feeding_cost, resting_metabolism, "
+                        "maintenance_level or max_intake_rate / the prey "
+                        "energy_content."
                     ),
                 )
                 return
+            if balance.warnings:
+                if not messagebox.askokcancel(
+                    "Weak Energy Balance",
+                    (
+                        f"'{fg_id}' passes the hard gates but is marginal:\n\n"
+                        + "\n\n".join(f"  - {msg}"
+                                      for msg in balance.warnings)
+                        + "\n\n"
+                        + balance.report()
+                        + "\n\nSave anyway?"
+                    ),
+                ):
+                    return
 
         self.current_fg_configs[fg_id] = config
 
