@@ -570,7 +570,7 @@ class FGConfigApp:
             ("Satiation Scale (hunger gate, 0=default 0.8)", "satiation_scale", "entry", 0.0, 1.0),
             ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry", 0.0, 1.0),
             ("Starve Rate (catabolism, fraction/tick)", "starve_rate", "entry", 0.0, 1.0),
-            ("Visibility Floor (min visible fraction when hiding)", "visibility_floor", "entry", 0.0, 1.0),
+            ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
             ("Natural Mortality (fraction/tick)", "natural_mortality", "entry", 0.0, 1.0),
             ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry", 0.0, 1.0),
             ("Movement Speed (cells/tick)", "movement_speed", "entry", 0.0, 1.0),
@@ -2627,6 +2627,25 @@ class FGConfigApp:
             dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
         self._add_handling_time_auto_buttons(dm_fgs, fgs)
 
+        # Visibility floor matrix: minsta synliga fraktion av kolumn-FG:n
+        # för rad-FG:n även när kolumnen gömmer sig (pi_rest -> 1).
+        # Detektion är en egenskap hos PARET, inte hos bytet: tumlare
+        # använder biosonar och påverkas inte av den visuella krypsis som
+        # skyddar sill från sjöfågel (Section 71.12 i mareld_resume.txt).
+        # Tom cell = ärv kolumn-FG:ns eget ``visibility_floor`` från
+        # FG-editorn. Cell aktiv endast om preys_on=True.
+        self.create_matrix_section(
+            "Visibility Floor (min visible fraction of column to row)",
+            "visibility_floor", dm_fgs, fgs,
+            cell_type="unit_optional", parent=self.matrix_container)
+        ttk.Label(
+            self.matrix_container,
+            foreground=self.MUTED_FG_COLOR,
+            text=("Empty cell = inherit the prey FG's own Visibility Floor "
+                  "(FG Editor). A value here overrides it for this "
+                  "predator-prey pair only."),
+        ).pack(fill="x", padx=10, pady=(0, 10))
+
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
@@ -2645,7 +2664,8 @@ class FGConfigApp:
             preys_var = data.get("preys_on")
             if preys_var is None:
                 continue
-            for dep_key in ("assimilation_factor", "handling_time"):
+            for dep_key in ("assimilation_factor", "handling_time",
+                            "visibility_floor"):
                 dep_widget = self.matrix_widgets.get(key, {}).get(dep_key)
                 if dep_widget is None:
                     continue
@@ -2910,6 +2930,11 @@ class FGConfigApp:
                     _default = 1.0
                 elif cell_type == "nonneg_float":
                     _default = 0.0
+                elif cell_type == "unit_optional":
+                    # Empty = inherit the column FG's own species-level
+                    # value; do NOT materialise an explicit default here
+                    # (that would silently override every prey default).
+                    _default = ""
                 else:
                     _default = False
                 val = existing.get(data_key, _default)
@@ -2959,6 +2984,35 @@ class FGConfigApp:
                             return False
                         return 0.0 <= v <= 1.0
                     vcmd = (frame.register(_validate_unit), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=6,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "unit_optional":
+                    # Optional value in [0, 1] (t.ex. visibility_floor per
+                    # predator-byte-par). Tom cell = ärv default från
+                    # kolumn-FG:ns egen species-parameter (se
+                    # förklaringstexten under matrisen i refresh_matrix).
+                    cur_val = val
+                    if cur_val is None:
+                        cur_val = ""
+                    if cur_val != "":
+                        try:
+                            cur_f = max(0.0, min(1.0, float(cur_val)))
+                            cur_val = f"{cur_f:g}"
+                        except (TypeError, ValueError):
+                            cur_val = ""
+                    var = tk.StringVar(value=str(cur_val))
+
+                    def _validate_unit_opt(proposed):
+                        if proposed in ("", "."):
+                            return True
+                        try:
+                            v = float(proposed)
+                        except ValueError:
+                            return False
+                        return 0.0 <= v <= 1.0
+                    vcmd = (frame.register(_validate_unit_opt), "%P")
 
                     widget = ttk.Entry(frame, textvariable=var, width=6,
                                        validate="key", validatecommand=vcmd)
@@ -3660,6 +3714,13 @@ class FGConfigApp:
                             self.global_library["interaction_definitions"][key][data_key] = val
                         except ValueError:
                             pass # skip invalid
+                    elif data_key == "visibility_floor":
+                        # Optional override: an emptied cell must REMOVE the
+                        # key so the prey FG's own default takes over again.
+                        # Other data_keys keep the legacy behaviour (an
+                        # empty string leaves the stored value untouched).
+                        self.global_library["interaction_definitions"][key].pop(
+                            data_key, None)
 
         # Persist impact tables (list of {value, biomass_factor, energy_factor})
         for key, table in getattr(self, "matrix_tables", {}).items():

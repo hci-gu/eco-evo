@@ -5673,3 +5673,729 @@ live only in the session scratch dir - recreate as needed):
     handling_time != 1/max_intake_rate.
   * Next action requires a user decision: pick C, A or B (and,
     if A, settle Decisions 1-3 in 71.10 first).
+
+72. Fix C implemented: visibility_floor per (predator, prey)
+
+Section 71.12 proposed it, the user approved "the whole chain".
+This section is the implementation record. Fixes A (separate
+movement head) and B (coherent_movement per FG) are NOT done and
+remain open exactly as described in 71.9 / 71.11.
+
+72.1 Data model
+
+  visibility_floor is now resolvable at TWO levels:
+
+    1. species_definitions[<fg>].visibility_floor  - the prey's
+       own default, unchanged meaning, unchanged values
+       (zoo 0.2, pelagic_fish 0.35, gadoids 0.6, rest 0.0).
+    2. interaction_definitions[<pred>_preys_on_<prey>]
+       .visibility_floor - OPTIONAL override for that pair only.
+       Absent / empty = inherit level 1.
+
+  No new YAML key namespace, no config_loader change: the
+  _preys_on_ branch already copies the whole idef into
+  params['interaction'][iid], so the engine had the value in
+  hand already.
+
+  The one concrete calibration change:
+
+    porpoises_preys_on_pelagic_fish.visibility_floor: 1.0
+
+  Rationale in the YAML comment (Au 1993; Verfuss et al. 2009):
+  biosonar is not defeated by a visual/schooling refuge. Effect
+  on the 71.8 arithmetic: required total herring per cell drops
+  from 15.1 t to 5.3 t, i.e. the school edges now qualify and the
+  number of viable cells multiplies.
+
+72.2 Engine (lib/environments/ecosystem.py)
+
+  _build_static_caches:
+    * vis_floor_mat, shape (N_dm, N_all). Base = the column FG's
+      own floor broadcast over all rows; overridden per cell
+      where the interaction carries an explicit value (clipped
+      to [0, 1]).
+    * _has_pair_vis_floor - False when every cell equals the
+      column default. Both the predation and the observation
+      path then take the OLD vector code, so legacy projects are
+      bit-identical and pay nothing.
+    * _obs_vis_floor - per-DM view of vis_floor_mat aligned with
+      the compact obs_others_idx layout.
+    * dm_visibility_floor / _all_visibility_floor are kept; they
+      are still the base of the matrix.
+
+  _apply_predation:
+    * With a pair override the visible prey biomass becomes a
+      (N_dm, N_all, H, W) tensor and feeds Holling saturation
+      (Bp) directly.
+    * Per-predator clamp: D = min(D, B_prey_pair_visible). Needed
+      because the shared availability cap is now the MAX over
+      predators that actually prey on j - without the clamp a
+      floor-0 predator could eat the hidden fraction just because
+      a better-detecting predator raised the cap.
+    * The shared cap is masked by eat_static_mask so non-predator
+      rows cannot inflate it. Reduces exactly to the legacy
+      vector when all rows share the column default.
+
+  _build_observation_batch:
+    * When a pair override exists the visible-biomass stack is
+      built per observer inside the DM loop instead of once
+      globally. "What I can see" and "what I can eat" therefore
+      stay consistent per predator; for non-prey columns the
+      observer still falls back to the prey's own scalar.
+
+  Checkpoints: in_dim is unchanged, so existing .pth files load.
+  The observation SCALE changes for affected pairs, so retraining
+  the mareld2 reference policies is recommended (not forced).
+
+72.3 GUI (fgconfig/fgconfig.py)
+
+  * New fifth matrix on the FG Interactions tab: "Visibility
+    Floor (min visible fraction of column to row)", stored on the
+    existing {row}_preys_on_{col} key, so apply_matrix_changes
+    persists it generically.
+  * New cell_type "unit_optional": default is the EMPTY string,
+    not 1.0. That was the critical detail - reusing unit_slider
+    would have materialised 48 explicit values and silently
+    killed the per-FG default. Live validation accepts "" or
+    0.0 <= v <= 1.0.
+  * apply_matrix_changes: for data_key == visibility_floor an
+    emptied cell now pop()s the key, so clearing a cell really
+    restores inheritance. Other data_keys keep the legacy
+    "empty string leaves the stored value alone" behaviour.
+  * Gated on preys_on exactly like assimilation_factor and
+    handling_time (cell greys out when predation is off).
+  * A muted explanatory label under the matrix states the
+    inheritance rule.
+  * FG editor label renamed to "Visibility Floor (default;
+    overridable per predator)" so it is clear the matrix wins.
+
+72.4 Tests
+
+  * tests/test_spawn_grid_invariance.py no longer hardcodes
+    HERRING_VISIBILITY_FLOOR = 0.35. It resolves the
+    (porpoises, pelagic_fish) value from fg_library.yaml with the
+    same inheritance rule as the engine; otherwise the Section 70
+    viability assertions would have silently measured the wrong
+    predator.
+  * tests/test_visibility_floor_pairs.py (new, 10 tests). Seven
+    contracts: inheritance, legacy vector path preserved,
+    override is pair-local, clipping to [0, 1], hidden prey is
+    eaten only by the detecting predator in the same tick and
+    cell, no over-harvest under the shared cap, floor is inert
+    when nobody hides, observation attenuates per observer, and
+    the live library really carries the biosonar override.
+  * Suite: 128 -> 138 passed. Smoke test
+    "--species porpoises --generations 1 --iter-per-gen 1
+    --workers 1" completes and checkpoints.
+
+72.5 Status / next
+
+  * C is done. A (71.9, needs Decisions 1-3 in 71.10 settled
+    first) and B (71.11) are untouched and still the candidates
+    if porpoises keep losing the pursuit race.
+  * NOT re-run yet: a full-length porpoise rollout to confirm
+    that the extinction at tick 158-205 is actually gone. That is
+    the natural next measurement now that the requirement is
+    5.3 t/cell.
+  * Unchanged open items from 71.14: phytoplankton.seed_rate is
+    0.0 in the working copy, P1 seed_rate for DM species,
+    retraining of the mareld2 reference policies, the
+    starve_rate/growth_rate asymmetry, spatial mismatch at spawn,
+    and the GUI validator for handling_time != 1/max_intake_rate.
+  * NOTE (added in 73): the pair floor was subsequently tuned to
+    0.95 instead of 1.0 - a small residual advantage is left to
+    schooling, so the break-even requirement is ~5.6 t/cell
+    rather than 5.3. tests/test_visibility_floor_pairs.py no
+    longer pins the exact magnitude, only that the override
+    exists and is far above the herring default of 0.35.
+
+
+73 THE ABSORBING ZERO AT THE BASE OF THE FOOD WEB
+  (phytoplankton extinction; Holling III is necessary but not
+   sufficient)
+
+  Trigger: the user's hypothesis that phytoplankton extinction
+  should already be prevented by the Holling values - "when phyto
+  gets too sparse, zooplankton no longer detects it and it can
+  regrow". The hypothesis is correct AND already implemented, but
+  it only covers the continuous case. This section documents the
+  discrete case it does not cover, and the two fixes applied.
+
+73.1 Holling type III is already on, for the right pair
+
+  _build_static_caches enables type III automatically for every
+  predator with EXACTLY ONE prey on its menu:
+
+    n_prey_per_pred = eat_static.sum(axis=1)
+    self._type3_pred_mask = (n_prey_per_pred == 1)
+
+  Zooplankton is the only true specialist in fg_library.yaml, so:
+
+    zooplankton -> phytoplankton : type III
+    everything else (generalists): type II
+
+  With a = 0.25 and h = 4.0 (a*h = 1) the per-capita grazing
+  f(P)/P is approximately 0.25*P at low P and therefore vanishes
+  faster than linearly - exactly the "no longer detected" effect.
+  Phytoplankton growth is linear in P (r = 0.0375). So
+  mathematically phytoplankton CANNOT be grazed to zero
+  asymptotically in a cell where P > 0.
+
+73.2 But the refuge level is indistinguishable from extinction
+
+  Equilibrium where logistic growth meets grazing (K = 24):
+
+    Z per cell   stable P    fraction of K
+       1.0 t     0.153 t        0.6 %
+       2.4 t     0.063 t       0.26 %
+       5.0 t     0.030 t       0.13 %
+       9.7 t     0.016 t       0.06 %
+      20.0 t     0.0075 t      0.03 %
+
+  mareld2 starts zooplankton at 8750-35000 t over 3600 cells,
+  i.e. 2.4-9.7 t/cell. The refuge therefore sits at a per mille
+  of carrying capacity: not zero, but functionally collapsed and
+  a flat line along the x-axis in the biomass plot. It is also
+  the ONLY equilibrium - at those Z the net is negative for every
+  P above it, so the system is pulled there.
+
+73.3 The actual hole: one tick can zero a cell EXACTLY
+
+  _apply_predation capped demand as
+
+    scale = where(total_demand > B_prey_visible,
+                  B_prey_visible / (total_demand + 1e-9), 1.0)
+
+  leaving a residue of B * 1e-9 / (D + 1e-9). Relative precision
+  in float32 is ~1.2e-7, i.e. LARGER than that residue, so
+  B_old - intake rounds to EXACTLY 0.0. Verified numerically
+  (B = 5, D = 9.6 -> leftover 0.0, == 0.0 is True).
+
+  When does overharvest happen? D = Z * f(P), so
+  D/P = a*Z*P / (1 + a*h*P^2), maximised at P = 1 with value
+  0.125*Z. Any cell with Z >~ 8 t can zero its phytoplankton in a
+  single tick - inside mareld2's start range. Trajectory traces
+  (a = 0.25, h = 4, start P = 5.0, legacy zeroing):
+
+    Z =  5.0  overharvest ticks   0   never zeroed
+    Z =  9.0  5.00 -> 2.93 -> 0.95 -> 0   zeroed at tick 3
+    Z = 14.0  5.00 -> 1.69 -> 0            zeroed at tick 2
+    Z = 20.0  5.00 -> 0.199 -> 0.0085      never zeroed
+    Z = 40.0  5.00 -> 0                    zeroed at tick 1
+
+  Note Z = 20 skips the dangerous band in one jump and survives
+  while Z = 9 and Z = 14 land inside it - the outcome is not
+  monotone in grazing pressure, which is why this was never
+  obvious from the aggregate curves.
+
+  The zeroing happens from a HEALTHY P (1-5 t), jumping straight
+  past the low-density region where the type III refuge would
+  have bitten. After that, zero is absorbing:
+
+    * growth = r*P*(1 - P/K) is multiplicative in P,
+    * movement_speed = 0.0, so no diffusion from neighbours,
+    * seed_rate was 0.0 in the working copy.
+
+  Type III is multiplicative in P and can by construction never
+  restore anything from zero. The refuge protects against
+  ASYMPTOTIC grazing-down, not against a discrete zeroing.
+
+  Two mechanisms are innocent here and were checked:
+  _apply_extinction_threshold requires min_split_biomass > 0,
+  which phytoplankton does not have; and visibility_floor is
+  irrelevant because NDMs never hide (hidden_frac = 0).
+
+73.4 Fix 1 - phytoplankton.seed_rate restored
+
+  fgconfig/fg_library.yaml: phytoplankton.seed_rate 0.0 ->
+  1e-07, i.e. 2.4e-6 t/cell/tick. It is the only mechanism that
+  can lift a cell off exact zero. Section 69.6 states it plainly:
+  "Without it, any retraining teaches the policies to live in a
+  dying world."
+
+  Caveat kept in the YAML comment: this is a PERSISTENCE floor,
+  not a fast recovery. Reaching the refuge level (~0.015 t/cell)
+  from zero by seeding alone is on the order of 6000 ticks.
+  benthic_community uses 1e-06, ten times more.
+
+73.5 Fix 2 - relative harvest cap in _apply_predation
+
+  New module-level constant in lib/environments/ecosystem.py:
+
+    MAX_HARVEST_FRAC = np.float32(0.999)
+
+  and the cap became
+
+    B_harvestable = B_prey_visible * MAX_HARVEST_FRAC
+    denom = np.maximum(total_demand, 1e-30)
+    scale = where(total_demand > B_harvestable,
+                  B_harvestable / denom, 1.0)
+
+  The margin is relative, so it is 5 orders of magnitude above
+  float32 epsilon and 0.1 % below anything ecologically
+  meaningful. The 1e-30 guards the division only; the branch
+  decides when it runs, so it cannot leak into the
+  total_demand == 0 case. No checkpoint impact (no dimension or
+  observation-scale change).
+
+  Deliberate consequence: the branch now also triggers in the
+  narrow window between 0.999*B_vis and B_vis, so a full harvest
+  of a cell is 0.1 % smaller than before. That is the fix, not a
+  side effect.
+
+73.6 Measurement
+
+  Worst-case probe: mareld2 FG set, 16x16 grid, 1000 ticks,
+  zooplankton pinned at constant biomass with an empty reserve
+  (hunger gate fully open, pi_eat = 1 on phytoplankton), phyto
+  initialised U(1, 6) t/cell. Cell-ticks where predation left
+  EXACTLY 0.0, measured BEFORE _apply_growth - measuring after
+  growth shows nothing, because seed_rate lifts the cell off zero
+  again and hides the event:
+
+    Z per cell   cap 1.0 (legacy)   cap 0.999   final mean
+       9.0 t          158                0        0.0162
+      14.0 t          233                0        0.0105
+      20.0 t          243                0        0.0074
+
+  So the zeroing was pervasive - 60-95 % of the 256 cells - and
+  it is now gone. The final mean is IDENTICAL in both columns,
+  which is the point: the fix removes the discrete zeroing
+  without moving the ecology. The final levels also match the
+  73.2 table, confirming the type III refuge is where the system
+  settles once zero is unreachable.
+
+73.7 Tests
+
+  tests/test_absorbing_zero.py (new, 10 tests):
+    * overharvest never reaches exactly zero (the regression -
+      verified to fail with MAX_HARVEST_FRAC patched to 1.0,
+      leftover 0.0),
+    * the removal equals MAX_HARVEST_FRAC of the visible biomass,
+    * the cap is tight (>= 99 % still harvestable), so it is not
+      a stealth nerf of predation,
+    * under-demand is untouched: scale stays exactly 1.0,
+    * the hidden (rested) fraction is still fully protected,
+    * 200 consecutive overharvest ticks never reach zero,
+    * the type III refuge is reachable after the fix,
+    * phytoplankton.seed_rate > 0 in the live library,
+    * a zeroed NDM cell recovers with seed_rate, and stays at
+      zero with seed_rate = 0 (opt-in preserved).
+
+  Suite: 138 -> 148 passed. Smoke test "--species zooplankton
+  --generations 1 --iter-per-gen 1 --workers 1" completes and
+  checkpoints.
+
+73.8 Rejected / deferred
+
+  * Raising zooplankton handling_time above 4.0 would lower the
+    saturation ceiling 1/h and thus the D/P peak, but it
+    collides with the calibration rationale in fg_library.yaml
+    (h = 1/a so the ceiling coincides with the physiological
+    maximum). That is a calibration discussion, not a fix.
+  * seed_rate for DM species (P1 from 69.6/70.8) is still open.
+    The predation cap now guarantees DMs are not zeroed by
+    predation either, but starvation and the extinction
+    threshold can still zero them, and those paths have no
+    recolonisation floor.
+
+73.9 Status / next
+
+  * Both fixes are in and measured. The open item "phytoplankton
+    .seed_rate is 0.0 in the working copy" from 71.14/72.5 is
+    closed.
+  * Still not run: the full-length porpoise rollout from 72.5,
+    and the retraining of the mareld2 reference policies. Both
+    fixes are prerequisites for that retraining being meaningful
+    rather than a study of a dying world.
+
+74 THE PORPOISE DIES BECAUSE THE SCHOOLS DISSOLVE
+   (post-fix-C rollout; Section 71's diagnosis is CORRECTED here)
+
+  Trigger: the user ran a full generation after fix C with
+  --mortality on:
+
+    train.py --project mareld2.yaml --run-name pzbpgp248nsrpfix9
+      --migration on --mortality on --generations inf
+      --profile info --iter-per-gen 50 --n_eval_ticks 1000
+      --n_deltas 16 --grid 16*16 --worlds_refresh iteration
+      --policynetwork 2 48 tanh --lr 0.03 --sigma 0.05 --visual
+
+  and reported that the porpoises STILL converge to ~100 % eat
+  and still go extinct. They do. This section explains why, and
+  it overturns the core of Section 71: the cause is NOT the
+  pursuit race, NOT the shared action simplex and NOT the
+  movement cost. Fixes A and B as scoped in 71.9-71.11 would
+  not have changed the outcome. Diagnosis only - no code, no
+  YAML and no tests were changed in this section.
+
+74.1 Correction to 71.4: the "0.84" is SATURATION, not a_eff/a
+
+  Section 71.4 reads the Section 69 requirement as
+  "a_eff/a >= 0.84". That is the wrong quantity, and it moves in
+  the wrong direction: a_eff = a/(1 + a*h*B_vis) DECREASES with
+  prey density, so a_eff/a >= 0.84 would require B_vis <= 0.19
+  t/cell, i.e. prey SCARCITY. The quantity that matters is the
+  Holling saturation
+
+    sat = f/f_max = a*h*B_vis / (1 + a*h*B_vis)
+
+  which is 0.84 at B_vis = 5.25 t/cell when a*h = 1. The 5.3
+  t/cell figure in 71.4 is therefore right, but the formula
+  attached to it was not. Any future probe must report sat, not
+  a_eff/a.
+
+74.2 The break-even identity, and the porpoise as an outlier
+
+  A DM that eats 100 % of the time, at the reserve level where
+  it exactly breaks even (s_x = u_x), gains
+
+    gain = a * sat * h(u_x) * energy_gain_per_tonne  [MJ/t/tick]
+    h(u_x) = max(0, 1 - u_x / satiation_scale)
+
+  and pays cost = resting_metabolism * feeding_cost. So
+
+    sat_min   = cost / (a * energy_gain_per_tonne * h(u_x))
+    B_vis_min = sat_min / ((1 - sat_min) * a * h)
+
+  Evaluated on the live mareld2 runtime matrices:
+
+   predator      prey          h(u)  cost  a*gain sat_min need_vis
+   gadoids       benthic       0.375  10.5   84.0  0.333   0.500
+   gadoids       pelagic_fish  0.375  10.5  240.0  0.117   0.132
+   pelagic_fish  zooplankton   0.375  15.2  144.0  0.281   0.392
+   porpoises     gadoids       0.444 126.0  231.0  1.227   INFEAS
+   porpoises     pelagic_fish  0.444 126.0  337.5  0.840   5.250
+   zooplankton   phytoplankton 0.375   5.1  325.0  0.042   0.043
+
+  Two things stand out.
+
+  (a) The porpoise requirement is 5.25 t/cell against 0.04-0.50
+      for every other pair - a factor 10 to 130. The reason is
+      structural: rm*feeding_cost = 90*1.4 = 126 MJ/t/tick is
+      8-25x the fish values (correct for an endotherm), while
+      a*energy_gain = 337.5 is only 1.4-2.3x theirs. Metabolism
+      was scaled up for a mammal; max_intake_rate was not.
+
+  (b) porpoises -> gadoids has sat_min = 1.227 > 1, i.e. it is
+      ARITHMETICALLY INFEASIBLE: no cod density whatsoever pays
+      for a porpoise, because the hunger gate caps realised
+      intake below the feeding cost. One of the porpoise's two
+      menu items is pure loss at every density. This is a
+      calibration error independent of everything else in this
+      section and should be fixed or the item removed.
+
+74.3 It is not a pursuit problem: the oracle also dies
+
+  Decisive experiment (porp_pinned.py). Porpoise actions forced
+  to "eat 100 %, never move"; every other DM keeps its trained
+  policy, so the herring field is untouched. Three variants:
+
+    spread   keep the cells the trained policy ends up in
+    pinned   all biomass concentrated in the 5 richest herring
+             cells at t=0, held there
+    perfect  re-concentrated onto the CURRENT 5 richest herring
+             cells EVERY tick - an oracle pursuer with free,
+             lossless, instantaneous movement
+
+    mode      died at tick
+    spread        380
+    pinned        366
+    perfect       598
+
+  The oracle dies too. Free movement buys 218 ticks and nothing
+  more. Since fixes A and B can at best approximate the oracle,
+  neither can save the porpoise. 71.9-71.11 are hereby demoted
+  from "the fix" to "unrelated improvements".
+
+74.4 The real cause: the herring field flattens to below the
+     requirement
+
+  herring_field.py runs the same world with the porpoises
+  REMOVED entirely, so the herring field is not being cropped by
+  them, and counts cells at or above 5.25 t/cell:
+
+   tick  B_pf   max   top5  top20  cells>=5.25  mean
+      0  853.3 81.41  57.47  35.19      33      3.333
+     50  848.8 24.72  22.17  16.89      51      3.316
+    100  836.6 14.64  13.94  11.85      51      3.268
+    200  790.2  8.56   8.13   6.80      22      3.087
+    300  716.5  4.97   4.77   4.50       0      2.799
+    500  551.4  3.63   3.60   3.47       0      2.154
+   1000  245.9  2.27   2.19   1.97       0      0.960
+
+  The porpoise habitat ceases to exist at tick ~300, with zero
+  porpoises present. Everything after that is bookkeeping.
+
+  And the mechanism is not stock depletion. With --mortality off
+  the herring stock is fully preserved (855 t at tick 1000,
+  against 853 at t=0) and the porpoises STILL die, at tick 453.
+  What kills them is the SHAPE of the field, not its mass:
+
+    mean herring density = 853.3 / 256 = 3.33 t/cell
+    porpoise requirement =                5.25 t/cell
+
+  A SPATIALLY UNIFORM HERRING FIELD CANNOT SUPPORT A PORPOISE
+  AT ALL, at any stock size. The porpoise is entirely dependent
+  on patchiness: it needs cells at >= 1.6x the mean, permanently,
+  and it needs them to still be there next tick.
+
+  The initial spawn delivers that patchiness (max 81 t/cell, 24x
+  the mean). It then decays away: herring runs pi_move ~ 0.085
+  per tick spread over four directions, which is a diffusion
+  process, and diffusion relaxes any initial peak toward the
+  mean. max/mean goes 24.4 (t=0) -> 7.5 (t=50) -> 4.5 (t=100)
+  -> 1.8 (t=300) -> 2.4 (t=1000, on a collapsing mean). The
+  schools do not relocate, they DISSOLVE.
+
+  This is exactly the four-way dilution of 71.7 - but it bites
+  the HERRING, not the porpoise. 71.7 looked at the right
+  mechanism through the wrong end of the telescope.
+
+74.5 Why ARS "converges to 100 % eat"
+
+  Not a learning failure, and this time for a stronger reason
+  than 71.6 gave. In results/pzbpgp248nsrpfix9/biomass.jsonl the
+  porpoise ratio is bit-identical at 3.515625e-13 in 59 of 59
+  evaluations - that is bh clamped at 1e-12 over b0 = 2.844.
+  Every rollout of every delta of every iteration ends with the
+  porpoises extinct. The survival component of the fitness is
+  therefore EXACTLY FLAT: there is no gradient to climb. The
+  only remaining signal is the biomass integral, which is
+  maximised by eating, so ARS climbs that. It is answering the
+  only question it is being asked.
+
+  Fix C did work, measurably: death moved from tick 158-205 to
+  tick 441 (trained policy, full trace), and avg_energy_ratio
+  for the porpoises rose from 0.006 to 0.24 within one
+  generation. It just cannot outrun a habitat that disappears.
+
+  Worth noting from the same log: pelagic_fish move_frac
+  collapsed from 62 % to 7 % over 50 iterations. The herring is
+  learning to sit still - which slows the diffusion but does not
+  stop it, and does not re-concentrate anything.
+
+74.6 Recalibration only postpones; it does not rescue
+
+  Forced-eat rollouts with single parameters overridden in
+  memory (porp_pinned.py, spread variant):
+
+    override                 need_vis t/cell   died at tick
+    none (u=0.5, sat_s=0.9)      5.25              380
+    satiation_scale 1.0          2.95              442
+    maintenance_level 0.4+1.0    1.65              586
+    maintenance_level 0.3        1.27              757
+    max_intake_rate *1.6         1.11              925
+
+  Every one of them helps, monotonically in need_vis, and every
+  one of them still dies - because the herring field keeps
+  falling and eventually crosses even 1.1 t/cell. Lowering the
+  requirement cannot beat a field heading for zero. Sensitivity
+  for the record (porpoises -> pelagic_fish):
+
+    u_x  sat_scale  h(u)   sat_min  need_vis t/cell
+    0.50   0.90     0.444   0.840        5.250
+    0.50   1.00     0.500   0.747        2.947
+    0.40   0.90     0.556   0.672        2.049
+    0.30   0.90     0.667   0.560        1.273
+    0.30   1.00     0.700   0.533        1.143
+
+74.7 Secondary findings, all separable from the above
+
+  * Realised demographic headroom. natural_mortality is applied
+    PER TICK and over a 1000-tick evaluation the survivor
+    fractions are: zooplankton 0.082, pelagic_fish 0.607,
+    gadoids 0.819, porpoises 0.951. Zooplankton's anabolic
+    ceiling is growth_rate * (satiation_scale - u_x) =
+    0.01 * 0.3 = 0.003/tick against 0.0025/tick of mortality -
+    a headroom of only 1.2. It is structurally near break-even
+    before any predation is applied.
+  * For the porpoise the same comparison explains the flat
+    B = 2.72 plateau in the trace: realised q_x was ~ +0.04, so
+    growth was 0.001*0.04 = 4e-5/tick against natural mortality
+    5e-5/tick. Realised headroom < 1. With mortality on, the
+    effective maintenance level is u_x + nm/growth_rate = 0.55,
+    not 0.50, which lifts the requirement from 5.25 to ~24
+    t/cell. THIS is the specific reason the user's --mortality
+    on run looked no better than the earlier --mortality off
+    runs despite fix C.
+  * Herring starvation is real but not budget-driven: its
+    sat_min is 0.281 (need 0.39 t/cell) against 9.8 t/cell of
+    zooplankton available, and at its observed action mix
+    (rest 0.53, eat 0.39, move 0.085) its net is +7 to +9
+    MJ/t/tick. The 233 t of starvation loss in the 1000-tick
+    probe comes from the heterogeneous tail of cells below u_x,
+    not from an unpayable budget. Predation by gadoids is the
+    larger term (299 t).
+  * The extinction sweep fires 286 times for gadoids and 61
+    times for pelagic_fish over 1000 ticks - the diffusion tail
+    being zeroed, as predicted in 71.7 point 3.
+
+74.8 What the next arc has to decide
+
+  The porpoise is a SYMPTOM. The primary defect is that the
+  model has no school-cohesion force for pelagic_fish: schooling
+  exists only in the initial spawn and is erased by four-way
+  proportional movement within ~300 ticks. Candidates, in the
+  order the evidence supports:
+
+  1. coherent_movement for PELAGIC_FISH (fix B from 71.11,
+     retargeted). The mechanism already exists in
+     _calculate_decisions as the sub-min_split_biomass one-hot
+     collapse; it needs a per-FG flag. Preserves patchiness
+     instead of manufacturing it. ~12 lines. Note 71.11 scoped
+     this to porpoises, where 74.3 now shows it cannot help.
+  2. An explicit aggregation / taxis term for schooling FGs, so
+     patches re-form rather than merely failing to disperse.
+     Larger change, needs a mathematical definition first, and
+     Strategi.pdf does not currently specify one.
+  3. Porpoise budget recalibration (74.6). Necessary but not
+     sufficient - do it only together with 1 or 2, otherwise it
+     just moves the death tick.
+  4. Remove or repair the infeasible porpoises -> gadoids pair
+     (74.2b). Independent of everything else, and cheap.
+
+  Do NOT retrain the mareld2 reference policies before 1 or 2 is
+  settled: with the field flattening as it does, retraining
+  still teaches the policies a dying world, which is the same
+  warning 69.6 gave about seed_rate.
+
+74.9 Reproduction - the probes are COMMITTED this time
+
+  Unlike 71.13, the diagnostics behind this section were kept.
+  They live in tools/probes/ and resolve the repo root from
+  __file__, so they run from any working directory:
+
+    tools/probes/budget_gate.py
+      No run needed, no policies loaded. Builds the live mareld2
+      runtime matrices and prints the break-even table of 74.2
+      plus the u_x / satiation_scale sensitivity of 74.6.
+      Seconds to run. START HERE - it is the cheapest way to
+      re-establish the whole argument.
+
+    tools/probes/porp_ckpt9.py <run-name> [ticks]
+      Tick-by-tick trace of the porpoises with the weights from
+      results/<run-name>/: B, occupied cells, s_x, pi_eat /
+      pi_move / pi_rest, herring in cell, visible herring.
+      Default run pzbpgp248nsrpfix9, 400 ticks.
+
+    tools/probes/porp_budget.py <run-name> [ticks]
+      The same trace but as an ENERGY BUDGET: gain, cost, net
+      (MJ/t/tick), hunger gate, Holling saturation, q_x = s_x -
+      u_x. Use energy_level (= (R/B)/ME), NOT energy_reserve /
+      max_energy_reserve - the first version of this probe got
+      that wrong and reported s_x ~ 0.006 for a healthy animal.
+      Ends with sat_min and the required visible density.
+
+    tools/probes/porp_pinned.py {spread|pinned|perfect} [K]
+      The decisive experiment of 74.3. Porpoise row of the
+      decision tensor overridden to pure eating after the real
+      _calculate_decisions has run, so every other DM keeps its
+      trained policy and the herring field is untouched.
+      Env vars: MORT=0 disables natural mortality, U_X, SAT_S
+      and A_MULT override maintenance_level, satiation_scale and
+      max_intake_rate in memory (A_MULT also divides
+      handling_time, keeping a*h = 1 per the fg_library
+      convention) - that is how the 74.6 table was produced.
+
+    tools/probes/herring_field.py [--keep-porpoises]
+      The 74.4 table. Removes the porpoises entirely, then
+      counts cells >= 5.25 t/cell per tick and reports max /
+      top5 / top20 / mean, followed by the per-FG loss
+      attribution and the extinction-sweep event counts of 74.7.
+
+  All of them use train._ProbeEnvBuilder with grid 16*16 and
+  seed 20260530 so the world is deterministic and the numbers in
+  74.2-74.7 are exactly reproducible. Runtime: budget_gate
+  seconds, the 1000-tick rollouts 5-20 minutes each.
+
+74.10 Status at the end of this arc
+
+  * Code, YAML and tests: UNCHANGED by section 74. The only
+    additions are this text and tools/probes/. Test suite: 147
+    passed, 1 failed (python3 -m pytest tests/ -q) - the failure
+    is NOT from this section, see 74.11.
+  * Working copy, branch coev, uncommitted (nothing in this arc
+    has been committed - commit only on explicit request):
+      M fgconfig/fg_library.yaml     (fix C override, seed_rate)
+      M fgconfig/fgconfig.py         (visibility_floor matrix)
+      M lib/environments/ecosystem.py(vis_floor_mat,
+                                      MAX_HARVEST_FRAC)
+      M mareld_resume.txt            (sections 72, 73, 74)
+      ?? AGENTS.md                   (distilled agent context)
+      ?? tools/probes/               (this section)
+      ?? tests/test_absorbing_zero.py,
+         tests/test_visibility_floor_pairs.py and five older
+         untracked test files
+  * Reference run for all of the above:
+    results/pzbpgp248nsrpfix9/ (policy_{gadoids,pelagic_fish,
+    porpoises,zooplankton}.pth + biomass.jsonl, 59 evaluations,
+    gen 1 iter 1-50 and gen 2 iter 1-9).
+  * Carried forward, none of it invalidated: the full-length
+    porpoise rollout of 72.5 (now DONE and negative - it dies at
+    441, see 74.5), retraining of the mareld2 reference policies
+    (now explicitly BLOCKED on 74.8 item 1 or 2), seed_rate for
+    DM species, the starve_rate/growth_rate asymmetry, spatial
+    mismatch at spawn, and the GUI validator for
+    handling_time != 1/max_intake_rate.
+  * To take this up again: read 74.8, run
+    tools/probes/budget_gate.py to confirm the parameter picture
+    still holds, then pick one of the four candidates. Items 1
+    and 4 are implementable immediately; item 2 needs a
+    mathematical definition from the user first; item 3 must not
+    be done alone.
+
+74.11 Library drift noticed while closing this section
+
+  fg_library.yaml has been edited outside the agent's changes
+  since section 73 - presumably through the GUI, since the
+  explanatory comments were dropped as well:
+
+  * phytoplankton.seed_rate is 0.0 AGAIN. Section 73 set it to
+    1e-07 precisely to remove the absorbing zero at the base of
+    the food web; that is now undone, and
+    tests/test_absorbing_zero.py::
+    test_phytoplankton_seed_rate_is_enabled_in_the_library is
+    RED as a result (147 passed, 1 failed). The float32 harvest
+    cap (MAX_HARVEST_FRAC) is still in place, so a cell is no
+    longer zeroed in a single tick - but if a cell does reach
+    zero there is again no way back, and 69.6's warning about
+    retraining in a dying world applies again. NOT reverted:
+    it may be a deliberate experiment. Decide explicitly.
+  * Two new pair overrides appeared. CORRECTION: an earlier
+    draft of this entry attributed the 0.25 to seabirds. That
+    was a misreading of the diff - no seabirds_preys_on_* entry
+    carries a visibility_floor at all, and seabirds, seals and
+    porpoises all sit on the species default 0.0. The complete
+    set of pair overrides in the library is exactly three:
+
+      gadoids_preys_on_pelagic_fish     0.25
+      porpoises_preys_on_pelagic_fish   0.95
+      porpoises_preys_on_gadoids        0.75
+
+  * gadoids_preys_on_pelagic_fish 0.25 is BELOW the herring
+    species default 0.35, i.e. it makes cod worse at seeing
+    hidden herring than the generic case, which TIGHTENS the
+    cod -> herring budget rather than relaxing it. 74.2 lists
+    that pair at sat_min = 0.117 -> 0.13 t visible per cell; at
+    floor 0.25 instead of 0.35 the same visible density needs
+    more total herring when part of the school is rested, so the
+    total requirement rises by the ratio of the floors on the
+    hidden fraction. The pair is far from its break-even, so
+    this is not load-bearing for the section 74 argument - but
+    it is a real, deliberate-looking calibration and should be
+    motivated in the YAML comment like the porpoise one is.
+  * porpoises_preys_on_gadoids 0.75 touches the pair 74.2b
+    calls arithmetically infeasible - note that visibility_floor
+    cannot rescue it: sat_min = 1.227 is independent of prey
+    density, so raising visibility does not change the verdict.
+    Only a, energy_gain or the hunger gate can.
+  * porpoises_preys_on_pelagic_fish is at 0.95, not the 1.0 the
+    YAML comment used to claim, and the old "15.1 to 5.3" figure
+    was stale as well. FIXED: the comment now states floor 0.95,
+    a break-even of 5.25 t visible / ~5.6 t total per cell
+    against 15.1 t/cell at the herring species default 0.35, and
+    cites sections 71.12 and 74.2. It also no longer says
+    "detectable to seabirds" - the 0.35 is the herring species
+    default that applies to every predator without an override,
+    seabirds have nothing to do with it.

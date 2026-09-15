@@ -3,6 +3,22 @@ import torch
 from lib.world.grid import Grid
 from lib.world.functional_group import FunctionalGroup
 
+# Fix 2 (Section 73): maximum fraction of the *visible* prey biomass that
+# predation may remove from a single cell in a single tick. Strictly < 1
+# so that `B_old - intake` can never round to exactly 0.0 in float32.
+#
+# The old cap, `B_vis / (total_demand + 1e-9)`, left behind only
+# `B_vis * 1e-9 / (D + 1e-9)`. Relative precision in float32 is ~1.2e-7,
+# i.e. LARGER than that residue, so an overharvested cell was zeroed
+# exactly. Zero is an absorbing state: logistic growth is multiplicative
+# in B, phytoplankton has movement_speed 0 (no diffusion from neighbours)
+# and Holling type III is multiplicative in prey density, so the type III
+# refuge can never restore a cell from 0. Keeping a 0.1 % survivor margin
+# makes that refuge reachable. The margin is far above float32 epsilon and
+# far below any ecologically meaningful biomass.
+MAX_HARVEST_FRAC = np.float32(0.999)
+
+
 class EcosystemEnvironment:
     def __init__(self, grid_config, functional_groups, interactions, policies=None,
                  observable_impact_vars=None, apply_natural_mortality=True,
@@ -166,6 +182,15 @@ class EcosystemEnvironment:
         # realiserade snitt, inte fysiologiska tak — `a` ska kalibreras mot
         # GER/gut-throughput-max, inte mot sustained grazing-snitt.
         handling_time = np.zeros((self.N_dm, self.N_all), dtype=self.dtype)
+        # Optional per-(predator, prey) visibility floor override. Empty /
+        # missing cells inherit the prey FG's own ``visibility_floor``
+        # (see the vis_floor_mat assembly further down, after
+        # ``_all_visibility_floor`` has been built). Rationale: detection
+        # is a property of the PAIR, not of the prey alone - porpoises use
+        # biosonar and are unaffected by the visual crypsis that protects
+        # herring from seabirds (Section 71.12 in mareld_resume.txt).
+        vis_floor_over = np.zeros((self.N_dm, self.N_all), dtype=self.dtype)
+        vis_floor_has = np.zeros((self.N_dm, self.N_all), dtype=bool)
         for i, pred_id in enumerate(self.dm_ids):
             pred_fg = self.fgs[pred_id]
             menu = pred_fg.params.get('menu', [])
@@ -208,6 +233,15 @@ class EcosystemEnvironment:
                     prey_ec_f = 0.0
                 energy_gain[i, j] = prey_ec_f * assim_f
                 handling_time[i, j] = float(inter_def.get('handling_time', 0.0))
+                vis_floor = inter_def.get('visibility_floor', None)
+                try:
+                    vf = (float(vis_floor)
+                          if vis_floor not in (None, "") else None)
+                except (TypeError, ValueError):
+                    vf = None
+                if vf is not None:
+                    vis_floor_over[i, j] = min(max(vf, 0.0), 1.0)
+                    vis_floor_has[i, j] = True
         self.eat_static_mask = eat_static
         self.max_intake_mat = max_intake
         self.energy_gain_mat = energy_gain
@@ -255,6 +289,22 @@ class EcosystemEnvironment:
         for i, fid in enumerate(self.dm_ids):
             j = int(self.dm_index_in_all[i])
             self._all_visibility_floor[j] = self.dm_visibility_floor[i]
+        # (N_dm, N_all) pair-resolved visibility floor. Base = the prey
+        # FG's own floor (column broadcast), overridden where the
+        # interaction definition carries an explicit ``visibility_floor``.
+        # ``_has_pair_vis_floor`` is False when every override equals the
+        # column default, in which case both the predation and the
+        # observation path take the cheaper legacy vector code path with
+        # bit-identical results.
+        vis_floor_base = np.tile(self._all_visibility_floor[None, :],
+                                 (self.N_dm, 1))
+        self.vis_floor_mat = np.where(
+            vis_floor_has, vis_floor_over, vis_floor_base
+        ).astype(self.dtype, copy=False)
+        self._has_pair_vis_floor = bool(
+            np.any(self.vis_floor_mat != vis_floor_base))
+        # The observation-side counterpart (``_obs_vis_floor``) is built
+        # right after ``obs_others_idx`` further down in this method.
         self.dm_max_energy_reserve = np.array([self.fgs[fid].max_energy_reserve for fid in self.dm_ids], dtype=self.dtype)
         # Per-DM cached impact tables for ALL impacts the FG is affected by.
         # Each entry is a list of (impact_id, (xs, bf, ef)) tuples; impacts
@@ -316,6 +366,16 @@ class EcosystemEnvironment:
                 idx = [j for j, other_id in enumerate(self.global_fg_order)
                        if j != j_own and other_id in observed_set]
             self.obs_others_idx.append(np.asarray(idx, dtype=np.int64))
+
+        # Observation-side visibility floor, per DM, aligned with the
+        # compact ``obs_others_idx`` layout (shape (k_i,)). Row i of
+        # ``vis_floor_mat`` already resolves to the prey FG's own floor
+        # for non-prey columns, so "what I can see" and "what I can eat"
+        # stay consistent per observer.
+        self._obs_vis_floor = [
+            self.vis_floor_mat[i, self.obs_others_idx[i]]
+            for i in range(self.N_dm)
+        ]
 
         # Number of impact observation channels (matches train.py's
         # get_dynamic_policy_params formula). Stored here so observation
@@ -526,10 +586,17 @@ class EcosystemEnvironment:
         #   visible = 1 - prev_hidden * (1 - floor)
         # which matches the symmetric predation-side formulation in
         # _apply_predation. Default floor=0 ⇒ legacy parity.
-        one_minus_floor_obs = (np.float32(1.0)
-                               - self._all_visibility_floor[:, None, None])
-        B_visible_all = B_all * (np.float32(1.0)
-                                 - self.prev_hidden_frac * one_minus_floor_obs)
+        #
+        # When a (predator, prey) override exists the floor is resolved
+        # per OBSERVER instead (``_obs_vis_floor``), so the visible
+        # biomass stack has to be built inside the per-DM loop below.
+        if self._has_pair_vis_floor:
+            B_visible_all = None
+        else:
+            one_minus_floor_obs = (np.float32(1.0)
+                                   - self._all_visibility_floor[:, None, None])
+            B_visible_all = B_all * (np.float32(1.0)
+                                     - self.prev_hidden_frac * one_minus_floor_obs)
         impact_layers = []
         for iid in self.observable_impact_vars:
             m = self.grid.get_map(iid)
@@ -573,7 +640,15 @@ class EcosystemEnvironment:
             # each observed FG is removed). B_own (this DM) is handled
             # separately below and uses the full biomass.
             if k_i > 0:
-                B_obs = B_visible_all[obs_idx]
+                if B_visible_all is not None:
+                    B_obs = B_visible_all[obs_idx]
+                else:
+                    floor_i = self._obs_vis_floor[i][:, None, None]
+                    B_obs = B_all[obs_idx] * (
+                        np.float32(1.0)
+                        - self.prev_hidden_frac[obs_idx]
+                        * (np.float32(1.0) - floor_i)
+                    )
             else:
                 B_obs = np.zeros((0, H, W), dtype=self.dtype)
 
@@ -890,15 +965,38 @@ class EcosystemEnvironment:
         # which means the floor is active for ANY pi_rest > 0, not only
         # at saturation (pi_rest -> 1). At floor=0 this reduces to the
         # legacy 1 - pi_rest; at floor=1 hide is fully disabled.
-        prey_vis_floor = np.zeros(self.N_all, dtype=self.dtype)
+        #
+        # When an interaction carries an explicit ``visibility_floor`` the
+        # floor is resolved per (predator, prey) pair instead, giving a
+        # (N_dm, N_all, H, W) visible-biomass tensor: detection ability
+        # differs between predators (biosonar vs vision), so the same
+        # hidden herring is not equally cryptic to porpoises and seabirds.
         for i, fid in enumerate(self.dm_ids):
             j = int(self.dm_index_in_all[i])
             hidden_frac_now[j] = self.pi_rest[i].astype(self.dtype, copy=False)
-            prey_vis_floor[j] = self.dm_visibility_floor[i]
-        one_minus_floor = np.float32(1.0) - prey_vis_floor[:, None, None]
-        effective_hidden = hidden_frac_now * one_minus_floor
-        visible_frac = np.float32(1.0) - effective_hidden
-        B_prey_visible = B_prey_all * visible_frac
+        if self._has_pair_vis_floor:
+            one_minus_floor = (np.float32(1.0)
+                               - self.vis_floor_mat[:, :, None, None])
+            visible_frac = (np.float32(1.0)
+                            - hidden_frac_now[None, :, :, :] * one_minus_floor)
+            B_prey_pair_visible = B_prey_all[None, :, :, :] * visible_frac
+            # Shared availability cap: the total removal from prey j is
+            # bounded by what the BEST-detecting predator of j can see.
+            # Rows that do not prey on j are excluded so they cannot
+            # inflate the cap. Reduces exactly to the legacy vector when
+            # all rows share the column default.
+            B_prey_visible = np.where(
+                self.eat_static_mask[:, :, None, None] > 0.0,
+                B_prey_pair_visible,
+                np.float32(0.0),
+            ).max(axis=0)
+        else:
+            prey_vis_floor = self._all_visibility_floor
+            one_minus_floor = np.float32(1.0) - prey_vis_floor[:, None, None]
+            effective_hidden = hidden_frac_now * one_minus_floor
+            visible_frac = np.float32(1.0) - effective_hidden
+            B_prey_visible = B_prey_all * visible_frac
+            B_prey_pair_visible = None
 
         a = self.max_intake_mat[:, :, None, None]  # (N_dm, N_all, 1, 1)
         if getattr(self, '_has_holling2', False) or getattr(self, '_has_holling3', False):
@@ -932,7 +1030,10 @@ class EcosystemEnvironment:
             # prey is functionally inaccessible this tick, so it neither
             # contributes to attack-rate saturation nor to total available
             # intake.
-            Bp = B_prey_visible[None, :, :, :]
+            if B_prey_pair_visible is not None:
+                Bp = B_prey_pair_visible
+            else:
+                Bp = B_prey_visible[None, :, :, :]
             m3 = self._type3_pred_mask  # (N_dm, 1, 1, 1)
             a_eff = self._holling_a_eff(a, h, Bp, m3)
         else:
@@ -945,12 +1046,29 @@ class EcosystemEnvironment:
             * hunger[:, None, :, :]
         )
 
+        if B_prey_pair_visible is not None:
+            # Per-predator bound: no predator may demand more than the
+            # fraction of the prey IT can detect. Without this, a
+            # low-floor predator could feed on the hidden fraction just
+            # because a better-detecting predator raised the shared cap.
+            D = np.minimum(D, B_prey_pair_visible)
+
         total_demand = D.sum(axis=0)  # (N_all, H, W)
         # Demand is capped at the *visible* prey biomass: the hidden
         # (rested) fraction is protected entirely this tick.
+        #
+        # Fix 2 (Section 73): the cap is RELATIVE (MAX_HARVEST_FRAC) rather
+        # than an absolute 1e-9 offset in the denominator. See the module
+        # level comment: the absolute form left a residue below float32
+        # precision, so an overharvested cell went to exactly 0.0 — an
+        # absorbing state no growth or refuge mechanism can escape.
+        B_harvestable = B_prey_visible * MAX_HARVEST_FRAC
+        # Guard the division only; the branch itself decides when it runs,
+        # so a tiny floor here cannot leak into the total_demand == 0 case.
+        denom = np.maximum(total_demand, np.float32(1e-30))
         scale = np.where(
-            total_demand > B_prey_visible,
-            B_prey_visible / (total_demand + np.float32(1e-9)),
+            total_demand > B_harvestable,
+            B_harvestable / denom,
             np.float32(1.0),
         ).astype(self.dtype, copy=False)
         actual = D * scale[None, :, :, :]

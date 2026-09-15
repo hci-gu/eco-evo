@@ -6,7 +6,7 @@
     growth_rate: 0.0375
     max_carrying_capacity: 24.0
     energy_content: 2000.0
-    seed_rate: 0.0
+    seed_rate: 1e-07
     seasonal_amplitude: 0.0
     seasonal_period: 1460.0
     spawn:
@@ -218,10 +218,20 @@ interaction_definitions:
     preys_on: true
     assimilation_factor: 0.8
     handling_time: 25.0
+    visibility_floor: 0.25
   porpoises_preys_on_pelagic_fish:
     preys_on: true
     assimilation_factor: 0.9
     handling_time: 20.0
+    # Porpoises hunt with biosonar, so the visual crypsis that makes
+    # hidden herring only 35 % detectable by default does not apply:
+    # schooling behaviour is no defence against echolocation
+    # (Au 1993; Verfuss et al. 2009). Floor 0.95 = hiding gives herring
+    # almost no protection against this predator; the break-even
+    # requirement is 5.25 t visible / ~5.6 t total per cell, down from
+    # 15.1 t/cell at the herring species default 0.35
+    # (Sections 71.12, 74.2).
+    visibility_floor: 0.95
   seals_preys_on_gadoids:
     preys_on: true
     assimilation_factor: 0.86
@@ -359,6 +369,7 @@ interaction_definitions:
     max_intake_rate: 0.05
     assimilation_factor: 0.84
     handling_time: 20.0
+    visibility_floor: 0.75
   porpoises_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
