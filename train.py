@@ -1408,22 +1408,10 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
         params[fg_id] = (in_dim_i, out_dim)
     return params
 
-def main():
-    # Detach from the controlling terminal's foreground process group so that
-    # Ctrl+C (SIGINT from the TTY) is delivered ONLY to this parent process,
-    # not broadcast to every spawned worker. Without this, when workers are
-    # mid-bootstrap (importing torch etc., before our ``_worker_init`` had a
-    # chance to install ``signal.SIG_IGN``), each of them prints its own
-    # multi-page traceback to the same terminal -- producing the giant
-    # interleaved "Traceback (most recent call last) ... import torch ..."
-    # blaffa the user saw. With our own pgid the workers inherit it and the
-    # foreground TTY signal only hits us; we then terminate the pool cleanly
-    # in the KeyboardInterrupt handler below.
-    try:
-        os.setpgrp()
-    except (AttributeError, OSError):
-        # Not available on Windows / already a session leader; harmless.
-        pass
+def main(argv=None, *, on_step=None, confirm=True):
+    # Keep the launcher's foreground process group. Detaching here makes
+    # terminal reads under `uv run` suspend Python with SIGTTIN and prevents
+    # normal delivery of Ctrl+C. ARSTrainer ignores SIGINT in spawned workers.
     parser = argparse.ArgumentParser(description="Mareld Ecosystem Simulator - Training Module")
     parser.add_argument("--species", nargs="+", default=["all"],
                         help="Which functional groups to train (e.g., pelagic_fish gadoids). Use 'all' for all decision makers (default: all).")
@@ -1603,7 +1591,7 @@ def main():
                              "OVERRIDE the profile values - the profile only fills in values "
                              "not specified on the command line.")
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # --- Profile application -----------------------------------------------
     # Each profile defines a fixed hyperparameter recipe. If --profile is set,
@@ -1679,7 +1667,7 @@ def main():
                 kwargs["type"] = a.type
                 kwargs["choices"] = a.choices
             _sentinel_parser.add_argument(*a.option_strings, **kwargs)
-        _ns, _ = _sentinel_parser.parse_known_args()
+        _ns, _ = _sentinel_parser.parse_known_args(argv)
         explicit = {k: v for k, v in vars(_ns).items() if v is not _sentinel}
 
         # Explicit CLI flags take precedence: only apply profile values for
@@ -1739,7 +1727,7 @@ def main():
     if not args.project:
         print("\nError: No project file specified.")
         print("You must specify a project file with the --project flag to start training.")
-        print("Example: python3 train.py --project mareld2.yaml\n")
+        print("Example: uv run train.py --project mareld2.yaml\n")
         return
 
     # Set project globally so env_builder can find it
@@ -2036,20 +2024,20 @@ def main():
         print(f"Workers:        {n_workers} (default: auto, resolved from {os.cpu_count()} CPUs and n_deltas={n_deltas})")
     print(f"------------------------------------------")
 
-    # Prompt user to confirm parameters before starting training.
-    # Enter (empty) or 'y' continues; 'n' aborts. Loops on invalid input.
-    try:
-        while True:
-            resp = input("Continue with these parameters? [Y/n]: ").strip().lower()
-            if resp in ("", "y", "yes"):
-                break
-            if resp in ("n", "no"):
-                print("Aborted by user.")
-                return
-            print("Please answer 'y' or 'n' (or press Enter for default 'y').")
-    except EOFError:
-        # No interactive stdin available — proceed with defaults.
-        pass
+    # Direct CLI runs retain the prompt; headless wrappers can opt out.
+    if confirm:
+        try:
+            while True:
+                resp = input("Continue with these parameters? [Y/n]: ").strip().lower()
+                if resp in ("", "y", "yes"):
+                    break
+                if resp in ("n", "no"):
+                    print("Aborted by user.")
+                    return
+                print("Please answer 'y' or 'n' (or press Enter for default 'y').")
+        except EOFError:
+            # No interactive stdin available — proceed with defaults.
+            pass
 
     # Parse --policynetwork: [LAYERS, NODES] or [LAYERS, NODES, ACTIVATION].
     # ACTIVATION defaults to 'sig' (sigmoid, legacy behaviour) when omitted;
@@ -2560,7 +2548,10 @@ def main():
         m, s = divmod(rem, 60)
         return f"{h:02d}:{m:02d}:{s:02d}"
 
+    completed_steps = start_gen * args.iter_per_gen * (1 if args.coevolution else len(target_species))
     try:
+        if on_step is not None:
+            on_step(trainer, completed_steps, run_dir, args)
         for gen in gen_iter:
             # Linear softmax-temperature annealing from temp_start -> temp_end
             # over the first temp_anneal_gens generations.
@@ -2602,6 +2593,9 @@ def main():
                             pass
                     means = trainer.train_step_coevolution(
                         target_species, n_eval_ticks=_neval)
+                    completed_steps += 1
+                    if on_step is not None:
+                        on_step(trainer, completed_steps, run_dir, args)
                     summary = " | ".join(
                         f"{fid}={means[fid]:+.4f}" for fid in target_species)
                     print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
@@ -2662,6 +2656,9 @@ def main():
                                 pass
                         # n_eval_ticks: how many time steps (ticks) each test run lasts
                         avg_reward = trainer.train_step(species, n_eval_ticks=_neval)
+                        completed_steps += 1
+                        if on_step is not None:
+                            on_step(trainer, completed_steps, run_dir, args)
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
                         if viz is not None:
                             viz.update_reward(species, float(avg_reward),

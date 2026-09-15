@@ -2,7 +2,7 @@
 
 Run locally:
 
-    python3 api.py --host 127.0.0.1 --port 8000
+    uv run api.py --host 127.0.0.1 --port 8000
 
 This intentionally uses only the Python standard library for HTTP handling so
 the API is runnable in the current project without adding a web framework.

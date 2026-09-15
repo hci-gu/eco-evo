@@ -7,7 +7,7 @@ try:
     from ruamel.yaml import YAML
 except ImportError:
     print("Error: The 'ruamel.yaml' library is required.")
-    print("Please install it using: pip install ruamel.yaml")
+    print("Run from the repository root with: uv run fgconfig/fgconfig.py")
     sys.exit(1)
 
 # The editor is launched from inside fgconfig/, so make the project root
