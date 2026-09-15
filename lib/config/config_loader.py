@@ -298,7 +298,7 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                 if 'impact' not in params: params['impact'] = {}
                 impact_id = iid.replace(f"{sid}_impacted_by_", "")
                 params['impact'][impact_id] = idef
-                
+
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: prefer library range (min/max or legacy scalar),
@@ -439,9 +439,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     independently of ``seed`` (which drives total-biomass / energy sampling).
     When set, every FG's spawn map is fully determined by ``(spawn_seed,
     fg_id)`` — used by ``train.py`` to share *identical* biomass maps across
-    all deltas/workers within one generation (analogous to the impact-map
-    snapshot). When ``None``, falls back to ``seed`` (legacy behaviour: each
-    rollout gets its own spawn layout).
+    all deltas/workers within one generation. When ``None``, falls back to
+    ``seed`` so each rollout gets its own spawn layout.
     """
     project = load_config(project_path)
     rng = np.random.default_rng(seed) if seed is not None else None
@@ -544,7 +543,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         if vmax < vmin:
             vmin, vmax = vmax, vmin
         impact_ranges[iid] = (vmin, vmax)
-    
+
     # ------------------------------------------------------------------
     # Topological ordering of spawn for env_driven refs
     # ------------------------------------------------------------------
@@ -627,7 +626,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # ``{sid}_observes_{other_id}`` with ``observes: True``. Observed FGs
         # that are muted are intentionally KEPT in the list (the policy still
         # gets an input slot for them, fed with 0 at runtime — see
-        # EcosystemEnvironment._build_static_caches). If no observability
+        # EcosystemEnvironment.build_static_caches). If no observability
         # entries exist for this sid (legacy projects), we fall back to "see
         # everything" for backward compatibility.
         observes_list = []

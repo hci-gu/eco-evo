@@ -15,7 +15,7 @@ plot panel:
     matching the live pygame visualiser's tab strip exactly (train
     mode): ``reward`` (= log10_ratio), ``biomass`` (= ratio %),
     ``energy``, ``move``, ``rest``, ``eat``, ``predation``,
-    ``starvation``, ``impacts``. The last three read the nested
+    ``starvation``. The loss tabs read the nested
     ``loss_breakdown[fid][<cause>]`` field and plot it as a percentage
     of total biomass loss per FG.
   * One trace per functional group (FG); legend entries are
@@ -40,19 +40,16 @@ from typing import Dict, List, Tuple
 # Metrics we know how to plot, in the order they should appear as tabs.
 # Order mirrors the live pygame visualiser's tab strip (train mode) 1:1:
 #   reward (= log10_ratio), biomass (= ratio %), energy, move, rest,
-#   eat, predation, starvation, impacts.
+#   eat, predation, starvation.
 # The fourth tuple element points at the matching random-action
 # baseline series inside the optional ``rnd`` sub-dict of each JSONL
 # record (empty string if no baseline is available for that metric).
 _METRICS: Tuple[Tuple[str, str, str, str], ...] = (
     # (tab key, top-level JSONL field, plot title,        rnd sub-field)
-    # Speglar live-viz-flikarna i ``lib/viz/pygame_viz.py`` exakt
-    # (train-mode): reward, biomass, energy, move, rest, eat,
-    # predation, starvation, impacts. ``bh``/``b0`` är borttagna då de
-    # inte finns som flikar i live-viz. De tre loss-flikarna läser
-    # nested-fält ``loss_breakdown[fid][<cause>]`` (fraktion 0..1) och
-    # skalas ×100 till procent — samma semantik som live-vizens plot-
-    # serier ``predation``/``starvation``/``impacts``.
+    # Mirrors the live visualizer tab order in train mode: reward,
+    # biomass, energy, move, rest, eat, predation, starvation. ``bh``/``b0``
+    # are omitted because they are not live-viz tabs. Loss tabs read nested
+    # ``loss_breakdown[fid][<cause>]`` fractions and scale them to percent.
     # OBS: titlarna nedan är TRAIN-lägets titlar (probe-medelvärden per
     # ARS-step). I inference-läget överlagras de av ``_INFER_TITLES``
     # nedan (per-tick ögonblicksvärden). ``_build_html(..., mode=...)``
@@ -71,7 +68,6 @@ _METRICS: Tuple[Tuple[str, str, str, str], ...] = (
     ("eat",        "eat_frac",               "mean eat-action % per DM",           "eat_frac"),
     ("predation",  "loss_breakdown.predation",  "predation share of total loss (%) per FG",  "loss_breakdown.predation"),
     ("starvation", "loss_breakdown.starvation", "starvation share of total loss (%) per FG", "loss_breakdown.starvation"),
-    ("impacts",    "loss_breakdown.impact",     "impact share of total loss (%) per FG",     "loss_breakdown.impact"),
 )
 
 
@@ -89,7 +85,6 @@ _INFER_TITLES: Dict[str, str] = {
     "eat":        "eat-action % per DM (per-tick)",
     "predation":  "predation share of tick loss (%) per FG",
     "starvation": "starvation share of tick loss (%) per FG",
-    "impacts":    "impact share of tick loss (%) per FG",
 }
 
 
@@ -102,7 +97,7 @@ def _extract_field(record: dict, field: str, rnd: bool = False) -> dict:
       * Nested loss-breakdown, t.ex. ``"loss_breakdown.predation"`` →
         bygger ``{fid: record["loss_breakdown"][fid]["predation"] * 100}``.
         Värdena skalas till procent (0..100) här, så att y-axeln matchar
-        live-vizens plot-flikar ``predation``/``starvation``/``impacts``.
+        live visualizer plot tabs ``predation``/``starvation``.
     """
     root = (record.get("rnd") or {}) if rnd else record
     if "." not in field:

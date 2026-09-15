@@ -543,7 +543,7 @@ def _run_one_replicate(
     env.policies = dict(policies)
     env.obs_mean = obs_mean
     env.obs_var = obs_var
-    env._rebuild_batched_weights()
+    env.rebuild_batched_weights()
 
     viz = None
     if visualize:
@@ -567,6 +567,11 @@ def _run_one_replicate(
         except Exception as exc:
             LOGGER.warning("run %s visualization could not start: %r", run_id, exc)
             viz = None
+
+    visual_b0 = {
+        fid: max(float(fg.biomass.sum()), 1e-12)
+        for fid, fg in env.fgs.items()
+    }
 
     frames: list[np.ndarray] = []
     steps: list[int] = []
@@ -604,7 +609,9 @@ def _run_one_replicate(
             viz.update_biomass(env.fgs, tick=step, extra={"run": run_id})
             for fid, fg in env.fgs.items():
                 total = float(fg.biomass.sum())
-                viz.update_series("biomass", fid, total, step=step)
+                viz.update_series("biomass", fid,
+                                  100.0 * total / visual_b0[fid],
+                                  step=step)
             if not viz.pump_events():
                 LOGGER.info("run %s visualization window closed at step %d; inference continues", run_id, step)
                 viz.close()
@@ -618,7 +625,9 @@ def _run_one_replicate(
         update_progress(0, force_log=True)
         update_visual(0)
         for step in range(1, max_steps + 1):
-            env.step()
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
             if step % sample_every == 0:
                 sample(step)
             update_progress(step)

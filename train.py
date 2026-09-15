@@ -9,7 +9,8 @@ import os
 import argparse
 import json
 import re
-from lib.config.config_loader import setup_full_mareld_mvp, load_project_config, load_impact_spawn_specs
+from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config,
+                                      load_impact_spawn_specs)
 from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.runners.trainer import ARSTrainer
@@ -27,6 +28,8 @@ APPLY_NATURAL_MORTALITY = False
 # motsvarande massflöde tolkas som emigration + immigration över
 # kantcellerna proportionellt mot accessibility.
 APPLY_MIGRATION = False
+
+
 def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
                         impact_spawn_specs=None,
                         observable_impact_vars=None):
@@ -81,11 +84,12 @@ def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
                 w = None
             if w is not None:
                 w = np.asarray(w, dtype=np.float64)
-                # Colony+jitter returnerar fältet redan i [0,1]-skala där
-                # amplituderna kodar relativ källstyrka (per-koloni
-                # Uniform(amp_min, amp_max)). Bypassa min-max-stretchen så
-                # heterogena källstyrkor bevaras (annars skulle den
-                # starkaste cellen alltid klättra upp till vmax).
+                # Colony+jitter already returns the field on a [0, 1]
+                # scale where the amplitudes encode relative source
+                # strength (per-colony Uniform(amp_min, amp_max)). Bypass
+                # the min-max stretch so heterogeneous source strengths
+                # survive (otherwise the strongest cell would always be
+                # pushed up to vmax).
                 bypass_stretch = (
                     spec.mode == "colony"
                     and str(spec.params.get("amplitude_mode",
@@ -109,6 +113,7 @@ def _sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
             field = np.full((H, W), float(vmin))
         maps[iv] = field.astype(np.float32)
     return maps
+
 
 def parse_grid_arg(value):
     """Parses a --grid argument on the form n*m (or nxm). Both dims must be >= 3."""
@@ -255,19 +260,15 @@ class _EnvBuilder:
     """Picklable env_builder callable used by the training loop.
 
     When ``impact_maps_snapshot`` is provided, every env produced by this
-    callable installs *those exact* impact fields (gemensamma per
-    generation). When ``None``, fresh maps are sampled per call from the
-    project's impact ranges - used only for the initial temp_env probe
-    before the training loop starts.
+    callable installs *those exact* impact fields (shared per generation).
+    When ``None``, fresh maps are sampled per call from the project's
+    impact ranges - used only for the initial temp_env probe before the
+    training loop starts.
 
-    STEP 2 (multi-world averaging scaffold): the builder also carries
-    the (impact_seed, spawn_seed) pair that defines one *world* from the
-    iteration's WorldList. ``with_world(impact_seed, spawn_seed)``
-    produces a fresh sibling builder bound to a different world, sharing
-    the same impact_vars / ranges / grid / project. This is what the
-    M>1 rollout loop in train_step will consume in Step 3; for now only
-    world index 0 is honoured by the legacy single-rollout path, so
-    semantics remain effectively unchanged.
+    The builder also carries the optional ``spawn_seed`` that defines one
+    deterministic spatial biomass layout. ``with_world(impact_seed,
+    spawn_seed)`` produces a fresh sibling builder bound to a different
+    world, sharing the same impact_vars / ranges / grid / project.
 
     Implemented as a top-level class (not a closure) so that the
     multiprocessing 'spawn' start method can pickle it when it gets
@@ -296,29 +297,26 @@ class _EnvBuilder:
         # entries fall back to legacy uniform sampling.
         self.impact_spawn_specs = (
             dict(impact_spawn_specs) if impact_spawn_specs is not None else None)
-        # Bakas in i instansen så spawn-workers (som reimport:ar train.py
-        # och nollställer modul-globalen) får rätt värde.
+        # Keep the raw impact recipe so ``with_world`` can re-sample maps
+        # for a different impact_seed without needing access to module
+        # globals (which are reset in spawn-workers).
+        self.impact_vars = list(impact_vars) if impact_vars is not None else None
+        self.impact_ranges = dict(impact_ranges) if impact_ranges is not None else None
+        self.impact_seed = impact_seed
+        # Store these in the instance so spawned workers do not depend on
+        # module globals that are reset when train.py is re-imported.
         self.apply_natural_mortality = (
             APPLY_NATURAL_MORTALITY if apply_natural_mortality is None
             else bool(apply_natural_mortality)
         )
-        # Bakas in i instansen på samma sätt som apply_natural_mortality
-        # eftersom spawn-workers reimporterar train.py och nollställer
-        # APPLY_MIGRATION-modulglobalen.
         self.migration = (
             APPLY_MIGRATION if migration is None
             else bool(migration)
         )
-        # Step 2: keep the raw impact recipe so ``with_world`` can
-        # re-sample maps for a different impact_seed without needing
-        # access to module globals (which are reset in spawn-workers).
-        self.impact_vars = list(impact_vars) if impact_vars is not None else None
-        self.impact_ranges = dict(impact_ranges) if impact_ranges is not None else None
-        self.impact_seed = impact_seed
         # Per-generation spawn seed: when set, every env built by this
         # callable produces *identical* biomass maps for all FGs (shared
-        # across deltas/workers), analogous to ``impact_maps_snapshot``.
-        # ``None`` falls back to per-rollout sampling (legacy).
+        # across deltas/workers). ``None`` falls back to per-rollout
+        # sampling.
         self.spawn_seed = spawn_seed
         # Bake grid dims into the instance so worker processes (which
         # reimport train.py via 'spawn' and would otherwise see the
@@ -331,21 +329,18 @@ class _EnvBuilder:
         # Bake project path into the instance as well. Spawn-workers reimport
         # train.py, which resets the module-level ``PROJECT_PATH`` global to
         # ``None``, causing the worker to fall back to ``setup_full_mareld_mvp``
-        # (different FG set + a hardcoded observable impact) and producing an
-        # obs-dim mismatch with the parent's policy_params -> crash inside
-        # the policy forward (RuntimeError: mat1 and mat2 shapes cannot be
-        # multiplied). Falls back to the module global when not supplied.
+        # and producing an obs-dim mismatch with the parent's policy_params.
+        # Falls back to the module global when not supplied.
         self.project_path = project_path if project_path is not None else PROJECT_PATH
 
     def with_world(self, impact_seed, spawn_seed):
         """Return a fresh sibling builder bound to a different world.
 
-        Used by the multi-world averaging path (Step 3): the trainer
-        picks world ``m`` from the WorldList and obtains a builder whose
+        Used by the multi-world averaging path: the trainer picks world
+        ``m`` from the WorldList and obtains a builder whose
         impact_maps_snapshot is freshly sampled from ``impact_seed`` and
         whose spawn layout is locked by ``spawn_seed``. All other state
-        (grid, project, impact recipe) is inherited. Returns a new
-        picklable ``_EnvBuilder`` instance; the original is untouched.
+        (grid, project, impact recipe) is inherited.
         """
         if self.impact_vars is None or self.impact_ranges is None:
             raise RuntimeError(
@@ -391,7 +386,7 @@ class _EnvBuilder:
             'cell_size': 1000.0,
             'tick_duration': 6.0,
         }
-        env = EcosystemEnvironment(grid_config, fgs, {},
+        env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
                                    migration=self.migration)
@@ -470,14 +465,12 @@ class _ProbeEnvBuilder:
         self._apply_b0 = _apply_b0
         self._apply_spawn = _apply_spawn
         self._load_spawn_tpls = _load_spawn_tpls
-        # Per-FG b0-overrides (ton) som ska appliceras innan första env.step().
-        # Sätts av ``_probe_biomass`` strax innan varje probe-anrop utifrån
-        # viz.get_b0_overrides(); tomt dict = ingen override.
+        # Per-FG b0 overrides in tons, set by ``_probe_biomass`` from
+        # ``viz.get_b0_overrides()`` before each probe call.
         self.b0_overrides: dict = {}
-        # Per-FG spawn-strategi-overrides från visualiseraren. Samma
-        # struktur som inference.py:s ``apply_spawn_overrides`` förväntar:
-        # ``{fid: {"mode": <m>, "template": <name>}}``. Tomt = inga
-        # overrides (projektfilens spawn används).
+        # Per-FG spawn strategy overrides from the visualizer. The structure
+        # matches ``inference.apply_spawn_overrides``:
+        # ``{fid: {"mode": <m>, "template": <name>}}``.
         self.spawn_overrides: dict = {}
 
     def __call__(self, seed=None):
@@ -502,7 +495,7 @@ class _ProbeEnvBuilder:
             'cell_size': 1000.0,
             'tick_duration': 6.0,
         }
-        env = EcosystemEnvironment(grid_config, fgs, {},
+        env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
                                    migration=self.migration)
@@ -516,18 +509,15 @@ class _ProbeEnvBuilder:
             if field is None:
                 field = np.zeros((H, W), dtype=np.float32)
             env.grid.add_map(iv, field)
-        # Applicera ev. b0-overrides från visualiseraren innan första
-        # env.step(). Skalar varje FG:s biomass-fält så totalsumman möter
-        # slider-värdet (spatial form bevarad).
+        # Apply visualizer b0 overrides before the first environment
+        # transition, preserving each FG's spatial biomass distribution.
         if self.b0_overrides:
             try:
                 self._apply_b0(env, self.b0_overrides)
             except Exception:
                 pass
-        # Applicera ev. spawn-strategi-overrides från visualiserarens
-        # per-heatmap-dropdowns. Görs EFTER b0-skalningen så totala
-        # biomassan är den användaren förväntar sig och endast den
-        # spatiala fördelningen byts ut.
+        # Apply visualizer spawn-strategy overrides after b0 scaling so only
+        # the spatial distribution changes.
         if self.spawn_overrides:
             try:
                 tpls = (self._load_spawn_tpls(self.project_path)
@@ -556,9 +546,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     when ``compact`` is True, prints a single-line summary to stdout.
     """
     import json
-    # Hämta aktuella b0-overrides från visualiseraren (om någon viz är
-    # ansluten) och stoppa in dem i probe_builder så de appliceras innan
-    # första env.step(). Tomt/ingen viz = ingen override.
+    # Pull current visualizer b0 overrides into the probe builders before
+    # their first environment transition.
     if viz is not None:
         try:
             overrides = viz.get_b0_overrides()
@@ -599,7 +588,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
 
     # Freeze obs-norm stats (same path as _evaluate / _evaluate_coevo).
     if trainer.obs_normalize and trainer.obs_stats:
-        env._build_static_caches()
+        env.build_static_caches()
         dm_ids = list(env.dm_ids)
         # Build (N_dm, D) stacks aligned with env.dm_ids; fall back to
         # mean=0/var=1 for DMs without stats yet (first iteration).
@@ -639,7 +628,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     #
     # ``rnd_env_for_fid`` maps each reported _rnd-FG -> the env whose state
     # should be read for that FG's curves. ``unique_rnd_envs`` is the list
-    # of distinct envs to ``.step()`` each tick (1 for 'all', N for 'solo').
+    # of distinct envs to transition each tick (1 for 'all', N for 'solo').
     rnd_env = None
     rnd_env_for_fid = {}
     unique_rnd_envs = []
@@ -656,7 +645,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 of DM-FG ids) act uniformly at random; the remaining DMs
                 use ``trainer.policies``. Frozen obs-norm from main env."""
                 e = rnd_builder()
-                e._build_static_caches()
+                e.build_static_caches()
                 out_dim = 5 + e.N_all
                 in_dim = (env.obs_mean.shape[1]
                           if getattr(env, 'obs_mean', None) is not None
@@ -776,7 +765,9 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     n_ticks_done = 0
     rnd_n_ticks_done = 0
     for _t in range(int(n_ticks)):
-        env.step()
+        observation = env.get_observation()
+        actions = env.policy_controller.forward(observation)
+        env.step(actions)
         n_ticks_done += 1
         for fid in fg_ids:
             b_sum[fid] += float(env.fgs[fid].biomass.sum())
@@ -789,7 +780,9 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 # this is a single env; in 'solo' mode it's N envs (one
                 # per DM-FG). Ordering is stable across ticks.
                 for _re in unique_rnd_envs:
-                    _re.step()
+                    observation = _re.get_observation()
+                    actions = _re.policy_controller.forward(observation)
+                    _re.step(actions)
                 rnd_n_ticks_done += 1
                 # Read per-FG state from its designated reporting env.
                 for fid, _re in rnd_env_for_fid.items():
@@ -1012,9 +1005,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 if _fid in _mv: rnd_move[_fid] = _mv[_fid]
                 if _fid in _rs: rnd_rest[_fid] = _rs[_fid]
                 if _fid in _et: rnd_eat[_fid] = _et[_fid]
-        # Mirror av huvud-envs ``loss_breakdown`` för random-action
-        # baseline, så att offline-html-grafer kan visa samma
-        # predation/starvation/impacts-tabbar för ``_rnd``-serierna.
+        # Mirror the main env's loss_breakdown for the random-action
+        # baseline so offline plots can show matching loss series.
         for fid, _re in rnd_env_for_fid.items():
             ls = float(getattr(_re, 'loss_starvation', {}).get(fid, 0.0))
             lp = float(getattr(_re, 'loss_predation', {}).get(fid, 0.0))
@@ -1152,12 +1144,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         except Exception:
             pass
 
-    # Per-FG förlustuppdelning över probe-rollouten. Ackumulatorerna
-    # ``loss_starvation`` / ``loss_predation`` / ``loss_impact`` sätts i
-    # EcosystemEnvironment och summerar faktisk avdragen biomass per
-    # orsak under hela rollouten. Andelarna nedan är fraktioner av den
-    # totala förlusten (summan av alla tre); summan är därför 1.0 när
-    # det fanns någon förlust alls, annars 0.0 för alla orsaker.
+    # Per-FG loss breakdown over the probe rollout. The environment
+    # accumulates actual biomass removed by starvation, predation and
+    # impacts. Fractions sum to 1.0 when there was any loss, otherwise all
+    # causes are 0.0.
     loss_breakdown = {}
     for fid in fg_ids:
         ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
@@ -1179,7 +1169,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 'total':      0.0,
             }
 
-    # Push loss-breakdown to the live visualiser so the 'pr/st/im=X/Y/Z%'
+    # Push loss-breakdown to the live visualiser so the 'pr/st=X/Y%'
     # line above each heatmap reflects the just-finished probe rollout.
     if viz is not None:
         try:
@@ -1187,11 +1177,9 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         except Exception:
             pass
 
-    # Push end-of-probe predation/starvation/impacts shares (0..100%) to
+    # Push end-of-probe predation/starvation shares (0..100%) to
     # the dedicated plot tabs, one point per probe — same x-scale (global
-    # ARS ``viz_step``) som biomass/energy. Detta speglar headern
-    # ``pr/st/im=…`` men över tid. NDM ingår: även de förlorar biomass
-    # till predation och impacts.
+    # ARS ``viz_step``) as biomass/energy.
     if viz is not None and viz_step is not None:
         try:
             for fid in fg_ids:
@@ -1202,30 +1190,24 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 viz.update_series("starvation", fid,
                                   100.0 * float(lb.get('starvation', 0.0)),
                                   step=int(viz_step))
-                viz.update_series("impacts", fid,
-                                  100.0 * float(lb.get('impact', 0.0)),
-                                  step=int(viz_step))
             if rnd_env_for_fid:
                 for fid, _re in rnd_env_for_fid.items():
                     ls = float(getattr(_re, 'loss_starvation', {}).get(fid, 0.0))
                     lp = float(getattr(_re, 'loss_predation', {}).get(fid, 0.0))
-                    li = float(getattr(_re, 'loss_impact', {}).get(fid, 0.0))
-                    tot = ls + lp + li
+                    tot = ls + lp
                     if tot > 0.0:
-                        pp, ss, ii = (lp / tot, ls / tot, li / tot)
+                        pp, ss = (lp / tot, ls / tot)
                     else:
-                        pp = ss = ii = 0.0
+                        pp = ss = 0.0
                     viz.update_series("predation", fid + "_rnd",
                                       100.0 * pp, step=int(viz_step))
                     viz.update_series("starvation", fid + "_rnd",
                                       100.0 * ss, step=int(viz_step))
-                    viz.update_series("impacts", fid + "_rnd",
-                                      100.0 * ii, step=int(viz_step))
         except Exception:
             pass
 
     # Force an immediate re-render so the freshly pushed mv/rs/et and
-    # pr/st/im values above each heatmap become visible as soon as this
+    # pr/st values above each heatmap become visible as soon as this
     # probe finishes, rather than only at the start of the next probe's
     # rollout (when the next ``update_biomass`` triggers a render). The
     # frame-rate cap on ``_maybe_render`` is bypassed by resetting
@@ -1247,7 +1229,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 pass
             viz._last_frame_ts = 0.0
             # Den sista ``update_biomass`` här är ett rent repaint för att
-            # rad mv/rs/et + pr/st/im ovanför heatmapen skall hinna
+            # row mv/rs/et + pr/st above the heatmap should update before
             # uppdateras innan användaren ser slutbilden — den visar
             # samma state som redan capturades som sista frame i
             # tick-loopen (``_t = n_ticks - 1``). ``_recording`` är
@@ -1276,7 +1258,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             loss_parts.append(
                 f"{fid}: starv {lb['starvation']*100:.0f}% / "
                 f"pred {lb['predation']*100:.0f}% / "
-                f"imp {lb['impact']*100:.0f}%"
+                f"imp {lb.get('impact', 0.0)*100:.0f}%"
             )
         if loss_parts:
             print(f"    [probe gen={gen+1} loss] " + " | ".join(loss_parts))
@@ -1289,10 +1271,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         'bh': bh,
         'ratio': ratio,
         'log10_ratio': log_ratio,
-        # Avg-over-rollout ratios: SAMMA värden som live viz pushar till
-        # biomass/energy-flikarna. Behövs för att --resume-hydreringen
-        # ska matcha graferna byte-för-byte (istället för att approximera
-        # via end-of-rollout 'ratio' som ger fel y-värde).
+        # Preserve rollout averages alongside the final ratios used by
+        # live plots, resume hydration, and offline HTML.
         'avg_ratio': avg_ratio,
         'avg_energy_ratio': avg_energy_ratio,
         # New: persist the same series the live viz shows in its tabs,
@@ -1301,9 +1281,9 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         'move_frac': move_frac,         # mean move-action % per DM
         'rest_frac': rest_frac,         # mean rest-action % per DM
         'eat_frac':  eat_frac,          # mean eat-action  % per DM
-        # Andel av total biomassaförlust under rollouten per FG, uppdelat
-        # på orsak (svält / predation / impact). 'total' = absolut summa i
-        # ton; andelarna summerar till 1.0 när total > 0.
+        # Fraction of total biomass loss during the rollout per FG, split
+        # by starvation, predation and impact. 'total' is the absolute loss
+        # in tons.
         'loss_breakdown': loss_breakdown,
     }
     # Actual ARS reward per FG for this iter (as seen by the optimiser).
@@ -1357,8 +1337,8 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
 
     ``spawn_seed`` (optional): when set, all envs built by the returned
     callable share the same biomass spawn layout (per FG). Used by
-    ``_install_generation_maps`` to lock the spawn pattern for one
-    generation, just like ``impact_maps_snapshot`` does for impacts.
+    ``_install_generation_worlds`` to lock the spawn pattern for one
+    world.
     """
     return _EnvBuilder(impact_maps_snapshot, grid_size=grid_size,
                       project_path=project_path, spawn_seed=spawn_seed,
@@ -1369,11 +1349,6 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       impact_spawn_specs=impact_spawn_specs,
                       observable_impact_vars=observable_impact_vars)
 
-
-# Default module-level env_builder: fresh impact maps per call. Used for
-# the initial temp_env probe before the main loop installs a generation-
-# specific env_builder via _make_env_builder(maps).
-env_builder = _make_env_builder(None)
 
 def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     """
@@ -1559,7 +1534,7 @@ def main():
     # M=1 (default) the legacy single-world tuple-task path is used
     # byte-identically to pre-STEP-3 behaviour.
     parser.add_argument("--rollouts_per_delta", type=int, default=1, metavar="M",
-                        help="Number of independent worlds (impact + spawn snapshots) "
+                        help="Number of independent spawn worlds "
                              "averaged per delta evaluation. M=1 reproduces the "
                              "legacy single-world path exactly. Typical useful "
                              "range: 3-5. Cost scales linearly: 2*n_deltas*M "
@@ -1681,7 +1656,6 @@ def main():
         prof = PROFILES[args.profile]
         # Determine which args were explicitly supplied on the command line by
         # re-parsing with all defaults set to a sentinel.
-        import sys as _sys
         _sentinel = object()
         _sentinel_parser = argparse.ArgumentParser(add_help=False)
         for a in parser._actions:
@@ -1773,7 +1747,7 @@ def main():
 
     # Probe rollout setup: a deterministic inference-world env used to
     # log per-FG biomass evolution as policies train. Mirrors the
-    # inference.py scenario (fixed initial biomass + .npz impact maps)
+    # inference.py scenario (fixed initial biomass)
     # so that the trajectory log10(bh/b0) is directly comparable to
     # what the trained policy will face at inference time.
     probe_builder = _ProbeEnvBuilder(
@@ -2000,10 +1974,8 @@ def main():
     n_deltas = args.n_deltas
     if args.workers > 0:
         n_workers = args.workers
-        workers_origin = "explicit"
     else:
         n_workers = _auto_workers(n_deltas)
-        workers_origin = "auto"
 
     grid_str = f"{GRID_WIDTH}x{GRID_HEIGHT}"
     grid_is_default = (args.grid is None)
@@ -2171,9 +2143,7 @@ def main():
     # (impact_seed, spawn_seed) pairs introduced by --rollouts_per_delta.
     # It is seeded independently from numpy's global RNG so future M>1
     # work can reproduce world sequences without disturbing the rest of
-    # training. STEP 1 only generates and logs WorldList entries; the
-    # actual M>1 averaging in train_step is not yet active and only the
-    # first world (index 0) drives the legacy single-rollout path below.
+    # training.
     _world_rng = np.random.default_rng()
 
     def _parse_M_schedule(spec):
@@ -2223,16 +2193,16 @@ def main():
 
     # Cache of the current iteration's WorldList. Updated by
     # ``_refresh_world_list_if_needed`` according to --worlds_refresh.
-    # STEP 1: read-only consumer is ``_install_generation_maps`` which
+    # STEP 1: read-only consumer is ``_install_generation_worlds`` which
     # picks world[0] for the legacy single-world snapshot, preserving
     # exact byte-for-byte behaviour when M=1.
     _current_world_list = []  # list[tuple[int, int]]
     _last_world_gen = [-1]    # mutable holder so closure can write to it
 
-    def _refresh_world_list_if_needed(gen_idx, iter_idx):
+    def _refresh_world_list_if_needed(gen_idx):
         """Refresh ``_current_world_list`` according to the configured
-        policy. iteration -> always refresh; generation -> only on the
-        first iter of a new generation. Returns True iff the list was
+        policy. iteration -> always refresh; generation -> once per
+        generation. Returns True iff the list was
         (re)sampled in this call (Step 2 uses this to decide whether to
         re-install the env builder / rebuild the worker pool)."""
         nonlocal _current_world_list
@@ -2347,12 +2317,9 @@ def main():
                 for k in maps)
             print(f"    Impact maps (shared this gen, seed={impact_seed}): {summary}")
 
-    # PRESTANDA-INSTRUMENTERING: ackumulera tid spenderad i
-    # ``_install_generation_worlds`` (impact-map-sampling + env_builder
-    # rebuild + worker-broadcast). Före brodcast-fixen var detta typiskt
-    # 1–3 s per ARS-iteration; efter fixen bör det vara <100 ms. Skriver
-    # ut första gången, var 10:e iteration, samt en sammanställning vid
-    # slutet av varje generation.
+    # Track time spent installing the current world builder. This used to
+    # rebuild the worker pool every iteration; it should now stay cheap
+    # because workers only receive a new builder reference.
     import time as _time_install
     _install_stats = {'count': 0, 'total': 0.0, 'last_print_count': 0}
     _install_orig = _install_generation_worlds
@@ -2406,18 +2373,14 @@ def main():
                 print(f"    [resume] biomass.jsonl reached gen "
                       f"{_max_gen_logged}; continuing at gen "
                       f"{start_gen + 1}.")
-            # Varna om --n_eval_ticks skiljer sig fran senaste loggade
-            # rolloutens n_ticks. Det andrar bade avg_ratio (medel over
-            # rollout, som live viz pushar till biomass/energy-flikarna)
-            # OCH reward-signalen for --integral_reward, sa graferna far
-            # en synlig brytpunkt vid resume och optimeringens objective
-            # skiftar effektivt.
+            # A changed rollout length affects saved rollout averages
+            # and the integral reward used during optimization.
             if (_last_logged_n_ticks is not None
                     and _last_logged_n_ticks != int(args.n_eval_ticks)):
                 print(f"    [resume] WARN: --n_eval_ticks="
                       f"{int(args.n_eval_ticks)} skiljer sig fran senaste "
                       f"loggade n_ticks={_last_logged_n_ticks}. Detta "
-                      f"andrar avg-over-rollout serierna (biomass/energy) "
+                      f"andrar sparade avg-over-rollout varden "
                       f"och integral-reward-signalen; forvanta dig en "
                       f"brytpunkt i graferna och ett effektivt byte av "
                       f"optimeringens objective.")
@@ -2427,7 +2390,7 @@ def main():
 
     # --resume: ladda in tidigare graf-historik i viz-fönstret så att
     # plot-flikarna (reward/biomass/energy/move/rest/eat/predation/
-    # starvation/impacts) inte startar tomma. Vi läser samma
+    # starvation) inte startar tomma. Vi läser samma
     # ``biomass.jsonl`` som redan används för gen-numreringen och
     # pushar en punkt per (gen, iter) via ``viz.update_series`` /
     # ``viz.update_reward`` med samma x-koordinat (``viz_step =
@@ -2512,10 +2475,6 @@ def main():
                                     "starvation", str(_fid),
                                     100.0 * float(_parts.get('starvation', 0.0)),
                                     step=int(_step))
-                                viz.update_series(
-                                    "impacts", str(_fid),
-                                    100.0 * float(_parts.get('impact', 0.0)),
-                                    step=int(_step))
                             except Exception:
                                 pass
                     # Random-action baseline (om loggad) — samma serier
@@ -2551,10 +2510,6 @@ def main():
                                     viz.update_series(
                                         "starvation", str(_fid) + "_rnd",
                                         100.0 * float(_parts.get('starvation', 0.0)),
-                                        step=int(_step))
-                                    viz.update_series(
-                                        "impacts", str(_fid) + "_rnd",
-                                        100.0 * float(_parts.get('impact', 0.0)),
                                         step=int(_step))
                                 except Exception:
                                     pass
@@ -2600,12 +2555,12 @@ def main():
             _elapsed = _fmt_elapsed(_time.monotonic() - _training_start_ts)
             print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ({_elapsed}) ==========")
             # Step 2: WorldList must be populated before world[0] can be
-            # installed. ``_refresh_world_list_if_needed(gen, 0)`` returns
+            # installed. ``_refresh_world_list_if_needed(gen)`` returns
             # True on the first iter of each generation (both policies),
             # so we always install at least once per generation here. The
             # per-iter loops below may refresh again (iteration policy)
             # and re-install via ``_maybe_reinstall_worlds``.
-            _refresh_world_list_if_needed(gen, 0)
+            _refresh_world_list_if_needed(gen)
             _install_generation_worlds(gen)
             if args.coevolution:
                 # Co-evolution: all species are trained simultaneously per iteration
@@ -2616,7 +2571,7 @@ def main():
                     print(f"    {species}: in={policy_params[species][0]} "
                           f"out={policy_params[species][1]}")
                 for i in range(args.iter_per_gen):
-                    if i > 0 and _refresh_world_list_if_needed(gen, i):
+                    if i > 0 and _refresh_world_list_if_needed(gen):
                         _install_generation_worlds(gen)
                     # Läs n_eval_ticks-slidern (om sliz finns). Värdet
                     # tillämpas mellan iterationer för att hålla
@@ -2678,7 +2633,7 @@ def main():
                     print(f"    Output dim: {policy_params[species][1]}")
 
                     for i in range(args.iter_per_gen):
-                        if i > 0 and _refresh_world_list_if_needed(gen, i):
+                        if i > 0 and _refresh_world_list_if_needed(gen):
                             _install_generation_worlds(gen)
                         # Läs n_eval_ticks-slidern (säkert mellan iter).
                         _neval = int(args.n_eval_ticks)
