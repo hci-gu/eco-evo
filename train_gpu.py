@@ -10,9 +10,11 @@ from pathlib import Path
 
 import torch
 
-from lib.gpu.cli import add_common_arguments, builder_from_args, positive_int, targets_from_args, trainer_options
+from lib.gpu.cli import (add_common_arguments, builder_from_args, positive_int,
+                         targets_from_args, trainer_options, parse_training_args)
 from lib.gpu.config import ProjectSpec
 from lib.gpu.trainer import TensorARSTrainer
+from lib.runners.profiles import PROFILES, gpu_profile
 
 
 def world_schedule(value):
@@ -38,9 +40,11 @@ def save_checkpoint(trainer, directory, generation, iteration_in_generation, opt
     trainer.export_policies(directory)
 
 
-def main(argv=None, *, on_step=None):
+def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     add_common_arguments(parser)
+    parser.add_argument("--profile", choices=list(PROFILES), default=None,
+                        help="Shared CPU/GPU training preset; explicit CLI flags override profile values.")
     parser.add_argument("--device", default="cuda", help="cuda, cuda:1, or cpu for validation")
     parser.add_argument("--generations", default="inf", help="Additional generations to run, or inf")
     parser.add_argument("--iter-per-gen", "--iter_per_gen", dest="iter_per_gen", type=positive_int, default=20)
@@ -56,7 +60,12 @@ def main(argv=None, *, on_step=None):
     parser.add_argument("--temp-start", "--temp_start", dest="temp_start", type=float, default=3.0)
     parser.add_argument("--temp-end", "--temp_end", dest="temp_end", type=float, default=1.0)
     parser.add_argument("--temp-anneal-gens", "--temp_anneal_gens", dest="temp_anneal_gens", type=positive_int, default=10)
-    args = parser.parse_args(argv)
+    return parser
+
+
+def main(argv=None, *, on_step=None):
+    parser = build_parser()
+    args = parse_training_args(parser, argv)
     try:
         generations = None if args.generations.lower() == "inf" else positive_int(args.generations)
         schedule = world_schedule(args.worlds_schedule)
@@ -101,6 +110,9 @@ def main(argv=None, *, on_step=None):
     (directory / "gpu_run.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(f"Device: {trainer.model.device}; {args.n_deltas} delta pairs, {args.worlds} worlds, "
           f"{args.ticks} ticks; execution={args.execution}", flush=True)
+    if args.profile is not None:
+        resolved = ", ".join(f"{key}={getattr(args, key)}" for key in gpu_profile(args.profile))
+        print(f"Profile: {args.profile} (explicit CLI flags take precedence). Resolved: {resolved}", flush=True)
     print(f"Output: {directory}. First iteration includes warmup/compilation/capture.", flush=True)
     if args.currents == "on":
         print(f"Currents: on; max drift={args.current_strength:g}/tick, "

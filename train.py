@@ -15,6 +15,7 @@ from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.runners.trainer import ARSTrainer
+from lib.runners.profiles import PROFILES
 from lib.runners.population_stability import (add_population_arguments, population_options,
                                                StabilityScore)
 
@@ -1598,7 +1599,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "reward plot. Requires pygame; if unavailable the flag "
                              "is silently ignored. Main-process only.")
     parser.add_argument("--profile", type=str, default=None,
-                        choices=["sanity", "info", "deep"],
+                        choices=list(PROFILES),
                         help="Preset hyperparameter profile for co-evolution: "
                              "'sanity' (~15 min quick check), 'info' (~1-2h standard run), "
                              "'deep' (~6-10h publication quality). Explicitly given CLI flags "
@@ -1625,50 +1626,6 @@ def main(argv=None, *, on_step=None, confirm=True):
     # to let the biological rules drive behaviour instead of
     # action-distribution hacks. The flags remain and can be enabled
     # manually without --profile.
-    PROFILES = {
-        "sanity": {
-            "coevolution": True,
-            "generations": "10",
-            "iter_per_gen": 15,
-            "n_deltas": 16,
-            "n_eval_ticks": 100,
-            "temp_anneal_gens": 8,
-            "argmax_penalty": 0.0,
-            "entropy_coef": 0.0,
-            "temp_start": 1.0,
-            "temp_end": 1.0,
-            "uniform_bias_init": False,
-            "rollouts_per_delta": 3,
-        },
-        "info": {
-            "coevolution": True,
-            "generations": "10",
-            "iter_per_gen": 20,
-            "n_deltas": 16,
-            "n_eval_ticks": 150,
-            "temp_anneal_gens": 30,
-            "argmax_penalty": 0.0,
-            "entropy_coef": 0.0,
-            "temp_start": 1.0,
-            "temp_end": 1.0,
-            "uniform_bias_init": False,
-            "rollouts_per_delta": 3,
-        },
-        "deep": {
-            "coevolution": True,
-            "generations": "80",
-            "iter_per_gen": 20,
-            "n_deltas": 20,
-            "n_eval_ticks": 200,
-            "temp_anneal_gens": 60,
-            "argmax_penalty": 0.0,
-            "entropy_coef": 0.0,
-            "temp_start": 1.0,
-            "temp_end": 1.0,
-            "uniform_bias_init": False,
-            "rollouts_per_delta": 3,
-        },
-    }
     if args.profile is not None:
         prof = PROFILES[args.profile]
         # Determine which args were explicitly supplied on the command line by

@@ -7,6 +7,7 @@ import re
 from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
 from lib.runners.population_stability import add_population_arguments, population_options
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.runners.profiles import gpu_profile
 
 
 def grid_size(value):
@@ -55,6 +56,20 @@ def add_common_arguments(parser):
     parser.add_argument("--execution", choices=("eager", "compile", "cuda-graph", "compile-graph"), default="cuda-graph")
     parser.add_argument("--graph-ticks", type=positive_int, default=32)
     parser.add_argument("--pairs-per-batch", type=positive_int, help="Limit simultaneous perturbation pairs to fit VRAM")
+
+
+def parse_training_args(parser, argv=None):
+    """Fill missing options from a profile while retaining all explicit flags.
+
+    Argparse only installs defaults for attributes missing from the namespace.
+    Pre-populating that namespace on the second parse handles aliases, boolean
+    flags, '--option=value', and explicit values equal to ordinary defaults.
+    The parser's defaults are never mutated.
+    """
+    args = parser.parse_args(argv)
+    if args.profile is None:
+        return args
+    return parser.parse_args(argv, namespace=argparse.Namespace(**gpu_profile(args.profile)))
 
 
 def builder_from_args(args):

@@ -77,7 +77,37 @@ uv run --locked train_gpu.py \
 
 By default all decision makers co-evolve. `--species gadoids pelagic_fish` limits trained species while retaining the other policies in every ecosystem; `--no-coevolution` trains targets in round-robin order. Common reward, normalization, mortality, migration, and policy-network options have the same meanings as the CPU runner. Underscore aliases are accepted for the main existing training options. Run either entry point with `--help` for its complete interface.
 
-Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`. CPU `--profile` presets and the interactive Pygame UI are not part of the headless GPU CLI.
+Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`. The interactive Pygame UI is not part of the headless GPU CLI.
+
+### Training profiles
+
+Both `train.py` and `train_gpu.py` accept `--profile sanity`, `--profile info`,
+or `--profile deep`, using the same preset definitions:
+
+| Profile | Generations | Updates/generation | Delta pairs | Ticks/rollout | Worlds | Temperature schedule length |
+| --- | --- | --- | --- | --- | --- | --- |
+| `sanity` | 10 | 15 | 16 | 100 | 3 | 8 generations |
+| `info` | 10 | 20 | 16 | 150 | 3 | 30 generations |
+| `deep` | 80 | 20 | 20 | 200 | 3 | 60 generations |
+
+All profiles enable co-evolution, set entropy and argmax coefficients to 0,
+set both start/end temperatures to 1, and disable uniform-bias initialization.
+With both temperatures at 1, the schedule length has no effect unless you
+override one of those temperatures. Other options keep their ordinary defaults.
+
+Explicit flags always win, regardless of position or hyphen/underscore aliases.
+For example, `--profile info --ticks 5000 --iter-per-gen 50` retains 5,000 ticks
+and 50 updates instead of the preset's 150 and 20. The resolved settings are
+printed at startup and saved in `gpu_run.json` and checkpoint options. Resume
+still requires supplying the desired profile/options again.
+
+```bash
+uv run train_gpu.py --project mareld2.yaml --profile info --grid 16x16 --population-stability --currents on --run-name mareld-info-currents
+```
+
+With the progress wrapper, put `--profile info` after `--`, alongside the other
+trainer flags. Profiles apply to training; they do not change wrapper evaluation
+settings. `benchmark_gpu.py` continues to use its explicit benchmark options.
 
 `results/mareld-gpu/` contains `trainer.pth` for complete resume, `policy_<species>.pth` files compatible with the existing inference/CPU-training loaders, `gpu_run.json` with configuration metadata, and `training.jsonl` with compact numerical diagnostics. For a non-default network, pass the matching `--policynetwork LAYERS NODES ACTIVATION` to existing inference tools. The CPU batched-policy path now honors sigmoid/ReLU/tanh consistently with individual policies; previously it always used sigmoid.
 
