@@ -50,6 +50,8 @@ Interactive scripts require a graphical desktop. The configuration editor also r
 
 `train_progress.py` wraps either trainer and periodically pauses between completed ARS updates to evaluate the current networks. It continuously updates one image with a line per species: **consecutive inference ticks within the biomass bounds on the Y-axis, inference evaluation number on the X-axis**. Each evaluation adds a point to the saved history and redraws the full graph. No GUI is needed.
 
+The wrapper starts training without an interactive confirmation prompt. After startup, it prints an `[progress] evaluation=...` message before running inference and reports the image path when the evaluation finishes.
+
 Put graph options before `--`, followed by the usual arguments for the selected trainer:
 
 ```bash
@@ -67,12 +69,14 @@ uv run --locked train_progress.py --backend cpu \
 The output defaults to `results/<run-name>/progress/` (or `<--output>/progress/` for the GPU trainer). Set `--plot-dir PATH` before `--` to choose another folder. It contains:
 
 - `latest.png`: the complete graph, replaced after each evaluation.
-- `survival.jsonl`: the persistent history, including evaluation number, training step, measurements and initial biomass for every species.
+- `survival.jsonl`: the persistent history, including evaluation number, training step, measurements and initial biomass for each decision maker, plus the actual inference length (`ticks_run`).
 - `config.json`: the evaluation settings used for this history.
 
-A baseline is saved as evaluation 1 before training starts, followed by evaluations at multiples of `--eval-every`. One training step means one completed optimizer update: a joint update in co-evolution mode, or a single-species update in round-robin mode. For example, with `--eval-every 20`, evaluations 1, 2 and 3 correspond to training steps 0, 20 and 40. The graph includes all active functional groups, including groups without a network. Only one PNG is maintained; there are no per-evaluation image copies.
+A baseline is saved as evaluation 1 before training starts, followed by evaluations at multiples of `--eval-every`. One training step means one completed optimizer update: a joint update in co-evolution mode, or a single-species update in round-robin mode. For example, with `--eval-every 20`, evaluations 1, 2 and 3 correspond to training steps 0, 20 and 40. The graph includes only decision-making species with policies. Non-acting groups such as phytoplankton remain in the ecosystem but are excluded from the graph, including when resuming older histories. Only one PNG is maintained; there are no per-evaluation image copies.
 
 For each species, `B0` is its total biomass at the start of the inference rollout. The bounds are inclusive: `0.3 × B0 <= B(t) <= 3.0 × B0` by default. A breach on tick 1 scores 0; a breach on tick 10 scores 9; staying inside the bounds for the full rollout scores `--eval-ticks`. Recovery after a breach does not restart the counter. Nonfinite biomass counts as a breach. Groups with zero starting biomass are excluded from the graph and recorded as `null`.
+
+Inference stops as soon as every decision maker has left the biomass bounds, even if non-acting groups are still alive. For example, `--eval-ticks 5000` is a maximum: if the last decision maker breaches its bounds at tick 230, evaluation stops at tick 230 and training resumes. The console reports the actual number of ticks used.
 
 Evaluation uses the existing **CPU inference simulation for both trainers**, with copied current weights and frozen observation-normalization statistics. It uses the project's `inference_initial_biomass` values and the training grid, mortality and migration settings. Each evaluation reuses the same world and environmental-noise seed (`--eval-seed`, default `20260530`) and a fixed softmax temperature (`--eval-temperature`, default `1.0`). Training randomness and statistics are preserved. This is one repeatable inference scenario; reaching the tick cap means the species stayed in range for that horizon. Longer horizons add time to each training pause.
 

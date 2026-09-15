@@ -44,9 +44,9 @@ def main(argv=None):
                                lower, upper, args.eval_seed, args.eval_temperature, args.plot_dir)
     if args.backend == "gpu":
         from train_gpu import main as train_main
-    else:
-        from train import main as train_main
-    return train_main(training_args, on_step=monitor)
+        return train_main(training_args, on_step=monitor)
+    from train import main as train_main
+    return train_main(training_args, on_step=monitor, confirm=False)
 
 
 if __name__ == "__main__":

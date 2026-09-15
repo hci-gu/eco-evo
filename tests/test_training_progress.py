@@ -25,14 +25,17 @@ from train_progress import main as progress_main
 
 
 class BiomassTrace:
-    def __init__(self, rows):
+    def __init__(self, rows, dm_ids=None):
         self.rows = iter(rows)
         self.fgs = {str(i): SimpleNamespace(biomass=np.array([value], dtype=float))
                     for i, value in enumerate(next(self.rows))}
+        self.dm_ids = list(self.fgs) if dm_ids is None else dm_ids
+        self.tick_count = 0
 
     def tick(self):
         for fg, value in zip(self.fgs.values(), next(self.rows)):
             fg.biomass[:] = value
+        self.tick_count += 1
 
 
 def test_first_breach_is_per_species_inclusive_and_never_restarts():
@@ -45,6 +48,26 @@ def test_first_breach_is_per_species_inclusive_and_never_restarts():
     result = measure_survival(env, 3, 0.3, 3.0)
     assert result["survival_ticks"] == {"0": 1, "1": 1, "2": 0, "3": None, "4": 0, "5": 2}
     assert measure_survival(BiomassTrace([[10], [10], [10]]), 2, 0.3, 3)["survival_ticks"] == {"0": 2}
+
+
+def test_evaluation_stops_when_all_decision_makers_leave_bounds():
+    env = BiomassTrace([
+        [10, 10, 100],
+        [2, 10, 100],  # first DM fails, second DM keeps the rollout running
+        [10, 31, 100],  # second DM fails; first DM's recovery does not reset it
+    ], dm_ids=["0", "1"])
+    result = measure_survival(env, 5000, 0.3, 3)
+    assert env.tick_count == result["ticks_run"] == 2
+    assert result["survival_ticks"] == {"0": 0, "1": 1}
+    assert result["initial_biomass"] == {"0": 10, "1": 10}
+    assert env.fgs["2"].biomass.sum() == 100  # non-acting group is still alive
+
+
+@pytest.mark.parametrize("dm_ids", [[], ["0"]])
+def test_evaluation_skips_ticks_when_no_decision_makers_have_starting_biomass(dm_ids):
+    env = BiomassTrace([[0, 100]], dm_ids=dm_ids)
+    result = measure_survival(env, 5000, 0.3, 3)
+    assert env.tick_count == result["ticks_run"] == 0
 
 
 def test_evaluation_rng_restores_all_cpu_generators_even_on_failure():
@@ -100,6 +123,7 @@ def test_evaluation_uses_current_weights_and_stats_without_changing_next_update(
     control = copy.deepcopy(trainer)
     with evaluation_randomness(200):
         first = monitor.evaluate(trainer)
+        assert set(first["survival_ticks"]) == set(env.dm_ids)
         assert monitor.evaluate(trainer) == first
         update(trainer, backend)
     with evaluation_randomness(200):

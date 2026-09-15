@@ -31,28 +31,33 @@ def evaluation_randomness(seed):
 
 
 def measure_survival(env, ticks, lower, upper):
-    """Count consecutive post-step ticks inside [lower*B0, upper*B0].
+    """Count decision makers' post-step ticks inside [lower*B0, upper*B0].
 
     A breach on tick 1 scores 0; surviving the entire horizon scores `ticks`.
     Returning inside the band after a breach never restarts the counter.
     Groups with zero initial biomass have no defined ratio and score None.
+    Stop once every decision maker has breached the bounds; non-acting
+    groups still participate in the ecosystem but do not prolong evaluation.
     """
-    ids = sorted(env.fgs)
+    ids = sorted(env.dm_ids)
     initial = np.array([env.fgs[f].biomass.sum() for f in ids], dtype=np.float64)
     if not np.isfinite(initial).all() or (initial < 0).any():
         raise ValueError("Inference initial biomass must be finite and nonnegative")
     present = initial > 0
     alive, survived = present.copy(), np.zeros(len(ids), dtype=np.int64)
+    ticks_run = 0
     for _ in range(ticks):
         if not alive.any():
             break
         env.tick()
+        ticks_run += 1
         current = np.array([env.fgs[f].biomass.sum() for f in ids], dtype=np.float64)
         alive &= np.isfinite(current) & (current >= lower * initial) & (current <= upper * initial)
         survived += alive
     return {
         "survival_ticks": {f: int(survived[i]) if present[i] else None for i, f in enumerate(ids)},
         "initial_biomass": dict(zip(ids, initial.tolist())),
+        "ticks_run": ticks_run,
     }
 
 
@@ -176,7 +181,8 @@ class TrainingProgress:
             # Monitoring failures must not discard a completed training update.
             print(f"[progress] WARNING: evaluation/plot failed at step {step}: {error}", flush=True)
             return
-        print(f"[progress] updated {self.directory / 'latest.png'} ({time.perf_counter() - started:.1f}s)", flush=True)
+        print(f"[progress] updated {self.directory / 'latest.png'} "
+              f"({result['ticks_run']}/{self.ticks} ticks, {time.perf_counter() - started:.1f}s)", flush=True)
 
     def _plot(self):
         from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -186,7 +192,8 @@ class TrainingProgress:
         fig = Figure(figsize=(11, 6), layout="constrained")
         FigureCanvasAgg(fig)
         ax = fig.subplots()
-        ids = sorted(self.records[-1]["survival_ticks"])
+        # Old histories may contain non-acting groups; only plot current DMs.
+        ids = sorted(self.template.dm_ids)
         missing = []
         for i, fid in enumerate(ids):
             values = [r["survival_ticks"][fid] for r in self.records]
