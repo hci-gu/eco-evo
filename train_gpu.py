@@ -38,7 +38,7 @@ def save_checkpoint(trainer, directory, generation, iteration_in_generation, opt
     trainer.export_policies(directory)
 
 
-def main(argv=None):
+def main(argv=None, *, on_step=None):
     parser = argparse.ArgumentParser(description=__doc__)
     add_common_arguments(parser)
     parser.add_argument("--device", default="cuda", help="cuda, cuda:1, or cpu for validation")
@@ -113,6 +113,8 @@ def main(argv=None):
     previous_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGINT, signal.SIGTERM)}
     save_final = False
     try:
+        if on_step is not None:
+            on_step(trainer, trainer.iterations_completed, directory, args)
         with (directory / "training.jsonl").open("a") as log:
             for gen in itertools.count(generation):
                 if stop is not None and gen >= stop:
@@ -128,9 +130,13 @@ def main(argv=None):
                     epoch = gen if args.worlds_refresh == "generation" else None
                     if args.coevolution:
                         trainer.train_step(targets, args.ticks, epoch)
+                        if on_step is not None:
+                            on_step(trainer, trainer.iterations_completed, directory, args)
                     else:
                         for species in targets:
                             trainer.train_step([species], args.ticks, epoch)
+                            if on_step is not None:
+                                on_step(trainer, trainer.iterations_completed, directory, args)
                     next_generation, next_within = gen, iteration + 1
                     if trainer.iterations_completed % args.log_every == 0:
                         metrics = trainer.metrics()  # intentional compact readback

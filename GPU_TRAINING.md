@@ -96,6 +96,8 @@ uv run --locked train_gpu.py \
 
 `--snapshot-every N` optionally saves one final candidate ecosystem as an `.npz` every N generations. It is a perturbed training candidate from the final chunk, not a baseline-policy evaluation or a complete trajectory. Existing inference tools remain the route for baseline-policy visualization. Snapshots and checkpoint/metrics readbacks are explicit output boundaries; none occur inside ecological ticks.
 
+For a single PNG graph of baseline-policy survival during training, use the [`train_progress.py` wrapper](README.md#simple-training-progress-graph). It pauses every N completed updates, evaluates copied current policies in the CPU inference simulation, and updates `progress/latest.png` with per-species ticks inside configurable biomass bounds. The wrapper supports both trainers and preserves their training state.
+
 For a quick check on a machine without CUDA:
 
 ```bash

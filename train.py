@@ -1182,7 +1182,7 @@ def get_dynamic_policy_params(fgs):
         params[fg_id] = (in_dim_i, out_dim)
     return params
 
-def main():
+def main(argv=None, *, on_step=None):
     # Detach from the controlling terminal's foreground process group so that
     # Ctrl+C (SIGINT from the TTY) is delivered ONLY to this parent process,
     # not broadcast to every spawned worker. Without this, when workers are
@@ -1377,7 +1377,7 @@ def main():
                              "OVERRIDE the profile values - the profile only fills in values "
                              "not specified on the command line.")
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # --- Profile application -----------------------------------------------
     # Each profile defines a fixed hyperparameter recipe. If --profile is set,
@@ -1453,7 +1453,7 @@ def main():
                 kwargs["type"] = a.type
                 kwargs["choices"] = a.choices
             _sentinel_parser.add_argument(*a.option_strings, **kwargs)
-        _ns, _ = _sentinel_parser.parse_known_args()
+        _ns, _ = _sentinel_parser.parse_known_args(argv)
         explicit = {k: v for k, v in vars(_ns).items() if v is not _sentinel}
 
         # Explicit CLI flags take precedence: only apply profile values for
@@ -2284,7 +2284,10 @@ def main():
         m, s = divmod(rem, 60)
         return f"{h:02d}:{m:02d}:{s:02d}"
 
+    completed_steps = start_gen * args.iter_per_gen * (1 if args.coevolution else len(target_species))
     try:
+        if on_step is not None:
+            on_step(trainer, completed_steps, run_dir, args)
         for gen in gen_iter:
             # Linear softmax-temperature annealing from temp_start -> temp_end
             # over the first temp_anneal_gens generations.
@@ -2326,6 +2329,9 @@ def main():
                             pass
                     means = trainer.train_step_coevolution(
                         target_species, n_eval_ticks=_neval)
+                    completed_steps += 1
+                    if on_step is not None:
+                        on_step(trainer, completed_steps, run_dir, args)
                     summary = " | ".join(
                         f"{fid}={means[fid]:+.4f}" for fid in target_species)
                     print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
@@ -2386,6 +2392,9 @@ def main():
                                 pass
                         # n_eval_ticks: how many time steps (ticks) each test run lasts
                         avg_reward = trainer.train_step(species, n_eval_ticks=_neval)
+                        completed_steps += 1
+                        if on_step is not None:
+                            on_step(trainer, completed_steps, run_dir, args)
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
                         if viz is not None:
                             viz.update_reward(species, float(avg_reward),
