@@ -15,12 +15,16 @@ from lib.gpu.policy import PolicyBank
 from lib.gpu.rollout import RolloutRunner
 from lib.gpu.trainer import TensorARSTrainer, ars_update
 from lib.runners.trainer import ARSTrainer
+from lib.runners.population_stability import PopulationStability
 from test_gpu_ecosystem import make_env, DEVICES
 
 
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("legacy,integral", [(False, True), (False, False), (True, True), (True, False)])
-def test_complete_rollout_reward_stats_and_actions_match_cpu(device, legacy, integral):
+@pytest.mark.parametrize("stability", [None, PopulationStability(), PopulationStability(0.99, 1.01, 1, 1)])
+def test_complete_rollout_reward_stats_and_actions_match_cpu(device, legacy, integral, stability):
+    if stability is not None and (legacy or not integral):
+        pytest.skip("Stability uses integral total-energy scoring")
     torch.set_num_threads(1)
     env = make_env(True, True)
     model = TensorEcosystem(env, device)
@@ -28,11 +32,12 @@ def test_complete_rollout_reward_stats_and_actions_match_cpu(device, legacy, int
     params = {f: (model.in_dims[i], model.A) for i, f in enumerate(model.dm_ids)}
     reference = ARSTrainer(lambda seed=None: copy.deepcopy(env), params, n_workers=1,
                            hidden_dim=7, legacy_reward=legacy, integral_reward=integral,
-                           alpha=0.7, beta=1.2, survival_bonus=0.4)
+                           alpha=0.7, beta=1.2, survival_bonus=0.4, population_stability=stability)
     reference.policies = {f: copy.deepcopy(p).cpu() for f, p in bank.policies.items()}
     reference.softmax_temperature = 1.7
     runner = RolloutRunner(model, bank, 1, 1, execution="eager", legacy_reward=legacy,
-                           integral_reward=integral, alpha=0.7, beta=1.2, survival_bonus=0.4)
+                           integral_reward=integral, alpha=0.7, beta=1.2, survival_bonus=0.4,
+                           population_stability=stability)
     b, r, _, phase = model.import_state([env])
     mean = np.full((model.D, model.F), 0.03, dtype=np.float32)
     var = np.full_like(mean, 0.8)
@@ -49,7 +54,7 @@ def test_complete_rollout_reward_stats_and_actions_match_cpu(device, legacy, int
         np.testing.assert_allclose(action[0, d].cpu(), expected, atol=3e-6, rtol=3e-5)
     np.testing.assert_allclose(runner.obs_sum[0].cpu(), moments[0], atol=0.003, rtol=3e-5)
     np.testing.assert_allclose(runner.obs_sumsq[0].cpu(), moments[1], atol=0.003, rtol=3e-5)
-    assert moments[2] == ticks * model.C
+    assert moments[2] == int(runner.observed_ticks[0]) * model.C
 
 
 @pytest.mark.parametrize("top", [1, 3, 7])
@@ -76,8 +81,51 @@ def build_trainer(**kwargs):
                             worlds=2, seed=16, **kwargs)
 
 
-def test_chunking_is_equivalent_including_partial_final_batch():
-    whole, chunks = build_trainer(), build_trainer(pairs_per_batch=2)
+def test_stability_masks_worlds_independently_and_resets(monkeypatch):
+    env = make_env(True, True)
+    model = TensorEcosystem(env, "cpu")
+    bank = PolicyBank(model, hidden_dim=7)
+    runner = RolloutRunner(model, bank, 4, 1, execution="eager",
+                           population_stability=PopulationStability())
+    b, r, _, phase = model.import_state([env] * 4)
+    # Fail three worlds at different ticks; later recovery cannot reactivate them.
+    ratios = torch.tensor([[0.05, 1, 1, 1], [1, 4, 1, 1],
+                           [1, 1, 0.05, 1], [1, 1, 1, 1]])
+    def scripted_step(biomass, reserve, actions, tick, phase, multiplier):
+        next_b, next_r = b.clone(), r.clone()
+        d = model.dm_index[0]
+        next_b[:, d] *= ratios[tick, :, None]
+        next_r[:, d] *= ratios[tick, :, None]
+        return next_b, next_r, torch.zeros_like(b), None, None
+    monkeypatch.setattr(model, "step", scripted_step)
+    def reset():
+        runner.reset(b, r, phase, torch.zeros(4, dtype=torch.int64), 4,
+                     torch.zeros(model.D, model.F), torch.ones(model.D, model.F), torch.tensor(1.0))
+    reset()
+    for tick in range(4):
+        runner._tick()
+        if tick == 0:
+            first_b, first_obs = runner.biomass[0].clone(), runner.obs_sum[0].clone()
+            first_actions = runner.action_sum[0].clone()
+    reward, _ = runner.results(4)
+    expected = torch.tensor([-5, -3.75, -2.5, 0], dtype=torch.float64)[:, None].expand_as(reward)
+    torch.testing.assert_close(reward, expected)
+    assert runner.observed_ticks.tolist() == [1, 2, 3, 4]
+    assert runner.valid_ticks.tolist() == [0, 1, 2, 4]
+    torch.testing.assert_close(runner.biomass[0], first_b)
+    torch.testing.assert_close(runner.obs_sum[0], first_obs)
+    torch.testing.assert_close(runner.action_sum[0], first_actions)
+    reset()
+    assert not runner.failed.any()
+    assert not runner.stability_sum.any()
+    runner.run(4)
+    torch.testing.assert_close(runner.results(4)[0], reward)
+
+
+@pytest.mark.parametrize("stability", [None, PopulationStability(0.99, 1.01, 1, 1)])
+def test_chunking_is_equivalent_including_partial_final_batch(stability):
+    whole = build_trainer(population_stability=stability)
+    chunks = build_trainer(pairs_per_batch=2, population_stability=stability)
     for _ in range(2):
         whole.train_step(n_eval_ticks=6)
         chunks.train_step(n_eval_ticks=6)
@@ -144,8 +192,9 @@ def test_reward_modifiers_match_reference_formula():
     np.testing.assert_allclose(trainer.last_metrics["reward_mean"], expected.mean(axis=(0, 1)), atol=1e-10)
 
 
-def test_full_tick_traces_without_graph_breaks():
-    trainer = build_trainer()
+@pytest.mark.parametrize("stability", [None, PopulationStability(0.99, 1.01, 1, 1)])
+def test_full_tick_traces_without_graph_breaks(stability):
+    trainer = build_trainer(population_stability=stability)
     trainer.train_step(n_eval_ticks=2)
     runner = trainer.runner
     snapshot = [v.clone() for v in runner.state_buffers]
@@ -161,8 +210,9 @@ def test_full_tick_traces_without_graph_breaks():
         torch.testing.assert_close(actual, ref)
 
 
-def test_numerical_training_loop_does_not_read_back_tensors(monkeypatch):
-    trainer = build_trainer()
+@pytest.mark.parametrize("stability", [None, PopulationStability(0.99, 1.01, 1, 1)])
+def test_numerical_training_loop_does_not_read_back_tensors(monkeypatch, stability):
+    trainer = build_trainer(population_stability=stability)
     trainer.train_step(n_eval_ticks=2)
     def forbidden(*args, **kwargs):
         raise AssertionError("Tensor readback in numerical training loop")
@@ -173,10 +223,13 @@ def test_numerical_training_loop_does_not_read_back_tensors(monkeypatch):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="NVIDIA GPU required")
 @pytest.mark.parametrize("execution", ["cuda-graph", "compile", "compile-graph"])
-def test_cuda_execution_matches_eager_and_replay_advances(execution):
+@pytest.mark.parametrize("stability", [None, PopulationStability(0.99, 1.01, 1, 1)])
+def test_cuda_execution_matches_eager_and_replay_advances(execution, stability):
     spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=(5, 6)))
-    eager = TensorARSTrainer(spec, device="cuda", execution="eager", n_deltas=2, worlds=2)
-    optimized = TensorARSTrainer(spec, device="cuda", execution=execution, graph_ticks=3, n_deltas=2, worlds=2)
+    eager = TensorARSTrainer(spec, device="cuda", execution="eager", n_deltas=2, worlds=2,
+                             population_stability=stability)
+    optimized = TensorARSTrainer(spec, device="cuda", execution=execution, graph_ticks=3, n_deltas=2, worlds=2,
+                                 population_stability=stability)
     for ticks in (7, 4):  # exercise remainder and a changed horizon
         eager.train_step(n_eval_ticks=ticks)
         optimized.train_step(n_eval_ticks=ticks)

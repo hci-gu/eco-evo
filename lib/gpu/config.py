@@ -10,6 +10,7 @@ from lib.config.config_loader import (
     setup_full_mareld_mvp,
 )
 from lib.environments.ecosystem import EcosystemEnvironment
+from lib.environments.ecosystem_env.currents import CurrentConfig
 
 
 DEFAULT_LIBRARY = str(Path(__file__).resolve().parents[2] / "fgconfig" / "fg_library.yaml")
@@ -24,10 +25,11 @@ class EnvironmentBuilder:
     migration: bool = False
     mortality: bool = False
     spawn_seed: int = None
+    currents: CurrentConfig | None = None
 
     def with_world(self, spawn_seed):
         return EnvironmentBuilder(self.project_path, self.library_path, self.grid,
-                                  self.migration, self.mortality, int(spawn_seed))
+                                  self.migration, self.mortality, int(spawn_seed), self.currents)
 
     def __call__(self, seed=None):
         kwargs = dict(library_path=self.library_path, grid_size=self.grid,
@@ -38,7 +40,8 @@ class EnvironmentBuilder:
             groups = setup_full_mareld_mvp(**kwargs)
         return EcosystemEnvironment(
             dict(height=self.grid[0], width=self.grid[1]), groups,
-            migration=self.migration, apply_natural_mortality=self.mortality)
+            migration=self.migration, apply_natural_mortality=self.mortality,
+            currents=self.currents, current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
 
 
 class ProjectSpec:
@@ -59,7 +62,8 @@ class ProjectSpec:
                 groups = setup_full_mareld_mvp(**kwargs)
             self.env = EcosystemEnvironment(
                 dict(height=builder.grid[0], width=builder.grid[1]), groups,
-                migration=builder.migration, apply_natural_mortality=builder.mortality)
+                migration=builder.migration, apply_natural_mortality=builder.mortality,
+                currents=builder.currents, current_world_seed=seed)
         finally:
             np.random.set_state(rng_state)
         self.allowed_mask = allowed_mask

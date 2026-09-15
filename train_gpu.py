@@ -102,6 +102,12 @@ def main(argv=None, *, on_step=None):
     print(f"Device: {trainer.model.device}; {args.n_deltas} delta pairs, {args.worlds} worlds, "
           f"{args.ticks} ticks; execution={args.execution}", flush=True)
     print(f"Output: {directory}. First iteration includes warmup/compilation/capture.", flush=True)
+    if args.currents == "on":
+        print(f"Currents: on; max drift={args.current_strength:g}/tick, "
+              f"period={args.current_period}, seed={args.current_seed}", flush=True)
+    if args.population_stability:
+        print(f"Population stability: biomass bounds [{args.population_min:g}, {args.population_max:g}) "
+              "× start; warnings, capped energy reward, failure tail −5/tick.", flush=True)
     stop = None if generations is None else generation + generations
     next_generation, next_within = generation, within
     started = time.perf_counter()

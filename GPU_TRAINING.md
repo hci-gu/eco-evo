@@ -1,5 +1,8 @@
 # GPU training and CPU comparison
 
+For the optional 10%–300% biomass bounds, warning penalties, and failed-rollout
+scoring, see [Population stability training](POPULATION_STABILITY.md).
+
 `train_gpu.py` runs batched ecosystems and ARS co-evolution on CUDA. Numerical state, spawning, random fields, policies, fitness, observation statistics, and ARS updates remain on the selected device. Python launches work and handles occasional logs, checkpoints, and optional snapshots. `train.py` remains the existing CPU training entry point.
 
 The implementation is in `lib/gpu/`. It also runs on CPU tensors for numerical validation. CPU reference comparisons, full-graph tracing, checkpoint/resume, and command-line smoke tests can run without a GPU. CUDA execution and performance must be verified on an NVIDIA machine; they were not available on the development machine.

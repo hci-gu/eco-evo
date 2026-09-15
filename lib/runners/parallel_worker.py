@@ -159,6 +159,11 @@ def _evaluate_coevo_task(task):
             env.obs_mean = mean[idx]
             env.obs_var = var[idx]
 
+    config = task.get('population_stability') if isinstance(task, dict) else None
+    if config is not None:
+        from lib.runners.population_stability import evaluate_stability
+        return evaluate_stability(env, fg_list, n_ticks, config, obs_pack is not None)
+
     # Initial state per evaluated species.
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
     r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
@@ -337,6 +342,13 @@ def _evaluate_task(task):
             idx = [dm_ids.index(fid) for fid in env.dm_ids]
             env.obs_mean = mean[idx]
             env.obs_var = var[idx]
+
+    config = task.get('population_stability') if isinstance(task, dict) else None
+    if config is not None:
+        from lib.runners.population_stability import evaluate_stability
+        fitness, samples, diagnostics = evaluate_stability(
+            env, [fg_to_train], n_ticks, config, obs_pack is not None)
+        return fitness[fg_to_train], samples, diagnostics[fg_to_train] if diagnostics else None
 
     b0 = float(env.fgs[fg_to_train].biomass.sum())
     r0 = float(env.fgs[fg_to_train].energy_reserve.sum())

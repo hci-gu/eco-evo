@@ -9,6 +9,7 @@ import math
 
 import numpy as np
 import torch
+from lib.environments.ecosystem_env.currents import direction_fractions
 
 
 class TensorEcosystem:
@@ -25,9 +26,12 @@ class TensorEcosystem:
         self.dm_positions = tuple(self.ids.index(fid) for fid in self.dm_ids)
         self.ndm_positions = tuple(i for i in range(self.G) if i not in self.dm_positions)
         self.migration = env.migration
+        self.currents = env.currents
+        self.current_world_seed = env.current_world_seed
         self.holling = env._has_holling2 or env._has_holling3
         tensor = self.tensor
         self.dm_index = tensor(self.dm_positions, torch.long)
+        self.ndm_index = tensor(self.ndm_positions, torch.long)
         self.is_dm = tensor([i in self.dm_positions for i in range(self.G)], torch.bool)[None, :, None]
         self.move_mask = tensor(env.move_mask.reshape(4, self.C))
         self.eat_mask = tensor(env.eat_static_mask)
@@ -250,8 +254,28 @@ class TensorEcosystem:
         r = torch.where(b <= 0, 0.0, r)
         return b, r, starve_loss
 
-    def step(self, biomass, reserve, actions, tick, phase, seed_multiplier):
+    def advect(self, biomass, reserve, tick, keys=None):
+        if self.currents is None or self.currents.strength == 0 or not self.ndm_positions:
+            return biomass, reserve
+        tick = torch.as_tensor(tick, dtype=torch.int64, device=self.device)
+        if keys is None:
+            keys = torch.full((biomass.shape[0],), self.current_world_seed,
+                              dtype=torch.int64, device=self.device)
+        fractions = torch.stack(direction_fractions(tick, keys, self.currents), dim=1)
+        fractions = fractions[:, None, :, None] * (self.move_mask * self.neighbor_valid)[None, None]
+        b, r = biomass[:, self.ndm_index], reserve[:, self.ndm_index]
+        b_out, r_out = b[:, :, None] * fractions, r[:, :, None] * fractions
+        b_total, r_total = b - b_out.sum(2), r - r_out.sum(2)
+        for direction in range(4):
+            source = (direction + 2) % 4
+            index, valid = self.neighbors[source], self.neighbor_valid[source]
+            b_total = b_total + b_out[:, :, direction, index] * valid
+            r_total = r_total + r_out[:, :, direction, index] * valid
+        return biomass.index_copy(1, self.ndm_index, b_total), reserve.index_copy(1, self.ndm_index, r_total)
+
+    def step(self, biomass, reserve, actions, tick, phase, seed_multiplier, current_keys=None):
         b, r, gains, hidden, intake = self.predation(biomass, reserve, actions)
         b, r = self.movement(b, r, gains, actions)
+        b, r = self.advect(b, r, tick, current_keys)
         b, r, starve_loss = self.population(b, r, tick, phase, seed_multiplier)
         return b, r, hidden, intake, starve_loss

@@ -4,6 +4,7 @@ import torch
 from lib.world.grid import Grid
 from lib.environments.ecosystem_env import (
     decisions,
+    currents as current_module,
     grid_masks,
     impacts as impact_module,
     interactions as interaction_module,
@@ -50,6 +51,8 @@ class EcosystemEnvironment:
         observable_impact_vars=None,
         apply_natural_mortality=True,
         migration=False,
+        currents=None,
+        current_world_seed=0,
     ):
         if policies is None and _looks_like_policies(interactions):
             policies, interactions = interactions, None
@@ -57,6 +60,8 @@ class EcosystemEnvironment:
         self.grid = Grid(**grid_config)
         self.apply_natural_mortality = bool(apply_natural_mortality)
         self.migration = bool(migration)
+        self.currents = currents
+        self.current_world_seed = int(current_world_seed or 0)
         self.fgs = functional_groups
         self.interactions = interactions
         self.policies = policies or {}
@@ -165,6 +170,7 @@ class EcosystemEnvironment:
         predation.apply_predation(self, actions)
         action_settlement = movement.apply_energy_costs(self, actions)
         movement.apply_movement(self, action_settlement)
+        current_module.apply_currents(self)
         population_change.apply_population_change(self, clip_nonviable=False)
         grid_masks.apply_accessibility_biomass_mask(self)
         # Extinction threshold: zero cells whose biomass has shrunk below

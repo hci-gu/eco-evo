@@ -4,6 +4,7 @@ import multiprocessing as mp
 import signal
 from lib.runners.policy import PolicyNetwork
 from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_coevo_task
+from lib.runners.population_stability import evaluate_stability, validate_reward
 
 class ARSTrainer:
     """ARS trainer with optional ARS-V2 extensions:
@@ -20,7 +21,9 @@ class ARSTrainer:
                  argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False,
                  hidden_layers=2, hidden_dim=30, activation="sig",
                  survival_bonus=0.0, survival_threshold=0.01,
-                 legacy_reward=False):
+                 legacy_reward=False, population_stability=None):
+        validate_reward(population_stability, integral_reward, legacy_reward)
+        self.population_stability = population_stability
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma
@@ -456,6 +459,7 @@ class ARSTrainer:
                             'survival_bonus': self.survival_bonus,
                             'survival_threshold': self.survival_threshold,
                             'legacy_reward': self.legacy_reward,
+                            'population_stability': self.population_stability,
                         })
             else:
                 for sign in (+1, -1):
@@ -479,6 +483,7 @@ class ARSTrainer:
                                 'survival_bonus': self.survival_bonus,
                                 'survival_threshold': self.survival_threshold,
                                 'legacy_reward': self.legacy_reward,
+                                'population_stability': self.population_stability,
                                 'env_builder': world_builders[m],
                             })
 
@@ -653,6 +658,11 @@ class ARSTrainer:
                 env.obs_mean = obs_mean[idx]
                 env.obs_var = obs_var[idx]
 
+        if self.population_stability is not None:
+            fitness, samples, diagnostics = evaluate_stability(
+                env, [fg_id], n_ticks, self.population_stability, obs_mean is not None)
+            return fitness[fg_id], samples, diagnostics[fg_id] if diagnostics else None
+
         b0 = float(env.fgs[fg_id].biomass.sum())
         r0 = float(env.fgs[fg_id].energy_reserve.sum())
         # Total-energi-reward: ec (MJ/ton) är konstant per FG.
@@ -774,6 +784,10 @@ class ARSTrainer:
                 idx = [dm_ids_for_norm.index(fid) for fid in env.dm_ids]
                 env.obs_mean = obs_mean[idx]
                 env.obs_var = obs_var[idx]
+
+        if self.population_stability is not None:
+            return evaluate_stability(env, fg_list, n_ticks, self.population_stability,
+                                      obs_mean is not None)
 
         b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
@@ -1034,6 +1048,7 @@ class ARSTrainer:
                             'survival_bonus': self.survival_bonus,
                             'survival_threshold': self.survival_threshold,
                             'legacy_reward': self.legacy_reward,
+                            'population_stability': self.population_stability,
                         })
             else:
                 # M>1: dict-tasks with per-world env_builder override. Layout:
@@ -1057,6 +1072,7 @@ class ARSTrainer:
                                 'survival_bonus': self.survival_bonus,
                                 'survival_threshold': self.survival_threshold,
                                 'legacy_reward': self.legacy_reward,
+                                'population_stability': self.population_stability,
                                 'env_builder': world_builders[m],
                             })
             results = self._pool_map(_evaluate_coevo_task, tasks)

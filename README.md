@@ -2,6 +2,12 @@
 
 Ecosystem simulation and ARS co-evolution training, with the original CPU runner and a batched GPU implementation.
 
+To experiment with 10%–300% population bounds and failure penalties, see
+[Population stability training](POPULATION_STABILITY.md).
+
+Use `--currents on` for seeded passive movement of non-decision makers during
+training or inference. See [random currents](CURRENTS.md) for tuning.
+
 ## Run with uv
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run commands from the repository root. Use uv 0.5.9 or newer.

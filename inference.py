@@ -31,6 +31,7 @@ import sys
 
 import numpy as np
 import torch
+from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 
 from lib.config.config_loader import (load_config, load_project_config, setup_full_mareld_mvp,
                                        compute_inference_b0_defaults,
@@ -359,7 +360,7 @@ def apply_b0_overrides(env, b0_overrides):
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
               apply_natural_mortality=False, allowed_mask=None,
-              migration=False):
+              migration=False, currents=None):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     accessibility = None
@@ -384,7 +385,7 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     env = EcosystemEnvironment(grid_config, fgs,
                                observable_impact_vars=observable_impact_vars,
                                apply_natural_mortality=apply_natural_mortality,
-                               migration=migration)
+                               migration=migration, currents=currents, current_world_seed=seed)
     if accessibility is not None:
         env.grid.add_map('accessibility', accessibility)
     # Impact maps are read from .npz files configured in the project's
@@ -945,7 +946,12 @@ def main():
                              "and a rolling total-biomass plot. Requires pygame; if "
                              "unavailable the flag is silently ignored.")
 
+    add_current_arguments(parser)
     args = parser.parse_args()
+    try:
+        currents = current_options(args)
+    except ValueError as error:
+        parser.error(str(error))
     verbose = not args.quiet
     if args.checkpoints is None:
         args.checkpoints = os.path.join("results", args.run_name)
@@ -970,7 +976,7 @@ def main():
 
     env = build_env(args.project, args.grid, seed=args.seed, verbose=verbose,
                     apply_natural_mortality=(args.mortality == "on"),
-                    migration=(args.migration == "on"))
+                    migration=(args.migration == "on"), currents=currents)
     if verbose:
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
     try:
@@ -1051,7 +1057,7 @@ def main():
                 env = build_env(args.project, args.grid, seed=args.seed,
                                 verbose=False,
                                 apply_natural_mortality=(args.mortality == "on"),
-                                migration=(args.migration == "on"))
+                                migration=(args.migration == "on"), currents=currents)
                 # Rebuild the static cache fields needed before refreshing
                 # batched policy weights.
                 env.build_static_caches()
@@ -1086,7 +1092,7 @@ def main():
                 rnd_env = build_env(args.project, args.grid, seed=args.seed,
                                     verbose=False,
                                     apply_natural_mortality=(args.mortality == "on"),
-                                    migration=(args.migration == "on"))
+                                    migration=(args.migration == "on"), currents=currents)
                 if b0_overrides:
                     apply_b0_overrides(rnd_env, b0_overrides)
                 if spawn_overrides:
