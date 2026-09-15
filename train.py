@@ -9,6 +9,7 @@ import os
 import argparse
 import json
 import re
+from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config,
                                       load_impact_spawn_specs)
 from lib.spawn import make_weights
@@ -440,8 +441,9 @@ class _ProbeEnvBuilder:
     PROBE_SEED = 20260530
 
     def __init__(self, project_path, grid_size, apply_natural_mortality=None,
-                 migration=None):
+                 migration=None, library_path=None):
         self.project_path = project_path
+        self.library_kwargs = {} if library_path is None else {"library_path": library_path}
         self.grid_height = int(grid_size[0])
         self.grid_width = int(grid_size[1])
         self.apply_natural_mortality = (
@@ -483,9 +485,10 @@ class _ProbeEnvBuilder:
         if self.project_path:
             fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
                 self.project_path, grid_size=grid_size, seed=s,
-                mode='inference', spawn_seed=s)
+                mode='inference', spawn_seed=s, **self.library_kwargs)
         else:
-            fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=s, spawn_seed=s)
+            fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=s, spawn_seed=s,
+                                      **self.library_kwargs)
             impact_vars = ['windfarm_noise']
             observable_impact_vars = ['windfarm_noise']
 
@@ -1583,127 +1586,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "(from the deterministic probe rollout) and a rolling "
                              "reward plot. Requires pygame; if unavailable the flag "
                              "is silently ignored. Main-process only.")
-    parser.add_argument("--profile", type=str, default=None,
-                        choices=["sanity", "info", "deep"],
-                        help="Preset hyperparameter profile for co-evolution: "
-                             "'sanity' (~15 min quick check), 'info' (~1-2h standard run), "
-                             "'deep' (~6-10h publication quality). Explicitly given CLI flags "
-                             "OVERRIDE the profile values - the profile only fills in values "
-                             "not specified on the command line.")
-
-    args = parser.parse_args(argv)
-
-    # --- Profile application -----------------------------------------------
-    # Each profile defines a fixed hyperparameter recipe. If --profile is set,
-    # the profile fills in values for any flag NOT explicitly given on the
-    # command line. Explicitly given CLI flags always take precedence over
-    # the profile (explicit > profile > parser default).
-    # The profiles NOW run without argmax-penalty, without entropy-bonus,
-    # without softmax-temperature annealing (T=1.0 at both ends) and without
-    # uniform-bias init - in line with konvergensproblem.txt's conclusion
-    # to let the biological rules drive behaviour instead of
-    # action-distribution hacks. The flags remain and can be enabled
-    # manually without --profile.
-    PROFILES = {
-        "sanity": {
-            "coevolution": True,
-            "generations": "10",
-            "iter_per_gen": 15,
-            "n_deltas": 16,
-            "n_eval_ticks": 100,
-            "temp_anneal_gens": 8,
-            "argmax_penalty": 0.0,
-            "entropy_coef": 0.0,
-            "temp_start": 1.0,
-            "temp_end": 1.0,
-            "uniform_bias_init": False,
-            "rollouts_per_delta": 3,
-        },
-        "info": {
-            "coevolution": True,
-            "generations": "10",
-            "iter_per_gen": 20,
-            "n_deltas": 16,
-            "n_eval_ticks": 150,
-            "temp_anneal_gens": 30,
-            "argmax_penalty": 0.0,
-            "entropy_coef": 0.0,
-            "temp_start": 1.0,
-            "temp_end": 1.0,
-            "uniform_bias_init": False,
-            "rollouts_per_delta": 3,
-        },
-        "deep": {
-            "coevolution": True,
-            "generations": "80",
-            "iter_per_gen": 20,
-            "n_deltas": 20,
-            "n_eval_ticks": 200,
-            "temp_anneal_gens": 60,
-            "argmax_penalty": 0.0,
-            "entropy_coef": 0.0,
-            "temp_start": 1.0,
-            "temp_end": 1.0,
-            "uniform_bias_init": False,
-            "rollouts_per_delta": 3,
-        },
-    }
-    if args.profile is not None:
-        prof = PROFILES[args.profile]
-        # Determine which args were explicitly supplied on the command line by
-        # re-parsing with all defaults set to a sentinel.
-        _sentinel = object()
-        _sentinel_parser = argparse.ArgumentParser(add_help=False)
-        for a in parser._actions:
-            if a.dest == "help" or not a.option_strings:
-                continue
-            kwargs = {"dest": a.dest, "default": _sentinel}
-            if isinstance(a, argparse._StoreTrueAction):
-                kwargs["action"] = "store_const"; kwargs["const"] = True
-            elif isinstance(a, argparse._StoreFalseAction):
-                kwargs["action"] = "store_const"; kwargs["const"] = False
-            else:
-                kwargs["nargs"] = a.nargs
-                kwargs["type"] = a.type
-                kwargs["choices"] = a.choices
-            _sentinel_parser.add_argument(*a.option_strings, **kwargs)
-        _ns, _ = _sentinel_parser.parse_known_args(argv)
-        explicit = {k: v for k, v in vars(_ns).items() if v is not _sentinel}
-
-        # Explicit CLI flags take precedence: only apply profile values for
-        # keys that the user did NOT specify on the command line. Track which
-        # profile values were skipped due to an explicit override so the user
-        # gets clear feedback.
-        applied = {}
-        overridden = []
-        for key, prof_val in prof.items():
-            if key in explicit:
-                # User-specified value wins; do not touch args.<key>.
-                if explicit[key] != prof_val:
-                    overridden.append((key, explicit[key], prof_val))
-            else:
-                setattr(args, key, prof_val)
-                applied[key] = prof_val
-
-        print(f"==========================================")
-        print(f"  PROFILE ACTIVE: --profile {args.profile}")
-        print(f"==========================================")
-        if applied:
-            print(f"Profile values applied (no explicit CLI override):")
-            for key, prof_val in applied.items():
-                print(f"  --{key.replace('_','-')} = {prof_val}")
-        else:
-            print(f"Profile '{args.profile}': every profile key was "
-                  f"overridden by an explicit CLI flag.")
-        if overridden:
-            print(f"\n[i] EXPLICIT CLI FLAGS OVERRIDE PROFILE - the following "
-                  f"profile values were NOT applied because you specified them "
-                  f"explicitly on the command line:")
-            for key, user_val, prof_val in overridden:
-                print(f"  --{key.replace('_','-')}: using your value {user_val!r} "
-                      f"(profile '{args.profile}' would have used {prof_val!r})")
-        print(f"------------------------------------------")
-    # -----------------------------------------------------------------------
+    add_profile_argument(parser)
+    args = parse_training_args(parser, argv)
 
     # Parse --generations: accept 'inf' or a positive integer.
     gen_raw = str(args.generations).strip().lower()

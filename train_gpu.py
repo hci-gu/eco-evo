@@ -1,4 +1,4 @@
-"""Headless GPU ecosystem training. See GPU_TRAINING.md for usage."""
+"""GPU ecosystem training with an optional live viewer. See GPU_TRAINING.md."""
 
 import argparse
 import itertools
@@ -13,6 +13,7 @@ import torch
 from lib.gpu.cli import add_common_arguments, builder_from_args, positive_int, targets_from_args, trainer_options
 from lib.gpu.config import ProjectSpec
 from lib.gpu.trainer import TensorARSTrainer
+from lib.training_profiles import add_profile_argument, parse_training_args
 
 
 def world_schedule(value):
@@ -56,7 +57,12 @@ def main(argv=None, *, on_step=None):
     parser.add_argument("--temp-start", "--temp_start", dest="temp_start", type=float, default=3.0)
     parser.add_argument("--temp-end", "--temp_end", dest="temp_end", type=float, default=1.0)
     parser.add_argument("--temp-anneal-gens", "--temp_anneal_gens", dest="temp_anneal_gens", type=positive_int, default=10)
-    args = parser.parse_args(argv)
+    parser.add_argument("--visual", action="store_true",
+                        help="Open the live pygame viewer with CPU inference probes between GPU updates")
+    add_profile_argument(parser)
+    args = parse_training_args(parser, argv, destinations={
+        "n_eval_ticks": "ticks", "rollouts_per_delta": "worlds",
+    })
     try:
         generations = None if args.generations.lower() == "inf" else positive_int(args.generations)
         schedule = world_schedule(args.worlds_schedule)
@@ -112,7 +118,11 @@ def main(argv=None, *, on_step=None):
         stop_requested = True
     previous_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGINT, signal.SIGTERM)}
     save_final = False
+    visual = None
     try:
+        if args.visual:
+            from lib.gpu.visual import GPUTrainingVisualizer
+            visual = GPUTrainingVisualizer(trainer, args, directory)
         if on_step is not None:
             on_step(trainer, trainer.iterations_completed, directory, args)
         with (directory / "training.jsonl").open("a") as log:
@@ -128,15 +138,16 @@ def main(argv=None, *, on_step=None):
                 trainer.set_temperature(args.temp_start + fraction * (args.temp_end - args.temp_start))
                 for iteration in range(within if gen == generation else 0, args.iter_per_gen):
                     epoch = gen if args.worlds_refresh == "generation" else None
-                    if args.coevolution:
-                        trainer.train_step(targets, args.ticks, epoch)
+                    ticks = args.ticks if visual is None else visual.training_ticks(args.ticks)
+                    batches = [targets] if args.coevolution else [[species] for species in targets]
+                    for batch in batches:
+                        if visual is None:
+                            trainer.train_step(batch, ticks, epoch)
+                        else:
+                            visual.train_step(trainer, batch, ticks, epoch)
+                            visual.update(trainer, batch, gen, iteration, args.ticks)
                         if on_step is not None:
                             on_step(trainer, trainer.iterations_completed, directory, args)
-                    else:
-                        for species in targets:
-                            trainer.train_step([species], args.ticks, epoch)
-                            if on_step is not None:
-                                on_step(trainer, trainer.iterations_completed, directory, args)
                     next_generation, next_within = gen, iteration + 1
                     if trainer.iterations_completed % args.log_every == 0:
                         metrics = trainer.metrics()  # intentional compact readback
@@ -166,6 +177,8 @@ def main(argv=None, *, on_step=None):
         print("Interrupted; saving the last completed update.", flush=True)
         save_final = True
     finally:
+        if visual is not None:
+            visual.close()
         for sig, handler in previous_handlers.items():
             signal.signal(sig, handler)
         if save_final:

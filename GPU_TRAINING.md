@@ -1,6 +1,6 @@
 # GPU training and CPU comparison
 
-`train_gpu.py` runs batched ecosystems and ARS co-evolution on CUDA. Numerical state, spawning, random fields, policies, fitness, observation statistics, and ARS updates remain on the selected device. Python launches work and handles occasional logs, checkpoints, and optional snapshots. `train.py` remains the existing CPU training entry point.
+`train_gpu.py` runs batched ecosystems and ARS co-evolution on CUDA. Numerical state, spawning, random fields, policies, fitness, observation statistics, and ARS updates remain on the selected device. Python launches work and handles occasional logs, checkpoints, optional snapshots, and an opt-in live viewer. `train.py` remains the existing CPU training entry point.
 
 The implementation is in `lib/gpu/`. It also runs on CPU tensors for numerical validation. CPU reference comparisons, full-graph tracing, checkpoint/resume, and command-line smoke tests can run without a GPU. CUDA execution and performance must be verified on an NVIDIA machine; they were not available on the development machine.
 
@@ -74,7 +74,37 @@ uv run --locked train_gpu.py \
 
 By default all decision makers co-evolve. `--species gadoids pelagic_fish` limits trained species while retaining the other policies in every ecosystem; `--no-coevolution` trains targets in round-robin order. Common reward, normalization, mortality, migration, and policy-network options have the same meanings as the CPU runner. Underscore aliases are accepted for the main existing training options. Run either entry point with `--help` for its complete interface.
 
-Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`. CPU `--profile` presets and the interactive Pygame UI are not part of the headless GPU CLI.
+Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`.
+
+Both trainers support the same `--profile sanity|info|deep` presets:
+
+| Profile | Generations | Iterations/generation | Delta pairs | Ticks | Worlds |
+| --- | --- | --- | --- | --- | --- |
+| `sanity` | 10 | 15 | 16 | 100 | 3 |
+| `info` | 10 | 20 | 16 | 150 | 3 |
+| `deep` | 80 | 20 | 20 | 200 | 3 |
+
+All presets enable co-evolution, set entropy and argmax modifiers to zero, keep temperature at 1, and disable uniform-bias initialization. Explicit CLI flags override the preset, including underscore aliases and values equal to ordinary defaults. World schedules still take precedence over the preset world count. Startup output lists applied values and overrides; `gpu_run.json` and checkpoints record the effective arguments. Presets specify training settings; runtime depends on the hardware and execution mode.
+
+```bash
+uv run --locked train_gpu.py --project mareld2.yaml --profile info --run-name mareld-gpu-info
+```
+
+The progress wrapper also forwards presets: `train_progress.py --backend gpu -- --profile info ...`.
+
+### Live visualization
+
+Add `--visual` to open the same Pygame viewer used by CPU training:
+
+```bash
+uv run --locked train_gpu.py --project mareld2.yaml --profile info --visual --run-name mareld-gpu-visual
+```
+
+The viewer shows biomass heatmaps, reward/biomass/energy/action/loss plots, and playback of a fixed inference world. After each completed ARS update it copies the current unperturbed policies and frozen normalization statistics to a separate CPU probe. Probe evaluation preserves the training state and random streams. Reward plots show the actual training rewards; heatmaps show the probe ecosystem. Probe records are appended to `biomass.jsonl`.
+
+Biomass and spawn controls change the probe world. The rollout-length slider changes the probe length; the separate `n_eval_ticks` slider changes training horizons between iterations. Closing the window (or pressing Q/Esc) disables visualization and training continues. Viewer failures also leave training running. Pygame events stay on the main thread while a single worker runs each GPU update, keeping the window responsive during compilation and execution. Visualization adds CPU probe time and a GPU synchronization boundary per update.
+
+The window requires a desktop display on the machine running training. On a headless server, use the `train_progress.py` PNG graph instead. The wrapper can also forward `--visual` after `--` when a desktop is available.
 
 `results/mareld-gpu/` contains `trainer.pth` for complete resume, `policy_<species>.pth` files compatible with the existing inference/CPU-training loaders, `gpu_run.json` with configuration metadata, and `training.jsonl` with compact numerical diagnostics. For a non-default network, pass the matching `--policynetwork LAYERS NODES ACTIVATION` to existing inference tools. The CPU batched-policy path now honors sigmoid/ReLU/tanh consistently with individual policies; previously it always used sigmoid.
 

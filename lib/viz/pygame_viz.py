@@ -228,9 +228,11 @@ class LiveVisualizer:
     _MIN_FRAME_INTERVAL = 1.0 / 30.0
 
     def __new__(cls, *args, **kwargs):
-        # Headless fallback: if no DISPLAY and SDL_VIDEODRIVER isn't set,
-        # silently switch to a dummy driver so CI / nohup runs don't crash.
-        if not os.environ.get("DISPLAY") and not os.environ.get("SDL_VIDEODRIVER"):
+        # Linux headless fallback. macOS/Windows native displays do not use
+        # DISPLAY, and Wayland desktops may only provide WAYLAND_DISPLAY.
+        if (sys.platform.startswith("linux") and not os.environ.get("DISPLAY")
+                and not os.environ.get("WAYLAND_DISPLAY")
+                and not os.environ.get("SDL_VIDEODRIVER")):
             os.environ["SDL_VIDEODRIVER"] = "dummy"
         try:
             import pygame  # noqa: F401
