@@ -1,5 +1,4 @@
 import copy
-import json
 import random
 import sys
 from pathlib import Path
@@ -8,7 +7,6 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 import torch
-from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -21,7 +19,6 @@ from lib.runners.training_progress import (
 )
 from train import _EnvBuilder
 from train_gpu import main as gpu_main
-from train_progress import main as progress_main
 
 
 class BiomassTrace:
@@ -142,35 +139,6 @@ def test_evaluation_uses_current_weights_and_stats_without_changing_next_update(
             assert trainer.obs_stats[fid]["count"] == control.obs_stats[fid]["count"]
 
 
-def test_wrapper_updates_one_image_at_interval_and_resumes_history(tmp_path):
-    trainer_args = ["--project", "mareld2.yaml", "--device", "cpu", "--execution", "eager",
-                    "--grid", "5x6", "--n-deltas", "2", "--ticks", "2", "--generations", "1",
-                    "--iter-per-gen", "3", "--output", str(tmp_path)]
-    wrapper = ["--eval-every", "2", "--eval-ticks", "5", "--"]
-    assert progress_main(wrapper + trainer_args) == 0
-    directory = tmp_path / "progress"
-    def steps():
-        return [r["step"] for r in map(json.loads, (directory / "survival.jsonl").read_text().splitlines())]
-    assert steps() == [0, 2]
-    assert {p.name for p in directory.glob("*.png")} == {"latest.png"}
-    first_image = (directory / "latest.png").read_bytes()
-    with Image.open(directory / "latest.png") as image:
-        assert image.format == "PNG"
-        assert min(image.size) > 500
-        image.verify()
-    assert progress_main(wrapper + trainer_args + ["--resume"]) == 0
-    assert steps() == [0, 2, 3, 4, 6]
-    assert (directory / "latest.png").read_bytes() != first_image
-    records = list(map(json.loads, (directory / "survival.jsonl").read_text().splitlines()))
-    assert [r["evaluation"] for r in records] == [1, 2, 3, 4, 5]
-    # Simulate an evaluation written after the last checkpoint, then a resume.
-    with (directory / "survival.jsonl").open("a") as stream:
-        stream.write(json.dumps(dict(step=100, survival_ticks={})) + "\n")
-    assert progress_main(wrapper + trainer_args + ["--resume"]) == 0
-    assert steps() == [0, 2, 3, 4, 6, 8]
-    assert {p.name for p in directory.glob("*.png")} == {"latest.png"}
-
-
 def test_round_robin_callback_counts_each_optimizer_update(tmp_path):
     observed = []
     gpu_main(["--project", "mareld2.yaml", "--device", "cpu", "--execution", "eager",
@@ -187,7 +155,7 @@ def test_round_robin_callback_counts_each_optimizer_update(tmp_path):
 ])
 def test_invalid_options_are_rejected_before_training(flags):
     with pytest.raises(SystemExit) as error:
-        progress_main(flags)
+        gpu_main(flags)
     assert error.value.code == 2
 
 

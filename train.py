@@ -10,6 +10,8 @@ import argparse
 import json
 import re
 from lib.training_profiles import add_profile_argument, parse_training_args
+from lib.runners.training_progress import (add_progress_arguments, validate_progress_arguments,
+                                           make_visual_progress)
 from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config,
                                       load_impact_spawn_specs)
 from lib.spawn import make_weights
@@ -1587,7 +1589,9 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "reward plot. Requires pygame; if unavailable the flag "
                              "is silently ignored. Main-process only.")
     add_profile_argument(parser)
+    add_progress_arguments(parser)
     args = parse_training_args(parser, argv)
+    validate_progress_arguments(parser, args)
 
     # Parse --generations: accept 'inf' or a positive integer.
     gen_raw = str(args.generations).strip().lower()
@@ -1908,7 +1912,7 @@ def main(argv=None, *, on_step=None, confirm=True):
         print(f"Workers:        {n_workers} (default: auto, resolved from {os.cpu_count()} CPUs and n_deltas={n_deltas})")
     print(f"------------------------------------------")
 
-    # Direct CLI runs retain the prompt; headless wrappers can opt out.
+    # Direct CLI runs retain the prompt; programmatic callers can opt out.
     if confirm:
         try:
             while True:
@@ -2433,9 +2437,16 @@ def main(argv=None, *, on_step=None, confirm=True):
         return f"{h:02d}:{m:02d}:{s:02d}"
 
     completed_steps = start_gen * args.iter_per_gen * (1 if args.coevolution else len(target_species))
-    try:
+    visual_progress = make_visual_progress("cpu", args, viz)
+
+    def report_step():
+        if visual_progress is not None:
+            visual_progress(trainer, completed_steps, run_dir, args)
         if on_step is not None:
             on_step(trainer, completed_steps, run_dir, args)
+
+    try:
+        report_step()
         for gen in gen_iter:
             # Linear softmax-temperature annealing from temp_start -> temp_end
             # over the first temp_anneal_gens generations.
@@ -2478,8 +2489,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     means = trainer.train_step_coevolution(
                         target_species, n_eval_ticks=_neval)
                     completed_steps += 1
-                    if on_step is not None:
-                        on_step(trainer, completed_steps, run_dir, args)
+                    report_step()
                     summary = " | ".join(
                         f"{fid}={means[fid]:+.4f}" for fid in target_species)
                     print(f"    Iter {i+1:2d}/{args.iter_per_gen} | {summary}")
@@ -2541,8 +2551,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                         # n_eval_ticks: how many time steps (ticks) each test run lasts
                         avg_reward = trainer.train_step(species, n_eval_ticks=_neval)
                         completed_steps += 1
-                        if on_step is not None:
-                            on_step(trainer, completed_steps, run_dir, args)
+                        report_step()
                         print(f"    Iter {i+1:2d}/{args.iter_per_gen} | Avg Reward: {avg_reward:10.6f}")
                         if viz is not None:
                             viz.update_reward(species, float(avg_reward),

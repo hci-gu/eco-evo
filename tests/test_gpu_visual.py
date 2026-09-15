@@ -37,7 +37,7 @@ def arguments(directory, device="cpu", execution="eager"):
     return ["--project", "mareld2.yaml", "--device", device, "--execution", execution,
             "--grid", "5x6", "--n-deltas", "2", "--ticks", "2", "--generations", "1",
             "--iter-per-gen", "2", "--output", str(directory), "--profile", "sanity",
-            "--worlds", "1"]
+            "--worlds", "1", "--eval-every", "1", "--eval-ticks", "5"]
 
 
 def assert_same(actual, expected):
@@ -87,6 +87,78 @@ def test_visual_cli_renders_and_preserves_training(tmp_path, viewers, device, ex
     visual = torch.load(tmp_path / "visual" / "trainer.pth", weights_only=False)
     plain = torch.load(tmp_path / "plain" / "trainer.pth", weights_only=False)
     assert_same(visual["trainer"], plain["trainer"])
+
+
+def test_progress_tab_continues_across_resume(tmp_path, viewers):
+    def render_progress(trainer, step, directory, args):
+        if step == 2:
+            import pygame
+            viz = viewers[-1]
+            # Click the tab using the actual hit boxes, then capture its render.
+            rect, _ = next((rect, i) for rect, i in viz._tab_rects if viz._tabs[i] == "progress")
+            viz._handle_click((rect[0] + 2, rect[1] + 2))
+            viz._render_full()
+            pygame.image.save(viz._screen, str(tmp_path / "progress-tab.png"))
+
+    flags = arguments(tmp_path) + ["--visual"]
+    assert main(flags, on_step=render_progress) == 0
+    history = tmp_path / "progress" / "survival.jsonl"
+    assert not (tmp_path / "progress" / "latest.png").exists()
+    assert [r["step"] for r in map(json.loads, history.read_text().splitlines())] == [0, 1, 2]
+    # A crash may leave evaluations ahead of the saved checkpoint.
+    with history.open("a") as stream:
+        stream.write(json.dumps(dict(step=99, evaluation=99, survival_ticks={})) + "\n")
+    assert main(flags + ["--resume"]) == 0
+    records = list(map(json.loads, history.read_text().splitlines()))
+    assert [r["step"] for r in records] == [0, 1, 2, 3, 4]
+    assert [r["evaluation"] for r in records] == [1, 2, 3, 4, 5]
+    assert [s for s, _ in viewers[-1]._series["progress"]["gadoids"]] == [0, 1, 2, 3, 4]
+
+
+def test_progress_history_outlives_rolling_plots_and_playback(tmp_path, viewers):
+    def populate(trainer, step, directory, args):
+        if step != 2:
+            return
+        viz = viewers[0]
+        records = [dict(step=i * 20, survival_ticks={"gadoids": i % 1000, "porpoises": None})
+                   for i in range(700)]
+        viz.set_training_progress(records, dict(ticks=1000, lower=0.3, upper=3))
+        viz.begin_rollout_recording()
+        viz.end_rollout_recording()
+        viz._active_tab = viz._tabs.index("progress")
+        viz._render_full()
+        assert len(viz._series["progress"]["gadoids"]) == 700
+        assert viz._series["progress"]["gadoids"][0] == (0, 0)
+        assert viz._series["progress"]["porpoises"] == []
+        assert "No starting biomass" in viz._progress_message
+        assert viz._plot_scroll_thumb_rect is None
+        assert viz._plot_scroll_span_cache == (0, 13980)
+        assert "phytoplankton" not in viz._active_plot_ids()
+
+    assert main(arguments(tmp_path) + ["--visual"], on_step=populate) == 0
+
+
+def test_progress_interval_and_resume_evaluation(tmp_path, viewers):
+    flags = arguments(tmp_path) + ["--visual", "--eval-every", "2", "--iter-per-gen", "3"]
+    history = tmp_path / "progress" / "survival.jsonl"
+    assert main(flags) == 0
+    assert [r["step"] for r in map(json.loads, history.read_text().splitlines())] == [0, 2]
+    assert main(flags + ["--resume"]) == 0
+    assert [r["step"] for r in map(json.loads, history.read_text().splitlines())] == [0, 2, 3, 4, 6]
+    assert [step for step, _ in viewers[-1]._series["progress"]["gadoids"]] == [0, 2, 3, 4, 6]
+
+
+def test_cpu_visual_evaluates_progress(tmp_path, viewers, monkeypatch):
+    from train import main as cpu_main
+    from lib.viz.pygame_viz import LiveVisualizer
+    monkeypatch.setattr(LiveVisualizer, "wait_for_close", lambda *a, **kw: None)
+    cpu_main(["--project", "mareld2.yaml", "--grid", "5x6", "--workers", "1",
+              "--n_deltas", "2", "--n_eval_ticks", "2", "--generations", "1",
+              "--iter-per-gen", "2", "--run-name", str(tmp_path), "--visual",
+              "--eval-every", "1", "--eval-ticks", "5"], confirm=False)
+    records = list(map(json.loads, (tmp_path / "progress" / "survival.jsonl").read_text().splitlines()))
+    assert [r["step"] for r in records] == [0, 1, 2]
+    assert len(viewers[0]._series["progress"]["gadoids"]) == 3
 
 
 def test_events_pumped_while_training_and_close_keeps_training(tmp_path, viewers, monkeypatch):

@@ -90,8 +90,6 @@ All presets enable co-evolution, set entropy and argmax modifiers to zero, keep 
 uv run --locked train_gpu.py --project mareld2.yaml --profile info --run-name mareld-gpu-info
 ```
 
-The progress wrapper also forwards presets: `train_progress.py --backend gpu -- --profile info ...`.
-
 ### Live visualization
 
 Add `--visual` to open the same Pygame viewer used by CPU training:
@@ -102,9 +100,15 @@ uv run --locked train_gpu.py --project mareld2.yaml --profile info --visual --ru
 
 The viewer shows biomass heatmaps, reward/biomass/energy/action/loss plots, and playback of a fixed inference world. After each completed ARS update it copies the current unperturbed policies and frozen normalization statistics to a separate CPU probe. Probe evaluation preserves the training state and random streams. Reward plots show the actual training rewards; heatmaps show the probe ecosystem. Probe records are appended to `biomass.jsonl`.
 
+Click the **progress** tab (or cycle tabs with Tab) for the survival graph across the entire training run. This is included in `--visual` on both trainers. The x-axis is completed training updates; the y-axis is consecutive inference ticks within the biomass bounds. The tab retains all evaluations, independently of probe playback and the other tabs' rolling buffers.
+
+Progress evaluates the initial policies and every 20 updates by default, using a separate fixed scenario with a 1,000-tick cap, biomass bounds of 0.3–3 times the starting biomass, and temperature 1. Change these with `--eval-every`, `--eval-ticks`, `--biomass-bounds`, `--eval-seed`, and `--eval-temperature` directly on the training command. Probe sliders do not change this comparison scenario. The viewer stays responsive during evaluation.
+
+History is saved to `progress/survival.jsonl` and reloaded with `--resume` in the same run directory; abandoned evaluations beyond the checkpoint are removed. Keep evaluation settings unchanged when resuming, or use a new `--plot-dir`. Histories belong to individual named runs.
+
 Biomass and spawn controls change the probe world. The rollout-length slider changes the probe length; the separate `n_eval_ticks` slider changes training horizons between iterations. Closing the window (or pressing Q/Esc) disables visualization and training continues. Viewer failures also leave training running. Pygame events stay on the main thread while a single worker runs each GPU update, keeping the window responsive during compilation and execution. Visualization adds CPU probe time and a GPU synchronization boundary per update.
 
-The window requires a desktop display on the machine running training. On a headless server, use the `train_progress.py` PNG graph instead. The wrapper can also forward `--visual` after `--` when a desktop is available.
+The window requires a desktop display on the machine running training.
 
 `results/mareld-gpu/` contains `trainer.pth` for complete resume, `policy_<species>.pth` files compatible with the existing inference/CPU-training loaders, `gpu_run.json` with configuration metadata, and `training.jsonl` with compact numerical diagnostics. For a non-default network, pass the matching `--policynetwork LAYERS NODES ACTIVATION` to existing inference tools. The CPU batched-policy path now honors sigmoid/ReLU/tanh consistently with individual policies; previously it always used sigmoid.
 
@@ -125,8 +129,6 @@ uv run --locked train_gpu.py \
 `--worlds-refresh generation` reuses spawn biomass maps within a generation, while reserves and runtime noise remain pair-specific. The default refreshes worlds every iteration. `--worlds-schedule '1@0,3@10,5@50'` changes the number of worlds at generation boundaries. Random fields are keyed by world, pair, iteration, species/sample, and tick, with shared keys for positive and negative perturbations; changing chunk size does not change their identity.
 
 `--snapshot-every N` optionally saves one final candidate ecosystem as an `.npz` every N generations. It is a perturbed training candidate from the final chunk, not a baseline-policy evaluation or a complete trajectory. Existing inference tools remain the route for baseline-policy visualization. Snapshots and checkpoint/metrics readbacks are explicit output boundaries; none occur inside ecological ticks.
-
-For a single PNG graph of baseline-policy survival during training, use the [`train_progress.py` wrapper](README.md#simple-training-progress-graph). It pauses every N completed updates, evaluates copied current policies in the CPU inference simulation, and updates `progress/latest.png` with per-species ticks inside configurable biomass bounds. The wrapper supports both trainers and preserves their training state.
 
 For a quick check on a machine without CUDA:
 

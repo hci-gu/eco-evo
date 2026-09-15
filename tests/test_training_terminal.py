@@ -66,22 +66,19 @@ def run_in_terminal(command, *, reply_to_prompt=None):
 
 
 @pytest.mark.skipif(os.name != "posix", reason="Requires POSIX terminal job control")
-@pytest.mark.parametrize("script", ["train.py", "train_progress.py"])
-def test_cpu_training_starts_from_terminal_launcher(script, tmp_path, monkeypatch):
+@pytest.mark.parametrize("confirm", [True, False])
+def test_cpu_training_starts_from_terminal_launcher(confirm, tmp_path, monkeypatch):
     monkeypatch.setenv("MPLCONFIGDIR", str(tmp_path / "matplotlib"))
-    command = [sys.executable, script]
-    if script == "train_progress.py":
-        command += ["--backend", "cpu", "--eval-every", "1", "--eval-ticks", "3", "--"]
+    command = ([sys.executable, "train.py"] if confirm else
+               [sys.executable, "-c", "from train import main; main(confirm=False)"])
     command += ["--project", "mareld2.yaml", "--run-name", str(tmp_path / "run"),
                 "--grid", "5x6", "--n_deltas", "2", "--workers", "2",
                 "--n_eval_ticks", "2", "--generations", "1", "--iter-per-gen", "1"]
-    status, output = run_in_terminal(command, reply_to_prompt=b"n\n" if script == "train.py" else None)
+    status, output = run_in_terminal(command, reply_to_prompt=b"n\n" if confirm else None)
     assert "TRAINER_STOPPED_BY_SIGNAL" not in output, output
     assert status == 0, output
-    if script == "train.py":
+    if confirm:
         assert "Aborted by user." in output
     else:
         assert "Continue with these parameters?" not in output
-        assert "[progress] evaluation=2, step=1:" in output
-        assert (tmp_path / "run" / "progress" / "latest.png").is_file()
         assert (tmp_path / "run" / "policy_gadoids.pth").is_file()

@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import torch
 
-from lib.runners.training_progress import evaluation_randomness
+from lib.runners.training_progress import evaluation_randomness, make_visual_progress
 
 
 @torch.no_grad()
@@ -39,6 +39,7 @@ class GPUTrainingVisualizer:
 
     def __init__(self, trainer, args, directory):
         self.viz = None
+        self.progress = None
         self.executor = None
         self.directory = directory
         try:
@@ -80,6 +81,7 @@ class GPUTrainingVisualizer:
             if self.viz is None:
                 return
             self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="gpu-training")
+            self.progress = make_visual_progress("gpu", args, self.viz)
             print("[viz] GPU training viewer enabled; CPU inference probes run between updates.", flush=True)
         except Exception as error:
             print(f"[viz] Could not start viewer: {error}; continuing training.", flush=True)
@@ -92,6 +94,11 @@ class GPUTrainingVisualizer:
                 viz.close()
             except Exception:
                 pass
+
+    def update_progress(self, trainer, args):
+        if self.viz is not None and self.progress is not None:
+            self.progress(trainer, trainer.iterations_completed, self.directory, args)
+            self.pump()
 
     def pump(self):
         if self.viz is None:

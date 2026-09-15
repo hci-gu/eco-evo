@@ -14,6 +14,7 @@ from lib.gpu.cli import add_common_arguments, builder_from_args, positive_int, t
 from lib.gpu.config import ProjectSpec
 from lib.gpu.trainer import TensorARSTrainer
 from lib.training_profiles import add_profile_argument, parse_training_args
+from lib.runners.training_progress import add_progress_arguments, validate_progress_arguments
 
 
 def world_schedule(value):
@@ -60,9 +61,11 @@ def main(argv=None, *, on_step=None):
     parser.add_argument("--visual", action="store_true",
                         help="Open the live pygame viewer with CPU inference probes between GPU updates")
     add_profile_argument(parser)
+    add_progress_arguments(parser)
     args = parse_training_args(parser, argv, destinations={
         "n_eval_ticks": "ticks", "rollouts_per_delta": "worlds",
     })
+    validate_progress_arguments(parser, args)
     try:
         generations = None if args.generations.lower() == "inf" else positive_int(args.generations)
         schedule = world_schedule(args.worlds_schedule)
@@ -123,6 +126,7 @@ def main(argv=None, *, on_step=None):
         if args.visual:
             from lib.gpu.visual import GPUTrainingVisualizer
             visual = GPUTrainingVisualizer(trainer, args, directory)
+            visual.update_progress(trainer, args)
         if on_step is not None:
             on_step(trainer, trainer.iterations_completed, directory, args)
         with (directory / "training.jsonl").open("a") as log:
@@ -146,6 +150,7 @@ def main(argv=None, *, on_step=None):
                         else:
                             visual.train_step(trainer, batch, ticks, epoch)
                             visual.update(trainer, batch, gen, iteration, args.ticks)
+                            visual.update_progress(trainer, args)
                         if on_step is not None:
                             on_step(trainer, trainer.iterations_completed, directory, args)
                     next_generation, next_within = gen, iteration + 1
