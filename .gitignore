@@ -83,3 +83,4 @@ dmypy.json
 # Operating System Files
 .DS_Store
 Thumbs.db
+/fgconfig/recent_projects.txt
