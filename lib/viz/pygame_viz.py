@@ -187,6 +187,8 @@ class _NullViz:
     def update_biomass(self, *a, **kw): pass
     def update_reward(self, *a, **kw): pass
     def update_series(self, *a, **kw): pass
+    def set_training_progress(self, *a, **kw): pass
+    def set_progress_message(self, *a, **kw): pass
     def update_loss_breakdown(self, *a, **kw): pass
     def update_diet_breakdown(self, *a, **kw): pass
     def update_action_fracs(self, *a, **kw): pass
@@ -228,9 +230,11 @@ class LiveVisualizer:
     _MIN_FRAME_INTERVAL = 1.0 / 30.0
 
     def __new__(cls, *args, **kwargs):
-        # Headless fallback: if no DISPLAY and SDL_VIDEODRIVER isn't set,
-        # silently switch to a dummy driver so CI / nohup runs don't crash.
-        if not os.environ.get("DISPLAY") and not os.environ.get("SDL_VIDEODRIVER"):
+        # Linux headless fallback. macOS/Windows native displays do not use
+        # DISPLAY, and Wayland desktops may only provide WAYLAND_DISPLAY.
+        if (sys.platform.startswith("linux") and not os.environ.get("DISPLAY")
+                and not os.environ.get("WAYLAND_DISPLAY")
+                and not os.environ.get("SDL_VIDEODRIVER")):
             os.environ["SDL_VIDEODRIVER"] = "dummy"
         try:
             import pygame  # noqa: F401
@@ -300,7 +304,7 @@ class LiveVisualizer:
         # Each tab has its own per-FG rolling buffer of (step, value).
         if self.mode == "train":
             self._tabs = ["reward", "biomass", "energy", "move", "rest", "eat",
-                          "predation", "starvation", "impacts"]
+                          "predation", "starvation", "impacts", "progress"]
         else:
             self._tabs = ["biomass", "energy", "move", "rest", "eat",
                           "predation", "starvation", "impacts"]
@@ -317,6 +321,7 @@ class LiveVisualizer:
                 "predation": "predation share of total loss (%)",
                 "starvation": "starvation share of total loss (%)",
                 "impacts": "impact share of total loss (%)",
+                "progress": "Survival across training (ticks within biomass bounds)",
             }
         else:
             self._tab_labels = {
@@ -355,10 +360,13 @@ class LiveVisualizer:
         _series_maxlen = (None
                           if str(self.mode).lower().startswith("infer")
                           else self.reward_window)
-        self._series: Dict[str, Dict[str, deque]] = {
-            tab: {fid: deque(maxlen=_series_maxlen) for fid in _all_series_ids}
+        self._series: Dict[str, Dict[str, deque | list]] = {
+            tab: {fid: ([] if tab == "progress" else deque(maxlen=_series_maxlen))
+                  for fid in _all_series_ids}
             for tab in self._tabs
         }
+        self._progress_cap = 1000
+        self._progress_message = "Waiting for the first survival evaluation"
         # Back-compat alias: legacy callers (and internal code) treat the
         # ``reward`` tab buffer as the historical _reward_buf. In inference
         # mode the first tab is biomass, so update_reward writes there.
@@ -806,6 +814,36 @@ class LiveVisualizer:
             buf[fg_id].append((int(step), float(value)))
         except Exception as e:
             self._log_once(f"update_series failed: {e!r}")
+
+    def set_progress_message(self, message: str) -> None:
+        self._progress_message = message
+        self._last_frame_ts = 0.0
+        self._maybe_render()
+
+    def set_training_progress(self, records, config) -> None:
+        """Replace the full training history, including restored checkpoints.
+
+        Keep compact scalar samples independently of rollout frames and rolling
+        plot buffers. Missing starting biomass has no survival measurement.
+        """
+        if not self.enabled or "progress" not in self._series:
+            return
+        self._progress_cap = config["ticks"]
+        self._tab_labels["progress"] = (
+            f"Survival ticks within {config['lower']:g}-{config['upper']:g} x starting biomass"
+            f" (cap {self._progress_cap})")
+        for fid in self._series["progress"]:
+            self._series["progress"][fid] = [
+                (r["step"], r["survival_ticks"][fid]) for r in records
+                if r["survival_ticks"].get(fid) is not None
+            ]
+        missing = [self._display_name(fid) for fid in self.fg_ids
+                   if fid not in self._ndm_ids and records
+                   and records[-1]["survival_ticks"].get(fid) is None]
+        self._progress_message = ("No starting biomass: " + ", ".join(missing) if missing else
+                                  f"{len(records)} evaluations | full training history")
+        self._last_frame_ts = 0.0
+        self._maybe_render()
 
     def update_loss_breakdown(
         self,
@@ -3383,6 +3421,9 @@ class LiveVisualizer:
         so NDMs are likewise filtered out there.
         """
         active = self._tabs[self._active_tab]
+        if active == "progress":
+            return [fid for fid in self.plot_fg_ids
+                    if fid not in self._ndm_ids and not fid.endswith("_rnd")]
         # NDMs are included on the biomass tab and loss tabs because they
         # can lose biomass to predation and impacts without making
         # decisions.
@@ -3587,12 +3628,13 @@ class LiveVisualizer:
         # per-FG buffer; callers push values via update_series(tab, ...).
         active = self._tabs[self._active_tab]
         buffers = self._series[active]
+        progress = active == "progress"
         base_label = self._tab_labels.get(active, active)
         # The biomass tab only leaves auto-scaling when the user pins the
         # display scale; log scaling is never applied to it.
         biomass_fixed_axis = (active == "biomass"
                               and self._biomass_scale_manual)
-        use_log_plot = bool(self._log_plot and active != "biomass")
+        use_log_plot = bool(self._log_plot and active not in ("biomass", "progress"))
         if biomass_fixed_axis:
             ylabel = (
                 f"{base_label}  display max = "
@@ -3631,6 +3673,9 @@ class LiveVisualizer:
         title_y = y + strip_h + 2
         tsurf = self._font.render(ylabel, True, (200, 200, 210))
         self._screen.blit(tsurf, (x + 6, title_y))
+        if progress:
+            detail = self._font.render(self._progress_message, True, (160, 160, 170))
+            self._screen.blit(detail, (x + 6, title_y + 14))
 
         active_ids = self._active_plot_ids()
 
@@ -3642,15 +3687,19 @@ class LiveVisualizer:
         plot_pad_l = 36
         plot_pad_r = getattr(self, "_legend_w", 110)  # room for legend
         plot_pad_t = strip_h + 20  # tab strip (variable rows) + ylabel line
+        if progress:
+            plot_pad_t += 16
         # Reservera ~14 px längst ned för horisontell scrollbar. Används
         # i både inference- och train-läget så att användaren kan
         # scrolla tillbaka i graferna även under träning (och gå live
         # igen via Live-knappen eller genom att dra thumb till högerkant).
-        scroll_bar_h = 12
+        scroll_bar_h = 0 if progress else 12
         # Save-knappen (inference) ritas under scrollbaren; reservera 22 px.
         save_btn_h = 22 if str(self.mode).lower().startswith("infer") else 0
         plot_pad_b = 16 + (scroll_bar_h + 4 if scroll_bar_h else 0) \
             + (save_btn_h + 4 if save_btn_h else 0)
+        if progress:
+            plot_pad_b = 40
         px0 = x + plot_pad_l
         py0 = y + plot_pad_t
         pw = w - plot_pad_l - plot_pad_r
@@ -3704,7 +3753,9 @@ class LiveVisualizer:
                 if xmax - xmin < 1:
                     xmax = xmin + 1
 
-            if biomass_fixed_axis:
+            if progress:
+                ymin, ymax = 0.0, float(self._progress_cap)
+            elif biomass_fixed_axis:
                 ymin = 0.0
                 ymax = max(1.0, 100.0 * float(self._biomass_display_scale))
             else:
@@ -3744,7 +3795,7 @@ class LiveVisualizer:
                 yy = int(py0 + frac * ph)
                 pg.draw.line(self._screen, (50, 50, 60),
                              (px0, yy), (px0 + pw, yy), 1)
-                lab_txt = f"{val:.3g}" if biomass_fixed_axis else f"{val:+.3g}"
+                lab_txt = f"{val:.3g}" if biomass_fixed_axis or progress else f"{val:+.3g}"
                 lab = self._font.render(lab_txt, True, (160, 160, 170))
                 self._screen.blit(lab, (x + 2, yy - 7))
 
@@ -3763,7 +3814,7 @@ class LiveVisualizer:
                 if not self._plot_enabled.get(fid, True):
                     continue
                 buf = buffers[fid]
-                if len(buf) < 2:
+                if not buf or (len(buf) < 2 and not progress):
                     continue
                 # Bygg indexlista av synliga punkter + en granne på varje
                 # sida (för att linjen ska nå fönsterkanten).
@@ -3801,12 +3852,25 @@ class LiveVisualizer:
                     elif yi > py0 + ph:
                         yi = py0 + ph
                     pts.append((xi, yi))
+                if progress:
+                    for point in pts:
+                        pg.draw.circle(self._screen, self._fg_colour[fid], point, 3)
                 if len(pts) < 2:
                     continue
                 try:
                     pg.draw.aalines(self._screen, self._fg_colour[fid], False, pts)
                 except Exception:
                     pg.draw.lines(self._screen, self._fg_colour[fid], False, pts, 1)
+
+            if progress:
+                tick_values = sorted({round(xmin + f * (xmax - xmin)) for f in (0, .25, .5, .75, 1)})
+                for value in tick_values:
+                    frac = (value - xmin) / (xmax - xmin)
+                    label = self._font.render(str(value), True, (160, 160, 170))
+                    self._screen.blit(label, (px0 + int(frac * pw) - label.get_width() // 2,
+                                              py0 + ph + 5))
+                label = self._font.render("Completed training updates", True, (200, 200, 210))
+                self._screen.blit(label, (px0 + (pw - label.get_width()) // 2, py0 + ph + 21))
 
         # ---- Horisontell scrollbar (inference) ---------------------------
         # Ritas alltid när scroll_bar_h > 0 (reserverar utrymme), men blir
@@ -4035,7 +4099,7 @@ class LiveVisualizer:
         # Rita en liten cirkelmarkör per serie vid dess (interpolerade) y.
         for fid, col, v in entries:
             v_plot = v
-            if self._log_plot:
+            if self._log_plot and self._tabs[self._active_tab] not in ("biomass", "progress"):
                 v_plot = float(np.sign(v_plot) * np.log10(abs(v_plot) + 1e-12))
             if ymax - ymin < 1e-12:
                 continue
@@ -4049,7 +4113,8 @@ class LiveVisualizer:
                     pass
 
         # Bygg tooltip-text: rad 1 = tick, sedan en rad per serie.
-        lines: list = [(f"tick {int(round(tick_at_mouse))}", (220, 220, 230))]
+        unit = "update" if self._tabs[self._active_tab] == "progress" else "tick"
+        lines: list = [(f"{unit} {int(round(tick_at_mouse))}", (220, 220, 230))]
         # Sortera efter y-värde (fallande) för läsbarhet.
         entries_sorted = sorted(entries, key=lambda e: -e[2])
         for fid, col, v in entries_sorted:

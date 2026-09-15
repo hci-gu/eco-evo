@@ -7,7 +7,7 @@ import re
 from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
 from lib.runners.population_stability import add_population_arguments, population_options
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
-from lib.runners.profiles import gpu_profile
+from lib.training_profiles import parse_training_args as _parse_training_args
 
 
 def grid_size(value):
@@ -59,17 +59,10 @@ def add_common_arguments(parser):
 
 
 def parse_training_args(parser, argv=None):
-    """Fill missing options from a profile while retaining all explicit flags.
-
-    Argparse only installs defaults for attributes missing from the namespace.
-    Pre-populating that namespace on the second parse handles aliases, boolean
-    flags, '--option=value', and explicit values equal to ordinary defaults.
-    The parser's defaults are never mutated.
-    """
-    args = parser.parse_args(argv)
-    if args.profile is None:
-        return args
-    return parser.parse_args(argv, namespace=argparse.Namespace(**gpu_profile(args.profile)))
+    """Parse GPU training options using the shared CPU/GPU profile handler."""
+    return _parse_training_args(parser, argv, destinations={
+        "n_eval_ticks": "ticks", "rollouts_per_delta": "worlds",
+    })
 
 
 def builder_from_args(args):

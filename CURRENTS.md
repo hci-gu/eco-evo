@@ -13,8 +13,8 @@ To combine it with population stability, add these to your training command:
 --population-stability --currents on --run-name mareld-stability-currents
 ```
 
-In `train_progress.py`, put the current flags after `--`. Training probes and
-progress evaluations automatically inherit the settings. Standalone inference
+With `--visual`, training probes and progress evaluations automatically inherit
+the current settings. Standalone inference
 and resumed training need the flags supplied again.
 
 | Option | Default | Meaning |

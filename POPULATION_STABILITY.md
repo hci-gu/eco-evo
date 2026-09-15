@@ -1,7 +1,6 @@
 # Population stability experiment
 
-Add `--population-stability` to either trainer, or after `--` in the
-`train_progress.py` wrapper. The mode is off by default. Use a new run name
+Add `--population-stability` to either trainer. The mode is off by default. Use a new run name
 to compare with existing training.
 
 ```bash
@@ -48,8 +47,8 @@ GPU logs include `population_failure_fraction` (failed worlds) and
 `population_valid_fraction` (fraction of horizon before failure). The mode requires
 the default integral total-energy reward and rejects legacy/final-value reward flags.
 
-For the progress wrapper, use `--biomass-bounds 0.1 3.0` before `--` to align its
-displayed range with this experiment. The progress plot still measures each species
+With `--visual`, add `--biomass-bounds 0.1 3.0` to the training command to align
+the progress graph’s displayed range with this experiment. The progress plot still measures each species
 independently using inclusive bounds; training fails the whole world at the upper
 boundary. Inference/probe simulations remain full ecological simulations.
 

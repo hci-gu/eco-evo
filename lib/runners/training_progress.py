@@ -1,7 +1,8 @@
-"""Periodic inference on an isolated CPU world, with a single PNG progress plot."""
+"""Periodic CPU inference and persistent survival history for the live viewer."""
 
 import copy
 import json
+import math
 import random
 import time
 from contextlib import contextmanager
@@ -14,6 +15,29 @@ from lib.config.config_loader import load_project_config, setup_full_mareld_mvp
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.gpu.config import DEFAULT_LIBRARY
 from lib.environments.ecosystem_env.currents import CurrentConfig
+
+
+def add_progress_arguments(parser):
+    from lib.gpu.cli import positive_int
+    parser.add_argument("--eval-every", type=positive_int, default=20,
+                        help="Survival progress: evaluate every N training updates (default: 20)")
+    parser.add_argument("--eval-ticks", type=positive_int, default=1000,
+                        help="Survival progress: inference tick cap (default: 1000)")
+    parser.add_argument("--biomass-bounds", type=float, nargs=2, default=(0.3, 3.0),
+                        metavar=("LOWER", "UPPER"), help="Survival bounds as multiples of initial biomass")
+    parser.add_argument("--eval-seed", type=int, default=20260530)
+    parser.add_argument("--eval-temperature", type=float, default=1.0)
+    parser.add_argument("--plot-dir", type=Path, help="Progress history directory (default: <run>/progress)")
+
+
+def validate_progress_arguments(parser, args):
+    lower, upper = args.biomass_bounds
+    if not (math.isfinite(lower) and math.isfinite(upper) and 0 < lower <= 1 <= upper and lower < upper):
+        parser.error("--biomass-bounds must be finite and satisfy 0 < LOWER <= 1 <= UPPER, LOWER < UPPER")
+    if not 0 <= args.eval_seed < 2**32:
+        parser.error("--eval-seed must be between 0 and 2**32 - 1")
+    if not math.isfinite(args.eval_temperature) or args.eval_temperature <= 0:
+        parser.error("--eval-temperature must be positive and finite")
 
 
 @contextmanager
@@ -31,7 +55,7 @@ def evaluation_randomness(seed):
         random.setstate(python_state)
 
 
-def measure_survival(env, ticks, lower, upper):
+def measure_survival(env, ticks, lower, upper, pump_events=None):
     """Count decision makers' post-step ticks inside [lower*B0, upper*B0].
 
     A breach on tick 1 scores 0; surviving the entire horizon scores `ticks`.
@@ -50,6 +74,8 @@ def measure_survival(env, ticks, lower, upper):
     for _ in range(ticks):
         if not alive.any():
             break
+        if pump_events is not None and not pump_events():
+            raise InterruptedError("Survival evaluation cancelled because the viewer closed")
         env.tick()
         ticks_run += 1
         current = np.array([env.fgs[f].biomass.sum() for f in ids], dtype=np.float64)
@@ -122,12 +148,14 @@ def install_current_policies(env, trainer, backend):
 
 
 class TrainingProgress:
-    def __init__(self, backend, every, ticks, lower, upper, seed, temperature, directory=None):
+    def __init__(self, backend, every, ticks, lower, upper, seed, temperature, directory=None,
+                 *, visualizer=None):
         self.backend, self.every, self.ticks = backend, every, ticks
         self.lower, self.upper, self.seed, self.temperature = lower, upper, seed, temperature
         self.directory = Path(directory) if directory is not None else None
         self.config = None
         self.records = []
+        self.visualizer = visualizer
 
     def _start(self, trainer, step, run_dir, resume):
         ecology = inference_config(trainer, self.backend)
@@ -160,9 +188,12 @@ class TrainingProgress:
             env = copy.deepcopy(self.template)
             install_current_policies(env, trainer, self.backend)
             env.softmax_temperature = self.temperature
-            return measure_survival(env, self.ticks, self.lower, self.upper)
+            pump = self.visualizer.pump_events if self.visualizer is not None else None
+            return measure_survival(env, self.ticks, self.lower, self.upper, pump_events=pump)
 
     def __call__(self, trainer, step, run_dir, args):
+        if self.visualizer is not None and not self.visualizer.enabled:
+            self.visualizer = None
         first = self.config is None
         if first:
             self._start(trainer, step, run_dir, args.resume)
@@ -180,50 +211,39 @@ class TrainingProgress:
             temporary = self.history.with_suffix(".jsonl.tmp")
             temporary.write_text("".join(json.dumps(r, allow_nan=False) + "\n" for r in self.records))
             temporary.replace(self.history)
-            self._plot()
+            if self.visualizer is not None:
+                self.visualizer.set_training_progress(self.records, self.config)
         except Exception as error:
             # Monitoring failures must not discard a completed training update.
             print(f"[progress] WARNING: evaluation/plot failed at step {step}: {error}", flush=True)
             return
-        print(f"[progress] updated {self.directory / 'latest.png'} "
+        destination = self.history
+        print(f"[progress] updated {destination} "
               f"({result['ticks_run']}/{self.ticks} ticks, {time.perf_counter() - started:.1f}s)", flush=True)
 
-    def _plot(self):
-        from matplotlib.backends.backend_agg import FigureCanvasAgg
-        from matplotlib.figure import Figure
-        from matplotlib.ticker import MaxNLocator
 
-        fig = Figure(figsize=(11, 6), layout="constrained")
-        FigureCanvasAgg(fig)
-        ax = fig.subplots()
-        # Old histories may contain non-acting groups; only plot current DMs.
-        ids = sorted(self.template.dm_ids)
-        missing = []
-        for i, fid in enumerate(ids):
-            values = [r["survival_ticks"][fid] for r in self.records]
-            if all(v is None for v in values):
-                missing.append(fid)
-                continue
-            ax.plot([r["evaluation"] for r in self.records],
-                    [np.nan if v is None else v for v in values],
-                    label=fid, marker="o", markersize=3, linewidth=1.6,
-                    color=f"C{i % 10}", linestyle=("-", "--", ":")[i // 10 % 3])
-        ax.set(title=f"Biomass survival within {self.lower:g}–{self.upper:g} × starting biomass",
-               xlabel="Inference evaluation", ylabel="Consecutive ticks before first breach",
-               ylim=(-0.02 * self.ticks, 1.08 * self.ticks))
-        ax.axhline(self.ticks, color="0.5", linestyle=":", linewidth=1)
-        ax.text(0.01, 0.97, f"Evaluation cap: {self.ticks} ticks · seed: {self.seed} · temperature: {self.temperature:g}",
-                transform=ax.transAxes, va="top", color="0.35", fontsize=9)
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-        ax.grid(alpha=0.2)
-        if len(missing) < len(ids):
-            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=9, frameon=False)
-        if missing:
-            fig.supxlabel("No starting biomass (excluded): " + ", ".join(missing), fontsize=8)
+class LiveTrainingProgress(TrainingProgress):
+    """Persist survival measurements and render them in the live viewer."""
+
+    disabled = False
+
+    def __call__(self, trainer, step, run_dir, args):
+        if (self.disabled or self.visualizer is None or not self.visualizer.enabled
+                or getattr(self.visualizer, "_quit", False)):
+            return
         try:
-            temporary = self.directory / "latest.png.tmp"
-            fig.savefig(temporary, format="png", dpi=140)
-            temporary.replace(self.directory / "latest.png")
-        finally:
-            fig.clear()
+            super().__call__(trainer, step, run_dir, args)
+        except Exception as error:
+            self.disabled = True
+            self.visualizer.set_progress_message("Progress unavailable; see terminal for details")
+            print(f"[progress] Live progress disabled: {error}", flush=True)
+
+
+def make_visual_progress(backend, args, viz):
+    """Create the evaluator used by either trainer's progress tab."""
+    if viz is None or not viz.enabled:
+        return None
+    lower, upper = args.biomass_bounds
+    return LiveTrainingProgress(backend, args.eval_every, args.eval_ticks, lower, upper,
+                                args.eval_seed, args.eval_temperature, args.plot_dir,
+                                visualizer=viz)

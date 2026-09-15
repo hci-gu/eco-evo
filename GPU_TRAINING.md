@@ -3,7 +3,7 @@
 For the optional 10%–300% biomass bounds, warning penalties, and failed-rollout
 scoring, see [Population stability training](POPULATION_STABILITY.md).
 
-`train_gpu.py` runs batched ecosystems and ARS co-evolution on CUDA. Numerical state, spawning, random fields, policies, fitness, observation statistics, and ARS updates remain on the selected device. Python launches work and handles occasional logs, checkpoints, and optional snapshots. `train.py` remains the existing CPU training entry point.
+`train_gpu.py` runs batched ecosystems and ARS co-evolution on CUDA. Numerical state, spawning, random fields, policies, fitness, observation statistics, and ARS updates remain on the selected device. Python launches work and handles occasional logs, checkpoints, optional snapshots, and an opt-in live viewer. `train.py` remains the existing CPU training entry point.
 
 The implementation is in `lib/gpu/`. It also runs on CPU tensors for numerical validation. CPU reference comparisons, full-graph tracing, checkpoint/resume, and command-line smoke tests can run without a GPU. CUDA execution and performance must be verified on an NVIDIA machine; they were not available on the development machine.
 
@@ -77,7 +77,7 @@ uv run --locked train_gpu.py \
 
 By default all decision makers co-evolve. `--species gadoids pelagic_fish` limits trained species while retaining the other policies in every ecosystem; `--no-coevolution` trains targets in round-robin order. Common reward, normalization, mortality, migration, and policy-network options have the same meanings as the CPU runner. Underscore aliases are accepted for the main existing training options. Run either entry point with `--help` for its complete interface.
 
-Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`. The interactive Pygame UI is not part of the headless GPU CLI.
+Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`.
 
 ### Training profiles
 
@@ -105,9 +105,29 @@ still requires supplying the desired profile/options again.
 uv run train_gpu.py --project mareld2.yaml --profile info --grid 16x16 --population-stability --currents on --run-name mareld-info-currents
 ```
 
-With the progress wrapper, put `--profile info` after `--`, alongside the other
-trainer flags. Profiles apply to training; they do not change wrapper evaluation
-settings. `benchmark_gpu.py` continues to use its explicit benchmark options.
+World schedules take precedence over the preset world count. Profiles apply to
+training; they do not change visualization evaluation settings. `benchmark_gpu.py`
+continues to use its explicit benchmark options.
+
+### Live visualization
+
+Add `--visual` to open the same Pygame viewer used by CPU training:
+
+```bash
+uv run --locked train_gpu.py --project mareld2.yaml --profile info --visual --run-name mareld-gpu-visual
+```
+
+The viewer shows biomass heatmaps, reward/biomass/energy/action/loss plots, and playback of a fixed inference world. After each completed ARS update it copies the current unperturbed policies and frozen normalization statistics to a separate CPU probe. Probe evaluation preserves the training state and random streams. Reward plots show the actual training rewards; heatmaps show the probe ecosystem. Probe records are appended to `biomass.jsonl`.
+
+Click the **progress** tab (or cycle tabs with Tab) for the survival graph across the entire training run. This is included in `--visual` on both trainers. The x-axis is completed training updates; the y-axis is consecutive inference ticks within the biomass bounds. The tab retains all evaluations, independently of probe playback and the other tabs' rolling buffers.
+
+Progress evaluates the initial policies and every 20 updates by default, using a separate fixed scenario with a 1,000-tick cap, biomass bounds of 0.3–3 times the starting biomass, and temperature 1. Change these with `--eval-every`, `--eval-ticks`, `--biomass-bounds`, `--eval-seed`, and `--eval-temperature` directly on the training command. Probe sliders do not change this comparison scenario. The viewer stays responsive during evaluation.
+
+History is saved to `progress/survival.jsonl` and reloaded with `--resume` in the same run directory; abandoned evaluations beyond the checkpoint are removed. Keep evaluation settings unchanged when resuming, or use a new `--plot-dir`. Histories belong to individual named runs.
+
+Biomass and spawn controls change the probe world. The rollout-length slider changes the probe length; the separate `n_eval_ticks` slider changes training horizons between iterations. Closing the window (or pressing Q/Esc) disables visualization and training continues. Viewer failures also leave training running. Pygame events stay on the main thread while a single worker runs each GPU update, keeping the window responsive during compilation and execution. Visualization adds CPU probe time and a GPU synchronization boundary per update.
+
+The window requires a desktop display on the machine running training.
 
 `results/mareld-gpu/` contains `trainer.pth` for complete resume, `policy_<species>.pth` files compatible with the existing inference/CPU-training loaders, `gpu_run.json` with configuration metadata, and `training.jsonl` with compact numerical diagnostics. For a non-default network, pass the matching `--policynetwork LAYERS NODES ACTIVATION` to existing inference tools. The CPU batched-policy path now honors sigmoid/ReLU/tanh consistently with individual policies; previously it always used sigmoid.
 
@@ -128,8 +148,6 @@ uv run --locked train_gpu.py \
 `--worlds-refresh generation` reuses spawn biomass maps within a generation, while reserves and runtime noise remain pair-specific. The default refreshes worlds every iteration. `--worlds-schedule '1@0,3@10,5@50'` changes the number of worlds at generation boundaries. Random fields are keyed by world, pair, iteration, species/sample, and tick, with shared keys for positive and negative perturbations; changing chunk size does not change their identity.
 
 `--snapshot-every N` optionally saves one final candidate ecosystem as an `.npz` every N generations. It is a perturbed training candidate from the final chunk, not a baseline-policy evaluation or a complete trajectory. Existing inference tools remain the route for baseline-policy visualization. Snapshots and checkpoint/metrics readbacks are explicit output boundaries; none occur inside ecological ticks.
-
-For a single PNG graph of baseline-policy survival during training, use the [`train_progress.py` wrapper](README.md#simple-training-progress-graph). It pauses every N completed updates, evaluates copied current policies in the CPU inference simulation, and updates `progress/latest.png` with per-species ticks inside configurable biomass bounds. The wrapper supports both trainers and preserves their training state.
 
 For a quick check on a machine without CUDA:
 
