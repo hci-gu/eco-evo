@@ -6399,3 +6399,78 @@ remain open exactly as described in 71.9 / 71.11.
     "detectable to seabirds" - the 0.35 is the herring species
     default that applies to every predator without an override,
     seabirds have nothing to do with it.
+
+75 THE MERGE WITH origin/coev, AND THE VISUALISER IT BROKE
+    The refactor branch (origin/coev, 8 commits, "break out env to
+    multiple files" + PR #12) replaced the 1577-line monolithic
+    lib/environments/ecosystem.py with a shim over the package
+    lib/environments/ecosystem_env/*. The merge kept the modular
+    architecture and ported the missing behaviour into it (impacts,
+    MAX_HARVEST_FRAC, pair visibility floors, split suppression,
+    accessibility mask, full extinction threshold, no-arg step(),
+    pi_* publication); see the merge commit body for the list. The
+    remote had also rewritten lib/viz/pygame_viz.py, and that part
+    was a regression the user reported immediately:
+    "visualiseringen har forstorts".
+
+75.1 What the remote viz changed
+    Two unrelated things, both user-visible:
+    (a) Fixed colour/axis reference. Heatmaps stopped auto-scaling
+        to the current frame max and were normalised against the
+        ROLLOUT-START per-cell max times a new global
+        "Biomass scale" slider, which defaulted to 5.0x. The
+        biomass plot y-axis was likewise locked to 0..100*scale,
+        i.e. 0..500 %. Consequence on a run that drifts even a
+        little below its start density: every heatmap renders as
+        uniform dark purple and every curve is squashed onto the
+        bottom 20 % of the plot. That is exactly the screenshot the
+        user attached.
+    (b) The "impacts" plot tab, the "im" field in the pr/st/im line
+        above each heatmap and the impact series in the saved HTML
+        were deleted, even though loss_impact is still accumulated
+        by the environment (and was restored by this merge).
+
+75.2 Resolution (user-chosen)
+    (a) Auto-scaling is the DEFAULT again. The slider survives but
+        is an opt-in override: _biomass_scale_manual starts False
+        and _biomass_display_scale starts at 1.0; the label reads
+        "Biomass scale = auto" and the knob is greyed out until the
+        user drags it. Touching it goes through
+        _set_biomass_display_scale() which pins both the heatmap
+        reference (start max * scale) and the biomass y-axis
+        (0..100*scale). Clicking the label calls
+        _reset_biomass_display_scale() and returns to auto - that is
+        the only way back, so the click target is registered in
+        _biomass_scale_label_rect and tested before the slider track
+        in _handle_click.
+        The fixed reference is still worth having: it keeps colours
+        comparable across ticks and keeps a near-extinct FG dark
+        instead of re-expanding its residual biomass to full yellow.
+        It is just wrong as a default.
+    (b) impacts restored end to end: tab + label in both modes,
+        'impact' key in update_loss_breakdown, the pr/st/im header
+        line, the NDM filter in _active_plot_ids (NDMs lose biomass
+        to impacts too, so they belong on the loss tabs), and the
+        impacts series in _save_inference_plot_html. Producers were
+        re-wired as well: the per-tick push in inference.py and the
+        end-of-probe push in train.py (including the _rnd baseline
+        and the --resume hydration from biomass.jsonl).
+
+75.3 Verification
+    pytest tests/ -q -> 172 passed. py_compile on the three touched
+    files. SDL_VIDEODRIVER=dummy inference run over 60 ticks on
+    results/pzbpgp248nsrpfix10 completes. An offscreen render with
+    biomass deliberately pushed to 5 % of start gives mean screen
+    brightness 48.5 in auto against 35.6 when pinned at 5.00x, i.e.
+    the washed-out image is reproducible and the fix measurable; the
+    saved frame shows coloured heatmaps, "Biomass scale = auto",
+    the impacts tab and "pr/st/im = 50/30/20%". One-generation
+    training run prints the imp share in its loss line.
+
+75.4 Note for whoever picks this up
+    The live visualiser still has no dedicated IMPACT MAP panel -
+    the remote also simplified _load_spawn_defaults in inference.py
+    to FG-only spawn modes. The impact fields are loaded and applied
+    (inference.impact_maps in the project yaml), and their effect is
+    visible through the impacts tab and the pr/st/im line, but there
+    is no heatmap of the map itself. That is a separate UI job.

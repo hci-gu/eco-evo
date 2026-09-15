@@ -1169,7 +1169,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 'total':      0.0,
             }
 
-    # Push loss-breakdown to the live visualiser so the 'pr/st=X/Y%'
+    # Push loss-breakdown to the live visualiser so the 'pr/st/im=X/Y/Z%'
     # line above each heatmap reflects the just-finished probe rollout.
     if viz is not None:
         try:
@@ -1177,9 +1177,11 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         except Exception:
             pass
 
-    # Push end-of-probe predation/starvation shares (0..100%) to
+    # Push end-of-probe predation/starvation/impacts shares (0..100%) to
     # the dedicated plot tabs, one point per probe — same x-scale (global
-    # ARS ``viz_step``) as biomass/energy.
+    # ARS ``viz_step``) as biomass/energy. This mirrors the
+    # ``pr/st/im=…`` header but over time. NDMs are included: they lose
+    # biomass to predation and impacts too.
     if viz is not None and viz_step is not None:
         try:
             for fid in fg_ids:
@@ -1190,24 +1192,30 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 viz.update_series("starvation", fid,
                                   100.0 * float(lb.get('starvation', 0.0)),
                                   step=int(viz_step))
+                viz.update_series("impacts", fid,
+                                  100.0 * float(lb.get('impact', 0.0)),
+                                  step=int(viz_step))
             if rnd_env_for_fid:
                 for fid, _re in rnd_env_for_fid.items():
                     ls = float(getattr(_re, 'loss_starvation', {}).get(fid, 0.0))
                     lp = float(getattr(_re, 'loss_predation', {}).get(fid, 0.0))
-                    tot = ls + lp
+                    li = float(getattr(_re, 'loss_impact', {}).get(fid, 0.0))
+                    tot = ls + lp + li
                     if tot > 0.0:
-                        pp, ss = (lp / tot, ls / tot)
+                        pp, ss, ii = (lp / tot, ls / tot, li / tot)
                     else:
-                        pp = ss = 0.0
+                        pp = ss = ii = 0.0
                     viz.update_series("predation", fid + "_rnd",
                                       100.0 * pp, step=int(viz_step))
                     viz.update_series("starvation", fid + "_rnd",
                                       100.0 * ss, step=int(viz_step))
+                    viz.update_series("impacts", fid + "_rnd",
+                                      100.0 * ii, step=int(viz_step))
         except Exception:
             pass
 
     # Force an immediate re-render so the freshly pushed mv/rs/et and
-    # pr/st values above each heatmap become visible as soon as this
+    # pr/st/im values above each heatmap become visible as soon as this
     # probe finishes, rather than only at the start of the next probe's
     # rollout (when the next ``update_biomass`` triggers a render). The
     # frame-rate cap on ``_maybe_render`` is bypassed by resetting
@@ -2475,6 +2483,10 @@ def main():
                                     "starvation", str(_fid),
                                     100.0 * float(_parts.get('starvation', 0.0)),
                                     step=int(_step))
+                                viz.update_series(
+                                    "impacts", str(_fid),
+                                    100.0 * float(_parts.get('impact', 0.0)),
+                                    step=int(_step))
                             except Exception:
                                 pass
                     # Random-action baseline (om loggad) — samma serier
@@ -2510,6 +2522,10 @@ def main():
                                     viz.update_series(
                                         "starvation", str(_fid) + "_rnd",
                                         100.0 * float(_parts.get('starvation', 0.0)),
+                                        step=int(_step))
+                                    viz.update_series(
+                                        "impacts", str(_fid) + "_rnd",
+                                        100.0 * float(_parts.get('impact', 0.0)),
                                         step=int(_step))
                                 except Exception:
                                     pass

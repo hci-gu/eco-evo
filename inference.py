@@ -801,14 +801,19 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                                     'impact': 0.0}
                 viz.update_loss_breakdown(_lb)
                 # Push the same fractions (×100%) to the dedicated plot
-                # tabs ``predation``/``starvation`` per tick, mirroring
-                # how biomass/energy is fed in inference.
+                # tabs ``predation``/``starvation``/``impacts`` per tick,
+                # mirroring how biomass/energy is fed in inference. The
+                # curves then show how the shares evolve over the
+                # rollout, i.e. the ``pr/st/im=…`` header over time.
                 for fid, _br in _lb.items():
                     viz.update_series("predation", fid,
                                       100.0 * float(_br.get('predation', 0.0)),
                                       step=t)
                     viz.update_series("starvation", fid,
                                       100.0 * float(_br.get('starvation', 0.0)),
+                                      step=t)
+                    viz.update_series("impacts", fid,
+                                      100.0 * float(_br.get('impact', 0.0)),
                                       step=t)
                 # Per-DM diet breakdown: läs env-ackumulatorn
                 # ``intake_by_pred_prey`` (ton intagen prey-biomassa över

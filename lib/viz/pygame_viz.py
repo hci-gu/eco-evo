@@ -300,10 +300,10 @@ class LiveVisualizer:
         # Each tab has its own per-FG rolling buffer of (step, value).
         if self.mode == "train":
             self._tabs = ["reward", "biomass", "energy", "move", "rest", "eat",
-                          "predation", "starvation"]
+                          "predation", "starvation", "impacts"]
         else:
             self._tabs = ["biomass", "energy", "move", "rest", "eat",
-                          "predation", "starvation"]
+                          "predation", "starvation", "impacts"]
         # Inference receives per-tick values. Training uses final biomass
         # and energy ratios, plus action averages over each probe rollout.
         if self.mode == "train":
@@ -316,6 +316,7 @@ class LiveVisualizer:
                 "eat": "avg eat action (%)",
                 "predation": "predation share of total loss (%)",
                 "starvation": "starvation share of total loss (%)",
+                "impacts": "impact share of total loss (%)",
             }
         else:
             self._tab_labels = {
@@ -327,6 +328,7 @@ class LiveVisualizer:
                 "eat": "eat action (%)",
                 "predation": "predation share of tick loss (%)",
                 "starvation": "starvation share of tick loss (%)",
+                "impacts": "impact share of tick loss (%)",
             }
         self._active_tab = 0
         # Per-FG enable flag for plot panel (checkbox state). Toggled via
@@ -370,22 +372,34 @@ class LiveVisualizer:
         # the title can display 'B0=... B=...' for context. Reset each new
         # rollout (train probe runs fresh per ARS-iter, inference is one run).
         self._b0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
-        # Rollout-start per-cell maxima used for heatmap colour scaling.
-        # Heatmaps deliberately do NOT rescale to each frame's current max:
-        # near-extinct species should stay dark instead of becoming full
-        # yellow because their tiny remaining biomass is the frame max.
+        # Rollout-start per-cell maxima, captured on the first frame of
+        # each rollout. Only used as the reference for the *manual*
+        # biomass display scale below; the default rendering path
+        # auto-scales every heatmap to its own current frame max.
         self._heatmap_vmax0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
         # One global visual biomass scale for inference. 1.0 means:
         # heatmap max = rollout-start per-cell max, biomass plot max = 100%
         # of rollout-start total. Dragging the slider zooms both together.
-        self._biomass_display_scale: float = 5.0
+        #
+        # The scale is an *opt-in override*: until the user touches the
+        # slider (``_biomass_scale_manual`` stays False) both the heatmaps
+        # and the biomass plot auto-scale to what is currently on screen,
+        # which is the long-standing behaviour. A fixed reference frame
+        # keeps near-extinct species dark instead of re-expanding their
+        # residual biomass to full yellow, but it also flattens every
+        # curve and darkens every map when the run drifts far from its
+        # start, so it must not be the default. Clicking the slider
+        # label switches back to auto.
+        self._biomass_display_scale: float = 1.0
+        self._biomass_scale_manual: bool = False
         self._biomass_scale_min: float = 0.05
         self._biomass_scale_max: float = 5.0
         self._biomass_scale_track_rect: Optional[tuple] = None
+        self._biomass_scale_label_rect: Optional[tuple] = None
         self._dragging_biomass_scale: bool = False
         # Per-FG biomass-loss fractions shown above the heatmap as
-        # ``pr/st=X/Y%``. Updated from train probe rollouts and inference
-        # ticks. Values are fractions in [0, 1].
+        # ``pr/st/im=X/Y/Z%``. Updated from train probe rollouts and
+        # inference ticks. Values are fractions in [0, 1].
         self._loss_breakdown: Dict[str, Dict[str, float]] = {}
         # Per-FG dietuppdelning (predator-DM → {prey_id: andel}) som visas
         # som en femte textrad ovanför heatmapen, på formatet
@@ -799,9 +813,10 @@ class LiveVisualizer:
     ) -> None:
         """Record per-FG biomass-loss fractions.
 
-        ``breakdown`` maps fg_id -> {'predation': p, 'starvation': s}
-        where each value is a fraction in [0, 1] summing to 1.0 when
-        there was any loss at all. Unknown keys are tolerated.
+        ``breakdown`` maps fg_id -> {'predation': p, 'starvation': s,
+        'impact': i} where each value is a fraction in [0, 1] summing to
+        1.0 when there was any loss at all. Unknown keys are tolerated.
+        Used to draw the ``pr/st/im=X/Y/Z%`` line above each heatmap.
         """
         if not self.enabled:
             return
@@ -812,6 +827,7 @@ class LiveVisualizer:
                 self._loss_breakdown[fid] = {
                     'predation':  float(lb.get('predation', 0.0)),
                     'starvation': float(lb.get('starvation', 0.0)),
+                    'impact':     float(lb.get('impact', 0.0)),
                 }
         except Exception as e:
             self._log_once(f"update_loss_breakdown failed: {e!r}")
@@ -1330,7 +1346,7 @@ class LiveVisualizer:
                 elif event.type == pg.MOUSEMOTION and self._dragging_biomass_scale:
                     v = self._biomass_scale_value_from_x(event.pos[0])
                     if v is not None:
-                        self._biomass_display_scale = float(v)
+                        self._set_biomass_display_scale(v)
                         interacted = True
                 elif event.type == pg.MOUSEMOTION and self._dragging_playback:
                     idx = self._playback_idx_from_x(event.pos[0])
@@ -1461,7 +1477,7 @@ class LiveVisualizer:
                           and self._dragging_biomass_scale):
                         v = self._biomass_scale_value_from_x(event.pos[0])
                         if v is not None:
-                            self._biomass_display_scale = float(v)
+                            self._set_biomass_display_scale(v)
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_playback):
                         idx = self._playback_idx_from_x(event.pos[0])
@@ -1583,7 +1599,7 @@ class LiveVisualizer:
                           and self._dragging_biomass_scale):
                         v = self._biomass_scale_value_from_x(event.pos[0])
                         if v is not None:
-                            self._biomass_display_scale = float(v)
+                            self._set_biomass_display_scale(v)
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_playback):
                         idx = self._playback_idx_from_x(event.pos[0])
@@ -1891,6 +1907,28 @@ class LiveVisualizer:
     def _hit_biomass_scale_slider(self, pos) -> bool:
         return self._hit_rect(self._biomass_scale_track_rect, pos)
 
+    def _set_biomass_display_scale(self, value: float) -> None:
+        """Pin the biomass display scale to ``value`` (manual override).
+
+        Touching the slider is what switches the heatmaps and the biomass
+        plot from auto-scaling to the fixed rollout-start reference; see
+        ``_biomass_scale_manual`` in ``__init__``.
+        """
+        lo = float(self._biomass_scale_min)
+        hi = float(self._biomass_scale_max)
+        self._biomass_display_scale = max(lo, min(hi, float(value)))
+        self._biomass_scale_manual = True
+
+    def _reset_biomass_display_scale(self) -> None:
+        """Return to auto-scaling (per-frame heatmap max, auto y-axis)."""
+        self._biomass_scale_manual = False
+        self._biomass_display_scale = 1.0
+
+    def _biomass_scale_label(self) -> str:
+        if not self._biomass_scale_manual:
+            return "Biomass scale = auto"
+        return f"Biomass scale = {self._biomass_display_scale:.2f}x"
+
     def _biomass_scale_value_from_x(self, mx: int) -> Optional[float]:
         rect = self._biomass_scale_track_rect
         if rect is None:
@@ -1951,10 +1989,16 @@ class LiveVisualizer:
                 self._neval_override = int(v)
                 self._dragging_neval = True
             return
+        # Klick på etiketten "Biomass scale = …" släpper override:en och
+        # återgår till autoskalning (kollas före slider-tracken).
+        if self._biomass_scale_label_rect is not None \
+                and self._hit_rect(self._biomass_scale_label_rect, pos):
+            self._reset_biomass_display_scale()
+            return
         if self._hit_biomass_scale_slider(pos):
             v = self._biomass_scale_value_from_x(mx)
             if v is not None:
-                self._biomass_display_scale = float(v)
+                self._set_biomass_display_scale(v)
                 self._dragging_biomass_scale = True
             return
         # b0-slidrar: kolla först om klicket landade i en slider — då
@@ -2771,7 +2815,7 @@ class LiveVisualizer:
         # (samma antipattern som redan fixad _draw_playback_bar:1968).
         _lbl2_preview_w = self._font.size(
             f"Perturbation ticks{marker2_preview} = {cur2_preview}")[0]
-        _bio_label = f"Biomass scale = {self._biomass_display_scale:.2f}x"
+        _bio_label = self._biomass_scale_label()
         _bio_label_w = self._font.size(_bio_label)[0] if _is_inference else 0
         _label_w = max(lbl_surf.get_width(), _lbl2_preview_w, _bio_label_w)
         # Track-rect: börjar efter label (+ liten gutter), slutar före
@@ -2869,11 +2913,18 @@ class LiveVisualizer:
             row3_y = y + 40
             row3_h = 18
             bio_lbl = self._font.render(
-                f"Biomass scale = {self._biomass_display_scale:.2f}x",
-                True, (210, 210, 220))
+                self._biomass_scale_label(),
+                True,
+                (210, 210, 220) if self._biomass_scale_manual
+                else (150, 150, 160))
             lo3_surf = self._font.render(_bio_lo_txt, True, (150, 150, 160))
             hi3_surf = self._font.render(_bio_hi_txt, True, (150, 150, 160))
             self._screen.blit(bio_lbl, (x + 6, row3_y + 2))
+            # Etiketten är klickbar: den släpper override:en och går
+            # tillbaka till autoskalning (se ``_handle_click``).
+            self._biomass_scale_label_rect = (
+                x + 4, row3_y, bio_lbl.get_width() + 4,
+                self._font.get_height() + 4)
             track3_y = row3_y + (row3_h - 6) // 2
             track3_h = 6
             self._screen.blit(lo3_surf,
@@ -2899,7 +2950,9 @@ class LiveVisualizer:
             except Exception:
                 frac3 = self._biomass_scale_pos_from_value(1.0)
             hx3 = int(track_x + frac3 * (track_w - 1))
-            pg.draw.circle(self._screen, (120, 205, 170),
+            knob3_col = ((120, 205, 170) if self._biomass_scale_manual
+                         else (110, 110, 125))
+            pg.draw.circle(self._screen, knob3_col,
                            (hx3, track3_y + track3_h // 2), 6)
             pg.draw.circle(self._screen, (40, 40, 50),
                            (hx3, track3_y + track3_h // 2), 6, 1)
@@ -2907,6 +2960,7 @@ class LiveVisualizer:
                 track_x - 2, track3_y - 6, track_w + 4, track3_h + 12)
             return
         self._biomass_scale_track_rect = None
+        self._biomass_scale_label_rect = None
         # Identisk layout som ticks-slidern men med "n_eval_ticks" som
         # label. Aktiv främst under träning; värdet konsumeras av
         # train.py mellan ARS-iterationer.
@@ -3084,7 +3138,7 @@ class LiveVisualizer:
                 act_txt = (f"mv/rs/et = {mv:.0f}/{rs:.0f}/{et:.0f}%")
                 act_surf = self._font.render(act_txt, True, info_col)
                 self._screen.blit(act_surf, (px + pad, act_y))
-                # Fourth info line: biomass-loss breakdown pr/st as
+                # Fourth info line: biomass-loss breakdown pr/st/im as
                 # percentages. Only rendered when a loss-breakdown record
                 # exists for this FG (probe rollout or inference tick has
                 # pushed it). NDMs always skip this line.
@@ -3092,7 +3146,8 @@ class LiveVisualizer:
                 if lb is not None:
                     pr = float(lb.get('predation', 0.0)) * 100.0
                     st = float(lb.get('starvation', 0.0)) * 100.0
-                    loss_txt = (f"pr/st = {pr:.0f}/{st:.0f}%")
+                    im = float(lb.get('impact', 0.0)) * 100.0
+                    loss_txt = (f"pr/st/im = {pr:.0f}/{st:.0f}/{im:.0f}%")
                     loss_surf = self._font.render(loss_txt, True, info_col)
                     loss_y = act_y + act_surf.get_height()
                     self._screen.blit(loss_surf, (px + pad, loss_y))
@@ -3183,10 +3238,21 @@ class LiveVisualizer:
             return
 
         v = arr.astype(np.float32, copy=False)
-        raw_vmax = float(self._heatmap_vmax0.get(fid, 0.0) or 0.0)
-        if raw_vmax <= 1e-12:
+        # Default: auto-scale to this frame's own max, which is what the
+        # heatmaps have always done - the whole grid structure stays
+        # visible no matter how far the run has drifted from its start.
+        # Only when the user pins the biomass scale do we switch to the
+        # fixed rollout-start reference (start max * scale), which keeps
+        # colours comparable over time at the cost of going dark once the
+        # FG falls well below its starting density.
+        if self._biomass_scale_manual:
+            raw_vmax = float(self._heatmap_vmax0.get(fid, 0.0) or 0.0)
+            if raw_vmax <= 1e-12:
+                raw_vmax = float(np.max(v)) if v.size else 0.0
+            raw_vmax *= float(self._biomass_display_scale)
+        else:
             raw_vmax = float(np.max(v)) if v.size else 0.0
-        raw_vmax = max(raw_vmax * float(self._biomass_display_scale), 1e-12)
+        raw_vmax = max(raw_vmax, 1e-12)
         if self._log_heatmap:
             v = np.log1p(np.maximum(v, 0.0))
             vmax = float(np.log1p(raw_vmax))
@@ -3213,10 +3279,10 @@ class LiveVisualizer:
 
         # ---- Colorbar legend under the heatmap ----------------------------
         # Per-FG normalisation: shows what the colour gradient maps to,
-        # from 0 (left, dark) to the rollout-start per-cell max times the
-        # global biomass display scale. It intentionally stays fixed over
-        # time so near-extinct species remain dark instead of being
-        # re-expanded to full yellow.
+        # from 0 (left, dark) to vmax (right, bright). vmax is the
+        # *current* per-FG max biomass in this tick (log1p when hm:log is
+        # on), or the pinned rollout-start reference when the biomass
+        # scale slider has been touched.
         cbar_y = hm_y + H * self.cell_px + 3
         cbar_w = W * self.cell_px
         cbar_strip_h = 6
@@ -3318,8 +3384,9 @@ class LiveVisualizer:
         """
         active = self._tabs[self._active_tab]
         # NDMs are included on the biomass tab and loss tabs because they
-        # can lose biomass to predation without making decisions.
-        if (active in ("biomass", "predation", "starvation")
+        # can lose biomass to predation and impacts without making
+        # decisions.
+        if (active in ("biomass", "predation", "starvation", "impacts")
                 or not self._ndm_ids):
             return list(self.plot_fg_ids)
         out = []
@@ -3342,15 +3409,16 @@ class LiveVisualizer:
             skrivs som ``ratio`` / ``energy_ratio`` i 0..1.
           * ``move`` / ``rest`` / ``eat``: viz lagrar procent; skrivs
             direkt som ``move_frac`` / ``rest_frac`` / ``eat_frac`` i %.
-          * ``predation`` / ``starvation``: viz stores %; written as
-            ``loss_breakdown[fid][<cause>]`` in fractions 0..1.
+          * ``predation`` / ``starvation`` / ``impacts``: viz stores %;
+            written as ``loss_breakdown[fid][<cause>]`` in fractions
+            0..1.
         """
         # Bygg tick-indexerad union av alla stegkoordinater som finns i
         # någon serie. Varje record motsvarar en tick.
         series = self._series
         all_steps: set = set()
         for tab in ("biomass", "energy", "move", "rest", "eat",
-                    "predation", "starvation"):
+                    "predation", "starvation", "impacts"):
             if tab not in series:
                 continue
             for fid, buf in series[tab].items():
@@ -3382,6 +3450,7 @@ class LiveVisualizer:
         et = _index("eat")
         pr = _index("predation")
         st = _index("starvation")
+        im = _index("impacts")
 
         records = []
         for step in steps_sorted:
@@ -3407,15 +3476,17 @@ class LiveVisualizer:
             for fid, d in et.items():
                 if step in d:
                     eat_frac[fid] = d[step]
-            all_fids = set(pr) | set(st)
+            all_fids = set(pr) | set(st) | set(im)
             for fid in all_fids:
                 lp = pr.get(fid, {}).get(step)
                 ls = st.get(fid, {}).get(step)
-                if lp is None and ls is None:
+                li = im.get(fid, {}).get(step)
+                if lp is None and ls is None and li is None:
                     continue
                 loss_breakdown[fid] = {
                     "predation":  (lp / 100.0) if lp is not None else 0.0,
                     "starvation": (ls / 100.0) if ls is not None else 0.0,
+                    "impact":     (li / 100.0) if li is not None else 0.0,
                 }
             if ratio:
                 rec["ratio"] = ratio
@@ -3517,8 +3588,12 @@ class LiveVisualizer:
         active = self._tabs[self._active_tab]
         buffers = self._series[active]
         base_label = self._tab_labels.get(active, active)
+        # The biomass tab only leaves auto-scaling when the user pins the
+        # display scale; log scaling is never applied to it.
+        biomass_fixed_axis = (active == "biomass"
+                              and self._biomass_scale_manual)
         use_log_plot = bool(self._log_plot and active != "biomass")
-        if active == "biomass":
+        if biomass_fixed_axis:
             ylabel = (
                 f"{base_label}  display max = "
                 f"{100.0 * float(self._biomass_display_scale):.0f}%")
@@ -3629,7 +3704,7 @@ class LiveVisualizer:
                 if xmax - xmin < 1:
                     xmax = xmin + 1
 
-            if active == "biomass":
+            if biomass_fixed_axis:
                 ymin = 0.0
                 ymax = max(1.0, 100.0 * float(self._biomass_display_scale))
             else:
@@ -3669,7 +3744,7 @@ class LiveVisualizer:
                 yy = int(py0 + frac * ph)
                 pg.draw.line(self._screen, (50, 50, 60),
                              (px0, yy), (px0 + pw, yy), 1)
-                lab_txt = f"{val:.3g}" if active == "biomass" else f"{val:+.3g}"
+                lab_txt = f"{val:.3g}" if biomass_fixed_axis else f"{val:+.3g}"
                 lab = self._font.render(lab_txt, True, (160, 160, 170))
                 self._screen.blit(lab, (x + 2, yy - 7))
 
