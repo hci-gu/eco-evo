@@ -6554,16 +6554,15 @@ remain open exactly as described in 71.9 / 71.11.
 
 76.2 Verification
     pytest tests/ -q -> 342 passed, 12 skipped, 4 failed. The 4 are
-    the PRE-EXISTING float32 parity failures in
+    the PRE-EXISTING failures in
     test_gpu_ecosystem.py::test_full_ticks_match_reference (all four
     parametrisations): energy_reserve, 1 of 80 elements, max abs
-    1.0e-3 / max rel 2.6e-4 against atol=rtol=4e-5. The biomass
-    assertion in the same test passes; the reserve is the accumulated
-    gain-minus-cost term, so it is the natural place for float32
-    cancellation between the batched GPU kernels and the CPU
-    reference. NOT touched - it predates both the merge and these
-    fixes, and the right answer (retune the reserve tolerance vs.
-    find a compensated accumulation) is a separate decision.
+    1.0e-3 / max rel 2.6e-4 against atol=rtol=4e-5.
+    CORRECTION (see section 77): the "float32 cancellation in the
+    accumulated gain-minus-cost term" diagnosis originally written
+    here was WRONG. The failures are a real formula difference - the
+    GPU predation kept the pre-Section-73 harvest cap - and they are
+    gone after the fixes in 77.
     Also: 1-generation GPU training with
     --currents on --population-stability --execution compile
     completes, and a 1-generation CPU run with --currents on followed
@@ -6576,3 +6575,113 @@ remain open exactly as described in 71.9 / 71.11.
     - but --population-stability is precisely a scoring mode for it,
     and --currents on changes the foraging problem by moving the
     plankton, so both are now available for that work.
+
+77 THE GPU ENGINE WAS OPTIMISING A DIFFERENT BIOLOGY
+    The 4 remaining test_gpu_ecosystem.py failures were NOT float32
+    parity (76.2 was wrong). lib/gpu/ecosystem.py had drifted three
+    ecological mechanisms behind lib/environments/ecosystem_env/, so
+    train_gpu.py maximised a reward computed under different rules
+    than inference.py / the CPU trainer then run - the same class of
+    bug as the activation mismatch, but in the dynamics instead of
+    the network. All three are fixed; the whole suite is green
+    (354 passed, 12 skipped, 0 failed).
+
+77.1 How the test pointed straight at it
+    Only handling=0.0 failed; both handling=0.2 parametrisations were
+    green with 50x margin, and the divergence was already there in
+    TICK 0 (R absmax 1.043e-03 at handling=0.0 vs 1.907e-06 at
+    handling=0.2). Three orders of magnitude at the first step is a
+    formula difference, not accumulation. Reason for the split: with
+    handling_time = 0 there is no Holling saturation (a_eff = a), so
+    demand is unbounded, exceeds the prey biomass and activates the
+    over-harvest branch; with handling=0.2 intake saturates,
+    total <= visible always, both engines take scale = 1.0 and the
+    differing code is never executed. The test hits exactly the edge
+    case where the two formulas differ.
+
+77.2 Fix 1 - the harvest cap (the actual test failure)
+    CPU (predation.py):
+        harvestable = visible * MAX_HARVEST_FRAC      # 0.999
+        scale = where(total > harvestable,
+                      harvestable / max(total, 1e-30), 1.0)
+    GPU (ecosystem.py:187, before):
+        scale = where(total > visible, visible / (total + 1e-9), 1.0)
+    i.e. the pre-Section-73 form: cap at 100% of the visible prey
+    instead of 99.9%, and an absolute epsilon in the denominator
+    instead of a guarded division. The ratio of the two scales is
+    exactly 0.999, i.e. 1e-3 relative in the intake - the observed
+    magnitude. MAX_HARVEST_FRAC is now IMPORTED into
+    lib/gpu/ecosystem.py (HARVEST_FRACTION) so the two engines cannot
+    drift apart again. This alone removed 2 of the 4 failures; the
+    other 2 dropped 10x and then disappeared as well once 77.3
+    landed.
+
+77.3 Fix 2 - per-pair visibility_floor and per-FG satiation_scale
+    Two silent divergences the old fixture never exercised (it has no
+    pair override and no satiation override, so both engines took the
+    same cheap path):
+    (a) Per-(predator, prey) visibility_floor did not exist on the
+        GPU at all: it used only _all_visibility_floor (the prey's
+        own floor), while the CPU has vis_floor_mat, the per-predator
+        demand bound min(demand, pair_visible) and a shared
+        availability cap = max over the predator rows that actually
+        eat that prey. fg_library.yaml carries three overrides
+        (porpoises->pelagic_fish 0.95, porpoises->gadoids 0.75,
+        gadoids->pelagic_fish 0.25), so under GPU training the
+        porpoises saw hiding herring with floor 0.35 instead of their
+        biosonar 0.95 - about a third of the hidden prey - which
+        points straight into the porpoise collapse (section 71.12:
+        break-even 15.1 t/cell at 0.35 against 5.3 t/cell at full
+        detectability).
+    (b) satiation_scale was hardcoded as /0.8 on the GPU; the CPU
+        resolves it per FG (resolve_satiation_scale), and
+        fg_library.yaml sets 0.9 for porpoises.
+    Implementation: TensorEcosystem gains pair_visibility
+    (None = keep the bit-identical shared-vector path, exactly the
+    _has_pair_vis_floor switch the reference makes) and satiation
+    (through the shared resolver). predation() mirrors the CPU order:
+    pair_visible -> shared cap by amax over eat_mask rows -> Holling
+    on the pair-visible prey -> min(demand, pair_visible) ->
+    MAX_HARVEST_FRAC scaling.
+    OBSERVATION SIDE TOO: the CPU resolves the floor per OBSERVER
+    (_obs_vis_floor), so the GPU observation bank now carries D
+    blocks of G visible channels instead of one, indexed from
+    _build_indices. The per-DM input dimension (max_in_dim) is
+    unchanged, so checkpoints stay valid; the extra cost is D*G*C
+    floats per world in the bank (60x60, G=8, D=6, 32 worlds ->
+    ~22 MB) and only for projects that actually declare an override.
+
+77.4 Tests
+    test_gpu_ecosystem.py: make_env() takes pair_floors= and
+    satiation=, the 12-tick parity loop is extracted as
+    _assert_parity(env, device, ticks), and a new
+    test_pair_visibility_and_satiation_match_reference exercises the
+    new paths with floor in {0.0, 0.95} x handling in {0.0, 0.2}.
+    floor=0.0 is deliberate: it is the case where a non-preying row
+    would inflate the shared cap if the amax forgot to mask by
+    eat_mask. test_full_ticks_match_reference now also asserts
+    pair_visibility is None, i.e. projects without an override keep
+    the cheap path.
+    The new test runs 6 ticks, not 12. Here the engines really do
+    differ by one float32 ulp in tick 0 (the operand grouping is not
+    identical) and the feedback through the policy input amplifies it
+    chaotically in the single cell where prey is harvested down to
+    the 0.1% residue: measured on CUDA rel 1e-7 (tick 0) -> 6e-5
+    (tick 6) -> 8e-5 (tick 11). Six ticks stay two orders below the
+    tolerance and still catch a formula difference, which announces
+    itself at tick 0 and 1000x larger.
+
+77.5 Verification and consequences
+    pytest tests/ -q -> 354 passed, 12 skipped. 1-generation GPU
+    training on mareld2.yaml (16x16, 2x16 tanh) completes with both
+    --execution compile and --execution cuda-graph and gives
+    identical rewards, so the new branches trace and capture. On the
+    real project the pair path is now active: the GPU sees
+    porpoises->pelagic_fish 0.95 and porpoises satiation 0.9.
+    CONSEQUENCE: every existing GPU-trained policy was trained
+    against the wrong predation - too little hidden prey detectable
+    for the porpoises, a slightly too permissive harvest cap and the
+    wrong satiation gate. The checkpoint FORMAT is unchanged (no
+    observation-dimension change), but the numbers behind those
+    weights are. Rerun anything whose conclusion depends on porpoise
+    predation.

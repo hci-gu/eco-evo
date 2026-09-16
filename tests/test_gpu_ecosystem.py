@@ -26,8 +26,18 @@ def device(request):
     return request.param
 
 
-def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5)):
+def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
+             pair_floors=None, satiation=None):
+    """Reference fixture.
+
+    ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
+    ``visibility_floor`` override and ``satiation`` maps an FG id to its own
+    ``satiation_scale``. Both default to absent, i.e. the cheap shared-vector
+    path and the global satiation constant.
+    """
     rng = np.random.default_rng(42)
+    pair_floors = pair_floors or {}
+    satiation = satiation or {}
     groups = {}
     for i, fid in enumerate(("a", "b", "c", "d")):
         params = dict(is_decision_maker=i < 2, movement_speed=[0.7, 0.0, 0, 0][i],
@@ -44,6 +54,11 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5)):
         params["interaction"] = {f"{fid}_preys_on_{prey}": dict(
             preys_on=True, assimilation_factor=0.65, handling_time=handling)
             for prey in params["menu"]}
+        for inter_id, floor in pair_floors.items():
+            if inter_id in params["interaction"]:
+                params["interaction"][inter_id]["visibility_floor"] = floor
+        if fid in satiation:
+            params["satiation_scale"] = satiation[fid]
         fg = FunctionalGroup(fid, params)
         fg.initialize_state(shape, initial_biomass=rng.uniform(0.01, 3, shape),
                             randomize_energy=True, rng=rng)
@@ -65,17 +80,14 @@ def manual_actions(probs, env):
     return ActionProbabilities(p[:, :4], p[:, 4], p[:, 5:])
 
 
-@pytest.mark.parametrize("migration,mortality", [(False, False), (True, True)])
-@pytest.mark.parametrize("handling", [0.0, 0.2])
-def test_full_ticks_match_reference(device, migration, mortality, handling):
-    env = make_env(migration, mortality, handling)
+def _assert_parity(env, device, ticks=12):
     model = TensorEcosystem(env, device)
     b, r, hidden, phase = model.import_state([env])
     bank = PolicyBank(model, hidden_dim=9, hidden_layers=2, seed=13)
     env.policies = {f: copy.deepcopy(p).cpu() for f, p in bank.policies.items()}
     env.build_static_caches()
     packed = bank.pack([w[None] for w in bank.flat_weights()])
-    for tick in range(12):
+    for tick in range(ticks):
         obs = model.observations(b, r, hidden)
         observation = env.get_observation()
         np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=2e-5, rtol=2e-5)
@@ -91,6 +103,47 @@ def test_full_ticks_match_reference(device, migration, mortality, handling):
         np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=3e-5, rtol=4e-5)
         np.testing.assert_allclose(numpy(r), numpy(expected[1]), atol=4e-5, rtol=4e-5)
         assert torch.isfinite(b).all() and (b >= 0).all()
+    return model
+
+
+@pytest.mark.parametrize("migration,mortality", [(False, False), (True, True)])
+@pytest.mark.parametrize("handling", [0.0, 0.2])
+def test_full_ticks_match_reference(device, migration, mortality, handling):
+    model = _assert_parity(make_env(migration, mortality, handling), device)
+    assert model.pair_visibility is None, (
+        "no override in the fixture must keep the cheap shared-vector path")
+
+
+@pytest.mark.parametrize("floor", [0.0, 0.95])
+@pytest.mark.parametrize("handling", [0.0, 0.2])
+def test_pair_visibility_and_satiation_match_reference(device, floor, handling):
+    """The GPU engine must honour per-pair detection and per-FG satiation.
+
+    Both were prey-side-only / hardcoded on the GPU while the reference had
+    per-(predator, prey) ``visibility_floor`` and per-FG ``satiation_scale``,
+    so ``train_gpu.py`` optimised against a different biology than
+    ``inference.py`` runs - invisible here until the fixture actually sets
+    non-trivial values. ``floor=0.0`` also checks that rows which do NOT
+    prey on a column cannot inflate the shared availability cap.
+    """
+    env = make_env(handling=handling,
+                   pair_floors={"a_preys_on_b": floor,
+                                "a_preys_on_c": 0.5},
+                   satiation={"a": 0.9, "b": 0.55})
+    # Shorter horizon than the shared-path test on purpose. The two engines
+    # group the same operations differently, so they diverge by one float32
+    # ulp in tick 0 and that difference is then amplified chaotically by the
+    # feedback through the policy input (measured on CUDA: rel 1e-7 at tick
+    # 0 -> 6e-5 at tick 6, always in the one cell where prey is harvested
+    # down to the MAX_HARVEST_FRAC residue). Six ticks stay two orders
+    # below the tolerance while still catching a formula difference, which
+    # shows up at tick 0 and three orders of magnitude larger.
+    model = _assert_parity(env, device, ticks=6)
+    assert model.pair_visibility is not None, "pair path was not taken"
+    i, j = env.dm_ids.index("a"), env.global_fg_order.index("b")
+    assert float(env.vis_floor_mat[i, j]) == pytest.approx(floor)
+    assert float(model.satiation.flatten()[env.dm_ids.index("b")]) == \
+        pytest.approx(0.55)
 
 
 @pytest.mark.parametrize("activation", ["sig", "tanh", "relu"])

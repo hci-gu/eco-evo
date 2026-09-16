@@ -9,7 +9,15 @@ import math
 
 import numpy as np
 import torch
+from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
+from lib.world.energy_balance import resolve_satiation_scale
+
+# Relative harvest cap, imported rather than repeated so the two engines
+# cannot drift apart again (Fix 2 / Section 73: an absolute epsilon in the
+# denominator left a residue below float32 precision and drove overharvested
+# cells to exactly 0.0, an absorbing state).
+HARVEST_FRACTION = float(MAX_HARVEST_FRAC)
 
 
 class TensorEcosystem:
@@ -40,6 +48,22 @@ class TensorEcosystem:
         self.handling = tensor(env.handling_time_mat)[None, :, :, None]
         self.type3 = tensor(env._type3_pred_mask.reshape(self.D))[None, :, None, None]
         self.visibility = tensor(env._all_visibility_floor)[None, :, None]
+        # Per-(predator, prey) detection floor. ``None`` keeps the cheaper
+        # shared-vector path, which is bit-identical whenever every override
+        # equals the prey's own floor - the same switch the reference makes
+        # with ``_has_pair_vis_floor``. Detection is a property of the PAIR:
+        # porpoise biosonar is unaffected by the crypsis that hides herring
+        # from seabirds.
+        self.pair_visibility = (
+            tensor(env.vis_floor_mat)[None, :, :, None]
+            if getattr(env, "_has_pair_vis_floor", False) else None)
+        # Per-FG satiation scale for h = max(0, 1 - s/scale). Missing values
+        # fall back to HUNGER_SATIATION_SCALE through the shared resolver, so
+        # a library override (porpoises: 0.9) is honoured here as well.
+        self.satiation = tensor([
+            resolve_satiation_scale(
+                getattr(env.fgs[fid], "satiation_scale", None))
+            for fid in self.dm_ids])[None, :, None]
         self.velocity = tensor(env.dm_v)[None, :, None, None]
         self.metabolism = tensor(env.dm_resting_metabolism)[None, :, None]
         self.cost_rest = tensor(env.dm_cost_rest)[None, :, None]
@@ -91,15 +115,25 @@ class TensorEcosystem:
         obs_indices = np.zeros((self.D, self.C, self.F), dtype=np.int64)
         obs_valid = np.zeros_like(obs_indices, dtype=np.float32)
         cells = np.arange(self.C)
+        # Channel layout of the bank assembled in ``observations``:
+        #   [biomass (G)] [visible] [energy_level (G)]
+        # where the visible block is one vector of G channels in the shared
+        # case and one block of G channels PER OBSERVER when a pair floor
+        # exists, because then "what I can see" depends on who is looking.
+        pair = self.pair_visibility is not None
+        visible_base = self.G
+        energy_base = self.G + (self.D * self.G if pair else self.G)
         for d, own in enumerate(self.dm_positions):
             others = list(env.obs_others_idx[d])
-            channels = [own, 2 * self.G + own] + [self.G + j for j in others]
+            visible = [visible_base + (d * self.G + j if pair else j)
+                       for j in others]
+            channels = [own, energy_base + own] + visible
             for k, channel in enumerate(channels):
                 obs_indices[d, :, k] = channel * self.C + cells
                 obs_valid[d, :, k] = 1.0
             offset = len(channels)
             for direction in range(4):
-                for channel in [own] + [self.G + j for j in others]:
+                for channel in [own] + visible:
                     obs_indices[d, :, offset] = channel * self.C + neighbors[direction]
                     obs_valid[d, :, offset] = valid[direction]
                     offset += 1
@@ -133,7 +167,13 @@ class TensorEcosystem:
                            reserve / safe_b / safe_max, 0.0)
 
     def observations(self, biomass, reserve, hidden):
-        visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
+        if self.pair_visibility is None:
+            visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
+        else:
+            # [E, D, G, C] -> D consecutive blocks of G channels, indexed by
+            # ``_build_indices`` so every observer reads its own row.
+            visible = (biomass[:, None] * (1.0 - hidden[:, None]
+                                           * (1.0 - self.pair_visibility))).flatten(1, 2)
         bank = torch.cat((biomass, visible, self.energy_level(biomass, reserve)), dim=1)
         return bank.flatten(1)[:, self.obs_indices] * self.obs_valid
 
@@ -171,11 +211,22 @@ class TensorEcosystem:
 
     def predation(self, biomass, reserve, actions):
         b_dm = biomass[:, self.dm_index]
-        hunger = (1.0 - self.energy_level(biomass, reserve)[:, self.dm_index] / 0.8).clamp_min(0)
+        hunger = (1.0 - self.energy_level(biomass, reserve)[:, self.dm_index]
+                  / self.satiation).clamp_min(0)
         hidden = torch.zeros_like(biomass).index_copy(1, self.dm_index, actions[:, :, 4])
-        visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
+        pair_visible = None
+        if self.pair_visibility is None:
+            visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
+        else:
+            pair_visible = biomass[:, None] * (1.0 - hidden[:, None]
+                                              * (1.0 - self.pair_visibility))
+            # Shared availability cap: total removal from prey j is bounded
+            # by what the BEST-detecting predator of j can see. Rows that do
+            # not prey on j are excluded so they cannot inflate the cap.
+            visible = torch.where(self.eat_mask[None, :, :, None] > 0.0,
+                                  pair_visible, 0.0).amax(1)
         if self.holling:
-            prey = visible[:, None]
+            prey = pair_visible if pair_visible is not None else visible[:, None]
             squared = prey * prey
             type2 = self.intake_rate * prey / (1.0 + self.intake_rate * self.handling * prey)
             type3 = self.intake_rate * squared / (1.0 + self.intake_rate * self.handling * squared)
@@ -183,8 +234,14 @@ class TensorEcosystem:
         else:
             rate = self.intake_rate
         demand = b_dm[:, :, None] * actions[:, :, 5:] * rate * hunger[:, :, None]
+        if pair_visible is not None:
+            # Per-predator bound: no predator may demand more than the
+            # fraction of the prey IT can detect, even when a better-
+            # detecting predator raised the shared cap.
+            demand = torch.minimum(demand, pair_visible)
         total = demand.sum(1)
-        scale = torch.where(total > visible, visible / (total + 1e-9), 1.0)
+        harvest = visible * HARVEST_FRACTION
+        scale = torch.where(total > harvest, harvest / total.clamp_min(1e-30), 1.0)
         actual = demand * scale[:, None]
         gains = (actual * self.energy_gain).sum(2)
         intake = actual.sum(1)
