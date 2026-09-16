@@ -144,7 +144,19 @@ def _save_checkpoint(trainer, fg_id, path):
     For backwards compatibility, code loading older .pth files (a bare
     state_dict) should still work — torch.save preserves dict structure here.
     """
-    payload = {'state_dict': trainer.policies[fg_id].state_dict()}
+    net = trainer.policies[fg_id]
+    payload = {'state_dict': net.state_dict()}
+    # The hidden activation cannot be recovered from the weights, so store it
+    # explicitly (same 'architecture' payload as the GPU trainer writes).
+    # Without it, inference.py has to assume the legacy sigmoid and a
+    # tanh/relu-trained policy behaves nothing like during training.
+    linear_dims = [tuple(p.shape) for k, p in net.state_dict().items()
+                   if k.startswith('net.') and k.endswith('.weight')]
+    payload['architecture'] = {
+        'hidden_dim': int(linear_dims[0][0]) if len(linear_dims) > 1 else None,
+        'hidden_layers': max(1, len(linear_dims) - 1),
+        'activation': getattr(net, 'activation', 'sig'),
+    }
     if getattr(trainer, 'obs_stats', None) and fg_id in trainer.obs_stats:
         st = trainer.obs_stats[fg_id]
         payload['obs_stats'] = {

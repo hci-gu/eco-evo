@@ -510,9 +510,19 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
         if isinstance(ckpt, dict) and 'state_dict' in ckpt:
             sd = ckpt['state_dict']
             os_stats = ckpt.get('obs_stats')
+            ck_arch = ckpt.get('architecture') or {}
         else:
             sd = ckpt
             os_stats = None
+            ck_arch = {}
+        # The hidden activation is NOT recoverable from the weights, so it
+        # must come from the checkpoint's ``architecture`` payload (saved by
+        # both trainers). Falling back to the legacy 'sig' for older
+        # checkpoints; running a tanh/relu-trained policy through sigmoid
+        # units reuses the weights but computes a completely different
+        # function, which makes inference behave unlike the training
+        # rollouts.
+        ck_activation = str(ck_arch.get('activation') or 'sig').lower()
 
         # Cross-check architecture against the env that we're about to run
         # inference on. Mismatch usually means the checkpoint was trained
@@ -550,9 +560,16 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
                 f"yields in_dim={ck_in}, or retrain."
             )
 
-        net = PolicyNetwork(expected_in, out_dim,
-                            hidden_dim=ck_hidden if ck_hidden else 30,
-                            hidden_layers=max(1, ck_layers))
+        try:
+            net = PolicyNetwork(expected_in, out_dim,
+                                hidden_dim=ck_hidden if ck_hidden else 30,
+                                hidden_layers=max(1, ck_layers),
+                                activation=ck_activation)
+        except ValueError as e:
+            raise PolicyCheckpointMismatchError(
+                f"Checkpoint '{ckpt_path}' requests an unsupported "
+                f"activation {ck_activation!r}: {e}"
+            )
         try:
             net.load_state_dict(sd)
         except Exception as e:
@@ -563,6 +580,15 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
             )
         net.eval()
         policies[fid] = net
+        if verbose:
+            if ck_arch.get('activation'):
+                print(f"  [arch]  '{fid}': {max(1, ck_layers)}x"
+                      f"{ck_hidden if ck_hidden else 30} {ck_activation}")
+            else:
+                print(f"  [warn] '{fid}' checkpoint has no 'architecture' "
+                      f"entry; assuming activation 'sig'. If it was trained "
+                      f"with --policynetwork ... tanh|relu, behaviour will "
+                      f"not match the training rollouts.")
 
         if os_stats is not None and int(os_stats.get('count', 0)) > 0:
             m = np.asarray(os_stats['mean'], dtype=np.float32)
