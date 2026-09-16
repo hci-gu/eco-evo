@@ -282,6 +282,8 @@ def _reward_title_from_meta(meta: dict) -> str:
     """
     if not isinstance(meta, dict) or not meta:
         return "ARS reward per FG"
+    if meta.get("population_stability"):
+        return "ARS reward per FG — population stability (clipped energy, warning and failure penalties)"
     legacy = bool(meta.get("legacy_reward", False))
     integral = bool(meta.get("integral_reward", True))
     if legacy:

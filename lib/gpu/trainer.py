@@ -34,7 +34,8 @@ class TensorARSTrainer:
                  integral_reward=True, legacy_reward=False, alpha=1.0, beta=1.0,
                  survival_bonus=0.0, survival_threshold=0.01,
                  entropy_coef=0.0, argmax_penalty=0.0,
-                 execution="cuda-graph", graph_ticks=32, pairs_per_batch=None):
+                 execution="cuda-graph", graph_ticks=32, pairs_per_batch=None,
+                 population_stability=None):
         if n_deltas < 1 or worlds < 1:
             raise ValueError("n_deltas and worlds must be positive")
         if sigma <= 0 or not math.isfinite(sigma) or lr < 0 or not math.isfinite(lr):
@@ -72,6 +73,7 @@ class TensorARSTrainer:
         self.runner_options = dict(obs_normalize=obs_normalize, integral_reward=integral_reward,
                                    legacy_reward=legacy_reward, alpha=alpha, beta=beta,
                                    survival_bonus=survival_bonus, survival_threshold=survival_threshold,
+                                   population_stability=population_stability,
                                    execution=execution, graph_ticks=graph_ticks)
         self.architecture = dict(hidden_dim=hidden_dim, hidden_layers=hidden_layers,
                                  activation=self.bank.activation)
@@ -160,6 +162,9 @@ class TensorARSTrainer:
         sums, squares = torch.zeros_like(self.obs_mean), torch.zeros_like(self.obs_mean)
         runner, m = self.runner, self.model
         biomass_mean = torch.zeros(m.G, device=m.device, dtype=torch.float64)
+        observation_count = torch.zeros((), device=m.device, dtype=torch.int64)
+        failure_count = torch.zeros((), device=m.device, dtype=torch.float64)
+        valid_tick_count = torch.zeros((), device=m.device, dtype=torch.float64)
         for start, count, pairs, indices in self.chunks:
             runner.set_weights(self.bank.pack([w[indices] for w in candidates]))
             # Both signs see exactly the same initial fields and future noise.
@@ -177,9 +182,16 @@ class TensorARSTrainer:
             if self.obs_normalize:
                 sums.add_(runner.obs_sum.reshape(2, self.pairs_per_batch, self.worlds, m.D, m.F)[:, :count].sum((0, 1, 2)))
                 squares.add_(runner.obs_sumsq.reshape(2, self.pairs_per_batch, self.worlds, m.D, m.F)[:, :count].sum((0, 1, 2)))
+                if runner.population_stability is not None:
+                    observation_count.add_(runner.observed_ticks.reshape(2, self.pairs_per_batch, self.worlds)[:, :count].sum() * m.C)
+            if runner.population_stability is not None:
+                failure_count.add_(runner.failed.reshape(2, self.pairs_per_batch, self.worlds)[:, :count].sum())
+                valid_tick_count.add_(runner.valid_ticks.reshape(2, self.pairs_per_batch, self.worlds)[:, :count].sum())
             biomass_mean.add_(runner.biomass_sum.reshape(2, self.pairs_per_batch, self.worlds, m.G)[:, :count].sum((0, 1, 2)))
         if self.obs_normalize:
-            self._merge_observations(sums, squares, 2 * self.n_deltas * self.worlds * m.C * n_eval_ticks)
+            if runner.population_stability is None:
+                observation_count = 2 * self.n_deltas * self.worlds * m.C * n_eval_ticks
+            self._merge_observations(sums, squares, observation_count)
         reward = self.rewards
         if self.entropy_coef != 0 or self.argmax_penalty != 0:
             reward = (reward - reward.mean((0, 1), keepdim=True)) / (reward.std((0, 1), correction=0, keepdim=True) + 1e-8)
@@ -197,6 +209,10 @@ class TensorARSTrainer:
             "actions": self.actions.mean((0, 1)), "sigma_f": sigma_f,
             "mean_biomass": biomass_mean / (2 * self.n_deltas * self.worlds * n_eval_ticks),
         }
+        if runner.population_stability is not None:
+            worlds_evaluated = 2 * self.n_deltas * self.worlds
+            self.last_metrics.update(population_failure_fraction=failure_count / worlds_evaluated,
+                                     population_valid_fraction=valid_tick_count / (worlds_evaluated * n_eval_ticks))
         self.iteration.add_(1)
         self.iterations_completed += 1
         return self.last_metrics

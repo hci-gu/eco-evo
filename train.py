@@ -16,7 +16,10 @@ from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config
                                       load_impact_spawn_specs)
 from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
+from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.runners.trainer import ARSTrainer
+from lib.runners.population_stability import (add_population_arguments, population_options,
+                                               StabilityScore)
 
 # Global variable to store project path for env_builder
 PROJECT_PATH = None
@@ -284,7 +287,8 @@ class _EnvBuilder:
                  apply_natural_mortality=None,
                  migration=None,
                  impact_spawn_specs=None,
-                 observable_impact_vars=None):
+                 observable_impact_vars=None, currents=None):
+        self.currents = currents
         self.impact_maps_snapshot = impact_maps_snapshot
         # List of impact_ids that are flagged ``observable: true`` in the
         # project. Non-observable impacts get a zero field at sampling
@@ -367,6 +371,7 @@ class _EnvBuilder:
             migration=self.migration,
             impact_spawn_specs=self.impact_spawn_specs,
             observable_impact_vars=self.observable_impact_vars,
+            currents=self.currents,
         )
 
     def __call__(self, seed=None):
@@ -392,7 +397,8 @@ class _EnvBuilder:
         env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
-                                   migration=self.migration)
+                                   migration=self.migration, currents=self.currents,
+                                   current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
 
         if self.impact_maps_snapshot is not None:
             for iv in impact_vars:
@@ -443,7 +449,8 @@ class _ProbeEnvBuilder:
     PROBE_SEED = 20260530
 
     def __init__(self, project_path, grid_size, apply_natural_mortality=None,
-                 migration=None, library_path=None):
+                 migration=None, currents=None, library_path=None):
+        self.currents = currents
         self.project_path = project_path
         self.library_kwargs = {} if library_path is None else {"library_path": library_path}
         self.grid_height = int(grid_size[0])
@@ -503,7 +510,8 @@ class _ProbeEnvBuilder:
         env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
-                                   migration=self.migration)
+                                   migration=self.migration, currents=self.currents,
+                                   current_world_seed=s)
         # Inference-tab impact maps (silent: avoid spamming "[info] Using
         # array ..." messages once per probe).
         map_paths = self._load_paths(self.project_path) if self.project_path else {}
@@ -769,6 +777,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                  for fid in rnd_env_for_fid}
     n_ticks_done = 0
     rnd_n_ticks_done = 0
+    stability_config = getattr(trainer, 'population_stability', None)
+    rnd_stability = {id(e): StabilityScore(e, stability_config) for e in unique_rnd_envs} if stability_config else {}
     for _t in range(int(n_ticks)):
         observation = env.get_observation()
         actions = env.policy_controller.forward(observation)
@@ -788,6 +798,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     observation = _re.get_observation()
                     actions = _re.policy_controller.forward(observation)
                     _re.step(actions)
+                    if rnd_stability:
+                        rnd_stability[id(_re)].step(_re)
                 rnd_n_ticks_done += 1
                 # Read per-FG state from its designated reporting env.
                 for fid, _re in rnd_env_for_fid.items():
@@ -1144,6 +1156,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                             _rr = _rr + _sb * (float(rnd_t_survive.get(fid, int(n_ticks))) / float(n_ticks))
                     else:
                         _rr = _log_e_mean
+                    if rnd_stability:
+                        _rr = rnd_stability[id(_re)].results(int(n_ticks))[fid]
                     viz.update_series("reward", fid + "_rnd", float(_rr),
                                       step=int(viz_step))
         except Exception:
@@ -1341,7 +1355,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       apply_natural_mortality=None,
                       migration=None,
                       impact_spawn_specs=None,
-                      observable_impact_vars=None):
+                      observable_impact_vars=None, currents=None):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
@@ -1360,7 +1374,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       apply_natural_mortality=apply_natural_mortality,
                       migration=migration,
                       impact_spawn_specs=impact_spawn_specs,
-                      observable_impact_vars=observable_impact_vars)
+                      observable_impact_vars=observable_impact_vars, currents=currents)
 
 
 def get_dynamic_policy_params(fgs, n_observable_impacts=0):
@@ -1590,8 +1604,15 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "is silently ignored. Main-process only.")
     add_profile_argument(parser)
     add_progress_arguments(parser)
+    add_population_arguments(parser)
+    add_current_arguments(parser)
     args = parse_training_args(parser, argv)
     validate_progress_arguments(parser, args)
+    try:
+        population_stability = population_options(args)
+        currents = current_options(args)
+    except ValueError as error:
+        parser.error(str(error))
 
     # Parse --generations: accept 'inf' or a positive integer.
     gen_raw = str(args.generations).strip().lower()
@@ -1637,6 +1658,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     probe_builder = _ProbeEnvBuilder(
         project_path=PROJECT_PATH,
         grid_size=(GRID_HEIGHT, GRID_WIDTH),
+        currents=currents,
     )
     probe_jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
 
@@ -1693,6 +1715,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                 "__meta__": {
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
                     "integral_reward": bool(getattr(args, "integral_reward", True)),
+                    "population_stability": population_stability.metadata() if population_stability else None,
+                    "currents": currents.metadata() if currents else None,
                     "alpha": getattr(args, "alpha", None),
                     "beta": getattr(args, "beta", None),
                     "cappa": getattr(args, "cappa", None),
@@ -1713,7 +1737,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     # one) so PROJECT_PATH set above is baked into the instance, ensuring
     # spawn-workers later receive the correct project path.
     env_builder_local = _make_env_builder(
-        None, grid_size=(GRID_HEIGHT, GRID_WIDTH), project_path=PROJECT_PATH)
+        None, grid_size=(GRID_HEIGHT, GRID_WIDTH), project_path=PROJECT_PATH, currents=currents)
     temp_env = env_builder_local()
     policy_params = get_dynamic_policy_params(
         temp_env.fgs,
@@ -1781,6 +1805,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                 _reward_meta = {
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
                     "integral_reward": bool(getattr(args, "integral_reward", True)),
+                    "population_stability": population_stability.metadata() if population_stability else None,
                     "alpha": getattr(args, "alpha", None),
                     "beta": getattr(args, "beta", None),
                     "cappa": getattr(args, "cappa", None),
@@ -1874,12 +1899,18 @@ def main(argv=None, *, on_step=None, confirm=True):
     print(f"Grid:           {grid_str} {'(default)' if grid_is_default else '(user)'}")
     print(f"Target Species: {', '.join(target_species)} {'(default: all)' if species_is_default else '(user)'}")
     print(f"Method:         ARS (Augmented Random Search)")
+    if currents:
+        print(f"Currents:       on; max drift={currents.strength:g}/tick, period={currents.period}, seed={currents.seed}")
     print(f"Generations:    {gen_display} {'(default)' if gen_is_default else '(user)'}")
     print(f"Iter/Gen:       {_mark('iter_per_gen', args.iter_per_gen)} per species per generation")
     print(f"N Eval Ticks:   {_mark('n_eval_ticks', args.n_eval_ticks)} ticks per rollout")
     print(f"Learning Rate:  {_mark('lr', args.lr)}")
     print(f"Sigma:          {_mark('sigma', args.sigma)}")
-    if args.legacy_reward:
+    if population_stability is not None:
+        print(f"Reward:         population stability; biomass bounds "
+              f"[{population_stability.lower:g}, {population_stability.upper:g}) × start")
+        print("                mean(clipped log-energy − warning); failure tail = −5/tick")
+    elif args.legacy_reward:
         print(f"Reward:         legacy linear (alpha*delta_b + beta*delta_r + cappa*survive) (user)")
         print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
         print(f"Beta  (delta_r):{_mark('beta', args.beta)}")
@@ -1960,7 +1991,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                          activation=_pn_activation,
                          survival_bonus=args.cappa,
                          survival_threshold=args.survival_threshold,
-                         legacy_reward=args.legacy_reward)
+                         legacy_reward=args.legacy_reward,
+                         population_stability=population_stability)
 
     # Wire the visualiser into the trainer so the pygame event queue gets
     # pumped from the main thread every ~50 ms while we wait on the
@@ -2146,6 +2178,7 @@ def main(argv=None, *, on_step=None, confirm=True):
             impact_seed=impact_seed,
             impact_spawn_specs=_impact_spawn_specs_global,
             observable_impact_vars=_observable_impact_vars_global,
+            currents=currents,
         )
         trainer.env_builder = new_builder
         # PRESTANDA: tidigare rev vi hela ``ctx.Pool`` här och byggde om

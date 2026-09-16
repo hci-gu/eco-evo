@@ -55,7 +55,7 @@ class GPUTrainingVisualizer:
             builder = trainer.spec.builder
             self.builder = _ProbeEnvBuilder(
                 builder.project_path, builder.grid, builder.mortality,
-                builder.migration, library_path=builder.library_path,
+                builder.migration, currents=builder.currents, library_path=builder.library_path,
             )
             with evaluation_randomness(self.builder.PROBE_SEED):
                 env = self.builder()

@@ -14,6 +14,7 @@ import torch
 from lib.config.config_loader import load_project_config, setup_full_mareld_mvp
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.gpu.config import DEFAULT_LIBRARY
+from lib.environments.ecosystem_env.currents import CurrentConfig
 
 
 def add_progress_arguments(parser):
@@ -99,7 +100,8 @@ def inference_config(trainer, backend):
         mortality, migration = builder.apply_natural_mortality, builder.migration
     return dict(project=str(Path(builder.project_path).resolve()) if builder.project_path else None,
                 library=str(Path(library).resolve()), grid=list(grid),
-                mortality=mortality, migration=migration)
+                mortality=mortality, migration=migration,
+                currents=builder.currents.metadata() if getattr(builder, "currents", None) else None)
 
 
 def build_inference_env(config, seed):
@@ -112,7 +114,9 @@ def build_inference_env(config, seed):
     height, width = config["grid"]
     return EcosystemEnvironment(dict(height=height, width=width), groups,
                                 apply_natural_mortality=config["mortality"],
-                                migration=config["migration"])
+                                migration=config["migration"],
+                                currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
+                                current_world_seed=seed)
 
 
 @torch.no_grad()

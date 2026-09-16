@@ -3,13 +3,16 @@
 import torch
 
 from lib.gpu.random import fold_in, uniform
+from lib.runners.population_stability import validate_reward
 
 
 class RolloutRunner:
     def __init__(self, model, bank, candidates, worlds, *, obs_normalize=True,
                  integral_reward=True, legacy_reward=False, alpha=1.0, beta=1.0,
                  survival_bonus=0.0, survival_threshold=0.01,
-                 execution="cuda-graph", graph_ticks=32):
+                 execution="cuda-graph", graph_ticks=32, population_stability=None):
+        validate_reward(population_stability, integral_reward, legacy_reward)
+        self.population_stability = population_stability
         if execution not in ("eager", "compile", "cuda-graph", "compile-graph"):
             raise ValueError("Unknown execution mode: " + execution)
         if "graph" in execution and model.device.type != "cuda":
@@ -50,6 +53,10 @@ class RolloutRunner:
             buffer(name, (self.E, model.D, model.F), torch.float64)
         buffer("action_sum", (self.E, model.D, 4), torch.float64)
         buffer("active_ticks", (self.E, model.D), torch.float64)
+        buffer("failed", (self.E,), torch.bool)
+        buffer("observed_ticks", (self.E,), torch.int64)
+        buffer("valid_ticks", (self.E,), torch.int64)
+        buffer("stability_sum", (self.E, model.D), torch.float64)
         self.weights, self.biases = bank.pack([
             w[None].expand(candidates, -1).clone() for w in bank.flat_weights()])
         self._execute_tick = self._tick
@@ -83,12 +90,21 @@ class RolloutRunner:
         self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)
         self.epsilon.copy_((1e-6 * self.e0).clamp_min(1e-9))
         self.survived.fill_(ticks)
+        for value in (self.failed, self.observed_ticks, self.valid_ticks, self.stability_sum):
+            value.zero_()
+        if self.population_stability is None:
+            self.observed_ticks.fill_(ticks)
 
     def _tick(self):
         m = self.model
+        if self.population_stability is not None:
+            alive = ~self.failed
+            self.observed_ticks.add_(alive)
         obs = m.observations(self.biomass, self.reserve, self.hidden)
         if self.normalize:
             raw = obs.double()
+            if self.population_stability is not None:
+                raw = torch.where(alive[:, None, None, None], raw, 0.0)
             self.obs_sum.add_(raw.sum(2))
             self.obs_sumsq.add_((raw * raw).sum(2))
             obs = ((obs - self.obs_mean[None, :, None]) /
@@ -100,6 +116,9 @@ class RolloutRunner:
         logits = logits.permute(0, 2, 1, 3, 4).reshape(self.E, m.D, m.C, m.A)
         actions = m.action_probabilities(logits, self.biomass, self.temperature)
         statistics, active = m.action_statistics(self.biomass, actions)
+        if self.population_stability is not None:
+            statistics = torch.where(alive[:, None, None], statistics, 0.0)
+            active = torch.where(alive[:, None], active, 0)
         self.action_sum.add_(statistics)
         self.active_ticks.add_(active)
         if m.has_seeding:
@@ -107,11 +126,33 @@ class RolloutRunner:
             multiplier = torch.pow(10.0, 2.0 * noise - 1.0)
         else:
             multiplier = torch.zeros_like(self.biomass)
+        current_args = {"current_keys": self.keys} if m.currents is not None else {}
         b, r, hidden, _, _ = m.step(self.biomass, self.reserve, actions,
-                                  self.tick, self.phase, multiplier)
+                                  self.tick, self.phase, multiplier, **current_args)
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd
+        if self.population_stability is not None:
+            c = self.population_stability
+            present = self.b0 > 0
+            ratio = torch.where(present, bd / self.b0.clamp_min(1e-30), 1.0)
+            breach = (present & ((ratio < c.lower) | (ratio >= c.upper))).any(-1)
+            breach = breach | (~torch.isfinite(energy) | ~torch.isfinite(bd) | (energy < 0)).any(-1)
+            valid = alive & ~breach
+            low = ((c.warning_lower - ratio) / (c.warning_lower - c.lower)).clamp(0, 1)
+            high = ((ratio - c.warning_upper) / (c.upper - c.warning_upper)).clamp(0, 1)
+            warning = torch.where(present, torch.maximum(low, high), 0.0).amax(-1)
+            base = torch.log((energy + self.epsilon) / (self.e0 + self.epsilon))
+            tick_reward = base.clamp(c.energy_floor, c.energy_cap) - warning[:, None]
+            self.stability_sum.add_(torch.where(valid[:, None], tick_reward, 0.0))
+            self.valid_ticks.add_(valid)
+            self.failed.logical_or_(breach)
+            # Absorb failed worlds: no subsequent state, normalization, or
+            # action-statistic changes. Fixed GPU graph shapes are retained.
+            b = torch.where(alive[:, None, None], b, self.biomass)
+            r = torch.where(alive[:, None, None], r, self.reserve)
+            hidden = torch.where(alive[:, None, None], hidden, self.hidden)
+            totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         self.log_energy.add_(torch.log((energy + self.epsilon) / (self.e0 + self.epsilon)))
         self.biomass_sum.add_(totals_b)
         self.reserve_sum.add_(totals_r)
@@ -164,6 +205,11 @@ class RolloutRunner:
 
     def results(self, ticks):
         m = self.model
+        if self.population_stability is not None:
+            tail = (ticks - self.valid_ticks)[:, None]
+            reward = (self.stability_sum + tail * self.population_stability.failure_reward) / ticks
+            action = self.action_sum / self.active_ticks.clamp_min(1)[:, :, None]
+            return reward, action
         if self.integral_reward:
             b = self.biomass_sum[:, m.dm_index] / ticks
             r = self.reserve_sum[:, m.dm_index] / ticks

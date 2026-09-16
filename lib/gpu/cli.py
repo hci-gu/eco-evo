@@ -5,6 +5,9 @@ import math
 import re
 
 from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
+from lib.runners.population_stability import add_population_arguments, population_options
+from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.training_profiles import parse_training_args as _parse_training_args
 
 
 def grid_size(value):
@@ -22,6 +25,8 @@ def positive_int(value):
 
 
 def add_common_arguments(parser):
+    add_current_arguments(parser)
+    add_population_arguments(parser)
     parser.add_argument("--project", default=None, help="Project YAML; omitted means all library groups")
     parser.add_argument("--library", default=DEFAULT_LIBRARY)
     parser.add_argument("--grid", type=grid_size, default=(60, 60))
@@ -53,9 +58,17 @@ def add_common_arguments(parser):
     parser.add_argument("--pairs-per-batch", type=positive_int, help="Limit simultaneous perturbation pairs to fit VRAM")
 
 
+def parse_training_args(parser, argv=None):
+    """Parse GPU training options using the shared CPU/GPU profile handler."""
+    return _parse_training_args(parser, argv, destinations={
+        "n_eval_ticks": "ticks", "rollouts_per_delta": "worlds",
+    })
+
+
 def builder_from_args(args):
     return EnvironmentBuilder(args.project, args.library, args.grid,
-                              args.migration == "on", args.mortality == "on")
+                              args.migration == "on", args.mortality == "on",
+                              currents=current_options(args))
 
 
 def trainer_options(args):
@@ -76,6 +89,7 @@ def trainer_options(args):
                 integral_reward=args.integral_reward, legacy_reward=args.legacy_reward,
                 alpha=args.alpha, beta=args.beta, survival_bonus=args.cappa,
                 survival_threshold=args.survival_threshold,
+                population_stability=population_options(args),
                 entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
                 execution=args.execution, graph_ticks=args.graph_ticks,
                 pairs_per_batch=args.pairs_per_batch)

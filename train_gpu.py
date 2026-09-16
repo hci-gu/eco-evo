@@ -10,7 +10,8 @@ from pathlib import Path
 
 import torch
 
-from lib.gpu.cli import add_common_arguments, builder_from_args, positive_int, targets_from_args, trainer_options
+from lib.gpu.cli import (add_common_arguments, builder_from_args, positive_int,
+                         targets_from_args, trainer_options)
 from lib.gpu.config import ProjectSpec
 from lib.gpu.trainer import TensorARSTrainer
 from lib.training_profiles import add_profile_argument, parse_training_args
@@ -40,7 +41,7 @@ def save_checkpoint(trainer, directory, generation, iteration_in_generation, opt
     trainer.export_policies(directory)
 
 
-def main(argv=None, *, on_step=None):
+def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     add_common_arguments(parser)
     parser.add_argument("--device", default="cuda", help="cuda, cuda:1, or cpu for validation")
@@ -62,6 +63,11 @@ def main(argv=None, *, on_step=None):
                         help="Open the live pygame viewer with CPU inference probes between GPU updates")
     add_profile_argument(parser)
     add_progress_arguments(parser)
+    return parser
+
+
+def main(argv=None, *, on_step=None):
+    parser = build_parser()
     args = parse_training_args(parser, argv, destinations={
         "n_eval_ticks": "ticks", "rollouts_per_delta": "worlds",
     })
@@ -111,6 +117,12 @@ def main(argv=None, *, on_step=None):
     print(f"Device: {trainer.model.device}; {args.n_deltas} delta pairs, {args.worlds} worlds, "
           f"{args.ticks} ticks; execution={args.execution}", flush=True)
     print(f"Output: {directory}. First iteration includes warmup/compilation/capture.", flush=True)
+    if args.currents == "on":
+        print(f"Currents: on; max drift={args.current_strength:g}/tick, "
+              f"period={args.current_period}, seed={args.current_seed}", flush=True)
+    if args.population_stability:
+        print(f"Population stability: biomass bounds [{args.population_min:g}, {args.population_max:g}) "
+              "× start; warnings, capped energy reward, failure tail −5/tick.", flush=True)
     stop = None if generations is None else generation + generations
     next_generation, next_within = generation, within
     started = time.perf_counter()

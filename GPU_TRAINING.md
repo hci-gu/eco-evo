@@ -1,5 +1,8 @@
 # GPU training and CPU comparison
 
+For the optional 10%–300% biomass bounds, warning penalties, and failed-rollout
+scoring, see [Population stability training](POPULATION_STABILITY.md).
+
 `train_gpu.py` runs batched ecosystems and ARS co-evolution on CUDA. Numerical state, spawning, random fields, policies, fitness, observation statistics, and ARS updates remain on the selected device. Python launches work and handles occasional logs, checkpoints, optional snapshots, and an opt-in live viewer. `train.py` remains the existing CPU training entry point.
 
 The implementation is in `lib/gpu/`. It also runs on CPU tensors for numerical validation. CPU reference comparisons, full-graph tracing, checkpoint/resume, and command-line smoke tests can run without a GPU. CUDA execution and performance must be verified on an NVIDIA machine; they were not available on the development machine.
@@ -76,19 +79,35 @@ By default all decision makers co-evolve. `--species gadoids pelagic_fish` limit
 
 Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`.
 
-Both trainers support the same `--profile sanity|info|deep` presets:
+### Training profiles
 
-| Profile | Generations | Iterations/generation | Delta pairs | Ticks | Worlds |
-| --- | --- | --- | --- | --- | --- |
-| `sanity` | 10 | 15 | 16 | 100 | 3 |
-| `info` | 10 | 20 | 16 | 150 | 3 |
-| `deep` | 80 | 20 | 20 | 200 | 3 |
+Both `train.py` and `train_gpu.py` accept `--profile sanity`, `--profile info`,
+or `--profile deep`, using the same preset definitions:
 
-All presets enable co-evolution, set entropy and argmax modifiers to zero, keep temperature at 1, and disable uniform-bias initialization. Explicit CLI flags override the preset, including underscore aliases and values equal to ordinary defaults. World schedules still take precedence over the preset world count. Startup output lists applied values and overrides; `gpu_run.json` and checkpoints record the effective arguments. Presets specify training settings; runtime depends on the hardware and execution mode.
+| Profile | Generations | Updates/generation | Delta pairs | Ticks/rollout | Worlds | Temperature schedule length |
+| --- | --- | --- | --- | --- | --- | --- |
+| `sanity` | 10 | 15 | 16 | 100 | 3 | 8 generations |
+| `info` | 10 | 20 | 16 | 150 | 3 | 30 generations |
+| `deep` | 80 | 20 | 20 | 200 | 3 | 60 generations |
+
+All profiles enable co-evolution, set entropy and argmax coefficients to 0,
+set both start/end temperatures to 1, and disable uniform-bias initialization.
+With both temperatures at 1, the schedule length has no effect unless you
+override one of those temperatures. Other options keep their ordinary defaults.
+
+Explicit flags always win, regardless of position or hyphen/underscore aliases.
+For example, `--profile info --ticks 5000 --iter-per-gen 50` retains 5,000 ticks
+and 50 updates instead of the preset's 150 and 20. The resolved settings are
+printed at startup and saved in `gpu_run.json` and checkpoint options. Resume
+still requires supplying the desired profile/options again.
 
 ```bash
-uv run --locked train_gpu.py --project mareld2.yaml --profile info --run-name mareld-gpu-info
+uv run train_gpu.py --project mareld2.yaml --profile info --grid 16x16 --population-stability --currents on --run-name mareld-info-currents
 ```
+
+World schedules take precedence over the preset world count. Profiles apply to
+training; they do not change visualization evaluation settings. `benchmark_gpu.py`
+continues to use its explicit benchmark options.
 
 ### Live visualization
 
