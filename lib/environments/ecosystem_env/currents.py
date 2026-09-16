@@ -44,6 +44,19 @@ def current_options(args):
     return config if args.currents == "on" else None
 
 
+def _promote(value, like):
+    """Return ``value`` as a tensor matching ``like`` without a host copy.
+
+    ``torch.as_tensor(python_int, device="cuda")`` materialises the scalar on
+    the host and copies it to the device, which CUDA forbids while a stream is
+    capturing a graph (``cudaErrorStreamCaptureUnsupported``). ``torch.full``
+    passes the value as a kernel argument instead, so it is capture-safe.
+    """
+    if isinstance(value, torch.Tensor):
+        return value if value.dtype == like.dtype else value.to(like.dtype)
+    return torch.full((), int(value), dtype=like.dtype, device=like.device)
+
+
 def _xor(left, right):
     """Bitwise xor for Python scalars, NumPy arrays and Torch tensors.
 
@@ -53,9 +66,8 @@ def _xor(left, right):
     """
     for operand in (left, right):
         if isinstance(operand, torch.Tensor):
-            return torch.bitwise_xor(
-                torch.as_tensor(left, dtype=operand.dtype, device=operand.device),
-                torch.as_tensor(right, dtype=operand.dtype, device=operand.device))
+            return torch.bitwise_xor(_promote(left, operand),
+                                     _promote(right, operand))
     return left ^ right
 
 

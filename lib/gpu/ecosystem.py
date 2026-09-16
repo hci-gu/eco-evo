@@ -314,7 +314,10 @@ class TensorEcosystem:
     def advect(self, biomass, reserve, tick, keys=None):
         if self.currents is None or self.currents.strength == 0 or not self.ndm_positions:
             return biomass, reserve
-        tick = torch.as_tensor(tick, dtype=torch.int64, device=self.device)
+        # ``torch.full`` rather than ``as_tensor``: a host scalar copied to the
+        # device is not permitted while a CUDA graph is capturing.
+        tick = (tick.to(torch.int64) if isinstance(tick, torch.Tensor) else
+                torch.full((), int(tick), dtype=torch.int64, device=self.device))
         if keys is None:
             keys = torch.full((biomass.shape[0],), self.current_world_seed,
                               dtype=torch.int64, device=self.device)

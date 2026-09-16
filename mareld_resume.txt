@@ -6685,3 +6685,57 @@ remain open exactly as described in 71.9 / 71.11.
     observation-dimension change), but the numbers behind those
     weights are. Rerun anything whose conclusion depends on porpoise
     predation.
+
+78 CURRENTS COULD NOT BE CAPTURED INTO A CUDA GRAPH
+    Symptom: train_gpu.py --currents on with the DEFAULT
+    --execution cuda-graph aborted in RolloutRunner.prepare() with
+        torch.AcceleratorError: CUDA error: operation not permitted
+        when stream is capturing   (cudaErrorStreamCaptureUnsupported)
+    followed by cudaErrorStreamCaptureInvalidated from
+    capture_end(). Traceback ended in currents._xor ->
+    torch.as_tensor(...). Progress probe and the first survival.jsonl
+    write had already succeeded, so it was purely the capture.
+
+78.1 Root cause
+    The Dynamo fix from section 76 promoted the Python hash
+    constants with
+        torch.as_tensor(scalar, dtype=..., device=cuda)
+    which builds the scalar on the HOST and then issues a
+    cudaMemcpyAsync from pageable host memory. Allocation from the
+    caching allocator is legal during capture (private pool), a H2D
+    copy from pageable memory is NOT. Hence the split behaviour:
+    eager and --execution compile worked (only the graph CAPTURE is
+    restricted), cuda-graph and compile-graph did not. _hash32 runs
+    four xors per current vector and direction_fractions calls it
+    for two epochs, so it tripped on the very first tick captured.
+
+78.2 Fix
+    New helper currents._promote(value, like): tensors are only
+    dtype-cast, Python/NumPy scalars become
+    torch.full((), int(value), dtype, device). torch.full lowers to
+    empty + fill_ with the value as a KERNEL ARGUMENT, so no host
+    memory is touched and capture is safe. The numerics are
+    unchanged (same int64 arithmetic), so existing runs are
+    comparable. lib/gpu/ecosystem.py::advect got the same treatment
+    for a scalar ``tick`` argument, which only the non-rollout
+    callers pass.
+
+78.3 Test
+    tests/test_currents.py::
+    test_current_training_captures_into_a_cuda_graph
+    (cuda-graph and compile-graph, skipped without a GPU) captures a
+    graph with currents enabled and compares rewards against eager
+    over ticks 7 and 4 (remainder plus a changed horizon). Verified
+    to FAIL with the old as_tensor form and pass with the fix. The
+    existing current tests only used eager/compile, which is exactly
+    why the hole existed: --execution is what decides whether the
+    same code path is captured or merely traced.
+
+78.4 Verification
+    pytest tests/ -q -> 356 passed, 12 skipped. The reported command
+    (16x16, 2x48 tanh, --currents on --migration on --mortality off
+    --profile info, cuda-graph) now runs; 200-tick, 16-delta,
+    3-world iterations complete in ~0.8 s/update after warmup.
+    Note: porpoises score about -12 there, i.e. the population
+    collapse of section 77.5 is still open and unrelated to this
+    fix.

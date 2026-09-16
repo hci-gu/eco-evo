@@ -132,6 +132,29 @@ def test_current_training_is_chunk_independent_and_traces_without_readback(monke
     whole.train_step(n_eval_ticks=4)
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="NVIDIA GPU required")
+@pytest.mark.parametrize("execution", ["cuda-graph", "compile-graph"])
+def test_current_training_captures_into_a_cuda_graph(execution):
+    """Drift must be expressible inside a captured CUDA graph.
+
+    Building the hash constants with ``torch.as_tensor`` placed them on the
+    host and copied them to the device, which CUDA rejects while a stream is
+    capturing (``cudaErrorStreamCaptureUnsupported``): --currents on worked
+    under eager and compile but aborted capture, i.e. exactly the default
+    --execution of train_gpu.py.
+    """
+    spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=(5, 6),
+                                          currents=CurrentConfig(period=3, seed=9)))
+    options = dict(device="cuda", n_deltas=2, worlds=2)
+    eager = TensorARSTrainer(spec, execution="eager", **options)
+    captured = TensorARSTrainer(spec, execution=execution, graph_ticks=3, **options)
+    for ticks in (7, 4):  # remainder ticks and a changed horizon
+        eager.train_step(n_eval_ticks=ticks)
+        captured.train_step(n_eval_ticks=ticks)
+        torch.cuda.synchronize()
+        torch.testing.assert_close(eager.rewards, captured.rewards, rtol=1e-4, atol=1e-5)
+
+
 def test_builders_and_progress_inference_keep_current_configuration():
     config = CurrentConfig(period=7, seed=22)
     builder = EnvironmentBuilder(project_path="mareld2.yaml", grid=(5, 6), currents=config)
