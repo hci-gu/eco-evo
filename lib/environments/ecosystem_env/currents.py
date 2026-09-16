@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 import math
 
 import numpy as np
+import torch
 
 from lib.environments.ecosystem_env.grid_masks import build_movement_mask
 from lib.environments.ecosystem_env.movement import _transfer_to_neighbours
@@ -43,12 +44,34 @@ def current_options(args):
     return config if args.currents == "on" else None
 
 
+def _xor(left, right):
+    """Bitwise xor for Python scalars, NumPy arrays and Torch tensors.
+
+    ``tensor ^ python_int`` is traced by Dynamo as ``aten::bitwise_xor.Tensor``,
+    which rejects the Python scalar and breaks ``torch.compile(fullgraph=True)``.
+    Promoting the scalar keeps a single code path for every backend.
+    """
+    for operand in (left, right):
+        if isinstance(operand, torch.Tensor):
+            return torch.bitwise_xor(
+                torch.as_tensor(left, dtype=operand.dtype, device=operand.device),
+                torch.as_tensor(right, dtype=operand.dtype, device=operand.device))
+    return left ^ right
+
+
+def _abs(value):
+    """``abs`` that Dynamo can trace: the builtin is unsupported on tensors."""
+    if isinstance(value, torch.Tensor):
+        return torch.abs(value)
+    return abs(value)
+
+
 def _hash32(value):
     # Same integer operations for Python scalars and device-side Torch tensors.
     value = value & 0xFFFFFFFF
-    value = ((value ^ (value >> 16)) * 0x7FEB352D) & 0xFFFFFFFF
-    value = ((value ^ (value >> 15)) * 0x846CA68B) & 0xFFFFFFFF
-    return (value ^ (value >> 16)) & 0xFFFFFFFF
+    value = (_xor(value, value >> 16) * 0x7FEB352D) & 0xFFFFFFFF
+    value = (_xor(value, value >> 15) * 0x846CA68B) & 0xFFFFFFFF
+    return _xor(value, value >> 16) & 0xFFFFFFFF
 
 
 def direction_fractions(tick, world_seed, config):
@@ -61,16 +84,17 @@ def direction_fractions(tick, world_seed, config):
     epoch = tick // config.period
     blend = (tick % config.period) / config.period
     def vector(epoch):
-        key = _hash32(world_seed ^ config.seed ^ _hash32(epoch + 0x9E3779B9))
-        x = ((_hash32(key ^ 0xA341316C) >> 9) + 0.5) / 8388608.0 * 2 - 1
-        y = ((_hash32(key ^ 0xC8013EA4) >> 9) + 0.5) / 8388608.0 * 2 - 1
+        key = _hash32(_xor(_xor(world_seed, config.seed),
+                           _hash32(epoch + 0x9E3779B9)))
+        x = ((_hash32(_xor(key, 0xA341316C)) >> 9) + 0.5) / 8388608.0 * 2 - 1
+        y = ((_hash32(_xor(key, 0xC8013EA4)) >> 9) + 0.5) / 8388608.0 * 2 - 1
         return x, y
     x0, y0 = vector(epoch)
     x1, y1 = vector(epoch + 1)
     x = ((1 - blend) * x0 + blend * x1) * (config.strength / 2)
     y = ((1 - blend) * y0 + blend * y1) * (config.strength / 2)
-    return ((abs(y) - y) / 2, (abs(x) + x) / 2,
-            (abs(y) + y) / 2, (abs(x) - x) / 2)
+    return ((_abs(y) - y) / 2, (_abs(x) + x) / 2,
+            (_abs(y) + y) / 2, (_abs(x) - x) / 2)
 
 
 def apply_currents(env):

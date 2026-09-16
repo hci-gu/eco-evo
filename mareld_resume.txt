@@ -6474,3 +6474,105 @@ remain open exactly as described in 71.9 / 71.11.
     (inference.impact_maps in the project yaml), and their effect is
     visible through the impacts tab and the pr/st/im line, but there
     is no heatmap of the map itself. That is a separate UI job.
+
+76 THE MERGE WITH origin/coev-seb (CURRENTS + POPULATION STABILITY)
+    Sebastian's branch (ba00ea6 "Add population stability scoring and
+    seeded passive currents", merged through a41548e) was never in
+    coev, which is why "are currents active during inference?" had to
+    be answered with "they do not exist" - correct for the checkout,
+    stale for the repository. Merged with --no-ff and NO conflicts.
+    His commit DELETES mareld_resume.txt (6476 lines); the file was
+    restored from e27c289 before the merge commit, so the merge keeps
+    it. The activation fix (inference.py reading
+    architecture.activation, train.py writing it - see the arc right
+    before this section) was stashed across the merge and committed
+    on top of it as 2d3c63a. New in the tree:
+    lib/environments/ecosystem_env/currents.py,
+    lib/runners/population_stability.py, lib/runners/profiles.py,
+    CURRENTS.md, POPULATION_STABILITY.md, plus --currents on /
+    --current-strength / --current-period / --current-seed and
+    --population-stability in train.py, train_gpu.py, inference.py
+    and benchmark_gpu.py.
+
+76.1 Three tests were RED on his branch too - all three now fixed
+    Verified by checking out a41548e in a separate worktree: the
+    failures are his, not the merge's. Two independent causes.
+
+    (a) currents.py was not torch.compile-traceable (torch 2.1).
+        test_currents.py::test_current_training_is_chunk_independent
+        _and_traces_without_readback died inside
+        torch.compile(fullgraph=True) on
+            world_seed ^ config.seed
+        Dynamo lowers "tensor ^ python_int" to aten::bitwise_xor.
+        Tensor, which refuses the scalar ("Unable to cast 0 to
+        Tensor"). Measured in isolation: &, >>, * and tensor ^ tensor
+        all trace fine, only xor-with-scalar breaks, and builtin abs()
+        on a tensor is unsupported as well. FIX: local helpers _xor()
+        (promotes either side with torch.as_tensor when the other side
+        is a tensor) and _abs() (torch.abs for tensors), used by
+        _hash32() and by the N/E/S/W fractions. Numerics unchanged -
+        the CPU/GPU parity and reproducibility tests in
+        test_currents.py still hold (17/17 green).
+
+    (b) RolloutRunner.observed_ticks was mis-scheduled under Inductor.
+        test_gpu_trainer.py::test_cuda_execution_matches_eager_and
+        _replay_advances[stability1-compile] and [...-compile-graph]
+        reported rewards off by 1.76e-2 against rtol 1e-4. Root cause
+        was NOT tolerance: _tick() did
+            alive = ~self.failed
+            self.observed_ticks.add_(alive)
+        and later, in the same traced graph,
+        self.failed.logical_or_(breach). A one-tick experiment on
+        cuda: eager gives observed=[1,1,1,1,...], execution=compile
+        gives [0,1,1,0,...] - exactly the worlds that breached on that
+        tick lose their increment, i.e. the compiled kernel reads the
+        ALREADY UPDATED flag. cuda-graph was bit-identical; only the
+        Inductor paths drifted. Moving the logical_or_ after the last
+        use of alive did NOT help (the dependency is on the buffer,
+        not the source order), and a minimal 4-element repro does not
+        reproduce it, so this is a torch 2.1 Inductor scheduling
+        quirk, not a source-order bug. obs_sum masking with the same
+        alive was NOT affected.
+        FIX: stop accumulating the counter. observed_ticks is now a
+        read-only property
+            valid_ticks + failed.long()
+        (horizon when population stability is off), which is exact:
+        a world is alive at the start of every tick until it
+        breaches, so it observes its valid ticks plus the single
+        failing tick. The buffer, its reset and its increment are
+        gone, so nothing reads "failed" inside the traced tick any
+        more.
+        WHY IT MOVED THE REWARDS: observed_ticks is the sample count
+        for ARS-V2 observation normalisation (lib/gpu/trainer.py,
+        observation_count). A count that is one too low per failing
+        world skews obs_mean/obs_var, which moves the policies, which
+        is then amplified by the test's degenerate warning band
+        (lower=0.99, warning_lower=1.0 gives a gain of
+        1/(1.0-0.99) = 100 on relative biomass deviations). The
+        0.0176 was a consequence of the bad count, not float noise -
+        with the fix the same test is green over repeated runs.
+
+76.2 Verification
+    pytest tests/ -q -> 342 passed, 12 skipped, 4 failed. The 4 are
+    the PRE-EXISTING float32 parity failures in
+    test_gpu_ecosystem.py::test_full_ticks_match_reference (all four
+    parametrisations): energy_reserve, 1 of 80 elements, max abs
+    1.0e-3 / max rel 2.6e-4 against atol=rtol=4e-5. The biomass
+    assertion in the same test passes; the reserve is the accumulated
+    gain-minus-cost term, so it is the natural place for float32
+    cancellation between the batched GPU kernels and the CPU
+    reference. NOT touched - it predates both the merge and these
+    fixes, and the right answer (retune the reserve tolerance vs.
+    find a compensated accumulation) is a separate decision.
+    Also: 1-generation GPU training with
+    --currents on --population-stability --execution compile
+    completes, and a 1-generation CPU run with --currents on followed
+    by inference.py --currents on loads every policy as 2x16 tanh,
+    i.e. the activation fix and the current code coexist.
+
+76.3 Open
+    The two fixes in 76.1 are uncommitted (currents.py, rollout.py),
+    as is this section. Nothing here addresses the porpoise collapse
+    - but --population-stability is precisely a scoring mode for it,
+    and --currents on changes the foraging problem by moving the
+    plankton, so both are now available for that work.

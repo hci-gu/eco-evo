@@ -54,7 +54,6 @@ class RolloutRunner:
         buffer("action_sum", (self.E, model.D, 4), torch.float64)
         buffer("active_ticks", (self.E, model.D), torch.float64)
         buffer("failed", (self.E,), torch.bool)
-        buffer("observed_ticks", (self.E,), torch.int64)
         buffer("valid_ticks", (self.E,), torch.int64)
         buffer("stability_sum", (self.E, model.D), torch.float64)
         self.weights, self.biases = bank.pack([
@@ -90,16 +89,27 @@ class RolloutRunner:
         self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)
         self.epsilon.copy_((1e-6 * self.e0).clamp_min(1e-9))
         self.survived.fill_(ticks)
-        for value in (self.failed, self.observed_ticks, self.valid_ticks, self.stability_sum):
+        for value in (self.failed, self.valid_ticks, self.stability_sum):
             value.zero_()
+
+    @property
+    def observed_ticks(self):
+        """Ticks each world contributed observations for.
+
+        Derived rather than accumulated: a world is alive at the start of a
+        tick until it breaches, so it observes its valid ticks plus the single
+        failing tick. Counting it inside ``_tick`` would have to read
+        ``failed`` in the same traced graph that updates it, and a compiled
+        graph then reads the already updated flag and loses the failing tick.
+        """
         if self.population_stability is None:
-            self.observed_ticks.fill_(ticks)
+            return self.horizon.reshape(1).expand(self.E)
+        return self.valid_ticks + self.failed.long()
 
     def _tick(self):
         m = self.model
         if self.population_stability is not None:
             alive = ~self.failed
-            self.observed_ticks.add_(alive)
         obs = m.observations(self.biomass, self.reserve, self.hidden)
         if self.normalize:
             raw = obs.double()
@@ -146,13 +156,17 @@ class RolloutRunner:
             tick_reward = base.clamp(c.energy_floor, c.energy_cap) - warning[:, None]
             self.stability_sum.add_(torch.where(valid[:, None], tick_reward, 0.0))
             self.valid_ticks.add_(valid)
-            self.failed.logical_or_(breach)
             # Absorb failed worlds: no subsequent state, normalization, or
             # action-statistic changes. Fixed GPU graph shapes are retained.
             b = torch.where(alive[:, None, None], b, self.biomass)
             r = torch.where(alive[:, None, None], r, self.reserve)
             hidden = torch.where(alive[:, None, None], hidden, self.hidden)
             totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
+            # Update the flag only after the last use of ``alive``: a compiled
+            # graph may fuse ``~failed`` into a later kernel, which would then
+            # read the already mutated buffer and drop the failing tick from
+            # ``observed_ticks`` (the observation-normalisation sample count).
+            self.failed.logical_or_(breach)
         self.log_energy.add_(torch.log((energy + self.epsilon) / (self.e0 + self.epsilon)))
         self.biomass_sum.add_(totals_b)
         self.reserve_sum.add_(totals_r)
