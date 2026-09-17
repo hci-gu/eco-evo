@@ -13,6 +13,7 @@ from lib.environments.ecosystem_env import (
     policies as policy_module,
     population_change,
     predation,
+    source_tracking,
     state,
 )
 from lib.environments.ecosystem_env.state import ActionProbabilities
@@ -53,6 +54,7 @@ class EcosystemEnvironment:
         migration=False,
         currents=None,
         current_world_seed=0,
+        local_reward=None,
     ):
         if policies is None and _looks_like_policies(interactions):
             policies, interactions = interactions, None
@@ -93,6 +95,14 @@ class EcosystemEnvironment:
         self.loss_impact = {fid: 0.0 for fid in self.fgs}
         self._extinction_events = {fid: 0 for fid in self.fgs}
         self.intake_by_pred_prey = {fid: {} for fid in self.fgs}
+        # Local reward (``--local_reward``): when set to a
+        # ``LocalRewardConfig`` the tick tracks, per decision maker and
+        # per cell, where the biomass that started the tick in that cell
+        # ended up, and accumulates the aggregated ratio B/A. ``None``
+        # (default) leaves the tick byte-identical to before.
+        self.local_reward = source_tracking.LocalRewardConfig.from_dict(
+            local_reward)
+        source_tracking.reset(self)
         self.build_static_caches()
 
     # ---------- Static caches ----------
@@ -158,6 +168,11 @@ class EcosystemEnvironment:
         self.ordered_fg_ids = list(self.fgs.keys())
         np.random.shuffle(self.ordered_fg_ids)
 
+        # A(c, t) for the local reward must be the state the policy saw,
+        # i.e. before any mortality is applied this tick.
+        if source_tracking.is_enabled(self):
+            source_tracking.begin_tick(self)
+
         if actions is None:
             actions = self.calculate_decisions()
         else:
@@ -177,6 +192,11 @@ class EcosystemEnvironment:
         # half an indivisible unit after every shrink step. Run last so
         # the next tick's observation never sees float32 subnormals.
         population_change.apply_extinction_threshold(self)
+
+        # Q(c, t+1) is now final, so the source shares recorded in
+        # ``apply_movement`` can be cashed in.
+        if source_tracking.is_enabled(self):
+            source_tracking.end_tick(self)
 
         decisions.update_hidden_state(self, actions)
         self.tick_count += 1

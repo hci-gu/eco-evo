@@ -17,6 +17,8 @@ from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config
 from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.environments.ecosystem_env import source_tracking
+from lib.environments.ecosystem_env.source_tracking import local_reward_options
 from lib.runners.trainer import ARSTrainer
 from lib.runners.population_stability import (add_population_arguments, population_options,
                                                StabilityScore)
@@ -671,6 +673,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 use ``trainer.policies``. Frozen obs-norm from main env."""
                 e = rnd_builder()
                 e.build_static_caches()
+                # ``--local_reward``: the baseline curve must be produced
+                # by the same formula as the trained policy's reward.
+                if getattr(trainer, 'local_reward', None) is not None:
+                    source_tracking.attach(e, trainer.local_reward)
                 out_dim = 5 + e.N_all
                 in_dim = (env.obs_mean.shape[1]
                           if getattr(env, 'obs_mean', None) is not None
@@ -1166,6 +1172,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                         _rr = _alpha * _db + _beta * _dr
                         if _sb > 0.0 and int(n_ticks) > 0:
                             _rr = _rr + _sb * (float(rnd_t_survive.get(fid, int(n_ticks))) / float(n_ticks))
+                    elif getattr(trainer, 'local_reward', None) is not None:
+                        # Per-cell source-tracked reward, accumulated by
+                        # the env itself over the probe rollout.
+                        _rr = source_tracking.fitness(_re, fid)
                     else:
                         _rr = _log_e_mean
                     if rnd_stability:
@@ -1512,6 +1522,57 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "negative gradient on its own via prey collapse during the rollout. Default: True.")
     parser.add_argument("--no_integral_reward", dest="integral_reward", action="store_false",
                         help="Disable integral reward, use classic final-value fitness.")
+    # --- Local (per-cell, source-tracked) reward ---
+    # Instead of the single global quantity log(E_total/E0), score every
+    # occupied cell separately: A(c,t) is the cell's energy at the start
+    # of the tick, B(c,t+1) the end-of-tick energy of the biomass that
+    # started in c (wherever it moved or split to), and reward(c) = B/A.
+    # The ratio is scale invariant, so a small cell's good decision
+    # counts as much as a large cell's. See
+    # lib/environments/ecosystem_env/source_tracking.py.
+    parser.add_argument("--local_reward", "--localreward", dest="local_reward",
+                        action="store_true", default=False,
+                        help="Use the per-cell source-tracked reward: per tick, "
+                             "aggregate reward(c) = B(c,t+1)/A(c,t) over the cells "
+                             "occupied at the start of the tick, where A is the "
+                             "cell's energy (B*energy_content + R) and B the "
+                             "end-of-tick energy of exactly that population, "
+                             "tracked through the move/split into {c,N,E,S,W}. "
+                             "Fitness is the mean over rollout ticks. Scale "
+                             "invariant per cell, so small populations count as "
+                             "much as large ones. Mutually exclusive with "
+                             "--legacy_reward and --population-stability.")
+    parser.add_argument("--local_reward_metric", choices=["log", "ratio"],
+                        default="log",
+                        help="Per-cell transform before aggregation. 'log' (default) "
+                             "uses log(B/A), which is symmetric in gain/loss and "
+                             "optimises the geometric mean growth rate (risk "
+                             "averse). 'ratio' uses the raw quotient B/A, which is "
+                             "asymmetric and mildly rewards boom-bust.")
+    parser.add_argument("--local_reward_norm", choices=["mean", "sum"],
+                        default="mean",
+                        help="Aggregation over cells. 'mean' (default) divides by "
+                             "the total cell weight. 'sum' keeps the raw sum, which "
+                             "grows with the number of occupied cells and therefore "
+                             "also rewards spreading thin just above the extinction "
+                             "threshold. Default: mean.")
+    parser.add_argument("--local_reward_theta", type=float, default=0.0,
+                        help="Cell weight exponent: w_c = A_c**theta. 0.0 (default) "
+                             "weights every occupied cell equally (the local reward "
+                             "proper); 1.0 with --local_reward_norm mean reduces to "
+                             "the global energy-weighted growth rate, which makes "
+                             "theta a single knob for A/B testing local vs global.")
+    parser.add_argument("--local_reward_clip", type=float, nargs=2,
+                        default=[0.2, 2.0], metavar=("LO", "HI"),
+                        help="Clip range for the per-cell ratio B/A before the "
+                             "metric is applied. Bounds the contribution of a "
+                             "nearly empty cell, where float32 residue would "
+                             "otherwise dominate the quotient. Default: 0.2 2.0.")
+    parser.add_argument("--local_reward_min_energy_factor", type=float, default=1.0,
+                        help="A cell participates only when A_c >= factor * "
+                             "extinction_threshold_factor * min_split_biomass * "
+                             "energy_content, i.e. when it held a viable population "
+                             "at the start of the tick. Default: 1.0.")
     parser.add_argument("--temp_anneal_gens", type=int, default=10,
                         help="Number of generations over which the temperature is annealed linearly "
                              "from --temp_start to --temp_end. After that it stays at --temp_end. "
@@ -1623,6 +1684,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     try:
         population_stability = population_options(args)
         currents = current_options(args)
+        local_reward = local_reward_options(args)
     except ValueError as error:
         parser.error(str(error))
 
@@ -1728,6 +1790,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
                     "integral_reward": bool(getattr(args, "integral_reward", True)),
                     "population_stability": population_stability.metadata() if population_stability else None,
+                    "local_reward": local_reward.as_dict() if local_reward else None,
                     "currents": currents.metadata() if currents else None,
                     "alpha": getattr(args, "alpha", None),
                     "beta": getattr(args, "beta", None),
@@ -1818,6 +1881,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
                     "integral_reward": bool(getattr(args, "integral_reward", True)),
                     "population_stability": population_stability.metadata() if population_stability else None,
+                    "local_reward": local_reward.as_dict() if local_reward else None,
                     "alpha": getattr(args, "alpha", None),
                     "beta": getattr(args, "beta", None),
                     "cappa": getattr(args, "cappa", None),
@@ -1922,6 +1986,16 @@ def main(argv=None, *, on_step=None, confirm=True):
         print(f"Reward:         population stability; biomass bounds "
               f"[{population_stability.lower:g}, {population_stability.upper:g}) × start")
         print("                mean(clipped log-energy − warning); failure tail = −5/tick")
+    elif local_reward is not None:
+        _expr = ("log(B/A)" if local_reward.metric == "log" else "B/A")
+        print(f"Reward:         local per-cell {_expr}, A=cell energy at tick "
+              f"start (user)")
+        print(f"                B=end-of-tick energy of that cell's own "
+              f"population ({{c,N,E,S,W}})")
+        print(f"                {local_reward.norm} over cells, "
+              f"theta={local_reward.theta:g}, clip="
+              f"[{local_reward.clip_lo:g}, {local_reward.clip_hi:g}], "
+              f"mean over ticks")
     elif args.legacy_reward:
         print(f"Reward:         legacy linear (alpha*delta_b + beta*delta_r + cappa*survive) (user)")
         print(f"Alpha (delta_b):{_mark('alpha', args.alpha)}")
@@ -2004,7 +2078,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                          survival_bonus=args.cappa,
                          survival_threshold=args.survival_threshold,
                          legacy_reward=args.legacy_reward,
-                         population_stability=population_stability)
+                         population_stability=population_stability,
+                         local_reward=local_reward)
 
     # Wire the visualiser into the trainer so the pygame event queue gets
     # pumped from the main thread every ~50 ms while we wait on the

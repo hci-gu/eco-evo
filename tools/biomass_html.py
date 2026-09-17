@@ -284,6 +284,17 @@ def _reward_title_from_meta(meta: dict) -> str:
         return "ARS reward per FG"
     if meta.get("population_stability"):
         return "ARS reward per FG — population stability (clipped energy, warning and failure penalties)"
+    local = meta.get("local_reward")
+    if local:
+        # Per-cell källspårad reward (``--local_reward``).
+        if not isinstance(local, dict):
+            local = {}
+        metric = local.get("metric", "log")
+        norm = local.get("norm", "mean")
+        theta = local.get("theta", 0.0)
+        expr = "log(B/A)" if metric == "log" else "B/A"
+        return (f"ARS reward per FG — local per-cell {expr} "
+                f"({norm} over cells, θ={theta})")
     legacy = bool(meta.get("legacy_reward", False))
     integral = bool(meta.get("integral_reward", True))
     if legacy:

@@ -50,14 +50,27 @@ def population_options(args):
         return None
     config = PopulationStability(args.population_min, args.population_max,
                                  args.population_warning_min, args.population_warning_max)
-    validate_reward(config, args.integral_reward, args.legacy_reward)
+    validate_reward(config, args.integral_reward, args.legacy_reward,
+                    getattr(args, "local_reward", None))
     return config
 
 
-def validate_reward(config, integral_reward, legacy_reward):
+def validate_reward(config, integral_reward, legacy_reward, local_reward=None):
     if config is not None and (legacy_reward or not integral_reward):
         raise ValueError("Population stability requires integral total-energy reward; "
                          "remove --legacy-reward/--legacyreward and --no-integral-reward")
+    if not local_reward:
+        return
+    # ``--local_reward`` replaces the rollout fitness entirely (it is a
+    # per-cell, source-tracked quantity averaged over ticks), so it can
+    # neither be combined with the legacy linear reward nor with the
+    # population-stability score.
+    if legacy_reward:
+        raise ValueError("--local_reward replaces the fitness function and cannot be "
+                         "combined with --legacy-reward/--legacyreward")
+    if config is not None:
+        raise ValueError("--local_reward replaces the fitness function and cannot be "
+                         "combined with --population-stability")
 
 
 class StabilityScore:

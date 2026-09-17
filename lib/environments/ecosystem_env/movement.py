@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import impacts
+from lib.environments.ecosystem_env import impacts, source_tracking
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 from lib.environments.ecosystem_env.state import ActionSettlement
 
@@ -188,9 +188,22 @@ def apply_movement(env, settlement):
     # no viable cell is made non-viable. Same principle as the top-k
     # immigration concentration above, generalized to the ordinary
     # 4-direction split.
+    b_cancel = None
     if env._dm_split_thr_any:
-        b_total, r_total = suppress_subthreshold_splits(
-            env, b_out, r_out, b_total, r_total)
+        b_total, r_total, b_cancel, _r_cancel = suppress_subthreshold_splits(
+            env, b_out, r_out, b_total, r_total, return_cancelled=True)
+
+    # Local reward (``--local_reward``): hand the per-source-cell biomass
+    # flow to the tracker while it is still available. Cancelled splits
+    # are moved from the outflow back into the stay term so the flow
+    # sums to ``b_total``, exactly as the biomass does.
+    if source_tracking.is_enabled(env):
+        if b_cancel is None:
+            b_stay_eff, b_out_eff = b_stay, b_out
+        else:
+            b_stay_eff = b_stay + b_cancel.sum(axis=1)
+            b_out_eff = b_out - b_cancel
+        source_tracking.record_movement(env, b_stay_eff, b_out_eff, b_total)
 
     max_reserve = b_total * env.dm_max_energy_reserve[:, None, None]
     new_reserve = np.clip(r_total, 0.0, max_reserve)
@@ -201,7 +214,8 @@ def apply_movement(env, settlement):
             env.dtype, copy=False)
 
 
-def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total):
+def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total,
+                                 return_cancelled=False):
     """Cancel move outflows that would land in a still-sub-threshold cell.
 
     ``b_out[i, d, y, x]`` is the biomass leaving cell (y, x) of DM ``i``
@@ -218,7 +232,10 @@ def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total):
     treated as unblocked so the migration emigration/immigration path
     (which has its own top-k concentration) is left untouched.
 
-    Returns the corrected ``(b_total, r_total)``.
+    Returns the corrected ``(b_total, r_total)``, or
+    ``(b_total, r_total, b_cancel, r_cancel)`` when ``return_cancelled``
+    is set -- the local-reward source tracking needs the cancelled
+    outflow to rebuild the effective per-cell biomass flow.
     """
     thr = env._dm_split_thr[:, None, None, None]     # (N_dm,1,1,1)
     inf = np.array(np.inf, dtype=env.dtype)
@@ -232,6 +249,9 @@ def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total):
 
     blocked = (b_out > 0.0) & (dest < thr)
     if not np.any(blocked):
+        if return_cancelled:
+            zero = np.zeros_like(b_out)
+            return b_total, r_total, zero, np.zeros_like(r_out)
         return b_total, r_total
 
     b_cancel = np.where(blocked, b_out, np.float32(0.0))
@@ -252,4 +272,6 @@ def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total):
     # float32 round-off on the +/- pair can leave tiny negatives.
     np.maximum(b_total, 0.0, out=b_total)
     np.maximum(r_total, 0.0, out=r_total)
+    if return_cancelled:
+        return b_total, r_total, b_cancel, r_cancel
     return b_total, r_total

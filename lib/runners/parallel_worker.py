@@ -14,6 +14,7 @@ the per-task payload to plain numpy arrays.
 import numpy as np
 import torch
 
+from lib.environments.ecosystem_env import source_tracking
 from lib.runners.policy import PolicyNetwork
 
 # Module-level globals, populated by _worker_init in each worker process.
@@ -128,12 +129,14 @@ def _evaluate_coevo_task(task):
         # Default True för tuple-tasks (back-compat); dict-tasks är
         # explicita och skickar med True/False.
         legacy_reward = bool(task.get('legacy_reward', True))
+        local_reward = task.get('local_reward')
     else:
         (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
         survival_bonus = 0.0
         survival_threshold = 0.01
         legacy_reward = True
+        local_reward = None
     _ = (entropy_coef, argmax_penalty)
 
     # Sync ALL policy weights
@@ -145,6 +148,8 @@ def _evaluate_coevo_task(task):
     env = builder(seed=seed) if seed is not None else builder()
     env.policies = _POLICIES
     env.softmax_temperature = float(softmax_temperature)
+    if local_reward is not None:
+        source_tracking.attach(env, local_reward)
 
     if obs_pack is not None:
         env.build_static_caches()
@@ -213,6 +218,12 @@ def _evaluate_coevo_task(task):
     fitness = {}
     denom = float(n_ticks) if (integral_reward and n_ticks > 0) else 1.0
     for fid in fg_list:
+        if local_reward is not None:
+            # Per-cell source-tracked reward: already a per-tick mean of
+            # the aggregated local ratio, so integral_reward does not
+            # apply here.
+            fitness[fid] = source_tracking.fitness(env, fid)
+            continue
         if legacy_reward:
             eps_b = max(1e-6 * b0[fid], 1e-9)
             eps_r = max(1e-6 * r0[fid], 1e-9)
@@ -278,6 +289,7 @@ def _evaluate_task(task):
     survival_bonus = 0.0
     survival_threshold = 0.01
     legacy_reward = True
+    local_reward = None
     if isinstance(task, dict):
         # STEP 3 dict-format task: same fields as tuple-format plus an
         # optional ``env_builder`` override carrying a per-world builder
@@ -298,6 +310,7 @@ def _evaluate_task(task):
         survival_bonus = float(task.get('survival_bonus', 0.0))
         survival_threshold = float(task.get('survival_threshold', 0.01))
         legacy_reward = bool(task.get('legacy_reward', True))
+        local_reward = task.get('local_reward')
     elif len(task) == 11:
         (fg_to_train, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
@@ -328,6 +341,8 @@ def _evaluate_task(task):
     env = builder(seed=seed) if seed is not None else builder()
     env.policies = _POLICIES
     env.softmax_temperature = float(softmax_temperature)
+    if local_reward is not None:
+        source_tracking.attach(env, local_reward)
 
     # Install obs-normalisation stats if provided.
     if obs_pack is not None:
@@ -391,7 +406,10 @@ def _evaluate_task(task):
         eh = bh * ec + rh
         log_e_sum = np.log((eh + eps_e) / (e0 + eps_e))
 
-    if legacy_reward:
+    if local_reward is not None:
+        # Per-cell source-tracked reward, already averaged over ticks.
+        fitness = source_tracking.fitness(env, fg_to_train)
+    elif legacy_reward:
         eps_b = max(1e-6 * b0, 1e-9)
         eps_r = max(1e-6 * r0, 1e-9)
         delta_b = np.log((bh + eps_b) / (b0 + eps_b))

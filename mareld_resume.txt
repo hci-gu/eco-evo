@@ -6739,3 +6739,196 @@ remain open exactly as described in 71.9 / 71.11.
     Note: porpoises score about -12 there, i.e. the population
     collapse of section 77.5 is still open and unrelated to this
     fix.
+
+79 LOCAL PER-CELL SOURCE-TRACKED REWARD (--local_reward)
+    The default fitness is one global scalar,
+    mean_t log(E_total(t)/E_total(0)) with
+    E_total = sum_c (B(c)*energy_content + R(c)). It is dominated by
+    the big cells: managing a 1000-ton cell well and a 1-kg cell
+    badly scores the same as the reverse, so most of the grid
+    carries almost no gradient.
+
+    The local reward (idea proposed in localreward.txt, sharpened in
+    review) scores every cell separately, per tick:
+
+        A(c,t)   = B(c,t)*energy_content + R(c,t)   at tick START
+        B(c,t+1) = sum_d share_d(c) * Q(dest(c,d), t+1)
+        reward(c)= B(c,t+1) / A(c,t)
+
+    d runs over the plus-shaped destination set {c, N, E, S, W} --
+    five terms, not the nine of a 3x3 square: MOVE_SLICE is
+    slice(0,4) and _transfer_to_neighbours moves exactly one step in
+    N/E/S/W, so diagonals are unreachable in one tick. The quotient
+    is scale invariant, hence a small population's decision counts
+    as much as a large one's. That was the whole point of the
+    proposal.
+
+79.1 Why the proportional allocation is EXACT, not an approximation
+    Order in environment.step():
+        impact_mortality -> predation -> apply_energy_costs
+        -> apply_movement -> apply_currents -> population_change
+        -> accessibility_mask -> extinction_threshold
+    * Impacts and predation run BEFORE the movement, so those losses
+      are already booked in the source cell. Nothing to track, and
+      this is what makes "my population got eaten" register as a low
+      reward(c) for the cell that made the decision.
+    * apply_movement yields five contributions per source cell, all
+      indexed on the source: b_stay (rest + eat + the non-moving
+      share) and b_out[:, d] for d in {N,E,S,W}.
+    * apply_currents touches only non decision makers
+      (ids = [f for f in ... if not is_decision_maker]), so it never
+      perturbs the DM tracking.
+    * population_change, the accessibility mask, the extinction
+      sweep and the reserve clip np.clip(r_total, 0, max_reserve)
+      are all CELL-WISE MULTIPLICATIVE. Therefore
+      unit(c) = Q_end(c) / b_total(c) is exactly what one delivered
+      ton is worth at the end of the tick, and splitting a
+      destination's end energy between its sources in proportion to
+      the biomass each delivered is an identity.
+    Implementation: five slice-assign gathers per DM per tick, the
+    same pattern as _transfer_to_neighbours, negligible next to the
+    policy forward pass.
+
+79.2 Edge cases that had to be decided
+    * suppress_subthreshold_splits (section 69) cancels outflows
+      that would land in a still-sub-threshold cell and returns them
+      to the source. The contributions MUST be read after that
+      correction, otherwise the mass balance does not close. The
+      function therefore grew an optional return_cancelled=True that
+      also hands back b_cancel/r_cancel; apply_movement folds them
+      back into b_stay and out of b_out. Default call signature
+      unchanged (2-tuple), so the legacy alias
+      _suppress_subthreshold_splits and its tests are untouched.
+    * Off-grid outflow has no in-grid destination. Counting it as a
+      loss would punish border cells for a move the tracker cannot
+      follow, so instead A is scaled by the in-grid biomass fraction
+      frac_in(c) = (b_stay + sum_{d in grid} b_out) / (b_stay + sum_d
+      b_out). Note the default action mask already removes off-grid
+      directions, so this only bites with --migration on.
+    * With --migration on the immigrating biomass has no source.
+      Because the shares are normalised by the destination's TOTAL
+      post-movement biomass, the immigrated part is attributed to
+      nobody; consequently sum_c B(c,t+1) < sum_c Q(c,t+1) there.
+      The exact mass-balance identity holds with --migration off.
+
+79.3 The aggregation is the real design decision
+    A cell-weighted sum telescopes: with w_c = A_c / sum A_c the
+    local reward IS the global one (this was the original objection,
+    and it is correct). With w_c = 1 it does not telescope, and
+    sum_c reward(c) is genuinely new information. But the raw sum has
+    N_occ(t) terms, each around 1.0, so
+        Reward ~ N_occ * (average local growth rate)
+    and the net can raise it simply by occupying more cells -- a
+    nearly empty cell just above the viability threshold contributes
+    as much as a 1000-ton one. The only brake in the code is
+    suppress_subthreshold_splits plus apply_extinction_threshold, so
+    the optimum becomes "spread as thin as possible but just above
+    thr". That may be ecologically sound (ideal free distribution)
+    or degenerate; it is the first thing to A/B test.
+    Hence both are flags rather than a hardcoded choice:
+        --local_reward_norm  mean|sum   (default mean)
+        --local_reward_theta THETA      w_c = A_c**theta, default 0
+    theta=0 + sum  = the literal proposal.
+    theta=0 + mean = average local growth rate, no spread gradient.
+    theta=1 + mean = collapses back onto the global energy growth
+                     rate (asserted by a test), so ONE flag value
+                     gives both baselines under identical CRN seeds.
+    Metric: --local_reward_metric log|ratio. The raw quotient is
+    asymmetric (doubling +1.0, halving -0.5), i.e. mildly risk
+    LOVING, which premieres boom-bust. log(B/A) is symmetric and
+    optimises geometric-mean growth (Kelly), which is risk averse
+    and matches POPULATION_STABILITY.md. Default log.
+    Clipping: --local_reward_clip LO HI on the ratio (default
+    0.2 2.0) and --local_reward_min_energy_factor, which restricts
+    the cell set to A_c >= factor * extinction_threshold_factor *
+    min_split_biomass * energy_content, i.e. cells that held a
+    viable population at tick start. Defining the cell set at t (not
+    t+1) is what keeps float32 residue out of the quotient.
+
+79.4 On gamma=0 and one-tick credit
+    A one-tick reward cannot see that a move pays off at t+2: eat
+    happens before the movement and the move cost is charged in
+    apply_energy_costs, so a cell that puts its mass on move gets no
+    intake and a full cost that tick. In ARS this matters less than
+    it looks: fitness is a sum over ALL ticks, so the destination
+    cell contributes its own high quotient at t+1 and the credit is
+    merely booked anonymously in the next term. ARS needs no
+    per-step credit assignment (no value function, no gamma), so a
+    K-step backward pass over saved share matrices would only reduce
+    variance, not enable movement to pay. It was therefore left out.
+    Note that --local_reward changes the SHAPE of the fitness
+    landscape (from "maximise total energy" to "maximise the typical
+    cell's growth rate, spatially risk averse"); motivate it
+    ecologically, not by credit assignment, per AGENTS.md section 7.
+
+79.5 Where it is wired in
+    * lib/environments/ecosystem_env/source_tracking.py (new):
+      LocalRewardConfig, local_reward_options(args), attach/reset,
+      begin_tick / record_movement / end_tick, fitness, occupancy.
+    * movement.apply_movement publishes the corrected per-source
+      flow; suppress_subthreshold_splits gained return_cancelled.
+    * environment.step() snapshots A before apply_impact_mortality
+      and cashes in the shares after apply_extinction_threshold.
+      The env ctor takes local_reward=None, so the tick is unchanged
+      when the flag is off (asserted by a test).
+    * lib/runners/trainer.py: self.local_reward plus
+      _local_reward_payload() in ALL FOUR dict-task blocks
+      (train_step M=1 and M>1, train_step_coevolution M=1 and M>1)
+      and both sequential paths (_evaluate, _evaluate_coevo).
+      IMPORTANT: --local_reward, like the energy reward, must force
+      the dict-task; the byte-identical tuple-task path now requires
+      legacy_reward and local_reward is None.
+    * lib/runners/parallel_worker.py: task.get('local_reward'),
+      source_tracking.attach on the fresh env, and a fitness branch
+      in both _evaluate_task and _evaluate_coevo_task.
+    * lib/runners/population_stability.py: validate_reward grew a
+      local_reward argument; mutually exclusive with
+      --legacy_reward and --population-stability.
+    * train.py: the flags, local_reward_options, the banner, the
+      __meta__ header in biomass.jsonl, and the random-action
+      baseline (which mirrors the reward formula by hand -- forget
+      it and the *_rnd curve is plotted against the wrong formula).
+    * tools/biomass_html.py: _reward_title_from_meta labels the
+      reward tab.
+    * GPU: lib/gpu/* is NOT mirrored. --local_reward is a train.py
+      flag only; train_gpu.py keeps the global reward. Mirroring it
+      would mean the same five roll/slice ops in
+      lib/gpu/rollout.py::reward().
+
+79.6 Diagnostics
+    env.local_reward_sum / local_reward_occupied / local_reward_ticks
+    accumulate per FG alongside loss_predation / loss_starvation, and
+    env.local_reward_last carries this tick's per-cell start,
+    tracked, frac_in, active, ratio and value arrays. occupancy() is
+    the mean number of participating cells per tick -- log it, since
+    a runaway N_occ is exactly the spread gradient of 79.3.
+
+79.7 Verification
+    tests/test_local_reward.py (15 tests): mass balance on one tick
+    and over five, pure-rest degeneracy, ratio 1.0 for a full 4-way
+    split, border/off-grid handling, a swept cell scoring finite
+    rather than NaN, viability gating, bit-identical dynamics with
+    the flag off, theta=1 collapsing onto the global growth rate,
+    sum-vs-mean cell-count scaling, config validation and the CLI
+    wiring. pytest tests/ -q -> 371 passed, 12 skipped.
+    Real-world check on mareld2.yaml (60x60, 15 ticks, random
+    policies): the mass balance holds to < 2e-4 relative for every
+    DM every tick with predation, impacts and real thresholds
+    active. Raw values, log/mean: gadoids -0.0008 (occ 1743),
+    pelagic_fish -0.0006 (occ 2477), porpoises -0.1207 (occ 251),
+    zooplankton +0.0019 (occ 3600); the same rollout's global
+    cumulative reward is -0.0058 / -0.0031 / -0.5064 / +0.0164, so
+    the local signal ranks the species the same way while being a
+    per-tick quantity. With ratio/sum the values become ~N_occ as
+    predicted in 79.3, which is the spread gradient made visible.
+    1-generation training runs complete in both co-evolution and
+    round-robin mode.
+
+79.8 Recommended next steps
+    1. Log occupancy() next to the reward in the probe rollout and
+       watch whether N_occ runs away under --local_reward_norm sum.
+    2. A/B --local_reward_theta 0 against 1 with the same CRN seed;
+       theta=1 is the global baseline by construction.
+    3. Only then consider a K-step backward pass over the saved
+       share matrices (--local_reward_horizon), which is a variance
+       reduction, not a correctness fix (see 79.4).

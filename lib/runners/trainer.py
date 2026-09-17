@@ -4,6 +4,8 @@ import multiprocessing as mp
 import signal
 from lib.runners.policy import PolicyNetwork
 from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_coevo_task
+from lib.environments.ecosystem_env import source_tracking
+from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.runners.population_stability import evaluate_stability, validate_reward
 
 class ARSTrainer:
@@ -21,9 +23,16 @@ class ARSTrainer:
                  argmax_penalty=0.0, integral_reward=True, uniform_bias_init=False,
                  hidden_layers=2, hidden_dim=30, activation="sig",
                  survival_bonus=0.0, survival_threshold=0.01,
-                 legacy_reward=False, population_stability=None):
-        validate_reward(population_stability, integral_reward, legacy_reward)
+                 legacy_reward=False, population_stability=None,
+                 local_reward=None):
+        validate_reward(population_stability, integral_reward, legacy_reward,
+                        local_reward)
         self.population_stability = population_stability
+        # ``--local_reward``: per-cell source-tracked reward
+        # ``mean_t agg_c(B(c,t+1) / A(c,t))``. A ``LocalRewardConfig``
+        # (or plain dict) enables it; ``None`` keeps the global reward.
+        # Mutually exclusive with legacy_reward and population_stability.
+        self.local_reward = LocalRewardConfig.from_dict(local_reward)
         self.env_builder = env_builder
         self.policy_params = policy_params
         self.sigma = sigma
@@ -424,10 +433,11 @@ class ARSTrainer:
             # we keep the original tuple-task format (no override needed)
             # so the worker stays on its byte-identical legacy code path.
             tasks = []
-            if M == 1 and self.legacy_reward:
+            if M == 1 and self.legacy_reward and self.local_reward is None:
                 # Byte-identisk legacy tuple-task-path bevaras enbart för
                 # legacy_reward=True. Nya energi-rewarden kräver dict-task
                 # (workern måste se ``legacy_reward=False``-flaggan).
+                # Detsamma gäller ``--local_reward``.
                 for sign in (+1, -1):
                     for i, delta in enumerate(deltas):
                         d = delta.numpy()
@@ -460,6 +470,7 @@ class ARSTrainer:
                             'survival_threshold': self.survival_threshold,
                             'legacy_reward': self.legacy_reward,
                             'population_stability': self.population_stability,
+                            'local_reward': self._local_reward_payload(),
                         })
             else:
                 for sign in (+1, -1):
@@ -484,6 +495,7 @@ class ARSTrainer:
                                 'survival_threshold': self.survival_threshold,
                                 'legacy_reward': self.legacy_reward,
                                 'population_stability': self.population_stability,
+                                'local_reward': self._local_reward_payload(),
                                 'env_builder': world_builders[m],
                             })
 
@@ -635,6 +647,12 @@ class ARSTrainer:
             p.data.copy_(weights[idx:idx + p_size].view(p.size()))
             idx += p_size
 
+    def _local_reward_payload(self):
+        """Picklable ``--local_reward`` config for a worker task dict."""
+        if self.local_reward is None:
+            return None
+        return self.local_reward.as_dict()
+
     def _evaluate(self, fg_id, n_ticks, seed=None,
                   obs_mean=None, obs_var=None, dm_ids_for_norm=None,
                   env_builder=None):
@@ -644,6 +662,8 @@ class ARSTrainer:
         env = builder(seed=seed) if seed is not None else builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
+        if self.local_reward is not None:
+            source_tracking.attach(env, self.local_reward)
 
         # Install obs-normalisation stats (frozen during this rollout).
         if obs_mean is not None and obs_var is not None:
@@ -709,7 +729,10 @@ class ARSTrainer:
             eh = bh * ec + rh
             log_e_sum = np.log((eh + eps_e) / (e0 + eps_e))
 
-        if self.legacy_reward:
+        if self.local_reward is not None:
+            # Per-cell source-tracked reward, already a per-tick mean.
+            fitness = source_tracking.fitness(env, fg_id)
+        elif self.legacy_reward:
             eps_b = max(1e-6 * b0, 1e-9)
             eps_r = max(1e-6 * r0, 1e-9)
             delta_b = np.log((bh + eps_b) / (b0 + eps_b))
@@ -774,6 +797,8 @@ class ARSTrainer:
         env = builder(seed=seed) if seed is not None else builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
+        if self.local_reward is not None:
+            source_tracking.attach(env, self.local_reward)
 
         if obs_mean is not None and obs_var is not None:
             env.build_static_caches()
@@ -838,6 +863,9 @@ class ARSTrainer:
         fitness = {}
         denom = float(n_ticks) if (self.integral_reward and n_ticks > 0) else 1.0
         for fid in fg_list:
+            if self.local_reward is not None:
+                fitness[fid] = source_tracking.fitness(env, fid)
+                continue
             if self.legacy_reward:
                 eps_b = max(1e-6 * b0[fid], 1e-9)
                 eps_r = max(1e-6 * r0[fid], 1e-9)
@@ -1013,9 +1041,10 @@ class ARSTrainer:
                 obs_pack = {'dm_ids': dm_ids_for_norm,
                             'mean': obs_mean, 'var': obs_var}
             tasks = []
-            if M == 1 and self.legacy_reward:
+            if M == 1 and self.legacy_reward and self.local_reward is None:
                 # Byte-identisk legacy tuple-task-path; nya energi-rewarden
-                # kräver dict-task så att workern ser ``legacy_reward=False``.
+                # och ``--local_reward`` kräver dict-task så att workern
+                # ser flaggorna.
                 for i in range(self.n_deltas):
                     wd_pos = _build_weights_dict(+1.0, i)
                     tasks.append((list(target_species), wd_pos, n_eval_ticks,
@@ -1049,6 +1078,7 @@ class ARSTrainer:
                             'survival_threshold': self.survival_threshold,
                             'legacy_reward': self.legacy_reward,
                             'population_stability': self.population_stability,
+                            'local_reward': self._local_reward_payload(),
                         })
             else:
                 # M>1: dict-tasks with per-world env_builder override. Layout:
@@ -1073,6 +1103,7 @@ class ARSTrainer:
                                 'survival_threshold': self.survival_threshold,
                                 'legacy_reward': self.legacy_reward,
                                 'population_stability': self.population_stability,
+                                'local_reward': self._local_reward_payload(),
                                 'env_builder': world_builders[m],
                             })
             results = self._pool_map(_evaluate_coevo_task, tasks)
