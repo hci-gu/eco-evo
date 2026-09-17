@@ -27,13 +27,19 @@ def device(request):
 
 
 def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
-             pair_floors=None, satiation=None):
+             pair_floors=None, satiation=None, min_split=200,
+             extinction_factor=0.3):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
     ``visibility_floor`` override and ``satiation`` maps an FG id to its own
     ``satiation_scale``. Both default to absent, i.e. the cheap shared-vector
     path and the global satiation constant.
+
+    ``min_split`` / ``extinction_factor`` default to the values above the
+    fixture's biomass, i.e. splits are suppressed and the extinction sweep
+    clears the grid. Set both to 0 for a fixture where biomass survives and
+    actually moves between cells.
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -45,7 +51,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
                       movement_cost=2.5, feeding_cost=1.2, resting_cost=0.3,
                       growth_rate=0.2, starve_rate=0.7, maintenance_level=0.4,
                       natural_mortality=0.1, visibility_floor=0.25,
-                      min_split_biomass=200, extinction_threshold_factor=0.3,
+                      min_split_biomass=min_split,
+                      extinction_threshold_factor=extinction_factor,
                       max_carrying_capacity=12, seasonal_amplitude=0.2,
                       seasonal_period=15, seed_rate=0.0, energy_content=20,
                       observes=["b", "c"] if i == 0 else ["a"],
@@ -200,6 +207,75 @@ def test_seeding_with_injected_noise(device, monkeypatch):
     expected = model.import_state([env])
     torch.testing.assert_close(b_next, expected[0], atol=3e-6, rtol=3e-6)
     torch.testing.assert_close(r_next, expected[1], atol=3e-6, rtol=3e-6)
+
+
+def sparse_env(min_split=50.0, extinction_factor=1.2, amount=0.1, shape=(4, 5)):
+    """Fixture where a 4-way split lands below the extinction threshold.
+
+    ``make_env``'s biomass fills every cell, so a split always arrives in
+    a cell that is viable on its own account and the suppression never
+    fires. Concentrating the biomass in one cell instead makes the
+    destinations empty: at 0.1 t, velocity 0.7 and four directions each
+    receives 0.0175 t, well under ``thr = 1.2 * 0.05 = 0.06``.
+    """
+    env = make_env(min_split=min_split, extinction_factor=extinction_factor,
+                   shape=shape)
+    for fg in env.fgs.values():
+        fg.biomass = np.zeros(fg.biomass.shape, dtype=np.float32)
+        fg.biomass[1, 2] = amount
+        fg.energy_reserve = fg.biomass * 2.0
+    env.build_static_caches()
+    return env
+
+
+def uniform_move(env, model):
+    """Probabilities that put the whole cell on a 4-way split."""
+    probabilities = torch.zeros(1, model.D, model.A, model.C, device=model.device)
+    probabilities[:, :, :4] = 0.25
+    reference = ActionProbabilities(
+        np.full((env.N_dm, 4, env.H, env.W), 0.25, np.float32),
+        np.zeros((env.N_dm, env.H, env.W), np.float32),
+        np.zeros((env.N_dm, env.N_all, env.H, env.W), np.float32))
+    return probabilities, reference
+
+
+def test_subthreshold_splits_are_suppressed_like_the_reference(device):
+    """Section 69's split suppression was missing from the GPU engine.
+
+    ``population`` zeroes every cell below ``thr =
+    extinction_threshold_factor * min_split_biomass``, so a splitting
+    decision maker bleeds biomass through that sweep. The reference
+    cancels an outflow whose destination would still be sub-threshold
+    (``movement.suppress_subthreshold_splits``); without the mirror,
+    ``train_gpu.py`` optimised against a diffusion loss that
+    ``inference.py`` does not have. Measured on this fixture: 0.33 vs.
+    0.41 t after a single tick, i.e. a fifth of the population.
+
+    Compared per tick over several ticks so the suppression is exercised
+    on an evolving grid, not just on the hand-built initial state.
+    """
+    env = sparse_env()
+    model = TensorEcosystem(env, device)
+    assert model.split_thr_any and env._dm_split_thr_any
+    np.testing.assert_allclose(numpy(model.split_thr).ravel(), env._dm_split_thr,
+                               rtol=0, atol=0)
+    b, r, _, phase = model.import_state([env])
+    probabilities, reference = uniform_move(env, model)
+    fired = False
+    for tick in range(4):
+        model.split_thr_any = False              # the pre-fix code path
+        unsuppressed = model.step(b, r, probabilities, model.tensor(tick), phase,
+                                  torch.zeros_like(b))[0]
+        model.split_thr_any = True
+        b, r, _, _, _ = model.step(b, r, probabilities, model.tensor(tick), phase,
+                                   torch.zeros_like(b))
+        env.step(reference)
+        expected = model.import_state([env])
+        np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=2e-7, rtol=2e-6)
+        np.testing.assert_allclose(numpy(r), numpy(expected[1]), atol=2e-7, rtol=2e-6)
+        fired = fired or float(b.sum()) > float(unsuppressed.sum()) + 1e-3
+    assert fired, "the suppression never fired; the test would be vacuous"
+    assert float(b.sum()) > 0, "everything died; the comparison is against zeros"
 
 
 def test_immigration_matches_threshold_concentration(device):

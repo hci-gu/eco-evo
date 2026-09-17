@@ -6890,10 +6890,8 @@ remain open exactly as described in 71.9 / 71.11.
       it and the *_rnd curve is plotted against the wrong formula).
     * tools/biomass_html.py: _reward_title_from_meta labels the
       reward tab.
-    * GPU: lib/gpu/* is NOT mirrored. --local_reward is a train.py
-      flag only; train_gpu.py keeps the global reward. Mirroring it
-      would mean the same five roll/slice ops in
-      lib/gpu/rollout.py::reward().
+    * GPU: mirrored in section 80. When 79 was written lib/gpu/*
+      was NOT mirrored and --local_reward was a train.py flag only.
 
 79.6 Diagnostics
     env.local_reward_sum / local_reward_occupied / local_reward_ticks
@@ -6932,3 +6930,263 @@ remain open exactly as described in 71.9 / 71.11.
     3. Only then consider a K-step backward pass over the saved
        share matrices (--local_reward_horizon), which is a variance
        reduction, not a correctness fix (see 79.4).
+
+
+80 --local_reward ON THE GPU PATH (mirroring section 79)
+    train_gpu.py now accepts the same --local_reward family as
+    train.py and optimises the same fitness. The two engines agree to
+    six decimals on identical rollouts (80.4), which is the whole
+    point: before this, --gpu runs silently optimised the global
+    reward while the CPU runs optimised the local one.
+
+80.1 What the tensor engine made easy
+    The GPU tick is
+        predation -> movement -> advect -> population
+    i.e. no impact mortality and no suppress_subthreshold_splits, so
+    the tracking is the plain five-term variant of 79.1 with no
+    cancellation correction to read back. Everything the tracker
+    needs was already computed inside movement():
+        b_stay  = b*rest + b*eat + (moving_b - b_out).sum(2)
+        b_out   [E, D, 4, C]  outflow per source cell and direction
+        b_total [E, D, C]     post-movement biomass per cell
+    Previously b_stay was not named; b_total was simply initialised
+    with that expression and then accumulated into. Naming it costs
+    nothing and makes the flow available.
+
+80.2 Direction indexing (the one place to get wrong)
+    The settle loop reads, for direction d, index = neighbors[(d+2)%4],
+    i.e. cell c receives the direction-d outflow of the cell
+    neighbors[opp(d)][c]. Inverting that, the destination of a
+    direction-d move FROM the source is neighbors[d][source]. The
+    tracker therefore gathers the destination's per-unit energy with
+    unit[:, :, neighbors[direction]] * neighbor_valid[direction] --
+    the same index tensors, read in the opposite direction. Getting
+    this backwards is silent: mass balance still holds, but every
+    moving cell is credited with the WRONG neighbour.
+
+80.3 Where it is wired in
+    * lib/gpu/ecosystem.py: movement(..., track=False) returns a
+      third value (b_stay, b_out, b_total) when asked; local_energy()
+      is Q(c) per DM; tracked_energy() does the proportional
+      allocation plus frac_in; local_min_energy(factor) is the
+      viability floor -- threshold already stores
+      extinction_threshold_factor * min_split_biomass, the same
+      product the reference reads from _dm_split_thr.
+      step(..., track_source=True) returns a sixth value
+      (start, tracked, frac_in); start is taken BEFORE predation,
+      i.e. the state the policy observed, exactly as begin_tick does.
+    * lib/gpu/rollout.py: LocalRewardConfig on the runner, the
+      float64 buffers local_sum / local_occupied, the aggregation in
+      _accumulate_local_reward (clip -> metric -> theta weight ->
+      mean|sum, in float64), results() returning local_sum/ticks, and
+      the occupancy property. validate_reward is called with the
+      config, so --legacy-reward and --population-stability are
+      rejected here too.
+    * lib/gpu/trainer.py: local_reward in runner_options, plus a
+      local_occupancy metric written to training.jsonl -- the GPU
+      answer to 79.8 step 1.
+    * lib/gpu/cli.py + train_gpu.py: the flags and the banner.
+    * The flags themselves moved into
+      source_tracking.add_local_reward_arguments(parser), used by
+      BOTH train.py and lib/gpu/cli.py, so the two entry points
+      cannot drift apart on names, choices or defaults (same pattern
+      as add_current_arguments / add_population_arguments).
+
+80.4 Verification
+    tests/test_gpu_local_reward.py (27 cases incl. CUDA params):
+    mass balance sum_c B = sum_c Q(t+1) with and without natural
+    mortality, pure rest degenerating to the cell's own energy,
+    rollout fitness vs ARSTrainer._evaluate_coevo for four configs
+    (log/mean, ratio/sum, ratio/mean/theta=1, tightened clip plus
+    min_energy_factor) x migration on/off, the tracked path leaving
+    the dynamics bit-identical, and torch.compile(fullgraph=True)
+    tracing the tracked tick without a graph break (required for
+    cuda-graph execution). Measured parity on a 4x5 fixture, 6 ticks:
+        log/mean    GPU -0.053543 / -0.079778  CPU identical
+        ratio/sum   GPU 18.80517 / 17.587451   CPU identical
+        ratio/th=1  GPU 0.946493 / 0.925788    CPU identical
+    with occupancy 19.8 / 19.0 of 20 cells, so the comparison is not
+    vacuous. pytest tests/ -q -> 398 passed, 12 skipped.
+    train_gpu.py --local_reward, 1 generation, 12x12, device cpu:
+    reward_mean gadoids -0.0802, pelagic_fish -0.1120, porpoises
+    -0.2046, zooplankton -0.1332 with local_occupancy 141.7 / 144.0 /
+    4.4 / 143.8 of 144 cells -- porpoises occupy few cells, which is
+    precisely the asymmetry the local reward is meant to expose.
+
+80.5 Kept deliberately out
+    * Test fixtures: make_env gained min_split / extinction_factor
+      arguments (defaults unchanged). The old defaults sit ABOVE the
+      fixture's biomass, so splits are suppressed and the extinction
+      sweep clears the grid; a tracking test would compare zeros.
+      Zero thresholds also keep the reference's
+      suppress_subthreshold_splits inactive, which the tensor engine
+      did not implement -- a genuine CPU/GPU discrepancy that is
+      older than this arc (see section 69) and was not touched here.
+      FIXED afterwards in section 81, which mirrors the suppression on
+      the GPU path and adds a fixture where it actually fires.
+    * --migration on still excludes immigrated biomass (no source
+      cell) on both paths, so the mass-balance identity is exact only
+      with migration off. The parity test covers migration on anyway:
+      both engines exclude it the same way.
+    * No K-step backward pass (79.4) on either path.
+
+81. APPLIED: SUB-THRESHOLD SPLIT SUPPRESSION ON THE GPU PATH
+    (CPU/GPU parity, closes the gap left open in 80.5)
+
+81.1 The discrepancy
+    Section 69 added movement.suppress_subthreshold_splits to the
+    reference tick: population_change.apply_extinction_threshold
+    zeroes every cell that ends the tick below
+        thr = extinction_threshold_factor * min_split_biomass
+    so a decision maker that splits its moving share across up to
+    four directions bleeds biomass through that sweep (measured for
+    porpoises in 68.4: 25.1 of 40 ton to the sweep vs. 14.9 ton to
+    starvation). The fix cancels an outflow whose DESTINATION would
+    still be below thr after receiving it; the biomass and its
+    reserve stay in the source cell.
+
+    lib/gpu/ecosystem.py never had that step. TensorEcosystem.movement
+    went straight from the settle loop (plus migration) to the reserve
+    clip, so train_gpu.py optimised against a diffusion loss that
+    train.py and inference.py do not have. Both engines apply the
+    sweep itself (population(): b < threshold -> 0), so the GPU was
+    strictly the harsher of the two.
+
+    Why it went unnoticed: the parity fixture in
+    tests/test_gpu_ecosystem.py fills EVERY cell with biomass, so a
+    split always arrives in a cell that is viable on its own account
+    and the suppression never fires. The discrepancy only shows up
+    when destinations are empty.
+
+81.2 The mirror
+    New TensorEcosystem.suppress_splits(b_out, r_out, b_total,
+    r_total), called from movement() after migration and BEFORE the
+    reserve clip -- the reference's order exactly:
+      * dest = b_total[:, :, self.neighbors] gathers the tentative
+        destination total, aligned on the SOURCE cell; off-grid
+        directions are set to +inf, i.e. treated as unblocked, so the
+        migration emigration/immigration path (with its own top-k
+        concentration) is untouched.
+      * blocked = (b_out > 0) & (dest < split_thr), b_cancel/r_cancel
+        added back to the source, then subtracted at the destination
+        with exactly the settle loop's gather and the sign flipped.
+      * clamp_min(0) for the float32 round-off on the +/- pair.
+    New static tensors next to threshold: split_thr ([1, D, 1, 1], the
+    same product per DM, broadcast over the direction axis) and
+    split_thr_any (the reference's _dm_split_thr_any). Everything is
+    fixed-shape with no data-dependent branch, so the tick still
+    traces as one graph for compile / cuda-graph execution.
+
+    The local reward (sections 79-80) needed one correction: a
+    cancelled split stayed home, so movement(track=True) now moves
+    b_cancel from b_out into b_stay before publishing the flow.
+    Otherwise the destination that never received the biomass would be
+    credited with the share and sum_c B = sum_c Q(t+1) would break.
+
+81.3 Verification
+    * tests/test_gpu_ecosystem.py: sparse_env / uniform_move helpers
+      (one cell with 0.1 t, velocity 0.7, four directions -> 0.0175 t
+      per destination, thr = 1.2 * 0.05 = 0.06) and
+      test_subthreshold_splits_are_suppressed_like_the_reference:
+      per-tick b/r parity over 4 ticks, plus an assertion that the
+      suppression actually fires (compared against split_thr_any =
+      False, the pre-fix code path). Measured on tick 0: 0.329494 t
+      without vs. 0.414619 t with suppression, the reference giving
+      0.414619 -- a fifth of the population, and now bit-identical.
+    * tests/test_gpu_local_reward.py: test_tracking_follows_
+      suppressed_splits (mass balance with the suppression firing),
+      test_rollout_fitness_matches_the_reference_with_suppression
+      (fitness parity vs ARSTrainer._evaluate_coevo with thresholds
+      on) and the graph-trace test parametrised over both fixtures.
+    * pytest tests/ -q -> 407 passed, 12 skipped (was 398/12).
+    * Real project, 24x24, 40 ticks, random policies, suppression on
+      vs off:
+        gadoids       444.12 vs 443.99 t, 377 vs 372 occupied cells
+        pelagic_fish 1237.08 vs 1237.01 t, 541 vs 540 cells
+        porpoises       3.68 vs    3.68 t,  50 vs  50 cells
+      Small in absolute terms -- mareld2 thresholds are 0.25 kg for
+      the fish and 5 kg for porpoises -- but systematic, and it is the
+      occupied-cell count that matters for --local_reward with
+      --local_reward_norm sum.
+    * train_gpu.py --local_reward, 1 generation, 12x12, device cpu:
+      unchanged from 80.4 (4 ticks on a dense grid never trigger the
+      suppression), so the flag's behaviour did not regress.
+
+81.4 Still open
+    * The GPU engine still has no equivalent of the reference's
+      impact mortality; only the split suppression was mirrored here.
+    * --migration on: unchanged, see 80.5.
+
+82 --local_reward T1: does the occupied-cell count run away?
+    The first of the evaluation experiments listed in 79.8/80.6. The
+    correctness tests only say the source tracking is exact; they say
+    nothing about whether the local reward behaves well AS a fitness
+    function. T1 asks the single cheapest question: does the raw
+    ratio-sum normalisation reward spreading the population thin
+    instead of doing well locally?
+
+82.1 Setup
+    Three arms, same seed, same everything else, on the GPU path:
+        sum_ratio      --local_reward_norm sum  --local_reward_metric ratio
+                       --local_reward_theta 0      (the literal formulation)
+        mean_log       --local_reward_norm mean --local_reward_metric log
+                       --local_reward_theta 0      (the defaults)
+        global_theta1  --local_reward_norm mean --local_reward_metric log
+                       --local_reward_theta 1      (= the global reward by
+                                                    construction, 79.6)
+    Command per arm (seeds 1 and 2):
+        python3 train_gpu.py --project mareld2.yaml --grid 24x24 \
+            --profile info --generations 20 --ticks 100 --seed <s> \
+            --local_reward <arm flags> --output results/t1_<arm>
+    --profile info fixes temperature at 1.0 and zeroes entropy_coef and
+    argmax_penalty, so reward_mean is the raw ecological reward. 400
+    updates per arm, ~0.93 s/update on the local GPU, about 6 min each.
+    local_occupancy is already logged per update in training.jsonl
+    (lib/gpu/trainer.py, mean occupied cells per tick and per DM), so no
+    code change was needed.
+
+82.2 Result: the spreading gradient is real
+    Mean of the first three vs the last three generations, occupied
+    cells out of 576, and mean biomass in tonnes. Both seeds agree.
+
+    Occupied cells, porpoises (the only DM with headroom):
+        sum_ratio       41.3 -> 51.4   and   45.9 -> 49.8
+        mean_log        43.9 -> 38.5   and   48.0 -> 39.1
+        global_theta1   43.2 -> 35.5   and   49.0 -> 11.9
+    Occupied cells, gadoids:
+        sum_ratio      568.6 -> 569.3  and  568.6 -> 569.4
+        mean_log       507.2 -> 470.0  and  511.8 -> 473.8
+        global_theta1  508.0 -> 482.6  and  514.6 -> 477.4
+    Porpoise biomass over the same window:
+        sum_ratio       3.85 -> 3.55   and   4.28 -> 3.96
+        mean_log        4.59 -> 5.23   and   4.93 -> 5.27
+        global_theta1   4.98 -> 5.60   and   5.37 -> 6.45
+
+    So the sum arm moves the occupancy UP while the biomass of the same
+    group moves DOWN, and it is the only arm that keeps gadoids pinned
+    at near-full occupancy. The other two arms let the population
+    contract and end with 40-80 percent more porpoise biomass. That is
+    exactly the trade predicted in 79.3: every extra cell adds about
+    1.0 to the sum, so thinning out pays even when it costs energy.
+    zooplankton sits at 576/576 in every arm and pelagic_fish at ~573,
+    so those two have no room to show the effect; porpoises, with 35-50
+    of 576 cells, is the sensitive group (as already seen in 80.4).
+
+82.3 Conclusions
+    * --local_reward_norm sum with theta=0 must not be used as a
+      fitness function. It optimises spatial extent, not local
+      performance. Keep it as the diagnostic that reproduces the
+      literal B/A formulation, nothing more.
+    * The defaults (log + mean, theta=0) do not show the runaway: N_occ
+      falls, biomass rises, and it stays between sum_ratio and the
+      global arm. Defaults confirmed as the right choice.
+    * theta=1 + norm mean is the strongest contraction of the three and
+      gave the single most extreme case (porpoises down to 11.9 cells
+      on seed 2). It behaves like the global reward, which is the point
+      of the arm, and it is also the "survive in one corner" risk from
+      79.3 showing up in the baseline rather than in the local reward.
+    * T2 (theta=0 vs theta=1 on reward-independent metrics, 3+ seeds)
+      is now the meaningful next experiment; run it with norm mean only.
+      T4 (the cornered-start degeneration test) has become more
+      interesting than it looked, since contraction turned out to be
+      the baseline's failure mode, not the local reward's.

@@ -2,6 +2,7 @@
 
 import torch
 
+from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.gpu.random import fold_in, uniform
 from lib.runners.population_stability import validate_reward
 
@@ -10,8 +11,16 @@ class RolloutRunner:
     def __init__(self, model, bank, candidates, worlds, *, obs_normalize=True,
                  integral_reward=True, legacy_reward=False, alpha=1.0, beta=1.0,
                  survival_bonus=0.0, survival_threshold=0.01,
-                 execution="cuda-graph", graph_ticks=32, population_stability=None):
-        validate_reward(population_stability, integral_reward, legacy_reward)
+                 execution="cuda-graph", graph_ticks=32, population_stability=None,
+                 local_reward=None):
+        # ``--local_reward``: the per-cell source-tracked reward, mirrored
+        # from the reference implementation in
+        # lib/environments/ecosystem_env/source_tracking.py. Every setting
+        # is static for the lifetime of the runner, so the tick stays a
+        # single fixed-shape graph.
+        self.local_reward = LocalRewardConfig.from_dict(local_reward)
+        validate_reward(population_stability, integral_reward, legacy_reward,
+                        self.local_reward)
         self.population_stability = population_stability
         if execution not in ("eager", "compile", "cuda-graph", "compile-graph"):
             raise ValueError("Unknown execution mode: " + execution)
@@ -56,6 +65,11 @@ class RolloutRunner:
         buffer("failed", (self.E,), torch.bool)
         buffer("valid_ticks", (self.E,), torch.int64)
         buffer("stability_sum", (self.E, model.D), torch.float64)
+        buffer("local_sum", (self.E, model.D), torch.float64)
+        buffer("local_occupied", (self.E, model.D), torch.float64)
+        self.local_min_energy = (
+            model.local_min_energy(self.local_reward.min_energy_factor)
+            if self.local_reward is not None else None)
         self.weights, self.biases = bank.pack([
             w[None].expand(candidates, -1).clone() for w in bank.flat_weights()])
         self._execute_tick = self._tick
@@ -89,8 +103,14 @@ class RolloutRunner:
         self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)
         self.epsilon.copy_((1e-6 * self.e0).clamp_min(1e-9))
         self.survived.fill_(ticks)
-        for value in (self.failed, self.valid_ticks, self.stability_sum):
+        for value in (self.failed, self.valid_ticks, self.stability_sum,
+                      self.local_sum, self.local_occupied):
             value.zero_()
+
+    @property
+    def occupancy(self):
+        """Mean participating cells per tick, per world and DM (diagnostic)."""
+        return self.local_occupied / self.horizon.clamp_min(1)
 
     @property
     def observed_ticks(self):
@@ -137,8 +157,14 @@ class RolloutRunner:
         else:
             multiplier = torch.zeros_like(self.biomass)
         current_args = {"current_keys": self.keys} if m.currents is not None else {}
-        b, r, hidden, _, _ = m.step(self.biomass, self.reserve, actions,
-                                  self.tick, self.phase, multiplier, **current_args)
+        if self.local_reward is not None:
+            b, r, hidden, _, _, local = m.step(self.biomass, self.reserve, actions,
+                                               self.tick, self.phase, multiplier,
+                                               track_source=True, **current_args)
+            self._accumulate_local_reward(*local)
+        else:
+            b, r, hidden, _, _ = m.step(self.biomass, self.reserve, actions,
+                                      self.tick, self.phase, multiplier, **current_args)
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd
@@ -176,6 +202,34 @@ class RolloutRunner:
         self.reserve.copy_(r)
         self.hidden.copy_(hidden)
         self.tick.add_(1)
+
+    def _accumulate_local_reward(self, start, tracked, frac_in):
+        """Aggregate this tick's per-cell ratios into ``local_sum``.
+
+        ``A`` is scaled by ``frac_in`` so outflow the tracker cannot
+        follow (across the grid border) leaves the denominator instead of
+        counting as a loss, and only cells that held a viable population
+        at the start of the tick take part. Float64 throughout: the raw
+        quotient of two float32 energies is the one place where the
+        reference and this engine would otherwise disagree visibly.
+        """
+        config = self.local_reward
+        a = start.double()
+        a_eff = a * frac_in.double()
+        active = (a >= self.local_min_energy) & (a_eff > 0.0)
+        ratio = torch.where(active, tracked.double() / a_eff.clamp_min(1e-300), 1.0)
+        ratio = ratio.clamp(config.clip_lo, config.clip_hi)
+        term = ratio.log() if config.metric == "log" else ratio
+        if config.theta == 0.0:
+            weight = active.double()
+        else:
+            weight = torch.where(active, a_eff.clamp_min(0.0).pow(config.theta), 0.0)
+        weighted = (weight * term).sum(-1)
+        if config.norm == "mean":
+            total = weight.sum(-1)
+            weighted = torch.where(total > 0.0, weighted / total.clamp_min(1e-300), 0.0)
+        self.local_sum.add_(weighted)
+        self.local_occupied.add_(active.double().sum(-1))
 
     @torch.no_grad()
     def prepare(self):
@@ -219,6 +273,12 @@ class RolloutRunner:
 
     def results(self, ticks):
         m = self.model
+        if self.local_reward is not None:
+            # Already a per-tick aggregate, so integral_reward does not
+            # apply; the fitness is its mean over the rollout.
+            reward = self.local_sum / ticks
+            action = self.action_sum / self.active_ticks.clamp_min(1)[:, :, None]
+            return reward, action
         if self.population_stability is not None:
             tail = (ticks - self.valid_ticks)[:, None]
             reward = (self.stability_sum + tail * self.population_stability.failure_reward) / ticks

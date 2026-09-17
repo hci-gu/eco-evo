@@ -123,6 +123,13 @@ def main(argv=None, *, on_step=None):
     if args.population_stability:
         print(f"Population stability: biomass bounds [{args.population_min:g}, {args.population_max:g}) "
               "× start; warnings, capped energy reward, failure tail −5/tick.", flush=True)
+    if args.local_reward:
+        expression = "log(B/A)" if args.local_reward_metric == "log" else "B/A"
+        print(f"Local reward: per-cell {expression} with B(c,t+1) source-tracked "
+              f"through {{c,N,E,S,W}}; {args.local_reward_norm} over cells, "
+              f"theta={args.local_reward_theta:g}, "
+              f"clip=[{args.local_reward_clip[0]:g}, {args.local_reward_clip[1]:g}], "
+              f"min energy factor={args.local_reward_min_energy_factor:g}.", flush=True)
     stop = None if generations is None else generation + generations
     next_generation, next_within = generation, within
     started = time.perf_counter()

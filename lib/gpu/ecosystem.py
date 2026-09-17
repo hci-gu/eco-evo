@@ -89,6 +89,13 @@ class TensorEcosystem:
         self.capacity = tensor([fg.params.get("max_carrying_capacity", 100.0) for fg in groups])[None, :, None]
         self.energy_content = tensor([fg.params.get("energy_content", 0.0) or 0.0 for fg in groups])[None, :]
         self.threshold = tensor([max(0.0, fg.min_split_biomass * fg.extinction_threshold_factor) for fg in groups])[None, :, None]
+        # Same product, per DM and broadcast over the direction axis of
+        # ``b_out``, for the sub-threshold split suppression in
+        # ``movement``. Mirrors the reference's ``_dm_split_thr`` /
+        # ``_dm_split_thr_any`` (see state.py); 0 opts out, exactly as the
+        # extinction sweep itself does.
+        self.split_thr = self.threshold[:, self.dm_index][:, :, :, None]
+        self.split_thr_any = bool((self.threshold[:, self.dm_index] > 0).any())
         self.mortality_keep = tensor([
             max(0.0, 1.0 - max(0.0, fg.natural_mortality))
             if env.apply_natural_mortality and fg.is_decision_maker else 1.0
@@ -263,7 +270,16 @@ class TensorEcosystem:
         r = torch.zeros(shape, device=self.device).index_copy(2, self.edge_indices, r_emig[:, :, None] * weights)
         return b, r
 
-    def movement(self, biomass, reserve, gains, actions):
+    def movement(self, biomass, reserve, gains, actions, track=False):
+        """Move, split and settle; ``track`` also returns the source flow.
+
+        With ``track`` the third return value is
+        ``(b_stay, b_out, b_total)``, the biomass that remained in each
+        source cell, what left it per direction, and the resulting
+        per-cell biomass. The local reward (``--local_reward``) needs all
+        three to attribute the destination cells' end-of-tick energy back
+        to the cell the population started in.
+        """
         b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
         move, rest = actions[:, :, :4], actions[:, :, 4]
         eat = actions[:, :, 5:].sum(2)
@@ -275,7 +291,8 @@ class TensorEcosystem:
         moving_r = move / safe[:, :, None] * move_r[:, :, None]
         moving_b = move * b[:, :, None]
         b_out, r_out = moving_b * self.velocity, moving_r * self.velocity
-        b_total = b * rest + b * eat + (moving_b - b_out).sum(2)
+        b_stay = b * rest + b * eat + (moving_b - b_out).sum(2)
+        b_total = b_stay
         r_total = rest_r + eat_r + (moving_r - r_out).sum(2)
         for direction in range(4):
             source = (direction + 2) % 4
@@ -287,8 +304,107 @@ class TensorEcosystem:
             r_emig = (r_out * self.outside).sum((2, 3))
             b_imm, r_imm = self.immigration(b_emig, r_emig)
             b_total, r_total = b_total + b_imm, r_total + r_imm
+        b_cancel = None
+        if self.split_thr_any:
+            b_total, r_total, b_cancel = self.suppress_splits(b_out, r_out, b_total, r_total)
         r_total = torch.minimum(r_total.clamp_min(0), b_total * self.max_reserve[:, self.dm_index])
-        return biomass.index_copy(1, self.dm_index, b_total), reserve.index_copy(1, self.dm_index, r_total)
+        settled = (biomass.index_copy(1, self.dm_index, b_total),
+                   reserve.index_copy(1, self.dm_index, r_total))
+        if not track:
+            return settled[0], settled[1], None
+        if b_cancel is not None:
+            # Cancelled splits stayed home, so the tracked flow has to
+            # move them from the outflow back into the stay term; only
+            # then does it still sum to ``b_total``.
+            b_stay = b_stay + b_cancel.sum(2)
+            b_out = b_out - b_cancel
+        return settled[0], settled[1], (b_stay, b_out, b_total)
+
+    def suppress_splits(self, b_out, r_out, b_total, r_total):
+        """Cancel move outflows that would land in a sub-threshold cell.
+
+        Section 69, mirrored from
+        ``lib/environments/ecosystem_env/movement.py``. ``population``
+        ends the tick by zeroing every cell below ``thr =
+        extinction_threshold_factor * min_split_biomass``, so a splitting
+        decision maker bleeds biomass through that sweep. An outflow whose
+        DESTINATION would still be below ``thr`` after receiving it is
+        therefore undone: biomass and reserve stay in the source cell.
+
+        Monotone-safe -- sources only gain, and the cells that lose inflow
+        were going to be zeroed anyway -- so the number of sub-threshold
+        cells cannot grow and no viable cell is made non-viable.
+
+        Off-grid directions count as unblocked, leaving the migration
+        emigration/immigration path (with its own top-k concentration)
+        alone. Returns ``(b_total, r_total, b_cancel)``.
+        """
+        # Tentative destination totals, aligned on the SOURCE cell:
+        # ``neighbors[d][c]`` is where a direction-d move from c lands.
+        dest = b_total[:, :, self.neighbors]
+        dest = torch.where(self.neighbor_valid[None, None] > 0, dest, float("inf"))
+        blocked = (b_out > 0.0) & (dest < self.split_thr)
+        b_cancel = torch.where(blocked, b_out, 0.0)
+        r_cancel = torch.where(blocked, r_out, 0.0)
+        b_total = b_total + b_cancel.sum(2)
+        r_total = r_total + r_cancel.sum(2)
+        for direction in range(4):
+            # Exactly the settle loop's gather with the sign flipped.
+            source = (direction + 2) % 4
+            index, valid = self.neighbors[source], self.neighbor_valid[source]
+            b_total = b_total - b_cancel[:, :, direction, index] * valid
+            r_total = r_total - r_cancel[:, :, direction, index] * valid
+        # float32 round-off on the +/- pair can leave tiny negatives.
+        return b_total.clamp_min(0), r_total.clamp_min(0), b_cancel
+
+    def local_energy(self, biomass, reserve):
+        """``Q(c) = B(c)*energy_content + R(c)`` per DM, shape [E, D, C]."""
+        b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
+        return b * self.energy_content[:, self.dm_index][:, :, None] + r
+
+    def tracked_energy(self, flow, biomass, reserve):
+        """End-of-tick energy attributed back to the source cell.
+
+        ``tracked[e, i, c]`` is ``B(c, t+1)`` of the local reward: the
+        share of the plus-shaped destination set ``{c, N, E, S, W}`` that
+        the population starting in ``c`` is entitled to. Everything after
+        the movement is cell-wise multiplicative, so splitting a
+        destination cell's energy in proportion to the biomass each
+        source delivered is an identity, not an approximation.
+
+        ``frac_in`` is the fraction of the source cell's post-movement
+        biomass that stayed on the grid. Outflow across the border has no
+        in-grid destination, so it is removed from the denominator (``A``
+        is scaled by ``frac_in``) instead of being booked as a loss.
+        """
+        b_stay, b_out, b_total = flow
+        unit = torch.where(b_total > 0.0, self.local_energy(biomass, reserve)
+                           / b_total.clamp_min(1e-30), 0.0)
+        tracked = b_stay * unit
+        b_move_in = torch.zeros_like(b_stay)
+        for direction in range(4):
+            # ``neighbors[direction]`` is the cell a direction-d move from
+            # the source lands in, the inverse of the settle loop above.
+            index, valid = self.neighbors[direction], self.neighbor_valid[direction]
+            out = b_out[:, :, direction] * valid
+            tracked = tracked + out * unit[:, :, index]
+            b_move_in = b_move_in + out
+        b_source = b_stay + b_out.sum(2)
+        frac_in = torch.where(b_source > 0.0,
+                              (b_stay + b_move_in) / b_source.clamp_min(1e-30), 1.0)
+        return tracked, frac_in
+
+    def local_min_energy(self, factor=1.0):
+        """Lower bound on ``A(c, t)`` for a cell to take part, [1, D, 1].
+
+        ``factor * extinction_threshold * energy_content``, i.e. the cell
+        held a viable population at the start of the tick. Mirrors
+        ``source_tracking._min_energy``, which reads the reference's
+        ``_dm_split_thr`` -- the same product stored in ``threshold``.
+        """
+        floor = (self.threshold[:, self.dm_index]
+                 * self.energy_content[:, self.dm_index][:, :, None])
+        return (floor.double() * float(factor)).clamp_min(1e-12)
 
     def population(self, biomass, reserve, tick, phase, seed_multiplier):
         b = biomass * self.mortality_keep
@@ -333,9 +449,22 @@ class TensorEcosystem:
             r_total = r_total + r_out[:, :, direction, index] * valid
         return biomass.index_copy(1, self.ndm_index, b_total), reserve.index_copy(1, self.ndm_index, r_total)
 
-    def step(self, biomass, reserve, actions, tick, phase, seed_multiplier, current_keys=None):
+    def step(self, biomass, reserve, actions, tick, phase, seed_multiplier,
+             current_keys=None, track_source=False):
+        """One tick. ``track_source`` appends the local-reward tracking.
+
+        With ``track_source`` a sixth value ``(start, tracked, frac_in)``
+        is returned: ``start`` is ``A(c, t)``, the cell energy the policy
+        observed (before predation, the first mortality of the tick), and
+        ``tracked``/``frac_in`` come from ``tracked_energy`` once the
+        end-of-tick state is final.
+        """
+        start = self.local_energy(biomass, reserve) if track_source else None
         b, r, gains, hidden, intake = self.predation(biomass, reserve, actions)
-        b, r = self.movement(b, r, gains, actions)
+        b, r, flow = self.movement(b, r, gains, actions, track=track_source)
         b, r = self.advect(b, r, tick, current_keys)
         b, r, starve_loss = self.population(b, r, tick, phase, seed_multiplier)
-        return b, r, hidden, intake, starve_loss
+        if not track_source:
+            return b, r, hidden, intake, starve_loss
+        tracked, frac_in = self.tracked_energy(flow, b, r)
+        return b, r, hidden, intake, starve_loss, (start, tracked, frac_in)

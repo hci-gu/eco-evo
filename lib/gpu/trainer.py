@@ -35,7 +35,7 @@ class TensorARSTrainer:
                  survival_bonus=0.0, survival_threshold=0.01,
                  entropy_coef=0.0, argmax_penalty=0.0,
                  execution="cuda-graph", graph_ticks=32, pairs_per_batch=None,
-                 population_stability=None):
+                 population_stability=None, local_reward=None):
         if n_deltas < 1 or worlds < 1:
             raise ValueError("n_deltas and worlds must be positive")
         if sigma <= 0 or not math.isfinite(sigma) or lr < 0 or not math.isfinite(lr):
@@ -74,6 +74,7 @@ class TensorARSTrainer:
                                    legacy_reward=legacy_reward, alpha=alpha, beta=beta,
                                    survival_bonus=survival_bonus, survival_threshold=survival_threshold,
                                    population_stability=population_stability,
+                                   local_reward=local_reward,
                                    execution=execution, graph_ticks=graph_ticks)
         self.architecture = dict(hidden_dim=hidden_dim, hidden_layers=hidden_layers,
                                  activation=self.bank.activation)
@@ -165,6 +166,10 @@ class TensorARSTrainer:
         observation_count = torch.zeros((), device=m.device, dtype=torch.int64)
         failure_count = torch.zeros((), device=m.device, dtype=torch.float64)
         valid_tick_count = torch.zeros((), device=m.device, dtype=torch.float64)
+        # ``--local_reward`` diagnostic: the mean number of cells that took
+        # part per tick. The raw sum normalisation grows with it, so this is
+        # the quantity that reveals a spreading gradient.
+        occupancy = torch.zeros(m.D, device=m.device, dtype=torch.float64)
         for start, count, pairs, indices in self.chunks:
             runner.set_weights(self.bank.pack([w[indices] for w in candidates]))
             # Both signs see exactly the same initial fields and future noise.
@@ -187,6 +192,8 @@ class TensorARSTrainer:
             if runner.population_stability is not None:
                 failure_count.add_(runner.failed.reshape(2, self.pairs_per_batch, self.worlds)[:, :count].sum())
                 valid_tick_count.add_(runner.valid_ticks.reshape(2, self.pairs_per_batch, self.worlds)[:, :count].sum())
+            if runner.local_reward is not None:
+                occupancy.add_(runner.occupancy.reshape(2, self.pairs_per_batch, self.worlds, m.D)[:, :count].sum((0, 1, 2)))
             biomass_mean.add_(runner.biomass_sum.reshape(2, self.pairs_per_batch, self.worlds, m.G)[:, :count].sum((0, 1, 2)))
         if self.obs_normalize:
             if runner.population_stability is None:
@@ -213,6 +220,9 @@ class TensorARSTrainer:
             worlds_evaluated = 2 * self.n_deltas * self.worlds
             self.last_metrics.update(population_failure_fraction=failure_count / worlds_evaluated,
                                      population_valid_fraction=valid_tick_count / (worlds_evaluated * n_eval_ticks))
+        if runner.local_reward is not None:
+            self.last_metrics.update(
+                local_occupancy=occupancy / (2 * self.n_deltas * self.worlds))
         self.iteration.add_(1)
         self.iterations_completed += 1
         return self.last_metrics

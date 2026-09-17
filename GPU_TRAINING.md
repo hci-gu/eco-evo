@@ -41,6 +41,17 @@ The report contains:
 
 Warmup iterations do update the policies. Both implementations start from the same seeded Torch policy initialization, but use different environmental and perturbation random generators. A matching seed provides reproducibility within a backend, not identical CPU/GPU worlds or training trajectories. Numerical parity is tested separately with identical state, actions, perturbations, and injected environmental noise. Repeating benchmarks across several seeds is appropriate for consequential comparisons.
 
+Sub-threshold split suppression is part of both engines. A move action splits the
+moving share of a cell across up to four directions, and the extinction sweep
+zeroes every cell that ends the tick below
+`extinction_threshold_factor * min_split_biomass`, so a diffusing decision maker
+would otherwise bleed biomass through the sweep. An outflow whose destination
+would still be sub-threshold after receiving it is therefore cancelled and stays
+in the source cell. Off-grid directions are left alone, so `--migration on` keeps
+its own edge concentration. The tensor engine lacked this step until it was
+mirrored in `TensorEcosystem.suppress_splits`; `tests/test_gpu_ecosystem.py`
+compares the two engines tick by tick on a fixture where the suppression fires.
+
 To investigate kernel fusion after the initial CUDA Graph benchmark:
 
 ```bash
@@ -78,6 +89,39 @@ uv run --locked train_gpu.py \
 By default all decision makers co-evolve. `--species gadoids pelagic_fish` limits trained species while retaining the other policies in every ecosystem; `--no-coevolution` trains targets in round-robin order. Common reward, normalization, mortality, migration, and policy-network options have the same meanings as the CPU runner. Underscore aliases are accepted for the main existing training options. Run either entry point with `--help` for its complete interface.
 
 Training defaults match the ordinary CPU CLI's reward modifiers: entropy coefficient 0.1, argmax penalty 0.3, and temperature annealing from 3 to 1 over 10 generations. The benchmark instead fixes temperature at 1 for both backends. For a run without those modifiers, pass `--entropy-coef 0 --argmax-penalty 0 --temp-start 1 --temp-end 1`; for the equivalent benchmark use the first two flags and `--temperature 1`.
+
+### Local per-cell reward
+
+`--local_reward` selects the per-cell source-tracked fitness instead of the
+global `log(E_total/E_0)`. Per tick and cell, `A(c,t)` is the cell's energy
+(`biomass * energy_content + reserve`) at the start of the tick and `B(c,t+1)`
+the end-of-tick energy of exactly the population that started in `c`, tracked
+through the move/split into the plus-shaped set `{c, N, E, S, W}`; `reward(c)`
+is the ratio. The quotient is scale invariant, so a small cell's good decision
+counts as much as a large cell's.
+
+The tensor engine computes the same quantity as `train.py`: a destination cell's
+end-of-tick energy is split between its sources in proportion to the biomass
+each delivered, which is exact because everything after the movement is
+cell-wise multiplicative. Agreement with the CPU trainer is asserted in
+`tests/test_gpu_local_reward.py`.
+
+```bash
+uv run --locked train_gpu.py --project mareld2.yaml --profile info \
+  --local_reward --local_reward_theta 0 --run-name mareld-local
+```
+
+`--local_reward_metric log|ratio`, `--local_reward_norm mean|sum`,
+`--local_reward_theta`, `--local_reward_clip LO HI` and
+`--local_reward_min_energy_factor` have the same meanings and defaults as on the
+CPU runner. `theta=0` weights every occupied cell equally; `theta=1` with
+`--local_reward_norm mean` collapses back onto the global energy growth rate, so
+one flag value provides both A/B baselines. The flag cannot be combined with
+`--legacy-reward` or `--population-stability`. `training.jsonl` gains a
+`local_occupancy` field, the mean number of participating cells per tick; with
+`--local_reward_norm sum` the fitness grows with it, which is the spreading
+gradient to watch. With `--migration on` immigrated biomass has no source cell
+and is excluded, so the mass-balance identity is exact only with migration off.
 
 ### Training profiles
 
