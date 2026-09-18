@@ -7190,3 +7190,117 @@ remain open exactly as described in 71.9 / 71.11.
       T4 (the cornered-start degeneration test) has become more
       interesting than it looked, since contraction turned out to be
       the baseline's failure mode, not the local reward's.
+
+83 --local_reward T2: is it better than the global reward?
+    The main experiment from 79.8/82.3. T1 only ruled out one
+    normalisation; it could not say whether the local reward is BETTER,
+    because the arms optimise different scalars and their reward curves
+    are not comparable. T2 trains the arms and then scores them on
+    reward-independent metrics in a shared evaluation rollout.
+
+83.1 Setup: ab_test_local_reward.py
+    New script in the repo root, same spirit as ab_test_literature.py
+    but built around training rather than pure simulation. Two stages:
+
+        python3 ab_test_local_reward.py --stage train
+        python3 ab_test_local_reward.py --stage eval
+
+    train delegates to train_gpu.py, one subprocess per (arm, seed),
+    and skips a run that already has trainer.pth, so the script is
+    restartable. eval loads results/t2_<arm>_s<seed>/policy_*.pth via
+    TensorARSTrainer.import_policies (which also restores obs_stats)
+    and runs its own RolloutRunner with local_reward=None, i.e. no arm
+    is scored with its own fitness function.
+
+    Four arms, all with --local_reward_norm mean --local_reward_metric
+    log, seeds 1/2/3, 24x24, --profile info, 20 generations, 100 ticks
+    (400 updates, ~6.5 min per run on the local GPU, 12 runs):
+        theta0    w_c = 1          the local reward
+        theta05   w_c = A_c**0.5   halfway
+        theta1    w_c = A_c        = the global reward (79.6)
+        global    no flag at all   sanity: must match theta1
+
+    Evaluation: 4 worlds from WorldSpawner keyed on --eval-seed 777
+    only, so every arm and seed sees bit-identical initial biomass,
+    reserves and phases; 300 ticks; temperature 1.0. Metrics per FG,
+    averaged over worlds and then over seeds: final/mean/min biomass,
+    occupied cells (same viability bar as the extinction sweep),
+    normalised Shannon entropy over cells, swing (coefficient of
+    variation over the second half, i.e. the boom-bust amplitude of
+    POPULATION_STABILITY.md), and the fraction of worlds ending below
+    a thousandth of their start. Raw numbers in
+    results/t2_local_reward.json.
+
+83.2 Result: the total is unchanged, the DISTRIBUTION is not
+    Total end-of-rollout DM energy (biomass * energy_content), which
+    is what the global reward maximises:
+        theta0   39.30 M MJ
+        theta05  38.16 M MJ
+        theta1   38.62 M MJ
+        global   38.86 M MJ
+    A 3 percent spread over a factor-of-four change in the weighting
+    exponent. The arms do not make the system richer or poorer; they
+    move energy between groups.
+
+    Final biomass in tonnes, mean +- sd over the three seeds:
+                    gadoids     pelagic_fish   porpoises    zooplankton
+        theta0      611 +- 6     1472 +- 19    1.14 +- 0.18  5531 +- 88
+        theta05     588 +- 7     1580 +- 55    0.98 +- 0.66  5125 +- 133
+        theta1      590 +- 8     1755 +- 113   0.43 +- 0.33  4935 +- 53
+        global      574 +- 3     1806 +- 50    0.58 +- 0.29  4923 +- 77
+
+    * Sanity holds: theta1 and global agree within the seed noise on
+      every group. The single-knob claim in 79.6 is confirmed on
+      trained policies, not just in a unit test.
+    * theta0 shifts energy DOWN the food chain: zooplankton +12 percent
+      and gadoids +6 percent against the global arm, pelagic_fish -18
+      percent. The ordering is monotone in theta for all three, so it
+      is the weighting that drives it, not seed noise.
+    * Porpoises, the group with spatial headroom (5-12 of 576 cells),
+      is the clearest single win: theta0 beats every other arm in every
+      seed (0.91/1.14/1.36 t against global 0.22/0.93/0.59 and theta1
+      0.40/0.04/0.86). This is the group the global reward ignores
+      because it contributes least to E_total, which is precisely the
+      motivation for the local reward in 79.
+
+83.3 The price, and why there is no clean winner yet
+    * Variability. theta0 has the highest swing for pelagic_fish
+      (0.043 vs 0.015) and zooplankton (0.055 vs 0.056, a tie), but the
+      lowest for porpoises (0.35 vs 0.42 global, 0.71 theta1). So the
+      local reward stabilises the sensitive group and destabilises the
+      large ones.
+    * Porpoises go bimodal. theta0 has the highest mean biomass AND the
+      highest loss rate (extinct fraction per seed 0.5/0.25/0.5 of four
+      worlds, against 0.25/0.25/0.25 for global). It does very well
+      where it survives and still loses whole worlds. theta05 is the
+      only arm that drops to zero losses on a seed (0.25/0.25/0.0).
+    * Spatial spread. theta0 keeps pelagic_fish at 576/576 and the
+      highest entropy for pelagic_fish and zooplankton, but the LOWEST
+      final occupancy for gadoids (467 vs theta1's 522) -- with norm
+      mean there is no spreading gradient left (82.2), so this is a
+      genuine allocation choice, not the T1 artefact.
+    * Three seeds and four worlds is thin for porpoises, where the
+      between-seed sd is of the same size as the mean. The group-level
+      orderings (gadoids, pelagic_fish, zooplankton) are monotone in
+      theta and consistent across seeds; the porpoise loss rate is not.
+
+83.4 Conclusions
+    * The local reward is not a free improvement and not a regression.
+      It is a different allocation: it trades pelagic_fish biomass for
+      zooplankton, gadoids and -- most of all -- porpoises, at constant
+      total energy. Whether that is better is an ecological question
+      about what the Mareld case is supposed to represent, not a
+      question the fitness curve can answer.
+    * If the scenario question concerns the groups the global reward
+      cannot see (porpoises, seals, seabirds -- the ones with small
+      energy content totals and few occupied cells), theta=0 is the
+      right choice and the gain is large relative to the seed noise.
+    * theta=0.5 is the interesting middle: closest to theta0 on
+      porpoise biomass while keeping the lowest porpoise loss rate and
+      most of pelagic_fish. Worth its own arc if the bimodality in 83.3
+      turns out to matter.
+    * Next, in order: (a) repeat the porpoise arms with more seeds and
+      more evaluation worlds, since that is the only claim the data
+      does not settle; (b) T4, the cornered-start test, which 82.3
+      already reframed as a baseline failure mode; (c) T5/T6
+      (ratio vs log, clip sensitivity) as robustness checks.
