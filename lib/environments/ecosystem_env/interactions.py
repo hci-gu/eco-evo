@@ -79,25 +79,32 @@ def build_interaction_matrices(env):
     )
 
 
-def holling_a_eff(a, h, Bp, m3):
+def holling_a_eff(a, h, Bp, m3, interference=0.0):
     """Effective per-predator-unit intake rate f(B_prey) [ton_prey per
     ton_pred per tick] for the Holling Type II / Type III mixture.
 
-        Type II:  f(B) = a*B  / (1 + a*h*B)
-        Type III: f(B) = a*B^2 / (1 + a*h*B^2)
+        Type II:  f(B) = a*B  / (1 + a*h*B  + I)
+        Type III: f(B) = a*B^2 / (1 + a*h*B^2 + I)
         f = m3 * f_III + (1 - m3) * f_II
 
     ``m3`` is the per-predator Type III mask (1.0 = Type III,
     0.0 = Type II) and must broadcast against ``Bp``.
 
+    ``interference`` is the Beddington-DeAngelis term I = w_X * B_X(c),
+    i.e. the predator's own biomass in the cell scaled by its
+    ``interference`` parameter (Section 86). It must broadcast against
+    ``Bp``. At I = 0 this reduces bit-identically to the pure Holling
+    response, which is why ``interference`` defaults to 0.
+
     Contract (locked by tests/test_holling_response.py): for h > 0 the
     result is zero at B=0, strictly increasing in B and bounded by the
-    physiological ceiling 1/h. Do NOT drop the B factor in the
-    numerator - see the BUGGFIX note in ``predation.apply_predation``.
+    physiological ceiling 1/h. Interference only lowers the curve, it
+    never changes that shape. Do NOT drop the B factor in the numerator
+    - see the BUGGFIX note in ``predation.apply_predation``.
     """
     Bp2 = Bp * Bp
-    a_eff_ii = (a * Bp) / (1.0 + a * h * Bp)
-    a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2)
+    a_eff_ii = (a * Bp) / (1.0 + a * h * Bp + interference)
+    a_eff_iii = (a * Bp2) / (1.0 + a * h * Bp2 + interference)
     return m3 * a_eff_iii + (1.0 - m3) * a_eff_ii
 
 

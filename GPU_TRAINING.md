@@ -111,17 +111,32 @@ uv run --locked train_gpu.py --project mareld2.yaml --profile info \
   --local_reward --local_reward_theta 0 --run-name mareld-local
 ```
 
-`--local_reward_metric log|ratio`, `--local_reward_norm mean|sum`,
+`--local_reward_metric log|ratio`, `--local_reward_norm mean|sum|grid`,
 `--local_reward_theta`, `--local_reward_clip LO HI` and
 `--local_reward_min_energy_factor` have the same meanings and defaults as on the
 CPU runner. `theta=0` weights every occupied cell equally; `theta=1` with
 `--local_reward_norm mean` collapses back onto the global energy growth rate, so
 one flag value provides both A/B baselines. The flag cannot be combined with
-`--legacy-reward` or `--population-stability`. `training.jsonl` gains a
-`local_occupancy` field, the mean number of participating cells per tick; with
-`--local_reward_norm sum` the fitness grows with it, which is the spreading
-gradient to watch. With `--migration on` immigrated biomass has no source cell
-and is excluded, so the mass-balance identity is exact only with migration off.
+`--legacy-reward` or `--population-stability`. With `--migration on` immigrated
+biomass has no source cell and is excluded, so the mass-balance identity is
+exact only with migration off.
+
+Pick the normalisation deliberately, because two of the three carry a
+cell-count gradient (sections 82 and 84). `training.jsonl` logs
+`local_occupancy`, the mean number of participating cells per tick, which is
+what to watch:
+
+| `--local_reward_norm` | Divides by | Cell-count gradient |
+| --- | --- | --- |
+| `sum` | nothing | fitness grows with every cell added (rewards spreading thin) |
+| `mean` (default) | the weight of the active cells | fitness grows when a cell dies and leaves the denominator |
+| `grid` | the constant cell count | none: with `log` a neutral cell contributes exactly 0 |
+
+`grid` is the only combination in which the cell count is orthogonal to the
+fitness by construction, and the only one where `sum_t log(B/A)` telescopes onto
+`log(end/start)` for a surviving cell line, so a slow bleed is priced the way
+the global reward prices it. The default clip `0.2 5.0` is symmetric in log
+space (`log(5) == -log(0.2)`); runs made before that change used `0.2 2.0`.
 
 ### Training profiles
 

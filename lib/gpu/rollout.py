@@ -228,6 +228,12 @@ class RolloutRunner:
         if config.norm == "mean":
             total = weight.sum(-1)
             weighted = torch.where(total > 0.0, weighted / total.clamp_min(1e-300), 0.0)
+        elif config.norm == "grid":
+            # Constant denominator (the cell count), so the cell count is
+            # orthogonal to the fitness instead of being a gradient in
+            # either direction. Static python scalar: the tick still
+            # traces as one fixed-shape graph.
+            weighted = weighted / float(self.model.C)
         self.local_sum.add_(weighted)
         self.local_occupied.add_(active.double().sum(-1))
 

@@ -328,6 +328,57 @@ def test_sum_norm_scales_with_the_number_of_cells():
         values[('sparse', 'mean')], rel=1e-3)
 
 
+def test_grid_norm_is_the_sum_over_a_constant_denominator():
+    """``grid`` is ``sum`` divided by the cell count, nothing else."""
+    values = {}
+    for norm in ('sum', 'grid'):
+        env, _ = _build_env(local_reward={'metric': 'ratio', 'norm': norm})
+        _set_biomass(env, _random_biomass())
+        env.step(_actions(env, _random_moves()))
+        values[norm] = source_tracking.fitness(env, 'mover')
+
+    assert values['grid'] == pytest.approx(values['sum'] / (H * W), rel=1e-9)
+
+
+def test_grid_norm_with_log_is_blind_to_the_number_of_cells():
+    """A neutral cell is worth 0, so the cell count cannot be gamed.
+
+    This is the property ``sum`` and ``mean`` both lack: ``sum`` grows
+    with every cell added (each neutral cell is worth 1.0 under the raw
+    ratio) and ``mean`` grows when a cell is dropped from its shrinking
+    denominator. Under ``grid`` + ``log`` the denominator is a constant
+    and a neutral term contributes exactly nothing, so occupying one
+    cell and occupying all of them score the same.
+    """
+    sparse = np.zeros((H, W), dtype=np.float32)
+    sparse[1, 1] = 5.0
+    dense = np.full((H, W), 5.0, dtype=np.float32)
+
+    values = {}
+    for name, biomass in (('sparse', sparse), ('dense', dense)):
+        env, _ = _build_env(local_reward={'metric': 'log', 'norm': 'grid'})
+        _set_biomass(env, biomass)
+        env.step(_actions(env))
+        values[name] = source_tracking.fitness(env, 'mover')
+
+    assert values['sparse'] == pytest.approx(0.0, abs=1e-6)
+    assert values['dense'] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_the_default_clip_is_symmetric_in_log_space():
+    """A halving must cost what a doubling is worth.
+
+    With an asymmetric range such as ``[0.2, 2.0]`` a wiped-out cell is
+    priced at ``log(0.2) = -1.61`` while the best possible tick is worth
+    ``log(2) = +0.69``; the policy then buys safety at almost any price
+    (section 84).
+    """
+    config = LocalRewardConfig()
+    assert config.clip_lo * config.clip_hi == pytest.approx(1.0, rel=1e-9)
+    assert np.log(config.clip_hi) == pytest.approx(-np.log(config.clip_lo),
+                                                   rel=1e-9)
+
+
 # ---------------------------------------------------------------- config
 
 
@@ -368,11 +419,11 @@ def test_cli_options_build_a_config():
 
     args = argparse.Namespace(
         local_reward=True, local_reward_metric='ratio',
-        local_reward_norm='sum', local_reward_theta=0.5,
+        local_reward_norm='grid', local_reward_theta=0.5,
         local_reward_clip=[0.1, 3.0], local_reward_min_energy_factor=2.0)
     config = source_tracking.local_reward_options(args)
     assert config.metric == 'ratio'
-    assert config.norm == 'sum'
+    assert config.norm == 'grid'
     assert config.theta == 0.5
     assert (config.clip_lo, config.clip_hi) == (0.1, 3.0)
     assert config.min_energy_factor == 2.0

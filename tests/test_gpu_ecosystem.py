@@ -28,7 +28,7 @@ def device(request):
 
 def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              pair_floors=None, satiation=None, min_split=200,
-             extinction_factor=0.3):
+             extinction_factor=0.3, interference=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -66,6 +66,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
                 params["interaction"][inter_id]["visibility_floor"] = floor
         if fid in satiation:
             params["satiation_scale"] = satiation[fid]
+        if interference and fid in interference:
+            params["interference"] = interference[fid]
         fg = FunctionalGroup(fid, params)
         fg.initialize_state(shape, initial_biomass=rng.uniform(0.01, 3, shape),
                             randomize_energy=True, rng=rng)
@@ -119,6 +121,22 @@ def test_full_ticks_match_reference(device, migration, mortality, handling):
     model = _assert_parity(make_env(migration, mortality, handling), device)
     assert model.pair_visibility is None, (
         "no override in the fixture must keep the cheap shared-vector path")
+
+
+@pytest.mark.parametrize("handling", [0.0, 0.2])
+def test_interference_matches_reference(device, handling):
+    """Beddington-DeAngelis interference must be mirrored on the GPU.
+
+    ``handling=0.0`` also covers the unsaturated branch, where the
+    reference divides the bare intake rate by ``1 + w*B_pred`` instead of
+    going through ``holling_a_eff`` at all - an easy branch to forget.
+    """
+    env = make_env(handling=handling, interference={"a": 0.8, "b": 0.3})
+    model = _assert_parity(env, device, ticks=6)
+    assert model.has_interference, "interference path was not taken"
+    np.testing.assert_allclose(
+        numpy(model.interference).reshape(-1),
+        [0.8 if fid == "a" else 0.3 for fid in env.dm_ids], rtol=1e-6)
 
 
 @pytest.mark.parametrize("floor", [0.0, 0.95])

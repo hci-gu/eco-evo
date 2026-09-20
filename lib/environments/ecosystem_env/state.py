@@ -24,6 +24,8 @@ class EcosystemCache:
     has_holling2: bool
     type3_pred_mask: np.ndarray
     has_holling3: bool
+    dm_interference: np.ndarray
+    has_interference: bool
     dm_v: np.ndarray
     dm_cost_move: np.ndarray
     dm_cost_eat: np.ndarray
@@ -132,6 +134,17 @@ def build_static_caches(env):
         .reshape(env.N_dm, 1, 1, 1)
     )
     env._has_holling3 = bool(np.any(env._type3_pred_mask > 0.0))
+
+    # Beddington-DeAngelis interference coefficient w_X [1/ton], per DM.
+    # Broadcast shape (N_dm, 1, 1, 1) so it multiplies the predator's own
+    # per-cell biomass in ``predation.apply_predation``. All-zero (the
+    # default) keeps the pure Holling code path and is bit-identical.
+    env.dm_interference = np.array(
+        [float(getattr(env.fgs[fid], "interference", 0.0) or 0.0)
+         for fid in env.dm_ids],
+        dtype=env.dtype,
+    ).reshape(env.N_dm, 1, 1, 1)
+    env._has_interference = bool(np.any(env.dm_interference > 0.0))
 
     env.dm_v = np.array(
         [float(np.clip(env.fgs[fid].speed, 0.0, 1.0)) for fid in env.dm_ids],
@@ -265,6 +278,8 @@ def build_static_caches(env):
         has_holling2=env._has_holling2,
         type3_pred_mask=env._type3_pred_mask,
         has_holling3=env._has_holling3,
+        dm_interference=env.dm_interference,
+        has_interference=env._has_interference,
         dm_v=env.dm_v,
         dm_cost_move=env.dm_cost_move,
         dm_cost_eat=env.dm_cost_eat,

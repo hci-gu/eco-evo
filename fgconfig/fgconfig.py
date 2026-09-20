@@ -570,6 +570,7 @@ class FGConfigApp:
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
             ("Natural Mortality (fraction/tick)", "natural_mortality", "entry", 0.0, 1.0),
             ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry", 0.0, 1.0),
+            ("Interference (Beddington-DeAngelis w, 1/ton, 0=off)", "interference", "entry", 0.0, 10.0),
             ("Movement Speed (cells/tick)", "movement_speed", "entry", 0.0, 1.0),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
             ("Extinction Threshold (× indiv. weight, 0=off)", "extinction_threshold_factor", "entry", 0.0, 5.0),

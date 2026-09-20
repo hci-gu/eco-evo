@@ -47,6 +47,12 @@ class TensorEcosystem:
         self.energy_gain = tensor(env.energy_gain_mat)[None, :, :, None]
         self.handling = tensor(env.handling_time_mat)[None, :, :, None]
         self.type3 = tensor(env._type3_pred_mask.reshape(self.D))[None, :, None, None]
+        # Beddington-DeAngelis interference w_X [1/ton], per DM. Mirrors
+        # the reference's ``dm_interference`` / ``_has_interference``; the
+        # all-zero default keeps the pure Holling path bit-identical.
+        self.interference = tensor(
+            env.dm_interference.reshape(self.D))[None, :, None, None]
+        self.has_interference = bool((self.interference > 0).any())
         self.visibility = tensor(env._all_visibility_floor)[None, :, None]
         # Per-(predator, prey) detection floor. ``None`` keeps the cheaper
         # shared-vector path, which is bit-identical whenever every override
@@ -232,12 +238,18 @@ class TensorEcosystem:
             # not prey on j are excluded so they cannot inflate the cap.
             visible = torch.where(self.eat_mask[None, :, :, None] > 0.0,
                                   pair_visible, 0.0).amax(1)
+        # Interference term I = w_X * B_X(c): the predator's own biomass in
+        # the cell, intraspecific only, shaped (B, D, 1, C) so it broadcasts
+        # over the prey axis exactly as the reference does.
+        inter = self.interference * b_dm[:, :, None] if self.has_interference else 0.0
         if self.holling:
             prey = pair_visible if pair_visible is not None else visible[:, None]
             squared = prey * prey
-            type2 = self.intake_rate * prey / (1.0 + self.intake_rate * self.handling * prey)
-            type3 = self.intake_rate * squared / (1.0 + self.intake_rate * self.handling * squared)
+            type2 = self.intake_rate * prey / (1.0 + self.intake_rate * self.handling * prey + inter)
+            type3 = self.intake_rate * squared / (1.0 + self.intake_rate * self.handling * squared + inter)
             rate = self.type3 * type3 + (1.0 - self.type3) * type2
+        elif self.has_interference:
+            rate = self.intake_rate / (1.0 + inter)
         else:
             rate = self.intake_rate
         demand = b_dm[:, :, None] * actions[:, :, 5:] * rate * hunger[:, :, None]

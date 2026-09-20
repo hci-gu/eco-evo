@@ -43,6 +43,11 @@
           transform: linear
     starve_rate: 0.2
     visibility_floor: 0.2
+    # Beddington-DeAngelis interference w [1/ton]; 0 = pure Holling.
+    # Left at 0: zooplankton does not aggregate (p90/p50 of its per-cell
+    # biomass is 1.4), so interference here would only be a uniform
+    # rescaling of grazing, not a spatial mechanism. Section 86.
+    interference: 0.0
     extinction_threshold_factor: 0.5
   benthic_community:
     display_name: "Benthic Community"
@@ -86,6 +91,13 @@
       amplitude_max: 1.0
     starve_rate: 0.025
     visibility_floor: 0.35
+    # Beddington-DeAngelis interference w [1/ton]. The density scale
+    # comes from the observed field: w = sat_p50 / B_pred_p90 = 15.0/6.5
+    # = 2.3 makes interference as strong as prey saturation at the peak
+    # density of the banded run. A sweep of {0, 2.3/3, 2.3} showed the
+    # third strength removes the bands just as completely at a lower
+    # cost in biomass, so 0.7 it is. Section 86.
+    interference: 0.7
     extinction_threshold_factor: 0.5
   gadoids:
     display_name: "Gadoids"
@@ -111,6 +123,11 @@
       amplitude_max: 1.0
     starve_rate: 0.012
     visibility_floor: 0.6
+    # Beddington-DeAngelis interference w [1/ton]. Same calibration and
+    # the same sweep: sat_p50 / B_pred_p90 = 6.3 / 1.95 = 3.2, one third
+    # of which is 1.0. Gadoids are the most strongly aggregated decision
+    # maker (p90/p50 of their per-cell biomass is 115). Section 86.
+    interference: 1.0
     extinction_threshold_factor: 0.5
   porpoises:
     display_name: "Porpoises"
@@ -139,6 +156,10 @@
     starve_rate: 0.5
     visibility_floor: 0.0
     satiation_scale: 0.9
+    # Left at 0: porpoises never reach densities where interference
+    # matters (they occupy a handful of cells at <1 ton each) and are
+    # already the group most at risk of extinction. Section 86.
+    interference: 0.0
     extinction_threshold_factor: 0.02
   seals:
     display_name: "Seals"

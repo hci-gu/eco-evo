@@ -29,6 +29,14 @@ class FunctionalGroup:
             self.visibility_floor = 0.0
         elif self.visibility_floor > 1.0:
             self.visibility_floor = 1.0
+        # Beddington-DeAngelis predator interference w_X [1/ton]. Adds
+        # w_X * B_X(c) to the functional response denominator, so intake
+        # per unit predator falls as the predator packs into a cell:
+        #     f = a*B_prey / (1 + a*h*B_prey + w*B_pred)
+        # 0 = no interference, i.e. exactly the Holling response.
+        self.interference = float(params.get('interference', 0.0) or 0.0)
+        if self.interference < 0.0:
+            self.interference = 0.0
         # Density-independent natural mortality per tick.
         self.natural_mortality = float(params.get('natural_mortality', 0.0))
         # Recolonisation floor for non-decision makers: fraction of

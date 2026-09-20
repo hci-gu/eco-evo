@@ -20,6 +20,15 @@ def apply_predation(env, actions):
     visible_biomass, pair_visible_biomass = interactions.visible_prey_biomass(
         env, prey_biomass, actions)
 
+    # Beddington-DeAngelis interference: I = w_X * B_X(c), the predator's
+    # OWN biomass in the cell. Intraspecific only - it is the standard
+    # form and it keeps the predation tensor's rows independent. Shape
+    # (N_dm, 1, H, W) so it broadcasts over the prey axis. Section 86.
+    if env._has_interference:
+        interference = env.dm_interference * predator_biomass[:, None, :, :]
+    else:
+        interference = np.float32(0.0)
+
     intake_rate = env.max_intake_mat[:, :, None, None]
     if env._has_holling2 or env._has_holling3:
         handling_time = env.handling_time_mat[:, :, None, None]
@@ -34,7 +43,12 @@ def apply_predation(env, actions):
         else:
             prey_visible = visible_biomass[None, :, :, :]
         effective_intake_rate = interactions.holling_a_eff(
-            intake_rate, handling_time, prey_visible, env._type3_pred_mask)
+            intake_rate, handling_time, prey_visible, env._type3_pred_mask,
+            interference)
+    elif env._has_interference:
+        # Linear (unsaturated) response: interference still divides the
+        # per-predator rate, so the limit h -> 0 stays continuous.
+        effective_intake_rate = intake_rate / (np.float32(1.0) + interference)
     else:
         effective_intake_rate = intake_rate
 

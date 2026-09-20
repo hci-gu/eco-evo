@@ -7304,3 +7304,489 @@ remain open exactly as described in 71.9 / 71.11.
       does not settle; (b) T4, the cornered-start test, which 82.3
       already reframed as a baseline failure mode; (c) T5/T6
       (ratio vs log, clip sensitivity) as robustness checks.
+
+84 --local_reward: THE FIXED DENOMINATOR (norm grid) AND A SYMMETRIC CLIP
+    Applied change, following the three long runs pzbpgp248nsrpfix16/17/18
+    (16x16, migration on, mortality off, --profile info, 2x48 tanh,
+    lr 0.03, sigma 0.05, 800-1400 updates, identical except
+    --local_reward_theta 0 / 0.5 / 1). Those runs showed the defaults
+    (metric log + norm mean + theta 0) to be exploitable, in the exact
+    mirror image of the T1 failure in section 82.
+
+84.1 The diagnosis: BOTH normalisations have a cell-count gradient
+    * norm sum (82): a neutral cell is worth 1.0 under the raw ratio, so
+      every extra occupied cell raises the sum. The policy spreads thin,
+      just above the extinction threshold.
+    * norm mean (these runs): the denominator is the weight of the cells
+      that were active AT THE START of the tick. A cell that is zeroed
+      pays log(clip_lo) once and then disappears from the denominator
+      for every later tick. Killing your worst cells raises the mean
+      forever after. Measured correlation between local_occupancy and
+      reward over training:
+          theta=0     gadoids -0.88   pelagic_fish -0.82
+          theta=0.5   gadoids -0.72   pelagic_fish -0.50
+          theta=1     gadoids -0.08   pelagic_fish -0.16
+      Occupancy fell 256->215 and 253->195 in the theta=0 arm while its
+      reward rose by a factor ~20 and the stock fell to 15 percent of
+      the start (gadoids 307->56 t, pelagic_fish 918->136 t). Fitness
+      and ecology pointed in opposite directions.
+    * Second effect, same runs: the loss budget went to 88-100 percent
+      starvation in the theta=0 arm (eat 17-23 percent, rest 23-26
+      percent) against 11 percent starvation and 80 percent eat at
+      theta=1. Per tick a starving cell loses at most
+      starve_rate * u = 0.012 * 0.5 = 0.006, i.e. log(B/A) ~ -0.006,
+      while a heavily grazed cell clips at log(0.2) = -1.61 -- a factor
+      ~270. A(c,t) rebases every tick, so you pay for SHRINKING, never
+      for BEING small: a slow bleed is almost invisible to B/A while
+      predation is maximally visible. The global reward does not have
+      this problem because log(E(t)/E(0)) is measured against the start.
+
+84.2 The fix: norm grid
+    A third normalisation, --local_reward_norm grid, divides the
+    weighted sum by the CONSTANT number of cells in the grid (H*W on the
+    reference path, model.C on the tensor path) instead of by the weight
+    of the active cells:
+        f_X = mean_t ( (1/(H*W)) * sum_c clip(log(B_c(t+1)/A_c(t))) )
+    With metric log a neutral cell contributes exactly 0, so neither
+    adding nor dropping cells moves the fitness -- the cell count is
+    orthogonal to fitness by construction, which neither sum (neutral
+    cell = 1.0) nor mean (shrinking denominator) achieves. The divisor
+    is a pure scale factor that only makes values comparable between
+    grid sizes; it changes no gradient. And because there is no
+    per-tick renormalisation, sum_t log(B/A) telescopes onto
+    log(end/start) for a surviving cell line, so a slow bleed is priced
+    exactly as the global reward prices it.
+
+84.3 The fix: a symmetric clip
+    The default clip moved from [0.2, 2.0] to [0.2, 5.0], i.e.
+    log(5) = -log(0.2) = 1.609. The old range priced a halving 2.3x
+    higher than a doubling, on top of starvation already being
+    underpriced (84.1), which pushed the policy towards hiding rather
+    than feeding. DEFAULT_CLIP in source_tracking.py is now the single
+    source of truth for the config default, the CLI default and the
+    local_reward_options fallback. Runs started before this section used
+    [0.2, 2.0]; pass --local_reward_clip 0.2 2.0 to reproduce them.
+
+84.4 Where it is wired in
+    * lib/environments/ecosystem_env/source_tracking.py: NORMS gained
+      "grid", DEFAULT_CLIP added, the grid branch in end_tick, and the
+      --local_reward_norm choices now come from NORMS so the CPU and GPU
+      parsers cannot drift (the flags are already shared, see 80.3).
+    * lib/gpu/rollout.py::_accumulate_local_reward: the same branch,
+      dividing by float(self.model.C). A static python scalar, so the
+      tick still traces as one fixed-shape graph.
+    * No banner changes were needed: train.py and train_gpu.py both
+      print config.norm and the clip range verbatim.
+
+84.5 Verification
+    * python3 -m pytest tests/ -q -> 414 passed, 12 skipped (was
+      407/12). New in tests/test_local_reward.py: grid == sum/(H*W)
+      exactly; grid + log scores a one-cell and a full grid identically
+      (0.0 both), which is the cell-count blindness claim; the default
+      clip satisfies clip_lo * clip_hi == 1. tests/test_gpu_local_reward
+      .py gained LocalRewardConfig(metric="log", norm="grid") to CONFIGS,
+      so the whole parity matrix (mass balance, fitness against
+      ARSTrainer._evaluate_coevo, graph tracing) covers it and also
+      asserts that H*W and model.C agree.
+    * Smoke runs: train_gpu.py --local_reward --local_reward_norm grid
+      (12x12, cpu, 1 generation) and train.py --local_reward
+      --local_reward_norm grid (1 generation, pelagic_fish).
+
+84.6 The falsifiable prediction this exists to test
+    Re-run the pzbpgp248nsrpfix16 command with
+    --local_reward_norm grid (defaults otherwise: metric log, theta 0,
+    clip 0.2 5.0). If the diagnosis in 84.1 is right, then against arm
+    16 we must see: corr(local_occupancy, reward) -> ~0 (as in the
+    theta=1 arm), the eat share back towards the theta=1 level, and the
+    starvation share of the loss budget down from 88-100 percent. If
+    occupancy still collapses, the cause is elsewhere and the
+    normalisation was not the problem.
+    Not addressed here, and independent of the reward: there is no
+    crowding cost for decision makers (Holling II is purely prey
+    dependent), so packing is free and aggregation is always optimal.
+    That is the mechanism behind the vertical banding, and no reward
+    formula removes it.
+
+85 --local_reward: THE DIAGNOSIS OF 84.6, RUN AND SCORED
+    The prediction in 84.6 was tested with the pzbpgp248nsrpfix16
+    command, only --local_reward_norm grid added (defaults otherwise:
+    metric log, theta 0, clip 0.2 5.0), run as results/lrgrid16:
+        python3 train_gpu.py --project mareld2.yaml --run-name lrgrid16
+            --migration on --mortality off --localreward
+            --local_reward_norm grid --profile info --generations 9
+            --iter-per-gen 50 --n_eval_ticks 1000 --n_deltas 16
+            --grid 16x16 --worlds_refresh iteration
+            --policynetwork 2 48 tanh --lr 0.03 --sigma 0.05
+    450 updates, the same count the three older arms are truncated to
+    so the comparison is at equal optimisation budget. Seed 0 in all
+    four, no --visual (4.1-4.8 s/update, 35 min).
+
+85.1 Verdict: two of the three predictions hold, one does not
+    Loss budget and action mix, measured by replaying the saved
+    policies in the REFERENCE engine (tools/probes/loss_budget.py,
+    400 ticks, one fixed world, reward independent):
+        arm            gadoids B / occ   pelagic B / occ   pf starve%  pf eat
+        grid  th0      179.2 / 223       740.1 / 255           59       0.44
+        mean  th0 (16) 139.0 / 203       209.1 / 220           92       0.16
+        mean  th0.5(18)181.3 / 184       787.8 / 222           71       0.46
+        mean  th1 (17) 217.8 / 217      1044.0 / 224            7       0.49
+    * The eat share is back: pelagic_fish 0.16 -> 0.44, essentially the
+      theta=1 level (0.49). CONFIRMED.
+    * The starvation share fell 92 -> 59 percent for pelagic_fish, and
+      its rest share 0.34 -> 0.06. CONFIRMED, but only halfway: the
+      theta=1 arm sits at 7 percent. Gadoids are still at 100 percent
+      starvation in every local arm.
+    * The stock follows: pelagic_fish 209 -> 740 t, a factor 3.5, and
+      occupancy 220 -> 255 of 256. grid at theta=0 lands roughly where
+      mean at theta=0.5 lands, i.e. it buys about half the distance to
+      the global reward without giving up locality.
+
+85.2 What did NOT happen: corr(occupancy, reward) did not go to zero
+    From the training logs (tools/probes/local_reward_log.py, first 450
+    updates of each run), correlation between local_occupancy and
+    reward, plus occupancy and mean biomass over the first/last fifth:
+        arm            gadoids corr  occ         pelagic corr  occ
+        grid  th0      -0.84  255->233           -0.43  256->236
+        mean  th0 (16) -0.91  256->220           -0.86  255->215
+        mean  th0.5(18)-0.45  256->248           +0.12  256->256
+        mean  th1 (17) -0.13  256->256           +0.34  256->256
+    Better than arm 16 on both groups, but nowhere near the theta=1
+    level. So the shrinking denominator was NOT the whole mechanism.
+    The residue is structural and independent of the normalisation: a
+    cell that is zeroed pays log(clip_lo) ONCE and then stops producing
+    terms altogether. A cell kept alive while slowly bleeding keeps
+    producing negative terms for the rest of the rollout. Killing a bad
+    cell is therefore still cheaper than nursing it, because A(c,t)
+    rebases every tick and there is no term for a cell that no longer
+    exists. The telescoping argument in 84.2 only holds for a SURVIVING
+    cell line; death truncates the sum instead of charging it.
+    A reward that removes this would have to keep dead cells in the
+    term set (an absorbing per-tick penalty), or measure against a
+    fixed A(c,0) rather than rebasing. Neither is implemented.
+
+85.3 The banding got WORSE, not better
+    Replay of the final policies in one fixed world, 300 ticks
+    (tools/probes/axis_collapse.py), against the same untrained control:
+        arm            gadoids aniso/nyq_x   pelagic aniso/nyq_x   pf total
+        untrained          3.07 / 0.02           2.25 / 0.00        283 t
+        grid  th0         24.31 / 0.56          22.84 / 0.96        639 t
+        mean  th0 (16)     4.98 / 0.01           9.98 / 0.26        299 t
+    Here aniso is var(column means)/var(row means) and nyq_x the share
+    of the column profile's spectral power at the 2-cell wavelength.
+    The grid arm is both far more productive and far more striped: with
+    nyq_x = 0.96 the pelagic field is essentially a pure Nyquist comb
+    along x. This is consistent with, and strengthens, the reading in
+    84.6: the bands are an AGGREGATION phenomenon, not a normalisation
+    artefact. Nothing in the tick charges for packing (Holling II is
+    purely prey dependent, no predator interference and no per-cell
+    carrying capacity for decision makers), so once the reward stops
+    punishing the policy for feeding, it aggregates harder. No reward
+    formula removes this; a crowding term in predation() is the fix.
+
+85.4 Practical conclusion
+    * Keep --local_reward_norm grid as the recommended setting. It is
+      the only cell-count neutral normalisation and it removes most of
+      the hide-and-starve behaviour, which is the failure mode that
+      made the defaults unusable.
+    * Do not claim it removes the survivorship bias: corr is -0.84 and
+      -0.43, not 0. 85.2 explains why, and the fix is a different one.
+    * The next real step is mechanical, not a reward change: a crowding
+      cost for decision makers. Until then any local reward will find
+      the Nyquist comb, and spatial metrics (N_occ, entropy) measure
+      the grid rather than the ecology.
+    * porpoises remain untestable at 16x16: they start at 2.84 t and
+      are gone in the first iteration in all four arms.
+
+85.5 Probes kept
+    tools/probes/local_reward_log.py  training.jsonl: corr(occupancy,
+        reward), occupancy/reward/biomass over the first and last fifth,
+        action mix. Takes run names, --updates truncates to a common
+        budget.
+    tools/probes/loss_budget.py       replays saved policies in the
+        reference engine and reports the loss budget (starvation vs
+        predation) and action mix, which training.jsonl does not carry.
+    tools/probes/axis_collapse.py     anisotropy and Nyquist share of
+        the biomass field, trained against an untrained control in the
+        same world.
+
+================================================================
+86. PREDATOR INTERFERENCE (BEDDINGTON-DEANGELIS): THE CROWDING
+    TERM THAT REMOVES THE BANDS
+================================================================
+
+86.1 Why the bands existed at all
+    Sections 84-85 chased the vertical 2-cell bands through the reward
+    function and concluded the cause was not there. It was in the
+    functional response. interactions.holling_a_eff was purely PREY
+    dependent:
+
+        f(B_prey) = a*B_prey / (1 + a*h*B_prey)
+
+    and predation.py multiplies it by the predator's own biomass:
+
+        demand = B_pred * pi_eat * f(B_prey) * hunger
+
+    so demand is EXACTLY linear in B_pred. 100 t of gadoids in one cell
+    get ten times the food of 10 t in the same cell. Nothing else in
+    the tick charges for packing either: max_carrying_capacity is only
+    read for non decision makers, and DM growth is pure energy
+    bookkeeping (q = s - u). Packing was therefore free at every
+    density, aggregation was always weakly optimal, and the resulting
+    positive density feedback is anti-diffusive. The fastest growing
+    mode of an anti-diffusive operator on a grid is the shortest
+    wavelength the grid can carry, i.e. 2 cells - measured as nyq_x =
+    0.96 in 85.3. The bands were the grid's Nyquist mode, not ecology.
+
+86.2 The term
+        f(B_prey, B_pred) = a*B_prey / (1 + a*h*B_prey + w_X*B_X(c))
+
+    w_X is the new per-FG parameter `interference` [1/ton], read in
+    lib/world/functional_group.py, cached per DM as env.dm_interference
+    (shape (N_dm,1,1,1), dm_ids order) with the env._has_interference
+    switch in state.py, and applied in predation.apply_predation as
+    I = w_X * B_X(c) broadcast over the prey axis. Intraspecific only:
+    it is the standard form and it keeps the rows of the predation
+    tensor independent.
+
+    Properties that made this the right shape:
+    * w = 0 is bit-identical to the old response (x + 0.0 == x), so the
+      default keeps every existing .pth valid. Both engines and the
+      whole test suite were verified unchanged at w = 0.
+    * The Holling contract of tests/test_holling_response.py survives:
+      zero at zero prey, strictly increasing in prey, bounded by 1/h.
+      Interference lowers the curve, it does not deform it.
+    * Total intake in a cell now tends to a*B_prey/w as B_pred -> inf
+      instead of growing without bound. That finite ceiling is exactly
+      the queue at the dinner table, and it is what gives aggregation a
+      finite optimum instead of a corner solution.
+    * It is cellwise and multiplicative, so source_tracking.py and the
+      --local_reward mass balance identity are untouched.
+    * The unsaturated branch (h = 0, no Holling) does NOT go through
+      holling_a_eff, so predation.py divides the bare intake rate by
+      (1 + I) there. Easy branch to miss; tests cover it.
+
+    Mirrored in lib/gpu/ecosystem.py as the same one-line denominator
+    change, fixed-shape, so the tick still traces as a graph.
+
+86.3 Calibration
+    The density scale was read off the banded run rather than guessed:
+    replay results/lrgrid16 and compare, over the cells the predator
+    actually occupies, the saturation term sum_j a*h*B_prey_j at the
+    median cell against the 90th percentile of the predator's own
+    per-cell biomass.
+
+        FG             B_pred p50   p90     sat p50    sat/p90
+        gadoids            0.017   1.95        6.3        3.2
+        pelagic_fish       0.60    6.5        15.0        2.3
+
+    sat/p90 is the w that makes interference as strong as prey
+    saturation at the observed peak density. Two strengths were then
+    trained (86.4); the weaker one won, so the library ships with one
+    third of it:
+
+        gadoids       interference: 1.0
+        pelagic_fish  interference: 0.7
+        zooplankton   0.0  (p90/p50 = 1.4, it does not aggregate; a
+                            term here would be a uniform rescaling of
+                            grazing, not a spatial mechanism)
+        porpoises     0.0  (a handful of cells at <1 t; already the
+                            group most at risk of extinction)
+
+86.4 The control run - the bands are gone
+    Exactly the pzbpgp248nsrpfix16 command plus --local_reward_norm
+    grid, i.e. identical to results/lrgrid16 in every respect except
+    the interference parameter. 450 updates each, 16x16, --profile
+    info, migration on, mortality off, 1000 ticks, 16 deltas, 3 worlds,
+    2x48 tanh, lr 0.03, sigma 0.05.
+
+      python3 train_gpu.py --project mareld2.yaml --run-name interf16 \
+        --migration on --mortality off --generations 9 --local_reward \
+        --local_reward_norm grid --profile info --iter-per-gen 50 \
+        --n_eval_ticks 1000 --n_deltas 16 --grid 16x16 \
+        --worlds_refresh iteration --policynetwork 2 48 tanh \
+        --lr 0.03 --sigma 0.05
+
+    tools/probes/axis_collapse.py, 300 ticks, against an untrained
+    control in the same world (aniso = var(column means)/var(row
+    means), nyq_x = share of the column profile's spectral power at the
+    2-cell wavelength):
+
+        arm                      gadoids         pelagic_fish
+                              aniso   nyq_x     aniso   nyq_x
+        untrained              1.8-2.8  0.03     2.5-2.7  0.00
+        lrgrid16   w = 0      19.23    0.53     18.66    0.97
+        interf16   w = 3/2     0.32    0.00      0.92    0.02
+        interf16_l w = 1/0.7   0.39    0.07      1.33    0.01
+
+    Unambiguous: with the term on, both groups end up LESS anisotropic
+    than an untrained policy, and the Nyquist comb is gone. The
+    directional mix confirms the mechanism rather than just the
+    symptom - the trained east/west dominance of 85.3 (N/E/S/W =
+    0.003/0.346/0.162/0.203) is replaced by a balanced mix
+    (0.027/0.101/0.105/0.141).
+
+    The bands were therefore an aggregation phenomenon all along, and
+    no reward formula could have removed them. Note also that replaying
+    the OLD banded policies under the new mechanics only drops aniso
+    from 24.3 to 19.2: the term does not merely smear the field, the
+    policy has to re-optimise against it. It is a change of incentive,
+    not a diffusion filter.
+
+86.5 What it costs, and why the weaker w won
+    training.jsonl, first vs last fifth of 450 updates
+    (tools/probes/local_reward_log.py):
+
+        arm          fg             eat   rest  move   bio0   bio1
+        w = 0        gadoids       0.18  0.20  0.61   274    215
+                     pelagic       0.59  0.04  0.37   702    467
+        w = 1/0.7    gadoids       0.51  0.01  0.48   256    148
+                     pelagic       0.66  0.01  0.33   745    277
+        w = 3/2      gadoids       0.54  0.01  0.46   232    127
+                     pelagic       0.62  0.10  0.28   729    264
+
+    Two things to read here. First, the policy stops wandering and
+    starts feeding (gadoids eat 0.18 -> 0.51, move 0.61 -> 0.48):
+    with a crowding cost, chasing the winning column no longer pays,
+    so the fish eats where it stands. Second, biomass is LOWER. That is
+    not a bug - interference is a real reduction in intake, and the
+    w = 0 arm's higher biomass was bought by the degenerate packing we
+    set out to remove. But it is a cost, and the weaker calibration
+    pays less of it for the same result (gadoids 148 vs 127, pelagic
+    277 vs 264) while removing the bands just as completely. Hence
+    1.0 / 0.7 in the library.
+
+    Loss budget in the reference engine (tools/probes/loss_budget.py,
+    400 ticks, fixed world) still shows 95-100 percent starvation for
+    both fish groups. So the crowding term does NOT fix the starvation
+    story of 85.2 - it is a different problem with a different cause,
+    and if anything a strong w makes it worse by lowering intake.
+    corr(local_occupancy, reward) is likewise unchanged (-0.79/-0.71
+    against -0.84/-0.43): the survivorship bias explained in 85.2 is
+    orthogonal to crowding, as expected.
+
+86.6 Tests
+    tests/test_interference.py (11 cases): w = 0 bit-identical in
+    holling_a_eff and over a live predation step; the Holling shape
+    contract preserved under w for both Type II and Type III; total
+    cell intake linear in B_pred without the term and converging to
+    a*B_prey/w with it; per-unit intake monotonically diminishing; the
+    term negligible at sparse density and exactly halving at the
+    density where interference equals saturation; the unsaturated
+    h = 0 branch; and the live library's coefficients wired through to
+    dm_interference in dm_ids order.
+    tests/test_gpu_ecosystem.py: test_interference_matches_reference,
+    per-tick CPU/GPU parity for both handling = 0 and 0.2, asserting
+    the GPU actually took the interference path.
+    Suite: 432 passed, 12 skipped (was 414/12).
+
+86.7 What this does and does not settle
+    Settled: the bands, and with them the premise of 85.4. N_occ and
+    spatial entropy now measure ecology rather than the grid's Nyquist
+    frequency, which is what the whole --local_reward evaluation rests
+    on. Sections 82-85 should be re-read with that in mind: every
+    spatial number in them was taken in a banded regime.
+    Not settled: the survivorship bias (85.2), the starvation-heavy
+    loss budget, impact mortality on the GPU engine, and porpoises,
+    which are still gone in the first iteration at 16x16 in every arm.
+    Open calibration question: only {0, w/3, w} were swept. Whether an
+    even weaker term still clears the bands is untested, and the
+    biomass cost suggests it is worth one more run.
+87 THE GLOBAL-REWARD CONTROL RUN (pzbpgp248nsrpfix20)
+    The measurement 86.4 was missing: interference lives in the tick
+    (predation.py / lib/gpu/ecosystem.py::predation), not in the reward
+    path, so the bands should disappear with the GLOBAL reward too.
+    Expected, but until this run untested.
+
+      __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia \
+      python3 train_gpu.py --project mareld2.yaml \
+        --run-name pzbpgp248nsrpfix20 --migration on --mortality off \
+        --generations inf --profile info --iter-per-gen 50 \
+        --n_eval_ticks 2500 --n_deltas 16 --grid 16x16 \
+        --worlds_refresh iteration --policynetwork 2 48 tanh \
+        --lr 0.03 --sigma 0.05 --visual
+
+    2876 updates, 17.2 h, cuda-graph, 3 worlds. No --local_reward.
+
+87.1 The bands are gone, and it is reward independent
+    tools/probes/axis_collapse.py, 300 ticks, against an untrained
+    control in the same fixed world:
+
+        FG            arm        total   occ  aniso  nyq_x
+        gadoids       untrained  136.9   256   2.83   0.02
+        gadoids       trained    178.1   254   0.32   0.18
+        pelagic_fish  untrained  253.2   256   2.46   0.00
+        pelagic_fish  trained    806.4   256   3.19   0.00
+
+    Compare the banded regime (85.3): aniso 19-23 and nyq_x 0.96-0.97.
+    Here anisotropy is at or below the untrained control and the
+    Nyquist comb is in the noise. The east/west collapse of arm 16
+    (N/E/S/W = 0.003/0.346/0.162/0.203) is gone; the directions are
+    symmetric. The mechanism is therefore in the functional response,
+    exactly as 86.2 claimed, and does not depend on the fitness used.
+
+87.2 Global reward + interference beats local reward + interference
+    Loss budget in the reference engine (tools/probes/loss_budget.py,
+    400 ticks, fixed world, reward independent):
+
+        arm             FG            biomass  occ   loss  starve%  eat
+        fix20 global    gadoids         211.4  240    0.1     96   0.88
+        interf16_low    gadoids          65.5  226  117.8    100   0.44
+        fix20 global    pelagic_fish    789.8  245  203.5     55   0.75
+        interf16_low    pelagic_fish    228.0  136  669.5     95   0.74
+
+    Three to four times the biomass, near-full occupancy, and
+    starvation is no longer the whole loss budget. The hide-and-starve
+    strategy of Section 85 is absent: gadoids lose 0.1 t over 400
+    ticks. Caveat: this is not a perfectly controlled A/B - fix20 ran
+    2500 ticks and 2876 updates against 1000/450 for interf16_low -
+    but the direction and the size of the gap are far too large to be
+    a horizon effect, and they point the same way as all of 84-85.
+
+87.3 The practically most important finding: 15 of the 17 hours were
+    wasted
+    Reward, 50-update moving average, and the update at which 95
+    percent of the total improvement is reached:
+
+        FG             start    final   95% at update
+        gadoids       -0.086   +0.420        22
+        pelagic_fish  -0.927   -0.503        33
+        zooplankton   +1.244   +1.508       358
+        porpoises    -10.71   -12.58        517  (downwards)
+
+    All of the fish learning happens inside the first ~30 updates.
+    After that the trend is below the noise: the slope over the WHOLE
+    run is 0.033 for gadoids against a per-update std of 0.047 and
+    sigma_f 0.048. The decile means confirm it (gadoids 0.396 / 0.418
+    / 0.347 / ... / 0.416, i.e. a random walk). At 19-22 s/update the
+    remaining ~2500 updates (~15 h) produced nothing.
+    Lesson for the budget: --iter-per-gen 50 --n_eval_ticks 2500
+    --generations inf spends everything on updates. The horizon and
+    the number of worlds (3) are where the money should go. Abort this
+    kind of run at ~500 updates; the plateau is measurable in the log.
+
+87.4 What the reward levels mean
+    With --integral_reward the reward is mean_t log(E(t)/E(0)), i.e.
+    measured against the SPAWN level:
+        gadoids      +0.42  -> time-mean energy 1.5x the start
+        pelagic_fish -0.50  -> 0.61x the start
+        zooplankton  +1.51  -> 4.5x, biomass 8283 -> 9216 t
+    pelagic_fish cannot hold its spawn level. The likely cause is that
+    mareld2.yaml's spawn now sits above the equilibrium at
+    interference: 0.7, not that learning failed. Worth recalibrating
+    spawn against the new equilibrium - otherwise every reward
+    measured against E(0) mostly reports "how far down to equilibrium".
+
+87.5 What this setup cannot answer
+    Porpoises: mean_biomass 0.008 t in the FIRST iteration, 0.02 t at
+    the end, reward monotonically 10.7 -> -12.6 (pure extinction
+    signal) and occ = 0 in the replay. At 16x16 they die before any
+    policy matters, so every porpoise conclusion from fix16/17/18/20
+    is empty. Needs 24x24 or 32x32, or a higher starting biomass.
+    Spatial behaviour: the mean policy barely moves (sum N/E/S/W =
+    0.027 gadoids, 0.031 pelagic in the replay) and entropy falls
+    1.67 -> 0.38 and 1.40 -> 0.29 (--profile info zeroes entropy_coef).
+    But mareld2.yaml has no environment maps, so a 16x16 grid is
+    perfectly isotropic and there is nothing to move towards.
+    "Stand still and eat" is the correct answer in that world; the
+    conclusion is that the setup cannot evaluate spatial behaviour at
+    all, not that the policy degenerated.

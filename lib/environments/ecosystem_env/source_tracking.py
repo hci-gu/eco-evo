@@ -63,7 +63,14 @@ import numpy as np
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 
 METRICS = ("log", "ratio")
-NORMS = ("mean", "sum")
+NORMS = ("mean", "sum", "grid")
+
+# Default clip on the per-cell ratio B/A. Symmetric in log space
+# (log(5) == -log(0.2)), so a halving is priced exactly as dearly as a
+# doubling is worth. The earlier default [0.2, 2.0] made a predation
+# event 2.3x more expensive than a doubling was rewarded, which biases
+# the policy towards hiding rather than feeding (section 84).
+DEFAULT_CLIP = (0.2, 5.0)
 
 
 class LocalRewardConfig:
@@ -73,17 +80,27 @@ class LocalRewardConfig:
         metric: ``"log"`` uses ``log(B/A)`` (symmetric, geometric mean
             growth, risk averse); ``"ratio"`` uses the raw quotient
             ``B/A`` as literally specified.
-        norm: ``"mean"`` divides the weighted sum by the total weight,
-            ``"sum"`` keeps the unnormalised sum over occupied cells.
-            With ``sum`` the fitness grows with the number of occupied
-            cells, which rewards thin spreading; ``mean`` removes that
-            gradient.
+        norm: how the per-cell terms are aggregated into one scalar.
+            ``"grid"`` divides by the (constant) number of cells in the
+            grid, ``"mean"`` by the total weight of the participating
+            cells and ``"sum"`` not at all. Only ``"grid"`` is neutral
+            with respect to the cell count: ``"sum"`` grows with the
+            number of occupied cells and rewards thin spreading, while
+            ``"mean"`` has a shrinking denominator and rewards killing
+            the worst cells (sections 82 and 84). With ``metric="log"``
+            a neutral cell contributes exactly 0, so under ``"grid"``
+            the cell count is orthogonal to fitness by construction and
+            ``sum_t log(B/A)`` telescopes onto ``log(end/start)`` for a
+            surviving cell line -- a slow bleed is priced the same way
+            the global reward prices it.
         theta: exponent of the cell weight ``w_c = A_c**theta``.
             ``0.0`` weights every occupied cell equally (the local
             reward proper), ``1.0`` reduces to the global energy reward.
         clip_lo / clip_hi: the ratio ``B/A`` is clipped to
             ``[clip_lo, clip_hi]`` before the metric is applied, which
-            bounds the contribution of a nearly empty cell.
+            bounds the contribution of a nearly empty cell. Keep the
+            range symmetric in log space (``clip_lo == 1/clip_hi``, the
+            default) unless asymmetric risk aversion is intended.
         min_energy_factor: a cell only takes part when
             ``A_c >= min_energy_factor * extinction_threshold *
             energy_content``, i.e. when it held a viable population at
@@ -93,8 +110,9 @@ class LocalRewardConfig:
     __slots__ = ("metric", "norm", "theta", "clip_lo", "clip_hi",
                  "min_energy_factor")
 
-    def __init__(self, metric="log", norm="mean", theta=0.0, clip_lo=0.2,
-                 clip_hi=2.0, min_energy_factor=1.0):
+    def __init__(self, metric="log", norm="mean", theta=0.0,
+                 clip_lo=DEFAULT_CLIP[0], clip_hi=DEFAULT_CLIP[1],
+                 min_energy_factor=1.0):
         metric = str(metric)
         norm = str(norm)
         if metric not in METRICS:
@@ -143,7 +161,7 @@ def local_reward_options(args):
     """
     if not getattr(args, "local_reward", False):
         return None
-    clip = getattr(args, "local_reward_clip", None) or (0.2, 2.0)
+    clip = getattr(args, "local_reward_clip", None) or DEFAULT_CLIP
     return LocalRewardConfig(
         metric=getattr(args, "local_reward_metric", "log"),
         norm=getattr(args, "local_reward_norm", "mean"),
@@ -188,13 +206,18 @@ def add_local_reward_arguments(parser):
                              "optimises the geometric mean growth rate (risk "
                              "averse). 'ratio' uses the raw quotient B/A, which is "
                              "asymmetric and mildly rewards boom-bust.")
-    parser.add_argument("--local_reward_norm", choices=["mean", "sum"],
+    parser.add_argument("--local_reward_norm", choices=list(NORMS),
                         default="mean",
-                        help="Aggregation over cells. 'mean' (default) divides by "
-                             "the total cell weight. 'sum' keeps the raw sum, which "
-                             "grows with the number of occupied cells and therefore "
-                             "also rewards spreading thin just above the extinction "
-                             "threshold. Default: mean.")
+                        help="Aggregation over cells. 'grid' divides by the constant "
+                             "number of cells in the grid, which is the only "
+                             "cell-count neutral choice: with metric 'log' a neutral "
+                             "cell contributes 0, so neither adding nor dropping "
+                             "cells moves the fitness. 'mean' (default) divides by "
+                             "the total cell weight, whose denominator shrinks when "
+                             "cells die, so sacrificing the worst cells pays. 'sum' "
+                             "keeps the raw sum, which grows with the number of "
+                             "occupied cells and rewards spreading thin just above "
+                             "the extinction threshold. Default: mean.")
     parser.add_argument("--local_reward_theta", type=float, default=0.0,
                         help="Cell weight exponent: w_c = A_c**theta. 0.0 (default) "
                              "weights every occupied cell equally (the local reward "
@@ -202,11 +225,14 @@ def add_local_reward_arguments(parser):
                              "the global energy-weighted growth rate, which makes "
                              "theta a single knob for A/B testing local vs global.")
     parser.add_argument("--local_reward_clip", type=float, nargs=2,
-                        default=[0.2, 2.0], metavar=("LO", "HI"),
+                        default=list(DEFAULT_CLIP), metavar=("LO", "HI"),
                         help="Clip range for the per-cell ratio B/A before the "
                              "metric is applied. Bounds the contribution of a "
                              "nearly empty cell, where float32 residue would "
-                             "otherwise dominate the quotient. Default: 0.2 2.0.")
+                             "otherwise dominate the quotient. The default is "
+                             "symmetric in log space (log(5) == -log(0.2)) so that "
+                             "losses and gains are priced alike. Default: %s %s."
+                             % DEFAULT_CLIP)
     parser.add_argument("--local_reward_min_energy_factor", type=float, default=1.0,
                         help="A cell participates only when A_c >= factor * "
                              "extinction_threshold_factor * min_split_biomass * "
@@ -397,6 +423,11 @@ def end_tick(env):
                          weighted / np.where(total_weight > 0.0,
                                              total_weight, 1.0),
                          0.0)
+    elif config.norm == "grid":
+        # Constant denominator: a pure scale factor that makes the
+        # values comparable across grid sizes without introducing a
+        # cell-count gradient in either direction.
+        value = weighted / float(env.H * env.W)
     else:
         value = weighted
 

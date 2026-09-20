@@ -40,6 +40,10 @@ CONFIGS = [
     LocalRewardConfig(metric="ratio", norm="sum"),
     LocalRewardConfig(metric="ratio", norm="mean", theta=1.0),
     LocalRewardConfig(clip_lo=0.5, clip_hi=1.5, min_energy_factor=2.0),
+    # ``grid`` divides by the constant cell count; the reference uses
+    # ``env.H * env.W`` and this engine ``model.C``, so parity here also
+    # asserts that the two agree on what "the grid" is.
+    LocalRewardConfig(metric="log", norm="grid"),
 ]
 
 
