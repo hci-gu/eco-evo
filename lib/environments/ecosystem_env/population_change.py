@@ -1,4 +1,42 @@
+import argparse
+
 import numpy as np
+
+
+DEFAULT_MORTALITY_MULTIPLIER = 1.0
+
+
+def mortality_multiplier_type(value):
+    """argparse type for ``--mortality_multiplier``: a finite factor >= 0."""
+    try:
+        factor = float(value)
+    except (TypeError, ValueError):
+        raise argparse.ArgumentTypeError(
+            "--mortality_multiplier must be a number")
+    if not np.isfinite(factor) or factor < 0.0:
+        raise argparse.ArgumentTypeError(
+            "--mortality_multiplier must be finite and >= 0")
+    return factor
+
+
+def add_mortality_multiplier_argument(parser):
+    """Register ``--mortality_multiplier`` on a CPU or GPU parser.
+
+    Shared so the two entry points cannot drift apart, exactly as
+    ``source_tracking.add_local_reward_arguments`` does for the local
+    reward flags.
+    """
+    parser.add_argument("--mortality_multiplier", "--mortality-multiplier",
+                        dest="mortality_multiplier",
+                        type=mortality_multiplier_type,
+                        default=DEFAULT_MORTALITY_MULTIPLIER,
+                        metavar="FACTOR",
+                        help="Scale every functional group's "
+                             "``natural_mortality`` by FACTOR (e.g. 0.5 halves "
+                             "it, 2 doubles it). Requires --mortality on to "
+                             "have any effect; 0 is equivalent to "
+                             "--mortality off. Default: 1.0 (library values "
+                             "unchanged).")
 
 
 def _seasonal_population_rate(env, fg_id, fg):
@@ -41,6 +79,9 @@ def _apply_non_decision_maker_population_change(env, fg_id, fg):
 
 def _apply_decision_maker_population_change(env, fg_id, fg):
     natural_mortality = float(getattr(fg, "natural_mortality", 0.0) or 0.0)
+    # ``--mortality_multiplier`` scales every FG's rate by the same
+    # factor; 1.0 (the default) leaves this branch bit-identical.
+    natural_mortality *= float(getattr(env, "mortality_multiplier", 1.0))
     if natural_mortality > 0.0 and env.apply_natural_mortality:
         keep = np.float32(max(0.0, 1.0 - natural_mortality))
         fg.energy_reserve = (fg.energy_reserve * keep).astype(

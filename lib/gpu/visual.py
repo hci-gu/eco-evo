@@ -56,6 +56,10 @@ class GPUTrainingVisualizer:
             self.builder = _ProbeEnvBuilder(
                 builder.project_path, builder.grid, builder.mortality,
                 builder.migration, currents=builder.currents, library_path=builder.library_path,
+                # Without this the probe falls back to train.py's module
+                # default (1.0) and runs with the unscaled library rates,
+                # so --mortality_multiplier would not reach the viewer.
+                mortality_multiplier=builder.mortality_multiplier,
             )
             with evaluation_randomness(self.builder.PROBE_SEED):
                 env = self.builder()

@@ -26,10 +26,14 @@ class EnvironmentBuilder:
     mortality: bool = False
     spawn_seed: int = None
     currents: CurrentConfig | None = None
+    # Global scale factor on every FG's ``natural_mortality``
+    # (``--mortality_multiplier``); 1.0 leaves the tick unchanged.
+    mortality_multiplier: float = 1.0
 
     def with_world(self, spawn_seed):
         return EnvironmentBuilder(self.project_path, self.library_path, self.grid,
-                                  self.migration, self.mortality, int(spawn_seed), self.currents)
+                                  self.migration, self.mortality, int(spawn_seed), self.currents,
+                                  self.mortality_multiplier)
 
     def __call__(self, seed=None):
         kwargs = dict(library_path=self.library_path, grid_size=self.grid,
@@ -41,6 +45,7 @@ class EnvironmentBuilder:
         return EcosystemEnvironment(
             dict(height=self.grid[0], width=self.grid[1]), groups,
             migration=self.migration, apply_natural_mortality=self.mortality,
+            mortality_multiplier=self.mortality_multiplier,
             currents=self.currents, current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
 
 
@@ -63,6 +68,7 @@ class ProjectSpec:
             self.env = EcosystemEnvironment(
                 dict(height=builder.grid[0], width=builder.grid[1]), groups,
                 migration=builder.migration, apply_natural_mortality=builder.mortality,
+                mortality_multiplier=builder.mortality_multiplier,
                 currents=builder.currents, current_world_seed=seed)
         finally:
             np.random.set_state(rng_state)

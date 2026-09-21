@@ -102,8 +102,12 @@ class TensorEcosystem:
         # extinction sweep itself does.
         self.split_thr = self.threshold[:, self.dm_index][:, :, :, None]
         self.split_thr_any = bool((self.threshold[:, self.dm_index] > 0).any())
+        # ``--mortality_multiplier`` scales every FG's rate, exactly as
+        # the reference does in ``population_change``; the default 1.0
+        # keeps this vector bit-identical.
+        mortality_scale = max(0.0, float(getattr(env, "mortality_multiplier", 1.0)))
         self.mortality_keep = tensor([
-            max(0.0, 1.0 - max(0.0, fg.natural_mortality))
+            max(0.0, 1.0 - max(0.0, fg.natural_mortality) * mortality_scale)
             if env.apply_natural_mortality and fg.is_decision_maker else 1.0
             for fg in groups
         ])[None, :, None]

@@ -7,6 +7,8 @@ import re
 from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
 from lib.runners.population_stability import add_population_arguments, population_options
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.environments.ecosystem_env.population_change import (
+    add_mortality_multiplier_argument)
 from lib.environments.ecosystem_env.source_tracking import (add_local_reward_arguments,
                                                             local_reward_options)
 from lib.training_profiles import parse_training_args as _parse_training_args
@@ -55,6 +57,7 @@ def add_common_arguments(parser):
     parser.add_argument("--entropy-coef", "--entropy_coef", dest="entropy_coef", type=float, default=0.1)
     parser.add_argument("--argmax-penalty", "--argmax_penalty", dest="argmax_penalty", type=float, default=0.3)
     parser.add_argument("--mortality", choices=("on", "off"), default="off")
+    add_mortality_multiplier_argument(parser)
     parser.add_argument("--migration", choices=("on", "off"), default="off")
     parser.add_argument("--execution", choices=("eager", "compile", "cuda-graph", "compile-graph"), default="cuda-graph")
     parser.add_argument("--graph-ticks", type=positive_int, default=32)
@@ -71,7 +74,9 @@ def parse_training_args(parser, argv=None):
 def builder_from_args(args):
     return EnvironmentBuilder(args.project, args.library, args.grid,
                               args.migration == "on", args.mortality == "on",
-                              currents=current_options(args))
+                              currents=current_options(args),
+                              mortality_multiplier=float(
+                                  getattr(args, "mortality_multiplier", 1.0)))
 
 
 def trainer_options(args):

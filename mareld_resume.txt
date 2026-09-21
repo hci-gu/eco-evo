@@ -7790,3 +7790,116 @@ remain open exactly as described in 71.9 / 71.11.
     "Stand still and eat" is the correct answer in that world; the
     conclusion is that the setup cannot evaluate spatial behaviour at
     all, not that the policy degenerated.
+
+88. CLI FLAG --mortality_multiplier: ONE GLOBAL SCALE ON natural_mortality
+--------------------------------------------------------------------------
+
+88.1 Why
+    The density-independent natural mortality is a per-FG constant in
+    fgconfig/fg_library.yaml (zooplankton 0.0025, pelagic_fish 0.0005,
+    gadoids 0.0002, porpoises 5e-05, ...). Sweeping it meant editing the
+    library, which changes every run that loads it and is easy to forget
+    to revert. --mortality_multiplier scales all of them at once from the
+    command line, so a sweep is a flag value and nothing else.
+
+88.2 Semantics
+    keep = 1 - m * natural_mortality        (NOT (1 - rate) * m)
+    The factor multiplies the RATE. Consequences:
+      m = 1   default, bit-identical to the pre-change engine.
+      m = 0   exactly --mortality off.
+      m > 1   harsher than the library; keep is clamped at 0 so biomass
+              can never go negative.
+      m < 0   rejected by the CLI and clamped by the environment; a
+              negative rate would create biomass out of nothing.
+    The flag only has an effect with --mortality on, because the branch
+    in population_change is gated on apply_natural_mortality. It scales
+    every FG by the same factor; per-FG scaling stays a library edit.
+
+88.3 Where it lives
+    The term is in the TICK, not in the reward path, so the flag applies
+    to every reward mode (global, --local_reward, --legacy_reward,
+    --integral_reward, --population-stability) and to inference.
+      EcosystemEnvironment.mortality_multiplier   (clamped >= 0)
+      population_change._apply_decision_maker_population_change (CPU)
+      lib/gpu/ecosystem.py: mortality_keep        (GPU mirror)
+    Plumbing: the flag itself is defined once, in
+    population_change.add_mortality_multiplier_argument, and registered
+    by train.py, lib/gpu/cli.py and inference.py - the same pattern as
+    source_tracking.add_local_reward_arguments, so the parsers cannot
+    drift apart. train.py carries it as the module global
+    MORTALITY_MULTIPLIER (picklable through _EnvBuilder /
+    _ProbeEnvBuilder into spawn workers, exactly like
+    APPLY_NATURAL_MORTALITY); the GPU path carries it as a field on
+    EnvironmentBuilder, including with_world. It is printed in both
+    banners and written to biomass.jsonl's __meta__ header.
+
+88.4 Tests
+    tests/test_mortality_multiplier.py (21 cases): the default is the
+    unscaled library rate, the factor scales the rate and not the
+    survival fraction, m = 0 equals --mortality off, the flag is inert
+    with mortality off, negative is clamped, a huge factor cannot drive
+    biomass negative, the energy reserve follows the same factor, the
+    GPU mortality_keep mirrors all of it, the CLI rejects negative/
+    non-finite values, and with_world keeps the field.
+    tests/test_gpu_ecosystem.py gained a per-tick CPU/GPU parity case
+    for m in {0, 0.5, 2}. Suite: 459 passed, 12 skipped (was 432/12).
+
+88.5 Checkpoints
+    Unchanged. Observation layout, action layout and the FG set are
+    untouched, so existing .pth files stay valid. Note the usual caveat:
+    a policy trained at one m is evaluated under different mechanics at
+    another m - loadable, not optimal.
+
+89. BUGFIX: m = 0 WAS NOT --mortality off IN THE MONITORING ENVS
+--------------------------------------------------------------------------
+
+89.1 The report
+    "--mortality on --mortality_multiplier 0 gives very different
+    extinction and growth behaviour than --mortality off, but they must
+    be semantically identical." (Section 88.2 promises exactly that.)
+
+89.2 What was actually equal, and what was not
+    The TICK was already correct. A controlled 10-tick rollout on
+    mareld2.yaml (20x20, same spawn/impact seeds) gives bit-identical
+    per-FG biomass for (mortality=off) and (mortality=on, m=0), and
+    differs from (mortality=on, m=1) as expected. The unit tests of
+    88.4 cover the same branch.
+    What was NOT equal were the environments built OUTSIDE the training
+    rollout, i.e. the ones the user actually watches:
+      a) lib/runners/training_progress.py - inference_config() listed
+         project/library/grid/mortality/migration/currents but NOT
+         mortality_multiplier, and build_inference_env() therefore
+         constructed EcosystemEnvironment with the default 1.0. The
+         survival evaluator (--eval-every, the progress tab) thus
+         measured extinction and growth under the FULL library rates
+         whenever --mortality on was given, no matter the factor.
+      b) lib/gpu/visual.py - the live probe built _ProbeEnvBuilder
+         positionally (project, grid, mortality, migration) and never
+         passed the factor, so it fell back to train.py's module-level
+         MORTALITY_MULTIPLIER, which in the GPU entry point is never
+         assigned and stays 1.0. Same failure mode as (a).
+    Both are exactly "different extinction and growth", and both only
+    bite when mortality is on - which is why --mortality off looked fine.
+
+89.3 The fix
+    inference_config() now carries mortality_multiplier and
+    build_inference_env() passes it on. Because the factor is part of
+    progress/config.json, a --resume against a directory written before
+    this change would fail the "evaluation settings changed" equality
+    check; comparable_config() fills in the default 1.0 on both sides so
+    old histories stay resumable (old runs did use the unscaled rates).
+    lib/gpu/visual.py passes builder.mortality_multiplier explicitly.
+    train.py now passes apply_natural_mortality / mortality_multiplier /
+    migration explicitly to _ProbeEnvBuilder instead of relying on the
+    module globals being set first - same values, no ordering trap.
+
+89.4 Verification
+    tests/test_mortality_multiplier.py section 6 (3 new cases): the
+    progress config carries the factor, the progress env is built with
+    it, and a config.json without the key still compares equal.
+    Suite: 462 passed, 12 skipped. Plus 1-generation smoke runs of both
+    flag combinations on 20x20.
+    Note when reproducing by eye: the probe line varies a lot run to run
+    because untrained FGs start from a fresh random policy - porpoises
+    landed on 17/19/27/42 percent across four runs of BOTH settings. Do
+    not read a single probe line as an A/B result.

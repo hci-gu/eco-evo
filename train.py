@@ -18,6 +18,8 @@ from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env import source_tracking
+from lib.environments.ecosystem_env.population_change import (
+    DEFAULT_MORTALITY_MULTIPLIER, add_mortality_multiplier_argument)
 from lib.environments.ecosystem_env.source_tracking import (add_local_reward_arguments,
                                                             local_reward_options)
 from lib.runners.trainer import ARSTrainer
@@ -31,6 +33,9 @@ GRID_HEIGHT = 60
 # Toggle for the artificial (density-independent) natural mortality term.
 # Default off; overridden by --mortality on the CLI.
 APPLY_NATURAL_MORTALITY = False
+# Global scale factor on every FG's ``natural_mortality``; overridden by
+# --mortality_multiplier on the CLI. 1.0 = library values unchanged.
+MORTALITY_MULTIPLIER = DEFAULT_MORTALITY_MULTIPLIER
 # Toggle for migration mode (immigration/emigration via grid edges).
 # Default off; overridden by --migration on the CLI. När True släpps
 # maskningen av förflyttningar utanför kantceller i ecosystem, och
@@ -300,6 +305,7 @@ class _EnvBuilder:
                  project_path=None, spawn_seed=None,
                  impact_vars=None, impact_ranges=None, impact_seed=None,
                  apply_natural_mortality=None,
+                 mortality_multiplier=None,
                  migration=None,
                  impact_spawn_specs=None,
                  observable_impact_vars=None, currents=None):
@@ -330,6 +336,10 @@ class _EnvBuilder:
         self.apply_natural_mortality = (
             APPLY_NATURAL_MORTALITY if apply_natural_mortality is None
             else bool(apply_natural_mortality)
+        )
+        self.mortality_multiplier = (
+            MORTALITY_MULTIPLIER if mortality_multiplier is None
+            else float(mortality_multiplier)
         )
         self.migration = (
             APPLY_MIGRATION if migration is None
@@ -383,6 +393,7 @@ class _EnvBuilder:
             impact_ranges=self.impact_ranges,
             impact_seed=int(impact_seed),
             apply_natural_mortality=self.apply_natural_mortality,
+            mortality_multiplier=self.mortality_multiplier,
             migration=self.migration,
             impact_spawn_specs=self.impact_spawn_specs,
             observable_impact_vars=self.observable_impact_vars,
@@ -412,6 +423,7 @@ class _EnvBuilder:
         env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
+                                   mortality_multiplier=self.mortality_multiplier,
                                    migration=self.migration, currents=self.currents,
                                    current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
 
@@ -464,7 +476,8 @@ class _ProbeEnvBuilder:
     PROBE_SEED = 20260530
 
     def __init__(self, project_path, grid_size, apply_natural_mortality=None,
-                 migration=None, currents=None, library_path=None):
+                 migration=None, currents=None, library_path=None,
+                 mortality_multiplier=None):
         self.currents = currents
         self.project_path = project_path
         self.library_kwargs = {} if library_path is None else {"library_path": library_path}
@@ -473,6 +486,10 @@ class _ProbeEnvBuilder:
         self.apply_natural_mortality = (
             APPLY_NATURAL_MORTALITY if apply_natural_mortality is None
             else bool(apply_natural_mortality)
+        )
+        self.mortality_multiplier = (
+            MORTALITY_MULTIPLIER if mortality_multiplier is None
+            else float(mortality_multiplier)
         )
         self.migration = (
             APPLY_MIGRATION if migration is None
@@ -525,6 +542,7 @@ class _ProbeEnvBuilder:
         env = EcosystemEnvironment(grid_config, fgs,
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
+                                   mortality_multiplier=self.mortality_multiplier,
                                    migration=self.migration, currents=self.currents,
                                    current_world_seed=s)
         # Inference-tab impact maps (silent: avoid spamming "[info] Using
@@ -1376,6 +1394,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       project_path=None, spawn_seed=None,
                       impact_vars=None, impact_ranges=None, impact_seed=None,
                       apply_natural_mortality=None,
+                      mortality_multiplier=None,
                       migration=None,
                       impact_spawn_specs=None,
                       observable_impact_vars=None, currents=None):
@@ -1395,6 +1414,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       impact_vars=impact_vars, impact_ranges=impact_ranges,
                       impact_seed=impact_seed,
                       apply_natural_mortality=apply_natural_mortality,
+                      mortality_multiplier=mortality_multiplier,
                       migration=migration,
                       impact_spawn_specs=impact_spawn_specs,
                       observable_impact_vars=observable_impact_vars, currents=currents)
@@ -1555,6 +1575,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                         help="Toggle the artificial (density-independent) natural "
                              "mortality term applied to decision-maker FGs each tick. "
                              "Default: off.")
+    add_mortality_multiplier_argument(parser)
     parser.add_argument("--migration", choices=["on", "off"], default="off",
                         help="Migration mode. When 'on', movement out through grid "
                              "edges is no longer masked away — instead it is "
@@ -1670,8 +1691,10 @@ def main(argv=None, *, on_step=None, confirm=True):
 
     # Set project globally so env_builder can find it
     global PROJECT_PATH, APPLY_NATURAL_MORTALITY, APPLY_MIGRATION
+    global MORTALITY_MULTIPLIER
     PROJECT_PATH = args.project
     APPLY_NATURAL_MORTALITY = (args.mortality == "on")
+    MORTALITY_MULTIPLIER = float(args.mortality_multiplier)
     APPLY_MIGRATION = (args.migration == "on")
 
     # Ensure run directory exists: results/<run-name>/
@@ -1687,6 +1710,9 @@ def main(argv=None, *, on_step=None, confirm=True):
     probe_builder = _ProbeEnvBuilder(
         project_path=PROJECT_PATH,
         grid_size=(GRID_HEIGHT, GRID_WIDTH),
+        apply_natural_mortality=APPLY_NATURAL_MORTALITY,
+        mortality_multiplier=MORTALITY_MULTIPLIER,
+        migration=APPLY_MIGRATION,
         currents=currents,
     )
     probe_jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
@@ -1752,6 +1778,10 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "cappa": getattr(args, "cappa", None),
                     "survival_bonus": getattr(args, "survival_bonus", None),
                     "n_eval_ticks": int(getattr(args, "n_eval_ticks", 0) or 0),
+                    "mortality": getattr(args, "mortality", None),
+                    "mortality_multiplier": float(
+                        getattr(args, "mortality_multiplier",
+                                DEFAULT_MORTALITY_MULTIPLIER)),
                     "dm_ids": _dm_ids_meta,
                     "ndm_ids": _ndm_ids_meta,
                 }
@@ -1977,7 +2007,9 @@ def main(argv=None, *, on_step=None, confirm=True):
     obs_norm_enabled = not args.no_obs_normalize
     print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
     print(f"Co-evolution:   {args.coevolution} {'(default: on)' if args.coevolution else '(user, disabled -> round-robin)'}")
-    print(f"Mortality:      {args.mortality} {'(default)' if args.mortality == 'off' else '(user)'}")
+    print(f"Mortality:      {args.mortality} {'(default)' if args.mortality == 'off' else '(user)'}"
+          f" x{args.mortality_multiplier:g}"
+          f" {'(default)' if args.mortality_multiplier == DEFAULT_MORTALITY_MULTIPLIER else '(user)'}")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:

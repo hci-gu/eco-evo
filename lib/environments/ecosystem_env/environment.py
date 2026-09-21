@@ -51,6 +51,7 @@ class EcosystemEnvironment:
         policies=None,
         observable_impact_vars=None,
         apply_natural_mortality=True,
+        mortality_multiplier=1.0,
         migration=False,
         currents=None,
         current_world_seed=0,
@@ -61,6 +62,13 @@ class EcosystemEnvironment:
 
         self.grid = Grid(**grid_config)
         self.apply_natural_mortality = bool(apply_natural_mortality)
+        # Global scale factor on every FG's ``natural_mortality``
+        # (``--mortality_multiplier``). 1.0 leaves the tick unchanged;
+        # 0.0 is equivalent to ``--mortality off``. Negative values make
+        # no sense as a mortality rate and are clamped away.
+        self.mortality_multiplier = max(
+            0.0, float(mortality_multiplier if mortality_multiplier is not None
+                       else 1.0))
         self.migration = bool(migration)
         self.currents = currents
         self.current_world_seed = int(current_world_seed or 0)

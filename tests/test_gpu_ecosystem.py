@@ -28,7 +28,8 @@ def device(request):
 
 def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              pair_floors=None, satiation=None, min_split=200,
-             extinction_factor=0.3, interference=None):
+             extinction_factor=0.3, interference=None,
+             mortality_multiplier=1.0):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -75,7 +76,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
         fg.energy_reserve.flat[0] = 0
         groups[fid] = fg
     env = EcosystemEnvironment(dict(height=shape[0], width=shape[1]), groups,
-                               migration=migration, apply_natural_mortality=mortality)
+                               migration=migration, apply_natural_mortality=mortality,
+                               mortality_multiplier=mortality_multiplier)
     env._season_phase = {f: 2.0 for f in groups}
     return env
 
@@ -121,6 +123,23 @@ def test_full_ticks_match_reference(device, migration, mortality, handling):
     model = _assert_parity(make_env(migration, mortality, handling), device)
     assert model.pair_visibility is None, (
         "no override in the fixture must keep the cheap shared-vector path")
+
+
+@pytest.mark.parametrize("multiplier", [0.0, 0.5, 2.0])
+def test_scaled_mortality_matches_reference(device, multiplier):
+    """``--mortality_multiplier`` must scale both engines identically.
+
+    The fixture's ``natural_mortality`` is 0.1, so the factor is visible
+    in every tick; a mirror that forgot the scale (or applied it to the
+    survival fraction instead of the rate) diverges immediately.
+    """
+    env = make_env(mortality=True, mortality_multiplier=multiplier)
+    model = _assert_parity(env, device, ticks=6)
+    expected = max(0.0, 1.0 - 0.1 * multiplier)
+    np.testing.assert_allclose(
+        numpy(model.mortality_keep).reshape(-1),
+        [expected if env.fgs[f].is_decision_maker else 1.0 for f in model.ids],
+        rtol=1e-6)
 
 
 @pytest.mark.parametrize("handling", [0.0, 0.2])

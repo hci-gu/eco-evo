@@ -15,6 +15,8 @@ from lib.config.config_loader import load_project_config, setup_full_mareld_mvp
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.gpu.config import DEFAULT_LIBRARY
 from lib.environments.ecosystem_env.currents import CurrentConfig
+from lib.environments.ecosystem_env.population_change import (
+    DEFAULT_MORTALITY_MULTIPLIER)
 
 
 def add_progress_arguments(parser):
@@ -98,10 +100,29 @@ def inference_config(trainer, backend):
         builder = trainer.env_builder
         grid, library = (builder.grid_height, builder.grid_width), DEFAULT_LIBRARY
         mortality, migration = builder.apply_natural_mortality, builder.migration
+    # ``--mortality_multiplier`` belongs to the ecology: dropping it here
+    # evaluated every run with the unscaled library rates, so
+    # ``--mortality on --mortality_multiplier 0`` measured extinction and
+    # growth under FULL mortality while ``--mortality off`` measured none.
     return dict(project=str(Path(builder.project_path).resolve()) if builder.project_path else None,
                 library=str(Path(library).resolve()), grid=list(grid),
                 mortality=mortality, migration=migration,
+                mortality_multiplier=float(
+                    getattr(builder, "mortality_multiplier",
+                            DEFAULT_MORTALITY_MULTIPLIER)),
                 currents=builder.currents.metadata() if getattr(builder, "currents", None) else None)
+
+
+def comparable_config(config):
+    """Fill in defaults so a pre-existing ``config.json`` stays resumable.
+
+    Histories written before ``mortality_multiplier`` was recorded used
+    the library rates unscaled, which is exactly the default factor.
+    """
+    normalised = dict(config)
+    normalised.setdefault("mortality_multiplier", DEFAULT_MORTALITY_MULTIPLIER)
+    normalised["mortality_multiplier"] = float(normalised["mortality_multiplier"])
+    return normalised
 
 
 def build_inference_env(config, seed):
@@ -114,6 +135,9 @@ def build_inference_env(config, seed):
     height, width = config["grid"]
     return EcosystemEnvironment(dict(height=height, width=width), groups,
                                 apply_natural_mortality=config["mortality"],
+                                mortality_multiplier=config.get(
+                                    "mortality_multiplier",
+                                    DEFAULT_MORTALITY_MULTIPLIER),
                                 migration=config["migration"],
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
                                 current_world_seed=seed)
@@ -169,7 +193,7 @@ class TrainingProgress:
         if config_path.exists():
             if not resume:
                 raise ValueError(f"Progress output already exists in {self.directory}; use --resume or a new --plot-dir")
-            if json.loads(config_path.read_text()) != self.config:
+            if comparable_config(json.loads(config_path.read_text())) != comparable_config(self.config):
                 raise ValueError("Evaluation settings changed; use a new --plot-dir to keep the graph comparable")
             if self.history.exists():
                 self.records = [json.loads(line) for line in self.history.read_text().splitlines() if line.strip()]
