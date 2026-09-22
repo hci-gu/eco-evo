@@ -32,6 +32,7 @@ import sys
 import numpy as np
 import torch
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.environments.ecosystem_env.boundaries import add_boundary_argument
 from lib.environments.ecosystem_env import debug_food
 
 from lib.config.config_loader import (load_config, load_project_config, setup_full_mareld_mvp,
@@ -363,7 +364,8 @@ def apply_b0_overrides(env, b0_overrides):
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
               apply_natural_mortality=False, allowed_mask=None,
-              migration=False, currents=None, mortality_multiplier=1.0, food_blobs=None):
+              migration=False, currents=None, mortality_multiplier=1.0, food_blobs=None,
+              boundary="bounded"):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     accessibility = None
@@ -390,7 +392,7 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
                                apply_natural_mortality=apply_natural_mortality,
                                mortality_multiplier=mortality_multiplier,
                                migration=migration, currents=currents, current_world_seed=seed,
-                               food_blobs=food_blobs)
+                               food_blobs=food_blobs, boundary=boundary)
     if accessibility is not None:
         env.grid.add_map('accessibility', accessibility)
     # Impact maps are read from .npz files configured in the project's
@@ -985,6 +987,7 @@ def main():
                              "unavailable the flag is silently ignored.")
 
     add_current_arguments(parser)
+    add_boundary_argument(parser)
     debug_food.add_food_blob_arguments(parser)
     args = parser.parse_args()
     try:
@@ -996,6 +999,8 @@ def main():
     if food_blobs and verbose:
         print(f"DEBUG FOOD BLOBS: constant food; speed={food_blobs.speed:g} cells/tick, "
               f"radius={food_blobs.radius:g} (0=automatic), seed={food_blobs.seed}")
+        if args.boundary == "torus":
+            print(f"Food segments: random heading for {food_blobs.segment_min}..{food_blobs.segment_max} ticks")
     if args.checkpoints is None:
         args.checkpoints = os.path.join("results", args.run_name)
 
@@ -1011,6 +1016,8 @@ def main():
         print(f"Seed:         {args.seed}")
         print(f"Mortality:    {args.mortality} (x{args.mortality_multiplier:g})")
         print(f"Migration:    {args.migration}")
+        print(f"Boundary:     {args.boundary}" +
+              (" (migration redistribution disabled)" if args.boundary == "torus" else ""))
         print("------------------------------------------")
 
     if not os.path.isdir(args.checkpoints):
@@ -1020,7 +1027,8 @@ def main():
     env = build_env(args.project, args.grid, seed=args.seed, verbose=verbose,
                     apply_natural_mortality=(args.mortality == "on"),
                     mortality_multiplier=args.mortality_multiplier,
-                    migration=(args.migration == "on"), currents=currents, food_blobs=food_blobs)
+                    migration=(args.migration == "on"), currents=currents, food_blobs=food_blobs,
+                    boundary=args.boundary)
     if verbose:
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
     try:
@@ -1041,7 +1049,8 @@ def main():
             viz = LiveVisualizer(fg_ids=list(env.fgs.keys()),
                                  grid_shape=args.grid,
                                  mode="inference",
-                                 title="Mareld inference" + (" [DEBUG FOOD BLOBS]" if food_blobs else ""),
+                                 title="Mareld inference" + (" [TORUS]" if args.boundary == "torus" else "")
+                                       + (" [DEBUG FOOD BLOBS]" if food_blobs else ""),
                                  extra_plot_ids=extra,
                                  ndm_ids=ndm_ids or None)
             # b0-slider defaults: gridskaleberäknat inference_initial_biomass
@@ -1103,7 +1112,8 @@ def main():
                                 verbose=False,
                                 apply_natural_mortality=(args.mortality == "on"),
                                 mortality_multiplier=args.mortality_multiplier,
-                                migration=(args.migration == "on"), currents=currents, food_blobs=food_blobs)
+                                migration=(args.migration == "on"), currents=currents, food_blobs=food_blobs,
+                                boundary=args.boundary)
                 # Rebuild the static cache fields needed before refreshing
                 # batched policy weights.
                 env.build_static_caches()
@@ -1139,7 +1149,8 @@ def main():
                                     verbose=False,
                                     apply_natural_mortality=(args.mortality == "on"),
                                     mortality_multiplier=args.mortality_multiplier,
-                                    migration=(args.migration == "on"), currents=currents, food_blobs=food_blobs)
+                                    migration=(args.migration == "on"), currents=currents, food_blobs=food_blobs,
+                                    boundary=args.boundary)
                 if b0_overrides:
                     apply_b0_overrides(rnd_env, b0_overrides)
                 if spawn_overrides:

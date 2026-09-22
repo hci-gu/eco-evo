@@ -28,7 +28,7 @@ def _current_hash(value):
     return _current_xor(value, value >> 16)
 
 
-def _current_noise(x, y, seed):
+def _current_noise(x, y, seed, lattice_period=None):
     """Smooth value noise in [0, 1), with matching NumPy/Torch arithmetic.
 
     Hash lattice corners instead of storing or repeatedly shifting a texture:
@@ -44,7 +44,10 @@ def _current_noise(x, y, seed):
     sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
 
     def corner(dx, dy):
-        key = _current_xor(_current_hash(ix + dx), _current_hash(iy + dy + 0x9E3779B9))
+        cx, cy = ix + dx, iy + dy
+        if lattice_period is not None:
+            cx, cy = cx % lattice_period[0], cy % lattice_period[1]
+        key = _current_xor(_current_hash(cx), _current_hash(cy + 0x9E3779B9))
         bits = _current_hash(_current_xor(key, seed)) >> 8
         value = bits.to(torch.float32) if isinstance(bits, torch.Tensor) else bits.astype(np.float32)
         return value * (1.0 / 16777216.0)
@@ -54,7 +57,7 @@ def _current_noise(x, y, seed):
     return lower * (1 - sy) + upper * sy
 
 
-def current_direction_fractions(tick, world_seed, config, x=0.0, y=0.0):
+def current_direction_fractions(tick, world_seed, config, x=0.0, y=0.0, world_shape=None):
     """N/E/S/W fractions for a cloud field scrolling towards east/south.
 
     ``period`` is ticks per cell of texture scrolling, independent of biomass
@@ -71,10 +74,18 @@ def current_direction_fractions(tick, world_seed, config, x=0.0, y=0.0):
         # scalars to float64. Use arrays to match device-side float32 sampling.
         x = np.array(x, dtype=np.float32, ndmin=1)
         y = np.array(y, dtype=np.float32, ndmin=1)
-    x, y = (x - offset) / config.scale, (y - offset) / config.scale
+    period = None
+    if world_shape is None:
+        x, y = (x - offset) / config.scale, (y - offset) / config.scale
+    else:
+        # Fit a whole number of noise cells to each torus circumference.
+        h, w = world_shape
+        period = (max(1, round(w / config.scale)), max(1, round(h / config.scale)))
+        x, y = (x - offset) * (period[0] / w), (y - offset) * (period[1] / h)
     seed = _current_xor(world_seed, config.seed)
-    cloud = (_current_noise(x, y, seed) * 0.75
-             + _current_noise(2 * x, 2 * y, _current_xor(seed, 0xA341316C)) * 0.25)
+    fine_period = None if period is None else (2 * period[0], 2 * period[1])
+    cloud = (_current_noise(x, y, seed, period) * 0.75
+             + _current_noise(2 * x, 2 * y, _current_xor(seed, 0xA341316C), fine_period) * 0.25)
     fraction = cloud * (config.strength * 0.5)
     if scalar_sample:
         fraction = fraction[0]
@@ -96,17 +107,18 @@ def apply_currents(env):
         env._current_coordinates = np.indices((env.H, env.W), dtype=np.float32)
     y, x = env._current_coordinates
     fractions = np.asarray(current_direction_fractions(
-        env.tick_count, env.current_world_seed, config, x, y), dtype=env.dtype)
-    # Currents share swimmers' migration boundaries. Blocked habitat flow
+        env.tick_count, env.current_world_seed, config, x, y,
+        (env.H, env.W) if env.boundary == "torus" else None), dtype=env.dtype)
+    # Currents share swimmers' topology and habitat mask. Blocked habitat flow
     # stays at its source; never renormalize the remaining directions.
-    fractions *= build_movement_mask(env.grid, env.migration, env.dtype)
+    fractions *= build_movement_mask(env.grid, env.migration, env.dtype, env.boundary)
     response = np.asarray([env.fgs[fid].current_response for fid in ids], dtype=env.dtype)
     fractions = fractions[None] * response[:, None, None, None]
     biomass = np.stack([env.fgs[fid].biomass for fid in ids])
     reserve = np.stack([env.fgs[fid].energy_reserve for fid in ids])
     out_b, out_r = biomass[:, None] * fractions, reserve[:, None] * fractions
     b, r = _transfer_to_neighbours(
-        biomass - out_b.sum(1), reserve - out_r.sum(1), out_b, out_r)
+        biomass - out_b.sum(1), reserve - out_r.sum(1), out_b, out_r, env.boundary)
     if env.migration:
         b_emig, r_emig = _edge_emigration(out_b, out_r)
         b_imm, r_imm = _concentrate_immigration(
@@ -118,7 +130,7 @@ def apply_currents(env):
         env.fgs[fid].energy_reserve = r[i].astype(env.dtype, copy=False)
 
 
-def _transfer_to_neighbours(b_stay, r_stay, b_out, r_out):
+def _transfer_to_neighbours(b_stay, r_stay, b_out, r_out, boundary="bounded"):
     b_total = b_stay.copy()
     r_total = r_stay.copy()
 
@@ -133,6 +145,12 @@ def _transfer_to_neighbours(b_stay, r_stay, b_out, r_out):
 
     b_total[:, :, :-1] += b_out[:, WEST, :, 1:]
     r_total[:, :, :-1] += r_out[:, WEST, :, 1:]
+    if boundary == "torus":
+        for total, out in ((b_total, b_out), (r_total, r_out)):
+            total[:, -1, :] += out[:, NORTH, 0, :]
+            total[:, :, 0] += out[:, EAST, :, -1]
+            total[:, 0, :] += out[:, SOUTH, -1, :]
+            total[:, :, -1] += out[:, WEST, :, 0]
     return b_total, r_total
 
 
@@ -276,7 +294,7 @@ def apply_movement(env, settlement):
     b_stay = settlement.stationary_biomass + b_keep.sum(axis=1)
     r_stay = settlement.stationary_reserve + r_keep.sum(axis=1)
 
-    b_total, r_total = _transfer_to_neighbours(b_stay, r_stay, b_out, r_out)
+    b_total, r_total = _transfer_to_neighbours(b_stay, r_stay, b_out, r_out, env.boundary)
 
     if env.migration:
         b_emig, r_emig = _edge_emigration(b_out, r_out)
@@ -361,6 +379,11 @@ def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total,
     dest[:, SOUTH, :-1, :] = b_total[:, 1:, :]       # S: (y,x) -> (y+1,x)
     dest[:, WEST, :, 1:] = b_total[:, :, :-1]        # W: (y,x) -> (y,x-1)
 
+    if env.boundary == "torus":
+        dest[:, NORTH, 0, :] = b_total[:, -1, :]
+        dest[:, EAST, :, -1] = b_total[:, :, 0]
+        dest[:, SOUTH, -1, :] = b_total[:, 0, :]
+        dest[:, WEST, :, 0] = b_total[:, :, -1]
     blocked = (b_out > 0.0) & (dest < thr)
     if not np.any(blocked):
         if return_cancelled:
@@ -383,6 +406,12 @@ def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total,
     r_total[:, 1:, :] -= r_cancel[:, SOUTH, :-1, :]
     b_total[:, :, :-1] -= b_cancel[:, WEST, :, 1:]
     r_total[:, :, :-1] -= r_cancel[:, WEST, :, 1:]
+    if env.boundary == "torus":
+        for total, cancelled in ((b_total, b_cancel), (r_total, r_cancel)):
+            total[:, -1, :] -= cancelled[:, NORTH, 0, :]
+            total[:, :, 0] -= cancelled[:, EAST, :, -1]
+            total[:, 0, :] -= cancelled[:, SOUTH, -1, :]
+            total[:, :, -1] -= cancelled[:, WEST, :, 0]
     # float32 round-off on the +/- pair can leave tiny negatives.
     np.maximum(b_total, 0.0, out=b_total)
     np.maximum(r_total, 0.0, out=r_total)

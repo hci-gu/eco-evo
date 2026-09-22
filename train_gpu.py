@@ -117,10 +117,14 @@ def main(argv=None, *, on_step=None):
     print(f"Device: {trainer.model.device}; {args.n_deltas} delta pairs, {args.worlds} worlds, "
           f"{args.ticks} ticks; execution={args.execution}", flush=True)
     print(f"Output: {directory}. First iteration includes warmup/compilation/capture.", flush=True)
+    print(f"Boundary: {trainer.model.boundary}; migration redistribution: "
+          f"{'on' if trainer.model.migration else 'off'}", flush=True)
     if trainer.model.food_blobs:
         config = trainer.model.food_blobs
         print(f"DEBUG FOOD BLOBS: constant food; speed={config.speed:g} cells/tick, "
               f"radius={config.radius:g} (0=automatic), seed={config.seed}", flush=True)
+        if args.boundary == "torus":
+            print(f"Food segments: random heading for {config.segment_min}..{config.segment_max} ticks", flush=True)
     if args.currents == "on":
         print(f"Currents: on; max drift={args.current_strength:g}/tick, "
               f"scroll={1 / args.current_period:g} cells/tick per axis, "

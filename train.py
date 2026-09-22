@@ -17,6 +17,7 @@ from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config
 from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.environments.ecosystem_env.boundaries import add_boundary_argument
 from lib.environments.ecosystem_env import debug_food
 from lib.environments.ecosystem_env import source_tracking
 from lib.environments.ecosystem_env.population_change import (
@@ -311,7 +312,8 @@ class _EnvBuilder:
                  mortality_multiplier=None,
                  migration=None,
                  impact_spawn_specs=None,
-                 observable_impact_vars=None, currents=None, food_blobs=None):
+                 observable_impact_vars=None, currents=None, food_blobs=None, boundary="bounded"):
+        self.boundary = boundary
         self.currents = currents
         self.food_blobs = food_blobs
         self.impact_maps_snapshot = impact_maps_snapshot
@@ -403,6 +405,7 @@ class _EnvBuilder:
             observable_impact_vars=self.observable_impact_vars,
             currents=self.currents,
             food_blobs=self.food_blobs,
+            boundary=self.boundary,
         )
 
     def __call__(self, seed=None):
@@ -431,7 +434,7 @@ class _EnvBuilder:
                                    mortality_multiplier=self.mortality_multiplier,
                                    migration=self.migration, currents=self.currents,
                                    current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0),
-                                   food_blobs=self.food_blobs)
+                                   food_blobs=self.food_blobs, boundary=self.boundary)
 
         if self.impact_maps_snapshot is not None:
             for iv in impact_vars:
@@ -483,7 +486,8 @@ class _ProbeEnvBuilder:
 
     def __init__(self, project_path, grid_size, apply_natural_mortality=None,
                  migration=None, currents=None, library_path=None,
-                 mortality_multiplier=None, food_blobs=None):
+                 mortality_multiplier=None, food_blobs=None, boundary="bounded"):
+        self.boundary = boundary
         self.currents = currents
         self.food_blobs = food_blobs
         self.project_path = project_path
@@ -551,7 +555,7 @@ class _ProbeEnvBuilder:
                                    apply_natural_mortality=self.apply_natural_mortality,
                                    mortality_multiplier=self.mortality_multiplier,
                                    migration=self.migration, currents=self.currents,
-                                   current_world_seed=s, food_blobs=self.food_blobs)
+                                   current_world_seed=s, food_blobs=self.food_blobs, boundary=self.boundary)
         # Inference-tab impact maps (silent: avoid spamming "[info] Using
         # array ..." messages once per probe).
         map_paths = self._load_paths(self.project_path) if self.project_path else {}
@@ -1411,7 +1415,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       mortality_multiplier=None,
                       migration=None,
                       impact_spawn_specs=None,
-                      observable_impact_vars=None, currents=None, food_blobs=None):
+                      observable_impact_vars=None, currents=None, food_blobs=None, boundary="bounded"):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
@@ -1432,7 +1436,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       migration=migration,
                       impact_spawn_specs=impact_spawn_specs,
                       observable_impact_vars=observable_impact_vars, currents=currents,
-                      food_blobs=food_blobs)
+                      food_blobs=food_blobs, boundary=boundary)
 
 
 def get_dynamic_policy_params(fgs, n_observable_impacts=0):
@@ -1671,6 +1675,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     add_population_arguments(parser)
     add_survival_reward_arguments(parser)
     add_current_arguments(parser)
+    add_boundary_argument(parser)
     debug_food.add_food_blob_arguments(parser)
     args = parse_training_args(parser, argv)
     validate_progress_arguments(parser, args)
@@ -1737,6 +1742,7 @@ def main(argv=None, *, on_step=None, confirm=True):
         migration=APPLY_MIGRATION,
         currents=currents,
         food_blobs=food_blobs,
+        boundary=args.boundary,
     )
     probe_jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
 
@@ -1798,6 +1804,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "local_reward": local_reward.as_dict() if local_reward else None,
                     "currents": currents.metadata() if currents else None,
                     "food_blobs": food_blobs.metadata() if food_blobs else None,
+                    "boundary": args.boundary,
                     "alpha": getattr(args, "alpha", None),
                     "beta": getattr(args, "beta", None),
                     "cappa": getattr(args, "cappa", None),
@@ -1823,7 +1830,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     # spawn-workers later receive the correct project path.
     env_builder_local = _make_env_builder(
         None, grid_size=(GRID_HEIGHT, GRID_WIDTH), project_path=PROJECT_PATH,
-        currents=currents, food_blobs=food_blobs)
+        currents=currents, food_blobs=food_blobs, boundary=args.boundary)
     temp_env = env_builder_local()
     policy_params = get_dynamic_policy_params(
         temp_env.fgs,
@@ -1873,7 +1880,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                 fg_ids=list(temp_env.fgs.keys()),
                 grid_shape=(GRID_HEIGHT, GRID_WIDTH),
                 mode="train",
-                title="Mareld training" + (" [DEBUG FOOD BLOBS]" if food_blobs else ""),
+                title="Mareld training" + (" [TORUS]" if args.boundary == "torus" else "")
+                      + (" [DEBUG FOOD BLOBS]" if food_blobs else ""),
                 plot_fg_ids=_plot_ids or None,
                 extra_plot_ids=_extra,
                 ndm_ids=_ndm_ids or None,
@@ -1988,9 +1996,13 @@ def main(argv=None, *, on_step=None, confirm=True):
     print(f"Grid:           {grid_str} {'(default)' if grid_is_default else '(user)'}")
     print(f"Target Species: {', '.join(target_species)} {'(default: all)' if species_is_default else '(user)'}")
     print(f"Method:         ARS (Augmented Random Search)")
+    print(f"Boundary:       {args.boundary}" +
+          (" (migration redistribution disabled)" if args.boundary == "torus" else ""))
     if food_blobs:
         print(f"DEBUG FOOD BLOBS: constant food; speed={food_blobs.speed:g} cells/tick, "
               f"radius={food_blobs.radius:g} (0=automatic), seed={food_blobs.seed}")
+        if args.boundary == "torus":
+            print(f"Food segments:  random heading for {food_blobs.segment_min}..{food_blobs.segment_max} ticks")
     if currents:
         print(f"Currents:       on; max drift={currents.strength:g}/tick, "
               f"scroll={1 / currents.period:g} cells/tick per axis, "
@@ -2291,6 +2303,7 @@ def main(argv=None, *, on_step=None, confirm=True):
             observable_impact_vars=_observable_impact_vars_global,
             currents=currents,
             food_blobs=food_blobs,
+            boundary=args.boundary,
         )
         trainer.env_builder = new_builder
         # PRESTANDA: tidigare rev vi hela ``ctx.Pool`` här och byggde om

@@ -1,11 +1,15 @@
-# Bouncing food blobs: disposable training experiment
+# Moving food blobs: disposable training experiment
 
 Enable `--debug-food-blobs` in `train.py`, `train_gpu.py`, or `inference.py`.
 The active non-decision makers `phytoplankton` and `benthic_community` share a
 compact, smooth blob. Each rollout gets a seeded random start position and
-direction. Its centre moves at constant speed and reflects at the map
-boundaries; the direction stays constant between bounces. The footprint keeps
-its shape instead of diffusing into the edges.
+direction. With `--boundary torus`, the centre moves at constant speed in a
+random direction for a random 40-160 ticks, then draws a new direction and
+duration. Crossing an edge continues on the opposite side. The footprint
+uses periodic distances, so a blob straddling a seam appears on both sides
+without losing biomass or abruptly relocating its whole footprint.
+The default `--boundary bounded` retains the previous reflecting trajectory
+with a constant heading between bounces. See [TORUS.md](TORUS.md).
 Each group's total biomass and reserve are restored to their rollout-start
 values after every tick. Predation still feeds consumers, but cannot exhaust
 the food source. Ordinary food growth, carrying-capacity limits, extinction
@@ -22,13 +26,17 @@ added to policy observations: agents must use their existing local observations.
 | `--food-blob-speed` | `0.1` | Centre speed in cells/tick; `0` is a stationary control |
 | `--food-blob-radius` | `0` | Radius in cells; `0` means one sixth of the shorter grid side, at least 1 |
 | `--food-blob-seed` | `0` | Trajectory seed combined with the rollout seed |
+| `--boundary` | `bounded` | Use `torus` for periodic topology and random motion segments |
+| `--food-blob-segment-ticks MIN MAX` | `40 160` | Torus segment duration range in ticks, inclusive |
 
 Both CPU and tensor training use deterministic trajectories, with identical
 food for the positive/negative ARS perturbations. Different rollout seeds now
 change the heading as well as the start position, instead of shifting every
-world along the same 0.8/0.6 diagonal. No per-tick RNG or trajectory state is
-needed; changing batching, worker count or execution order does not change a
-seed's trajectory. Training already refreshes rollout seeds between updates.
+world along the same 0.8/0.6 diagonal. Torus mode holds a small per-world
+position/velocity/countdown state; each segment's angle and duration are
+hashed from the seed and segment number, without consuming global RNG state.
+Changing batching, worker count or execution order does not change a seed's
+trajectory. Training already refreshes rollout seeds between updates.
 Progress evaluation deliberately keeps its fixed `--eval-seed` so scores are
 comparable; use different inference `--seed` values to check generalisation.
 Training probes, progress
@@ -46,7 +54,7 @@ Start a fresh experiment (using a new run name):
 
 ```bash
 uv run python train.py --project mareld2.yaml --run-name food-blobs \
-  --grid '30*30' --debug-food-blobs --food-blob-speed 0.1 \
+  --grid '30*30' --boundary torus --debug-food-blobs --food-blob-speed 0.1 \
   --n_eval_ticks 300 --generations 20 --iter-per-gen 10 --visual
 ```
 
@@ -54,7 +62,7 @@ Or use the GPU trainer on a CUDA machine:
 
 ```bash
 uv run python train_gpu.py --project mareld2.yaml --run-name food-blobs-gpu \
-  --grid '30*30' --debug-food-blobs --food-blob-speed 0.1 \
+  --grid '30*30' --boundary torus --debug-food-blobs --food-blob-speed 0.1 \
   --ticks 300 --generations 20 --iter-per-gen 10 --visual
 ```
 
@@ -62,7 +70,7 @@ View a saved model with the same experiment settings:
 
 ```bash
 uv run python inference.py --project mareld2.yaml --run-name food-blobs \
-  --grid '30*30' --debug-food-blobs --food-blob-speed 0.1 \
+  --grid '30*30' --boundary torus --debug-food-blobs --food-blob-speed 0.1 \
   --ticks 1000 --seed 17 --visual --rnd-baseline
 ```
 
@@ -73,7 +81,7 @@ show the trained agents. A useful control is a separate training run with
 `--food-blob-speed 0`. Zooplankton now defaults to movement speed 1.0 in the
 shared species library (also outside debug mode), up from 0.02, so its maximum
 movement can keep up with the default blob. Use a horizon long enough to
-see movement and a bounce; the usual 15-tick training horizon is too short for
+see movement and direction changes; the usual 15-tick training horizon is too short for
 that comparison on large grids.
 
 In training and inference viewers, click **Colors: fixed [C]** or press `C`
@@ -86,8 +94,8 @@ colour modes does not change the biomass line plot or simulation.
 
 Internal habitat obstacles clip and renormalise the food footprint. If the
 footprint is entirely blocked, food is placed at the nearest accessible cell(s).
-The trajectory only reflects at the rectangular map boundary; it does not plan
-routes around obstacles. A fully inaccessible map is rejected.
+The trajectory does not plan routes around obstacles. It wraps in torus mode
+and reflects in bounded mode. A fully inaccessible map is rejected.
 
 ## Removal
 

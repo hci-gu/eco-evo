@@ -18,6 +18,7 @@ from lib.environments.ecosystem_env import (
     state,
 )
 from lib.environments.ecosystem_env.state import ActionProbabilities
+from lib.environments.ecosystem_env.boundaries import validate_boundary
 
 
 def _looks_like_policies(candidate):
@@ -58,6 +59,7 @@ class EcosystemEnvironment:
         current_world_seed=0,
         local_reward=None,
         food_blobs=None,
+        boundary="bounded",
     ):
         if policies is None and _looks_like_policies(interactions):
             policies, interactions = interactions, None
@@ -71,7 +73,8 @@ class EcosystemEnvironment:
         self.mortality_multiplier = max(
             0.0, float(mortality_multiplier if mortality_multiplier is not None
                        else 1.0))
-        self.migration = bool(migration)
+        self.boundary = validate_boundary(boundary)
+        self.migration = bool(migration) and self.boundary != "torus"
         self.currents = currents
         self.food_blobs = food_blobs
         self.current_world_seed = int(current_world_seed or 0)

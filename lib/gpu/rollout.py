@@ -45,6 +45,12 @@ class RolloutRunner:
         self.graphs = {}
         self.prepared = False
         self.state_buffers = []
+        self.food_blob_motion = None
+        if model.food_blobs is not None and model.boundary == "torus":
+            self.food_blob_motion = debug_food.TorusBlobMotion(
+                model.H, model.W, torch.zeros((self.E, 1), dtype=torch.int64, device=model.device),
+                model.food_blobs)
+            self.state_buffers.extend(self.food_blob_motion.buffers)
         def buffer(name, shape, dtype=torch.float32):
             value = torch.zeros(shape, dtype=dtype, device=model.device)
             setattr(self, name, value)
@@ -114,10 +120,12 @@ class RolloutRunner:
         self.phase.copy_(phase)
         self.keys.copy_(keys)
         if self.model.food_blobs is not None:
+            if self.food_blob_motion is not None:
+                self.food_blob_motion.reset(keys[:, None])
             self.food_blob_b0.copy_(biomass[:, self.model.food_blob_index].sum(-1, keepdim=True))
             self.food_blob_r0.copy_(reserve[:, self.model.food_blob_index].sum(-1, keepdim=True))
             b, r = debug_food.apply_tensor(self.model, biomass, reserve, 0, keys,
-                                           (self.food_blob_b0, self.food_blob_r0))
+                                           (self.food_blob_b0, self.food_blob_r0), self.food_blob_motion)
             self.biomass.copy_(b)
             self.reserve.copy_(r)
         self.tick.zero_()
@@ -191,6 +199,8 @@ class RolloutRunner:
         current_args = {"current_keys": self.keys} if m.currents is not None or m.food_blobs is not None else {}
         if m.food_blobs is not None:
             current_args["food_blob_totals"] = (self.food_blob_b0, self.food_blob_r0)
+            if self.food_blob_motion is not None:
+                current_args["food_blob_motion"] = self.food_blob_motion
         if self.local_reward is not None:
             b, r, hidden, _, _, local = m.step(self.biomass, self.reserve, actions,
                                                self.tick, self.phase, multiplier,

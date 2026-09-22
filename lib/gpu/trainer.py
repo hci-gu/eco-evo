@@ -246,6 +246,7 @@ class TensorARSTrainer:
         """Explicit checkpoint boundary. Returned tensors own their CPU data."""
         cpu = lambda t: t.detach().cpu().clone()
         return dict(format_version=1, ids=self.model.ids, dm_ids=self.model.dm_ids,
+                    boundary=self.model.boundary,
                     survival_reward=(self.runner_options["survival_reward"].metadata()
                                      if self.runner_options["survival_reward"] else None),
                     grid=(self.model.H, self.model.W), in_dims=self.model.in_dims,
@@ -257,6 +258,8 @@ class TensorARSTrainer:
                     world_biomass=cpu(self.world_biomass))
 
     def load_state_dict(self, state):
+        if state.get("boundary", "bounded") != self.model.boundary:
+            raise ValueError("Checkpoint boundary differs; use a new run with --init-from")
         config = self.runner_options["survival_reward"]
         if state.get("survival_reward") != (config.metadata() if config else None):
             raise ValueError("Checkpoint survival reward differs; use a new run with --init-from "

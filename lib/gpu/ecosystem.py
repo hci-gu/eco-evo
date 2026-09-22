@@ -35,6 +35,7 @@ class TensorEcosystem:
         self.dm_positions = tuple(self.ids.index(fid) for fid in self.dm_ids)
         self.ndm_positions = tuple(i for i in range(self.G) if i not in self.dm_positions)
         self.migration = env.migration
+        self.boundary = env.boundary
         self.currents = env.currents
         self.food_blobs = env.food_blobs
         self.current_world_seed = env.current_world_seed
@@ -135,8 +136,12 @@ class TensorEcosystem:
         coords = ((yy - 1, xx), (yy, xx + 1), (yy + 1, xx), (yy, xx - 1))
         neighbors, valid = [], []
         for y, x in coords:
-            valid.append(((y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)).ravel())
-            neighbors.append((np.clip(y, 0, self.H - 1) * self.W + np.clip(x, 0, self.W - 1)).ravel())
+            if self.boundary == "torus":
+                valid.append(np.ones(self.C, dtype=bool))
+                neighbors.append(((y % self.H) * self.W + x % self.W).ravel())
+            else:
+                valid.append(((y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)).ravel())
+                neighbors.append((np.clip(y, 0, self.H - 1) * self.W + np.clip(x, 0, self.W - 1)).ravel())
         self.neighbors = self.tensor(np.array(neighbors), torch.long)
         self.neighbor_valid = self.tensor(np.array(valid))
         self.outside = 1.0 - self.neighbor_valid
@@ -469,7 +474,8 @@ class TensorEcosystem:
             keys = torch.full((biomass.shape[0],), self.current_world_seed,
                               dtype=torch.int64, device=self.device)
         fractions = torch.stack(direction_fractions(
-            tick, keys[:, None], self.currents, self.current_x, self.current_y), dim=1)
+            tick, keys[:, None], self.currents, self.current_x, self.current_y,
+            (self.H, self.W) if self.boundary == "torus" else None), dim=1)
         fractions = (fractions[:, None] * self.current_response
                      * self.move_mask[None, None])
         b, r = biomass[:, self.ndm_index], reserve[:, self.ndm_index]
@@ -488,7 +494,7 @@ class TensorEcosystem:
         return biomass.index_copy(1, self.ndm_index, b_total), reserve.index_copy(1, self.ndm_index, r_total)
 
     def step(self, biomass, reserve, actions, tick, phase, seed_multiplier,
-             current_keys=None, track_source=False, food_blob_totals=None):
+             current_keys=None, track_source=False, food_blob_totals=None, food_blob_motion=None):
         """One tick. ``track_source`` appends the local-reward tracking.
 
         With ``track_source`` a sixth value ``(start, tracked, frac_in)``
@@ -505,7 +511,10 @@ class TensorEcosystem:
         b, r, flow = self.movement(b, r, gains, actions, track=track_source)
         b, r = self.advect(b, r, tick, current_keys)
         b, r, starve_loss = self.population(b, r, tick, phase, seed_multiplier)
-        b, r = debug_food.apply_tensor(self, b, r, tick + 1, current_keys, food_blob_totals)
+        if food_blob_motion is not None:
+            food_blob_motion.advance()
+        b, r = debug_food.apply_tensor(self, b, r, tick + 1, current_keys,
+                                       food_blob_totals, food_blob_motion)
         if not track_source:
             return b, r, hidden, intake, starve_loss
         tracked, frac_in = self.tracked_energy(flow, b, r)

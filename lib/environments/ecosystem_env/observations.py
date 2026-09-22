@@ -4,7 +4,7 @@ from lib.environments.ecosystem_env import impacts
 from lib.environments.ecosystem_env.constants import DIRECTIONS
 
 
-def shift_field(field, direction):
+def shift_field(field, direction, boundary="bounded"):
     out = np.zeros_like(field)
     if direction == "N":
         out[1:, :] = field[:-1, :]
@@ -14,6 +14,15 @@ def shift_field(field, direction):
         out[:, :-1] = field[:, 1:]
     elif direction == "W":
         out[:, 1:] = field[:, :-1]
+    if boundary == "torus":
+        if direction == "N":
+            out[0, :] = field[-1, :]
+        elif direction == "S":
+            out[-1, :] = field[0, :]
+        elif direction == "E":
+            out[:, -1] = field[:, 0]
+        elif direction == "W":
+            out[:, 0] = field[:, -1]
     return out
 
 
@@ -48,7 +57,7 @@ def build_observation_batch(env):
     n_obs_imp = len(impact_layers)
     # Pre-shift the impact layers once (shared across all DMs).
     impact_shifts = {
-        direction: [shift_field(layer, direction) for layer in impact_layers]
+        direction: [shift_field(layer, direction, env.boundary) for layer in impact_layers]
         for direction in DIRECTIONS
     }
 
@@ -87,11 +96,11 @@ def build_observation_batch(env):
 
         for direction_index, direction in enumerate(DIRECTIONS):
             base = center_dim + direction_index * neighbor_dim
-            obs[i, base] = shift_field(own_biomass, direction)
+            obs[i, base] = shift_field(own_biomass, direction, env.boundary)
             if n_other > 0:
                 for k in range(n_other):
                     obs[i, base + 1 + k] = shift_field(
-                        observed_biomass[k], direction)
+                        observed_biomass[k], direction, env.boundary)
             for k, layer_shift in enumerate(impact_shifts[direction]):
                 obs[i, base + 1 + n_other + k] = layer_shift
 

@@ -287,7 +287,7 @@ def _cell_energy(env):
     return biomass * _energy_content(env)[:, None, None] + reserve
 
 
-def _gather_destinations(values):
+def _gather_destinations(values, boundary="bounded"):
     """Neighbour values re-indexed on the SOURCE cell.
 
     ``out[:, d, y, x]`` is ``values`` at the cell that a direction-``d``
@@ -300,11 +300,18 @@ def _gather_destinations(values):
     out[:, EAST, :, :-1] = values[:, :, 1:]       # (y,x) -> (y,x+1)
     out[:, SOUTH, :-1, :] = values[:, 1:, :]      # (y,x) -> (y+1,x)
     out[:, WEST, :, 1:] = values[:, :, :-1]       # (y,x) -> (y,x-1)
+    if boundary == "torus":
+        out[:, NORTH, 0, :] = values[:, -1, :]
+        out[:, EAST, :, -1] = values[:, :, 0]
+        out[:, SOUTH, -1, :] = values[:, 0, :]
+        out[:, WEST, :, 0] = values[:, :, -1]
     return out
 
 
 def _in_grid_mask(env):
     """Boolean (1,4,H,W): does a direction-d move stay on the grid?"""
+    if env.boundary == "torus":
+        return np.ones((1, 4, env.H, env.W), dtype=bool)
     mask = np.zeros((1, 4, env.H, env.W), dtype=bool)
     mask[:, NORTH, 1:, :] = True
     mask[:, EAST, :, :-1] = True
@@ -364,7 +371,7 @@ def tracked_end_energy(env):
         unit = np.where(b_total > 0.0, q_end / b_total, 0.0)
     unit = unit.astype(env.dtype, copy=False)
 
-    unit_dest = _gather_destinations(unit)
+    unit_dest = _gather_destinations(unit, env.boundary)
     tracked = b_stay * unit + (b_out * unit_dest).sum(axis=1)
 
     b_move_total = b_out.sum(axis=1)

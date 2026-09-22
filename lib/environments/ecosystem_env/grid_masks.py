@@ -3,11 +3,11 @@ import numpy as np
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 
 
-def build_movement_mask(grid, migration, dtype):
+def build_movement_mask(grid, migration, dtype, boundary="bounded"):
     H, W = grid.height, grid.width
     move_mask = np.ones((4, H, W), dtype=dtype)
 
-    if not migration:
+    if not migration and boundary != "torus":
         move_mask[NORTH, 0, :] = 0.0
         move_mask[SOUTH, -1, :] = 0.0
         move_mask[EAST, :, -1] = 0.0
@@ -26,6 +26,11 @@ def build_movement_mask(grid, migration, dtype):
     accessible_south[:-1, :] = access[1:, :]
     accessible_east[:, :-1] = access[:, 1:]
     accessible_west[:, 1:] = access[:, :-1]
+    if boundary == "torus":
+        accessible_north[0, :] = access[-1, :]
+        accessible_south[-1, :] = access[0, :]
+        accessible_east[:, -1] = access[:, 0]
+        accessible_west[:, 0] = access[:, -1]
 
     move_mask[NORTH] *= (accessible_north > 0).astype(dtype)
     move_mask[SOUTH] *= (accessible_south > 0).astype(dtype)

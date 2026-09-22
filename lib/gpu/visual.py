@@ -58,6 +58,7 @@ class GPUTrainingVisualizer:
                 builder.project_path, builder.grid, builder.mortality,
                 builder.migration, currents=builder.currents, library_path=builder.library_path,
                 food_blobs=builder.food_blobs,
+                boundary=builder.boundary,
                 # Without this the probe falls back to train.py's module
                 # default (1.0) and runs with the unscaled library rates,
                 # so --mortality_multiplier would not reach the viewer.
@@ -70,7 +71,8 @@ class GPUTrainingVisualizer:
             self.viz = LiveVisualizer(
                 fg_ids=list(env.fgs), grid_shape=builder.grid, mode="train",
                 plot_fg_ids=dm_ids + ndm_ids, ndm_ids=ndm_ids,
-                title="Mareld GPU training" + (" [DEBUG FOOD BLOBS]" if builder.food_blobs else ""),
+                title="Mareld GPU training" + (" [TORUS]" if builder.boundary == "torus" else "")
+                      + (" [DEBUG FOOD BLOBS]" if builder.food_blobs else ""),
             )
             if not self.viz.enabled:
                 self._disable()

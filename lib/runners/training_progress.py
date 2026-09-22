@@ -108,6 +108,7 @@ def inference_config(trainer, backend):
     return dict(project=str(Path(builder.project_path).resolve()) if builder.project_path else None,
                 library=str(Path(library).resolve()), grid=list(grid),
                 mortality=mortality, migration=migration,
+                boundary=getattr(builder, "boundary", "bounded"),
                 mortality_multiplier=float(
                     getattr(builder, "mortality_multiplier",
                             DEFAULT_MORTALITY_MULTIPLIER)),
@@ -124,6 +125,9 @@ def comparable_config(config):
     normalised = dict(config)
     normalised.setdefault("mortality_multiplier", DEFAULT_MORTALITY_MULTIPLIER)
     normalised.setdefault("food_blobs", None)
+    normalised.setdefault("boundary", "bounded")
+    if normalised["food_blobs"] is not None:
+        normalised["food_blobs"] = FoodBlobConfig(**normalised["food_blobs"]).metadata()
     normalised["mortality_multiplier"] = float(normalised["mortality_multiplier"])
     return normalised
 
@@ -142,6 +146,7 @@ def build_inference_env(config, seed):
                                     "mortality_multiplier",
                                     DEFAULT_MORTALITY_MULTIPLIER),
                                 migration=config["migration"],
+                                boundary=config.get("boundary", "bounded"),
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
                                 current_world_seed=seed,
                                 food_blobs=FoodBlobConfig(**config["food_blobs"]) if config.get("food_blobs") else None)

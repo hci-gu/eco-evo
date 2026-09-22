@@ -113,7 +113,7 @@ def build_static_caches(env):
             fg.temp_energy_gains = fg.temp_energy_gains.astype(env.dtype)
 
     env.move_mask = grid_masks.build_movement_mask(
-        env.grid, env.migration, env.dtype)
+        env.grid, env.migration, env.dtype, env.boundary)
     env._edge_imm_weights = grid_masks.build_edge_immigration_weights(
         env.grid, env.dtype)
 
