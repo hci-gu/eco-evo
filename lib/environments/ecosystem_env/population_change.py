@@ -53,6 +53,8 @@ def _seasonal_population_rate(env, fg_id, fg):
 
 
 def _apply_non_decision_maker_population_change(env, fg_id, fg):
+    if env.food_blobs is not None and fg_id in env._food_blob_totals:
+        return
     carrying_capacity = fg.params.get("max_carrying_capacity", 100.0)
     population_rate = _seasonal_population_rate(env, fg_id, fg)
     biomass_delta = (

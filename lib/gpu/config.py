@@ -11,6 +11,7 @@ from lib.config.config_loader import (
 )
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import CurrentConfig
+from lib.environments.ecosystem_env import debug_food
 
 
 DEFAULT_LIBRARY = str(Path(__file__).resolve().parents[2] / "fgconfig" / "fg_library.yaml")
@@ -29,11 +30,12 @@ class EnvironmentBuilder:
     # Global scale factor on every FG's ``natural_mortality``
     # (``--mortality_multiplier``); 1.0 leaves the tick unchanged.
     mortality_multiplier: float = 1.0
+    food_blobs: debug_food.FoodBlobConfig | None = None
 
     def with_world(self, spawn_seed):
         return EnvironmentBuilder(self.project_path, self.library_path, self.grid,
                                   self.migration, self.mortality, int(spawn_seed), self.currents,
-                                  self.mortality_multiplier)
+                                  self.mortality_multiplier, self.food_blobs)
 
     def __call__(self, seed=None):
         kwargs = dict(library_path=self.library_path, grid_size=self.grid,
@@ -46,7 +48,8 @@ class EnvironmentBuilder:
             dict(height=self.grid[0], width=self.grid[1]), groups,
             migration=self.migration, apply_natural_mortality=self.mortality,
             mortality_multiplier=self.mortality_multiplier,
-            currents=self.currents, current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
+            currents=self.currents, current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0),
+            food_blobs=self.food_blobs)
 
 
 class ProjectSpec:
@@ -69,7 +72,11 @@ class ProjectSpec:
                 dict(height=builder.grid[0], width=builder.grid[1]), groups,
                 migration=builder.migration, apply_natural_mortality=builder.mortality,
                 mortality_multiplier=builder.mortality_multiplier,
-                currents=builder.currents, current_world_seed=seed)
+                currents=builder.currents, current_world_seed=seed, food_blobs=builder.food_blobs)
+            if builder.food_blobs is not None and allowed_mask is not None:
+                self.env.grid.add_map("accessibility", np.asarray(allowed_mask).reshape(builder.grid))
+                self.env.build_static_caches()
+                debug_food.reset(self.env)
         finally:
             np.random.set_state(rng_state)
         self.allowed_mask = allowed_mask

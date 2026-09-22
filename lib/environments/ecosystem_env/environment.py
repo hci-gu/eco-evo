@@ -4,6 +4,7 @@ import torch
 from lib.world.grid import Grid
 from lib.environments.ecosystem_env import (
     decisions,
+    debug_food,
     currents as current_module,
     grid_masks,
     impacts as impact_module,
@@ -56,6 +57,7 @@ class EcosystemEnvironment:
         currents=None,
         current_world_seed=0,
         local_reward=None,
+        food_blobs=None,
     ):
         if policies is None and _looks_like_policies(interactions):
             policies, interactions = interactions, None
@@ -71,6 +73,7 @@ class EcosystemEnvironment:
                        else 1.0))
         self.migration = bool(migration)
         self.currents = currents
+        self.food_blobs = food_blobs
         self.current_world_seed = int(current_world_seed or 0)
         self.fgs = functional_groups
         self.interactions = interactions
@@ -112,6 +115,7 @@ class EcosystemEnvironment:
             local_reward)
         source_tracking.reset(self)
         self.build_static_caches()
+        debug_food.reset(self)
 
     # ---------- Static caches ----------
     def build_static_caches(self):
@@ -200,6 +204,8 @@ class EcosystemEnvironment:
         # half an indivisible unit after every shrink step. Run last so
         # the next tick's observation never sees float32 subnormals.
         population_change.apply_extinction_threshold(self)
+        # Debug food is replenished after ecology, ready for the next observation.
+        debug_food.apply(self, self.tick_count + 1)
 
         # Q(c, t+1) is now final, so the source shares recorded in
         # ``apply_movement`` can be cashed in.

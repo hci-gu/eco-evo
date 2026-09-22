@@ -3,6 +3,7 @@
 import torch
 
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
+from lib.environments.ecosystem_env import debug_food
 from lib.gpu.random import fold_in, uniform
 from lib.runners.population_stability import validate_reward
 
@@ -48,6 +49,9 @@ class RolloutRunner:
             buffer(name, (self.E, model.G, model.C))
         buffer("phase", (self.E, model.G, 1))
         buffer("keys", (self.E,), torch.int64)
+        if model.food_blobs is not None:
+            for name in ("food_blob_b0", "food_blob_r0"):
+                buffer(name, (self.E, model.food_blob_index.numel(), 1))
         buffer("tick", (), torch.int64)
         buffer("horizon", (), torch.int64)
         buffer("temperature", ())
@@ -90,6 +94,13 @@ class RolloutRunner:
         self.reserve.copy_(reserve)
         self.phase.copy_(phase)
         self.keys.copy_(keys)
+        if self.model.food_blobs is not None:
+            self.food_blob_b0.copy_(biomass[:, self.model.food_blob_index].sum(-1, keepdim=True))
+            self.food_blob_r0.copy_(reserve[:, self.model.food_blob_index].sum(-1, keepdim=True))
+            b, r = debug_food.apply_tensor(self.model, biomass, reserve, 0, keys,
+                                           (self.food_blob_b0, self.food_blob_r0))
+            self.biomass.copy_(b)
+            self.reserve.copy_(r)
         self.tick.zero_()
         self.horizon.fill_(ticks)
         self.temperature.copy_(temperature)
@@ -156,7 +167,9 @@ class RolloutRunner:
             multiplier = torch.pow(10.0, 2.0 * noise - 1.0)
         else:
             multiplier = torch.zeros_like(self.biomass)
-        current_args = {"current_keys": self.keys} if m.currents is not None else {}
+        current_args = {"current_keys": self.keys} if m.currents is not None or m.food_blobs is not None else {}
+        if m.food_blobs is not None:
+            current_args["food_blob_totals"] = (self.food_blob_b0, self.food_blob_r0)
         if self.local_reward is not None:
             b, r, hidden, _, _, local = m.step(self.biomass, self.reserve, actions,
                                                self.tick, self.phase, multiplier,

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from lib.environments.ecosystem_env import impacts, source_tracking
+from lib.environments.ecosystem_env import debug_food, impacts, source_tracking
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 from lib.environments.ecosystem_env.grid_masks import build_movement_mask
 from lib.environments.ecosystem_env.state import ActionSettlement
@@ -88,7 +88,8 @@ def apply_currents(env):
     if config is None or config.strength == 0:
         return
     ids = [fid for fid in env.global_fg_order
-           if not env.fgs[fid].is_decision_maker and env.fgs[fid].current_response > 0]
+           if not env.fgs[fid].is_decision_maker and env.fgs[fid].current_response > 0
+           and fid not in debug_food.selected_ids(env)]
     if not ids:
         return
     if getattr(env, "_current_coordinates", None) is None:

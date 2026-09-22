@@ -15,6 +15,7 @@ from lib.config.config_loader import load_project_config, setup_full_mareld_mvp
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.gpu.config import DEFAULT_LIBRARY
 from lib.environments.ecosystem_env.currents import CurrentConfig
+from lib.environments.ecosystem_env.debug_food import FoodBlobConfig
 from lib.environments.ecosystem_env.population_change import (
     DEFAULT_MORTALITY_MULTIPLIER)
 
@@ -110,7 +111,8 @@ def inference_config(trainer, backend):
                 mortality_multiplier=float(
                     getattr(builder, "mortality_multiplier",
                             DEFAULT_MORTALITY_MULTIPLIER)),
-                currents=builder.currents.metadata() if getattr(builder, "currents", None) else None)
+                currents=builder.currents.metadata() if getattr(builder, "currents", None) else None,
+                food_blobs=builder.food_blobs.metadata() if getattr(builder, "food_blobs", None) else None)
 
 
 def comparable_config(config):
@@ -121,6 +123,7 @@ def comparable_config(config):
     """
     normalised = dict(config)
     normalised.setdefault("mortality_multiplier", DEFAULT_MORTALITY_MULTIPLIER)
+    normalised.setdefault("food_blobs", None)
     normalised["mortality_multiplier"] = float(normalised["mortality_multiplier"])
     return normalised
 
@@ -140,7 +143,8 @@ def build_inference_env(config, seed):
                                     DEFAULT_MORTALITY_MULTIPLIER),
                                 migration=config["migration"],
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
-                                current_world_seed=seed)
+                                current_world_seed=seed,
+                                food_blobs=FoodBlobConfig(**config["food_blobs"]) if config.get("food_blobs") else None)
 
 
 @torch.no_grad()

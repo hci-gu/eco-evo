@@ -10,6 +10,7 @@ import math
 import numpy as np
 import torch
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
+from lib.environments.ecosystem_env import debug_food
 from lib.environments.ecosystem_env.currents import direction_fractions
 from lib.world.energy_balance import resolve_satiation_scale
 
@@ -35,13 +36,21 @@ class TensorEcosystem:
         self.ndm_positions = tuple(i for i in range(self.G) if i not in self.dm_positions)
         self.migration = env.migration
         self.currents = env.currents
+        self.food_blobs = env.food_blobs
         self.current_world_seed = env.current_world_seed
         self.holling = env._has_holling2 or env._has_holling3
         tensor = self.tensor
+        self.food_blob_index = tensor([self.ids.index(fid) for fid in debug_food.selected_ids(env)], torch.long)
+        habitat = env.grid.get_map("accessibility")
+        self.food_blob_allowed = tensor(
+            np.ones(self.C, dtype=bool) if habitat is None else (habitat > 0).ravel(), torch.bool)
+        if self.food_blobs is not None and not bool(self.food_blob_allowed.any()):
+            raise ValueError("Food blobs need at least one accessible cell")
         self.dm_index = tensor(self.dm_positions, torch.long)
         self.ndm_index = tensor(self.ndm_positions, torch.long)
         self.current_response = tensor([
-            env.fgs[self.ids[i]].current_response for i in self.ndm_positions
+            0.0 if self.ids[i] in debug_food.selected_ids(env) else env.fgs[self.ids[i]].current_response
+            for i in self.ndm_positions
         ])[None, :, None, None]
         self.is_dm = tensor([i in self.dm_positions for i in range(self.G)], torch.bool)[None, :, None]
         self.move_mask = tensor(env.move_mask.reshape(4, self.C))
@@ -479,7 +488,7 @@ class TensorEcosystem:
         return biomass.index_copy(1, self.ndm_index, b_total), reserve.index_copy(1, self.ndm_index, r_total)
 
     def step(self, biomass, reserve, actions, tick, phase, seed_multiplier,
-             current_keys=None, track_source=False):
+             current_keys=None, track_source=False, food_blob_totals=None):
         """One tick. ``track_source`` appends the local-reward tracking.
 
         With ``track_source`` a sixth value ``(start, tracked, frac_in)``
@@ -489,10 +498,14 @@ class TensorEcosystem:
         end-of-tick state is final.
         """
         start = self.local_energy(biomass, reserve) if track_source else None
+        if self.food_blobs is not None and food_blob_totals is None:
+            food_blob_totals = (biomass[:, self.food_blob_index].sum(-1, keepdim=True),
+                                reserve[:, self.food_blob_index].sum(-1, keepdim=True))
         b, r, gains, hidden, intake = self.predation(biomass, reserve, actions)
         b, r, flow = self.movement(b, r, gains, actions, track=track_source)
         b, r = self.advect(b, r, tick, current_keys)
         b, r, starve_loss = self.population(b, r, tick, phase, seed_multiplier)
+        b, r = debug_food.apply_tensor(self, b, r, tick + 1, current_keys, food_blob_totals)
         if not track_source:
             return b, r, hidden, intake, starve_loss
         tracked, frac_in = self.tracked_energy(flow, b, r)

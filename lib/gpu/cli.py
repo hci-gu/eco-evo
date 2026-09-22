@@ -7,6 +7,7 @@ import re
 from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
 from lib.runners.population_stability import add_population_arguments, population_options
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.environments.ecosystem_env.debug_food import add_food_blob_arguments, food_blob_options
 from lib.environments.ecosystem_env.population_change import (
     add_mortality_multiplier_argument)
 from lib.environments.ecosystem_env.source_tracking import (add_local_reward_arguments,
@@ -30,6 +31,7 @@ def positive_int(value):
 
 def add_common_arguments(parser):
     add_current_arguments(parser)
+    add_food_blob_arguments(parser)
     add_population_arguments(parser)
     add_local_reward_arguments(parser)
     parser.add_argument("--project", default=None, help="Project YAML; omitted means all library groups")
@@ -75,6 +77,7 @@ def builder_from_args(args):
     return EnvironmentBuilder(args.project, args.library, args.grid,
                               args.migration == "on", args.mortality == "on",
                               currents=current_options(args),
+                              food_blobs=food_blob_options(args),
                               mortality_multiplier=float(
                                   getattr(args, "mortality_multiplier", 1.0)))
 
