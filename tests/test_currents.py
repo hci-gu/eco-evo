@@ -1,12 +1,17 @@
 """Conservation, reference parity, and deterministic training with passive drift."""
 
 import copy
+import argparse
 
 import numpy as np
 import pytest
 import torch
 
-from lib.environments.ecosystem_env.currents import CurrentConfig, apply_currents, direction_fractions
+from lib.environments.ecosystem import EcosystemEnvironment
+from lib.environments.ecosystem_env.currents import (
+    CurrentConfig, add_current_arguments, apply_currents, current_options,
+    direction_fractions,
+)
 from lib.gpu.config import EnvironmentBuilder, ProjectSpec
 from lib.gpu.ecosystem import TensorEcosystem
 from lib.gpu.policy import PolicyBank
@@ -15,6 +20,7 @@ from lib.gpu.trainer import TensorARSTrainer
 from lib.runners.population_stability import PopulationStability
 from lib.runners.trainer import ARSTrainer
 from lib.runners.training_progress import inference_config, build_inference_env
+from lib.world.functional_group import FunctionalGroup
 from test_gpu_ecosystem import make_env, DEVICES
 
 
@@ -34,6 +40,136 @@ def test_current_vectors_are_bounded_reproducible_and_change_smoothly(device):
     assert not np.allclose(first, direction_fractions(0, 18, config))
     assert np.max(np.abs(np.array(direction_fractions(19, 17, config)) -
                          direction_fractions(20, 17, config))) <= config.strength / config.period
+
+
+@pytest.mark.parametrize("device", DEVICES)
+def test_cloud_field_is_spatial_bounded_and_matches_batched_worlds(device):
+    config = CurrentConfig(strength=0.8, scale=7.5, period=13, seed=31)
+    y, x = np.indices((19, 23), dtype=np.float32)
+    keys = (0, 17, 0xFFFFFFFF)
+    for tick in (0, 1, 20, 99, 10000):
+        expected = np.stack([direction_fractions(tick, seed, config, x, y) for seed in keys])
+        actual = torch.stack(direction_fractions(
+            torch.tensor(tick, device=device),
+            torch.tensor(keys, device=device, dtype=torch.int64)[:, None, None], config,
+            torch.tensor(x, device=device), torch.tensor(y, device=device)), dim=1)
+        np.testing.assert_allclose(actual.cpu(), expected, atol=1e-7, rtol=3e-6)
+        assert (expected >= 0).all()
+        assert (expected.sum(axis=1) <= config.strength).all()
+        assert np.ptp(expected[0, 1]) > 0.05
+        assert not np.allclose(expected[0], expected[1])
+        np.testing.assert_array_equal(expected[:, 0], 0)
+        np.testing.assert_array_equal(expected[:, 3], 0)
+        np.testing.assert_array_equal(expected[:, 1], expected[:, 2])
+
+
+def test_cloud_scrolls_continuously_in_positive_xy_without_rng_consumption():
+    config = CurrentConfig(strength=0.8, scale=8, period=20)
+    y, x = np.indices((25, 31), dtype=np.float32)
+    rng_state = np.random.get_state()
+    first = np.asarray(direction_fractions(0, 17, config, x, y))
+    later = np.asarray(direction_fractions(config.period, 17, config, x, y))
+    # One cell of positive XY scrolling: the old pixel reappears southeast.
+    np.testing.assert_array_equal(first[:, :-1, :-1], later[:, 1:, 1:])
+    # A fractional tick shifts by a fractional cell, without integer rolling.
+    half = np.asarray(direction_fractions(0.5, 17, config, x, y))
+    assert not np.array_equal(first, half)
+    assert np.max(np.abs(first - half)) < 0.005
+    np.testing.assert_array_equal(first, direction_fractions(0, 17, config, x, y))
+    after = np.random.get_state()
+    assert rng_state[0] == after[0] and rng_state[2:] == after[2:]
+    np.testing.assert_array_equal(rng_state[1], after[1])
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("response", [0.0, 0.25, 1.0])
+def test_current_response_scales_flux_and_energy_together(device, response):
+    env = make_env()
+    env.currents = CurrentConfig(strength=0.8)
+    fg = env.fgs["c"]
+    fg.current_response = response
+    fg.biomass[:] = fg.energy_reserve[:] = 0
+    fg.biomass[1, 1], fg.energy_reserve[1, 1] = 100, 200
+    full = copy.deepcopy(env)
+    full.fgs["c"].current_response = 1.0
+    before_b, before_r = fg.biomass.copy(), fg.energy_reserve.copy()
+    model = TensorEcosystem(env, device)
+    b, r, _, _ = model.import_state([env])
+    actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
+    apply_currents(env)
+    apply_currents(full)
+    expected_b, expected_r, _, _ = model.import_state([env])
+    torch.testing.assert_close(actual_b, expected_b)
+    torch.testing.assert_close(actual_r, expected_r)
+    np.testing.assert_allclose(fg.biomass - before_b,
+                               response * (full.fgs["c"].biomass - before_b), atol=1e-5)
+    np.testing.assert_allclose(fg.energy_reserve, fg.biomass * 2)
+    assert (fg.biomass[1, 2] > 0) == (response > 0)
+    assert (fg.biomass[2, 1] > 0) == (response > 0)
+    assert fg.biomass[0, 1] == fg.biomass[1, 0] == 0
+    if response == 0:
+        np.testing.assert_array_equal(fg.biomass, before_b)
+        np.testing.assert_array_equal(fg.energy_reserve, before_r)
+
+
+@pytest.mark.parametrize("shape", [(1, 1), (1, 5), (5, 1), (4, 5)])
+@pytest.mark.parametrize("migration", [False, True])
+def test_current_transport_works_without_decision_makers_and_keeps_edges(shape, migration):
+    fg = FunctionalGroup("drifter", {"growth_rate": 0, "max_energy_reserve": 10})
+    fg.initialize_state(shape, initial_biomass=np.ones(shape, dtype=np.float32))
+    env = EcosystemEnvironment(dict(height=shape[0], width=shape[1]), {"drifter": fg},
+                               currents=CurrentConfig(strength=1, period=1), migration=migration)
+    before = fg.biomass.copy()
+    for tick in range(25):
+        env.tick_count = tick
+        apply_currents(env)
+    assert env.N_dm == 0
+    assert fg.biomass.sum() == pytest.approx(before.sum(), rel=2e-6)
+    assert (fg.biomass >= 0).all()
+    if shape == (1, 1):
+        np.testing.assert_array_equal(fg.biomass, before)
+    elif not migration:
+        assert fg.biomass[-1, -1] > before[-1, -1]
+    else:
+        assert fg.biomass[0, 0] > 0, "Immigration keeps repopulating the upstream edge"
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("migration", [False, True])
+def test_current_edge_outflow_uses_swimmer_migration_weights(device, migration):
+    base = make_env()
+    # Unequal DM/NDM counts catch migration code that assumes DM array shapes.
+    env = EcosystemEnvironment(
+        dict(height=base.H, width=base.W),
+        {fid: fg for fid, fg in base.fgs.items() if fid != "d"},
+        migration=migration, currents=CurrentConfig(strength=1, seed=4))
+    habitat = np.ones((env.H, env.W), dtype=np.float32)
+    habitat[0, 0] = 0  # No immigrants may land on this boundary cell.
+    habitat[0, 1] = 3  # Immigration weights, not just a binary mask.
+    env.grid.add_map("accessibility", habitat)
+    env.build_static_caches()
+    fg = env.fgs["c"]
+    fg.min_split_biomass = 0
+    fg.biomass[:] = fg.energy_reserve[:] = 0
+    fg.biomass[-1, -1], fg.energy_reserve[-1, -1] = 100, 200
+    before = fg.biomass.copy()
+    model = TensorEcosystem(env, device)
+    b, r, _, _ = model.import_state([env])
+    actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
+    apply_currents(env)
+    if migration:
+        assert 0 < fg.biomass[-1, -1] < 100, "Current biomass remains trapped at the edge"
+        assert fg.biomass[0, 1] > 0, "Outgoing biomass must re-enter at other edges"
+        assert fg.biomass[0, 1] == pytest.approx(3 * fg.biomass[0, 2], rel=1e-6)
+        assert fg.biomass[0, 0] == 0
+        np.testing.assert_array_equal(fg.biomass[1:-1, 1:-1], 0)
+    else:
+        np.testing.assert_array_equal(fg.biomass, before)
+    assert fg.biomass.sum() == pytest.approx(100, rel=1e-6)
+    np.testing.assert_allclose(fg.energy_reserve, fg.biomass * 2)
+    expected_b, expected_r, _, _ = model.import_state([env])
+    torch.testing.assert_close(actual_b, expected_b)
+    torch.testing.assert_close(actual_r, expected_r)
 
 
 @pytest.mark.parametrize("device", DEVICES)
@@ -104,9 +240,10 @@ def test_cpu_and_tensor_rollouts_match_with_currents_and_population_stability():
     np.testing.assert_allclose(runner.obs_sum[0], samples[0], atol=0.003, rtol=3e-5)
 
 
-def test_current_training_is_chunk_independent_and_traces_without_readback(monkeypatch):
+@pytest.mark.parametrize("migration", [False, True])
+def test_current_training_is_chunk_independent_and_traces_without_readback(monkeypatch, migration):
     spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=(5, 6),
-                                          currents=CurrentConfig(period=3)))
+                                          currents=CurrentConfig(period=3), migration=migration))
     options = dict(device="cpu", execution="eager", n_deltas=3, worlds=2,
                    population_stability=PopulationStability())
     whole = TensorARSTrainer(spec, **options)
@@ -144,7 +281,7 @@ def test_current_training_captures_into_a_cuda_graph(execution):
     --execution of train_gpu.py.
     """
     spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=(5, 6),
-                                          currents=CurrentConfig(period=3, seed=9)))
+                                          currents=CurrentConfig(period=3, seed=9), migration=True))
     options = dict(device="cuda", n_deltas=2, worlds=2)
     eager = TensorARSTrainer(spec, execution="eager", **options)
     captured = TensorARSTrainer(spec, execution=execution, graph_ticks=3, **options)
@@ -156,7 +293,7 @@ def test_current_training_captures_into_a_cuda_graph(execution):
 
 
 def test_builders_and_progress_inference_keep_current_configuration():
-    config = CurrentConfig(period=7, seed=22)
+    config = CurrentConfig(period=7, seed=22, scale=9.5)
     builder = EnvironmentBuilder(project_path="mareld2.yaml", grid=(5, 6), currents=config)
     assert builder.with_world(3).currents == config
     assert builder.with_world(3)(seed=5).current_world_seed == 6
@@ -169,11 +306,33 @@ def test_builders_and_progress_inference_keep_current_configuration():
     assert cpu_builder.with_world(1, 3).currents == config
     assert cpu_builder.with_world(1, 3)(seed=5).current_world_seed == 6
     assert _ProbeEnvBuilder("mareld2.yaml", (5, 6), currents=config)().currents == config
+    env = builder(seed=5)
+    assert env.fgs["phytoplankton"].current_response == 1
+    assert env.fgs["benthic_community"].current_response == 0
+
+
+def test_current_cli_and_metadata_keep_cloud_settings():
+    parser = argparse.ArgumentParser()
+    add_current_arguments(parser)
+    config = current_options(parser.parse_args([
+        "--currents", "on", "--current-strength", "0.3", "--current-period", "5",
+        "--current_scale", "9.5", "--current-seed", "31"]))
+    assert config == CurrentConfig(strength=0.3, period=5, seed=31, scale=9.5)
+    assert CurrentConfig(**config.metadata()) == config
+    assert current_options(parser.parse_args([])) is None
+
+
+@pytest.mark.parametrize("response", [-0.1, 1.1, float("nan"), float("inf")])
+def test_invalid_current_response_rejected(response):
+    with pytest.raises(ValueError, match="current_response"):
+        FunctionalGroup("drifter", {"current_response": response})
 
 
 @pytest.mark.parametrize("kwargs", [{"strength": -0.1}, {"strength": 1.1},
                                    {"strength": float("nan")}, {"period": 0},
-                                   {"period": 1.5}, {"seed": -1}])
+                                   {"period": 1.5}, {"seed": -1},
+                                   {"scale": 0}, {"scale": 0.5},
+                                   {"scale": float("nan")}, {"scale": float("inf")}])
 def test_invalid_current_settings_rejected(kwargs):
     with pytest.raises(ValueError):
         CurrentConfig(**kwargs)

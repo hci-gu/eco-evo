@@ -1,8 +1,120 @@
 import numpy as np
+import torch
 
 from lib.environments.ecosystem_env import impacts, source_tracking
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
+from lib.environments.ecosystem_env.grid_masks import build_movement_mask
 from lib.environments.ecosystem_env.state import ActionSettlement
+
+
+def _current_xor(left, right):
+    # Tensor/scalar xor needs device-local constants for fullgraph tracing
+    # and CUDA graph capture (no host copies during a tick).
+    for value in (left, right):
+        if isinstance(value, torch.Tensor):
+            if not isinstance(left, torch.Tensor):
+                left = torch.full((), int(left), dtype=value.dtype, device=value.device)
+            if not isinstance(right, torch.Tensor):
+                right = torch.full((), int(right), dtype=value.dtype, device=value.device)
+            return torch.bitwise_xor(left, right)
+    return left ^ right
+
+
+def _current_hash(value):
+    # This multiplier fits signed int64 intermediates on NumPy and Torch.
+    value = value & 0xFFFFFFFF
+    value = (_current_xor(value, value >> 16) * 0x45D9F3B) & 0xFFFFFFFF
+    value = (_current_xor(value, value >> 16) * 0x45D9F3B) & 0xFFFFFFFF
+    return _current_xor(value, value >> 16)
+
+
+def _current_noise(x, y, seed):
+    """Smooth value noise in [0, 1), with matching NumPy/Torch arithmetic.
+
+    Hash lattice corners instead of storing or repeatedly shifting a texture:
+    any tick can be sampled directly, independently of the ecology's RNG.
+    Coordinates and seeds follow ordinary broadcasting rules.
+    """
+    if isinstance(x, torch.Tensor):
+        ix, iy = torch.floor(x).to(torch.int64), torch.floor(y).to(torch.int64)
+        fx, fy = x - ix.to(torch.float32), y - iy.to(torch.float32)
+    else:
+        ix, iy = np.floor(x).astype(np.int64), np.floor(y).astype(np.int64)
+        fx, fy = x - ix.astype(np.float32), y - iy.astype(np.float32)
+    sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+
+    def corner(dx, dy):
+        key = _current_xor(_current_hash(ix + dx), _current_hash(iy + dy + 0x9E3779B9))
+        bits = _current_hash(_current_xor(key, seed)) >> 8
+        value = bits.to(torch.float32) if isinstance(bits, torch.Tensor) else bits.astype(np.float32)
+        return value * (1.0 / 16777216.0)
+
+    lower = corner(0, 0) * (1 - sx) + corner(1, 0) * sx
+    upper = corner(0, 1) * (1 - sx) + corner(1, 1) * sx
+    return lower * (1 - sy) + upper * sy
+
+
+def current_direction_fractions(tick, world_seed, config, x=0.0, y=0.0):
+    """N/E/S/W fractions for a cloud field scrolling towards east/south.
+
+    ``period`` is ticks per cell of texture scrolling, independent of biomass
+    transport strength. Two noise scales give broad clouds with finer detail.
+    For batched worlds, pass seeds shaped [world, 1] and coordinates [cell].
+    """
+    scalar_sample = False
+    if isinstance(tick, torch.Tensor):
+        offset = tick.to(torch.float32) / config.period
+    else:
+        scalar_sample = np.ndim(x) == np.ndim(y) == np.ndim(world_seed) == 0
+        offset = np.asarray(tick, dtype=np.float32) / np.float32(config.period)
+        # NumPy 1.x promotes zero-dimensional float32 arithmetic with Python
+        # scalars to float64. Use arrays to match device-side float32 sampling.
+        x = np.array(x, dtype=np.float32, ndmin=1)
+        y = np.array(y, dtype=np.float32, ndmin=1)
+    x, y = (x - offset) / config.scale, (y - offset) / config.scale
+    seed = _current_xor(world_seed, config.seed)
+    cloud = (_current_noise(x, y, seed) * 0.75
+             + _current_noise(2 * x, 2 * y, _current_xor(seed, 0xA341316C)) * 0.25)
+    fraction = cloud * (config.strength * 0.5)
+    if scalar_sample:
+        fraction = fraction[0]
+    zero = fraction * 0
+    return zero, fraction, fraction, zero
+
+
+def apply_currents(env):
+    """Conservatively drift responding non-decision makers before growth."""
+    config = env.currents
+    if config is None or config.strength == 0:
+        return
+    ids = [fid for fid in env.global_fg_order
+           if not env.fgs[fid].is_decision_maker and env.fgs[fid].current_response > 0]
+    if not ids:
+        return
+    if getattr(env, "_current_coordinates", None) is None:
+        env._current_coordinates = np.indices((env.H, env.W), dtype=np.float32)
+    y, x = env._current_coordinates
+    fractions = np.asarray(current_direction_fractions(
+        env.tick_count, env.current_world_seed, config, x, y), dtype=env.dtype)
+    # Currents share swimmers' migration boundaries. Blocked habitat flow
+    # stays at its source; never renormalize the remaining directions.
+    fractions *= build_movement_mask(env.grid, env.migration, env.dtype)
+    response = np.asarray([env.fgs[fid].current_response for fid in ids], dtype=env.dtype)
+    fractions = fractions[None] * response[:, None, None, None]
+    biomass = np.stack([env.fgs[fid].biomass for fid in ids])
+    reserve = np.stack([env.fgs[fid].energy_reserve for fid in ids])
+    out_b, out_r = biomass[:, None] * fractions, reserve[:, None] * fractions
+    b, r = _transfer_to_neighbours(
+        biomass - out_b.sum(1), reserve - out_r.sum(1), out_b, out_r)
+    if env.migration:
+        b_emig, r_emig = _edge_emigration(out_b, out_r)
+        b_imm, r_imm = _concentrate_immigration(
+            env, b_emig, r_emig, env._edge_imm_weights, group_ids=ids)
+        b += b_imm
+        r += r_imm
+    for i, fid in enumerate(ids):
+        env.fgs[fid].biomass = b[i].astype(env.dtype, copy=False)
+        env.fgs[fid].energy_reserve = r[i].astype(env.dtype, copy=False)
 
 
 def _transfer_to_neighbours(b_stay, r_stay, b_out, r_out):
@@ -39,7 +151,8 @@ def _edge_emigration(b_out, r_out):
     return b_emig, r_emig
 
 
-def _concentrate_immigration(env, b_emig, r_emig, base_weights):
+def _concentrate_immigration(env, b_emig, r_emig, base_weights, group_ids=None):
+    """Redistribute emigrants for swimmers or passive groups with the same rules."""
     weights_flat = base_weights.reshape(-1)
     edge_idx = np.flatnonzero(weights_flat > 0.0)
     b_imm = b_emig[:, None, None] * base_weights[None, :, :]
@@ -53,7 +166,7 @@ def _concentrate_immigration(env, b_emig, r_emig, base_weights):
     sorted_weights = edge_weights[order]
     cumulative_weights = np.cumsum(sorted_weights)
 
-    for i, fid in enumerate(env.dm_ids):
+    for i, fid in enumerate(env.dm_ids if group_ids is None else group_ids):
         min_split = float(env.fgs[fid].min_split_biomass or 0.0)
         factor = float(
             getattr(env.fgs[fid], "extinction_threshold_factor", 0.0) or 0.0)

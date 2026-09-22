@@ -719,6 +719,9 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     if viz is not None:
         try:
             viz.begin_rollout_recording()
+            # Capture the actual initial field before the first simulation
+            # step; heatmap colours use this reference for the whole rollout.
+            viz.update_biomass(env.fgs, tick=0)
         except Exception:
             pass
     for t in range(n_ticks):
@@ -794,7 +797,7 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             print(f"    tick {t+1}/{n_ticks}")
         if viz is not None:
             try:
-                viz.update_biomass(env.fgs, tick=t)
+                viz.update_biomass(env.fgs, tick=t + 1)
                 for fid in history.keys():
                     viz.update_series("biomass", fid, pct_bio[fid], step=t)
                     viz.update_series("energy", fid, pct_eng[fid], step=t)
