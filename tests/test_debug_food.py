@@ -18,6 +18,23 @@ from lib.runners.training_progress import inference_config, build_inference_env
 from test_gpu_ecosystem import DEVICES, manual_actions
 
 
+def test_world_seeds_randomize_heading_not_just_start_position():
+    y, x = np.indices((80, 80), dtype=np.float32)
+    x, y = x.ravel(), y.ravel()
+    config = debug_food.FoodBlobConfig(speed=.5, radius=4)
+    headings = []
+    for seed in (17, 42, 139, 827, 20260530, 123456789):
+        centres = []
+        for tick in (0, 1):
+            weights = debug_food.blob_weights(x, y, 80, 80, tick, seed,
+                                               config, np.ones_like(x, dtype=bool))
+            centres.append(np.array([weights @ x, weights @ y]))
+        delta = np.abs(centres[1] - centres[0])
+        headings.append(delta / np.linalg.norm(delta))
+    # Previously every world followed the same absolute 0.8/0.6 heading.
+    assert np.std(np.array(headings)[:, 0]) > .05
+
+
 @pytest.mark.parametrize("device", DEVICES)
 def test_blob_bounces_and_cpu_tensor_fields_agree(device):
     y, x = np.indices((16, 20), dtype=np.float32)
@@ -38,10 +55,45 @@ def test_blob_bounces_and_cpu_tensor_fields_agree(device):
     centres = np.array(centres)
     for axis in (0, 1):
         shifts = np.diff(centres[:, axis])
-        assert shifts.min() < -0.4 and shifts.max() > 0.4
+        assert shifts.min() < -0.2 and shifts.max() > 0.2
         assert np.max(np.abs(shifts)) < 1.01
     assert centres[:, 0].min() >= 2.9 and centres[:, 0].max() <= 16.1
     assert centres[:, 1].min() >= 2.9 and centres[:, 1].max() <= 12.1
+
+
+@pytest.mark.parametrize("device", DEVICES)
+def test_seeded_centres_reproduce_across_backends_and_stay_in_bounds(device):
+    keys = np.array([0, 17, 42, 20260530, 2**32 - 1], dtype=np.int64)
+    config = debug_food.FoodBlobConfig(speed=.1, seed=13)
+    times = np.arange(5001, dtype=np.float32)
+    expected = debug_food.blob_center(24, 24, times[None], keys[:, None], config)
+    actual = debug_food.blob_center(
+        24, 24, torch.tensor(times[None], device=device),
+        torch.tensor(keys[:, None], device=device), config)
+    for reference, tensor in zip(expected, actual):
+        np.testing.assert_allclose(tensor.cpu(), reference, atol=1e-4, rtol=1e-5)
+        assert reference.min() >= 4 and reference.max() <= 19
+    steps = np.hypot(np.diff(expected[0]), np.diff(expected[1]))
+    assert steps.max() <= config.speed + 1e-4
+    assert np.median(steps) == pytest.approx(config.speed, abs=1e-5)
+    # Random access/replay must not depend on any preceding calls or RNG state.
+    for tick in (5000, 1, 97, 0):
+        single = debug_food.blob_center(24, 24, tick, keys, config)
+        for axis in (0, 1):
+            np.testing.assert_array_equal(single[axis], expected[axis][:, tick])
+    shifted = debug_food.blob_center(24, 24, times[None], keys[:, None],
+                                     debug_food.FoodBlobConfig(speed=.1, seed=14))
+    assert not np.allclose(shifted, expected)
+
+
+@pytest.mark.parametrize("shape", [(1, 1), (1, 9), (9, 1), (3, 3)])
+def test_seeded_blob_handles_tiny_grids(shape):
+    y, x = np.indices(shape, dtype=np.float32)
+    field = debug_food.blob_weights(x.ravel(), y.ravel(), *shape, 5000, 42,
+                                    debug_food.FoodBlobConfig(),
+                                    np.ones(x.size, dtype=bool))
+    assert np.isfinite(field).all()
+    assert field.sum() == pytest.approx(1)
 
 
 @pytest.mark.parametrize("device", DEVICES)
@@ -115,6 +167,8 @@ def test_blob_training_is_chunk_independent_compilable_and_has_no_readback(monke
         # Paired ARS signs see the identical scripted food trajectory.
         foods = runner.biomass[:, whole.model.food_blob_index].reshape(2, 3, 2, 2, 72)
         torch.testing.assert_close(foods[0], foods[1], atol=0, rtol=0)
+        assert not torch.equal(foods[0, 0, 0], foods[0, 0, 1])
+        previous_keys = runner.keys.clone()
         saved = [v.clone() for v in runner.state_buffers]
         runner._tick()
         expected = [v.clone() for v in runner.state_buffers]
@@ -129,6 +183,7 @@ def test_blob_training_is_chunk_independent_compilable_and_has_no_readback(monke
             for name in ("cpu", "numpy", "item", "tolist", "__float__", "__int__", "__bool__"):
                 patch.setattr(torch.Tensor, name, forbidden)
             whole.train_step(n_eval_ticks=4)
+        assert not torch.equal(runner.keys, previous_keys)
     finally:
         whole.close()
         chunked.close()

@@ -58,6 +58,54 @@ def selected_ids(env):
                  if fid in env.fgs and not env.fgs[fid].is_decision_maker)
 
 
+def _trajectory_uniform(seed, stream):
+    """Stateless 32-bit mixing shared by NumPy and Torch, without RNG state."""
+    value = (seed + stream * 0x9E3779B9) & 0xFFFFFFFF
+    value = ((value ^ (value >> 16)) * 0x45D9F3B) & 0xFFFFFFFF
+    value = ((value ^ (value >> 16)) * 0x45D9F3B) & 0xFFFFFFFF
+    value = (value ^ (value >> 16)) >> 8
+    value = value.to(torch.float32) if isinstance(value, torch.Tensor) else value.astype(np.float32)
+    return value * (1.0 / 16777216.0)
+
+
+def blob_center(height, width, tick, keys, config):
+    """Seeded start and heading, reflected at boundaries at constant speed.
+
+    Each rollout samples a different start and velocity, not merely a phase
+    offset on one shared diagonal path. The heading stays constant between
+    bounces. A seed identifies a reproducible trajectory, including for ARS
+    pairs, replay, chunked execution and CUDA graph capture.
+    """
+    tensor = isinstance(keys, torch.Tensor)
+    radius = config.radius or max(1.0, min(height, width) / 6.0)
+    if tensor:
+        seed = (keys.to(torch.int64) + config.seed) & 0xFFFFFFFF
+        time = tick.to(torch.float32)
+        absolute, sqrt, where = torch.abs, torch.sqrt, torch.where
+    else:
+        seed = (np.array(keys, dtype=np.int64, ndmin=1) + config.seed) & 0xFFFFFFFF
+        time = np.array(tick, dtype=np.float32, ndmin=1)
+        absolute, sqrt, where = np.abs, np.sqrt, np.where
+    px, py = _trajectory_uniform(seed, 1), _trajectory_uniform(seed, 2)
+    vx = 2 * _trajectory_uniform(seed, 3) - 1
+    vy = 2 * _trajectory_uniform(seed, 4) - 1
+    # A degenerate zero vector gets a unit heading, without a host branch.
+    length2 = vx * vx + vy * vy
+    vx = where(length2 > 0, vx, 1.0)
+    length = sqrt(where(length2 > 0, length2, 1.0))
+    vx, vy = vx * (config.speed / length), vy * (config.speed / length)
+
+    def bounce(size, phase, velocity):
+        margin = min(radius, (size - 1) / 2)
+        span = size - 1 - 2 * margin
+        if span <= 0:
+            return phase * 0 + margin
+        travel = (phase * (2 * span) + time * velocity) % (2 * span)
+        return margin + span - absolute(travel - span)
+
+    return bounce(width, px, vx), bounce(height, py, vy)
+
+
 def blob_weights(x, y, height, width, tick, keys, config, allowed):
     """Normalised compact blob; NumPy [cell] or Torch [world, cell].
 
@@ -68,27 +116,7 @@ def blob_weights(x, y, height, width, tick, keys, config, allowed):
     """
     tensor = isinstance(x, torch.Tensor)
     radius = config.radius or max(1.0, min(height, width) / 6.0)
-    seed = (keys + config.seed) % (2**32)
-    px, py = seed % 997, (seed * 37 + 137) % 991
-    if tensor:
-        px, py = px.to(torch.float32) / 997, py.to(torch.float32) / 991
-        time = tick.to(torch.float32)
-        absolute = torch.abs
-    else:
-        px = np.array(px, dtype=np.float32, ndmin=1) / 997
-        py = np.array(py, dtype=np.float32, ndmin=1) / 991
-        time = np.array(tick, dtype=np.float32, ndmin=1)
-        absolute = np.abs
-
-    def bounce(size, phase, velocity):
-        margin = min(radius, (size - 1) / 2)
-        span = size - 1 - 2 * margin
-        if span <= 0:
-            return phase * 0 + margin
-        travel = (phase * (2 * span) + time * velocity) % (2 * span)
-        return margin + span - absolute(travel - span)
-
-    cx, cy = bounce(width, px, config.speed * 0.8), bounce(height, py, config.speed * 0.6)
+    cx, cy = blob_center(height, width, tick, keys, config)
     distance2 = (x - cx) ** 2 + (y - cy) ** 2
     if tensor:
         raw = (1 - distance2 / radius**2).clamp_min(0).square() * allowed

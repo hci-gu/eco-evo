@@ -2,8 +2,10 @@
 
 Enable `--debug-food-blobs` in `train.py`, `train_gpu.py`, or `inference.py`.
 The active non-decision makers `phytoplankton` and `benthic_community` share a
-compact, smooth blob. Its centre moves diagonally and reflects at the map
-boundaries. The footprint keeps its shape instead of diffusing into the edges.
+compact, smooth blob. Each rollout gets a seeded random start position and
+direction. Its centre moves at constant speed and reflects at the map
+boundaries; the direction stays constant between bounces. The footprint keeps
+its shape instead of diffusing into the edges.
 Each group's total biomass and reserve are restored to their rollout-start
 values after every tick. Predation still feeds consumers, but cannot exhaust
 the food source. Ordinary food growth, carrying-capacity limits, extinction
@@ -22,12 +24,23 @@ added to policy observations: agents must use their existing local observations.
 | `--food-blob-seed` | `0` | Trajectory seed combined with the rollout seed |
 
 Both CPU and tensor training use deterministic trajectories, with identical
-food for the positive/negative ARS perturbations. Training probes, progress
+food for the positive/negative ARS perturbations. Different rollout seeds now
+change the heading as well as the start position, instead of shifting every
+world along the same 0.8/0.6 diagonal. No per-tick RNG or trajectory state is
+needed; changing batching, worker count or execution order does not change a
+seed's trajectory. Training already refreshes rollout seeds between updates.
+Progress evaluation deliberately keeps its fixed `--eval-seed` so scores are
+comparable; use different inference `--seed` values to check generalisation.
+Training probes, progress
 evaluations, and the live viewer inherit the experiment settings. Food totals
 come from the usual training/inference biomass configuration. Viewer biomass
 sliders set new totals on the next rollout; food spawn-shape overrides are
 superseded by the blob. Existing fixed colour scales make it easy to see motion.
 `--currents` and `--migration` do not change the prescribed food trajectory.
+
+This changes trajectories for existing seeds. Old policy weights still load,
+but use a fresh run/progress directory rather than comparing evaluation scores
+across the old and new trajectories.
 
 Start a fresh experiment (using a new run name):
 
