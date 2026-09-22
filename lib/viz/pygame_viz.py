@@ -26,6 +26,7 @@ Usage (inference.py)::
 
 Keys:
     space   pause / resume
+    c       toggle fixed / dynamic heatmap colour limits
     l       toggle log-scale on heatmaps
     r       toggle log-scale on the reward/biomass plot y-axis
     q / esc quit visualiser (training continues)
@@ -381,15 +382,17 @@ class LiveVisualizer:
         # rollout (train probe runs fresh per ARS-iter, inference is one run).
         self._b0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
         # Rollout-start per-cell maxima, captured on the first frame of
-        # each rollout. Heatmap colours always use this fixed reference.
+        # each rollout. Fixed colours are the default; dynamic uses the
+        # currently displayed frame, including during replay.
         self._heatmap_vmax0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
+        self._dynamic_heatmap = False
         # One global visual biomass scale for inference. 1.0 means:
-        # heatmap max = rollout-start per-cell max. After slider adjustment,
+        # heatmap max = the selected per-cell max. After slider adjustment,
         # biomass plot max = 100% * scale. The slider zooms both together.
         #
-        # Heatmaps stay comparable across ticks, including near extinction.
+        # Fixed heatmaps stay comparable across ticks, even near extinction.
         # The line plot still auto-scales until the slider is adjusted.
-        # Clicking the label restores 1x start colours and the auto plot axis.
+        # Clicking the label restores 1x colours and the auto plot axis.
         self._biomass_display_scale: float = 1.0
         self._biomass_scale_manual: bool = False
         self._biomass_scale_min: float = 0.05
@@ -1757,6 +1760,8 @@ class LiveVisualizer:
             self._paused = not self._paused
         elif key == pg.K_l:
             self._log_heatmap = not self._log_heatmap
+        elif key == pg.K_c:
+            self._dynamic_heatmap = not self._dynamic_heatmap
         elif key == pg.K_r:
             self._log_plot = not self._log_plot
         elif key == pg.K_TAB:
@@ -1930,7 +1935,7 @@ class LiveVisualizer:
     def _set_biomass_display_scale(self, value: float) -> None:
         """Pin the biomass display scale to ``value`` (manual override).
 
-        Heatmaps always use their rollout-start reference. Adjusting the
+        Heatmaps use the selected fixed/dynamic reference. Adjusting the
         slider also pins the biomass plot axis to a multiple of 100%.
         """
         lo = float(self._biomass_scale_min)
@@ -1939,12 +1944,18 @@ class LiveVisualizer:
         self._biomass_scale_manual = True
 
     def _reset_biomass_display_scale(self) -> None:
-        """Restore start-value heatmap colours and an automatic plot y-axis."""
+        """Restore a 1x colour multiplier and an automatic plot y-axis."""
         self._biomass_scale_manual = False
         self._biomass_display_scale = 1.0
 
     def _biomass_scale_label(self) -> str:
         return f"Biomass scale = {self._biomass_display_scale:.2f}x"
+
+    def _heatmap_max(self, fid: str, arr: np.ndarray) -> float:
+        """Return the raw colour limit without changing the start reference."""
+        reference = (float(np.max(arr, initial=0.0)) if self._dynamic_heatmap
+                     else float(self._heatmap_vmax0.get(fid, 0.0)))
+        return max(reference * float(self._biomass_display_scale), 1e-12)
 
     def _biomass_scale_value_from_x(self, mx: int) -> Optional[float]:
         rect = self._biomass_scale_track_rect
@@ -2101,6 +2112,9 @@ class LiveVisualizer:
         for rect, action in getattr(self, "_playback_rects", []):
             rx, ry, rw, rh = rect
             if rx <= mx < rx + rw and ry <= my < ry + rh:
+                if action == "toggle_heatmap_scale":
+                    self._dynamic_heatmap = not self._dynamic_heatmap
+                    return
                 if disabled and action != "toggle_train_pause":
                     return
                 self._handle_playback_action(action)
@@ -2623,6 +2637,8 @@ class LiveVisualizer:
         # Knapp-spec: (label, action_id, width).
         is_playing = (self._playback_mode == "playing")
         buttons = [
+            ("Colors: dynamic [C]" if self._dynamic_heatmap else "Colors: fixed [C]",
+             "toggle_heatmap_scale", 146),
             ("<<", "step_back", 32),
             ("|>" if not is_playing else "||", "toggle_play", 32),
             (">>", "step_fwd", 32),
@@ -2666,7 +2682,7 @@ class LiveVisualizer:
                 continue
             # Knappfärg. ``toggle_train_pause`` är alltid aktiv (även
             # under recording / utan film), så den hanteras separat.
-            always_active = (action == "toggle_train_pause")
+            always_active = action in ("toggle_train_pause", "toggle_heatmap_scale")
             if disabled and not always_active:
                 bg = (40, 40, 46)
                 fg = (110, 110, 120)
@@ -3254,10 +3270,8 @@ class LiveVisualizer:
             return
 
         v = arr.astype(np.float32, copy=False)
-        # Fixed per-FG start reference, also during replay and in log mode.
-        # Never fall back to the current frame's max, even for a zero start.
-        raw_vmax = max(float(self._heatmap_vmax0.get(fid, 0.0))
-                       * float(self._biomass_display_scale), 1e-12)
+        # Both linear and log colours use the selected per-FG reference.
+        raw_vmax = self._heatmap_max(fid, v)
         if self._log_heatmap:
             v = np.log1p(np.maximum(v, 0.0))
             vmax = float(np.log1p(raw_vmax))
@@ -3281,7 +3295,7 @@ class LiveVisualizer:
 
         # ---- Colorbar legend under the heatmap ----------------------------
         # Per-FG normalisation: shows what the colour gradient maps to,
-        # from 0 (left, dark) to the fixed rollout-start maximum times the
+        # from 0 (left, dark) to the selected per-FG maximum times the
         # display scale (right, bright), also when log mode is enabled.
         cbar_y = hm_y + H * self.cell_px + 3
         cbar_w = W * self.cell_px

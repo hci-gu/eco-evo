@@ -24,7 +24,7 @@
     maintenance_level: 0.5
     max_energy_reserve: 450.0
     resting_metabolism: 3.5
-    movement_speed: 0.02
+    movement_speed: 1.0
     feeding_cost: 1.45
     movement_cost: 1.2
     energy_content: 4500.0

@@ -57,11 +57,19 @@ Repeat the debug flags when resuming or running standalone inference. Policies
 retain the usual checkpoint format; the run/progress metadata records the
 experiment. The random baseline compares biomass/energy curves, while heatmaps
 show the trained agents. A useful control is a separate training run with
-`--food-blob-speed 0`. For zooplankton specifically, lower the speed (e.g. 0.01):
-its configured movement speed is only 0.02 cells/tick. A fast moving target can
-be impossible to follow regardless of training. Use a horizon long enough to
+`--food-blob-speed 0`. Zooplankton now defaults to movement speed 1.0 in the
+shared species library (also outside debug mode), up from 0.02, so its maximum
+movement can keep up with the default blob. Use a horizon long enough to
 see movement and a bounce; the usual 15-tick training horizon is too short for
 that comparison on large grids.
+
+In training and inference viewers, click **Colors: fixed [C]** or press `C`
+to switch between rollout-start colour limits (the default) and dynamic
+per-species limits from the displayed frame. Dynamic colours reveal small
+remaining populations but are not comparable across ticks; the colourbar shows
+the current limit. This also works during recording and replay, with linear or
+log colours. The biomass scale multiplier applies in both modes; switching
+colour modes does not change the biomass line plot or simulation.
 
 Internal habitat obstacles clip and renormalise the food footprint. If the
 footprint is entirely blocked, food is placed at the nearest accessible cell(s).
