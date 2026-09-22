@@ -119,7 +119,8 @@ def main(argv=None, *, on_step=None):
     print(f"Output: {directory}. First iteration includes warmup/compilation/capture.", flush=True)
     if args.currents == "on":
         print(f"Currents: on; max drift={args.current_strength:g}/tick, "
-              f"period={args.current_period}, seed={args.current_seed}", flush=True)
+              f"scroll={1 / args.current_period:g} cells/tick per axis, "
+              f"scale={args.current_scale:g} cells, seed={args.current_seed}", flush=True)
     if args.mortality_multiplier != 1.0:
         print(f"Mortality multiplier: every natural_mortality scaled by "
               f"{args.mortality_multiplier:g} (mortality={args.mortality}).",

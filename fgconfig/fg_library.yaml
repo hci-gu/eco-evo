@@ -1,5 +1,6 @@
 ﻿species_definitions:
   phytoplankton:
+    current_response: 1.0
     display_name: "Phytoplankton"
     is_decision_maker: false
     movement_speed: 0.0
@@ -46,6 +47,7 @@
     interference: 0.0
     extinction_threshold_factor: 0.5
   benthic_community:
+    current_response: 0.0
     display_name: "Benthic Community"
     is_decision_maker: false
     movement_speed: 0.0

@@ -14,6 +14,11 @@ class FunctionalGroup:
         
         # Metadata from params
         self.is_decision_maker = params.get('is_decision_maker', False)
+        # Active decision makers are excluded regardless of this value.
+        # Zero anchors a non-decision-maker group against passive currents.
+        self.current_response = float(params.get('current_response', 1.0))
+        if not np.isfinite(self.current_response) or not 0 <= self.current_response <= 1:
+            raise ValueError("current_response must be finite and between 0 and 1")
         self.max_energy_reserve = params.get('max_energy_reserve', 1000.0)  # ME_X
         self.resting_metabolism = params.get('resting_metabolism', 0.0)  # Rest_X
         self.growth_rate = params.get('growth_rate', 0.0)  # MG_X

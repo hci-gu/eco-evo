@@ -8474,3 +8474,120 @@ remain open exactly as described in 71.9 / 71.11.
        number does both, neither can be calibrated honestly. This is
        the same conflation satiation_scale 1.37 works around for the
        porpoise only.
+
+93 SCROLLING CLOUD CURRENTS (2026-09-22)
+
+93.1 Implementation
+    Replaced the spatially uniform random current vector with smooth,
+    seeded value noise scrolling in +X/+Y (east/south in array coordinates).
+    movement.py owns noise generation, direction fractions and CPU passive
+    transport. currents.py retains CurrentConfig, CLI and compatibility
+    exports. TensorEcosystem.advect samples the same field on the device.
+
+    The cloud mixes two spatial scales with weights 0.75 and 0.25.
+    Coordinates are ((x - tick/period)/scale, (y - tick/period)/scale).
+    The outgoing biomass fraction is strength * cloud * current_response,
+    split equally east/south, with identical transport of energy reserves.
+    Blocked habitat/edge transfers stay at the source, even with migration.
+    No active movement cost, ecology RNG consumption, or evolving texture
+    state. The existing step hook still runs before growth and independently
+    of decision-maker movement. Coordinates are cached per environment.
+
+93.2 Configuration and compatibility
+    --currents remains off by default. --current-strength still caps the
+    outgoing fraction per tick (default 0.1). --current-period now means
+    ticks to scroll one cell along each axis (default 20), NOT ticks between
+    random vector targets. New --current-scale is the coarse noise lattice
+    spacing in cells (default 12, minimum 1). Scrolling speed and transport
+    strength are independent. Metadata/probe propagation retains scale.
+
+    Per-FG current_response is validated in [0,1], default 1 for existing
+    species definitions. The library sets phytoplankton=1 and
+    benthic_community=0. All decision makers, including zooplankton, remain
+    excluded. Susceptibility is editable in the library YAML.
+
+    This is diagonal drift with spatially varying strength, not an eddy or
+    hydrodynamic model. Persistent flow can accumulate biomass downstream.
+    Old current-enabled trajectories change, but the observation/checkpoint
+    layout does not. CURRENTS.md documents parameters and migration semantics.
+
+93.3 Validation
+    Environment: .venv/bin/python, Torch 2.11.0, NumPy 1.26.4, no CUDA.
+    Current tests: 32 passed, 9 CUDA cases skipped. Coverage includes spatial
+    NumPy/Torch parity, continuous positive-XY scrolling, seeds, conservation,
+    habitat/edges, response 0/0.25/1, no decision makers, CLI/metadata, ARS
+    chunk independence, fullgraph tracing and no tensor readback.
+
+    Full suite: 450 passed, 72 skipped, 2 failed. An isolated git archive of
+    unchanged HEAD reproduced BOTH failures (432 passed, 68 skipped):
+      * test_live_project_porpoises_need_a_clupeid_majority_not_a_pure_diet:
+        computed minimum pelagic share 0.266912, below expected 0.40.
+      * test_full_ticks_match_reference[cpu-0.0-True-True]: currents disabled;
+        reserve difference 0.00027227 exceeds existing parity tolerance.
+    Neither unrelated failure was modified or hidden by changing tolerances.
+
+    One CPU training generation passed at 60x60, pelagic_fish, 2 deltas,
+    3 worlds, 30 ticks, currents on (strength 0.2, period 10, scale 9.5):
+      results/current-cloud-smoke-20260922/
+    One tensor-trainer generation passed on CPU/eager at 8x9, 2 deltas,
+    2 worlds, 15 ticks, all active DMs and the same current settings:
+      results/current-cloud-tensor-smoke-20260922/
+    Syntax and diff checks passed. CUDA execution still needs NVIDIA hardware.
+
+94 FIXED BIOMASS HEATMAP COLOURS (2026-09-22)
+
+    User explicitly requested fixed colour maxima based on starting biomass.
+    This supersedes section 75.2(a) for heatmaps. Each FG now uses its own
+    rollout-start per-cell maximum, multiplied by the optional display-scale
+    slider (default 1x). Declining biomass darkens; values above the reference
+    saturate. No frame-dependent maximum fallback, including zero starts.
+    New rollouts capture a new reference; replay and log mode retain it.
+    Clicking the slider label restores 1x rather than automatic heatmap
+    scaling. The line plot's automatic axis remains the default.
+
+    inference.run_inference now records tick 0 BEFORE the first simulation
+    step and records subsequent biomass frames as ticks 1..N. Previously its
+    tick-0 frame already included one ecological update. Training probes
+    already supplied the true initial field.
+
+    Verified actual rendered pixel colours with SDL dummy across decline,
+    growth, log mode, slider/reset, new rollout, replay and a zero start.
+    Three-tick real-policy inference retained the original maxima and
+    recorded four frames (ticks 0..3). One-generation visual tensor training
+    passed on CPU/eager with currents on; outputs:
+      results/fixed-biomass-colours-smoke-20260922/
+    Full pytest: 450 passed, 72 skipped, the same 2 pre-existing failures
+    documented and baseline-verified in section 93.3. No new test failures.
+
+95 CURRENT BOUNDARIES FOLLOW MIGRATION (2026-09-22)
+
+    User observed current-driven biomass collecting at edges and requested
+    the same migration handling as ordinary movement. Reproduced with 100
+    units at the southeast corner: --migration on still left all 100 there.
+    CPU currents forced a closed movement mask; tensor currents multiplied
+    their mask by neighbor_valid, also blocking every off-grid outflow.
+
+    Current transport now respects env.migration on both backends. With
+    migration on, edge outflows are summed and reintroduced with the same
+    habitat-weighted immigration and threshold concentration as swimmers.
+    The existing immigration helpers now accept the participating FG IDs
+    or tensor indices, defaulting to DMs for existing movement callers.
+    Biomass and reserve remain conserved; inaccessible internal cells stay
+    blocked. With migration off the existing closed boundaries remain.
+    This is boundary redistribution, not opposite-edge wrapping, and does
+    not guarantee a uniform spatial equilibrium.
+
+    Add --migration on to inference as well as --currents on; neither flag
+    changes its default. CURRENTS.md now documents both boundary modes.
+    This supersedes the always-closed-current description in section 93.
+
+    Regression: corner release with migration on/off, habitat-weighted
+    recipient ratios, no immigration to blocked cells, CPU/tensor agreement
+    with unequal DM/NDM counts, and NDM-only worlds including 1x1/1xN/Nx1.
+    ARS chunking/fullgraph/no-readback checks also run with migration on;
+    CUDA capture cases now enable migration (skipped here: no NVIDIA GPU).
+    Full suite: 457 passed, 74 skipped, same 2 pre-existing failures as 93.3.
+    Syntax and diff checks passed. One generation completed in both trainers
+    with currents and migration on, strength 0.2, period 10, scale 9.5:
+      results/current-migration-smoke-20260922/
+      results/current-migration-tensor-smoke-20260922/

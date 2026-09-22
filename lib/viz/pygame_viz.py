@@ -381,23 +381,15 @@ class LiveVisualizer:
         # rollout (train probe runs fresh per ARS-iter, inference is one run).
         self._b0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
         # Rollout-start per-cell maxima, captured on the first frame of
-        # each rollout. Only used as the reference for the *manual*
-        # biomass display scale below; the default rendering path
-        # auto-scales every heatmap to its own current frame max.
+        # each rollout. Heatmap colours always use this fixed reference.
         self._heatmap_vmax0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
         # One global visual biomass scale for inference. 1.0 means:
-        # heatmap max = rollout-start per-cell max, biomass plot max = 100%
-        # of rollout-start total. Dragging the slider zooms both together.
+        # heatmap max = rollout-start per-cell max. After slider adjustment,
+        # biomass plot max = 100% * scale. The slider zooms both together.
         #
-        # The scale is an *opt-in override*: until the user touches the
-        # slider (``_biomass_scale_manual`` stays False) both the heatmaps
-        # and the biomass plot auto-scale to what is currently on screen,
-        # which is the long-standing behaviour. A fixed reference frame
-        # keeps near-extinct species dark instead of re-expanding their
-        # residual biomass to full yellow, but it also flattens every
-        # curve and darkens every map when the run drifts far from its
-        # start, so it must not be the default. Clicking the slider
-        # label switches back to auto.
+        # Heatmaps stay comparable across ticks, including near extinction.
+        # The line plot still auto-scales until the slider is adjusted.
+        # Clicking the label restores 1x start colours and the auto plot axis.
         self._biomass_display_scale: float = 1.0
         self._biomass_scale_manual: bool = False
         self._biomass_scale_min: float = 0.05
@@ -734,18 +726,8 @@ class LiveVisualizer:
                 obj = fgs[fid]
                 arr = obj.biomass if hasattr(obj, "biomass") else obj
                 arr = np.asarray(arr, dtype=np.float32)
-                # När en FG-cell kollapsat lämnar upprepade decay-multiplikationer
-                # kvar pyttesmå rester (ofta float32-subnormaler ~1e-45, men
-                # även "normala" mikrovärden långt under realistisk biomass).
-                # Heatmapens per-frame max-normalisering förstoras då upp till
-                # full skala och fluktuerar visuellt brusigt mellan tickar
-                # trots att cellen i praktiken är död. Vi nollar därför **per
-                # cell** så snart biomassan understiger en tröskel kopplad till
-                # FG:ns minsta odelbara enhet (``min_split_biomass`` i ton;
-                # halva den nivån = mindre än en halv odelbar individ kvar i
-                # cellen). Saknas ``min_split_biomass`` (kontinuerligt läge)
-                # använder vi en liten numerisk tröskel som bara fångar
-                # subnormaler/brus.
+                # Hide sub-individual residues after extinction. Continuous
+                # biomass uses a numerical floor to suppress subnormal noise.
                 msb = float(getattr(obj, 'min_split_biomass', 0.0)) \
                     if hasattr(obj, 'biomass') else 0.0
                 dead_eps = 0.5 * msb if msb > 0.0 else 1e-20
@@ -758,7 +740,7 @@ class LiveVisualizer:
                 total = float(arr.sum())
                 self._biomass[fid] = arr
                 self._totals[fid] = total
-                if new_rollout:
+                if new_rollout or self._heatmap_vmax0.get(fid, 0.0) <= 0.0:
                     self._b0[fid] = total
                     try:
                         self._heatmap_vmax0[fid] = max(float(arr.max()), 1e-12)
@@ -1948,9 +1930,8 @@ class LiveVisualizer:
     def _set_biomass_display_scale(self, value: float) -> None:
         """Pin the biomass display scale to ``value`` (manual override).
 
-        Touching the slider is what switches the heatmaps and the biomass
-        plot from auto-scaling to the fixed rollout-start reference; see
-        ``_biomass_scale_manual`` in ``__init__``.
+        Heatmaps always use their rollout-start reference. Adjusting the
+        slider also pins the biomass plot axis to a multiple of 100%.
         """
         lo = float(self._biomass_scale_min)
         hi = float(self._biomass_scale_max)
@@ -1958,13 +1939,11 @@ class LiveVisualizer:
         self._biomass_scale_manual = True
 
     def _reset_biomass_display_scale(self) -> None:
-        """Return to auto-scaling (per-frame heatmap max, auto y-axis)."""
+        """Restore start-value heatmap colours and an automatic plot y-axis."""
         self._biomass_scale_manual = False
         self._biomass_display_scale = 1.0
 
     def _biomass_scale_label(self) -> str:
-        if not self._biomass_scale_manual:
-            return "Biomass scale = auto"
         return f"Biomass scale = {self._biomass_display_scale:.2f}x"
 
     def _biomass_scale_value_from_x(self, mx: int) -> Optional[float]:
@@ -2958,8 +2937,7 @@ class LiveVisualizer:
             lo3_surf = self._font.render(_bio_lo_txt, True, (150, 150, 160))
             hi3_surf = self._font.render(_bio_hi_txt, True, (150, 150, 160))
             self._screen.blit(bio_lbl, (x + 6, row3_y + 2))
-            # Etiketten är klickbar: den släpper override:en och går
-            # tillbaka till autoskalning (se ``_handle_click``).
+            # Clicking restores 1x start colours and the automatic plot axis.
             self._biomass_scale_label_rect = (
                 x + 4, row3_y, bio_lbl.get_width() + 4,
                 self._font.get_height() + 4)
@@ -3276,30 +3254,16 @@ class LiveVisualizer:
             return
 
         v = arr.astype(np.float32, copy=False)
-        # Default: auto-scale to this frame's own max, which is what the
-        # heatmaps have always done - the whole grid structure stays
-        # visible no matter how far the run has drifted from its start.
-        # Only when the user pins the biomass scale do we switch to the
-        # fixed rollout-start reference (start max * scale), which keeps
-        # colours comparable over time at the cost of going dark once the
-        # FG falls well below its starting density.
-        if self._biomass_scale_manual:
-            raw_vmax = float(self._heatmap_vmax0.get(fid, 0.0) or 0.0)
-            if raw_vmax <= 1e-12:
-                raw_vmax = float(np.max(v)) if v.size else 0.0
-            raw_vmax *= float(self._biomass_display_scale)
-        else:
-            raw_vmax = float(np.max(v)) if v.size else 0.0
-        raw_vmax = max(raw_vmax, 1e-12)
+        # Fixed per-FG start reference, also during replay and in log mode.
+        # Never fall back to the current frame's max, even for a zero start.
+        raw_vmax = max(float(self._heatmap_vmax0.get(fid, 0.0))
+                       * float(self._biomass_display_scale), 1e-12)
         if self._log_heatmap:
             v = np.log1p(np.maximum(v, 0.0))
             vmax = float(np.log1p(raw_vmax))
         else:
             vmax = raw_vmax
-        if vmax <= 1e-12:
-            idx = np.zeros_like(v, dtype=np.uint8)
-        else:
-            idx = np.clip((v / vmax) * 255.0, 0, 255).astype(np.uint8)
+        idx = np.clip((v / vmax) * 255.0, 0, 255).astype(np.uint8)
         rgb = self._lut[idx]  # (H, W, 3)
         if dim:
             rgb = (rgb.astype(np.uint16) * 90 // 255).astype(np.uint8)
@@ -3317,10 +3281,8 @@ class LiveVisualizer:
 
         # ---- Colorbar legend under the heatmap ----------------------------
         # Per-FG normalisation: shows what the colour gradient maps to,
-        # from 0 (left, dark) to vmax (right, bright). vmax is the
-        # *current* per-FG max biomass in this tick (log1p when hm:log is
-        # on), or the pinned rollout-start reference when the biomass
-        # scale slider has been touched.
+        # from 0 (left, dark) to the fixed rollout-start maximum times the
+        # display scale (right, bright), also when log mode is enabled.
         cbar_y = hm_y + H * self.cell_px + 3
         cbar_w = W * self.cell_px
         cbar_strip_h = 6

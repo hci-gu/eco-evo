@@ -40,6 +40,9 @@ class TensorEcosystem:
         tensor = self.tensor
         self.dm_index = tensor(self.dm_positions, torch.long)
         self.ndm_index = tensor(self.ndm_positions, torch.long)
+        self.current_response = tensor([
+            env.fgs[self.ids[i]].current_response for i in self.ndm_positions
+        ])[None, :, None, None]
         self.is_dm = tensor([i in self.dm_positions for i in range(self.G)], torch.bool)[None, :, None]
         self.move_mask = tensor(env.move_mask.reshape(4, self.C))
         self.eat_mask = tensor(env.eat_static_mask)
@@ -118,6 +121,8 @@ class TensorEcosystem:
 
     def _build_indices(self, env):
         yy, xx = np.indices((self.H, self.W))
+        self.current_x = self.tensor(xx.ravel())
+        self.current_y = self.tensor(yy.ravel())
         coords = ((yy - 1, xx), (yy, xx + 1), (yy + 1, xx), (yy, xx - 1))
         neighbors, valid = [], []
         for y, x in coords:
@@ -271,9 +276,10 @@ class TensorEcosystem:
         reduction = torch.where(biomass > 1e-9, (biomass - intake) / (biomass + 1e-9), 0.0)
         return biomass - intake, reserve * reduction, gains, hidden, actual
 
-    def immigration(self, b_emig, r_emig):
+    def immigration(self, b_emig, r_emig, group_index=None):
+        """Shared boundary redistribution for active and passive movement."""
         weights = self.edge_weights[None, None]
-        threshold = self.threshold[:, self.dm_index]
+        threshold = self.threshold[:, self.dm_index if group_index is None else group_index]
         per_cell = b_emig[:, :, None] * weights / self.edge_cumsum.clamp_min(1e-30)
         valid = (per_cell >= threshold) & (threshold > 0) & (b_emig[:, :, None] > 0)
         keep = torch.where(valid, self.edge_ranks, 0).amax(-1, keepdim=True)
@@ -281,7 +287,7 @@ class TensorEcosystem:
         mask = (self.edge_ranks <= keep) | (keep == 0)
         weights = weights * mask
         weights = weights / weights.sum(-1, keepdim=True).clamp_min(1e-30)
-        shape = (b_emig.shape[0], self.D, self.C)
+        shape = (b_emig.shape[0], b_emig.shape[1], self.C)
         b = torch.zeros(shape, device=self.device).index_copy(2, self.edge_indices, b_emig[:, :, None] * weights)
         r = torch.zeros(shape, device=self.device).index_copy(2, self.edge_indices, r_emig[:, :, None] * weights)
         return b, r
@@ -453,8 +459,10 @@ class TensorEcosystem:
         if keys is None:
             keys = torch.full((biomass.shape[0],), self.current_world_seed,
                               dtype=torch.int64, device=self.device)
-        fractions = torch.stack(direction_fractions(tick, keys, self.currents), dim=1)
-        fractions = fractions[:, None, :, None] * (self.move_mask * self.neighbor_valid)[None, None]
+        fractions = torch.stack(direction_fractions(
+            tick, keys[:, None], self.currents, self.current_x, self.current_y), dim=1)
+        fractions = (fractions[:, None] * self.current_response
+                     * self.move_mask[None, None])
         b, r = biomass[:, self.ndm_index], reserve[:, self.ndm_index]
         b_out, r_out = b[:, :, None] * fractions, r[:, :, None] * fractions
         b_total, r_total = b - b_out.sum(2), r - r_out.sum(2)
@@ -463,6 +471,11 @@ class TensorEcosystem:
             index, valid = self.neighbors[source], self.neighbor_valid[source]
             b_total = b_total + b_out[:, :, direction, index] * valid
             r_total = r_total + r_out[:, :, direction, index] * valid
+        if self.migration:
+            b_emig = (b_out * self.outside).sum((2, 3))
+            r_emig = (r_out * self.outside).sum((2, 3))
+            b_imm, r_imm = self.immigration(b_emig, r_emig, self.ndm_index)
+            b_total, r_total = b_total + b_imm, r_total + r_imm
         return biomass.index_copy(1, self.ndm_index, b_total), reserve.index_copy(1, self.ndm_index, r_total)
 
     def step(self, biomass, reserve, actions, tick, phase, seed_multiplier,

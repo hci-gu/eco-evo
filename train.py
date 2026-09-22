@@ -1961,7 +1961,9 @@ def main(argv=None, *, on_step=None, confirm=True):
     print(f"Target Species: {', '.join(target_species)} {'(default: all)' if species_is_default else '(user)'}")
     print(f"Method:         ARS (Augmented Random Search)")
     if currents:
-        print(f"Currents:       on; max drift={currents.strength:g}/tick, period={currents.period}, seed={currents.seed}")
+        print(f"Currents:       on; max drift={currents.strength:g}/tick, "
+              f"scroll={1 / currents.period:g} cells/tick per axis, "
+              f"scale={currents.scale:g} cells, seed={currents.seed}")
     print(f"Generations:    {gen_display} {'(default)' if gen_is_default else '(user)'}")
     print(f"Iter/Gen:       {_mark('iter_per_gen', args.iter_per_gen)} per species per generation")
     print(f"N Eval Ticks:   {_mark('n_eval_ticks', args.n_eval_ticks)} ticks per rollout")
