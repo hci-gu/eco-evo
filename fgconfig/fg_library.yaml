@@ -6,7 +6,7 @@
     growth_rate: 0.0375
     max_carrying_capacity: 24.0
     energy_content: 2000.0
-    seed_rate: 1e-07
+    seed_rate: 0.0
     seasonal_amplitude: 0.0
     seasonal_period: 1460.0
     spawn:
