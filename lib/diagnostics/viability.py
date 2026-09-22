@@ -79,7 +79,13 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-TICKS_PER_YEAR = 1460  # 6 h/tick
+from lib.world.tick_time import DEFAULT_TICK_HOURS, ticks_per_year
+
+#: Ticks in a simulated year at the historical 6 h tick. Kept as a
+#: module constant because ``tools/viability.py`` converts a --ticks
+#: override back into years with it; a project on another tick length
+#: passes its own via ``ViabilityCriterion.tick_hours``. Section 97.
+TICKS_PER_YEAR = ticks_per_year(DEFAULT_TICK_HOURS)
 
 NEUTRAL = "neutral"
 EAT = "eat"
@@ -132,6 +138,10 @@ class ViabilityCriterion:
     ceiling: float = 10.0
     max_drift: float = 2.0
     window_frac: float = 0.10
+    #: Hours per tick, from ``project_metadata.tick_hours``. Only the
+    #: years <-> ticks conversion depends on it; the criterion itself is
+    #: expressed in simulated years and so is tick-length independent.
+    tick_hours: int = DEFAULT_TICK_HOURS
 
     def __post_init__(self):
         if not self.years > 0:
@@ -149,7 +159,7 @@ class ViabilityCriterion:
 
     @property
     def ticks(self) -> int:
-        return max(1, int(round(self.years * TICKS_PER_YEAR)))
+        return max(1, int(round(self.years * ticks_per_year(self.tick_hours))))
 
     @property
     def window(self) -> int:
@@ -158,7 +168,8 @@ class ViabilityCriterion:
 
     def describe(self) -> str:
         return (
-            f"{self.years:g} years ({self.ticks} ticks), {self.seeds} seed(s), "
+            f"{self.years:g} years ({self.ticks} ticks of {self.tick_hours} h), "
+            f"{self.seeds} seed(s), "
             f"floor {self.floor:g}x spawn, ceiling {self.ceiling:g}x spawn, "
             f"drift <= {self.max_drift:g}x over the last "
             f"{self.window_frac:g} of the horizon"

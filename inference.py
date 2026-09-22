@@ -41,6 +41,7 @@ from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.population_change import (
     add_mortality_multiplier_argument)
 from lib.runners.policy import PolicyNetwork
+from lib.runners.rnd_baseline import add_rnd_baseline_argument, rnd_baseline_plot_ids
 
 
 class RandomPolicy:
@@ -613,8 +614,12 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
     return policies, mean, var
 
 
-def _push_action_fracs(viz, env, step, suffix="", prev=None):
+def _push_action_fracs(viz, env, step, suffix="", prev=None, only=None):
     """Push per-DM PER-TICK (instantaneous) action fractions into viz.
+
+    ``only`` (optional set of FG ids) restricts which DMs are pushed; the
+    ``solo`` baseline uses it so each leave-one-out world reports only the
+    DM that is random in it.
 
     ``env._action_move_frac`` / ``_rest_frac`` / ``_eat_frac`` är
     kumulativa summor per DM över aktiva ticks. För att få ögonblicks-
@@ -649,7 +654,7 @@ def _push_action_fracs(viz, env, step, suffix="", prev=None):
             prev[(i, 'mv')] = float(mv[i])
             prev[(i, 'rs')] = float(rs[i])
             prev[(i, 'et')] = float(et[i])
-            if dc <= 0.0:
+            if dc <= 0.0 or (only is not None and fid not in only):
                 continue
             key = fid + suffix
             _mv_pct = 100.0 * (float(mv[i]) - mv_prev) / dc
@@ -670,14 +675,64 @@ def _push_action_fracs(viz, env, step, suffix="", prev=None):
         pass
 
 
+def _install_rnd_policies(env, rnd_env, policies, random_fids):
+    """Make ``random_fids`` act uniformly at random in ``rnd_env``.
+
+    The remaining DMs keep their trained policy and the main env's frozen
+    obs-norm rows, so they behave exactly as in the main env up to the
+    changed world the random DMs create (the ``solo`` ablation). With
+    ``random_fids == rnd_env.dm_ids`` this is the ``all`` baseline.
+    """
+    rnd_env.build_static_caches()
+    random_fids = set(random_fids)
+    out_dim = 5 + rnd_env.N_all
+    obs_mean = getattr(env, 'obs_mean', None)
+    obs_var = getattr(env, 'obs_var', None)
+    in_dim = obs_mean.shape[1] if obs_mean is not None and obs_mean.ndim == 2 else 0
+    rnd_env.policies = {
+        fid: (RandomPolicy(in_dim, out_dim) if fid in random_fids
+              else policies.get(fid))
+        for fid in rnd_env.dm_ids
+    }
+    if obs_mean is not None and obs_var is not None:
+        # Rows are aligned with dm_ids, identical in both envs (same
+        # project, same builder). Random DMs get mean=0 / var=1: their
+        # logits are constant zero, so this is pure bookkeeping.
+        mean = np.array(obs_mean, copy=True)
+        var = np.array(obs_var, copy=True)
+        for i, fid in enumerate(rnd_env.dm_ids):
+            if fid in random_fids:
+                mean[i] = 0.0
+                var[i] = 1.0
+        rnd_env.obs_mean = mean
+        rnd_env.obs_var = var
+    temperature = getattr(env, 'softmax_temperature', None)
+    if temperature is not None:
+        rnd_env.softmax_temperature = temperature
+    # Force the per-DM Python path so RandomPolicy.get_action_logits_torch
+    # is actually called (the batched path needs stacked Linear weights).
+    # Trained DMs go through the same per-DM path, which is numerically the
+    # batched one without the zero padding.
+    rnd_env._batched_ready = False
+
+
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
-                  viz=None, rnd_env=None):
+                  viz=None, rnd_env=None, rnd_solo_envs=None):
     """Install policies + frozen stats and step the environment ``n_ticks`` times.
 
     If ``viz`` is a :class:`lib.viz.LiveVisualizer`, biomass heatmaps and a
     rolling per-FG total-biomass plot are updated every tick. The visualiser
     is allowed to abort the run early by returning False from ``pump_events``;
     in that case the partial history collected so far is returned.
+
+    Random-action baselines (``--rnd_baseline``, section 62):
+
+    * ``rnd_env`` - the ``all`` baseline: every DM random, every FG reported.
+    * ``rnd_solo_envs`` - ``{dm_id: env}`` for the ``solo`` baseline: in each
+      env only that DM is random and only that DM is reported.
+
+    Each baseline env must be built from the same world (seed, overrides)
+    as ``env``.
     """
     env.policies = dict(policies)
     env.obs_mean = obs_mean
@@ -685,34 +740,37 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     # Rebuild batched weight tensors used by the fast inference path.
     env.rebuild_batched_weights()
 
-    # Install uniform-random policies on the parallel baseline env, if any.
+    # ``rnd_env_for_fid`` maps each reported _rnd FG to the env it is read
+    # from; ``unique_rnd_envs`` are the distinct envs stepped each tick
+    # (one for 'all', N for 'solo'), mirroring train._probe_biomass.
+    rnd_env_for_fid = {}
+    unique_rnd_envs = []
     if rnd_env is not None:
-        rnd_env.build_static_caches()
-        out_dim_rnd = 5 + rnd_env.N_all
-        in_dim_rnd = env.obs_mean.shape[1] if env.obs_mean.ndim == 2 else 0
-        rnd_env.policies = {
-            fid: RandomPolicy(in_dim_rnd, out_dim_rnd) for fid in rnd_env.dm_ids
-        }
-        # Frozen mean=0 / var=1 (we want true uniform actions, no obs
-        # normalisation pulling the masked logits anywhere). Logits are
-        # constant zero anyway so this is pure bookkeeping.
-        rnd_env.obs_mean = np.zeros_like(env.obs_mean)
-        rnd_env.obs_var = np.ones_like(env.obs_var)
-        # Force the per-DM Python path so RandomPolicy.get_action_logits_torch
-        # is actually called (the batched path needs stacked Linear weights).
-        rnd_env._batched_ready = False
+        _install_rnd_policies(env, rnd_env, policies, rnd_env.dm_ids)
+        unique_rnd_envs.append(rnd_env)
+        for fid in rnd_env.fgs:
+            rnd_env_for_fid[fid] = rnd_env
+    for fid, solo_env in (rnd_solo_envs or {}).items():
+        _install_rnd_policies(env, solo_env, policies, [fid])
+        unique_rnd_envs.append(solo_env)
+        rnd_env_for_fid[fid] = solo_env
+    # FGs each env reports, for the action-fraction push.
+    rnd_report = {id(e): {f for f, e2 in rnd_env_for_fid.items() if e2 is e}
+                  for e in unique_rnd_envs}
 
     history = {fid: [] for fid in env.fgs}
     energy_history = {fid: [] for fid in env.fgs}
-    rnd_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
-    rnd_energy_history = {fid: [] for fid in (rnd_env.fgs if rnd_env is not None else {})}
+    rnd_history = {fid: [] for fid in rnd_env_for_fid}
+    rnd_energy_history = {fid: [] for fid in rnd_env_for_fid}
     # Snapshots för att omvandla env:s kumulativa ackumulatorer till
     # per-tick ögonblicksvärden i viz (headertexter + grafer). Nycklarna
     # matchar de env-attribut vi läser nedan.
     _prev_loss = {fid: {'s': 0.0, 'p': 0.0, 'i': 0.0} for fid in env.fgs}
     _prev_diet = {}  # pred_id -> {prey_id: cumulative intake}
     _prev_act = {}
-    _prev_act_rnd = {}
+    # One snapshot dict per rnd env: ``_push_action_fracs`` keys it by DM
+    # index, which is only unique within one env.
+    _prev_act_rnd = {id(e): {} for e in unique_rnd_envs}
     # Spela in hela inference-rollouten som en uppspelningsbar "film" i
     # viz. Frames capturas vid varje ``update_biomass``; vid loop-slut
     # kallas ``end_rollout_recording`` så användaren kan spela upp/stega.
@@ -729,10 +787,10 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             observation = env.get_observation()
             actions = env.policy_controller.forward(observation)
             env.step(actions)
-            if rnd_env is not None:
-                rnd_observation = rnd_env.get_observation()
-                rnd_actions = rnd_env.policy_controller.forward(rnd_observation)
-                rnd_env.step(rnd_actions)
+            for _re in unique_rnd_envs:
+                rnd_observation = _re.get_observation()
+                rnd_actions = _re.policy_controller.forward(rnd_observation)
+                _re.step(rnd_actions)
         except KeyboardInterrupt:
             if verbose:
                 print(f"\n    interrupted at tick {t+1}/{n_ticks}; "
@@ -742,12 +800,12 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             history[fid].append(float(fg.biomass.sum()))
             er = getattr(fg, 'energy_reserve', None)
             energy_history[fid].append(float(er.sum()) if er is not None else 0.0)
-        if rnd_env is not None:
-            for fid, fg in rnd_env.fgs.items():
-                rnd_history[fid].append(float(fg.biomass.sum()))
-                er = getattr(fg, 'energy_reserve', None)
-                rnd_energy_history[fid].append(
-                    float(er.sum()) if er is not None else 0.0)
+        for fid, _re in rnd_env_for_fid.items():
+            fg = _re.fgs[fid]
+            rnd_history[fid].append(float(fg.biomass.sum()))
+            er = getattr(fg, 'energy_reserve', None)
+            rnd_energy_history[fid].append(
+                float(er.sum()) if er is not None else 0.0)
         # Stop visualization once all tracked biomass has collapsed. Use an
         # absolute epsilon instead of exact zero because repeated float32
         # decay can leave subnormal values with no biological meaning.
@@ -757,20 +815,18 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             float(getattr(fg, 'min_split_biomass', 0.0))
             for fg in env.fgs.values()
         ]
-        if rnd_env is not None:
+        for _re in unique_rnd_envs:
             _msb_values.extend(
                 float(getattr(fg, 'min_split_biomass', 0.0))
-                for fg in rnd_env.fgs.values()
+                for fg in _re.fgs.values()
             )
         _msb_pos = [v for v in _msb_values if v > 0.0]
         DEAD_EPS = 0.5 * min(_msb_pos) if _msb_pos else 1e-9
         total_b = sum(float(fg.biomass.sum()) for fg in env.fgs.values())
-        total_b_rnd = (
-            sum(float(fg.biomass.sum()) for fg in rnd_env.fgs.values())
-            if rnd_env is not None else 0.0
-        )
-        ecosystem_dead = (total_b <= DEAD_EPS) and (
-            rnd_env is None or total_b_rnd <= DEAD_EPS
+        # Stop only when the main world AND every baseline world are dead.
+        ecosystem_dead = (total_b <= DEAD_EPS) and all(
+            sum(float(fg.biomass.sum()) for fg in _re.fgs.values()) <= DEAD_EPS
+            for _re in unique_rnd_envs
         )
         # Per-FG average-biomass / average-energy ratio over the rollout
         # so far, expressed as a percentage of the initial value. ``b0``
@@ -867,10 +923,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     _diet[pred_id] = {pid: dv / _tot_d for pid, dv in deltas.items()}
                 if _diet:
                     viz.update_diet_breakdown(_diet)
-                if rnd_env is not None:
-                    _push_action_fracs(viz, rnd_env, step=t, suffix="_rnd",
-                                       prev=_prev_act_rnd)
-                if rnd_env is not None:
+                for _re in unique_rnd_envs:
+                    _push_action_fracs(viz, _re, step=t, suffix="_rnd",
+                                       prev=_prev_act_rnd[id(_re)],
+                                       only=rnd_report[id(_re)])
+                if rnd_env_for_fid:
                     for fid in rnd_history.keys():
                         b0 = rnd_history[fid][0] if rnd_history[fid] else 0.0
                         e0 = rnd_energy_history[fid][0] if rnd_energy_history[fid] else 0.0
@@ -967,13 +1024,11 @@ def main():
                              "distributed proportionally to those cells' "
                              "accessibility (uniform over edge cells if no "
                              "accessibility map is provided). Default: off.")
-    parser.add_argument("--rnd-baseline", "--rnd_baseline", dest="rnd_baseline",
-                        action="store_true",
-                        help="Run a parallel rollout where each DM acts uniformly "
-                             "at random (mask-respecting) and overlay its biomass%% "
-                             "/ energy%% in the live plot as a baseline. Legend "
-                             "entries are suffixed with '_rnd'. No heatmaps for "
-                             "the random agents.")
+    add_rnd_baseline_argument(
+        parser, extra_help=" Only shown with --visual (biomass%%, energy%% "
+                           "and move/rest/eat; no heatmaps for the baseline "
+                           "worlds). Without --seed a seed is drawn so the "
+                           "baseline worlds share the main world's spawn.")
     parser.add_argument("--visual", action="store_true",
                         help="Open a live pygame window with per-FG biomass heatmaps "
                              "and a rolling total-biomass plot. Requires pygame; if "
@@ -988,6 +1043,18 @@ def main():
     verbose = not args.quiet
     if args.checkpoints is None:
         args.checkpoints = os.path.join("results", args.run_name)
+    if args.rnd_baseline != "none" and not args.visual:
+        # The baseline only feeds the live plot; headless it would cost one
+        # (all) or N (solo) extra rollouts for nothing.
+        print(f"[warn] --rnd_baseline {args.rnd_baseline} needs --visual; "
+              f"ignored.", file=sys.stderr)
+        args.rnd_baseline = "none"
+    if args.rnd_baseline != "none" and args.seed is None:
+        # Every world is built separately, and an unseeded spawn would give
+        # the baseline worlds a different layout from the main world, so the
+        # comparison would mix policy with geometry. Drawing the seed keeps
+        # the main world exactly as random as an unseeded run.
+        args.seed = int(np.random.SeedSequence().generate_state(1)[0] & 0x7FFFFFFF)
 
     if verbose:
         print("==========================================")
@@ -1001,6 +1068,7 @@ def main():
         print(f"Seed:         {args.seed}")
         print(f"Mortality:    {args.mortality} (x{args.mortality_multiplier:g})")
         print(f"Migration:    {args.migration}")
+        print(f"Rnd baseline: {args.rnd_baseline}")
         print("------------------------------------------")
 
     if not os.path.isdir(args.checkpoints):
@@ -1024,8 +1092,8 @@ def main():
     if args.visual:
         try:
             from lib.viz import LiveVisualizer
-            extra = ([fid + "_rnd" for fid in env.fgs.keys()]
-                     if args.rnd_baseline else None)
+            extra = rnd_baseline_plot_ids(args.rnd_baseline, list(env.fgs),
+                                          list(env.dm_ids))
             ndm_ids = [fid for fid, fg in env.fgs.items()
                        if not getattr(fg, 'is_decision_maker', False)]
             viz = LiveVisualizer(fg_ids=list(env.fgs.keys()),
@@ -1122,18 +1190,26 @@ def main():
                               f"{k}={v.get('template')}({v.get('mode')})"
                               for k, v in spawn_overrides.items()))
 
-            rnd_env = None
-            if args.rnd_baseline:
-                rnd_env = build_env(args.project, args.grid, seed=args.seed,
-                                    verbose=False,
-                                    apply_natural_mortality=(args.mortality == "on"),
-                                    mortality_multiplier=args.mortality_multiplier,
-                                    migration=(args.migration == "on"), currents=currents)
+            def _baseline_env():
+                """A fresh world with ``env``'s spawn, b0 and spawn overrides."""
+                e = build_env(args.project, args.grid, seed=args.seed,
+                              verbose=False,
+                              apply_natural_mortality=(args.mortality == "on"),
+                              mortality_multiplier=args.mortality_multiplier,
+                              migration=(args.migration == "on"), currents=currents)
                 if b0_overrides:
-                    apply_b0_overrides(rnd_env, b0_overrides)
+                    apply_b0_overrides(e, b0_overrides)
                 if spawn_overrides:
-                    apply_spawn_overrides(rnd_env, spawn_overrides,
+                    apply_spawn_overrides(e, spawn_overrides,
                                           spawn_tpls_now, seed=args.seed)
+                return e
+
+            rnd_env = None
+            rnd_solo_envs = None
+            if args.rnd_baseline == "all":
+                rnd_env = _baseline_env()
+            elif args.rnd_baseline == "solo":
+                rnd_solo_envs = {fid: _baseline_env() for fid in env.dm_ids}
 
             # Konsumera ev. dirty-flaggor som råkade vara satta vid start
             # av ny iteration — vi vill bara reagera på drag som sker EFTER
@@ -1152,7 +1228,8 @@ def main():
                 print(f"    [ticks override] rollout length = {ticks_this_run}")
             history = run_inference(env, policies, mean, var, ticks_this_run,
                                     verbose=verbose, viz=viz,
-                                    rnd_env=rnd_env)
+                                    rnd_env=rnd_env,
+                                    rnd_solo_envs=rnd_solo_envs)
             first_iteration = False
 
             if viz is None:

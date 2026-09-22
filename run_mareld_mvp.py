@@ -1,16 +1,21 @@
 import matplotlib.pyplot as plt
-from lib.config.config_loader import setup_full_mareld_mvp
+from lib.config.config_loader import library_tick_hours, setup_full_mareld_mvp
 from lib.environments.ecosystem import EcosystemEnvironment
+from lib.world.tick_time import tick_label
+
+# The MVP runs off the library alone (no project file), so it adopts the
+# tick length the library's numbers are calibrated at. Section 97.
+TICK_HOURS = library_tick_hours('fgconfig/fg_library.yaml')
 
 def main():
     print("Setting up Mareld Full MVP...")
     fgs = setup_full_mareld_mvp()
-    
+
     grid_config = {
         'width': 60,
         'height': 60,
         'cell_size': 1000.0,
-        'tick_duration': 6.0
+        'tick_duration': float(TICK_HOURS)
     }
     
     env = EcosystemEnvironment(grid_config, fgs)
@@ -40,7 +45,7 @@ def main():
     plt.figure(figsize=(10, 6))
     for fid, h in history.items():
         plt.plot(h, label=fid)
-    plt.xlabel('Ticks (6h)')
+    plt.xlabel(f'Ticks ({tick_label(TICK_HOURS)})')
     plt.ylabel('Total Biomass (tons)')
     plt.title('Mareld Mini MVP Simulation')
     plt.legend()

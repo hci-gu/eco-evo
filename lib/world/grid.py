@@ -1,8 +1,11 @@
 import numpy as np
 from PIL import Image
 
+from lib.world.tick_time import DEFAULT_TICK_HOURS
+
+
 class Grid:
-    def __init__(self, width=60, height=60, cell_size=1000.0, tick_duration=6.0):
+    def __init__(self, width=60, height=60, cell_size=1000.0, tick_duration=DEFAULT_TICK_HOURS):
         self.width = width
         self.height = height
         self.cell_size = cell_size  # meters

@@ -28,6 +28,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
+from lib.config.config_loader import project_tick_hours  # noqa: E402
 from lib.diagnostics import viability  # noqa: E402
 
 
@@ -145,9 +146,13 @@ def _write_csv(path, rows, sample_every):
 def main(argv=None):
     args = build_parser().parse_args(argv)
 
+    # The horizon is specified in simulated years, so the tick length
+    # the project runs at decides how many ticks that is. Section 97.
+    tick_hours = project_tick_hours(args.project)
     criterion = viability.ViabilityCriterion(
-        years=(args.ticks / viability.TICKS_PER_YEAR if args.ticks
+        years=(args.ticks / viability.ticks_per_year(tick_hours) if args.ticks
                else args.years),
+        tick_hours=tick_hours,
         seeds=args.seeds,
         floor=args.floor,
         ceiling=args.ceiling,
@@ -164,6 +169,8 @@ def main(argv=None):
     if not args.quiet:
         print(f"project        {args.project}")
         print(f"grid           {height}x{width}")
+        print(f"tick           {tick_hours} h "
+              f"({viability.ticks_per_year(tick_hours)} ticks/year)")
         print(f"spawn          {args.spawn} ({spawn_note})")
         print(f"mortality      {args.mortality} "
               f"(multiplier {args.mortality_multiplier:g})")

@@ -1,6 +1,7 @@
 import yaml
 import numpy as np
 from lib.world.functional_group import FunctionalGroup
+from lib.world.tick_time import DEFAULT_TICK_HOURS, resolve_tick_hours
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
@@ -9,6 +10,45 @@ def load_config(path):
     # utf-8-sig accepts both editor output and ordinary UTF-8 YAML.
     with open(path, 'r', encoding='utf-8-sig') as f:
         return yaml.safe_load(f)
+
+
+def project_tick_hours(project):
+    """Tick length in hours for a project (path or already-loaded dict).
+
+    Reads ``project_metadata.tick_hours``, falling back to
+    :data:`lib.world.tick_time.DEFAULT_TICK_HOURS` for project files that
+    predate the field. This is the single accessor every tool that
+    converts ticks <-> real time should use, so they cannot drift apart
+    (same pattern as ``reference_grid_{width,height}``). Section 97.
+    """
+    if project is None:
+        return DEFAULT_TICK_HOURS
+    if not isinstance(project, dict):
+        try:
+            project = load_config(project)
+        except (OSError, yaml.YAMLError):
+            return DEFAULT_TICK_HOURS
+    pmeta = (project or {}).get('project_metadata', {}) or {}
+    return resolve_tick_hours(pmeta.get('tick_hours'))
+
+
+def library_tick_hours(library):
+    """Tick length the library's per-tick numbers are calibrated at.
+
+    Stamped into ``library_metadata.tick_hours`` by the FG editor when it
+    rescales. A project whose ``tick_hours`` differs from this is running
+    miscalibrated biology - ``fg_library.yaml`` is shared between
+    projects, so the editor warns instead of rescaling behind your back.
+    """
+    if library is None:
+        return DEFAULT_TICK_HOURS
+    if not isinstance(library, dict):
+        try:
+            library = load_config(library)
+        except (OSError, yaml.YAMLError):
+            return DEFAULT_TICK_HOURS
+    lmeta = (library or {}).get('library_metadata', {}) or {}
+    return resolve_tick_hours(lmeta.get('tick_hours'))
 
 
 def _resolve_initial_biomass_range(*sources):

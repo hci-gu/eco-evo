@@ -6,9 +6,17 @@ Distilled project context for AI agents. Keep it short; the full history lives i
 ## 1. What this project is
 
 Agent-based marine ecosystem simulator for the Mareld / Poseidon Nord offshore case.
-Functional groups (FGs) live on a 60x60 grid (1 km/cell, 6 h/tick) and the
+Functional groups (FGs) live on a 60x60 grid (1 km/cell) and the
 decision-making FGs are driven by small policy networks trained with ARS
 (Augmented Random Search), co-evolution on by default.
+
+The tick length is `project_metadata.tick_hours` (default 6 h, range
+1-168, whole hours; section 97). The tick pipeline itself is
+tick-agnostic - every library parameter is *per tick* - so the value
+only drives the tick <-> real-time conversions and the FG-editor
+labels. `lib/world/tick_time.py` is the single definition point; read
+it via `config_loader.project_tick_hours()` rather than hardcoding 4
+ticks/day anywhere.
 
 `Strategi.pdf` is authoritative for the mathematics ("The Tick"); `Method.pdf`
 defines observation/neighbourhood conventions.
@@ -34,6 +42,7 @@ defines observation/neighbourhood conventions.
 | `lib/environments/ecosystem.py` | `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
+| `lib/world/tick_time.py` | Tick length: bounds (1-168 h), tick<->real-time conversion, label rendering, and the per-parameter rescale rules the FG editor applies when the tick length changes (section 97). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
 | `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. Two factors (behaviour x spawn geometry); the verdict comes from the normative corner `--spawn colocated --behaviour greedy`. The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |
@@ -99,7 +108,10 @@ Useful flags: `--profile sanity|info|deep` (forces action-hack-free settings),
 `keep = 1 - FACTOR*rate`, needs `--mortality on`, section 88), `--migration on`,
 `--policynetwork LAYERS NODES [ACTIVATION]`, `--resume`,
 `--local_reward` (per-cell source-tracked reward, sections 79 and 80;
-available on `train_gpu.py` as well). Prefer
+available on `train_gpu.py` as well), `--rnd_baseline [all|solo]`
+(random-action `_rnd` curves in the live plot; `all` = every DM random,
+`solo` = leave-one-out per DM; on `train.py`, `train_gpu.py --visual` and
+`inference.py --visual`, sections 62 and 96). Prefer
 `--local_reward_norm grid` with the default `log` metric: `sum` rewards
 spreading thin and `mean` rewards killing the worst cells (sections 82, 84).
 

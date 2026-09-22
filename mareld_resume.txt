@@ -8591,3 +8591,229 @@ remain open exactly as described in 71.9 / 71.11.
     with currents and migration on, strength 0.2, period 10, scale 9.5:
       results/current-migration-smoke-20260922/
       results/current-migration-tensor-smoke-20260922/
+
+96 --rnd_baseline [all|solo|none] ON train_gpu.py AND inference.py (2026-09-22)
+
+96.1 Why
+    The random-action baseline (section 62) existed with all three
+    modes on train.py only. train_gpu.py had none, and inference.py had
+    a store_true flag equivalent to 'all'. The leave-one-out 'solo'
+    mode is the fair per-DM ablation ("how much is FG k's learned
+    behaviour worth against the trained rest"), so it is now on all
+    three entry points with the section 62 semantics: bare flag = all,
+    absent = none, solo = one world per DM with only that DM random.
+
+96.2 Shared helper
+    lib/runners/rnd_baseline.py: add_rnd_baseline_argument (the CLI,
+    same choices/const/default as train.py) and rnd_baseline_plot_ids
+    ('all' -> every FG incl. NDMs, 'solo' -> DMs only, 62.5). train.py
+    itself is unchanged.
+
+96.3 train_gpu.py
+    The GPU viewer already runs train._probe_biomass on CPU between
+    updates, so the baseline is that probe's own rnd path: lib/gpu/
+    visual.py passes rnd_builder=<probe builder> and rnd_mode, and the
+    viewer registers the _rnd legend ids. --rnd_baseline without
+    --visual is a CLI error (there is no probe headless).
+    policy_snapshot now also carries legacy_reward, integral_reward,
+    alpha, beta, survival_bonus, survival_threshold,
+    population_stability and local_reward (LocalRewardConfig) from
+    trainer.runner_options. Before this, the _rnd reward curve would
+    silently have used the probe's getattr defaults instead of the
+    run's reward formula. Only the rnd path of the probe reads these
+    fields, so the main probe is unchanged. The GPU update is never
+    touched.
+
+96.4 inference.py
+    run_inference(..., rnd_env=None, rnd_solo_envs=None): rnd_env is
+    the old 'all' world; rnd_solo_envs = {dm_id: env}. Internally the
+    same rnd_env_for_fid / unique_rnd_envs structure as the train.py
+    probe. _install_rnd_policies gives the random DMs RandomPolicy and
+    mean=0/var=1, and the other DMs the trained policy and the main
+    env's frozen obs-norm rows. Per-DM forward path (_batched_ready =
+    False), as before. _push_action_fracs got an 'only' filter and a
+    per-env prev snapshot, so each solo world reports only its random
+    DM. The early stop needs the main world AND every baseline world
+    dead.
+    Two CLI behaviour changes:
+      * --rnd_baseline without --visual now warns and is ignored (it
+        only feeds the live plot; headless 'solo' would cost N
+        rollouts for nothing).
+      * With --rnd_baseline and no --seed a seed is drawn and printed.
+        Every world is built separately, and an unseeded spawn gave
+        the old 'all' baseline a different layout from the main world.
+        Drawing the seed keeps the main world exactly as random as an
+        unseeded run.
+
+96.5 Caveat (unchanged from 62, now documented)
+    The tick shuffles the FG order with the GLOBAL numpy RNG, and the
+    env constructor draws season phases from it. Worlds stepped side by
+    side therefore do not see the same tick order, so a solo curve
+    differs from the main curve by FG k's randomness PLUS order noise.
+    Season phases do not matter while seasonal_amplitude is 0 in the
+    library. The same holds for the train.py probe.
+
+96.6 Tests
+    tests/test_rnd_baseline.py: CLI semantics match train.py; plot ids
+    per mode; solo randomises exactly one DM per world, keeps the
+    trained policies identical objects, and reports only DMs; a solo
+    world whose random DM is swapped back to its policy reproduces the
+    main world (global RNG pinned), so any divergence is caused by the
+    one random DM; 'all' keeps its old behaviour; GPU viewer draws
+    DM _rnd curves in both modes and phytoplankton_rnd only in 'all';
+    GPU CLI refuses --rnd_baseline without --visual;
+    policy_snapshot carries the reward settings.
+    NOT RUN by the agent that wrote them: that environment could not
+    install torch. Run the full suite plus a 1-generation training.
+
+97 CONFIGURABLE TICK LENGTH (2026-09-22)
+
+97.1 Why
+    The tick was 6 hours by assumption, not by configuration. The
+    number appeared as a literal in labels ("fraction/tick" without a
+    duration), in tick <-> real-time conversions (TICKS_PER_YEAR = 1460
+    in lib/diagnostics/viability.py, TICKS_PER_DAY = 4.0 in
+    tools/starve_calibration.py and tools/probes/budget_gate.py), in
+    plot axes and in every grid_config dict. Changing it meant editing
+    all of them and hoping none was missed.
+
+97.2 The engine was already tick-agnostic
+    Worth stating because it shaped the design. The tick pipeline never
+    asks how long a tick is: every library parameter is expressed PER
+    TICK and Grid.tick_duration is stored but read nowhere. The tick
+    length is therefore purely INTERPRETIVE - it converts a per-tick
+    rate into a real-world rate and lets a label name a duration. No
+    change to the tick was needed or made.
+
+97.3 Where the value lives
+    project_metadata.tick_hours, next to reference_grid_{width,height}.
+    Whole hours, 1 to 168, default 6. Missing / out of range resolves
+    to 6, so a project file predating the field loads bit-identically.
+
+    lib/world/tick_time.py is the single definition point, same pattern
+    as HUNGER_SATIATION_SCALE in energy_balance.py: DEFAULT/MIN/MAX,
+    resolve_tick_hours, ticks_per_day, ticks_per_year, tick_label,
+    per_tick, and the rescale rules. Read it through
+    config_loader.project_tick_hours() / library_tick_hours(); do not
+    hardcode 4 ticks/day again.
+
+97.4 The GUI
+    Project Info gained a third row: "Tick Length (hours, 1-168)" with
+    an Entry, an Apply button and a live-validation status label,
+    mirroring the Reference Grid row. Typing is validated on keypress;
+    a valid but un-applied value shows "ej tillampad -> Apply" in
+    amber rather than red.
+
+    Every FG-editor label whose unit is per tick now carries the
+    duration: "Max Growth (MG_X, fraction/6 h)", "Max Intake Rate (ton
+    prey / ton consumer / 6 h)", "Seasonal Period (ticks of 6 h)".
+    Labels are templates containing "{tick}"; _make_prop_label
+    registers them and _refresh_tick_labels re-renders on change.
+    Resting Metabolism gained the "/tick" it was always missing - it
+    is MJ/ton/tick in energy_balance.py and the label said MJ/ton.
+
+97.5 Rescaling: what Apply does
+    Apply rescales the LIBRARY so the biology stays constant in real
+    time, then stamps library_metadata.tick_hours. Per dimension:
+
+      flux    x k        linear; the quantity genuinely accumulates
+                         within a tick. max_intake_rate,
+                         resting_metabolism, seed_rate.
+      growth  (1+r)^k-1  a per-tick fraction ADDED to a stock.
+                         growth_rate.
+      loss    1-(1-r)^k  a per-tick fraction REMOVED from a stock, i.e.
+                         a survival probability. natural_mortality,
+                         starve_rate, movement_speed.
+      period  p / k      a duration in ticks, floored at 1 whole tick.
+                         seasonal_period.
+
+    Compounding rather than linear for the fraction classes is not
+    cosmetic: linear mortality at k = 28 exceeds 1, and a linear
+    growth_rate can drive `1 + rate * surplus` negative in
+    population_change._apply_decision_maker_population_change.
+
+    Everything else is tick-independent and is left alone: stocks
+    (max_energy_reserve, energy_content, max_carrying_capacity,
+    initial_biomass_*), dimensionless thresholds (maintenance_level,
+    satiation_scale, visibility_floor, extinction_threshold_factor,
+    seasonal_amplitude), the action-cost multipliers (feeding_cost,
+    resting_cost, movement_cost - they multiply resting_metabolism,
+    which is itself rescaled) and interference / min_split_biomass.
+
+    A converted value that exceeds its declared range is CLAMPED and
+    listed as such in the confirmation dialog - never silently cut.
+    Zooplankton max_intake_rate 0.25 at 6 -> 168 h is the live example:
+    7.0 clamped to 1.0, biology not preserved, and the dialog says so.
+
+97.6 The shared-library problem, and the stamp
+    fg_library.yaml is shared between projects and is where the runtime
+    reads every biological parameter from (load_project_config merges
+    only spawn / initial_biomass_* / muted off the project entry).
+    Rescaling it for one project therefore changes every other project
+    that loads it.
+
+    That cannot be designed away, so it is made visible instead:
+    library_metadata.tick_hours records the tick length the library's
+    numbers are calibrated at, the confirmation dialog says the library
+    is shared, and opening a project whose tick_hours disagrees with
+    the library raises a mismatch warning naming the factor. An
+    unstamped library reads as 6 h, which is what it is.
+
+    save_project persists the COMMITTED tick length, never the raw
+    Entry: an un-applied edit has not rescaled anything, so writing it
+    would record a tick length the numbers do not match.
+
+97.7 Consumers updated
+    lib/diagnostics/viability.py   ViabilityCriterion.tick_hours; ticks
+                                   = years * ticks_per_year(tick_hours).
+                                   TICKS_PER_YEAR kept as the 6 h value
+                                   because tools/viability.py converts a
+                                   --ticks override back into years.
+    tools/viability.py             reads project_tick_hours(--project),
+                                   prints the tick line.
+    tools/probes/budget_gate.py    %bm/day and the units footer.
+    tools/starve_calibration.py    TICKS_PER_DAY resolved per run; the
+                                   LITERATURE targets are in days.
+    run_mareld_mvp.py              plot axis + grid_config.
+    lib/world/grid.py              tick_duration defaults to the shared
+                                   constant instead of a bare 6.0.
+
+    NOT threaded through: the 'tick_duration': 6.0 literals in
+    train.py, inference.py, manual_play.py, simple_inference.py,
+    compare_scenarios.py and the ab_test_* scripts. Grid.tick_duration
+    is read nowhere, so these are inert; converting them is a separate
+    tidy-up, not a correctness fix.
+
+97.8 Tests
+    tests/test_tick_time.py (78 cases): defaults and the 1-168 bounds;
+    legacy projects resolving to 6; label rendering incl. whole days
+    ("7 d" for 168 h); the identity, the A->B->A round trip per rule,
+    and that unknown keys are never touched; per-class dimensional
+    behaviour; clamping reported not silent; zeros staying zero
+    (phytoplankton movement_speed); and the two real-time invariance
+    properties that are the point of the feature - survival over a
+    fixed real duration and intake over a fixed real duration are
+    unchanged by the tick length. Plus the loader accessors and that
+    mareld2.yaml and fg_library.yaml agree.
+
+    The period round trip is exact only to within one tick of the
+    coarser of the two lengths: 1460 h is not a whole number of 168 h
+    steps. That is quantisation, not a bug, and the test states the
+    bound rather than hiding it.
+
+    Suite: 625 passed, 15 skipped, 7 failed - the SAME 7 that fail on
+    a clean worktree at HEAD (verified with a detached worktree, same
+    full-suite load), so none is caused by this change. Four are
+    genuine pre-existing failures (test_absorbing_zero phytoplankton
+    seed rate, test_energy_balance_gate porpoise clupeid majority,
+    test_gpu_ecosystem cpu-0.0-True-True, test_currents cuda cloud
+    field); three are CUDA/torch.compile flakiness under full-suite GPU
+    contention and pass in isolation.
+
+    Also run: one-generation train.py on mareld2 (results/
+    tick-smoke-20260922), tools/probes/budget_gate.py,
+    tools/viability.py --ticks 60 --seeds 1 --behaviour eat --grid 8*8,
+    and a headless xvfb GUI test covering construction, label refresh,
+    Apply end to end, save/reload, an exact 12 -> 6 -> 12 round trip and
+    rejection of an out-of-range value. The GUI test wrote to scratch
+    copies; the real fg_library.yaml was never modified.

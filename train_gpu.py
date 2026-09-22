@@ -15,6 +15,7 @@ from lib.gpu.cli import (add_common_arguments, builder_from_args, positive_int,
 from lib.gpu.config import ProjectSpec
 from lib.gpu.trainer import TensorARSTrainer
 from lib.training_profiles import add_profile_argument, parse_training_args
+from lib.runners.rnd_baseline import add_rnd_baseline_argument
 from lib.runners.training_progress import add_progress_arguments, validate_progress_arguments
 
 
@@ -61,6 +62,9 @@ def build_parser():
     parser.add_argument("--temp-anneal-gens", "--temp_anneal_gens", dest="temp_anneal_gens", type=positive_int, default=10)
     parser.add_argument("--visual", action="store_true",
                         help="Open the live pygame viewer with CPU inference probes between GPU updates")
+    add_rnd_baseline_argument(
+        parser, extra_help=" Runs inside the CPU probe of --visual (which it "
+                           "requires) and never touches the GPU update.")
     add_profile_argument(parser)
     add_progress_arguments(parser)
     return parser
@@ -82,6 +86,8 @@ def main(argv=None, *, on_step=None):
             raise ValueError("--snapshot-every cannot be negative")
         if args.device == "cpu" and "graph" in args.execution:
             raise ValueError("Use --execution eager or compile with --device cpu")
+        if args.rnd_baseline != "none" and not args.visual:
+            raise ValueError("--rnd_baseline only affects the --visual probe; add --visual")
         torch.set_num_threads(1)
         # Full FP32 policy math is the reproducibility baseline. Allow later
         # precision experiments only after reference comparisons on the target.

@@ -7,12 +7,19 @@ from types import SimpleNamespace
 
 import torch
 
+from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
+from lib.runners.rnd_baseline import rnd_baseline_plot_ids
 from lib.runners.training_progress import evaluation_randomness, make_visual_progress
 
 
 @torch.no_grad()
 def policy_snapshot(trainer):
-    """Copy authoritative weights/statistics without altering the training bank."""
+    """Copy authoritative weights/statistics without altering the training bank.
+
+    The reward settings are copied as well: ``train._probe_biomass`` reads
+    them (under the CPU ``ARSTrainer`` attribute names) to score the
+    ``--rnd_baseline`` curves with the same formula as the trained policy.
+    """
     policies = {fid: copy.deepcopy(p).cpu().eval()
                 for fid, p in trainer.bank.policies.items()}
     for fid, flat in zip(trainer.model.dm_ids, trainer.theta):
@@ -24,9 +31,17 @@ def policy_snapshot(trainer):
         count = trainer.obs_count.cpu().tolist()
         stats = {fid: dict(mean=mean[d], var=var[d], count=count[d])
                  for d, fid in enumerate(trainer.model.dm_ids)}
+    reward = trainer.runner_options
     return SimpleNamespace(policies=policies, obs_stats=stats,
                            obs_normalize=trainer.obs_normalize,
-                           softmax_temperature=float(trainer.temperature.cpu()))
+                           softmax_temperature=float(trainer.temperature.cpu()),
+                           legacy_reward=bool(reward["legacy_reward"]),
+                           integral_reward=bool(reward["integral_reward"]),
+                           alpha=float(reward["alpha"]), beta=float(reward["beta"]),
+                           survival_bonus=float(reward["survival_bonus"]),
+                           survival_threshold=float(reward["survival_threshold"]),
+                           population_stability=reward["population_stability"],
+                           local_reward=LocalRewardConfig.from_dict(reward["local_reward"]))
 
 
 class GPUTrainingVisualizer:
@@ -42,6 +57,7 @@ class GPUTrainingVisualizer:
         self.progress = None
         self.executor = None
         self.directory = directory
+        self.rnd_mode = str(getattr(args, "rnd_baseline", "none") or "none").lower()
         try:
             # Reuse the CPU CLI's complete probe (maps, controls, playback and
             # plots). Guard its legacy module-level no-grad setting on import.
@@ -68,6 +84,7 @@ class GPUTrainingVisualizer:
             self.viz = LiveVisualizer(
                 fg_ids=list(env.fgs), grid_shape=builder.grid, mode="train",
                 plot_fg_ids=dm_ids + ndm_ids, ndm_ids=ndm_ids,
+                extra_plot_ids=rnd_baseline_plot_ids(self.rnd_mode, list(env.fgs), dm_ids),
                 title="Mareld GPU training",
             )
             if not self.viz.enabled:
@@ -165,6 +182,10 @@ class GPUTrainingVisualizer:
                     viz_extra={"gen": generation + 1, "iter": iteration + 1,
                                "T": snapshot.softmax_temperature},
                     reward_by_fid=rewards,
+                    # Same deterministic probe world, built by the same
+                    # builder, exactly as train.py passes it.
+                    rnd_builder=self.builder if self.rnd_mode != "none" else None,
+                    rnd_mode=self.rnd_mode,
                 )
             self.pump()
         except Exception as error:

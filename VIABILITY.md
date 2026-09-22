@@ -35,7 +35,8 @@ with the horizon and the sampling
 
 | Parameter | Default | Meaning |
 |---|---|---|
-| `years` | `5.0` | horizon, `T = years * 1460` ticks (6 h/tick) |
+| `years` | `5.0` | horizon, `T = years * ticks_per_year(tick_hours)`; 1460 ticks at the default 6 h tick |
+| `tick_hours` | `6` | hours per tick, read from `project_metadata.tick_hours` (section 97) |
 | `seeds` | `3` | independent spawn layouts; the worst seed decides |
 | `window_frac` | `0.10` | share of the horizon used as the final window |
 

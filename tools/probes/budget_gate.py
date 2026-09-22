@@ -53,13 +53,19 @@ sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
 import train as train_mod
+from lib.config.config_loader import project_tick_hours
 from lib.world.energy_balance import resolve_satiation_scale
+from lib.world.tick_time import tick_label, ticks_per_day
 
-TICKS_PER_DAY = 4.0
+PROJECT = 'mareld2.yaml'
+# %bm/day is the only real-time figure in this probe, so it is the
+# only thing the project's tick length changes here. Section 97.
+TICK_HOURS = project_tick_hours(PROJECT)
+TICKS_PER_DAY = ticks_per_day(TICK_HOURS)
 
 H = W = 16
 builder = train_mod._ProbeEnvBuilder(
-    project_path='mareld2.yaml', grid_size=(H, W),
+    project_path=PROJECT, grid_size=(H, W),
     apply_natural_mortality=True, migration=True)
 env = builder()
 env._build_static_caches()
@@ -161,7 +167,8 @@ for i, pid in enumerate(env.dm_ids):
               f"the rest {worst_id}")
 
 print()
-print("Units: ration in t prey / t predator / tick; cost and quality in")
+print(f"Units: ration in t prey / t predator / {tick_label(TICK_HOURS)}; "
+      f"cost and quality in")
 print("MJ / t. quality is assimilation_factor * energy_content, i.e. the")
 print("energy the predator keeps per tonne eaten.")
 

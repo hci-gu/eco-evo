@@ -21,6 +21,16 @@ from lib.world.energy_balance import (  # noqa: E402
     REFERENCE_RESTING_COST,
     evaluate_energy_balance,
 )
+from lib.world.tick_time import (  # noqa: E402
+    DEFAULT_TICK_HOURS,
+    MAX_TICK_HOURS,
+    MIN_TICK_HOURS,
+    per_tick,
+    rescale_params,
+    resolve_tick_hours,
+    tick_label,
+    ticks_per_day,
+)
 
 # Initialize YAML handler
 yaml = YAML()
@@ -67,6 +77,11 @@ class FGConfigApp:
         }
         self.current_fg_configs = {} # local project configs for active FGs
 
+        # (widget, template) for every label whose text embeds the tick
+        # length. _refresh_tick_labels() re-renders them when the tick
+        # length changes. Populated by _make_prop_label during setup_ui.
+        self._tick_label_widgets = []
+
         # Swedish name mapping for display (as requested)
         self.sv_mapping = {
             "phytoplankton": "Växtplankton",
@@ -95,6 +110,7 @@ class FGConfigApp:
             self.project_name_var.trace_add("write", lambda *_: self._mark_dirty())
             self.ref_grid_w_var.trace_add("write", lambda *_: self._mark_dirty())
             self.ref_grid_h_var.trace_add("write", lambda *_: self._mark_dirty())
+            self.tick_hours_var.trace_add("write", lambda *_: self._mark_dirty())
         except Exception:
             pass
 
@@ -500,6 +516,70 @@ class FGConfigApp:
         self.ref_grid_h_var.trace_add("write", _validate_ref_live)
         _validate_ref_live()
 
+        # Tick length. The engine is tick-agnostic - every library number is
+        # per tick and the tick pipeline never asks how many hours that is -
+        # so this value does two things: it relabels every per-tick input in
+        # the FG editor with the concrete duration, and it drives the
+        # tick <-> real-time conversions in the probes and the viability rig
+        # (via project_metadata.tick_hours). Changing it offers to rescale
+        # the library so the biology stays constant in real time; the
+        # rescale is explicit and confirmed, never a side effect of typing.
+        # Section 97.
+        ttk.Label(info_frame,
+                  text=f"Tick Length (hours, {MIN_TICK_HOURS}-{MAX_TICK_HOURS}):").grid(
+            row=2, column=0, sticky="w", padx=5, pady=(4, 0))
+        self.tick_hours_var = tk.StringVar(value=str(DEFAULT_TICK_HOURS))
+        # The last value actually committed (library in sync with it). Used
+        # to compute the rescale factor and to revert a cancelled edit.
+        self.tick_hours_committed = DEFAULT_TICK_HOURS
+        self.tick_hours_entry = ttk.Entry(
+            info_frame, textvariable=self.tick_hours_var, width=10,
+            validate="key", validatecommand=vcmd_ref)
+        self.tick_hours_entry.grid(row=2, column=2, sticky="w",
+                                   padx=(0, 8), pady=(4, 0))
+        self.tick_apply_btn = ttk.Button(
+            info_frame, text="Apply", width=8,
+            command=self.apply_tick_length)
+        self.tick_apply_btn.grid(row=2, column=3, columnspan=2, sticky="w",
+                                 padx=(0, 8), pady=(4, 0))
+
+        self.tick_status_var = tk.StringVar(value="")
+        self.tick_status_lbl = tk.Label(
+            info_frame, textvariable=self.tick_status_var,
+            fg="red", font=("TkDefaultFont", 9, "italic"))
+        self.tick_status_lbl.grid(row=2, column=5, sticky="w",
+                                  padx=(8, 0), pady=(4, 0))
+
+        def _validate_tick_live(*_args):
+            raw = self.tick_hours_var.get()
+            if raw == "":
+                state, msg = "empty", "ange värde"
+            else:
+                try:
+                    iv = int(raw)
+                except ValueError:
+                    state, msg = "bad", "heltal"
+                else:
+                    if MIN_TICK_HOURS <= iv <= MAX_TICK_HOURS:
+                        state, msg = "ok", ""
+                    else:
+                        state = "range"
+                        msg = f"{MIN_TICK_HOURS}-{MAX_TICK_HOURS}"
+            self.tick_hours_entry.configure(
+                style="Invalid.TEntry" if state != "ok" else "TEntry")
+            if state == "ok" and int(raw) != self.tick_hours_committed:
+                # Valid but not yet applied: nudge towards the button
+                # instead of flagging an error.
+                self.tick_status_lbl.configure(fg="#b06000")
+                self.tick_status_var.set("not applied - press Apply")
+            else:
+                self.tick_status_lbl.configure(fg="red")
+                self.tick_status_var.set(msg)
+
+        self._validate_tick_live = _validate_tick_live
+        self.tick_hours_var.trace_add("write", _validate_tick_live)
+        _validate_tick_live()
+
         # Two side-by-side FG frames: Decision Makers and Non Decision Makers
         fg_container = ttk.Frame(self.project_inner)
         fg_container.pack(expand=True, fill="both", padx=10, pady=5)
@@ -559,19 +639,23 @@ class FGConfigApp:
         # lo/hi define the allowed range; rows show "[lo, hi]" label and a
         # slider next to the Entry. For type=="range" the range applies to
         # both Min and Max sub-fields.
+        # Labels containing "{tick}" are re-rendered by
+        # _refresh_tick_labels() whenever the project's tick length
+        # changes, so a per-tick input always states the duration it is
+        # per. "{tick}" expands to e.g. "6 h" / "7 d". Section 97.
         main_props = [
             ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry", 0.0, 10000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
-            ("Resting Metabolism (MJ/ton)", "resting_metabolism", "entry", 0.0, 1000.0),
+            ("Resting Metabolism (MJ/ton/{tick})", "resting_metabolism", "entry", 0.0, 1000.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
             ("Satiation Scale (hunger gate, 0=default 0.8)", "satiation_scale", "entry", 0.0, 1.0),
-            ("Max Growth (MG_X, fraction/tick)", "growth_rate", "entry", 0.0, 1.0),
-            ("Starve Rate (catabolism, fraction/tick)", "starve_rate", "entry", 0.0, 1.0),
+            ("Max Growth (MG_X, fraction/{tick})", "growth_rate", "entry", 0.0, 1.0),
+            ("Starve Rate (catabolism, fraction/{tick})", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
-            ("Natural Mortality (fraction/tick)", "natural_mortality", "entry", 0.0, 1.0),
-            ("Max Intake Rate (ton prey / ton consumer / tick)", "max_intake_rate", "entry", 0.0, 1.0),
+            ("Natural Mortality (fraction/{tick})", "natural_mortality", "entry", 0.0, 1.0),
+            ("Max Intake Rate (ton prey / ton consumer / {tick})", "max_intake_rate", "entry", 0.0, 1.0),
             ("Interference (Beddington-DeAngelis w, 1/ton, 0=off)", "interference", "entry", 0.0, 10.0),
-            ("Movement Speed (cells/tick)", "movement_speed", "entry", 0.0, 1.0),
+            ("Movement Speed (cells/{tick})", "movement_speed", "entry", 0.0, 1.0),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
             ("Extinction Threshold (× indiv. weight, 0=off)", "extinction_threshold_factor", "entry", 0.0, 5.0),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
@@ -585,7 +669,7 @@ class FGConfigApp:
         self.editor_frame.columnconfigure(1, weight=1)
         grow = 0
         for (label, key, type, lo, hi) in main_props:
-            ttk.Label(self.editor_frame, text=label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+            self._make_prop_label(self.editor_frame, label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
             if type == "entry":
                 var = self._build_ranged_entry(self.editor_frame, grow, lo, hi)
                 self.prop_vars[key] = var
@@ -647,18 +731,18 @@ class FGConfigApp:
         self.ndm_prop_vars = {}
         # (label, key, type, lo, hi)
         ndm_props = [
-            ("Max Growth (fraction/tick)", "growth_rate", "entry", 0.0, 1.0),
+            ("Max Growth (fraction/{tick})", "growth_rate", "entry", 0.0, 1.0),
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry", 0.0, 100000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
-            ("Seed Rate (fraction of cc/tick)", "seed_rate", "entry", 0.0, 1.0),
+            ("Seed Rate (fraction of cc/{tick})", "seed_rate", "entry", 0.0, 1.0),
             ("Seasonal Amplitude (fraction of growth_rate, 0=off)", "seasonal_amplitude", "entry", 0.0, 10.0),
-            ("Seasonal Period (ticks)", "seasonal_period", "entry", 0.0, 10000.0),
+            ("Seasonal Period (ticks of {tick})", "seasonal_period", "entry", 0.0, 10000.0),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
         ]
         self.ndm_editor_frame.columnconfigure(1, weight=1)
         grow = 0
         for (label, key, type, lo, hi) in ndm_props:
-            ttk.Label(self.ndm_editor_frame, text=label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+            self._make_prop_label(self.ndm_editor_frame, label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
             if type == "range":
                 ttk.Label(self.ndm_editor_frame, text="  Min:").grid(
                     row=grow + 1, column=0, sticky="w", padx=5, pady=2)
@@ -1200,6 +1284,168 @@ class FGConfigApp:
         if h < 3:
             h = 60
         return w, h
+
+    # ------------------------------------------------------------------
+    # Tick length (Section 97)
+    # ------------------------------------------------------------------
+    def get_tick_hours(self):
+        """Committed tick length in hours.
+
+        Reads the committed value, not the Entry: a half-typed or
+        not-yet-applied edit must not change what the labels say or what
+        the library is assumed to be calibrated at.
+        """
+        return resolve_tick_hours(getattr(self, "tick_hours_committed",
+                                          DEFAULT_TICK_HOURS))
+
+    def _format_tick_label(self, template):
+        """Expand ``{tick}`` in a label template to the tick duration."""
+        return template.replace("{tick}", tick_label(self.get_tick_hours()))
+
+    def _make_prop_label(self, parent, template):
+        """Create an FG-editor property label, tick-aware if templated."""
+        widget = ttk.Label(parent, text=self._format_tick_label(template))
+        if "{tick}" in template:
+            self._tick_label_widgets.append((widget, template))
+        return widget
+
+    def _refresh_tick_labels(self):
+        """Re-render every label that embeds the tick length."""
+        survivors = []
+        for widget, template in self._tick_label_widgets:
+            try:
+                if not widget.winfo_exists():
+                    continue
+                widget.configure(text=self._format_tick_label(template))
+            except Exception:
+                continue
+            survivors.append((widget, template))
+        self._tick_label_widgets = survivors
+
+    def _library_species(self):
+        return self.global_library.setdefault("species_definitions", {})
+
+    def _plan_tick_rescale(self, old_hours, new_hours):
+        """Per-FG rescale plan for a tick-length change.
+
+        Returns ``{fg_id: [(key, old, new, clamped), ...]}`` covering the
+        whole library, because the library - not the project - is where
+        the runtime reads biological parameters from
+        (``config_loader.load_project_config`` merges only ``spawn``,
+        ``initial_biomass_*`` and ``muted`` off the project entry).
+        """
+        plan = {}
+        for fg_id, params in self._library_species().items():
+            if not isinstance(params, dict):
+                continue
+            _, changes = rescale_params(params, old_hours, new_hours)
+            if changes:
+                plan[fg_id] = changes
+        return plan
+
+    def _format_rescale_plan(self, plan, old_hours, new_hours):
+        lines = []
+        clamped_any = False
+        for fg_id in sorted(plan):
+            lines.append(f"{fg_id}:")
+            for key, old_value, new_value, clamped in plan[fg_id]:
+                flag = "   << CLAMPED to range" if clamped else ""
+                if clamped:
+                    clamped_any = True
+                lines.append(f"    {key}: {old_value:g} -> {new_value:g}{flag}")
+        header = (
+            f"Tick length {old_hours} h -> {new_hours} h "
+            f"({ticks_per_day(old_hours):g} -> {ticks_per_day(new_hours):g} "
+            f"ticks/day).\n\n"
+            "Every per-tick rate in the LIBRARY is rescaled so the biology "
+            "stays constant in real time. Fluxes (intake, metabolism, "
+            "seeding) scale linearly; per-tick fractions (growth, "
+            "starvation, mortality, movement) compound; durations "
+            "(seasonal period) divide.\n\n"
+        )
+        footer = ""
+        if clamped_any:
+            footer += (
+                "\n\nWARNING: values marked CLAMPED hit the parameter's "
+                "allowed range and were cut. The biology is NOT preserved "
+                "for those - review them before training."
+            )
+        footer += (
+            "\n\nfg_library.yaml is shared between projects. Rescaling it "
+            "changes every project that loads it; those projects need the "
+            "same tick length to stay calibrated."
+        )
+        return header + "\n".join(lines) + footer
+
+    def apply_tick_length(self):
+        """Commit the tick-length Entry, offering to rescale the library."""
+        raw = self.tick_hours_var.get()
+        try:
+            new_hours = int(raw)
+        except (TypeError, ValueError):
+            messagebox.showerror(
+                "Invalid Tick Length",
+                f"Tick length must be a whole number of hours between "
+                f"{MIN_TICK_HOURS} and {MAX_TICK_HOURS}.")
+            return
+        if not (MIN_TICK_HOURS <= new_hours <= MAX_TICK_HOURS):
+            messagebox.showerror(
+                "Invalid Tick Length",
+                f"Tick length must be between {MIN_TICK_HOURS} and "
+                f"{MAX_TICK_HOURS} hours (got {new_hours}).")
+            return
+
+        old_hours = self.get_tick_hours()
+        if new_hours == old_hours:
+            self._validate_tick_live()
+            return
+
+        plan = self._plan_tick_rescale(old_hours, new_hours)
+        if plan:
+            if not messagebox.askokcancel(
+                "Rescale library to new tick length?",
+                self._format_rescale_plan(plan, old_hours, new_hours),
+            ):
+                # Revert the Entry; nothing has been written.
+                self.tick_hours_var.set(str(old_hours))
+                self._validate_tick_live()
+                return
+            species = self._library_species()
+            for fg_id, changes in plan.items():
+                for key, _old, new_value, _clamped in changes:
+                    species[fg_id][key] = new_value
+                if fg_id in self.current_fg_configs:
+                    # Keep the in-memory editor copy in step with the
+                    # library it was loaded from.
+                    for key, _old, new_value, _clamped in changes:
+                        self.current_fg_configs[fg_id][key] = new_value
+
+        # Stamp the library with the tick length its numbers now mean, so
+        # a project opened against a differently-scaled library can be
+        # detected instead of silently running miscalibrated biology.
+        lmeta = self.global_library.setdefault("library_metadata", {})
+        lmeta["tick_hours"] = new_hours
+        self.save_yaml(self.global_library, self.library_path)
+
+        self.tick_hours_committed = new_hours
+        self.project_data.setdefault("project_metadata", {})["tick_hours"] = new_hours
+        self._refresh_tick_labels()
+        if self.active_fg_category:
+            # Reload the open FG so its Entries show the rescaled values
+            # instead of the pre-rescale ones. Returns early when nothing
+            # is selected, so this is safe unconditionally.
+            self.on_fg_select(self.active_fg_category)
+        self._validate_tick_live()
+        self._mark_dirty()
+        messagebox.showinfo(
+            "Tick Length Updated",
+            f"Tick length is now {new_hours} h "
+            f"({ticks_per_day(new_hours):g} ticks/day).\n\n"
+            + (f"Rescaled {sum(len(c) for c in plan.values())} value(s) "
+               f"across {len(plan)} functional group(s); library saved."
+               if plan else "No per-tick values needed rescaling.")
+            + "\n\nRemember to Save Project so project_metadata.tick_hours "
+              "is persisted.")
 
     def _render_spawn_preview(self, vars_store):
         """Compute weights via lib.spawn.make_weights and draw on the preview canvas."""
@@ -4098,6 +4344,7 @@ class FGConfigApp:
                 "name": "New Project",
                 "reference_grid_width": 60,
                 "reference_grid_height": 60,
+                "tick_hours": DEFAULT_TICK_HOURS,
             },
             "simulation_settings": {},
             "decision_makers": [],
@@ -4110,6 +4357,16 @@ class FGConfigApp:
         if hasattr(self, 'ref_grid_w_var'):
             self.ref_grid_w_var.set("60")
             self.ref_grid_h_var.set("60")
+        if hasattr(self, 'tick_hours_var'):
+            # A new project adopts the library's own calibration tick
+            # length, so a fresh project is never born out of step with
+            # the numbers it is about to load.
+            lib_hours = resolve_tick_hours(
+                (self.global_library.get("library_metadata", {}) or {}).get("tick_hours"))
+            self.tick_hours_committed = lib_hours
+            self.tick_hours_var.set(str(lib_hours))
+            self.project_data["project_metadata"]["tick_hours"] = lib_hours
+            self._refresh_tick_labels()
         self.update_fg_list()
         self.update_impact_list()
         self.refresh_matrix()
@@ -4154,6 +4411,30 @@ class FGConfigApp:
             if hasattr(self, 'ref_grid_w_var'):
                 self.ref_grid_w_var.set(str(rw))
                 self.ref_grid_h_var.set(str(rh))
+            # Tick length. Out-of-range / missing falls back to the
+            # historical 6 h, so projects predating the field load
+            # unchanged. The library carries the tick length its numbers
+            # are calibrated at; a mismatch means this project would run
+            # miscalibrated biology, so say so rather than rescale a
+            # shared library behind the user's back.
+            tick_hours = resolve_tick_hours(pmeta.get("tick_hours"))
+            lib_hours = resolve_tick_hours(
+                (self.global_library.get("library_metadata", {}) or {}).get("tick_hours"))
+            if hasattr(self, 'tick_hours_var'):
+                self.tick_hours_committed = tick_hours
+                self.tick_hours_var.set(str(tick_hours))
+                self._refresh_tick_labels()
+            if tick_hours != lib_hours:
+                messagebox.showwarning(
+                    "Tick Length Mismatch",
+                    f"This project runs at {tick_hours} h/tick, but "
+                    f"fg_library.yaml is calibrated at {lib_hours} h/tick.\n\n"
+                    f"Every per-tick rate the runtime reads comes from the "
+                    f"library, so the biology is off by a factor of "
+                    f"{tick_hours / lib_hours:g} until they agree.\n\n"
+                    f"Press Apply next to Tick Length to rescale the library "
+                    f"to {tick_hours} h, or set the field back to "
+                    f"{lib_hours} h.")
             # Backward compatibility: legacy projects had a single `functional_groups` list.
             # Split it into decision/non-decision based on the library's is_decision_maker flag.
             if 'functional_groups' in self.project_data and (
@@ -4221,6 +4502,12 @@ class FGConfigApp:
             # was actually saved.
             self.ref_grid_w_var.set(str(rw))
             self.ref_grid_h_var.set(str(rh))
+            # Persist the COMMITTED tick length, never the raw Entry: an
+            # un-applied edit has not rescaled the library, so saving it
+            # would record a tick length the numbers do not match.
+            tick_hours = self.get_tick_hours()
+            self.project_data["project_metadata"]["tick_hours"] = tick_hours
+            self.tick_hours_var.set(str(tick_hours))
             self.save_yaml(self.project_data, self.project_path)
             self.add_to_recent(self.project_path)
             self._clear_dirty()
