@@ -25,6 +25,7 @@ def policy_snapshot(trainer):
         stats = {fid: dict(mean=mean[d], var=var[d], count=count[d])
                  for d, fid in enumerate(trainer.model.dm_ids)}
     return SimpleNamespace(policies=policies, obs_stats=stats,
+                           survival_reward=trainer.runner_options.get("survival_reward"),
                            obs_normalize=trainer.obs_normalize,
                            softmax_temperature=float(trainer.temperature.cpu()))
 

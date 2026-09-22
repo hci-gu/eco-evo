@@ -6,6 +6,7 @@ import re
 
 from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
 from lib.runners.population_stability import add_population_arguments, population_options
+from lib.runners.survival_reward import add_survival_reward_arguments, survival_reward_options
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env.debug_food import add_food_blob_arguments, food_blob_options
 from lib.environments.ecosystem_env.population_change import (
@@ -33,6 +34,7 @@ def add_common_arguments(parser):
     add_current_arguments(parser)
     add_food_blob_arguments(parser)
     add_population_arguments(parser)
+    add_survival_reward_arguments(parser)
     add_local_reward_arguments(parser)
     parser.add_argument("--project", default=None, help="Project YAML; omitted means all library groups")
     parser.add_argument("--library", default=DEFAULT_LIBRARY)
@@ -101,6 +103,7 @@ def trainer_options(args):
                 alpha=args.alpha, beta=args.beta, survival_bonus=args.cappa,
                 survival_threshold=args.survival_threshold,
                 population_stability=population_options(args),
+                survival_reward=survival_reward_options(args),
                 local_reward=local_reward_options(args),
                 entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
                 execution=args.execution, graph_ticks=args.graph_ticks,

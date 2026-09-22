@@ -129,6 +129,9 @@ def main(argv=None, *, on_step=None):
         print(f"Mortality multiplier: every natural_mortality scaled by "
               f"{args.mortality_multiplier:g} (mortality={args.mortality}).",
               flush=True)
+    if args.survival_reward:
+        print(f"Reward: survival-first; biomass floor={args.survival_reward_floor:g} x start; "
+              "(viable ticks + 0.5 * late-life reserve fullness) / horizon")
     if args.population_stability:
         print(f"Population stability: biomass bounds [{args.population_min:g}, {args.population_max:g}) "
               "× start; warnings, capped energy reward, failure tail −5/tick.", flush=True)

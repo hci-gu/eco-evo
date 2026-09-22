@@ -6,6 +6,7 @@ from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.environments.ecosystem_env import debug_food
 from lib.gpu.random import fold_in, uniform
 from lib.runners.population_stability import validate_reward
+from lib.runners.survival_reward import TensorSurvivalScore, validate_survival_reward
 
 
 class RolloutRunner:
@@ -13,7 +14,11 @@ class RolloutRunner:
                  integral_reward=True, legacy_reward=False, alpha=1.0, beta=1.0,
                  survival_bonus=0.0, survival_threshold=0.01,
                  execution="cuda-graph", graph_ticks=32, population_stability=None,
-                 local_reward=None):
+                 local_reward=None, survival_reward=None):
+        validate_survival_reward(survival_reward, integral_reward, legacy_reward,
+                                 population_stability, local_reward)
+        self.survival_reward = survival_reward
+        self.survival_score = None
         # ``--local_reward``: the per-cell source-tracked reward, mirrored
         # from the reference implementation in
         # lib/environments/ecosystem_env/source_tracking.py. Every setting
@@ -90,6 +95,20 @@ class RolloutRunner:
     def reset(self, biomass, reserve, phase, keys, ticks, mean, var, temperature):
         if ticks < 1:
             raise ValueError("Rollouts must contain at least one tick")
+        if self.survival_reward is not None:
+            # Warmup and capture execute extra ticks before restoring state.
+            capacity = ticks + self.graph_ticks + 4
+            if self.survival_score is None or self.survival_score.prefix.shape[0] <= capacity:
+                if self.model.device.type == "cuda":
+                    torch.cuda.synchronize(self.model.device)
+                self.graphs.clear()
+                self.prepared = False
+                if self.survival_score is not None:
+                    old = {id(v) for v in self.survival_score.buffers}
+                    self.state_buffers = [v for v in self.state_buffers if id(v) not in old]
+                self.survival_score = TensorSurvivalScore(
+                    (self.E, self.model.D), capacity, self.model.device, self.survival_reward)
+                self.state_buffers.extend(self.survival_score.buffers)
         self.biomass.copy_(biomass)
         self.reserve.copy_(reserve)
         self.phase.copy_(phase)
@@ -110,6 +129,8 @@ class RolloutRunner:
                       self.obs_sum, self.obs_sumsq, self.action_sum, self.active_ticks):
             value.zero_()
         self.b0.copy_(biomass[:, self.model.dm_index].sum(-1).double())
+        if self.survival_score is not None:
+            self.survival_score.reset(self.b0)
         self.r0.copy_(reserve[:, self.model.dm_index].sum(-1).double())
         self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)
         self.epsilon.copy_((1e-6 * self.e0).clamp_min(1e-9))
@@ -181,6 +202,8 @@ class RolloutRunner:
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd
+        if self.survival_score is not None:
+            self.survival_score.step(bd, rd, self.b0, m.max_reserve[:, m.dm_index, 0], self.tick)
         if self.population_stability is not None:
             c = self.population_stability
             present = self.b0 > 0
@@ -292,6 +315,9 @@ class RolloutRunner:
 
     def results(self, ticks):
         m = self.model
+        if self.survival_score is not None:
+            return (self.survival_score.results(ticks),
+                    self.action_sum / self.active_ticks.clamp_min(1)[:, :, None])
         if self.local_reward is not None:
             # Already a per-tick aggregate, so integral_reward does not
             # apply; the fitness is its mean over the rollout.

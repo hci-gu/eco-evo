@@ -10,6 +10,7 @@ from lib.gpu.policy import PolicyBank
 from lib.gpu.random import fold_in, normal
 from lib.gpu.rollout import RolloutRunner
 from lib.gpu.spawn import WorldSpawner
+from lib.runners.survival_reward import validate_survival_reward
 
 
 def ars_update(weights, deltas, positive, negative, lr, top_deltas):
@@ -35,7 +36,9 @@ class TensorARSTrainer:
                  survival_bonus=0.0, survival_threshold=0.01,
                  entropy_coef=0.0, argmax_penalty=0.0,
                  execution="cuda-graph", graph_ticks=32, pairs_per_batch=None,
-                 population_stability=None, local_reward=None):
+                 population_stability=None, local_reward=None, survival_reward=None):
+        validate_survival_reward(survival_reward, integral_reward, legacy_reward,
+                                 population_stability, local_reward, entropy_coef, argmax_penalty)
         if n_deltas < 1 or worlds < 1:
             raise ValueError("n_deltas and worlds must be positive")
         if sigma <= 0 or not math.isfinite(sigma) or lr < 0 or not math.isfinite(lr):
@@ -75,6 +78,7 @@ class TensorARSTrainer:
                                    survival_bonus=survival_bonus, survival_threshold=survival_threshold,
                                    population_stability=population_stability,
                                    local_reward=local_reward,
+                                   survival_reward=survival_reward,
                                    execution=execution, graph_ticks=graph_ticks)
         self.architecture = dict(hidden_dim=hidden_dim, hidden_layers=hidden_layers,
                                  activation=self.bank.activation)
@@ -242,6 +246,8 @@ class TensorARSTrainer:
         """Explicit checkpoint boundary. Returned tensors own their CPU data."""
         cpu = lambda t: t.detach().cpu().clone()
         return dict(format_version=1, ids=self.model.ids, dm_ids=self.model.dm_ids,
+                    survival_reward=(self.runner_options["survival_reward"].metadata()
+                                     if self.runner_options["survival_reward"] else None),
                     grid=(self.model.H, self.model.W), in_dims=self.model.in_dims,
                     architecture=self.architecture, theta=[cpu(w) for w in self.theta],
                     obs_mean=cpu(self.obs_mean), obs_var=cpu(self.obs_var), obs_count=cpu(self.obs_count),
@@ -251,6 +257,10 @@ class TensorARSTrainer:
                     world_biomass=cpu(self.world_biomass))
 
     def load_state_dict(self, state):
+        config = self.runner_options["survival_reward"]
+        if state.get("survival_reward") != (config.metadata() if config else None):
+            raise ValueError("Checkpoint survival reward differs; use a new run with --init-from "
+                             "to change objectives")
         for name, expected in (("ids", self.model.ids), ("dm_ids", self.model.dm_ids),
                                ("grid", (self.model.H, self.model.W)), ("in_dims", self.model.in_dims)):
             if tuple(state[name]) != tuple(expected):

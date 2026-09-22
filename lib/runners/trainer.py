@@ -7,6 +7,7 @@ from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_
 from lib.environments.ecosystem_env import source_tracking
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.runners.population_stability import evaluate_stability, validate_reward
+from lib.runners.survival_reward import evaluate_survival, validate_survival_reward
 
 class ARSTrainer:
     """ARS trainer with optional ARS-V2 extensions:
@@ -24,7 +25,10 @@ class ARSTrainer:
                  hidden_layers=2, hidden_dim=30, activation="sig",
                  survival_bonus=0.0, survival_threshold=0.01,
                  legacy_reward=False, population_stability=None,
-                 local_reward=None):
+                 local_reward=None, survival_reward=None):
+        validate_survival_reward(survival_reward, integral_reward, legacy_reward,
+                                 population_stability, local_reward, entropy_coef, argmax_penalty)
+        self.survival_reward = survival_reward
         validate_reward(population_stability, integral_reward, legacy_reward,
                         local_reward)
         self.population_stability = population_stability
@@ -470,6 +474,7 @@ class ARSTrainer:
                             'survival_threshold': self.survival_threshold,
                             'legacy_reward': self.legacy_reward,
                             'population_stability': self.population_stability,
+                            'survival_reward': self.survival_reward,
                             'local_reward': self._local_reward_payload(),
                         })
             else:
@@ -495,6 +500,7 @@ class ARSTrainer:
                                 'survival_threshold': self.survival_threshold,
                                 'legacy_reward': self.legacy_reward,
                                 'population_stability': self.population_stability,
+                                'survival_reward': self.survival_reward,
                                 'local_reward': self._local_reward_payload(),
                                 'env_builder': world_builders[m],
                             })
@@ -682,6 +688,10 @@ class ARSTrainer:
             fitness, samples, diagnostics = evaluate_stability(
                 env, [fg_id], n_ticks, self.population_stability, obs_mean is not None)
             return fitness[fg_id], samples, diagnostics[fg_id] if diagnostics else None
+        if self.survival_reward is not None:
+            fitness, samples, diagnostics = evaluate_survival(
+                env, [fg_id], n_ticks, self.survival_reward, obs_mean is not None)
+            return fitness[fg_id], samples, diagnostics[fg_id] if diagnostics else None
 
         b0 = float(env.fgs[fg_id].biomass.sum())
         r0 = float(env.fgs[fg_id].energy_reserve.sum())
@@ -813,6 +823,9 @@ class ARSTrainer:
         if self.population_stability is not None:
             return evaluate_stability(env, fg_list, n_ticks, self.population_stability,
                                       obs_mean is not None)
+        if self.survival_reward is not None:
+            return evaluate_survival(env, fg_list, n_ticks, self.survival_reward,
+                                     obs_mean is not None)
 
         b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         r0 = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
@@ -1078,6 +1091,7 @@ class ARSTrainer:
                             'survival_threshold': self.survival_threshold,
                             'legacy_reward': self.legacy_reward,
                             'population_stability': self.population_stability,
+                            'survival_reward': self.survival_reward,
                             'local_reward': self._local_reward_payload(),
                         })
             else:
@@ -1103,6 +1117,7 @@ class ARSTrainer:
                                 'survival_threshold': self.survival_threshold,
                                 'legacy_reward': self.legacy_reward,
                                 'population_stability': self.population_stability,
+                                'survival_reward': self.survival_reward,
                                 'local_reward': self._local_reward_payload(),
                                 'env_builder': world_builders[m],
                             })

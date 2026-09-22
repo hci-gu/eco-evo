@@ -24,6 +24,8 @@ from lib.environments.ecosystem_env.population_change import (
 from lib.environments.ecosystem_env.source_tracking import (add_local_reward_arguments,
                                                             local_reward_options)
 from lib.runners.trainer import ARSTrainer
+from lib.runners.survival_reward import (add_survival_reward_arguments,
+    survival_reward_options, validate_survival_reward, SurvivalScore)
 from lib.runners.population_stability import (add_population_arguments, population_options,
                                                StabilityScore)
 
@@ -822,6 +824,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     rnd_n_ticks_done = 0
     stability_config = getattr(trainer, 'population_stability', None)
     rnd_stability = {id(e): StabilityScore(e, stability_config) for e in unique_rnd_envs} if stability_config else {}
+    survival_config = getattr(trainer, 'survival_reward', None)
+    rnd_survival = {id(e): SurvivalScore(e, survival_config) for e in unique_rnd_envs} if survival_config else {}
     for _t in range(int(n_ticks)):
         observation = env.get_observation()
         actions = env.policy_controller.forward(observation)
@@ -841,6 +845,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     observation = _re.get_observation()
                     actions = _re.policy_controller.forward(observation)
                     _re.step(actions)
+                    if rnd_survival:
+                        rnd_survival[id(_re)].step(_re)
                     if rnd_stability:
                         rnd_stability[id(_re)].step(_re)
                 rnd_n_ticks_done += 1
@@ -1205,6 +1211,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                         _rr = _log_e_mean
                     if rnd_stability:
                         _rr = rnd_stability[id(_re)].results(int(n_ticks))[fid]
+                    if rnd_survival:
+                        _rr = rnd_survival[id(_re)].results(int(n_ticks))[fid]
                     viz.update_series("reward", fid + "_rnd", float(_rr),
                                       step=int(viz_step))
         except Exception:
@@ -1661,12 +1669,17 @@ def main(argv=None, *, on_step=None, confirm=True):
     add_profile_argument(parser)
     add_progress_arguments(parser)
     add_population_arguments(parser)
+    add_survival_reward_arguments(parser)
     add_current_arguments(parser)
     debug_food.add_food_blob_arguments(parser)
     args = parse_training_args(parser, argv)
     validate_progress_arguments(parser, args)
     try:
         population_stability = population_options(args)
+        survival_reward = survival_reward_options(args)
+        validate_survival_reward(survival_reward, args.integral_reward, args.legacy_reward,
+                                 population_stability, args.local_reward,
+                                 args.entropy_coef, args.argmax_penalty)
         currents = current_options(args)
         food_blobs = debug_food.food_blob_options(args)
         local_reward = local_reward_options(args)
@@ -1781,6 +1794,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
                     "integral_reward": bool(getattr(args, "integral_reward", True)),
                     "population_stability": population_stability.metadata() if population_stability else None,
+                    "survival_reward": survival_reward.metadata() if survival_reward else None,
                     "local_reward": local_reward.as_dict() if local_reward else None,
                     "currents": currents.metadata() if currents else None,
                     "food_blobs": food_blobs.metadata() if food_blobs else None,
@@ -1879,6 +1893,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "legacy_reward": bool(getattr(args, "legacy_reward", False)),
                     "integral_reward": bool(getattr(args, "integral_reward", True)),
                     "population_stability": population_stability.metadata() if population_stability else None,
+                    "survival_reward": survival_reward.metadata() if survival_reward else None,
                     "local_reward": local_reward.as_dict() if local_reward else None,
                     "alpha": getattr(args, "alpha", None),
                     "beta": getattr(args, "beta", None),
@@ -1985,7 +2000,10 @@ def main(argv=None, *, on_step=None, confirm=True):
     print(f"N Eval Ticks:   {_mark('n_eval_ticks', args.n_eval_ticks)} ticks per rollout")
     print(f"Learning Rate:  {_mark('lr', args.lr)}")
     print(f"Sigma:          {_mark('sigma', args.sigma)}")
-    if population_stability is not None:
+    if survival_reward is not None:
+        print(f"Reward:         survival-first; biomass floor={survival_reward.lower:g} x start")
+        print("                (viable ticks + 0.5 * late-life reserve fullness) / horizon")
+    elif population_stability is not None:
         print(f"Reward:         population stability; biomass bounds "
               f"[{population_stability.lower:g}, {population_stability.upper:g}) × start")
         print("                mean(clipped log-energy − warning); failure tail = −5/tick")
@@ -2084,6 +2102,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                          survival_threshold=args.survival_threshold,
                          legacy_reward=args.legacy_reward,
                          population_stability=population_stability,
+                         survival_reward=survival_reward,
                          local_reward=local_reward)
 
     # Wire the visualiser into the trainer so the pygame event queue gets

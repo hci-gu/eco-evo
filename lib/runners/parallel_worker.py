@@ -16,6 +16,7 @@ import torch
 
 from lib.environments.ecosystem_env import source_tracking
 from lib.runners.policy import PolicyNetwork
+from lib.runners.survival_reward import evaluate_survival
 
 # Module-level globals, populated by _worker_init in each worker process.
 _ENV_BUILDER = None
@@ -168,6 +169,10 @@ def _evaluate_coevo_task(task):
     if config is not None:
         from lib.runners.population_stability import evaluate_stability
         return evaluate_stability(env, fg_list, n_ticks, config, obs_pack is not None)
+
+    config = task.get('survival_reward') if isinstance(task, dict) else None
+    if config is not None:
+        return evaluate_survival(env, fg_list, n_ticks, config, obs_pack is not None)
 
     # Initial state per evaluated species.
     b0 = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
@@ -362,6 +367,12 @@ def _evaluate_task(task):
     if config is not None:
         from lib.runners.population_stability import evaluate_stability
         fitness, samples, diagnostics = evaluate_stability(
+            env, [fg_to_train], n_ticks, config, obs_pack is not None)
+        return fitness[fg_to_train], samples, diagnostics[fg_to_train] if diagnostics else None
+
+    config = task.get('survival_reward') if isinstance(task, dict) else None
+    if config is not None:
+        fitness, samples, diagnostics = evaluate_survival(
             env, [fg_to_train], n_ticks, config, obs_pack is not None)
         return fitness[fg_to_train], samples, diagnostics[fg_to_train] if diagnostics else None
 
