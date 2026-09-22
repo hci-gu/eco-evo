@@ -1,0 +1,9 @@
+run,status,rollout,seed,species,final,last_window_mean,best,tail_cap_fraction,updates,seconds,candidate_world_ticks
+rollout-20_seed-0,complete,20,0,gadoids,100,100.0,100,1.0,3,3.4662923329742625,240
+rollout-20_seed-0,complete,20,0,pelagic_fish,100,100.0,100,1.0,3,3.4662923329742625,240
+rollout-20_seed-0,complete,20,0,porpoises,40,26.5,40,0.0,3,3.4662923329742625,240
+rollout-20_seed-0,complete,20,0,zooplankton,97,91.0,97,0.0,3,3.4662923329742625,240
+rollout-40_seed-0,complete,40,0,gadoids,100,100.0,100,1.0,3,3.788806749973446,480
+rollout-40_seed-0,complete,40,0,pelagic_fish,100,100.0,100,1.0,3,3.788806749973446,480
+rollout-40_seed-0,complete,40,0,porpoises,23,19.5,23,0.0,3,3.788806749973446,480
+rollout-40_seed-0,complete,40,0,zooplankton,99,91.5,99,0.0,3,3.788806749973446,480

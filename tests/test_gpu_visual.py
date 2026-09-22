@@ -82,6 +82,9 @@ def test_visual_cli_renders_and_preserves_training(tmp_path, viewers, device, ex
     assert len(viz._series["biomass"]["gadoids"]) == 2
     records = [json.loads(line) for line in (tmp_path / "visual" / "biomass.jsonl").read_text().splitlines()]
     assert [r["iter"] for r in records] == [1, 2]
+    assert records[0]["probe_seed"] != records[1]["probe_seed"]
+    config = json.loads((tmp_path / "visual" / "progress" / "config.json").read_text())
+    assert (config["lower"], config["upper"]) == (.1, 10.)
     assert all(r["reward"] and r["n_ticks"] == 2 for r in records)
     assert main(arguments(tmp_path / "plain", device, execution)) == 0
     visual = torch.load(tmp_path / "visual" / "trainer.pth", weights_only=False)
@@ -136,6 +139,42 @@ def test_progress_history_outlives_rolling_plots_and_playback(tmp_path, viewers)
         assert "phytoplankton" not in viz._active_plot_ids()
 
     assert main(arguments(tmp_path) + ["--visual"], on_step=populate) == 0
+
+
+def test_progress_dots_are_translucent_and_mean_is_separate(tmp_path, viewers, monkeypatch):
+    import pygame
+    from lib.runners.progress_plot import running_average
+    import lib.runners.progress_plot as plotting
+    colors, means = [], []
+    original = pygame.draw.circle
+
+    def circle(surface, color, *args, **kwargs):
+        if len(color) == 4 and color[3] == 128:
+            colors.append(color)
+        return original(surface, color, *args, **kwargs)
+
+    def average(values, window):
+        result = running_average(values, window)
+        means.append(result.tolist())
+        return result
+
+    monkeypatch.setattr(pygame.draw, "circle", circle)
+    monkeypatch.setattr(plotting, "running_average", average)
+
+    def render(trainer, step, directory, args):
+        if step != 2:
+            return
+        viz = viewers[0]
+        records = [dict(step=i, survival_ticks={"porpoises": value})
+                   for i, value in enumerate([10, 30, 20])]
+        viz.set_training_progress(records, dict(ticks=50, lower=.1, upper=10, smooth_window=2))
+        viz._active_tab = viz._tabs.index("progress")
+        viz._render_full()
+        pygame.image.save(viz._screen, str(tmp_path / "smoothed-progress.png"))
+
+    assert main(arguments(tmp_path) + ["--visual"], on_step=render) == 0
+    assert len(colors) >= 3
+    assert [10., 20., 25.] in means
 
 
 def test_progress_interval_and_resume_evaluation(tmp_path, viewers):

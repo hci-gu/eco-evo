@@ -61,6 +61,8 @@ def build_parser():
     parser.add_argument("--temp-anneal-gens", "--temp_anneal_gens", dest="temp_anneal_gens", type=positive_int, default=10)
     parser.add_argument("--visual", action="store_true",
                         help="Open the live pygame viewer with CPU inference probes between GPU updates")
+    parser.add_argument("--progress", action="store_true",
+                        help="Save headless survival evaluations and progress.png (without --visual)")
     add_profile_argument(parser)
     add_progress_arguments(parser)
     return parser
@@ -157,11 +159,19 @@ def main(argv=None, *, on_step=None):
     previous_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGINT, signal.SIGTERM)}
     save_final = False
     visual = None
+    progress = None
     try:
         if args.visual:
             from lib.gpu.visual import GPUTrainingVisualizer
             visual = GPUTrainingVisualizer(trainer, args, directory)
             visual.update_progress(trainer, args)
+        elif args.progress:
+            from lib.runners.training_progress import TrainingProgress
+            progress = TrainingProgress("gpu", args.eval_every, args.eval_ticks,
+                                        *args.biomass_bounds, args.eval_seed,
+                                        args.eval_temperature, args.plot_dir,
+                                        window=args.progress_window, save_plot=True)
+            progress(trainer, trainer.iterations_completed, directory, args)
         if on_step is not None:
             on_step(trainer, trainer.iterations_completed, directory, args)
         with (directory / "training.jsonl").open("a") as log:
@@ -188,6 +198,8 @@ def main(argv=None, *, on_step=None):
                             visual.update_progress(trainer, args)
                         if on_step is not None:
                             on_step(trainer, trainer.iterations_completed, directory, args)
+                        if progress is not None:
+                            progress(trainer, trainer.iterations_completed, directory, args)
                     next_generation, next_within = gen, iteration + 1
                     if trainer.iterations_completed % args.log_every == 0:
                         metrics = trainer.metrics()  # intentional compact readback
@@ -212,6 +224,8 @@ def main(argv=None, *, on_step=None):
                     import numpy as np
                     np.savez_compressed(directory / f"snapshot_{gen + 1:06d}.npz",
                                         group_ids=np.asarray(trainer.model.ids), **trainer.runner.snapshot())
+            if progress is not None:
+                progress(trainer, trainer.iterations_completed, directory, args, force=True)
             save_final = True
     except KeyboardInterrupt:
         print("Interrupted; saving the last completed update.", flush=True)

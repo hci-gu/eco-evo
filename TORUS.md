@@ -52,8 +52,12 @@ No growing trajectory table or finite repeated path is used.
 
 Builders, multiprocessing workers, CPU visual probes and the separate progress
 evaluation all inherit the topology and blob settings. The viewer title shows
-`[TORUS]`. Progress retains its existing biomass bounds, seed and tick cap.
-Standalone inference needs the same flags explicitly.
+`[TORUS]`. Live probes use fresh seeds between updates, logged as `probe_seed`
+in `biomass.jsonl`. Progress evaluation separately keeps its fixed seed and
+tick cap, with a default biomass band of 0.1 to 10 times initial biomass
+(`--biomass-bounds 0.1 10`). This does not change the training reward. When
+resuming an old progress history with different bounds, use a new `--plot-dir`.
+Standalone inference needs the same ecology flags explicitly.
 
 Start a new run/progress directory. Policy input dimensions are unchanged,
 so old weights can technically be imported, but their neighbourhood semantics

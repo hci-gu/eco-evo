@@ -1,0 +1,58 @@
+[
+  {
+    "species": "gadoids",
+    "rollout": 20,
+    "completed_seeds": 1,
+    "mean": 100.0,
+    "std": 0.0
+  },
+  {
+    "species": "gadoids",
+    "rollout": 40,
+    "completed_seeds": 1,
+    "mean": 100.0,
+    "std": 0.0
+  },
+  {
+    "species": "pelagic_fish",
+    "rollout": 20,
+    "completed_seeds": 1,
+    "mean": 100.0,
+    "std": 0.0
+  },
+  {
+    "species": "pelagic_fish",
+    "rollout": 40,
+    "completed_seeds": 1,
+    "mean": 100.0,
+    "std": 0.0
+  },
+  {
+    "species": "porpoises",
+    "rollout": 20,
+    "completed_seeds": 1,
+    "mean": 26.5,
+    "std": 0.0
+  },
+  {
+    "species": "porpoises",
+    "rollout": 40,
+    "completed_seeds": 1,
+    "mean": 19.5,
+    "std": 0.0
+  },
+  {
+    "species": "zooplankton",
+    "rollout": 20,
+    "completed_seeds": 1,
+    "mean": 91.0,
+    "std": 0.0
+  },
+  {
+    "species": "zooplankton",
+    "rollout": 40,
+    "completed_seeds": 1,
+    "mean": 91.5,
+    "std": 0.0
+  }
+]

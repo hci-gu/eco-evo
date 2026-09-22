@@ -37,8 +37,15 @@ position/velocity/countdown state; each segment's angle and duration are
 hashed from the seed and segment number, without consuming global RNG state.
 Changing batching, worker count or execution order does not change a seed's
 trajectory. Training already refreshes rollout seeds between updates.
+Live training probes now receive fresh random seeds between updates, varying
+spawn layouts and food trajectories. The seed is saved as `probe_seed` in each
+`biomass.jsonl` record. Random baselines share the displayed probe's initial
+world, and probes do not consume training RNG state.
 Progress evaluation deliberately keeps its fixed `--eval-seed` so scores are
-comparable; use different inference `--seed` values to check generalisation.
+comparable; its default survival band is 0.1 to 10 times initial biomass.
+This is not a change to the training reward. Use a new `--plot-dir` when resuming
+an old progress history with different bounds. Use different inference `--seed`
+values to check generalisation.
 Training probes, progress
 evaluations, and the live viewer inherit the experiment settings. Food totals
 come from the usual training/inference biomass configuration. Viewer biomass

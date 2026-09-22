@@ -814,6 +814,7 @@ class LiveVisualizer:
         if not self.enabled or "progress" not in self._series:
             return
         self._progress_cap = config["ticks"]
+        self._progress_window = config.get("smooth_window", 5)
         self._tab_labels["progress"] = (
             f"Survival ticks within {config['lower']:g}-{config['upper']:g} x starting biomass"
             f" (cap {self._progress_cap})")
@@ -826,7 +827,8 @@ class LiveVisualizer:
                    if fid not in self._ndm_ids and records
                    and records[-1]["survival_ticks"].get(fid) is None]
         self._progress_message = ("No starting biomass: " + ", ".join(missing) if missing else
-                                  f"{len(records)} evaluations | full training history")
+                                  f"{len(records)} evaluations | dots: raw | "
+                                  f"line: trailing {self._progress_window}-evaluation mean")
         self._last_frame_ts = 0.0
         self._maybe_render()
 
@@ -3829,8 +3831,17 @@ class LiveVisualizer:
                         yi = py0 + ph
                     pts.append((xi, yi))
                 if progress:
+                    from lib.runners.progress_plot import running_average
+                    dots = pg.Surface((pw + 1, ph + 1), pg.SRCALPHA)
                     for point in pts:
-                        pg.draw.circle(self._screen, self._fg_colour[fid], point, 3)
+                        pg.draw.circle(dots, (*self._fg_colour[fid][:3], 128),
+                                       (point[0] - px0, point[1] - py0), 3)
+                    self._screen.blit(dots, (px0, py0))
+                    averaged = running_average([value for _, value in buf],
+                                               getattr(self, "_progress_window", 5))
+                    pts = [(pts[k - start_i][0], int(py0 + np.clip(
+                        (ymax - averaged[k]) / (ymax - ymin), 0, 1) * ph))
+                           for k in range(start_i, end_i + 1)]
                 if len(pts) < 2:
                     continue
                 try:

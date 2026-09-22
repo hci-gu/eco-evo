@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Rollout experiment</title>
+<style>body{font:15px system-ui;margin:30px;background:#fafafa;color:#222}img{width:100%;max-width:1400px}
+table{border-collapse:collapse;margin:20px 0}td,th{padding:7px;border:1px solid #ccc;text-align:left}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr))}figure{margin:10px}</style>
+<h1>Rollout-length experiment</h1><p>1 generations x 3 updates;
+progress cap 100 ticks; biomass band 0.1-10 x start; eval seed 20260530.</p>
+<p>Dots: individual evaluations at 50% opacity. Lines: trailing 5-evaluation means.
+Comparison lines first average matching checkpoints across participating training seeds.
+Partial runs are shown but excluded from aggregate summaries. Startup windows use fewer samples.
+Scores at the cap are censored, not proof of survival beyond it. This is one fixed evaluation world,
+not a generalization test. Equal generations do not mean equal compute.</p>
+<h2>Jobs</h2><table><tr><th>name</th><th>status</th><th>updates</th><th>seconds</th><th>error</th></tr><tr><td>rollout-20_seed-0</td><td>complete</td><td>3</td><td>3.47</td><td></td></tr><tr><td>rollout-40_seed-0</td><td>complete</td><td>3</td><td>3.79</td><td></td></tr></table>
+<h2>Comparison</h2><img src="comparison.png" alt="Rollout comparison">
+<h2>Completed-run summary</h2><p>Mean and population standard deviation across seeds of each run's
+last 5 evaluations; not a confidence interval. Best single scores are not used to rank runs.</p>
+<table><tr><th>species</th><th>rollout</th><th>completed_seeds</th><th>mean</th><th>std</th></tr><tr><td>gadoids</td><td>20</td><td>1</td><td>100.00</td><td>0.00</td></tr><tr><td>gadoids</td><td>40</td><td>1</td><td>100.00</td><td>0.00</td></tr><tr><td>pelagic_fish</td><td>20</td><td>1</td><td>100.00</td><td>0.00</td></tr><tr><td>pelagic_fish</td><td>40</td><td>1</td><td>100.00</td><td>0.00</td></tr><tr><td>porpoises</td><td>20</td><td>1</td><td>26.50</td><td>0.00</td></tr><tr><td>porpoises</td><td>40</td><td>1</td><td>19.50</td><td>0.00</td></tr><tr><td>zooplankton</td><td>20</td><td>1</td><td>91.00</td><td>0.00</td></tr><tr><td>zooplankton</td><td>40</td><td>1</td><td>91.50</td><td>0.00</td></tr></table>
+<h2>Per-run measurements</h2><table><tr><th>run</th><th>species</th><th>final</th><th>last_window_mean</th><th>best</th><th>tail_cap_fraction</th><th>candidate_world_ticks</th></tr><tr><td>rollout-20_seed-0</td><td>gadoids</td><td>100</td><td>100.00</td><td>100</td><td>1.00</td><td>240</td></tr><tr><td>rollout-20_seed-0</td><td>pelagic_fish</td><td>100</td><td>100.00</td><td>100</td><td>1.00</td><td>240</td></tr><tr><td>rollout-20_seed-0</td><td>porpoises</td><td>40</td><td>26.50</td><td>40</td><td>0.00</td><td>240</td></tr><tr><td>rollout-20_seed-0</td><td>zooplankton</td><td>97</td><td>91.00</td><td>97</td><td>0.00</td><td>240</td></tr><tr><td>rollout-40_seed-0</td><td>gadoids</td><td>100</td><td>100.00</td><td>100</td><td>1.00</td><td>480</td></tr><tr><td>rollout-40_seed-0</td><td>pelagic_fish</td><td>100</td><td>100.00</td><td>100</td><td>1.00</td><td>480</td></tr><tr><td>rollout-40_seed-0</td><td>porpoises</td><td>23</td><td>19.50</td><td>23</td><td>0.00</td><td>480</td></tr><tr><td>rollout-40_seed-0</td><td>zooplankton</td><td>99</td><td>91.50</td><td>99</td><td>0.00</td><td>480</td></tr></table>
+<p><a href="summary.csv">CSV</a> | <a href="manifest.json">Settings and commands</a></p>
+<h2>Progress images</h2><div class="gallery"><figure><figcaption>rollout-20_seed-0 (complete)</figcaption><img loading="lazy" src="rollout-20_seed-0/progress/progress.png"></figure><figure><figcaption>rollout-40_seed-0 (complete)</figcaption><img loading="lazy" src="rollout-40_seed-0/progress/progress.png"></figure></div></html>

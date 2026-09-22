@@ -41,8 +41,9 @@ The mode rejects local, legacy and population-stability reward combinations,
 
 `--eval-ticks 5000` still controls the separate progress evaluation; it does
 not change a `--n_eval_ticks 300` training horizon. Progress keeps its existing
-biomass band (default 0.3 to 3 times initial biomass) and fixed evaluation seed.
-Training survival uses only the lower bound. The two metrics are therefore
+biomass band (default 0.1 to 10 times initial biomass) and fixed evaluation seed.
+Training survival still uses its own lower bound (default 0.3), without an
+upper bound. The two metrics are therefore
 related but not identical, and neither is simply time to literal extinction.
 
 Once policies reliably survive 300 ticks, the main term is saturated: increase
@@ -50,6 +51,11 @@ the training horizon to reward further improvements. Late-life reserve quality
 alone cannot guarantee survival to tick 5000. Co-evolving prey and different
 spawn worlds can still cause noisy progress. No training convergence or
 ecological viability improvement is guaranteed by this reward change.
+
+The live biomass maps/probes use fresh random worlds between updates, separately
+from fixed-seed progress evaluation. Their seeds are logged in `biomass.jsonl`.
+To resume an existing run whose progress used the older 0.3-to-3 band, select
+a new `--plot-dir`; old and new survival scores must not share one history.
 
 ## Run
 

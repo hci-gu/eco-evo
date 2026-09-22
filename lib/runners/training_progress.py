@@ -4,6 +4,7 @@ import copy
 import json
 import math
 import random
+import secrets
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -26,11 +27,14 @@ def add_progress_arguments(parser):
                         help="Survival progress: evaluate every N training updates (default: 20)")
     parser.add_argument("--eval-ticks", type=positive_int, default=1000,
                         help="Survival progress: inference tick cap (default: 1000)")
-    parser.add_argument("--biomass-bounds", type=float, nargs=2, default=(0.3, 3.0),
-                        metavar=("LOWER", "UPPER"), help="Survival bounds as multiples of initial biomass")
+    parser.add_argument("--biomass-bounds", type=float, nargs=2, default=(0.1, 10.0),
+                        metavar=("LOWER", "UPPER"),
+                        help="Progress survival band relative to initial biomass (default: 0.1 10); not training reward")
     parser.add_argument("--eval-seed", type=int, default=20260530)
     parser.add_argument("--eval-temperature", type=float, default=1.0)
     parser.add_argument("--plot-dir", type=Path, help="Progress history directory (default: <run>/progress)")
+    parser.add_argument("--progress-window", type=positive_int, default=5,
+                        help="Trailing evaluation window for progress graph smoothing (default: 5)")
 
 
 def validate_progress_arguments(parser, args):
@@ -56,6 +60,14 @@ def evaluation_randomness(seed):
     finally:
         np.random.set_state(numpy_state)
         random.setstate(python_state)
+
+
+@contextmanager
+def probe_randomness(seed=None):
+    """Fresh visual world without consuming any training RNG; log seed for replay."""
+    seed = secrets.randbits(32) if seed is None else int(seed)
+    with evaluation_randomness(seed):
+        yield seed
 
 
 def measure_survival(env, ticks, lower, upper, pump_events=None):
@@ -182,13 +194,14 @@ def install_current_policies(env, trainer, backend):
 
 class TrainingProgress:
     def __init__(self, backend, every, ticks, lower, upper, seed, temperature, directory=None,
-                 *, visualizer=None):
+                 *, visualizer=None, window=5, save_plot=False):
         self.backend, self.every, self.ticks = backend, every, ticks
         self.lower, self.upper, self.seed, self.temperature = lower, upper, seed, temperature
         self.directory = Path(directory) if directory is not None else None
         self.config = None
         self.records = []
         self.visualizer = visualizer
+        self.window, self.save_plot = window, save_plot
 
     def _start(self, trainer, step, run_dir, resume):
         ecology = inference_config(trainer, self.backend)
@@ -224,13 +237,15 @@ class TrainingProgress:
             pump = self.visualizer.pump_events if self.visualizer is not None else None
             return measure_survival(env, self.ticks, self.lower, self.upper, pump_events=pump)
 
-    def __call__(self, trainer, step, run_dir, args):
+    def __call__(self, trainer, step, run_dir, args, *, force=False):
         if self.visualizer is not None and not self.visualizer.enabled:
             self.visualizer = None
         first = self.config is None
         if first:
             self._start(trainer, step, run_dir, args.resume)
-        if not first and step % self.every:
+        if self.records and self.records[-1]["step"] == step:
+            return
+        if not first and not force and step % self.every:
             return
         number = len(self.records) + 1
         print(f"[progress] evaluation={number}, step={step}: evaluating up to {self.ticks} inference ticks on CPU...", flush=True)
@@ -245,7 +260,10 @@ class TrainingProgress:
             temporary.write_text("".join(json.dumps(r, allow_nan=False) + "\n" for r in self.records))
             temporary.replace(self.history)
             if self.visualizer is not None:
-                self.visualizer.set_training_progress(self.records, self.config)
+                self.visualizer.set_training_progress(self.records, {**self.config, "smooth_window": self.window})
+            if self.save_plot:
+                from lib.runners.progress_plot import save_progress_plot
+                save_progress_plot(self.records, self.config, self.directory / "progress.png", self.window)
         except Exception as error:
             # Monitoring failures must not discard a completed training update.
             print(f"[progress] WARNING: evaluation/plot failed at step {step}: {error}", flush=True)
@@ -279,4 +297,4 @@ def make_visual_progress(backend, args, viz):
     lower, upper = args.biomass_bounds
     return LiveTrainingProgress(backend, args.eval_every, args.eval_ticks, lower, upper,
                                 args.eval_seed, args.eval_temperature, args.plot_dir,
-                                visualizer=viz)
+                                visualizer=viz, window=getattr(args, "progress_window", 5))

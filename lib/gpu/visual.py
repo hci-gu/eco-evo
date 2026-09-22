@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import torch
 
-from lib.runners.training_progress import evaluation_randomness, make_visual_progress
+from lib.runners.training_progress import probe_randomness, make_visual_progress
 
 
 @torch.no_grad()
@@ -64,8 +64,8 @@ class GPUTrainingVisualizer:
                 # so --mortality_multiplier would not reach the viewer.
                 mortality_multiplier=builder.mortality_multiplier,
             )
-            with evaluation_randomness(self.builder.PROBE_SEED):
-                env = self.builder()
+            with probe_randomness() as seed:
+                env = self.builder(seed=seed)
             dm_ids = list(env.dm_ids)
             ndm_ids = [fid for fid in env.fgs if fid not in dm_ids]
             self.viz = LiveVisualizer(
@@ -161,15 +161,14 @@ class GPUTrainingVisualizer:
             step = trainer.iterations_completed
             for fid, reward in rewards.items():
                 self.viz.update_reward(fid, reward, step=step)
-            with evaluation_randomness(self.builder.PROBE_SEED):
-                self.probe(
-                    snapshot, self.builder, n_ticks=ticks, gen=generation,
-                    it=iteration, jsonl_path=self.directory / "biomass.jsonl",
-                    compact=False, viz=self.viz, viz_step=step,
-                    viz_extra={"gen": generation + 1, "iter": iteration + 1,
-                               "T": snapshot.softmax_temperature},
-                    reward_by_fid=rewards,
-                )
+            self.probe(
+                snapshot, self.builder, n_ticks=ticks, gen=generation,
+                it=iteration, jsonl_path=self.directory / "biomass.jsonl",
+                compact=False, viz=self.viz, viz_step=step,
+                viz_extra={"gen": generation + 1, "iter": iteration + 1,
+                           "T": snapshot.softmax_temperature},
+                reward_by_fid=rewards,
+            )
             self.pump()
         except Exception as error:
             print(f"[viz] Probe failed: {error}; viewer disabled, training continues.", flush=True)

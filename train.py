@@ -11,7 +11,7 @@ import json
 import re
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.training_progress import (add_progress_arguments, validate_progress_arguments,
-                                           make_visual_progress)
+                                           make_visual_progress, evaluation_randomness, probe_randomness)
 from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config,
                                       load_impact_spawn_specs)
 from lib.spawn import make_weights
@@ -464,8 +464,8 @@ class _EnvBuilder:
 
 
 class _ProbeEnvBuilder:
-    """Picklable env builder dedicated to the *probe rollout* — a fixed,
-    deterministic world used to track per-FG biomass evolution as policies
+    """Picklable env builder dedicated to the *probe rollout* — an
+    inference world used to illustrate per-FG biomass evolution as policies
     train. Distinguishes itself from ``_EnvBuilder`` in two ways:
 
       1. Uses ``mode='inference'`` when loading the project config, so
@@ -476,10 +476,10 @@ class _ProbeEnvBuilder:
          section (real .npz files configured via fgconfig's Inference tab)
          instead of sampling fresh fields per call.
 
-    The probe seed is fixed (``probe_seed``); every call returns an env
-    whose spawn layout and impact field are identical, so the only
-    variable across iterations is the policy. Mirrors ``inference.py``'s
-    ``build_env`` semantics.
+    Calls accept an explicit seed, shared with random baselines in each probe.
+    The fixed fallback is only for metadata/compatibility callers; displayed
+    rollouts receive a fresh seed from ``_probe_biomass``. Saved inference
+    impact maps remain unchanged. Mirrors ``inference.py``'s build semantics.
     """
 
     PROBE_SEED = 20260530
@@ -530,10 +530,7 @@ class _ProbeEnvBuilder:
     def __call__(self, seed=None):
         H, W = self.grid_height, self.grid_width
         grid_size = (H, W)
-        # Always use the fixed probe seed: the spawn layout and any
-        # remaining stochastic choices inside load_project_config(mode=
-        # 'inference') must be deterministic across iterations.
-        s = self.PROBE_SEED
+        s = self.PROBE_SEED if seed is None else int(seed)
         if self.project_path:
             fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
                 self.project_path, grid_size=grid_size, seed=s,
@@ -580,7 +577,7 @@ class _ProbeEnvBuilder:
                 tpls = (self._load_spawn_tpls(self.project_path)
                         if self.project_path else {})
                 self._apply_spawn(env, self.spawn_overrides, tpls,
-                                  seed=self.PROBE_SEED)
+                                  seed=s)
             except Exception as _e:
                 print(f"    [probe] WARN: spawn override failed: {_e!r}")
         debug_food.reset(env)
@@ -589,16 +586,28 @@ class _ProbeEnvBuilder:
 
 def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    compact=True, viz=None, viz_extra=None, viz_step=None,
+                   rnd_builder=None, rnd_mode="all", reward_by_fid=None, probe_seed=None):
+    """Show a fresh seeded world, isolated from ARS and progress evaluation."""
+    with probe_randomness(probe_seed) as seed:
+        return _probe_biomass_impl(
+            trainer, probe_builder, n_ticks, gen, it, jsonl_path,
+            compact=compact, viz=viz, viz_extra=viz_extra, viz_step=viz_step,
+            rnd_builder=rnd_builder, rnd_mode=rnd_mode,
+            reward_by_fid=reward_by_fid, probe_seed=seed)
+
+
+def _probe_biomass_impl(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
+                   compact=True, viz=None, viz_extra=None, viz_step=None,
                    rnd_builder=None,
                    rnd_mode="all",
-                   reward_by_fid=None):
+                   reward_by_fid=None, probe_seed=None):
     """Run a probe rollout with the trainer's current policies and log
     per-FG biomass evolution.
 
-    The rollout uses ``probe_builder`` (deterministic inference world)
-    so that any variation in ``log10(bh/b0)`` reflects *policy* change,
-    not environmental noise. Frozen obs-norm stats are installed from
-    ``trainer.obs_stats`` exactly as in ``_evaluate``.
+    Each probe samples a fresh inference world, including food trajectories.
+    These curves illustrate behaviour, not a controlled policy comparison.
+    Progress evaluation remains fixed-seed. Frozen obs-norm stats are installed
+    from ``trainer.obs_stats`` exactly as in ``_evaluate``.
 
     Writes one JSONL line per call to ``jsonl_path`` (results dir) and,
     when ``compact`` is True, prints a single-line summary to stdout.
@@ -640,7 +649,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 n_ticks = int(t_ovr)
         except Exception:
             pass
-    env = probe_builder()
+    env = probe_builder(seed=probe_seed)
     env.policies = trainer.policies
     env.softmax_temperature = float(trainer.softmax_temperature)
 
@@ -673,7 +682,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 else 0.0)
           for fid in fg_ids}
 
-    # Parallel random-action baseline env(s) (same deterministic probe world).
+    # Parallel random-action baselines share this probe's initial world/seed.
     # Built fresh per probe so biomass/energy histories restart at 100 %
     # together with the main env's curves on every iteration.
     #
@@ -702,7 +711,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 """Build one rnd probe env where ``random_fids`` (iterable
                 of DM-FG ids) act uniformly at random; the remaining DMs
                 use ``trainer.policies``. Frozen obs-norm from main env."""
-                e = rnd_builder()
+                with evaluation_randomness(probe_seed):
+                    e = rnd_builder(seed=probe_seed)
                 e.build_static_caches()
                 # ``--local_reward``: the baseline curve must be produced
                 # by the same formula as the trained policy's reward.
@@ -1353,6 +1363,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         'gen': int(gen + 1),
         'iter': int(it + 1),
         'n_ticks': int(n_ticks),
+        'probe_seed': int(probe_seed),
         'b0': b0,
         'bh': bh,
         'ratio': ratio,
@@ -1667,7 +1678,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "Requires --visual to have any visible effect.")
     parser.add_argument("--visual", action="store_true",
                         help="Open a live pygame window with per-FG biomass heatmaps "
-                             "(from the deterministic probe rollout) and a rolling "
+                             "(from a fresh random probe world) and a rolling "
                              "reward plot. Requires pygame; if unavailable the flag "
                              "is silently ignored. Main-process only.")
     add_profile_argument(parser)
@@ -1729,7 +1740,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
 
-    # Probe rollout setup: a deterministic inference-world env used to
+    # Probe rollout setup: a freshly seeded inference world used to
     # log per-FG biomass evolution as policies train. Mirrors the
     # inference.py scenario (fixed initial biomass)
     # so that the trajectory log10(bh/b0) is directly comparable to
@@ -2655,9 +2666,9 @@ def main(argv=None, *, on_step=None, confirm=True):
                         _step = gen * args.iter_per_gen + i
                         for fid in target_species:
                             viz.update_reward(fid, float(means[fid]), step=_step)
-                    # Probe: deterministic inference-world rollout with the
+                    # Probe: freshly seeded inference-world rollout with the
                     # updated theta. log10(bh/b0) per FG; JSONL row + compact
-                    # stdout line. Fixed seed -> only policy varies across iters.
+                    # stdout line. World and policy may both vary across iterations.
                     try:
                         _probe_biomass(trainer, probe_builder,
                                        n_ticks=args.n_eval_ticks,
@@ -2714,9 +2725,9 @@ def main(argv=None, *, on_step=None, confirm=True):
                         if viz is not None:
                             viz.update_reward(species, float(avg_reward),
                                               step=gen * args.iter_per_gen + i)
-                        # Probe: deterministic inference-world rollout with the
+                        # Probe: freshly seeded inference-world rollout with the
                         # updated theta. log10(bh/b0) per FG; JSONL row + compact
-                        # stdout line. Fixed seed -> only policy varies across iters.
+                        # stdout line. World and policy may both vary across iterations.
                         try:
                             _probe_biomass(trainer, probe_builder,
                                            n_ticks=args.n_eval_ticks,

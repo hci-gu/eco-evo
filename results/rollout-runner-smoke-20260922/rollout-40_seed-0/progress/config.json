@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "backend": "gpu",
+  "ticks": 100,
+  "lower": 0.1,
+  "upper": 10.0,
+  "seed": 20260530,
+  "temperature": 1.0,
+  "project": "/Users/sebastianandreasson/Documents/code/work/gu/eco-evo/mareld2.yaml",
+  "library": "/Users/sebastianandreasson/Documents/code/work/gu/eco-evo/fgconfig/fg_library.yaml",
+  "grid": [
+    24,
+    24
+  ],
+  "mortality": false,
+  "migration": true,
+  "boundary": "torus",
+  "mortality_multiplier": 1.0,
+  "currents": null,
+  "food_blobs": {
+    "speed": 0.1,
+    "radius": 0.0,
+    "seed": 0,
+    "segment_min": 40,
+    "segment_max": 160
+  }
+}

@@ -8591,3 +8591,427 @@ remain open exactly as described in 71.9 / 71.11.
     with currents and migration on, strength 0.2, period 10, scale 9.5:
       results/current-migration-smoke-20260922/
       results/current-migration-tensor-smoke-20260922/
+
+96 DEBUG BOUNCING FOOD BLOBS (2026-09-22)
+
+    User requested a disposable food-following experiment and explicitly chose
+    CONSTANT food biomass. New --debug-food-blobs opt-in in train.py,
+    train_gpu.py and inference.py. Active non-decision-maker phytoplankton and
+    benthic_community share a compact, smooth blob whose centre reflects at
+    the rectangular map boundaries. After each tick, their biomass and reserve
+    are restored to rollout-start totals. Predation still feeds consumers.
+    Food shape is prescribed, regardless of growth/capacity/extinction/current
+    transport; all DM ecology, policy inputs and rewards remain ordinary.
+
+    Most logic lives in ecosystem_env/debug_food.py; small explicit hooks in
+    environment, tensor engine/runner, CLI, builders and visual/progress paths.
+    No library YAML changes. Flag off leaves ecological behaviour unchanged.
+    See DEBUG_FOOD_BLOBS.md for commands, caveats and removal instructions.
+
+    Options: --food-blob-speed (default 0.1 cells/tick, zero = stationary
+    control), --food-blob-radius (default 0 = min(H,W)/6, at least one cell),
+    --food-blob-seed (default 0). A seeded triangular-wave centre trajectory
+    uses direction components 0.8/0.6. Compact polynomial radial weights are
+    normalised each tick; no diffusion or edge emigration. Accessibility clips
+    the shape; if completely blocked, place food at nearest accessible cells.
+    This debug path does not navigate around internal obstacles.
+
+    CPU reset captures totals after spawning/visual biomass overrides. Tensor
+    runners keep fixed totals in persistent device buffers and place the initial
+    field before observations. Trajectories depend on seed/tick only, with no
+    RNG draws and paired ARS signs seeing identical food. Settings survive
+    multiprocessing, world builders, visual probes and progress metadata.
+    Repeat debug flags for standalone inference or resumed training, as for
+    currents. Window titles/CLI identify DEBUG FOOD BLOBS. Existing playback
+    and fixed colour references work without a separate renderer.
+
+    Important experimental limit: the default blob moves faster than the
+    zooplankton movement_speed=0.02. For that follower try speed 0.01, and
+    compare to a stationary control. Existing local observations do not reveal
+    a distant target. Short 15-tick horizons do not test sustained following.
+    Constant food means this experiment is NOT a biological viability result.
+
+    Validation: 12 new tests passed, 5 CUDA cases skipped. Covers reflection,
+    spatial CPU/Torch parity, complete-consumption replenishment, constant food
+    totals through full ecological ticks, stationary control, blocked habitat,
+    builder/pickle/probe propagation, ARS chunk/paired-sign consistency,
+    fullgraph tracing and no tensor readback. CUDA capture tests added but
+    NVIDIA hardware unavailable locally.
+    Full suite: 469 passed, 79 skipped, same 2 pre-existing failures as 93.3.
+    Syntax/diff checks passed. Both one-generation smoke runs passed at 12x15,
+    80 ticks, speed 0.5; CPU used 2 workers, tensor used CPU/eager and --visual:
+      results/food-blobs-cpu-smoke-20260922/
+      results/food-blobs-tensor-smoke-20260922/
+    uv run --no-sync inference with the CPU smoke checkpoints passed. An
+    offscreen visual inference recorded 81 frames, maintained both food totals
+    in every frame and rendered visible moving blobs/replay (visually checked).
+
+97 DEBUG FOLLOWER SPEED AND COLOUR-SCALE TOGGLE (2026-09-22)
+
+    User requested zooplankton movement_speed=1.0 (formerly 0.02). Changed the
+    shared fg_library.yaml default, so CPU/GPU training and inference all use
+    it, including outside debug-food mode. This supersedes the slow-zooplankton
+    warning in section 96; policy choices still determine actual movement.
+
+    The shared pygame viewer now has Colors: fixed/dynamic [C] in the playback
+    bar, clickable even during recording or before any saved frames exist.
+    C toggles the same setting. Fixed remains default and retains rollout-start
+    per-FG maxima; dynamic uses each species' displayed-frame maximum, including
+    replay. Both support log colours and the existing display multiplier.
+    Switching modes preserves start references and leaves line plots and the
+    simulation unchanged. Dynamic colours reveal small populations but cannot
+    be compared quantitatively across ticks. Colourbar limits remain explicit.
+
+    Added tests/test_heatmap_scale.py: shared default loading, both viewer modes,
+    click/key controls, recording/replay, log colours, multiplier/reset and empty
+    populations. Offscreen six-FG viewer layout inspected. One-generation debug
+    training passed with migration on, mortality off, 16x16 grid, 20 ticks,
+    2 deltas, one world and 2x48 tanh policy in CPU and tensor CPU/eager modes:
+      results/food-blobs-scale-smoke-20260922/
+      results/food-blobs-scale-tensor-smoke-20260922/ (with --visual)
+    No local NVIDIA device available for a CUDA run.
+    Full suite: 474 passed, 79 skipped, the same 2 pre-existing failures as
+    section 93.3 (porpoise diet gate and CPU/tensor numerical tolerance).
+    All 5 new tests passed; syntax/diff checks and ASCII history check passed.
+
+98 PORPOISE DEBUG-FOOD DIAGNOSIS (2026-09-22; NO MODEL CHANGE)
+
+    User asked why porpoises have little chance. Used local results/food-blobs
+    checkpoint (only generation 1, iteration 1 saved), not the latest remote
+    tactik-pc GPU run. Replayed current library, 16x16, migration on, mortality
+    off, food speed 0.1, inference biomass and seed 20260530 twice identically.
+    Porpoises fall below 30% B0 on tick 14 and reach zero on tick 26, while
+    pelagic fish initially grows (853 t initially, about 865 t at tick 30).
+
+    Deterministic in-memory ablations, other policies unchanged, 300 ticks:
+      baseline:             extinct 26
+      food speed 0:         extinct 26 (same early trajectory)
+      porpoise best-prey eat: extinct 258; B100/B0=1.018
+      porpoise greedy:      same as best-prey eat in this world
+      starve_rate .025:     below 30% tick 70, B300/B0=.0073
+      extinction factor 0: below 30% tick 15; B30/B0=.0034
+      no below-unit argmax: extinct 23
+      initial reserve 100%: extinct 35
+      frozen fish/gadoids:   extinct 26 with existing porpoise policy
+      frozen fish/gadoids + best-prey eat: B300/B0=1.087, no starvation
+    Seeds 17 and 42 confirm baseline extinction at 35/28, best-prey eat at
+    264/262, and frozen-prey + eat at B300/B0=1.088 with no starvation.
+
+    Baseline biomass-time-weighted actions: 68.94% move, 27.92% eat. Measured
+    assimilated gain 14.21 vs metabolic cost 137.28 MJ/t/tick. Of the 2.8456 t
+    lost, metabolic starvation accounts for 2.5428 and the extinction sweep
+    for .3027. Removing the sweep does not repair the energy deficit.
+    Porpoises have starve_rate=.5 and maintenance=.5: at zero reserve the
+    growth law removes 25% of biomass per tick, independently of --mortality.
+    Inference starts at reserve ratio .7, only .2*2800=560 MJ/t above the
+    starvation boundary. The measured deficit crosses that buffer quickly.
+
+    Best-prey eat starts on one fish-rich cell (81.4 t pelagic fish). By tick
+    180 that cell holds 1.72 t, below the approximately 1.97 t VISIBLE fish
+    needed to pay continuous feeding at reserve ratio .5. Its maximum intake
+    at maintenance has fallen to 120.1 vs feeding cost 126 MJ/t/tick. The
+    population then starves despite good feeding actions. Only phytoplankton
+    and benthos are replenished by debug-food mode, not the porpoises' fish.
+    Freezing prey biomass/reserve at spawn isolates this second cause.
+
+    Conclusion: the early policy leaves food, spends too much on movement,
+    and is rapidly punished by starvation; later the live prey supply also
+    collapses. Blob speed and the extinction sweep are not the primary cause
+    of the early collapse. This does NOT prove all policies are infeasible.
+    For an isolated porpoise tracking test, a replenished moving fish target
+    would remove dependence on learning the whole food chain simultaneously.
+    No fixes implemented; diagnostic patches existed in RAM only.
+
+99 PORPOISE FEASIBILITY FOLLOW-UP: 24x24, 5000 TICKS (2026-09-22)
+
+    User clarified their world is 24x24 with a 5000-tick horizon and asked
+    whether perfect behaviour survives or success requires spawn luck.
+    Tested current project/library with inference initial biomass, migration
+    on, mortality off and debug food speed .1. No trained checkpoint used:
+    ALL decision makers used the existing hand-coded greedy food-potential
+    controller, which sees global reachable food. This is a strong diagnostic
+    heuristic, NOT a mathematically optimal controller or an impossibility
+    proof when it fails. No model or parameter changes were made.
+
+    Seeds 20260530,17,42; each rollout ran all 5000 ticks:
+      configured spawn: porpoise extinction ticks 1127,1146,1117
+      colocated spawn:  porpoise extinction ticks 1115,1118,1238
+    Colocation moves all predators onto their prey in trophic order, keeping
+    biomass and occupancy. Configured porpoises already start in 3-4 occupied
+    cells at 6.4 t total, with biomass-weighted fish densities 94.6-102.5 t/cell.
+    At tick 100 configured porpoise B/B0 is .477,.871,.464; colocation gives
+    about 1.023 in all three. Spawn affects early losses, but favourable spawn
+    does not prevent late extinction with this controller.
+    Additional configured seed 20260530 greedy_hide arm: extinct at 1140.
+    All these arms lose pelagic fish later in the rollout as well. This does
+    not identify the optimal strategy or test the latest tactik-pc policies.
+
+    Conclusion: no verified robust 5000-tick solution yet. A failing heuristic
+    cannot establish that perfect behaviour is impossible. A useful next test
+    is a known-solvable replenished moving fish target to isolate porpoise
+    tracking, rather than interpreting whole-food-chain failures as deficient
+    policy learning alone. Horizon means ticks per rollout, not rollout count.
+
+100 RANDOMISED FOOD-BLOB HEADINGS (2026-09-22)
+
+    User reported a shared movement pattern that could be memorised. The old
+    trajectory seeded only start phases; all rollouts used velocity components
+    .8*speed and .6*speed. Added a regression using real blob-field centroid
+    displacements across six seeds; confirmed it failed before the fix.
+
+    debug_food.blob_center now hashes the rollout key + food-blob seed into
+    separate start phases and velocity components. Normalising the velocity
+    preserves configured speed. Reflection keeps the blob inside its radius
+    margins; the heading is constant between wall bounces, not a per-tick random
+    walk. Both foods remain co-located and total biomass is still replenished.
+    Hashing uses NumPy/Torch integer operations, without RNG state, readback,
+    growing trajectory tables or additional per-rollout buffers. Ordinary
+    simulation with the debug flag off is unchanged.
+
+    Training already supplies new rollout keys per update and identical keys
+    to the positive/negative ARS pair. Tests cover different world fields and
+    refreshed keys, pair equality, chunk independence, compilation and absence
+    of host readback. Added CPU/Torch centre parity, bounds and speed through
+    5000 ticks on 24x24, seed extremes, random access and tiny grids. The old
+    bounce test now permits random axis speeds instead of assuming .8/.6.
+    Targeted suite: 18 passed, 6 CUDA cases skipped. Full suite: 480 passed,
+    80 skipped and the same 2 pre-existing failures documented in section 93.3.
+
+    One-generation CPU and tensor CPU/eager visual runs passed at 24x24,
+    40 ticks, 2 deltas, 2 worlds, with migration on and mortality off:
+      results/food-blobs-random-path-smoke-20260922/
+      results/food-blobs-random-path-tensor-smoke-20260922/
+    No NVIDIA device available locally. Syntax and diff checks passed.
+
+    No new flags. Progress evaluation intentionally keeps --eval-seed fixed
+    for fair comparisons; inference --seed selects held-out trajectories.
+    Existing seeds now map to different paths, so use a fresh run/progress
+    directory to avoid mixing old/new score histories. DEBUG_FOOD_BLOBS.md
+    documents this reproducibility distinction and the new heading semantics.
+
+101 SURVIVAL-FIRST FITNESS WITH A SPECIES-LIFETIME TAIL (2026-09-22)
+
+    User approved testing survival-first fitness instead of scoring only the
+    final portion of a fixed rollout: porpoises often fail before that portion.
+    Added opt-in --survival-reward to train.py and train_gpu.py; old total-energy
+    scoring remains the default. No biological parameters or tick mechanics
+    changed. Inference still consumes ordinary exported policies.
+
+    Per species and world: fitness = (T + 0.5*Q)/H. H is the full training
+    horizon. T is the contiguous prefix of post-tick biomass >= floor*B0,
+    default floor .3 (--survival-reward-floor). The first dip permanently
+    ends that species' viable lifetime, including if biomass later recovers.
+    Other species keep scoring and the simulation still runs H ticks.
+    Empty starts or first-tick failure score zero; no upper biomass bound.
+    Q is mean clipped reserve fullness R/(B*max_energy_reserve) over the last
+    ceil(T/3) viable ticks, not the last third of H. One extra viable tick
+    beats any Q difference in the same world/horizon. Multi-world averaging
+    is unchanged; this is not a worst-world guarantee. Score can exceed one
+    by at most .5/H when surviving the whole horizon.
+
+    Shared CPU scorer serves serial/parallel single-species and coevolution
+    paths, observation moments and action diagnostics, plus random visual
+    baselines. Tensor scoring keeps per-species failure masks, counts and
+    reserve-quality prefix sums on device, without host readback in training.
+    Buffers participate in warmup/capture state restoration; horizon growth
+    reallocates prefix storage and invalidates captured graphs. CLI metadata,
+    reward plot labels and GPU checkpoints identify the objective. GPU resume
+    rejects mode/floor changes; use a fresh run with --init-from for old weights.
+    Reject incompatible reward modes and nonzero entropy/argmax shaping;
+    --profile info supplies the required zero shaping coefficients.
+
+    Progress evaluation is untouched: --eval-ticks caps its separate fixed-seed
+    inference test using the existing .3..3 biomass band. --n_eval_ticks remains
+    the training horizon. Training survival has only a lower bound, so these
+    metrics are not identical. Once all candidates survive H, increase H;
+    the reserve tie-breaker cannot guarantee long-horizon survival. No claim
+    of improved convergence is made from smoke tests.
+
+    New regression suite: 20 passed, 5 NVIDIA-only cases skipped. Covers
+    boundary equality, independent failures, no recovery restart, lifetime
+    tail means, absent/invalid states, bounded quality, CPU/worker/tensor
+    parity, changing horizons, chunking, fullgraph tracing, no readback and
+    exact checkpoint resume. Full suite: 500 passed, 85 skipped, the same two
+    pre-existing failures as sections 93.3/100 (diet budget and float parity).
+
+    One-generation smoke runs passed:
+      results/survival-reward-cpu-smoke-20260922/ (2 workers, 40 ticks)
+      results/survival-reward-tensor-smoke-20260922/ (CPU/eager, 40 ticks)
+      results/survival-reward-visual-smoke-20260922/ (CPU/eager, SDL dummy,
+        24x24, 300 training ticks, 5000 progress cap, 2 deltas, 2 worlds).
+    Visual progress ran before and after training, ending after all species
+    failed their progress bounds (496 and 515 ticks), as designed. CUDA
+    hardware was unavailable locally. Syntax/diff checks passed.
+    SURVIVAL_REWARD.md documents semantics, limitations and a GPU one-liner.
+    Existing train-command.txt and remote tactik-pc files were not modified.
+
+102 TORUS TOPOLOGY AND RANDOM FOOD-MOTION SEGMENTS (2026-09-22)
+
+    User requested a torus world so prey crossing a boundary stays adjacent
+    to its pursuer, instead of pooling emigrants and redistributing them over
+    weighted edge cells. Added --boundary torus to CPU/GPU training and
+    inference. Default bounded mode retains existing behaviour. Torus disables
+    immigration/emigration even with --migration on; there is no double flow.
+
+    CPU observations wrap all neighbour channels, including observable impact
+    layers and hidden-prey visibility. Movement conserves the crossing mass
+    and energy at the matching opposite cell, retaining metabolic costs.
+    Accessibility checks the wrapped destination. Split suppression cancels
+    sub-threshold seam arrivals exactly like interior arrivals. Local reward
+    tracks the wrapped source/destination flow rather than counting emigration.
+    Tensor observations, movement, currents, suppression and tracking share
+    wrapped neighbour indices. Existing GPU impact-layer limits are unchanged.
+
+    Passive currents wrap through the same boundaries and habitat mask. Noise
+    lattice coordinates wrap too, with an integer count of lattice cells per
+    axis and a doubled count for the fine layer; current-scale is approximate
+    on a torus. This removes a discontinuity in the scrolling cloud field.
+    The old bounded noise and migration path are preserved.
+
+    Torus debug food now moves in random segments: uniform random angle and
+    integer duration, default 40..160 ticks inclusive. Configure with
+    --food-blob-segment-ticks MIN MAX. Speed stays constant; zero is stationary.
+    At expiry the next tick uses a new direction and duration. The footprint
+    uses shortest periodic distances, so it straddles edges without jumping
+    or losing its replenished total. Obstacles still clip/renormalise food;
+    fully blocked footprints use the nearest allowed cells, without routing.
+    Bounded debug food retains its earlier analytic bouncing trajectory.
+
+    TorusBlobMotion keeps seven small per-world buffers (seed, segment,
+    remaining ticks, x/y, vx/vy). Randomness is hashed by seed and segment,
+    independent of ecology RNG and execution order. Positions are float64,
+    fields float32. GPU runners reset all motion buffers and include them in
+    warmup/capture snapshots; no tick readback or growing trajectory table.
+    Low-level tensor step callers pass food_blob_motion explicitly when using
+    torus debug food. ARS pairs share keys/paths; worlds and updates differ.
+
+    Topology and segment options propagate through picklable world builders,
+    progress evaluation, probes and standalone inference/reruns. Viewer titles
+    identify TORUS. Progress metadata normalises absent topology/segment fields
+    to the old bounded defaults. GPU resume rejects a topology mismatch; new
+    run plus --init-from allows deliberate weight reuse. Network dimensions
+    are unchanged, but the task is different: use fresh training/progress for
+    clean comparisons. Fixed geographical maps are not smoothed across seams.
+
+    New torus suite: 28 passed, 17 CUDA cases skipped. Tests cover all four
+    seam directions, source attribution, split cancellation, opposite-edge
+    habitat, complete CPU/tensor tick parity, periodic scrolling clouds,
+    5000-tick segmented motion parity/speed/bounds, footprint continuity,
+    constant food, tiny worlds, stationary controls, worker/probe/CLI wiring,
+    chunk/ARS pair identity, no readback, fullgraph tracing and exact resume.
+    The fullgraph test resets Dynamo's process-wide variant cache to avoid
+    exhausting the eight-variant limit after unrelated graph test fixtures.
+    Full suite: 528 passed, 102 skipped, same two pre-existing failures as
+    section 101. Syntax, diff and ASCII checks passed. NVIDIA unavailable.
+
+    One-generation smoke runs passed:
+      results/torus-cpu-smoke-20260922/ (2 workers, 40 ticks, 3..9 segments)
+      results/torus-visual-smoke-20260922/ (tensor CPU/eager, SDL dummy,
+        24x24, 300 training ticks, 5000 progress cap, 2 deltas, 2 worlds).
+    Progress stopped at 495 and 508 ticks when all species left its biomass
+    band. Standalone inference loaded the tensor-exported policies and ran
+    40 ticks both headless and in the visual recorder; the finished viewer
+    was closed with SIGINT. These are functional smoke checks, not evidence
+    that porpoises can now survive indefinitely or that training converges.
+
+    TORUS.md and DEBUG_FOOD_BLOBS.md document the new mode. Updated local
+    train-command.txt: fresh food-blobs-torus run, torus, 40..160 segments,
+    survival-first reward, 300 rollout / 5000 progress, 24x24, retaining the
+    requested training hyperparameters. Nothing sent to tactik-pc this turn.
+
+103 FRESH VISUAL PROBES AND WIDER PROGRESS BAND (2026-09-22)
+
+    User requested changing visual training worlds between displays, plus a
+    progress survival band of 10%..10x initial biomass. Implemented both for
+    CPU and GPU training. The progress evaluator retains its fixed eval-seed
+    and original first-breach/no-restart semantics. Exact endpoints pass.
+    Default --biomass-bounds is now 0.1 10. This changes the progress metric,
+    NOT the survival-first training reward's .3 floor or other fitness modes.
+
+    Shared probe_randomness chooses a fresh 32-bit seed from OS randomness,
+    then forks/restores NumPy, Python and CPU Torch RNG state around the whole
+    probe. Visual randomness cannot perturb the next ARS update. GPU initial
+    display also uses this context. _ProbeEnvBuilder now honours explicit
+    seeds for spawning, seasonal setup, current/blob keys and spawn overrides;
+    its old fixed fallback remains for metadata/compatibility calls only.
+    Every displayed rollout (and CPU probe log) gets a fresh seed, recorded
+    as probe_seed in biomass.jsonl. Passing probe_seed to _probe_biomass allows
+    exact replay. Saved geographical impact maps do not change.
+
+    Random-action baseline environments share the trained policy probe's seed
+    and initial state, including seasonal phases. Both all/solo baseline modes
+    are covered. Probe curves now reflect world and policy variation and are
+    illustrative, not controlled progress measurements. The separate progress
+    evaluator remains fixed-seed and does not use visual override sliders.
+
+    Existing progress histories with the old bounds must not be mixed with
+    the new score. Existing resume validation requires a new --plot-dir.
+    Updated local train-command.txt with --biomass-bounds 0.1 10 and
+    --plot-dir results/food-blobs-torus/progress-wide; preserved rollout 300,
+    progress 5000, 24x24, torus and the training hyperparameters. Not sent to
+    tactik-pc in this turn. Docs distinguish the visual/progress/training roles.
+
+    New tests cover changing probe fields/seeds, shared baseline starts,
+    exact seeded replay, training RNG preservation, seeded spawn overrides,
+    inclusive 10%/10x endpoints and unchanged training reward. Viewer integration
+    asserts fresh logged seeds, the new progress config and identical trained
+    weights with/without the viewer. Full suite: 532 passed, 102 skipped, same
+    two pre-existing failures (diet budget and CPU/tensor float tolerance).
+    Syntax/diff checks passed. No NVIDIA hardware available locally.
+
+    One-generation visual smoke (tensor CPU/eager, two updates, 24x24,
+    300 training ticks and 5000 progress cap) passed:
+      results/random-probe-wide-progress-smoke-20260922/
+    The two logged probe seeds differed; progress retained seed 20260530 and
+    bounds .1/10. Progress ended after 682, 693 and 689 ticks when every DM
+    had breached the widened band. These values use a changed metric and
+    must not be interpreted as an improvement over the older narrow-band run.
+
+104. Rollout-length experiment runner and smoothed progress (2026-09-22)
+    Added tools/rollout_experiment.py and ROLLOUT_EXPERIMENT.md. Defaults:
+    horizons 100/300/1000, training seeds 0/1/2, 25 generations of 50 updates
+    each, sequential independent GPU processes. Existing debug-food torus
+    settings retained: 24x24, survival-first fitness, mortality off, 16 delta
+    pairs, three worlds refreshed each iteration, 2x48 tanh, lr .03, sigma .05.
+    No changes to biology, reward, policy observations or action mechanics.
+
+    train_gpu.py --progress enables headless progress history and PNG output,
+    independent of --visual. Evaluation runs at initialization, scheduled
+    updates, and the final update (even off interval). Experiment defaults:
+    every 50 updates, cap 5000, fixed seed 20260530, biomass band .1..10.
+    Evaluation preserves training RNG and weights. Ordinary training without
+    --progress/--visual remains unchanged.
+
+    Shared progress_plot helper draws raw points at alpha .5 and a causal
+    trailing five-evaluation mean (shorter startup windows, configurable via
+    --progress-window). Live CPU/GPU progress uses the same smoothing and
+    alpha-128 pygame points. Raw JSONL histories are not smoothed or replaced
+    with averages. Comparison images average matching checkpoints across
+    participating training seeds before temporal smoothing.
+
+    Experiment output: manifest with source/config fingerprint and commands,
+    per-job logs/checkpoints/progress images, comparison.png, report.html,
+    summary CSV/JSON and completed-run aggregate JSON. Reports rebuild after
+    each job and via --report-only. Summaries include final/best/last-window
+    viability, cap-hit fraction, elapsed seconds and candidate-world-ticks;
+    equal generations are explicitly not equal compute. Incomplete jobs are
+    visible but excluded from aggregate results. Fixed-world capped progress
+    must not be presented as a generalization or post-cap survival guarantee.
+
+    --resume skips completed jobs and resumes checkpoints to the original
+    generation target; incompatible settings/source are rejected. No existing
+    experiment is overwritten implicitly. Failure before any checkpoint with
+    existing progress requires a fresh output directory. Failed jobs are
+    reported, remaining jobs continue, and the runner exits nonzero.
+
+    Validation: full pytest 542 passed, 102 skipped, two known pre-existing
+    failures (porpoise diet budget and CPU/tensor reserve float tolerance).
+    Tests cover headless evaluation neutrality/final sampling, raw opacity,
+    moving-average values, actual pygame rendering, two-job execution, resume
+    of completed and partial jobs, report regeneration, missing biomass and
+    exclusion of failed runs. Syntax and diff checks pass.
+    One-generation 24x24 CPU/eager smoke with horizons 20/40, three updates,
+    and 100-tick progress completed in results/rollout-runner-smoke-20260922/.
+    Both report images and the live progress screenshot were visually checked.
+    Full 25-generation experiment NOT run; no local NVIDIA GPU. No transfer
+    to tactik-pc or commit was requested/performed.
