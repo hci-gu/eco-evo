@@ -378,6 +378,112 @@ def test_live_project_porpoises_carry_the_scale_override():
         f"at u_X; got {scale:g}")
 
 
+# ---------- The budget is closed over the DIET (Section 92) ----------
+#
+# ``apply_predation`` sums the intake over the whole menu and applies
+# the hunger gate and the feeding cost ONCE, to the total. A per-pair
+# break-even is therefore the wrong question: a prey that cannot pay for
+# the predator on its own is low-quality food, not pure loss. Section
+# 74.2b concluded the opposite from ``porpoises -> gadoids``
+# (sat_min = 1.227) and is superseded by these two checks.
+
+TICKS_PER_DAY = 4.0
+
+
+def _diet_budget(env, i, fg_id):
+    """(ration, need_quality, {prey: quality}) for DM row ``i``."""
+    params = env.fgs[fg_id].params
+    menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
+    scale = resolve_satiation_scale(params.get('satiation_scale'))
+    h_u = hunger_at(params.get('maintenance_level', 0.0), scale)
+    cost = (float(params.get('resting_metabolism', 0.0))
+            * float(params.get('feeding_cost', 1.0)))
+    a = float(np.max(np.asarray(env.max_intake_mat, dtype=np.float64)[i, menu]))
+    ration = a * h_u
+    quality = {env.global_fg_order[j]: float(env.energy_gain_mat[i, j])
+               for j in menu}
+    return ration, (cost / ration if ration > 0 else np.inf), quality
+
+
+def test_live_project_no_decision_maker_is_infeasible_on_its_whole_menu():
+    """The real infeasibility test: not one pair, but the best diet.
+
+    A DM is beyond rescue only when even a pure diet of its single best
+    prey cannot cover its feeding metabolism at the maintenance level.
+    """
+    env = _build_live_env()
+    if env.N_dm == 0:
+        pytest.skip("No decision makers in the project configuration")
+    starving = []
+    for i, fg_id in enumerate(env.dm_ids):
+        ration, need_q, quality = _diet_budget(env, i, fg_id)
+        best = max(quality.values()) if quality else 0.0
+        if best < need_q:
+            starving.append(
+                f"{fg_id}: best prey gives {best:.0f} MJ/t against a "
+                f"requirement of {need_q:.0f} MJ/t")
+    assert not starving, (
+        "decision makers no diet at all can pay for:\n  "
+        + "\n  ".join(starving))
+
+
+def test_live_project_porpoises_need_a_clupeid_majority_not_a_pure_diet():
+    """The junk-food hypothesis, as a number the library must satisfy.
+
+    A porpoise cannot live on lean gadoid alone (MacLeod et al. 2007;
+    Spitz et al. 2012) and the model must say so - but it must also
+    stay inside what the stomach data supply: 50-70 % clupeids by mass
+    in Kattegat / Skagerrak. Anything above that window would mean the
+    modelled porpoise is hungrier than the real one.
+    """
+    env = _build_live_env()
+    if 'porpoises' not in env.dm_ids:
+        pytest.skip("porpoises not in the project configuration")
+    i = env.dm_ids.index('porpoises')
+    ration, need_q, quality = _diet_budget(env, i, 'porpoises')
+
+    best_id = max(quality, key=quality.get)
+    worst_id = min(quality, key=quality.get)
+    assert best_id == 'pelagic_fish', best_id
+    assert quality[worst_id] < need_q <= quality[best_id], (
+        f"{quality} against a requirement of {need_q:.0f} MJ/t")
+
+    share = ((need_q - quality[worst_id])
+             / (quality[best_id] - quality[worst_id]))
+    assert 0.40 <= share <= 0.70, (
+        f"minimum {best_id} share in the ration is {share:.3f}, outside the "
+        f"50-70 % clupeid window the stomach data supply")
+
+
+def test_live_project_porpoise_ration_is_the_literature_one():
+    """Section 92, point 3: the ceiling caps, the gate no longer rations.
+
+    ``max_intake_rate`` is a *physiological* ceiling and must sit above
+    the highest ration ever measured (Kastelein: 4-9.5 % of body mass
+    per day); the ration realised at the maintenance level is the
+    literature-anchored number and must land inside that window. Before
+    Section 92 the ceiling was 20 %/day - twice the observed maximum -
+    and the un-anchored ``satiation_scale`` was setting the ration.
+    """
+    env = _build_live_env()
+    if 'porpoises' not in env.dm_ids:
+        pytest.skip("porpoises not in the project configuration")
+    i = env.dm_ids.index('porpoises')
+    menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
+    a = float(np.max(np.asarray(env.max_intake_mat, dtype=np.float64)[i, menu]))
+    ration, _, _ = _diet_budget(env, i, 'porpoises')
+
+    ceiling_pct = a * TICKS_PER_DAY * 100.0
+    ration_pct = ration * TICKS_PER_DAY * 100.0
+    assert 10.0 <= ceiling_pct <= 16.0, (
+        f"intake ceiling {ceiling_pct:.1f} %bm/day is not a physiological "
+        f"ceiling for a harbour porpoise")
+    assert 4.0 <= ration_pct <= 9.5, (
+        f"realised ration {ration_pct:.1f} %bm/day is outside the Kastelein "
+        f"window")
+    assert ration_pct < ceiling_pct
+
+
 def test_live_project_break_even_margins_are_not_marginal():
     """A DM that only just clears the gate cannot realize it in the world.
 

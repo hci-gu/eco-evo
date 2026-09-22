@@ -6077,13 +6077,26 @@ remain open exactly as described in 71.9 / 71.11.
       a*energy_gain = 337.5 is only 1.4-2.3x theirs. Metabolism
       was scaled up for a mammal; max_intake_rate was not.
 
-  (b) porpoises -> gadoids has sat_min = 1.227 > 1, i.e. it is
+  (b) *** SUPERSEDED BY SECTION 92.2 - DO NOT ACT ON THIS ***
+      porpoises -> gadoids has sat_min = 1.227 > 1, i.e. it is
       ARITHMETICALLY INFEASIBLE: no cod density whatsoever pays
       for a porpoise, because the hunger gate caps realised
       intake below the feeding cost. One of the porpoise's two
       menu items is pure loss at every density. This is a
       calibration error independent of everything else in this
       section and should be fixed or the item removed.
+
+      WRONG, and wrong in the measure rather than in the
+      library. The engine sums intake over the whole menu and
+      applies the hunger gate and the feeding cost ONCE, to the
+      total, so a per-pair break-even is not a quantity the tick
+      ever evaluates. Gadoid is not pure loss, it is low-quality
+      food: the correct statement is a minimum clupeid share in
+      the ration, f >= 0.493, which the Kattegat/Skagerrak
+      stomach data (50-70 percent clupeids by mass) clear. This
+      is the junk-food hypothesis (MacLeod et al. 2007; Spitz
+      et al. 2012) coming out of the parameters correctly. The
+      pair stays. See 92.2.
 
 74.3 It is not a pursuit problem: the oracle also dies
 
@@ -6252,8 +6265,10 @@ remain open exactly as described in 71.9 / 71.11.
   3. Porpoise budget recalibration (74.6). Necessary but not
      sufficient - do it only together with 1 or 2, otherwise it
      just moves the death tick.
-  4. Remove or repair the infeasible porpoises -> gadoids pair
-     (74.2b). Independent of everything else, and cheap.
+  4. WITHDRAWN (92.2). Remove or repair the infeasible
+     porpoises -> gadoids pair (74.2b). Independent of
+     everything else, and cheap. -- The pair is not infeasible;
+     the per-pair measure was. Do not touch it.
 
   Do NOT retrain the mareld2 reference policies before 1 or 2 is
   settled: with the field flattening as it does, retraining
@@ -7903,3 +7918,559 @@ remain open exactly as described in 71.9 / 71.11.
     because untrained FGs start from a fresh random policy - porpoises
     landed on 17/19/27/42 percent across four runs of BOTH settings. Do
     not read a single probe line as an A/B result.
+
+90. THE VIABILITY RIG: "LIVSKRAFTIG" TURNED INTO A NUMBER (NO ARS)
+--------------------------------------------------------------------------
+
+90.1 Why
+    Sections 73, 74 and 87.4 each end in the same place: the base has an
+    effectively absorbing zero, the top predator cannot break even in a
+    mean field, and the spawn sits away from the equilibrium. What was
+    missing was not another observation but an ACCEPTANCE CRITERION: a
+    definition of "long-term viable" that can be measured and signed off.
+    --population-stability (POPULATION_STABILITY.md) is not that - it is
+    reward shaping INSIDE training, so it mixes the world with the policy.
+    Viability is a property of the parameters and the mechanisms in the
+    tick, not of the policy nets, so it must be measurable with the
+    behaviour FROZEN. That is what this arc adds.
+
+90.2 The criterion (VIABILITY.md is authoritative)
+    With B_f(t) the total biomass of FG f after tick t, T the horizon,
+    W the last window_frac of the horizon, and
+        eq_f   = mean over W of B_f(t)      (the MEASURED equilibrium)
+        prev_f = mean over the window before W
+        ref_f  = B_f(0)                    (the spawn level)
+    a configuration is viable when, for EVERY FG present at spawn and
+    EVERY seed:
+        1 survival      B_f(t) > 0 for all t <= T
+        2 floor         eq_f >= floor * ref_f            floor = 0.10
+        3 ceiling       eq_f <= ceiling * ref_f          ceiling = 10.0
+        4 stationarity  max(eq/prev, prev/eq) <= max_drift    = 2.0
+    Horizon 5 years = 7300 ticks, 3 seeds (worst seed decides),
+    window_frac 0.10. FGs absent at spawn are outside the criterion.
+    Rationale: floor/ceiling are deliberately WIDE because the
+    equilibrium is an output of the parameters, not an input - a group
+    need not hold its spawn level, only avoid decaying to zero or running
+    away. Criterion 4 is what makes the claim "long-term": it catches a
+    group that is above the floor at T but still on a monotone slide.
+    The criterion deliberately does NOT settle open vs closed system, nor
+    does it gate on occupancy (with no environment maps in mareld2.yaml
+    the grid is isotropic, so occ is not yet interpretable - see 87.5).
+    occ is printed anyway, because surviving in one cell is qualitatively
+    different from surviving across the grid.
+
+90.3 The rig
+    lib/diagnostics/viability.py  (criterion, arms, rollout, report)
+    tools/viability.py            (CLI, exit code 0 = viable, 1 = not)
+    Worlds come from inference.build_env(seed=...), i.e. fixed
+    inference_initial_biomass with a seed-varying spawn layout, and the
+    reference NumPy tick. The reward path is NEVER evaluated.
+    Four frozen behaviour arms:
+        neutral  no policy at all - PolicyController emits zero logits,
+                 so the masked softmax is uniform over the legal actions
+                 in each cell. Deterministic.
+        eat      hand-coded: all mass on the legal prey in the cell,
+                 never move, rest where there is nothing to eat. The
+                 ecological upper bound on intake.
+        random   freshly initialised PolicyNetwork per DM, seeded.
+        policy   a checkpoint from results/<run-name>, for comparison.
+    Defaults: --project mareld2.yaml --grid 20*20 --years 5 --seeds 3
+    --behaviour neutral,eat --mortality off --migration off.
+    Cost: ~18 s per neutral rollout and ~10 s per eat rollout of 7300
+    ticks at 20x20, i.e. the default (2 arms x 3 seeds) runs in ~1.5
+    minutes. This is the "runs in minutes, not hours" requirement.
+    --json writes the machine-readable summary, --csv the trajectories.
+
+90.4 First measurement: mareld2.yaml, 20x20, 5 years, mortality off
+    Closed box (--migration off), worst of 3 seeds:
+
+        arm      FG                 spawn  equilib  eq/spawn  drift  occ  extinct
+        neutral  gadoids            277.8      0.0     0.000   1.00    0     3245
+        neutral  pelagic_fish      1333.3      0.0     0.000   1.00    0     2192
+        neutral  porpoises            4.4      0.0     0.000   1.00    0       27
+        neutral  benthic_community 1777.8   3946.3     2.220   1.01  400        -
+        neutral  phytoplankton     8888.9   6565.0     0.739   1.13  400        -
+        neutral  zooplankton       3888.9  11816.6     3.039   5.16  400        - (drifting)
+        eat      gadoids            277.8     20.4     0.073   1.14   43        - (below floor)
+        eat      pelagic_fish      1333.3      0.0     0.000   1.00    0     4506
+        eat      porpoises            4.4      0.0     0.000   1.00    0      396
+        eat      benthic_community 1777.8   3273.3     1.841   1.02  400        -
+        eat      phytoplankton     8888.9   9515.7     1.071   1.06  400        -
+        eat      zooplankton       3888.9    496.8     0.128   1.15  399        -
+
+    Verdict: NOT VIABLE in both arms. Three findings.
+    a) The whole fish/predator column dies inside the horizon. Not just
+       porpoises (which 87.5 already suspected): pelagic_fish goes at
+       tick 2192 (1.5 years) and gadoids at 3245 (2.2 years) under
+       neutral behaviour. Every reward comparison in sections 82-87 was
+       measured over 1000-2500 ticks, i.e. BEFORE the collapse is
+       visible. That is the single most important consequence.
+    b) The arms disagree, so this is not a pure parameter statement.
+       Under eat, gadoids survive the full 5 years (at 0.073x spawn) and
+       porpoises last 396 ticks instead of 27. Behaviour buys time; it
+       does not buy survival.
+    c) zooplankton under neutral fails criterion 4, not the floor:
+       drift 5.16 with min 0.009x spawn is a large slow oscillation, not
+       an equilibrium. A 1000-tick rollout cannot see this at all.
+    Note also 16x16/300 ticks, seed 20260530: porpoises survive the full
+    300 ticks under eat but in ONE cell (occ = 1), and die at tick 26
+    (neutral) / 148 (random). The mean-field energy budget of 74 is
+    exactly what this is; the rig simply makes it a dated number.
+
+90.5 Open vs closed changes almost nothing
+    The same command with --migration on, worst of 3 seeds:
+        neutral: gadoids extinct@2692, pelagic_fish extinct@2547,
+                 porpoises extinct@23; zooplankton PASSES (drift 1.36,
+                 eq/spawn 0.797) instead of failing on stationarity.
+        eat:     the same verdicts as the closed box, and the levels
+                 agree to three digits (gadoids 0.073x, pelagic_fish
+                 extinct@4506, porpoises extinct@396) - unsurprising,
+                 since the eat arm never moves, so almost nothing ever
+                 reaches an edge.
+    So the open-vs-closed question, which was left undecided, does NOT
+    decide viability at this grid size: both settings are NOT VIABLE and
+    the extinction ticks move by at most ~25 percent, in both directions.
+    Caveat on interpretation: --migration on only re-interprets outflow
+    through the grid edges as emigration plus an equal immigration. It is
+    NOT recruitment from an external stock, so it is the weak form of
+    "open system". A true open system (an immigration/recruitment term
+    that does not require biomass to already be at the edge) is still
+    untested, and is the version that would actually be expected to
+    change the answer.
+
+90.6 Tests
+    tests/test_viability.py (31 cases): the horizon/window arithmetic,
+    rejection of nonsensical criteria, each of the four conditions
+    failing on its own (a flat trajectory passes; a settled level below
+    the floor fails and still reports its equilibrium; runaway growth
+    fails the ceiling; geometric growth fails stationarity while floor
+    and ceiling hold; extinction reports its tick), FGs absent at spawn
+    being outside the criterion, worst-seed aggregation, strict-JSON
+    summary (no Infinity for an infinite drift), run_rollout booking
+    spawn at t=0 and one sample per tick, the neutral arm installing no
+    network and acting uniformly over the legal actions, the eat arm
+    never moving and spending its mass only on legal prey, the random arm
+    being reproducible per seed, unknown/unconfigured arms being refused,
+    and the CLI (grid spellings n*m / nxm / n, unknown arms rejected,
+    --ticks overriding --years, exit code carrying the verdict).
+    Suite: 493 passed, 12 skipped (was 462/12). Plus a 1-generation
+    train.py smoke run on 16x16.
+
+90.7 What this does and does not settle
+    Settled: "livskraftig" is now a number with a horizon, a seed count
+    and four named conditions, measurable in ~1.5 minutes without ARS,
+    and the current configuration fails it in a dated, reproducible way.
+    The measured equilibrium per FG is now available, which is the input
+    the spawn recalibration of 87.4 was missing.
+    Not settled: the two structural holes of 73 and 74 (the absorbing
+    base and the mean-field energy budget of the top predator), the true
+    open-system variant (90.5), and whether a larger grid changes (a).
+    Next step by this measurement: recalibrate spawn against equilib and
+    re-run, then attack 74 - NOT more training. Nothing trained in this
+    configuration can be interpreted past ~tick 2000.
+
+91. THE VIABILITY RIG, SECOND PASS: TWO FACTORS AND A NORMATIVE CORNER
+    (2026-09-21, after 90)
+
+91.1 The two objections that forced the rebuild
+    (a) "Why would a uniform or random policy failing to keep species
+        alive for 5 years say anything about viability? Obviously it
+        does not." Correct, and 90 was too blunt: it aggregated all arms
+        into one viable true/false, so the trivially expected failure of
+        neutral could set the whole verdict to NOT VIABLE.
+    (b) "A hand-coded eat policy says nothing either, as long as the FGs
+        are spawned beside each other rather than on top of each other."
+        Also correct, and measurable. Overlap at spawn in mareld2.yaml,
+        share of predator biomass in a cell that holds any prey, 60x60,
+        three seeds:
+            gadoids      -> pelagic_fish   0.44 / 0.24 / 0.31
+            porpoises    -> pelagic_fish   1.00 / 1.00 / 1.00
+            pelagic_fish -> zooplankton    1.00 / 1.00 / 1.00
+            zooplankton  -> phytoplankton  1.00 / 1.00 / 1.00
+        gadoids occupy ~1100/3600 cells and pelagic_fish ~1200/3600, so
+        the product of the marginals is ~0.33: the measured overlap is
+        exactly chance. Both are drawn as 25 independent colonies
+        (colony, sigma 1.0) with no ecological link at tick 0. The eat
+        arm sets move = 0, so that geometry is frozen forever.
+    (c) Follow-up: "should rest not be represented in the greedy policy
+        too?" Yes - rest has three distinct roles in the engine (cheap
+        metabolism via cost_rest, hiding via prev_hidden_frac, and the
+        mask fallback), and an arm without hiding is not an upper bound
+        for an FG that is itself prey. But an arm that rests for energy
+        can also "survive" by hibernating at low biomass, which would
+        inflate a PASS. Hence hiding became its own arm, not a fifth
+        action in greedy.
+
+91.2 What the rig is now
+    Two factors instead of one:
+      behaviour: greedy | greedy_hide | eat | neutral | random | policy
+      spawn:     colocated | configured
+    The verdict is taken from the NORMATIVE CORNER = colocated + greedy.
+    Only greedy, greedy_hide and eat may decide at all; a run of
+    neutral/random alone reports NO VERDICT and exits 0 (objection (a)).
+    The differences between cells are the information:
+      greedy - eat          = what search is worth
+      greedy_hide - greedy  = what the predation refuge is worth
+      colocated - configured = how much is spawn geometry
+
+91.3 The greedy arm, and two ways of getting it wrong
+    Rule per cell: move to the neighbour with the highest reachable
+    intake if that beats staying, else eat over the legal prey present,
+    else rest (mask fallback only - no voluntary rest).
+    (i) The field must be the PAYOFF, not raw prey biomass: energy
+        intake per unit predator biomass, i.e. holling_a_eff (Holling
+        II/III + Beddington-DeAngelis interference) times energy_gain,
+        summed over the menu - exactly predation.apply_predation's
+        demand with B_pred, hunger and the eat share divided out. With
+        raw biomass the gradient has no saturation, every FG piles into
+        the single richest cell (pelagic_fish occ 1 after 20 ticks on
+        8x8) and the arm manufactures the shoal density 74 says a 1 km
+        mean field cannot sustain - i.e. it would answer a question
+        about its own artefact.
+    (ii) The potential must be a MAX, not a sum, and travel must pay for
+        itself. P(c) = max(payoff(c), 0.85 * max P(neighbour)) (value
+        iteration; converges to max_d payoff(d) * 0.85^dist), and a cell
+        moves only when 0.85 * P(best neighbour) > payoff(c). A diffusive
+        (summed) potential peaks at the prey's centre of mass rather than
+        at the best cell, so every FG walks to the middle and starves:
+        8x8/40 ticks, porpoises 0.03x spawn under the summed version and
+        0.00 (extinct@28) when comparing potentials without the travel
+        discount, against 0.51x for simply standing still under eat. An
+        arm that is worse than eat is not an upper bound. With both fixes
+        greedy >= eat for every FG in that test.
+    0.85 per km is the only free parameter, and it has one meaning: what
+    a tick of travel costs relative to a tick of feeding.
+
+91.4 greedy_hide
+    Same as greedy, but rests when the predator biomass in the cell is
+    at least 1.0x the group's own biomass there (HIDE_PREDATOR_RATIO),
+    or when the energy reserve is at least 95 % full (HIDE_SATIATION) so
+    intake buys nothing. Both are named module constants.
+
+91.5 Co-located spawn
+    colocate_spawn() moves every predator onto the richest cells of its
+    own prey, bottom up through the food web (topological sort on the
+    menus, so pelagic_fish is placed before gadoids/porpoises are placed
+    on it). It keeps the group's TOTAL BIOMASS and its NUMBER OF
+    OCCUPIED CELLS, so per-cell density and patchiness are unchanged and
+    only the geometry moves. It is deliberately generous: it answers
+    "can this parameterisation carry an ecosystem given a perfect start",
+    not "is the layout in fg_library.yaml viable".
+
+91.6 Result, 20x20, 5 years (7300 ticks), 3 seeds, worst seed, closed box
+    Extinction tick (or eq/spawn when alive at the end):
+                     colocated              configured
+      greedy         gadoids   ext@4943     gadoids   ext@4823
+                     pel_fish  0.000x       pel_fish  0.000x
+                     porpoises ext@176      porpoises ext@145
+      greedy_hide    gadoids   ext@4564     gadoids   0.000x (occ 9)
+                     pel_fish  ext@2906     pel_fish  ext@1776
+                     porpoises ext@176      porpoises ext@91
+      eat            gadoids   ext@2938     gadoids   0.073x
+                     pel_fish  ext@3440     pel_fish  ext@4506
+                     porpoises ext@396      porpoises ext@396
+    Overlap at tick 0, 20x20, seed 20260530 (share of predator biomass
+    in a cell with prey / prey density seen relative to the grid mean):
+      configured: gadoids->pelagic_fish 0.168 / 0.21
+                  porpoises->pelagic_fish 1.000 / 22.42
+      colocated:  gadoids->pelagic_fish 0.942 / 2.86
+                  porpoises->pelagic_fish 1.000 / 4.34
+    Verdict: NOT VIABLE in the normative corner.
+
+91.7 What the second pass changed in the conclusions of 90
+    (a) The gadoids FAIL is NOT mainly a spawn artefact. That was the
+        working hypothesis after the overlap measurement in 91.1(b), and
+        the rig refutes it: with search enabled, gadoids die at 4943
+        (colocated) vs 4823 (configured) - a 2.5 percent difference,
+        even though the overlap goes from 0.168 to 0.942. Geometry is
+        worth almost nothing once the group is allowed to move. What
+        geometry did explain is the DIFFERENCE BETWEEN ARMS: under the
+        stationary eat arm, colocating gadoids makes things WORSE
+        (ext@2938 vs 0.073x alive), because the cod are placed on the
+        herring, eat them out, and then cannot leave.
+    (b) Search buys time, not viability: greedy extends gadoids from
+        2938 to 4943 ticks (+68 percent) over eat, and keeps
+        pelagic_fish nominally alive instead of extinct at 3440 - but
+        both still fail floor.
+    (c) porpoises die at 91-396 ticks in EVERY cell of the table, under
+        the most favourable start (100 percent overlap, 22x the grid
+        mean prey density under the configured spawn) and the strongest
+        frozen behaviour. This is 74's mean-field energy budget, full
+        stop: it is not behaviour, not training and not geometry.
+    (d) greedy_hide is NOT uniformly better than greedy: hiding costs
+        feeding ticks, and pelagic_fish dies earlier with it (2906 vs
+        alive). Hiding is a real trade-off in this engine, not a free
+        survival bonus - which is also why it must not outrank greedy
+        for the verdict.
+
+91.8 Tests
+    tests/test_viability.py grew from 31 to 44 cases: only a normative
+    arm may decide (neutral/random alone -> viable is None), greedy
+    outranks eat when both ran, the greedy action tensor is a
+    distribution over legal actions only with no voluntary rest, the
+    move set equals the travel-discount rule exactly, a 15 percent
+    improvement does not buy a lost feeding tick while a 100 percent one
+    does, the potential peaks at the best cell (not the centre of mass)
+    and decays by exactly 0.85 per cell, greedy_hide rests on a full
+    reserve and under predation pressure, trophic_order puts prey first
+    and survives a cycle, co-location conserves total biomass and cell
+    count and cannot lower any overlap, and the overlap report carries
+    both numbers. Suite: 506 passed, 12 skipped (was 493/12).
+
+91.9 Next by this measurement
+    Unchanged from 90.7 in direction, sharper in content: the top
+    predator (74) is now proven to be a structural problem under the
+    most generous conditions the rig can construct, so it is the first
+    thing to fix - sub-grid patchiness/aggregation term, conspecific
+    attraction in movement, or a redefinition of the porpoise energy
+    budget. Spawn recalibration against equilib (87.4) is still needed
+    but will not save gadoids or pelagic_fish on its own, since both
+    also fail with search and perfect co-location. What is NOT worth
+    doing yet: more training, more reward shaping, and impacts.
+
+92. THE MEASURE BEFORE THE ECOLOGY: MIXED-DIET BREAK-EVEN, THE RIG'S
+    DIET, AND THE PORPOISE INTAKE CEILING
+
+92.0 Why this arc exists
+    User principle, and it turned out to be the right one: the
+    nutritional values in fg_library.yaml are calibrated against the
+    literature, so if the diagnostics disagree with the library the
+    diagnostics are the first suspect, not the biology. Recomputing
+    the porpoise budget in the units the literature uses confirmed
+    the library and falsified two of this agent's own measures. The
+    three items below are corrections of measurement error that were
+    introduced by the agent, and they were done BEFORE any further
+    ecological interpretation.
+
+    Porpoise budget in literature units, straight off the library:
+
+      resting metabolism   360 MJ/t/day -> 18 MJ/day for a 50 kg animal
+      feeding              504 MJ/t/day -> 25 MJ/day (~4x Kleiber)
+      reserve 2800 MJ/t    = 5.6 days of starvation
+      realised ration      8.9 % of body mass/day (Kastelein 4-9.5 %)
+
+    Metabolism, reserve and ration are all in range. The requirement
+    on diet quality then follows arithmetically:
+
+      504 / 0.089 = 5670 MJ/t assimilated = 6.3 MJ/kg gross
+        herring  7.5 MJ/kg * 0.90 = 6750 MJ/t   clears by 19 %
+        gadoid   5.5 MJ/kg * 0.84 = 4620 MJ/t   does not pay alone
+
+92.1 Item 1a: the break-even measure is over the RATION, not the pair
+    predation.apply_predation sums actual_intake over the whole prey
+    axis, multiplies by energy_gain_mat and hands the predator ONE
+    number; get_hunger and the feeding cost are applied once, to that
+    total. A per-pair break-even is therefore not a quantity the tick
+    ever evaluates. The correct statement for a mixed menu is the
+    minimum share of the high-quality prey in the ration:
+
+      f * 6750 + (1 - f) * 4620 >= 5670   ->   f >= 0.493
+
+    At least 49.3 % clupeid in the ration. Kattegat / Skagerrak
+    stomach data give 50-70 % clupeids by mass, so the library is
+    inside the window, with little room to spare.
+
+92.2 74.2b is WITHDRAWN
+    Section 74.2b read sat_min = 1.227 for porpoises -> gadoids as
+    ARITHMETICALLY INFEASIBLE and recommended fixing or removing the
+    pair. That was a misreading of the agent's own diagnostic. Gadoid
+    is not pure loss, it is low-quality food, and a porpoise that has
+    to live on it alone would need ~12 % of its body mass per day,
+    i.e. at or above the physiological cap. That is the junk-food
+    hypothesis (MacLeod et al. 2007; Spitz et al. 2012) emerging
+    correctly from the parameters. "Fixing" the pair would have meant
+    writing against the literature. The pair stays; 74.8 item 4 is
+    withdrawn and 74.2b carries a SUPERSEDED marker.
+
+92.3 Item 1b: tools/probes/budget_gate.py runs again
+    It had been unrunnable since the action costs moved into the env
+    caches: it read pred.feeding_cost, which no longer exists on
+    FunctionalGroup (AttributeError), so every number section 74
+    rests on was irreproducible. Now reads dm_resting_metabolism /
+    dm_cost_eat and prints two blocks:
+
+      * per (predator, prey): the old table, with the verdict column
+        renamed "alone" and INFEASIBLE renamed "not alone", because
+        that is all a per-pair failure means,
+      * per predator: ration (t/t/tick and % body mass/day), cost,
+        need_q, best and worst prey quality, and "min share" - the
+        minimum share of the best prey in the ration.
+
+    Live mareld2, 16x16:
+
+      predator      ration  %bm/day  cost  need_q  best  worst  share
+      gadoids      0.01500     6.0%  10.5     700  6000   2100  any
+      pelagic_fish 0.01500     6.0%  15.2    1013  3600   3600  any
+      porpoises    0.02223     8.9% 126.0    5669  6750   4620  0.492
+      zooplankton  0.09375    37.5%   5.1      54  1300   1300  any
+
+    Only the porpoise needs a mixed diet at all; every other DM
+    clears the bar on any prey on its menu.
+
+92.4 Item 2: the rig was feeding the top predator junk food
+    Both hand-coded arms in lib/diagnostics/viability.py allocated
+    the eat mass EVENLY over the legal prey present (eat = mask /
+    total). For a porpoise in a cell with both prey that is a 50/50
+    diet:
+
+      even split  5685 MJ/t  against a requirement of 5670 MJ/t
+                  -> a margin of 3 parts per thousand
+      herring     6750 MJ/t  -> a margin of 19 %
+
+    So the "normative" arm put the top predator three per mille from
+    starvation and then reported its death as a property of the
+    world. Same class of error as the spawn geometry of section 91.
+
+    The fix follows the engine. Intake is LINEAR in the per-prey eat
+    share up to the per-pair harvest cap MAX_HARVEST_FRAC * B_prey,
+    so the energy-maximising diet is water-filling in descending
+    order of marginal yield energy_gain_j * a_eff_j:
+
+      cap_j  = MAX_HARVEST_FRAC * B_j / (B_pred * a_eff_j * h)
+      shares = fill the best prey to cap_j, then the next, ...
+
+    New helpers: _per_prey_intake (the a_eff tensor, formerly folded
+    into _intake_payoff), _saturating_share (the caps), _waterfill
+    (the allocation) and _eat_shares (mask handling + the leftover
+    rule). Leftover share, once every legal prey is saturated, goes
+    to the best of them: it buys no energy but the population still
+    pays the feeding cost, which keeps the arms comparable with the
+    even-split runs.
+
+    _intake_payoff changed meaning as well, and had to. It used to
+    SUM the per-prey rates with an implicit share of 1.0 on each,
+    which is not a quantity the engine can deliver since the shares
+    are a distribution. It now weights by the chosen diet and clips
+    each term at the harvest cap, so the greedy potential no longer
+    walks towards a cell whose prey the group has already eaten.
+
+    Note for anyone extending this: the criterion is marginal YIELD,
+    not energy content. A cell dense in gadoid can out-yield the
+    same cell's thin herring, and eating the gadoid there is the
+    right answer - the first version of the test asserted a herring
+    preference per cell and was correctly falsified by the rig.
+
+92.5 Item 3: max_intake_rate is a ceiling, not a ration
+    porpoises.max_intake_rate was 0.05 = 20 % of body mass per day,
+    2x the highest ration ever measured, while the realised ration
+    came out right only because satiation_scale 0.9 - documented in
+    lib/world/energy_balance.py as "a pure model constant (no
+    literature anchor)" - cut it back to 8.9 %/day. The
+    literature-anchored parameter was wrong and the un-anchored one
+    was doing its job. Applied:
+
+      max_intake_rate      0.05 -> 0.035   (14 %bm/day, ~1.5x the
+                                            highest observed ration)
+      handling_time        20.0 -> 28.6    (both porpoise pairs;
+                                            1/h = a is the library
+                                            convention, so a*h = 1)
+      satiation_scale       0.9 -> 1.37    (keeps a*h(u_X) = 0.0222
+                                            t/t/tick = 8.9 %bm/day)
+
+    Invariant by construction: a*h(u_X), and therefore sat_min
+    (0.840), the break-even visible density (5.25 t/cell) and the
+    GUI gate margin (net_eat = +24.0 MJ/t/tick). Measured effect on
+    the rig: porpoise extinction tick 1369 -> 1396 (+2 %), i.e.
+    hygiene, as intended.
+
+    Two things are NOT invariant and were chosen deliberately:
+
+      * satiation_scale now exceeds 1.0. At 0.9 a porpoise with a
+        full reserve stopped feeding altogether, which treats a
+        5.6-day blubber store as if it were stomach content. A
+        mammal at full condition still eats. The gate now flattens
+        the intake curve instead of closing it.
+      * The lower bound on max_intake_rate is not free. The legacy
+        full-hunger gate G4 in evaluate_energy_balance requires
+        ceiling > rest_cost + feed_cost = 216 MJ/t/tick, i.e.
+        a > 0.032. The literature-preferred 0.03 (12 %bm/day) fails
+        it, which is why 0.035 was chosen. Worth knowing: the
+        porpoise clears G4 by 22 %, and G4 is the one gate in that
+        module that is explicitly legacy.
+
+92.6 Measurements, normative corner, 20x20, 5 years, 3 seeds, worst
+     seed, closed box (--spawn colocated --behaviour greedy)
+
+      state                       porpoises  gadoids       pelagic_fish
+      before (91, even split)          176   ext@5030      below floor
+      after item 2 (diet)             1369   below floor   below floor
+      after item 3 (parameters)       1396   below floor   below floor
+      full 3-arm rerun                1404   ext@4741      below floor
+
+    The diet correction is worth a factor 7.8 on the porpoise and
+    takes gadoids off the extinction list in two of three runs; the
+    parameter change is worth 2 %. Run-to-run jitter in the
+    extinction tick is under 1 % (1396 vs 1404 for identical seeds),
+    which is float32 reduction order, so differences below ~50 ticks
+    should not be read as signal.
+
+    All three arms after the changes (extinction tick, worst seed):
+
+      arm           porpoises  pelagic_fish  gadoids
+      eat                 542          3494     3017
+      greedy             1404             -     4741
+      greedy_hide        1202          2400     4246
+
+    greedy > greedy_hide > eat for the porpoise, which is the
+    expected ordering and the first time the arms have ranked
+    sensibly for it: search is worth 2.6x standing still, and hiding
+    costs a top predator feeding ticks for nothing.
+
+    Verdict UNCHANGED: NOT VIABLE in the normative corner. What
+    changed is that it is now a statement about the world rather
+    than about the arm. The three FAILs that remain are also more
+    clearly separated: the porpoise dies at 1404 with a perfect
+    start, an optimal search and the best available diet, which is
+    still section 74's resolution problem; pelagic_fish settles at
+    0.0008x spawn with drift 1.82, i.e. it has not even finished
+    falling; gadoids follows its prey down.
+
+92.7 Tests
+    tests/test_viability.py 44 -> 49: water-filling takes the best
+    prey first and spills into the next, all-in when no cap binds,
+    the whole action mass is always spent, the shares are a
+    distribution over legal prey only, the chosen diet is never
+    worse than the even split on the energy the engine would
+    actually deliver (and strictly better somewhere), and the top
+    predator obeys water-filling optimality per cell and never
+    produces a 50/50 split everywhere.
+
+    tests/test_energy_balance_gate.py +3: no DM is infeasible on its
+    whole menu (the correct replacement for the per-pair
+    INFEASIBLE), the porpoise needs a clupeid majority but stays
+    inside the 50-70 % window the stomach data supply, and the
+    porpoise intake ceiling is 10-16 %bm/day while the realised
+    ration is inside the Kastelein 4-9.5 % window and strictly below
+    the ceiling.
+
+    Suite: 514 passed, 12 skipped (was 506/12).
+
+92.8 What this does and does not change
+    Does not change: the verdict, the direction of 91.9, the
+    blocking of retraining, or the status of impacts.
+    Does change: every porpoise number in sections 74, 90 and 91 was
+    measured with an even-split diet and, from 91 onwards, is a
+    lower bound on what the arm can do rather than a statement about
+    the parameters. 74.2b is withdrawn outright. The porpoise
+    intake parameters in fg_library.yaml are new, so any .pth
+    checkpoint trained before this section was trained against a
+    different intake ceiling - the observation layout is untouched,
+    so the checkpoints still LOAD, but they are no longer calibrated.
+
+92.9 Next by this measurement
+    1. pelagic_fish is now the least understood of the three: drift
+       1.82 at 0.0008x spawn means the horizon does not even contain
+       its equilibrium. It needs the same causal treatment section
+       74 gave the porpoise - break-even identity plus a loss budget
+       under the normative corner - before anything is changed.
+    2. The remaining items of the revised order: decide the herring
+       energy content deliberately (annual mean 7.5 MJ/kg vs a
+       seasonal 9.5, which alone takes need_vis from 5.25 to 1.98
+       t/cell against a field mean of 3.33 - this is a literature
+       CHOICE and needs the user), then the zooplankton headroom
+       (1.20) and seabirds (1.50), then school cohesion.
+    3. maintenance_level still carries two incompatible roles (body
+       condition setpoint and satiation level). As long as one
+       number does both, neither can be calibrated honestly. This is
+       the same conflation satiation_scale 1.37 works around for the
+       porpoise only.

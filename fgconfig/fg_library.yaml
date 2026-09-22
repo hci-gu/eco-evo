@@ -72,7 +72,7 @@
     movement_speed: 1.0
     feeding_cost: 1.9
     movement_cost: 1.5
-    energy_content: 7500.0
+    energy_content: 9500.0
     min_split_biomass: 0.5
     growth_rate: 0.004
     natural_mortality: 0.0005
@@ -128,7 +128,14 @@
     energy_content: 8500.0
     growth_rate: 0.001
     natural_mortality: 5e-05
-    max_intake_rate: 0.05
+    # Physiological intake ceiling, NOT the realised ration: 0.035 t prey
+    # per t predator per tick = 14 % of body mass per day. Kastelein et
+    # al. measure 4-9.5 %/day for captive harbour porpoises, so the cap
+    # sits ~1.5x above the highest observed ration, which is what a
+    # ceiling is supposed to do. The previous 0.05 (20 %/day) was 2x the
+    # observed maximum and the un-anchored satiation_scale was silently
+    # doing the ceiling's job of setting the ration (Section 92).
+    max_intake_rate: 0.035
     spawn:
       mode: env_driven
       floor: 0.0
@@ -141,7 +148,20 @@
           transform: linear
     starve_rate: 0.5
     visibility_floor: 0.0
-    satiation_scale: 0.9
+    # Raised with max_intake_rate so the REALISED ration at the
+    # maintenance level is unchanged: a * h(u_X) = 0.035 * (1 - 0.5/1.37)
+    # = 0.0222 t/t/tick = 8.9 % of body mass per day, mid Kastelein, the
+    # same number the old 0.05 / 0.9 pair delivered. sat_min (0.840) and
+    # the break-even visible density (5.25 t/cell) are therefore
+    # invariant, and so is the GUI gate margin (net_eat = +24.0).
+    #
+    # It exceeds 1.0 on purpose, and that is the substantive part of the
+    # change: with 0.9 a porpoise at a full reserve stopped feeding
+    # altogether, which treats a 5.6-day blubber store as if it were
+    # stomach content. A mammal at full condition still eats. The gate
+    # now only flattens the intake curve instead of closing it
+    # (Section 92).
+    satiation_scale: 1.37
     # Left at 0: porpoises never reach densities where interference
     # matters (they occupy a handful of cells at <1 ton each) and are
     # already the group most at risk of extinction. Section 86.
@@ -229,7 +249,10 @@ interaction_definitions:
   porpoises_preys_on_pelagic_fish:
     preys_on: true
     assimilation_factor: 0.9
-    handling_time: 20.0
+    # 1/h = a is the library convention for the Holling half-saturation,
+    # so it follows max_intake_rate 0.035 (Section 92). Keeping a*h = 1
+    # is what makes the break-even visible density invariant.
+    handling_time: 28.6
     # Porpoises hunt with biosonar, so the visual crypsis that makes
     # hidden herring only 35 % detectable by default does not apply:
     # schooling behaviour is no defence against echolocation
@@ -373,9 +396,9 @@ interaction_definitions:
     handling_time: 0.0
   porpoises_preys_on_gadoids:
     preys_on: true
-    max_intake_rate: 0.05
+    max_intake_rate: 0.035
     assimilation_factor: 0.84
-    handling_time: 20.0
+    handling_time: 28.6
     visibility_floor: 0.75
   porpoises_preys_on_phytoplankton:
     preys_on: false
