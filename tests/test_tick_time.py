@@ -39,12 +39,12 @@ def test_default_is_the_historical_six_hour_tick():
     assert ticks_per_year(DEFAULT_TICK_HOURS) == 1460
 
 
-@pytest.mark.parametrize("bad", [None, "", "abc", 0, -1, 169, 1000, float("nan")])
+@pytest.mark.parametrize("bad", [None, "", "abc", 0, -1, 7, 1000, float("nan")])
 def test_missing_or_out_of_range_resolves_to_the_default(bad):
     assert resolve_tick_hours(bad) == DEFAULT_TICK_HOURS
 
 
-@pytest.mark.parametrize("value,expected", [(1, 1), ("12", 12), (24.0, 24), (168, 168)])
+@pytest.mark.parametrize("value,expected", [(1, 1), ("3", 3), (4.0, 4), (6, 6)])
 def test_valid_values_resolve_to_themselves(value, expected):
     assert resolve_tick_hours(value) == expected
 
@@ -56,14 +56,29 @@ def test_bounds_are_inclusive():
     assert resolve_tick_hours(MAX_TICK_HOURS + 1) == DEFAULT_TICK_HOURS
 
 
+@pytest.mark.parametrize("hours", [7, 8, 12, 18, 24, 48, 168])
+def test_the_range_is_one_to_six_hours(hours):
+    """Section 103 narrowed it from 1-168.
+
+    Six hours is the length fg_library.yaml is calibrated at, and the
+    values above it were the ones whose rescale carried every parameter
+    furthest from the numbers that were measured. They are not rejected
+    loudly - ``resolve_tick_hours`` has always fallen back to the
+    default for anything out of range - so a project file that still
+    carries one now runs at 6 h.
+    """
+    assert (MIN_TICK_HOURS, MAX_TICK_HOURS) == (1, 6)
+    assert resolve_tick_hours(hours) == DEFAULT_TICK_HOURS
+
+
 # ----------------------------------------------------------------------
 # 2. Labels
 # ----------------------------------------------------------------------
 
 @pytest.mark.parametrize("hours,expected", [
-    (1, "1 h"), (6, "6 h"), (23, "23 h"),
-    (24, "1 d"), (48, "2 d"), (168, "7 d"),
-    (36, "36 h"),  # not a whole number of days -> stays in hours
+    (1, "1 h"), (2, "2 h"), (5, "5 h"), (6, "6 h"),
+    # Out of range resolves to the default first, so the label follows.
+    (24, "6 h"), (168, "6 h"), (None, "6 h"),
 ])
 def test_tick_label(hours, expected):
     assert tick_label(hours) == expected
@@ -71,7 +86,7 @@ def test_tick_label(hours, expected):
 
 def test_per_tick_renders_the_unit_with_the_duration():
     assert per_tick("fraction", 6) == "fraction / 6 h"
-    assert per_tick("cells", 168) == "cells / 7 d"
+    assert per_tick("cells", 1) == "cells / 1 h"
 
 
 # ----------------------------------------------------------------------
@@ -92,11 +107,11 @@ def test_unknown_keys_are_left_alone():
                 "feeding_cost", "resting_cost", "movement_cost",
                 "max_carrying_capacity", "visibility_floor"):
         assert key not in RESCALE_RULES
-        assert rescale_value(key, 0.5, 6, 12) == (0.5, False)
+        assert rescale_value(key, 0.5, 6, 3) == (0.5, False)
 
 
 @pytest.mark.parametrize("key", sorted(RESCALE_RULES))
-@pytest.mark.parametrize("a,b", [(6, 12), (6, 1), (6, 24), (12, 6), (1, 168)])
+@pytest.mark.parametrize("a,b", [(6, 1), (1, 6), (6, 3), (3, 6), (2, 5)])
 def test_round_trip_returns_the_original(key, a, b):
     # A period is a count of ticks, not a fraction, so it needs a
     # representative magnitude of its own: 1460 ticks is one year at the
@@ -108,8 +123,8 @@ def test_round_trip_returns_the_original(key, a, b):
         pytest.skip("clamped; round trip is not defined through a clamp")
     if RESCALE_RULES[key] == "period":
         # Quantisation is inherent: a duration that is a whole number of
-        # A-ticks need not be a whole number of B-ticks (1460 h cannot be
-        # expressed exactly in 168 h steps). The round trip is therefore
+        # A-ticks need not be a whole number of B-ticks (1460 two-hour
+        # ticks are 584 five-hour ticks). The round trip is therefore
         # exact to within one tick of the coarser of the two.
         assert abs(back - original) <= max(1.0, b / a)
     else:
@@ -118,43 +133,44 @@ def test_round_trip_returns_the_original(key, a, b):
 
 def test_flux_is_linear():
     # Eating for twice as long moves twice the prey.
-    assert rescale_value("max_intake_rate", 0.035, 6, 12)[0] == pytest.approx(0.07)
+    assert rescale_value("max_intake_rate", 0.035, 3, 6)[0] == pytest.approx(0.07)
     assert rescale_value("resting_metabolism", 90.0, 6, 3)[0] == pytest.approx(45.0)
-    assert rescale_value("seed_rate", 0.001, 6, 18)[0] == pytest.approx(0.003)
+    assert rescale_value("seed_rate", 0.001, 2, 6)[0] == pytest.approx(0.003)
 
 
 def test_loss_compounds_and_stays_below_one():
-    # Survival over a 12 h tick equals survival over two 6 h ticks.
-    r6 = 0.02
-    r12, _ = rescale_value("natural_mortality", r6, 6, 12)
-    assert (1 - r12) == pytest.approx((1 - r6) ** 2)
-    # Even an extreme stretch cannot produce a rate at or above 1.
-    r168, clamped = rescale_value("natural_mortality", 0.5, 6, 168)
-    assert 0.0 < r168 < 1.0 and not clamped
+    # Survival over a 6 h tick equals survival over two 3 h ticks.
+    r3 = 0.02
+    r6, _ = rescale_value("natural_mortality", r3, 3, 6)
+    assert (1 - r6) == pytest.approx((1 - r3) ** 2)
+    # Even the widest stretch the range allows (1 h -> 6 h) cannot
+    # produce a rate at or above 1.
+    r_wide, clamped = rescale_value("natural_mortality", 0.5, 1, 6)
+    assert 0.0 < r_wide < 1.0 and not clamped
 
 
 def test_loss_rate_of_one_stays_one():
     # Already lethal in a single tick; a longer tick cannot be worse.
-    assert rescale_value("natural_mortality", 1.0, 6, 12) == (1.0, False)
+    assert rescale_value("natural_mortality", 1.0, 3, 6) == (1.0, False)
 
 
 def test_growth_compounds():
-    r6 = 0.05
-    r12, _ = rescale_value("growth_rate", r6, 6, 12)
-    assert (1 + r12) == pytest.approx((1 + r6) ** 2)
+    r3 = 0.05
+    r6, _ = rescale_value("growth_rate", r3, 3, 6)
+    assert (1 + r6) == pytest.approx((1 + r3) ** 2)
 
 
 def test_period_divides_and_stays_a_whole_tick():
-    # A 1460-tick (one year at 6 h) season becomes 730 ticks at 12 h.
-    assert rescale_value("seasonal_period", 1460, 6, 12)[0] == 730
+    # A 1460-tick (one year at 6 h) season becomes 2920 ticks at 3 h.
+    assert rescale_value("seasonal_period", 1460, 6, 3)[0] == 2920
     # Never rounds down to zero.
-    value, _ = rescale_value("seasonal_period", 3, 6, 168)
+    value, _ = rescale_value("seasonal_period", 3, 1, 6)
     assert value >= 1
 
 
 def test_clamp_is_reported_not_silent():
-    # Zooplankton intake (0.25 / 6 h) cannot be 7x that in a 7 d tick.
-    value, clamped = rescale_value("max_intake_rate", 0.25, 6, 168)
+    # Zooplankton intake (0.25 / 1 h) cannot be 6x that in a 6 h tick.
+    value, clamped = rescale_value("max_intake_rate", 0.25, 1, 6)
     assert clamped is True
     assert value == 1.0
 
@@ -167,7 +183,7 @@ def test_rescale_params_does_not_mutate_and_reports_changes():
         "satiation_scale": 1.37,        # untouched
     }
     snapshot = dict(params)
-    out, changes = rescale_params(params, 6, 12)
+    out, changes = rescale_params(params, 6, 3)
     assert params == snapshot, "input dict must not be mutated"
     assert out["max_energy_reserve"] == 2800.0
     assert out["satiation_scale"] == 1.37
@@ -177,7 +193,7 @@ def test_rescale_params_does_not_mutate_and_reports_changes():
 def test_zero_values_stay_zero():
     # movement_speed 0 (phytoplankton) must not become nonzero.
     for key in RESCALE_RULES:
-        assert rescale_value(key, 0.0, 6, 168) == (0.0, False)
+        assert rescale_value(key, 0.0, 6, 1) == (0.0, False)
 
 
 # ----------------------------------------------------------------------
@@ -189,7 +205,7 @@ def test_mortality_survival_is_invariant_over_a_fixed_real_duration():
     r6 = 2e-4
     week_ticks_6h = 7 * 4
     baseline = (1 - r6) ** week_ticks_6h
-    for new_hours in (1, 2, 3, 4, 8, 12, 24, 168):
+    for new_hours in (1, 2, 3, 4, 5, 6):
         r_new, _ = rescale_value("natural_mortality", r6, 6, new_hours)
         week_ticks = 7 * 24 / new_hours
         assert (1 - r_new) ** week_ticks == pytest.approx(baseline, rel=1e-9)
@@ -198,7 +214,7 @@ def test_mortality_survival_is_invariant_over_a_fixed_real_duration():
 def test_intake_over_a_fixed_real_duration_is_invariant():
     a6 = 0.035
     baseline = a6 * (24 / 6)  # tonnes prey per tonne predator per day
-    for new_hours in (1, 2, 3, 4, 8, 12, 24):
+    for new_hours in (1, 2, 3, 4, 5, 6):
         a_new, clamped = rescale_value("max_intake_rate", a6, 6, new_hours)
         assert not clamped
         assert a_new * (24 / new_hours) == pytest.approx(baseline, rel=1e-9)
@@ -209,7 +225,7 @@ def test_intake_over_a_fixed_real_duration_is_invariant():
 # ----------------------------------------------------------------------
 
 def test_project_tick_hours_reads_metadata():
-    assert project_tick_hours({"project_metadata": {"tick_hours": 12}}) == 12
+    assert project_tick_hours({"project_metadata": {"tick_hours": 3}}) == 3
 
 
 def test_project_tick_hours_defaults_for_legacy_projects():
@@ -219,14 +235,14 @@ def test_project_tick_hours_defaults_for_legacy_projects():
 
 
 def test_library_tick_hours_reads_metadata_and_defaults():
-    assert library_tick_hours({"library_metadata": {"tick_hours": 24}}) == 24
+    assert library_tick_hours({"library_metadata": {"tick_hours": 4}}) == 4
     assert library_tick_hours({"species_definitions": {}}) == DEFAULT_TICK_HOURS
 
 
 def test_loader_accessors_accept_a_path(tmp_path):
     path = tmp_path / "p.yaml"
-    path.write_text(yaml.safe_dump({"project_metadata": {"tick_hours": 8}}))
-    assert project_tick_hours(str(path)) == 8
+    path.write_text(yaml.safe_dump({"project_metadata": {"tick_hours": 2}}))
+    assert project_tick_hours(str(path)) == 2
 
 
 def test_loader_accessor_survives_a_missing_file():
@@ -247,5 +263,5 @@ def test_viability_horizon_follows_the_tick_length():
     from lib.diagnostics.viability import TICKS_PER_YEAR, ViabilityCriterion
     assert TICKS_PER_YEAR == 1460
     assert ViabilityCriterion(years=5.0).ticks == 7300
-    assert ViabilityCriterion(years=5.0, tick_hours=12).ticks == 3650
+    assert ViabilityCriterion(years=5.0, tick_hours=3).ticks == 14600
     assert ViabilityCriterion(years=1.0, tick_hours=1).ticks == 8760

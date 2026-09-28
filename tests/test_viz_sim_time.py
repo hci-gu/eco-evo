@@ -69,13 +69,16 @@ def test_six_hour_ticks_read_as_years_and_days(monkeypatch, tick, expected):
         v.close()
 
 
+# The tick length is 1-6 h (section 103), so every case here is inside
+# that range; a project carrying anything else resolves to the default
+# and is covered by tests/test_tick_time.py.
 @pytest.mark.parametrize("hours,tick,expected", [
     (1, 24, "0 y 1 d"),
     (1, 24 * DAYS_PER_YEAR, "1 y 0 d"),
-    (24, 1, "0 y 1 d"),
-    (24, DAYS_PER_YEAR + 5, "1 y 5 d"),
-    (168, 1, "0 y 7 d"),          # a one-week tick
-    (12, 2 * DAYS_PER_YEAR, "1 y 0 d"),
+    (2, 12, "0 y 1 d"),
+    (3, 8 * DAYS_PER_YEAR, "1 y 0 d"),
+    (6, 4, "0 y 1 d"),
+    (6, 4 * (DAYS_PER_YEAR + 5), "1 y 5 d"),
 ])
 def test_the_project_tick_length_is_what_converts(monkeypatch, hours, tick, expected):
     """The same tick number is a different amount of time per project."""

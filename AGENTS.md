@@ -11,7 +11,7 @@ decision-making FGs are driven by small policy networks trained with ARS
 (Augmented Random Search), co-evolution on by default.
 
 The tick length is `project_metadata.tick_hours` (default 6 h, range
-1-168, whole hours; section 97). The tick pipeline itself is
+1-6, whole hours; sections 97 and 103). The tick pipeline itself is
 tick-agnostic - every library parameter is *per tick* - so the value
 only drives the tick <-> real-time conversions and the FG-editor
 labels. `lib/world/tick_time.py` is the single definition point; read
@@ -42,7 +42,7 @@ defines observation/neighbourhood conventions.
 | `lib/environments/ecosystem.py` | `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
-| `lib/world/tick_time.py` | Tick length: bounds (1-168 h), tick<->real-time conversion, label rendering, and the per-parameter rescale rules the FG editor applies when the tick length changes (section 97). |
+| `lib/world/tick_time.py` | Tick length: bounds (1-6 h), tick<->real-time conversion, label rendering, and the per-parameter rescale rules the FG editor applies when the tick length changes (section 97). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
 | `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. Two factors (behaviour x spawn geometry); the verdict comes from the normative corner `--spawn colocated --behaviour greedy`. The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |

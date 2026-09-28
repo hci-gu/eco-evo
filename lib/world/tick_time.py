@@ -38,10 +38,19 @@ DAYS_PER_YEAR = 365
 DEFAULT_TICK_HOURS = 6
 
 # One hour is the finest tick the engine's daily-scale rates stay
-# meaningful at; one week is the coarsest that still resolves the
-# seasonal signal. Both bounds are enforced in the GUI and here.
+# meaningful at. Six hours - the calibration length everything in
+# fg_library.yaml is expressed at - is the coarsest allowed: past a
+# quarter day a tick stops resolving the within-day structure the
+# decision makers are calibrated against, and the rescale would be
+# carrying every parameter further from the numbers that were actually
+# measured. Both bounds are enforced in the GUI and here; the GUI reads
+# them from this module rather than declaring its own.
+#
+# The range was 1-168 h when the feature landed (section 97) and was
+# narrowed on 2026-09-28 (section 103). Widening it again means raising
+# MAX_TICK_HOURS and restoring the whole-days branch in ``tick_label``.
 MIN_TICK_HOURS = 1
-MAX_TICK_HOURS = 168
+MAX_TICK_HOURS = 6
 
 
 def resolve_tick_hours(value):
@@ -77,16 +86,14 @@ def ticks_per_year(tick_hours=None):
 
 
 def tick_label(tick_hours=None):
-    """Short unit fragment for a rate label: ``6 h``, ``1 h``, ``7 d``.
+    """Short unit fragment for a rate label: ``6 h``, ``1 h``.
 
-    Whole days render as days so a 168 h tick reads "7 d" rather than
-    "168 h"; everything else stays in hours.
+    Always hours: every value ``resolve_tick_hours`` can return is now
+    below a day. The whole-days rendering this used to carry ("7 d" for
+    a 168 h tick) became unreachable when MAX_TICK_HOURS dropped to 6,
+    and a branch no input can take reads as support that is not there.
     """
-    hours = resolve_tick_hours(tick_hours)
-    if hours >= HOURS_PER_DAY and hours % HOURS_PER_DAY == 0:
-        days = hours // HOURS_PER_DAY
-        return f"{days} d"
-    return f"{hours} h"
+    return f"{resolve_tick_hours(tick_hours)} h"
 
 
 def per_tick(unit, tick_hours=None):

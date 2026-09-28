@@ -9445,3 +9445,80 @@ remain open exactly as described in 71.9 / 71.11.
     (most cheaply as a separate tab fed from the per-tick totals
     update_biomass already computes, cleared per probe, which is what
     inference mode does) was raised and the user deferred it.
+
+103 TICK LENGTH NARROWED TO 1-6 HOURS (2026-09-28)
+
+103.1 What changed and where
+    USER DECISION 2026-09-28: the configurable tick length is 1-6 h,
+    not the 1-168 h section 97 shipped.
+
+    The request was phrased as a change to fgconfig, but the FG editor
+    already reads MIN_TICK_HOURS / MAX_TICK_HOURS from
+    lib/world/tick_time.py for both its label and its live validation -
+    that is what the single definition point is for. So the change is
+    one constant there, and the GUI, resolve_tick_hours and every tool
+    that converts ticks to real time follow from it. fgconfig.py itself
+    is untouched.
+
+    Why 6 is the ceiling: it is the length every number in
+    fg_library.yaml is calibrated at. Past a quarter day a tick stops
+    resolving the within-day structure the decision makers are
+    calibrated against, and the rescale carries every parameter further
+    from what was actually measured. The old comment justified 168 h as
+    "the coarsest that still resolves the seasonal signal", which is
+    true of the seasonal term and beside the point for the rest.
+
+103.2 Consequence: tick_label lost its whole-days branch
+    tick_label resolves its argument first, so with the ceiling at 6 no
+    input can reach the branch that rendered 24 h as "1 d" and 168 h as
+    "7 d" - tick_label(168) now returns "6 h", because 168 resolves to
+    the default. A branch no input can take reads as support that is
+    not there, so it is gone and the function is one line. Restoring it
+    is part of widening the range again; the module comment says so.
+
+103.3 Out-of-range values are still silent
+    resolve_tick_hours has always fallen back to DEFAULT_TICK_HOURS for
+    anything out of range, and that is unchanged. A project file
+    carrying tick_hours: 12 therefore now runs at 6 h rather than being
+    refused. Nothing in the repo is affected - mareld2.yaml is the only
+    project file with the key and it is 6 - but a project written
+    outside it would change behaviour without saying so. The FG editor
+    is where the value is entered and it rejects out-of-range input
+    loudly (verified below), so this only bites a hand-edited file.
+
+103.4 Tests
+    tests/test_tick_time.py: every test point above 6 h moved inside
+    the range, keeping the property each one asserts:
+      * resolution and label cases,
+      * the round-trip pairs, now (6,1) (1,6) (6,3) (3,6) (2,5),
+      * flux/loss/growth/period dimensional cases rebuilt around 3->6
+        and 1->6 rather than 6->12 and 6->168,
+      * the clamp case: zooplankton intake 0.25/1 h cannot be 6x that
+        in a 6 h tick (it was 0.25/6 h and a 7 d tick),
+      * the two real-time invariance properties now sweep 1..6,
+      * the loader and viability cases.
+    New: test_the_range_is_one_to_six_hours pins (MIN, MAX) == (1, 6)
+    and that 7, 8, 12, 18, 24, 48 and 168 all resolve to the default.
+
+    A side effect worth noting: test_round_trip_returns_the_original
+    used to SKIP three cases because the round trip went through a
+    clamp at 168 h. Inside 1-6 nothing clamps, so those three now
+    actually assert. tests/test_tick_time.py went 78 -> 88 cases with
+    0 skips.
+
+    tests/test_viz_sim_time.py: the 12 h, 24 h and 168 h conversion
+    cases moved to 2 h, 3 h and 6 h. They were asserting that the
+    project setting is what converts, which is unchanged.
+
+    Headless xvfb GUI run against SCRATCH copies, 12 checks: the label
+    reads "Tick Length (hours, 1-6)"; live validation accepts 1, 3, 6
+    and rejects 0, 7, 12, 168; Apply on 12 raises "Invalid Tick Length",
+    leaves the library byte-identical and commits nothing; Apply on 3
+    still rescales, stamps library_metadata.tick_hours and commits. The
+    real fg_library.yaml was never touched.
+
+    Suite: 693 passed, 12 skipped (was 683/15 after 102).
+
+103.5 Docs
+    AGENTS.md said "range 1-168" in two places; both now say 1-6 and
+    point at this section alongside 97.
