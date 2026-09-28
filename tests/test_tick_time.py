@@ -136,6 +136,56 @@ def test_flux_is_linear():
     assert rescale_value("max_intake_rate", 0.035, 3, 6)[0] == pytest.approx(0.07)
     assert rescale_value("resting_metabolism", 90.0, 6, 3)[0] == pytest.approx(45.0)
     assert rescale_value("seed_rate", 0.001, 2, 6)[0] == pytest.approx(0.003)
+    # Swimming for a third of the time covers a third of the distance.
+    assert rescale_value("movement_speed", 0.9, 6, 2)[0] == pytest.approx(0.3)
+
+
+def test_movement_speed_is_a_distance_not_a_survival_probability():
+    """Section 104. It was filed under "loss" and did not rescale.
+
+    ``apply_movement`` computes ``b_out = moving_biomass * v`` and keeps
+    the rest in the source cell, so the moving cohort advances v cells
+    in one tick: v is cells/tick, exactly what the FG editor's label
+    says, and the real-time speed is v / tick_hours.
+
+    Under the old "loss" rule the value compounded as a survival
+    probability, and its ``x >= 1.0`` short-circuit returned 1.0
+    unchanged - so pelagic_fish, porpoises, seals and seabirds, all at
+    1.0 in fg_library.yaml, kept moving one whole cell per tick at every
+    tick length. Going 6 h -> 1 h that is a six-fold speed-up, applied
+    silently by the one operation whose entire purpose is to hold the
+    biology fixed in real time.
+    """
+    assert RESCALE_RULES["movement_speed"] == "flux"
+    # The four FGs that did not move at all under the old rule.
+    assert rescale_value("movement_speed", 1.0, 6, 1)[0] == pytest.approx(1.0 / 6.0)
+    # ...and one that did, but too fast: the loss rule gave 0.0468.
+    assert rescale_value("movement_speed", 0.25, 6, 1)[0] == pytest.approx(0.25 / 6.0)
+
+
+@pytest.mark.parametrize("v6", [1.0, 0.25, 0.02])
+def test_movement_speed_over_a_fixed_real_duration_is_invariant(v6):
+    """Cells per hour is what must not change."""
+    baseline = v6 / 6.0
+    for new_hours in (1, 2, 3, 4, 5, 6):
+        v_new, clamped = rescale_value("movement_speed", v6, 6, new_hours)
+        assert not clamped
+        assert v_new / new_hours == pytest.approx(baseline, rel=1e-9)
+
+
+def test_movement_speed_clamps_when_the_tick_cannot_carry_it():
+    """A cell per tick is the engine's ceiling, and it is reported.
+
+    Coarsening is where linear scaling meets the cap: a fish crossing
+    a quarter cell per hour would cross one and a half in six, which
+    ``apply_movement`` cannot express - it moves biomass to the
+    ADJACENT cell or not at all. The clamp is the honest answer and the
+    confirmation dialog lists it; the old rule instead saturated
+    smoothly to a value that was simply wrong.
+    """
+    value, clamped = rescale_value("movement_speed", 0.25, 1, 6)
+    assert clamped is True
+    assert value == 1.0
 
 
 def test_loss_compounds_and_stays_below_one():

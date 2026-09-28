@@ -9522,3 +9522,97 @@ remain open exactly as described in 71.9 / 71.11.
 103.5 Docs
     AGENTS.md said "range 1-168" in two places; both now say 1-6 and
     point at this section alongside 97.
+
+104 MOVEMENT_SPEED WAS RESCALED AS A SURVIVAL PROBABILITY (2026-09-28)
+
+104.1 The report
+    User set the tick length to 1 h in the FG editor and observed that
+    movement_speed was NOT rescaled to 1/6 cell per tick for porpoises
+    and pelagic_fish. Reproduced exactly:
+
+        fg               v@6h   6->1 h    expected
+        pelagic_fish    1.000   1.0000     0.1667
+        porpoises       1.000   1.0000     0.1667
+        seals           1.000   1.0000     0.1667
+        seabirds        1.000   1.0000     0.1667
+        gadoids         0.250   0.0468     0.0417
+        zooplankton     0.020   0.0034     0.0033
+
+    Two failures in one: the four FGs at v = 1.0 did not move at all,
+    and the two that did moved too far.
+
+104.2 Cause
+    Section 97.5 filed movement_speed under "loss" - the class for a
+    per-tick fraction REMOVED from a stock, a survival probability in
+    disguise, which compounds as 1 - (1 - r)^k. It is in that class
+    because it is a fraction in [0, 1], which is not the same thing.
+
+    What the engine does with it (movement.apply_movement):
+
+        b_out  = moving_biomass * v     # reaches the neighbour cell
+        b_keep = moving_biomass - b_out # stays in the source cell
+
+    so the moving cohort's centre of mass advances v CELLS in one tick.
+    v is a distance per tick - exactly what the FG editor's label
+    "Movement Speed (cells/{tick})" says - and the quantity that must
+    not change is v / tick_hours. That makes it linear in the tick
+    length: a flux.
+
+    The loss rule also carries ``if x >= 1.0: return 1.0``, which is
+    right for mortality (already lethal in one tick; a longer tick
+    cannot be worse, and a shorter one needs r = 1 to still kill
+    everything). Applied to a speed it means the FASTEST animals are
+    exactly the ones that never rescale. Four of the eight FGs in
+    fg_library.yaml sit at 1.0.
+
+    Going 6 h -> 1 h that is a silent six-fold speed-up, produced by
+    the one operation whose entire purpose is to hold the biology fixed
+    in real time.
+
+104.3 Fix
+    RESCALE_RULES["movement_speed"]: "loss" -> "flux". Supersedes 97.5
+    on this parameter only; the other four classifications stand.
+
+        pelagic_fish / porpoises / seals / seabirds  1.0 -> 0.16667
+        gadoids                                     0.25 -> 0.04167
+        zooplankton                                 0.02 -> 0.00333
+        phytoplankton / benthic_community            0.0 -> 0.0
+
+    and the 1 h -> 6 h round trip restores every one of them exactly.
+
+    The trade, stated rather than hidden: linear scaling can exceed the
+    [0, 1] cap when the tick is made COARSER. A fish crossing a quarter
+    cell per hour would cross one and a half in six, which the engine
+    cannot express - apply_movement moves biomass to the ADJACENT cell
+    or not at all. That is a clamp, it is reported in the confirmation
+    dialog (97.5), and it is the honest answer. The loss rule instead
+    saturated smoothly towards 1.0, which never reports anything and is
+    simply the wrong number.
+
+104.4 Tests
+    tests/test_tick_time.py +5:
+      * the rule is "flux", 1.0 at 6 h is 1/6 at 1 h, and 0.25 is
+        0.04167 rather than the 0.0468 the loss rule gave,
+      * cells per hour is invariant over 1..6 h for v = 1.0, 0.25, 0.02,
+      * coarsening past the cap clamps AND reports,
+      * one more line in test_flux_is_linear.
+    Verified by putting "loss" back: 6 cases turn red.
+
+    Headless xvfb GUI run against a SCRATCH library, the path the user
+    took: Apply 1 h rescales all eight FGs to exactly v/6 and stamps
+    library_metadata.tick_hours = 1; Apply 6 h afterwards restores every
+    original value exactly. The real fg_library.yaml was never touched.
+
+    Suite: 698 passed, 12 skipped (was 693/12 after 103).
+
+104.5 Worth a look, not done here
+    The same question should be asked of every other entry in
+    RESCALE_RULES, since the failure mode was a plausible-looking
+    classification rather than a coding error. natural_mortality and
+    starve_rate are genuine survival probabilities and compound
+    correctly; growth_rate is a fraction ADDED to a stock and
+    compounds; max_intake_rate, resting_metabolism and seed_rate are
+    per-tick transfers and are linear; seasonal_period is a duration.
+    Those all still read correctly against what the engine does with
+    them, but none of them has been re-derived from the engine the way
+    movement_speed just was.

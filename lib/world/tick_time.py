@@ -111,9 +111,14 @@ def per_tick(unit, tick_hours=None):
 # How each per-tick parameter converts when the tick length changes by a
 # factor k = new_hours / old_hours. Three kinds, by dimension:
 #
-#   "flux"    A quantity transferred per tick (mass, energy). Genuinely
-#             accumulates within a tick, so it is linear: x * k. Eating
-#             for twice as long moves twice the prey.
+#   "flux"    A quantity transferred per tick (mass, energy, distance).
+#             Genuinely accumulates within a tick, so it is linear:
+#             x * k. Eating for twice as long moves twice the prey.
+#
+#             Being a fraction in [0, 1] does NOT make something a
+#             "loss": movement_speed is bounded by 1 because the engine
+#             cannot move biomass more than one cell per tick, not
+#             because it is a survival probability. See its entry below.
 #
 #   "growth"  A per-tick fraction ADDED to a stock. Compounds:
 #             (1 + r)^k - 1. Linear would overshoot badly at large k and
@@ -139,12 +144,22 @@ RESCALE_RULES = {
     "max_intake_rate": "flux",
     "resting_metabolism": "flux",
     "seed_rate": "flux",
+    # Distance per tick, and the engine means it literally:
+    # ``apply_movement`` computes ``b_out = moving_biomass * v`` and
+    # keeps the rest in the source cell, so the moving cohort's centre
+    # of mass advances v cells in one tick. Real-time speed is therefore
+    # v / tick_hours, and holding it constant makes v linear in the tick
+    # length. Section 97 filed it under "loss" because it is a fraction
+    # in [0, 1]; that is a different thing, and the misfiling made the
+    # rescale a no-op for every FG at v = 1.0 - which is four of the
+    # eight in fg_library.yaml, the two fastest of them the ones the
+    # user noticed. Section 104.
+    "movement_speed": "flux",
     # growth
     "growth_rate": "growth",
     # loss
     "natural_mortality": "loss",
     "starve_rate": "loss",
-    "movement_speed": "loss",
     # period
     "seasonal_period": "period",
 }
