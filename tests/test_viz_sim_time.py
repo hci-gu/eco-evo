@@ -7,6 +7,7 @@ the arithmetic has to be exact at the year boundary - "0 y 364 d" for
 a full year is the failure this is guarding.
 """
 
+import ast
 import sys
 from pathlib import Path
 
@@ -123,16 +124,69 @@ def test_the_status_bar_shows_it_next_to_the_tick(monkeypatch):
         v.close()
 
 
-def test_the_entry_points_pass_the_project_tick_length():
-    """A viewer told nothing would silently render 6 h for every project."""
-    import ast
-    for name in ("train.py", "inference.py", "api.py"):
-        source = Path(__file__).resolve().parents[1] / name
-        tree = ast.parse(source.read_text(encoding="utf-8"))
-        calls = [n for n in ast.walk(tree)
+# Every construction site, and where its tick length must come from.
+# train.py, inference.py and the GPU viewer can be told one and must
+# pass it on; api.py, manual_play.py and simple_inference.py have no
+# flag and run at the library's calibration, which the DEFAULT gives
+# them - so they are allowed to pass nothing.
+ENTRY_POINTS = {
+    "train.py": "tick_length",
+    "inference.py": "tick_length",
+    "lib/gpu/visual.py": "tick_hours",
+}
+NO_FLAG = {"api.py", "manual_play.py", "simple_inference.py"}
+
+
+def construction_sites():
+    """Every module that builds a LiveVisualizer, found not listed.
+
+    The first version of this test carried a hand-written list of entry
+    points, and lib/gpu/visual.py was not on it - so train_gpu.py built
+    its viewer with no tick length at all and rendered every run at 6 h
+    while the engine ran at whatever --tick-length said. Discovering the
+    call sites is the point: a new one cannot be forgotten.
+    """
+    root = Path(__file__).resolve().parents[1]
+    found = {}
+    for path in list(root.glob("*.py")) + list((root / "lib").rglob("*.py")):
+        if path.name == "pygame_viz.py":
+            continue  # its own docstring examples
+        text = path.read_text(encoding="utf-8")
+        if "LiveVisualizer(" not in text:
+            continue
+        name = str(path.relative_to(root))
+        calls = [n for n in ast.walk(ast.parse(text))
                  if isinstance(n, ast.Call)
                  and getattr(n.func, "id", None) == "LiveVisualizer"]
-        assert calls, f"{name} no longer constructs a LiveVisualizer"
-        for call in calls:
-            names = {kw.arg for kw in call.keywords}
-            assert "tick_hours" in names, f"{name} does not pass tick_hours"
+        if calls:
+            found[name] = calls
+    return found
+
+
+def test_every_construction_site_is_accounted_for():
+    sites = set(construction_sites())
+    assert sites == set(ENTRY_POINTS) | NO_FLAG, (
+        "a LiveVisualizer is built somewhere this test does not classify: "
+        f"{sorted(sites ^ (set(ENTRY_POINTS) | NO_FLAG))}")
+
+
+@pytest.mark.parametrize("name,expected", sorted(ENTRY_POINTS.items()))
+def test_the_entry_points_pass_the_right_tick_length(name, expected):
+    """Passing the argument is not enough - the VALUE has to be the flag.
+
+    The first version of this test only checked that ``tick_hours``
+    appeared as a keyword, which a call passing a constant, a stale
+    accessor or the wrong variable would have satisfied just as well.
+    A viewer handed the wrong number renders a plausible, wrong
+    simulated time and nothing else goes wrong, so nothing else would
+    have caught it.
+    """
+    calls = construction_sites().get(name)
+    assert calls, f"{name} no longer constructs a LiveVisualizer"
+    for call in calls:
+        passed = {kw.arg: kw.value for kw in call.keywords}
+        assert "tick_hours" in passed, f"{name} does not pass tick_hours"
+        expression = ast.unparse(passed["tick_hours"])
+        assert expected in expression, (
+            f"{name} passes tick_hours={expression!r}, which does not come "
+            f"from {expected}")

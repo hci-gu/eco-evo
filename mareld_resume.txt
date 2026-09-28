@@ -9843,3 +9843,62 @@ remain open exactly as described in 71.9 / 71.11.
     is the same approximation natural_mortality already lives with next
     to the other losses - but it is an approximation, not an identity,
     and nobody has measured where it stops being negligible.
+
+107 THE GPU VIEWER NEVER GOT --tick-length (2026-09-28)
+
+107.1 The report and the arithmetic
+    Training with a 500-tick rollout at --tick-length 1, the status bar
+    read "0 y 125 d" at the end of the probe. 125 d is 3000 h, and
+    3000 / 500 = 6: the viewer was converting at the LIBRARY's tick
+    length, not the run's.
+
+    Not a display bug in the conversion - the engine really did run at
+    1 h, only the clock above it did not. 500 ticks at 1 h is 20 d.
+
+107.2 Cause
+    lib/gpu/visual.py builds its own LiveVisualizer and section 106
+    never passed it a tick length, so it took the default. train.py,
+    inference.py and api.py were wired; the GPU viewer was not.
+
+    The reason it got missed is worth more than the fix. Section 101
+    added a test that every entry point passes ``tick_hours``, and that
+    test carried a HAND-WRITTEN list of three files - the three I had
+    edited. It could not fail for a file that was not on it. A test
+    that enumerates its own subjects only ever checks what its author
+    already remembered.
+
+107.3 Fix
+    lib/gpu/visual.py passes
+    ``tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS)``.
+    From the BUILDER, not by re-reading the flag: the builder is what
+    actually applies --tick-length to the library, so the clock and the
+    biology cannot disagree even if one of them is wired wrongly later.
+
+    tests/test_viz_sim_time.py now DISCOVERS the construction sites -
+    every *.py at the root and under lib/ that constructs a
+    LiveVisualizer - and classifies them:
+
+      pass the flag   train.py, inference.py, lib/gpu/visual.py
+      no flag exists  api.py, manual_play.py, simple_inference.py
+
+    with a separate test asserting the discovered set equals the
+    classified set, so a new call site fails until someone says which
+    kind it is. The value check from section 106 is kept: passing
+    ``tick_hours`` is not enough, the expression has to mention
+    ``tick_length`` (or the builder's ``tick_hours``), because a call
+    passing a constant or a stale accessor would satisfy "the keyword
+    is present" just as well.
+
+    Verified by deleting the fix: the GPU case turns red on its own.
+
+107.4 Validation
+    train_gpu.py --tick-length 1 --visual, one generation on CPU/eager,
+    completed. Suite: 734 passed, 12 skipped (was 731/12 after 106).
+
+107.5 Note on which rollout the number describes
+    The two trainers take their probe length from different flags -
+    train.py from --n_eval_ticks (via the viewer's "Probe ticks"
+    slider, which the user can override live) and train_gpu.py's
+    progress evaluation from --eval-ticks, default 1000. Worth knowing
+    when a displayed duration looks unexpected: check which rollout the
+    tick counter is counting before concluding the clock is wrong.

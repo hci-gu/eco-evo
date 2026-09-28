@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import torch
 
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
+from lib.world.tick_time import LIBRARY_TICK_HOURS
 from lib.runners.rnd_baseline import rnd_baseline_plot_ids
 from lib.runners.training_progress import evaluation_randomness, make_visual_progress
 
@@ -86,6 +87,10 @@ class GPUTrainingVisualizer:
                 plot_fg_ids=dm_ids + ndm_ids, ndm_ids=ndm_ids,
                 extra_plot_ids=rnd_baseline_plot_ids(self.rnd_mode, list(env.fgs), dm_ids),
                 title="Mareld GPU training",
+                # The builder is what actually applies --tick-length to the
+                # library, so take it from there rather than re-reading the
+                # flag: the two cannot then disagree. Section 106.
+                tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS),
             )
             if not self.viz.enabled:
                 self._disable()
