@@ -9616,3 +9616,86 @@ remain open exactly as described in 71.9 / 71.11.
     Those all still read correctly against what the engine does with
     them, but none of them has been re-derived from the engine the way
     movement_speed just was.
+
+105 MOVEMENT-SPEED INPUT RANGE FOLLOWS THE TICK LENGTH (2026-09-28)
+
+105.1 Why
+    After 104 the values rescale correctly - at a 1 h tick every FG in
+    fg_library.yaml sits at or below 1/6 - but the FG editor's input
+    still declared [0, 1]. The whole library then lived in the bottom
+    sixth of the slider, and the hint label said a speed was allowed
+    that is six times the fastest animal the library describes.
+
+105.2 The ceiling is derived, not invented
+    _movement_speed_bounds returns
+
+        (0.0, rescale_value("movement_speed", 1.0,
+                            DEFAULT_TICK_HOURS, tick_hours)[0])
+
+    i.e. the library's calibrated maximum - one cell per 6 h - put
+    through the same flux rule its values take. That is what makes the
+    two agree: a library rescaled from 6 h lands exactly ON the ceiling
+    rather than being clamped by it, and fg_library.yaml has FOUR FGs at
+    the calibration maximum, so "exactly on" is the common case, not a
+    corner.
+
+        1 h  [0, 0.167]    3 h  [0, 0.5]
+        2 h  [0, 0.333]    6 h  [0, 1]      (unchanged)
+
+    This is NOT the engine's ceiling, and the two are deliberately
+    different. state.py clips speed to [0, 1] at any tick length and
+    RESCALE_CLAMP keeps 1.0, because apply_movement moves biomass to the
+    adjacent cell or not at all. The editor's bound is the tighter,
+    biological one; the clamp is the wider, physical one. The comment on
+    RESCALE_CLAMP used to say the two were the same and now says where
+    they part.
+
+105.3 How a live range was made possible
+    A ranged row baked its [lo, hi] into three places at construction:
+    the validatecommand closure, the slider's from_/to, and the hint
+    label. Re-running the builder would have stacked a second
+    trace_add on the same StringVar.
+
+    _build_inline_ranged_entry now owns a MUTABLE ``bounds`` dict that
+    both the validator and _bind_slider_entry read, so a range change is
+    a mutation plus two widget options - nothing is re-registered. Rows
+    opt into this by passing ``key``; they land in self._ranged_rows and
+    _set_ranged_row_range changes them. Only "dm:movement_speed" uses it
+    today.
+
+    The refresh hangs off _refresh_tick_labels, which every path that
+    commits a tick length already calls (Apply, new project, project
+    load), so there is no fourth call site to keep in sync.
+
+    _range_label renders the hint: "%g" would have printed the 1 h
+    ceiling as 0.166667 and pushed the label out of its fixed-width
+    slot, so it is three significant figures, and whole numbers stay
+    whole ("[0, 1]", not "[0, 1.00]").
+
+105.4 Tests
+    tests/test_tick_time.py +1 (6 cases): the editor's ceiling IS
+    rescale_value(1.0, 6, h), it never clamps, and every library value
+    rescaled from 6 h stays at or below it. Pure - it does not import
+    fgconfig, which needs a display at import time.
+
+    Headless xvfb GUI run against a SCRATCH library, 6 h -> 1 -> 3 -> 2
+    -> 6 h, 23 checks at every step:
+      * bounds, hint label and BOTH slider end points follow,
+      * pelagic_fish lands exactly on the new ceiling,
+      * typing half the ceiling into the real Entry is accepted and
+        typing 1.5x it is rejected - i.e. the validatecommand reads the
+        mutated dict, not a copy taken at construction,
+      * writing an out-of-range value to the var does not move the
+        slider knob, which is the same check for _bind_slider_entry,
+      * and 6 h comes back to exactly [0, 1].
+    The real fg_library.yaml was never touched.
+
+    Suite: 704 passed, 12 skipped (was 698/12 after 104).
+
+105.5 Open
+    Every other ranged row still declares a constant. max_intake_rate,
+    resting_metabolism and seed_rate are fluxes too, so their editor
+    ranges have the same mismatch at a short tick - the difference is
+    that their library values sit far below the ceiling, so nobody has
+    hit it. The mechanism added here is generic; applying it is a
+    one-line call per row once someone decides what each ceiling means.

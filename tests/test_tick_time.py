@@ -173,6 +173,29 @@ def test_movement_speed_over_a_fixed_real_duration_is_invariant(v6):
         assert v_new / new_hours == pytest.approx(baseline, rel=1e-9)
 
 
+@pytest.mark.parametrize("hours", [1, 2, 3, 4, 5, 6])
+def test_the_editor_ceiling_is_the_rescaled_calibration_maximum(hours):
+    """Section 105: the FG editor's movement-speed range follows the tick.
+
+    The editor derives its ceiling as this same call rather than
+    inventing a number, which is what makes the two agree: a library
+    calibrated at 6 h lands exactly ON the ceiling after a rescale
+    instead of being clamped by it. fg_library.yaml has four FGs at the
+    calibration maximum, so "exactly on" is not a corner case.
+
+    The ENGINE's ceiling is a different bound and stays 1.0 at every
+    tick length - RESCALE_CLAMP keeps it, because apply_movement moves
+    biomass to the adjacent cell or not at all.
+    """
+    ceiling, clamped = rescale_value("movement_speed", 1.0, 6, hours)
+    assert not clamped
+    assert ceiling == pytest.approx(hours / 6.0)
+    for v6 in (1.0, 0.25, 0.02, 0.0):
+        rescaled, was_clamped = rescale_value("movement_speed", v6, 6, hours)
+        assert not was_clamped
+        assert rescaled <= ceiling + 1e-12
+
+
 def test_movement_speed_clamps_when_the_tick_cannot_carry_it():
     """A cell per tick is the engine's ceiling, and it is reported.
 

@@ -164,9 +164,17 @@ RESCALE_RULES = {
     "seasonal_period": "period",
 }
 
-# Upper bound per parameter, matching the FG editor's declared slider
-# range. A rescale that would exceed it is clamped and reported, never
-# silently truncated.
+# Upper bound per parameter: what the ENGINE can represent. A rescale
+# that would exceed it is clamped and reported, never silently
+# truncated.
+#
+# These used to be described as "the FG editor's declared slider range".
+# That is still true of every entry except movement_speed, whose editor
+# range now follows the tick length (section 105) and is therefore
+# tighter than this one at any tick below 6 h. The engine's ceiling is
+# the tick-independent one: state.py clips speed to [0, 1] whatever the
+# tick length is, because apply_movement moves biomass to the adjacent
+# cell or not at all.
 RESCALE_CLAMP = {
     "max_intake_rate": (0.0, 1.0),
     "resting_metabolism": (0.0, 1000.0),

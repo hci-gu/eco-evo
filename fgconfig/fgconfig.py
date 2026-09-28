@@ -27,6 +27,7 @@ from lib.world.tick_time import (  # noqa: E402
     MIN_TICK_HOURS,
     per_tick,
     rescale_params,
+    rescale_value,
     resolve_tick_hours,
     tick_label,
     ticks_per_day,
@@ -635,6 +636,9 @@ class FGConfigApp:
         # Note: not packed here; on_fg_select shows/hides editors based on category.
 
         self.prop_vars = {}
+        # Ranged rows whose [lo, hi] can change while the editor is open,
+        # keyed by "<editor>:<param>". See _set_ranged_row_range.
+        self._ranged_rows = {}
         # (label, key, type, lo, hi)
         # lo/hi define the allowed range; rows show "[lo, hi]" label and a
         # slider next to the Entry. For type=="range" the range applies to
@@ -672,7 +676,10 @@ class FGConfigApp:
         for (label, key, type, lo, hi) in main_props:
             self._make_prop_label(self.editor_frame, label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
             if type == "entry":
-                var = self._build_ranged_entry(self.editor_frame, grow, lo, hi)
+                if key == "movement_speed":
+                    lo, hi = self._movement_speed_bounds()
+                var = self._build_ranged_entry(self.editor_frame, grow, lo, hi,
+                                               key=f"dm:{key}")
                 self.prop_vars[key] = var
                 grow += 1
             elif type == "range":
@@ -1312,7 +1319,15 @@ class FGConfigApp:
         return widget
 
     def _refresh_tick_labels(self):
-        """Re-render every label that embeds the tick length."""
+        """Re-render everything that depends on the tick length.
+
+        The labels that embed ``{tick}``, and the movement-speed input
+        range, which is a per-tick distance and therefore moves with the
+        tick exactly as its values do (section 105). Every caller that
+        changes the committed tick length already goes through here.
+        """
+        lo, hi = self._movement_speed_bounds()
+        self._set_ranged_row_range("dm:movement_speed", lo, hi)
         survivors = []
         for widget, template in self._tick_label_widgets:
             try:
@@ -1760,13 +1775,18 @@ class FGConfigApp:
                 return mn, mx
         return None, None
 
-    def _bind_slider_entry(self, var, slider, lo, hi, is_int=False):
+    def _bind_slider_entry(self, var, slider, bounds, is_int=False):
         """Two-way binding between a tk.StringVar (Entry) and a ttk.Scale.
 
         Updates the slider position when the Entry changes (if the value
-        parses and falls within [lo, hi]), and writes back to the Entry
+        parses and falls within the range), and writes back to the Entry
         when the slider is dragged. Live in-range validation already
         happens on the Entry side; this method only mirrors values.
+
+        ``bounds`` is the MUTABLE ``{"lo", "hi"}`` dict the row owns, not
+        two numbers: a range can change while the editor is open (see
+        ``_set_ranged_row_range``) and re-binding would stack a second
+        trace on the same variable.
         """
         state = {"sync": False}
 
@@ -1778,7 +1798,7 @@ class FGConfigApp:
                 v = float(raw)
             except (TypeError, ValueError):
                 return
-            if v < lo or v > hi:
+            if v < bounds["lo"] or v > bounds["hi"]:
                 return
             state["sync"] = True
             try:
@@ -1810,7 +1830,63 @@ class FGConfigApp:
         # Initial sync (if var already holds a value).
         _entry_to_slider()
 
-    def _build_ranged_entry(self, parent, row, lo, hi, is_int=None):
+    @staticmethod
+    def _range_label(lo, hi):
+        """The "[lo, hi]" hint beside an Entry.
+
+        ``%g`` would render a rescaled movement-speed ceiling as
+        0.166667; three significant figures is enough for a hint and
+        keeps the label inside its fixed-width slot.
+        """
+        def _fmt(v):
+            v = float(v)
+            if v == int(v):
+                return f"{int(v)}"
+            return f"{v:.3g}"
+        return f"[{_fmt(lo)}, {_fmt(hi)}]"
+
+    def _set_ranged_row_range(self, key, lo, hi):
+        """Change a registered row's range in place.
+
+        Mutates the bounds dict the validator and the slider binding
+        read, so neither is re-registered; updates the hint label and
+        the slider's end points. A value already in the Entry is left
+        alone - on a tick-length change the library has just been
+        rescaled and on_fg_select reloads it anyway.
+        """
+        row = self._ranged_rows.get(key)
+        if row is None:
+            return
+        row["bounds"]["lo"] = float(lo)
+        row["bounds"]["hi"] = float(hi)
+        try:
+            row["label"].configure(text=self._range_label(lo, hi))
+            row["scale"].configure(from_=float(lo), to=float(hi))
+        except Exception as e:
+            print(f"[fgconfig] range refresh for {key} failed: {e!r}")
+
+    def _movement_speed_bounds(self, tick_hours=None):
+        """[0, one cell per 6 h] expressed in the current tick length.
+
+        The ceiling is not a new number: it is the library's calibrated
+        maximum (1.0 cell per 6 h tick) put through the same flux rule
+        the values themselves take, so a library rescaled from 6 h lands
+        exactly ON the new ceiling rather than being clamped by it.
+        Section 105.
+
+        The ENGINE's ceiling is a separate thing and stays 1.0 cell per
+        tick at any length (``state.py`` clips to it, and so does
+        RESCALE_CLAMP): this bound is tighter, and deliberately, because
+        one cell per hour is six times the fastest animal the library
+        describes.
+        """
+        if tick_hours is None:
+            tick_hours = getattr(self, "tick_hours_committed", DEFAULT_TICK_HOURS)
+        hi, _clamped = rescale_value(
+            "movement_speed", 1.0, DEFAULT_TICK_HOURS, tick_hours)
+        return 0.0, float(hi)
+
+    def _build_ranged_entry(self, parent, row, lo, hi, is_int=None, key=None):
         """Build a [lo, hi] range label + Entry + slider triple in column 1.
 
         Returns the tk.StringVar bound to the Entry (kept as StringVar so
@@ -1823,7 +1899,7 @@ class FGConfigApp:
         container.columnconfigure(1, weight=1)
         return self._build_inline_ranged_entry(container, lo, hi,
                                                pack=False, width=12,
-                                               is_int=is_int)
+                                               is_int=is_int, key=key)
 
     def _effective_current_response(self, config, is_dm):
         """The external-force share a library entry actually means.
@@ -1888,15 +1964,20 @@ class FGConfigApp:
         max_var.trace_add("write", _on_max)
 
     def _build_inline_ranged_entry(self, container, lo, hi, *,
-                                   pack=True, width=12, is_int=None):
+                                   pack=True, width=12, is_int=None,
+                                   key=None):
         """Place a [lo, hi] label + Entry + slider into ``container``.
 
         ``pack=True`` uses .pack() (for the Action Costs row that itself
         uses pack), ``pack=False`` uses .grid() (for the multi-row FG
         editor where the outer container has columnconfigure).
+        ``key`` registers the row in ``self._ranged_rows`` so its range
+        can be changed later; see ``_set_ranged_row_range``.
+
         Returns the tk.StringVar bound to the Entry.
         """
         var = tk.StringVar()
+        bounds = {"lo": float(lo), "hi": float(hi)}
 
         def _validate(proposed):
             if proposed in ("", ".", "-", "-.", "+", "+."):
@@ -1905,14 +1986,14 @@ class FGConfigApp:
                 v = float(proposed)
             except ValueError:
                 return False
-            return lo <= v <= hi
+            return bounds["lo"] <= v <= bounds["hi"]
 
         vcmd = (container.register(_validate), "%P")
 
         # Right-align the range label inside a fixed-width slot so that
         # the Entry columns line up across rows regardless of how wide the
         # "[lo, hi]" text is.
-        lbl = ttk.Label(container, text=f"[{lo:g}, {hi:g}]",
+        lbl = ttk.Label(container, text=self._range_label(lo, hi),
                         foreground="#666666", anchor="e", width=16)
         ent = ttk.Entry(container, textvariable=var, width=width,
                         validate="key", validatecommand=vcmd)
@@ -1936,7 +2017,10 @@ class FGConfigApp:
                             and hi >= 10)
         else:
             is_int_range = bool(is_int)
-        self._bind_slider_entry(var, scl, lo, hi, is_int=is_int_range)
+        self._bind_slider_entry(var, scl, bounds, is_int=is_int_range)
+        if key is not None:
+            self._ranged_rows[key] = {
+                "bounds": bounds, "label": lbl, "scale": scl, "var": var}
         return var
 
     def _build_value_range_row(self, parent, row):
