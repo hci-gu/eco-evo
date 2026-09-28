@@ -12,7 +12,8 @@ import re
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.training_progress import (add_progress_arguments, validate_progress_arguments,
                                            make_visual_progress)
-from lib.config.config_loader import (setup_full_mareld_mvp, load_project_config,
+from lib.config.config_loader import (project_tick_hours,
+                                      setup_full_mareld_mvp, load_project_config,
                                       load_impact_spawn_specs)
 from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
@@ -1850,6 +1851,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                 plot_fg_ids=_plot_ids or None,
                 extra_plot_ids=_extra,
                 ndm_ids=_ndm_ids or None,
+                # Status-bar simulated time; display only (section 97).
+                tick_hours=project_tick_hours(getattr(args, 'project', None)),
             )
             # Reward-flikens y-axel-/rubriktext ska spegla den aktiva
             # rewardformeln, precis som titeln i plots.html. Vi återanvänder

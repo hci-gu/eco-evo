@@ -9206,3 +9206,163 @@ remain open exactly as described in 71.9 / 71.11.
     replaced by a section on which groups the field carries, the
     default rule and the local-reward guarantee.
 
+100 ROLLING HEATMAP NORMALISATION TOGGLE (2026-09-28)
+
+100.1 Why
+    Section 94 made the heatmap colour reference the rollout-start
+    per-cell maximum, on explicit request, and removed the frame
+    dependent maximum entirely. That is the right default: declining
+    biomass darkens, and two ticks - or two FGs - can be compared by
+    eye. It is also the wrong answer in one case, and the case is not
+    rare here: a field that collapses to a thousandth of its start
+    goes black, and its spatial structure goes with it. The two
+    references answer different questions and neither is always the
+    one being asked, so this is a toggle rather than a reversal of 94.
+
+100.2 What it does
+    lib/viz/pygame_viz.py, one flag and one branch:
+
+        fixed (default)  reference = rollout-start per-cell max
+        rolling ('n')    reference = the max of the frame being drawn
+
+    The display-scale slider multiplies whichever reference is in use,
+    log mode ('l') applies on top of either, and the colourbar always
+    prints the reference in use - so a frame can still be read without
+    knowing which mode produced it, which is what keeps the rolling
+    mode honest.
+
+    Key 'n', beside 'l' (log heatmap) and 'r' (log plot), AND a
+    clickable button in the status bar reading "norm: fixed [n]" /
+    "norm: rolling [n]", green while rolling, styled like the plot's
+    Live button.
+
+    The button was not in the first version and had to be: the user
+    started a training run and reported seeing no setting for the
+    normalisation, which was exactly right. A key is not a setting if
+    nothing on screen mentions it, the module docstring is the only
+    place the keys are documented (no in-app legend, no README
+    section), and the status bar only showed "hm:rolling" once the
+    mode was already on - i.e. nothing at all in the default state.
+    The natural neighbour would have been the biomass-scale slider,
+    but _draw_status_bar draws that in INFERENCE mode only, so during
+    training there was no display control on screen whatsoever. The
+    status bar's first row is drawn in every mode, so the button lives
+    there, right aligned, falling back to just after the status text if
+    the window is too narrow to right align it - never hidden, never on
+    top of the text. Measured across 1, 2, 6 and 8 FGs (windows 905 to
+    1563 px): no overlap, never off screen.
+
+    ONE class, six entry points: train.py, train_gpu.py (via api.py),
+    inference.py, simple_inference.py and manual_play.py all construct
+    the same LiveVisualizer, so all of them get it.
+
+    Deliberately NOT part of the frame snapshot. _capture_frame stores
+    heatmap_vmax0 because that is data about the rollout; the toggle is
+    a view setting, so it can be flipped in the middle of a playback,
+    and during playback the rolling reference is read from the REPLAYED
+    frame's array (swapped in by _swap_in_frame) rather than the live
+    one.
+
+    No CLI flag: 'l' and 'r' have none either, and the toggle survives
+    a new rollout, so one keypress lasts the session. Adding one would
+    touch all six entry points for a setting that is already one key.
+
+100.3 Tests
+    tests/test_viz_normalisation.py, 7 cases, all asserting the PIXELS
+    the viewer blitted rather than the reference it computed - the
+    contract is about colours - by reading the rendered surface under
+    SDL's dummy driver and comparing against the viewer's own LUT:
+      * fixed is the default and a tenfold collapse reads as a tenfold
+        collapse,
+      * 'n' gives the same collapsed field the full colour range back,
+        and the quarter cell sits a quarter up the gradient rather than
+        a fortieth - i.e. the structure the fixed reference flattened,
+      * growth above the start reference saturates when fixed and does
+        not when rolling,
+      * the display-scale slider multiplies both references (checked at
+        a tick where the two differ, so the case is distinguishable),
+      * an all-zero frame is black in both modes, with no division by
+        the zero reference,
+      * 'l' and 'n' compose,
+      * playback normalises by the replayed frame, and the toggle is
+        absent from the snapshot,
+      * the button exists in BOTH train and inference mode, inside the
+        status-bar rect, repaints when clicked, and its click never
+        falls through to the heatmap underneath.
+
+    Verified by deleting the rolling branch: 4 of the 7 pixel cases
+    turn red. The other three are the default-behaviour case and the
+    two robustness cases, which are correct to pass either way.
+    Unregistering the button's hit-rect turns both button cases red.
+
+    Suite: 660 passed, 15 skipped (was 651 after 99).
+
+101 SIMULATED TIME IN THE STATUS BAR (2026-09-28)
+
+101.1 What
+    The status bar's first row now reads
+
+        mode = train  tick = 2960  time = 2 y 40 d  gen = ...
+
+    ADDED next to the tick, not instead of it: the tick is the engine's
+    unit and the rest of the UI is in ticks (the probe-ticks slider, the
+    playback bar), so removing it would have broken the correspondence
+    between the two.
+
+101.2 Where the conversion comes from
+    project_metadata.tick_hours (section 97), never a hardcoded 6.
+    LiveVisualizer takes a new ``tick_hours`` argument and resolves it
+    with ``tick_time.resolve_tick_hours``; train.py, inference.py and
+    api.py pass ``config_loader.project_tick_hours(...)`` from their
+    project path. manual_play.py and simple_inference.py have no project
+    file at all and keep the historical 6 h through the default, which
+    is what resolve_tick_hours is for.
+
+    The arithmetic is integer, on hours:
+
+        days  = tick * tick_hours // 24
+        years, rest = divmod(days, 365)
+
+    Floats would put a whole year at "0 y 364 d" often enough to be
+    noticed. The part of a day a sub-daily tick leaves over is DROPPED,
+    not rounded: the tick counter beside it already carries the finer
+    resolution, and a day that ticks over early reads as a bug.
+
+101.3 The layout regression this caused, and the rule that fixes it
+    The longer row 1 pushed the normalisation button (section 100) off
+    the right edge of the window in the narrowest case - one FG, 905 px,
+    a five-digit tick and gen/iter/T present: btn_end 951 > win 905.
+    Section 100's placement rule (right aligned, falling back to just
+    past the text) cannot hold both properties at once when the text
+    outgrows the row.
+
+    New rule: the button owns a FIXED slot at the right end and the TEXT
+    is what yields. ``parts`` is already ordered by importance, so
+    trailing fields are dropped until the rest fits - fps first, then
+    grid, then solo, ... - and mode, tick and time are never dropped.
+    In the 905 px case exactly one field (fps) goes; at 1136 px and up
+    nothing does.
+
+101.4 Tests
+    tests/test_viz_sim_time.py, 16 cases:
+      * 6 h ticks across 0, a part-day, a day, 40 days, a year exactly,
+        one tick short of a year ("0 y 364 d") and two years and change,
+      * the same tick number under 1 h, 12 h, 24 h and 168 h tick
+        lengths, i.e. the project setting is what converts,
+      * a missing tick length falls back to 6 h,
+      * the rendered row 1 contains both "tick = N" and "time = ...",
+        in that order (asserted by wrapping the font object - pygame's
+        Font.render is read-only and cannot be monkeypatched),
+      * an AST check that train.py, inference.py and api.py all pass
+        tick_hours - a viewer told nothing renders 6 h for every
+        project, silently and plausibly.
+
+    tests/test_viz_normalisation.py +1: in the narrowest window the
+    button stays inside the bar, the text stays out from under it, and
+    mode/tick/time survive the trimming.
+
+    Verified by deleting the code under test: ignoring the argument
+    turns 7 of the 16 red, removing the trimming loop turns the layout
+    case red.
+
+    Suite: 677 passed, 15 skipped (was 660 after 100).

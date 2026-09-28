@@ -46,7 +46,7 @@ from inference import (
     build_env,
     load_policies_and_stats,
 )
-from lib.config.config_loader import load_project_config
+from lib.config.config_loader import load_project_config, project_tick_hours
 
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -562,6 +562,7 @@ def _run_one_replicate(
                 title=f"Mareld API {run_id}",
                 plot_fg_ids=internal_species,
                 ndm_ids=ndm_ids or None,
+                tick_hours=project_tick_hours(model.project_path),
             )
             LOGGER.info("run %s visualization enabled for replicate %d", run_id, replicate_index + 1)
         except Exception as exc:

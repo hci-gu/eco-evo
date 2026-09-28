@@ -33,7 +33,8 @@ import numpy as np
 import torch
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 
-from lib.config.config_loader import (load_config, load_project_config, setup_full_mareld_mvp,
+from lib.config.config_loader import (load_config, load_project_config,
+                                      project_tick_hours, setup_full_mareld_mvp,
                                        compute_inference_b0_defaults,
                                        _build_spawn_spec,
                                        _spawn_biomass_distribution)
@@ -1100,7 +1101,9 @@ def main():
                                  grid_shape=args.grid,
                                  mode="inference",
                                  extra_plot_ids=extra,
-                                 ndm_ids=ndm_ids or None)
+                                 ndm_ids=ndm_ids or None,
+                                 tick_hours=project_tick_hours(
+                                     getattr(args, 'project', None)))
             # b0-slider defaults: gridskaleberäknat inference_initial_biomass
             # per FG, läst direkt från projekt-YAML. Slider-rangen blir
             # ``[0, 4 * default]`` per FG, mittposition = default.

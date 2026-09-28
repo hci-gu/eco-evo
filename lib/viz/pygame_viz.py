@@ -27,6 +27,9 @@ Usage (inference.py)::
 Keys:
     space   pause / resume
     l       toggle log-scale on heatmaps
+    n       toggle rolling heatmap normalisation (per-frame maximum)
+            instead of the fixed rollout-start maximum. Also a button
+            in the status bar, "norm: fixed / rolling".
     r       toggle log-scale on the reward/biomass plot y-axis
     q / esc quit visualiser (training continues)
     1..9    solo-focus one FG (press same digit again to clear)
@@ -41,6 +44,10 @@ from collections import deque
 from typing import Dict, Mapping, Optional, Sequence
 
 import numpy as np
+
+from lib.world.tick_time import (
+    DAYS_PER_YEAR, HOURS_PER_DAY, resolve_tick_hours,
+)
 
 
 _VIRIDIS_256: Optional[np.ndarray] = None
@@ -256,6 +263,7 @@ class LiveVisualizer:
         plot_fg_ids: Optional[Sequence[str]] = None,
         extra_plot_ids: Optional[Sequence[str]] = None,
         ndm_ids: Optional[Sequence[str]] = None,
+        tick_hours: Optional[int] = None,
     ):
         import pygame
         self._pg = pygame
@@ -283,6 +291,12 @@ class LiveVisualizer:
         # ``_active_plot_ids``. ``_rnd``-baseline series follow the same
         # rule based on their stripped base id.
         self._ndm_ids: set = set(ndm_ids or [])
+        # How much real time one tick is (project_metadata.tick_hours,
+        # section 97). The engine is tick-agnostic, so this is purely for
+        # display: it turns the tick counter into simulated time. Callers
+        # without a project file (manual_play, simple_inference) leave it
+        # None and get the historical 6 h.
+        self.tick_hours = resolve_tick_hours(tick_hours)
         self.grid_h, self.grid_w = int(grid_shape[0]), int(grid_shape[1])
         # Heatmaps ska alltid renderas i samma fysiska storlek som ett
         # 32x32-rutnt hade haft. Referens: cell_px=6 vid 32x32 -> 192 px.
@@ -381,8 +395,25 @@ class LiveVisualizer:
         # rollout (train probe runs fresh per ARS-iter, inference is one run).
         self._b0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
         # Rollout-start per-cell maxima, captured on the first frame of
-        # each rollout. Heatmap colours always use this fixed reference.
+        # each rollout. This is the DEFAULT heatmap reference (section 94).
         self._heatmap_vmax0: Dict[str, float] = {fid: 0.0 for fid in self.fg_ids}
+        # Rolling normalisation ('n'): take the reference from the frame
+        # being drawn instead of from the start of the rollout. The two
+        # answer different questions and neither is always right, which is
+        # why it is a toggle rather than a choice made once:
+        #   fixed    absolute. Declining biomass darkens, and two ticks or
+        #            two FGs can be compared by eye. A field that collapses
+        #            to a thousandth goes black and its structure with it.
+        #   rolling  relative. Always uses the full colour range, so the
+        #            pattern stays readable however small the numbers get -
+        #            at the price of the brightness meaning nothing across
+        #            frames, since the reference moves under it.
+        # The colourbar always prints the reference in use, so a frame can
+        # be read without knowing which mode produced it.
+        self._rolling_heatmap: bool = False
+        # Hit-rect for the status-bar button that toggles it, registered
+        # every frame by ``_draw_status_bar``.
+        self._hm_norm_button_rect: Optional[tuple] = None
         # One global visual biomass scale for inference. 1.0 means:
         # heatmap max = rollout-start per-cell max. After slider adjustment,
         # biomass plot max = 100% * scale. The slider zooms both together.
@@ -1757,6 +1788,8 @@ class LiveVisualizer:
             self._paused = not self._paused
         elif key == pg.K_l:
             self._log_heatmap = not self._log_heatmap
+        elif key == pg.K_n:
+            self._rolling_heatmap = not self._rolling_heatmap
         elif key == pg.K_r:
             self._log_plot = not self._log_plot
         elif key == pg.K_TAB:
@@ -1985,6 +2018,11 @@ class LiveVisualizer:
             return
         if self._hit_rect(self._neval_lock_rect, pos):
             self._neval_locked = not self._neval_locked
+            return
+        # Heatmap normalisation button: sits in the status bar, so it must
+        # be claimed before anything routes the click on to a heatmap.
+        if self._hit_rect(self._hm_norm_button_rect, pos):
+            self._rolling_heatmap = not self._rolling_heatmap
             return
         # Ticks-slider: kolla först av allt (sitter i status-baren ovanför
         # heatmapsen och får inte routas vidare som heatmap/tab-klick).
@@ -2777,10 +2815,25 @@ class LiveVisualizer:
         else:
             self._playback_track_rect = None
 
+    def _sim_time_label(self) -> str:
+        """Simulated time at the current tick, as ``"2 y 40 d"``.
+
+        Integer arithmetic on hours, so a whole year lands on exactly
+        "1 y 0 d" instead of "0 y 364 d" through float error. The part
+        of a day a sub-daily tick leaves over is dropped rather than
+        rounded: the tick counter beside it already carries the finer
+        resolution, and a day that ticks over early reads as wrong.
+        """
+        total_hours = int(self._tick) * int(self.tick_hours)
+        days = total_hours // HOURS_PER_DAY
+        years, rest_days = divmod(days, DAYS_PER_YEAR)
+        return f"{years} y {rest_days} d"
+
     def _draw_status_bar(self) -> None:
         pg = self._pg
         x, y, w, h = self._status_rect
-        parts = [f"mode = {self.mode}", f"tick = {self._tick}"]
+        parts = [f"mode = {self.mode}", f"tick = {self._tick}",
+                 f"time = {self._sim_time_label()}"]
         for k in ("gen", "iter", "T"):
             if k in self._status:
                 v = self._status[k]
@@ -2798,9 +2851,46 @@ class LiveVisualizer:
             parts.append(f"solo = {self._solo}")
         parts.append(f"grid = {self.grid_w}x{self.grid_h}")
         parts.append(f"fps = {self._fps_value:4.1f}")
+        # ---- Heatmap normalisation button (row 1, right aligned) -----
+        # The ONLY always-visible control for the reference: 'n' is not
+        # discoverable on its own, and the biomass-scale slider that
+        # would have been its natural neighbour exists in inference mode
+        # only - so during training there was nothing to see at all.
+        # Styled like the plot's Live button: green while the non-default
+        # mode is active, so the state reads at a glance.
+        #
+        # The button owns a fixed slot at the right end of the row and the
+        # TEXT is what yields: a narrow window with a long status line
+        # would otherwise either push the button off the edge or slide it
+        # under the text. ``parts`` is already ordered by importance, so
+        # trailing fields (fps, then grid, ...) are dropped until the rest
+        # fits. The first three - mode, tick and simulated time - are
+        # never dropped.
+        rolling = self._rolling_heatmap
+        norm_label = "norm: rolling [n]" if rolling else "norm: fixed [n]"
+        norm_surf = self._font.render(
+            norm_label, True,
+            (220, 240, 220) if rolling else (210, 220, 230))
+        btn_w = norm_surf.get_width() + 12
+        btn_h = self._font.get_height() + 4
+        btn_x = x + w - btn_w - 8
+        btn_y = y + 2
+
+        available = btn_x - (x + 6) - 12
+        while len(parts) > 3 and self._font_big.size("  ".join(parts))[0] > available:
+            parts.pop()
         text = "  ".join(parts)
         surf = self._font_big.render(text, True, (230, 230, 235))
         self._screen.blit(surf, (x + 6, y + 3))
+
+        pg.draw.rect(self._screen,
+                     (55, 90, 60) if rolling else (55, 55, 65),
+                     (btn_x, btn_y, btn_w, btn_h))
+        pg.draw.rect(self._screen,
+                     (110, 180, 130) if rolling else (120, 130, 145),
+                     (btn_x, btn_y, btn_w, btn_h), 1)
+        self._screen.blit(norm_surf, (btn_x + 6, btn_y + 2))
+        self._hm_norm_button_rect = (btn_x, btn_y, btn_w, btn_h)
 
         # ---- Rollout-längd-slider (rad 2 i status-baren) -------------
         # Layout: vänster label "rollout ticks = N", track, höger gränser.
@@ -3254,10 +3344,20 @@ class LiveVisualizer:
             return
 
         v = arr.astype(np.float32, copy=False)
-        # Fixed per-FG start reference, also during replay and in log mode.
-        # Never fall back to the current frame's max, even for a zero start.
-        raw_vmax = max(float(self._heatmap_vmax0.get(fid, 0.0))
-                       * float(self._biomass_display_scale), 1e-12)
+        # Per-FG colour reference. Fixed (default): the rollout-start
+        # maximum, also during replay and in log mode, never falling back
+        # to the frame's own max even for a zero start. Rolling ('n'): this
+        # frame's own maximum, which is what the fixed reference replaced
+        # in section 94 and what the toggle brings back on demand. The
+        # display-scale slider multiplies whichever one is in use.
+        if self._rolling_heatmap:
+            try:
+                reference = float(np.max(v))
+            except Exception:
+                reference = 0.0
+        else:
+            reference = float(self._heatmap_vmax0.get(fid, 0.0))
+        raw_vmax = max(reference * float(self._biomass_display_scale), 1e-12)
         if self._log_heatmap:
             v = np.log1p(np.maximum(v, 0.0))
             vmax = float(np.log1p(raw_vmax))
@@ -3281,8 +3381,10 @@ class LiveVisualizer:
 
         # ---- Colorbar legend under the heatmap ----------------------------
         # Per-FG normalisation: shows what the colour gradient maps to,
-        # from 0 (left, dark) to the fixed rollout-start maximum times the
-        # display scale (right, bright), also when log mode is enabled.
+        # from 0 (left, dark) to the reference in use times the display
+        # scale (right, bright), also when log mode is enabled. The number
+        # is the whole point of the rolling toggle being legible: it is the
+        # rollout-start maximum when fixed and this frame's when rolling.
         cbar_y = hm_y + H * self.cell_px + 3
         cbar_w = W * self.cell_px
         cbar_strip_h = 6
