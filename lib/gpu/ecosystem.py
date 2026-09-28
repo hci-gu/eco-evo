@@ -40,8 +40,17 @@ class TensorEcosystem:
         tensor = self.tensor
         self.dm_index = tensor(self.dm_positions, torch.long)
         self.ndm_index = tensor(self.ndm_positions, torch.long)
+        # Drifting is per group, not per kind: a decision maker with
+        # current_response > 0 is advected too, on top of the move its
+        # policy chose. FunctionalGroup defaults the response so a
+        # library without the key keeps the old decision-makers-never-
+        # drift behaviour, which is why this set is usually the NDMs.
+        self.drift_positions = tuple(
+            i for i in range(self.G)
+            if env.fgs[self.ids[i]].current_response > 0)
+        self.drift_index = tensor(self.drift_positions, torch.long)
         self.current_response = tensor([
-            env.fgs[self.ids[i]].current_response for i in self.ndm_positions
+            env.fgs[self.ids[i]].current_response for i in self.drift_positions
         ])[None, :, None, None]
         self.is_dm = tensor([i in self.dm_positions for i in range(self.G)], torch.bool)[None, :, None]
         self.move_mask = tensor(env.move_mask.reshape(4, self.C))
@@ -384,7 +393,7 @@ class TensorEcosystem:
         b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
         return b * self.energy_content[:, self.dm_index][:, :, None] + r
 
-    def tracked_energy(self, flow, biomass, reserve):
+    def tracked_energy(self, flow, biomass, reserve, drift=None):
         """End-of-tick energy attributed back to the source cell.
 
         ``tracked[e, i, c]`` is ``B(c, t+1)`` of the local reward: the
@@ -394,14 +403,28 @@ class TensorEcosystem:
         destination cell's energy in proportion to the biomass each
         source delivered is an identity, not an approximation.
 
+        ``drift`` is ``advect(..., track=True)``'s third value. The
+        current runs after the movement and is linear and uniform within
+        a cell, so it composes with the move shares rather than breaking
+        them: each destination's unit value is first pushed back through
+        the field's shares. Mirrors ``source_tracking``.
+
         ``frac_in`` is the fraction of the source cell's post-movement
         biomass that stayed on the grid. Outflow across the border has no
         in-grid destination, so it is removed from the denominator (``A``
         is scaled by ``frac_in``) instead of being booked as a loss.
         """
         b_stay, b_out, b_total = flow
-        unit = torch.where(b_total > 0.0, self.local_energy(biomass, reserve)
-                           / b_total.clamp_min(1e-30), 0.0)
+        b_final = b_total if drift is None else drift[1]
+        unit = torch.where(b_final > 0.0, self.local_energy(biomass, reserve)
+                           / b_final.clamp_min(1e-30), 0.0)
+        if drift is not None:
+            phi = drift[0]
+            carried = torch.zeros_like(unit)
+            for direction in range(4):
+                index, valid = self.neighbors[direction], self.neighbor_valid[direction]
+                carried = carried + phi[:, :, direction] * valid * unit[:, :, index]
+            unit = (1.0 - phi.sum(2)) * unit + carried
         tracked = b_stay * unit
         b_move_in = torch.zeros_like(b_stay)
         for direction in range(4):
@@ -449,9 +472,17 @@ class TensorEcosystem:
         r = torch.where(b <= 0, 0.0, r)
         return b, r, starve_loss
 
-    def advect(self, biomass, reserve, tick, keys=None):
-        if self.currents is None or self.currents.strength == 0 or not self.ndm_positions:
-            return biomass, reserve
+    def advect(self, biomass, reserve, tick, keys=None, track=False):
+        """Drift every responding group; ``track`` also returns the shares.
+
+        With ``track`` the third return value is ``(phi, b_after)`` for
+        the decision makers: the per-direction share the field carried
+        out of each cell and the biomass left standing there. The local
+        reward needs both, because a drifting decision maker no longer
+        sits where the movement tracker recorded it.
+        """
+        if self.currents is None or self.currents.strength == 0 or not self.drift_positions:
+            return (biomass, reserve, None) if track else (biomass, reserve)
         # ``torch.full`` rather than ``as_tensor``: a host scalar copied to the
         # device is not permitted while a CUDA graph is capturing.
         tick = (tick.to(torch.int64) if isinstance(tick, torch.Tensor) else
@@ -463,7 +494,7 @@ class TensorEcosystem:
             tick, keys[:, None], self.currents, self.current_x, self.current_y), dim=1)
         fractions = (fractions[:, None] * self.current_response
                      * self.move_mask[None, None])
-        b, r = biomass[:, self.ndm_index], reserve[:, self.ndm_index]
+        b, r = biomass[:, self.drift_index], reserve[:, self.drift_index]
         b_out, r_out = b[:, :, None] * fractions, r[:, :, None] * fractions
         b_total, r_total = b - b_out.sum(2), r - r_out.sum(2)
         for direction in range(4):
@@ -474,9 +505,18 @@ class TensorEcosystem:
         if self.migration:
             b_emig = (b_out * self.outside).sum((2, 3))
             r_emig = (r_out * self.outside).sum((2, 3))
-            b_imm, r_imm = self.immigration(b_emig, r_emig, self.ndm_index)
+            b_imm, r_imm = self.immigration(b_emig, r_emig, self.drift_index)
             b_total, r_total = b_total + b_imm, r_total + r_imm
-        return biomass.index_copy(1, self.ndm_index, b_total), reserve.index_copy(1, self.ndm_index, r_total)
+        out_b = biomass.index_copy(1, self.drift_index, b_total)
+        out_r = reserve.index_copy(1, self.drift_index, r_total)
+        if not track:
+            return out_b, out_r
+        # Re-index the shares on the decision makers, zero for the ones
+        # the field does not carry, so the tracker sees one fixed shape.
+        phi = torch.zeros((biomass.shape[0], self.G) + fractions.shape[2:],
+                          device=self.device, dtype=fractions.dtype)
+        phi = phi.index_copy(1, self.drift_index, fractions)
+        return out_b, out_r, (phi[:, self.dm_index], out_b[:, self.dm_index])
 
     def step(self, biomass, reserve, actions, tick, phase, seed_multiplier,
              current_keys=None, track_source=False):
@@ -491,9 +531,12 @@ class TensorEcosystem:
         start = self.local_energy(biomass, reserve) if track_source else None
         b, r, gains, hidden, intake = self.predation(biomass, reserve, actions)
         b, r, flow = self.movement(b, r, gains, actions, track=track_source)
-        b, r = self.advect(b, r, tick, current_keys)
+        if track_source:
+            b, r, drift = self.advect(b, r, tick, current_keys, track=True)
+        else:
+            b, r = self.advect(b, r, tick, current_keys)
         b, r, starve_loss = self.population(b, r, tick, phase, seed_multiplier)
         if not track_source:
             return b, r, hidden, intake, starve_loss
-        tracked, frac_in = self.tracked_energy(flow, b, r)
+        tracked, frac_in = self.tracked_energy(flow, b, r, drift)
         return b, r, hidden, intake, starve_loss, (start, tracked, frac_in)

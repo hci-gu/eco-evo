@@ -14,9 +14,18 @@ class FunctionalGroup:
         
         # Metadata from params
         self.is_decision_maker = params.get('is_decision_maker', False)
-        # Active decision makers are excluded regardless of this value.
-        # Zero anchors a non-decision-maker group against passive currents.
-        self.current_response = float(params.get('current_response', 1.0))
+        # Share of the current field this group is carried by: 0 anchors
+        # it completely, 1 lets it drift with the full flow, and the
+        # values between scale flux and energy together. Any group can
+        # respond, decision makers included - a swimmer that drifts is
+        # advected on top of the move its policy chose. The DEFAULT
+        # reproduces the rule that predated the per-group flag, where
+        # only non decision makers were advected, so a library written
+        # before this option behaves exactly as it did.
+        response = params.get('current_response')
+        if response is None:
+            response = 0.0 if self.is_decision_maker else 1.0
+        self.current_response = float(response)
         if not np.isfinite(self.current_response) or not 0 <= self.current_response <= 1:
             raise ValueError("current_response must be finite and between 0 and 1")
         self.max_energy_reserve = params.get('max_energy_reserve', 1000.0)  # ME_X

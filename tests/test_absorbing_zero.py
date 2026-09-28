@@ -230,16 +230,55 @@ def test_holling_type3_refuge_is_reachable_after_the_fix():
 # Fix 1: the recolonisation floor.
 # ---------------------------------------------------------------------------
 
-def test_phytoplankton_seed_rate_is_enabled_in_the_library():
+def _library_setting(species, key):
+    """(value, comment) for ``key`` inside ``species``, from the raw text.
+
+    The comment cannot come from the parsed YAML, and it is the point
+    here: the FG editor rewrites the library without comments, so a
+    comment is what distinguishes a chosen value from editor drift.
+    """
     with open(LIBRARY, "r", encoding="utf-8") as fh:
-        library = yaml.safe_load(fh) or {}
-    phyto = (library.get("species_definitions", {})
-             .get("phytoplankton") or {})
-    seed_rate = float(phyto.get("seed_rate", 0.0) or 0.0)
-    assert seed_rate > 0.0, (
-        "phytoplankton.seed_rate is 0 - zero is absorbing at the base of "
-        "the food web and long training runs learn a dying world "
-        "(Section 69.6)")
+        lines = fh.read().splitlines()
+    library = yaml.safe_load("\n".join(lines)) or {}
+    value = (library.get("species_definitions", {}).get(species) or {}).get(key)
+
+    start = next(i for i, line in enumerate(lines)
+                 if line.strip().rstrip(":") == species and line.startswith("  " + species))
+    end = next((i for i in range(start + 1, len(lines))
+                if lines[i][:3].strip() and not lines[i].startswith("   ")), len(lines))
+    at = next(i for i in range(start, end) if lines[i].strip().startswith(key + ":"))
+
+    comment = lines[at].partition("#")[2].strip()
+    above = at - 1
+    while above > start and lines[above].strip().startswith("#"):
+        comment = lines[above].strip().lstrip("#").strip() + " " + comment
+        above -= 1
+    return value, comment.strip()
+
+
+def test_phytoplankton_seed_rate_is_a_deliberate_choice():
+    """Zero is absorbing at the base of the food web, so it must be chosen.
+
+    Sections 69.6 and 73.4 set ``seed_rate`` to 1e-07 to remove that
+    absorbing zero, and 74.11 found it back at 0 twice after the library
+    had been through the FG editor - which rewrites the file without its
+    comments, so the value and its justification are lost together. The
+    value is the user's call (0 is the recorded choice as of 2026-09-28,
+    i.e. no recolonisation floor: a cell that reaches exact zero stays
+    there). What this test holds is the weaker but checkable property
+    that a zero has to carry the comment saying it was meant - which is
+    exactly what editor drift strips.
+    """
+    seed_rate, comment = _library_setting("phytoplankton", "seed_rate")
+    if float(seed_rate or 0.0) > 0.0:
+        return
+    assert len(comment) >= 40, (
+        "phytoplankton.seed_rate is 0 with no explanation next to it. Zero "
+        "is absorbing at the base of the food web (Section 69.6): a cell "
+        "that reaches it never recovers, and long runs train the policies "
+        "in a dying world. Either restore the 1e-07 floor of Section 73.4, "
+        "or write down next to the value why the zero is wanted - a bare 0 "
+        "here is what the FG editor leaves behind, not a decision.")
 
 
 def test_seed_rate_recovers_a_zeroed_ndm_cell():

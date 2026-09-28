@@ -35,6 +35,7 @@ if _ROOT not in sys.path:
 
 from lib.environments.ecosystem import EcosystemEnvironment  # noqa: E402
 from lib.environments.ecosystem_env import source_tracking  # noqa: E402
+from lib.environments.ecosystem_env.currents import CurrentConfig  # noqa: E402
 from lib.environments.ecosystem_env.source_tracking import (  # noqa: E402
     LocalRewardConfig,
 )
@@ -50,7 +51,8 @@ MAX_RESERVE = 1000.0
 FILL = 0.5
 
 
-def _build_env(local_reward=None, min_split_kg=0.0, factor=0.0):
+def _build_env(local_reward=None, min_split_kg=0.0, factor=0.0,
+               currents=None, current_response=None):
     fg = FunctionalGroup('mover', {
         'is_decision_maker': True,
         'energy_content': ENERGY_CONTENT,
@@ -65,9 +67,11 @@ def _build_env(local_reward=None, min_split_kg=0.0, factor=0.0):
         'resting_cost': 1.0,
     })
     fg.initialize_state((H, W), initial_biomass=np.zeros((H, W)))
+    if current_response is not None:
+        fg.current_response = float(current_response)
     env = EcosystemEnvironment(
         {'width': W, 'height': H, 'cell_size': 1000.0, 'tick_duration': 6.0},
-        {'mover': fg}, {}, local_reward=local_reward)
+        {'mover': fg}, {}, local_reward=local_reward, currents=currents)
     env._build_static_caches()
     return env, fg
 
@@ -147,6 +151,100 @@ def test_mass_balance_holds_over_many_ticks():
             np.asarray(diag['tracked'], dtype=np.float64).sum())
         assert total_tracked == pytest.approx(
             float(_cell_energy(env).sum()), rel=1e-4)
+
+
+def test_a_decision_maker_only_drifts_when_it_responds():
+    """Guards the fixture of the next test against being vacuous."""
+    still, _ = _build_env(currents=CurrentConfig(strength=0.8))
+    drifting, _ = _build_env(currents=CurrentConfig(strength=0.8),
+                             current_response=1.0)
+    for env in (still, drifting):
+        _set_biomass(env, np.zeros((H, W), dtype=np.float32))
+        env.fgs['mover'].biomass[2, 2] = np.float32(10.0)
+        env.fgs['mover'].energy_reserve[2, 2] = np.float32(
+            10.0 * FILL * MAX_RESERVE)
+        env.step(_actions(env))
+    # The field flows east and south (movement.current_direction_fractions).
+    assert still.fgs['mover'].biomass[2, 3] == 0.0
+    assert drifting.fgs['mover'].biomass[2, 3] > 0.0
+    assert drifting.fgs['mover'].biomass[3, 2] > 0.0
+
+
+def _set_uneven_reserve(env, biomass, seed=3):
+    """Biomass plus a per-cell reserve fill, so energy/ton varies.
+
+    The mass-balance identity is only sensitive to WHERE the tracker
+    cashes a destination cell in when the end-of-tick energy per ton
+    differs between cells. With the uniform fill of ``_set_biomass``
+    every cell is worth the same per ton, the sum telescopes whatever
+    the allocation does, and the assertion cannot see a misplaced
+    share at all.
+    """
+    rng = np.random.default_rng(seed)
+    fill = rng.uniform(0.2, 0.9, size=(H, W)).astype(np.float32)
+    fg = env.fgs['mover']
+    fg.biomass = np.asarray(biomass, dtype=env.dtype)
+    fg.energy_reserve = (fg.biomass * fill
+                         * np.float32(MAX_RESERVE)).astype(env.dtype)
+    fg.temp_energy_gains = np.zeros((H, W), dtype=env.dtype)
+
+
+def test_mass_balance_holds_while_a_decision_maker_drifts():
+    """The identity must survive transport the policy did not choose.
+
+    ``apply_currents`` runs after the movement, so unless the field's
+    shares are composed into the move shares the tracker cashes the
+    destination cells in at the wrong place: energy the current carried
+    away is credited at the value of the cell it left rather than the
+    one it reached, and the total stops re-partitioning the grid.
+    """
+    env, _ = _build_env(local_reward={},
+                        currents=CurrentConfig(strength=0.8),
+                        current_response=0.6)
+    _set_uneven_reserve(env, _random_biomass())
+    moves = _random_moves()
+    for _ in range(5):
+        env.step(_actions(env, moves))
+        diag = env.local_reward_last
+        total_tracked = float(
+            np.asarray(diag['tracked'], dtype=np.float64).sum())
+        assert total_tracked == pytest.approx(
+            float(_cell_energy(env).sum()), rel=1e-4)
+
+
+def test_the_uneven_fixture_would_expose_a_misplaced_share():
+    """The drift fixture must not be able to pass by telescoping.
+
+    Guards the test above: with an uneven fill the end-of-tick energy
+    per ton genuinely differs between the cells the current connects,
+    which is the only situation in which the sum can tell a right
+    allocation from a wrong one.
+    """
+    env, _ = _build_env(local_reward={},
+                        currents=CurrentConfig(strength=0.8),
+                        current_response=0.6)
+    _set_uneven_reserve(env, _random_biomass())
+    env.step(_actions(env, _random_moves()))
+    b = np.asarray(env.fgs['mover'].biomass, dtype=np.float64)
+    unit = np.where(b > 0.0, _cell_energy(env) / np.where(b > 0.0, b, 1.0), 0.0)
+    live = unit[b > 0.0]
+    assert live.size > 4 and live.ptp() / live.mean() > 0.05
+
+
+def test_a_drifting_cell_that_rests_is_still_credited_its_own_energy():
+    """Pure rest plus a current: the source keeps what the field moved.
+
+    With no move and a uniform starting field the tick is a pure
+    transport operator, so every cell must come out at ratio 1 even
+    though its biomass has been carried to its neighbours.
+    """
+    env, _ = _build_env(local_reward={'metric': 'log'},
+                        currents=CurrentConfig(strength=0.8),
+                        current_response=1.0)
+    _set_biomass(env, np.full((H, W), 5.0, dtype=np.float32))
+    env.step(_actions(env))
+    ratio = np.asarray(env.local_reward_last['ratio'], dtype=np.float64)
+    np.testing.assert_allclose(ratio, 1.0, rtol=1e-4)
 
 
 # ---------------------------------------------------------------- 2

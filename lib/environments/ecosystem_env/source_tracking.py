@@ -33,11 +33,16 @@ Impacts and predation happen *before* the movement, so those losses are
 already booked in the source cell -- nothing to track. Everything
 *after* the movement is cell-wise multiplicative (``population_change``
 scales B and R by a per-cell factor, the accessibility mask and the
-extinction sweep multiply by 0/1, the reserve clip is per cell), and
-``apply_currents`` only touches non decision makers. A destination
-cell's end-of-tick energy can therefore be split between its sources in
-proportion to the biomass each of them delivered; this is an identity,
-not an approximation.
+extinction sweep multiply by 0/1, the reserve clip is per cell) EXCEPT
+``apply_currents``, which transfers biomass between cells whenever a
+decision maker has ``current_response > 0``. That transfer is linear
+and uniform within a cell, so it composes with the move shares instead
+of breaking them: ``record_advection`` stores the field's per-direction
+shares and ``tracked_end_energy`` pushes each destination's unit value
+back through them before the move shares are cashed in. A destination
+cell's end-of-tick energy can therefore still be split between its
+sources in proportion to the biomass each of them delivered; this is an
+identity, not an approximation.
 
 Edge cases
 ----------
@@ -50,6 +55,12 @@ Edge cases
   being counted as a loss -- ``A`` is scaled by the in-grid biomass
   fraction ``frac_in``, so a border cell is not punished for a move the
   tracker cannot follow.
+* Without migration the current cannot leave the grid: the movement
+  mask zeroes the border directions for the field exactly as it does
+  for a move, so the composed shares stay on the grid and the identity
+  is exact. With ``--migration on`` the field emigrates across the
+  border and is re-injected elsewhere, which no source cell can follow
+  -- the same hole migration already puts in the movement shares.
 * With ``--migration on`` the immigrating biomass has no source cell.
   Because the shares are normalised by the destination's *total*
   post-movement biomass, the immigrated part is simply attributed to
@@ -325,6 +336,7 @@ def begin_tick(env):
         return
     env._local_start_energy = _cell_energy(env)
     env._local_contrib = None
+    env._local_advection = None
 
 
 def record_movement(env, b_stay, b_out, b_total):
@@ -343,6 +355,34 @@ def record_movement(env, b_stay, b_out, b_total):
     )
 
 
+def record_advection(env, ids, fractions):
+    """Store the current field's transfer of decision makers.
+
+    ``apply_currents`` runs AFTER ``apply_movement``, so a drifting
+    decision maker no longer sits where ``record_movement`` left it and
+    the destination cell whose energy is divided among its sources is
+    not the cell the move landed in. ``fractions[i, d]`` is the share of
+    the cell the field carries in direction ``d`` for the advected group
+    ``ids[i]``, already masked and scaled by ``current_response``, and
+    the post-transfer biomass is read back per decision maker.
+
+    A decision maker that does not drift gets a zero row and its
+    unchanged biomass, which makes the arithmetic in
+    ``tracked_end_energy`` collapse to the identity it used before
+    currents could touch a decision maker at all.
+    """
+    if env.N_dm == 0:
+        return
+    index = {fid: i for i, fid in enumerate(ids)}
+    phi = np.zeros((env.N_dm, 4, env.H, env.W), dtype=env.dtype)
+    biomass = np.empty((env.N_dm, env.H, env.W), dtype=env.dtype)
+    for i, fid in enumerate(env.dm_ids):
+        biomass[i] = env.fgs[fid].biomass
+        if fid in index:
+            phi[i] = fractions[index[fid]]
+    env._local_advection = (phi, biomass)
+
+
 def tracked_end_energy(env):
     """``B(c, t+1)`` per DM plus the in-grid biomass fraction.
 
@@ -355,13 +395,25 @@ def tracked_end_energy(env):
 
     b_stay, b_out, b_total = contrib
     q_end = _cell_energy(env)
+    advection = getattr(env, "_local_advection", None)
+    phi, b_final = (None, b_total) if advection is None else advection
 
     # Per-unit-biomass end-of-tick energy of every destination cell.
-    # Everything after the movement is cell-wise multiplicative, so
-    # ``q_end / b_total`` is exactly the energy each delivered ton is
-    # worth at the end of the tick.
+    # Everything after the CURRENT is cell-wise multiplicative, so
+    # ``q_end / b_final`` is exactly the energy each ton standing there
+    # is worth at the end of the tick.
     with np.errstate(divide="ignore", invalid="ignore"):
-        unit = np.where(b_total > 0.0, q_end / b_total, 0.0)
+        unit = np.where(b_final > 0.0, q_end / b_final, 0.0)
+
+    # Push that value back through the current. The field is linear and
+    # uniform within a cell, so one ton left in cell m by the movement
+    # is worth what it keeps there plus what the field carries away:
+    #     unit(m) = (1 - sum_d phi_d(m)) * u(m) + sum_d phi_d(m) * u(m_d)
+    # which is exact for the same reason the move shares are, and is
+    # the identity u(m) when the group does not drift.
+    if phi is not None:
+        unit = ((1.0 - phi.sum(axis=1)) * unit
+                + (phi * _gather_destinations(unit)).sum(axis=1))
     unit = unit.astype(env.dtype, copy=False)
 
     unit_dest = _gather_destinations(unit)
@@ -448,6 +500,7 @@ def end_tick(env):
         "occupied": occupied,
     }
     env._local_contrib = None
+    env._local_advection = None
     env._local_start_energy = None
 
 

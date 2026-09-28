@@ -658,6 +658,7 @@ class FGConfigApp:
             ("Movement Speed (cells/{tick})", "movement_speed", "entry", 0.0, 1.0),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
             ("Extinction Threshold (× indiv. weight, 0=off)", "extinction_threshold_factor", "entry", 0.0, 5.0),
+            ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
         ]
 
@@ -737,6 +738,7 @@ class FGConfigApp:
             ("Seed Rate (fraction of cc/{tick})", "seed_rate", "entry", 0.0, 1.0),
             ("Seasonal Amplitude (fraction of growth_rate, 0=off)", "seasonal_amplitude", "entry", 0.0, 10.0),
             ("Seasonal Period (ticks of {tick})", "seasonal_period", "entry", 0.0, 10000.0),
+            ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
         ]
         self.ndm_editor_frame.columnconfigure(1, weight=1)
@@ -1822,6 +1824,26 @@ class FGConfigApp:
         return self._build_inline_ranged_entry(container, lo, hi,
                                                pack=False, width=12,
                                                is_int=is_int)
+
+    def _effective_current_response(self, config, is_dm):
+        """The external-force share a library entry actually means.
+
+        A MISSING key is not 0: ``FunctionalGroup`` defaults it to 1.0
+        for a non decision maker and 0.0 for a decision maker, which is
+        the rule that predated the per-group parameter. Resolving it
+        here means the editor shows what the tick will do, and - more
+        importantly - that applying unrelated changes to an older
+        library entry cannot silently write an empty field back as 0
+        and anchor a group that had been drifting all along.
+        """
+        raw = config.get("current_response")
+        if raw in (None, ""):
+            raw = 0.0 if is_dm else 1.0
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            value = 0.0
+        return max(0.0, min(1.0, value))
 
     def _link_minmax(self, min_var, max_var):
         """Enforce min <= max across two StringVars on every write.
@@ -3462,6 +3484,9 @@ class FGConfigApp:
                 if key == "extinction_threshold_factor" and key not in config:
                     var.set("0.5")
                     continue
+                if key == "current_response":
+                    var.set(f"{self._effective_current_response(config, True):g}")
+                    continue
                 val = config.get(key, "")
                 if isinstance(var, tk.BooleanVar):
                     var.set(bool(val))
@@ -3481,6 +3506,9 @@ class FGConfigApp:
                     continue
                 if key == "initial_biomass_max":
                     var.set("" if init_max_val is None else str(init_max_val))
+                    continue
+                if key == "current_response":
+                    var.set(f"{self._effective_current_response(config, False):g}")
                     continue
                 val = config.get(key, "")
                 var.set(str(val))
@@ -3601,6 +3629,15 @@ class FGConfigApp:
                     elif config[key] > 1.0:
                         config[key] = 1.0
                         var.set("1.0")
+                # Clamp the external-force share to [0, 1]. 0 = anchored,
+                # 1 = carried by the whole flow.
+                if key == "current_response":
+                    if config[key] < 0.0:
+                        config[key] = 0.0
+                        var.set("0")
+                    elif config[key] > 1.0:
+                        config[key] = 1.0
+                        var.set("1")
                 # Clamp indivisible weight to [0, 10000] kg. 0 = continuous.
                 if key == "min_split_biomass":
                     if config[key] < 0.0:

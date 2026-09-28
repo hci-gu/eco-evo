@@ -8817,3 +8817,392 @@ remain open exactly as described in 71.9 / 71.11.
     Apply end to end, save/reload, an exact 12 -> 6 -> 12 round trip and
     rejection of an out-of-range value. The GUI test wrote to scratch
     copies; the real fg_library.yaml was never modified.
+
+98 TEST SUITE CLEANUP (2026-09-28)
+
+98.1 Starting point
+    Section 97.8 recorded 625 passed, 15 skipped, 7 failed at HEAD
+    (ddec80e), of which four were called genuine and three CUDA
+    flakiness. All seven are now accounted for: two were numerical
+    defects, three were one suite-level defect, and two were
+    parameter decisions the user has now made. Suite after this
+    section: 633 passed, 15 skipped, 0 failed, in 50 s.
+
+98.2 Fix 1 - the cloud current lost precision as the tick grew
+
+    Symptom: test_currents::
+    test_cloud_field_is_spatial_bounded_and_matches_batched_worlds
+    [cuda] failed with 1298 of 5244 elements outside rtol 3e-6, max
+    absolute difference 4.1e-6. Measured per tick, CPU matched the
+    NumPy reference bit for bit at every tick, and CUDA matched to
+    ~1 ULP (1e-7) at ticks 0, 1, 20 and 99 - and only at tick 10000
+    did it diverge. The tolerance was not the problem.
+
+    Cause: current_direction_fractions sampled the noise lattice at
+    (x - tick/period) / scale in float32. The offset is in GRID
+    cells and grows without bound: at tick 10000 with period 13 it
+    is 769.2, where one float32 ULP is 6.1e-5, so the mantissa is
+    spent on the offset and only ~14 bits are left for the position
+    INSIDE a lattice cell - the quantity the smoothstep and the two
+    lerps actually use. Two devices then round the same field
+    differently, and on either device the field freezes into steps
+    as the tick grows. period divides the tick, so a short period
+    reaches that regime inside an ordinary run.
+
+    Fix: split the offset. Let u = (x - offset)/scale be the true
+    lattice coordinate, m = floor(offset/scale) the whole lattice
+    cells in it and s = offset - m*scale the remainder below one
+    cell. Then u = v - m with v = (x - s)/scale, so floor(u) =
+    floor(v) - m and frac(u) = frac(v): the large part moves into
+    the int64 lattice index, where it is exact, and the coordinate
+    stays small. _current_noise takes a new `shift` argument for
+    that index; the detail octave samples at 2u and therefore
+    shifts by 2m. The scalar offset is computed in float64 so the
+    remainder is not born rounded.
+
+    After: CUDA matches the reference to 9e-8 at ticks 10000, 1e5,
+    1e6 and 1e7 - i.e. tick-independent, the same as tick 0.
+
+    Effect on the field: bit-identical while the offset is below
+    one lattice cell (with scale 7.5 / period 13 the first change
+    is at tick 100), and at most 1.4e-5 different after that, on
+    fractions bounded by strength/2. That difference is the
+    round-off being removed, not added. The one-cell-per-period
+    scroll identity holds exactly in both versions.
+
+    New test: test_cloud_keeps_its_sub_cell_resolution_at_a_large
+    _tick. Twelve sub-cell scroll steps (period/2000) must give
+    twelve distinct fields at tick 0 AND at tick 1e6. The old code
+    gave 12/12 at tick 0 and 3/12 at 1e6, so the test states the
+    defect directly and needs no GPU.
+
+98.3 Fix 2 - the GPU/reference parity tolerance was a fixed number
+     for a divergence that compounds
+
+    Symptom: test_gpu_ecosystem::test_full_ticks_match_reference
+    [cpu-0.0-True-True] failed on one element of 80, rel 4.89e-5
+    against rtol 4e-5.
+
+    Measurement before touching anything: the worst cell diverges
+    by 1.4e-7 (~1 ULP) at tick 0, stays there for seven ticks, then
+    grows by roughly 3x per tick to 4.9e-5 at tick 11. Throughout,
+    the action probabilities of the two engines stay identical to
+    6e-8 and the biomasses to ~1e-6 relative, so no branch has
+    flipped: it is float32 state drift through a nonlinear map, not
+    a mirror bug. The pair-visibility fixture was already known to
+    do the same faster (its docstring records 1e-7 -> 6e-5 over six
+    ticks), which is why that test runs six ticks and not twelve.
+
+    A single constant bound therefore has to be set by the last
+    tick of the longest fixture and is blind for the first ones -
+    where a real formula difference shows up at once and three
+    orders of magnitude larger. _assert_parity now uses
+    min(3e-4, 1e-6 * 3**tick) for the observation, biomass and
+    reserve comparisons: ULP-tight at tick 0, growing at the rate
+    the divergence actually grows, capped where the measurements
+    level off. The action comparison is left constant, because
+    probabilities are recomputed from the state each tick and do
+    not accumulate.
+
+98.4 Fix 3 - the three "CUDA flakiness" failures were one bug
+
+    test_gpu_trainer::test_cuda_execution_matches_eager_and_replay
+    _advances[stability1-compile] and [stability1-compile-graph]
+    and test_gpu_visual::test_visual_cli_renders_and_preserves
+    _training[cuda-compile-graph] failed only in the full run and
+    passed on their own. The error was not numerical:
+    torch._dynamo.exc.FailOnRecompileLimitHit.
+
+    torch.compile budgets recompilations per code object, default
+    8. RolloutRunner._tick is one code object and the suite builds
+    many runners that differ in shapes, flags and dtypes, so the
+    variants accumulate on that one frame across tests. A training
+    run compiles a single runner, so the budget is a property of
+    the pytest process, not of production.
+
+    New tests/conftest.py: an autouse fixture calling
+    torch._dynamo.reset() after every test. Each test gets a clean
+    cache and the limit goes back to meaning something per test.
+    Side effect: the suite got FASTER, 78 s -> 50 s, because the
+    guard chains no longer grow.
+
+98.5 Decision 1 - phytoplankton.seed_rate stays 0.0
+
+    74.11 left this open ("may be a deliberate experiment. Decide
+    explicitly"): sections 69.6 and 73.4 set 1e-07 to remove the
+    absorbing zero at the base of the food web, and the FG editor
+    reset it to 0 twice. USER DECISION 2026-09-28: keep 0.0, i.e.
+    no recolonisation floor - a phytoplankton cell that reaches
+    exact zero stays there.
+
+    The value now carries a comment block in fg_library.yaml
+    saying so. test_phytoplankton_seed_rate_is_enabled_in_the
+    _library is replaced by test_phytoplankton_seed_rate_is_a
+    _deliberate_choice, which passes on any value above zero and,
+    at zero, requires an explanation next to the value in the raw
+    YAML. That is the weaker property, but it is the one that
+    catches the actual failure mode: the editor rewrites the
+    library WITHOUT comments, so the comment vanishing is the
+    signal that the zero came from the editor and not from a
+    decision. Verified both ways - stripping the comment turns the
+    test red, restoring 1e-07 turns it green through the other
+    branch.
+
+98.6 Decision 2 - clupeid energy content 9.5 -> 7.5 MJ/kg
+
+    This was open item 92.9 point 2. USER DECISION 2026-09-28:
+    pelagic_fish.energy_content 9500 -> 7500 MJ/t, the annual mean
+    rather than the autumn peak.
+
+    What it settles: test_live_project_porpoises_need_a_clupeid
+    _majority_not_a_pure_diet. The minimum clupeid share in the
+    porpoise ration is (need_q - q_gadoids)/(q_clupeid -
+    q_gadoids); at 9500 that is (5669 - 4620)/(8550 - 4620) =
+    0.267, i.e. the modelled porpoise could very nearly live on
+    lean gadoid, against 50-70 % clupeids by mass in the Kattegat
+    and Skagerrak stomach data. At 7500 it is 0.492. The window
+    0.40-0.70 that the test allows corresponds to an energy
+    content of 6800-8050 MJ/t, so 7.5 sits in the middle of it and
+    9.5 is far outside.
+
+    What it costs, from tools/probes/budget_gate.py:
+        gadoids   -> pelagic_fish  sat_min 0.092 -> 0.117,
+                                   need_vis 0.101 -> 0.132 t/cell
+        porpoises -> pelagic_fish  sat_min 0.663 -> 0.840,
+                                   need_vis 1.966 -> 5.239 t/cell
+    exactly the trade 92.9 predicted. The herring field measured by
+    tools/probes/herring_field.py settles around 3.3 t/cell and
+    falls to 2.3 by tick 1000, so a porpoise living on clupeids
+    ALONE now needs more herring than the field carries. The mixed
+    ration is what has to pay, and it is the mix the literature
+    describes.
+
+    Viability, full rig, same criterion as section 92:
+        verdict          NOT VIABLE, normative corner - UNCHANGED
+        porpoises        extinct at 1386 (92.6 recorded 1404)
+        pelagic_fish     0.001x spawn, drift 1.83 (was 0.0008x,
+                         drift 1.82)
+        gadoids          extinct at 4573
+    So the choice costs the porpoise about 18 ticks out of 1386 and
+    changes nothing structural: the three FAILs remain exactly the
+    ones 92.6 and 92.9 describe, and 92.9 point 1 (pelagic_fish
+    needs the section 74 treatment) is still the next thing.
+
+    CORRECTION to 92.7: that section reports 514 passed, 12 skipped
+    for the commit that added this test (21c38db). The library
+    carried energy_content 9500 already at that commit, with every
+    other porpoise, gadoid and clupeid parameter identical to
+    today, so the test was red the day it landed and the quoted
+    count did not include it.
+
+98.7 Validation
+    python3 -m pytest tests/ -q      633 passed, 15 skipped, 0
+                                     failed (twice, plus once with
+                                     the GPU files first, to rule
+                                     out order dependence)
+    python3 train.py --project mareld2.yaml --species pelagic_fish
+        --generations 1 --iter-per-gen 1 --workers 2   completed,
+                                     checkpoint written to
+                                     results/cleanup-smoke-20260928
+    tools/probes/budget_gate.py      numbers quoted in 98.6
+    tools/probes/herring_field.py    field mean quoted in 98.6
+    tools/viability.py               numbers quoted in 98.6, exit 1
+                                     as before
+
+99 EXTERNAL FORCES PER FUNCTIONAL GROUP (2026-09-28)
+
+99.1 What was asked
+    A checkbox per FG in the FG editor saying whether the group is
+    moved by external forces (wind and currents). Until now only
+    phytoplankton was: both engines filtered the advection on
+    is_decision_maker, so a checkbox on a swimmer would have been a
+    promise the tick does not keep. USER DECISION 2026-09-28: every
+    FG can be ticked, decision makers included, which means the
+    engines change too - and the widget is a checkbox PLUS a share
+    field, because current_response is a fraction in [0, 1] and the
+    engine scales flux and energy with it.
+
+99.2 The rule is now the parameter, not the kind
+
+    lib/world/functional_group.py
+        current_response keeps its [0, 1] validation, but its DEFAULT
+        now depends on the group: 1.0 for a non decision maker, 0.0
+        for a decision maker. That is exactly the rule the filter
+        used to hardcode, so a library written before this option
+        behaves identically - phytoplankton drifts, swimmers do not -
+        and nothing had to be written into fg_library.yaml to keep
+        the current world as it was.
+
+    movement.apply_currents
+        the ids list drops "not is_decision_maker" and keeps only
+        "current_response > 0".
+
+    lib/gpu/ecosystem.py
+        ndm_positions / ndm_index are no longer what advect() uses.
+        New drift_positions / drift_index, built from the same
+        current_response > 0 rule, and current_response itself is
+        built over that set. ndm_index is untouched for its other
+        uses.
+
+    A drifting swimmer is advected AFTER apply_movement, i.e. on top
+    of the move its policy chose in the same tick. The order is the
+    existing one; only the membership changed.
+
+99.3 The local reward had to learn the current
+
+    source_tracking's exactness argument is explicit that everything
+    after the movement is cell-wise multiplicative, and named
+    apply_currents as safe *because* it only touched non decision
+    makers. That sentence stops being true the moment a decision
+    maker drifts: the field moves biomass between cells after the
+    move shares were recorded, so the destination whose energy is
+    divided among its sources is not the cell the move landed in.
+
+    The fix composes rather than approximates. The field is linear
+    and uniform within a cell, so one ton left in cell m by the
+    movement is worth
+
+        unit(m) = (1 - sum_d phi_d(m)) * u(m)
+                  + sum_d phi_d(m) * u(m_d)
+
+    where u = q_end / b_after_current and phi are the field's
+    per-direction shares. Pushing u back through phi BEFORE the move
+    shares are cashed in restores the identity exactly, and collapses
+    to unit = u for a group that does not drift, so the pre-existing
+    path is bit-for-bit unchanged.
+
+    New: source_tracking.record_advection(env, ids, fractions),
+    called from apply_currents; env._local_advection holds (phi,
+    biomass) and is cleared with the rest in begin_tick/end_tick.
+    The GPU mirror is advect(..., track=True), which returns the same
+    two things re-indexed on the decision makers, and tracked_energy
+    takes them as a new optional argument.
+
+    Unchanged: with --migration on the field emigrates across the
+    border and is re-injected elsewhere, which no source cell can
+    follow. That is the same hole migration already puts in the move
+    shares, and the module docstring now says so for both. Without
+    migration the movement mask zeroes the border directions for the
+    field exactly as it does for a move, so nothing leaks and the
+    identity is exact.
+
+99.4 The widget
+
+    fgconfig/fgconfig.py, one ordinary property row in BOTH editors
+    (decision makers and non decision makers), just above the initial
+    biomass range:
+
+        External Forces (wind/currents; share carried, 0=off)
+                                    [0, 1]  [0.6]  ----o------
+
+    It is built by the same _build_ranged_entry call as every other
+    numeric property, so it inherits the column layout, the live
+    [0, 1] validation and the slider, and it is clamped on apply the
+    way maintenance_level is. "0=off" follows the labels already in
+    the same editor ("Interference (... 0=off)", "Extinction
+    Threshold (... 0=off)").
+
+    HISTORY, because two designs were built and discarded and the
+    reasons matter more than the code:
+
+    * The first version was a checkbox in front of the Entry, per the
+      original request. It pushed this row's Entry 25 px right of the
+      rows above and made it 9 px narrower - the drift row was the
+      only one whose column 1 was not a plain
+      _build_inline_ranged_entry, so it was the only one that could
+      leave the margin.
+    * The second put the checkbox in column 0 beside the label, which
+      fixed the alignment. The user then made the sharper point: the
+      checkbox carries no information the share does not. The library
+      stores ONE number and 0 already means off, so the box bought an
+      extra widget, a greying rule, a coercion (empty field -> 1.0)
+      and four helper methods to say what a 0 says. It would have
+      earned its place only by remembering the share across an
+      untick, which it did not do and which the library could not
+      persist anyway. USER DECISION 2026-09-28: remove it.
+
+    What survives from all that is one helper, and it is the one that
+    was actually load bearing:
+
+    _effective_current_response(config, is_dm)
+        A MISSING key is not 0. It means the FunctionalGroup default,
+        1.0 for a non decision maker and 0.0 for a decision maker.
+        Without resolving it on load the editor would show an empty
+        field for every group in a library written before this option,
+        and the generic apply path turns an empty field into 0.0 - so
+        editing anything at all about phytoplankton would silently
+        anchor it. The test below fails with 0.0 when this helper is
+        bypassed, which is how that was confirmed rather than assumed.
+
+99.5 Tests
+
+    tests/test_currents.py +2
+      * a decision maker with current_response 0.25 / 1.0 is advected,
+        east and south, mass conserving, energy following biomass, and
+        the CPU and GPU engines agree tensor for tensor.
+      * the default rule, as four FunctionalGroup constructions plus
+        an end-to-end check that an untouched fixture leaves its
+        swimmer exactly where it was and that drift_positions ==
+        ndm_positions there.
+
+    tests/test_local_reward.py +4
+      * a decision maker only drifts when it responds (guards the
+        next test against being vacuous),
+      * mass balance holds while a decision maker drifts,
+      * the fixture actually varies energy per ton (see below),
+      * a drifting cell that rests still scores ratio 1.
+
+    tests/test_gpu_local_reward.py +1 and one parametrisation
+      * the mass-balance test now also runs with drift 0.7,
+      * rollout fitness matches the CPU trainer's while drifting, at
+        response 0.4 and 1.0, which is the end-to-end check that both
+        trackers compose the field the same way.
+
+    WATCH OUT - the first version of the mass-balance test passed
+    with the composition deleted. The fixture used a uniform reserve
+    fill, so the end-of-tick energy per ton was the same in every
+    cell, the sum telescoped whatever the allocation did, and the
+    assertion could not see a misplaced share at all. The test now
+    fills the reserve unevenly and a companion test asserts that the
+    resulting spread is real (ptp/mean > 0.05). Verified by deleting
+    the composition in each engine in turn: 1 CPU failure and 8 GPU
+    failures appear, and disappear when it is restored.
+
+    Suite: 651 passed, 15 skipped, 0 failed (was 633 after 98).
+
+99.6 Validation
+    python3 -m pytest tests/ -q                   651 passed
+    train.py --currents on                        1 generation, ok
+    train.py --currents on --local_reward         1 generation, ok
+    headless xvfb GUI run against SCRATCH copies  21 checks:
+        phytoplankton shows 1, benthic_community 0, pelagic_fish
+        (no key at all in the library) 0; 0.6 + Apply writes 0.6 and
+        survives a reload; 1.5 clamps to 1.0; 0 writes 0.0; a library
+        entry with the key DELETED shows 1 and is still 1.0 after an
+        Apply, i.e. the silent-anchoring trap; every Entry in column 1
+        of both editors shares one left margin and one width and the
+        share Entry is among them; and FunctionalGroup reads back
+        1.0 / 0.0 / 0.0 from the file the GUI wrote.
+
+        Two of these checks were vacuous when first written, in the
+        same way 99.5 records for the mass balance, and both were
+        found by deleting the code under test rather than by reading:
+          * the layout check walked only the DIRECT children of each
+            column-1 container, and in the broken layout the Entry
+            sat one frame deeper - so the row it was about was
+            skipped and the rest agreed trivially. It now searches at
+            any depth and asserts separately that the share Entry was
+            found. Against the old layout it reports x=[512, 537],
+            widths=[152, 161] and fails.
+          * bypassing _effective_current_response turns the missing-key
+            checks red with 0.0, as it should.
+
+        The real fg_library.yaml was never touched.
+
+99.7 Docs
+    CURRENTS.md said "It does not apply to decision makers. All non
+    decision makers participate" - both were already stale (the
+    per-FG current_response predates this section) and are now
+    replaced by a section on which groups the field carries, the
+    default rule and the local-reward guarantee.
+

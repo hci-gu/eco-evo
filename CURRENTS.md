@@ -28,12 +28,30 @@ For example, `--currents on --current-strength 0.2 --current-period 10` gives
 stronger, more frequently changing flow. Strength is a fraction per simulation
 tick, not a physical speed. Underscore aliases are accepted for the tuning flags.
 
-This is a simple bulk flow: one vector shared by all non-decision makers in a
-world, interpolated between random targets. It transfers biomass and its energy
-reserve to north/east/south/west neighbours before population growth. It does not
-apply to decision makers. All non-decision makers participate, including benthic
-groups; this is an experiment in moving food availability, not a hydrodynamic
-model or a distinction between drifting and attached organisms.
+This is a simple bulk flow: one scrolling cloud field shared by a world, sampled
+per cell. It transfers biomass and its energy reserve to north/east/south/west
+neighbours before population growth. This is an experiment in moving food
+availability, not a hydrodynamic model.
+
+## Which groups the field carries
+
+Participation is per functional group, not per kind. Each FG has a
+`current_response` in `[0, 1]` -- the share of the flow that carries it, scaling
+its biomass flux and the energy that follows it together. The FG editor exposes
+it as one field, "External Forces (wind/currents; share carried, 0=off)".
+
+Decision makers can respond too: a swimmer with `current_response > 0` is
+advected on top of the move its policy chose, in the same step, so wind and
+currents act on fish as well as on plankton.
+
+The default reproduces the behaviour that predated the per-group flag, so a
+library written before it is unchanged: **non decision makers drift (1.0),
+decision makers do not (0.0)**. In `fg_library.yaml` today, phytoplankton is at
+1.0 and benthic_community at 0.0.
+
+With `--local_reward`, the per-cell reward follows a drifting decision maker
+correctly: the field's shares are composed into the movement shares, so the
+end-of-tick energy is still credited to the cell the population started in.
 
 The transport step conserves each group's biomass and reserve, retains material
 at grid boundaries, and prevents transport into inaccessible cells. These closed

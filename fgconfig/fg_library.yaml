@@ -7,6 +7,13 @@
     growth_rate: 0.0375
     max_carrying_capacity: 24.0
     energy_content: 2000.0
+    # seed_rate 0 is a DELIBERATE choice (2026-09-28), not editor drift:
+    # phytoplankton has no recolonisation floor, so a cell that reaches
+    # exact zero stays there. Sections 69.6 and 73.4 argue for 1e-07 and
+    # 74.11 records the value being reset to 0 twice by the FG editor,
+    # which rewrites this file without its comments. This block is
+    # therefore the evidence that the zero was chosen: if it disappears,
+    # the value came from the editor and not from a decision.
     seed_rate: 0.0
     seasonal_amplitude: 0.0
     seasonal_period: 1460.0
@@ -46,6 +53,7 @@
     visibility_floor: 0.2
     interference: 0.0
     extinction_threshold_factor: 0.5
+    current_response: 1.0
   benthic_community:
     current_response: 0.0
     display_name: "Benthic Community"
@@ -74,7 +82,7 @@
     movement_speed: 1.0
     feeding_cost: 1.9
     movement_cost: 1.5
-    energy_content: 9500.0
+    energy_content: 7500.0   # annual mean 7.5 MJ/kg, not the autumn peak (section 98)
     min_split_biomass: 0.5
     growth_rate: 0.004
     natural_mortality: 0.0005

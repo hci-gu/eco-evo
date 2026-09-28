@@ -81,6 +81,97 @@ def test_cloud_scrolls_continuously_in_positive_xy_without_rng_consumption():
     np.testing.assert_array_equal(rng_state[1], after[1])
 
 
+def test_cloud_keeps_its_sub_cell_resolution_at_a_large_tick():
+    """The scroll offset must not eat the float32 mantissa.
+
+    Sampling ``x - tick/period`` directly spends the mantissa on the
+    offset rather than on the position inside a lattice cell, so the
+    field freezes into steps once the offset grows: at offset 5e4 one
+    float32 ULP is 0.004 cells and distinct ticks start returning the
+    identical field. ``period`` divides the tick, so a short period
+    reaches that regime inside an ordinary run. The offset is therefore
+    split into whole lattice cells (exact, in the int64 lattice index)
+    and a remainder below one cell.
+    """
+    config = CurrentConfig(strength=0.8, scale=8, period=20)
+    y, x = np.indices((9, 9), dtype=np.float32)
+    for base in (0, 10 ** 6):
+        fields = {np.asarray(direction_fractions(
+            base + i * config.period / 2000.0, 17, config, x, y)).tobytes()
+            for i in range(12)}
+        assert len(fields) == 12, (
+            f"only {len(fields)}/12 distinct fields at tick {base} - the "
+            "cloud is quantised by the scroll offset")
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("response", [0.25, 1.0])
+def test_a_decision_maker_drifts_when_it_responds(device, response):
+    """Drifting is per group, not per kind.
+
+    The engines used to filter on ``is_decision_maker``, so a swimmer
+    could never be carried by the field. It is now the per-group
+    ``current_response`` that decides, and the GPU mirror has to pick
+    the same set - a mirror still keyed on the non-decision makers
+    would leave the swimmer standing still and diverge on tick one.
+    """
+    env = make_env()
+    env.currents = CurrentConfig(strength=0.8)
+    fg = env.fgs["a"]
+    assert fg.is_decision_maker
+    fg.current_response = response
+    fg.biomass[:] = fg.energy_reserve[:] = 0
+    fg.biomass[1, 1], fg.energy_reserve[1, 1] = 100, 200
+    before = fg.biomass.copy()
+
+    model = TensorEcosystem(env, device)
+    b, r, _, _ = model.import_state([env])
+    actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
+    apply_currents(env)
+    expected_b, expected_r, _, _ = model.import_state([env])
+    torch.testing.assert_close(actual_b, expected_b)
+    torch.testing.assert_close(actual_r, expected_r)
+
+    # East and south, the directions the cloud field flows in.
+    assert fg.biomass[1, 2] > 0 and fg.biomass[2, 1] > 0
+    assert fg.biomass[0, 1] == fg.biomass[1, 0] == 0
+    assert fg.biomass[1, 1] < before[1, 1]
+    assert fg.biomass.sum() == pytest.approx(before.sum(), rel=1e-6)
+    np.testing.assert_allclose(fg.energy_reserve, fg.biomass * 2, rtol=1e-6)
+
+
+@pytest.mark.parametrize("device", DEVICES)
+def test_a_decision_maker_stands_still_by_default(device):
+    """The default reproduces the rule the per-group flag replaced.
+
+    A library written before this option has no ``current_response`` on
+    its swimmers, and must keep behaving as it did: decision makers are
+    anchored, non decision makers follow the field.
+    """
+    assert FunctionalGroup("swimmer", {"is_decision_maker": True}).current_response == 0.0
+    assert FunctionalGroup("drifter", {}).current_response == 1.0
+    assert FunctionalGroup("swimmer", {"is_decision_maker": True,
+                                       "current_response": 0.5}).current_response == 0.5
+    assert FunctionalGroup("drifter", {"current_response": 0.0}).current_response == 0.0
+
+    env = make_env()
+    env.currents = CurrentConfig(strength=0.8)
+    fg = env.fgs["a"]
+    fg.biomass[:] = fg.energy_reserve[:] = 0
+    fg.biomass[1, 1], fg.energy_reserve[1, 1] = 100, 200
+    before_b, before_r = fg.biomass.copy(), fg.energy_reserve.copy()
+    model = TensorEcosystem(env, device)
+    assert model.drift_positions == model.ndm_positions
+    b, r, _, _ = model.import_state([env])
+    actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
+    apply_currents(env)
+    expected_b, expected_r, _, _ = model.import_state([env])
+    torch.testing.assert_close(actual_b, expected_b)
+    torch.testing.assert_close(actual_r, expected_r)
+    np.testing.assert_array_equal(fg.biomass, before_b)
+    np.testing.assert_array_equal(fg.energy_reserve, before_r)
+
+
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("response", [0.0, 0.25, 1.0])
 def test_current_response_scales_flux_and_energy_together(device, response):

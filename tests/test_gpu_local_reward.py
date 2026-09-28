@@ -26,6 +26,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from lib.environments.ecosystem_env.currents import CurrentConfig
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.gpu.ecosystem import TensorEcosystem
 from lib.gpu.policy import PolicyBank
@@ -47,15 +48,25 @@ CONFIGS = [
 ]
 
 
-def live_env(migration=False, mortality=False):
+def live_env(migration=False, mortality=False, drift=0.0):
     """Fixture where biomass survives, so it actually moves and splits.
 
     The default fixture's ``min_split_biomass`` sits above its biomass,
     which both suppresses splits and lets the extinction sweep clear the
     grid - a tracking test would then compare zeros. The split
     suppression itself is covered by ``sparse_env`` below.
+
+    ``drift`` turns the current field on and gives the decision makers
+    that ``current_response``. The field runs AFTER the movement, so a
+    drifting decision maker is the case where the tracker has to
+    compose the field's shares into the move shares.
     """
-    return make_env(migration, mortality, min_split=0.0, extinction_factor=0.0)
+    env = make_env(migration, mortality, min_split=0.0, extinction_factor=0.0)
+    if drift:
+        env.currents = CurrentConfig(strength=0.8)
+        for fid in env.dm_ids:
+            env.fgs[fid].current_response = float(drift)
+    return env
 
 
 def tracked_step(model, state, probabilities, tick=0):
@@ -72,9 +83,10 @@ def random_probabilities(model, biomass, seed=5):
 
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("mortality", [False, True])
-def test_tracked_energy_repartitions_the_end_of_tick_energy(device, mortality):
+@pytest.mark.parametrize("drift", [0.0, 0.7])
+def test_tracked_energy_repartitions_the_end_of_tick_energy(device, mortality, drift):
     """Mass balance: the shares neither create nor destroy energy."""
-    env = live_env(mortality=mortality)
+    env = live_env(mortality=mortality, drift=drift)
     model = TensorEcosystem(env, device)
     state = model.import_state([env])
     probabilities = random_probabilities(model, state[0])
@@ -99,6 +111,42 @@ def test_pure_rest_tracks_the_cell_itself(device):
     rest[:, :, 4] = 1.0
     b, r, _, _, _, (_, tracked, _) = tracked_step(model, state, rest)
     torch.testing.assert_close(tracked, model.local_energy(b, r))
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("drift", [0.4, 1.0])
+def test_rollout_fitness_matches_the_reference_while_drifting(device, drift):
+    """Both trackers must compose the current the same way.
+
+    End to end, not per tensor: if either engine cashes a destination
+    cell in at the wrong place the two fitnesses part company.
+    """
+    torch.set_num_threads(1)
+    env = live_env(mortality=True, drift=drift)
+    model = TensorEcosystem(env, device)
+    assert set(model.drift_positions) >= set(model.dm_positions), (
+        "the fixture does not actually drift its decision makers")
+    config = LocalRewardConfig()
+    bank = PolicyBank(model, hidden_dim=7)
+    params = {f: (model.in_dims[i], model.A) for i, f in enumerate(model.dm_ids)}
+    reference = ARSTrainer(lambda seed=None: copy.deepcopy(env), params, n_workers=1,
+                           hidden_dim=7, local_reward=config)
+    reference.policies = {f: copy.deepcopy(p).cpu() for f, p in bank.policies.items()}
+    reference.softmax_temperature = 1.0
+    runner = RolloutRunner(model, bank, 1, 1, execution="eager",
+                           obs_normalize=False, local_reward=config)
+    state = model.import_state([env])
+    ticks = 6
+    runner.reset(state[0], state[1], state[3],
+                 torch.zeros(1, dtype=torch.int64, device=model.device), ticks,
+                 torch.zeros_like(runner.obs_mean), torch.ones_like(runner.obs_var),
+                 model.tensor(1.0))
+    runner.run(ticks)
+    reward, _ = runner.results(ticks)
+    expected, _, _ = reference._evaluate_coevo(model.dm_ids, ticks)
+    for d, fid in enumerate(model.dm_ids):
+        assert reward[0, d].item() == pytest.approx(expected[fid], rel=2e-3, abs=2e-4)
+    assert (runner.occupancy > 0).any(), "no cell took part; the test is vacuous"
 
 
 @pytest.mark.parametrize("device", DEVICES)

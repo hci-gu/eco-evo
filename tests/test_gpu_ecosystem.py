@@ -91,6 +91,26 @@ def manual_actions(probs, env):
     return ActionProbabilities(p[:, :4], p[:, 4], p[:, 5:])
 
 
+# The two engines are two float32 implementations of the same map: they
+# part company at round-off in tick 0 and the difference then compounds
+# by up to ~3x per tick through the feedback into the policy input. The
+# migration+mortality fixture sits at ~1 ULP (1.4e-7 relative) for seven
+# ticks and reaches 4.9e-5 by tick 11, with the action probabilities
+# still identical to 6e-8 - no branch has flipped, it is the state that
+# drifts. A single constant bound therefore has to be set by the last
+# tick of the longest fixture, and is then blind for the first ones,
+# where a real formula difference appears at once and three orders of
+# magnitude larger. Grow the bound from the ULP scale at the rate the
+# divergence actually grows, and cap it where the measurements level
+# off (worst seen: 6e-5 at tick 6 on the pair-visibility fixture).
+PARITY_GROWTH = 3.0
+PARITY_TOL_CAP = 3e-4
+
+
+def _parity_tol(tick, base=1e-6):
+    return min(PARITY_TOL_CAP, base * PARITY_GROWTH ** tick)
+
+
 def _assert_parity(env, device, ticks=12):
     model = TensorEcosystem(env, device)
     b, r, hidden, phase = model.import_state([env])
@@ -99,20 +119,23 @@ def _assert_parity(env, device, ticks=12):
     env.build_static_caches()
     packed = bank.pack([w[None] for w in bank.flat_weights()])
     for tick in range(ticks):
+        tol = _parity_tol(tick)
         obs = model.observations(b, r, hidden)
         observation = env.get_observation()
-        np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=2e-5, rtol=2e-5)
+        np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=tol, rtol=tol)
         logits = bank.forward(obs, *packed)
         probs = model.action_probabilities(logits, b, model.tensor(1.0))
         cpu_actions = env.policy_controller.forward(observation)
         ours = manual_actions(probs, env)
+        # Probabilities are recomputed from the state each tick, so their
+        # difference does not accumulate; it stays at the ULP scale.
         for field in ("move", "rest", "eat"):
             np.testing.assert_allclose(getattr(ours, field), getattr(cpu_actions, field), atol=2e-6, rtol=2e-5)
         b, r, hidden, _, _ = model.step(b, r, probs, model.tensor(tick), phase, torch.zeros_like(b))
         env.step(cpu_actions)
         expected = model.import_state([env])
-        np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=3e-5, rtol=4e-5)
-        np.testing.assert_allclose(numpy(r), numpy(expected[1]), atol=4e-5, rtol=4e-5)
+        np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=tol, rtol=tol)
+        np.testing.assert_allclose(numpy(r), numpy(expected[1]), atol=tol, rtol=tol)
         assert torch.isfinite(b).all() and (b >= 0).all()
     return model
 

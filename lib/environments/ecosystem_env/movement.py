@@ -28,12 +28,16 @@ def _current_hash(value):
     return _current_xor(value, value >> 16)
 
 
-def _current_noise(x, y, seed):
+def _current_noise(x, y, seed, shift=0):
     """Smooth value noise in [0, 1), with matching NumPy/Torch arithmetic.
 
     Hash lattice corners instead of storing or repeatedly shifting a texture:
     any tick can be sampled directly, independently of the ecology's RNG.
     Coordinates and seeds follow ordinary broadcasting rules.
+
+    ``shift`` moves the sampled lattice by whole cells without touching the
+    coordinate, so a caller can keep a large scroll offset in exact integer
+    arithmetic instead of spending float32 mantissa bits on it.
     """
     if isinstance(x, torch.Tensor):
         ix, iy = torch.floor(x).to(torch.int64), torch.floor(y).to(torch.int64)
@@ -44,7 +48,8 @@ def _current_noise(x, y, seed):
     sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
 
     def corner(dx, dy):
-        key = _current_xor(_current_hash(ix + dx), _current_hash(iy + dy + 0x9E3779B9))
+        key = _current_xor(_current_hash(ix + dx + shift),
+                           _current_hash(iy + dy + shift + 0x9E3779B9))
         bits = _current_hash(_current_xor(key, seed)) >> 8
         value = bits.to(torch.float32) if isinstance(bits, torch.Tensor) else bits.astype(np.float32)
         return value * (1.0 / 16777216.0)
@@ -61,20 +66,33 @@ def current_direction_fractions(tick, world_seed, config, x=0.0, y=0.0):
     transport strength. Two noise scales give broad clouds with finer detail.
     For batched worlds, pass seeds shaped [world, 1] and coordinates [cell].
     """
+    # The scroll offset is kept out of the sampled coordinate. Sampling
+    # ``x - offset`` directly spends the float32 mantissa on the offset
+    # instead of on the position inside a lattice cell: at tick 10000 the
+    # offset is ~770 grid cells, which leaves ~14 bits below the cell, and
+    # CPU and CUDA then round the same field up to 1e-5 apart. Splitting it
+    # into whole lattice cells - exact in the int64 lattice index - and a
+    # remainder below one cell keeps full precision at any tick. The two
+    # octaves sample at u and 2u, so the finer one shifts by twice as much.
     scalar_sample = False
     if isinstance(tick, torch.Tensor):
-        offset = tick.to(torch.float32) / config.period
+        offset = tick.to(torch.float64) / config.period
+        whole = torch.floor(offset / config.scale).to(torch.int64)
+        remainder = (offset - whole * config.scale).to(torch.float32)
     else:
         scalar_sample = np.ndim(x) == np.ndim(y) == np.ndim(world_seed) == 0
-        offset = np.asarray(tick, dtype=np.float32) / np.float32(config.period)
+        offset = np.asarray(tick, dtype=np.float64) / np.float64(config.period)
+        whole = np.floor(offset / config.scale).astype(np.int64)
+        remainder = (offset - whole * config.scale).astype(np.float32)
         # NumPy 1.x promotes zero-dimensional float32 arithmetic with Python
         # scalars to float64. Use arrays to match device-side float32 sampling.
         x = np.array(x, dtype=np.float32, ndmin=1)
         y = np.array(y, dtype=np.float32, ndmin=1)
-    x, y = (x - offset) / config.scale, (y - offset) / config.scale
+    x, y = (x - remainder) / config.scale, (y - remainder) / config.scale
     seed = _current_xor(world_seed, config.seed)
-    cloud = (_current_noise(x, y, seed) * 0.75
-             + _current_noise(2 * x, 2 * y, _current_xor(seed, 0xA341316C)) * 0.25)
+    cloud = (_current_noise(x, y, seed, -whole) * 0.75
+             + _current_noise(2 * x, 2 * y, _current_xor(seed, 0xA341316C),
+                              -2 * whole) * 0.25)
     fraction = cloud * (config.strength * 0.5)
     if scalar_sample:
         fraction = fraction[0]
@@ -83,12 +101,19 @@ def current_direction_fractions(tick, world_seed, config, x=0.0, y=0.0):
 
 
 def apply_currents(env):
-    """Conservatively drift responding non-decision makers before growth."""
+    """Conservatively drift every responding group before growth.
+
+    Participation is the per-group ``current_response``, not the
+    decision-maker flag: a swimmer that responds is advected on top of
+    the move its policy already made. ``FunctionalGroup`` defaults the
+    response so that a library without the key keeps the older
+    behaviour, where only non decision makers drifted.
+    """
     config = env.currents
     if config is None or config.strength == 0:
         return
     ids = [fid for fid in env.global_fg_order
-           if not env.fgs[fid].is_decision_maker and env.fgs[fid].current_response > 0]
+           if env.fgs[fid].current_response > 0]
     if not ids:
         return
     if getattr(env, "_current_coordinates", None) is None:
@@ -115,6 +140,12 @@ def apply_currents(env):
     for i, fid in enumerate(ids):
         env.fgs[fid].biomass = b[i].astype(env.dtype, copy=False)
         env.fgs[fid].energy_reserve = r[i].astype(env.dtype, copy=False)
+
+    # Local reward: a drifting decision maker is carried between cells
+    # after the movement was recorded, so the tracker has to know where
+    # the field took it before it can cash the shares in.
+    if source_tracking.is_enabled(env):
+        source_tracking.record_advection(env, ids, fractions)
 
 
 def _transfer_to_neighbours(b_stay, r_stay, b_out, r_out):
