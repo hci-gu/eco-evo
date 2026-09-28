@@ -414,6 +414,10 @@ class LiveVisualizer:
         # Hit-rect for the status-bar button that toggles it, registered
         # every frame by ``_draw_status_bar``.
         self._hm_norm_button_rect: Optional[tuple] = None
+        # Was the pointer inside the plot area at the previous motion
+        # event? Kept so the movement that LEAVES the area also forces a
+        # repaint and the hover tooltip is erased instead of stranded.
+        self._plot_hover: bool = False
         # One global visual biomass scale for inference. 1.0 means:
         # heatmap max = rollout-start per-cell max. After slider adjustment,
         # biomass plot max = 100% * scale. The slider zooms both together.
@@ -1350,6 +1354,17 @@ class LiveVisualizer:
             # click can sit unseen in the OS layer.
             pg.event.pump()
             interacted = False
+            # Plain pointer movement is not an "interaction" - it changes
+            # no state - but the hover tooltip is drawn from the live
+            # mouse position inside ``_draw_plot``, so it only exists
+            # while something repaints. During a PROBE rollout
+            # ``update_biomass`` repaints every tick and the tooltip
+            # works; during the perturbation rollouts nothing calls it
+            # and this loop is the only thing running, so the tooltip
+            # never appeared. Tracked separately from ``interacted`` so
+            # it goes through the frame cap rather than forcing a redraw
+            # per motion event.
+            hover = False
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self._quit = True
@@ -1443,6 +1458,12 @@ class LiveVisualizer:
                         and self._dragging_biomass_scale:
                     self._dragging_biomass_scale = False
                     interacted = True
+                elif event.type == pg.MOUSEMOTION:
+                    # Reached only when no drag claimed the motion.
+                    inside = self._hit_rect(self._plot_area_rect, event.pos)
+                    if inside or self._plot_hover:
+                        hover = True
+                    self._plot_hover = bool(inside)
             # Only render on actual user interaction here — a full
             # heatmap+plot redraw can easily cost 50-150 ms and during
             # that time the main thread is blocked, which is the main
@@ -1456,6 +1477,10 @@ class LiveVisualizer:
                 # user issued while we were drawing are picked up on
                 # the very next pump tick instead of next iteration.
                 pg.event.pump()
+            elif hover:
+                # Frame-capped: a hover repaint is worth ~5 ms and the
+                # pointer can produce hundreds of motion events a second.
+                self._maybe_render()
             # Auto-advance vid replay-play: stega frame när play-fps
             # tidsbudgeten passerats. Render-anrop sker via _render_full
             # direkt så användaren ser framgång även mellan ARS-steg.

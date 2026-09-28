@@ -9366,3 +9366,82 @@ remain open exactly as described in 71.9 / 71.11.
     case red.
 
     Suite: 677 passed, 15 skipped (was 660 after 100).
+
+102 HOVER TOOLTIP DURING THE PERTURBATION ROLLOUTS (2026-09-28)
+
+102.1 The report and what it actually was
+    "The plot section does not respond while rollouts run" - narrowed
+    by the user to: the hover tooltip appears during the PROBE rollout
+    and nowhere else, i.e. not while the perturbation rollouts run.
+
+    That distinction is the whole diagnosis. _draw_plot reads the live
+    pointer position (pg.mouse.get_pos) and draws the tooltip as part
+    of the frame, so the tooltip exists only while something repaints:
+
+      probe rollout      update_biomass every tick -> _maybe_render
+                         every tick -> tooltip follows the pointer.
+      perturbation       nothing calls update_biomass. The trainer's
+                         pump_callback runs pump_events every ~50 ms
+                         and that is ALL that runs - and pump_events
+                         repainted only when ``interacted`` was set,
+                         which plain pointer movement never sets. It
+                         is set by clicks, keys, wheel and the MOTION
+                         branches that belong to an active DRAG.
+
+    So the tooltip was not broken, it was never drawn: no repaint, no
+    tooltip. Everything else in the window behaves the same way, but
+    the tooltip is the only thing whose content depends on the pointer
+    rather than on state, so it is the only thing you can notice.
+
+    Ruled out first, by measurement rather than reading: clicks are not
+    being lost. pump_events is called every tick during a probe
+    (train.py:962) and every 50 ms during the pool wait
+    (trainer._pool_map). On 60x60 with 6 FGs, update_biomass costs
+    0.18 ms/tick, pump_events 0.01 ms and a full redraw 4.9 ms.
+
+102.2 The fix
+    A new last ``elif`` in the pump_events event chain: plain
+    MOUSEMOTION sets a ``hover`` flag when the pointer is inside
+    _plot_area_rect, or was at the previous motion (``self._plot_hover``)
+    so the movement that LEAVES also repaints and the tooltip is erased
+    rather than stranded.
+
+    ``hover`` is tracked separately from ``interacted`` on purpose:
+    interacted forces an immediate redraw (_last_frame_ts = 0), which is
+    right for a click but wrong for a pointer that emits hundreds of
+    motion events a second. Hover calls _maybe_render() instead and goes
+    through the 30 fps cap. Being the LAST elif also means an active
+    drag still claims the motion first and keeps its uncapped redraw -
+    dragging a slider through a frame cap feels like it is sticking.
+
+102.3 Tests
+    tests/test_viz_hover.py, 6 cases:
+      * movement over the plot repaints; movement elsewhere does not,
+      * leaving repaints exactly once, and the movement after that
+        costs nothing,
+      * twenty motion events inside one frame budget produce one
+        redraw,
+      * a drag is not frame-capped,
+      * end to end, in the reported situation: with NO update_biomass
+        anywhere - only pump_events, which is exactly the perturbation
+        phase - the pixels change when the pointer enters the plot,
+        every changed pixel is inside _plot_area_rect, and the screen
+        returns bit-identical when it leaves.
+
+    The end-to-end case works headless because pygame's dummy driver
+    honours mouse.set_pos, so get_pos returns it and the tooltip really
+    is drawn.
+
+    Verified by deleting the hover branch: 4 of the 6 turn red.
+
+    Suite: 683 passed, 15 skipped (was 677 after 101).
+
+102.4 Still open, deliberately
+    In train mode the plot receives ONE point per probe, pushed after
+    the tick loop ends (train.py:1093; the loop ends at 973), so during
+    a rollout there is genuinely no new data to draw - the heatmaps
+    animate next to a static curve. That is by construction: the x-axis
+    is the global ARS step. Whether a within-rollout view is wanted
+    (most cheaply as a separate tab fed from the per-tick totals
+    update_biomass already computes, cleared per probe, which is what
+    inference mode does) was raised and the user deferred it.
