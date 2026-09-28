@@ -12,7 +12,6 @@ import math
 import pytest
 import yaml
 
-from lib.config.config_loader import library_tick_hours, project_tick_hours
 from lib.world.tick_time import (
     DEFAULT_TICK_HOURS,
     MAX_TICK_HOURS,
@@ -174,18 +173,19 @@ def test_movement_speed_over_a_fixed_real_duration_is_invariant(v6):
 
 
 @pytest.mark.parametrize("hours", [1, 2, 3, 4, 5, 6])
-def test_the_editor_ceiling_is_the_rescaled_calibration_maximum(hours):
-    """Section 105: the FG editor's movement-speed range follows the tick.
+def test_no_library_speed_is_clamped_by_the_engine_ceiling(hours):
+    """A shorter tick must never lose a speed to the [0, 1] cap.
 
-    The editor derives its ceiling as this same call rather than
-    inventing a number, which is what makes the two agree: a library
-    calibrated at 6 h lands exactly ON the ceiling after a rescale
-    instead of being clamped by it. fg_library.yaml has four FGs at the
-    calibration maximum, so "exactly on" is not a corner case.
+    apply_movement moves biomass to the adjacent cell or not at all, so
+    the engine cannot represent more than one cell per tick and
+    RESCALE_CLAMP holds 1.0 at every tick length. Converting DOWN from
+    the 6 h calibration only ever shrinks a speed, so nothing clamps -
+    and fg_library.yaml has four FGs sitting exactly at 1.0, which is
+    where a sign error in the rule would show up first.
 
-    The ENGINE's ceiling is a different bound and stays 1.0 at every
-    tick length - RESCALE_CLAMP keeps it, because apply_movement moves
-    biomass to the adjacent cell or not at all.
+    Section 105 gave the FG editor a matching tick-dependent input
+    range; section 106 removed the editor's tick length entirely, so
+    this is now purely the runtime property.
     """
     ceiling, clamped = rescale_value("movement_speed", 1.0, 6, hours)
     assert not clamped
@@ -294,43 +294,8 @@ def test_intake_over_a_fixed_real_duration_is_invariant():
 
 
 # ----------------------------------------------------------------------
-# 5. Loader accessors
-# ----------------------------------------------------------------------
-
-def test_project_tick_hours_reads_metadata():
-    assert project_tick_hours({"project_metadata": {"tick_hours": 3}}) == 3
-
-
-def test_project_tick_hours_defaults_for_legacy_projects():
-    assert project_tick_hours({"project_metadata": {"name": "x"}}) == DEFAULT_TICK_HOURS
-    assert project_tick_hours({}) == DEFAULT_TICK_HOURS
-    assert project_tick_hours(None) == DEFAULT_TICK_HOURS
-
-
-def test_library_tick_hours_reads_metadata_and_defaults():
-    assert library_tick_hours({"library_metadata": {"tick_hours": 4}}) == 4
-    assert library_tick_hours({"species_definitions": {}}) == DEFAULT_TICK_HOURS
-
-
-def test_loader_accessors_accept_a_path(tmp_path):
-    path = tmp_path / "p.yaml"
-    path.write_text(yaml.safe_dump({"project_metadata": {"tick_hours": 2}}))
-    assert project_tick_hours(str(path)) == 2
-
-
-def test_loader_accessor_survives_a_missing_file():
-    assert project_tick_hours("/nonexistent/project.yaml") == DEFAULT_TICK_HOURS
-
-
-# ----------------------------------------------------------------------
 # 6. The live project still resolves to the historical tick
 # ----------------------------------------------------------------------
-
-def test_mareld2_and_library_agree():
-    """A mismatch here means the shipped project runs miscalibrated."""
-    assert project_tick_hours("mareld2.yaml") == library_tick_hours(
-        "fgconfig/fg_library.yaml")
-
 
 def test_viability_horizon_follows_the_tick_length():
     from lib.diagnostics.viability import TICKS_PER_YEAR, ViabilityCriterion

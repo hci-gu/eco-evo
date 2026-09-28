@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
-from lib.config.config_loader import library_tick_hours, setup_full_mareld_mvp
+from lib.config.config_loader import setup_full_mareld_mvp
+from lib.world.tick_time import LIBRARY_TICK_HOURS
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.world.tick_time import tick_label
 
 # The MVP runs off the library alone (no project file), so it adopts the
 # tick length the library's numbers are calibrated at. Section 97.
-TICK_HOURS = library_tick_hours('fgconfig/fg_library.yaml')
+TICK_HOURS = LIBRARY_TICK_HOURS
 
 def main():
     print("Setting up Mareld Full MVP...")

@@ -1,7 +1,7 @@
 import yaml
 import numpy as np
 from lib.world.functional_group import FunctionalGroup
-from lib.world.tick_time import DEFAULT_TICK_HOURS, resolve_tick_hours
+from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
@@ -10,45 +10,6 @@ def load_config(path):
     # utf-8-sig accepts both editor output and ordinary UTF-8 YAML.
     with open(path, 'r', encoding='utf-8-sig') as f:
         return yaml.safe_load(f)
-
-
-def project_tick_hours(project):
-    """Tick length in hours for a project (path or already-loaded dict).
-
-    Reads ``project_metadata.tick_hours``, falling back to
-    :data:`lib.world.tick_time.DEFAULT_TICK_HOURS` for project files that
-    predate the field. This is the single accessor every tool that
-    converts ticks <-> real time should use, so they cannot drift apart
-    (same pattern as ``reference_grid_{width,height}``). Section 97.
-    """
-    if project is None:
-        return DEFAULT_TICK_HOURS
-    if not isinstance(project, dict):
-        try:
-            project = load_config(project)
-        except (OSError, yaml.YAMLError):
-            return DEFAULT_TICK_HOURS
-    pmeta = (project or {}).get('project_metadata', {}) or {}
-    return resolve_tick_hours(pmeta.get('tick_hours'))
-
-
-def library_tick_hours(library):
-    """Tick length the library's per-tick numbers are calibrated at.
-
-    Stamped into ``library_metadata.tick_hours`` by the FG editor when it
-    rescales. A project whose ``tick_hours`` differs from this is running
-    miscalibrated biology - ``fg_library.yaml`` is shared between
-    projects, so the editor warns instead of rescaling behind your back.
-    """
-    if library is None:
-        return DEFAULT_TICK_HOURS
-    if not isinstance(library, dict):
-        try:
-            library = load_config(library)
-        except (OSError, yaml.YAMLError):
-            return DEFAULT_TICK_HOURS
-    lmeta = (library or {}).get('library_metadata', {}) or {}
-    return resolve_tick_hours(lmeta.get('tick_hours'))
 
 
 def _resolve_initial_biomass_range(*sources):
@@ -278,7 +239,8 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
 
 
 def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None,
-                          allowed_mask=None, library_config=None):
+                          allowed_mask=None, library_config=None,
+                          tick_hours=LIBRARY_TICK_HOURS):
     lib = library_config if library_config is not None else load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
@@ -342,6 +304,11 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                 impact_id = iid.replace(f"{sid}_impacted_by_", "")
                 params['impact'][impact_id] = idef
 
+        # fg_library.yaml is calibrated at LIBRARY_TICK_HOURS and is never
+        # rewritten for a run: a different --tick-length is converted here,
+        # in memory, every time. A 6 h run short-circuits and is
+        # bit-identical to not calling this at all. Section 106.
+        params, _tick_changes = rescale_species(params, tick_hours)
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: prefer library range (min/max or legacy scalar),
@@ -475,7 +442,8 @@ def load_impact_spawn_specs(project_path):
 
 
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
-                        spawn_seed=None, allowed_mask=None, project_config=None, library_config=None):
+                        spawn_seed=None, allowed_mask=None, project_config=None, library_config=None,
+                        tick_hours=LIBRARY_TICK_HOURS):
     """Load a project config and build its FunctionalGroups.
 
     ``spawn_seed`` (optional) controls the per-cell biomass distribution
@@ -701,6 +669,11 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 params['impact'][impact_id] = idef
         params['observes'] = observes_list if observes_seen_any else None
                 
+        # fg_library.yaml is calibrated at LIBRARY_TICK_HOURS and is never
+        # rewritten for a run: a different --tick-length is converted here,
+        # in memory, every time. A 6 h run short-circuits and is
+        # bit-identical to not calling this at all. Section 106.
+        params, _tick_changes = rescale_species(params, tick_hours)
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: per-project override range > library range >

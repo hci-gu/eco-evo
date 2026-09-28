@@ -9699,3 +9699,147 @@ remain open exactly as described in 71.9 / 71.11.
     that their library values sit far below the ceiling, so nobody has
     hit it. The mechanism added here is generic; applying it is a
     one-line call per row once someone decides what each ceiling means.
+
+106 TICK LENGTH MOVES FROM THE EDITOR TO THE COMMAND LINE (2026-09-28)
+
+106.1 The decision
+    USER DECISION 2026-09-28, reversing the GUI half of section 97:
+    fg_library.yaml holds ONE calibration, LIBRARY_TICK_HOURS = 6, and
+    the FG editor can no longer change it. A run that wants another tick
+    length says so with --tick-length [1, 6] (default 6), and the
+    relevant library values are converted IN MEMORY as the run starts.
+    Nothing is ever written back.
+
+    This is a better arrangement than what it replaces. Section 97 had
+    the tick length in the project file AND a rescaled, stamped library
+    shared between projects - two places for one number, with a warning
+    dialog to catch them disagreeing. Now the library is a constant and
+    the tick length is a run parameter, which cannot disagree with
+    anything.
+
+106.2 The conversion was incomplete, and that mattered more now
+    ``rescale_params`` only walked a species' TOP-LEVEL keys. Three
+    tick-dependent parameters live elsewhere and were never converted:
+
+      handling_time       per (predator, prey). The Holling ceiling is
+                          1/h ton prey per ton predator per TICK, so
+                          holding the real-time ceiling fixed needs 1/h
+                          linear in the tick length, i.e. h inverse in
+                          it. New "inverse" rule, x / k.
+      max_intake_rate     per-pair override. Flux, like the species-
+                          level one. The library has exactly one:
+                          porpoises_preys_on_gadoids.
+      biomass_factor      per impact_table row. The fraction of standing
+                          biomass an impact removes per tick
+                          (compute_impact_mortality: contribution =
+                          biomass * bf), i.e. a loss rate.
+
+    NOT energy_factor, and the distinction is the point: it enters as
+    1 + sum(energy_factor) multiplying the metabolic costs, exactly like
+    feeding_cost and movement_cost, which 97.5 already lists as
+    tick-independent because they multiply resting_metabolism - which is
+    itself rescaled. Scaling the multiplier too would apply the tick
+    length twice. Checked in the code rather than assumed; the first
+    draft of this section had it in the wrong column.
+
+    a is a flux and h its inverse, so the dimensionless product a*h
+    comes out unchanged. That is the algebraic check that the pair is
+    classified consistently, and it is asserted.
+
+    As a rare manual action in the editor these gaps mostly did not
+    bite. Running on every non-6 h rollout, a missed parameter is a
+    silently different biology: the Holling ceiling would have been six
+    times too high at --tick-length 1.
+
+106.3 Where the conversion happens
+    lib/world/tick_time.py
+        LIBRARY_TICK_HOURS = 6, kept separate from DEFAULT_TICK_HOURS
+        because they answer different questions ("what is the library
+        calibrated at" vs "what does a run use when not told").
+        New "inverse" rule; INTERACTION_RESCALE_RULES and
+        IMPACT_ROW_RESCALE_RULES; rescale_species(), which walks the
+        nested structures and COPIES every level it changes - those
+        dicts are the library's own objects, shared with other species
+        and with the next call. add_tick_length_argument(), shared so
+        the entry points cannot drift on the flag name or the bounds.
+
+    lib/config/config_loader.py
+        load_project_config and setup_full_mareld_mvp take tick_hours
+        and call rescale_species just before FunctionalGroup. A 6 h run
+        short-circuits and is bit-identical to not calling it.
+        project_tick_hours and library_tick_hours are GONE.
+
+    The flag reaches the workers through the builders, not a global:
+    _EnvBuilder / _ProbeEnvBuilder resolve TICK_HOURS in the parent
+    process and bake it into the pickled instance, the way
+    APPLY_NATURAL_MORTALITY already worked - a spawn-worker re-imports
+    train.py and would otherwise get the module default back.
+    EnvironmentBuilder carries it for the GPU path.
+
+106.4 Removed
+    fgconfig: the Tick Length entry, its Apply button, the live
+    validator, _plan_tick_rescale, _format_rescale_plan,
+    apply_tick_length, the library stamp, the "Tick Length Mismatch"
+    warning, and reading/writing project_metadata.tick_hours. The
+    per-tick labels stay and now always read "6 h"; get_tick_hours
+    returns LIBRARY_TICK_HOURS. The movement-speed input range from
+    section 105 is a constant [0, 1] again, since the editor no longer
+    has a tick length to follow - the mechanism that made the range
+    live is kept, unused, because it cost nothing and one row wanting
+    it again is a one-line call.
+
+    mareld2.yaml: project_metadata.tick_hours. fg_library.yaml had no
+    library_metadata stamp to remove - the editor only wrote one when
+    it rescaled, and the shipped library never was.
+
+    Tools: budget_gate and starve_calibration read the library's own
+    numbers, which mean LIBRARY_TICK_HOURS by definition, so they use
+    the constant and take no flag. viability builds real envs and takes
+    the flag.
+
+106.5 Tests
+    tests/test_tick_length_runtime.py, 33 cases, written around the
+    REAL-TIME quantities rather than the per-tick numbers:
+      * the Holling ceiling in ton prey per ton predator per DAY is
+        invariant over 1-6 h, on the live library's own pairs (with a
+        guard that at least two saturating pairs were checked, so the
+        test cannot pass by skipping everything),
+      * the dimensionless product a*h is invariant,
+      * the per-pair max_intake_rate override is converted,
+      * impact mortality over a WEEK is invariant,
+      * energy_factor is left alone,
+      * the library's dicts are never mutated,
+      * a 6 h run returns the input object unchanged,
+      * the loader converts the groups and never writes the file,
+      * the flag's bounds, default and underscore alias, and that all
+        four entry points register it,
+      * neither YAML carries a tick length any more.
+
+    Verified by deleting the code under test: removing the
+    handling_time rule turns 10 red, removing the loader hook turns 2
+    red.
+
+    tests/test_tick_time.py: the loader-accessor cases are gone with the
+    accessors; the section 105 ceiling case is reframed as what it now
+    is - no library speed is clamped by the engine's [0, 1] cap.
+
+    Suite: 731 passed, 12 skipped (was 704/12 after 105).
+
+106.6 Validation
+    train.py --tick-length 1, one generation, ok.
+    tools/viability.py --tick-length 1 --ticks 40, ok.
+    tools/probes/budget_gate.py unchanged output.
+    Headless xvfb GUI run against SCRATCH copies, 7 checks: no tick
+    entry, no apply_tick_length, no "Tick Length" label anywhere in the
+    widget tree, per-tick labels read "/ 6 h", the movement-speed range
+    is [0, 1], Apply Changes writes no library stamp and Save Project
+    writes no project_metadata.tick_hours.
+
+106.7 Open
+    The conversion is applied per species independently, so several
+    impacts summing their biomass_factor contributions before the
+    biomass update are each compounded on their own. For the small
+    rates in the library the difference is below float32 noise, and it
+    is the same approximation natural_mortality already lives with next
+    to the other losses - but it is an approximation, not an identity,
+    and nobody has measured where it stops being negligible.

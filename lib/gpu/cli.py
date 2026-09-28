@@ -12,6 +12,7 @@ from lib.environments.ecosystem_env.population_change import (
 from lib.environments.ecosystem_env.source_tracking import (add_local_reward_arguments,
                                                             local_reward_options)
 from lib.training_profiles import parse_training_args as _parse_training_args
+from lib.world.tick_time import add_tick_length_argument
 
 
 def grid_size(value):
@@ -30,6 +31,7 @@ def positive_int(value):
 
 def add_common_arguments(parser):
     add_current_arguments(parser)
+    add_tick_length_argument(parser)
     add_population_arguments(parser)
     add_local_reward_arguments(parser)
     parser.add_argument("--project", default=None, help="Project YAML; omitted means all library groups")
@@ -76,7 +78,8 @@ def builder_from_args(args):
                               args.migration == "on", args.mortality == "on",
                               currents=current_options(args),
                               mortality_multiplier=float(
-                                  getattr(args, "mortality_multiplier", 1.0)))
+                                  getattr(args, "mortality_multiplier", 1.0)),
+                              tick_hours=int(getattr(args, "tick_length", 6)))
 
 
 def trainer_options(args):

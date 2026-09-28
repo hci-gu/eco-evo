@@ -33,8 +33,11 @@ import numpy as np
 import torch
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 
+from lib.world.tick_time import (
+    LIBRARY_TICK_HOURS, add_tick_length_argument,
+)
 from lib.config.config_loader import (load_config, load_project_config,
-                                      project_tick_hours, setup_full_mareld_mvp,
+                                      setup_full_mareld_mvp,
                                        compute_inference_b0_defaults,
                                        _build_spawn_spec,
                                        _spawn_biomass_distribution)
@@ -364,7 +367,7 @@ def apply_b0_overrides(env, b0_overrides):
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
               apply_natural_mortality=False, allowed_mask=None,
-              migration=False, currents=None, mortality_multiplier=1.0):
+              migration=False, currents=None, mortality_multiplier=1.0, tick_hours=LIBRARY_TICK_HOURS):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     accessibility = None
@@ -373,10 +376,11 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     if project_path:
         fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
             project_path, grid_size=grid_size, seed=seed, mode='inference',
-            allowed_mask=accessibility)
+            allowed_mask=accessibility, tick_hours=tick_hours)
     else:
         fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
-                                    allowed_mask=accessibility)
+                                    allowed_mask=accessibility,
+                                    tick_hours=tick_hours)
         impact_vars = ['windfarm_noise']
         observable_impact_vars = ['windfarm_noise']
 
@@ -1036,6 +1040,7 @@ def main():
                              "unavailable the flag is silently ignored.")
 
     add_current_arguments(parser)
+    add_tick_length_argument(parser)
     args = parser.parse_args()
     try:
         currents = current_options(args)
@@ -1076,7 +1081,8 @@ def main():
         print(f"Error: checkpoint directory does not exist: {args.checkpoints}", file=sys.stderr)
         return 1
 
-    env = build_env(args.project, args.grid, seed=args.seed, verbose=verbose,
+    env = build_env(args.project, args.grid, seed=args.seed,
+                    tick_hours=args.tick_length, verbose=verbose,
                     apply_natural_mortality=(args.mortality == "on"),
                     mortality_multiplier=args.mortality_multiplier,
                     migration=(args.migration == "on"), currents=currents)
@@ -1102,8 +1108,7 @@ def main():
                                  mode="inference",
                                  extra_plot_ids=extra,
                                  ndm_ids=ndm_ids or None,
-                                 tick_hours=project_tick_hours(
-                                     getattr(args, 'project', None)))
+                                 tick_hours=int(args.tick_length))
             # b0-slider defaults: gridskaleberäknat inference_initial_biomass
             # per FG, läst direkt från projekt-YAML. Slider-rangen blir
             # ``[0, 4 * default]`` per FG, mittposition = default.
@@ -1160,6 +1165,7 @@ def main():
         while True:
             if not first_iteration:
                 env = build_env(args.project, args.grid, seed=args.seed,
+                    tick_hours=args.tick_length,
                                 verbose=False,
                                 apply_natural_mortality=(args.mortality == "on"),
                                 mortality_multiplier=args.mortality_multiplier,
@@ -1196,6 +1202,7 @@ def main():
             def _baseline_env():
                 """A fresh world with ``env``'s spawn, b0 and spawn overrides."""
                 e = build_env(args.project, args.grid, seed=args.seed,
+                    tick_hours=args.tick_length,
                               verbose=False,
                               apply_natural_mortality=(args.mortality == "on"),
                               mortality_multiplier=args.mortality_multiplier,

@@ -53,14 +53,15 @@ sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
 import train as train_mod
-from lib.config.config_loader import project_tick_hours
 from lib.world.energy_balance import resolve_satiation_scale
-from lib.world.tick_time import tick_label, ticks_per_day
+from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label, ticks_per_day
 
 PROJECT = 'mareld2.yaml'
-# %bm/day is the only real-time figure in this probe, so it is the
-# only thing the project's tick length changes here. Section 97.
-TICK_HOURS = project_tick_hours(PROJECT)
+# This probe reads fg_library.yaml's own numbers, and those mean
+# LIBRARY_TICK_HOURS by definition - a run's --tick-length converts them
+# in memory and never writes back, so it cannot change what is on disk.
+# %bm/day is the only real-time figure here. Sections 97 and 106.
+TICK_HOURS = LIBRARY_TICK_HOURS
 TICKS_PER_DAY = ticks_per_day(TICK_HOURS)
 
 H = W = 16

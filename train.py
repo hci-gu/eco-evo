@@ -12,7 +12,10 @@ import re
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.training_progress import (add_progress_arguments, validate_progress_arguments,
                                            make_visual_progress)
-from lib.config.config_loader import (project_tick_hours,
+from lib.world.tick_time import (
+    LIBRARY_TICK_HOURS, add_tick_length_argument, resolve_tick_hours,
+)
+from lib.config.config_loader import (
                                       setup_full_mareld_mvp, load_project_config,
                                       load_impact_spawn_specs)
 from lib.spawn import make_weights
@@ -37,6 +40,10 @@ APPLY_NATURAL_MORTALITY = False
 # Global scale factor on every FG's ``natural_mortality``; overridden by
 # --mortality_multiplier on the CLI. 1.0 = library values unchanged.
 MORTALITY_MULTIPLIER = DEFAULT_MORTALITY_MULTIPLIER
+# ``--tick-length``: how many hours one tick is. fg_library.yaml is
+# calibrated at LIBRARY_TICK_HOURS and is never rewritten for a run;
+# anything else is converted in memory as the FGs are built. Section 106.
+TICK_HOURS = LIBRARY_TICK_HOURS
 # Toggle for migration mode (immigration/emigration via grid edges).
 # Default off; overridden by --migration on the CLI. När True släpps
 # maskningen av förflyttningar utanför kantceller i ecosystem, och
@@ -309,7 +316,13 @@ class _EnvBuilder:
                  mortality_multiplier=None,
                  migration=None,
                  impact_spawn_specs=None,
-                 observable_impact_vars=None, currents=None):
+                 observable_impact_vars=None, currents=None,
+                 tick_hours=None):
+        # ``--tick-length``. Resolved HERE, in the parent process, so the
+        # value is baked into the pickled builder: a spawn-worker
+        # re-imports train.py and gets the module default back.
+        self.tick_hours = (TICK_HOURS if tick_hours is None
+                           else int(tick_hours))
         self.currents = currents
         self.impact_maps_snapshot = impact_maps_snapshot
         # List of impact_ids that are flagged ``observable: true`` in the
@@ -399,6 +412,7 @@ class _EnvBuilder:
             impact_spawn_specs=self.impact_spawn_specs,
             observable_impact_vars=self.observable_impact_vars,
             currents=self.currents,
+            tick_hours=self.tick_hours,
         )
 
     def __call__(self, seed=None):
@@ -408,10 +422,11 @@ class _EnvBuilder:
         if self.project_path:
             fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
                 self.project_path, grid_size=grid_size, seed=seed,
-                spawn_seed=self.spawn_seed)
+                spawn_seed=self.spawn_seed, tick_hours=self.tick_hours)
         else:
             fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
-                                        spawn_seed=self.spawn_seed)
+                                        spawn_seed=self.spawn_seed,
+                                        tick_hours=self.tick_hours)
             impact_vars = ['windfarm_noise']
             observable_impact_vars = ['windfarm_noise']
 
@@ -478,7 +493,9 @@ class _ProbeEnvBuilder:
 
     def __init__(self, project_path, grid_size, apply_natural_mortality=None,
                  migration=None, currents=None, library_path=None,
-                 mortality_multiplier=None):
+                 mortality_multiplier=None, tick_hours=None):
+        self.tick_hours = (TICK_HOURS if tick_hours is None
+                           else int(tick_hours))
         self.currents = currents
         self.project_path = project_path
         self.library_kwargs = {} if library_path is None else {"library_path": library_path}
@@ -527,9 +544,11 @@ class _ProbeEnvBuilder:
         if self.project_path:
             fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
                 self.project_path, grid_size=grid_size, seed=s,
-                mode='inference', spawn_seed=s, **self.library_kwargs)
+                mode='inference', spawn_seed=s, tick_hours=self.tick_hours,
+                **self.library_kwargs)
         else:
             fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=s, spawn_seed=s,
+                                      tick_hours=self.tick_hours,
                                       **self.library_kwargs)
             impact_vars = ['windfarm_noise']
             observable_impact_vars = ['windfarm_noise']
@@ -1398,7 +1417,8 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       mortality_multiplier=None,
                       migration=None,
                       impact_spawn_specs=None,
-                      observable_impact_vars=None, currents=None):
+                      observable_impact_vars=None, currents=None,
+                      tick_hours=None):
     """Factory kept for call-site compatibility; returns a picklable
     ``_EnvBuilder`` instance with an explicit ``grid_size`` and
     ``project_path`` baked in so 'spawn' workers don't fall back to the
@@ -1418,7 +1438,8 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       mortality_multiplier=mortality_multiplier,
                       migration=migration,
                       impact_spawn_specs=impact_spawn_specs,
-                      observable_impact_vars=observable_impact_vars, currents=currents)
+                      observable_impact_vars=observable_impact_vars, currents=currents,
+                      tick_hours=tick_hours)
 
 
 def get_dynamic_policy_params(fgs, n_observable_impacts=0):
@@ -1656,6 +1677,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     add_progress_arguments(parser)
     add_population_arguments(parser)
     add_current_arguments(parser)
+    add_tick_length_argument(parser)
     args = parse_training_args(parser, argv)
     validate_progress_arguments(parser, args)
     try:
@@ -1692,10 +1714,11 @@ def main(argv=None, *, on_step=None, confirm=True):
 
     # Set project globally so env_builder can find it
     global PROJECT_PATH, APPLY_NATURAL_MORTALITY, APPLY_MIGRATION
-    global MORTALITY_MULTIPLIER
+    global MORTALITY_MULTIPLIER, TICK_HOURS
     PROJECT_PATH = args.project
     APPLY_NATURAL_MORTALITY = (args.mortality == "on")
     MORTALITY_MULTIPLIER = float(args.mortality_multiplier)
+    TICK_HOURS = int(getattr(args, 'tick_length', LIBRARY_TICK_HOURS))
     APPLY_MIGRATION = (args.migration == "on")
 
     # Ensure run directory exists: results/<run-name>/
@@ -1852,7 +1875,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                 extra_plot_ids=_extra,
                 ndm_ids=_ndm_ids or None,
                 # Status-bar simulated time; display only (section 97).
-                tick_hours=project_tick_hours(getattr(args, 'project', None)),
+                tick_hours=int(getattr(args, 'tick_length', LIBRARY_TICK_HOURS)),
             )
             # Reward-flikens y-axel-/rubriktext ska spegla den aktiva
             # rewardformeln, precis som titeln i plots.html. Vi återanvänder

@@ -37,6 +37,14 @@ DAYS_PER_YEAR = 365
 # the field loads bit-identically.
 DEFAULT_TICK_HOURS = 6
 
+# What fg_library.yaml's numbers mean, always. The library has ONE
+# calibration and the editor can no longer change it (section 106); a
+# run at another tick length rescales in memory at load time and never
+# writes back. Kept separate from DEFAULT_TICK_HOURS because they answer
+# different questions - "what is the library calibrated at" and "what
+# does a run use when not told otherwise" - even though both are 6.
+LIBRARY_TICK_HOURS = 6
+
 # One hour is the finest tick the engine's daily-scale rates stay
 # meaningful at. Six hours - the calibration length everything in
 # fg_library.yaml is expressed at - is the coarsest allowed: past a
@@ -130,6 +138,14 @@ def per_tick(unit, tick_hours=None):
 #             1 - (1 - r)^k. Stays in [0, 1) for every k, which linear
 #             does not.
 #
+#   "inverse" A quantity whose RECIPROCAL is the per-tick rate: x / k.
+#             handling_time is the case: the Holling ceiling is 1/h ton
+#             prey per ton predator per tick, so holding the real-time
+#             ceiling fixed needs 1/h linear in the tick length, i.e. h
+#             inverse in it. It also keeps the dimensionless product
+#             a*h invariant, since a is a flux - which is the algebraic
+#             check that the pair is classified consistently.
+#
 #   "period"  A duration measured in ticks: p / k, floored at 1.
 #
 # Anything not listed is tick-independent and is left alone: stocks
@@ -187,6 +203,33 @@ RESCALE_CLAMP = {
 }
 
 
+# Tick-dependent keys that do NOT live at the top level of a species
+# entry. These were missed when the rescale was a rare manual action in
+# the FG editor (section 97) and matter on every run now that it happens
+# at load time (section 106).
+INTERACTION_RESCALE_RULES = {
+    # Per-(predator, prey) override of the species-level ceiling.
+    "max_intake_rate": "flux",
+    # Holling handling time; see the "inverse" note above.
+    "handling_time": "inverse",
+}
+
+# Per-row keys inside an impact_table.
+#
+# biomass_factor is the fraction of standing biomass an impact removes
+# per tick (``impacts.compute_impact_mortality``: contribution =
+# biomass * bf), i.e. a loss rate.
+#
+# energy_factor is NOT here and must not be: it enters as
+# ``1 + sum(energy_factor)`` multiplying the metabolic costs
+# (``movement.apply_energy_costs``), exactly like feeding_cost and
+# movement_cost, which 97.5 already lists as tick-independent because
+# they multiply resting_metabolism - which is itself rescaled.
+IMPACT_ROW_RESCALE_RULES = {
+    "biomass_factor": "loss",
+}
+
+
 def rescale_value(key, value, old_hours, new_hours):
     """Convert one parameter from ``old_hours`` to ``new_hours`` ticks.
 
@@ -194,7 +237,7 @@ def rescale_value(key, value, old_hours, new_hours):
     converted value hit the parameter's declared range and was cut, so
     the caller can report it rather than apply it silently.
     """
-    rule = RESCALE_RULES.get(key)
+    rule = _rule_for(key)
     if rule is None:
         return value, False
     try:
@@ -218,7 +261,7 @@ def rescale_value(key, value, old_hours, new_hours):
         # A rate at or above 1 already removes everything in one tick;
         # (1 - x) would go negative under a fractional power.
         out = 1.0 if x >= 1.0 else 1.0 - (1.0 - x) ** k
-    elif rule == "period":
+    elif rule in ("period", "inverse"):
         out = x / k
     else:
         return value, False
@@ -233,6 +276,124 @@ def rescale_value(key, value, old_hours, new_hours):
         # A period is a whole number of ticks and must survive rounding.
         out = max(1.0, round(out))
     return out, clamped
+
+
+def _rule_for(key):
+    """The dimension rule for ``key`` wherever it appears."""
+    if key in RESCALE_RULES:
+        return RESCALE_RULES[key]
+    if key in INTERACTION_RESCALE_RULES:
+        return INTERACTION_RESCALE_RULES[key]
+    return IMPACT_ROW_RESCALE_RULES.get(key)
+
+
+def add_tick_length_argument(parser):
+    """Register ``--tick-length`` on an argument parser.
+
+    Shared by every entry point that can run at a tick length other than
+    the library's, so they cannot drift apart on the flag name, the
+    bounds or the default. Mirrors
+    ``currents.add_current_arguments``. Section 106.
+    """
+    parser.add_argument(
+        "--tick-length", "--tick_length", dest="tick_length", type=int,
+        default=LIBRARY_TICK_HOURS,
+        choices=list(range(MIN_TICK_HOURS, MAX_TICK_HOURS + 1)),
+        help=(f"Hours per tick ({MIN_TICK_HOURS}-{MAX_TICK_HOURS}, default "
+              f"{LIBRARY_TICK_HOURS}). fg_library.yaml is calibrated at "
+              f"{LIBRARY_TICK_HOURS} h and is never rewritten: another "
+              "length converts every tick-dependent parameter in memory "
+              "as the run starts, so the biology stays the same in real "
+              "time."))
+
+
+def rescale_species(params, new_hours, old_hours=LIBRARY_TICK_HOURS):
+    """Rescale one species entry, nested parameters included.
+
+    ``params`` is what ``config_loader`` hands ``FunctionalGroup``: the
+    library's species dict plus an ``interaction`` map and an ``impact``
+    map built from the shared interaction definitions. Those nested
+    dicts are the SAME objects the library holds and other species may
+    reference, so every level that changes is copied first - rescaling
+    in place would corrupt the library for the next species and for the
+    next call.
+
+    Returns ``(new_params, changes)`` with ``changes`` a list of
+    ``(path, old, new, clamped)``; ``path`` is dotted, e.g.
+    ``"interaction.porpoises_preys_on_gadoids.handling_time"``.
+
+    A no-op that returns the input unchanged when the lengths agree,
+    so the common case (a 6 h run against a 6 h library) costs nothing
+    and is bit-identical.
+    """
+    if resolve_tick_hours(old_hours) == resolve_tick_hours(new_hours):
+        return params, []
+
+    out, changes = rescale_params(params, old_hours, new_hours)
+    if out is params:
+        out = dict(params)
+    changes = [(k, a, b, c) for (k, a, b, c) in changes]
+
+    interaction = params.get("interaction")
+    if isinstance(interaction, dict):
+        new_inter = dict(interaction)
+        for iid, idef in interaction.items():
+            if not isinstance(idef, dict):
+                continue
+            row = None
+            for key in INTERACTION_RESCALE_RULES:
+                if key not in idef:
+                    continue
+                value, clamped = rescale_value(key, idef[key], old_hours, new_hours)
+                if value == idef[key]:
+                    continue
+                if row is None:
+                    row = dict(idef)
+                row[key] = value
+                changes.append(
+                    (f"interaction.{iid}.{key}", idef[key], value, clamped))
+            if row is not None:
+                new_inter[iid] = row
+        out["interaction"] = new_inter
+
+    impact = params.get("impact")
+    if isinstance(impact, dict):
+        new_impact = dict(impact)
+        for iid, idef in impact.items():
+            if not isinstance(idef, dict):
+                continue
+            table = idef.get("impact_table")
+            if not isinstance(table, list):
+                continue
+            new_table = list(table)
+            touched = False
+            for n, entry in enumerate(table):
+                if not isinstance(entry, dict):
+                    continue
+                row = None
+                for key in IMPACT_ROW_RESCALE_RULES:
+                    if key not in entry:
+                        continue
+                    value, clamped = rescale_value(
+                        key, entry[key], old_hours, new_hours)
+                    if value == entry[key]:
+                        continue
+                    if row is None:
+                        row = dict(entry)
+                    row[key] = value
+                    changes.append(
+                        (f"impact.{iid}.impact_table[{n}].{key}",
+                         entry[key], value, clamped))
+                if row is not None:
+                    new_table[n] = row
+                    touched = True
+            if touched:
+                new_def = dict(idef)
+                new_def["impact_table"] = new_table
+                new_impact[iid] = new_def
+        out["impact"] = new_impact
+
+    return out, changes
 
 
 def rescale_params(params, old_hours, new_hours):

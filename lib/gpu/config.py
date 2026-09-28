@@ -11,6 +11,7 @@ from lib.config.config_loader import (
 )
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import CurrentConfig
+from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 
 DEFAULT_LIBRARY = str(Path(__file__).resolve().parents[2] / "fgconfig" / "fg_library.yaml")
@@ -29,15 +30,20 @@ class EnvironmentBuilder:
     # Global scale factor on every FG's ``natural_mortality``
     # (``--mortality_multiplier``); 1.0 leaves the tick unchanged.
     mortality_multiplier: float = 1.0
+    # ``--tick-length``. The library is calibrated at LIBRARY_TICK_HOURS
+    # and is never rewritten; anything else is converted in memory as the
+    # groups are built. Section 106.
+    tick_hours: int = LIBRARY_TICK_HOURS
 
     def with_world(self, spawn_seed):
         return EnvironmentBuilder(self.project_path, self.library_path, self.grid,
                                   self.migration, self.mortality, int(spawn_seed), self.currents,
-                                  self.mortality_multiplier)
+                                  self.mortality_multiplier, self.tick_hours)
 
     def __call__(self, seed=None):
         kwargs = dict(library_path=self.library_path, grid_size=self.grid,
-                      seed=seed, spawn_seed=self.spawn_seed)
+                      seed=seed, spawn_seed=self.spawn_seed,
+                      tick_hours=self.tick_hours)
         if self.project_path:
             groups = load_project_config(self.project_path, **kwargs)[0]
         else:
@@ -57,7 +63,8 @@ class ProjectSpec:
         project = load_config(builder.project_path) if builder.project_path else None
         kwargs = dict(library_path=builder.library_path, grid_size=builder.grid,
                       seed=seed, spawn_seed=seed, allowed_mask=allowed_mask,
-                      library_config=library)
+                      library_config=library,
+                      tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS))
         rng_state = np.random.get_state()
         try:
             np.random.seed(seed & 0xFFFFFFFF)

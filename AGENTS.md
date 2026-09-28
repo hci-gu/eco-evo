@@ -10,13 +10,15 @@ Functional groups (FGs) live on a 60x60 grid (1 km/cell) and the
 decision-making FGs are driven by small policy networks trained with ARS
 (Augmented Random Search), co-evolution on by default.
 
-The tick length is `project_metadata.tick_hours` (default 6 h, range
-1-6, whole hours; sections 97 and 103). The tick pipeline itself is
+The tick length is the `--tick-length` CLI flag (1-6 h, default 6;
+sections 97, 103 and 106). The tick pipeline itself is
 tick-agnostic - every library parameter is *per tick* - so the value
-only drives the tick <-> real-time conversions and the FG-editor
-labels. `lib/world/tick_time.py` is the single definition point; read
-it via `config_loader.project_tick_hours()` rather than hardcoding 4
-ticks/day anywhere.
+drives the tick <-> real-time conversions and, when it is not 6, an
+in-memory conversion of every tick-dependent library parameter as the
+FGs are built. Nothing is ever written back: `fg_library.yaml` has one
+calibration and the FG editor can no longer change it. `lib/world/tick_time.py` is the single definition point; read it via the run's
+`--tick-length` (or `LIBRARY_TICK_HOURS` when reading the library's own
+numbers) rather than hardcoding 4 ticks/day anywhere.
 
 `Strategi.pdf` is authoritative for the mathematics ("The Tick"); `Method.pdf`
 defines observation/neighbourhood conventions.
@@ -42,7 +44,7 @@ defines observation/neighbourhood conventions.
 | `lib/environments/ecosystem.py` | `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
-| `lib/world/tick_time.py` | Tick length: bounds (1-6 h), tick<->real-time conversion, label rendering, and the per-parameter rescale rules the FG editor applies when the tick length changes (section 97). |
+| `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
 | `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. Two factors (behaviour x spawn geometry); the verdict comes from the normative corner `--spawn colocated --behaviour greedy`. The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |
@@ -104,6 +106,7 @@ python3 tools/biomass_html.py results/<run-name>      # -> plots.html
 
 Useful flags: `--profile sanity|info|deep` (forces action-hack-free settings),
 `--visual`, `--rollouts_per_delta`, `--mortality on`,
+`--tick-length HOURS` (1-6, default 6; section 106),
 `--mortality_multiplier FACTOR` (scales every FG's `natural_mortality`;
 `keep = 1 - FACTOR*rate`, needs `--mortality on`, section 88), `--migration on`,
 `--policynetwork LAYERS NODES [ACTIVATION]`, `--resume`,

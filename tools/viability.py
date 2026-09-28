@@ -28,7 +28,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
-from lib.config.config_loader import project_tick_hours  # noqa: E402
+from lib.world.tick_time import add_tick_length_argument  # noqa: E402
 from lib.diagnostics import viability  # noqa: E402
 
 
@@ -59,6 +59,7 @@ def build_parser():
     parser = argparse.ArgumentParser(
         description="Measure whether the ecosystem is viable without training.")
     parser.add_argument("--project", default="mareld2.yaml")
+    add_tick_length_argument(parser)
     parser.add_argument("--grid", type=parse_grid, default=(20, 20),
                         help="Grid as n*m (default: 20*20).")
     parser.add_argument("--years", type=float, default=5.0,
@@ -130,6 +131,7 @@ def _build_env(args, seed):
         apply_natural_mortality=args.mortality == "on",
         mortality_multiplier=args.mortality_multiplier,
         migration=args.migration == "on",
+        tick_hours=args.tick_length,
     )
 
 
@@ -147,8 +149,8 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
 
     # The horizon is specified in simulated years, so the tick length
-    # the project runs at decides how many ticks that is. Section 97.
-    tick_hours = project_tick_hours(args.project)
+    # the RUN uses decides how many ticks that is. Sections 97 and 106.
+    tick_hours = args.tick_length
     criterion = viability.ViabilityCriterion(
         years=(args.ticks / viability.ticks_per_year(tick_hours) if args.ticks
                else args.years),
