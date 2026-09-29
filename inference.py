@@ -369,7 +369,16 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
               apply_natural_mortality=False, allowed_mask=None,
               migration=False, currents=None, mortality_multiplier=1.0,
               mass_balance=False, tick_hours=LIBRARY_TICK_HOURS):
-    """Construct a fresh EcosystemEnvironment for inference."""
+    """Construct a fresh EcosystemEnvironment for inference.
+
+    A given ``seed`` also seeds NumPy's global RNG. The tick draws from it
+    (the NDM ``seed_rate`` recruitment noise, the per-tick FG shuffle, the
+    seasonal phase), so without this the same ``--seed`` gave rollouts
+    that drift apart by a few per cent over thousands of ticks (section
+    124.4). ``seed=None`` leaves the global RNG alone.
+    """
+    if seed is not None:
+        np.random.seed(int(seed) & 0xFFFFFFFF)
     H, W = grid_size
     accessibility = None
     if allowed_mask is not None:

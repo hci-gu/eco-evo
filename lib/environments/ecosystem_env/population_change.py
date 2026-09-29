@@ -111,9 +111,10 @@ def _charge_growth_to_reserve(env, fg, biomass_delta):
 
     Note that this makes ``max_energy_reserve / energy_content`` a hard
     ceiling on the reachable ``growth_rate``, since cap and wish are both
-    linear in ``q_X``. For zooplankton that ratio is 0.100 against a
-    ``growth_rate`` of 0.0913 - 91 % of the bound. Section 115.3 has the
-    table for every FG.
+    linear in ``q_X``. For zooplankton that ratio is 0.150 against a
+    ``growth_rate`` of 0.0913 (it was 0.100, 91 % of the bound, until
+    section 124 set the reserve from storage lipid). Section 115.3 has
+    the table for every FG.
     """
     energy_content = float(fg.params.get("energy_content", 0.0) or 0.0)
     if energy_content <= 0.0:

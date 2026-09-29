@@ -74,7 +74,19 @@
     display_name: "Zooplankton"
     is_decision_maker: true
     maintenance_level: 0.5
-    max_energy_reserve: 450.0
+    # STORAGE LIPID, set from the literature - section 124. 675 MJ/t =
+    # 15 % of body energy (energy_content 4500), the energy-weighted
+    # storage-lipid share of a mixed Skagerrak assemblage: small neritic
+    # copepods (Acartia, Temora, Pseudocalanus, Oithona) hold 3-6 % of
+    # body energy as mobilisable lipid, active-season Calanus CV 25-45 %;
+    # weighted 2/3 : 1/3 by biomass that is ~15 % (band 10-25 %). The
+    # reserve is the lipid pool only; the protein phase of starvation is
+    # starve_rate catabolising biomass. Checks: the reserve drains from
+    # u_X in 3.8 d at rest (lipid exhausted after 3-7 d in the
+    # literature) and T_total is 8.8 d (mortality rises after 1-2
+    # weeks). Under --mass-balance ME/ec is also the growth ceiling; 0.150
+    # leaves growth_rate 0.0913 clear of it, where 450 put it at 91 %.
+    max_energy_reserve: 675.0
     # RESPIRATION, set from the literature - section 118, and raised
     # 6.4x from 3.5. 22.5 MJ/t/tick = 90 MJ/t/day = 2.0 % of body energy
     # per day (energy_content 4500 MJ/t). Copepod respiration alone sits
@@ -95,12 +107,23 @@
     # pair is in section 119. There is also an extinction wall just
     # above 5 %/day: at 10 %/day zooplankton dies out entirely (118.5).
     #
-    # Companion, NOT done: max_energy_reserve 450 MJ/t is 10 % of body
-    # energy, i.e. a 5-day buffer at this rate where it used to be 32
-    # days, and feeding_cost 1.45 sits under the literature 2-3x.
+    # This is the FASTING rate: starved Acartia respire ~2.4 %/day at
+    # 10 C (Svetlichny et al. 2022). The feeding rate is this times
+    # feeding_cost below, ~4 %/day, against 3.9-6.0 %/day measured in
+    # situ for Temora (Castellani & Altunbas 2014). Ikeda et al. (2001)
+    # predicts more for small copepods (~7.5 %/day), so this sits at the
+    # low edge of the band (section 124).
     resting_metabolism: 22.5
     movement_speed: 0.02
-    feeding_cost: 1.45
+    # SPECIFIC DYNAMIC ACTION, set from the literature - section 124.
+    # Respiration fed / starved is 1.9 for Acartia tonsa (Thor 2000),
+    # 1.6-2.5 for Acartia clausi and Calanus helgolandicus (Svetlichny
+    # et al. 2022) and ~2 for Temora/Acartia/Centropages (Koski et al.
+    # 2017); band 1.8-2.5. The often-quoted "2-3x" is Koski's TOTAL
+    # carbon demand (respiration + pellets + eggs), not a respiration
+    # ratio, and eggs are the growth term here. Max allowed by the
+    # energy-balance gate at rm 22.5 is 5.42.
+    feeding_cost: 2.0
     movement_cost: 1.2
     energy_content: 4500.0
     min_split_biomass: 0.0

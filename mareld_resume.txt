@@ -12049,14 +12049,18 @@ remain open exactly as described in 71.9 / 71.11.
       1. CLOSED by 121: phytoplankton `growth_rate` 0.0375 -> 0.125
          (113), applied. It is the only lever that moves the absolute
          level, and its cost is the zoo:phyto ratio.
-      2. `max_energy_reserve` 450 MJ/t for zooplankton. At 2 %/day it is
+      2. CLOSED by 124 (-> 675). `max_energy_reserve` 450 MJ/t for zooplankton. At 2 %/day it is
          a 5-day buffer where it used to be 32, and under `--mass-balance`
          it is also the growth budget - `max_energy_reserve /
          energy_content = 0.100` is a hard ceiling on the reachable
          `growth_rate`, and 0.0913 sits at 91 % of it (115.3, 116.2).
-      3. `feeding_cost` 1.45 against a literature 2-3x (118.4).
+      3. CLOSED by 124 (-> 2.0). `feeding_cost` 1.45 against a literature 2-3x (118.4).
       4. The absolute plankton level, still a factor 4-20 below spawn
-         even in the best arm.
+         even in the best arm. SCOPE: measured under FROZEN GREEDY
+         behaviour only (the viability corner, no trained policy). A
+         trained co-evolved run holds phytoplankton at 0.56x and
+         zooplankton at 2.3x spawn, stationary over 10000 ticks -
+         section 123. Not an open item for trained runs.
       5. The no-action fixtures in `test_population_stability.py` and
          `test_ecosystem_refactor.py` (120.1).
 
@@ -12138,9 +12142,10 @@ remain open exactly as described in 71.9 / 71.11.
     sections 109 and 110 got it the other way round and had to be
     superseded.
 
-    Still open, unchanged from 120.4: `max_energy_reserve` 450 MJ/t for
-    zooplankton, `feeding_cost` 1.45, the absolute plankton level (still
-    a factor 4-20 under spawn), the no-action fixtures in
+    Still open, unchanged from 120.4 (the first two CLOSED by 124): `max_energy_reserve` 450 MJ/t for
+    zooplankton, `feeding_cost` 1.45, the absolute plankton level under
+    frozen greedy behaviour (a factor 4-20 under spawn; with trained
+    policies the level is healthy, section 123), the no-action fixtures in
     `test_population_stability.py` and `test_ecosystem_refactor.py`, and
     the zoo:phyto ratio at 2.34:1 against a spawn 0.44:1 - which 120.3
     shows is the price of this change and not a defect introduced by it.
@@ -12149,3 +12154,283 @@ remain open exactly as described in 71.9 / 71.11.
     FG set, grid layout or Observability entry moved anywhere in the arc
     - but every policy in `results/` was trained in a materially
     different world and should be retrained before being quoted.
+
+122 Strategi_sep.pdf: THE STRATEGY DECK REWRITTEN AGAINST THE CODE (2026-09-29)
+---------------------------------------------------------------------
+
+122.1 What was made
+    `Strategi_sep.pdf` - a 60-slide, 960x540 pt Swedish deck that
+    replaces the May 2026 `Strategi.pdf` (37 slides, PowerPoint export).
+    Same section order; the content is written against the tick, the
+    trainer and the library as they stand after section 121.
+
+    Generator: `tools/make_strategi_deck.py` (matplotlib PdfPages, no
+    LaTeX or pandoc in this environment). Re-run it when the mechanics
+    move:
+
+        python3 tools/make_strategi_deck.py -o Strategi_sep.pdf
+        python3 tools/make_strategi_deck.py --png <dir>   # proofing
+
+    The spawn-strategy slide calls `lib/spawn/strategies.make_weights`
+    directly, so those four panels are the real fields, not mock-ups.
+
+122.2 Where the deck deviates from the May edition, and why
+    One slide states these explicitly, because the May document is a
+    draft to develop further and not a spec to conform to:
+
+      growth term      mass-balanced and charged to the reserve (114-116,
+                       120); the documented B*(1+MG*q) was free mass
+      hunger           the May deck had BOTH the s > 0.8 eat mask and
+                       h = max(0, 1 - s/0.8). The code kept the factor,
+                       now per-FG via satiation_scale (69), and dropped
+                       the mask. Remaining difference: mass that eats
+                       while satiated still pays feeding_cost
+      predation        Holling II/III + Beddington-DeAngelis (86), the
+                       0.999 harvest cap (73), per-pair visibility
+                       floors (71.12)
+      fitness          mean_t log(E_tot(t)/E_tot(0)) with
+                       E_tot = B*energy_content + R; alpha/beta survives
+                       as --legacyreward only
+      rollouts         15-200 ticks, not the documented H = 2
+      training         co-evolution (all DMs perturbed in one shared
+                       rollout) instead of the alternating schedule
+      memory           the N(c,t-1) extension is not implemented; the
+                       only cross-tick state is prev_hidden_frac
+      size ladder      3x3 -> 60x60 is not the recommended flow; --grid
+                       remains and the viability rig runs 20x20
+
+    New sections with no counterpart in the May edition: tick length as
+    a run parameter (97, 103-106), currents, migration, the extinction
+    threshold and split suppression (69), the local per-cell reward
+    (79-84), the viability rig (90-92, VIABILITY.md), the energy budget
+    gate, and the status table from 121.3.
+
+122.3 Checks
+    Text is Swedish (the original deck's language); parameter names stay
+    in their English library spelling. Word wrapping is measured against
+    the real glyph advances, and a checker asserts that no text artist
+    leaves the page or drops into the footer band - 0 problems over all
+    60 slides. MediaBox verified as [0 0 960 540], matching the original
+    export. Nothing in the engine, the library or the tests was touched.
+
+123 PLANKTON LEVEL UNDER TRAINED POLICIES: THE 4-20x GAP IS A FROZEN-
+    BEHAVIOUR ARTEFACT (2026-09-29)
+---------------------------------------------------------------------
+
+123.1 Why
+    120.3/120.4/121.4 reported the absolute plankton level as "a factor
+    4-20 below spawn". That number comes from the frozen greedy corner
+    (every DM eats maximally, no policy), 60x60, 3000 ticks, no
+    migration or currents. It was then repeated as if it held for the
+    model in general. It does not.
+
+123.2 Measurement
+    Run `pzbpgp248nsrpfix35` (train_gpu.py, co-evolution, --profile
+    info, policynetwork 2 48 tanh, 500-tick rollouts, ~295 iterations
+    over 6 generations, --mortality on --migration on --currents on,
+    tick length 6 h, library as of section 121). Inference, headless:
+
+        python3 inference.py --project mareld2.yaml \
+            --run-name pzbpgp248nsrpfix35 --ticks 10000 --seed 1 \
+            --mortality on --migration on --currents on --tick-length 6 \
+            --quiet --output inf10k.npz
+
+    Biomass / spawn, window means (10000 ticks = ~6.8 years, 2 min):
+
+      fg             t~500  t~2000  t~5000  t~7500  t9500-10000  drift*
+      phytoplankton  0.56   0.55    0.56    0.56    0.56         1.00
+      zooplankton    2.31   2.19    2.21    2.40    2.29         1.01
+      benthic        0.98   0.86    0.72    0.49    0.65         0.96
+      gadoids        1.15   1.74    3.13    1.29    1.09         0.44
+      pelagic_fish   1.18   1.74    1.71    0.97    1.38         0.94
+      porpoises      0.15   0.008   0       0       0            -
+
+      * mean(7500-10000) / mean(5000-7500)
+
+    The training log agrees: at tick 500 of every rollout from gen 1
+    iter 21 onwards, phytoplankton reads 0.55-0.58x and zooplankton
+    1.9-2.3x spawn.
+
+123.3 Reading
+    - Both plankton groups are stationary from tick ~2000 to 10000
+      (within +-5 %). phyto ~44 kt, zoo ~80 kt. The absolute level is
+      healthy under trained policies; item 4 of 120.4 is closed for
+      trained runs and stays a property of the frozen corner only.
+    - What remains is the ratio: zoo:phyto 1.80:1 against a spawn
+      0.44:1 (the frozen corner gives 2.34:1). That is the R*
+      structure of 117.2, not a level deficit.
+    - Porpoises go extinct under the trained policy as well: below
+      10 % of spawn at tick 738, zero at tick 2365 (~1.6 years). Same
+      failure as the viability corner (121.3).
+    - Gadoids and pelagic_fish run a slow cycle (gadoids peak 3.1x at
+      t~5000, back to 1.0x at t~9000) with benthic dipping to 0.5x.
+      Period is of order the run length; 10000 ticks and one seed
+      cannot say whether it damps.
+
+123.4 Caveat
+    One seed, one checkpoint set. Nothing in engine, library or tests
+    was changed. The same overbroad claim sat on slide 59 ("Oppna
+    fragor") of `Strategi_sep.pdf` (section 122); the bullet in
+    `tools/make_strategi_deck.py` now gives the trained-run levels and
+    scopes the 4-20x figure to frozen greedy behaviour, and the PDF was
+    regenerated.
+
+124 APPLIED: ZOOPLANKTON feeding_cost 1.45 -> 2.0, max_energy_reserve
+    450 -> 675 (2026-09-29)
+---------------------------------------------------------------------
+
+124.1 What was open
+    The two zooplankton parameters 118.8, 120.4 and 121.4 left as not
+    set from the literature: `feeding_cost` 1.45 (against a quoted
+    "2-3x") and `max_energy_reserve` 450 MJ/t (10 % of body energy,
+    fitted to a starvation window, and under --mass-balance also the
+    growth ceiling ME/ec = 0.100 with growth_rate at 91 % of it,
+    115.3/115.6). Plus 118.8's caveat that the copepod figures had been
+    located by search and not read.
+
+    Assemblage (decided by the user): a MIXED Skagerrak mesozooplankton,
+    small neritic copepods (Acartia, Temora, Pseudocalanus, Centropages,
+    Oithona) with a Calanus finmarchicus/helgolandicus component,
+    weighted 2/3 : 1/3 by biomass. 8-12 C.
+
+124.2 Literature
+    Tags: [V] number read in the source (abstract or text), [2H] quoted
+    second-hand, [C] computed (lipid 39.5 kJ/g, non-lipid 23.6 kJ/g).
+
+    Feeding cost = respiration fed / respiration starved:
+      Acartia tonsa        1.9          Thor 2000, JEMBE 245:171 [V/2H]
+      A. clausi, C. helgo. 1.6-2.5      Svetlichny et al. 2022 [V]
+      Temora/Acartia/Cent. ~2           Koski et al. 2017, PLoS ONE [V]
+      -> band 1.8-2.5, central 2.0. The "2-3x" is Koski's TOTAL carbon
+      demand of feeding calanoids (respiration + pellets + eggs), not a
+      respiration ratio. Eggs are this model's growth term, so the
+      respiration ratio is the one that belongs in feeding_cost.
+
+    Storage lipid as a share of body energy:
+      small neritic copepods   total lipid 3-7 % of DM (Kreibich 2008
+                               [V], Svetlichny 2022 [V]), mostly
+                               phospholipid -> mobilisable 3-6 % [C]
+      Calanus CV active season 20-40 % lipid of DM (inferred; wax ester
+                               ~90 % of lipid, Kattner & Krause 1987 [V])
+                               -> 25-45 % of body energy [C]
+      -> assemblage ~15 % (band 10-25 %).
+    Starvation: lipid exhausted after ~3-7 d, mortality rises after
+    ~1-2 weeks for the assemblage (Dagg 1977 [2H], Tsuda 1994 [2H],
+    Kreibich 2008 [V], Niehoff 2000 [V]). Copepods respire 50-65 % of
+    body carbon before death - most of it protein after the lipid is
+    gone, which is the model's starve_rate phase, not the reserve.
+
+    Resting rate (cross-check of 119, not changed): starved Acartia
+    ~2.4 %/day at 10 C [C from Svetlichny]; in-situ Temora 3.9-6.0
+    %/day (Castellani & Altunbas 2014 [V]); Ikeda et al. 2001 (fasting,
+    units inferred, not read) predicts ~7.5 %/day for a 5 ug C copepod
+    and ~3.2 %/day for a Calanus CV. So 22.5 MJ/t/tick = 2.0 %/day reads
+    as the FASTING floor, and with feeding_cost 2.0 the feeding rate is
+    4 %/day, inside the measured in-situ band. The two parameters are
+    consistent without double-charging. 2.0 %/day stays at the low edge
+    of the literature and is the one number here Ikeda would raise.
+
+    Energy density: 4.1-5.4 kJ/g wet for the mix [C from Laurence 1976,
+    McKinstry 2013, via 2H]; 4500 MJ/t unchanged.
+
+    Not read in full (paywall): Lee, Hagen & Kattner 2006; Kiorboe et
+    al. 1985; Ikeda et al. 2001; Tsuda 1994; Dagg 1977.
+
+124.3 Checks
+    Energy-balance gate: max allowed feeding_cost at rm 22.5 is
+    h(u) * ceiling / rm = 0.375 * 325 / 22.5 = 5.42; 2.0 passes.
+
+    tools/starve_calibration.py (PYTHONPATH=. needed when run directly):
+      ME 450   T1 2.5 d   T_total 8.2 d
+      ME 675   T1 3.8 d   T_total 8.8 d   (lit: lipid 3-7 d, death 1-2 w)
+
+    Growth ceiling under --mass-balance: ME/ec 0.100 -> 0.150, so
+    growth_rate 0.0913 is no longer at 91 % of the bound.
+
+124.4 Measured
+    tools/probes/growth_mass_balance.py, extended in this section with
+    --zoo-fc, --zoo-me (the spawned reserve is rescaled so s_X(0) is
+    unchanged), --behaviour policy --checkpoints DIR (configured spawn,
+    trained policies), --migration and --currents. Default behaviour is
+    unchanged.
+
+    Run-to-run spread, found and FIXED in this section. The numbers below
+    were measured before the fix, when repeated default runs with the
+    same --seed gave zoo 9326-9589 t and phyto 3705-4077 t, about +-3 %.
+    Cause: benthic_community has seed_rate 1e-06, and its recruitment
+    noise (population_change.py, np.random.uniform) is drawn from NumPy's
+    GLOBAL RNG, which inference.build_env never seeded - --seed reached
+    the spawn only. Two runs differed from tick 0 (benthic, 6e-9
+    relative) and the predator-prey dynamics amplified that to per cent
+    over 3000 ticks. Isolated by elimination: fixed PYTHONHASHSEED and
+    OMP/MKL_NUM_THREADS=1 still diverged; np.random.seed(0) gave
+    bit-identical 3000-tick traces; benthic seed_rate 0 with the global
+    RNG unseeded also gave bit-identical traces. The per-tick FG shuffle
+    (environment.py, np.random.shuffle) uses the same RNG but does not
+    change the result - every FG's update is independent of the order.
+
+    Fix: build_env(seed=...) now also seeds the global RNG
+    (np.random.seed(seed & 0xFFFFFFFF)); seed=None leaves it alone.
+    Covers inference.py, tools/viability.py, api.py and every probe
+    built on build_env. Training is untouched: train.py workers seed the
+    global RNG per rollout (parallel_worker) and the GPU engine seeds in
+    lib/gpu/config.py. After the fix two full growth_mass_balance.py
+    runs print identical output. Regression test:
+    tests/test_inference_determinism.py (fails without the fix).
+
+    Consequences: differences under ~3 % between two single rollouts
+    measured before this fix are noise - in the tables below that is the
+    reserve's effect on the levels under trained policies (-4 %). The
+    3 % also says something about the model: a 1e-5 t/cell/tick
+    perturbation grows to per cent in 3000 ticks, so single-seed
+    comparisons should use several seeds, not one.
+
+    Trained policies (results/pzbpgp248nsrpfix35, migration + currents
+    on, 3000 ticks, last 300):
+      fc     ME     zoo t    phyto t   zoo:phyto   GGE wet   GGE carbon
+      1.45   450    75322    44567     1.69:1      11.8 %    26.6 %
+      2.0    450    65290    44364     1.47:1      10.8 %    24.3 %
+      2.5    450    56493    44029     1.28:1       9.7 %    21.8 %
+      2.0    675    62525    45454     1.38:1      10.6 %    23.9 %
+    (carbon = wet * 4500/2000, 118.7)
+
+    Frozen greedy, colocated (mechanics bench, not a verdict - 123):
+      fc     ME     zoo t    phyto t   zoo:phyto   built/ingested
+      1.45   450     9475     3945     2.40:1      23.9 %
+      2.0    450    10717     7437     1.44:1      24.7 %
+      2.5    450    14228    16806     0.85:1      25.3 %
+      3.0    450    16645    26075     0.64:1      22.6 %
+      2.0    675    14669    13597     1.08:1      26.8 %
+
+    Reading: under trained policies phytoplankton does not move and
+    zooplankton drops 17 %; almost all of it is feeding_cost, the
+    reserve is within noise on the levels. Under frozen greedy a higher
+    feeding_cost raises R* - the classic result 115.7 predicted for the
+    maintenance/intake triple - and both levels rise. Carbon-basis GGE
+    stays inside the copepod 20-40 % band in every arm.
+
+124.5 Applied
+    fgconfig/fg_library.yaml, zooplankton:
+      feeding_cost        1.45  -> 2.0
+      max_energy_reserve  450.0 -> 675.0
+    with the derivation in the comments; the resting_metabolism comment
+    now says it is the fasting rate. Docstring in
+    population_change._charge_growth_to_reserve updated (0.150). The
+    strategy deck (122) was updated to the new values and regenerated.
+
+    Validation: suite 760 passed, 12 skipped (761 with the determinism
+    test of 124.4). 1-generation train.py run
+    with --mortality on completed; gen-1 probe: phytoplankton 98 %,
+    zooplankton 86 %, porpoises 36 % of spawn.
+
+    Checkpoints: no observation shape moved, but the reserve change
+    shifts the fill level s_X that the zooplankton policy observes, so
+    policies trained before this section see a shifted input and should
+    be retrained before being quoted.
+
+124.6 Still open for plankton
+    - resting_metabolism 2.0 %/day at the low edge (Ikeda would raise it;
+      needs Ikeda's tables read, not inferred).
+    - the no-action fixtures in test_population_stability.py and
+      test_ecosystem_refactor.py (120.1).
+
