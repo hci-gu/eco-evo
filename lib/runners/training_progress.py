@@ -16,7 +16,8 @@ from lib.environments.ecosystem import EcosystemEnvironment
 from lib.gpu.config import DEFAULT_LIBRARY
 from lib.environments.ecosystem_env.currents import CurrentConfig
 from lib.environments.ecosystem_env.population_change import (
-    DEFAULT_MORTALITY_MULTIPLIER)
+    DEFAULT_MASS_BALANCE, DEFAULT_MORTALITY_MULTIPLIER,
+    LEGACY_MASS_BALANCE)
 
 
 def add_progress_arguments(parser):
@@ -110,6 +111,12 @@ def inference_config(trainer, backend):
                 mortality_multiplier=float(
                     getattr(builder, "mortality_multiplier",
                             DEFAULT_MORTALITY_MULTIPLIER)),
+                # Same argument as the multiplier above: the growth term
+                # the run was trained under has to be the one the
+                # progress rollout is evaluated under, or the curve
+                # measures a different ecology (section 116.3).
+                mass_balance=bool(
+                    getattr(builder, "mass_balance", DEFAULT_MASS_BALANCE)),
                 currents=builder.currents.metadata() if getattr(builder, "currents", None) else None)
 
 
@@ -122,6 +129,12 @@ def comparable_config(config):
     normalised = dict(config)
     normalised.setdefault("mortality_multiplier", DEFAULT_MORTALITY_MULTIPLIER)
     normalised["mortality_multiplier"] = float(normalised["mortality_multiplier"])
+    # Histories written before --mass-balance existed used the legacy
+    # growth term. That is LEGACY_MASS_BALANCE and not DEFAULT_MASS_BALANCE:
+    # the default flipped in section 120 and flipping a default must not
+    # retroactively relabel what an old run was doing.
+    normalised.setdefault("mass_balance", LEGACY_MASS_BALANCE)
+    normalised["mass_balance"] = bool(normalised["mass_balance"])
     return normalised
 
 
@@ -138,6 +151,8 @@ def build_inference_env(config, seed):
                                 mortality_multiplier=config.get(
                                     "mortality_multiplier",
                                     DEFAULT_MORTALITY_MULTIPLIER),
+                                mass_balance=config.get(
+                                    "mass_balance", DEFAULT_MASS_BALANCE),
                                 migration=config["migration"],
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
                                 current_world_seed=seed)

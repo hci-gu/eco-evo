@@ -8,6 +8,7 @@ from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
 from lib.runners.population_stability import add_population_arguments, population_options
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env.population_change import (
+    DEFAULT_MASS_BALANCE, add_mass_balance_argument,
     add_mortality_multiplier_argument)
 from lib.environments.ecosystem_env.source_tracking import (add_local_reward_arguments,
                                                             local_reward_options)
@@ -60,6 +61,7 @@ def add_common_arguments(parser):
     parser.add_argument("--argmax-penalty", "--argmax_penalty", dest="argmax_penalty", type=float, default=0.3)
     parser.add_argument("--mortality", choices=("on", "off"), default="off")
     add_mortality_multiplier_argument(parser)
+    add_mass_balance_argument(parser)
     parser.add_argument("--migration", choices=("on", "off"), default="off")
     parser.add_argument("--execution", choices=("eager", "compile", "cuda-graph", "compile-graph"), default="cuda-graph")
     parser.add_argument("--graph-ticks", type=positive_int, default=32)
@@ -79,6 +81,9 @@ def builder_from_args(args):
                               currents=current_options(args),
                               mortality_multiplier=float(
                                   getattr(args, "mortality_multiplier", 1.0)),
+                              mass_balance=bool(
+                                  getattr(args, "mass_balance",
+                                          DEFAULT_MASS_BALANCE)),
                               tick_hours=int(getattr(args, "tick_length", 6)))
 
 

@@ -39,6 +39,104 @@ def add_mortality_multiplier_argument(parser):
                              "unchanged).")
 
 
+# ON since section 120. The library is calibrated for the mass-balanced
+# growth term - zooplankton's resting_metabolism (118) and growth_rate
+# (111) are both set in that world - so a run that does not pass the flag
+# has to get that world, not the legacy one. ``--no-mass-balance`` is the
+# way back to the pre-116 tick.
+DEFAULT_MASS_BALANCE = True
+
+# What a run recorded BEFORE the flag existed was running: the legacy
+# term. Kept separate from the default above so that flipping the default
+# never rewrites history (see training_progress.comparable_config).
+LEGACY_MASS_BALANCE = False
+
+
+def add_mass_balance_argument(parser):
+    """Register ``--mass-balance`` / ``--no-mass-balance``.
+
+    Shared between the entry points for the same reason
+    :func:`add_mortality_multiplier_argument` is (section 88.3): a flag
+    that changes the tick must not be able to mean two different things
+    on two parsers.
+
+    Both spellings exist because the default flipped in section 120:
+    ``--mass-balance`` was the way to opt IN while the default was off
+    and is now a no-op that scripts written against 116 keep working
+    with, and ``--no-mass-balance`` is the way to opt out.
+    """
+    parser.add_argument("--mass-balance", "--mass_balance",
+                        dest="mass_balance", action="store_true",
+                        default=DEFAULT_MASS_BALANCE,
+                        help="Make the growth term PAY for the biomass it "
+                             "adds: cap it by the energy reserve above the "
+                             "maintenance line and debit that reserve "
+                             "(option A, section 116). ON by default since "
+                             "section 120, so this flag is a no-op kept for "
+                             "scripts written against the old default.")
+    parser.add_argument("--no-mass-balance", "--no_mass_balance",
+                        dest="mass_balance", action="store_false",
+                        help="Revert to the pre-116 growth term, which adds "
+                             "biomass without debiting the energy reserve. "
+                             "The library is NOT calibrated for it (118, "
+                             "119.4): zooplankton then converts mass at "
+                             "45 %% against a 28.9 %% thermodynamic "
+                             "ceiling.")
+
+
+def _charge_growth_to_reserve(env, fg, biomass_delta):
+    """``--mass-balance``: growth buys biomass instead of receiving it.
+
+    Without this the growth term adds biomass and leaves
+    ``energy_reserve`` untouched, so the new biomass arrives carrying an
+    implied ``energy_content`` that was never withdrawn from anywhere -
+    measured at 198-344 % of the mass actually eaten, against a ceiling
+    of 28.9 % from the library's own numbers (sections 114, 115).
+
+    With it, the growth term is still GATED by satiation exactly as
+    ``Strategi.pdf`` specifies - ``B * MG_X * q_X`` is the wish - but the
+    wish is capped by the reserve standing above the maintenance line
+    and that reserve is then debited:
+
+        E_avail = max(0, R - u_X * ME_X * B)
+        dB      = min(B * MG_X * q_X, E_avail / energy_content_X)
+        R      -= dB * energy_content_X
+
+    The debit is the part that matters. The cap alone leaves the reserve
+    refilling freely, so ``s_X`` falls only by dilution, which is an
+    order of magnitude weaker (section 115.2).
+
+    Only the POSITIVE part of ``biomass_delta`` is touched. Starvation is
+    a loss, not a purchase, and its branch is left exactly as it was.
+
+    Note that this makes ``max_energy_reserve / energy_content`` a hard
+    ceiling on the reachable ``growth_rate``, since cap and wish are both
+    linear in ``q_X``. For zooplankton that ratio is 0.100 against a
+    ``growth_rate`` of 0.0913 - 91 % of the bound. Section 115.3 has the
+    table for every FG.
+    """
+    energy_content = float(fg.params.get("energy_content", 0.0) or 0.0)
+    if energy_content <= 0.0:
+        # No energy content, no price. Leaving the wish alone is the only
+        # defined behaviour; an FG in this state is a configuration bug
+        # the growth term is not the place to diagnose.
+        return biomass_delta
+
+    available = np.maximum(
+        0.0,
+        fg.energy_reserve
+        - np.float32(fg.maintenance_level * fg.max_energy_reserve)
+        * fg.biomass,
+    )
+    cap = available / np.float32(energy_content)
+    gain = np.minimum(np.maximum(0.0, biomass_delta), cap)
+    fg.energy_reserve = np.maximum(
+        0.0, fg.energy_reserve - gain * np.float32(energy_content)
+    ).astype(env.dtype, copy=False)
+    return np.where(biomass_delta > 0.0, gain, biomass_delta).astype(
+        env.dtype, copy=False)
+
+
 def _seasonal_population_rate(env, fg_id, fg):
     growth_rate = fg.growth_rate
     amplitude = float(getattr(fg, "seasonal_amplitude", 0.0) or 0.0)
@@ -98,6 +196,12 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
     rate = np.where(energy_surplus >= 0.0, growth_rate, starve_rate).astype(
         env.dtype, copy=False)
     biomass_delta = fg.biomass * rate * energy_surplus
+
+    # ``--mass-balance``: charge the growth to the reserve before anything
+    # downstream reads the delta, so the loss accounting below sees the
+    # biomass that was actually paid for. Off by default (section 116).
+    if getattr(env, "mass_balance", False):
+        biomass_delta = _charge_growth_to_reserve(env, fg, biomass_delta)
 
     total_loss = -np.minimum(0.0, biomass_delta)
     actual_starve_loss = np.minimum(total_loss, fg.biomass)

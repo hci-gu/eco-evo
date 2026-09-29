@@ -30,6 +30,10 @@ class EnvironmentBuilder:
     # Global scale factor on every FG's ``natural_mortality``
     # (``--mortality_multiplier``); 1.0 leaves the tick unchanged.
     mortality_multiplier: float = 1.0
+    # Whether the growth term pays for the biomass it adds out of the
+    # energy reserve (``--mass-balance``, section 116). True since
+    # section 120; False is the pre-116 tick.
+    mass_balance: bool = True
     # ``--tick-length``. The library is calibrated at LIBRARY_TICK_HOURS
     # and is never rewritten; anything else is converted in memory as the
     # groups are built. Section 106.
@@ -52,6 +56,7 @@ class EnvironmentBuilder:
             dict(height=self.grid[0], width=self.grid[1]), groups,
             migration=self.migration, apply_natural_mortality=self.mortality,
             mortality_multiplier=self.mortality_multiplier,
+            mass_balance=self.mass_balance,
             currents=self.currents, current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
 
 
@@ -76,6 +81,7 @@ class ProjectSpec:
                 dict(height=builder.grid[0], width=builder.grid[1]), groups,
                 migration=builder.migration, apply_natural_mortality=builder.mortality,
                 mortality_multiplier=builder.mortality_multiplier,
+                mass_balance=builder.mass_balance,
                 currents=builder.currents, current_world_seed=seed)
         finally:
             np.random.set_state(rng_state)

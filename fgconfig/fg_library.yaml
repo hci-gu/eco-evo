@@ -4,7 +4,52 @@
     display_name: "Phytoplankton"
     is_decision_maker: false
     movement_speed: 0.0
-    growth_rate: 0.0375
+    # RESIDUAL growth, not net growth - sections 113 and 121. The old
+    # 0.0375 was "net mu ~0.15/day, HELCOM avg" (63.3), and for
+    # phytoplankton "net growth" in a field context is the OBSERVED
+    # population change, i.e. division minus grazing. Grazing is applied
+    # separately in `_apply_predation`, so using it as the logistic's
+    # input rate charged the same loss twice - the same error section
+    # 108 found in natural_mortality, on the other side of the flow.
+    #
+    # The signature: 63.3 divided the previous value, 0.125, by 3.33,
+    # i.e. removed 70 % of production. Calbet & Landry (2004) put
+    # microzooplankton grazing at 60 % of daily phytoplankton growth in
+    # coastal systems and 67 % overall; Calbet (2001) puts
+    # mesozooplankton at a mean 22.6 %/day. That reduction was the
+    # grazing term, not a calibration.
+    #
+    # The rate must be gross of the losses the model RESOLVES and net of
+    # the ones it does not. This model's `zooplankton` is mesozooplankton
+    # (copepod P/B, section 111); microzooplankton is not represented at
+    # all. So: Eppley (1972) mu_max = ln2 * 0.851 * 1.066^T gives
+    # 0.81-1.54/day at 5-15 C, and removing ~60 % unmodelled
+    # micro-grazing leaves 0.081-0.154/tick. 0.125 sits mid-band, at
+    # about 11.5 C.
+    #
+    # 63.3's operative argument was a BEHAVIOUR - 0.125 "drives phyto to
+    # CC and masks grazing signal" - and section 64 found why: the
+    # Holling numerator had lost its B_prey factor, so a_eff fell toward
+    # zero as prey became abundant. At B = CC with a = 0.25, h = 4 that
+    # is 0.010 against a correct 0.240, a factor 24 of missing grazing
+    # exactly where the symptom was seen. The bug was fixed in 64; this
+    # compensation was not reverted until now (113.5).
+    #
+    # MEASURED (120.3, 60x60, 3000 ticks, frozen greedy, mass-balanced
+    # growth term, --mortality on): against 0.0375 this raises delivered
+    # zooplankton production from 17.5 % to 25.0 % of ingested energy -
+    # inside the literature copepod GGE band of 20-40 % on a carbon
+    # basis, the only arm in sections 108-120 to land there - and lifts
+    # the plankton from 4-8 % of their spawn levels to 5-27 %.
+    #
+    # THE COST, stated because it is real: the zoo:phyto standing-stock
+    # ratio degrades from 1.00:1 to 2.35:1 against a spawn ratio of
+    # 0.44:1. That is the R* invariance of 117.2 - a faster resource
+    # raises throughput and the consumer's stock but not its own. This
+    # value buys absolute LEVEL at the cost of RATIO; zooplankton's
+    # resting_metabolism (118) buys ratio at the cost of level. Neither
+    # fixes both, and the remaining gap is item 4 of 120.4.
+    growth_rate: 0.125
     max_carrying_capacity: 24.0
     energy_content: 2000.0
     # seed_rate 0 is a DELIBERATE choice (2026-09-28), not editor drift:
@@ -30,13 +75,81 @@
     is_decision_maker: true
     maintenance_level: 0.5
     max_energy_reserve: 450.0
-    resting_metabolism: 3.5
+    # RESPIRATION, set from the literature - section 118, and raised
+    # 6.4x from 3.5. 22.5 MJ/t/tick = 90 MJ/t/day = 2.0 % of body energy
+    # per day (energy_content 4500 MJ/t). Copepod respiration alone sits
+    # at 2-5 %/day; the often-quoted ~10 %/day non-feeding carbon demand
+    # includes egg production, which in this model IS the growth term
+    # and must not be charged twice. 0.311 %/day was 1/6 of the band.
+    #
+    # The old value was solved backwards out of the starvation window in
+    # tools/starve_calibration.py, and that window turned out not to
+    # bind: T_total stays inside the literature 3-30 d across a 32-fold
+    # range of this parameter (15.0 d at 3.5, 8.2 d at 22.5, 7.2 d at
+    # 112.5), because starve_rate carries it and not the reserve drain.
+    # The number was under-determined, not measured (118.3).
+    #
+    # This value PRESUPPOSES --mass-balance (section 116). Under the
+    # legacy growth term a higher metabolism is partly absorbed by
+    # fabricated biomass and the two are not separable; the measured
+    # pair is in section 119. There is also an extinction wall just
+    # above 5 %/day: at 10 %/day zooplankton dies out entirely (118.5).
+    #
+    # Companion, NOT done: max_energy_reserve 450 MJ/t is 10 % of body
+    # energy, i.e. a 5-day buffer at this rate where it used to be 32
+    # days, and feeding_cost 1.45 sits under the literature 2-3x.
+    resting_metabolism: 22.5
     movement_speed: 0.02
     feeding_cost: 1.45
     movement_cost: 1.2
     energy_content: 4500.0
     min_split_biomass: 0.0
-    growth_rate: 0.01
+    # SET FROM THE LITERATURE, not from what the model tolerates -
+    # section 111. Biology drives (AGENTS.md section 7); a collapse at a
+    # biologically correct value is a model defect to be diagnosed, not
+    # a reason to lower the value.
+    #
+    # This is the ANABOLIC CEILING: growth_rate * (satiation_scale -
+    # u_x) is the most biomass the group can add per tick, reached only
+    # at full energy surplus. Copepod P/B in temperate shelf seas is
+    # 15-40/yr, so the ceiling is set at the band's TOP, 40/yr, which
+    # makes the whole band reachable rather than excluding its upper
+    # part by construction:
+    #
+    #   growth_rate = 40 / (0.3 * 1460) = 0.0913
+    #
+    # It is GROSS growth, before death, as this parameter has always
+    # been: the tick applies B * (1 - natural_mortality) * (1 +
+    # growth_rate * (s_x - u_x)), mortality first and growth on what is
+    # left. Senescence is a SEPARATE subtraction and is not baked in
+    # here. P/B is likewise a gross production figure - production is
+    # what mortality balances in steady state, not something net of it -
+    # so the two are the same kind of quantity.
+    #
+    # DELIVERED, not ceiling. The 17.3/yr and the collapse that section
+    # 111.3 recorded here were both measured in a world that no longer
+    # exists: the growth term was not mass-balanced (116) and
+    # phytoplankton was still at 0.0375 (121). At the current library
+    # the same rollout delivers 25.0 % of ingested energy as new
+    # biomass, inside the literature copepod GGE band of 20-40 % on a
+    # carbon basis (120.3, 121.2). The two defects 111.3 blamed have
+    # since been found and fixed - the growth term fabricated mass
+    # (114) and phytoplankton's rate was net of the model's own grazing
+    # (113) - so neither is a live caveat on this number any more.
+    #
+    # Sections 109 and 110 answered "what does the model tolerate" -
+    # 0.0125 and 0.0208 - which was the wrong question, and 111 is the
+    # section that asked the right one.
+    growth_rate: 0.0913
+    # LEFT ALONE by the M1 pass of section 108, deliberately. 0.0025 /
+    # 6 h = 0.01/day = M 3.65/yr, which is at the LOW end of measured
+    # copepod mortality, so it is not the parameter that is too harsh.
+    # The squeeze section 74.7 found is on the other side, on
+    # growth_rate - see its comment above and section 111. The headroom
+    # ceiling/natural_mortality is 11.0 now that growth_rate is set from
+    # the literature, in line with pelagic_fish 12.0 and gadoids 10.7;
+    # it was 1.2 when 74.7 measured it. The squeeze was on the growth
+    # side the whole time, not on this value.
     natural_mortality: 0.0025
     max_intake_rate: 0.25
     spawn:
@@ -85,7 +198,12 @@
     energy_content: 7500.0   # annual mean 7.5 MJ/kg, not the autumn peak (section 98)
     min_split_biomass: 0.5
     growth_rate: 0.004
-    natural_mortality: 0.0005
+    # RESIDUAL mortality (ICES SMS "M1"), not total M. Predation is
+    # explicit in the tick, so the total M of a stock assessment would
+    # double-count it; see section 108. 1.0e-04 / 6 h = M1 0.146/yr,
+    # inside the 0.1-0.2 band SMS keyruns use for herring and sprat.
+    # Was 5e-04 = M 0.73/yr, drawn from total-M allometry (section 35.3).
+    natural_mortality: 0.0001
     max_intake_rate: 0.04
     spawn:
       mode: colony
@@ -111,7 +229,10 @@
     energy_content: 5500.0
     min_split_biomass: 0.5
     growth_rate: 0.0025
-    natural_mortality: 0.0002
+    # Residual M1, section 108. 7.0e-05 / 6 h = M1 0.102/yr, against the
+    # 0.05-0.15 band; ICES single-species M = 0.2/yr for cod is a TOTAL
+    # that includes the predation this model resolves. Was 2e-04.
+    natural_mortality: 7.0e-05
     max_intake_rate: 0.04
     spawn:
       mode: colony
@@ -137,7 +258,12 @@
     min_split_biomass: 250.0
     energy_content: 8500.0
     growth_rate: 0.001
-    natural_mortality: 5e-05
+    # Residual M1, section 108. 6.0e-05 / 6 h = M1 0.088/yr, i.e. adult
+    # annual survival 0.916 - inside the 0.90-0.95 reported for harbour
+    # porpoise, excluding bycatch. Was 5e-05 (0.073/yr); the only FG
+    # whose allometric value already landed in the literature band, so
+    # this is a nudge toward the middle of it, not a correction.
+    natural_mortality: 6.0e-05
     # Physiological intake ceiling, NOT the realised ration: 0.035 t prey
     # per t predator per tick = 14 % of body mass per day. Kastelein et
     # al. measure 4-9.5 %/day for captive harbour porpoises, so the cap
@@ -189,7 +315,11 @@
     min_split_biomass: 80.0
     energy_content: 10000.0
     growth_rate: 0.001
-    natural_mortality: 4e-05
+    # Residual M1, section 108. 6.0e-05 / 6 h = M1 0.088/yr. Grey-seal
+    # adult female survival is 0.94-0.97 (M 0.03-0.06), but the engine
+    # applies this to a BIOMASS pool that also carries subadults, so the
+    # value sits above the adult-only figure. Was 4e-05 (0.058/yr).
+    natural_mortality: 6.0e-05
     max_intake_rate: 0.05
     spawn:
       mode: colony
@@ -213,7 +343,14 @@
     maintenance_level: 0.5
     energy_content: 7000.0
     growth_rate: 0.001
-    natural_mortality: 0.0002
+    # Residual M1, section 108, and the largest single correction in it.
+    # 8.0e-05 / 6 h = M1 0.117/yr, i.e. annual survival 0.89, against
+    # 0.90-0.95 for common guillemot and razorbill and 0.85-0.88 for
+    # kittiwake. The old 2e-04 = M 0.29/yr gave a mean lifespan of 3.4
+    # years, identical to gadoids, because the W^-0.25 allometry of
+    # section 35.3 was applied across the ectotherm/endotherm line where
+    # it does not hold. Guillemots live 20-30 years.
+    natural_mortality: 8.0e-05
     max_intake_rate: 0.15
     spawn:
       mode: colony

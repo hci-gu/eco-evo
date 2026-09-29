@@ -117,6 +117,10 @@ class TensorEcosystem:
         # ``--mortality_multiplier`` scales every FG's rate, exactly as
         # the reference does in ``population_change``; the default 1.0
         # keeps this vector bit-identical.
+        # ``--mass-balance`` mirror of the reference's
+        # ``_charge_growth_to_reserve``; False keeps ``population``
+        # bit-identical to the pre-change kernel.
+        self.mass_balance = bool(getattr(env, "mass_balance", False))
         mortality_scale = max(0.0, float(getattr(env, "mortality_multiplier", 1.0)))
         self.mortality_keep = tensor([
             max(0.0, 1.0 - max(0.0, fg.natural_mortality) * mortality_scale)
@@ -456,6 +460,20 @@ class TensorEcosystem:
         r = reserve * self.mortality_keep
         surplus = self.energy_level(b, r) - self.maintenance
         delta = b * torch.where(surplus >= 0, self.growth, self.starve) * surplus
+        if self.mass_balance:
+            # Growth buys biomass out of the reserve standing above the
+            # maintenance line, and the reserve is debited for it. Same
+            # algebra as ``population_change._charge_growth_to_reserve``;
+            # see that docstring and section 116.
+            ec = self.energy_content[:, :, None]
+            available = (r - self.maintenance * self.max_reserve * b).clamp_min(0)
+            wish = delta.clamp_min(0)
+            gain = torch.where(ec > 0,
+                               torch.minimum(wish, available / ec.clamp_min(1e-30)),
+                               wish)
+            r = (r - torch.where(self.is_dm & (ec > 0), gain * ec,
+                                 torch.zeros_like(gain))).clamp_min(0)
+            delta = torch.where(delta > 0, gain, delta)
         loss = -torch.minimum(delta, torch.zeros_like(delta))
         starve_loss = torch.where(self.is_dm, torch.minimum(loss, b), 0.0)
         reduction = torch.where(loss > 0, (b - loss) / (b + 1e-9), 1.0).clamp(0, 1)

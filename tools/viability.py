@@ -55,6 +55,10 @@ def parse_behaviours(text):
     return names or [viability.NEUTRAL]
 
 
+from lib.environments.ecosystem_env.population_change import (  # noqa: E402
+    add_mass_balance_argument)
+
+
 def build_parser():
     parser = argparse.ArgumentParser(
         description="Measure whether the ecosystem is viable without training.")
@@ -120,6 +124,7 @@ def build_parser():
                         dest="sample_every", type=int, default=10,
                         help="Tick stride for --csv (default: 10).")
     parser.add_argument("--quiet", action="store_true")
+    add_mass_balance_argument(parser)
     return parser
 
 
@@ -130,6 +135,7 @@ def _build_env(args, seed):
         args.project, args.grid, seed=seed, verbose=False,
         apply_natural_mortality=args.mortality == "on",
         mortality_multiplier=args.mortality_multiplier,
+        mass_balance=args.mass_balance,
         migration=args.migration == "on",
         tick_hours=args.tick_length,
     )
@@ -176,6 +182,8 @@ def main(argv=None):
         print(f"spawn          {args.spawn} ({spawn_note})")
         print(f"mortality      {args.mortality} "
               f"(multiplier {args.mortality_multiplier:g})")
+        print(f"mass balance   "
+              f"{'on - growth pays for biomass' if args.mass_balance else 'off'}")
         print(f"migration      {args.migration} "
               f"({'open' if args.migration == 'on' else 'closed'} system)")
         print(f"criterion      {criterion.describe()}")

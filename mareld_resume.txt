@@ -3869,6 +3869,10 @@ starves despite phyto sitting at carrying capacity.
       0.05 per active cell.
 
 63.3 Phyto calibration recommendation (literature-based)
+  SUPERSEDED BY 113 on two of its three numbers: growth_rate 0.0375 is
+  net of the grazing the tick applies (use ~0.125), and
+  seasonal_amplitude 0.7 makes the mean supply worse when measured
+  (112.4). seasonal_period 1460 stands.
   For temperate coastal / Baltic pelagial phytoplankton on a
   1 km^2 cell with 6 h tick (mareld2.yaml defaults):
     growth_rate         = 0.0375   (net mu ~ 0.15/day, HELCOM avg)
@@ -9902,3 +9906,2246 @@ remain open exactly as described in 71.9 / 71.11.
     progress evaluation from --eval-ticks, default 1000. Worth knowing
     when a displayed duration looks unexpected: check which rollout the
     tick counter is counting before concluding the clock is wrong.
+
+108 NATURAL MORTALITY RE-DERIVED AS RESIDUAL M1 (2026-09-28)
+
+108.1 The question and the answer
+    Asked whether the per-FG `natural_mortality` values match the
+    literature, given the intended meaning: the fraction of a one-ton
+    population that dies of AGE per 6 h tick, multiplied by the current
+    biomass at runtime, on top of starvation, predation and impacts.
+
+    They did not, and the reason is structural rather than arithmetic.
+    Section 35.3 derived them from an allometric scaling of NATURAL
+    mortality, ~M^-0.25. The published M values that scaling is anchored
+    to - ICES M = 0.2/yr for cod, 0.3-0.5/yr for herring, quoted in
+    section 65 P4 to REJECT a change - are single-species TOTAL natural
+    mortality. Total M includes predation. Predation is explicit in the
+    tick (`_apply_predation`, Holling II with Beddington-DeAngelis), so
+    the library was charging every prey FG for its predators twice.
+
+    The quantity the parameter should hold is the RESIDUAL: what ICES
+    multispecies (SMS) calls M1, i.e. M minus the predation the model
+    resolves. That is the single finding; everything below follows from
+    it.
+
+108.2 What the old values actually said
+    Converted at 1460 ticks/yr (the rescale rule is "loss", so these
+    compound: M = -1460 * ln(1 - m), section 104.5):
+
+      FG              m/tick    implied M/yr   annual loss   1/M
+      zooplankton     0.0025        3.655          97.4 %    0.27 yr
+      pelagic_fish    5e-04         0.730          51.8 %    1.37 yr
+      gadoids         2e-04         0.292          25.3 %    3.42 yr
+      porpoises       5e-05         0.073           7.0 %   13.70 yr
+      seals           4e-05         0.058           5.7 %   17.12 yr
+      seabirds        2e-04         0.292          25.3 %    3.42 yr
+
+    Read as total M the fish rows are defensible. Read as residual M1 -
+    which is what the engine needs - pelagic_fish is 4-7x too harsh and
+    gadoids 2-6x.
+
+    The unambiguous error is the last row. seabirds and gadoids carried
+    the SAME value, so seabirds got a mean lifespan of 3.4 years. The
+    W^-0.25 line does not cross the ectotherm/endotherm boundary:
+    birds and mammals sit far below the fish line at equal mass.
+    Common guillemots live 20-30 years. This row is wrong under every
+    reading of the parameter, M or M1.
+
+108.3 Two definitions were in circulation
+    The user's statement is "age only". Section 35.3 says the term
+    represents "senescence, hidden predation, disease, mechanical
+    damage, sedimentation". Those differ by a factor of several.
+
+    Settled on the M1 reading - age, disease, and predation by
+    UNMODELLED predators - because it is the only one with published
+    numbers attached. Pure senescence is not separately measurable for
+    fish or copepods; nobody reports it. A strict age-only reading would
+    push every value lower still, and would have no source to check it
+    against. The library comments now state the M1 reading next to each
+    value so the next person does not have to re-derive which of the two
+    a number was set under.
+
+108.4 Biomass pool, not head count
+    `_apply_decision_maker_population_change` applies
+    `keep = 1 - m * mortality_multiplier` to `fg.biomass` and
+    `fg.energy_reserve`. It is a BIOMASS pool. Numbers-weighted M is
+    dominated by juveniles - high mortality, little mass - while
+    biomass-weighted M is dominated by adults. The values should
+    therefore lean adult, which pushes all of them DOWN relative to a
+    population-average M, not up. The seal row is the visible case: the
+    new value sits above adult-only grey-seal survival (0.94-0.97) but
+    below a pup-inclusive average, because the pool carries subadults.
+
+108.5 New values
+      FG              old      new      M1/yr   annual   literature band
+      zooplankton     0.0025   0.0025   3.655   97.4 %   (left alone)
+      pelagic_fish    5e-04    1.0e-04  0.146   13.6 %   M1 0.1-0.2
+      gadoids         2e-04    7.0e-05  0.102    9.7 %   M1 0.05-0.15
+      porpoises       5e-05    6.0e-05  0.088    8.4 %   0.07-0.12
+      seals           4e-05    6.0e-05  0.088    8.4 %   0.05-0.12
+      seabirds        2e-04    8.0e-05  0.117   11.0 %   0.08-0.15
+
+    Bands are ranges, not point citations: the fish rows should be
+    checked against the North Sea SMS keyrun M1 tables in the ICES
+    WGSAM reports before anyone quotes a single number from them. The
+    endotherm rows come from reported adult annual survival - harbour
+    porpoise 0.90-0.95 excluding bycatch, grey seal 0.94-0.97, common
+    guillemot and razorbill 0.90-0.95, kittiwake 0.85-0.88.
+
+    Two rows went UP. porpoises was already the one FG whose allometric
+    value landed inside its band; 5e-05 to 6e-05 moves it to the middle
+    of that band rather than correcting it. seals was below its band for
+    a biomass pool, per 108.4.
+
+108.6 Zooplankton was left alone on purpose
+    0.0025/tick is 0.01/day, M 3.655/yr, a 69-day half-life. That is at
+    the LOW end of measured copepod mortality, so it is not the value
+    making the group fragile. Section 74.7 already located the real
+    squeeze on the other side of the ledger: the anabolic ceiling is
+    growth_rate * (satiation_scale - u_x) = 0.01 * 0.3 = 0.003/tick, a
+    headroom of 1.2 over this mortality before any predation lands. A
+    copepod P/B of 15-40/yr in temperate shelf seas against the 4.4/yr
+    this growth_rate can reach says `growth_rate` is the low number, not
+    `natural_mortality` the high one. Lowering zoo mortality would hide
+    that, so it was not done. CLOSED by section 111: growth_rate is now
+    0.0913, set from the literature (copepod P/B 15-40/yr) rather than
+    from what the model tolerates. The mortality value here is unchanged
+    and still correct; the headroom it leaves is 11.0, in line with
+    every other DM.
+
+108.7 Scope and consequences
+    * `--mortality` is OFF by default (`APPLY_NATURAL_MORTALITY = False`
+      in train.py), so no existing default run changes behaviour. Only
+      `--mortality on` runs see any of this.
+    * `--mortality_multiplier` (section 88) scales every FG by the same
+      factor, so it cannot express this change; per-FG values stay a
+      library edit, which is what this was.
+    * Checkpoints are NOT invalidated - no observation shape, FG set,
+      grid layout or Observability entry moved. But policies trained
+      with `--mortality on` under the old values learned a harsher
+      world for pelagic_fish, gadoids and seabirds than the one they
+      would now be evaluated in.
+    * `fg_library.yaml` is calibrated at LIBRARY_TICK_HOURS = 6 as
+      always; the loader compounds these under `--tick-length` via the
+      "loss" rule (sections 103, 106). Nothing here is tick-specific.
+    * The viability verdict is unaffected: VIABILITY.md's normative
+      corner runs `--mortality off`, so no recorded survivor fraction
+      there was produced under the old values. `tools/viability.py
+      --mortality on` and `tools/probes/budget_gate.py` DO apply them,
+      and any number quoted from those two before today predates this
+      change. Lower mortality can only make the world easier, so the
+      direction of a past verdict is safe; the magnitudes are stale.
+    * The FG editor rewrites fg_library.yaml WITHOUT comments. If the
+      justifications added next to these six values disappear, the file
+      went through the editor, and the numbers are no longer evidenced
+      by anything but this section. Same failure mode the phytoplankton
+      `seed_rate: 0.0` comment guards against (section 74.11).
+
+108.8 Validation
+    Suite: 734 passed, 12 skipped (unchanged from 107 - no test asserts
+    a library mortality value; tests/test_mortality_multiplier.py and
+    tests/test_gpu_ecosystem.py build their own FGs). One-generation
+    training run on mareld2.yaml with --mortality on completed.
+
+109 ZOOPLANKTON GROWTH IS STABILITY-LIMITED, NOT LITERATURE-LIMITED (2026-09-28)
+-------------------------------------------------------------------------------
+
+109.1 What this closes
+    Section 108.6 left `growth_rate: 0.01` open with the observation
+    that it caps zooplankton at P/B 4.4/yr against a literature range
+    of 15-40/yr for copepods in temperate shelf seas. Asked to raise
+    it. It was raised, to 0.0125 - a fifth of the way to the bottom of
+    that range, and not one step further, because the world does not
+    tolerate more. This section is the measurement that says so.
+
+109.2 What the parameter can reach
+    `_apply_decision_maker_population_change` computes
+
+      biomass_delta = B * growth_rate * (s_X - u_X)
+
+    and intake shuts off as s_X approaches `satiation_scale`, so the
+    anabolic ceiling is
+
+      growth_rate * (satiation_scale - u_X) = growth_rate * 0.3
+
+    with the zooplankton defaults (u_X = 0.5, satiation_scale absent ->
+    HUNGER_SATIATION_SCALE = 0.8). Growth does NOT draw down
+    `energy_reserve`; the reserve is only scaled on loss. The cost is
+    implicit instead: s_X = E/(B * ME), so added biomass dilutes the
+    per-ton reserve, and that dilution is the negative feedback.
+    Reaching P/B 15-40/yr therefore needs growth_rate 0.034-0.091.
+
+109.3 The sweep
+    SUPERSEDED BY 111 - read that first. The measurement below stands
+    and is part of the diagnosis in 111, but its CONCLUSION does not:
+    a stability sweep may diagnose a parameter, it may not set one that
+    has a literature value. growth_rate is now 0.0913, from copepod
+    P/B, and the cliff this section found is the model defect rather
+    than a bound on the biology. (110 moved the value to 0.0208 on the
+    same mistaken footing.)
+    Frozen greedy behaviour, colocated spawn, no ARS - the viability
+    rig's machinery (`install_behaviour`, `colocate_spawn`,
+    `run_rollout`), 60x60, 3000 ticks, `--mortality off`, which is the
+    normative corner in VIABILITY.md and the training default. Columns
+    are final-window means over spawn level, except *_min which is the
+    trough over the whole horizon. realPB is the REALISED
+    production/biomass, growth_rate * <s_X - u_X>_B * 1460, not the
+    ceiling.
+
+      g        realPB  <surp>  phy_end phy_min  zoo_end zoo_min  gad_end
+      0.01      3.6    0.245     0.53    0.28     1.94    0.45     1.85
+      0.0125    4.4    0.240     0.60    0.16     2.13    0.28     1.39
+      0.015     5.1    0.233     0.47    0.04     2.27    0.07     0.57
+      0.02      6.5    0.225     0.45    0.01     1.85    0.01     0.23
+      0.025     7.8    0.213     0.47    0.01     2.22    0.005    0.21
+      0.03      8.9    0.202     0.32    0.007    1.95    0.004    0.10
+
+    (0.02/0.025/0.03 and the 0.01 row are 2-seed means, 0.0125 and
+    0.015 are 3 seeds;
+    per-seed spread is small - at 0.0125 phy_min was 0.132/0.158/0.186.)
+
+    The cliff is between 0.0125 and 0.015. It is not a gradual
+    softening: at 0.015 the phytoplankton trough drops by a factor 4
+    and gadoids fall from 1.4 to 0.57 of their spawn level. That last
+    column is the tell - this is a trophic CASCADE, not a
+    predator-prey oscillation. Zooplankton itself survives every arm;
+    what breaks is what sits above it.
+
+    0.0125 was chosen as the last value on the safe side. It buys +22 %
+    realised P/B (3.6 -> 4.4/yr) and costs phy_min 0.28 -> 0.16. That
+    is the whole of what was available.
+
+109.4 The mortality setting moves the cliff, and by a lot
+    The same sweep with `--mortality on` puts the cliff between 0.02
+    and 0.035 instead - 0.02 held phy_min at 0.21 and gadoids at 1.9,
+    and only 0.035 produced the cascade. The 0.0025/tick drain on
+    zooplankton damps the oscillation, so mortality-on is the PERMISSIVE
+    setting here, which is the opposite of the intuition that mortality
+    makes a world harsher.
+
+    The library is one calibration for both settings, so it has to be
+    set to the stricter one. 108.6's numbers (ceiling 0.003/tick,
+    headroom 1.2, P/B 4.4) are arithmetic and hold under either
+    setting; what does NOT transfer is the CLIFF LOCATION, which is a
+    rollout result and moves by a factor 2 between them. Anyone quoting
+    a cliff has to say which mortality setting measured it.
+
+109.5 The binding constraint is phytoplankton, and it has a defence
+    One run settles where the limit lives. At zoo growth_rate 0.035 -
+    two steps past the cliff - with phytoplankton `growth_rate` doubled
+    from 0.0375 to 0.075 and nothing else changed. NOTE: this pair was
+    measured under `--mortality on`, the permissive setting, before the
+    sweep moved to `off`, and was not rerun. The direction is not in
+    doubt; the magnitudes belong to that setting.
+
+                          phy_min  zoo_min  gad_end
+      phyto 0.0375 (now)    0.011    0.005     0.33
+      phyto 0.075           0.026    0.228     0.937
+
+    The cascade disappears. zoo_min rises by a factor 40 and gadoids
+    return to their spawn level. Zooplankton's growth_rate was never
+    the constraint; the phytoplankton supply is.
+
+    SUPERSEDED BY 113: 0.0375 IS wrong, and for the reason 108 found
+    in natural_mortality - it is a rate measured net of the grazing the
+    tick applies itself. The defence below is what the repo believed at
+    the time and is kept for that reason.
+
+    Section 63.3 set it deliberately: net mu ~ 0.15/day, mid-range for
+    HELCOM / Behrenfeld-Falkowski temperate net growth, explicitly NOT
+    the Eppley physiological maximum of ~0.125/tick, precisely because
+    the physiological maximum drives phyto to carrying capacity and
+    masks the grazing signal. A phytoplankton P/B of 100-300/yr from
+    the literature is a GROSS turnover figure and is not the same
+    quantity as this net mu, so the two numbers do not refute each
+    other and 0.0375 was not raised here.
+
+    The real gap is that phytoplankton and zooplankton cannot both sit
+    at their literature turnover under a plain logistic supply with no
+    seasonal forcing. `seasonal_amplitude` is 0.0 in fg_library.yaml
+    while 63.3 recommends 0.7 - an unclosed recommendation, and the
+    more likely route than pushing net mu past its calibration, since
+    a spring bloom supplies the surplus in pulses instead of raising
+    the mean. Untested. Next lever, not this change.
+
+109.6 Read-throughs from the sweep that are NOT this change
+    * pelagic_fish ends at 0.000-0.002 of spawn in EVERY arm, including
+      growth_rate 0.01. It is a pre-existing property of the frozen
+      greedy arm (sections 73, 74), not a consequence of anything here.
+    * porpoises go extinct in every arm, between tick 430 and 2450, at
+      every growth_rate. Same story.
+    * The phytoplankton dead-cell count stayed at 1 - the single
+      inaccessible cell - in every rollout in this arc, at every
+      growth_rate and
+      both mortality settings. `seed_rate: 0.0` makes exact zero
+      absorbing, so this was the failure mode the sweep was built to
+      catch, and it did not appear. Section 73.1 explains why: zoo ->
+      phyto is the only type III pair in the library, so per-capita
+      grazing vanishes faster than linearly and a cell with P > 0
+      cannot be grazed to zero asymptotically. The refuge level is
+      still indistinguishable from extinction (73.2), which is what
+      phy_min measures.
+    * Zooplankton now settles at ~2.1x its `mareld2.yaml` spawn level
+      and gadoids at ~1.4x. The spawn levels are further from
+      equilibrium than they were. Recalibrating them is a follow-up.
+
+109.7 Scope and consequences
+    * Checkpoints are NOT invalidated - no observation shape, FG set,
+      grid layout or Observability entry moved. Policies trained at
+      0.01 learned a slower zooplankton, and pelagic_fish's policy
+      learned a slower prey field.
+    * The value is calibrated at LIBRARY_TICK_HOURS = 6 like the rest
+      of the library; the loader compounds it under `--tick-length` via
+      the "growth" rule (sections 103, 106).
+    * 108.6's headroom figure is updated: the anabolic ceiling is now
+      0.00375/tick against natural_mortality 0.0025/tick, a headroom of
+      1.5 where 74.7 measured 1.2. Still thin.
+    * The sweep script is not in the repo. It is 90 lines over
+      `lib/diagnostics/viability.py`'s public helpers plus a
+      `growth_rate` assignment and an `on_tick` hook counting dead
+      phytoplankton cells; the table above is its output.
+
+109.8 The viability corner, before and after - read this before
+      quoting 109.3
+    `tools/viability.py --spawn colocated --behaviour greedy` runs its
+    own settings: 20x20, 7300 ticks, 3 seeds, mortality off. That is a
+    much smaller grid than the project's 60x60 over more than twice the
+    horizon, and it is harsher. Both values were run through it.
+
+      fg              0.01 (before)          0.0125 (after)
+      gadoids         FAIL extinct@4717      FAIL extinct@4182
+      pelagic_fish    FAIL below floor       FAIL below floor
+      porpoises       FAIL extinct@1386      FAIL extinct@926
+      benthic         PASS  eq/spawn 0.260   PASS  eq/spawn 0.354
+      phytoplankton   PASS  min 0.196        PASS  min 0.093
+      zooplankton     PASS  min 0.339        PASS  min 0.175
+      overall         NOT VIABLE             NOT VIABLE
+
+    The verdict does not change and the three failing groups are the
+    same three, failing in the same way - this corner has been NOT
+    VIABLE since well before this change (sections 73, 74, 90-92). But
+    the change is not free there either: the phytoplankton trough
+    halves, and the two groups that were already going extinct go
+    extinct 10-30 % earlier.
+
+    So the margin claim in 109.3 is grid-dependent and must be quoted
+    with its grid. On 60x60 - the project's reference grid, and the one
+    mareld2.yaml is drawn for - 0.0125 is comfortably on the safe side
+    of the cliff. On the rig's 20x20 default over 7300 ticks it is not
+    comfortable, it is merely not the thing that broke the corner.
+    Anyone who wants the old margin back should set growth_rate to
+    0.01; the change buys +22 % realised P/B and nothing else.
+
+    SUPERSEDED BY 111: growth_rate is now 0.0913, set from copepod P/B
+    and not from any margin. The trade-off weighed here - margin against
+    turnover - is not a trade-off that should have been made at a
+    biological parameter.
+
+109.9 Validation
+    Suite: 734 passed, 12 skipped (unchanged). One-generation training
+    run on mareld2.yaml completed. Viability corner run at both values,
+    table above.
+
+110 ZOOPLANKTON GROWTH CALIBRATED IN THE MORTALITY-ON WORLD (2026-09-28)
+------------------------------------------------------------------------
+
+110.1 The instruction, and what it does NOT mean
+    Section 109 chose `growth_rate: 0.0125` by sweeping a world with
+    `--mortality off`, on the ground that off is the normative corner in
+    VIABILITY.md and train.py's default. The instruction here is that
+    growth_rate has to take natural_mortality into account - i.e. the
+    parameter cannot be judged in a world where the drain it has to
+    outpace is switched off. That is correct, and it is why the sweep
+    was redone with mortality on.
+
+    It does NOT mean that natural_mortality belongs inside growth_rate.
+    It does not, and nothing in the engine changed. The tick applies
+
+      B' = B * (1 - natural_mortality) * (1 + growth_rate * (s_X - u_X))
+
+    - mortality first, to `biomass` AND `energy_reserve` so that
+    s_X = E/(B*ME) is untouched by it, then growth on the reduced
+    biomass. `growth_rate` is a GROSS rate, growth before death, and
+    always was. Senescence is a separate subtraction. An earlier draft
+    of this section presented the value as "solved net of
+    natural_mortality", which reads as if the drain were being added
+    into the parameter and then removed again by the engine. It is not,
+    and that framing has been removed: under the gross model
+    growth_rate is not a function of natural_mortality at all.
+
+    What IS a function of natural_mortality is where the stability
+    cliff sits, and that is the whole of this section.
+
+110.2 The invariant is the NET ceiling, and the cliff does not move
+    Section 109.4 recorded that the mortality setting moves the cliff by
+    a factor 2 - between 0.0125 and 0.015 with mortality off, between
+    0.02 and 0.035 with it on - and treated that as a reason to
+    calibrate against the stricter setting. It is not. The cliff does
+    not move at all; it was being measured in the wrong coordinate.
+
+    What the tick actually applies per tick is
+
+      net = growth_rate * (satiation_scale - u_X) - natural_mortality
+
+    since `_apply_decision_maker_population_change` scales biomass by
+    `1 - natural_mortality` and then adds `B * growth_rate * (s_X -
+    u_X)`. Re-reading both sweeps in that coordinate (60x60, 3000 ticks,
+    frozen greedy, colocated; phy_min is the phytoplankton trough over
+    the horizon, gad the gadoid final window over spawn):
+
+      mortality   g        net/tick   phy_min   gad_end   verdict
+      off         0.01     0.00300      0.28      1.85    safe
+      off         0.0125   0.00375      0.16      1.39    safe
+      off         0.015    0.00450      0.04      0.57    cascade
+      off         0.02     0.00600      0.01      0.23    cascade
+      on          0.02     0.00350      0.21      1.92    safe
+      on          0.0208   0.00374      0.18      1.72    safe
+      on          0.025    0.00500      0.02      0.66    cascade
+      on          0.03     0.00650      0.01      0.39    cascade
+
+    Sorted by the middle column the two settings interleave exactly.
+    Every arm at net <= 0.00375 is safe and every arm at net >= 0.0045
+    cascades, with no exception and no dependence on which setting
+    produced the number. The cliff is a property of the NET anabolic
+    ceiling, at 0.004-0.005/tick, and the gross growth_rate is not the
+    quantity that governs anything.
+
+    This is also the check on the reading: 0.0125-with-mortality-off and
+    0.0208-with-mortality-on are not merely both "safe", they land in
+    the same regime on every column (phy_min 0.16 vs 0.18, zoo_min 0.28
+    vs 0.35, gadoids 1.39 vs 1.72). Two different worlds agreeing that
+    closely is what a correct invariant looks like.
+
+110.3 The value, and why it is not double counting
+    SUPERSEDED BY 111: 0.0208 was still the model's tolerance rather
+    than the literature's number. The "not double counting" argument
+    below is unaffected and still correct - growth_rate is gross,
+    mortality is a separate subtraction - and 111.2 restates it.
+    0.0208 is a MEASURED stability limit, read off the mortality-on rows
+    of 110.2 exactly the way 109 read 0.0125 off the mortality-off rows:
+    0.0208 safe, 0.025 cascade. It is not derived from
+    natural_mortality. The net-ceiling identity
+
+      0.0208 * 0.3 - 0.0025 = 0.00374 ~= 0.0125 * 0.3 - 0
+
+    is the EXPLANATION for why the on-world tolerates more gross growth
+    than the off-world, not the source of the number. Read the other way
+    round it is also the check that 110.2's invariant holds.
+
+    Gross and net side by side, because the two are easy to conflate:
+
+      ceiling     9.1/yr gross    5.5/yr net of mortality
+      delivered   7.4/yr gross    3.7/yr net of mortality
+
+    The gross figures are the ones with a biological reference. Copepod
+    P/B of 15-40/yr is a GROSS production figure - production is the
+    quantity mortality balances in steady state, not a quantity net of
+    it - so the delivered 7.4/yr is still 2-5x BELOW its reference.
+    Double counting would put the value above that reference; it is a
+    factor of several under it. It stays out of reach for the reason
+    109.5 gives, the phytoplankton supply, and nothing here revisits
+    that.
+
+    The reason 0.01 is not the better value is the same arithmetic run
+    forward instead of backward. With mortality on it delivers a net of
+
+      (1 - 0.0025) * (1 + 0.01 * 0.3) - 1 = 0.00049/tick = 0.72/yr
+
+    A copepod population whose gross production barely outpaces its own
+    senescence cannot fund any predation at all, which is a biological
+    statement and not a tuning one - and 110.4 is what it looks like in
+    a rollout. No other FG's growth_rate was touched; 108's mortality
+    pass left every growth_rate alone and so does this one.
+
+110.4 The viability corner says the old value was the broken one
+    `tools/viability.py --spawn colocated --behaviour greedy
+    --mortality on` (20x20, 7300 ticks, 3 seeds), which is now the
+    setting the library is calibrated for:
+
+      fg              0.01 (before)              0.0208 (after)
+      gadoids         FAIL extinct@4003          FAIL extinct@4461
+      pelagic_fish    FAIL below floor           FAIL below floor
+      porpoises       FAIL extinct@416           FAIL extinct@918
+      benthic         PASS eq 0.356              PASS eq 0.266
+      phytoplankton   PASS min 0.139             PASS min 0.067
+      zooplankton     FAIL still drifting        PASS eq 1.877
+                           eq 0.413, drift 10.5       drift 1.02
+      overall         NOT VIABLE                 NOT VIABLE
+
+    One failing group fewer, and the failure that was removed is
+    zooplankton's own: at 0.01 with mortality on it never settles -
+    drift 10.5 over the last window - and sits at 0.41 of spawn on its
+    way down. At 0.0208 it is stationary at 1.88 of spawn. The two
+    groups that go extinct in both arms do so 10-120 % LATER.
+
+    The cost is the phytoplankton trough, 0.139 -> 0.067. The overall
+    verdict is unchanged and still driven by the same three pre-existing
+    failures (sections 73, 74, 90-92).
+
+110.5 The library now presupposes `--mortality on`, and two things
+      in the repo say otherwise
+    RESOLVED BY 111.5 - do not act on this section. At growth_rate
+    0.0913 the value is indistinguishable under the two mortality
+    settings, so it presupposes neither and the `--mortality` default
+    is a free design decision again. The reasoning below was correct
+    for 0.0208 and is kept for that reason only.
+    A growth_rate solved net of a drain is WRONG when the drain is off.
+    At 0.0208 with `--mortality off` the net ceiling is 0.00624/tick,
+    which by the table in 110.2 is two steps past the cliff: phytoplankton
+    trough 0.01 of spawn, gadoids at 0.23.
+
+    Two things in the repo contradict the calibration:
+
+      train.py:39   APPLY_NATURAL_MORTALITY = False
+      VIABILITY.md  the normative corner runs --mortality off
+
+    Neither was changed here: flipping a default changes every run that
+    does not pass the flag, and which way Mareld is modelled - closed
+    box or not - is a design decision on record as a deliberate open
+    question (35.3, and VIABILITY.md section 1). But it is a blocker
+    rather than ambient worry: running `python3 train.py --project
+    mareld2.yaml` with no flag now trains against a zooplankton whose
+    growth is compensating for a mortality that is not being applied.
+    Either the default flips or the library goes back to 0.0125.
+
+110.6 The other decision makers are not squeezed
+    Headroom = ceiling / natural_mortality, under the section 108
+    mortality values:
+
+      FG              growth   sat-u   ceiling    nm       headroom
+      zooplankton     0.0208    0.30   0.00624   0.0025      2.5
+      pelagic_fish    0.004     0.30   0.00120   1.0e-04    12.0
+      gadoids         0.0025    0.30   0.00075   7.0e-05    10.7
+      porpoises       0.001     0.87   0.00087   6.0e-05    14.5
+      seals           0.001     0.30   0.00030   6.0e-05     5.0
+      seabirds        0.001     0.30   0.00030   8.0e-05     3.8
+
+    The zooplankton row is superseded by 111.5: growth_rate is 0.0913
+    and the headroom is 11.0, which makes it unremarkable rather than
+    the outlier. Every other row still holds.
+
+    Zooplankton was the squeezed case and still is, at 2.5 against 1.2
+    before section 109 - the mortality it carries is 25-40x any other
+    group's, which is what the short copepod lifespan means. Nothing
+    else needs the same treatment; seabirds at 3.8 is the next lowest
+    and is not near the 1.x range where 74.7 found the problem.
+
+110.7 Scope and consequences
+    * Checkpoints are NOT invalidated - no observation shape, FG set,
+      grid layout or Observability entry moved. Policies trained at 0.01
+      or 0.0125 learned a slower zooplankton.
+    * Calibrated at LIBRARY_TICK_HOURS = 6; the loader compounds it
+      under `--tick-length` via the "growth" rule (103, 106).
+    * 109 is NOT superseded. Its mortality-off cliff measurement stands
+      and is half the evidence for 110.2; what 109 got wrong was
+      treating the gross parameter as the thing to calibrate.
+    * The zooplankton headroom figure in 108.6 is now 2.5.
+
+110.8 Validation
+    Suite: 734 passed, 12 skipped (unchanged). One-generation training
+    run on mareld2.yaml with `--mortality on` completed. Viability
+    corner run at both values with `--mortality on`, table in 110.4.
+
+111 ZOOPLANKTON GROWTH SET FROM THE LITERATURE (2026-09-28)
+------------------------------------------------------------
+
+111.1 The principle, and what 109 and 110 got wrong
+    Both previous sections chose `growth_rate` by asking what the
+    simulation tolerates: 109 swept it and stopped at the stability
+    cliff (0.0125, mortality off), 110 redid the sweep in the
+    mortality-on world and stopped at that cliff instead (0.0208). Both
+    numbers are correct answers to "what does the model tolerate".
+
+    That was the wrong question. AGENTS.md section 7 states the rule -
+    biology drives, fix parameters and mechanisms rather than tuning
+    around them - and it applies to the biological parameters
+    themselves, not only to reward shaping. The zooplankton growth rate
+    is what the literature says it is. If the simulation collapses at
+    that value, the collapse is a defect in the model and the job is to
+    locate it, not to lower the biology until the symptom goes away.
+
+    Restated as a rule for the next person: a stability sweep may
+    DIAGNOSE a parameter, it may not SET one that has a literature
+    value. 109 and 110 are kept because their measurements are the
+    diagnosis; their conclusions are superseded.
+
+111.2 The value
+    `growth_rate` is the anabolic ceiling: growth_rate *
+    (satiation_scale - u_X) is the most biomass the group can add in a
+    tick, reached only at full energy surplus. Copepod P/B in temperate
+    shelf seas is 15-40/yr.
+
+    The ceiling is set at the TOP of that band, not its centre, because
+    a ceiling at the centre would make the upper half of the literature
+    range unreachable by construction - the same category error as
+    reading a realised field statistic onto a physiological maximum.
+    The library already separates the two that way: porpoise
+    `max_intake_rate` is a physiological ceiling and the realised ration
+    is the check on it, not the same number (section 92).
+
+      growth_rate = 40 / (0.3 * 1460) = 0.0913
+
+    SOURCE, stated as plainly as 108.5 states its mortality bands:
+    "copepod P/B 15-40/yr in temperate shelf seas" is a range, not a
+    point citation, and it is not sourced in this repo. Before anyone
+    quotes it as settled it should be checked against HELCOM / ICES
+    zooplankton production assessments for the Baltic and Kattegat, and
+    against Hirst & Bunker (2003) for the underlying copepod growth
+    rates. If the band moves, this value moves with it - which is the
+    point of setting it from the literature rather than from a sweep.
+
+    Gross, not net. The tick applies B * (1 - natural_mortality) *
+    (1 + growth_rate * (s_X - u_X)) - mortality first, to `biomass` and
+    `energy_reserve` both so that s_X is untouched, then growth on the
+    reduced biomass. P/B is likewise a GROSS production figure;
+    production is the quantity mortality balances in steady state, not
+    something net of it. The two are the same kind of quantity and
+    nothing is subtracted twice.
+
+111.3 What the model does with it
+    60x60, 3000 ticks, frozen greedy, colocated spawn, 2 seeds,
+    `--mortality on`. ceilPB is growth_rate * 0.3 * 1460, realPB is
+    growth_rate * <s_X - u_X>_B * 1460, i.e. what is actually delivered:
+
+      g        ceilPB  realPB  phy_min  zoo_min  gad_end
+      0.034     14.9    10.7    0.009    0.005     0.40
+      0.046     20.1    12.7    0.005    0.004     0.27
+      0.057     25.0    13.7    0.003    0.002     0.24
+      0.069     30.2    15.1    0.002    0.001     0.19
+      0.0913    39.9    17.3    0.001    0.001     0.18
+
+    Two things to read off it.
+
+    First, DELIVERED production saturates at ~17/yr no matter how high
+    the ceiling goes. Raising the ceiling from 15 to 40/yr - a factor
+    2.7 - buys 10.7 -> 17.3, a factor 1.6, and the mean energy surplus
+    falls from 0.21 to 0.13 as the group grazes down its own food. The
+    delivered value lands INSIDE the literature band, at its floor. The
+    ceiling is not what limits production here; the supply is.
+
+    Second, the ecosystem cost is already paid at the bottom of the
+    band. At 0.034 - the literature MINIMUM - the phytoplankton trough
+    is 0.009 of spawn and gadoids are at 0.40. There is no value in the
+    literature range at which this world is intact. That is the finding:
+    the model cannot carry literature zooplankton biology anywhere in
+    its published range, so the defect is not a matter of degree.
+
+    The viability corner (`--spawn colocated --behaviour greedy
+    --mortality on`, 20x20, 7300 ticks, 3 seeds) records the same thing
+    with a verdict attached:
+
+      gadoids          FAIL below floor
+      pelagic_fish     FAIL below floor
+      porpoises        FAIL extinct@212
+      benthic          PASS eq 0.713
+      phytoplankton    FAIL below floor   eq 0.066, min 0.000
+      zooplankton      PASS eq 0.651
+      overall          NOT VIABLE
+
+    Phytoplankton now fails, which it did not at 0.01 or 0.0208 with
+    mortality on, nor at 0.0125 with it off (109.8). That is the
+    deficiency naming itself.
+
+111.4 Where the defect is
+    Not in this parameter, and not in zooplankton at all. Section 109.5
+    already ran the experiment: at zoo growth_rate 0.035 with
+    phytoplankton `growth_rate` doubled from 0.0375 to 0.075, the
+    cascade disappears - zoo_min rises by a factor 40 and gadoids return
+    to their spawn level. The supply side is what breaks.
+
+    SUPERSEDED BY 113 - 0.0375 is net of the model's own grazing, so
+    "not an oversight" is wrong. The paragraph is kept as the state of
+    belief when 111 was written.
+
+    Phytoplankton's 0.0375 is not an oversight either; section 63.3 set
+    it to HELCOM net mu ~0.15/day, explicitly NOT the Eppley
+    physiological maximum, on the ground that the maximum drives phyto
+    to carrying capacity and masks the grazing signal. So the defect is
+    structural rather than a wrong number: a plain logistic supply at
+    net mu, with `seasonal_amplitude` at 0.0 against 63.3's recommended
+    0.7, cannot feed a zooplankton population running at literature P/B.
+    A spring bloom delivers the surplus in pulses, which is how a real
+    copepod population funds a P/B of 20-40 without grazing its food to
+    a refuge level year-round.
+
+    Untested, and deliberately not done here - the instruction was
+    zooplankton. It is the next lever, and it is a phytoplankton change,
+    not a zooplankton one.
+
+111.5 Two things this closes
+    * The mortality-setting blocker from 110.5 is gone. At 0.0913 the
+      same rollout under `--mortality off` gives realPB 15.9-16.2 and
+      phy_min 0.000-0.001, i.e. indistinguishable from mortality on
+      (17.2-17.4, 0.001). natural_mortality of 3.655/yr is simply small
+      against a 40/yr ceiling, so the value no longer presupposes
+      either setting and the `--mortality` default is once again a free
+      design decision rather than something this calibration forces.
+    * The headroom squeeze from 74.7 and 108.6 is resolved, and by
+      biology rather than by tuning. ceiling / natural_mortality for
+      zooplankton is now 11.0, against 12.0 for pelagic_fish, 10.7 for
+      gadoids and 14.5 for porpoises. Zooplankton was the outlier at
+      1.2; it is now unremarkable. No other FG's growth_rate was
+      touched by 108, 109, 110 or this section - the only value that
+      has moved in this whole arc is zooplankton's.
+
+111.6 Scope and consequences
+    * Checkpoints are NOT invalidated - no observation shape, FG set,
+      grid layout or Observability entry moved. Every policy in
+      `results/` was trained against a zooplankton 7-9x slower than
+      this one, so they are stale in substance if not in shape.
+    * `mareld2.yaml`'s zooplankton spawn level is now further from
+      equilibrium in the other direction (0.65 of spawn at the corner,
+      against 1.88 at 0.0208). Recalibrating spawn is a follow-up.
+    * Calibrated at LIBRARY_TICK_HOURS = 6; the loader compounds it
+      under `--tick-length` via the "growth" rule (103, 106).
+    * The sweep that produced 109.3, 110.2 and 111.3 is now in the repo
+      at `tools/probes/zoo_growth_sweep.py` rather than being quoted
+      from a scratch directory.
+
+111.7 Validation
+    Suite: 734 passed, 12 skipped. One-generation training run on
+    mareld2.yaml with `--mortality on` completed. Viability corner run
+    at the new value, table in 111.3.
+
+112 IS THE DEFICIENCY A MISSING BIRTH TERM? NO - THREE NEGATIVE RESULTS
+------------------------------------------------------------------------
+
+112.1 The question
+    Section 111 left the model unable to carry literature zooplankton
+    biology and pointed at the phytoplankton supply without naming a
+    mechanism. The question put to it: functional groups reproduce in
+    reality - is mortality modelled but birth not?
+
+    Short answer: birth IS modelled, the asymmetries a reader notices
+    are real, and none of them is the deficiency. Recorded here so the
+    next person does not spend an arc on it.
+
+112.2 Birth is the growth term
+    For a decision maker, `_apply_decision_maker_population_change`
+    computes
+
+      biomass_delta = B * growth_rate * (s_X - u_X)
+
+    That IS reproduction: in a biomass model recruitment and somatic
+    growth are the same quantity, and gating it on the energy surplus
+    is what makes it conditional on food the way spawning is. Section
+    111 sets its ceiling from copepod P/B, which is a production figure
+    - births included. There is no separate birth term missing.
+
+112.3 But three NDM/DM asymmetries are real
+                              NDM (phyto, benthos)   DM (all others)
+      production              logistic toward K      g * (s_X - u_X)
+      seasonality             YES                    NO
+      recolonisation          YES (`seed_rate`)      NO
+      natural mortality       NO (in the logistic)   YES
+
+    `_seasonal_population_rate` is called only from the NDM branch, so
+    zooplankton, fish, mammals and birds reproduce at a flat rate all
+    year. `seed_rate` is read only in the NDM branch, so a DM cell
+    emptied of biomass can only be repopulated by movement - and
+    zooplankton's `movement_speed` is 0.02. Both gaps are genuine.
+
+112.4 All three were tested. None of them moves the outcome.
+    Zooplankton at the section 111 value 0.0913, 60x60, 3000 ticks,
+    frozen greedy, colocated, `--mortality on`, 2 seeds. Ranges are
+    over seeds. realPB is delivered production/biomass per year.
+
+      arm                          realPB  phy_end  zoo_end  gad_end
+      baseline (111)                 17.3   0.09-0.14  0.75-0.98  0.07-0.30
+      phyto seed_rate 1e-07          17.0-17.5  0.06-0.08  0.64-0.65  0.08-0.18
+      phyto seasonal_amp 0.7         19.8-19.9  0.02-0.02  0.15-0.34  0.10-0.26
+      zoo DM seasonality amp 0.7     17.7-20.0  0.03-0.08  0.40-0.43  0.15-0.23
+      zoo DM seasonality amp 0.9     22.4-23.2  0.03-0.52  0.50-2.97  0.18-0.26
+
+      for reference, the supply-side RATE change (109.5):
+      phyto growth_rate 0.075        (zoo 0.035)  gadoids 0.937, zoo_min 0.228
+
+    * `seed_rate` on phytoplankton does exactly what it is for - the
+      dead-cell count goes from 1 to 0, so recolonisation works - and
+      changes nothing else. The crash is not an absorbing-zero problem
+      at this grid size; section 73.1's type III grazing already
+      protects a cell with P > 0, which 109.6 recorded.
+    * Reproductive seasonality, on either side, RAISES delivered
+      zooplankton production (17.3 -> 20-23, i.e. toward the middle of
+      the literature band that 111 could only reach the floor of) and
+      still leaves gadoids at 0.1-0.26. It buys the thing 111 said was
+      short and does not buy the food web, because it raises grazing
+      pressure in the same breath.
+    * Phytoplankton seasonality at amplitude 0.7 makes the MEAN supply
+      worse, not better: phy_end 0.09-0.14 -> 0.015-0.024. Winter mu is
+      0.3x and the logistic cannot rebound from a grazed trough at that
+      rate, so the recommendation in 63.3 is not a fix for this and
+      should not be adopted on the strength of it.
+    * The DM-seasonality arm put the grazer's peak 365 ticks (a quarter
+      year) after phytoplankton's, which is the diapause geometry - the
+      spring bloom escaping grazers that have not built up yet. Even
+      that timing does not save it.
+
+112.5 What this leaves
+    The one intervention that does work is the supply RATE: doubling
+    phytoplankton `growth_rate` returns gadoids to their spawn level
+    (109.5). So the deficiency is a magnitude problem in mean primary
+    production, not a missing mechanism and not a timing problem.
+    Adding birth machinery that is genuinely absent does not fix it.
+
+    That sharpens 111.4 rather than replacing it, and it narrows the
+    next lever to one thing: phytoplankton's mean production rate,
+    0.0375, set in 63.3 to HELCOM net mu and deliberately below the
+    Eppley maximum. Either that calibration is too conservative for a
+    grazed system - net mu measured in the field is already net OF
+    grazing, which would make using it as the input rate a double
+    count, and that is worth checking before anything else - or the
+    logistic supply itself is the wrong model for primary production
+    here.
+
+    ANSWERED BY 113: it is the double count. The rate is net of the
+    grazing the tick applies, the 3.33x reduction 63.3 made is the
+    grazing fraction, and the behaviour that justified it was the
+    Holling bug section 64 fixed. Raising it to 0.125 returns gadoids
+    to 0.63-0.95 of spawn at the section 111 zooplankton value.
+
+112.6 Nothing was changed
+    This section is diagnosis only. `fg_library.yaml` is untouched by
+    it: phytoplankton keeps `seed_rate: 0.0` and `seasonal_amplitude:
+    0.0`, no DM gained a seasonal term, and no code in `lib/` was
+    modified. The DM-seasonality arm was run by monkey-patching
+    `_apply_decision_maker_population_change` inside the probe.
+
+    Probes: `tools/probes/zoo_growth_sweep.py` (gained `--phyto-season`
+    and `--phyto-seed`) and `tools/probes/dm_seasonal_reproduction.py`.
+
+113 PHYTOPLANKTON growth_rate IS NET OF THE GRAZING THE MODEL APPLIES (2026-09-29)
+-----------------------------------------------------------------------------------
+
+113.1 The finding
+    `phytoplankton.growth_rate = 0.0375` is a rate measured NET of
+    grazing, used as the input rate of a logistic whose grazing is then
+    applied separately in `_apply_predation`. It is the same class of
+    error section 108 found in `natural_mortality`, in the same
+    direction, on the other side of the energy flow: a literature figure
+    that already contains a loss the model resolves explicitly.
+
+    Four independent lines point at it. They are laid out below; the
+    library is NOT changed by this section.
+
+113.2 The stated calibration says "net"
+    Section 63.3: `growth_rate = 0.0375 (net mu ~ 0.15/day, HELCOM
+    avg)`, justified as "0.0375 lands in the middle of HELCOM /
+    Behrenfeld-Falkowski NET growth for temperate zones", against
+    "growth_rate 0.125/tick (~0.5/day) is Eppley physiological max, not
+    sustained net".
+
+    For phytoplankton, "net growth" in a field context is the observed
+    population change: division rate minus grazing, sinking and lysis.
+    That is the quantity a model computes as an OUTPUT. The logistic's
+    r is an input, and it must be gross of every loss the model applies
+    itself.
+
+    The one escape route is Behrenfeld-Falkowski, whose VGPM yields NET
+    PRIMARY PRODUCTION - net of autotrophic respiration but NOT of
+    grazing. Had 63.3 meant an NPP-derived rate there would be no double
+    count. It did not: 0.15/day is a turnover of 55/yr, and NPP-based
+    phytoplankton turnover in temperate shelf seas is 100-300/yr. The
+    value is below any NPP band, so whichever citation was intended the
+    number behaves as net-of-grazing. (That 100-300/yr band is itself
+    uncited in this repo and should be checked alongside everything
+    else here.)
+
+113.3 The size of the reduction is the grazing fraction
+    The value before 63.3 was 0.125/tick - section 63.5 records the
+    legacy checkpoint as trained under "growth_rate=0.125, h=0, no
+    season". So 63.3 divided the rate by 3.33, i.e. removed 70 % of
+    production.
+
+    Calbet & Landry (2004) put microzooplankton consumption at 67 % of
+    daily phytoplankton growth overall, 60 % in coastal and estuarine
+    systems. Calbet (2001) puts mesozooplankton at a mean 22.6 % of PP
+    per day, highest in productive coastal systems. A 70 % reduction is
+    not a coincidence of calibration; it is the grazing term, subtracted
+    once in the parameter and then again in the tick.
+
+113.4 The rate should be residual, not gross - and 0.0375 is neither
+    The rule section 108 established: a rate must be gross of the losses
+    the model RESOLVES and net of the ones it does not. Applied here,
+    the model's `zooplankton` FG is mesozooplankton - copepod P/B,
+    section 111 - and microzooplankton is not represented anywhere. So
+    the logistic r should be the division rate minus microzooplankton
+    grazing, sinking and lysis, but BEFORE the mesozooplankton grazing
+    the tick applies.
+
+      Eppley (1972)  mu_max = ln2 * 0.851 * 1.066^T per day
+        T =  5 C   0.81/day = 0.203/tick
+        T = 10 C   1.12/day = 0.279/tick
+        T = 15 C   1.54/day = 0.385/tick
+
+      minus ~60 % unmodelled micro-grazing (Calbet & Landry, coastal):
+        T =  5 C   0.32/day = 0.081/tick
+        T = 10 C   0.45/day = 0.112/tick
+        T = 15 C   0.62/day = 0.154/tick
+
+    The defensible band for this parameter is therefore roughly
+    0.081-0.154/tick for Kattegat/Skagerrak surface temperatures, and
+    0.125 sits mid-band, at about 11.5 C. Note that 63.3's own
+    "Eppley physiological max, 0.5/day" was already a factor ~2 BELOW
+    Eppley at 10 C, so the value it was rejecting as a maximum was not
+    one.
+
+113.5 The outcome that justified the reduction was a bug
+    63.3's operative argument is not a citation but a behaviour:
+    0.125 "drives phyto to CC and masks grazing signal". Section 64,
+    one arc later, found why. `_apply_predation` had lost the B_prey
+    factor from the Holling numerator, so `a_eff` FELL toward zero as
+    prey became abundant instead of saturating. For zooplankton eating
+    phytoplankton, at carrying capacity B = 24 t/cell with a = 0.25 and
+    h = 4:
+
+      buggy    a_eff = a / (1 + a*h*B)     = 0.25 / 25   = 0.010
+      correct  a_eff = a*B / (1 + a*h*B)   = 6.0  / 25   = 0.240
+
+    - a factor 24 of missing grazing exactly where 63.3 observed
+    "phyto sits at CC". 64 is explicit that zoo -> phyto "escaped the
+    symptom in visible training because a*h = 0.25*4 = 1 gave milder
+    scaling in practice, but the same bug was present there too".
+
+    So the phytoplankton growth rate was lowered to compensate for
+    under-grazing caused by a bug; 64 fixed the bug; the compensation
+    was never reverted. That is inference from two sections and the
+    arithmetic above, not something 64 states - but it is the only
+    reading under which 63.3's behavioural argument makes sense.
+
+113.6 Measured effect
+    Zooplankton at its section 111 literature value 0.0913, 60x60,
+    3000 ticks, frozen greedy, colocated, `--mortality on`, 2 seeds
+    (3 at 0.125). Only `phytoplankton.growth_rate` varies.
+
+      phyto g   mu/day   phy_end   zoo_end   gad_end        zoo realPB
+      0.0375     0.15    0.09-0.14  0.75-0.98  0.07-0.30      17.3
+      0.075      0.30    0.15-0.16  2.58-2.60  0.47-0.74      17.8-18.1
+      0.1125     0.45    0.31-0.32  4.51       0.35-0.70      17.4-17.6
+      0.125      0.50    0.32-0.33  5.06-5.11  0.63-0.95      17.4-17.5
+      0.15       0.60    0.35-0.41  5.87-6.03  0.74-0.99      18.9-20.4
+
+    Gadoids go from 0.07-0.30 of spawn to 0.63-0.95 and phytoplankton's
+    own final level triples. The cascade section 111 could not avoid at
+    any literature zooplankton value is gone at a phytoplankton value
+    that is itself from the literature.
+
+    Read the last column carefully: zooplankton's DELIVERED production
+    does not move (17.3 -> 17.5). The hunger gate fixes per-capita
+    production, so a larger food supply buys more grazers rather than
+    faster ones - zoo biomass goes to ~5x its spawn level. 111's
+    shortfall against the literature band is therefore NOT what this
+    fixes; what it fixes is the food web underneath.
+
+    pelagic_fish stays at 0.000 in every arm. Pre-existing in the frozen
+    greedy arm (73, 74), untouched by any of this.
+
+113.7 Recommendation
+    Set `phytoplankton.growth_rate = 0.125`, restoring the pre-63.3
+    value on literature grounds rather than historical ones: mid-band
+    for Eppley at 10-12 C minus unmodelled microzooplankton grazing.
+    Leave `seasonal_amplitude` at 0.0 - section 112.4 measured 63.3's
+    0.7 recommendation and it makes the mean supply worse.
+
+    Consequences to accept with it:
+      * zooplankton settles at ~5x its `mareld2.yaml` spawn level.
+        WITHDRAWN - see 113.9. Recalibrating spawn is the wrong move
+        and the 5x is a symptom worth keeping visible, not fitting
+        away. It also makes this recommendation conditional.
+      * Every checkpoint in `results/` becomes stale in substance -
+        no shape changes, so nothing is invalidated formally.
+      * Sections 109.5, 111.4 and 112.5 each defend 0.0375 as
+        deliberately calibrated. They are superseded by this section
+        and carry pointers to it.
+
+    NOT DONE HERE: the instruction was to investigate.
+    APPLIED by section 121, after 120.3 measured it in the
+    mass-balanced world.
+
+113.9 WITHDRAWN from 113.7: "recalibrate the zooplankton spawn level"
+    113.7 listed spawn recalibration as a consequence to accept. That
+    was wrong, and checking the numbers turns it into a better finding
+    than the one it was hiding.
+
+    What the spawn level is: `initial_biomass_min/max` (and
+    `inference_initial_biomass`) in `mareld2.yaml`, in tons for the
+    60x60 reference grid, scaled at load time by cell count. It matters
+    beyond the starting point because ARS measures fitness as
+    `delta_b = log((bh + eps)/(b0 + eps))` - b0 IS the spawn level - so
+    a spawn far from equilibrium pays a policy for the world relaxing
+    on its own. That is the mechanism that made "recalibrate" sound
+    reasonable.
+
+    But the spawn levels are not arbitrary numbers waiting to be fitted
+    to the model. On 60x60:
+
+      phytoplankton     80000 t   (93 % of K = 24 t/cell x 3600)
+      zooplankton       35000 t
+      zoo : phyto at spawn                     0.44 : 1
+
+    Phytoplankton spawning at 93 % of its own carrying capacity, and a
+    grazer standing stock at 0.44 of its food's, is what a temperate
+    shelf sea looks like. Those are biological statements. Moving them
+    so the model's equilibrium stops looking odd is exactly the
+    inversion section 111 rejected for growth_rate, applied to the
+    spawn file instead.
+
+    What the same arithmetic says about the equilibrium:
+
+      phyto growth_rate   phyto eq    zoo eq     zoo : phyto
+      0.0375 (current)      9200 t    30275 t      3.3 : 1
+      0.125  (113.7)       26160 t   177765 t      6.8 : 1
+
+    Both are inverted, and the proposed value makes it worse - at 0.125
+    the zooplankton standing stock is 2x the entire carrying capacity of
+    its own food. Inverted pelagic pyramids exist, but not at 7:1 in a
+    productive coastal system, and not against a grazer that outweighs
+    the maximum possible biomass of what it eats.
+
+    So 113.7 is not the clean win 113.6's gadoid row makes it look like.
+    Raising phytoplankton production does repair the food web above
+    zooplankton, and the double count in 113.1-113.5 is real
+    independently of this, but something in the zooplankton-
+    phytoplankton pair is still wrong in a way neither this section nor
+    109-112 has located: nothing in the tick's growth term conserves
+    mass between ingested prey and added predator biomass - biomass
+    grows by `g * surplus` whatever was eaten, with energy acting only
+    as a gate through s_X - so a grazer can accumulate standing stock
+    its food could not have produced. Whether that is the explanation
+    here is not established, and Strategi.pdf should be read on the
+    point before anyone changes it.
+
+    Concrete follow-up that costs nothing: the zoo:phyto standing-stock
+    ratio is a cheap plausibility check and no arm of the viability rig
+    reports it. Every number in 109-113 was read off per-FG levels
+    against spawn, which cannot see a ratio going wrong. Adding it
+    would have caught this at section 109.
+
+113.8 Sources
+    Eppley, R.W. (1972) Temperature and phytoplankton growth in the
+      sea. Fish. Bull. 70:1063-1085.
+    Calbet, A. (2001) Mesozooplankton grazing effect on primary
+      production: a global comparative analysis in marine ecosystems.
+      Limnol. Oceanogr. 46:1824-1830.
+    Calbet, A. & Landry, M.R. (2004) Phytoplankton growth,
+      microzooplankton grazing, and carbon cycling in marine systems.
+      Limnol. Oceanogr. 49:51-57.
+    The HELCOM figure 63.3 cites is not identified in this repo and was
+    not located.
+
+114 THE GROWTH TERM IS NOT MASS-BALANCED, BY DESIGN, AND IT SHOWS (2026-09-29)
+-------------------------------------------------------------------------------
+
+114.1 What Strategi.pdf says
+    Read on the point raised in 113.9. Under "Berakna nettotillvaxt
+    efter rorelse" the document gives, for functional groups whose
+    energy is modelled:
+
+      s_X(c) = E_X(c) / ME_X
+      q_X(c) = s_X(c) - u_X                    u_X = maintenance level
+      B_X(c,t+1) = B*_X(c) * (1 + MG_X * q_X(c)) + impact_delta,
+                   clipped to >= 0
+
+    with the heading note "Tillvaxten begransas av populationens
+    mattnad" - growth is limited by the population's SATIATION.
+
+    That is exactly what `_apply_decision_maker_population_change`
+    implements. The code is faithful to the design; the absence of a
+    mass balance between prey eaten and predator biomass added is in
+    the design, not in the implementation. Energy is a GATE on growth,
+    never a currency spent to buy biomass. Nothing anywhere in the
+    document ties `MG_X * q_X` to what was ingested.
+
+    (Swedish quotations in this section are transliterated - a, a, o for
+    the accented vowels - because this file is ASCII only. They will not
+    string-match the PDF.)
+
+    Noted per the user: the document is a draft of an initial model to
+    develop further, not a specification to conform to. AGENTS.md still
+    calls it "authoritative for the mathematics", which no longer
+    matches how it is to be used.
+
+114.2 One thing the document leaves open, and the code picks well
+    The growth step says what happens to B and is silent on R_X and
+    E_X. Two readings: keep total reserve R constant, so E = R/B falls
+    as biomass grows (added biomass dilutes the reserve), or keep E
+    constant, so R grows with B (energy created from nothing). The code
+    takes the first, which is the conservative one, and it is the only
+    implicit cost the growth term pays.
+
+114.3 Measured: the growth term produces about twice the mass it eats
+    `tools/probes/growth_mass_balance.py`, 60x60, 3000 ticks, means over
+    the last 300, frozen greedy, colocated, `--mortality on`, zooplankton
+    at its section 111 value 0.0913.
+
+      phyto growth_rate           0.0375 (current)   0.125 (113.7)
+      zoo standing stock             26327 t            176917 t
+      phyto standing stock           10206 t             26228 t
+      zoo : phyto                     2.58 : 1            6.75 : 1
+      phyto grazed                   116.9 t/tick        859.7 t/tick
+      zoo produced by growth         231.0 t/tick       1815.3 t/tick
+      IMPLIED gross efficiency       197.6 %             211.2 %
+
+    Cross-check on the production figure: at equilibrium production must
+    equal total losses, and the losses sum to 340.0 and 1885.3 t/tick
+    respectively - within 4 % of the growth-term estimate, so the number
+    is not an artefact of sampling the state after the tick.
+
+114.4 What the ceiling actually is, and the one assumption in it
+    `interactions.py` builds `energy_gain = prey_energy_content *
+    assimilation_factor`. For zooplankton eating phytoplankton that is
+    2000 MJ/t * 0.65 = 1300 MJ per ton of phytoplankton grazed.
+
+    The other half of the ratio needs a stated assumption.
+    `energy_content` is a PREY-side parameter: what a predator gains per
+    ton of this FG when it eats it. The library has no separate
+    construction cost for biomass, so `energy_content` is the only
+    figure available for "what a ton of this group embodies", and using
+    it as the cost of building one is a modelling assumption, not a
+    library fact. Taking it that way - zooplankton at 4500 MJ/t - one
+    ton grazed can become at most
+
+      1300 / 4500 = 28.9 %
+
+    of a ton of zooplankton, BEFORE any maintenance cost. A reader who
+    rejects the assumption still has to explain the 198 %: no assumption
+    makes 2 tons of grazer out of 1 ton of plant.
+    Measured 198-211 % against a 28.9 % ceiling is a factor 6.9-7.3.
+    Copepod gross growth efficiency in the literature is 20-40 %, i.e.
+    the ceiling is roughly the right order and the model is nowhere near
+    it.
+
+    The growth term is therefore not merely unconstrained by mass - it
+    is running well past what the energy bookkeeping in the same tick
+    says is possible. The two halves of the tick disagree with each
+    other.
+
+114.5 The balance is closed by starvation, which makes it a futile cycle
+    Where the created biomass goes, per tick, at the current
+    phytoplankton value:
+
+      starvation   274.2 t   (81 % of all losses)
+      natural       65.8 t
+      predation      0.0 t   (pelagic_fish is at ~0 in this arm)
+
+    The 81 % is ARM-SPECIFIC and should not be quoted on its own: in
+    the frozen greedy arm pelagic_fish sits at ~0, so zooplankton has
+    no predator and starvation is the only thing left that can close
+    the balance. Under a trained policy with pelagic_fish alive,
+    predation takes part of that share. The robust number is the 198 %
+    production-to-grazing ratio; the split is what this arm does with
+    it.
+
+    The growth step creates biomass the food could not support, the
+    starvation branch destroys it again at `starve_rate = 0.2`, and the
+    two very nearly cancel. The standing stock that survives this churn
+    is what makes the zoo:phyto ratio inverted - 2.58:1 now, 6.75:1 at
+    113.7's phytoplankton value.
+
+    This also explains why section 111's "delivered P/B" saturates at
+    ~17/yr no matter how high the ceiling goes, and why it does not move
+    when the food supply triples (113.6). That metric measures the
+    positive part of the growth term only. It is gross production in the
+    growing cells, not net production, and with 81 % of losses being
+    starvation the two are far apart. Every `realPB` figure in 109-113
+    should be read that way.
+
+114.6 Pre-existing, and confirmed as the 113.9 suspicion
+    197.6 % at the current phytoplankton value against 211.2 % at the
+    proposed one: the defect is essentially scale-invariant and is not
+    caused by anything in sections 108-113. 113.9 raised it as an
+    unestablished possibility and said to read Strategi.pdf first. It is
+    now established, and the document is where it comes from.
+
+    It also revises 113.7 further. Raising phytoplankton production
+    still repairs the food web above zooplankton and the double count in
+    113.1-113.5 is real regardless - but the change would be feeding a
+    growth term that converts mass at 7x the possible rate, so a bigger
+    supply mostly buys a bigger futile cycle.
+
+114.7 What a mass-balanced version would need
+    The minimal change that keeps the document's gate semantics and adds
+    conservation is a cap, not a new equation:
+
+      dB = min( B * MG_X * q_X ,
+                (assimilated energy this tick - maintenance)
+                / energy_content_X )
+
+    i.e. growth is still gated by satiation, but can never exceed the
+    biomass the tick's own assimilated energy can build. Note the
+    divisor: `energy_content_X`, not `ME_X` - `ME_X` is
+    `max_energy_reserve` (450 MJ/t for zooplankton), the per-ton RESERVE
+    ceiling, a different quantity from the energy a ton of biomass
+    embodies, and confusing the two is easy because both are MJ/t. This
+    also inherits 114.4's assumption that `energy_content` doubles as a
+    construction cost; a cleaner model would give each FG its own.
+
+    At the current values the cap is 116.9 t/tick * 1300 MJ/t
+    / 4500 MJ/t = 33.8 t/tick before maintenance, against the 231
+    t/tick actually produced.
+
+    Consequences to expect, none of them measured: every DM's
+    `growth_rate` becomes a ceiling that is no longer reachable, so the
+    section 111 calibration would have to be redone against realised
+    production rather than the anabolic ceiling; the starvation churn
+    largely disappears; standing stocks fall, probably by a lot; and
+    every checkpoint becomes meaningless because the ecology changes
+    shape rather than scale.
+
+    This alters the core growth equation of Strategi.pdf. Not done, not
+    a decision to take from a probe result.
+
+114.8 Other deviations from the document noticed while reading
+    * `u_X`: the document says "t.ex. 0,3"; every DM in
+      fg_library.yaml uses `maintenance_level: 0.5`. AGENTS.md also
+      states 0.3 as the default. Not investigated here.
+    * "all predation maskas bort om energinivan s_X ar over 0.8" - the
+      0.8 satiation gate is from the document, and `satiation_scale`
+      (section 69) is a per-FG override of it.
+    * "Naturlig mortalitet kan bakas in i tillvaxt" - the document
+      permits folding natural mortality into the growth term. The code
+      keeps them separate, which is what sections 110 and 111 concluded
+      it should, so the two readings agree on the outcome.
+
+115 FOUR WAYS TO MASS-BALANCE THE GROWTH TERM, ONE OF THEM MEASURED (2026-09-29)
+--------------------------------------------------------------------------------
+
+115.1 Where the leak is, exactly
+    Worth pinning before proposing anything, because it is one line.
+    Energy enters and leaves in `_apply_movement`: intake is added from
+    `temp_energy_gains`, action costs are subtracted, and the result is
+    clipped, `new_reserve = clip(r_total, 0, b_total * ME)`. Then
+    `population_change` adds biomass and **does not touch the reserve**.
+
+    So new biomass arrives carrying an implied `energy_content` (4500
+    MJ/t for zooplankton) that was never withdrawn from anywhere. The
+    only thing that happens to the reserve is dilution - the same total
+    R spread over more B - which lowers `s_X` but destroys no energy.
+    Growth is free.
+
+    The ME clip is a second, opposite leak (energy above ME*B is
+    discarded) but it barely binds here: the satiation gate stops intake
+    at s = 0.8 and zooplankton sits near s = 0.63, so the clip is not
+    what section 114 measured.
+
+    Every option below is a different answer to "what should growth pay,
+    and to whom".
+
+115.2 Option A - energy as currency: charge the reserve. MEASURED.
+    Keep the document's equation as the WISH and make it a purchase:
+
+      E_avail = max(0, R - u_X * ME_X * B)      reserve above maintenance
+      dB      = min(B * MG_X * q_X, E_avail / ec_X)
+      R      -= dB * ec_X                       <-- the point
+
+    The cap alone is what 114.7 proposed and it is NOT the fix; the
+    debit is. Without it the reserve refills freely and s_X only falls
+    by dilution, which is far weaker: at zooplankton's equilibrium the
+    debit would remove ~123 MJ per ton from a reserve of ~283 MJ/t,
+    a 43 % drawdown per tick, against a 2.7 % dilution.
+
+    Prototyped in `tools/probes/growth_debit_prototype.py`, monkey-patched
+    for every DM, 60x60, 3000 ticks, means over the last 300, frozen
+    greedy, colocated, `--mortality on`, zooplankton at 0.0913:
+
+      arm                       eff.    starv/tick   zoo      phyto   gadoids
+      baseline                 343.8 %    309.6      0.74x    0.14x    0.24x
+      debit, phyto 0.0375       19.2 %      0.0      0.11x    0.02x    0.31x
+      debit, phyto 0.125        19.7 %      2.0      0.36x    0.02x    0.48x
+      debit, phyto 0.25         21.4 %     31.8      0.91x    0.03x    1.35x
+
+    (eff. = zooplankton production / phytoplankton grazed; ceiling 28.9 %
+    per 114.4. Multiples are of the `mareld2.yaml` spawn level. The
+    baseline row reads 343.8 % rather than 114.3's 197.6 % because it
+    measures production as total losses rather than the growth term's
+    positive part - the two bracket the same defect.)
+
+    Three things this settles:
+      * Conservation is restored and STAYS restored: 19-21 % across a
+        7x range of phytoplankton supply, always under the 28.9 %
+        ceiling, and inside the 20-40 % copepod GGE band.
+      * The futile cycle disappears. Starvation goes from 310 t/tick to
+        0. Section 114.5's churn was entirely an artefact of paying for
+        nothing and then destroying it.
+      * Gadoids IMPROVE at every phytoplankton value, 0.24x -> 0.31x
+        with nothing else changed. Less zooplankton, but real
+        zooplankton.
+
+115.3 Option A introduces a hard bound that has to be checked
+    With a debit, the cap `E_avail/ec` and the wish `B*MG*q` are both
+    linear in q, so their ratio is a constant:
+
+      cap / wish = ME_X / (ec_X * MG_X)
+
+    which means `growth_rate` above `ME_X / ec_X` can NEVER be reached,
+    whatever it is set to. Per FG:
+
+      FG               ME      ec    ME/ec   growth_rate   bound binds?
+      zooplankton     450    4500    0.100      0.0913        no, barely
+      pelagic_fish   2400    7500    0.320      0.0040        no
+      gadoids        2500    5500    0.455      0.0025        no
+      porpoises      2800    8500    0.329      0.0010        no
+      seals          5200   10000    0.520      0.0010        no
+      seabirds       3400    7000    0.486      0.0010        no
+
+    Zooplankton is at 91 % of its own bound and every other DM is two
+    orders below. So section 111's literature value survives Option A
+    by a margin of 9 %, which is luck rather than design, and any future
+    upward revision of it would hit a ceiling set by
+    `max_energy_reserve / energy_content` rather than by biology.
+
+115.4 Option B - consumption-driven growth. The one to prefer.
+    Drop the energy ratio from the growth term entirely and define
+    production from what was eaten:
+
+      dB = K_X * Q_X(c)  -  losses
+
+    where Q_X(c) is this tick's assimilated intake in the cell and K_X
+    is the gross growth efficiency. The reserve is demoted to what it is
+    good at - driving hunger, the satiation gate and starvation - and
+    stops pretending to be a construction budget.
+
+    Why this is better than A even though A already works:
+      * `growth_rate` as an "anabolic ceiling" has no literature value.
+        Sections 109, 110 and 111 are three attempts to calibrate it and
+        the third one had to set it from P/B, which is a realised
+        population statistic being read onto a maximum. K_X does have a
+        literature value, measured directly: copepod gross growth
+        efficiency 20-40 %, fish 10-30 %.
+      * Conservation is structural rather than enforced. There is no
+        cap, no debit and no bound like 115.3's to audit.
+      * A converges on what B would declare. The prototype settles at
+        19-21 % by itself; Option B would write 0.25 in the library and
+        be done. A DISCOVERS the number, B DECLARES it.
+
+    Cost: growth becomes impossible in a tick with no intake, even for
+    a well-fed animal with a full reserve, which is wrong for anything
+    larger than a copepod. The fix is to let reserve drawdown count as
+    intake: `dB = K_X * (Q_X + max(0, drawdown))`, which is Option C in
+    miniature.
+
+    Migration path: implement A, confirm it lands where B predicts (it
+    does, 19-21 % against a literature 20-40 %), then replace the
+    parameter. A is the experiment, B is the model.
+
+115.5 Option C - two pools: structure and reserve
+    Make the split explicit instead of implicit. Biomass becomes
+    structure S; the reserve R is a separate state with its own
+    dynamics; assimilation fills R; a fraction of reserve mobilisation
+    pays maintenance and the remainder buys S at a fixed cost per ton.
+    This is the DEB kappa-rule reduced to two pools.
+
+    What it buys over A and B:
+      * Starvation stops being a separate branch with its own
+        `starve_rate`. An animal starves because R runs out, which is
+        what starvation IS. One parameter fewer and a mechanism instead
+        of a rule.
+      * Condition (`s_X`) becomes a real state variable rather than a
+        ratio to a cap, so the satiation gate and the hunger term stop
+        being two views of the same number.
+      * Reproduction can be separated from somatic growth, which is what
+        section 112 found the model cannot currently express.
+
+    Cost: it is a rewrite of the DM branch and of the energy update in
+    `_apply_movement`, it invalidates every checkpoint by changing the
+    observation semantics of energy, and DEB parameters are harder to
+    source than K_X. Not a next step; the right destination if the model
+    is going to carry more biology.
+
+115.6 Option D - not a fix, but the companion any of them needs
+    `ME_X / ec_X` is 0.1 for zooplankton: a FULL reserve funds one tenth
+    of a ton of new biomass per ton standing. Whatever option is chosen,
+    that ratio is what decides how much growth the energy state can
+    finance, and it was never set with that job in mind -
+    `max_energy_reserve` was calibrated as a starvation window
+    (`starve_calibration.py`, section 36 territory) and `energy_content`
+    as a prey-side value. Under A and C they also become the growth
+    budget. Both should be re-derived once, together, against what they
+    are being asked to do.
+
+115.7 What none of them fixes, and it is the next question
+    In every debited arm phytoplankton settles at 0.02-0.03 of its spawn
+    level and the zoo:phyto ratio gets WORSE, 2.3:1 -> 8:1 -> 12:1 as
+    the supply rises. That is not a conservation failure any more - it
+    is the classic R* result. Zooplankton keeps growing as long as
+    per-ton intake exceeds per-ton maintenance, so it grazes
+    phytoplankton down to the density where
+
+      f(P) * energy_gain = resting_metabolism * cost_eat
+
+    and that density is very low because zooplankton's maintenance
+    (3.5 MJ/t/tick) is cheap against the energy in its food (1300 MJ per
+    ton grazed). Fixing the growth term makes this visible instead of
+    hiding it behind fabricated biomass.
+
+    So the ranking of what is actually wrong, after 114 and this
+    section: (1) growth is not mass-balanced, (2) zooplankton's
+    maintenance/intake/energy-content triple sets an implausible R*,
+    (3) phytoplankton's growth_rate is net of grazing (113). All three
+    are independent and (1) has to go first, because the other two
+    cannot be measured through a growth term that fabricates mass.
+
+115.8 Nothing changed
+    Design note only. No file in `lib/` or `fgconfig/` was modified; the
+    prototype monkey-patches `_apply_decision_maker_population_change`
+    inside `tools/probes/growth_debit_prototype.py`.
+
+116 CLI FLAG --mass-balance: THE GROWTH TERM PAYS FOR WHAT IT ADDS (2026-09-29)
+-------------------------------------------------------------------------------
+
+116.1 What it does
+    Option A of section 115, implemented behind a flag so it can be A/B
+    tested against the legacy term without committing to it. Off by
+    default; off is bit-identical to the pre-change engine.
+
+    The growth WISH is unchanged and still exactly what Strategi.pdf
+    specifies, `B * MG_X * q_X`. What changes is that it is now a
+    purchase:
+
+      E_avail = max(0, R - u_X * ME_X * B)
+      dB      = min(B * MG_X * q_X, E_avail / energy_content_X)
+      R      -= dB * energy_content_X
+
+    Only the POSITIVE part of the delta is touched. Starvation is a loss,
+    not a purchase, and its branch is byte-identical with the flag on -
+    asserted by `tests/test_mass_balance.py`.
+
+116.2 Semantics worth knowing before using it
+    * The DEBIT is the mechanism, not the cap. Section 114.7 proposed the
+      cap alone; that is not enough, because without the debit the
+      reserve refills freely and `s_X` falls only by dilution, an order
+      of magnitude weaker (115.2).
+    * `max_energy_reserve / energy_content` becomes a hard ceiling on the
+      reachable `growth_rate`, since cap and wish are both linear in
+      `q_X`. Zooplankton sits at 0.0913 against a bound of 0.100 - 91 %
+      of it. Every other DM is two orders below its own bound (115.3).
+    * `energy_content` is a prey-side parameter being used as a
+      construction cost. The library has no separate figure, so this is
+      an assumption the flag inherits from 114.4, not a fact.
+    * An FG with `energy_content = 0` has no definable price and keeps
+      the legacy term. That is a configuration bug the growth step is
+      not the place to diagnose.
+
+116.3 Where it lives
+    Flag defined ONCE, in `population_change.add_mass_balance_argument`,
+    for the same reason `--mortality_multiplier` is (88.3): a flag that
+    changes the tick must not mean two things on two parsers.
+
+      lib/environments/ecosystem_env/population_change.py
+          add_mass_balance_argument, DEFAULT_MASS_BALANCE,
+          _charge_growth_to_reserve  (the term itself)
+      lib/environments/ecosystem_env/environment.py
+          EcosystemEnvironment(mass_balance=False) -> env.mass_balance
+      lib/gpu/ecosystem.py
+          TensorEcosystem.population  (the mirror)
+      train.py        MASS_BALANCE global, both env builders, the banner
+      lib/runners/training_progress.py
+                      recorded in the run config, defaulted for older
+                      histories in `comparable_config`, and passed to
+                      `build_inference_env`. Missing this last one would
+                      have made every progress rollout of a
+                      `--mass-balance` run measure the LEGACY ecology,
+                      which is the same trap the multiplier fell into.
+      inference.py    build_env(mass_balance=...), all three call sites
+      tools/viability.py
+      lib/gpu/cli.py, lib/gpu/config.py, lib/gpu/visual.py
+
+    `lib/runners/parallel_worker.py` needs no change: the flag travels
+    inside the pickled env builder, like every other builder field.
+    Verified by a `--workers 2` run rather than by inspection.
+
+116.4 Measured, with the real flag rather than the prototype
+    `tools/probes/growth_mass_balance.py`, 60x60, 3000 ticks, means over
+    the last 300, frozen greedy, colocated, `--mortality on`, library
+    values (zooplankton 0.0913, phytoplankton 0.0375):
+
+                              legacy        --mass-balance
+      zoo standing stock      24124 t          3959 t
+      phyto standing stock     8883 t          1448 t
+      zoo : phyto              2.72 : 1        2.73 : 1
+      phyto grazed            107.4 t/tick     51.5 t/tick
+      zoo production          293.8 t/tick      9.9 t/tick
+      of which starvation     233.5 t/tick      0.0 t/tick
+      gross efficiency        273.7 %          19.2 %
+      (ceiling 2000*0.65/4500 = 28.9 %)
+
+    19.2 % against the prototype's 19.2 %, and standing stocks matching
+    it to one ton (3959 vs 3958, 1448 vs 1449) - the flag reproduces
+    section 115.2 exactly, which is what makes the two independent.
+
+    Note the legacy row is UNSTEADY: the same arm has measured 190.8 %,
+    273.7 % and 343.8 % across runs of this probe at 3000 ticks, because
+    the fabricate-then-starve cycle never settles. The debited arm gives
+    the same number every time. That stability is itself a result.
+
+    The probe's production estimator had to change with the flag. Under
+    `--mass-balance` the growth term is capped, so `B*(1-nm)*g*(s-u)` is
+    the WISH and not the spend; production is now read off the losses,
+    which is exact at equilibrium and agrees with the delta estimate to
+    a few per cent when the flag is off.
+
+116.5 The viability corner
+    `--spawn colocated --behaviour greedy --mortality on`, 20x20, 7300
+    ticks, 3 seeds:
+
+      fg              legacy                  --mass-balance
+      gadoids         FAIL below floor        FAIL extinct@3506
+      pelagic_fish    FAIL below floor        FAIL below floor
+      porpoises       FAIL extinct@212        FAIL extinct@86
+      benthic         PASS 0.702              PASS 0.721
+      phytoplankton   FAIL 0.065, drift 1.31  FAIL 0.018, drift 1.00
+      zooplankton     PASS 0.702, drift 1.18  PASS 0.113, drift 1.00
+      overall         NOT VIABLE              NOT VIABLE
+
+    Those are the rig's 3-seed figures, so zooplankton's 0.113 is the
+    seed-worst level and not one lucky draw.
+
+    Read honestly: the world gets quantitatively POORER and
+    qualitatively more settled. Every level falls, gadoids tip from
+    asymptotic-zero into a recorded extinction, and zooplankton lands at
+    0.113 against the criterion's 0.1 floor - one more step down and it
+    fails too. But the drift column goes to 1.00 for both plankton
+    groups: the system is stationary, which it was not before. The
+    biomass that disappeared was the biomass that was never paid for.
+
+    The verdict does not change and is still driven by the same
+    pre-existing failures (73, 74, 90-92).
+
+116.6 What this does NOT do
+    It does not make the world viable, and it is not expected to. Per
+    115.7 the ranking is (1) growth not mass-balanced - this flag, (2)
+    zooplankton's maintenance/intake/energy-content triple setting an
+    implausible R*, (3) phytoplankton's growth_rate being net of grazing
+    (113). This is (1) only. (2) is what the low phytoplankton level in
+    116.5 is measuring and it is untouched.
+
+    It also does not settle the design. Option B of section 115 -
+    consumption-driven growth with a literature `K_X` - remains the one
+    to prefer, and this flag is the experiment that says where it should
+    land: 19.2 %, inside the 20-40 % copepod band.
+
+116.7 Tests
+    `tests/test_mass_balance.py`, 19 cases: default-off and off being the
+    legacy term; the debit equalling `dB * energy_content`; the cap
+    landing the reserve exactly on the maintenance line and never below
+    zero; the `ME/EC` bound at three growth rates; `energy_content = 0`
+    falling back; the starvation branch bit-identical across the flag;
+    and CPU/GPU parity for both flag states at two growth rates and both
+    `energy_content` values, since `energy_content = 0` is the one branch
+    where the two implementations differ structurally - the reference
+    returns early, the mirror guards with `torch.where(ec > 0, ...)`.
+
+    The GPU parity case was verified to bite by disabling the mirror -
+    two of four cases turn red on their own.
+
+    Suite: 757 passed, 12 skipped (was 734/12). One-generation training
+    run with `--mortality on --mass-balance --workers 2` completed.
+
+116.8 Checkpoints
+    Not invalidated formally - no observation shape, FG set, grid layout
+    or Observability entry moved - but a policy trained with the flag on
+    and run with it off, or the reverse, is being evaluated in a
+    different world. The flag is recorded in the `training_progress`
+    config so a run says which one it was.
+
+117 A/B: --mass-balance x PHYTOPLANKTON 0.125. THE RESOURCE LEVEL IS INVARIANT (2026-09-29)
+--------------------------------------------------------------------------------------------
+
+117.1 Why this 2x2
+    Section 113 recommends raising `phytoplankton.growth_rate` from
+    0.0375 to 0.125 on the ground that 0.0375 is net of the grazing the
+    tick applies. Section 116 implements a mass-balanced growth term
+    behind `--mass-balance`. Section 115.7 ranks the two as independent
+    defects and predicts that fixing the growth term first will change
+    what the phytoplankton change buys. This measures it.
+
+    All four arms: 60x60, 3000 ticks, frozen greedy, colocated,
+    `--mortality on`, zooplankton at its library value 0.0913.
+
+117.2 Conservation and throughput
+    `tools/probes/growth_mass_balance.py`, means over the last 300 ticks:
+
+      arm                  zoo t    phyto t  zoo:phyto  grazed  prod   eff.
+      legacy    0.0375     28395     9964     2.85:1     100.0  467.8  468 %
+      legacy    0.125     176522    26180     6.74:1     861.0 1864.9  217 %
+      mass-bal  0.0375      3959     1448     2.73:1      51.5    9.9   19 %
+      mass-bal  0.125      12700     1570     8.09:1     171.9   33.9   20 %
+
+    (grazed and prod in t/tick; eff. = production/grazed against the
+    28.9 % ceiling of 114.4. Production is read off the losses, the only
+    estimator valid under the flag - 116.4.)
+
+    The result is in the phyto column. Under `--mass-balance`, tripling
+    phytoplankton's growth rate moves its standing stock from 1448 to
+    1570 t - EIGHT PER CENT. What moves is the throughput: grazing
+    51.5 -> 171.9 t/tick, +234 %, and zooplankton 3959 -> 12700 t,
+    +221 %. Conservation holds either way, 19.2 % and 19.7 %.
+
+    That is the textbook R* result and it is what a mass-balanced
+    consumer is supposed to do: the equilibrium resource level is set by
+    the CONSUMER's break-even, not by the resource's growth rate. Faster
+    primary production buys more flux at the same standing stock.
+
+    The legacy rows do not show it - phytoplankton goes 9964 -> 26180 t,
+    +163 % - because a consumer whose growth is decoupled from its
+    ingestion does not have a well-defined R* to pin the resource at.
+    Finding the invariance only after the growth term is fixed is
+    itself a check on the fix.
+
+117.3 The food web
+    `tools/probes/zoo_growth_sweep.py`, 3 seeds, ranges over seeds:
+
+      arm                 phy_end      zoo_end     zoo_min      gad_end
+      legacy   0.0375   0.069-0.149  0.64-1.16  0.000-0.001  0.10-0.24
+      legacy   0.125    0.325-0.337  5.09-5.11  0.049-0.058  0.65-0.98
+      mass-bal 0.0375   0.018        0.113      0.001-0.002  0.14-0.32
+      mass-bal 0.125    0.020        0.362      0.361-0.362  0.37-0.51
+
+    Two things stand out beyond 117.2.
+
+    First, the OSCILLATION IS GONE. In the mass-balanced 0.125 arm
+    zooplankton's trough over the whole 3000 ticks is 0.361 against a
+    final-window mean of 0.362 - it never dips below its equilibrium at
+    all. The legacy arm at the same phytoplankton value swings from a
+    trough of 0.049 to a mean of 5.11, a factor 100. The predator-prey
+    cycling that dominated every measurement in sections 109 to 113 was
+    the fabricate-then-starve cycle, not ecology.
+
+    Second, the SEED SPREAD collapses. Legacy phy_end spans 0.069-0.149
+    across three seeds; the mass-balanced arms read 0.018, 0.018, 0.018
+    and 0.113, 0.113, 0.113. A deterministic equilibrium, which is what
+    made the legacy arm's 190.8 / 273.7 / 343.8 / 467.7 % efficiency
+    spread across runs (116.4) unmeasurable.
+
+    Gadoids improve with the phytoplankton change in BOTH worlds, 0.10-
+    0.24 -> 0.65-0.98 legacy and 0.14-0.32 -> 0.37-0.51 mass-balanced.
+    The absolute level is lower under the flag because part of the legacy
+    gadoid biomass was fed by zooplankton that was never paid for.
+
+117.4 The viability corner
+    `--spawn colocated --behaviour greedy --mortality on`, 20x20, 7300
+    ticks, 3 seeds. The 0.0375 column is from 116.5:
+
+      fg             phyto 0.0375              phyto 0.125
+                   legacy      mass-bal      legacy      mass-bal
+      gadoids      FAIL floor  FAIL ext@3506 FAIL floor  FAIL floor
+      pelagic      FAIL floor  FAIL floor    FAIL floor  FAIL floor
+      porpoises    ext@212     ext@86        ext@229     ext@97
+      benthic      PASS 0.702  PASS 0.721    PASS 0.402  PASS 0.634
+      phyto        FAIL 0.065  FAIL 0.018    PASS 0.302  FAIL 0.019
+      zoo          PASS 0.702  PASS 0.113    PASS 4.891  PASS 0.359
+      overall      NOT VIABLE  NOT VIABLE    NOT VIABLE  NOT VIABLE
+
+    Raising phytoplankton RESCUES its own viability criterion in the
+    legacy world - 0.065 FAIL to 0.302 PASS - and does nothing for it
+    under the flag, 0.018 to 0.019. Same invariance as 117.2, now with a
+    verdict attached.
+
+    Under the flag both plankton groups sit at drift 1.00 with
+    zooplankton's trough at 0.357 against an equilibrium of 0.359. One
+    improvement worth noting: gadoids go from `extinct@3506` back to
+    below-floor-but-alive when phytoplankton is raised.
+
+    The overall verdict is NOT VIABLE in all four arms, still driven by
+    the same pre-existing failures (73, 74, 90-92).
+
+117.5 What this settles, and what it changes
+    * Section 113's recommendation stands but its VALUE changes. Raising
+      phytoplankton to 0.125 is a productivity fix, not a standing-stock
+      fix: +234 % throughput and roughly double the gadoids, and 8 % on
+      phytoplankton's own biomass. It does NOT repair the inverted
+      zoo:phyto ratio - it makes it worse, 2.73:1 -> 8.09:1, because
+      zooplankton scales with throughput while its food's stock does not.
+      113.9's withdrawal of the spawn recalibration was right for a
+      better reason than the one it gave.
+    * The inversion is now unambiguously defect (2) of 115.7 -
+      zooplankton's maintenance / intake / energy-content triple setting
+      an R* far below any plausible phytoplankton standing stock. Not
+      the growth term, and not phytoplankton's growth rate. Both of the
+      other two candidates have now been eliminated by measurement
+      rather than by argument.
+    * The next lever is therefore that triple. The R* condition is
+      f(P) * energy_gain = resting_metabolism * cost_eat, and the
+      quantity to check first is `resting_metabolism = 3.5 MJ/t/tick`
+      against 1300 MJ per ton grazed: a maintenance cost that cheap
+      pins the resource at a refuge level whatever else is done.
+      Untested.
+
+117.6 Probe note
+    `zoo_growth_sweep.py`'s `realPB` column is the growth-term WISH, not
+    production, when `--mass-balance` is on - the reserve caps the term,
+    so `growth_rate * <s-u> * 1460` is what was wanted rather than what
+    was spent. It reads 0.2-0.3 in the flagged arms, which is the
+    surplus collapsing to the maintenance line, not production
+    collapsing. The probe now prints that warning itself.
+    `growth_mass_balance.py` reads production off the losses and is the
+    one to quote. Nothing in the library or in `lib/` changed for this
+    section; the phytoplankton value was overridden in memory, except
+    for the corner runs, where the library was edited and restored.
+
+118 ZOOPLANKTON resting_metabolism IS ~1/6 OF A COPEPOD'S, AND THE CONSTRAINT THAT SET IT NEVER BOUND (2026-09-29)
+-------------------------------------------------------------------------------------------------------------------
+
+118.1 The number
+    `resting_metabolism: 3.5` MJ/t/tick, i.e. 14.0 MJ/t/day, against
+    `energy_content: 4500` MJ/t:
+
+      14.0 / 4500 = 0.311 % of body energy per day at rest
+      x cost_eat 1.45                = 0.451 %/day while feeding
+
+    Section 117.5 named this triple as the remaining defect. This is the
+    metabolism leg of it.
+
+118.2 How it got there: fitted backwards from a starvation window
+    `tools/starve_calibration.py` is the calibration of record. It drives
+    one isolated cell with `pi_rest = 1` and no prey and reports T1
+    (days to drain the reserve from u_X) and T_total (days to 95 %
+    biomass loss), against a literature target of 3-30 days for
+    zooplankton - "active copepods 3-14 d; lipid-rich up to 30+". At the
+    library values it prints
+
+      zooplankton   ME 450   rm 3.5   starve 0.200   T1 16.2 d   T_total 15.0 d   OK
+
+    So `resting_metabolism` was solved for a window, given a fixed
+    `max_energy_reserve`. It was never set from a respiration rate, and
+    nothing in the repo records one.
+
+118.3 The constraint does not bind, and that is the finding
+    Re-running the same tool with only zooplankton's rate changed:
+
+      zoo rm    %/day    T1 (d)   T_total (d)   verdict
+      3.5        0.31     16.2       15.0       OK (lit 3-30 d)
+      22.5       2.00      2.5        8.2       OK (lit 3-30 d)
+      56.2       5.00      1.2        7.5       OK (lit 3-30 d)
+      112.5     10.00      0.5        7.2       OK (lit 3-30 d)
+
+    The window stays inside the literature range across a 32-FOLD range
+    of `resting_metabolism`, because T_total is dominated by
+    `starve_rate = 0.2` catabolising biomass and not by the reserve
+    drain. T1 moves by a factor 32; T_total moves by a factor 2.
+
+    That is biologically the right structure - a starving copepod burns
+    its lipid store and then its body, and the second phase is the long
+    one - but it means the calibration that produced 3.5 had almost no
+    power to determine it. Any value in the table passes. The number was
+    under-determined and has been treated ever since as though it were
+    measured.
+
+118.4 What the literature says
+    Sources located (see 118.8): the daily minimum carbon demand of
+    NON-FEEDING copepods - respiration plus pellet plus egg production -
+    is about 10 % of body weight per day; respiration or excretion
+    accounts for roughly 50 % of ingestion in carbon terms; and carbon
+    demand for calanoids feeding on dispersed food is 2-3x the resting
+    rate.
+
+    Two readings of that against the model:
+      * Respiration alone is less than the 10 %/day figure, since that
+        figure includes egg production - which in this model IS the
+        growth term, not the metabolism. A respiration rate of 2-5 %/day
+        is the defensible band, and 0.311 %/day is 1/6 to 1/16 of it.
+      * `feeding_cost: 1.45` is the model's feeding multiplier against a
+        literature 2-3x. Low, and not investigated here.
+
+118.5 Measured: what the rate does to the world
+    `tools/probes/growth_mass_balance.py --mass-balance --zoo-rm`, 60x60,
+    3000 ticks, means over the last 300, frozen greedy, colocated,
+    `--mortality on`, library values otherwise. Run under
+    `--mass-balance` deliberately: it is the only regime where the tick's
+    energy budget closes, so shares of ingested energy mean something
+    (the gap column below).
+
+      rm     %/day  resp/ing  built/ing  gap    zoo t   phyto t  zoo:phyto
+      3.5     0.31   19.5 %    43.2 %    2.3 %   3959    1448     2.73 : 1
+      11.25   1.00   37.6 %    26.0 %    1.4 %   3230    1978     1.63 : 1
+      22.5    2.00   46.1 %    17.9 %    1.0 %   2837    2875     0.99 : 1
+      56.2    5.00   49.5 %    18.8 %   -3.4 %   5666   22524     0.25 : 1
+      112.5  10.00     -          -       -         0   86376     extinct
+
+    (resp/ing and built/ing are shares of INGESTED energy; assimilation
+    is 0.65, so the two should come to 65 % and `gap` is what is
+    missing. zoo:phyto at spawn is 0.44:1.)
+
+    Reading it:
+      * The INVERSION IS A METABOLISM ARTEFACT. zoo:phyto goes 2.73:1 ->
+        0.99:1 -> 0.25:1 as the rate rises through its plausible band,
+        crossing the spawn ratio 0.44:1 between 2 and 5 %/day. Nothing
+        else in sections 109-117 moved it: section 117 showed tripling
+        phytoplankton's growth rate made it WORSE.
+      * Phytoplankton's standing stock rises with it, 1448 -> 22524 t,
+        which is the R* mechanism working in reverse: a more expensive
+        grazer breaks even at a higher resource density.
+      * There is a WALL just above 5 %/day. At 10 %/day zooplankton goes
+        extinct and phytoplankton sits at its carrying capacity. The
+        usable band is narrow and its upper edge is close.
+      * The respiration share moves onto the literature ~50 % exactly
+        where the ratio becomes plausible.
+
+118.6 Two caveats on those numbers
+    * The respiration column is an UPPER BOUND. It is computed as
+      `biomass * rm * cost_eat`, i.e. as though the whole standing stock
+      paid the feeding multiplier every tick; a resting or moving mix
+      pays 1.0 or 1.2 instead. The true share is between 69 % and 100 %
+      of the printed value - so rm 22.5 sits at 32-46 % of ingestion
+      rather than exactly 46 %. The DIRECTION is unaffected: 3.5 gives
+      13-19 % against a literature ~50 %.
+    * The -3.4 % gap at rm 56.2 is that same over-estimate showing up as
+      an impossible closure, which is the check that the bound is a
+      bound.
+
+118.7 Correction to sections 114-117: GGE was compared on the wrong basis
+    Those sections quote an implied gross growth efficiency of ~19 %
+    against a literature copepod GGE of 20-40 % and read it as "inside
+    the band, at its floor". The 19 % is a WET MASS ratio, tons of
+    zooplankton per ton of phytoplankton; the literature band is CARBON.
+    A wet ton of zooplankton carries 4500 MJ against phytoplankton's
+    2000, so the carbon-basis figure is 19.2 * 4500/2000 = 43.2 %, i.e.
+    ABOVE the band rather than at its floor. That is the `built/ing`
+    column in 118.5.
+
+    What this does NOT change: the 28.9 % ceiling of 114.4 is itself a
+    mass ratio derived from the same two energy contents, so
+    "19.2 % against a 28.9 % ceiling" is apples to apples and stands, as
+    does everything built on it - the legacy term's 198-468 % is over the
+    ceiling on either basis. What changes is which direction the
+    mass-balanced arm errs in: it is slightly too EFFICIENT at rm 3.5,
+    not slightly too poor. Raising rm to 22.5 brings it to 17.9 %, just
+    under the band.
+
+118.8 Recommendation
+    Set `zooplankton.resting_metabolism = 22.5` MJ/t/tick - 2 % of body
+    energy per day, a 6.4x raise. It is the value where the respiration
+    share reaches the literature order, the zoo:phyto ratio stops being
+    inverted (0.99:1), the carbon-basis GGE lands just under the 20-40 %
+    band, and the starvation window stays comfortably inside 3-30 days
+    at 8.2. 56.2 (5 %/day) is arguably better on the ratio alone but its
+    energy accounting does not close, and 112.5 is past the extinction
+    wall.
+
+    Do it WITH `--mass-balance`. Under the legacy growth term a higher
+    metabolism is partly absorbed by the fabricated biomass and the two
+    changes are not separable.
+
+    Not applied - the instruction was to investigate. Companion items
+    this raises and does not settle: `max_energy_reserve = 450` (10 % of
+    body energy) becomes a 5-day buffer at 2 %/day and a 1-day buffer at
+    10 %, so it should be re-derived alongside (115.6 asked for the same
+    thing for a different reason); and `feeding_cost: 1.45` against a
+    literature 2-3x.
+
+    Sources: Ikeda et al. (2001) Metabolic rates of epipelagic marine
+    copepods as a function of body mass and temperature, Mar. Biol.
+    139:587-596, for the mass/temperature scaling; and the non-feeding
+    carbon-demand, respiration-share and feeding-multiplier figures from
+    the copepod metabolic-budget literature located by search rather than
+    read in full - they are orders of magnitude, not point citations, and
+    should be checked against Ikeda's tables before being quoted as
+    settled.
+
+    APPLIED by section 119.
+
+119 APPLIED: ZOOPLANKTON resting_metabolism 3.5 -> 22.5 (2026-09-29)
+---------------------------------------------------------------------
+
+    *** ONE TEST IS RED AND UNRESOLVED - READ 119.3 AND 119.7. ***
+
+119.1 The change
+    `fgconfig/fg_library.yaml`, zooplankton only:
+
+      resting_metabolism: 3.5  ->  22.5      MJ/t/tick
+                                             = 90 MJ/t/day
+                                             = 2.0 % of body energy/day
+
+    A 6.4x raise, on the grounds section 118 establishes: 0.311 %/day is
+    1/6 to 1/16 of copepod respiration, the starvation window that set
+    the old value does not bind (T_total stays inside the literature
+    3-30 d across a 32-fold range of this parameter), and 2 %/day is
+    where the respiration share reaches the literature order without
+    hitting the extinction wall just above 5 %/day.
+
+    No other parameter moved. `growth_rate` stays at 0.0913 (111),
+    `natural_mortality` at 0.0025 (108), phytoplankton's `growth_rate`
+    at 0.0375 - section 113's recommendation to raise that one was
+    still open when this section was written and is APPLIED by 121.
+
+119.2 It presupposes --mass-balance, and that is now a live problem
+    Section 118.8 says to make this change with the mass-balanced growth
+    term, because under the legacy term a higher metabolism is partly
+    absorbed by fabricated biomass. `--mass-balance` is OFF by default
+    (116), so as the repo now stands
+
+      python3 train.py --project mareld2.yaml
+
+    runs a zooplankton with 6.4x the metabolism inside a growth term
+    that fabricates mass - a combination that is neither calibrated nor
+    measured, and worse than either coherent state.
+
+    This is the same shape as 110.5, and it was resolved there by the
+    calibration ceasing to presuppose a setting. Here it does not. The
+    options are to flip `DEFAULT_MASS_BALANCE` to True, or to revert
+    this value. Flipping a default changes every run that does not pass
+    the flag and is not a decision to take from a probe result, so it
+    was left open.
+
+119.3 Validation: one test turns red, and it is informative
+    `tests/test_phyto_zoo_sanity.py::test_zoo_bounded_in_closed_phyto_zoo_system`
+    FAILS. Suite 756 passed, 1 failed, 12 skipped (was 757/0/12).
+
+    The test drives a closed phytoplankton + zooplankton world for 200
+    ticks (~50 days) from 1000 t each and asserts zooplankton ends
+    within a factor 0.03-100 of where it started. At rm 22.5 it ends at
+    0.013 of start.
+
+    Attribution, by re-running the same fixture across the rate and both
+    growth terms (zoo end / start after 200 ticks):
+
+      rm      legacy   mass-bal   legacy   mass-bal
+              default  default    greedy   greedy
+      3.5     14.22    1.18       41.31    1.37
+      11.25    2.29    0.75        4.04    1.01
+      22.5     0.013   0.011       2.52    0.97
+      56.2     0.000   0.000       0.23    0.19
+      band: PASS is 0.03-100
+
+    The collapse is BEHAVIOURAL, not energetic. The fixture calls
+    `env.step()` with no action provider, so the zooplankton makes no
+    foraging decisions at all. Give it the viability rig's frozen
+    `greedy` behaviour and rm 22.5 passes in both growth terms - and so
+    does 56.2. What fails is a zooplankton that does not forage.
+
+    The same table says something about the OLD value. At rm 3.5 with
+    the legacy term, zooplankton grows 14x in 50 days WITHOUT FORAGING,
+    and 41x with. A metabolism that cheap is why the contract was
+    satisfiable; the test was not protecting an ecological property, it
+    was measuring how little the metabolism mattered.
+
+    The same fixture defect shows up a second time in a contract that
+    still passes. `test_predation_visibly_suppresses_phyto` requires
+    zooplankton to depress phytoplankton by more than 0.3 % relative to
+    a no-zooplankton baseline:
+
+      rm      phyto alone   with zoo   suppression   margin
+      3.5       21279.6     18985.6     10.78 %      x35.9
+      11.25     21279.6     20437.9      3.96 %      x13.2
+      22.5      21279.6     21174.3      0.50 %       x1.6
+
+    Grazing in the default-action fixture is now barely detectable: one
+    more step and that test goes red as well, for the same reason. A
+    world where a decision maker does not forage is one where predation
+    pressure does not exist, which is what both contracts are really
+    measuring.
+
+    Two other test files step decision makers with no action provider -
+    `test_population_stability.py` and `test_ecosystem_refactor.py` - so
+    whatever is decided here has a scope beyond this one file. Neither
+    failed.
+
+    NOT ACTED ON. The fixture, not the threshold, is what looks wrong -
+    "the ecosystem must be stable when its decision makers do not
+    decide" is a statement about the default-action path, not an
+    ecological contract - and the repo-standard fix would be to install
+    `greedy` and leave the 0.03-100 band untouched. But editing a test
+    so a parameter fits is the inversion this whole arc has been
+    correcting, so it is a decision to take deliberately and not a
+    side effect of a calibration. The suite is left red.
+
+119.4 Validation: everything else
+    * The library parses; only zooplankton's rate moved.
+    * One-generation training run with `--mortality on --mass-balance`
+      completed.
+    * `tools/probes/growth_mass_balance.py` at the LIBRARY value
+      reproduces what 118.5 predicted from an in-memory override:
+
+                        predicted (118.5)   measured (119)
+        respired/ing       46.1 %             46.6 %
+        built/ing          17.9 %             17.5 %
+        closure gap         1.0 %              0.9 %
+        zoo                2837 t             2835 t
+        phyto              2875 t             2845 t
+        zoo:phyto          0.99 : 1           1.00 : 1
+
+      The inversion is gone: 2.73:1 at rm 3.5, 1.00:1 now, against a
+      spawn ratio of 0.44:1.
+
+    * The same probe WITHOUT `--mass-balance` is the quantified proof of
+      119.2: respired 67.9 % and built 102.5 % of ingested energy, a
+      closure gap of -105 %, and a mass-basis efficiency of 45.6 %
+      against the 28.9 % thermodynamic ceiling. The legacy term does not
+      merely absorb the higher metabolism, it fabricates harder to pay
+      for it. This value must not be used without the flag.
+
+119.5 The viability corner got worse by one group
+    `--spawn colocated --behaviour greedy --mortality on`, 20x20, 7300
+    ticks, 3 seeds, both at rm 22.5:
+
+      fg             mass-balance        legacy
+      gadoids        FAIL below floor    FAIL below floor
+      pelagic_fish   FAIL below floor    FAIL below floor
+      porpoises      FAIL extinct@62     FAIL extinct@106
+      benthic        PASS 0.832          PASS 0.706
+      phytoplankton  FAIL 0.034          FAIL 0.093
+      zooplankton    FAIL 0.080          PASS 0.254
+      overall        NOT VIABLE          NOT VIABLE
+
+    Against rm 3.5 with the flag (116.5): phytoplankton improves,
+    0.018 -> 0.034, and zooplankton drops from 0.113 to 0.080, i.e. from
+    just above the criterion's 0.1 floor to just below it. Five failing
+    groups where there were four.
+
+    That is not a grid artefact - the 60x60 probe puts zooplankton at
+    2835 t against an inference spawn of 35000, which is the same 0.08.
+
+119.6 The level is wrong, the ratio is not
+    Both plankton groups now sit at 3-8 % of their `mareld2.yaml` spawn
+    levels while holding a zoo:phyto ratio of 1.00:1 against a spawn
+    ratio of 0.44:1. Section 113.9 argued those spawn levels look
+    biologically anchored - phytoplankton at 93 % of its carrying
+    capacity, zooplankton at 0.44 of it. So the model now gets the
+    RELATIVE structure of the plankton right and the ABSOLUTE level
+    wrong by a factor 15-30.
+
+    The obvious next combination is this value together with section
+    113's phytoplankton 0.125, which 117 showed raises throughput 3.3x
+    and zooplankton 3.2x while barely moving phytoplankton's own stock.
+    That is the arm most likely to fix the level without breaking the
+    ratio. Not run.
+
+119.7 Standing recommendation
+    Either flip `DEFAULT_MASS_BALANCE` to True or revert this value;
+    119.2 and 119.4 together say the pair is not optional. And the red
+    test in 119.3 needs a decision of its own before the suite is green
+    again. If the preference is to keep the suite green today, rm 11.25
+    (1 %/day) passes every arm of 119.3 and still triples the
+    metabolism, at the cost of a zoo:phyto of 1.63:1 instead of 1.00:1
+    and a respiration share of 37.6 % instead of 46.6 %.
+
+120 FIXTURE FIXED, --mass-balance ON BY DEFAULT, AND THE COMBINATION MEASURED (2026-09-29)
+--------------------------------------------------------------------------------------------
+
+    The three decisions 119.7 left open, all taken.
+
+120.1 The sanity fixture now forages
+    `tests/test_phyto_zoo_sanity.py::_build_env` called `env.step()` with
+    no action provider, so its zooplankton never made a foraging
+    decision, and all four contracts in the file were measuring an
+    ecosystem whose decision makers do not decide. It now installs the
+    viability rig's frozen `greedy`, which is the repo's standard for
+    behaviour-free measurement, and skips it for the phyto-only baseline
+    that has no decision makers.
+
+    THE BANDS ARE UNCHANGED. Only the behaviour is. That is the whole of
+    the change: no threshold was widened to fit a parameter.
+
+    Why the fixture and not the threshold, stated so the argument can be
+    checked rather than trusted: at the OLD `resting_metabolism` of 3.5
+    the non-foraging zooplankton grew 14x in 50 days, and 41x with
+    greedy. The green state was the absurd one. The grazing-pressure
+    contract in the same file said it from the other side - its margin
+    against the 0.3 % threshold fell 36x -> 13x -> 1.6x as the
+    metabolism went 3.5 -> 11.25 -> 22.5, because a grazer that does not
+    forage exerts no grazing pressure, so that test was about to go red
+    for the same reason.
+
+    `test_population_stability.py` and `test_ecosystem_refactor.py` also
+    step decision makers with no action provider. Neither failed and
+    neither was touched; the same question applies to them.
+
+120.2 --mass-balance is ON by default
+    `DEFAULT_MASS_BALANCE = True`, and `EcosystemEnvironment`'s
+    constructor default with it. The library is calibrated for that tick
+    - zooplankton's `growth_rate` (111) and `resting_metabolism` (118)
+    are both set in that world - so a run that passes no flag has to get
+    it. 119.4 is the quantified version: with the legacy term at the
+    current library, zooplankton converts mass at 45.6 % against a
+    28.9 % thermodynamic ceiling and the energy budget over-accounts by
+    105 %.
+
+    `--mass-balance` is kept as a no-op so scripts written against
+    section 116 keep working, and `--no-mass-balance` is the way back to
+    the pre-116 tick. Its help text says the library is not calibrated
+    for it.
+
+    One thing that must NOT follow the default: what an OLD run was
+    doing. `LEGACY_MASS_BALANCE = False` is a separate constant and
+    `training_progress.comparable_config` defaults histories to it, so
+    flipping the default cannot retroactively relabel a recorded run.
+    Asserted by `test_legacy_constant_is_separate_from_the_default`.
+
+    Caught while doing this, and worth recording because it is the same
+    trap one level down: `tools/probes/growth_mass_balance.py` and
+    `zoo_growth_sweep.py` each had their own `--mass-balance`
+    `store_true` with an implicit default of False. After the flip they
+    silently forced the LEGACY term - the first run of 120.3 came back
+    with a -139 % closure gap before that was found. Both now default to
+    `DEFAULT_MASS_BALANCE` and carry `--no-mass-balance`.
+
+    Suite: 760 passed, 12 skipped, 0 failed. Was 756/1/12 at the end of
+    section 119.
+
+120.3 The combination: phytoplankton 0.125 with resting_metabolism 22.5
+    Run here with the rate overridden in memory; APPLIED to the library
+    by section 121, which reproduces the numbers below to within a
+    percent. 60x60,
+    3000 ticks, frozen greedy, colocated, `--mortality on`, means over
+    the last 300 ticks:
+
+                          phyto 0.0375      phyto 0.125
+      zoo                   2835 t            9578 t
+        vs spawn             0.081x            0.274x
+      phyto                 2845 t            4080 t
+        vs spawn             0.036x            0.051x
+      zoo:phyto             1.00 : 1          2.35 : 1
+      phyto grazed          99.3 t/tick      387.1 t/tick
+      respired / ingested   46.6 %            40.4 %
+      built / ingested      17.5 %            25.0 %
+      closure gap            0.9 %            -0.3 %
+
+    The `built / ingested` row is the result. 25.0 % is INSIDE the
+    literature copepod gross growth efficiency band of 20-40 % on a
+    carbon basis - the first time any arm in sections 108-120 has landed
+    there. The respiration share stays at the literature order and the
+    energy budget still closes.
+
+    The level moves the way 119.6 predicted: zooplankton 3.4x and
+    phytoplankton 1.4x, so the plankton sit at 5-27 % of their spawn
+    levels instead of 4-8 %. Still low, but the gap is a factor 4-20
+    where it was 15-30.
+
+    The ratio moves the WRONG way, 1.00:1 -> 2.35:1, which is exactly
+    section 117.2's R* invariance doing its work: a faster resource
+    raises throughput and the consumer's stock but not its own, so the
+    ratio degrades. Raising phytoplankton buys level at the cost of
+    ratio; raising the metabolism buys ratio at the cost of level. They
+    are not the same lever and neither fixes both.
+
+    Food web, 3 seeds, final-window means over spawn:
+
+      arm                          phy_end  zoo_end  zoo_min  gad_end
+      rm 3.5,  phyto 0.125 (117)    0.020    0.362    0.361   0.37-0.51
+      rm 22.5, phyto 0.125          0.046    0.268    0.142   0.46-0.58
+      (3-seed spread on the last row: 0.046-0.050, 0.268-0.271,
+       0.142-0.169)
+
+    Gadoids improve and phytoplankton more than doubles.
+
+    Viability corner, `--mortality on`, 20x20, 7300 ticks, 3 seeds:
+
+      arm                        zooplankton      phytoplankton   FAILs
+      rm 3.5,  phyto 0.0375      PASS 0.113       FAIL 0.018        4
+      rm 22.5, phyto 0.0375      FAIL 0.080       FAIL 0.034        5
+      rm 22.5, phyto 0.125       PASS 0.256       FAIL 0.041        4
+
+    The combination recovers the criterion that 119.5 lost: zooplankton
+    goes from 0.080, just under the 0.1 floor, back to 0.256. Overall
+    still NOT VIABLE on the same three pre-existing failures.
+
+120.4 Where this leaves the open list
+    Applied: mass-balanced growth (116, now default), zooplankton
+    `growth_rate` 0.0913 (111), `natural_mortality` M1 values (108),
+    `resting_metabolism` 22.5 (119).
+
+    Open, in the order the evidence now supports:
+      1. CLOSED by 121: phytoplankton `growth_rate` 0.0375 -> 0.125
+         (113), applied. It is the only lever that moves the absolute
+         level, and its cost is the zoo:phyto ratio.
+      2. `max_energy_reserve` 450 MJ/t for zooplankton. At 2 %/day it is
+         a 5-day buffer where it used to be 32, and under `--mass-balance`
+         it is also the growth budget - `max_energy_reserve /
+         energy_content = 0.100` is a hard ceiling on the reachable
+         `growth_rate`, and 0.0913 sits at 91 % of it (115.3, 116.2).
+      3. `feeding_cost` 1.45 against a literature 2-3x (118.4).
+      4. The absolute plankton level, still a factor 4-20 below spawn
+         even in the best arm.
+      5. The no-action fixtures in `test_population_stability.py` and
+         `test_ecosystem_refactor.py` (120.1).
+
+121 APPLIED: PHYTOPLANKTON growth_rate 0.0375 -> 0.125 (2026-09-29)
+---------------------------------------------------------------------
+
+121.1 The change
+    Section 113's recommendation, applied. The argument is there and in
+    120.3 and is not repeated: 0.0375 was a rate measured NET of the
+    grazing the tick applies itself, the 3.33x reduction 63.3 made is
+    the grazing fraction, the behaviour that justified it was the
+    Holling bug section 64 fixed, and 0.125 sits mid-band for Eppley at
+    10-12 C minus the unmodelled microzooplankton grazing.
+
+    `seasonal_amplitude` stays at 0.0 - 112.4 measured 63.3's companion
+    recommendation of 0.7 and it makes the mean supply worse - and
+    `seed_rate` stays at 0.0.
+
+121.2 Validation
+    Suite: 760 passed, 12 skipped. Library parses; only phytoplankton's
+    rate moved.
+
+    `tools/probes/growth_mass_balance.py` at the library values, with no
+    flags, reproduces what 120.3 measured with the rate overridden in
+    memory:
+
+                        120.3 (override)   121 (library)
+      zoo                  9578 t            9551 t
+      phyto                4080 t            4079 t
+      zoo:phyto            2.35 : 1          2.34 : 1
+      respired / ingested  40.4 %            40.3 %
+      built / ingested     25.0 %            25.0 %
+      closure gap          -0.3 %            -0.3 %
+
+    One-generation training run with `--mortality on` and no other flags
+    completed; the gen-1 probe reads phytoplankton at 98 % of spawn
+    against 85-86 % before the change.
+
+121.3 The viability corner at the finished library
+    `--spawn colocated --behaviour greedy`, 20x20, 7300 ticks, 3 seeds,
+    no flags beyond `--mortality`:
+
+      fg             mortality on        mortality off
+      gadoids        FAIL below floor    FAIL extinct@3924
+      pelagic_fish   FAIL below floor    FAIL below floor
+      porpoises      FAIL extinct@71     FAIL extinct@73
+      benthic        PASS 0.555          PASS 0.533
+      phytoplankton  FAIL 0.054          FAIL 0.065
+      zooplankton    PASS 0.270          PASS 0.303
+      overall        NOT VIABLE          NOT VIABLE
+
+    Four failing groups either way. The verdict has not changed
+    anywhere in sections 108-121 and is still driven by the same three
+    pre-existing failures (73, 74, 90-92) - gadoids and pelagic_fish
+    below floor and porpoises extinct - none of which this arc set out
+    to fix.
+
+    What DID change is that zooplankton now passes comfortably (0.270
+    against a 0.1 floor, where 119.5 had it at 0.080) and that the two
+    plankton groups are stationary, drift 1.02-1.07.
+
+121.4 Where the library stands after sections 108-121
+    Changed:
+      zooplankton    natural_mortality  0.0025   unchanged (108)
+                     growth_rate        0.01  -> 0.0913   (111)
+                     resting_metabolism 3.5   -> 22.5     (119)
+      phytoplankton  growth_rate        0.0375 -> 0.125   (121)
+      pelagic_fish   natural_mortality  5e-04 -> 1.0e-04  (108)
+      gadoids        natural_mortality  2e-04 -> 7.0e-05  (108)
+      porpoises      natural_mortality  5e-05 -> 6.0e-05  (108)
+      seals          natural_mortality  4e-05 -> 6.0e-05  (108)
+      seabirds       natural_mortality  2e-04 -> 8.0e-05  (108)
+    Engine:
+      the growth term is mass-balanced and that is the default (116, 120)
+
+    Every one of those was set from a literature quantity and not from
+    what the model tolerates. Two of them - zooplankton's growth_rate
+    and the mass-balanced growth term - were arrived at only after
+    sections 109 and 110 got it the other way round and had to be
+    superseded.
+
+    Still open, unchanged from 120.4: `max_energy_reserve` 450 MJ/t for
+    zooplankton, `feeding_cost` 1.45, the absolute plankton level (still
+    a factor 4-20 under spawn), the no-action fixtures in
+    `test_population_stability.py` and `test_ecosystem_refactor.py`, and
+    the zoo:phyto ratio at 2.34:1 against a spawn 0.44:1 - which 120.3
+    shows is the price of this change and not a defect introduced by it.
+
+    Checkpoints: nothing is invalidated formally - no observation shape,
+    FG set, grid layout or Observability entry moved anywhere in the arc
+    - but every policy in `results/` was trained in a materially
+    different world and should be retrained before being quoted.

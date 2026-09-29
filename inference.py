@@ -43,7 +43,7 @@ from lib.config.config_loader import (load_config, load_project_config,
                                        _spawn_biomass_distribution)
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.population_change import (
-    add_mortality_multiplier_argument)
+    add_mass_balance_argument, add_mortality_multiplier_argument)
 from lib.runners.policy import PolicyNetwork
 from lib.runners.rnd_baseline import add_rnd_baseline_argument, rnd_baseline_plot_ids
 
@@ -367,7 +367,8 @@ def apply_b0_overrides(env, b0_overrides):
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
               apply_natural_mortality=False, allowed_mask=None,
-              migration=False, currents=None, mortality_multiplier=1.0, tick_hours=LIBRARY_TICK_HOURS):
+              migration=False, currents=None, mortality_multiplier=1.0,
+              mass_balance=False, tick_hours=LIBRARY_TICK_HOURS):
     """Construct a fresh EcosystemEnvironment for inference."""
     H, W = grid_size
     accessibility = None
@@ -394,6 +395,7 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
                                observable_impact_vars=observable_impact_vars,
                                apply_natural_mortality=apply_natural_mortality,
                                mortality_multiplier=mortality_multiplier,
+                               mass_balance=mass_balance,
                                migration=migration, currents=currents, current_world_seed=seed)
     if accessibility is not None:
         env.grid.add_map('accessibility', accessibility)
@@ -1021,6 +1023,7 @@ def main():
                              "mortality term applied to decision-maker FGs each tick. "
                              "Default: off.")
     add_mortality_multiplier_argument(parser)
+    add_mass_balance_argument(parser)
     parser.add_argument("--migration", choices=["on", "off"], default="off",
                         help="Migration mode. When 'on', movement out through grid "
                              "edges is no longer masked away — instead it is "
@@ -1073,6 +1076,7 @@ def main():
         print(f"Ticks:        {args.ticks}")
         print(f"Seed:         {args.seed}")
         print(f"Mortality:    {args.mortality} (x{args.mortality_multiplier:g})")
+        print(f"Mass balance: {'on' if args.mass_balance else 'off'}")
         print(f"Migration:    {args.migration}")
         print(f"Rnd baseline: {args.rnd_baseline}")
         print("------------------------------------------")
@@ -1085,6 +1089,7 @@ def main():
                     tick_hours=args.tick_length, verbose=verbose,
                     apply_natural_mortality=(args.mortality == "on"),
                     mortality_multiplier=args.mortality_multiplier,
+                    mass_balance=args.mass_balance,
                     migration=(args.migration == "on"), currents=currents)
     if verbose:
         print(f"Loading policies for DMs: {[fid for fid in env.fgs if env.fgs[fid].is_decision_maker]}")
@@ -1169,6 +1174,7 @@ def main():
                                 verbose=False,
                                 apply_natural_mortality=(args.mortality == "on"),
                                 mortality_multiplier=args.mortality_multiplier,
+                                mass_balance=args.mass_balance,
                                 migration=(args.migration == "on"), currents=currents)
                 # Rebuild the static cache fields needed before refreshing
                 # batched policy weights.
@@ -1206,6 +1212,7 @@ def main():
                               verbose=False,
                               apply_natural_mortality=(args.mortality == "on"),
                               mortality_multiplier=args.mortality_multiplier,
+                              mass_balance=args.mass_balance,
                               migration=(args.migration == "on"), currents=currents)
                 if b0_overrides:
                     apply_b0_overrides(e, b0_overrides)

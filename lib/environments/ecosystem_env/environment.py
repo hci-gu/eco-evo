@@ -52,6 +52,7 @@ class EcosystemEnvironment:
         observable_impact_vars=None,
         apply_natural_mortality=True,
         mortality_multiplier=1.0,
+        mass_balance=True,
         migration=False,
         currents=None,
         current_world_seed=0,
@@ -69,6 +70,11 @@ class EcosystemEnvironment:
         self.mortality_multiplier = max(
             0.0, float(mortality_multiplier if mortality_multiplier is not None
                        else 1.0))
+        # ``--mass-balance``: the growth term pays for the biomass it
+        # adds out of the energy reserve instead of receiving it free
+        # (sections 114-116). Default True since section 120 - the
+        # library is calibrated for it - and False is the pre-116 tick.
+        self.mass_balance = bool(mass_balance)
         self.migration = bool(migration)
         self.currents = currents
         self.current_world_seed = int(current_world_seed or 0)

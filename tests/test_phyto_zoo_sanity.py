@@ -28,6 +28,7 @@ if _ROOT not in sys.path:
 
 from lib.config.config_loader import setup_full_mareld_mvp  # noqa: E402
 from lib.environments.ecosystem import EcosystemEnvironment  # noqa: E402
+from lib.diagnostics import viability  # noqa: E402
 
 
 GRID = (30, 30)
@@ -40,7 +41,26 @@ GRID_CONFIG = {
 
 
 def _build_env(keep_ids, seed=0, ticks=0):
-    """Construct an EcosystemEnvironment containing only ``keep_ids``."""
+    """Construct an EcosystemEnvironment containing only ``keep_ids``.
+
+    The decision makers are driven by the viability rig's frozen
+    ``greedy`` behaviour, not by the no-action path. Section 119.3: this
+    fixture used to call ``env.step()`` with no action provider, so the
+    zooplankton never made a foraging decision, and all three contracts
+    below were then measuring what happens to an ecosystem whose
+    decision makers do not decide.
+
+    That is not an ecological property, and it hid one. At
+    ``resting_metabolism = 3.5`` the non-foraging zooplankton grew 14x
+    in 50 days and the file was green; at the literature-derived 22.5
+    (section 118) it collapses to 0.013 and the file went red, while
+    the same world with ``greedy`` sits at 0.97-2.52. The grazing
+    signal contract told the same story from the other side - its
+    margin fell from 36x to 1.6x over that range, because a
+    non-foraging grazer exerts no grazing pressure.
+
+    The bands below are unchanged. Only the behaviour is.
+    """
     all_fgs = setup_full_mareld_mvp(grid_size=GRID, seed=seed, spawn_seed=seed)
     fgs = {fid: fg for fid, fg in all_fgs.items() if fid in keep_ids}
     assert set(fgs.keys()) == set(keep_ids), (
@@ -52,9 +72,14 @@ def _build_env(keep_ids, seed=0, ticks=0):
     for iid in ('djup', 'windfarm_noise', 'bottom_trawling',
                 'pelagic_trawling', 'rotor'):
         env.grid.add_map(iid, np.zeros(GRID, dtype=np.float32))
+    # ``greedy`` needs decision makers; the phyto-only baseline has none,
+    # and for it the provider is irrelevant anyway.
+    provider = None
+    if any(fg.is_decision_maker for fg in fgs.values()):
+        provider = viability.install_behaviour(env, 'greedy', seed=seed)
     history = {fid: [] for fid in fgs}
     for _ in range(ticks):
-        env.step()
+        env.step(provider(env) if provider is not None else None)
         for fid, fg in env.fgs.items():
             history[fid].append(float(fg.biomass.sum()))
     return env, history

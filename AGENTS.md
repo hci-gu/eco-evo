@@ -20,8 +20,12 @@ calibration and the FG editor can no longer change it. `lib/world/tick_time.py` 
 `--tick-length` (or `LIBRARY_TICK_HOURS` when reading the library's own
 numbers) rather than hardcoding 4 ticks/day anywhere.
 
-`Strategi.pdf` is authoritative for the mathematics ("The Tick"); `Method.pdf`
-defines observation/neighbourhood conventions.
+`Strategi.pdf` defines the mathematics ("The Tick") and `Method.pdf` the
+observation/neighbourhood conventions. `Strategi.pdf` is a **draft of an
+initial model to develop further, not a specification to conform to** -
+the code matching it is not by itself evidence that a term is right. See
+section 114, where the growth term is faithful to the document and still
+fabricates mass.
 
 ## 2. Language policy (hard rule)
 
@@ -108,7 +112,12 @@ Useful flags: `--profile sanity|info|deep` (forces action-hack-free settings),
 `--visual`, `--rollouts_per_delta`, `--mortality on`,
 `--tick-length HOURS` (1-6, default 6; section 106),
 `--mortality_multiplier FACTOR` (scales every FG's `natural_mortality`;
-`keep = 1 - FACTOR*rate`, needs `--mortality on`, section 88), `--migration on`,
+`keep = 1 - FACTOR*rate`, needs `--mortality on`, section 88),
+`--no-mass-balance` (revert to the pre-116 growth term, which adds biomass
+without debiting the energy reserve; the mass-balanced term is ON by
+default since section 120 and the library is calibrated for it -
+`--mass-balance` is kept as a no-op, sections 114-116, 120),
+`--migration on`,
 `--policynetwork LAYERS NODES [ACTIVATION]`, `--resume`,
 `--local_reward` (per-cell source-tracked reward, sections 79 and 80;
 available on `train_gpu.py` as well), `--rnd_baseline [all|solo]`

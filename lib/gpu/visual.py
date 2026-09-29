@@ -77,6 +77,7 @@ class GPUTrainingVisualizer:
                 # default (1.0) and runs with the unscaled library rates,
                 # so --mortality_multiplier would not reach the viewer.
                 mortality_multiplier=builder.mortality_multiplier,
+                mass_balance=builder.mass_balance,
             )
             with evaluation_randomness(self.builder.PROBE_SEED):
                 env = self.builder()

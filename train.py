@@ -23,7 +23,8 @@ from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env import source_tracking
 from lib.environments.ecosystem_env.population_change import (
-    DEFAULT_MORTALITY_MULTIPLIER, add_mortality_multiplier_argument)
+    DEFAULT_MASS_BALANCE, DEFAULT_MORTALITY_MULTIPLIER,
+    add_mass_balance_argument, add_mortality_multiplier_argument)
 from lib.environments.ecosystem_env.source_tracking import (add_local_reward_arguments,
                                                             local_reward_options)
 from lib.runners.trainer import ARSTrainer
@@ -40,6 +41,9 @@ APPLY_NATURAL_MORTALITY = False
 # Global scale factor on every FG's ``natural_mortality``; overridden by
 # --mortality_multiplier on the CLI. 1.0 = library values unchanged.
 MORTALITY_MULTIPLIER = DEFAULT_MORTALITY_MULTIPLIER
+# Whether the growth term pays for the biomass it adds; overridden by
+# --mass-balance on the CLI. False = pre-change engine (section 116).
+MASS_BALANCE = DEFAULT_MASS_BALANCE
 # ``--tick-length``: how many hours one tick is. fg_library.yaml is
 # calibrated at LIBRARY_TICK_HOURS and is never rewritten for a run;
 # anything else is converted in memory as the FGs are built. Section 106.
@@ -314,6 +318,7 @@ class _EnvBuilder:
                  impact_vars=None, impact_ranges=None, impact_seed=None,
                  apply_natural_mortality=None,
                  mortality_multiplier=None,
+                 mass_balance=None,
                  migration=None,
                  impact_spawn_specs=None,
                  observable_impact_vars=None, currents=None,
@@ -354,6 +359,9 @@ class _EnvBuilder:
         self.mortality_multiplier = (
             MORTALITY_MULTIPLIER if mortality_multiplier is None
             else float(mortality_multiplier)
+        )
+        self.mass_balance = (
+            MASS_BALANCE if mass_balance is None else bool(mass_balance)
         )
         self.migration = (
             APPLY_MIGRATION if migration is None
@@ -408,6 +416,7 @@ class _EnvBuilder:
             impact_seed=int(impact_seed),
             apply_natural_mortality=self.apply_natural_mortality,
             mortality_multiplier=self.mortality_multiplier,
+            mass_balance=self.mass_balance,
             migration=self.migration,
             impact_spawn_specs=self.impact_spawn_specs,
             observable_impact_vars=self.observable_impact_vars,
@@ -440,6 +449,7 @@ class _EnvBuilder:
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
                                    mortality_multiplier=self.mortality_multiplier,
+                                   mass_balance=self.mass_balance,
                                    migration=self.migration, currents=self.currents,
                                    current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
 
@@ -493,7 +503,8 @@ class _ProbeEnvBuilder:
 
     def __init__(self, project_path, grid_size, apply_natural_mortality=None,
                  migration=None, currents=None, library_path=None,
-                 mortality_multiplier=None, tick_hours=None):
+                 mortality_multiplier=None, mass_balance=None,
+                 tick_hours=None):
         self.tick_hours = (TICK_HOURS if tick_hours is None
                            else int(tick_hours))
         self.currents = currents
@@ -508,6 +519,9 @@ class _ProbeEnvBuilder:
         self.mortality_multiplier = (
             MORTALITY_MULTIPLIER if mortality_multiplier is None
             else float(mortality_multiplier)
+        )
+        self.mass_balance = (
+            MASS_BALANCE if mass_balance is None else bool(mass_balance)
         )
         self.migration = (
             APPLY_MIGRATION if migration is None
@@ -563,6 +577,7 @@ class _ProbeEnvBuilder:
                                    observable_impact_vars=observable_impact_vars,
                                    apply_natural_mortality=self.apply_natural_mortality,
                                    mortality_multiplier=self.mortality_multiplier,
+                                   mass_balance=self.mass_balance,
                                    migration=self.migration, currents=self.currents,
                                    current_world_seed=s)
         # Inference-tab impact maps (silent: avoid spamming "[info] Using
@@ -1415,6 +1430,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       impact_vars=None, impact_ranges=None, impact_seed=None,
                       apply_natural_mortality=None,
                       mortality_multiplier=None,
+                      mass_balance=None,
                       migration=None,
                       impact_spawn_specs=None,
                       observable_impact_vars=None, currents=None,
@@ -1436,6 +1452,7 @@ def _make_env_builder(impact_maps_snapshot=None, grid_size=None,
                       impact_seed=impact_seed,
                       apply_natural_mortality=apply_natural_mortality,
                       mortality_multiplier=mortality_multiplier,
+                      mass_balance=mass_balance,
                       migration=migration,
                       impact_spawn_specs=impact_spawn_specs,
                       observable_impact_vars=observable_impact_vars, currents=currents,
@@ -1598,6 +1615,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "mortality term applied to decision-maker FGs each tick. "
                              "Default: off.")
     add_mortality_multiplier_argument(parser)
+    add_mass_balance_argument(parser)
     parser.add_argument("--migration", choices=["on", "off"], default="off",
                         help="Migration mode. When 'on', movement out through grid "
                              "edges is no longer masked away — instead it is "
@@ -1714,10 +1732,11 @@ def main(argv=None, *, on_step=None, confirm=True):
 
     # Set project globally so env_builder can find it
     global PROJECT_PATH, APPLY_NATURAL_MORTALITY, APPLY_MIGRATION
-    global MORTALITY_MULTIPLIER, TICK_HOURS
+    global MORTALITY_MULTIPLIER, MASS_BALANCE, TICK_HOURS
     PROJECT_PATH = args.project
     APPLY_NATURAL_MORTALITY = (args.mortality == "on")
     MORTALITY_MULTIPLIER = float(args.mortality_multiplier)
+    MASS_BALANCE = bool(getattr(args, 'mass_balance', DEFAULT_MASS_BALANCE))
     TICK_HOURS = int(getattr(args, 'tick_length', LIBRARY_TICK_HOURS))
     APPLY_MIGRATION = (args.migration == "on")
 
@@ -1736,6 +1755,7 @@ def main(argv=None, *, on_step=None, confirm=True):
         grid_size=(GRID_HEIGHT, GRID_WIDTH),
         apply_natural_mortality=APPLY_NATURAL_MORTALITY,
         mortality_multiplier=MORTALITY_MULTIPLIER,
+        mass_balance=MASS_BALANCE,
         migration=APPLY_MIGRATION,
         currents=currents,
     )
@@ -1806,6 +1826,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                     "mortality_multiplier": float(
                         getattr(args, "mortality_multiplier",
                                 DEFAULT_MORTALITY_MULTIPLIER)),
+                    "mass_balance": bool(
+                        getattr(args, "mass_balance", DEFAULT_MASS_BALANCE)),
                     "dm_ids": _dm_ids_meta,
                     "ndm_ids": _ndm_ids_meta,
                 }
@@ -2038,6 +2060,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     print(f"Mortality:      {args.mortality} {'(default)' if args.mortality == 'off' else '(user)'}"
           f" x{args.mortality_multiplier:g}"
           f" {'(default)' if args.mortality_multiplier == DEFAULT_MORTALITY_MULTIPLIER else '(user)'}")
+    print(f"Mass balance: {'on - growth pays for biomass (default)' if args.mass_balance else 'OFF - legacy growth term, library NOT calibrated for it'}")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:
