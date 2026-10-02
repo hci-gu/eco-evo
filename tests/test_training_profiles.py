@@ -25,7 +25,7 @@ def test_gpu_profile_trains_and_records_effective_settings(tmp_path, profile, le
     def on_step(trainer, step, directory, args):
         assert trainer.n_deltas == 2
         assert trainer.worlds == 1
-        assert trainer.entropy_coef == 0.1  # explicit value equals the CLI default
+        assert trainer.entropy_coef == 0.1  # explicit value wins over the profile
         assert trainer.argmax_penalty == 0
         assert float(trainer.temperature) == 1
         seen.append(step)
@@ -85,10 +85,10 @@ def test_cpu_and_gpu_effective_presets(monkeypatch, script, profile, expected):
             args.temp_anneal_gens, worlds) == expected
     assert args.coevolution is True
     assert args.uniform_bias_init is False
-    assert args.entropy_coef == (0.1 if profile is None else 0)
-    assert args.argmax_penalty == (0.3 if profile is None else 0)
-    assert args.temp_start == (3 if profile is None else 1)
-    assert args.temp_end == 1
+    # Action-level shaping is off with or without a profile.
+    assert args.entropy_coef == 0
+    assert args.argmax_penalty == 0
+    assert args.temp_start == args.temp_end == 1
 
 
 def test_cpu_profile_preserves_overrides_and_optional_flag_value(monkeypatch):
@@ -182,7 +182,7 @@ def test_no_profile_preserves_gpu_defaults_and_parser_can_be_reused():
     args = parse_training_args(parser, [])
     assert args.profile is None
     assert (args.generations, args.iter_per_gen, args.n_deltas, args.worlds, args.ticks) == ("inf", 20, 10, 1, 15)
-    assert (args.entropy_coef, args.argmax_penalty, args.temp_start) == (0.1, 0.3, 3)
+    assert (args.entropy_coef, args.argmax_penalty, args.temp_start) == (0, 0, 1)
 
 
 def test_unknown_profile_is_rejected():

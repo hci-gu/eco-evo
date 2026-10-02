@@ -12489,3 +12489,25 @@ remain open exactly as described in 71.9 / 71.11.
     ticks (50000 ticks -> stride 8, ~6250 frames), and
     end_rollout_recording appends the final state when the last tick
     fell between two captures. Cap: LiveVisualizer._MAX_ROLLOUT_FRAMES.
+
+128 ACTION-LEVEL SHAPING OFF BY DEFAULT, NOT ONLY IN THE PROFILES (2026-10-02)
+    The three --profile presets (sanity/info/deep) set entropy_coef 0,
+    argmax_penalty 0, temp_start = temp_end = 1 and uniform_bias_init
+    off, but a run without --profile still got entropy_coef 0.1,
+    argmax_penalty 0.3 and softmax-temperature annealing 3.0 -> 1.0 over
+    10 generations. Those terms act on the action distribution, not on
+    the biology (section 7 of AGENTS.md), so the ordinary defaults now
+    match the profiles:
+        train.py        --entropy_coef 0.0, --argmax_penalty 0.0,
+                        --temp_start 1.0 (was 0.1 / 0.3 / 3.0)
+        train_gpu.py    --temp-start 1.0 (was 3.0)
+        lib/gpu/cli.py  --entropy-coef 0.0, --argmax-penalty 0.0
+    temp_end (1.0) and uniform_bias_init (off) were already neutral;
+    with temp_start == temp_end, temp_anneal_gens has no effect. The
+    flags remain for explicit opt-in; the former behaviour is
+    --entropy_coef 0.1 --argmax_penalty 0.3 --temp_start 3. The profiles
+    still list the same keys, so they are now no-ops for these settings
+    unless a user flag overrides them - explicit flags still win.
+    Updated: tests/test_training_profiles.py (no-profile expectations),
+    GPU_TRAINING.md, AGENTS.md, and the "Profiler och formande termer"
+    table in both deck generators (the PDFs are not rebuilt).

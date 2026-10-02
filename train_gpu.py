@@ -57,7 +57,7 @@ def build_parser():
     parser.add_argument("--snapshot-every", type=int, default=0, help="Save one ecosystem snapshot every N generations; 0 disables")
     parser.add_argument("--worlds-refresh", "--worlds_refresh", dest="worlds_refresh", choices=("iteration", "generation"), default="iteration")
     parser.add_argument("--worlds-schedule", "--rollouts_per_delta_schedule", dest="worlds_schedule")
-    parser.add_argument("--temp-start", "--temp_start", dest="temp_start", type=float, default=3.0)
+    parser.add_argument("--temp-start", "--temp_start", dest="temp_start", type=float, default=1.0)
     parser.add_argument("--temp-end", "--temp_end", dest="temp_end", type=float, default=1.0)
     parser.add_argument("--temp-anneal-gens", "--temp_anneal_gens", dest="temp_anneal_gens", type=positive_int, default=10)
     parser.add_argument("--visual", action="store_true",

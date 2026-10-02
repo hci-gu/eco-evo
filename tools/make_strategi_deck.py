@@ -1590,15 +1590,15 @@ topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
          ["n_deltas", "10", "16", "16", "20"],
          ["n_eval_ticks", "15", "100", "150", "200"],
          ["rollouts_per_delta", "1", "3", "3", "3"],
-         ["entropy_coef", "0,1", "0", "0", "0"],
-         ["argmax_penalty", "0,3", "0", "0", "0"],
-         ["softmax-temperatur", "3,0 → 1,0", "1,0", "1,0", "1,0"]],
+         ["entropy_coef", "0", "0", "0", "0"],
+         ["argmax_penalty", "0", "0", "0", "0"],
+         ["softmax-temperatur", "1,0", "1,0", "1,0", "1,0"]],
         [26, 22, 14, 14, 14], size=12,
         align=["left", "right", "right", "right", "right"],
         lead="Entropibonus, argmax-straff och temperaturhärdning är "
              "formande termer som verkar på actionfördelningen i stället "
              "för på biologin. De finns kvar som flaggor men är avstängda "
-             "i alla tre profiler - det är den rekommenderade körningen.",
+             "som standard, med eller utan profil.",
         footnote="--profile sanity | info | deep. Explicita flaggor på "
                  "kommandoraden vinner alltid över profilens värden.")
 

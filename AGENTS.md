@@ -108,7 +108,7 @@ python3 inference.py --project mareld2.yaml --run-name <name>
 python3 tools/biomass_html.py results/<run-name>      # -> plots.html
 ```
 
-Useful flags: `--profile sanity|info|deep` (forces action-hack-free settings),
+Useful flags: `--profile sanity|info|deep` (run-size presets; action hacks are off with or without one),
 `--visual`, `--rollouts_per_delta`, `--mortality on`,
 `--tick-length HOURS` (1-6, default 6; section 106),
 `--mortality_multiplier FACTOR` (scales every FG's `natural_mortality`;
@@ -130,8 +130,9 @@ spreading thin and `mean` rewards killing the worst cells (sections 82, 84).
 ## 7. Working conventions
 
 - **Biology drives, not action-hacks.** Fix parameters/mechanisms before adding
-  shaping terms; profiles deliberately disable `argmax_penalty`, `entropy_coef`
-  and temperature annealing.
+  shaping terms. `argmax_penalty`, `entropy_coef`, temperature annealing and
+  `uniform_bias_init` default to off on `train.py` and `train_gpu.py`, with or
+  without `--profile` (section 128); they are explicit opt-in flags only.
 - Don't redo performance work (batching, vectorisation, slice-assign, CRN)
   without measuring first.
 - Changing the Observability matrix, observable impacts, the FG set or the grid

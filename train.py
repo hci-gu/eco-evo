@@ -1542,17 +1542,23 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "Set equal to --n_deltas to disable truncation.")
     parser.add_argument("--no_obs_normalize", action="store_true",
                         help="Disable ARS-V2 running observation normalisation (mean/std).")
-    parser.add_argument("--entropy_coef", type=float, default=0.1,
+    # Action-level shaping (entropy bonus, argmax penalty, temperature
+    # annealing) acts on the action distribution instead of the biology.
+    # The defaults switch all of it off, so a run without --profile
+    # trains like the profiles do; the flags remain for explicit opt-in.
+    parser.add_argument("--entropy_coef", type=float, default=0.0,
                         help="Entropy bonus weight in fitness: fitness += entropy_coef * H(pi)/H_max. "
                              "Counteracts softmax-policy collapse to a constant action. "
-                             "0.0 = off (default: 0.1).")
-    parser.add_argument("--argmax_penalty", type=float, default=0.3,
+                             "Action-level shaping; 0.0 = off (default: 0.0).")
+    parser.add_argument("--argmax_penalty", type=float, default=0.0,
                         help="Argmax-penalty weight: fitness -= argmax_penalty * max_argmax_frac, "
                              "where max_argmax_frac = max(move,rest,eat) fraction across active cells. "
-                             "Directly penalises degenerate single-action policies. 0.0 = off (default: 0.3).")
-    parser.add_argument("--temp_start", type=float, default=3.0,
+                             "Directly penalises degenerate single-action policies. "
+                             "Action-level shaping; 0.0 = off (default: 0.0).")
+    parser.add_argument("--temp_start", type=float, default=1.0,
                         help="Softmax temperature at generation 1. High T -> flatter softmax -> "
-                             "forced exploration. Linearly annealed to --temp_end. Default: 3.0.")
+                             "forced exploration. Linearly annealed to --temp_end. "
+                             "Default: 1.0 (equal to --temp_end, i.e. no annealing).")
     parser.add_argument("--temp_end", type=float, default=1.0,
                         help="Softmax temperature at the last generation (default: 1.0).")
     parser.add_argument("--cappa", type=float, default=1.0,
