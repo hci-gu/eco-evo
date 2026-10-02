@@ -40,7 +40,6 @@ from __future__ import annotations
 import os
 import sys
 import time
-from collections import deque
 from typing import Dict, Mapping, Optional, Sequence
 
 import numpy as np
@@ -182,6 +181,116 @@ def _maybe_unwrap_array(v):
     return v
 
 
+class _SeriesBuffer:
+    """Append-only ``(step, value)`` series backed by growable numpy arrays.
+
+    Drop-in for the ``deque`` the plot tabs used to hold: ``append``,
+    ``clear``, ``len``, truthiness, iteration and indexing all yield
+    ``(int step, float value)`` tuples, and ``maxlen`` drops the oldest
+    points like a bounded deque. Unlike a deque, :meth:`arrays` hands the
+    plot code contiguous numpy views, so drawing a frame costs O(visible
+    window) instead of a Python loop over the whole rollout (inference
+    keeps every tick, which made the frame rate fall linearly with the
+    rollout length).
+
+    ``is_sorted`` stays True while steps are non-decreasing; the plot only
+    uses binary search and per-pixel decimation when it holds.
+    """
+
+    __slots__ = ("maxlen", "_steps", "_vals", "_start", "_end", "is_sorted")
+
+    def __init__(self, maxlen: Optional[int] = None) -> None:
+        self.maxlen = None if maxlen is None else max(1, int(maxlen))
+        self._steps = np.empty(256, dtype=np.int64)
+        self._vals = np.empty(256, dtype=np.float64)
+        self._start = 0
+        self._end = 0
+        self.is_sorted = True
+
+    def append(self, item) -> None:
+        step, value = item
+        step = int(step)
+        if self._end > self._start and step < self._steps[self._end - 1]:
+            self.is_sorted = False
+        if self._end == len(self._steps):
+            n = self._end - self._start
+            cap = len(self._steps)
+            if n * 2 > cap:
+                cap *= 2
+            steps = np.empty(cap, dtype=np.int64)
+            vals = np.empty(cap, dtype=np.float64)
+            steps[:n] = self._steps[self._start:self._end]
+            vals[:n] = self._vals[self._start:self._end]
+            self._steps, self._vals = steps, vals
+            self._start, self._end = 0, n
+        self._steps[self._end] = step
+        self._vals[self._end] = float(value)
+        self._end += 1
+        if self.maxlen is not None and self._end - self._start > self.maxlen:
+            self._start = self._end - self.maxlen
+            if not self.is_sorted:
+                s = self._steps[self._start:self._end]
+                self.is_sorted = bool(np.all(s[1:] >= s[:-1]))
+
+    def clear(self) -> None:
+        self._start = 0
+        self._end = 0
+        self.is_sorted = True
+
+    def arrays(self) -> tuple:
+        """Return ``(steps, values)`` as read-only-by-convention views."""
+        return (self._steps[self._start:self._end],
+                self._vals[self._start:self._end])
+
+    def __len__(self) -> int:
+        return self._end - self._start
+
+    def __iter__(self):
+        steps, vals = self.arrays()
+        return zip(steps.tolist(), vals.tolist())
+
+    def __getitem__(self, i: int) -> tuple:
+        n = self._end - self._start
+        if i < 0:
+            i += n
+        if not 0 <= i < n:
+            raise IndexError("series index out of range")
+        j = self._start + i
+        return (int(self._steps[j]), float(self._vals[j]))
+
+
+def _series_arrays(buf) -> tuple:
+    """``(steps, values, is_sorted)`` for a series buffer or a plain list."""
+    if isinstance(buf, _SeriesBuffer):
+        steps, vals = buf.arrays()
+        return steps, vals, buf.is_sorted
+    if not buf:
+        empty = np.empty(0, dtype=np.float64)
+        return empty, empty, True
+    arr = np.asarray(list(buf), dtype=np.float64).reshape(-1, 2)
+    steps, vals = arr[:, 0], arr[:, 1]
+    return steps, vals, bool(np.all(steps[1:] >= steps[:-1]))
+
+
+def _decimate_polyline(xs: np.ndarray, ys: np.ndarray) -> tuple:
+    """Reduce a polyline with non-decreasing integer ``xs`` to at most four
+    points per pixel column (first, min, max, last).
+
+    Pixel-exact: every segment inside one column is vertical, so the
+    column's ink is the span [min, max] plus the links to its neighbours,
+    which first/last preserve.
+    """
+    starts = np.flatnonzero(np.r_[True, xs[1:] != xs[:-1]])
+    ends = np.r_[starts[1:], len(xs)] - 1
+    col_x = xs[starts]
+    out_y = np.stack([ys[starts],
+                      np.minimum.reduceat(ys, starts),
+                      np.maximum.reduceat(ys, starts),
+                      ys[ends]], axis=1).ravel()
+    out_x = np.repeat(col_x, 4)
+    return out_x, out_y
+
+
 class _NullViz:
     """Drop-in replacement when pygame is unavailable or init failed.
 
@@ -235,6 +344,10 @@ class LiveVisualizer:
     # Train calls update_biomass once per ARS iter which is already slow,
     # so this mostly protects inference (per-tick rendering).
     _MIN_FRAME_INTERVAL = 1.0 / 30.0
+    # Most frames a recorded rollout keeps. Past it every other frame is
+    # dropped and the capture stride doubles, so a 50000-tick inference
+    # rollout is still a film with evenly spaced frames (stride 8).
+    _MAX_ROLLOUT_FRAMES = 10000
 
     def __new__(cls, *args, **kwargs):
         # Linux headless fallback. macOS/Windows native displays do not use
@@ -365,7 +478,7 @@ class LiveVisualizer:
         _all_series_ids = list(self.fg_ids) + [
             eid for eid in self._extra_plot_ids if eid not in self.fg_ids
         ]
-        # I inference-läge sparas hela rollouten (obegränsad deque) så
+        # I inference-läge sparas hela rollouten (obegränsad buffert) så
         # att scrollbaren under plot-arean kan panorera tillbaka till
         # tick 0 utan att tidiga punkter tappats. I träningsläget
         # behålls ``reward_window`` som maxlen — där pushas en punkt
@@ -374,8 +487,8 @@ class LiveVisualizer:
         _series_maxlen = (None
                           if str(self.mode).lower().startswith("infer")
                           else self.reward_window)
-        self._series: Dict[str, Dict[str, deque | list]] = {
-            tab: {fid: ([] if tab == "progress" else deque(maxlen=_series_maxlen))
+        self._series: Dict[str, Dict[str, "_SeriesBuffer | list"]] = {
+            tab: {fid: ([] if tab == "progress" else _SeriesBuffer(maxlen=_series_maxlen))
                   for fid in _all_series_ids}
             for tab in self._tabs
         }
@@ -384,7 +497,7 @@ class LiveVisualizer:
         # Back-compat alias: legacy callers (and internal code) treat the
         # ``reward`` tab buffer as the historical _reward_buf. In inference
         # mode the first tab is biomass, so update_reward writes there.
-        self._reward_buf: Dict[str, deque] = self._series[self._tabs[0]]
+        self._reward_buf: Dict[str, _SeriesBuffer] = self._series[self._tabs[0]]
         # Click hit-boxes for tab headers, recomputed each frame.
         self._tab_rects: list = []
         # Latest biomass arrays + totals for heatmap rendering.
@@ -473,11 +586,14 @@ class LiveVisualizer:
         # ``set_ticks_default``. ``_ticks_override`` är användarens valda
         # värde via slidern (None = default). ``_ticks_dirty`` sätts när
         # slidern släpps på ett nytt värde; konsumeras av inference.py.
-        # Range = [3, 25000] med log-skala mappning för bättre kontroll.
+        # Range = [3, 25000] (train) / [3, 50000] (inference) med
+        # log-skala mappning för bättre kontroll.
         # ``_ticks_track_rect`` är (x, y, w, h) för den enda track-rect:en,
         # registrerad varje frame av ``_draw_status_bar``.
         self._ticks_min: int = 3
-        self._ticks_max: int = 25000
+        self._ticks_max: int = (50000
+                                if str(self.mode).lower().startswith("infer")
+                                else 25000)
         self._ticks_default: int = 200
         self._ticks_override: Optional[int] = None
         self._ticks_dirty: bool = False
@@ -648,6 +764,11 @@ class LiveVisualizer:
         self._recording = False
         self._pending_rollout: list = []
         self._current_rollout: list = []
+        # Capture every ``_capture_stride``-th update_biomass call while
+        # recording; ``_capture_calls`` counts the calls (see
+        # ``_MAX_ROLLOUT_FRAMES``).
+        self._capture_stride = 1
+        self._capture_calls = 0
         self._playback_mode = "live"  # "live" | "paused" | "playing"
         self._playback_idx = 0
         self._playback_fps = 10.0  # justerbar via knappar (1..60)
@@ -789,20 +910,19 @@ class LiveVisualizer:
             # live-renderingen visar.
             if self._recording:
                 try:
-                    self._pending_rollout.append(self._capture_frame())
-                    # Säkerhetscap mot oavsiktligt obegränsade rollouts.
-                    # Capen är primärt en säkerhetsventil mot oavsiktligt
-                    # obegränsade rollouts — den verkliga läckan (gamla
-                    # filmer som hängde kvar mellan probes) åtgärdas i
-                    # ``end_rollout_recording`` via explicit frigöring +
-                    # ``gc.collect()``. 10000 frames ≈ 1.1 GB per film på
-                    # 8 FG / 60×60 vilket är acceptabelt så länge bara en
-                    # film lever åt gången.
-                    if len(self._pending_rollout) > 10000:
-                        # In-place decimering (var 2:a frame) så att den
-                        # gamla listan kan frigöras direkt istället för att
-                        # leva kvar parallellt med en ny kopia.
+                    if self._capture_calls % self._capture_stride == 0:
+                        self._pending_rollout.append(self._capture_frame())
+                    self._capture_calls += 1
+                    # Frame cap: 10000 frames ≈ 1.1 GB per film på 8 FG /
+                    # 60×60 okomprimerat, acceptabelt så länge bara en
+                    # film lever åt gången (den gamla frigörs i
+                    # ``end_rollout_recording``). Past the cap, drop every
+                    # other frame in place and double the stride, so the
+                    # film stays evenly spaced in ticks however long the
+                    # rollout runs.
+                    if len(self._pending_rollout) > self._MAX_ROLLOUT_FRAMES:
                         del self._pending_rollout[1::2]
+                        self._capture_stride *= 2
                 except Exception as e:
                     self._log_once(f"frame capture failed: {e!r}")
             self._maybe_render()
@@ -1078,7 +1198,8 @@ class LiveVisualizer:
     def set_ticks_default(self, ticks: int) -> None:
         """Registrera CLI-värdet (default) för rollout-längd.
 
-        Klampas till ``[_ticks_min, _ticks_max]`` = [3, 25000]. Anropas
+        Klampas till ``[_ticks_min, _ticks_max]`` = [3, 25000] (train)
+        eller [3, 50000] (inference). Anropas
         en gång av train.py (``--n_eval_ticks``) och inference.py
         (``--ticks``) när viz initieras.
         """
@@ -1186,6 +1307,8 @@ class LiveVisualizer:
             return
         self._recording = True
         self._pending_rollout = []
+        self._capture_stride = 1
+        self._capture_calls = 0
         # Rensa per-FG plot-serier mellan inspelningar — MEN endast i
         # inference-läge. I inference används ``step=tick`` (0..N) som
         # x-värde och varje ny rollout startar om från 0, så gamla par
@@ -1230,6 +1353,14 @@ class LiveVisualizer:
         if not self.enabled:
             return
         self._recording = False
+        # With a stride > 1 the last tick may have fallen between two
+        # captures; add it so the film ends on the final state.
+        if (self._pending_rollout and self._capture_calls > 0
+                and (self._capture_calls - 1) % self._capture_stride != 0):
+            try:
+                self._pending_rollout.append(self._capture_frame())
+            except Exception as e:
+                self._log_once(f"final frame capture failed: {e!r}")
         if self._pending_rollout:
             # Frigör föregående films frame-listor EXPLICIT innan vi byter
             # in den nya. Utan detta kunde två filmer (gamla + nya) leva
@@ -3850,19 +3981,24 @@ class LiveVisualizer:
             else:
                 # Y-range: bara från punkter inom det synliga x-intervallet så
                 # skalan följer det som faktiskt syns i fönstret.
-                all_vals: list = []
+                visible: list = []
                 for fid in active_ids:
                     if self._solo is not None and self._solo != fid:
                         continue
                     if not self._plot_enabled.get(fid, True):
                         continue
-                    for s, v in buffers[fid]:
-                        if xmin <= s <= xmax:
-                            all_vals.append(v)
-                if not all_vals:
+                    steps, vals, _sorted = _series_arrays(buffers[fid])
+                    if _sorted:
+                        lo = np.searchsorted(steps, xmin, side="left")
+                        hi = np.searchsorted(steps, xmax, side="right")
+                        visible.append(vals[lo:hi])
+                    else:
+                        visible.append(vals[(steps >= xmin) & (steps <= xmax)])
+                arr = (np.concatenate(visible) if visible
+                       else np.empty(0, dtype=np.float64))
+                if arr.size == 0:
                     have_data = False
                 else:
-                    arr = np.asarray(all_vals, dtype=np.float64)
                     if use_log_plot:
                         arr = np.sign(arr) * np.log10(np.abs(arr) + 1e-12)
                     ymin = float(arr.min())
@@ -3905,42 +4041,47 @@ class LiveVisualizer:
                 buf = buffers[fid]
                 if not buf or (len(buf) < 2 and not progress):
                     continue
+                steps, vals, _sorted = _series_arrays(buf)
+                n_buf = len(steps)
                 # Bygg indexlista av synliga punkter + en granne på varje
                 # sida (för att linjen ska nå fönsterkanten).
-                start_i = 0
-                end_i = len(buf) - 1
-                for i, (s, _v) in enumerate(buf):
-                    if s >= xmin:
-                        start_i = max(0, i - 1)
-                        break
-                for j in range(len(buf) - 1, -1, -1):
-                    if buf[j][0] <= xmax:
-                        end_i = min(len(buf) - 1, j + 1)
-                        break
-                pts = []
-                for k in range(start_i, end_i + 1):
-                    step, val = buf[k]
-                    v = val
-                    if use_log_plot:
-                        v = float(np.sign(v) * np.log10(abs(v) + 1e-12))
-                    fx = (step - xmin) / (xmax - xmin)
-                    fy = (ymax - v) / (ymax - ymin)
-                    xi = int(px0 + fx * pw)
-                    yi = int(py0 + fy * ph)
-                    # Klipp x till plot-arean så linjer inte spiller över.
-                    if xi < px0:
-                        xi = px0
-                    elif xi > px0 + pw:
-                        xi = px0 + pw
-                    # Klipp även y: annars kan padding-grannar (som ligger
-                    # utanför synligt x-fönster men vars värden är utanför
-                    # det synliga y-intervallet) rita linjer som spiller
-                    # över tab-strippen ovanför eller scrollbaren nedanför.
-                    if yi < py0:
-                        yi = py0
-                    elif yi > py0 + ph:
-                        yi = py0 + ph
-                    pts.append((xi, yi))
+                if _sorted:
+                    i = int(np.searchsorted(steps, xmin, side="left"))
+                    j = int(np.searchsorted(steps, xmax, side="right")) - 1
+                else:
+                    ge = np.flatnonzero(steps >= xmin)
+                    le = np.flatnonzero(steps <= xmax)
+                    i = int(ge[0]) if ge.size else n_buf
+                    j = int(le[-1]) if le.size else -1
+                start_i = max(0, i - 1) if i < n_buf else 0
+                end_i = min(n_buf - 1, j + 1) if j >= 0 else n_buf - 1
+                if end_i < start_i:
+                    continue
+                v = vals[start_i:end_i + 1]
+                if use_log_plot:
+                    v = np.sign(v) * np.log10(np.abs(v) + 1e-12)
+                fx = (steps[start_i:end_i + 1] - xmin) / (xmax - xmin)
+                fy = (ymax - v) / (ymax - ymin)
+                # Klipp x till plot-arean så linjer inte spiller över.
+                # Klipp även y: annars kan padding-grannar (som ligger
+                # utanför synligt x-fönster men vars värden är utanför
+                # det synliga y-intervallet) rita linjer som spiller
+                # över tab-strippen ovanför eller scrollbaren nedanför.
+                # (int() truncation, as before; NaN rows are dropped.)
+                xf = px0 + fx * pw
+                yf = py0 + fy * ph
+                ok = np.isfinite(xf) & np.isfinite(yf)
+                if not ok.all():
+                    xf, yf = xf[ok], yf[ok]
+                xs = np.clip(np.trunc(xf), px0, px0 + pw).astype(np.int64)
+                ys = np.clip(np.trunc(yf), py0, py0 + ph).astype(np.int64)
+                # A long rollout has far more points than the plot has
+                # pixel columns; collapse each column to first/min/max/
+                # last so the cost of a frame is bounded by the plot
+                # width, not the rollout length.
+                if not progress and _sorted and len(xs) > 2 * pw:
+                    xs, ys = _decimate_polyline(xs, ys)
+                pts = list(zip(xs.tolist(), ys.tolist()))
                 if progress:
                     for point in pts:
                         pg.draw.circle(self._screen, self._fg_colour[fid], point, 3)
@@ -4155,15 +4296,23 @@ class LiveVisualizer:
             buf = buffers.get(fid)
             if not buf or len(buf) == 0:
                 continue
-            # Binärsök vore snabbare, men buffrarna är små i praktiken.
             prev = None
             nxt = None
-            for step, val in buf:
-                if step <= tick_at_mouse:
-                    prev = (step, val)
-                if step >= tick_at_mouse and nxt is None:
-                    nxt = (step, val)
-                    break
+            steps, vals, _sorted = _series_arrays(buf)
+            if _sorted:
+                i = int(np.searchsorted(steps, tick_at_mouse, side="right"))
+                j = int(np.searchsorted(steps, tick_at_mouse, side="left"))
+                if i > 0:
+                    prev = (steps[i - 1], vals[i - 1])
+                if j < len(steps):
+                    nxt = (steps[j], vals[j])
+            else:
+                for step, val in buf:
+                    if step <= tick_at_mouse:
+                        prev = (step, val)
+                    if step >= tick_at_mouse and nxt is None:
+                        nxt = (step, val)
+                        break
             if prev is None and nxt is None:
                 continue
             if prev is None:

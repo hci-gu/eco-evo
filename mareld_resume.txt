@@ -12434,3 +12434,58 @@ remain open exactly as described in 71.9 / 71.11.
     - the no-action fixtures in test_population_stability.py and
       test_ecosystem_refactor.py (120.1).
 
+
+127 LIVE VIEWER: PLOT COST NO LONGER GROWS WITH ROLLOUT LENGTH (2026-10-01)
+
+127.1 Symptom and cause
+    Inference --visual rollouts past ~10000 ticks dropped to a few fps
+    (and, since rendering runs in the simulation thread, the tick rate
+    dropped with it). The heatmaps and status bar are constant cost;
+    _draw_plot was O(N) per frame. Inference keeps every tick in the
+    plot buffers (unbounded), and each frame (a) scanned every point of
+    every series in Python for the y-range, (b) scanned forward from
+    tick 0 for the visible window, and (c) when zoomed out, handed all
+    N points to pygame.draw.aalines. Measured on 16 series: 1 ms at
+    t=0, 42 ms at 10000, 72 ms at 20000 (live window), 1.4 s per frame
+    at 20000 zoomed out. 10000 ticks is roughly where the plot alone
+    passes the 33 ms frame budget (fps_cap 30), hence "drastic at 10k".
+
+127.2 Fix (lib/viz/pygame_viz.py)
+    - _SeriesBuffer replaces deque for every plot tab except "progress"
+      (still a list). Growable int64 steps / float64 values, optional
+      maxlen (train mode keeps reward_window), deque-compatible append /
+      clear / len / iter / [i]; arrays() returns numpy views and
+      is_sorted tracks non-decreasing steps.
+    - _draw_plot: y-range and visible-window slicing via searchsorted
+      (mask fallback when a series is not sorted), coordinates computed
+      vectorised with the same int truncation and clipping as before.
+    - _decimate_polyline: when a series has more than 2 points per
+      pixel column, each column is collapsed to first/min/max/last.
+      Pixel-exact, since segments inside one column are vertical.
+    - Tooltip lookup uses searchsorted.
+    - A NaN/inf neighbour just outside the window used to raise in
+      int() and drop the whole frame; such points are now skipped.
+    Old vs new rendering compared pixel by pixel (live, zoomed out, log
+    scale, action tab, train reward with maxlen, tooltip): identical.
+
+127.3 Result
+    draw_plot at 20000 ticks, 16 series, realistic data: live window
+    37.8 -> 3.6 ms, zoomed out 366 -> 43 ms; flat in N. What remains
+    is aalines ink (proportional to drawn pixel length, not to N).
+    A 12000-tick headless inference --visual run kept a steady
+    ~13-17 s per 1200 ticks to the end. Test:
+    tests/test_viz_series_buffer.py.
+
+127.4 Inference rollouts up to 50000 ticks
+    The rollout-length slider (and --ticks when --visual is on, via
+    set_ticks_default) was clamped to 25000. _ticks_max is now 50000 in
+    inference mode; train mode keeps 25000. Without --visual, --ticks was
+    never capped.
+    The recorded film used to keep at most 10000 frames by deleting every
+    other frame in place each time it overflowed, while new frames kept
+    arriving at full rate - so a long rollout became a film whose early
+    part was sparse and late part dense. Now the overflow also doubles a
+    capture stride (_capture_stride), so frames stay evenly spaced in
+    ticks (50000 ticks -> stride 8, ~6250 frames), and
+    end_rollout_recording appends the final state when the last tick
+    fell between two captures. Cap: LiveVisualizer._MAX_ROLLOUT_FRAMES.
