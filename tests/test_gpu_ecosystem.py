@@ -27,15 +27,14 @@ def device(request):
 
 
 def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
-             pair_floors=None, satiation=None, min_split=200,
+             pair_floors=None, min_split=200,
              extinction_factor=0.3, interference=None,
              mortality_multiplier=1.0):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
-    ``visibility_floor`` override and ``satiation`` maps an FG id to its own
-    ``satiation_scale``. Both default to absent, i.e. the cheap shared-vector
-    path and the global satiation constant.
+    ``visibility_floor`` override. Absent means the cheap shared-vector
+    path.
 
     ``min_split`` / ``extinction_factor`` default to the values above the
     fixture's biomass, i.e. splits are suppressed and the extinction sweep
@@ -44,7 +43,6 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
-    satiation = satiation or {}
     groups = {}
     for i, fid in enumerate(("a", "b", "c", "d")):
         params = dict(is_decision_maker=i < 2, movement_speed=[0.7, 0.0, 0, 0][i],
@@ -65,8 +63,6 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
         for inter_id, floor in pair_floors.items():
             if inter_id in params["interaction"]:
                 params["interaction"][inter_id]["visibility_floor"] = floor
-        if fid in satiation:
-            params["satiation_scale"] = satiation[fid]
         if interference and fid in interference:
             params["interference"] = interference[fid]
         fg = FunctionalGroup(fid, params)
@@ -183,20 +179,20 @@ def test_interference_matches_reference(device, handling):
 
 @pytest.mark.parametrize("floor", [0.0, 0.95])
 @pytest.mark.parametrize("handling", [0.0, 0.2])
-def test_pair_visibility_and_satiation_match_reference(device, floor, handling):
-    """The GPU engine must honour per-pair detection and per-FG satiation.
+def test_pair_visibility_matches_reference(device, floor, handling):
+    """The GPU engine must honour per-pair detection.
 
-    Both were prey-side-only / hardcoded on the GPU while the reference had
-    per-(predator, prey) ``visibility_floor`` and per-FG ``satiation_scale``,
-    so ``train_gpu.py`` optimised against a different biology than
+    It was prey-side-only on the GPU while the reference had per-(predator,
+    prey) ``visibility_floor`` (and, until section 130, per-FG
+    ``satiation_scale``), so ``train_gpu.py`` optimised against a different
+    biology than
     ``inference.py`` runs - invisible here until the fixture actually sets
     non-trivial values. ``floor=0.0`` also checks that rows which do NOT
     prey on a column cannot inflate the shared availability cap.
     """
     env = make_env(handling=handling,
                    pair_floors={"a_preys_on_b": floor,
-                                "a_preys_on_c": 0.5},
-                   satiation={"a": 0.9, "b": 0.55})
+                                "a_preys_on_c": 0.5})
     # Shorter horizon than the shared-path test on purpose. The two engines
     # group the same operations differently, so they diverge by one float32
     # ulp in tick 0 and that difference is then amplified chaotically by the
@@ -209,8 +205,6 @@ def test_pair_visibility_and_satiation_match_reference(device, floor, handling):
     assert model.pair_visibility is not None, "pair path was not taken"
     i, j = env.dm_ids.index("a"), env.global_fg_order.index("b")
     assert float(env.vis_floor_mat[i, j]) == pytest.approx(floor)
-    assert float(model.satiation.flatten()[env.dm_ids.index("b")]) == \
-        pytest.approx(0.55)
 
 
 @pytest.mark.parametrize("activation", ["sig", "tanh", "relu"])

@@ -107,6 +107,8 @@ class EcosystemEnvironment:
         self.loss_predation = {fid: 0.0 for fid in self.fgs}
         self.loss_starvation = {fid: 0.0 for fid in self.fgs}
         self.loss_impact = {fid: 0.0 for fid in self.fgs}
+        # Residual natural mortality M1 (section 132; see loss_accounting).
+        self.loss_natural = {fid: 0.0 for fid in self.fgs}
         self._extinction_events = {fid: 0 for fid in self.fgs}
         self.intake_by_pred_prey = {fid: {} for fid in self.fgs}
         # Local reward (``--local_reward``): when set to a

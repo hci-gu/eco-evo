@@ -183,9 +183,16 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
     natural_mortality *= float(getattr(env, "mortality_multiplier", 1.0))
     if natural_mortality > 0.0 and env.apply_natural_mortality:
         keep = np.float32(max(0.0, 1.0 - natural_mortality))
+        before = float(fg.biomass.sum())
         fg.energy_reserve = (fg.energy_reserve * keep).astype(
             env.dtype, copy=False)
         fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+        # Book M1 like the other causes, so the loss breakdown can show it
+        # (section 132). ``getattr`` keeps hand-built test envs working.
+        losses = getattr(env, "loss_natural", None)
+        if losses is not None:
+            losses[fg_id] = (float(losses.get(fg_id, 0.0))
+                             + before - float(fg.biomass.sum()))
 
     energy_surplus = fg.energy_level - fg.maintenance_level
     growth_rate = np.float32(fg.growth_rate)

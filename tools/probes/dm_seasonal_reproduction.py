@@ -13,7 +13,6 @@ sys.path.insert(0, '.')
 from inference import build_env
 from lib.diagnostics import viability
 from lib.environments.ecosystem_env import population_change as pc
-from lib.world.energy_balance import resolve_satiation_scale
 
 _orig = pc._apply_decision_maker_population_change
 

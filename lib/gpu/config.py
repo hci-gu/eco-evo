@@ -47,7 +47,8 @@ class EnvironmentBuilder:
     def __call__(self, seed=None):
         kwargs = dict(library_path=self.library_path, grid_size=self.grid,
                       seed=seed, spawn_seed=self.spawn_seed,
-                      tick_hours=self.tick_hours)
+                      tick_hours=self.tick_hours,
+                      apply_natural_mortality=bool(self.mortality))
         if self.project_path:
             groups = load_project_config(self.project_path, **kwargs)[0]
         else:
@@ -69,7 +70,8 @@ class ProjectSpec:
         kwargs = dict(library_path=builder.library_path, grid_size=builder.grid,
                       seed=seed, spawn_seed=seed, allowed_mask=allowed_mask,
                       library_config=library,
-                      tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS))
+                      tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS),
+                      apply_natural_mortality=bool(builder.mortality))
         rng_state = np.random.get_state()
         try:
             np.random.seed(seed & 0xFFFFFFFF)

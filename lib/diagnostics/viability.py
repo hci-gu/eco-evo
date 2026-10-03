@@ -731,9 +731,17 @@ def colocate_spawn(env):
         total = float(biomass.sum())
         if total <= 0.0:
             continue
+        # Each prey map is normalised to its own total before summing, so
+        # every item on the menu weighs the same. Summing raw tonnes let
+        # the prey with the largest stock decide alone: with benthos at
+        # K = 100 t/km2 the gadoids were placed on benthos-rich cells and
+        # their overlap with pelagic fish FELL under colocation.
         prey = np.zeros_like(biomass)
         for pid in prey_ids:
-            prey += np.asarray(env.fgs[pid].biomass, dtype=np.float64)
+            pb = np.asarray(env.fgs[pid].biomass, dtype=np.float64)
+            ptot = float(pb.sum())
+            if ptot > 0.0:
+                prey += pb / ptot
         flat = prey.reshape(-1)
         candidates = np.flatnonzero(flat > 0.0)
         if candidates.size == 0:

@@ -64,8 +64,7 @@ MAX_TICK_HOURS = 6
 def resolve_tick_hours(value):
     """Per-project ``tick_hours`` with fallback to the module default.
 
-    Mirrors :func:`lib.world.energy_balance.resolve_satiation_scale`:
-    empty / missing / unparseable / out-of-range values resolve to
+    Empty / missing / unparseable / out-of-range values resolve to
     :data:`DEFAULT_TICK_HOURS`, so legacy project files that never
     declare the field behave exactly as before.
     """
@@ -151,7 +150,7 @@ def per_tick(unit, tick_hours=None):
 # Anything not listed is tick-independent and is left alone: stocks
 # (max_energy_reserve, energy_content, max_carrying_capacity,
 # initial_biomass_*), dimensionless thresholds (maintenance_level,
-# satiation_scale, visibility_floor, extinction_threshold_factor,
+# visibility_floor, extinction_threshold_factor,
 # seasonal_amplitude), the action-cost multipliers (feeding_cost,
 # resting_cost, movement_cost - they multiply resting_metabolism, which
 # is itself rescaled), interference (1/ton) and min_split_biomass (kg).

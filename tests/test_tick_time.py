@@ -101,7 +101,7 @@ def test_no_change_is_the_identity():
 def test_unknown_keys_are_left_alone():
     # Stocks and dimensionless thresholds must never be touched.
     for key in ("max_energy_reserve", "energy_content", "maintenance_level",
-                "satiation_scale", "interference", "min_split_biomass",
+                "interference", "min_split_biomass",
                 "extinction_threshold_factor", "seasonal_amplitude",
                 "feeding_cost", "resting_cost", "movement_cost",
                 "max_carrying_capacity", "visibility_floor"):
@@ -253,13 +253,13 @@ def test_rescale_params_does_not_mutate_and_reports_changes():
         "natural_mortality": 5e-05,
         "max_intake_rate": 0.035,
         "max_energy_reserve": 2800.0,   # untouched
-        "satiation_scale": 1.37,        # untouched
+        "visibility_floor": 0.35,       # untouched
     }
     snapshot = dict(params)
     out, changes = rescale_params(params, 6, 3)
     assert params == snapshot, "input dict must not be mutated"
     assert out["max_energy_reserve"] == 2800.0
-    assert out["satiation_scale"] == 1.37
+    assert out["visibility_floor"] == 0.35
     assert {c[0] for c in changes} == {"natural_mortality", "max_intake_rate"}
 
 

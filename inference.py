@@ -32,6 +32,7 @@ import sys
 import numpy as np
 import torch
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
+from lib.environments.ecosystem_env.loss_accounting import LOSS_CAUSES
 
 from lib.world.tick_time import (
     LIBRARY_TICK_HOURS, add_tick_length_argument,
@@ -386,11 +387,13 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     if project_path:
         fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
             project_path, grid_size=grid_size, seed=seed, mode='inference',
-            allowed_mask=accessibility, tick_hours=tick_hours)
+            allowed_mask=accessibility, tick_hours=tick_hours,
+            apply_natural_mortality=apply_natural_mortality)
     else:
         fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
                                     allowed_mask=accessibility,
-                                    tick_hours=tick_hours)
+                                    tick_hours=tick_hours,
+                                    apply_natural_mortality=apply_natural_mortality)
         impact_vars = ['windfarm_noise']
         observable_impact_vars = ['windfarm_noise']
 
@@ -781,7 +784,7 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     # Snapshots för att omvandla env:s kumulativa ackumulatorer till
     # per-tick ögonblicksvärden i viz (headertexter + grafer). Nycklarna
     # matchar de env-attribut vi läser nedan.
-    _prev_loss = {fid: {'s': 0.0, 'p': 0.0, 'i': 0.0} for fid in env.fgs}
+    _prev_loss = {fid: {} for fid in env.fgs}
     _prev_diet = {}  # pred_id -> {prey_id: cumulative intake}
     _prev_act = {}
     # One snapshot dict per rnd env: ``_push_action_fracs`` keys it by DM
@@ -878,27 +881,18 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 # We diff the cumulative starvation/predation/impact
                 # accumulators against the previous tick, then normalize
                 # within this tick.
+                # Natural mortality (M1) is a cause of its own since
+                # section 132.
                 _lb = {}
                 for fid in env.fgs:
-                    ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
-                    lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
-                    li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
-                    prev = _prev_loss.get(fid, {'s': 0.0, 'p': 0.0, 'i': 0.0})
-                    dls = ls - prev['s']
-                    dlp = lp - prev['p']
-                    dli = li - prev['i']
-                    _prev_loss[fid] = {'s': ls, 'p': lp, 'i': li}
-                    _tot = dls + dlp + dli
-                    if _tot > 0.0:
-                        _lb[fid] = {
-                            'predation':  dlp / _tot,
-                            'starvation': dls / _tot,
-                            'impact':     dli / _tot,
-                        }
-                    else:
-                        _lb[fid] = {'predation': 0.0,
-                                    'starvation': 0.0,
-                                    'impact': 0.0}
+                    cur = {name: float((getattr(env, attr, None) or {}).get(fid, 0.0))
+                           for name, attr in LOSS_CAUSES}
+                    prev = _prev_loss.get(fid) or {name: 0.0 for name in cur}
+                    delta = {name: cur[name] - prev.get(name, 0.0) for name in cur}
+                    _prev_loss[fid] = cur
+                    _tot = sum(delta.values())
+                    _lb[fid] = {name: (v / _tot if _tot > 0.0 else 0.0)
+                                for name, v in delta.items()}
                 viz.update_loss_breakdown(_lb)
                 # Push the same fractions (×100%) to the dedicated plot
                 # tabs ``predation``/``starvation``/``impacts`` per tick,
@@ -914,6 +908,9 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                                       step=t)
                     viz.update_series("impacts", fid,
                                       100.0 * float(_br.get('impact', 0.0)),
+                                      step=t)
+                    viz.update_series("natural", fid,
+                                      100.0 * float(_br.get('natural', 0.0)),
                                       step=t)
                 # Per-DM diet breakdown: läs env-ackumulatorn
                 # ``intake_by_pred_prey`` (ton intagen prey-biomassa över

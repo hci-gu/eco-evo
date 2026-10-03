@@ -20,6 +20,7 @@ from lib.config.config_loader import (
                                       load_impact_spawn_specs)
 from lib.spawn import make_weights
 from lib.environments.ecosystem import EcosystemEnvironment
+from lib.environments.ecosystem_env.loss_accounting import loss_shares
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env import source_tracking
 from lib.environments.ecosystem_env.population_change import (
@@ -431,11 +432,13 @@ class _EnvBuilder:
         if self.project_path:
             fgs, impact_vars, impact_ranges, observable_impact_vars = load_project_config(
                 self.project_path, grid_size=grid_size, seed=seed,
-                spawn_seed=self.spawn_seed, tick_hours=self.tick_hours)
+                spawn_seed=self.spawn_seed, tick_hours=self.tick_hours,
+                apply_natural_mortality=self.apply_natural_mortality)
         else:
             fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
                                         spawn_seed=self.spawn_seed,
-                                        tick_hours=self.tick_hours)
+                                        tick_hours=self.tick_hours,
+                                        apply_natural_mortality=self.apply_natural_mortality)
             impact_vars = ['windfarm_noise']
             observable_impact_vars = ['windfarm_noise']
 
@@ -559,10 +562,12 @@ class _ProbeEnvBuilder:
             fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
                 self.project_path, grid_size=grid_size, seed=s,
                 mode='inference', spawn_seed=s, tick_hours=self.tick_hours,
+                apply_natural_mortality=self.apply_natural_mortality,
                 **self.library_kwargs)
         else:
             fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=s, spawn_seed=s,
                                       tick_hours=self.tick_hours,
+                                      apply_natural_mortality=self.apply_natural_mortality,
                                       **self.library_kwargs)
             impact_vars = ['windfarm_noise']
             observable_impact_vars = ['windfarm_noise']
@@ -959,22 +964,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                             )
                 except Exception:
                     pass
-                _lb_tick = {}
-                for fid in env.fgs:
-                    ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
-                    lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
-                    li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
-                    _tot = ls + lp + li
-                    if _tot > 0.0:
-                        _lb_tick[fid] = {
-                            'predation':  lp / _tot,
-                            'starvation': ls / _tot,
-                            'impact':     li / _tot,
-                        }
-                    else:
-                        _lb_tick[fid] = {'predation': 0.0,
-                                         'starvation': 0.0,
-                                         'impact': 0.0}
+                _lb_tick = {fid: loss_shares(env, fid) for fid in env.fgs}
                 viz.update_loss_breakdown(_lb_tick)
                 # Diet-uppdelning per DM-predator: läs env-ackumulatorn
                 # ``intake_by_pred_prey`` (ton intagen prey-biomassa över
@@ -1097,22 +1087,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
         # Mirror the main env's loss_breakdown for the random-action
         # baseline so offline plots can show matching loss series.
         for fid, _re in rnd_env_for_fid.items():
-            ls = float(getattr(_re, 'loss_starvation', {}).get(fid, 0.0))
-            lp = float(getattr(_re, 'loss_predation', {}).get(fid, 0.0))
-            li = float(getattr(_re, 'loss_impact', {}).get(fid, 0.0))
-            tot = ls + lp + li
-            if tot > 0.0:
-                rnd_loss_breakdown[fid] = {
-                    'starvation': ls / tot,
-                    'predation':  lp / tot,
-                    'impact':     li / tot,
-                    'total':      tot,
-                }
-            else:
-                rnd_loss_breakdown[fid] = {
-                    'starvation': 0.0, 'predation': 0.0,
-                    'impact': 0.0, 'total': 0.0,
-                }
+            rnd_loss_breakdown[fid] = loss_shares(_re, fid)
 
     # Push end-of-probe biomass% / energy% into the visualiser's tabbed
     # plot. ``viz_step`` should be the global ARS step (gen*iter+iter)
@@ -1240,29 +1215,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             pass
 
     # Per-FG loss breakdown over the probe rollout. The environment
-    # accumulates actual biomass removed by starvation, predation and
-    # impacts. Fractions sum to 1.0 when there was any loss, otherwise all
-    # causes are 0.0.
-    loss_breakdown = {}
-    for fid in fg_ids:
-        ls = float(getattr(env, 'loss_starvation', {}).get(fid, 0.0))
-        lp = float(getattr(env, 'loss_predation', {}).get(fid, 0.0))
-        li = float(getattr(env, 'loss_impact', {}).get(fid, 0.0))
-        tot = ls + lp + li
-        if tot > 0.0:
-            loss_breakdown[fid] = {
-                'starvation': ls / tot,
-                'predation':  lp / tot,
-                'impact':     li / tot,
-                'total':      tot,
-            }
-        else:
-            loss_breakdown[fid] = {
-                'starvation': 0.0,
-                'predation':  0.0,
-                'impact':     0.0,
-                'total':      0.0,
-            }
+    # accumulates actual biomass removed by starvation, predation, impacts
+    # and natural mortality (M1, section 132). Fractions sum to 1.0 when
+    # there was any loss, otherwise all causes are 0.0.
+    loss_breakdown = {fid: loss_shares(env, fid) for fid in fg_ids}
 
     # Push loss-breakdown to the live visualiser so the 'pr/st/im=X/Y/Z%'
     # line above each heatmap reflects the just-finished probe rollout.
@@ -1290,22 +1246,18 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 viz.update_series("impacts", fid,
                                   100.0 * float(lb.get('impact', 0.0)),
                                   step=int(viz_step))
+                viz.update_series("natural", fid,
+                                  100.0 * float(lb.get('natural', 0.0)),
+                                  step=int(viz_step))
             if rnd_env_for_fid:
                 for fid, _re in rnd_env_for_fid.items():
-                    ls = float(getattr(_re, 'loss_starvation', {}).get(fid, 0.0))
-                    lp = float(getattr(_re, 'loss_predation', {}).get(fid, 0.0))
-                    li = float(getattr(_re, 'loss_impact', {}).get(fid, 0.0))
-                    tot = ls + lp + li
-                    if tot > 0.0:
-                        pp, ss, ii = (lp / tot, ls / tot, li / tot)
-                    else:
-                        pp = ss = ii = 0.0
-                    viz.update_series("predation", fid + "_rnd",
-                                      100.0 * pp, step=int(viz_step))
-                    viz.update_series("starvation", fid + "_rnd",
-                                      100.0 * ss, step=int(viz_step))
-                    viz.update_series("impacts", fid + "_rnd",
-                                      100.0 * ii, step=int(viz_step))
+                    _sh = loss_shares(_re, fid)
+                    for _tab, _key in (("predation", "predation"),
+                                       ("starvation", "starvation"),
+                                       ("impacts", "impact"),
+                                       ("natural", "natural")):
+                        viz.update_series(_tab, fid + "_rnd",
+                                          100.0 * _sh[_key], step=int(viz_step))
         except Exception:
             pass
 
@@ -1361,7 +1313,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             loss_parts.append(
                 f"{fid}: starv {lb['starvation']*100:.0f}% / "
                 f"pred {lb['predation']*100:.0f}% / "
-                f"imp {lb.get('impact', 0.0)*100:.0f}%"
+                f"imp {lb.get('impact', 0.0)*100:.0f}% / "
+                f"nat {lb.get('natural', 0.0)*100:.0f}%"
             )
         if loss_parts:
             print(f"    [probe gen={gen+1} loss] " + " | ".join(loss_parts))
@@ -2527,6 +2480,10 @@ def main(argv=None, *, on_step=None, confirm=True):
                                     "impacts", str(_fid),
                                     100.0 * float(_parts.get('impact', 0.0)),
                                     step=int(_step))
+                                viz.update_series(
+                                    "natural", str(_fid),
+                                    100.0 * float(_parts.get('natural', 0.0)),
+                                    step=int(_step))
                             except Exception:
                                 pass
                     # Random-action baseline (om loggad) — samma serier
@@ -2566,6 +2523,10 @@ def main(argv=None, *, on_step=None, confirm=True):
                                     viz.update_series(
                                         "impacts", str(_fid) + "_rnd",
                                         100.0 * float(_parts.get('impact', 0.0)),
+                                        step=int(_step))
+                                    viz.update_series(
+                                        "natural", str(_fid) + "_rnd",
+                                        100.0 * float(_parts.get('natural', 0.0)),
                                         step=int(_step))
                                 except Exception:
                                     pass

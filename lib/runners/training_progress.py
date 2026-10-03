@@ -140,7 +140,8 @@ def comparable_config(config):
 
 def build_inference_env(config, seed):
     kwargs = dict(library_path=config["library"], grid_size=tuple(config["grid"]),
-                  seed=seed, spawn_seed=seed)
+                  seed=seed, spawn_seed=seed,
+                  apply_natural_mortality=bool(config["mortality"]))
     if config["project"]:
         groups = load_project_config(config["project"], mode="inference", **kwargs)[0]
     else:

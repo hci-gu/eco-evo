@@ -68,6 +68,7 @@ _METRICS: Tuple[Tuple[str, str, str, str], ...] = (
     ("eat",        "eat_frac",               "mean eat-action % per DM",           "eat_frac"),
     ("predation",  "loss_breakdown.predation",  "predation share of total loss (%) per FG",  "loss_breakdown.predation"),
     ("starvation", "loss_breakdown.starvation", "starvation share of total loss (%) per FG", "loss_breakdown.starvation"),
+    ("natural",    "loss_breakdown.natural",    "natural mortality (M1) share of total loss (%) per FG", "loss_breakdown.natural"),
 )
 
 
@@ -85,6 +86,7 @@ _INFER_TITLES: Dict[str, str] = {
     "eat":        "eat-action % per DM (per-tick)",
     "predation":  "predation share of tick loss (%) per FG",
     "starvation": "starvation share of tick loss (%) per FG",
+    "natural":    "natural mortality (M1) share of tick loss (%) per FG",
 }
 
 

@@ -1,4 +1,4 @@
-project_metadata:
+﻿project_metadata:
   name: Mareld2
   reference_grid_width: 60
   reference_grid_height: 60
@@ -27,8 +27,8 @@ decision_makers:
     inference_initial_biomass: 15
     muted: true
   - group_id: zooplankton
-    initial_biomass_min: 8750
-    initial_biomass_max: 35000
+    initial_biomass_min: 17500
+    initial_biomass_max: 70000
     inference_initial_biomass: 35000
 non_decision_makers:
   - group_id: benthic_community

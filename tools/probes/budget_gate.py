@@ -21,7 +21,7 @@ of the prey it eats, and pays
 so survival by eating alone requires
 
     quality >= need_quality = cost / ration,
-    h(u_X)  = max(0, 1 - u_X / satiation_scale).
+    h(u_X)  = min(1, (1 - u_X) / (1 - u_X)) = 1 (section 133).
 
 Why the per-pair form was wrong (Section 74.2b, superseded)
 -----------------------------------------------------------
@@ -53,7 +53,7 @@ sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
 import train as train_mod
-from lib.world.energy_balance import resolve_satiation_scale
+from lib.world.energy_balance import hunger_at, intake_ceiling
 from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label, ticks_per_day
 
 PROJECT = 'mareld2.yaml'
@@ -84,21 +84,20 @@ def _pred_costs(i, fg_id):
     c_eat = float(env.dm_cost_eat[i])
     params = env.fgs[fg_id].params
     u_x = float(params.get('maintenance_level', 0.0) or 0.0)
-    scale = float(resolve_satiation_scale(params.get('satiation_scale')))
-    return rm, c_eat, u_x, scale
+    return rm, c_eat, u_x
 
 
 print("=== per (predator, prey): what ONE prey alone would have to do ===")
 print("A row that does not clear the bar on its own is low-quality food,")
 print("not pure loss - the verdict is the per-predator block below.")
 print()
-print(f"{'predator':>14} {'prey':>18} {'u_x':>5} {'sat_s':>6} {'h(u)':>6} "
+print(f"{'predator':>14} {'prey':>18} {'u_x':>5} {'h(u)':>6} "
       f"{'cost':>7} {'a*gain':>8} {'sat_min':>8} {'need_vis':>9} "
       f"{'B/cell':>8} {'max':>8} {'alone':>12}")
 
 for i, pid in enumerate(env.dm_ids):
-    rm, c_eat, u_x, scale = _pred_costs(i, pid)
-    h_u = max(0.0, 1.0 - u_x / scale)
+    rm, c_eat, u_x = _pred_costs(i, pid)
+    h_u = hunger_at(u_x, u_x)
     cost = rm * c_eat
     for j, prey_id in enumerate(env.global_fg_order):
         if not env.eat_static_mask[i, j]:
@@ -106,7 +105,8 @@ for i, pid in enumerate(env.dm_ids):
         a = float(env.max_intake_mat[i, j])
         ht = float(env.handling_time_mat[i, j])
         gain_t = float(env.energy_gain_mat[i, j])
-        max_gain = a * gain_t
+        # Holling ceiling 1/h, not the attack rate (section 134).
+        max_gain = intake_ceiling(a, ht) * gain_t
         if h_u <= 0.0 or max_gain <= 0.0:
             sat_min = float('inf')
         else:
@@ -121,7 +121,7 @@ for i, pid in enumerate(env.dm_ids):
         else:
             need = sat_min / ((1.0 - sat_min) * a * ht) if a * ht > 0 else 0.0
             verdict = "ok" if mx >= need else "unreachable"
-        print(f"{pid:>14} {prey_id:>18} {u_x:>5.2f} {scale:>6.2f} "
+        print(f"{pid:>14} {prey_id:>18} {u_x:>5.2f} "
               f"{h_u:>6.3f} {cost:>7.1f} {max_gain:>8.1f} {sat_min:>8.3f} "
               f"{need:>9.3f} {mean_occ:>8.2f} {mx:>8.2f} {verdict:>12}")
 
@@ -132,8 +132,8 @@ print(f"{'predator':>14} {'ration':>9} {'%bm/day':>8} {'cost':>7} "
       f"{'verdict':>12}")
 
 for i, pid in enumerate(env.dm_ids):
-    rm, c_eat, u_x, scale = _pred_costs(i, pid)
-    h_u = max(0.0, 1.0 - u_x / scale)
+    rm, c_eat, u_x = _pred_costs(i, pid)
+    h_u = hunger_at(u_x, u_x)
     cost = rm * c_eat
     menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
     if not menu or h_u <= 0.0:
@@ -144,7 +144,8 @@ for i, pid in enumerate(env.dm_ids):
     # The physiological ration is a per-predator property; the library
     # convention is one max_intake_rate per predator, so take the row
     # maximum rather than assuming the pairs agree.
-    a = float(np.max(env.max_intake_mat[i, menu]))
+    a = max(intake_ceiling(float(env.max_intake_mat[i, j]),
+                           float(env.handling_time_mat[i, j])) for j in menu)
     ration = a * h_u
     quality = {env.global_fg_order[j]: float(env.energy_gain_mat[i, j])
                for j in menu}
@@ -181,13 +182,12 @@ a = float(env.max_intake_mat[i, j])
 ht = float(env.handling_time_mat[i, j])
 gain_t = float(env.energy_gain_mat[i, j])
 cost = float(env.dm_resting_metabolism[i]) * float(env.dm_cost_eat[i])
-print(f"{'u_x':>6} {'sat_scale':>10} {'h(u)':>7} {'sat_min':>8} "
+print(f"{'u_x':>6} {'h(u)':>7} {'sat_min':>8} "
       f"{'need_visible_t/cell':>20}")
 for u_x in (0.5, 0.4, 0.3):
-    for scale in (0.9, 1.0, 1.37):
-        h_u = max(0.0, 1.0 - u_x / scale)
-        sat_min = cost / (a * gain_t * h_u)
-        need = (sat_min / ((1.0 - sat_min) * a * ht)
-                if sat_min < 1.0 else float('inf'))
-        print(f"{u_x:>6.2f} {scale:>10.2f} {h_u:>7.3f} {sat_min:>8.3f} "
-              f"{need:>20.3f}")
+    h_u = hunger_at(u_x, u_x)
+    sat_min = cost / (intake_ceiling(a, ht) * gain_t * h_u)
+    need = (sat_min / ((1.0 - sat_min) * a * ht)
+            if sat_min < 1.0 else float('inf'))
+    print(f"{u_x:>6.2f} {h_u:>7.3f} {sat_min:>8.3f} "
+          f"{need:>20.3f}")

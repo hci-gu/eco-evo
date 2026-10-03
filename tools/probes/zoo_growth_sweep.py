@@ -4,7 +4,7 @@ Evidence for mareld_resume.txt sections 109, 110, 111 and 112. Reports,
 per (growth_rate, seed): survival, final-window level vs spawn, the
 DELIVERED production/biomass ratio (delivered is growth_rate *
 <s_X - u_X>_B * 1460 and is always BELOW the ceiling growth_rate *
-(satiation_scale - u_X) * 1460), and the phytoplankton dead-cell count,
+(1 - u_X) * 1460), and the phytoplankton dead-cell count,
 which is the failure mode total biomass hides because phyto has
 seed_rate 0 and exact zero is absorbing.
 
@@ -26,7 +26,6 @@ from inference import build_env
 from lib.diagnostics import viability
 from lib.environments.ecosystem_env.population_change import (
     DEFAULT_MASS_BALANCE)
-from lib.world.energy_balance import resolve_satiation_scale
 
 TICKS_PER_YEAR = 1460
 
@@ -45,7 +44,7 @@ def run(g, seed, ticks, grid, behaviour, spawn, mortality, phyto_g=None,
     if phyto_seed is not None:
         env.fgs['phytoplankton'].seed_rate = float(phyto_seed)
     u = float(zoo.params.get('maintenance_level', 0.0) or 0.0)
-    sat = float(resolve_satiation_scale(zoo.params.get('satiation_scale')))
+    sat = 1.0  # hunger gate h = 1 - s closes at a full reserve (section 130)
     provider = viability.install_behaviour(env, behaviour, seed=seed)
     if spawn == 'colocated':
         viability.colocate_spawn(env)

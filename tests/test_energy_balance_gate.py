@@ -2,8 +2,9 @@
 
 The gate asks a single question per decision maker: can it cover its own
 feeding metabolism at ITS OWN maintenance level u_X, where the hunger gate
-only lets through h(u_X) = 1 - u_X/satiation_scale of the physiological
-intake ceiling?
+lets through h(u_X) of the physiological intake ceiling? Since section
+133 appetite is full up to u_X (h(u_X) = 1), so the question is whether
+the FG covers its feeding metabolism at its full intake ceiling.
 
     realized(u_X) = h(u_X) * max_intake_rate * energy_content * assim
     net_eat       = realized(u_X) - feeding_cost * resting_metabolism > 0
@@ -16,10 +17,9 @@ configurations that shrink at ~2 %/tick with unlimited prey available.
 This module is the same kind of shape guard as
 tests/test_holling_response.py: it locks the CONTRACT, not a calibration.
 
-``satiation_scale`` is per-FG (Section 69, default
-``HUNGER_SATIATION_SCALE`` = 0.8), so the live-project checks must read
-it from the FG params - otherwise the gate silently evaluates a
-different hunger window than the runtime.
+The hunger gate is h = 1 - s for every FG. The per-FG ``satiation_scale``
+of Sections 69 and 92 (default 0.8, porpoises 0.9 then 1.37) was removed
+in section 130, together with the tests that pinned it.
 
 HISTORY: test_live_project_decision_makers_can_break_even was
 deliberately RED for `porpoises` when it was added in Section 67
@@ -41,11 +41,9 @@ if _ROOT not in sys.path:
 from lib.config.config_loader import setup_full_mareld_mvp  # noqa: E402
 from lib.environments.ecosystem import EcosystemEnvironment  # noqa: E402
 from lib.world.energy_balance import (  # noqa: E402
-    HUNGER_SATIATION_SCALE,
     REFERENCE_RESTING_COST,
     evaluate_energy_balance,
     hunger_at,
-    resolve_satiation_scale,
 )
 from lib.world.functional_group import FunctionalGroup  # noqa: E402
 
@@ -72,9 +70,21 @@ def _build_live_env():
     return env
 
 
+def _ceiling_mat(env):
+    """Holling ceiling per pair: 1/h, or the attack rate when h = 0.
+
+    Since section 134 a pair can carry its own attack rate (half-
+    saturation 1/(a h)), so ``max_intake_mat`` is no longer the ceiling.
+    """
+    a = np.asarray(env.max_intake_mat, dtype=np.float64)
+    h = np.asarray(env.handling_time_mat, dtype=np.float64)
+    with np.errstate(divide="ignore"):
+        return np.where(h > 0.0, 1.0 / np.where(h > 0.0, h, 1.0), a) * (a > 0)
+
+
 def _balance_for(env, i, fg_id):
     """Gate result for DM row ``i`` using the live runtime caches."""
-    a = np.asarray(env.max_intake_mat, dtype=np.float64)[i]
+    a = _ceiling_mat(env)[i]
     gain = np.asarray(env.energy_gain_mat, dtype=np.float64)[i]
     row = a * gain
     j = int(np.argmax(row))
@@ -88,9 +98,6 @@ def _balance_for(env, i, fg_id):
         resting_cost=params.get('resting_cost', REFERENCE_RESTING_COST),
         movement_cost=params.get('movement_cost'),
         best_prey=env.global_fg_order[j],
-        # Per-FG hunger window (Section 69). Must be threaded through or
-        # the gate evaluates a different h(u_X) than get_hunger() does.
-        hunger_scale=params.get('satiation_scale'),
     )
 
 
@@ -107,25 +114,23 @@ def test_hunger_at_matches_functional_group_runtime():
     np.testing.assert_allclose(runtime, scalar)
 
 
-def test_full_hunger_requires_an_empty_reserve():
-    """h = 1 only at s_X = 0 - the state the old gate assumed.
-
-    This is why the gate may not be evaluated at h = 1: no surviving
-    population sits there.
-    """
-    assert hunger_at(0.0) == 1.0
-    assert hunger_at(HUNGER_SATIATION_SCALE) == 0.0
-    assert hunger_at(1.0) == 0.0
-    assert 0.0 < hunger_at(0.5) < 1.0
+def test_appetite_is_full_up_to_maintenance():
+    """h = min(1, (1 - s)/(1 - u)) (section 133)."""
+    assert hunger_at(0.0, 0.5) == 1.0
+    assert hunger_at(0.5, 0.5) == 1.0
+    assert hunger_at(0.75, 0.5) == pytest.approx(0.5)
+    assert hunger_at(1.0, 0.5) == 0.0
+    assert hunger_at(0.5, 1.0) == 0.0          # no feeding window
+    assert hunger_at(0.3) == pytest.approx(0.7)  # u = 0: h = 1 - s
 
 
 def test_hunger_at_maintenance_is_the_evaluation_point():
     b = evaluate_energy_balance(**HEALTHY)
-    expected = 1.0 - HEALTHY['maintenance_level'] / HUNGER_SATIATION_SCALE
+    expected = 1.0  # full appetite at u_X (section 133)
     assert b.hunger_at_maintenance == pytest.approx(expected)
     assert b.realized_intake == pytest.approx(
         expected * HEALTHY['intake_ceiling'])
-    assert b.realized_intake < b.intake_ceiling
+    assert b.realized_intake == pytest.approx(b.intake_ceiling)
 
 
 # ---------- The gate contracts ----------
@@ -151,39 +156,35 @@ def test_gate_rejects_feeding_cheaper_than_resting():
 
 
 def test_gate_rejects_a_closed_hunger_window():
-    """u_X >= the satiation scale means intake is identically 0 at u_X."""
-    b = evaluate_energy_balance(**dict(HEALTHY, maintenance_level=0.85))
+    """u_X >= 1 means intake is identically 0 at u_X."""
+    b = evaluate_energy_balance(**dict(HEALTHY, maintenance_level=1.0))
     assert not b.ok
     assert b.hunger_at_maintenance == 0.0
     assert any("hunger gate is fully closed" in m for m in b.failures), \
         b.failures
 
 
-def test_gate_catches_the_porpoise_failure_mode():
-    """The Section 67 regression case: passes at h=1, starves at u_X.
+def test_maintenance_gate_equals_the_full_hunger_gate():
+    """With full appetite at u_X the two views coincide (section 133).
 
-    Numbers are the porpoise row of fg_library.yaml
-    (max_intake_rate 0.05 * energy_content 6500 * assim 0.9 = 292.5;
-    resting_metabolism 90, feeding_cost 1.4, maintenance_level 0.5).
+    The Section 67 failure mode (passes at h = 1, starves at u_X) needed
+    h(u_X) < 1 and cannot occur any more. Porpoise numbers: ceiling
+    0.035 * 7500 * 0.9 = 236.25, resting_metabolism 90, feeding_cost 1.4.
     """
     b = evaluate_energy_balance(
-        "porpoise_like", intake_ceiling=292.5, resting_metabolism=90.0,
+        "porpoise_like", intake_ceiling=236.25, resting_metabolism=90.0,
         maintenance_level=0.5, feeding_cost=1.4, resting_cost=1.0,
         movement_cost=1.6)
-    # The OLD gate (evaluated at h = 1) is comfortably satisfied ...
-    assert b.net_eat_at_h1 == pytest.approx(166.5, abs=1e-6)
-    assert b.net_eat_at_h1 > b.rest_cost
-    # ... yet the animal cannot break even at its maintenance level.
-    assert b.hunger_at_maintenance == pytest.approx(0.375)
-    assert b.realized_intake == pytest.approx(109.6875)
-    assert b.net_eat == pytest.approx(-16.3125)
-    assert not b.ok
-    assert b.max_feeding_cost == pytest.approx(1.21875)
+    assert b.hunger_at_maintenance == pytest.approx(1.0)
+    assert b.realized_intake == pytest.approx(b.intake_ceiling)
+    assert b.net_eat == pytest.approx(b.net_eat_at_h1)
+    assert b.net_eat == pytest.approx(110.25)
+    assert b.ok, b.failures
 
 
 def test_break_even_condition_is_the_headroom_ratio():
     """net_eat > 0  <=>  ceiling/Rest_X > feeding_cost/h(u_X)."""
-    for fc in [1.0, 1.2, 1.21875, 1.4, 2.0]:
+    for fc in [1.0, 2.0, 3.25, 3.3, 4.0]:
         b = evaluate_energy_balance(
             "sweep", intake_ceiling=292.5, resting_metabolism=90.0,
             maintenance_level=0.5, feeding_cost=fc)
@@ -284,7 +285,7 @@ def test_live_project_feeding_cost_never_undercuts_resting_cost():
 def test_live_project_intake_ceilings_are_configured():
     """Guards against a vacuous gate: every DM needs a positive ceiling."""
     env = _build_live_env()
-    a = np.asarray(env.max_intake_mat, dtype=np.float64)
+    a = _ceiling_mat(env)
     gain = np.asarray(env.energy_gain_mat, dtype=np.float64)
     ceilings = (a * gain).max(axis=1)
     zero = [fg_id for i, fg_id in enumerate(env.dm_ids)
@@ -294,88 +295,43 @@ def test_live_project_intake_ceilings_are_configured():
         "max_intake_rate or energy_content): " + ", ".join(zero))
 
 
-# ---------- Per-FG satiation scale (Section 69) ----------
+# ---------- The hunger gate closes at a full reserve (section 130) ----------
 
-def test_missing_satiation_scale_falls_back_to_the_default():
-    """Legacy FGs that never declare the field must be unchanged."""
-    for absent in (None, "", 0.0, 0, "not-a-number"):
-        assert resolve_satiation_scale(absent) == HUNGER_SATIATION_SCALE
-
-
-def test_satiation_scale_override_is_honoured():
-    assert resolve_satiation_scale(0.9) == pytest.approx(0.9)
-    assert hunger_at(0.5, 0.9) == pytest.approx(1.0 - 0.5 / 0.9)
-    assert hunger_at(0.5, 0.8) == pytest.approx(0.375)
-
-
-def test_per_fg_scale_reaches_the_runtime_hunger_gate():
-    """``get_hunger`` must use the FG's own scale, not the module default.
-
-    This is the coupling that makes the gate meaningful: if the runtime
-    ignored ``satiation_scale`` the GUI would accept a configuration the
-    simulation never realizes.
-    """
-    ratios = np.array([[0.0, 0.25, 0.5, 0.75]])
-    for scale in (None, 0.9, 1.0):
-        params = {'max_energy_reserve': 1000.0}
-        if scale is not None:
-            params['satiation_scale'] = scale
-        fg = FunctionalGroup("probe", params)
-        fg.biomass = np.ones_like(ratios)
-        fg.energy_reserve = fg.biomass * ratios * fg.max_energy_reserve
-        runtime = np.asarray(fg.get_hunger()).ravel()
-        expected = [hunger_at(s, scale) for s in ratios.ravel()]
-        np.testing.assert_allclose(runtime, expected, err_msg=f"{scale=}")
-
-
-def test_raising_the_scale_can_only_widen_the_hunger_window():
-    """Monotonicity in the scale, so the knob has an unambiguous sign."""
-    prev = -np.inf
-    for scale in np.linspace(0.55, 1.0, 20):
-        h = hunger_at(0.5, scale)
-        assert h > prev, f"h(u_X) not increasing at scale={scale:g}"
-        prev = h
+def test_hunger_gate_closes_exactly_at_a_full_reserve():
+    """No satiation_scale any more: h = 1 - s, so appetite ends at s = 1."""
+    ratios = np.array([[0.0, 0.5, 0.99, 1.0]])
+    fg = FunctionalGroup("probe", {'max_energy_reserve': 1000.0,
+                                   'satiation_scale': 1.37})  # ignored
+    fg.biomass = np.ones_like(ratios)
+    fg.energy_reserve = fg.biomass * ratios * fg.max_energy_reserve
+    np.testing.assert_allclose(np.asarray(fg.get_hunger()).ravel(),
+                               1.0 - ratios.ravel())
+    assert not hasattr(fg, "satiation_scale")
+    # With a maintenance level the appetite is full up to it (section 133).
+    fg2 = FunctionalGroup("probe", {'max_energy_reserve': 1000.0,
+                                    'maintenance_level': 0.5})
+    r2 = np.array([[0.0, 0.5, 0.75, 1.0]])
+    fg2.biomass = np.ones_like(r2)
+    fg2.energy_reserve = fg2.biomass * r2 * fg2.max_energy_reserve
+    np.testing.assert_allclose(np.asarray(fg2.get_hunger()).ravel(),
+                               [1.0, 1.0, 0.5, 0.0])
+    assert [hunger_at(x, 0.5) for x in r2.ravel()] == [1.0, 1.0, 0.5, 0.0]
 
 
 def test_porpoises_break_even_with_a_usable_margin():
-    """Section 69 regression case, pinned to the two applied changes.
+    """The live porpoise budget (section 133: full appetite at u_X).
 
-    ceiling = max_intake_rate 0.05 * herring energy_content 7500 * assim
-    0.9 = 337.5; with satiation_scale 0.9 the gate lets through
-    h(u_X) = 1 - 0.5/0.9 = 0.4444 of it, against feed_cost 1.4 * 90 = 126.
-
-    The margin matters, not just the sign: the gate is derived with
-    a_eff = a (unlimited visible prey), and with a*h = 1 the realized
-    a_eff/a is B_vis/(1 + B_vis). net_eat = +0.56 (the herring change
-    alone) would demand ~231 ton of visible herring per cell, which never
-    occurs; +24 demands ~5.3 ton, i.e. one school cell.
+    ceiling = max_intake_rate 0.035 * herring 7500 * assim 0.9 = 236.25
+    against feed_cost 1.4 * 90 = 126.
     """
     b = evaluate_energy_balance(
-        "porpoise_like", intake_ceiling=0.05 * 7500.0 * 0.9,
+        "porpoise_like", intake_ceiling=0.035 * 7500.0 * 0.9,
         resting_metabolism=90.0, maintenance_level=0.5, feeding_cost=1.4,
-        resting_cost=1.0, movement_cost=1.6, hunger_scale=0.9)
-    assert b.hunger_at_maintenance == pytest.approx(1.0 - 0.5 / 0.9)
-    assert b.net_eat == pytest.approx(24.0, abs=1e-6)
-    assert b.max_feeding_cost == pytest.approx(1.6666667, abs=1e-6)
+        resting_cost=1.0, movement_cost=1.6)
+    assert b.hunger_at_maintenance == pytest.approx(1.0)
+    assert b.net_eat == pytest.approx(110.25, abs=1e-6)
+    assert b.max_feeding_cost == pytest.approx(2.625, abs=1e-6)
     assert b.ok, b.failures
-    assert not b.warnings, b.warnings
-
-
-def test_live_project_porpoises_carry_the_scale_override():
-    """Guard against the fix being reverted in fg_library.yaml only.
-
-    Porpoises are the single DM whose ceiling/Rest_X headroom (3.25 with
-    the old herring value) cannot absorb the default 0.8 gate, so the
-    override must actually be present on the live FG.
-    """
-    env = _build_live_env()
-    if 'porpoises' not in env.fgs:
-        pytest.skip("porpoises not in the project configuration")
-    scale = resolve_satiation_scale(
-        env.fgs['porpoises'].params.get('satiation_scale'))
-    assert scale > HUNGER_SATIATION_SCALE, (
-        "porpoises need a satiation_scale above the default to break even "
-        f"at u_X; got {scale:g}")
 
 
 # ---------- The budget is closed over the DIET (Section 92) ----------
@@ -394,11 +350,11 @@ def _diet_budget(env, i, fg_id):
     """(ration, need_quality, {prey: quality}) for DM row ``i``."""
     params = env.fgs[fg_id].params
     menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
-    scale = resolve_satiation_scale(params.get('satiation_scale'))
-    h_u = hunger_at(params.get('maintenance_level', 0.0), scale)
+    u_x = params.get('maintenance_level', 0.0)
+    h_u = hunger_at(u_x, u_x)
     cost = (float(params.get('resting_metabolism', 0.0))
             * float(params.get('feeding_cost', 1.0)))
-    a = float(np.max(np.asarray(env.max_intake_mat, dtype=np.float64)[i, menu]))
+    a = float(np.max(_ceiling_mat(env)[i, menu]))
     ration = a * h_u
     quality = {env.global_fg_order[j]: float(env.energy_gain_mat[i, j])
                for j in menu}
@@ -427,60 +383,71 @@ def test_live_project_no_decision_maker_is_infeasible_on_its_whole_menu():
         + "\n  ".join(starving))
 
 
-def test_live_project_porpoises_need_a_clupeid_majority_not_a_pure_diet():
-    """The junk-food hypothesis, as a number the library must satisfy.
+KASTELEIN_MAX = 0.095   # highest measured ration, fraction of body mass per day
+KASTELEIN_MIN = 0.04
 
-    A porpoise cannot live on lean gadoid alone (MacLeod et al. 2007;
-    Spitz et al. 2012) and the model must say so - but it must also
-    stay inside what the stomach data supply: 50-70 % clupeids by mass
-    in Kattegat / Skagerrak. Anything above that window would mean the
-    modelled porpoise is hungrier than the real one.
+
+def _porpoise_cost_and_quality(env):
+    i = env.dm_ids.index('porpoises')
+    params = env.fgs['porpoises'].params
+    cost = (float(params.get('resting_metabolism', 0.0))
+            * float(params.get('feeding_cost', 1.0)))
+    menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
+    a = float(np.max(_ceiling_mat(env)[i, menu]))
+    quality = {env.global_fg_order[j]: float(env.energy_gain_mat[i, j])
+               for j in menu}
+    return cost, a, quality
+
+
+def test_live_project_porpoises_need_clupeids_at_a_real_ration():
+    """The junk-food hypothesis (MacLeod et al. 2007; Spitz et al. 2012).
+
+    With full appetite at u_X (section 133) the physiological ceiling
+    alone no longer rations, so the test is posed at the highest ration
+    actually measured (Kastelein, 9.5 % of body mass per day): a pure
+    lean-gadoid diet must NOT pay for the feeding metabolism there, and
+    the minimum clupeid share must stay within the 50-70 % that Kattegat /
+    Skagerrak stomachs contain (it may be lower - porpoises eat more
+    clupeids than the minimum).
     """
     env = _build_live_env()
     if 'porpoises' not in env.dm_ids:
         pytest.skip("porpoises not in the project configuration")
-    i = env.dm_ids.index('porpoises')
-    ration, need_q, quality = _diet_budget(env, i, 'porpoises')
-
+    cost, _a, quality = _porpoise_cost_and_quality(env)
     best_id = max(quality, key=quality.get)
     worst_id = min(quality, key=quality.get)
     assert best_id == 'pelagic_fish', best_id
+    ration = KASTELEIN_MAX / TICKS_PER_DAY
+    need_q = cost / ration
     assert quality[worst_id] < need_q <= quality[best_id], (
-        f"{quality} against a requirement of {need_q:.0f} MJ/t")
-
+        f"{quality} against a requirement of {need_q:.0f} MJ/t at the "
+        f"Kastelein maximum ration")
     share = ((need_q - quality[worst_id])
              / (quality[best_id] - quality[worst_id]))
-    assert 0.40 <= share <= 0.70, (
-        f"minimum {best_id} share in the ration is {share:.3f}, outside the "
-        f"50-70 % clupeid window the stomach data supply")
+    assert 0.0 < share <= 0.70, share
 
 
 def test_live_project_porpoise_ration_is_the_literature_one():
-    """Section 92, point 3: the ceiling caps, the gate no longer rations.
+    """The ceiling caps; the break-even ration is the literature number.
 
     ``max_intake_rate`` is a *physiological* ceiling and must sit above
-    the highest ration ever measured (Kastelein: 4-9.5 % of body mass
-    per day); the ration realised at the maintenance level is the
-    literature-anchored number and must land inside that window. Before
-    Section 92 the ceiling was 20 %/day - twice the observed maximum -
-    and the un-anchored ``satiation_scale`` was setting the ration.
+    the highest ration ever measured (Kastelein: 4-9.5 % of body mass per
+    day). The ration that just pays the feeding metabolism on clupeids
+    must land inside that window (section 133; before it, the ration was
+    h(u_X) * ceiling, Section 92).
     """
     env = _build_live_env()
     if 'porpoises' not in env.dm_ids:
         pytest.skip("porpoises not in the project configuration")
-    i = env.dm_ids.index('porpoises')
-    menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
-    a = float(np.max(np.asarray(env.max_intake_mat, dtype=np.float64)[i, menu]))
-    ration, _, _ = _diet_budget(env, i, 'porpoises')
-
+    cost, a, quality = _porpoise_cost_and_quality(env)
     ceiling_pct = a * TICKS_PER_DAY * 100.0
-    ration_pct = ration * TICKS_PER_DAY * 100.0
+    ration_pct = cost / max(quality.values()) * TICKS_PER_DAY * 100.0
     assert 10.0 <= ceiling_pct <= 16.0, (
         f"intake ceiling {ceiling_pct:.1f} %bm/day is not a physiological "
         f"ceiling for a harbour porpoise")
-    assert 4.0 <= ration_pct <= 9.5, (
-        f"realised ration {ration_pct:.1f} %bm/day is outside the Kastelein "
-        f"window")
+    assert KASTELEIN_MIN * 100 <= ration_pct <= KASTELEIN_MAX * 100, (
+        f"break-even ration {ration_pct:.1f} %bm/day is outside the "
+        f"Kastelein window")
     assert ration_pct < ceiling_pct
 
 

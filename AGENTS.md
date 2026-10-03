@@ -48,10 +48,11 @@ fabricates mass.
 | `lib/environments/ecosystem.py` | `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
+| `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs; shared by loader, FG editor and tests (section 129). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
-| `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. Two factors (behaviour x spawn geometry); the verdict comes from the normative corner `--spawn colocated --behaviour greedy`. The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |
+| `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. A diagnostic for the mechanics, not the judge of the world: its verdict (normative corner `--spawn colocated --behaviour greedy`) is about that behaviour, and trained policies can be viable where it fails (`VIABILITY.md` section 6, resume 123). Two factors (behaviour x spawn geometry). The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |
 | `tests/` | pytest suite - keep green. |
 | `results/<run-name>/` | Checkpoints `{'state_dict': ..., 'obs_stats': {...}}`. |
 
@@ -71,6 +72,10 @@ fabricates mass.
 - Decisions: batched `torch.bmm` over all DMs; per-DM compact observation layout
   driven by the Observability matrix; `Rest` doubles as a hide action.
 - Impacts: linear interpolation in `impact_table`, clipped to endpoints.
+- Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
+  is the attack rate a. A pair may override it (`<pred>_preys_on_<prey>:
+  max_intake_rate`) to set the half-saturation 1/(a h) without moving the
+  ceiling - zoo -> phyto uses 20 t/km2 (section 134).
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
@@ -78,6 +83,17 @@ fabricates mass.
   library, section 86). It is what removes the 2-cell vertical bands.
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.
 - Growth: NDM logistic; DM `s = R/(B*ME)`, `q = s - u` (`maintenance_level`, default 0.3).
+- `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
+  `g = (r_max + M1 + sum checked predation_mortality) / ((1-u)*1460)`,
+  NDM `r = (r_max + sum M2) / 1460`. Checking/unchecking a predator in the
+  FG editor moves the prey's growth by that predator's share; muted FGs are
+  absent. With `--mortality off` the loader leaves M1 out of g (pass
+  `apply_natural_mortality` to the loader wherever an env is built). Edit
+  `r_max`, `natural_mortality` (M1, non-FG losses only) or the pair's
+  `predation_mortality`, never `growth_rate` itself.
+- Hunger gate `h = min(1, max(0, (1 - s)/(1 - u)))` for every FG: full
+  appetite up to the maintenance level, zero at a full reserve (section 133);
+  `satiation_scale` no longer exists (section 130).
 
 ## 6. Commands
 
@@ -92,7 +108,8 @@ python3 -m pytest tests/ -q
 python3 -m py_compile fgconfig/fgconfig.py lib/environments/ecosystem.py \
     lib/runners/trainer.py lib/runners/parallel_worker.py train.py
 
-# Is the world viable at all? Frozen behaviour, no training. Exit 1 = not viable.
+# Mechanics diagnostic: frozen behaviour, no training. Exit 1 = the frozen
+# greedy corner fails; judge viability with trained policies (VIABILITY.md 6).
 python3 tools/viability.py                                  # ~4 min, see VIABILITY.md
 python3 tools/viability.py --spawn configured               # geometry as drawn
 python3 tools/viability.py --ticks 300 --seeds 1 --behaviour eat   # smoke test

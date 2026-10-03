@@ -11,7 +11,6 @@ import numpy as np
 import torch
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
-from lib.world.energy_balance import resolve_satiation_scale
 
 # Relative harvest cap, imported rather than repeated so the two engines
 # cannot drift apart again (Fix 2 / Section 73: an absolute epsilon in the
@@ -75,13 +74,6 @@ class TensorEcosystem:
         self.pair_visibility = (
             tensor(env.vis_floor_mat)[None, :, :, None]
             if getattr(env, "_has_pair_vis_floor", False) else None)
-        # Per-FG satiation scale for h = max(0, 1 - s/scale). Missing values
-        # fall back to HUNGER_SATIATION_SCALE through the shared resolver, so
-        # a library override (porpoises: 0.9) is honoured here as well.
-        self.satiation = tensor([
-            resolve_satiation_scale(
-                getattr(env.fgs[fid], "satiation_scale", None))
-            for fid in self.dm_ids])[None, :, None]
         self.velocity = tensor(env.dm_v)[None, :, None, None]
         self.metabolism = tensor(env.dm_resting_metabolism)[None, :, None]
         self.cost_rest = tensor(env.dm_cost_rest)[None, :, None]
@@ -246,8 +238,14 @@ class TensorEcosystem:
 
     def predation(self, biomass, reserve, actions):
         b_dm = biomass[:, self.dm_index]
-        hunger = (1.0 - self.energy_level(biomass, reserve)[:, self.dm_index]
-                  / self.satiation).clamp_min(0)
+        # h = min(1, max(0, (1 - s) / (1 - u))), as FunctionalGroup.get_hunger
+        # (section 133); u >= 1 closes the window.
+        u_dm = self.maintenance[:, self.dm_index]
+        hunger = torch.where(
+            u_dm < 1.0,
+            ((1.0 - self.energy_level(biomass, reserve)[:, self.dm_index])
+             / (1.0 - u_dm).clamp_min(1e-12)).clamp(0.0, 1.0),
+            torch.zeros_like(u_dm))
         hidden = torch.zeros_like(biomass).index_copy(1, self.dm_index, actions[:, :, 4])
         pair_visible = None
         if self.pair_visibility is None:

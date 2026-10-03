@@ -51,7 +51,13 @@ def build_interaction_matrices(env):
                 continue
 
             eat_static[i, j] = 1.0
-            max_intake[i, j] = pred_max_intake
+            # Attack rate a of the Holling response. The species value is
+            # the default; a pair may override it (section 134), which is
+            # how a prey-specific half-saturation 1/(a*h) is set without
+            # moving the ceiling 1/h. tick_time already rescales the pair
+            # key (INTERACTION_RESCALE_RULES).
+            max_intake[i, j] = _float_or_default(
+                inter_def.get("max_intake_rate", None), pred_max_intake)
 
             assimilation = np.clip(
                 _float_or_default(inter_def.get("assimilation_factor", 1.0), 1.0),

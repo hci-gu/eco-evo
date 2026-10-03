@@ -11,14 +11,14 @@ The original Section 23 gate evaluated the intake side at FULL hunger::
 
     intake_at_h1 = max_intake_rate * energy_gain
 
-But ``h_X = max(0, 1 - s_X / HUNGER_SATIATION_SCALE)`` means h = 1
+But ``h_X = max(0, 1 - s_X)`` means h = 1
 requires s_X = 0, i.e. an animal whose energy reserve is already empty -
 a state it does not survive in. The ecologically meaningful question is
 whether the FG can break even *at its own maintenance level* ``u_X``,
 where growth flips sign (``q_X = s_X - u_X``). That is the point the
 population is attracted to, and there the hunger gate only lets through
 
-    h(u_X) = max(0, 1 - u_X / HUNGER_SATIATION_SCALE)
+    h(u_X) = max(0, 1 - u_X)
 
 of the physiological ceiling. Evaluating at h = 1 hides exactly the
 failure mode where an FG passes every gate on paper yet shrinks at
@@ -35,23 +35,17 @@ an invalid configuration, not merely a generous one.
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-# DEFAULT saturation scale of the hunger gate: h_X = max(0, 1 - s_X / SCALE).
-# A pure model constant (no literature anchor, unlike resting_metabolism,
-# max_energy_reserve, max_intake_rate and maintenance_level). Kept here so
-# the runtime (FunctionalGroup.get_hunger), the GUI gate and the tests all
-# read the same number.
+# The hunger gate (section 133): appetite is FULL up to the maintenance
+# level u_X and falls linearly to zero at a full reserve,
 #
-# Per-FG override (Section 69). An FG may set ``satiation_scale`` in
-# fg_library.yaml to raise or lower its own gate; the value falls back to
-# this constant when absent. The scale is per-FG rather than global
-# because the measured effect of raising it is species-specific in BOTH
-# directions (Section 68): 0.9 is what lets porpoises break even at u_X
-# (their ceiling/Rest_X headroom is only 3.25, against 6.6-92.9 for every
-# other DM), while the same change applied to zooplankton deepens the
-# phyto-zoo overshoot (zoo floor 0.36x, phyto floor 0.70x). There is no
-# cross-species calibration to preserve by keeping it global - the
-# headroom already spans a factor of 28 between DMs.
-HUNGER_SATIATION_SCALE = 0.8
+#     h_X = min(1, max(0, (1 - s_X) / (1 - u_X)))
+#
+# Copepod literature (Tiselius 1998; Mackas & Burns 1986; Kiorboe et al.
+# 2018) finds hunger effects on gut timescales and ingestion set by food
+# concentration and gut capacity, not a gradual decline with condition.
+# The previous h = 1 - s (section 130) halved intake at the maintenance
+# level and made the zooplankton budget impossible to close. The per-FG
+# ``satiation_scale`` (Sections 68-69, 92) was removed in section 130.
 
 # Reference value of resting_cost. The runtime default in
 # FunctionalGroup / ecosystem caches is 1.0 and no FG in fg_library.yaml
@@ -61,34 +55,30 @@ HUNGER_SATIATION_SCALE = 0.8
 REFERENCE_RESTING_COST = 1.0
 
 
-def resolve_satiation_scale(value):
-    """Per-FG ``satiation_scale`` with fallback to the module default.
+def intake_ceiling(attack_rate, handling_time):
+    """Physiological intake ceiling of a Holling response (t/t/tick).
 
-    Empty / missing / non-positive values resolve to
-    :data:`HUNGER_SATIATION_SCALE`, so legacy library entries that never
-    declare the field behave exactly as before.
+    Type II f(B) = a B / (1 + a h B) saturates at 1/h, so with h > 0 the
+    ceiling is 1/h, NOT the attack rate a; a only sets how fast intake
+    falls when prey is scarce (half-saturation 1/(a h)). Without handling
+    time the response is linear and capped by a (section 134).
     """
-    if value in (None, ""):
-        return float(HUNGER_SATIATION_SCALE)
-    try:
-        scale = float(value)
-    except (TypeError, ValueError):
-        return float(HUNGER_SATIATION_SCALE)
-    if scale <= 0.0:
-        return float(HUNGER_SATIATION_SCALE)
-    return scale
+    h = float(handling_time or 0.0)
+    if h > 0.0:
+        return 1.0 / h
+    return float(attack_rate or 0.0)
 
 
-def hunger_at(s_x, scale=None):
-    """h_X at a given relative energy fill ratio s_X.
+def hunger_at(s_x, maintenance_level=0.0):
+    """h_X = min(1, max(0, (1 - s_X) / (1 - u_X))) at fill ratio s_X.
 
-    Mirrors ``FunctionalGroup.get_hunger`` for a scalar s_X. ``scale=None``
-    resolves to :data:`HUNGER_SATIATION_SCALE`.
+    Mirrors ``FunctionalGroup.get_hunger`` for a scalar s_X. With
+    ``u_X >= 1`` there is no feeding window and h is 0.
     """
-    scale = resolve_satiation_scale(scale)
-    if scale <= 0.0:
+    u = float(maintenance_level or 0.0)
+    if u >= 1.0:
         return 0.0
-    return max(0.0, 1.0 - float(s_x) / scale)
+    return min(1.0, max(0.0, (1.0 - float(s_x)) / (1.0 - u)))
 
 
 @dataclass
@@ -106,7 +96,6 @@ class EnergyBalance:
     feeding_cost: float
     resting_cost: float
     movement_cost: Optional[float]
-    hunger_scale: float
     # Derived
     hunger_at_maintenance: float   # h(u_X)
     realized_intake: float         # h(u_X) * intake_ceiling
@@ -136,8 +125,7 @@ class EnergyBalance:
             f"  intake ceiling (h=1)     = max_intake_rate * energy_content"
             f" * assim = {self.intake_ceiling:.3f}",
             f"  u_X                      = {self.maintenance_level:.3f}",
-            f"  h(u_X) = 1 - u_X/{self.hunger_scale:g}"
-            f"        = {self.hunger_at_maintenance:.3f}",
+            f"  h(u_X)                   = {self.hunger_at_maintenance:.3f}",
             f"  realized intake at u_X   = h(u_X) * ceiling"
             f" = {self.realized_intake:.3f}",
             f"  feed_cost                = feeding_cost * resting_metabolism"
@@ -165,8 +153,7 @@ class EnergyBalance:
 def evaluate_energy_balance(fg_id, intake_ceiling, resting_metabolism,
                             maintenance_level, feeding_cost,
                             resting_cost=REFERENCE_RESTING_COST,
-                            movement_cost=None, best_prey=None,
-                            hunger_scale=None):
+                            movement_cost=None, best_prey=None):
     """Evaluate the DM energy-balance gate at the maintenance level.
 
     Parameters
@@ -184,7 +171,7 @@ def evaluate_energy_balance(fg_id, intake_ceiling, resting_metabolism,
         G1  ``feeding_cost >= resting_cost`` - hunting may not be cheaper
             than lying still; ``feeding_cost`` is an activity multiplier
             relative to rest.
-        G2  ``h(u_X) > 0`` - with ``u_X >= hunger_scale`` the hunger gate
+        G2  ``h(u_X) > 0`` - with ``u_X >= 1`` the hunger gate
             closes completely at maintenance and intake is identically 0.
         G3  ``net_eat > 0`` at ``h(u_X)`` - the FG must be able to cover
             its own feeding metabolism at its maintenance level.
@@ -198,7 +185,6 @@ def evaluate_energy_balance(fg_id, intake_ceiling, resting_metabolism,
         W2  ``eat_minus_move > 0`` at ``h(u_X)`` - searching should be
             affordable when it leads to a full meal.
     """
-    hunger_scale = resolve_satiation_scale(hunger_scale)
     intake_ceiling = float(intake_ceiling or 0.0)
     rm = float(resting_metabolism or 0.0)
     u_x = float(maintenance_level or 0.0)
@@ -206,7 +192,7 @@ def evaluate_energy_balance(fg_id, intake_ceiling, resting_metabolism,
     cr = float(resting_cost or 0.0)
     mc = None if movement_cost in (None, "") else float(movement_cost)
 
-    h_u = hunger_at(u_x, hunger_scale)
+    h_u = hunger_at(u_x, u_x)
     realized = h_u * intake_ceiling
     feed_cost = fc * rm
     rest_cost = cr * rm
@@ -224,7 +210,7 @@ def evaluate_energy_balance(fg_id, intake_ceiling, resting_metabolism,
     res = EnergyBalance(
         fg_id=fg_id, best_prey=best_prey, intake_ceiling=intake_ceiling,
         resting_metabolism=rm, maintenance_level=u_x, feeding_cost=fc,
-        resting_cost=cr, movement_cost=mc, hunger_scale=float(hunger_scale),
+        resting_cost=cr, movement_cost=mc,
         hunger_at_maintenance=h_u, realized_intake=realized,
         feed_cost=feed_cost, rest_cost=rest_cost, move_cost=move_cost,
         net_eat=net_eat, net_eat_at_h1=net_eat_h1,
@@ -241,7 +227,7 @@ def evaluate_energy_balance(fg_id, intake_ceiling, resting_metabolism,
     if h_u <= 0.0:
         res.failures.append(
             f"the hunger gate is fully closed at the maintenance level: "
-            f"u_X = {u_x:g} >= {float(hunger_scale):g}, so h(u_X) = 0 and "
+            f"u_X = {u_x:g} >= 1, so h(u_X) = 0 and "
             f"realized intake is identically 0.")
     elif net_eat <= 0.0:
         res.failures.append(

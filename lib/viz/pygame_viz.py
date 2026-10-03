@@ -431,10 +431,11 @@ class LiveVisualizer:
         # Each tab has its own per-FG rolling buffer of (step, value).
         if self.mode == "train":
             self._tabs = ["reward", "biomass", "energy", "move", "rest", "eat",
-                          "predation", "starvation", "impacts", "progress"]
+                          "predation", "starvation", "impacts", "natural",
+                          "progress"]
         else:
             self._tabs = ["biomass", "energy", "move", "rest", "eat",
-                          "predation", "starvation", "impacts"]
+                          "predation", "starvation", "impacts", "natural"]
         # Inference receives per-tick values. Training uses final biomass
         # and energy ratios, plus action averages over each probe rollout.
         if self.mode == "train":
@@ -448,6 +449,7 @@ class LiveVisualizer:
                 "predation": "predation share of total loss (%)",
                 "starvation": "starvation share of total loss (%)",
                 "impacts": "impact share of total loss (%)",
+                "natural": "natural mortality (M1) share of total loss (%)",
                 "progress": "Survival across training (ticks within biomass bounds)",
             }
         else:
@@ -461,6 +463,7 @@ class LiveVisualizer:
                 "predation": "predation share of tick loss (%)",
                 "starvation": "starvation share of tick loss (%)",
                 "impacts": "impact share of tick loss (%)",
+                "natural": "natural mortality (M1) share of tick loss (%)",
             }
         self._active_tab = 0
         # Per-FG enable flag for plot panel (checkbox state). Toggled via
@@ -989,9 +992,10 @@ class LiveVisualizer:
         """Record per-FG biomass-loss fractions.
 
         ``breakdown`` maps fg_id -> {'predation': p, 'starvation': s,
-        'impact': i} where each value is a fraction in [0, 1] summing to
-        1.0 when there was any loss at all. Unknown keys are tolerated.
-        Used to draw the ``pr/st/im=X/Y/Z%`` line above each heatmap.
+        'impact': i, 'natural': n} where each value is a fraction in
+        [0, 1] summing to 1.0 when there was any loss at all. Unknown keys
+        are tolerated. Used to draw the ``pr/st/im/nm=...%`` line above
+        each heatmap.
         """
         if not self.enabled:
             return
@@ -1003,6 +1007,7 @@ class LiveVisualizer:
                     'predation':  float(lb.get('predation', 0.0)),
                     'starvation': float(lb.get('starvation', 0.0)),
                     'impact':     float(lb.get('impact', 0.0)),
+                    'natural':    float(lb.get('natural', 0.0)),
                 }
         except Exception as e:
             self._log_once(f"update_loss_breakdown failed: {e!r}")
@@ -3409,7 +3414,8 @@ class LiveVisualizer:
                     pr = float(lb.get('predation', 0.0)) * 100.0
                     st = float(lb.get('starvation', 0.0)) * 100.0
                     im = float(lb.get('impact', 0.0)) * 100.0
-                    loss_txt = (f"pr/st/im = {pr:.0f}/{st:.0f}/{im:.0f}%")
+                    nm = float(lb.get('natural', 0.0)) * 100.0
+                    loss_txt = (f"pr/st/im/nm = {pr:.0f}/{st:.0f}/{im:.0f}/{nm:.0f}%")
                     loss_surf = self._font.render(loss_txt, True, info_col)
                     loss_y = act_y + act_surf.get_height()
                     self._screen.blit(loss_surf, (px + pad, loss_y))
@@ -3647,7 +3653,8 @@ class LiveVisualizer:
         # NDMs are included on the biomass tab and loss tabs because they
         # can lose biomass to predation and impacts without making
         # decisions.
-        if (active in ("biomass", "predation", "starvation", "impacts")
+        if (active in ("biomass", "predation", "starvation", "impacts",
+                       "natural")
                 or not self._ndm_ids):
             return list(self.plot_fg_ids)
         out = []
@@ -3679,7 +3686,7 @@ class LiveVisualizer:
         series = self._series
         all_steps: set = set()
         for tab in ("biomass", "energy", "move", "rest", "eat",
-                    "predation", "starvation", "impacts"):
+                    "predation", "starvation", "impacts", "natural"):
             if tab not in series:
                 continue
             for fid, buf in series[tab].items():
@@ -3712,6 +3719,7 @@ class LiveVisualizer:
         pr = _index("predation")
         st = _index("starvation")
         im = _index("impacts")
+        nm = _index("natural")
 
         records = []
         for step in steps_sorted:
@@ -3737,17 +3745,19 @@ class LiveVisualizer:
             for fid, d in et.items():
                 if step in d:
                     eat_frac[fid] = d[step]
-            all_fids = set(pr) | set(st) | set(im)
+            all_fids = set(pr) | set(st) | set(im) | set(nm)
             for fid in all_fids:
                 lp = pr.get(fid, {}).get(step)
                 ls = st.get(fid, {}).get(step)
                 li = im.get(fid, {}).get(step)
-                if lp is None and ls is None and li is None:
+                ln = nm.get(fid, {}).get(step)
+                if lp is None and ls is None and li is None and ln is None:
                     continue
                 loss_breakdown[fid] = {
                     "predation":  (lp / 100.0) if lp is not None else 0.0,
                     "starvation": (ls / 100.0) if ls is not None else 0.0,
                     "impact":     (li / 100.0) if li is not None else 0.0,
+                    "natural":    (ln / 100.0) if ln is not None else 0.0,
                 }
             if ratio:
                 rec["ratio"] = ratio

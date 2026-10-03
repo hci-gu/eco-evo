@@ -2,6 +2,7 @@ import yaml
 import numpy as np
 from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
+from lib.world.growth_budget import derived_growth_rate
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
@@ -240,7 +241,8 @@ def _spawn_biomass_distribution(grid_size, total_b, min_per_cell,
 
 def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, spawn_seed=None,
                           allowed_mask=None, library_config=None,
-                          tick_hours=LIBRARY_TICK_HOURS):
+                          tick_hours=LIBRARY_TICK_HOURS,
+                          apply_natural_mortality=True):
     lib = library_config if library_config is not None else load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
@@ -303,6 +305,17 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                 if 'impact' not in params: params['impact'] = {}
                 impact_id = iid.replace(f"{sid}_impacted_by_", "")
                 params['impact'][impact_id] = idef
+
+        # growth_rate is derived from r_max, natural_mortality and the
+        # checked predation pairs (lib/world/growth_budget.py). Every
+        # library FG counts as present on this library-only path. With
+        # natural mortality off (``--mortality off``) M1 is not applied by
+        # the tick, so it is not paid for in the growth term either.
+        _g = derived_growth_rate(sid, spec_defs, inter_defs,
+                                 active_predators=_ordered,
+                                 include_m1=apply_natural_mortality)
+        if _g is not None:
+            params['growth_rate'] = _g
 
         # fg_library.yaml is calibrated at LIBRARY_TICK_HOURS and is never
         # rewritten for a run: a different --tick-length is converted here,
@@ -443,7 +456,7 @@ def load_impact_spawn_specs(project_path):
 
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
                         spawn_seed=None, allowed_mask=None, project_config=None, library_config=None,
-                        tick_hours=LIBRARY_TICK_HOURS):
+                        tick_hours=LIBRARY_TICK_HOURS, apply_natural_mortality=True):
     """Load a project config and build its FunctionalGroups.
 
     ``spawn_seed`` (optional) controls the per-cell biomass distribution
@@ -452,6 +465,10 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     fg_id)`` — used by ``train.py`` to share *identical* biomass maps across
     all deltas/workers within one generation. When ``None``, falls back to
     ``seed`` so each rollout gets its own spawn layout.
+
+    ``apply_natural_mortality`` must match the environment's flag: with
+    ``False`` (``--mortality off``) the derived growth_rate leaves M1 out,
+    since the tick will not apply it (lib/world/growth_budget.py).
     """
     project = project_config if project_config is not None else load_config(project_path)
     rng = np.random.default_rng(seed) if seed is not None else None
@@ -668,7 +685,17 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                 if 'impact' not in params: params['impact'] = {}
                 params['impact'][impact_id] = idef
         params['observes'] = observes_list if observes_seen_any else None
-                
+
+        # growth_rate is derived from r_max, natural_mortality and the
+        # checked predation pairs whose predator is active in THIS project
+        # (muted FGs are absent, so their predation share is not paid for).
+        # See lib/world/growth_budget.py.
+        _g = derived_growth_rate(sid, spec_defs, inter_defs,
+                                 active_predators=project_fg_ids,
+                                 include_m1=apply_natural_mortality)
+        if _g is not None:
+            params['growth_rate'] = _g
+
         # fg_library.yaml is calibrated at LIBRARY_TICK_HOURS and is never
         # rewritten for a run: a different --tick-length is converted here,
         # in memory, every time. A 6 h run short-circuits and is

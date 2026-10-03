@@ -20,8 +20,14 @@ if _PROJECT_ROOT not in sys.path:
 from lib.world.energy_balance import (  # noqa: E402
     REFERENCE_RESTING_COST,
     evaluate_energy_balance,
+    intake_ceiling,
 )
 from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label  # noqa: E402
+from lib.world.growth_budget import (  # noqa: E402
+    PREYS_ON,
+    growth_budget,
+    has_budget,
+)
 
 # Initialize YAML handler
 yaml = YAML()
@@ -577,8 +583,8 @@ class FGConfigApp:
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
             ("Resting Metabolism (MJ/ton/{tick})", "resting_metabolism", "entry", 0.0, 1000.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
-            ("Satiation Scale (hunger gate, 0=default 0.8)", "satiation_scale", "entry", 0.0, 1.0),
-            ("Max Growth (MG_X, fraction/{tick})", "growth_rate", "entry", 0.0, 1.0),
+            ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
+            ("Max Growth (MG_X, fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
             ("Starve Rate (catabolism, fraction/{tick})", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
             ("Natural Mortality (fraction/{tick})", "natural_mortality", "entry", 0.0, 1.0),
@@ -588,7 +594,7 @@ class FGConfigApp:
             ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
             ("Extinction Threshold (× indiv. weight, 0=off)", "extinction_threshold_factor", "entry", 0.0, 5.0),
             ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
-            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
+            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 1000000.0),
         ]
 
         # Add a thin separator under every variable/input row so the eye
@@ -643,6 +649,13 @@ class FGConfigApp:
         ttk.Separator(self.editor_frame, orient="horizontal").grid(
             row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
         grow += 1
+        # Derived growth-rate breakdown (lib/world/growth_budget.py).
+        self.growth_info_var = tk.StringVar(value="")
+        ttk.Label(self.editor_frame, textvariable=self.growth_info_var,
+                  foreground=self.MUTED_FG_COLOR, wraplength=700,
+                  justify="left").grid(row=grow, column=0, columnspan=2,
+                                       sticky="w", padx=5, pady=(0, 2))
+        grow += 1
         ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
             row=grow, column=0, columnspan=2, pady=5)
         grow += 1
@@ -662,14 +675,15 @@ class FGConfigApp:
         self.ndm_prop_vars = {}
         # (label, key, type, lo, hi)
         ndm_props = [
-            ("Max Growth (fraction/{tick})", "growth_rate", "entry", 0.0, 1.0),
+            ("Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
+            ("Max Growth (fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry", 0.0, 100000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
             ("Seed Rate (fraction of cc/{tick})", "seed_rate", "entry", 0.0, 1.0),
             ("Seasonal Amplitude (fraction of growth_rate, 0=off)", "seasonal_amplitude", "entry", 0.0, 10.0),
             ("Seasonal Period (ticks of {tick})", "seasonal_period", "entry", 0.0, 10000.0),
             ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
-            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 100000.0),
+            ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 1000000.0),
         ]
         self.ndm_editor_frame.columnconfigure(1, weight=1)
         grow = 0
@@ -689,17 +703,32 @@ class FGConfigApp:
                 self.ndm_prop_vars["initial_biomass_max"] = max_var
                 grow += 3
             else:
-                var = self._build_ranged_entry(self.ndm_editor_frame, grow, lo, hi)
+                var = self._build_ranged_entry(self.ndm_editor_frame, grow, lo, hi,
+                                               key=f"ndm:{key}")
                 self.ndm_prop_vars[key] = var
                 grow += 1
             ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
                 row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
             grow += 1
 
+        self.ndm_growth_info_var = tk.StringVar(value="")
+        ttk.Label(self.ndm_editor_frame, textvariable=self.ndm_growth_info_var,
+                  foreground=self.MUTED_FG_COLOR, wraplength=700,
+                  justify="left").grid(row=grow, column=0, columnspan=2,
+                                       sticky="w", padx=5, pady=(0, 2))
+        grow += 1
         ttk.Button(self.ndm_editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
             row=grow, column=0, columnspan=2, pady=5
         )
         grow += 1
+        # Re-derive the displayed growth_rate whenever an input of the
+        # budget is edited (r_max, M1, u).
+        for _k in ("r_max", "natural_mortality", "maintenance_level"):
+            if _k in self.prop_vars:
+                self.prop_vars[_k].trace_add(
+                    "write", lambda *_a: self._update_editor_growth_display())
+        self.ndm_prop_vars["r_max"].trace_add(
+            "write", lambda *_a: self._update_editor_growth_display())
 
         # Spawn Strategy editor (NDM) — nested LabelFrame inside FG Editor
         self.ndm_spawn_frame = ttk.LabelFrame(self.ndm_editor_frame, text="Spawn Strategy")
@@ -1797,7 +1826,8 @@ class FGConfigApp:
         self._bind_slider_entry(var, scl, bounds, is_int=is_int_range)
         if key is not None:
             self._ranged_rows[key] = {
-                "bounds": bounds, "label": lbl, "scale": scl, "var": var}
+                "bounds": bounds, "label": lbl, "scale": scl, "var": var,
+                "entry": ent}
         return var
 
     def _build_value_range_row(self, parent, row):
@@ -2653,6 +2683,17 @@ class FGConfigApp:
         self.create_matrix_section("Predation (row eats column)", "preys_on", dm_fgs, fgs, cell_type="bool",
                                    parent=self.matrix_container)
 
+        # Literature predation mortality M2 (1/yr) of the column FG caused
+        # by the row FG. While the pair is checked it is added to the
+        # column FG's derived growth_rate (lib/world/growth_budget.py), so
+        # checking / unchecking a predator raises / lowers the prey's
+        # growth at once. Cell active only if preys_on=True.
+        self.create_matrix_section(
+            "Predation Mortality M2 (1/yr; row's predation on column, added to column's growth)",
+            "predation_mortality", dm_fgs, fgs, cell_type="nonneg_float",
+            parent=self.matrix_container)
+        self._build_derived_growth_panel(fgs)
+
         # Observability matrix: definierar vilka FGs varje FG kan observera i
         # sitt input space. Muteade rader/kolumner gråmarkeras och
         # deaktiveras precis som i predationsmatrisen. Om en observerad FG
@@ -2716,7 +2757,7 @@ class FGConfigApp:
             if preys_var is None:
                 continue
             for dep_key in ("assimilation_factor", "handling_time",
-                            "visibility_floor"):
+                            "visibility_floor", "predation_mortality"):
                 dep_widget = self.matrix_widgets.get(key, {}).get(dep_key)
                 if dep_widget is None:
                     continue
@@ -2844,6 +2885,18 @@ class FGConfigApp:
                 except tk.TclError:
                     pass
 
+        # Live re-derivation of every prey's growth_rate on check/uncheck
+        # and on edits of the M2 matrix.
+        for key, data in self.matrix_entries.items():
+            if PREYS_ON not in key:
+                continue
+            for dk in ("preys_on", "predation_mortality"):
+                v = data.get(dk)
+                if v is not None:
+                    v.trace_add("write",
+                                lambda *_a: self._on_predation_matrix_changed())
+        self._on_predation_matrix_changed()
+
         ttk.Button(self.matrix_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
         if impacts:
             ttk.Button(self.impact_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
@@ -2929,6 +2982,169 @@ class FGConfigApp:
 
         ttk.Button(panel, text="Auto All Rows", command=_auto_all).grid(
             row=len(row_ids), column=0, columnspan=2, pady=(6, 4))
+
+    # ------------------------------------------------------------------
+    # Derived growth rate (lib/world/growth_budget.py)
+    # ------------------------------------------------------------------
+    def _active_project_fg_ids(self):
+        """Project FGs that exist for the simulation (muted = absent)."""
+        return [fid for fid in self._all_fg_ids()
+                if not self._is_fg_id_muted(fid)]
+
+    def _live_interactions(self):
+        """Library interactions overlaid with the matrix's current state.
+
+        The matrix is only written to the library on "Apply All Matrix
+        Changes"; the derived growth rates shown in the GUI must follow
+        the checkboxes immediately, so they read the widgets.
+        """
+        lib = self.global_library.get("interaction_definitions", {}) or {}
+        out = {k: dict(v) for k, v in lib.items() if isinstance(v, dict)}
+        for key, data in (getattr(self, "matrix_entries", {}) or {}).items():
+            if PREYS_ON not in key:
+                continue
+            entry = out.setdefault(key, {})
+            pv = data.get("preys_on")
+            if pv is not None:
+                entry["preys_on"] = bool(pv.get())
+            mv = data.get("predation_mortality")
+            if mv is not None:
+                try:
+                    entry["predation_mortality"] = float(mv.get() or 0.0)
+                except (TypeError, ValueError, tk.TclError):
+                    entry["predation_mortality"] = 0.0
+        return out
+
+    def _budget_for(self, fg_id, interactions=None, species=None):
+        species_defs = self.global_library.get("species_definitions", {}) or {}
+        if interactions is None:
+            interactions = self._live_interactions()
+        if species is None:
+            species = self.current_fg_configs.get(fg_id) or species_defs.get(fg_id)
+        return growth_budget(fg_id, species_defs, interactions,
+                             active_predators=self._active_project_fg_ids(),
+                             species=species)
+
+    def _build_derived_growth_panel(self, fg_ids):
+        """Read-only table of every derived growth_rate, live."""
+        frame = ttk.LabelFrame(
+            self.matrix_container,
+            text="Derived growth_rate per {tick} (live; r_max + M1 + checked M2)".replace(
+                "{tick}", tick_label(self.get_tick_hours())))
+        frame.pack(fill="x", padx=10, pady=(0, 10))
+        self.derived_growth_vars = {}
+        row = 0
+        for fid in fg_ids:
+            var = tk.StringVar(value="")
+            ttk.Label(frame, text=self.fg_display(fid)).grid(
+                row=row, column=0, sticky="w", padx=5, pady=1)
+            ttk.Label(frame, textvariable=var, foreground="#333333").grid(
+                row=row, column=1, sticky="w", padx=5, pady=1)
+            self.derived_growth_vars[fid] = var
+            row += 1
+        ttk.Label(
+            frame, foreground=self.MUTED_FG_COLOR,
+            text=("A prey's growth_rate is derived when its r_max > 0 "
+                  "(FG Editor). Checking a predator adds its M2 to the prey's "
+                  "budget, unchecking removes it; muted FGs count as absent. "
+                  "Applied to the library with 'Apply All Matrix Changes'."),
+            wraplength=700, justify="left").grid(
+            row=row, column=0, columnspan=2, sticky="w", padx=5, pady=(4, 2))
+
+    def _on_predation_matrix_changed(self):
+        interactions = self._live_interactions()
+        for fid, var in (getattr(self, "derived_growth_vars", {}) or {}).items():
+            budget = self._budget_for(fid, interactions)
+            if budget is None:
+                spec = self.current_fg_configs.get(fid) or {}
+                var.set(f"{spec.get('growth_rate', '')}  (hand-set, no r_max)")
+            elif budget.error:
+                var.set(budget.error)
+            else:
+                stored = (self.current_fg_configs.get(fid) or {}).get("growth_rate")
+                note = ""
+                try:
+                    if stored is not None and abs(float(stored) - budget.growth_rate) > (
+                            1e-5 * max(abs(budget.growth_rate), 1e-12)):
+                        note = f"   [library: {float(stored):.6g} until applied]"
+                except (TypeError, ValueError):
+                    pass
+                var.set(budget.describe() + note)
+        self._update_editor_growth_display(interactions)
+
+    def _update_editor_growth_display(self, interactions=None):
+        """Show the derived growth_rate of the FG open in the editor."""
+        category = getattr(self, "active_fg_category", None)
+        if category is None:
+            return
+        is_dm = category == "decision_makers"
+        prop_vars = self.prop_vars if is_dm else self.ndm_prop_vars
+        info_var = getattr(self, "growth_info_var" if is_dm else "ndm_growth_info_var", None)
+        row = self._ranged_rows.get(("dm:" if is_dm else "ndm:") + "growth_rate")
+        try:
+            listbox = self._listbox_for(category)
+            sel = listbox.curselection()
+        except Exception:
+            return
+        fgs = self.project_data.get(category, []) or []
+        if not sel or sel[0] >= len(fgs):
+            return
+        fg_entry = fgs[sel[0]]
+        fg_id = fg_entry.get("group_id")
+        spec = dict(self.current_fg_configs.get(fg_id) or {})
+        spec["is_decision_maker"] = is_dm
+        for k in ("r_max", "natural_mortality", "maintenance_level"):
+            if k in prop_vars:
+                raw = prop_vars[k].get()
+                try:
+                    spec[k] = float(raw) if raw not in ("", None) else 0.0
+                except (TypeError, ValueError):
+                    pass
+        budget = self._budget_for(fg_id, interactions, species=spec)
+        derived = budget is not None and not budget.error
+        if derived:
+            prop_vars["growth_rate"].set(f"{budget.growth_rate:.6g}")
+        if info_var is not None:
+            if budget is None:
+                info_var.set("growth_rate is hand-set (r_max = 0).")
+            else:
+                info_var.set(budget.describe())
+        if row is not None and not self._is_fg_muted(fg_entry):
+            state = "disabled" if derived else "normal"
+            for w in (row.get("entry"), row.get("scale")):
+                if w is None:
+                    continue
+                try:
+                    w.configure(state=state)
+                except tk.TclError:
+                    pass
+
+    def _sync_derived_growth_rates(self):
+        """Write every derived growth_rate into the library (on apply)."""
+        species_defs = self.global_library.get("species_definitions", {}) or {}
+        interactions = self.global_library.get("interaction_definitions", {}) or {}
+        changed = []
+        for fid in self._all_fg_ids():
+            spec = species_defs.get(fid)
+            if not has_budget(spec):
+                continue
+            budget = growth_budget(fid, species_defs, interactions,
+                                   active_predators=self._active_project_fg_ids())
+            if budget is None or budget.error:
+                continue
+            new = float(f"{budget.growth_rate:.6g}")
+            old = spec.get("growth_rate")
+            try:
+                same = old is not None and abs(float(old) - new) < 1e-12
+            except (TypeError, ValueError):
+                same = False
+            if not same:
+                spec["growth_rate"] = new
+                changed.append(f"{fid}: {old} -> {new:.6g}")
+            if fid in self.current_fg_configs and self.current_fg_configs[fid] is not spec:
+                self.current_fg_configs[fid]["growth_rate"] = new
+        self._update_editor_growth_display()
+        return changed
 
     def create_matrix_section(self, title, data_key, row_ids, col_ids, cell_type="entry", parent=None):
         if parent is None:
@@ -3391,6 +3607,8 @@ class FGConfigApp:
         active_spawn = self.spawn_frame if category == "decision_makers" else self.ndm_spawn_frame
         self._set_widget_tree_state(active_editor, not is_muted)
         self._set_widget_tree_state(active_spawn, not is_muted)
+        # growth_rate is read-only while it is derived from r_max.
+        self._update_editor_growth_display()
         # Keep mute-button labels in sync with the freshly selected row.
         self._refresh_mute_button_labels()
 
@@ -3480,16 +3698,6 @@ class FGConfigApp:
                     elif config[key] > 1.0:
                         config[key] = 1.0
                         var.set("1.0")
-                # Clamp the hunger-gate satiation scale to [0, 1]. 0 means
-                # "use the default" (HUNGER_SATIATION_SCALE), so the key is
-                # stripped below rather than persisted as 0.0.
-                if key == "satiation_scale":
-                    if config[key] < 0.0:
-                        config[key] = 0.0
-                        var.set("0.0")
-                    elif config[key] > 1.0:
-                        config[key] = 1.0
-                        var.set("1.0")
                 # Clamp the external-force share to [0, 1]. 0 = anchored,
                 # 1 = carried by the whole flow.
                 if key == "current_response":
@@ -3532,11 +3740,29 @@ class FGConfigApp:
         config.pop("initial_biomass_min", None)
         config.pop("initial_biomass_max", None)
 
-        # satiation_scale = 0 (or an empty field) means "inherit the module
-        # default". Omit the key entirely so legacy library entries stay
-        # clean and resolve_satiation_scale() supplies 0.8.
-        if not float(config.get("satiation_scale", 0.0) or 0.0):
-            config.pop("satiation_scale", None)
+        # satiation_scale was removed (section 130): the hunger gate is
+        # h = 1 - s for every FG. Drop a stale key from older libraries.
+        config.pop("satiation_scale", None)
+
+        # r_max > 0 makes growth_rate derived (lib/world/growth_budget.py):
+        # overwrite the field with the budget over the APPLIED predation
+        # matrix and the active project FGs. r_max = 0 keeps the legacy
+        # hand-set growth_rate and is not stored.
+        if not float(config.get("r_max", 0.0) or 0.0):
+            config.pop("r_max", None)
+        else:
+            budget = growth_budget(
+                fg_id, self.global_library.get("species_definitions", {}) or {},
+                self.global_library.get("interaction_definitions", {}) or {},
+                active_predators=self._active_project_fg_ids(), species=config)
+            if budget is None or budget.error:
+                messagebox.showerror(
+                    "Invalid growth budget",
+                    (budget.describe() if budget is not None else fg_id)
+                    + "\n\nNo changes were saved.")
+                return
+            config["growth_rate"] = float(f"{budget.growth_rate:.6g}")
+            prop_vars["growth_rate"].set(f"{config['growth_rate']:.6g}")
 
         # Capture the spawn block from the active editor. Use strict mode
         # so unparseable spawn params / ref weights surface as an error
@@ -3563,8 +3789,9 @@ class FGConfigApp:
         # For decision makers the per-tick energy balance from a single eat
         # action is evaluated at the MAINTENANCE LEVEL u_X, not at full
         # hunger:
-        #   ceiling   = max_intake_rate * energy_content * assim (best prey)
-        #   h(u_X)    = max(0, 1 - u_X / satiation_scale)   [default 0.8]
+        #   ceiling   = 1/h (Holling ceiling; max_intake_rate if h = 0)
+        #               * energy_content * assim (best prey), section 134
+        #   h(u_X)    = max(0, 1 - u_X)
         #   realized  = h(u_X) * ceiling
         #   feed_cost = feeding_cost   * resting_metabolism
         #   rest_cost = resting_cost   * resting_metabolism
@@ -3629,7 +3856,18 @@ class FGConfigApp:
                 except (TypeError, ValueError):
                     assim_f = 1.0
                 assim_f = min(max(assim_f, 0.0), 1.0)
-                intake = mir * eg * assim_f
+                # The pair's Holling ceiling, not the attack rate: with a
+                # pair-level max_intake_rate (half-saturation, section 134)
+                # a is far below the ceiling 1/h.
+                try:
+                    a_pair = float(entry.get("max_intake_rate", mir) or mir)
+                except (TypeError, ValueError):
+                    a_pair = mir
+                try:
+                    h_pair = float(entry.get("handling_time", 0.0) or 0.0)
+                except (TypeError, ValueError):
+                    h_pair = 0.0
+                intake = intake_ceiling(a_pair, h_pair) * eg * assim_f
                 if intake > best_intake:
                     best_intake = intake
                     best_prey = prey_id
@@ -3657,9 +3895,6 @@ class FGConfigApp:
                 resting_cost=config.get("resting_cost", REFERENCE_RESTING_COST),
                 movement_cost=config.get("movement_cost"),
                 best_prey=best_prey,
-                # Per-FG override (Section 69); None/0 -> the module default,
-                # exactly as FunctionalGroup.get_hunger resolves it.
-                hunger_scale=config.get("satiation_scale"),
             )
             if not balance.ok:
                 messagebox.showinfo(
@@ -3767,6 +4002,11 @@ class FGConfigApp:
                     if val_str:
                         try:
                             val = float(val_str)
+                            if (data_key == "predation_mortality" and val == 0.0
+                                    and data_key not in self.global_library[
+                                        "interaction_definitions"][key]):
+                                # Absent means 0; keep unpaired keys clean.
+                                continue
                             self.global_library["interaction_definitions"][key][data_key] = val
                         except ValueError:
                             pass # skip invalid
@@ -3791,8 +4031,13 @@ class FGConfigApp:
                 for row in table
             ]
 
+        changed = self._sync_derived_growth_rates()
         self.save_yaml(self.global_library, self.library_path)
-        messagebox.showinfo("Success", "Updated interactions and saved to library.")
+        msg = "Updated interactions and saved to library."
+        if changed:
+            msg += ("\n\nDerived growth_rate updated:\n  "
+                    + "\n  ".join(changed))
+        messagebox.showinfo("Success", msg)
 
     def open_impact_table_editor(self, key, fg_id, impact_id):
         """Open a dialog to edit the impact table (value, biomass_factor, energy_factor) for (FG, impact).

@@ -12434,6 +12434,150 @@ remain open exactly as described in 71.9 / 71.11.
     - the no-action fixtures in test_population_stability.py and
       test_ecosystem_refactor.py (120.1).
 
+125 GPU TRAINING: COST AND VALUE OF --n_deltas (2026-09-29)
+---------------------------------------------------------------------
+
+125.1 Cost
+    New probe tools/probes/ars_delta_budget.py builds the trainer from
+    train_gpu.py's own parser (flags after --) and times train_step per
+    --n_deltas. RTX A3000 12 GB, 60x60, 3 worlds, migration + mortality +
+    currents on, 2x48 tanh, --profile info:
+
+      N     100 ticks s/upd   500 ticks s/upd   s/pair @500   peak VRAM
+      1          0.46               -               -          0.09 GiB
+      2          0.80               -               -          0.18 GiB
+      4          1.51              7.37            1.84         0.33 GiB
+      8          2.95             14.85            1.86         0.64 GiB
+      16         5.82             30.39            1.90         1.27 GiB
+      32        11.75             63.84            2.00         1.28 GiB*
+      64          OOM            124.35            1.94         1.30 GiB*
+      * with --pairs-per-batch 16
+
+    The GPU is saturated from ~2-4 pairs (24 worlds of 3600 cells); from
+    there every pair costs the same, ~0.37 s per 100 ticks, so there is
+    no free range to fill. VRAM is ~80 MB per simultaneous pair; 64 pairs
+    in one batch runs out of memory, --pairs-per-batch caps it at the
+    same cost per pair.
+
+125.2 Value: what the cosine of independent steps measures
+    Six independent ARS steps from the same weights
+    (results/pzbpgp248nsrpfix35), 500 ticks, pairwise cosine per DM:
+    within +-0.01 of zero for every DM at N = 4..64, i.e. at the noise
+    floor 1/sqrt(d) = 0.016. First read as "no gradient signal"; that
+    was WRONG. An ARS step is a sum over N random directions in
+    d ~ 3500-3950 dimensions, so even with noise-free rewards two
+    independent steps agree only to E[cos] = N/(N+d) - 0.004 at N = 16,
+    0.016 at N = 64. The sweep measured the dimensionality, not noise.
+    The probe now prints that reference instead of a fitted N0.
+
+    Controls at N = 16 (trained policies, 4 repeats):
+      held fixed           gadoids  pelagic  porpoises  zooplankton
+      worlds + deltas       1.000    1.000     1.000      1.000   (probe ok)
+      worlds only          -0.001   +0.007    +0.005     -0.003
+      deltas only          +0.481   +0.386    +0.529     +0.885
+    Fresh (untrained) policies, nothing fixed: 0.004-0.015 at N = 16 and
+    64 - again the dimensional level.
+
+    Reading: the delta draw is what makes two steps differ; the world
+    draw costs only part of the agreement - the same deltas in new
+    worlds still point 0.39-0.89 the same way. So the rewards DO rank
+    the directions reproducibly; zooplankton most, pelagic_fish least.
+
+125.3 What N buys
+    With ARS-V2's normalisation, lr / (b * sigma_f), the component of
+    each step along the true gradient is roughly independent of N; what
+    a larger N (b = N/2) shrinks is the random sideways component, as
+    1/sqrt(b) - measured: |step| 1.2 at N = 16, 0.6 at N = 64, same lr.
+    Cost is linear in N. So more deltas buy a straighter path, not a
+    longer stride, at proportional wall-clock. This is the geometric
+    argument, not a measured learning curve: the decisive test is equal
+    wall-clock training runs at N = 8 / 16 / 32, not done.
+
+125.4 Are the perturbations run at the same time? Yes - and why that
+    does not make them free
+    --pairs-per-batch defaults to n_deltas, so every perturbation pair
+    and every world of an update is already one batch on the GPU. The
+    time is linear in N because the GPU is COMPUTE-saturated, not
+    memory-bound: nvidia-smi sampled every 0.5 s during an N = 16,
+    100-tick run read 100 % utilisation in 44 of 50 samples.
+
+    The OOM at N = 64 is the CUDA-graph execution, not the model:
+      N = 64, 96 ticks        s/pair   peak / outcome
+      --execution cuda-graph    -      OOM: 11.3 GiB allocated, 7.3 GiB
+                                       of it in CUDA-graph private pools
+      --execution eager       0.366    5.00 GiB
+      (N = 16: cuda-graph 0.348 s/pair, eager 0.360 - graphs buy ~3 %)
+    --graph-ticks 32 / 8 / 4 all OOM at N = 64 and time identically at
+    N = 16, so the pool size does not follow the captured tick count.
+
+    Practical: up to N ~ 32 the default cuda-graph path fits; above it
+    use --execution eager (~5 GiB at N = 64, so roughly N ~ 128 fits in
+    12 GB) or keep cuda-graph with --pairs-per-batch 32. Either way the
+    cost per pair is the same ~0.36 s per 100 ticks.
+
+126 THE VIABILITY RIG DEMOTED TO A DIAGNOSTIC; DECK FORMULAS AS MATH
+    (2026-09-30)
+---------------------------------------------------------------------
+
+126.1 Why
+    Section 123 showed trained policies keeping gadoids, pelagic_fish and
+    phytoplankton viable over 10 000 ticks where the rig's normative
+    corner (--spawn colocated --behaviour greedy) fails all three. The
+    premise VIABILITY.md was written on - "if the world fails the rig,
+    no amount of training can fix it" - is therefore false. greedy is an
+    upper bound on per-tick intake, not on persistence: every group
+    taking the most it can over-exploits the shared resource (phyto at
+    ~0.05x spawn under greedy, ~0.56x stationary under trained policies).
+
+126.2 VIABILITY.md
+    - Intro: the question is viability with the behaviour the world will
+      run with; the rig is a diagnostic for the mechanics, fast and
+      deterministic, not the judge. The converse still holds: failing
+      both frozen and trained (today porpoises) is structural.
+    - Section 1: stationarity (two-window ratio) flagged as unable to
+      tell a slide from a cycle; the trained gadoid cycle (1.0-3.1x,
+      last-two-quarters ratio 0.44) would fail max_drift 2.0. A
+      cycle-tolerant test is proposed, not implemented.
+    - Section 2 renamed "What the rig's verdict means"; section 4's
+      "a FAIL in the normative corner closes the question" replaced by
+      "closes it only if trained policies fail too".
+    - New section 6: measuring viability with trained policies, via
+      tools/viability.py --behaviour policy (verified: per-arm PASS/FAIL,
+      overall NO VERDICT, exit 0) or a long inference.py rollout; the
+      123 table frozen vs trained; the rig has no --currents flag.
+    Code unchanged: the policy arm still never decides the exit code.
+    AGENTS.md's two viability lines toned down accordingly.
+
+126.3 Strategy deck (section 122)
+    - Part 7 "Acceptanskriterier" -> "Diagnostik och livskraft"; the
+      status table became frozen vs trained; new slide "Vad riggen ar
+      till for"; Malsattning, Bestandsdelar, Korningar and Oppna fragor
+      reworded to match. 61 slides.
+    - Formula slides (steps 2-5, 7 x2, fitness, local reward, ARS) are
+      matplotlib mathtext in Computer Modern: \dfrac, sums with limits,
+      super/subscripts, aligned at = / <-. No TeX install needed.
+      Two mathtext limits worked around: no \Bigl, and the largest
+      \right) glyph in the cm fontset renders as "!" (skala line uses a
+      slash instead of a tall fraction). Inline powers in prose/tables
+      use Unicode superscripts in DejaVu Sans; no "^" left in the
+      rendered PDF.
+    - Layout fixes found by a text/box overlap scan: slide 11 legend over
+      the phytoplankton box, x-labels over the bullets on the impact-
+      curve and functional-response slides.
+
+126.4 English edition: Strategy_Sep_eng.pdf
+    tools/make_strategy_deck_en.py builds the English deck (61 slides,
+    same layout) by importing the Swedish generator's Deck, helpers and
+    diagram functions. To make that possible, make_strategi_deck.py now
+    keeps every diagram string in a LABELS table and the footer / "Del"
+    label in Deck.FOOTER / Deck.PART; the English module overrides both
+    and supplies its own build(). The Swedish output was verified
+    pixel-identical before and after the refactor (61/61 slides).
+    Numbers use decimal points and thousands commas in English. Keep the
+    two build() functions in step when the mechanics move.
+
+        python3 tools/make_strategy_deck_en.py -o Strategy_Sep_eng.pdf
+
 
 127 LIVE VIEWER: PLOT COST NO LONGER GROWS WITH ROLLOUT LENGTH (2026-10-01)
 
@@ -12511,3 +12655,286 @@ remain open exactly as described in 71.9 / 71.11.
     Updated: tests/test_training_profiles.py (no-profile expectations),
     GPU_TRAINING.md, AGENTS.md, and the "Profiler och formande termer"
     table in both deck generators (the PDFs are not rebuilt).
+
+129 GROWTH_RATE DERIVED FROM A LITERATURE BUDGET AND THE PREDATION MATRIX
+    (2026-10-03)
+------------------------------------------------------------------------
+
+129.1 What changed
+    growth_rate is no longer a free per-FG number. lib/world/growth_budget.py
+    derives it, and the loader (both FG builders, before the tick rescale)
+    and the FG editor call the same function:
+
+      DM   g = (r_max + M1 + sum_j M2_ij) / ((min(satiation_scale,1) - u) * 1460)
+      NDM  r = (r_max + sum_j M2_ij) / 1460
+
+    r_max     new species key, 1/yr. DM: literature maximum NET population
+              growth at low density. NDM: net growth after natural mortality
+              and predation by groups that are not FGs.
+    M1        natural_mortality (per tick, converted with the loss rule). It
+              now holds ONLY losses that are not predation by an FG: M0,
+              predation by non-FG groups, and predation by NDMs (they cannot
+              hunt in the tick).
+    M2_ij     new pair key predation_mortality, 1/yr: literature predation
+              mortality of prey i caused by FG j. Counted while preys_on is
+              true, the predator is a DM and the predator is active (unmuted)
+              in the project.
+    Checking a predator raises the prey's g by its share, unchecking lowers
+    it; net low-density growth stays r_max. An FG without r_max keeps its
+    stored growth_rate (legacy).
+
+129.2 Values (report: reports/Litteraturbaserad growth rate per FG.md)
+    M and M2 come from the North Sea 1991 Ecopath model (Mackinson &
+    Daskalov 2007), with every species under the umbrella terms. The diet
+    matrix was parsed from the PDF and validated against the report's own
+    EE-based M2; rows 24-25 are duplicated and several gadoid columns do not
+    sum to 1 in the printed table. r_max comes from FishBase CMSY priors
+    (fish), from observed recovery (seals, porpoise), Niel & Lebreton
+    (seabirds), Huntley & Lopez (copepods), Hiddink 2017 (benthos), and
+    Kattegat 14C PP (phytoplankton).
+      FG            r_max   M1/yr   checked M2 on it         g (mareld2)
+      phyto          5.66     -     zoo 22.63                0.0194
+      zooplankton   33.4    19.7    pelagic 5.24             0.0799
+      benthic        0.82     -     gadoids 0.0048           5.65e-4
+      pelagic_fish   0.648   0.580  gad 0.300 porp 0.012     0.00211
+      gadoids        0.511   0.683  porp 0.056               0.00171
+      porpoises      0.10    0.10   -                        2.74e-4
+      seals          0.11    0.10   -                        2.88e-4
+      seabirds       0.10    0.15   -                        3.42e-4
+    Also: satiation_scale 1.0 on every DM (was 0.8 default, porpoises 1.37);
+    porpoise feeding_cost 1.4 -> 1.1 so the budget still closes (ration
+    7 %bm/day, clupeid share 0.49); benthos max_carrying_capacity 10 -> 100
+    and its mareld2.yaml spawn x10.
+
+129.3 FG editor
+    New matrix "Predation Mortality M2" (cells active when preys_on), a
+    "Derived growth_rate" panel that updates on every check/uncheck and M2
+    edit, an r_max field in both FG editors, and a read-only live
+    growth_rate while r_max > 0. Apply All Matrix Changes writes the derived
+    values to the library. Initial-biomass entry range raised to 1e6 t.
+
+129.4 Validation
+    tests/test_growth_budget.py (12 cases). viability.colocate_spawn now
+    normalises each prey map before summing (with benthos at K 100 the raw
+    sum placed gadoids on benthos alone and lowered their overlap with
+    pelagic fish). Suite: 778 passed, 1 FAILED:
+    test_phyto_zoo_sanity::test_zoo_bounded - zoo falls to 0.027x in 200
+    ticks. Driver: phytoplankton r (0.125 restored -> 2.04x; old zoo M1
+    alone -> 0.066x). The annual-mean phyto rate used as a logistic
+    low-density rate is the same error corrected for benthos; left open for
+    a decision, not swept. One-generation training run OK.
+
+129.5 Open
+    * Phytoplankton r definition (above).
+    * --mortality off (CLI default) does not apply M1 while g pays for it:
+      net growth becomes r_max + M1. Use --mortality on, or let the loader
+      drop M1 from g when mortality is off.
+    * Every checkpoint in results/ is stale in substance.
+    * The FG editor's Apply Changes rewrites the FG's species entry without
+      its comments (pre-existing behaviour, 74.11).
+
+130 SATIATION_SCALE REMOVED; LOADER DROPS M1 FROM g WHEN MORTALITY IS OFF
+    (2026-10-03)
+------------------------------------------------------------------------
+
+130.1 satiation_scale removed
+    The hunger gate is h = max(0, 1 - s) for every FG. Gone:
+    HUNGER_SATIATION_SCALE and resolve_satiation_scale (energy_balance.py),
+    the hunger_scale argument and field of evaluate_energy_balance /
+    EnergyBalance, FunctionalGroup.satiation_scale, the GPU satiation vector
+    (lib/gpu/ecosystem.py), the FG-editor field and its clamp, and every
+    satiation_scale key in fg_library.yaml. hunger_at(s) takes no scale.
+    growth_budget.max_gate = 1 - u. A stale key in an old library is
+    ignored by FunctionalGroup and dropped by the FG editor on apply.
+    Reason: below 1 the top of the literature max_energy_reserve was never
+    reachable; above 1 (porpoises 1.37) a satiated FG kept eating and the
+    reserve clip discarded the surplus. Porpoise feeding_cost 1.1 (129)
+    keeps its budget closed under h = 1 - s.
+
+130.2 Loader and --mortality off
+    load_project_config and setup_full_mareld_mvp take
+    apply_natural_mortality (default True, like EcosystemEnvironment). With
+    False, growth_budget(include_m1=False) leaves M1 out of g, so net
+    low-density growth stays r_max when the tick does not apply M1.
+    Passed from train.py (both env builders), inference.build_env,
+    training_progress.build_inference_env and lib/gpu/config.py
+    (EnvironmentBuilder, ProjectSpec). mareld2, mortality off: zoo 0.0529,
+    pelagic 0.00131, gadoids 0.00078, porpoises 1.37e-4 (on: 0.0799,
+    0.00211, 0.00171, 2.74e-4). The FG editor and the stored library
+    growth_rate assume mortality on. --mortality_multiplier does NOT
+    change g: it stays a stress-test knob.
+
+130.3 Tests and tools
+    test_energy_balance_gate: scale tests replaced by
+    test_hunger_gate_closes_exactly_at_a_full_reserve and a live-porpoise
+    margin test (net_eat +19.1, max feeding_cost 1.3125); the porpoise
+    failure-mode case re-derived for h = 1 - s (236.25 MJ ceiling,
+    feeding_cost 1.4 -> net_eat -7.875). test_gpu_ecosystem and
+    test_tick_time no longer use the key. test_growth_budget gained the
+    mortality-off cases. tools/probes/budget_gate.py, zoo_growth_sweep.py
+    and dm_seasonal_reproduction.py updated. The deck generators
+    (tools/make_strategi_deck.py, make_strategy_deck_en.py) still describe
+    satiation_scale and were not touched.
+    Suite: 776 passed, 1 failed (test_phyto_zoo_sanity, unchanged cause,
+    129.4). One-generation training run OK.
+
+131 PHYTOPLANKTON r = LOW-DENSITY IN SITU RATE, NOT THE ANNUAL MEAN
+    (2026-10-03)
+------------------------------------------------------------------------
+
+131.1 The error
+    Section 129 set phytoplankton r_max 5.66 /yr (g 0.0194 /tick): annual
+    14C PP over mean biomass in Kattegat/Skagerrak (0.31 d-1) minus every
+    loss. That is a steady-state remainder; a logistic population near K
+    realises r(1 - B/K), so the remainder is ~0 by construction - the same
+    error that gave benthos r = 4e-6 before it was corrected to Hiddink's
+    low-density recovery rate. It cut rK/4 to 0.12 t/cell/tick (0.75 at the
+    old 0.125) and made test_phyto_zoo_sanity::test_zoo_bounded fail (zoo
+    0.027x in 200 ticks). Diagnosis: restoring 0.125 alone gave 2.04x, the
+    old zoo M1 alone 0.066x.
+
+131.2 The value (user decision)
+    Logistic r = highest in situ growth from dilution experiments, 0.67 d-1
+    (Stelfox-Widdicombe et al. 2004, southern North Sea, April, 7-9.5 C),
+    minus microzooplankton grazing 60 % (Calbet & Landry 2004) = 0.27 d-1 =
+    0.067 /tick = 97.8 /yr. The zooplankton pair supplies 22.63, so
+    r_max = 75.2 /yr and g = 0.0670068 /tick. Sinking/lysis not subtracted
+    (would give ~0.055). rK/4 = 0.40 t/cell/tick.
+
+131.3 Validation and open points
+    Suite: 777 passed, 0 failed (zoo 1.07x, min 0.70x in the closed test -
+    a diagnostic, not the basis of the value). One-generation training run.
+    Open: one source, spring, southern North Sea; no seasonal forcing
+    (seasonal_amplitude 0), so spring-like growth applies all year; K = 24
+    t/cell not reviewed.
+
+132 NATURAL MORTALITY IN THE LOSS BREAKDOWN; ZOOPLANKTON BUDGET DIAGNOSED
+    (2026-10-03)
+------------------------------------------------------------------------
+
+132.1 Loss accounting
+    The loss breakdown counted starvation, predation and impacts only, so
+    M1 (natural_mortality) was invisible: a group losing mostly to M1 was
+    shown as "100 % predation". population_change now books M1 into
+    env.loss_natural; lib/environments/ecosystem_env/loss_accounting.py
+    (loss_shares, LOSS_CAUSES) is the single place that turns the four
+    accumulators into shares. train.py (probe, live tick, rnd baseline,
+    jsonl replay, console line "nat"), inference.py (per-tick deltas),
+    the live viz (new "natural" tab, header pr/st/im/nm) and
+    tools/biomass_html.py use it. tests/test_loss_accounting.py.
+    A running training picks this up only after a restart.
+
+132.2 Zooplankton collapse in run pzbpgp248nsrpfix39 (train_gpu, mass
+    balance, mortality, migration, currents on)
+    Replaying its policies on CPU: mass balance OFF -> zoo 1.11x after 300
+    ticks (s 0.68); ON -> 0.10x (s 0.56): production 0.0093 /tick against
+    M1 0.0134 + predation 0.0037. Pelagic fish then starve (99 %).
+    Analytic one-cell budget: with h = 1 - s, phyto 2 kJ/g WW and mass
+    balance the zooplankton steady state s* = 0.656 gives net growth
+    -0.0035 /tick even at saturating food; persistence needs s >= 0.70.
+    Literature (research_notes/Zooplankton energibudget/): hunger acts on
+    gut timescales, appetite should stay ~1 until reserves are nearly full;
+    phyto 2 kJ/g WW is the large-diatom end (Ecopath 4.8); zoo->phyto
+    half-saturation 1 t/km2 is 1-2 orders too low; implied GGE ~0.56 vs
+    0.26; feeding cost x2 vs >4x. Options and table:
+    reports/Zooplankton energibudget.md. Nothing changed in the model.
+
+133 FULL APPETITE UP TO MAINTENANCE; PHYTOPLANKTON 4.8 kJ/g WW (2026-10-03)
+------------------------------------------------------------------------
+
+133.1 Changes (options 1 and 2 of reports/Zooplankton energibudget.md)
+    * Hunger gate h = min(1, max(0, (1 - s)/(1 - u))) for every DM:
+      FunctionalGroup.get_hunger, energy_balance.hunger_at(s, u) (the
+      GUI gate now evaluates h(u) = 1) and lib/gpu/ecosystem.py. u >= 1
+      closes the window. Literature: copepod hunger acts on gut
+      timescales; ingestion is set by food and gut capacity.
+    * phytoplankton energy_content 2000 -> 4800 MJ/t (Ecopath convention,
+      flagellate-rich assemblage; 2 kJ/g WW is the large-diatom end).
+    * porpoise feeding_cost 1.1 -> 1.4 (1.1 only compensated h(u) = 0.5).
+      Break-even ration on clupeids 7.5 %bm/day.
+    * Tests re-posed: gate at u equals the full-hunger gate; porpoise
+      break-even ration in Kastelein's window; at Kastelein's maximum
+      ration a pure gadoid diet cannot pay. Suite 780 passed.
+
+133.2 Effect (mareld2, mass balance, mortality, migration, currents, 1000
+    ticks): with the pre-133 policies zoo ends 0.52x (was 0.10x), pelagic
+    0.53x (was 0.09x); zoo s 0.6-0.7. Next bottleneck: zoo grazes phyto
+    22 -> 0.5-0.8 t/cell in 100 ticks (half-saturation 1 t/km2, option 3),
+    then crashes; greedy loses pelagic fish entirely. Porpoises still
+    starve; gadoids eat 90-99 % benthos. Retrain policies.
+
+134 ZOOPLANKTON -> PHYTOPLANKTON HALF-SATURATION 20 t/km2 (2026-10-03)
+------------------------------------------------------------------------
+
+134.1 Mechanism
+    * Holling II f(B) = aB/(1 + ahB): ceiling 1/h, half-saturation 1/(ah).
+      The library convention h = 1/a made every pair's half-saturation
+      exactly 1 t/km2 and made a equal to the ceiling.
+    * interactions.py now reads a pair-level max_intake_rate (attack rate)
+      as an override of the species value; tick_time already rescaled the
+      pair key (INTERACTION_RESCALE_RULES) but the matrix builder ignored
+      it. Legacy pair keys (porpoises->gadoids 0.035, seals->pelagic 0.05)
+      equal their species values, so nothing else moves.
+    * energy_balance.intake_ceiling(a, h) = 1/h (a when h = 0). The GUI
+      energy gate, the live-project gate tests and budget_gate.py use it
+      instead of max_intake_rate.
+
+134.2 Value
+    zooplankton_preys_on_phytoplankton: max_intake_rate 0.0125, h 4 ->
+    ceiling 0.25 t/t/tick (unchanged), half-saturation 20 t/km2
+    (literature ~5-60 g WW/m2 for a 10-20 m feeding layer).
+    tests/test_half_saturation.py; suite 783 passed.
+
+134.3 Effect (mareld2, mass balance, mortality, migration, currents,
+    1000 ticks, pre-133 policies): zoo 0.66x, pelagic 1.45x, phyto
+    settles at 3-5 t/cell instead of crashing to 0.5-0.8. Losses now
+    mostly M1 (zoo 75 %, pelagic 93 %). Greedy still loses pelagic fish.
+    Porpoises starve in every run; gadoids eat 92-98 % benthos. Open:
+    option 4 of reports/Zooplankton energibudget.md (zoo GGE ~0.26).
+    Retrain policies.
+
+135 ZOOPLANKTON feeding_cost 2.0 -> 4.0: RESPIRATION + EXCRETION (2026-10-03)
+------------------------------------------------------------------------
+
+135.1 Definition (user decision)
+    feeding_cost now means respiration + excretion while feeding, in
+    multiples of the fasting rate. Kiorboe, Mohlenberg & Hamburger 1985:
+    both "more than 4 times higher" in saturation-fed than in starved
+    Acartia tonsa. The model has no excretion term (NH4, DOC), so that
+    loss belongs here. This SUPERSEDES the feeding-cost reasoning of
+    124.2 (respiration-only ratio 1.6-2.5 -> 2.0; Thor 2000, Svetlichny
+    2022, Koski 2017); the rest of 124 (reserve, energy content, resting
+    rate) stands. Value 4.0 = the lower bound of the Kiorboe band.
+    Kiorboe 2018's mf/m0 = 6.7 includes defecation, already booked as
+    1 - assimilation, so it is not an upper bound.
+
+135.2 Cross-check (not the basis)
+    Steady-state GGE = AE * P*ec / (metabolism + P*ec) with P = 0.016
+    /tick (M1 + fish predation): 0.40 at 2.0, 0.29-0.31 at 4.0 (Straile
+    1997: mean 0.26, IQR 0.13-0.35). Feeding metabolism 7-8 %/day of body
+    energy, top of the field routine band (3-7 %/day at 10 C).
+
+135.3 Effect (mareld2, mass balance, mortality, migration, currents,
+    1000 ticks, pre-133 policies): zoo 0.66x, pelagic 1.44x, phyto 5.6
+    t/cell (at 2.0: 0.66x, 1.45x, 5.0). Greedy: zoo 0.32x, pelagic lost.
+    Energy gate passes (ceiling 780 vs feeding cost 90). Suite 783 passed.
+    Options 1-4 of reports/Zooplankton energibudget.md are now all
+    applied. Still open: porpoises starve in every run; gadoids eat
+    92-98 % benthos.
+
+136 BENTHOS REVERTED TO THE PRE-SESSION STATE (2026-10-03)
+------------------------------------------------------------------------
+    At the user's request benthic_community is back to how it worked
+    before sections 129-135: growth_rate 0.001 hand-set (r_max removed,
+    so the loader does NOT derive it from the predation matrix; the
+    gadoids/pelagic -> benthos predation_mortality values stay on the
+    pairs but are inert), max_carrying_capacity 10 t/km2, mareld2 spawn
+    12000-20000 t (inference 16000). The literature proposal (r 0.82 /yr,
+    K ~100) stays documented in reports/Litteraturbaserad growth rate per
+    FG.md section 3.3. Kept: the colocate_spawn per-prey normalisation
+    (129.4), which is independent of K.
+    tests/test_growth_budget.py: benthic_community listed as hand-set.
+    Suite 783 passed.
+    Effect (mareld2, mass balance, mortality, migration, currents, 1000
+    ticks, pre-133 policies): gadoids 0.54x (starvation 54 %), still
+    ~95 % benthos in their diet; zoo 0.65x, pelagic 1.42x, benthos 0.82x.
