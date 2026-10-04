@@ -5,8 +5,6 @@ State fields are [ecosystem, functional_group, cell]. Actions are
 touch NumPy; every numerical method supports CPU tensors and CUDA tensors.
 """
 
-import math
-
 import numpy as np
 import torch
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
@@ -74,6 +72,36 @@ class TensorEcosystem:
         self.pair_visibility = (
             tensor(env.vis_floor_mat)[None, :, :, None]
             if getattr(env, "_has_pair_vis_floor", False) else None)
+        # Daylight calendar (section 137). ``light_obs`` is F per year
+        # tick (the extra observation channel), ``light_mult`` the
+        # (T, D, G) attack-rate multiplier, None when no pair is
+        # modulated. Both are indexed per world by ``light_index`` =
+        # (start + tick) % light_period, exactly as the reference's
+        # ``interactions.light_index``.
+        self.daylight = bool(getattr(env, "_has_daylight", False))
+        self.light_pairs = bool(getattr(env, "_has_light_pairs", False))
+        # The calendar also exists without the observation channel when
+        # only producers are light-limited; ``calendar`` is the switch
+        # for the year-tick index, ``daylight`` for the channel.
+        self.calendar = getattr(env, "daylight", None) is not None
+        self.light_period = int(env.light_period) if self.calendar else 1
+        self.light_random_start = bool(
+            self.calendar and env.daylight.get("random_start", False))
+        self.light_fixed_start = int(env.light_start) if self.calendar else 0
+        # Light-limited growth of producers (section 138): (T, G, 1)
+        # multiplier on growth_rate, exactly 1 for every other group.
+        self.growth_light_on = bool(getattr(env, "_has_growth_light", False))
+        if self.growth_light_on:
+            table = np.ones((self.light_period, self.G), dtype=np.float32)
+            for j, fid in enumerate(self.ids):
+                if fid in env.growth_light:
+                    table[:, j] = env.growth_light[fid]
+            self.growth_light = tensor(table)[:, :, None]
+        else:
+            self.growth_light = None
+        self.light_obs = tensor(env.light_obs_table) if self.daylight else None
+        self.light_mult = (tensor(env.light_mult_table)[:, :, :, None]
+                           if self.light_pairs else None)
         self.velocity = tensor(env.dm_v)[None, :, None, None]
         self.metabolism = tensor(env.dm_resting_metabolism)[None, :, None]
         self.cost_rest = tensor(env.dm_cost_rest)[None, :, None]
@@ -93,9 +121,6 @@ class TensorEcosystem:
         self.maintenance = parameter("maintenance_level")
         self.seed_rate = parameter("seed_rate").clamp_min(0)
         self.has_seeding = any(fg.seed_rate > 0 and not fg.is_decision_maker for fg in groups)
-        self.amplitude = parameter("seasonal_amplitude")
-        self.period = parameter("seasonal_period")
-        self.seasonal = (self.period > 0) & (self.amplitude != 0)
         self.capacity = tensor([fg.params.get("max_carrying_capacity", 100.0) for fg in groups])[None, :, None]
         self.energy_content = tensor([fg.params.get("energy_content", 0.0) or 0.0 for fg in groups])[None, :]
         self.threshold = tensor([max(0.0, fg.min_split_biomass * fg.extinction_threshold_factor) for fg in groups])[None, :, None]
@@ -164,6 +189,11 @@ class TensorEcosystem:
                     obs_indices[d, :, offset] = channel * self.C + neighbors[direction]
                     obs_valid[d, :, offset] = valid[direction]
                     offset += 1
+            if self.daylight:
+                # One broadcast light channel after the energy block, read
+                # into the last slot of the DM's compact layout.
+                obs_indices[d, :, offset] = (energy_base + self.G) * self.C + cells
+                obs_valid[d, :, offset] = 1.0
         self.obs_indices = self.tensor(obs_indices, torch.long)
         self.obs_valid = self.tensor(obs_valid)
 
@@ -183,9 +213,8 @@ class TensorEcosystem:
         b = np.stack([np.stack([e.fgs[f].biomass for f in self.ids]) for e in environments])
         r = np.stack([np.stack([e.fgs[f].energy_reserve for f in self.ids]) for e in environments])
         h = np.stack([e.prev_hidden_frac for e in environments])
-        phase = np.array([[e._season_phase[f] for f in self.ids] for e in environments])
         return (self.tensor(b).flatten(2), self.tensor(r).flatten(2),
-                self.tensor(h).flatten(2), self.tensor(phase)[:, :, None])
+                self.tensor(h).flatten(2))
 
     def energy_level(self, biomass, reserve):
         safe_b = torch.where(biomass > 1e-9, biomass, 1.0)
@@ -193,7 +222,20 @@ class TensorEcosystem:
         return torch.where((biomass > 1e-9) & (self.max_reserve != 0),
                            reserve / safe_b / safe_max, 0.0)
 
-    def observations(self, biomass, reserve, hidden):
+    def light_starts(self, environments):
+        """Per-world year tick of the reference envs (fixture upload)."""
+        return self.tensor([getattr(e, "light_start", 0) for e in environments],
+                           torch.long)
+
+    def light_index(self, light_start, tick):
+        """Year tick per world, or None without the daylight calendar."""
+        if not self.calendar:
+            return None
+        if light_start is None:
+            light_start = torch.zeros((), dtype=torch.long, device=self.device)
+        return torch.remainder(light_start + tick, self.light_period)
+
+    def observations(self, biomass, reserve, hidden, light_index=None):
         if self.pair_visibility is None:
             visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
         else:
@@ -201,7 +243,13 @@ class TensorEcosystem:
             # ``_build_indices`` so every observer reads its own row.
             visible = (biomass[:, None] * (1.0 - hidden[:, None]
                                            * (1.0 - self.pair_visibility))).flatten(1, 2)
-        bank = torch.cat((biomass, visible, self.energy_level(biomass, reserve)), dim=1)
+        parts = [biomass, visible, self.energy_level(biomass, reserve)]
+        if self.daylight:
+            if light_index is None:
+                raise ValueError("light_index is required with the daylight calendar")
+            light = self.light_obs[light_index].reshape(-1, 1, 1)
+            parts.append(light.expand(biomass.shape[0], 1, self.C))
+        bank = torch.cat(parts, dim=1)
         return bank.flatten(1)[:, self.obs_indices] * self.obs_valid
 
     def action_mask(self, biomass):
@@ -236,7 +284,7 @@ class TensorEcosystem:
         stats = torch.stack([(v * active).sum(-1) / denom for v in (entropy, move, rest, eat)], dim=-1)
         return stats.to(torch.float64), (count > 0).to(torch.float64)
 
-    def predation(self, biomass, reserve, actions):
+    def predation(self, biomass, reserve, actions, light_index=None):
         b_dm = biomass[:, self.dm_index]
         # h = min(1, max(0, (1 - s) / (1 - u))), as FunctionalGroup.get_hunger
         # (section 133); u >= 1 closes the window.
@@ -262,16 +310,23 @@ class TensorEcosystem:
         # the cell, intraspecific only, shaped (B, D, 1, C) so it broadcasts
         # over the prey axis exactly as the reference does.
         inter = self.interference * b_dm[:, :, None] if self.has_interference else 0.0
+        # Attack rate of this tick: [1, D, G, 1], or [B, D, G, 1] when the
+        # daylight calendar modulates a pair (section 137).
+        a = self.intake_rate
+        if self.light_pairs:
+            if light_index is None:
+                raise ValueError("light_index is required with the daylight calendar")
+            a = a * self.light_mult[light_index.reshape(-1)]
         if self.holling:
             prey = pair_visible if pair_visible is not None else visible[:, None]
             squared = prey * prey
-            type2 = self.intake_rate * prey / (1.0 + self.intake_rate * self.handling * prey + inter)
-            type3 = self.intake_rate * squared / (1.0 + self.intake_rate * self.handling * squared + inter)
+            type2 = a * prey / (1.0 + a * self.handling * prey + inter)
+            type3 = a * squared / (1.0 + a * self.handling * squared + inter)
             rate = self.type3 * type3 + (1.0 - self.type3) * type2
         elif self.has_interference:
-            rate = self.intake_rate / (1.0 + inter)
+            rate = a / (1.0 + inter)
         else:
-            rate = self.intake_rate
+            rate = a
         demand = b_dm[:, :, None] * actions[:, :, 5:] * rate * hunger[:, :, None]
         if pair_visible is not None:
             # Per-predator bound: no predator may demand more than the
@@ -453,7 +508,7 @@ class TensorEcosystem:
                  * self.energy_content[:, self.dm_index][:, :, None])
         return (floor.double() * float(factor)).clamp_min(1e-12)
 
-    def population(self, biomass, reserve, tick, phase, seed_multiplier):
+    def population(self, biomass, reserve, seed_multiplier, light_index=None):
         b = biomass * self.mortality_keep
         r = reserve * self.mortality_keep
         surplus = self.energy_level(b, r) - self.maintenance
@@ -477,8 +532,11 @@ class TensorEcosystem:
         reduction = torch.where(loss > 0, (b - loss) / (b + 1e-9), 1.0).clamp(0, 1)
         dm_b, dm_r = (b + delta).clamp_min(0), r * reduction
 
-        season = 1.0 + self.amplitude * torch.sin(2.0 * math.pi * (tick + phase) / self.period.clamp_min(1e-30))
-        rate = self.growth * torch.where(self.seasonal, season, 1.0)
+        rate = self.growth
+        if self.growth_light_on:
+            if light_index is None:
+                raise ValueError("light_index is required with light-limited growth")
+            rate = rate * self.growth_light[light_index.reshape(-1)]
         ndm_delta = rate * biomass * (1.0 - biomass / (self.capacity + 1e-9))
         ndm_delta = ndm_delta + self.seed_rate * self.capacity * seed_multiplier
         ndm_b = torch.minimum((biomass + ndm_delta).clamp_min(0), self.capacity)
@@ -534,8 +592,8 @@ class TensorEcosystem:
         phi = phi.index_copy(1, self.drift_index, fractions)
         return out_b, out_r, (phi[:, self.dm_index], out_b[:, self.dm_index])
 
-    def step(self, biomass, reserve, actions, tick, phase, seed_multiplier,
-             current_keys=None, track_source=False):
+    def step(self, biomass, reserve, actions, tick, seed_multiplier,
+             current_keys=None, track_source=False, light_index=None):
         """One tick. ``track_source`` appends the local-reward tracking.
 
         With ``track_source`` a sixth value ``(start, tracked, frac_in)``
@@ -545,13 +603,14 @@ class TensorEcosystem:
         end-of-tick state is final.
         """
         start = self.local_energy(biomass, reserve) if track_source else None
-        b, r, gains, hidden, intake = self.predation(biomass, reserve, actions)
+        b, r, gains, hidden, intake = self.predation(biomass, reserve, actions,
+                                                     light_index)
         b, r, flow = self.movement(b, r, gains, actions, track=track_source)
         if track_source:
             b, r, drift = self.advect(b, r, tick, current_keys, track=True)
         else:
             b, r = self.advect(b, r, tick, current_keys)
-        b, r, starve_loss = self.population(b, r, tick, phase, seed_multiplier)
+        b, r, starve_loss = self.population(b, r, seed_multiplier, light_index)
         if not track_source:
             return b, r, hidden, intake, starve_loss
         tracked, frac_in = self.tracked_energy(flow, b, r, drift)

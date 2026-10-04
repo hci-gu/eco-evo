@@ -46,8 +46,9 @@ class RolloutRunner:
             return value
         for name in ("biomass", "reserve", "hidden"):
             buffer(name, (self.E, model.G, model.C))
-        buffer("phase", (self.E, model.G, 1))
         buffer("keys", (self.E,), torch.int64)
+        # Year tick each world starts at (daylight calendar, section 137).
+        buffer("light_start", (self.E,), torch.int64)
         buffer("tick", (), torch.int64)
         buffer("horizon", (), torch.int64)
         buffer("temperature", ())
@@ -83,12 +84,16 @@ class RolloutRunner:
         for destination, source in zip(self.weights + self.biases, packed[0] + packed[1]):
             destination.copy_(source)
 
-    def reset(self, biomass, reserve, phase, keys, ticks, mean, var, temperature):
+    def reset(self, biomass, reserve, keys, ticks, mean, var, temperature,
+              light_start=None):
         if ticks < 1:
             raise ValueError("Rollouts must contain at least one tick")
+        if light_start is None:
+            self.light_start.fill_(self.model.light_fixed_start)
+        else:
+            self.light_start.copy_(light_start)
         self.biomass.copy_(biomass)
         self.reserve.copy_(reserve)
-        self.phase.copy_(phase)
         self.keys.copy_(keys)
         self.tick.zero_()
         self.horizon.fill_(ticks)
@@ -130,7 +135,10 @@ class RolloutRunner:
         m = self.model
         if self.population_stability is not None:
             alive = ~self.failed
-        obs = m.observations(self.biomass, self.reserve, self.hidden)
+        # Observation and predation read the same year tick: the tick
+        # counter only advances at the end of ``_tick``.
+        light = m.light_index(self.light_start, self.tick)
+        obs = m.observations(self.biomass, self.reserve, self.hidden, light)
         if self.normalize:
             raw = obs.double()
             if self.population_stability is not None:
@@ -157,14 +165,16 @@ class RolloutRunner:
         else:
             multiplier = torch.zeros_like(self.biomass)
         current_args = {"current_keys": self.keys} if m.currents is not None else {}
+        if light is not None:
+            current_args["light_index"] = light
         if self.local_reward is not None:
             b, r, hidden, _, _, local = m.step(self.biomass, self.reserve, actions,
-                                               self.tick, self.phase, multiplier,
+                                               self.tick, multiplier,
                                                track_source=True, **current_args)
             self._accumulate_local_reward(*local)
         else:
             b, r, hidden, _, _ = m.step(self.biomass, self.reserve, actions,
-                                      self.tick, self.phase, multiplier, **current_args)
+                                      self.tick, multiplier, **current_args)
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd

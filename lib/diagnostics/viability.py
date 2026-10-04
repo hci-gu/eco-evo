@@ -308,7 +308,7 @@ def _per_prey_intake(env):
     prey = np.stack(
         [env.fgs[fid].biomass for fid in env.global_fg_order],
         axis=0)[None, :, :, :]
-    intake_rate = env.max_intake_mat[:, :, None, None]
+    intake_rate = interactions.attack_rate(env)[:, :, None, None]
     if env._has_interference:
         predator = np.stack(
             [env.fgs[fid].biomass for fid in env.dm_ids], axis=0)

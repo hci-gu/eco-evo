@@ -1425,7 +1425,8 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
 
         center_dim_i = 2 + k_i + n_obs_imp      # B_own, E_own, B_obs, impacts
         nbr_dim_i    = 1 + k_i + n_obs_imp      # B_own, B_obs, impacts
-        in_dim_i     = center_dim_i + 4 * nbr_dim_i
+        in_dim_i     = center_dim_i + 4 * nbr_dim_i (+ 1 light channel
+                       when the project enables the daylight calendar)
 
     Legacy behaviour: when ``params['observes']`` is None (no observability
     matrix in the project YAML) the DM observes all other FGs, recovering
@@ -1443,6 +1444,9 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
     n_fgs = len(fgs)
     n_obs_imp = int(n_observable_impacts)
     out_dim = 5 + n_fgs
+    # Daylight calendar (section 137): one light channel, last in the
+    # layout, for every DM. Mirrors state.build_static_caches.
+    n_light = 1 if any(fg.params.get('daylight') for fg in fgs.values()) else 0
     for fg_id, fg in fgs.items():
         if not fg.is_decision_maker:
             continue
@@ -1458,7 +1462,7 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
             k_i = sum(1 for oid in observes if oid != fg_id and oid in fgs)
         center_dim_i = 2 + k_i + n_obs_imp
         nbr_dim_i = 1 + k_i + n_obs_imp
-        in_dim_i = center_dim_i + 4 * nbr_dim_i
+        in_dim_i = center_dim_i + 4 * nbr_dim_i + n_light
         params[fg_id] = (in_dim_i, out_dim)
     return params
 
@@ -2020,6 +2024,20 @@ def main(argv=None, *, on_step=None, confirm=True):
           f" x{args.mortality_multiplier:g}"
           f" {'(default)' if args.mortality_multiplier == DEFAULT_MORTALITY_MULTIPLIER else '(user)'}")
     print(f"Mass balance: {'on - growth pays for biomass (default)' if args.mass_balance else 'OFF - legacy growth term, library NOT calibrated for it'}")
+    try:
+        from lib.world import daylight as _daylight
+        from lib.config.config_loader import load_config as _load_config
+        _day = _daylight.parse_settings(_load_config(args.project))
+    except Exception as exc:  # reported, then the loader raises properly
+        _day = None
+        print(f"Daylight:       ERROR {exc}")
+    else:
+        if _day is None:
+            print("Daylight:       off (project)")
+        else:
+            _start = _day['start_day_of_year'] or 'random per world'
+            print(f"Daylight:       on - lat {_day['latitude_deg']:g}, "
+                  f"start day {_start}, +1 input channel (section 137)")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:

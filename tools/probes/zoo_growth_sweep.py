@@ -31,7 +31,7 @@ TICKS_PER_YEAR = 1460
 
 
 def run(g, seed, ticks, grid, behaviour, spawn, mortality, phyto_g=None,
-        phyto_season=None, phyto_seed=None, mass_balance=False):
+        phyto_seed=None, mass_balance=False):
     env = build_env('mareld2.yaml', grid, seed=seed, verbose=False,
                     apply_natural_mortality=mortality, migration=False,
                     tick_hours=6, mass_balance=mass_balance)
@@ -39,8 +39,6 @@ def run(g, seed, ticks, grid, behaviour, spawn, mortality, phyto_g=None,
     zoo.growth_rate = float(g)
     if phyto_g is not None:
         env.fgs['phytoplankton'].growth_rate = float(phyto_g)
-    if phyto_season is not None:
-        env.fgs['phytoplankton'].seasonal_amplitude = float(phyto_season)
     if phyto_seed is not None:
         env.fgs['phytoplankton'].seed_rate = float(phyto_seed)
     u = float(zoo.params.get('maintenance_level', 0.0) or 0.0)
@@ -105,7 +103,6 @@ def main():
     p.add_argument('--no-mass-balance', dest='mass_balance',
                    action='store_false',
                    help='Legacy growth term, pre-section-116.')
-    p.add_argument('--phyto-season', dest='phyto_season', type=float, default=None)
     p.add_argument('--phyto-seed', dest='phyto_seed', type=float, default=None)
     p.add_argument('--seed-base', dest='seed_base', type=int, default=0)
     p.add_argument('--values', type=float, nargs='+',
@@ -128,7 +125,7 @@ def main():
         for seed in range(a.seed_base, a.seed_base + a.seeds):
             t0 = time.time()
             r = run(g, seed, a.ticks, tuple(a.grid), a.behaviour, a.spawn, mort,
-                    a.phyto_growth, a.phyto_season, a.phyto_seed,
+                    a.phyto_growth, a.phyto_seed,
                     a.mass_balance)
             ext = ','.join(f"{k[:3]}@{v}" for k, v in
                            [(k[:-4], r[k]) for k in r if k.endswith('_ext')]

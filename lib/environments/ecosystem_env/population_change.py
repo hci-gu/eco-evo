@@ -2,6 +2,8 @@ import argparse
 
 import numpy as np
 
+from lib.environments.ecosystem_env import interactions
+
 
 DEFAULT_MORTALITY_MULTIPLIER = 1.0
 
@@ -138,22 +140,11 @@ def _charge_growth_to_reserve(env, fg, biomass_delta):
         env.dtype, copy=False)
 
 
-def _seasonal_population_rate(env, fg_id, fg):
-    growth_rate = fg.growth_rate
-    amplitude = float(getattr(fg, "seasonal_amplitude", 0.0) or 0.0)
-    period = float(getattr(fg, "seasonal_period", 0.0) or 0.0)
-    if amplitude == 0.0 or period <= 0.0:
-        return growth_rate
-
-    phase = env._season_phase.get(fg_id, 0.0)
-    phase_t = (env.tick_count + phase) / period
-    season = 1.0 + amplitude * float(np.sin(2.0 * np.pi * phase_t))
-    return growth_rate * season
-
-
 def _apply_non_decision_maker_population_change(env, fg_id, fg):
     carrying_capacity = fg.params.get("max_carrying_capacity", 100.0)
-    population_rate = _seasonal_population_rate(env, fg_id, fg)
+    # Light-limited producers grow at growth_rate * P(t)/P_ref under the
+    # daylight calendar (section 138); 1.0 for everything else.
+    population_rate = fg.growth_rate * interactions.growth_light(env, fg_id)
     biomass_delta = (
         population_rate
         * fg.biomass

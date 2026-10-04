@@ -178,8 +178,8 @@ class TensorARSTrainer:
             keys = torch.cat((keys, keys), 0).flatten()
             b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
             r = self.spawner.reserves(b, keys)
-            phase = self.spawner.phases(keys)
-            runner.reset(b, r, phase, keys, n_eval_ticks, self.obs_mean, self.obs_var, self.temperature)
+            runner.reset(b, r, keys, n_eval_ticks, self.obs_mean, self.obs_var, self.temperature,
+                         light_start=self.spawner.light_starts(keys))
             runner.run(n_eval_ticks)
             rewards, actions = runner.results(n_eval_ticks)
             self.rewards[:, start:start + count].copy_(rewards.reshape(2, self.pairs_per_batch, self.worlds, m.D)[:, :count].mean(2))

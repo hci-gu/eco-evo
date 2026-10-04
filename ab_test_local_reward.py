@@ -98,7 +98,7 @@ class Evaluator:
 
     The worlds come from ``WorldSpawner`` keyed on ``--eval-seed`` only, so
     all arms and seeds see bit-identical initial biomass, reserves and
-    seasonal phases. ``local_reward=None`` on the runner means no arm is
+    daylight start days. ``local_reward=None`` on the runner means no arm is
     scored with its own fitness function.
     """
 
@@ -120,7 +120,7 @@ class Evaluator:
         self.trainer.refresh_worlds(epoch=0)
         self.biomass0 = self.trainer.world_biomass.clone()
         self.reserve0 = self.trainer.spawner.reserves(self.biomass0, self.keys)
-        self.phase0 = self.trainer.spawner.phases(self.keys)
+        self.light_start0 = self.trainer.spawner.light_starts(self.keys)
         # Occupancy uses the same viability bar as the extinction sweep,
         # so "occupied" means the same thing here as inside the tick.
         self.occupied_bar = self.model.threshold.clamp_min(1e-9)
@@ -129,9 +129,10 @@ class Evaluator:
         self.trainer.import_policies(directory)
         self.runner.set_weights(self.trainer.bank.pack(
             [w[None].clone() for w in self.trainer.theta]))
-        self.runner.reset(self.biomass0, self.reserve0, self.phase0, self.keys,
+        self.runner.reset(self.biomass0, self.reserve0, self.keys,
                           self.args.eval_ticks, self.trainer.obs_mean.float(),
-                          self.trainer.obs_var.float(), self.model.tensor(1.0))
+                          self.trainer.obs_var.float(), self.model.tensor(1.0),
+                          light_start=self.light_start0)
         biomass, occupancy, entropy = [], [], []
         for _ in range(self.args.eval_ticks):
             self.runner.run(1)

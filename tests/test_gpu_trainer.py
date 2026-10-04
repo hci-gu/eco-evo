@@ -38,11 +38,11 @@ def test_complete_rollout_reward_stats_and_actions_match_cpu(device, legacy, int
     runner = RolloutRunner(model, bank, 1, 1, execution="eager", legacy_reward=legacy,
                            integral_reward=integral, alpha=0.7, beta=1.2, survival_bonus=0.4,
                            population_stability=stability)
-    b, r, _, phase = model.import_state([env])
+    b, r, _ = model.import_state([env])
     mean = np.full((model.D, model.F), 0.03, dtype=np.float32)
     var = np.full_like(mean, 0.8)
     ticks = 11
-    runner.reset(b, r, phase, torch.zeros(1, dtype=torch.long, device=device), ticks,
+    runner.reset(b, r, torch.zeros(1, dtype=torch.long, device=device), ticks,
                  model.tensor(mean), model.tensor(var), model.tensor(1.7))
     runner.run(ticks)
     reward, action = runner.results(ticks)
@@ -87,11 +87,11 @@ def test_stability_masks_worlds_independently_and_resets(monkeypatch):
     bank = PolicyBank(model, hidden_dim=7)
     runner = RolloutRunner(model, bank, 4, 1, execution="eager",
                            population_stability=PopulationStability())
-    b, r, _, phase = model.import_state([env] * 4)
+    b, r, _ = model.import_state([env] * 4)
     # Fail three worlds at different ticks; later recovery cannot reactivate them.
     ratios = torch.tensor([[0.05, 1, 1, 1], [1, 4, 1, 1],
                            [1, 1, 0.05, 1], [1, 1, 1, 1]])
-    def scripted_step(biomass, reserve, actions, tick, phase, multiplier):
+    def scripted_step(biomass, reserve, actions, tick, multiplier, **_):
         next_b, next_r = b.clone(), r.clone()
         d = model.dm_index[0]
         next_b[:, d] *= ratios[tick, :, None]
@@ -99,7 +99,7 @@ def test_stability_masks_worlds_independently_and_resets(monkeypatch):
         return next_b, next_r, torch.zeros_like(b), None, None
     monkeypatch.setattr(model, "step", scripted_step)
     def reset():
-        runner.reset(b, r, phase, torch.zeros(4, dtype=torch.int64), 4,
+        runner.reset(b, r, torch.zeros(4, dtype=torch.int64), 4,
                      torch.zeros(model.D, model.F), torch.ones(model.D, model.F), torch.tensor(1.0))
     reset()
     for tick in range(4):

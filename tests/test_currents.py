@@ -125,10 +125,10 @@ def test_a_decision_maker_drifts_when_it_responds(device, response):
     before = fg.biomass.copy()
 
     model = TensorEcosystem(env, device)
-    b, r, _, _ = model.import_state([env])
+    b, r, _ = model.import_state([env])
     actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
     apply_currents(env)
-    expected_b, expected_r, _, _ = model.import_state([env])
+    expected_b, expected_r, _ = model.import_state([env])
     torch.testing.assert_close(actual_b, expected_b)
     torch.testing.assert_close(actual_r, expected_r)
 
@@ -162,10 +162,10 @@ def test_a_decision_maker_stands_still_by_default(device):
     before_b, before_r = fg.biomass.copy(), fg.energy_reserve.copy()
     model = TensorEcosystem(env, device)
     assert model.drift_positions == model.ndm_positions
-    b, r, _, _ = model.import_state([env])
+    b, r, _ = model.import_state([env])
     actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
     apply_currents(env)
-    expected_b, expected_r, _, _ = model.import_state([env])
+    expected_b, expected_r, _ = model.import_state([env])
     torch.testing.assert_close(actual_b, expected_b)
     torch.testing.assert_close(actual_r, expected_r)
     np.testing.assert_array_equal(fg.biomass, before_b)
@@ -185,11 +185,11 @@ def test_current_response_scales_flux_and_energy_together(device, response):
     full.fgs["c"].current_response = 1.0
     before_b, before_r = fg.biomass.copy(), fg.energy_reserve.copy()
     model = TensorEcosystem(env, device)
-    b, r, _, _ = model.import_state([env])
+    b, r, _ = model.import_state([env])
     actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
     apply_currents(env)
     apply_currents(full)
-    expected_b, expected_r, _, _ = model.import_state([env])
+    expected_b, expected_r, _ = model.import_state([env])
     torch.testing.assert_close(actual_b, expected_b)
     torch.testing.assert_close(actual_r, expected_r)
     np.testing.assert_allclose(fg.biomass - before_b,
@@ -245,7 +245,7 @@ def test_current_edge_outflow_uses_swimmer_migration_weights(device, migration):
     fg.biomass[-1, -1], fg.energy_reserve[-1, -1] = 100, 200
     before = fg.biomass.copy()
     model = TensorEcosystem(env, device)
-    b, r, _, _ = model.import_state([env])
+    b, r, _ = model.import_state([env])
     actual_b, actual_r = model.advect(b, r, model.tensor(0, torch.int64))
     apply_currents(env)
     if migration:
@@ -258,7 +258,7 @@ def test_current_edge_outflow_uses_swimmer_migration_weights(device, migration):
         np.testing.assert_array_equal(fg.biomass, before)
     assert fg.biomass.sum() == pytest.approx(100, rel=1e-6)
     np.testing.assert_allclose(fg.energy_reserve, fg.biomass * 2)
-    expected_b, expected_r, _, _ = model.import_state([env])
+    expected_b, expected_r, _ = model.import_state([env])
     torch.testing.assert_close(actual_b, expected_b)
     torch.testing.assert_close(actual_r, expected_r)
 
@@ -276,12 +276,12 @@ def test_transport_conserves_biomass_reserves_and_respects_habitat(device, migra
     initial_b = {f: fg.biomass.copy() for f, fg in env.fgs.items()}
     initial_r = {f: fg.energy_reserve.copy() for f, fg in env.fgs.items()}
     model = TensorEcosystem(env, device)
-    b, r, _, _ = model.import_state([env])
+    b, r, _ = model.import_state([env])
     for tick in range(60):
         env.tick_count = tick
         apply_currents(env)
         b, r = model.advect(b, r, model.tensor(tick, torch.int64))
-    expected_b, expected_r, _, _ = model.import_state([env])
+    expected_b, expected_r, _ = model.import_state([env])
     torch.testing.assert_close(b, expected_b, atol=3e-5, rtol=3e-5)
     torch.testing.assert_close(r, expected_r, atol=5e-5, rtol=3e-5)
     for f, fg in env.fgs.items():
@@ -320,9 +320,9 @@ def test_cpu_and_tensor_rollouts_match_with_currents_and_population_stability():
     reference.policies = {f: copy.deepcopy(p) for f, p in bank.policies.items()}
     runner = RolloutRunner(model, bank, 1, 1, execution="eager",
                            population_stability=PopulationStability())
-    b, r, _, phase = model.import_state([env])
+    b, r, _ = model.import_state([env])
     mean, var = np.zeros((model.D, model.F), np.float32), np.ones((model.D, model.F), np.float32)
-    runner.reset(b, r, phase, torch.zeros(1, dtype=torch.int64), 15,
+    runner.reset(b, r, torch.zeros(1, dtype=torch.int64), 15,
                  model.tensor(mean), model.tensor(var), model.tensor(1.0))
     runner.run(15)
     fitness, samples, _ = reference._evaluate_coevo(list(model.dm_ids), 15,

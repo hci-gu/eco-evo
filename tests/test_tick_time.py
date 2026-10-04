@@ -102,7 +102,7 @@ def test_unknown_keys_are_left_alone():
     # Stocks and dimensionless thresholds must never be touched.
     for key in ("max_energy_reserve", "energy_content", "maintenance_level",
                 "interference", "min_split_biomass",
-                "extinction_threshold_factor", "seasonal_amplitude",
+                "extinction_threshold_factor",
                 "feeding_cost", "resting_cost", "movement_cost",
                 "max_carrying_capacity", "visibility_floor"):
         assert key not in RESCALE_RULES
@@ -112,22 +112,12 @@ def test_unknown_keys_are_left_alone():
 @pytest.mark.parametrize("key", sorted(RESCALE_RULES))
 @pytest.mark.parametrize("a,b", [(6, 1), (1, 6), (6, 3), (3, 6), (2, 5)])
 def test_round_trip_returns_the_original(key, a, b):
-    # A period is a count of ticks, not a fraction, so it needs a
-    # representative magnitude of its own: 1460 ticks is one year at the
-    # 6 h tick, the scale seasonal_period actually holds.
-    original = 1460.0 if RESCALE_RULES[key] == "period" else 0.02
+    original = 0.02
     there, clamped_there = rescale_value(key, original, a, b)
     back, clamped_back = rescale_value(key, there, b, a)
     if clamped_there or clamped_back:
         pytest.skip("clamped; round trip is not defined through a clamp")
-    if RESCALE_RULES[key] == "period":
-        # Quantisation is inherent: a duration that is a whole number of
-        # A-ticks need not be a whole number of B-ticks (1460 two-hour
-        # ticks are 584 five-hour ticks). The round trip is therefore
-        # exact to within one tick of the coarser of the two.
-        assert abs(back - original) <= max(1.0, b / a)
-    else:
-        assert back == pytest.approx(original, rel=1e-9)
+    assert back == pytest.approx(original, rel=1e-9)
 
 
 def test_flux_is_linear():
@@ -231,14 +221,6 @@ def test_growth_compounds():
     r3 = 0.05
     r6, _ = rescale_value("growth_rate", r3, 3, 6)
     assert (1 + r6) == pytest.approx((1 + r3) ** 2)
-
-
-def test_period_divides_and_stays_a_whole_tick():
-    # A 1460-tick (one year at 6 h) season becomes 2920 ticks at 3 h.
-    assert rescale_value("seasonal_period", 1460, 6, 3)[0] == 2920
-    # Never rounds down to zero.
-    value, _ = rescale_value("seasonal_period", 3, 1, 6)
-    assert value >= 1
 
 
 def test_clamp_is_reported_not_silent():

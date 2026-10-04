@@ -29,7 +29,8 @@ def device(request):
 def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              pair_floors=None, min_split=200,
              extinction_factor=0.3, interference=None,
-             mortality_multiplier=1.0):
+             mortality_multiplier=1.0, daylight=None, dark_ratios=None,
+             light_saturation=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -40,6 +41,11 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     fixture's biomass, i.e. splits are suppressed and the extinction sweep
     clears the grid. Set both to 0 for a fixture where biomass survives and
     actually moves between cells.
+
+    ``daylight`` is the ``params['daylight']`` dict the loader would put
+    on every FG; ``dark_ratios`` maps an interaction id to its
+    ``dark_ratio`` (section 137). ``light_saturation`` makes the NDM ``c``
+    light-limited (section 138; needs a light climate in ``daylight``).
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -52,8 +58,7 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
                       natural_mortality=0.1, visibility_floor=0.25,
                       min_split_biomass=min_split,
                       extinction_threshold_factor=extinction_factor,
-                      max_carrying_capacity=12, seasonal_amplitude=0.2,
-                      seasonal_period=15, seed_rate=0.0, energy_content=20,
+                      max_carrying_capacity=12, seed_rate=0.0, energy_content=20,
                       observes=["b", "c"] if i == 0 else ["a"],
                       max_intake_rate=0.8,
                       menu=["b", "c"] if i == 0 else (["c"] if i == 1 else []))
@@ -65,6 +70,13 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
                 params["interaction"][inter_id]["visibility_floor"] = floor
         if interference and fid in interference:
             params["interference"] = interference[fid]
+        for inter_id, ratio in (dark_ratios or {}).items():
+            if inter_id in params["interaction"]:
+                params["interaction"][inter_id]["dark_ratio"] = ratio
+        if daylight:
+            params["daylight"] = dict(daylight)
+        if light_saturation and fid == "c":
+            params["light_saturation"] = light_saturation
         fg = FunctionalGroup(fid, params)
         fg.initialize_state(shape, initial_biomass=rng.uniform(0.01, 3, shape),
                             randomize_energy=True, rng=rng)
@@ -74,7 +86,6 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     env = EcosystemEnvironment(dict(height=shape[0], width=shape[1]), groups,
                                migration=migration, apply_natural_mortality=mortality,
                                mortality_multiplier=mortality_multiplier)
-    env._season_phase = {f: 2.0 for f in groups}
     return env
 
 
@@ -109,14 +120,16 @@ def _parity_tol(tick, base=1e-6):
 
 def _assert_parity(env, device, ticks=12):
     model = TensorEcosystem(env, device)
-    b, r, hidden, phase = model.import_state([env])
+    b, r, hidden = model.import_state([env])
     bank = PolicyBank(model, hidden_dim=9, hidden_layers=2, seed=13)
     env.policies = {f: copy.deepcopy(p).cpu() for f, p in bank.policies.items()}
     env.build_static_caches()
     packed = bank.pack([w[None] for w in bank.flat_weights()])
+    starts = model.light_starts([env])
     for tick in range(ticks):
         tol = _parity_tol(tick)
-        obs = model.observations(b, r, hidden)
+        light = model.light_index(starts, torch.tensor(tick, device=model.device))
+        obs = model.observations(b, r, hidden, light)
         observation = env.get_observation()
         np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=tol, rtol=tol)
         logits = bank.forward(obs, *packed)
@@ -127,7 +140,8 @@ def _assert_parity(env, device, ticks=12):
         # difference does not accumulate; it stays at the ULP scale.
         for field in ("move", "rest", "eat"):
             np.testing.assert_allclose(getattr(ours, field), getattr(cpu_actions, field), atol=2e-6, rtol=2e-5)
-        b, r, hidden, _, _ = model.step(b, r, probs, model.tensor(tick), phase, torch.zeros_like(b))
+        b, r, hidden, _, _ = model.step(b, r, probs, model.tensor(tick), torch.zeros_like(b),
+                                        light_index=light)
         env.step(cpu_actions)
         expected = model.import_state([env])
         np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=tol, rtol=tol)
@@ -207,6 +221,60 @@ def test_pair_visibility_matches_reference(device, floor, handling):
     assert float(env.vis_floor_mat[i, j]) == pytest.approx(floor)
 
 
+@pytest.mark.parametrize("start_tick", [0, 3])
+@pytest.mark.parametrize("handling", [0.0, 0.2])
+def test_daylight_matches_reference(device, start_tick, handling):
+    """The daylight calendar must index the same year tick on both engines.
+
+    One pair is light-modulated and one is not, so a mirror that
+    modulated every pair, read the multiplier one tick off, or put the
+    light channel in another slot diverges at once. 6 h ticks: the
+    starts 0 and 3 sit at midnight and 18:00, so the run crosses dawn
+    and dusk.
+    """
+    env = make_env(handling=handling,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False},
+                   dark_ratios={"a_preys_on_b": 0.1})
+    model = _assert_parity(env, device, ticks=6)
+    assert model.daylight and model.light_pairs
+    i, j = env.dm_ids.index("a"), env.global_fg_order.index("c")
+    assert np.all(env.light_mult_table[:, i, j] == 1.0), (
+        "an unmodulated pair must stay exactly 1")
+    assert model.in_dims == tuple(int(n) for n in env.per_dm_in_dim)
+
+
+LIGHT_CLIMATE = {"light_attenuation_per_m": 0.15,
+                 "mixed_layer_depth_m": [40, 40, 30, 15, 12, 10,
+                                         10, 12, 15, 25, 35, 40],
+                 "cloud_transmission": [0.5] * 12}
+
+
+@pytest.mark.parametrize("start_tick", [0, 4 * 170 + 1])
+@pytest.mark.parametrize("with_pairs", [False, True])
+def test_light_limited_growth_matches_reference(device, start_tick, with_pairs):
+    """Producer growth must read the same year tick on both engines.
+
+    ``with_pairs`` False is the calendar without any modulated pair,
+    i.e. still with the light observation channel; the NDM ``d`` is not
+    light-limited and must keep growth_rate exactly.
+    """
+    env = make_env(min_split=0.0, extinction_factor=0.0,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False,
+                             "light_climate": LIGHT_CLIMATE},
+                   dark_ratios={"a_preys_on_b": 0.1} if with_pairs else None,
+                   light_saturation=150.0)
+    model = _assert_parity(env, device, ticks=6)
+    assert model.growth_light_on
+    j_c, j_d = model.ids.index("c"), model.ids.index("d")
+    assert torch.all(model.growth_light[:, j_d] == 1.0)
+    # Midnight starts a night tick (no growth); the second start is noon
+    # in late June (growth above the April reference).
+    first = float(model.growth_light[start_tick, j_c])
+    assert first == pytest.approx(0.0, abs=1e-6) if start_tick == 0 else first > 1.0
+
+
 @pytest.mark.parametrize("activation", ["sig", "tanh", "relu"])
 def test_packed_policies_match_individual_networks(device, activation):
     model = TensorEcosystem(make_env(), device)
@@ -230,11 +298,11 @@ def test_batch_isolation_and_empty_cells(device):
         fg.biomass *= 0
         fg.energy_reserve *= 0
     model = TensorEcosystem(env, device)
-    b, r, h, phase = model.import_state([env, second])
+    b, r, h = model.import_state([env, second])
     probs = model.action_probabilities(torch.zeros(2, model.D, model.C, model.A, device=device), b, 1.0)
-    batched = model.step(b, r, probs, 0, phase, torch.zeros_like(b))
+    batched = model.step(b, r, probs, 0, torch.zeros_like(b))
     for i in range(2):
-        single = model.step(b[i:i+1], r[i:i+1], probs[i:i+1], 0, phase[i:i+1], torch.zeros_like(b[i:i+1]))
+        single = model.step(b[i:i+1], r[i:i+1], probs[i:i+1], 0, torch.zeros_like(b[i:i+1]))
         for actual, expected in zip(batched, single):
             torch.testing.assert_close(actual[i:i+1], expected)
     assert batched[0][1].sum() == 0
@@ -245,10 +313,10 @@ def test_seeding_with_injected_noise(device, monkeypatch):
     for f in ("c", "d"):
         env.fgs[f].seed_rate = 0.05
     model = TensorEcosystem(env, device)
-    b, r, _, phase = model.import_state([env])
+    b, r, _ = model.import_state([env])
     noise = np.random.default_rng(12).uniform(-1, 1, (model.G, env.H, env.W))
     multipliers = model.tensor(np.power(10, noise).astype(np.float32))[None].flatten(2)
-    b_next, r_next, _ = model.population(b, r, 0, phase, multipliers)
+    b_next, r_next, _ = model.population(b, r, multipliers)
     for j, fid in enumerate(env.global_fg_order):
         monkeypatch.setattr(np.random, "uniform", lambda *args, **kwargs: noise[j])
         fg = env.fgs[fid]
@@ -313,15 +381,15 @@ def test_subthreshold_splits_are_suppressed_like_the_reference(device):
     assert model.split_thr_any and env._dm_split_thr_any
     np.testing.assert_allclose(numpy(model.split_thr).ravel(), env._dm_split_thr,
                                rtol=0, atol=0)
-    b, r, _, phase = model.import_state([env])
+    b, r, _ = model.import_state([env])
     probabilities, reference = uniform_move(env, model)
     fired = False
     for tick in range(4):
         model.split_thr_any = False              # the pre-fix code path
-        unsuppressed = model.step(b, r, probabilities, model.tensor(tick), phase,
+        unsuppressed = model.step(b, r, probabilities, model.tensor(tick),
                                   torch.zeros_like(b))[0]
         model.split_thr_any = True
-        b, r, _, _, _ = model.step(b, r, probabilities, model.tensor(tick), phase,
+        b, r, _, _, _ = model.step(b, r, probabilities, model.tensor(tick),
                                    torch.zeros_like(b))
         env.step(reference)
         expected = model.import_state([env])

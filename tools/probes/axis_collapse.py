@@ -48,12 +48,13 @@ def rollout(trainer, runner, world, ticks, H, W):
     m = trainer.model
     runner.set_weights(trainer.bank.pack([w[None].clone() for w in trainer.theta]))
     runner.reset(*world, ticks, trainer.obs_mean.float(), trainer.obs_var.float(),
-                 m.tensor(1.0))
+                 m.tensor(1.0), light_start=trainer.spawner.light_starts(world[-1]))
     directions = np.zeros((m.D, 4))
     series = []
     counted = 0
     for tick in range(ticks):
-        obs = m.observations(runner.biomass, runner.reserve, runner.hidden)
+        obs = m.observations(runner.biomass, runner.reserve, runner.hidden,
+                             m.light_index(runner.light_start, runner.tick))
         if runner.normalize:
             obs = ((obs - runner.obs_mean[None, :, None]) /
                    runner.obs_var.clamp_min(1e-2).sqrt()[None, :, None]).clamp(-10, 10)
@@ -126,8 +127,7 @@ def main():
                    torch.tensor([0], device=m.device))
     keys = fold_in(keys, 0)
     biomass0 = trainer.world_biomass.clone()
-    world = (biomass0, trainer.spawner.reserves(biomass0, keys),
-             trainer.spawner.phases(keys), keys)
+    world = (biomass0, trainer.spawner.reserves(biomass0, keys), keys)
     runner = RolloutRunner(m, trainer.bank, 1, 1, execution="eager",
                            obs_normalize=True, local_reward=None)
 

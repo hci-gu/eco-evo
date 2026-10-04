@@ -36,8 +36,16 @@
     # therefore the evidence that the zero was chosen: if it disappears,
     # the value came from the editor and not from a decision.
     seed_rate: 0.0
-    seasonal_amplitude: 0.0
-    seasonal_period: 1460.0
+    # Light-limited growth on the daylight calendar (section 138): the
+    # growth rate above is the April rate (section 131), so the factor is
+    # 1 on day 105 and follows P-I = tanh(I/I_k) over the mixed layer
+    # otherwise. I_k = Pmax/alpha, monthly medians of the SMHI 14C P-I
+    # curves 2008-2021 (Anholt E, Kattegat, 0-10 m; Dec, n = 6, replaced
+    # by the mean of Nov and Jan): photoacclimation from ~110 in winter
+    # to ~300 in July.
+    light_saturation: [114, 132, 161, 165, 208, 248, 298, 257, 193, 149, 111, 
+          113]
+    light_reference_day: 105
     spawn:
       mode: perlin
       scale: 12.0
@@ -121,8 +129,6 @@
       threshold: 0.0
       min_frac_of_max: 0.0
     seed_rate: 1e-06
-    seasonal_amplitude: 0.0
-    seasonal_period: 0.0
   pelagic_fish:
     display_name: "Pelagic Fish"
     is_decision_maker: true
@@ -350,6 +356,19 @@ interaction_definitions:
     predation_mortality: 5.24
     assimilation_factor: 0.8
     handling_time: 25.0
+    # Daylight calendar (section 137; only active when the project
+    # enables simulation_settings.daylight). Herring bite zooplankton
+    # by sight down to 0.001 lx (Batty, Blaxter & Richard 1990); their
+    # stomach fullness peaks after dawn and before dusk, and at night
+    # they switch to filter feeding (Darbyson et al. 2003). dark_ratio
+    # 0.1 (night attack rate a tenth of the daylight one) is an estimate
+    # consistent with that, not a measured ratio. 0.001 lx at the
+    # 10-40 m the herring feed at is ~0.005-0.4 lx at the surface
+    # (Kd ~0.15/m), i.e. a sun 8-12 deg below the horizon; -8 deg is
+    # the half-detection point of the logistic.
+    dark_ratio: 0.1
+    light_threshold_deg: -8.0
+    visibility_floor: 0.7
   gadoids_preys_on_pelagic_fish:
     preys_on: true
     predation_mortality: 0.2997

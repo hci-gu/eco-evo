@@ -216,13 +216,12 @@ def test_gpu_population_step_matches_the_reference(mass_balance, growth_rate,
     env, fg = _build_env(mass_balance=mass_balance, growth_rate=growth_rate,
                          energy_content=energy_content)
     env.build_static_caches()
-    env._season_phase = {'grazer': 0.0}
     model = TensorEcosystem(env, device="cpu")
     b = torch.as_tensor(np.asarray(fg.biomass).reshape(1, 1, H * W),
                         dtype=torch.float32)
     r = torch.as_tensor(np.asarray(fg.energy_reserve).reshape(1, 1, H * W),
                         dtype=torch.float32)
-    gb, gr, _ = model.population(b, r, 0, 0.0, 1.0)
+    gb, gr, _ = model.population(b, r, 1.0)
 
     population_change._apply_decision_maker_population_change(
         env, 'grazer', fg)

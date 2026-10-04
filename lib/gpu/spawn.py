@@ -208,5 +208,16 @@ class WorldSpawner:
             ratios = 0.7
         return biomass * ratios * self.model.max_reserve
 
-    def phases(self, pair_keys):
-        return uniform(pair_keys, (self.model.G, 1), 502) * self.model.period.clamp_min(1)
+    def light_starts(self, pair_keys):
+        """Year tick each world starts at (daylight calendar, section 137).
+
+        Key-derived, so both ARS signs and every delta evaluated on the
+        same world see the same season (CRN). A fixed start day is used
+        as is.
+        """
+        m = self.model
+        if m.calendar and m.light_random_start:
+            draw = uniform(pair_keys, (), 503) * m.light_period
+            return draw.long().clamp_(0, m.light_period - 1)
+        return torch.full((pair_keys.numel(),), m.light_fixed_start,
+                          dtype=torch.long, device=pair_keys.device)

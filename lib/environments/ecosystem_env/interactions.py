@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from lib.world import daylight
+
 
 @dataclass
 class InteractionMatrices:
@@ -83,6 +85,113 @@ def build_interaction_matrices(env):
         vis_floor_over=vis_floor_over,
         vis_floor_has=vis_floor_has,
     )
+
+
+def build_daylight_tables(env):
+    """Light tables for the daylight calendar (section 137).
+
+    Sets ``env._has_daylight`` (the light observation channel exists),
+    ``env._has_light_pairs`` (at least one pair's attack rate is
+    modulated), ``env.light_obs_table`` (F per year tick, the value the
+    policies observe) and ``env.light_mult_table`` ((T, N_dm, N_all)
+    attack-rate multiplier, exactly 1 for every unmodulated pair, or
+    None when no pair is modulated). Everything is off - and the tick
+    bit-identical to before - unless the loader put a
+    ``params['daylight']`` on the FGs.
+
+    Also the light-limited growth of non-decision makers (section 138):
+    ``env._has_growth_light`` and ``env.growth_light`` = {fg_id: (T,)
+    growth multiplier} for every NDM with ``light_saturation``.
+    """
+    cfg = None
+    for fid in env.global_fg_order:
+        cfg = env.fgs[fid].params.get("daylight")
+        if cfg:
+            break
+    env.daylight = dict(cfg) if cfg else None
+    env._has_daylight = env.daylight is not None and env.N_dm > 0
+    env._has_light_pairs = False
+    env._has_growth_light = False
+    env.growth_light = {}
+    env.light_obs_table = None
+    env.light_mult_table = None
+    if env.daylight is None:
+        return
+    latitude = float(env.daylight["latitude_deg"])
+    tick_hours = int(env.daylight["tick_hours"])
+    env.light_period = daylight.ticks_per_year(tick_hours)
+    env.light_start = int(env.daylight.get("start_tick", 0)) % env.light_period
+
+    for fid in env.global_fg_order:
+        fg = env.fgs[fid]
+        if fg.is_decision_maker:
+            continue
+        settings = daylight.growth_light_settings(fg.params)
+        if settings is None:
+            continue
+        climate = env.daylight.get("light_climate")
+        if not climate:
+            raise ValueError(
+                f"'{fid}' has light_saturation (light-limited growth) but "
+                "the project's simulation_settings.daylight has no light "
+                "climate (light_attenuation_per_m, mixed_layer_depth_m, "
+                "cloud_transmission); section 138")
+        ik, reference_day = settings
+        env.growth_light[fid] = daylight.growth_light_schedule(
+            latitude, tick_hours, climate, ik, reference_day)
+    env._has_growth_light = bool(env.growth_light)
+
+    if not env._has_daylight:
+        return
+    env.light_obs_table = daylight.light_schedule(
+        latitude, tick_hours).astype(env.dtype)
+
+    table = np.ones((env.light_period, env.N_dm, env.N_all), dtype=env.dtype)
+    for i, pred_id in enumerate(env.dm_ids):
+        interaction = env.fgs[pred_id].params.get("interaction", {})
+        for j, prey_id in enumerate(env.global_fg_order):
+            if env.eat_static_mask[i, j] <= 0.0:
+                continue
+            pair = daylight.pair_settings(
+                interaction.get(f"{pred_id}_preys_on_{prey_id}"))
+            if pair is None:
+                continue
+            dark_ratio, threshold = pair
+            table[:, i, j] = daylight.attack_multiplier(
+                latitude, tick_hours, dark_ratio, threshold)
+            env._has_light_pairs = True
+    if env._has_light_pairs:
+        env.light_mult_table = table
+
+
+def light_index(env):
+    """Year tick of the current env tick (valid when ``_has_daylight``)."""
+    return (env.light_start + int(env.tick_count)) % env.light_period
+
+
+def growth_light(env, fg_id):
+    """Light factor on ``fg_id``'s growth this tick (1.0 when unlimited)."""
+    table = env.growth_light.get(fg_id) if env._has_growth_light else None
+    if table is None:
+        return 1.0
+    return float(table[light_index(env)])
+
+
+def light_level(env):
+    """F for the current tick: the light observation channel's value."""
+    return env.light_obs_table[light_index(env)]
+
+
+def attack_rate(env):
+    """``(N_dm, N_all)`` attack rate a for THIS tick.
+
+    The library's (tick-rescaled) ``max_intake_mat`` times the pair's
+    light multiplier when the daylight calendar modulates any pair;
+    otherwise ``max_intake_mat`` itself, untouched.
+    """
+    if not env._has_light_pairs:
+        return env.max_intake_mat
+    return env.max_intake_mat * env.light_mult_table[light_index(env)]
 
 
 def holling_a_eff(a, h, Bp, m3, interference=0.0):

@@ -23,6 +23,8 @@ from lib.world.energy_balance import (  # noqa: E402
     intake_ceiling,
 )
 from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label  # noqa: E402
+from lib.world.daylight import (  # noqa: E402
+    DEFAULT_THRESHOLD_DEG as DAYLIGHT_DEFAULT_THRESHOLD_DEG)
 from lib.world.growth_budget import (  # noqa: E402
     PREYS_ON,
     growth_budget,
@@ -107,6 +109,10 @@ class FGConfigApp:
             self.project_name_var.trace_add("write", lambda *_: self._mark_dirty())
             self.ref_grid_w_var.trace_add("write", lambda *_: self._mark_dirty())
             self.ref_grid_h_var.trace_add("write", lambda *_: self._mark_dirty())
+            for _var in (self.daylight_enabled_var, self.daylight_lat_var,
+                         self.daylight_start_var, self.daylight_kd_var,
+                         self.daylight_zmix_var, self.daylight_cloud_var):
+                _var.trace_add("write", lambda *_: self._mark_dirty())
         except Exception:
             pass
 
@@ -477,6 +483,53 @@ class FGConfigApp:
             fg="red", font=("TkDefaultFont", 9, "italic"))
         self.ref_grid_status_lbl.grid(row=1, column=5, sticky="w", padx=(8, 0), pady=(4, 0))
 
+        # Daylight calendar (simulation_settings.daylight, section 137 in
+        # mareld_resume.txt): light-dependent attack rates for the pairs
+        # with a Dark Ratio, plus one light observation channel. Turning
+        # it on or off changes the policies' input size, so checkpoints
+        # trained with the other setting no longer load.
+        ttk.Label(info_frame, text="Daylight calendar:").grid(
+            row=2, column=0, sticky="w", padx=5, pady=(4, 0))
+        self.daylight_enabled_var = tk.BooleanVar(value=False)
+        self.daylight_lat_var = tk.StringVar(value="")
+        self.daylight_start_var = tk.StringVar(value="random")
+        ttk.Checkbutton(info_frame, text="on",
+                        variable=self.daylight_enabled_var).grid(
+            row=2, column=1, sticky="w", pady=(4, 0))
+        daylight_frame = ttk.Frame(info_frame)
+        daylight_frame.grid(row=2, column=2, columnspan=4, sticky="w",
+                            pady=(4, 0))
+        ttk.Label(daylight_frame, text="Latitude (deg):").pack(side="left")
+        ttk.Entry(daylight_frame, textvariable=self.daylight_lat_var,
+                  width=8).pack(side="left", padx=(2, 10))
+        ttk.Label(daylight_frame,
+                  text="Start day (1-365 or random):").pack(side="left")
+        ttk.Entry(daylight_frame, textvariable=self.daylight_start_var,
+                  width=8).pack(side="left", padx=(2, 0))
+
+        # Site light climate for light-limited producers (section 138):
+        # Kd(PAR) and 12 monthly values (Jan..Dec, comma separated) of the
+        # mixed-layer depth and of the cloud transmission.
+        ttk.Label(info_frame, text="Light climate:").grid(
+            row=3, column=0, sticky="w", padx=5, pady=(4, 0))
+        self.daylight_kd_var = tk.StringVar(value="")
+        self.daylight_zmix_var = tk.StringVar(value="")
+        self.daylight_cloud_var = tk.StringVar(value="")
+        climate_frame = ttk.Frame(info_frame)
+        climate_frame.grid(row=3, column=1, columnspan=5, sticky="w",
+                           pady=(4, 0))
+        ttk.Label(climate_frame, text="Kd(PAR) (1/m):").pack(side="left")
+        ttk.Entry(climate_frame, textvariable=self.daylight_kd_var,
+                  width=6).pack(side="left", padx=(2, 10))
+        ttk.Label(climate_frame,
+                  text="Mixed layer (m, Jan..Dec):").pack(side="left")
+        ttk.Entry(climate_frame, textvariable=self.daylight_zmix_var,
+                  width=34).pack(side="left", padx=(2, 10))
+        ttk.Label(climate_frame,
+                  text="Cloud transmission (Jan..Dec):").pack(side="left")
+        ttk.Entry(climate_frame, textvariable=self.daylight_cloud_var,
+                  width=40).pack(side="left", padx=(2, 0))
+
         # tk.Entry supports a 'background' option that ttk.Entry does not.
         # We toggle a ttk style instead.
         try:
@@ -680,8 +733,9 @@ class FGConfigApp:
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry", 0.0, 100000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
             ("Seed Rate (fraction of cc/{tick})", "seed_rate", "entry", 0.0, 1.0),
-            ("Seasonal Amplitude (fraction of growth_rate, 0=off)", "seasonal_amplitude", "entry", 0.0, 10.0),
-            ("Seasonal Period (ticks of {tick})", "seasonal_period", "entry", 0.0, 10000.0),
+            # Light-limited growth on the daylight calendar (section 138).
+            ("Light Saturation I_k (umol photons/m2/s; 1 or 12 monthly values; 0 = off)", "light_saturation", "entry", 0.0, 5000.0),
+            ("Light Reference Day (day of year Max Growth applies; 0 = 105, mid April)", "light_reference_day", "entry", 0.0, 365.0),
             ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 1000000.0),
         ]
@@ -2738,6 +2792,27 @@ class FGConfigApp:
                   "predator-prey pair only."),
         ).pack(fill="x", padx=10, pady=(0, 10))
 
+        # Daylight calendar (section 137 in mareld_resume.txt): light-
+        # dependent attack rate for visual predators. Only active when
+        # the project enables simulation_settings.daylight.
+        self.create_matrix_section(
+            "Dark Ratio (row's attack rate in darkness / in daylight)",
+            "dark_ratio", dm_fgs, fgs,
+            cell_type="unit_optional", parent=self.matrix_container)
+        self.create_matrix_section(
+            "Light Threshold (sun elevation in degrees at half detection)",
+            "light_threshold_deg", dm_fgs, fgs,
+            cell_type="signed_optional", parent=self.matrix_container)
+        ttk.Label(
+            self.matrix_container,
+            foreground=self.MUTED_FG_COLOR,
+            text=("Used only when the project's Daylight calendar is on. "
+                  "Empty Dark Ratio (or 1) = the pair does not depend on "
+                  "light. The library attack rate stays the annual mean; "
+                  f"empty threshold = {DAYLIGHT_DEFAULT_THRESHOLD_DEG:g} deg "
+                  "(end of civil twilight)."),
+        ).pack(fill="x", padx=10, pady=(0, 10))
+
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
@@ -2757,7 +2832,8 @@ class FGConfigApp:
             if preys_var is None:
                 continue
             for dep_key in ("assimilation_factor", "handling_time",
-                            "visibility_floor", "predation_mortality"):
+                            "visibility_floor", "predation_mortality",
+                            "dark_ratio", "light_threshold_deg"):
                 dep_widget = self.matrix_widgets.get(key, {}).get(dep_key)
                 if dep_widget is None:
                     continue
@@ -3197,7 +3273,7 @@ class FGConfigApp:
                     _default = 1.0
                 elif cell_type == "nonneg_float":
                     _default = 0.0
-                elif cell_type == "unit_optional":
+                elif cell_type in ("unit_optional", "signed_optional"):
                     # Empty = inherit the column FG's own species-level
                     # value; do NOT materialise an explicit default here
                     # (that would silently override every prey default).
@@ -3280,6 +3356,35 @@ class FGConfigApp:
                             return False
                         return 0.0 <= v <= 1.0
                     vcmd = (frame.register(_validate_unit_opt), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=6,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "signed_optional":
+                    # Optional signed float (light_threshold_deg: sun
+                    # elevation in degrees, may be negative). Empty =
+                    # module default. Range [-18, 10]: below -18 deg the
+                    # sky is fully dark, above 10 deg fully light.
+                    cur_val = val
+                    if cur_val is None:
+                        cur_val = ""
+                    if cur_val != "":
+                        try:
+                            cur_f = max(-18.0, min(10.0, float(cur_val)))
+                            cur_val = f"{cur_f:g}"
+                        except (TypeError, ValueError):
+                            cur_val = ""
+                    var = tk.StringVar(value=str(cur_val))
+
+                    def _validate_signed_opt(proposed):
+                        if proposed in ("", "-", ".", "-."):
+                            return True
+                        try:
+                            v = float(proposed)
+                        except ValueError:
+                            return False
+                        return -18.0 <= v <= 10.0
+                    vcmd = (frame.register(_validate_signed_opt), "%P")
 
                     widget = ttk.Entry(frame, textvariable=var, width=6,
                                        validate="key", validatecommand=vcmd)
@@ -3588,6 +3693,10 @@ class FGConfigApp:
                     var.set(f"{self._effective_current_response(config, False):g}")
                     continue
                 val = config.get(key, "")
+                if isinstance(val, (list, tuple)):
+                    # Monthly light_saturation (section 138): 12 values.
+                    var.set(", ".join(f"{float(v):g}" for v in val))
+                    continue
                 var.set(str(val))
 
         # Populate the per-FG spawn editor from config['spawn'] (or library default).
@@ -3668,6 +3777,20 @@ class FGConfigApp:
                 continue
             if isinstance(var, tk.BooleanVar):
                 config[key] = val
+            elif key == "light_saturation" and "," in str(val):
+                # 12 monthly I_k values, Jan..Dec (section 138).
+                try:
+                    values = [float(v) for v in str(val).split(",") if v.strip()]
+                except ValueError:
+                    values = []
+                if len(values) != 12 or min(values) <= 0.0:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Light Saturation: one number, or 12 positive "
+                        "monthly values (Jan..Dec) separated by commas. "
+                        "No changes were saved.")
+                    return
+                config[key] = values
             else:
                 raw_val = val
                 if raw_val in (None, ""):
@@ -4010,7 +4133,8 @@ class FGConfigApp:
                             self.global_library["interaction_definitions"][key][data_key] = val
                         except ValueError:
                             pass # skip invalid
-                    elif data_key == "visibility_floor":
+                    elif data_key in ("visibility_floor", "dark_ratio",
+                                      "light_threshold_deg"):
                         # Optional override: an emptied cell must REMOVE the
                         # key so the prey FG's own default takes over again.
                         # Other data_keys keep the legacy behaviour (an
@@ -4543,6 +4667,28 @@ class FGConfigApp:
             if hasattr(self, 'ref_grid_w_var'):
                 self.ref_grid_w_var.set(str(rw))
                 self.ref_grid_h_var.set(str(rh))
+            if hasattr(self, 'daylight_enabled_var'):
+                _sim = self.project_data.get("simulation_settings") or {}
+                _day = _sim.get("daylight") if isinstance(_sim, dict) else None
+                _day = _day if isinstance(_day, dict) else {}
+                self.daylight_enabled_var.set(bool(_day.get("enabled", False)))
+                _lat = _day.get("latitude_deg")
+                try:
+                    _lat = "" if _lat is None else f"{float(_lat):g}"
+                except (TypeError, ValueError):
+                    _lat = ""   # hand-edited garbage: let the user re-enter
+                self.daylight_lat_var.set(_lat)
+                _start = _day.get("start_day_of_year", "random")
+                self.daylight_start_var.set(
+                    "random" if _start in (None, "") else str(_start))
+                _kd = _day.get("light_attenuation_per_m")
+                self.daylight_kd_var.set("" if _kd is None else str(_kd))
+                for _key, _var in (("mixed_layer_depth_m", self.daylight_zmix_var),
+                                   ("cloud_transmission", self.daylight_cloud_var)):
+                    _vals = _day.get(_key)
+                    _var.set(", ".join(f"{v:g}" if isinstance(v, (int, float))
+                                       else str(v) for v in _vals)
+                             if isinstance(_vals, (list, tuple)) else "")
             # Tick length. Out-of-range / missing falls back to the
             # historical 6 h, so projects predating the field load
             # Backward compatibility: legacy projects had a single `functional_groups` list.
@@ -4585,6 +4731,73 @@ class FGConfigApp:
             # project marked dirty.
             self._clear_dirty()
 
+    def _store_daylight_settings(self):
+        """Write the header's Daylight fields into simulation_settings.
+
+        Validated with the same parser the loader uses, so a project the
+        editor saves is one the simulator accepts. Returns False (and
+        says why) when the fields cannot be honoured. A project that
+        never had a daylight block and leaves it off gets none.
+        """
+        from lib.world import daylight
+        if not hasattr(self, "daylight_enabled_var"):
+            return True
+        sim = self.project_data.get("simulation_settings")
+        if not isinstance(sim, dict):
+            sim = {}
+        enabled = bool(self.daylight_enabled_var.get())
+        lat_str = self.daylight_lat_var.get().strip()
+        start_str = self.daylight_start_var.get().strip().lower() or "random"
+        if not enabled and not lat_str and "daylight" not in sim:
+            return True
+        block = dict(sim.get("daylight") or {})
+        block["enabled"] = enabled
+        if lat_str:
+            try:
+                block["latitude_deg"] = float(lat_str)
+            except ValueError:
+                messagebox.showerror("Daylight", "Latitude must be a number.")
+                return False
+        # Light climate: all three or none (parse_settings checks that).
+        kd_str = self.daylight_kd_var.get().strip()
+        if kd_str:
+            try:
+                block["light_attenuation_per_m"] = float(kd_str)
+            except ValueError:
+                messagebox.showerror("Daylight", "Kd(PAR) must be a number.")
+                return False
+        else:
+            block.pop("light_attenuation_per_m", None)
+        for key, var in (("mixed_layer_depth_m", self.daylight_zmix_var),
+                         ("cloud_transmission", self.daylight_cloud_var)):
+            text = var.get().strip()
+            if not text:
+                block.pop(key, None)
+                continue
+            try:
+                block[key] = [float(v) for v in text.replace(";", ",").split(",")
+                              if v.strip()]
+            except ValueError:
+                messagebox.showerror(
+                    "Daylight", f"{key}: 12 numbers separated by commas.")
+                return False
+        block["start_day_of_year"] = (
+            "random" if start_str == "random" else start_str)
+        if start_str != "random":
+            try:
+                block["start_day_of_year"] = int(start_str)
+            except ValueError:
+                pass   # rejected by parse_settings below
+        try:
+            daylight.parse_settings({"simulation_settings": {"daylight": dict(
+                block, enabled=True)}} if (enabled or lat_str) else {})
+        except ValueError as exc:
+            messagebox.showerror("Daylight", str(exc))
+            return False
+        sim["daylight"] = block
+        self.project_data["simulation_settings"] = sim
+        return True
+
     def save_project(self):
         """Persist project_data to YAML. Returns True on success, False if
         the user cancelled the path dialog or the save did not happen."""
@@ -4612,6 +4825,8 @@ class FGConfigApp:
             # was actually saved.
             self.ref_grid_w_var.set(str(rw))
             self.ref_grid_h_var.set(str(rh))
+            if not self._store_daylight_settings():
+                return False
             self.save_yaml(self.project_data, self.project_path)
             self.add_to_recent(self.project_path)
             self._clear_dirty()

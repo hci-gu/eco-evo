@@ -70,7 +70,7 @@ def live_env(migration=False, mortality=False, drift=0.0):
 
 
 def tracked_step(model, state, probabilities, tick=0):
-    return model.step(*state[:2], probabilities, model.tensor(tick), state[3],
+    return model.step(*state[:2], probabilities, model.tensor(tick),
                       torch.zeros_like(state[0]), track_source=True)
 
 
@@ -137,7 +137,7 @@ def test_rollout_fitness_matches_the_reference_while_drifting(device, drift):
                            obs_normalize=False, local_reward=config)
     state = model.import_state([env])
     ticks = 6
-    runner.reset(state[0], state[1], state[3],
+    runner.reset(state[0], state[1],
                  torch.zeros(1, dtype=torch.int64, device=model.device), ticks,
                  torch.zeros_like(runner.obs_mean), torch.ones_like(runner.obs_var),
                  model.tensor(1.0))
@@ -167,7 +167,7 @@ def test_rollout_fitness_matches_the_reference(device, config, migration):
                            obs_normalize=False, local_reward=config)
     state = model.import_state([env])
     ticks = 6
-    runner.reset(state[0], state[1], state[3],
+    runner.reset(state[0], state[1],
                  torch.zeros(1, dtype=torch.int64, device=model.device), ticks,
                  torch.zeros_like(runner.obs_mean), torch.ones_like(runner.obs_var),
                  model.tensor(1.0))
@@ -221,7 +221,7 @@ def test_rollout_fitness_matches_the_reference_with_suppression(device, config):
                            obs_normalize=False, local_reward=config)
     state = model.import_state([env])
     ticks = 6
-    runner.reset(state[0], state[1], state[3],
+    runner.reset(state[0], state[1],
                  torch.zeros(1, dtype=torch.int64, device=model.device), ticks,
                  torch.zeros_like(runner.obs_mean), torch.ones_like(runner.obs_var),
                  model.tensor(1.0))
@@ -240,7 +240,7 @@ def test_disabled_tracking_leaves_the_tick_untouched(device):
     model = TensorEcosystem(env, device)
     state = model.import_state([env])
     probabilities = random_probabilities(model, state[0])
-    plain = model.step(*state[:2], probabilities, model.tensor(0), state[3],
+    plain = model.step(*state[:2], probabilities, model.tensor(0),
                        torch.zeros_like(state[0]))
     tracked = tracked_step(model, state, probabilities)
     assert len(plain) == 5 and len(tracked) == 6
@@ -262,13 +262,13 @@ def test_tracked_tick_traces_without_graph_breaks(builder):
     runner = RolloutRunner(model, bank, 1, 1, execution="eager",
                            local_reward=LocalRewardConfig())
     state = model.import_state([env])
-    runner.reset(state[0], state[1], state[3], torch.zeros(1, dtype=torch.int64), 3,
+    runner.reset(state[0], state[1], torch.zeros(1, dtype=torch.int64), 3,
                  torch.zeros_like(runner.obs_mean), torch.ones_like(runner.obs_var),
                  torch.tensor(1.0))
     runner._tick()
     expected = [v.clone() for v in runner.state_buffers] + [runner.local_sum.clone()]
     reference_sum = runner.local_sum.clone()
-    runner.reset(state[0], state[1], state[3], torch.zeros(1, dtype=torch.int64), 3,
+    runner.reset(state[0], state[1], torch.zeros(1, dtype=torch.int64), 3,
                  torch.zeros_like(runner.obs_mean), torch.ones_like(runner.obs_var),
                  torch.tensor(1.0))
     compiled = torch.compile(runner._tick, backend="eager", fullgraph=True)

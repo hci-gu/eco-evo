@@ -54,10 +54,6 @@ class FunctionalGroup:
         # Recolonisation floor for non-decision makers: fraction of
         # max_carrying_capacity added per tick in every cell.
         self.seed_rate = float(params.get('seed_rate', 0.0))
-        # Seasonal modulation of non-decision-maker growth rate:
-        # r_eff(t) = r * (1 + AMP * sin(2*pi*(t+phase)/PERIOD)).
-        self.seasonal_amplitude = float(params.get('seasonal_amplitude', 0.0) or 0.0)
-        self.seasonal_period = float(params.get('seasonal_period', 0.0) or 0.0)
         # u_X: maintenance level. The relative energy fill ratio s_X required
         # to break even (q_X = s_X - u_X = 0). Below u_X the population
         # shrinks; above it, it grows. Method.pdf §6.

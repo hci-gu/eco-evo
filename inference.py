@@ -373,8 +373,8 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     """Construct a fresh EcosystemEnvironment for inference.
 
     A given ``seed`` also seeds NumPy's global RNG. The tick draws from it
-    (the NDM ``seed_rate`` recruitment noise, the per-tick FG shuffle, the
-    seasonal phase), so without this the same ``--seed`` gave rollouts
+    (the NDM ``seed_rate`` recruitment noise, the per-tick FG shuffle),
+    so without this the same ``--seed`` gave rollouts
     that drift apart by a few per cent over thousands of ticks (section
     124.4). ``seed=None`` leaves the global RNG alone.
     """
@@ -581,6 +581,12 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
                 f"Observability matrix or FG set. "
                 f"Adjust the Observability matrix in fgconfig so '{fid}' "
                 f"yields in_dim={ck_in}, or retrain."
+                + (f"\n  The daylight calendar adds one input channel "
+                   f"(currently {'on' if getattr(env, '_has_daylight', False) else 'off'}"
+                   f"); a checkpoint trained with it "
+                   f"{'off' if getattr(env, '_has_daylight', False) else 'on'} "
+                   f"differs by exactly 1 (section 137)."
+                   if abs(ck_in - expected_in) == 1 else "")
             )
 
         try:

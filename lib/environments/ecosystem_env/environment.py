@@ -91,19 +91,6 @@ class EcosystemEnvironment:
         self._static_built = False
         self.cache = None
 
-        self._season_phase = {
-            fid: float(
-                np.random.uniform(
-                    0.0,
-                    max(
-                        1.0,
-                        float(getattr(fg, "seasonal_period", 0.0) or 0.0),
-                    ),
-                )
-            )
-            for fid, fg in self.fgs.items()
-        }
-
         self.loss_predation = {fid: 0.0 for fid in self.fgs}
         self.loss_starvation = {fid: 0.0 for fid in self.fgs}
         self.loss_impact = {fid: 0.0 for fid in self.fgs}

@@ -135,6 +135,11 @@ def build_static_caches(env):
     )
     env._has_holling3 = bool(np.any(env._type3_pred_mask > 0.0))
 
+    # Daylight calendar (section 137): per-tick attack-rate multipliers
+    # for light-dependent pairs and the light observation channel. Off
+    # unless the project enables it.
+    interactions.build_daylight_tables(env)
+
     # Beddington-DeAngelis interference coefficient w_X [1/ton], per DM.
     # Broadcast shape (N_dm, 1, 1, 1) so it multiplies the predator's own
     # per-cell biomass in ``predation.apply_predation``. All-zero (the
@@ -251,12 +256,16 @@ def build_static_caches(env):
     #   center : [B_own, E_own, B_obs_others (k_i), impacts (n_obs_imp)]
     #   neighbour (N/E/S/W) : [B_own, B_obs_others (k_i), impacts (n_obs_imp)]
     # so center_dim_i = 2 + k_i + n_obs_imp and nbr_dim_i = 1 + k_i + n_obs_imp.
+    # With the daylight calendar one more channel, the light level F of
+    # the tick, is appended LAST (after the neighbours), so the layout of
+    # everything before it is unchanged.
     env.per_dm_in_dim = np.zeros(env.N_dm, dtype=np.int64)
     for i in range(env.N_dm):
         k_i = int(env.obs_others_idx[i].shape[0])
         center_dim_i = 2 + k_i + n_obs_imp
         nbr_dim_i = 1 + k_i + n_obs_imp
-        env.per_dm_in_dim[i] = center_dim_i + 4 * nbr_dim_i
+        env.per_dm_in_dim[i] = (center_dim_i + 4 * nbr_dim_i
+                                + (1 if env._has_daylight else 0))
     env.max_in_dim = int(env.per_dm_in_dim.max()) if env.N_dm > 0 else 0
     env.n_obs_imp = n_obs_imp
 

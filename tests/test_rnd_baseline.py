@@ -40,8 +40,8 @@ def test_plot_ids_all_reports_ndms_solo_only_dms():
 
 
 def _world():
-    # The env constructor draws season phases from the global RNG, and every
-    # tick shuffles the FG order with it, so identical worlds need it pinned.
+    # Every tick shuffles the FG order with the global RNG, so identical
+    # worlds need it pinned.
     np.random.seed(0)
     env = build_env("mareld2.yaml", GRID, seed=7, verbose=False)
     env.build_static_caches()

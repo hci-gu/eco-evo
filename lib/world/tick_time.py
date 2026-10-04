@@ -145,15 +145,18 @@ def per_tick(unit, tick_hours=None):
 #             a*h invariant, since a is a flux - which is the algebraic
 #             check that the pair is classified consistently.
 #
-#   "period"  A duration measured in ticks: p / k, floored at 1.
+# (A "period" rule - durations in ticks, p / k - existed for the NDM
+# seasonal_period until that sine forcing was removed in section 138.)
 #
 # Anything not listed is tick-independent and is left alone: stocks
 # (max_energy_reserve, energy_content, max_carrying_capacity,
 # initial_biomass_*), dimensionless thresholds (maintenance_level,
-# visibility_floor, extinction_threshold_factor,
-# seasonal_amplitude), the action-cost multipliers (feeding_cost,
+# visibility_floor, extinction_threshold_factor), the action-cost multipliers (feeding_cost,
 # resting_cost, movement_cost - they multiply resting_metabolism, which
 # is itself rescaled), interference (1/ton) and min_split_biomass (kg).
+# The daylight pair keys dark_ratio and light_threshold_deg are
+# dimensionless too: the light schedule itself is built for the run's
+# tick length by lib/world/daylight.py (section 137).
 RESCALE_RULES = {
     # flux
     "max_intake_rate": "flux",
@@ -175,8 +178,6 @@ RESCALE_RULES = {
     # loss
     "natural_mortality": "loss",
     "starve_rate": "loss",
-    # period
-    "seasonal_period": "period",
 }
 
 # Upper bound per parameter: what the ENGINE can represent. A rescale
@@ -198,7 +199,6 @@ RESCALE_CLAMP = {
     "natural_mortality": (0.0, 1.0),
     "starve_rate": (0.0, 1.0),
     "movement_speed": (0.0, 1.0),
-    "seasonal_period": (0.0, 10000.0),
 }
 
 
@@ -260,7 +260,7 @@ def rescale_value(key, value, old_hours, new_hours):
         # A rate at or above 1 already removes everything in one tick;
         # (1 - x) would go negative under a fractional power.
         out = 1.0 if x >= 1.0 else 1.0 - (1.0 - x) ** k
-    elif rule in ("period", "inverse"):
+    elif rule == "inverse":
         out = x / k
     else:
         return value, False
@@ -271,9 +271,6 @@ def rescale_value(key, value, old_hours, new_hours):
         out, clamped = lo, True
     if hi is not None and out > hi:
         out, clamped = hi, True
-    if rule == "period" and out > 0.0:
-        # A period is a whole number of ticks and must survive rounding.
-        out = max(1.0, round(out))
     return out, clamped
 
 

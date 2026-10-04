@@ -29,7 +29,9 @@ def apply_predation(env, actions):
     else:
         interference = np.float32(0.0)
 
-    intake_rate = env.max_intake_mat[:, :, None, None]
+    # Attack rate a of this tick: the library value, times the pair's
+    # light multiplier under the daylight calendar (section 137).
+    intake_rate = interactions.attack_rate(env)[:, :, None, None]
     if env._has_holling2 or env._has_holling3:
         handling_time = env.handling_time_mat[:, :, None, None]
         # Holling saturation uses the *visible* prey biomass: hidden prey

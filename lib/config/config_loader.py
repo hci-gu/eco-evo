@@ -3,6 +3,7 @@ import numpy as np
 from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
 from lib.world.growth_budget import derived_growth_rate
+from lib.world import daylight
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
@@ -482,7 +483,23 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     lib = library_config if library_config is not None else load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
-    
+
+    # Daylight calendar (section 137): None unless the manifest enables
+    # it, in which case every FG carries the same ``params['daylight']``
+    # and the env builds its light tables from it. The random start day
+    # is drawn like the spawn map - from ``spawn_seed`` when given - so
+    # every delta of an ARS generation sees the same season (CRN).
+    daylight_cfg = None
+    daylight_settings = daylight.parse_settings(project)
+    if daylight_settings is not None:
+        if spawn_rng_base is not None:
+            daylight_rng = np.random.default_rng(
+                _derive_fg_spawn_seed(spawn_rng_base, '__daylight__'))
+        else:
+            daylight_rng = rng
+        daylight_cfg = daylight.runtime_config(
+            daylight_settings, tick_hours, rng=daylight_rng)
+
     # Support both the new split (decision_makers / non_decision_makers) and the
     # legacy unified functional_groups list for backward compatibility.
     # Also retain per-FG project overrides (e.g. initial_biomass).
@@ -701,6 +718,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         # in memory, every time. A 6 h run short-circuits and is
         # bit-identical to not calling this at all. Section 106.
         params, _tick_changes = rescale_species(params, tick_hours)
+        if daylight_cfg is not None:
+            params['daylight'] = dict(daylight_cfg)
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: per-project override range > library range >

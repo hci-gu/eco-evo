@@ -12938,3 +12938,204 @@ remain open exactly as described in 71.9 / 71.11.
     Effect (mareld2, mass balance, mortality, migration, currents, 1000
     ticks, pre-133 policies): gadoids 0.54x (starvation 54 %), still
     ~95 % benthos in their diet; zoo 0.65x, pelagic 1.42x, benthos 0.82x.
+
+137 DAYLIGHT CALENDAR: LIGHT-DEPENDENT ATTACK RATES (2026-10-04)
+------------------------------------------------------------------------
+137.1 Why
+    Visual predators (herring on zooplankton) detect prey far better in
+    light than in darkness; zooplankton answers with diel vertical
+    migration (DVM). The CAUSE is put in the model, not the response:
+    the predator's attack rate a depends on light, and the prey's DVM is
+    left to the policies (Rest = hide, which also stops grazing - the
+    real cost of DVM). Observability and visibility_floor are unchanged:
+    they say what a DM knows and how well hiding works; light only says
+    how dangerous it is to be visible. In the Holling/BD response a and
+    the visible prey biomass enter only as the product a*B, so scaling a
+    is the same as scaling non-hidden visibility, without a second knob.
+
+137.2 Model (lib/world/daylight.py)
+    f(elev) = logistic((elev - theta) / 2 deg), elev = sun elevation at
+    local solar time (declination 23.44 sin(2 pi (284 + n)/365)).
+    F(t) = mean of f over the tick in 10-min sub-steps (f is strongly
+    nonlinear, so mean f, not f of the mean). Per pair with dark_ratio
+    rho < 1: m(t) = (rho + (1 - rho) F(t)) / annual mean of the same, so
+    the library max_intake_rate IS the annual mean a and the growth
+    budget (section 129) and budget_gate hold on average. Elevation, not
+    lux: a fish's visual range grows with log(light) and saturates at
+    twilight levels (Aksnes & Giske 1993; Aksnes & Utne 1997), so f is
+    ~1 by day, ~0 by night and moves through twilight. Clouds ignored.
+    Calendar: year tick k starts at hour k * tick_hours after 1 Jan
+    00:00 solar time; 8760 h divides by every tick length 1-6, so the
+    schedule is exactly periodic. Run tick t = year tick
+    (start_tick + t) % ticks_per_year.
+
+137.3 Settings
+    Manifest: simulation_settings.daylight {enabled, latitude_deg,
+    start_day_of_year: 1-365 | random}. mareld2.yaml ships enabled:
+    false, latitude 58.15 (Mareld / Poseidon Nord, coordinates.txt).
+    Library, per pair, both dimensionless and tick-independent:
+    dark_ratio (absent or >= 1 = no light dependence; the column is then
+    exactly 1.0, not 1 via the normalisation) and light_threshold_deg
+    (default -6, end of civil twilight). FG editor: two matrices (Dark
+    Ratio, Light Threshold) under Visibility Floor, and a Daylight row
+    in the project header validated with the loader's own parser.
+    Only pelagic_fish -> zooplankton is set: dark_ratio 0.1,
+    threshold -8 deg. Herring bite zooplankton by sight down to
+    0.001 lx (Batty, Blaxter & Richard 1990, Mar Biol 107:383); their
+    stomach fullness peaks after dawn and before dusk and they switch
+    to filter feeding at night (Darbyson et al. 2003, J Fish Biol).
+    rho 0.1 is an estimate consistent with that, not a measured ratio
+    - the first number to revisit. 0.001 lx at 10-40 m with
+    Kd ~0.15/m is 0.005-0.4 lx at the surface, a sun 8-12 deg below the
+    horizon. Seabirds, gadoids and seals have no values yet.
+
+137.4 Engine
+    Loader puts the same params['daylight'] = {latitude_deg,
+    tick_hours, start_tick, random_start} on every FG, so all ~50 env
+    construction sites get it without new arguments. A random start is
+    drawn from spawn_seed (pseudo-FG '__daylight__'): every delta of a
+    generation sees the same season (CRN). state.build_static_caches ->
+    interactions.build_daylight_tables: env._has_daylight,
+    _has_light_pairs, light_obs_table (T,), light_mult_table (T, N_dm,
+    N_all). predation and the viability rig read
+    interactions.attack_rate(env). Observation: one channel, F of the
+    tick at the default threshold, appended LAST to every DM's compact
+    layout (in_dim + 1), so everything before it keeps its slot;
+    train.get_dynamic_policy_params mirrors it. GPU: TensorEcosystem
+    mirrors both (light_index per world), RolloutRunner keeps a
+    light_start buffer, WorldSpawner.light_starts draws it from the world
+    keys (stream 503), shared by both ARS signs.
+    Turning the calendar on or off changes in_dim by 1: checkpoints do
+    not carry over; inference.py says so in the mismatch hint.
+
+137.5 Validation
+    Disabled: 30-tick rollout hash on mareld2 identical to HEAD
+    (sha c6855a7f...), in_dim unchanged. tests/test_daylight.py (annual
+    mean exactly 1 for tick 1-6 at 0/58/70 N, solstice elevations,
+    loader/CRN, light slot, predation = a*m(t)); test_gpu_ecosystem
+    daylight parity on CPU and CUDA (shifting the GPU index by one tick
+    fails it). Suite green. 1-gen train.py, train_gpu.py and inference
+    with a daylight-enabled copy of the manifest run.
+
+137.6 Effect on herring's attack rate at 58.15 N (6 h ticks;
+    tools/probes/daylight_table.py): a_light 1.54 a, a_dark 0.15 a.
+    Monthly mean m: Jan 0.70 Feb 0.80 Mar 0.94 Apr 1.10 May 1.30
+    Jun 1.42 Jul 1.36 Aug 1.17 Sep 0.99 Oct 0.84 Nov 0.72 Dec 0.66.
+    In June the midnight sun is only -8.5 deg, so night ticks keep
+    m ~ 1.3; in December two of four ticks are fully dark.
+
+137.7 Open
+    - Not trained with the calendar on yet; no biological results.
+    - Run budget_gate against the winter low (m 0.66 in Dec): herring's
+      winter break-even density rises by 1/0.66.
+    - The phytoplankton seasonal term still uses its own random phase
+      (seasonal_amplitude 0 in the library); tie it to this calendar
+      before switching it on, or bloom and daylength drift apart.
+    - 2D limitation: depth is collapsed, so night = prey shallow but
+      unseen and day = seen but deep both become one encounter factor;
+      herring's twilight feeding window is only approximated by F.
+    - Policies see light but not the date; anticipatory seasonal
+      strategies are out of reach at n_eval_ticks 15 anyway.
+
+138 LIGHT-LIMITED PHYTOPLANKTON ON THE DAYLIGHT CALENDAR (2026-10-04)
+------------------------------------------------------------------------
+138.1 What changed
+    The NDM sine forcing (seasonal_amplitude / seasonal_period, random
+    phase per env, amplitude 0 in the library) is REMOVED everywhere:
+    FunctionalGroup, population_change, env._season_phase, the GPU
+    engine (amplitude/period tensors, the per-world ``phase`` argument
+    of import_state / step / population, RolloutRunner's phase buffer,
+    WorldSpawner.phases), tick_time (the "period" rescale rule had no
+    other key and went with it), the FG editor fields, the library keys
+    and tools/probes/dm_seasonal_reproduction.py, which was built on
+    it. GPU signatures: import_state -> (b, r, hidden); step(b, r,
+    actions, tick, seed_multiplier, ..., light_index);
+    population(b, r, seed_multiplier, light_index); runner.reset(b, r,
+    keys, ticks, mean, var, temperature, light_start=None).
+    Side effect: the env constructor no longer draws from the global
+    numpy RNG, so seeded rollouts are not bit-identical to before.
+
+138.2 Model (lib/world/daylight.py, section 137 calendar)
+    A non-decision maker with light_saturation (I_k) grows at
+        r(t) = growth_rate * P(t) / P_ref
+        P(t) = mean over the tick (10-min steps) and over the mixed
+               layer (40 mid-points) of tanh(I0 exp(-Kd z) / I_k)
+               (Jassby & Platt 1976)
+        I0   = Haurwitz (1945) clear-sky global radiation x 0.45 PAR
+               share x 4.57 umol/J (McCree 1972) x monthly cloud
+               transmission
+    P_ref = daily mean of P on light_reference_day (105, mid April):
+    growth_rate is the April dilution-experiment rate of section 131,
+    so the factor is 1 on that day, not 1 as an annual mean (unlike the
+    attack-rate multiplier of 137). P = 0 at night. Monthly inputs are
+    interpolated circularly between mid-month points. I_k may be one
+    value or 12 monthly values (photoacclimation). Needs the site light
+    climate in the manifest; a light-limited NDM without it raises.
+    The growth multiplier also exists for NDM-only projects (the
+    calendar runs without the DM light channel). growth_budget and the
+    derived growth_rate are unchanged: the factor multiplies them.
+
+138.3 Values (subagent research from primary monitoring data; most
+    are DERIVED, not stated in a publication)
+    Kd(PAR) 0.29 /m: Kd = 2.5 / Secchi (Aas, Hokedal & Sorensen 2014,
+      Ocean Sci 10:177, Table 8) with Skagerrak Secchi 8.3 m (Aarup
+      2002, Oceanologia 44:323) and SMHI SHARK 1990-2024 median 8.5 m.
+      Monthly 0.25 (Jul) - 0.42 (Feb-Mar); one annual value used.
+    Mixed layer (m, Jan..Dec) 13 9 6 6 6 6 6 7 10 10 17 15: SHARK CTD at
+      A17 (58.28 N 10.50 E) 1992-2024, density threshold 0.125 kg/m3
+      from the surface sample (de Boyer Montegut et al. 2004). Apr-Jun
+      '<5-7 m' (bottle spacing) set to 6; Dec median 8 is sampling noise
+      and replaced by the Nov/Jan mean. The Baltic outflow keeps a
+      halocline all winter (0-50 m delta-sigma >= 1.3 in January), so
+      winter darkness for the algae comes from the sun and the clouds,
+      not from deep mixing. IMR Arendal 2017-2019 agrees (3-21 m).
+    Cloud transmission (Jan..Dec) .66 .66 .73 .78 .75 .74 .74 .73 .70
+      .66 .60 .69: SMHI Nordkoster (58.89 N) monthly mean global
+      radiation 2011-2025 over the Haurwitz clear sky at that latitude.
+    I_k (Jan..Dec) 114 132 161 165 208 248 298 257 193 149 111 113
+      umol photons/m2/s: medians of Pmax/alpha from SMHI 14C P-I curves
+      2008-2021 (Anholt E, Kattegat, 0-10 m, n = 172); Dec (n = 6, 175)
+      replaced by the Nov/Jan mean. No Skagerrak-specific Ek published.
+    Bloom timing check: Feb-Mar diatom bloom (Gran-Stadniczenko et al.
+      2019, J Eukaryot Microbiol 66:494), secondary Oct-Nov at A17.
+
+138.4 Resulting growth factor at 58.15 N (6 h ticks,
+    tools/probes/daylight_table.py): Jan 0.16 Feb 0.38 Mar 0.72
+    Apr 0.99 May 1.12 Jun 1.14 Jul 1.03 Aug 0.84 Sep 0.58 Oct 0.37
+    Nov 0.15 Dec 0.10; annual mean 0.63; highest tick 1.98.
+
+138.5 Effect, frozen-behaviour rig (tools/viability.py, eat arm,
+    colocated spawn, 20x20, 1460 ticks, 2 seeds; calendar on from
+    1 Jan vs off; both include the 137 herring modulation):
+        end/spawn   phyto  zoo   gadoids  herring
+        off         0.39   0.44  0.74     0.002
+        on          0.13   0.03  0.09     0.000
+    Seed 1 by month (on): phyto 0.02 0.14 1.15 1.26 1.20 0.95 0.31 ...
+    - a spring bloom Mar-May appears; zooplankton is ~0 from Feb to Apr
+    (0.00-0.01) and only recovers in summer (0.3-0.5), then falls
+    again from October. The frozen eat arm cannot rest through winter,
+    and the model has no diapause (Calanus overwinters at depth on
+    lipid reserves), so this is the pessimistic corner, not a verdict;
+    trained policies are needed (VIABILITY.md section 6).
+
+138.6 Validation
+    tests/test_daylight.py (+ factor 1 on the reference day for every
+    tick length, nights 0, winter mixing/clouds darken, circular
+    interpolation, invalid climates raise, missing climate raises,
+    NDM growth = g * factor * B(1 - B/K)); test_gpu_ecosystem
+    light-limited parity on CPU and CUDA (an index shift fails it).
+    Suite green. 1-gen train.py, train_gpu.py and inference run on
+    mareld2 with the calendar on. FG editor: Light Saturation (1 or 12
+    values) and Light Reference Day for NDMs, light climate fields in
+    the project header; checked headless.
+
+138.7 Open
+    - Zooplankton winter survival (138.5): needs trained policies; if
+      it still fails, the candidates are a winter metabolic reduction
+      (diapause) or reconsidering zoo M1/feeding cost in winter.
+    - No nutrients: summer growth stays near the April rate; the real
+      summer is nutrient-limited.
+    - One annual Kd; the Feb-Mar bloom months attenuate more (0.42).
+    - I_k is from Kattegat (Anholt E), not the open Skagerrak.
+    - The growth_rate source is one April experiment in the southern
+      North Sea (131.3).

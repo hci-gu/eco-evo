@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import impacts
+from lib.environments.ecosystem_env import impacts, interactions
 from lib.environments.ecosystem_env.constants import DIRECTIONS
 
 
@@ -53,6 +53,8 @@ def build_observation_batch(env):
     }
 
     max_dim = int(env.max_in_dim)
+    light = (interactions.light_level(env) if env._has_daylight
+             else None)
     obs = np.zeros((env.N_dm, max_dim, H, W), dtype=env.dtype)
 
     for i, pred_id in enumerate(env.dm_ids):
@@ -94,5 +96,10 @@ def build_observation_batch(env):
                         observed_biomass[k], direction)
             for k, layer_shift in enumerate(impact_shifts[direction]):
                 obs[i, base + 1 + n_other + k] = layer_shift
+
+        if env._has_daylight:
+            # Light level of this tick, uniform over the grid; the last
+            # slot of the DM's compact layout (section 137).
+            obs[i, int(env.per_dm_in_dim[i]) - 1] = light
 
     return obs.transpose(0, 2, 3, 1).reshape(env.N_dm, H * W, max_dim)
