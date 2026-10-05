@@ -3750,6 +3750,49 @@ class FGConfigApp:
         # Keep mute-button labels in sync with the freshly selected row.
         self._refresh_mute_button_labels()
 
+    # Optional species fields whose absence and 0 mean the same thing
+    # (off / module default). An empty editor field is written as 0.0,
+    # which must not add these keys to an entry that never had them.
+    OPTIONAL_ZERO_KEYS = frozenset({
+        "m1_visual_share", "m1_tactile_share", "depth_risk_ratio",
+        "hide_reference", "light_saturation", "light_reference_day",
+    })
+
+    @staticmethod
+    def _same_value(old, new):
+        """True when writing ``new`` over ``old`` would change nothing.
+
+        Numbers compare by value, so ``0.10`` in the file is not rewritten
+        as ``0.1`` just because the field was re-read.
+        """
+        if isinstance(old, bool) or isinstance(new, bool):
+            return old == new
+        try:
+            return float(old) == float(new)
+        except (TypeError, ValueError):
+            return old == new
+
+    def _merge_species_entry(self, target, config, original_keys, is_dm):
+        """Write ``config`` into the library entry ``target`` in place.
+
+        The library is a ruamel round-trip document: comments live on the
+        mapping object, so replacing it with a plain dict (as the editor
+        used to) dropped every comment of the edited group. Only changed
+        values are assigned, and optional fields still at their default
+        are not added (see OPTIONAL_ZERO_KEYS; ``current_response`` at the
+        engine's default for the group kind likewise).
+        """
+        for key, value in config.items():
+            if key not in original_keys:
+                if key in self.OPTIONAL_ZERO_KEYS and self._same_value(0.0, value):
+                    continue
+                if key == "current_response" and self._same_value(
+                        0.0 if is_dm else 1.0, value):
+                    continue
+            if key in target and self._same_value(target[key], value):
+                continue
+            target[key] = value
+
     def apply_fg_changes(self):
         category = self.active_fg_category
         if category is None:
@@ -4082,8 +4125,6 @@ class FGConfigApp:
                 ):
                     return
 
-        self.current_fg_configs[fg_id] = config
-
         # Persist initial_biomass range on the project FG entry (per-project value).
         # Always remove the legacy scalar key so projects converge on the new schema.
         fg_entry = fgs[idx]
@@ -4095,10 +4136,18 @@ class FGConfigApp:
             fg_entry["initial_biomass_min"] = int(initial_biomass_min_val)
             fg_entry["initial_biomass_max"] = int(initial_biomass_max_val)
 
-        # Sync remaining fields with global library
+        # Sync remaining fields with global library - in place, so the
+        # entry keeps its comments and untouched number formatting.
         if "species_definitions" not in self.global_library:
             self.global_library["species_definitions"] = {}
-        self.global_library["species_definitions"][fg_id] = config
+        species_defs = self.global_library["species_definitions"]
+        target = species_defs.get(fg_id)
+        if not isinstance(target, dict):
+            target = {}
+            species_defs[fg_id] = target
+        original_keys = set(existing.keys()) if isinstance(existing, dict) else set()
+        self._merge_species_entry(target, config, original_keys, is_dm)
+        self.current_fg_configs[fg_id] = target
 
         # ``energy_gain`` är legacy och varken läses av runtime
         # (``lib/environments/ecosystem.py`` läser numera bytets
@@ -4149,8 +4198,10 @@ class FGConfigApp:
                 self.global_library["interaction_definitions"][key] = {}
             
             for data_key, var in data.items():
+                entry = self.global_library["interaction_definitions"][key]
                 if isinstance(var, tk.BooleanVar):
-                    self.global_library["interaction_definitions"][key][data_key] = bool(var.get())
+                    if not (data_key in entry and entry[data_key] == bool(var.get())):
+                        entry[data_key] = bool(var.get())
                 else:
                     val_str = var.get()
                     if val_str:
@@ -4161,7 +4212,9 @@ class FGConfigApp:
                                         "interaction_definitions"][key]):
                                 # Absent means 0; keep unpaired keys clean.
                                 continue
-                            self.global_library["interaction_definitions"][key][data_key] = val
+                            if not (data_key in entry
+                                    and self._same_value(entry[data_key], val)):
+                                entry[data_key] = val
                         except ValueError:
                             pass # skip invalid
                     elif data_key in ("visibility_floor", "dark_ratio",

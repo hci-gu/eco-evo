@@ -13357,3 +13357,13 @@ remain open exactly as described in 71.9 / 71.11.
     now the one definition (energy_content + reference fill x max
     reserve for prey_includes_reserve), used by the editor gate and by
     interactions.reserve_food_settings; a test pins editor == runtime.
+141.6 FG editor keeps the library intact: applying a group replaced its
+    ruamel mapping with a plain dict, which dropped every comment in the
+    group's block (porpoises lost ~20 lines of literature notes on a
+    biomass edit), rewrote 0.10 as 0.1 and added the new optional fields
+    as 0. _merge_species_entry now writes changed values in place and
+    skips optional fields still at their default; the matrix save only
+    assigns changed values. Saving all six groups and the matrices
+    leaves fg_library.yaml byte-identical; comments restored from git.
+    tests/test_fgconfig_preserves_library.py. Porpoise spawn range in
+    mareld2.yaml is now 6-18 t (inference 12), a user change.

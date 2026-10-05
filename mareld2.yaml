@@ -44,9 +44,9 @@ decision_makers:
     initial_biomass_max: 24000
     inference_initial_biomass: 12000
   - group_id: porpoises
-    initial_biomass_min: 20
-    initial_biomass_max: 80
-    inference_initial_biomass: 40
+    initial_biomass_min: 6
+    initial_biomass_max: 18
+    inference_initial_biomass: 12
   - group_id: seabirds
     initial_biomass_min: 12
     initial_biomass_max: 50
