@@ -96,6 +96,9 @@ class EcosystemEnvironment:
         self.loss_impact = {fid: 0.0 for fid in self.fgs}
         # Residual natural mortality M1 (section 132; see loss_accounting).
         self.loss_natural = {fid: 0.0 for fid in self.fgs}
+        # Exposure-weighted M1 split per FG: visual / tactile / other
+        # (section 139); only FGs with exposure weighting get a row.
+        self.loss_natural_parts = {}
         self._extinction_events = {fid: 0 for fid in self.fgs}
         self.intake_by_pred_prey = {fid: {} for fid in self.fgs}
         # Local reward (``--local_reward``): when set to a

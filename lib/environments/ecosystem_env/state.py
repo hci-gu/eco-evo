@@ -4,7 +4,8 @@ from typing import Dict, List, Optional
 import numpy as np
 import torch
 
-from lib.environments.ecosystem_env import grid_masks, impacts, interactions
+from lib.environments.ecosystem_env import (
+    grid_masks, impacts, interactions, natural_mortality)
 
 
 @dataclass
@@ -123,6 +124,19 @@ def build_static_caches(env):
     env.eat_static_mask = eat_static
     env.max_intake_mat = matrices.max_intake
     env.energy_gain_mat = matrices.energy_gain
+    env.assimilation_mat = matrices.assimilation
+    # Prey whose energy reserve is eaten with it (section 140): per prey
+    # column the max reserve and the reference fill already folded into
+    # ``energy_gain_mat``; the tick corrects to the cell's actual fill.
+    env.prey_reserve_max = np.zeros(env.N_all, dtype=env.dtype)
+    env.prey_reserve_fill = np.zeros(env.N_all, dtype=env.dtype)
+    env.prey_reserve_food = np.zeros(env.N_all, dtype=bool)
+    for j, fid in enumerate(env.global_fg_order):
+        settings = interactions.reserve_food_settings(env.fgs[fid])
+        if settings is not None:
+            env.prey_reserve_max[j], env.prey_reserve_fill[j] = settings
+            env.prey_reserve_food[j] = True
+    env._has_reserve_food = bool(np.any(env.prey_reserve_food))
     env.handling_time_mat = handling_time
     env._has_holling2 = bool(np.any(handling_time > 0.0))
     # Specialists (exactly one active prey) use Type III; generalists
@@ -180,6 +194,10 @@ def build_static_caches(env):
     for i, _fid in enumerate(env.dm_ids):
         j = int(env.dm_index_in_all[i])
         env._all_visibility_floor[j] = env.dm_visibility_floor[i]
+
+    # Exposure-weighted natural mortality (section 139); needs the
+    # visibility floors above and the daylight calendar (built earlier).
+    natural_mortality.build(env)
 
     # (N_dm, N_all) pair-resolved visibility floor. Base = the prey FG's
     # own floor (column broadcast), overridden where the interaction

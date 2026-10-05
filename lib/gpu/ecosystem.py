@@ -54,6 +54,15 @@ class TensorEcosystem:
         self.eat_mask = tensor(env.eat_static_mask)
         self.intake_rate = tensor(env.max_intake_mat)[None, :, :, None]
         self.energy_gain = tensor(env.energy_gain_mat)[None, :, :, None]
+        # Prey whose reserve is eaten with it (section 140): the static
+        # quality holds the reference fill, the tick adds the difference
+        # to the cell's reserve per tonne.
+        self.reserve_food = bool(getattr(env, "_has_reserve_food", False))
+        if self.reserve_food:
+            self.assimilation = tensor(env.assimilation_mat)[None, :, :, None]
+            self.reserve_food_mask = tensor(env.prey_reserve_food)[None, :, None]
+            self.reserve_reference = tensor(
+                env.prey_reserve_fill * env.prey_reserve_max)[None, :, None]
         self.handling = tensor(env.handling_time_mat)[None, :, :, None]
         self.type3 = tensor(env._type3_pred_mask.reshape(self.D))[None, :, None, None]
         # Beddington-DeAngelis interference w_X [1/ton], per DM. Mirrors
@@ -144,6 +153,33 @@ class TensorEcosystem:
             if env.apply_natural_mortality and fg.is_decision_maker else 1.0
             for fg in groups
         ])[None, :, None]
+        # Exposure-weighted M1 (section 139), mirroring
+        # ``natural_mortality.components``: per group [1, G, 1] shares,
+        # depth-risk ratio, floor and references, and a (T, G, 1) visual
+        # light multiplier. Groups without it keep ``mortality_keep``.
+        exposure = getattr(env, "m1_exposure", {}) or {}
+        self.m1_exposure_on = bool(exposure) and env.apply_natural_mortality
+        if self.m1_exposure_on:
+            def column(key, default):
+                return tensor([float(exposure[f][key]) if f in exposure
+                               else default for f in self.ids])[None, :, None]
+            self.m1_flag = tensor([f in exposure for f in self.ids],
+                                  torch.bool)[None, :, None]
+            self.m1_rate = 1.0 - self.mortality_keep
+            self.m1_visual = column("visual", 0.0)
+            self.m1_tactile = column("tactile", 0.0)
+            self.m1_rho = column("rho", 1.0)
+            self.m1_floor = column("floor", 0.0)
+            self.m1_v_ref = column("v_ref", 1.0)
+            self.m1_d_ref = column("d_ref", 1.0)
+            light = np.ones((self.light_period, self.G), dtype=np.float32)
+            for j, fid in enumerate(self.ids):
+                table = exposure.get(fid, {}).get("light")
+                if table is not None:
+                    light[:, j] = table
+            self.m1_light = tensor(light)[:, :, None]
+            self.m1_light_on = any(exposure[f].get("light") is not None
+                                   for f in exposure)
         self._build_indices(env)
 
     def tensor(self, value, dtype=torch.float32):
@@ -338,6 +374,12 @@ class TensorEcosystem:
         scale = torch.where(total > harvest, harvest / total.clamp_min(1e-30), 1.0)
         actual = demand * scale[:, None]
         gains = (actual * self.energy_gain).sum(2)
+        if self.reserve_food:
+            density = torch.where(biomass > 1e-9,
+                                  reserve / biomass.clamp_min(1e-9), 0.0)
+            offset = (density - self.reserve_reference) * self.reserve_food_mask
+            gains = gains + (actual * self.assimilation
+                             * offset[:, None]).sum(2)
         intake = actual.sum(1)
         reduction = torch.where(biomass > 1e-9, (biomass - intake) / (biomass + 1e-9), 0.0)
         return biomass - intake, reserve * reduction, gains, hidden, actual
@@ -508,9 +550,33 @@ class TensorEcosystem:
                  * self.energy_content[:, self.dm_index][:, :, None])
         return (floor.double() * float(factor)).clamp_min(1e-12)
 
-    def population(self, biomass, reserve, seed_multiplier, light_index=None):
-        b = biomass * self.mortality_keep
-        r = reserve * self.mortality_keep
+    def mortality_keep_field(self, hidden, light_index=None):
+        """Per-cell survival of M1 this tick: [B, G, C] or [1, G, 1]."""
+        if not self.m1_exposure_on:
+            return self.mortality_keep
+        light = 1.0
+        if self.m1_light_on:
+            if light_index is None:
+                raise ValueError("light_index is required with visual M1")
+            light = self.m1_light[light_index.reshape(-1)]
+        visible = (1.0 - hidden * (1.0 - self.m1_floor)) * light
+        deep = (1.0 - hidden) + self.m1_rho * hidden
+        factor = ((1.0 - self.m1_visual - self.m1_tactile)
+                  + self.m1_visual * visible / self.m1_v_ref
+                  + self.m1_tactile * deep / self.m1_d_ref)
+        keep = 1.0 - (self.m1_rate * factor).clamp(0.0, 1.0)
+        return torch.where(self.m1_flag, keep, self.mortality_keep)
+
+    def population(self, biomass, reserve, seed_multiplier, light_index=None,
+                   hidden=None):
+        if self.m1_exposure_on:
+            if hidden is None:
+                raise ValueError("hidden is required with exposure-weighted M1")
+            keep = self.mortality_keep_field(hidden, light_index)
+        else:
+            keep = self.mortality_keep
+        b = biomass * keep
+        r = reserve * keep
         surplus = self.energy_level(b, r) - self.maintenance
         delta = b * torch.where(surplus >= 0, self.growth, self.starve) * surplus
         if self.mass_balance:
@@ -610,7 +676,8 @@ class TensorEcosystem:
             b, r, drift = self.advect(b, r, tick, current_keys, track=True)
         else:
             b, r = self.advect(b, r, tick, current_keys)
-        b, r, starve_loss = self.population(b, r, seed_multiplier, light_index)
+        b, r, starve_loss = self.population(b, r, seed_multiplier, light_index,
+                                            hidden)
         if not track_source:
             return b, r, hidden, intake, starve_loss
         tracked, frac_in = self.tracked_energy(flow, b, r, drift)

@@ -369,7 +369,8 @@ def apply_b0_overrides(env, b0_overrides):
 def build_env(project_path, grid_size, seed=None, verbose=True,
               apply_natural_mortality=False, allowed_mask=None,
               migration=False, currents=None, mortality_multiplier=1.0,
-              mass_balance=False, tick_hours=LIBRARY_TICK_HOURS):
+              mass_balance=False, tick_hours=LIBRARY_TICK_HOURS,
+              library_path=None):
     """Construct a fresh EcosystemEnvironment for inference.
 
     A given ``seed`` also seeds NumPy's global RNG. The tick draws from it
@@ -377,6 +378,9 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     so without this the same ``--seed`` gave rollouts
     that drift apart by a few per cent over thousands of ticks (section
     124.4). ``seed=None`` leaves the global RNG alone.
+
+    ``library_path`` overrides fgconfig/fg_library.yaml; the probes use it
+    to try a library variant without touching the real file.
     """
     if seed is not None:
         np.random.seed(int(seed) & 0xFFFFFFFF)
@@ -385,10 +389,12 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     if allowed_mask is not None:
         accessibility = np.asarray(allowed_mask).reshape(H, W).astype(np.float32)
     if project_path:
+        library_kwargs = ({'library_path': library_path}
+                          if library_path else {})
         fgs, impact_vars, _impact_ranges, observable_impact_vars = load_project_config(
             project_path, grid_size=grid_size, seed=seed, mode='inference',
             allowed_mask=accessibility, tick_hours=tick_hours,
-            apply_natural_mortality=apply_natural_mortality)
+            apply_natural_mortality=apply_natural_mortality, **library_kwargs)
     else:
         fgs = setup_full_mareld_mvp(grid_size=grid_size, seed=seed,
                                     allowed_mask=accessibility,

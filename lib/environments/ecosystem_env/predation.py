@@ -17,6 +17,16 @@ def apply_predation(env, actions):
     )
     prey_biomass = np.stack(
         [env.fgs[fid].biomass for fid in env.global_fg_order], axis=0)
+    if env._has_reserve_food:
+        reserve_offset = np.zeros_like(prey_biomass)
+        for j in np.flatnonzero(env.prey_reserve_food):
+            fg = env.fgs[env.global_fg_order[j]]
+            density = np.where(
+                fg.biomass > 1e-9,
+                fg.energy_reserve / np.maximum(fg.biomass, np.float32(1e-9)),
+                np.float32(0.0))
+            reserve_offset[j] = (density - env.prey_reserve_fill[j]
+                                 * env.prey_reserve_max[j])
     visible_biomass, pair_visible_biomass = interactions.visible_prey_biomass(
         env, prey_biomass, actions)
 
@@ -91,6 +101,14 @@ def apply_predation(env, actions):
     gains = (
         actual_intake * env.energy_gain_mat[:, :, None, None]
     ).sum(axis=1)
+    if env._has_reserve_food:
+        # The eaten tonnes carry the prey's reserve (section 140):
+        # correct the static quality (evaluated at the reference fill)
+        # to the reserve per tonne in the cell before predation.
+        gains = gains + (
+            actual_intake * env.assimilation_mat[:, :, None, None]
+            * reserve_offset[None, :, :, :]
+        ).sum(axis=1)
     for i, fid in enumerate(env.dm_ids):
         env.fgs[fid].temp_energy_gains = gains[i]
 

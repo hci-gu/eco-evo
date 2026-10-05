@@ -63,6 +63,9 @@ def build_parser():
     parser = argparse.ArgumentParser(
         description="Measure whether the ecosystem is viable without training.")
     parser.add_argument("--project", default="mareld2.yaml")
+    parser.add_argument("--library", default=None,
+                        help="library file to use instead of "
+                             "fgconfig/fg_library.yaml (to test a variant)")
     add_tick_length_argument(parser)
     parser.add_argument("--grid", type=parse_grid, default=(20, 20),
                         help="Grid as n*m (default: 20*20).")
@@ -138,6 +141,7 @@ def _build_env(args, seed):
         mass_balance=args.mass_balance,
         migration=args.migration == "on",
         tick_hours=args.tick_length,
+        library_path=args.library,
     )
 
 

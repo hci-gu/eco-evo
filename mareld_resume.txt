@@ -13139,3 +13139,153 @@ remain open exactly as described in 71.9 / 71.11.
     - I_k is from Kattegat (Anholt E), not the open Skagerrak.
     - The growth_rate source is one April experiment in the southern
       North Sea (131.3).
+
+139 EXPOSURE-WEIGHTED M1 (DEPTH RISK) - MECHANISM IN, LIBRARY OFF (2026-10-05)
+------------------------------------------------------------------------
+139.1 Why
+    Run pzbpgp248nsrpfix43 (train_gpu, daylight on, floor 0.2) learned
+    no diel vertical migration: zooplankton rests ~0.8 around the clock
+    (day-night difference <= 0.05 in every month). Realised herring
+    predation on zoo was 2.13 /yr against the budget's 5.24 (= the
+    visible fraction 1 - 0.8 * 0.8), gadoid predation on herring 0.91
+    against 0.31, herring starvation 1.04 /yr. Literature (subagent,
+    mostly DERIVED from Mackinson & Daskalov 2007, North Sea Ecopath
+    1991; Hirst & Kiorboe 2002; Maud et al. 2018): only ~2 of zoo's
+    M1 19.7 /yr is visual (fish larvae, Norway pout, 0-group), ~10-15
+    tactile (chaetognaths, gelatinous), 2.5-8.3 non-predation; tactile
+    predators hunt where zoo hides by day (Tonnesson & Tiselius 2005,
+    Gullmarsfjorden, abstract only; Ohman, Frost & Cohen 1983).
+
+139.2 Mechanism (lib/environments/ecosystem_env/natural_mortality.py)
+    Per tick and cell, pi = this tick's rest (hiding) fraction:
+      M1(t,c) = M1 [ (1 - s_v - s_t) + s_v V/V_ref + s_t D/D_ref ]
+      V = (1 - pi (1 - phi)) m(t),  D = (1 - pi) + rho pi
+    phi = the FG's visibility_floor, m(t) = daylight attack multiplier
+    (m1_visual_dark_ratio 0.1, m1_visual_threshold_deg -6; 1 without
+    the calendar), refs at hide_reference (default 0.5) and annual-mean
+    light, so M1 averages to natural_mortality at pi_ref and the
+    growth budget is unchanged. Keys per DM species: m1_visual_share,
+    m1_tactile_share, depth_risk_ratio, hide_reference (editor: 0 means
+    default), m1_visual_dark_ratio, m1_visual_threshold_deg. Inert (and
+    bit-identical) unless a share is set. CPU population_change and the
+    GPU population() (needs this tick's hidden fraction, now passed from
+    step) agree; env.loss_natural_parts books visual/tactile/other.
+    FG editor: four fields under Natural Mortality.
+
+139.3 Viability gate (tools/probes/depth_risk_viability.py): trained
+    policies of pzbpgp248nsrpfix43 for every DM, zooplankton's hiding
+    replaced by frozen schedules; 20x20, migration + currents +
+    mortality on, 1460 ticks, 2 seeds; s_v 2/19.7, s_t 10/19.7.
+        M1        schedule  zoo end  zoo mean  zoo min  M2 herring
+        constant  trained    1.21     0.73     0.084     2.33
+        constant  flat80     0.22     0.49     0.056     3.13
+        constant  dvm80      0.25     0.49     0.050     2.92
+        constant  flat50     0.35     0.35     0.037     3.84
+        constant  dvm50      0.56     0.28     0.026     4.13
+        rho 2     trained    1.16     0.69     0.082     2.42
+        rho 2     flat80     0.15     0.45     0.051     3.38
+        rho 2     dvm80      0.19     0.47     0.050     3.06
+        rho 4     trained    1.10     0.66     0.079     2.51
+        rho 4     flat80     0.15     0.38     0.086     3.96
+    (50 % schedules are identical for every rho: pi = pi_ref.) Herring
+    ends at 0.00-0.06 in every row.
+    Readings:
+    - The gate set before implementing (dvm beats constant hiding at
+      rho 2) FAILS: no frozen schedule is viable, dvm vs flat at equal
+      mean changes the zoo mean by <= 0.02, dvm50 vs flat80 is mixed
+      (higher end, lower mean and minimum).
+    - The trained, state-dependent policy beats every frozen schedule.
+      Its ~0.8 rest is grazing restraint, not predator avoidance:
+      flat50 doubles grazing (3.8-4.4 vs 1.8 kt per 3 days on 20x20),
+      phytoplankton falls 7.4 -> 0.7 kt in 15 days and zoo starves.
+      Zoo's grazing capacity exceeds phytoplankton's maximum production
+      (rK/4) about twofold, so the population boom-busts unless it
+      rests; the shared policy learns restraint at the population level.
+    - Depth risk costs the trained policy ~5 % (rho 2) to ~10 % (rho 4)
+      of mean zoo biomass and raises herring's realised M2 only
+      2.33 -> 2.42-2.51. DVM timing alone lowers herring M2 (3.13 ->
+      2.92) - the light-dependent herring attack rate already rewards
+      it - but the gain is small next to the food dynamics.
+    Decision: mechanism and tests stay, fg_library.yaml is NOT changed
+    (no shares set). The open problems are food-side: zoo grazing
+    capacity vs phyto production, herring starvation in winter.
+
+140 HERRING: FLOOR SWEEP, OVERWINTERING, LEAN/RESERVE SPLIT (2026-10-05)
+------------------------------------------------------------------------
+140.1 Floor sweep (tools/probes/depth_risk_viability.py --floors):
+    trained policies of pzbpgp248nsrpfix43, 20x20, migration+currents+
+    mortality, 1460 ticks, 3 seeds. herring -> zoo visibility_floor
+    0.2/0.3/0.4/0.6/0.8/1.0 -> realised herring M2 on zoo 2.40 ... 2.98
+    /yr (budget 5.24), herring end 0.055 ... 0.20, starvation 0.85 ...
+    0.56 /yr, zoo mean 0.71-0.72 throughout. The floor is NOT the main
+    limiter. Per-month diagnosis: spring-autumn herring are satiated
+    (reserve 0.89, hunger 0.2, overlap 1.0), winter (Dec-Feb) zoo falls
+    to 0.6-2 t/cell and herring lose 60-90 % to starvation. Even well
+    fed, herring growth at s = 0.89 (~1.2 /yr) does not cover the
+    realised losses (M1 0.58 + gadoid predation ~1.0 vs budget 0.31).
+
+140.2 Overwintering rules (tools/probes/herring_overwinter.py; herring
+    rule replaces the policy, everything else trained): resting in
+    winter or at low food made it WORSE (winter survival 0.13 -> 0.01-
+    0.06): eating still nets -3..-7 MJ/t/tick against -8 for resting,
+    and starvation mortality starts at half the reserve (u = 0.5), i.e.
+    at 7.5 + 1.2 = 8.7 MJ/kg, while real herring reach ~4.5-6 kJ/g in
+    spring and live. gadoids -> herring floor 1.0 changed nothing.
+
+140.3 Literature (subagents; mostly DERIVED, see their reports):
+    temperature at A17 (SHARK, derived): 0-10 m 4.0 (Feb) - 17.0 (Aug),
+    annual 10.4 C; 50-100 m 6.8-9.9 C, annual ~8.2 C, warmer than the
+    surface Dec-Mar. Q10 for respiration: herring 1.73 (NEMURO.FISH,
+    Rose et al. 2008), cod 1.8-2.1, copepods 1.8-2.1 (Ikeda 2001), C.
+    finmarchicus diapause 10-20 % of active respiration. Temperature
+    alone lowers herring winter cost only ~7 % (ref 8.2 C).
+    Herring energy density: lean ~4.1 kJ/g (protein 15-19 %, Warren et
+    al. 2026); North Sea Q3 10.1-11.9 kJ/g, Q1 4.4-6.5 (Pedersen &
+    Hislop 2001 via JNCC Report 633); fat 2.1 % (Baltic, March) to
+    13.6-26 %; ED ~ 4.1 + 0.396 fat%. North Sea herring feed at a
+    reduced rate in winter (Segers et al. 2007: 578/855 stomachs with
+    food in February), they do not fast.
+
+140.4 Engine: prey reserve is food (section 140). A DM species with
+    prey_includes_reserve: true passes its reserve to the predator:
+    gain = intake * assim * (energy_content + reserve per tonne in the
+    cell). The static energy_gain_mat (gates, budget_gate, viability)
+    is evaluated at reserve_reference_fill (default 0.5). CPU predation
+    and GPU predation; tests/test_reserve_food.py and a parity test.
+    Inert unless set. inference.build_env, tools/viability.py and
+    herring_overwinter.py take a library override (--library).
+
+140.5 Proposed split for pelagic_fish (NOT applied to the library):
+    energy_content 4000 (lean), max_energy_reserve 7000 (18 % fat),
+    maintenance_level 0.2 (starvation from ~2 % fat), prey_includes_
+    reserve true, reserve_reference_fill 0.5 (static quality 7500 as
+    today, so the porpoise clupeid-share gate is unchanged).
+    Overwinter test, trained policies, 3 seeds:
+        library      rule      herring end  mean  winter  starve  pred
+        current      trained     0.055      0.63   0.13    0.85   1.01
+        current      lowfood2    0.020      0.61   0.06    1.11   0.86
+        split u0.15  trained     0.389      0.81   0.54    0.14   0.93
+        split u0.15  lowfood2    0.547      0.87   0.74    0.08   0.73
+        split u0.20  trained     0.359      0.80   0.50    0.18   0.92
+        split u0.20  lowfood2    0.515      0.86   0.70    0.12   0.72
+        split u0.30  trained     0.303      0.78   0.43    0.28   0.91
+        split u0.30  lowfood2    0.439      0.84   0.61    0.22   0.72
+    Zoo mean 0.70-0.73 in all. With the split, resting at low food now
+    PAYS (winter 0.50 -> 0.70): a retrained herring policy can learn
+    to fast. Herring still decline (~ -50..-65 %/yr) through predation
+    ~0.9 /yr, three times the gadoid budget - the next item.
+    Frozen viability rig (greedy, eat; colocated; 20x20; 2 yr; 2 seeds;
+    mortality on): NOT VIABLE for every variant including the current
+    library; herring ~0 in all arms. Under greedy the gadoids keep
+    0.15-0.20 x spawn with the split (fat herring is better food) vs
+    0.003 today. Not decisive (VIABILITY.md section 6).
+    The checkpoint's energy observation changes meaning with the split
+    (s relative to 7000, not 2400): retrain after applying.
+
+140.6 APPLIED (user decision 2026-10-05): the u = 0.2 split is in
+    fg_library.yaml (pelagic_fish energy_content 4000, max_energy_
+    reserve 7000, maintenance_level 0.2, prey_includes_reserve true,
+    reserve_reference_fill 0.5; derived growth_rate 0.00131775, was
+    0.0021084). budget_gate unchanged (gadoid quality 6000, porpoise
+    6750 from herring). Suite 927 passed. Checkpoints trained before
+    this see a different herring energy observation: retrain.

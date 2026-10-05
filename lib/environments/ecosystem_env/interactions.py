@@ -13,6 +13,29 @@ class InteractionMatrices:
     handling_time: np.ndarray
     vis_floor_over: np.ndarray
     vis_floor_has: np.ndarray
+    assimilation: np.ndarray = None
+
+
+def reserve_food_settings(fg):
+    """(max reserve, reference fill) if ``fg``'s reserve is eaten too.
+
+    Section 140: with ``prey_includes_reserve`` a predator gains the
+    prey's energy_content PLUS the energy reserve each eaten tonne
+    carries (fat autumn herring is better food than spent spring
+    herring). ``reserve_reference_fill`` (default 0.5) is the fill at
+    which the static quality ``energy_gain_mat`` - used by the energy
+    gates, budget_gate and the viability rig - is evaluated. None for
+    every other FG, and always for non-decision makers (no reserve).
+    """
+    params = fg.params
+    if not fg.is_decision_maker or not params.get("prey_includes_reserve",
+                                                  False):
+        return None
+    max_reserve = float(getattr(fg, "max_energy_reserve", 0.0) or 0.0)
+    fill = _float_or_default(params.get("reserve_reference_fill", None), 0.5)
+    if not 0.0 <= fill <= 1.0:
+        raise ValueError(f"reserve_reference_fill must be in [0, 1], got {fill}")
+    return max_reserve, fill
 
 
 def _float_or_default(value, default):
@@ -26,6 +49,7 @@ def build_interaction_matrices(env):
     eat_static = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     max_intake = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     energy_gain = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
+    assimilation_mat = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     handling_time = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     # Optional per-(predator, prey) visibility floor override. Empty /
     # missing cells inherit the prey FG's own ``visibility_floor``
@@ -68,7 +92,14 @@ def build_interaction_matrices(env):
             )
             prey_energy_content = _float_or_default(
                 env.fgs[prey_id].params.get("energy_content", 0.0), 0.0)
+            reserve_food = reserve_food_settings(env.fgs[prey_id])
+            if reserve_food is not None:
+                # Quality at the reference fill; the tick adds the
+                # difference to the cell's actual reserve (section 140).
+                max_reserve, fill = reserve_food
+                prey_energy_content += fill * max_reserve
             energy_gain[i, j] = prey_energy_content * assimilation
+            assimilation_mat[i, j] = assimilation
             handling_time[i, j] = float(inter_def.get("handling_time", 0.0))
 
             vis_floor = _float_or_default(
@@ -84,6 +115,7 @@ def build_interaction_matrices(env):
         handling_time=handling_time,
         vis_floor_over=vis_floor_over,
         vis_floor_has=vis_floor_has,
+        assimilation=assimilation_mat,
     )
 
 

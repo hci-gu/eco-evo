@@ -641,6 +641,13 @@ class FGConfigApp:
             ("Starve Rate (catabolism, fraction/{tick})", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
             ("Natural Mortality (fraction/{tick})", "natural_mortality", "entry", 0.0, 1.0),
+            # Exposure-weighted M1 (section 139): shares of Natural
+            # Mortality that follow the visible biomass and the light, or
+            # that hit hidden biomass depth_risk_ratio times harder.
+            ("  M1 Visual Share (0-1; hidden by Rest, follows light)", "m1_visual_share", "entry", 0.0, 1.0),
+            ("  M1 Tactile Share (0-1; stronger at depth when hiding)", "m1_tactile_share", "entry", 0.0, 1.0),
+            ("  Depth Risk Ratio (tactile risk hidden / visible; 0 = 1)", "depth_risk_ratio", "entry", 0.0, 20.0),
+            ("  Hide Reference (hidden share at which M1 is the value above; 0 = 0.5)", "hide_reference", "entry", 0.0, 1.0),
             ("Max Intake Rate (ton prey / ton consumer / {tick})", "max_intake_rate", "entry", 0.0, 1.0),
             ("Interference (Beddington-DeAngelis w, 1/ton, 0=off)", "interference", "entry", 0.0, 10.0),
             ("Movement Speed (cells/{tick})", "movement_speed", "entry", 0.0, 1.0),

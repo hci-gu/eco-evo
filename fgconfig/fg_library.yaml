@@ -132,13 +132,26 @@
   pelagic_fish:
     display_name: "Pelagic Fish"
     is_decision_maker: true
-    maintenance_level: 0.5
-    max_energy_reserve: 2400.0
+    # Lean body + fat reserve (section 140). energy_content is the LEAN
+    # tissue, ~4.1 kJ/g from 15-19 % protein (Warren et al. 2026); the
+    # reserve is the fat, up to ~18 % (0.396 kJ/g per fat %), so a full
+    # herring holds ~11 kJ/g, the North Sea Q3 value of 10.1-11.9
+    # (Pedersen & Hislop 2001 via JNCC Report 633). Starvation mortality
+    # starts at 0.2 of the reserve (~2 % fat, the spring low of healthy
+    # Baltic herring, Rojbek et al. 2014), not at half of it: herring
+    # live through the winter on their fat. Predators eat the reserve
+    # with the fish (prey_includes_reserve); at the reference fill 0.5
+    # the static quality is 4000 + 0.5 x 7000 = 7500 MJ/t, the annual
+    # mean that section 98 settled on for the porpoise diet gate.
+    maintenance_level: 0.2
+    max_energy_reserve: 7000.0
     resting_metabolism: 8.0
     movement_speed: 1.0
     feeding_cost: 1.9
     movement_cost: 1.5
-    energy_content: 7500.0   # annual mean 7.5 MJ/kg, not the autumn peak (section 98)
+    energy_content: 4000.0
+    prey_includes_reserve: true
+    reserve_reference_fill: 0.5
     min_split_biomass: 0.5
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
@@ -148,7 +161,7 @@
     # r_max 0.648 /yr: biomass-weighted FishBase CMSY priors over herring,
     # sprat, mackerel, horse mackerel, sandeel and other planktivores.
     r_max: 0.648
-    growth_rate: 0.0021084
+    growth_rate: 0.00131775
     # M1 = M0 (0.391) + predation by groups that are not FGs (0.189:
     # sharks, rays, other fish, larvae) = 0.580 /yr, North Sea Ecopath
     # 1991. Predation by FGs lives in predation_mortality. Was 1.0e-04.
@@ -368,7 +381,7 @@ interaction_definitions:
     # the half-detection point of the logistic.
     dark_ratio: 0.1
     light_threshold_deg: -8.0
-    visibility_floor: 0.7
+    visibility_floor: 0.2
   gadoids_preys_on_pelagic_fish:
     preys_on: true
     predation_mortality: 0.2997

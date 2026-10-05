@@ -30,7 +30,7 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              pair_floors=None, min_split=200,
              extinction_factor=0.3, interference=None,
              mortality_multiplier=1.0, daylight=None, dark_ratios=None,
-             light_saturation=None):
+             light_saturation=None, m1_exposure=None, reserve_food=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -77,6 +77,11 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
             params["daylight"] = dict(daylight)
         if light_saturation and fid == "c":
             params["light_saturation"] = light_saturation
+        if m1_exposure and fid == "a":
+            params.update(m1_exposure)
+        if reserve_food is not None and fid == "b":
+            params["prey_includes_reserve"] = True
+            params["reserve_reference_fill"] = reserve_food
         fg = FunctionalGroup(fid, params)
         fg.initialize_state(shape, initial_biomass=rng.uniform(0.01, 3, shape),
                             randomize_energy=True, rng=rng)
@@ -273,6 +278,41 @@ def test_light_limited_growth_matches_reference(device, start_tick, with_pairs):
     # in late June (growth above the April reference).
     first = float(model.growth_light[start_tick, j_c])
     assert first == pytest.approx(0.0, abs=1e-6) if start_tick == 0 else first > 1.0
+
+
+@pytest.mark.parametrize("rho", [1.0, 3.0])
+@pytest.mark.parametrize("calendar", [False, True])
+def test_exposure_weighted_m1_matches_reference(device, rho, calendar):
+    """Section 139: per-cell M1 from this tick's hiding and light.
+
+    Only DM ``a`` carries the split; ``b`` must keep its scalar M1.
+    """
+    daylight = ({"latitude_deg": 58.15, "tick_hours": 6, "start_tick": 2,
+                 "random_start": False} if calendar else None)
+    env = make_env(mortality=True, min_split=0.0, extinction_factor=0.0,
+                   daylight=daylight,
+                   m1_exposure={"m1_visual_share": 0.2,
+                                "m1_tactile_share": 0.5,
+                                "depth_risk_ratio": rho})
+    model = _assert_parity(env, device, ticks=6)
+    assert model.m1_exposure_on
+    assert bool(model.m1_flag[0, model.ids.index("a"), 0])
+    assert not bool(model.m1_flag[0, model.ids.index("b"), 0])
+
+
+@pytest.mark.parametrize("fill", [0.0, 0.5])
+@pytest.mark.parametrize("handling", [0.0, 0.2])
+def test_reserve_as_food_matches_reference(device, fill, handling):
+    """Section 140: eaten tonnes of ``b`` carry its reserve to ``a``."""
+    env = make_env(handling=handling, min_split=0.0, extinction_factor=0.0,
+                   reserve_food=fill)
+    model = _assert_parity(env, device, ticks=6)
+    assert model.reserve_food
+    j = env.global_fg_order.index("b")
+    i = env.dm_ids.index("a")
+    # Static quality = (energy_content + fill * max reserve) * assim.
+    assert float(env.energy_gain_mat[i, j]) == pytest.approx(
+        (20 + fill * env.fgs["b"].max_energy_reserve) * 0.65, rel=1e-6)
 
 
 @pytest.mark.parametrize("activation", ["sig", "tanh", "relu"])

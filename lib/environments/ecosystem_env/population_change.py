@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 
 from lib.environments.ecosystem_env import interactions
+from lib.environments.ecosystem_env import natural_mortality as natural_mortality_module
 
 
 DEFAULT_MORTALITY_MULTIPLIER = 1.0
@@ -173,7 +174,26 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
     # factor; 1.0 (the default) leaves this branch bit-identical.
     natural_mortality *= float(getattr(env, "mortality_multiplier", 1.0))
     if natural_mortality > 0.0 and env.apply_natural_mortality:
-        keep = np.float32(max(0.0, 1.0 - natural_mortality))
+        # Exposure-weighted M1 (section 139): per cell, by this tick's
+        # hiding and light. None for every FG without it, which keeps
+        # the scalar path below bit-identical.
+        parts = natural_mortality_module.components(
+            env, fg_id, natural_mortality)
+        if parts is None:
+            keep = np.float32(max(0.0, 1.0 - natural_mortality))
+        else:
+            rate = np.clip(parts[0] + parts[1] + parts[2], 0.0, 1.0)
+            keep = (1.0 - rate).astype(env.dtype)
+            book = getattr(env, "loss_natural_parts", None)
+            if book is not None:
+                row = book.setdefault(fg_id, {"visual": 0.0, "tactile": 0.0,
+                                              "other": 0.0})
+                biomass = fg.biomass.astype(np.float64)
+                scale = np.where(parts[0] + parts[1] + parts[2] > 0.0,
+                                 rate / np.maximum(parts[0] + parts[1]
+                                                   + parts[2], 1e-300), 0.0)
+                for name, part in zip(("visual", "tactile", "other"), parts):
+                    row[name] += float((biomass * part * scale).sum())
         before = float(fg.biomass.sum())
         fg.energy_reserve = (fg.energy_reserve * keep).astype(
             env.dtype, copy=False)

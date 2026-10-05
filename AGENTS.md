@@ -92,6 +92,15 @@ fabricates mass.
   `growth_rate * P(t)/P_ref` (section 138; 0 at night, needs the site's
   light climate in the manifest). The old `seasonal_amplitude` /
   `seasonal_period` sine is gone.
+- M1 can be exposure-weighted (section 139: `m1_visual_share`,
+  `m1_tactile_share`, `depth_risk_ratio`): visual part follows the
+  visible biomass and the light, tactile part is stronger on hidden
+  biomass. Implemented on CPU and GPU but not set in the library - the
+  viability gate in section 139.3 did not justify it.
+- `prey_includes_reserve` (section 140): a prey DM's energy reserve is
+  eaten with it; the static quality is taken at
+  `reserve_reference_fill`. Set for `pelagic_fish` (section 140.6):
+  lean 4000 MJ/t + reserve up to 7000, starvation from 0.2 of it.
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((1-u)*1460)`,
   NDM `r = (r_max + sum M2) / 1460`. Checking/unchecking a predator in the
