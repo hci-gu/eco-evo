@@ -13367,3 +13367,39 @@ remain open exactly as described in 71.9 / 71.11.
     leaves fg_library.yaml byte-identical; comments restored from git.
     tests/test_fgconfig_preserves_library.py. Porpoise spawn range in
     mareld2.yaml is now 6-18 t (inference 12), a user change.
+
+142 Live viewer shows the daylight calendar (2026-10-06)
+142.1 What: with simulation_settings.daylight on, the pygame viewer
+    (train.py / train_gpu.py --visual, inference.py --visual, api.py)
+    shows "month = Apr" after the simulated time and "light = 0.42"
+    after gen/iter/T in the status bar, and draws a 2 px grey frame just outside every
+    heatmap, black (F = 0, night) to white (F = 1, full daylight).
+    F is the light observation channel (light_schedule at the civil
+    twilight threshold), so the frame shows what the policies see.
+    Without the calendar the viewer is unchanged (no month, no frame).
+142.2 How: daylight.calendar_at(cfg, tick) -> year tick, day of year,
+    month, F; daylight.month_of_day() and MONTH_NAMES. The viewer reads
+    cfg from params['daylight'] on the FG objects passed to
+    update_biomass (the loader's runtime_config, the same values the
+    env's light tables are built from), so no caller had to change. The
+    light is the one at the START of the given tick, matching the time
+    label (callers pass tick = t + 1 after env step t).
+142.3 Replay: the calendar is captured per frame and swapped in with
+    the heatmaps; the status bar stays live as before EXCEPT month and
+    light, which follow the frame on screen so they agree with the
+    frame colour. The month is never dropped when the status line is
+    too long; the light number is dropped first.
+142.4 Frame width 2 px: the colorbar starts 3 px below the heatmap.
+    The old 1 px (60,60,70) border is kept inside it, so the heatmap
+    keeps an edge at night. tests/test_viz_daylight.py.
+142.5 Frame changed to DAY LENGTH (user request, same day): the grey is
+    the day's sun hours on the year's own scale, black on the shortest
+    day, white on the longest, linear in hours between, constant within
+    a day (steps at midnight). daylight.day_length_hours(lat) is the
+    analytic sunrise equation (sun centre above the geometric horizon,
+    no refraction or twilight; declination at the day's solar noon),
+    checked against solar_elevation_deg to 0.1 h; 58.15 N spans
+    6.1-17.9 h. day_length_fraction() is the 0..1 scale (0.5 at the
+    equator, where there is no range). The status bar's "light = F"
+    became "daylight = 14.2 h". F (per tick) is still in calendar_at
+    but no longer drawn. 142.1-142.4 otherwise unchanged.

@@ -44,12 +44,16 @@ from typing import Dict, Mapping, Optional, Sequence
 
 import numpy as np
 
+from lib.world import daylight
 from lib.world.tick_time import (
     DAYS_PER_YEAR, HOURS_PER_DAY, resolve_tick_hours,
 )
 
 
 _VIRIDIS_256: Optional[np.ndarray] = None
+
+# Width of the daylight frame around each heatmap (section 142).
+_LIGHT_FRAME_PX = 2
 
 
 def _build_viridis_lut() -> np.ndarray:
@@ -687,6 +691,12 @@ class LiveVisualizer:
         self._last_frame_ts = 0.0
         self._status: Dict[str, object] = {}
         self._tick = 0
+        # Daylight calendar at the current tick (month, day length), or
+        # None when the project runs without one (section 137).
+        self._calendar: Optional[dict] = None
+        # The calendar of the frame on screen: the live one, or the
+        # replayed frame's during playback (set in ``_render_full``).
+        self._shown_calendar: Optional[dict] = None
         self._fps_clock_t = time.monotonic()
         self._fps_frames = 0
         self._fps_value = 0.0
@@ -879,6 +889,7 @@ class LiveVisualizer:
         try:
             new_rollout = (int(tick) == 0)
             self._tick = int(tick)
+            self._calendar = self._calendar_from(fgs, self._tick)
             for fid in self.fg_ids:
                 if fid not in fgs:
                     continue
@@ -931,6 +942,31 @@ class LiveVisualizer:
             self._maybe_render()
         except Exception as e:
             self._log_once(f"update_biomass failed: {e!r}")
+
+    def _calendar_from(self, fgs: Mapping[str, object],
+                       tick: int) -> Optional[dict]:
+        """The daylight calendar at ``tick``, read off the FG objects.
+
+        The loader puts the same ``params['daylight']`` (latitude, tick
+        length, the world's start tick) on every FG, and the environment
+        builds its light tables from exactly that, so every caller gets
+        the month and day length without passing anything new. Raw
+        arrays (tests) and projects without the calendar give None.
+
+        The day is the one at the START of ``tick`` - the instant the
+        time label describes - i.e. the day of the tick about to run,
+        not of the one just completed.
+        """
+        for obj in fgs.values():
+            params = getattr(obj, "params", None)
+            cfg = params.get("daylight") if isinstance(params, dict) else None
+            if cfg:
+                try:
+                    return daylight.calendar_at(cfg, tick)
+                except Exception as e:
+                    self._log_once(f"daylight calendar failed: {e!r}")
+                    return None
+        return None
 
     def update_reward(self, fg_id: str, value: float, step: int) -> None:
         # Back-compat shim: writes into the first tab's buffer (which is
@@ -1460,6 +1496,7 @@ class LiveVisualizer:
             "diet_breakdown": diet,
             "action_fracs": actf,
             "tick": int(self._tick),
+            "calendar": self._calendar,
             "status": dict(self._status),
         }
 
@@ -2726,6 +2763,16 @@ class LiveVisualizer:
     def _render_full(self) -> None:
         screen = self._screen
         screen.fill((18, 18, 22))
+        replaying = (not self._recording
+                     and self._playback_mode != "live"
+                     and self._current_rollout
+                     and 0 <= self._playback_idx < len(self._current_rollout))
+        # The status bar stays live during replay, except for the month
+        # and day length: those belong to the frame whose heatmaps (and
+        # daylight frames) are on screen, or the two would disagree.
+        self._shown_calendar = (
+            self._current_rollout[self._playback_idx].get("calendar")
+            if replaying else self._calendar)
         self._draw_status_bar()
         # Replay-state-swap: när vi inte är i live-läget ritar
         # heatmap-griden frame N av ``_current_rollout`` i stället för
@@ -2739,10 +2786,7 @@ class LiveVisualizer:
         # inte synas förrän rolloutten är klar (eller alls, i inference
         # där "live"-knappen saknas).
         swap = None
-        if (not self._recording
-                and self._playback_mode != "live"
-                and self._current_rollout
-                and 0 <= self._playback_idx < len(self._current_rollout)):
+        if replaying:
             swap = self._swap_in_frame(self._current_rollout[self._playback_idx])
         try:
             self._draw_heatmaps()
@@ -2768,6 +2812,7 @@ class LiveVisualizer:
             "diet_breakdown": self._diet_breakdown,
             "action_fracs": self._action_fracs,
             "tick": self._tick,
+            "calendar": self._calendar,
         }
         # Dekomprimera biomass-fält on demand: om ``_capture_frame``
         # lagrat ``_CompressedArray``-wrappers packar vi upp dem här så
@@ -2783,6 +2828,7 @@ class LiveVisualizer:
         self._diet_breakdown = frame.get("diet_breakdown", {})
         self._action_fracs = frame.get("action_fracs", {})
         self._tick = int(frame.get("tick", 0))
+        self._calendar = frame.get("calendar")
         return saved
 
     def _swap_out_frame(self, saved: dict) -> None:
@@ -2794,6 +2840,7 @@ class LiveVisualizer:
         self._diet_breakdown = saved["diet_breakdown"]
         self._action_fracs = saved["action_fracs"]
         self._tick = saved["tick"]
+        self._calendar = saved["calendar"]
 
     def _draw_playback_bar(self) -> None:
         """Rita uppspelningskontroller under heatmap-griden.
@@ -2995,6 +3042,15 @@ class LiveVisualizer:
         x, y, w, h = self._status_rect
         parts = [f"mode = {self.mode}", f"tick = {self._tick}",
                  f"time = {self._sim_time_label()}"]
+        # Daylight calendar: the month is kept with mode/tick/time when
+        # the line is too long. The day length (what the frame around
+        # every heatmap shows, in hours) goes after gen/iter/T, so it is
+        # the first of them to be dropped - the frame still shows it.
+        calendar = self._shown_calendar
+        n_fixed = 3
+        if calendar:
+            parts.append(f"month = {calendar['month_name']}")
+            n_fixed = 4
         for k in ("gen", "iter", "T"):
             if k in self._status:
                 v = self._status[k]
@@ -3002,6 +3058,8 @@ class LiveVisualizer:
                     parts.append(f"{k} = {v:.3f}")
                 else:
                     parts.append(f"{k} = {v}")
+        if calendar:
+            parts.append(f"daylight = {calendar['day_length_h']:.1f} h")
         if self._paused:
             parts.append("[PAUSED]")
         if self._log_heatmap:
@@ -3026,7 +3084,7 @@ class LiveVisualizer:
         # under the text. ``parts`` is already ordered by importance, so
         # trailing fields (fps, then grid, ...) are dropped until the rest
         # fits. The first three - mode, tick and simulated time - are
-        # never dropped.
+        # never dropped, nor is the month when there is a calendar.
         rolling = self._rolling_heatmap
         norm_label = "norm: rolling [n]" if rolling else "norm: fixed [n]"
         norm_surf = self._font.render(
@@ -3038,7 +3096,7 @@ class LiveVisualizer:
         btn_y = y + 2
 
         available = btn_x - (x + 6) - 12
-        while len(parts) > 3 and self._font_big.size("  ".join(parts))[0] > available:
+        while len(parts) > n_fixed and self._font_big.size("  ".join(parts))[0] > available:
             parts.pop()
         text = "  ".join(parts)
         surf = self._font_big.render(text, True, (230, 230, 235))
@@ -3540,6 +3598,19 @@ class LiveVisualizer:
         # Border.
         pg.draw.rect(self._screen, (60, 60, 70),
                      (hm_x, hm_y, W * self.cell_px, H * self.cell_px), 1)
+        # Daylight: a thin frame just outside the heatmap whose grey is
+        # the day's sun hours on the year's scale - black on the shortest
+        # day, white on the longest, linear between, constant within a
+        # day (it changes at midnight, not over the day).
+        # 2 px is what fits: the colorbar starts 3 px below the heatmap.
+        if self._calendar:
+            grey = int(round(255.0 * min(1.0, max(0.0, float(
+                self._calendar.get("day_length_frac", 0.0))))))
+            pg.draw.rect(self._screen, (grey, grey, grey),
+                         (hm_x - _LIGHT_FRAME_PX, hm_y - _LIGHT_FRAME_PX,
+                          W * self.cell_px + 2 * _LIGHT_FRAME_PX,
+                          H * self.cell_px + 2 * _LIGHT_FRAME_PX),
+                         _LIGHT_FRAME_PX)
 
         # ---- Colorbar legend under the heatmap ----------------------------
         # Per-FG normalisation: shows what the colour gradient maps to,

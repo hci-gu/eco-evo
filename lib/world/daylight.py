@@ -125,7 +125,10 @@ DEFAULT_LIGHT_REFERENCE_DAY = 105
 MIXED_LAYER_LAYERS = 40
 
 MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
-_MONTH_MID_DAY = np.cumsum((0,) + MONTH_DAYS[:-1]) + np.array(MONTH_DAYS) / 2.0
+_MONTH_START_DAY = np.cumsum((0,) + MONTH_DAYS[:-1])
+_MONTH_MID_DAY = _MONTH_START_DAY + np.array(MONTH_DAYS) / 2.0
+MONTH_NAMES = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
 def ticks_per_year(tick_hours):
@@ -138,6 +141,13 @@ def ticks_per_year(tick_hours):
     return HOURS_PER_YEAR // hours
 
 
+def _declination_rad(day_number):
+    """Solar declination for a continuous day number (1 = 1 Jan 00:00)."""
+    return np.radians(AXIAL_TILT_DEG) * np.sin(
+        2.0 * np.pi * (284.0 + np.asarray(day_number, dtype=np.float64))
+        / DAYS_PER_YEAR)
+
+
 def solar_elevation_deg(latitude_deg, hours_since_new_year):
     """Sun elevation in degrees at local solar time.
 
@@ -146,9 +156,7 @@ def solar_elevation_deg(latitude_deg, hours_since_new_year):
     continuous day number n, so it moves smoothly within a day.
     """
     t = np.asarray(hours_since_new_year, dtype=np.float64)
-    day = 1.0 + t / HOURS_PER_DAY
-    declination = np.radians(AXIAL_TILT_DEG) * np.sin(
-        2.0 * np.pi * (284.0 + day) / DAYS_PER_YEAR)
+    declination = _declination_rad(1.0 + t / HOURS_PER_DAY)
     hour_angle = np.radians(15.0 * (np.mod(t, HOURS_PER_DAY) - 12.0))
     phi = math.radians(float(latitude_deg))
     sin_elev = (math.sin(phi) * np.sin(declination)
@@ -420,6 +428,72 @@ def runtime_config(settings, tick_hours, rng=None):
         "random_start": settings["start_day_of_year"] is None,
         "light_climate": settings.get("light_climate"),
     }
+
+
+def month_of_day(day_of_year_0):
+    """0-based month (0 = January) of a 0-based day of the year."""
+    day = int(day_of_year_0) % DAYS_PER_YEAR
+    return int(np.searchsorted(_MONTH_START_DAY, day, side="right")) - 1
+
+
+@lru_cache(maxsize=16)
+def _day_length_cached(latitude_deg):
+    # Declination at each day's solar noon: day number d0 + 1.5.
+    declination = _declination_rad(np.arange(DAYS_PER_YEAR) + 1.5)
+    phi = math.radians(latitude_deg)
+    cos_h0 = np.clip(-math.tan(phi) * np.tan(declination), -1.0, 1.0)
+    hours = 2.0 * np.degrees(np.arccos(cos_h0)) / 15.0
+    hours.setflags(write=False)
+    return hours
+
+
+def day_length_hours(latitude_deg):
+    """Hours of sun per day, shape (365,), indexed by 0-based day.
+
+    The sun's centre above the geometric horizon (no refraction, no
+    twilight), with the declination at the day's solar noon, so the
+    value is constant within a day and steps at midnight. 0 in polar
+    night, 24 under the midnight sun.
+    """
+    return _day_length_cached(float(latitude_deg))
+
+
+def day_length_fraction(latitude_deg, day_of_year_0):
+    """A day's sun hours on the year's own scale: 0 = shortest, 1 = longest.
+
+    At the equator (no seasonal range) every day is 0.5.
+    """
+    hours = day_length_hours(latitude_deg)
+    lo, hi = float(hours.min()), float(hours.max())
+    if hi - lo < 1e-9:
+        return 0.5
+    return (float(hours[int(day_of_year_0) % DAYS_PER_YEAR]) - lo) / (hi - lo)
+
+
+def calendar_at(config, tick):
+    """Where tick ``tick`` of a run falls in the year, and its light.
+
+    ``config`` is the loader's ``params['daylight']`` (runtime_config);
+    the year tick is ``(start_tick + tick) % ticks_per_year``, exactly
+    as the environment's ``light_index``. Returns ``{"year_tick",
+    "day_of_year" (1-based), "month" (0-based), "month_name", "light",
+    "day_length_h", "day_length_frac"}`` where ``light`` is F, the value
+    of the light observation channel this tick, and the day length is
+    that day's sun hours, also on the year's 0..1 scale
+    (``day_length_fraction``).
+    """
+    hours = resolve_tick_hours(config["tick_hours"])
+    n_ticks = ticks_per_year(hours)
+    year_tick = (int(config.get("start_tick", 0)) + int(tick)) % n_ticks
+    day0 = (year_tick * hours) // HOURS_PER_DAY
+    month = month_of_day(day0)
+    latitude = config["latitude_deg"]
+    light = light_schedule(latitude, hours)[year_tick]
+    return {"year_tick": int(year_tick), "day_of_year": int(day0) + 1,
+            "month": month, "month_name": MONTH_NAMES[month],
+            "light": float(light),
+            "day_length_h": float(day_length_hours(latitude)[day0]),
+            "day_length_frac": day_length_fraction(latitude, day0)}
 
 
 def pair_settings(inter_def):
