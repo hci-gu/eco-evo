@@ -21,6 +21,7 @@ from lib.world.energy_balance import (  # noqa: E402
     REFERENCE_RESTING_COST,
     evaluate_energy_balance,
     intake_ceiling,
+    prey_energy,
 )
 from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label  # noqa: E402
 from lib.world.daylight import (  # noqa: E402
@@ -495,7 +496,7 @@ class FGConfigApp:
         self.daylight_start_var = tk.StringVar(value="random")
         ttk.Checkbutton(info_frame, text="on",
                         variable=self.daylight_enabled_var).grid(
-            row=2, column=1, sticky="w", pady=(4, 0))
+            row=2, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
         daylight_frame = ttk.Frame(info_frame)
         daylight_frame.grid(row=2, column=2, columnspan=4, sticky="w",
                             pady=(4, 0))
@@ -515,20 +516,26 @@ class FGConfigApp:
         self.daylight_kd_var = tk.StringVar(value="")
         self.daylight_zmix_var = tk.StringVar(value="")
         self.daylight_cloud_var = tk.StringVar(value="")
+        # One row per input: Kd next to the heading, the two monthly
+        # series on their own rows spanning the same width as the
+        # project name, so all twelve values stay visible.
         climate_frame = ttk.Frame(info_frame)
-        climate_frame.grid(row=3, column=1, columnspan=5, sticky="w",
+        climate_frame.grid(row=3, column=2, columnspan=3, sticky="w",
                            pady=(4, 0))
         ttk.Label(climate_frame, text="Kd(PAR) (1/m):").pack(side="left")
         ttk.Entry(climate_frame, textvariable=self.daylight_kd_var,
-                  width=6).pack(side="left", padx=(2, 10))
-        ttk.Label(climate_frame,
-                  text="Mixed layer (m, Jan..Dec):").pack(side="left")
-        ttk.Entry(climate_frame, textvariable=self.daylight_zmix_var,
-                  width=34).pack(side="left", padx=(2, 10))
-        ttk.Label(climate_frame,
-                  text="Cloud transmission (Jan..Dec):").pack(side="left")
-        ttk.Entry(climate_frame, textvariable=self.daylight_cloud_var,
-                  width=40).pack(side="left", padx=(2, 0))
+                  width=8).pack(side="left", padx=(2, 0))
+        ttk.Label(info_frame, text="    Mixed layer (m, Jan..Dec):").grid(
+            row=4, column=0, sticky="w", padx=5, pady=(4, 0))
+        ttk.Entry(info_frame, textvariable=self.daylight_zmix_var).grid(
+            row=4, column=2, columnspan=3, sticky="ew", padx=(0, 8),
+            pady=(4, 0))
+        ttk.Label(info_frame,
+                  text="    Cloud transmission (Jan..Dec):").grid(
+            row=5, column=0, sticky="w", padx=5, pady=(4, 0))
+        ttk.Entry(info_frame, textvariable=self.daylight_cloud_var).grid(
+            row=5, column=2, columnspan=3, sticky="ew", padx=(0, 8),
+            pady=(4, 0))
 
         # tk.Entry supports a 'background' option that ttk.Entry does not.
         # We toggle a ttk style instead.
@@ -2787,17 +2794,15 @@ class FGConfigApp:
         # skyddar sill från sjöfågel (Section 71.12 i mareld_resume.txt).
         # Tom cell = ärv kolumn-FG:ns eget ``visibility_floor`` från
         # FG-editorn. Cell aktiv endast om preys_on=True.
-        self.create_matrix_section(
+        floor_frame = self.create_matrix_section(
             "Visibility Floor (min visible fraction of column to row)",
             "visibility_floor", dm_fgs, fgs,
             cell_type="unit_optional", parent=self.matrix_container)
-        ttk.Label(
-            self.matrix_container,
-            foreground=self.MUTED_FG_COLOR,
-            text=("Empty cell = inherit the prey FG's own Visibility Floor "
-                  "(FG Editor). A value here overrides it for this "
-                  "predator-prey pair only."),
-        ).pack(fill="x", padx=10, pady=(0, 10))
+        self._add_matrix_note(
+            floor_frame,
+            "Empty cell = inherit the prey FG's own Visibility Floor "
+            "(FG Editor). A value here overrides it for this "
+            "predator-prey pair only.")
 
         # Daylight calendar (section 137 in mareld_resume.txt): light-
         # dependent attack rate for visual predators. Only active when
@@ -2806,19 +2811,17 @@ class FGConfigApp:
             "Dark Ratio (row's attack rate in darkness / in daylight)",
             "dark_ratio", dm_fgs, fgs,
             cell_type="unit_optional", parent=self.matrix_container)
-        self.create_matrix_section(
+        threshold_frame = self.create_matrix_section(
             "Light Threshold (sun elevation in degrees at half detection)",
             "light_threshold_deg", dm_fgs, fgs,
             cell_type="signed_optional", parent=self.matrix_container)
-        ttk.Label(
-            self.matrix_container,
-            foreground=self.MUTED_FG_COLOR,
-            text=("Used only when the project's Daylight calendar is on. "
-                  "Empty Dark Ratio (or 1) = the pair does not depend on "
-                  "light. The library attack rate stays the annual mean; "
-                  f"empty threshold = {DAYLIGHT_DEFAULT_THRESHOLD_DEG:g} deg "
-                  "(end of civil twilight)."),
-        ).pack(fill="x", padx=10, pady=(0, 10))
+        self._add_matrix_note(
+            threshold_frame,
+            "Used only when the project's Daylight calendar is on. "
+            "Empty Dark Ratio (or 1) = the pair does not depend on "
+            "light. The library attack rate stays the annual mean; "
+            f"empty threshold = {DAYLIGHT_DEFAULT_THRESHOLD_DEG:g} deg "
+            "(end of civil twilight).")
 
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
@@ -3448,6 +3451,25 @@ class FGConfigApp:
                 if key not in self.matrix_widgets:
                     self.matrix_widgets[key] = {}
                 self.matrix_widgets[key][data_key] = widget
+        return frame
+
+    def _add_matrix_note(self, frame, text):
+        """Muted explanatory text under a matrix, wrapped to its width.
+
+        The label follows the matrix box: its wraplength tracks the
+        box's width, so the note never sets the width of the tab and
+        always breaks at the box's right edge.
+        """
+        note = ttk.Label(self.matrix_container, foreground=self.MUTED_FG_COLOR,
+                         text=text, justify="left", wraplength=400)
+        note.pack(fill="x", padx=10, pady=(0, 10))
+
+        def follow(event):
+            width = max(100, event.width - 4)
+            if note.cget("wraplength") != width:
+                note.configure(wraplength=width)
+        frame.bind("<Configure>", follow, add="+")
+        return note
 
     # ------------------------------------------------------------------
     # Mute (soft-delete) helpers
@@ -3965,14 +3987,16 @@ class FGConfigApp:
                 # ``energy_gain`` är legacy och kan inte längre matas in via
                 # UI:t. Vi använder alltid bytets ``energy_content`` från
                 # ``species_definitions`` som auktoritativ källa.
-                eg = None
-                prey_def = species_defs.get(prey_id, {}) or {}
-                ec = prey_def.get("energy_content")
-                if ec not in (None, ""):
-                    try:
-                        eg = float(ec)
-                    except (TypeError, ValueError):
-                        eg = None
+                # The prey's reserve counts when it is eaten with it
+                # (prey_includes_reserve, section 140): same static
+                # quality as the runtime's energy_gain_mat.
+                prey_def = dict(species_defs.get(prey_id, {}) or {})
+                if prey_id == fg_id:
+                    prey_def.update(config)   # the values being applied
+                try:
+                    eg = prey_energy(prey_def)
+                except ValueError:
+                    eg = None
                 if eg is None:
                     eg = 0.0
                     if mir > 0.0:

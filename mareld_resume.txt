@@ -13350,3 +13350,10 @@ remain open exactly as described in 71.9 / 71.11.
     Gadoids now hold a stable stock (drift 1.09) on four prey; herring
     still fail in the frozen arms (diagnostic, VIABILITY.md 6) - the
     test that matters is a retrained run. Suite 932 passed.
+141.5 FG editor energy gate fixed: it read the prey's bare
+    energy_content, so after 140.6 lean herring (4000) made porpoises
+    fail ("Invalid Energy Balance" on any porpoise edit) while the
+    runtime feeds them 6750 per tonne. energy_balance.prey_energy() is
+    now the one definition (energy_content + reference fill x max
+    reserve for prey_includes_reserve), used by the editor gate and by
+    interactions.reserve_food_settings; a test pins editor == runtime.

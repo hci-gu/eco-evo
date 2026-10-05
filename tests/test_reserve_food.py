@@ -71,3 +71,34 @@ def test_without_the_flag_only_energy_content_counts():
     assert not env._has_reserve_food
     eaten, gained = _eat(env)
     assert gained == pytest.approx(eaten * ASSIM * EC, rel=1e-6)
+
+
+def test_gate_and_runtime_use_the_same_prey_energy():
+    """Section 140/141: the FG editor's gate must see what predators eat.
+
+    It read the bare energy_content, so lean herring (4000) made the
+    porpoise gate fail while the runtime fed porpoises 6750 per tonne.
+    """
+    from lib.config.config_loader import load_config, load_project_config
+    from lib.world.energy_balance import prey_energy
+
+    root = Path(__file__).resolve().parents[1]
+    library = load_config(root / "fgconfig" / "fg_library.yaml")
+    species = library["species_definitions"]
+    fgs, _iv, _ir, observable = load_project_config(
+        str(root / "mareld2.yaml"), grid_size=(6, 6), seed=1)
+    env = EcosystemEnvironment(dict(height=6, width=6), fgs,
+                               observable_impact_vars=observable)
+    checked = 0
+    for i, pred in enumerate(env.dm_ids):
+        for j, prey in enumerate(env.global_fg_order):
+            if env.eat_static_mask[i, j] <= 0:
+                continue
+            assim = float(env.assimilation_mat[i, j])
+            assert float(env.energy_gain_mat[i, j]) == pytest.approx(
+                prey_energy(species[prey]) * assim, rel=1e-6), (pred, prey)
+            checked += 1
+    assert checked > 0
+    if species["pelagic_fish"].get("prey_includes_reserve"):
+        assert prey_energy(species["pelagic_fish"]) > float(
+            species["pelagic_fish"]["energy_content"])

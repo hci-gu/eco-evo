@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from lib.world import daylight
+from lib.world import daylight, energy_balance
 
 
 @dataclass
@@ -31,15 +31,10 @@ def reserve_food_settings(fg):
     gates, budget_gate and the viability rig - is evaluated. None for
     every other FG, and always for non-decision makers (no reserve).
     """
-    params = fg.params
-    if not fg.is_decision_maker or not params.get("prey_includes_reserve",
-                                                  False):
-        return None
-    max_reserve = float(getattr(fg, "max_energy_reserve", 0.0) or 0.0)
-    fill = _float_or_default(params.get("reserve_reference_fill", None), 0.5)
-    if not 0.0 <= fill <= 1.0:
-        raise ValueError(f"reserve_reference_fill must be in [0, 1], got {fill}")
-    return max_reserve, fill
+    spec = dict(fg.params)
+    spec["is_decision_maker"] = fg.is_decision_maker
+    spec["max_energy_reserve"] = getattr(fg, "max_energy_reserve", 0.0)
+    return energy_balance.reserve_food(spec)
 
 
 def _float_or_default(value, default):

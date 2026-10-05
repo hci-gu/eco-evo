@@ -55,6 +55,56 @@ from typing import List, Optional
 REFERENCE_RESTING_COST = 1.0
 
 
+def reserve_food(species_def):
+    """(max reserve, reference fill) when a prey's reserve is eaten too.
+
+    Section 140: a decision maker with ``prey_includes_reserve`` passes
+    its energy reserve to the predator with every eaten tonne. The
+    static prey quality used by the gates and ``energy_gain_mat`` is
+    taken at ``reserve_reference_fill`` (default 0.5). Returns None for
+    every other species, and always for non-decision makers.
+    """
+    spec = species_def or {}
+    if not spec.get("is_decision_maker", False) or not spec.get(
+            "prey_includes_reserve", False):
+        return None
+    try:
+        max_reserve = float(spec.get("max_energy_reserve", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        max_reserve = 0.0
+    raw = spec.get("reserve_reference_fill", None)
+    try:
+        fill = 0.5 if raw in (None, "") else float(raw)
+    except (TypeError, ValueError):
+        fill = 0.5
+    if not 0.0 <= fill <= 1.0:
+        raise ValueError(f"reserve_reference_fill must be in [0, 1], got {fill}")
+    return max_reserve, fill
+
+
+def prey_energy(species_def):
+    """Static energy per tonne a predator gets from this prey (MJ/t).
+
+    ``energy_content`` plus, for a prey whose reserve is eaten with it,
+    the reserve at the reference fill - the same number the runtime puts
+    into ``energy_gain_mat`` before assimilation. None when the species
+    has no usable ``energy_content``.
+    """
+    spec = species_def or {}
+    raw = spec.get("energy_content")
+    if raw in (None, ""):
+        return None
+    try:
+        energy = float(raw)
+    except (TypeError, ValueError):
+        return None
+    food = reserve_food(spec)
+    if food is not None:
+        max_reserve, fill = food
+        energy += fill * max_reserve
+    return energy
+
+
 def intake_ceiling(attack_rate, handling_time):
     """Physiological intake ceiling of a Holling response (t/t/tick).
 
