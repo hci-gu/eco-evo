@@ -723,7 +723,10 @@ def colocate_spawn(env):
     menus_by_fg = menus(env)
     moved = []
     for fid in trophic_order(menus_by_fg, list(env.dm_ids)):
-        prey_ids = [p for p in menus_by_fg[fid] if p in env.fgs]
+        # Cannibalism is not a reason to move: a group placed on its own
+        # cells would drag every predator placed after it away from the
+        # other prey (section 141).
+        prey_ids = [p for p in menus_by_fg[fid] if p in env.fgs and p != fid]
         if not prey_ids:
             continue
         fg = env.fgs[fid]

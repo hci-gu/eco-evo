@@ -155,7 +155,8 @@ def test_live_project_matrices_satisfy_the_contracts():
 
     a_mat = np.asarray(env.max_intake_mat, dtype=np.float64)
     h_mat = np.asarray(env.handling_time_mat, dtype=np.float64)
-    mask = np.asarray(env._type3_pred_mask, dtype=np.float64).reshape(-1)
+    mask = np.asarray(env._type3_pred_mask, dtype=np.float64).reshape(
+        env.N_dm, env.N_all)
 
     checked = 0
     for i, pred_id in enumerate(env.dm_ids):
@@ -164,7 +165,7 @@ def test_live_project_matrices_satisfy_the_contracts():
             if a <= 0.0 or h <= 0.0:
                 continue
             checked += 1
-            vals = _a_eff(a, h, B_GRID, mask[i])
+            vals = _a_eff(a, h, B_GRID, mask[i, j])
             label = f"{pred_id} -> {prey_id} (a={a:g}, h={h:g})"
             assert vals[0] > 0.0, f"{label}: zero response over whole raster"
             assert np.all(np.diff(vals) > 0.0), (
@@ -174,3 +175,23 @@ def test_live_project_matrices_satisfy_the_contracts():
     assert checked > 0, (
         "No (predator, prey) pair with h > 0 found - the Holling branch "
         "is inactive, so this regression guard is vacuous")
+
+
+def test_functional_response_must_be_two_or_three():
+    """Section 141: an invalid per-pair type is refused, not ignored."""
+    import numpy as np
+    from lib.environments.ecosystem_env.environment import EcosystemEnvironment
+    from lib.world.functional_group import FunctionalGroup
+    groups = {}
+    for fid, dm in (("p", True), ("q", False)):
+        params = dict(is_decision_maker=dm, max_intake_rate=0.1,
+                      menu=["q"] if dm else [], max_energy_reserve=1.0,
+                      energy_content=1.0)
+        params["interaction"] = ({"p_preys_on_q": dict(
+            preys_on=True, handling_time=1.0, functional_response=4)}
+            if dm else {})
+        fg = FunctionalGroup(fid, params)
+        fg.initialize_state((1, 1), initial_biomass=np.ones((1, 1)))
+        groups[fid] = fg
+    with pytest.raises(ValueError, match="functional_response"):
+        EcosystemEnvironment(dict(height=1, width=1), groups)

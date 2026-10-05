@@ -101,6 +101,10 @@ fabricates mass.
   eaten with it; the static quality is taken at
   `reserve_reference_fill`. Set for `pelagic_fish` (section 140.6):
   lean 4000 MJ/t + reserve up to 7000, starvation from 0.2 of it.
+- `functional_response: 2|3` on a predation pair forces the Holling type
+  for that pair (section 141); without it a specialist gets III and a
+  generalist II, as before. Set on gadoids -> pelagic_fish (141.4),
+  where gadoids also eat zooplankton (krill proxy) and each other.
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((1-u)*1460)`,
   NDM `r = (r_max + sum M2) / 1460`. Checking/unchecking a predator in the

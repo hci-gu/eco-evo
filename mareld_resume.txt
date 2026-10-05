@@ -13289,3 +13289,64 @@ remain open exactly as described in 71.9 / 71.11.
     0.0021084). budget_gate unchanged (gadoid quality 6000, porpoise
     6750 from herring). Suite 927 passed. Checkpoints trained before
     this see a different herring energy observation: retrain.
+
+141 FUNCTIONAL RESPONSE TYPE PER PAIR; GADOID PRESSURE ON HERRING (2026-10-06)
+------------------------------------------------------------------------
+141.1 Diagnosis chain (all tools/probes/herring_overwinter.py, trained
+    policies of pzbpgp248nsrpfix44, 20x20, migration+currents+mortality)
+    - Gadoids eat ~64-71 % herring by mass. Not a diet error: Ecopath
+      1991 gives pelagic/(pelagic+benthos) = 0.53-0.63 for the gadoid
+      group (subagent, derived from Mackinson & Daskalov 2007 + EcoBase
+      457). But Ecopath gadoids take ~45 % of their food from prey the
+      model lacks (Norway pout ~16 %, zooplankton/krill ~20 %, gadoids
+      ~5 %, other fish ~4 %), so the model's gadoids, with Ecopath's
+      Q/B (~4.3-4.5 /yr) and Ecopath's gadoid:pelagic biomass ratio
+      (0.20-0.21), put about twice the Ecopath pressure on herring.
+    - 1 yr, 5 seeds: dark_ratio 0.3 on gadoids->herring and/or the
+      herring budget M2 0.30 -> 0.52 changed herring end 0.23 -> 0.26.
+    - Ecopath 1991 is a fished state: F ~0.44 gadoids, ~0.40 pelagics
+      (derived from Table 3.5); the library takes M = P/B - F, so the
+      model is F = 0 by construction. ICES today (subagent): F ~0.12
+      gadoids, ~0.20 pelagics (biomass-weighted, inference). 2 yr,
+      4 seeds, r_max - F: gadoid mean 1.31 -> 1.22 (-0.19: 1.16),
+      herring extinct in year 2 in every run anyway.
+    - Herring hiding from gadoids (frozen rule, rest where gadoids are):
+      predation 1.46 -> 0.48 but starvation 0.15 -> 1.80 /yr; herring
+      die faster. Gadoids share every cell with herring, so hiding means
+      not eating.
+141.2 Engine: ``functional_response: 2 | 3`` on a predation pair forces
+    Holling II or III for that pair; absent = the old rule (III for a
+    specialist). _type3_pred_mask is now (N_dm, N_all, 1, 1); the GPU
+    mask is [1, D, G, 1]. Bit-identical without the key (rollout hash
+    = HEAD). Parity test (an all-pairs-of-a-predator mask fails it) and
+    a validation test. Not set in the library.
+141.3 Test, 2 yr, 4 seeds: gadoids->herring Type III
+        variant          herring end  mean  gadoid mean  pred by gad
+        current            0.000      0.38     1.31         1.46
+        T3                 0.032      0.39     1.30         1.40
+        T3 + r_max - F     0.034      0.39     1.21         1.33
+    Type III stops the extinction but pins herring at ~3 % of spawn: at
+    a h = 1 the refuge starts below ~1 t/cell, gadoids stay at ~0.9
+    t/cell on benthos, and at that ratio their demand on herring (~2.5
+    t/cell/yr) exceeds herring's net production (~2 t/cell/yr at spawn
+    density). The structural cause is the missing gadoid prey (141.1).
+141.4 APPLIED to fg_library.yaml (user decision 2026-10-06):
+    - gadoids_preys_on_zooplankton on (M2 0.089, assim 0.8, h 25) and
+      gadoids_observes_zooplankton true: gadoid in_dim 22 -> 27,
+      RETRAIN (checkpoints before this do not load for gadoids);
+    - gadoids_preys_on_gadoids on (cannibalism, M2 0.2168, assim 0.8,
+      h 25): derived gadoid growth_rate 0.00171252 -> 0.00200951;
+      zooplankton growth_rate 0.0799127 -> 0.0800346 (gadoid M2);
+    - gadoids_preys_on_pelagic_fish functional_response: 3.
+    viability.colocate_spawn now ignores a group's own column (with the
+    cannibalism pair the gadoids were placed on their own cells and the
+    porpoise/herring overlap fell to 0).
+    Frozen rig, colocated, 20x20, 2 yr, 2 seeds, mortality on:
+        arm     library       gadoids    herring   zoo     porpoises
+        greedy  before 141    0.150 F    0.000 F   0.250   extinct@80
+        greedy  141           0.343 PASS 0.000 F   0.202   extinct@82
+        eat     before 141    0.000 F    0.000 F   0.108   extinct@435
+        eat     141           0.372 PASS 0.006 F   0.101   extinct@432
+    Gadoids now hold a stable stock (drift 1.09) on four prey; herring
+    still fail in the frozen arms (diagnostic, VIABILITY.md 6) - the
+    test that matters is a retrained run. Suite 932 passed.

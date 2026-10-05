@@ -14,6 +14,10 @@ class InteractionMatrices:
     vis_floor_over: np.ndarray
     vis_floor_has: np.ndarray
     assimilation: np.ndarray = None
+    # Per-pair Holling type override (section 141): 0 = automatic (III
+    # for a specialist, II otherwise), 2 or 3 = forced by the pair's
+    # ``functional_response``.
+    response_type: np.ndarray = None
 
 
 def reserve_food_settings(fg):
@@ -50,6 +54,7 @@ def build_interaction_matrices(env):
     max_intake = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     energy_gain = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     assimilation_mat = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
+    response_type = np.zeros((env.N_dm, env.N_all), dtype=np.int8)
     handling_time = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     # Optional per-(predator, prey) visibility floor override. Empty /
     # missing cells inherit the prey FG's own ``visibility_floor``
@@ -101,6 +106,17 @@ def build_interaction_matrices(env):
             energy_gain[i, j] = prey_energy_content * assimilation
             assimilation_mat[i, j] = assimilation
             handling_time[i, j] = float(inter_def.get("handling_time", 0.0))
+            forced = inter_def.get("functional_response", None)
+            if forced not in (None, "", 0, 0.0):
+                try:
+                    forced = int(forced)
+                except (TypeError, ValueError):
+                    forced = -1
+                if forced not in (2, 3):
+                    raise ValueError(
+                        f"{inter_id}: functional_response must be 2 or 3, "
+                        f"got {inter_def.get('functional_response')!r}")
+                response_type[i, j] = forced
 
             vis_floor = _float_or_default(
                 inter_def.get("visibility_floor", None), None)
@@ -116,6 +132,7 @@ def build_interaction_matrices(env):
         vis_floor_over=vis_floor_over,
         vis_floor_has=vis_floor_has,
         assimilation=assimilation_mat,
+        response_type=response_type,
     )
 
 

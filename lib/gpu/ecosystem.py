@@ -64,7 +64,8 @@ class TensorEcosystem:
             self.reserve_reference = tensor(
                 env.prey_reserve_fill * env.prey_reserve_max)[None, :, None]
         self.handling = tensor(env.handling_time_mat)[None, :, :, None]
-        self.type3 = tensor(env._type3_pred_mask.reshape(self.D))[None, :, None, None]
+        # Per-pair Holling type mask (section 141): [1, D, G, 1].
+        self.type3 = tensor(env._type3_pred_mask.reshape(self.D, self.G))[None, :, :, None]
         # Beddington-DeAngelis interference w_X [1/ton], per DM. Mirrors
         # the reference's ``dm_interference`` / ``_has_interference``; the
         # all-zero default keeps the pure Holling path bit-identical.

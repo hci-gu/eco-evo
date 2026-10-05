@@ -30,7 +30,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              pair_floors=None, min_split=200,
              extinction_factor=0.3, interference=None,
              mortality_multiplier=1.0, daylight=None, dark_ratios=None,
-             light_saturation=None, m1_exposure=None, reserve_food=None):
+             light_saturation=None, m1_exposure=None, reserve_food=None,
+             response_types=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -70,6 +71,9 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
                 params["interaction"][inter_id]["visibility_floor"] = floor
         if interference and fid in interference:
             params["interference"] = interference[fid]
+        for inter_id, kind in (response_types or {}).items():
+            if inter_id in params["interaction"]:
+                params["interaction"][inter_id]["functional_response"] = kind
         for inter_id, ratio in (dark_ratios or {}).items():
             if inter_id in params["interaction"]:
                 params["interaction"][inter_id]["dark_ratio"] = ratio
@@ -313,6 +317,27 @@ def test_reserve_as_food_matches_reference(device, fill, handling):
     # Static quality = (energy_content + fill * max reserve) * assim.
     assert float(env.energy_gain_mat[i, j]) == pytest.approx(
         (20 + fill * env.fgs["b"].max_energy_reserve) * 0.65, rel=1e-6)
+
+
+@pytest.mark.parametrize("kinds", [{"a_preys_on_b": 3},
+                                   {"a_preys_on_b": 3, "b_preys_on_c": 2}])
+def test_pair_functional_response_matches_reference(device, kinds):
+    """Section 141: Holling type per pair, not only per predator.
+
+    ``a`` eats ``b`` and ``c`` (a generalist, Type II by default) and is
+    forced to Type III on ``b`` only; ``b`` is a specialist on ``c``
+    (Type III by default) and may be forced back to Type II.
+    """
+    env = make_env(handling=0.2, min_split=0.0, extinction_factor=0.0,
+                   response_types=kinds)
+    model = _assert_parity(env, device, ticks=6)
+    i_a, i_b = env.dm_ids.index("a"), env.dm_ids.index("b")
+    j_b, j_c = env.global_fg_order.index("b"), env.global_fg_order.index("c")
+    mask = env._type3_pred_mask[:, :, 0, 0]
+    assert mask[i_a, j_b] == 1.0 and mask[i_a, j_c] == 0.0
+    assert mask[i_b, j_c] == (0.0 if "b_preys_on_c" in kinds else 1.0)
+    torch.testing.assert_close(model.type3[0, :, :, 0].cpu(),
+                               torch.as_tensor(mask))
 
 
 @pytest.mark.parametrize("activation", ["sig", "tanh", "relu"])

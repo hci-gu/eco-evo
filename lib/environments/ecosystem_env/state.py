@@ -141,11 +141,19 @@ def build_static_caches(env):
     env._has_holling2 = bool(np.any(handling_time > 0.0))
     # Specialists (exactly one active prey) use Type III; generalists
     # retain Type II because their policy already handles prey switching.
+    # A pair's ``functional_response`` (2 or 3) overrides that per pair
+    # (section 141): a generalist that switches away from a prey as it
+    # gets scarce gives it a Type III refuge. Shape (N_dm, N_all, 1, 1).
     n_prey_per_predator = eat_static.sum(axis=1)
+    specialist = (n_prey_per_predator == 1).astype(env.dtype)
+    pair_type3 = np.tile(specialist[:, None], (1, env.N_all))
+    pair_type3 = np.where(matrices.response_type == 3, 1.0,
+                          np.where(matrices.response_type == 2, 0.0,
+                                   pair_type3))
     env._type3_pred_mask = (
-        (n_prey_per_predator == 1)
+        (pair_type3 * eat_static)
         .astype(env.dtype)
-        .reshape(env.N_dm, 1, 1, 1)
+        .reshape(env.N_dm, env.N_all, 1, 1)
     )
     env._has_holling3 = bool(np.any(env._type3_pred_mask > 0.0))
 

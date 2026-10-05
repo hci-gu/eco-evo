@@ -9,6 +9,9 @@ Rules (herring only):
             the checkpoint's actions elsewhere
   winter    rest 0.9 in December-February (calendar months), the
             checkpoint's actions otherwise
+  hideSatT  rest a share S where gadoids exceed T t/cell (e.g.
+            hide1at0.1, hide0.5at0.1), the checkpoint's actions elsewhere
+            - hiding from the predator (gadoids -> herring floor 0.25)
 
 Resting both saves energy (resting_cost instead of feeding_cost) and
 hides from gadoids (visibility_floor 0.25). ``--gadoid-floor 1.0``
@@ -52,6 +55,11 @@ def _apply_rule(env, actions, rule):
         threshold = float(rule[len("lowfood"):])
         resting = env.fgs[ZOO].biomass < threshold
         share = np.where(resting, 1.0, 0.0).astype(actions.rest.dtype)
+    elif rule.startswith("hide"):
+        share_text, threshold_text = rule[len("hide"):].split("at")
+        present = env.fgs["gadoids"].biomass > float(threshold_text)
+        share = np.where(present, float(share_text), 0.0).astype(
+            actions.rest.dtype)
     elif rule == "winter":
         share = np.full_like(actions.rest[i],
                              0.9 if _month(env) in WINTER_MONTHS else 0.0)
@@ -88,7 +96,8 @@ def run_one(job):
     i = env.dm_ids.index(HERRING)
     h0 = float(env.fgs[HERRING].biomass.sum())
     z0 = float(env.fgs[ZOO].biomass.sum())
-    series, zoo, rest, months = [], [], [], []
+    g0 = float(env.fgs["gadoids"].biomass.sum())
+    series, zoo, rest, months, gad = [], [], [], [], []
     for _ in range(job["ticks"]):
         months.append(_month(env))
         actions = _apply_rule(env, env.calculate_decisions(), job["rule"])
@@ -96,6 +105,7 @@ def run_one(job):
         b = env.fgs[HERRING].biomass
         series.append(float(b.sum()))
         zoo.append(float(env.fgs[ZOO].biomass.sum()))
+        gad.append(float(env.fgs["gadoids"].biomass.sum()))
         rest.append(float((env.pi_rest[i] * b).sum() / max(b.sum(), 1e-12)))
     h = np.array(series)
     months = np.array(months)
@@ -114,6 +124,9 @@ def run_one(job):
     mean_h = max(float(h.mean()), 1e-12)
     eaten_by = sum(float(row.get(HERRING, 0.0))
                    for row in env.intake_by_pred_prey.values())
+    gadoid_diet = env.intake_by_pred_prey.get("gadoids", {})
+    gadoid_total = max(sum(float(v) for v in gadoid_diet.values()), 1e-12)
+    gadoid_herring = float(gadoid_diet.get(HERRING, 0.0))
     return dict(job, end=h[-1] / h0, mean=float(h.mean()) / h0,
                 min=float(h.min()) / h0, winter=winter_ratio,
                 rest=float(np.mean(rest)),
@@ -121,6 +134,9 @@ def run_one(job):
                 if winter.any() else float("nan"),
                 starve=env.loss_starvation.get(HERRING, 0.0) / mean_h / years,
                 predation=eaten_by / mean_h / years,
+                gadoid_m2=gadoid_herring / mean_h / years,
+                gadoid_share=gadoid_herring / gadoid_total,
+                gadoid_mean=float(np.mean(gad)) / g0,
                 zoo_mean=float(np.mean(zoo)) / z0)
 
 
@@ -145,7 +161,8 @@ def main(argv=None):
     parser.add_argument("--json", default=None)
     args = parser.parse_args(argv)
 
-    ckpt = os.path.join("results", args.run_name)
+    ckpt = (args.run_name if os.path.isdir(args.run_name)
+            else os.path.join("results", args.run_name))
     floors = args.gadoid_floor or [None]
     jobs = [dict(project=args.project, grid=args.grid, ticks=args.ticks,
                  ckpt=ckpt, seed=args.seed0 + s, rule=rule, gadoid_floor=f,
@@ -162,20 +179,23 @@ def main(argv=None):
           "herring biomass relative to spawn")
     print(f"{'library':>12} {'gad floor':>9} {'rule':>9} | {'rest':>5} "
           f"{'rest DJF':>8} | {'end':>6} {'mean':>5} {'min':>6} {'winter':>6} | "
-          f"{'starve':>6} {'pred':>5} | {'zoo mean':>8}")
+          f"{'starve':>6} {'pred':>5} {'by gad':>6} | {'gad diet':>8} "
+          f"{'gad mean':>8} | {'zoo mean':>8}")
     for lib, f, rule in itertools.product(args.library, floors, args.rules):
         rows = [r for r in results if r["library"] == lib
                 and r["gadoid_floor"] == f and r["rule"] == rule]
         m = {k: float(np.nanmean([r[k] for r in rows])) for k in
              ("rest", "rest_winter", "end", "mean", "min", "winter",
-              "starve", "predation", "zoo_mean")}
+              "starve", "predation", "gadoid_m2", "gadoid_share",
+              "gadoid_mean", "zoo_mean")}
         label = "library" if f is None else f"{f:g}"
         name = "default" if lib is None else os.path.basename(lib)[:12]
         print(f"{name:>12} {label:>9} {rule:>9} | {m['rest']:5.2f} "
               f"{m['rest_winter']:8.2f} | {m['end']:6.3f} "
               f"{m['mean']:5.2f} {m['min']:6.3f} {m['winter']:6.2f} | "
-              f"{m['starve']:6.2f} {m['predation']:5.2f} | "
-              f"{m['zoo_mean']:8.2f}")
+              f"{m['starve']:6.2f} {m['predation']:5.2f} "
+              f"{m['gadoid_m2']:6.2f} | {m['gadoid_share']:8.2f} "
+              f"{m['gadoid_mean']:8.2f} | {m['zoo_mean']:8.2f}")
     return 0
 
 
