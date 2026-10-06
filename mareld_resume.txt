@@ -13541,7 +13541,26 @@ remain open exactly as described in 71.9 / 71.11.
     from winter to summer; the ~43 %/yr herring decline is an annual
     budget question (predation_mortality / growth_budget), not light.
     Full suite 1005 passed / 12 skipped.
-144.4 Open: Onsrud et al. 2004 give herring's feeding threshold as
-    0.007-0.036 lx, 1-1.5 decades above the 0.001 lx behind the herring
-    -> zoo threshold of -8 deg; worth re-checking.
+144.4 Herring -> zoo threshold re-checked (same day): Onsrud et al.
+    2004 (ICES JMS 61:1278, Discussion) do not measure it; they cite
+    Blaxter 1964 (J Exp Biol 41:155): biting stops at 0.007-0.036 lx.
+    Batty, Blaxter & Richard 1990 (Mar Biol 107:383; the library's
+    source, infra-red video 0.0001-270 lx) measured 0.001 lx on natural
+    zooplankton and 0.01 lx on Artemia nauplii, so the direct
+    behavioural value on the modelled prey supports 0.001 lx. Converted
+    to sun elevation (surface ~3.4 lx at -6 deg, tenfold per 2 deg,
+    Kd 0.15-0.2 /m): 0.001 lx -> -11.8 to -6.1 deg over 10-40 m;
+    0.007-0.036 lx -> -10.0 to -3.0 deg; -8 sits mid-range (Blaxter at
+    25 m: -8.1 to -5.6). Both sources give where biting STOPS, the
+    model's threshold is half detection, so -6 would be as defensible.
+    It hardly matters: thresholds -10/-8/-6/-4 give Dec monthly mean m
+    0.67/0.66/0.65/0.64 and Jun 1.42/1.42/1.42/1.41 (day length sets
+    the season; the threshold only moves the twilight switch). Kept at
+    -8; no library change.
+144.5 Probes kept in the repo: tools/probes/fg_year_budget.py (monthly
+    budget of one DM with trained policies; FG, LIB, RUN, RM_WINTER,
+    U_X) produced the numbers in 143.1, 143.5 and 144.3;
+    tools/probes/porp_winter_oracle.py (trained / eatonly / oracle K /
+    greedy porpoises, CHARGE_MOVE, CMOVE0) produced 143.1's
+    positional-vs-budgetary test.
 
