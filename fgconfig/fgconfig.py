@@ -112,8 +112,12 @@ class FGConfigApp:
             self.ref_grid_h_var.trace_add("write", lambda *_: self._mark_dirty())
             for _var in (self.daylight_enabled_var, self.daylight_lat_var,
                          self.daylight_start_var, self.daylight_kd_var,
-                         self.daylight_zmix_var, self.daylight_cloud_var):
+                         self.daylight_zmix_var, self.daylight_cloud_var,
+                         self.temperature_enabled_var,
+                         self.temperature_groups_var):
                 _var.trace_add("write", lambda *_: self._mark_dirty())
+            self.temperature_layers_text.bind(
+                "<<Modified>>", self._on_temperature_layers_modified)
         except Exception:
             pass
 
@@ -537,6 +541,37 @@ class FGConfigApp:
             row=5, column=2, columnspan=3, sticky="ew", padx=(0, 8),
             pady=(4, 0))
 
+        # Water temperature (simulation_settings.temperature, section 143):
+        # Q10 metabolism of the groups with a Metabolism Q10, on the
+        # daylight calendar above (it needs Daylight on). One layer per
+        # line, "name: 12 monthly deg C (Jan..Dec)", and which layer each
+        # group lives in. Adds no input channel: checkpoints stay valid.
+        ttk.Label(info_frame, text="Water temperature:").grid(
+            row=6, column=0, sticky="w", padx=5, pady=(4, 0))
+        self.temperature_enabled_var = tk.BooleanVar(value=False)
+        self.temperature_groups_var = tk.StringVar(value="")
+        ttk.Checkbutton(info_frame, text="on",
+                        variable=self.temperature_enabled_var).grid(
+            row=6, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
+        temperature_frame = ttk.Frame(info_frame)
+        temperature_frame.grid(row=6, column=2, columnspan=3, sticky="ew",
+                               pady=(4, 0))
+        temperature_frame.columnconfigure(1, weight=1)
+        ttk.Label(temperature_frame,
+                  text="Group layers (group=layer, ...):").grid(
+            row=0, column=0, sticky="w")
+        ttk.Entry(temperature_frame,
+                  textvariable=self.temperature_groups_var).grid(
+            row=0, column=1, sticky="ew", padx=(2, 8))
+        ttk.Label(info_frame,
+                  text="    Layers (name: deg C Jan..Dec, one per line):").grid(
+            row=7, column=0, columnspan=2, sticky="nw", padx=5, pady=(4, 0))
+        self.temperature_layers_text = tk.Text(info_frame, height=3,
+                                               width=60, wrap="none")
+        self.temperature_layers_text.grid(
+            row=7, column=2, columnspan=3, sticky="ew", padx=(0, 8),
+            pady=(4, 0))
+
         # tk.Entry supports a 'background' option that ttk.Entry does not.
         # We toggle a ttk style instead.
         try:
@@ -642,6 +677,10 @@ class FGConfigApp:
             ("Max Energy Reserve (ME_X MJ/ton)", "max_energy_reserve", "entry", 0.0, 10000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
             ("Resting Metabolism (MJ/ton/{tick})", "resting_metabolism", "entry", 0.0, 1000.0),
+            # Water temperature (section 143; only with the project's
+            # Water temperature on): Resting Metabolism x Q10^((T - t_ref)/10).
+            ("  Metabolism Q10 (water temperature; 0 = off)", "metabolism_q10", "entry", 0.0, 5.0),
+            ("  Metabolism t_ref (deg C of Resting Metabolism; empty = annual mean)", "metabolism_t_ref", "entry", -2.0, 30.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
             ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
             ("Max Growth (MG_X, fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
@@ -3698,6 +3737,11 @@ class FGConfigApp:
                 if key == "current_response":
                     var.set(f"{self._effective_current_response(config, True):g}")
                     continue
+                if key == "metabolism_t_ref":
+                    # "annual_mean" (or absent) is shown as an empty field.
+                    val = config.get(key, "")
+                    var.set("" if val in (None, "", "annual_mean") else str(val))
+                    continue
                 val = config.get(key, "")
                 if isinstance(var, tk.BooleanVar):
                     var.set(bool(val))
@@ -3756,6 +3800,7 @@ class FGConfigApp:
     OPTIONAL_ZERO_KEYS = frozenset({
         "m1_visual_share", "m1_tactile_share", "depth_risk_ratio",
         "hide_reference", "light_saturation", "light_reference_day",
+        "metabolism_q10",
     })
 
     @staticmethod
@@ -3849,6 +3894,16 @@ class FGConfigApp:
                 continue
             if isinstance(var, tk.BooleanVar):
                 config[key] = val
+            elif key == "metabolism_t_ref" and val in (None, ""):
+                # Empty = the library's Resting Metabolism is the annual
+                # mean (section 143); only meaningful with a Q10, so a
+                # group without one does not get the key.
+                try:
+                    q10 = float(prop_vars["metabolism_q10"].get() or 0.0)
+                except (KeyError, TypeError, ValueError):
+                    q10 = 0.0
+                if q10 > 0.0 and q10 != 1.0:
+                    config[key] = "annual_mean"
             elif key == "light_saturation" and "," in str(val):
                 # 12 monthly I_k values, Jan..Dec (section 138).
                 try:
@@ -4773,6 +4828,8 @@ class FGConfigApp:
                     _var.set(", ".join(f"{v:g}" if isinstance(v, (int, float))
                                        else str(v) for v in _vals)
                              if isinstance(_vals, (list, tuple)) else "")
+            if hasattr(self, 'temperature_enabled_var'):
+                self._load_temperature_settings()
             # Tick length. Out-of-range / missing falls back to the
             # historical 6 h, so projects predating the field load
             # Backward compatibility: legacy projects had a single `functional_groups` list.
@@ -4814,6 +4871,101 @@ class FGConfigApp:
             # calls above so the Tk-variable traces don't leave the
             # project marked dirty.
             self._clear_dirty()
+
+    def _on_temperature_layers_modified(self, _event=None):
+        """Mark the project dirty when the user edits the layer text."""
+        text = self.temperature_layers_text
+        if not text.edit_modified():
+            return
+        text.edit_modified(False)
+        self._mark_dirty()
+
+    def _load_temperature_settings(self):
+        """Fill the header's Water temperature fields from the project."""
+        sim = self.project_data.get("simulation_settings") or {}
+        block = sim.get("temperature") if isinstance(sim, dict) else None
+        block = block if isinstance(block, dict) else {}
+        self.temperature_enabled_var.set(bool(block.get("enabled", False)))
+        groups = block.get("group_layers")
+        self.temperature_groups_var.set(
+            ", ".join(f"{fid}={layer}" for fid, layer in groups.items())
+            if isinstance(groups, dict) else "")
+        lines = []
+        layers = block.get("layers")
+        if isinstance(layers, dict):
+            for name, values in layers.items():
+                if isinstance(values, (list, tuple)):
+                    values = ", ".join(f"{v:g}" if isinstance(v, (int, float))
+                                       else str(v) for v in values)
+                lines.append(f"{name}: {values}")
+        text = self.temperature_layers_text
+        text.delete("1.0", "end")
+        text.insert("1.0", "\n".join(lines))
+        text.edit_modified(False)
+
+    def _parse_temperature_fields(self):
+        """(layers, group_layers) from the header, or raise ValueError."""
+        layers = {}
+        raw = self.temperature_layers_text.get("1.0", "end")
+        for line in raw.splitlines():
+            if not line.strip():
+                continue
+            name, sep, values = line.partition(":")
+            name = name.strip()
+            if not sep or not name:
+                raise ValueError(f"layer line {line.strip()!r}: write "
+                                 "'name: 12 values'")
+            try:
+                layers[name] = [float(v) for v in
+                                values.replace(";", ",").split(",")
+                                if v.strip()]
+            except ValueError:
+                raise ValueError(f"layer '{name}': 12 numbers separated "
+                                 "by commas")
+        groups = {}
+        for item in self.temperature_groups_var.get().replace(";", ",").split(","):
+            if not item.strip():
+                continue
+            fid, sep, layer = item.partition("=")
+            if not sep or not fid.strip() or not layer.strip():
+                raise ValueError(f"group layer {item.strip()!r}: write "
+                                 "'group=layer'")
+            groups[fid.strip()] = layer.strip()
+        return layers, groups
+
+    def _store_temperature_settings(self):
+        """Write the header's Water temperature fields into
+        simulation_settings.
+
+        Validated with the loader's own parser (section 143), together
+        with the Daylight block it depends on. A project that never had a
+        temperature block and leaves the fields empty gets none.
+        """
+        from lib.world import temperature
+        if not hasattr(self, "temperature_enabled_var"):
+            return True
+        sim = self.project_data.get("simulation_settings")
+        if not isinstance(sim, dict):
+            sim = {}
+        enabled = bool(self.temperature_enabled_var.get())
+        try:
+            layers, groups = self._parse_temperature_fields()
+        except ValueError as exc:
+            messagebox.showerror("Water temperature", str(exc))
+            return False
+        if not enabled and not layers and not groups and "temperature" not in sim:
+            return True
+        block = {"enabled": enabled, "layers": layers, "group_layers": groups}
+        if enabled:
+            try:
+                temperature.parse_settings({"simulation_settings": dict(
+                    sim, temperature=block)})
+            except ValueError as exc:
+                messagebox.showerror("Water temperature", str(exc))
+                return False
+        sim["temperature"] = block
+        self.project_data["simulation_settings"] = sim
+        return True
 
     def _store_daylight_settings(self):
         """Write the header's Daylight fields into simulation_settings.
@@ -4910,6 +5062,8 @@ class FGConfigApp:
             self.ref_grid_w_var.set(str(rw))
             self.ref_grid_h_var.set(str(rh))
             if not self._store_daylight_settings():
+                return False
+            if not self._store_temperature_settings():
                 return False
             self.save_yaml(self.project_data, self.project_path)
             self.add_to_recent(self.project_path)

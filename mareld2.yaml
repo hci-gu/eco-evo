@@ -34,6 +34,39 @@ simulation_settings:
       - 0.66
       - 0.6
       - 0.69
+  temperature:
+    enabled: true
+    layers:
+      mean_0_50m:
+        - 6.3
+        - 5.4
+        - 5.2
+        - 6.1
+        - 7.8
+        - 9.9
+        - 12.1
+        - 13.4
+        - 13.8
+        - 12.8
+        - 10.5
+        - 8.4
+      at_50m:
+        - 7.7
+        - 7.2
+        - 6.6
+        - 6.6
+        - 6.8
+        - 7.2
+        - 8.0
+        - 8.5
+        - 10.2
+        - 11.7
+        - 10.6
+        - 9.3
+    group_layers:
+      pelagic_fish: mean_0_50m
+      zooplankton: mean_0_50m
+      gadoids: at_50m
 decision_makers:
   - group_id: gadoids
     initial_biomass_min: 1250

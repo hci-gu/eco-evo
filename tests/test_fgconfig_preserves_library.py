@@ -64,3 +64,13 @@ def test_an_edit_changes_only_its_value_and_keeps_the_comments():
 def test_a_set_optional_field_is_written():
     out = _merge(LIBRARY, {"m1_tactile_share": 0.5})
     assert "m1_tactile_share: 0.5" in out
+
+
+def test_an_empty_metabolism_q10_is_not_added():
+    """Section 143: 0 means no temperature term; never add the key."""
+    out = _merge(LIBRARY, {"metabolism_q10": 0.0})
+    assert "metabolism_q10" not in out
+    out = _merge(LIBRARY, {"metabolism_q10": 2.2,
+                           "metabolism_t_ref": "annual_mean"})
+    assert "metabolism_q10: 2.2" in out
+    assert "metabolism_t_ref: annual_mean" in out

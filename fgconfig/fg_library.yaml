@@ -60,6 +60,14 @@
     maintenance_level: 0.5
     max_energy_reserve: 675.0
     resting_metabolism: 22.5
+    # Water temperature (section 143; only with the manifest's
+    # simulation_settings.temperature): Q10 2.0 for active copepods and
+    # krill, 4-16 C (Ikeda et al. 2001; Saborowski et al. 2000, Kattegat
+    # Meganyctiphanes). resting_metabolism is read as the annual mean.
+    # Calanus diapause (~10-20 % of active respiration) is a state switch
+    # a Q10 does not describe.
+    metabolism_q10: 2.0
+    metabolism_t_ref: annual_mean
     movement_speed: 0.02
     # Respiration + excretion while feeding, in multiples of the resting
     # (fasting) rate (section 135): Kiorboe et al. 1985 measured both at
@@ -146,6 +154,14 @@
     maintenance_level: 0.2
     max_energy_reserve: 7000.0
     resting_metabolism: 8.0
+    # Water temperature (section 143; only with the manifest's
+    # simulation_settings.temperature): Q10 2.2 from sprat respirometry,
+    # 9-21 C (Meskendahl 2013; clupeids 1.8-2.2). t_ref 14 C because 8
+    # MJ/t/tick (32 kJ/kg/d at rest) is the Rudstam/Rose et al. 2008
+    # herring resting term at ~14 C, i.e. already a summer value: the
+    # multiplier is ~0.5 in Jan-Apr and ~1 in Aug-Sep.
+    metabolism_q10: 2.2
+    metabolism_t_ref: 14.0
     movement_speed: 1.0
     feeding_cost: 1.9
     movement_cost: 1.5
@@ -185,6 +201,13 @@
     maintenance_level: 0.5
     max_energy_reserve: 2500.0
     resting_metabolism: 6.0
+    # Water temperature (section 143; only with the manifest's
+    # simulation_settings.temperature): Q10 2.2 from cod standard
+    # metabolic rate, 35.5 / 57.0 / 78.2 mg O2/kg/h at 5 / 10 / 15 C
+    # (Schurmann & Steffensen 1997). resting_metabolism is read as the
+    # annual mean (low confidence).
+    metabolism_q10: 2.2
+    metabolism_t_ref: annual_mean
     movement_speed: 0.25
     feeding_cost: 1.75
     movement_cost: 2.0
@@ -224,6 +247,9 @@
     maintenance_level: 0.5
     max_energy_reserve: 2800.0
     resting_metabolism: 90.0
+    # No metabolism_q10 (section 143): an endotherm; wild field metabolic
+    # rate is flat over 0-20 C water and FMR barely changed between Dec,
+    # Aug and Feb (Rojano-Donate et al. 2018).
     movement_speed: 1.0
     # Back to 1.4 (section 133): the 1.1 of section 130 only compensated
     # the halved appetite at the maintenance level under h = 1 - s. With

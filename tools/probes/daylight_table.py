@@ -11,6 +11,10 @@ For every light-limited producer (``light_saturation`` set) it also
 prints the monthly mean growth factor P(t)/P_ref, which is 1 on the
 species' reference day (default mid April) - section 138.
 
+With a ``simulation_settings.temperature`` block it prints, for every
+group with ``metabolism_q10``, the monthly mean temperature of its
+layer and the Q10 multiplier on its resting_metabolism - section 143.
+
 Reads the manifest's latitude even when the calendar is disabled there,
 so the effect can be inspected before switching it on.
 
@@ -29,7 +33,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
 sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
-from lib.world import daylight  # noqa: E402
+from lib.world import daylight, temperature  # noqa: E402
 from lib.world.tick_time import LIBRARY_TICK_HOURS  # noqa: E402
 
 MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
@@ -50,6 +54,40 @@ def _monthly(values, tick_hours):
         out.append(days[first:first + n].mean())
         first += n
     return out
+
+
+def _print_temperature(project, species, hours):
+    """Monthly Q10 metabolism multipliers per group (section 143)."""
+    block = ((project.get("simulation_settings") or {}).get("temperature")
+             or {})
+    if not block.get("layers"):
+        print("\nNo simulation_settings.temperature: metabolism is constant.")
+        return
+    state = "ON" if block.get("enabled") else "off (shown as if on)"
+    layers = {str(k): v for k, v in block["layers"].items()}
+    group_layers = block.get("group_layers") or {}
+    print(f"\nWater temperature {state}: Q10 multiplier on resting_metabolism")
+    for fid, spec in species.items():
+        settings = temperature.species_settings(spec or {})
+        if settings is None:
+            continue
+        q10, t_ref = settings
+        layer = group_layers.get(fid)
+        if layer not in layers:
+            print(f"  {fid}: metabolism_q10 {q10:g} but no layer assigned")
+            continue
+        temps = _monthly(temperature.tick_temperatures(layers[layer], hours),
+                         hours)
+        m = temperature.metabolism_multiplier(layers[layer], hours, q10, t_ref)
+        monthly = _monthly(m, hours)
+        ref = t_ref if t_ref == temperature.ANNUAL_MEAN else f"{t_ref:g} C"
+        print(f"\n{fid}: Q10 {q10:g}, t_ref {ref}, layer {layer}")
+        print("  monthly mean T (C):  "
+              + "  ".join(f"{mo} {v:4.1f}" for mo, v in zip(MONTHS, temps)))
+        print("  monthly mean m:      "
+              + "  ".join(f"{mo} {v:4.2f}" for mo, v in zip(MONTHS, monthly)))
+        print(f"  annual mean m {m.mean():.2f}; lowest {m.min():.2f}, "
+              f"highest {m.max():.2f}")
 
 
 def main(argv=None):
@@ -110,6 +148,7 @@ def main(argv=None):
               + "  ".join(f"{m} {v:4.2f}" for m, v in zip(MONTHS, monthly)))
         print(f"  annual mean {g.mean():.2f}; highest tick {g.max():.2f} "
               "(nights are 0)")
+    _print_temperature(project, species, hours)
     pairs = [(key, d) for key, d in
              (library.get("interaction_definitions") or {}).items()
              if "_preys_on_" in key and d.get("preys_on")

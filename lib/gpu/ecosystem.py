@@ -112,6 +112,11 @@ class TensorEcosystem:
         self.light_obs = tensor(env.light_obs_table) if self.daylight else None
         self.light_mult = (tensor(env.light_mult_table)[:, :, :, None]
                            if self.light_pairs else None)
+        # Water temperature (section 143): (T, D) Q10 multiplier on the
+        # metabolism, indexed by the same year tick as the light tables.
+        self.temperature_on = bool(getattr(env, "_has_temperature", False))
+        self.metabolism_temp = (tensor(env.metabolism_temp_table)
+                                if self.temperature_on else None)
         self.velocity = tensor(env.dm_v)[None, :, None, None]
         self.metabolism = tensor(env.dm_resting_metabolism)[None, :, None]
         self.cost_rest = tensor(env.dm_cost_rest)[None, :, None]
@@ -401,7 +406,8 @@ class TensorEcosystem:
         r = torch.zeros(shape, device=self.device).index_copy(2, self.edge_indices, r_emig[:, :, None] * weights)
         return b, r
 
-    def movement(self, biomass, reserve, gains, actions, track=False):
+    def movement(self, biomass, reserve, gains, actions, track=False,
+                 light_index=None):
         """Move, split and settle; ``track`` also returns the source flow.
 
         With ``track`` the third return value is
@@ -410,14 +416,24 @@ class TensorEcosystem:
         per-cell biomass. The local reward (``--local_reward``) needs all
         three to attribute the destination cells' end-of-tick energy back
         to the cell the population started in.
+
+        ``light_index`` is the year tick per world; the water temperature
+        (section 143) scales every action cost by its Q10 multiplier.
         """
         b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
+        metabolism = self.metabolism
+        if self.temperature_on:
+            if light_index is None:
+                raise ValueError("light_index is required with the water "
+                                 "temperature")
+            metabolism = (metabolism
+                          * self.metabolism_temp[light_index.reshape(-1)][:, :, None])
         move, rest = actions[:, :, :4], actions[:, :, 4]
         eat = actions[:, :, 5:].sum(2)
         move_fraction = move.sum(2)
-        rest_r = (r * rest - b * rest * self.metabolism * self.cost_rest).clamp_min(0)
-        eat_r = (r * eat - b * eat * self.metabolism * self.cost_eat).clamp_min(0) + gains
-        move_r = (r * move_fraction - b * move_fraction * self.metabolism * self.cost_move).clamp_min(0)
+        rest_r = (r * rest - b * rest * metabolism * self.cost_rest).clamp_min(0)
+        eat_r = (r * eat - b * eat * metabolism * self.cost_eat).clamp_min(0) + gains
+        move_r = (r * move_fraction - b * move_fraction * metabolism * self.cost_move).clamp_min(0)
         safe = torch.where(move_fraction > 0, move_fraction, 1.0)
         moving_r = move / safe[:, :, None] * move_r[:, :, None]
         moving_b = move * b[:, :, None]
@@ -672,7 +688,8 @@ class TensorEcosystem:
         start = self.local_energy(biomass, reserve) if track_source else None
         b, r, gains, hidden, intake = self.predation(biomass, reserve, actions,
                                                      light_index)
-        b, r, flow = self.movement(b, r, gains, actions, track=track_source)
+        b, r, flow = self.movement(b, r, gains, actions, track=track_source,
+                                   light_index=light_index)
         if track_source:
             b, r, drift = self.advect(b, r, tick, current_keys, track=True)
         else:

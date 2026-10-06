@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from lib.world import daylight, energy_balance
+from lib.world import daylight, energy_balance, temperature
 
 
 @dataclass
@@ -206,6 +206,49 @@ def build_daylight_tables(env):
             env._has_light_pairs = True
     if env._has_light_pairs:
         env.light_mult_table = table
+
+
+def build_temperature_tables(env):
+    """Q10 metabolism multipliers on the daylight calendar (section 143).
+
+    Sets ``env._has_temperature`` and ``env.metabolism_temp_table``
+    ((T, N_dm) multiplier on ``resting_metabolism``, exactly 1 for every
+    decision maker without ``metabolism_q10``, or None when no group
+    has one). Off - and the tick bit-identical to before - unless the
+    loader put a ``params['temperature']`` on a decision maker. Adds no
+    observation channel. Must run after ``build_daylight_tables``.
+    """
+    env._has_temperature = False
+    env.metabolism_temp_table = None
+    configured = [fid for fid in env.global_fg_order
+                  if env.fgs[fid].params.get("temperature")]
+    if not configured:
+        return
+    if env.daylight is None:
+        raise ValueError(
+            "temperature-dependent metabolism needs the daylight calendar "
+            f"(groups {configured}); section 143")
+    tick_hours = int(env.daylight["tick_hours"])
+    table = np.ones((env.light_period, env.N_dm), dtype=env.dtype)
+    for i, fid in enumerate(env.dm_ids):
+        fg = env.fgs[fid]
+        cfg = fg.params.get("temperature")
+        settings = temperature.species_settings(fg.params)
+        if not cfg or settings is None:
+            continue
+        q10, t_ref = settings
+        table[:, i] = temperature.metabolism_multiplier(
+            cfg["monthly_c"], tick_hours, q10, t_ref)
+        env._has_temperature = True
+    if env._has_temperature:
+        env.metabolism_temp_table = table
+
+
+def metabolism_temperature(env):
+    """``(N_dm,)`` multiplier on resting_metabolism this tick, or None."""
+    if not getattr(env, "_has_temperature", False):
+        return None
+    return env.metabolism_temp_table[light_index(env)]
 
 
 def light_index(env):

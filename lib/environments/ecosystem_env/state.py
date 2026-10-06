@@ -159,8 +159,10 @@ def build_static_caches(env):
 
     # Daylight calendar (section 137): per-tick attack-rate multipliers
     # for light-dependent pairs and the light observation channel. Off
-    # unless the project enables it.
+    # unless the project enables it. The water temperature (section 143)
+    # reads the same calendar: Q10 multipliers on resting_metabolism.
     interactions.build_daylight_tables(env)
+    interactions.build_temperature_tables(env)
 
     # Beddington-DeAngelis interference coefficient w_X [1/ton], per DM.
     # Broadcast shape (N_dm, 1, 1, 1) so it multiplies the predator's own

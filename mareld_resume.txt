@@ -13403,3 +13403,113 @@ remain open exactly as described in 71.9 / 71.11.
     equator, where there is no range). The status bar's "light = F"
     became "daylight = 14.2 h". F (per tick) is still in calendar_at
     but no longer drawn. 142.1-142.4 otherwise unchanged.
+
+143 Water temperature: Q10 metabolism on the daylight calendar (2026-10-06)
+143.1 Why: the model had no temperature, so every ectotherm paid its
+    summer resting_metabolism all year. Probe on fix47 policies
+    (pzbpgp248nsrpfix47, 60x60, currents/migration/mortality on, start
+    late May): herring intake fell ~90 % in winter (zooplankton at
+    herring cells 10.7 -> 1.2 t/cell, daylight attack multiplier 1.4 ->
+    0.66) while cost fell only ~30 % (more resting). Reserve fill 0.81
+    (Jul) -> 0.15-0.19 (Jan-Feb), 57-79 % of herring biomass below the
+    starvation threshold, ~1600 t lost to starvation Dec-Feb, herring
+    12500 -> 5150 t over the year. Lean herring (reserve ~1000 MJ/t)
+    then starved the porpoises out in Jan-Feb (end 0.08 of 12 t); only
+    an omniscient free-moving oracle survived. Literature
+    (reports/Vintermetabolism sill och tumlare.md, notes in
+    research_notes/Vintermetabolism sill och tumlare/): no source
+    reports winter starvation of adult herring; Q1 herring hold ~6.5
+    kJ/g (~5-8 % fat); fish metabolism Q10 ~2.2, krill/copepods ~2.0;
+    porpoise FMR is flat over 0-20 C.
+143.2 Model: a DM with metabolism_q10 pays resting_metabolism * m(t),
+    m(t) = q10 ** ((T(t) - t_ref) / 10). Every action cost is a multiple
+    of resting_metabolism, so rest/eat/move all follow. T(t) = the
+    group's layer temperature at the tick mid-point, interpolated from
+    12 monthly means (daylight.monthly_value, circular). t_ref is deg C
+    or "annual_mean" (m normalised to average exactly 1 over the year,
+    the attack-multiplier convention; slightly different from t_ref =
+    mean T because q10**x is convex). Uses the daylight calendar's year
+    tick (same start, same random start per world); an enabled block
+    without daylight raises. No observation channel: checkpoints stay
+    valid. Attack rate is NOT scaled (literature E ~0.4 eV, weaker than
+    metabolism; on top of the daylight factor it would deepen the
+    winter intake collapse) - a possible step 2.
+143.3 Settings: manifest simulation_settings.temperature {enabled,
+    layers: {name: 12 monthly C}, group_layers: {fg: layer}} (site
+    data); library per species metabolism_q10, metabolism_t_ref
+    (biology, tick-independent, not in RESCALE_RULES). A q10 group
+    without a layer, or a q10 on a non decision maker, raises in the
+    loader. q10 = 1 or absent is exactly inert.
+    mareld2.yaml: enabled, SMHI SHARK stations A16+A17 1991-2020;
+    mean_0_50m (unweighted mean of 0-2/10/20/30/50 m) for pelagic_fish
+    and zooplankton, at_50m for gadoids.
+    fg_library.yaml: pelagic_fish 2.2 / t_ref 14 C (8 MJ/t/tick is the
+    Rudstam/Rose 2008 resting term at ~14 C, a summer value: m 0.50-0.55
+    Jan-Apr, 0.95-0.98 Aug-Sep); gadoids 2.2 / annual_mean (cod SMR,
+    Schurmann & Steffensen 1997; m 0.86-1.29); zooplankton 2.0 /
+    annual_mean (Ikeda 2001, Saborowski 2000; m 0.74-1.33). Porpoises,
+    benthos, phytoplankton: none (endotherm / no metabolism term).
+143.4 Code: lib/world/temperature.py (parse_settings, species_settings,
+    tick_temperatures, metabolism_multiplier, runtime_config);
+    config_loader puts params['temperature'] = {layer, monthly_c} on
+    each q10 DM; interactions.build_temperature_tables -> env.
+    _has_temperature, env.metabolism_temp_table (T, N_dm), exactly 1
+    for DMs without q10; movement.apply_energy_costs multiplies a fresh
+    copy of dm_resting_metabolism; GPU TensorEcosystem.metabolism_temp
+    indexed by light_index in movement() (step passes it). train.py
+    banner prints the temperature line; tools/probes/daylight_table.py
+    prints monthly T and m per group.
+143.5 Validation:
+    * tests/test_temperature.py (35) and a GPU parity case in
+      tests/test_gpu_ecosystem.py (fails with an off-by-one table);
+      full suite 1004 passed / 12 skipped; train.py and train_gpu.py
+      1-generation smoke runs OK.
+    * Same probe, temperature on, fix47 policies (trained WITHOUT it):
+      no herring starvation in any month; fill 0.31 (Jan) / 0.32 (Feb),
+      inside the literature target 0.28-0.45; porpoises survive the
+      year at 2.7 of 12 t (were 0.08); herring end 6810 t (was 5150);
+      gadoids 4257, zooplankton 47680 t. Herring summer cost is also
+      a bit lower (Jul m 0.86).
+    * tools/viability.py (frozen behaviour, normative corner) is NOT
+      VIABLE with and without the term (exit 1 both). greedy and
+      greedy_hide: herring ~0 and porpoises extinct by tick ~100 either
+      way. eat arm: herring eq/spawn 0.001 -> 0.066, porpoises extinct
+      at 608 instead of 539, gadoids 0.35 -> 0.41. The rig does not
+      judge trained policies (VIABILITY.md section 6).
+143.6 Open:
+    * Fill minimum is still Jan-Feb, not Mar-Apr after spawning (no
+      spawning cost in the model; the winter intake collapse is
+      zooplankton + light, not cost).
+    * Herring still lose ~43 % over the probe year, now dominated by
+      predation (~8200 t eaten), not starvation.
+    * budget_gate.py and the FG editor energy gate evaluate the library
+      resting_metabolism, i.e. at t_ref (summer for herring).
+    * Not done (report proposals): porpoise feeding_cost 1.4 -> 1.2 and
+      max_energy_reserve ~4500; herring maintenance_level comment says
+      "~2 % fat" but 0.2 x 7000 = 1400 MJ/t = ~3.5 % fat, and Rojbek et
+      al. 2014 is central Baltic (SD 25) with no starvation threshold;
+      attack-rate temperature scaling.
+    * Existing checkpoints load, but the policies were trained at
+      constant cost; retrain to judge.
+143.7 FG editor (same day, user request "no change in fgconfig"):
+    * Project header rows 6-7: "Water temperature: [on]", "Group layers
+      (group=layer, ...)" and a 3-line text box "name: 12 deg C"
+      (Jan..Dec). Loaded from / stored to simulation_settings.
+      temperature; _store_temperature_settings runs after the daylight
+      store on save and validates with temperature.parse_settings, so
+      Daylight off + temperature on, an unknown layer or a short series
+      is refused with a message and nothing is saved.
+    * DM editor, under Resting Metabolism: "Metabolism Q10 (0 = off)"
+      and "Metabolism t_ref (deg C; empty = annual mean)". annual_mean
+      is shown as an empty field and written back as "annual_mean"
+      only when Q10 is set; metabolism_q10 is in OPTIONAL_ZERO_KEYS, so
+      applying a group without it (porpoises) adds nothing.
+    * The editor saves the project with yaml.dump, which drops
+      comments: mareld2.yaml therefore carries no comment on the
+      temperature block; its source (SMHI SHARK A16+A17, 1991-2020) is
+      in 143.3 and in reports/Vintermetabolism sill och tumlare.md.
+    * Checked headless (xvfb): load shows the manifest values, store
+      round-trips the block unchanged, Apply on gadoids / porpoises /
+      pelagic_fish leaves fg_library.yaml byte-identical, a project
+      saved with an extra layer loads in the simulator.
+      tests/test_fgconfig_preserves_library.py covers the merge.

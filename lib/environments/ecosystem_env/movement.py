@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from lib.environments.ecosystem_env import impacts, source_tracking
+from lib.environments.ecosystem_env import impacts, interactions, source_tracking
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 from lib.environments.ecosystem_env.grid_masks import build_movement_mask
 from lib.environments.ecosystem_env.state import ActionSettlement
@@ -250,6 +250,12 @@ def apply_energy_costs(env, actions):
     # movement metabolic costs.
     cost_factor = impacts.impact_energy_cost_factor(env)
     resting_metabolism = env.dm_resting_metabolism[:, None, None]
+    # Water temperature (section 143): Q10 multiplier of this tick on
+    # every action cost; a fresh array, never the cached vector itself.
+    temperature_mult = interactions.metabolism_temperature(env)
+    if temperature_mult is not None:
+        resting_metabolism = (resting_metabolism
+                              * temperature_mult[:, None, None])
     cost_rest = env.dm_cost_rest[:, None, None]
     cost_eat = env.dm_cost_eat[:, None, None]
     cost_move = env.dm_cost_move[:, None, None]

@@ -50,6 +50,7 @@ fabricates mass.
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
 | `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs; shared by loader, FG editor and tests (section 129). |
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142). |
+| `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
@@ -87,6 +88,12 @@ fabricates mass.
   (`interference: 0` = pure Holling; `gadoids: 1.0`, `pelagic_fish: 0.7` in the
   library, section 86). It is what removes the 2-cell vertical bands.
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.
+  With `simulation_settings.temperature` (section 143) the cost of a DM
+  with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
+  T from its layer's monthly table on the daylight calendar; herring
+  t_ref is 14 C (the library value is a summer cost), gadoids and
+  zooplankton `annual_mean`, porpoises none (endotherm). On in
+  `mareld2.yaml`; attack rates are not temperature-scaled.
 - Growth: NDM logistic; DM `s = R/(B*ME)`, `q = s - u` (`maintenance_level`, default 0.3).
   With the daylight calendar a producer with `light_saturation` grows at
   `growth_rate * P(t)/P_ref` (section 138; 0 at night, needs the site's

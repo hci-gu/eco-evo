@@ -3,7 +3,7 @@ import numpy as np
 from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
 from lib.world.growth_budget import derived_growth_rate
-from lib.world import daylight
+from lib.world import daylight, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
@@ -499,6 +499,9 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             daylight_rng = rng
         daylight_cfg = daylight.runtime_config(
             daylight_settings, tick_hours, rng=daylight_rng)
+    # Water temperature (section 143): rides on the daylight calendar,
+    # so parse_settings refuses an enabled block without it.
+    temperature_settings = temperature.parse_settings(project)
 
     # Support both the new split (decision_makers / non_decision_makers) and the
     # legacy unified functional_groups list for backward compatibility.
@@ -720,6 +723,21 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         params, _tick_changes = rescale_species(params, tick_hours)
         if daylight_cfg is not None:
             params['daylight'] = dict(daylight_cfg)
+        if temperature_settings is not None:
+            temperature_cfg = temperature.runtime_config(
+                temperature_settings, sid)
+            if temperature.species_settings(params) is not None:
+                if not params.get('is_decision_maker', False):
+                    raise ValueError(
+                        f"'{sid}' has metabolism_q10 but is not a decision "
+                        "maker: only decision makers pay a metabolism "
+                        "(section 143)")
+                if temperature_cfg is None:
+                    raise ValueError(
+                        f"'{sid}' has metabolism_q10 but no layer in "
+                        "simulation_settings.temperature.group_layers "
+                        "(section 143)")
+                params['temperature'] = temperature_cfg
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: per-project override range > library range >

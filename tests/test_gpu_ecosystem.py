@@ -31,7 +31,7 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              extinction_factor=0.3, interference=None,
              mortality_multiplier=1.0, daylight=None, dark_ratios=None,
              light_saturation=None, m1_exposure=None, reserve_food=None,
-             response_types=None):
+             response_types=None, temperature=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -47,6 +47,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     on every FG; ``dark_ratios`` maps an interaction id to its
     ``dark_ratio`` (section 137). ``light_saturation`` makes the NDM ``c``
     light-limited (section 138; needs a light climate in ``daylight``).
+    ``temperature`` is ``(q10, t_ref, monthly_c)`` for the DM ``a``: its
+    Q10 metabolism on the daylight calendar (section 143).
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -81,6 +83,11 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
             params["daylight"] = dict(daylight)
         if light_saturation and fid == "c":
             params["light_saturation"] = light_saturation
+        if temperature and fid == "a":
+            q10, t_ref, monthly_c = temperature
+            params.update(metabolism_q10=q10, metabolism_t_ref=t_ref,
+                          temperature={"layer": "upper",
+                                       "monthly_c": list(monthly_c)})
         if m1_exposure and fid == "a":
             params.update(m1_exposure)
         if reserve_food is not None and fid == "b":
@@ -282,6 +289,30 @@ def test_light_limited_growth_matches_reference(device, start_tick, with_pairs):
     # in late June (growth above the April reference).
     first = float(model.growth_light[start_tick, j_c])
     assert first == pytest.approx(0.0, abs=1e-6) if start_tick == 0 else first > 1.0
+
+
+TEMPERATURES = [6.3, 5.4, 5.2, 6.1, 7.8, 9.9, 12.1, 13.4, 13.8, 12.8, 10.5, 8.4]
+
+
+@pytest.mark.parametrize("start_tick", [0, 4 * 59 + 3])
+@pytest.mark.parametrize("t_ref", [14.0, "annual_mean"])
+def test_temperature_metabolism_matches_reference(device, start_tick, t_ref):
+    """Section 143: both engines read the same year tick's Q10 multiplier.
+
+    Only ``a`` has a Q10, so a mirror that scaled every DM, or read the
+    table one tick off, diverges. The second start crosses the 28 Feb /
+    1 Mar boundary.
+    """
+    env = make_env(min_split=0.0, extinction_factor=0.0,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False},
+                   temperature=(2.2, t_ref, TEMPERATURES))
+    model = _assert_parity(env, device, ticks=6)
+    assert model.temperature_on
+    i_a, i_b = env.dm_ids.index("a"), env.dm_ids.index("b")
+    assert torch.all(model.metabolism_temp[:, i_b] == 1.0)
+    assert float(model.metabolism_temp[start_tick, i_a]) != pytest.approx(1.0)
+    assert model.in_dims == tuple(int(n) for n in env.per_dm_in_dim)
 
 
 @pytest.mark.parametrize("rho", [1.0, 3.0])

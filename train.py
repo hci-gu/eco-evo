@@ -2038,6 +2038,19 @@ def main(argv=None, *, on_step=None, confirm=True):
             _start = _day['start_day_of_year'] or 'random per world'
             print(f"Daylight:       on - lat {_day['latitude_deg']:g}, "
                   f"start day {_start}, +1 input channel (section 137)")
+    try:
+        from lib.world import temperature as _temperature
+        _temp = _temperature.parse_settings(_load_config(args.project))
+    except Exception as exc:  # reported, then the loader raises properly
+        _temp = None
+        print(f"Temperature:    ERROR {exc}")
+    else:
+        if _temp is None:
+            print("Temperature:    off (project)")
+        else:
+            _groups = ", ".join(f"{f}={l}" for f, l in _temp['group_layers'].items())
+            print(f"Temperature:    on - Q10 metabolism, layers {_groups}, "
+                  f"no input channel (section 143)")
     if args.workers > 0:
         print(f"Workers:        {n_workers} (user, explicit)")
     else:
