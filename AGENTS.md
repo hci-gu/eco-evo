@@ -81,7 +81,8 @@ fabricates mass.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
-  observes the light level (last input slot). Only herring -> zoo is set.
+  observes the light level (last input slot). Set on herring -> zoo
+  (0.1, -8 deg) and gadoids -> herring (0.6, -5 deg; section 144).
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter

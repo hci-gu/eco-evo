@@ -419,6 +419,20 @@ interaction_definitions:
     # density. Without it herring went extinct within two years in every
     # run; with it alone they were held at ~3 % of spawn.
     functional_response: 3
+    # Daylight calendar (section 137; only with simulation_settings.
+    # daylight). Gadoids catch clupeids mostly at dusk and dawn but keep
+    # feeding at night by lateral line and smell: cod stomachs with
+    # herring peak morning and evening (Adlerstein & Welleman 2000),
+    # gadoids take sprat at night in a Norwegian fjord (Kaartvedt et al.
+    # 2009), whiting feed mainly at night (Mergardt & Temming 1997).
+    # dark_ratio 0.6 (range 0.4-1.0) is inferred from stomach data, not
+    # measured. Threshold -5 deg: half detection at ~0.01-0.03 lx at
+    # 30-40 m with an effective Kd 0.15-0.2 /m (cod reactive distance
+    # still long at ~0.35-1.5 lx, Meager et al. 2010). Monthly mean
+    # multiplier 0.88 in Dec, 1.13 in Jun (annual mean 1). Source:
+    # reports/Torskfiskars ljusberoende vid jakt.md.
+    dark_ratio: 0.6
+    light_threshold_deg: -5.0
   porpoises_preys_on_pelagic_fish:
     preys_on: true
     predation_mortality: 0.0117

@@ -13513,3 +13513,35 @@ remain open exactly as described in 71.9 / 71.11.
       pelagic_fish leaves fg_library.yaml byte-identical, a project
       saved with an extra layer loads in the simulator.
       tests/test_fgconfig_preserves_library.py covers the merge.
+
+144 Gadoid -> herring light dependence (2026-10-06)
+144.1 Literature (reports/Torskfiskars ljusberoende vid jakt.md, notes in
+    research_notes/Torskfiskars ljusberoende vid jakt/): no measured
+    night/day attack ratio exists for adult gadoids. Field stomach data
+    (all senses, real prey behaviour) were weighted over lab vision
+    thresholds (vision only; suggested ~0.25-0.3): cod stomachs with
+    herring peak morning and evening (Adlerstein & Welleman 2000,
+    snippet only), gadoids take sprat at night (Kaartvedt et al. 2009,
+    abstract), whiting feed mainly at night (Mergardt & Temming 1997).
+    Krill: no day/night difference in whiting (Onsrud et al. 2004,
+    Oslofjord) -> zooplankton pair unset. Cannibalism: cod most
+    effective at dusk/night/dawn (Strand et al. 2020) -> unset.
+    Benthos: eaten MORE at night (Rindorf 2003), which dark_ratio >= 1
+    cannot express -> unset.
+144.2 Set gadoids_preys_on_pelagic_fish dark_ratio 0.6 (range 0.4-1.0),
+    light_threshold_deg -5 (half detection ~0.01-0.03 lx at 30-40 m,
+    effective Kd 0.15-0.2 /m; the manifest's PAR Kd 0.29 would blind
+    gadoids at Dec noon). Monthly mean m 0.88 (Dec) - 1.13 (Jun),
+    per tick 0.73-1.21, annual mean 1. No new observation channel.
+144.3 Probe (fix47 policies, temperature on, same world as 143.5), with
+    vs without: herring end 6766 vs 6811 t, porpoises 3.24 vs 2.71 t,
+    gadoids 4260 vs 4257 t; herring and gadoid monthly budgets
+    unchanged to the first decimal (gadoids stay satiated, hunger
+    0.13-0.22). As expected: m averages 1, so it only moves predation
+    from winter to summer; the ~43 %/yr herring decline is an annual
+    budget question (predation_mortality / growth_budget), not light.
+    Full suite 1005 passed / 12 skipped.
+144.4 Open: Onsrud et al. 2004 give herring's feeding threshold as
+    0.007-0.036 lx, 1-1.5 decades above the 0.001 lx behind the herring
+    -> zoo threshold of -8 deg; worth re-checking.
+
