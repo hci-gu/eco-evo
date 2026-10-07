@@ -13564,3 +13564,72 @@ remain open exactly as described in 71.9 / 71.11.
     greedy porpoises, CHARGE_MOVE, CMOVE0) produced 143.1's
     positional-vs-budgetary test.
 
+
+145 Porpoise action costs anchored to measured metabolism (2026-10-08)
+145.1 Trigger: run pzbpgp248nsrpfix49 (train_gpu, 4 worlds, temperature
+    on). Porpoises reach ~0.98 of b0 in gen 1, collapse in gen 2 as
+    gadoids climb to 1.7x, then sit flat at avg_ratio ~0.42 for ten
+    generations (episode end 0.6-2 t of 12). Losses 95 % starvation.
+    fix48 (stopped at gen 1 it 16) is not a 1-world success: fix49 was
+    at the same level at it 17.
+145.2 Diagnosis (year probe, tools/probes/fg_year_budget.py world,
+    extended with local herring/gadoid density at porpoise cells):
+    * Extinction sweep is negligible (0.24 of 9.6 t); the starvation
+      booking is real energy deficit.
+    * Policy swap: fix48 porp + fix48 rest 11.6 t; fix49 + fix49 2.4 t;
+      fix48 porp (sit and eat) + fix49 rest ~0.1 t (cells 83 -> 2,
+      porpoise cells end poorer in herring than the grid mean); fix49
+      porp + fix48 rest ~5.6 t. Both the world and the porpoise policy
+      got harder; herring observe porpoises, evasion not shown.
+    * Starving fix49 porpoise biomass MOVES 45 % of ticks (fed: 3 %);
+      78 % of moving biomass leaves cells with herring >= 1 t/km2.
+      Every porpoise cell is below min_split_biomass (0.25 t), so 94 %
+      of actions are one-hot: a moving cell eats nothing and paid
+      90*1.6 = 144 MJ/t/tick; s 0.72 -> u 0.5 is ~4 move ticks.
+145.3 Definition of resting_metabolism (history): SMR in sections 23-24
+    (porpoises 62); reinterpreted 2026-06-01 (commit e61a447,
+    konvergensproblem.txt insikt 9) as "rest-tick FMR" with porpoises
+    62 -> 90 and fc/mc tuned so net eat sits near zero - a calibration
+    to the margin, not to data. Other DMs still use rest/SMR-type
+    values (cod SMR 143, herring Rudstam rest term, zoo fasting rate
+    135). 65.5's "resting_metabolism is SMR-calibrated" was stale for
+    porpoises and seabirds.
+145.4 Literature (read directly, not via the winter report):
+    * Rojano-Donate et al. 2018 (J Exp Biol 221 jeb185827): 5 wild
+      adults 21.7 MJ/d = 12.1 ml O2/kg/min = 0.35 MJ/kg/d (20.1 kJ/l;
+      implied mass ~62 kg); all 13 wild 0.25-0.58 MJ/kg/d; breaths may
+      be underestimated by up to 30 % (-> <= ~0.45). No foraging
+      increment is measured: the winter report's "hunting < +20 %" is
+      NOT in the paper, and its 0.33-0.43 range is not reproducible.
+      Starvation "in a week" in cold water (citing Kastelein 1997a;
+      half the blubber is structural) IS in the paper, so the reserve
+      2800 MJ/t (~8 d at 21.7 MJ/d) is consistent; no case for 4500.
+    * Reed et al. 2000 (J Comp Physiol B 170:1): two 28 kg juveniles,
+      247 ml O2/min = 0.25 MJ/kg/d, 1.9x Kleiber (state not stated).
+    * Otani et al. 2001 (Fish Sci): min COT 2.4 J/kg/m at 1.3-1.5 m/s.
+    * Old model: rest 0.36, eat 0.50, move 0.58 MJ/kg/d, i.e. rest
+      already = wild FMR, which includes foraging and the heat
+      increment of feeding; eat 1.4 counted both twice.
+145.5 APPLIED (user decision): porpoises resting_metabolism 90 -> 60
+    (rest, 0.24 MJ/kg/d), feeding_cost 1.4 -> 1.5 (eat = 90 MJ/t/tick
+    = 0.36 MJ/kg/d = measured FMR), movement_cost 1.6 -> 1.3 (swimming
+    without hunting/SDA; no measurement separates it, judgement).
+    Order rest < move < eat. budget_gate: break-even visible herring
+    1.14 -> 0.62 t/cell, gadoids 3.54 -> 1.26; break-even ration on
+    clupeids 7.5 -> 5.3 %/d. Checkpoints stay valid.
+    SDA is still a per-tick fee; physically it scales with intake
+    (belongs in assimilation_factor). Open.
+145.6 Probe with fix49 policies (trained at the old costs), same world:
+    porpoises 2.4 -> 6.6 t (flat from Feb; loss Jul-Oct), starving
+    share 2.0 -> 0.8 %, s 0.67-0.83; herring/gadoids unchanged
+    (8296/4154 t). fix48 sit-and-eat policy in the fix49 world:
+    0.1 -> 0.7 t, still collapses (starving cells at 0.2-0.7 t herring,
+    below the new break-even): the policy has to learn to find herring.
+145.7 Test: test_live_project_porpoises_need_clupeids_at_a_real_ration
+    (junk-food, section 92) failed - lean gadoids pay at 7.8 %/d, inside
+    Kastelein 4-9.5 %. User decision: pose it at the middle of the
+    window (6.75 %/d); min clupeid share there 0.33. Suite 1005 passed /
+    12 skipped; train.py 1-generation smoke OK.
+145.8 Open: seabirds carry the same FMR-level rest (135) but are muted;
+    one-hot actions below min_split_biomass make "search" all-or-
+    nothing; retrain (resume from fix49 is possible) to judge.

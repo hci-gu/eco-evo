@@ -403,12 +403,15 @@ def test_live_project_porpoises_need_clupeids_at_a_real_ration():
     """The junk-food hypothesis (MacLeod et al. 2007; Spitz et al. 2012).
 
     With full appetite at u_X (section 133) the physiological ceiling
-    alone no longer rations, so the test is posed at the highest ration
-    actually measured (Kastelein, 9.5 % of body mass per day): a pure
+    alone no longer rations, so the test is posed at the middle of the
+    measured rations (Kastelein, 4-9.5 % of body mass per day): a pure
     lean-gadoid diet must NOT pay for the feeding metabolism there, and
     the minimum clupeid share must stay within the 50-70 % that Kattegat /
     Skagerrak stomachs contain (it may be lower - porpoises eat more
-    clupeids than the minimum).
+    clupeids than the minimum). Since section 145 the feeding cost is
+    the measured field metabolic rate, and lean food pays at the top of
+    the window (7.8 %/day), so it is low-quality food that needs an
+    above-typical ration, not food that cannot pay at all.
     """
     env = _build_live_env()
     if 'porpoises' not in env.dm_ids:
@@ -417,11 +420,11 @@ def test_live_project_porpoises_need_clupeids_at_a_real_ration():
     best_id = max(quality, key=quality.get)
     worst_id = min(quality, key=quality.get)
     assert best_id == 'pelagic_fish', best_id
-    ration = KASTELEIN_MAX / TICKS_PER_DAY
+    ration = 0.5 * (KASTELEIN_MIN + KASTELEIN_MAX) / TICKS_PER_DAY
     need_q = cost / ration
     assert quality[worst_id] < need_q <= quality[best_id], (
         f"{quality} against a requirement of {need_q:.0f} MJ/t at the "
-        f"Kastelein maximum ration")
+        f"middle of the Kastelein rations")
     share = ((need_q - quality[worst_id])
              / (quality[best_id] - quality[worst_id]))
     assert 0.0 < share <= 0.70, share
