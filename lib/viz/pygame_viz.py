@@ -896,11 +896,16 @@ class LiveVisualizer:
                 obj = fgs[fid]
                 arr = obj.biomass if hasattr(obj, "biomass") else obj
                 arr = np.asarray(arr, dtype=np.float32)
-                # Hide sub-individual residues after extinction. Continuous
-                # biomass uses a numerical floor to suppress subnormal noise.
+                # Hide only what the model itself treats as extinct: the
+                # per-cell sweep threshold extinction_threshold_factor *
+                # min_split_biomass (section 61). A fixed 0.5 hid live
+                # porpoise cells of 5-125 kg (factor 0.02, section 146).
+                # Continuous biomass, or a factor of 0, keeps a numerical
+                # floor that only suppresses subnormal noise.
                 msb = float(getattr(obj, 'min_split_biomass', 0.0)) \
                     if hasattr(obj, 'biomass') else 0.0
-                dead_eps = 0.5 * msb if msb > 0.0 else 1e-20
+                factor = float(getattr(obj, 'extinction_threshold_factor', 0.5))
+                dead_eps = factor * msb if msb > 0.0 and factor > 0.0 else 1e-20
                 if dead_eps > 0.0:
                     # Kopiera först för att inte mutera env:s underliggande
                     # array; nolla sedan alla celler under tröskeln.

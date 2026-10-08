@@ -13633,3 +13633,25 @@ remain open exactly as described in 71.9 / 71.11.
 145.8 Open: seabirds carry the same FMR-level rest (135) but are muted;
     one-hot actions below min_split_biomass make "search" all-or-
     nothing; retrain (resume from fix49 is possible) to judge.
+
+146 Viewer dead-clamp follows the extinction sweep (2026-10-08)
+146.1 Trigger: after resuming fix49 with the section 145 costs the live
+    viewer showed porpoises at 3.39 t while biomass.jsonl (same probe
+    world) logged 6-10 t at episode end.
+146.2 Cause: pygame_viz.update_biomass zeroed every cell <= 0.5 *
+    min_split_biomass before summing (section 54, written when porpoise
+    min_split_biomass was 50 kg -> 25 kg). Commit f594fd3 (2026-09-14)
+    raised it to 250 kg, so the viewer hid cells <= 125 kg, while the
+    model sweeps porpoise cells only below extinction_threshold_factor *
+    min_split_biomass = 0.02 * 250 = 5 kg (section 61). biomass.jsonl
+    'bh' is the raw sum and was never affected.
+146.3 Measured (fix49 checkpoint, one year, probe world): porpoises
+    spread over ~100 cells, of which 27-44 are above 125 kg. Raw vs
+    viewer: tick 730 11.45 / 8.05 t, tick 1460 8.23 / 5.30 t - the
+    viewer under-read by 30-40 %, more the more spread out they are.
+146.4 Fix: the clamp is extinction_threshold_factor * min_split_biomass
+    per FG (default 0.5, so every other FG is unchanged); factor 0 or
+    continuous biomass keep the 1e-20 subnormal floor. Visual only;
+    inference.py's all-FG DEAD_EPS early exit is unchanged.
+    tests/test_viz_dead_clamp.py. Suite 1008 passed / 12 skipped;
+    train.py 1-generation smoke OK.
