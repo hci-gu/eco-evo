@@ -90,6 +90,7 @@ class TensorARSTrainer:
         m = self.model
         self.world_index = torch.arange(self.worlds, device=m.device, dtype=torch.int64)
         self.world_biomass = torch.zeros((self.worlds, m.G, m.C), device=m.device)
+        self.world_light_start = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
         self.pair_index = torch.arange(self.n_deltas, device=m.device, dtype=torch.int64)
         self.runner = RolloutRunner(m, self.bank, 2 * self.pairs_per_batch, self.worlds, **self.runner_options)
         self.chunks = []
@@ -115,11 +116,19 @@ class TensorARSTrainer:
     def refresh_worlds(self, epoch=None):
         if epoch is not None and epoch == self.last_world_epoch:
             return
-        epoch_key = self.iteration if epoch is None else epoch
-        keys = fold_in(fold_in(self.seed.expand(self.worlds), 20001), self.world_index)
-        keys = fold_in(keys, epoch_key)
+        keys = self._world_keys(self.iteration if epoch is None else epoch)
         self.world_biomass.copy_(self.spawner.biomass(keys))
+        # The calendar start belongs to the world, like its fields: every
+        # delta pair evaluated on a world sees the same season. Drawn per
+        # pair it made the pairs' reward levels differ by season (98-99 %
+        # of the between-pair variance), which randomised the top-b
+        # selection and inflated sigma_f (section 150).
+        self.world_light_start.copy_(self.spawner.light_starts(keys))
         self.last_world_epoch = epoch
+
+    def _world_keys(self, epoch_key):
+        keys = fold_in(fold_in(self.seed.expand(self.worlds), 20001), self.world_index)
+        return fold_in(keys, epoch_key)
 
     def make_deltas(self):
         keys = fold_in(fold_in(self.seed.expand(self.n_deltas), self.iteration), self.pair_index)
@@ -178,8 +187,9 @@ class TensorARSTrainer:
             keys = torch.cat((keys, keys), 0).flatten()
             b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
             r = self.spawner.reserves(b, keys)
+            light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
             runner.reset(b, r, keys, n_eval_ticks, self.obs_mean, self.obs_var, self.temperature,
-                         light_start=self.spawner.light_starts(keys))
+                         light_start=light)
             runner.run(n_eval_ticks)
             rewards, actions = runner.results(n_eval_ticks)
             self.rewards[:, start:start + count].copy_(rewards.reshape(2, self.pairs_per_batch, self.worlds, m.D)[:, :count].mean(2))
@@ -248,7 +258,8 @@ class TensorARSTrainer:
                     seed=cpu(self.seed), iteration=cpu(self.iteration),
                     iterations_completed=self.iterations_completed, temperature=cpu(self.temperature),
                     worlds=self.worlds, last_world_epoch=self.last_world_epoch,
-                    world_biomass=cpu(self.world_biomass))
+                    world_biomass=cpu(self.world_biomass),
+                    world_light_start=cpu(self.world_light_start))
 
     def load_state_dict(self, state):
         for name, expected in (("ids", self.model.ids), ("dm_ids", self.model.dm_ids),
@@ -272,6 +283,13 @@ class TensorARSTrainer:
         if state["worlds"] == self.worlds:
             self.world_biomass.copy_(state["world_biomass"])
             self.last_world_epoch = state["last_world_epoch"]
+            if "world_light_start" in state:
+                self.world_light_start.copy_(state["world_light_start"])
+            elif self.last_world_epoch is not None:
+                # Checkpoints before section 150: the locked worlds' start
+                # is a pure function of their keys.
+                self.world_light_start.copy_(self.spawner.light_starts(
+                    self._world_keys(self.last_world_epoch)))
         else:
             self.last_world_epoch = None
 

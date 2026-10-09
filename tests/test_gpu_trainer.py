@@ -237,3 +237,27 @@ def test_cuda_execution_matches_eager_and_replay_advances(execution, stability):
         torch.testing.assert_close(eager.rewards, optimized.rewards, rtol=1e-4, atol=1e-5)
         for w, r in zip(eager.theta, optimized.theta):
             torch.testing.assert_close(w, r, rtol=1e-4, atol=2e-5)
+
+
+def test_calendar_start_is_shared_by_every_pair_of_a_world():
+    # Section 150: the start day belongs to the world, like its fields.
+    trainer = build_trainer()
+    assert trainer.model.calendar and trainer.model.light_random_start
+    trainer.train_step(n_eval_ticks=2, world_epoch=5)
+    starts = trainer.runner.light_start.reshape(2, trainer.pairs_per_batch, trainer.worlds).clone()
+    torch.testing.assert_close(starts, starts[:1, :1].expand_as(starts), rtol=0, atol=0)
+    assert starts[0, 0, 0] != starts[0, 0, 1]
+    # A locked world keeps its start, also across a checkpoint reload.
+    trainer.train_step(n_eval_ticks=2, world_epoch=5)
+    torch.testing.assert_close(trainer.runner.light_start.reshape(starts.shape), starts, rtol=0, atol=0)
+    reloaded = build_trainer()
+    state = trainer.state_dict()
+    reloaded.load_state_dict(state)
+    torch.testing.assert_close(reloaded.world_light_start, trainer.world_light_start, rtol=0, atol=0)
+    del state["world_light_start"]
+    legacy = build_trainer()
+    legacy.load_state_dict(state)
+    torch.testing.assert_close(legacy.world_light_start, trainer.world_light_start, rtol=0, atol=0)
+    # A new epoch draws new starts.
+    trainer.train_step(n_eval_ticks=2, world_epoch=6)
+    assert not torch.equal(trainer.world_light_start, starts[0, 0])
