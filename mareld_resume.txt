@@ -13656,6 +13656,139 @@ remain open exactly as described in 71.9 / 71.11.
     tests/test_viz_dead_clamp.py. Suite 1008 passed / 12 skipped;
     train.py 1-generation smoke OK.
 
+147 Gadoid Holling ceiling at a real Cmax (2026-10-08)
+147.1 Trigger: the winter Nyquist checkerboard in pelagic_fish (fix49,
+    inference) is learned night-time density-dependent resting that
+    exploits gadoid saturation: per-capita risk falls in dense herring
+    cells and the gadoids do not follow, because they are full.
+147.2 Diagnosis (fix49 policies, probe world, one year from Oct):
+    gadoid reserve fill 0.83-0.88 Oct-Feb and 0.93-0.94 Mar-Sep, hunger
+    gate 0.13-0.35. Potential intake on benthos alone ~50 MJ/t/tick vs
+    costs 9-13: with h = 25 the ceiling 1/h = 0.04 t/t/tick = 16 %/day,
+    so the reserve-based hunger gate, not a stomach limit, set the
+    intake. Realised ration 1.2-2.4 %/day; gadoids +52 %/yr, herring
+    -28 %/yr. Benthos amount is not the error (model gadoids take ~1/3
+    of it per year vs Ecopath M2 0.0048).
+147.3 Literature: adult cod Cmax ~2-3.5 %/day at North Sea temperatures
+    (Jobling 1988 eq. 0.223 exp(0.104T - 0.000112T^3) W^0.802, read as
+    kJ/day with ~4.5 kJ/g prey: 1 kg cod 2.3/2.7/3.2 %/day at 6/8/10 C;
+    lab rations 1.9 % at 4-5 C, 2.5 % at 6 C, ICES CM 1980/F20; field
+    0.9-1.5 % for cod > 30 cm, Durbin et al. 1983). Units of the Jobling
+    equation are not stated in the citing paper (ICES JMS 77:624).
+147.4 Probe (fix49 policies frozen, h overridden on the four gadoid
+    pairs, Nov -> Sep): gadoids / winter fill / herring
+      h 25  (16 %/d)   +52 %   0.84        -28 %
+      h 130 (3.1 %/d)   -2 %   0.57-0.62    -8 %
+      h 160 (2.5 %/d)  -13 %   0.52-0.56    -4 %
+      h 200 (2.0 %/d)  -43 %   0.43         +3 %
+    h 160 with a Q10-scaled ceiling (same annual mean) ~ h 160 constant.
+    The frozen policy still eats 71-77 % benthos in Dec-Jan.
+147.5 Change: handling_time 25 -> 130 on gadoids -> pelagic_fish,
+    benthic_community, gadoids, zooplankton. a stays 0.04, so a*h = 5.2
+    (the a*h = 1 library convention is broken for gadoids; half-
+    saturation of the type III herring pair ~1 -> ~0.44 t/km2).
+    budget_gate: gadoid ration 3.1 %/day, need quality 1365 MJ/t, any
+    diet closes. Suite 1008 passed / 12 skipped; train_gpu 1-generation
+    smoke OK. Checkpoints stay loadable (no observation change).
+147.6 Open: retrain to see whether hungry winter gadoids track herring
+    and the checkerboard goes away. Whether the real ceiling is mass- or
+    energy-limited is unverified (the herring-vs-benthos advantage per
+    stomach-full is up to ~3x if mass-limited, less otherwise). Other
+    DMs' ceilings also follow a*h = 1 rather than Cmax: pelagic_fish
+    16 %/d (realised 0.2-3.8), porpoises 14 %/d (lit. 7-10), seals
+    20 %/d (lit. ~2-5, muted), seabirds h = 0 (muted).
+
+148 Gadoid ceilings as an energy limit (2026-10-09)
+148.1 Trigger: pzbpgp248nsrpfix50 (h 130 on every gadoid pair, from
+    scratch, 2 worlds, gen 7): checkerboard still visible; gadoids eat
+    1-3 % benthos, 55-73 % herring, 24-51 % zooplankton (Ecopath 1991
+    renormalised to the model's prey: herring ~40, benthos ~28, zoo
+    ~25, gadoids ~6 %). The rest-vs-neighbour-contrast mechanism of
+    fix49 is gone (night rest 0.77-0.80 at every contrast), pelagic
+    (pi,pi) share 0.2-0.9 % vs 1.8-4.7 % for fix49 at h 25 in the same
+    probe world. But winter-night per-capita herring risk is 2.8x lower
+    in the densest quintile than at 1.4-2.6 t (fix49: 1.6x), and
+    gadoids do not follow herring (corr -0.11): with a = 0.04 and
+    h = 130 the type III half-saturation is 0.44 t/km2, exceeded in
+    92 % of cells, so every cell fills the stomach.
+148.2 Literature: gastric evacuation time scales with prey energy
+    density (whiting, 1.6-1.7x slower from 3.4 to 5.6 kJ/g, Andersen
+    1999; cod, Temming & Herrmann 2003; brown shrimp ~2x slower than
+    krill of equal energy). The stomach limit is closer to an energy
+    limit than a mass limit; real cod eat benthos because it is easy
+    to find, not because it fills the stomach better.
+148.3 Calibration (fix50 fields, one year, every 2nd tick; a gadoid is
+    assumed to eat only the prey with the highest energy rate in its
+    cell; tools: scratchpad collect.py / calib.py, not in the repo):
+      variant                          benth gad herr zoo  dist  risk Q5
+      mass limit h 130 (now)              0   12   78  10    87  0.60
+      energy limit h = 130 E/4500 (C)    18   10   45  26    20  1.00
+      C + a_herr 0.02 + a_zoo 0.025      28   13   36  23    13  1.00
+      mass limit + a_herr 0.005 (A)       0   29   39  32    58  1.00
+      C + a_zoo <= 0.01 (krill only, B)  40   13   46   0    50  0.82
+    risk Q5 = winter-night herring per-capita risk in the densest
+    quintile relative to the most dangerous quintile. Under C risk
+    rises with herring density (0, .08, .20, .85, 1.00); diet Dec-Feb
+    41-65 % benthos, Apr-Aug 62-78 % herring; energy at full appetite
+    22-32 MJ/t/tick vs costs 9-13. A and B are within the method's
+    error and B at a krill share removes zooplankton from the diet.
+148.4 Change (C only): gadoid handling_time = 130 * E / 4500 with E the
+    energy as eaten: benthic_community 87 (3000), zooplankton 130
+    (4500), gadoids 159 (5500), pelagic_fish 217 (7500 at the reserve
+    reference fill). a unchanged (0.04). budget_gate: every gadoid
+    pair alone closes (a*gain 24-28 vs cost 10.5). Frozen fix50
+    policies, one year: gadoids -8 %, winter fill 0.55-0.62, herring
+    -18 %. Suite 1008 passed / 12 skipped; train_gpu 1-generation
+    smoke (cpu eager) OK.
+148.5 Open: retrain. Cannibalism comes out at 10-13 % (23-32 % in
+    Nov-Jan) in the calibration vs ~6 % Ecopath; herring h is fixed
+    at the reference fill although their energy varies 4000-11000 MJ/t.
+
+149 Porpoise diet: why they eat no gadoids (2026-10-09)
+149.1 Trigger: porpoises eat 98-100 % herring, 0 % gadoids (fix50,
+    one year). Ecopath 1991 implies ~49 % gadoids by mass on the
+    model's prey: porpoise M2 0.0557 /yr on gadoids vs 0.0117 on
+    herring, i.e. 4.8x more gadoid per tonne of prey, at a gadoid:
+    herring biomass ratio of ~0.2. Stomach data agree in direction
+    (Danish waters: gadoids in 62 % of stomachs, clupeids 35 %;
+    western Baltic: cod + herring ~70 % of mass; Oresund: cod the main
+    prey Apr-Oct, herring Nov-Mar; Belgian coast: whiting dominant).
+149.2 Not the gadoid fix (148): marine mammal intake is mass-limited
+    (Rosen & Trites 2000/2004, Steller sea lions on pollock could not
+    eat 35-80 % more to match herring - the junk-food hypothesis the
+    porpoise gate already uses), and the porpoise ceiling does not
+    bind (ration 4-7 %/day vs 14 %/day). Mass ceiling kept.
+149.3 Visibility floor 0.75 (porpoises -> gadoids): appeared via the GUI
+    without a comment (section ~74). Literature check: no study tests
+    seabed masking of porpoise sonar. For: cod rest near the bottom at
+    night (Newfoundland telemetry); fish near the seabed are in the
+    dead zone of vertical fishery echosounders. Against: porpoise sonar
+    characteristics suit foraging near the surface or the bottom
+    (ICES JMS 53:465), porpoises aim clicks downward when feeding on
+    bottom fish and feed on the bottom in shallow water. Value kept,
+    YAML comment states it is inferred, not measured. A higher attack
+    rate on gadoids must therefore be justified by the diet data, not
+    by easy sonar detection near the bottom.
+149.4 Calibration (fix50 policies, current library, one year, every 2nd
+    tick; porpoise eats only the prey with the higher energy rate in
+    its cell; scratchpad collect_pred.py / calib_porp*.py). Gadoid
+    share by mass, weighted by current porpoise biomass / every cell
+    equally, and energy at full appetite (cost ~90 MJ/t/tick):
+      a_herr  a_gad   share       E
+      0.035   0.035    0 /  7 %   174 / 162   (library now)
+      0.035   0.300    4 / 32 %   175 / 175
+      0.035   1.000   16 / 44 %   176 / 181
+      0.020   0.300   19 / 48 %   148 / 156
+      0.015   0.150   16 / 46 %   132 / 139
+      0.010   0.300   51 / 69 %   120 / 136
+    Raising a_gad alone cannot work where porpoises are: herring there
+    already give 174 MJ/t/tick, more than gadoids give AT the mass
+    ceiling (4620 / 28.6 = 162). Gadoids win only where herring are
+    well below saturation, so an Ecopath-like diet also needs a lower
+    a on herring, which costs the porpoise budget (E 174 -> ~150).
+149.5 Open: user decision on a_herr / a_gad for porpoises (nothing
+    changed yet); redo on fix51 fields since porpoises would move.
+
 150 GPU calendar start per world, not per delta pair (2026-10-10)
 150.1 Finding: the GPU trainer drew the daylight start tick from the
     pair keys (fold_in(seed, iteration, pair, world)), so every delta

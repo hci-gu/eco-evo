@@ -424,7 +424,19 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.2997
     assimilation_factor: 0.8
-    handling_time: 25.0
+    # Gadoid Holling ceilings are an ENERGY limit (sections 147, 148):
+    # h = 130 * E_prey / 4500, E_prey the energy as eaten (MJ/t), so
+    # every gadoid pair fills the stomach at the same ~35 MJ/t/tick
+    # (~3 % body mass/day of 4.5 kJ/g food; adult cod Cmax ~2-3.5 %/day
+    # at North Sea temperatures, Jobling 1988 read as kJ/day; lab
+    # rations 1.9-2.5 % at 4-6 C, ICES CM 1980/F20). Gastric evacuation
+    # slows in proportion to prey energy density (whiting, Andersen
+    # 1999; cod, Temming & Herrmann 2003). A mass limit made herring
+    # worth ~3x benthos per stomach-full: gadoids ate <3 % benthos
+    # (Ecopath ~28 % of the model's prey). Herring here: 7500 MJ/t at
+    # the reserve reference fill -> h 217. h was 25 (16 %/day) before
+    # section 147. a stays 0.04 on every pair.
+    handling_time: 217.0
     visibility_floor: 0.25
     # Type III (section 141): gadoids are generalists that switch to
     # other prey when herring get scarce, giving herring a refuge at low
@@ -508,16 +520,17 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.0048
     assimilation_factor: 0.7
-    handling_time: 25.0
+    # Energy-limited ceiling, h = 130 * 3000 MJ/t / 4500 (section 148).
+    handling_time: 87.0
   # Cannibalism (section 141): ~5 % of the gadoid diet in North Sea
   # Ecopath 1991 (juvenile cod, whiting, haddock, saithe eaten by the
   # adults); M2 0.2168 /yr is the report's gadoid-on-gadoid share.
-  # a * h = 1 as on the other gadoid pairs.
   gadoids_preys_on_gadoids:
     preys_on: true
     predation_mortality: 0.2168
     assimilation_factor: 0.8
-    handling_time: 25.0
+    # Energy-limited ceiling, h = 130 * 5500 MJ/t / 4500 (section 148).
+    handling_time: 159.0
   gadoids_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
@@ -543,7 +556,8 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.089
     assimilation_factor: 0.8
-    handling_time: 25.0
+    # Energy-limited ceiling, h = 130 * 4500 MJ/t / 4500 (section 148).
+    handling_time: 130.0
   pelagic_fish_preys_on_benthic_community:
     preys_on: false
     predation_mortality: 0.015
@@ -618,6 +632,13 @@ interaction_definitions:
     max_intake_rate: 0.035
     assimilation_factor: 0.84
     handling_time: 28.6
+    # Rested (hidden) gadoids sit near the seabed, which is assumed to
+    # shield them partly from porpoise biosonar (herring: 0.95). This is
+    # inferred, not measured (section 149): cod rest near the bottom at
+    # night (Newfoundland telemetry) and fish close to the seabed fall in
+    # the acoustic dead zone of vertical fishery echosounders, but no
+    # study tests seabed masking of porpoise sonar, and porpoises do
+    # forage on the bottom with downward-aimed clicks.
     visibility_floor: 0.75
   porpoises_preys_on_phytoplankton:
     preys_on: false
