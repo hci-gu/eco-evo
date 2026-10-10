@@ -138,18 +138,33 @@ class GrowthBudget:
             return 0.0
         return annual / (self.gate * TICKS_PER_YEAR)
 
-    def describe(self):
+    def describe_terms(self):
+        """``describe()`` as (text, term) pieces.
+
+        ``term`` names the budget quantity a piece shows - "growth_rate",
+        "r_max", "m1", "m2:<predator>", "gate", "ticks_per_year" or
+        "error" - and is None for the operators between them. The FG
+        editor uses it to give each quantity its own hover help.
+        """
         if self.error:
-            return f"{self.prey_id}: {self.error}"
-        parts = [f"r_max {self.r_max:g}"]
+            return [(f"{self.prey_id}: {self.error}", "error")]
+        terms = [(f"g = {self.growth_rate:.4g}", "growth_rate"),
+                 (" = (", None), (f"r_max {self.r_max:g}", "r_max")]
         if self.is_decision_maker:
-            parts.append(f"M1 {self.m1_annual:.3g}")
+            terms += [(" + ", None), (f"M1 {self.m1_annual:.3g}", "m1")]
         for pred, m2 in sorted(self.predation.items()):
-            parts.append(f"{pred} {m2:g}")
-        gate = f" / ({self.gate:g} x {TICKS_PER_YEAR:g})" if (
-            self.is_decision_maker) else f" / {TICKS_PER_YEAR:g}"
-        return (f"g = {self.growth_rate:.4g} = (" + " + ".join(parts)
-                + f"){gate}")
+            terms += [(" + ", None), (f"{pred} {m2:g}", f"m2:{pred}")]
+        if self.is_decision_maker:
+            terms += [(") / (", None), (f"{self.gate:g}", "gate"),
+                      (" x ", None), (f"{TICKS_PER_YEAR:g}", "ticks_per_year"),
+                      (")", None)]
+        else:
+            terms += [(") / ", None),
+                      (f"{TICKS_PER_YEAR:g}", "ticks_per_year")]
+        return terms
+
+    def describe(self):
+        return "".join(text for text, _term in self.describe_terms())
 
 
 def growth_budget(prey_id, species_defs, interactions,

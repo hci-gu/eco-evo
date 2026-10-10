@@ -13915,3 +13915,52 @@ remain open exactly as described in 71.9 / 71.11.
 152.6 Open: retrain (checkpoints valid); if porpoises still sit and
     their reward noise stays 4-10x the other DMs (sigma_f 0.14-0.22 vs
     0.02-0.05 in fix53), test sampling (B) in training, CPU and GPU.
+
+153 FG editor hover help (fgconfig/field_help.py)
+153.1 Every input field of fgconfig.py now has a hover tooltip (0.5 s
+    delay, hides on leave, click and canvas scroll): project info,
+    daylight/light climate/temperature, DM and NDM editor rows (label,
+    range label, Entry and slider), action costs, impact editor,
+    every matrix cell (caption "<row> eats/observes <col>"), spawn
+    mode/templates/parameters/refs, the impact-table dialog and the
+    Inference tab. Texts live in FIELD_HELP (field_help.py), keyed by
+    the library parameter name; "ndm:" variants where the meaning
+    differs (r_max, growth_rate, energy_content, current_response),
+    "matrix:" for the pair matrices, "spawn_" for spawn parameters.
+    Texts are written from the CPU tick code, not the PDFs.
+153.2 Code vs comment/doc discrepancies found while writing them (not
+    fixed, texts follow the code):
+    - maintenance_level defaults to 0.0 in FunctionalGroup, not 0.3.
+    - spawn floor is 5 x min_split_biomass (config_loader); the
+      Uniform text in SPAWN_MODE_HELP said 10 x (FIXED there, as were
+      the env_driven Floor and colony jitter/uniform descriptions).
+    - a muted observed FG loses its input slot (state.py), comments in
+      config_loader/fgconfig say it is fed 0.
+    - with any Holling pair in the project, a pair with handling_time
+      0 eats a*B (linear, no ceiling); only a project with no h > 0
+      and no specialist uses the flat a.
+    - training initial fill is U[u-0.3, u+0.3], not U(0, ME) as a
+      config_loader comment says.
+    - impacts.py docstring: energy_factor is a cost multiplier only,
+      no direct reserve loss.
+    - spawn: "Perlin" is low-pass filtered white noise; colony anchor
+      has no effect; env_driven for impacts has no refs (constant
+      field at Min unless noise is added).
+153.3 Validation: tests/test_fgconfig_field_help.py (builds the editor
+    on a Tk root, checks every bound key has text and every editor
+    row, matrix and spawn parameter is bound); pytest 1018 passed /
+    12 skipped. GUI-only change: no training smoke run.
+153.4 Derived growth_rate panel (FG Interactions tab): each row is now
+    one label per budget term, from GrowthBudget.describe_terms()
+    (growth_budget.py; describe() joins it, text unchanged). Every
+    term has its own help ("growth:" keys: growth_rate, r_max, m1,
+    m2, gate, ticks_per_year, hand_set, library_note, error) with a
+    first line of the FG's own numbers, e.g. "M2 caused by gadoids =
+    0.2997 per year, adds 0.0002566 per tick to g". The FG name
+    explains the DM or NDM formula, the panel title the panel. The
+    m1 help notes that the panel always includes M1 while a run with
+    --mortality off (default) leaves it out of g.
+153.5 The same per-term rendering (_render_growth_terms) now draws the
+    budget line under the DM and NDM FG Editor, live from the typed
+    r_max / Natural Mortality / Maintenance Level, in the muted colour
+    it had (the 700 px wrap is gone; the line is one row of labels).

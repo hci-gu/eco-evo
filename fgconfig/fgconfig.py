@@ -2,6 +2,7 @@
 from tkinter import ttk, messagebox, filedialog
 import os
 import codecs
+import math
 import sys
 try:
     from ruamel.yaml import YAML
@@ -28,9 +29,16 @@ from lib.world.daylight import (  # noqa: E402
     DEFAULT_THRESHOLD_DEG as DAYLIGHT_DEFAULT_THRESHOLD_DEG)
 from lib.world.growth_budget import (  # noqa: E402
     PREYS_ON,
+    TICKS_PER_YEAR,
     growth_budget,
     has_budget,
 )
+
+# Hover help for every input field (sibling module in fgconfig/).
+_FGCONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+if _FGCONFIG_DIR not in sys.path:
+    sys.path.insert(0, _FGCONFIG_DIR)
+from field_help import Tooltip, attach_help, ndm_help_key  # noqa: E402
 
 # Initialize YAML handler
 yaml = YAML()
@@ -171,6 +179,7 @@ class FGConfigApp:
 
     def _on_mousewheel(self, event):
         """Handle mouse wheel and trackpad scroll events (vertical)."""
+        Tooltip.hide_active()
         delta = self._wheel_delta(event)
         if delta is None:
             return
@@ -182,6 +191,7 @@ class FGConfigApp:
 
     def _on_shift_mousewheel(self, event):
         """Handle horizontal scroll via Shift+wheel or trackpad horizontal gesture."""
+        Tooltip.hide_active()
         delta = self._wheel_delta(event)
         if delta is None:
             return
@@ -355,20 +365,22 @@ class FGConfigApp:
                   font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, columnspan=2,
                                                           sticky="w", padx=5, pady=(5, 2))
 
-        ttk.Label(self.impact_editor_frame, text="Value Range").grid(
-            row=1, column=0, sticky="w", padx=5, pady=2)
+        range_lbl = ttk.Label(self.impact_editor_frame, text="Value Range")
+        range_lbl.grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        attach_help(range_lbl, "impact_value_range")
         ie_min_var, ie_max_var = self._build_value_range_row(
-            self.impact_editor_frame, row=1)
+            self.impact_editor_frame, row=1, help_key="impact_value_range")
         self.impact_value_min_var = ie_min_var
         self.impact_value_max_var = ie_max_var
 
-        ttk.Label(self.impact_editor_frame, text="Observable by policy").grid(
-            row=2, column=0, sticky="w", padx=5, pady=2)
+        obs_lbl = ttk.Label(self.impact_editor_frame, text="Observable by policy")
+        obs_lbl.grid(row=2, column=0, sticky="w", padx=5, pady=2)
         self.impact_observable_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(self.impact_editor_frame,
-                        variable=self.impact_observable_var,
-                        command=self._on_impact_observable_toggled).grid(
-            row=2, column=1, sticky="w", padx=5, pady=2)
+        obs_cb = ttk.Checkbutton(self.impact_editor_frame,
+                                 variable=self.impact_observable_var,
+                                 command=self._on_impact_observable_toggled)
+        obs_cb.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        attach_help([obs_lbl, obs_cb], "impact_observable")
 
         self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
                                            text="Apply Changes",
@@ -435,14 +447,16 @@ class FGConfigApp:
         #   col 3: "Y:"-prefix (endast rad 1)
         #   col 4: andra Entry (Y-värde, endast rad 1)
         #   col 5: status-label (endast rad 1)
-        ttk.Label(info_frame, text="Project Name:").grid(row=0, column=0, sticky="w", padx=5)
+        name_lbl = ttk.Label(info_frame, text="Project Name:")
+        name_lbl.grid(row=0, column=0, sticky="w", padx=5)
         self.project_name_var = tk.StringVar(value="New Project")
         # Project Name-Entry spänner över kolumnerna 2..4 så att fältet täcker
         # bägge X/Y-Entry-fälten nedan (inkl. "Y:"-prefix-label) och slutar
         # vid samma högerkant som Y-Entry. sticky="ew" gör att Entry:n växer
         # till hela columnspan-bredden.
-        ttk.Entry(info_frame, textvariable=self.project_name_var).grid(
-            row=0, column=2, columnspan=3, sticky="ew", padx=(0, 8))
+        name_ent = ttk.Entry(info_frame, textvariable=self.project_name_var)
+        name_ent.grid(row=0, column=2, columnspan=3, sticky="ew", padx=(0, 8))
+        attach_help([name_lbl, name_ent], "project_name")
 
         # Reference grid size. All biomass values entered in the FG editor
         # ("Initial Total Biomass Range") and the Inference tab
@@ -452,8 +466,8 @@ class FGConfigApp:
         # the runtime (`load_project_config`) scales those values linearly by
         # (actual_cells / reference_cells), with a hard floor of 1 ton on the
         # scaled lower bound and on the scaled inference initial biomass.
-        ttk.Label(info_frame, text="Reference Grid (cells, X x Y, min 3):").grid(
-            row=1, column=0, sticky="w", padx=5, pady=(4, 0))
+        ref_lbl = ttk.Label(info_frame, text="Reference Grid (cells, X x Y, min 3):")
+        ref_lbl.grid(row=1, column=0, sticky="w", padx=5, pady=(4, 0))
         self.ref_grid_w_var = tk.StringVar(value="60")
         self.ref_grid_h_var = tk.StringVar(value="60")
 
@@ -480,6 +494,8 @@ class FGConfigApp:
             info_frame, textvariable=self.ref_grid_h_var, width=10,
             validate="key", validatecommand=vcmd_ref)
         self.ref_grid_h_entry.grid(row=1, column=4, sticky="w", padx=(0, 8), pady=(4, 0))
+        attach_help([ref_lbl, self.ref_grid_w_entry, self.ref_grid_h_entry],
+                    "ref_grid")
 
         # Status label that turns red when either field is < 3 (or empty).
         self.ref_grid_status_var = tk.StringVar(value="")
@@ -493,30 +509,38 @@ class FGConfigApp:
         # with a Dark Ratio, plus one light observation channel. Turning
         # it on or off changes the policies' input size, so checkpoints
         # trained with the other setting no longer load.
-        ttk.Label(info_frame, text="Daylight calendar:").grid(
-            row=2, column=0, sticky="w", padx=5, pady=(4, 0))
+        daylight_lbl = ttk.Label(info_frame, text="Daylight calendar:")
+        daylight_lbl.grid(row=2, column=0, sticky="w", padx=5, pady=(4, 0))
         self.daylight_enabled_var = tk.BooleanVar(value=False)
         self.daylight_lat_var = tk.StringVar(value="")
         self.daylight_start_var = tk.StringVar(value="random")
-        ttk.Checkbutton(info_frame, text="on",
-                        variable=self.daylight_enabled_var).grid(
-            row=2, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
+        daylight_cb = ttk.Checkbutton(info_frame, text="on",
+                                      variable=self.daylight_enabled_var)
+        daylight_cb.grid(row=2, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
+        attach_help([daylight_lbl, daylight_cb], "daylight_enabled")
         daylight_frame = ttk.Frame(info_frame)
         daylight_frame.grid(row=2, column=2, columnspan=4, sticky="w",
                             pady=(4, 0))
-        ttk.Label(daylight_frame, text="Latitude (deg):").pack(side="left")
-        ttk.Entry(daylight_frame, textvariable=self.daylight_lat_var,
-                  width=8).pack(side="left", padx=(2, 10))
-        ttk.Label(daylight_frame,
-                  text="Start day (1-365 or random):").pack(side="left")
-        ttk.Entry(daylight_frame, textvariable=self.daylight_start_var,
-                  width=8).pack(side="left", padx=(2, 0))
+        lat_lbl = ttk.Label(daylight_frame, text="Latitude (deg):")
+        lat_lbl.pack(side="left")
+        lat_ent = ttk.Entry(daylight_frame, textvariable=self.daylight_lat_var,
+                            width=8)
+        lat_ent.pack(side="left", padx=(2, 10))
+        attach_help([lat_lbl, lat_ent], "daylight_latitude")
+        start_lbl = ttk.Label(daylight_frame,
+                              text="Start day (1-365 or random):")
+        start_lbl.pack(side="left")
+        start_ent = ttk.Entry(daylight_frame,
+                              textvariable=self.daylight_start_var, width=8)
+        start_ent.pack(side="left", padx=(2, 0))
+        attach_help([start_lbl, start_ent], "daylight_start_day")
 
         # Site light climate for light-limited producers (section 138):
         # Kd(PAR) and 12 monthly values (Jan..Dec, comma separated) of the
         # mixed-layer depth and of the cloud transmission.
-        ttk.Label(info_frame, text="Light climate:").grid(
-            row=3, column=0, sticky="w", padx=5, pady=(4, 0))
+        climate_lbl = ttk.Label(info_frame, text="Light climate:")
+        climate_lbl.grid(row=3, column=0, sticky="w", padx=5, pady=(4, 0))
+        attach_help(climate_lbl, "light_climate")
         self.daylight_kd_var = tk.StringVar(value="")
         self.daylight_zmix_var = tk.StringVar(value="")
         self.daylight_cloud_var = tk.StringVar(value="")
@@ -526,51 +550,61 @@ class FGConfigApp:
         climate_frame = ttk.Frame(info_frame)
         climate_frame.grid(row=3, column=2, columnspan=3, sticky="w",
                            pady=(4, 0))
-        ttk.Label(climate_frame, text="Kd(PAR) (1/m):").pack(side="left")
-        ttk.Entry(climate_frame, textvariable=self.daylight_kd_var,
-                  width=8).pack(side="left", padx=(2, 0))
-        ttk.Label(info_frame, text="    Mixed layer (m, Jan..Dec):").grid(
-            row=4, column=0, sticky="w", padx=5, pady=(4, 0))
-        ttk.Entry(info_frame, textvariable=self.daylight_zmix_var).grid(
-            row=4, column=2, columnspan=3, sticky="ew", padx=(0, 8),
-            pady=(4, 0))
-        ttk.Label(info_frame,
-                  text="    Cloud transmission (Jan..Dec):").grid(
-            row=5, column=0, sticky="w", padx=5, pady=(4, 0))
-        ttk.Entry(info_frame, textvariable=self.daylight_cloud_var).grid(
-            row=5, column=2, columnspan=3, sticky="ew", padx=(0, 8),
-            pady=(4, 0))
+        kd_lbl = ttk.Label(climate_frame, text="Kd(PAR) (1/m):")
+        kd_lbl.pack(side="left")
+        kd_ent = ttk.Entry(climate_frame, textvariable=self.daylight_kd_var,
+                           width=8)
+        kd_ent.pack(side="left", padx=(2, 0))
+        attach_help([kd_lbl, kd_ent], "daylight_kd")
+        zmix_lbl = ttk.Label(info_frame, text="    Mixed layer (m, Jan..Dec):")
+        zmix_lbl.grid(row=4, column=0, sticky="w", padx=5, pady=(4, 0))
+        zmix_ent = ttk.Entry(info_frame, textvariable=self.daylight_zmix_var)
+        zmix_ent.grid(row=4, column=2, columnspan=3, sticky="ew", padx=(0, 8),
+                      pady=(4, 0))
+        attach_help([zmix_lbl, zmix_ent], "daylight_mixed_layer")
+        cloud_lbl = ttk.Label(info_frame,
+                              text="    Cloud transmission (Jan..Dec):")
+        cloud_lbl.grid(row=5, column=0, sticky="w", padx=5, pady=(4, 0))
+        cloud_ent = ttk.Entry(info_frame, textvariable=self.daylight_cloud_var)
+        cloud_ent.grid(row=5, column=2, columnspan=3, sticky="ew", padx=(0, 8),
+                       pady=(4, 0))
+        attach_help([cloud_lbl, cloud_ent], "daylight_cloud")
 
         # Water temperature (simulation_settings.temperature, section 143):
         # Q10 metabolism of the groups with a Metabolism Q10, on the
         # daylight calendar above (it needs Daylight on). One layer per
         # line, "name: 12 monthly deg C (Jan..Dec)", and which layer each
         # group lives in. Adds no input channel: checkpoints stay valid.
-        ttk.Label(info_frame, text="Water temperature:").grid(
-            row=6, column=0, sticky="w", padx=5, pady=(4, 0))
+        temp_lbl = ttk.Label(info_frame, text="Water temperature:")
+        temp_lbl.grid(row=6, column=0, sticky="w", padx=5, pady=(4, 0))
         self.temperature_enabled_var = tk.BooleanVar(value=False)
         self.temperature_groups_var = tk.StringVar(value="")
-        ttk.Checkbutton(info_frame, text="on",
-                        variable=self.temperature_enabled_var).grid(
-            row=6, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
+        temp_cb = ttk.Checkbutton(info_frame, text="on",
+                                  variable=self.temperature_enabled_var)
+        temp_cb.grid(row=6, column=1, sticky="w", padx=(0, 8), pady=(4, 0))
+        attach_help([temp_lbl, temp_cb], "temperature_enabled")
         temperature_frame = ttk.Frame(info_frame)
         temperature_frame.grid(row=6, column=2, columnspan=3, sticky="ew",
                                pady=(4, 0))
         temperature_frame.columnconfigure(1, weight=1)
-        ttk.Label(temperature_frame,
-                  text="Group layers (group=layer, ...):").grid(
-            row=0, column=0, sticky="w")
-        ttk.Entry(temperature_frame,
-                  textvariable=self.temperature_groups_var).grid(
-            row=0, column=1, sticky="ew", padx=(2, 8))
-        ttk.Label(info_frame,
-                  text="    Layers (name: deg C Jan..Dec, one per line):").grid(
-            row=7, column=0, columnspan=2, sticky="nw", padx=5, pady=(4, 0))
+        groups_lbl = ttk.Label(temperature_frame,
+                               text="Group layers (group=layer, ...):")
+        groups_lbl.grid(row=0, column=0, sticky="w")
+        groups_ent = ttk.Entry(temperature_frame,
+                               textvariable=self.temperature_groups_var)
+        groups_ent.grid(row=0, column=1, sticky="ew", padx=(2, 8))
+        attach_help([groups_lbl, groups_ent], "temperature_group_layers")
+        layers_lbl = ttk.Label(
+            info_frame, text="    Layers (name: deg C Jan..Dec, one per line):")
+        layers_lbl.grid(row=7, column=0, columnspan=2, sticky="nw", padx=5,
+                        pady=(4, 0))
         self.temperature_layers_text = tk.Text(info_frame, height=3,
                                                width=60, wrap="none")
         self.temperature_layers_text.grid(
             row=7, column=2, columnspan=3, sticky="ew", padx=(0, 8),
             pady=(4, 0))
+        attach_help([layers_lbl, self.temperature_layers_text],
+                    "temperature_layers")
 
         # tk.Entry supports a 'background' option that ttk.Entry does not.
         # We toggle a ttk style instead.
@@ -711,24 +745,27 @@ class FGConfigApp:
         self.editor_frame.columnconfigure(1, weight=1)
         grow = 0
         for (label, key, type, lo, hi) in main_props:
-            self._make_prop_label(self.editor_frame, label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+            self._make_prop_label(self.editor_frame, label, help_key=key).grid(
+                row=grow, column=0, sticky="w", padx=5, pady=2)
             if type == "entry":
                 var = self._build_ranged_entry(self.editor_frame, grow, lo, hi,
-                                               key=f"dm:{key}")
+                                               key=f"dm:{key}", help_key=key)
                 self.prop_vars[key] = var
                 grow += 1
             elif type == "range":
                 # Min on its own row, Max on the next; sub-row labels go
                 # into column 0 so the range-label/Entry/slider columns
                 # line up with every other property row above.
-                ttk.Label(self.editor_frame, text="  Min:").grid(
-                    row=grow + 1, column=0, sticky="w", padx=5, pady=2)
-                ttk.Label(self.editor_frame, text="  Max:").grid(
-                    row=grow + 2, column=0, sticky="w", padx=5, pady=2)
+                for sub_row, sub_text in ((grow + 1, "  Min:"), (grow + 2, "  Max:")):
+                    sub_lbl = ttk.Label(self.editor_frame, text=sub_text)
+                    sub_lbl.grid(row=sub_row, column=0, sticky="w", padx=5, pady=2)
+                    attach_help(sub_lbl, key)
                 min_var = self._build_ranged_entry(
-                    self.editor_frame, grow + 1, lo, hi, is_int=True)
+                    self.editor_frame, grow + 1, lo, hi, is_int=True,
+                    help_key=key)
                 max_var = self._build_ranged_entry(
-                    self.editor_frame, grow + 2, lo, hi, is_int=True)
+                    self.editor_frame, grow + 2, lo, hi, is_int=True,
+                    help_key=key)
                 self._link_minmax(min_var, max_var)
                 self.prop_vars["initial_biomass_min"] = min_var
                 self.prop_vars["initial_biomass_max"] = max_var
@@ -740,27 +777,30 @@ class FGConfigApp:
         # Action Costs: header on its own row, Eat and Move each on their
         # own row matching the standard ranged-entry column layout. No
         # separators between the three sub-rows.
-        ttk.Label(self.editor_frame, text="Action Costs").grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+        action_costs_lbl = ttk.Label(self.editor_frame, text="Action Costs")
+        action_costs_lbl.grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+        attach_help(action_costs_lbl, "action_costs")
         action_costs = [
             ("  Eat:", "feeding_cost", 1.0, 10.0),
             ("  Move:", "movement_cost", 1.0, 10.0),
         ]
         for j, (label, key, lo, hi) in enumerate(action_costs):
-            ttk.Label(self.editor_frame, text=label).grid(
-                row=grow + 1 + j, column=0, sticky="w", padx=5, pady=2)
-            var = self._build_ranged_entry(self.editor_frame, grow + 1 + j, lo, hi)
+            cost_lbl = ttk.Label(self.editor_frame, text=label)
+            cost_lbl.grid(row=grow + 1 + j, column=0, sticky="w", padx=5, pady=2)
+            attach_help(cost_lbl, key)
+            var = self._build_ranged_entry(self.editor_frame, grow + 1 + j,
+                                           lo, hi, help_key=key)
             self.prop_vars[key] = var
         grow += 1 + len(action_costs)
 
         ttk.Separator(self.editor_frame, orient="horizontal").grid(
             row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
         grow += 1
-        # Derived growth-rate breakdown (lib/world/growth_budget.py).
-        self.growth_info_var = tk.StringVar(value="")
-        ttk.Label(self.editor_frame, textvariable=self.growth_info_var,
-                  foreground=self.MUTED_FG_COLOR, wraplength=700,
-                  justify="left").grid(row=grow, column=0, columnspan=2,
-                                       sticky="w", padx=5, pady=(0, 2))
+        # Derived growth-rate breakdown (lib/world/growth_budget.py), one
+        # label per budget term; filled by _update_editor_growth_display.
+        self.growth_info_frame = ttk.Frame(self.editor_frame)
+        self.growth_info_frame.grid(row=grow, column=0, columnspan=2,
+                                    sticky="w", padx=5, pady=(0, 2))
         grow += 1
         ttk.Button(self.editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
             row=grow, column=0, columnspan=2, pady=5)
@@ -795,34 +835,36 @@ class FGConfigApp:
         self.ndm_editor_frame.columnconfigure(1, weight=1)
         grow = 0
         for (label, key, type, lo, hi) in ndm_props:
-            self._make_prop_label(self.ndm_editor_frame, label).grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+            hkey = ndm_help_key(key)
+            self._make_prop_label(self.ndm_editor_frame, label, help_key=hkey).grid(
+                row=grow, column=0, sticky="w", padx=5, pady=2)
             if type == "range":
-                ttk.Label(self.ndm_editor_frame, text="  Min:").grid(
-                    row=grow + 1, column=0, sticky="w", padx=5, pady=2)
-                ttk.Label(self.ndm_editor_frame, text="  Max:").grid(
-                    row=grow + 2, column=0, sticky="w", padx=5, pady=2)
+                for sub_row, sub_text in ((grow + 1, "  Min:"), (grow + 2, "  Max:")):
+                    sub_lbl = ttk.Label(self.ndm_editor_frame, text=sub_text)
+                    sub_lbl.grid(row=sub_row, column=0, sticky="w", padx=5, pady=2)
+                    attach_help(sub_lbl, hkey)
                 min_var = self._build_ranged_entry(
-                    self.ndm_editor_frame, grow + 1, lo, hi, is_int=True)
+                    self.ndm_editor_frame, grow + 1, lo, hi, is_int=True,
+                    help_key=hkey)
                 max_var = self._build_ranged_entry(
-                    self.ndm_editor_frame, grow + 2, lo, hi, is_int=True)
+                    self.ndm_editor_frame, grow + 2, lo, hi, is_int=True,
+                    help_key=hkey)
                 self._link_minmax(min_var, max_var)
                 self.ndm_prop_vars["initial_biomass_min"] = min_var
                 self.ndm_prop_vars["initial_biomass_max"] = max_var
                 grow += 3
             else:
                 var = self._build_ranged_entry(self.ndm_editor_frame, grow, lo, hi,
-                                               key=f"ndm:{key}")
+                                               key=f"ndm:{key}", help_key=hkey)
                 self.ndm_prop_vars[key] = var
                 grow += 1
             ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
                 row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
             grow += 1
 
-        self.ndm_growth_info_var = tk.StringVar(value="")
-        ttk.Label(self.ndm_editor_frame, textvariable=self.ndm_growth_info_var,
-                  foreground=self.MUTED_FG_COLOR, wraplength=700,
-                  justify="left").grid(row=grow, column=0, columnspan=2,
-                                       sticky="w", padx=5, pady=(0, 2))
+        self.ndm_growth_info_frame = ttk.Frame(self.ndm_editor_frame)
+        self.ndm_growth_info_frame.grid(row=grow, column=0, columnspan=2,
+                                        sticky="w", padx=5, pady=(0, 2))
         grow += 1
         ttk.Button(self.ndm_editor_frame, text="Apply Changes", command=self.apply_fg_changes).grid(
             row=grow, column=0, columnspan=2, pady=5
@@ -869,7 +911,7 @@ class FGConfigApp:
             "Spreads biomass evenly across all allowed cells "
             "(Dirichlet-style), with no spatial correlation. This is "
             "the default behaviour and does not break any previous "
-            "contracts. The per-cell floor (10·min_split) is still "
+            "contracts. The per-cell floor (5·min_split) is still "
             "applied by the allocator.\n"
             "\n"
             "Parameters: none."
@@ -918,21 +960,21 @@ class FGConfigApp:
             "\n"
             "Amplitude_mode:\n"
             "  uniform (default, legacy): every centre contributes "
-            "amplitude 1.0, colonies combine by SUM, and the field is "
-            "min-max stretched so the strongest cell hits vmax. Best "
-            "for biomass (sum-preserving).\n"
+            "amplitude 1.0 and colonies combine by SUM. For biomass the "
+            "field is normalised to the drawn total; for an impact it "
+            "is min-max stretched so the strongest cell hits vmax.\n"
             "  jitter: every centre gets an INDEPENDENT amplitude "
-            "Uniform(amplitude_min, amplitude_max) · vmax, colonies "
+            "amp ~ Uniform(amplitude_min, amplitude_max), colonies "
             "combine by MAX (not sum), and the field is NOT stretched "
-            "— isolated centres land at exactly amp·vmax. Best for "
+            "— isolated centres land at exactly vmin + (vmax − vmin)·amp. "
+            "Best for "
             "impacts that represent physical sources of different "
             "strength (e.g. noise sources at different dB levels) so "
             "the policy is trained against a heterogeneous mix of "
             "source intensities.\n"
             "Amplitude_min / amplitude_max: relative bounds in [0, 1] "
-            "for the per-centre amplitude in jitter mode. Each colony "
-            "centre value lies in [amplitude_min·vmax, amplitude_max·"
-            "vmax]."
+            "for the per-centre amplitude in jitter mode, relative to "
+            "the [vmin, vmax] range."
         ),
         "env_driven": (
             "Env-driven\n"
@@ -944,7 +986,8 @@ class FGConfigApp:
             "already computed layers — e.g. zooplankton following "
             "phytoplankton.\n"
             "\n"
-            "Floor: minimum weight per cell before normalisation.\n"
+            "Floor: subtracted from the weight; cells at or below it "
+            "get nothing (a threshold).\n"
             "Noise_amp: amplitude of the Perlin overlay (0 = none).\n"
             "Noise_scale: wavelength of the overlay in cells.\n"
             "Min frac of max: relative floor for surviving cells. "
@@ -1008,12 +1051,17 @@ class FGConfigApp:
         # Mode row
         mode_row = ttk.Frame(outer)
         mode_row.pack(side="top", fill="x", anchor="w")
-        ttk.Label(mode_row, text="Mode:").pack(side="left", padx=(0, 4))
+        mode_lbl = ttk.Label(mode_row, text="Mode:")
+        mode_lbl.pack(side="left", padx=(0, 4))
         mode_var = tk.StringVar(value=self.SPAWN_MODE_LABELS["uniform"])
         mode_cb = ttk.Combobox(mode_row, textvariable=mode_var,
                                values=[self.SPAWN_MODE_LABELS[m] for m in self.SPAWN_MODES],
                                state="readonly", width=12)
         mode_cb.pack(side="left", padx=(0, 8))
+        attach_help([mode_lbl, mode_cb],
+                    "impact_spawn_mode"
+                    if vars_store.get("_owner_kind") == "impact"
+                    else "spawn_mode")
 
         # Templates row: dropdown filtered by current mode + Save / Delete.
         # Templates are stored per (FG or impact) and per spawn mode in the
@@ -1021,11 +1069,13 @@ class FGConfigApp:
         # see _on_save_spawn_template / _on_delete_spawn_template.
         tpl_row = ttk.Frame(outer)
         tpl_row.pack(side="top", fill="x", anchor="w", pady=(4, 0))
-        ttk.Label(tpl_row, text="Templates:").pack(side="left", padx=(0, 4))
+        tpl_lbl = ttk.Label(tpl_row, text="Templates:")
+        tpl_lbl.pack(side="left", padx=(0, 4))
         template_var = tk.StringVar(value="")
         template_cb = ttk.Combobox(tpl_row, textvariable=template_var,
                                    values=[], state="readonly", width=20)
         template_cb.pack(side="left", padx=(0, 8))
+        attach_help([tpl_lbl, template_cb], "spawn_templates")
         save_btn = ttk.Button(
             tpl_row, text="Save",
             command=lambda vs=vars_store: self._on_save_spawn_template(vs))
@@ -1147,6 +1197,7 @@ class FGConfigApp:
                 var = tk.StringVar(value=str(default))
                 w = ttk.Entry(frame, textvariable=var, width=10)
             w.grid(row=i, column=1, sticky="w", pady=1)
+            attach_help([lbl, w], f"spawn_{key}")
             vars_store["_param_widgets"].append(w)
             vars_store["param_vars"][key] = (var, ptype)
             # Live-update preview on edit
@@ -1172,6 +1223,7 @@ class FGConfigApp:
                           font=("TkDefaultFont", 9, "bold"))
         header.grid(row=start_row, column=0, columnspan=4,
                     sticky="w", pady=(6, 2))
+        attach_help(header, "spawn_refs")
         vars_store["_param_widgets"].append(header)
 
         refs_frame = ttk.Frame(parent)
@@ -1181,12 +1233,12 @@ class FGConfigApp:
         vars_store["refs_frame"] = refs_frame
 
         # Sub-header row inside refs_frame
-        ttk.Label(refs_frame, text="Name", font=("TkDefaultFont", 8)).grid(
-            row=0, column=0, sticky="w", padx=(0, 4))
-        ttk.Label(refs_frame, text="Weight", font=("TkDefaultFont", 8)).grid(
-            row=0, column=1, sticky="w", padx=(0, 4))
-        ttk.Label(refs_frame, text="Transform", font=("TkDefaultFont", 8)).grid(
-            row=0, column=2, sticky="w", padx=(0, 4))
+        for col, (text, hkey) in enumerate((
+                ("Name", "spawn_ref_name"), ("Weight", "spawn_ref_weight"),
+                ("Transform", "spawn_ref_transform"))):
+            sub = ttk.Label(refs_frame, text=text, font=("TkDefaultFont", 8))
+            sub.grid(row=0, column=col, sticky="w", padx=(0, 4))
+            attach_help(sub, hkey)
 
         add_btn = ttk.Button(parent, text="+ Add ref",
                              command=lambda vs=vars_store: self._add_ref_row(vs))
@@ -1231,6 +1283,9 @@ class FGConfigApp:
                                     values=list(self.SPAWN_REF_TRANSFORMS),
                                     state="readonly", width=12)
         transform_cb.grid(row=row_idx, column=2, sticky="w", padx=(0, 4), pady=1)
+        attach_help(name_cb, "spawn_ref_name")
+        attach_help(weight_ent, "spawn_ref_weight")
+        attach_help(transform_cb, "spawn_ref_transform")
         row_data = {
             "name_var": name_var, "weight_var": weight_var,
             "transform_var": transform_var,
@@ -1369,11 +1424,13 @@ class FGConfigApp:
         """Expand ``{tick}`` in a label template to the tick duration."""
         return template.replace("{tick}", tick_label(self.get_tick_hours()))
 
-    def _make_prop_label(self, parent, template):
+    def _make_prop_label(self, parent, template, help_key=None):
         """Create an FG-editor property label, tick-aware if templated."""
         widget = ttk.Label(parent, text=self._format_tick_label(template))
         if "{tick}" in template:
             self._tick_label_widgets.append((widget, template))
+        if help_key is not None:
+            attach_help(widget, help_key)
         return widget
 
     def _refresh_tick_labels(self):
@@ -1799,7 +1856,8 @@ class FGConfigApp:
         except Exception as e:
             print(f"[fgconfig] range refresh for {key} failed: {e!r}")
 
-    def _build_ranged_entry(self, parent, row, lo, hi, is_int=None, key=None):
+    def _build_ranged_entry(self, parent, row, lo, hi, is_int=None, key=None,
+                            help_key=None):
         """Build a [lo, hi] range label + Entry + slider triple in column 1.
 
         Returns the tk.StringVar bound to the Entry (kept as StringVar so
@@ -1812,7 +1870,8 @@ class FGConfigApp:
         container.columnconfigure(1, weight=1)
         return self._build_inline_ranged_entry(container, lo, hi,
                                                pack=False, width=12,
-                                               is_int=is_int, key=key)
+                                               is_int=is_int, key=key,
+                                               help_key=help_key)
 
     def _effective_current_response(self, config, is_dm):
         """The external-force share a library entry actually means.
@@ -1878,7 +1937,7 @@ class FGConfigApp:
 
     def _build_inline_ranged_entry(self, container, lo, hi, *,
                                    pack=True, width=12, is_int=None,
-                                   key=None):
+                                   key=None, help_key=None):
         """Place a [lo, hi] label + Entry + slider into ``container``.
 
         ``pack=True`` uses .pack() (for the Action Costs row that itself
@@ -1886,6 +1945,8 @@ class FGConfigApp:
         editor where the outer container has columnconfigure).
         ``key`` registers the row in ``self._ranged_rows`` so its range
         can be changed later; see ``_set_ranged_row_range``.
+        ``help_key`` binds that field's hover help to the range label,
+        the Entry and the slider.
 
         Returns the tk.StringVar bound to the Entry.
         """
@@ -1931,13 +1992,15 @@ class FGConfigApp:
         else:
             is_int_range = bool(is_int)
         self._bind_slider_entry(var, scl, bounds, is_int=is_int_range)
+        if help_key is not None:
+            attach_help([lbl, ent, scl], help_key)
         if key is not None:
             self._ranged_rows[key] = {
                 "bounds": bounds, "label": lbl, "scale": scl, "var": var,
                 "entry": ent}
         return var
 
-    def _build_value_range_row(self, parent, row):
+    def _build_value_range_row(self, parent, row, help_key=None):
         """Build a Min/Max entry pair (side by side) for an impact value range.
 
         Accepts non-negative floats; live validation forbids typing a max
@@ -1995,6 +2058,8 @@ class FGConfigApp:
         max_entry = ttk.Entry(container, textvariable=max_var, width=10,
                               validate="key", validatecommand=vcmd_max)
         max_entry.pack(side="left")
+        if help_key is not None:
+            attach_help([min_entry, max_entry], help_key)
         return min_var, max_var
 
     def _sync_impact_spawn_visibility(self):
@@ -2328,8 +2393,10 @@ class FGConfigApp:
 
         ttk.Label(self.inference_list_frame, text="Functional Group",
                   font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, sticky="w", padx=5, pady=4)
-        ttk.Label(self.inference_list_frame, text="Initial Biomass (ton)",
-                  font=("TkDefaultFont", 9, "bold")).grid(row=0, column=1, sticky="w", padx=5, pady=4)
+        ib_hdr = ttk.Label(self.inference_list_frame, text="Initial Biomass (ton)",
+                           font=("TkDefaultFont", 9, "bold"))
+        ib_hdr.grid(row=0, column=1, sticky="w", padx=5, pady=4)
+        attach_help(ib_hdr, "inference_initial_biomass")
 
         # Sort alphabetically by display name within each category, DMs first.
         def _sort_key(item):
@@ -2358,6 +2425,7 @@ class FGConfigApp:
             ent = ttk.Entry(self.inference_list_frame, textvariable=var, width=14,
                             validate="key", validatecommand=vcmd)
             ent.grid(row=i, column=1, sticky="w", padx=5, pady=2)
+            attach_help(ent, "inference_initial_biomass")
             if muted:
                 ent.configure(state="disabled")
             self.inference_vars[gid] = var
@@ -2442,6 +2510,7 @@ class FGConfigApp:
             status_lbl = tk.Label(zone, textvariable=status_var, bg="#f4f4f4",
                                   wraplength=300, justify="center")
             status_lbl.place(relx=0.5, rely=0.5, anchor="center")
+            attach_help([zone, status_lbl], "inference_impact_map")
 
             # Bind click on the zone itself for browsing.
             def _browse(_e=None, k=iid):
@@ -3152,20 +3221,27 @@ class FGConfigApp:
 
     def _build_derived_growth_panel(self, fg_ids):
         """Read-only table of every derived growth_rate, live."""
-        frame = ttk.LabelFrame(
+        title = ttk.Label(
             self.matrix_container,
             text="Derived growth_rate per {tick} (live; r_max + M1 + checked M2)".replace(
                 "{tick}", tick_label(self.get_tick_hours())))
+        attach_help(title, "growth:panel")
+        frame = ttk.LabelFrame(self.matrix_container, labelwidget=title)
         frame.pack(fill="x", padx=10, pady=(0, 10))
-        self.derived_growth_vars = {}
+        dm_ids = {fg.get("group_id")
+                  for fg in (self.project_data.get("decision_makers", []) or [])}
+        # One frame per FG; _on_predation_matrix_changed fills it with
+        # one label per budget term so each term has its own hover help.
+        self.derived_growth_rows = {}
         row = 0
         for fid in fg_ids:
-            var = tk.StringVar(value="")
-            ttk.Label(frame, text=self.fg_display(fid)).grid(
-                row=row, column=0, sticky="w", padx=5, pady=1)
-            ttk.Label(frame, textvariable=var, foreground="#333333").grid(
-                row=row, column=1, sticky="w", padx=5, pady=1)
-            self.derived_growth_vars[fid] = var
+            name = ttk.Label(frame, text=self.fg_display(fid))
+            name.grid(row=row, column=0, sticky="w", padx=5, pady=1)
+            attach_help(name, "growth:dm_formula" if fid in dm_ids
+                        else "growth:ndm_formula")
+            terms = ttk.Frame(frame)
+            terms.grid(row=row, column=1, sticky="w", padx=5, pady=1)
+            self.derived_growth_rows[fid] = terms
             row += 1
         ttk.Label(
             frame, foreground=self.MUTED_FG_COLOR,
@@ -3178,24 +3254,82 @@ class FGConfigApp:
 
     def _on_predation_matrix_changed(self):
         interactions = self._live_interactions()
-        for fid, var in (getattr(self, "derived_growth_vars", {}) or {}).items():
+        for fid, terms in (getattr(self, "derived_growth_rows", {}) or {}).items():
             budget = self._budget_for(fid, interactions)
             if budget is None:
                 spec = self.current_fg_configs.get(fid) or {}
-                var.set(f"{spec.get('growth_rate', '')}  (hand-set, no r_max)")
+                pieces = [(f"{spec.get('growth_rate', '')}  (hand-set, no r_max)",
+                           "hand_set")]
             elif budget.error:
-                var.set(budget.error)
+                pieces = [(budget.error, "error")]
             else:
+                pieces = budget.describe_terms()
                 stored = (self.current_fg_configs.get(fid) or {}).get("growth_rate")
-                note = ""
                 try:
                     if stored is not None and abs(float(stored) - budget.growth_rate) > (
                             1e-5 * max(abs(budget.growth_rate), 1e-12)):
-                        note = f"   [library: {float(stored):.6g} until applied]"
+                        pieces.append((f"   [library: {float(stored):.6g} until applied]",
+                                       "library_note"))
                 except (TypeError, ValueError):
                     pass
-                var.set(budget.describe() + note)
+            self._render_growth_terms(terms, fid, budget, pieces)
         self._update_editor_growth_display(interactions)
+
+    def _render_growth_terms(self, frame, fg_id, budget, pieces,
+                             foreground="#333333"):
+        """Fill a derived-growth formula row, one label per term.
+
+        Used by the Derived growth_rate panel (FG Interactions) and the
+        breakdown line under the FG Editor.
+
+        Each quantity of the budget gets the general help for its kind
+        plus a first line with this FG's own numbers (value, and what
+        the term adds to g per tick).
+        """
+        try:
+            if not frame.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        for child in frame.winfo_children():
+            child.destroy()
+        name = self.fg_display(fg_id)
+        for text, term in pieces:
+            lbl = ttk.Label(frame, text=text, foreground=foreground,
+                            padding=0)
+            lbl.pack(side="left", padx=0, pady=0)
+            if term is None:
+                continue
+            kind, _, pred = term.partition(":")
+            attach_help(lbl, f"growth:{kind}",
+                        prefix=self._growth_term_caption(name, budget, kind, pred))
+
+    @staticmethod
+    def _growth_term_caption(name, budget, kind, pred):
+        """First line of a derived-growth term's hover help."""
+        if budget is None or budget.error:
+            return name
+        if kind == "growth_rate":
+            return (f"{name}: g = {budget.growth_rate:.6g} per tick "
+                    f"(gross {budget.gross_annual:.4g} per year)")
+        if kind == "r_max":
+            return (f"{name}: r_max = {budget.r_max:g} per year, adds "
+                    f"{budget.per_tick(budget.r_max):.4g} per tick to g")
+        if kind == "m1":
+            per_tick = -math.expm1(-budget.m1_annual / TICKS_PER_YEAR)
+            return (f"{name}: M1 = {budget.m1_annual:.4g} per year "
+                    f"(Natural Mortality {per_tick:.4g} per tick), adds "
+                    f"{budget.per_tick(budget.m1_annual):.4g} per tick to g")
+        if kind == "m2":
+            m2 = budget.predation.get(pred, 0.0)
+            return (f"{name}: M2 caused by {pred} = {m2:g} per year, adds "
+                    f"{budget.per_tick(m2):.4g} per tick to g")
+        if kind == "gate":
+            return (f"{name}: 1 - u = {budget.gate:g} "
+                    f"(Maintenance Level u = {1.0 - budget.gate:g})")
+        if kind == "ticks_per_year":
+            return f"{TICKS_PER_YEAR:g} ticks per year"
+        return name
 
     def _update_editor_growth_display(self, interactions=None):
         """Show the derived growth_rate of the FG open in the editor."""
@@ -3204,7 +3338,8 @@ class FGConfigApp:
             return
         is_dm = category == "decision_makers"
         prop_vars = self.prop_vars if is_dm else self.ndm_prop_vars
-        info_var = getattr(self, "growth_info_var" if is_dm else "ndm_growth_info_var", None)
+        info_frame = getattr(
+            self, "growth_info_frame" if is_dm else "ndm_growth_info_frame", None)
         row = self._ranged_rows.get(("dm:" if is_dm else "ndm:") + "growth_rate")
         try:
             listbox = self._listbox_for(category)
@@ -3229,11 +3364,13 @@ class FGConfigApp:
         derived = budget is not None and not budget.error
         if derived:
             prop_vars["growth_rate"].set(f"{budget.growth_rate:.6g}")
-        if info_var is not None:
+        if info_frame is not None:
             if budget is None:
-                info_var.set("growth_rate is hand-set (r_max = 0).")
+                pieces = [("growth_rate is hand-set (r_max = 0).", "hand_set")]
             else:
-                info_var.set(budget.describe())
+                pieces = budget.describe_terms()
+            self._render_growth_terms(info_frame, fg_id, budget, pieces,
+                                      foreground=self.MUTED_FG_COLOR)
         if row is not None and not self._is_fg_muted(fg_entry):
             state = "disabled" if derived else "normal"
             for w in (row.get("entry"), row.get("scale")):
@@ -3285,7 +3422,9 @@ class FGConfigApp:
         if not hasattr(self, "matrix_row_headers"):
             self.matrix_row_headers = {}
         # Headers — use tk.Label so we can recolour per-label.
-        tk.Label(frame, text="Group \\ Var").grid(row=0, column=0, padx=5, pady=5)
+        corner = tk.Label(frame, text="Group \\ Var")
+        corner.grid(row=0, column=0, padx=5, pady=5)
+        attach_help(corner, f"matrix:{data_key}")
         for j, col_id in enumerate(col_ids):
             # Use display_name from impact_definitions if available
             if data_key in impact_keys:
@@ -3485,12 +3624,25 @@ class FGConfigApp:
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 if var is not None:
                     self.matrix_entries[key][data_key] = var
+                attach_help(widget, f"matrix:{data_key}",
+                            prefix=self._matrix_cell_caption(
+                                data_key, row_id, col_id))
                 if not hasattr(self, "matrix_widgets"):
                     self.matrix_widgets = {}
                 if key not in self.matrix_widgets:
                     self.matrix_widgets[key] = {}
                 self.matrix_widgets[key][data_key] = widget
         return frame
+
+    def _matrix_cell_caption(self, data_key, row_id, col_id):
+        """First line of a matrix cell's hover help: which pair it is."""
+        if data_key in ("impact_affects", "impact_table"):
+            col = self.global_library.get("impact_definitions", {}).get(
+                col_id, {}).get("display_name", col_id)
+            return f"{self.fg_display(row_id)} x {col}"
+        if data_key == "observes":
+            return f"{self.fg_display(row_id)} observes {self.fg_display(col_id)}"
+        return f"{self.fg_display(row_id)} eats {self.fg_display(col_id)}"
 
     def _add_matrix_note(self, frame, text):
         """Muted explanatory text under a matrix, wrapped to its width.
@@ -4358,8 +4510,12 @@ class FGConfigApp:
         table_frame.pack(padx=10, pady=5, fill="both", expand=True)
 
         headers = (f"Value ({self._impact_unit(impact_id)})", "Biomass factor", "Energy factor")
+        header_help = ("impact_table_value", "impact_table_biomass_factor",
+                       "impact_table_energy_factor")
         for j, h in enumerate(headers):
-            ttk.Label(table_frame, text=h, font=("TkDefaultFont", 9, "bold")).grid(row=0, column=j, padx=4, pady=2)
+            hdr = ttk.Label(table_frame, text=h, font=("TkDefaultFont", 9, "bold"))
+            hdr.grid(row=0, column=j, padx=4, pady=2)
+            attach_help(hdr, header_help[j])
 
         row_vars = []  # list of (value_var, bf_var, ef_var)
 
@@ -4399,12 +4555,13 @@ class FGConfigApp:
             v_var = tk.StringVar(value=f"{float(value):.4g}")
             b_var = tk.StringVar(value=f"{float(bf):.4g}")
             e_var = tk.StringVar(value=f"{float(ef):.4g}")
-            ttk.Entry(table_frame, textvariable=v_var, width=10,
-                      validate="key", validatecommand=vcmd_value).grid(row=r, column=0, padx=4, pady=2)
-            ttk.Entry(table_frame, textvariable=b_var, width=10,
-                      validate="key", validatecommand=vcmd_unit).grid(row=r, column=1, padx=4, pady=2)
-            ttk.Entry(table_frame, textvariable=e_var, width=10,
-                      validate="key", validatecommand=vcmd_unit).grid(row=r, column=2, padx=4, pady=2)
+            for j, (cvar, cvcmd) in enumerate(((v_var, vcmd_value),
+                                               (b_var, vcmd_unit),
+                                               (e_var, vcmd_unit))):
+                cell = ttk.Entry(table_frame, textvariable=cvar, width=10,
+                                 validate="key", validatecommand=cvcmd)
+                cell.grid(row=r, column=j, padx=4, pady=2)
+                attach_help(cell, header_help[j])
             row_vars.append((v_var, b_var, e_var))
 
         for row in current:
