@@ -460,10 +460,22 @@ interaction_definitions:
   porpoises_preys_on_pelagic_fish:
     preys_on: true
     predation_mortality: 0.0117
+    # Porpoise attack rates are fitted to the Ecopath 1991 diet, not to a
+    # mechanism (section 151): ~49 % gadoids by mass on the model's prey
+    # (M2 0.0557 vs 0.0117 /yr, 4.8x more per tonne of gadoids). With the
+    # species a 0.035 on both pairs, herring gave 181 MJ/t/tick at full
+    # appetite where porpoises were (fix51), more than gadoids give at
+    # the mass ceiling (4620 / 28.6 = 162), so porpoises ate 0 %
+    # gadoids; no gadoid a alone reaches the target. a 0.015 here and
+    # 0.2 on gadoids give 26 % gadoids where porpoises were and 46 %
+    # over every cell (frozen fields, so the learned shift lies in
+    # between), with 137 MJ/t/tick against a cost of ~90 (1.5x, was 2x;
+    # wild porpoises forage almost continuously, Wisniewska et al. 2016).
+    max_intake_rate: 0.015
     assimilation_factor: 0.9
-    # 1/h = a is the library convention for the Holling half-saturation,
-    # so it follows max_intake_rate 0.035 (Section 92). Keeping a*h = 1
-    # is what makes the break-even visible density invariant.
+    # Mass ceiling 1/h kept (marine mammal intake is mass-limited, Rosen
+    # & Trites 2000; section 149). a*h is 0.43 since section 151, so the
+    # half-saturation is 1/(a h) = 2.3 t/km2 visible herring.
     handling_time: 28.6
     # Porpoises hunt with biosonar, so the visual crypsis that makes
     # hidden herring only 35 % detectable by default does not apply:
@@ -629,7 +641,9 @@ interaction_definitions:
   porpoises_preys_on_gadoids:
     preys_on: true
     predation_mortality: 0.0557
-    max_intake_rate: 0.035
+    # Fitted to the Ecopath diet together with the herring pair (section
+    # 151); a*h = 5.7, half-saturation 0.17 t/km2 visible gadoids.
+    max_intake_rate: 0.2
     assimilation_factor: 0.84
     handling_time: 28.6
     # Rested (hidden) gadoids sit near the seabed, which is assumed to

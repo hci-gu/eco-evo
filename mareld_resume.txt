@@ -13823,3 +13823,49 @@ remain open exactly as described in 71.9 / 71.11.
 150.5 Consequence: at the same lr the step is ~3x longer for gadoids,
     herring and zooplankton. A resumed run may need lr ~0.01 to keep
     the old step size. Policies stay valid (no observation change).
+
+151 Porpoise attack rates fitted to the Ecopath diet (2026-10-10)
+151.1 Follows 149.5 (open decision). Target: Ecopath 1991, ~49 %
+    gadoids by mass on the model's prey (M2 0.0557 vs 0.0117 /yr,
+    4.8x more per tonne of gadoids). In fix51 B_gad/B_herr is 0.19
+    (Ecopath ~0.2), so the per-tonne ratio and the diet share are the
+    same target here: share/(1-share) = ratio * 0.19.
+151.2 Calibration (fix51 policies after 9 gens, current library, one
+    frozen year, every 2nd tick; porpoise eats only the prey with the
+    higher energy rate in its cell; scratchpad collect_pred51.py,
+    calib_porp51.py). Gadoid share where porpoises are / over every
+    cell, winter (Nov-Feb) / summer (May-Aug) where porpoises are,
+    per-tonne ratio, energy at full appetite (cost ~90 MJ/t/tick):
+      a_herr  a_gad  share      win/sum   ratio  E
+      0.035   0.035   0 /  4 %   0 /  0   0.01   181  (library before)
+      0.035   1.000  14 / 32 %  25 /  9   0.90   183
+      0.020   0.300  22 / 41 %  26 / 21   1.51   153  (option 1)
+      0.015   0.200  26 / 46 %  27 / 25   1.93   137  (option 2, chosen)
+      0.010   0.500  49 / 73 %  43 / 53   5.20   124  (option 3)
+      0.007   0.200  49 / 74 %  40 / 54   5.09   103
+    Herring now give 181 MJ/t/tick where porpoises are (fix50: 174),
+    above the gadoid mass ceiling 162, so no gadoid a alone gets past
+    ~14 % where porpoises are; with a_herr 0.02 the share stays <=33 %
+    even at a_gad 1.0. Frozen fields: once gadoids pay, porpoises
+    should learn to move toward them, so the trained share is expected
+    between the two columns.
+151.3 Chosen: option 2, pair overrides porpoises_preys_on_pelagic_fish
+    max_intake_rate 0.015 (inherited the species a 0.035 before) and
+    porpoises_preys_on_gadoids 0.2 (was 0.035). h 28.6 (mass ceiling)
+    and the visibility floors 0.95 / 0.75 unchanged. The a ratio 13 is
+    a fit to diet data, not a mechanism: nothing says porpoises catch
+    gadoids 13x more easily; it is needed because herring saturate the
+    porpoise and porpoises have learned to sit on herring. The margin
+    falls from 2x to 1.5x of cost, closer to wild porpoises that forage
+    almost continuously (Wisniewska et al. 2016).
+151.4 Validation: pytest 1009 passed / 12 skipped; budget_gate: both
+    porpoise pairs close alone; 1-gen CPU smoke OK. Frozen fix51
+    policies, one year (start in Nov), porpoise biomass old / new
+    library: 7 / 7 t Nov, 7 / 5 Jan, 7 / 4 from Feb, then flat at 4 t
+    with summer fill 0.71-0.74 (old 0.77-0.78). Gadoids, herring and
+    zooplankton within 0.5 % of the old run. Pessimistic: the frozen
+    policies never seek gadoids.
+151.5 Next: train from fix51 (--init-from) with the per-world calendar
+    start (150; lr ~0.01) and watch porpoises; below ~3 t switch to
+    option 1 (0.02 / 0.3, margin 1.7x). Redo the diet measurement on
+    the trained fields.
