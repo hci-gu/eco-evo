@@ -3465,7 +3465,7 @@ class LiveVisualizer:
             else:
                 mv = rs = et = None
             if mv is not None and rs is not None and et is not None:
-                act_txt = (f"mv/rs/et = {mv:.0f}/{rs:.0f}/{et:.0f}%")
+                act_txt = (f"mv/rs/et = {mv:.1f}/{rs:.1f}/{et:.1f}%")
                 act_surf = self._font.render(act_txt, True, info_col)
                 self._screen.blit(act_surf, (px + pad, act_y))
                 # Fourth info line: biomass-loss breakdown pr/st/im as
