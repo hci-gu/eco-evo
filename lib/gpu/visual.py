@@ -3,6 +3,7 @@
 import copy
 from concurrent.futures import ThreadPoolExecutor, wait
 from contextlib import nullcontext
+from pathlib import Path
 from types import SimpleNamespace
 
 import torch
@@ -63,7 +64,7 @@ class GPUTrainingVisualizer:
             # Reuse the CPU CLI's complete probe (maps, controls, playback and
             # plots). Guard its legacy module-level no-grad setting on import.
             with torch.no_grad():
-                from train import _ProbeEnvBuilder, _probe_biomass
+                from train import _ProbeEnvBuilder, _probe_biomass, _hydrate_viz_history
             from lib.viz import LiveVisualizer
             from inference import _load_spawn_defaults, _load_spawn_templates
             from tools.biomass_html import _reward_title_from_meta
@@ -104,6 +105,11 @@ class GPUTrainingVisualizer:
             self.viz.set_spawn_defaults(_load_spawn_defaults(builder.project_path))
             self.viz.set_save_dir(str(directory))
             self.viz.update_biomass(env.fgs, tick=0)
+            history = Path(directory) / "biomass.jsonl"
+            if getattr(args, "resume", False) and history.is_file():
+                # Live points are plotted at trainer.iterations_completed,
+                # one past train.py's gen * iter_per_gen + i.
+                _hydrate_viz_history(self.viz, str(history), args.iter_per_gen, step_offset=1)
             self.pump()
             if self.viz is None:
                 return

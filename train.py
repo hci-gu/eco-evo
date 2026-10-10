@@ -615,6 +615,160 @@ class _ProbeEnvBuilder:
         return env
 
 
+def _hydrate_viz_history(viz, probe_jsonl_path, iter_per_gen, step_offset=0):
+    """Push the plot history in ``biomass.jsonl`` into a resumed viewer.
+
+    One point per (gen, iter) record at ``(gen - 1) * iter_per_gen +
+    (iter - 1) + step_offset``. train.py's loop plots at
+    ``gen * iter_per_gen + i`` (offset 0); train_gpu.py plots at
+    ``trainer.iterations_completed``, one past it (offset 1).
+    """
+    _n_hydrated = 0
+    try:
+        import json as _json_hydrate
+        _ipg = max(1, int(iter_per_gen))
+        with open(probe_jsonl_path, 'r') as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if not _line:
+                    continue
+                try:
+                    _rec = _json_hydrate.loads(_line)
+                except Exception:
+                    continue
+                # Hoppa över ``__meta__``-headern och rader utan gen/iter.
+                _g = _rec.get('gen')
+                _it = _rec.get('iter')
+                if not (isinstance(_g, (int, float))
+                        and isinstance(_it, (int, float))):
+                    continue
+                # JSONL lagrar 1-indexerat; tränings-loopen använder
+                # 0-indexerat ``gen * iter_per_gen + i``. Konvertera.
+                _gz = int(_g) - 1
+                _iz = int(_it) - 1
+                if _gz < 0 or _iz < 0:
+                    continue
+                _step = _gz * _ipg + _iz + int(step_offset)
+
+                def _push(_tab, _mapping, _scale=1.0):
+                    if not isinstance(_mapping, dict):
+                        return
+                    for _fid, _v in _mapping.items():
+                        try:
+                            viz.update_series(
+                                _tab, str(_fid),
+                                float(_v) * float(_scale),
+                                step=int(_step))
+                        except Exception:
+                            pass
+
+                # Reward per FG (om loggad).
+                _rw = _rec.get('reward')
+                if isinstance(_rw, dict):
+                    for _fid, _v in _rw.items():
+                        try:
+                            viz.update_reward(
+                                str(_fid), float(_v), step=int(_step))
+                        except Exception:
+                            pass
+                # ``_probe_biomass`` pushar biomass/energy som
+                # ``ratio * 100`` (bh/b0 i procent vid rollout-slut),
+                # vilket matchar heatmap-headern och ar oberoende
+                # av --n_eval_ticks.
+                _push("biomass", _rec.get('ratio'), _scale=100.0)
+                _push("energy",  _rec.get('energy_ratio'), _scale=100.0)
+                # Action-fraktioner (redan i procent, 0..100).
+                _push("move", _rec.get('move_frac'))
+                _push("rest", _rec.get('rest_frac'))
+                _push("eat",  _rec.get('eat_frac'))
+                # Loss-breakdown: samma 0..100%-skala som live-push.
+                _lb = _rec.get('loss_breakdown')
+                if isinstance(_lb, dict):
+                    for _fid, _parts in _lb.items():
+                        if not isinstance(_parts, dict):
+                            continue
+                        try:
+                            viz.update_series(
+                                "predation", str(_fid),
+                                100.0 * float(_parts.get('predation', 0.0)),
+                                step=int(_step))
+                            viz.update_series(
+                                "starvation", str(_fid),
+                                100.0 * float(_parts.get('starvation', 0.0)),
+                                step=int(_step))
+                            viz.update_series(
+                                "impacts", str(_fid),
+                                100.0 * float(_parts.get('impact', 0.0)),
+                                step=int(_step))
+                            viz.update_series(
+                                "natural", str(_fid),
+                                100.0 * float(_parts.get('natural', 0.0)),
+                                step=int(_step))
+                        except Exception:
+                            pass
+                # Random-action baseline (om loggad) — samma serier
+                # men med ``_rnd``-suffix, precis som live-push.
+                _rnd = _rec.get('rnd')
+                if isinstance(_rnd, dict):
+                    def _push_rnd(_tab, _mapping, _scale=1.0):
+                        if not isinstance(_mapping, dict):
+                            return
+                        for _fid, _v in _mapping.items():
+                            try:
+                                viz.update_series(
+                                    _tab, str(_fid) + "_rnd",
+                                    float(_v) * float(_scale),
+                                    step=int(_step))
+                            except Exception:
+                                pass
+                    _push_rnd("biomass", _rnd.get('ratio'), _scale=100.0)
+                    _push_rnd("energy",  _rnd.get('energy_ratio'), _scale=100.0)
+                    _push_rnd("move", _rnd.get('move_frac'))
+                    _push_rnd("rest", _rnd.get('rest_frac'))
+                    _push_rnd("eat",  _rnd.get('eat_frac'))
+                    _lbr = _rnd.get('loss_breakdown')
+                    if isinstance(_lbr, dict):
+                        for _fid, _parts in _lbr.items():
+                            if not isinstance(_parts, dict):
+                                continue
+                            try:
+                                viz.update_series(
+                                    "predation", str(_fid) + "_rnd",
+                                    100.0 * float(_parts.get('predation', 0.0)),
+                                    step=int(_step))
+                                viz.update_series(
+                                    "starvation", str(_fid) + "_rnd",
+                                    100.0 * float(_parts.get('starvation', 0.0)),
+                                    step=int(_step))
+                                viz.update_series(
+                                    "impacts", str(_fid) + "_rnd",
+                                    100.0 * float(_parts.get('impact', 0.0)),
+                                    step=int(_step))
+                                viz.update_series(
+                                    "natural", str(_fid) + "_rnd",
+                                    100.0 * float(_parts.get('natural', 0.0)),
+                                    step=int(_step))
+                            except Exception:
+                                pass
+                _n_hydrated += 1
+        if _n_hydrated > 0:
+            print(f"    [resume] hydrated viz plots with "
+                  f"{_n_hydrated} probe records from "
+                  f"{probe_jsonl_path}.")
+            # Tvinga ett omedelbart repaint så användaren ser
+            # historiken direkt (annars visas den först vid
+            # första ``update_biomass`` i tränings-loopen).
+            try:
+                viz._last_frame_ts = 0.0
+                viz.pump_events()
+            except Exception:
+                pass
+    except Exception as _e:
+        print(f"    [resume] WARN: could not hydrate viz plots "
+              f"from {probe_jsonl_path}: {_e!r}")
+    return _n_hydrated
+
+
 def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    compact=True, viz=None, viz_extra=None, viz_step=None,
                    rnd_builder=None,
@@ -2434,149 +2588,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     # bättre än ingen historik alls.
     if (args.resume and viz is not None
             and os.path.isfile(probe_jsonl_path)):
-        try:
-            import json as _json_hydrate
-            _ipg = max(1, int(args.iter_per_gen))
-            _n_hydrated = 0
-            with open(probe_jsonl_path, 'r') as _f:
-                for _line in _f:
-                    _line = _line.strip()
-                    if not _line:
-                        continue
-                    try:
-                        _rec = _json_hydrate.loads(_line)
-                    except Exception:
-                        continue
-                    # Hoppa över ``__meta__``-headern och rader utan gen/iter.
-                    _g = _rec.get('gen')
-                    _it = _rec.get('iter')
-                    if not (isinstance(_g, (int, float))
-                            and isinstance(_it, (int, float))):
-                        continue
-                    # JSONL lagrar 1-indexerat; tränings-loopen använder
-                    # 0-indexerat ``gen * iter_per_gen + i``. Konvertera.
-                    _gz = int(_g) - 1
-                    _iz = int(_it) - 1
-                    if _gz < 0 or _iz < 0:
-                        continue
-                    _step = _gz * _ipg + _iz
-
-                    def _push(_tab, _mapping, _scale=1.0):
-                        if not isinstance(_mapping, dict):
-                            return
-                        for _fid, _v in _mapping.items():
-                            try:
-                                viz.update_series(
-                                    _tab, str(_fid),
-                                    float(_v) * float(_scale),
-                                    step=int(_step))
-                            except Exception:
-                                pass
-
-                    # Reward per FG (om loggad).
-                    _rw = _rec.get('reward')
-                    if isinstance(_rw, dict):
-                        for _fid, _v in _rw.items():
-                            try:
-                                viz.update_reward(
-                                    str(_fid), float(_v), step=int(_step))
-                            except Exception:
-                                pass
-                    # ``_probe_biomass`` pushar biomass/energy som
-                    # ``ratio * 100`` (bh/b0 i procent vid rollout-slut),
-                    # vilket matchar heatmap-headern och ar oberoende
-                    # av --n_eval_ticks.
-                    _push("biomass", _rec.get('ratio'), _scale=100.0)
-                    _push("energy",  _rec.get('energy_ratio'), _scale=100.0)
-                    # Action-fraktioner (redan i procent, 0..100).
-                    _push("move", _rec.get('move_frac'))
-                    _push("rest", _rec.get('rest_frac'))
-                    _push("eat",  _rec.get('eat_frac'))
-                    # Loss-breakdown: samma 0..100%-skala som live-push.
-                    _lb = _rec.get('loss_breakdown')
-                    if isinstance(_lb, dict):
-                        for _fid, _parts in _lb.items():
-                            if not isinstance(_parts, dict):
-                                continue
-                            try:
-                                viz.update_series(
-                                    "predation", str(_fid),
-                                    100.0 * float(_parts.get('predation', 0.0)),
-                                    step=int(_step))
-                                viz.update_series(
-                                    "starvation", str(_fid),
-                                    100.0 * float(_parts.get('starvation', 0.0)),
-                                    step=int(_step))
-                                viz.update_series(
-                                    "impacts", str(_fid),
-                                    100.0 * float(_parts.get('impact', 0.0)),
-                                    step=int(_step))
-                                viz.update_series(
-                                    "natural", str(_fid),
-                                    100.0 * float(_parts.get('natural', 0.0)),
-                                    step=int(_step))
-                            except Exception:
-                                pass
-                    # Random-action baseline (om loggad) — samma serier
-                    # men med ``_rnd``-suffix, precis som live-push.
-                    _rnd = _rec.get('rnd')
-                    if isinstance(_rnd, dict):
-                        def _push_rnd(_tab, _mapping, _scale=1.0):
-                            if not isinstance(_mapping, dict):
-                                return
-                            for _fid, _v in _mapping.items():
-                                try:
-                                    viz.update_series(
-                                        _tab, str(_fid) + "_rnd",
-                                        float(_v) * float(_scale),
-                                        step=int(_step))
-                                except Exception:
-                                    pass
-                        _push_rnd("biomass", _rnd.get('ratio'), _scale=100.0)
-                        _push_rnd("energy",  _rnd.get('energy_ratio'), _scale=100.0)
-                        _push_rnd("move", _rnd.get('move_frac'))
-                        _push_rnd("rest", _rnd.get('rest_frac'))
-                        _push_rnd("eat",  _rnd.get('eat_frac'))
-                        _lbr = _rnd.get('loss_breakdown')
-                        if isinstance(_lbr, dict):
-                            for _fid, _parts in _lbr.items():
-                                if not isinstance(_parts, dict):
-                                    continue
-                                try:
-                                    viz.update_series(
-                                        "predation", str(_fid) + "_rnd",
-                                        100.0 * float(_parts.get('predation', 0.0)),
-                                        step=int(_step))
-                                    viz.update_series(
-                                        "starvation", str(_fid) + "_rnd",
-                                        100.0 * float(_parts.get('starvation', 0.0)),
-                                        step=int(_step))
-                                    viz.update_series(
-                                        "impacts", str(_fid) + "_rnd",
-                                        100.0 * float(_parts.get('impact', 0.0)),
-                                        step=int(_step))
-                                    viz.update_series(
-                                        "natural", str(_fid) + "_rnd",
-                                        100.0 * float(_parts.get('natural', 0.0)),
-                                        step=int(_step))
-                                except Exception:
-                                    pass
-                    _n_hydrated += 1
-            if _n_hydrated > 0:
-                print(f"    [resume] hydrated viz plots with "
-                      f"{_n_hydrated} probe records from "
-                      f"{probe_jsonl_path}.")
-                # Tvinga ett omedelbart repaint så användaren ser
-                # historiken direkt (annars visas den först vid
-                # första ``update_biomass`` i tränings-loopen).
-                try:
-                    viz._last_frame_ts = 0.0
-                    viz.pump_events()
-                except Exception:
-                    pass
-        except Exception as _e:
-            print(f"    [resume] WARN: could not hydrate viz plots "
-                  f"from {probe_jsonl_path}: {_e!r}")
+        _hydrate_viz_history(viz, probe_jsonl_path, args.iter_per_gen)
 
     if generations_is_inf:
         gen_iter = itertools.count(start_gen)
