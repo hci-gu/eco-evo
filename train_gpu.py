@@ -40,6 +40,19 @@ def save_checkpoint(trainer, directory, generation, iteration_in_generation, opt
     torch.save(payload, temporary)
     temporary.replace(directory / "trainer.pth")
     trainer.export_policies(directory)
+    regenerate_plots(trainer, directory, options)
+
+
+def regenerate_plots(trainer, directory, options):
+    """Rewrite <run>/plots.html from the --visual probe log, as train.py does."""
+    if not (Path(directory) / "biomass.jsonl").is_file():
+        return
+    # train.py sets a module-level no-grad default on import; keep it local.
+    with torch.no_grad():
+        from train import _regenerate_biomass_html
+    m = trainer.model
+    meta = dict(options, dm_ids=list(m.dm_ids), ndm_ids=[f for f in m.ids if f not in m.dm_ids])
+    _regenerate_biomass_html(str(directory), fallback_meta=meta)
 
 
 def build_parser():

@@ -188,13 +188,16 @@ def _save_checkpoint(trainer, fg_id, path):
     torch.save(payload, path)
 
 
-def _regenerate_biomass_html(run_dir):
+def _regenerate_biomass_html(run_dir, fallback_meta=None):
     """Regenerate ``<run_dir>/plots.html`` from the current
     ``biomass.jsonl``. Called right after each checkpoint save (incl.
     on KeyboardInterrupt) so the user always has a clickable, up-to-date
     interactive plot in the run folder. Fully best-effort: any failure
     is swallowed with a short warning so it can never block training or
     final checkpoint persistence.
+
+    ``fallback_meta`` stands in for a missing ``__meta__`` header
+    (train_gpu.py writes none; it passes its run options).
     """
     try:
         jsonl_path = os.path.join(run_dir, 'biomass.jsonl')
@@ -221,6 +224,8 @@ def _regenerate_biomass_html(run_dir):
         else:
             records = mod._load_jsonl(jsonl_path)
             meta = {}
+        if not meta and fallback_meta:
+            meta = dict(fallback_meta)
         if not records:
             return
         try:
