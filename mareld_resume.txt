@@ -13869,3 +13869,49 @@ remain open exactly as described in 71.9 / 71.11.
     start (150; lr ~0.01) and watch porpoises; below ~3 t switch to
     option 1 (0.02 / 0.3, margin 1.7x). Redo the diet measurement on
     the trained fields.
+
+152 Porpoise indivisible unit 250 kg -> 50 kg (2026-10-10)
+152.1 Trigger: the training log shows porpoise move_frac ~0.014, yet
+    the viewer shows porpoises moving a lot. Both are true: below
+    min_split_biomass a cell takes the argmax action with ALL its
+    biomass (lib/gpu/ecosystem.py action_probabilities), and with
+    250 kg every porpoise cell (~90 of them, 99 %) is one-hot, so ~1
+    whole cell jumps per tick. Over a year 896 moves into empty cells,
+    86 t arriving in new cells (12x the mean 4.8 t); 101 new cells
+    appear on the edge (--migration on). move_frac is an unweighted
+    cell mean of the post-collapse distribution.
+152.2 History: 250 kg with extinction_threshold_factor 0.02 (sweep 5 kg)
+    came in f594fd3 (2026-09-14) as the "cheap proxy" for coherent
+    movement in 71.11: every cell one-hot, so small groups move as a
+    unit. Cost: the argmax hides the policy's real distribution, and a
+    moving cell gives up a whole tick of food (145.2).
+152.3 Frozen fix53 policies (gen 5), one year, same world; one-hot
+    threshold changed at runtime only (spawn and sweep unchanged);
+    "wanted" = biomass-weighted move probability before the collapse:
+      variant                       moved  wanted  end t  gadoid  cells
+      250 kg argmax (library)       1.9 %  25 %    2.9    36 %    92
+      50 kg argmax                  1.1 %  24 %    4.5    50 %    165
+      never one-hot (fractions)     14 %   14 %    0.8    58 %    84
+      250 kg, action SAMPLED        12-14  -       0.2/0.4 34-37  24
+      50 kg, action SAMPLED         12 %   -       1.0/1.1 50 %   57
+    (sampled: two noise seeds; start ~7 t). The policy carries a
+    15-25 % move probability that cost nothing under argmax, so it was
+    never shaped; executed as fractions or samples it starves the
+    porpoises. Sampling (fix "B") can therefore only be judged by
+    training, not frozen; not done.
+152.4 APPLIED (fix "A"): porpoises min_split_biomass 250 -> 50 kg (one
+    animal; Rojano-Donate et al. 2018 imply ~62 kg) and
+    extinction_threshold_factor 0.02 -> 0.1 (sweep stays 5 kg). The
+    spawn floor follows (5 x min_split = 250 kg per cell, was 1.25 t).
+    Note: porpoise interference w is 0, so the 50 kg gain is NOT less
+    crowding in a cell; cells above 50 kg split, which spreads the
+    porpoises over more cells (165 vs 92) and more prey.
+152.5 Validation: pytest 1009 passed / 12 skipped; budget_gate
+    unchanged (porpoise pairs ok); 1-gen CPU smoke OK. Frozen fix53
+    year with the full library change (new spawn floor): start 6.7 t,
+    end 3.6 t, gadoids 41 % of the diet, 148 cells, moved 0.9 %
+    (wanted 22 %); 250 kg same world 7.3 -> 2.9 t. Better than now,
+    below the runtime-only 4.5 t: the finer spawn costs some of it.
+152.6 Open: retrain (checkpoints valid); if porpoises still sit and
+    their reward noise stays 4-10x the other DMs (sigma_f 0.14-0.22 vs
+    0.02-0.05 in fix53), test sampling (B) in training, CPU and GPU.

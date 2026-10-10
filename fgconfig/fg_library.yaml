@@ -270,7 +270,14 @@
     # porpoise measurement separates travel from foraging; 1.3 is a
     # judgement between rest and eat.
     movement_cost: 1.3
-    min_split_biomass: 250.0
+    # Indivisible unit = one porpoise (~50-60 kg; Rojano-Donate et al.
+    # 2018 imply ~62 kg). Cells below it take one action per tick. 250 kg
+    # (2026-09-14, a proxy for coherent movement, section 71.11) made
+    # every porpoise cell one-hot, so the argmax hid a ~25 % move
+    # probability and a moving cell gave up a whole tick of food; on
+    # frozen fix53 policies 50 kg ended the year at 4.5 t vs 2.9 t
+    # (section 152). Also sets the spawn floor (5x = 250 kg per cell).
+    min_split_biomass: 50.0
     energy_content: 8500.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
@@ -309,7 +316,8 @@
     # matters (they occupy a handful of cells at <1 ton each) and are
     # already the group most at risk of extinction. Section 86.
     interference: 0.0
-    extinction_threshold_factor: 0.02
+    # Sweep at 0.1 * 50 kg = 5 kg per cell, as before section 152.
+    extinction_threshold_factor: 0.1
   seals:
     display_name: "Seals"
     is_decision_maker: true
