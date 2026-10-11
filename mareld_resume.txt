@@ -14188,3 +14188,53 @@ remain open exactly as described in 71.9 / 71.11.
     stomach at the densities present, so benthos wins on availability
     rather than value (148.2). Verdict: direction and seasonal switch
     plausible, share elevated, not one of the gross deviations.
+
+157 Gadoid natural mortality 0.683 -> 0.415 /yr (2026-10-12)
+157.1 Literature review (reports/ "Restdodlighet M0 hos torskfiskar.md",
+    spelled with a Swedish o-umlaut in the file name; notes in
+    research_notes/ under the same title): the M0 0.392 in
+    the gadoid M1 is the North Sea Ecopath 1991 pool residual
+    P/B (1 - EE), 66 % of it from juvenile haddock and saithe with EE
+    0.45 / 0.31; adults alone give 0.18. ICES SMS fixes residual M1 at
+    0.05 per quarter (0.20 /yr) for cod, haddock, whiting and saithe
+    in every key run 2011-2023 (a convention, never estimated);
+    life-history estimators give TOTAL adult M 0.25-0.40. The benthos
+    part 0.121 is an artefact: in the extracted Table 3.4 the rows of
+    Norway pout / other gadoids repeat twelve columns over, so the
+    crab, Nephrops and shrimp columns sum to 1.468 / 1.115 / 1.026 with
+    them and exactly 1.000 without, while megrim, halibut and turbot
+    sum to 1.00 only with them (checked on the repo's diet.json; the
+    report writer states the PDF text has it too). Recomputed non-FG
+    predation without the duplicates: 0.214.
+157.2 APPLIED (user's call): gadoids natural_mortality 0.000468 ->
+    0.000284 per tick (0.683 -> 0.415 /yr = M0 0.20 + non-FG
+    predation 0.214, no benthos part). Derived growth_rate
+    0.00200951 -> 0.00164137 (budget at s = 1: 1.467 -> 1.198 /yr).
+    The pair values the same correction would move (cannibalism
+    0.2168 -> 0.202, porpoises 0.0557 -> 0.065, seals, seabirds,
+    herring -> gadoids) are NOT changed, so the two steps can be told
+    apart. The growth-budget reference fill (156.4, budget paid at the
+    unreachable s = 1) is still open.
+157.3 Effect, frozen fix53 checkpoint of 22:27 (trained on the old M1),
+    probe world, 10 years, annual means (t); old M1 in brackets
+    (156.7 "after" run, end of year):
+      gadoids    2519 2666 2893 3155 3391 3567 3697 3747 3643 3292
+                 (y5 1636, y10 1430)
+      herring   12565 12335 11678 10666 9516 8443 7577 6924 6467 6232
+                 (y5 13058, y10 15938)
+      porpoises 11.5 10.5 9.6 8.9 8.3 7.9 7.4 6.9 6.4 5.9 (y10 3.99)
+      benthos   18603 22005 23238 23214 22374 20884 19288 17667 16520
+                15856
+    Gadoids rise +3 to +9 %/yr, peak in year 8 and turn down as herring
+    (halved) and benthos are depleted: an overshoot, so a slow
+    predator-prey cycle rather than a new level within 10 years.
+    Gadoid s 0.71-0.73 falling to 0.68 by year 10 (food limitation);
+    herring starvation share ~0. Porpoises decline slower (-6 %/yr vs
+    -12 %/yr). These policies were trained against M1 0.683; retrain
+    before reading the new balance.
+157.4 Validation: pytest 1047 passed / 12 skipped; budget_gate all
+    pairs ok; train.py 1-gen CPU smoke OK. Note: a running train_gpu
+    keeps the library it loaded at start, while its viewer probe
+    re-reads fg_library.yaml every probe (memory: library edit hits
+    running probe), so a run started before this edit shows probe
+    curves from a different M1 than it trains on.

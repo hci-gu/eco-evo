@@ -222,12 +222,19 @@
     # whiting, haddock, saithe, hake and the other gadoids (Norway pout
     # and blue whiting excluded: they eat zooplankton).
     r_max: 0.511
-    growth_rate: 0.00200951
-    # M1 = M0 (0.392) + predation by non-FG groups (0.171) + by benthos,
-    # which cannot hunt in the tick (0.121) = 0.683 /yr, North Sea
-    # Ecopath 1991. Cannibalism is the gadoids_preys_on_gadoids pair.
-    # Was 7.0e-05.
-    natural_mortality: 0.000468
+    growth_rate: 0.00164137
+    # M1 = M0 (0.20; SMS residual M1 convention for cod, haddock,
+    # whiting and saithe; Ecopath NS 1991 adults 0.18) + predation by
+    # non-FG groups (0.214; squid, halibut, gurnards, long-rough dab,
+    # megrim, rays, monkfish) = 0.41 /yr. The Ecopath pool residual
+    # 0.392 is not used: 66 % of it is juvenile haddock and saithe with
+    # EE 0.45 / 0.31. No benthos part: the crab / Nephrops / shrimp
+    # entries on 'other gadoids' in Mackinson & Daskalov 2007 Table 3.4
+    # duplicate the megrim / halibut / large demersal columns (column
+    # sums). reports/Restdödlighet M0 hos torskfiskar.md, resume 157.
+    # Cannibalism is the gadoids_preys_on_gadoids pair. Was 0.000468
+    # (0.683 /yr), before that 7.0e-05.
+    natural_mortality: 0.000284
     max_intake_rate: 0.04
     spawn:
       mode: colony
