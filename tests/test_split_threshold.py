@@ -45,6 +45,7 @@ if _ROOT not in sys.path:
 
 from lib.environments.ecosystem import EcosystemEnvironment  # noqa: E402
 from lib.world.functional_group import FunctionalGroup  # noqa: E402
+from lib.environments.ecosystem_env import movement  # noqa: E402
 
 # 50 kg indivisible weight * factor 0.5 -> thr = 0.025 ton, the porpoise
 # configuration from fg_library.yaml.
@@ -55,7 +56,7 @@ THR = FACTOR * MIN_SPLIT_KG / 1000.0
 H = W = 5
 
 
-def _build_env(min_split_kg=MIN_SPLIT_KG, factor=FACTOR):
+def _build_env(min_split_kg=MIN_SPLIT_KG, factor=FACTOR, migration=False):
     """Single-DM env with all metabolic costs and interactions switched off.
 
     ``resting_metabolism = 0`` makes ``_apply_movement`` a pure transport
@@ -77,7 +78,7 @@ def _build_env(min_split_kg=MIN_SPLIT_KG, factor=FACTOR):
     fg.initialize_state((H, W), initial_biomass=np.zeros((H, W)))
     env = EcosystemEnvironment(
         {'width': W, 'height': H, 'cell_size': 1000.0, 'tick_duration': 6.0},
-        {'mover': fg}, {})
+        {'mover': fg}, {}, migration=migration)
     env._build_static_caches()
     return env, fg
 
@@ -258,3 +259,165 @@ def test_threshold_cache_matches_the_extinction_sweep_bound():
     expected = (fg.min_split_biomass * fg.extinction_threshold_factor)
     assert float(env._dm_split_thr[0]) == pytest.approx(expected)
     assert expected == pytest.approx(THR)
+
+
+# Section 156: the two remaining sweep channels of movement.
+
+def _set_moves(env, biomass, moves):
+    """Put ``biomass`` on the grid with explicit per-cell move shares.
+
+    ``moves`` maps ``(y, x)`` to a length-4 sequence of N/E/S/W move
+    probabilities; the rest of each listed cell rests, every other cell
+    rests entirely.
+    """
+    _set_state(env, biomass, np.zeros((H, W), dtype=bool))
+    for (y, x), shares in moves.items():
+        env.pi_move[0, :, y, x] = np.asarray(shares, dtype=env.dtype)
+    env.pi_rest = (np.float32(1.0)
+                   - env.pi_move.sum(axis=1)).astype(env.dtype)
+
+
+def test_subthreshold_residue_follows_the_outflow():
+    """A cell that sends almost everything away no longer leaves dust.
+
+    99 % of the centre goes east into an empty cell (viable on its own),
+    the 1 % that stays is below ``thr`` and used to be swept. It now
+    follows the outflow, so the whole population arrives east.
+    """
+    total = 10.0 * THR
+    cy, cx = H // 2, W // 2
+    env, fg = _build_env()
+    _set_moves(env, _center_only(total), {(cy, cx): (0.0, 0.99, 0.0, 0.0)})
+    r_before = float(fg.energy_reserve.sum())
+    env._apply_movement()
+    assert float(fg.biomass[cy, cx]) == 0.0
+    assert float(fg.energy_reserve[cy, cx]) == 0.0
+    assert float(fg.biomass[cy, cx + 1]) == pytest.approx(total, rel=1e-5)
+    assert float(fg.energy_reserve.sum()) == pytest.approx(r_before, rel=1e-5)
+    env._apply_extinction_threshold()
+    assert float(fg.biomass.sum()) == pytest.approx(total, rel=1e-5)
+    assert env._extinction_events['mover'] == 0
+
+
+def test_subthreshold_residue_used_to_be_swept(monkeypatch):
+    """Without the residue rule the same move loses the 1 % to the sweep."""
+    monkeypatch.setattr(
+        movement, "follow_subthreshold_residues",
+        lambda env, b_out, b_total, r_total: (
+            b_total, r_total, np.zeros(b_total.shape, dtype=bool),
+            np.zeros_like(b_out)))
+    total = 10.0 * THR
+    cy, cx = H // 2, W // 2
+    env, fg = _build_env()
+    _set_moves(env, _center_only(total), {(cy, cx): (0.0, 0.99, 0.0, 0.0)})
+    env._apply_movement()
+    env._apply_extinction_threshold()
+    assert float(fg.biomass.sum()) == pytest.approx(0.99 * total, rel=1e-5)
+    assert env._extinction_events['mover'] == 1
+
+
+def test_residue_is_split_in_proportion_to_the_outflows():
+    """Two outflows (3:1) carry the residue in the same ratio."""
+    total = 10.0 * THR
+    cy, cx = H // 2, W // 2
+    env, fg = _build_env()
+    _set_moves(env, _center_only(total),
+               {(cy, cx): (0.0, 0.75 * 0.99, 0.0, 0.25 * 0.99)})
+    env._apply_movement()
+    assert float(fg.biomass[cy, cx]) == 0.0
+    assert float(fg.biomass[cy, cx + 1]) == pytest.approx(0.75 * total, rel=1e-5)
+    assert float(fg.biomass[cy, cx - 1]) == pytest.approx(0.25 * total, rel=1e-5)
+
+
+def test_residue_stays_when_every_outflow_was_cancelled():
+    """No remaining in-grid outflow: the section 69 retention applies."""
+    total = 4.0 * THR * 0.8
+    env, fg = _build_env()
+    _set_state(env, _center_only(total), _center_mask())
+    env._apply_movement()
+    assert float(fg.biomass[H // 2, W // 2]) == pytest.approx(total, rel=1e-5)
+
+
+def test_subthreshold_emigration_stays_home():
+    """With migration, an off-grid pool below thr is not spread as dust.
+
+    The pool would be redistributed over every edge cell at far below
+    ``thr`` each and swept; it now stays in the cell it came from.
+    """
+    env, fg = _build_env(migration=True)
+    b = np.zeros((H, W))
+    b[0, 2] = 10.0 * THR
+    _set_moves(env, b, {(0, 2): (0.05, 0.0, 0.0, 0.0)})   # 0.5 thr off-grid
+    env._apply_movement()
+    assert float(fg.biomass[0, 2]) == pytest.approx(10.0 * THR, rel=1e-5)
+    assert int(np.count_nonzero(fg.biomass)) == 1
+    env._apply_extinction_threshold()
+    assert float(fg.biomass.sum()) == pytest.approx(10.0 * THR, rel=1e-5)
+
+
+def test_viable_emigration_still_leaves():
+    """A pool at or above thr migrates as before."""
+    env, fg = _build_env(migration=True)
+    b = np.zeros((H, W))
+    b[0, 2] = 10.0 * THR
+    _set_moves(env, b, {(0, 2): (0.5, 0.0, 0.0, 0.0)})    # 5 thr off-grid
+    env._apply_movement()
+    # The pool re-enters on the edge (possibly partly in the source cell
+    # itself, which is an edge cell too), so it reaches other cells.
+    assert int(np.count_nonzero(fg.biomass)) > 1
+    assert float(fg.biomass.sum()) == pytest.approx(10.0 * THR, rel=1e-5)
+    env._apply_extinction_threshold()
+    assert float(fg.biomass.sum()) == pytest.approx(10.0 * THR, rel=1e-5)
+
+
+@pytest.mark.parametrize("migration", [False, True])
+def test_movement_conserves_and_dominates_with_both_rules(migration,
+                                                          monkeypatch):
+    """Contracts 4 and 5 for the full section 69 + 156 path.
+
+    On random sparse states with random move shares, movement conserves
+    biomass and reserve, and versus the section-69-only path the swept
+    biomass never grows and no sub-threshold cell is added.
+    """
+    rng = np.random.default_rng(156)
+    original = movement.follow_subthreshold_residues
+    original_emig = movement.cancel_subthreshold_emigration
+    for trial in range(25):
+        b0 = rng.random((H, W)) * (4.0 * THR) * float(rng.uniform(0.1, 5.0))
+        b0 *= (rng.random((H, W)) > 0.4)
+        move = rng.random((4, H, W)) * rng.random((1, H, W))
+        move /= np.maximum(move.sum(axis=0, keepdims=True), 1.0)
+        totals, subthr = {}, {}
+        for new_rules in (False, True):
+            if new_rules:
+                monkeypatch.setattr(movement, "follow_subthreshold_residues",
+                                    original)
+                monkeypatch.setattr(movement, "cancel_subthreshold_emigration",
+                                    original_emig)
+            else:
+                monkeypatch.setattr(
+                    movement, "follow_subthreshold_residues",
+                    lambda env, b_out, b_total, r_total: (
+                        b_total, r_total, np.zeros(b_total.shape, dtype=bool),
+                        np.zeros_like(b_out)))
+                monkeypatch.setattr(
+                    movement, "cancel_subthreshold_emigration",
+                    lambda env, b_out, r_out, b_stay, r_stay: (
+                        b_out, r_out, b_stay, r_stay))
+            env, fg = _build_env(migration=migration)
+            _set_state(env, b0)
+            env.pi_move = (move[None] * env.move_mask[None]).astype(env.dtype)
+            env.pi_rest = (np.float32(1.0)
+                           - env.pi_move.sum(axis=1)).astype(env.dtype)
+            b_before = float(fg.biomass.sum())
+            r_before = float(fg.energy_reserve.sum())
+            env._apply_movement()
+            assert float(fg.biomass.sum()) == pytest.approx(b_before, rel=1e-4)
+            assert float(fg.energy_reserve.sum()) == pytest.approx(
+                r_before, rel=1e-4)
+            b = np.asarray(fg.biomass, dtype=np.float64)
+            subthr[new_rules] = int(np.count_nonzero((b > 0.0) & (b < THR)))
+            env._apply_extinction_threshold()
+            totals[new_rules] = float(fg.biomass.sum())
+        assert totals[True] >= totals[False] - 1e-6, trial
+        assert subthr[True] <= subthr[False], trial

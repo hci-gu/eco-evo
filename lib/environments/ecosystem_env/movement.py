@@ -312,6 +312,13 @@ def apply_movement(env, settlement):
     b_stay = settlement.stationary_biomass + b_keep.sum(axis=1)
     r_stay = settlement.stationary_reserve + r_keep.sum(axis=1)
 
+    # Emigration below the sweep threshold stays home (section 156): the
+    # immigration path has no viable edge cell for it and would spread it
+    # as dust over the whole edge, where the sweep zeroes it.
+    if env.migration and env._dm_split_thr_any:
+        b_out, r_out, b_stay, r_stay = cancel_subthreshold_emigration(
+            env, b_out, r_out, b_stay, r_stay)
+
     b_total, r_total = _transfer_to_neighbours(b_stay, r_stay, b_out, r_out)
 
     if env.migration:
@@ -338,21 +345,30 @@ def apply_movement(env, settlement):
     # no viable cell is made non-viable. Same principle as the top-k
     # immigration concentration above, generalized to the ordinary
     # 4-direction split.
-    b_cancel = None
+    #
+    # The mirror case (section 156): a cell that sends almost everything
+    # away keeps a residue below thr, which the sweep zeroes. Such a
+    # residue now follows the cell's remaining in-grid outflows. Those
+    # all land in viable cells (the rest were cancelled above), and a
+    # residue cell holds only its own biomass (every inflow into it was
+    # cancelled), so no cell is made non-viable and one pass suffices.
+    b_stay_eff, b_out_eff = b_stay, b_out
     if env._dm_split_thr_any:
         b_total, r_total, b_cancel, _r_cancel = suppress_subthreshold_splits(
             env, b_out, r_out, b_total, r_total, return_cancelled=True)
+        b_stay_eff = b_stay + b_cancel.sum(axis=1)
+        b_out_eff = b_out - b_cancel
+        b_total, r_total, residue, b_push = follow_subthreshold_residues(
+            env, b_out_eff, b_total, r_total)
+        b_stay_eff = np.where(residue, np.float32(0.0), b_stay_eff)
+        b_out_eff = b_out_eff + b_push
 
     # Local reward (``--local_reward``): hand the per-source-cell biomass
     # flow to the tracker while it is still available. Cancelled splits
-    # are moved from the outflow back into the stay term so the flow
-    # sums to ``b_total``, exactly as the biomass does.
+    # are moved from the outflow back into the stay term, and followed
+    # residues from the stay term into the outflow, so the flow sums to
+    # ``b_total``, exactly as the biomass does.
     if source_tracking.is_enabled(env):
-        if b_cancel is None:
-            b_stay_eff, b_out_eff = b_stay, b_out
-        else:
-            b_stay_eff = b_stay + b_cancel.sum(axis=1)
-            b_out_eff = b_out - b_cancel
         source_tracking.record_movement(env, b_stay_eff, b_out_eff, b_total)
 
     max_reserve = b_total * env.dm_max_energy_reserve[:, None, None]
@@ -425,3 +441,70 @@ def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total,
     if return_cancelled:
         return b_total, r_total, b_cancel, r_cancel
     return b_total, r_total
+
+
+def _off_grid_mask(shape):
+    """``(4, H, W)``: True where a move in direction ``d`` leaves the grid."""
+    _, height, width = shape
+    off = np.zeros((4, height, width), dtype=bool)
+    off[NORTH, 0, :] = True
+    off[SOUTH, height - 1, :] = True
+    off[EAST, :, width - 1] = True
+    off[WEST, :, 0] = True
+    return off
+
+
+def cancel_subthreshold_emigration(env, b_out, r_out, b_stay, r_stay):
+    """Return a DM's emigration to its source cells when it is below thr.
+
+    With ``--migration`` the off-grid outflows of a DM are pooled and
+    re-enter on the edge (``_concentrate_immigration``). A pool below
+    ``thr`` has no viable edge cell, so it is spread over every edge
+    cell and the extinction sweep zeroes all of it. Such a pool is
+    cancelled instead: each off-grid outflow (and its reserve) stays in
+    the cell it came from. Section 156; same principle as
+    ``suppress_subthreshold_splits``.
+
+    Returns ``(b_out, r_out, b_stay, r_stay)``, new arrays only when
+    something was cancelled.
+    """
+    b_emig, _ = _edge_emigration(b_out, r_out)
+    small = (b_emig > 0.0) & (b_emig < env._dm_split_thr)
+    if not np.any(small):
+        return b_out, r_out, b_stay, r_stay
+    off = _off_grid_mask(b_stay.shape)[None] & small[:, None, None, None]
+    b_back = np.where(off, b_out, np.float32(0.0))
+    r_back = np.where(off, r_out, np.float32(0.0))
+    return (b_out - b_back, r_out - r_back,
+            b_stay + b_back.sum(axis=1), r_stay + r_back.sum(axis=1))
+
+
+def follow_subthreshold_residues(env, b_out, b_total, r_total):
+    """Move a sub-threshold residue along its cell's remaining outflows.
+
+    ``b_out`` is the outflow left after ``suppress_subthreshold_splits``
+    (cancelled splits removed) and ``b_total``/``r_total`` the settled
+    grid. A cell with ``0 < b_total < thr`` that still sends biomass to
+    an in-grid neighbour hands all of its biomass and reserve to those
+    neighbours, in proportion to what it sends each; the extinction
+    sweep would otherwise zero it. A residue whose only outflow leaves
+    the grid stays (and is swept). Section 156.
+
+    Returns ``(b_total, r_total, residue, b_push)``: ``residue`` is the
+    ``(N_dm, H, W)`` mask of emptied cells and ``b_push`` the extra
+    outflow per direction, for the local-reward flow.
+    """
+    thr = env._dm_split_thr[:, None, None]
+    in_grid = np.where(_off_grid_mask(b_total.shape)[None], np.float32(0.0),
+                       b_out)
+    sent = in_grid.sum(axis=1)
+    residue = (b_total > 0.0) & (b_total < thr) & (sent > 0.0)
+    if not np.any(residue):
+        return b_total, r_total, residue, np.zeros_like(b_out)
+    share = in_grid / np.where(residue, sent, np.float32(1.0))[:, None]
+    b_push = share * np.where(residue, b_total, np.float32(0.0))[:, None]
+    r_push = share * np.where(residue, r_total, np.float32(0.0))[:, None]
+    b_left = np.where(residue, np.float32(0.0), b_total)
+    r_left = np.where(residue, np.float32(0.0), r_total)
+    b_total, r_total = _transfer_to_neighbours(b_left, r_left, b_push, r_push)
+    return b_total, r_total, residue, b_push

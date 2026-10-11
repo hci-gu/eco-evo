@@ -205,6 +205,38 @@ def test_tracking_follows_suppressed_splits(device):
 
 
 @pytest.mark.parametrize("device", DEVICES)
+def test_tracking_follows_moved_residues(device):
+    """A followed residue has to be booked as outflow, not as stay.
+
+    Section 156: a cell moving 98 % east (velocity 0.7) keeps 31 % of
+    0.1 t, below ``thr = 0.06``, and ``follow_residues`` sends it after
+    the 69 % that leaves. The tracked flow must move it from ``b_stay``
+    into ``b_out``; otherwise the emptied source would be credited and
+    the mass balance would break.
+    """
+    env = sparse_env()
+    model = TensorEcosystem(env, device)
+    state = model.import_state([env])
+    probabilities = torch.zeros(1, model.D, model.A, model.C, device=model.device)
+    probabilities[:, :, 1] = 0.98          # east
+    probabilities[:, :, 4] = 0.02          # rest
+    rule = model.follow_residues
+    model.follow_residues = lambda b_out, b_total, r_total: (
+        b_total, r_total, torch.zeros_like(b_total, dtype=torch.bool),
+        torch.zeros_like(b_out))
+    without = tracked_step(model, state, probabilities)[0]
+    model.follow_residues = rule
+    b, r, _, _, _, (_, tracked, frac_in) = tracked_step(model, state, probabilities)
+    a = model.dm_index[0]
+    assert float(b[0, a].sum()) > float(without[0, a].sum()) + 1e-3, \
+        "the residue rule did not fire; the test would be vacuous"
+    total = model.local_energy(b, r).double().sum()
+    torch.testing.assert_close(tracked.double().sum(), total, rtol=2e-6, atol=2e-6)
+    assert total > 0, "everything died; the identity would be trivial"
+    torch.testing.assert_close(frac_in, torch.ones_like(frac_in))
+
+
+@pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("config", CONFIGS[:2])
 def test_rollout_fitness_matches_the_reference_with_suppression(device, config):
     """Parity has to hold with the extinction thresholds switched on."""

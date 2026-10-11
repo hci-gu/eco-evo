@@ -438,6 +438,10 @@ class TensorEcosystem:
         moving_r = move / safe[:, :, None] * move_r[:, :, None]
         moving_b = move * b[:, :, None]
         b_out, r_out = moving_b * self.velocity, moving_r * self.velocity
+        if self.migration and self.split_thr_any:
+            # What is taken out of the off-grid outflow lands in the stay
+            # terms below by construction (moving minus outflow).
+            b_out, r_out = self.cancel_emigration(b_out, r_out)
         b_stay = b * rest + b * eat + (moving_b - b_out).sum(2)
         b_total = b_stay
         r_total = rest_r + eat_r + (moving_r - r_out).sum(2)
@@ -454,18 +458,62 @@ class TensorEcosystem:
         b_cancel = None
         if self.split_thr_any:
             b_total, r_total, b_cancel = self.suppress_splits(b_out, r_out, b_total, r_total)
+            b_total, r_total, residue, b_push = self.follow_residues(
+                b_out - b_cancel, b_total, r_total)
         r_total = torch.minimum(r_total.clamp_min(0), b_total * self.max_reserve[:, self.dm_index])
         settled = (biomass.index_copy(1, self.dm_index, b_total),
                    reserve.index_copy(1, self.dm_index, r_total))
         if not track:
             return settled[0], settled[1], None
         if b_cancel is not None:
-            # Cancelled splits stayed home, so the tracked flow has to
-            # move them from the outflow back into the stay term; only
-            # then does it still sum to ``b_total``.
-            b_stay = b_stay + b_cancel.sum(2)
-            b_out = b_out - b_cancel
+            # Cancelled splits stayed home and followed residues left, so
+            # the tracked flow moves the former from the outflow back into
+            # the stay term and the latter the other way; only then does
+            # it still sum to ``b_total``.
+            b_stay = torch.where(residue, 0.0, b_stay + b_cancel.sum(2))
+            b_out = b_out - b_cancel + b_push
         return settled[0], settled[1], (b_stay, b_out, b_total)
+
+    def cancel_emigration(self, b_out, r_out):
+        """Keep a DM's off-grid outflow home when its pool is below thr.
+
+        Section 156, mirrored from
+        ``movement.cancel_subthreshold_emigration``: a pool below ``thr``
+        has no viable edge cell, so ``immigration`` would spread it over
+        the whole edge and ``population`` would sweep all of it. Returns
+        ``(b_out, r_out)`` with those outflows removed; the caller's stay
+        terms (moving minus outflow) pick them up.
+        """
+        b_emig = (b_out * self.outside).sum((2, 3))
+        small = (b_emig > 0) & (b_emig < self.split_thr[:, :, 0, 0])
+        back = self.outside * small[:, :, None, None]
+        return b_out - b_out * back, r_out - r_out * back
+
+    def follow_residues(self, b_out, b_total, r_total):
+        """Move a sub-threshold residue along its remaining outflows.
+
+        Section 156, mirrored from
+        ``movement.follow_subthreshold_residues``. ``b_out`` is the
+        outflow left after ``suppress_splits``. A cell with ``0 < b_total
+        < thr`` that still sends biomass to an in-grid neighbour hands
+        all of its biomass and reserve to those neighbours, in proportion
+        to what it sends each. Returns ``(b_total, r_total, residue,
+        b_push)`` with ``b_push`` the extra outflow per direction.
+        """
+        in_grid = b_out * self.neighbor_valid
+        sent = in_grid.sum(2)
+        residue = (b_total > 0) & (b_total < self.split_thr[:, :, :, 0]) & (sent > 0)
+        share = in_grid / torch.where(residue, sent, 1.0)[:, :, None]
+        b_push = share * torch.where(residue, b_total, 0.0)[:, :, None]
+        r_push = share * torch.where(residue, r_total, 0.0)[:, :, None]
+        b_total = torch.where(residue, 0.0, b_total)
+        r_total = torch.where(residue, 0.0, r_total)
+        for direction in range(4):
+            source = (direction + 2) % 4
+            index, valid = self.neighbors[source], self.neighbor_valid[source]
+            b_total = b_total + b_push[:, :, direction, index] * valid
+            r_total = r_total + r_push[:, :, direction, index] * valid
+        return b_total, r_total, residue, b_push
 
     def suppress_splits(self, b_out, r_out, b_total, r_total):
         """Cancel move outflows that would land in a sub-threshold cell.

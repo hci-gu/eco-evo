@@ -14005,3 +14005,160 @@ remain open exactly as described in 71.9 / 71.11.
     three zoom levels, layout unchanged without the calendar and in
     train mode). Headless inference.py --visual on fix53 renders the
     band with no viz error logged.
+
+156 fix53 ten-year rollout read against nature; movement sweep leak
+    closed (2026-10-11)
+156.1 Setup. Frozen fix53 checkpoint of 20:57 (training still running,
+    lr 0.06 sigma 0.1), the deterministic probe world (60x60, mortality,
+    migration, currents 0.1/20/0/12, mass balance, daylight +
+    temperature, calendar start May 28), 14600 ticks = 10 years. Every
+    impact in mareld2.yaml is muted: this is the null scenario. Per tick:
+    biomass, reserve, biomass-weighted action mix, reserve fill s and
+    starving share, diet and loss-by-cause deltas, occupied cells,
+    Lloyd patchiness, pred-prey cosine overlap. Monthly patterns are
+    detrended (log biomass over a centred one-year running mean); raw
+    per-year normalisation folds a trend into a false step at the May
+    year boundary (porpoises looked like they had a June "calving
+    pulse"). A second run with another global seed (same spawn, only
+    the FG order differs) stayed within 2 % (porpoises 18 %, few t): a
+    small perturbation does not grow, no sign of chaos: the cycle is
+    forced by the calendar (daylight, temperature), damped by
+    interference, type III and reserves, and noise-free (fractions,
+    frozen policies).
+156.2 Trends, annual means year 1 -> 10 (t): herring 12710 -> 20650
+    (+1 %/yr at y10, slowing), benthos 18950 -> 31030, gadoids 2300 ->
+    1520 (-1.3 %/yr, slowing), porpoises 11 -> 3.6 (-12 %/yr,
+    exponential), zooplankton 24400 -> 22800, phytoplankton flat 43400.
+    Not at equilibrium after 10 years; everything past year 1 is also
+    outside the 1460-tick training episodes.
+156.3 Behaviour that matches nature (detrended, years 2-10):
+    * Phytoplankton spring bloom in March (0.75 Jan -> 1.12 Mar).
+    * Zooplankton minimum Jan, maximum May-Jun, ~9x, 2-3 months after
+      the bloom (Calanus-like).
+    * Zooplankton diapause-like: rest 0.78-0.85 in winter, most eating
+      in Feb-Mar (0.33-0.40) when the bloom starts.
+    * Zooplankton diel vertical migration where real night exists: rest
+      day/night 0.93/0.60 (DJF), 0.73/0.44 (MAM). Gone at midsummer
+      (no dark tick at 58 N with 6 h ticks).
+    * Herring feed by day and rest at night (DJF rest 0.11 day / 0.75
+      night): a visual planktivore. The winter rest (0.42-0.47 Nov-Jan)
+      is mostly long nights.
+    * Herring lipid cycle: s 0.23 in Feb -> 0.87 in Jun; biomass minimum
+      Mar-Apr, maximum Oct-Nov.
+    * Herring aggregate in winter (Lloyd 1.8 vs 1.4 in summer).
+    * Gadoid-herring overlap highest in the feeding season (0.72 summer
+      vs 0.59 winter); gadoid diet switches with season (summer herring
+      + zooplankton, winter benthos 88 %).
+    * Porpoises feed around the clock (eat 0.97-1.00, no rest), Q/B 22
+      /yr (~6 % of body mass per day, low end of the literature).
+    * Herring become food-limited as they grow: starving share of the
+      losses 2 % -> 7 % over the run.
+156.4 Behaviour that does not:
+    * Realised M2 vs the budgeted predation_mortality (1/yr, years
+      1..10):
+        pair                    library   realised
+        gadoids -> gadoids      0.217     ~0.001  (growth paid for a
+                                                   loss never taken)
+        gadoids -> benthos      0.0048    0.33 -> 0.17 (40-70x; 65 %
+                                                   of the diet, library
+                                                   implies ~1 %)
+        gadoids -> herring      0.30      0.19 -> 0.14 (herring under-
+                                                   cropped, they grow
+                                                   until food brakes)
+        zoo -> phyto            22.6      30.5
+        herring -> zoo          5.24      3.2 -> 5.2
+        porpoises -> gadoids    0.056     0.087 -> 0.020
+        porpoises -> herring    0.0117    0.006 -> 0.003
+    * The derived g = budget / ((1 - u) * 1460) pays the full budget at
+      s = 1 only (growth_budget.py, "ideal conditions"), where the
+      hunger gate closes intake. s sits at 0.6-0.75, so gadoids and
+      porpoises realise 40-50 % of the designed production; for
+      porpoises that does not even cover M1. By design, but it is a
+      structural reason the top predators decline.
+    * Phytoplankton has no post-bloom decline: a plateau 1.05-1.10 from
+      Apr to Oct, annual range 1.6x. Nature: nutrient-depleted summer
+      low, autumn bloom, 5-10x in chlorophyll. No nutrient pool.
+    * Top predators do not track prey: porpoises Lloyd 25, overlap with
+      prey 0.15-0.22, move 0-3 %, cells 250 -> 128; gadoids move 1 %,
+      never rest, no spawning migration (154.6: staying is rational
+      under filled ceilings).
+    * Porpoise diet 51 / 49 herring / gadoids matches Ecopath, but it
+      was fitted (151), not an emergent result.
+    * 154.5 is superseded: this checkpoint rests 42-47 % in Nov-Jan
+      (after the lr 0.1 restarts of 154.7).
+156.5 Porpoise "starvation" (49 % of the losses) was half the extinction
+    sweep. Two years, probe world, 20:57 checkpoint: 1.68 t booked as
+    starvation, 0.92 t of it the sweep (cells below 0.1 x 50 kg = 5 kg
+    zeroed). One year, frozen 22:27 checkpoint (md5-checked copy),
+    split by cause of the swept cell:
+        residue of a cell that moved almost everything     0.31 t
+        dust: emigration pool < 5 kg spread over every
+          edge cell by the immigration (185000 cells)      0.04 t
+        cells that shrank through 5 kg (M1, catabolism)    0.06 t
+    Herring lost 0.47 t/yr and gadoids 0.03 t/yr to residues
+    (negligible). 75-87 % of porpoise cells hold less than one animal
+    (50 kg; 20:57 checkpoint); fractions above 50 kg split off 5-50 kg
+    pieces.
+156.6 Fix (lib/environments/ecosystem_env/movement.py, mirrored in
+    lib/gpu/ecosystem.py), two rules next to section 69's split
+    suppression, same principle (thr = extinction_threshold_factor *
+    min_split_biomass, 0 opts out):
+    * cancel_subthreshold_emigration / TensorEcosystem.cancel_emigration:
+      with --migration, a DM whose off-grid pool this tick is 0 < pool
+      < thr keeps every off-grid outflow (and its reserve) in the source
+      cell. _concentrate_immigration / immigration are unchanged; their
+      "no viable prefix -> spread over the whole edge" branch is now
+      only reached by thr = 0 groups (and advect's passive groups).
+    * follow_subthreshold_residues / TensorEcosystem.follow_residues:
+      after the split suppression, a cell with 0 < B < thr that still
+      sends biomass to an in-grid neighbour hands all its biomass and
+      reserve to those neighbours in proportion to the remaining
+      outflows. One pass is safe: cells only lose inflow when they
+      were below thr with every inflow applied, so every destination of
+      a non-cancelled outflow stays viable, and a residue cell holds
+      only its own biomass (all inflows into it were cancelled). A
+      residue whose only outflow leaves the grid stays and is swept.
+    The local-reward flow books cancelled emigration as stay and a
+    followed residue as outflow (stay 0 at the residue cell), so it
+    still sums to the settled grid on CPU and GPU. Graph-safe
+    (torch.where only). No observation change: checkpoints stay valid,
+    but policies were trained against the leak, and the running
+    train_gpu (code loaded at start) keeps the old movement until it
+    is restarted.
+156.7 Effect (frozen 22:27 checkpoint throughout). One year after the
+    fix: residue 0.31 -> 0 t, edge dust
+    0.04 -> 0.005 t, gadoid and herring sweeps ~0; porpoise sweep 0.42
+    -> 0.31 t, now almost all cells shrinking through 5 kg. Most of
+    the saved residue ends as such fragments later, so the long-run
+    gain is small. Ten years, frozen checkpoint of 22:27, three global
+    seeds (20260530 / 7 / 99), porpoise t at year 10:
+        before  3.48 / 3.41 / 3.47   (mean 3.45, -12.5 %/yr from 12 t)
+        after   3.99 / 3.73 / 4.07   (mean 3.93, -11.2 %/yr)
+    Herring, gadoids and zooplankton unchanged within the seed spread
+    (e.g. herring 15900-16050 t either way). The fix closes a
+    bookkeeping loss; it is not a porpoise rescue. What remains: M1
+    0.1/yr against production at s ~0.7 (156.4), winter catabolism,
+    and sub-animal fragments that die through the 5 kg sweep.
+    Caveat: 156.1-156.4 and the two-year figure in 156.5 are the 20:57
+    checkpoint; the trainer overwrote it at 22:27 (herring y10 ~16000 t
+    on the newer one vs 20650), which is why the one-year split in
+    156.5 and all of 156.7 use a frozen copy of the 22:27 one.
+156.8 Tests: tests/test_split_threshold.py (residue follows the outflow,
+    used to be swept, proportional split, stays when every outflow was
+    cancelled, small emigration stays home, viable emigration still
+    leaves, conservation + dominance over the section-69-only path on
+    random states with and without migration);
+    tests/test_gpu_ecosystem.py::
+    test_residues_and_small_emigration_match_the_reference (CPU vs
+    tensor engine per tick, fails with the GPU rules switched off);
+    tests/test_gpu_local_reward.py::test_tracking_follows_moved_residues
+    (mass balance of the tracked flow). Full suite 1047 passed / 12
+    skipped (CUDA available, both devices); train.py 1-gen CPU smoke
+    and train_gpu.py 1-gen cuda-graph smoke OK.
+156.9 Open: (1) sub-animal porpoise fragments (fractions above 50 kg
+    split off 5-50 kg pieces that then die through the sweep); (2)
+    growth budget paid at s = 1 only; (3) gadoid cannibalism and
+    benthos M2 far from the budget; (4) no nutrient limitation on
+    phytoplankton. Tools (scratchpad, as in 154.10): multiyear.py
+    (rollout recorder), analyse.py (tables above), leak_diag.py (sweep
+    split by cause), ens.py (seed ensemble before/after).

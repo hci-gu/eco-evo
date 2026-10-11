@@ -496,6 +496,59 @@ def test_subthreshold_splits_are_suppressed_like_the_reference(device):
     assert float(b.sum()) > 0, "everything died; the comparison is against zeros"
 
 
+def test_residues_and_small_emigration_match_the_reference(device):
+    """Section 156's two rules, mirrored from ``movement.py``.
+
+    A cell moving 98 % of its biomass one way keeps a residue below
+    ``thr`` (``follow_residues``), and with migration a top-row cell
+    sending a small share north emigrates a pool below ``thr``
+    (``cancel_emigration``). Both used to end in the extinction sweep.
+    Compared per tick over several ticks; ``fired`` proves the rules
+    changed the outcome on this fixture.
+    """
+    env = make_env(migration=True, min_split=50.0, extinction_factor=1.2)
+    rng = np.random.default_rng(156)
+    for fg in env.fgs.values():
+        b = rng.uniform(0.0, 0.3, fg.biomass.shape).astype(np.float32)
+        b *= (rng.random(b.shape) > 0.5)
+        fg.biomass = b
+        fg.energy_reserve = b * 2.0
+    env.build_static_caches()
+    model = TensorEcosystem(env, device)
+    direction = rng.integers(0, 4, (env.H, env.W))
+    share = rng.choice(np.array([0.3, 0.98], np.float32), (env.H, env.W))
+    move = np.zeros((env.N_dm, 4, env.H, env.W), np.float32)
+    for d in range(4):
+        move[:, d, direction == d] = share[direction == d]
+    rest = (1.0 - move.sum(1)).astype(np.float32)
+    reference = ActionProbabilities(
+        move, rest, np.zeros((env.N_dm, env.N_all, env.H, env.W), np.float32))
+    probabilities = torch.zeros(1, model.D, model.A, model.C, device=model.device)
+    probabilities[0, :, :4] = model.tensor(move.reshape(env.N_dm, 4, -1))
+    probabilities[0, :, 4] = model.tensor(rest.reshape(env.N_dm, -1))
+    b, r, _ = model.import_state([env])
+    rules = (model.follow_residues, model.cancel_emigration)
+    fired = False
+    for tick in range(4):
+        # The section-69-only path, for the ``fired`` check.
+        model.follow_residues = lambda b_out, b_total, r_total: (
+            b_total, r_total, torch.zeros_like(b_total, dtype=torch.bool),
+            torch.zeros_like(b_out))
+        model.cancel_emigration = lambda b_out, r_out: (b_out, r_out)
+        without = model.step(b, r, probabilities, model.tensor(tick),
+                             torch.zeros_like(b))[0]
+        model.follow_residues, model.cancel_emigration = rules
+        b, r, _, _, _ = model.step(b, r, probabilities, model.tensor(tick),
+                                   torch.zeros_like(b))
+        env.step(reference)
+        expected = model.import_state([env])
+        np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=2e-7, rtol=2e-6)
+        np.testing.assert_allclose(numpy(r), numpy(expected[1]), atol=2e-7, rtol=2e-6)
+        fired = fired or float(b.sum()) > float(without.sum()) + 1e-4
+    assert fired, "neither rule fired; the test would be vacuous"
+    assert float(b.sum()) > 0, "everything died; the comparison is against zeros"
+
+
 def test_immigration_matches_threshold_concentration(device):
     env = make_env(True)
     model = TensorEcosystem(env, device)
