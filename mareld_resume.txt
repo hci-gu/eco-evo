@@ -13964,3 +13964,44 @@ remain open exactly as described in 71.9 / 71.11.
     budget line under the DM and NDM FG Editor, live from the typed
     r_max / Natural Mortality / Maintenance Level, in the muted colour
     it had (the 700 px wrap is gone; the line is one row of labels).
+155 Calendar band under the inference plot (2026-10-11)
+155.1 User request: show in the inference viewer's plot which month
+    the rollout is in and the time of day, as profiler-style labels
+    (Unity's profiler timeline): month blocks with the clock times
+    running underneath. lib/viz/pygame_viz.py, inference mode only
+    (train-mode x is the ARS step, not a tick), only with the daylight
+    calendar on and never on the progress tab. Layout otherwise
+    unchanged: the band adds _CAL_BAND_H (31 px) to the plot's bottom
+    padding, scrollbar and Save button move down with it.
+155.2 Mapping: series point at step s is the state after tick s, i.e.
+    at the start of tick s + 1 - the instant the status bar describes
+    with "tick = s + 1". _plot_x_hours(cfg, x) = (start_tick + x + 1)
+    * tick_hours, unwrapped year-hours (a run crossing New Year keeps
+    increasing). At the live edge the band's month equals the status
+    bar's. The viewer keeps the loader's params['daylight'] as
+    _daylight_cfg on every update_biomass (start_tick changes per
+    rollout with start_day_of_year: random); during playback the plot
+    is live, so the band is the live rollout's, like its curves.
+155.3 Rows. Month row: one block per month, tinted by season (Dec-Feb
+    blue, Mar-May green, Jun-Aug yellow, Sep-Nov brown), alternate
+    months darker; label "September" / "Sep" / "S" / none, whichever
+    fits, centred in the block's visible part. Month starts are faint
+    vertical guides through the plot, New Year a brighter one. Clock
+    row: blocks of the finest step in 1, 2, 3, 6, 12, 24 h that is not
+    finer than a tick and at least 18 px wide; labels "06:00" (or
+    "06"), the day of the month for 24 h blocks; at under 18 px/day
+    days are only outlined (>= 8 px) and below that not at all. The
+    row is shaded per pixel column by the mean light level F (the
+    observation channel) of the ticks it covers, night blue to day
+    amber, taken exactly through the cumulative sum of the year's
+    light schedule (no aliasing when a column spans many ticks). At the
+    default 100-tick window (6 h ticks) the clock row shows days;
+    zooming in (wheel, minimum 10 ticks) gives 06:00 / 12:00 / ...
+155.4 Hover tooltip: the first line adds the same instant,
+    "tick 123  Mar 14 06:00".
+155.5 Tests: tests/test_viz_calendar_band.py (mapping vs
+    daylight.calendar_at for tick lengths 1-6 across New Year, month
+    blocks, exact column light, clock step choice, rendered labels at
+    three zoom levels, layout unchanged without the calendar and in
+    train mode). Headless inference.py --visual on fix53 renders the
+    band with no viz error logged.

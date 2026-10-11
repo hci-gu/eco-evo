@@ -55,6 +55,102 @@ _VIRIDIS_256: Optional[np.ndarray] = None
 # Width of the daylight frame around each heatmap (section 142).
 _LIGHT_FRAME_PX = 2
 
+# Calendar band under the inference plot (section 155): a month row and
+# a clock row, profiler-style blocks with the label inside when it fits.
+_CAL_ROW_H = 14
+_CAL_BAND_H = 2 * _CAL_ROW_H + 3
+# Clock block lengths tried, finest first; the finest one whose block is
+# at least _CAL_MIN_BLOCK_PX wide is drawn (never finer than a tick).
+_CAL_CLOCK_STEPS_H = (1, 2, 3, 6, 12, 24)
+_CAL_MIN_BLOCK_PX = 18
+# Below this a day block is not outlined; the light shading remains.
+_CAL_MIN_DAY_PX = 8
+_CAL_MONTH_NAMES = ("January", "February", "March", "April", "May", "June",
+                    "July", "August", "September", "October", "November",
+                    "December")
+# Month blocks are tinted by season (Dec-Feb, Mar-May, Jun-Aug, Sep-Nov).
+_CAL_SEASON_RGB = ((62, 84, 128), (66, 112, 72), (132, 114, 52),
+                   (134, 84, 48))
+# Clock row shading: the mean light level F of the column's ticks.
+_CAL_NIGHT_RGB = np.array((26, 30, 56), dtype=np.float64)
+_CAL_DAY_RGB = np.array((112, 100, 58), dtype=np.float64)
+_HOURS_PER_YEAR = DAYS_PER_YEAR * HOURS_PER_DAY
+_MONTH_START_H = np.cumsum((0,) + daylight.MONTH_DAYS[:-1]) * HOURS_PER_DAY
+
+
+def _plot_x_hours(cfg: Mapping, x):
+    """Hours after 1 January 00:00 of the start year at inference plot x.
+
+    The series point at step ``s`` is the state after tick ``s`` ran,
+    i.e. at the start of tick ``s + 1`` - the instant the status bar
+    describes when it shows ``tick = s + 1``. Not wrapped at a year, so
+    a run that crosses New Year keeps increasing.
+    """
+    hours = resolve_tick_hours(cfg["tick_hours"])
+    start = int(cfg.get("start_tick", 0))
+    return (start + np.asarray(x, dtype=np.float64) + 1.0) * hours
+
+
+def _date_parts(hours: float) -> tuple:
+    """``(month, day_of_month, hour)`` of an instant in year-hours.
+
+    ``month`` is 0-based, the day of the month 1-based; the year-hours
+    may be unwrapped (past the first New Year).
+    """
+    h = int(np.floor(hours)) % _HOURS_PER_YEAR
+    day0, hour = divmod(h, HOURS_PER_DAY)
+    month = daylight.month_of_day(day0)
+    dom = day0 - int(_MONTH_START_H[month]) // HOURS_PER_DAY + 1
+    return month, dom, hour
+
+
+def _calendar_label(hours: float) -> str:
+    """``"Mar 14 06:00"`` for an instant in (unwrapped) year-hours."""
+    month, dom, hour = _date_parts(hours)
+    return f"{daylight.MONTH_NAMES[month]} {dom} {hour:02d}:00"
+
+
+def _month_blocks(h0: float, h1: float) -> list:
+    """``(start_h, end_h, month)`` of every month overlapping [h0, h1]."""
+    out = []
+    for year in range(int(h0 // _HOURS_PER_YEAR),
+                      int(h1 // _HOURS_PER_YEAR) + 1):
+        base = year * _HOURS_PER_YEAR
+        for m, days in enumerate(daylight.MONTH_DAYS):
+            start = base + int(_MONTH_START_H[m])
+            end = start + days * HOURS_PER_DAY
+            if end > h0 and start < h1:
+                out.append((start, end, m))
+    return out
+
+
+def _clock_step_hours(tick_hours: int, px_per_hour: float) -> Optional[int]:
+    """Clock block length to draw, or None when even a day is too narrow."""
+    for step in _CAL_CLOCK_STEPS_H:
+        if step >= tick_hours and step * px_per_hour >= _CAL_MIN_BLOCK_PX:
+            return step
+    return None
+
+
+def _column_light(cfg: Mapping, h_edges: np.ndarray) -> np.ndarray:
+    """Mean light F between consecutive year-hour edges, exactly.
+
+    F is the per-tick light level (the observation channel); the mean
+    over a column is taken through the cumulative sum of the year's
+    schedule, so a column covering many ticks shows their average
+    rather than an aliased sample of one time of day.
+    """
+    hours = resolve_tick_hours(cfg["tick_hours"])
+    sched = daylight.light_schedule(cfg["latitude_deg"], hours)
+    n = len(sched)
+    cum = np.concatenate(([0.0], np.cumsum(sched, dtype=np.float64)))
+    ticks = np.asarray(h_edges, dtype=np.float64) / hours
+    whole = np.floor(ticks / n)
+    rest = ticks - whole * n
+    c = whole * cum[-1] + np.interp(rest, np.arange(n + 1), cum)
+    span = np.diff(ticks)
+    return np.where(span > 0, np.diff(c) / np.maximum(span, 1e-12), 0.0)
+
 
 def _build_viridis_lut() -> np.ndarray:
     """Tiny analytic approximation of viridis (256x3 uint8).
@@ -697,6 +793,10 @@ class LiveVisualizer:
         # The calendar of the frame on screen: the live one, or the
         # replayed frame's during playback (set in ``_render_full``).
         self._shown_calendar: Optional[dict] = None
+        # The loader's ``params['daylight']`` of the live rollout: the
+        # inference plot's calendar band maps every x in its window to a
+        # month and a clock time with it, not only the current tick.
+        self._daylight_cfg: Optional[dict] = None
         self._fps_clock_t = time.monotonic()
         self._fps_frames = 0
         self._fps_value = 0.0
@@ -962,10 +1062,12 @@ class LiveVisualizer:
         time label describes - i.e. the day of the tick about to run,
         not of the one just completed.
         """
+        self._daylight_cfg = None
         for obj in fgs.values():
             params = getattr(obj, "params", None)
             cfg = params.get("daylight") if isinstance(params, dict) else None
             if cfg:
+                self._daylight_cfg = cfg
                 try:
                     return daylight.calendar_at(cfg, tick)
                 except Exception as e:
@@ -4001,8 +4103,13 @@ class LiveVisualizer:
         # igen via Live-knappen eller genom att dra thumb till högerkant).
         scroll_bar_h = 0 if progress else 12
         # Save-knappen (inference) ritas under scrollbaren; reservera 22 px.
-        save_btn_h = 22 if str(self.mode).lower().startswith("infer") else 0
-        plot_pad_b = 16 + (scroll_bar_h + 4 if scroll_bar_h else 0) \
+        inference = str(self.mode).lower().startswith("infer")
+        save_btn_h = 22 if inference else 0
+        # Calendar band (section 155): inference x is the tick, so with
+        # the daylight calendar every x has a month and a clock time.
+        cal_cfg = self._daylight_cfg if inference and not progress else None
+        band_h = _CAL_BAND_H if cal_cfg else 0
+        plot_pad_b = 16 + band_h + (scroll_bar_h + 4 if scroll_bar_h else 0) \
             + (save_btn_h + 4 if save_btn_h else 0)
         if progress:
             plot_pad_b = 40
@@ -4116,6 +4223,11 @@ class LiveVisualizer:
                 pg.draw.line(self._screen, (90, 90, 110),
                              (px0, yy), (px0 + pw, yy), 1)
 
+            # Before the series, so its month guides lie under them.
+            if cal_cfg:
+                self._draw_calendar_band(cal_cfg, xmin, xmax,
+                                         px0, py0, pw, ph, py0 + ph + 3)
+
             # Plot lines. Klipp till synligt x-fönster med en padding-punkt
             # på varje sida så linjesegment som skär fönstrets kanter
             # fortfarande når hela vägen ut.
@@ -4208,7 +4320,7 @@ class LiveVisualizer:
         self._plot_area_rect = (int(px0), int(py0), int(pw), int(ph))
         self._live_button_rect = None
         if scroll_bar_h > 0 and pw > 4:
-            sb_y = py0 + ph + 4
+            sb_y = py0 + ph + 4 + band_h
             sb_h = scroll_bar_h
             # Reservera plats till höger för "Live"-knappen så den ligger
             # bredvid scrollbaren (bara när scroll faktiskt är aktiv och
@@ -4271,7 +4383,8 @@ class LiveVisualizer:
         # Tk-fildialog med default-filnamn ``inferenceplot.html``.
         self._save_plot_button_rect = None
         if save_btn_h > 0 and pw > 4:
-            btn_y = py0 + ph + 4 + (scroll_bar_h + 4 if scroll_bar_h else 0)
+            btn_y = py0 + ph + 4 + band_h \
+                + (scroll_bar_h + 4 if scroll_bar_h else 0)
             btn_w = min(180, pw)
             btn_x = px0
             btn_rect = (btn_x, btn_y, btn_w, save_btn_h)
@@ -4347,6 +4460,98 @@ class LiveVisualizer:
                     px0=px, py0=py, pw=pwv, ph=phv,
                     plot_rect=(x, y, w, h),
                 )
+
+    def _draw_calendar_band(self, cfg: Mapping, xmin: float, xmax: float,
+                            px0: int, py0: int, pw: int, ph: int,
+                            band_y: int) -> None:
+        """Month and clock rows under the inference plot (section 155).
+
+        Profiler-style blocks: each month spans its ticks, and the clock
+        row under it is cut at the finest clock step that leaves room
+        for a label (``06:00``; the day of the month once only whole
+        days fit; no labels when even a day is too narrow). The clock
+        row is shaded by the light level of its ticks, night to day. A
+        label is centred in the block's visible part, or left out when
+        it does not fit. Month starts are faint guides through the
+        plot, New Year a brighter one.
+        """
+        pg = self._pg
+        screen = self._screen
+        if xmax <= xmin or pw <= 4:
+            return
+        tick_h = resolve_tick_hours(cfg["tick_hours"])
+        h0 = float(_plot_x_hours(cfg, xmin))
+        h1 = float(_plot_x_hours(cfg, xmax))
+        px_per_h = pw / (h1 - h0)
+        month_y = band_y
+        clock_y = band_y + _CAL_ROW_H + 1
+
+        def span(start, end):
+            a = max(px0, int(round(px0 + (start - h0) * px_per_h)))
+            b = min(px0 + pw, int(round(px0 + (end - h0) * px_per_h)))
+            return a, b
+
+        # Clock row shading, one pixel column at a time.
+        edges = h0 + np.arange(pw + 1, dtype=np.float64) * (h1 - h0) / pw
+        light = np.clip(_column_light(cfg, edges), 0.0, 1.0)
+        rgb = _CAL_NIGHT_RGB + light[:, None] * (_CAL_DAY_RGB - _CAL_NIGHT_RGB)
+        cols = np.repeat(rgb[:, None, :], _CAL_ROW_H, axis=1)
+        screen.blit(pg.surfarray.make_surface(cols.astype(np.uint8)),
+                    (px0, clock_y))
+
+        for start, end, m in _month_blocks(h0, h1):
+            a, b = span(start, end)
+            if b <= a:
+                continue
+            base = _CAL_SEASON_RGB[((m + 1) % 12) // 3]
+            shade = 1.0 if m % 2 == 0 else 0.8
+            pg.draw.rect(screen, tuple(int(c * shade) for c in base),
+                         (a, month_y, b - a, _CAL_ROW_H))
+            if start > h0:
+                guide = (95, 95, 115) if m == 0 else (52, 52, 64)
+                pg.draw.line(screen, guide, (a, py0), (a, py0 + ph), 1)
+                pg.draw.line(screen, (18, 18, 22),
+                             (a, month_y), (a, clock_y + _CAL_ROW_H - 1), 1)
+            name = _CAL_MONTH_NAMES[m]
+            self._blit_block_label((name, name[:3], name[0]), a, b, month_y)
+
+        step = _clock_step_hours(tick_h, px_per_h)
+        labelled = step is not None
+        if step is None and HOURS_PER_DAY * px_per_h >= _CAL_MIN_DAY_PX:
+            step = HOURS_PER_DAY
+        if step is not None:
+            for k in range(int(np.floor(h0 / step)), int(np.ceil(h1 / step))):
+                start = k * step
+                a, b = span(start, start + step)
+                if b <= a:
+                    continue
+                if start > h0:
+                    pg.draw.line(screen, (18, 18, 22), (a, clock_y),
+                                 (a, clock_y + _CAL_ROW_H - 1), 1)
+                if not labelled:
+                    continue
+                _month, dom, hour = _date_parts(start)
+                if step < HOURS_PER_DAY:
+                    labels = (f"{hour:02d}:00", f"{hour:02d}")
+                else:
+                    labels = (str(dom),)
+                self._blit_block_label(labels, a, b, clock_y)
+        pg.draw.rect(screen, (60, 60, 70),
+                     (px0, band_y - 1, pw + 1, 2 * _CAL_ROW_H + 3), 1)
+
+    def _blit_block_label(self, labels: Sequence[str], a: int, b: int,
+                          row_y: int) -> None:
+        """The first of ``labels`` that fits in [a, b), centred, shadowed."""
+        for text in labels:
+            surf = self._font.render(text, True, (235, 235, 240))
+            if surf.get_width() + 4 > b - a:
+                continue
+            tx = a + (b - a - surf.get_width()) // 2
+            ty = row_y + (_CAL_ROW_H - surf.get_height()) // 2
+            shadow = self._font.render(text, True, (10, 10, 14))
+            self._screen.blit(shadow, (tx + 1, ty + 1))
+            self._screen.blit(surf, (tx, ty))
+            return
 
     def _draw_plot_tooltip(self, mx: int, my: int, *,
                            active_ids: list,
@@ -4437,8 +4642,15 @@ class LiveVisualizer:
                     pass
 
         # Bygg tooltip-text: rad 1 = tick, sedan en rad per serie.
-        unit = "update" if self._tabs[self._active_tab] == "progress" else "tick"
-        lines: list = [(f"{unit} {int(round(tick_at_mouse))}", (220, 220, 230))]
+        progress = self._tabs[self._active_tab] == "progress"
+        unit = "update" if progress else "tick"
+        head = f"{unit} {int(round(tick_at_mouse))}"
+        # Same instant as the calendar band under the plot (section 155).
+        if (self._daylight_cfg and not progress
+                and str(self.mode).lower().startswith("infer")):
+            head += "  " + _calendar_label(float(_plot_x_hours(
+                self._daylight_cfg, round(tick_at_mouse))))
+        lines: list = [(head, (220, 220, 230))]
         # Sortera efter y-värde (fallande) för läsbarhet.
         entries_sorted = sorted(entries, key=lambda e: -e[2])
         for fid, col, v in entries_sorted:
