@@ -14059,9 +14059,9 @@ remain open exactly as described in 71.9 / 71.11.
         pair                    library   realised
         gadoids -> gadoids      0.217     ~0.001  (growth paid for a
                                                    loss never taken)
-        gadoids -> benthos      0.0048    0.33 -> 0.17 (40-70x; 65 %
-                                                   of the diet, library
-                                                   implies ~1 %)
+        gadoids -> benthos      0.0048    0.33 -> 0.17 (see 156.10;
+                                                   the rate ratio is
+                                                   not a diet error)
         gadoids -> herring      0.30      0.19 -> 0.14 (herring under-
                                                    cropped, they grow
                                                    until food brakes)
@@ -14157,8 +14157,34 @@ remain open exactly as described in 71.9 / 71.11.
     and train_gpu.py 1-gen cuda-graph smoke OK.
 156.9 Open: (1) sub-animal porpoise fragments (fractions above 50 kg
     split off 5-50 kg pieces that then die through the sweep); (2)
-    growth budget paid at s = 1 only; (3) gadoid cannibalism and
-    benthos M2 far from the budget; (4) no nutrient limitation on
+    growth budget paid at s = 1 only; (3) gadoid cannibalism absent,
+    benthos share ~2x Ecopath (156.10); (4) no nutrient limitation on
     phytoplankton. Tools (scratchpad, as in 154.10): multiyear.py
     (rollout recorder), analyse.py (tables above), leak_diag.py (sweep
     split by cause), ens.py (seed ensemble before/after).
+156.10 Correction to 156.4 (gadoids -> benthos). The rate comparison
+    (budget M2 0.0048 vs realised 0.17-0.33 /yr, first written as
+    "40-70x, library implies ~1 % of the diet") is misleading: the
+    Ecopath M2 is a rate on Ecopath's benthos biomass, while the model's
+    benthos has K = 10 t/km2 (literature proposal ~100, section 136).
+    The same absolute flux on a tenth of the biomass is a ten times
+    higher rate, so the ratio says little about the diet. The right
+    reference is Ecopath 1991's diet composition (141.1, 148.1):
+                         benthos  herring  zoo     gadoids
+      Ecopath, renorm.   ~28 %    ~40 %    ~25 %   ~6 %
+      model, years 2-10  65 %     26-28 %  7-10 %  0 %
+    Benthos / (pelagic fish + benthos) is 0.37-0.47 in Ecopath and
+    ~0.70 in the model; per tonne of gadoid the model eats roughly 3-4x
+    Ecopath's benthos (Q/B 5.7 vs 4.3-4.5, and the higher share; rough).
+    For: "gadoids" is an umbrella (haddock mainly benthivorous, cod eats
+    crabs, Nephrops, shrimp, polychaetes; whiting and saithe are fish /
+    krill eaters); ~45 % of the Ecopath gadoid diet is prey the model
+    lacks (Norway pout, krill beyond zooplankton, other fish), which
+    the model's gadoids must replace, and benthos is everywhere, never
+    hides and never moves; the winter switch (88 % Dec-Feb, 22 %
+    Jun-Aug) follows herring's night rest and the dark_ratio 0.6 on
+    gadoids -> herring. Against: the share is ~1.5-2.5x Ecopath, and
+    with the energy-limited ceilings of 148 every pair fills the
+    stomach at the densities present, so benthos wins on availability
+    rather than value (148.2). Verdict: direction and seasonal switch
+    plausible, share elevated, not one of the gross deviations.
