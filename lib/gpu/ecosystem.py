@@ -124,6 +124,10 @@ class TensorEcosystem:
         self.cost_move = tensor(env.dm_cost_move)[None, :, None]
         self.can_move = tensor(env.dm_v > 0, torch.bool)[None, :, None, None]
         self.min_split = tensor(env.dm_min_split)[None, :, None]
+        # Section 159 mirror of ``decisions.merge_subunit_fractions``.
+        self.unit_splits = (bool(getattr(env, "unit_splits", True))
+                            and bool((env.dm_min_split > 0).any()))
+        self.fraction_indices = torch.arange(5, device=self.device)[None, None, :, None]
         self.action_indices = torch.arange(self.A, device=self.device)[None, None, :, None]
 
         groups = [env.fgs[fid] for fid in self.ids]
@@ -313,7 +317,28 @@ class TensorEcosystem:
         # one_hot performs value checks on some Torch backends/releases. A
         # fixed arange comparison has no scalar extraction or dynamic output.
         one_hot = (self.action_indices == probs.argmax(dim=2)[:, :, None]).to(probs.dtype)
-        return torch.where(small[:, :, None], one_hot, probs)
+        probs = torch.where(small[:, :, None], one_hot, probs)
+        if self.unit_splits:
+            probs = self.merge_subunit_fractions(probs, b_dm)
+        return probs
+
+    def merge_subunit_fractions(self, probs, b_dm):
+        # A cell holding >= one unit never hands off less than one unit:
+        # sub-unit spatial fractions (stay = rest + eat, and the four
+        # moves) go to the fractions holding one, proportionally; with
+        # none such the largest takes the cell (first index on ties).
+        stay = probs[:, :, 4:].sum(2, keepdim=True)
+        fractions = torch.cat((probs[:, :, :4], stay), dim=2)
+        unit = self.min_split[:, :, None]
+        keep = fractions * b_dm[:, :, None] >= unit
+        top = self.fraction_indices == fractions.argmax(dim=2)[:, :, None]
+        keep = torch.where(keep.any(dim=2, keepdim=True), keep, top)
+        kept = fractions * keep.to(probs.dtype)
+        kept = kept / kept.sum(2, keepdim=True).clamp_min(1e-30)
+        scale = kept[:, :, 4:] / stay.clamp_min(1e-30)
+        merged = torch.cat((kept[:, :, :4], probs[:, :, 4:] * scale), dim=2)
+        active = (self.min_split > 0) & (b_dm >= self.min_split)
+        return torch.where(active[:, :, None], merged, probs)
 
     def action_statistics(self, biomass, actions):
         active = (biomass[:, self.dm_index] > 0).to(actions.dtype)

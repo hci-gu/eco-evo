@@ -14440,3 +14440,102 @@ remain open exactly as described in 71.9 / 71.11.
     footer band, no overlapping main-axes texts) gives 0 problems on
     both decks. Nothing in the engine, library or tests was touched;
     pytest 1047 passed / 12 skipped, train.py 1-gen smoke OK.
+
+159 Splits hand off whole units only (2026-10-14)
+159.1 Reading of min_split_biomass (user): one unit = one individual
+    (porpoises 50 kg), and the sweep at extinction_threshold_factor x
+    unit (5 kg) is where that individual dies. Correction to 156.7 (last
+    sentence) and 156.9(1): sub-animal pieces do not "die through the
+    sweep". The sweep only zeroes cells below 5 kg, and the section-69
+    split suppression and the 156 residue rule never create such a cell
+    by moving; a 5-50 kg piece reaches the sweep only by shrinking (M1,
+    catabolism, predation), which books everything above the last <5 kg
+    on those channels. The real gap was elsewhere: below one unit the
+    action distribution collapses to argmax (the cell moves whole), but
+    from one unit the softmax split was continuous, so a 70 kg cell
+    sending 30 % E and 20 % N made 21 kg and 14 kg "individuals".
+159.2 Measurement, tools/probes/porp_fragments.py (rollout recorder with
+    a per-cell split-origin lineage, mass-weighted; --rule-a / --rule-d
+    probe variants; --fractional-splits reproduces the pre-159 baseline
+    below). Frozen fix53 checkpoint of 2026-10-12 15:37 (md5
+    porpoises d45593b2, herring 5cf33a1e, gadoids fc3175ca, zoo
+    4d9a4f24; trained after the 14:12 restart, i.e. on the 156 rules and
+    gadoid M1 0.415), probe world, 10 years. Pre-159 engine, per year:
+        5-50 kg pieces landing alone     35 000, 6.0 t
+        pieces joining a >= 50 kg cell   13 000, 2.8 t
+        >= 50 kg sources left < 50 kg     7.4 t
+        cells shrinking through 50 kg    3, 0.17 t
+        sweep                            10 cells, 0.05 t (0.007 t of it
+                                          split-origin)
+    88 % of occupied cells and 73 % of the porpoise mass held less than
+    one animal (156.5: 75-87 %), 95 % of that mass put there by splits.
+    No mass leak: every loss rate is per kg and porpoise interference is
+    0, so a 14 kg piece loses the same share per tick as the 70 kg cell
+    it came from. The cost was semantic. (The 0.31 t/yr sweep of 156.7
+    was the 22:27 checkpoint, which no longer exists.)
+159.3 Rule A (probe only, rejected): cancel an in-grid outflow below one
+    unit unless the destination's pre-move stay holds one. Frozen
+    porpoises fell to 1.5 t (occupied cells 279 -> 67, 28 t/yr of
+    outflow cancelled): the frozen policies spread moves over four
+    directions, so A pins every 50-100 kg cell, and each cancelled move
+    still paid movement_cost. A deterministic cancel fights a policy that
+    outputs a distribution.
+159.4 Rule D (user's proposal, implemented): a cell holding >= one unit
+    splits over five spatial fractions, stay (rest + every eat action)
+    and N/E/S/W. A fraction with B * p < unit is handed to the fractions
+    holding >= one unit, proportionally; the eat/rest mix inside stay is
+    kept. With no fraction at one unit the whole cell goes to the largest
+    (first index on ties) - the sub-unit argmax collapse applied to the
+    spatial split. Applied in the decision step, after the collapse and
+    before the action diagnostics, so predation (hidden share) and the
+    movement costs see the realised split and no cost is paid for a move
+    that did not happen. Every DM with min_split_biomass > 0 (porpoises
+    50 kg, herring and gadoids 0.5 kg; muted seals 80, seabirds 1).
+    Code: decisions.merge_subunit_fractions (NumPy),
+    TensorEcosystem.merge_subunit_fractions (graph-safe torch.where),
+    EcosystemEnvironment(unit_splits=True); unit_splits=False is the
+    pre-159 continuous split (env kwarg only, no CLI flag). The env's
+    policy path is the only CPU entry point: env.step(actions) with a
+    supplied distribution (tests, viability rig hand-coded arms) bypasses
+    both the argmax collapse and D, as before. No observation change:
+    checkpoints load, but behaviour changes and inference of a pre-159
+    checkpoint now runs with D.
+159.5 Effect, same frozen checkpoint, probe world, 10 years:
+                                   pre-159     D (engine)
+        pieces < 50 kg from splits 8.8 t/yr    0
+        sub-animal cells / mass    88 / 73 %   31 / 14 %
+        split-origin of that mass  95 %        0 %
+        cells shrinking past 50 kg 3/yr        7/yr, 0.35 t
+        sweep                      0.05 t/yr   0.05 t/yr
+        occupied cells (mean)      279         131
+        porpoises y1 / y4 / y10    11.0/9.7/7.6  10.2/7.9/6.2 t
+        herring / gadoids y10      3100 / 4100   2840 / 4520 t
+    Sub-animal cells now arise only by shrinking or edge immigration, so
+    the 5 kg line means what 159.1 says. The faster frozen porpoise
+    decline (-6.4 vs -4.4 %/yr) is most likely clumping (half the cells,
+    59 vs 34 kg per cell, local prey depletion) of policies trained to
+    diffuse; D reassigned ~57 t/yr (probe variant), about seven stock
+    turnovers. Not decomposed by loss channel. The probe variant
+    (float64, 1 - sum(move) as stay) ended at the same state (6.2 t,
+    33 % sub-animal cells, 140 cells) but drifted 4 % in year 1; the
+    porpoise trajectory is sensitive to small perturbations (156.1).
+159.6 Side note: herring 12200 -> 3100 t over ten years on this
+    checkpoint (157.3, older checkpoint: 6232 t at year 10), gadoids
+    2500 -> 4100 t. Not separable here from the checkpoint having
+    trained only 85 min after the 14:12 restart.
+159.7 Tests: tests/test_unit_splits.py (proportional hand-off, eat/rest
+    mix kept, whole-cell collapse to the largest fraction incl. a move,
+    sub-unit cells / unit_splits=False / unit 0 untouched, 4000 random
+    distributions keep every non-zero fraction at >= one unit and never
+    drop one that held a unit, torch vs NumPy, CPU vs tensor engine
+    parity over 8 ticks with and without migration with cells on both
+    sides of the unit - D changes ~19 probability units per tick there -
+    and the opt-out parity). Full suite 1061 passed / 12 skipped (CUDA,
+    both devices, cuda-graph capture incl.); train.py 1-gen CPU smoke and
+    train_gpu.py 1-gen cuda-graph smoke OK.
+159.8 Next: retrain fix53 with D (needed anyway for gadoid M1 0.415)
+    and redo the ten-year reading; a running train_gpu keeps the engine
+    it loaded at start. Follow-ups: the October decks (158) still say
+    only "below min_split the distribution collapses to argmax" and need
+    the D rule on the mechanics slides; gpu_run.json / training_progress
+    do not record unit_splits (fine while it has no CLI flag).

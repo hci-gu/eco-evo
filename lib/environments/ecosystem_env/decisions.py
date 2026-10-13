@@ -112,6 +112,42 @@ def collapse_subthreshold_actions(probs, subthreshold_mask):
     return np.where(subthreshold_mask[:, None, :, :], one_hot, probs)
 
 
+def merge_subunit_fractions(env, probs):
+    """Keep every spatial fraction of a split at one unit or more (section 159).
+
+    ``min_split_biomass`` is one indivisible unit (porpoises: one animal).
+    A cell holding at least one unit splits over five spatial fractions:
+    stay (rest and every eat action) and the four moves. A fraction whose
+    mass ``B * p`` is below one unit is handed to the fractions that hold
+    at least one, in proportion to their size; the eat/rest mix inside
+    stay is kept. With no fraction at one unit the whole cell goes to the
+    largest one (first index on ties), which is the sub-unit argmax
+    collapse above applied to the spatial split. Cells below one unit
+    and DMs with ``min_split_biomass`` 0 are left untouched.
+    """
+    if not getattr(env, "unit_splits", True) or not np.any(env.dm_min_split > 0):
+        return probs
+    unit = env.dm_min_split.astype(env.dtype)[:, None, None]
+    biomass = np.stack([env.fgs[fid].biomass for fid in env.dm_ids], axis=0)
+    active = (unit > 0) & (biomass >= unit)
+    if not np.any(active):
+        return probs
+
+    stay = probs[:, REST_INDEX:].sum(axis=1, keepdims=True)
+    fractions = np.concatenate([probs[:, MOVE_SLICE], stay], axis=1)
+    keep = fractions * biomass[:, None] >= unit[:, None]
+    top = np.arange(fractions.shape[1])[None, :, None, None] == (
+        np.argmax(fractions, axis=1)[:, None])
+    keep = np.where(np.any(keep, axis=1, keepdims=True), keep, top)
+    kept = np.where(keep, fractions, np.float32(0.0))
+    kept = kept / np.maximum(kept.sum(axis=1, keepdims=True), np.float32(1e-30))
+    scale = kept[:, 4:] / np.maximum(stay, np.float32(1e-30))
+    merged = np.concatenate(
+        [kept[:, :4], probs[:, REST_INDEX:] * scale], axis=1).astype(
+            probs.dtype, copy=False)
+    return np.where(active[:, None], merged, probs)
+
+
 def update_action_diagnostics(env, probs):
     if env.N_dm == 0:
         # NDM-only project: no actions are taken, so there is nothing to
@@ -191,6 +227,7 @@ def build_observation(env):
 
 def actions_from_probabilities(env, probs, subthreshold):
     probs = collapse_subthreshold_actions(probs, subthreshold)
+    probs = merge_subunit_fractions(env, probs)
     update_action_diagnostics(env, probs)
     return ActionProbabilities(
         move=probs[:, MOVE_SLICE],

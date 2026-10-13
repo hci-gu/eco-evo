@@ -57,6 +57,7 @@ class EcosystemEnvironment:
         currents=None,
         current_world_seed=0,
         local_reward=None,
+        unit_splits=True,
     ):
         if policies is None and _looks_like_policies(interactions):
             policies, interactions = interactions, None
@@ -75,6 +76,11 @@ class EcosystemEnvironment:
         # (sections 114-116). Default True since section 120 - the
         # library is calibrated for it - and False is the pre-116 tick.
         self.mass_balance = bool(mass_balance)
+        # No split hands off less than one ``min_split_biomass`` unit: a
+        # sub-unit spatial fraction goes to the fractions holding one
+        # (``decisions.merge_subunit_fractions``, section 159). False is
+        # the pre-159 continuous split.
+        self.unit_splits = bool(unit_splits)
         self.migration = bool(migration)
         self.currents = currents
         self.current_world_seed = int(current_world_seed or 0)

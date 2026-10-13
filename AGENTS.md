@@ -89,6 +89,11 @@ fabricates mass.
   (`interference: 0` = pure Holling; `gadoids: 1.0`, `pelagic_fish: 0.7` in the
   library, section 86). It is what removes the 2-cell vertical bands.
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.
+  `min_split_biomass` is one indivisible unit (porpoises: one animal):
+  below it a cell moves whole (argmax), and from it no spatial fraction
+  of a split holds less than one unit - sub-unit fractions go to the
+  others proportionally (`decisions.merge_subunit_fractions`, on by
+  default, `unit_splits=False` on the env reverts; section 159).
   With `simulation_settings.temperature` (section 143) the cost of a DM
   with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
   T from its layer's monthly table on the daylight calendar; herring
