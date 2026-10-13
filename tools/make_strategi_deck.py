@@ -1,5 +1,5 @@
-"""Generate ``Strategi_sep.pdf`` - the September 2026 edition of the
-strategy deck, rewritten against the mechanics the code actually runs.
+"""Generate ``Strategi_okt.pdf`` - the October 2026 edition of the
+strategy deck, written against the mechanics the code actually runs.
 
 The original ``Strategi.pdf`` (May 2026) is a 37-slide 16:9 PowerPoint
 export. This generator reproduces that format (960 x 540 pt pages) with
@@ -9,15 +9,21 @@ Everything stated on a slide is read from, or checked against:
   lib/environments/ecosystem_env/*.py   the tick
   lib/runners/trainer.py, parallel_worker.py, policy.py   ARS
   lib/world/tick_time.py, functional_group.py, energy_balance.py
+  lib/world/growth_budget.py, daylight.py, temperature.py
+  lib/gpu/   the tensor engine and trainer behind train_gpu.py
   fgconfig/fg_library.yaml, mareld2.yaml   the calibration
-  VIABILITY.md, mareld_resume.txt sections 69-121
+  VIABILITY.md, mareld_resume.txt sections 69-157
+
+The two library tables, the pair table and the Observability matrix are
+read from fgconfig/fg_library.yaml and mareld2.yaml at build time, so
+they cannot drift from the calibration.
 
 Slide text is Swedish (the original deck's language); parameter names
 are kept in their English library spelling so a slide can be traced to
 the YAML key it describes.
 
 Usage:
-    python3 tools/make_strategi_deck.py [-o Strategi_sep.pdf] [--png DIR]
+    python3 tools/make_strategi_deck.py [-o Strategi_okt.pdf] [--png DIR]
 """
 import argparse
 import os
@@ -56,6 +62,9 @@ plt.rcParams.update({
     "font.sans-serif": SANS,
     "pdf.fonttype": 42,
     "text.usetex": False,
+    # Formulas are matplotlib mathtext ($...$) in Computer Modern, so they
+    # read like LaTeX without a TeX install; å/ä/ö fall back to DejaVu.
+    "mathtext.fontset": "cm",
 })
 
 TITLE_SIZE = 27
@@ -72,6 +81,11 @@ BODY_BOTTOM = 52.0
 
 class Deck:
     """A 16:9 slide deck written straight to a PdfPages file."""
+
+    #: Footer and section-number label; the English build
+    #: (tools/make_strategy_deck_en.py) overrides both.
+    FOOTER = "Strategi - Mareld / Poseidon Nord - oktober 2026"
+    PART = "Del"
 
     def __init__(self, pdf, png_dir=None):
         self.pdf = pdf
@@ -115,7 +129,7 @@ class Deck:
             ax.text(PAGE_W - RIGHT, rule_y + 10, note, color=ACCENT_2,
                     size=11.5, weight="bold", va="center", ha="right")
         # footer
-        ax.text(LEFT, 26, "Strategi - Mareld / Poseidon Nord - september 2026",
+        ax.text(LEFT, 26, self.FOOTER,
                 color=MUTED, size=9.5, va="center", ha="left")
         ax.text(PAGE_W - RIGHT, 26, str(self.n), color=MUTED, size=9.5,
                 va="center", ha="right")
@@ -145,14 +159,14 @@ class Deck:
         ax.add_patch(Rectangle((0, 0), PAGE_W, PAGE_H, color=BAND, zorder=-5))
         ax.add_patch(Rectangle((0, 0), 14, PAGE_H, color=ACCENT, zorder=-4))
         if number:
-            ax.text(LEFT, 320, f"Del {number}", color=ACCENT, size=16,
+            ax.text(LEFT, 320, f"{self.PART} {number}", color=ACCENT, size=16,
                     weight="bold", va="center", ha="left")
-        for i, line in enumerate(wrap(title, 40, PAGE_W - LEFT - RIGHT - 60,
-                                      weight="bold")):
+        lines = wrap(title, 40, PAGE_W - LEFT - RIGHT - 60, weight="bold")
+        for i, line in enumerate(lines):
             ax.text(LEFT, 272 - i * 48, line, color=NAVY, size=40,
                     weight="bold", va="center", ha="left")
         if blurb:
-            yb = 210
+            yb = 210 - (len(lines) - 1) * 48
             for line in wrap(blurb, 15, PAGE_W - LEFT - RIGHT - 160):
                 ax.text(LEFT, yb, line, color=INK, size=15, va="center",
                         ha="left")
@@ -205,7 +219,8 @@ class Deck:
             y = draw_bullets(ax, lead, LEFT, y, PAGE_W - LEFT - RIGHT,
                              size=BODY_SIZE_2) - 10
         for caption, code in blocks:
-            y = draw_code(ax, caption, code, LEFT, y, PAGE_W - LEFT - RIGHT)
+            draw = draw_math if isinstance(code, list) else draw_code
+            y = draw(ax, caption, code, LEFT, y, PAGE_W - LEFT - RIGHT)
             y -= 14
         if tail:
             draw_bullets(ax, tail, LEFT, y - 2, PAGE_W - LEFT - RIGHT,
@@ -238,9 +253,34 @@ def _glyph_width(ch, weight, mono):
     return hit
 
 
+_MATH_CACHE = {}
+
+
+def math_extent(tex, size):
+    """(width, height, descent) in points of mathtext ``tex`` (no $)."""
+    key = (tex, size)
+    hit = _MATH_CACHE.get(key)
+    if hit is None:
+        ext = TextPath((0, 0), "$" + tex + "$", size=size,
+                       prop=FontProperties(family=SANS[0])).get_extents()
+        hit = (ext.x1, ext.height, -min(0.0, ext.y0))
+        _MATH_CACHE[key] = hit
+    return hit
+
+
 def text_width(text, size, weight="normal", mono=False):
-    """Rendered width of ``text`` in points (per-glyph sum, no kerning)."""
-    return size * sum(_glyph_width(ch, weight, mono) for ch in str(text))
+    """Rendered width of ``text`` in points (per-glyph sum, no kerning).
+    ``$...$`` segments are measured as mathtext."""
+    parts = str(text).split("$")
+    if len(parts) % 2 == 0:            # unpaired $: plain text
+        parts = [str(text)]
+    total = 0.0
+    for i, part in enumerate(parts):
+        if i % 2:
+            total += math_extent(part, size)[0] if part else 0.0
+        else:
+            total += size * sum(_glyph_width(ch, weight, mono) for ch in part)
+    return total
 
 
 def char_width(size, weight="normal", mono=False):
@@ -336,6 +376,60 @@ def draw_code(ax, caption, code, x, y, width, size=13.5):
     return top - h - 6
 
 
+def draw_math(ax, caption, lines, x, y, width, size=14.0):
+    """A light box of display formulas, LaTeX align style.
+
+    ``lines`` entries: a mathtext string without $ (``&`` marks the
+    alignment point, as in align), ``""`` for a half-line gap, or
+    ``("t", text)`` for a plain line that may carry inline ``$...$``.
+    Returns the y below the box, like ``draw_code``."""
+    pad, head = 12, (20 if caption else 0)
+    gap = size * 0.55
+    rows, col = [], 0.0
+    for line in lines:
+        if line == "":
+            rows.append(("gap", None, gap))
+        elif isinstance(line, tuple):
+            rows.append(("text", line[1], size * 1.45))
+        else:
+            lhs, _, rhs = line.partition("&")
+            if not _:
+                lhs, rhs = "", line
+            h = max(math_extent(part, size)[1] for part in (lhs, rhs) if part)
+            if lhs:
+                col = max(col, math_extent(lhs, size)[0])
+            rows.append(("math", (lhs, rhs), max(size * 1.5, h + size * 0.5)))
+    h = pad * 2 + head + sum(r[2] for r in rows)
+    top = y + size * 0.8
+    ax.add_patch(FancyBboxPatch(
+        (x, top - h), width, h, boxstyle="round,pad=0,rounding_size=6",
+        facecolor=BAND, edgecolor="#D3DEE8", lw=1.0, zorder=0))
+    ax.add_patch(Rectangle((x, top - h), 4, h, color=ACCENT, zorder=1))
+    yy = top - pad
+    if caption:
+        ax.text(x + 18, yy - size * 0.5, caption, color=NAVY, size=12.5,
+                weight="bold", va="center", ha="left")
+        yy -= head
+    x_eq = x + 26 + col
+    for kind, body, rh in rows:
+        mid = yy - rh / 2
+        if kind == "text":
+            ax.text(x + 26, mid, body, color=INK, size=size - 2.5,
+                    va="center", ha="left")
+        elif kind == "math":
+            lhs, rhs = body
+            if lhs:
+                ax.text(x_eq, mid, "$" + lhs + "$", color=INK, size=size,
+                        va="center", ha="right")
+                ax.text(x_eq, mid, "$" + rhs + "$", color=INK, size=size,
+                        va="center", ha="left")
+            else:
+                ax.text(x + 26, mid, "$" + rhs + "$", color=INK, size=size,
+                        va="center", ha="left")
+        yy -= rh
+    return top - h - 6
+
+
 def _cell_anchor(cx, width, how):
     if how == "right":
         return cx + width - 8, "right"
@@ -393,6 +487,94 @@ def draw_table(ax, headers, rows, widths, x, y, size=12.5, align=None):
 
 
 # ----------------------------------------------------------------------
+# Diagram labels
+# ----------------------------------------------------------------------
+#: Every piece of text the diagram functions draw. The English build
+#: replaces the entries with ``LABELS.update(...)`` before it draws.
+LABELS = {
+    "pipeline": [
+        ("1  Beslut", "observation → policy → maskad softmax"),
+        ("2  Påverkansmortalitet", "impact_table → biomassa"),
+        ("3  Predation", "Holling II/III + interferens"),
+        ("4  Energikostnader", "vila / äta / röra sig, × Q10(T)"),
+        ("5  Rörelse", "N/E/S/W × hastighet, energi följer med"),
+        ("6  Strömmar", "valfritt: current_response"),
+        ("7  Tillväxt / svält", "massbalanserad, + mortalitet, ljus för NDM"),
+        ("8  Masker", "accessibility, utdöendetröskel"),
+    ],
+    "web_nodes": {
+        "phytoplankton": "Växtplankton", "benthic_community": "Bottensamhälle",
+        "zooplankton": "Djurplankton", "pelagic_fish": "Pelagisk fisk",
+        "gadoids": "Torskfiskar", "porpoises": "Tumlare", "seals": "Sälar",
+        "seabirds": "Sjöfåglar",
+    },
+    "web_legend": "grönt = icke beslutande (logistisk tillväxt)\n"
+                  "blått = beslutande (policynätverk och energibudget)\n"
+                  "streckat = muted i mareld2.yaml",
+    "web_self": "kannibalism",
+    "fr_herr": "pelagisk fisk  typ III, h = {h}",
+    "fr_herr_w": "pelagisk fisk  w = 1, B_pred = 0,5",
+    "fr_benth": "bottensamhälle  typ II, h = {h}",
+    "fr_typeII_plain": "typ II",
+    "fr_typeIII": "typ III (specialist)",
+    "fr_ceiling": "tak 1/h",
+    "fr_ceiling_e": "energitak 4 500/130",
+    "fr_title_gad": "Torskfiskar: a = {a}, h ∝ bytets energi",
+    "fr_title_zoo": "Djurplankton → växtplankton: a = {a}  h = {h}",
+    "fr_xlabel": "synlig bytesbiomassa i cellen  [ton]",
+    "fr_ylabel": "intag  [ton byte / ton predator / tick]",
+    "fr_ylabel_e": "energiintag  [MJ / ton torskfisk / tick]",
+    "hg_u5": "u = 0,5  (djurplankton, torskfisk, tumlare)",
+    "hg_u2": "u = 0,2  (pelagisk fisk)",
+    "hg_xlabel1": "mättnadsgrad  s_X = E_X / ME_X",
+    "hg_ylabel1": "hungerfaktor  h_X",
+    "hg_zoo": "djurplankton  g = {g} / SR = {sr}",
+    "hg_pel": "pelagisk fisk  g = {g} / SR = {sr}  (×10)",
+    "hg_xlabel2": "mättnadsgrad  s_X  (q_X = s_X − u_X)",
+    "hg_ylabel2": "relativ biomassaändring / tick",
+    "ic_title1": "windfarm_noise → tumlare: energy_factor",
+    "ic_xlabel1": "kartvärde  (dB)",
+    "ic_ylabel1": "extra metabolisk kostnad",
+    "ic_title2": "rotor → sjöfåglar: biomass_factor",
+    "ic_xlabel2": "kartvärde  (rotortäthet 0-1)",
+    "ic_ylabel2": "biomassaförlust / tick",
+    "obs_centre": "egen cell",
+    "obs_shape": "plusform: egen cell + fyra grannar",
+    "obs_caption": "Kanaler per cell (kompakt layout)",
+    "obs_code": """
+egen cell  [ B_egen, s_egen, B_obs_1..k, imp_1..m ]
+granne d   [ B_egen, B_obs_1..k, imp_1..m ]
+sist       [ ljus F(t) ]       (med dagsljuskalendern)
+
+in_dim_X = (2 + k_X + m) + 4 · (1 + k_X + m) + 1
+""",
+    "obs_bullets": [
+        ("-", "k_X = antal ANDRA aktiva FG som X observerar enligt "
+              "Observability-matrisen"),
+        ("-", "m = antal aktiva impaktkartor märkta observable"),
+        ("-", "B_obs är SYNLIG biomassa: den gömda (vilande) andelen "
+              "dras bort"),
+        ("-", "Mareld i dag: k = 1-4, m = 0 (windfarm_noise är muted) "
+              "och en ljuskanal, dvs 12-27 kanaler"),
+    ],
+    "net_in": "observation\n(in_dim)",
+    "net_h1": "dolt lager 1\n30 noder, sigmoid",
+    "net_h2": "dolt lager 2\n30 noder, sigmoid",
+    "net_out": "logits → mask → softmax",
+    "net_actions": ["Flytta N", "Flytta E/S/W", "Vila (= gömma sig)",
+                    "Äta Y_1 ... Y_n", ""],
+    "ef_stages": ["Intag  intag_XY", "Assimilerat  · assimilation",
+                  "Reserv R_X  (+ intag − kostnad)", "Ny biomassa  dB ton"],
+    "ef_spill": "spill",
+    "ef_costs": "vila / rörelse / födosök\n+ påverkan",
+    "ef_price": "priset dB · energy_content debiteras reserven",
+    "spawn_panels": ["uniform", "perlin  (växtplankton)",
+                     "colony  (pelagisk fisk)",
+                     "env_driven  (följer växtplankton)"],
+}
+
+
+# ----------------------------------------------------------------------
 # Diagram helpers
 # ----------------------------------------------------------------------
 def axes_pt(fig, x, y, w, h):
@@ -422,16 +604,7 @@ def arrow(ax, x0, y0, x1, y1, color=ACCENT, lw=1.4, head=7.0, ls="-"):
 
 
 def draw_tick_pipeline(fig, ax, y):
-    steps = [
-        ("1  Beslut", "observation → policy → maskad softmax"),
-        ("2  Påverkansmortalitet", "impact_table → biomassa"),
-        ("3  Predation", "Holling II/III + interferens"),
-        ("4  Energikostnader", "vila / äta / röra sig"),
-        ("5  Rörelse", "N/E/S/W × hastighet, energi följer med"),
-        ("6  Strömmar", "valfritt: current_response"),
-        ("7  Tillväxt / svält", "massbalanserad, + mortalitet"),
-        ("8  Masker", "accessibility, utdöendetröskel"),
-    ]
+    steps = LABELS["pipeline"]
     top = y - 8
     h = 34.0
     gap = 8.0
@@ -463,78 +636,300 @@ def _rect_edge(cx, cy, w, h, tx, ty, pad=4.0):
     return cx + dx * t, cy + dy * t
 
 
+# ----------------------------------------------------------------------
+# Library values, read at build time so the tables cannot drift
+# ----------------------------------------------------------------------
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_YAML_CACHE = {}
+
+DM_ORDER = ["zooplankton", "pelagic_fish", "gadoids", "porpoises", "seals",
+            "seabirds"]
+OBS_ORDER = ["phytoplankton", "zooplankton", "pelagic_fish", "gadoids",
+             "porpoises", "seals", "seabirds", "benthic_community"]
+PAIR_ORDER = [
+    ("zooplankton", "phytoplankton"), ("pelagic_fish", "zooplankton"),
+    ("gadoids", "pelagic_fish"), ("gadoids", "zooplankton"),
+    ("gadoids", "benthic_community"), ("gadoids", "gadoids"),
+    ("porpoises", "pelagic_fish"), ("porpoises", "gadoids"),
+    ("seals", "pelagic_fish"), ("seals", "gadoids"),
+    ("seabirds", "pelagic_fish"),
+]
+
+
+def _yaml(rel):
+    hit = _YAML_CACHE.get(rel)
+    if hit is None:
+        import yaml
+        with open(os.path.join(REPO, rel), encoding="utf-8-sig") as fh:
+            hit = yaml.safe_load(fh)
+        _YAML_CACHE[rel] = hit
+    return hit
+
+
+def library():
+    return _yaml(os.path.join("fgconfig", "fg_library.yaml"))
+
+
+def species(name):
+    return library()["species_definitions"][name]
+
+
+def pair(pred, prey, rel="preys_on"):
+    return library()["interaction_definitions"].get(
+        f"{pred}_{rel}_{prey}") or {}
+
+
+def muted_groups():
+    """FG ids muted in mareld2.yaml."""
+    m = _yaml("mareld2.yaml")
+    out = set()
+    for key in ("decision_makers", "non_decision_makers"):
+        for entry in m.get(key) or []:
+            if entry.get("muted"):
+                out.add(entry["group_id"])
+    return out
+
+
+#: Decimal mark and thousands separator for numbers read from the
+#: library; the English build sets "." and ",".
+NUM = {"dec": ",", "sep": " "}
+
+
+def fmt(x, dec=None, sep=None, sig=3):
+    """A library number for a slide: three significant digits, trailing
+    zeros dropped only when the value is exact, thousands grouped, and
+    values below 0.001 as mantissa e exponent."""
+    dec = NUM["dec"] if dec is None else dec
+    sep = NUM["sep"] if sep is None else sep
+    if x is None:
+        return "-"
+    if isinstance(x, bool):
+        return str(x)
+    if isinstance(x, str):
+        try:                       # PyYAML reads 1e-06 as a string
+            x = float(x)
+        except ValueError:
+            return x
+    x = float(x)
+    if x == 0:
+        return "0"
+    ax_ = abs(x)
+    if ax_ >= 1000:
+        s = f"{x:,.0f}".replace(",", sep)
+    elif ax_ < 1e-3:
+        mant, exp = f"{x:.2e}".split("e")
+        mant = mant.rstrip("0").rstrip(".")
+        s = f"{mant}e{int(exp)}"
+    else:
+        d = max(0, sig - 1 - int(np.floor(np.log10(ax_))))
+        s = f"{x:.{d}f}"
+        if abs(x - round(x, d)) < 1e-12 and "." in s:
+            s = s.rstrip("0").rstrip(".")
+    return s.replace(".", dec) if dec != "." else s
+
+
+def pair_attack(pred, prey):
+    return pair(pred, prey).get("max_intake_rate",
+                                species(pred).get("max_intake_rate"))
+
+
+def response_type(pred, prey):
+    """Holling type the engine uses: the pair's functional_response, or
+    III for a specialist (exactly one active prey) and II otherwise."""
+    forced = pair(pred, prey).get("functional_response")
+    if forced:
+        return int(forced), True
+    muted = muted_groups()
+    n = sum(1 for (p, y) in PAIR_ORDER
+            if p == pred and y not in muted and pair(p, y).get("preys_on"))
+    return (3 if n == 1 else 2), False
+
+
+def dm_value_rows(dec=None, sep=None, year="år", annual="årsmedel",
+                  derived="härledd"):
+    f = lambda x: fmt(x, dec, sep)
+    rows = []
+
+    def row(label, get):
+        rows.append([label] + [get(species(n)) for n in DM_ORDER])
+
+    row(f"r_max  (1/{year})", lambda s: f(s.get("r_max")))
+    row(f"growth_rate  ({derived})", lambda s: f(s.get("growth_rate")))
+    row("natural_mortality  M1", lambda s: f(s.get("natural_mortality")))
+    row("maintenance_level  u", lambda s: f(s.get("maintenance_level")))
+    row("max_energy_reserve", lambda s: f(s.get("max_energy_reserve")))
+    row("energy_content", lambda s: f(s.get("energy_content")))
+    row("resting_metabolism", lambda s: f(s.get("resting_metabolism")))
+    row("feeding / movement_cost",
+        lambda s: f"{f(s.get('feeding_cost'))} / {f(s.get('movement_cost'))}")
+    row("metabolism_q10 / t_ref",
+        lambda s: "-" if not s.get("metabolism_q10") else
+        f"{f(s['metabolism_q10'])} / " + (
+            annual if s.get("metabolism_t_ref") == "annual_mean"
+            else f"{f(s.get('metabolism_t_ref'))} °C"))
+    row("starve_rate", lambda s: f(s.get("starve_rate")))
+    row("max_intake_rate  a", lambda s: f(s.get("max_intake_rate")))
+    row("movement_speed  v", lambda s: f(s.get("movement_speed")))
+    row("interference w / vis.floor",
+        lambda s: f"{f(s.get('interference', 0))} / "
+                  f"{f(s.get('visibility_floor', 0))}")
+    row("min_split_biomass  (kg)", lambda s: f(s.get("min_split_biomass")))
+    return rows
+
+
+def pair_value_rows(dec=None, sep=None, prey_word="byte", type_word="typ",
+                    forced_word="satt"):
+    f = lambda x: fmt(x, dec, sep)
+    muted = muted_groups()
+    rows = []
+    for pred, prey in PAIR_ORDER:
+        p = pair(pred, prey)
+        if not p.get("preys_on"):
+            continue
+        if "visibility_floor" in p:
+            floor = f(p["visibility_floor"])
+        else:
+            floor = f"{prey_word} {f(species(prey).get('visibility_floor', 0))}"
+        kind, forced = response_type(pred, prey)
+        resp = f"{type_word} {'III' if kind == 3 else 'II'}" + (
+            f" ({forced_word})" if forced else "")
+        light = "-"
+        if p.get("dark_ratio") is not None and p["dark_ratio"] < 1:
+            light = (f"{f(p['dark_ratio'])} / "
+                     f"{f(p.get('light_threshold_deg', -6))}°")
+        name = f"{pred} → {prey}" + (" *" if pred in muted else "")
+        rows.append([name, f(pair_attack(pred, prey)),
+                     f(p.get("handling_time")), f(p.get("assimilation_factor")),
+                     floor, resp, light, f(p.get("predation_mortality"))])
+    return rows
+
+
+def observability_rows(yes="ja"):
+    muted = muted_groups()
+    rows = []
+    for obs in DM_ORDER:
+        name = obs + (" *" if obs in muted else "")
+        rows.append([name] + [
+            yes if (pair(obs, tgt, "observes").get("observes")) else "-"
+            for tgt in OBS_ORDER])
+    return rows
+
+
+def _decimal_ticks(ax_):
+    """Tick labels with the deck's decimal mark (comma in Swedish)."""
+    from matplotlib.ticker import ScalarFormatter
+
+    class DecimalFormatter(ScalarFormatter):
+        def __call__(self, x, pos=None):
+            return super().__call__(x, pos).replace(".", NUM["dec"])
+    ax_.xaxis.set_major_formatter(DecimalFormatter())
+    ax_.yaxis.set_major_formatter(DecimalFormatter())
+
+
 def draw_food_web(fig, ax, y):
+    names = LABELS["web_nodes"]
     nodes = {
-        "phytoplankton": (210, 118, "Växtplankton"),
-        "benthic_community": (720, 118, "Bottensamhälle"),
-        "zooplankton": (210, 205, "Djurplankton"),
-        "pelagic_fish": (300, 292, "Pelagisk fisk"),
-        "gadoids": (650, 205, "Torskfiskar"),
-        "porpoises": (790, 292, "Tumlare"),
-        "seals": (520, 370, "Sälar"),
-        "seabirds": (200, 370, "Sjöfåglar"),
+        "phytoplankton": (210, 118, names["phytoplankton"]),
+        "benthic_community": (720, 118, names["benthic_community"]),
+        "zooplankton": (210, 205, names["zooplankton"]),
+        "pelagic_fish": (300, 292, names["pelagic_fish"]),
+        "gadoids": (650, 205, names["gadoids"]),
+        "porpoises": (790, 292, names["porpoises"]),
+        "seals": (520, 370, names["seals"]),
+        "seabirds": (200, 370, names["seabirds"]),
     }
-    edges = [
-        ("phytoplankton", "zooplankton"),
-        ("zooplankton", "pelagic_fish"),
-        ("pelagic_fish", "gadoids"),
-        ("benthic_community", "gadoids"),
-        ("pelagic_fish", "porpoises"),
-        ("gadoids", "porpoises"),
-        ("pelagic_fish", "seals"),
-        ("gadoids", "seals"),
-        ("pelagic_fish", "seabirds"),
-    ]
+    muted = muted_groups()
     bw, bh = 142, 40
-    for a, b in edges:
-        xa, ya, _ = nodes[a]
-        xb, yb, _ = nodes[b]
+    for pred, prey in PAIR_ORDER:
+        if pred == prey or not pair(pred, prey).get("preys_on"):
+            continue
+        xa, ya, _ = nodes[prey]
+        xb, yb, _ = nodes[pred]
         x0, y0 = _rect_edge(xa, ya, bw, bh, xb, yb)
         x1, y1 = _rect_edge(xb, yb, bw, bh, xa, ya)
-        arrow(ax, x0, y0, x1, y1, color="#8FA9BC", lw=1.4, head=7)
+        arrow(ax, x0, y0, x1, y1, color="#8FA9BC", lw=1.4, head=7,
+              ls="--" if pred in muted else "-")
+    if pair("gadoids", "gadoids").get("preys_on"):
+        gx, gy, _ = nodes["gadoids"]
+        ax.annotate("", xy=(gx + bw / 2 + 2, gy - 8),
+                    xytext=(gx + bw / 2 + 2, gy + 8),
+                    arrowprops=dict(arrowstyle="-|>", color="#8FA9BC", lw=1.4,
+                                    connectionstyle="arc3,rad=-1.6",
+                                    shrinkA=0, shrinkB=0,
+                                    mutation_scale=11), zorder=2)
+        ax.text(gx + bw / 2 + 34, gy, LABELS["web_self"], color=MUTED,
+                size=10.5, va="center", ha="left")
     for key, (x, yy, label) in nodes.items():
         ndm = key in ("phytoplankton", "benthic_community")
         box(ax, x - bw / 2, yy - bh / 2, bw, bh, label,
             face="#E4EEF3" if not ndm else "#E9F2E4",
             edge=ACCENT if not ndm else "#5C8A3C", size=12, weight="bold")
-    ax.text(LEFT, 112, "grönt = icke beslutande (logistisk tillväxt)\n"
-                       "blått = beslutande (policynätverk och energibudget)",
-            color=MUTED, size=11.5, va="center", ha="left")
+        if key in muted:
+            ax.patches[-1].set_linestyle("--")
+            ax.patches[-1].set_facecolor("#F4F7F9")
+    # Centred in the free strip between the two NDM boxes, which sit on
+    # the same row; at LEFT it overlapped the phytoplankton box.
+    ax.text(465, 112, LABELS["web_legend"], color=MUTED, size=11, va="center",
+            ha="center")
 
 
 def draw_functional_response(fig, ax, y):
-    a2, h2, w2 = 0.04, 25.0, 1.0        # gadoids (typ II, interferens 1.0)
-    a3, h3 = 0.25, 4.0                  # zooplankton (typ III)
-    B = np.linspace(0, 1.2, 400)
-    f2 = a2 * B / (1 + a2 * h2 * B)
-    f2i = a2 * B / (1 + a2 * h2 * B + w2 * 0.5)
-    ax1 = axes_pt(fig, 92, 175, 360, 190)
-    ax1.plot(B, f2, color=ACCENT, lw=2.2, label="typ II  (w = 0)")
-    ax1.plot(B, f2i, color=ACCENT_2, lw=2.2, ls="--",
-             label="typ II  (w = 1, B_pred = 0,5)")
-    ax1.axhline(1 / h2, color=MUTED, lw=1.0, ls=":")
-    ax1.text(1.19, 1 / h2 + 0.0012, "tak 1/h", color=MUTED, size=9.5,
-             ha="right")
-    ax1.set_title("Torskfiskar: a = 0,04  h = 25  w = 1,0", size=11,
+    # Left: the gadoid ceilings as an energy limit (section 148): h is
+    # proportional to the prey's energy as eaten, so every pair saturates
+    # at the same MJ per tonne of gadoid and tick.
+    a_g = pair_attack("gadoids", "pelagic_fish")
+    h_herr = pair("gadoids", "pelagic_fish")["handling_time"]
+    h_ben = pair("gadoids", "benthic_community")["handling_time"]
+    herr = species("pelagic_fish")
+    e_herr = herr["energy_content"] + herr.get("reserve_reference_fill", 0.5) \
+        * herr["max_energy_reserve"]
+    e_ben = species("benthic_community")["energy_content"]
+    w = species("gadoids").get("interference", 0.0)
+    B = np.linspace(0, 3.0, 400)
+    f_herr = e_herr * a_g * B ** 2 / (1 + a_g * h_herr * B ** 2)
+    f_herr_w = e_herr * a_g * B ** 2 / (1 + a_g * h_herr * B ** 2 + w * 0.5)
+    f_ben = e_ben * a_g * B / (1 + a_g * h_ben * B)
+    # Axes bottom at 200 pt: the x label hangs ~28 pt below the axes and
+    # the bullet list below starts at 150 pt (Deck.figure items).
+    ax1 = axes_pt(fig, 92, 200, 360, 165)
+    ax1.plot(B, f_herr, color=ACCENT, lw=2.2,
+             label=LABELS["fr_herr"].format(h=fmt(h_herr)))
+    ax1.plot(B, f_herr_w, color=ACCENT, lw=1.6, ls="--",
+             label=LABELS["fr_herr_w"])
+    ax1.plot(B, f_ben, color=ACCENT_2, lw=2.2,
+             label=LABELS["fr_benth"].format(h=fmt(h_ben)))
+    ceil_e = e_herr / h_herr
+    ax1.axhline(ceil_e, color=MUTED, lw=1.0, ls=":")
+    ax1.text(2.98, ceil_e + 0.6, LABELS["fr_ceiling_e"], color=MUTED,
+             size=9.5, ha="right")
+    ax1.set_ylim(0, ceil_e * 1.25)
+    ax1.set_title(LABELS["fr_title_gad"].format(a=fmt(a_g)), size=11,
                   color=NAVY)
-    ax1.legend(fontsize=8.5, loc="lower right", frameon=False)
+    ax1.legend(fontsize=8.0, loc="lower right", frameon=False)
+    ax1.set_ylabel(LABELS["fr_ylabel_e"], size=9)
 
-    Bz = np.linspace(0, 2.5, 400)
+    a3 = pair_attack("zooplankton", "phytoplankton")
+    h3 = pair("zooplankton", "phytoplankton")["handling_time"]
+    Bz = np.linspace(0, 40, 400)
     f3 = a3 * Bz ** 2 / (1 + a3 * h3 * Bz ** 2)
     f2z = a3 * Bz / (1 + a3 * h3 * Bz)
-    ax2 = axes_pt(fig, 520, 175, 360, 190)
-    ax2.plot(Bz, f2z, color="#9FB6C6", lw=2.0, ls="--", label="typ II")
-    ax2.plot(Bz, f3, color=ACCENT, lw=2.2, label="typ III (specialist)")
+    ax2 = axes_pt(fig, 520, 200, 360, 165)
+    ax2.plot(Bz, f2z, color="#9FB6C6", lw=2.0, ls="--",
+             label=LABELS["fr_typeII_plain"])
+    ax2.plot(Bz, f3, color=ACCENT, lw=2.2, label=LABELS["fr_typeIII"])
     ax2.axhline(1 / h3, color=MUTED, lw=1.0, ls=":")
-    ax2.text(2.48, 1 / h3 + 0.004, "tak 1/h", color=MUTED, size=9.5,
-             ha="right")
-    ax2.set_title("Djurplankton: a = 0,25  h = 4", size=11, color=NAVY)
+    ax2.text(39.5, 1 / h3 + 0.005, LABELS["fr_ceiling"], color=MUTED,
+             size=9.5, ha="right")
+    ax2.set_ylim(0, 1 / h3 * 1.2)
+    ax2.set_title(LABELS["fr_title_zoo"].format(a=fmt(a3), h=fmt(h3)),
+                  size=11, color=NAVY)
     ax2.legend(fontsize=8.5, loc="lower right", frameon=False)
+    ax2.set_ylabel(LABELS["fr_ylabel"], size=9)
 
     for a_ in (ax1, ax2):
-        a_.set_xlabel("synlig bytesbiomassa i cellen  [ton]", size=9.5)
-        a_.set_ylabel("intag  [ton byte / ton predator / tick]", size=9)
+        a_.set_xlabel(LABELS["fr_xlabel"], size=9.5)
         a_.tick_params(labelsize=8.5)
+        _decimal_ticks(a_)
         for s in ("top", "right"):
             a_.spines[s].set_visible(False)
         a_.grid(alpha=0.25, lw=0.6)
@@ -543,61 +938,69 @@ def draw_functional_response(fig, ax, y):
 def draw_hunger_gate(fig, ax, y):
     s = np.linspace(0, 1, 300)
     ax1 = axes_pt(fig, 92, 178, 360, 190)
-    for scale, label, color in ((0.8, "standard  scale = 0,8", ACCENT),
-                                (1.37, "tumlare  scale = 1,37", ACCENT_2)):
-        ax1.plot(s, np.maximum(0.0, 1 - s / scale), color=color, lw=2.2,
-                 label=label)
-    ax1.axvline(0.5, color=MUTED, lw=1.0, ls=":")
-    ax1.text(0.52, 0.92, "u_X = 0,5", color=MUTED, size=9.5)
-    ax1.set_xlabel("mättnadsgrad  s_X = E_X / ME_X", size=9.5)
-    ax1.set_ylabel("hungerfaktor  h_X", size=9.5)
-    ax1.legend(fontsize=8.5, frameon=False)
+    for u, label, color in ((0.5, LABELS["hg_u5"], ACCENT),
+                            (0.2, LABELS["hg_u2"], ACCENT_2)):
+        ax1.plot(s, np.clip((1 - s) / (1 - u), 0.0, 1.0), color=color,
+                 lw=2.2, label=label)
+    ax1.set_ylim(0, 1.12)
+    ax1.set_xlabel(LABELS["hg_xlabel1"], size=9.5)
+    ax1.set_ylabel(LABELS["hg_ylabel1"], size=9.5)
+    ax1.legend(fontsize=8.5, frameon=False, loc="lower left")
 
-    q = np.linspace(-0.5, 0.5, 300)
+    zoo, pel = species("zooplankton"), species("pelagic_fish")
     ax2 = axes_pt(fig, 520, 178, 360, 190)
-    ax2.plot(q, np.where(q >= 0, 0.0913 * q, 0.2 * q), color=ACCENT, lw=2.2,
-             label="djurplankton  MG = 0,0913 / SR = 0,2")
-    ax2.plot(q, np.where(q >= 0, 0.004 * q, 0.025 * q), color=ACCENT_2,
-             lw=2.2, label="pelagisk fisk  MG = 0,004 / SR = 0,025")
+    for sp_, k, label, color in (
+            (zoo, 1.0, LABELS["hg_zoo"], ACCENT),
+            (pel, 10.0, LABELS["hg_pel"], ACCENT_2)):
+        u, g, sr = sp_["maintenance_level"], sp_["growth_rate"], \
+            sp_["starve_rate"]
+        q = s - u
+        ax2.plot(s, k * np.where(q >= 0, g * q, sr * q), color=color, lw=2.2,
+                 label=label.format(g=fmt(g), sr=fmt(sr)))
+        ax2.axvline(u, color=color, lw=0.8, ls=":")
     ax2.axhline(0, color=MUTED, lw=0.8)
-    ax2.axvline(0, color=MUTED, lw=0.8)
-    ax2.set_xlabel("överskottsenergi  q_X = s_X - u_X", size=9.5)
-    ax2.set_ylabel("relativ biomassaändring / tick", size=9.5)
-    ax2.legend(fontsize=8.5, frameon=False, loc="upper left")
+    ax2.set_ylim(-0.11, 0.05)
+    ax2.set_xlabel(LABELS["hg_xlabel2"], size=9.5)
+    ax2.set_ylabel(LABELS["hg_ylabel2"], size=9.5)
+    ax2.legend(fontsize=8.5, frameon=False, loc="lower right")
 
     for a_ in (ax1, ax2):
         a_.tick_params(labelsize=8.5)
+        _decimal_ticks(a_)
         for sp in ("top", "right"):
             a_.spines[sp].set_visible(False)
         a_.grid(alpha=0.25, lw=0.6)
 
 
 def draw_impact_curves(fig, ax, y):
-    ax1 = axes_pt(fig, 92, 178, 360, 190)
+    # Axes bottom at 200 pt: the x label hangs ~28 pt below the axes and
+    # the bullet list below starts at 150 pt (Deck.figure items).
+    ax1 = axes_pt(fig, 92, 200, 360, 165)
     xs = np.array([60.0, 80.0, 100.0, 120.0])
     ef = np.array([0.0, 0.15, 0.40, 0.80])
     q = np.linspace(40, 140, 400)
     ax1.plot(q, np.interp(q, xs, ef, left=ef[0], right=ef[-1]),
              color=ACCENT, lw=2.2)
     ax1.plot(xs, ef, "o", color=ACCENT_2, ms=5.5, zorder=3)
-    ax1.set_title("windfarm_noise → tumlare: energy_factor", size=11,
+    ax1.set_title(LABELS["ic_title1"], size=11,
                   color=NAVY)
-    ax1.set_xlabel("kartvärde  (dB)", size=9.5)
-    ax1.set_ylabel("extra metabolisk kostnad", size=9.5)
+    ax1.set_xlabel(LABELS["ic_xlabel1"], size=9.5)
+    ax1.set_ylabel(LABELS["ic_ylabel1"], size=9.5)
 
-    ax2 = axes_pt(fig, 520, 178, 360, 190)
+    ax2 = axes_pt(fig, 520, 200, 360, 165)
     xs2 = np.array([0.0, 0.25, 0.5, 1.0])
     bf2 = np.array([0.0, 0.005, 0.015, 0.03])
     r = np.linspace(-0.1, 1.2, 400)
     ax2.plot(r, np.interp(r, xs2, bf2, left=bf2[0], right=bf2[-1]),
              color=ACCENT, lw=2.2)
     ax2.plot(xs2, bf2, "o", color=ACCENT_2, ms=5.5, zorder=3)
-    ax2.set_title("rotor → sjöfåglar: biomass_factor", size=11, color=NAVY)
-    ax2.set_xlabel("kartvärde  (rotortäthet 0-1)", size=9.5)
-    ax2.set_ylabel("biomassaforlust / tick", size=9.5)
+    ax2.set_title(LABELS["ic_title2"], size=11, color=NAVY)
+    ax2.set_xlabel(LABELS["ic_xlabel2"], size=9.5)
+    ax2.set_ylabel(LABELS["ic_ylabel2"], size=9.5)
 
     for a_ in (ax1, ax2):
         a_.tick_params(labelsize=8.5)
+        _decimal_ticks(a_)
         for sp in ("top", "right"):
             a_.spines[sp].set_visible(False)
         a_.grid(alpha=0.25, lw=0.6)
@@ -610,28 +1013,17 @@ def draw_observation(fig, ax, y):
     for key, (x, yy) in cells.items():
         centre = key == "C"
         box(ax, x - c / 2, yy - c / 2, c, c,
-            "egen cell" if centre else key,
+            LABELS["obs_centre"] if centre else key,
             face="#E4EEF3" if centre else BAND,
             edge=ACCENT if centre else "#9FB6C6", size=12,
             weight="bold" if centre else "normal")
-    ax.text(cx, cy - 2 * c - 6, "plusform: egen cell + fyra grannar",
+    ax.text(cx, cy - 2 * c - 6, LABELS["obs_shape"],
             color=MUTED, size=11.5, ha="center", va="center")
     xb = 468
-    draw_code(ax, "Kanaler per cell (kompakt layout)", """
-egen cell  [ B_egen, s_egen, B_obs_1..k, imp_1..m ]
-granne d   [ B_egen, B_obs_1..k, imp_1..m ]
-
-in_dim_X = (2 + k_X + m) + 4 · (1 + k_X + m)
-""", xb, y - 6, PAGE_W - RIGHT - xb, size=12.5)
-    draw_bullets(ax, [
-        ("-", "k_X = antal ANDRA FG som X observerar enligt "
-              "Observability-matrisen"),
-        ("-", "m = antal impaktkartor märkta observable i projektfilen"),
-        ("-", "B_obs är SYNLIG biomassa: den gömda (vilande) andelen "
-              "dras bort"),
-        ("-", "Mareld i dag: k = 1-5 och m = 1 (windfarm_noise), "
-              "dvs 16-36 kanaler per beslutande FG"),
-    ], xb, y - 128, PAGE_W - RIGHT - xb, size=13)
+    draw_code(ax, LABELS["obs_caption"], LABELS["obs_code"],
+              xb, y - 6, PAGE_W - RIGHT - xb, size=12.5)
+    draw_bullets(ax, LABELS["obs_bullets"], xb, y - 128,
+                 PAGE_W - RIGHT - xb, size=13)
 
 
 def draw_policy_net(fig, ax, y):
@@ -644,10 +1036,10 @@ def draw_policy_net(fig, ax, y):
         ax.text(x, 176, label, color=NAVY, size=12, weight="bold",
                 ha="center", va="center")
         return ys
-    a = column(x0, 7, "observation\n(in_dim)", ACCENT)
-    b = column(x1, 6, "dolt lager 1\n30 noder, sigmoid", "#7FB2C0")
-    c = column(x2, 6, "dolt lager 2\n30 noder, sigmoid", "#7FB2C0")
-    d = column(x3, 5, "logits → mask → softmax", ACCENT_2)
+    a = column(x0, 7, LABELS["net_in"], ACCENT)
+    b = column(x1, 6, LABELS["net_h1"], "#7FB2C0")
+    c = column(x2, 6, LABELS["net_h2"], "#7FB2C0")
+    d = column(x3, 5, LABELS["net_out"], ACCENT_2)
     for u in a:
         for v in b:
             ax.plot([x0, x1], [u, v], color="#C9D8E2", lw=0.4, zorder=1)
@@ -657,8 +1049,7 @@ def draw_policy_net(fig, ax, y):
     for u in c:
         for v in d:
             ax.plot([x2, x3], [u, v], color="#C9D8E2", lw=0.4, zorder=1)
-    labels = ["Flytta N", "Flytta E/S/W", "Vila (= gömma sig)",
-              "Äta Y_1 ... Y_n", ""]
+    labels = LABELS["net_actions"]
     for yy, lab in zip(d[::-1], labels):
         if lab:
             ax.text(x3 + 16, yy, lab, color=INK, size=11.5, va="center",
@@ -668,24 +1059,25 @@ def draw_policy_net(fig, ax, y):
 def draw_energy_flow(fig, ax, y):
     yb = y - 128
     w, h = 176, 62
+    names = LABELS["ef_stages"]
     stages = [
-        (LEFT, "Intag  intag_XY", BAND),
-        (LEFT + 210, "Assimilerat  · assimilation", "#E4EEF3"),
-        (LEFT + 420, "Reserv R_X  (+ intag − kostnad)", "#E4EEF3"),
-        (LEFT + 630, "Ny biomassa  dB ton", "#E9F2E4"),
+        (LEFT, names[0], BAND),
+        (LEFT + 210, names[1], "#E4EEF3"),
+        (LEFT + 420, names[2], "#E4EEF3"),
+        (LEFT + 630, names[3], "#E9F2E4"),
     ]
     for x, text, face in stages:
         box(ax, x, yb, w, h, text, face=face, size=12, weight="bold")
     for i in range(3):
         arrow(ax, stages[i][0] + w, yb + h / 2, stages[i + 1][0],
               yb + h / 2, lw=1.6)
-    for x, label in ((LEFT + 210, "spill"),
-                     (LEFT + 420, "vila / rörelse / födosök\n+ påverkan")):
+    for x, label in ((LEFT + 210, LABELS["ef_spill"]),
+                     (LEFT + 420, LABELS["ef_costs"])):
         arrow(ax, x + w / 2, yb, x + w / 2, yb - 44, color=MUTED, lw=1.2)
         ax.text(x + w / 2, yb - 56, label.replace("\n", ", "), color=MUTED,
                 size=11, ha="center", va="center")
     ax.text(LEFT + 630 + w / 2, yb + h + 26,
-            "priset dB · energy_content debiteras reserven",
+            LABELS["ef_price"],
             color=ACCENT_2, size=12, weight="bold", ha="center", va="center")
     arrow(ax, LEFT + 630 + w / 2, yb + h + 16, LEFT + 630 + w / 2, yb + h + 2,
           color=ACCENT_2, lw=1.4)
@@ -710,9 +1102,8 @@ def draw_spawn_examples(fig, ax, y):
         context={"env_fields": {"phytoplankton": perlin}})
     uniform = make_weights(StrategySpec.from_dict({"mode": "uniform"}),
                            grid, 7)
-    panels = [("uniform", uniform), ("perlin  (växtplankton)", perlin),
-              ("colony  (pelagisk fisk)", colony),
-              ("env_driven  (följer växtplankton)", env)]
+    panels = list(zip(LABELS["spawn_panels"],
+                      (uniform, perlin, colony, env)))
     for i, (label, field) in enumerate(panels):
         a = axes_pt(fig, 96 + i * 196, 190, 160, 160)
         a.imshow(field, cmap="YlGnBu", interpolation="nearest")
@@ -724,26 +1115,32 @@ def draw_spawn_examples(fig, ax, y):
 # The deck
 # ----------------------------------------------------------------------
 def build(d):
+    f = fmt
+    phy, ben = species("phytoplankton"), species("benthic_community")
     # ---------------------------------------------------------------- 1
     d.title_slide(
         "Strategi",
         "För att bygga ekosystemsimulatorer",
-        ["Uppdaterad utgåva - september 2026",
+        ["Uppdaterad utgåva - oktober 2026",
          "Mareld / Poseidon Nord",
          "Beskriver den mekanik som simulatorn faktiskt kör i dag"])
 
     d.bullets(
         "Om den här utgåvan",
-        [("p", "Den här versionen ersätter maj-utgåvan av Strategi.pdf. "
-               "Strukturen är densamma; innehållet är skrivet mot koden "
-               "som den ser ut i dag."),
+        [("p", "Den här versionen ersätter september-utgåvan, som i sin tur "
+               "ersatte maj-utgåvan av Strategi.pdf. Strukturen är "
+               "densamma; innehållet är skrivet mot koden som den ser ut i "
+               "dag, och en ny del väger modellens styrkor mot dess "
+               "svagheter."),
          "",
          "Koden är modellen. Dokumentet beskriver den - inte tvärtom. "
-         "Där maj-utgåvan och koden skiljer sig är det koden som gäller, "
-         "och skillnaden redovisas i klartext.",
-         "Varje formel och siffra i dokumentet är hämtad ur tickpipelinen "
-         "i lib/environments/ecosystem_env/, ur ARS-tränaren i "
-         "lib/runners/, ur fg_library.yaml eller ur mareld2.yaml.",
+         "Där tidigare utgåvor och koden skiljer sig är det koden som "
+         "gäller, och skillnaden redovisas i klartext.",
+         "Varje formel och siffra är hämtad ur tickpipelinen i "
+         "lib/environments/ecosystem_env/, ur ARS-tränarna i lib/runners/ "
+         "och lib/gpu/, ur fg_library.yaml eller ur mareld2.yaml. "
+         "Bibliotekstabellerna läses direkt ur YAML-filerna när "
+         "dokumentet byggs.",
          "Parameternamn står kvar på engelska (growth_rate, handling_time, "
          "max_intake_rate) så att en slide kan spåras till den YAML-nyckel "
          "den beskriver.",
@@ -759,29 +1156,60 @@ def build(d):
         "Vad som har ändrats sedan maj 2026",
         ["Område", "Maj-utgåvan", "I dag"],
         [["Tillväxt", "B·(1 + MG·q) - ny massa var gratis",
-          "Massbalanserad: tillväxten betalas ur energireserven "
-          "(--no-mass-balance ger gamla termen)"],
+          "Massbalanserad: tillväxten betalas ur energireserven; "
+          "growth_rate härleds ur en litteraturbudget"],
          ["Predation", "Önskat intag = B·π·I·h, proportionell nedskalning",
-          "Holling typ II/III med Beddington-DeAngelis-interferens; "
-          "nedskalningen finns kvar"],
+          "Holling typ II/III per par med Beddington-DeAngelis-interferens "
+          "och ljusberoende attackhastighet"],
          ["Hunger", "All predation maskades bort över s_X = 0,8",
-          "Ingen mask - hungern är en kontinuerlig faktor "
-          "h_X = max(0, 1 - s_X/scale)"],
+          "Ingen mask - full aptit upp till underhållsnivån, sedan linjärt "
+          "mot noll vid full reserv"],
          ["Vila", "Vila = låg energikostnad",
           "Vila är också en gömma-sig-action med per-par synlighetsgolv"],
          ["Fitness", "α·ΔB + β·ΔR över två transitioner",
-          "Medelvärde över rollouten av log(total energi / startenergi); "
-          "15-200 tick"],
+          "Medelvärde över rollouten av log(total energi / startenergi)"],
          ["Träning", "Alternerande: en FG i taget",
-          "Co-evolution: alla beslutande FG perturberas samtidigt i samma "
-          "rollout"],
+          "Co-evolution på CPU (train.py) eller GPU (train_gpu.py), "
+          "ettårsrollouts"],
          ["Ticklängd", "Fast 6 h", "--tick-length 1-6 h, biblioteket "
           "räknas om i minnet vid inläsning"],
-         ["Nytt", "-", "Strömmar, migration, utdöendetröskel, "
-          "säsongsvariation, lokal belöning per cell, viabilitetsrigg"]],
+         ["Nytt", "-", "Dagsljuskalender, vattentemperatur, strömmar, "
+          "migration, utdöendetröskel, lokal belöning per cell, "
+          "diagnostikverktyg"]],
         [10, 30, 46], kicker="Översikt", size=11.5,
-        footnote="Avsnitt 8 i det här dokumentet listar de avvikelser som "
-                 "är avsiktliga och varför.")
+        footnote="Del 9 listar de avvikelser från maj-utgåvan som är "
+                 "avsiktliga och varför.")
+
+    d.table(
+        "Vad som har ändrats sedan september 2026",
+        ["Område", "September", "Oktober", "Avsnitt"],
+        [["growth_rate", "Fritt tal per FG",
+          "Härleds ur r_max, M1 och predationsmatrisen (M2)", "129-131"],
+         ["Hunger", "h = max(0, 1 − s/scale)",
+          "h = min(1, (1 − s)/(1 − u)); satiation_scale borttagen",
+          "130, 133"],
+         ["Säsong", "Sinus för växtplankton (avstängd)",
+          "Dagsljuskalender: ljusberoende attack och ljusbegränsad "
+          "primärproduktion", "137-138"],
+         ["Temperatur", "Ingen",
+          "Q10 på viloförbränningen per FG och vattenlager", "143"],
+         ["Sill", "En energipott, 7 500 MJ/ton",
+          "Mager kropp 4 000 + fettreserv upp till 7 000; reserven äts med",
+          "140"],
+         ["Torskfiskar", "Två byten, typ II, tak 16 %/dygn",
+          "Fyra byten, typ III på sill, tak som energigräns, M1 0,415/år",
+          "141, 147-148, 157"],
+         ["Tumlare", "Vila 90, odelbar enhet 250 kg",
+          "Kostnader mot uppmätt FMR, diet anpassad till Ecopath, 50 kg",
+          "145, 151-152"],
+         ["Plankton", "Fri halvmättnad, 2 000 MJ/ton",
+          "Halvmättnad 20 t/km², 4 800 MJ/ton, feeding_cost 4,0",
+          "133-135"],
+         ["Rörelse", "Rester under tröskeln sveptes bort",
+          "Rester följer utflödet; små emigrationer stannar", "156"]],
+        [11, 25, 50, 12], kicker="Översikt", size=10.8,
+        footnote="Avsnittsnumren hänvisar till mareld_resume.txt, där "
+                 "varje ändring är motiverad och mätt.")
 
     # ---------------------------------------------------------------- 2
     d.section("1", "Strategi och beståndsdelar",
@@ -794,13 +1222,14 @@ def build(d):
          "utvecklas över tid.",
          "Kartlagren beskriver miljöförhållanden, utbredning av "
          "populationer tillhörande olika funktionsgrupper, samt olika "
-         "sorters miljöpåverkan.",
+         "sorters miljöpåverkan. En kalender för ljus och temperatur "
+         "driver säsongen.",
          "Populationernas beteende - särskilt rörelse och födosök - styrs "
          "av beteendemodeller som tränas med ARS, men kan också vara "
          "handkodade (viabilitetsriggen kör helt utan nätverk).",
          "Biologin driver, inte action-hackar. Parametrar och mekanismer "
          "justeras först; formande termer i belöningen är sista utvägen "
-         "och är avstängda i alla träningsprofiler.",
+         "och är avstängda som standard.",
          "Modellen är Eulerisk: vi följer värden i fasta celler, inte "
          "individer. Biomassan kan delas, flytta åt olika håll och blandas "
          "med annan biomassa i samma cell."],
@@ -813,10 +1242,12 @@ def build(d):
          "Modellerna ger inte absoluta populationsprognoser.",
          "Resultaten ska tolkas relativt, jämförande och under antaganden.",
          "",
-         ("p", "Ett tillägg sedan maj: innan ett scenario jämförs måste "
-               "världen klara viabilitetskriteriet i VIABILITY.md. En "
-               "konfiguration som inte är självbärande gör varje jämförelse "
-               "otolkbar, oavsett hur väl policyerna är tränade."),
+         ("p", "Innan ett scenario jämförs ska världen vara självbärande "
+               "med de policyer som faktiskt används - ingen "
+               "funktionsgrupp får dö ut eller glida mot noll under "
+               "horisonten. Viabilitetsriggen, som kör med fryst "
+               "beteende, är ett diagnosverktyg för mekaniken, inte "
+               "domaren."),
          ],
         kicker="Vad modellen svarar på")
 
@@ -827,18 +1258,19 @@ def build(d):
          ("-", "en uppsättning funktionsgrupper (FG), beslutande och icke "
                "beslutande"),
          ("-", "en uppsättning kartor - ett scenario"),
-         ("-", "en uppsättning egenskaper för varje funktionsgrupp "
-               "(fg_library.yaml)"),
+         ("-", "en kalender: dagsljus och vattentemperatur för platsen"),
+         ("-", "en uppsättning egenskaper för varje funktionsgrupp och "
+               "varje predationspar (fg_library.yaml)"),
          ("-", "en dynamisk modell med uppdateringsregler för kartorna - "
                "ticken"),
          ("-", "en beteendemodell för varje beslutande funktionsgrupp"),
          ("-", "spawnstrategier som bestämmer hur startbiomassan läggs ut"),
-         ("-", "acceptanskriterier: viabilitetsrigg och energibudgetgrind"),
-         "",
-         "Biblioteket (fg_library.yaml) är gemensamt för alla projekt. "
-         "Projektfilen (mareld2.yaml) väljer vilka FG som ingår, "
-         "startbiomassor, impaktvariabler och gridstorlek."],
-        kicker="Modellens delar")
+         ("-", "diagnostik: energibudgetgrind, fryst viabilitetsrigg och "
+               "probeverktyg för årsbudgetar"),
+         "Biblioteket är gemensamt för alla projekt. Projektfilen "
+         "(mareld2.yaml) väljer FG, startbiomassor, impaktvariabler, "
+         "gridstorlek och platsens ljus- och temperaturklimat."],
+        kicker="Modellens delar", size=15.5)
 
     d.bullets(
         "Grid",
@@ -846,40 +1278,39 @@ def build(d):
          ("-", "en dimension - Mareld kör 60 x 60 celler"),
          ("-", "en längdskala - en cellsida = 1 km"),
          ("-", "en tidskala - ett tick = 1-6 timmar, normalt 6"),
+         ("-", "en position - 58,15° N, som sätter dagsljuset"),
          "Griden är plan och fyrgrannskopplad: all rörelse sker till N, E, "
          "S eller W, aldrig diagonalt.",
          "En valfri karta accessibility styr vilka celler som är "
-         "tillgängliga. Den är gemensam för alla FG, inte per FG: "
-         "rörelse in i en otillgänglig cell maskas bort, och biomassa som "
-         "ändå hamnar där nollställs i slutet av ticket.",
-         "Utan migration är gridens kant sluten: rörelse ut över kanten "
-         "maskas bort. Med --migration on lämnar biomassan griden och "
-         "återinförs koncentrerat längs kanten."],
+         "tillgängliga. Den är gemensam för alla FG: rörelse in i en "
+         "otillgänglig cell maskas bort, och biomassa som ändå hamnar där "
+         "nollställs i slutet av ticket.",
+         "Utan migration är gridens kant sluten. Med --migration on lämnar "
+         "biomassan griden och återinförs koncentrerat längs kanten."],
         kicker="Geografi")
 
     d.table(
         "Ticklängd är en körningsparameter",
         ["Parametertyp", "Regel vid faktor k = ny/gammal", "Exempel"],
         [["flux - mängd som överförs per tick", "x · k",
-          "max_intake_rate, resting_metabolism, movement_speed, seed_rate"],
-         ["growth - andel som LÄGGS TILL ett lager", "(1 + x)^k - 1",
+          "max_intake_rate (även per par), resting_metabolism, "
+          "movement_speed, seed_rate"],
+         ["growth - andel som LÄGGS TILL ett lager", "(1 + x)ᵏ − 1",
           "growth_rate"],
-         ["loss - andel som TAS BORT ur ett lager", "1 - (1 - x)^k",
+         ["loss - andel som TAS BORT ur ett lager", "1 − (1 − x)ᵏ",
           "natural_mortality, starve_rate, biomass_factor i impacttabeller"],
          ["inverse - storhet vars invers är takten", "x / k",
           "handling_time (Hollingtaket 1/h ska hållas fast i realtid)"],
-         ["period - varaktighet mätt i tick", "p / k, lägst 1",
-          "seasonal_period"],
          ["tick-oberoende", "oförändrad",
           "max_energy_reserve, energy_content, maintenance_level, "
-          "satiation_scale, interference, min_split_biomass, "
-          "kostnadsmultiplikatorerna"]],
+          "interference, min_split_biomass, kostnadsmultiplikatorerna, "
+          "dark_ratio, light_threshold_deg, metabolism_q10"]],
         [22, 24, 40], kicker="--tick-length", size=11.5,
         lead="Motorn är ticklängdsagnostisk: varje bibliotekstal är uttryckt "
-             "PER TICK. Ticklängden är en tolkningskonstant som räknar om "
-             "per-tick-takter till realtid - och som, när den inte är 6 h, "
-             "skalar om varje tickberoende parameter i minnet när FG:erna "
-             "byggs.",
+             "PER TICK. Ticklängden räknar om per-tick-takter till realtid "
+             "- och skalar, när den inte är 6 h, om varje tickberoende "
+             "parameter i minnet när FG:erna byggs. Ljus- och "
+             "temperaturtabellerna byggs direkt för körningens ticklängd.",
         footnote="fg_library.yaml har EN kalibrering (6 h) och skrivs aldrig "
                  "om av en körning. lib/world/tick_time.py är enda "
                  "definitionspunkten.")
@@ -888,24 +1319,25 @@ def build(d):
         "Funktionsgrupper",
         ["Funktionsgrupp", "Typ", "Meny", "Roll i modellen"],
         [["phytoplankton", "icke beslutande", "-",
-          "Primärproducent, logistisk tillväxt mot bärkraft, driver med "
-          "strömmen"],
+          "Primärproducent, ljusbegränsad logistisk tillväxt mot bärkraft, "
+          "driver med strömmen"],
          ["benthic_community", "icke beslutande", "-",
           "Bottenföda för torskfisk, mycket långsam tillväxt, "
           "förflyttas inte"],
          ["zooplankton", "beslutande", "phytoplankton",
           "Betare, specialist (typ III), rör sig 0,02 cell/tick"],
          ["pelagic_fish", "beslutande", "zooplankton",
-          "Stimfisk, specialist (typ III), interferens 0,7"],
-         ["gadoids", "beslutande", "pelagic_fish, benthic_community",
-          "Generalist (typ II), interferens 1,0"],
+          "Sill/skarpsill, specialist (typ III), mager kropp + fettreserv"],
+         ["gadoids", "beslutande",
+          "pelagic_fish, benthic_community, zooplankton, gadoids",
+          "Generalist; typ III på sill, energitak, interferens 1,0"],
          ["porpoises", "beslutande", "pelagic_fish, gadoids",
-          "Toppredator, hög viloförbränning, känslig för undervattensbuller"],
+          "Toppredator, endoterm, känslig för undervattensbuller"],
          ["seals", "beslutande", "pelagic_fish, gadoids",
-          "Toppredator, koloni-spawn"],
+          "Toppredator, koloni-spawn (muted)"],
          ["seabirds", "beslutande", "pelagic_fish",
-          "Toppredator, enda FG med rotormortalitet"]],
-        [16, 12, 22, 40], kicker="Mareld: åtta grupper, sex med policy",
+          "Toppredator, enda FG med rotormortalitet (muted)"]],
+        [16, 12, 26, 38], kicker="Mareld: åtta grupper, sex med policy",
         size=11.5,
         footnote="Engelska snake_case-id:n är kanoniska. seabirds och seals "
                  "är muted i mareld2.yaml - definierade men inte utlagda i "
@@ -913,18 +1345,20 @@ def build(d):
 
     d.figure("Näringsväv", draw_food_web, kicker="Meny enligt biblioteket",
              footnote="Pilen går från byte till konsument. Varje par har "
-                      "egna värden för handling_time, assimilation_factor "
-                      "och - för vissa par - ett eget synlighetsgolv.")
+                      "egna värden för handling_time, assimilation_factor, "
+                      "predation_mortality och - för vissa par - "
+                      "attackhastighet, synlighetsgolv och ljusberoende.")
 
     # ---------------------------------------------------------------- 3
-    d.section("2", "Kartor",
-              "Allt tillstånd i modellen är kartor över griden.")
+    d.section("2", "Kartor och kalender",
+              "Allt tillstånd i modellen är kartor över griden. Ljus och "
+              "temperatur kommer från en kalender för platsen.")
 
     d.bullets(
         "Kartor",
         ["En karta är en funktion från griden till de reella talen.",
          "En karta med värden i [0, 1] kan betraktas som en gråskalebild. "
-         "Andra kartor - djup, temperatur, biomassa - visas som heatmaps.",
+         "Andra kartor - djup, biomassa, buller - visas som heatmaps.",
          "Modellen håller två tillståndskartor per funktionsgrupp: "
          "biomassa B_X(c) i ton och reservenergi R_X(c) i MJ.",
          "Energikartan E_X(c) = R_X(c) / B_X(c) är härledd, inte lagrad. "
@@ -936,12 +1370,9 @@ def build(d):
         kicker="Definition")
 
     d.table(
-        "Karttyper",
-        ["Karttyp", "Symbol", "Enhet", "Tolkning"],
-        [["Geografiska kartor", "Geo_k(c)", "[0,1], m, °C",
-          "Abiotisk miljö och habitat. accessibility är den enda som "
-          "motorn läser i dag."],
-         ["Biomassakartor", "B_X(c)", "ton/cell",
+        "Karttyper och kalendertabeller",
+        ["Typ", "Symbol", "Enhet", "Tolkning"],
+        [["Biomassakartor", "B_X(c)", "ton/cell",
           "Biomassa av funktionsgrupp X i cell c."],
          ["Reservenergikartor", "R_X(c)", "MJ/cell",
           "Lagrad energi. Primärt tillstånd; klipps till B_X · ME_X."],
@@ -955,11 +1386,88 @@ def build(d):
           "Buller i dB, trålningsintensitet, rotortäthet. Slås upp i "
           "FG:ns impact_table."],
          ["Strömfält", "-", "andel/tick",
-          "Genereras proceduralt per tick ur brus, lagras inte."]],
-        [17, 13, 12, 48], kicker="Vad som finns i en körning", size=11.5,
-        footnote="Administrativa kartor (andel av cell inom ett område) "
-                 "finns i strategin men har ingen motsvarighet i motorn i "
-                 "dag; de hör till efterbearbetningen.")
+          "Genereras proceduralt per tick ur brus, lagras inte."],
+         ["Kalendertabeller", "F(t), m(t), P(t), T(t)", "per tick",
+          "Ljus, attackmultiplikator, primärproduktionsfaktor och "
+          "vattentemperatur. Samma för alla celler; byggs ur manifestet."]],
+        [17, 16, 12, 45], kicker="Vad som finns i en körning", size=11.5,
+        footnote="Geografiska kartor som djup och temperatur per cell och "
+                 "administrativa kartor finns i strategin men läses inte av "
+                 "motorn i dag; temperaturen är en tidsserie per vattenlager, "
+                 "inte en karta.")
+
+    d.bullets(
+        "Dagsljuskalendern",
+        ["Kalendern ger varje tick ett datum och en tid: årstick k börjar "
+         "k · ticklängd timmar efter 1 januari 00:00 soltid. 8 760 h är "
+         "delbart med varje ticklängd 1-6 h, så året går exakt jämnt ut.",
+         "Solhöjden räknas ur latitud (58,15° N), deklination och soltid. "
+         "Ljusnivån F(t) är medelvärdet av en logistisk funktion av "
+         "solhöjden över tickets 10-minuterssteg - medel av f, inte f av "
+         "medlet, eftersom f är starkt olinjär.",
+         "Startdagen lottas per värld (start_day_of_year: random) och delas "
+         "av alla delta-par och båda tecknen i den världen (CRN).",
+         "Kalendern används på tre ställen:",
+         ("-", "ljusberoende attackhastighet för visuella predatorer"),
+         ("-", "ljusbegränsad tillväxt för växtplankton"),
+         ("-", "månadstemperaturen som styr ämnesomsättningen"),
+         "Varje beslutande FG ser F(t) som sista observationskanal. Att slå "
+         "på eller av kalendern ändrar in_dim med 1 och gör checkpoints "
+         "ogiltiga."],
+        kicker="simulation_settings.daylight", size=15.5)
+
+    d.table(
+        "Kalendern månad för månad",
+        ["", "jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep",
+         "okt", "nov", "dec"],
+        [["ljus F", "0,37", "0,44", "0,54", "0,66", "0,79", "0,87", "0,83",
+          "0,70", "0,58", "0,47", "0,38", "0,34"],
+         ["m sill → djurpl.", "0,70", "0,80", "0,94", "1,10", "1,30", "1,42",
+          "1,36", "1,17", "0,99", "0,84", "0,72", "0,66"],
+         ["m torsk → sill", "0,90", "0,93", "0,98", "1,04", "1,10", "1,13",
+          "1,11", "1,06", "1,00", "0,95", "0,91", "0,88"],
+         ["P/P_ref växtpl.", "0,16", "0,38", "0,72", "0,99", "1,12", "1,14",
+          "1,03", "0,84", "0,58", "0,37", "0,15", "0,10"],
+         ["T 0-50 m (°C)", "6,4", "5,5", "5,3", "6,2", "7,9", "9,9", "12,0",
+          "13,3", "13,6", "12,6", "10,5", "8,4"],
+         ["T 50 m (°C)", "7,8", "7,2", "6,7", "6,6", "6,8", "7,2", "8,0",
+          "8,7", "10,2", "11,4", "10,6", "9,3"],
+         ["Q10-faktor sill", "0,55", "0,51", "0,51", "0,54", "0,62", "0,73",
+          "0,85", "0,95", "0,97", "0,90", "0,76", "0,64"],
+         ["Q10-faktor torsk", "0,95", "0,90", "0,87", "0,86", "0,88", "0,91",
+          "0,96", "1,01", "1,14", "1,26", "1,18", "1,06"],
+         ["Q10-faktor djurpl.", "0,80", "0,75", "0,74", "0,79", "0,88",
+          "1,02", "1,18", "1,29", "1,32", "1,23", "1,06", "0,92"]],
+        [20] + [6] * 12, size=11.5, align=["left"] + ["right"] * 12,
+        kicker="58,15° N, 6 h/tick, månadsmedel",
+        footnote="Ur tools/probes/daylight_table.py. Attackmultiplikatorn m "
+                 "har årsmedel exakt 1; växtplanktonfaktorn är 1 den 15 "
+                 "april (dag 105) och har årsmedel 0,63; sillens Q10-faktor "
+                 "är relativ en sommarkostnad vid 14 °C. Temperatur: SMHI "
+                 "SHARK A16 + A17, 1991-2020.")
+
+    d.bullets(
+        "Vattentemperatur",
+        ["Utan temperatur betalade varje växelvarm FG sin sommarkostnad "
+         "hela året. Med simulation_settings.temperature betalar en "
+         "beslutande FG med metabolism_q10:",
+         ("p", "resting_metabolism · Q10^((T(t) − t_ref) / 10)"),
+         "Alla actionkostnader är multiplar av resting_metabolism, så vila, "
+         "äta och röra sig följer med. T(t) interpoleras cirkulärt ur tolv "
+         "månadsmedel för FG:ns vattenlager: 0-50 m för sill och "
+         "djurplankton, 50 m för torskfisk.",
+         ("-", "Sill: Q10 2,2, t_ref 14 °C - bibliotekets värde är "
+               "Rudstam/Rose-kostnaden vid sommartemperatur."),
+         ("-", "Torskfisk 2,2 och djurplankton 2,0 med t_ref = årsmedel: "
+               "faktorn har årsmedel 1."),
+         ("-", "Tumlare: ingen - endoterm, fältmetabolismen är platt över "
+               "0-20 °C."),
+         "Attackhastigheterna skalas inte med temperaturen, och ingen "
+         "observationskanal tillkommer: checkpoints förblir giltiga.",
+         ("p", "Effekt i en probe med tränade policyer: sillens vintersvält försvann; "
+               "reservfyllnaden i januari-februari hamnade på 0,31-0,32, "
+               "inom litteraturens 0,28-0,45.")],
+        kicker="Q10 på kalendern", size=15)
 
     # ---------------------------------------------------------------- 4
     d.section("3", "Egenskaper hos funktionsgrupper",
@@ -977,106 +1485,198 @@ def build(d):
           "Basförbrukning. Multipliceras med actionens kostnadsfaktor."],
          ["Kostnadsfaktorer", "resting_cost, feeding_cost, movement_cost",
           "faktor", "Multiplikator på viloförbränningen per action."],
+         ["Temperatur", "metabolism_q10, metabolism_t_ref", "-, °C",
+          "Q10-faktor på viloförbränningen; t_ref i °C eller annual_mean."],
          ["Energiinnehåll", "energy_content", "MJ/ton",
           "Vad ett ton av FG:n är värt som föda - och priset på ett ton "
           "egen ny biomassa."],
+         ["Reserven som föda", "prey_includes_reserve, "
+          "reserve_reference_fill", "ja/nej, andel",
+          "Bytets reserv äts med. Statisk kvalitet för grindarna vid "
+          "referensfyllnaden."],
          ["Underhållsnivå", "maintenance_level (u_X)", "andel av ME",
-          "Nollpunkt: q_X = s_X - u_X. 0,5 för samtliga beslutande FG i "
-          "biblioteket."],
-         ["Mättnadsskala", "satiation_scale", "andel av ME",
-          "Hungerfaktorns nollpunkt: h_X = max(0, 1 - s_X/scale). "
-          "Standard 0,8; tumlare 1,37."],
+          "Nollpunkt: q_X = s_X - u_X, och knät i hungerkurvan. 0,5 för "
+          "alla beslutande FG utom sill (0,2)."],
          ["Energikänslighet", "impact_table.energy_factor", "faktor",
           "Extra metabolisk kostnad från påverkan p."]],
-        [17, 24, 12, 42], size=11.5, kicker="Per funktionsgrupp")
+        [17, 25, 12, 41], size=11.0, kicker="Per funktionsgrupp")
 
     d.table(
         "Egenskaper: tillväxt, förluster och rörelse",
         ["Egenskap", "Nyckel", "Enhet", "Roll"],
-        [["Maximal tillväxt", "growth_rate (MG_X)", "andel/tick",
-          "Tillväxtönskan dB = B · MG · q när q >= 0."],
+        [["Maximal nettotillväxt", "r_max", "1/år",
+          "Litteraturens nettotillväxt vid låg täthet. Grund för den "
+          "härledda growth_rate."],
+         ["Tillväxttakt", "growth_rate (MG_X)", "andel/tick",
+          "HÄRLEDD av laddaren - redigeras aldrig direkt (utom "
+          "bottensamhället)."],
+         ["Naturlig mortalitet", "natural_mortality (M1)", "andel/tick",
+          "Endast förluster som inte är predation från en FG. Kräver "
+          "--mortality on."],
          ["Svälttakt", "starve_rate", "andel/tick",
-          "Katabolism när q < 0. Egen takt: 2 ggr growth_rate för djurplankton, 500 ggr för tumlare."],
-         ["Naturlig mortalitet", "natural_mortality", "andel/tick",
-          "Täthetsoberoende. Kräver --mortality on."],
+          "Katabolism när q < 0."],
          ["Maximal bärkraft", "max_carrying_capacity", "ton/cell",
           "Endast icke beslutande FG."],
-         ["Maximalt intag", "max_intake_rate (a)", "ton byte/ton X/tick",
-          "Attackhastighet i det funktionella svaret."],
-         ["Hanteringstid", "handling_time (h)", "tick/ton",
-          "Sätter det fysiologiska taket 1/h."],
+         ["Återkolonisering", "seed_rate", "andel av CC/tick",
+          "Golv för icke beslutande FG; 0 för växtplankton."],
+         ["Attackhastighet", "max_intake_rate (a)", "1/(ton·tick)",
+          "Lutningen i det funktionella svaret; kan sättas per par."],
          ["Interferens", "interference (w)", "1/ton",
           "Beddington-DeAngelis: egen täthet sänker intaget."],
          ["Hastighet", "movement_speed (v)", "cellsidor/tick",
-          "Andel av den rörliga biomassan som når grannen. Klipps till "
-          "[0, 1]."],
+          "Sträcka per tick för den rörliga kohorten. Klipps till [0, 1]."],
          ["Minsta delbara massa", "min_split_biomass", "kg",
           "Under detta kollapsar actionfördelningen till argmax."],
          ["Utdöendetröskel", "extinction_threshold_factor", "faktor",
-          "Cell nollställs under faktor · min_split_biomass. Standard 0,5."],
-         ["Synlighetsgolv", "visibility_floor", "[0,1]",
-          "Andel som förblir synlig trots vila."],
-         ["Strömrespons", "current_response", "[0,1]",
-          "Andel av strömfältet som FG:n följer."]],
+          "Cell nollställs under faktor · min_split_biomass."]],
         [17, 24, 14, 40], size=10.8, kicker="Per funktionsgrupp")
 
     d.table(
-        "Bibliotekets värden - beslutande funktionsgrupper",
-        ["", "zooplankton", "pelagic_fish", "gadoids", "porpoises", "seals",
-         "seabirds"],
-        [["maintenance_level u", "0,5", "0,5", "0,5", "0,5", "0,5", "0,5"],
-         ["max_energy_reserve", "675", "2 400", "2 500", "2 800", "5 200",
-          "3 400"],
-         ["resting_metabolism", "22,5", "8,0", "6,0", "90", "45", "135"],
-         ["energy_content", "4 500", "7 500", "5 500", "8 500", "10 000",
-          "7 000"],
-         ["growth_rate", "0,0913", "0,004", "0,0025", "0,001", "0,001",
-          "0,001"],
-         ["starve_rate", "0,2", "0,025", "0,012", "0,5", "0,03", "0,2"],
-         ["natural_mortality", "0,0025", "1,0e-4", "7,0e-5", "6,0e-5",
-          "6,0e-5", "8,0e-5"],
-         ["max_intake_rate a", "0,25", "0,04", "0,04", "0,035", "0,05",
-          "0,15"],
-         ["movement_speed v", "0,02", "1,0", "0,25", "1,0", "1,0", "1,0"],
-         ["interference w", "0", "0,7", "1,0", "0", "0", "0"],
-         ["visibility_floor", "0,2", "0,35", "0,6", "0", "0", "0"],
-         ["min_split_biomass (kg)", "0", "0,5", "0,5", "250", "80", "1,0"],
-         ["feeding / movement_cost", "2,0 / 1,2", "1,9 / 1,5", "1,75 / 2,0",
-          "1,4 / 1,6", "1,3 / 1,5", "2,2 / 2,8"]],
-        [22, 13, 13, 13, 13, 13, 13], size=11.0,
-        align=["left", "right", "right", "right", "right", "right", "right"],
-        kicker="fg_library.yaml, kalibrerat vid 6 h/tick",
-        footnote="Energier i MJ/ton, takter per tick. Tumlare har dessutom "
-                 "satiation_scale 1,37 och extinction_threshold_factor 0,02.")
+        "Egenskaper: predationspar och primärproducent",
+        ["Egenskap", "Nyckel", "Enhet", "Roll"],
+        [["Predationsmortalitet", "predation_mortality (M2)", "1/år",
+          "Litteraturens förlust av bytet till predatorn. Ingår i bytets "
+          "härledda tillväxt."],
+         ["Attackhastighet per par", "max_intake_rate", "1/(ton·tick)",
+          "Ersätter artens värde. Flyttar halvmättnaden 1/(a·h) utan att "
+          "flytta taket."],
+         ["Hanteringstid", "handling_time (h)", "tick",
+          "Sätter taket 1/h ton byte per ton predator och tick."],
+         ["Assimilation", "assimilation_factor", "andel",
+          "Andel av bytets energi som predatorn behåller."],
+         ["Synlighetsgolv", "visibility_floor", "[0,1]",
+          "Andel som förblir synlig trots vila; annars bytets eget."],
+         ["Funktionellt svar", "functional_response", "2 | 3",
+          "Tvingar Holling typ II eller III för paret."],
+         ["Ljusberoende", "dark_ratio, light_threshold_deg", "andel, °",
+          "Attack i mörker relativt dagsljus, och solhöjden för halv "
+          "detektion."],
+         ["Ljusmättnad", "light_saturation (I_k)", "µmol/m²/s",
+          "P-I-kurvans knä för växtplankton; ett värde eller tolv."],
+         ["Referensdag", "light_reference_day", "dag",
+          "Dagen då ljusfaktorn är exakt 1 (105 = mitten av april)."],
+         ["Strömrespons", "current_response", "[0,1]",
+          "Andel av strömfältet som FG:n följer."]],
+        [19, 25, 12, 40], size=10.8, kicker="Per par och för producenter")
+
+    d.formula(
+        "Tillväxttakten härleds ur en litteraturbudget",
+        [("lib/world/growth_budget.py - laddaren, FG-editorn och testerna "
+          "räknar likadant", [
+            r"g_X &= \dfrac{r_{\max,X} + M1_X + \sum_j M2_{Xj}}{(1 - u_X)\cdot 1460} \qquad \mathrm{beslutande\ FG}",
+            r"r_X &= \dfrac{r_{\max,X} + \sum_j M2_{Xj}}{1460} \qquad \mathrm{icke\ beslutande\ FG}",
+            ("t", "1 460 = antal 6-timmarstick per år. M2_Xj räknas när "
+                  "paret är ikryssat, predatorn är beslutande och aktiv i "
+                  "projektet."),
+        ])],
+        lead=[("p", "growth_rate är inte längre ett fritt tal. Tillväxten "
+                    "måste betala för de förluster modellen själv tar ut, "
+                    "så att nettotillväxten vid låg täthet blir "
+                    "litteraturens r_max.")],
+        tail=[("-", "M1 och M2 kommer från Nordsjöns Ecopath-modell för 1991 "
+                    "(Mackinson & Daskalov 2007); r_max från FishBase/CMSY, "
+                    "observerad återhämtning (säl, tumlare), Huntley & Lopez "
+                    "(copepoder) och utspädningsexperiment (växtplankton)."),
+              ("-", "Kryssas en predator ur i FG-editorn sjunker bytets g "
+                    "med predatorns andel. Med --mortality off lämnar "
+                    "laddaren M1 utanför g."),
+              ("-", "Budgeten betalas fullt först vid s = 1, där "
+                    "hungern stänger intaget. Det är en känd svaghet "
+                    "(del 8). Bottensamhället är fortfarande handsatt.")],
+        kicker="r_max, M1, M2")
 
     d.table(
-        "Bibliotekets värden - icke beslutande grupper och predationspar",
-        ["Predator → byte", "a", "h", "assimilation", "vis.golv", "svar"],
-        [["zooplankton → phytoplankton", "0,25", "4,0", "0,65", "prey 0",
-          "typ III"],
-         ["pelagic_fish → zooplankton", "0,04", "25,0", "0,80", "prey 0,2",
-          "typ III"],
-         ["gadoids → pelagic_fish", "0,04", "25,0", "0,80", "0,25",
-          "typ II"],
-         ["gadoids → benthic_community", "0,04", "25,0", "0,70", "prey 0",
-          "typ II"],
-         ["porpoises → pelagic_fish", "0,035", "28,6", "0,90", "0,95",
-          "typ II"],
-         ["porpoises → gadoids", "0,035", "28,6", "0,84", "0,75", "typ II"],
-         ["seals → pelagic_fish", "0,05", "20,0", "0,92", "prey 0,35",
-          "typ II"],
-         ["seals → gadoids", "0,05", "20,0", "0,86", "prey 0,6", "typ II"],
-         ["seabirds → pelagic_fish", "0,15", "0,0", "1,00", "prey 0,35",
-          "typ III"]],
-        [30, 10, 10, 14, 14, 12], size=11.5,
-        align=["left", "right", "right", "right", "right", "left"],
-        lead="Icke beslutande: phytoplankton växer med growth_rate 0,125 mot "
-             "max_carrying_capacity 24 ton/cell och energy_content 2 000 "
-             "MJ/ton; benthic_community med 0,001 mot 10 ton/cell och "
-             "3 000 MJ/ton, plus seed_rate 1e-6.",
-        footnote="\"prey 0,2\" = paret ärver bytets eget visibility_floor. "
-                 "Typ III används av specialister - predatorer med exakt en "
-                 "aktiv bytesgrupp - och väljs automatiskt av motorn.")
+        "Bibliotekets värden - beslutande funktionsgrupper",
+        ["", "zooplankton", "pelagic_fish", "gadoids", "porpoises", "seals *",
+         "seabirds *"],
+        dm_value_rows(),
+        [22, 13, 13, 13, 13, 13, 13], size=10.2,
+        align=["left", "right", "right", "right", "right", "right", "right"],
+        kicker="fg_library.yaml, kalibrerat vid 6 h/tick",
+        footnote="Läst ur fg_library.yaml när dokumentet byggs. Energier i "
+                 "MJ/ton, takter per tick. * = muted i mareld2.yaml. "
+                 "Sillens energy_content är den magra kroppen; reserven "
+                 "kommer ovanpå.")
+
+    d.table(
+        "Bibliotekets värden - predationspar",
+        ["Predator → byte", "a", "h", "assim.", "golv", "svar",
+         "mörker / tröskel", "M2 (1/år)"],
+        pair_value_rows(),
+        [28, 8, 8, 9, 11, 13, 14, 11], size=10.8,
+        align=["left", "right", "right", "right", "right", "left", "left",
+               "right"],
+        lead=f"Icke beslutande: phytoplankton växer med growth_rate "
+             f"{f(phy['growth_rate'])} (aprilvärdet, ljusbegränsat) mot "
+             f"max_carrying_capacity {f(phy['max_carrying_capacity'])} "
+             f"ton/cell, {f(phy['energy_content'])} MJ/ton; "
+             f"benthic_community med {f(ben['growth_rate'])} mot "
+             f"{f(ben['max_carrying_capacity'])} ton/cell, "
+             f"{f(ben['energy_content'])} MJ/ton, plus seed_rate "
+             f"{f(ben['seed_rate'])}.",
+        footnote="\"byte 0,2\" = paret ärver bytets eget visibility_floor. "
+                 "\"satt\" = functional_response i biblioteket; annars får "
+                 "en specialist typ III och en generalist typ II. "
+                 "* = predatorn är muted.")
+
+    d.bullets(
+        "Sill: mager kropp och fettreserv",
+        ["Sillen bar tidigare en enda energipott (7 500 MJ/ton). I "
+         "tränade körningar svalt den ihjäl varje vinter, men ingen källa "
+         "rapporterar vintersvält hos vuxen sill: verklig sill går ned "
+         "till 4,4-6,5 kJ/g i första kvartalet och lever.",
+         "Nu skiljs kroppen från reserven:",
+         ("-", "energy_content 4 000 MJ/ton = mager kropp (≈ 4,1 kJ/g)"),
+         ("-", "max_energy_reserve 7 000 MJ/ton ≈ 18 % fett"),
+         ("-", "maintenance_level 0,2 - svält först när fettet nästan är slut"),
+         ("-", "prey_includes_reserve: en predator får "
+               "intag · assimilation · (4 000 + R/B i cellen)"),
+         "Grindarna och FG-editorn räknar med reserven vid "
+         "referensfyllnaden 0,5, dvs samma kvalitet 7 500 MJ/ton som förut, "
+         "så tumlarens energibudget är oförändrad.",
+         ("p", "Med delningen lönar sig vila vid låg föda - en sill kan lära "
+               "sig fasta. I tioårskörningen följer sillen en fettcykel: "
+               "s 0,23 i februari, 0,87 i juni.")],
+        kicker="prey_includes_reserve", size=15)
+
+    d.bullets(
+        "Torskfiskar: fyra byten och ett energitak",
+        ["Ecopath 1991 ger torskfiskarna 45 % av födan från byten modellen "
+         "saknar. Med bara sill och bottendjur lade modellens torskfiskar "
+         "dubbla Ecopath-trycket på sillen. Djurplankton (krillproxy) och "
+         "kannibalism lades till; sillparet fick typ III, som ger glest "
+         "byte en refug.",
+         "Taket var 1/h = 16 % av kroppsvikten per dygn - mot 2-3,5 % för "
+         "vuxen torsk. Hungern, inte magen, satte intaget. Magsäckens "
+         "tömningstid skalar med bytets energitäthet, så taket sätts nu "
+         "som en ENERGIgräns per par:",
+         ("p", "h = 130 · E / 4 500   →   bottendjur 87, djurplankton 130, "
+               "torskfisk 159, sill 217"),
+         "Alla par mättar då vid samma MJ per ton torskfisk och tick.",
+         "M1 sänktes 12 oktober från 0,683 till 0,415 per år: residual M0 "
+         "0,20 enligt ICES SMS plus predation från grupper som inte är FG "
+         "(0,214). Den gamla bottendelen kom av dubblerade rader i "
+         "Ecopath-tabellen."],
+        kicker="Avsnitt 141, 147-148, 157", size=15)
+
+    d.bullets(
+        "Tumlare: kostnader, diet och odelbar enhet",
+        ["Kostnader mot uppmätt metabolism (Rojano-Donate m fl 2018: vilda "
+         "tumlare 0,35 MJ/kg/dygn, fältmetabolism inklusive födosök):",
+         ("-", "resting_metabolism 60 MJ/ton/tick = 0,24 MJ/kg/dygn"),
+         ("-", "feeding_cost 1,5 → äta = 90 = den uppmätta "
+               "fältmetabolismen; movement_cost 1,3"),
+         "Diet: Ecopath ger ~49 % torskfisk i massa. Sillen mättade "
+         "tumlaren, så attackhastigheten per par sattes till 0,015 på sill "
+         "och 0,2 på torskfisk. Kvoten 13 är en anpassning till "
+         "dietdata, inte en mekanism.",
+         "Odelbar enhet: min_split_biomass 250 → 50 kg (ett djur), "
+         "utdöendesvep vid 5 kg. Med 250 kg var varje tumlarcell argmax, "
+         "vilket dolde policyns verkliga fördelning.",
+         ("p", "Tränat på 50 kg: 44 % torskfisk i dieten, tumlarna sprids "
+               "över 264 celler, flyttsannolikheten tränades ned från "
+               "22 % till 7 %.")],
+        kicker="Avsnitt 145, 151-152, 154", size=15)
 
     # ---------------------------------------------------------------- 5
     d.section("4", "Beteendemodeller",
@@ -1101,38 +1701,35 @@ def build(d):
     d.figure(
         "Observation", draw_observation, kicker="Vad en population ser",
         footnote="Ändras Observability-matrisen, de observerbara "
-                 "impaktkartorna, FG-uppsättningen eller gridlayouten blir "
-                 "befintliga checkpoints ogiltiga - observationens bredd "
-                 "ändras.")
+                 "impaktkartorna, FG-uppsättningen, gridlayouten eller "
+                 "dagsljuskalendern blir befintliga checkpoints ogiltiga - "
+                 "observationens bredd ändras.")
 
     d.table(
         "Observability-matrisen",
         ["Observatör", "phyto", "zoo", "pel.fisk", "torskfisk", "tumlare",
          "säl", "sjöfågel", "botten"],
-        [["zooplankton", "ja", "ja", "-", "-", "-", "-", "-", "-"],
-         ["pelagic_fish", "-", "ja", "ja", "ja", "ja", "ja", "ja", "-"],
-         ["gadoids", "-", "-", "ja", "ja", "ja", "ja", "-", "ja"],
-         ["porpoises", "-", "-", "ja", "ja", "ja", "ja", "-", "-"],
-         ["seals", "-", "-", "ja", "ja", "ja", "ja", "ja", "-"],
-         ["seabirds", "-", "-", "ja", "-", "-", "-", "ja", "-"]],
+        observability_rows("ja"),
         [20, 10, 10, 11, 12, 11, 9, 11, 10], size=11.5,
         align=["left"] + ["center"] * 8,
         lead="Matrisen bestämmer observationens bredd per FG: k_X = "
-             "antal ja på raden utöver FG:n själv (den egna biomassan och "
-             "mättnadsgraden är alltid med). k = 1 för djurplankton och "
-             "sjöfågel, 5 för pelagisk fisk.",
-        footnote="Raderna är inte symmetriska: torskfisk ser tumlare "
-                 "(predatorn) men sjöfågel ser bara pelagisk fisk och sig "
-                 "själv. Matrisen redigeras i FG-editorn.")
+             "antal ja på raden utöver FG:n själv, räknat bara på aktiva "
+             "FG (den egna biomassan och mättnadsgraden är alltid med). "
+             "I dag k = 1 för djurplankton, 2 för tumlare, 3 för pelagisk "
+             "fisk och 4 för torskfisk.",
+        footnote="Läst ur fg_library.yaml. Torskfiskarna ser djurplankton "
+                 "sedan avsnitt 141 (in_dim 22 → 27). * = muted. Matrisen "
+                 "redigeras i FG-editorn.")
 
     d.bullets(
         "Maskning av actions",
         ["Predation maskas bort när bytet inte finns i cellen eller inte "
          "ligger på menyn. Ingenting annat maskar ätandet.",
          ("-", "Maj-utgåvan maskade bort all predation över s_X = 0,8. "
-               "Den regeln finns inte i koden: hungern är i stället en "
-               "KONTINUERLIG faktor h_X = max(0, 1 - s_X/satiation_scale) "
-               "som skalar det önskade intaget mjukt mot noll."),
+               "Den regeln finns inte i koden. Hungern är i stället en "
+               "KONTINUERLIG faktor "
+               "h_X = min(1, max(0, (1 − s_X)/(1 − u_X))) som skalar det "
+               "önskade intaget."),
          "Rörelse i en riktning maskas bort när grannen är otillgänglig, "
          "när riktningen lämnar griden (utan --migration on) eller när "
          "FG:ns movement_speed är 0.",
@@ -1150,13 +1747,14 @@ def build(d):
     d.figure(
         "Hunger, underhåll och tillväxt", draw_hunger_gate,
         kicker="Två kurvor som styr allt",
-        lead="Hungerfaktorn h_X skalar intaget; överskottsenergin q_X = "
-             "s_X - u_X sätter tecknet på tillväxten. De är olika trösklar "
-             "med olika nollpunkter, och avståndet mellan dem är den "
-             "marginal en FG har att leva på.",
-        footnote="Med u_X = 0,5 och satiation_scale 0,8 äter en mätt "
-                 "population fortfarande med h = 0,375 vid sin nollpunkt. "
-                 "Det är den siffran energibudgetgrinden räknar på.")
+        lead="Hungerfaktorn h_X är 1 upp till underhållsnivån u_X och faller "
+             "sedan linjärt till 0 vid full reserv. Överskottsenergin "
+             "q_X = s_X − u_X sätter tecknet på tillväxten. Båda kurvorna "
+             "har sitt knä i u_X.",
+        footnote="Under u_X äter en population med full aptit - ätandet styrs "
+                 "av föda och magkapacitet, inte av reserven. "
+                 "Energibudgetgrinden räknar därför på h(u_X) = 1. "
+                 "Sillens tillväxtkurva är förstorad tio gånger.")
 
     d.bullets(
         "Vila är också att gömma sig",
@@ -1164,19 +1762,20 @@ def build(d):
          "skyddad från predation samma tick - och osynlig i nästa ticks "
          "observation.",
          ("-", "synlig andel = 1 - π_vila · (1 - golv)"),
-         ("-", "Golvet verkar på själva gömda andelen, så det är aktivt "
-               "för varje π_vila > 0, inte bara vid mättnad."),
          "Golvet är i första hand bytets eget visibility_floor, men kan "
          "sättas per PAR: detektionsförmåga tillhör paret, inte bytet. "
-         "Tumlaren använder biosonar och påverkas inte av den visuella "
-         "krypsis som skyddar sill mot sjöfågel - därför golv 0,95 för "
-         "tumlare → pelagisk fisk mot 0,25 för torskfisk → pelagisk fisk.",
-         "Den gömda andelen räknas bort både i predationen (bytet kan inte "
-         "tas) och i observationen (bytet syns inte), med samma formel på "
-         "båda ställena.",
+         "Tumlaren använder biosonar - därför golv 0,95 för tumlare → "
+         "pelagisk fisk mot 0,25 för torskfisk → pelagisk fisk.",
+         "Ljuset och gömslet är två olika saker: golvet säger hur väl "
+         "gömslet fungerar, ljuset hur farligt det är att vara synlig. "
+         "Vila stoppar också betningen - den verkliga kostnaden för "
+         "dygnsvandring.",
          "Taket på uttaget ur en cell sätts av den BÄST detekterande "
          "predatorn, medan varje enskild predator är begränsad av vad den "
-         "själv ser."],
+         "själv ser.",
+         ("-", "En exponeringsviktad M1 (avsnitt 139: visuell del följer "
+               "ljuset, taktil del drabbar de gömda) finns i motorn men är "
+               "inte satt i biblioteket.")],
         kicker="visibility_floor")
 
     # ---------------------------------------------------------------- 6
@@ -1193,13 +1792,13 @@ def build(d):
 
     d.formula(
         "Steg 2: påverkansmortalitet",
-        [("Uppslagning i FG:ns egen tabell", """
-(biomass_factor, energy_factor) = interp( impact_table, Impact_p(c) )
-
-m_X^Impact(c) = B_X(c) · Σ_p biomass_factor_p(c)
-B_X(c)  ← max(0, B_X(c) − m_X^Impact(c))
-R_X(c)  ← R_X(c) · B_X_ny(c) / B_X_gammal(c)
-""")],
+        [("Uppslagning i FG:ns egen tabell", [
+            r"(\mathrm{biomass\_factor}_p,\ \mathrm{energy\_factor}_p) = \mathrm{interp}\left(\mathrm{impact\_table},\ \mathrm{Impact}_p(c)\right)",
+            "",
+            r"m_X^{\mathrm{Impact}}(c) &= B_X(c)\,\sum_p \mathrm{biomass\_factor}_p(c)",
+            r"B_X(c) &\leftarrow \max\left(0,\ B_X(c) - m_X^{\mathrm{Impact}}(c)\right)",
+            r"R_X(c) &\leftarrow R_X(c)\,\dfrac{B_X^{\mathrm{ny}}(c)}{B_X^{\mathrm{gammal}}(c)}",
+        ])],
         lead=[("p", "Påverkan tas ut FÖRE predationen, så att den "
                     "bytesbiomassa predatorerna ser redan är reducerad.")],
         tail=[("-", "Tabellen är en lista av (value, biomass_factor, "
@@ -1227,86 +1826,98 @@ R_X(c)  ← R_X(c) · B_X_ny(c) / B_X_gammal(c)
 
     d.formula(
         "Steg 3: predation",
-        [("Önskat intag, effektiv attackhastighet och uttag", """
-B_synlig,Y(c)  = B_Y(c) · ( 1 − π_Y,vila(c) · (1 − golv_XY) )
-
-                      a_XY · B_synlig,Y                (typ II)
-f_XY(c)  =  ──────────────────────────────────────────────
-            1 + a_XY · h_XY · B_synlig,Y + w_X · B_X(c)
-
-D_XY(c)  = B_X(c) · π_X,ätY(c) · f_XY(c) · h_X(c)
-skala(c) = min( 1 , 0.999 · B_synlig,Y(c) / Σ_X D_XY(c) )
-intag_XY = D_XY(c) · skala(c)
-"""),
-         ("Bokföring", """
-R_X(c) ← R_X(c) + Σ_Y intag_XY(c) · energy_content_Y · assimilation_XY
-B_Y(c) ← B_Y(c) − Σ_X intag_XY(c)      R_Y skalas med samma kvot
-""")],
-        tail=[("-", "Typ III (specialister) ersätter B med B² i både "
-                    "täljare och nämnare, vilket ger glest byte en refug."),
-              ("-", "w_X · B_X(c) är Beddington-DeAngelis-interferens: "
-                    "predatorns EGEN täthet i cellen sänker intaget per ton "
-                    "predator. Det är den term som löste de vertikala "
-                    "banden i rörelsemönstret."),
-              ("-", "Faktorn 0,999 är ett hårt tak på uttaget ur en cell. "
-                    "Noll är ett absorberande tillstånd - varje term i "
-                    "ticken är multiplikativ i B - så en överbetad cell får "
-                    "aldrig nå exakt noll.")],
-        kicker="Holling + interferens")
+        [("Önskat intag, effektiv attackhastighet och uttag", [
+            r"B_Y^{\mathrm{synlig}}(c) &= B_Y(c)\,\left(1 - \pi_{Y,\mathrm{vila}}(c)\,(1 - \mathrm{golv}_{XY})\right) \qquad a_{XY}(t) = a_{XY}\,m_{XY}(t)",
+            r"f_{XY}(c) &= \dfrac{a_{XY}(t)\,B_Y^{\mathrm{synlig}}}{1 + a_{XY}(t)\,h_{XY}\,B_Y^{\mathrm{synlig}} + w_X\,B_X(c)} \qquad (\mathrm{typ\ II})",
+            r"D_{XY}(c) &= B_X(c)\,\pi_{X,\mathrm{ät}\,Y}(c)\,f_{XY}(c)\,h_X(c)",
+            r"\mathrm{skala}(c) &= \min\left(1,\ 0{,}999\,B_Y^{\mathrm{synlig}}(c)\ /\ \Sigma_X\,D_{XY}(c)\right) \qquad \mathrm{intag}_{XY} = D_{XY}(c)\,\mathrm{skala}(c)",
+        ]),
+         ("Bokföring", [
+            r"R_X(c) &\leftarrow R_X(c) + \sum_Y \mathrm{intag}_{XY}(c)\,\mathrm{assimilation}_{XY}\,\left(\mathrm{energy\_content}_Y + [R_Y/B_Y]\right)",
+            r"B_Y(c) &\leftarrow B_Y(c) - \sum_X \mathrm{intag}_{XY}(c) \qquad R_Y\ \mathrm{skalas\ med\ samma\ kvot}",
+        ])],
+        tail=[("-", "Typ III ersätter B med B² i täljare och nämnare. Den "
+                    "används av specialister och av par med "
+                    "functional_response: 3."),
+              ("-", "m_XY(t) är dagsljusmultiplikatorn (1 utan kalender); "
+                    "[R_Y/B_Y] ingår bara för byten med "
+                    "prey_includes_reserve, i dag sill."),
+              ("-", "w_X · B_X(c) är Beddington-DeAngelis-interferens. "
+                    "Faktorn 0,999 håller en överbetad cell borta från "
+                    "exakt noll, som är absorberande.")],
+        kicker="Holling + interferens + ljus")
 
     d.figure(
         "Funktionellt svar", draw_functional_response,
         kicker="Vad formeln gör",
-        items=[("-", "a sätter lutningen vid låg täthet, h sätter taket: "
-                     "en torskfisk kan aldrig äta mer än 1/25 = 0,04 ton "
-                     "byte per ton torskfisk och tick."),
-               ("-", "Interferensen w är vad som tar bort de vertikala "
-                     "banden i rörelsemönstret: att packa ihop sig i en "
-                     "cell lönar sig inte längre."),
-               ("-", "Typ III väljs automatiskt för predatorer med exakt "
-                     "en aktiv bytesgrupp - en generalist antas klara "
-                     "bytesväxling via sin policy i stället.")],
-        footnote="För h > 0 mättar intaget vid det fysiologiska taket "
-                 "1/h oavsett bytestäthet; sjöfågel har h = 0 och saknar "
-                 "därför tak utöver den synliga bytesbiomassan. Interferens "
-                 "sänker hela kurvan men ändrar inte dess form; typ III tar "
-                 "bort intaget vid låg täthet i stället.")
+        items=[("-", "Vänster: torskfiskarnas tak är en energigräns. "
+                     "Sill (typ III, h 217) och bottendjur (typ II, h 87) "
+                     "mättar vid samma MJ per ton torskfisk och tick."),
+               ("-", "Höger: djurplankton på växtplankton, tak 1/h = 0,25. "
+                     "Attackhastigheten per par sätter 1/(a·h) = 20 t/km²; "
+                     "med typ III nås halva taket vid √20 ≈ 4,5 ton/cell."),
+               ("-", "Interferensen w sänker hela kurvan när predatorerna "
+                     "packar ihop sig - det tog bort de vertikala banden i "
+                     "rörelsemönstret.")],
+        footnote="Energin räknas som den äts: sillen med reserven vid "
+                 "referensfyllnaden (4 000 + 0,5 · 7 000 MJ/ton).")
+
+    d.formula(
+        "Ljusberoende attackhastighet",
+        [("Per par med dark_ratio ρ < 1", [
+            r"f(\mathrm{elev}) &= \mathrm{logistisk}\left(\dfrac{\mathrm{elev} - \theta}{2^\circ}\right) \qquad F(t) = \mathrm{medel\ över\ tickets\ 10\ min\ steg}",
+            r"m_{XY}(t) &= \dfrac{\rho + (1 - \rho)\,F(t)}{\mathrm{årsmedel}\left(\rho + (1 - \rho)\,F\right)} \qquad a_{XY}(t) = a_{XY}\,m_{XY}(t)",
+        ])],
+        lead=[("p", "Visuella predatorer ser bytet mycket bättre i ljus. "
+                    "ORSAKEN läggs i modellen - attackhastigheten - medan "
+                    "bytets svar, dygnsvandring, lämnas åt policyerna.")],
+        tail=[("-", "Normeringen gör bibliotekets a till årsmedlet, så "
+                    "tillväxtbudgeten och energibudgetgrinden håller i "
+                    "medel."),
+              ("-", "Sill → djurplankton: ρ = 0,1, θ = −8° (bett ned till "
+                    "0,001 lx, Batty m fl 1990). m: 0,66 i december, 1,42 i "
+                    "juni - midnattssolen går bara till −8,5°."),
+              ("-", "Torskfisk → sill: ρ = 0,6, θ = −5° (magsäcksdata från "
+                    "fält: sill i morgon- och kvällsmagar). Övriga par "
+                    "saknar mätningar och är ljusoberoende."),
+              ("-", "Elevation, inte lux: synavståndet växer med log(ljus) "
+                    "och mättar i skymningen. Moln ignoreras.")],
+        kicker="dark_ratio, light_threshold_deg")
 
     d.formula(
         "Steg 4: energi efter action",
-        [("Kostnad per action, före rörelse", """
-kostnad_a(c) = B_X(c) · π_X,a(c) · resting_metabolism_X
-               · cost_a · ( 1 + Σ_p energy_factor_p(c) )
-
-     cost_a  =  resting_cost | feeding_cost | movement_cost
-
-R_vila(c) = max(0, R_X(c)·π_vila − kostnad_vila)
-R_ät(c)   = max(0, R_X(c)·π_ät   − kostnad_ät ) + energivinst(c)
-R_rör(c)  = max(0, R_X(c)·π_rör  − kostnad_rör)
-""")],
+        [("Kostnad per action, före rörelse", [
+            r"\mathrm{kostnad}_a(c) &= B_X(c)\,\pi_{X,a}(c)\,\mathrm{resting\_metabolism}_X\,Q_{10}^{(T(t) - t_{\mathrm{ref}})/10}\,\mathrm{cost}_a\,\left(1 + \sum_p \mathrm{energy\_factor}_p(c)\right)",
+            r"\mathrm{cost}_a &\in \{\mathrm{resting\_cost},\ \mathrm{feeding\_cost},\ \mathrm{movement\_cost}\}",
+            "",
+            r"R_{\mathrm{vila}}(c) &= \max\left(0,\ R_X(c)\,\pi_{\mathrm{vila}} - \mathrm{kostnad}_{\mathrm{vila}}\right)",
+            r"R_{\mathrm{ät}}(c) &= \max\left(0,\ R_X(c)\,\pi_{\mathrm{ät}} - \mathrm{kostnad}_{\mathrm{ät}}\right) + \mathrm{energivinst}(c)",
+            r"R_{\mathrm{rör}}(c) &= \max\left(0,\ R_X(c)\,\pi_{\mathrm{rör}} - \mathrm{kostnad}_{\mathrm{rör}}\right)",
+        ])],
         lead=[("p", "Reserven delas upp på de tre actiongrupperna i "
                     "proportion till hur biomassan valde, varje grupp "
                     "betalar sin kostnad, och ätgruppen får predationens "
                     "energivinst.")],
         tail=[("-", "Alla actions kostar. Vila är den billigaste, inte "
                     "gratis."),
-              ("-", "Påverkan verkar multiplikativt på kostnaden: buller "
-                    "gör varje action dyrare i stället för att döda direkt."),
+              ("-", "Q10-faktorn är 1 för FG utan metabolism_q10 och utan "
+                    "temperaturblock. Påverkan verkar multiplikativt: "
+                    "buller gör varje action dyrare i stället för att döda."),
               ("-", "Efter rörelsen klipps reserven till [0, B_X · ME_X] "
                     "i varje cell.")],
         kicker="Metabolism")
 
     d.formula(
         "Steg 5: rörelse",
-        [("Utflöde, kvarvarande massa och blandning", """
-ut_d(c)   = B_X(c) · π_X,d(c) · v_X · mask_d(c)
-kvar(c)   = B_X(c) − Σ_d ut_d(c)
-B_X(c,+)  = kvar(c) + Σ_d ut_d( granne_d^-1(c) )
-
-R följer med sin biomassa:  flyttas 20 % av massan följer
-20 % av den actiongruppens reserv med.
-E_X = R_X / B_X räknas om efter blandning; B = 0 ger E = 0.
-""")],
+        [("Utflöde, kvarvarande massa och blandning", [
+            r"\mathrm{ut}_d(c) &= B_X(c)\,\pi_{X,d}(c)\,v_X\,\mathrm{mask}_d(c)",
+            r"\mathrm{kvar}(c) &= B_X(c) - \sum_d \mathrm{ut}_d(c)",
+            r"B_X^{+}(c) &= \mathrm{kvar}(c) + \sum_d \mathrm{ut}_d\left(\mathrm{granne}_d^{-1}(c)\right)",
+            "",
+            ("t", "R följer med sin biomassa: flyttas 20 % av massan följer "
+                  "20 % av den actiongruppens reserv med."),
+            r"E_X &= \dfrac{R_X}{B_X} \qquad \mathrm{räknas\ om\ efter\ blandning;}\ B = 0\ \Rightarrow\ E = 0",
+        ])],
         lead=[("p", "Rörelse skapar och förstör ingen biomassa. Den delar "
                     "bara upp cellens massa i utflöden och kvarvarande "
                     "massa.")],
@@ -1323,22 +1934,25 @@ E_X = R_X / B_X räknas om efter blandning; B = 0 ger E = 0.
     d.bullets(
         "Rörelse: trösklar, migration och utdöende",
         ["Ett utflöde vars MÅLCELL ändå skulle hamna under "
-         "utdöendetröskeln ställs in och återförs till källcellen. Utan den "
-         "regeln blöder en diffunderande population biomassa genom "
-         "utdöendesvepet snabbare än den svälter.",
+         "utdöendetröskeln ställs in och återförs till källcellen.",
+         "Nytt i oktober (avsnitt 156): en cell som efter detta själv ligger "
+         "under tröskeln men fortfarande skickar biomassa till en granne "
+         "lämnar ALL sin biomassa och reserv till grannarna, i proportion "
+         "till utflödena. Och en emigration över kanten som är mindre än "
+         "tröskeln stannar hemma.",
+         ("-", "Motivet: rester och emigrationsdamm sveptes bort och "
+               "bokfördes som svält - för tumlare hälften av den "
+               "\"svältförlust\" som syntes."),
          "Med --migration on lämnar kantflödet griden och återinförs "
-         "fördelat längs kanten. Fördelningen koncentreras till de "
-         "tyngst viktade kantcellerna (top-k) så att invandringen inte "
-         "sprids ut under tröskeln och nollställs direkt.",
+         "koncentrerat till de tyngst viktade kantcellerna, så att "
+         "invandringen inte sprids ut under tröskeln.",
          "Sista steget i ticket nollställer celler där "
          "0 < B < extinction_threshold_factor · min_split_biomass och "
          "bokför massan som svältförlust. Motivet är numeriskt: under "
-         "tröskeln närmar sig värdena float32:s subnormaler och bär ingen "
-         "biologisk information, men stör observation, belöning och "
-         "förlustredovisning.",
+         "tröskeln närmar sig värdena float32:s subnormaler.",
          "Kontinuerliga FG - plankton, med min_split_biomass 0 - berörs "
          "inte av vare sig argmax-kollaps eller utdöendetröskel."],
-        kicker="Diskreta populationer i ett kontinuerligt fält")
+        kicker="Diskreta populationer i ett kontinuerligt fält", size=15.5)
 
     d.bullets(
         "Strömmar",
@@ -1362,30 +1976,28 @@ E_X = R_X / B_X räknas om efter blandning; B = 0 ger E = 0.
 
     d.formula(
         "Steg 7: tillväxt för beslutande FG - massbalanserad",
-        [("Önskan, tak och debitering", """
-s_X(c) = E_X(c) / ME_X            q_X(c) = s_X(c) − u_X
-
-önskan   = B_X(c) · MG_X · q_X(c)                   ( q ≥ 0 )
-E_ledig  = max( 0 , R_X(c) − u_X · ME_X · B_X(c) )
-dB       = min( önskan , E_ledig / energy_content_X )
-R_X(c)  ← R_X(c) − dB · energy_content_X
-B_X(c)  ← B_X(c) + dB
-"""),
-         ("Svält (q < 0) är en förlust, inte ett köp", """
-dB = B_X(c) · starve_rate_X · q_X(c)        R skalas med B
-""")],
-        lead=[("p", "Tillväxten är fortfarande GRINDAD av mättnaden precis "
-                    "som i maj-utgåvan - B · MG · q är önskan - men önskan "
-                    "är nu begränsad av den reserv som står över "
-                    "underhållsnivån, och den reserven DEBITERAS.")],
+        [("Önskan, tak och debitering", [
+            r"s_X(c) &= \dfrac{E_X(c)}{\mathrm{ME}_X} \qquad q_X(c) = s_X(c) - u_X",
+            r"\mathrm{önskan} &= B_X(c)\,\mathrm{MG}_X\,q_X(c) \qquad (q \geq 0)",
+            r"E_{\mathrm{ledig}} &= \max\left(0,\ R_X(c) - u_X\,\mathrm{ME}_X\,B_X(c)\right)",
+            r"\Delta B &= \min\left(\mathrm{önskan},\ \dfrac{E_{\mathrm{ledig}}}{\mathrm{energy\_content}_X}\right)",
+            r"R_X(c) &\leftarrow R_X(c) - \Delta B\,\mathrm{energy\_content}_X \qquad B_X(c) \leftarrow B_X(c) + \Delta B",
+        ]),
+         ("Svält (q < 0) är en förlust, inte ett köp", [
+            r"\Delta B &= B_X(c)\,\mathrm{starve\_rate}_X\,q_X(c) \qquad R\ \mathrm{skalas\ med}\ B",
+        ])],
+        lead=[("p", "Tillväxten är GRINDAD av mättnaden - B · MG · q är "
+                    "önskan - men önskan är begränsad av den reserv som "
+                    "står över underhållsnivån, och den reserven "
+                    "DEBITERAS. MG_X är den härledda growth_rate.")],
         tail=[("-", "Utan debiteringen bär ny biomassa ett energiinnehåll "
                     "som aldrig tagits ur något: mätt till 198-344 % av "
                     "den massa som faktiskt åts, mot ett termodynamiskt "
                     "tak på 28,9 %."),
               ("-", "Konsekvens: ME_X / energy_content_X blir ett hårt tak "
                     "på den uppnåbara growth_rate. För djurplankton är "
-                    "kvoten 0,150 mot growth_rate 0,0913 (0,100 och "
-                    "91 % av gränsen före avsnitt 124)."),
+                    f"kvoten {f(species('zooplankton')['max_energy_reserve'] / species('zooplankton')['energy_content'])} "
+                    f"mot growth_rate {f(species('zooplankton')['growth_rate'])}."),
               ("-", "--no-mass-balance återställer maj-utgåvans term. "
                     "Biblioteket är INTE kalibrerat för den.")],
         kicker="--mass-balance, på sedan september")
@@ -1394,67 +2006,75 @@ dB = B_X(c) · starve_rate_X · q_X(c)        R skalas med B
         "Energibokföringen i ett tick", draw_energy_flow,
         kicker="Var massan kommer ifrån",
         items=[("-", "Spillet är (1 − assimilation_factor) av intaget: "
-                     "0,65 för djurplankton på växtplankton, 0,90 för "
+                     "0,35 för djurplankton på växtplankton, 0,10 för "
                      "tumlare på pelagisk fisk."),
                ("-", "Reserven är den enda bufferten. Alla actions tar ur "
-                     "den, och påverkan höjer kostnaden multiplikativt."),
+                     "den; temperatur och påverkan höjer kostnaden "
+                     "multiplikativt."),
                ("-", "Först i tillväxtsteget blir reserv till biomassa, "
                      "till priset energy_content MJ per ton. En population "
                      "på eller under underhållsnivån kan därför inte växa "
                      "hur mycket föda som än finns.")],
-        footnote="Mätt vid bibliotekets värden: av det djurplankton äter "
-                 "andas 40,3 % bort som metabolism, 25,0 % byggs in som ny "
-                 "biomassa och slutningsgapet är -0,3 %.")
+        footnote="Fördelningen mellan andning, tillväxt och spill per FG går "
+                 "att läsa ut tick för tick ur förlustredovisningen och "
+                 "probeverktyget tools/probes/fg_year_budget.py.")
 
     d.bullets(
-        "Förluster: svält, mortalitet och påverkan",
-        ["Ticken bokför tre förlustkanaler separat per FG, och de går att "
-         "läsa ut i diagnostiken: predation, svält och påverkan.",
-         "Naturlig mortalitet är täthetsoberoende och valfri: den kräver "
-         "--mortality on och skalas av --mortality_multiplier "
+        "Förluster: fyra kanaler",
+        ["Ticken bokför fyra förlustkanaler separat per FG: predation, "
+         "svält, påverkan och naturlig mortalitet. "
+         "lib/environments/ecosystem_env/loss_accounting.py är enda stället "
+         "som gör andelar av dem; träningsloggen, inferensen, den levande "
+         "visningen och plots.html använder samma funktion.",
+         "Naturlig mortalitet (M1) är täthetsoberoende och valfri: den "
+         "kräver --mortality on och skalas av --mortality_multiplier "
          "(keep = 1 - FAKTOR · natural_mortality). Den tas ut på både "
-         "biomassa och reserv, före tillväxttermen.",
+         "biomassa och reserv, före tillväxttermen. Före avsnitt 132 syntes "
+         "den inte alls i förlustredovisningen.",
          "Svält är katabolism: under underhållsnivån krymper biomassan med "
          "starve_rate · |q|, och reserven skalas med samma kvot.",
-         "Massa som nollställs av utdöendetröskeln bokförs som svält - "
-         "semantiskt närmast, och antalet händelser räknas separat.",
+         "Massa som nollställs av utdöendetröskeln bokförs som svält, och "
+         "antalet händelser räknas separat.",
          "Mortalitet genom påverkan modelleras med påverkanskartor: fiske, "
          "jakt, kemikalier eller mekanisk dödlighet."],
-        kicker="Tre kanaler")
+        kicker="Predation, svält, påverkan, naturlig", size=15.5)
 
     d.formula(
         "Steg 7: tillväxt för icke beslutande FG",
-        [("Logistisk tillväxt mot bärkraft", """
-r_eff(t)   = growth_rate · ( 1 + amplitud · sin(2π (t + fas) / period) )
-
-dB(c)      = r_eff · B(c) · ( 1 − B(c) / CC(c) )  +  seed_rate · CC(c) · u
-B(c,t+1)   = klipp( B(c) + dB(c) , 0 , CC(c) )
-""")],
-        lead=[("p", "Gäller funktionsgrupper vars energi inte modelleras "
-                    "men som ingår i näringsväven. Betet har redan tagits "
-                    "ut i steg 3, så B(c) är biomassan efter predation.")],
-        tail=[("-", "seed_rate är ett återkoloniseringsgolv: en liten "
-                    "andel av bärkraften läggs till i varje cell varje "
-                    "tick, med en slumpfaktor 10^U(-1,1). Det gör noll "
-                    "icke-absorberande för bottensamhället."),
-              ("-", "Säsongsvariationen är avstängd i dag "
-                    "(seasonal_amplitude 0): den mättes och sänkte "
-                    "medelförsörjningen."),
-              ("-", "Växtplankton: growth_rate 0,125 per 6 h mot bärkraft "
-                    "24 ton/cell - en Eppley-takt vid 10-12 °C minus "
-                    "obetad mikrozooplanktonbetning.")],
-        kicker="Logistisk tillväxt")
+        [("Ljusbegränsad logistisk tillväxt mot bärkraft", [
+            r"r(t) &= \mathrm{growth\_rate}\,\dfrac{P(t)}{P_{\mathrm{ref}}} \qquad P(t) = \mathrm{medel}_{\mathrm{tick},\,z}\ \tanh\left(\dfrac{I_0(t)\,e^{-K_d z}}{I_k}\right)",
+            r"\Delta B(c) &= r(t)\,B(c)\,\left(1 - \dfrac{B(c)}{\mathrm{CC}(c)}\right) + \mathrm{seed\_rate}\,\mathrm{CC}(c)\,u \qquad u = 10^{U(-1,\,1)}",
+            r"B(c,t+1) &= \mathrm{klipp}\left(B(c) + \Delta B(c),\ 0,\ \mathrm{CC}(c)\right)",
+        ])],
+        lead=[("p", "Gäller funktionsgrupper vars energi inte modelleras. "
+                    "Betet har redan tagits ut i steg 3. Den gamla "
+                    "sinustermen är borttagen; säsongen kommer från "
+                    "kalendern.")],
+        tail=[("-", "I_0: klarhimmelsinstrålning (Haurwitz) × 0,45 PAR × "
+                    "4,57 µmol/J × månatlig molntransmission (SMHI "
+                    "Nordkoster). K_d 0,29/m; blandningsdjup 6-17 m (SHARK "
+                    "A17); I_k 111-298 µmol/m²/s per månad (SMHI 14C, "
+                    "Anholt E). P = 0 på natten."),
+              ("-", f"growth_rate {f(phy['growth_rate'])} per 6 h är den "
+                    "högsta in situ-takten i utspädningsexperiment i april "
+                    "minus mikrozooplanktonbetning; P_ref är dag 105, så "
+                    "faktorn är 1 i mitten av april och 0,63 i årsmedel."),
+              ("-", "Bottensamhället är inte ljusbegränsat: growth_rate "
+                    f"{f(ben['growth_rate'])}, plus seed_rate som "
+                    "återkoloniseringsgolv.")],
+        kicker="light_saturation, light_reference_day")
 
     d.bullets(
         "Sammanfattning av bokföringen",
         ["Ny biomassa = biomassa efter påverkan, predation och förflyttning "
          "+ tillväxt - svält - naturlig mortalitet.",
          "Biomassa kan bara öka när energireserven tillåter det. För icke "
-         "beslutande FG är bärkraften taket; för beslutande FG är "
-         "reserven över underhållsnivån taket.",
+         "beslutande FG är bärkraften taket och ljuset takten; för "
+         "beslutande FG är reserven över underhållsnivån taket.",
          "Reservenergin följer alltid sin biomassa: varje gång biomassan "
          "skalas ned skalas reserven med samma kvot, och varje gång massa "
-         "flyttas följer motsvarande andel av reserven med.",
+         "flyttas följer motsvarande andel av reserven med. Hos sill följer "
+         "reserven dessutom med in i predatorn.",
          "Det som INTE bevaras: naturlig mortalitet, påverkan och "
          "utdöendetröskeln tar massa ur systemet, och migration flyttar "
          "massa över gridens rand. Predation och rörelse bevarar den.",
@@ -1479,29 +2099,24 @@ B(c,t+1)   = klipp( B(c) + dB(c) , 0 , CC(c) )
          "på ett torg.",
          "Därför optimeras ingen långsiktig individuell avkastning, utan "
          "hur väl ett FÄLT klarar sig över en rollout.",
-         "Policynätverk kan konstrueras med flera metoder, t ex RL och "
-         "ARS. Det som körs i dag är ARS: gradientfritt och "
-         "parallelliserat över processer.",
-         "Rollouten är 15 tick som standard och 100-200 tick i "
-         "profilerna. Det är en förändring: maj-utgåvans motiv för "
-         "tvåstegsrollouts gäller inte den nuvarande belöningen, som "
-         "integrerar över hela rollouten."],
+         "Det som körs är ARS: gradientfritt och parallelliserat, på CPU "
+         "(train.py) eller i tensorform på GPU (train_gpu.py).",
+         "Rollouten är 15 tick som standard och 100-200 tick i profilerna. "
+         "Med kalendern på tränas i praktiken på ettårsrollouts, 1 460 "
+         "tick, så att varje rollout innehåller alla årstider."],
         kicker="Vad ARS ska åstadkomma")
 
     d.formula(
         "Fitness",
-        [("Standard: total energi, integrerad över rollouten", """
-E_tot(t) = Σ_c ( B_X(c,t) · energy_content_X + R_X(c,t) )
-
-              1    H
-Fitness_X = ───  Σ   log( ( E_tot(t) + ε ) / ( E_tot(0) + ε ) )
-              H   t=1
-
-ε = max( 1e-6 · E_tot(0) , 1e-9 )      H = --n_eval_ticks
-"""),
-         ("Kvar som --legacyreward: maj-utgåvans form", """
-Fitness_X = α · log(B_H/B_0) + β · log(R_H/R_0) + κ · (t_överlevd / H)
-""")],
+        [("Standard: total energi, integrerad över rollouten", [
+            r"E_{\mathrm{tot}}(t) &= \sum_c \left(B_X(c,t)\,\mathrm{energy\_content}_X + R_X(c,t)\right)",
+            r"\mathrm{Fitness}_X &= \dfrac{1}{H}\sum_{t=1}^{H}\,\log\dfrac{E_{\mathrm{tot}}(t) + \varepsilon}{E_{\mathrm{tot}}(0) + \varepsilon}",
+            r"\varepsilon &= \max\left(10^{-6}\,E_{\mathrm{tot}}(0),\ 10^{-9}\right)",
+            ("t", "H = --n_eval_ticks"),
+        ]),
+         ("Kvar som --legacyreward: maj-utgåvans form", [
+            r"\mathrm{Fitness}_X &= \alpha\,\log\dfrac{B_H}{B_0} + \beta\,\log\dfrac{R_H}{R_0} + \kappa\,\dfrac{t_{\mathrm{överlevd}}}{H}",
+        ])],
         tail=[("-", "Att räkna biomassa och reserv i SAMMA valuta tar bort "
                     "viktningen mellan α och β: ett ton biomassa är värt "
                     "exakt sitt energiinnehåll."),
@@ -1515,14 +2130,12 @@ Fitness_X = α · log(B_H/B_0) + β · log(R_H/R_0) + κ · (t_överlevd / H)
 
     d.formula(
         "Lokal belöning per cell",
-        [("--local_reward: samma fråga, ställd per cell", """
-A(c,t)   = B(c,t) · energy_content + R(c,t)
-B(c,t+1) = Σ_d andel_d(c) · Q( mål(c,d) , t+1 )
-
-belöning(c) = klipp( B(c,t+1) / A(c,t) , 0.2 , 5.0 )
-
-Fitness_X = medel_t  Σ_c  w_c · log( belöning(c) )  / antal celler
-""")],
+        [("--local_reward: samma fråga, ställd per cell", [
+            r"A(c,t) &= B(c,t)\,\mathrm{energy\_content} + R(c,t)",
+            r"B(c,t+1) &= \sum_d \mathrm{andel}_d(c)\,Q\left(\mathrm{mål}(c,d),\ t+1\right)",
+            r"\mathrm{belöning}(c) &= \mathrm{klipp}\left(\dfrac{B(c,t+1)}{A(c,t)},\ 0{,}2,\ 5{,}0\right)",
+            r"\mathrm{Fitness}_X &= \mathrm{medel}_t\ \dfrac{1}{N_{\mathrm{celler}}}\sum_c w_c\,\log\,\mathrm{belöning}(c)",
+        ])],
         lead=[("p", "Den globala belöningen domineras av de stora "
                     "cellerna: en policy som sköter en tusentonscell bra "
                     "och ett kilo dåligt får samma betyg som tvärtom.")],
@@ -1533,34 +2146,31 @@ Fitness_X = medel_t  Σ_c  w_c · log( belöning(c) )  / antal celler
               ("-", "Använd --local_reward_norm grid med metriken log: "
                     "sum belönar tunn spridning och mean belönar att döda "
                     "de sämsta cellerna."),
-              ("-", "w_c = A_c^θ. θ = 0 väger varje bebodd cell lika, "
+              ("-", "w_c = A_cᶿ. θ = 0 väger varje bebodd cell lika, "
                     "θ = 1 återger den globala energibelöningen.")],
         kicker="Skalinvariant per cell")
 
     d.formula(
         "ARS-uppdateringen",
-        [("Per iteration, per beslutande FG med vikter θ", """
-δ_1 ... δ_N ~ N(0, I)                        N = --n_deltas
-
-F_i^+ = fitness( θ + σδ_i )    F_i^- = fitness( θ − σδ_i )
-        - samma värld och samma seed för + och − (CRN)
-
-topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
-σ_F    = standardavvikelsen över de utvalda parens fitness
-
-                  η
-θ  ←  θ  +  ─────────────  Σ_{i ∈ topp b} ( F_i^+ − F_i^- ) · δ_i
-              b · σ_F
-""")],
+        [("Per iteration, per beslutande FG med vikter θ", [
+            r"\delta_1, \ldots, \delta_N &\sim \mathcal{N}(0,\ I)",
+            r"F_i^{+} &= \mathrm{fitness}(\theta + \sigma\,\delta_i) \qquad F_i^{-} = \mathrm{fitness}(\theta - \sigma\,\delta_i)",
+            ("t", "N = --n_deltas. Samma värld, seed och kalenderstart för + "
+                  "och − (CRN)."),
+            r"\mathrm{topp}\ b &= \mathrm{de}\ b\ \mathrm{par\ med\ högst}\ \max(F_i^{+},\ F_i^{-}) \qquad b = N/2",
+            r"\sigma_F &= \mathrm{standardavvikelsen\ över\ de\ utvalda\ parens\ fitness}",
+            r"\theta &\leftarrow \theta + \dfrac{\eta}{b\,\sigma_F}\sum_{i \in \mathrm{topp}\,b}\left(F_i^{+} - F_i^{-}\right)\delta_i",
+        ])],
         tail=[("-", "ARS-V2: observationerna normaliseras med ett löpande "
-                    "medel och en löpande varians per FG, delad mellan "
-                    "processerna, och klipps till ±10."),
-              ("-", "CRN - gemensamma slumptal - är det som gör "
-                    "skillnaden F^+ - F^- meningsfull vid så få rollouts: "
-                    "båda halvorna möter identiska startfält."),
-              ("-", "Standard: η = 0,03, σ = 0,1, N = 10, "
-                    "--rollouts_per_delta 1 (profilerna kör 3 världar per "
-                    "delta och medelvärdesbildar).")],
+                    "medel och en löpande varians per FG och klipps till "
+                    "±10."),
+              ("-", "CRN - gemensamma slumptal - gör skillnaden F⁺ − F⁻ "
+                    "meningsfull vid få rollouts: båda halvorna möter "
+                    "identiska startfält och samma årstid."),
+              ("-", "Standard: η = 0,03, σ = 0,1, N = 10, en värld per "
+                    "delta. Normeringen med σ_F gör steglängden oberoende "
+                    "av belöningens skala: |steg| / probradie ≈ "
+                    "(η/σ) · k/√b.")],
         kicker="Augmented Random Search")
 
     d.bullets(
@@ -1582,6 +2192,27 @@ topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
          "loggar biomassan per FG till results/<run>/biomass.jsonl."],
         kicker="Alla arter samtidigt")
 
+    d.bullets(
+        "GPU-träning: train_gpu.py",
+        ["lib/gpu/ är en tensorversion av samma tick: alla världar, delta-par "
+         "och tecken körs samtidigt på grafikkortet, i block av tick som "
+         "spelas upp som CUDA-grafer. Paritetstester jämför varje steg mot "
+         "CPU-motorn.",
+         "Aktuella körningar (fix53): 16 delta-par × 2 världar × 1 460 "
+         "tick, 60 × 60, mortalitet, migration, strömmar, dagsljus och "
+         "temperatur på.",
+         "Kalenderstarten dras per VÄRLD och delas av alla par (avsnitt "
+         "150). När varje par hade sin egen årstid sattes parens "
+         "belöningsnivå av säsongen: topp-b-urvalet blev nästan slumpmässigt "
+         "och steget krympte till en tredjedel.",
+         "Steglängd: vid η = 0,1 och σ = 0,05 blev uppdateringen "
+         "brusdominerad - vikternas norm växte som en slumpvandring "
+         "(29-35 → 64-75) och policyerna skärptes mer än belöningen "
+         "motiverar. Håll η/σ ≲ 0,6; σ är ratten för mer utforskning.",
+         ("-", "Visningens probe läser om fg_library.yaml vid varje probe, "
+               "men tränaren behåller biblioteket den startade med.")],
+        kicker="lib/gpu/", size=15)
+
     d.table(
         "Profiler och formande termer",
         ["Inställning", "Standard på train.py", "sanity", "info", "deep"],
@@ -1598,7 +2229,7 @@ topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
         lead="Entropibonus, argmax-straff och temperaturhärdning är "
              "formande termer som verkar på actionfördelningen i stället "
              "för på biologin. De finns kvar som flaggor men är avstängda "
-             "som standard, med eller utan profil.",
+             "som standard, med eller utan profil, på båda tränarna.",
         footnote="--profile sanity | info | deep. Explicita flaggor på "
                  "kommandoraden vinner alltid över profilens värden.")
 
@@ -1619,8 +2250,8 @@ topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
                      "pelagisk fisk.")],
         footnote="Startbiomassan lottas per värld ur "
                  "[initial_biomass_min, initial_biomass_max] i "
-                 "mareld2.yaml. I TRÄNINGSläge lottas energinivån dessutom "
-                 "per cell kring underhållsnivån så att E[q_X(0)] ≈ 0; "
+                 "mareld2.yaml, startdagen ur kalendern. I TRÄNINGSläge "
+                 "lottas energinivån per cell kring underhållsnivån; "
                  "inferensvärlden startar deterministiskt på 0,7 · ME_X.")
 
     d.bullets(
@@ -1630,23 +2261,23 @@ topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
          "observationsnormaliseringens löpande statistik.",
          "--resume läser in dem och fortsätter; inference.py kör dem mot "
          "en deterministisk värld.",
-         "",
          "Följande ändringar gör befintliga checkpoints ogiltiga - "
-         "observationens form eller betydelse ändras och nätverket måste "
-         "tränas om:",
-         ("-", "Observability-matrisen"),
-         ("-", "vilka impaktkartor som är observable"),
-         ("-", "FG-uppsättningen i projektet"),
-         ("-", "gridlayouten"),
-         "En ändrad kalibrering i biblioteket gör dem inte formellt "
+         "observationens form eller betydelse ändras:",
+         ("-", "Observability-matrisen (t ex torskfisk ser djurplankton, "
+               "avsnitt 141)"),
+         ("-", "vilka impaktkartor som är observable och aktiva"),
+         ("-", "FG-uppsättningen i projektet och gridlayouten"),
+         ("-", "dagsljuskalendern på eller av (ljuskanalen)"),
+         "Temperaturen och en ändrad kalibrering gör dem inte formellt "
          "ogiltiga, men en policy som tränats i en väsentligt annan värld "
-         "bör tränas om innan den citeras."],
-        kicker="Vad som sparas och vad som bryter det")
+         "bör tränas om innan den citeras. Kopiera en checkpoint innan den "
+         "jämförs - en pågående körning skriver över policy_*.pth."],
+        kicker="Vad som sparas och vad som bryter det", size=15.5)
 
     # ---------------------------------------------------------------- 8
-    d.section("7", "Acceptanskriterier",
-              "Två grindar som måste passeras innan ett resultat betyder "
-              "något. Ingen av dem involverar ARS.")
+    d.section("7", "Diagnostik och livskraft",
+              "Verktyg som testar mekaniken utan ARS, och vad tränade "
+              "policyer gör över tio år.")
 
     d.table(
         "Viabilitetsriggen",
@@ -1656,64 +2287,267 @@ topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
          ["3", "Tak", "eq_f ≤ tak · B_f(0)", "tak = 10"],
          ["4", "Stationaritet",
           "max(eq_f/föreg_f, föreg_f/eq_f) ≤ max_drift", "max_drift = 2,0"]],
-        [6, 26, 44, 24], size=12.5,
-        lead="Är den konfigurerade världen självbärande över huvud taget? "
-             "Frågan är en egenskap hos parametrarna och mekanismerna, inte "
-             "hos policynätverken, så den mäts med FRYST beteende. eq_f är "
+        [6, 26, 44, 24], size=12.5, kicker="Fryst beteende",
+        lead="Riggen kör världen med FRYST, handkodat beteende. Det gör den "
+             "snabb och deterministisk, och därmed bra för att mäta en "
+             "parameter- eller mekanikändring isolerat. eq_f är "
              "medelbiomassan i horisontens sista fönster.",
-        footnote="Horisont 5 år (1 460 tick vid 6 h), 3 seeds, sämsta seed "
-                 "avgör, sista fönstret 10 % av horisonten. Riggen har två "
-                 "faktorer - beteende × spawngeometri - och utslaget kommer "
-                 "från det normativa hörnet --spawn colocated "
-                 "--behaviour greedy. python3 tools/viability.py, ~4 min.")
+        footnote="Horisont 5 år (1 460 tick vid 6 h), 3 seeds, sista "
+                 "fönstret 10 % av horisonten; standardhörnet är --spawn "
+                 "colocated --behaviour greedy. Utslaget gäller DET "
+                 "beteendet: alla äter maximalt, vilket betar ned "
+                 "växtplanktonet och drar med sig kedjan uppåt. Tränade "
+                 "policyer gör inte så. python3 tools/viability.py, ~4 min.")
 
     d.bullets(
         "Energibudgetgrinden",
         ["Kan varje beslutande FG gå ihop energimässigt över sin RATION? "
          "Frågan besvaras utan rollout, på sekunder: "
          "python3 tools/probes/budget_gate.py",
-         ("p", "ration  = a · h(u_X)          [ton byte / ton predator / "
-               "tick]"),
+         ("p", "ration  = taket 1/h vid full aptit h(u_X) = 1   [ton byte / "
+               "ton predator / tick]"),
          ("p", "kostnad = resting_metabolism · feeding_cost   [MJ / ton / "
                "tick]"),
          ("p", "krav    = kostnad / ration ≤ ransonens viktade "
                "energikvalitet"),
          "Grinden utvärderas över hela menyn, inte per par: motorn summerar "
-         "intaget över alla byten och ger predatorn EN energivinst, så "
-         "hungergrinden och födosökskostnaden tas ut en gång på totalen.",
-         "Därför rapporterar grinden \"min share\" - minsta andel av det "
-         "bästa bytet i dieten. Ett par som inte kan betala för sig på "
-         "egen hand är lågkvalitativ föda, inte ren förlust.",
-         ("-", "Tumlare kan inte leva på enbart torskfisk - och "
-               "litteraturen säger detsamma (junk food-hypotesen). "
-               "Magsäcksdata från Kattegatt/Skagerrak, 50-70 % sill och "
-               "skarpsill i massa, klarar kravet.")],
-        kicker="Går budgeten ihop?")
+         "intaget över alla byten och ger predatorn EN energivinst. Den "
+         "rapporterar \"min share\" - minsta andel av det bästa bytet i "
+         "dieten.",
+         ("-", "I dag går alla fyra aktiva predatorer ihop på vilken diet "
+               "som helst. Tumlare: break-even-ration på sill 5,3 % av "
+               "kroppsvikten per dygn; mitt i Kastelein-fönstret (6,75 %) "
+               "krävs minst 33 % sill - junk food-hypotesen."),
+         ("-", "Grinden räknar på bibliotekets resting_metabolism, dvs vid "
+               "t_ref - för sill en sommarkostnad.")],
+        kicker="Går budgeten ihop?", size=15)
 
     d.table(
-        "Status i dag",
-        ["Funktionsgrupp", "--mortality on", "--mortality off"],
-        [["gadoids", "UNDERKÄND - under golvet", "UNDERKÄND - utdöd @3924"],
-         ["pelagic_fish", "UNDERKÄND - under golvet",
-          "UNDERKÄND - under golvet"],
-         ["porpoises", "UNDERKÄND - utdöd @71", "UNDERKÄND - utdöd @73"],
-         ["phytoplankton", "UNDERKÄND - 0,054", "UNDERKÄND - 0,065"],
-         ["benthic_community", "GODKÄND - 0,555", "GODKÄND - 0,533"],
-         ["zooplankton", "GODKÄND - 0,270", "GODKÄND - 0,303"],
-         ["samlat omdöme", "INTE VIABEL", "INTE VIABEL"]],
-        [26, 28, 28], size=12.5,
-        lead="Det normativa hörnet (--spawn colocated --behaviour greedy), "
-             "20 × 20, 7 300 tick, 3 seeds, vid bibliotekets nuvarande "
-             "värden. Siffran är eq_f / spawn mot ett golv på 0,10.",
-        footnote="Utslaget drivs av tre sedan länge kända brister - "
-                 "torskfisk och pelagisk fisk under golvet, tumlare utdöd - "
-                 "och inget av det här arbetet har satt ut att åtgärda dem. "
-                 "Det som ändrats i september är att djurplankton nu klarar "
-                 "sig med marginal och att båda planktongrupperna är "
-                 "stationära.")
+        "Tio år med tränade policyer",
+        ["Funktionsgrupp", "År 1", "År 10, M1 0,683", "År 10, M1 0,415",
+         "Förlopp med nuvarande bibliotek"],
+        [["pelagic_fish (sill)", "12 565", "15 938", "6 232",
+          "Halveras; biomassatopp okt-nov"],
+         ["gadoids", "2 519", "1 430", "3 292",
+          "+3 till +9 %/år, topp år 8, sedan nedgång"],
+         ["porpoises", "11,5", "3,99", "5,9",
+          "−6 %/år (förut −12 %/år)"],
+         ["benthic_community", "18 603", "-", "15 856",
+          "Stiger till år 3-4, betas sedan ned"],
+         ["zooplankton", "~24 000", "~22 800", "-",
+          "Stationär med årscykel ~9×"],
+         ["phytoplankton", "~43 400", "~43 400", "-",
+          "Stationär, vårblomning i mars"]],
+        [20, 11, 15, 15, 39], size=11.5,
+        align=["left", "right", "right", "right", "left"],
+        kicker="Nollscenariot, 14 600 tick",
+        lead="Fryst checkpoint från fix53 (tränad på M1 0,683), "
+             "deterministisk probevärld 60 × 60 med mortalitet, migration, "
+             "strömmar, dagsljus och temperatur, alla impakter muted. "
+             "Årsmedel i ton.",
+        footnote="Kolumnen M1 0,683 är slutet av år 10 (avsnitt 156.7), "
+                 "M1 0,415 årsmedel (157.3); plankton ur avsnitt 156.2 "
+                 "(närliggande checkpoint). En andra global seed höll sig "
+                 "inom 2 %: cykeln drivs av kalendern, inte av kaos. "
+                 "Policyerna bör tränas om på M1 0,415 innan den nya "
+                 "balansen läses.")
+
+    d.table(
+        "Realiserad mot budgeterad predation",
+        ["Par", "Bibliotekets M2 (1/år)", "Realiserad, år 1 → 10",
+         "Läsning"],
+        [["gadoids → gadoids", "0,217", "~0,001",
+          "Tillväxt betald för en förlust som aldrig tas"],
+         ["gadoids → pelagic_fish", "0,30", "0,19 → 0,14",
+          "Sillen underbeskattas och växer tills födan bromsar"],
+         ["gadoids → benthic", "0,0048", "0,33 → 0,17",
+          "Annan bas (K 10 mot ~100 t/km²); dieten ~2× Ecopath"],
+         ["zooplankton → phyto", "22,6", "30,5", "Något högre"],
+         ["pelagic_fish → zoo", "5,24", "3,2 → 5,2", "Närmar sig budgeten"],
+         ["porpoises → gadoids", "0,056", "0,087 → 0,020",
+          "Följer tumlarnas nedgång"],
+         ["porpoises → pelagic", "0,0117", "0,006 → 0,003",
+          "Följer tumlarnas nedgång"]],
+        [24, 18, 20, 38], size=11.5,
+        align=["left", "right", "right", "left"],
+        kicker="Avsnitt 156",
+        lead="Tillväxtbudgeten antar att varje predator tar sin M2. I "
+             "tioårskörningen gör de flesta par det ungefär - men inte "
+             "alla.",
+        footnote="Realiserad M2 = årligt uttag / bytets medelbiomassa. "
+                 "Siffrorna gäller M1 0,683 för torskfisk (före avsnitt 157).")
+
+    d.bullets(
+        "Vad riggen är till för",
+        ["Riggen är ett mätinstrument för mekaniken, inte en dom över "
+         "världen. Med fryst beteende och fast seed är den deterministisk, "
+         "så en biblioteksändring kan mätas isolerat utan träningsbrus.",
+         "Den fångar fel som ingen policy kan rädda: en grupp som krymper "
+         "även med tränat beteende - i dag tumlaren - pekar på ett "
+         "strukturproblem. Där pekar riggen och energibudgetgrinden åt "
+         "samma håll.",
+         "Den säger inte att en värld är obrukbar. Premissen att en värld "
+         "som underkänns inte kan räddas av träning håller inte: de "
+         "tränade policyerna betar inte ned växtplanktonet som det giriga "
+         "beteendet gör, och djurplanktonet lär sig hålla igen.",
+         "Livskraft bör därför bedömas med de policyer som faktiskt "
+         "används: samma kriterier på inferensdata från flera seeds, och "
+         "ett stationaritetskrav som tål naturliga cykler i stället för att "
+         "jämföra två fönster. Det är inte byggt än."],
+        kicker="Diagnos, inte dom")
 
     # ---------------------------------------------------------------- 9
-    d.section("8", "Scenarier och körningar",
+    d.section("8", "Styrkor, svagheter och förbättringsförslag",
+              "En samlad bedömning av modellen som den står i oktober "
+              "2026: vad den gör bra, var den brister och vad som bör "
+              "göras härnäst.")
+
+    d.bullets(
+        "Styrkor: mekanik och metod",
+        ["Massa och energi bokförs slutet. Predation, rörelse och strömmar "
+         "bevarar massa; tillväxten betalas ur reserven; varje förlust "
+         "bokförs under en av fyra orsaker. Källspårningen per cell är en "
+         "identitet.",
+         "Parametrarna är spårbara. growth_rate härleds ur r_max, M1 och "
+         "Ecopath-M2; ljusklimat, temperatur och P-I-kurvor kommer ur "
+         "SMHI-data för platsen; varje biblioteksvärde har en kommentar "
+         "och ett avsnitt i resumén.",
+         "Ett bibliotek, en kalibrering: ticklängden 1-6 h räknas om i "
+         "minnet och skrivs aldrig tillbaka.",
+         "Beteendet lärs, det hackas inte. Formande termer är avstängda; "
+         "problem löses i biologin eller i perceptionen.",
+         "Reproducerbart och testat: CRN, deterministiska probevärldar, "
+         "CPU/GPU-paritet per steg och en testsvit på över 1 000 tester.",
+         "Snabb diagnostik i tre steg: energibudgetgrinden på sekunder, "
+         "fryst rigg på minuter, probeverktyg för års- och "
+         "månadsbudgetar med tränade policyer."],
+        kicker="Vad som bär", size=15)
+
+    d.table(
+        "Styrkor: beteende som liknar naturen",
+        ["Fenomen", "I modellen (tränade policyer, år 2-10)",
+         "Jämförelse"],
+        [["Vårblomning", "Växtplankton 0,75 i januari → 1,12 i mars",
+          "Kiselalgsblomning feb-mar i Skagerrak"],
+         ["Djurplanktonets årscykel",
+          "Minimum januari, maximum maj-juni (~9×)",
+          "Calanus-likt, 2-3 månader efter blomningen"],
+         ["Vintervila", "Djurplankton vilar 0,78-0,85 på vintern, äter "
+          "mest i feb-mar", "Diapaus-likt (Calanus på djupet)"],
+         ["Dygnsvandring", "Djurplankton vilar dag/natt 0,93/0,60 (vinter)",
+          "DVM där riktig natt finns"],
+         ["Visuell planktonätare", "Sill vilar 0,11 dag / 0,75 natt "
+          "(vinter)", "Sill äter i ljus, filtrerar på natten"],
+         ["Fettcykel", "Sillens s 0,23 i februari → 0,87 i juni",
+          "Mager Q1, fet Q3"],
+         ["Säsongsbyte i dieten", "Torskfisk: sommar sill + djurplankton, "
+          "vinter bottendjur", "Riktning rimlig, andel förhöjd"],
+         ["Kontinuerligt födosök", "Tumlare äter 97-100 % av tiden, Q/B "
+          "22/år", "Nära kontinuerligt (Wisniewska m fl 2016)"],
+         ["Återhållsam betning", "Djurplankton vilar ~0,8 och betar inte "
+          "ned växtplanktonet", "Emergent på populationsnivå"]],
+        [20, 44, 32], size=10.8, kicker="Emergent, inte inprogrammerat",
+        footnote="Ur avsnitt 139 och 156, detrenderade månadsmönster. Inget "
+                 "av detta är inskrivet i reglerna - det följer av kalendern, "
+                 "energibudgeten och vad policyerna har lärt sig.")
+
+    d.bullets(
+        "Svagheter: biologi och struktur",
+        ["Tillväxtbudgeten betalas fullt först vid s = 1, där hungern "
+         "stänger intaget. Verkliga s ligger på 0,6-0,75, så torskfisk och "
+         "tumlare realiserar 40-50 % av den designade produktionen - för "
+         "tumlare täcker det inte ens M1.",
+         "Inga näringsämnen: växtplanktonet ligger på en platå april-oktober "
+         "(1,6× årsvariation mot 5-10× i klorofyll i naturen). Ingen "
+         "sommarsvacka, ingen höstblomning.",
+         "Toppredatorerna följer inte bytet: tumlare överlappar sitt byte "
+         "till 0,15-0,22 och flyttar 0-3 % av tiden; torskfisk flyttar 1 %. "
+         "Med fyllda tak ger en tätare cell bara ~2 % mer intag.",
+         "Tumlarna minskar 6-12 % per år över tio år. Dieten är anpassad "
+         "(attackkvot 13), inte emergent. Kannibalismen är budgeterad men "
+         "inträffar inte.",
+         "Djupet är kollapsat till 2D; ingen lekkostnad, ingen diapaus som "
+         "tillstånd. Flera värden vilar på en enda källa (växtplanktonets "
+         "takt, I_k från Kattegatt, mörkerkvoterna är skattningar).",
+         "Sälar, sjöfåglar och alla impakter är muted: inget scenario är "
+         "ännu kört med det nuvarande biblioteket."],
+        kicker="Var modellen brister", size=14.5)
+
+    d.bullets(
+        "Svagheter: träning och utvärdering",
+        ["Policyerna tränas på ettårsrollouts. Allt efter år 1 i en "
+         "tioårskörning ligger utanför träningsfördelningen, och världen "
+         "är inte i jämvikt efter tio år.",
+         "ARS-steget kan bli brusdominerat: vid för högt η/σ växer vikternas "
+         "norm som en slumpvandring och policyerna skärps mer än belöningen "
+         "motiverar. Ingen normkontroll finns.",
+         "Små gruppers belöning är brusig: tumlarnas σ_F låg 4-10× över "
+         "övriga DM med 250 kg-enheten och ligger fortfarande ~4× över "
+         "torskfisk och djurplankton. Under min_split_biomass döljer argmax den "
+         "verkliga fördelningen, och fragment under ett djur dör genom "
+         "utdöendesvepet.",
+         "Livskraft bedöms med en eller få seeds, och det finns inget "
+         "cykeltolerant stationaritetskrav; riggen som har ett kriterium "
+         "kör fryst beteende.",
+         "Varje biblioteksändring kräver omträning innan siffror citeras. "
+         "Torskfiskens M1 ändrades 12 oktober - efter att fix53 tränats.",
+         "Nätverket är litet (2 × 30) och utan minne; policyerna ser ljuset "
+         "men inte datumet."],
+        kicker="Var metoden brister", size=14.5)
+
+    d.table(
+        "Förbättringsförslag: modellen",
+        ["#", "Förslag", "Motiv", "Avsnitt"],
+        [["1", "Referensfyllnad < 1 i tillväxtbudgeten (t ex s ≈ 0,7)",
+          "Budgeten betalas i dag bara vid s = 1, som aldrig nås",
+          "156.4"],
+         ["2", "Näringsämnespool för växtplankton",
+          "Sommarsvacka och höstblomning saknas", "138.7, 156.4"],
+         ["3", "Funktionellt svar för toppredatorer (a eller h per par) så "
+          "att täthet lönar sig", "Torskfisk och tumlare står still",
+          "154.6, 156.4"],
+         ["4", "Kannibalism: sänk M2 eller ge den en mekanism",
+          "Tillväxt betald för en förlust som inte tas", "156.4, 157.2"],
+         ["5", "Lekkostnad för sill, vinterdiapaus för djurplankton",
+          "Fettminimum i fel månad; vinteröverlevnad", "143.6, 138.7"],
+         ["6", "SDA i assimilation_factor i stället för per-tick-avgift",
+          "Kostnaden skalar med intaget, inte med tiden", "145.5"],
+         ["7", "Temperaturskalad attackhastighet (E ~ 0,4 eV)",
+          "Steg 2 efter Q10 på metabolismen", "143.2"],
+         ["8", "Bottensamhälle med K ~100 t/km² enligt litteraturen",
+          "Bottendominans i torskdieten", "136, 156.10"]],
+        [4, 42, 38, 14], size=11, kicker="Biologi och mekanik",
+        footnote="Ordningen är en bedömning av nytta mot kostnad. Varje "
+                 "förslag mäts först med probeverktygen och tränade "
+                 "policyer innan biblioteket ändras.")
+
+    d.table(
+        "Förbättringsförslag: träning och utvärdering",
+        ["#", "Förslag", "Motiv", "Avsnitt"],
+        [["1", "Träna om på det aktuella biblioteket och läs balansen med "
+          "flera seeds", "Alla checkpoints är tränade före M1-ändringen",
+          "157"],
+         ["2", "Cykeltolerant livskraftskriterium på inferensdata",
+          "Två-fönstertestet underkänner vanliga predator-bytescykler",
+          "126"],
+         ["3", "Normkontroll i ARS (viktavklingning eller fast |θ|); σ som "
+          "utforskningsratt", "Slumpvandring i vikterna vid högt η/σ",
+          "154.8-10"],
+         ["4", "Sampling i stället för argmax under min_split_biomass; "
+          "hantera fragment under ett djur", "Dold fördelning; tumlare dör "
+          "genom svepet", "152.6, 156.9"],
+         ["5", "Längre utvärdering än träningsepisoden: flerårsrollouts i "
+          "probe och belöning", "Tioårsbeteendet ligger utanför "
+          "träningsfördelningen", "156.2"],
+         ["6", "Aktivera sälar, sjöfåglar och impaktscenarier först när "
+          "nollscenariot är livskraftigt", "En jämförelse kräver en "
+          "självbärande bas", "-"]],
+        [4, 44, 38, 12], size=11, kicker="Metod",
+        footnote="Inget av förslagen kräver formande termer i belöningen; "
+                 "de rör biologin, optimeraren eller utvärderingen.")
+
+    # --------------------------------------------------------------- 10
+    d.section("9", "Scenarier och körningar",
               "Vad ett scenario är, hur det körs och vad som skiljer den "
               "här utgåvan från maj-utgåvan.")
 
@@ -1741,79 +2575,71 @@ topp b = de b par som har högst max(F_i^+, F_i^-)     b = N/2
         "Körningar",
         [("Träning, inferens och grindar", """
 python3 train.py --project mareld2.yaml --run-name <namn> --profile info
+python3 train_gpu.py --project mareld2.yaml --run-name <namn> ...  # GPU
 python3 train.py --project mareld2.yaml --species pelagic_fish \\
         --generations 1 --iter-per-gen 1 --workers 1        # röktest
-
 python3 inference.py --project mareld2.yaml --run-name <namn>
 python3 tools/biomass_html.py results/<namn>                # plots.html
-
-python3 tools/viability.py                 # ~4 min, avslut 1 = inte viabel
 python3 tools/probes/budget_gate.py        # sekunder, ingen rollout
+python3 tools/probes/daylight_table.py     # kalendern månad för månad
+python3 tools/viability.py                 # ~4 min, fryst beteende
 python3 -m pytest tests/ -q
 """)],
         tail=[("-", "Viktiga flaggor: --tick-length 1-6, --mortality on, "
                     "--mortality_multiplier, --migration on, --currents on, "
                     "--local_reward, --no-mass-balance, --policynetwork, "
                     "--resume, --visual, --rnd_baseline."),
-              ("-", "--rnd_baseline ritar slumpmässiga referenskurvor i "
-                    "den levande plotten: all = alla beslutande FG "
-                    "slumpar, solo = en i taget. Utan en sådan referens "
-                    "går det inte att säga om en policy gör något alls.")],
+              ("-", "Den levande visningen visar månad, dagslängd och en "
+                    "kalenderremsa under inferensplotten; --rnd_baseline "
+                    "ritar slumpmässiga referenskurvor.")],
         kicker="Vad som körs")
 
     d.table(
         "Avsiktliga avvikelser från maj-utgåvan",
         ["Vad", "Varför"],
-        [["Tillväxten är massbalanserad",
+        [["Tillväxten är massbalanserad och growth_rate härleds",
           "Den dokumenterade termen B·(1 + MG·q) skapar massa utan att "
-          "debitera någon energi - mätt till 198-344 % av vad som åts, mot "
-          "ett termodynamiskt tak på 28,9 %. Balansen slöts annars av "
-          "svält, dvs en meningslös cykel."],
-         ["Hungergrinden är kontinuerlig, inte en mask",
-          "Maj-utgåvan hade BÅDE masken vid s = 0,8 och faktorn "
-          "h = max(0, 1 - s/0,8), som redan är noll där masken slog till. "
-          "Koden behöll faktorn - numera per FG via satiation_scale - och "
-          "tog bort masken. Kvarvarande skillnad: massa som ändå väljer att "
-          "äta betalar feeding_cost."],
+          "debitera energi - mätt till 198-344 % av vad som åts, mot ett "
+          "termodynamiskt tak på 28,9 %. Takten härleds så att "
+          "nettotillväxten blir litteraturens."],
+         ["Hungern är kontinuerlig, inte en mask",
+          "Maj-utgåvan hade både masken vid s = 0,8 och faktorn "
+          "h = max(0, 1 − s/0,8). I dag gäller full aptit upp till "
+          "underhållsnivån och linjär nedgång därefter: ätandet styrs av "
+          "föda och magkapacitet, inte av reserven."],
          ["Fitness räknar biomassa och reserv i samma valuta",
           "α och β blir godtyckliga vikter mellan två storheter som redan "
-          "har en växelkurs: energy_content. Med det gemensamma måttet "
-          "försvinner viktningsfrågan."],
-         ["Rollouterna är 15-200 tick, inte 2",
-          "Motivet för två transitioner var en belöning som bara läste "
-          "start och slut. Integralbelöningen läser varje tick, och en "
-          "längre rollout blir informativ i stället för brusig."],
-         ["Minnesutvidgningen N(c,t-1) är inte byggd",
-          "Det enda tillstånd som förs mellan tick i dag är vilken andel "
-          "som gömde sig förra ticket, och det används för synlighet - "
-          "inte som policyinput."],
-         ["Storleksstegen 3×3 → 60×60 ingår inte i det rekommenderade "
-          "flödet",
-          "--grid finns kvar och viabilitetsriggen kör 20×20, men "
-          "variationen i träningen kommer från spawnstrategierna, "
-          "startbiomassaintervallen och flera världar per delta."]],
-        [26, 74], size=11.5, kicker="Dokumentet mot koden")
+          "har en växelkurs: energy_content."],
+         ["Rollouterna är 15 tick till ett år, inte 2",
+          "Integralbelöningen läser varje tick, och kalendern kräver att "
+          "en rollout rymmer årstiderna."],
+         ["Säsongen kommer från en kalender",
+          "Maj-utgåvan hade ingen säsong. Ljus och temperatur för platsen "
+          "driver nu attack, primärproduktion och metabolism."],
+         ["Minnesutvidgningen N(c,t-1) och storleksstegen 3×3 → 60×60 "
+          "ingår inte", "Enda tillståndet mellan tick är förra tickets "
+          "gömda andel; variationen i träningen kommer från spawn, "
+          "startbiomassa och kalenderstart."]],
+        [27, 73], size=11, kicker="Dokumentet mot koden")
 
     d.bullets(
         "Öppna frågor",
-        ["Tre funktionsgrupper klarar inte viabilitetskriteriet i det "
-         "normativa hörnet: torskfisk och pelagisk fisk hamnar under "
-         "golvet och tumlaren dör ut tidigt. Det är den viktigaste "
-         "öppna punkten.",
-         "Med tränade policyer är planktonnivåerna stationära över "
-         "10 000 tick (växtplankton 0,56×, djurplankton 2,3× spawn), men "
-         "kvoten djurplankton:växtplankton landar på 1,8:1 mot 0,44:1 vid "
-         "spawn. Med fruset girigt beteende ligger nivåerna däremot en "
-         "faktor 4-20 under spawn.",
-         "Djurplanktonets resting_metabolism (2 %/dygn) motsvarar fastande "
-         "djur och ligger i nederkanten av litteraturbandet; Ikedas "
-         "regression ger mer för små copepoder (avsnitt 124).",
-         "Policyerna i results/ är tränade i en väsentligt annan värld än "
-         "den biblioteket beskriver efter september och bör tränas om "
-         "innan de citeras.",
+        ["Tumlarna minskar med 6-12 % per år även med tränade policyer. De "
+         "största kvarvarande orsakerna är tillväxtbudgeten vid s = 1, "
+         "vinterkatabolism och fragment under ett djur.",
+         "Med torskfiskens nya M1 (0,415) överskjuter torskfisken och "
+         "halverar sillen inom tio år med de gamla policyerna. Är det en "
+         "långsam cykel eller en ny nivå? Det kräver omträning.",
+         "Djurplanktonet faller till ~13 % av startbiomassan i januari "
+         "och återhämtar sig till maj. Diapaus som tillstånd är en "
+         "kandidat om det inte håller med tränade policyer.",
+         "Ska tillväxtbudgeten referera till en realistisk mättnad (s ≈ "
+         "0,7) i stället för s = 1? Det ändrar varje DM:s growth_rate.",
+         "Växtplanktonet saknar näringsbegränsning; sommarnivån ligger "
+         "kvar nära aprilnivån.",
          ("p", "Hela historiken - varje kalibrering, A/B-test och öppet "
-               "problem - ligger i mareld_resume.txt, avsnitt 0-124.")],
-        kicker="Vad som återstår")
+               "problem - ligger i mareld_resume.txt, avsnitt 0-158.")],
+        kicker="Vad som återstår", size=15.5)
 
     d.section("", "Tack",
               "Frågor, invändningar och rättelser hör hemma i "
@@ -1823,7 +2649,7 @@ python3 -m pytest tests/ -q
 # ----------------------------------------------------------------------
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-o", "--out", default="Strategi_sep.pdf")
+    parser.add_argument("-o", "--out", default="Strategi_okt.pdf")
     parser.add_argument("--png", default=None,
                         help="Also write one PNG per slide into this "
                              "directory (for proofreading).")
@@ -1837,7 +2663,7 @@ def main(argv=None):
         info = pdf.infodict()
         info["Title"] = "Strategi - för att bygga ekosystemsimulatorer"
         info["Author"] = "Mareld / Poseidon Nord"
-        info["Subject"] = ("Uppdaterad strategi, september 2026 - beskriver "
+        info["Subject"] = ("Uppdaterad strategi, oktober 2026 - beskriver "
                            "den mekanik simulatorn kör i dag")
     print(f"{args.out}: {deck.n} slides")
     return 0

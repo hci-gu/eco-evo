@@ -14390,3 +14390,53 @@ remain open exactly as described in 71.9 / 71.11.
     re-reads fg_library.yaml every probe (memory: library edit hits
     running probe), so a run started before this edit shows probe
     curves from a different M1 than it trains on.
+
+158 Strategi_okt.pdf / Strategy_Oct_eng.pdf: the October strategy decks
+    (2026-10-12)
+158.1 What: the two deck generators (section 122, 126.4) updated in place
+    for sections 127-157 and rebuilt as Strategi_okt.pdf (Swedish) and
+    Strategy_Oct_eng.pdf (English), 80 slides each, 960x540 pt. The
+    September PDFs stay on disk; the September version of the Swedish
+    generator was never committed and is superseded.
+        python3 tools/make_strategi_deck.py       # -> Strategi_okt.pdf
+        python3 tools/make_strategy_deck_en.py    # -> Strategy_Oct_eng.pdf
+158.2 Content changes: new slide "changed since September" (129-157);
+    Part 2 renamed "maps and calendar" with the daylight calendar, a
+    month-by-month table (light F, attack multipliers, phyto P/P_ref,
+    layer temperatures, Q10 factors; numbers from
+    tools/probes/daylight_table.py) and water temperature; Part 3 gains
+    the growth-budget formula (129), a pair/producer property table,
+    herring lean/reserve (140), gadoid prey and energy ceilings (141,
+    147-148, 157) and porpoise costs/diet/unit (145, 151-152, 154);
+    hunger gate h = min(1, (1-s)/(1-u)) everywhere (satiation_scale
+    gone); step 3 with a(t) = a m(t) and the prey reserve as food; a
+    light-dependent attack slide; step 4 with the Q10 factor; residue
+    and small-emigration rules (156.6); four loss channels (132); the
+    NDM step with light-limited growth instead of the sine (138); a
+    train_gpu.py slide (150, 154.8); checkpoints list the calendar;
+    Part 7 has the ten-year trained run (156.2, 157.3) and realised vs
+    budgeted M2 (156.4) instead of the section-123 table.
+158.3 New Part 8 "strengths, weaknesses and suggested improvements"
+    (user request): strengths of mechanics/method, a table of emergent
+    behaviour that matches nature (139.3, 156.3), weaknesses in biology
+    (budget paid at s = 1, no nutrients, top predators not tracking
+    prey, fitted porpoise diet, absent cannibalism, 2D, single sources,
+    muted groups) and in training/evaluation (one-year episodes, ARS
+    random walk, argmax fragments, no cycle-tolerant criterion, retrain
+    after every library change), and two prioritised tables of
+    suggestions with section references. Scenarios and runs moved to
+    Part 9.
+158.4 Code: make_strategi_deck.py now reads fg_library.yaml and
+    mareld2.yaml at build time (dm_value_rows, pair_value_rows,
+    observability_rows, response_type, muted_groups) so the two value
+    tables, the pair table and the Observability matrix cannot drift;
+    the food web draws its edges from the library (gadoids -> zoo and
+    the cannibalism loop, muted groups dashed); the functional-response
+    figure shows the gadoid energy ceiling and the zoo pair at a 0.0125;
+    the hunger figure shows u = 0.5 and 0.2 with the derived g. fmt()
+    and NUM give comma decimals in Swedish and point/thousands comma in
+    English (also on plot axes). Deck.section moves the blurb below a
+    two-line title. A layout check (every text on the page, none in the
+    footer band, no overlapping main-axes texts) gives 0 problems on
+    both decks. Nothing in the engine, library or tests was touched;
+    pytest 1047 passed / 12 skipped, train.py 1-gen smoke OK.
