@@ -1,15 +1,26 @@
-# Long-term viability: the acceptance criterion and the rig
+# Long-term viability: the criterion and the frozen-behaviour rig
 
-Before anything is asked about behaviour, reward shaping or impacts, one
-question has to have a signed-off answer: **is the configured world
-self-sustaining at all?** This file defines that question as a number and
-describes the rig that measures it.
+Before a scenario comparison means anything, one question needs an
+answer: **is the world self-sustaining with the behaviour it will
+actually run with?** A group that dies out or slides towards zero inside
+the horizon makes every comparison taken in that world uninterpretable
+(`mareld_resume.txt` sections 73, 74 and 87.4). This file defines the
+question as a number (section 1) and describes two ways of measuring it:
+the frozen-behaviour rig (sections 2-4) and trained policies (section 6).
 
-Nothing here involves ARS. Viability is a property of the parameters and
-the mechanisms in the tick, not of the policy networks, so it must be
-measurable with the behaviour frozen. If the world fails this test, no
-amount of training can fix it, and every reward comparison taken in it is
-uninterpretable - see `mareld_resume.txt` sections 73, 74 and 87.4.
+**The rig is a diagnostic for the mechanics, not the judge of the
+world.** It runs with hand-coded behaviour and no ARS, which makes it
+fast and deterministic - the right instrument for measuring a parameter
+or mechanism change in isolation, free of training noise. Its verdict,
+however, is a statement about that behaviour. The premise this file was
+first written on - "if the world fails the rig, no amount of training can
+fix it" - has been falsified: on the same library, trained policies keep
+`gadoids`, `pelagic_fish` and `phytoplankton` viable over 10 000 ticks
+where the rig's normative corner fails all three (section 6, and
+`mareld_resume.txt` section 123). What still holds is the converse
+direction: a group that fails **both** under frozen behaviour and with
+trained policies - today `porpoises` - has a structural problem no
+policy will fix.
 
 ## 1. The criterion
 
@@ -58,6 +69,17 @@ seed them, so they cannot fail it.
   well above the floor at `T` and still be on a monotone slide; comparing
   the last two windows catches that without needing a longer run.
 
+  Known limitation: a two-window ratio cannot tell a slide from a
+  **cycle**. Predator-prey oscillations are ordinary dynamics, and one
+  whose period is comparable to the horizon fails `max_drift` depending
+  on where the windows fall. Under trained policies `gadoids` run a
+  cycle from 1.0x to 3.1x spawn and back over ~10 000 ticks, and the
+  ratio of the last two quarters of that run is 0.44 - a FAIL at
+  `max_drift = 2.0` for a population that never approached the floor.
+  A cycle-tolerant test (a trend over the whole horizon, or a floor on
+  the running minimum) is the proposed replacement; it is not
+  implemented.
+
 ### What the criterion deliberately does not say
 
 * It does not settle **open vs closed system**. A 1 km-cell box is in
@@ -71,7 +93,7 @@ seed them, so they cannot fail it.
   condition: with no environment maps in `mareld2.yaml` the grid is
   isotropic and occupancy is not yet interpretable (section 87.5).
 
-## 2. Who may pronounce the verdict
+## 2. What the rig's verdict means
 
 The criterion above is evaluated per *cell of a two-factorial design*,
 not once. Two things decide the outcome besides the parameters:
@@ -96,11 +118,23 @@ smuggled into the other.
 > nothing ever moves, so two thirds of the cod can never reach food:
 > that FAIL is a spawn artefact, not a statement about parameters.
 
-**The verdict is taken from the normative corner: co-located spawn +
-`greedy`.** The most favourable start and the strongest frozen
-behaviour. A FAIL there is a statement about parameters and mechanisms
-that no trained policy can argue with. Everything else in the table is
-diagnostic, and the *differences* are the information:
+**The rig's verdict is taken from the normative corner: co-located
+spawn + `greedy`.** The most favourable start and the strongest frozen
+behaviour *per tick*. That makes a FAIL there a statement about the
+parameters and mechanisms **under that behaviour** - not about every
+behaviour the world could carry.
+
+`greedy` maximises each group's own intake every tick. That is an upper
+bound on short-term intake, not on long-term persistence: when every
+grazer and predator takes the most it can, the shared resource is
+over-exploited, and in the current library `greedy` grazes
+phytoplankton down to ~0.05x spawn and drags the chain above it along. A
+trained policy can hold back - under trained policies phytoplankton sits
+stationary at ~0.56x - so a trained world can pass where the normative
+corner fails. Section 6 has the numbers.
+
+Everything else in the table is diagnostic, and the *differences* are
+the information:
 
 | Difference | What it measures |
 |---|---|
@@ -144,7 +178,7 @@ evaluates a reward function:
 | `eat` | all action mass on the legal prey in the cell, never move; cells with nothing to eat rest. Maximal intake, zero mobility. | yes |
 | `neutral` | no policy at all: zero logits, so the masked softmax is uniform over the legal actions in each cell. Deterministic. | no |
 | `random` | freshly initialised `PolicyNetwork` per decision maker, seeded. | no |
-| `policy` | a checkpoint from `results/<run-name>`, for comparison against the frozen arms. | no - it is a trained policy, so a FAIL could be a training problem |
+| `policy` | a checkpoint from `results/<run-name>`, measured against the same criterion. | no - the rig's exit code stays tied to the frozen arms, but see section 6: a PASS here is the stronger evidence of viability, and a FAIL may be a training problem |
 
 Both `eat` and the `greedy` arms allocate the eat mass **by marginal
 energy return**, not evenly - see "The diet" below.
@@ -255,14 +289,65 @@ separates "dipped and recovered" from "never left". `drift` is criterion
 * **The spawn settings disagree** - the outcome depends on geometry. A
   group that only fails under `--spawn configured` is telling you about
   `fg_library.yaml`'s spawn strategies, not about the tick.
-* **A FAIL in the normative corner** is the only one that closes the
-  question. There is nothing left to try: the start was as good as it
-  gets and the behaviour was the strongest available without training.
+* **A FAIL in the normative corner** says the world cannot carry that
+  group under maximal per-tick greed from a perfect start. It closes the
+  question only if trained policies fail too (section 6). A group that
+  fails here but survives with trained policies is limited by
+  over-exploitation, not by its parameters - today `gadoids`,
+  `pelagic_fish` and `phytoplankton`.
+* **A FAIL under both** - frozen and trained - is the structural case:
+  look at the energy budget (`tools/probes/budget_gate.py`), the
+  starvation window and the menu. Today that is `porpoises`.
 
 ## 5. Relation to `--population-stability`
 
 `POPULATION_STABILITY.md` describes a *training* mode: bounds enforced
 inside the fitness, which shapes what ARS optimises. This rig is the
 opposite: a diagnostic, outside training, with no reward at all. Use the
-rig to decide whether a configuration is worth training in; use
-`--population-stability` only afterwards, to keep a run inside bounds.
+rig to find mechanical faults and to measure library changes; use
+`--population-stability` only during training, to keep a run inside
+bounds.
+
+## 6. Viability with trained policies
+
+The question in the first paragraph is about the behaviour the world
+will actually run with, so the criterion of section 1 applied to
+trained policies is the stronger evidence. Two ways to measure it today:
+
+    # the rig's own criterion and report, policy arm (no exit-code verdict)
+    python3 tools/viability.py --behaviour policy --run-name <run> \
+        --grid 60*60 --spawn configured --migration on --mortality on
+
+    # a long inference rollout, trajectories to .npz, criterion by hand
+    python3 inference.py --project mareld2.yaml --run-name <run> \
+        --ticks 10000 --seed 1 --mortality on --migration on \
+        --currents on --quiet --output run.npz
+
+The rig has no `--currents` flag, so a run trained with currents is only
+reproduced exactly by `inference.py`. `build_env(seed=...)` seeds the
+global RNG since section 124.4, so both are reproducible per seed. Use
+several seeds: a perturbation of 1e-5 t per cell and tick grows to a few
+per cent over 3000 ticks, so one seed is one sample.
+
+Measured, `results/pzbpgp248nsrpfix35` (co-evolved, 60x60, migration,
+currents and mortality on; library before section 124), one seed,
+10 000 ticks (~6.8 years), biomass / spawn in the final window, against
+the rig's normative corner on the library of section 121:
+
+| fg | rig, frozen `greedy` | trained policies |
+|---|---|---|
+| gadoids | below floor | 1.09 - cycle 1.0-3.1 |
+| pelagic_fish | below floor | 1.38 - lowest 0.96 after tick 2000 |
+| porpoises | extinct@71 | extinct@2365 (~1.6 years) |
+| phytoplankton | 0.054, below floor | 0.56, stationary |
+| benthic_community | 0.555 | 0.65 - lowest 0.49 |
+| zooplankton | 0.270 | 2.29, stationary |
+
+Three of the four groups the rig fails are viable with trained
+policies; only `porpoises` fails both. The zoo:phyto ratio settles at
+1.8:1 against 0.44:1 at spawn - the equilibrium is an output, so that is
+a calibration fact about the spawn levels, not a failure.
+
+Not built yet: the policy arm as a deciding arm, with several seeds and
+the cycle-tolerant stationarity test of section 1. Until then a verdict
+on trained policies is taken by hand from runs like the one above.
