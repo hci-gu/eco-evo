@@ -13964,6 +13964,158 @@ remain open exactly as described in 71.9 / 71.11.
     budget line under the DM and NDM FG Editor, live from the typed
     r_max / Natural Mortality / Maintenance Level, in the muted colour
     it had (the 700 px wrap is gone; the line is one row of labels).
+
+154 fix53 retrained on the 50 kg porpoise unit (2026-10-11)
+154.1 Follows 152.6. pzbpgp248nsrpfix53 (train_gpu, lr 0.03, sigma
+    0.05, 16 pairs x 2 worlds, 1460 ticks, per-world calendar start)
+    resumed at gen 7 on the 50 kg library (restarts at gen 7 it 0,
+    gen 7 it 43, gen 8 it 0). Boundary caveat: biomass.jsonl comes from
+    the viewer's CPU probe, which re-reads fg_library.yaml every probe,
+    and its "gen" is the training gen + 1; its rows from training gen 6
+    on already use 50 kg while the trainer was still on 250 kg.
+154.2 Training log (gen means; DM order gad / herr / porp / zoo):
+      gen   reward                        sigma_f                 porp end ratio
+      1-5   -0.05..-0.13  0.16-0.32  -0.28..-0.54  -0.72..-0.77
+                                         0.02 0.04 0.10-0.18 0.01   0.71-0.77
+      8-14  -0.03  0.15-0.22 -0.13..-0.15 -0.74..-0.84
+                                         0.008 0.03 0.034-0.047 0.010  0.93
+    Porpoise sigma_f is now ~1.2x herring and ~4x gadoids/zooplankton
+    (152.6 gate was 4-10x). Every DM is flat within noise since gen ~9.
+154.3 Frozen probe (checkpoint after 14 gens, deterministic viewer
+    world 60x60, migration + currents + mortality, one year from May,
+    pre-collapse move probability hooked on
+    decisions.collapse_subthreshold_actions):
+      porpoises 12.0 -> 11.1 t, 264 cells (frozen gen 5: 148), wanted
+      move 6.7 % (gen 5: 22 %), executed 0.8 %, eaten 249 t/yr,
+      gadoids 44 % of the diet (Ecopath ~49 %; 151.2 frozen estimate for
+      option 2 was 26 % where porpoises are). Seasonal: Dec-Mar 30-34 %,
+      Apr-Jun ~40 %, Jul-Sep 60-65 %; in June the porpoises gather (175
+      cells, 3.6 % moved).
+    The policy's unshaped 15-25 % move probability (152.3) is trained
+    away now that cells above 50 kg execute fractions. Sampling (fix B)
+    is not indicated; a_herr/a_gad option 2 (151.3) stands.
+154.4 Zooplankton unchanged and still the open item (138.7): reward
+    flat, rest 0.77, Jan mean 4.6 kt = 13 % of b0 (recovers to 46 kt by
+    May); every eval (bounds 0.3-3.0) leaves the band at tick ~660.
+154.5 Herring no longer rest in winter (user observation, confirmed).
+    Frozen year, deterministic probe world (start May), current library,
+    herring rest share (biomass-weighted, executed) Nov / Dec / Jan:
+      fix51 (gen 10)  34 / 45 / 46 %   fix53 (14 gens)  0 / 0 / 0 %
+    Training log: fix51 herring rest fell to 4 % by gen 3 and climbed
+    back to 18 % by gen 9; fix53 sits at 2.7-4.0 % through gen 14.
+    Rule overrides on herring only (probe diagnostic, not a model change),
+    three worlds (PROBE_SEED default / 11 / 22, starts May / Nov / Oct),
+    herring reward = mean log(E/E0) over the year, end biomass t:
+      fix53 trained          -0.069 / -0.020 / -0.122   11046 13086 12199
+      fix53 + fix51 profile  -0.064 / -0.012 / -0.123   11399 13580 12280
+      fix53 + rest Nov-Feb   -0.054 / -0.048 / -0.110   11641 13202 12411
+      fix51 trained          -0.052 / -0.024 / -0.104
+      fix51, rest -> eat     -0.087 / -0.045 / -0.142   (Sep-Mar)
+    Winter rest still pays (less gadoid predation, 4076 -> 2698-3347 t,
+    for more starvation in Feb); end biomass is higher in every world.
+    The crude fix51 profile on the fix53 policy gains only ~0.005-0.008
+    (a sixth to a quarter of herring sigma_f ~0.03); fix51's own,
+    state-dependent rest is worth 0.02-0.04. Likely why fix53 does not
+    find it: its winter rest probability is ~0, so the softmax gradient
+    toward rest is ~0, and the gain is small against the noise. Not an
+    incentive change. fix53 was restarted at lr 0.01 (2026-10-11 00:43).
+154.6 Gadoids barely move (user observation, confirmed; fix53 checkpoint
+    of 01:32, probe world from May): move 1-3 % Nov-Feb, 4-11 % in
+    summer; reserve fill s 0.69-0.76, hunger gate 0.48-0.62 (u 0.5), so
+    they are not full. Herring in gadoid cells 2.6-3.6 t vs best
+    4-neighbour 3.4-6.5 t; gadoid-herring correlation -0.27..+0.03.
+    Diet: May-Aug zooplankton 59-77 %, herring 18-32 %; Oct-Feb benthos
+    55-61 %, herring ~40 %; cannibalism 0 % (Ecopath, model prey: herring
+    ~40, benthos ~28, zoo ~25, gadoids ~6 %). Why staying is rational:
+    with the 148 energy-limit ceilings every pair fills the stomach at
+    the observed densities (herring type III a h B^2 = 83 at 3.1 t,
+    f = 0.97; 0.99 at 4.8 t; benthos ~0.94; zoo ~0.98 in summer), so a
+    denser herring cell adds ~2 % intake, while the moving share eats
+    nothing that tick and pays 12 vs 10.5 MJ/t/tick. Intake is set by
+    the hunger gate times the ceiling, not by where the gadoid is. A
+    "bigger incentive" (shaping) would break section 7; the lever is
+    the functional response (a or h per pair), e.g. 148.3 option B
+    (a_zoo <= 0.01): no decision taken.
+154.7 fix53 at lr 0.1 (restart 2026-10-11 01:44, gen 15 it 3). Training
+    log gens 16-20: herring rest 12-17 % (was ~4 %, peak gen 17-18 then
+    falling), porpoise reward -0.13 -> -0.20..-0.32, gadoid -0.03 ->
+    -0.08..-0.09. Swap test (frozen year, 3 worlds: probe seed default /
+    11 / 22, starts May / Nov / Oct; "old" = checkpoint 01:32 at lr
+    0.01, "new" = 10:34; a swapped DM takes its policy and obs stats
+    from old), reward = mean log(E/E0):
+                       gadoids          herring          porpoises
+      old             -.042 -.038 -.072  -.072 -.029 -.131  -.050 -.055 -.061
+      new             -.095 -.082 -.119  -.032 +.008 -.084  -.093 -.074 -.129
+      new + old gad   -.076 -.064 -.105  -.071 -.045 -.155  -.089 -.148 -.166
+      new + old herr  -.075 -.067 -.097  -.006 +.038 -.051  -.045 -.040 -.051
+      new + old porp  -.093 -.078 -.124  -.033 +.007 -.084  -.163 -.159 -.156
+    In every world: (1) the herring gain comes from the new gadoid
+    policy taking fewer herring; the new herring policy (winter rest
+    16-22 % Nov-Feb) is worse for herring than the old one against the
+    new gadoids. (2) The new gadoid policy is worse for gadoids too
+    (degraded, not adapted). (3) The new porpoise policy is better than
+    the old one in the new world; the porpoise loss follows the herring
+    winter rest (old herring restores it). Porpoise sonar sees 95 % of
+    hidden herring, so the path is indirect; not traced. Reading: lr 0.1
+    unlocked winter rest but overshoots the low-noise DMs (gadoids,
+    zooplankton) and drives a herring-gadoid cycle.
+154.8 Is lr 0.1 too high? GPU ARS step (lib/gpu/trainer.py ars_update):
+    theta += lr/(b sigma_f) sum_top-b (r+ - r-) delta, delta ~ N(0, I),
+    perturbation sigma*delta, b = 8 of 16. Normalising by sigma_f makes
+    the step length independent of the reward scale: |step| ~ lr * k *
+    sqrt(d/b) with k = rms (r+ - r-)/sigma_f ~ 1-2, against a probe
+    radius sigma*sqrt(d), so |step|/radius ~ (lr/sigma) k / sqrt(b):
+    ~0.2k at lr 0.03, ~0.7k at lr 0.1 (sigma 0.05). Measured on the
+    fix53 checkpoints 01:32 -> 10:34 (~280 iterations at lr 0.1, d
+    3500-4200 per DM): |theta| 29-35 -> 64-75 for every DM, |dtheta|
+    57-66, cos(old, new) 0.44-0.49, per-parameter rms change ~1.0 (sigma
+    0.05). 35^2 + n s^2 = 75^2 gives s ~ 3.9 per step, 1.2x the probe
+    radius 3.2, and the norm growth is that of a pure random walk
+    (orthogonal increments): the update is noise-dominated and each
+    generation moves the weights by ~s sqrt(50) ~ 27. The relative
+    exploration sigma*sqrt(d)/|theta| fell from 9 % to 4 %, and larger
+    weights saturate the tanh units and sharpen the softmax.
+154.9 Is the lr-0.1 herring policy (winter rest 13-21 % Nov-Feb) better
+    for herring? Old checkpoint + new herring policy (and obs stats),
+    same three worlds: herring -0.083 / -0.049 / -0.165 vs old -0.072 /
+    -0.029 / -0.131; gadoids -0.066 / -0.059 / -0.094 vs -0.042 / -0.038
+    / -0.072; porpoises -0.193 / -0.142 / -0.165 vs -0.050 / -0.055 /
+    -0.061 (with the new porpoise policy too: -0.087 / -0.144 / -0.222).
+    With 154.7 the new herring policy is worse for herring than the old
+    one in all six world x opponent cases (by 0.011-0.034), although a
+    pure winter-rest overlay on the old policy gains (154.5). The rest
+    came with other changes that cost more; consistent with the random-
+    walk reading of 154.8, and with the rest share already falling
+    (17 -> 12 %). If a burst is wanted to leave the flat softmax region,
+    sigma (probe radius) is the knob, with lr kept at lr/sigma <= ~0.6.
+154.10 Do policies become uniform in movement as training goes on?
+    Training logs: per-cell action entropy falls monotonically in every
+    run (fix40 gad 1.37 -> 0.66 over 40 gens; fix49 0.76 -> 0.42 gens
+    3-22; fix53 0.53 -> 0.33 gens 3-13 at lr 0.03, -> 0.13 by gen 21
+    after lr 0.1). Probe (tools: scratchpad spread.py; probe world,
+    one year; "local dir" = biomass-weighted |sum_k p_k u_k| / p_move
+    per cell, 1 = each cell moves one way; "global coh" = the same over
+    the whole population per tick; eff cells = exp(entropy of the
+    biomass distribution); Rg = radius of gyration, cells):
+                    local dir (gad herr porp zoo)  global coh       eff cells gad / herr
+      random        0    0    -    0               0    0    -  0   2904 / 3463
+      fix53 01:32   .83  .85  .76  .66             .50  .64  .56 .50  2538 / 2719
+      fix53 10:34   .94  .88  .95  .96             .22  .26  .58 .38  2263 / 2207
+      fix53 11:47   .95  .90  .96  .94             .36  .39  .53 .59  2118 / 2099
+    fix49/50/51 checkpoints: local .21-.81, global .16-.72. Rg 20-25
+    for every DM and checkpoint except porpoises (whole grid covered).
+    So: cells become one-directional and gadoids/herring patchier
+    (eff cells -17/-23 %), but the population as a whole does not move
+    more in one direction and the range does not shrink. Softmax at
+    T = 2 on the current (post lr 0.1) policies: gadoids -0.107 ->
+    -0.096, herring -0.023 -> +0.012, porpoises -0.150 -> -0.090, zoo
+    -0.670 -> -0.683; on the 01:32 policies mixed (gad -0.042 -> -0.064,
+    herr -0.072 -> -0.042, porp -0.050 -> -0.032, zoo -0.663 -> -0.685).
+    Reading: the sharpening is at least partly the noise-driven weight
+    norm growth of 154.8 (no entropy term, step length fixed by lr),
+    not reward; after lr 0.1 it exceeds what the reward supports.
+    Candidate (not done): norm control on theta in ARS (weight decay or
+    fixed |theta|), an optimiser change, not an action hack.
 155 Calendar band under the inference plot (2026-10-11)
 155.1 User request: show in the inference viewer's plot which month
     the rollout is in and the time of day, as profiler-style labels
