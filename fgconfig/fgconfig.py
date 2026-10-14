@@ -3325,8 +3325,16 @@ class FGConfigApp:
             return (f"{name}: M2 caused by {pred} = {m2:g} per year, adds "
                     f"{budget.per_tick(m2):.4g} per tick to g")
         if kind == "gate":
-            return (f"{name}: 1 - u = {budget.gate:g} "
-                    f"(Maintenance Level u = {1.0 - budget.gate:g})")
+            u = budget.maintenance
+            if budget.reference_fill is None:
+                return (f"{name}: 1 - u = {budget.gate:g} "
+                        f"(full reserve; Maintenance Level u = {u:g})")
+            return (f"{name}: s* - u = {budget.gate:.4g} (ideal reserve "
+                    f"s* = {budget.reference_fill:.4g}, u = {u:g}; best prey "
+                    f"{budget.best_prey} at the ceiling "
+                    f"{budget.ideal_intake:.4g} MJ/t per tick, eat cost "
+                    f"{budget.ideal_cost:.4g}; Pmax {budget.pmax_annual:.4g} "
+                    f"per year)")
         if kind == "ticks_per_year":
             return f"{TICKS_PER_YEAR:g} ticks per year"
         return name

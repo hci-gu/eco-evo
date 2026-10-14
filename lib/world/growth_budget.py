@@ -11,7 +11,7 @@ calibration, ``LIBRARY_TICK_HOURS``):
 
   decision maker
       gross = r_max + M1 + sum_j M2_ij
-      g     = gross / ((1 - u) * TICKS_PER_YEAR)
+      g     = gross / ((s* - u) * TICKS_PER_YEAR)
 
   non decision maker (logistic, no separate mortality term)
       g     = (r_max + sum_j M2_ij) / TICKS_PER_YEAR
@@ -29,9 +29,29 @@ calibration, ``LIBRARY_TICK_HOURS``):
             predator j. Counted only while the pair is checked
             (``preys_on``), the predator is a decision maker (only DMs
             hunt in the tick) and the predator is active in the project.
-  1 - u     the largest energy surplus, reached at a full reserve
-            (s = 1, where the hunger gate closes). Ideal
-            conditions mean a full reserve.
+  s* - u    the energy surplus at the reserve a DM settles on under
+            ideal conditions (section 160). Growth per tick is
+            g (s - u), and it used to be paid at a full reserve (1 - u),
+            but the hunger gate h = (1 - s)/(1 - u) closes there, so no
+            DM ever produced its budget. Ideal conditions: unlimited prey
+            of the best checked, active pair, eaten every tick at the
+            Holling ceiling, C = assimilation * prey energy / h_t (MJ per
+            t per tick), paying resting_metabolism * feeding_cost (the
+            library value, i.e. at the reference temperature). The
+            growth is debited from the reserve (energy_content per t) and
+            the new biomass dilutes it (s ME per t), so the reserve
+            settles where h(s) C = cost + P (ec + s ME). Asking that the
+            production there, P = g (s* - u), equals gross per tick gives
+
+                s* = (C/(1-u) - cost - P ec) / (C/(1-u) + P ME)
+
+            in closed form, with no policy and no rollout. The budget is
+            infeasible when P >= Pmax = (C - cost) / (ec + u ME), and
+            unrealisable under the mass balance when g > ME / ec (the
+            growth is capped at the reserve above u). A DM without the
+            energy data (no checked prey with an energy content, no
+            energy_content, max_energy_reserve or resting_metabolism)
+            falls back to the full reserve, 1 - u.
 
 When ``--mortality off`` the tick never applies M1, so the loader passes
 ``include_m1=False`` and M1 is left out of the budget as well: removing a
@@ -52,6 +72,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, Optional
 
+from lib.world.energy_balance import intake_ceiling, prey_energy
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 TICKS_PER_YEAR = 365.0 * 24.0 / LIBRARY_TICK_HOURS
@@ -79,8 +100,55 @@ def annual_rate_from_tick_loss(m_tick):
 
 
 def max_gate(species):
-    """(s - u)_max for a decision maker: 1 - maintenance_level."""
+    """(s - u) at a full reserve: 1 - maintenance_level (the fallback)."""
     return 1.0 - _as_float(species.get("maintenance_level"))
+
+
+def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
+    """(C, best prey) at the Holling ceiling of the best checked pair.
+
+    C in MJ per t predator per tick: max over checked pairs with an
+    active prey of intake_ceiling(a, h_t) * assimilation * prey energy,
+    the same numbers the runtime puts in ``max_intake_mat``,
+    ``handling_time_mat`` and ``energy_gain_mat``. (0.0, None) when no
+    pair has a usable prey energy.
+    """
+    active = None if active_predators is None else set(active_predators)
+    species_defs = species_defs or {}
+    pred_def = species_defs.get(pred_id) or {}
+    prefix = pred_id + PREYS_ON
+    best, best_id = 0.0, None
+    for key, entry in (interactions or {}).items():
+        if not key.startswith(prefix) or not isinstance(entry, dict):
+            continue
+        prey_id = key[len(prefix):]
+        if not entry.get("preys_on", False) or PREYS_ON in prey_id:
+            continue
+        if active is not None and prey_id not in active:
+            continue
+        energy = prey_energy(species_defs.get(prey_id))
+        if not energy:
+            continue
+        a = _as_float(entry.get("max_intake_rate"),
+                      _as_float(pred_def.get("max_intake_rate")))
+        assim = min(1.0, max(0.0, _as_float(entry.get("assimilation_factor"), 1.0)))
+        rate = intake_ceiling(a, _as_float(entry.get("handling_time"))) * assim * energy
+        if rate > best:
+            best, best_id = rate, prey_id
+    return best, best_id
+
+
+def ideal_reserve(maintenance, intake, cost, energy_content, max_reserve,
+                  production):
+    """s* where h(s) C = cost + P (energy_content + s ME), or None.
+
+    ``production`` P is the wanted g (s* - u) per tick. None when the
+    energy cannot pay for it, i.e. P >= Pmax = (C - cost) / (ec + u ME).
+    """
+    u = maintenance
+    k = intake / (1.0 - u)
+    s = (k - cost - production * energy_content) / (k + production * max_reserve)
+    return s if s > u else None
 
 
 def has_budget(species):
@@ -123,6 +191,13 @@ class GrowthBudget:
     gate: float = 1.0
     growth_rate: Optional[float] = None
     error: Optional[str] = None
+    # Section 160: the ideal-conditions reserve the gate is taken at.
+    maintenance: float = 0.0
+    reference_fill: Optional[float] = None    # s*; None = full reserve
+    ideal_intake: float = 0.0                 # C, MJ/t/tick
+    ideal_cost: float = 0.0                   # MJ/t/tick
+    best_prey: Optional[str] = None
+    pmax_annual: Optional[float] = None       # (C - cost)/(ec + u ME), /yr
 
     @property
     def predation_total(self):
@@ -190,6 +265,7 @@ def growth_budget(prey_id, species_defs, interactions,
                                    active_predators),
     )
     if is_dm:
+        budget.maintenance = _as_float(spec.get("maintenance_level"))
         budget.gate = max_gate(spec)
         if budget.gate <= 0.0:
             budget.error = "no growth window: maintenance_level must be below 1"
@@ -197,10 +273,54 @@ def growth_budget(prey_id, species_defs, interactions,
         if not math.isfinite(budget.m1_annual):
             budget.error = "natural_mortality must be below 1"
             return budget
+        _ideal_gate(budget, prey_id, spec, species_defs, interactions,
+                    active_predators)
+        if budget.error:
+            return budget
     else:
         budget.gate = 1.0
     budget.growth_rate = budget.gross_annual / (budget.gate * TICKS_PER_YEAR)
+    if is_dm and budget.reference_fill is not None:
+        ceiling = budget_mass_balance_ceiling(spec)
+        if ceiling is not None and budget.growth_rate > ceiling:
+            budget.error = (f"g = {budget.growth_rate:.4g} exceeds the "
+                            f"mass-balance ceiling max_energy_reserve / "
+                            f"energy_content = {ceiling:.4g}")
+            budget.growth_rate = None
     return budget
+
+
+def budget_mass_balance_ceiling(spec):
+    """ME / energy_content: the growth a reserve above u can pay per tick."""
+    ec = _as_float(spec.get("energy_content"))
+    me = _as_float(spec.get("max_energy_reserve"))
+    return me / ec if ec > 0.0 and me > 0.0 else None
+
+
+def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
+                active_predators):
+    """Set ``budget.gate`` to s* - u (section 160), or leave 1 - u."""
+    u = budget.maintenance
+    ec = _as_float(spec.get("energy_content"))
+    me = _as_float(spec.get("max_energy_reserve"))
+    cost = (_as_float(spec.get("resting_metabolism"))
+            * _as_float(spec.get("feeding_cost"), 3.0))
+    defs = dict(species_defs or {})
+    defs[prey_id] = spec
+    intake, best = ideal_intake(prey_id, defs, interactions, active_predators)
+    if intake <= 0.0 or ec <= 0.0 or me <= 0.0 or cost <= 0.0:
+        return
+    budget.ideal_intake, budget.ideal_cost, budget.best_prey = intake, cost, best
+    budget.pmax_annual = (intake - cost) / (ec + u * me) * TICKS_PER_YEAR
+    production = budget.gross_annual / TICKS_PER_YEAR
+    s_star = ideal_reserve(u, intake, cost, ec, me, production)
+    if s_star is None:
+        budget.error = (f"budget {budget.gross_annual:.4g} /yr exceeds the most "
+                        f"the energy allows, Pmax {budget.pmax_annual:.4g} /yr "
+                        f"(best prey {best})")
+        return
+    budget.reference_fill = s_star
+    budget.gate = s_star - u
 
 
 def derived_growth_rate(prey_id, species_defs, interactions,

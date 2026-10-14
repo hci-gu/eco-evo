@@ -94,7 +94,7 @@
     # 11.5 C (Huntley & Lopez 1992) = 58.4 /yr, minus total mortality
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
     r_max: 33.4
-    growth_rate: 0.0800346
+    growth_rate: 0.127932799
     # M1 = total copepod mortality (~25 /yr = realised P/B) minus the
     # 21 % taken by pelagic fish, gadoids and seabirds in the North Sea
     # Ecopath diet matrix: 19.7 /yr. The rest is carnivorous zooplankton,
@@ -177,7 +177,7 @@
     # r_max 0.648 /yr: biomass-weighted FishBase CMSY priors over herring,
     # sprat, mackerel, horse mackerel, sandeel and other planktivores.
     r_max: 0.648
-    growth_rate: 0.00131775
+    growth_rate: 0.00160458203
     # M1 = M0 (0.391) + predation by groups that are not FGs (0.189:
     # sharks, rays, other fish, larvae) = 0.580 /yr, North Sea Ecopath
     # 1991. Predation by FGs lives in predation_mortality. Was 1.0e-04.
@@ -222,7 +222,7 @@
     # whiting, haddock, saithe, hake and the other gadoids (Norway pout
     # and blue whiting excluded: they eat zooplankton).
     r_max: 0.511
-    growth_rate: 0.00164137
+    growth_rate: 0.00303110135
     # M1 = M0 (0.20; SMS residual M1 convention for cod, haddock,
     # whiting and saithe; Ecopath NS 1991 adults 0.18) + predation by
     # non-FG groups (0.214; squid, halibut, gurnards, long-rough dab,
@@ -232,7 +232,8 @@
     # entries on 'other gadoids' in Mackinson & Daskalov 2007 Table 3.4
     # duplicate the megrim / halibut / large demersal columns (column
     # sums). reports/Restdödlighet M0 hos torskfiskar.md, resume 157.
-    # Cannibalism is the gadoids_preys_on_gadoids pair. Was 0.000468
+    # Cannibalism is the gadoids_preys_on_gadoids pair (unchecked since
+    # section 160, so it is in neither M1 nor the budget). Was 0.000468
     # (0.683 /yr), before that 7.0e-05.
     natural_mortality: 0.000284
     max_intake_rate: 0.04
@@ -294,7 +295,7 @@
     # r_max 0.10 /yr (Lockyer 2003; Caswell et al. 1998; Forney et al.
     # 2021: 9.6 %/yr after bycatch ended).
     r_max: 0.10
-    growth_rate: 0.000273991
+    growth_rate: 0.000447388854
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models from adult
     # survival 0.90-0.95 excluding bycatch, plus calf mortality). No FG
     # preys on porpoises. Was 6.0e-05.
@@ -344,7 +345,7 @@
     # r_max 0.11 /yr: harbour seal 10.2-13.6 %/yr in Kattegat-Skagerrak
     # after 1988 (Carroll et al. 2025), grey seal <= 10 % (HELCOM).
     r_max: 0.11
-    growth_rate: 0.00028769
+    growth_rate: 0.000349016012
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models); no FG preys on
     # seals. Was 6.0e-05.
     natural_mortality: 6.85e-05
@@ -378,7 +379,7 @@
     # r_max 0.10 /yr: Niel & Lebreton on JNCC 552 rates (guillemot 0.08,
     # razorbill/gannet 0.10, kittiwake/gulls 0.11-0.16).
     r_max: 0.10
-    growth_rate: 0.000342397
+    growth_rate: 0.000466172023
     # M = M1 = 0.15 /yr, biomass weighted with juveniles (Leslie Z:
     # guillemot 0.145, kittiwake 0.16, gannet 0.20); no FG preys on
     # seabirds. Was 8.0e-05 (adult-only 0.117 /yr).
@@ -552,8 +553,12 @@ interaction_definitions:
   # Cannibalism (section 141): ~5 % of the gadoid diet in North Sea
   # Ecopath 1991 (juvenile cod, whiting, haddock, saithe eaten by the
   # adults); M2 0.2168 /yr is the report's gadoid-on-gadoid share.
+  # Unchecked (section 160): a group-biomass reward never learns to eat
+  # its own group (0.03 % of the gadoid eat probability), so the budget
+  # paid 0.2168 /yr for a loss the tick never took. In an age-pooled
+  # group it is mostly a transfer from small to large fish.
   gadoids_preys_on_gadoids:
-    preys_on: true
+    preys_on: false
     predation_mortality: 0.2168
     assimilation_factor: 0.8
     # Energy-limited ceiling, h = 130 * 5500 MJ/t / 4500 (section 148).

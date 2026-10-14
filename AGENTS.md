@@ -48,7 +48,7 @@ fabricates mass.
 | `lib/environments/ecosystem.py` | `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
-| `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs; shared by loader, FG editor and tests (section 129). |
+| `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs, paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). |
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
@@ -119,10 +119,15 @@ fabricates mass.
   generalist II, as before. Set on gadoids -> pelagic_fish (141.4),
   where gadoids also eat zooplankton (krill proxy) and each other.
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
-  `g = (r_max + M1 + sum checked predation_mortality) / ((1-u)*1460)`,
-  NDM `r = (r_max + sum M2) / 1460`. Checking/unchecking a predator in the
-  FG editor moves the prey's growth by that predator's share; muted FGs are
-  absent. With `--mortality off` the loader leaves M1 out of g (pass
+  `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
+  NDM `r = (r_max + sum M2) / 1460`. s* is the reserve a DM settles on
+  under ideal conditions (best checked prey at the Holling ceiling, eating
+  every tick; closed form from the library, no policy - section 160); it
+  replaced the full reserve 1 - u, which the hunger gate never lets a DM
+  reach. Checking/unchecking a predator in the FG editor moves the prey's
+  growth; muted FGs are absent. A pair a group-biomass reward cannot
+  learn (cannibalism) does not belong in the budget: gadoid cannibalism
+  is unchecked (section 160). With `--mortality off` the loader leaves M1 out of g (pass
   `apply_natural_mortality` to the loader wherever an env is built). Edit
   `r_max`, `natural_mortality` (M1, non-FG losses only) or the pair's
   `predation_mortality`, never `growth_rate` itself.

@@ -2,9 +2,11 @@
 
 Contract (lib/world/growth_budget.py): a prey's growth_rate pays for the
 predation of every checked, active, decision-making predator, so
-checking a predator raises the prey's growth by exactly that predator's
-share and unchecking lowers it by the same amount, leaving the net
-low-density growth r_max invariant.
+checking a predator raises the prey's growth by that predator's share
+and unchecking lowers it, leaving the net low-density growth r_max
+invariant. The toy budgets here carry no energy data and so take the
+full-reserve gate 1 - u, where the share is exact; the ideal-reserve
+gate s* - u (section 160) is tested in test_ideal_reserve.py.
 """
 import math
 import os

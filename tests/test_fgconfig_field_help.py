@@ -150,10 +150,13 @@ def test_fg_editor_growth_line_has_term_help():
 
     try:
         app = fgconfig.FGConfigApp(root)
+        # porpoises give gadoids an M2 term now that cannibalism is
+        # unchecked (section 160).
         app.project_data["decision_makers"] = [
-            {"group_id": "pelagic_fish"}, {"group_id": "gadoids"}]
+            {"group_id": "pelagic_fish"}, {"group_id": "gadoids"},
+            {"group_id": "porpoises"}]
         species = app.global_library["species_definitions"]
-        for gid in ("pelagic_fish", "gadoids"):
+        for gid in ("pelagic_fish", "gadoids", "porpoises"):
             # What load_project_from_path does for every project FG.
             app.current_fg_configs[gid] = species[gid]
         app.update_fg_list()

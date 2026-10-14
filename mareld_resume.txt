@@ -14539,3 +14539,123 @@ remain open exactly as described in 71.9 / 71.11.
     only "below min_split the distribution collapses to argmax" and need
     the D rule on the mechanics slides; gpu_run.json / training_progress
     do not record unit_splits (fine while it has no CLI flag).
+
+160 Growth budget paid at the ideal-conditions reserve; gadoid
+    cannibalism unchecked (2026-10-14)
+160.1 Trigger: pzbpgp248nsrpfix54 (train_gpu, --policynetwork 1 16 tanh,
+    lr 0.06 sigma 0.1, 32 deltas, section 159 unit splits, gadoid M1
+    0.415; 388 updates in 9.6 h, 87 s/update vs 148 for 2x48; rewards
+    flat from ~200 updates; herring winter rest 16 % from ~150 updates;
+    weight rms 0.5-0.6, sigma sqrt(d)/|theta| 17-21 %). Frozen copy of
+    the 2026-10-14 10:27 checkpoint (md5 gadoids 9e80e913, herring
+    0c1a49cb, porpoises 96494ce9, zoo 42ead86a), probe world, 10 years:
+    herring 12000 -> 2292 t, gadoids 2500 -> 4963 t (peak year 9),
+    porpoises 12 -> 6.9 t (fix53 on the same engine: 2841 / 4516 / 6.2).
+160.2 Herring loss budget per year (tools/probes/herring_losses.py; rates
+    on mean herring biomass): taken by gadoids 0.35 (year 1) -> 0.60
+    (year 5) against their predation_mortality 0.30, while herring is
+    33 % of the gadoid diet in year 1 and 4 % in year 10 (gadoids eat
+    4.9-6.0 x their own mass a year and doubled); porpoises 0.012; M1
+    0.58; starvation 0; production only 0.85-1.00 against the budget
+    r_max 0.648 + M1 0.58 + M2 0.31 = 1.54.
+160.3 Why production is short (tools/probes/herring_monthly.py, any DM):
+    the mass-balance cap never binds (realised growth = wish), so
+    production / budget = (mean s - u) / (1 - u). Herring year 3: s
+    0.34 (Jan) .. 0.88 (May), mean 0.68 -> 60 %; no herring cell ever
+    reaches s 0.9. Summer: s settles at ~0.85 with plenty of zoo
+    (10-14 t/km2) because the hunger gate h = (1-s)/(1-u) is down to
+    0.16-0.2 while growth debits the reserve (~14 MJ/t/day) and dilutes
+    it (~20). Winter: food-limited, zoo 1.5-2.9 t/km2 where the herring
+    are, attack x0.66-0.72 (daylight), intake below cost despite h
+    0.7-0.9 and 40-54 % rest. The same for every DM (year 3): gadoids
+    s 0.74, 48 %; porpoises s 0.71, 39 % (year 1 0.03 /yr: cells below u
+    starve); zooplankton s 0.58, 38 % (rest 76-87 %).
+160.4 What limits intake (tools/probes/intake_ceiling.py). Correction of
+    a claim made while reading 160.3: demand = B * eat * f(B_prey) * h,
+    so the hunger gate multiplies the Holling ceiling too, and a lower s
+    raises intake even for a DM at the ceiling. Year 1: the prey harvest
+    cap never binds; gadoids sat 0.89-0.95 (at the ceiling) but intake
+    at full appetite C1 81-118 MJ/t/day vs cost 37-53, Pmax =
+    (C1 - cost)/(ec + u ME) 3.2 /yr vs budget 1.20; porpoises sat
+    0.65-0.75, C1 470-740 vs cost 358 (flat intake = h-regulated at
+    gain ~ cost), Pmax 9.2 vs 0.20; herring C1 400 vs 40 in summer,
+    below cost Nov-Jan, Pmax 12.5 (annual mean); zooplankton Pmax 32 vs
+    58 measured at eat 0.17 - its own hide/feed trade-off, not energy.
+    Pmax is an upper bound (linear in h, same eat mix, no depletion).
+160.5 Herring g scaled in memory (frozen fix54, 10 years; net = gross
+    production - starvation):
+        g x   mean s      net prod y1/y3/y5    herring y10   gadoid take y8-9
+        1     0.64-0.68   0.85/0.92/0.96       2300 t        0.57
+        1.67  0.57-0.63   1.13/1.01/1.09       5700 t        0.96
+        2.5   0.51-0.55   1.18/1.01/1.11       7900 t        1.03
+    Net production saturates at 1.0-1.2: the extra g at 2.5 goes into
+    winter catabolism (0.3-0.6 /yr in years 1-3). More herring feeds
+    the gadoids.
+160.6 Gadoid cannibalism (gadoids_preys_on_gadoids, M2 0.2168) was in the
+    gadoid budget (1.198 = r_max 0.511 + M1 0.415 + 0.2168 + porpoises
+    0.0557) but realised ~0: the pair works (f ~4.8e-3 t/t/tick, type
+    II) yet the frozen policy puts 0.03 % of its eat probability on
+    gadoids. Structural: the reward is the group's own biomass and
+    eating your own group is a net loss at assimilation < 1, so no
+    policy learns it, and the budget paid ~0.1 /yr of free production
+    (the M0 report said the same). It is not in M1 (157: M0 0.20 + non-
+    FG predation 0.214). APPLIED (user's call): pair unchecked; in an
+    age-pooled group it is mostly a transfer from small to large fish,
+    and r_max is already net at low density where it is small. The
+    density regulation real cannibalism gives is gone either way; a
+    density-dependent non-behavioural loss is the candidate if the
+    overshoot stays after retraining. tests/test_fgconfig_field_help.py
+    adds porpoises to its toy project so gadoids keep an M2 term.
+160.7 s* (tools/probes/ideal_growth.py, lib/world/growth_budget.py).
+    Ideal conditions: unlimited prey of the best checked, active pair,
+    eaten every tick at the Holling ceiling, C = assimilation * prey
+    energy (incl. the reference reserve, 140) / h_t, paying
+    resting_metabolism * feeding_cost at the library (reference)
+    temperature. Growth is debited from the reserve and dilutes it, so
+    the reserve settles where h(s) C = cost + P (ec + s ME). With P the
+    gross budget per tick, s* = (C/(1-u) - cost - P ec)/(C/(1-u) + P ME)
+    and g = gross / ((s* - u) * 1460): closed form, no policy, no
+    rollout (an earlier idea - calibrate s_ref on a trained policy's s -
+    was dropped as circular). Errors: P >= Pmax = (C - cost)/(ec + u ME)
+    (budget above the energy) and g > ME / ec (the mass balance would
+    cap it). No energy data -> the old full reserve 1 - u (the toy
+    budgets in tests/test_growth_budget.py). New GrowthBudget fields:
+    maintenance, reference_fill (s*), ideal_intake, ideal_cost,
+    best_prey, pmax_annual; ideal_intake() and ideal_reserve() are
+    public. FG editor: the gate term's caption shows s*, u, best prey,
+    C, cost and Pmax; field_help growth:gate rewritten. The annual-mean
+    Q10 factor is left out on purpose so the budget stays a library
+    property (herring t_ref 14 C: s* 0.857 here vs 0.880 with the annual
+    mean factor 0.71).
+160.8 New derived growth_rate (stored values rewritten; s*, Pmax /yr):
+        zooplankton   0.0800346  -> 0.127932799   s* 0.813  Pmax 208
+        pelagic_fish  0.00131775 -> 0.00160458    s* 0.857  Pmax 34.8
+        gadoids       0.00134438 -> 0.00303110    s* 0.722  Pmax 3.72
+        porpoises     0.000273991 -> 0.000447389  s* 0.806  Pmax 21.5
+        seals (muted) 0.00028769 -> 0.000349016   s* 0.912
+        seabirds (m.) 0.000342397 -> 0.000466172  s* 0.867
+    (gadoids 0.00164137 before 160.6). Zooplankton g is at 85 % of its
+    mass-balance ceiling 0.150.
+160.9 First read, frozen fix54 policies (trained on the old library),
+    new library, 10 years: gadoids (mean t) 3081 4754 6555 7371 7193
+    6521 5709 4926 4272 3682 - a faster, larger overshoot, peak in year
+    4; their take on herring 0.45 -> 0.99 (year 3) -> 0.55; herring
+    12000 -> 10568 7467 4462 3216 2814 2746 2758 2809 2807 2767 t, flat
+    from year 5 with net production 1.11-1.15 at s 0.67-0.69 (was
+    0.96-1.00 at 0.65-0.68). Porpoises (end of year) 12.1 12.3 12.6
+    13.0 13.3 13.5 13.5 11.4 9.9 7.1 t: they grow while gadoids and
+    herring are plentiful and fall once both are low; zooplankton
+    48-51 kt. Retrain before reading the balance.
+160.10 Validation: tests/test_ideal_reserve.py (production at s* = gross,
+    s* is the steady reserve, g above the full-reserve value, net
+    low-density growth still r_max, unchecked / inactive prey not the
+    best prey, Pmax and mass-balance errors, fallback without energy
+    data, and the real tick with one DM on unlimited prey settling at
+    s* within 0.002 and growing at the gross budget within 2 %). Full
+    suite 1069 passed / 12 skipped; budget_gate all DMs "any diet";
+    train.py 1-gen smoke OK.
+160.11 Open: retrain (fix55) and redo the ten-year reading; gadoid
+    density regulation (no cannibalism, food and interference only);
+    herring winter food limitation; zooplankton production set by its
+    hide/feed trade-off. The October decks (158) still show the 1 - u
+    budget formula, next to the unit-split note of 159.8.
