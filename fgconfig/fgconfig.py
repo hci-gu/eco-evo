@@ -871,8 +871,9 @@ class FGConfigApp:
         )
         grow += 1
         # Re-derive the displayed growth_rate whenever an input of the
-        # budget is edited (r_max, M1, u).
-        for _k in ("r_max", "natural_mortality", "maintenance_level"):
+        # budget is edited: r_max, M1, u and, through the ideal reserve s*
+        # (section 160), the energy inputs.
+        for _k in self.GROWTH_BUDGET_KEYS:
             if _k in self.prop_vars:
                 self.prop_vars[_k].trace_add(
                     "write", lambda *_a: self._update_editor_growth_display())
@@ -3079,12 +3080,14 @@ class FGConfigApp:
                 except tk.TclError:
                     pass
 
-        # Live re-derivation of every prey's growth_rate on check/uncheck
-        # and on edits of the M2 matrix.
+        # Live re-derivation of every growth_rate on check/uncheck, on
+        # edits of the M2 matrix and, through the predator's ideal
+        # reserve s* (section 160), of assimilation and handling time.
         for key, data in self.matrix_entries.items():
             if PREYS_ON not in key:
                 continue
-            for dk in ("preys_on", "predation_mortality"):
+            for dk in ("preys_on", "predation_mortality",
+                       "assimilation_factor", "handling_time"):
                 v = data.get(dk)
                 if v is not None:
                     v.trace_add("write",
@@ -3207,6 +3210,19 @@ class FGConfigApp:
                     entry["predation_mortality"] = float(mv.get() or 0.0)
                 except (TypeError, ValueError, tk.TclError):
                     entry["predation_mortality"] = 0.0
+            # The predator's ideal reserve s* (section 160) reads the
+            # pair's assimilation and handling time; an empty or invalid
+            # cell keeps the library value.
+            for dk in ("assimilation_factor", "handling_time"):
+                var = data.get(dk)
+                if var is None:
+                    continue
+                try:
+                    raw = var.get()
+                    if raw not in ("", None):
+                        entry[dk] = float(raw)
+                except (TypeError, ValueError, tk.TclError):
+                    pass
         return out
 
     def _budget_for(self, fg_id, interactions=None, species=None):
@@ -3339,6 +3355,13 @@ class FGConfigApp:
             return f"{TICKS_PER_YEAR:g} ticks per year"
         return name
 
+    # FG Editor fields the derived growth_rate depends on (section 160:
+    # the ideal reserve s* reads the energy ones).
+    GROWTH_BUDGET_KEYS = ("r_max", "natural_mortality", "maintenance_level",
+                          "max_energy_reserve", "energy_content",
+                          "resting_metabolism", "feeding_cost",
+                          "max_intake_rate")
+
     def _update_editor_growth_display(self, interactions=None):
         """Show the derived growth_rate of the FG open in the editor."""
         category = getattr(self, "active_fg_category", None)
@@ -3361,7 +3384,7 @@ class FGConfigApp:
         fg_id = fg_entry.get("group_id")
         spec = dict(self.current_fg_configs.get(fg_id) or {})
         spec["is_decision_maker"] = is_dm
-        for k in ("r_max", "natural_mortality", "maintenance_level"):
+        for k in self.GROWTH_BUDGET_KEYS:
             if k in prop_vars:
                 raw = prop_vars[k].get()
                 try:
@@ -4382,6 +4405,10 @@ class FGConfigApp:
             if isinstance(entry, dict) and "energy_gain" in entry:
                 entry.pop("energy_gain", None)
                 removed_legacy += 1
+
+        # The FG's energy content and reserve enter its predators' ideal
+        # reserve s* (section 160), so re-derive every growth_rate.
+        self._sync_derived_growth_rates()
 
         self.save_yaml(self.global_library, self.library_path)
         # FG editor writes initial_biomass min/max and spawn block onto the

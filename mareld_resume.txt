@@ -14659,3 +14659,14 @@ remain open exactly as described in 71.9 / 71.11.
     herring winter food limitation; zooplankton production set by its
     hide/feed trade-off. The October decks (158) still show the 1 - u
     budget formula, next to the unit-split note of 159.8.
+160.12 FG editor follow-up (fgconfig/fgconfig.py): the live re-derivation
+    now also listens to the energy inputs of s* - Max Energy Reserve,
+    Energy Content, Resting Metabolism, Eat cost and Max Intake Rate
+    (GROWTH_BUDGET_KEYS, read into the budget's species dict) - and the
+    matrix overlay (_live_interactions) and its traces cover assimilation
+    and handling time; Apply on an FG re-derives every growth_rate, since
+    a prey's energy moves its predators' s*. field_help: Maintenance
+    Level, r_max, Max Growth, the DM and NDM formula texts use s* - u.
+    tests/test_fgconfig_growth_sync.py (each energy field moves the
+    shown g to growth_budget's value; a handling-time cell reaches the
+    predator's budget). Full suite 1074 passed / 12 skipped.
