@@ -826,6 +826,16 @@ FIELD_HELP = {
         "see it.\n"
         "Changing it alters the input size: retraining is required."
     ),
+    "impact_baseline": (
+        "Baseline: the impact is part of the world as it is today "
+        "(e.g. fishing), not a scenario pressure.\n\n"
+        "On: the field is spawned in every training world with the Spawn "
+        "Strategy below, even when the policies cannot observe it, and an "
+        "inference world without a map for it samples one, so the "
+        "baseline world is never unfished. Adds no inputs; checkpoints "
+        "stay valid.\n"
+        "Off: a scenario impact, absent from training unless observable."
+    ),
     "impact_table_value": (
         "Impact value (in the impact's unit) at which this row's "
         "factors apply. Rows are sorted by value and interpolated "

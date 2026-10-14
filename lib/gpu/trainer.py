@@ -10,6 +10,7 @@ from lib.gpu.policy import PolicyBank
 from lib.gpu.random import fold_in, normal
 from lib.gpu.rollout import RolloutRunner
 from lib.gpu.spawn import WorldSpawner
+from lib.world.impact_maps import sample_impact_maps
 
 
 def ars_update(weights, deltas, positive, negative, lr, top_deltas):
@@ -91,6 +92,11 @@ class TensorARSTrainer:
         self.world_index = torch.arange(self.worlds, device=m.device, dtype=torch.int64)
         self.world_biomass = torch.zeros((self.worlds, m.G, m.C), device=m.device)
         self.world_light_start = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
+        if m.has_impacts:
+            self.world_impact_loss = torch.zeros((self.worlds, m.D, m.C), device=m.device)
+            self.world_impact_cost = torch.zeros_like(self.world_impact_loss)
+        if m.n_obs_imp:
+            self.world_impact_obs = torch.zeros((self.worlds, m.n_obs_imp, m.C), device=m.device)
         self.pair_index = torch.arange(self.n_deltas, device=m.device, dtype=torch.int64)
         self.runner = RolloutRunner(m, self.bank, 2 * self.pairs_per_batch, self.worlds, **self.runner_options)
         self.chunks = []
@@ -124,7 +130,36 @@ class TensorARSTrainer:
         # of the between-pair variance), which randomised the top-b
         # selection and inflated sigma_f (section 150).
         self.world_light_start.copy_(self.spawner.light_starts(keys))
+        self._refresh_impacts(keys)
         self.last_world_epoch = epoch
+
+    def _refresh_impacts(self, keys):
+        """Sample the worlds' impact fields on the host (section 161).
+
+        Same rule as the CPU trainer (``lib.world.impact_maps``): an
+        observable or baseline impact gets a field from its value range
+        and spawn strategy, any other impact is absent (a zero field,
+        which still reads the tables at value 0). One small readback per
+        world refresh, never inside a rollout.
+        """
+        m = self.model
+        if not (m.has_impacts or m.n_obs_imp):
+            return
+        spec = self.spec
+        impact_ids = sorted(set(m.impact_ids) | set(m.observed_impacts))
+        maps = [sample_impact_maps(
+                    impact_ids, getattr(spec, "impact_ranges", {}),
+                    (m.H, m.W), seed=int(key) & 0x7FFFFFFF,
+                    impact_spawn_specs=getattr(spec, "impact_spawn_specs", {}),
+                    observable_impact_vars=list(m.observed_impacts),
+                    baseline_impact_vars=getattr(spec, "baseline_impact_vars", []))
+                for key in keys.cpu().tolist()]
+        if m.has_impacts:
+            loss, cost = m.impact_fields(maps)
+            self.world_impact_loss.copy_(loss)
+            self.world_impact_cost.copy_(cost)
+        if m.n_obs_imp:
+            self.world_impact_obs.copy_(m.impact_observations(maps))
 
     def _world_keys(self, epoch_key):
         keys = fold_in(fold_in(self.seed.expand(self.worlds), 20001), self.world_index)
@@ -188,8 +223,15 @@ class TensorARSTrainer:
             b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
             r = self.spawner.reserves(b, keys)
             light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
+            per_pair = lambda field: field[None].expand(
+                2 * self.pairs_per_batch, *field.shape).reshape(runner.E, *field.shape[1:])
+            impacts = impact_obs = None
+            if m.has_impacts:
+                impacts = (per_pair(self.world_impact_loss), per_pair(self.world_impact_cost))
+            if m.n_obs_imp:
+                impact_obs = per_pair(self.world_impact_obs)
             runner.reset(b, r, keys, n_eval_ticks, self.obs_mean, self.obs_var, self.temperature,
-                         light_start=light)
+                         light_start=light, impacts=impacts, impact_obs=impact_obs)
             runner.run(n_eval_ticks)
             rewards, actions = runner.results(n_eval_ticks)
             self.rewards[:, start:start + count].copy_(rewards.reshape(2, self.pairs_per_batch, self.worlds, m.D)[:, :count].mean(2))
@@ -290,6 +332,10 @@ class TensorARSTrainer:
                 # is a pure function of their keys.
                 self.world_light_start.copy_(self.spawner.light_starts(
                     self._world_keys(self.last_world_epoch)))
+            if self.last_world_epoch is not None:
+                # The locked worlds' impact fields are a pure function of
+                # their keys too, so they are not stored (section 161).
+                self._refresh_impacts(self._world_keys(self.last_world_epoch))
         else:
             self.last_world_epoch = None
 

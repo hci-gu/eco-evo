@@ -37,6 +37,7 @@ from lib.environments.ecosystem_env.loss_accounting import LOSS_CAUSES
 from lib.world.tick_time import (
     LIBRARY_TICK_HOURS, add_tick_length_argument,
 )
+from lib.world.impact_maps import baseline_fallback_maps
 from lib.config.config_loader import (load_config, load_project_config,
                                       setup_full_mareld_mvp,
                                        compute_inference_b0_defaults,
@@ -170,6 +171,33 @@ def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
         if verbose:
             print(f"  [info] Resampled '{impact_id}' from {(Hs, Ws)} to {(H, W)} (nearest).")
     return arr.astype(np.float32, copy=False)
+
+
+def load_inference_impact_maps(project_path, impact_vars, H, W, seed=None,
+                               verbose=True):
+    """Impact fields of an inference world, ``{impact_id: (H, W) field}``.
+
+    Each impact reads its ``inference.impact_maps`` file. A baseline impact
+    (``baseline: true``, e.g. fishing) without a file gets a field sampled
+    from its value range and spawn strategy with ``seed``, so the baseline
+    world is never silently unfished (section 161). Any other impact
+    without a file - or with a file that fails validation - is an all-zero
+    field.
+    """
+    map_paths = _load_inference_map_paths(project_path)
+    maps = {}
+    for iv in impact_vars:
+        field = None
+        if iv in map_paths:
+            field = _load_impact_map_npz(map_paths[iv], iv, H, W, verbose=verbose)
+        if field is not None:
+            maps[iv] = field
+    missing = [iv for iv in impact_vars if iv not in maps]
+    maps.update(baseline_fallback_maps(project_path, missing, (H, W), seed=seed))
+    for iv in impact_vars:
+        if iv not in maps:
+            maps[iv] = np.zeros((H, W), dtype=np.float32)
+    return maps
 
 
 def _load_spawn_templates(project_path):
@@ -422,14 +450,10 @@ def build_env(project_path, grid_size, seed=None, verbose=True,
     # Missing entries — or files that fail validation — are treated as
     # all-zero fields. Biomass / energy maps are still randomly spawned
     # from the configured initial biomass values.
-    map_paths = _load_inference_map_paths(project_path)
+    maps = load_inference_impact_maps(project_path, impact_vars, H, W,
+                                      seed=seed, verbose=verbose)
     for iv in impact_vars:
-        field = None
-        if iv in map_paths:
-            field = _load_impact_map_npz(map_paths[iv], iv, H, W, verbose=verbose)
-        if field is None:
-            field = np.zeros((H, W), dtype=np.float32)
-        env.grid.add_map(iv, field)
+        env.grid.add_map(iv, maps[iv])
     return env
 
 

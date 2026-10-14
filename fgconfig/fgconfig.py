@@ -382,10 +382,19 @@ class FGConfigApp:
         obs_cb.grid(row=2, column=1, sticky="w", padx=5, pady=2)
         attach_help([obs_lbl, obs_cb], "impact_observable")
 
+        base_lbl = ttk.Label(self.impact_editor_frame, text="Baseline (always present)")
+        base_lbl.grid(row=3, column=0, sticky="w", padx=5, pady=2)
+        self.impact_baseline_var = tk.BooleanVar(value=False)
+        base_cb = ttk.Checkbutton(self.impact_editor_frame,
+                                  variable=self.impact_baseline_var,
+                                  command=self._on_impact_observable_toggled)
+        base_cb.grid(row=3, column=1, sticky="w", padx=5, pady=2)
+        attach_help([base_lbl, base_cb], "impact_baseline")
+
         self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
                                            text="Apply Changes",
                                            command=self.apply_impact_changes)
-        self.impact_apply_btn.grid(row=3, column=0, columnspan=2, pady=5)
+        self.impact_apply_btn.grid(row=4, column=0, columnspan=2, pady=5)
 
         # Spawn-strategy editor for impact maps. Mirrors the per-FG spawn
         # editor (mode/parameters/preview/info) but writes back to the
@@ -393,7 +402,7 @@ class FGConfigApp:
         # the random impact field (still scaled to [value_min, value_max]).
         self.impact_spawn_frame = ttk.LabelFrame(
             self.impact_editor_frame, text="Spawn Strategy")
-        self.impact_spawn_frame.grid(row=4, column=0, columnspan=2,
+        self.impact_spawn_frame.grid(row=5, column=0, columnspan=2,
                                      sticky="ew", padx=5, pady=5)
         self.impact_spawn_vars = {}
         self.impact_spawn_vars["_owner_kind"] = "impact"
@@ -2064,16 +2073,18 @@ class FGConfigApp:
         return min_var, max_var
 
     def _sync_impact_spawn_visibility(self):
-        """Show the Spawn Strategy frame iff the impact is observable.
+        """Show the Spawn Strategy frame iff the impact gets a field in
+        training: it is observable or a baseline impact (section 161).
 
-        Non-observable impacts are zero-filled at training time, so the
+        Other impacts are zero-filled at training time, so the
         spawn-strategy parameters would have no effect — we hide the
         whole LabelFrame to make this clear.
         """
         if not hasattr(self, 'impact_spawn_frame'):
             return
         try:
-            if bool(self.impact_observable_var.get()):
+            if (bool(self.impact_observable_var.get())
+                    or bool(self.impact_baseline_var.get())):
                 self.impact_spawn_frame.grid()
             else:
                 self.impact_spawn_frame.grid_remove()
@@ -2139,6 +2150,7 @@ class FGConfigApp:
         self.impact_value_min_var.set(_fmt(entry.get('value_min')))
         self.impact_value_max_var.set(_fmt(entry.get('value_max')))
         self.impact_observable_var.set(bool(entry.get('observable', False)))
+        self.impact_baseline_var.set(bool(entry.get('baseline', False)))
         # Populate the spawn-strategy editor from the impact's spawn block
         # (project override). Missing/invalid blocks fall back to uniform.
         spawn_cfg = entry.get('spawn') if isinstance(entry, dict) else None
@@ -2208,6 +2220,10 @@ class FGConfigApp:
             entry['observable'] = True
         else:
             entry.pop('observable', None)
+        if bool(self.impact_baseline_var.get()):
+            entry['baseline'] = True
+        else:
+            entry.pop('baseline', None)
         # Persist spawn block. Drop the entry entirely when the mode is
         # uniform with no extra params (legacy i.i.d. uniform sampling).
         if isinstance(spawn_dict, dict) and spawn_dict:

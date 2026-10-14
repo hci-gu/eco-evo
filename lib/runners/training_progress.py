@@ -142,12 +142,15 @@ def build_inference_env(config, seed):
     kwargs = dict(library_path=config["library"], grid_size=tuple(config["grid"]),
                   seed=seed, spawn_seed=seed,
                   apply_natural_mortality=bool(config["mortality"]))
+    impact_vars, observable = [], []
     if config["project"]:
-        groups = load_project_config(config["project"], mode="inference", **kwargs)[0]
+        groups, impact_vars, _, observable = load_project_config(
+            config["project"], mode="inference", **kwargs)
     else:
         groups = setup_full_mareld_mvp(**kwargs)
     height, width = config["grid"]
-    return EcosystemEnvironment(dict(height=height, width=width), groups,
+    env = EcosystemEnvironment(dict(height=height, width=width), groups,
+                                observable_impact_vars=observable,
                                 apply_natural_mortality=config["mortality"],
                                 mortality_multiplier=config.get(
                                     "mortality_multiplier",
@@ -157,6 +160,16 @@ def build_inference_env(config, seed):
                                 migration=config["migration"],
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
                                 current_world_seed=seed)
+    if impact_vars:
+        # The inference world's impact fields, baseline impacts (fishing)
+        # included (section 161). Imported here: inference.py is a script
+        # module that itself imports from lib.runners.
+        from inference import load_inference_impact_maps
+        maps = load_inference_impact_maps(config["project"], impact_vars,
+                                          height, width, seed=seed, verbose=False)
+        for iv in impact_vars:
+            env.grid.add_map(iv, maps[iv])
+    return env
 
 
 @torch.no_grad()

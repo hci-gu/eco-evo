@@ -14670,3 +14670,127 @@ remain open exactly as described in 71.9 / 71.11.
     tests/test_fgconfig_growth_sync.py (each energy field moves the
     shown g to growth_budget's value; a handling-time cell reaches the
     predator's budget). Full suite 1074 passed / 12 skipped.
+
+161 BASELINE IMPACTS AND IMPACT PRESSURE ON THE GPU ENGINE
+================================================================
+
+161.1 Why. fix55 (the section 160 library) let gadoids grow 35-40 %/yr
+    with no density brake after cannibalism was unchecked. A literature
+    review (reports/Taethetsberoende och interferens hos torskfiskar.md,
+    notes under research_notes/; Swedish file names) found that
+    interference cannot be that brake: w = 1 already gives 2-3 % less
+    intake per doubling of biomass, inside the empirical 3-6 %, and a
+    frozen-fix55 sweep needs w ~ 11 for zero net growth in year 1, with
+    winter starvation and growth back by year 2. The missing piece is a
+    loss. The user set the frame: the inference start biomasses are the
+    area as it is today, under a restrictive fishery. 2500 t gadoids is
+    therefore a fished state, and fishing belongs in the world as a loss
+    outside the growth budget (r_max is unfished low-density growth).
+    The impact maps (pelagic_trawling) were the intended vehicle.
+
+161.2 Two findings blocked that.
+    * The GPU engine (lib/gpu) had no impacts at all: no impact
+      mortality, no energy_factor surcharge (open since 86.7).
+    * Training zeroes every impact the policy cannot observe
+      (train._sample_impact_maps, "treated as absent during training");
+      only the probe and inference load inference.impact_maps. A
+      non-observable fishery would have been absent from training on
+      both engines.
+    The user chose a new flag over making trawling observable (which
+    would add input channels, invalidate checkpoints and let fish learn
+    to dodge the trawl, lowering the effective F).
+
+161.3 The baseline flag. impact_variables[i].baseline: true marks an
+    impact as part of today's world (fishing), not a scenario pressure.
+    * Training samples a field for observable impacts AND baseline
+      impacts; everything else stays absent (lib/world/impact_maps.py:
+      sample_impact_maps, trained_impact_vars; moved from train.py,
+      train._sample_impact_maps kept as an alias). _EnvBuilder reads the
+      baseline list from the project.
+    * Inference worlds (inference.build_env, train._ProbeEnvBuilder, the
+      progress evaluation lib/runners/training_progress.build_inference_env,
+      which had no impact maps at all before) go through
+      inference.load_inference_impact_maps: the project's npz map if
+      there is one, else a baseline impact is sampled from its range and
+      spawn strategy with the world seed, else zero. The noll and
+      projekt scenarios are thus both fished.
+    * config_loader: project_impact_ranges (factored out of
+      load_project_config) and project_baseline_impact_vars.
+    * FG editor: "Baseline (always present)" checkbox in the Impact
+      Editor; the Spawn Strategy frame shows for observable or baseline
+      impacts; field_help impact_baseline.
+    Impacts stay outside growth_budget, which never read them.
+
+161.4 GPU port (lib/gpu/ecosystem.py, rollout.py, trainer.py, config.py).
+    TensorEcosystem keeps the reference's dm_impact_tables. impact_fields
+    turns one world's fields into a per-cell loss rate (sum of
+    biomass_factor) and cost surcharge (sum of energy_factor), [N, D, C],
+    on the host once per world; the tick only multiplies:
+    impact_mortality before predation (B -= B*loss, reserve shrinks with
+    it, as impacts.apply_impact_mortality) and metabolism *
+    (1 + cost) in movement (impacts.impact_energy_cost_factor). A
+    missing field is skipped and an absent impact is a zero field read
+    through the table, as on CPU. Without any table (mareld2 today:
+    every impact muted) nothing is allocated and the graph is unchanged.
+    RolloutRunner holds impact_loss / impact_cost buffers and reset takes
+    impacts; TensorARSTrainer samples the baseline fields per world in
+    refresh_worlds from the world keys (one small readback per refresh)
+    and rebuilds them on load_state_dict. ProjectSpec carries the impact
+    recipe and raises NotImplementedError for an active observable
+    impact (the engine builds no impact observation channels; it used to
+    ignore them silently).
+
+161.5 Validation. tests/test_gpu_impacts.py (19 with CUDA): full-tick
+    CPU/GPU parity with two impacts, a table non-zero at value 0, a field
+    beyond the table, a missing field, migration and mortality; the
+    summed fields against interp_impact; impacts change the trajectory;
+    no tables keep the old graph; baseline sampled in training while a
+    non-observable scenario impact stays zero; muted baseline skipped;
+    inference fallback deterministic per seed; trainer fields per world,
+    reproducible per epoch, expanded into the runner and restored on
+    resume; observable impacts refused. tests/test_gpu_ecosystem.py
+    make_env takes impacts. Full suite 1093 passed / 12 skipped.
+    Smoke: train.py 1-gen on mareld2 OK; on a copy with pelagic_trawling
+    un-muted as baseline (value_max 1000, the placeholder table removes
+    up to 100 %/tick) herring is gone on both engines (train_gpu reward
+    -9.4, train.py probe "imp 100%"), with value_max 0.001 it trains
+    normally.
+
+161.6 Open. The fishery itself: bottom_trawling FG entries for gadoids
+    (they are caught in demersal and Nephrops trawls, not pelagic), real
+    per-tick tables (F/1460, ~1.6e-4/tick for F 0.24), the pelagic
+    trawling placeholder table, an effort map or a uniform field, and
+    calibration so the effective F (biomass-weighted over where the
+    policies put the fish) matches today's restrictive fishery. Next to
+    it the density-dependent M1 for gadoids (SMS: 0.016 + 0.0875 B per
+    year, B in t/km2; only the intercept paid by the budget). Frozen
+    fix55: F + k B_ref must close a surplus of ~0.36/yr at 2500 t, e.g.
+    k B ~ 0.12 and F ~ 0.24. Observable impacts on the GPU engine are
+    still unsupported.
+161.7 Observable impacts on the GPU engine (follow-up, same session).
+    The NotImplementedError of 161.4 is gone; the engine now follows
+    train.py's implementation (observations.build_observation_batch):
+    each observable impact is one raw-valued channel after the observed
+    groups in the own cell and again in each neighbour block (N, E, S,
+    W; zero outside the grid), the light channel still last; a missing
+    field reads as zeros. TensorEcosystem builds those indices from
+    env.observable_impact_vars (bank: biomass, visible, energy, light,
+    impacts) and takes impact_obs [E, n_obs, C] in observations;
+    impact_observations / import_impact_observations build it per world.
+    RolloutRunner keeps an impact_obs buffer (reset(impact_obs=...));
+    TensorARSTrainer samples observable and baseline fields together per
+    world with train.py's rule (spawn strategy, colony jitter, value
+    range) and restores them on resume. ProjectSpec, EnvironmentBuilder
+    and the progress evaluation world build their envs with the
+    observable list, so in_dims match the CPU trainer and exported
+    policies load in CPU inference; EnvironmentBuilder also samples the
+    training-world fields. Side fix: EnvironmentBuilder.with_world passed
+    tick_hours into the mass_balance slot (positional); it now uses
+    dataclasses.replace.
+    Tests (tests/test_gpu_impacts.py, 32 with CUDA): observation and
+    tick parity with one, two and a field-less observable impact, with
+    and without the daylight channel; trainer fields per world into the
+    runner and on resume; exported policy widths equal the CPU world's.
+    Full suite 1106 passed / 12 skipped. Smoke: train_gpu with
+    windfarm_noise observable (cuda-graph, 2 iterations) and the exported
+    policies stepping a CPU inference world.

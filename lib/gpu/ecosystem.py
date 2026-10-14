@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
+from lib.environments.ecosystem_env.impacts import interp_impact
 
 # Relative harvest cap, imported rather than repeated so the two engines
 # cannot drift apart again (Fix 2 / Section 73: an absolute epsilon in the
@@ -190,6 +191,20 @@ class TensorEcosystem:
             self.m1_light = tensor(light)[:, :, None]
             self.m1_light_on = any(exposure[f].get("light") is not None
                                    for f in exposure)
+        # Impact pressure (section 161): every DM's tables for the active
+        # impacts, from the reference's ``dm_impact_tables``. A field
+        # belongs to a world, so ``impact_fields`` turns the fields into
+        # per-cell rates once per world on the host and the tick only
+        # multiplies. No table keeps the tick bit-identical.
+        self.impact_tables = [list(entries) for entries in env.dm_impact_tables]
+        self.impact_ids = tuple(sorted(
+            {impact_id for entries in self.impact_tables for impact_id, _ in entries}))
+        self.has_impacts = bool(self.impact_ids)
+        # Observable impacts (section 161): raw field values read into the
+        # compact layout after the observed groups, in the own cell and in
+        # each neighbour, exactly as ``observations.build_observation_batch``.
+        self.observed_impacts = tuple(env.observable_impact_vars)
+        self.n_obs_imp = len(self.observed_impacts)
         self._build_indices(env)
 
     def tensor(self, value, dtype=torch.float32):
@@ -218,20 +233,23 @@ class TensorEcosystem:
         # where the visible block is one vector of G channels in the shared
         # case and one block of G channels PER OBSERVER when a pair floor
         # exists, because then "what I can see" depends on who is looking.
+        #   [biomass (G)] [visible] [energy_level (G)] [light] [impacts]
         pair = self.pair_visibility is not None
         visible_base = self.G
         energy_base = self.G + (self.D * self.G if pair else self.G)
+        impact_base = energy_base + self.G + (1 if self.daylight else 0)
+        impacts = [impact_base + k for k in range(self.n_obs_imp)]
         for d, own in enumerate(self.dm_positions):
             others = list(env.obs_others_idx[d])
             visible = [visible_base + (d * self.G + j if pair else j)
                        for j in others]
-            channels = [own, energy_base + own] + visible
+            channels = [own, energy_base + own] + visible + impacts
             for k, channel in enumerate(channels):
                 obs_indices[d, :, k] = channel * self.C + cells
                 obs_valid[d, :, k] = 1.0
             offset = len(channels)
             for direction in range(4):
-                for channel in [own] + visible:
+                for channel in [own] + visible + impacts:
                     obs_indices[d, :, offset] = channel * self.C + neighbors[direction]
                     obs_valid[d, :, offset] = valid[direction]
                     offset += 1
@@ -262,6 +280,77 @@ class TensorEcosystem:
         return (self.tensor(b).flatten(2), self.tensor(r).flatten(2),
                 self.tensor(h).flatten(2))
 
+    def impact_fields(self, maps):
+        """Per-world impact loss rate and cost surcharge, two [N, D, C].
+
+        ``maps`` holds one ``{impact_id: (H, W) field}`` per world. Each DM
+        sums, over the impacts it is affected by, its tables'
+        ``biomass_factor`` (the fraction of standing biomass removed per
+        tick, ``impacts.compute_impact_mortality``) and ``energy_factor``
+        (the extra multiple of every action cost,
+        ``impacts.impact_energy_cost_factor``). A missing field is skipped,
+        as there. Host side, once per world, never inside a tick.
+        """
+        loss = np.zeros((len(maps), self.D, self.C), dtype=np.float32)
+        cost = np.zeros_like(loss)
+        for w, fields in enumerate(maps):
+            for d, entries in enumerate(self.impact_tables):
+                for impact_id, table in entries:
+                    field = fields.get(impact_id)
+                    if field is None:
+                        continue
+                    bf, ef = interp_impact(
+                        table, np.asarray(field, dtype=np.float32).reshape(-1))
+                    loss[w, d] += bf
+                    cost[w, d] += ef
+        return self.tensor(loss), self.tensor(cost)
+
+    def impact_observations(self, maps):
+        """Observable impact fields per world, [N, n_obs_imp, C].
+
+        Raw values, a missing field as zeros, in ``observable_impact_vars``
+        order (``impacts.observable_impact_layers``).
+        """
+        out = np.zeros((len(maps), self.n_obs_imp, self.C), dtype=np.float32)
+        for w, fields in enumerate(maps):
+            for k, impact_id in enumerate(self.observed_impacts):
+                field = fields.get(impact_id)
+                if field is not None:
+                    out[w, k] = np.asarray(field, dtype=np.float32).reshape(-1)
+        return self.tensor(out)
+
+    def import_impact_observations(self, environments):
+        """Observable impact fields of reference envs (fixture upload)."""
+        return self.impact_observations([
+            {impact_id: env.grid.get_map(impact_id) for impact_id in self.observed_impacts
+             if env.grid.get_map(impact_id) is not None}
+            for env in environments])
+
+    def import_impacts(self, environments):
+        """Impact fields of reference envs (fixture upload)."""
+        maps = []
+        for env in environments:
+            fields = {}
+            for impact_id in self.impact_ids:
+                field = env.grid.get_map(impact_id)
+                if field is not None:
+                    fields[impact_id] = field
+            maps.append(fields)
+        return self.impact_fields(maps)
+
+    def impact_mortality(self, biomass, reserve, loss_rate):
+        """Direct impact mortality, before predation (Method.pdf 1-6).
+
+        Mirrors ``impacts.apply_impact_mortality``: the loss is
+        ``B * loss_rate`` per DM cell, the reserve shrinks with the
+        biomass, and the cell cannot go below zero.
+        """
+        b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
+        loss = b * loss_rate
+        reduction = torch.where(loss > 0, ((b - loss) / (b + 1e-9)).clamp(0.0, 1.0), 1.0)
+        return (biomass.index_copy(1, self.dm_index, (b - loss).clamp_min(0)),
+                reserve.index_copy(1, self.dm_index, r * reduction))
+
     def energy_level(self, biomass, reserve):
         safe_b = torch.where(biomass > 1e-9, biomass, 1.0)
         safe_max = torch.where(self.max_reserve != 0, self.max_reserve, 1.0)
@@ -281,7 +370,14 @@ class TensorEcosystem:
             light_start = torch.zeros((), dtype=torch.long, device=self.device)
         return torch.remainder(light_start + tick, self.light_period)
 
-    def observations(self, biomass, reserve, hidden, light_index=None):
+    def observations(self, biomass, reserve, hidden, light_index=None,
+                     impact_obs=None):
+        """Compact per-DM observations [E, D, C, F].
+
+        ``impact_obs`` [E, n_obs_imp, C] holds the observable impact fields
+        (``impact_observations``); None reads them as zero, as the
+        reference does for a missing map.
+        """
         if self.pair_visibility is None:
             visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
         else:
@@ -295,6 +391,11 @@ class TensorEcosystem:
                 raise ValueError("light_index is required with the daylight calendar")
             light = self.light_obs[light_index].reshape(-1, 1, 1)
             parts.append(light.expand(biomass.shape[0], 1, self.C))
+        if self.n_obs_imp:
+            if impact_obs is None:
+                impact_obs = torch.zeros((biomass.shape[0], self.n_obs_imp, self.C),
+                                         device=self.device)
+            parts.append(impact_obs)
         bank = torch.cat(parts, dim=1)
         return bank.flatten(1)[:, self.obs_indices] * self.obs_valid
 
@@ -432,7 +533,7 @@ class TensorEcosystem:
         return b, r
 
     def movement(self, biomass, reserve, gains, actions, track=False,
-                 light_index=None):
+                 light_index=None, impact_cost=None):
         """Move, split and settle; ``track`` also returns the source flow.
 
         With ``track`` the third return value is
@@ -444,6 +545,8 @@ class TensorEcosystem:
 
         ``light_index`` is the year tick per world; the water temperature
         (section 143) scales every action cost by its Q10 multiplier.
+        ``impact_cost`` [E, D, C] is the impacts' summed ``energy_factor``,
+        which scales them by ``1 + impact_cost`` per cell (section 161).
         """
         b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
         metabolism = self.metabolism
@@ -453,6 +556,8 @@ class TensorEcosystem:
                                  "temperature")
             metabolism = (metabolism
                           * self.metabolism_temp[light_index.reshape(-1)][:, :, None])
+        if impact_cost is not None:
+            metabolism = metabolism * (1.0 + impact_cost)
         move, rest = actions[:, :, :4], actions[:, :, 4]
         eat = actions[:, :, 5:].sum(2)
         move_fraction = move.sum(2)
@@ -749,20 +854,28 @@ class TensorEcosystem:
         return out_b, out_r, (phi[:, self.dm_index], out_b[:, self.dm_index])
 
     def step(self, biomass, reserve, actions, tick, seed_multiplier,
-             current_keys=None, track_source=False, light_index=None):
+             current_keys=None, track_source=False, light_index=None,
+             impacts=None):
         """One tick. ``track_source`` appends the local-reward tracking.
+
+        ``impacts`` is ``(loss_rate, cost)`` from ``impact_fields``, or
+        None for a world without impact tables (section 161).
 
         With ``track_source`` a sixth value ``(start, tracked, frac_in)``
         is returned: ``start`` is ``A(c, t)``, the cell energy the policy
-        observed (before predation, the first mortality of the tick), and
+        observed (before the impact mortality and predation), and
         ``tracked``/``frac_in`` come from ``tracked_energy`` once the
         end-of-tick state is final.
         """
         start = self.local_energy(biomass, reserve) if track_source else None
+        impact_cost = None
+        if impacts is not None:
+            biomass, reserve = self.impact_mortality(biomass, reserve, impacts[0])
+            impact_cost = impacts[1]
         b, r, gains, hidden, intake = self.predation(biomass, reserve, actions,
                                                      light_index)
         b, r, flow = self.movement(b, r, gains, actions, track=track_source,
-                                   light_index=light_index)
+                                   light_index=light_index, impact_cost=impact_cost)
         if track_source:
             b, r, drift = self.advect(b, r, tick, current_keys, track=True)
         else:

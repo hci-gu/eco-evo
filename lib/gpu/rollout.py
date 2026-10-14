@@ -68,6 +68,14 @@ class RolloutRunner:
         buffer("stability_sum", (self.E, model.D), torch.float64)
         buffer("local_sum", (self.E, model.D), torch.float64)
         buffer("local_occupied", (self.E, model.D), torch.float64)
+        # Impact loss rate and cost surcharge per world (section 161),
+        # only with impact tables so a project without them keeps the
+        # exact same graph.
+        if model.has_impacts:
+            buffer("impact_loss", (self.E, model.D, model.C))
+            buffer("impact_cost", (self.E, model.D, model.C))
+        if model.n_obs_imp:
+            buffer("impact_obs", (self.E, model.n_obs_imp, model.C))
         self.local_min_energy = (
             model.local_min_energy(self.local_reward.min_energy_factor)
             if self.local_reward is not None else None)
@@ -85,9 +93,28 @@ class RolloutRunner:
             destination.copy_(source)
 
     def reset(self, biomass, reserve, keys, ticks, mean, var, temperature,
-              light_start=None):
+              light_start=None, impacts=None, impact_obs=None):
+        """Load a batch of worlds; ``impacts`` is ``(loss_rate, cost)``
+        [E, D, C] from ``TensorEcosystem.impact_fields`` and ``impact_obs``
+        [E, n_obs_imp, C] from ``impact_observations`` (zero if None)."""
         if ticks < 1:
             raise ValueError("Rollouts must contain at least one tick")
+        if self.model.has_impacts:
+            if impacts is None:
+                self.impact_loss.zero_()
+                self.impact_cost.zero_()
+            else:
+                self.impact_loss.copy_(impacts[0])
+                self.impact_cost.copy_(impacts[1])
+        elif impacts is not None:
+            raise ValueError("impacts given but no DM has an impact table")
+        if self.model.n_obs_imp:
+            if impact_obs is None:
+                self.impact_obs.zero_()
+            else:
+                self.impact_obs.copy_(impact_obs)
+        elif impact_obs is not None:
+            raise ValueError("impact_obs given but no impact is observable")
         if light_start is None:
             self.light_start.fill_(self.model.light_fixed_start)
         else:
@@ -138,7 +165,8 @@ class RolloutRunner:
         # Observation and predation read the same year tick: the tick
         # counter only advances at the end of ``_tick``.
         light = m.light_index(self.light_start, self.tick)
-        obs = m.observations(self.biomass, self.reserve, self.hidden, light)
+        obs = m.observations(self.biomass, self.reserve, self.hidden, light,
+                             self.impact_obs if m.n_obs_imp else None)
         if self.normalize:
             raw = obs.double()
             if self.population_stability is not None:
@@ -167,6 +195,8 @@ class RolloutRunner:
         current_args = {"current_keys": self.keys} if m.currents is not None else {}
         if light is not None:
             current_args["light_index"] = light
+        if m.has_impacts:
+            current_args["impacts"] = (self.impact_loss, self.impact_cost)
         if self.local_reward is not None:
             b, r, hidden, _, _, local = m.step(self.biomass, self.reserve, actions,
                                                self.tick, multiplier,

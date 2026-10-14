@@ -455,6 +455,58 @@ def load_impact_spawn_specs(project_path):
     return out
 
 
+def _as_nonnegative_float(v):
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if f >= 0 else None
+
+
+def project_impact_ranges(project):
+    """Return ``{impact_id: (vmin, vmax)}`` for the active impacts.
+
+    Read from the project's impact_variables entries: schema
+    ``value_min`` / ``value_max``. Missing/invalid values fall back to
+    (0.0, 0.0) so the resulting map is a zero field (preserving previous
+    behaviour for unconfigured impacts). Muted impacts are skipped.
+    """
+    impact_ranges = {}
+    for iv in (project or {}).get('impact_variables', []) or []:
+        if not isinstance(iv, dict) or iv.get('muted'):
+            continue
+        iid = iv.get('impact_id')
+        if not iid:
+            continue
+        vmin = _as_nonnegative_float(iv.get('value_min'))
+        vmax = _as_nonnegative_float(iv.get('value_max'))
+        if vmin is None and vmax is None:
+            vmin, vmax = 0.0, 0.0
+        elif vmin is None:
+            vmin = vmax
+        elif vmax is None:
+            vmax = vmin
+        if vmax < vmin:
+            vmin, vmax = vmax, vmin
+        impact_ranges[iid] = (vmin, vmax)
+    return impact_ranges
+
+
+def project_baseline_impact_vars(project):
+    """Active impacts flagged ``baseline: true``, in project order.
+
+    A baseline impact is part of the world as it is today (fishing), not
+    a scenario pressure: it is present in training and in every scenario
+    even when the policy cannot observe it (section 161). ``project`` is
+    the parsed project dict or a path to it.
+    """
+    if isinstance(project, str):
+        project = load_config(project)
+    return [iv['impact_id'] for iv in (project or {}).get('impact_variables', []) or []
+            if isinstance(iv, dict) and iv.get('impact_id')
+            and not iv.get('muted') and iv.get('baseline')]
+
+
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
                         spawn_seed=None, allowed_mask=None, project_config=None, library_config=None,
                         tick_hours=LIBRARY_TICK_HOURS, apply_natural_mortality=True):
@@ -532,17 +584,6 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         if isinstance(iv, dict) and not iv.get('muted') and iv.get('observable')
     ]
 
-    # Per-impact value range (vmin, vmax). Read from the project's
-    # impact_variables entries: schema ``value_min`` / ``value_max``.
-    # Missing/invalid values fall back to (0.0, 0.0) so the resulting map is
-    # a zero field (preserving previous behaviour for unconfigured impacts).
-    def _as_float(v):
-        try:
-            f = float(v)
-        except (TypeError, ValueError):
-            return None
-        return f if f >= 0 else None
-
     # Reference-grid scaling: biomass values entered in the FG editor and the
     # Inference tab are defined relative to a reference grid (Rx x Ry cells)
     # stored under project_metadata.reference_grid_{width,height}. When the
@@ -573,24 +614,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     act_cells = H_act * W_act
     biomass_scale = (act_cells / ref_cells) if ref_cells > 0 else 1.0
 
-    impact_ranges = {}
-    for iv in project.get('impact_variables', []) or []:
-        if not isinstance(iv, dict) or iv.get('muted'):
-            continue
-        iid = iv.get('impact_id')
-        if not iid:
-            continue
-        vmin = _as_float(iv.get('value_min'))
-        vmax = _as_float(iv.get('value_max'))
-        if vmin is None and vmax is None:
-            vmin, vmax = 0.0, 0.0
-        elif vmin is None:
-            vmin = vmax
-        elif vmax is None:
-            vmax = vmin
-        if vmax < vmin:
-            vmin, vmax = vmax, vmin
-        impact_ranges[iid] = (vmin, vmax)
+    impact_ranges = project_impact_ranges(project)
 
     # ------------------------------------------------------------------
     # Topological ordering of spawn for env_driven refs

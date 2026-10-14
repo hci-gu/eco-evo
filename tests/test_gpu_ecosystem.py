@@ -31,7 +31,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              extinction_factor=0.3, interference=None,
              mortality_multiplier=1.0, daylight=None, dark_ratios=None,
              light_saturation=None, m1_exposure=None, reserve_food=None,
-             response_types=None, temperature=None):
+             response_types=None, temperature=None, impacts=None,
+             observable_impacts=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -49,6 +50,9 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     light-limited (section 138; needs a light climate in ``daylight``).
     ``temperature`` is ``(q10, t_ref, monthly_c)`` for the DM ``a``: its
     Q10 metabolism on the daylight calendar (section 143).
+    ``impacts`` maps a group to its ``params['impact']`` block; the caller
+    adds the fields with ``env.grid.add_map`` (section 161).
+    ``observable_impacts`` lists the impacts the policies observe.
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -90,6 +94,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
                                        "monthly_c": list(monthly_c)})
         if m1_exposure and fid == "a":
             params.update(m1_exposure)
+        if impacts and fid in impacts:
+            params["impact"] = copy.deepcopy(impacts[fid])
         if reserve_food is not None and fid == "b":
             params["prey_includes_reserve"] = True
             params["reserve_reference_fill"] = reserve_food
@@ -101,7 +107,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
         groups[fid] = fg
     env = EcosystemEnvironment(dict(height=shape[0], width=shape[1]), groups,
                                migration=migration, apply_natural_mortality=mortality,
-                               mortality_multiplier=mortality_multiplier)
+                               mortality_multiplier=mortality_multiplier,
+                               observable_impact_vars=observable_impacts)
     return env
 
 
@@ -142,10 +149,12 @@ def _assert_parity(env, device, ticks=12):
     env.build_static_caches()
     packed = bank.pack([w[None] for w in bank.flat_weights()])
     starts = model.light_starts([env])
+    impacts = model.import_impacts([env]) if model.has_impacts else None
+    impact_obs = model.import_impact_observations([env]) if model.n_obs_imp else None
     for tick in range(ticks):
         tol = _parity_tol(tick)
         light = model.light_index(starts, torch.tensor(tick, device=model.device))
-        obs = model.observations(b, r, hidden, light)
+        obs = model.observations(b, r, hidden, light, impact_obs)
         observation = env.get_observation()
         np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=tol, rtol=tol)
         logits = bank.forward(obs, *packed)
@@ -157,7 +166,7 @@ def _assert_parity(env, device, ticks=12):
         for field in ("move", "rest", "eat"):
             np.testing.assert_allclose(getattr(ours, field), getattr(cpu_actions, field), atol=2e-6, rtol=2e-5)
         b, r, hidden, _, _ = model.step(b, r, probs, model.tensor(tick), torch.zeros_like(b),
-                                        light_index=light)
+                                        light_index=light, impacts=impacts)
         env.step(cpu_actions)
         expected = model.import_state([env])
         np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=tol, rtol=tol)
