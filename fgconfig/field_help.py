@@ -826,15 +826,18 @@ FIELD_HELP = {
         "see it.\n"
         "Changing it alters the input size: retraining is required."
     ),
-    "impact_baseline": (
-        "Baseline: the impact is part of the world as it is today "
-        "(e.g. fishing), not a scenario pressure.\n\n"
-        "On: the field is spawned in every training world with the Spawn "
-        "Strategy below, even when the policies cannot observe it, and an "
-        "inference world without a map for it samples one, so the "
-        "baseline world is never unfished. Adds no inputs; checkpoints "
-        "stay valid.\n"
-        "Off: a scenario impact, absent from training unless observable."
+    "impact_baseline_map": (
+        "Baseline map: today's field of this impact as a .npz, one value "
+        "per cell (e.g. fishing effort in the cell).\n\n"
+        "Training: every training world gets this map, whether or not the "
+        "policies can observe the impact, so they train in today's world; "
+        "it replaces the spawned field of an observable impact.\n"
+        "Inference: not read. Add the same file under the Inference tab "
+        "to keep today's field in an inference world, or another file "
+        "for a scenario (closed wind farm, changed quotas) - one field "
+        "per impact, never added on top.\n"
+        "No baseline map: absent from training unless observable. Adds "
+        "no inputs; checkpoints stay valid."
     ),
     "impact_table_value": (
         "Impact value (in the impact's unit) at which this row's "

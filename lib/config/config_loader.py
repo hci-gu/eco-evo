@@ -492,21 +492,6 @@ def project_impact_ranges(project):
     return impact_ranges
 
 
-def project_baseline_impact_vars(project):
-    """Active impacts flagged ``baseline: true``, in project order.
-
-    A baseline impact is part of the world as it is today (fishing), not
-    a scenario pressure: it is present in training and in every scenario
-    even when the policy cannot observe it (section 161). ``project`` is
-    the parsed project dict or a path to it.
-    """
-    if isinstance(project, str):
-        project = load_config(project)
-    return [iv['impact_id'] for iv in (project or {}).get('impact_variables', []) or []
-            if isinstance(iv, dict) and iv.get('impact_id')
-            and not iv.get('muted') and iv.get('baseline')]
-
-
 def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', grid_size=(60, 60), seed=None, mode='train',
                         spawn_seed=None, allowed_mask=None, project_config=None, library_config=None,
                         tick_hours=LIBRARY_TICK_HOURS, apply_natural_mortality=True):

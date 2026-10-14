@@ -161,9 +161,9 @@ def build_inference_env(config, seed):
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
                                 current_world_seed=seed)
     if impact_vars:
-        # The inference world's impact fields, baseline impacts (fishing)
-        # included (section 161). Imported here: inference.py is a script
-        # module that itself imports from lib.runners.
+        # The inference world's impact fields (section 161). Imported
+        # here: inference.py is a script module that itself imports from
+        # lib.runners.
         from inference import load_inference_impact_maps
         maps = load_inference_impact_maps(config["project"], impact_vars,
                                           height, width, seed=seed, verbose=False)

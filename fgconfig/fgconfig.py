@@ -382,14 +382,21 @@ class FGConfigApp:
         obs_cb.grid(row=2, column=1, sticky="w", padx=5, pady=2)
         attach_help([obs_lbl, obs_cb], "impact_observable")
 
-        base_lbl = ttk.Label(self.impact_editor_frame, text="Baseline (always present)")
+        base_lbl = ttk.Label(self.impact_editor_frame, text="Baseline map")
         base_lbl.grid(row=3, column=0, sticky="w", padx=5, pady=2)
-        self.impact_baseline_var = tk.BooleanVar(value=False)
-        base_cb = ttk.Checkbutton(self.impact_editor_frame,
-                                  variable=self.impact_baseline_var,
-                                  command=self._on_impact_observable_toggled)
-        base_cb.grid(row=3, column=1, sticky="w", padx=5, pady=2)
-        attach_help([base_lbl, base_cb], "impact_baseline")
+        base_row = ttk.Frame(self.impact_editor_frame)
+        base_row.grid(row=3, column=1, sticky="w", padx=5, pady=2)
+        self.impact_baseline_status_var = tk.StringVar(value="(none)")
+        base_status = ttk.Label(base_row, textvariable=self.impact_baseline_status_var,
+                                wraplength=260, justify="left")
+        base_status.pack(side="left", padx=(0, 6))
+        base_browse = ttk.Button(base_row, text="Browse…",
+                                 command=self._impact_browse_baseline_map)
+        base_browse.pack(side="left")
+        base_clear = ttk.Button(base_row, text="Clear",
+                                command=self._impact_clear_baseline_map)
+        base_clear.pack(side="left", padx=(4, 0))
+        attach_help([base_lbl, base_status, base_browse, base_clear], "impact_baseline_map")
 
         self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
                                            text="Apply Changes",
@@ -2073,18 +2080,19 @@ class FGConfigApp:
         return min_var, max_var
 
     def _sync_impact_spawn_visibility(self):
-        """Show the Spawn Strategy frame iff the impact gets a field in
-        training: it is observable or a baseline impact (section 161).
+        """Show the Spawn Strategy frame iff training spawns the field:
+        the impact is observable and has no baseline map (section 161).
 
-        Other impacts are zero-filled at training time, so the
-        spawn-strategy parameters would have no effect — we hide the
-        whole LabelFrame to make this clear.
+        Other impacts are zero-filled at training time, and a baseline map
+        replaces the spawned field, so the spawn-strategy parameters would
+        have no effect — we hide the whole LabelFrame to make this clear.
         """
         if not hasattr(self, 'impact_spawn_frame'):
             return
+        entry = self._selected_impact_entry() or {}
         try:
             if (bool(self.impact_observable_var.get())
-                    or bool(self.impact_baseline_var.get())):
+                    and not entry.get('baseline_map')):
                 self.impact_spawn_frame.grid()
             else:
                 self.impact_spawn_frame.grid_remove()
@@ -2150,7 +2158,7 @@ class FGConfigApp:
         self.impact_value_min_var.set(_fmt(entry.get('value_min')))
         self.impact_value_max_var.set(_fmt(entry.get('value_max')))
         self.impact_observable_var.set(bool(entry.get('observable', False)))
-        self.impact_baseline_var.set(bool(entry.get('baseline', False)))
+        self.impact_baseline_status_var.set(self._baseline_map_status(entry))
         # Populate the spawn-strategy editor from the impact's spawn block
         # (project override). Missing/invalid blocks fall back to uniform.
         spawn_cfg = entry.get('spawn') if isinstance(entry, dict) else None
@@ -2220,10 +2228,6 @@ class FGConfigApp:
             entry['observable'] = True
         else:
             entry.pop('observable', None)
-        if bool(self.impact_baseline_var.get()):
-            entry['baseline'] = True
-        else:
-            entry.pop('baseline', None)
         # Persist spawn block. Drop the entry entirely when the mode is
         # uniform with no extra params (legacy i.i.d. uniform sampling).
         if isinstance(spawn_dict, dict) and spawn_dict:
@@ -2469,6 +2473,119 @@ class FGConfigApp:
         self._dnd_available_cached = bool(ok)
         return self._dnd_available_cached
 
+    def _baseline_map_status(self, entry):
+        """One-line status of an impact's baseline map for the editor."""
+        stored = (entry or {}).get('baseline_map')
+        if not stored:
+            return "(none: no field in training unless observable)"
+        path = self._resolve_inference_map_path(stored)
+        if not os.path.isfile(path):
+            return f"{stored} (file not found: no baseline)"
+        return os.path.basename(path)
+
+    def _impact_browse_baseline_map(self):
+        """Pick the selected impact's baseline map (section 161).
+
+        Today's field, e.g. fishing effort per cell: every training world
+        gets it, and it is not read by inference - add the same file under
+        the Inference tab for that.
+        """
+        entry = self._selected_impact_entry()
+        if entry is None or entry.get('muted'):
+            return
+        impact_id = entry.get('impact_id', '')
+        path = filedialog.askopenfilename(
+            title=f"Select baseline .npz for '{impact_id}'",
+            filetypes=[("NumPy archive", "*.npz"), ("All files", "*.*")],
+        )
+        if not path or self._read_impact_npz(impact_id, path) is None:
+            return
+        entry['baseline_map'] = self._format_inference_map_path(path)
+        self._mark_dirty()
+        self.impact_baseline_status_var.set(self._baseline_map_status(entry))
+        self._sync_impact_spawn_visibility()
+        self._refresh_impact_list_keep_selection()
+
+    def _impact_clear_baseline_map(self):
+        entry = self._selected_impact_entry()
+        if entry is None or entry.get('muted') or 'baseline_map' not in entry:
+            return
+        entry.pop('baseline_map', None)
+        self._mark_dirty()
+        self.impact_baseline_status_var.set(self._baseline_map_status(entry))
+        self._sync_impact_spawn_visibility()
+        self._refresh_impact_list_keep_selection()
+
+    def _refresh_impact_list_keep_selection(self):
+        try:
+            sel = self.impact_listbox.curselection()
+            self.update_impact_list()
+            if sel:
+                self.impact_listbox.selection_clear(0, "end")
+                self.impact_listbox.selection_set(sel[0])
+                self.on_impact_select()
+        except tk.TclError:
+            pass
+
+    def _read_impact_npz(self, impact_id, path):
+        """Validate an impact .npz and return its 2-D float32 array, or
+        None after telling the user what is wrong. Shared by the Inference
+        tab and the Impact Editor's baseline map."""
+        import numpy as _np
+        if not path or not os.path.isfile(path):
+            messagebox.showwarning(
+                "File not found",
+                f"Could not open file:\n{path}")
+            return None
+        if not path.lower().endswith('.npz'):
+            messagebox.showwarning(
+                "Wrong file type",
+                f"Only .npz files are accepted (got: {os.path.basename(path)}).")
+            return None
+        try:
+            with _np.load(path, allow_pickle=False) as data:
+                keys = list(data.files)
+                arr = None
+                # Priority 1: exact impact_id match.
+                if impact_id in keys:
+                    arr = data[impact_id]
+                else:
+                    # Priority 2: any 2-D array in the archive. Prefer the
+                    # first one; ignore non-2D arrays (e.g. metadata vectors).
+                    for k in keys:
+                        cand = data[k]
+                        if hasattr(cand, 'ndim') and cand.ndim == 2:
+                            arr = cand
+                            break
+                if arr is None:
+                    messagebox.showwarning(
+                        "No 2-D array in .npz",
+                        f"{os.path.basename(path)} does not contain any 2-D array "
+                        f"that can be used as an impact map.\nKeys present: {keys}")
+                    return None
+                arr = _np.asarray(arr)
+        except Exception as e:
+            messagebox.showwarning("Invalid .npz",
+                                   f"Could not read '{impact_id}' from {os.path.basename(path)}:\n{e}")
+            return None
+        if arr.ndim != 2:
+            messagebox.showwarning(
+                "Wrong shape",
+                f"Array '{impact_id}' must be 2-D (got shape {arr.shape}).")
+            return None
+        try:
+            arr_f = arr.astype('float32', copy=False)
+        except Exception as e:
+            messagebox.showwarning("Invalid dtype",
+                                   f"Could not convert array to float32: {e}")
+            return None
+        if not _np.isfinite(arr_f).all():
+            messagebox.showwarning(
+                "Non-finite values",
+                f"Array '{impact_id}' contains NaN or inf values; please clean before use.")
+            return None
+        return arr_f
+
     def _refresh_inference_impact_maps(self):
         """Rebuild the per-impact .npz drop-zone rows under the Inference tab."""
         if not hasattr(self, "inference_impact_frame"):
@@ -2700,64 +2817,14 @@ class FGConfigApp:
 
     def _inference_set_map(self, impact_id, path, persist=True, store_path=None):
         """Validate the .npz, update GUI (status + thumbnail), and (optionally) persist."""
-        import numpy as _np
         w = self.inference_impact_widgets.get(impact_id)
         if w is None:
             return
-        if not path or not os.path.isfile(path):
-            messagebox.showwarning(
-                "File not found",
-                f"Could not open file:\n{path}")
-            w['status_var'].set("Drop .npz here or click 'Browse…'")
+        arr_f = self._read_impact_npz(impact_id, path)
+        if arr_f is None:
+            if not path or not os.path.isfile(path):
+                w['status_var'].set("Drop .npz here or click 'Browse…'")
             return
-        if not path.lower().endswith('.npz'):
-            messagebox.showwarning(
-                "Wrong file type",
-                f"Only .npz files are accepted (got: {os.path.basename(path)}).")
-            return
-        try:
-            with _np.load(path, allow_pickle=False) as data:
-                keys = list(data.files)
-                arr = None
-                # Priority 1: exact impact_id match.
-                if impact_id in keys:
-                    arr = data[impact_id]
-                else:
-                    # Priority 2: any 2-D array in the archive. Prefer the
-                    # first one; ignore non-2D arrays (e.g. metadata vectors).
-                    for k in keys:
-                        cand = data[k]
-                        if hasattr(cand, 'ndim') and cand.ndim == 2:
-                            arr = cand
-                            break
-                if arr is None:
-                    messagebox.showwarning(
-                        "No 2-D array in .npz",
-                        f"{os.path.basename(path)} does not contain any 2-D array "
-                        f"that can be used as an impact map.\nKeys present: {keys}")
-                    return
-                arr = _np.asarray(arr)
-        except Exception as e:
-            messagebox.showwarning("Invalid .npz",
-                                   f"Could not read '{impact_id}' from {os.path.basename(path)}:\n{e}")
-            return
-        if arr.ndim != 2:
-            messagebox.showwarning(
-                "Wrong shape",
-                f"Array '{impact_id}' must be 2-D (got shape {arr.shape}).")
-            return
-        try:
-            arr_f = arr.astype('float32', copy=False)
-        except Exception as e:
-            messagebox.showwarning("Invalid dtype",
-                                   f"Could not convert array to float32: {e}")
-            return
-        if not _np.isfinite(arr_f).all():
-            messagebox.showwarning(
-                "Non-finite values",
-                f"Array '{impact_id}' contains NaN or inf values; please clean before use.")
-            return
-
         # Optional sanity-check against the per-impact [value_min, value_max].
         ie = self._find_impact_entry(impact_id) or {}
         vmin = ie.get('value_min')
@@ -3724,8 +3791,9 @@ class FGConfigApp:
     # display name in the project's Impact Variables list and after the
     # "Value" header in the impact-table editor under "Impact Interactions").
     IMPACT_UNITS = {
-        "bottom_trawling": "MW-h/year",
-        "pelagic_trawling": "MW-h/year",
+        # Fishing effort density per cell, EMODnet units (section 161).
+        "bottom_trawling": "MW-h/km²/year",
+        "pelagic_trawling": "MW-h/km²/year",
         "windfarm_noise": "dB",
         "rotor": "fraction/cell",
     }
@@ -4870,6 +4938,8 @@ class FGConfigApp:
             # which impacts feed into the policy network's input layer.
             if iv.get('observable'):
                 base = f"{base} [observable]"
+            if iv.get('baseline_map'):
+                base = f"{base} [baseline map]"
             return base
         if self.project_data.get('impact_variables'):
             self.project_data['impact_variables'].sort(key=lambda iv: _impact_display(iv).lower())

@@ -791,6 +791,21 @@ interaction_definitions:
   benthic_community_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
+  # Bottom otter trawling on gadoids (section 161), same construction
+  # as pelagic trawling on pelagic fish: effort in MW-h per km2 per year,
+  # F 0.12 /yr (ICES 2026 cod, haddock, whiting, saithe, hake pooled by
+  # Skagerrak IBTS biomass), mean effort of today's map 3.0142 ->
+  # q = 0.12 / 1460 / 3.0142 = 2.7269e-5 per tick per unit; the last row
+  # is ~10 x today's maximum (9.6).
+  gadoids_impacted_by_bottom_trawling:
+    impact_affects: true
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.002726853
+        energy_factor: 0.0
   gadoids_impacted_by_pelagic_trawling:
     impact_affects: false
     impact_table: []
@@ -800,14 +815,25 @@ interaction_definitions:
   gadoids_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
+  # Fishing (section 161). The impact value is fishing effort density in
+  # MW-h per km2 per year (EMODnet, VMS vessels > 12 m; maps from
+  # tools/make_fishing_maps.py). The table is linear, biomass_factor =
+  # q * effort per tick, with the catchability q set so that the mean
+  # effort of today's map gives today's biomass-weighted fishing
+  # mortality: F 0.10 /yr for pelagic fish (ICES 2026: NSAS, WBSS,
+  # sprat, mackerel, horse mackerel, sandeel pooled by Skagerrak biomass;
+  # reports/Fiskeridodlighet i Skagerrak idag.md). Mean effort 0.02496
+  # -> q = 0.10 / 1460 / 0.02496 = 2.744e-3 per tick per unit. The last
+  # row lies far above today's maximum (0.43) so scenario maps with more
+  # effort are not clamped. Was a placeholder (1.0 per tick at 1000).
   pelagic_fish_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
       - value: 0.0
         biomass_factor: 0.0
         energy_factor: 0.0
-      - value: 1000.0
-        biomass_factor: 1.0
+      - value: 10.0
+        biomass_factor: 0.02743977
         energy_factor: 0.0
   pelagic_fish_impacted_by_rotor:
     impact_affects: false

@@ -37,7 +37,7 @@ from lib.environments.ecosystem_env.loss_accounting import LOSS_CAUSES
 from lib.world.tick_time import (
     LIBRARY_TICK_HOURS, add_tick_length_argument,
 )
-from lib.world.impact_maps import baseline_fallback_maps
+from lib.world.impact_maps import load_impact_map_npz
 from lib.config.config_loader import (load_config, load_project_config,
                                       setup_full_mareld_mvp,
                                        compute_inference_b0_defaults,
@@ -115,74 +115,21 @@ def _load_inference_map_paths(project_path):
     return resolved
 
 
-def _load_impact_map_npz(path, impact_id, H, W, verbose=True):
-    """Load a single (H, W) impact map from ``path[impact_id]`` with nearest-neighbor resampling.
-
-    Returns a ``float32`` array of shape (H, W), or ``None`` on failure (caller
-    should fall back to a zero field).
-    """
-    if not os.path.isfile(path):
-        if verbose:
-            print(f"  [warn] Impact map for '{impact_id}' not found at {path}; using zero field.")
-        return None
-    try:
-        with np.load(path, allow_pickle=False) as data:
-            keys = list(data.files)
-            arr = None
-            # Priority 1: exact impact_id match (back-compat with archives
-            # whose key happens to be named after the impact).
-            if impact_id in keys:
-                cand = np.asarray(data[impact_id])
-                if cand.ndim == 2:
-                    arr = cand
-            # Priority 2: the first 2-D array in the archive. This makes
-            # impact-map .npz files key-agnostic — any 2-D array works,
-            # regardless of what it is called inside the archive. Mirrors
-            # the loader used by fgconfig's Inference tab.
-            if arr is None:
-                for k in keys:
-                    cand = np.asarray(data[k])
-                    if cand.ndim == 2:
-                        arr = cand
-                        if verbose and k != impact_id:
-                            print(f"  [info] Using array '{k}' from "
-                                  f"{os.path.basename(path)} as impact map "
-                                  f"for '{impact_id}' (key-agnostic load).")
-                        break
-            if arr is None:
-                if verbose:
-                    print(f"  [warn] No 2-D array found in "
-                          f"{os.path.basename(path)} (keys: {keys}); "
-                          f"using zero field for '{impact_id}'.")
-                return None
-    except Exception as e:
-        if verbose:
-            print(f"  [warn] Could not read '{impact_id}' from {path}: {e}; using zero field.")
-        return None
-    arr = arr.astype(np.float32, copy=False)
-    Hs, Ws = arr.shape
-    if (Hs, Ws) != (H, W):
-        # Nearest-neighbor resample to the requested grid.
-        if Hs == 0 or Ws == 0:
-            return None
-        row_idx = (np.arange(H) * Hs / H).astype(np.int64)
-        col_idx = (np.arange(W) * Ws / W).astype(np.int64)
-        arr = arr[row_idx[:, None], col_idx[None, :]]
-        if verbose:
-            print(f"  [info] Resampled '{impact_id}' from {(Hs, Ws)} to {(H, W)} (nearest).")
-    return arr.astype(np.float32, copy=False)
+# Moved to lib/world/impact_maps.py (section 161): the trainers load the
+# Impact Editor's baseline maps with the same reader.
+_load_impact_map_npz = load_impact_map_npz
 
 
 def load_inference_impact_maps(project_path, impact_vars, H, W, seed=None,
                                verbose=True):
     """Impact fields of an inference world, ``{impact_id: (H, W) field}``.
 
-    Each impact reads its ``inference.impact_maps`` file. A baseline impact
-    (``baseline: true``, e.g. fishing) without a file gets a field sampled
-    from its value range and spawn strategy with ``seed``, so the baseline
-    world is never silently unfished (section 161). Any other impact
-    without a file - or with a file that fails validation - is an all-zero
-    field.
+    Each impact reads its ``inference.impact_maps`` file; an impact
+    without a file - or with a file that fails validation - is an
+    all-zero field. The Impact Editor's ``baseline_map`` is a TRAINING
+    map and is not read here: add the same file under the Inference tab
+    to keep today's fishing in an inference world (section 161). ``seed``
+    is accepted for the callers' convenience and unused.
     """
     map_paths = _load_inference_map_paths(project_path)
     maps = {}
@@ -190,13 +137,7 @@ def load_inference_impact_maps(project_path, impact_vars, H, W, seed=None,
         field = None
         if iv in map_paths:
             field = _load_impact_map_npz(map_paths[iv], iv, H, W, verbose=verbose)
-        if field is not None:
-            maps[iv] = field
-    missing = [iv for iv in impact_vars if iv not in maps]
-    maps.update(baseline_fallback_maps(project_path, missing, (H, W), seed=seed))
-    for iv in impact_vars:
-        if iv not in maps:
-            maps[iv] = np.zeros((H, W), dtype=np.float32)
+        maps[iv] = field if field is not None else np.zeros((H, W), dtype=np.float32)
     return maps
 
 

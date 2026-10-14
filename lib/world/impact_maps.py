@@ -1,16 +1,15 @@
-"""Impact fields for training worlds, inference worlds and baseline impacts.
+"""Impact fields for training worlds and inference worlds (section 161).
 
-An impact variable is either a scenario pressure (wind-farm noise, the
-rotor) or a baseline pressure that belongs to the world as it is today
-(fishing, ``baseline: true`` in the project; section 161). Training
-samples a field for every impact the policy observes and for every
-baseline impact; any other impact is an all-zero field during training
-(per project decision, a pressure the policy cannot see is absent from
-the training world). Inference worlds load the project's
-``inference.impact_maps`` and fall back to a sampled field for a
-baseline impact that has no map, so the baseline world is never silently
-unfished.
+A training world samples a field for every impact the policy observes,
+so the groups can develop behaviour against it, and is otherwise without
+impacts (per project decision, a pressure the policy cannot see is absent
+from training) - except that an impact with a ``baseline_map`` (set in
+the FG editor's Impact Editor, e.g. today's fishing effort per cell)
+always gets that map. An inference world reads only the project's
+``inference.impact_maps``; to keep today's fishing there, the same file
+is added under the Inference tab. No map means no impact.
 """
+import os
 import zlib
 
 import numpy as np
@@ -18,23 +17,104 @@ import numpy as np
 from lib.spawn import make_weights
 
 
-def trained_impact_vars(impact_vars, observable_impact_vars=None,
-                        baseline_impact_vars=None):
+def trained_impact_vars(impact_vars, observable_impact_vars=None):
     """The impacts that get a sampled (not zero) field in a training world.
 
     ``observable_impact_vars`` None keeps the legacy behaviour (every
-    impact sampled).
+    impact sampled). A baseline map overrides this (``sample_impact_maps``).
     """
     if observable_impact_vars is None:
         return list(impact_vars)
-    keep = set(observable_impact_vars) | set(baseline_impact_vars or ())
+    keep = set(observable_impact_vars)
     return [iv for iv in impact_vars if iv in keep]
+
+
+def load_impact_map_npz(path, impact_id, H, W, verbose=True):
+    """Load a single (H, W) impact map from ``path[impact_id]`` with nearest-neighbor resampling.
+
+    Returns a ``float32`` array of shape (H, W), or ``None`` on failure (caller
+    should fall back to a zero field).
+    """
+    if not os.path.isfile(path):
+        if verbose:
+            print(f"  [warn] Impact map for '{impact_id}' not found at {path}; using zero field.")
+        return None
+    try:
+        with np.load(path, allow_pickle=False) as data:
+            keys = list(data.files)
+            arr = None
+            # Priority 1: exact impact_id match (back-compat with archives
+            # whose key happens to be named after the impact).
+            if impact_id in keys:
+                cand = np.asarray(data[impact_id])
+                if cand.ndim == 2:
+                    arr = cand
+            # Priority 2: the first 2-D array in the archive. This makes
+            # impact-map .npz files key-agnostic — any 2-D array works,
+            # regardless of what it is called inside the archive. Mirrors
+            # the loader used by fgconfig's Inference tab.
+            if arr is None:
+                for k in keys:
+                    cand = np.asarray(data[k])
+                    if cand.ndim == 2:
+                        arr = cand
+                        if verbose and k != impact_id:
+                            print(f"  [info] Using array '{k}' from "
+                                  f"{os.path.basename(path)} as impact map "
+                                  f"for '{impact_id}' (key-agnostic load).")
+                        break
+            if arr is None:
+                if verbose:
+                    print(f"  [warn] No 2-D array found in "
+                          f"{os.path.basename(path)} (keys: {keys}); "
+                          f"using zero field for '{impact_id}'.")
+                return None
+    except Exception as e:
+        if verbose:
+            print(f"  [warn] Could not read '{impact_id}' from {path}: {e}; using zero field.")
+        return None
+    arr = arr.astype(np.float32, copy=False)
+    Hs, Ws = arr.shape
+    if (Hs, Ws) != (H, W):
+        # Nearest-neighbor resample to the requested grid.
+        if Hs == 0 or Ws == 0:
+            return None
+        row_idx = (np.arange(H) * Hs / H).astype(np.int64)
+        col_idx = (np.arange(W) * Ws / W).astype(np.int64)
+        arr = arr[row_idx[:, None], col_idx[None, :]]
+        if verbose:
+            print(f"  [info] Resampled '{impact_id}' from {(Hs, Ws)} to {(H, W)} (nearest).")
+    return arr.astype(np.float32, copy=False)
+
+
+def project_baseline_maps(project, project_path, grid_size, verbose=False):
+    """Load the Impact Editor's baseline maps, ``{impact_id: (H, W) field}``.
+
+    ``baseline_map`` on an active ``impact_variables`` entry is a .npz
+    path, relative to the project file or absolute, read like an
+    inference map (nearest-neighbour resampled to ``grid_size``). An
+    impact whose file is missing or invalid has no baseline map.
+    """
+    base = os.path.dirname(os.path.abspath(project_path)) if project_path else os.getcwd()
+    H, W = grid_size
+    maps = {}
+    for iv in (project or {}).get('impact_variables', []) or []:
+        if not isinstance(iv, dict) or iv.get('muted') or not iv.get('impact_id'):
+            continue
+        stored = iv.get('baseline_map')
+        if not isinstance(stored, str) or not stored:
+            continue
+        path = stored if os.path.isabs(stored) else os.path.normpath(os.path.join(base, stored))
+        field = load_impact_map_npz(path, iv['impact_id'], H, W, verbose=verbose)
+        if field is not None:
+            maps[iv['impact_id']] = field
+    return maps
 
 
 def sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
                        impact_spawn_specs=None,
                        observable_impact_vars=None,
-                       baseline_impact_vars=None):
+                       baseline_maps=None):
     """Sample one impact field per active impact variable.
 
     Two code paths per impact:
@@ -49,19 +129,23 @@ def sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
       configured value range. Constant weights collapse to ``value_min`` to
       preserve the legacy behaviour for ``vmax == vmin``.
 
-    When ``observable_impact_vars`` is provided, any impact that is
-    neither in that set nor in ``baseline_impact_vars`` is forced to an
-    all-zero field (see the module docstring).
+    When ``observable_impact_vars`` is provided, any impact not in that
+    set is forced to an all-zero field. An impact in ``baseline_maps``
+    gets its baseline map instead, observable or not (see the module
+    docstring).
 
     Returns a dict ``{impact_id: np.ndarray}``.
     """
     H, W = grid_size
     rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
     specs = impact_spawn_specs or {}
-    sampled = set(trained_impact_vars(impact_vars, observable_impact_vars,
-                                      baseline_impact_vars))
+    sampled = set(trained_impact_vars(impact_vars, observable_impact_vars))
+    baseline_maps = baseline_maps or {}
     maps = {}
     for iv in impact_vars:
+        if iv in baseline_maps:
+            maps[iv] = np.array(baseline_maps[iv], dtype=np.float32)
+            continue
         if iv not in sampled:
             # Absent from the training world: a zero field (ignored by the
             # policy network anyway; this also keeps any downstream env
@@ -113,24 +197,3 @@ def sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,
             field = np.full((H, W), float(vmin))
         maps[iv] = field.astype(np.float32)
     return maps
-
-
-def baseline_fallback_maps(project_path, missing, grid_size, seed=None):
-    """Sampled fields for baseline impacts that have no inference map.
-
-    ``missing`` lists the impact ids without a loaded field; only the
-    baseline ones among them get a field. Returns ``{impact_id: field}``.
-    """
-    if not project_path or not missing:
-        return {}
-    from lib.config.config_loader import (
-        load_config, load_impact_spawn_specs, project_baseline_impact_vars,
-        project_impact_ranges)
-    project = load_config(project_path)
-    baseline = [iv for iv in project_baseline_impact_vars(project) if iv in missing]
-    if not baseline:
-        return {}
-    return sample_impact_maps(
-        baseline, project_impact_ranges(project), grid_size, seed=seed,
-        impact_spawn_specs=load_impact_spawn_specs(project_path),
-        observable_impact_vars=[], baseline_impact_vars=baseline)

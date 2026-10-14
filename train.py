@@ -17,9 +17,8 @@ from lib.world.tick_time import (
 )
 from lib.config.config_loader import (
                                       setup_full_mareld_mvp, load_project_config,
-                                      load_impact_spawn_specs,
-                                      project_baseline_impact_vars)
-from lib.world.impact_maps import sample_impact_maps
+                                      load_config, load_impact_spawn_specs)
+from lib.world.impact_maps import project_baseline_maps, sample_impact_maps
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.loss_accounting import loss_shares
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
@@ -313,13 +312,14 @@ class _EnvBuilder:
         # and producing an obs-dim mismatch with the parent's policy_params.
         # Falls back to the module global when not supplied.
         self.project_path = project_path if project_path is not None else PROJECT_PATH
-        # Impacts flagged ``baseline: true`` (fishing) are sampled even
-        # when the policy cannot observe them: they are part of today's
-        # world, not a scenario (section 161). Read from the project once
-        # here so spawn-workers get the list with the pickled builder.
-        self.baseline_impact_vars = (
-            project_baseline_impact_vars(self.project_path)
-            if self.project_path else [])
+        # The Impact Editor's baseline maps (today's fishing effort per
+        # cell): every training world gets them, observable or not
+        # (section 161). Loaded once here so spawn-workers get the fields
+        # with the pickled builder.
+        self.baseline_maps = (
+            project_baseline_maps(load_config(self.project_path), self.project_path,
+                                  (self.grid_height, self.grid_width))
+            if self.project_path else {})
 
     def with_world(self, impact_seed, spawn_seed):
         """Return a fresh sibling builder bound to a different world.
@@ -340,7 +340,7 @@ class _EnvBuilder:
             (self.grid_height, self.grid_width), seed=int(impact_seed),
             impact_spawn_specs=self.impact_spawn_specs,
             observable_impact_vars=self.observable_impact_vars,
-            baseline_impact_vars=self.baseline_impact_vars)
+            baseline_maps=self.baseline_maps)
         return _EnvBuilder(
             impact_maps_snapshot=maps,
             grid_size=(self.grid_height, self.grid_width),
@@ -411,7 +411,7 @@ class _EnvBuilder:
                     self.observable_impact_vars
                     if self.observable_impact_vars is not None
                     else observable_impact_vars),
-                baseline_impact_vars=self.baseline_impact_vars)
+                baseline_maps=self.baseline_maps)
             for iv in impact_vars:
                 env.grid.add_map(iv, sampled.get(
                     iv, np.zeros((H, W), dtype=np.float32)))
@@ -523,8 +523,8 @@ class _ProbeEnvBuilder:
                                    migration=self.migration, currents=self.currents,
                                    current_world_seed=s)
         # Inference-tab impact maps (silent: avoid spamming "[info] Using
-        # array ..." messages once per probe).
-        # A baseline impact without a map is sampled with the probe seed
+        # array ..." messages once per probe). The probe is an inference
+        # world: a baseline map counts only if it is also added there
         # (section 161).
         maps = self._load_maps(self.project_path, impact_vars, H, W,
                                seed=s, verbose=False)
@@ -2372,9 +2372,11 @@ def main(argv=None, *, on_step=None, confirm=True):
                                    (GRID_HEIGHT, GRID_WIDTH), seed=impact_seed,
                                    impact_spawn_specs=_impact_spawn_specs_global,
                                    observable_impact_vars=_observable_impact_vars_global,
-                                   baseline_impact_vars=(
-                                       project_baseline_impact_vars(PROJECT_PATH)
-                                       if PROJECT_PATH else []))
+                                   baseline_maps=(
+                                       project_baseline_maps(
+                                           load_config(PROJECT_PATH), PROJECT_PATH,
+                                           (GRID_HEIGHT, GRID_WIDTH))
+                                       if PROJECT_PATH else {}))
         new_builder = _make_env_builder(
             maps,
             grid_size=(GRID_HEIGHT, GRID_WIDTH),

@@ -6,9 +6,10 @@ reference: direct impact mortality before predation, the
 fields that ``TensorEcosystem.impact_fields`` turns into rates once per
 world, and the observable impacts as raw input channels after the
 observed groups (own cell and the four neighbours, the light channel
-still last). A ``baseline: true`` impact (fishing) is part of today's
-world: it gets a field in training even though the policy cannot observe
-it, and an inference world without a map for it samples one.
+still last). An impact with a ``baseline_map`` (the Impact Editor's
+today's field, e.g. fishing effort per cell) gets that map in every
+training world, observable or not; inference reads only its own
+``inference.impact_maps``, and no map means no impact.
 """
 import copy
 import sys
@@ -22,14 +23,13 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from inference import load_inference_impact_maps
-from lib.config.config_loader import project_baseline_impact_vars
 from lib.environments.ecosystem_env.impacts import interp_impact
 from lib.gpu.config import EnvironmentBuilder, ProjectSpec
 from lib.gpu.ecosystem import TensorEcosystem
 from lib.gpu.policy import PolicyBank
 from lib.gpu.rollout import RolloutRunner
 from lib.gpu.trainer import TensorARSTrainer
-from lib.world.impact_maps import sample_impact_maps
+from lib.world.impact_maps import project_baseline_maps, sample_impact_maps
 from test_gpu_ecosystem import DEVICES, _assert_parity, make_env
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -140,50 +140,66 @@ def test_no_impact_tables_keep_the_old_graph(device):
                      model.tensor(1.0), impacts=(zero, zero))
 
 
-def test_baseline_impacts_are_sampled_in_training_unobserved():
+def test_baseline_map_is_the_training_field():
     ranges = {"fishing": (0.0, 2.0), "noise": (0.0, 140.0), "rotor": (0.0, 1.0)}
-    maps = sample_impact_maps(["fishing", "noise", "rotor"], ranges, (6, 7), seed=3,
-                              observable_impact_vars=["noise"],
-                              baseline_impact_vars=["fishing"])
-    assert maps["fishing"].max() > 0 and 0 <= maps["fishing"].min() <= maps["fishing"].max() <= 2
-    assert maps["noise"].max() > 0
-    assert not maps["rotor"].any(), "a scenario impact the policy cannot see stays absent"
+    today = np.arange(42, dtype=np.float32).reshape(6, 7)
+    seen = np.full((6, 7), 7.0, dtype=np.float32)
+    maps = sample_impact_maps(["fishing", "noise", "rotor", "seen"],
+                              dict(ranges, seen=(0.0, 100.0)), (6, 7), seed=3,
+                              observable_impact_vars=["noise", "seen"],
+                              baseline_maps={"fishing": today, "seen": seen})
+    np.testing.assert_array_equal(maps["fishing"], today)
+    np.testing.assert_array_equal(maps["seen"], seen), "a baseline map replaces the spawned field"
+    assert maps["noise"].max() > 0, "an observable impact is still spawned"
+    assert not maps["rotor"].any(), "no baseline map and not observable: absent"
     legacy = sample_impact_maps(["rotor"], ranges, (6, 7), seed=3)
     assert legacy["rotor"].max() > 0, "observable None keeps the sample-everything rule"
 
 
-def test_project_baseline_impact_vars_skips_muted():
+def test_project_baseline_maps_resolve_resample_and_skip(tmp_path):
+    np.savez(tmp_path / "effort.npz", effort=np.arange(16, dtype=np.float32).reshape(4, 4))
     project = {"impact_variables": [
-        {"impact_id": "pelagic_trawling", "baseline": True},
-        {"impact_id": "bottom_trawling", "baseline": True, "muted": True},
+        {"impact_id": "pelagic_trawling", "baseline_map": "effort.npz"},
+        {"impact_id": "bottom_trawling", "baseline_map": "effort.npz", "muted": True},
+        {"impact_id": "rotor", "baseline_map": "missing.npz"},
         {"impact_id": "windfarm_noise", "observable": True}]}
-    assert project_baseline_impact_vars(project) == ["pelagic_trawling"]
+    maps = project_baseline_maps(project, str(tmp_path / "p.yaml"), (8, 8))
+    assert set(maps) == {"pelagic_trawling"}
+    assert maps["pelagic_trawling"].shape == (8, 8)
+    assert maps["pelagic_trawling"][0, 0] == 0 and maps["pelagic_trawling"][7, 7] == 15
 
 
 @pytest.fixture
 def baseline_project(tmp_path):
-    """mareld2 with pelagic trawling un-muted as a baseline impact."""
+    """mareld2 with pelagic trawling un-muted and a baseline effort map."""
     with open(ROOT / "mareld2.yaml", encoding="utf-8-sig") as f:
         data = yaml.safe_load(f)
+    effort = np.random.default_rng(4).uniform(0, 1000, (60, 60)).astype(np.float32)
+    np.savez(tmp_path / "effort.npz", pelagic_trawling=effort)
     for iv in data["impact_variables"]:
         if iv["impact_id"] == "pelagic_trawling":
             iv["muted"] = False
-            iv["baseline"] = True
+            iv["baseline_map"] = "effort.npz"
+    data.get("inference", {}).get("impact_maps", {}).pop("rotor", None)
     path = tmp_path / "baseline.yaml"
     with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f, sort_keys=False)
     return str(path), data
 
 
-def test_inference_samples_a_baseline_impact_without_a_map(baseline_project):
-    path, _ = baseline_project
-    first = load_inference_impact_maps(path, ["pelagic_trawling", "windfarm_noise"],
-                                       8, 9, seed=5, verbose=False)
-    again = load_inference_impact_maps(path, ["pelagic_trawling", "windfarm_noise"],
-                                       8, 9, seed=5, verbose=False)
-    assert 0 < first["pelagic_trawling"].max() <= 1000.0
-    np.testing.assert_array_equal(first["pelagic_trawling"], again["pelagic_trawling"])
-    assert not first["windfarm_noise"].any()
+def test_inference_reads_only_its_own_maps(baseline_project, tmp_path):
+    """The baseline map is a training map; inference needs its own entry."""
+    path, data = baseline_project
+    maps = load_inference_impact_maps(path, ["pelagic_trawling", "windfarm_noise"],
+                                      8, 9, verbose=False)
+    assert not maps["pelagic_trawling"].any() and not maps["windfarm_noise"].any()
+    data = copy.deepcopy(data)
+    data.setdefault("inference", {}).setdefault("impact_maps", {})["pelagic_trawling"] = "effort.npz"
+    with_map = tmp_path / "with_map.yaml"
+    with open(with_map, "w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f, sort_keys=False)
+    maps = load_inference_impact_maps(str(with_map), ["pelagic_trawling"], 8, 9, verbose=False)
+    assert maps["pelagic_trawling"].max() > 0
 
 
 def baseline_trainer(path, **kwargs):
@@ -192,7 +208,7 @@ def baseline_trainer(path, **kwargs):
                             worlds=2, seed=16, hidden_dim=6, **kwargs)
 
 
-def test_trainer_gives_each_world_its_baseline_field(baseline_project):
+def test_trainer_gives_every_world_the_baseline_map(baseline_project):
     path, _ = baseline_project
     trainer = baseline_trainer(path)
     m = trainer.model
@@ -203,10 +219,9 @@ def test_trainer_gives_each_world_its_baseline_field(baseline_project):
     assert (loss[:, herring] > 0).any()
     others = [d for d, fid in enumerate(m.dm_ids) if fid != "pelagic_fish"]
     assert not loss[:, others].any()
-    assert not torch.equal(loss[0], loss[1]), "each world draws its own field"
-    trainer.refresh_worlds(epoch=4)
-    trainer.refresh_worlds(epoch=3)
-    torch.testing.assert_close(trainer.world_impact_loss, loss, rtol=0, atol=0)
+    torch.testing.assert_close(loss[0], loss[1], rtol=0, atol=0), "one map for every world"
+    expected = m.impact_fields([trainer.spec.baseline_maps])[0]
+    torch.testing.assert_close(loss[0], expected[0], rtol=0, atol=0)
     trainer.train_step(n_eval_ticks=2, world_epoch=3)
     expanded = loss[None].expand(2 * trainer.pairs_per_batch, -1, -1, -1).reshape(
         trainer.runner.E, m.D, m.C)
@@ -214,6 +229,20 @@ def test_trainer_gives_each_world_its_baseline_field(baseline_project):
     resumed = baseline_trainer(path)
     resumed.load_state_dict(trainer.state_dict())
     torch.testing.assert_close(resumed.world_impact_loss, loss, rtol=0, atol=0)
+
+
+def test_without_baseline_map_a_hidden_impact_is_absent_in_training(baseline_project, tmp_path):
+    _, data = baseline_project
+    data = copy.deepcopy(data)
+    for iv in data["impact_variables"]:
+        iv.pop("baseline_map", None)
+    path = tmp_path / "no_map.yaml"
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f, sort_keys=False)
+    trainer = baseline_trainer(str(path))
+    trainer.refresh_worlds(epoch=1)
+    assert trainer.model.has_impacts
+    assert not trainer.world_impact_loss.any()
 
 
 def observable_project(data, tmp_path):
@@ -267,3 +296,19 @@ def test_gpu_policies_load_into_the_cpu_inference_world(baseline_project, tmp_pa
                            weights_only=False)["state_dict"]
         first = next(v for k, v in state.items() if k.endswith("weight"))
         assert first.shape[1] == int(env.per_dm_in_dim[d])
+
+
+def test_impact_fields_need_no_device_readback(baseline_project, tmp_path, monkeypatch):
+    """Fresh observable fields every epoch, without reading the device back."""
+    _, data = baseline_project
+    trainer = baseline_trainer(observable_project(data, tmp_path))
+    trainer.train_step(n_eval_ticks=2, world_epoch=1)
+    first = trainer.world_impact_obs.clone()
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Tensor readback in numerical training loop")
+    for name in ("cpu", "numpy", "item", "tolist", "__float__", "__int__", "__bool__"):
+        monkeypatch.setattr(torch.Tensor, name, forbidden)
+    trainer.train_step(n_eval_ticks=2, world_epoch=2)
+    trainer.train_step(n_eval_ticks=2)
+    monkeypatch.undo()
+    assert not torch.equal(trainer.world_impact_obs, first)

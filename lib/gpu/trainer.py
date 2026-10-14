@@ -1,6 +1,7 @@
 """ARS co-evolution with GPU world generation, rollouts, and weight updates."""
 
 import math
+import zlib
 from pathlib import Path
 
 import torch
@@ -64,6 +65,9 @@ class TensorARSTrainer:
         self.entropy_coef, self.argmax_penalty = float(entropy_coef), float(argmax_penalty)
         self.obs_normalize = bool(obs_normalize)
         self.seed = self.model.tensor(seed, torch.int64)
+        # Host copy for the impact fields' seeds: sampling them must never
+        # read the device seed back inside the training loop.
+        self.seed_value = int(seed)
         self.iteration = self.model.tensor(0, torch.int64)
         self.temperature = self.model.tensor(1.0)
         self.iterations_completed = 0
@@ -97,6 +101,9 @@ class TensorARSTrainer:
             self.world_impact_cost = torch.zeros_like(self.world_impact_loss)
         if m.n_obs_imp:
             self.world_impact_obs = torch.zeros((self.worlds, m.n_obs_imp, m.C), device=m.device)
+        if m.has_impacts and not m.n_obs_imp:
+            # Baseline maps only: the same fields in every world and epoch.
+            self._refresh_impacts(None)
         self.pair_index = torch.arange(self.n_deltas, device=m.device, dtype=torch.int64)
         self.runner = RolloutRunner(m, self.bank, 2 * self.pairs_per_batch, self.worlds, **self.runner_options)
         self.chunks = []
@@ -130,30 +137,35 @@ class TensorARSTrainer:
         # of the between-pair variance), which randomised the top-b
         # selection and inflated sigma_f (section 150).
         self.world_light_start.copy_(self.spawner.light_starts(keys))
-        self._refresh_impacts(keys)
+        if self.model.n_obs_imp:
+            self._refresh_impacts(self.iterations_completed if epoch is None else epoch)
         self.last_world_epoch = epoch
 
-    def _refresh_impacts(self, keys):
+    def _refresh_impacts(self, epoch_key):
         """Sample the worlds' impact fields on the host (section 161).
 
         Same rule as the CPU trainer (``lib.world.impact_maps``): an
-        observable or baseline impact gets a field from its value range
-        and spawn strategy, any other impact is absent (a zero field,
-        which still reads the tables at value 0). One small readback per
-        world refresh, never inside a rollout.
+        impact with a baseline map gets that map, an observable impact a
+        field from its value range and spawn strategy, any other impact
+        is absent (a zero field, which still reads the tables at value 0).
+        The per-world seeds come from the host seed, ``epoch_key`` and the
+        world index, so nothing is read back from the device; only the
+        observable fields change with the epoch.
         """
         m = self.model
         if not (m.has_impacts or m.n_obs_imp):
             return
         spec = self.spec
         impact_ids = sorted(set(m.impact_ids) | set(m.observed_impacts))
+        seeds = [zlib.adler32(f"{self.seed_value}:{epoch_key}:{w}".encode()) & 0x7FFFFFFF
+                 for w in range(self.worlds)]
         maps = [sample_impact_maps(
                     impact_ids, getattr(spec, "impact_ranges", {}),
-                    (m.H, m.W), seed=int(key) & 0x7FFFFFFF,
+                    (m.H, m.W), seed=seed,
                     impact_spawn_specs=getattr(spec, "impact_spawn_specs", {}),
                     observable_impact_vars=list(m.observed_impacts),
-                    baseline_impact_vars=getattr(spec, "baseline_impact_vars", []))
-                for key in keys.cpu().tolist()]
+                    baseline_maps=getattr(spec, "baseline_maps", {}))
+                for seed in seeds]
         if m.has_impacts:
             loss, cost = m.impact_fields(maps)
             self.world_impact_loss.copy_(loss)
@@ -321,6 +333,7 @@ class TensorARSTrainer:
             if destination.shape != state[name].shape:
                 raise ValueError("Checkpoint has incompatible " + name)
             destination.copy_(state[name])
+        self.seed_value = int(state["seed"])
         self.iterations_completed = int(state["iterations_completed"])
         if state["worlds"] == self.worlds:
             self.world_biomass.copy_(state["world_biomass"])
@@ -332,10 +345,10 @@ class TensorARSTrainer:
                 # is a pure function of their keys.
                 self.world_light_start.copy_(self.spawner.light_starts(
                     self._world_keys(self.last_world_epoch)))
-            if self.last_world_epoch is not None:
-                # The locked worlds' impact fields are a pure function of
-                # their keys too, so they are not stored (section 161).
-                self._refresh_impacts(self._world_keys(self.last_world_epoch))
+            if self.last_world_epoch is not None and self.model.n_obs_imp:
+                # The locked worlds' observable fields are a pure function
+                # of the seed and the epoch, so they are not stored.
+                self._refresh_impacts(self.last_world_epoch)
         else:
             self.last_world_epoch = None
 

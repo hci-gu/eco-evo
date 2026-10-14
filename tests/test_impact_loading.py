@@ -1,10 +1,10 @@
 """Impact pipeline: project YAML -> loader metadata -> FG impact tables.
 
-``mareld2.yaml`` ships with every impact ``muted: true``, so the active
-metadata is empty for the project as-is. These tests therefore cover both
-cases: the muted project (empty metadata, but the 4-value contract intact)
-and a temporary un-muted copy (metadata + a usable per-FG impact table that
-``lib.environments.ecosystem_env.impacts`` can consume).
+``mareld2.yaml`` ships with the two trawling impacts active (today's
+fishing, non-observable, with baseline maps; section 161) and the wind
+farm impacts muted. These tests cover the shipped project and a temporary
+copy with ``windfarm_noise`` un-muted (metadata + a usable per-FG impact
+table that ``lib.environments.ecosystem_env.impacts`` can consume).
 """
 
 import numpy as np
@@ -38,16 +38,17 @@ def test_load_project_config_returns_four_values():
     assert len(out) == 4
     fgs, impact_vars, impact_ranges, observable_impact_vars = out
     assert fgs
-    # All impacts are muted in the shipped project.
-    assert impact_vars == []
-    assert impact_ranges == {}
+    # Only the fishery is active in the shipped project, and the policies
+    # do not observe it.
+    assert impact_vars == ['bottom_trawling', 'pelagic_trawling']
+    assert set(impact_ranges) == {'bottom_trawling', 'pelagic_trawling'}
     assert observable_impact_vars == []
 
 
 def test_unmuted_project_yields_impact_metadata(unmuted_project):
     fgs, impact_vars, impact_ranges, observable = load_project_config(
         unmuted_project, grid_size=GRID, seed=1)
-    assert impact_vars == ['windfarm_noise']
+    assert 'windfarm_noise' in impact_vars
     assert observable == ['windfarm_noise']
     vmin, vmax = impact_ranges['windfarm_noise']
     assert vmin == pytest.approx(0.0)

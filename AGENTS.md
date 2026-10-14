@@ -51,7 +51,7 @@ fabricates mass.
 | `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs, paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). |
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. |
-| `lib/world/impact_maps.py` | Impact fields: the training sampler (observable + baseline impacts), the inference fallback for a baseline impact without a map (section 161). |
+| `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
@@ -76,14 +76,20 @@ fabricates mass.
   driven by the Observability matrix; `Rest` doubles as a hide action.
 - Impacts: linear interpolation in `impact_table`, clipped to endpoints.
   `biomass_factor` is a loss per tick, `energy_factor` multiplies every
-  action cost by `1 + sum`. Training samples a field only for observable
-  impacts and for `baseline: true` impacts (today's world, e.g. fishing);
-  any other impact is absent from training. Inference reads
-  `inference.impact_maps` and samples a baseline impact without a map
-  (`lib/world/impact_maps.py`). The GPU engine mirrors all of it:
-  impact mortality and cost from per-world fields, observable impacts as
-  input channels in train.py's slots (section 161). Impacts are outside
-  the growth budget.
+  action cost by `1 + sum`. Training: an impact with a `baseline_map`
+  (Impact Editor; today's field, e.g. fishing effort per cell) gets that
+  map in every world; otherwise an observable impact is spawned per world
+  (so groups learn behaviour against it) and any other impact is absent.
+  Inference reads only `inference.impact_maps` (no map = no impact): add
+  the baseline file there to keep today's fishing, or another file for a
+  scenario - one field per impact, never stacked
+  (`lib/world/impact_maps.py`). The GPU engine mirrors all of it (impact
+  mortality and cost, observable channels in train.py's slots; section
+  161). Impacts are outside the growth budget. `mareld2.yaml` fishes
+  today's world: `bottom_trawling` (gadoids, F 0.12/yr) and
+  `pelagic_trawling` (pelagic fish, F 0.10/yr), the `maps/` effort maps
+  as baseline and inference maps, linear library tables calibrated to
+  the maps' mean effort.
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
   is the attack rate a. A pair may override it (`<pred>_preys_on_<prey>:
   max_intake_rate`) to set the half-saturation 1/(a h) without moving the
@@ -170,6 +176,9 @@ python3 tools/viability.py --ticks 300 --seeds 1 --behaviour eat   # smoke test
 python3 tools/probes/budget_gate.py
 # Monthly attack-rate multipliers and producer growth factors (137, 138).
 python3 tools/probes/daylight_table.py
+# Fishing-effort maps (MW-h/km2/year per cell) from EMODnet -> maps/*.npz;
+# the library's trawling tables are calibrated to their mean (section 161).
+python3 tools/make_fishing_maps.py
 
 # GUI, inference, plots
 python3 fgconfig/fgconfig.py

@@ -14794,3 +14794,110 @@ remain open exactly as described in 71.9 / 71.11.
     Full suite 1106 passed / 12 skipped. Smoke: train_gpu with
     windfarm_noise observable (cuda-graph, 2 iterations) and the exported
     policies stepping a CPU inference world.
+161.8 Baseline maps replace the baseline flag (follow-up, user design).
+    The user's frame: a fishing map holds the effort in each cell; a
+    scenario (closed wind farm, changed quotas) is another map for the
+    same impact, never a second impact on top (impacts add up). An
+    impact without a map has no effect, in training too. So the
+    baseline: true flag and the sampled baseline fields of 161.3 (from
+    the value range, in training and as an inference fallback) are gone.
+    * Impact Editor: "Baseline map" row (Browse / Clear) stores
+      impact_variables[i].baseline_map, a .npz path relative to the
+      project file (same validation as the Inference tab, shared in
+      _read_impact_npz); the list shows [baseline map]; the Spawn
+      Strategy frame shows only for observable impacts without one.
+    * Training (train._EnvBuilder, GPU ProjectSpec/trainer,
+      EnvironmentBuilder): an impact with a baseline map gets that map in
+      every world, observable or not; otherwise observable impacts are
+      spawned per world (behaviour against them, as before) and the rest
+      is absent. lib/world/impact_maps.py: project_baseline_maps,
+      sample_impact_maps(baseline_maps=...), load_impact_map_npz (moved
+      from inference.py, alias kept).
+    * Inference worlds (inference.build_env, the probe, the progress
+      evaluation) read only inference.impact_maps; the baseline map is
+      not read there - the user adds the same file under the Inference
+      tab to keep today's fishing, or a scenario file instead.
+    Why a hidden baseline impact belongs in training: the policies cannot
+    react to fishing itself, but they train in the states it creates
+    (lower densities, more food per fish), and the world settles near the
+    reference instead of drifting to an unfished state (fix55). Scenario
+    impacts that are not observable stay out of training, so noll and
+    projekt are compared with the same policies.
+    Tests: tests/test_gpu_impacts.py (33 with CUDA; the baseline ones
+    rewritten: the map is the training field and replaces an observable
+    impact's spawned field, project_baseline_maps resolves, resamples and
+    skips muted / missing files, inference ignores the baseline map until
+    the Inference tab has it, every GPU world gets the same map, no map
+    means zero in training), tests/test_fgconfig_baseline_map.py (Browse
+    stores a relative path and marks the list, Clear removes it, an
+    invalid file is not stored). Full suite 1109 passed / 12 skipped.
+    Smoke with a 1000-everywhere baseline map on pelagic trawling (the
+    placeholder table, 100 %/tick): herring gone in training on both
+    engines (reward -13.8), untouched in the train.py probe (103 %),
+    which is an inference world without the map.
+    Next: the fishery maps themselves (EMODnet effort per km2 per cell,
+    multi-window mean, bottom otter trawls for gadoids), linear tables
+    with catchability q = F / mean effort reaching well above today's
+    effort (interp_impact clamps at the last row), F 0.12 gadoids and
+    0.10 pelagic fish (reports/Fiskeridodlighet i Skagerrak idag.md).
+161.9 The fishery: effort maps and calibrated tables.
+    tools/make_fishing_maps.py fetches the EMODnet Human Activities WFS
+    layers fishingbottomottertrawls and fishingpelagic (mw_fshn per 0.05
+    deg c-square, VMS vessels > 12 m, five overlapping 4-year windows
+    2015-2018 ... 2021-2024), divides by the c-square area to get effort
+    density and rasterises it onto the 60x60 SWEREF 99 TM grid by
+    sampling each c-square (80 x 80 points, no shapely/pyproj; the
+    Gauss-Krueger projection hits coordinates.txt within 2 m). Today's
+    map = mean over windows of each window / its grid mean (the
+    Skagerrak total falls ~60 % after 2018-2021), scaled to the 2021-2024
+    grid mean. Output maps/fishing_bottom_otter_trawls.npz (key
+    bottom_trawling: mean 3.014, max 9.6, max/mean 3.2, a band along the
+    trench slope in the north, ~0 in the Bratten corner) and
+    maps/fishing_pelagic.npz (pelagic_trawling: mean 0.02496, max 0.43,
+    max/mean 17.3, 910 empty cells, a band in the west). Unit
+    MW-h/km2/year, also in the FG editor's IMPACT_UNITS.
+    Library (section 161 comments): linear tables, biomass_factor = q x
+    effort per tick, q = F / 1460 / mean effort of today's map:
+    gadoids_impacted_by_bottom_trawling (new) F 0.12 -> q 2.7269e-5,
+    row 100 -> 0.002726853; pelagic_fish_impacted_by_pelagic_trawling
+    (placeholder 1.0/tick at 1000 replaced) F 0.10 -> q 2.744e-3, row
+    10 -> 0.02743977. The top rows are ~10-20 x today's maximum so
+    scenario maps with more effort are not clamped.
+    Check, frozen fix55 policies (copy of 2026-10-15), probe world, a
+    project copy with both trawlings un-muted and the maps as baseline
+    and inference maps: realised F (impact loss / mean biomass) gadoids
+    0.123 / 0.110 (years 1 / 2), pelagic fish 0.088 / 0.082 - herring
+    stand a little less where the pelagic effort is; the calibration is
+    kept on the mean effort, which does not depend on the policies.
+    Gadoids 2500 -> 3217 -> 4394 t with fishing against 3641 -> 5527
+    without; herring 11333 -> 9006 against 11999 -> 9109 (fewer gadoids
+    eat less herring). tests/test_fishing_maps.py (projection, effort
+    kept by the rasterisation, latest-window scaling, linear tables).
+    Full suite 1116 passed / 12 skipped (with the fixed rasterisation
+    tolerance). 1-gen smoke train_gpu and train.py on the fishing copy.
+    Not done: mareld2.yaml itself (bottom_trawling impact variable,
+    pelagic trawling un-muted, the two maps as baseline and inference
+    maps) - the running fix55's probe re-reads the project; and the
+    density-dependent gadoid M1.
+161.10 The fishery is on in mareld2.yaml (fix55 stopped first; its
+    probe re-read the project). impact_variables: bottom_trawling (new,
+    0-100 MW-h/km2/year, baseline_map maps/fishing_bottom_otter_trawls.npz)
+    and pelagic_trawling (un-muted, 0-10, baseline_map
+    maps/fishing_pelagic.npz, the perlin spawn block dropped - it is not
+    observable); both maps also under inference.impact_maps, so training,
+    the probe and inference all fish today's effort. The wind farm
+    impacts stay muted. Non-observable: no new inputs, fix55 checkpoints
+    still load.
+    Side fix in the GPU trainer: with an active impact every world
+    refresh read the world keys back to the host for the seeds
+    (tests/test_gpu_trainer.py and test_currents.py forbid readback in
+    the training loop). Baseline-only fields are now computed once when
+    the worlds are allocated; observable fields are seeded on the host
+    from the seed (seed_value, restored on resume), the epoch and the
+    world index. tests/test_impact_loading.py follows the shipped
+    project (the two trawlings active). Full suite 1117 passed / 12
+    skipped; 1-gen train_gpu and train.py on mareld2.yaml OK.
+    Still open: the density-dependent gadoid M1; the herring
+    under-production; whether to raise the gadoid start biomass toward
+    the IBTS level (~2.7 t/km2). maps/*.npz are untracked like
+    vindparker.npz; tools/make_fishing_maps.py rebuilds them.

@@ -104,17 +104,14 @@ non_decision_makers:
     initial_biomass_max: 100000
     inference_initial_biomass: 80000
 impact_variables:
+  - impact_id: bottom_trawling
+    value_min: 0.0
+    value_max: 100.0
+    baseline_map: maps/fishing_bottom_otter_trawls.npz
   - impact_id: pelagic_trawling
     value_min: 0.0
-    value_max: 1000.0
-    spawn:
-      mode: perlin
-      scale: 12.0
-      octaves: 4
-      persistence: 0.5
-      lacunarity: 2.0
-      threshold: 0.0
-    muted: true
+    value_max: 10.0
+    baseline_map: maps/fishing_pelagic.npz
   - impact_id: rotor
     value_min: 0
     value_max: 1
@@ -173,3 +170,5 @@ spawn_templates:
 inference:
   impact_maps:
     rotor: vindparker.npz
+    bottom_trawling: maps/fishing_bottom_otter_trawls.npz
+    pelagic_trawling: maps/fishing_pelagic.npz

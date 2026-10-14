@@ -7,11 +7,11 @@ import numpy as np
 
 from lib.config.config_loader import (
     _resolve_initial_biomass_range, load_config, load_impact_spawn_specs,
-    load_project_config, project_baseline_impact_vars, setup_full_mareld_mvp,
+    load_project_config, setup_full_mareld_mvp,
 )
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import CurrentConfig
-from lib.world.impact_maps import sample_impact_maps
+from lib.world.impact_maps import project_baseline_maps, sample_impact_maps
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 
@@ -63,12 +63,14 @@ class EnvironmentBuilder:
             currents=self.currents, current_world_seed=int(seed or 0) ^ int(self.spawn_seed or 0))
         if impact_vars:
             # A training world, as train._EnvBuilder builds it: observable
-            # and baseline impacts sampled, the rest absent (section 161).
+            # impacts sampled, baseline maps loaded, the rest absent
+            # (section 161).
             maps = sample_impact_maps(
                 impact_vars, impact_ranges, tuple(self.grid), seed=seed,
                 impact_spawn_specs=load_impact_spawn_specs(self.project_path),
                 observable_impact_vars=observable,
-                baseline_impact_vars=project_baseline_impact_vars(self.project_path))
+                baseline_maps=project_baseline_maps(
+                    load_config(self.project_path), self.project_path, tuple(self.grid)))
             for impact_id in impact_vars:
                 env.grid.add_map(impact_id, maps[impact_id])
         return env
@@ -104,13 +106,15 @@ class ProjectSpec:
         finally:
             np.random.set_state(rng_state)
         # Impact recipe (section 161): the GPU trainer samples a field per
-        # world for every observable and baseline impact, exactly as the
-        # CPU trainer; the observable ones also widen the policy input.
+        # world for every observable impact and loads the baseline maps,
+        # exactly as the CPU trainer; the observable ones also widen the
+        # policy input.
         self.impact_vars = list(impact_vars)
         self.observable_impact_vars = list(observable)
         self.impact_ranges = dict(impact_ranges)
-        self.baseline_impact_vars = (project_baseline_impact_vars(project)
-                                     if project is not None else [])
+        self.baseline_maps = (project_baseline_maps(project, builder.project_path,
+                                                    tuple(builder.grid))
+                              if project is not None else {})
         self.impact_spawn_specs = (load_impact_spawn_specs(builder.project_path)
                                    if project is not None else {})
         self.allowed_mask = allowed_mask
