@@ -72,7 +72,7 @@ class RolloutRunner:
         # only with impact tables so a project without them keeps the
         # exact same graph.
         if model.has_impacts:
-            buffer("impact_loss", (self.E, model.D, model.C))
+            buffer("impact_loss", (self.E, model.G, model.C))
             buffer("impact_cost", (self.E, model.D, model.C))
         if model.n_obs_imp:
             buffer("impact_obs", (self.E, model.n_obs_imp, model.C))
@@ -95,7 +95,7 @@ class RolloutRunner:
     def reset(self, biomass, reserve, keys, ticks, mean, var, temperature,
               light_start=None, impacts=None, impact_obs=None):
         """Load a batch of worlds; ``impacts`` is ``(loss_rate, cost)``
-        [E, D, C] from ``TensorEcosystem.impact_fields`` and ``impact_obs``
+        ([E, G, C], [E, D, C]) from ``TensorEcosystem.impact_fields`` and ``impact_obs``
         [E, n_obs_imp, C] from ``impact_observations`` (zero if None)."""
         if ticks < 1:
             raise ValueError("Rollouts must contain at least one tick")

@@ -50,11 +50,14 @@ def device(request):
 
 
 def impact_env(migration=False, mortality=False, maps=("trawl", "noise"),
-               observable=None, daylight=None):
+               observable=None, daylight=None, ndm=False):
+    """``ndm`` also trawls the non decision maker "c" (benthos-like)."""
+    impacts = {"a": {"trawl": TRAWL, "noise": NOISE},
+               "b": {"trawl": TRAWL, "noise": OFF}}
+    if ndm:
+        impacts["c"] = {"trawl": TRAWL}
     env = make_env(migration, mortality, min_split=0, extinction_factor=0,
-                   impacts={"a": {"trawl": TRAWL, "noise": NOISE},
-                            "b": {"trawl": TRAWL, "noise": OFF}},
-                   observable_impacts=observable, daylight=daylight)
+                   impacts=impacts, observable_impacts=observable, daylight=daylight)
     rng = np.random.default_rng(7)
     # The trawl field runs past the table's last point: clamped, as on CPU.
     fields = {"trawl": rng.uniform(0, 12, (env.H, env.W)),
@@ -66,14 +69,18 @@ def impact_env(migration=False, mortality=False, maps=("trawl", "noise"),
 
 @pytest.mark.parametrize("migration,mortality", [(False, False), (True, True)])
 @pytest.mark.parametrize("maps", [("trawl", "noise"), ("trawl",)])
-def test_impacts_match_reference(device, migration, mortality, maps):
+@pytest.mark.parametrize("ndm", [False, True])
+def test_impacts_match_reference(device, migration, mortality, maps, ndm):
     """Full ticks with impact mortality and cost, against the CPU tick.
 
     ``("trawl",)`` leaves the noise field out: both engines skip a
-    missing field rather than reading it as zero.
+    missing field rather than reading it as zero. ``ndm`` trawls the
+    logistic group "c" too: only its biomass factor acts.
     """
-    model = _assert_parity(impact_env(migration, mortality, maps), device)
+    model = _assert_parity(impact_env(migration, mortality, maps, ndm=ndm), device)
     assert model.has_impacts and model.impact_ids == ("noise", "trawl")
+    c = model.ids.index("c")
+    assert bool(model.impact_loss_tables[c]) == ndm
 
 
 @pytest.mark.parametrize("observable", [["noise"], ["trawl", "noise"], ["noise", "seen"]])
@@ -104,12 +111,15 @@ def test_impact_fields_sum_each_groups_tables(device):
                                 for k in ("value", "biomass_factor", "energy_factor"))
     bf_t, ef_t = interp_impact(table(TRAWL), trawl)
     bf_n, ef_n = interp_impact(table(NOISE), noise)
+    ga, gb = model.ids.index("a"), model.ids.index("b")
     a, b = env.dm_ids.index("a"), env.dm_ids.index("b")
-    np.testing.assert_allclose(loss[0, a].cpu(), bf_t + bf_n, rtol=1e-6)
+    assert loss.shape[1] == model.G and cost.shape[1] == model.D
+    np.testing.assert_allclose(loss[0, ga].cpu(), bf_t + bf_n, rtol=1e-6)
     np.testing.assert_allclose(cost[0, a].cpu(), ef_t + ef_n, rtol=1e-6)
     # "b" is not affected by the noise: its table is switched off.
-    np.testing.assert_allclose(loss[0, b].cpu(), bf_t, rtol=1e-6)
+    np.testing.assert_allclose(loss[0, gb].cpu(), bf_t, rtol=1e-6)
     np.testing.assert_allclose(cost[0, b].cpu(), ef_t, rtol=1e-6)
+    assert not loss[0, model.ids.index("c")].any()
 
 
 def test_impacts_change_the_trajectory(device):
@@ -124,6 +134,18 @@ def test_impacts_change_the_trajectory(device):
     dm = model.dm_index
     assert (on[0][:, dm].sum() < off[0][:, dm].sum()).item()
     assert (on[1][:, dm].sum() < off[1][:, dm].sum()).item()
+
+
+def test_trawling_a_logistic_group_lowers_it(device):
+    env = impact_env(ndm=True)
+    model = TensorEcosystem(env, device)
+    b, r, _ = model.import_state([env])
+    probs = torch.full((1, model.D, model.A, model.C), 1.0 / model.A, device=model.device)
+    loss, cost = model.import_impacts([env])
+    on = model.step(b, r, probs, model.tensor(0), torch.zeros_like(b), impacts=(loss, cost))
+    off = model.step(b, r, probs, model.tensor(0), torch.zeros_like(b))
+    c = model.ids.index("c")
+    assert (on[0][:, c].sum() < off[0][:, c].sum()).item()
 
 
 def test_no_impact_tables_keep_the_old_graph(device):
@@ -214,17 +236,20 @@ def test_trainer_gives_every_world_the_baseline_map(baseline_project):
     m = trainer.model
     assert m.has_impacts and "pelagic_trawling" in m.impact_ids
     trainer.refresh_worlds(epoch=3)
-    herring = m.dm_ids.index("pelagic_fish")
+    herring, gadoids = m.ids.index("pelagic_fish"), m.ids.index("gadoids")
     loss = trainer.world_impact_loss.clone()
     assert (loss[:, herring] > 0).any()
-    others = [d for d, fid in enumerate(m.dm_ids) if fid != "pelagic_fish"]
+    # Pelagic trawls also take 2 % of the gadoid F (section 161.14).
+    assert (loss[:, gadoids] > 0).any()
+    assert loss[:, gadoids].sum() < loss[:, herring].sum()
+    others = [g for g, fid in enumerate(m.ids) if fid not in ("pelagic_fish", "gadoids")]
     assert not loss[:, others].any()
     torch.testing.assert_close(loss[0], loss[1], rtol=0, atol=0), "one map for every world"
     expected = m.impact_fields([trainer.spec.baseline_maps])[0]
     torch.testing.assert_close(loss[0], expected[0], rtol=0, atol=0)
     trainer.train_step(n_eval_ticks=2, world_epoch=3)
     expanded = loss[None].expand(2 * trainer.pairs_per_batch, -1, -1, -1).reshape(
-        trainer.runner.E, m.D, m.C)
+        trainer.runner.E, m.G, m.C)
     torch.testing.assert_close(trainer.runner.impact_loss, expanded, rtol=0, atol=0)
     resumed = baseline_trainer(path)
     resumed.load_state_dict(trainer.state_dict())

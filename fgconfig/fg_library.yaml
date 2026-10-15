@@ -121,11 +121,15 @@
     display_name: "Benthic Community"
     is_decision_maker: false
     movement_speed: 0.0
-    # Reverted 2026-10-03 (section 136) to the pre-session values at the
-    # user's request: hand-set growth_rate (no r_max, so it is NOT derived
-    # from the predation matrix), K = 10 t/km2. The literature proposal
-    # (r 0.82 /yr, K ~100) is in reports/Litteraturbaserad growth rate per FG.md.
-    growth_rate: 0.001
+    # Hand-set growth_rate (section 136: no r_max, so it is NOT derived
+    # from the predation matrix), K = 10 t/km2 (user's value). r is the
+    # community-biomass recovery rate after trawling, 0.82 /yr (5-95 %
+    # 0.42-1.53; Hiddink et al. 2017 PNAS; Pitcher et al. 2022: 0.68 on
+    # mud): 0.82 / 1460 per tick (section 161.13). Was 0.001 (1.46 /yr),
+    # which halved the depletion bottom trawling causes at a given SAR.
+    # K ~100 from reports/Litteraturbaserad growth rate per FG.md is not
+    # adopted.
+    growth_rate: 0.000561644
     max_carrying_capacity: 10.0
     energy_content: 3000.0
     spawn:
@@ -782,6 +786,27 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  # Bottom otter trawling on the benthos (section 161): direct seabed
+  # mortality, loss per tick = d x SAR / 1460 with the effort map in
+  # MW-h/km2/year. SAR (whole gear footprint, ICES "surface") per unit
+  # effort k = 0.75 /yr (range 0.6-1.1; ICES WGSFD SAR per MW-h/km2 where
+  # otter trawls dominate, 2019-2024, matching the 2021-2024 level of the
+  # map; Eigaard et al. 2016 gear widths give 0.9-1.1 for 300-500 kW
+  # shrimp/Nephrops trawlers). d = 0.10 per pass (range 0.06-0.115;
+  # Rijnsdorp et al. 2020 OT_CRU, from Hiddink et al. 2017's otter-trawl
+  # 0.06 scaled by the digging share; Pitcher et al. 2022 mud 0.115).
+  # Slope d k / 1460 = 5.137e-5 per tick per unit; the grid mean (3.0)
+  # is SAR 2.3, a loss of 0.23 /yr. Only the biomass factor acts on a
+  # non decision maker. research_notes/Bottentralning och bentos/.
+  benthic_community_impacted_by_bottom_trawling:
+    impact_affects: true
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.005136986
+        energy_factor: 0.0
   benthic_community_impacted_by_pelagic_trawling:
     impact_affects: false
     impact_table: []
@@ -794,9 +819,13 @@ interaction_definitions:
   # Bottom otter trawling on gadoids (section 161), same construction
   # as pelagic trawling on pelagic fish: effort in MW-h per km2 per year,
   # F 0.12 /yr (ICES 2026 cod, haddock, whiting, saithe, hake pooled by
-  # Skagerrak IBTS biomass), mean effort of today's map 3.0142 ->
-  # q = 0.12 / 1460 / 3.0142 = 2.7269e-5 per tick per unit; the last row
-  # is ~10 x today's maximum (9.6).
+  # Skagerrak IBTS biomass), split by gear like pelagic fish: 98 %
+  # bottom trawls (gadoids are caught in demersal, Nephrops and shrimp
+  # trawls; seines and gillnets have no map and stay here), 2 % pelagic
+  # and industrial trawls (whiting, haddock and saithe bycatch, range
+  # 0.1-4.5 %). Mean effort of today's map 3.0142 -> q = 0.98 x 0.12 /
+  # 1460 / 3.0142 = 2.6723e-5 per tick per unit; the last row is ~10 x
+  # today's maximum (9.6).
   gadoids_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
@@ -804,11 +833,19 @@ interaction_definitions:
         biomass_factor: 0.0
         energy_factor: 0.0
       - value: 100.0
-        biomass_factor: 0.002726853
+        biomass_factor: 0.00267232003
         energy_factor: 0.0
+  # The 2 % of the gadoid F taken by pelagic trawls: q = 0.02 x 0.12 /
+  # 1460 / 0.02496 = 6.585e-5 per tick per unit of pelagic effort.
   gadoids_impacted_by_pelagic_trawling:
-    impact_affects: false
-    impact_table: []
+    impact_affects: true
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 10.0
+        biomass_factor: 0.000658532007
+        energy_factor: 0.0
   gadoids_impacted_by_rotor:
     impact_affects: false
     impact_table: []
@@ -822,10 +859,15 @@ interaction_definitions:
   # effort of today's map gives today's biomass-weighted fishing
   # mortality: F 0.10 /yr for pelagic fish (ICES 2026: NSAS, WBSS,
   # sprat, mackerel, horse mackerel, sandeel pooled by Skagerrak biomass;
-  # reports/Fiskeridodlighet i Skagerrak idag.md). Mean effort 0.02496
-  # -> q = 0.10 / 1460 / 0.02496 = 2.744e-3 per tick per unit. The last
-  # row lies far above today's maximum (0.43) so scenario maps with more
-  # effort are not clamped. Was a placeholder (1.0 per tick at 1000).
+  # reports/Fiskeridodlighet i Skagerrak idag.md). Each group's F is
+  # split over the two gear maps by the gear that catches it (ICES catch
+  # by fleet, STECF FDI 3.a.20; research_notes/Fiskeridodlighet i
+  # Skagerrak idag/catch_by_gear.md): pelagic fish 98 % pelagic trawls
+  # and seines, 2 % bottom trawls (herring bycatch, range 0.2-11 %).
+  # Mean effort 0.02496 -> q = 0.98 x 0.10 / 1460 / 0.02496 = 2.689e-3
+  # per tick per unit. The last row lies far above today's maximum (0.43)
+  # so scenario maps with more effort are not clamped. Was a placeholder
+  # (1.0 per tick at 1000).
   pelagic_fish_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
@@ -833,7 +875,18 @@ interaction_definitions:
         biomass_factor: 0.0
         energy_factor: 0.0
       - value: 10.0
-        biomass_factor: 0.02743977
+        biomass_factor: 0.0268900569
+        energy_factor: 0.0
+  # The 2 % of the pelagic-fish F taken by bottom trawls: q = 0.02 x 0.10
+  # / 1460 / 3.0142 = 4.545e-7 per tick per unit of bottom-trawl effort.
+  pelagic_fish_impacted_by_bottom_trawling:
+    impact_affects: true
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.0000454476196
         energy_factor: 0.0
   pelagic_fish_impacted_by_rotor:
     impact_affects: false

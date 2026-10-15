@@ -386,17 +386,32 @@ class FGConfigApp:
         base_lbl.grid(row=3, column=0, sticky="w", padx=5, pady=2)
         base_row = ttk.Frame(self.impact_editor_frame)
         base_row.grid(row=3, column=1, sticky="w", padx=5, pady=2)
+        # Drop / browse zone, thumbnail and Clear, as on the Inference tab.
+        base_zone = tk.Frame(base_row, relief="groove", borderwidth=2,
+                             width=260, height=60, bg="#f4f4f4")
+        base_zone.pack(side="left", padx=(0, 6))
+        base_zone.pack_propagate(False)
         self.impact_baseline_status_var = tk.StringVar(value="(none)")
-        base_status = ttk.Label(base_row, textvariable=self.impact_baseline_status_var,
-                                wraplength=260, justify="left")
-        base_status.pack(side="left", padx=(0, 6))
-        base_browse = ttk.Button(base_row, text="Browse…",
-                                 command=self._impact_browse_baseline_map)
-        base_browse.pack(side="left")
+        base_status = tk.Label(base_zone, textvariable=self.impact_baseline_status_var,
+                               bg="#f4f4f4", wraplength=240, justify="center")
+        base_status.place(relx=0.5, rely=0.5, anchor="center")
+        self.impact_baseline_thumb = tk.Label(base_row, bg="#ffffff", width=8, height=4,
+                                              relief="solid", borderwidth=1)
+        self.impact_baseline_thumb.pack(side="left", padx=(0, 6))
         base_clear = ttk.Button(base_row, text="Clear",
                                 command=self._impact_clear_baseline_map)
-        base_clear.pack(side="left", padx=(4, 0))
-        attach_help([base_lbl, base_status, base_browse, base_clear], "impact_baseline_map")
+        base_clear.pack(side="left")
+        for widget in (base_zone, base_status):
+            widget.bind("<Button-1>", lambda _e: self._impact_browse_baseline_map())
+        if self._dnd_available():
+            for widget in (base_zone, base_status, self.impact_baseline_thumb, base_row):
+                try:
+                    widget.drop_target_register("DND_Files")  # type: ignore[attr-defined]
+                    widget.dnd_bind("<<Drop>>",  # type: ignore[attr-defined]
+                                    lambda e: self._impact_on_drop_baseline(e.data))
+                except Exception:
+                    pass
+        attach_help([base_lbl, base_zone, base_status, base_clear], "impact_baseline_map")
 
         self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
                                            text="Apply Changes",
@@ -2158,7 +2173,7 @@ class FGConfigApp:
         self.impact_value_min_var.set(_fmt(entry.get('value_min')))
         self.impact_value_max_var.set(_fmt(entry.get('value_max')))
         self.impact_observable_var.set(bool(entry.get('observable', False)))
-        self.impact_baseline_status_var.set(self._baseline_map_status(entry))
+        self._update_baseline_map_view(entry)
         # Populate the spawn-strategy editor from the impact's spawn block
         # (project override). Missing/invalid blocks fall back to uniform.
         spawn_cfg = entry.get('spawn') if isinstance(entry, dict) else None
@@ -2477,11 +2492,50 @@ class FGConfigApp:
         """One-line status of an impact's baseline map for the editor."""
         stored = (entry or {}).get('baseline_map')
         if not stored:
-            return "(none: no field in training unless observable)"
+            return ("Drop .npz here or click to browse" if self._dnd_available()
+                    else "Click to browse (.npz)")
         path = self._resolve_inference_map_path(stored)
         if not os.path.isfile(path):
             return f"{stored} (file not found: no baseline)"
-        return os.path.basename(path)
+        arr = self._peek_impact_npz((entry or {}).get('impact_id', ''), path)
+        if arr is None:
+            return f"{os.path.basename(path)} (unreadable: no baseline)"
+        return (f"{os.path.basename(path)}\nshape={arr.shape[0]}×{arr.shape[1]}  "
+                f"min={float(arr.min()):g}  max={float(arr.max()):g}")
+
+    def _update_baseline_map_view(self, entry):
+        """Status text and thumbnail of the selected impact's baseline map."""
+        self.impact_baseline_status_var.set(self._baseline_map_status(entry))
+        arr = None
+        stored = (entry or {}).get('baseline_map')
+        if stored:
+            arr = self._peek_impact_npz(entry.get('impact_id', ''),
+                                        self._resolve_inference_map_path(stored))
+        photo = self._thumbnail_photo(arr) if arr is not None else None
+        try:
+            if photo is None:
+                self.impact_baseline_thumb.configure(image='', width=8, height=4)
+            else:
+                self.impact_baseline_thumb.configure(image=photo, width=photo.width(),
+                                                     height=photo.height())
+        except tk.TclError:
+            pass
+        self._baseline_thumb_ref = photo  # prevent GC
+
+    @staticmethod
+    def _peek_impact_npz(impact_id, path):
+        """The .npz's map without dialogs (None if unreadable), for display."""
+        import numpy as _np
+        try:
+            with _np.load(path, allow_pickle=False) as data:
+                if impact_id in data.files and data[impact_id].ndim == 2:
+                    return _np.asarray(data[impact_id], dtype='float32')
+                for k in data.files:
+                    if data[k].ndim == 2:
+                        return _np.asarray(data[k], dtype='float32')
+        except Exception:
+            return None
+        return None
 
     def _impact_browse_baseline_map(self):
         """Pick the selected impact's baseline map (section 161).
@@ -2493,16 +2547,28 @@ class FGConfigApp:
         entry = self._selected_impact_entry()
         if entry is None or entry.get('muted'):
             return
-        impact_id = entry.get('impact_id', '')
         path = filedialog.askopenfilename(
-            title=f"Select baseline .npz for '{impact_id}'",
+            title=f"Select baseline .npz for '{entry.get('impact_id', '')}'",
             filetypes=[("NumPy archive", "*.npz"), ("All files", "*.*")],
         )
-        if not path or self._read_impact_npz(impact_id, path) is None:
+        if path:
+            self._impact_set_baseline_map(path)
+
+    def _impact_on_drop_baseline(self, data):
+        """tkinterdnd2 drop on the baseline zone: the first dropped file."""
+        paths = self._parse_dnd_paths(data)
+        if paths:
+            self._impact_set_baseline_map(paths[0])
+
+    def _impact_set_baseline_map(self, path):
+        entry = self._selected_impact_entry()
+        if entry is None or entry.get('muted'):
+            return
+        if self._read_impact_npz(entry.get('impact_id', ''), path) is None:
             return
         entry['baseline_map'] = self._format_inference_map_path(path)
         self._mark_dirty()
-        self.impact_baseline_status_var.set(self._baseline_map_status(entry))
+        self._update_baseline_map_view(entry)
         self._sync_impact_spawn_visibility()
         self._refresh_impact_list_keep_selection()
 
@@ -2512,7 +2578,7 @@ class FGConfigApp:
             return
         entry.pop('baseline_map', None)
         self._mark_dirty()
-        self.impact_baseline_status_var.set(self._baseline_map_status(entry))
+        self._update_baseline_map_view(entry)
         self._sync_impact_spawn_visibility()
         self._refresh_impact_list_keep_selection()
 
@@ -2771,10 +2837,16 @@ class FGConfigApp:
             impact_id = self._inference_impact_under_pointer()
             if impact_id is None:
                 return
-        # tkinterdnd2 passes a brace-quoted, space-separated list of paths.
+        paths = self._parse_dnd_paths(data)
+        if paths:
+            self._inference_set_map(impact_id, paths[0], persist=True)
+
+    @staticmethod
+    def _parse_dnd_paths(data):
+        """tkinterdnd2 passes a brace-quoted, space-separated list of paths."""
         paths = []
         cur, in_brace = [], False
-        for ch in data:
+        for ch in data or "":
             if ch == '{':
                 in_brace = True
                 continue
@@ -2791,8 +2863,7 @@ class FGConfigApp:
             cur.append(ch)
         if cur:
             paths.append(''.join(cur))
-        if paths:
-            self._inference_set_map(impact_id, paths[0], persist=True)
+        return paths
 
     def _resolve_inference_map_path(self, stored):
         """Resolve a stored (possibly relative) path against the project file dir."""
@@ -2861,10 +2932,23 @@ class FGConfigApp:
 
     def _render_inference_thumbnail(self, impact_id, arr):
         """Render a small grayscale thumbnail of ``arr`` (min/max normalised for display only)."""
+        photo = self._thumbnail_photo(arr)
+        if photo is None:
+            return
+        w = self.inference_impact_widgets.get(impact_id)
+        if w is None:
+            return
+        w['thumb_lbl'].configure(image=photo, text='', width=photo.width(), height=photo.height())
+        self._inference_thumb_refs[impact_id] = photo  # prevent GC
+
+    @staticmethod
+    def _thumbnail_photo(arr):
+        """~80x64 grayscale PhotoImage of ``arr`` (min/max normalised), or
+        None without PIL."""
         try:
             from PIL import Image, ImageTk
         except Exception:
-            return
+            return None
         a = arr.astype('float32', copy=False)
         amin = float(a.min())
         amax = float(a.max())
@@ -2876,12 +2960,7 @@ class FGConfigApp:
         img = Image.fromarray(disp, mode='L')
         # Fit into ~80×64 pixels (preserve aspect).
         img.thumbnail((80, 64))
-        photo = ImageTk.PhotoImage(img)
-        w = self.inference_impact_widgets.get(impact_id)
-        if w is None:
-            return
-        w['thumb_lbl'].configure(image=photo, text='', width=img.width, height=img.height)
-        self._inference_thumb_refs[impact_id] = photo  # prevent GC
+        return ImageTk.PhotoImage(img)
 
     def apply_inference_changes(self):
         """Persist the inference-tab values onto the project FG entries."""
@@ -3019,10 +3098,19 @@ class FGConfigApp:
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
         if impacts:
-            self.create_matrix_section("Impact Affects (row impacted by column)", "impact_affects", dm_fgs, impacts,
+            # Every group, non decision makers included: bottom trawling
+            # kills benthos too (section 161). Only the biomass factor acts
+            # on a non decision maker; it has no action costs to scale.
+            self.create_matrix_section("Impact Affects (row impacted by column)", "impact_affects", fgs, impacts,
                                        cell_type="bool", parent=self.impact_container)
-            self.create_matrix_section("Impact Tables (value, biomass factor, energy factor)", "impact_table", dm_fgs, impacts,
-                                       cell_type="table", parent=self.impact_container)
+            tables_frame = self.create_matrix_section(
+                "Impact Tables (value, biomass factor, energy factor)", "impact_table", fgs, impacts,
+                cell_type="table", parent=self.impact_container)
+            self._add_matrix_note(
+                tables_frame,
+                "Non decision makers (benthos, phytoplankton) use only the "
+                "biomass factor: they take no actions, so the energy "
+                "factor has no cost to scale.")
         else:
             ttk.Label(self.impact_container, text="Add impact variables to the project to see impact interactions.").pack(padx=10, pady=10)
 

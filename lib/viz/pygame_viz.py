@@ -3507,8 +3507,10 @@ class LiveVisualizer:
         pad = 4
         # Five info lines above the heatmap: FG name, 'B0 = ... B = ...',
         # action distribution 'mv/rs/et = ...', biomass-loss breakdown
-        # 'pr/st = ...', and diet breakdown '<abbr>/... = X/...%' (last
-        # three blank for NDMs), followed by a b0 slider.
+        # 'pr/st/im/nm = ...', and diet breakdown '<abbr>/... = X/...%',
+        # followed by a b0 slider. An NDM has no actions, diet, M1 or
+        # starvation: its third line is its loss breakdown 'pr/im = ...'
+        # (eaten / impacts such as bottom trawling) and the rest is blank.
         title_h = 104
         arr = self._biomass.get(fid)
         # Panel background.
@@ -3553,7 +3555,14 @@ class LiveVisualizer:
         # Third info line: action distribution mv/rs/et for DMs.
         act_y = info_y + info_surf.get_height()
         is_ndm = fid in self._ndm_ids
-        if not is_ndm:
+        if is_ndm:
+            lb = self._loss_breakdown.get(fid)
+            if lb is not None:
+                pr = float(lb.get('predation', 0.0)) * 100.0
+                im = float(lb.get('impact', 0.0)) * 100.0
+                ndm_surf = self._font.render(f"pr/im = {pr:.0f}/{im:.0f}%", True, info_col)
+                self._screen.blit(ndm_surf, (px + pad, act_y))
+        else:
             # Header läser senaste mv/rs/et från ``_action_fracs`` (uppdateras
             # per tick via ``update_action_fracs``) i stället för från plot-
             # serie-buffrarna. Det gör att plot-flikarna kan matas med en

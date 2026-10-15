@@ -49,7 +49,10 @@ def test_build_scales_the_mean_pattern_to_the_latest_window():
 
 
 @pytest.mark.parametrize("key", ["gadoids_impacted_by_bottom_trawling",
-                                 "pelagic_fish_impacted_by_pelagic_trawling"])
+                                 "gadoids_impacted_by_pelagic_trawling",
+                                 "pelagic_fish_impacted_by_pelagic_trawling",
+                                 "pelagic_fish_impacted_by_bottom_trawling",
+                                 "benthic_community_impacted_by_bottom_trawling"])
 def test_fishing_tables_are_linear_from_zero(key):
     table = load_config(str(ROOT / "fgconfig" / "fg_library.yaml"))["interaction_definitions"][key]
     assert table["impact_affects"]
@@ -59,3 +62,16 @@ def test_fishing_tables_are_linear_from_zero(key):
     # The catchability is small: even at the top of the table well under
     # 3 % of the cell per tick.
     assert 0 < rows[1]["biomass_factor"] < 0.03
+
+
+@pytest.mark.parametrize("fg,total", [("gadoids", 0.12), ("pelagic_fish", 0.10)])
+def test_gear_split_keeps_the_total_f(fg, total):
+    """98/2 split over the two maps; at today's mean effort the two
+    tables add up to the group's F (catch_by_gear.md)."""
+    lib = load_config(str(ROOT / "fgconfig" / "fg_library.yaml"))["interaction_definitions"]
+    means = {"bottom_trawling": 3.0141578935527487, "pelagic_trawling": 0.02496212180679044}
+    f = 0.0
+    for impact, mean in means.items():
+        top = lib[f"{fg}_impacted_by_{impact}"]["impact_table"][-1]
+        f += top["biomass_factor"] / top["value"] * mean * 1460
+    assert f == pytest.approx(total, rel=1e-6)

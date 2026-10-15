@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
-from lib.environments.ecosystem_env.impacts import interp_impact
+from lib.environments.ecosystem_env.impacts import extract_impact_table, interp_impact
 
 # Relative harvest cap, imported rather than repeated so the two engines
 # cannot drift apart again (Fix 2 / Section 73: an absolute epsilon in the
@@ -191,14 +191,25 @@ class TensorEcosystem:
             self.m1_light = tensor(light)[:, :, None]
             self.m1_light_on = any(exposure[f].get("light") is not None
                                    for f in exposure)
-        # Impact pressure (section 161): every DM's tables for the active
-        # impacts, from the reference's ``dm_impact_tables``. A field
-        # belongs to a world, so ``impact_fields`` turns the fields into
-        # per-cell rates once per world on the host and the tick only
-        # multiplies. No table keeps the tick bit-identical.
+        # Impact pressure (section 161). Mortality tables for every group
+        # (non decision makers too: bottom trawling on the benthos), cost
+        # tables for the DMs only (the reference's ``dm_impact_tables``;
+        # a group without actions has no cost to scale). A field belongs
+        # to a world, so ``impact_fields`` turns the fields into per-cell
+        # rates once per world on the host and the tick only multiplies.
+        # No table keeps the tick bit-identical.
+        self.impact_loss_tables = []
+        for fid in self.ids:
+            entries = []
+            for impact_id, block in (env.fgs[fid].params.get("impact") or {}).items():
+                table = extract_impact_table(block)
+                if table is not None:
+                    entries.append((impact_id, table))
+            self.impact_loss_tables.append(entries)
         self.impact_tables = [list(entries) for entries in env.dm_impact_tables]
         self.impact_ids = tuple(sorted(
-            {impact_id for entries in self.impact_tables for impact_id, _ in entries}))
+            {impact_id for entries in self.impact_loss_tables + self.impact_tables
+             for impact_id, _ in entries}))
         self.has_impacts = bool(self.impact_ids)
         # Observable impacts (section 161): raw field values read into the
         # compact layout after the observed groups, in the own cell and in
@@ -281,28 +292,29 @@ class TensorEcosystem:
                 self.tensor(h).flatten(2))
 
     def impact_fields(self, maps):
-        """Per-world impact loss rate and cost surcharge, two [N, D, C].
+        """Per-world impact loss rate [N, G, C] and cost surcharge [N, D, C].
 
-        ``maps`` holds one ``{impact_id: (H, W) field}`` per world. Each DM
-        sums, over the impacts it is affected by, its tables'
+        ``maps`` holds one ``{impact_id: (H, W) field}`` per world. Each
+        group sums, over the impacts it is affected by, its tables'
         ``biomass_factor`` (the fraction of standing biomass removed per
-        tick, ``impacts.compute_impact_mortality``) and ``energy_factor``
-        (the extra multiple of every action cost,
+        tick, ``impacts.compute_impact_mortality``); each DM also sums the
+        ``energy_factor`` (the extra multiple of every action cost,
         ``impacts.impact_energy_cost_factor``). A missing field is skipped,
         as there. Host side, once per world, never inside a tick.
         """
-        loss = np.zeros((len(maps), self.D, self.C), dtype=np.float32)
-        cost = np.zeros_like(loss)
+        loss = np.zeros((len(maps), self.G, self.C), dtype=np.float32)
+        cost = np.zeros((len(maps), self.D, self.C), dtype=np.float32)
         for w, fields in enumerate(maps):
-            for d, entries in enumerate(self.impact_tables):
-                for impact_id, table in entries:
-                    field = fields.get(impact_id)
-                    if field is None:
-                        continue
-                    bf, ef = interp_impact(
-                        table, np.asarray(field, dtype=np.float32).reshape(-1))
-                    loss[w, d] += bf
-                    cost[w, d] += ef
+            for rows, out, column in ((self.impact_loss_tables, loss, 0),
+                                      (self.impact_tables, cost, 1)):
+                for i, entries in enumerate(rows):
+                    for impact_id, table in entries:
+                        field = fields.get(impact_id)
+                        if field is None:
+                            continue
+                        factors = interp_impact(
+                            table, np.asarray(field, dtype=np.float32).reshape(-1))
+                        out[w, i] += factors[column]
         return self.tensor(loss), self.tensor(cost)
 
     def impact_observations(self, maps):
@@ -342,14 +354,12 @@ class TensorEcosystem:
         """Direct impact mortality, before predation (Method.pdf 1-6).
 
         Mirrors ``impacts.apply_impact_mortality``: the loss is
-        ``B * loss_rate`` per DM cell, the reserve shrinks with the
-        biomass, and the cell cannot go below zero.
+        ``B * loss_rate`` per cell of every group ([E, G, C]), the reserve
+        shrinks with the biomass, and the cell cannot go below zero.
         """
-        b, r = biomass[:, self.dm_index], reserve[:, self.dm_index]
-        loss = b * loss_rate
-        reduction = torch.where(loss > 0, ((b - loss) / (b + 1e-9)).clamp(0.0, 1.0), 1.0)
-        return (biomass.index_copy(1, self.dm_index, (b - loss).clamp_min(0)),
-                reserve.index_copy(1, self.dm_index, r * reduction))
+        loss = biomass * loss_rate
+        reduction = torch.where(loss > 0, ((biomass - loss) / (biomass + 1e-9)).clamp(0.0, 1.0), 1.0)
+        return (biomass - loss).clamp_min(0), reserve * reduction
 
     def energy_level(self, biomass, reserve):
         safe_b = torch.where(biomass > 1e-9, biomass, 1.0)

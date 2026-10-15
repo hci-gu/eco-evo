@@ -128,12 +128,13 @@ def compute_impact_mortality(env, fg):
 
 
 def apply_impact_mortality(env):
-    """Method.pdf steg 1-6: apply m_X^Impact before predation. Only
-    decision-maker FGs carry impact tables in the current model."""
+    """Method.pdf steg 1-6: apply m_X^Impact before predation, to every FG
+    with an impact table - decision makers and, since section 161, non
+    decision makers too (bottom trawling on the benthos). Only the
+    biomass factor acts on a non decision maker: it has no actions, so
+    the energy factor (a surcharge on action costs) has nothing to scale."""
     for fg_id in env.ordered_fg_ids:
         fg = env.fgs[fg_id]
-        if not fg.is_decision_maker:
-            continue
         total_mortality_impact = compute_impact_mortality(env, fg)
         if total_mortality_impact is None:
             continue

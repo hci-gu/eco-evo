@@ -669,14 +669,17 @@ FIELD_HELP = {
         "Impact Affects: checked = the row group is affected by the "
         "column impact (fishing, noise, ...). The effect itself is "
         "defined by the pair's Impact Table; unchecked, or an empty "
-        "table, means no effect. Only decision makers carry impacts."
+        "table, means no effect. Every group can carry impacts; a non "
+        "decision maker (e.g. bottom trawling on the benthos) feels only "
+        "the biomass factor."
     ),
     "matrix:impact_table": (
         "Impact Table: how strongly the impact value in a cell affects "
         "the row group. Rows of (value, biomass factor, energy factor), "
         "linearly interpolated and clamped at the ends. Biomass factor "
         "= fraction of the cell's biomass lost per tick; energy factor "
-        "= extra cost added to all action costs. Click to edit."
+        "= extra cost added to all action costs (decision makers only). "
+        "Click to edit."
     ),
 
     # ------------------------------------------------------------------

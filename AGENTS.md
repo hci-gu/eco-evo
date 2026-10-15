@@ -89,7 +89,9 @@ fabricates mass.
   today's world: `bottom_trawling` (gadoids, F 0.12/yr) and
   `pelagic_trawling` (pelagic fish, F 0.10/yr), the `maps/` effort maps
   as baseline and inference maps, linear library tables calibrated to
-  the maps' mean effort.
+  the maps' mean effort. Impact mortality acts on every group with a
+  table, non decision makers too (biomass factor only): bottom trawling
+  removes benthos at d x SAR (d 0.10, SAR 0.75 per MW-h/km2), ~0.2/yr.
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
   is the attack rate a. A pair may override it (`<pred>_preys_on_<prey>:
   max_intake_rate`) to set the half-saturation 1/(a h) without moving the

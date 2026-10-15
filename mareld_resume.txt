@@ -14901,3 +14901,85 @@ remain open exactly as described in 71.9 / 71.11.
     under-production; whether to raise the gadoid start biomass toward
     the IBTS level (~2.7 t/km2). maps/*.npz are untracked like
     vindparker.npz; tools/make_fishing_maps.py rebuilds them.
+161.11 Impact Editor baseline map with drag and drop (follow-up): the
+    row is now a drop / click-to-browse zone with status text (file,
+    shape, min, max), a thumbnail and Clear, like the Inference tab's
+    rows (tkinterdnd2 when the root supports it). The brace-quoted DnD
+    path parsing and the thumbnail rendering are shared helpers
+    (_parse_dnd_paths, _thumbnail_photo). tests/test_fgconfig_baseline_map.py
+    adds a drop with a space in the path and the parser. Full suite
+    1119 passed / 12 skipped; 1-gen train.py smoke OK.
+161.12 Bottom trawling on the benthos. Literature (research_notes/
+    Bottentralning och bentos/, reports/Bottentralning och bentos.md;
+    Swedish file names): depletion per pass d = 0.06 for otter trawls
+    (Hiddink et al. 2017), 0.10 for Nephrops/shrimp otter trawls OT_CRU
+    (Rijnsdorp et al. 2020), 0.115 on mud (Pitcher et al. 2022); the
+    shrimp ground gear digs in on soft bottom (Eigaard et al. 2016).
+    Swept area: EMODnet HA has the ICES WGSFD SAR layers fishingsurface /
+    fishingsubsurface; grid mean surface SAR 2.74/yr (2021-2024, all
+    gears); where otter trawls dominate 0.74 surface SAR per MW-h/km2
+    (2019-2024), Eigaard gear widths 0.87-1.14 for 300-500 kW. Chosen:
+    d 0.10 with surface SAR, k 0.75, slope d k / 1460 = 5.137e-5 per tick
+    per MW-h/km2/yr (library benthic_community_impacted_by_bottom_trawling,
+    row 100 -> 0.005136986). Recovery: literature r 0.82/yr (Hiddink),
+    0.68 on mud (Pitcher), the model's hand-set benthos r 1.46 (section
+    136, user's values, untouched) halves the depletion for the same
+    SAR; the right model r is a joint calibration with gadoid predation.
+    Engine: impact mortality now acts on non decision makers too
+    (impacts.apply_impact_mortality no longer skips them; GPU
+    TensorEcosystem.impact_loss_tables per group, impact_fields returns
+    loss [N, G, C] and cost [N, D, C], impact_mortality on all groups,
+    RolloutRunner/trainer buffers resized). Only the biomass factor acts
+    on an NDM. FG editor: Impact Affects / Impact Tables matrices list
+    every group, with a note on the energy factor; field_help updated.
+    Tests: tests/test_gpu_impacts.py (44 with CUDA: parity with a
+    trawled logistic group, per-group loss shapes, a trawled NDM falls),
+    tests/test_fgconfig_impact_matrix.py (benthos row read from the
+    library). Full suite 1130 passed / 12 skipped; 1-gen train_gpu and
+    train.py on mareld2.yaml OK.
+    Check, frozen fix55 policies, probe world, 2 years: benthos impact
+    loss 0.201 / 0.189 per year; benthos 16000 -> 17442 -> 16501 t with
+    trawling against 20189 -> 20659 without (-20 %); gadoids and herring
+    unchanged to within 1 %.
+161.13 Benthos r fixed at the literature value (user request): growth_rate
+    0.001 (1.46 /yr) -> 0.000561644 = 0.82 / 1460 (Hiddink et al. 2017
+    community-biomass recovery, 5-95 % 0.42-1.53; Pitcher et al. 2022
+    0.68 on mud). Still hand-set as in section 136 (no r_max; deriving it
+    would add the gadoid M2 0.0048 /yr, +0.6 %); K 10 t/km2 untouched.
+    Frozen fix55 policies, probe world, 3 years: benthos 16000 -> 13527
+    -> 10470 -> 7126 t with trawling (impact loss 0.20 / 0.18 / 0.17),
+    16000 -> 16031 -> 14161 -> 10718 t without; gadoids 2500 -> ~5100 t
+    in both - the benthos decline without trawling is the gadoid
+    overshoot eating it (no density-dependent gadoid loss yet). The
+    policies were trained on r 1.46. Full suite 1130 passed / 12
+    skipped; 1-gen train.py smoke OK.
+161.14 Fishing F split by gear map (user request). research_notes/
+    Fiskeridodlighet i Skagerrak idag/catch_by_gear.md: the gear code
+    decides the map (OTB/OTT incl. OTB_SPF -> bottom-trawl map, OTM/PTM/
+    PS -> pelagic map; Danish sprat fishing is logged OTM_SPF). Gadoids
+    98 % bottom / 2 % pelagic (range 0.1-4.5 %; FDI 3.a.20 2022-24:
+    pelagic gears take 0 % of cod, haddock, saithe, hake and 0.7 % of
+    whiting, plus industrial whiting bycatch; stock level 3.4-4.2 %);
+    seines and gillnets (~15 % of local gadoid F) stay on the bottom map.
+    Pelagic fish 98 % pelagic / 2 % bottom (range 0.2-11 %; herring
+    bycatch in Nephrops and fish trawls). Library: q = share x F / 1460 /
+    map mean - gadoids_impacted_by_bottom_trawling 2.6723e-5 (row 100 ->
+    0.00267232003), gadoids_impacted_by_pelagic_trawling 6.5853e-5 (new,
+    row 10 -> 0.000658532007), pelagic_fish_impacted_by_pelagic_trawling
+    2.6890e-3 (row 10 -> 0.0268900569), pelagic_fish_impacted_by_bottom_
+    trawling 4.545e-7 (new, row 100 -> 4.54476196e-05); totals at the
+    maps' mean effort still 0.12 and 0.10 (tests/test_fishing_maps.py).
+    Frozen fix55, 1 year: realised F gadoids 0.122, pelagic fish 0.088,
+    benthos impact loss 0.199 - unchanged. Full suite passes; 1-gen
+    train.py smoke OK.
+161.15 Viewer: NDM loss line. The live pygame viewer (train.py,
+    train_gpu.py --visual, inference.py --visual) drew the loss
+    breakdown only for decision makers. An NDM panel now shows
+    "pr/im = x/y%" on its third header line (where a DM has mv/rs/et):
+    the share of its biomass loss eaten by predators and removed by
+    impacts (bottom trawling on the benthos). NDMs have no M1 or
+    starvation, so the two add up to 100 %. The breakdown was already
+    pushed for every FG by the probe and inference. tests/
+    test_viz_ndm_losses.py (the line is rendered from the breakdown, no
+    DM lines on an NDM panel, nothing without a breakdown). Full suite
+    1137 passed / 12 skipped.

@@ -97,8 +97,8 @@ class TensorARSTrainer:
         self.world_biomass = torch.zeros((self.worlds, m.G, m.C), device=m.device)
         self.world_light_start = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
         if m.has_impacts:
-            self.world_impact_loss = torch.zeros((self.worlds, m.D, m.C), device=m.device)
-            self.world_impact_cost = torch.zeros_like(self.world_impact_loss)
+            self.world_impact_loss = torch.zeros((self.worlds, m.G, m.C), device=m.device)
+            self.world_impact_cost = torch.zeros((self.worlds, m.D, m.C), device=m.device)
         if m.n_obs_imp:
             self.world_impact_obs = torch.zeros((self.worlds, m.n_obs_imp, m.C), device=m.device)
         if m.has_impacts and not m.n_obs_imp:
