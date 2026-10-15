@@ -422,6 +422,8 @@ class _NullViz:
     def get_neval_ticks_override(self, *a, **kw): return None
     def get_neval_ticks(self, *a, **kw): return None
     def consume_neval_ticks_change(self, *a, **kw): return False
+    def set_eval_interval_default(self, *a, **kw): pass
+    def get_eval_interval_override(self, *a, **kw): return None
     def set_spawn_templates(self, *a, **kw): pass
     def set_spawn_defaults(self, *a, **kw): pass
     def set_save_dir(self, *a, **kw): pass
@@ -723,6 +725,20 @@ class LiveVisualizer:
         # Lås för n_eval_ticks-slidern (default låst).
         self._neval_locked: bool = True
         self._neval_lock_rect: Optional[tuple] = None
+        # Evaluation probe interval: how many training updates between
+        # two survival progress evaluations (--eval-every). Training only,
+        # row 4 of the status bar, linear 1-50, locked by default like
+        # the other training sliders. The default is the CLI value as
+        # given (it may lie outside the range; the knob is then clamped);
+        # the progress evaluator reads the override before each update.
+        self._evalint_min: int = 1
+        self._evalint_max: int = 50
+        self._evalint_default: int = 1
+        self._evalint_override: Optional[int] = None
+        self._evalint_track_rect: Optional[tuple] = None
+        self._dragging_evalint: bool = False
+        self._evalint_locked: bool = True
+        self._evalint_lock_rect: Optional[tuple] = None
         # Uppspelnings-scrub-slider (timeline). Placeras i playback-baren
         # mellan speed-knapparna och frame-indikatorn. ``_playback_track_rect``
         # sätts varje frame av ``_draw_playback_bar`` (None när slidern
@@ -847,10 +863,11 @@ class LiveVisualizer:
         plot_h = heatmap_block_h
         # Status-baren rymmer textraden och två slider-rader. I training är
         # rad 3 n_eval_ticks; i inference är rad 3 biomass display scale.
+        # In training a fourth row holds the evaluation probe interval.
         if str(mode).lower().startswith("infer"):
             status_h = 62
         else:
-            status_h = 62
+            status_h = 80
         log_h = 0
         # Playback bar (under heatmaps) for replaying the most recent
         # probe/inference rollout. Holds the buttons << / >> / play / pause
@@ -1441,6 +1458,42 @@ class LiveVisualizer:
         v = math.exp(math.log(lo) + frac * (math.log(hi) - math.log(lo)))
         return int(round(max(lo, min(hi, v))))
 
+    # ---- Evaluation probe interval slider (--eval-every) -------------
+    def set_eval_interval_default(self, every: int) -> None:
+        """Register the CLI --eval-every as the slider's default."""
+        if not self.enabled:
+            return
+        try:
+            self._evalint_default = max(1, int(every))
+        except (TypeError, ValueError):
+            return
+
+    def get_eval_interval_override(self) -> Optional[int]:
+        """The interval chosen on the slider, or None (use the CLI value)."""
+        return self._evalint_override
+
+    def get_eval_interval(self) -> int:
+        """Effective interval: the override if set, else the default."""
+        if self._evalint_override is not None:
+            return int(self._evalint_override)
+        return int(self._evalint_default)
+
+    def _evalint_pos_from_value(self, v: int) -> float:
+        lo, hi = float(self._evalint_min), float(self._evalint_max)
+        return (max(lo, min(hi, float(v))) - lo) / (hi - lo)
+
+    def _evalint_value_from_pos(self, frac: float) -> int:
+        lo, hi = float(self._evalint_min), float(self._evalint_max)
+        frac = max(0.0, min(1.0, float(frac)))
+        return int(round(lo + frac * (hi - lo)))
+
+    def _evalint_value_from_x(self, mx: int) -> Optional[int]:
+        rect = self._evalint_track_rect
+        if rect is None:
+            return None
+        rx, _ry, rw, _rh = rect
+        return self._evalint_value_from_pos((mx - (rx + 2)) / float(max(1, rw - 4)))
+
     # ---- Rollout recording / playback --------------------------------
     def begin_rollout_recording(self) -> None:
         """Starta inspelning av en ny probe/inference-rollout.
@@ -1689,6 +1742,11 @@ class LiveVisualizer:
                     if v is not None:
                         self._neval_override = int(v)
                         interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_evalint:
+                    v = self._evalint_value_from_x(event.pos[0])
+                    if v is not None:
+                        self._evalint_override = int(v)
+                        interacted = True
                 elif event.type == pg.MOUSEMOTION and self._dragging_biomass_scale:
                     v = self._biomass_scale_value_from_x(event.pos[0])
                     if v is not None:
@@ -1733,6 +1791,10 @@ class LiveVisualizer:
                         and self._dragging_neval:
                     self._dragging_neval = False
                     self._neval_dirty = True
+                    interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_evalint:
+                    self._dragging_evalint = False
                     interacted = True
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_biomass_scale:
@@ -1830,6 +1892,11 @@ class LiveVisualizer:
                         if v is not None:
                             self._neval_override = int(v)
                     elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_evalint):
+                        v = self._evalint_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._evalint_override = int(v)
+                    elif (event.type == pg.MOUSEMOTION
                           and self._dragging_biomass_scale):
                         v = self._biomass_scale_value_from_x(event.pos[0])
                         if v is not None:
@@ -1864,6 +1931,9 @@ class LiveVisualizer:
                           and self._dragging_neval):
                         self._dragging_neval = False
                         self._neval_dirty = True
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_evalint):
+                        self._dragging_evalint = False
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_biomass_scale):
                         self._dragging_biomass_scale = False
@@ -1952,6 +2022,11 @@ class LiveVisualizer:
                         if v is not None:
                             self._neval_override = int(v)
                     elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_evalint):
+                        v = self._evalint_value_from_x(event.pos[0])
+                        if v is not None:
+                            self._evalint_override = int(v)
+                    elif (event.type == pg.MOUSEMOTION
                           and self._dragging_biomass_scale):
                         v = self._biomass_scale_value_from_x(event.pos[0])
                         if v is not None:
@@ -2002,6 +2077,9 @@ class LiveVisualizer:
                         # i inference.py reagerar bara om en relevant
                         # slider är dirty, så detta är ofarligt.
                         pass
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_evalint):
+                        self._dragging_evalint = False
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_biomass_scale):
                         self._dragging_biomass_scale = False
@@ -2324,6 +2402,9 @@ class LiveVisualizer:
         if self._hit_rect(self._neval_lock_rect, pos):
             self._neval_locked = not self._neval_locked
             return
+        if self._hit_rect(self._evalint_lock_rect, pos):
+            self._evalint_locked = not self._evalint_locked
+            return
         # Heatmap normalisation button: sits in the status bar, so it must
         # be claimed before anything routes the click on to a heatmap.
         if self._hit_rect(self._hm_norm_button_rect, pos):
@@ -2348,6 +2429,15 @@ class LiveVisualizer:
             if v is not None:
                 self._neval_override = int(v)
                 self._dragging_neval = True
+            return
+        # Evaluation probe interval slider (row 4, training only).
+        if self._hit_rect(self._evalint_track_rect, pos):
+            if self._evalint_locked:
+                return
+            v = self._evalint_value_from_x(mx)
+            if v is not None:
+                self._evalint_override = int(v)
+                self._dragging_evalint = True
             return
         # Klick på etiketten "Biomass scale = …" släpper override:en och
         # återgår till autoskalning (kollas före slider-tracken).
@@ -3250,7 +3340,10 @@ class LiveVisualizer:
             f"Perturbation ticks{marker2_preview} = {cur2_preview}")[0]
         _bio_label = self._biomass_scale_label()
         _bio_label_w = self._font.size(_bio_label)[0] if _is_inference else 0
-        _label_w = max(lbl_surf.get_width(), _lbl2_preview_w, _bio_label_w)
+        _lbl4_preview_w = (0 if _is_inference
+                           else self._font.size(self._evalint_label())[0])
+        _label_w = max(lbl_surf.get_width(), _lbl2_preview_w, _bio_label_w,
+                       _lbl4_preview_w)
         # Track-rect: börjar efter label (+ liten gutter), slutar före
         # hi-label (+ gutter). Mappar mot fönsterbredden.
         try:
@@ -3343,6 +3436,8 @@ class LiveVisualizer:
         if _is_inference:
             self._neval_track_rect = None
             self._neval_lock_rect = None
+            self._evalint_track_rect = None
+            self._evalint_lock_rect = None
             row3_y = y + 40
             row3_h = 18
             bio_lbl = self._font.render(
@@ -3410,7 +3505,7 @@ class LiveVisualizer:
         # Använd samma gemensamma label-bredd som rad 2 så att
         # track-startpositionen (och därmed sliderlängden) blir
         # identisk för Probe- och Perturbation-ticks-slidrarna.
-        _label2_w = max(lbl2_surf.get_width(), lbl_surf.get_width())
+        _label2_w = max(lbl2_surf.get_width(), _label_w)
         _lo2_w = max(lo2_surf.get_width(), lo_surf.get_width())
         track2_x = (x + 6 + _label2_w + 12
                     + _lo2_w + 6)
@@ -3457,6 +3552,44 @@ class LiveVisualizer:
         lock2_y = row3_y + (row3_h - lock_size) // 2
         self._neval_lock_rect = self._draw_lock_icon(
             lock2_x, lock2_y, lock_size, self._neval_locked)
+
+        # ---- Evaluation probe interval (row 4, training only) --------
+        # Same track geometry as row 3; linear 1-50 updates.
+        lbl4_surf = self._font.render(self._evalint_label(), True, (210, 210, 220))
+        row4_y = y + 58
+        row4_h = 18
+        self._screen.blit(lbl4_surf, (x + 6, row4_y + 2))
+        lo4_surf = self._font.render(str(self._evalint_min), True, (150, 150, 160))
+        hi4_surf = self._font.render(str(self._evalint_max), True, (150, 150, 160))
+        track4_y = row4_y + (row4_h - 6) // 2
+        track4_h = 6
+        self._screen.blit(lo4_surf, (track2_x - 6 - lo4_surf.get_width(), row4_y + 2))
+        self._screen.blit(
+            hi4_surf,
+            (track2_x + track2_w + lock_gutter + lock_size + 6, row4_y + 2))
+        pg.draw.rect(self._screen, (60, 60, 70),
+                     (track2_x, track4_y, track2_w, track4_h))
+        pg.draw.rect(self._screen, (110, 110, 125),
+                     (track2_x, track4_y, track2_w, track4_h), 1)
+        dx4 = int(track2_x + self._evalint_pos_from_value(self._evalint_default)
+                  * (track2_w - 1))
+        pg.draw.line(self._screen, (140, 140, 150),
+                     (dx4, track4_y - 2), (dx4, track4_y + track4_h + 2), 1)
+        hx4 = int(track2_x + self._evalint_pos_from_value(self.get_eval_interval())
+                  * (track2_w - 1))
+        hcol4 = ((220, 220, 90) if self._evalint_override is not None
+                 else (200, 200, 210))
+        pg.draw.circle(self._screen, hcol4, (hx4, track4_y + track4_h // 2), 6)
+        pg.draw.circle(self._screen, (40, 40, 50), (hx4, track4_y + track4_h // 2), 6, 1)
+        self._evalint_track_rect = (track2_x - 2, track4_y - 6,
+                                    track2_w + 4, track4_h + 12)
+        self._evalint_lock_rect = self._draw_lock_icon(
+            lock2_x, row4_y + (row4_h - lock_size) // 2, lock_size,
+            self._evalint_locked)
+
+    def _evalint_label(self) -> str:
+        marker = "*" if self._evalint_override is not None else ""
+        return f"Evaluation probe interval{marker} = {self.get_eval_interval()}"
 
     def _draw_heatmaps(self) -> None:
         ox, oy = self._heatmap_origin

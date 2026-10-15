@@ -166,3 +166,48 @@ def test_resume_rejects_incomparable_evaluation_settings(tmp_path):
     changed = TrainingProgress("gpu", 2, 5, 0.5, 3.0, 100, 1.0, tmp_path)
     with pytest.raises(ValueError, match="settings changed"):
         changed._start(trainer, 0, tmp_path, True)
+
+
+def _progress_args(**overrides):
+    args = SimpleNamespace(eval_ticks=None, biomass_bounds=(0.3, 3.0),
+                           eval_seed=20260530, eval_temperature=1.0)
+    for key, value in overrides.items():
+        setattr(args, key, value)
+    return args
+
+
+@pytest.mark.parametrize("rollout", [{"n_eval_ticks": 1460}, {"ticks": 1460}])
+def test_eval_ticks_follow_the_training_rollout_length(rollout):
+    """train.py stores --n_eval_ticks, train_gpu.py the dest "ticks"."""
+    from lib.runners.training_progress import validate_progress_arguments
+    args = _progress_args(**rollout)
+    validate_progress_arguments(None, args)
+    assert args.eval_ticks == 1460 and args.eval_ticks_default
+
+
+def test_an_explicit_eval_ticks_wins():
+    from lib.runners.training_progress import validate_progress_arguments
+    args = _progress_args(n_eval_ticks=1460, eval_ticks=500)
+    validate_progress_arguments(None, args)
+    assert args.eval_ticks == 500 and not args.eval_ticks_default
+
+
+def test_gpu_parser_resolves_eval_ticks_from_n_eval_ticks():
+    from lib.gpu.cli import parse_training_args
+    from lib.runners.training_progress import validate_progress_arguments
+    from train_gpu import build_parser
+    parser = build_parser()
+    args = parse_training_args(parser, ["--project", "mareld2.yaml", "--n_eval_ticks", "1460"])
+    validate_progress_arguments(parser, args)
+    assert (args.ticks, args.eval_ticks) == (1460, 1460)
+
+
+def test_resume_keeps_the_runs_eval_ticks_unless_one_is_given(tmp_path):
+    trainer = build_trainer("gpu")
+    TrainingProgress("gpu", 2, 5, 0.3, 3.0, 100, 1.0, tmp_path)._start(trainer, 0, tmp_path, False)
+    followed = TrainingProgress("gpu", 2, 9, 0.3, 3.0, 100, 1.0, tmp_path, ticks_default=True)
+    followed._start(trainer, 0, tmp_path, True)
+    assert followed.ticks == 5 and followed.config["ticks"] == 5
+    explicit = TrainingProgress("gpu", 2, 9, 0.3, 3.0, 100, 1.0, tmp_path)
+    with pytest.raises(ValueError, match="settings changed"):
+        explicit._start(trainer, 0, tmp_path, True)

@@ -104,8 +104,11 @@ fabricates mass.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
-  (`interference: 0` = pure Holling; `gadoids: 1.0`, `pelagic_fish: 0.7` in the
-  library, section 86). It is what removes the 2-cell vertical bands.
+  (`interference: 0` = pure Holling; `gadoids: 1.0` in the library,
+  section 86, where it removed the 2-cell vertical bands; `pelagic_fish:
+  0.05` since section 162 - 0.7 had no herring data behind it and cut
+  winter intake by two thirds). Herring -> zooplankton is Type II
+  (`functional_response: 2`) with `visibility_floor` 0.5 (section 162).
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.
   `min_split_biomass` is one indivisible unit (porpoises: one animal):
   below it a cell moves whole (argmax), and from it no spatial fraction

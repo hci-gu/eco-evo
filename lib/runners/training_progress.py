@@ -22,10 +22,11 @@ from lib.environments.ecosystem_env.population_change import (
 
 def add_progress_arguments(parser):
     from lib.gpu.cli import positive_int
-    parser.add_argument("--eval-every", type=positive_int, default=20,
-                        help="Survival progress: evaluate every N training updates (default: 20)")
-    parser.add_argument("--eval-ticks", type=positive_int, default=1000,
-                        help="Survival progress: inference tick cap (default: 1000)")
+    parser.add_argument("--eval-every", type=positive_int, default=1,
+                        help="Survival progress: evaluate every N training updates (default: 1)")
+    parser.add_argument("--eval-ticks", type=positive_int, default=None,
+                        help="Survival progress: inference tick cap (default: the "
+                             "training rollout length, --n_eval_ticks)")
     parser.add_argument("--biomass-bounds", type=float, nargs=2, default=(0.3, 3.0),
                         metavar=("LOWER", "UPPER"), help="Survival bounds as multiples of initial biomass")
     parser.add_argument("--eval-seed", type=int, default=20260530)
@@ -34,6 +35,15 @@ def add_progress_arguments(parser):
 
 
 def validate_progress_arguments(parser, args):
+    # Without --eval-ticks the cap follows the training rollout length
+    # (train.py --n_eval_ticks, train_gpu.py's dest "ticks"), so the
+    # progress evaluation covers the same span - a whole year with
+    # 1460-tick rollouts - and not a fixed 1000 ticks. A resumed run keeps
+    # the cap its history was written with (TrainingProgress._start).
+    args.eval_ticks_default = args.eval_ticks is None
+    if args.eval_ticks_default:
+        args.eval_ticks = int(getattr(args, "n_eval_ticks", None)
+                              or getattr(args, "ticks", None) or 1000)
     lower, upper = args.biomass_bounds
     if not (math.isfinite(lower) and math.isfinite(upper) and 0 < lower <= 1 <= upper and lower < upper):
         parser.error("--biomass-bounds must be finite and satisfy 0 < LOWER <= 1 <= UPPER, LOWER < UPPER")
@@ -202,8 +212,11 @@ def install_current_policies(env, trainer, backend):
 
 class TrainingProgress:
     def __init__(self, backend, every, ticks, lower, upper, seed, temperature, directory=None,
-                 *, visualizer=None):
+                 *, visualizer=None, ticks_default=False):
         self.backend, self.every, self.ticks = backend, every, ticks
+        # True when ``ticks`` only followed the rollout length (no
+        # --eval-ticks): a resumed history then keeps its own cap.
+        self.ticks_default = ticks_default
         self.lower, self.upper, self.seed, self.temperature = lower, upper, seed, temperature
         self.directory = Path(directory) if directory is not None else None
         self.config = None
@@ -222,6 +235,12 @@ class TrainingProgress:
         if config_path.exists():
             if not resume:
                 raise ValueError(f"Progress output already exists in {self.directory}; use --resume or a new --plot-dir")
+            stored = json.loads(config_path.read_text())
+            if self.ticks_default and stored.get("ticks") not in (None, self.ticks):
+                print(f"[progress] keeping this run's evaluation cap of {stored['ticks']} ticks "
+                      f"(pass --eval-ticks to change it with a new --plot-dir)", flush=True)
+                self.ticks = int(stored["ticks"])
+                self.config["ticks"] = self.ticks
             if comparable_config(json.loads(config_path.read_text())) != comparable_config(self.config):
                 raise ValueError("Evaluation settings changed; use a new --plot-dir to keep the graph comparable")
             if self.history.exists():
@@ -234,6 +253,12 @@ class TrainingProgress:
         with evaluation_randomness(self.seed):
             self.template = build_inference_env(ecology, self.seed)
         config_path.write_text(json.dumps(self.config, indent=2) + "\n")
+
+    def interval(self):
+        """Updates between evaluations: the viewer's slider, else --eval-every."""
+        getter = getattr(self.visualizer, "get_eval_interval_override", None)
+        override = getter() if callable(getter) else None
+        return int(override) if override is not None else int(self.every)
 
     @torch.no_grad()
     def evaluate(self, trainer):
@@ -250,7 +275,10 @@ class TrainingProgress:
         first = self.config is None
         if first:
             self._start(trainer, step, run_dir, args.resume)
-        if not first and step % self.every:
+        # Every multiple of the interval (a resume re-evaluates its first
+        # step, then returns to the grid). The live viewer's "Evaluation
+        # probe interval" slider can change the interval between updates.
+        if not first and step % self.interval():
             return
         number = len(self.records) + 1
         print(f"[progress] evaluation={number}, step={step}: evaluating up to {self.ticks} inference ticks on CPU...", flush=True)
@@ -297,6 +325,8 @@ def make_visual_progress(backend, args, viz):
     if viz is None or not viz.enabled:
         return None
     lower, upper = args.biomass_bounds
+    viz.set_eval_interval_default(args.eval_every)
     return LiveTrainingProgress(backend, args.eval_every, args.eval_ticks, lower, upper,
                                 args.eval_seed, args.eval_temperature, args.plot_dir,
-                                visualizer=viz)
+                                visualizer=viz,
+                                ticks_default=getattr(args, "eval_ticks_default", False))

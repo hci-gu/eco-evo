@@ -14983,3 +14983,116 @@ remain open exactly as described in 71.9 / 71.11.
     test_viz_ndm_losses.py (the line is rendered from the breakdown, no
     DM lines on an NDM panel, nothing without a breakdown). Full suite
     1137 passed / 12 skipped.
+
+162 HERRING WINTER FEEDING: INTERFERENCE, REFUGE AND RESPONSE TYPE (2026-10-15)
+================================================================
+
+162.1 Why herring underproduce (frozen fix57 copy 2026-10-15 15:37,
+    probe world with today's fishing maps; tools/probes/herring_losses.py,
+    herring_monthly.py, fg_year_budget.py). Year 1 from 12000 t: gross
+    production 0.94 /yr against the budget 1.54 (r_max 0.648 + M1 0.58 +
+    M2 0.31); losses M1 0.58, gadoids 0.39 (budget 0.30), fishing 0.07,
+    porpoises + starvation 0.03; net -0.13. Apr-Aug production 1.36-1.55
+    /yr (88-100 % of budget, s 0.78-0.86 ~ s* 0.857); Oct-Feb 0-0.95 with
+    intake below cost Nov-Jan (6-18 vs 23-35 MJ/t/day), s 0.71 (Sep) ->
+    0.26 (Jan): ~90 % of the shortfall is the winter half. From year 2
+    the gadoid take rises 0.39 -> 0.68 -> 1.00 (gadoids 2800 -> 4500 t,
+    per-gadoid take about constant).
+162.2 Literature (research_notes/Sillens vinterfoda/, Swedish dir name):
+    winter_food_and_feeding.md - SHARK A17 Dec-Feb mesozooplankton
+    0.7-1.7 g WW/m2 (0-25 m), ~1.5-4.4 whole column vs model 1.5-3.2:
+    realistic (the Apr-May peak 19-36 vs model 10.5-12.5 is 2-3x low);
+    herring winter ration 0.4-1.0 % BW/day (Lohmeyer 1977, Bernreuther
+    2007) vs model 0.18-0.30 Dec-Jan; winter cost not above the Rudstam
+    model; krill possibly missing (NS Ecopath 0.8-2.4 g WW/m2, no
+    Skagerrak value). herring_functional_response.md - every herring fit
+    is Type II or linear, no sigmoid response reported for any clupeid;
+    Type III came only from the "one prey -> Type III" rule (state.py).
+    herring_interference.md - no behavioural interference measured in
+    herring; intake falls 0-5 % per doubling (depletion included), the
+    model's w 0.7 gave 40 % (winter) / 11 % (summer); w 0.7 was set in 86
+    against the band artefact and only {0, w/3, w} were tried.
+    zooplankton_refuge.md - shelf copepods mostly do not migrate, a
+    non-feeding copepod is still visible, daytime accessible share
+    0.65-0.9 (summer) / 0.5-0.8 (winter) vs ~0.3 in the model; floor 0.2
+    fits a deep basin, 0.4-0.6 a 100 m bank.
+162.3 Mechanism (checked in code and a day/night probe): Dec intake
+    computed from holling_a_eff + visible_prey_biomass = 0.15 % BW/day vs
+    0.18 measured. Zooplankton rest 81-88 % all year (94-96 % of daylight
+    ticks, 60-81 % of dark ticks in Oct-Feb; likely energetic - feeding
+    costs 4x resting, section 135), so visible ~0.45 t/km2 in Dec; Type
+    III squares it; I = 0.7 x 3.4 = 2.4 dominates the denominator; light
+    0.66; herring eat 60-65 % of daylight ticks and ~4 % of dark ticks.
+    The interference term counts resting herring too (predation.py:38;
+    not changed). Counterfactual Dec intake: no hiding x7.9, no
+    interference x3.1, Type II x2.1, dark_ratio 0.3 x1.16.
+162.4 In-memory variants (frozen fix57, 2 yr; herring_variants.py in the
+    session scratchpad): Type II alone worse (prod 0.85; summer intake
+    falls more than winter rises at I 2.4); w 0.05 -> prod 1.16, net
+    +0.11; w 0 1.19; floor 0.5 1.17; Type II + w 0.05 = w 0.05; w 0.05 +
+    floor 0.5 -> prod 1.31, herring 12000 -> 15746 -> 15875 t; all three
+    1.25-1.29. Dec-Feb ration 0.9-1.3 % BW/day (base 0.56, Feb-heavy). No
+    1-cell stripes in any variant (Nyquist share <= 0.03 as base). Year
+    2 the gadoids grow faster (4800-5500 vs 4175 t) and take 0.63-0.67:
+    feeding the herring feeds the gadoid overshoot (as 160.5).
+162.5 APPLIED (user's call), fg_library.yaml: pelagic_fish interference
+    0.7 -> 0.05; pelagic_fish_preys_on_zooplankton visibility_floor 0.2
+    -> 0.5 and functional_response: 2. growth_rate unchanged (s* does
+    not depend on w, the floor or the response type). No observation
+    channel changes, so checkpoints load; retrain to read the effect.
+    AGENTS.md predation bullet updated. Full suite 1137 passed / 12
+    skipped; budget_gate OK; train.py 1-gen smoke OK.
+162.6 Open: retrain; gadoid density regulation (the overshoot is now
+    the next limit); interference counting only feeding biomass;
+    zooplankton rest as a refuge is coupled to its feeding cost; the
+    zooplankton spring peak 2-3x low; dark_ratio 0.1 vs Onsrud (night
+    stomachs 70-80 % of day; notes disagree, effect x1.16).
+
+163 PROGRESS EVALUATION FOLLOWS THE ROLLOUT LENGTH (2026-10-15)
+================================================================
+
+163.1 --eval-ticks (lib/runners/training_progress.py, train.py and
+    train_gpu.py) defaulted to 1000, so with 1460-tick training rollouts
+    the survival progress evaluation stopped before the winter ("[progress]
+    ... evaluating up to 1000 inference ticks"). Without --eval-ticks it
+    now follows the training rollout length (train.py --n_eval_ticks,
+    train_gpu.py dest "ticks"); an explicit --eval-ticks still wins
+    (args.eval_ticks_default records which). A resumed run whose
+    progress/config.json was written with another cap keeps that cap when
+    --eval-ticks is not given (prints a note) so its graph stays
+    comparable; an explicit different value is still refused ("settings
+    changed", use a new --plot-dir). Recommendation recorded with it:
+    train on whole years (1460 ticks; random start day, every season in
+    every rollout, 150.2), read multi-year effects with separate
+    inference runs, not a longer training horizon.
+163.2 tests/test_training_progress.py: the default follows n_eval_ticks /
+    ticks, an explicit value wins, the GPU parser resolves it, resume
+    keeps the stored cap unless one is given. Full suite 1142 passed / 12
+    skipped; train.py 1-gen smoke OK.
+
+164 VIEWER SLIDER: EVALUATION PROBE INTERVAL (2026-10-15)
+================================================================
+
+164.1 User request: set how often the survival progress evaluation runs
+    from the training viewer. lib/viz/pygame_viz.py: fourth status-bar
+    row in training mode (status bar 62 -> 80 px; inference unchanged),
+    "Evaluation probe interval = N", linear 1-50 updates, padlock locked
+    by default like the probe / perturbation ticks sliders, '*' and a
+    yellow knob when overridden, a tick mark at the CLI default. API:
+    set_eval_interval_default (make_visual_progress registers
+    --eval-every), get_eval_interval_override (None = CLI value; the
+    no-op viewer returns None), get_eval_interval. The CLI value may lie
+    outside 1-50; the knob is then clamped but the value is kept.
+    lib/runners/training_progress.py: TrainingProgress.interval() reads
+    the override before each update; the cadence stays "every multiple
+    of the interval" (a resume re-evaluates its first step, then returns
+    to the grid - tests/test_gpu_visual.py pins that).
+164.2 tests/test_viz_eval_interval.py: drawn locked with the CLI default,
+    unlocked spans 1-50, absent in inference, the evaluator follows a
+    slider change between updates. Full suite 1146 passed / 12 skipped;
+    train.py 1-gen smoke OK.
+164.3 --eval-every default 20 -> 1 (user's call): the survival progress
+    evaluation runs after every training update unless --eval-every or
+    the viewer slider says otherwise; the slider's built-in default
+    follows (1). Not part of progress/config.json, so resumes are
+    unaffected. Full suite 1146 passed / 12 skipped; 1-gen smoke OK.

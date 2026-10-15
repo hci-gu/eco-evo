@@ -197,7 +197,15 @@
       amplitude_max: 1.0
     starve_rate: 0.025
     visibility_floor: 0.35
-    interference: 0.7
+    # Beddington-DeAngelis w (section 162; was 0.7, set in section 86
+    # against the band artefact, not from herring data). No behavioural
+    # interference has been measured in herring; per-capita intake falls
+    # 0-5 % per doubling of stock density, depletion included (Stenevik
+    # et al. 2022, Brunel & Dickey-Collas 2010), and school-scale costs
+    # are offset by facilitation. 0.7 cut winter intake by two thirds at
+    # 3.4 t/km2 (40 % per doubling). 0.05 = the compromise of
+    # research_notes/Sillens vinterfoda/herring_interference.md.
+    interference: 0.05
     extinction_threshold_factor: 0.5
   gadoids:
     display_name: "Gadoids"
@@ -439,7 +447,22 @@ interaction_definitions:
     # the half-detection point of the logistic.
     dark_ratio: 0.1
     light_threshold_deg: -8.0
-    visibility_floor: 0.2
+    # Section 162. Hiding zooplankton still visible to herring: was 0.2,
+    # a deep-basin refuge. On a ~100 m bank the 0.001 lx biting
+    # threshold reaches the bottom at midday in December and June (Kd
+    # 0.15/m), shelf-sea copepods mostly do not migrate (Daro 1988,
+    # Irigoien et al. 2004) and a non-feeding copepod is still visible;
+    # the literature-implied daytime accessible share is 0.65-0.9 in
+    # summer and 0.5-0.8 in winter, against ~0.3 with 0.2 and the
+    # trained 80-95 % rest. 0.5 = mid of the 0.4-0.6 band in
+    # research_notes/Sillens vinterfoda/zooplankton_refuge.md.
+    visibility_floor: 0.5
+    # Type II, not the specialist default Type III (section 162): every
+    # fit to herring is Type II or linear (Bernreuther 2007 lab,
+    # Arrhenius & Hansson 1999 field; NEMURO.FISH, mizer), no sigmoid
+    # response is reported for any clupeid, and with one prey there is
+    # nothing to switch to, so Type III only cut winter intake.
+    functional_response: 2
   gadoids_preys_on_pelagic_fish:
     preys_on: true
     predation_mortality: 0.2997
