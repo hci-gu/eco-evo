@@ -1292,6 +1292,10 @@ def main():
     # record a new rollout with the updated value. Later iterations rebuild
     # from scratch so biomass fields reset.
     first_iteration = True
+    # A slider change starts a new rollout; it is only a recording when
+    # frames are captured.
+    rerun_verb, rerun_ing = (("re-run", "re-running") if args.no_capture
+                             else ("re-record", "re-recording"))
     try:
         while True:
             if not first_iteration:
@@ -1395,8 +1399,8 @@ def main():
                 try:
                     viz.wait_for_close(
                         banner="inference finished — drag a slider (b0 or "
-                               "rollout ticks) to re-record, or close window "
-                               "to exit (Q/ESC)")
+                               f"rollout ticks) to {rerun_verb}, or close "
+                               "window to exit (Q/ESC)")
                 except KeyboardInterrupt:
                     if verbose:
                         print("\nInterrupted by user (Ctrl+C); closing window.")
@@ -1416,7 +1420,7 @@ def main():
                 if spawn_changed:
                     reasons.append("spawn")
                 print(f"\n[change] {'/'.join(reasons)} changed — "
-                      f"re-recording rollout…")
+                      f"{rerun_ing} rollout…")
     except KeyboardInterrupt:
         if verbose:
             print("\nInterrupted by user (Ctrl+C).")
