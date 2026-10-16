@@ -84,6 +84,44 @@ DEFAULT_DIAGNOSTICS_MULTIPLIER = {"tick": 1000, "day": 1, "month": 1,
                                   "year": 1}
 
 
+def _unit_hours(unit, tick_hours):
+    """Hours in one ``unit`` (tick|day|month|year), as a Fraction.
+
+    A month is a twelfth of a 365-day year.
+    """
+    year_hours = DAYS_PER_YEAR * HOURS_PER_DAY
+    return {"tick": Fraction(tick_hours),
+            "day": Fraction(HOURS_PER_DAY),
+            "month": Fraction(year_hours, 12),
+            "year": Fraction(year_hours)}[unit]
+
+
+def rollout_ticks(args):
+    """Rollout length in ticks from --ticks / --days / --months / --years.
+
+    The real-time flags are rounded to the nearest whole tick at
+    ``--tick-length``. Raises ``ValueError`` if the length is not
+    positive or rounds to zero ticks.
+    """
+    tick_hours = int(args.tick_length)
+    for unit in ("day", "month", "year"):
+        value = getattr(args, unit + "s")
+        if value is None:
+            continue
+        if not 0 < value < float("inf"):
+            raise ValueError(f"--{unit}s must be a positive number, "
+                             f"got {value:g}")
+        ticks = round(Fraction(value) * _unit_hours(unit, tick_hours)
+                      / tick_hours)
+        if ticks < 1:
+            raise ValueError(f"--{unit}s {value:g} is shorter than one tick "
+                             f"({tick_hours} h)")
+        return int(ticks)
+    if args.ticks < 1:
+        raise ValueError(f"--ticks must be >= 1, got {args.ticks}")
+    return int(args.ticks)
+
+
 def diagnostics_interval_ticks(values, tick_hours):
     """``--diagnostics-interval [UNIT [MULTIPLIER]]`` as a tick count.
 
@@ -110,12 +148,7 @@ def diagnostics_interval_ticks(values, tick_hours):
                          f"number, got {values[1]!r}")
     if multiplier <= 0:
         raise ValueError("--diagnostics-interval multiplier must be > 0")
-    year_hours = DAYS_PER_YEAR * HOURS_PER_DAY
-    unit_hours = {"tick": Fraction(tick_hours),
-                  "day": Fraction(HOURS_PER_DAY),
-                  "month": Fraction(year_hours, 12),
-                  "year": Fraction(year_hours)}[unit]
-    interval = unit_hours * multiplier / tick_hours
+    interval = _unit_hours(unit, tick_hours) * multiplier / tick_hours
     if interval < 1:
         raise ValueError(f"--diagnostics-interval {' '.join(values)} is "
                          f"shorter than one tick ({tick_hours} h)")
@@ -1065,8 +1098,19 @@ def main():
                              "Default: 'default'. Ignored if --checkpoints is given explicitly.")
     parser.add_argument("--grid", type=parse_grid_arg, default=(60, 60),
                         help="Grid dimensions as n*m (default: 60*60).")
-    parser.add_argument("--ticks", type=int, default=100,
-                        help="Number of simulation ticks to run (default: 100).")
+    length = parser.add_mutually_exclusive_group()
+    length.add_argument("--ticks", type=int, default=1460,
+                        help="Number of simulation ticks to run (default: "
+                             "1460). Excludes --days, --months and --years.")
+    length.add_argument("--days", type=float, default=None,
+                        help="Rollout length in days, rounded to whole ticks "
+                             "at --tick-length.")
+    length.add_argument("--months", type=float, default=None,
+                        help="Rollout length in months (1/12 of a 365-day "
+                             "year), rounded to whole ticks at --tick-length.")
+    length.add_argument("--years", type=float, default=None,
+                        help="Rollout length in 365-day years, rounded to "
+                             "whole ticks at --tick-length.")
     parser.add_argument("--seed", type=int, default=None,
                         help="Seed for deterministic initial biomass distribution.")
     parser.add_argument("--output", type=str, default=None,
@@ -1117,6 +1161,10 @@ def main():
     args = parser.parse_args()
     try:
         currents = current_options(args)
+    except ValueError as error:
+        parser.error(str(error))
+    try:
+        args.ticks = rollout_ticks(args)
     except ValueError as error:
         parser.error(str(error))
     try:

@@ -60,14 +60,20 @@ def _viewer(mode):
     return LiveVisualizer(fg_ids=["gadoids"], grid_shape=(4, 4), mode=mode)
 
 
-def test_inference_ticks_slider_reaches_50000():
+def test_inference_ticks_slider_reaches_100000():
     v = _viewer("inference")
-    v.set_ticks_default(50000)
-    assert v.get_ticks() == 50000
-    assert v._ticks_value_from_pos(1.0) == 50000
-    v.set_ticks_default(10 ** 6)
-    assert v.get_ticks() == 50000
-    assert _viewer("train")._ticks_max == 25000
+    v.set_ticks_default(100000)
+    assert v.get_ticks() == 100000
+    assert v._ticks_value_from_pos(1.0) == 100000
+    # A CLI length past the slider's max is kept in inference (a
+    # 100-year rollout is 146000 ticks); training still clamps.
+    v.set_ticks_default(146000)
+    assert v.get_ticks() == 146000
+    assert v._ticks_pos_from_value(v.get_ticks()) == 1.0
+    t = _viewer("train")
+    assert t._ticks_max == 25000
+    t.set_ticks_default(10 ** 6)
+    assert t.get_ticks() == 25000
 
 
 def test_long_recording_is_evenly_strided_and_ends_on_last_tick():

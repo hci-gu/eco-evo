@@ -447,8 +447,8 @@ class LiveVisualizer:
     # so this mostly protects inference (per-tick rendering).
     _MIN_FRAME_INTERVAL = 1.0 / 30.0
     # Most frames a recorded rollout keeps. Past it every other frame is
-    # dropped and the capture stride doubles, so a 50000-tick inference
-    # rollout is still a film with evenly spaced frames (stride 8).
+    # dropped and the capture stride doubles, so a 100000-tick inference
+    # rollout is still a film with evenly spaced frames (stride 16).
     _MAX_ROLLOUT_FRAMES = 10000
 
     def __new__(cls, *args, **kwargs):
@@ -692,12 +692,13 @@ class LiveVisualizer:
         # ``set_ticks_default``. ``_ticks_override`` är användarens valda
         # värde via slidern (None = default). ``_ticks_dirty`` sätts när
         # slidern släpps på ett nytt värde; konsumeras av inference.py.
-        # Range = [3, 25000] (train) / [3, 50000] (inference) med
-        # log-skala mappning för bättre kontroll.
+        # Range = [3, 25000] (train) / [3, 100000] (inference) med
+        # log-skala mappning för bättre kontroll. In inference a CLI
+        # length above the max is kept (see ``set_ticks_default``).
         # ``_ticks_track_rect`` är (x, y, w, h) för den enda track-rect:en,
         # registrerad varje frame av ``_draw_status_bar``.
         self._ticks_min: int = 3
-        self._ticks_max: int = (50000
+        self._ticks_max: int = (100000
                                 if str(self.mode).lower().startswith("infer")
                                 else 25000)
         self._ticks_default: int = 200
@@ -1368,9 +1369,13 @@ class LiveVisualizer:
         """Registrera CLI-värdet (default) för rollout-längd.
 
         Klampas till ``[_ticks_min, _ticks_max]`` = [3, 25000] (train)
-        eller [3, 50000] (inference). Anropas
+        eller [3, 100000] (inference). Anropas
         en gång av train.py (``--n_eval_ticks``) och inference.py
         (``--ticks``) när viz initieras.
+
+        In inference only the lower bound applies: a CLI rollout longer
+        than the slider's max runs to its full length, and the slider
+        handle sits at the right end until it is dragged.
         """
         if not self.enabled:
             return
@@ -1378,8 +1383,9 @@ class LiveVisualizer:
             v = int(ticks)
         except (TypeError, ValueError):
             return
-        self._ticks_default = max(self._ticks_min,
-                                  min(self._ticks_max, v))
+        if not str(self.mode).lower().startswith("infer"):
+            v = min(self._ticks_max, v)
+        self._ticks_default = max(self._ticks_min, v)
 
     def get_ticks_override(self) -> Optional[int]:
         """Returnera användarens valda rollout-längd, eller None om
