@@ -28,6 +28,7 @@ import argparse
 import os
 import re
 import sys
+from fractions import Fraction
 
 import numpy as np
 import torch
@@ -35,7 +36,8 @@ from lib.environments.ecosystem_env.currents import add_current_arguments, curre
 from lib.environments.ecosystem_env.loss_accounting import LOSS_CAUSES
 
 from lib.world.tick_time import (
-    LIBRARY_TICK_HOURS, add_tick_length_argument,
+    DAYS_PER_YEAR, HOURS_PER_DAY, LIBRARY_TICK_HOURS,
+    add_tick_length_argument,
 )
 from lib.world.impact_maps import load_impact_map_npz
 from lib.config.config_loader import (load_config, load_project_config,
@@ -73,6 +75,51 @@ class RandomPolicy:
 
     def eval(self):
         return self
+
+
+DIAGNOSTICS_UNITS = ("tick", "day", "month", "year")
+DEFAULT_DIAGNOSTICS_UNIT = "tick"
+# Multiplier used when --diagnostics-interval names a unit but no number.
+DEFAULT_DIAGNOSTICS_MULTIPLIER = {"tick": 1000, "day": 1, "month": 1,
+                                  "year": 1}
+
+
+def diagnostics_interval_ticks(values, tick_hours):
+    """``--diagnostics-interval [UNIT [MULTIPLIER]]`` as a tick count.
+
+    No values means :data:`DEFAULT_DIAGNOSTICS_UNIT`; a unit without a
+    multiplier takes :data:`DEFAULT_DIAGNOSTICS_MULTIPLIER`.
+
+    Returned as an exact :class:`~fractions.Fraction`: a month is a
+    twelfth of a 365-day year, which is not a whole number of ticks, so
+    the progress print fires on the tick where each multiple of the
+    interval is crossed. Raises ``ValueError`` on bad input.
+    """
+    values = list(values or [DEFAULT_DIAGNOSTICS_UNIT])
+    if len(values) > 2:
+        raise ValueError("--diagnostics-interval takes [UNIT [MULTIPLIER]]")
+    unit = values[0].lower()
+    if unit not in DIAGNOSTICS_UNITS:
+        raise ValueError(f"--diagnostics-interval unit must be one of "
+                         f"{'|'.join(DIAGNOSTICS_UNITS)}, got {values[0]!r}")
+    try:
+        multiplier = Fraction(values[1] if len(values) == 2
+                              else DEFAULT_DIAGNOSTICS_MULTIPLIER[unit])
+    except (ValueError, ZeroDivisionError):
+        raise ValueError(f"--diagnostics-interval multiplier must be a "
+                         f"number, got {values[1]!r}")
+    if multiplier <= 0:
+        raise ValueError("--diagnostics-interval multiplier must be > 0")
+    year_hours = DAYS_PER_YEAR * HOURS_PER_DAY
+    unit_hours = {"tick": Fraction(tick_hours),
+                  "day": Fraction(HOURS_PER_DAY),
+                  "month": Fraction(year_hours, 12),
+                  "year": Fraction(year_hours)}[unit]
+    interval = unit_hours * multiplier / tick_hours
+    if interval < 1:
+        raise ValueError(f"--diagnostics-interval {' '.join(values)} is "
+                         f"shorter than one tick ({tick_hours} h)")
+    return interval
 
 
 def parse_grid_arg(value):
@@ -713,7 +760,8 @@ def _install_rnd_policies(env, rnd_env, policies, random_fids):
 
 
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
-                  viz=None, rnd_env=None, rnd_solo_envs=None):
+                  viz=None, rnd_env=None, rnd_solo_envs=None,
+                  diagnostics_interval=None):
     """Install policies + frozen stats and step the environment ``n_ticks`` times.
 
     If ``viz`` is a :class:`lib.viz.LiveVisualizer`, biomass heatmaps and a
@@ -729,6 +777,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
 
     Each baseline env must be built from the same world (seed, overrides)
     as ``env``.
+
+    ``diagnostics_interval`` (ticks, may be fractional; see
+    :func:`diagnostics_interval_ticks`) sets how often the verbose
+    progress line and the B/B0 ratios are printed. ``None`` (callers
+    other than the CLI) keeps ten prints per rollout.
     """
     env.policies = dict(policies)
     env.obs_mean = obs_mean
@@ -778,6 +831,9 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             viz.update_biomass(env.fgs, tick=0)
         except Exception:
             pass
+    # Biomass before the first step: the reference for the B/B0 ratios
+    # printed with the tick progress lines.
+    start_biomass = {fid: float(fg.biomass.sum()) for fid, fg in env.fgs.items()}
     for t in range(n_ticks):
         try:
             observation = env.get_observation()
@@ -845,8 +901,23 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 pct_eng[fid] = 100.0 * energy_history[fid][-1] / e0
             else:
                 pct_eng[fid] = 0.0
-        if verbose and (t % max(1, n_ticks // 10) == 0):
+        if diagnostics_interval is None:
+            print_now = t % max(1, n_ticks // 10) == 0
+        else:
+            print_now = ((t + 1) // diagnostics_interval
+                         > t // diagnostics_interval)
+        # The last tick is always printed, also when the rollout stops
+        # early because every world has collapsed.
+        print_now = print_now or t == n_ticks - 1 or ecosystem_dead
+        if verbose and print_now:
             print(f"    tick {t+1}/{n_ticks}")
+            ratios = []
+            for fid in history.keys():
+                b0 = start_biomass.get(fid, 0.0)
+                cur = history[fid][-1] if history[fid] else 0.0
+                ratios.append(f"{fid} {cur / b0:.3f}" if b0 > 0.0
+                              else f"{fid} -")
+            print(f"      B/B0: {'  '.join(ratios)}")
         if viz is not None:
             try:
                 viz.update_biomass(env.fgs, tick=t + 1)
@@ -1025,11 +1096,32 @@ def main():
                              "and a rolling total-biomass plot. Requires pygame; if "
                              "unavailable the flag is silently ignored.")
 
+    parser.add_argument("--no-capture", "--no_capture", dest="no_capture",
+                        action="store_true",
+                        help="With --visual: do not record the rollout. The "
+                             "playback controls under the heatmaps stay "
+                             "inactive. Ignored without --visual.")
+    parser.add_argument("--diagnostics-interval", "--diagnostics_interval",
+                        dest="diagnostics_interval", nargs="*",
+                        metavar="UNIT [MULTIPLIER]", default=[],
+                        help="How often the progress line (tick x/y and every "
+                             "FG's B/B0 ratio) is printed: UNIT is "
+                             "tick|day|month|year (default tick), MULTIPLIER "
+                             "an optional positive number (default 1000 for "
+                             "tick, 1 otherwise), e.g. 'day 2' or "
+                             "'month 0.5'. A month is 1/12 of a 365-day year. "
+                             "Default: every 1000 ticks.")
+
     add_current_arguments(parser)
     add_tick_length_argument(parser)
     args = parser.parse_args()
     try:
         currents = current_options(args)
+    except ValueError as error:
+        parser.error(str(error))
+    try:
+        diagnostics_interval = diagnostics_interval_ticks(
+            args.diagnostics_interval, int(args.tick_length))
     except ValueError as error:
         parser.error(str(error))
     verbose = not args.quiet
@@ -1041,6 +1133,8 @@ def main():
         print(f"[warn] --rnd_baseline {args.rnd_baseline} needs --visual; "
               f"ignored.", file=sys.stderr)
         args.rnd_baseline = "none"
+    if args.no_capture and not args.visual:
+        print("[warn] --no-capture needs --visual; ignored.", file=sys.stderr)
     if args.rnd_baseline != "none" and args.seed is None:
         # Every world is built separately, and an unseeded spawn would give
         # the baseline worlds a different layout from the main world, so the
@@ -1096,7 +1190,8 @@ def main():
                                  mode="inference",
                                  extra_plot_ids=extra,
                                  ndm_ids=ndm_ids or None,
-                                 tick_hours=int(args.tick_length))
+                                 tick_hours=int(args.tick_length),
+                                 capture=not args.no_capture)
             # b0-slider defaults: gridskaleberäknat inference_initial_biomass
             # per FG, läst direkt från projekt-YAML. Slider-rangen blir
             # ``[0, 4 * default]`` per FG, mittposition = default.
@@ -1229,7 +1324,8 @@ def main():
             history = run_inference(env, policies, mean, var, ticks_this_run,
                                     verbose=verbose, viz=viz,
                                     rnd_env=rnd_env,
-                                    rnd_solo_envs=rnd_solo_envs)
+                                    rnd_solo_envs=rnd_solo_envs,
+                                    diagnostics_interval=diagnostics_interval)
             first_iteration = False
 
             if viz is None:

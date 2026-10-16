@@ -479,6 +479,7 @@ class LiveVisualizer:
         extra_plot_ids: Optional[Sequence[str]] = None,
         ndm_ids: Optional[Sequence[str]] = None,
         tick_hours: Optional[int] = None,
+        capture: bool = True,
     ):
         import pygame
         self._pg = pygame
@@ -892,6 +893,9 @@ class LiveVisualizer:
         # kallas flyttas listan över till ``_current_rollout`` och knapparna
         # blinkar tills användaren klickar (eller en ny film tar över).
         self._recording = False
+        # ``capture=False`` (inference --no-capture): rollouts are never
+        # recorded, so no film exists and the playback bar stays disabled.
+        self._capture = bool(capture)
         self._pending_rollout: list = []
         self._current_rollout: list = []
         # Capture every ``_capture_stride``-th update_biomass call while
@@ -1506,7 +1510,9 @@ class LiveVisualizer:
         """
         if not self.enabled:
             return
-        self._recording = True
+        # Without capture the resets below still run; only the frame
+        # recording is skipped.
+        self._recording = self._capture
         self._pending_rollout = []
         self._capture_stride = 1
         self._capture_calls = 0
@@ -3146,6 +3152,8 @@ class LiveVisualizer:
             ind = f"frame = {self._playback_idx + 1}/{n}"
         if self._recording:
             ind = f"recording... ({len(self._pending_rollout)} frames)"
+        if not self._capture:
+            ind = "capture off"
         ind_surf = self._font.render(ind, True, (200, 200, 215))
         # Reservera stabil bredd för indikator-zonen så att scrub-
         # slidern inte ändrar storlek när texten växlar mellan
@@ -3159,6 +3167,7 @@ class LiveVisualizer:
             f"live  (saved frames: {_max_n})",
             f"frame = {_max_n}/{_max_n}",
             f"recording... ({_max_pending} frames)",
+            "capture off",
         ]
         # MEMORY LEAK FIX: anvand font.size()[0] istallet for
         # font.render(...).get_width(). Memray --leaks-flamegraph visade
