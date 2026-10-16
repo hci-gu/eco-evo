@@ -94,10 +94,11 @@ def test_impact_table_reaches_env_and_costs_energy(unmuted_project):
         env.grid.add_map(iid, np.full((H, W), vmax, dtype=np.float32))
     env.build_static_caches()
 
-    # The porpoise table is the only one with impact_affects=true.
+    # Porpoises are affected by the noise and, through gillnet bycatch
+    # carried on the bottom-trawl map, by bottom trawling.
     idx = env.dm_ids.index('porpoises')
     entries = env.dm_impact_tables[idx]
-    assert [iid for iid, _t in entries] == ['windfarm_noise']
+    assert sorted(iid for iid, _t in entries) == ['bottom_trawling', 'windfarm_noise']
 
     # Observable impacts occupy one centre slot plus one per neighbour.
     factor = impacts_mod.impact_energy_cost_factor(env)

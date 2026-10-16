@@ -926,6 +926,25 @@ interaction_definitions:
   phytoplankton_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
+  # Porpoise bycatch, placed on the bottom-trawl map the way the gadoids'
+  # seine and gillnet share is. Trawls themselves catch almost no
+  # porpoises (ASCOBANS NSG14: ~24/yr in OTB over ~111,000 days at sea);
+  # the loss is gillnet bycatch, ~1.7 % of the population per year in
+  # the North Sea region (Kindt-Larsen et al. 2023 / OSPAR 2020, snippet
+  # only; no Skagerrak figure). Static-gear effort in the grid is ~0
+  # (local_fishery.md), so like the herring F this is the population's
+  # loss met outside the grid, carried by the closed pool. The library
+  # M1 is survival excluding bycatch, so nothing is counted twice.
+  # q = 0.017 / 1460 / 3.0142 = 3.863e-6 per tick per unit of effort.
+  porpoises_impacted_by_bottom_trawling:
+    impact_affects: true
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.000386304767
+        energy_factor: 0.0
   porpoises_impacted_by_pelagic_trawling:
     impact_affects: false
     impact_table: []

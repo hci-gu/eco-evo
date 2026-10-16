@@ -92,6 +92,8 @@ fabricates mass.
   the maps' mean effort. Impact mortality acts on every group with a
   table, non decision makers too (biomass factor only): bottom trawling
   removes benthos at d x SAR (d 0.10, SAR 0.75 per MW-h/km2), ~0.2/yr.
+  Porpoise gillnet bycatch (~0.017/yr, met outside the grid) rides on
+  the bottom-trawl map too (section 165).
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
   is the attack rate a. A pair may override it (`<pred>_preys_on_<prey>:
   max_intake_rate`) to set the half-saturation 1/(a h) without moving the

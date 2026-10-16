@@ -15096,3 +15096,31 @@ remain open exactly as described in 71.9 / 71.11.
     the viewer slider says otherwise; the slider's built-in default
     follows (1). Not part of progress/config.json, so resumes are
     unaffected. Full suite 1146 passed / 12 skipped; 1-gen smoke OK.
+
+165 PORPOISE BYCATCH ON THE BOTTOM-TRAWL MAP (2026-10-16)
+================================================================
+
+165.1 Literature: trawls catch almost no porpoises (ASCOBANS NSG14,
+    2017-23: ~24/yr in bottom otter trawls over ~111,000 days at sea vs
+    ~389/yr in trammel nets over ~10,500; UK experts class bottom trawls
+    low risk; the pelagic-trawl problem is common dolphins in Biscay pair
+    trawls). Porpoise bycatch is gillnet bycatch, ~1.7 % of the
+    population per year in the North Sea region (Kindt-Larsen et al.
+    2023 / OSPAR 2020, snippet only; no Skagerrak figure).
+165.2 Static-gear effort (VMS > 12 m) in the grid is ~0 and gillnets are
+    0.6 % of the 45G0 catch (local_fishery.md), so a gillnet map would be
+    empty. As for the herring F, the closed pool carries the population's
+    loss met outside the grid. User's call: carry it on the bottom-trawl
+    map, the way the gadoids' seine and gillnet share already is.
+165.3 fg_library.yaml: porpoises_impacted_by_bottom_trawling, linear,
+    q = 0.017 / 1460 / 3.0142 = 3.863e-6 per tick per unit (row 100 ->
+    3.863e-4). Today's map: 0.017/yr at mean effort, 0.054/yr in the
+    busiest cell. Outside the growth budget; the library M1 is survival
+    excluding bycatch, so nothing is double counted. bottom_trawling is
+    not observable: no observation channel, checkpoints stay valid.
+    Side effect to keep in mind: a scenario that closes trawling also
+    removes the porpoise bycatch there, which gillnets would not do.
+165.4 tests/test_fishing_maps.py covers the new table (linear from zero,
+    0.017 at mean effort); tests/test_impact_loading.py now expects
+    porpoises to carry bottom_trawling and windfarm_noise. Full suite
+    1148 passed / 12 skipped; train.py 1-gen smoke OK.
