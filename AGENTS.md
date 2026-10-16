@@ -62,7 +62,10 @@ fabricates mass.
 ## 4. Functional groups
 
 - Decision makers (have a policy net): `zooplankton`, `pelagic_fish`, `gadoids`,
-  `porpoises`, `seals`, `seabirds`.
+  `porpoises`, `seals`, `seabirds`. `mareld2.yaml` mutes only `seabirds`;
+  seals (harbour seals only) are on since section 166 and spawn on
+  gadoids, which carry ~95 % of their diet (pair attack rates 0.2 vs
+  herring 0.015, as for porpoises in section 151).
 - Non decision makers (logistic growth toward carrying capacity):
   `phytoplankton`, `benthic_community`.
 - English snake_case IDs are canonical.
@@ -140,7 +143,8 @@ fabricates mass.
 - `functional_response: 2|3` on a predation pair forces the Holling type
   for that pair (section 141); without it a specialist gets III and a
   generalist II, as before. Set on gadoids -> pelagic_fish (141.4),
-  where gadoids also eat zooplankton (krill proxy) and each other.
+  where gadoids also eat zooplankton (krill proxy) and each other, and
+  on seals -> pelagic_fish (166).
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
   NDM `r = (r_max + sum M2) / 1460`. s* is the reserve a DM settles on

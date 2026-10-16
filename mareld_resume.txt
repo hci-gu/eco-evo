@@ -15124,3 +15124,109 @@ remain open exactly as described in 71.9 / 71.11.
     0.017 at mean effort); tests/test_impact_loading.py now expects
     porpoises to carry bottom_trawling and windfarm_noise. Full suite
     1148 passed / 12 skipped; train.py 1-gen smoke OK.
+
+166 SEALS ON: LITERATURE PARAMETERS, SPAWN ON GADOIDS (2026-10-16)
+================================================================
+
+166.1 Literature review (four parallel searches; report
+    "reports/Parametervarden for salar i Skagerrak.md" with Swedish
+    letters in the file name, notes in the matching research_notes/
+    folder; the report is Swedish). The group is harbour seals only:
+    grey seals are a few individuals in Swedish Skagerrak (HaV 2025,
+    Carroll et al. 2025) and too large for the one-seal unit. The
+    population is near carrying capacity (2023 count 12,507 vs
+    logistic K 13,965, Carroll 2025), so r_max 0.11 and M1 0.10 stay;
+    bycatch (~150/yr on the Swedish west coast 2001-06, Lundstroem
+    2010) is already inside both, the hunt (from ~2020) is not and is
+    left out for now (~0.01 /yr if added). Several load-bearing numbers
+    were seen only as search snippets (GU 2019 diet, Soerlie 2020,
+    Silva 2021 survival, Lansstyrelsen counts); listed in the report.
+166.2 APPLIED, fg_library.yaml seals: resting_metabolism 45 -> 50
+    (1.9x Kleiber at 55 kg; Paterson et al. 2021 45-52 resting after a
+    meal); feeding_cost 1.3 -> 1.5 and movement_cost 1.5 -> 1.3 (the
+    porpoise order, section 145: eat = FMR incl. heat increment);
+    min_split_biomass 80 -> 55 kg (population mean, not an adult);
+    extinction_threshold_factor 0.1 (default 0.5 cleared cells < 40 kg);
+    spawn colony x7 free -> env_driven on gadoids (user's call: same
+    type as porpoises; the colonies started with zero gadoid overlap).
+    Reserve 5200, maintenance 0.5, starve_rate 0.03, energy_content
+    10000 (lean, reserve on top), r_max, M1 unchanged; no Q10.
+166.3 APPLIED, pairs. seals->gadoids: predation_mortality 0.0299 ->
+    0.12 /yr (user's call: keep the 2500 t gadoid start; 15 t seals at
+    ~5.9 %/day eat ~325 t/yr, 95 % gadoids incl. the flatfish the model
+    lacks; 0.03 would match the IBTS 9700 t), max_intake_rate 0.2 (at
+    the FG 0.05 the break-even visible density 0.55 t/km2 sat at the
+    grid mean 0.69), assimilation 0.86 -> 0.85 (metabolisable),
+    handling_time 20 -> 26 (ceiling 15 %/day = 1.5x the highest routine
+    intake, 0.57 MJ/kg/day, Rosen et al. 2021). Default response type
+    (II): III on the near-whole diet mainly cuts intake (section 162).
+    seals->pelagic_fish: 0.0076 -> 0.0015 /yr (~5 % of the diet by
+    mass), max_intake_rate 0.05 -> 0.015, assimilation 0.92 -> 0.88,
+    handling_time 20 -> 35 (equal energy ceiling, 189 vs 180 MJ/t/tick),
+    functional_response 3 (pinniped prey switching, Smout et al. 2014).
+    Both attack rates are starting values; tune toward a 95:5 diet
+    after the first run, as in section 151.
+166.4 mareld2.yaml: seals unmuted. Stored growth_rate regenerated from
+    growth_budget for the new active set: gadoids 0.00303 -> 0.00357
+    (+17.8 %), pelagic_fish +0.1 %, seals 0.000349 -> 0.000486 (s*
+    0.912 -> ~0.80). Comment "(seals and seabirds muted)" -> "(seabirds
+    muted)". budget_gate: seals "any diet", break-even 0.138 t visible
+    gadoids per cell. Impacts on seals stay off (no displacement at
+    operating farms, floating foundations, trawl bycatch small).
+166.5 Checkpoints: gadoids, pelagic_fish and porpoises observe seals, so
+    every DM checkpoint is invalid; retrain from scratch, no --resume.
+166.6 Checks. tests/test_gpu_spawn.py expects 7 active FGs. Full suite
+    1148 passed / 12 skipped; train.py and train_gpu.py 1-gen smokes OK.
+    Viability (eat arm, configured spawn): seals start with overlap 1.0
+    on gadoids (was 0.0); 300 ticks all DMs pass. Over 1460 ticks the
+    frozen eat arm collapses with or without seals (gadoids eq/spawn
+    0.109 vs 0.106, porpoises extinct at 907 vs 1034, seals at 1230) -
+    the known frozen-behaviour limit (VIABILITY.md 6), not a seal verdict.
+166.7 Open: tune the seal attack rates to the 95:5 diet; a hunt impact;
+    coast-anchored spawn (anchor: coast is a no-op in
+    lib/spawn/strategies.py) if the prey spawn proves unrealistic; the
+    1991 Skagerrak seal budget paper (Haerkoenen) was not read.
+
+167 SEALS: LIGHT AND PREY REFUGE (2026-10-16)
+================================================================
+
+167.1 Targeted review (three searches; report "reports/Salars jakt i
+    ljus och morker.md" with Swedish letters in the file name, notes in
+    the matching research_notes/ folder). No study, for any phocid,
+    measures capture success in light vs darkness, so every value below
+    is inferred.
+167.2 dark_ratio / light_threshold_deg: NOT set on either seal pair
+    (= 1, no light effect). Harbour seals hunt with their vibrissae
+    (blindfolded seals follow fish wakes up to ~35 s old, Dehnhardt
+    2001, Wieskotten 2010; find flatfish breathing currents of ~4 cm/s,
+    Niesterok 2017); blind wild seals did well; field dive data show as
+    much or more foraging at night (Blanchet 2015 Svalbard, Jessopp
+    2013 grey seals 44 % pelagic dives at night vs 28 % by day),
+    benthic feeders little diel difference (Bjoerge 1995, Tollit 1998,
+    via Wilson 2014). Day-biased time at sea (Kattegat, Galatius 2026,
+    snippet) is when seals are out, not how well they hunt, and is
+    left to Rest + the light input; a dark_ratio would count it twice.
+    Not "dark anyway": at 40-50 m day and night differ by 7-8 decades
+    of light. Herring alternative 0.8 / -6 deg rejected: month means
+    0.95-1.06 on a ~16 t/yr pair.
+167.3 APPLIED, fg_library.yaml: seals_preys_on_gadoids visibility_floor
+    0.85 (range 0.75-0.95; was the gadoid default 0.6). Resting or
+    buried bottom fish are a seal's normal prey (sandeel 40 % of
+    otoliths in Skagerrak 2020, Kappa 2026; flatfish 46 % of energy,
+    GU 2019; Baltic EwE gives grey seal fish prey no refuge, Costalago
+    2018); at or above porpoises -> gadoids 0.75. seals_preys_on_
+    pelagic_fish keeps the herring default 0.35 (range 0.3-0.5): seals
+    have no sonar, so schooling protects; and the herring floor is what
+    holds the 95:5 diet (in-memory probe at grid mean density: unhidden
+    herring yields 161 vs gadoids 141 MJ/t/tick; fully hidden 79). The
+    gadoid floor raises the seal's yield from hidden gadoids by +3 % at
+    half hiding and +11 % at full (saturation). Growth budget and
+    budget_gate unchanged (the floor is not in s*). No observation
+    change; checkpoints from section 166 onward stay valid.
+167.4 Note: fg_library.yaml was re-saved by the FG editor between 166
+    and 167 (growth_rate rounded to 6 significant digits, interference
+    0.0 written for seals); the stored rates still pass the 1e-5 test.
+167.5 Checks: full suite 1148 passed / 12 skipped; train.py 1-gen smoke
+    OK. Open: reanalyse the public Vance et al. 2021 Wadden Sea capture
+    timings by day/night for a measured dark_ratio; floor sensitivity
+    at the range ends.

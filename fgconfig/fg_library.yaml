@@ -6,7 +6,7 @@
     movement_speed: 0.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
-    # loader computes for mareld2.yaml (seals and seabirds muted) with
+    # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # NDM: g = (r_max + checked predation_mortality on this FG) / 1460.
@@ -85,7 +85,7 @@
     min_split_biomass: 0.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
-    # loader computes for mareld2.yaml (seals and seabirds muted) with
+    # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # DM: g = (r_max + M1 + checked predation_mortality) /
@@ -94,7 +94,7 @@
     # 11.5 C (Huntley & Lopez 1992) = 58.4 /yr, minus total mortality
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
     r_max: 33.4
-    growth_rate: 0.127932799
+    growth_rate: 0.127933
     # M1 = total copepod mortality (~25 /yr = realised P/B) minus the
     # 21 % taken by pelagic fish, gadoids and seabirds in the North Sea
     # Ecopath diet matrix: 19.7 /yr. The rest is carnivorous zooplankton,
@@ -175,13 +175,13 @@
     min_split_biomass: 0.5
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
-    # loader computes for mareld2.yaml (seals and seabirds muted) with
+    # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # r_max 0.648 /yr: biomass-weighted FishBase CMSY priors over herring,
     # sprat, mackerel, horse mackerel, sandeel and other planktivores.
     r_max: 0.648
-    growth_rate: 0.00160458203
+    growth_rate: 0.00160628
     # M1 = M0 (0.391) + predation by groups that are not FGs (0.189:
     # sharks, rays, other fish, larvae) = 0.580 /yr, North Sea Ecopath
     # 1991. Predation by FGs lives in predation_mortality. Was 1.0e-04.
@@ -227,14 +227,14 @@
     min_split_biomass: 0.5
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
-    # loader computes for mareld2.yaml (seals and seabirds muted) with
+    # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # r_max 0.511 /yr: biomass-weighted FishBase CMSY priors over cod,
     # whiting, haddock, saithe, hake and the other gadoids (Norway pout
     # and blue whiting excluded: they eat zooplankton).
     r_max: 0.511
-    growth_rate: 0.00303110135
+    growth_rate: 0.00357051
     # M1 = M0 (0.20; SMS residual M1 convention for cod, haddock,
     # whiting and saithe; Ecopath NS 1991 adults 0.18) + predation by
     # non-FG groups (0.214; squid, halibut, gurnards, long-rough dab,
@@ -301,13 +301,13 @@
     energy_content: 8500.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
-    # loader computes for mareld2.yaml (seals and seabirds muted) with
+    # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # r_max 0.10 /yr (Lockyer 2003; Caswell et al. 1998; Forney et al.
     # 2021: 9.6 %/yr after bycatch ended).
     r_max: 0.10
-    growth_rate: 0.000447388854
+    growth_rate: 0.000447389
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models from adult
     # survival 0.90-0.95 excluding bycatch, plus calf mortality). No FG
     # preys on porpoises. Was 6.0e-05.
@@ -339,39 +339,70 @@
     # Sweep at 0.1 * 50 kg = 5 kg per cell, as before section 152.
     extinction_threshold_factor: 0.1
   seals:
+    # Harbour seals only (section 166): grey seals are a few individuals
+    # in Swedish Skagerrak (HaV 2025; Carroll et al. 2025) and too large
+    # for the one-seal unit below.
     display_name: "Seals"
     is_decision_maker: true
     maintenance_level: 0.5
+    # ~14 % of body mass as blubber; adults swing ~4000-4200 MJ/t over the
+    # year (Olesiuk 1993; Karpovich).
     max_energy_reserve: 5200.0
-    resting_metabolism: 45.0
+    # REST, as for porpoises (section 145): 50 MJ/t/tick = 0.20 MJ/kg/day,
+    # 1.9x Kleiber at the 55 kg population mean; captive adults resting
+    # after a meal 45-52 (Paterson et al. 2021). Was 45. No metabolism_q10:
+    # thermoneutral in 6-17 C water (Olesiuk 1993).
+    resting_metabolism: 50.0
     movement_speed: 1.0
-    feeding_cost: 1.3
-    movement_cost: 1.5
-    min_split_biomass: 80.0
+    # Eat = field metabolic rate incl. the heat increment of feeding
+    # (10-17 % of gross intake, ~15 h; Markussen 1994), above move =
+    # transit swimming (~2.2x rest at 1.4 m/s, Davis 1985 / Williams 1987
+    # via Olesiuk 1993). The porpoise order; was eat 1.3 / move 1.5.
+    feeding_cost: 1.5
+    movement_cost: 1.3
+    # Indivisible unit = one seal of the population mean mass: 0-3 year
+    # olds are ~half the population, so ~55 kg (Olesiuk 44.7, Haerkoenen &
+    # Heide-Joergensen 41.8 for younger, growing populations). Was 80 kg,
+    # an adult.
+    min_split_biomass: 55.0
+    # Lean value, as for pelagic_fish (whole body ~15.9 MJ/kg at 30 %
+    # blubber, Olesiuk 1993). prey_includes_reserve is not set because
+    # nothing eats seals; set it if a seal predator is added.
     energy_content: 10000.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
-    # loader computes for mareld2.yaml (seals and seabirds muted) with
+    # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # r_max 0.11 /yr: harbour seal 10.2-13.6 %/yr in Kattegat-Skagerrak
     # after 1988 (Carroll et al. 2025), grey seal <= 10 % (HELCOM).
     r_max: 0.11
-    growth_rate: 0.000349016012
+    growth_rate: 0.000486383
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models); no FG preys on
     # seals. Was 6.0e-05.
     natural_mortality: 6.85e-05
+    # Fallback attack rate; both seal pairs set their own (section 166).
     max_intake_rate: 0.05
+    # Spawn on the main prey, as porpoises spawn on herring (user's call,
+    # section 166). The 7 free colonies started with ~no gadoid overlap.
     spawn:
-      mode: colony
-      n_colonies: 7
-      sigma_cells: 2.5
-      anchor: free
-      amplitude_mode: uniform
-      amplitude_min: 0.0
-      amplitude_max: 1.0
+      mode: env_driven
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.0
+      refs:
+        - name: gadoids
+          weight: 1.0
+          transform: linear
+    # 1.5 % of biomass per tick at an empty reserve: blubber lets a seal
+    # fast for weeks (30-60 day target, section 147).
     starve_rate: 0.03
     visibility_floor: 0.0
+    # Sweep at 0.1 * 55 kg = 5.5 kg per cell, as for porpoises (section
+    # 152); the default 0.5 cleared cells below 40 kg.
+    extinction_threshold_factor: 0.1
+    interference: 0.0
   seabirds:
     display_name: "Seabirds"
     is_decision_maker: true
@@ -385,13 +416,13 @@
     energy_content: 7000.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
-    # loader computes for mareld2.yaml (seals and seabirds muted) with
+    # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # r_max 0.10 /yr: Niel & Lebreton on JNCC 552 rates (guillemot 0.08,
     # razorbill/gannet 0.10, kittiwake/gulls 0.11-0.16).
     r_max: 0.10
-    growth_rate: 0.000466172023
+    growth_rate: 0.000466172
     # M = M1 = 0.15 /yr, biomass weighted with juveniles (Leslie Z:
     # guillemot 0.145, kittiwake 0.16, gannet 0.20); no FG preys on
     # seabirds. Was 8.0e-05 (adult-only 0.117 /yr).
@@ -531,9 +562,40 @@ interaction_definitions:
     visibility_floor: 0.95
   seals_preys_on_gadoids:
     preys_on: true
-    predation_mortality: 0.0299
-    assimilation_factor: 0.86
-    handling_time: 20.0
+    # Gadoids carry ~95 % of the seal diet by mass: Skagerrak seals eat
+    # mostly flatfish (46 % of energy, GU 2019 scats), haddock, pollack,
+    # saithe and Norway pout (Soerlie et al. 2020: gadoids + flatfish 87 %
+    # of biomass; Kappa et al. 2026), and the model has no flatfish group.
+    # 15 t of seals at ~5.9 % of body mass per day (own budget; Olesiuk
+    # 1993: 5.0 %) eat ~325 t/yr, ~309 t/yr of it gadoids = 0.12 /yr of
+    # the 2500 t start biomass (section 166; range 0.08-0.18). Was 0.0299.
+    predation_mortality: 0.12
+    # Attack rate as for porpoises -> gadoids (section 151): at the
+    # FG fallback 0.05 the break-even visible gadoid density (0.55 t/km2)
+    # sat at the grid mean (0.69). Starting value; tune toward a 95:5
+    # diet. Default response type (II, two prey): III on the prey that
+    # is nearly the whole diet mainly cuts intake (section 162).
+    max_intake_rate: 0.2
+    # Metabolisable energy (Lawson et al. 1997; Keiver et al. 1984); the
+    # heat increment is paid in feeding_cost. Was 0.86.
+    assimilation_factor: 0.85
+    # Ceiling 1/26 = 15 % of body mass per day = 0.85 MJ/kg/day, 1.5x the
+    # highest routine intake found (0.57 MJ/kg/day, spotted seal
+    # yearlings, Rosen et al. 2021), the porpoise rule. Was 20 (20 %/day).
+    handling_time: 26.0
+    # Harbour seals find resting bottom fish with their vibrissae:
+    # blindfolded seals locate flatfish breathing currents of ~4 cm/s
+    # (Niesterok et al. 2017, JEB 220:174 and 220:2364) and follow fish
+    # wakes up to ~35 s old (Wieskotten et al. 2010), and buried or
+    # cryptic prey dominate Skagerrak scats (sandeel 40 % of otoliths,
+    # Kappa et al. 2026; flatfish 46 % of energy, GU 2019). Floor 0.85
+    # (range 0.75-0.95): resting on the bottom gives gadoids little
+    # protection against seals; at or above porpoises -> gadoids (0.75).
+    # Inferred, not measured (section 167). Was the gadoid default 0.6.
+    # No dark_ratio on either seal pair: no light effect on capture is
+    # documented, and diel timing is left to Rest + the light input.
+    # Source: reports/Sälars jakt i ljus och mörker.md.
+    visibility_floor: 0.85
   seabirds_preys_on_pelagic_fish:
     preys_on: true
     predation_mortality: 0.0236
@@ -757,10 +819,23 @@ interaction_definitions:
     handling_time: 0.0
   seals_preys_on_pelagic_fish:
     preys_on: true
-    predation_mortality: 0.0076
-    max_intake_rate: 0.05
-    assimilation_factor: 0.92
-    handling_time: 20.0
+    # Herring ~5 % of the diet by mass (2.8 % of energy in 2019 scats, GU;
+    # 10 % by Qi in Soerlie et al. 2020; down from ~24 % historically):
+    # ~16 t/yr of 12000 t (section 166). Was 0.0076.
+    predation_mortality: 0.0015
+    # Low attack rate as for porpoises -> herring (section 151): per tonne
+    # herring is worth more than gadoids, so equal rates would make the
+    # seals herring eaters. Starting value; tune toward a 95:5 diet.
+    max_intake_rate: 0.015
+    # Metabolisable energy 85.5-88.7 % on herring (Keiver et al. 1984);
+    # 0.92 was a digestibility. Was 0.92.
+    assimilation_factor: 0.88
+    # Same energy ceiling as the gadoid pair: 0.88 * ~7500 / 35 = 189 vs
+    # 0.85 * 5500 / 26 = 180 MJ/t/tick, ~11 % of body mass per day. Was 20.
+    handling_time: 35.0
+    # Pinnipeds switch prey (Smout et al. 2014; Middlemas et al. 2006):
+    # Type III gives herring a refuge when the seals switch away.
+    functional_response: 3
   seals_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
