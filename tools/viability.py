@@ -29,6 +29,8 @@ sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
 from lib.world.tick_time import add_tick_length_argument  # noqa: E402
+from lib.environments.ecosystem_env.currents import (  # noqa: E402
+    add_current_arguments, current_options)
 from lib.diagnostics import viability  # noqa: E402
 
 
@@ -81,7 +83,8 @@ def build_parser():
                         default=[viability.GREEDY, viability.GREEDY_HIDE,
                                  viability.EAT],
                         help="Comma-separated arms from greedy,greedy_hide,"
-                             "eat,neutral,random,policy "
+                             "greedy_flee,greedy_stay,greedy_hide_stay,"
+                             "greedy_flee_stay,eat,neutral,random,policy "
                              "(default: greedy,greedy_hide,eat).")
     parser.add_argument("--spawn", choices=(viability.SPAWN_COLOCATED,
                                             viability.SPAWN_CONFIGURED),
@@ -98,6 +101,16 @@ def build_parser():
     parser.add_argument("--run-name", "--run_name", dest="run_name",
                         default=None,
                         help="results/<run-name> for --behaviour policy.")
+    parser.add_argument("--mixed-fg", "--mixed_fg", dest="mixed_fg",
+                        type=lambda text: [t.strip() for t in text.split(",")
+                                           if t.strip()],
+                        default=None,
+                        help="Comma-separated decision makers. Each hand-coded "
+                             "--behaviour arm is then run once per group "
+                             "listed, with only that group on the rule and "
+                             "every other DM on the --run-name policies "
+                             "(arm label 'behaviour@group'). Diagnostic only: "
+                             "a mixed arm never decides the verdict.")
     parser.add_argument("--mortality", choices=("on", "off"), default="off",
                         help="Density-independent natural mortality (default: off, "
                              "matching train.py).")
@@ -128,6 +141,9 @@ def build_parser():
                         help="Tick stride for --csv (default: 10).")
     parser.add_argument("--quiet", action="store_true")
     add_mass_balance_argument(parser)
+    # Off by default, as before; a policy trained with currents is only
+    # compared on its own world with --currents on (VIABILITY.md 6).
+    add_current_arguments(parser)
     return parser
 
 
@@ -140,6 +156,7 @@ def _build_env(args, seed):
         mortality_multiplier=args.mortality_multiplier,
         mass_balance=args.mass_balance,
         migration=args.migration == "on",
+        currents=current_options(args),
         tick_hours=args.tick_length,
         library_path=args.library,
     )
@@ -190,13 +207,27 @@ def main(argv=None):
               f"{'on - growth pays for biomass' if args.mass_balance else 'off'}")
         print(f"migration      {args.migration} "
               f"({'open' if args.migration == 'on' else 'closed'} system)")
+        print(f"currents       {args.currents}")
         print(f"criterion      {criterion.describe()}")
         print(f"arms           {', '.join(args.behaviour)}")
         print()
 
+    if args.mixed_fg:
+        if not checkpoint_dir:
+            raise SystemExit("--mixed-fg needs --run-name (the policies "
+                             "that drive every other group)")
+        wrong = [b for b in args.behaviour
+                 if b not in viability.HAND_CODED_BEHAVIOURS]
+        if wrong:
+            raise SystemExit(f"--mixed-fg needs hand-coded arms, got {wrong}")
+        plan = [(b, fg) for b in args.behaviour for fg in args.mixed_fg]
+    else:
+        plan = [(b, None) for b in args.behaviour]
+
     arms, rows, overlap = [], [], []
-    for behaviour in args.behaviour:
-        arm = viability.ArmVerdict(behaviour=behaviour, criterion=criterion)
+    for behaviour, mixed_fg in plan:
+        label = f"{behaviour}@{mixed_fg}" if mixed_fg else behaviour
+        arm = viability.ArmVerdict(behaviour=label, criterion=criterion)
         for index in range(criterion.seeds):
             seed = args.seed0 + index
             started = time.time()
@@ -208,14 +239,18 @@ def main(argv=None):
                 # FAIL cannot be read without knowing whether predator
                 # and prey even started in the same cells.
                 overlap = viability.spawn_overlap(env)
-            provider = viability.install_behaviour(
-                env, behaviour, seed=seed, checkpoint_dir=checkpoint_dir)
+            if mixed_fg:
+                provider = viability.install_mixed(
+                    env, behaviour, mixed_fg, checkpoint_dir, seed=seed)
+            else:
+                provider = viability.install_behaviour(
+                    env, behaviour, seed=seed, checkpoint_dir=checkpoint_dir)
             result = viability.run_rollout(env, criterion.ticks, provider)
             result.seed = seed
             arm.per_seed[seed] = viability.evaluate_seed(result, criterion)
-            rows.append((behaviour, seed, result))
+            rows.append((label, seed, result))
             if not args.quiet:
-                print(f"  [{behaviour}] seed {seed}: {criterion.ticks} ticks "
+                print(f"  [{label}] seed {seed}: {criterion.ticks} ticks "
                       f"in {time.time() - started:.1f} s")
         arms.append(arm)
         if not args.quiet:

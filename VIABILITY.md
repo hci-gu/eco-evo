@@ -140,6 +140,7 @@ the information:
 |---|---|
 | `greedy` - `eat` | what search is worth (and what it costs) |
 | `greedy_hide` - `greedy` | how much survival comes from the predation refuge rather than from energy |
+| `greedy_flee` - `greedy_hide` | what running from predators buys over hiding from them |
 | co-located - configured | how much of the outcome is spawn geometry |
 
 The co-located corner is deliberately *generous*. It answers "can this
@@ -155,6 +156,7 @@ just must not share a column.
     python3 tools/viability.py --spawn configured             # geometry as drawn
     python3 tools/viability.py --migration on --mortality on  # open box
     python3 tools/viability.py --behaviour policy --run-name <run>
+    python3 tools/viability.py --behaviour greedy_stay --mixed-fg zooplankton --run-name <run>
 
 Defaults: `--project mareld2.yaml --grid 20*20 --years 5 --seeds 3
 --behaviour greedy,greedy_hide,eat --spawn colocated --mortality off
@@ -175,6 +177,8 @@ evaluates a reward function:
 |---|---|---|
 | `greedy` | hand-coded gradient ascent: move to the neighbour with the highest reachable intake, otherwise eat. `Rest` only as the mask fallback. | yes |
 | `greedy_hide` | `greedy` plus the two other uses of `Rest` in the engine - cheap metabolism and the predation refuge - under one explicit rule. | yes |
+| `greedy_stay`, `greedy_hide_stay`, `greedy_flee_stay` | the arm without `_stay`, plus a stop rule: a cell that can feed does not climb while its intake at full appetite covers `STAY_COST_RATIO` (1.0) x its feeding cost. | yes |
+| `greedy_flee` | "go towards food, run from predators, eat when hungry": `greedy`, but a cell whose predators outweigh it moves all its mass to the legal neighbour with the least predator biomass (if strictly less), and a cell with a reserve >= 0.95 full rests. Never hides. | yes |
 | `eat` | all action mass on the legal prey in the cell, never move; cells with nothing to eat rest. Maximal intake, zero mobility. | yes |
 | `neutral` | no policy at all: zero logits, so the masked softmax is uniform over the legal actions in each cell. Deterministic. | no |
 | `random` | freshly initialised `PolicyNetwork` per decision maker, seeded. | no |
@@ -347,6 +351,37 @@ Three of the four groups the rig fails are viable with trained
 policies; only `porpoises` fails both. The zoo:phyto ratio settles at
 1.8:1 against 0.44:1 at spawn - the equilibrium is an output, so that is
 a calibration fact about the spawn levels, not a failure.
+
+Measured, `results/pzbpgp248nsrpfix58` (co-evolved, 1x16 tanh, one-year
+rollouts, ~750 updates) against every frozen arm on its own world:
+`mareld2.yaml` with seals muted, library of section 168 (seal entries
+inert), 60x60, `--spawn configured --mortality on --migration on
+--currents on`, 5 years, 3 seeds. Final-year mean / spawn, range over
+seeds (resume section 169):
+
+| fg | greedy | greedy_hide | greedy_flee | eat | trained |
+|---|---|---|---|---|---|
+| phytoplankton | 0.12 | 0.15-0.25 | 0.15-0.23 | 0.14 | 0.59-0.62 |
+| zooplankton | 0.16 | 0.18-0.19 | 0.17-0.18 | 0.16 | 0.72 |
+| benthic_community | 0.13-0.27 | 0.04-0.11 | 0.05-0.07 | 1.24-1.32 | 0.55-0.62 |
+| pelagic_fish | 0.001 | 0.000-0.001 | 0.002 | 0.25 | 0.55-0.59 |
+| gadoids | 0.92-1.03 | 0.17-0.43 | 0.18-0.32 | 0.20-0.24 | 3.2 |
+| porpoises | extinct@43-49 | extinct@47 | extinct@43 | extinct@1755+ | 1.00-1.18 |
+
+The trained policies beat every hand-coded arm for every group, the
+`_stay` arms included (herring 0.01-0.02, zooplankton 0.16-0.17). The
+moving arms lose herring and porpoises the same way: the reachable-payoff
+potential always shows a better cell somewhere, so 90-100 % of the mass
+travels every tick and starves on the way (herring reserve 0.7 -> 0.02
+in 500 ticks). The trained world fails the rig criterion only on
+zooplankton drift (worst seed 3.06, a cycle).
+
+Mixed arms (`--mixed-fg FG --run-name <run>`) put one group on a
+hand-coded rule and leave the rest on the trained policies. On fix58
+only `porpoises` can be replaced (0.97-1.05 vs 1.00-1.18); a rule on
+gadoids reaches 1.35-1.53 vs 3.2, on herring 0.06-0.26 vs 0.55-0.59, on
+zooplankton 0.16 vs 0.72 (the net rests ~78 % of the zooplankton mass,
+every rule eats with all of it). Resume section 169.7-169.9.
 
 Not built yet: the policy arm as a deciding arm, with several seeds and
 the cycle-tolerant stationarity test of section 1. Until then a verdict

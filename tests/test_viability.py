@@ -42,7 +42,11 @@ contracts:
 20. The reachable-payoff potential is a max, not a sum - it peaks at the
     best cell, not at the centre of mass.
 21. ``greedy_hide`` rests where the predation pressure or the energy
-    reserve says so, and is otherwise identical to ``greedy``.
+    reserve says so, and is otherwise identical to ``greedy``;
+    ``greedy_flee`` moves a threatened cell to its safest legal
+    neighbour, rests a sated one, and is otherwise ``greedy``; a
+    ``_stay`` arm does not climb from a cell whose intake pays for its
+    feeding, and a mixed arm overrides one group and nothing else.
 22. Co-location preserves total biomass and cell count, places every
     predator on its prey, and runs bottom up through the food web.
 23. The tick-0 overlap is measured and reported, because a FAIL cannot
@@ -368,6 +372,15 @@ def test_cli_exposes_both_factors_of_the_rig():
     assert alias.spawn == viability.SPAWN_COLOCATED
     assert cli.parse_behaviours("greedy,greedy_hide") == ["greedy",
                                                           "greedy_hide"]
+    assert cli.parse_behaviours("greedy_flee") == ["greedy_flee"]
+    assert cli.parse_behaviours("greedy_flee_stay") == ["greedy_flee_stay"]
+    assert default.mixed_fg is None
+    assert cli.build_parser().parse_args(
+        ["--mixed-fg", "gadoids, porpoises"]).mixed_fg == ["gadoids",
+                                                          "porpoises"]
+    assert default.currents == "off"
+    assert cli.build_parser().parse_args(
+        ["--currents", "on"]).currents == "on"
 
 
 # ------------------------------------------------------------------- 17.
@@ -527,6 +540,127 @@ def test_greedy_hide_rests_under_predation_pressure():
         pytest.skip("no DM is outweighed by its predators in this layout")
     actions = viability._greedy_actions(env, hide=True)
     assert np.all(actions.rest[threatened] == 1.0)
+
+
+def _one_threat_env(prey="pelagic_fish", predator="gadoids", cell=(2, 2)):
+    """``prey`` everywhere, hungry; its only predator biomass in ``cell``."""
+    env = _tiny_env(grid=(6, 6))
+    viability.install_behaviour(env, viability.GREEDY_FLEE)
+    hunters = [fid for fid in env.dm_ids
+               if prey in viability.menus(env)[fid]]
+    assert predator in hunters
+    for fid in hunters:
+        env.fgs[fid].biomass[...] = 0.0
+        env.fgs[fid].energy_reserve[...] = 0.0
+    env.fgs[predator].biomass[cell] = 10.0
+    env.fgs[prey].biomass[...] = 1.0
+    env.fgs[prey].energy_reserve[...] = 0.0
+    return env, env.dm_ids.index(prey)
+
+
+def test_greedy_flee_runs_from_predators_instead_of_hiding():
+    env, i = _one_threat_env()
+    actions = viability._greedy_actions(env, flee=True)
+    y, x = 2, 2
+    assert actions.move[i, :, y, x].sum() == pytest.approx(1.0)
+    assert actions.eat[i, :, y, x].sum() == 0.0
+    assert actions.rest[i, y, x] == 0.0
+    assert np.all(_probabilities(actions).sum(axis=1) == pytest.approx(
+        1.0, abs=1e-5))
+
+
+def test_greedy_flee_stays_greedy_where_nothing_threatens():
+    env, i = _one_threat_env()
+    plain = viability._greedy_actions(env)
+    fleeing = viability._greedy_actions(env, flee=True)
+    calm = np.ones((env.H, env.W), dtype=bool)
+    calm[2, 2] = False
+    assert np.array_equal(plain.move[i][:, calm], fleeing.move[i][:, calm])
+    assert np.array_equal(plain.eat[i][:, calm], fleeing.eat[i][:, calm])
+
+
+def test_greedy_flee_rests_when_sated():
+    env = _tiny_env(grid=(6, 6))
+    viability.install_behaviour(env, viability.GREEDY_FLEE)
+    for i, fid in enumerate(env.dm_ids):
+        env.fgs[fid].energy_reserve = (
+            env.fgs[fid].biomass * env.dm_max_energy_reserve[i]).astype(
+                env.dtype, copy=False)
+    actions = viability._greedy_actions(env, flee=True)
+    biomass = np.stack([env.fgs[fid].biomass for fid in env.dm_ids], axis=0)
+    pressure = viability._predator_biomass_field(env)
+    calm = (biomass > 0) & (
+        pressure < viability.HIDE_PREDATOR_RATIO * biomass)
+    assert np.all(actions.rest[calm] == 1.0)
+    assert np.all(actions.eat.sum(axis=1)[calm] == 0.0)
+
+
+def test_feeding_cost_is_what_the_tick_charges_the_eaters():
+    from lib.environments.ecosystem_env import movement
+    from lib.environments.ecosystem_env.state import ActionProbabilities
+
+    env = _tiny_env(grid=(6, 6))
+    viability.install_behaviour(env, viability.EAT)
+    biomass = np.stack([env.fgs[fid].biomass for fid in env.dm_ids], axis=0)
+    reserve = np.stack([env.fgs[fid].energy_reserve for fid in env.dm_ids],
+                       axis=0)
+    for fid in env.dm_ids:
+        env.fgs[fid].temp_energy_gains = np.zeros_like(env.fgs[fid].biomass)
+    eat = np.zeros((env.N_dm, env.N_all, env.H, env.W), dtype=env.dtype)
+    eat[:, 0] = 1.0
+    actions = ActionProbabilities(
+        move=np.zeros((env.N_dm, 4, env.H, env.W), dtype=env.dtype),
+        rest=np.zeros((env.N_dm, env.H, env.W), dtype=env.dtype), eat=eat)
+    settled = movement.apply_energy_costs(env, actions)
+    rich = reserve > 10.0 * biomass * viability._feeding_cost(env)
+    charged = reserve - settled.stationary_reserve
+    expected = biomass * viability._feeding_cost(env)
+    assert np.any(rich)
+    assert np.allclose(charged[rich], expected[rich], rtol=1e-4)
+
+
+def test_stay_arm_never_climbs_from_a_cell_that_pays():
+    from lib.environments.ecosystem_env import decisions
+
+    env = _tiny_env(grid=(6, 6))
+    viability.install_behaviour(env, viability.GREEDY_STAY)
+    mask = decisions.build_action_mask(env, EAT_START + env.N_all)
+    eat, feeding = viability._eat_shares(env, mask)
+    payoff = viability._intake_payoff(env, shares=eat)
+    pays = (payoff >= viability.STAY_COST_RATIO * viability._feeding_cost(env)
+            ) & feeding[:, 0]
+    plain = viability._greedy_actions(env)
+    staying = viability._greedy_actions(env, stay=True)
+    assert np.all(staying.move.sum(axis=1)[pays] == 0.0)
+    # Where the cell does not pay, the stop rule changes nothing.
+    assert np.array_equal(np.where(pays[:, None], 0, staying.move),
+                          np.where(pays[:, None], 0, plain.move))
+
+
+def test_mixed_arm_overrides_one_group_and_keeps_the_others(monkeypatch):
+    env = _tiny_env(grid=(6, 6))
+    # A seeded random net stands in for a checkpoint.
+    monkeypatch.setattr(viability, "_trained_policies",
+                        lambda env, _dir: viability._random_policies(env, 3))
+    fid = env.dm_ids[0]
+    provider = viability.install_mixed(env, viability.EAT, fid, "unused")
+    # Publishing an action sets the hidden fraction the next observation
+    # reads, so both forward passes must start from the same state.
+    hidden = np.array(env.prev_hidden_frac, copy=True)
+    policy = env.calculate_decisions()
+    env.prev_hidden_frac = hidden
+    mixed = provider(env)
+    rule = viability._eat_actions(env)
+    i = env.dm_ids.index(fid)
+    assert np.array_equal(mixed.eat[i], rule.eat[i])
+    assert np.array_equal(mixed.move[i], rule.move[i])
+    others = [k for k in range(env.N_dm) if k != i]
+    assert np.allclose(mixed.eat[others], policy.eat[others])
+    assert np.allclose(mixed.move[others], policy.move[others])
+    with pytest.raises(ValueError):
+        viability.install_mixed(env, viability.POLICY, fid, "unused")
+    with pytest.raises(ValueError):
+        viability.install_mixed(env, viability.EAT, "phytoplankton", "unused")
 
 
 # -------------------------------------------------------------- 22. - 23.

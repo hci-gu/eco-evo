@@ -55,7 +55,10 @@ layout as about the parameters. The rig therefore separates
 
   * **behaviour** - ``eat`` (maximal intake, zero mobility) vs
     ``greedy`` (climbs the prey gradient, then eats) vs ``greedy_hide``
-    (``greedy`` plus the hiding use of ``Rest``), and
+    (``greedy`` plus the hiding use of ``Rest``) vs ``greedy_flee``
+    (``greedy``, but a threatened cell moves away from its predators
+    instead of hiding, and a sated one rests), each also with a ``_stay``
+    variant that stops climbing while the cell pays for its feeding, and
   * **spawn geometry** - as configured vs co-located, where every
     predator is moved onto the richest cells of its own prey while
     keeping its total biomass *and* its cell count.
@@ -69,6 +72,11 @@ and the difference between them is the information:
   * ``greedy`` - ``eat``          : how much is lost to search,
   * ``greedy_hide`` - ``greedy``  : how much survival comes from
                                     predation refuge rather than energy,
+  * ``greedy_flee`` - ``greedy``  : what running from predators (and
+                                    eating only when hungry) is worth,
+  * ``*_stay`` - ``*``            : what a satisficing stop rule is
+                                    worth over always chasing the best
+                                    reachable cell,
   * co-located - configured       : how much is spawn geometry.
 
 The overlap between each predator and its prey at tick 0 is reported
@@ -91,19 +99,33 @@ NEUTRAL = "neutral"
 EAT = "eat"
 GREEDY = "greedy"
 GREEDY_HIDE = "greedy_hide"
+GREEDY_FLEE = "greedy_flee"
+GREEDY_STAY = "greedy_stay"
+GREEDY_HIDE_STAY = "greedy_hide_stay"
+GREEDY_FLEE_STAY = "greedy_flee_stay"
 RANDOM = "random"
 POLICY = "policy"
-BEHAVIOURS = (NEUTRAL, EAT, GREEDY, GREEDY_HIDE, RANDOM, POLICY)
+BEHAVIOURS = (NEUTRAL, EAT, GREEDY, GREEDY_HIDE, GREEDY_FLEE, GREEDY_STAY,
+              GREEDY_HIDE_STAY, GREEDY_FLEE_STAY, RANDOM, POLICY)
+
+#: The hand-coded arms, i.e. the ones a mixed arm can put on one group
+#: while the trained policies drive the rest.
+HAND_CODED_BEHAVIOURS = (EAT, GREEDY, GREEDY_HIDE, GREEDY_FLEE, GREEDY_STAY,
+                         GREEDY_HIDE_STAY, GREEDY_FLEE_STAY)
 
 #: Arms that are an upper bound on what behaviour can achieve, and may
 #: therefore decide a verdict. ``neutral`` and ``random`` cannot: a
 #: uniform or untrained policy dying proves nothing about the world.
-NORMATIVE_BEHAVIOURS = (GREEDY, GREEDY_HIDE, EAT)
+NORMATIVE_BEHAVIOURS = (GREEDY, GREEDY_HIDE, GREEDY_FLEE, GREEDY_STAY,
+                        GREEDY_HIDE_STAY, GREEDY_FLEE_STAY, EAT)
 
 #: Which arm decides when several were run. ``greedy`` is the normative
-#: corner; ``greedy_hide`` is more generous but can pass for the wrong
-#: reason (resting through the horizon), so it only decides on its own.
-VERDICT_PRECEDENCE = (GREEDY, GREEDY_HIDE, EAT, NEUTRAL, RANDOM, POLICY)
+#: corner; ``greedy_hide`` and ``greedy_flee`` are more generous but can
+#: pass for the wrong reason (resting through the horizon), so they only
+#: decide on their own.
+VERDICT_PRECEDENCE = (GREEDY, GREEDY_HIDE, GREEDY_FLEE, GREEDY_STAY,
+                      GREEDY_HIDE_STAY, GREEDY_FLEE_STAY, EAT, NEUTRAL,
+                      RANDOM, POLICY)
 
 SPAWN_CONFIGURED = "configured"
 SPAWN_COLOCATED = "colocated"
@@ -115,11 +137,19 @@ SPAWN_COLOCATED = "colocated"
 #: of travel costs relative to a tick of feeding.
 TRAVEL_DISCOUNT = 0.85
 
-#: ``greedy_hide`` rests when the predator biomass in the cell reaches
-#: this multiple of the group's own biomass there ...
+#: ``greedy_hide`` rests (``greedy_flee`` moves away) when the predator
+#: biomass in the cell reaches this multiple of the group's own biomass
+#: there ...
 HIDE_PREDATOR_RATIO = 1.0
-#: ... or when the energy reserve is this full, so intake buys nothing.
+#: ... and both rest when the energy reserve is this full, so intake
+#: buys nothing.
 HIDE_SATIATION = 0.95
+
+#: The ``_stay`` arms keep eating where they stand while the cell's
+#: intake at full appetite is at least this multiple of the feeding
+#: cost, and only climb the potential below it. 1.0 = break-even: stay
+#: wherever eating pays for itself (section 169).
+STAY_COST_RATIO = 1.0
 
 
 @dataclass(frozen=True)
@@ -558,7 +588,26 @@ def _neighbour_potential(env, potential):
     return out
 
 
-def _greedy_actions(env, hide=False):
+def _feeding_cost(env):
+    """``(N_dm, H, W)`` MJ per tonne per tick of the eat action.
+
+    Exactly what ``movement.apply_energy_costs`` charges the eating
+    fraction: resting metabolism (with this tick's Q10 multiplier) times
+    ``feeding_cost`` times the impact cost factor of the cell. Same
+    units as :func:`_intake_payoff`.
+    """
+    from lib.environments.ecosystem_env import impacts, interactions
+
+    resting = env.dm_resting_metabolism.astype(env.dtype, copy=True)
+    temperature = interactions.metabolism_temperature(env)
+    if temperature is not None:
+        resting = resting * temperature
+    return ((resting * env.dm_cost_eat)[:, None, None]
+            * impacts.impact_energy_cost_factor(env)).astype(
+                env.dtype, copy=False)
+
+
+def _greedy_actions(env, hide=False, flee=False, stay=False):
     """Hand-coded gradient ascent on prey, with eating at the local max.
 
     Per cell, in order:
@@ -575,6 +624,21 @@ def _greedy_actions(env, hide=False):
     ``Rest`` in the engine are switched on as well - the cheap
     metabolism and the predation refuge - under one explicit rule, so
     the difference between the arms measures what hiding is worth.
+
+    With ``flee`` a sated cell rests as under ``hide`` (eat only when
+    hungry), but a threatened one never hides: it moves with all of its
+    mass to the legal neighbour with the least predator biomass, if that
+    holds strictly less than its own cell, and otherwise acts as
+    ``greedy``. The three rules "go towards food, run from predators,
+    eat when hungry" without the refuge, so ``greedy_flee`` -
+    ``greedy_hide`` is what running buys over hiding.
+
+    With ``stay`` a cell that can feed does not climb while its intake
+    at full appetite is at least ``STAY_COST_RATIO`` times the feeding
+    cost (:func:`_feeding_cost`): it stops at the first cell that pays,
+    instead of chasing the best one in reach. Without it the potential
+    nearly always shows a better cell somewhere, and herring and
+    porpoises starve travelling (section 169).
     """
     from lib.environments.ecosystem_env import decisions
     from lib.environments.ecosystem_env.constants import EAT_START, MOVE_SLICE
@@ -599,6 +663,9 @@ def _greedy_actions(env, hide=False):
     # depletes its own cell, which is how ``porpoises`` first came out
     # *worse* under ``greedy`` than under ``eat``.
     climbing = np.float32(TRAVEL_DISCOUNT) * best_value > payoff
+    if stay:
+        pays = payoff >= np.float32(STAY_COST_RATIO) * _feeding_cost(env)
+        climbing = climbing & ~(pays & feeding[:, 0])
 
     eat = np.where(feeding & ~climbing[:, None, :, :], eat,
                    np.float32(0.0)).astype(env.dtype, copy=False)
@@ -624,13 +691,45 @@ def _greedy_actions(env, hide=False):
             eat = np.where(hiding[:, None, :, :], np.float32(0.0), eat)
             move = np.where(hiding[:, None, :, :], np.float32(0.0), move)
 
+    if flee:
+        biomass_dm = np.stack(
+            [env.fgs[fid].biomass for fid in env.dm_ids], axis=0)
+        reserve = np.stack(
+            [env.fgs[fid].energy_reserve for fid in env.dm_ids], axis=0)
+        pressure = _predator_biomass_field(env)
+        alive = biomass_dm > 0
+        threatened = alive & (
+            pressure >= np.float32(HIDE_PREDATOR_RATIO) * biomass_dm)
+        # Lowest predator biomass among the legal neighbours: negate it
+        # so the -inf of an off-grid or masked direction never wins.
+        safety = _neighbour_potential(env, -pressure)
+        safety = np.where(mask[:, MOVE_SLICE] > 0, safety, -np.inf)
+        safest_direction = np.argmax(safety, axis=1)
+        fleeing = threatened & (-np.max(safety, axis=1) < pressure)
+        full = reserve >= (np.float32(HIDE_SATIATION)
+                           * env.dm_max_energy_reserve[:, None, None]
+                           * biomass_dm)
+        sated = alive & full & ~fleeing
+        if np.any(fleeing):
+            flee_move = np.zeros_like(move)
+            np.put_along_axis(flee_move, safest_direction[:, None, :, :],
+                              np.float32(1.0), axis=1)
+            move = np.where(fleeing[:, None, :, :], flee_move, move)
+            eat = np.where(fleeing[:, None, :, :], np.float32(0.0), eat)
+            resting = resting & ~fleeing
+        if np.any(sated):
+            resting = resting | sated
+            eat = np.where(sated[:, None, :, :], np.float32(0.0), eat)
+            move = np.where(sated[:, None, :, :], np.float32(0.0), move)
+
     rest = resting.astype(env.dtype, copy=False)
-    return ActionProbabilities(move=move, rest=rest, eat=eat)
+    return ActionProbabilities(move=move.astype(env.dtype, copy=False),
+                               rest=rest, eat=eat)
 
 
-def _greedy_provider(hide):
+def _greedy_provider(hide, flee=False, stay=False):
     def provider(env):
-        return _greedy_actions(env, hide=hide)
+        return _greedy_actions(env, hide=hide, flee=flee, stay=stay)
     return provider
 
 
@@ -658,7 +757,51 @@ def install_behaviour(env, behaviour, seed=0, checkpoint_dir=None):
         return _greedy_provider(hide=False)
     if behaviour == GREEDY_HIDE:
         return _greedy_provider(hide=True)
+    if behaviour == GREEDY_FLEE:
+        return _greedy_provider(hide=False, flee=True)
+    if behaviour == GREEDY_STAY:
+        return _greedy_provider(hide=False, stay=True)
+    if behaviour == GREEDY_HIDE_STAY:
+        return _greedy_provider(hide=True, stay=True)
+    if behaviour == GREEDY_FLEE_STAY:
+        return _greedy_provider(hide=False, flee=True, stay=True)
     return _eat_actions
+
+
+def install_mixed(env, behaviour, fg_id, checkpoint_dir, seed=0):
+    """Trained policies for every DM except ``fg_id``, which runs the
+    hand-coded ``behaviour``.
+
+    Answers "can this group's net be replaced by the rule" with every
+    other group as trained, rather than in a world where every group
+    runs the same rule. The policy forward pass runs for all DMs and
+    only ``fg_id``'s slices are overwritten, so the others see exactly
+    the decisions they would have taken.
+    """
+    if behaviour not in HAND_CODED_BEHAVIOURS:
+        raise ValueError(
+            f"mixed arm needs a hand-coded behaviour, got {behaviour!r}; "
+            f"expected one of {HAND_CODED_BEHAVIOURS}")
+    if fg_id not in env.dm_ids:
+        raise ValueError(
+            f"{fg_id!r} is not an active decision maker "
+            f"({', '.join(env.dm_ids)})")
+    install_behaviour(env, POLICY, seed=seed, checkpoint_dir=checkpoint_dir)
+    rule = install_behaviour(env, behaviour, seed=seed)
+    # install_behaviour(POLICY) leaves env.policies in place and the
+    # hand-coded arm does not touch them, so the forward pass still runs.
+    i = env.dm_ids.index(fg_id)
+
+    def provider(env):
+        actions = env.calculate_decisions()
+        override = rule(env)
+        move, rest, eat = (actions.move.copy(), actions.rest.copy(),
+                           actions.eat.copy())
+        move[i], rest[i], eat[i] = override.move[i], override.rest[i], \
+            override.eat[i]
+        return type(actions)(move=move, rest=rest, eat=eat)
+
+    return provider
 
 
 # ---------------------------------------------------------- spawn geometry

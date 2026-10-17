@@ -15311,3 +15311,120 @@ remain open exactly as described in 71.9 / 71.11.
     individual specialisation); the fit used fix60's policy-shaped
     fields; and the ~4 % assumes a greedy seal. Test: the retrained
     diet. Below ~3 % herring raise a toward 2e-4, above ~10 % lower it.
+
+169 HAND-CODED HEURISTICS VS A TRAINED POLICY; greedy_flee ARM (2026-10-17)
+================================================================
+
+169.1 Question (user): is the behaviour not just "go towards food, run
+    from predators, eat when hungry", so that shorter rollouts or a
+    plain heuristic would do as well as the trained nets (fix58)?
+169.2 New arm greedy_flee (lib/diagnostics/viability.py): greedy, but a
+    cell whose predator biomass >= its own (HIDE_PREDATOR_RATIO) moves
+    all its mass to the legal neighbour with the least predator biomass
+    if that is strictly less (otherwise greedy), and a cell with reserve
+    >= 0.95 full rests (HIDE_SATIATION). It never hides. Normative like
+    greedy_hide; verdict precedence greedy > greedy_hide > greedy_flee.
+    tools/viability.py gains the --currents flags (default off, as
+    before) so a policy trained with currents is compared on its own
+    world. Tests: three new cases in tests/test_viability.py (21).
+169.3 Setup: mareld2.yaml copy with seals muted and absolute map paths
+    (= fix58's world; seal entries in the library are inert when
+    muted; 165 bycatch may or may not have been in fix58's run),
+    60x60, --spawn configured --mortality on --migration on --currents
+    on, 5 years, 3 seeds, arms greedy, greedy_hide, greedy_flee, eat,
+    policy (fix58). ~1-1.5 min per seed per arm on CPU.
+169.4 Final-year mean / spawn (range over seeds):
+      fg            greedy     hide       flee       eat        fix58
+      phyto         0.12       0.15-0.25  0.15-0.23  0.14       0.59-0.62
+      zoo           0.16       0.18-0.19  0.17-0.18  0.16       0.72
+      benthos       0.13-0.27  0.04-0.11  0.05-0.07  1.24-1.32  0.55-0.62
+      herring       0.001      0.000-.001 0.002      0.25       0.55-0.59
+      gadoids       0.92-1.03  0.17-0.43  0.18-0.32  0.20-0.24  3.2
+      porpoises     ext@43-49  ext@47     ext@43     ext@1755+  1.00-1.18
+    Mean log(B/B0) over the 5 years (the training reward's shape),
+    herring: greedy -5.5, flee -5.0, eat -1.5, fix58 +0.17; porpoises
+    -23 for every moving arm, +0.05 for fix58. The trained policies
+    beat every hand-coded arm for every group. fix58 fails the rig
+    criterion only on zooplankton drift (worst seed 3.06, a cycle);
+    gadoids settle at 3.2x spawn.
+169.5 Why the heuristics lose (traces, seed 20260530):
+    - Perpetual travel. Under greedy the herring put 95-98 % of their
+      mass on move from tick ~100 and their reserve falls 0.7 -> 0.02
+      by tick 500: the reachable-payoff potential (max over the grid,
+      0.85 per km) always shows a better cell than the depleted one
+      they stand on. Porpoises do the same from tick 3: the greedy
+      herring dissolve the dense patches the porpoises spawn on (101 ->
+      13 t/cell in three ticks), after which 0.85 * best neighbour
+      (~196) beats the local payoff (<20) forever and they starve
+      walking (extinct@43-49). Under eat (no movement) porpoises live
+      ~1755+ ticks. The move-vs-stay threshold is what the nets learned
+      and the heuristic got wrong.
+    - No restraint at the bottom. Every arm's zooplankton eats with
+      all its mass and holds phyto at 0.12-0.25x; under fix58 phyto
+      sits at 0.6x and zoo at 0.72x (section 123 saw the same with
+      fix35).
+    - Flee vs hide is NOT tested by this run: both are within seed
+      noise, but herring and porpoises starve from travelling before
+      predation pressure matters, so the comparison is masked by the
+      move rule (the same rule killed porpoises in 121.3).
+169.6 Reading: the behaviours are simple in kind (fix58 is a 1x16
+    memoryless per-cell map, and section 87.3 / fix58's log show most
+    learning in the first ~50 updates), but the THRESHOLDS - when to
+    stop moving, how hard to graze - decide the outcome, and the
+    obvious hand-coded rules set them badly. A satisficing heuristic
+    (stay while intake covers the cost) was not tried; it would be the
+    fair next arm. The rig still applies one heuristic to every DM at
+    once; whether a heuristic can replace the net for one group alone
+    needs a mixed arm (policy for the rest).
+169.7 Follow-up (user: "do the next steps"). Two additions to the rig:
+    - _stay arms (greedy_stay, greedy_hide_stay, greedy_flee_stay): a
+      cell that can feed does not climb while its intake at full
+      appetite is >= STAY_COST_RATIO (1.0, break-even) x the feeding
+      cost the tick charges (_feeding_cost: resting metabolism x Q10 x
+      feeding_cost x impact factor). Stops at the first cell that pays.
+    - Mixed arms (install_mixed, tools/viability.py --mixed-fg FG,...):
+      fix58 policies for every DM except FG, which runs the hand-coded
+      arm. Label behaviour@FG; diagnostic, never decides the verdict.
+    Tests: feeding cost equals what apply_energy_costs charges; a stay
+    cell that pays never moves and the rule changes nothing elsewhere;
+    a mixed arm overrides exactly one group.
+169.8 Results, same world and seeds as 169.3. Final-year mean / spawn
+    (seed range), all DMs on the rule:
+      fg            greedy_stay  hide_stay  flee_stay  fix58
+      phyto         0.12         0.13-0.14  0.15-0.16  0.59-0.62
+      zoo           0.16         0.16       0.17       0.72
+      benthos       0.45-0.62    0.83-0.88  0.14-0.40  0.55-0.62
+      herring       0.01         0.01       0.01-0.02  0.55-0.59
+      gadoids       0.53-0.64    0.21-0.24  0.27-0.31  3.2
+      porpoises     0.34-0.40    0.02-0.03  0.07-0.21  1.00-1.18
+    The stop rule ends the travel starvation (herring 1.05x and
+    porpoises alive at 400 ticks) but herring still collapse within
+    the 5 years, starved through the zooplankton the rule overgrazes.
+    One group on the rule, fix58 on the rest (own group's final-year
+    ratio; best rule; fix58 in brackets):
+      porpoises  0.97-1.05 any stay rule   (1.00-1.18)  replaceable
+      gadoids    1.35-1.53 stay rules      (3.2); herring then rise to
+                 4.6-4.9x, zoo falls to 0.39
+      herring    0.26 eat, 0.06-0.11 stay rules (0.55-0.59)
+      zoo        0.16 eat/stay (0.72); phyto 0.13, herring 0.23-0.26,
+                 gadoids 1.0-1.15; hide_stay@zoo diverges by seed (zoo
+                 0.00-0.15)
+169.9 What the nets do that the rules do not (year 2, seed 20260530,
+    biomass-weighted action shares, tools: scratch shares.py):
+      fix58:         zoo rest 0.78 eat 0.21; herring rest 0.20 eat 0.70
+                     move 0.09, reserve fill 0.73; gadoids eat 0.97
+                     move 0.03; porpoises eat 1.00
+      stay@zoo:      zoo rest 0.00 eat 1.00 (same reserve fill 0.52)
+      stay@herring:  herring rest 0.00 move 0.23, reserve fill 0.42
+      stay@gadoids:  gadoids move 0.00 (a cell that pays on benthos or
+                     zoo never leaves for herring)
+    Reading: porpoises (no predators, one prey field) are the only
+    group a plain rule replaces. The other three need a group-specific
+    setting the rules get wrong in opposite directions: zooplankton
+    must rest ~80 % (restraint plus refuge; the hide rule never fires
+    because herring rarely outweigh zoo in a cell), herring must stop
+    travelling sooner and rest some, and gadoids must NOT stop at the
+    first cell that pays but keep searching for herring. A per-group
+    threshold sweep would be hand-doing what ARS does. Caveat: the
+    other groups' nets were co-evolved with fix58's version of the
+    replaced group, which favours the net in a mixed arm.
