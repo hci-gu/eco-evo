@@ -15428,3 +15428,202 @@ remain open exactly as described in 71.9 / 71.11.
     threshold sweep would be hand-doing what ARS does. Caveat: the
     other groups' nets were co-evolved with fix58's version of the
     replaced group, which favours the net in a mixed arm.
+
+170 THE TRAINED ZOOPLANKTON POLICY AGAINST COPEPOD BIOLOGY (2026-10-17)
+================================================================
+
+170.1 Question (user): how well does the model's zooplankton policy
+    match reality? fix58 policies in fix58's world (169.3), 3 seeds,
+    3 years with the first discarded. New probes (untracked, like the
+    rest of tools/probes): zoo_behaviour.py (monthly / diel / binned
+    action shares, stocks, ration, grazing vs gross production) and
+    zoo_tradeoff.py (per cell: what eating instead of resting gains a
+    unit of zooplankton vs what it risks from herring). Literature is
+    the existing notes, no new search: research_notes/Sillens
+    vinterfoda/zooplankton_refuge.md (DVM, time budget, refuge),
+    .../winter_food_and_feeding.md (SHARK A17 seasonal stock),
+    Zooplankton energibudget/copepod_energetics.md (ration, hunger,
+    zoo:phyto), Litteraturbaserad growth rate per FG/plankton.md
+    (grazing share of PP).
+170.2 What the zooplankton can perceive: own biomass and energy,
+    phytoplankton (cell + 4 neighbours) and the light level. It does
+    NOT observe herring, so no predator-dependent behaviour is
+    possible (field copepods start/stop DVM within 12-24 h of fish
+    being added/removed, Bollens & Frost 1991).
+170.3 Measured (mean of 3 seeds; seed spread of the annual rest share
+    0.771-0.776):
+      month  rest  eat   move  vis_h  zoo t/km2 phyto t/km2 ration/d grazed/prod grazed/stock/d
+      Jan    0.67  0.33  0.00  0.68   0.8       10.1        0.26     0.89        0.022
+      Apr    0.79  0.18  0.03  0.62   9.8       13.3        0.16     1.00        0.117
+      Jun    0.79  0.16  0.05  0.62   12.7      13.6        0.14     1.00        0.133
+      Sep    0.82  0.18  0.00  0.61   6.2       12.4        0.16     1.02        0.077
+      Nov    0.83  0.17  0.00  0.61   1.9       10.3        0.14     1.13        0.026
+      year   0.77  0.21  0.02  0.63   6.3       12.1        0.18     1.00        0.078
+    (vis_h = share visible to herring where herring are, floor 0.5;
+    ration = t phyto per t zooplankton per day, x 4800/4500 in body
+    energy; reserve fill before the decision 0.51 everywhere, the
+    growth step drains it to u each tick, so hunger cannot be read.)
+    Diel: eat share per 6 h block (00-06, 06-12, 12-18, 18-24):
+    DJF .30 .21 .31 .43; MAM .11 .13 .22 .29; JJA .12 .12 .20 .23;
+    SON .14 .14 .21 .24. Night/day eat ratio by sun elevation 1.42
+    (DJF), 1.17, 1.08, 1.08. Rest vs herring:zoo ratio in the cell:
+    0.82 at < 0.01, 0.74 at > 1 (falls where herring are; correlation,
+    the policy cannot see them).
+170.4 Individual trade-off (zoo_tradeoff.py): eating instead of resting
+    gains 0.12-0.13 of the unit's biomass per tick in energy (intake at
+    its appetite minus the extra feeding cost, priced at 4838 MJ/t =
+    energy content + reserve at u; capped by growth it is still
+    <= 0.064), while the extra herring risk of being visible is
+    0.0002-0.002 per tick (0.006-0.018 on winter/autumn days; the
+    estimate is 0.67-0.94 of the realised herring intake). Eating pays
+    in 99.99-100 % of the zooplankton biomass, yet 62-83 % of it rests.
+    The rest is not anti-predator and not individually rational: it is
+    group restraint learned from the group-energy reward (with a rule
+    that eats, phyto 0.13 and zoo 0.16 of spawn, section 169.8). The
+    restraint holds phytoplankton at 10-13.6 t/km2 against K 24, i.e.
+    at ~K/2 where logistic production peaks - the harvest optimum of a
+    group, not of an individual. Caveats: the risk counts herring only
+    (gadoids also eat zooplankton, M2 0.089 /yr, too small to close a
+    30-600x gap); there are no individuals, so "individual" means a
+    marginal unit of the cell's biomass.
+170.5 Against the literature:
+    - Time budget: eat 16-34 % (year 21 %) vs 27-99 % (median ~51 %)
+      for non-ambush Skagerrak copepods (Tiselius & Jonsson 1990),
+      81-98 % for Acartia (Saiz 1994). Low, but the 6 h tick is
+      linear in the eat share, so a time budget is weakly defined;
+      the ration is the better test.
+    - Ration 0.14-0.28 t/t/day (0.15-0.30 body energy/day): inside
+      the field range (C. finmarchicus ~19-40 % body C/d; lab max
+      median 0.44 at 10 C). Plausible. But it is HIGHEST in Jan-Feb,
+      where real copepods eat least (low food, Calanus absent or in
+      diapause), because model phyto barely drops in winter.
+    - Diel: the clean test is by sun elevation: night/day eat ratio
+      1.08-1.42 against ~3x (Durbin et al. 1990; nocturnal feeding,
+      Daro 1988). The 6 h blocks rise through the day in MAM-SON
+      (min 00-12, max 18-24), most likely following the phytoplankton's
+      own light-driven daily cycle (production by day only), which the
+      zooplankton observes; not tested. 6 h ticks limit resolution. Rest by night 0.63-0.81
+      protects where nature has no refuge (double count with
+      dark_ratio, small in absolute terms).
+    - Refuge: visible to herring 0.61-0.69 vs the literature daytime
+      0.65-0.9 (summer) / 0.5-0.8 (winter) - consistent since the
+      floor went to 0.5 (section 162).
+    - Predator response: none possible (170.2).
+    - Seasonality of behaviour: rest highest Sep-Nov (0.82-0.83),
+      lowest Jan-Feb (0.66-0.67). Neritic copepods do not go dormant
+      on the bank; the Calanus diapause (Aug/Sep-Jan) happens in the
+      Norwegian Trench. A superficial match at best, for a different
+      reason (food per capita).
+    - Stock: annual mean 6.3 t/km2 vs A17 0-25 m 7.1-10.0; winter
+      0.8 vs 1.2-1.7; peak Jun 12.7 vs May 26-36. Level right, peak
+      late and 2-3x low (as in the winter-food note).
+    - Grazing: 1.5-13 % of the phytoplankton stock per day (summer
+      12-13 %). That grazing equals gross production (0.89-1.13 per
+      month) is a tautology of a near-stationary stock with one loss
+      term, not a finding.
+      Literature: mesozooplankton 6 % (mode) / 22.6 % (mean) of PP
+      (Calbet 2001), central North Sea 3-14 %, Kattegat/Skagerrak
+      < 4 % of stock per day (summer up to 48 % of PP). Even taking the
+      model's r as net of microzooplankton grazing (plankton.md), 15-57
+      % would be the comparable share: the model's phytoplankton is
+      top-down controlled (stock ~K/2, not near K). Phytoplankton stock is nearly flat
+      over the year (9.8-13.6 t/km2), with no spring bloom, against a
+      ~10-fold seasonal PP cycle in the region.
+170.6 Reading: the policy's numbers that matter for the rest of the
+    food web (stock level, ration, visible share) are in or near the
+    literature ranges, but for the wrong reason. The behaviour is a
+    commons restraint that real copepods do not show (selection acts
+    on individuals, and a unit that eats where eating pays outgrows
+    one that holds back); it compensates for a phyto-zoo structure in
+    which nothing but zooplankton grazing controls phytoplankton and
+    zooplankton can track phytoplankton without a generation lag, so
+    an eating zooplankton suppresses the bloom. The density-dependent
+    zooplankton M1 is NOT the fix (gamma ~ 0 in the Taethetsberoende
+    report). Candidate structural directions, untested: phytoplankton
+    losses other than mesozooplankton grazing (sinking, lysis,
+    microzooplankton as an explicit sink), a recruitment lag in the
+    zooplankton growth, or a reward that does not credit a group for
+    restraint. Weak links: hunger and food dependence cannot be read
+    (fill and phyto have no spread); 6 h ticks blur the diel test;
+    one checkpoint.
+
+171 WHY THERE IS NO PHYTOPLANKTON SPRING BLOOM (2026-10-17)
+================================================================
+
+171.1 Question (user): why does the phytoplankton have no spring bloom?
+    Under fix58 (170) the stock is 9.8-13.6 t/km2 all year (max/min
+    1.4, peak June), although the light growth factor of section 138
+    runs 0.10 (Dec) - 1.14 (Jun), a ~10x cycle in the growth RATE.
+171.2 Observed (SHARK, A17 58.28 N 10.51 E, 2010-2023, 0-10 m bottle
+    mean per visit, monthly mean / median, n 8-14 visits per month;
+    POST https://shark.smhi.se/api/sample/download, tableView
+    sharkdata_physicalchemical, dataTypes ["Physical and Chemical"],
+    stationName ["A17" with the Swedish ring]):
+      month       J    F    M    A    M    J    J    A    S    O    N    D
+      chl ug/l   1.21 3.88 3.28 1.48 0.94 0.80 0.46 0.65 0.79 1.81 1.54 0.77
+      (median)   0.60 1.07 1.47 1.28 0.97 0.67 0.43 0.63 0.67 1.43 1.40 0.60
+      NO3 umol/l 4.90 5.13 2.60 0.43 0.14 0.11 0.10 0.10 0.10 0.24 1.00 3.37
+      SiO3       4.71 5.12 1.43 1.17 1.06 0.51 0.25 0.63 0.97 1.82 1.77 4.36
+    Bloom Feb-Mar (mean 8.4x the July minimum, median 3.4x; monthly
+    sampling misses short peaks), second peak Oct-Nov, summer MINIMUM
+    in July when nitrate sits at the detection limit (0.1) from May to
+    September. Chl is not carbon (C:chl rises in summer light), so the
+    carbon amplitude is somewhat smaller, but the phase is clear: the
+    model's summer maximum is the real summer minimum.
+171.3 Experiments (tools/probes/phyto_bloom.py, fix58 policies frozen,
+    fix58 world, 2 seeds, 3 years with the first discarded; phyto
+    t/km2 by month J..D, max/min):
+      base        10.1 11.5 13.1 13.4 13.5 13.6 13.3 13.0 12.4 11.5 10.3  9.8   1.4  (Jun)
+      nograze     20.9 22.2 23.3 23.6 23.6 23.6 23.6 23.5 23.3 23.0 22.2 21.1   1.1  (K = 24)
+      eat (zoo)    3.1  3.8  3.1  2.5  2.5  2.6  2.8  2.9  2.9  3.0  2.7  2.8   1.5  (Feb)
+      loss 0.005   7.6 11.6 15.9 14.4 13.4 13.3 13.1 12.7 12.0 10.9  9.4  7.8   2.1  (Mar)
+      loss 0.01    2.7  4.5 14.7 20.1 20.7 19.8 18.0 16.3 12.7 10.5  7.5  4.2   7.7  (May)
+      loss 0.02    0.1  0.1  0.7 10.0 17.3 17.6 17.0 15.7 12.7  8.6  3.3  0.7   219  (Jun)
+    (loss = extra phytoplankton loss per tick after growth.) In base,
+    grazing per day equals the specific growth per day in every month
+    within ~5 % (Jan 0.021/0.024, Jun 0.132/0.134); the zooplankton
+    cycle (0.8 -> 12.7 t/km2, 15x) carries the seasonality instead.
+    With loss 0.01 the frozen zooplankton is ~0 from January to May
+    and recovers only in summer (3.4); with 0.02 it dies. The bloom
+    appears exactly when the grazer is absent in spring: so it did in
+    138.5 (all-eat arm, zooplankton ~0 Feb-Apr, phyto 0.02 -> 1.26),
+    while eat@zoo here keeps 0.2-0.3 t/km2 of zooplankton through the
+    winter and stays flat.
+171.4 Reading, three mechanisms:
+    (a) The phytoplankton has no loss of its own. Logistic growth with
+        a light factor >= 0 can never be negative, so light only sets
+        how fast the stock is replaced, not where it sits: alone it
+        stays at K all year (nograze, 1.1x). Winter decline in nature
+        comes from respiration, sinking and lysis exceeding light-
+        limited growth; here only grazing can lower the stock.
+    (b) The zooplankton absorbs the production. It tracks the
+        phytoplankton without a lag and grazes what grows each month,
+        holding the stock near K/2 (170.4); the seasonal forcing moves
+        one trophic level up (a 2-level chain with top-down control has
+        a prey level independent of productivity). With a zooplankton
+        that always eats, the stock sits lower (2.5-3.8) but is just as
+        flat.
+    (c) No nutrients. K is one constant, so nothing ends a bloom: the
+        summer has the most light and the highest production, and the
+        stock stays highest there. In reality nitrate is used up by
+        April and the summer is the minimum.
+    A loss term alone (0.01-0.02/tick = 0.04-0.08 /day, inside
+    respiration-plus-sinking ranges) does create a large cycle, but it
+    peaks Apr-Jun (light), not Feb-Mar, keeps the summer high, and the
+    frozen zooplankton cannot survive the low winter stock - a retrain
+    and a recalibration would be needed: growth_rate is derived from
+    the April dilution rate, which is already net of some of these
+    losses, so a loss term needs r raised to keep the April net rate.
+    The Feb-Mar timing and the summer minimum need a nutrient pool
+    (winter replenishment, drawdown by growth; 138.7 listed "no
+    nutrients" as open, 171.2 puts data under it). A third candidate
+    is the grazer lag: the zooplankton growth_rate is not temperature
+    scaled (the Q10 of section 143 acts only on action costs in
+    movement.apply_energy_costs, so winter is CHEAPER for it, m
+    0.74-0.80 Jan-Apr), whereas copepod growth has a 3-4x seasonal
+    range from temperature alone (Hirst & Bunker 2003: 0.039 /d at
+    5 C vs 0.128 at 15 C; plankton.md section 5). Real copepods at
+    5-6 C cannot follow a February bloom; the model's can. Ranking:
+    (a) is necessary (light alone gives 1.1x), (c) sets the phase,
+    (b) sets the level and erases what amplitude is left. Not
+    implemented; nothing in engine or library changed.
