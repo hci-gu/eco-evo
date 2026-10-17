@@ -64,8 +64,9 @@ fabricates mass.
 - Decision makers (have a policy net): `zooplankton`, `pelagic_fish`, `gadoids`,
   `porpoises`, `seals`, `seabirds`. `mareld2.yaml` mutes only `seabirds`;
   seals (harbour seals only) are on since section 166 and spawn on
-  gadoids, which carry ~95 % of their diet (pair attack rates 0.2 vs
-  herring 0.015, as for porpoises in section 151).
+  gadoids, which carry ~95 % of their diet (pair attack rates 0.2,
+  Type II, vs herring 1e-4, Type III - a Type III `a` is per (t/cell)^2;
+  0.015 made fix60's seals 85 % herring eaters, section 168).
 - Non decision makers (logistic growth toward carrying capacity):
   `phytoplankton`, `benthic_community`.
 - English snake_case IDs are canonical.

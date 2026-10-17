@@ -15230,3 +15230,84 @@ remain open exactly as described in 71.9 / 71.11.
     OK. Open: reanalyse the public Vance et al. 2021 Wadden Sea capture
     timings by day/night for a measured dark_ratio; floor sensitivity
     at the range ends.
+
+168 SEAL DIET: TYPE III ATTACK RATE ON HERRING (2026-10-17)
+168.1 Trigger: pzbpgp248nsrpfix60 (train_gpu, seals on since 166; same
+    flags as fix58/59). Gen 8: every DM except zooplankton survives the
+    probe year; seals 0.93-1.11 of B0. Frozen copies of its policies
+    (12:00 and 17:58) in the probe world, 3 seeds:
+    - Realised intake per pair (new tools/probes/pair_intake.py, reads
+      env.intake_by_pred_prey per tick): seals ate 84-88 % herring by
+      mass (88 % of energy), 16 % gadoids. Realised M2 seals->gadoids
+      0.012 /yr vs the budget's 0.12 (x0.10); seals->herring 0.014 vs
+      0.0015 (x9). Porpoises close to target (gadoids x0.8-1.1).
+    - The policy chose it: 83-85 % of the seals' eat mass on herring;
+      seals stood on herring patches (raw 13-20 t/cell, 4-5x the grid
+      mean; visible 6-7) with 1.6-1.8 t/cell of gadoids there.
+    - 15 years (17:58 checkpoint): seals grow at r_max, 0.10-0.12 /yr
+      every year, to 4.0-4.7x B0 (20x at ~27 years); porpoises fall to
+      0.27-0.39 from year 6; gadoids cycle 1.1-3.2x. Food never limits
+      the seals: they live off a 12-20 kt herring stock.
+    - Gadoids -> benthos realised M2 0.32 /yr vs the library's 0.0048
+      is NOT an overconsumption: 1.3 t/km2/yr eaten vs 0.15-2 from
+      Ecopath (0.3-1.3 % of a 45-150 t/km2 stock's production); the
+      model's benthos stock is 10-35x smaller (K 10, section 136), and
+      the benthos growth rate is hand-set, so 0.0048 is inert.
+168.2 Cause: seals_preys_on_pelagic_fish has functional_response 3 but
+    kept max_intake_rate 0.015 from the porpoise Type II pair (section
+    151). Under Type III, a is per (t/cell)^2 and the effective rate
+    is a*B: ~0.1 at 7 t/cell, half the gadoid pair's 0.2, and the
+    half-saturation 1/sqrt(a h) = 1.4 t/cell put herring patches at the
+    ceiling. Herring was also fat (seal-weighted 8000 MJ/t vs static
+    6600), so it beat gadoids in ~80 % of the seals' cells. The h
+    equalisation in 166 (189 vs 180 MJ/t/tick) only holds at saturation
+    with reference-fill herring; the floor argument in 167.3 only at the
+    grid-mean density.
+168.3 Calibration on the fix60 prey fields (one year, 2 seeds, every
+    4th tick; visible biomass per seal pair, herring reserve per cell):
+      form  a       E_h>E_g in cells   top-1 % herring cell vs   greedy
+                    with gadoids>0.138  median gadoid cell (MJ)   herring %
+      III   0.015   0.35                233 vs 138                79-82
+      III   0.001   0.13                200 vs 138                45-50
+      III   3e-4    0.05                155-164 vs 138-140        18-20
+      III   1e-4    0.01                100-110 vs 138-140        4
+      II    0.001   0.00                 80-85 vs 138-140         3
+    ("greedy" = a seal eating the better prey in its own cell.)
+    APPLIED: seals_preys_on_pelagic_fish max_intake_rate 0.015 -> 1e-4
+    (Type III kept, literature: pinnipeds switch). Half-saturation now
+    17 t/cell. A FITTED value (see 168.6), range 1e-4 - 2e-4 for 3-10 %
+    herring by mass. Budget, s* and growth rates unchanged (the ceiling 1/h is
+    what s* uses); budget_gate: herring alone "unreachable" (low-quality
+    food, intended), seals "any diet". Not changed: h, assimilation,
+    predation_mortality (still the 95:5 target).
+168.4 Checks: full suite 1148 passed / 12 skipped; train.py 1-gen seals
+    smoke OK; viability greedy/configured 2 years: seals PASS 1.19x
+    (herring and porpoises fail that frozen arm as before). Frozen fix60
+    policies on the new library: the herring habit starves the seals
+    out within the year (end 0.00-0.01, mean 0.26-0.29), so the seal
+    policy must be retrained; a fresh seal policy may learn faster than
+    one initialised from fix60. No observation change.
+168.5 Open: (a) measure the retrained diet against 95:5 with
+    tools/probes/pair_intake.py; (b) seals still have no density
+    dependence: near K (Carroll et al. 2025: x = 0.90 today, mu 0.28
+    /yr) they should grow ~0-0.03 /yr, not r_max. Once their diet runs
+    through the 2500 t gadoid stock, measure whether food limitation
+    brings that down before adding a term; if one is needed it belongs
+    on growth (pups, fecundity), not on adult M1.
+168.6 Is 1e-4 biologically defensible? As a calibration, yes; as a
+    measurement, no. For: the TARGET is literature (herring 3-10 % of
+    the Skagerrak harbour seal diet: 2.8 % of energy in 2019 scats, Qi
+    10 % in Soerlie 2020); the mechanism is real (seals forage on the
+    bottom with their vibrissae, herring school in the water column, and
+    the model's single layer per cell co-locates them far more than in
+    reality; a low a is the only place to put that separation); Type III
+    keeps prey switching, so herring patches above ~17 t/cell can still
+    draw seals; and the old 0.015 was no literature value either (a
+    Type II porpoise rate in the wrong units). Against: the per-tonne
+    selectivity it implies (a*B / 0.2 = 1/670 at 3 t/cell, 1/290 at 7,
+    1/120 at 17) is stronger than the empirical (5 %/12000 t) / (95 %/
+    2500 t) ~ 1/90, because the policy maximises energy and access has
+    to carry the whole avoidance (real seals add preference and
+    individual specialisation); the fit used fix60's policy-shaped
+    fields; and the ~4 % assumes a greedy seal. Test: the retrained
+    diet. Below ~3 % herring raise a toward 2e-4, above ~10 % lower it.

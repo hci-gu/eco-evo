@@ -823,10 +823,24 @@ interaction_definitions:
     # 10 % by Qi in Soerlie et al. 2020; down from ~24 % historically):
     # ~16 t/yr of 12000 t (section 166). Was 0.0076.
     predation_mortality: 0.0015
-    # Low attack rate as for porpoises -> herring (section 151): per tonne
-    # herring is worth more than gadoids, so equal rates would make the
-    # seals herring eaters. Starting value; tune toward a 95:5 diet.
-    max_intake_rate: 0.015
+    # Fitted to the diet target, not measured (as the porpoise rates,
+    # section 151). Mechanism: harbour seals forage on the bottom with
+    # their vibrissae, herring school in the water column; the model has
+    # one layer per cell, so a low a stands in for the missing vertical
+    # habitat separation. Type III attack rate, per (t/cell)^2: the
+    # effective Type II rate is a * B. The first value, 0.015, was the
+    # porpoise Type II rate in the wrong units; at the 6-7 t/cell of
+    # visible herring the seals stood on it gave a * B ~ 0.1, and fat
+    # herring (~8000 MJ/t) beat gadoids in ~80 % of the seals' cells:
+    # fix60 seals ate 84-88 % herring by mass (section 168). 1e-4 puts the
+    # half-saturation 1/sqrt(a h) at 17 t/cell; on the fix60 prey fields a
+    # seal eating the better prey in its cell takes ~4 % herring by mass
+    # (3e-4: ~19 %). Range 1e-4 - 2e-4 for 3-10 % herring; retune against
+    # the retrained diet (tools/probes/pair_intake.py). Weak points: the
+    # per-tonne selectivity (1/120 - 1/670 of the gadoid rate at 17-3
+    # t/cell) is stronger than the empirical ~1/90, and the fit used
+    # fix60's policy-shaped fields and a greedy seal.
+    max_intake_rate: 0.0001
     # Metabolisable energy 85.5-88.7 % on herring (Keiver et al. 1984);
     # 0.92 was a digestibility. Was 0.92.
     assimilation_factor: 0.88
