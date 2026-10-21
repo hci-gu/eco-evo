@@ -195,3 +195,24 @@ def test_functional_response_must_be_two_or_three():
         groups[fid] = fg
     with pytest.raises(ValueError, match="functional_response"):
         EcosystemEnvironment(dict(height=1, width=1), groups)
+
+
+def test_zooplankton_switches_away_from_scarce_microzooplankton():
+    """Section 178: the live zooplankton -> microzooplankton pair is Type
+    III (prey switching), its phytoplankton pair stays Type II.
+
+    With Type II the trained zooplankton of fix62 grazed the
+    microzooplankton to 1e-18 in two weeks of March and it never came
+    back; the Type III refuge is what keeps it in the world.
+    """
+    fgs = setup_full_mareld_mvp(grid_size=(8, 8), seed=0, spawn_seed=0)
+    if not {"zooplankton", "microzooplankton", "phytoplankton"} <= set(fgs):
+        pytest.skip("plankton groups not in the project configuration")
+    env = EcosystemEnvironment({'width': 8, 'height': 8, 'cell_size': 1000.0,
+                                'tick_duration': 6.0}, fgs, {})
+    env._build_static_caches()
+    mask = np.asarray(env._type3_pred_mask).reshape(env.N_dm, env.N_all)
+    zoo = env.dm_ids.index("zooplankton")
+    order = list(env.global_fg_order)
+    assert mask[zoo, order.index("microzooplankton")] == 1.0
+    assert mask[zoo, order.index("phytoplankton")] == 0.0

@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 
 from lib.environments.ecosystem_env import interactions
+from lib.world import nutrients
 from lib.environments.ecosystem_env import natural_mortality as natural_mortality_module
 
 
@@ -141,16 +142,80 @@ def _charge_growth_to_reserve(env, fg, biomass_delta):
         env.dtype, copy=False)
 
 
+def _nutrient_limited_delta(env, fg_id, fg, population_rate,
+                            carrying_capacity):
+    """Section 172: supply the pool, then grow on it.
+
+    ``N' = N * keep(t) + supply(t)`` (vertical exchange and entrainment,
+    ``nutrients.tick_tables``), then ``dB = min(rate B N/(N + half(t)),
+    N, K - B)`` and the pool pays for it. Returns ``dB``; the pool in
+    ``energy_reserve`` is updated here.
+    """
+    tables = env.nutrient_tables[fg_id]
+    t = interactions.light_index(env)
+    pool = (fg.energy_reserve * tables["keep"][t]
+            + tables["supply"][t]).astype(env.dtype, copy=False)
+    pool = np.maximum(pool, np.float32(0.0))
+    limitation = pool / (pool + tables["half"][t])
+    stress = getattr(env, "nutrient_stress", {}).get(fg_id)
+    if stress is not None:
+        # Section 175: lysis and aggregate sinking once the pool runs
+        # dry, before growth; exported, booked as natural mortality.
+        rate = nutrients.stress_loss(limitation, *stress)
+        before = float(fg.biomass.sum())
+        lost = fg.biomass * rate
+        fg.biomass = (fg.biomass - lost).astype(env.dtype, copy=False)
+        # Section 177: the lysed share is remineralised in the mixed layer.
+        pool = (pool + np.float32(env.nutrient_stress_regeneration.get(
+            fg_id, 0.0)) * lost).astype(env.dtype, copy=False)
+        losses = getattr(env, "loss_natural", None)
+        if losses is not None:
+            losses[fg_id] = (float(losses.get(fg_id, 0.0))
+                             + before - float(fg.biomass.sum()))
+    wish = population_rate * fg.biomass * limitation
+    delta = np.minimum(np.minimum(wish, pool),
+                       np.maximum(np.float32(carrying_capacity) - fg.biomass,
+                                  np.float32(0.0)))
+    delta = np.maximum(delta, np.float32(0.0)).astype(env.dtype, copy=False)
+    fg.energy_reserve = (pool - delta).astype(env.dtype, copy=False)
+    return delta
+
+
+def _apply_non_decision_maker_mortality(env, fg_id, fg):
+    """Section 173: an NDM's own losses M1 (respiration, sinking, lysis),
+    before its growth, as for a decision maker. Only the biomass: a
+    producer's nutrient pool is the water's, and an NDM's reserve slot
+    holds no energy. Booked as natural mortality."""
+    rate = float(getattr(fg, "natural_mortality", 0.0) or 0.0)
+    rate *= float(getattr(env, "mortality_multiplier", 1.0))
+    if rate <= 0.0 or not env.apply_natural_mortality:
+        return
+    keep = np.float32(max(0.0, 1.0 - rate))
+    before = float(fg.biomass.sum())
+    fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+    losses = getattr(env, "loss_natural", None)
+    if losses is not None:
+        losses[fg_id] = (float(losses.get(fg_id, 0.0))
+                         + before - float(fg.biomass.sum()))
+
+
 def _apply_non_decision_maker_population_change(env, fg_id, fg):
     carrying_capacity = fg.params.get("max_carrying_capacity", 100.0)
+    _apply_non_decision_maker_mortality(env, fg_id, fg)
     # Light-limited producers grow at growth_rate * P(t)/P_ref under the
     # daylight calendar (section 138); 1.0 for everything else.
     population_rate = fg.growth_rate * interactions.growth_light(env, fg_id)
-    biomass_delta = (
-        population_rate
-        * fg.biomass
-        * (1.0 - fg.biomass / (carrying_capacity + 1e-9))
-    )
+    if fg_id in getattr(env, "inert_producers", ()):
+        population_rate = 0.0     # section 180: no layer to live in
+    if interactions.is_nutrient_producer(env, fg_id):
+        biomass_delta = _nutrient_limited_delta(
+            env, fg_id, fg, population_rate, carrying_capacity)
+    else:
+        biomass_delta = (
+            population_rate
+            * fg.biomass
+            * (1.0 - fg.biomass / (carrying_capacity + 1e-9))
+        )
 
     seed_rate = float(getattr(fg, "seed_rate", 0.0) or 0.0)
     if seed_rate > 0.0:
@@ -205,13 +270,34 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
             losses[fg_id] = (float(losses.get(fg_id, 0.0))
                              + before - float(fg.biomass.sum()))
 
+    # Section 185: the regional logistic loss c * B_region, B_region the
+    # grid-mean density after M1. Outside the derived growth rate and
+    # independent of --mortality (it closes r_max, which g always pays).
+    if getattr(env, "_has_regional_capacity", False):
+        coefficient = float(env.dm_capacity_rate[env.dm_ids.index(fg_id)])
+        if coefficient > 0.0 and fg.biomass.size:
+            before = float(fg.biomass.sum())
+            keep = np.float32(max(0.0, 1.0 - coefficient * before
+                                  / fg.biomass.size))
+            fg.energy_reserve = (fg.energy_reserve * keep).astype(
+                env.dtype, copy=False)
+            fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+            losses = getattr(env, "loss_natural", None)
+            if losses is not None:
+                losses[fg_id] = (float(losses.get(fg_id, 0.0))
+                                 + before - float(fg.biomass.sum()))
+
     energy_surplus = fg.energy_level - fg.maintenance_level
-    growth_rate = np.float32(fg.growth_rate)
-    starve_rate = (
-        np.float32(fg.starve_rate)
-        if fg.starve_rate > 0.0
-        else growth_rate
-    )
+    starve_rate = np.float32(
+        fg.starve_rate if fg.starve_rate > 0.0 else fg.growth_rate)
+    # Section 183: growth_q10 scales the growth branch only.
+    growth_rate = np.float32(
+        fg.growth_rate * interactions.growth_temperature(env, fg_id))
+    # Section 184: an income-funded DM grew in ``apply_energy_costs``;
+    # it never turns its reserve into biomass here.
+    if getattr(env, "_has_income_growth", False) and (
+            env.dm_income_kappa[env.dm_ids.index(fg_id)] > 0.0):
+        growth_rate = np.float32(0.0)
     rate = np.where(energy_surplus >= 0.0, growth_rate, starve_rate).astype(
         env.dtype, copy=False)
     biomass_delta = fg.biomass * rate * energy_surplus
@@ -312,12 +398,66 @@ def apply_extinction_threshold(env):
 
 
 def _zero_energy_in_empty_cells(env):
-    for fg in env.fgs.values():
+    for fg_id, fg in env.fgs.items():
+        # The nutrient pool stays in a cell without producers (172).
+        if interactions.is_nutrient_producer(env, fg_id):
+            continue
         fg.energy_reserve = np.where(
                 fg.biomass <= 0.0,
                 np.float32(0.0),
                 fg.energy_reserve,
             ).astype(env.dtype, copy=False)
+
+
+def apply_ndm_grazing(env):
+    """Section 177: grazing non decision makers, before every group's
+    population change (deterministic order, mirrored on the GPU)."""
+    from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
+    for entry in getattr(env, "ndm_grazers", []):
+        grazer, prey = env.fgs[entry["grazer"]], env.fgs[entry["prey"]]
+        rate = interactions.ndm_grazing_rate(env, entry, prey.biomass,
+                                             prey.energy_reserve)
+        intake = np.minimum(grazer.biomass * rate,
+                            np.float32(MAX_HARVEST_FRAC) * prey.biomass)
+        intake = np.maximum(intake, np.float32(0.0)).astype(env.dtype,
+                                                            copy=False)
+        prey.biomass = (prey.biomass - intake).astype(env.dtype, copy=False)
+        grazer.biomass = (grazer.biomass
+                          + np.float32(entry["gge"]) * intake).astype(
+                              env.dtype, copy=False)
+        if interactions.is_nutrient_producer(env, entry["prey"]):
+            prey.energy_reserve = (
+                prey.energy_reserve
+                + np.float32(entry["regen"] * (1.0 - entry["gge"])) * intake
+            ).astype(env.dtype, copy=False)
+        total = float(intake.sum())
+        env.loss_predation[entry["prey"]] = (
+            float(env.loss_predation.get(entry["prey"], 0.0)) + total)
+        row = env.intake_by_pred_prey.setdefault(entry["grazer"], {})
+        row[entry["prey"]] = float(row.get(entry["prey"], 0.0)) + total
+
+
+def apply_layer_exchange(env):
+    """Section 180: move water and algae between the mixed layer and the
+    subsurface layer (entrainment / detrainment as M(t) changes, the
+    diffusive exchange across the pycnocline, the reservoir below), as
+    the linear per-tick map of ``nutrients.layer_tables``. Runs first in
+    the population step, before grazing and growth."""
+    ex = getattr(env, "layer_exchange", None)
+    if not ex:
+        return
+    t = interactions.light_index(env)
+    top, deep = env.fgs[ex["mixed"]], env.fgs[ex["subsurface"]]
+    n, nd = top.energy_reserve, deep.energy_reserve
+    b, bd = top.biomass, deep.biomass
+    top.energy_reserve = (ex["n_mm"][t] * n + ex["n_md"][t] * nd
+                          ).astype(env.dtype, copy=False)
+    deep.energy_reserve = (ex["n_dm"][t] * n + ex["n_dd"][t] * nd
+                           + ex["n_s"][t]).astype(env.dtype, copy=False)
+    top.biomass = (ex["b_mm"][t] * b + ex["b_md"][t] * bd
+                   ).astype(env.dtype, copy=False)
+    deep.biomass = (ex["b_dm"][t] * b + ex["b_dd"][t] * bd
+                    ).astype(env.dtype, copy=False)
 
 
 def apply_population_change(env, clip_nonviable=True):
@@ -328,6 +468,8 @@ def apply_population_change(env, clip_nonviable=True):
     the monolith pipeline, where the sweep is the last step and books the
     vanished biomass as a starvation loss.
     """
+    apply_layer_exchange(env)
+    apply_ndm_grazing(env)
     for fg_id in env.ordered_fg_ids:
         fg = env.fgs[fg_id]
         if fg.is_decision_maker:

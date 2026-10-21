@@ -180,6 +180,7 @@ evaluates a reward function:
 | `greedy_stay`, `greedy_hide_stay`, `greedy_flee_stay` | the arm without `_stay`, plus a stop rule: a cell that can feed does not climb while its intake at full appetite covers `STAY_COST_RATIO` (1.0) x its feeding cost. | yes |
 | `greedy_flee` | "go towards food, run from predators, eat when hungry": `greedy`, but a cell whose predators outweigh it moves all its mass to the legal neighbour with the least predator biomass (if strictly less), and a cell with a reserve >= 0.95 full rests. Never hides. | yes |
 | `eat` | all action mass on the legal prey in the cell, never move; cells with nothing to eat rest. Maximal intake, zero mobility. | yes |
+| `eat_pays` | `eat` where the intake at the cell's appetite covers the feeding cost, rest elsewhere; never moves (section 177, the plankton calibration). | no |
 | `neutral` | no policy at all: zero logits, so the masked softmax is uniform over the legal actions in each cell. Deterministic. | no |
 | `random` | freshly initialised `PolicyNetwork` per decision maker, seeded. | no |
 | `policy` | a checkpoint from `results/<run-name>`, measured against the same criterion. | no - the rig's exit code stays tied to the frozen arms, but see section 6: a PASS here is the stronger evidence of viability, and a FAIL may be a training problem |
@@ -351,6 +352,10 @@ Three of the four groups the rig fails are viable with trained
 policies; only `porpoises` fails both. The zoo:phyto ratio settles at
 1.8:1 against 0.44:1 at spawn - the equilibrium is an output, so that is
 a calibration fact about the spawn levels, not a failure.
+
+(The fix58 numbers below are from a world that no longer exists: the
+nutrient pool, phytoplankton M1 and microzooplankton of sections 172-177
+changed the FG set and every checkpoint.)
 
 Measured, `results/pzbpgp248nsrpfix58` (co-evolved, 1x16 tanh, one-year
 rollouts, ~750 updates) against every frozen arm on its own world:

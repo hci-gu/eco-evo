@@ -173,6 +173,9 @@ RESCALE_RULES = {
     # eight in fg_library.yaml, the two fastest of them the ones the
     # user noticed. Section 104.
     "movement_speed": "flux",
+    # Section 185: the regional logistic loss c * B_region per tick, c
+    # derived by the loader from r_max and regional_carrying_capacity.
+    "capacity_loss_rate": "flux",
     # growth
     "growth_rate": "growth",
     # loss
@@ -199,6 +202,7 @@ RESCALE_CLAMP = {
     "natural_mortality": (0.0, 1.0),
     "starve_rate": (0.0, 1.0),
     "movement_speed": (0.0, 1.0),
+    "capacity_loss_rate": (0.0, 1.0),
 }
 
 

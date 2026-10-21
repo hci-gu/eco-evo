@@ -1,5 +1,7 @@
 import numpy as np
 
+from lib.environments.ecosystem_env import interactions
+
 
 def extract_impact_table(impact_def):
     """Return (xs, biomass_factors, energy_factors) as float32 arrays sorted
@@ -156,8 +158,11 @@ def apply_impact_mortality(env):
             + float(actual_impact_loss.sum())
         )
 
-        fg.energy_reserve = (fg.energy_reserve * reduction).astype(
-            env.dtype, copy=False)
+        # A producer's reserve slot is its nutrient pool (section 172),
+        # which an impact on the producer does not remove.
+        if not interactions.is_nutrient_producer(env, fg_id):
+            fg.energy_reserve = (fg.energy_reserve * reduction).astype(
+                env.dtype, copy=False)
         fg.biomass = np.maximum(
             0.0, fg.biomass - total_mortality_impact
         ).astype(env.dtype, copy=False)

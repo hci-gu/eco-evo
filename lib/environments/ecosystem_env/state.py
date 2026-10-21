@@ -4,6 +4,8 @@ from typing import Dict, List, Optional
 import numpy as np
 import torch
 
+from lib.world import nutrients, temperature
+from lib.world.growth_budget import income_growth
 from lib.environments.ecosystem_env import (
     grid_masks, impacts, interactions, natural_mortality)
 
@@ -163,6 +165,18 @@ def build_static_caches(env):
     # reads the same calendar: Q10 multipliers on resting_metabolism.
     interactions.build_daylight_tables(env)
     interactions.build_temperature_tables(env)
+    # Nutrient pools of light-limited producers (section 172), on the
+    # same year tick.
+    interactions.build_nutrient_tables(env)
+    # Section 180: a subsurface producer without the two-layer column
+    # (no nutrients.subsurface_layer, or no calendar at all) is inert.
+    env.inert_producers = frozenset(
+        fid for fid in env.global_fg_order
+        if not env.fgs[fid].is_decision_maker
+        and nutrients.species_layer(env.fgs[fid].params) == "subsurface"
+        and not getattr(env, "layer_exchange", None))
+    # Grazing non decision makers (section 177: microzooplankton).
+    interactions.build_ndm_grazing(env)
 
     # Beddington-DeAngelis interference coefficient w_X [1/ton], per DM.
     # Broadcast shape (N_dm, 1, 1, 1) so it multiplies the predator's own
@@ -227,6 +241,12 @@ def build_static_caches(env):
         [env.fgs[fid].max_energy_reserve for fid in env.dm_ids],
         dtype=env.dtype,
     )
+
+    # Section 184: income-funded growth, kappa per DM (0 = the
+    # reserve-funded law). Read by ``movement.apply_energy_costs`` (the
+    # growth) and the DM population step (its growth branch is off).
+    _build_income_growth(env)
+    _build_regional_capacity(env)
 
     # Per-DM cached impact tables for ALL impacts the FG is affected by.
     # Consumed by ``movement.apply_energy_costs`` (energy_factor -> extra
@@ -342,3 +362,53 @@ def build_static_caches(env):
     policies.rebuild_batched_weights(env)
     grid_masks.apply_accessibility_biomass_mask(env)
     env._static_built = True
+
+
+def _build_income_growth(env):
+    """``env.dm_income_kappa`` (N_dm,) and ``env._has_income_growth``."""
+    for fid in env.global_fg_order:
+        fg = env.fgs[fid]
+        if income_growth(fg.params) is not None and fid not in env.dm_ids:
+            raise ValueError(f"'{fid}' has income_growth_kappa but is not a "
+                             "decision maker (section 184)")
+    kappa = np.zeros(env.N_dm, dtype=env.dtype)
+    for i, fid in enumerate(env.dm_ids):
+        fg = env.fgs[fid]
+        settings = income_growth(fg.params)
+        if settings is None:
+            continue
+        if temperature.growth_q10(fg.params) is not None:
+            raise ValueError(f"'{fid}' has both income_growth_kappa and "
+                             "growth_q10 (section 184)")
+        if not fg.starve_rate > 0.0:
+            raise ValueError(f"'{fid}' has income_growth_kappa but no "
+                             "starve_rate (section 184)")
+        kappa[i] = settings[0]
+    env.dm_income_kappa = kappa
+    env._has_income_growth = bool((kappa > 0.0).any())
+
+
+def _build_regional_capacity(env):
+    """``env.dm_capacity_rate`` (N_dm,) and ``env._has_regional_capacity``.
+
+    Section 185: c = r_max / (ticks per year * K) per tick per (t/km2),
+    derived by the loader as ``capacity_loss_rate``; the population step
+    removes the fraction c * B_region of the group in every cell.
+    """
+    def rate(fid):
+        raw = env.fgs[fid].params.get("capacity_loss_rate", None)
+        if raw in (None, ""):
+            return 0.0
+        value = float(raw)
+        if not (np.isfinite(value) and 0.0 <= value <= 1.0):
+            raise ValueError(f"'{fid}' capacity_loss_rate must be in [0, 1], "
+                             f"got {raw!r} (section 185)")
+        return value
+
+    for fid in env.global_fg_order:
+        if fid not in env.dm_ids and rate(fid) > 0.0:
+            raise ValueError(f"'{fid}' has a regional carrying capacity but "
+                             "is not a decision maker (section 185)")
+    env.dm_capacity_rate = np.array([rate(fid) for fid in env.dm_ids],
+                                    dtype=np.float64)
+    env._has_regional_capacity = bool((env.dm_capacity_rate > 0.0).any())

@@ -291,6 +291,67 @@ def growth_light_schedule(latitude_deg, tick_hours, light_climate,
         int(reference_day))
 
 
+def _subsurface_photosynthesis(latitude_deg, hours, kd, zmix, cloud, ik,
+                               bottom_m, kd_below):
+    """Mean tanh(I(z)/I_k) over the subsurface layer [z_mix, bottom_m]
+    (section 180): light reaches the layer's top through the mixed layer
+    at kd and decays below it at kd_below (the clearer, blue-shifted
+    light under the surface layer)."""
+    day = np.asarray(hours, dtype=np.float64) / HOURS_PER_DAY
+    surface = (clear_sky_par(solar_elevation_deg(latitude_deg, hours))
+               * monthly_value(cloud, day))
+    depth = monthly_value(zmix, day)
+    thickness = np.maximum(bottom_m - depth, 0.0)
+    fractions = (np.arange(MIXED_LAYER_LAYERS) + 0.5) / MIXED_LAYER_LAYERS
+    light = (surface[..., None] * np.exp(-kd * depth[..., None])
+             * np.exp(-kd_below * thickness[..., None] * fractions))
+    saturation = (monthly_value(ik, day) if isinstance(ik, tuple)
+                  else np.full_like(day, ik))
+    return np.tanh(light / saturation[..., None]).mean(axis=-1)
+
+
+@lru_cache(maxsize=16)
+def _subsurface_schedule_cached(latitude_deg, tick_hours, kd, zmix, cloud,
+                                ik, reference_day, bottom_m, kd_below):
+    hours = resolve_tick_hours(tick_hours)
+    n_ticks = ticks_per_year(hours)
+    substeps = hours * SUBSTEPS_PER_HOUR
+    offsets = (np.arange(substeps) + 0.5) * (hours / substeps)
+    times = np.arange(n_ticks)[:, None] * hours + offsets[None, :]
+    p = _subsurface_photosynthesis(latitude_deg, times, kd, zmix, cloud, ik,
+                                   bottom_m, kd_below).mean(axis=1)
+    day_steps = HOURS_PER_DAY * SUBSTEPS_PER_HOUR
+    ref_times = ((reference_day - 1) * HOURS_PER_DAY
+                 + (np.arange(day_steps) + 0.5) / SUBSTEPS_PER_HOUR)
+    # Same normalisation as the mixed layer: the species' own I_k in the
+    # mixed layer on the reference day, so growth_rate keeps its meaning
+    # (the rate at that light) and the layer's dimness is the factor.
+    p_ref = float(_photosynthesis(latitude_deg, ref_times, kd, zmix, cloud,
+                                  ik).mean())
+    if p_ref <= 0.0:
+        raise ValueError(f"no light on the reference day {reference_day}: "
+                         "light-limited growth cannot be normalised")
+    out = p / p_ref
+    out.setflags(write=False)
+    return out
+
+
+def subsurface_light_schedule(latitude_deg, tick_hours, light_climate,
+                              light_saturation, bottom_m, kd_below,
+                              reference_day=DEFAULT_LIGHT_REFERENCE_DAY):
+    """Growth multiplier of a producer in the subsurface layer (section
+    180), per year tick; same normalisation as ``growth_light_schedule``."""
+    return _subsurface_schedule_cached(
+        float(latitude_deg), int(resolve_tick_hours(tick_hours)),
+        float(light_climate["light_attenuation_per_m"]),
+        tuple(float(v) for v in light_climate["mixed_layer_depth_m"]),
+        tuple(float(v) for v in light_climate["cloud_transmission"]),
+        (tuple(float(v) for v in light_saturation)
+         if isinstance(light_saturation, (list, tuple))
+         else float(light_saturation)),
+        int(reference_day), float(bottom_m), float(kd_below))
+
+
 def growth_light_settings(params):
     """(I_k, reference day) of a species, or None if not light-limited.
 

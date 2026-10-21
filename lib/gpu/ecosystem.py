@@ -10,6 +10,7 @@ import torch
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
 from lib.environments.ecosystem_env.impacts import extract_impact_table, interp_impact
+from lib.world import nutrients
 
 # Relative harvest cap, imported rather than repeated so the two engines
 # cannot drift apart again (Fix 2 / Section 73: an absolute epsilon in the
@@ -110,6 +111,82 @@ class TensorEcosystem:
             self.growth_light = tensor(table)[:, :, None]
         else:
             self.growth_light = None
+        # Nutrient pools of producers (section 172): the pool rides in the
+        # producer's reserve slot. (T, G, 1) tables, exactly inert (keep 1,
+        # supply 0) for every other group; ``nutrient`` masks the groups.
+        self.nutrients_on = bool(getattr(env, "_has_nutrients", False))
+        if self.nutrients_on:
+            keep = np.ones((self.light_period, self.G), dtype=np.float32)
+            supply = np.zeros((self.light_period, self.G), dtype=np.float32)
+            half = np.ones((self.light_period, self.G), dtype=np.float32)
+            regen = np.zeros(self.G, dtype=np.float32)
+            stress_max = np.zeros(self.G, dtype=np.float32)
+            stress_shape = np.ones(self.G, dtype=np.float32)
+            stress_regen = np.zeros(self.G, dtype=np.float32)
+            initial = np.zeros((self.light_period, self.G), dtype=np.float32)
+            for j, fid in enumerate(self.ids):
+                if fid not in env.nutrient_tables:
+                    continue
+                tables = env.nutrient_tables[fid]
+                keep[:, j], supply[:, j], half[:, j] = (
+                    tables["keep"], tables["supply"], tables["half"])
+                regen[j] = env.nutrient_regeneration[fid]
+                if fid in getattr(env, "nutrient_stress", {}):
+                    stress_max[j], stress_shape[j] = env.nutrient_stress[fid]
+                stress_regen[j] = getattr(
+                    env, "nutrient_stress_regeneration", {}).get(fid, 0.0)
+                initial[:, j] = [nutrients.initial_pool(
+                    env.nutrient_config, env.nutrient_yield[fid], t,
+                    getattr(env, "nutrient_layer", {}).get(fid, "mixed"))
+                    for t in range(self.light_period)]
+            self.nutrient = tensor(np.array(
+                [fid in env.nutrient_tables for fid in self.ids]),
+                torch.bool)[None, :, None]
+            self.nutrient_keep = tensor(keep)[:, :, None]
+            self.nutrient_supply = tensor(supply)[:, :, None]
+            self.nutrient_half = tensor(half)[:, :, None]
+            self.nutrient_regen = tensor(regen)[None, :, None]
+            # Section 175: stress loss L_s c (1 - f)/(f + c); L_s 0 = none.
+            self.stress_max = tensor(stress_max)[None, :, None]
+            self.stress_shape = tensor(stress_shape)[None, :, None]
+            self.stress_regen = tensor(stress_regen)[None, :, None]
+            self.nutrient_initial = tensor(initial)[:, :, None]
+        # Two-layer water column (section 180), mirror of
+        # ``population_change.apply_layer_exchange``: (T, 1) tables of the
+        # linear map between the mixed and the subsurface producer.
+        ex = getattr(env, "layer_exchange", None)
+        if ex:
+            self.layer = {"m": self.ids.index(ex["mixed"]),
+                          "d": self.ids.index(ex["subsurface"])}
+            for key in ("n_mm", "n_md", "n_dm", "n_dd", "n_s",
+                        "b_mm", "b_md", "b_dm", "b_dd"):
+                self.layer[key] = tensor(np.asarray(ex[key], dtype=np.float32))[:, None]
+        else:
+            self.layer = None
+        # Grazing non decision makers (section 177), mirror of
+        # ``population_change.apply_ndm_grazing``: one entry per pair, in
+        # the reference's order, with (T, 1) temperature / scale tables.
+        self.ndm_grazers = []
+        for entry in getattr(env, "ndm_grazers", []):
+            period = self.light_period
+            def table(values):
+                if values is None:
+                    return None
+                return tensor(np.asarray(values, dtype=np.float32))[:, None]
+            self.ndm_grazers.append({
+                "g": self.ids.index(entry["grazer"]),
+                "p": self.ids.index(entry["prey"]),
+                "a": float(entry["a"]), "h": float(entry["h"]),
+                "threshold": float(entry.get("threshold", 0.0)),
+                "edibility": (None if entry.get("edibility") is None else
+                              (float(entry["edibility"][0]),
+                               table(entry["edibility"][1]))),
+                "gge": float(entry["gge"]),
+                "pool": (float(entry["regen"] * (1.0 - entry["gge"]))
+                         if entry["prey"] in getattr(env, "nutrient_regeneration", {})
+                         else 0.0),
+                "temperature": table(entry["temperature"]),
+                "scale": table(entry["scale"])})
         self.light_obs = tensor(env.light_obs_table) if self.daylight else None
         self.light_mult = (tensor(env.light_mult_table)[:, :, :, None]
                            if self.light_pairs else None)
@@ -118,6 +195,18 @@ class TensorEcosystem:
         self.temperature_on = bool(getattr(env, "_has_temperature", False))
         self.metabolism_temp = (tensor(env.metabolism_temp_table)
                                 if self.temperature_on else None)
+        # Section 181: (T, D) Q10 multiplier on each DM's whole intake.
+        self.ingestion_temp = (
+            tensor(env.ingestion_temp_table)
+            if getattr(env, "_has_ingestion_temperature", False) else None)
+        # Section 183: (T, G, 1) Q10 multiplier on each DM's growth rate,
+        # 1 for every other group.
+        self.growth_temp = None
+        if getattr(env, "_has_growth_temperature", False):
+            table = np.ones((self.light_period, self.G), dtype=np.float32)
+            for i, fid in enumerate(env.dm_ids):
+                table[:, self.ids.index(fid)] = env.growth_temp_table[:, i]
+            self.growth_temp = tensor(table)[:, :, None]
         self.velocity = tensor(env.dm_v)[None, :, None, None]
         self.metabolism = tensor(env.dm_resting_metabolism)[None, :, None]
         self.cost_rest = tensor(env.dm_cost_rest)[None, :, None]
@@ -138,7 +227,29 @@ class TensorEcosystem:
         self.growth = parameter("growth_rate")
         self.starve = parameter("starve_rate")
         self.starve = torch.where(self.starve > 0, self.starve, self.growth)
+        # Section 180: a subsurface producer without the layer is inert.
+        inert = getattr(env, "inert_producers", ())
+        if inert:
+            self.growth = torch.where(tensor(
+                [fid in inert for fid in self.ids], torch.bool)[None, :, None],
+                0.0, self.growth)
         self.maintenance = parameter("maintenance_level")
+        # Section 184: income-funded growth (``movement.income_growth``).
+        # kappa per DM in dm order; such a DM's reserve-funded branch is
+        # off in ``population``.
+        self.income_on = bool(getattr(env, "_has_income_growth", False))
+        if self.income_on:
+            self.income_kappa = tensor(env.dm_income_kappa)[None, :, None]
+            self.income_off_growth = tensor(
+                [fid in env.dm_ids and env.dm_income_kappa[env.dm_ids.index(fid)] > 0
+                 for fid in self.ids], torch.bool)[None, :, None]
+        # Section 185: regional logistic loss c * grid-mean B per decision
+        # maker (``population_change``; c = 0 for every other group).
+        self.capacity_on = bool(getattr(env, "_has_regional_capacity", False))
+        if self.capacity_on:
+            self.capacity_rate = tensor(
+                [float(env.dm_capacity_rate[env.dm_ids.index(fid)])
+                 if fid in env.dm_ids else 0.0 for fid in self.ids])[None, :, None]
         self.seed_rate = parameter("seed_rate").clamp_min(0)
         self.has_seeding = any(fg.seed_rate > 0 and not fg.is_decision_maker for fg in groups)
         self.capacity = tensor([fg.params.get("max_carrying_capacity", 100.0) for fg in groups])[None, :, None]
@@ -159,9 +270,11 @@ class TensorEcosystem:
         # bit-identical to the pre-change kernel.
         self.mass_balance = bool(getattr(env, "mass_balance", False))
         mortality_scale = max(0.0, float(getattr(env, "mortality_multiplier", 1.0)))
+        # Every group: a non decision maker's M1 (section 173) scales its
+        # biomass before growth, never its reserve slot.
         self.mortality_keep = tensor([
             max(0.0, 1.0 - max(0.0, fg.natural_mortality) * mortality_scale)
-            if env.apply_natural_mortality and fg.is_decision_maker else 1.0
+            if env.apply_natural_mortality else 1.0
             for fg in groups
         ])[None, :, None]
         # Exposure-weighted M1 (section 139), mirroring
@@ -359,6 +472,9 @@ class TensorEcosystem:
         """
         loss = biomass * loss_rate
         reduction = torch.where(loss > 0, ((biomass - loss) / (biomass + 1e-9)).clamp(0.0, 1.0), 1.0)
+        if self.nutrients_on:
+            # A producer's nutrient pool is not removed with it (172).
+            reduction = torch.where(self.nutrient, 1.0, reduction)
         return (biomass - loss).clamp_min(0), reserve * reduction
 
     def energy_level(self, biomass, reserve):
@@ -366,6 +482,15 @@ class TensorEcosystem:
         safe_max = torch.where(self.max_reserve != 0, self.max_reserve, 1.0)
         return torch.where((biomass > 1e-9) & (self.max_reserve != 0),
                            reserve / safe_b / safe_max, 0.0)
+
+    def initial_nutrients(self, reserve, light_start):
+        """``reserve`` with every producer's pool set to the surface
+        climatology of each world's start tick (section 172); the CPU
+        environment does the same in ``initialise_nutrient_pools``."""
+        if not self.nutrients_on:
+            return reserve
+        pools = self.nutrient_initial[light_start.reshape(-1)]   # [E, G, 1]
+        return torch.where(self.nutrient, pools.expand_as(reserve), reserve)
 
     def light_starts(self, environments):
         """Per-world year tick of the reference envs (fixture upload)."""
@@ -505,6 +630,10 @@ class TensorEcosystem:
             rate = a / (1.0 + inter)
         else:
             rate = a
+        if self.ingestion_temp is not None:
+            if light_index is None:
+                raise ValueError("light_index is required with ingestion_q10")
+            rate = rate * self.ingestion_temp[light_index.reshape(-1)][:, :, None, None]
         demand = b_dm[:, :, None] * actions[:, :, 5:] * rate * hunger[:, :, None]
         if pair_visible is not None:
             # Per-predator bound: no predator may demand more than the
@@ -524,7 +653,14 @@ class TensorEcosystem:
                              * offset[:, None]).sum(2)
         intake = actual.sum(1)
         reduction = torch.where(biomass > 1e-9, (biomass - intake) / (biomass + 1e-9), 0.0)
-        return biomass - intake, reserve * reduction, gains, hidden, actual
+        reserve_after = reserve * reduction
+        if self.nutrients_on:
+            # Grazing leaves a producer's nutrient pool in place and
+            # excretes a fraction of what it removed back into it (172).
+            reserve_after = torch.where(
+                self.nutrient, reserve + self.nutrient_regen * intake,
+                reserve_after)
+        return biomass - intake, reserve_after, gains, hidden, actual
 
     def immigration(self, b_emig, r_emig, group_index=None):
         """Shared boundary redistribution for active and passive movement."""
@@ -582,9 +718,13 @@ class TensorEcosystem:
             # What is taken out of the off-grid outflow lands in the stay
             # terms below by construction (moving minus outflow).
             b_out, r_out = self.cancel_emigration(b_out, r_out)
-        b_stay = b * rest + b * eat + (moving_b - b_out).sum(2)
+        stay_b, stay_r = b * rest + b * eat, rest_r + eat_r
+        if self.income_on:
+            stay_b, stay_r = self.income_growth(b, r, gains, metabolism, rest,
+                                                eat, move_fraction, stay_b, stay_r)
+        b_stay = stay_b + (moving_b - b_out).sum(2)
         b_total = b_stay
-        r_total = rest_r + eat_r + (moving_r - r_out).sum(2)
+        r_total = stay_r + (moving_r - r_out).sum(2)
         for direction in range(4):
             source = (direction + 2) % 4
             index, valid = self.neighbors[source], self.neighbor_valid[source]
@@ -613,6 +753,25 @@ class TensorEcosystem:
             b_stay = torch.where(residue, 0.0, b_stay + b_cancel.sum(2))
             b_out = b_out - b_cancel + b_push
         return settled[0], settled[1], (b_stay, b_out, b_total)
+
+    def income_growth(self, b, r, gains, metabolism, rest, eat, move_fraction,
+                      stay_b, stay_r):
+        """Section 184 mirror of ``movement.income_growth``: per cell
+        G = min(kappa I - C, B g (s - u) ec), at most the settling reserve,
+        moved from the stationary reserve into G / ec new tonnes."""
+        cost = (b * rest * metabolism * self.cost_rest
+                + b * eat * metabolism * self.cost_eat
+                + b * move_fraction * metabolism * self.cost_move)
+        growth = self.growth[:, self.dm_index]
+        maintenance = self.maintenance[:, self.dm_index]
+        ec = self.energy_content[:, self.dm_index][:, :, None]
+        capacity = b * self.max_reserve[:, self.dm_index]
+        fill = torch.where(capacity > 0, r / torch.where(capacity > 0, capacity, 1.0), 0.0)
+        ceiling = b * growth * (fill - maintenance).clamp_min(0) * ec
+        paid = torch.minimum((self.income_kappa * gains - cost).clamp_min(0), ceiling)
+        paid = torch.minimum(paid, stay_r.clamp_min(0))
+        paid = torch.where((self.income_kappa > 0) & (ec > 0), paid, 0.0)
+        return (stay_b + paid / torch.where(ec > 0, ec, 1.0), stay_r - paid)
 
     def cancel_emigration(self, b_out, r_out):
         """Keep a DM's off-grid outflow home when its pool is below thr.
@@ -772,8 +931,64 @@ class TensorEcosystem:
         keep = 1.0 - (self.m1_rate * factor).clamp(0.0, 1.0)
         return torch.where(self.m1_flag, keep, self.mortality_keep)
 
+    def ndm_grazing(self, biomass, reserve, light_index=None):
+        """Section 177: grazing non decision makers, before the rest of
+        the population step (mirror of ``apply_ndm_grazing``)."""
+        if not self.ndm_grazers:
+            return biomass, reserve
+        biomass, reserve = biomass.clone(), reserve.clone()
+        t = None if light_index is None else light_index.reshape(-1)
+        for entry in self.ndm_grazers:
+            g, p = entry["g"], entry["p"]
+            prey, grazer = biomass[:, p], biomass[:, g]
+            a, threshold = entry["a"], entry["threshold"]
+            if entry["scale"] is not None:
+                a = a * entry["scale"][t]
+                threshold = threshold / entry["scale"][t]
+            food = prey
+            if entry["edibility"] is not None:
+                if t is None:
+                    raise ValueError("light_index is required with edibility")
+                floor, half = entry["edibility"]
+                pool = reserve[:, p].clamp_min(0)
+                food = prey * (floor + (1.0 - floor) * pool / (pool + half[t]))
+            if entry["threshold"] > 0.0:
+                food = food * food / (food + threshold)
+            rate = a * food / (1.0 + a * entry["h"] * food)
+            if entry["temperature"] is not None:
+                rate = rate * entry["temperature"][t]
+            intake = torch.minimum(grazer * rate, HARVEST_FRACTION * prey
+                                   ).clamp_min(0)
+            biomass[:, p] = prey - intake
+            biomass[:, g] = grazer + entry["gge"] * intake
+            if entry["pool"]:
+                reserve[:, p] = reserve[:, p] + entry["pool"] * intake
+        return biomass, reserve
+
+    def layer_exchange(self, biomass, reserve, light_index=None):
+        """Section 180: water and algae between the mixed layer and the
+        subsurface layer (mirror of ``apply_layer_exchange``)."""
+        if self.layer is None:
+            return biomass, reserve
+        if light_index is None:
+            raise ValueError("light_index is required with the subsurface layer")
+        L = self.layer
+        t = light_index.reshape(-1)
+        m, d = L["m"], L["d"]
+        # Slices are read (copied) before either column is written.
+        n, nd = reserve[:, m].clone(), reserve[:, d].clone()
+        b, bd = biomass[:, m].clone(), biomass[:, d].clone()
+        biomass, reserve = biomass.clone(), reserve.clone()
+        reserve[:, m] = L["n_mm"][t] * n + L["n_md"][t] * nd
+        reserve[:, d] = L["n_dm"][t] * n + L["n_dd"][t] * nd + L["n_s"][t]
+        biomass[:, m] = L["b_mm"][t] * b + L["b_md"][t] * bd
+        biomass[:, d] = L["b_dm"][t] * b + L["b_dd"][t] * bd
+        return biomass, reserve
+
     def population(self, biomass, reserve, seed_multiplier, light_index=None,
                    hidden=None):
+        biomass, reserve = self.layer_exchange(biomass, reserve, light_index)
+        biomass, reserve = self.ndm_grazing(biomass, reserve, light_index)
         if self.m1_exposure_on:
             if hidden is None:
                 raise ValueError("hidden is required with exposure-weighted M1")
@@ -782,8 +997,20 @@ class TensorEcosystem:
             keep = self.mortality_keep
         b = biomass * keep
         r = reserve * keep
+        if self.capacity_on:
+            capacity_keep = (1.0 - self.capacity_rate
+                             * b.mean(dim=-1, keepdim=True)).clamp_min(0)
+            b = b * capacity_keep
+            r = r * capacity_keep
         surplus = self.energy_level(b, r) - self.maintenance
-        delta = b * torch.where(surplus >= 0, self.growth, self.starve) * surplus
+        growth = self.growth
+        if self.growth_temp is not None:
+            if light_index is None:
+                raise ValueError("light_index is required with growth_q10")
+            growth = growth * self.growth_temp[light_index.reshape(-1)]
+        if self.income_on:
+            growth = torch.where(self.income_off_growth, 0.0, growth)
+        delta = b * torch.where(surplus >= 0, growth, self.starve) * surplus
         if self.mass_balance:
             # Growth buys biomass out of the reserve standing above the
             # maintenance line, and the reserve is debited for it. Same
@@ -808,13 +1035,41 @@ class TensorEcosystem:
             if light_index is None:
                 raise ValueError("light_index is required with light-limited growth")
             rate = rate * self.growth_light[light_index.reshape(-1)]
-        ndm_delta = rate * biomass * (1.0 - biomass / (self.capacity + 1e-9))
+        # Section 173: the M1 of a non decision maker acts before its
+        # growth, on the biomass only (``keep`` is 1 for an NDM without it).
+        nb = biomass * keep
+        ndm_delta = rate * nb * (1.0 - nb / (self.capacity + 1e-9))
+        ndm_r = reserve
+        if self.nutrients_on:
+            if light_index is None:
+                raise ValueError("light_index is required with nutrient pools")
+            # Section 172, mirror of ``population_change.
+            # _nutrient_limited_delta``: supply the pool, grow on it, pay.
+            t = light_index.reshape(-1)
+            pool = (reserve * self.nutrient_keep[t]
+                    + self.nutrient_supply[t]).clamp_min(0)
+            limitation = pool / (pool + self.nutrient_half[t])
+            stress = (self.stress_max * self.stress_shape * (1.0 - limitation)
+                      / (limitation + self.stress_shape))
+            lost = torch.where(self.nutrient, nb * stress, 0.0)
+            nb = nb - lost
+            # Section 177: the lysed share returns to the pool.
+            pool = pool + self.stress_regen * lost
+            wish = rate * nb * limitation
+            limited = torch.minimum(torch.minimum(wish, pool),
+                                    (self.capacity - nb).clamp_min(0)
+                                    ).clamp_min(0)
+            ndm_delta = torch.where(self.nutrient, limited, ndm_delta)
+            ndm_r = torch.where(self.nutrient, pool - limited, reserve)
         ndm_delta = ndm_delta + self.seed_rate * self.capacity * seed_multiplier
-        ndm_b = torch.minimum((biomass + ndm_delta).clamp_min(0), self.capacity)
+        ndm_b = torch.minimum((nb + ndm_delta).clamp_min(0), self.capacity)
         b = torch.where(self.is_dm, dm_b, ndm_b)
-        r = torch.where(self.is_dm, dm_r, reserve)
+        r = torch.where(self.is_dm, dm_r, ndm_r)
         b = torch.where(b < self.threshold, 0.0, b)
-        r = torch.where(b <= 0, 0.0, r)
+        empty = b <= 0
+        if self.nutrients_on:
+            empty = empty & ~self.nutrient
+        r = torch.where(empty, 0.0, r)
         return b, r, starve_loss
 
     def advect(self, biomass, reserve, tick, keys=None, track=False):

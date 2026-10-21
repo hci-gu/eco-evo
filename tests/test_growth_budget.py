@@ -85,8 +85,12 @@ def test_check_and_uncheck_move_growth_by_the_predator_share():
 
 def test_only_active_decision_making_predators_count():
     species, inter = _toy()
-    # crab is a non decision maker: it cannot hunt in the tick.
+    # crab is a non decision maker without an attack rate: it does not
+    # graze in the tick, so it is not in the budget ...
     assert "crab" not in active_predation("prey", species, inter)
+    # ... but a grazing one is (section 177, microzooplankton).
+    inter["crab_preys_on_prey"]["max_intake_rate"] = 0.1
+    assert active_predation("prey", species, inter)["crab"] == 5.0
     # A muted / absent predator does not count either.
     assert active_predation("prey", species, inter, active_predators=["prey"]) == {}
 
@@ -147,7 +151,9 @@ def _active_in_project():
 
 
 # benthic_community keeps its hand-set growth_rate (reverted, section 136).
-HAND_SET = {"benthic_community"}
+# benthic_community: hand-set growth (section 136); microzooplankton grows
+# only by grazing, growth_rate 0 (section 177).
+HAND_SET = {"benthic_community", "microzooplankton"}
 
 
 def _expected(fid, spec, S, I, active, include_m1=True):
@@ -205,7 +211,8 @@ def test_loader_leaves_m1_out_when_mortality_is_off():
     full_off = setup_full_mareld_mvp(grid_size=(6, 6), seed=0, spawn_seed=0,
                                      apply_natural_mortality=False)
     full_on = setup_full_mareld_mvp(grid_size=(6, 6), seed=0, spawn_seed=0)
-    for fid in ("zooplankton", "pelagic_fish", "gadoids"):
+    # Phytoplankton carries an M1 (its sinking loss) since section 173/174.
+    for fid in ("zooplankton", "pelagic_fish", "gadoids", "phytoplankton"):
         assert full_off[fid].growth_rate < full_on[fid].growth_rate
-    assert full_off["phytoplankton"].growth_rate == pytest.approx(
-        full_on["phytoplankton"].growth_rate)
+    assert full_off["benthic_community"].growth_rate == pytest.approx(
+        full_on["benthic_community"].growth_rate)

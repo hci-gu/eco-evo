@@ -35,13 +35,15 @@ def test_pair_attack_rate_reaches_the_runtime_matrix():
     i = env.dm_ids.index('zooplankton')
     j = env.global_fg_order.index('phytoplankton')
     a, h = float(env.max_intake_mat[i, j]), float(env.handling_time_mat[i, j])
-    assert a == pytest.approx(0.0125)
-    assert 1.0 / (a * h) == pytest.approx(20.0, rel=1e-5)
+    # Section 177: 5 t/km2 at the 10 m reference depth (no calendar here,
+    # so the mixed-layer scale is inert). Section 134 had 0.0125 / 20.
+    assert a == pytest.approx(0.05)
+    assert 1.0 / (a * h) == pytest.approx(5.0, rel=1e-5)
     # The ceiling is the species max_intake_rate, unchanged.
     assert 1.0 / h == pytest.approx(
         float(env.fgs['zooplankton'].params['max_intake_rate']))
     # Half the ceiling at the half-saturation density.
-    half = float(holling_a_eff(a, h, 20.0, 0.0))
+    half = float(holling_a_eff(a, h, 5.0, 0.0))
     assert half == pytest.approx(0.125, rel=1e-5)
 
 

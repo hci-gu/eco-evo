@@ -103,15 +103,16 @@ GREEDY_FLEE = "greedy_flee"
 GREEDY_STAY = "greedy_stay"
 GREEDY_HIDE_STAY = "greedy_hide_stay"
 GREEDY_FLEE_STAY = "greedy_flee_stay"
+EAT_PAYS = "eat_pays"
 RANDOM = "random"
 POLICY = "policy"
 BEHAVIOURS = (NEUTRAL, EAT, GREEDY, GREEDY_HIDE, GREEDY_FLEE, GREEDY_STAY,
-              GREEDY_HIDE_STAY, GREEDY_FLEE_STAY, RANDOM, POLICY)
+              GREEDY_HIDE_STAY, GREEDY_FLEE_STAY, EAT_PAYS, RANDOM, POLICY)
 
 #: The hand-coded arms, i.e. the ones a mixed arm can put on one group
 #: while the trained policies drive the rest.
 HAND_CODED_BEHAVIOURS = (EAT, GREEDY, GREEDY_HIDE, GREEDY_FLEE, GREEDY_STAY,
-                         GREEDY_HIDE_STAY, GREEDY_FLEE_STAY)
+                         GREEDY_HIDE_STAY, GREEDY_FLEE_STAY, EAT_PAYS)
 
 #: Arms that are an upper bound on what behaviour can achieve, and may
 #: therefore decide a verdict. ``neutral`` and ``random`` cannot: a
@@ -478,6 +479,23 @@ def _eat_actions(env):
     return ActionProbabilities(move=move, rest=rest, eat=eat)
 
 
+def _eat_pays_actions(env):
+    """Hand-coded: ``eat`` where the intake at the cell's appetite covers
+    the feeding cost, rest elsewhere (section 177). Never moves. Unlike
+    ``eat`` it does not pay a loss-making feeding cost, so a population
+    that over-grazes its food does not starve on the way down."""
+    actions = _eat_actions(env)
+    payoff = _intake_payoff(env)
+    hunger = np.stack([env.fgs[fid].get_hunger().astype(env.dtype, copy=False)
+                       for fid in env.dm_ids], axis=0)
+    pays = payoff * hunger >= _feeding_cost(env)
+    eat = np.where(pays[:, None], actions.eat, np.float32(0.0)).astype(
+        env.dtype, copy=False)
+    rest = np.where(pays, actions.rest, np.float32(1.0)).astype(
+        env.dtype, copy=False)
+    return type(actions)(move=actions.move, rest=rest, eat=eat)
+
+
 def _intake_payoff(env, shares=None):
     """``(N_dm, H, W)`` energy intake per unit of predator biomass.
 
@@ -765,6 +783,8 @@ def install_behaviour(env, behaviour, seed=0, checkpoint_dir=None):
         return _greedy_provider(hide=True, stay=True)
     if behaviour == GREEDY_FLEE_STAY:
         return _greedy_provider(hide=False, flee=True, stay=True)
+    if behaviour == EAT_PAYS:
+        return _eat_pays_actions
     return _eat_actions
 
 

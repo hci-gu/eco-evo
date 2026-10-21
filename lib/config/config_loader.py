@@ -2,8 +2,9 @@ import yaml
 import numpy as np
 from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
-from lib.world.growth_budget import derived_growth_rate
-from lib.world import daylight, temperature
+from lib.world.growth_budget import (capacity_loss_rate, derived_growth_rate,
+                                     income_growth)
+from lib.world import daylight, nutrients, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 
 def load_config(path):
@@ -317,6 +318,11 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
+        # Section 185: the regional logistic loss, derived like growth_rate
+        # and kept out of it.
+        _c = capacity_loss_rate(params)
+        if _c is not None:
+            params['capacity_loss_rate'] = _c
 
         # fg_library.yaml is calibrated at LIBRARY_TICK_HOURS and is never
         # rewritten for a run: a different --tick-length is converted here,
@@ -539,6 +545,11 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     # Water temperature (section 143): rides on the daylight calendar,
     # so parse_settings refuses an enabled block without it.
     temperature_settings = temperature.parse_settings(project)
+    # Nutrient pool of light-limited producers (section 172): reads the
+    # daylight light climate's mixed-layer depths, so parse_settings
+    # refuses an enabled block without it.
+    nutrient_cfg = nutrients.runtime_config(
+        nutrients.parse_settings(project), tick_hours)
 
     # Support both the new split (decision_makers / non_decision_makers) and the
     # legacy unified functional_groups list for backward compatibility.
@@ -724,6 +735,11 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
+        # Section 185: the regional logistic loss, derived like growth_rate
+        # and kept out of it.
+        _c = capacity_loss_rate(params)
+        if _c is not None:
+            params['capacity_loss_rate'] = _c
 
         # fg_library.yaml is calibrated at LIBRARY_TICK_HOURS and is never
         # rewritten for a run: a different --tick-length is converted here,
@@ -732,9 +748,21 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         params, _tick_changes = rescale_species(params, tick_hours)
         if daylight_cfg is not None:
             params['daylight'] = dict(daylight_cfg)
+        if nutrient_cfg is not None:
+            params['nutrients'] = dict(nutrient_cfg)
         if temperature_settings is not None:
             temperature_cfg = temperature.runtime_config(
                 temperature_settings, sid)
+            if (not params.get('is_decision_maker', False)
+                    and params.get('grazing_q10') not in (None, "", 0, 0.0)):
+                # A grazing non decision maker (section 177) reads its
+                # layer's temperatures for its Q10.
+                if temperature_cfg is None:
+                    raise ValueError(
+                        f"'{sid}' has grazing_q10 but no layer in "
+                        "simulation_settings.temperature.group_layers "
+                        "(section 177)")
+                params['temperature'] = temperature_cfg
             if temperature.species_settings(params) is not None:
                 if not params.get('is_decision_maker', False):
                     raise ValueError(
@@ -747,6 +775,57 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                         "simulation_settings.temperature.group_layers "
                         "(section 143)")
                 params['temperature'] = temperature_cfg
+            if temperature.ingestion_q10(params) is not None:
+                # Section 181: Q10 on a decision maker's whole intake.
+                if not params.get('is_decision_maker', False):
+                    raise ValueError(
+                        f"'{sid}' has ingestion_q10 but is not a decision "
+                        "maker; a grazing non decision maker uses "
+                        "grazing_q10 (section 181)")
+                if temperature_cfg is None:
+                    raise ValueError(
+                        f"'{sid}' has ingestion_q10 but no layer in "
+                        "simulation_settings.temperature.group_layers "
+                        "(section 181)")
+                params['temperature'] = temperature_cfg
+            if temperature.growth_q10(params) is not None:
+                # Section 183: Q10 on a decision maker's growth rate.
+                if not params.get('is_decision_maker', False):
+                    raise ValueError(
+                        f"'{sid}' has growth_q10 but is not a decision "
+                        "maker (section 183)")
+                if temperature_cfg is None:
+                    raise ValueError(
+                        f"'{sid}' has growth_q10 but no layer in "
+                        "simulation_settings.temperature.group_layers "
+                        "(section 183)")
+                params['temperature'] = temperature_cfg
+        if (capacity_loss_rate(params) is not None
+                and not params.get('is_decision_maker', False)):
+            raise ValueError(
+                f"'{sid}' has regional_carrying_capacity but is not a "
+                "decision maker (section 185)")
+        if income_growth(params) is not None:
+            # Section 184: growth out of this tick's income.
+            if not params.get('is_decision_maker', False):
+                raise ValueError(
+                    f"'{sid}' has income_growth_kappa but is not a "
+                    "decision maker (section 184)")
+            if temperature.growth_q10(params) is not None:
+                raise ValueError(
+                    f"'{sid}' has both income_growth_kappa and growth_q10; "
+                    "the income-funded law does not carry a growth Q10 "
+                    "(section 184)")
+            if (income_growth(params)[1] != 12.0
+                    and not float(params.get('r_max', 0.0) or 0.0) > 0.0):
+                raise ValueError(
+                    f"'{sid}' has feeding_season_months but no r_max; the "
+                    "season sizes a DERIVED growth rate (section 184)")
+            if not float(params.get('starve_rate', 0.0) or 0.0) > 0.0:
+                raise ValueError(
+                    f"'{sid}' has income_growth_kappa but no starve_rate; "
+                    "the fallback would starve at the season-sized growth "
+                    "rate (section 184)")
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: per-project override range > library range >

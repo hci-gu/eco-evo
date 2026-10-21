@@ -13,8 +13,14 @@ calibration, ``LIBRARY_TICK_HOURS``):
       gross = r_max + M1 + sum_j M2_ij
       g     = gross / ((s* - u) * TICKS_PER_YEAR)
 
-  non decision maker (logistic, no separate mortality term)
-      g     = (r_max + sum_j M2_ij) / TICKS_PER_YEAR
+  non decision maker
+      g     = (r_max + M1 + sum_j M2_ij) / TICKS_PER_YEAR
+
+            M1 is 0 for an NDM without ``natural_mortality``, which
+            keeps the old logistic form exactly. Section 173: a producer's
+            own losses (respiration, sinking, lysis) are an explicit M1,
+            so its growth rate is gross of them and the net growth at the
+            light reference day is unchanged.
 
   r_max     ``species_definitions.<fg>.r_max``. For a DM the literature
             maximum NET population growth at low density (recruitment and
@@ -27,8 +33,9 @@ calibration, ``LIBRARY_TICK_HOURS``):
   M2_ij     ``interaction_definitions.<j>_preys_on_<i>.predation_mortality``,
             the literature predation mortality of prey i caused by
             predator j. Counted only while the pair is checked
-            (``preys_on``), the predator is a decision maker (only DMs
-            hunt in the tick) and the predator is active in the project.
+            (``preys_on``) and the predator is active in the project; a
+            non decision maker predator grazes in the population step
+            (section 177, microzooplankton).
   s* - u    the energy surplus at the reserve a DM settles on under
             ideal conditions (section 160). Growth per tick is
             g (s - u), and it used to be paid at a full reserve (1 - u),
@@ -52,6 +59,46 @@ calibration, ``LIBRARY_TICK_HOURS``):
             energy data (no checked prey with an energy content, no
             energy_content, max_energy_reserve or resting_metabolism)
             falls back to the full reserve, 1 - u.
+
+Income-funded growth (section 184)
+----------------------------------
+A decision maker with ``income_growth_kappa`` kappa grows out of this
+tick's income, not out of its reserve: G = min(kappa I - C, B g (s - u)
+ec), I the assimilated intake and C the action costs of the tick (MJ),
+the rest of the income goes to the reserve, and with nothing to eat it
+does not grow at all (the fat is kept for the winter; the reserve-funded
+law of section 116 kept turning it into biomass after the food had
+gone). Its g is paid over ``feeding_season_months`` n (default 12):
+
+      g     = gross / ((s* - u) * TICKS_PER_YEAR) * 12 / n
+
+because a group that can only grow while it is fed has to produce its
+annual budget in those months. s* is unchanged (taken at the annual-mean
+production, as before); the mass-balance ceiling is checked on the
+season-sized g. The months are a stated biological parameter of the
+budget, not a switch: when the group grows is decided by its food.
+Herring: Apr - mid-Sep, 5.5 months (Bachiller et al. 2018),
+research_notes/Sillens vinterbudget/growth_allocation.md.
+
+Regional carrying capacity (section 185)
+---------------------------------------
+r_max is the r of a Schaefer (logistic) stock; a pool paid r_max at any
+density grows at r_max - F until its food runs out and then crashes
+(resume 184.13). ``regional_carrying_capacity`` K (t/km2, the stock's
+effective capacity today - lowered by trawled nurseries and warming, not
+the historical ceiling) closes it: every tick the engine removes the
+fraction
+
+      c * B_region,   c = r_max / (TICKS_PER_YEAR * K)
+
+of the group's biomass and reserve in every cell, B_region its grid-mean
+density (t per 1 km2 cell). The loss is NOT in the derived g, so net
+growth at ideal food is r_max (1 - B/K) - F, as in the source model of
+the r_max prior. It acts on the regional stock (recruitment compensation
+at the nursery scale), not per cell, so it gives a policy no gradient.
+The loader derives ``capacity_loss_rate`` = c at the library tick (a
+"flux" for other tick lengths). Gadoids: r_max 0.37, K 1.02
+(research_notes/Torskfiskarnas reglering/, resume 184.18-185).
 
 When ``--mortality off`` the tick never applies M1, so the loader passes
 ``include_m1=False`` and M1 is left out of the budget as well: removing a
@@ -151,6 +198,81 @@ def ideal_reserve(maintenance, intake, cost, energy_content, max_reserve,
     return s if s > u else None
 
 
+def income_growth(spec):
+    """``(kappa, feeding_season_months)`` of an income-funded decision
+    maker (section 184), or None for the reserve-funded law.
+
+    ``income_growth_kappa`` empty or 0 is off; otherwise 0 < kappa <= 1.
+    ``feeding_season_months`` (empty or 0 = 12) needs a kappa and lies in
+    (0, 12].
+    """
+    spec = spec or {}
+
+    def number(key):
+        raw = spec.get(key, None)
+        if raw in (None, ""):
+            return 0.0
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            raise ValueError(f"{key} must be a number, got {raw!r}")
+        if not math.isfinite(value):
+            raise ValueError(f"{key} must be finite, got {raw!r}")
+        return value
+
+    kappa = number("income_growth_kappa")
+    months = number("feeding_season_months")
+    if kappa == 0.0:
+        if months != 0.0:
+            raise ValueError("feeding_season_months needs income_growth_kappa "
+                             "(section 184): a season-sized g on the "
+                             "reserve-funded law keeps growing on the fat")
+        return None
+    if not 0.0 < kappa <= 1.0:
+        raise ValueError(f"income_growth_kappa must be in (0, 1], got {kappa}")
+    if months == 0.0:
+        months = 12.0
+    if not 0.0 < months <= 12.0:
+        raise ValueError(f"feeding_season_months must be in (0, 12], got {months}")
+    return kappa, months
+
+
+def regional_capacity(spec):
+    """``regional_carrying_capacity`` K (t/km2) of a group, or None.
+
+    Empty or 0 is off; otherwise a positive finite number (section 185).
+    """
+    raw = (spec or {}).get("regional_carrying_capacity", None)
+    if raw in (None, ""):
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        raise ValueError(
+            f"regional_carrying_capacity must be a number, got {raw!r}")
+    if not math.isfinite(value) or value < 0.0:
+        raise ValueError(
+            f"regional_carrying_capacity must be >= 0 t/km2, got {raw!r}")
+    return value if value > 0.0 else None
+
+
+def capacity_loss_rate(spec):
+    """c = r_max / (TICKS_PER_YEAR * K) per tick per (t/km2), or None.
+
+    The regional logistic loss of section 185 at the library tick. K
+    needs r_max: it closes the logistic whose r the budget pays.
+    """
+    capacity = regional_capacity(spec)
+    if capacity is None:
+        return None
+    r_max = _as_float((spec or {}).get("r_max"))
+    if not r_max > 0.0:
+        raise ValueError("regional_carrying_capacity needs r_max (section "
+                         "185): it closes the logistic whose r the derived "
+                         "growth rate pays")
+    return r_max / (TICKS_PER_YEAR * capacity)
+
+
 def has_budget(species):
     """True when the FG's growth_rate is derived rather than hand-set."""
     return isinstance(species, dict) and _as_float(species.get("r_max")) > 0.0
@@ -173,7 +295,13 @@ def active_predation(prey_id, species_defs, interactions,
         if active is not None and pred_id not in active:
             continue
         pred_def = (species_defs or {}).get(pred_id) or {}
-        if not pred_def.get("is_decision_maker", False):
+        # Decision makers hunt in the predation step; a non decision maker
+        # grazes in the population step only when its pair has an attack
+        # rate (section 177, interactions.build_ndm_grazing).
+        if not pred_def:
+            continue
+        if (not pred_def.get("is_decision_maker", False)
+                and _as_float(entry.get("max_intake_rate")) <= 0.0):
             continue
         m2 = _as_float(entry.get("predation_mortality"))
         if m2 > 0.0:
@@ -198,6 +326,7 @@ class GrowthBudget:
     ideal_cost: float = 0.0                   # MJ/t/tick
     best_prey: Optional[str] = None
     pmax_annual: Optional[float] = None       # (C - cost)/(ec + u ME), /yr
+    season_factor: float = 1.0                # 12 / feeding_season_months (184)
 
     @property
     def predation_total(self):
@@ -211,7 +340,7 @@ class GrowthBudget:
         """Contribution of an annual term to the per-tick growth_rate."""
         if self.error:
             return 0.0
-        return annual / (self.gate * TICKS_PER_YEAR)
+        return annual / (self.gate * TICKS_PER_YEAR) * self.season_factor
 
     def describe_terms(self):
         """``describe()`` as (text, term) pieces.
@@ -225,7 +354,7 @@ class GrowthBudget:
             return [(f"{self.prey_id}: {self.error}", "error")]
         terms = [(f"g = {self.growth_rate:.4g}", "growth_rate"),
                  (" = (", None), (f"r_max {self.r_max:g}", "r_max")]
-        if self.is_decision_maker:
+        if self.is_decision_maker or self.m1_annual > 0.0:
             terms += [(" + ", None), (f"M1 {self.m1_annual:.3g}", "m1")]
         for pred, m2 in sorted(self.predation.items()):
             terms += [(" + ", None), (f"{pred} {m2:g}", f"m2:{pred}")]
@@ -233,6 +362,9 @@ class GrowthBudget:
             terms += [(") / (", None), (f"{self.gate:g}", "gate"),
                       (" x ", None), (f"{TICKS_PER_YEAR:g}", "ticks_per_year"),
                       (")", None)]
+            if self.season_factor != 1.0:
+                terms += [(" x ", None),
+                          (f"12/{12.0 / self.season_factor:g}", "season")]
         else:
             terms += [(") / ", None),
                       (f"{TICKS_PER_YEAR:g}", "ticks_per_year")]
@@ -260,7 +392,7 @@ def growth_budget(prey_id, species_defs, interactions,
         is_decision_maker=is_dm,
         r_max=_as_float(spec.get("r_max")),
         m1_annual=annual_rate_from_tick_loss(spec.get("natural_mortality"))
-        if (is_dm and include_m1) else 0.0,
+        if include_m1 else 0.0,
         predation=active_predation(prey_id, species_defs, interactions,
                                    active_predators),
     )
@@ -277,9 +409,20 @@ def growth_budget(prey_id, species_defs, interactions,
                     active_predators)
         if budget.error:
             return budget
+        try:
+            income = income_growth(spec)
+        except ValueError as error:      # the FG editor, mid-keystroke
+            budget.error = str(error)
+            return budget
+        if income is not None:
+            budget.season_factor = 12.0 / income[1]
     else:
         budget.gate = 1.0
-    budget.growth_rate = budget.gross_annual / (budget.gate * TICKS_PER_YEAR)
+        if not math.isfinite(budget.m1_annual):
+            budget.error = "natural_mortality must be below 1"
+            return budget
+    budget.growth_rate = (budget.gross_annual / (budget.gate * TICKS_PER_YEAR)
+                          * budget.season_factor)
     if is_dm and budget.reference_fill is not None:
         ceiling = budget_mass_balance_ceiling(spec)
         if ceiling is not None and budget.growth_rate > ceiling:

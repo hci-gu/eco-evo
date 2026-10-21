@@ -50,7 +50,8 @@ fabricates mass.
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
 | `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs, paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). |
-| `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. |
+| `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
+| `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
@@ -67,8 +68,14 @@ fabricates mass.
   gadoids, which carry ~95 % of their diet (pair attack rates 0.2,
   Type II, vs herring 1e-4, Type III - a Type III `a` is per (t/cell)^2;
   0.015 made fix60's seals 85 % herring eaters, section 168).
-- Non decision makers (logistic growth toward carrying capacity):
-  `phytoplankton`, `benthic_community`.
+- Non decision makers: `phytoplankton` (nutrient-limited since 172),
+  `subsurface_phytoplankton` (section 180: the A17 subsurface
+  chlorophyll maximum, the same algae in the layer [M(t), 30 m],
+  shade-adapted I_k 30, eaten by zooplankton and microzooplankton
+  diluted over the layer thickness; zooplankton observes it),
+  `benthic_community` (logistic), `microzooplankton` (section 177:
+  grows only by grazing the phytoplankton in the population step;
+  eaten by zooplankton, which observes it).
 - English snake_case IDs are canonical.
 
 ## 5. The Tick (per tick, random FG order)
@@ -126,12 +133,62 @@ fabricates mass.
   T from its layer's monthly table on the daylight calendar; herring
   t_ref is 14 C (the library value is a summer cost), gadoids and
   zooplankton `annual_mean`, porpoises none (endotherm). On in
-  `mareld2.yaml`; attack rates are not temperature-scaled.
+  `mareld2.yaml`. Intake is temperature-scaled only for a DM with
+  `ingestion_q10` (section 181: zooplankton 2.8, the whole response,
+  annual mean 1; it moved the trained zooplankton's spring from February
+  to March-April as at A17); `growth_q10` (section 183, zooplankton 3.0)
+  scales its growth branch the same way.
 - Growth: NDM logistic; DM `s = R/(B*ME)`, `q = s - u` (`maintenance_level`, default 0.3).
+  A DM with `income_growth_kappa` kappa (section 184) grows out of this
+  tick's income instead, `G = min(kappa I - C, B g (s - u) ec)` in
+  `movement.apply_energy_costs` (both engines), and never turns its
+  reserve into biomass: no food, no growth, the fat is kept for the
+  winter (the reserve-funded law kept growing on it after the food had
+  gone). Its derived g is paid over `feeding_season_months` (x 12/n).
+  Set on herring (kappa 0.75, season 5.5 months; resume 184.8).
+  A DM with `regional_carrying_capacity` K (t/km2, section 185) loses
+  `r_max/1460 * B_region/K` of its biomass and reserve per tick after
+  M1 (B_region = grid-mean density; both engines, with or without
+  `--mortality`), kept OUT of the derived g, so it grows at
+  `r_max (1 - B/K) - F` (the logistic its r_max prior comes from). The
+  loader derives `capacity_loss_rate`. Gadoids: r_max 0.37 (today's
+  productivity, 184.18) and K 1.02 (today's effective capacity, not the
+  historical ceiling); without it they grew at r_max - F, ate the
+  pelagic pool down and crashed (184.13).
   With the daylight calendar a producer with `light_saturation` grows at
   `growth_rate * P(t)/P_ref` (section 138; 0 at night, needs the site's
   light climate in the manifest). The old `seasonal_amplitude` /
-  `seasonal_period` sine is gone.
+  `seasonal_period` sine is gone. With `simulation_settings.nutrients`
+  (section 172) a producer with `nutrient_half_saturation` grows on a
+  nutrient pool instead of logistically (K stays a ceiling); alone it
+  gives the nitrate cycle but no spring bloom. An NDM's
+  `natural_mortality` is its own loss M1 (respiration, sinking, lysis;
+  section 173): removed before growth, follows `--mortality`, and
+  counted in its derived growth `(r_max + M1 + sum M2)/1460`.
+  Phytoplankton M1 0.005 (its sinking loss; r_max 67.882 keeps g 0.0670)
+  is on since section 174: pool + M1 give a March bloom; checkpoints
+  from before 174 were trained in a flat-phytoplankton world. A
+  nutrient-stress loss (`stress_loss_max`, section 175) exists but is
+  OFF; since section 177 the summer minimum comes from grazing.
+- Grazing NDMs (section 177): an NDM with a checked
+  `<ndm>_preys_on_<prey>` pair carrying `max_intake_rate` grazes at the
+  start of the population step (Holling II, optional `food_threshold`
+  = ERSEM perception term, `grazing_q10` on its temperature layer,
+  `growth_efficiency`, `excretion_regeneration` to the prey's pool) and
+  counts as a predator in the prey's growth budget. Phytoplankton g is
+  therefore GROSS (0.1675/tick): microzooplankton carries the 60 %
+  micrograzing as M2 147/yr. A pair with `mixed_layer_reference_m` has
+  a(t) = a M_ref/M(t) (grazers feed on concentration); the zooplankton
+  pairs use it (half-saturation 50 ug C/l = 5 t/km2 at 10 m).
+  Zooplankton -> microzooplankton is Type III (prey switching, section
+  178): with Type II the trained zooplankton grazed it extinct in March.
+  A pair on a subsurface prey scales by M_ref/H(t), H = bottom - M(t)
+  (section 180). A grazing pair may carry an edible share of a producer
+  with a pool, `e = edibility_floor + (1 - floor) N/(N + K)` with K
+  `edibility_half_saturation_umol_l` (section 182): set on
+  microzooplankton -> subsurface phytoplankton (0.1, 2 umol/l; the
+  late-summer Ceratium layer at the pycnocline), which stocks the
+  autumn entrainment and raised October-November zooplankton.
 - M1 can be exposure-weighted (section 139: `m1_visual_share`,
   `m1_tactile_share`, `depth_risk_ratio`): visual part follows the
   visible biomass and the light, tactile part is stronger on hidden
@@ -148,7 +205,9 @@ fabricates mass.
   on seals -> pelagic_fish (166).
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
-  NDM `r = (r_max + sum M2) / 1460`. s* is the reserve a DM settles on
+  NDM `r = (r_max + sum M2) / 1460`; an income-funded DM's g is x 12 /
+  `feeding_season_months` (section 184); a `regional_carrying_capacity`
+  loss is not in g (section 185). s* is the reserve a DM settles on
   under ideal conditions (best checked prey at the Holling ceiling, eating
   every tick; closed form from the library, no policy - section 160); it
   replaced the full reserve 1 - u, which the hunger gate never lets a DM

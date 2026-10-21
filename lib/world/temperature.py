@@ -29,8 +29,29 @@ convex.
 Endotherms (porpoises) get no term: their field metabolic rate is flat
 over 0-20 C (Rojano-Donate et al. 2018). Only decision makers carry a
 metabolism, so a non decision maker with ``metabolism_q10`` is an error.
-Consumption is NOT scaled here; attack-rate temperature dependence is a
-separate, weaker effect (E ~0.4 eV, Rall et al. 2012) left for later.
+
+Ingestion (section 181)
+-----------------------
+A decision maker with ``ingestion_q10`` also eats at
+
+    f(t) = q10 ** (T(t) / 10), normalised to an annual mean of 1
+
+times its whole functional response on every prey: attack rate and
+ceiling 1/h together, so the half-saturation 1/(a h) stays put (ERSEM,
+NEMURO and PISCES scale copepod grazing this way). The library's ``a``
+and ``h`` are therefore annual means, as with the daylight multiplier,
+and the growth budget's s* (at the annual-mean ceiling) is unchanged.
+Same layer and calendar as the metabolism; no ``t_ref``.
+
+Growth (section 183)
+--------------------
+A decision maker with ``growth_q10`` converts its reserve into biomass at
+``growth_rate * f(t)``, f normalised as above: development and growth
+are paced by temperature even on a full reserve (copepods: Huntley &
+Lopez 1992). Only the growth branch is scaled; the starvation branch
+keeps the library rate (``starve_rate``, or the unscaled growth_rate
+when it is 0). ``growth_rate`` (derived at s*, section 160) is the
+annual mean.
 
 The calendar
 ------------
@@ -150,6 +171,32 @@ def species_settings(params):
     if not math.isfinite(t_ref):
         raise ValueError(f"metabolism_t_ref must be finite, got {t_ref}")
     return q10, t_ref
+
+
+def _annual_mean_q10(params, key):
+    """A Q10 normalised to an annual mean of 1, or None when inert."""
+    raw = params.get(key, None)
+    if raw in (None, ""):
+        return None
+    try:
+        q10 = float(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"{key} must be a number, got {raw!r}")
+    if q10 == 0.0 or q10 == 1.0:
+        return None                      # 0 = the FG editor's empty field
+    if not math.isfinite(q10) or q10 < 0.0:
+        raise ValueError(f"{key} must be > 0, got {q10}")
+    return q10
+
+
+def ingestion_q10(params):
+    """The species' ``ingestion_q10`` (section 181), or None when inert."""
+    return _annual_mean_q10(params, "ingestion_q10")
+
+
+def growth_q10(params):
+    """The species' ``growth_q10`` (section 183), or None when inert."""
+    return _annual_mean_q10(params, "growth_q10")
 
 
 def tick_temperatures(monthly_c, tick_hours):

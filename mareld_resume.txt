@@ -15627,3 +15627,1749 @@ remain open exactly as described in 71.9 / 71.11.
     (a) is necessary (light alone gives 1.1x), (c) sets the phase,
     (b) sets the level and erases what amplitude is left. Not
     implemented; nothing in engine or library changed.
+
+172 NUTRIENT POOL FOR LIGHT-LIMITED PRODUCERS (2026-10-18)
+================================================================
+
+172.1 User request after 171: implement a nutrient pool for the
+    phytoplankton. Implemented OPT-IN; mareld2.yaml carries the block
+    with enabled: false (fix61 was training and the probe reloads the
+    manifest). No observation channel, so checkpoints still load, but
+    enabling it changes the world: every policy needs retraining.
+172.2 Model (lib/world/nutrients.py, Evans & Parslow 1985 form). Per
+    cell a pool N in the producer's own units (t/km2 it could become).
+    Growth dB = min(r L(t) B N/(N + k_N Y M(t)), N, K - B), paid out of
+    N: the logistic factor is gone, K stays only as a ceiling (kept
+    because without an own loss the stock has no way down; not
+    calibrated for this, and in an ungrazed world it pins B at K and
+    blocks uptake). Supply per tick N' = N keep(t) + supply(t) from
+    dN/dt = Y [m (N0(t) - c) + max(dM/dt,0) N0 - max(-dM/dt,0) c],
+    c = N/(Y M), M(t) the daylight light climate's mixed-layer depth,
+    N0(t) 12 monthly values just below it. Grazing returns
+    grazing_regeneration x the biomass it removes; that is the only
+    closure, the budget is open. Initial N = Y M c_surface(start day).
+172.3 Engine. The pool rides in the producer's unused energy_reserve
+    slot: currents and the open boundary already move it with the
+    water on both engines, and nothing that reads a reserve as energy
+    reads a non decision maker's (observations, local reward, mass
+    balance, movement clamp, population stability, GPU rollout
+    reward are per DM). Guarded writers: predation (pool kept, regen
+    added), impact mortality, the empty-cell sweep (CPU) and the
+    b <= 0 zeroing (GPU). The per-group "energy" in the inference and
+    training plots shows the pool for a nutrient producer (that number
+    had no meaning for a non decision maker before). CPU:
+    interactions.build_nutrient_tables / initialise_nutrient_pools
+    (once, in the env constructor) / is_nutrient_producer,
+    population_change._nutrient_limited_delta. GPU: TensorEcosystem
+    nutrient tables (T, G, 1), population/predation/impact_mortality,
+    initial_nutrients(reserve, light_start) used by the trainer.
+    Loader: params['nutrients'] on every FG. FG editor: three NDM
+    fields with help (the project block is edited in the manifest;
+    the GUI keeps unknown simulation_settings keys).
+172.4 Values. Library (phytoplankton; tick-independent):
+    nutrient_half_saturation 1.0 umol N/l (0.5-2; MacIsaac & Dugdale
+    1972 ~1.0 in nutrient-rich water [F], Fennel et al. 2006 NPZ 0.5
+    [F], NORWECOM diatoms 2.0 [F]); nutrient_yield 0.795 t/km2 per
+    (umol N/l x m) = 14 mg N/m2 x Redfield 5.68 g C/g N / C:WW 0.10
+    (North Sea Ecopath 1:10 [F]); grazing_regeneration 0.3 (0.25-0.45;
+    Acartia excretes ~0.25 of ingested N, Kioerboe et al. 1985 via
+    Kuijper et al. 2004 [F]; pellets are export). Notes:
+    research_notes/Naringspool for vaxtplankton/nutrient_parameters.md
+    (Swedish dir name; Fasham 1990 not obtained). Manifest: N0 = SHARK
+    A17 2010-2023 NO2+NO3 at 20-30 m by month (5.7 6.6 6.8 7.0 4.9 4.4
+    2.8 1.4 0.9 0.9 2.5 3.9); surface (initial) = 0-10 m (171.2);
+    exchange_m_per_day 0.2 = the top of the literature range (0.01-0.2;
+    Hasager et al. 2003 Kattegat entrainment flux and halocline Kz
+    analogues give 0.01-0.17 [D]), fitted below - PROVISIONAL.
+172.5 Calibration (tools/probes/phyto_bloom.py, now with an optional
+    LIBRARY argument and a nitrate row; fix58 frozen, fix58 world plus
+    the block, years 2-3). Sweep m 0.05-0.5 x rho 0.3-0.7 (k_N 0.5):
+    nitrate log-RMSE vs A17 best 0.49-0.52 at m 0.2, rho 0.3-0.5.
+    Final values (k_N 1.0, rho 0.3), 2 seeds, monthly J..D:
+      A17 NO3  5.09 4.84 2.33 0.32 0.13 0.10 0.10 0.10 0.10 0.32 1.30 3.61
+      m 0.2    2.36 2.80 1.72 0.69 0.36 0.27 0.21 0.17 0.17 0.23 0.84 1.47 (0.60)
+      m 0.05   0.90 0.77 0.26 0.13 0.08 0.07 0.06 0.07 0.08 0.12 0.56 0.72 (1.11)
+      phyto m 0.2: 10.2 12.0 13.2 13.2 12.8 12.4 11.8 10.9 10.3 10.0 10.4 9.8
+    The pool gives the nitrate cycle (drawdown Mar-Apr, summer floor,
+    autumn recovery) but NOT a bloom: phytoplankton 1.2-1.9x over the
+    whole sweep, peak Mar-May. Ungrazed it sits at K = 24 all year
+    and nitrate accumulates (4-6 umol/l). Winter nitrate is low
+    (2.4-2.8 vs 5) because the ~10 t/km2 winter stock keeps taking it
+    up: the missing own loss of 171(a), so m is re-fitted once a loss
+    term exists.
+172.6 Pool + a phytoplankton loss (in-memory, after growth, not
+    remineralised), m 0.2: loss 0.005 /tick (0.02 /d): phyto 5.4 11.6
+    20.1 17.8 15.1 12.8 11.2 9.9 8.7 7.1 6.3 5.4, 3.7x, peak March
+    (A17: Feb-Mar), frozen zooplankton survives but at 0.02-0.06 t/km2
+    in winter (A17 ~1.2-1.7). 0.01 /tick: 24x, zooplankton extinct.
+    That is the next step, with r (section 131, April dilution rate,
+    already net of some losses; N/(N + k_N) costs ~15 % more at 5 umol/l)
+    re-derived and a retrain.
+172.7 Checks: tests/test_nutrients.py (14: settings, species keys,
+    tables incl. tick-length agnosticism, uptake = growth, no logistic
+    factor, K ceiling, empty cells keep the pool, regeneration, impacts
+    spare it, inert without the block, loader + env end to end);
+    tests/test_gpu_ecosystem.py::test_nutrient_pool_matches_reference
+    (CPU and CUDA parity, and the trainer's initial_nutrients equals
+    the CPU pool). Full suite 1176 passed / 12 skipped. train.py 1-gen
+    and train_gpu (cuda-graph) smokes with the block enabled on a
+    scratch manifest.
+
+173 PHYTOPLANKTON LOSS TERM M1; SEASONAL PYCNOCLINE EXCHANGE (2026-10-18)
+================================================================
+
+173.1 User request after 172: implement the loss term. A non decision
+    maker's natural_mortality is now its own loss M1: removed from the
+    biomass before growth (CPU population_change.
+    _apply_non_decision_maker_mortality, GPU mortality_keep for every
+    group, the NDM path on biomass * keep), with --mortality on only,
+    scaled by --mortality_multiplier, booked as natural mortality, and
+    never touching the reserve slot (a nutrient pool is the water's;
+    lost producer biomass is not remineralised). The growth budget
+    counts it for an NDM as for a DM: g = (r_max + M1 + sum M2)/1460,
+    left out with --mortality off. NDMs without natural_mortality are
+    bit-identical; the library has none set (see 173.4). FG editor:
+    "Natural Mortality M1" field and help on the NDM editor.
+173.2 What M1 is (research_notes/Naringspool for vaxtplankton/
+    phytoplankton_losses.md, subagent; Swedish dir name). The growth
+    rate behind phytoplankton g (Stelfox-Widdicombe et al. 2004, 0.67
+    /d, section 131) is a dilution rate [F]: 24 h in closed bottles,
+    no nutrients added, so it is NET of respiration and of lysis
+    (both act in every bottle) and GROSS of sinking. So M1 = the
+    sinking loss (0.03 /d, range 0.01-0.1 for growing cells over a
+    6-17 m mixed layer; Kattegat intact-cell flux ~0.025 /d), and
+    respiration/lysis must not be added again. g stays 0.0670 /tick;
+    r_max is re-derived: 97.8 - 22.63 - M1 /yr. After nutrient
+    exhaustion the literature losses rise to 0.1-0.5 /d (stress lysis,
+    aggregate sinking; ERSEM, NORWECOM): not implemented.
+173.3 Seasonal exchange: exchange_m_per_day accepts 1 or 12 monthly
+    values. Summer stratification vs winter storms (Hasager et al.
+    2003: summer entrainment flux small against storm events [F]); the
+    pattern 0.3 0.3 0.2 0.1 0.05 0.05 0.05 0.05 0.1 0.2 0.3 0.3 m/d is
+    PROVISIONAL (shape from that contrast, levels fitted), inside the
+    0.01-0.2 literature range in summer and above it in winter.
+173.4 Calibration (phyto_bloom.py, fix58 frozen, fix58 world plus the
+    pool, k_N 1.0, rho 0.3, g fixed at 0.0670, years 2-3). Seed
+    20260530 unless noted; P = phytoplankton t/km2 J..D:
+      M1/tick  exchange  NO3 logRMSE  r(log P, log chl)  P max/min  zoo min
+      0.0025   seasonal  0.34         +0.61              1.7x Mar   0.25
+      0.004    seasonal  0.37         +0.58              2.8x Mar   0.07
+      0.005    seasonal  0.61         +0.42              4.6x Mar   0.01
+      0.005    0.2       0.82         +0.24              3.7x Mar   0.02
+      0.0075   seasonal  0.45         +0.02              17x Apr    0 (extinct)
+    (A17 chl: 3.4x by monthly medians, 8.4x by means, peak Feb.)
+    Chosen 0.005 (0.02 /d, lower half of the sinking range) for the
+    amplitude: P 4.9 11.8 21.0 18.6 14.6 9.6 7.7 6.8 6.3 5.3 5.1 4.6;
+    NO3 3.2 3.7 2.8 1.7 0.5 0.1 0.1 0.1 0.1 0.3 1.0 1.9 (A17 5.1 4.8
+    2.3 0.3 0.1 0.1 0.1 0.1 0.1 0.3 1.3 3.6). An earlier sweep raised
+    g by M1 (r_max kept): that double-counts against a dilution rate
+    and was discarded.
+173.5 Left as is: (a) the summer stays high (Jul/peak 0.37 vs 0.12)
+    and there is no autumn bloom - the post-bloom stress losses of
+    173.2 are the literature's mechanism for both; (b) the frozen fix58
+    zooplankton falls to 0.01-0.1 t/km2 in summer and winter (A17
+    1-26): trained in a world with flat phytoplankton, it must be
+    retrained; (c) one seed per row except the chosen one checked
+    on 20260531 in 173.4's earlier run (3.8x, r +0.50, with g raised).
+173.6 NOT ACTIVE. M1 acts with or without the pool and the live
+    library is re-read by the running fix61 probe, so the values are
+    commented in fg_library.yaml (natural_mortality 0.005, r_max
+    67.882) and the mareld2.yaml block carries the seasonal exchange
+    with enabled: false. Activating = those three edits, then a
+    retrain of every policy.
+173.7 Checks: tests/test_ndm_mortality.py (budget with/without M1,
+    tick removal by flag and multiplier, loss booking, reserve
+    untouched), test_nutrients.py monthly exchange,
+    test_gpu_ecosystem mortality_keep now includes NDMs (the
+    fixture's NDMs carry natural_mortality 0.1, so every mortality
+    parity case covers it). Full suite 1181 passed / 12 skipped;
+    train_gpu smoke with pool + M1 on scratch files.
+
+174 NUTRIENT POOL AND PHYTOPLANKTON M1 SWITCHED ON (2026-10-18)
+================================================================
+
+174.1 User's call: switch the combination on. mareld2.yaml:
+    simulation_settings.nutrients.enabled true (seasonal exchange of
+    173.3). fg_library.yaml phytoplankton: natural_mortality 0.005,
+    r_max 75.2 -> 67.882, stored growth_rate 0.0670071 (what the
+    loader now computes; 0.0620 with --mortality off, since removing
+    M1 removes its compensation). Library comments updated.
+174.2 fix61 (train_gpu, started before 172) was still running. Its
+    GPU training keeps the world it was built with, but its progress
+    probe/viewer re-reads the library and the manifest, so from now on
+    its evaluations run in the new world. Every checkpoint up to fix61
+    was trained with flat phytoplankton; retrain (173.5: the frozen
+    zooplankton does badly in the new world).
+174.3 Checks: full suite 1181 passed / 12 skipped after one test
+    update (test_growth_budget: phytoplankton now grows faster with
+    mortality on; benthos is the unchanged NDM). train.py 1-gen and
+    train_gpu (cuda-graph) smokes on mareld2.yaml.
+
+175 NUTRIENT-STRESS LOSS: IMPLEMENTED, NOT SWITCHED ON (2026-10-18)
+================================================================
+
+175.1 User request after 174: fix what remains (summer too high,
+    no autumn bloom). The literature mechanism (173.2): after nutrient
+    exhaustion lysis and aggregate sinking rise to 0.1-0.5 /d (ERSEM:
+    lysis 0.045 / 0.125 / 0.5 /d at nutrient limitation 1 / 0.3 / 0;
+    Si-triggered sinking up to 3.5 m/d; NORWECOM likewise).
+175.2 Implemented: a producer with stress_loss_max L_s loses
+    L_s c (1 - f)/(f + c) of its biomass per tick, f = N/(N + half)
+    its growth limitation, c = stress_loss_shape (default 0.1 =
+    ERSEM's curve without the replete baseline, which the dilution
+    rate already holds). After supply, before growth; exported, booked
+    as natural mortality. CPU population_change._nutrient_limited_delta,
+    GPU population (stress_max / stress_shape tensors), nutrients.
+    stress_settings / stress_loss, FG editor fields and help.
+    Tests: test_nutrients (ERSEM shape, order vs growth, pool spared),
+    GPU parity case with L_s 0.08 on CPU and CUDA.
+175.3 Calibration attempt (phyto_bloom.py, fix58 world + pool + M1
+    0.005 + seasonal exchange, year 2-3, seed 20260530):
+    - frozen fix58 zooplankton, L_s 0.01 / 0.025 / 0.05 / 0.1 per
+      tick: the summer minimum appears (Jul/peak 0.13-0.26 vs A17
+      0.12) but the zooplankton goes EXTINCT in every run, after which
+      the dynamics are grazer-free (peak April, winter 0.1-2 t/km2).
+    - zooplankton on the eat rule (intake upper bound), L_s 0.01:
+      P 1.4 3.6 12.5 4.9 2.5 2.2 2.2 2.2 2.2 1.9 1.6 1.4 (peak Mar),
+      zooplankton max 2.4 t/km2 (A17 May 26), summer NO3 1.2-0.4
+      (A17 0.1): the grazer holds the producer down and still cannot
+      build biomass. M1 only + eat: zooplankton max 2.3.
+    The two bracket the observed state (low chl, nitrate at the
+    detection limit, 5-26 t/km2 of copepods) from opposite sides.
+175.4 Diagnosis (tools/probes/budget_gate.py on the library): an
+    always-eating zooplankton breaks even on its feeding cost alone at
+    2.6 t/km2 of visible phytoplankton; covering its M1 (19.6 /yr) and
+    the herring budget needs roughly 5 [D]. A17 summer chl 0.46-0.8
+    ug/l is ~1.5-3 t/km2 in model units (C:chl 50, C:WW 0.1, 6 m mixed
+    layer) [D], yet copepods hold 5-26 t/km2: their summer food is
+    microzooplankton (copepods control ciliates year-round, Nielsen &
+    Kioerboe 1994, plankton.md section 5) and the subsurface
+    chlorophyll maximum below the mixed layer (~30 % of Kattegat
+    production), neither of which the model has. The gap is energetic;
+    a retrain cannot close it. stress_loss_max is therefore NOT set in
+    the library: any value would be calibrated against an extinct or
+    an eat-rule grazer.
+175.5 The autumn bloom is the same story (nutrients and a grazer that
+    does not collapse); exchange was not tuned to chase it.
+175.6 Options for the user: (a) give the zooplankton summer food - an
+    explicit microzooplankton pool on regenerated production, or a
+    subsurface producer layer - structural, needs its own literature
+    pass; (b) revisit the zooplankton half-saturation 20 t/km2
+    (section 134) against the model's phytoplankton units, a
+    calibration with a known footprint; (c) then set L_s and retrain.
+
+176 MICROZOOPLANKTON POOL: FEASIBILITY CHECKED, NOT BUILT (2026-10-18)
+================================================================
+
+176.1 User's choice after 175: option 1, give the zooplankton summer
+    food. Design: an explicit microzooplankton NDM grazing the
+    phytoplankton (the 60 % micrograzing section 131 subtracts from r
+    would become a transfer, and phytoplankton g gross, ~0.1675/tick
+    via M2_micro ~147 /yr). Literature: research_notes/Mikrozooplankton/
+    microzooplankton.md (subagent): mixed-layer biomass central ~1.5 t
+    WW/km2 (winter 0.3-0.5, early summer 0.3-1, late summer 1-5, HD
+    peaks ~10; upper bounds, protozoa peak below the mixed layer);
+    pool umax 0.5 /d at 10 C (HD-dominated), Q10 2.6, GGE 0.3, Imax 1.7
+    /d, K ~30 ug C/l (field), Type II; grazes 50-60 % of annual PP
+    (spring 10-25 %, summer 50-100 %+); 25-30 % of copepod diet (50-80 %
+    late summer), no size-independent preference; excretes ~0.4 of
+    ingested N; non-predatory mortality 0.05 /d.
+176.2 Feasibility in the engine's own terms. The DM predation splits
+    the eat mass over the prey (shares), each prey with its own
+    Holling term, so a second prey does not add a second ceiling: the
+    intake per eating tonne is at most the best single prey's. The
+    zooplankton needs ~172 MJ/t/tick (feeding cost 90 + M1 + the
+    herring budget, at s = u); at the zoo -> phytoplankton form
+    (ceiling 0.25, K 20 t/km2) and ciliate quality 0.8 x 4500 that is
+    >= 4.7 t/km2 of microzooplankton, against a literature central 1.5
+    (0.3-1 in early summer). The pool alone does not close the gap.
+176.3 Zooplankton half-saturation (option 2 of 175.6), full engine,
+    fix58 world + pool + M1 0.005 + seasonal exchange: K 8 or 5 t/km2
+    (100 ug C/l in a 6-10 m layer; K 20 is ~330 ug C/l in summer's 6 m,
+    above the 50-150 of copepod_energetics.md) changes little: frozen
+    zooplankton same as K 20; eat-rule zooplankton max 1.6-1.9 t/km2
+    (K 20: 2.4) - it grazes the phytoplankton lower and its stock stays
+    supply-limited. A 0-D box (scratch) was too crude (mean field, no
+    rest/hide) to judge persistence and was not used for conclusions.
+176.4 The actual ceiling: production. Model gross phytoplankton
+    production with pool + M1 ~12 g C/m2/yr (C:WW 0.1), July 0.14 t/km2
+    /d at a stock of ~7.7 t/km2 (P/B 0.02 /d, f ~0.07 at 0.07 umol/l
+    with k_N 1.0); before the pool 37 g C/m2/yr. Observed 14C PP
+    190-290 g C/m2/yr (plankton.md section 3); net of the 60 %
+    micrograzing the model removes, 76-116 - the model is 6-10x low,
+    ~20x in summer (North Sea summer PP 700-1000 mg C/m2/d). Real summer
+    production is regenerated (Kattegat ~30 % of annual PP in summer
+    subsurface layers; microzooplankton excretion 35-50 % of summer N
+    demand) at low stock and fast turnover; the model has high stock,
+    no turnover, and exports every non-grazing loss.
+176.5 What a fix needs, together (not built; user to decide):
+    (a) explicit microzooplankton (176.1) with Q10 (it lags the bloom
+        at 3-5 C), excreting ~0.4 of intake to the pool;
+    (b) fast regeneration of the producer's own losses (lysis -> DOM ->
+        NH4 in the mixed layer) instead of full export, and an NH4-like
+        low half-saturation (0.1-0.5 umol/l) for regenerated N;
+    (c) a concentration-based (mixed-layer-scaled) half-saturation for
+        grazers, as the nutrient half-saturation already is;
+    (d) then stress loss, recalibration of g/M1/m against A17 and a
+        retrain. Phytoplankton g ~2.5x and the K question reopen.
+    Nothing in engine or library changed in this section.
+
+177 MICROZOOPLANKTON, CONCENTRATION-BASED GRAZING, REGENERATION (2026-10-18)
+================================================================
+
+177.1 User's call after 176: build the whole package. Built:
+    (a) Grazing non decision makers (interactions.build_ndm_grazing /
+        ndm_grazing_rate, population_change.apply_ndm_grazing, GPU
+        TensorEcosystem.ndm_grazing): an NDM with a checked pair that
+        carries max_intake_rate takes B_g m(t) a' F/(1 + a' h F) of the
+        prey at the start of the population step (before M1, fixed
+        order), F = B_p, or B_p^2/(B_p + F0) with food_threshold F0
+        (ERSEM's food-perception term); a' = a x M_ref/M(t) with
+        mixed_layer_reference_m; m(t) = grazing_q10^((T - t_ref)/10) on
+        its temperature layer (inert without the calendar); capped at
+        MAX_HARVEST_FRAC; grows growth_efficiency x intake; returns
+        excretion_regeneration x (1 - gge) x intake to the prey's
+        nutrient pool; booked as predation. growth_budget counts an
+        NDM predator whose pair has an attack rate.
+    (b) mixed_layer_reference_m on a DM pair: folded into the per-tick
+        pair table (light_mult_table), so the GPU needed no new code.
+    (c) stress_regeneration: the lysed share of the stress loss
+        returns to the pool (CPU and GPU).
+    (d) Rig arm eat_pays (eat where the intake covers the feeding
+        cost, else rest), needed because every checkpoint is invalid
+        (a new FG changes the action layout, 5 + N_all).
+    (e) FG editor fields and help for the new species keys (the FG
+        Interactions editor does not show NDM predators; the pair is
+        edited in fg_library.yaml).
+177.2 Library (sources research_notes/Mikrozooplankton/
+    microzooplankton.md and earlier notes): microzooplankton growth 0,
+    energy 4500, gge 0.3, excretion_regeneration 0.571 (0.4 of
+    intake), grazing_q10 2.6 at 10 C (layer mean_0_50m), M1 0.0125
+    (0.05 /d), spawn on phytoplankton; pair micro -> phyto Imax 0.425
+    /tick (h 2.353), half-saturation 7 t/km2 at 10 m (70 ug C/l; 3
+    over-grazed the bloom), food_threshold 1.2 (ERSEM 12 mg C/m3),
+    predation_mortality 146.7 (rate ratio: 60 % of the gross 0.67 /d)
+    -> phytoplankton growth_rate 0.1674865 (gross), r_max unchanged
+    67.882. Zooplankton pairs on phyto and micro: a 0.05, h 4,
+    mixed_layer_reference_m 10 (half-saturation 50 ug C/l = 5 t/km2 at
+    10 m, low end of 50-150; 100 starved a rule-driven zooplankton);
+    micro assimilation 0.8. zooplankton_observes_microzooplankton.
+    Phytoplankton k_N 1.0 -> 0.5 (one pool for nitrate and the
+    regenerated ammonium). Zooplankton growth_rate 0.1186083 (its best
+    prey in the s* budget is now microzooplankton). mareld2.yaml:
+    microzooplankton NDM (start 1440 t = 0.4 t/km2, the winter level)
+    and its temperature layer.
+177.3 Calibration (plankton-only scratch manifest: fish and mammals
+    muted, zooplankton on eat_pays, no herring loss on the zooplankton;
+    years 2-3, seed 20260530; A17 for reference):
+      run                 NO3 logRMSE  r(P, chl)  P max/min  Z mean/max  micro share of PP
+      old (174) + rule    1.38         +0.65      7.3x Mar   0.91 / 2.7  -
+      final               0.67         +0.73      6.2x Feb   0.92 / 3.4  0.24
+      final, seed 20260531  0.67       +0.72      6.3x Feb   0.91 / 3.5  0.25
+    final: NO3 3.0 3.5 3.8 1.2 0.4 0.3 0.3 0.2 0.2 0.3 1.1 1.9 (A17 5.1
+    4.8 2.3 0.3 0.1 0.1 0.1 0.1 0.1 0.3 1.3 3.6); P 3.7 5.0 3.7 3.6 1.5
+    0.9 0.8 0.9 1.3 1.1 2.0 2.5 (peak Feb, minimum Jul as A17 chl);
+    micro 0.3-1.6 t/km2. The eat rule (no resting) crashed the start
+    (phytoplankton 22 -> 0.06 in 15 days, zooplankton starved) and was
+    replaced by eat_pays for calibration.
+177.4 Not reached: zooplankton stays ~1 t/km2 mean, 3.4 max (A17 0-25 m
+    up to 26 in May, Calanus); microzooplankton grazes 24 % of
+    production (literature 50-60 % annual); gross primary production
+    ~12-15 g C/m2/yr against 190-290 - the single mixed layer has no
+    subsurface chlorophyll maximum (Kattegat ~30 % of production) and
+    stock x turnover stays low. These are structural limits of a
+    one-layer column, documented, not tuned away. The stress loss stays
+    off: the summer minimum now comes from grazing.
+177.5 Checks: tests/test_ndm_grazing.py (rate, Q10, mixed-layer scale,
+    threshold, cap, inert without a pair), test_gpu_ecosystem.
+    test_ndm_grazing_matches_reference (grazer + DM pair scaling +
+    stress regeneration, CPU and CUDA); updated test_gpu_spawn (8 FGs),
+    test_growth_budget (microzooplankton hand-set; NDM grazer counted
+    only with an attack rate), test_half_saturation (a 0.05, K 5),
+    test_temperature (micro layer). Full suite 1196 passed / 12
+    skipped. train.py 1-gen and train_gpu smokes on mareld2.yaml.
+177.6 Retrain started: pzbpgp248nsrpfix62 (train_gpu, fix61's flags
+    without --visual: migration, mortality, currents on, inf
+    generations x 50, 1 world, 1460-tick rollouts, 32 deltas, 1 16
+    tanh, lr 0.06, sigma 0.1), ~83 s/update plus the per-update CPU
+    progress probe, ~1.5-2 min wall clock per update (~1.5 h per
+    generation); --resume --visual reattaches the viewer; log in
+    results/pzbpgp248nsrpfix62/train.log. Every earlier checkpoint is
+    invalid (FG set and observation layout changed).
+
+178 ZOOPLANKTON SWITCHES AWAY FROM SCARCE MICROZOOPLANKTON (2026-10-18)
+
+178.1 Probe of fix62 at generation 4 (checkpoint copied first;
+    tools/probes/phyto_bloom.py base, 3 years, burn-in 1, seeds
+    20260530/31; tools/probes/pair_intake.py 2 years). The trained
+    zooplankton is 2.5x the rule's (mean 2.4 t/km2, max 10.2 in March vs
+    0.92 / 3.4) and eats 97 % phytoplankton. It grazed the
+    microzooplankton from 1.2 to 0.008 t/km2 in two weeks of early
+    March (zooplankton 9-10 t/km2) and on to ~1e-18: every cell stays
+    positive (no extinction threshold), but nothing regrows from there,
+    so years 2-3 have no microzooplankton at all. Without it the bloom
+    is bigger and later (Mar, 17 t/km2) and nitrate is gone by March
+    (0.10 vs A17 2.33 umol/l): nitrate logRMSE 0.98, r(P,chl) +0.83.
+    This is the caveat of 177.4: the calibration ran a rule-driven
+    zooplankton that never peaked above 3.4.
+
+178.2 Cause: Type II on zooplankton -> microzooplankton gives no
+    low-density refuge; at 10 t/km2 the zooplankton's per-capita take of
+    the microzooplankton exceeds its best growth (0.3 x 0.425 per tick).
+    Fix: functional_response 3 on that pair (prey switching: copepods
+    turn from suspension to ambush feeding as ciliates become common,
+    Kioerboe, Saiz & Viitasalo 1996). a per (t/km2)^2 at 10 m, still
+    scaled by M_ref/M(t). Same checkpoint, scratch library copies:
+
+      a     NO3 logRMSE  r(P,chl)  r(Z,obs)  Z mean/max  micro  micro/PP
+      0.05     0.64       +0.45     +0.85    0.84/4.7    0.98    0.39
+      0.1      0.55       +0.67     +0.69    1.39/6.3    0.55    0.27
+      0.2      0.98       +0.77     +0.49    2.16/9.9    0.26    0.18
+
+    0.1 (= the Type II clearance 0.05 at 0.5 t/km2 of microzooplankton)
+    is in the library. New risk: the zooplankton falls to ~0.01 t/km2
+    Oct-Jan before regrowing in spring - with policies trained in a
+    world whose microzooplankton died every spring.
+
+178.3 Checks: tests/test_holling_response.py::
+    test_zooplankton_switches_away_from_scarce_microzooplankton (live
+    pair Type III, phytoplankton pair Type II). Full suite 1197 passed,
+    12 skipped; train.py 1-generation smoke and a train_gpu smoke with
+    --init-from fix62 passed.
+
+178.4 fix62 stopped by SIGTERM (saved at generation 5, update 49; its
+    zooplankton reward sat at -2.6 from generation 1 on). Retrain
+    pzbpgp248nsrpfix63: fix62's flags plus --init-from
+    results/pzbpgp248nsrpfix62 (FG set unchanged, checkpoints valid);
+    log in results/pzbpgp248nsrpfix63/train.log.
+
+178.5 fix63 generation 0 (copied checkpoint, same probes as 178.1).
+    Microzooplankton persists (mean 0.19 t/km2, 13 % of PP; 0.00 in
+    fix62); nitrate logRMSE 0.93, r(P,chl) +0.74, r(Z,obs) +0.43,
+    zooplankton mean 2.1 / max 9.1 (March). New headline, unmasked
+    rather than caused: the zooplankton falls to 0.07-0.13 t/km2 from
+    October to December (A17 2.9 / 3.5 / 1.2) and the rule eat_pays
+    does the same on the live library (0.05 / 0.02 / 0.04), as did the
+    177 calibration (0.04 / 0.01 / 0.02) - fix62 hid it because the dead
+    microzooplankton left autumn phytoplankton at ~2.4 instead of ~1.2.
+    pair_intake over 3 years: herring 1.9 -> 0.24 -> 0.10, gadoids 0.68
+    -> 0.44 -> 0.12, benthos 3.3 -> 1.0 -> 0.17 t/km2 (fix62 also slid,
+    herring 2.6 -> 1.3); training rollouts are one year, so multi-year
+    persistence is never optimised. Herring intake on zooplankton 19 kt
+    vs 47 kt in fix62.
+
+178.6 Budget, not policy. Mean-field per t of zooplankton (fix63 gen0
+    monthly phytoplankton, ML scale, Q10 cost on mean_0_50m): eating
+    pays every month, but Sep-Nov the net is only +39..+64 MJ/t/tick =
+    0.008-0.013 /tick of biomass, below M1 0.0134 + herring ~0.004:
+    -3.6 %/day, as the trace shows. Autumn phytoplankton is the cause:
+    1.2-1.5 t/km2 = 12-15 ug C/l at 10 m vs A17 chl 0.8-1.8 ug/l (x C:chl
+    50 = 40-90 ug C/l), and the A17 October chlorophyll peak is a month
+    late (November) in the model. Rejected: a Q10 on the zooplankton M1
+    (mean-preserving, Q10 2 and 3, scratch probe) makes October-December
+    worse (0.05/0.01/0.02), since September-October is the warmest water.
+
+178.7 Zooplankton loss by cause (fix63 gen0, CPU, year 2; t/km2/day):
+    June-October M1 is 0.014-0.06 against herring predation 0.0004-
+    0.009 and no starvation; the reserve sits at s 0.51 (u 0.5), so the
+    zooplankton eats all the time (eat 0.93-0.98, rest <= 0.04) and its
+    growth almost but not quite pays M1 0.054 /d: -1.4 to -3.8 %/day
+    from June to October. Rule eat_pays: the same picture.
+    Scratch-library sensitivity (fix63 gen0 / rule eat_pays):
+      zooplankton M1 0.010 / 0.007 / 0.004 (g re-derived): Oct-Dec
+        0.16/0.10/0.19 .. 0.19/0.16/0.37 (policy), 0.10/0.05/0.10 ..
+        0.17/0.13/0.26 (rule) - far from A17 2.9/3.5/1.2.
+      ERSEM-style overwintering switch (M1 x 0.05 while grid-mean
+        phytoplankton + microzooplankton < 3 t/km2, optionally scaled
+        with M/10): the rule holds 0.4-0.56 t/km2 Oct-Dec, but the
+        switch also fires all summer (food < 3 at a 6 m layer), the
+        zooplankton then overgrazes, microzooplankton dies, nitrate
+        logRMSE 1.5-1.8. The policy keeps declining (0.12-0.14 Oct-Nov).
+      grazing_regeneration 0.5 / 0.7: gross PP 14.6 -> 17.6 / 21.8
+        g C/m2/yr, nitrate logRMSE 0.79 / 0.58, zooplankton mean 2.6 /
+        3.2, but Oct-Dec unchanged (0.14/0.06/0.10 at 0.7).
+    Conclusion: the autumn floor is food supply. Model gross PP ~14 g
+    C/m2/yr (monthly 6 46 39 18 10 6 5 4 4 2 3 2 t WW/km2) against
+    190-290 at A17; nitrate already matches A17, so the deficit is
+    turnover, not supply: only grazing regenerates (zooplankton 0.3,
+    microzooplankton 0.4 of intake) while phytoplankton M1, zooplankton
+    respiration/M1 and all detritus leave the cycle - an f-ratio ~0.7
+    against ~0.1-0.3 in a stratified summer. A remineralisation path
+    (detritus / bacteria, or regeneration from the M1 and respiration
+    of the groups) plus the missing subsurface chlorophyll maximum are
+    the candidates; both are design decisions for the user.
+    Literature on winter M1 (research_notes/Zooplankton vinterdodlighet/
+    zoo_winter_mortality.md, Swedish dir name; subagent):
+    Hirst & Kioerboe 2002 Q10 ~2.05 (field), NEMURO exp(0.0693 T); ERSEM
+    switches mesozooplankton to an overwintering state (mortality and
+    respiration 0.0025 /d) below 300 mg C/m2 of integrated prey; the
+    A17 Nov-Jan decline is ~0.018 /d net.
+
+178.8 fix63 generation 1 (13:52): mean rewards gen0 -> gen1 gadoids
+    -0.01 -> +0.03, herring -0.36 -> -0.25, porpoises -0.37 -> -0.32,
+    seals +0.06 -> +0.09, zooplankton -3.63 -> -3.22. Probes as 178.5:
+    nitrate logRMSE 0.88, r(P,chl) +0.72, zooplankton mean 2.1 / max 9.1,
+    Oct-Dec 0.15 / 0.08 / 0.16, microzooplankton 0.18 (14 % of PP);
+    3-year pair_intake: herring 1.95 -> 0.28 -> 0.10, gadoids 0.66 ->
+    0.42 -> 0.12, benthos 3.2 -> 1.05 -> 0.19; herring intake on
+    zooplankton 20 kt -> 3.8 kt -> 1.5 kt. Zooplankton loss budget
+    unchanged from gen0 (M1-dominated decline June-October).
+    Scratch remineralisation test (bloom probe, fix63 gen1): a share F1
+    of the zooplankton and microzooplankton M1 and F2 of a zooplankton
+    respiration proxy (2.5 x resting cost / 4837.5 per t per tick)
+    returned to the phytoplankton pool:
+      F1/F2 0.5/0   PP 16.9 g C/m2/yr  NO3 0.74  Z mean 2.5
+      F1/F2 0.5/0.5 PP 19.9            NO3 0.56  Z mean 3.0
+      F1/F2 0.8/0.8 PP 25.3            NO3 0.65  Z mean 3.8, r(P,chl) +0.35
+    Recycling lengthens the spring bloom into May-July but leaves
+    September-December as it is (zooplankton 0.07-0.17): in autumn the
+    phytoplankton is light-limited (factor 0.58 / 0.37 / 0.15 in
+    Sep-Nov) as well as nutrient-limited (0.17-0.3 umol/l), and there
+    is no A17-like October bloom. fix63 left running (warm start for
+    whatever the user decides).
+
+178.9 fix63 generation 2 (15:09): mean rewards gadoids 0.00, herring
+    -0.42, porpoises -0.32, seals +0.09, zooplankton -3.19 (plateau after
+    -3.22 in gen1). Probes: nitrate logRMSE 0.73, r(P,chl) +0.69,
+    r(Z,obs) +0.45, zooplankton mean 2.0 / max 8.5, Oct-Dec 0.15 / 0.07
+    / 0.15, microzooplankton 0.20 (16 % of PP); 3-year herring 1.97 ->
+    0.32 -> 0.20, gadoids 0.69 -> 0.52 -> 0.16, benthos 3.35 -> 1.03 ->
+    0.16. New in the policy: the zooplankton rests 0.63-0.64 in March-
+    April (0.17-0.48 before), the rest of the year it eats ~1.0. The
+    decision rule of 178.6-178.8 is met (autumn floor not rising, reward
+    flat, budget-limited), so further training of this world does not
+    fix it; the mechanism choice (remineralisation, subsurface
+    chlorophyll maximum, an overwintering state) is left to the user.
+    fix63 keeps running as a warm start.
+
+179 OPTION 1 TRIED IN SCRATCH: A DETRITUS / DOM REMINERALISATION POOL (2026-10-18)
+
+179.1 User's call after 178.9: try option 1 first. Scratch probe only
+    (bloom probe + a per-cell pool D in numpy, fix63 gen2 policies and
+    rule eat_pays, 3 years, burn-in 1); library, manifest and engines
+    untouched. Sources into D: a share of the zooplankton M1, all of the
+    microzooplankton M1, microzooplankton egestion (1 - GGE 0.3 -
+    excretion 0.4 = 0.3 of its intake). D -> nutrient pool at k(T) = k
+    2^((T - 10)/10) per day, sinking export w/M. Zooplankton respiration
+    is NOT added: grazing_regeneration 0.3 already stands for its NH4
+    excretion (Kioerboe et al. 1985), adding it double counts (an early
+    run with it, 0.5/0.5, gave PP 18-20). Phytoplankton M1 and faecal
+    pellets stay export.
+
+179.2 Literature (subagent, research_notes/Detritus och
+    remineralisering/detritus_remineralisation.md): ERSEM pe_R1
+    0.5 (half of zooplankton mortality/excretion to labile DOM, half to
+    POM sinking 5-10 m/d), labile DOM turnover up to 1 /d, Q10 2 at 10 C;
+    NEMURO PON->NH4 0.1 /d at 0 C, Q10 2, PON sinking 40 m/d; Fennel et
+    al. 2006 0.03 / 0.01 /d. Recommendation: one fast pool, share 0.5
+    (0.4-0.7), k 0.4 /d at 10 C, Q10 2, w 0.5 m/d. Field: summer f-ratio
+    < 0.02 - 0.1 in the Norwegian Trench / Kattegat (Bendtsen &
+    Richardson 2018 [F]) - summer production runs on N recycled in the
+    layer; the model's f-ratio is ~0.7.
+
+179.3 Results (policy = fix63 gen2; PP gross g C/m2/yr; Z t/km2):
+      run                      NO3   r(P,chl) PP    Z mean  Z Jul-Aug  Z Oct-Dec
+      no pool                  0.73  +0.69    14.3  2.03    0.62       0.15 0.07 0.15
+      lit k0.4 w0.5 share 0.5  0.70  +0.65    17.6  2.55    0.74       0.17 0.08 0.11
+      lit, share 0.7           0.67  +0.63    18.8  2.72    0.82       0.17 0.07 0.10
+      instant (k 4), share 1   0.61  +0.51    23.0  3.32    1.37       0.20 0.08 0.07
+      no sinking, share 1      0.65  +0.42    23.9  3.39    1.90       0.19 0.07 0.08
+      rule eat_pays: no pool 0.76 / +0.68 / 13.1; lit share 0.5 0.94 /
+      +0.75 / 15.6 (summer nitrate too high for the rule).
+    The pool lifts PP 23-31 % and summer zooplankton 20-30 % at the
+    literature values; more recycling smears the bloom (r(P,chl) falls
+    to +0.4-0.5). Autumn unchanged, as expected (light-limited, 178.8).
+    More microzooplankton (food_threshold 0.6 or 0, M1 0.006) only moves
+    grazing from zooplankton to microzooplankton: PP 13-19, zooplankton
+    dies out in December, microzooplankton 0.5-1.9.
+
+179.4 Reading: option 1 closes a real N leak (zooplankton and
+    microzooplankton M1 vanish today) with sourced parameters, but it is
+    a +25 % lever against a ~15x PP gap. The gap is the productive volume:
+    a 6 m summer mixed layer against a 20-25 m euphotic zone and its
+    subsurface chlorophyll maximum (option 2). Not implemented in the
+    engines yet; user to decide.
+
+180 THE SUBSURFACE CHLOROPHYLL MAXIMUM: A TWO-LAYER WATER COLUMN (2026-10-18)
+
+180.1 User's call after 179: option 2. Facts first (SHARK A17
+    2010-2023, physical/chemical download, bottle chl-a by depth;
+    tables and the request in research_notes/Djupklorofyllmaximum/
+    subsurface_chlorophyll_A17.md):
+    April-August chl at 15-30 m is 2-4x the surface (Apr 2.44 at 15 m
+    vs 1.39 at 1 m; Jun 2.06 at 20 m vs 0.68; Jul 1.59 at 30 m vs
+    0.38) and in June-July ~90 % of the 0-30 m chlorophyll lies below
+    the 6 m mixed layer, on the nitracline (NO3 0.1 at 15 m, 2.6-4.0 at
+    30 m, 6-8 at 50 m). 0-30 m column chl (trapezoid, mg/m2) 23 66 73
+    52 34 39 26 25 25 40 34 17. The October maximum is a 0-10 m one
+    (1.8-1.9 ug/l). Summer NH4 0.19-0.21 umol/l. Secchi 7-12 m. The
+    190-290 g C/m2/yr PP target is Kattegat / Gullmar Fjord mouth 14C
+    (plankton.md section 3), not open Skagerrak.
+
+180.2 0-D box (scratchpad f63/box2.py: the chained nutrients, the
+    layer's light, rule zooplankton): PP 10 -> 19-35 g C/m2/yr, 63-75 %
+    below the mixed layer, zooplankton mean 1.0 -> 2.0-4.1, r(Z, A17)
+    +0.56 -> +0.73, Oct-Nov zooplankton 0.2 -> 0.6-0.9. It adds
+    production (the layer reaches nitrate the mixed layer cannot), not
+    only relocates it. Go.
+
+180.3 Mechanism (lib/world/nutrients.py docstring; both engines):
+    manifest nutrients.subsurface_layer {bottom_m, light_attenuation_
+    per_m, reservoir_umol_l, reservoir_exchange_m_per_day}; library
+    water_layer: mixed|subsurface on a producer. Exactly one producer
+    per layer, one nutrient_yield. Per tick a linear 2x2 map
+    (layer_tables) moves water AND algae: entrainment f_up = dM+/H,
+    detrainment f_dn = dM-/M, diffusive exchange e (the old
+    exchange_m_per_day, now between the layers) and e_b with the
+    reservoir; total new N is the one flux e_b (N_res - c_d). Each
+    producer's own table is then keep 1, supply 0, half k_N Y x its
+    layer thickness; sub_mixed_layer_umol_l becomes the initial
+    subsurface concentration. Light (daylight.subsurface_light_
+    schedule): surface PAR x exp(-Kd M) x exp(-Kd2 z) over the layer,
+    normalised like the mixed layer (the species' I_k in the mixed
+    layer on day 105). Grazer pairs with mixed_layer_reference_m on a
+    subsurface prey scale by M_ref / H(t). Runs first in the
+    population step (population_change.apply_layer_exchange; GPU
+    TensorEcosystem.layer_exchange). Without the layer block a
+    subsurface producer is inert under daylight-only projects and
+    refused when nutrients are on. Bug caught by the parity test: the
+    GPU first wrote the mixed column, then read it as a view.
+
+180.4 Library / manifest. subsurface_phytoplankton: the phytoplankton's
+    r_max, M1, energy, pool keys and grazing pairs (derived g 0.1675,
+    same as phytoplankton), light_saturation 30 (shade-adapted, 20-60),
+    spawned on the phytoplankton layout; zooplankton_preys_on_ and
+    microzooplankton_preys_on_subsurface_phytoplankton as their
+    phytoplankton pairs; zooplankton observes it. Manifest: bottom 30 m,
+    Kd2 0.17 /m (1.7/Secchi), reservoir = A17 50 m NO2+NO3, reservoir
+    exchange [1.0 1.0 0.6 0.3 0.2 0.2 0.2 0.2 0.3 0.6 1.0 1.0] m/d;
+    initial 20000-60000 t (inference 40000).
+    Scratch calibration (rule eat_pays, plankton world, seed 20260530):
+      variant           NO3   NO3d  r(P,chl) col/obs PP    Z mean r(Z)
+      eb 0.3            0.69  0.62  +0.63    0.34    35.9  2.96  +0.73
+      eb 0.6 / 1.0      0.92 / 1.05 ...       PP 45-48, nitrate worse
+      eb seasonal       0.62  0.51  +0.71    0.35    37.0  2.99  +0.71
+      seasonal, Ik 30   0.58  0.53  +0.72    0.36    40.3  3.30  +0.73
+      seasonal, Kd2 .15 0.59  0.51  +0.71    0.35    38.4  3.13  +0.72
+    Repo files, rule eat_pays, seeds 20260530/31: plankton world NO3
+    0.57-0.58, r(P,chl) +0.72-0.73, PP 40.4 (72 % subsurface),
+    zooplankton 3.3 mean / 10.6 max, r(Z) +0.73; full world 0.68-0.71,
+    +0.70, PP 39, zooplankton 3.2 / 9.2, r(Z) +0.71-0.72. Before (one
+    layer, same rule): 0.76, +0.68, PP 13, zooplankton 0.94, r(Z) +0.41.
+    Zooplankton July-August 3.0-3.8 (A17 6.9 / 4.6; was 0.4).
+
+180.5 Not reached: October-December zooplankton still 0.2 / 0.1 / 0.04
+    (A17 2.9 / 3.5 / 1.2): the subsurface layer fades with the light in
+    September and the mixed layer has no October bloom (micro-
+    zooplankton holds it at ~1.1 t/km2). Column chlorophyll 32-36 % of
+    A17 (was 11 %). PP 39-40 vs the Kattegat 190-290.
+
+180.6 Checks: tests/test_subsurface_layer.py (6: block validation,
+    water/algae conservation of layer_tables, inert producer tables,
+    light schedule, M_ref/H scaling, the env map), test_gpu_ecosystem::
+    test_subsurface_layer_matches_reference (3 start ticks x cpu/cuda);
+    test_gpu_spawn 9 FGs; test_nutrients loader test without the
+    layer. Full suite 1209 passed, 12 skipped; train.py 1-gen and a
+    train_gpu smoke passed. FG editor: Water Layer field + help.
+    tools/probes/phyto_bloom.py reports the subsurface producer, its
+    growth, zooplankton intake on it and its nitrate.
+
+180.7 fix63 stopped (generation 5, update 30). New FG set -> every
+    checkpoint invalid. Retrain from scratch: pzbpgp248nsrpfix64
+    (fix62's flags, no --init-from), ~87 s/update; log
+    results/pzbpgp248nsrpfix64/train.log.
+
+180.8 After review: a subsurface producer is also inert in a world with
+    no calendar at all (setup_full_mareld_mvp builds from the library
+    alone): env.inert_producers (state.py) zeroes its growth on the CPU
+    and the GPU growth tensor (test_gpu_ecosystem::test_subsurface_
+    producer_without_the_layer_is_inert). The probe's "PP" is net of
+    the 0.005 /tick M1 (sinking) and gross of grazing. Known gaps,
+    deferred to the next stop of fix64 (no library/manifest edits while
+    it runs): light_saturation 30 and Kd2 0.17 are [D] calibrated
+    within ranges, the DCM I_k range 20-60 needs a citation; the
+    reservoir exchange is a fit. Calibration was rule-driven (eat_pays),
+    the condition that hid the microzooplankton extinction in 178.
+
+181 AUTUMN-WINTER ZOOPLANKTON: Q10 ON THE ZOOPLANKTON INTAKE (2026-10-19)
+
+181.1 fix64 (section 180, from scratch) probed at generations 0, 1, 2
+    and 8 (checkpoint copied first; phyto_bloom + pair_intake + zloss,
+    seed 20260530, 3 years, burn-in 1; Z in t/km2, A17 in brackets):
+      gen  NO3   r(P,chl) col/A17  Z mean/max  r(Z)   Z Oct/Nov/Dec    micro
+      0    0.46  +0.49    0.77     3.4 / 9.6   +0.86  1.0/0.18/0.01    1.0
+      1    0.81  +0.52    0.85     4.6 / 15    +0.79  0.66/0.17/0.03   0.56
+      2    0.93  +0.59    0.87     4.4 / 14    +0.70  0.51/0.15/0.04   0.49
+      8    1.04  +0.66    0.60     6.3 / 22    +0.75  0.33/0.09/0.03   0.49
+      A17                          ~7 / 26            2.9/3.5/1.2
+    The trained zooplankton learned to eat from January (eat 0.97-1.0
+    Jan-Feb) and grows from ~0.04 t/km2 to 2 (Feb) and 10-12 (Mar):
+    its spring runs a month early (A17 0.7 / 4.3), it grazes the
+    microzooplankton down in February (it survives at 0.2-0.8), the
+    phytoplankton blooms in Feb-Mar and the mixed layer is out of
+    nitrate in March (0.14-0.18 vs A17 2.33). By gen 8 it also grazes
+    the subsurface producer off its K = 24 ceiling (10-15 t/km2 Apr-Jul;
+    gen 1-2 sat at 23.5-24) and the subsurface nitrate runs out by May
+    (0.7 vs A17 3.4). Herring 3.2 -> 1.8, gadoids 0.73 -> 0.49 over the
+    3 probe years at gen 8. Stopped by SIGTERM at generation 10,
+    update 1 (the generation-9 checkpoint was copied before).
+
+181.2 Scratch probe (scratchpad aw/probe.py = phyto_bloom + hooks via
+    environment variables; fix64 gen 8/9 policies and rule eat_pays):
+    Q10 on the zooplankton's whole Holling output (annual mean 1),
+    density-dependent M1 (quadratic m B/B_ref, saturating
+    m B/(B+K) (B_ref+K)/B_ref), regeneration of the zooplankton and
+    microzooplankton M1 into the mixed-layer pool, Q10 on the
+    zooplankton M1, herring -> zooplankton Type III (a 0.04/B_ref),
+    and microzooplankton grazing switched off in chosen months.
+    Gen 9 policy (Z Oct/Nov/Dec; Feb/Mar; r(Z); NO3 logRMSE):
+      base                       0.38/0.11/0.04  2.2/13.0  +0.73  1.02
+      Q10 2.0                    0.50/0.17/0.06  1.0/9.8   +0.80  0.98
+      Q10 2.8                    0.57/0.20/0.07  0.5/4.6   +0.85  0.74
+      M1 saturating (7, K 3)     0.60/0.30/0.24  1.8/10.3  +0.79  0.71
+      Q10 2.8 + saturating M1    0.79/0.45/0.21  1.9/9.8   +0.79  0.99
+      Q10 2.8 + quadratic B_ref 7 0.95/0.52/0.18 2.0/8.8   +0.76  0.96
+      herring Type III (B_ref 7) 0.54/0.17/0.06  2.6/13.7  +0.73  1.00
+        (herring 1.5 -> 0.68 t/km2 in January: rejected)
+      Q10 2.8 + M1 Q10 2.0       0.45/0.16/0.05  0.8/8.2   +0.82  0.83
+      regeneration 0.5 (gen 8)   0.35/0.10/0.04  1.9/12.5  +0.75  0.77,
+        r(P,chl) +0.66 -> +0.23 (bloom smeared into May-July; as 179)
+    Rule eat_pays behaves alike (Q10 2.0: 0.35/0.13/0.05, r(Z) +0.75).
+    The engine implementation (181.5) reproduces the Q10 2.8 hook
+    exactly (all 12 monthly Z to 2 decimals).
+
+181.3 Literature (subagent, research_notes/Zooplankton vinterdodlighet/
+    zoo_autumn_closure.md, Swedish dir name): copepod feeding/growth
+    Q10 2.8 (Hansen, Bjornsen & Hansen 1997, used by Kioerboe & Hirst
+    2014 [F]), Huntley & Lopez growth 3.0 [S], Hirst & Lampitt 2.3 [S];
+    in situ fecundity 1.4-1.6 (Hirst & Bunker 2003 [A]); ERSEM 2.0 at
+    10 C, NEMURO 2.0, PISCES 2.14, all on the whole response [SRC];
+    Fennel and ECOSMO none. Quadratic closures (NEMURO, PISCES, Fennel)
+    give 0.37-1.3 /d at 26 t/km2 and would remove the May peak; PISCES
+    chose the square form for stability, not data. Regional
+    invertebrate predation PEAKS in Aug-Oct (Sagitta setosa in Gullmar
+    310 ind/m3 on 1 Oct 1998, up to 48 %/d of single copepod species
+    [F]; Mnemiopsis 5-16 %/d Aug-Sep [F, slides]) and is gone by
+    December: a lower autumn M1 is contradicted. Gullmar 1978-81
+    (Lindahl & Hernroth 1983 [F]): mesozooplankton highest Oct-Dec,
+    primary production ~800 mg C/m2/d in the second half of the season
+    vs 500 in the first - the autumn stock is fed by autumn production.
+
+181.4 Diagnosis. The zooplankton's daily ration is 12-19 %/d from June
+    to October (gen 9 base: deep layer + microzooplankton; it eats
+    almost no mixed-layer phytoplankton in summer). That does not pay
+    M1 5.3 %/d plus herring 1-3 %/d at 12-14 C, where the Q10 2.0
+    metabolism costs 1.3x its annual mean; the same 19 %/d grows the
+    stock in a 5 C March. A17 October food is 0-10 m chl 1.8-1.9 ug/l
+    (~70-90 ug C/l) against the model's ~8 ug C/l mixed-layer
+    phytoplankton (0.8-1.2 t/km2 at 10 m), ~20 ug C/l in the fading
+    subsurface layer and ~8 ug C/l of microzooplankton. The October
+    deficit is top-down: switching the microzooplankton's grazing on
+    the phytoplankton off in Sep-Nov (diagnostic only) lifts October
+    phytoplankton 1.2 -> 3.4 t/km2, r(P,chl) +0.75 -> +0.86 and
+    November zooplankton 0.20 -> 1.17; halving it gives 2.0 / +0.85 /
+    0.47. In the model the microzooplankton (0.6-0.8 t/km2, ~1:1 with
+    the phytoplankton, Q10 2.6 at 13-14 C) holds the autumn mixed layer
+    once the zooplankton has collapsed - a cascade with a low-zooplankton
+    state. Without it the phytoplankton still only reaches 3.4 (A17
+    ~7-9 at C:chl 40-50): light (factor 0.37 in October) and nitrate
+    limit the rest. Literature (subagent, research_notes/
+    Mikrozooplankton/autumn_microzooplankton.md): field autumn
+    ciliates + heterotrophic dinoflagellates are 10-30 ug C/l
+    (Helgoland Sep-Oct 2007/08 9.5-31 [D from F data]; Kattegat HD 42
+    in Aug-Sep, 163 in November, Hansen 1991 [F]), so the model's 6-8
+    is plausible to low, and its 8 %/d grazing is not excessive
+    (Kattegat HD took 6-9 %/d of a Ceratium bloom that still grew,
+    Nielsen 1991 [F]). The real October gap is the phytoplankton
+    itself (~90 vs ~10 ug C/l): the Skagerrak/Kattegat autumn bloom is
+    chain diatoms and Tripos/Ceratium, a size refuge from ciliates
+    (prey < ~35 um) with a slow, lagged HD response, fed by nutrients
+    entrained at destratification. The model's single phytoplankton
+    has neither the refuge nor the entrainment in October (mixed layer
+    10 m in Sep and Oct). Candidate next step, for the user: an
+    autumn/large-cell share the microzooplankton cannot eat (an
+    edibility term or a second producer), not a weaker grazer.
+
+181.5 Implemented (both engines): ``ingestion_q10`` on a decision maker
+    (lib/world/temperature.py ``ingestion_q10``; the loader requires a
+    DM and a temperature layer; interactions.build_temperature_tables
+    builds ``env.ingestion_temp_table`` (T, N_dm) =
+    metabolism_multiplier(layer, tick, q10, annual_mean), 1 for a DM
+    without it; predation multiplies ``effective_intake_rate`` by
+    interactions.ingestion_temperature(env), GPU ``predation`` its rate
+    by ``self.ingestion_temp[light_index]``). The whole response
+    scales (a and 1/h together), so the half-saturation stays and the
+    annual mean is 1: library a and h are annual means and the growth
+    budget's s* is unchanged. Library: zooplankton ingestion_q10 2.8
+    (layer mean_0_50m: Feb-Mar x0.68, Sep x1.37). FG editor field
+    "Ingestion Q10" + help. Not adopted: density-dependent M1 (it
+    reopens the early spring - Feb 1.9 vs 0.5 - and a realised mean M1
+    off the 0.0134 the growth rate is derived from), herring Type III,
+    Q10 on M1, M1 regeneration.
+
+181.6 Checks: tests/test_ingestion_q10.py (12: parsing, annual mean 1,
+    Q10 law, loader refusals, the whole response scales by f(t) below
+    and above the half-saturation, a DM without it untouched),
+    test_gpu_ecosystem::test_ingestion_q10_matches_reference (3 start
+    ticks x cpu/cuda; fails with the GPU term removed). Full suite 1229
+    passed, 12 skipped; train.py 1-generation smoke passed.
+
+181.7 fix65 = fix64's flags, --init-from the frozen fix64 generation-9
+    policies (FG set and observations unchanged, checkpoints valid);
+    log results/pzbpgp248nsrpfix65/train.log.
+
+181.8 Subsurface-layer parameters checked against the literature
+    (subagent; research_notes/Djupklorofyllmaximum/
+    subsurface_chlorophyll_A17.md, section "Parameter sources"):
+    light_saturation 30 is BELOW the regional range (Kattegat
+    pycnocline I_k 63-117, mean 92, Lyngsgaard et al. 2014 [F]; NE
+    North Sea SCM ~64-86 [D from Bendtsen & Richardson 2018 F]; Celtic
+    Sea 20-100, Hickman et al. 2012 [F]). Kd 0.17 below the mixed
+    layer is plausible (NE North Sea July 0.14 +- 0.03 [F]); 0.29 in
+    the mixed layer matches the Skagerrak Secchi 8.3 m x Kq 2.5 [F/D].
+    The summer reservoir exchange 0.2 m/d (~4.6e-5 m2/s) is 5-50x the
+    open NE North Sea pycnocline (1e-6-1e-5 m2/s, nitrate flux < 0.1
+    mmol N m-2 d-1 [F]); Celtic Sea ~5e-5 [A]; no winter value. Both
+    the light and the supply of the subsurface producer are therefore
+    on the generous side; they were fitted (rule eat_pays) to A17
+    nitrate and column chlorophyll. Library and manifest comments now
+    say so (fix65 stopped at update 8 for the comment-only edit and
+    resumed with --resume). A recalibration (I_k ~60-90, summer
+    exchange ~0.02-0.05 m/d) would need production recycled within
+    the layer (section 179) to keep A17's subsurface maximum - left to
+    the user.
+
+181.9 Is the October mixed layer too shallow? A17 density mixed layer
+    from the SHARK bottle/CTD T and S (first sample > 0.125 kg/m3 above
+    the surface, linear EOS; bottles at 0/5/10/15/20/30 m, so minus
+    half a bin): ~18 17 11 8 6 6 7 7 11 12.5 22 14 m (Jan..Dec) against
+    the manifest's 13 9 6 6 6 6 6 7 10 10 17 15. October temperature is
+    uniform to 30 m but the Baltic-water halocline holds the surface
+    layer (A17 nitrate and chlorophyll stay layered at 10-15 m), so the
+    manifest's autumn is close. Scratch (gen 9 policies, Q10 2.8):
+      manifest                 Z Oct/Nov/Dec 0.57/0.20/0.07  P Oct 1.22  r(P,chl) +0.75  r(Z) +0.85
+      autumn only (11/13/22)   0.32/0.11/0.04                1.66        +0.76           +0.84
+      A17 all months           0.35/0.14/0.06                1.81        +0.82           +0.87
+    Deeper autumn layers thin the subsurface producer earlier and lower
+    the October zooplankton; the mixed-layer depth is not the autumn
+    lever. The A17 set improves the winter-spring chlorophyll shape;
+    not adopted here (manifest unchanged; a separate decision).
+
+181.10 fix65 generation 0 (checkpoint after 50 updates, frozen and
+    probed 3 years, seed 20260530):
+      Z (t/km2) Jan..Dec  0.03 0.61 5.62 20.55 18.56 9.88 6.59 4.03 1.74 0.59 0.22 0.07
+      A17                 1.2  0.7  4.3  19.3  26.0  11.4 6.9  4.6  3.7  2.9  3.5  1.2
+      NO3 score 0.75 (fix64 g8 1.04), r(P,chl) +0.74 (+0.66), r(Z) +0.85
+      (+0.75), micro 0.64 (0.49); Oct/Nov/Dec 0.59/0.22/0.07 (0.33/0.09/0.03).
+    The trained run reproduces the scratch Q10 2.8 result (0.52/0.18/0.06,
+    r(Z) +0.87): the spring now starts in March as at A17, the
+    January-September shape fits, the autumn-winter is still 5-17x short.
+    Herring year-mean 3.22/2.02/1.35 over the 3 years (fix64 g8
+    3.17/2.16/1.83); herring<-zoo intake 63/41/28 kt (fix64 g8 62.7/44.6/38.3:
+    year 3 -26 %, the cost of the lower spring peak, Zmax 20.6 vs 22.2); a decline both runs
+    share, a bit steeper after one generation on the smaller spring
+    peak - watch it in later generations. Library comment on the 2.8
+    now tagged [D] (fitted within the literature range).
+
+181.11 fix65 after generation 9 (500 updates), same probes:
+      Z Jan..Dec 0.04 0.67 5.80 19.45 19.00 9.32 5.67 4.16 1.82 0.86 0.26 0.08
+      NO3 0.70, NO3d 0.76, r(P,chl) +0.73, r(Z) +0.85, micro 0.64.
+    Herring year-mean 3.41/2.71/2.03 (generation 0: 3.22/2.02/1.35;
+    fix64 g8 3.17/2.16/1.83), herring<-zoo 74/57/44 kt (fix64 g8
+    63/45/38): the trained herring recovered the generation-0 loss and
+    now ends above fix64. Gadoids 0.75/0.89/0.87. The spring stays
+    at A17; Oct/Nov/Dec 0.86/0.26/0.08 is still 3-15x short.
+
+182 AUTUMN BLOOM: AN EDIBLE SHARE ON THE MICROZOOPLANKTON'S SUBSURFACE PAIR (2026-10-19)
+
+182.1 Ask: "make the autumn bloom with an edibility term" (user, after
+    181.4: the microzooplankton holds the autumn phytoplankton down; the
+    literature's autumn formers, Tripos/Ceratium and chain diatoms, are
+    out of ciliate reach and the heterotrophic dinoflagellates that eat
+    them lag; research_notes/Mikrozooplankton/autumn_microzooplankton.md).
+    fix65 stopped at gen 10 iter 12 for the library edit.
+
+182.2 Scratch (aw/probe.py hook on interactions.ndm_grazing_rate: the
+    microzooplankton sees e x B; frozen fix65 generation-9 policies,
+    3 years, seed 20260530). Base = fix65 g10 to the digit.
+      variant (e on ...)          NO3   rPchl col/obs r(col) r(Z)  Z Mar  Z Oct/Nov/Dec
+      base                        0.70  +0.73  0.52  +0.68  +0.85  5.8   0.86/0.26/0.08
+      mixed, e = 0.4 constant     1.18  +0.64  0.62  +0.79  +0.76  13.6  0.97/0.68/0.41
+      mixed, e = 1-0.8N/(N+0.3)   1.10  +0.78  0.60  +0.80  +0.75  13.7  0.84/0.60/0.45
+      both,  e = 1-0.9N/(N+0.3)   1.09  +0.79  0.71  +0.87  +0.80  13.5  1.21/1.38/0.44
+      subsurface, e = 0.3         0.94  +0.79  0.69  +0.83  +0.86  10.3  1.33/1.07/0.25
+      subsurface, e = 0.15        1.06  +0.79  0.79  +0.78  +0.86  11.4  1.53/1.37/0.38
+      subsurface, e(N) 0/1        0.81  +0.76  0.67  +0.66  +0.87  6.7   1.36/0.82/0.16
+      subsurface, e(N) 0/2        0.84  +0.76  0.74  +0.63  +0.88  7.1   1.58/1.09/0.21
+      subsurface, e(N) 0.1/2      0.81  +0.77  0.67  +0.69  +0.88  6.7   1.37/0.94/0.19
+      subsurface, e(N) 0.15/1     0.77  +0.76  0.60  +0.73  +0.87  6.6   1.28/0.67/0.14
+    (e(N) floor/K = floor + (1-floor) N/(N+K), N the layer's nitrate in
+    umol/l; A17 Z Mar 4.3, Oct/Nov/Dec 2.9/3.5/1.2.) An edible share on
+    the MIXED-layer producer, constant or rising with nitrate (the
+    diatom rule: large cells at high N), starves the winter
+    microzooplankton (Feb 0.02-0.23 vs 2.4) and pulls the spring back to
+    February (Z Mar 13.5 vs A17 4.3, nitrate gone in March): rejected. A
+    constant share on the subsurface producer does the same more mildly
+    (inedible winter algae seed an early bloom). The share that FALLS
+    with the layer's nitrate keeps the spring (r(Z) +0.88) and stocks
+    the late-summer subsurface maximum that the autumn deepening
+    entrains. Column chlorophyll (t/km2 x 2, A17 obsCol 26/25/25 Jul-Sep,
+    40 Oct, 34 Nov): base 12.8/17.7/19.7, 10.9, 5.2; e(N) 0.1/2
+    24.2/28.2/29.0, 29.1, 9.4 - summer at A17, October 11 -> 29, not
+    banked above the data. Herring year-mean 2.37 -> 2.59.
+
+182.3 Biology and sign. The share falls at LOW nitrate, the opposite of
+    the diatom size rule; it encodes the subsurface producer's
+    late-summer community: in the stratified, nitrate-poor pycnocline
+    layer Tripos/Ceratium dominate (Kattegat Aug-Sep, >50 um = 57-62 % of
+    chl, Nielsen & Kioerboe 1994 [F]), ciliates take prey up to ~35 um
+    (Hansen 1991 [F]); heterotrophic dinoflagellates take 6-9 %/d of
+    Ceratium production and lag the bloom (Nielsen 1991 [F]) -> floor
+    0.1, not 0. At winter nitrate (4-5 umol/l) e ~0.75. floor 0.1 and K
+    2 umol/l are [D]. The micro's predation_mortality (146.7 rate ratio)
+    is unchanged; the realised grazing falls below it in late summer.
+
+182.4 Implemented (both engines). Pair keys edibility_floor and
+    edibility_half_saturation_umol_l (together; K > 0, floor in [0,1]):
+    the grazer perceives e B before the food threshold and Holling,
+    e = floor + (1-floor) pool/(pool + half(t) K/k_N), pool the prey's
+    nutrient pool before this pair grazes. Raises when the pools are on
+    and the prey has none; inert without any pools (as Q10 and the
+    mixed-layer scale without the calendar). interactions._edibility,
+    ndm_grazing_rate(env, entry, prey_biomass, prey_pool),
+    population_change.apply_ndm_grazing passes the pool; GPU
+    ecosystem.ndm_grazing mirrors it. Library: microzooplankton_preys_on_
+    subsurface_phytoplankton floor 0.1, K 2.0. AGENTS.md section 5.
+
+182.5 Checks: tests/test_ndm_edibility.py (11: rate = plain rate at e B
+    for pools 0..500, e0 at an empty pool, untouched without keys, one
+    tick, validation, inert without pools); tests/test_gpu_ecosystem.py::
+    test_ndm_edibility_matches_reference (2 start ticks x devices; fails
+    with the GPU term removed). Full suite 1244 passed, 12 skipped;
+    train.py 1-generation smoke passed. The engine with the library value
+    reproduces the scratch e(N) 0.1/2 run within 0.3 % (zoo max abs diff
+    0.06 t/km2; float32 evaluation order, amplified over 4 years).
+
+182.6 Limits. (a) Algae entrained into the mixed layer become edible on
+    arrival (one mixed-layer producer); the A17 surface October peak
+    (1.81 ug chl/l) is still missing - mixed-layer phyto Oct 1.1. (b)
+    Oct/Nov/Dec zooplankton ~1.4/0.9/0.2 vs 2.9/3.5/1.2: Oct about half
+    the gap, Nov-Dec still 4-6x short. (c) The gain rides on the summer
+    subsurface stock that 181.8 called generous (I_k 30, exchange 0.2
+    m/d); recalibrating those would take part of it back.
+
+182.7 fix66 = fix65's flags, --init-from the frozen fix65 generation-9
+    policies (FG set and observations unchanged, checkpoints valid);
+    log results/pzbpgp248nsrpfix66/train.log.
+
+182.8 fix66 generation 0 (50 updates from fix65 g10), same probes:
+      Z Jan..Dec 0.08 1.10 8.93 21.73 18.71 9.73 6.55 4.38 2.42 1.36 0.92 0.22
+      NO3 0.93, NO3d 1.16, r(P,chl) +0.82, col/obs 0.70, r(col) +0.72,
+      r(Z) +0.86, micro 0.51; column Jul-Oct 25/25/26/26 (A17 26/25/25/40).
+    Autumn as in scratch (Oct/Nov/Dec 1.36/0.92/0.22). Herring year-mean
+    3.58/3.34/2.79 (fix65 g10 3.41/2.71/2.03), herring<-zoo 81/74/62 kt
+    (74/57/44), gadoids 0.75/0.94/1.03: the larger late-summer and
+    autumn zooplankton feeds the fish. Cost to watch: March Z 8.9 (scratch
+    with the g10 policies 6.7, A17 4.3) and nitrate gone in March (0.28
+    vs 2.33): the trained zooplankton's spring creeps earlier again; the
+    zooplankton rests more in summer (rest 0.71 Jun-Aug vs ~0.5).
+
+182.9 fix66 at update 121 (gen 2 iter 21), same probes:
+      Z Jan..Dec 0.05 0.80 6.95 19.89 19.40 10.55 7.08 4.69 2.39 1.48 0.75 0.16
+      NO3 0.79, r(P,chl) +0.79, col/obs 0.67, r(col) +0.71, r(Z) +0.87.
+    The generation-0 spring creep reversed (March Z 8.9 -> 7.0, March
+    nitrate 0.28 -> 0.58); autumn Oct/Nov/Dec 1.48/0.75/0.16. Herring
+    3.59/3.33/2.50, gadoids 0.76/1.00/1.19.
+
+182.10 Subsurface layer recalibrated toward the literature (181.8)?
+    Scratch, fix66 update-121 policies, library/manifest copies:
+      variant                          NO3  NO3d  rPchl col/obs Zmax r(Z)  Z Jul-Aug Z Oct/Nov/Dec
+      base (I_k 30, summer x 0.2)      0.79 1.11  +0.79  0.67   19.9 +0.87 5.88      1.48/0.75/0.16
+      I_k 60                           0.78 0.71  +0.76  0.57   17.1 +0.84 6.13      0.73/0.43/0.12
+      I_k 90                           0.72 0.46  +0.66  0.49   11.3 +0.82 6.11      0.66/0.29/0.10
+      summer x 0.05 (May-Aug)          1.09 1.57  +0.82  0.67   21.9 +0.70 0.57      1.62/1.13/0.25
+      summer x 0.02                    0.85 1.60  +0.82  0.58   21.3 +0.58 0.18      0.38/0.74/0.12
+      I_k 90 + x 0.05                  0.79 0.68  +0.73  0.48   11.5 +0.81 2.87      0.41/0.31/0.11
+      I_k 60 + x 0.05 + regen 0.7      0.82 0.65  +0.71  0.60   19.0 +0.84 6.77      0.61/0.45/0.13
+      I_k 60 + regen 0.9               0.66 0.70  +0.49  0.69   26.2 +0.82 19.97     1.05/0.34/0.10
+    (regen = the subsurface producer's grazing_regeneration, 0.3 now.)
+    Best literature-side set (I_k 60, summer exchange 0.05 m/d, regen
+    0.7 [D]) keeps the spring but moves the zooplankton peak to May-Jun
+    (Jun 19.0 vs A17 11.4), empties September (0.63 vs 3.7) and halves
+    the autumn gain of section 182; herring 3-year mean 2.91 -> 1.81.
+    Not adopted. What it does fix: the base layer empties its nitrate
+    two months early (Apr/May/Jun 2.14/0.40/0.22 vs A17 5.6/3.4/2.4);
+    the literature-side layer gives 4.24/2.77/1.01. The generous I_k and
+    exchange are therefore a SPRING error in the subsurface layer (too
+    early a subsurface bloom), which the summer and autumn food web now
+    leans on.
+
+182.11 fix66 at update 335 (gen 6 iter 35):
+      Z Jan..Dec 0.21 2.04 11.81 22.40 18.25 9.98 7.02 4.38 2.66 1.62 0.50 0.25
+      NO3 1.01, r(P,chl) +0.76, r(col) +0.71, r(Z) +0.81, micro 0.35.
+    The spring creep is back (March 11.8 vs A17 4.3, nitrate 0.14 in
+    March) as in fix64: the trained zooplankton eats more phytoplankton
+    (zoo<-phyto 133-150 kt/yr vs 66-86 at update 121) and grazes the
+    microzooplankton to 0.08-0.13 in Aug-Dec (0.4-0.5 before), so the
+    October column falls back to 12.5 (A17 40). Its winter stock rises
+    (Jan 0.21 vs 0.05) and seeds the early spring. Herring 3.69/3.81/3.42,
+    gadoids 0.77/1.01/1.24 - the fish keep gaining. Note for the winter
+    work: a larger overwintering stock alone will advance the spring
+    further unless the Feb-Mar growth is held back by something real
+    (copepod recruitment / development time at 5 C).
+
+182.12 Second mixed-layer producer (the entrained Ceratium stock) -
+    PARKED. Prototype: water_layer 'entrained', a pool-less mixed-layer
+    stock that receives the entrained subsurface algae (b_md) and
+    detrains with the small producer. Two findings: (a) the rule-driven
+    world (rule:eat_pays) builds no late-summer subsurface stock (Aug-Oct
+    ~2 t/km2 vs ~11 under trained policies), so the prototype tested
+    nothing; (b) every DM's policy output has 5 + N_all columns and the
+    groups sort alphabetically, so any new FG changes all five output
+    heads (large_phytoplankton lands at index 2): checkpoints invalid,
+    or surgery on every head. The CPU-only engine path was backed out
+    (no unmirrored path); the scratch library/manifest stay in
+    scratchpad aw/large/.
+
+183 WINTER: WHAT A17 MEASURES, SPLIT M1, AND A Q10 ON ZOOPLANKTON GROWTH (2026-10-20)
+
+183.1 Literature + SHARK (subagent, research_notes/Zooplankton
+    vinterdodlighet/winter_stock.md). Every A17 zooplankton haul is a
+    WP2 90 um net, 25 m -> surface, at a ~345 m station; carbon (2019-23)
+    is computed (HELCOM C7 stage weights), wet weight never reported.
+    Calanus + Metridia share of carbon Jan..Dec:
+      0.82 0.75 0.64 0.89 0.77 0.35 0.48 0.67 0.78 0.30 0.23 0.23
+    In Dec-Mar these are deep-water animals rising from the Norwegian
+    Trench (a 30 m column cannot hold them); in Apr-May it is the new
+    generation growing near the surface. Resident (all minus Calanus and
+    Metridia), t WW/km2 at C/WW 0.084:
+      0.21 0.18 1.56 2.12 6.10 7.40 3.59 1.50 0.79 2.03 2.66 0.92
+    against the model's obs row (total) 1.2 0.7 4.3 19.3 26.0 11.4 6.9
+    4.6 3.7 2.9 3.5 1.2. The flat total Dec->Jan is a composition
+    change: resident carbon falls -0.052/d while Calanus rises. n = 2-4
+    visits per month, 2-50x within a month. So the Feb-Mar 0.7/4.3 that
+    ingestion_q10 2.8 was fitted to (181) is 64-75 % imported Calanus.
+    Scratch scorer sc.py now also prints lZ(res): RMS log error against
+    resident Dec-Mar + total Apr-Nov.
+
+183.2 Split M1 (subagent recommendation: m_np 0.019/d at 5 C, Q10 2, +
+    0.037 Z/(3 + Z), = 0.054 at Z 10 and 9.3 C; scratch, fix66 u335):
+      variant        Z Jan  Feb  Mar   Nov  Dec   lZ(tot) lZ(res) herring
+      base           0.21  2.04 11.81  0.50 0.25  0.99    1.14    3.63
+      split K 3      0.36  2.92 13.32  0.60 0.37  0.90    1.18    3.82
+      split K 1      0.31  2.55 12.54  0.54 0.34  -       -       3.61
+      split K 10     0.37  3.06 13.47  0.62 0.37  -       -       3.87
+    1.5x more winter stock, not the 4-8x of the arithmetic: from October
+    to December the stock sits at the maintenance line (s 0.51-0.52 vs
+    u 0.5) - food-limited, starvation small - so fewer deaths share the
+    same food. And the larger stock advances the spring. The trained
+    zooplankton has also grazed the microzooplankton (its winter food,
+    winter_stock.md rows 13/17) to 0.08-0.13 from Aug to Dec (0.4-0.5 at
+    u121): the remaining Nov-Dec lever, untouched by M1 or growth Q10.
+
+183.3 Growth Q10 (scratch hook, then engine). The trained zooplankton
+    grows 13 %/d in February at 5.4 C; Huntley & Lopez 1992 [S] put the
+    food-saturated copepod maximum at 0.0445 e^(0.111 T) = ~0.08/d at
+    5.4 C, Q10 ~3.0. The DM growth term g (s - u) has no temperature, so
+    a full reserve in cold water grows as fast as in summer. Scratch,
+    fix66 u335, Q10 on g (annual mean 1, starvation unscaled):
+      variant           Z Feb  Mar   Apr   May  NO3  r(col) lZ(tot) lZ(res) herring
+      base (no Q10)     2.04  11.81 22.40 18.25 1.01 +0.71  0.99    1.14    3.63
+      growth Q10 2.0    0.99  4.22  16.06 19.94 0.65 +0.68  0.92    0.89    3.05
+      growth Q10 2.5    0.73  2.41  10.39 20.47 0.53 +0.63  0.96    0.82    2.74
+      growth Q10 3.0    0.56  1.68  6.93  19.64 0.54 +0.59  1.03    0.82    2.48
+      growth Q10 4.0    0.38  1.15  3.92  16.42 0.60 +0.53  1.15    0.87    2.09
+      3.0 + split M1    1.37  4.98  15.25 19.86 0.76 +0.71  0.78    0.90    3.29
+      3.0, ingestion 2.0  0.60 1.99 8.58 20.59 0.52 +0.62  1.03    0.82    2.61
+      3.0, ingestion off  0.45 2.18 10.39 21.25 0.54 +0.62  1.16    0.89    2.50
+    Growth Q10 3.0 puts March at the resident 1.56 and the peak in May as
+    at A17, NO3 0.54 (best yet); once growth is temperature-paced the
+    ingestion Q10 adds little (2.8 vs 2.0 alike). Costs: April 6.9 vs
+    total 19.3 (A17's April is 89 % Calanus, the new generation of the
+    imported overwinterers, which this model has no source for), herring
+    3.63 -> 2.48, r(col) +0.71 -> +0.59 (the spring phytoplankton escapes).
+
+183.4 Implemented (both engines, OFF in the library): ``growth_q10`` on
+    a decision maker with a temperature layer; growth branch
+    growth_rate * f(t), f = q10^(T/10) normalised to annual mean 1;
+    starvation keeps starve_rate (or the unscaled growth_rate).
+    temperature.growth_q10 (shared parser with ingestion_q10), loader
+    refusals (non-DM, no layer), interactions.build_temperature_tables
+    -> env.growth_temp_table, interactions.growth_temperature,
+    population_change DM step; GPU (T, G, 1) growth_temp in population().
+    FG editor field + help. s* stays the closed form at the annual-mean
+    g (as with the metabolism Q10). Tests: tests/test_growth_q10.py (10),
+    tests/test_gpu_ecosystem.py::test_growth_q10_matches_reference (fails
+    with the GPU term removed). Full suite 1260 passed, 12 skipped. The
+    engine with growth_q10 3.0 reproduces the scratch hook within 0.7 %
+    (per-tick temperature interpolation differs slightly).
+
+183.5 Open decision (user): is the model's zooplankton the resident
+    0-25 m community, or everything the herring eats including the
+    imported Calanus? Under the resident target growth Q10 3.0 (literature
+    value) with ingestion Q10 2.0 (the models' value) is the recommended
+    pair; under the total target it undershoots April 3x and costs the
+    herring a third. A Calanus import (seasonal advective source) would
+    be the way to keep both.
+
+183.6 Decision (user, 2026-10-20): resident target, growth_q10 3.0 on.
+    - Target: the model's zooplankton is the resident 0-25 m community.
+      Dec-Mar is compared with A17's resident stock (all minus Calanus
+      and Metridia, C/WW 0.084): Dec 0.92, Jan 0.21, Feb 0.18, Mar 1.56
+      t/km2. Apr-Nov keeps the A17 total, because the Apr-May Calanus is
+      the new generation grown in the surface layer, not imported. The
+      hybrid row is Jan-Dec 0.21 0.18 1.56 19.3 26.0 11.4 6.9 4.6 3.7
+      2.9 3.5 0.92 (scratch l2/sc.py, lZ(res)). There is no repo tool
+      with these targets.
+    - Where the Calanus comes from: diapause C5 in the Norwegian Trench,
+      entering with the deep Atlantic inflow (Falkenhaug et al. 2022;
+      Kaartvedt et al. 2021 for C. helgolandicus at 80-150 m). A17 sits
+      on the 345 m trench slope and gets them rising into 0-25 m in
+      Jan-Mar. A ~100 m bank such as Mareld has no diapause habitat, so
+      any supply there is lateral, and its size is unknown. Not modelled.
+    - Library: zooplankton growth_q10 3.0 (Huntley & Lopez 1992, not
+      fitted). ingestion_q10 stays 2.8; its comment now says it was
+      fitted to the total, and 2.8 vs 2.0 is open (alike in scratch:
+      Mar 1.68 vs 1.99, herring 2.48 vs 2.61).
+    - fix66 stopped at gen 8 iter 9 (SIGINT, last update saved; resumable
+      with --resume). Frozen at scratch pzbpgp248nsrpfix66_g8; its library
+      is frozen at f66/lib_fix66.yaml, and evalgen.sh takes LIB= so fix66
+      evaluations keep the old world. g8 (old library): NO3 0.99,
+      r(col) +0.68, lZ(tot) 1.01, lZ(res) 1.25; zooplankton Mar 13.3, Apr
+      22.4 (the spring creep continued), herring 3.68/3.78/3.41, gadoids
+      0.76-1.23.
+    - fix67 = fix66's CLI, run name pzbpgp248nsrpfix67, --init-from
+      pzbpgp248nsrpfix66_u335 (the policy set measured with growth_q10
+      3.0 in 183.3; no head change). Full suite 1260 passed, 12 skipped;
+      1-gen train.py smoke passed.
+
+183.7 fix67 after gen 0 (scratch f67/g1; live library, growth_q10 3.0).
+    run          NO3  r(col) Zmean Zmax  micro lZ(tot) lZ(res)
+    fix66 g8     0.99 +0.68  6.91  22.4  0.28  1.01    1.25  (old library)
+    u335 + g30   0.54 +0.59  4.95  19.7  1.01  1.02    0.82  (start point)
+    fix67 g1     0.52 +0.62  5.19  20.1  0.80  0.94    0.80
+    Zooplankton by month, t/km2 (resident target Dec-Mar, A17 total
+    Apr-Nov in brackets): Jan 0.17 (0.21), Feb 0.77 (0.18), Mar 2.2
+    (1.56), Apr 8.1 (19.3), May 19.9 (26.0), Jun 12.5 (11.4), Oct 1.7
+    (2.9), Nov 0.60 (3.5), Dec 0.26 (0.92). The spring stays at the
+    resident stock after a generation of training (no creep yet); Feb is
+    4x high, April half. Nov-Dec is still 3-6x low. Microzooplankton
+    0.8 (vs 0.3 in fix66): the zooplankton now eats more micro and less
+    phytoplankton. Herring falls over the 3-year probe, 3.53 / 2.81 /
+    2.04 (fix66 g8: 3.68 / 3.78 / 3.41), herring<-zoo intake 74k -> 43k;
+    gadoids 0.75-0.93. Watch at gen 5: the herring trend and the spring.
+
+183.8 Why the herring falls in fix67 g1 (scratch hz/hloss.py: monthly
+    herring budget per year after a burn-in year, probe year starts at
+    day 147, so each block runs Jun -> May).
+    - fix67 g1: Jun 2.98 -> Dec 2.97 (flat), then Jan-Apr down to 2.09
+      (-30 %), May 2.24; next Jun 2.26, then 1.64. The loss is in the
+      winter: herring rests 0.94-1.00 Nov-Feb and eats 0.00-0.36 %BW/d
+      Dec-Feb (literature winter ration 0.4-1.0 %BW/d, Lohmeyer 1977,
+      Bernreuther 2007), its reserve falls from s 0.69 (Oct) to 0.21
+      (Feb), and it starves 0.07-0.09 %/d in Feb-Mar.
+    - fix66 g8 (old library) bridged the winter on the early zooplankton:
+      Feb-Mar ration 2.7-3.6 %BW/d, no starvation; the spring creep was
+      feeding the herring. It also declines over years 2-4 (Jun 3.86 ->
+      3.75 -> 3.16), with gadoids rising 0.76 -> 1.23.
+    - Ingestion Q10 2.0 instead of 2.8 (fix67 g1 policies): herring year
+      means 3.55 / 2.95 / 2.23 vs 3.53 / 2.81 / 2.04. Not the lever.
+    - So the binding problem for the herring is the Oct-Dec zooplankton
+      deficit (Nov 0.6 vs 3.5, Dec 0.26 vs 0.92 t/km2): with a realistic
+      Feb-Mar spring, the herring has to bridge Nov-Apr on its reserve,
+      and the autumn feeding that should fill it is missing. The autumn
+      and herring problems are the same problem.
+
+183.9 Autumn producer, sensitivity first (scratch aw/probe_floor.py, FML /
+    FDP = monthly floors on the mixed-layer / subsurface producer, grid
+    mean t/km2, the field scaled up when below; mass is created, so these
+    are upper bounds, not mechanisms). fix67 g1 policies, live library,
+    2 years after burn-in. A17 targets from sc.py's conversions: mixed
+    layer obsC x M/10 = Sep-Dec 0.79 / 1.81 / 2.62 / 1.16; subsurface
+    obsCol/2 - that = 11.7 / 18.2 / 14.4 / 7.3 t/km2.
+      variant              added/yr  Z Sep Oct Nov Dec Jan Feb Mar   lZ(res) herring y1/y2
+      base                     0     2.89 1.73 0.61 0.25 0.16 0.74 2.27  0.80   2.79 2.03
+      ML Oct at A17          3.2     2.88 2.21 0.69 0.22 0.11 0.46 1.81  0.76   2.88 2.11
+      ML Sep-Dec at A17      5.7     2.97 2.17 0.83 0.36 0.12 0.38 1.68  0.64   2.89 2.11
+      subsurface x 0.25     14.0     2.88 1.82 1.39 0.57 0.10 0.21 1.27  0.52   2.89 2.04
+      subsurface x 0.35     29.6     2.80 2.14 2.26 0.80 0.14 0.21 1.22  0.43   3.36 2.51
+      subsurface x 0.5      56.2     2.73 3.30 4.02 1.47 0.28 0.31 1.42  0.43   3.83 3.02
+      subsurface x 1       187.5     3.80 12.0 12.6 5.34 1.10 0.58 1.56  1.04   5.06 4.70
+      (target                        3.7  2.9  3.5  0.92 0.21 0.18 1.56)
+    - A second MIXED-layer producer is not the lever: the October surface
+      peak at A17 level adds 3 t/km2/yr and moves the zooplankton little
+      (r(P,chl) +0.78 -> +0.90 is its only real gain).
+    - The lever is the SUBSURFACE autumn stock: 35-50 % of A17's
+      below-mixed-layer chlorophyll in Oct-Dec (model Oct/Nov/Dec 6.4-9.0
+      / 4.9-7.0 / 2.8-4.0 vs 5.0 / 1.2 / 0.6 now) puts the zooplankton
+      on the target from October to March (lZ(res) 0.43, the best yet,
+      Jan-Feb 0.14-0.21 at the resident stock). All of it edible
+      overshoots 4x, consistent with much of A17's autumn chlorophyll
+      being poorly grazed Ceratium (inference).
+    - The herring still falls 21-25 %/yr at 0.35-0.5 (base 27 %): Sep
+      3.78 -> Apr 2.74 at 0.5. Matching the autumn zooplankton fills its
+      autumn but does not stop the Jan-Apr loss; the winter herring
+      budget (M1 0.58/yr + FG predation, ~0.3 %/d, vs a 5-month growing
+      season) is a separate question (subagent, research_notes/Sillens
+      vinterbudget/).
+
+183.10 Herring winter budget (subagent, research_notes/Sillens
+    vinterbudget/winter_budget.md) and a herring growth Q10 probe.
+    - Literature/data: IBTS 2019-24 near the site, weight-at-length
+      15-20 % lower in Jan-Feb than in August, energy-at-length -40-50 %;
+      the site-population mean 12 % fat (Oct) -> 4 % (Feb) is plausible,
+      but too steep for one adult (Norwegian spring spawners fasting lose
+      ~2 fat-% Sep-Dec, Slotte 1996 [A]). No evidence of winter
+      starvation of adult herring; juvenile Pacific herring die at ~1.3 %
+      lipid (Sewall 2019); the model starts starving at ~3.5 % fat.
+      Winter cost 7-14 kJ/kg/d vs the model's 16-24 (1.2-2x high).
+      Adult WBSS overwinter in the Oresund / Koge Bay (Payne 2009); IBTS
+      Q1 adults (3+) are ~0.2 of the August level, the winter stock
+      ~90 % 1-2-year-olds. Fat bottoms in late May (4.5 %) and is 16 % by
+      late June; the model refills from February.
+    - The subagent's own budget: of the Jan-Apr loss only 8-15 % is
+      starvation, 35-54 % is M1, the rest predation; 38 % of the Oct-Feb
+      reserve drawdown is the growth term still turning fat into biomass
+      (0.17-0.27 %/d Oct-Dec). Its ranking: (d) partial emigration,
+      (b) winter cost, (c) starvation threshold, (a) autumn food; probe a
+      seasonal growth brake first.
+    - Herring growth_q10 (scratch, fix67 g1 policies), herring years 1/2:
+        base 2.79/2.03; Q10 2.2 2.79/2.02; 3.0 2.70/1.92; 4.0 2.62/1.84
+        with subsurface x 0.35: 3.36/2.51; +Q10 2.2 3.71/2.84; 3.0
+        3.80/2.97; 4.0 3.92/3.10
+      Wrong phase: the 0-50 m water peaks in Aug-Oct, so the Q10 moves
+      herring growth INTO the autumn and brakes the spring; Feb-Mar
+      starvation rises (0.18-0.23 %/d at 3.0). Temperature is not the
+      herring's growth clock. Not adopted.
+    - Net: no single lever stops the decline (20-27 %/yr in a 2-year
+      probe). The two with the strongest support are the winter
+      emigration of the adults (the site's winter stock is mostly
+      juveniles) and a growth budget that knows the feeding season.
+
+183.11 Season-aware herring growth budget (scratch hs/hseason.py on the
+    section-183 growth table: HSEASON a-b -> herring growth branch
+    g x 12/n inside months a..b, 0 outside, annual mean = the derived g;
+    i.e. the budget r_max + M1 + M2 paid over the feeding season, which
+    also stops the Oct-Dec fat -> biomass conversion). fix67 g1
+    policies, 2 years after burn-in.
+      variant           herring y1/y2  Jun   Sep   Apr   Z Oct/Nov/Dec  lZ(res) gadoids
+      base               2.79 2.03     2.62  2.77  1.79  1.73 0.61 0.25  0.80   0.91
+      season 4-9         5.11 4.93     4.69  6.61  3.48  1.12 0.46 0.22  0.94   1.15
+      season 5-9         5.48 5.01     4.60  7.11  3.25  1.03 0.43 0.20  0.96   1.11
+      season 6-9         3.92 3.52     2.85  5.09  2.54  1.29 0.54 0.25  0.85   1.04
+      season 5-10        3.61 3.03     2.96  4.18  2.06  1.45 0.57 0.26  0.82   1.01
+      subsurface x0.35   3.36 2.51     3.16  3.31  2.27  2.14 2.26 0.80  0.43   1.13
+       + season 5-9      5.56 5.18     4.76  7.27  3.55  1.65 1.68 0.60  0.67   1.31
+       + season 6-9      5.88 5.25     4.33  7.59  3.90  1.56 1.53 0.58  0.72   1.20
+    - The seasonal budget is the herring's main lever: the year-on-year
+      fall drops from 27 % to 4-10 % and the mean doubles. May-Sep matches
+      the literature feeding season (fat lowest late May, 16 % by late
+      June, winter_budget.md). Oct-Dec growth is gone, the reserve is
+      kept (s Dec 0.35-0.40 vs 0.39 before, Feb starvation remains
+      0.15-0.34 %/d in year 2 under the untrained policy).
+    - Costs: a +/- 50 % seasonal herring amplitude (Jun 4.6 -> Sep 7.1 ->
+      Apr 3.3), more than the 10-27 % weight-at-length swing in IBTS
+      (the site's real amplitude comes mostly from the adults leaving,
+      183.10); summer ration 3.2-3.5 %BW/d; the herring then eats the
+      autumn zooplankton down (Oct-Dec 1.0/0.4/0.2), so the autumn stock
+      (subsurface x 0.35) is needed with it; gadoids rise to 1.1-1.3.
+    - Policies were trained without it; a trained herring would adapt.
+
+184 GROWTH SEASON OF A DECISION MAKER (2026-10-20)
+
+184.1 Why: 183.10-183.11. The derived growth_rate (section 160) assumes a
+    DM can turn reserve into biomass every tick of the year. Herring at
+    the site feeds May-Sep; the rest of the year the model's herring kept
+    converting fat into biomass (Oct-Dec 0.17-0.27 %/d), entered winter
+    lean and lost 25-30 %/yr. Paying the budget over the feeding season
+    cut the fall to 4-10 %/yr in scratch (183.11).
+
+184.2 Engine: ``growth_season_start`` / ``growth_season_end`` on a DM
+    (calendar months 1-12, inclusive, start > end wraps; both or
+    neither; 0 or empty = off). daylight.growth_season parses,
+    daylight.season_multiplier gives the (T,) factor (0 outside, constant
+    inside, annual mean 1 over the ticks). interactions.
+    build_growth_season_tables (called after build_temperature_tables in
+    state.py) folds it into env.growth_temp_table; with a growth_q10 the
+    product is renormalised to mean 1. The growth branch is growth_rate x
+    the table (population_change, unchanged code path); the starvation
+    branch keeps the library rate. The GPU reads the same table (no
+    GPU-side change beyond the error text). Refusals: non-DM (loader and
+    env), no daylight calendar (env). FG editor fields + help. s* and the
+    derived g are unchanged (annual mean).
+
+184.3 Checks: tests/test_growth_season.py (18): parsing, the multiplier,
+    no growth outside the season, raised rate inside, starvation
+    unscaled, product with growth_q10, refusals.
+    tests/test_gpu_ecosystem.py::test_growth_season_matches_reference
+    (6; all fail when the GPU ignores the table). The engine with herring
+    5-9 reproduces the scratch hook exactly (herring 5.478 / 5.009,
+    zooplankton Sep-Dec 2.01 / 1.03 / 0.43 / 0.20). Full suite 1290
+    passed, 12 skipped; 1-gen train.py smoke passed.
+
+184.4 NOT set in the library. Open choice (user): which season (May-Sep
+    fits the fat cycle but swings the herring +/- 50 %; Jun-Sep less),
+    and whether to enable it before an autumn subsurface mechanism exists
+    (with the season the herring eats the Oct-Dec zooplankton down to
+    1.0 / 0.4 / 0.2, lZ(res) 0.80 -> 0.96). Enabling it needs a new run.
+
+184.5 Is a calendar the right driver? (user: growth should emerge from
+    biology, not an external calendar). Subagent, research_notes/Sillens
+    vinterbudget/growth_allocation.md:
+    - Seasonal somatic growth is established: NSS herring grow 1 Apr -
+      15 Sep (Bachiller 2018 [F]); North Sea herring soma peaks May-Jun
+      before gonads Jul-Sep (Iles 1964); DATRAS at the site: 65-93 % of
+      the yearly length gain of 2-3-ringers between Jan-Feb and August.
+    - Driver: falling food plus maintenance explains the stop; salmonid
+      lab work shows allocation or an endogenous rhythm can stop growth
+      with food in excess (Metcalfe & Thorpe 1992; Saether 1996); for
+      herring only indirect evidence (Sewall 2019 juveniles switch to
+      storage in November; Schmidt 2022 photoperiod times oocytes).
+      Temperature is not the switch.
+    - My citations from memory: Hurst 2007, Post & Parkinson 2001, Boeuf
+      & Le Bail 1999 exist and say roughly that; Iles 1984 exists (book
+      chapter, unread).
+    - Models: Wisconsin bioenergetics (incl. herring), Broekhuizen-type
+      reserve/structure models and DEBlipid (Martin et al. 2017) fund
+      structure from this step's income; standard DEB grows on the
+      reserve like Mareld, which DEB-Storage (Ortiz Duran et al. 2026,
+      Ecol Model) was written to fix.
+    - Ranked rules: A) kappa split of this tick's income, G = max(0,
+      kappa I - C), the rest to the reserve, kappa derived per group
+      (~0.75 for herring, s* unchanged 0.857), estimated Feb s 0.39 vs
+      0.21; C) today's law braked to I >= C; B) a reserve target raised
+      by shortening days (salmonid evidence only). Recommendation: one
+      code path for all DMs, kappa per group, herring first.
+    So growth_season (184.2) is a phenomenological stand-in; rule A is
+    the mechanistic candidate. Not tested yet.
+
+184.6 Rule A in scratch (hs/kappa.py: per cell G = max(0, kappa I - C), I
+    this tick's assimilated intake, C its action costs, G leaves the
+    eaters' reserve as G / energy_content new tonnes before movement;
+    the reserve-funded branch off for herring, starvation unchanged).
+    fix67 g1 policies, 2 years after burn-in, kappa 0.75 unless noted.
+      variant                     herring y1/y2  Jun   Sep   Apr   Z Oct/Nov/Dec  lZ(res) starv Feb-Mar  s Feb
+      base (today's law)           2.79 2.03     2.62  2.77  1.79  1.73 0.61 0.25  0.80   0.07-0.09     0.21
+      calendar 5-9 (184.2)         5.48 5.01     4.60  7.11  3.25  1.03 0.43 0.20  0.96   0.15-0.34     0.19
+      A, no ceiling                5.29 5.57     18.6  5.83  0.18  boom-bust: 0.2 -> 19 t/km2 Mar-Jun, s ~0 Jul-Feb
+      A, ceiling B g (s-u)         1.42 0.73     1.57  1.27  0.74  2.02 0.66 0.24  0.79   0             0.54
+      A, ceiling 2 g (1-u)         7.15 5.58     5.79  8.39  3.72  0.92 0.35 0.15  1.12   0.03-0.27     0.21
+      A, ceiling B 2.18 g (s-u)    4.57 4.14     4.46  5.52  3.04  1.35 0.50 0.25  0.87   0             0.34
+       + subsurface x 0.35         4.90 4.31     4.63  5.68  3.17  1.93 2.01 0.67  0.58   0             0.35
+    - Income-funded growth needs a growth ceiling: without one, a few
+      herring meeting the spring zooplankton grow 90x in three months
+      and starve all winter (no reserve ever filled).
+    - With today's g (s-u) as the ceiling the mechanism does what the
+      literature says: growth stops when the food stops, the fat is
+      kept (s 0.54 in Feb), no starvation. But the herring collapses:
+      the derived g is sized for growth all year (section 160).
+    - g sized for a 5.5-month feeding season (Apr - mid-Sep, Bachiller
+      2018; x 12/5.5 = 2.18): -9 %/yr, no starvation at all, Feb s 0.34
+      (~6 % fat, between the population mean 4 % and a fasting adult),
+      autumn zooplankton less grazed than with the calendar. Same order
+      of effect as the calendar, but the switch now comes from the food;
+      the calendar survives only as a stated biological parameter of
+      the budget (the length of the feeding season), not as a switch.
+    - Left: ~10 %/yr decline and a +/- 50 % annual herring amplitude
+      (M1 + predation ~0.35-0.45 %/d all year; gadoids rise to 1.2-1.3).
+
+184.7 Income-funded growth in the engine (rule A with the reserve-state
+    ceiling, 184.6). 184.2-184.4 (growth_season) are SUPERSEDED: the
+    calendar switch is removed from both engines, the FG editor, the
+    tests and AGENTS.md; the months now only size the budget.
+    - Library keys on a DM: ``income_growth_kappa`` kappa (0 / empty =
+      the reserve-funded law), ``feeding_season_months`` n (default 12,
+      needs kappa). growth_budget.income_growth parses;
+      growth_budget pays g over the season (x 12/n on growth_rate and
+      per_tick; s* unchanged at the annual-mean production; the
+      mass-balance ceiling checked on the season-sized g; the FG
+      editor's formula shows "x 12/n", hover help growth:season).
+    - Tick: movement.apply_energy_costs -> movement.income_growth, per
+      cell G = min(max(0, kappa I - C), B g (s - u) ec, stationary
+      reserve), I = temp_energy_gains, C = rest + eat + move cost of the
+      tick (the arrays the function already had; rest_cost factored out
+      with the same arithmetic order), s at the start of the tick; G
+      leaves the stationary reserve and becomes G / ec tonnes before the
+      movement. population_change zeroes the DM's growth branch
+      (starvation unchanged). GPU: TensorEcosystem.income_growth at the
+      rest + eat stage of movement(), income_off_growth mask in
+      population(). Default path bit-identical (only the factoring).
+    - Refusals (loader and env): non-DM; growth_q10 on the same DM; no
+      starve_rate (the fallback would starve at the season-sized g).
+    - Checks: tests/test_income_growth.py (parsing, budget x 12/5.5 with
+      s* unchanged, the per-cell formula incl. no intake -> no growth on
+      a full reserve, the settling-reserve clamp, population step,
+      refusals); tests/test_gpu_ecosystem.py::
+      test_income_growth_matches_reference (8; all fail with the GPU
+      income block removed, and all fail with the GPU growth-branch
+      zeroing removed). One-tick engine vs scratch hook on a June state
+      of the full world: max relative difference 5.6e-8 (float32). Over
+      the 3-year probe the engine gives herring 4.57 / 4.10 vs the hook
+      4.62 / 4.17 (whole-unit herring moves amplify round-off).
+    - Also refused: feeding_season_months on a group without r_max (a
+      hand-set g gets no season factor). A malformed kappa in the FG
+      editor shows as the budget's error instead of raising.
+    - Full suite 1287 passed, 12 skipped; 1-gen train.py smoke passed
+      (library unchanged, so it exercises the default path only).
+    - NOT set in the library. To enable for herring: pelagic_fish
+      income_growth_kappa 0.75, feeding_season_months 5.5 (the loader
+      derives g 0.003505 = 0.001606 x 12/5.5; the stored growth_rate
+      comment/value then needs regenerating), then a new run.
+
+184.8 Enabled for herring (user, 2026-10-20 evening): pelagic_fish
+    income_growth_kappa 0.75, feeding_season_months 5.5 (stored
+    growth_rate 0.00350461 = 0.00160628 x 12/5.5). Full suite 1287
+    passed (test_income_growth's budget test made library-independent);
+    1-gen train.py smoke passed, now on the income path.
+    - fix67 stopped at gen 4 iter 26 (SIGINT, saved; resumable), frozen at
+      scratch pzbpgp248nsrpfix67_g4, library frozen at f66/lib_fix67.yaml.
+      fix67 g4 (its own library): NO3 0.58, lZ(res) 0.94, zooplankton
+      Jan-Dec 0.36 0.99 2.82 10.45 19.42 11.51 7.50 4.47 2.62 1.23 0.35
+      0.37 (a slight spring creep since g1: Feb 0.77 -> 0.99, Mar 2.2 ->
+      2.8), herring 3.52 / 2.87 / 2.25, gadoids 0.75-1.09.
+    - fix68 = fix67's CLI, run pzbpgp248nsrpfix68, --init-from
+      pzbpgp248nsrpfix67_g4 (no head change), library frozen at
+      f68/lib_fix68.yaml. Start point (fix67 g4 policies in the fix68
+      world): herring 4.78 / 4.23 (-12 %), Jun 4.6 -> Sep 5.9 -> Apr 3.1,
+      no starvation, s Feb 0.36; zooplankton 0.20 0.49 1.36 4.15 15.67
+      11.55 6.48 3.50 2.14 0.94 0.42 0.39 (the herring now eats the
+      April zooplankton, ration 3.8 %BW/d), lZ(res) 0.93, NO3 0.64,
+      gadoids 1.23.
+    - FG editor hover help synced with the income-funded law: energy
+      content (price paid from intake), maintenance level, r_max and
+      Max Growth (ceiling, x 12/months), starve rate (0 not allowed),
+      the Derived growth_rate panel (recompute triggers, DM formula, g,
+      s* - u), growth_q10 (not with kappa), kappa/season (library
+      values, season needs r_max).
+
+184.9 fix68 gen 1 (income-funded herring, 3 years, seed 20260530;
+    snapshot $S/pzbpgp248nsrpfix68_g1, probes in $S/f68/g1).
+    Herring in January, years 1-3: g0 4.35 / 3.67 / 2.60, g1 4.45 /
+    3.97 / 2.86. Annual means 4.16 / 4.93 / 4.66; the summer peak is
+    6.24 / 6.28 / 4.86 (Aug-Sep). Starvation is 0 in every month. The
+    reserve is s 0.35-0.41 in Feb and 0.80 in May-Jun, so the fat is
+    kept for the winter as intended. The remaining loss is mortality
+    over the winter: rest 0.94-0.99 in Nov-Feb, nat 0.159 %/d and pred
+    0.13-0.33 %/d (Sep-Nov in year 3). Gadoids rise 0.78 / 1.09 / 1.50.
+    Zooplankton Jan-Dec: 0.22 0.79 2.00 5.95 17.4 10.7 6.37 3.31 1.98
+    0.99 0.50 0.36 (obs 0.21 0.18 1.56 19.3 26.0 11.4 6.9 4.6 3.7 2.9
+    3.5 0.92). The April dip and the February creep remain (eat 0.99,
+    s 0.70 in Feb). lZ(res) 0.89 (g0 0.93), Zmean 4.29, NO3 0.56,
+    rPchl +0.82. Open: the herring Jan-Jan decline of ~20 %/yr is now
+    predation plus M1 over a winter without growth, not starvation;
+    see whether later generations raise the summer peak.
+
+184.10 fix68 gen 2 (policies written at the end of gen index 1,
+    22:59:25; snapshot $S/pzbpgp248nsrpfix68_g2 taken before hloss ran,
+    md5 differs from g1). Note on naming: tag gN = the policies after N
+    finished generations (written when gen index N-1 ends); g1 was the
+    gen-0 write (21:18).
+    Herring in January, years 1-3: g1 4.45 / 3.97 / 2.86, g2 4.21 /
+    3.90 / 3.22; December of year 3 is 3.22 -> 3.54. Jan-Jan losses
+    are -7 % and -17 % (g1 -11 % and -28 %). The summer peak is 5.96 /
+    6.14 / 5.10 (g1 6.24 / 6.28 / 4.86). Starvation is 0; s is 0.34-0.39
+    in Feb and 0.81 in May. Pred %/d in year 3 drops in Jan-May (0.09-
+    0.14) and is still 0.30 in Sep-Oct. Gadoids are unchanged (0.79 /
+    1.10 / 1.49).
+    Zooplankton Jan-Dec: 0.22 0.77 2.14 7.45 18.1 10.2 6.34 3.51 2.09
+    1.24 0.43 0.27. April rises 5.95 -> 7.45 (obs 19.3); Feb is unchanged
+    (0.77, obs 0.18). lZ(res) 0.90, Z OND 1.27 / 0.44 / 0.26, Zmean
+    4.45, NO3 0.58, rPchl +0.74 (g1 +0.82).
+
+184.11 fix68 gen 3 (policies written 00:42:02 at the end of gen index 2;
+    snapshot $S/pzbpgp248nsrpfix68_g3, md5 differs from g2).
+    Herring in January, years 1-3: 4.36 / 3.87 / 2.83, December of year
+    3 is 3.22. Jan-Jan losses are -11 % / -27 %, back at the g1 level
+    (g2 -7 % / -17 %). The g2 gain did not hold: with one evaluation seed
+    and --worlds 1 the generation-to-generation spread is of that size.
+    The summer peak is 6.10 / 6.07 / 4.94. Starvation is 0. Pred %/d
+    rises over the run (Jan 0.18 -> 0.26 -> 0.22, Oct 0.16 -> 0.23 ->
+    0.34) as the gadoids grow 0.79 / 1.10 / 1.52 (the same in g1-g3).
+    The herring decline therefore tracks the gadoid build-up and is
+    not trained away.
+    Zooplankton Jan-Dec: 0.27 0.72 2.04 6.74 18.3 10.2 6.25 3.33 2.08
+    1.02 0.30 0.39 (April 6.7, obs 19.3; Feb 0.72, obs 0.18). lZ(res)
+    0.96 (g2 0.90), Z OND 1.06 / 0.32 / 0.37, micro 0.85, NO3 0.54,
+    rPchl +0.81.
+
+184.12 Gadoids held at the start level (scratch $S/fg/hloss_fix.py =
+    hz/hloss.py + FIXG: after every tick the gadoid biomass and reserve
+    are rescaled to the t=0 total, 2500 t = 0.69 t/km2, keeping the
+    spatial pattern and the reserve fill; g3 policies, seed 20260530,
+    one burn-in year, then 3 years). The free run reproduces 184.11
+    exactly.
+    Free: gadoids 0.69 at t=0 -> 1.16 (Jan, year 1 after burn-in) ->
+    1.57 -> 1.63, 1.8-1.9 by autumn of year 3 and still rising. Herring
+    in January 4.36 / 3.87 / 2.83, Dec of year 3 3.22; pred 0.13-0.34 %/d.
+    Fixed: herring in January 5.09 / 6.25 / 6.69, Dec of year 3 7.27
+    (+23 %, +7 %: levelling off); pred 0.07-0.13 %/d all year;
+    starvation 0; the summer peak is 6.6 / 8.2 / 8.8. With more
+    herring the zooplankton in Feb-Mar is eaten down (0.04-0.07 and
+    0.64-0.87 % BW/d) and the spring reserve dips to s 0.30.
+    Verdict: the herring decline is the gadoid build-up, not the herring
+    budget or its policy. Next: why the gadoids grow ~2.7x in 4 years
+    (their derived g counts the checked predation_mortality of seals
+    and porpoises - do they really take it? fishing F 0.12 is outside
+    the budget).
+    Tooling note: a wait loop "while pgrep -f <script>" matches its own
+    bash command line and never ends; wait on the pid instead.
+
+184.13 Gadoid monthly budget (scratch $S/fg/gloss.py = hloss_fix.py
+    plus impact loss, dB and per-predator rows; g3 policies, seed
+    20260530, one burn-in year, then 3 years).
+    READING NOTE (applies to every hloss table since 184.9): the run
+    starts on day 147.5 (late May), so each probe "year" runs Jun..Dec
+    and then Jan..May of the next calendar year. Month 12 of a probe
+    year comes BEFORE month 1 of the same probe year. The Jan-Jan
+    comparisons in 184.9-184.12 are still one calendar year apart;
+    the "Dec of year 3" values quoted there are NOT the end of the
+    run (the end is May of probe year 3).
+    Annual (/yr) per probe year: nat 0.415 (as in the budget), seals
+    0.101 / 0.079 / 0.081, porpoises 0.017 / 0.028 / 0.035 (budget
+    0.12 + 0.056 = 0.176; realised 0.11-0.12), fishing 0.104 / 0.115 /
+    0.112 (F 0.12), cannibalism 0 (unchecked), starvation 0.002 /
+    0.019 / 0.349, net dB +0.354 / +0.245 / -0.233.
+    Gadoids in calendar order: 0.92 (Jun, probe year 1) -> 1.21 (May)
+    -> 1.58 (Nov-May, probe year 2) -> 1.94 (Oct, probe year 3) -> 1.24
+    (Apr). Over the last winter they starve (0.36-0.42 %/d in Jan-Feb)
+    as the herring ration falls to 0.30-0.37 % BW/d (0.60-0.89 in
+    summer). Diet per year: herring 2.45 / 2.30 / 1.83, benthos 1.42 /
+    1.09 / 1.12, zooplankton 0.86 / 1.16 / 1.63 (x BW per year).
+    Verdict: the predation shortfall (~0.06/yr) and the fishing are not
+    the issue. The gadoids grow near r_max - F until they have eaten
+    the herring down and then crash by starvation: a predator-prey
+    overshoot, regulated by food only. Open: is that cycle real (no
+    data for it here) or should something else hold the gadoids near
+    today's level (higher F incl. the fishing outside the grid, a
+    lower r_max for a stock near capacity, density dependence)?
+
+184.14 Literature on what regulates the gadoids (subagent, notes in
+    research_notes/Torskfiskarnas reglering/: stock_trends_and_mortality,
+    r_max_and_recruitment, density_dependence, predator_prey_cycles,
+    recommendation).
+    - r_max 0.511 is the CMSY/Schaefer r; the model kept r and dropped
+      K, so at ideal food the pool grows at r_max - F ~ 0.39/yr at any
+      density (184.13 measured +0.35).
+    - Stocks: the pool was roughly stationary in 2010-2020 at F
+      0.23-0.30, then doubled in 2020-23 from two haddock year classes,
+      and has fallen ~3 %/yr since. Cod is depleted, saithe below Blim,
+      hake down ~60 %. F 0.12 is right for today's haddock-heavy mix,
+      0.17-0.20 for a long-term mix.
+    - r today is probably 0.35-0.45 (lower recruits per spawner and
+      warming; the subagent's estimate, not a published value).
+    - Density dependence is mainly stock-recruit compensation (68-78 %
+      of NE Atlantic stocks) plus cannibalism (~0.08/yr at B_ref).
+    - No gadoid-herring overshoot cycle is documented. SMS gadoid M2 on
+      herring is 0.15/yr (0.11-0.22, no trend; 60 % saithe) against
+      0.5-1.2 in the model; herring is ~5 % of the SMS gadoid ration
+      against 40-52 % in the model (184.13 diet confirms 40-52 %).
+    - Ranking: (c) a regional logistic closure L = r_max/1460 *
+      B_region/K, kept OUT of the derived g, K = B_ref/(1 - F/r_max)
+      = 0.90 t/km2 at r 0.511, F 0.12 (0.8-1.0); then (b) r_max 0.40;
+      (a) F 0.17-0.20; (d) cannibalism (~20 % of the gap, only if left
+      out of g); (e) "recovering" is least supported. Plus (f): the
+      herring share of the gadoid diet as a calibration target.
+    - Caveat: the model's 0.69 t/km2 is ~4x below the IBTS density
+      (2.7-3.3), which would scale K by about 4.
+    Nothing implemented.
+
+184.15 Carrying capacity for the gadoids in scratch ($S/fg/kloss.py:
+    after every tick, biomass and reserve x (1 - r_max/1460 *
+    B_region/K), B_region = grid-mean t/km2, K 0.9, r_max 0.511; kept
+    out of the derived g; g3 policies trained WITHOUT it; seed 20260530,
+    one burn-in year, then 4 years).
+    Gadoids: 0.62-0.68 in every month for 4 years (start 0.69). dB
+    +0.020 / +0.013 / -0.008 / -0.004 per year, starvation <= 0.002.
+    Losses per year: K term 0.36-0.37, nat 0.415, fishing 0.10-0.115,
+    seals 0.17-0.19 (budget 0.12), porpoises 0.004-0.006 (budget
+    0.056).
+    Pelagic pool in January: 5.28 / 6.52 / 6.92 / 6.90 (+23 %, +6 %,
+    0 %), so it settles at ~6.9 with a summer peak of ~9.0. Gadoid M2 on
+    it is 0.32 / 0.30 / 0.29 / 0.29 per year (library budget 0.2997,
+    Ecopath NS 1991 pool 0.30-0.39). Starvation 0. The spring reserve is
+    low (s 0.28 in Mar).
+    Gadoid diet (BW/yr): pelagic 2.78-3.22, benthos 1.00-1.50,
+    zooplankton 0.09-0.36. The pelagic share is 60-74 %; Ecopath NS
+    1991 gives 26 % (herring, sprat, mackerel, horse mackerel, sandeel)
+    to 39 % (+ Norway pout, blue whiting), at 1.3-2.0 BW/yr. The model
+    takes 1.6-2.5x the Ecopath pool ration of pelagic fish; the M2 on
+    the pool still matches because the pelagic:gadoid biomass ratio is
+    ~10 here against ~5 in Ecopath.
+    Correction to 184.14 (f) (user: both FGs are umbrella pools): the
+    subagent's 5 % / 8-16x compared HERRING only. With the pool the gap
+    is ~1-2.5x; a correction section was appended to
+    research_notes/Torskfiskarnas reglering/recommendation.md.
+    Not in the engine.
+
+184.16 K 1.4 (user: today's 0.69 t/km2 is a stock depleted by decades
+    of overfishing and by trawling of nursery habitat, so it cannot be
+    the ceiling). K from the 2010-19 stationarity at F 0.23-0.30 (B/K
+    0.43-0.55 with r 0.511) is 1.25-1.7; 1.4 is tested. Same rig as
+    184.15, 6 years.
+    Gadoids in January: 0.76 / 0.85 / 0.91 / 0.94 / 0.94 / 0.93, dB per
+    year +0.111 / +0.090 / +0.045 / +0.019 / -0.003 / -0.027. A smooth
+    recovery to ~0.95 (the logistic predicts K(1 - F/r) = 1.07; the
+    seal and porpoise M2 of 0.155-0.18 is on top of it). Starvation
+    <= 0.007, no crash. K term 0.28-0.34, seals 0.14-0.16, porpoises
+    0.008-0.018, fishing 0.10-0.12.
+    Pelagic pool in January: 5.02 / 5.89 / 5.95 / 5.81 / 5.69 / 5.63,
+    dB -0.02 to -0.03 in years 3-6 (still settling, slowly); summer
+    peak ~7.7-8.1. Gadoid M2 on it 0.38 / 0.41 / 0.44 / 0.45 / 0.45 /
+    0.44 (Ecopath pool 0.30-0.39). Starvation 0.
+    Gadoid diet: pelagic 2.7-3.0 BW/yr, 58-71 % of ration; benthos
+    0.97-1.48; zooplankton 0.29-0.47.
+    Open: K as a fixed number or as a function of the bottom-trawling
+    field (habitat loss lowers K; a trawl-free wind farm would then
+    raise recruitment, scaled by its share of the nursery area).
+
+184.17 Low present-day productivity instead of a low ceiling (user:
+    2010-19 is a depleted state too; the stock was historically much
+    larger). Literature (research_notes/Torskfiskarnas reglering/
+    r_max_and_recruitment.md): North Sea cod R/SSB is ~2.5x lower than
+    before 1990, haddock 3-5x and hake ~4x lower, whiting unchanged;
+    hysteresis linked to warming (Sguotti et al. 2019); MSY -35 % with
+    warming (Free et al. 2019). So the brake is low productivity at low
+    density, not crowding near K.
+    Test: scratch library $S/fg/lib_r020.yaml (gadoid r_max 0.20 =
+    0.51/2.5; derived g 0.002269, s* gate 0.2386) plus K 3.0 t/km2 as a
+    historical-ceiling placeholder (K term only 0.045-0.05/yr); g3
+    policies, 6 years.
+    Gadoids in January: 0.68 / 0.71 / 0.74 / 0.75 / 0.75 / 0.75, dB +0.04
+    / +0.04 / +0.02 / +0.01 / 0.00 / -0.015 per year. It levels off at
+    ~0.75 because r 0.20 is almost used up by F (0.10-0.115), the K term
+    (0.05) and seal M2 above the budget (0.16-0.19 vs 0.12; porpoises
+    0.005-0.012 vs 0.056). Starvation <= 0.001.
+    Pelagic pool in January: 5.31 / 6.50 / 6.80 / 6.79 / 6.76 / 6.80,
+    stable; gadoid M2 on it 0.30-0.32 (Ecopath 0.30). Starvation 0.
+    Gadoid diet: pelagic 2.6-2.9 BW/yr, 64-75 %.
+    The 2.5x is a cod figure; the pool mean is uncertain (whiting has
+    no decline). At r 0.20 the equilibrium is sensitive to F and to the
+    seal M2: small changes in either move it a lot (useful for the
+    trawling scenarios, but r needs a better pool estimate).
+
+184.18 Biomass-weighted present-day r for the gadoid pool (note:
+    research_notes/Torskfiskarnas reglering/r_pool_present.md).
+    Method: per-species CMSY prior r_max x Euler-Lotka, r_now = r_max -
+    ln(d)/T, with d = the R/SSB decline from ICES SAG (cod 2.6, haddock
+    4.7 [2.7-8.3], hake 3.9, saithe 1.6, whiting 1) and T = 3/r (Froese
+    et al. 2017). Per species: cod 0.35 (0.26 with Myers' T 3.9),
+    haddock 0.24, whiting 0.49, saithe 0.44, hake 0.26.
+    Pool: 0.34 (today's survey weights, haddock-heavy), 0.38 (box
+    weights), 0.40 (Ecopath 1991 mix); range 0.29-0.42, and ~0.05-0.08
+    lower with shorter generation times.
+    The 0.20 of 184.17 (0.51/2.5) was too low: a recruitment decline
+    lowers r by ln(d)/T, not by the factor d. At r ~0.37 and F 0.12 the
+    pool still grows ~+0.2/yr at ideal food, so the lower r closes about
+    half of the surplus. The rest needs density dependence at today's
+    effective capacity (habitat loss and warming lower it below the
+    historical ceiling).
+
+184.19 r 0.37 with an effective carrying capacity in scratch
+    ($S/fg/lib_r037.yaml: gadoid r_max 0.37, derived g 0.002942, gate
+    0.2236; K = 0.69/(1 - 0.12/0.37) = 1.02 t/km2 as today's effective
+    capacity; same rig as 184.15, g3 policies, 6 years).
+    Gadoids in January: 0.64 / 0.65 / 0.66 / 0.65 / 0.64 / 0.63, dB
+    +0.013 / +0.010 / -0.008 / -0.010 / -0.016 / -0.016 per year. That
+    is stationary about 6 % below 0.69: seal M2 is 0.17-0.19 against
+    0.12 in the budget, while porpoises take only 0.003-0.009 of 0.056.
+    K term 0.23-0.24, fishing 0.10-0.11, starvation <= 0.001.
+    Pelagic pool in January: 5.35 / 6.62 / 6.99 / 7.02 / 7.08 / 7.06,
+    stable from year 3; summer peak ~9.2. Gadoid M2 on it 0.31 / 0.29 /
+    0.28 / 0.28 / 0.27 / 0.26 (Ecopath 0.30). Starvation 0.
+    Gadoid diet: pelagic 2.7-3.1 BW/yr, 62-76 % of ration; zooplankton
+    falls to 0.07-0.08.
+    Candidate for the engine: r_max 0.37 in the library plus a regional
+    logistic loss r/1460 * B_region/K_eff kept out of the derived g,
+    with K_eff later a function of the bottom-trawling field.
+
+185 REGIONAL CARRYING CAPACITY AND PRESENT-DAY r FOR THE GADOIDS
+    (2026-10-21)
+185.1 Why: 184.13-184.19. The derived g pays r_max at any density, so
+    the gadoid pool grew at r_max - F, ate the pelagic pool down and
+    crashed. The user's points: today's stock is depleted by decades of
+    overfishing and trawled nurseries, so neither today's level nor
+    2010-19 is the ceiling, and the historical stock was much larger.
+    Resolution: r_max is today's low-density productivity (lower than
+    the 1960s-90s priors, 184.18), and K is today's EFFECTIVE capacity
+    (lowered by habitat loss and warming), separate from the historical
+    ceiling.
+185.2 Engine. New library key ``regional_carrying_capacity`` K (t/km2,
+    DMs with r_max only):
+    - growth_budget.regional_capacity / capacity_loss_rate give
+      c = r_max / (1460 K); the loader (both paths) derives
+      params['capacity_loss_rate'], rescaled as a "flux" (tick_time).
+    - state._build_regional_capacity sets env.dm_capacity_rate and
+      env._has_regional_capacity.
+    - population_change: after M1, keep = 1 - c * sum(B)/n_cells,
+      applied to biomass and reserve and booked in loss_natural.
+      Applied with or without --mortality (it closes r_max, which g
+      always pays); not scaled by --mortality_multiplier.
+    - GPU mirror in TensorEcosystem.population (capacity_rate [1, G, 1],
+      b.mean over cells).
+    - Not in the derived g; describe() is unchanged.
+    - Refusals: a non-DM (loader and env), K without r_max, c outside
+      [0, 1].
+185.3 Library (gadoids): r_max 0.511 -> 0.37; regional_carrying_capacity
+    1.02 (= 0.69/(1 - 0.12/0.37)); stored growth_rate 0.00357051 ->
+    0.00294180 (derived).
+185.4 FG editor: the field "Regional carrying capacity K" under r_max
+    (OPTIONAL_ZERO_KEYS); help for it and a line in the r_max help.
+185.5 Tests: tests/test_regional_capacity.py (18: parsing, the c
+    formula, outside the budget, loader derivation for the library
+    gadoids, flux rescale, population step with and without mortality,
+    the bit-identical off path, refusals) and
+    test_gpu_ecosystem.py::test_regional_capacity_matches_reference
+    (c 0.02 / 0.1 x mortality off / on). Mutation checks: GPU biomass or
+    reserve halves fail 8/8; removing the CPU branch fails 10.
+185.6 fix68 (running) is unaffected: GPU training read the library and
+    the code at start, and the late import in train_gpu runs only with
+    --visual. The scratch evals use the frozen lib_fix68.yaml, which has
+    no K, so the new branch is off there. A retrain is needed for the
+    new world (the policies of 184.19 were trained without K).
+185.7 Open:
+    - K as a function of the bottom-trawling field (a trawl-free wind
+      farm raising the effective capacity locally);
+    - the pelagic share of the gadoid diet (62-76 % vs Ecopath 26-39 %);
+    - porpoises take almost no gadoids (0.003-0.009 vs 0.056 in the
+      budget) and seals take more (0.17-0.19 vs 0.12);
+    - the model's 0.69 t/km2 is ~4x below the IBTS density.
+185.8 fix68 stopped by the user on 2026-10-21 at 10:29 (SIGINT; training
+    finished the running update and saved). results/pzbpgp248nsrpfix68
+    now holds the policies after gen 9 update 8, not a generation
+    boundary; the end-of-gen-8 write (10:13) was overwritten. Snapshots
+    g1-g3 are in $S. The library at its start had no K (lib_fix68.yaml).
+185.9 Trawling, nursery habitat and K (subagent; notes in
+    research_notes/ folder "Tralning och uppvaxtomraden" (Swedish
+    letters in the real name): mechanism_evidence, quantitative_links,
+    nursery_areas, benthic_recovery_and_wind_farms, recommendation).
+    - The form K(H) = f + gH exists (Foley et al. 2012; Atlantis habitat
+      scaling of recruitment). No published function links SAR or effort
+      to gadoid juvenile survival, recruitment or K; RBS = 1 - SAR d/r is
+      quantified for the benthos only.
+    - Shelter effects are shown for 0-group cod on shallow cobble,
+      sponge, eelgrass and maerl; nothing links mud epifauna to juvenile
+      gadoids. The food pathway is already in the model (gadoids eat
+      benthic_community, which trawling depletes per cell), so a K(H) on
+      top would count it twice.
+    - Nurseries: cod, whiting and saithe are coastal; Skagerrak haddock
+      0-1 group at 150-300 m (Albert 1991, 1984-87). Sites per the EIAs:
+      Mareld 180-450 m, Poseidon Nord 55-230 m, soft bottom, FLOATING
+      turbines; parks 521 km2 = 14.5 % of the grid and 27 % of its trawl
+      effort. The grid's share of regional juvenile habitat is ~0.3-0.6 %
+      (the subagent's inference).
+    - Recovery: mud benthos 4-6 yr; OWEZ showed no benthic difference
+      after 5 yr (Bergman et al. 2015); the Kattegat no-take zone doubled
+      Nephrops but not cod (Skold et al. 2022). Turbine reef effects are
+      attraction at fixed foundations and do not apply to floating
+      turbines (Hywind Tampen: no fish effect).
+    - Effect of the parks on K: +0.03-0.1 % central, ~0.3 % upper bound;
+      ~0 if the effort is displaced within the grid.
+    - Verdict: leave the K(H) coupling out of the baseline; at most a
+      sensitivity case (recommendation.md: depth-weighted, read from the
+      model's benthos, s_pool 0.004).
+    - Larger caveat: closing the parks lowers the grid gadoid F from 0.12
+      to ~0.088, which with the regional K raises the equilibrium B by
+      ~13 % - but the real stock F barely changes for a closure this
+      size. The same grid-versus-stock scale problem applies; the projekt
+      effort map must state whether the parks' effort is removed or
+      displaced.

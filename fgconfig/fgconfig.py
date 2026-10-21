@@ -746,8 +746,17 @@ class FGConfigApp:
             # Water temperature on): Resting Metabolism x Q10^((T - t_ref)/10).
             ("  Metabolism Q10 (water temperature; 0 = off)", "metabolism_q10", "entry", 0.0, 5.0),
             ("  Metabolism t_ref (deg C of Resting Metabolism; empty = annual mean)", "metabolism_t_ref", "entry", -2.0, 30.0),
+            # Section 181: the whole functional response x Q10^(T/10),
+            # normalised to an annual mean of 1 (no t_ref).
+            ("  Ingestion Q10 (water temperature, whole intake; 0 = off)", "ingestion_q10", "entry", 0.0, 5.0),
+            ("  Growth Q10 (water temperature, reserve -> biomass; 0 = off)", "growth_q10", "entry", 0.0, 5.0),
+            # Section 184: growth out of this tick's income, not the reserve.
+            ("  Income growth kappa (share of intake for maintenance + growth; 0 = reserve-funded)", "income_growth_kappa", "entry", 0.0, 1.0),
+            ("  Feeding season (months per year the budget is paid in; 0 = 12)", "feeding_season_months", "entry", 0.0, 12.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
             ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
+            # Section 185: closes the logistic whose r the budget pays.
+            ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
             ("Max Growth (MG_X, fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
             ("Starve Rate (catabolism, fraction/{tick})", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
@@ -854,12 +863,29 @@ class FGConfigApp:
         ndm_props = [
             ("Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
             ("Max Growth (fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
+            # Own losses of the producer (section 173).
+            ("Natural Mortality M1 (fraction/{tick}; respiration, sinking, lysis)", "natural_mortality", "entry", 0.0, 1.0),
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry", 0.0, 100000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
             ("Seed Rate (fraction of cc/{tick})", "seed_rate", "entry", 0.0, 1.0),
             # Light-limited growth on the daylight calendar (section 138).
             ("Light Saturation I_k (umol photons/m2/s; 1 or 12 monthly values; 0 = off)", "light_saturation", "entry", 0.0, 5000.0),
             ("Light Reference Day (day of year Max Growth applies; 0 = 105, mid April)", "light_reference_day", "entry", 0.0, 365.0),
+            # Two-layer water column (section 180).
+            ("Water Layer (mixed or subsurface; empty = mixed)", "water_layer", "entry", 0.0, 0.0),
+            # Nutrient pool (section 172); inert unless the project
+            # enables simulation_settings.nutrients.
+            ("Nutrient Half-Saturation k_N (umol N/l; 0 = logistic, no pool)", "nutrient_half_saturation", "entry", 0.0, 100.0),
+            ("Nutrient Yield (ton/cell per umol N/l in a 1 m column)", "nutrient_yield", "entry", 0.0, 100.0),
+            ("Grazing Regeneration (share of grazed biomass returned to the pool)", "grazing_regeneration", "entry", 0.0, 1.0),
+            ("Stress Loss Max (fraction/{tick} when nutrients are exhausted; 0 = off)", "stress_loss_max", "entry", 0.0, 1.0),
+            ("Stress Loss Shape c (0 = 0.1, ERSEM)", "stress_loss_shape", "entry", 0.0, 10.0),
+            ("Stress Regeneration (share of the stress loss returned to the pool)", "stress_regeneration", "entry", 0.0, 1.0),
+            # Grazing non decision makers (section 177: microzooplankton).
+            ("Growth Efficiency (grazer: t grown per t eaten)", "growth_efficiency", "entry", 0.0, 1.0),
+            ("Excretion Regeneration (grazer: share of the uneaten-into-growth part returned to the prey's pool)", "excretion_regeneration", "entry", 0.0, 1.0),
+            ("Grazing Q10 (grazer; 0 = none)", "grazing_q10", "entry", 0.0, 10.0),
+            ("Grazing Reference Temperature (deg C)", "grazing_t_ref", "entry", -5.0, 40.0),
             ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
             ("Initial Total Biomass Range (ton)", "initial_biomass_range", "range", 0.0, 1000000.0),
         ]
@@ -3524,6 +3550,9 @@ class FGConfigApp:
                     f"per year)")
         if kind == "ticks_per_year":
             return f"{TICKS_PER_YEAR:g} ticks per year"
+        if kind == "season":
+            return (f"{name}: x {budget.season_factor:.4g} (budget paid over "
+                    f"{12.0 / budget.season_factor:g} feeding months)")
         return name
 
     # FG Editor fields the derived growth_rate depends on (section 160:
@@ -3531,7 +3560,8 @@ class FGConfigApp:
     GROWTH_BUDGET_KEYS = ("r_max", "natural_mortality", "maintenance_level",
                           "max_energy_reserve", "energy_content",
                           "resting_metabolism", "feeding_cost",
-                          "max_intake_rate")
+                          "max_intake_rate", "income_growth_kappa",
+                          "feeding_season_months")
 
     def _update_editor_growth_display(self, interactions=None):
         """Show the derived growth_rate of the FG open in the editor."""
@@ -4111,6 +4141,11 @@ class FGConfigApp:
                 title += " — MUTED"
             self.ndm_editor_frame.configure(text=title)
             for key, var in self.ndm_prop_vars.items():
+                if key == "water_layer":
+                    # Section 180: absent = the mixed layer.
+                    val = config.get(key, "")
+                    var.set("" if val in (None, "", "mixed") else str(val))
+                    continue
                 if key == "initial_biomass_min":
                     var.set("" if init_min_val is None else str(init_min_val))
                     continue
@@ -4155,7 +4190,12 @@ class FGConfigApp:
     OPTIONAL_ZERO_KEYS = frozenset({
         "m1_visual_share", "m1_tactile_share", "depth_risk_ratio",
         "hide_reference", "light_saturation", "light_reference_day",
-        "metabolism_q10",
+        "metabolism_q10", "nutrient_half_saturation", "nutrient_yield",
+        "grazing_regeneration", "stress_loss_max", "stress_loss_shape",
+        "stress_regeneration", "growth_efficiency", "excretion_regeneration",
+        "grazing_q10", "grazing_t_ref", "ingestion_q10", "growth_q10",
+        "income_growth_kappa", "feeding_season_months",
+        "regional_carrying_capacity",
     })
 
     @staticmethod
@@ -4259,6 +4299,19 @@ class FGConfigApp:
                     q10 = 0.0
                 if q10 > 0.0 and q10 != 1.0:
                     config[key] = "annual_mean"
+            elif key == "water_layer":
+                # Section 180: 'mixed' is the default and is not written.
+                layer = str(val or "").strip().lower()
+                if layer in ("", "mixed", "0", "0.0"):
+                    config.pop(key, None)
+                elif layer == "subsurface":
+                    config[key] = layer
+                else:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Water Layer: 'mixed' (or empty) or 'subsurface'. "
+                        "No changes were saved.")
+                    return
             elif key == "light_saturation" and "," in str(val):
                 # 12 monthly I_k values, Jan..Dec (section 138).
                 try:

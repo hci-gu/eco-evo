@@ -84,7 +84,7 @@ def build_parser():
                                  viability.EAT],
                         help="Comma-separated arms from greedy,greedy_hide,"
                              "greedy_flee,greedy_stay,greedy_hide_stay,"
-                             "greedy_flee_stay,eat,neutral,random,policy "
+                             "greedy_flee_stay,eat,eat_pays,neutral,random,policy "
                              "(default: greedy,greedy_hide,eat).")
     parser.add_argument("--spawn", choices=(viability.SPAWN_COLOCATED,
                                             viability.SPAWN_CONFIGURED),

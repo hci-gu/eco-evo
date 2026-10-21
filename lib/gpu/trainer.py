@@ -235,6 +235,7 @@ class TensorARSTrainer:
             b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
             r = self.spawner.reserves(b, keys)
             light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
+            r = m.initial_nutrients(r, light)
             per_pair = lambda field: field[None].expand(
                 2 * self.pairs_per_batch, *field.shape).reshape(runner.E, *field.shape[1:])
             impacts = impact_obs = None

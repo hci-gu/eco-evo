@@ -42,7 +42,9 @@ def _project(temperature_block=None, daylight_on=True):
 def _block(**overrides):
     block = {"enabled": True, "layers": {"upper": LAYER, "deep": LAYER[::-1]},
              "group_layers": {"pelagic_fish": "upper", "zooplankton": "upper",
-                              "gadoids": "deep"}}
+                              "gadoids": "deep",
+                              # grazing Q10, section 177
+                              "microzooplankton": "upper"}}
     block.update(overrides)
     return block
 

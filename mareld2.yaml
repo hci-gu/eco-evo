@@ -34,6 +34,31 @@ simulation_settings:
       - 0.66
       - 0.6
       - 0.69
+  nutrients:
+    enabled: true
+    sub_mixed_layer_umol_l: [5.73, 6.58, 6.79, 6.96, 4.9, 4.35, 2.79, 1.37, 0.9, 0.87, 2.5, 3.88]
+    surface_umol_l: [5.09, 4.84, 2.33, 0.32, 0.13, 0.1, 0.1, 0.1, 0.1, 0.32, 1.3, 3.61]
+    exchange_m_per_day: [0.3, 0.3, 0.2, 0.1, 0.05, 0.05, 0.05, 0.05, 0.1, 0.2, 0.3, 0.3]
+    # Section 180: the subsurface layer [M(t), 30 m] with its own
+    # producer (subsurface_phytoplankton). The exchange above is then
+    # between the mixed layer and this layer; the layer exchanges with
+    # the reservoir at 50 m (SHARK A17 2010-2023 NO2+NO3 at 50 m, monthly
+    # means). 30 m: the deepest A17 subsurface maximum (July). Kd below
+    # the mixed layer 0.17 /m: 1.7 / Secchi (A17 summer Secchi 8-12 m);
+    # the blue-shifted light under the surface layer decays slower than
+    # the surface PAR Kd 0.29 (section 144.2: effective 0.15-0.2); NE
+    # North Sea July kd 0.14 +- 0.03 (Bendtsen & Richardson 2018 [F]).
+    # Reservoir exchange: winter mixing 1.0 m/d, stratified 0.2 m/d (Kz
+    # ~0.5-2e-4 m2/s over ~20 m [D]); a FIT to A17 nitrate in and below
+    # the mixed layer (resume 180), not a measurement: the open NE North
+    # Sea pycnocline has 1e-6-1e-5 m2/s (Bendtsen & Richardson 2018
+    # [F]), the Celtic Sea ~5e-5 (Palmer et al. 2008 [A]); no winter
+    # Skagerrak value found (resume 181.8).
+    subsurface_layer:
+      bottom_m: 30.0
+      light_attenuation_per_m: 0.17
+      reservoir_umol_l: [6.34, 7.42, 7.48, 7.88, 7.20, 7.17, 6.36, 4.68, 4.40, 2.46, 4.60, 4.47]
+      reservoir_exchange_m_per_day: [1.0, 1.0, 0.6, 0.3, 0.2, 0.2, 0.2, 0.2, 0.3, 0.6, 1.0, 1.0]
   temperature:
     enabled: true
     layers:
@@ -66,6 +91,7 @@ simulation_settings:
     group_layers:
       pelagic_fish: mean_0_50m
       zooplankton: mean_0_50m
+      microzooplankton: mean_0_50m
       gadoids: at_50m
 decision_makers:
   - group_id: gadoids
@@ -102,6 +128,14 @@ non_decision_makers:
     initial_biomass_min: 40000
     initial_biomass_max: 100000
     inference_initial_biomass: 80000
+  - group_id: subsurface_phytoplankton
+    initial_biomass_min: 20000
+    initial_biomass_max: 60000
+    inference_initial_biomass: 40000
+  - group_id: microzooplankton
+    initial_biomass_min: 700
+    initial_biomass_max: 7200
+    inference_initial_biomass: 1440
 impact_variables:
   - impact_id: bottom_trawling
     value_min: 0.0

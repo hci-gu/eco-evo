@@ -1,8 +1,9 @@
+import math
 from dataclasses import dataclass
 
 import numpy as np
 
-from lib.world import daylight, energy_balance, temperature
+from lib.world import daylight, energy_balance, nutrients, temperature
 
 
 @dataclass
@@ -181,8 +182,21 @@ def build_daylight_tables(env):
                 "climate (light_attenuation_per_m, mixed_layer_depth_m, "
                 "cloud_transmission); section 138")
         ik, reference_day = settings
-        env.growth_light[fid] = daylight.growth_light_schedule(
-            latitude, tick_hours, climate, ik, reference_day)
+        if nutrients.species_layer(fg.params) == "subsurface":
+            # Section 180: light through the mixed layer, then the layer.
+            sub = (fg.params.get("nutrients") or {}).get("subsurface")
+            if not sub:
+                # No layer in this project (e.g. daylight without
+                # nutrients): the producer is inert - it does not grow.
+                # With nutrients on, build_nutrient_tables refuses it.
+                env.growth_light[fid] = np.zeros(env.light_period)
+                continue
+            env.growth_light[fid] = daylight.subsurface_light_schedule(
+                latitude, tick_hours, climate, ik, sub["bottom_m"],
+                sub["light_attenuation_per_m"], reference_day)
+        else:
+            env.growth_light[fid] = daylight.growth_light_schedule(
+                latitude, tick_hours, climate, ik, reference_day)
     env._has_growth_light = bool(env.growth_light)
 
     if not env._has_daylight:
@@ -204,12 +218,305 @@ def build_daylight_tables(env):
             table[:, i, j] = daylight.attack_multiplier(
                 latitude, tick_hours, dark_ratio, threshold)
             env._has_light_pairs = True
+    # Section 177: a grazer feeds on CONCENTRATION, so a pair with
+    # ``mixed_layer_reference_m`` has a(t) = a * M_ref / M(t): its areal
+    # half-saturation 1/(a h) is the library's at M_ref and follows the
+    # mixed layer. Folded into the same per-tick pair table.
+    for i, pred_id in enumerate(env.dm_ids):
+        interaction = env.fgs[pred_id].params.get("interaction", {})
+        for j, prey_id in enumerate(env.global_fg_order):
+            if env.eat_static_mask[i, j] <= 0.0:
+                continue
+            scale = mixed_layer_scale(
+                env, interaction.get(f"{pred_id}_preys_on_{prey_id}"),
+                prey_id)
+            if scale is None:
+                continue
+            table[:, i, j] *= scale.astype(env.dtype)
+            env._has_light_pairs = True
     if env._has_light_pairs:
         env.light_mult_table = table
 
 
+def mixed_layer_scale(env, inter_def, prey_id=None):
+    """(T,) M_ref / M(t) for a pair with ``mixed_layer_reference_m``, or
+    None (section 177). Needs the daylight light climate. A prey in the
+    subsurface layer (section 180) is diluted over that layer instead:
+    M_ref / H(t), H = bottom_m - M(t)."""
+    if not inter_def:
+        return None
+    raw = inter_def.get("mixed_layer_reference_m")
+    if raw in (None, "", 0, 0.0):
+        return None
+    climate = (getattr(env, "daylight", None) or {}).get("light_climate")
+    if not climate:
+        raise ValueError("mixed_layer_reference_m needs the daylight light "
+                         "climate (mixed_layer_depth_m); section 177")
+    hours = int(env.daylight["tick_hours"])
+    n_ticks = daylight.ticks_per_year(hours)
+    mid = (np.arange(n_ticks) * hours + 0.5 * hours) / 24.0
+    depth = daylight.monthly_value(climate["mixed_layer_depth_m"], mid)
+    prey = env.fgs.get(prey_id) if prey_id is not None else None
+    if prey is not None and nutrients.species_layer(prey.params) == "subsurface":
+        sub = (prey.params.get("nutrients") or {}).get("subsurface")
+        if sub:
+            depth = sub["bottom_m"] - depth
+    return float(raw) / depth
+
+
+def build_ndm_grazing(env):
+    """Non decision makers that graze another group (section 177).
+
+    An NDM with a checked ``<grazer>_preys_on_<prey>`` pair takes, per
+    cell and tick, ``I = B_g m(t) a' B_p / (1 + a' h B_p)`` of the prey
+    (a' = a x the pair's mixed-layer scale, m(t) its Q10 multiplier),
+    capped at MAX_HARVEST_FRAC of the prey; it gains growth_efficiency x
+    I and returns excretion_regeneration x (1 - growth_efficiency) x I
+    to the prey's nutrient pool when the prey has one. Sets
+    ``env.ndm_grazers`` (a list of dicts, in global order) and
+    ``env._has_ndm_grazing``. Must run after the daylight, temperature
+    and nutrient tables.
+    """
+    env.ndm_grazers = []
+    env._has_ndm_grazing = False
+    for gid in env.global_fg_order:
+        grazer = env.fgs[gid]
+        if grazer.is_decision_maker:
+            continue
+        for pair_id, pair in (grazer.params.get("interaction") or {}).items():
+            if not pair_id.startswith(f"{gid}_preys_on_") or not pair.get(
+                    "preys_on", False):
+                continue
+            pid = pair_id[len(f"{gid}_preys_on_"):]
+            if pid not in env.fgs:
+                continue
+            a = float(pair.get("max_intake_rate", 0.0) or 0.0)
+            h = float(pair.get("handling_time", 0.0) or 0.0)
+            if a <= 0.0:
+                continue
+            gge = float(grazer.params.get("growth_efficiency", 0.3))
+            regen = float(grazer.params.get("excretion_regeneration", 0.0)
+                          or 0.0)
+            if not (0.0 < gge <= 1.0 and 0.0 <= regen <= 1.0):
+                raise ValueError(f"'{gid}': growth_efficiency must be in "
+                                 "(0, 1] and excretion_regeneration in "
+                                 "[0, 1]")
+            # Q10 and the mixed-layer scale are inert without the calendar
+            # (e.g. setup_full_mareld_mvp), as a decision maker's Q10 and
+            # pair scaling are; the loader refuses an enabled temperature
+            # block without the grazer's layer.
+            calendar = getattr(env, "daylight", None)
+            temp = None
+            q10 = grazer.params.get("grazing_q10")
+            cfg = grazer.params.get("temperature")
+            if q10 not in (None, "", 0, 0.0, 1, 1.0) and cfg and calendar:
+                t_ref = float(grazer.params.get("grazing_t_ref", 10.0))
+                temps = temperature.tick_temperatures(
+                    cfg["monthly_c"], env.daylight["tick_hours"])
+                temp = np.power(float(q10), (temps - t_ref) / 10.0).astype(
+                    env.dtype)
+            scale = (mixed_layer_scale(env, pair, pid)
+                     if calendar and calendar.get("light_climate") else None)
+            threshold = float(pair.get("food_threshold", 0.0) or 0.0)
+            if threshold < 0.0:
+                raise ValueError(f"'{pair_id}': food_threshold must be >= 0")
+            env.ndm_grazers.append({
+                "edibility": _edibility(env, pair_id, pair, pid),
+                "threshold": threshold,
+                "grazer": gid, "prey": pid, "a": a, "h": h, "gge": gge,
+                "regen": regen, "temperature": temp,
+                "scale": None if scale is None else scale.astype(env.dtype)})
+    env._has_ndm_grazing = bool(env.ndm_grazers)
+
+
+def _edibility(env, pair_id, pair, prey_id):
+    """The pair's edible share of the prey (section 182), or None.
+
+    ``edibility_half_saturation_umol_l`` K and ``edibility_floor`` e0 make
+    the grazer see only ``e = e0 + (1 - e0) N/(N + K)`` of the prey, N
+    the prey's nutrient pool as a concentration: the producer's community
+    shifts to cells the grazer cannot take as its pool runs dry. Returns
+    ``(e0, half)`` with ``half[t]`` the pool (in the producer's units) at
+    which N = K, so ``N/(N + K) = pool/(pool + half[t])``.
+    """
+    has_half = pair.get("edibility_half_saturation_umol_l") not in (None, "")
+    has_floor = pair.get("edibility_floor") not in (None, "")
+    if not has_half and not has_floor:
+        return None
+    if not (has_half and has_floor):
+        raise ValueError(f"'{pair_id}': edibility_floor and "
+                         "edibility_half_saturation_umol_l go together "
+                         "(section 182)")
+    k = float(pair["edibility_half_saturation_umol_l"])
+    floor = float(pair["edibility_floor"])
+    if not (math.isfinite(k) and k > 0.0 and 0.0 <= floor <= 1.0):
+        raise ValueError(f"'{pair_id}': edibility_half_saturation_umol_l "
+                         "must be > 0 and edibility_floor in [0, 1]")
+    if not getattr(env, "_has_nutrients", False):
+        # Inert without the pools, as the Q10 and the mixed-layer scale
+        # are without the calendar (e.g. a test or MVP world).
+        return None
+    tables = env.nutrient_tables.get(prey_id)
+    if tables is None:
+        raise ValueError(f"'{pair_id}': edibility needs a prey with a "
+                         "nutrient pool (simulation_settings.nutrients and "
+                         "the prey's nutrient_half_saturation; section 182)")
+    k_n = float(env.fgs[prey_id].params["nutrient_half_saturation"])
+    half = (np.asarray(tables["half"], dtype=np.float64) * (k / k_n))
+    return floor, half.astype(env.dtype)
+
+
+def ndm_grazing_rate(env, entry, prey_biomass, prey_pool=None):
+    """Per tonne of grazer, tonnes of prey taken this tick (section 177).
+
+    With ``food_threshold`` F0 (t/km2 at the pair's reference depth,
+    scaled with the mixed layer like the half-saturation) the prey the
+    grazer perceives is F F / (F + F0): ERSEM's food-perception term,
+    which makes the response sigmoid at low prey and leaves it a refuge.
+    With the pair's edibility (section 182) F is first the edible share
+    e(N) of the prey, N from ``prey_pool`` (the prey's nutrient pool).
+    """
+    a = entry["a"]
+    threshold = entry.get("threshold", 0.0)
+    if entry["scale"] is not None:
+        s = float(entry["scale"][light_index(env)])
+        a = a * s
+        threshold = threshold / s
+    food = prey_biomass
+    edibility = entry.get("edibility")
+    if edibility is not None:
+        if prey_pool is None:
+            raise ValueError("ndm_grazing_rate needs the prey's pool with "
+                             "an edibility term (section 182)")
+        floor, half = edibility
+        pool = np.maximum(prey_pool, np.float32(0.0))
+        h = half[light_index(env)]
+        food = prey_biomass * (np.float32(floor) + np.float32(1.0 - floor)
+                               * pool / (pool + h))
+    if threshold > 0.0:
+        food = food * food / (food + threshold)
+    rate = a * food / (1.0 + a * entry["h"] * food)
+    if entry["temperature"] is not None:
+        rate = rate * float(entry["temperature"][light_index(env)])
+    return rate
+
+
+def build_nutrient_tables(env):
+    """Nutrient pools of light-limited producers (section 172).
+
+    Sets ``env._has_nutrients``, ``env.nutrient_ids`` (producers with a
+    pool, in ``global_fg_order``), ``env.nutrient_config`` and, per
+    producer, ``env.nutrient_tables[fid]`` = {"keep", "supply", "half"}
+    (per year tick, ``nutrients.tick_tables``), ``env.nutrient_yield[fid]``
+    and ``env.nutrient_regeneration[fid]``. Everything is off - and the
+    tick bit-identical - unless the manifest enables
+    ``simulation_settings.nutrients``. Must run after
+    ``build_daylight_tables`` (the pool reads the same year tick).
+    """
+    cfg = None
+    for fid in env.global_fg_order:
+        cfg = env.fgs[fid].params.get("nutrients")
+        if cfg:
+            break
+    env.nutrient_config = dict(cfg) if cfg else None
+    env.nutrient_ids = []
+    env.nutrient_tables = {}
+    env.nutrient_yield = {}
+    env.nutrient_regeneration = {}
+    env.nutrient_stress = {}
+    env.nutrient_stress_regeneration = {}
+    env.nutrient_layer = {}
+    env.layer_exchange = None
+    env._has_nutrients = False
+    if env.nutrient_config is None:
+        return
+    if getattr(env, "daylight", None) is None:
+        raise ValueError("simulation_settings.nutrients needs the daylight "
+                         "calendar (section 172)")
+    for fid in env.global_fg_order:
+        fg = env.fgs[fid]
+        settings = nutrients.species_settings(fg.params)
+        if settings is None:
+            continue
+        if fg.is_decision_maker:
+            raise ValueError(f"'{fid}' has nutrient_half_saturation but is a "
+                             "decision maker: only producers take up "
+                             "nutrients (section 172)")
+        k_n, yield_, rho = settings
+        layer = nutrients.species_layer(fg.params)
+        tables = nutrients.tick_tables(env.nutrient_config, yield_, k_n,
+                                       layer)
+        env.nutrient_layer[fid] = layer
+        if len(tables["keep"]) != env.light_period:
+            raise ValueError("nutrient tables and the daylight calendar "
+                             "disagree on the tick length")
+        env.nutrient_ids.append(fid)
+        env.nutrient_tables[fid] = {
+            key: value.astype(env.dtype) for key, value in tables.items()}
+        env.nutrient_yield[fid] = yield_
+        env.nutrient_regeneration[fid] = rho
+        stress = nutrients.stress_settings(fg.params)
+        if stress is not None:
+            env.nutrient_stress[fid] = stress
+        env.nutrient_stress_regeneration[fid] = float(
+            fg.params.get("stress_regeneration", 0.0) or 0.0)
+    if not env.nutrient_ids:
+        raise ValueError("simulation_settings.nutrients is enabled but no "
+                         "group has nutrient_half_saturation (section 172)")
+    env._has_nutrients = True
+    if env.nutrient_config.get("subsurface"):
+        # Section 180: one producer per layer, one nutrient currency.
+        by_layer = {}
+        for fid in env.nutrient_ids:
+            by_layer.setdefault(env.nutrient_layer[fid], []).append(fid)
+        if sorted(by_layer) != ["mixed", "subsurface"] or any(
+                len(v) != 1 for v in by_layer.values()):
+            raise ValueError(
+                "nutrients.subsurface_layer needs exactly one producer with "
+                "water_layer 'mixed' and one with 'subsurface' (section "
+                f"180), got {by_layer}")
+        mixed, deep = by_layer["mixed"][0], by_layer["subsurface"][0]
+        if env.nutrient_yield[mixed] != env.nutrient_yield[deep]:
+            raise ValueError(f"'{mixed}' and '{deep}' must share one "
+                             "nutrient_yield (section 180)")
+        tables = nutrients.layer_tables(env.nutrient_config,
+                                        env.nutrient_yield[mixed])
+        env.layer_exchange = {
+            "mixed": mixed, "subsurface": deep,
+            **{key: value.astype(env.dtype) for key, value in tables.items()}}
+    elif "subsurface" in env.nutrient_layer.values():
+        raise ValueError("water_layer 'subsurface' needs "
+                         "nutrients.subsurface_layer in the manifest "
+                         "(section 180)")
+
+
+def initialise_nutrient_pools(env):
+    """Fill every producer's pool with the surface climatology of the
+    world's start day (section 172). The pool lives in the producer's
+    ``energy_reserve``; called once, when the environment is built."""
+    if not getattr(env, "_has_nutrients", False):
+        return
+    for fid in env.nutrient_ids:
+        fg = env.fgs[fid]
+        pool = nutrients.initial_pool(env.nutrient_config,
+                                      env.nutrient_yield[fid], env.light_start,
+                                      env.nutrient_layer.get(fid, "mixed"))
+        fg.energy_reserve = np.full(fg.biomass.shape, pool, dtype=env.dtype)
+
+
+def is_nutrient_producer(env, fg_id):
+    """True when ``fg_id``'s reserve slot holds a nutrient pool."""
+    return fg_id in getattr(env, "nutrient_regeneration", {})
+
+
 def build_temperature_tables(env):
     """Q10 metabolism multipliers on the daylight calendar (section 143).
+
+    Also the ingestion multipliers of section 181
+    (``env._has_ingestion_temperature``, ``env.ingestion_temp_table``,
+    (T, N_dm), 1 for a DM without ``ingestion_q10``) and the growth
+    multipliers of section 183 (``env._has_growth_temperature``,
+    ``env.growth_temp_table``, likewise).
 
     Sets ``env._has_temperature`` and ``env.metabolism_temp_table``
     ((T, N_dm) multiplier on ``resting_metabolism``, exactly 1 for every
@@ -220,6 +527,10 @@ def build_temperature_tables(env):
     """
     env._has_temperature = False
     env.metabolism_temp_table = None
+    env._has_ingestion_temperature = False
+    env.ingestion_temp_table = None
+    env._has_growth_temperature = False
+    env.growth_temp_table = None
     configured = [fid for fid in env.global_fg_order
                   if env.fgs[fid].params.get("temperature")]
     if not configured:
@@ -242,6 +553,32 @@ def build_temperature_tables(env):
         env._has_temperature = True
     if env._has_temperature:
         env.metabolism_temp_table = table
+    # Section 181: Q10 on the whole functional response, annual mean 1.
+    intake = np.ones((env.light_period, env.N_dm), dtype=env.dtype)
+    for i, fid in enumerate(env.dm_ids):
+        fg = env.fgs[fid]
+        cfg = fg.params.get("temperature")
+        q10 = temperature.ingestion_q10(fg.params)
+        if not cfg or q10 is None:
+            continue
+        intake[:, i] = temperature.metabolism_multiplier(
+            cfg["monthly_c"], tick_hours, q10, temperature.ANNUAL_MEAN)
+        env._has_ingestion_temperature = True
+    if env._has_ingestion_temperature:
+        env.ingestion_temp_table = intake
+    # Section 183: Q10 on the growth rate, annual mean 1.
+    growth = np.ones((env.light_period, env.N_dm), dtype=env.dtype)
+    for i, fid in enumerate(env.dm_ids):
+        fg = env.fgs[fid]
+        cfg = fg.params.get("temperature")
+        q10 = temperature.growth_q10(fg.params)
+        if not cfg or q10 is None:
+            continue
+        growth[:, i] = temperature.metabolism_multiplier(
+            cfg["monthly_c"], tick_hours, q10, temperature.ANNUAL_MEAN)
+        env._has_growth_temperature = True
+    if env._has_growth_temperature:
+        env.growth_temp_table = growth
 
 
 def metabolism_temperature(env):
@@ -249,6 +586,21 @@ def metabolism_temperature(env):
     if not getattr(env, "_has_temperature", False):
         return None
     return env.metabolism_temp_table[light_index(env)]
+
+
+def growth_temperature(env, fg_id):
+    """This tick's multiplier on ``fg_id``'s growth rate (section 183)."""
+    if not getattr(env, "_has_growth_temperature", False):
+        return 1.0
+    return float(env.growth_temp_table[light_index(env),
+                                       env.dm_ids.index(fg_id)])
+
+
+def ingestion_temperature(env):
+    """``(N_dm,)`` multiplier on every DM's intake this tick, or None."""
+    if not getattr(env, "_has_ingestion_temperature", False):
+        return None
+    return env.ingestion_temp_table[light_index(env)]
 
 
 def light_index(env):

@@ -261,11 +261,12 @@ def apply_energy_costs(env, actions):
     cost_move = env.dm_cost_move[:, None, None]
 
     rest_biomass = biomass * actions.rest
+    rest_cost = (biomass * actions.rest * resting_metabolism * cost_rest
+                 * cost_factor)
     rest_reserve = np.maximum(
         0,
         reserve * actions.rest
-        - biomass * actions.rest * resting_metabolism * cost_rest
-        * cost_factor,
+        - rest_cost,
     )
 
     eat_fraction = actions.eat.sum(axis=1)
@@ -291,12 +292,58 @@ def apply_energy_costs(env, actions):
     move_reserve_choices = direction_fraction * move_reserve_pool[:, None, :, :]
     move_biomass_choices = actions.move * biomass[:, None, :, :]
 
+    stationary_biomass = rest_biomass + eat_biomass
+    stationary_reserve = rest_reserve + eat_reserve
+    if getattr(env, "_has_income_growth", False):
+        stationary_biomass, stationary_reserve = income_growth(
+            env, biomass, reserve, temp_gains,
+            rest_cost + eat_cost + move_cost,
+            stationary_biomass, stationary_reserve)
+
     return ActionSettlement(
-        stationary_biomass=rest_biomass + eat_biomass,
-        stationary_reserve=rest_reserve + eat_reserve,
+        stationary_biomass=stationary_biomass,
+        stationary_reserve=stationary_reserve,
         moving_biomass=move_biomass_choices,
         moving_reserve=move_reserve_choices,
     )
+
+
+def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
+                  stationary_reserve):
+    """Section 184: an income-funded DM grows out of this tick's intake.
+
+    Per cell, with I the assimilated intake (``gains``) and C the action
+    costs of the tick (MJ), G = min(kappa I - C, B g (s - u) ec), at
+    least 0 and at most the settling reserve; s is the reserve fill at
+    the start of the tick. G leaves the stationary reserve (where the
+    intake landed) and becomes G / ec tonnes of new biomass there, before
+    the movement. Nothing to eat, no growth: the reserve only pays the
+    costs. The DM's reserve-funded growth branch is off in the
+    population step; its starvation branch is untouched.
+    """
+    kappa = env.dm_income_kappa[:, None, None]
+    on = kappa > 0.0
+    groups = [env.fgs[fid] for fid in env.dm_ids]
+    growth = np.array([fg.growth_rate for fg in groups],
+                      dtype=env.dtype)[:, None, None]
+    maintenance = np.array([fg.maintenance_level for fg in groups],
+                           dtype=env.dtype)[:, None, None]
+    ec = np.array([float(fg.params.get("energy_content", 0.0) or 0.0)
+                   for fg in groups], dtype=env.dtype)[:, None, None]
+    max_reserve = env.dm_max_energy_reserve[:, None, None]
+    capacity = biomass * max_reserve
+    fill = np.where(capacity > 0, reserve / np.where(capacity > 0, capacity,
+                                                     np.float32(1.0)),
+                    np.float32(0.0))
+    ceiling = biomass * growth * np.maximum(fill - maintenance,
+                                            np.float32(0.0)) * ec
+    paid = np.minimum(np.maximum(kappa * gains - cost, np.float32(0.0)),
+                      ceiling)
+    paid = np.minimum(paid, np.maximum(stationary_reserve, np.float32(0.0)))
+    paid = np.where(on & (ec > 0), paid, np.float32(0.0)).astype(env.dtype)
+    safe_ec = np.where(ec > 0, ec, np.float32(1.0))
+    return ((stationary_biomass + paid / safe_ec).astype(env.dtype),
+            (stationary_reserve - paid).astype(env.dtype))
 
 
 def apply_movement(env, settlement):

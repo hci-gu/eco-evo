@@ -103,13 +103,15 @@ def test_matrix_cells_are_bound(bound_keys):
 
 GROWTH_TERMS = ("panel", "dm_formula", "ndm_formula", "growth_rate",
                 "r_max", "m1", "m2", "gate", "ticks_per_year")
+# Shown only for an income-funded group (section 184).
+OPTIONAL_GROWTH_TERMS = ("season",)
 
 
 def test_derived_growth_terms_are_bound(bound_keys):
     """Each term of the Derived growth_rate panel has its own help."""
     unbound = sorted({f"growth:{t}" for t in GROWTH_TERMS} - set(bound_keys))
     assert not unbound, unbound
-    for term in GROWTH_TERMS + ("hand_set", "library_note", "error"):
+    for term in GROWTH_TERMS + OPTIONAL_GROWTH_TERMS + ("hand_set", "library_note", "error"):
         assert field_help.help_text(f"growth:{term}"), term
 
 

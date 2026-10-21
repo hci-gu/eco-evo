@@ -20,8 +20,21 @@
     # The annual-mean value of section 129 (0.0194, r_max 5.66) was a
     # steady-state remainder, the error already corrected for benthos.
     # Derivation: reports/Litteraturbaserad growth rate per FG.md.
-    r_max: 75.2
-    growth_rate: 0.0670068
+    # Section 173: that rate is gross of sinking, which is now the
+    # explicit M1 below, so r_max = 97.8 - 22.63 - 7.32 = 67.882 and
+    # growth_rate stays 0.0670 (was r_max 75.2 with no M1).
+    r_max: 67.882
+    growth_rate: 0.167487
+    # Own loss M1 (section 173): the sinking loss, 0.005 /tick = 0.02 /d
+    # = 7.32 /yr. The dilution rate behind growth_rate (Stelfox-
+    # Widdicombe et al. 2004 [F]) is net of respiration and lysis and
+    # gross of sinking (closed bottles, no nutrients added); sinking of
+    # growing cells over a 6-17 m mixed layer is 0.03 /d (0.01-0.1),
+    # research_notes/Naringspool for vaxtplankton/phytoplankton_losses.md.
+    # 0.005 fitted to SHARK A17 chl and nitrate with fix58 frozen (Mar
+    # bloom, 4.6x); 0.0075 gives 17x and kills the frozen zooplankton.
+    # Acts with or without the nutrient pool.
+    natural_mortality: 0.005
     max_carrying_capacity: 24.0
     # 4.8 kJ/g WW, the Ecopath convention, for a flagellate-rich coastal
     # assemblage (flagellates 6-8 kJ/g WW). The previous 2.0 implies C/WW
@@ -46,6 +59,28 @@
     light_saturation: [114, 132, 161, 165, 208, 248, 298, 257, 193, 149, 111, 
           113]
     light_reference_day: 105
+    # Nutrient pool (section 172, lib/world/nutrients.py). Used when the
+    # project enables simulation_settings.nutrients (mareld2.yaml does
+    # since section 174); then growth is
+    # r L(t) B N/(N + k_N Y M(t)), paid out of the pool. K above is then
+    # only a ceiling, kept because without an own loss term the stock has
+    # no way down; it is not calibrated for this use and blocks uptake
+    # in an ungrazed world. Sources: research_notes/Naringspool for
+    # vaxtplankton/nutrient_parameters.md (Swedish dir name).
+    # k_N 0.5 umol N/l: ONE pool for nitrate and the regenerated ammonium
+    # (NH4 half-saturation 0.1-0.5; nitrate ~1.0 in nutrient-rich water,
+    # MacIsaac & Dugdale 1972 [F]; NPZ standard 0.5, Fennel et al. 2006
+    # [F]); 0.5 fitted the A17 nitrate best once grazing regenerates
+    # (section 177). Was 1.0.
+    # Yield: 1 umol N/l over 1 m = 14 mg N/m2 x Redfield C:N 5.68 g/g =
+    # 79.5 mg C/m2, / C:WW 0.10 (North Sea Ecopath 1:10, Mackinson &
+    # Daskalov 2007 [F]; the ratio energy_content 4.8 kJ/g WW implies) =
+    # 0.795 t/km2. Regeneration 0.3 (range 0.25-0.45): Acartia excretes
+    # ~0.25 of ingested N (Kioerboe et al. 1985 via Kuijper et al. 2004
+    # [F]); faecal pellets leave a 6-17 m mixed layer and count as export.
+    nutrient_half_saturation: 0.5
+    nutrient_yield: 0.795
+    grazing_regeneration: 0.3
     spawn:
       mode: perlin
       scale: 12.0
@@ -54,6 +89,59 @@
       lacunarity: 2.0
       threshold: 0.0
       min_frac_of_max: 0.1
+  subsurface_phytoplankton:
+    # Section 180: the subsurface chlorophyll maximum. SHARK A17 2010-2023
+    # (bottle chl-a by depth): from April to August chl at 15-30 m is
+    # 2-4x the surface (Jun 2.06 ug/l at 20 m vs 0.68 at 1 m, Jul 1.59 at
+    # 30 m vs 0.38) and ~90 % of the 0-30 m chlorophyll lies below the
+    # 6 m mixed layer, on the nitracline (NO3 0.1 at 15 m, 2.6-4.0 at
+    # 30 m). The single mixed layer had none of it: gross PP 13-15 g
+    # C/m2/yr against 190-290 in the Kattegat/Gullmar Fjord 14C record.
+    # The same algae as phytoplankton (same r_max, M1, grazing pairs,
+    # hence the same derived gross growth_rate), living in the layer
+    # between the mixed layer and the manifest's
+    # nutrients.subsurface_layer.bottom_m: light through the mixed layer
+    # then the layer's own attenuation, nutrients from the reservoir
+    # below, entrained into the mixed layer when it deepens. The growth
+    # budget comments of phytoplankton apply unchanged.
+    current_response: 1.0
+    display_name: "Subsurface phytoplankton"
+    is_decision_maker: false
+    movement_speed: 0.0
+    water_layer: subsurface
+    r_max: 67.882
+    growth_rate: 0.167487
+    natural_mortality: 0.005
+    max_carrying_capacity: 24.0
+    energy_content: 4800.0
+    seed_rate: 0.0
+    # Shade-adapted: I_k 30 umol photons/m2/s [D] (the light factor is
+    # normalised by this I_k in the mixed layer on day 105, so
+    # growth_rate keeps its meaning). 30 fitted A17 nitrate and the
+    # column chlorophyll best of 30/50 in the scratch calibration
+    # (resume 180) and is BELOW the regional measurements: Kattegat
+    # pycnocline I_k 63-117, mean 92 (Lyngsgaard et al. 2014 [F]); NE
+    # North Sea SCM ~64-86 [D from Bendtsen & Richardson 2018 F]; only
+    # the Celtic Sea scatter reaches 20-100 (Hickman et al. 2012 [F]).
+    # research_notes/Djupklorofyllmaximum (resume 181.8).
+    light_saturation: 30.0
+    light_reference_day: 105
+    nutrient_half_saturation: 0.5
+    nutrient_yield: 0.795
+    grazing_regeneration: 0.3
+    # Spawned on the phytoplankton's layout: the same water masses, and
+    # an independent field would put the zooplankton between its two
+    # algal prey at the start.
+    spawn:
+      mode: env_driven
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.1
+      refs:
+        - name: phytoplankton
+          weight: 1.0
+          transform: linear
   zooplankton:
     display_name: "Zooplankton"
     is_decision_maker: true
@@ -68,6 +156,26 @@
     # a Q10 does not describe.
     metabolism_q10: 2.0
     metabolism_t_ref: annual_mean
+    # Section 181: Q10 on the whole intake (attack rate and ceiling
+    # together; annual mean 1, so a and h stay annual means). 2.8 =
+    # copepod feeding/growth (Hansen, Bjornsen & Hansen 1997, used by
+    # Kioerboe & Hirst 2014 [F]; Huntley & Lopez 1992 growth 3.0 [S]);
+    # models use 2.0-2.14 (ERSEM, NEMURO, PISCES [SRC]), in situ
+    # fecundity 1.4-1.6 (Hirst & Bunker 2003 [A]). 2.8 [D] was fitted to A17's
+    # Feb-Mar TOTAL zooplankton (0.5 / 4.6 vs 0.7 / 4.3 t/km2; 2.0 gave
+    # 1.0 / 9.8), but 64-75 % of that carbon is Calanus and Metridia
+    # risen from the Norwegian Trench (section 183); the target is now the
+    # resident stock (Feb / Mar 0.2 / 1.6), reached with growth_q10 below.
+    # 2.8 vs 2.0 is open. research_notes/Zooplankton vinterdodlighet/
+    # zoo_autumn_closure.md and winter_stock.md (Swedish dir name).
+    ingestion_q10: 2.8
+    # Section 183: Q10 on the growth branch (reserve -> biomass; annual
+    # mean 1, starvation unscaled). 3.0 = copepod growth vs temperature,
+    # g = 0.0445 e^(0.111 T) (Huntley & Lopez 1992 [S]); not fitted. At
+    # 5 C in February it caps growth near their ~8 %/d where the flat
+    # rate gave 13 %/d, and puts the spring at the resident stock
+    # (Mar 1.7 vs 1.6 t/km2, peak in May).
+    growth_q10: 3.0
     movement_speed: 0.02
     # Respiration + excretion while feeding, in multiples of the resting
     # (fasting) rate (section 135): Kiorboe et al. 1985 measured both at
@@ -94,7 +202,7 @@
     # 11.5 C (Huntley & Lopez 1992) = 58.4 /yr, minus total mortality
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
     r_max: 33.4
-    growth_rate: 0.127933
+    growth_rate: 0.118608
     # M1 = total copepod mortality (~25 /yr = realised P/B) minus the
     # 21 % taken by pelagic fish, gadoids and seabirds in the North Sea
     # Ecopath diet matrix: 19.7 /yr. The rest is carnivorous zooplankton,
@@ -116,6 +224,48 @@
     interference: 0.0
     extinction_threshold_factor: 0.5
     current_response: 1.0
+  microzooplankton:
+    # Section 177: ciliates + heterotrophic dinoflagellates (HD-dominated
+    # here), the grazers section 131 used to subtract from the
+    # phytoplankton's growth as "60 % microzooplankton grazing". A non
+    # decision maker that GRAZES (interactions.build_ndm_grazing): no
+    # logistic growth of its own (growth_rate 0), it grows by
+    # growth_efficiency x what it takes. Sources: research_notes/
+    # Mikrozooplankton/microzooplankton.md (Swedish dir name).
+    current_response: 1.0
+    display_name: "Microzooplankton"
+    is_decision_maker: false
+    movement_speed: 0.0
+    growth_rate: 0.0
+    max_carrying_capacity: 100.0
+    # Protist carbon ~45 kJ/g C at C:WW 0.1 (NK94 0.11 pg C/um3).
+    energy_content: 4500.0
+    # GGE 0.3 on carbon (Straile 1997 [F]: ciliates 30 %, dinoflagellates
+    # 26 %).
+    growth_efficiency: 0.3
+    # NH4 excreted ~0.4 of ingested N (Verity 1985 [F] 53 %, Goldman et
+    # al. 15-50 % [A]): 0.4 / (1 - 0.3) = 0.571 of the part not grown.
+    excretion_regeneration: 0.571
+    # Q10 2.6 (Nielsen & Kioerboe 1994 [F]; Hansen 1997 2.8 [F]) on the
+    # 10 C rates of the grazing pair; layer in the manifest.
+    grazing_q10: 2.6
+    grazing_t_ref: 10.0
+    # Non-predatory mortality 0.05 /d with copepod predation explicit
+    # (ERSEM basal 0.05 [F]; range 0.02-0.1).
+    natural_mortality: 0.0125
+    min_split_biomass: 0.0
+    extinction_threshold_factor: 0.0
+    seed_rate: 0.0
+    spawn:
+      mode: env_driven
+      floor: 0.0
+      noise_amp: 0.0
+      noise_scale: 4.0
+      min_frac_of_max: 0.1
+      refs:
+        - name: phytoplankton
+          weight: 1.0
+          transform: linear
   benthic_community:
     current_response: 0.0
     display_name: "Benthic Community"
@@ -166,6 +316,20 @@
     # multiplier is ~0.5 in Jan-Apr and ~1 in Aug-Sep.
     metabolism_q10: 2.2
     metabolism_t_ref: 14.0
+    # Section 184: growth out of this tick's income, not out of the fat.
+    # G = min(kappa I - C, B g (s - u) ec): structure is built from food
+    # (fat holds no nitrogen; fasting fish lose the GH -> IGF-1 signal),
+    # so with no food there is no growth and the summer fat is kept for
+    # the winter. The reserve-funded law kept turning it into biomass in
+    # Oct-Dec and the stock lost 25-30 %/yr (sections 183.8-184.6).
+    # kappa 0.75 [D]: where the ideal-conditions budget closes at today's
+    # s* (DEBlipid form, Martin et al. 2017). The budget is paid over a
+    # 5.5-month feeding season, Apr - mid-Sep (Bachiller et al. 2018,
+    # NSS herring), so g = 12/5.5 x the year-round value; the months size
+    # the rate, the food decides when it grows.
+    # research_notes/Sillens vinterbudget/growth_allocation.md.
+    income_growth_kappa: 0.75
+    feeding_season_months: 5.5
     movement_speed: 1.0
     feeding_cost: 1.9
     movement_cost: 1.5
@@ -181,7 +345,8 @@
     # r_max 0.648 /yr: biomass-weighted FishBase CMSY priors over herring,
     # sprat, mackerel, horse mackerel, sandeel and other planktivores.
     r_max: 0.648
-    growth_rate: 0.00160628
+    # x 12 / feeding_season_months (5.5) since section 184.
+    growth_rate: 0.00350461
     # M1 = M0 (0.391) + predation by groups that are not FGs (0.189:
     # sharks, rays, other fish, larvae) = 0.580 /yr, North Sea Ecopath
     # 1991. Predation by FGs lives in predation_mortality. Was 1.0e-04.
@@ -230,11 +395,26 @@
     # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
-    # r_max 0.511 /yr: biomass-weighted FishBase CMSY priors over cod,
-    # whiting, haddock, saithe, hake and the other gadoids (Norway pout
-    # and blue whiting excluded: they eat zooplankton).
-    r_max: 0.511
-    growth_rate: 0.00357051
+    # r_max 0.37 /yr since section 185: today's productivity. The
+    # FishBase CMSY priors (cod 0.51, haddock 0.50, whiting 0.49, saithe
+    # 0.52, hake 0.48; pool 0.50-0.511, Norway pout and blue whiting
+    # excluded: they eat zooplankton) are 1960s-90s low-density rates.
+    # Recruits per spawner have fallen since (ICES SAG: cod 2.6x, haddock
+    # 4.7x, hake 3.9x, saithe 1.6x, whiting none); by Euler-Lotka r_now
+    # = r - ln(d)/T, T = 3/r: pool 0.34 (today's survey mix) - 0.40
+    # (Ecopath 1991 mix). research_notes/Torskfiskarnas reglering/
+    # r_pool_present.md, resume 184.18.
+    r_max: 0.37
+    # Section 185: today's EFFECTIVE capacity (t/km2), not the historical
+    # ceiling - the stock was much larger before decades of overfishing,
+    # trawled nurseries and warming. K = B / (1 - F/r) = 0.69 / (1 -
+    # 0.12/0.37): stationary at today's 0.69 t/km2 under F 0.12. The
+    # loss r_max/1460 x B_region/K is outside the derived growth_rate.
+    # Without it the pool grew at r_max - F, ate the pelagic fish down
+    # and crashed (resume 184.13); with it, 0.63-0.66 and a stable
+    # pelagic pool (184.19).
+    regional_carrying_capacity: 1.02
+    growth_rate: 0.00294180
     # M1 = M0 (0.20; SMS residual M1 convention for cod, haddock,
     # whiting and saithe; Ecopath NS 1991 adults 0.18) + predation by
     # non-FG groups (0.214; squid, halibut, gurnards, long-rough dab,
@@ -458,9 +638,85 @@ interaction_definitions:
   zooplankton_preys_on_phytoplankton:
     handling_time: 4.0
     preys_on: true
-    max_intake_rate: 0.0125
+    # Section 177: copepods feed on CONCENTRATION. Half-saturation 50
+    # ug C/l (low end of 50-150, copepod_energetics.md) = 5 t/km2 in the
+    # 10 m reference layer at C:WW 0.1, so a = 1/(4 x 5) = 0.05, scaled
+    # by 10 / M(t) (3 t/km2 in the 6 m summer layer, 8.5 in November).
+    # 100 ug C/l starved even a rule-driven zooplankton in the plankton
+    # calibration. Was 0.0125 = a fixed 20 t/km2 (section 134).
+    max_intake_rate: 0.05
+    mixed_layer_reference_m: 10.0
     predation_mortality: 22.63
     assimilation_factor: 0.65
+  zooplankton_preys_on_microzooplankton:
+    # Section 177: no size-independent preference (Tiselius 1989 [F]);
+    # protists are better food. Section 178: Type III (prey switching:
+    # copepods turn from suspension to ambush feeding as ciliates become
+    # common, Kioerboe et al. 1996 [F]). Type II let fix62's trained
+    # zooplankton (9-10 t/km2 in March) graze the microzooplankton to
+    # 1e-18 in two weeks, for good. a is per (t/km2)^2 at 10 m; 0.1 =
+    # the Type II clearance 0.05 at 0.5 t/km2 of microzooplankton.
+    handling_time: 4.0
+    preys_on: true
+    max_intake_rate: 0.1
+    functional_response: 3
+    mixed_layer_reference_m: 10.0
+    assimilation_factor: 0.8
+  microzooplankton_preys_on_phytoplankton:
+    # Section 177. Imax 1.7 /d at 10 C (Hansen et al. 1997 [F]) = 0.425
+    # per tick = 1/h; half-saturation 70 ug C/l = 7 t/km2 at 10 m (field
+    # ~30, range 10-80; lab 75-300; 3 t/km2 over-grazed the bloom in the
+    # calibration), a = 1/(2.353 x 7) = 0.0607, scaled by 10 / M(t); Q10
+    # on the grazer. food_threshold 1.2 t/km2 at 10 m = ERSEM's 12 mg
+    # C/m3 food-perception term (sigmoid at low prey, a refuge; without
+    # it the pair oscillates to near-zero phytoplankton). predation_mortality is the RATE
+    # RATIO the phytoplankton budget needs, not a measured annual
+    # mortality: 60 % of the gross 0.67 /d (Calbet & Landry 2004),
+    # 0.6 x 0.67 x 365 = 146.7 /yr, so the phytoplankton growth_rate is
+    # the gross dilution rate.
+    preys_on: true
+    max_intake_rate: 0.0607
+    handling_time: 2.353
+    mixed_layer_reference_m: 10.0
+    food_threshold: 1.2
+    predation_mortality: 146.7
+  zooplankton_preys_on_subsurface_phytoplankton:
+    # Section 180: as zooplankton_preys_on_phytoplankton (a 0.05, h 4 =
+    # half-saturation 50 ug C/l at 10 m); the prey is diluted over the
+    # subsurface layer, so the scale is 10 / H(t), H = bottom_m - M(t).
+    handling_time: 4.0
+    preys_on: true
+    max_intake_rate: 0.05
+    mixed_layer_reference_m: 10.0
+    predation_mortality: 22.63
+    assimilation_factor: 0.65
+  microzooplankton_preys_on_subsurface_phytoplankton:
+    # Section 180: as microzooplankton_preys_on_phytoplankton (ciliates
+    # and dinoflagellates are abundant at the subsurface maximum), the
+    # same rate ratio in the budget, diluted over H(t).
+    # Section 182: the microzooplankton sees only the edible share
+    # e = floor + (1 - floor) N/(N + K) of the subsurface producer, N its
+    # layer's nitrate. This describes THIS producer's late-summer
+    # community, not a general size law (diatoms win at HIGH nitrate):
+    # in the stratified, nitrate-poor layer at the pycnocline the
+    # Tripos/Ceratium dinoflagellates dominate (Kattegat Aug-Sep bloom,
+    # >50 um = 57-62 % of chl, Nielsen & Kioerboe 1994 [F]), out of reach
+    # of ciliates (max prey ~35 um, Hansen 1991 [F]); the heterotrophic
+    # dinoflagellates that eat them take 6-9 %/d of production and lag
+    # the bloom (Nielsen 1991 [F]), hence a floor above 0. At winter
+    # nitrate (4-5 umol/l) e is ~0.75. floor 0.1 and K 2 umol/l are [D],
+    # fitted to A17's Oct-Nov zooplankton and column chlorophyll
+    # (research_notes/Mikrozooplankton/autumn_microzooplankton.md).
+    # predation_mortality stays the rate ratio: the realised grazing now
+    # falls below it in late summer, which is the mechanism.
+    edibility_floor: 0.1
+    edibility_half_saturation_umol_l: 2.0
+    preys_on: true
+    max_intake_rate: 0.0607
+    handling_time: 2.353
+    mixed_layer_reference_m: 10.0
+    food_threshold: 1.2
+    predation_mortality: 146.7
   pelagic_fish_preys_on_zooplankton:
     preys_on: true
     predation_mortality: 5.24
@@ -1181,6 +1437,10 @@ interaction_definitions:
   zooplankton_observes_pelagic_fish:
     observes: false
   zooplankton_observes_phytoplankton:
+    observes: true
+  zooplankton_observes_microzooplankton:
+    observes: true
+  zooplankton_observes_subsurface_phytoplankton:
     observes: true
   zooplankton_observes_porpoises:
     observes: false

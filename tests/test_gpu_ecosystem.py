@@ -32,7 +32,9 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              mortality_multiplier=1.0, daylight=None, dark_ratios=None,
              light_saturation=None, m1_exposure=None, reserve_food=None,
              response_types=None, temperature=None, impacts=None,
-             observable_impacts=None):
+             observable_impacts=None, nutrient_pool=None, grazer=None,
+             mixed_layer_pairs=None, subsurface=None, inert_subsurface=False,
+             ingestion=None, growth=None, income=None, capacity=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -53,6 +55,19 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     ``impacts`` maps a group to its ``params['impact']`` block; the caller
     adds the fields with ``env.grid.add_map`` (section 161).
     ``observable_impacts`` lists the impacts the policies observe.
+    ``nutrient_pool`` is ``(params['nutrients'], species keys)``: every FG
+    carries the former, the NDM ``c`` the latter (section 172).
+    ``grazer`` is ``(pair keys, species keys)`` making the NDM ``d`` graze
+    ``c`` (section 177).
+    ``subsurface`` is ``(subsurface_layer block, light_saturation)``: the
+    NDM ``d`` becomes the subsurface producer with ``c``'s nutrient keys
+    (section 180; needs ``nutrient_pool``).
+    ``ingestion`` is ``(q10, monthly_c)``: Q10 on DM ``a``'s whole intake
+    (section 181; needs ``daylight``).
+    ``growth`` is ``(q10, monthly_c)``: Q10 on DM ``a``'s growth rate
+    (section 183; needs ``daylight``).
+    ``capacity`` is DM ``a``'s ``capacity_loss_rate`` c: the regional
+    logistic loss c * grid-mean B per tick (section 185).
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -83,15 +98,47 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
         for inter_id, ratio in (dark_ratios or {}).items():
             if inter_id in params["interaction"]:
                 params["interaction"][inter_id]["dark_ratio"] = ratio
+        for inter_id, m_ref in (mixed_layer_pairs or {}).items():
+            if inter_id in params["interaction"]:
+                params["interaction"][inter_id]["mixed_layer_reference_m"] = m_ref
         if daylight:
             params["daylight"] = dict(daylight)
         if light_saturation and fid == "c":
             params["light_saturation"] = light_saturation
+        if nutrient_pool is not None:
+            params["nutrients"] = dict(nutrient_pool[0])
+            if fid == "c":
+                params.update(nutrient_pool[1])
+            if subsurface is not None:
+                params["nutrients"]["subsurface"] = dict(subsurface[0])
+                if fid == "d":
+                    params.update(nutrient_pool[1])
+                    params.update(water_layer="subsurface",
+                                  light_saturation=subsurface[1])
+        if inert_subsurface and fid == "d":
+            params["water_layer"] = "subsurface"
+        if grazer is not None and fid == "d":
+            params["interaction"] = {"d_preys_on_c": dict(
+                preys_on=True, **grazer[0])}
+            params.update(grazer[1])
         if temperature and fid == "a":
             q10, t_ref, monthly_c = temperature
             params.update(metabolism_q10=q10, metabolism_t_ref=t_ref,
                           temperature={"layer": "upper",
                                        "monthly_c": list(monthly_c)})
+        if ingestion and fid == "a":
+            params.update(ingestion_q10=ingestion[0],
+                          temperature={"layer": "upper",
+                                       "monthly_c": list(ingestion[1])})
+        if growth and fid == "a":
+            params.update(growth_q10=growth[0],
+                          temperature={"layer": "upper",
+                                       "monthly_c": list(growth[1])})
+        if income and fid == "a":
+            params.update(income_growth_kappa=income[0],
+                          feeding_season_months=income[1])
+        if capacity and fid == "a":
+            params["capacity_loss_rate"] = capacity
         if m1_exposure and fid == "a":
             params.update(m1_exposure)
         if impacts and fid in impacts:
@@ -194,10 +241,11 @@ def test_scaled_mortality_matches_reference(device, multiplier):
     env = make_env(mortality=True, mortality_multiplier=multiplier)
     model = _assert_parity(env, device, ticks=6)
     expected = max(0.0, 1.0 - 0.1 * multiplier)
+    # Every group, the non decision makers included (section 173: their
+    # natural_mortality, 0.1 in the fixture, is a real loss now).
     np.testing.assert_allclose(
         numpy(model.mortality_keep).reshape(-1),
-        [expected if env.fgs[f].is_decision_maker else 1.0 for f in model.ids],
-        rtol=1e-6)
+        [expected for f in model.ids], rtol=1e-6)
 
 
 @pytest.mark.parametrize("handling", [0.0, 0.2])
@@ -300,6 +348,159 @@ def test_light_limited_growth_matches_reference(device, start_tick, with_pairs):
     assert first == pytest.approx(0.0, abs=1e-6) if start_tick == 0 else first > 1.0
 
 
+TEMPERATURES_NDM = [6.3, 5.4, 5.2, 6.1, 7.8, 9.9, 12.1, 13.4, 13.8, 12.8,
+                    10.5, 8.4]
+NUTRIENTS = {"sub_mixed_layer_umol_l": [6, 7, 7, 7, 5, 4, 3, 1.4, 0.9, 0.9, 2.5, 4],
+             "surface_umol_l": [5, 5, 2, 0.3, 0.1, 0.1, 0.1, 0.1, 0.1, 0.3, 1.3, 3.6],
+             "exchange_m_per_day": 0.3,
+             "mixed_layer_depth_m": LIGHT_CLIMATE["mixed_layer_depth_m"],
+             "tick_hours": 6}
+
+
+@pytest.mark.parametrize("start_tick", [4 * 40 + 2, 4 * 300 + 1])
+@pytest.mark.parametrize("regeneration,stress", [(0.0, 0.0), (0.6, 0.0),
+                                                 (0.6, 0.08)])
+def test_nutrient_pool_matches_reference(device, start_tick, regeneration,
+                                         stress):
+    """Section 172: supply, uptake, the K ceiling and grazing's return to
+    the pool must agree on both engines; the pool rides in the reserve
+    slot, so the ordinary state comparison checks it. The small yield
+    makes the pool limiting, so the N/(N + half) term is exercised."""
+    env = make_env(min_split=0.0, extinction_factor=0.0,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False,
+                             "light_climate": LIGHT_CLIMATE},
+                   light_saturation=150.0,
+                   nutrient_pool=(NUTRIENTS, {
+                       "nutrient_half_saturation": 0.5,
+                       "nutrient_yield": 0.01,
+                       "grazing_regeneration": regeneration,
+                       "stress_loss_max": stress}))
+    j_c = sorted(env.fgs).index("c")
+    assert env._has_nutrients and env.nutrient_ids == ["c"]
+    assert env.fgs["c"].energy_reserve.flat[0] > 0     # empty cell, full pool
+    # The GPU trainer's own start (TensorEcosystem.initial_nutrients)
+    # must equal the CPU environment's pool at the same start tick.
+    model = TensorEcosystem(env, device)
+    _, r0, _ = model.import_state([env])
+    started = model.initial_nutrients(torch.zeros_like(r0),
+                                      model.light_starts([env]))
+    np.testing.assert_allclose(numpy(started[0, j_c]), numpy(r0[0, j_c]),
+                               rtol=1e-6)
+    assert float(started[0].sum()) == pytest.approx(float(started[0, j_c].sum()))
+    model = _assert_parity(env, device, ticks=8)
+    assert model.nutrients_on and bool(model.nutrient[0, j_c, 0])
+    # An empty producer cell keeps its pool on the tensor engine too.
+    b, r, _ = model.import_state([env])
+    assert float(r[0, j_c].min()) >= 0.0
+
+
+@pytest.mark.parametrize("start_tick", [4 * 60 + 1, 4 * 250 + 2])
+def test_ndm_grazing_matches_reference(device, start_tick):
+    """Section 177: a grazing NDM (Holling II, Q10, mixed-layer-scaled
+    attack rate, excretion back to the prey's nutrient pool) and the
+    stress loss's regeneration must agree on both engines."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, mortality=True,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False,
+                             "light_climate": LIGHT_CLIMATE},
+                   light_saturation=150.0,
+                   nutrient_pool=(NUTRIENTS, {
+                       "nutrient_half_saturation": 0.5,
+                       "nutrient_yield": 0.02,
+                       "grazing_regeneration": 0.3,
+                       "stress_loss_max": 0.05,
+                       "stress_regeneration": 0.5}),
+                   grazer=({"max_intake_rate": 0.4, "handling_time": 2.0,
+                            "mixed_layer_reference_m": 10.0,
+                            "food_threshold": 0.5},
+                           {"growth_efficiency": 0.3,
+                            "excretion_regeneration": 0.4,
+                            "grazing_q10": 2.6, "grazing_t_ref": 10.0,
+                            "temperature": {"layer": "upper",
+                                            "monthly_c": TEMPERATURES_NDM}}),
+                   mixed_layer_pairs={"a_preys_on_c": 10.0})
+    assert env._has_light_pairs      # the DM pair's M_ref / M(t) table
+    assert env._has_ndm_grazing and env.ndm_grazers[0]["prey"] == "c"
+    model = _assert_parity(env, device, ticks=8)
+    assert len(model.ndm_grazers) == 1
+    assert env.intake_by_pred_prey["d"]["c"] > 0.0     # it really grazed
+
+
+
+@pytest.mark.parametrize("start_tick", [4 * 60 + 1, 4 * 250 + 2])
+def test_ndm_edibility_matches_reference(device, start_tick):
+    """Section 182: the grazer sees only the edible share
+    e0 + (1 - e0) N/(N + K) of a producer with a pool, on both engines."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, mortality=True,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False,
+                             "light_climate": LIGHT_CLIMATE},
+                   light_saturation=150.0,
+                   nutrient_pool=(NUTRIENTS, {
+                       "nutrient_half_saturation": 0.5,
+                       "nutrient_yield": 0.02,
+                       "grazing_regeneration": 0.3}),
+                   grazer=({"max_intake_rate": 0.4, "handling_time": 2.0,
+                            "mixed_layer_reference_m": 10.0,
+                            "food_threshold": 0.5,
+                            "edibility_floor": 0.2,
+                            "edibility_half_saturation_umol_l": 1.0},
+                           {"growth_efficiency": 0.3,
+                            "excretion_regeneration": 0.4}),
+                   mixed_layer_pairs={"a_preys_on_c": 10.0})
+    assert env.ndm_grazers[0]["edibility"] is not None
+    model = _assert_parity(env, device, ticks=8)
+    assert model.ndm_grazers[0]["edibility"] is not None
+    assert env.intake_by_pred_prey["d"]["c"] > 0.0
+
+SUBSURFACE = {"bottom_m": 60.0, "light_attenuation_per_m": 0.12,
+              "reservoir_umol_l": [6.3, 7.4, 7.5, 7.9, 7.2, 7.2, 6.4, 4.7,
+                                   4.4, 2.5, 4.6, 4.5],
+              "reservoir_exchange_m_per_day": 0.3}
+
+
+@pytest.mark.parametrize("start_tick", [4 * 80 + 1, 4 * 290 + 2, 4 * 310 + 3])
+def test_subsurface_layer_matches_reference(device, start_tick):
+    """Section 180: the two-layer exchange (entrainment, detrainment,
+    diffusion, the reservoir), the subsurface light schedule and the
+    layer-specific half-saturation must agree on both engines; both
+    pools ride in the reserve slots, so the state comparison checks
+    them. Start ticks: shoaling in spring, deepening in autumn."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, mortality=True,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False,
+                             "light_climate": LIGHT_CLIMATE},
+                   light_saturation=150.0,
+                   nutrient_pool=(NUTRIENTS, {
+                       "nutrient_half_saturation": 0.5,
+                       "nutrient_yield": 0.02,
+                       "grazing_regeneration": 0.3}),
+                   subsurface=(SUBSURFACE, 50.0),
+                   mixed_layer_pairs={"a_preys_on_c": 10.0})
+    assert env.layer_exchange["mixed"] == "c"
+    assert env.layer_exchange["subsurface"] == "d"
+    model = TensorEcosystem(env, device)
+    _, r0, _ = model.import_state([env])
+    started = model.initial_nutrients(torch.zeros_like(r0),
+                                      model.light_starts([env]))
+    j_d = model.ids.index("d")
+    np.testing.assert_allclose(numpy(started[0, j_d]), numpy(r0[0, j_d]),
+                               rtol=1e-6)
+    model = _assert_parity(env, device, ticks=8)
+    assert model.layer is not None
+
+
+def test_subsurface_producer_without_the_layer_is_inert(device):
+    """Section 180: without the two-layer column (here: no calendar at
+    all) a subsurface producer does not grow, on both engines."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, mortality=True,
+                   inert_subsurface=True)
+    assert env.inert_producers == frozenset({"d"})
+    model = _assert_parity(env, device, ticks=4)
+    assert float(model.growth[0, model.ids.index("d"), 0]) == 0.0
+
+
 TEMPERATURES = [6.3, 5.4, 5.2, 6.1, 7.8, 9.9, 12.1, 13.4, 13.8, 12.8, 10.5, 8.4]
 
 
@@ -322,6 +523,65 @@ def test_temperature_metabolism_matches_reference(device, start_tick, t_ref):
     assert torch.all(model.metabolism_temp[:, i_b] == 1.0)
     assert float(model.metabolism_temp[start_tick, i_a]) != pytest.approx(1.0)
     assert model.in_dims == tuple(int(n) for n in env.per_dm_in_dim)
+
+
+@pytest.mark.parametrize("start_tick", [0, 4 * 74 + 2, 4 * 250 + 1])
+def test_ingestion_q10_matches_reference(device, start_tick):
+    """Section 181: both engines scale DM ``a``'s whole intake by the
+    same tick's Q10 multiplier, and only ``a``'s (no metabolism Q10 here,
+    so the table must be built on its own)."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, handling=0.6,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False},
+                   ingestion=(2.0, TEMPERATURES))
+    model = _assert_parity(env, device, ticks=6)
+    assert model.ingestion_temp is not None and not model.temperature_on
+    i_a, i_b = env.dm_ids.index("a"), env.dm_ids.index("b")
+    assert torch.all(model.ingestion_temp[:, i_b] == 1.0)
+    assert float(model.ingestion_temp[start_tick, i_a]) != pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("start_tick", [0, 4 * 74 + 2, 4 * 250 + 1])
+def test_growth_q10_matches_reference(device, start_tick):
+    """Section 183: both engines scale DM ``a``'s growth branch by the
+    same tick's Q10 multiplier, and only ``a``'s."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, handling=0.6,
+                   daylight={"latitude_deg": 58.15, "tick_hours": 6,
+                             "start_tick": start_tick, "random_start": False},
+                   growth=(3.0, TEMPERATURES))
+    model = _assert_parity(env, device, ticks=6)
+    assert model.growth_temp is not None and not model.temperature_on
+    j_a, j_b = env.global_fg_order.index("a"), env.global_fg_order.index("b")
+    assert torch.all(model.growth_temp[:, j_b] == 1.0)
+    assert float(model.growth_temp[start_tick, j_a]) != pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("kappa", [0.6, 1.0])
+@pytest.mark.parametrize("handling", [0.0, 0.6])
+def test_income_growth_matches_reference(device, kappa, handling):
+    """Section 184: both engines grow DM ``a`` out of this tick's intake
+    (kappa I - C, capped at g (s - u)) and never out of its reserve."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, handling=handling,
+                   income=(kappa, 6.0))
+    model = _assert_parity(env, device, ticks=6)
+    assert model.income_on
+    i_a = env.dm_ids.index("a")
+    assert float(env.dm_income_kappa[i_a]) == pytest.approx(kappa)
+    assert not bool(model.income_off_growth[0, model.ids.index("b"), 0])
+    assert bool(model.income_off_growth[0, model.ids.index("a"), 0])
+
+
+@pytest.mark.parametrize("mortality", [False, True])
+@pytest.mark.parametrize("capacity", [0.02, 0.1])
+def test_regional_capacity_matches_reference(device, capacity, mortality):
+    """Section 185: both engines remove c * grid-mean B of DM ``a`` per
+    tick after M1, with or without --mortality; ``b`` is untouched."""
+    env = make_env(mortality=mortality, min_split=0.0, extinction_factor=0.0,
+                   capacity=capacity)
+    model = _assert_parity(env, device, ticks=6)
+    assert model.capacity_on
+    assert float(model.capacity_rate[0, model.ids.index("a"), 0]) == pytest.approx(capacity)
+    assert float(model.capacity_rate[0, model.ids.index("b"), 0]) == 0.0
 
 
 @pytest.mark.parametrize("rho", [1.0, 3.0])

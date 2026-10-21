@@ -64,6 +64,15 @@ def apply_predation(env, actions):
     else:
         effective_intake_rate = intake_rate
 
+    # Section 181: the water temperature scales the whole response (a and
+    # the ceiling 1/h together) of a DM with ``ingestion_q10``.
+    intake_temperature = interactions.ingestion_temperature(env)
+    if intake_temperature is not None:
+        effective_intake_rate = (
+            effective_intake_rate
+            * intake_temperature[:, None, None, None]).astype(
+                env.dtype, copy=False)
+
     demand = (
         predator_biomass[:, None, :, :]
         * actions.eat
@@ -135,7 +144,16 @@ def apply_predation(env, actions):
             (biomass_old - intake) / (biomass_old + eps),
             np.float32(0.0),
         )
-        prey_fg.energy_reserve = (prey_fg.energy_reserve * reduction).astype(
-            env.dtype, copy=False)
+        if interactions.is_nutrient_producer(env, prey_id):
+            # Section 172: the reserve slot is the producer's nutrient
+            # pool, which grazing does not eat; a fraction of what it
+            # removes is excreted back into it.
+            prey_fg.energy_reserve = (
+                prey_fg.energy_reserve
+                + np.float32(env.nutrient_regeneration[prey_id]) * intake
+            ).astype(env.dtype, copy=False)
+        else:
+            prey_fg.energy_reserve = (prey_fg.energy_reserve * reduction).astype(
+                env.dtype, copy=False)
         prey_fg.biomass = (biomass_old - intake).astype(
             env.dtype, copy=False)
