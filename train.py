@@ -11,7 +11,7 @@ import json
 import re
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.training_progress import (add_progress_arguments, validate_progress_arguments,
-                                           make_visual_progress)
+                                           make_visual_progress, probe_due)
 from lib.world.tick_time import (
     LIBRARY_TICK_HOURS, add_tick_length_argument, resolve_tick_hours,
 )
@@ -2545,6 +2545,9 @@ def main(argv=None, *, on_step=None, confirm=True):
         return f"{h:02d}:{m:02d}:{s:02d}"
 
     completed_steps = start_gen * args.iter_per_gen * (1 if args.coevolution else len(target_species))
+    # The viewer's "Evaluation probe interval" slider paces the biomass
+    # probe as well; the first update of the session always probes.
+    probed = False
     visual_progress = make_visual_progress("cpu", args, viz)
 
     def report_step():
@@ -2608,23 +2611,27 @@ def main(argv=None, *, on_step=None, confirm=True):
                     # Probe: deterministic inference-world rollout with the
                     # updated theta. log10(bh/b0) per FG; JSONL row + compact
                     # stdout line. Fixed seed -> only policy varies across iters.
-                    try:
-                        _probe_biomass(trainer, probe_builder,
-                                       n_ticks=args.n_eval_ticks,
-                                       gen=gen, it=i,
-                                       jsonl_path=probe_jsonl_path,
-                                       viz=viz,
-                                       viz_extra={"gen": gen + 1,
-                                                  "iter": i + 1,
-                                                  "T": T},
-                                       viz_step=gen * args.iter_per_gen + i,
-                                       rnd_builder=(probe_builder
-                                                    if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
-                                                    else None),
-                                       rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower(),
-                                       reward_by_fid={fid: float(means[fid]) for fid in target_species})
-                    except Exception as _e:
-                        print(f"    [probe] WARN: probe rollout failed: {_e}")
+                    if viz is not None:
+                        viz.update_status(gen=gen + 1, iter=i + 1, T=T)
+                    if probe_due(viz, completed_steps, first=not probed):
+                        probed = True
+                        try:
+                            _probe_biomass(trainer, probe_builder,
+                                           n_ticks=args.n_eval_ticks,
+                                           gen=gen, it=i,
+                                           jsonl_path=probe_jsonl_path,
+                                           viz=viz,
+                                           viz_extra={"gen": gen + 1,
+                                                      "iter": i + 1,
+                                                      "T": T},
+                                           viz_step=gen * args.iter_per_gen + i,
+                                           rnd_builder=(probe_builder
+                                                        if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
+                                                        else None),
+                                           rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower(),
+                                           reward_by_fid={fid: float(means[fid]) for fid in target_species})
+                        except Exception as _e:
+                            print(f"    [probe] WARN: probe rollout failed: {_e}")
                     if viz is not None and not viz.pump_events():
                         print("    [viz] window closed; visualiser disabled.")
                         try:
@@ -2667,23 +2674,27 @@ def main(argv=None, *, on_step=None, confirm=True):
                         # Probe: deterministic inference-world rollout with the
                         # updated theta. log10(bh/b0) per FG; JSONL row + compact
                         # stdout line. Fixed seed -> only policy varies across iters.
-                        try:
-                            _probe_biomass(trainer, probe_builder,
-                                           n_ticks=args.n_eval_ticks,
-                                           gen=gen, it=i,
-                                           jsonl_path=probe_jsonl_path,
-                                           viz=viz,
-                                           viz_extra={"gen": gen + 1,
-                                                      "iter": i + 1,
-                                                      "T": T},
-                                           viz_step=gen * args.iter_per_gen + i,
-                                           rnd_builder=(probe_builder
-                                                        if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
-                                                        else None),
-                                           rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower(),
-                                           reward_by_fid={species: float(avg_reward)})
-                        except Exception as _e:
-                            print(f"    [probe] WARN: probe rollout failed: {_e}")
+                        if viz is not None:
+                            viz.update_status(gen=gen + 1, iter=i + 1, T=T)
+                        if probe_due(viz, completed_steps, first=not probed):
+                            probed = True
+                            try:
+                                _probe_biomass(trainer, probe_builder,
+                                               n_ticks=args.n_eval_ticks,
+                                               gen=gen, it=i,
+                                               jsonl_path=probe_jsonl_path,
+                                               viz=viz,
+                                               viz_extra={"gen": gen + 1,
+                                                          "iter": i + 1,
+                                                          "T": T},
+                                               viz_step=gen * args.iter_per_gen + i,
+                                               rnd_builder=(probe_builder
+                                                            if str(getattr(args, 'rnd_baseline', 'none') or 'none').lower() != 'none'
+                                                            else None),
+                                               rnd_mode=str(getattr(args, 'rnd_baseline', 'none') or 'none').lower(),
+                                               reward_by_fid={species: float(avg_reward)})
+                            except Exception as _e:
+                                print(f"    [probe] WARN: probe rollout failed: {_e}")
                         if viz is not None and not viz.pump_events():
                             print("    [viz] window closed; visualiser disabled.")
                             try:

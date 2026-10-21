@@ -65,9 +65,11 @@ fabricates mass.
 - Decision makers (have a policy net): `zooplankton`, `pelagic_fish`, `gadoids`,
   `porpoises`, `seals`, `seabirds`. `mareld2.yaml` mutes only `seabirds`;
   seals (harbour seals only) are on since section 166 and spawn on
-  gadoids, which carry ~95 % of their diet (pair attack rates 0.2,
-  Type II, vs herring 1e-4, Type III - a Type III `a` is per (t/cell)^2;
-  0.015 made fix60's seals 85 % herring eaters, section 168).
+  gadoids, which carry ~90 % of their diet (pair attack rates 0.2,
+  Type II, vs the pelagic pool 3e-4, Type III - a Type III `a` is per
+  (t/cell)^2; 0.015 made fix60's seals 85 % herring eaters, section
+  168; 1e-4 gave fix68's seals no pelagic fish at all, 185.10; 3e-4
+  gives a seal eating the better prey per cell ~10 %, 185.16).
 - Non decision makers: `phytoplankton` (nutrient-limited since 172),
   `subsurface_phytoplankton` (section 180: the A17 subsurface
   chlorophyll maximum, the same algae in the layer [M(t), 30 m],

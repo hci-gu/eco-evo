@@ -17373,3 +17373,178 @@ remain open exactly as described in 71.9 / 71.11.
       size. The same grid-versus-stock scale problem applies; the projekt
       effort map must state whether the parks' effort is removed or
       displaced.
+185.10 Seal diet recalibration in the new world (user: the target is the
+    whole pelagic_fish pool, of which herring is one share). Target from
+    research_notes/Parametervarden for salar i Skagerrak/
+    diet_and_foraging.md (normalisation B: flatfish, wrasse and rockling
+    lumped into gadoids, sandeel into pelagic_fish): pelagic_fish 5-20 %
+    of the seal diet by mass, working split ~90:10 (herring alone 3-5 %
+    in 2019-20).
+    Measured: fix68 g1-g3 seals ate 0.002-0.004 t/yr of pelagic fish
+    (~0.001 %); the same with g3 policies in the current world (0.0 %).
+    Rig ($S/seal/sealdiet.py): current library (r 0.37, K 1.02), g3
+    policies for every DM except the seals, which run viability GREEDY
+    (water-filling by marginal energy, install_mixed); seed 20260530, one
+    burn-in year, then 2 years.
+    Pelagic share of the seal diet by mass (energy) in years 1 / 2:
+      a 1e-4: 5.9 / 5.7 % (8.1 / 7.9 %)
+      a 2e-4: 19.6 / 17.5 % (25.6 / 23.1 %)
+      a 3e-4: 36.1 / 30.1 % (44.4 / 37.9 %)
+      a 5e-4: 45.8 / 48.8 % (54.4 / 57.4 %)
+      a 1e-3: 63.3 / 64.1 % (70.8 / 71.6 %)
+    Seal M2 on the pool at 2e-4 is 0.002-0.003/yr (budget 0.0015).
+    Caveat: greedy seals decline (15 -> 11 t at 1e-4; to 4-7 t at
+    5e-4-1e-3, chasing pelagic patches), while trained policies hold
+    them at 16-18 t; greedy is a diet yardstick only. The trained policy
+    takes less pelagic fish than greedy (0 % vs 6 % at 1e-4).
+    Recommendation (not applied): a 2e-4, the top of the target range
+    for greedy, because a trained policy picks less pelagic fish than
+    greedy; check the retrained diet with tools/probes/pair_intake.py
+    (> 20 %: 1.5e-4; < 5 %: 3e-4).
+185.11 APPLIED (user): seals_preys_on_pelagic_fish max_intake_rate 1e-4 ->
+    2e-4 in fg_library.yaml (comment updated), AGENTS.md seal line
+    updated. predation_mortality (0.0015) unchanged: at a ~10 % pool
+    share the seals take ~30 t/yr of ~22 000 t (0.0014/yr). The budget,
+    s* and the growth rates are unchanged (s* uses the ceiling 1/h). The
+    seal policy must be retrained to see the new diet.
+185.12 Viewer probe interval (user: the "Evaluation probe interval"
+    slider set to 10 still probed every update). There were two probes:
+    the survival evaluation (progress/survival.jsonl), which followed the
+    slider, and the viewer's biomass probe (biomass.jsonl, heatmaps, one
+    CPU inference year), which ran after every update with no interval
+    and made the --visual updates ~180-210 s instead of ~120 s. Now the
+    same slider (default --eval-every) paces both:
+    training_progress.probe_due(viz, step, first) is used by
+    GPUTrainingVisualizer.update and both probe calls in train.py. The
+    first update of a session always probes; without a viewer the probe
+    runs every update as before. Tests: two new cases in
+    tests/test_viz_eval_interval.py (the step pattern, and the GPU viewer
+    probing at 477, 480, 490, 500 with interval 10; removing the gate
+    fails it). Full suite 1320 passed / 12 skipped; train.py smoke OK.
+    A running training keeps the old code until it is restarted.
+185.13 The status row's gen / iter / T follow every update (user): the
+    trainers call the viewer's existing update_status(**kw) after every
+    update, before the probe check (GPUTrainingVisualizer.update and both
+    probe sites in train.py); before this the row only changed through
+    the probe frame. Tests: the GPU viewer case also checks the status
+    calls for every step (removing the call fails it), plus a viewer case
+    for update_status. Full suite 1321 passed / 12 skipped; smoke OK.
+185.14 Seals still eat no pelagic fish after the 2e-4 change (user). The
+    run (train_gpu --resume, pid 588605, started 12:42 with the 2e-4
+    library) is at gen 13. Measured on its 16:08 policies, seed 20260530,
+    one burn-in year, then 0.5-1 year:
+    - trained seals: 393.7 t gadoids, 0.03 t pelagic (0.0 %);
+    - greedy seals (install_mixed) at 2e-4 on the same fields: 88 %
+      pelagic by mass (243 t vs 33 t), seals stable at 17 t;
+    - the trained seal policy puts 0.03 % of its eat mass on pelagic_fish
+      and 99 % on gadoids, while standing on above-average pelagic
+      density (8.6 vs 6.8 t/cell grid mean; gadoids 0.77 vs 0.65).
+    It is the policy's allocation, not access or co-location: seals
+    observe pelagic_fish and have it in their menu. The pelagic eat
+    logit is saturated (~-8 relative to gadoids) since the a cut of
+    section 168. The ARS gradient through a softmax share scales with
+    that share, so the channel cannot recover.
+    Also: greedy went from 18 % (g3 fields, 185.10) to 88 % (current
+    fields) at the same a. Under Type III the intake scales with B^2, so
+    the right a depends strongly on how patchy the herring policy makes
+    the pelagic field.
+185.15 How to reset the seals' pelagic eat channel (dry run on a copy of
+    the 16:08 policies, $S/f68r/reset; script $S/seal/reset_eat.py). The
+    policy output is 5 + N_all logits (move 4, rest, then eat per prey in
+    env.global_fg_order: benthic_community, gadoids, microzooplankton,
+    pelagic_fish, ...). Copying the gadoid row (output index 6) of
+    net.2 into the pelagic row (8), with bias - 2.2, makes the pelagic
+    share start at e^-2.2 ~ 0.11 of the gadoid share in every cell. The
+    old pelagic bias was -0.54 vs 0.78, so the suppression sat in the
+    weights. Result: eat share 9.6 % pelagic / 89.7 % gadoids (was
+    0.03 / 99); diet 7.8 t pelagic of 380 t (2.0 % by mass, 2.9 % of
+    energy), seals 16.2 t. Training needs --init-from into a new run
+    directory: train_gpu refuses --init-from where policies exist, and
+    --resume would reload the old theta from trainer.pth. obs_stats
+    travel with the policy files.
+185.16 fix69 (--init-from the reset policies, $S/f69_init) still gives
+    the seals no pelagic fish (user). Cause: eat intake is
+    B_seal * share_j * f_j(B_j) per prey with no shared handling, so
+    the return is linear in the share and the optimum puts the whole
+    eat mass on the best prey of the cell. Where the f69_init seals
+    stand (2 years, seal-biomass weighted) gadoids give 139 and the
+    pelagic pool 54 MJ per t seal, tick and unit share; the pool pays
+    better for 7 % of the seal biomass (ceilings E/h 180 vs 189). The
+    2e-4 of 185.10 was fitted to the water-filling greedy arm, which
+    mixes prey the way an optimiser never does.
+    Scan with an OPTIMISING seal ($S/seal/sealscan.py: trained
+    positions, rest and total eat; the eat mass goes to the prey with
+    the higher energy return per unit share in each cell), 1 year
+    spin-up + 2 years, pelagic share of the seal diet by mass
+    (year 1 / year 2):
+        a       seed 20260530   seed 7       energy y2
+        2e-4    4.0 / 6.7       4.4 / 6.5    9 %
+        3e-4    7.2 / 10.6      8.8 / 10.5   14 %
+        4e-4    11.4 / 14.3     13.8 / 16.3  19-22 %
+        5e-4    13.7 / 18.3     16.6 / 17.5  23-24 %
+        1e-3    25.9 / 28.8                  36 %
+        1e-2    64.7 / 70.0                  77 %
+    3e-4 meets the ~10 % target (mean 9.3 % by mass, 12.6 % of
+    energy). Seal biomass is 17.4-18.4 t at every a and M2 seal on
+    pelagic 0.001-0.008/yr, so the switch hardly moves the seals'
+    reward: an optimiser at 2e-4 already eats 4-7 %, the trained policy
+    0 %, which is a learning problem (no gradient), not access.
+    Set: seals_preys_on_pelagic_fish max_intake_rate 2e-4 -> 3e-4
+    (library comment and AGENTS.md updated).
+185.17 State after fix68 (13 gens) + fix69 (--init-from reset seals,
+    then --resume with seals->pelagic 3e-4). Policies frozen 18:46
+    ($S/pzbpgp248nsrpfix69_now), 3-year CPU inference, seed 20260530.
+    Annual means t/km2 (y1 / y2 / y3): gadoids 0.66 / 0.66 / 0.68,
+    pelagic pool 4.07 / 5.54 / 6.77 (start 3.33), zooplankton 5.88 /
+    3.59 / 2.94, benthos 4.35 / 4.33 / 4.68, micro 0.89 / 1.20 / 1.37.
+    - Gadoids are held by K: flat 0.64-0.72, no starvation, ration
+      1.4-1.7 %BW/d, pelagic pool 0.6-0.95 of it; nat 0.18 %/d =
+      M1 + capacity loss.
+    - The pelagic pool is now the unregulated group: no starvation,
+      M1 0.58/yr, predation 0.25-0.4/yr, F 0.10, and it doubles over
+      3 years (Jan 5.1 / 6.4 / 6.9, slowing). Herring<-zoo 105 / 132 /
+      150 kt/yr; zooplankton winter stock 0.34 / 0.22 / 0.17, peak
+      12.3 (May) -> 9.6 (June); Zmean 3.22, Zmax 10.4 (g3: 4.47, 18.7).
+    - Seals still eat 0.2-0.3 % pelagic by mass (2 seeds) with 3e-4:
+      the policy has seen it for only a few updates. Seals grow
+      ~7 %/yr (probe ratio 1.07, 16.4 -> 17.2 t) with nothing to cap
+      them yet; porpoises ~0.96/yr.
+    - Training rewards flat since gen 4; the gadoid reward went
+      negative at the 12:42 resume (gen 9), when K entered the world.
+185.18 Pelagic pool regulation (subagent; notes in research_notes/
+    "Den pelagiska poolens reglering": stock_composition, productivity,
+    regulation, migration_scale, zooplankton_consumption,
+    recommendation). Grid 57.8-58.3 N, 10.1-11.2 E (coordinates.txt),
+    ICES 44G0/45G0. Site weights: herring 0.73, mackerel 0.19 (~5
+    months), sprat 0.06, horse mackerel 0.02, sandeel 0 (no grounds in
+    the grid). 3.33 t/km2 fits the annual mean (summer ~5.4, winter
+    ~1.3). r_max 0.648 is the North Sea mix with 36 % sandeel; site
+    weights give 0.44, today's Euler-Lotka r 0.34 (0.27-0.40). Real
+    surplus production 0.115/yr vs F 0.14 at site weights: flat stocks.
+    SMS M2 0.26-0.32 (model applies M1 + M2 = 0.89). No evidence that
+    herring control North Sea zooplankton; the model pool eats 10-14x
+    the zooplankton standing stock per year (Ecopath 1.9x), Q/B 6-7 vs
+    4.5-5.3. Recommendation: r_max 0.34 + K 5.0 t/km2
+    (3.33/(1 - 0.115/0.34); 4.7 for stationarity at F 0.10), read as
+    stock-scale compensation plus net emigration; a seasonal
+    immigration/emigration term fits best but needs engine code. Flags:
+    M1 0.58 vs SMS residual 0.1-0.2; F 0.14 vs library 0.10. Nothing
+    applied.
+185.19 Scratch test of 185.18 (user: r 0.34, K 5.0; frozen fix69
+    policies from 18:46, 3 years, seed 20260530 + seed 7; library
+    unchanged). pelagic_fish growth_rate 0.0035046 -> 0.0027564,
+    capacity_loss_rate 4.6575e-5.
+    - Annual means base / test: pelagic 4.07 5.54 6.77 / 3.09 2.75
+      2.73; zooplankton 5.88 3.59 2.94 / 6.44 5.66 5.50; gadoids
+      0.66 0.66 0.68 / 0.66 0.62 0.58. Pelagic Jan 2.28 / 2.30 / 2.34
+      (seed 7 2.17 / 2.26 / 2.35): stationary, +1-2 %/yr vs +15-25.
+    - Herring<-zoo 78 / 71 / 71 kt/yr (base 105-150): ~3.6x the
+      zooplankton standing stock per year (base 14x, Ecopath 1.9x).
+      Zmean 5.56, Zmax 18.1 (base 3.22, 10.4; fix68 g3 18.7).
+    - The pool settles at ~2.75, below today's 3.33 and below
+      K(1 - F/r) = 3.5: ~0.05/yr more loss than the budget assumes
+      (not traced). Gadoids fall ~9 %/yr: less pelagic in the ration
+      (0.3 vs 0.8 %BW/d), more benthos (1.5 vs 0.7) - food or a
+      policy trained in a herring-rich world, not separated.
+    - Do not tune K (~6 would give 3.33) on policies trained without
+      it; retrain first. Nothing applied.

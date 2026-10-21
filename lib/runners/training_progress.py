@@ -320,6 +320,23 @@ class LiveTrainingProgress(TrainingProgress):
             print(f"[progress] Live progress disabled: {error}", flush=True)
 
 
+def probe_due(viz, step, first=False):
+    """True when the viewer's biomass probe should run after update ``step``.
+
+    The probe shares the viewer's "Evaluation probe interval" slider
+    (default ``--eval-every``) with the survival evaluation, so both run
+    on the same updates. The first update of a session always probes, so
+    the viewer has a rollout to show; without a viewer the probe runs
+    after every update, as before.
+    """
+    if first or viz is None:
+        return True
+    getter = getattr(viz, "get_eval_interval", None)
+    if not callable(getter):
+        return True
+    return int(step) % max(1, int(getter())) == 0
+
+
 def make_visual_progress(backend, args, viz):
     """Create the evaluator used by either trainer's progress tab."""
     if viz is None or not viz.enabled:

@@ -1096,7 +1096,23 @@ interaction_definitions:
     # per-tonne selectivity (1/120 - 1/670 of the gadoid rate at 17-3
     # t/cell) is stronger than the empirical ~1/90, and the fit used
     # fix60's policy-shaped fields and a greedy seal.
-    max_intake_rate: 0.0001
+    # Section 185.10: 1e-4 -> 2e-4. The target is the whole pelagic_fish
+    # pool (herring, sprat, sandeel, ...), ~10 % of the diet by mass
+    # (5-20 %). fix68's trained seals took 0.001 %. On the current
+    # world (gadoids held near 0.65 t/km2 by K, pelagic pool ~6-7) a
+    # greedy seal takes 6 % at 1e-4, 18-20 % at 2e-4, 30-36 % at 3e-4;
+    # a trained policy picks less pelagic fish than greedy, so the top
+    # of the range. Retune against the retrained diet: > 20 % -> 1.5e-4,
+    # < 5 % -> 3e-4.
+    # Section 185.16: 2e-4 -> 3e-4. Eat intake is linear in the eat
+    # share, so a seal maximising energy puts the whole eat mass on
+    # the better prey of each cell; the water-filling greedy arm above
+    # mixes prey the way that optimiser never does. A seal with the
+    # trained positions eating the better prey per cell takes 9.3 %
+    # pelagic fish by mass at 3e-4 (12.6 % of energy; 2 seeds x 2
+    # years), 5.4 % at 2e-4, 14 % at 4e-4. The seals' biomass barely
+    # moves with the switch, so a trained policy may still eat less.
+    max_intake_rate: 0.0003
     # Metabolisable energy 85.5-88.7 % on herring (Keiver et al. 1984);
     # 0.92 was a digestibility. Was 0.92.
     assimilation_factor: 0.88

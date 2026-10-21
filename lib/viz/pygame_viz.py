@@ -728,7 +728,9 @@ class LiveVisualizer:
         self._neval_locked: bool = True
         self._neval_lock_rect: Optional[tuple] = None
         # Evaluation probe interval: how many training updates between
-        # two survival progress evaluations (--eval-every). Training only,
+        # two survival progress evaluations (--eval-every) and between two
+        # biomass probes of this viewer (training_progress.probe_due; the
+        # first update of a session always probes). Training only,
         # row 4 of the status bar, linear 1-50, locked by default like
         # the other training sliders. The default is the CLI value as
         # given (it may lie outside the range; the knob is then clamped);

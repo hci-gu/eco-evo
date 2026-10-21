@@ -11,7 +11,8 @@ import torch
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 from lib.runners.rnd_baseline import rnd_baseline_plot_ids
-from lib.runners.training_progress import evaluation_randomness, make_visual_progress
+from lib.runners.training_progress import (evaluation_randomness, make_visual_progress,
+                                           probe_due)
 
 
 @torch.no_grad()
@@ -59,6 +60,7 @@ class GPUTrainingVisualizer:
         self.progress = None
         self.executor = None
         self.directory = directory
+        self.probed = False
         self.rnd_mode = str(getattr(args, "rnd_baseline", "none") or "none").lower()
         try:
             # Reuse the CPU CLI's complete probe (maps, controls, playback and
@@ -186,13 +188,21 @@ class GPUTrainingVisualizer:
             step = trainer.iterations_completed
             for fid, reward in rewards.items():
                 self.viz.update_reward(fid, reward, step=step)
+            extra = {"gen": generation + 1, "iter": iteration + 1,
+                     "T": snapshot.softmax_temperature}
+            # The status row follows every update, probe or not.
+            self.viz.update_status(**extra)
+            # The "Evaluation probe interval" slider paces this probe too.
+            if not probe_due(self.viz, step, first=not self.probed):
+                self.pump()
+                return
+            self.probed = True
             with evaluation_randomness(self.builder.PROBE_SEED):
                 self.probe(
                     snapshot, self.builder, n_ticks=ticks, gen=generation,
                     it=iteration, jsonl_path=self.directory / "biomass.jsonl",
                     compact=False, viz=self.viz, viz_step=step,
-                    viz_extra={"gen": generation + 1, "iter": iteration + 1,
-                               "T": snapshot.softmax_temperature},
+                    viz_extra=extra,
                     reward_by_fid=rewards,
                     # Same deterministic probe world, built by the same
                     # builder, exactly as train.py passes it.
