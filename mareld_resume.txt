@@ -17565,6 +17565,130 @@ remain open exactly as described in 71.9 / 71.11.
     or the gadoid decline. tests/test_regional_capacity.py now
     expects gadoids and pelagic_fish to carry the loss.
 
+186 STRATEGY DECKS, EDITION 2: Strategi_okt2.pdf / Strategy_Oct2.pdf (2026-10-22)
+186.1 What (user request): a new thorough description of the system in
+    the format of Strategi_okt.pdf, in Swedish (Strategi_okt2.pdf) and
+    English (Strategy_Oct2.pdf), with an in-depth explanation of the
+    biological motivation for the growth rates and the logistic
+    ceilings, and a section on strengths, weaknesses and suggested
+    improvements. 106 slides each, 960x540 pt.
+        python3 tools/make_strategi_deck2.py      # -> Strategi_okt2.pdf
+        python3 tools/make_strategy_deck2_en.py   # -> Strategy_Oct2.pdf
+186.2 Code: new generators, copies of the section-158 ones (which stay
+    untouched so Strategi_okt.pdf / Strategy_Oct_eng.pdf can still be
+    rebuilt). The English module imports the Swedish one and asserts that
+    LABELS_EN has exactly the keys of LABELS. Read at build time: the two
+    DM value tables (energy; growth and ceilings), the pair table (now
+    with M_ref, food threshold and edibility), the Observability matrix
+    and the per-group observation width, the food web (10 groups), the
+    per-group growth budget (r_max, M1, M2 by predator, gross, s*, g,
+    Pmax, K, from lib/world/growth_budget.growth_budget on mareld2.yaml),
+    capacity_loss_rate, the regional F of each group from the two
+    fishing maps and the library's linear tables, and the maps
+    themselves. New figures: the ideal-conditions reserve s* (income
+    h(s) C vs cost + P (ec + s ME), zooplankton and gadoids), net growth
+    r (1 - B/K) - F with and without K (gadoids, pelagic fish, today's
+    B and the equilibrium), the two fishing effort maps, a water-column
+    schematic (mixed layer, subsurface layer, 50 m reservoir). The
+    calendar table gained the mixed-layer depth, the subsurface light
+    factor and the zooplankton ingestion and growth Q10 factors (from
+    lib/world/temperature.metabolism_multiplier); the functional
+    response figure shows the concentration-scaled zooplankton pairs.
+186.3 Content: Part 4 "growth rate and logistic ceiling" is new (17
+    slides): why g is derived (net r_max at low density, the model
+    takes M1 and M2 itself), the formulas incl. 12/n and the growth Q10,
+    the live budget table, r_max per group with source, present-day
+    productivity r_now = r_prior - ln(d)/T (184.18, 185.18), M1/M2 and
+    what is outside the budget, why s* (160.3 numbers, closed form),
+    income-funded herring growth (184), temperature and growth (181,
+    183), producers gross of grazing and sinking (131, 173), why a K is
+    needed (184.13, 161.1, 185.17-18), the regional-capacity formula
+    and K = B/(1 - F/r) resp. B/(1 - P/r), effective vs historical
+    capacity and why regional not per cell (185.1, 185.9), NDM
+    ceilings, the scratch results with and without K (184.13, 184.19,
+    185.17, 185.19), and open questions. Parts 1-3 and 5-8 updated for
+    sections 159-185 (rule D, nutrient pool and two layers, grazing
+    NDMs, fishing maps, seals, herring winter feeding, Q10 on intake and
+    growth); Part 8 has the hand-coded vs trained table (169), plankton
+    vs A17 (184.11) and realised vs budgeted mortality (184.15-185.19);
+    Part 9 strengths / weaknesses (biology, growth budget and ceiling,
+    training) / three prioritised improvement tables; Part 10 scenarios
+    with baseline vs inference maps and the grid-vs-stock F caveat.
+186.4 Checks: a layout check (every text on the page, none in the
+    footer band, no overlapping main-axes texts, no text over an inset
+    plot; a deliberate overflow test is flagged) gives 0 problems on
+    both decks. Nothing in the engine, library or tests was touched;
+    pytest 1321 passed / 12 skipped.
+
+187 GADOID RESERVE AS FOOD: LITERATURE AND A SCRATCH PROBE (2026-10-22)
+187.1 Question (user): why does only pelagic_fish carry
+    prey_includes_reserve? Answer: the flag came with the herring
+    lean/reserve split of section 140 (it keeps the predators' herring
+    quality at 7500 MJ/t once the fat became a reserve). Zooplankton
+    and gadoids keep a whole-body energy_content with the reserve on
+    top, so an eaten gadoid's reserve (~1750 MJ/t at s 0.7, ~30 % of
+    energy_content) leaves the system unpaid; zooplankton ~7 %.
+187.2 Literature (subagent; research_notes/ folder "Torskfiskars
+    energiinnehall" with the Swedish a-ring, energy_density.md, 31
+    sources): lean body 3850 MJ/t (3700-4000; whiting 3.9, hake 3.7
+    kJ/g whole body, Spitz 2010 [F]; cod ~3.8 [S]; haddock and saithe
+    ASSUMED from fillet tables), weighted by today's survey mix (haddock
+    0.54, whiting 0.27, saithe 0.12, cod 0.06, hake 0.01); liver reserve
+    ME 2000 MJ/t (1650-2100; cod autumn HSI 4.3-5.7 % x ~29 kJ/g);
+    reference fill 0.45 -> 4750 MJ/t = mean whole body; maintenance u
+    0.1 (death at fill 0.02-0.035, wild spring minimum ~0.2 survived).
+    The library's 5500 equals the autumn maximum (5515), +16 % on the
+    annual mean; whole-body gadoid energy swings ~1.3x over the year
+    (herring ~2x). Haddock (54 % of the pool) has no wild liver or
+    whole-body series; the reserve and u are the cod cycle as a proxy.
+187.3 Probe (scratchpad gres/probe.py: train._ProbeEnvBuilder with a
+    library copy, predation patched in memory to book the assimilated
+    energy per pair exactly; frozen copy of the fix70 policies of
+    2026-10-22 00:23, gen 1 / 69 updates, md5 gadoids b834b11d; seeds
+    20260530 and 7, 3 years; live library untouched while fix70 trains
+    with --visual). Variants: base; flagonly (prey_includes_reserve on,
+    ec 5500 kept, fill 0.5 = fat counted twice, static 6750);
+    split_u05 (ec 3850, ME 2000, fill 0.45, u 0.5); split_u01 (same,
+    u 0.1). Year 3 mean, seed 20260530 / seed 7:
+      variant    gadoids t/km2  pelagic  seals t      porpoises t  seal MJ/t gadoid
+      base       0.455 / 0.412  1.69/1.39  7.5 / 5.3   0.74 / 0.02  4675
+      flagonly   0.439 / 0.392  1.66/1.38  14.5 / 11.0 3.57 / 0.55  ~6050
+      split_u05  0.479 / 0.445  1.76/1.42  7.8 / 3.9   0.84 / 0.02  ~4450
+      split_u01  0.411 / 0.387  2.21/1.89  3.9 / 1.1   1.52 / 0.17  ~3950
+    Gadoid derived g: base 0.00294, split_u05 0.00266 (s* 0.747),
+    split_u01 0.00145 (s* 0.553, gate 0.45).
+187.4 Reading:
+    - The baseline itself is not viable on these early fix70 policies:
+      porpoises collapse (10.9 -> 0.7 t, 6.8 -> 0.02 t), seals halve
+      with starvation 0.24-0.6 /yr, gadoids -25-30 %, the pelagic pool
+      falls to 1.4-1.7 t/km2 (equilibrium K(1-F/r) 3.5). That
+      dominates every reserve variant; re-read on later generations.
+    - The top predators are food-quality limited: +23 % gadoid quality
+      (flagonly) keeps the seals (starvation 0.24 -> 0.06-0.08 /yr) and
+      slows the porpoises. But flagonly is not a biology option (double
+      count).
+    - The literature split at u 0.5 is close to neutral: the realised
+      reserve fill stays 0.62-0.75 all year, so predators get ~4450
+      MJ/t (-5 % vs 4675 today), seals a little worse, gadoids a little
+      better (cheaper biomass). The seasonal swing the model produces
+      is ~5 %, against ~1.3x whole-body in nature: the gadoid policy
+      keeps the reserve near full, so a fat-autumn/lean-spring prey
+      quality does not emerge.
+    - u 0.1 is not adoptable as a parameter change: in this engine u is
+      also the knee of the hunger gate and the zero of the growth gate,
+      so lowering it cuts gadoid appetite (fill falls to 0.25-0.53),
+      halves the derived g and starves the seals (realised quality
+      ~3950). The literature u is a starvation threshold; decoupling it
+      from the hunger knee is a structural question (and the policies
+      were trained at u 0.5).
+187.5 Nothing applied; library, engine and tests untouched. Options for
+    the user: (a) leave as is (5500 whole body, reserve lost when
+    eaten; simple, ~16 % generous on quality); (b) split_u05 (lean
+    3850 + liver 2000, fill 0.45, prey_includes_reserve): mass and
+    energy consistent, ~neutral for the food web, needs a retrain and
+    a re-read of the seal/porpoise diets; (c) a separate starvation
+    threshold from the hunger knee before any u change.
+
 188 Live viewer: heatmaps in a scroll view
 188.1 Problem (user): with the full FG set (9 heatmaps, 3 rows on a
     60x60 grid) the training viewer was ~1170 px tall, taller than the
