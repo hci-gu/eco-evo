@@ -17548,3 +17548,46 @@ remain open exactly as described in 71.9 / 71.11.
       policy trained in a herring-rich world, not separated.
     - Do not tune K (~6 would give 3.33) on policies trained without
       it; retrain first. Nothing applied.
+
+188 Live viewer: heatmaps in a scroll view
+188.1 Problem (user): with the full FG set (9 heatmaps, 3 rows on a
+    60x60 grid) the training viewer was ~1170 px tall, taller than the
+    usable height of a 1920x1200 desktop, so the playback bar at the
+    bottom of the window could not be reached.
+188.2 Fix (lib/viz/pygame_viz.py, LiveVisualizer; covers train.py,
+    train_gpu.py --visual and inference.py --visual): the window height
+    is capped to the first desktop's height minus 100 px
+    (MARELD_VIZ_MAX_HEIGHT=<px> overrides). When the heatmap grid does
+    not fit, it is drawn in a viewport between the status bar and the
+    playback bar (screen clip, panels offset by _hm_scroll_y) with a
+    12 px scrollbar at its right edge; the plot takes the viewport
+    height. Mouse wheel over the heatmaps scrolls (48 px/notch),
+    a click on the track pages, the thumb drags. Slider and spawn
+    dropdown hit rects are clipped to the viewport in y, so a control
+    scrolled out of view never claims a status-bar or playback click;
+    scrolling closes an open spawn popup. The handler runs first in all
+    three event loops (pump_events, its pause loop, wait_for_close).
+    A grid that fits gets no scrollbar and the old layout.
+188.3 Tests: tests/test_viz_heatmap_scroll.py (dummy driver, 768 px
+    desktop: window fits, playback bar inside it, third-row slider
+    absent at scroll 0 and present at the bottom, track paging, thumb
+    drag, no scrollbar for two FGs, the env override).
+188.4 Splitter and resizable window (user): the window is opened
+    SWSURFACE | RESIZABLE, so it can be resized and maximised; the
+    layout is no longer fixed in __init__ but derived by
+    _compute_layout() from the window size and _split_frac, the
+    heatmap area's share of the width. A vertical splitter (8 px,
+    resize cursor on hover) between heatmaps and plot is dragged to
+    change the share; VIDEORESIZE / WINDOWSIZECHANGED re-run the layout
+    and keep the share. The heatmap area keeps min(4, n) columns and
+    its cells grow with it; below the reference cell size (the old
+    fixed cell_px) columns are dropped instead, so it is clamped to
+    one reference panel; the plot keeps at least max(320, legend +
+    160) px and its tab strip is clipped at its edge. The playback bar
+    now spans the whole window width. The initial window is the old
+    natural size capped to the desktop; a width cap is taken from the
+    plot first. The status-bar sliders end at the plot's left edge but
+    never left of their natural end. Checked on the real X11 display:
+    maximise -> 1920x1136, layout recomputed, restore -> 1565x1100.
+    Tests in tests/test_viz_heatmap_scroll.py (splitter drag both ways
+    with clamps, resize keeps the share, layout consistency).

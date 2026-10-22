@@ -31,6 +31,13 @@ Keys:
             instead of the fixed rollout-start maximum. Also a button
             in the status bar, "norm: fixed / rolling".
     r       toggle log-scale on the reward/biomass plot y-axis
+    wheel   over the heatmaps: scroll them when the grid is taller than
+            the window (also the scrollbar at their right edge;
+            MARELD_VIZ_MAX_HEIGHT=<px> overrides the start height cap)
+
+The window is resizable and can be maximised. The vertical splitter
+between the heatmaps and the plot is dragged to share the width between
+them; the heatmaps grow with their share.
     q / esc quit visualiser (training continues)
     1..9    solo-focus one FG (press same digit again to clear)
 """
@@ -843,10 +850,13 @@ class LiveVisualizer:
         # Varje rad ~14 px text + 2 px padding ⇒ 32 px för båda.
         spawn_dd_h = 34
         pad = 8
-        self._panel_w = hm_w + 2 * pad
-        self._panel_h = hm_h + title_h + cbar_h + spawn_dd_h + 2 * pad
-        heatmap_block_w = self._cols * self._panel_w
-        heatmap_block_h = self._rows * self._panel_h
+        # The natural layout: ``self._cols`` panels of the reference cell
+        # size per row. It sets the initial window; after that
+        # ``_compute_layout`` derives everything from the window size and
+        # the splitter position.
+        nat_panel_w = hm_w + 2 * pad
+        nat_block_w = self._cols * nat_panel_w
+        nat_block_h = self._rows * (hm_h + title_h + cbar_h + spawn_dd_h + 2 * pad)
         # Reserve enough horizontal room in the plot panel for the legend:
         # roughly 7 px per character of the longest FG id, plus the swatch
         # and gutter. This avoids the legend overflowing the window with
@@ -862,9 +872,8 @@ class LiveVisualizer:
         # garanterar därför att plot_w är minst så stor att hela
         # tab-strippen (+ legend + några pixlar marginal) ryms på en rad.
         tab_strip_w = 6 + sum(7 * len(t) + 10 + 4 for t in self._tabs) + 8
-        plot_w = max(420, heatmap_block_w // 2 + self._legend_w,
+        plot_w = max(420, nat_block_w // 2 + self._legend_w,
                      tab_strip_w + self._legend_w + 4)
-        plot_h = heatmap_block_h
         # Status-baren rymmer textraden och två slider-rader. I training är
         # rad 3 n_eval_ticks; i inference är rad 3 biomass display scale.
         # In training a fourth row holds the evaluation probe interval.
@@ -872,22 +881,57 @@ class LiveVisualizer:
             status_h = 62
         else:
             status_h = 80
-        log_h = 0
-        # Playback bar (under heatmaps) for replaying the most recent
-        # probe/inference rollout. Holds the buttons << / >> / play / pause
-        # / speed +/- and a frame indicator. Allokeras alltid (även när
-        # ingen film ännu finns) så fönsterstorleken är konstant.
+        # Playback bar (under heatmaps and plot) for replaying the most
+        # recent probe/inference rollout. Holds the buttons << / >> / play
+        # / pause / speed +/- and a frame indicator. Always allocated, even
+        # before a film exists.
         playback_h = 32
-        self._win_w = heatmap_block_w + plot_w + pad
-        self._win_h = status_h + heatmap_block_h + playback_h + pad + log_h
-        self._heatmap_origin = (0, status_h)
-        self._plot_rect = (heatmap_block_w + pad // 2,
-                           status_h,
-                           plot_w - pad // 2,
-                           plot_h)
-        self._status_rect = (0, 0, self._win_w, status_h)
-        self._playback_rect = (0, status_h + heatmap_block_h,
-                               heatmap_block_w, playback_h)
+        self._status_h = status_h
+        self._playback_h = playback_h
+        self._pad = pad
+        # Panel height on top of the heatmap itself.
+        self._panel_extra_h = title_h + cbar_h + spawn_dd_h + 2 * pad
+        # Heatmaps never get smaller than the reference cell size: the
+        # five info lines need a panel about that wide. A narrower
+        # heatmap area gets fewer columns instead.
+        self._min_cell_px = self.cell_px
+        # Heatmap area = viewport + a scrollbar column (always reserved,
+        # drawn only when the grid is taller than the viewport). The
+        # splitter between it and the plot sets the area's share of the
+        # window width (``_split_frac``) and is dragged with the mouse.
+        self._hm_sb_w = 12
+        self._splitter_w = 8
+        self._min_hm_area_w = nat_panel_w + self._hm_sb_w
+        self._min_plot_w = max(320, self._legend_w + 160)
+        nat_hm_area_w = nat_block_w + self._hm_sb_w
+        nat_win_w = nat_hm_area_w + self._splitter_w + plot_w + pad // 2
+        # The status-bar sliders end where the plot starts, but never
+        # left of where they end in the natural layout.
+        self._status_track_right_min = nat_hm_area_w + self._splitter_w
+        self._hm_scroll_y = 0
+        self._hm_scroll_step = 48  # px per wheel notch
+        self._dragging_hm_scroll = False
+        self._hm_scroll_drag_dy = 0
+        self._hm_thumb_rect: Optional[tuple] = None
+        self._hm_scrollbar_rect: Optional[tuple] = None
+        self._dragging_splitter = False
+        self._splitter_drag_dx = 0
+        self._splitter_hover = False
+        # The window starts at its natural size, capped to the screen so
+        # the playback bar stays reachable; it is resizable (and can be
+        # maximised), and every resize goes through ``_compute_layout``.
+        win_w = nat_win_w
+        win_h = status_h + nat_block_h + playback_h + pad
+        usable = self._usable_screen_size()
+        if usable is not None:
+            win_w = min(win_w, max(640, usable[0]))
+            win_h = min(win_h, max(200, usable[1]))
+        self._win_w = int(win_w)
+        self._win_h = int(win_h)
+        # A width-capped window takes the cut from the plot first.
+        self._split_frac = nat_hm_area_w / float(self._win_w)
+        self._compute_layout()
+        self._split_frac = self._splitter_rect[0] / float(self._win_w)
         # ---- Playback state ----------------------------------------------
         # Den senast färdigställda rollouten lagras som en lista av frame-
         # snapshots (dicts med biomass/totals/b0/loss_breakdown/diet_breakdown/
@@ -975,8 +1019,11 @@ class LiveVisualizer:
             # bara 108 GL_UpdateTexture-anrop returnerar minnet). Med
             # SWSURFACE-flaggan gar flip via SDL_UpdateRects istallet och
             # undviker hela GL-texture-pathen som lacker pa manga drivers.
+            # RESIZABLE: the window can be resized and maximised; the
+            # surface stays a software surface.
             self._screen = pygame.display.set_mode(
-                (self._win_w, self._win_h), pygame.SWSURFACE)
+                (self._win_w, self._win_h),
+                pygame.SWSURFACE | pygame.RESIZABLE)
             pygame.display.set_caption(
                 title or f"Mareld viz [{mode}]")
             self._font = pygame.font.SysFont("dejavusansmono,monospace", 12)
@@ -1713,7 +1760,9 @@ class LiveVisualizer:
             # per motion event.
             hover = False
             for event in pg.event.get():
-                if event.type == pg.QUIT:
+                if self._handle_layout_event(event):
+                    interacted = True
+                elif event.type == pg.QUIT:
                     self._quit = True
                 elif event.type == pg.KEYDOWN:
                     self._handle_key(event.key)
@@ -1868,7 +1917,9 @@ class LiveVisualizer:
             # auto-advance + render som ovanför.
             while self._paused and not self._quit:
                 for event in pg.event.get():
-                    if event.type == pg.QUIT:
+                    if self._handle_layout_event(event):
+                        pass
+                    elif event.type == pg.QUIT:
                         self._quit = True
                     elif event.type == pg.KEYDOWN:
                         self._handle_key(event.key)
@@ -1989,7 +2040,9 @@ class LiveVisualizer:
                 pass
             while not self._quit:
                 for event in pg.event.get():
-                    if event.type == pg.QUIT:
+                    if self._handle_layout_event(event):
+                        pass
+                    elif event.type == pg.QUIT:
                         self._quit = True
                     elif event.type == pg.KEYDOWN:
                         if event.key in (pg.K_q, pg.K_ESCAPE):
@@ -3005,6 +3058,7 @@ class LiveVisualizer:
             if swap is not None:
                 self._swap_out_frame(swap)
         self._draw_plot()
+        self._draw_splitter()
         self._draw_playback_bar()
         # Spawn-popup ritas sist så den ligger ovanpå allt annat.
         self._draw_spawn_popup()
@@ -3376,7 +3430,8 @@ class LiveVisualizer:
         # börjar (annars sträcker den sig över hela fönsterbredden och
         # täcker grafritarrutan, vilket ser fult ut och är onödigt långt).
         try:
-            plot_left = int(self._plot_rect[0])
+            plot_left = min(x + w - 8, max(int(self._plot_rect[0]),
+                                           int(self._status_track_right_min)))
         except Exception:
             plot_left = x + w
         # Lämna plats för låsikon (16 px + 6 px gutter) mellan track och
@@ -3610,17 +3665,264 @@ class LiveVisualizer:
 
     def _draw_heatmaps(self) -> None:
         ox, oy = self._heatmap_origin
+        oy -= self._hm_scroll_y
+        vx, vy, vw, vh = self._hm_view_rect
         # Slider-rektangellistan byggs om varje frame så stale entries
         # från föregående layout aldrig kan trigga drag i fel panel.
         self._slider_rects = []
         # Samma sak för spawn-dropdown-rektanglarna.
         self._spawn_dropdown_rects = []
-        for idx, fid in enumerate(self.fg_ids):
-            row = idx // self._cols
-            col = idx % self._cols
-            px = ox + col * self._panel_w
-            py = oy + row * self._panel_h
-            self._draw_one_heatmap(fid, px, py)
+        # Everything a panel draws is clipped to the viewport, so a panel
+        # scrolled half out of view cannot paint over the status bar or
+        # the playback bar.
+        self._screen.set_clip(self._pg.Rect(vx, vy, vw, vh))
+        try:
+            for idx, fid in enumerate(self.fg_ids):
+                row = idx // self._cols
+                col = idx % self._cols
+                px = ox + col * self._panel_w
+                py = oy + row * self._panel_h
+                if py >= vy + vh or py + self._panel_h <= vy:
+                    continue
+                self._draw_one_heatmap(fid, px, py)
+        finally:
+            self._screen.set_clip(None)
+        # Hit rects are clipped to the viewport in y (x and width are kept:
+        # ``_slider_value_from_x`` reads the track from them), so a control
+        # scrolled out of view never claims a click meant for the status
+        # bar or the playback bar.
+        self._slider_rects = self._clip_hit_rects(self._slider_rects)
+        self._spawn_dropdown_rects = self._clip_hit_rects(
+            self._spawn_dropdown_rects)
+        self._draw_hm_scrollbar()
+
+    def _clip_hit_rects(self, entries: list) -> list:
+        _vx, vy, _vw, vh = self._hm_view_rect
+        out = []
+        for entry in entries:
+            rx, ry, rw, rh = entry[0]
+            y0 = max(ry, vy)
+            y1 = min(ry + rh, vy + vh)
+            if y1 > y0:
+                out.append(((rx, y0, rw, y1 - y0),) + tuple(entry[1:]))
+        return out
+
+    def _usable_screen_size(self) -> Optional[tuple]:
+        """(width, height) the window may start at, or None if unknown.
+
+        The first desktop's size minus room for the title bar and panels
+        in height; ``MARELD_VIZ_MAX_HEIGHT`` (px) overrides the height.
+        """
+        try:
+            self._pg.display.init()
+            sizes = self._pg.display.get_desktop_sizes()
+            if sizes:
+                width, height = int(sizes[0][0]), int(sizes[0][1])
+            else:
+                info = self._pg.display.Info()
+                width, height = int(info.current_w), int(info.current_h)
+        except Exception:
+            return None
+        if width <= 0 or height <= 0:
+            return None
+        height -= 100
+        env = os.environ.get("MARELD_VIZ_MAX_HEIGHT")
+        if env:
+            try:
+                height = max(200, int(env))
+            except ValueError:
+                pass
+        return width, height
+
+    def _compute_layout(self) -> None:
+        """Derive every layout rect from the window size and the splitter.
+
+        The heatmap area takes ``_split_frac`` of the window width (at
+        least one reference panel, leaving the plot ``_min_plot_w``). Its
+        panels keep ``min(4, n)`` columns and grow with the area; when
+        the area is too narrow for the reference cell size, columns are
+        dropped instead. Rows that do not fit in the viewport scroll.
+        """
+        W, H = int(self._win_w), int(self._win_h)
+        status_h, playback_h, pad = self._status_h, self._playback_h, self._pad
+        sb_w, sp_w = self._hm_sb_w, self._splitter_w
+        hm_area_w = int(round(self._split_frac * W))
+        hm_area_w = min(hm_area_w, W - sp_w - self._min_plot_w)
+        hm_area_w = max(hm_area_w, self._min_hm_area_w)
+        view_h = max(60, H - status_h - playback_h - pad)
+        avail_w = hm_area_w - sb_w
+        n = len(self.fg_ids)
+
+        def cell_for(cols: int) -> int:
+            return (avail_w // cols - 2 * pad) // max(1, self.grid_w)
+
+        cols = 1
+        for c in range(min(4, n), 0, -1):
+            if cell_for(c) >= self._min_cell_px:
+                cols = c
+                break
+        self.cell_px = max(1, cell_for(cols))
+        self._cols = cols
+        self._rows = (n + cols - 1) // cols
+        self._panel_w = self.grid_w * self.cell_px + 2 * pad
+        self._panel_h = self.grid_h * self.cell_px + self._panel_extra_h
+        self._hm_block_h = self._rows * self._panel_h
+        self._heatmap_origin = (0, status_h)
+        self._hm_view_rect = (0, status_h, avail_w, view_h)
+        self._hm_scrollbar_rect = (
+            (avail_w, status_h, sb_w, view_h)
+            if self._hm_block_h > view_h else None)
+        if self._hm_scrollbar_rect is None:
+            self._dragging_hm_scroll = False
+        self._hm_scroll_y = max(0, min(self._hm_max_scroll(), self._hm_scroll_y))
+        self._splitter_rect = (hm_area_w, status_h, sp_w, view_h)
+        plot_x = hm_area_w + sp_w
+        self._plot_rect = (plot_x, status_h, max(1, W - plot_x - pad // 2),
+                           view_h)
+        self._status_rect = (0, 0, W, status_h)
+        self._playback_rect = (0, status_h + view_h, W, playback_h)
+
+    def _hm_max_scroll(self) -> int:
+        return max(0, self._hm_block_h - self._hm_view_rect[3])
+
+    def _set_hm_scroll(self, y: float) -> None:
+        self._hm_scroll_y = int(max(0, min(self._hm_max_scroll(), y)))
+        # The spawn popup is anchored to a dropdown that has just moved.
+        self._spawn_popup = None
+        self._spawn_popup_item_rects = []
+
+    def _draw_hm_scrollbar(self) -> None:
+        self._hm_thumb_rect = None
+        if self._hm_scrollbar_rect is None:
+            return
+        pg = self._pg
+        sx, sy, sw, sh = self._hm_scrollbar_rect
+        pg.draw.rect(self._screen, (30, 30, 38), (sx, sy, sw, sh))
+        pg.draw.rect(self._screen, (60, 60, 70), (sx, sy, sw, sh), 1)
+        max_scroll = self._hm_max_scroll()
+        th = max(24, int(sh * sh / max(1, self._hm_block_h)))
+        ty = sy + int((sh - th) * self._hm_scroll_y / max(1, max_scroll))
+        thumb = (sx + 2, ty, sw - 4, th)
+        col = (150, 150, 170) if self._dragging_hm_scroll else (110, 110, 130)
+        pg.draw.rect(self._screen, col, thumb)
+        pg.draw.rect(self._screen, (170, 170, 190), thumb, 1)
+        self._hm_thumb_rect = (sx, ty, sw, th)
+
+    def _draw_splitter(self) -> None:
+        pg = self._pg
+        x, y, w, h = self._splitter_rect
+        active = self._dragging_splitter or self._splitter_hover
+        pg.draw.rect(self._screen, (44, 44, 54) if active else (30, 30, 38),
+                     (x, y, w, h))
+        grip = (170, 170, 190) if active else (90, 90, 105)
+        cx = x + w // 2
+        cy = y + h // 2
+        for dy in (-8, -4, 0, 4, 8):
+            pg.draw.circle(self._screen, grip, (cx, cy + dy), 1)
+
+    def _set_cursor(self, resize: bool) -> None:
+        pg = self._pg
+        try:
+            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_SIZEWE if resize
+                                else pg.SYSTEM_CURSOR_ARROW)
+        except Exception:
+            pass
+
+    def _hit_splitter(self, pos) -> bool:
+        x, y, w, h = self._splitter_rect
+        # A few px of grab tolerance into the plot (not to the left: the
+        # heatmap scrollbar ends where the splitter starts).
+        return self._hit_rect((x, y, w + 3, h), pos)
+
+    def _handle_layout_event(self, event) -> bool:
+        """Window resize, the splitter, and the heatmap scroll view.
+
+        Returns True when the event was consumed (the caller redraws).
+        Called first in every event loop (``pump_events``, its pause
+        loop, ``wait_for_close``).
+        """
+        pg = self._pg
+        if event.type in (pg.VIDEORESIZE,
+                          getattr(pg, "WINDOWSIZECHANGED", pg.VIDEORESIZE)):
+            surf = pg.display.get_surface()
+            if surf is None:
+                return False
+            self._screen = surf
+            size = surf.get_size()
+            if size != (self._win_w, self._win_h):
+                self._win_w, self._win_h = int(size[0]), int(size[1])
+                self._spawn_popup = None
+                self._spawn_popup_item_rects = []
+                self._compute_layout()
+            return True
+        if (event.type == pg.MOUSEBUTTONDOWN and event.button == 1
+                and self._spawn_popup is None
+                and self._hit_splitter(event.pos)):
+            self._dragging_splitter = True
+            self._splitter_drag_dx = event.pos[0] - self._splitter_rect[0]
+            return True
+        if event.type == pg.MOUSEMOTION and self._dragging_splitter:
+            hm_area_w = event.pos[0] - self._splitter_drag_dx
+            self._split_frac = hm_area_w / float(max(1, self._win_w))
+            self._compute_layout()
+            # Keep the stored share inside the clamped range, so a later
+            # resize starts from where the splitter actually is.
+            self._split_frac = self._splitter_rect[0] / float(max(1, self._win_w))
+            return True
+        if (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                and self._dragging_splitter):
+            self._dragging_splitter = False
+            if not self._hit_splitter(event.pos):
+                self._set_cursor(False)
+                self._splitter_hover = False
+            return True
+        if event.type == pg.MOUSEMOTION:
+            hover = self._hit_splitter(event.pos)
+            if hover != self._splitter_hover:
+                self._splitter_hover = hover
+                self._set_cursor(hover)
+            # Not consumed: the plot hover tooltip also reads motion.
+        if self._hm_scrollbar_rect is None:
+            return False
+        if event.type == pg.MOUSEWHEEL:
+            dy = int(getattr(event, "y", 0))
+            if dy == 0:
+                return False
+            try:
+                mpos = pg.mouse.get_pos()
+            except Exception:
+                return False
+            if not (self._hit_rect(self._hm_view_rect, mpos)
+                    or self._hit_rect(self._hm_scrollbar_rect, mpos)):
+                return False
+            self._set_hm_scroll(self._hm_scroll_y - dy * self._hm_scroll_step)
+            return True
+        if (event.type == pg.MOUSEBUTTONDOWN and event.button == 1
+                and self._spawn_popup is None
+                and self._hit_rect(self._hm_scrollbar_rect, event.pos)):
+            my = event.pos[1]
+            thumb = self._hm_thumb_rect
+            if thumb is not None and thumb[1] <= my < thumb[1] + thumb[3]:
+                self._dragging_hm_scroll = True
+                self._hm_scroll_drag_dy = my - thumb[1]
+            else:
+                # Click beside the thumb pages one viewport up or down.
+                page = self._hm_view_rect[3]
+                if thumb is not None and my < thumb[1]:
+                    page = -page
+                self._set_hm_scroll(self._hm_scroll_y + page)
+            return True
+        if event.type == pg.MOUSEMOTION and self._dragging_hm_scroll:
+            _sx, sy, _sw, sh = self._hm_scrollbar_rect
+            th = self._hm_thumb_rect[3] if self._hm_thumb_rect else 24
+            frac = (event.pos[1] - self._hm_scroll_drag_dy - sy) / max(1, sh - th)
+            self._set_hm_scroll(frac * self._hm_max_scroll())
+            return True
+        if (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                and self._dragging_hm_scroll):
+            self._dragging_hm_scroll = False
+            return True
+        return False
 
     @staticmethod
     def _abbrev_fg(name: str) -> str:
@@ -4223,6 +4525,8 @@ class LiveVisualizer:
         self._tab_rects = []
         strip_h = row_h + 2
         pg.draw.rect(self._screen, (24, 24, 30), (x, y, w, strip_h), 0)
+        # A plot narrowed by the splitter cuts the strip at its edge.
+        self._screen.set_clip(pg.Rect(x, y, w, strip_h))
         for i, tab in enumerate(self._tabs):
             is_active = (i == self._active_tab)
             col = (240, 240, 250) if is_active else (140, 140, 150)
@@ -4235,6 +4539,7 @@ class LiveVisualizer:
             self._screen.blit(surf, (tab_x + 5, tab_y + 1))
             self._tab_rects.append((rect, i))
             tab_x += tw + 4
+        self._screen.set_clip(None)
 
         # Title (under tab strip).
         title_y = y + strip_h + 2
