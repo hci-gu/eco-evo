@@ -17548,6 +17548,22 @@ remain open exactly as described in 71.9 / 71.11.
       policy trained in a herring-rich world, not separated.
     - Do not tune K (~6 would give 3.33) on policies trained without
       it; retrain first. Nothing applied.
+185.20 APPLIED (user): pelagic_fish r_max 0.648 -> 0.34 and
+    regional_carrying_capacity 5.0 t/km2 (185.18-19). Loader-derived
+    growth_rate 0.00350461 -> 0.00275637 (mareld2, --mortality on),
+    capacity_loss_rate 4.6575e-5. Why K and not only the lower r: the
+    derived g pays r_max at any density, so without K the pool grows
+    at r - F until food stops it, and in the closed grid that means
+    grazing the zooplankton down (the literature finds no herring
+    top-down control and weight-at-age barely density dependent). K
+    stands in for stock-scale compensation (density-dependent
+    recruitment; the r_max prior is itself a Schaefer r with a K) and
+    net emigration; a seasonal immigration/emigration term would be
+    the mechanistic version (engine code, not done). Checkpoints stay
+    valid (no observation change) but were trained without it:
+    retrain before judging the equilibrium (2.75 vs 3.33 on fix69)
+    or the gadoid decline. tests/test_regional_capacity.py now
+    expects gadoids and pelagic_fish to carry the loss.
 
 188 Live viewer: heatmaps in a scroll view
 188.1 Problem (user): with the full FG set (9 heatmaps, 3 rows on a

@@ -342,11 +342,27 @@
     # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
-    # r_max 0.648 /yr: biomass-weighted FishBase CMSY priors over herring,
-    # sprat, mackerel, horse mackerel, sandeel and other planktivores.
-    r_max: 0.648
+    # r_max 0.34 /yr since section 185.20: today's productivity at the
+    # site. The FishBase CMSY priors weighted over the North Sea mix
+    # gave 0.648 (36 % sandeel, which has no grounds in the grid); site
+    # weights (herring 0.73, mackerel 0.19, sprat 0.06, horse mackerel
+    # 0.02) give 0.44. Recruits per spawner have fallen since (NSAS
+    # 1.7x, WBSS 2.25x, mackerel 3.6x, horse mackerel 1.6x, sprat none);
+    # by Euler-Lotka r_now = 0.34 (0.27-0.40). research_notes/Den
+    # pelagiska poolens reglering/productivity.md, resume 185.18.
+    r_max: 0.34
+    # Section 185.20: today's EFFECTIVE capacity (t/km2), standing in for
+    # stock-scale compensation (density-dependent recruitment) plus net
+    # emigration out of a grid that holds ~0.4 % of the autumn-spawning
+    # herring - not local crowding. K = B / (1 - P/r) = 3.33 / (1 -
+    # 0.115/0.34), P the stocks' surplus production at site weights.
+    # The r_max prior comes from a Schaefer fit that had a K; without it
+    # the pool grew at r_max - F and grazed the zooplankton 10-14x its
+    # standing stock per year (Ecopath 1.9x). The scratch test on fix69
+    # policies (185.19): stationary at ~2.75, zooplankton held ~5.5.
+    regional_carrying_capacity: 5.0
     # x 12 / feeding_season_months (5.5) since section 184.
-    growth_rate: 0.00350461
+    growth_rate: 0.00275637
     # M1 = M0 (0.391) + predation by groups that are not FGs (0.189:
     # sharks, rays, other fish, larvae) = 0.580 /yr, North Sea Ecopath
     # 1991. Predation by FGs lives in predation_mortality. Was 1.0e-04.

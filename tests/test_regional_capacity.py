@@ -7,7 +7,7 @@ Contracts asserted:
    r_max.
 2. The loss is outside the derived growth rate: K changes no budget term.
 3. The loader derives ``capacity_loss_rate`` (the library's gadoids
-   carry it) and rescales it as a flux for another tick length.
+   and pelagic fish carry it) and rescales it as a flux for another tick length.
 4. In the population step a DM with it loses the fraction c * B_region
    (grid-mean density) of its biomass and reserve, booked as a natural
    loss, with or without --mortality; another DM is untouched.
@@ -81,18 +81,21 @@ def test_capacity_is_outside_the_growth_budget():
     assert capped.describe() == plain.describe()
 
 
-def test_loader_derives_the_rate_for_the_library_gadoids():
+CAPPED = ("gadoids", "pelagic_fish")      # sections 185, 185.20
+
+
+def test_loader_derives_the_rate_for_the_library_groups():
     lib = _library()
-    spec = lib["species_definitions"]["gadoids"]
     project = yaml.safe_load(PROJECT.read_text(encoding="utf-8-sig"))
     fgs = load_project_config(str(PROJECT), library_config=lib,
                               project_config=project, grid_size=(6, 6),
                               seed=1)[0]
-    gadoids = fgs["gadoids"]
-    assert gadoids.params["capacity_loss_rate"] == pytest.approx(
-        gb.capacity_loss_rate(spec))
+    for fid in CAPPED:
+        spec = lib["species_definitions"][fid]
+        assert fgs[fid].params["capacity_loss_rate"] == pytest.approx(
+            gb.capacity_loss_rate(spec)), fid
     for fid, fg in fgs.items():
-        if fid != "gadoids":
+        if fid not in CAPPED:
             assert "capacity_loss_rate" not in fg.params, fid
 
 

@@ -156,7 +156,10 @@ fabricates mass.
   loader derives `capacity_loss_rate`. Gadoids: r_max 0.37 (today's
   productivity, 184.18) and K 1.02 (today's effective capacity, not the
   historical ceiling); without it they grew at r_max - F, ate the
-  pelagic pool down and crashed (184.13).
+  pelagic pool down and crashed (184.13). Pelagic fish: r_max 0.34
+  (site mix, today's recruitment) and K 5.0 since 185.20 - stock-scale
+  compensation plus net emigration; without it the pool grazed the
+  zooplankton down year after year (185.17-19).
   With the daylight calendar a producer with `light_saturation` grows at
   `growth_rate * P(t)/P_ref` (section 138; 0 at night, needs the site's
   light climate in the manifest). The old `seasonal_amplitude` /
