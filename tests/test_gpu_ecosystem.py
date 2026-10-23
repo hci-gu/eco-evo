@@ -34,7 +34,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              response_types=None, temperature=None, impacts=None,
              observable_impacts=None, nutrient_pool=None, grazer=None,
              mixed_layer_pairs=None, subsurface=None, inert_subsurface=False,
-             ingestion=None, growth=None, income=None, capacity=None):
+             ingestion=None, growth=None, income=None, capacity=None,
+             regen=None, extra_prey=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -68,6 +69,9 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     (section 183; needs ``daylight``).
     ``capacity`` is DM ``a``'s ``capacity_loss_rate`` c: the regional
     logistic loss c * grid-mean B per tick (section 185).
+    ``regen`` maps a group to extra species keys (section 202:
+    ``mortality_regeneration``, ``egestion_regeneration``);
+    ``extra_prey`` maps a DM to prey added to its menu.
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -84,6 +88,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
                       observes=["b", "c"] if i == 0 else ["a"],
                       max_intake_rate=0.8,
                       menu=["b", "c"] if i == 0 else (["c"] if i == 1 else []))
+        if extra_prey and fid in extra_prey:
+            params["menu"] = params["menu"] + list(extra_prey[fid])
         params["interaction"] = {f"{fid}_preys_on_{prey}": dict(
             preys_on=True, assimilation_factor=0.65, handling_time=handling)
             for prey in params["menu"]}
@@ -141,6 +147,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
             params["capacity_loss_rate"] = capacity
         if m1_exposure and fid == "a":
             params.update(m1_exposure)
+        if regen and fid in regen:
+            params.update(regen[fid])
         if impacts and fid in impacts:
             params["impact"] = copy.deepcopy(impacts[fid])
         if reserve_food is not None and fid == "b":

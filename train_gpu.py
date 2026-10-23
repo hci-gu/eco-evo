@@ -137,6 +137,9 @@ def main(argv=None, *, on_step=None):
     (directory / "gpu_run.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(f"Device: {trainer.model.device}; {args.n_deltas} delta pairs, {args.worlds} worlds, "
           f"{args.ticks} ticks; execution={args.execution}", flush=True)
+    if trainer.warmup_ticks:
+        print(f"World warm-up: {args.warmup_days:g} days = {trainer.warmup_ticks} ticks with the "
+              "unperturbed policies before each scored rollout (section 200)", flush=True)
     print(f"Output: {directory}. First iteration includes warmup/compilation/capture.", flush=True)
     if args.currents == "on":
         print(f"Currents: on; max drift={args.current_strength:g}/tick, "

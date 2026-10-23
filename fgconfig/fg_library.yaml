@@ -208,6 +208,10 @@
     # Ecopath diet matrix: 19.7 /yr. The rest is carnivorous zooplankton,
     # fish larvae, jellyfish and non-predation losses. Was 0.0025.
     natural_mortality: 0.0134
+    # Section 202: half of the M1 loss is remineralised in the water
+    # column and returns to the nutrient pools (ERSEM pe_R1 0.5, resume
+    # 179.2), split between the layers by where the zooplankton fed.
+    mortality_regeneration: 0.5
     max_intake_rate: 0.25
     spawn:
       mode: env_driven
@@ -253,6 +257,11 @@
     # Non-predatory mortality 0.05 /d with copepod predation explicit
     # (ERSEM basal 0.05 [F]; range 0.02-0.1).
     natural_mortality: 0.0125
+    # Section 202: half of the M1 back to the pools (as zooplankton), and
+    # all of the egesta - (1 - 0.3) x (1 - 0.571) = 0.30 of the intake -
+    # to the grazed producer's pool beside the excretion (0.40).
+    mortality_regeneration: 0.5
+    egestion_regeneration: 1.0
     min_split_biomass: 0.0
     extinction_threshold_factor: 0.0
     seed_rate: 0.0
@@ -573,6 +582,15 @@
     # r_max 0.11 /yr: harbour seal 10.2-13.6 %/yr in Kattegat-Skagerrak
     # after 1988 (Carroll et al. 2025), grey seal <= 10 % (HELCOM).
     r_max: 0.11
+    # Regional carrying capacity (section 199, variant b): K = the 15 t
+    # start / 3600 km2, so the seals sit at today's level with no hunt
+    # impact. The grid holds the offshore tail of the Kattegat-Skagerrak
+    # metapopulation, which is regulated off the grid (Skagerrak at 0.82
+    # of its logistic K 4,517 counted seals, Carroll et al. 2025: food -
+    # prey the model's seals do not eat - and haul-out competition).
+    # Without it the seals grew ~6 %/yr on gadoids alone, halved them and
+    # crashed (15-year run on fix70). Outside the derived growth_rate.
+    regional_carrying_capacity: 0.0041667
     growth_rate: 0.000486383
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models); no FG preys on
     # seals. Was 6.0e-05.
@@ -660,7 +678,14 @@ interaction_definitions:
     # by 10 / M(t) (3 t/km2 in the 6 m summer layer, 8.5 in November).
     # 100 ug C/l starved even a rule-driven zooplankton in the plankton
     # calibration. Was 0.0125 = a fixed 20 t/km2 (section 134).
-    max_intake_rate: 0.05
+    # Section 202: Type III (copepods' sigmoid response at low food,
+    # Frost 1975; Kioerboe et al. 1996 [F]): a = 0.03 per (t/km2)^2 at
+    # 10 m, half-saturation 1/sqrt(a h) = 2.9 t/km2. Type II grazed the
+    # summer mixed layer to 0.01-0.06 ug chl/l (A17 0.46-0.94) and left
+    # the regenerated nitrate unused; 0.01 collapsed a frozen
+    # zooplankton's spring in scratch (201.4). Was Type II, a 0.05.
+    functional_response: 3
+    max_intake_rate: 0.03
     mixed_layer_reference_m: 10.0
     predation_mortality: 22.63
     assimilation_factor: 0.65
@@ -1128,7 +1153,14 @@ interaction_definitions:
     # pelagic fish by mass at 3e-4 (12.6 % of energy; 2 seeds x 2
     # years), 5.4 % at 2e-4, 14 % at 4e-4. The seals' biomass barely
     # moves with the switch, so a trained policy may still eat less.
-    max_intake_rate: 0.0003
+    # Section 199.9: 3e-4 -> 2e-3. The 185.16 optimiser rated the pool on
+    # its TOTAL biomass; the engine feeds on the visible part (herring
+    # rest ~38 %, squared under Type III), and fix69's pool was 4-7
+    # t/km2 against ~3 since its K. With the engine's own effective rate
+    # (visible prey, interference) an optimising seal on fix70 positions
+    # takes 0.02-0.3 % pelagic fish at 3e-4 - nothing to learn - and
+    # 3.9-8.5 % by mass at 2e-3 (2 seeds, 1 training-length year).
+    max_intake_rate: 0.002
     # Metabolisable energy 85.5-88.7 % on herring (Keiver et al. 1984);
     # 0.92 was a digestibility. Was 0.92.
     assimilation_factor: 0.88

@@ -187,7 +187,14 @@ class WorldSpawner:
             index = self.model.ids.index(fid)
             keys = fold_in(world_keys, index + 1000)
             lo, hi = self.spec.ranges[fid]
-            total = torch.floor(uniform(keys, (), 0, torch.float64) * (hi - lo + 1)) + lo
+            u = uniform(keys, (), 0, torch.float64)
+            if lo > 0 and hi > lo:
+                # Log-uniform, rounded to whole tonnes (section 200; the CPU
+                # loader's _sample_total_biomass draws the same law).
+                total = torch.exp(math.log(lo) + u * (math.log(hi) - math.log(lo)))
+                total = torch.round(total).clamp(lo, hi)
+            else:
+                total = torch.floor(u * (hi - lo + 1)) + lo
             cfg = self.spec.spawn[fid]
             if cfg and str(cfg.get("mode", "uniform")).strip():
                 if cfg.get("seed") is not None:

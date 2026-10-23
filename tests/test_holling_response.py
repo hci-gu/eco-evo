@@ -199,7 +199,8 @@ def test_functional_response_must_be_two_or_three():
 
 def test_zooplankton_switches_away_from_scarce_microzooplankton():
     """Section 178: the live zooplankton -> microzooplankton pair is Type
-    III (prey switching), its phytoplankton pair stays Type II.
+    III (prey switching). Section 202 made the mixed-layer phytoplankton
+    pair Type III too; the subsurface pair stays Type II.
 
     With Type II the trained zooplankton of fix62 grazed the
     microzooplankton to 1e-18 in two weeks of March and it never came
@@ -215,4 +216,6 @@ def test_zooplankton_switches_away_from_scarce_microzooplankton():
     zoo = env.dm_ids.index("zooplankton")
     order = list(env.global_fg_order)
     assert mask[zoo, order.index("microzooplankton")] == 1.0
-    assert mask[zoo, order.index("phytoplankton")] == 0.0
+    assert mask[zoo, order.index("phytoplankton")] == 1.0
+    if "subsurface_phytoplankton" in order:
+        assert mask[zoo, order.index("subsurface_phytoplankton")] == 0.0

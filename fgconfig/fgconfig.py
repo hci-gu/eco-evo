@@ -757,6 +757,8 @@ class FGConfigApp:
             ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
             # Section 185: closes the logistic whose r the budget pays.
             ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
+            # Section 202: share of the M1 loss returned to the nutrient pools.
+            ("  Mortality regeneration (share of M1 back to the nutrient pools; 0 = off)", "mortality_regeneration", "entry", 0.0, 1.0),
             ("Max Growth (MG_X, fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
             ("Starve Rate (catabolism, fraction/{tick})", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
@@ -884,6 +886,9 @@ class FGConfigApp:
             # Grazing non decision makers (section 177: microzooplankton).
             ("Growth Efficiency (grazer: t grown per t eaten)", "growth_efficiency", "entry", 0.0, 1.0),
             ("Excretion Regeneration (grazer: share of the uneaten-into-growth part returned to the prey's pool)", "excretion_regeneration", "entry", 0.0, 1.0),
+            # Section 202.
+            ("Egestion Regeneration (grazer: share of the egesta returned to the prey's pool)", "egestion_regeneration", "entry", 0.0, 1.0),
+            ("Mortality Regeneration (share of M1 back to the nutrient pools)", "mortality_regeneration", "entry", 0.0, 1.0),
             ("Grazing Q10 (grazer; 0 = none)", "grazing_q10", "entry", 0.0, 10.0),
             ("Grazing Reference Temperature (deg C)", "grazing_t_ref", "entry", -5.0, 40.0),
             ("External Forces (wind/currents; share carried, 0=off)", "current_response", "entry", 0.0, 1.0),
@@ -4196,6 +4201,7 @@ class FGConfigApp:
         "grazing_q10", "grazing_t_ref", "ingestion_q10", "growth_q10",
         "income_growth_kappa", "feeding_season_months",
         "regional_carrying_capacity",
+        "mortality_regeneration", "egestion_regeneration",
     })
 
     @staticmethod

@@ -93,10 +93,12 @@ class RolloutRunner:
             destination.copy_(source)
 
     def reset(self, biomass, reserve, keys, ticks, mean, var, temperature,
-              light_start=None, impacts=None, impact_obs=None):
+              light_start=None, impacts=None, impact_obs=None, hidden=None):
         """Load a batch of worlds; ``impacts`` is ``(loss_rate, cost)``
         ([E, G, C], [E, D, C]) from ``TensorEcosystem.impact_fields`` and ``impact_obs``
-        [E, n_obs_imp, C] from ``impact_observations`` (zero if None)."""
+        [E, n_obs_imp, C] from ``impact_observations`` (zero if None).
+        ``hidden`` [E, G, C] carries the last tick's hide fractions over
+        from a warm-up (section 200); None starts with nothing hidden."""
         if ticks < 1:
             raise ValueError("Rollouts must contain at least one tick")
         if self.model.has_impacts:
@@ -130,6 +132,8 @@ class RolloutRunner:
         for value in (self.hidden, self.log_energy, self.biomass_sum, self.reserve_sum,
                       self.obs_sum, self.obs_sumsq, self.action_sum, self.active_ticks):
             value.zero_()
+        if hidden is not None:
+            self.hidden.copy_(hidden)
         self.b0.copy_(biomass[:, self.model.dm_index].sum(-1).double())
         self.r0.copy_(reserve[:, self.model.dm_index].sum(-1).double())
         self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)

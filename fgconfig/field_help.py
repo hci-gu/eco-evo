@@ -741,6 +741,25 @@ FIELD_HELP = {
         "the prey's nutrient pool as excreted ammonium. 0.571 x (1 - "
         "0.3) = 0.4 of the intake for microzooplankton."
     ),
+    "egestion_regeneration": (
+        "Egestion Regeneration (0-1, grazing non decision makers; section "
+        "202).\n\n"
+        "Share of the egesta - (1 - growth efficiency) x (1 - excretion "
+        "regeneration) of the intake - that returns to the grazed "
+        "producer's nutrient pool, beside the excretion. 1.0 for "
+        "microzooplankton: 0.7 x 0.429 = 0.30 of its intake. 0 = the "
+        "egesta leave the system."
+    ),
+    "mortality_regeneration": (
+        "Mortality Regeneration (0-1; section 202).\n\n"
+        "Share of the group's natural mortality M1 that is remineralised "
+        "in the water column and returns to the producers' nutrient "
+        "pools in the same tick. With the two-layer column the return is "
+        "split between the mixed and the subsurface pool by where the "
+        "group fed this tick (thickness shares if it fed on neither). "
+        "0.5 for zooplankton and microzooplankton (ERSEM pe_R1). Inert "
+        "without nutrient pools; does not change the derived growth."
+    ),
     "grazing_q10": (
         "Grazing Q10 (grazing non decision makers; 0/empty = none).\n\n"
         "Temperature multiplier on the grazing rate, Q10^((T - T_ref)/10), "

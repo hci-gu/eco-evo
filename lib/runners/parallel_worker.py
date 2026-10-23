@@ -16,6 +16,7 @@ import torch
 
 from lib.environments.ecosystem_env import source_tracking
 from lib.runners.policy import PolicyNetwork
+from lib.runners.warmup import run_warmup
 
 # Module-level globals, populated by _worker_init in each worker process.
 _ENV_BUILDER = None
@@ -130,6 +131,8 @@ def _evaluate_coevo_task(task):
         # explicita och skickar med True/False.
         legacy_reward = bool(task.get('legacy_reward', True))
         local_reward = task.get('local_reward')
+        warmup_ticks = int(task.get('warmup_ticks', 0) or 0)
+        warmup_weights = task.get('warmup_weights')
     else:
         (fg_list, weights_dict, n_ticks, alpha, beta, seed, obs_pack,
          entropy_coef, argmax_penalty, softmax_temperature, integral_reward) = task
@@ -137,6 +140,7 @@ def _evaluate_coevo_task(task):
         survival_threshold = 0.01
         legacy_reward = True
         local_reward = None
+        warmup_ticks, warmup_weights = 0, None
     _ = (entropy_coef, argmax_penalty)
 
     # Sync ALL policy weights
@@ -148,8 +152,6 @@ def _evaluate_coevo_task(task):
     env = builder(seed=seed) if seed is not None else builder()
     env.policies = _POLICIES
     env.softmax_temperature = float(softmax_temperature)
-    if local_reward is not None:
-        source_tracking.attach(env, local_reward)
 
     if obs_pack is not None:
         env.build_static_caches()
@@ -163,6 +165,21 @@ def _evaluate_coevo_task(task):
             idx = [dm_ids.index(fid) for fid in env.dm_ids]
             env.obs_mean = mean[idx]
             env.obs_var = var[idx]
+
+    if warmup_ticks > 0 and warmup_weights is not None:
+        # Section 200: settle the world under the unperturbed weights (the
+        # +/- tasks of a pair share seed and weights, so they reach the
+        # same state), then this candidate's weights take over.
+        for fg_id, w in warmup_weights.items():
+            if fg_id in _POLICIES:
+                _set_weights_flat(_POLICIES[fg_id], w)
+        run_warmup(env, warmup_ticks, seed=seed)
+        for fg_id, w in weights_dict.items():
+            if fg_id in _POLICIES:
+                _set_weights_flat(_POLICIES[fg_id], w)
+
+    if local_reward is not None:
+        source_tracking.attach(env, local_reward)
 
     config = task.get('population_stability') if isinstance(task, dict) else None
     if config is not None:

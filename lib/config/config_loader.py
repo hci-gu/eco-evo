@@ -1,4 +1,5 @@
 import yaml
+import math
 import numpy as np
 from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
@@ -49,9 +50,14 @@ def _resolve_initial_biomass_range(*sources):
 
 
 def _sample_total_biomass(min_b, max_b, rng):
-    """Sample an initial total biomass uniformly from [min_b, max_b] integers.
+    """Sample an initial total biomass from [min_b, max_b], log-uniformly.
 
-    If both bounds are None, returns 1000.0 (legacy fallback).
+    Section 200: log-uniform, so a range [x/2, 2x] is symmetric about x
+    (median x; the linear draw had mean 1.25x and put two thirds of the
+    worlds above x). The draw is rounded to whole tonnes, as before. A
+    range with a non-positive lower bound falls back to the uniform
+    integer draw. If both bounds are None, returns 1000.0 (legacy
+    fallback).
     """
     if min_b is None and max_b is None:
         return 1000.0
@@ -63,9 +69,14 @@ def _sample_total_biomass(min_b, max_b, rng):
     hi = int(round(max_b))
     if lo == hi:
         return float(lo)
-    if rng is not None and hasattr(rng, "integers"):
-        return float(rng.integers(lo, hi + 1))
-    return float(np.random.randint(lo, hi + 1))
+    if lo <= 0:
+        if rng is not None and hasattr(rng, "integers"):
+            return float(rng.integers(lo, hi + 1))
+        return float(np.random.randint(lo, hi + 1))
+    u = (float(rng.random()) if rng is not None and hasattr(rng, "random")
+         else float(np.random.random()))
+    value = math.exp(math.log(lo) + u * (math.log(hi) - math.log(lo)))
+    return float(min(hi, max(lo, int(round(value)))))
 
 def _derive_fg_spawn_seed(base_seed, fg_id):
     """Derive a deterministic, FG-specific spawn seed from a base seed.

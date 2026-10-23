@@ -17491,6 +17491,11 @@ remain open exactly as described in 71.9 / 71.11.
     0 %, which is a learning problem (no gradient), not access.
     Set: seals_preys_on_pelagic_fish max_intake_rate 2e-4 -> 3e-4
     (library comment and AGENTS.md updated).
+    CORRECTED in 199.9: the optimiser rated the pool on its total, not
+    its visible, biomass, and the fields were fix69's herring-rich ones;
+    with the engine's effective rate on fix70 fields 3e-4 gives < 0.3 %.
+    "A learning problem, not access" was wrong: there was nothing to
+    learn. Now 2e-3.
 185.17 State after fix68 (13 gens) + fix69 (--init-from reset seals,
     then --resume with seals->pelagic 3e-4). Policies frozen 18:46
     ($S/pzbpgp248nsrpfix69_now), 3-year CPU inference, seed 20260530.
@@ -18101,3 +18106,485 @@ remain open exactly as described in 71.9 / 71.11.
     Headless screenshot with the mareld2 FG set checked (5 DMs on
     two rows, 4 NDMs on two rows). pytest passed; 1-generation
     train.py smoke run OK.
+
+================================================================
+199 FIX70 VERDICT; CARRYING CAPACITY FOR SEALS AND PORPOISES (2026-10-23)
+================================================================
+199.1 fix70 (train_gpu, pzbpgp248nsrpfix70, started 2026-10-22 12:07
+    with --resume, 1x16 tanh, lr 0.06, sigma 0.1, 32 deltas, 1 world,
+    1460-tick episodes; library unchanged since 2026-10-21 22:41, i.e.
+    the 185.20 world). No longer running at 22:34; last policies
+    written 21:58. Evaluated on a frozen copy of the 19:25 policies
+    (gen ~26-27, policy_gadoids md5 a3abd904...), CPU inference and the
+    section-187 probe (gres/probe.py: per-year diets, losses, monthly
+    means), seeds 20260530 and 7, --mortality on --migration on
+    --currents on.
+    - Training: rewards flat since gen 4-6, sigma_f down 10-20x
+      (gadoids 0.23 -> 0.011). More generations will not move the
+      picture. The zooplankton reward (-1.4) is the 40x seasonal swing,
+      not a policy fault.
+    - Years 1-3 (seed A / seed 7): gadoids 0.66/0.66/0.65 and
+      0.63/0.60/0.59 t/km2 (start 0.69, K(1-F/r) 0.69); pelagic pool
+      3.34/3.19/3.18 and 2.93/2.83/2.95 (start 3.33; the fix69 runaway
+      is gone); porpoises 12.1/12.0/11.5 and 11.9/11.3/10.5 t with
+      starvation rising in year 3 (0.03 -> 0.08-0.13 /yr); seals +6 %/yr
+      (15.5/16.5/17.5 t), no starvation; benthos 4.16/3.62/3.27 (start
+      4.44); zooplankton 7.4/6.0/5.9, winter 0.5-0.6 stable. Against
+      187.4 (gen 1 policies: porpoises collapsed, seals halved, pool
+      1.4-1.7) training made a large difference.
+    - Realised vs budgeted M2 (growth_budget, mareld2): gadoids
+      0.17-0.21 vs 0.176, but split wrong - seals 0.175 and rising vs
+      0.12, porpoises ~0.02 vs 0.056; pelagic pool 0.44 vs 0.31, almost
+      all from gadoids (0.43 vs 0.30); zooplankton 3.3-3.9 vs 5.3. M1 +
+      capacity loss match the budget for gadoids (0.65) and the pool
+      (0.80).
+    - 15 years without a seal K: a seal-gadoid cycle, same on both
+      seeds. Seals 15.5 -> 24.4 t (year 9) -> 14.7; gadoids 0.66 ->
+      0.35 (year 12) -> 0.41; the pool, freed from gadoid predation,
+      rises to 4.6; porpoises follow it to 16 t (still rising); benthos
+      dips to 2.9 and recovers to 4.6. Nothing dies out; nothing is
+      stationary. Policies trained on 1-year episodes from today's
+      state never saw years 4-15.
+    - Open (unchanged by fix70): seals eat 0 % pelagic fish (0.001-0.2
+      t of ~400 t/yr; 185.16 aimed at ~10 %; budget_gate: 63 t/cell
+      visible herring needed alone, so the pair is shut - too low an
+      attack rate or an unlearned channel, not separated); herring Q/B 7.1-7.3 (lit
+      4.5-5.3) and herring <- zoo 3.9x the zooplankton stock (Ecopath
+      1.9x); zooplankton low vs A17 (mean 5.9 vs 7.1-10, winter 0.5-0.6
+      vs 1.2-1.7, Oct/Nov 1.0/0.5 vs 2.9/3.5); the phytoplankton bloom
+      peaks in February (calendar months via light_index), not March.
+199.2 Box depth (EMODnet mean DTM on the 60x60 grid, make_djup.py
+    method, scratch copy; djup.png untouched): all sea, 43-533 m, mean
+    168 m; < 50 m 25 km2, < 75 m 239 km2, < 100 m 832 km2. The box is
+    offshore on the Norwegian Trench slope. The earlier seal note's
+    shallow-ground route (up to ~1,500 km2 < 50 m) does not hold.
+199.3 Literature (two subagents; notes in research_notes/"Barformaga
+    for sal och tumlare" - Swedish letters in the folder name -
+    seals.md, porpoises.md, seal_box_kernel.py = the box usage
+    calculation, reads a wide EMODnet tile fetched as its docstring
+    says).
+    Seals:
+    - Carroll et al. 2025 (PLOS ONE, full text and S-tables): logistic
+      K per region; Skagerrak 4,517 +/- 305 counted (~7,230 total at
+      x1.54-1.75), 2023 count 3,710 = 0.82 of K (0.73-0.91); Kattegat
+      0.91, combined 0.90 (K 13,965). Levelling most likely food
+      limitation (lower births), plus haul-out competition; hunting a
+      possible contributor; bycatch unchanged. Their mu (0.25-0.33) is
+      not r_max; r_max 0.11 stays.
+    - Seals in the box (own kernel: each colony's 2023 count spread
+      ~exp(-d/L) over the sea, three depth weightings, x1.6 x 0.8 at
+      sea x 55 kg): central ~20 t, likely 12-30, plausible 5-45. The
+      load-bearing unknown is how much adults forage over the 100-300 m
+      slope (10x). Two routes to K_box: B_box/0.82 = 24 t; Skagerrak K
+      x habitat share = 36-38 t (both without a 50 m limit).
+    - Diet check (corrected in 199.8): with flatfish, wrasse and
+      rockling lumped into gadoids (normalisation B, 185.10) the target
+      is 85-95 % gadoids : 3-10 % pelagic fish, so the model's 100:0
+      misses by 5-10 points and 15 t of model seals act on gadoids like
+      ~1.1x as many real ones (the first draft compared with the
+      unlumped 51-56 % and said 27-30 t). The 15 t start stays inside
+      the 12-30 t range on its own.
+    - K stands for the regulation of a coastal metapopulation off the
+      grid (prey the model's seals do not eat, haul-out dynamics); the
+      grid holds its offshore tail. Same kind of K as the pelagic pool
+      (185.20). Epizootics are pulses outside K.
+    Porpoises:
+    - SCANS-IV 2022 block NS-L (covers the box; Gilles et al. 2023 Table
+      6): 0.519 animals/km2, CV 0.35; SCANS-III 2016 block P1 1.077.
+      At 45 kg: ~84 t in the box (33-103 t). The model's 12 t (0.07
+      /km2) has no source in this file (it came with commit d17b4dd).
+      The box sits on documented high-density habitat (Jutland front,
+      trench slope; Sveegaard et al. 2011).
+    - No published K; no measured density dependence in vital rates;
+      the RLA (OSPAR) and DEPONS get their ceiling from food. North Sea
+      abundance flat 1994-2022 (+0.51 %/yr, n.s.); depletion "largely
+      unknown" (OSPAR). r_max 0.10 is defensible (the RLA caps r at
+      0.10).
+    - No K: K = 12/(1 - 0.017/0.10) = 14.5 t rests on the 12 t that
+      the surveys contradict and would bind from tick one; a
+      survey-anchored ~100 t would never bind. The open question is the
+      food/energetics calibration: why the model's food-limited
+      equilibrium is 12-16 t when the surveys say ~84 t. Do not just
+      raise the start: at the realised Q/B 17.6, 84 t eat ~1,480 t/yr,
+      i.e. M2 ~0.10/yr on the pelagic pool (budget 0.012; the pool
+      already takes 0.44 vs 0.31) and ~0.13 on gadoids (budget 0.056).
+199.4 APPLIED (user: variant b), fg_library.yaml seals:
+    regional_carrying_capacity 0.0041667 t/km2 = the 15 t start / 3600
+    km2, no hunting impact (variant a, K = 15/0.82 = 18.3 t plus a hunt
+    impact 0.01/yr with a baseline_map, was not chosen; hunting is
+    coastal, so 0.01 is an upper value for the box anyway). Loader-
+    derived capacity_loss_rate 0.018082 (r_max/(1460 K)). Derived
+    growth_rate unchanged (the loss is outside g). No observation
+    change: checkpoints stay valid, but they were trained without it -
+    continue fix70 with --resume before judging. Porpoises: no K.
+    tests/test_regional_capacity.py: CAPPED now includes seals.
+    AGENTS.md section 5 updated.
+199.5 Frozen fix70 policies (19:25) with the seal K, same seeds:
+    - Years 1-3: seals 14.7/14.0/13.4 t (seed 7 14.7/13.9/13.3),
+      natural loss 0.20-0.21/yr = M1 0.10 + K loss ~0.10; gadoids
+      0.67/0.67/0.68 (0.64/0.61/0.62), seal M2 on gadoids falls with
+      the seals; pool, porpoises and zooplankton as without K.
+    - 15 years: seals fall steadily to 10.1-10.3 t (decelerating). The
+      expected offset: the policies realise ~0.06/yr net growth while
+      the K loss is charged at r_max 0.11, so the equilibrium sits
+      near 0.55 K (~8 t) unless retraining changes the behaviour; read
+      after a retrain, do not tune K away. Gadoids hold 0.61-0.68 for
+      ~7 years, then fall to ~0.50 and stay (years 10-15); benthos
+      falls 4.2 -> 2.5 by year 7 and recovers to 3.3 - the gadoid
+      decline follows the benthos minimum, not the seals (benthos dips
+      without K too: 2.9 at years 5-6). The pool rises to 3.8-3.95 and
+      porpoises to 13.9-14.6 t as the gadoids fall. The seal-gadoid
+      cycle of 199.1 is gone; the slower gadoid-benthos drift remains
+      (benthos is hand-set logistic, r 0.82/yr, K 10 t/cell).
+199.6 Checks: pytest 1360 passed / 12 skipped; train.py 1-generation
+    smoke run (pelagic_fish, 1 iteration) OK.
+199.7 Next: retrain (now fix71 --init-from, 199.10) with the seal K and re-read the
+    seal level and the gadoid M2 split; the porpoise food calibration
+    (199.3); the benthos-gadoid
+    drift over 5-15 years.
+199.8 The seals' 0 % pelagic diet: first accepted (user: option 1,
+    2026-10-23), then re-diagnosed and recalibrated in 199.9-199.10.
+    - Cost: at the K level (~15 t, ~350 t/yr) the seal M2 on gadoids is
+      ~0.15/yr against ~0.135 at a 90:10 diet (budget 0.12, set from 325
+      t/yr x 0.95 on 2500 t); on the pelagic pool ~0.003/yr is missing.
+      Both are small next to the other gaps (gadoids take 0.43/yr of
+      the pool vs the budget's 0.30).
+    - Why it does not resolve: SUPERSEDED by 199.9 (the reading here
+      - a weak learning signal, a higher a rejected as calibrating
+      against a learning problem - rested on the flawed 185.16
+      optimiser; at 3e-4 there was nothing to switch to).
+    - Prey switching itself already emerges in the trained policies
+      (user): the eat shares follow availability per cell and over
+      time - gadoids move between benthos, pelagic fish and zooplankton
+      (fix70, seed 20260530: 46/34/21 % in year 1, 43/44/14 % in year 3
+      as the benthos falls), and in the 15-year runs their diet follows
+      the cycles. The seals' 0 % is therefore not missing switching; why
+      it is 0 % is answered in 199.9.
+    - Alternative, if a gradual within-cell mix (rather than the
+      policy's allocation) is ever wanted: a multi-prey functional
+      response with shared handling, intake_j = a_j B_j / (1 + sum_k
+      a_k h_k B_k) (both engines, every pair recalibrated, all groups
+      retrained). Not needed for switching; not started.
+    - Correction: 199.3's diet check and seals.md (section 3 caveat,
+      uncertainty 6) first compared the model's 100 % gadoids with the
+      unlumped 51-56 % of real Koster seals; corrected to the lumped
+      85-95 % target. The K decision (199.4) is unaffected.
+199.9 Why the seals did not learn to switch: the attack rate, not the
+    learning (user question, 2026-10-23).
+    - Rig (scratchpad sw/switch.py): frozen fix70 policies (19:25 and
+      21:58), current library, one 1460-tick episode from the start
+      state (as in training), seeds 20260530 and 7. 'trained' = the
+      policy's eat shares; 'optimal' = same positions, rest and total
+      eat, the eat mass on the prey with the higher energy return per
+      unit share in each cell, the return computed with the engine's
+      own effective rate (interactions.visible_prey_biomass and
+      holling_a_eff: visible prey, pair floors, interference; the seal
+      pairs have no light multiplier). Reward proxy: mean
+      log(B_seal/B0) over the year.
+    - A first version with the 185.16 rate (total prey biomass) put
+      eat mass on herring where it was not the better prey and ended
+      BELOW the trained seal at a >= 1e-2: the 185.16 yardstick was
+      biased towards herring.
+    - Optimal seal by a (seed A / seed 7): biomass-weighted share of
+      cells where the pool is the better prey; pelagic share of the
+      diet by mass; gain in the proxy vs the trained seal:
+        3e-4   0.5 / 0.02 %   0.3 / 0.02 %   +0.004 / 0.000
+        1e-3   6.3 / 1.8 %    3.7 / 1.0 %    +0.002 / 0.000
+        2e-3   14 / 6.6 %     8.5 / 3.9 %    +0.003 / +0.001
+        3e-3   20 / 9.5 %     12.9 / 5.7 %   +0.007 / +0.001
+        1e-2   40 / 27 %      28 / 17 %      +0.011 / +0.004
+      Seal reward spread between ARS deltas is ~0.02 (sigma_f). At
+      3e-4 even the perfect switcher ate < 0.3 % pelagic fish: the
+      trained 0 % was essentially optimal. Cause of the miscalibration:
+      the visible fraction (herring rest ~38 %, squared under Type III)
+      and the pool at ~3 t/km2 since its K vs fix69's 4-7 (also
+      squared) - together ~10x.
+    - Gadoids switch because each of their three prey is the better one
+      in a large share of cells and the choice moves their reward.
+199.10 APPLIED (user: 1-3).
+    - fg_library.yaml: seals_preys_on_pelagic_fish max_intake_rate
+      3e-4 -> 2e-3 (comment), the middle of the 3-10 % target (seed
+      spread large). predation_mortality 0.0015 kept (~6 % of ~350 t/yr
+      = ~21 t of ~11,500 t, 0.0018/yr; not budget-relevant).
+      budget_gate: seals "any diet"; pelagic alone needs 9.4 t/cell
+      visible (was 63). AGENTS.md seal line updated.
+    - Seal eat channel reset (185.15 script): from the fix70 21:58
+      policies (policy_seals md5 2e60827b), net.2 row 6 (gadoids)
+      copied into row 8 (pelagic_fish), bias - 2.2 (bias -0.917 ->
+      -1.844); other groups unchanged. Stored in
+      results/pzbpgp248nsrpfix71_init/ (policy_seals md5 f3e49d2f).
+      At 2e-3 the reset seal puts 9.4 % of its eat mass on pelagic fish
+      everywhere, eats 1.5-2.3 % by mass and loses 0.003-0.007 in the
+      proxy against the un-reset policy: a uniform share costs energy
+      where gadoids are better, so training must turn it into a
+      cell-conditional switch (gain ~0.001-0.003) or it will drift back
+      to 0 as in fix69. The un-reset policy at 2e-3 still eats 0 %.
+    - Next run (started by the user at 23:14, see 200.6): train_gpu.py
+      --run-name pzbpgp248nsrpfix71 --init-from
+      results/pzbpgp248nsrpfix71_init with fix70's flags (the init dir must stay separate; --resume
+      would reload fix70's theta). Read the seal diet against 3-10 %
+      and the seal level against K (199.5) after a few generations.
+    - Checks: pytest 1360 passed / 12 skipped; train.py 1-generation
+      smoke run (seals) OK.
+
+================================================================
+200 WORLD WARM-UP BEFORE THE SCORED ROLLOUT; LOG-UNIFORM START TOTALS (2026-10-23)
+================================================================
+200.1 Why (user, after a review of the training start ranges): the
+    start totals ignore the season. Phytoplankton 11-28 t/km2 against the
+    model's own 0.05 (summer) to 14 (February peak); zooplankton 4.9-19.4
+    against 0.6 in January and 20 in April. Both 3-year inference seeds
+    (early-summer starts) grazed the phytoplankton down within a week
+    and gave the zooplankton a pulse (10 -> 24 t/km2 in 7 days vs 13 on
+    the same date a year later); a winter start puts the zooplankton
+    8-30x over its winter stock (the eval's survival_ticks 52, the
+    zooplankton reward -1.4). One to two months of every 1-year episode
+    were the world settling. The linear draw on [x/2, 2x] also had mean
+    1.25x and put two thirds of the worlds above x.
+    Ranges judged otherwise reasonable: gadoids 0.35-1.39 t/km2, pelagic
+    1.7-6.7, seals 5-30 t (K 15), subsurface phytoplankton, micro- and
+    benthos. Porpoises 6-18 t lie wholly below SCANS-IV's lower 95 %
+    bound (33 t; central ~84 t, section 199.3) - left until the porpoise
+    food calibration.
+200.2 Warm-up (lib/runners/warmup.py; flag --warmup-days D on train.py
+    and train_gpu.py, default 0 = off, converted with the run's tick
+    length). Each world first runs D days with the UNPERTURBED policies
+    (the current theta), and every candidate on that world starts its
+    scored rollout from the state that reaches. Shared, not per
+    candidate: the +/- candidates keep a common start (CRN, section
+    150), and nothing a candidate does goes unscored (a per-candidate
+    warm-up would forgive its own losses through the new baseline e0).
+    The calendar runs on: the scored rollout starts D days after the
+    sampled start day (still uniform over the year with
+    start_day_of_year: random).
+    - GPU (lib/gpu/trainer.py): a second RolloutRunner with one weight
+      set over the worlds (warm_runner; no reward variant), run in
+      train_step after refresh_worlds, every update (theta changes).
+      Its keys are the world keys folded with 70001; reserves and
+      nutrient pools are initialised as before at the sampled start;
+      biomass, reserve and the last hide fractions carry over
+      (RolloutRunner.reset(hidden=...)); world_scored_light = start + D
+      ticks mod the year. Warm-up observations are not merged into the
+      normalisation statistics. With a warm-up the per-pair reserve draw
+      (spawn randomize_energy on pair keys) no longer applies: every
+      candidate starts from its world's warm reserve. mean_biomass,
+      reward and sigma_f in training.jsonl come from the scored rollout
+      only.
+    - CPU (lib/runners/trainer.py, parallel_worker.py): inside every
+      co-evolution rollout task the env runs D days with the base
+      weights, then the candidate's weights are set and the reward
+      starts. The CPU tick draws its FG order and the seeding noise from
+      the global np.random, which is not re-seeded per task (worker
+      histories differ; this already made the +/- scored rollouts differ
+      in that noise before section 200). run_warmup therefore runs on a
+      stream seeded from the pair seed and restores the global state
+      afterwards: the +/- tasks reach the same warm state on any worker,
+      and the scored rollout draws as before. run_warmup clears the
+      observation and
+      action-statistic accumulators; --local_reward is attached after
+      the warm-up. The legacy tuple-task path is skipped when a warm-up
+      is on. The round-robin path (--no_coevolution) refuses it.
+    - Cost: 240 ticks (60 days) on the GPU take ~1.7 s per update
+      (measured with fix71 running alongside), against 110-280 s per
+      update: ~1 %. On the CPU trainer every task repeats the warm-up
+      (+D/n_eval_ticks, ~16 % at 60 of 365 days).
+    - Example (one world, fix71_init policies, 60 days): phytoplankton
+      13.1 -> 1.9 t/km2, zooplankton 10.9 -> 0.21 (a winter start),
+      subsurface phytoplankton 11.7 -> 0.6, microzooplankton 0.42 ->
+      0.17; gadoids 0.49 -> 0.44, pelagic 3.23 -> 2.81.
+200.3 Log-uniform start totals (lib/config/config_loader.
+    _sample_total_biomass, lib/gpu/spawn.WorldSpawner.biomass): exp of a
+    uniform draw between log(min) and log(max), rounded to whole tonnes
+    and clamped to the range, so [x/2, 2x] has median x. A non-positive
+    lower bound keeps the uniform integer draw. No flag; inference
+    starts (inference_initial_biomass) are unchanged.
+200.4 Not changed: the survival evaluation and the --visual CPU probe
+    still start from the inference biomasses with no warm-up (they
+    describe an inference run from today's state), so their zooplankton
+    numbers keep the start transient.
+200.5 Tests: tests/test_warmup.py (12: day->tick conversion and
+    refusals; run_warmup clears the accumulators and, seeded, restores
+    the global stream; on a 6x6 mareld2 env two RNG histories give two
+    warm states unseeded and one seeded; CPU sequential and worker paths
+    reach the same warm state for two different candidate weights and
+    RNG histories and restore the candidate's weights; round-robin
+    refuses;
+    GPU candidates start from the warm state (b0) and the warm state is
+    independent of the perturbations; scored calendar start = start + D;
+    CPU and GPU draws inside the range with median at the geometric
+    mean, uniform fallback at min 0). pytest 1372 passed / 12 skipped;
+    train.py 1-generation smoke runs with --warmup-days 2, sequential
+    (--workers 1) and parallel (--workers 4), OK. CUDA end to end
+    (cuda-graph, 2 deltas, 64 ticks, --warmup-days 2): --init-from run,
+    then --resume with the flag, and a --visual run under
+    SDL_VIDEODRIVER=dummy - all OK; gpu_run.json records warmup_days.
+    A first 1460-tick CUDA comparison (with and without 60 days) shared
+    the GPU with fix71 for ~10 min and was stopped; fix71's
+    seconds_per_update for those minutes is inflated.
+200.6 fix71 (started by the user 2026-10-23 23:14, --init-from
+    results/pzbpgp248nsrpfix71_init, fix70's flags) predates this code
+    (23:34-23:37): it trains with the seal K and a 2e-3, but without a
+    warm-up and with the linear draw. A running process keeps the code
+    it imported. To use both: stop it and restart with --resume
+    --warmup-days 60 (the trainer state is compatible).
+
+================================================================
+201 PLANKTON VS A17: DIAGNOSIS AND A RECYCLING TEST IN SCRATCH (2026-10-24)
+================================================================
+201.1 Questions (user): are the plankton start biomasses right, and
+    what brings the model closer to A17?
+    - Start totals: phytoplankton 80 000 t was 93 % of its K when it was
+      the whole column (113.9); section 180 added the subsurface
+      producer's 40 000 t on top, so the column starts at 120 000 t =
+      33 t/km2 (A17's March peak; 1.75x A17's annual mean of 18.9 at
+      C:chl 50, C:WW 0.1; 3x the model's own 10.8), split 2:1 mixed :
+      subsurface on any date while the model holds 70-99 % in the
+      subsurface layer Mar-Oct. Proposal (not applied): total ~68 000 t
+      (A17 annual mean), split 18 000 / 50 000 by the model's annual
+      layer shares; ranges x/2-2x.
+201.2 Rig: the 181-182 plankton probe (scratchpad pl/probe.py, scored
+    by pl/sc.py against A17 nitrate, surface and column chl and
+    zooplankton), frozen fix70 policies of 21:58, current library,
+    seeds 20260530 and 7, 3 years after 1 burn-in. Base: NO3 0.67, NO3d
+    1.11, r(P,chl) +0.83, col/obs 0.57, PP 46.6 g C/m2/yr (75 %
+    subsurface), Z mean 5.9.
+201.3 Diagnosis.
+    - Yardstick: with a seasonal C:chl (~30 in winter, ~100 in summer)
+      instead of 50 all year, the column ratio is ~0.8 in Dec-Mar and
+      0.25-0.45 in May-Nov: the real gaps are summer and autumn.
+    - Production is capped by the new-N supply: reservoir exchange x
+      (N_res - N_sub) from the manifest and the model's subsurface
+      nitrate gives ~39 g C/m2/yr, the model's PP is 40-47 (f-ratio
+      ~0.9; field summer f < 0.1, 179.2). Regional 14C PP is 190-290
+      (Kattegat, S Skagerrak front, Gullmar mouth 241; plankton.md
+      section 3; no open-Skagerrak value found).
+    - The summer mixed layer is grazed out: zooplankton (Type II)
+      takes the mixed-layer producer to 0.01-0.06 ug chl/l (A17
+      0.46-0.94), below the microzooplankton's food threshold (1.2 t/km2
+      at 10 m = 0.24 ug/l), so microzooplankton is ~0 from May to
+      December and the autumn bloom has no seed stock (Oct-Nov column
+      0.25).
+201.4 Parameter levers, no recycling (col/obs never rises):
+      variant                         NO3   r(P,chl) col/obs  note
+      Type III zoo->phyto a 0.03      0.60  +0.92    0.55     summer surface chl x5-15
+      Type III a 0.01                 0.73  +0.85    0.50     frozen zooplankton loses its spring
+      A17 mixed-layer depths (181.9)  0.61  +0.88    0.55     better winter Z
+      both of the first and third     0.50  +0.91    0.50     winter-spring column lower
+      micro food_threshold 0.6        0.47  +0.83    0.51     micro eats the spring bloom, summer as empty (cf. 179.3)
+    Type III results are frozen-policy results.
+201.5 Recycling in two layers (pl/probe_det.py hook, section 179.2
+    values): a detritus pool per layer gets 0.5 of zooplankton and
+    microzooplankton M1 plus the microzooplankton's egesta, (1 - GGE
+    0.3) x (1 - excretion_regeneration 0.571) = 0.30 of its intake (the
+    engine already returns 0.571 x 0.7 = 0.40 as excretion), split
+    between the layers by where each grazer fed that tick;
+    remineralised at 0.4 /d at 10 C (Q10 2, mean_0_50m temperature)
+    into that layer's nutrient pool; sinks 0.5 m/d mixed -> subsurface
+    -> export (pools in producer-biomass N equivalents; zooplankton and
+    phytoplankton N per t WW taken equal, 0.017-0.018). (A run in
+    between with egesta 0.129 rested on a misreading of
+    excretion_regeneration as a share of the intake: wrong, discarded.)
+      variant (2 seeds agree)         NO3   NO3d  r(P,chl) col/obs PP    Z mean
+      base                            0.67  1.11  +0.83    0.57    46.7  6.0
+      recycling, share 0.5            0.64  0.86  +0.87    0.61    57.6  7.2
+      same, instant remineralisation  0.64  0.86  +0.87    0.61    58.5  7.2
+      recycling + Type III a 0.03     0.44  0.90  +0.92    0.59    56.6  7.2
+      same, instant                   0.42  0.90  +0.92    0.59    57.4  7.3
+      (share 0.7 / share 1 instant: PP 61 / 69, NO3 0.72 / 0.97 -
+      summer surface nitrate too high)
+      literature-side subsurface (I_k 60, May-Aug exchange 0.05): PP 33,
+      Z Jul-Aug 0.9; with recycling PP 41, Z Jul-Aug 1.8 - recycling
+      does not rescue it (181.8, 182.10).
+    - Remineralised 10.7 g C/m2/yr, export 0.4: nearly all detritus is
+      remineralised in its layer within days, so instant regeneration
+      (a share of the M1 and the egesta straight into the layer pools,
+      no new state) gives the same result as a pool.
+    - What it fixes: zooplankton May-Jul 23.6 / 12.4 / 8.0 t/km2 (A17
+      26.0 / 11.4 / 6.9; base 16.3 / 7.8 / 6.2), subsurface nitrate in
+      April-May 3.0 / 0.75 (A17 5.6 / 3.4; base 1.9 / 0.33), column
+      April-May 0.98-1.03 of A17, herring 3.15 -> 3.35 t/km2. With Type
+      III a 0.03 the summer surface nitrate matches A17 (0.05-0.09 vs
+      0.10; recycling alone leaves ~0.25 unused) and the summer surface
+      chl is 0.15-0.19 of A17 (0.03-0.07).
+    - What it does not fix: Oct-Nov column 0.22-0.28, PP 57 against
+      190-290 (f-ratio ~0.7), the column 0.59-0.61.
+201.6 Nothing applied. Implementation, if chosen: a regeneration share
+    on the M1 of zooplankton and microzooplankton and on the
+    microzooplankton's egestion, routed per cell into the mixed and
+    subsurface pools by that tick's intake split (both engines; no new
+    state, no observation change, checkpoints valid; the budget and the
+    zooplankton's derived g unchanged). Optionally with Type III a 0.03
+    on zooplankton -> phytoplankton (needs a zooplankton retrain to
+    judge). The autumn needs a seed stock that survives the summer -
+    still open (182.12's second producer is parked).
+
+================================================================
+202 REGENERATED NITROGEN IN THE ENGINES; TYPE III ON ZOO -> PHYTOPLANKTON (2026-10-24)
+================================================================
+202.1 User's call after 201: build the recycling in, with Type III.
+202.2 Engine (lib/environments/ecosystem_env/regeneration.py, both
+    engines; no new state, no observation change, checkpoints valid):
+    - Species keys mortality_regeneration (0-1, any group) and
+      egestion_regeneration (0-1, a grazing NDM); refused outside
+      [0, 1]; inert without nutrient pools (env._has_regeneration).
+    - M1 return: the CPU records each regenerating group's M1 loss per
+      cell where it is applied (DM and NDM M1; the regional K loss is
+      not M1 and is not returned) and adds share x loss to the pools at
+      the END of the population step, after every group's growth (the
+      GPU does the same from biomass x (1 - keep)), so the order of the
+      FGs does not matter and the return feeds the next tick.
+    - Layer split per world and tick: a group's mixed-layer share =
+      its intake from the mixed producer / its intake from both
+      producers, a grazer prey (microzooplankton) counted by that
+      grazer's own split; a group that fed on neither: thickness share
+      M(t)/bottom (env.regen["fallback"], per year tick). The intake
+      comes from this tick: env._tick_dm_intake (predation) and
+      env._tick_ndm_intake (apply_ndm_grazing); on the GPU from the
+      predation's actual intake (step passes dm_feed) and ndm_grazing's
+      per-entry totals. Grid-level, not per cell: the zooplankton has
+      moved and drifted between predation and M1 (that is also what the
+      201 scratch test used). Without the subsurface layer everything
+      goes to the one producer's pool.
+    - Egesta: the NDM grazer entry carries pool = (1 - gge)(excretion +
+      egest (1 - excretion)), returned to the grazed producer's own pool
+      in apply_ndm_grazing / ndm_grazing (so the layer split is the
+      prey's layer).
+    - GPU: regen_fraction() keeps its DM rows as host-side ints (a
+      first version read dm_index back inside the captured tick and
+      broke 20 CUDA-graph / no-readback tests).
+202.3 Library: zooplankton mortality_regeneration 0.5;
+    microzooplankton mortality_regeneration 0.5, egestion_regeneration
+    1.0 (pool share 0.7 x (0.571 + 0.429) = 0.70 of its intake: 0.40
+    excretion + 0.30 egesta); zooplankton_preys_on_phytoplankton
+    functional_response 3, max_intake_rate 0.05 -> 0.03 (half-saturation
+    1/sqrt(a h) = 2.9 t/km2 at 10 m); the subsurface pair stays Type II.
+    Caveat (pre-existing, zoo -> micro has it since 178):
+    mixed_layer_reference_m scales a linearly by M_ref/M(t); for a Type
+    III response on a concentration the scale would be squared, so the
+    2.9 t/km2 half-saturation holds at M = 10 m only and drifts as
+    sqrt(M/M_ref) otherwise. The 0.03 was fitted on the engine as it is.
+    budget_gate: zooplankton "any diet". FG editor fields and help
+    texts for both keys (fgconfig.py main and NDM rows, field_help.py).
+202.4 Check against the scratch result (pl/probe.py, the engine itself,
+    no hook; frozen fix70 21:58 policies, seeds 20260530 / 7): NO3 0.43
+    / 0.43, NO3d 0.90 / 0.91, r(P,chl) +0.91 / +0.92, col/obs 0.59, PP
+    57.6 / 57.3 g C/m2/yr, Z mean 7.2 / 7.4 - the 201.5 "recycling +
+    Type III, instant" row (0.41-0.43, 57.3-57.5). Frozen policies: the
+    zooplankton was trained on Type II and without the return; retrain.
+202.5 Tests: tests/test_regeneration.py (13: parsing and refusals;
+    inert without pools or share; the CPU return split 3:1 by intake
+    and by thickness for a group that did not feed; conservation over a
+    population step (pools gain share x booked M1); the egesta share in
+    the grazer entry and in the pool; GPU parity on a two-layer fixture
+    (two start ticks), a one-pool fixture with a grazer, and a 5x6
+    mareld2 world with seed_rate zeroed in a library copy - the
+    reference draws seeding from np.random, the tensor engine takes it
+    injected, and that mismatch already failed the committed library).
+    tests/test_gpu_ecosystem.make_env gained regen= and extra_prey=.
+    test_half_saturation and test_holling_response updated for the Type
+    III pair. pytest 1385 passed / 12 skipped; train.py 1-generation
+    smoke and a CUDA train_gpu smoke (--warmup-days 2) OK.
+202.6 fix71 (restarted by the user 00:08 with --resume --warmup-days
+    60, stopped 00:45 after 34 updates) trained without this. Next: a
+    run with the new plankton world; read the zooplankton spring and
+    summer, the surface chl and the autumn against A17 with pl/sc.py.

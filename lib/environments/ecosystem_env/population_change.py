@@ -5,6 +5,7 @@ import numpy as np
 from lib.environments.ecosystem_env import interactions
 from lib.world import nutrients
 from lib.environments.ecosystem_env import natural_mortality as natural_mortality_module
+from lib.environments.ecosystem_env import regeneration
 
 
 DEFAULT_MORTALITY_MULTIPLIER = 1.0
@@ -192,7 +193,9 @@ def _apply_non_decision_maker_mortality(env, fg_id, fg):
         return
     keep = np.float32(max(0.0, 1.0 - rate))
     before = float(fg.biomass.sum())
+    start = fg.biomass
     fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+    regeneration.record_m1(env, fg_id, start, fg.biomass)
     losses = getattr(env, "loss_natural", None)
     if losses is not None:
         losses[fg_id] = (float(losses.get(fg_id, 0.0))
@@ -260,9 +263,11 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
                 for name, part in zip(("visual", "tactile", "other"), parts):
                     row[name] += float((biomass * part * scale).sum())
         before = float(fg.biomass.sum())
+        start = fg.biomass
         fg.energy_reserve = (fg.energy_reserve * keep).astype(
             env.dtype, copy=False)
         fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+        regeneration.record_m1(env, fg_id, start, fg.biomass)
         # Book M1 like the other causes, so the loss breakdown can show it
         # (section 132). ``getattr`` keeps hand-built test envs working.
         losses = getattr(env, "loss_natural", None)
@@ -413,6 +418,7 @@ def apply_ndm_grazing(env):
     """Section 177: grazing non decision makers, before every group's
     population change (deterministic order, mirrored on the GPU)."""
     from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
+    env._tick_ndm_intake = {}
     for entry in getattr(env, "ndm_grazers", []):
         grazer, prey = env.fgs[entry["grazer"]], env.fgs[entry["prey"]]
         rate = interactions.ndm_grazing_rate(env, entry, prey.biomass,
@@ -426,11 +432,13 @@ def apply_ndm_grazing(env):
                           + np.float32(entry["gge"]) * intake).astype(
                               env.dtype, copy=False)
         if interactions.is_nutrient_producer(env, entry["prey"]):
+            share = entry.get("pool", entry["regen"] * (1.0 - entry["gge"]))
             prey.energy_reserve = (
-                prey.energy_reserve
-                + np.float32(entry["regen"] * (1.0 - entry["gge"])) * intake
+                prey.energy_reserve + np.float32(share) * intake
             ).astype(env.dtype, copy=False)
         total = float(intake.sum())
+        key = (entry["grazer"], entry["prey"])
+        env._tick_ndm_intake[key] = env._tick_ndm_intake.get(key, 0.0) + total
         env.loss_predation[entry["prey"]] = (
             float(env.loss_predation.get(entry["prey"], 0.0)) + total)
         row = env.intake_by_pred_prey.setdefault(entry["grazer"], {})
@@ -479,3 +487,5 @@ def apply_population_change(env, clip_nonviable=True):
     if clip_nonviable:
         _clip_biomass_based_on_min_thresholds(env)
     _zero_energy_in_empty_cells(env)
+    # Section 202: after every group's growth, as on the GPU.
+    regeneration.apply(env)

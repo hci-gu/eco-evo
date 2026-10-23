@@ -6,8 +6,8 @@ Contracts asserted:
    positive number; ``capacity_loss_rate`` = r_max / (1460 K) and needs
    r_max.
 2. The loss is outside the derived growth rate: K changes no budget term.
-3. The loader derives ``capacity_loss_rate`` (the library's gadoids
-   and pelagic fish carry it) and rescales it as a flux for another tick length.
+3. The loader derives ``capacity_loss_rate`` (the library's gadoids,
+   pelagic fish and seals carry it) and rescales it as a flux for another tick length.
 4. In the population step a DM with it loses the fraction c * B_region
    (grid-mean density) of its biomass and reserve, booked as a natural
    loss, with or without --mortality; another DM is untouched.
@@ -81,7 +81,7 @@ def test_capacity_is_outside_the_growth_budget():
     assert capped.describe() == plain.describe()
 
 
-CAPPED = ("gadoids", "pelagic_fish")      # sections 185, 185.20
+CAPPED = ("gadoids", "pelagic_fish", "seals")   # sections 185, 185.20, 199
 
 
 def test_loader_derives_the_rate_for_the_library_groups():

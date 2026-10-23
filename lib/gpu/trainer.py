@@ -37,7 +37,7 @@ class TensorARSTrainer:
                  survival_bonus=0.0, survival_threshold=0.01,
                  entropy_coef=0.0, argmax_penalty=0.0,
                  execution="cuda-graph", graph_ticks=32, pairs_per_batch=None,
-                 population_stability=None, local_reward=None):
+                 population_stability=None, local_reward=None, warmup_ticks=0):
         if n_deltas < 1 or worlds < 1:
             raise ValueError("n_deltas and worlds must be positive")
         if sigma <= 0 or not math.isfinite(sigma) or lr < 0 or not math.isfinite(lr):
@@ -62,6 +62,11 @@ class TensorARSTrainer:
             raise ValueError("pairs_per_batch must be positive")
         self.pairs_per_batch = min(self.pairs_per_batch, n_deltas)
         self.sigma, self.lr = float(sigma), float(lr)
+        # Section 200: ticks each world runs with the unperturbed theta
+        # before the scored rollout (0 = off).
+        self.warmup_ticks = int(warmup_ticks)
+        if self.warmup_ticks < 0:
+            raise ValueError("warmup_ticks must be >= 0")
         self.entropy_coef, self.argmax_penalty = float(entropy_coef), float(argmax_penalty)
         self.obs_normalize = bool(obs_normalize)
         self.seed = self.model.tensor(seed, torch.int64)
@@ -106,6 +111,19 @@ class TensorARSTrainer:
             self._refresh_impacts(None)
         self.pair_index = torch.arange(self.n_deltas, device=m.device, dtype=torch.int64)
         self.runner = RolloutRunner(m, self.bank, 2 * self.pairs_per_batch, self.worlds, **self.runner_options)
+        if hasattr(self, "warm_runner"):
+            self.warm_runner.close()
+            del self.warm_runner
+        if self.warmup_ticks > 0:
+            # One weight set (theta) over the worlds; its rewards are never
+            # read, so no reward variant is needed.
+            options = dict(self.runner_options, population_stability=None, local_reward=None,
+                           integral_reward=True, legacy_reward=False)
+            self.warm_runner = RolloutRunner(m, self.bank, 1, self.worlds, **options)
+            self.world_warm_biomass = torch.zeros((self.worlds, m.G, m.C), device=m.device)
+            self.world_warm_reserve = torch.zeros_like(self.world_warm_biomass)
+            self.world_warm_hidden = torch.zeros_like(self.world_warm_biomass)
+            self.world_scored_light = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
         self.chunks = []
         for start in range(0, self.n_deltas, self.pairs_per_batch):
             count = min(self.pairs_per_batch, self.n_deltas - start)
@@ -183,6 +201,8 @@ class TensorARSTrainer:
 
     def close(self):
         self.runner.close()
+        if hasattr(self, "warm_runner"):
+            self.warm_runner.close()
 
     def _merge_observations(self, sums, squares, count):
         old_count = self.obs_count[:, None]
@@ -197,6 +217,35 @@ class TensorARSTrainer:
         self.obs_count.add_(count)
 
     @torch.no_grad()
+    def _warm_up(self):
+        """Run every world ``warmup_ticks`` with the unperturbed theta.
+
+        Section 200. The end state (biomass, reserve, hide fractions) is
+        the start of every candidate's scored rollout on that world, and
+        the calendar runs on, so the scored start is the world's sampled
+        start day plus the warm-up. Keys are the world's, folded apart
+        from the scored rollouts' pair keys.
+        """
+        m, runner = self.model, self.warm_runner
+        keys = fold_in(fold_in(self.seed.expand(self.worlds), self.iteration), self.world_index + 70001)
+        b = self.world_biomass
+        r = m.initial_nutrients(self.spawner.reserves(b, keys), self.world_light_start)
+        runner.set_weights(self.bank.pack([w[None] for w in self.theta]))
+        impacts = (self.world_impact_loss, self.world_impact_cost) if m.has_impacts else None
+        impact_obs = self.world_impact_obs if m.n_obs_imp else None
+        runner.reset(b, r, keys, self.warmup_ticks, self.obs_mean, self.obs_var, self.temperature,
+                     light_start=self.world_light_start, impacts=impacts, impact_obs=impact_obs)
+        runner.run(self.warmup_ticks)
+        self.world_warm_biomass.copy_(runner.biomass)
+        self.world_warm_reserve.copy_(runner.reserve)
+        self.world_warm_hidden.copy_(runner.hidden)
+        if m.calendar:
+            self.world_scored_light.copy_(torch.remainder(self.world_light_start + self.warmup_ticks,
+                                                          m.light_period))
+        else:
+            self.world_scored_light.copy_(self.world_light_start)
+
+    @torch.no_grad()
     def train_step(self, target_species=None, n_eval_ticks=15, world_epoch=None, deltas=None):
         if n_eval_ticks < 1:
             raise ValueError("n_eval_ticks must be positive")
@@ -205,6 +254,8 @@ class TensorARSTrainer:
             raise ValueError("Targets must be unique active decision makers")
         selected = set(targets)
         self.refresh_worlds(world_epoch)
+        if self.warmup_ticks > 0:
+            self._warm_up()
         deltas = self.make_deltas() if deltas is None else deltas
         if len(deltas) != len(self.theta):
             raise ValueError("Provide one perturbation tensor per decision maker")
@@ -232,19 +283,28 @@ class TensorARSTrainer:
             keys = fold_in(fold_in(self.seed.expand(pairs.numel()), self.iteration), pairs)
             keys = fold_in(keys[:, None], self.world_index[None] + 40001)
             keys = torch.cat((keys, keys), 0).flatten()
-            b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
-            r = self.spawner.reserves(b, keys)
-            light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
-            r = m.initial_nutrients(r, light)
             per_pair = lambda field: field[None].expand(
                 2 * self.pairs_per_batch, *field.shape).reshape(runner.E, *field.shape[1:])
+            hidden = None
+            if self.warmup_ticks > 0:
+                # Section 200: every candidate starts from its world's
+                # warmed-up state.
+                b = per_pair(self.world_warm_biomass)
+                r = per_pair(self.world_warm_reserve)
+                hidden = per_pair(self.world_warm_hidden)
+                light = per_pair(self.world_scored_light)
+            else:
+                b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
+                r = self.spawner.reserves(b, keys)
+                light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
+                r = m.initial_nutrients(r, light)
             impacts = impact_obs = None
             if m.has_impacts:
                 impacts = (per_pair(self.world_impact_loss), per_pair(self.world_impact_cost))
             if m.n_obs_imp:
                 impact_obs = per_pair(self.world_impact_obs)
             runner.reset(b, r, keys, n_eval_ticks, self.obs_mean, self.obs_var, self.temperature,
-                         light_start=light, impacts=impacts, impact_obs=impact_obs)
+                         light_start=light, impacts=impacts, impact_obs=impact_obs, hidden=hidden)
             runner.run(n_eval_ticks)
             rewards, actions = runner.results(n_eval_ticks)
             self.rewards[:, start:start + count].copy_(rewards.reshape(2, self.pairs_per_batch, self.worlds, m.D)[:, :count].mean(2))

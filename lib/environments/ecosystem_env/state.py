@@ -7,7 +7,7 @@ import torch
 from lib.world import nutrients, temperature
 from lib.world.growth_budget import income_growth
 from lib.environments.ecosystem_env import (
-    grid_masks, impacts, interactions, natural_mortality)
+    grid_masks, impacts, interactions, natural_mortality, regeneration)
 
 
 @dataclass
@@ -177,6 +177,8 @@ def build_static_caches(env):
         and not getattr(env, "layer_exchange", None))
     # Grazing non decision makers (section 177: microzooplankton).
     interactions.build_ndm_grazing(env)
+    # Section 202: consumer M1 returned to the nutrient pools.
+    regeneration.build(env)
 
     # Beddington-DeAngelis interference coefficient w_X [1/ton], per DM.
     # Broadcast shape (N_dm, 1, 1, 1) so it multiplies the predator's own

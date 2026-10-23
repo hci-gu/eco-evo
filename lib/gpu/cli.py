@@ -6,6 +6,7 @@ import re
 
 from lib.gpu.config import DEFAULT_LIBRARY, EnvironmentBuilder
 from lib.runners.population_stability import add_population_arguments, population_options
+from lib.runners.warmup import add_warmup_argument, warmup_ticks
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env.population_change import (
     DEFAULT_MASS_BALANCE, add_mass_balance_argument,
@@ -66,6 +67,7 @@ def add_common_arguments(parser):
     parser.add_argument("--execution", choices=("eager", "compile", "cuda-graph", "compile-graph"), default="cuda-graph")
     parser.add_argument("--graph-ticks", type=positive_int, default=32)
     parser.add_argument("--pairs-per-batch", type=positive_int, help="Limit simultaneous perturbation pairs to fit VRAM")
+    add_warmup_argument(parser)
 
 
 def parse_training_args(parser, argv=None):
@@ -109,7 +111,9 @@ def trainer_options(args):
                 local_reward=local_reward_options(args),
                 entropy_coef=args.entropy_coef, argmax_penalty=args.argmax_penalty,
                 execution=args.execution, graph_ticks=args.graph_ticks,
-                pairs_per_batch=args.pairs_per_batch)
+                pairs_per_batch=args.pairs_per_batch,
+                warmup_ticks=warmup_ticks(getattr(args, "warmup_days", 0.0),
+                                          int(getattr(args, "tick_length", 6))))
 
 
 def targets_from_args(args, dm_ids):

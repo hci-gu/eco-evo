@@ -123,6 +123,9 @@ def apply_predation(env, actions):
 
     intake_by_prey = actual_intake.sum(axis=0)
     intake_by_pred_prey = actual_intake.sum(axis=(2, 3))
+    # Section 202: this tick's intake per pair, for the layer split of
+    # the regenerated M1.
+    env._tick_dm_intake = intake_by_pred_prey
     for i, pred_id in enumerate(env.dm_ids):
         row = env.intake_by_pred_prey.setdefault(pred_id, {})
         for j, prey_id in enumerate(env.global_fg_order):

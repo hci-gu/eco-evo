@@ -12,6 +12,7 @@ import re
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.training_progress import (add_progress_arguments, validate_progress_arguments,
                                            make_visual_progress, probe_due)
+from lib.runners.warmup import add_warmup_argument, warmup_ticks
 from lib.world.tick_time import (
     LIBRARY_TICK_HOURS, add_tick_length_argument, resolve_tick_hours,
 )
@@ -1571,6 +1572,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     parser.add_argument("--lr", type=float, default=0.03, help="Learning rate (default: 0.03).")
     parser.add_argument("--sigma", type=float, default=0.1, help="Exploration noise (default: 0.1).")
     parser.add_argument("--n_eval_ticks", type=int, default=15, help="Number of time steps (ticks) per evaluation rollout (default: 15).")
+    add_warmup_argument(parser)
     parser.add_argument("--project", type=str, help="Path to project file (.yaml)")
     parser.add_argument("--grid", type=parse_grid_arg, default=None,
                         help="Grid dimensions as n*m (e.g. 30*30). Both dimensions must be >= 3. Default: 60*60.")
@@ -2186,6 +2188,13 @@ def main(argv=None, *, on_step=None, confirm=True):
         return
 
     # Create the trainer with all relevant policy dimensions
+    # Section 200: world warm-up before each scored rollout.
+    _warmup_ticks = warmup_ticks(args.warmup_days, TICK_HOURS)
+    if _warmup_ticks and not args.coevolution:
+        raise SystemExit("--warmup-days needs co-evolution (drop --no_coevolution)")
+    if _warmup_ticks:
+        print(f"World warm-up: {args.warmup_days:g} days = {_warmup_ticks} ticks with the "
+              "unperturbed policies before each scored rollout (section 200)")
     trainer = ARSTrainer(env_builder_local, policy_params, sigma=args.sigma, lr=args.lr, n_deltas=n_deltas,
                          n_workers=n_workers, alpha=args.alpha, beta=args.beta,
                          obs_normalize=obs_norm_enabled, top_deltas=top_deltas_resolved,
@@ -2199,7 +2208,8 @@ def main(argv=None, *, on_step=None, confirm=True):
                          survival_threshold=args.survival_threshold,
                          legacy_reward=args.legacy_reward,
                          population_stability=population_stability,
-                         local_reward=local_reward)
+                         local_reward=local_reward,
+                         warmup_ticks=_warmup_ticks)
 
     # Wire the visualiser into the trainer so the pygame event queue gets
     # pumped from the main thread every ~50 ms while we wait on the

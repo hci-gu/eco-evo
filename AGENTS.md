@@ -66,10 +66,12 @@ fabricates mass.
   `porpoises`, `seals`, `seabirds`. `mareld2.yaml` mutes only `seabirds`;
   seals (harbour seals only) are on since section 166 and spawn on
   gadoids, which carry ~90 % of their diet (pair attack rates 0.2,
-  Type II, vs the pelagic pool 3e-4, Type III - a Type III `a` is per
+  Type II, vs the pelagic pool 2e-3, Type III - a Type III `a` is per
   (t/cell)^2; 0.015 made fix60's seals 85 % herring eaters, section
-  168; 1e-4 gave fix68's seals no pelagic fish at all, 185.10; 3e-4
-  gives a seal eating the better prey per cell ~10 %, 185.16).
+  168; 1e-4 gave fix68's seals no pelagic fish at all, 185.10; at 3e-4
+  (185.16) even a perfectly switching seal on fix70's fields took
+  < 0.3 %, at 2e-3 4-9 % - judge diets with the engine's VISIBLE prey,
+  section 199.9).
 - Non decision makers: `phytoplankton` (nutrient-limited since 172),
   `subsurface_phytoplankton` (section 180: the A17 subsurface
   chlorophyll maximum, the same algae in the layer [M(t), 30 m],
@@ -109,8 +111,8 @@ fabricates mass.
   the bottom-trawl map too (section 165).
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
   is the attack rate a. A pair may override it (`<pred>_preys_on_<prey>:
-  max_intake_rate`) to set the half-saturation 1/(a h) without moving the
-  ceiling - zoo -> phyto uses 20 t/km2 (section 134).
+  max_intake_rate`) to set the half-saturation 1/(a h) (Type III:
+  1/sqrt(a h)) without moving the ceiling.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
@@ -159,7 +161,11 @@ fabricates mass.
   pelagic pool down and crashed (184.13). Pelagic fish: r_max 0.34
   (site mix, today's recruitment) and K 5.0 since 185.20 - stock-scale
   compensation plus net emigration; without it the pool grazed the
-  zooplankton down year after year (185.17-19).
+  zooplankton down year after year (185.17-19). Seals: K 0.0041667
+  (= the 15 t start, no hunt impact; section 199) - the grid holds the
+  offshore tail of a metapopulation regulated off the grid; without it
+  they grew ~6 %/yr on gadoids, halved them and crashed. Porpoises
+  have no K (section 199: the gap is their food calibration).
   With the daylight calendar a producer with `light_saturation` grows at
   `growth_rate * P(t)/P_ref` (section 138; 0 at night, needs the site's
   light climate in the manifest). The old `seasonal_amplitude` /
@@ -184,9 +190,12 @@ fabricates mass.
   therefore GROSS (0.1675/tick): microzooplankton carries the 60 %
   micrograzing as M2 147/yr. A pair with `mixed_layer_reference_m` has
   a(t) = a M_ref/M(t) (grazers feed on concentration); the zooplankton
-  pairs use it (half-saturation 50 ug C/l = 5 t/km2 at 10 m).
-  Zooplankton -> microzooplankton is Type III (prey switching, section
-  178): with Type II the trained zooplankton grazed it extinct in March.
+  pairs use it (half-saturation 50 ug C/l = 5 t/km2 at 10 m on the
+  subsurface pair). Zooplankton -> microzooplankton is Type III (prey
+  switching, section 178): with Type II the trained zooplankton grazed
+  it extinct in March. Zooplankton -> (mixed-layer) phytoplankton is
+  Type III too since section 202 (a 0.03, half-saturation 2.9 t/km2):
+  Type II grazed the summer mixed layer to ~0.01 ug chl/l.
   A pair on a subsurface prey scales by M_ref/H(t), H = bottom - M(t)
   (section 180). A grazing pair may carry an edible share of a producer
   with a pool, `e = edibility_floor + (1 - floor) N/(N + K)` with K
@@ -194,6 +203,16 @@ fabricates mass.
   microzooplankton -> subsurface phytoplankton (0.1, 2 umol/l; the
   late-summer Ceratium layer at the pycnocline), which stocks the
   autumn entrainment and raised October-November zooplankton.
+- Regenerated N (section 202): `mortality_regeneration` (0-1) returns
+  that share of a group's M1 to the nutrient pools in the same tick,
+  split mixed / subsurface by where it fed this tick (thickness shares
+  if it fed on neither); `egestion_regeneration` on a grazing NDM
+  returns that share of its egesta (1 - gge)(1 - excretion) to the
+  prey's pool. Zooplankton and microzooplankton 0.5, micro egesta 1.0.
+  Both engines add the M1 return after every group's growth. It lifted
+  PP 47 -> 57 g C/m2/yr and the May-July zooplankton to A17 levels; the
+  production was capped by the new-N supply (~39 g C, f-ratio ~0.9).
+  Not in the growth budget (nitrogen, not consumer mass).
 - M1 can be exposure-weighted (section 139: `m1_visual_share`,
   `m1_tactile_share`, `depth_risk_ratio`): visual part follows the
   visible biomass and the light, tactile part is stronger on hidden
@@ -265,6 +284,11 @@ python3 tools/biomass_html.py results/<run-name>      # -> plots.html
 Useful flags: `--profile sanity|info|deep` (run-size presets; action hacks are off with or without one),
 `--visual`, `--rollouts_per_delta`, `--mortality on`,
 `--tick-length HOURS` (1-6, default 6; section 106),
+`--warmup-days D` (train.py with co-evolution and train_gpu.py: each world
+first runs D days with the unperturbed policies, shared by the +/-
+candidates, and the reward starts from that state - the plankton settle
+from the season-blind start totals; default 0, section 200; start totals
+are drawn log-uniformly from the manifest ranges),
 `--mortality_multiplier FACTOR` (scales every FG's `natural_mortality`;
 `keep = 1 - FACTOR*rate`, needs `--mortality on`, section 88),
 `--no-mass-balance` (revert to the pre-116 growth term, which adds biomass

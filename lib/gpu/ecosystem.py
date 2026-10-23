@@ -182,11 +182,26 @@ class TensorEcosystem:
                               (float(entry["edibility"][0]),
                                table(entry["edibility"][1]))),
                 "gge": float(entry["gge"]),
-                "pool": (float(entry["regen"] * (1.0 - entry["gge"]))
+                "pool": (float(entry.get("pool", entry["regen"] * (1.0 - entry["gge"])))
                          if entry["prey"] in getattr(env, "nutrient_regeneration", {})
                          else 0.0),
                 "temperature": table(entry["temperature"]),
                 "scale": table(entry["scale"])})
+        # Section 202, mirror of ``regeneration``: a share of each group's
+        # M1 back to the mixed / subsurface pool, split by where it fed.
+        self.regen_on = bool(getattr(env, "_has_regeneration", False))
+        if self.regen_on:
+            R = env.regen
+            self.regen_share = tensor([R["shares"].get(f, 0.0) for f in self.ids])[None, :, None]
+            self.regen_m = self.ids.index(R["mixed"])
+            self.regen_d = None if R["subsurface"] is None else self.ids.index(R["subsurface"])
+            self.regen_fallback = tensor(np.asarray(R["fallback"], dtype=np.float32))
+            self.regen_grazers = [self.ids.index(g) for g in R["grazers"]]
+            self.regen_groups = [self.ids.index(f) for f in self.ids if f in R["shares"]]
+            # Host-side (row, group) pairs of the regenerating DMs: no
+            # device readback inside a captured tick.
+            self.regen_dm_rows = [(i, self.ids.index(f)) for i, f in enumerate(env.dm_ids)
+                                  if f in R["shares"]]
         self.light_obs = tensor(env.light_obs_table) if self.daylight else None
         self.light_mult = (tensor(env.light_mult_table)[:, :, :, None]
                            if self.light_pairs else None)
@@ -935,9 +950,10 @@ class TensorEcosystem:
         """Section 177: grazing non decision makers, before the rest of
         the population step (mirror of ``apply_ndm_grazing``)."""
         if not self.ndm_grazers:
-            return biomass, reserve
+            return biomass, reserve, []
         biomass, reserve = biomass.clone(), reserve.clone()
         t = None if light_index is None else light_index.reshape(-1)
+        totals = []
         for entry in self.ndm_grazers:
             g, p = entry["g"], entry["p"]
             prey, grazer = biomass[:, p], biomass[:, g]
@@ -963,7 +979,41 @@ class TensorEcosystem:
             biomass[:, g] = grazer + entry["gge"] * intake
             if entry["pool"]:
                 reserve[:, p] = reserve[:, p] + entry["pool"] * intake
-        return biomass, reserve
+            totals.append(intake.sum(-1))
+        return biomass, reserve, totals
+
+    def regen_fraction(self, dm_feed, ndm_totals, light_index, batch):
+        """Mixed-layer share [B, G] of each group's feeding this tick
+        (mirror of ``regeneration.fraction``; 1 without the subsurface
+        layer, the thickness share for a group that fed on neither)."""
+        B = batch
+        if self.regen_d is None:
+            return torch.ones((B, self.G), device=self.device)
+        fallback = self.regen_fallback[light_index.reshape(-1)].expand(B)
+        f = fallback[:, None].expand(B, self.G).clone()
+        m, d = self.regen_m, self.regen_d
+        for g in self.regen_grazers:
+            num = torch.zeros(B, device=self.device)
+            den = torch.zeros(B, device=self.device)
+            for entry, total in zip(self.ndm_grazers, ndm_totals):
+                if entry["g"] != g or entry["p"] not in (m, d):
+                    continue
+                den = den + total
+                if entry["p"] == m:
+                    num = num + total
+            f[:, g] = torch.where(den > 0, num / den.clamp_min(1e-30), fallback)
+        if dm_feed is not None:
+            phi_cols = [(m, None), (d, None)] + [(g, g) for g in self.regen_grazers]
+            for i, gi in self.regen_dm_rows:
+                num = torch.zeros(B, device=self.device)
+                den = torch.zeros(B, device=self.device)
+                for col, grazer in phi_cols:
+                    v = dm_feed[:, i, col]
+                    phi = (1.0 if col == m else 0.0) if grazer is None else f[:, grazer]
+                    num = num + v * phi
+                    den = den + v
+                f[:, gi] = torch.where(den > 0, num / den.clamp_min(1e-30), fallback)
+        return f
 
     def layer_exchange(self, biomass, reserve, light_index=None):
         """Section 180: water and algae between the mixed layer and the
@@ -986,9 +1036,11 @@ class TensorEcosystem:
         return biomass, reserve
 
     def population(self, biomass, reserve, seed_multiplier, light_index=None,
-                   hidden=None):
+                   hidden=None, dm_feed=None):
+        """``dm_feed`` [B, D, G]: this tick's intake per pair, for the layer
+        split of the regenerated M1 (section 202; None = no DM fed)."""
         biomass, reserve = self.layer_exchange(biomass, reserve, light_index)
-        biomass, reserve = self.ndm_grazing(biomass, reserve, light_index)
+        biomass, reserve, ndm_totals = self.ndm_grazing(biomass, reserve, light_index)
         if self.m1_exposure_on:
             if hidden is None:
                 raise ValueError("hidden is required with exposure-weighted M1")
@@ -997,6 +1049,12 @@ class TensorEcosystem:
             keep = self.mortality_keep
         b = biomass * keep
         r = reserve * keep
+        if self.regen_on:
+            if light_index is None:
+                raise ValueError("light_index is required with regeneration")
+            m1_back = self.regen_share * (biomass - b)
+            share_m = self.regen_fraction(dm_feed, ndm_totals, light_index,
+                                          biomass.shape[0])
         if self.capacity_on:
             capacity_keep = (1.0 - self.capacity_rate
                              * b.mean(dim=-1, keepdim=True)).clamp_min(0)
@@ -1070,6 +1128,13 @@ class TensorEcosystem:
         if self.nutrients_on:
             empty = empty & ~self.nutrient
         r = torch.where(empty, 0.0, r)
+        if self.regen_on:
+            # Section 202: after every group's growth, as the reference.
+            to_mixed = (m1_back * share_m[:, :, None]).sum(1)
+            r = r.clone()
+            r[:, self.regen_m] = r[:, self.regen_m] + to_mixed
+            if self.regen_d is not None:
+                r[:, self.regen_d] = r[:, self.regen_d] + (m1_back.sum(1) - to_mixed)
         return b, r, starve_loss
 
     def advect(self, biomass, reserve, tick, keys=None, track=False):
@@ -1145,8 +1210,9 @@ class TensorEcosystem:
             b, r, drift = self.advect(b, r, tick, current_keys, track=True)
         else:
             b, r = self.advect(b, r, tick, current_keys)
-        b, r, starve_loss = self.population(b, r, seed_multiplier, light_index,
-                                            hidden)
+        b, r, starve_loss = self.population(
+            b, r, seed_multiplier, light_index, hidden,
+            dm_feed=intake.sum(-1) if self.regen_on else None)
         if not track_source:
             return b, r, hidden, intake, starve_loss
         tracked, frac_in = self.tracked_energy(flow, b, r, drift)

@@ -7,6 +7,7 @@ from lib.runners.parallel_worker import _worker_init, _evaluate_task, _evaluate_
 from lib.environments.ecosystem_env import source_tracking
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.runners.population_stability import evaluate_stability, validate_reward
+from lib.runners.warmup import run_warmup
 
 class ARSTrainer:
     """ARS trainer with optional ARS-V2 extensions:
@@ -24,10 +25,15 @@ class ARSTrainer:
                  hidden_layers=2, hidden_dim=30, activation="sig",
                  survival_bonus=0.0, survival_threshold=0.01,
                  legacy_reward=False, population_stability=None,
-                 local_reward=None):
+                 local_reward=None, warmup_ticks=0):
         validate_reward(population_stability, integral_reward, legacy_reward,
                         local_reward)
         self.population_stability = population_stability
+        # Section 200: ticks each rollout first runs with the unperturbed
+        # weights before the reward starts (co-evolution only; 0 = off).
+        self.warmup_ticks = int(warmup_ticks)
+        if self.warmup_ticks < 0:
+            raise ValueError("warmup_ticks must be >= 0")
         # ``--local_reward``: per-cell source-tracked reward
         # ``mean_t agg_c(B(c,t+1) / A(c,t))``. A ``LocalRewardConfig``
         # (or plain dict) enables it; ``None`` keeps the global reward.
@@ -308,6 +314,8 @@ class ARSTrainer:
         return builders
 
     def train_step(self, fg_to_train, n_eval_ticks=2):
+        if self.warmup_ticks:
+            raise ValueError("--warmup-days needs co-evolution (section 200)")
         policy = self.policies[fg_to_train]
         weights = self._get_weights(policy)
 
@@ -786,7 +794,7 @@ class ARSTrainer:
     # ================================================================
     def _evaluate_coevo(self, fg_list, n_ticks, seed=None,
                         obs_mean=None, obs_var=None, dm_ids_for_norm=None,
-                        env_builder=None):
+                        env_builder=None, warmup_weights=None):
         """Sequential co-evolution rollout: returns fitness per species
         from a single shared simulation.
 
@@ -797,8 +805,6 @@ class ARSTrainer:
         env = builder(seed=seed) if seed is not None else builder()
         env.policies = self.policies
         env.softmax_temperature = float(self.softmax_temperature)
-        if self.local_reward is not None:
-            source_tracking.attach(env, self.local_reward)
 
         if obs_mean is not None and obs_var is not None:
             env.build_static_caches()
@@ -809,6 +815,19 @@ class ARSTrainer:
                 idx = [dm_ids_for_norm.index(fid) for fid in env.dm_ids]
                 env.obs_mean = obs_mean[idx]
                 env.obs_var = obs_var[idx]
+
+        if self.warmup_ticks > 0 and warmup_weights is not None:
+            # Section 200: the world settles under the unperturbed weights,
+            # then this candidate's weights take over and the reward starts.
+            candidate = {fid: self._get_weights(self.policies[fid]) for fid in warmup_weights}
+            for fid, w in warmup_weights.items():
+                self._set_weights(self.policies[fid], w)
+            run_warmup(env, self.warmup_ticks, seed=seed)
+            for fid, w in candidate.items():
+                self._set_weights(self.policies[fid], w)
+
+        if self.local_reward is not None:
+            source_tracking.attach(env, self.local_reward)
 
         if self.population_stability is not None:
             return evaluate_stability(env, fg_list, n_ticks, self.population_stability,
@@ -967,6 +986,13 @@ class ARSTrainer:
         act_pos = [None] * self.n_deltas
         act_neg = [None] * self.n_deltas
 
+        # Section 200: the unperturbed weights every rollout warms up with.
+        warmup_wd = None
+        if self.warmup_ticks:
+            warmup_wd = dict(non_target_weights)
+            for fid in target_species:
+                warmup_wd[fid] = base_weights[fid].numpy().copy()
+
         def _build_weights_dict(sign, idx):
             """Build a weight dict for all policies, perturbed per species (delta-pair idx)."""
             wd = dict(non_target_weights)
@@ -1020,6 +1046,7 @@ class ARSTrainer:
                             obs_mean=obs_mean, obs_var=obs_var,
                             dm_ids_for_norm=dm_ids_for_norm,
                             env_builder=world_builders[m],
+                            warmup_weights=base_weights if self.warmup_ticks else None,
                         )
                         fit_world.append(fit); act_world.append(act_d)
                         if samples is not None:
@@ -1041,7 +1068,8 @@ class ARSTrainer:
                 obs_pack = {'dm_ids': dm_ids_for_norm,
                             'mean': obs_mean, 'var': obs_var}
             tasks = []
-            if M == 1 and self.legacy_reward and self.local_reward is None:
+            if (M == 1 and self.legacy_reward and self.local_reward is None
+                    and not self.warmup_ticks):
                 # Byte-identisk legacy tuple-task-path; nya energi-rewarden
                 # och ``--local_reward`` kräver dict-task så att workern
                 # ser flaggorna.
@@ -1079,6 +1107,8 @@ class ARSTrainer:
                             'legacy_reward': self.legacy_reward,
                             'population_stability': self.population_stability,
                             'local_reward': self._local_reward_payload(),
+                            'warmup_ticks': self.warmup_ticks,
+                            'warmup_weights': warmup_wd,
                         })
             else:
                 # M>1: dict-tasks with per-world env_builder override. Layout:
@@ -1105,6 +1135,8 @@ class ARSTrainer:
                                 'population_stability': self.population_stability,
                                 'local_reward': self._local_reward_payload(),
                                 'env_builder': world_builders[m],
+                                'warmup_ticks': self.warmup_ticks,
+                                'warmup_weights': warmup_wd,
                             })
             results = self._pool_map(_evaluate_coevo_task, tasks)
             self._pump()

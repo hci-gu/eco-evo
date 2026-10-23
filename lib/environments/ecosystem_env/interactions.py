@@ -272,7 +272,8 @@ def build_ndm_grazing(env):
     (a' = a x the pair's mixed-layer scale, m(t) its Q10 multiplier),
     capped at MAX_HARVEST_FRAC of the prey; it gains growth_efficiency x
     I and returns excretion_regeneration x (1 - growth_efficiency) x I
-    to the prey's nutrient pool when the prey has one. Sets
+    to the prey's nutrient pool when the prey has one, plus
+    egestion_regeneration x the egesta (section 202). Sets
     ``env.ndm_grazers`` (a list of dicts, in global order) and
     ``env._has_ndm_grazing``. Must run after the daylight, temperature
     and nutrient tables.
@@ -301,6 +302,9 @@ def build_ndm_grazing(env):
                 raise ValueError(f"'{gid}': growth_efficiency must be in "
                                  "(0, 1] and excretion_regeneration in "
                                  "[0, 1]")
+            # Section 202: a share of the egesta returns as well.
+            from lib.environments.ecosystem_env.regeneration import species_share
+            egest = species_share(grazer.params, "egestion_regeneration")
             # Q10 and the mixed-layer scale are inert without the calendar
             # (e.g. setup_full_mareld_mvp), as a decision maker's Q10 and
             # pair scaling are; the loader refuses an enabled temperature
@@ -324,7 +328,11 @@ def build_ndm_grazing(env):
                 "edibility": _edibility(env, pair_id, pair, pid),
                 "threshold": threshold,
                 "grazer": gid, "prey": pid, "a": a, "h": h, "gge": gge,
-                "regen": regen, "temperature": temp,
+                "regen": regen, "egest": egest,
+                # share of the intake returned to the prey's pool:
+                # excretion plus the regenerated egesta (section 202)
+                "pool": (1.0 - gge) * (regen + egest * (1.0 - regen)),
+                "temperature": temp,
                 "scale": None if scale is None else scale.astype(env.dtype)})
     env._has_ndm_grazing = bool(env.ndm_grazers)
 
