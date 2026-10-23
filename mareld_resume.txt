@@ -17731,3 +17731,347 @@ remain open exactly as described in 71.9 / 71.11.
     maximise -> 1920x1136, layout recomputed, restore -> 1565x1100.
     Tests in tests/test_viz_heatmap_scroll.py (splitter drag both ways
     with clamps, resize keeps the share, layout consistency).
+
+================================================================
+189 Viewer memory leak: band labels rendered but never blitted (2026-10-23)
+================================================================
+189.1 Symptom (user): after a 50-year inference rollout with --visual
+    (with or without --no-capture), scrolling, zooming and switching
+    plot tabs made RSS climb until the box ran out of memory.
+189.2 Repro: headless (SDL_VIDEODRIVER=dummy) LiveVisualizer with 9
+    FGs x 9 tabs x 73000 ticks, _render_full() in a loop. Random zoom
+    + scroll + tabs: +650 MB over 3000 frames, linear (~0.25 MB per
+    frame). Bisected: tabs alone and scroll alone flat, zoom alone
+    leaks; with _draw_calendar_band or _blit_block_label stubbed out
+    the leak is gone.
+189.3 Mechanism: the section-60 antipattern again, in code written
+    after it (section 155). In this environment (pygame 2.6.1, SDL
+    2.32.56 = sdl2-compat over SDL3 - conda-forge sdl2 2.32.56 plus
+    sdl3 3.4.2 in eco-evo-mixed - SDL_ttf 2.24) an antialiased
+    font.render() surface that is never blitted (or locked) leaks
+    its whole pixel buffer when it is freed: 200k renders of short
+    strings = +215 MB unblitted, +0.4 MB when each is blitted - even
+    a blit fully outside the clip rect, or lock()/unlock(), frees it.
+    Non-antialiased render() does not leak. _blit_block_label rendered
+    each label variant ("January", "Jan", "J") to measure it and threw
+    away the ones that did not fit; zoomed out over 50 years every
+    month and clock block is a pixel or two wide, so every variant of
+    every block was rendered and dropped, every frame, and
+    wait_for_close re-renders at ~20 fps even when idle.
+189.4 Fix (lib/viz/pygame_viz.py): _blit_block_label measures with
+    font.size() and returns early when even the shortest variant does
+    not fit; only the label drawn (and its shadow) is rendered. The
+    spawn dropdown truncation in _draw_one_heatmap had the same
+    pattern (render, measure, re-render shorter) and now measures
+    with font.size() and renders once. All other render() call sites
+    were checked: each blits what it renders.
+    Rule: never render text you will not blit - measure with
+    font.size().
+189.5 Result: same repro, 5000 random zoom/scroll/tab frames +12 MB
+    and plateauing (glibc/numpy churn); zoomed-out idle flat over
+    2000 frames. Test: tests/test_viz_calendar_band.py::
+    test_every_rendered_text_is_blitted (a Surface subclass as screen
+    records blits, a spy font records renders; 50-year rollout at
+    three zooms) - fails on the old code, passes now. pytest 1330
+    passed; 1-generation train.py smoke run OK.
+
+================================================================
+190 Live viewer: the plot panel folds in under the heatmaps (2026-10-23)
+================================================================
+190.1 Request (user): one click should fold the whole plot panel
+    in under the heatmap section, and bring it back, in both the
+    training and the inference viewer.
+190.2 Implementation (lib/viz/pygame_viz.py, LiveVisualizer):
+    _plot_collapsed flag. A fold button (36 px) sits at the top of
+    the splitter, above the drag grip; the chevron points the way the
+    plot moves (left = in under the heatmaps, right = out again).
+    Only the plot folds and the WINDOW follows it (user, after two
+    rejected versions: first the heatmaps took the freed width by the
+    splitter rule, then they kept their size in a window with an
+    empty right part). Folding (_toggle_plot) remembers the window
+    width, sets the heatmap area to cols * panel_w + scrollbar - snug
+    around the panels, so _compute_layout gets exactly the same
+    columns and cell size back - and resizes the window
+    (_set_window_width: display.set_mode with the same SWSURFACE |
+    RESIZABLE flags, height kept) to that plus a 16 px strip
+    (_collapsed_strip_w) carrying the chevron and a vertical "PLOT"
+    label. Floor _min_collapsed_win_w = 600 px for the status and
+    playback bars (one or two heatmap columns); three 60x60 columns
+    at the reference cell give 616 px. Unfolding restores the
+    remembered width; _split_frac was never touched, so the plot
+    comes back at the same share. A manual resize while folded keeps
+    the heatmaps as they were (only a narrower window squeezes
+    them); unfolding then restores the remembered width with the new
+    height. If the window manager refuses the size (maximised
+    window), the layout follows the surface it got. The playback
+    scrub slider stays visible in the folded window (section 191).
+    The fold button unfolds again (no grab tolerance to the left:
+    the heatmap scrollbar ends there); the rest of the strip is the
+    splitter (section 192). The P key toggles too (_handle_key). The state is not saved between runs.
+    _plot_rect stays a 4-tuple, width 0 when collapsed. The
+    status-bar sliders end at the expanded plot x (_expanded_plot_x),
+    clamped to the window. The toggle is handled in
+    _handle_layout_event, which runs first in all three event loops;
+    the strip and the button never start a splitter drag or show the
+    resize cursor.
+    _draw_plot sets the plot's click targets every frame, so the
+    toggle and every collapsed render clear them
+    (_clear_plot_hit_rects: tabs, legend, plot area, Live/Save
+    buttons, scrollbar); otherwise the hidden plot would keep taking
+    clicks and wheel zoom.
+190.3 Tests (tests/test_viz_heatmap_scroll.py): fold and restore by
+    click (window shrinks to the snug width or the floor and comes
+    back to its exact size, columns / cell size / viewport origin
+    unchanged, strip at the panels' edge, no stale plot hit rects,
+    strip never drags, exact restore of splitter, plot rect and
+    share), the button is not the drag grip, the P key plus a manual
+    resize while folded (heatmaps unchanged, unfold restores the
+    width), the status sliders stay put. Checked on headless
+    screenshots in train and inference mode (616 px folded, 1024 px
+    unfolded). pytest 1334 passed; 1-generation train.py smoke run
+    OK.
+
+================================================================
+191 Playback scrub slider visible in a narrow window (2026-10-23)
+================================================================
+191.1 Request (user): the scrub slider must stay visible and
+    draggable with the plot folded in. In train mode the folded
+    window (616 px for three 60x60 columns) left it under the 60 px
+    it needs: the train buttons ("live"/"replay", "pause train") end
+    at ~400 px and the frame indicator reserved ~170 px for its
+    widest text ("live  (saved frames: N)").
+191.2 Fix (_draw_playback_bar): the indicator zone is sized from the
+    full texts first; if that leaves the slider less than
+    _MIN_SCRUB_W (120 px), the compact texts are used instead -
+    "live (N)", "i/N", "rec (N)", "no capture" - which leave the
+    folded train window a ~110 px slider. Applies to any narrow
+    window, folded or not; a wide one keeps the full texts. Widths
+    measured with font.size (section 189). _playback_compact records
+    the choice (tests).
+191.3 Tests (tests/test_viz_heatmap_scroll.py::
+    test_scrub_slider_stays_draggable_with_the_plot_folded, train and
+    inference): folded, the track exists and fits the window, compact
+    texts exactly in train mode, a click near its right end starts a
+    drag at > 90 % of the film, the left end maps to frame 0;
+    unfolded, the full texts return. Checked on headless screenshots.
+    pytest 1336 passed; 1-generation train.py smoke run OK.
+
+================================================================
+192 Splitter grip on the folded strip (2026-10-23)
+================================================================
+192.1 Request (user): the splitter grip (the dotted control that
+    sets how much width the heatmaps take) was gone in the folded
+    window - the whole strip was an unfold button. It must stay
+    visible and usable. (Section 191, the playback scrub slider, was
+    a misreading of "scrubpanelen"; that change is kept since the
+    slider did disappear in the folded train window.)
+192.2 Implementation (lib/viz/pygame_viz.py): the fold button is the
+    top 36 px of the splitter in both states (_plot_toggle_rect);
+    only it unfolds. The rest of the strip draws the grip and is the
+    splitter (_hit_splitter, resize cursor). Dragging it while
+    folded first resized the window on every motion event; that was
+    replaced in section 193 (guide line, one resize on release). _collapsed_resized marks such a drag: unfolding
+    then puts the plot back beside the new heatmap area at the width
+    it had when folded (_expanded_plot_w; window capped to the
+    desktop, _split_frac recomputed from the result) instead of
+    restoring the old window width, which would have shrunk or grown
+    the heatmaps again. Without a drag the old exact restore holds.
+192.3 Tests (tests/test_viz_heatmap_scroll.py): the strip hits the
+    splitter and not the button, the scrollbar beside it neither;
+    unfold is by the button. New test: one folded column, drag the
+    grip 500 px right - window wider, splitter under the mouse,
+    layout consistent; release - snug again; unfold - same columns
+    and cell size, plot back at its width or the window at the
+    desktop cap. Headless screenshot checked. pytest 1337 passed;
+    1-generation train.py smoke run OK.
+
+================================================================
+193 Folded splitter drag: guide line, one resize on release (2026-10-23)
+================================================================
+193.1 Symptom (user): dragging the grip on the folded strip (192)
+    made the window flicker, jump and stop responding. Cause: every
+    MOUSEMOTION called display.set_mode with a new width. On X11 the
+    window manager resizes asynchronously and may move the window,
+    so event x shifted under the mouse, the next width was computed
+    from a moved origin, and the drag fed back on itself; each
+    set_mode also re-created the surface.
+193.2 Fix (lib/viz/pygame_viz.py): while the folded splitter is
+    dragged the window is not touched. _fold_drag_w holds the target
+    heatmap width (clamped to [_min_hm_area_w, desktop - strip]) and
+    _draw_fold_drag_guide draws a vertical guide line with the
+    resulting window width ("N px"; clamped to the window edge when
+    the target lies beyond it). The release (_end_fold_drag) resizes
+    the window ONCE, straight to the snug width for that target
+    (_snug_hm_area_w, via the column rule factored out of
+    _compute_layout as _heatmap_columns). A motion event whose
+    buttons say the left button is up ends the drag (a release
+    outside the window can be missed); WINDOWFOCUSLOST cancels it.
+    Unfolding after such a drag behaves as in 192.2. The expanded
+    splitter is unchanged (live relayout inside a fixed window).
+193.3 Checks: tests/test_viz_heatmap_scroll.py - no window resize
+    during 21 motion events, exactly one on release, snug result,
+    unfold beside the new heatmaps; a drag ended by a button-up
+    motion and one cancelled by focus loss. On the real X11 display
+    (DISPLAY :1, events posted into pump_events, the user's mouse not
+    moved): folded 812 px, window unchanged during the drag, one
+    resize to 600 px on release, no VIDEORESIZE / WINDOWSIZECHANGED
+    events at all, unfold to 1342 px. pytest 1338 passed;
+    1-generation train.py smoke run OK.
+
+================================================================
+194 Plot fold as a calm roll; no window re-creation (2026-10-23)
+================================================================
+194.1 Complaint (user): folding/unfolding blinked, the window
+    "jumped", and the fold button moved away from the pointer that
+    had just clicked it. Wanted: the plot area rolls out and in
+    calmly.
+194.2 Measured on the real X11 display (DISPLAY :1, events posted,
+    the user's mouse not moved; probes in the session scratchpad):
+    * pygame.display.set_mode on an open window DESTROYS AND
+      RE-CREATES it here (pygame 2.6.1 / sdl2-compat): a new X
+      window id on every call, ~120 ms each. That was the blink of
+      sections 190-193 (one set_mode per toggle; 193 per drag
+      motion).
+    * SDL_SetWindowSize (pygame._sdl2.video.Window.size) resizes the
+      same window in ~10-20 ms, origin unchanged.
+    * The viewer opens near screen size with 9 FGs (1920x1136) and
+      the window manager MAXIMISES it by itself (_NET_WM_STATE
+      MAXIMIZED_HORZ/VERT). A maximised window ignores
+      SetWindowSize; restore() alone moves it to its remembered
+      geometry (114,100 1717x1117) - a jump. restore() immediately
+      followed by position = old origin and size = target gives the
+      target geometry with no intermediate one.
+    * The button moved because 190's fold snugged the heatmap area
+      around the panels (removing up to one cell step of slack per
+      column), which moved the splitter.
+194.3 Implementation (lib/viz/pygame_viz.py):
+    * _set_window_width(width, render=True): SDL_SetWindowSize on
+      the same window; if the size does not take (maximised),
+      restore + old origin + size in one go, pumping up to 0.3 s for
+      the surface; display.set_mode only as the fallback. Re-runs the
+      layout and paints the frame immediately (no unpainted surface
+      reaches the screen).
+    * The heatmap area is pinned (_hm_area_fixed) for the fold and
+      the folded state: the splitter, and the fold button under the
+      pointer, never move. No snugging any more - the folded window
+      is the area as arranged plus the 16 px strip (floor 600 px),
+      so up to one cell step of slack per column can remain right of
+      the panels. _compute_layout honours the pin; unfolding returns
+      to the splitter share at exactly the pinned position (kept
+      pinned only if the screen leaves the plot under its minimum
+      width, until the splitter is dragged).
+    * _roll_window(w0, w1): time-based glide of the right edge,
+      _fold_anim_s = 0.25 s, ease-out cubic, every step resized and
+      painted before the next; a slow first step (un-maximising) is
+      not charged to the glide. During the roll the plot area shows a
+      captured image of the plot (fold: the current one; unfold: the
+      plot drawn off screen at the target width), cut off by the
+      moving edge - the plot rolls in under the heatmaps and out
+      from under them; its hit rects are cleared meanwhile.
+    * Folded splitter drag (193): release resizes once to the
+      dragged area (no snug).
+194.4 Result on X11, 9 FGs, start maximised 1920 px: fold 15 steps
+    1919 -> 920 px in ~0.3 s (~20 ms/step, first step 94 ms for the
+    un-maximise), unfold 15 steps 921 -> 1920 px; one X window id
+    throughout, origin (0,64) throughout, button x 904 in every
+    step, every step painted. How it LOOKS is the user's to judge.
+194.5 Tests (tests/test_viz_heatmap_scroll.py; make_viewer sets
+    _fold_anim_s = 0): button rect and heatmap viewport unchanged
+    across fold and unfold; window = area + strip (or floor); roll
+    test with 0.12 s - >= 3 monotone steps each way, button and
+    viewport fixed in every step, the captured image used, no
+    display.set_mode call; the folded drag releases to the dragged
+    area. pytest 1339 passed; 1-generation train.py smoke run OK.
+
+================================================================
+195 Folded: the window's own edges size the heatmaps (2026-10-23)
+================================================================
+195.1 Request (user): the splitter grip need not show while the
+    plot is folded; then the main window's edges and corners control
+    the heatmap area. Supersedes the folded splitter drag of
+    sections 192-193 (guide line, _fold_drag_w, _end_fold_drag,
+    _draw_fold_drag_guide - all removed).
+195.2 Implementation (lib/viz/pygame_viz.py): folded, the strip
+    draws only the fold button and the vertical "PLOT" label - no
+    grip - and _hit_splitter is False on it (no resize cursor, no
+    drag). A VIDEORESIZE / WINDOWSIZECHANGED that changes the WIDTH
+    of the folded window sets _hm_area_fixed = max(_min_hm_area_w,
+    W - strip) and _collapsed_resized; a height-only resize leaves
+    the area. Unfolding after such a resize puts the plot back
+    beside the new area at the width it had (as in 192.2; window
+    capped to the desktop, the pin kept only if the plot would be
+    under its minimum). The expanded splitter is unchanged.
+195.3 Note: resizes the viewer makes itself through
+    SDL_SetWindowSize (the roll, section 194) produce no resize
+    events at all on X11 here, so they are never mistaken for a
+    user resize. A real edge drag comes from the window manager.
+    Checked on DISPLAY :1 with XResizeWindow from a separate process
+    (a WM-style external resize): folded 920 px -> 1300 px, area
+    904 -> 1284 px, cells 3 -> 5 px, strip at the window edge;
+    unfold to 1920 px (desktop cap) with the button still at
+    x = 1284, plot 624 px, same X window.
+195.4 Tests (tests/test_viz_heatmap_scroll.py): the folded strip
+    neither hits the splitter nor starts a drag; a height-only
+    resize keeps the area; new test - folded window widened by its
+    edge to 760 px (area follows, layout consistent), unfold beside
+    it with the button in place, then narrowed to 500 px (area
+    follows down to its minimum). The two folded-drag tests are
+    gone. pytest 1338 passed; 1-generation train.py smoke run OK.
+
+================================================================
+196 Plot y-axis labels in plain decimals (2026-10-23)
+================================================================
+196.1 Request (user): no scientific notation on the plot's y axis
+    (".3g" printed 1.23e+04 from 10000 up) and no plus sign.
+196.2 Implementation (lib/viz/pygame_viz.py): _axis_labels(values,
+    step) - one number of decimals per axis, three significant
+    digits of the label step (2 - floor(log10(step)), capped at 12),
+    then the trailing zeros all five labels share are dropped; "-0"
+    prints as "0". Examples: 0..60000 -> 60000 45000 ... 0;
+    0..1 -> 1.00 0.75 ... 0.00; -50.7..29.8 -> 29.8 9.7 -10.4
+    -30.6 -50.7; 0..0.0012 -> 0.0012 ... 0.0000. _draw_plot builds
+    the labels first and widens plot_pad_l (default 36 px) to the
+    widest label + 6 px, so "345000" does not run into the plot
+    (px0 / pw are not used before that point). Applies to every tab,
+    train and inference. The hover tooltip followed (196.4).
+196.3 Tests: tests/test_viz_axis_labels.py (fixed examples; never
+    "e" or a leading "+", five distinct labels, over ranges from 1e-6
+    to 1e7; a rendered predation tab at 100000-345000 draws exactly
+    the five plain labels and a margin wider than 36 px). Headless
+    screenshot checked. pytest 1350 passed; 1-generation train.py
+    smoke run OK.
+196.4 Tooltip (user): the hover tooltip values use _axis_labels too,
+    with the axis step, so they carry the axis's decimals and read
+    against its labels (123456, 54322 on a 50000-130000 axis;
+    -0.00042 on 0..-0.0012). On a log-scaled axis (labels in log10,
+    values raw) the step is a tenth of the largest value's decade:
+    three significant digits of the largest value. No "e", no "+".
+    Tests in tests/test_viz_axis_labels.py (linear and log, small
+    negative values). pytest 1353 passed; smoke run OK.
+
+================================================================
+197 --norm rolling|fixed: the viewer's starting heatmap normalisation
+    (2026-10-23)
+================================================================
+197.1 Request (user): choose at start whether the heatmaps use the
+    fixed or the rolling (per-frame) normalisation; default rolling.
+    Until now the viewer always started fixed (section 94) and only
+    the N key / status-bar button switched it.
+197.2 Implementation: lib/viz/__init__.py holds HEATMAP_NORMS and
+    add_heatmap_norm_argument(parser) (--norm {rolling,fixed},
+    default rolling; importing lib.viz does not pull in pygame).
+    LiveVisualizer(heatmap_norm="rolling"|"fixed", default rolling;
+    anything else raises ValueError) sets _rolling_heatmap. The flag
+    is on train.py, train_gpu.py (passed through
+    lib/gpu/visual.GPUTrainingVisualizer) and inference.py; it only
+    matters with --visual. Callers without the flag (manual_play.py,
+    simple_inference.py, api.py) get the class default, rolling. The
+    toggle is unchanged.
+197.3 Tests (tests/test_viz_normalisation.py): the fixed-reference
+    tests now ask for heatmap_norm="fixed" explicitly; new - rolling
+    is the default (collapsed field fills the colour range, the
+    quarter cell at a quarter, N switches to fixed), an unknown norm
+    is refused, and --norm {rolling,fixed} appears in --help of all
+    three entry points with argparse defaulting to rolling and
+    refusing other values. pytest 1358 passed; 1-generation train.py
+    smoke run OK. AGENTS.md flag list updated.

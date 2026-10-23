@@ -16,6 +16,7 @@ from lib.gpu.config import ProjectSpec
 from lib.gpu.trainer import TensorARSTrainer
 from lib.training_profiles import add_profile_argument, parse_training_args
 from lib.runners.rnd_baseline import add_rnd_baseline_argument
+from lib.viz import add_heatmap_norm_argument
 from lib.runners.training_progress import add_progress_arguments, validate_progress_arguments
 
 
@@ -75,6 +76,7 @@ def build_parser():
     parser.add_argument("--temp-anneal-gens", "--temp_anneal_gens", dest="temp_anneal_gens", type=positive_int, default=10)
     parser.add_argument("--visual", action="store_true",
                         help="Open the live pygame viewer with CPU inference probes between GPU updates")
+    add_heatmap_norm_argument(parser)
     add_rnd_baseline_argument(
         parser, extra_help=" Runs inside the CPU probe of --visual (which it "
                            "requires) and never touches the GPU update.")

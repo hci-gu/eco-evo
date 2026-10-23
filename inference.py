@@ -50,6 +50,7 @@ from lib.environments.ecosystem_env.population_change import (
     add_mass_balance_argument, add_mortality_multiplier_argument)
 from lib.runners.policy import PolicyNetwork
 from lib.runners.rnd_baseline import add_rnd_baseline_argument, rnd_baseline_plot_ids
+from lib.viz import add_heatmap_norm_argument
 
 
 class RandomPolicy:
@@ -1140,6 +1141,7 @@ def main():
                              "and a rolling total-biomass plot. Requires pygame; if "
                              "unavailable the flag is silently ignored.")
 
+    add_heatmap_norm_argument(parser)
     parser.add_argument("--no-capture", "--no_capture", dest="no_capture",
                         action="store_true",
                         help="With --visual: do not record the rollout. The "
@@ -1239,7 +1241,8 @@ def main():
                                  extra_plot_ids=extra,
                                  ndm_ids=ndm_ids or None,
                                  tick_hours=int(args.tick_length),
-                                 capture=not args.no_capture)
+                                 capture=not args.no_capture,
+                                 heatmap_norm=args.norm)
             # b0-slider defaults: gridskaleberäknat inference_initial_biomass
             # per FG, läst direkt från projekt-YAML. Slider-rangen blir
             # ``[0, 4 * default]`` per FG, mittposition = default.

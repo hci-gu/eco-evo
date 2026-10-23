@@ -20,6 +20,7 @@ from lib.config.config_loader import (
                                       load_config, load_impact_spawn_specs)
 from lib.world.impact_maps import project_baseline_maps, sample_impact_maps
 from lib.environments.ecosystem import EcosystemEnvironment
+from lib.viz import add_heatmap_norm_argument
 from lib.environments.ecosystem_env.loss_accounting import loss_shares
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env import source_tracking
@@ -1743,6 +1744,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "(from the deterministic probe rollout) and a rolling "
                              "reward plot. Requires pygame; if unavailable the flag "
                              "is silently ignored. Main-process only.")
+    add_heatmap_norm_argument(parser)
     add_profile_argument(parser)
     add_progress_arguments(parser)
     add_population_arguments(parser)
@@ -1950,6 +1952,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                 ndm_ids=_ndm_ids or None,
                 # Status-bar simulated time; display only (section 97).
                 tick_hours=int(getattr(args, 'tick_length', LIBRARY_TICK_HOURS)),
+                heatmap_norm=getattr(args, "norm", "rolling"),
             )
             # Reward-flikens y-axel-/rubriktext ska spegla den aktiva
             # rewardformeln, precis som titeln i plots.html. Vi återanvänder

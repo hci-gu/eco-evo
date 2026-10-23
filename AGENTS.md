@@ -277,7 +277,9 @@ default since section 120 and the library is calibrated for it -
 available on `train_gpu.py` as well), `--rnd_baseline [all|solo]`
 (random-action `_rnd` curves in the live plot; `all` = every DM random,
 `solo` = leave-one-out per DM; on `train.py`, `train_gpu.py --visual` and
-`inference.py --visual`, sections 62 and 96). Prefer
+`inference.py --visual`, sections 62 and 96), `--norm rolling|fixed`
+(heatmap normalisation the `--visual` viewer starts in, default
+`rolling`; N toggles it; same three entry points, section 197). Prefer
 `--local_reward_norm grid` with the default `log` metric: `sum` rewards
 spreading thin and `mean` rewards killing the worst cells (sections 82, 84).
 

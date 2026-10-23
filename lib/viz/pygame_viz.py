@@ -31,6 +31,8 @@ Keys:
             instead of the fixed rollout-start maximum. Also a button
             in the status bar, "norm: fixed / rolling".
     r       toggle log-scale on the reward/biomass plot y-axis
+    p       fold the plot panel in under the heatmaps / bring it back
+            (also the button at the top of the splitter)
     wheel   over the heatmaps: scroll them when the grid is taller than
             the window (also the scrollbar at their right edge;
             MARELD_VIZ_MAX_HEIGHT=<px> overrides the start height cap)
@@ -379,6 +381,29 @@ def _series_arrays(buf) -> tuple:
     return steps, vals, bool(np.all(steps[1:] >= steps[:-1]))
 
 
+def _axis_labels(values: Sequence[float], step: float) -> list:
+    """Plain decimal y-axis labels: no scientific notation, no plus sign.
+
+    One number of decimals for the whole axis: three significant digits
+    of the label ``step``, then the trailing zeros all labels share are
+    dropped - 60000, 45000; 0.75, 0.50; -50.7, -30.6; 0.0012, 0.0009.
+    ``-0`` prints as ``0``.
+    """
+    step = abs(float(step))
+    if step > 0 and np.isfinite(step):
+        decimals = int(min(12, max(0, 2 - np.floor(np.log10(step)))))
+    else:
+        decimals = 2
+    out = [f"{float(v):.{decimals}f}" for v in values]
+    if decimals > 0:
+        common = min(len(t) - len(t.rstrip("0")) for t in out)
+        common = min(common, decimals)
+        if common:
+            out = [t[:-common] for t in out]
+        out = [t.rstrip(".") if t.endswith(".") else t for t in out]
+    return [t.lstrip("-") if float(t) == 0.0 else t for t in out]
+
+
 def _decimate_polyline(xs: np.ndarray, ys: np.ndarray) -> tuple:
     """Reduce a polyline with non-decreasing integer ``xs`` to at most four
     points per pixel column (first, min, max, last).
@@ -453,6 +478,10 @@ class LiveVisualizer:
     # Train calls update_biomass once per ARS iter which is already slow,
     # so this mostly protects inference (per-tick rendering).
     _MIN_FRAME_INTERVAL = 1.0 / 30.0
+    # Below this scrub-slider width the playback bar switches its frame
+    # indicator to the compact texts (section 191).
+    _MIN_SCRUB_W = 120
+    _playback_compact = False
     # Most frames a recorded rollout keeps. Past it every other frame is
     # dropped and the capture stride doubles, so a 100000-tick inference
     # rollout is still a film with evenly spaced frames (stride 16).
@@ -487,6 +516,7 @@ class LiveVisualizer:
         ndm_ids: Optional[Sequence[str]] = None,
         tick_hours: Optional[int] = None,
         capture: bool = True,
+        heatmap_norm: str = "rolling",
     ):
         import pygame
         self._pg = pygame
@@ -635,8 +665,12 @@ class LiveVisualizer:
         #            at the price of the brightness meaning nothing across
         #            frames, since the reference moves under it.
         # The colourbar always prints the reference in use, so a frame can
-        # be read without knowing which mode produced it.
-        self._rolling_heatmap: bool = False
+        # be read without knowing which mode produced it. The starting
+        # mode is ``heatmap_norm`` (--norm, default rolling; section 197).
+        if heatmap_norm not in ("rolling", "fixed"):
+            raise ValueError(
+                f"heatmap_norm must be 'rolling' or 'fixed', not {heatmap_norm!r}")
+        self._rolling_heatmap: bool = heatmap_norm == "rolling"
         # Hit-rect for the status-bar button that toggles it, registered
         # every frame by ``_draw_status_bar``.
         self._hm_norm_button_rect: Optional[tuple] = None
@@ -917,6 +951,39 @@ class LiveVisualizer:
         self._dragging_splitter = False
         self._splitter_drag_dx = 0
         self._splitter_hover = False
+        # The plot panel folds in under the heatmaps (section 190): a
+        # button at the top of the splitter (or the P key) rolls it in
+        # under the heatmaps - they keep their size and place, the button
+        # stays under the pointer, the window edge glides in to the strip
+        # - and the same button rolls it out again (section 194). Folded,
+        # the window's own edges and corners size the heatmap area
+        # (section 195).
+        self._plot_collapsed = False
+        self._plot_toggle_h = 36
+        self._plot_toggle_rect: Optional[tuple] = None
+        self._plot_toggle_hover = False
+        self._collapsed_strip_w = 16
+        # Window width and plot width at the moment the plot folded; the
+        # window gets the former back on unfold.
+        self._expanded_win_w = 0
+        self._expanded_plot_w = 0
+        # Heatmap-area width pinned while the plot is folded or rolling
+        # (section 194): the splitter - and the fold button under the
+        # pointer - stays where it was. None = the splitter share rules.
+        self._hm_area_fixed: Optional[int] = None
+        # Fold/unfold roll: the window's right edge glides over this many
+        # seconds (ease-out) with a captured image of the plot in the
+        # widening/narrowing plot area. 0 = one step (tests).
+        self._fold_anim_s = 0.25
+        self._plot_anim_img = None
+        self._sdl_window = None
+        # Set when the user resizes the folded window (section 195):
+        # unfolding then puts the plot back beside the new heatmap area
+        # instead of restoring the old window width.
+        self._collapsed_resized = False
+        # The status and playback bars need about this much; with one or
+        # two heatmap columns the folded window stops here.
+        self._min_collapsed_win_w = 600
         # The window starts at its natural size, capped to the screen so
         # the playback bar stays reachable; it is resizable (and can be
         # maximised), and every resize goes through ``_compute_layout``.
@@ -2242,6 +2309,8 @@ class LiveVisualizer:
             self._rolling_heatmap = not self._rolling_heatmap
         elif key == pg.K_r:
             self._log_plot = not self._log_plot
+        elif key == pg.K_p:
+            self._toggle_plot()
         elif key == pg.K_TAB:
             mods = self._pg.key.get_mods()
             n = len(self._tabs)
@@ -3057,7 +3126,14 @@ class LiveVisualizer:
         finally:
             if swap is not None:
                 self._swap_out_frame(swap)
-        self._draw_plot()
+        if self._plot_collapsed:
+            self._clear_plot_hit_rects()
+        elif self._plot_anim_img is not None:
+            # Rolling: the captured plot, cut off by the moving edge.
+            self._clear_plot_hit_rects()
+            self._screen.blit(self._plot_anim_img, self._plot_rect[:2])
+        else:
+            self._draw_plot()
         self._draw_splitter()
         self._draw_playback_bar()
         # Spawn-popup ritas sist så den ligger ovanpå allt annat.
@@ -3206,42 +3282,53 @@ class LiveVisualizer:
             self._playback_rects.append((rect, action))
             bx += bw + 4
 
-        # Frame-indikator till höger.
+        # Frame indicator on the right, in a zone of stable width (the
+        # widest variant at the current counts) so the scrub slider does
+        # not change size when the text switches between live / frame /
+        # recording. Widths are measured with font.size: a rendered
+        # surface that is never blitted leaks (sections 60 and 189).
+        # When the full texts would leave the scrub slider less than
+        # ``_MIN_SCRUB_W`` (a narrow window, e.g. with the plot folded
+        # in, section 191), the compact texts are used instead, so the
+        # slider stays visible and draggable.
         n = len(self._current_rollout)
-        if self._playback_mode == "live":
-            ind = f"live  (saved frames: {n})"
-        else:
-            ind = f"frame = {self._playback_idx + 1}/{n}"
-        if self._recording:
-            ind = f"recording... ({len(self._pending_rollout)} frames)"
-        if not self._capture:
-            ind = "capture off"
-        ind_surf = self._font.render(ind, True, (200, 200, 215))
-        # Reservera stabil bredd för indikator-zonen så att scrub-
-        # slidern inte ändrar storlek när texten växlar mellan
-        # "live ...", "frame = i/N" och "recording... (...)". Vi
-        # beräknar maxbredden av samtliga möjliga varianter med
-        # de nuvarande räknarvärdena och använder den för att
-        # placera scrub-slidens högerkant.
+        n_pending = len(self._pending_rollout)
         _max_n = max(n, 1)
-        _max_pending = len(self._pending_rollout)
-        _ind_variants = [
-            f"live  (saved frames: {_max_n})",
-            f"frame = {_max_n}/{_max_n}",
-            f"recording... ({_max_pending} frames)",
-            "capture off",
-        ]
-        # MEMORY LEAK FIX: anvand font.size()[0] istallet for
-        # font.render(...).get_width(). Memray --leaks-flamegraph visade
-        # att denna callsite ensam stod for 218 MB lackt SDL-minne
-        # (TTF_Render_Internal -> AllocateAlignedPixels -> SDL_malloc)
-        # eftersom den allokerar en full Surface per anrop bara for att
-        # mata textbredden, och Surface-objektet kastas direkt utan att
-        # SDL aterlamnar pixelbufferten. font.size() returnerar (w,h)
-        # utan att allokera nagon Surface alls.
-        _ind_reserve_w = max(
-            self._font.size(s)[0] for s in _ind_variants)
-        ind_zone_left = x + w - _ind_reserve_w - 10
+        track_x = bx + 8
+        for compact in (False, True):
+            if compact:
+                live_txt = f"live ({n})"
+                frame_txt = f"{self._playback_idx + 1}/{n}"
+                rec_txt = f"rec ({n_pending})"
+                off_txt = "no capture"
+                _ind_variants = [f"live ({_max_n})", f"{_max_n}/{_max_n}",
+                                 f"rec ({n_pending})", off_txt]
+            else:
+                live_txt = f"live  (saved frames: {n})"
+                frame_txt = f"frame = {self._playback_idx + 1}/{n}"
+                rec_txt = f"recording... ({n_pending} frames)"
+                off_txt = "capture off"
+                _ind_variants = [
+                    f"live  (saved frames: {_max_n})",
+                    f"frame = {_max_n}/{_max_n}",
+                    f"recording... ({n_pending} frames)",
+                    off_txt,
+                ]
+            _ind_reserve_w = max(
+                self._font.size(s)[0] for s in _ind_variants)
+            ind_zone_left = x + w - _ind_reserve_w - 10
+            if ind_zone_left - 10 - track_x >= self._MIN_SCRUB_W:
+                break
+        self._playback_compact = compact
+        if self._playback_mode == "live":
+            ind = live_txt
+        else:
+            ind = frame_txt
+        if self._recording:
+            ind = rec_txt
+        if not self._capture:
+            ind = off_txt
+        ind_surf = self._font.render(ind, True, (200, 200, 215))
         # Höger-justera den faktiska texten inom den reserverade zonen
         # så att den alltid hamnar vid samma högerkant.
         ind_x = x + w - ind_surf.get_width() - 10
@@ -3252,7 +3339,6 @@ class LiveVisualizer:
         # Scrub-slider (timeline) mellan knapparna och frame-indikatorn.
         # Disabled samma villkor som transport-knapparna (recording eller
         # ingen film). Klick/drag sätter ``_playback_idx`` och pausar.
-        track_x = bx + 8
         # Använd den reserverade indikator-zonens vänsterkant (stabil)
         # istället för den dynamiska ``ind_x`` (som flyttar sig när
         # indikator-texten ändras), så scrub-slidern behåller exakt
@@ -3430,7 +3516,7 @@ class LiveVisualizer:
         # börjar (annars sträcker den sig över hela fönsterbredden och
         # täcker grafritarrutan, vilket ser fult ut och är onödigt långt).
         try:
-            plot_left = min(x + w - 8, max(int(self._plot_rect[0]),
+            plot_left = min(x + w - 8, max(int(self._expanded_plot_x),
                                            int(self._status_track_right_min)))
         except Exception:
             plot_left = x + w
@@ -3742,26 +3828,31 @@ class LiveVisualizer:
         panels keep ``min(4, n)`` columns and grow with the area; when
         the area is too narrow for the reference cell size, columns are
         dropped instead. Rows that do not fit in the viewport scroll.
+        With the plot collapsed the splitter becomes a strip right at
+        the heatmap area's edge and the plot gets no width; the heatmaps
+        keep the area they had when it folded (``_hm_area_fixed``) and
+        ``_toggle_plot`` rolls the window edge in to the strip.
         """
         W, H = int(self._win_w), int(self._win_h)
         status_h, playback_h, pad = self._status_h, self._playback_h, self._pad
-        sb_w, sp_w = self._hm_sb_w, self._splitter_w
-        hm_area_w = int(round(self._split_frac * W))
-        hm_area_w = min(hm_area_w, W - sp_w - self._min_plot_w)
+        sb_w = self._hm_sb_w
+        sp_w = (self._collapsed_strip_w if self._plot_collapsed
+                else self._splitter_w)
+        if self._hm_area_fixed is not None:
+            # Folded or rolling: the heatmaps stay as they were arranged;
+            # only a narrower window can squeeze them.
+            hm_area_w = min(int(self._hm_area_fixed), W - sp_w)
+        else:
+            hm_area_w = int(round(self._split_frac * W))
+            hm_area_w = min(hm_area_w, W - sp_w - self._min_plot_w)
         hm_area_w = max(hm_area_w, self._min_hm_area_w)
+        # Where the plot starts when expanded; the status-bar sliders end
+        # there in both states, so they do not jump on a toggle.
+        self._expanded_plot_x = hm_area_w + self._splitter_w
         view_h = max(60, H - status_h - playback_h - pad)
         avail_w = hm_area_w - sb_w
         n = len(self.fg_ids)
-
-        def cell_for(cols: int) -> int:
-            return (avail_w // cols - 2 * pad) // max(1, self.grid_w)
-
-        cols = 1
-        for c in range(min(4, n), 0, -1):
-            if cell_for(c) >= self._min_cell_px:
-                cols = c
-                break
-        self.cell_px = max(1, cell_for(cols))
+        cols, self.cell_px = self._heatmap_columns(avail_w)
         self._cols = cols
         self._rows = (n + cols - 1) // cols
         self._panel_w = self.grid_w * self.cell_px + 2 * pad
@@ -3777,10 +3868,31 @@ class LiveVisualizer:
         self._hm_scroll_y = max(0, min(self._hm_max_scroll(), self._hm_scroll_y))
         self._splitter_rect = (hm_area_w, status_h, sp_w, view_h)
         plot_x = hm_area_w + sp_w
-        self._plot_rect = (plot_x, status_h, max(1, W - plot_x - pad // 2),
-                           view_h)
+        if self._plot_collapsed:
+            self._plot_rect = (plot_x, status_h, 0, view_h)
+        else:
+            self._plot_rect = (plot_x, status_h,
+                               max(1, W - plot_x - pad // 2), view_h)
+        self._plot_toggle_rect = (hm_area_w, status_h, sp_w,
+                                  min(self._plot_toggle_h, view_h))
         self._status_rect = (0, 0, W, status_h)
         self._playback_rect = (0, status_h + view_h, W, playback_h)
+
+    def _heatmap_columns(self, avail_w: int) -> tuple:
+        """``(columns, cell_px)`` for a heatmap viewport ``avail_w`` wide:
+        the most columns (at most ``min(4, n)``) whose cells reach the
+        reference size, one column otherwise."""
+        pad = self._pad
+
+        def cell_for(cols: int) -> int:
+            return (avail_w // cols - 2 * pad) // max(1, self.grid_w)
+
+        cols = 1
+        for c in range(min(4, len(self.fg_ids)), 0, -1):
+            if cell_for(c) >= self._min_cell_px:
+                cols = c
+                break
+        return cols, max(1, cell_for(cols))
 
     def _hm_max_scroll(self) -> int:
         return max(0, self._hm_block_h - self._hm_view_rect[3])
@@ -3814,11 +3926,218 @@ class LiveVisualizer:
         active = self._dragging_splitter or self._splitter_hover
         pg.draw.rect(self._screen, (44, 44, 54) if active else (30, 30, 38),
                      (x, y, w, h))
-        grip = (170, 170, 190) if active else (90, 90, 105)
-        cx = x + w // 2
-        cy = y + h // 2
-        for dy in (-8, -4, 0, 4, 8):
-            pg.draw.circle(self._screen, grip, (cx, cy + dy), 1)
+        # The drag grip; folded, the window's own edges set the heatmap
+        # area instead (section 195).
+        if not self._plot_collapsed:
+            grip = (170, 170, 190) if active else (90, 90, 105)
+            cx = x + w // 2
+            cy = y + h // 2
+            for dy in (-8, -4, 0, 4, 8):
+                pg.draw.circle(self._screen, grip, (cx, cy + dy), 1)
+        # Fold button at the top: the chevron points the way the plot
+        # moves (left = fold it in under the heatmaps, right = out again).
+        bh = min(self._plot_toggle_h, h)
+        hover = self._plot_toggle_hover
+        pg.draw.rect(self._screen, (70, 70, 88) if hover else (52, 52, 64),
+                     (x, y, w, bh))
+        pg.draw.rect(self._screen, (110, 110, 130), (x, y, w, bh), 1)
+        cx, cy = x + w // 2, y + bh // 2
+        d = -1 if self._plot_collapsed else 1
+        col = (230, 230, 240) if hover else (190, 190, 205)
+        pg.draw.polygon(self._screen, col, [(cx + 2 * d, cy - 4),
+                                            (cx - 2 * d, cy),
+                                            (cx + 2 * d, cy + 4)])
+        if self._plot_collapsed:
+            # The folded panel's name, one letter per line.
+            ly = y + bh + 8
+            for ch in "PLOT":
+                surf = self._font.render(ch, True, col)
+                self._screen.blit(surf, (cx - surf.get_width() // 2, ly))
+                ly += 13
+
+    def _hit_plot_toggle(self, pos) -> bool:
+        x, y, w, h = self._plot_toggle_rect
+        # No tolerance to the left: the heatmap scrollbar ends there.
+        return self._hit_rect((x, y, w + (0 if self._plot_collapsed else 3),
+                               h), pos)
+
+    def _toggle_plot(self) -> None:
+        """Fold the plot panel in under the heatmaps, or roll it out.
+
+        The heatmap area - and with it the splitter and the fold button
+        under the pointer - stays exactly where it is; only the window's
+        right edge moves. It glides (``_fold_anim_s``, ease-out) with a
+        captured image of the plot in the plot area, so the plot rolls
+        in under the heatmaps or out from under them. Folded, the window
+        is the heatmap area plus the strip (never below
+        ``_min_collapsed_win_w``); unfolded, it gets its earlier width
+        back (section 194).
+        """
+        pg = self._pg
+        self._dragging_splitter = False
+        self._dragging_plot_scroll = False
+        self._splitter_hover = False
+        self._set_cursor(False)
+        self._spawn_popup = None
+        self._spawn_popup_item_rects = []
+        hm_w = self._splitter_rect[0]
+        if not self._plot_collapsed:
+            self._expanded_win_w = self._win_w
+            self._expanded_plot_w = self._win_w - self._expanded_plot_x
+            self._collapsed_resized = False
+            self._hm_area_fixed = hm_w
+            self._render_full()
+            self._plot_anim_img = self._capture_plot_image(self._screen)
+            target = max(self._min_collapsed_win_w,
+                         hm_w + self._collapsed_strip_w)
+            try:
+                self._roll_window(self._win_w, target)
+            finally:
+                self._plot_anim_img = None
+            self._plot_collapsed = True
+            self._clear_plot_hit_rects()
+            self._set_window_width(target)
+            return
+        if not self._collapsed_resized:
+            target = self._expanded_win_w
+        else:
+            # The heatmaps were resized while folded: the plot comes
+            # back beside them at the width it had.
+            target = hm_w + self._splitter_w + self._expanded_plot_w
+        target = max(target, hm_w + self._splitter_w + self._min_plot_w)
+        max_w = self._max_window_w()
+        if max_w is not None:
+            target = min(target, max_w)
+        self._plot_collapsed = False
+        # The plot as it will look at the target width, drawn off screen.
+        start_w, screen = self._win_w, self._screen
+        try:
+            self._win_w = target
+            self._compute_layout()
+            self._screen = pg.Surface((target, self._win_h))
+            self._screen.fill((18, 18, 22))
+            self._draw_plot()
+            self._plot_anim_img = self._capture_plot_image(self._screen)
+        finally:
+            self._screen, self._win_w = screen, start_w
+            self._compute_layout()
+        try:
+            self._roll_window(start_w, target)
+        finally:
+            self._plot_anim_img = None
+        self._set_window_width(target, render=False)
+        # Back to the splitter share, at exactly the pinned position -
+        # unless the screen left the plot under its minimum width; then
+        # the area stays pinned (the button must not move) until the
+        # splitter is dragged.
+        self._split_frac = self._splitter_rect[0] / float(max(1, self._win_w))
+        if self._plot_rect[2] >= self._min_plot_w:
+            self._hm_area_fixed = None
+            self._compute_layout()
+        self._render_full()
+
+    def _capture_plot_image(self, surface):
+        x, y, w, h = self._plot_rect
+        w = min(w, surface.get_width() - x)
+        if w <= 0 or h <= 0:
+            return None
+        return surface.subsurface((x, y, w, h)).copy()
+
+    def _roll_window(self, w0: int, w1: int) -> None:
+        """Glide the window's right edge from ``w0`` to ``w1`` (ease-out),
+        painting every step before the next."""
+        dur = float(self._fold_anim_s)
+        if dur <= 0 or w0 == w1:
+            return
+        t0 = time.monotonic()
+        while True:
+            f = min(1.0, (time.monotonic() - t0) / dur)
+            e = 1.0 - (1.0 - f) ** 3
+            w = int(round(w0 + (w1 - w0) * e))
+            if w != self._win_w:
+                t_step = time.monotonic()
+                self._set_window_width(w)
+                slow = time.monotonic() - t_step
+                if slow > 0.04 and f < 0.5:
+                    # A slow step (un-maximising) is not part of the
+                    # roll: do not let it eat the glide.
+                    t0 += slow
+            self._pg.event.pump()
+            if f >= 1.0:
+                return
+
+    def _set_window_width(self, width: int, render: bool = True) -> None:
+        """Resize the window in x (height kept), re-run the layout and
+        paint the new frame at once.
+
+        Through SDL_SetWindowSize (``pygame._sdl2``): the same X window,
+        ~20 ms. ``display.set_mode`` destroys and re-creates the window
+        on every call here (pygame 2.6 / sdl2-compat, a new X window id
+        each time, ~120 ms) - that was the flicker of sections 190-193;
+        it is only the fallback. The window manager may refuse a size
+        (e.g. a maximised window); the layout follows the surface the
+        window actually has.
+        """
+        pg = self._pg
+        width, height = int(width), int(self._win_h)
+        surf = None
+        try:
+            if self._sdl_window is None:
+                from pygame._sdl2.video import Window
+                self._sdl_window = Window.from_display_module()
+            win = self._sdl_window
+            win.size = (width, height)
+            surf = pg.display.get_surface()
+            if surf.get_size() != (width, height):
+                # A maximised window refuses a new size - and the window
+                # manager maximises this one by itself when it opens near
+                # screen size. Un-maximise and set the geometry in the
+                # same breath, at the same origin, so the restored size
+                # never shows (measured on X11: no intermediate geometry).
+                pos = win.position
+                win.restore()
+                win.position = pos
+                win.size = (width, height)
+                end = time.monotonic() + 0.3
+                while time.monotonic() < end:
+                    pg.event.pump()
+                    surf = pg.display.get_surface()
+                    if surf.get_size() == (width, height):
+                        break
+                    time.sleep(0.005)
+        except Exception as e:
+            self._log_once(f"SDL window resize failed, using set_mode: {e!r}")
+            self._sdl_window = None
+        if surf is None or surf.get_size() != (width, height):
+            try:
+                surf = pg.display.set_mode((width, height),
+                                           pg.SWSURFACE | pg.RESIZABLE)
+            except Exception as e:
+                self._log_once(f"window resize failed: {e!r}")
+                surf = pg.display.get_surface()
+        if surf is not None:
+            self._screen = surf
+            self._win_w, self._win_h = (int(v) for v in surf.get_size())
+        self._compute_layout()
+        if render:
+            self._render_full()
+
+    def _max_window_w(self) -> Optional[int]:
+        usable = self._usable_screen_size()
+        return None if usable is None else int(usable[0])
+
+    def _clear_plot_hit_rects(self) -> None:
+        """Forget the plot's click targets; ``_draw_plot`` sets them each
+        frame, so a collapsed plot would otherwise keep claiming clicks
+        and wheel zoom over the heatmaps."""
+        self._tab_rects = []
+        self._legend_rects = []
+        self._plot_area_rect = None
+        self._live_button_rect = None
+        self._save_plot_button_rect = None
+        self._plot_scroll_track_rect = None
+        self._plot_scroll_thumb_rect = None
+        self._plot_hover = False
 
     def _set_cursor(self, resize: bool) -> None:
         pg = self._pg
@@ -3829,6 +4148,10 @@ class LiveVisualizer:
             pass
 
     def _hit_splitter(self, pos) -> bool:
+        # The fold button never drags; folded, the strip does not either
+        # (the window's edges set the heatmap area, section 195).
+        if self._plot_collapsed or self._hit_plot_toggle(pos):
+            return False
         x, y, w, h = self._splitter_rect
         # A few px of grab tolerance into the plot (not to the left: the
         # heatmap scrollbar ends where the splitter starts).
@@ -3850,16 +4173,31 @@ class LiveVisualizer:
             self._screen = surf
             size = surf.get_size()
             if size != (self._win_w, self._win_h):
+                width_changed = int(size[0]) != self._win_w
                 self._win_w, self._win_h = int(size[0]), int(size[1])
                 self._spawn_popup = None
                 self._spawn_popup_item_rects = []
+                if self._plot_collapsed and width_changed:
+                    # Folded, the window's own edges and corners set the
+                    # heatmap area (section 195): it fills the window up
+                    # to the strip, and unfolding puts the plot beside it.
+                    self._hm_area_fixed = max(
+                        self._min_hm_area_w,
+                        self._win_w - self._collapsed_strip_w)
+                    self._collapsed_resized = True
                 self._compute_layout()
+            return True
+        if (event.type == pg.MOUSEBUTTONDOWN and event.button == 1
+                and self._spawn_popup is None
+                and self._hit_plot_toggle(event.pos)):
+            self._toggle_plot()
             return True
         if (event.type == pg.MOUSEBUTTONDOWN and event.button == 1
                 and self._spawn_popup is None
                 and self._hit_splitter(event.pos)):
             self._dragging_splitter = True
             self._splitter_drag_dx = event.pos[0] - self._splitter_rect[0]
+            self._hm_area_fixed = None
             return True
         if event.type == pg.MOUSEMOTION and self._dragging_splitter:
             hm_area_w = event.pos[0] - self._splitter_drag_dx
@@ -3877,6 +4215,7 @@ class LiveVisualizer:
                 self._splitter_hover = False
             return True
         if event.type == pg.MOUSEMOTION:
+            self._plot_toggle_hover = self._hit_plot_toggle(event.pos)
             hover = self._hit_splitter(event.pos)
             if hover != self._splitter_hover:
                 self._splitter_hover = hover
@@ -4257,15 +4596,15 @@ class LiveVisualizer:
             pg.draw.rect(self._screen, dd_bg, rect)
             pg.draw.rect(self._screen, dd_border, rect, 1)
             txt = f"{label_prefix}{value_text}"
-            # Truncate to fit.
+            # Truncate to fit. Measured with font.size: a rendered
+            # surface that is never blitted leaks (section 189).
             max_w = dd_w - 14
-            txt_surf = self._font.render(txt, True, dd_text)
-            if txt_surf.get_width() > max_w:
+            if self._font.size(txt)[0] > max_w:
                 # Crude truncation.
-                while len(txt) > 4 and txt_surf.get_width() > max_w:
+                while len(txt) > 4 and self._font.size(txt + "…")[0] > max_w:
                     txt = txt[:-2]
-                    txt_surf = self._font.render(txt + "…", True, dd_text)
                 txt = txt + "…"
+            txt_surf = self._font.render(txt, True, dd_text)
             self._screen.blit(txt_surf, (rx + 4, ry + 1))
             # Triangle indicator on the right.
             tri_x = rx + dd_w - 10
@@ -4666,18 +5005,22 @@ class LiveVisualizer:
                         ymax = ymin + 1.0
 
         if have_data:
-            # Y-axis tick labels (5 st: max, 3/4, mid, 1/4, min).
-            for frac, val in (
-                (0.0,  ymax),
-                (0.25, ymin + 0.75 * (ymax - ymin)),
-                (0.5,  (ymin + ymax) / 2),
-                (0.75, ymin + 0.25 * (ymax - ymin)),
-                (1.0,  ymin),
-            ):
+            # Y-axis tick labels (max, 3/4, mid, 1/4, min) in plain
+            # decimals - no scientific notation, no plus sign. A long
+            # label widens the left margin instead of running into the
+            # plot (px0/pw are not used before this point).
+            fracs = (0.0, 0.25, 0.5, 0.75, 1.0)
+            vals = [ymax - f * (ymax - ymin) for f in fracs]
+            labels = _axis_labels(vals, (ymax - ymin) / 4.0)
+            lab_w = max(self._font.size(t)[0] for t in labels)
+            if lab_w + 6 > plot_pad_l and w - (lab_w + 6) - plot_pad_r > 4:
+                plot_pad_l = lab_w + 6
+                px0 = x + plot_pad_l
+                pw = w - plot_pad_l - plot_pad_r
+            for frac, lab_txt in zip(fracs, labels):
                 yy = int(py0 + frac * ph)
                 pg.draw.line(self._screen, (50, 50, 60),
                              (px0, yy), (px0 + pw, yy), 1)
-                lab_txt = f"{val:.3g}" if biomass_fixed_axis or progress else f"{val:+.3g}"
                 lab = self._font.render(lab_txt, True, (160, 160, 170))
                 self._screen.blit(lab, (x + 2, yy - 7))
 
@@ -5005,11 +5348,19 @@ class LiveVisualizer:
 
     def _blit_block_label(self, labels: Sequence[str], a: int, b: int,
                           row_y: int) -> None:
-        """The first of ``labels`` that fits in [a, b), centred, shadowed."""
+        """The first of ``labels`` that fits in [a, b), centred, shadowed.
+
+        Widths are measured with ``font.size``: an antialiased
+        ``font.render`` surface that is never blitted leaks its pixel
+        buffer (section 60, section 189), and zoomed out over a long
+        rollout nearly every block is too narrow for any variant.
+        """
+        if self._font.size(labels[-1])[0] + 4 > b - a:
+            return
         for text in labels:
-            surf = self._font.render(text, True, (235, 235, 240))
-            if surf.get_width() + 4 > b - a:
+            if self._font.size(text)[0] + 4 > b - a:
                 continue
+            surf = self._font.render(text, True, (235, 235, 240))
             tx = a + (b - a - surf.get_width()) // 2
             ty = row_y + (_CAL_ROW_H - surf.get_height()) // 2
             shadow = self._font.render(text, True, (10, 10, 14))
@@ -5117,9 +5468,21 @@ class LiveVisualizer:
         lines: list = [(head, (220, 220, 230))]
         # Sortera efter y-värde (fallande) för läsbarhet.
         entries_sorted = sorted(entries, key=lambda e: -e[2])
-        for fid, col, v in entries_sorted:
+        # Plain decimals like the y axis (section 196): no scientific
+        # notation, no plus sign, the axis's number of decimals so the
+        # values read against its labels. On a log-scaled axis (whose
+        # labels are log10) the raw values get three significant digits
+        # of the largest one instead.
+        if (self._log_plot
+                and self._tabs[self._active_tab] not in ("biomass", "progress")):
+            big = max(abs(e[2]) for e in entries_sorted)
+            step = 10.0 ** (np.floor(np.log10(big)) - 1) if big > 0 else 0.0
+        else:
+            step = (ymax - ymin) / 4.0
+        texts = _axis_labels([e[2] for e in entries_sorted], step)
+        for (fid, col, _v), txt in zip(entries_sorted, texts):
             name = self._display_name(fid)
-            lines.append((f"{name}: {v:+.3g}", col))
+            lines.append((f"{name}: {txt}", col))
 
         # Mät textstorlek.
         pad = 4

@@ -33,6 +33,7 @@ def make_viewer(monkeypatch, n_fgs, max_height=None):
     if not viewer.enabled:
         pytest.skip("pygame display unavailable")
     viewer.set_b0_defaults({fid: 10.0 for fid in FGS[:n_fgs]})
+    viewer._fold_anim_s = 0.0          # the roll is tested on its own
     return viewer
 
 
@@ -67,6 +68,8 @@ def assert_layout_consistent(viewer):
     bx, by, bw, bh = viewer._playback_rect
     assert vx + vw <= sx and sx + sw == px
     assert px + pw <= W
+    if viewer._plot_collapsed:
+        assert pw == 0
     assert by == vy + vh and by + bh <= H and bw == W
     assert viewer._cols * viewer._panel_w <= vw
 
@@ -184,6 +187,288 @@ def test_resize_relayouts_and_keeps_the_share(monkeypatch):
         assert (viewer._win_w, viewer._win_h) == (1600, 1100)
         assert viewer._playback_rect[1] + viewer._playback_rect[3] <= 1100
         assert abs(viewer._splitter_rect[0] / 1600 - frac) < 0.01
+        assert_layout_consistent(viewer)
+        viewer._render_full()
+    finally:
+        viewer.close()
+
+
+# ---- folding the plot in under the heatmaps (sections 190-194) ------
+
+def click_toggle(viewer):
+    x, y, w, h = viewer._plot_toggle_rect
+    assert event(viewer, "MOUSEBUTTONDOWN", button=1,
+                 pos=(x + w // 2, y + h // 2))
+
+
+def test_fold_button_collapses_and_restores_the_plot(monkeypatch):
+    viewer = make_viewer(monkeypatch, 2)
+    try:
+        viewer._render_full()
+        splitter0, plot0 = viewer._splitter_rect, viewer._plot_rect
+        toggle0 = viewer._plot_toggle_rect
+        view0, cell0, cols0 = viewer._hm_view_rect, viewer.cell_px, viewer._cols
+        hm_sb0 = viewer._hm_scrollbar_rect
+        frac0 = viewer._split_frac
+        win0 = (viewer._win_w, viewer._win_h)
+        old_plot_area = viewer._plot_area_rect
+        assert viewer._tab_rects and old_plot_area is not None
+
+        click_toggle(viewer)
+        assert viewer._plot_collapsed
+        # Only the plot folds: the heatmap area, and with it the fold
+        # button under the pointer, stays exactly where it was; the
+        # window ends at the strip (or the floor).
+        assert viewer._plot_toggle_rect[:2] == toggle0[:2]
+        assert viewer._splitter_rect[0] == splitter0[0]
+        assert viewer._splitter_rect[2] == viewer._collapsed_strip_w
+        assert viewer._win_w == max(viewer._min_collapsed_win_w,
+                                    splitter0[0] + viewer._collapsed_strip_w)
+        assert viewer._win_w < win0[0]
+        assert viewer._screen.get_size() == (viewer._win_w, win0[1])
+        assert viewer._hm_view_rect == view0
+        assert viewer.cell_px == cell0 and viewer._cols == cols0
+        assert viewer._hm_scrollbar_rect == hm_sb0
+        assert_layout_consistent(viewer)
+        viewer._render_full()
+        # No stale plot click targets over the heatmaps.
+        assert viewer._tab_rects == [] and viewer._legend_rects == []
+        assert viewer._plot_area_rect is None
+        assert viewer._save_plot_button_rect is None
+        assert not viewer._hit_plot_area(
+            (old_plot_area[0] + 5, old_plot_area[1] + 5))
+        # Folded, the strip has no grip and does not drag (the window's
+        # edges size the heatmaps); only its button unfolds.
+        sx, sy, sw, sh = viewer._splitter_rect
+        assert not viewer._hit_splitter((sx + 2, sy + sh // 2))
+        assert not event(viewer, "MOUSEBUTTONDOWN", button=1,
+                         pos=(sx + 2, sy + sh // 2))
+        assert not viewer._dragging_splitter
+        assert not viewer._hit_plot_toggle((sx + 2, sy + sh // 2))
+        # The heatmap scrollbar right beside the strip keeps its clicks.
+        assert not viewer._hit_splitter((sx - 1, sy + sh // 2))
+        assert not viewer._hit_plot_toggle((sx - 1, sy + 5))
+
+        # The button rolls the plot out again, unchanged, button in place.
+        click_toggle(viewer)
+        assert not viewer._plot_collapsed
+        assert viewer._plot_toggle_rect == toggle0
+        assert (viewer._win_w, viewer._win_h) == win0
+        assert viewer._screen.get_size() == win0
+        assert viewer._splitter_rect == splitter0
+        assert viewer._plot_rect == plot0
+        assert abs(viewer._split_frac - frac0) < 1e-3
+        assert viewer._hm_area_fixed is None
+        viewer._render_full()
+        assert viewer._plot_area_rect == old_plot_area
+    finally:
+        viewer.close()
+
+
+def test_fold_rolls_the_window_edge_without_re_creating_it(monkeypatch):
+    """Section 194: the window edge glides in steps (ease-out), every
+    step painted, the heatmaps and the button never move, and the
+    window is resized in place, never through display.set_mode (which
+    re-creates the X window here - the flicker of sections 190-193)."""
+    viewer = make_viewer(monkeypatch, 2)
+    try:
+        viewer._render_full()
+        viewer._fold_anim_s = 0.12
+        toggle0, view0 = viewer._plot_toggle_rect, viewer._hm_view_rect
+        widths, renders = [], []
+        original = viewer._set_window_width
+
+        def spy(w, render=True):
+            original(w, render)
+            widths.append(viewer._win_w)
+            assert viewer._plot_toggle_rect[:2] == toggle0[:2]
+            assert viewer._hm_view_rect == view0
+        monkeypatch.setattr(viewer, "_set_window_width", spy)
+        original_render = viewer._render_full
+
+        def render_spy():
+            original_render()
+            renders.append(viewer._plot_anim_img is not None)
+        monkeypatch.setattr(viewer, "_render_full", render_spy)
+        set_modes = []
+        pg = viewer._pg
+        real_set_mode = pg.display.set_mode
+        monkeypatch.setattr(pg.display, "set_mode",
+                            lambda *a, **k: (set_modes.append(a),
+                                             real_set_mode(*a, **k))[1])
+        w0 = viewer._win_w
+        click_toggle(viewer)
+        folded = viewer._win_w
+        assert len(widths) >= 3
+        assert widths == sorted(widths, reverse=True)
+        assert widths[0] < w0 and widths[-1] == folded
+        assert any(renders)                    # the captured plot rolled
+        widths.clear()
+        click_toggle(viewer)
+        assert len(widths) >= 3
+        assert widths == sorted(widths)
+        assert widths[-1] == w0
+        assert viewer._plot_toggle_rect == toggle0
+        assert set_modes == []
+    finally:
+        viewer.close()
+
+
+def test_fold_button_is_not_the_splitter_grip(monkeypatch):
+    viewer = make_viewer(monkeypatch, 2)
+    try:
+        x, y, w, h = viewer._plot_toggle_rect
+        assert y == viewer._splitter_rect[1] and h < viewer._splitter_rect[3]
+        assert not viewer._hit_splitter((x + w // 2, y + h // 2))
+        # The splitter still drags from its middle.
+        drag_splitter(viewer, viewer._win_w - viewer._min_plot_w - 20)
+        assert not viewer._plot_collapsed
+    finally:
+        viewer.close()
+
+
+def test_p_key_toggles_and_resize_keeps_the_state(monkeypatch):
+    viewer = make_viewer(monkeypatch, len(FGS))
+    try:
+        pg = viewer._pg
+        frac = viewer._split_frac
+        win_w0 = viewer._win_w
+        hm_w = viewer._splitter_rect[0]
+        cols0, cell0 = viewer._cols, viewer.cell_px
+        viewer._handle_key(pg.K_p)
+        assert viewer._plot_collapsed
+        assert viewer._win_w == max(viewer._min_collapsed_win_w,
+                                    hm_w + viewer._collapsed_strip_w)
+        assert (viewer._cols, viewer.cell_px) == (cols0, cell0)
+        # A height-only resize while folded leaves the heatmap area.
+        viewer._screen = pg.display.set_mode(
+            (viewer._win_w, 1100), pg.SWSURFACE | pg.RESIZABLE)
+        assert event(viewer, "VIDEORESIZE", w=viewer._win_w, h=1100,
+                     size=(viewer._win_w, 1100))
+        assert viewer._plot_collapsed and viewer._win_h == 1100
+        assert viewer._splitter_rect[0] == hm_w
+        assert not viewer._collapsed_resized
+        assert_layout_consistent(viewer)
+        viewer._render_full()
+        # Unfolding gives the window its earlier width (the new height).
+        viewer._handle_key(pg.K_p)
+        assert not viewer._plot_collapsed
+        assert (viewer._win_w, viewer._win_h) == (win_w0, 1100)
+        assert viewer._splitter_rect[0] == hm_w
+        assert abs(viewer._splitter_rect[0] / win_w0 - frac) < 0.01
+        assert_layout_consistent(viewer)
+        viewer._render_full()
+    finally:
+        viewer.close()
+
+
+def test_status_sliders_stay_put_when_the_plot_folds(monkeypatch):
+    viewer = make_viewer(monkeypatch, 2)
+    try:
+        viewer._render_full()
+        track0 = viewer._ticks_track_rect
+        viewer._handle_key(viewer._pg.K_p)
+        viewer._render_full()
+        assert viewer._ticks_track_rect == track0
+    finally:
+        viewer.close()
+
+
+@pytest.mark.parametrize("mode", ["train", "inference"])
+def test_scrub_slider_stays_draggable_with_the_plot_folded(monkeypatch, mode):
+    """Folded, the window is too narrow for the full frame indicator
+    beside the train buttons; the indicator goes compact so the scrub
+    slider keeps its room (section 191)."""
+    monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
+    monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
+    monkeypatch.delenv("MARELD_VIZ_MAX_HEIGHT", raising=False)
+    from lib.viz.pygame_viz import LiveVisualizer
+    viewer = LiveVisualizer(fg_ids=FGS, grid_shape=GRID, mode=mode)
+    if not viewer.enabled:
+        pytest.skip("pygame display unavailable")
+    viewer._fold_anim_s = 0.0
+    try:
+        n = 7300
+        viewer._current_rollout = [{"tick": i} for i in range(n)]
+        viewer._playback_mode = "paused"
+        viewer._playback_idx = 0
+        viewer._render_full()
+        assert not viewer._playback_compact
+        viewer._handle_key(viewer._pg.K_p)
+        viewer._render_full()
+        assert viewer._plot_collapsed
+        # The train buttons leave no room for the full texts.
+        assert viewer._playback_compact == (mode == "train")
+        track = viewer._playback_track_rect
+        assert track is not None
+        assert track[2] >= 60 and track[0] + track[2] <= viewer._win_w
+        # Click near the right end, then drag to the left end.
+        tx, ty, tw, th = track
+        viewer._handle_click((tx + tw - 4, ty + th // 2))
+        assert viewer._dragging_playback
+        assert viewer._playback_idx > 0.9 * n
+        viewer._playback_idx = viewer._playback_idx_from_x(tx)
+        assert viewer._playback_idx == 0
+        # Unfolded again: the full indicator comes back.
+        viewer._handle_key(viewer._pg.K_p)
+        viewer._render_full()
+        assert not viewer._playback_compact
+    finally:
+        viewer.close()
+
+
+def test_folded_window_edges_size_the_heatmaps(monkeypatch):
+    """Section 195: folded, the strip has no grip; resizing the window
+    by its own edges or corners sets the heatmap area (the window up to
+    the strip). Unfolding puts the plot back beside the new area at the
+    width it had, button where the strip's button was."""
+    viewer = make_viewer(monkeypatch, 2)
+    try:
+        pg = viewer._pg
+        viewer._split_frac = 0.0          # one column, the narrowest area
+        viewer._compute_layout()
+        viewer._render_full()
+        plot_w0 = viewer._win_w - viewer._plot_rect[0]
+        cell0 = viewer.cell_px
+        click_toggle(viewer)
+        assert viewer._plot_collapsed and viewer._cols == 1
+        viewer._render_full()
+
+        # The user drags the window's right edge out to 760 px.
+        new_w = 760
+        viewer._screen = pg.display.set_mode(
+            (new_w, viewer._win_h), pg.SWSURFACE | pg.RESIZABLE)
+        assert event(viewer, "VIDEORESIZE", w=new_w, h=viewer._win_h,
+                     size=(new_w, viewer._win_h))
+        hm_w = new_w - viewer._collapsed_strip_w
+        assert viewer._splitter_rect[0] == hm_w
+        assert viewer._splitter_rect[0] + viewer._splitter_rect[2] == new_w
+        assert viewer._cols == 2 or viewer.cell_px > cell0
+        assert_layout_consistent(viewer)
+        viewer._render_full()
+        cols, cell = viewer._cols, viewer.cell_px
+        toggle = viewer._plot_toggle_rect
+
+        # Unfold: the plot comes back beside the new heatmaps.
+        click_toggle(viewer)
+        assert not viewer._plot_collapsed
+        assert (viewer._cols, viewer.cell_px) == (cols, cell)
+        assert viewer._splitter_rect[0] == hm_w
+        assert viewer._plot_toggle_rect[:2] == toggle[:2]
+        assert abs(viewer._win_w - viewer._plot_rect[0] - plot_w0) <= 1 \
+            or viewer._win_w == viewer._max_window_w()
+        assert_layout_consistent(viewer)
+        viewer._render_full()
+
+        # Narrowed by its edge while folded: the heatmaps follow down.
+        click_toggle(viewer)
+        narrow = 500
+        viewer._screen = pg.display.set_mode(
+            (narrow, viewer._win_h), pg.SWSURFACE | pg.RESIZABLE)
+        assert event(viewer, "VIDEORESIZE", w=narrow, h=viewer._win_h,
+                     size=(narrow, viewer._win_h))
+        assert viewer._splitter_rect[0] == max(
+            viewer._min_hm_area_w, narrow - viewer._collapsed_strip_w)
         assert_layout_consistent(viewer)
         viewer._render_full()
     finally:

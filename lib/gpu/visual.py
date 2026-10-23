@@ -95,6 +95,7 @@ class GPUTrainingVisualizer:
                 # library, so take it from there rather than re-reading the
                 # flag: the two cannot then disagree. Section 106.
                 tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS),
+                heatmap_norm=getattr(args, "norm", "rolling"),
             )
             if not self.viz.enabled:
                 self._disable()

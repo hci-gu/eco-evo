@@ -192,3 +192,44 @@ def test_train_mode_has_no_band(monkeypatch):
     plain = _plot_area(monkeypatch, "train", None)
     with_calendar = _plot_area(monkeypatch, "train", config(start_day=105))
     assert with_calendar == plain
+
+
+@pytest.mark.parametrize("window", [10 ** 6, 400, 12])
+def test_every_rendered_text_is_blitted(monkeypatch, window):
+    """An antialiased ``font.render`` surface that is never blitted
+    leaks its pixel buffer (sections 60 and 189): zoomed out over a
+    50-year rollout the band rendered three label variants for every
+    month block and blitted none, ~0.25 MB per frame. Widths are
+    measured with ``font.size``; only the label drawn is rendered."""
+    import pygame
+    v = viewer(monkeypatch)
+    try:
+        feed(v, config(start_day=105), n_ticks=50 * 1460, window=window)
+
+        rendered, blitted = [], set()
+
+        class Screen(pygame.Surface):
+            def blit(self, source, *a, **kw):
+                blitted.add(id(source))
+                return super().blit(source, *a, **kw)
+
+        class Font:
+            def __init__(self, font):
+                self._font = font
+
+            def render(self, *a, **kw):
+                surf = self._font.render(*a, **kw)
+                rendered.append((a[0], surf))
+                return surf
+
+            def __getattr__(self, name):
+                return getattr(self._font, name)
+
+        screen = Screen(v._screen.get_size())
+        v._screen, v._font = screen, Font(v._font)
+        v._render_full()
+        unblitted = [text for text, surf in rendered
+                     if id(surf) not in blitted]
+        assert rendered and not unblitted
+    finally:
+        v.close()

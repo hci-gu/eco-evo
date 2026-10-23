@@ -28,7 +28,10 @@ def viz(monkeypatch):
     monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
     monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
     from lib.viz.pygame_viz import LiveVisualizer
-    viewer = LiveVisualizer(fg_ids=[FG], grid_shape=GRID, mode="inference")
+    # These tests start from the fixed reference and toggle to rolling;
+    # the default became rolling in section 197 (--norm).
+    viewer = LiveVisualizer(fg_ids=[FG], grid_shape=GRID, mode="inference",
+                            heatmap_norm="fixed")
     if not viewer.enabled:
         pytest.skip("pygame display unavailable")
     yield viewer
@@ -59,7 +62,7 @@ def lut(viewer, fraction):
     return tuple(int(c) for c in viewer._lut[idx])
 
 
-def test_fixed_reference_is_the_default_and_darkens_on_decline(viz):
+def test_fixed_reference_darkens_on_decline(viz):
     """A tenfold collapse must read as a tenfold collapse."""
     assert viz._rolling_heatmap is False
     viz.update_biomass({FG: field(10.0)}, tick=0)
@@ -187,7 +190,8 @@ def test_the_toggle_has_a_visible_button_in_every_mode(monkeypatch, mode):
     monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
     monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
     from lib.viz.pygame_viz import LiveVisualizer
-    viewer = LiveVisualizer(fg_ids=[FG], grid_shape=GRID, mode=mode)
+    viewer = LiveVisualizer(fg_ids=[FG], grid_shape=GRID, mode=mode,
+                            heatmap_norm="fixed")
     if not viewer.enabled:
         pytest.skip("pygame display unavailable")
     try:
@@ -276,3 +280,55 @@ def test_the_button_keeps_its_slot_in_the_narrowest_window(monkeypatch):
             assert kept in line, line
     finally:
         viewer.close()
+
+
+# ---- the starting mode: --norm rolling|fixed (section 197) -----------
+
+def test_rolling_is_the_default(monkeypatch):
+    monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
+    monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
+    from lib.viz.pygame_viz import LiveVisualizer
+    viewer = LiveVisualizer(fg_ids=[FG], grid_shape=GRID, mode="inference")
+    if not viewer.enabled:
+        pytest.skip("pygame display unavailable")
+    try:
+        assert viewer._rolling_heatmap is True
+        viewer.update_biomass({FG: field(10.0)}, tick=0)
+        viewer.update_biomass({FG: field(1.0)}, tick=1)
+        # The collapsed field fills the colour range from the start.
+        assert hot_pixel(viewer) == lut(viewer, 1.0)
+        assert hot_pixel(viewer, cell=(0, 0)) == lut(viewer, 0.25)
+        # The toggle still works from the new default.
+        viewer._handle_key(viewer._pg.K_n)
+        assert viewer._rolling_heatmap is False
+        assert hot_pixel(viewer) == lut(viewer, 0.1)
+    finally:
+        viewer.close()
+
+
+def test_unknown_norm_is_refused(monkeypatch):
+    monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
+    from lib.viz.pygame_viz import LiveVisualizer
+    with pytest.raises(ValueError):
+        LiveVisualizer(fg_ids=[FG], grid_shape=GRID, mode="inference",
+                       heatmap_norm="sliding")
+
+
+@pytest.mark.parametrize("script", ["train.py", "train_gpu.py", "inference.py"])
+def test_norm_flag_on_every_visual_entry_point(script):
+    """--norm rolling|fixed, default rolling, on all three --visual
+    entry points; anything else is refused by argparse."""
+    import argparse
+    import subprocess
+    root = Path(__file__).resolve().parents[1]
+    out = subprocess.run([sys.executable, str(root / script), "--help"],
+                         capture_output=True, text=True, cwd=root)
+    assert "--norm {rolling,fixed}" in out.stdout, out.stderr[-2000:]
+
+    from lib.viz import add_heatmap_norm_argument
+    parser = argparse.ArgumentParser()
+    add_heatmap_norm_argument(parser)
+    assert parser.parse_args([]).norm == "rolling"
+    assert parser.parse_args(["--norm", "fixed"]).norm == "fixed"
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--norm", "sliding"])
