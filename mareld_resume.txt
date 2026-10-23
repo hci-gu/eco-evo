@@ -18075,3 +18075,29 @@ remain open exactly as described in 71.9 / 71.11.
     three entry points with argparse defaulting to rolling and
     refusing other values. pytest 1358 passed; 1-generation train.py
     smoke run OK. AGENTS.md flag list updated.
+
+================================================================
+198 Heatmaps grouped: Decision makers / Non-decision makers (2026-10-23)
+================================================================
+198.1 Request (user): sort the heatmaps under the categories
+    "Decision makers" and "Non-decision makers".
+198.2 Implementation (lib/viz/pygame_viz.py): __init__ splits fg_ids
+    by the ndm_ids every caller already passes (train.py,
+    train_gpu.py via lib/gpu/visual.py, inference.py, manual_play.py,
+    simple_inference.py, api.py) into _hm_groups - DMs first, then
+    NDMs, each in FG order - with a 22 px header row per group
+    (_hm_header_h; bold title over a rule, _draw_group_header). Each
+    group starts on a row of its own. _compute_layout lays out
+    _hm_slots (fid, x, y in the scrolled block) and _hm_headers, and
+    _hm_block_h now includes the headers, so the scroll view, the
+    scrollbar and the clipped hit rects follow. Natural window height
+    counts the headers. With only one kind present (or no ndm_ids)
+    there is a single untitled group: the old grid, no headers.
+198.3 Tests (tests/test_viz_heatmap_scroll.py): NDMs interleaved in
+    the FG order are sorted out; DM panels right under their header,
+    the NDM header after the last DM row and the first NDM at
+    column 0 under it; block height = headers + rows; the last NDM's
+    slider reachable by scrolling; without NDMs the untitled grid.
+    Headless screenshot with the mareld2 FG set checked (5 DMs on
+    two rows, 4 NDMs on two rows). pytest passed; 1-generation
+    train.py smoke run OK.

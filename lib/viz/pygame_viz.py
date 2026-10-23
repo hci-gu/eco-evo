@@ -867,7 +867,22 @@ class LiveVisualizer:
         # we get 4 cols x 2 rows; with 1 FG, 1x1; etc.
         n = len(self.fg_ids)
         self._cols = min(4, n)
-        self._rows = (n + self._cols - 1) // self._cols
+        # Heatmaps sorted under "Decision makers" and "Non-decision
+        # makers" (section 198), each group under a header row and
+        # starting on a row of its own. Without NDM information (or with
+        # only one kind present) there is one untitled group, the old
+        # layout.
+        ndms = [f for f in self.fg_ids if f in self._ndm_ids]
+        dms = [f for f in self.fg_ids if f not in self._ndm_ids]
+        if dms and ndms:
+            self._hm_groups = [("Decision makers", dms),
+                               ("Non-decision makers", ndms)]
+            self._hm_header_h = 22
+        else:
+            self._hm_groups = [(None, list(self.fg_ids))]
+            self._hm_header_h = 0
+        self._rows = sum((len(g) + self._cols - 1) // self._cols
+                         for _t, g in self._hm_groups)
         hm_w = self.grid_w * self.cell_px
         hm_h = self.grid_h * self.cell_px
         # Five info lines above the heatmap: FG id, 'B0 = ... B = ...',
@@ -890,7 +905,9 @@ class LiveVisualizer:
         # the splitter position.
         nat_panel_w = hm_w + 2 * pad
         nat_block_w = self._cols * nat_panel_w
-        nat_block_h = self._rows * (hm_h + title_h + cbar_h + spawn_dd_h + 2 * pad)
+        nat_block_h = (self._rows * (hm_h + title_h + cbar_h + spawn_dd_h + 2 * pad)
+                       + self._hm_header_h * sum(
+                           1 for t, _g in self._hm_groups if t is not None))
         # Reserve enough horizontal room in the plot panel for the legend:
         # roughly 7 px per character of the longest FG id, plus the swatch
         # and gutter. This avoids the legend overflowing the window with
@@ -3763,11 +3780,11 @@ class LiveVisualizer:
         # the playback bar.
         self._screen.set_clip(self._pg.Rect(vx, vy, vw, vh))
         try:
-            for idx, fid in enumerate(self.fg_ids):
-                row = idx // self._cols
-                col = idx % self._cols
-                px = ox + col * self._panel_w
-                py = oy + row * self._panel_h
+            for title, y_off in self._hm_headers:
+                self._draw_group_header(title, ox, oy + y_off, vw)
+            for fid, x_off, y_off in self._hm_slots:
+                px = ox + x_off
+                py = oy + y_off
                 if py >= vy + vh or py + self._panel_h <= vy:
                     continue
                 self._draw_one_heatmap(fid, px, py)
@@ -3781,6 +3798,19 @@ class LiveVisualizer:
         self._spawn_dropdown_rects = self._clip_hit_rects(
             self._spawn_dropdown_rects)
         self._draw_hm_scrollbar()
+
+    def _draw_group_header(self, title: str, x: int, y: int, w: int) -> None:
+        """A group's header row: its name over a rule (section 198)."""
+        pg = self._pg
+        h = self._hm_header_h
+        vy, vh = self._hm_view_rect[1], self._hm_view_rect[3]
+        if y >= vy + vh or y + h <= vy:
+            return
+        pg.draw.rect(self._screen, (28, 28, 36), (x, y, w, h))
+        surf = self._font_big.render(title, True, (225, 225, 235))
+        self._screen.blit(surf, (x + 6, y + (h - surf.get_height()) // 2))
+        pg.draw.line(self._screen, (70, 70, 85),
+                     (x, y + h - 1), (x + w - 1, y + h - 1), 1)
 
     def _clip_hit_rects(self, entries: list) -> list:
         _vx, vy, _vw, vh = self._hm_view_rect
@@ -3854,10 +3884,25 @@ class LiveVisualizer:
         n = len(self.fg_ids)
         cols, self.cell_px = self._heatmap_columns(avail_w)
         self._cols = cols
-        self._rows = (n + cols - 1) // cols
         self._panel_w = self.grid_w * self.cell_px + 2 * pad
         self._panel_h = self.grid_h * self.cell_px + self._panel_extra_h
-        self._hm_block_h = self._rows * self._panel_h
+        # Panel and group-header offsets inside the scrolled block.
+        self._hm_slots = []
+        self._hm_headers = []
+        y_off = 0
+        rows = 0
+        for title, fids in self._hm_groups:
+            if title is not None:
+                self._hm_headers.append((title, y_off))
+                y_off += self._hm_header_h
+            for i, fid in enumerate(fids):
+                self._hm_slots.append((fid, (i % cols) * self._panel_w,
+                                       y_off + (i // cols) * self._panel_h))
+            group_rows = (len(fids) + cols - 1) // cols
+            rows += group_rows
+            y_off += group_rows * self._panel_h
+        self._rows = rows
+        self._hm_block_h = y_off
         self._heatmap_origin = (0, status_h)
         self._hm_view_rect = (0, status_h, avail_w, view_h)
         self._hm_scrollbar_rect = (

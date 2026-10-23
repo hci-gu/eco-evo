@@ -473,3 +473,69 @@ def test_folded_window_edges_size_the_heatmaps(monkeypatch):
         viewer._render_full()
     finally:
         viewer.close()
+
+
+# ---- heatmaps grouped by decision makers / non-decision makers (198) -
+
+NDMS = ["phytoplankton", "subsurface_phytoplankton", "benthic_community",
+        "microzooplankton"]
+
+
+def test_heatmaps_are_grouped_under_dm_and_ndm_headers(monkeypatch):
+    monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
+    monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
+    monkeypatch.delenv("MARELD_VIZ_MAX_HEIGHT", raising=False)
+    from lib.viz.pygame_viz import LiveVisualizer
+    # NDMs interleaved in the FG order: the grouping must sort them out.
+    order = ["phytoplankton", "zooplankton", "pelagic_fish",
+             "subsurface_phytoplankton", "gadoids", "porpoises",
+             "benthic_community", "seals", "microzooplankton"]
+    viewer = LiveVisualizer(fg_ids=order, grid_shape=GRID, mode="training",
+                            ndm_ids=NDMS)
+    if not viewer.enabled:
+        pytest.skip("pygame display unavailable")
+    viewer._fold_anim_s = 0.0
+    viewer.set_b0_defaults({fid: 10.0 for fid in order})
+    try:
+        titles = [t for t, _y in viewer._hm_headers]
+        assert titles == ["Decision makers", "Non-decision makers"]
+        slots = viewer._hm_slots
+        fids = [f for f, _x, _y in slots]
+        dms = [f for f in order if f not in NDMS]
+        assert fids == dms + [f for f in order if f in NDMS]
+        cols, pw, ph = viewer._cols, viewer._panel_w, viewer._panel_h
+        hh = viewer._hm_header_h
+        dm_rows = (len(dms) + cols - 1) // cols
+        # DMs right under their header, row by row.
+        for i, (fid, x, y) in enumerate(slots[:len(dms)]):
+            assert (x, y) == ((i % cols) * pw, hh + (i // cols) * ph)
+        # The NDM header starts after the last DM row, NDMs on a new row.
+        ndm_header_y = hh + dm_rows * ph
+        assert viewer._hm_headers[1][1] == ndm_header_y
+        first_ndm = slots[len(dms)]
+        assert first_ndm[1] == 0 and first_ndm[2] == ndm_header_y + hh
+        ndm_rows = (len(NDMS) + cols - 1) // cols
+        assert viewer._hm_block_h == 2 * hh + (dm_rows + ndm_rows) * ph
+        assert_layout_consistent(viewer)
+
+        # Every panel is reachable by scrolling, last NDM included.
+        vx, vy, vw, vh = viewer._hm_view_rect
+        viewer._render_full()
+        for _ in range(200):
+            wheel(viewer, -1, (vx + 10, vy + 10))
+        viewer._render_full()
+        assert "microzooplankton" in slider_fids(viewer)
+    finally:
+        viewer.close()
+
+
+def test_one_kind_only_keeps_the_untitled_grid(monkeypatch):
+    viewer = make_viewer(monkeypatch, len(FGS))
+    try:
+        assert viewer._hm_headers == [] and viewer._hm_header_h == 0
+        cols, pw, ph = viewer._cols, viewer._panel_w, viewer._panel_h
+        for i, (fid, x, y) in enumerate(viewer._hm_slots):
+            assert fid == FGS[i]
+            assert (x, y) == ((i % cols) * pw, (i // cols) * ph)
+    finally:
+        viewer.close()
