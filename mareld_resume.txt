@@ -18688,3 +18688,36 @@ remain open exactly as described in 71.9 / 71.11.
       autumn 3x low.
     - Scoring with these targets: scratchpad pl/ (sc.py still uses
       C:chl 50; the table above was computed separately).
+
+================================================================
+205 THE A17 SCORER IN THE REPO: tools/probes/a17_score.py (2026-10-24)
+================================================================
+205.1 Why: the scratch scorer (pl/sc.py) converted chlorophyll at C:chl
+    50 all year, which made the annual column look 0.6 of A17 when it
+    is ~1.0 at A17's measured C:chl (204).
+205.2 Tool: `run CKPT_DIR` builds the probe world (60x60, M1, mass
+    balance, migration, currents; --behaviour for a viability arm
+    instead of policies), skips --burn-in years (default 1), averages
+    --years (default 3) by calendar month and writes --out JSON;
+    `score FILE...` re-prints saved runs. Targets (204): column
+    biomass 0-30 m = A17 chl x column C:chl / 1000 / C:WW 0.1; surface
+    carbon = A17 0-10 m chl x surface C:chl; nitrate surface / 15-30 m;
+    zooplankton resident Dec-Mar; PP 150 (120-200) g C/m2/yr; f-ratio
+    0.2-0.4. log-RMSE with log(x + 0.05) and log correlations, as the
+    scratch scorer. Gross production = the producers' pool-paid growth
+    (wraps population_change._nutrient_limited_delta); new N = the net
+    gain of the pools in apply_layer_exchange (reservoir) or from the
+    pool tables (one layer). The wrappers are restored after the run.
+205.3 Note on the definitions: the scratch scorer's "PP" was the net
+    growth of the producers (after their M1) and gave 61 with the
+    f-ratio ~0.7 quoted in 201-204; gross pool-paid production is 68.4
+    g C/m2/yr and f = 0.55 (new N ~38 g C either way).
+205.4 Baseline (frozen fix70 21:58 policies, the 203.4 world, seed
+    20260530): column log-RMSE 0.39 (r +0.85, mean ratio 1.02),
+    surface carbon 1.30 (r +0.66), nitrate 0.28, deep nitrate 0.89,
+    zooplankton 0.97 (r +0.76), PP 68.4, f 0.55. The fix72 policies
+    are to be scored against this.
+205.5 Tests: tests/test_a17_score.py (3: the targets are the 204
+    numbers; a run equal to the targets scores zero; a 6x6 one-year
+    run with the 'eat' arm gives twelve months, PP > 0, f in (0, 1] and
+    restores the wrapped functions). pytest 1388 passed / 12 skipped.

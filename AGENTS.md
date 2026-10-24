@@ -269,6 +269,10 @@ python3 tools/viability.py --ticks 300 --seeds 1 --behaviour eat   # smoke test
 # "min share" = minimum share of the best prey in the diet; a pair that
 # cannot pay on its own is low-quality food, not pure loss (section 92).
 python3 tools/probes/budget_gate.py
+# Plankton against SHARK A17 (section 205): column biomass at A17's
+# measured C:chl, surface carbon, nitrate, zooplankton, PP and f-ratio.
+python3 tools/probes/a17_score.py run results/<run-name>      # ~2 min
+python3 tools/probes/a17_score.py score a.json b.json         # saved runs
 # Monthly attack-rate multipliers and producer growth factors (137, 138).
 python3 tools/probes/daylight_table.py
 # Fishing-effort maps (MW-h/km2/year per cell) from EMODnet -> maps/*.npz;
