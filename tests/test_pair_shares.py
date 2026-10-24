@@ -13,8 +13,8 @@ Contracts asserted:
    it takes from f x B, and the prey loses no more than that.
 4. Inert at 1 (bit-identical), and GPU parity with both keys set, with
    and without per-pair visibility floors.
-5. mareld2: gadoids -> benthos carries phi 0.53 and f 0.2, and the
-   gadoids' derived growth rate is unchanged (their best prey at the
+5. mareld2: benthivorous_fish -> benthos carries phi 0.53 and f 0.2, and the
+   benthivorous_fish' derived growth rate is unchanged (their best prey at the
    ceiling is zooplankton).
 """
 import copy
@@ -76,6 +76,22 @@ def test_growth_budget_sees_the_predator_share():
     assert best == "q" and half == pytest.approx(0.5 * full)
 
 
+def test_ideal_intake_fills_the_caps_in_order():
+    """The eat shares sum to 1 and each is capped at its phi, so the ideal
+    allocation fills the best pair's cap first and the rest goes to the
+    next (section 209)."""
+    species = {"p": {"max_intake_rate": 0.5}, "q": {"energy_content": 100.0},
+               "r": {"energy_content": 50.0}, "s": {"energy_content": 20.0}}
+    pairs = {"p_preys_on_q": {"preys_on": True, "handling_time": 10.0, "predator_share": 0.4},
+             "p_preys_on_r": {"preys_on": True, "handling_time": 10.0, "predator_share": 0.5},
+             "p_preys_on_s": {"preys_on": True, "handling_time": 10.0}}
+    rate = {k: growth_budget.intake_ceiling(0.5, 10.0) * species[k]["energy_content"]
+            for k in "qrs"}
+    intake, best = growth_budget.ideal_intake("p", species, pairs)
+    assert best == "q"
+    assert intake == pytest.approx(0.4 * rate["q"] + 0.5 * rate["r"] + 0.1 * rate["s"])
+
+
 def _eat_only_c(env):
     """DM a eats c with its whole action mass; b does nothing (it eats c
     too, at full access, which would otherwise set the shared cap)."""
@@ -124,17 +140,17 @@ def test_pair_shares_match_reference(device, floors):
     assert model.pair_access is not None
 
 
-def test_mareld2_gadoid_benthos_pair():
+def test_mareld2_benthivore_benthos_pair():
     import yaml
     root = Path(__file__).resolve().parents[1]
     library = yaml.safe_load((root / "fgconfig" / "fg_library.yaml").read_text())
-    pair = library["interaction_definitions"]["gadoids_preys_on_benthic_community"]
-    assert pair["predator_share"] == pytest.approx(0.53)
+    pair = library["interaction_definitions"]["benthivorous_fish_preys_on_benthic_community"]
+    assert pair["predator_share"] == pytest.approx(0.9)
     assert pair["accessible_fraction"] == pytest.approx(0.2)
     stripped = copy.deepcopy(library)
     for key in ("predator_share", "accessible_fraction"):
-        stripped["interaction_definitions"]["gadoids_preys_on_benthic_community"].pop(key)
-    g = [growth_budget.derived_growth_rate("gadoids", lib["species_definitions"],
+        stripped["interaction_definitions"]["benthivorous_fish_preys_on_benthic_community"].pop(key)
+    g = [growth_budget.derived_growth_rate("benthivorous_fish", lib["species_definitions"],
                                            lib["interaction_definitions"])
          for lib in (library, stripped)]
     assert g[0] == pytest.approx(g[1])

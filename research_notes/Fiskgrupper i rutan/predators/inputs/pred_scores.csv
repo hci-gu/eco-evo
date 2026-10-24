@@ -1,0 +1,66 @@
+species,stage,pool,s_min,s_c,s_max,basis
+whiting,juvenile,benthos,0.18,0.40,0.70,reused: Torskfiskarnas bytesandelar scores.csv A x C (hyperbenthos only; no barbel)
+whiting,juvenile,plank_fish,0.00,0.04,0.10,reused: gape class none below 20-23 cm
+whiting,juvenile,zoo_krill,0.49,0.81,1.00,reused: krill layer by day
+whiting,juvenile,zoo_cop,0.07,0.27,0.50,reused: picking only
+whiting,juvenile,benth_fish,0.00,0.05,0.15,judgement: below the size of settled 0-group gadoids it could swallow except the smallest
+whiting,adult,benthos,0.04,0.18,0.40,reused
+whiting,adult,plank_fish,0.18,0.40,0.75,reused: sprat / small herring; Norway pout (10-20 cm) also within gape
+whiting,adult,zoo_krill,0.28,0.54,0.80,reused
+whiting,adult,zoo_cop,0.00,0.05,0.10,reused
+whiting,adult,benth_fish,0.20,0.45,0.70,judgement: sharp teeth; 0-group and 1-group haddock/cod and small flatfish near the bed; whiting are a major predator of 0-group gadoids in North Sea MSVPA/SMS
+saithe,adult,benthos,0.00,0.06,0.20,reused (30-60 cm)
+saithe,adult,plank_fish,0.40,0.70,0.85,reused: sprat + juvenile herring; Norway pout and blue whiting named as main prey (IMR 2021)
+saithe,adult,zoo_krill,0.56,0.90,1.00,reused: 35-40 rakers; DVM through krill layer
+saithe,adult,zoo_cop,0.24,0.50,0.80,reused
+saithe,adult,benth_fish,0.05,0.20,0.40,judgement: pelagic schools; near bottom by day only; juvenile gadoids taken occasionally
+saithe,large,benthos,0.00,0.03,0.10,reused (> 60 cm)
+saithe,large,plank_fish,0.68,1.00,1.00,reused: all clupeids within gape
+saithe,large,zoo_krill,0.24,0.50,0.70,reused
+saithe,large,zoo_cop,0.08,0.30,0.50,reused
+saithe,large,benth_fish,0.10,0.30,0.50,judgement: gape admits 20-40 cm haddock/cod; still mostly pelagic
+hake,juvenile,benthos,0.12,0.32,0.60,reused
+hake,juvenile,plank_fish,0.09,0.24,0.45,reused
+hake,juvenile,zoo_krill,0.30,0.56,0.90,reused
+hake,juvenile,zoo_cop,0.00,0.08,0.20,reused
+hake,juvenile,benth_fish,0.05,0.15,0.30,judgement
+hake,adult,benthos,0.00,0.06,0.16,reused
+hake,adult,plank_fish,0.42,0.72,1.00,reused
+hake,adult,zoo_krill,0.03,0.12,0.30,reused
+hake,adult,zoo_cop,0.00,0.00,0.05,reused
+hake,adult,benth_fish,0.30,0.55,0.80,judgement: near bottom by day; gadoids 16-48 % of the Skagerrak/Kattegat 2024 hake diet (whiting the main one)
+mackerel,all,benthos,0.00,0.00,0.03,judgement: pelagic 0-50 m; no bottom foraging
+mackerel,all,plank_fish,0.06,0.18,0.35,judgement: A 0.6 (upper-layer schools) x C 0.3 (gape class sprat/sandeel/0-group herring at 25-35 cm)
+mackerel,all,zoo_krill,0.60,0.90,1.00,judgement: visual particulate feeder on krill and Themisto in the upper layer
+mackerel,all,zoo_cop,0.70,0.90,1.00,judgement: ram filter feeding on Calanus at high density; fine gill rakers
+mackerel,all,benth_fish,0.00,0.01,0.05,judgement: pelagic; settled gadoids out of reach
+horse mackerel,all,benthos,0.05,0.15,0.30,judgement: near the bed by day; epibenthic crustaceans (shrimps) in diets
+horse mackerel,all,plank_fish,0.10,0.21,0.40,judgement: A 0.7 x C 0.3 (small fish only at 25-35 cm)
+horse mackerel,all,zoo_krill,0.45,0.72,0.90,judgement: krill and copepods are the main prey of North Sea horse mackerel
+horse mackerel,all,zoo_cop,0.25,0.50,0.75,judgement: picking and filtering
+horse mackerel,all,benth_fish,0.00,0.05,0.15,judgement
+spurdog,all,benthos,0.25,0.48,0.70,judgement: generalist near the bed; crabs Nephrops Crangon polychaetes and squid in diets
+spurdog,all,plank_fish,0.40,0.64,0.80,judgement: herring sprat sandeel and Norway pout are its main fish prey; schools by season
+spurdog,all,zoo_krill,0.05,0.24,0.40,judgement: euphausiids taken by smaller spurdog
+spurdog,all,zoo_cop,0.00,0.00,0.05,judgement
+spurdog,all,benth_fish,0.30,0.56,0.80,judgement: gadoids and flatfish in diets; large gape
+anglerfish,all,benthos,0.05,0.20,0.40,judgement: ambush on the bed; large crustaceans occasionally
+anglerfish,all,plank_fish,0.20,0.40,0.60,judgement: C 1 (huge gape) x A 0.4 (only clupeids and Norway pout that come near the bed)
+anglerfish,all,zoo_krill,0.00,0.00,0.05,judgement
+anglerfish,all,zoo_cop,0.00,0.00,0.00,judgement
+anglerfish,all,benth_fish,0.70,0.90,1.00,judgement: ambush predator of gadoids and flatfish on the bed
+ling,all,benthos,0.20,0.40,0.60,reused minor_scores.csv
+ling,all,plank_fish,0.40,0.60,0.80,reused minor_scores.csv
+ling,all,zoo_krill,0.00,0.05,0.20,reused minor_scores.csv
+ling,all,zoo_cop,0.00,0.00,0.05,reused minor_scores.csv
+ling,all,benth_fish,0.40,0.60,0.80,judgement: demersal piscivore
+pollack,all,benthos,0.00,0.00,0.10,reused minor_scores.csv
+pollack,all,plank_fish,0.50,0.70,0.90,reused minor_scores.csv
+pollack,all,zoo_krill,0.30,0.50,0.80,reused minor_scores.csv
+pollack,all,zoo_cop,0.05,0.20,0.40,reused minor_scores.csv
+pollack,all,benth_fish,0.10,0.30,0.50,judgement
+velvet belly,all,benthos,0.10,0.30,0.50,judgement: small deep shark; shrimps
+velvet belly,all,plank_fish,0.10,0.30,0.50,judgement: small fish
+velvet belly,all,zoo_krill,0.40,0.70,0.90,judgement: krill and Pasiphaea
+velvet belly,all,zoo_cop,0.00,0.10,0.20,judgement
+velvet belly,all,benth_fish,0.00,0.10,0.20,judgement

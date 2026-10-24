@@ -32,9 +32,9 @@ def test_cli_semantics_match_train_py():
 
 
 def test_plot_ids_all_reports_ndms_solo_only_dms():
-    fgs, dms = ["phytoplankton", "zooplankton", "gadoids"], ["zooplankton", "gadoids"]
+    fgs, dms = ["phytoplankton", "zooplankton", "benthivorous_fish"], ["zooplankton", "benthivorous_fish"]
     assert rnd_baseline_plot_ids("all", fgs, dms) == [f + "_rnd" for f in fgs]
-    assert rnd_baseline_plot_ids("solo", fgs, dms) == ["zooplankton_rnd", "gadoids_rnd"]
+    assert rnd_baseline_plot_ids("solo", fgs, dms) == ["zooplankton_rnd", "benthivorous_fish_rnd"]
     assert rnd_baseline_plot_ids("none", fgs, dms) is None
     assert rnd_baseline_plot_ids(None, fgs, dms) is None
 
@@ -171,10 +171,10 @@ def test_gpu_viewer_draws_the_baseline(tmp_path, viewers, mode):
     viz = viewers[0]
     rnd = {key for key in viz._series["biomass"] if key.endswith("_rnd")
            and viz._series["biomass"][key]}
-    dms = {"gadoids", "pelagic_fish", "porpoises", "zooplankton"}
+    dms = {"benthivorous_fish", "planktivorous_fish", "porpoises", "zooplankton"}
     assert {fid + "_rnd" for fid in dms} <= rnd
     assert ("phytoplankton_rnd" in rnd) == (mode == "all")
-    assert viz._series["reward"]["gadoids_rnd"]
+    assert viz._series["reward"]["benthivorous_fish_rnd"]
 
 
 def test_gpu_rnd_baseline_requires_visual(tmp_path):

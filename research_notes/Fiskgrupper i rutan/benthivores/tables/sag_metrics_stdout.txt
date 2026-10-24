@@ -1,0 +1,91 @@
+== ple.27.420 (assessment 2026, key 22489), recruitment age 1, SSB units tonnes
+  SSB years 1957-1989: n 33  median R/SSB    3.516  median R      2554101  median SSB     677358
+  SSB years 1990-1999: n 10  median R/SSB    5.174  median R      2305813  median SSB     427138
+  SSB years 2000-2009: n 10  median R/SSB    5.510  median R      3784425  median SSB     541829
+  SSB years 2010-2019: n 10  median R/SSB    4.063  median R      4276609  median SSB    1134941
+  SSB years 2015-2024: n 10  median R/SSB    5.473  median R      4924766  median SSB     884536
+  SSB years 2020-2025: n  6  median R/SSB    5.928  median R      5538151  median SSB     870002
+  2015: catch    134838 (L 85390.0, D 49447.875, dead D None)  TB    1440479  C/TB 0.094  SSB    1161380  C/SSB 0.116  F/HR 0.1115849322964
+  2016: catch    137261 (L 92783.0, D 44478.471, dead D None)  TB    1362800  C/TB 0.101  SSB    1110078  C/SSB 0.124  F/HR 0.127940103852379
+  2017: catch    114274 (L 74938.0, D 39336.476, dead D None)  TB    1312221  C/TB 0.087  SSB    1031177  C/SSB 0.111  F/HR 0.120808168638483
+  2018: catch    106241 (L 57839.0, D 48402.094, dead D None)  TB    1116464  C/TB 0.095  SSB     855310  C/SSB 0.124  F/HR 0.129345833659807
+  2019: catch     86327 (L 48781.0, D 37546.0, dead D None)  TB    1051285  C/TB 0.082  SSB     758456  C/SSB 0.114  F/HR 0.107088344075964
+  2020: catch     79211 (L 40918.0, D 38292.996, dead D None)  TB    1046402  C/TB 0.076  SSB     775418  C/SSB 0.102  F/HR 0.0940956205729663
+  2021: catch     74062 (L 35950.0, D 38111.773, dead D None)  TB    1135182  C/TB 0.065  SSB     819860  C/SSB 0.090  F/HR 0.0787111871250039
+  2022: catch     54467 (L 25601.0, D 28865.527, dead D None)  TB    1179289  C/TB 0.046  SSB     826243  C/SSB 0.066  F/HR 0.057977857188074
+  2023: catch     56793 (L 23153.0, D 33639.516, dead D None)  TB    1273989  C/TB 0.045  SSB     913761  C/SSB 0.062  F/HR 0.0527573341949052
+  2024: catch     44058 (L 19499.0, D 24558.757, dead D None)  TB    1454670  C/TB 0.030  SSB    1051919  C/SSB 0.042  F/HR 0.0393883157667639
+  2025: catch     50755 (L 16108.0, D 34647.32, dead D None)  TB    1415274  C/TB 0.036  SSB    1043184  C/SSB 0.049  F/HR 0.0425545386600369
+== ple.27.21-32 (assessment 2026, key 22470), recruitment age 1, SSB units tonnes
+  SSB years 2000-2009: n  8  median R/SSB   20.072  median R       218603  median SSB      10742
+  SSB years 2010-2019: n 10  median R/SSB   20.747  median R       443524  median SSB      22438
+  SSB years 2015-2024: n 10  median R/SSB   77.638  median R      2471693  median SSB      33144
+  SSB years 2020-2025: n  6  median R/SSB  105.417  median R      5873463  median SSB      65360
+  2015: catch      3843 (L 3164.78, D None, dead D 678.21)  TB      41179  C/TB 0.093  SSB      24335  C/SSB 0.158  F/HR 0.156
+  2016: catch      5073 (L 3647.23, D None, dead D 1425.42)  TB      44777  C/TB 0.113  SSB      25535  C/SSB 0.199  F/HR 0.181
+  2017: catch      4613 (L 3967.76, D None, dead D 645.34)  TB      56647  C/TB 0.081  SSB      28305  C/SSB 0.163  F/HR 0.173
+  2018: catch      6190 (L 5091.67, D None, dead D 1098.22)  TB      53439  C/TB 0.116  SSB      32405  C/SSB 0.191  F/HR 0.22
+  2019: catch      6831 (L 6064.9, D None, dead D 766.59)  TB      50288  C/TB 0.136  SSB      33884  C/SSB 0.202  F/HR 0.22
+  2020: catch      5210 (L 4449.16, D None, dead D 761.13)  TB      74165  C/TB 0.070  SSB      30555  C/SSB 0.171  F/HR 0.175
+  2021: catch      3792 (L 2911.16, D None, dead D 881.12)  TB     100304  C/TB 0.038  SSB      41549  C/SSB 0.091  F/HR 0.122
+  2022: catch      2505 (L 1917.25, D None, dead D 588.19)  TB     144424  C/TB 0.017  SSB      56663  C/SSB 0.044  F/HR 0.066
+  2023: catch      2602 (L 1921.03, D None, dead D 681.22)  TB     180231  C/TB 0.014  SSB      74058  C/SSB 0.035  F/HR 0.052
+  2024: catch      2015 (L 1316.85, D None, dead D 698.44)  TB     216528  C/TB 0.009  SSB      76449  C/SSB 0.026  F/HR 0.034
+  2025: catch      1306 (L 817.09, D None, dead D 489.28)  TB     261862  C/TB 0.005  SSB      96773  C/SSB 0.013  F/HR 0.02
+== wit.27.3a47d (assessment 2026, key 22534), recruitment age 1, SSB units tonnes
+  SSB years 1950-1989: n 40  median R/SSB   11.395  median R        27952  median SSB       2836
+  SSB years 1990-1999: n 10  median R/SSB   10.761  median R        50682  median SSB       4654
+  SSB years 2000-2009: n 10  median R/SSB   10.747  median R        38002  median SSB       2654
+  SSB years 2010-2019: n 10  median R/SSB   10.006  median R        28804  median SSB       3366
+  SSB years 2015-2024: n 10  median R/SSB    8.117  median R        31641  median SSB       3457
+  SSB years 2020-2025: n  6  median R/SSB    8.035  median R        33180  median SSB       3290
+  2015: catch      2762 (L 2363.0, D 399.0, dead D None)  SSB       3667  C/SSB 0.753  F/HR 0.28
+  2016: catch      3312 (L 3025.0, D 287.0, dead D None)  SSB       3730  C/SSB 0.888  F/HR 0.29
+  2017: catch      3510 (L 3360.0, D 150.0, dead D None)  SSB       3650  C/SSB 0.962  F/HR 0.34
+  2018: catch      3293 (L 3141.0, D 152.0, dead D None)  SSB       3426  C/SSB 0.961  F/HR 0.34
+  2019: catch      2890 (L 2707.0, D 183.0, dead D None)  SSB       3164  C/SSB 0.913  F/HR 0.34
+  2020: catch      2164 (L 1980.0, D 184.0, dead D None)  SSB       2852  C/SSB 0.759  F/HR 0.31
+  2021: catch      2083 (L 1855.0, D 228.0, dead D None)  SSB       2906  C/SSB 0.717  F/HR 0.29
+  2022: catch      1812 (L 1653.0, D 159.0, dead D None)  SSB       3091  C/SSB 0.586  F/HR 0.26
+  2023: catch      1648 (L 1522.0, D 126.0, dead D None)  SSB       3488  C/SSB 0.472  F/HR 0.23
+  2024: catch      1658 (L 1541.0, D 117.0, dead D None)  SSB       4064  C/SSB 0.408  F/HR 0.182
+  2025: catch      1649 (L 1550.0, D 99.0, dead D None)  SSB       4650  C/SSB 0.355  F/HR 0.151
+== dab.27.3a4 (assessment 2025, key 19480), recruitment age 0, SSB units ratio
+  SSB years 2000-2009: n  7  median R/SSB    0.014  median R            1  median SSB         83
+  SSB years 2010-2019: n 10  median R/SSB    0.018  median R            3  median SSB        194
+  SSB years 2015-2024: n 10  median R/SSB    0.013  median R            2  median SSB        195
+  SSB years 2020-2025: n  5  median R/SSB    0.014  median R            2  median SSB        162
+  2015: catch     52454 (L 5082.18445, D 47371.51551, dead D None)  SSB        205  C/SSB 256.432  F/HR 256.432144876566
+  2016: catch     49896 (L 5085.08675, D 44810.88713, dead D None)  SSB        257  C/SSB 194.179  F/HR 194.178802813256
+  2017: catch     35113 (L 3597.85087, D 31515.03032, dead D None)  SSB        227  C/SSB 154.829  F/HR 154.828786789222
+  2018: catch     44792 (L 4232.96426, D 40545.4537, dead D None)  SSB        202  C/SSB 221.424  F/HR 221.423986643481
+  2019: catch     40725 (L 4991.14332, D 35701.53252, dead D None)  SSB        206  C/SSB 197.996  F/HR 197.996061672595
+  2020: catch     42673 (L 3807.68621, D 38865.54787, dead D None)  SSB        187  C/SSB 227.846  F/HR 227.845947909095
+  2021: catch     37749 (L 3321.18074, D 34410.011, dead D None)  SSB        165  C/SSB 229.244  F/HR 229.244002155749
+  2022: catch     35690 (L 2170.76829, D 33515.1727, dead D None)  SSB        142  C/SSB 251.888  F/HR 251.887979212975
+  2023: catch     28005 (L 1802.13343, D 26191.98322, dead D None)  SSB        162  C/SSB 172.620  F/HR 172.620098853723
+  2024: catch     23175 (L 1715.79537, D 21453.48447, dead D None)  SSB        144  C/SSB 161.098  F/HR 161.098068873293
+== lem.27.3a47d (assessment 2026, key 22413), recruitment age 0, SSB units tonnes
+  2015: catch      5116 (L 3480.379, D 1635.795, dead D None)  F/HR 4060.31746
+  2016: catch      5001 (L 3833.895, D 1166.541, dead D None)  F/HR 3647.702407
+  2017: catch      3966 (L 3315.116, D 650.974, dead D None)  F/HR 3172.8
+  2018: catch      3377 (L 3045.563, D 330.669, dead D None)  F/HR 3047.833935
+  2019: catch      3878 (L 3272.732, D 605.002, dead D None)  F/HR 3584.103512
+  2020: catch      3044 (L 2652.511, D 391.421, dead D None)  F/HR 2847.521048
+  2021: catch      2775 (L 2106.818, D 667.732, dead D None)  F/HR 2957.973348
+  2022: catch      1961 (L 1507.244, D 453.576, dead D None)  F/HR 2203.213483
+  2023: catch      1891 (L 1472.907, D 417.935, dead D None)  F/HR 2269.966387
+  2024: catch      1444 (L 1180.084, D 263.601, dead D None)  F/HR 1829.816223
+  2025: catch      1296 (L 1061.864, D 233.863, dead D None)  F/HR 1650.957962
+== gug.27.3a47d (assessment 2026, key 22487), recruitment age 0, SSB units Kilograms per hour
+  2015: catch      8451 (L 2140.69481, D 6310.34529, dead D None)  F/HR None
+  2016: catch     12129 (L 2156.13044, D 9973.21535000001, dead D None)  F/HR None
+  2017: catch     17121 (L 3450.60577, D 13670.45704, dead D None)  F/HR None
+  2018: catch     11419 (L 1136.73524, D 10136.31783, dead D None)  F/HR None
+  2019: catch      9294 (L 1708.68114, D 7572.83467, dead D None)  F/HR None
+  2020: catch     10221 (L 1965.84701, D 8249.25664, dead D None)  F/HR None
+  2021: catch      5550 (L 1099.01777, D 4450.73776, dead D None)  F/HR None
+  2022: catch      9885 (L 779.7131, D 9105.78490999999, dead D None)  F/HR None
+  2023: catch      9560 (L 879.254879999999, D 8680.25958000001, dead D None)  F/HR None
+  2024: catch      3260 (L 706.89373, D 2553.12903, dead D None)  F/HR None
+  2025: catch      3827 (L 701.09375, D 3125.3713, dead D None)  F/HR None

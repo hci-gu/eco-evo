@@ -1,0 +1,40 @@
+weights                  pool  central   p05   p95
+ pooled               benthos    0.145 0.122 0.208
+ pooled            plank_fish    0.533 0.447 0.590
+ pooled                   zoo    0.478 0.392 0.533
+ pooled            benth_fish    0.290 0.236 0.360
+ pooled        plank_fish|zoo    0.651 0.580 0.710
+ pooled plank_fish|benth_fish    0.554 0.483 0.609
+ pooled              any fish    0.554 0.483 0.609
+ pooled              all four    0.671 0.613 0.727
+     q1               benthos    0.202 0.153 0.305
+     q1            plank_fish    0.406 0.314 0.539
+     q1                   zoo    0.382 0.292 0.470
+     q1            benth_fish    0.349 0.253 0.450
+     q1        plank_fish|zoo    0.508 0.429 0.641
+     q1 plank_fish|benth_fish    0.448 0.389 0.563
+     q1              any fish    0.448 0.389 0.563
+     q1              all four    0.548 0.491 0.667
+     q3               benthos    0.124 0.111 0.179
+     q3            plank_fish    0.578 0.484 0.617
+     q3                   zoo    0.513 0.428 0.563
+     q3            benth_fish    0.268 0.222 0.332
+     q3        plank_fish|zoo    0.702 0.627 0.741
+     q3 plank_fish|benth_fish    0.593 0.505 0.632
+     q3              any fish    0.593 0.505 0.632
+     q3              all four    0.716 0.651 0.756
+
+sum of the four caps (pooled, central): 1.445
+
+contributions to phi by species (pooled, central):
+                benthos  plank_fish  zoo_krill  zoo_cop  benth_fish  zoo(f=0.5)
+anglerfish        0.003       0.005      0.000    0.000       0.012       0.000
+hake              0.002       0.018      0.003    0.000       0.014       0.002
+horse mackerel    0.005       0.007      0.025    0.017       0.002       0.021
+ling              0.003       0.004      0.000    0.000       0.004       0.000
+mackerel          0.000       0.014      0.072    0.072       0.001       0.072
+pollack           0.000       0.003      0.002    0.001       0.001       0.001
+saithe            0.020       0.332      0.308    0.175       0.097       0.241
+spurdog           0.024       0.032      0.012    0.000       0.028       0.006
+velvet belly      0.001       0.001      0.003    0.000       0.000       0.002
+whiting           0.087       0.116      0.225    0.039       0.130       0.132

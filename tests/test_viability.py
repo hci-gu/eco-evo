@@ -376,7 +376,7 @@ def test_cli_exposes_both_factors_of_the_rig():
     assert cli.parse_behaviours("greedy_flee_stay") == ["greedy_flee_stay"]
     assert default.mixed_fg is None
     assert cli.build_parser().parse_args(
-        ["--mixed-fg", "gadoids, porpoises"]).mixed_fg == ["gadoids",
+        ["--mixed-fg", "benthivorous_fish, porpoises"]).mixed_fg == ["benthivorous_fish",
                                                           "porpoises"]
     assert default.currents == "off"
     assert cli.build_parser().parse_args(
@@ -542,7 +542,7 @@ def test_greedy_hide_rests_under_predation_pressure():
     assert np.all(actions.rest[threatened] == 1.0)
 
 
-def _one_threat_env(prey="pelagic_fish", predator="gadoids", cell=(2, 2)):
+def _one_threat_env(prey="planktivorous_fish", predator="benthivorous_fish", cell=(2, 2)):
     """``prey`` everywhere, hungry; its only predator biomass in ``cell``."""
     env = _tiny_env(grid=(6, 6))
     viability.install_behaviour(env, viability.GREEDY_FLEE)
@@ -667,13 +667,13 @@ def test_mixed_arm_overrides_one_group_and_keeps_the_others(monkeypatch):
 
 
 def test_trophic_order_puts_prey_before_its_predators():
-    menus = {"porpoises": ["pelagic_fish"],
-             "pelagic_fish": ["zooplankton"],
+    menus = {"porpoises": ["planktivorous_fish"],
+             "planktivorous_fish": ["zooplankton"],
              "zooplankton": ["phytoplankton"]}
     order = viability.trophic_order(
-        menus, ["porpoises", "pelagic_fish", "zooplankton"])
-    assert order.index("zooplankton") < order.index("pelagic_fish")
-    assert order.index("pelagic_fish") < order.index("porpoises")
+        menus, ["porpoises", "planktivorous_fish", "zooplankton"])
+    assert order.index("zooplankton") < order.index("planktivorous_fish")
+    assert order.index("planktivorous_fish") < order.index("porpoises")
 
 
 def test_trophic_order_survives_a_cycle():
@@ -704,7 +704,7 @@ def test_colocation_moves_predators_onto_prey_and_conserves_biomass():
     for pair, overlap in after.items():
         assert overlap >= before[pair] - 1e-9
     # The primary pair the critique was about must end fully overlapped.
-    assert after["pelagic_fish>zooplankton"] == pytest.approx(1.0)
+    assert after["planktivorous_fish>zooplankton"] == pytest.approx(1.0)
 
 
 def test_overlap_reports_both_numbers_a_verdict_must_be_read_with():

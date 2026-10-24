@@ -100,7 +100,7 @@ def test_the_dimensionless_holling_product_is_invariant(hours):
 def test_the_per_pair_intake_override_is_rescaled():
     """The library really has one, so this is not hypothetical."""
     params = porpoise_params()
-    pair = "porpoises_preys_on_gadoids"
+    pair = "porpoises_preys_on_benthivorous_fish"
     assert "max_intake_rate" in params["interaction"][pair], (
         "fixture no longer covers a per-pair override")
     out, _ = rescale_species(params, 1)

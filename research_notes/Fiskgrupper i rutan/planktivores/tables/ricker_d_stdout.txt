@@ -1,0 +1,45 @@
+data/sg_nop_26011.csv: lag 1; early 1985-2000 (n=16), recent 2010-2025 (n=16)
+  median R/SSB early 1334, recent 1165; raw d = 1.14
+  median R early/recent = 1.23; median SSB early 54942, recent 46349
+  Ricker b = 1.1e-05 per t (SSB at max R 1/b = 90681 t); resid SD 0.63
+  Ricker d = 1.27 (+-1 SE 1.02-1.59)
+data/sg_nop_26011.csv: lag 1; early 1985-2002 (n=18), recent 2003-2025 (n=23)
+  median R/SSB early 1306, recent 1224; raw d = 1.07
+  median R early/recent = 1.25; median SSB early 59100, recent 42099
+  Ricker b = 1.19e-05 per t (SSB at max R 1/b = 84000 t); resid SD 0.61
+  Ricker d = 1.31 (+-1 SE 1.07-1.61)
+data/sg_nop_26011.csv: lag 1; early 1985-2009 (n=25), recent 2010-2025 (n=16)
+  median R/SSB early 1300, recent 1165; raw d = 1.12
+  median R early/recent = 1.17; median SSB early 42560, recent 46349
+  Ricker b = 1.09e-05 per t (SSB at max R 1/b = 91619 t); resid SD 0.63
+  Ricker d = 1.11 (+-1 SE 0.91-1.36)
+data/sg_nop_26011.csv: lag 1; early 1985-2000 (n=16), recent 2016-2025 (n=10)
+  median R/SSB early 1334, recent 1165; raw d = 1.14
+  median R early/recent = 0.97; median SSB early 54942, recent 43285
+  Ricker b = 1.05e-05 per t (SSB at max R 1/b = 94811 t); resid SD 0.58
+  Ricker d = 1.20 (+-1 SE 0.95-1.52)
+data/sg_nop_26011.csv: lag 0; early 1984-2000 (n=17), recent 2010-2025 (n=16)
+  median R/SSB early 1364, recent 788; raw d = 1.73
+  median R early/recent = 1.18; median SSB early 58197, recent 43285
+  Ricker b = 1.77e-05 per t (SSB at max R 1/b = 56504 t); resid SD 0.68
+  Ricker d = 1.33 (+-1 SE 1.05-1.69)
+data/sg_whb_25908.csv: lag 1; early 1982-2005 (n=24), recent 2006-2025 (n=20)
+  median R/SSB early 5.457, recent 4.805; raw d = 1.14
+  median R early/recent = 0.96; median SSB early 2382226, recent 4143539
+  Ricker b = 1.28e-07 per t (SSB at max R 1/b = 7802622 t); resid SD 0.75
+  Ricker d = 1.13 (+-1 SE 0.87-1.46)
+data/sg_whb_25908.csv: lag 1; early 1982-1995 (n=14), recent 2006-2025 (n=20)
+  median R/SSB early 3.881, recent 4.805; raw d = 0.81
+  median R early/recent = 0.46; median SSB early 2017417, recent 4143539
+  Ricker b = 4.46e-07 per t (SSB at max R 1/b = 2241146 t); resid SD 0.66
+  Ricker d = 0.36 (+-1 SE 0.25-0.52)
+data/sg_whb_25908.csv: lag 1; early 1996-2005 (n=10), recent 2006-2025 (n=20)
+  median R/SSB early 10.02, recent 4.805; raw d = 2.09
+  median R early/recent = 1.79; median SSB early 4366845, recent 4143539
+  Ricker b = 3.32e-07 per t (SSB at max R 1/b = 3013963 t); resid SD 0.68
+  Ricker d = 1.91 (+-1 SE 1.47-2.48)
+data/sg_whb_25908.csv: lag 1; early 1982-2005 (n=24), recent 2011-2025 (n=15)
+  median R/SSB early 5.457, recent 6.429; raw d = 0.85
+  median R early/recent = 0.83; median SSB early 2382226, recent 4090619
+  Ricker b = 8.65e-08 per t (SSB at max R 1/b = 11560719 t); resid SD 0.66
+  Ricker d = 0.87 (+-1 SE 0.68-1.10)

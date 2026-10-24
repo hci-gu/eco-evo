@@ -41,8 +41,8 @@ def _project(temperature_block=None, daylight_on=True):
 
 def _block(**overrides):
     block = {"enabled": True, "layers": {"upper": LAYER, "deep": LAYER[::-1]},
-             "group_layers": {"pelagic_fish": "upper", "zooplankton": "upper",
-                              "gadoids": "deep",
+             "group_layers": {"planktivorous_fish": "upper", "zooplankton": "upper",
+                              "benthivorous_fish": "deep", "predatory_fish": "deep",
                               # grazing Q10, section 177
                               "microzooplankton": "upper"}}
     block.update(overrides)
@@ -70,7 +70,7 @@ def test_disabled_or_absent_settings_are_none():
     _block(layers={"upper": ["warm"] * 12}),
     _block(layers={"upper": [60.0] * 12}),
     _block(layers={}),
-    _block(group_layers={"pelagic_fish": "missing"}),
+    _block(group_layers={"planktivorous_fish": "missing"}),
 ])
 def test_an_enabled_block_that_cannot_be_honoured_raises(block):
     with pytest.raises(ValueError):
@@ -133,9 +133,9 @@ def test_tick_temperature_is_continuous_over_new_year():
 
 def test_loader_puts_the_layer_on_the_configured_groups_only():
     fgs, *_ = _load(_project(_block()))
-    assert fgs["pelagic_fish"].params["temperature"] == {
+    assert fgs["planktivorous_fish"].params["temperature"] == {
         "layer": "upper", "monthly_c": LAYER}
-    assert fgs["gadoids"].params["temperature"] == {
+    assert fgs["benthivorous_fish"].params["temperature"] == {
         "layer": "deep", "monthly_c": LAYER[::-1]}
     for fid in ("porpoises", "phytoplankton", "benthic_community"):
         assert "temperature" not in fgs[fid].params
@@ -148,10 +148,11 @@ def test_disabled_loader_adds_nothing():
 
 def test_a_q10_group_without_a_layer_raises():
     library = yaml.safe_load(LIBRARY.read_text(encoding="utf-8-sig"))
-    assert library["species_definitions"]["gadoids"].get("metabolism_q10")
-    with pytest.raises(ValueError, match="gadoids"):
-        _load(_project(_block(group_layers={"pelagic_fish": "upper",
-                                            "zooplankton": "upper"})))
+    assert library["species_definitions"]["benthivorous_fish"].get("metabolism_q10")
+    with pytest.raises(ValueError, match="benthivorous_fish"):
+        _load(_project(_block(group_layers={"planktivorous_fish": "upper",
+                                            "zooplankton": "upper",
+                                            "predatory_fish": "deep"})))
 
 
 def test_a_q10_on_a_non_decision_maker_raises():

@@ -1,0 +1,22 @@
+SMS key run 2023, years 2018-2022, rates per year on mean biomass (N.bar*west)
+Cod      ages>=0: meanB      87.5 kt  M1 0.288  M2 0.506  F 0.309 | M2 by predator:H.porpoise 0.197 Grey.seal 0.147 G.gurnards 0.047 Cod 0.041 Whiting 0.032 Gannet 0.029 Fulmar 0.008 A.radiata 0.002 GBB.Gull 0.002 Kittiwake 0.001 Her.Gull 0.001
+Cod      ages>=1: meanB      84.6 kt  M1 0.291  M2 0.405  F 0.319 | M2 by predator:H.porpoise 0.189 Grey.seal 0.146 Cod 0.035 Gannet 0.030 Whiting 0.005
+Cod      ages>=2: meanB      70.9 kt  M1 0.309  M2 0.284  F 0.369 | M2 by predator:H.porpoise 0.135 Grey.seal 0.127 Cod 0.021
+   biomass share by age (all quarters): 0:3% 1:16% 2:24% 3:20% 4:13% 5:9% 6:6% 7:3% 8:2% 9:1% 10:3%
+Haddock  ages>=0: meanB     277.6 kt  M1 0.200  M2 0.562  F 0.189 | M2 by predator:Saithe 0.225 Whiting 0.168 Cod 0.098 Grey.seal 0.043 Guillemot 0.017 G.gurnards 0.006 GBB.Gull 0.002 Her.Gull 0.002 Kittiwake 0.001
+Haddock  ages>=1: meanB     251.4 kt  M1 0.200  M2 0.386  F 0.221 | M2 by predator:Saithe 0.184 Cod 0.084 Whiting 0.069 Grey.seal 0.049
+Haddock  ages>=2: meanB     177.1 kt  M1 0.200  M2 0.183  F 0.304 | M2 by predator:Saithe 0.072 Cod 0.062 Grey.seal 0.048
+   biomass share by age (all quarters): 0:9% 1:27% 2:33% 3:19% 4:7% 5:3% 6:1% 7:1% 8:0% 9:0% 10:0%
+Plaice   ages>=0: meanB     513.2 kt  M1 0.343  M2 0.013  F 0.129 | M2 by predator:Grey.seal 0.013
+Plaice   ages>=1: meanB     489.7 kt  M1 0.336  M2 0.013  F 0.135 | M2 by predator:Grey.seal 0.013
+Plaice   ages>=2: meanB     421.4 kt  M1 0.311  M2 0.013  F 0.149 | M2 by predator:Grey.seal 0.013
+   biomass share by age (all quarters): 0:5% 1:13% 2:15% 3:15% 4:12% 5:9% 6:7% 7:6% 8:5% 9:4% 10:10%
+Whiting  ages>=0: meanB     400.7 kt  M1 0.200  M2 0.763  F 0.062 | M2 by predator:G.gurnards 0.210 H.porpoise 0.195 Whiting 0.145 Saithe 0.093 Cod 0.055 Guillemot 0.032 Grey.seal 0.021 Fulmar 0.006 A.radiata 0.002 Her.Gull 0.002 GBB.Gull 0.002 Kittiwake 0.001 Razorbill 0.001
+Whiting  ages>=1: meanB     359.3 kt  M1 0.200  M2 0.483  F 0.070 | M2 by predator:H.porpoise 0.195 Whiting 0.090 Saithe 0.083 Cod 0.051 Guillemot 0.030 Grey.seal 0.022 G.gurnards 0.012 Razorbill 0.001
+Whiting  ages>=2: meanB     258.8 kt  M1 0.200  M2 0.341  F 0.090 | M2 by predator:H.porpoise 0.192 Saithe 0.051 Cod 0.046 Whiting 0.030 Grey.seal 0.021
+   biomass share by age (all quarters): 0:10% 1:25% 2:23% 3:17% 4:10% 5:6% 6:8%
+Saithe   ages>=0: meanB     290.2 kt  M1 0.200  M2 0.000  F 0.263 | M2 by predator:
+Saithe   ages>=1: meanB     289.3 kt  M1 0.200  M2 0.000  F 0.263 | M2 by predator:
+Saithe   ages>=2: meanB     279.5 kt  M1 0.200  M2 0.000  F 0.272 | M2 by predator:
+   biomass share by age (all quarters): 0:0% 1:3% 2:11% 3:18% 4:18% 5:15% 6:11% 7:8% 8:6% 9:4% 10:7%
+check BIO column vs N.bar*west for (2018, 1, 16, 1) 5267.78 4385.269740000001

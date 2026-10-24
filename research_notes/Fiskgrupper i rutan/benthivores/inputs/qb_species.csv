@@ -1,0 +1,13 @@
+species,share_pct,qb_low,qb_central,qb_high,temp_basis,sources
+haddock,38.6,2.35,3.8,4.75,North Sea field rations (MSVPA/Greenstreet; NS temperatures),low M&D 1991 adult data value 2.35 (Table 3.3 bracket); central NS 1981 ages pooled 3.79 (Christensen 1995; EcoBase 680); high Greenstreet 1997 ration 0.0130/d x365 = 4.75; M&D balanced adult 4.4
+cod,31.4,2.17,3.2,5.26,North Sea field rations (MSVPA/Greenstreet),low M&D 1991 adult data 2.17; central NS 1981 ages pooled 3.15; high Greenstreet 0.0144/d x365 = 5.26; M&D balanced adult 3.5 juv 5.96 (print) / 8.0 (EcoBase)
+long_rough_dab,12.6,3.0,3.4,4.0,FishBase empirical (Palomares & Pauly 1998) at T = 10 C,M&D balanced 3.4; data 4.0 (FishBase formula); low = 3.4 x 0.85-0.9 Palomares-Pauly temperature term at 6-7.5 C (judgement)
+dab,4.5,3.36,3.5,4.2,Greenstreet 1996 ration (NS),M&D balanced 3.36 / data 4.0; NS 1974 (EcoBase 413) 3.5; EEC+SNS 2006 (EcoBase 789) 4.2
+plaice,3.8,2.8,3.42,3.42,Greenstreet 1996 ration (NS),M&D 3.42; NS 1981 2.8 (EcoBase 680); EEC 2.6; West Scotland 3.42; NS 1974 1.26 (outlier)
+witch,1.7,2.7,3.0,4.84,FishBase empirical at 10 C,M&D 3.0; Malangen fjord 2017 (EcoBase 751) 4.84
+starry_ray,1.5,1.5,1.7,2.3,FishBase empirical,M&D starry ray + others 1.7; thornback/spotted 2.3; NS 1981 rays 2.9
+hagfish,1.3,2.0,4.0,6.4,judgement,Malangen fjord 2017 (EcoBase 751) 6.4; central and low are judgements (hagfish metabolism is low; pending literature)
+grey_gurnard,0.9,3.0,3.2,4.67,MSVPA grey gurnard consumption (ICES 2002b),M&D 3.2; NS 1974 3.0; EEC 4.54; West Scotland 4.67
+lemon_sole,0.9,3.8,4.32,4.32,Greenstreet 1996 ration,M&D 4.32
+greater_weever,0.8,3.0,3.5,4.5,no source; judgement = group mean,none
+others,2.5,3.0,3.5,4.5,no source; judgement = group mean,none

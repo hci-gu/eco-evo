@@ -63,16 +63,22 @@ fabricates mass.
 
 ## 4. Functional groups
 
-- Decision makers (have a policy net): `zooplankton`, `pelagic_fish`, `gadoids`,
-  `porpoises`, `seals`, `seabirds`. `mareld2.yaml` mutes only `seabirds`;
-  seals (harbour seals only) are on since section 166 and spawn on
-  gadoids, which carry ~90 % of their diet (pair attack rates 0.2,
-  Type II, vs the pelagic pool 2e-3, Type III - a Type III `a` is per
-  (t/cell)^2; 0.015 made fix60's seals 85 % herring eaters, section
-  168; 1e-4 gave fix68's seals no pelagic fish at all, 185.10; at 3e-4
-  (185.16) even a perfectly switching seal on fix70's fields took
-  < 0.3 %, at 2e-3 4-9 % - judge diets with the engine's VISIBLE prey,
-  section 199.9).
+- Decision makers (have a policy net): `zooplankton`, `planktivorous_fish`,
+  `benthivorous_fish`, `predatory_fish`, `porpoises`, `seals`, `seabirds`.
+  `mareld2.yaml` mutes only `seabirds`. Since section 209 the fish are
+  three feeding groups (were `pelagic_fish` + `gadoids`; every value a
+  biomass-weighted species value, research_notes/"Fiskgrupper i rutan"):
+  planktivores = herring 0.79, blue whiting, Norway pout, sprat (3.3
+  t/km2, the HERAS acoustic level); benthivores = haddock, cod,
+  flatfish (1.53 t/km2); predators = saithe, whiting, mackerel,
+  spurdog, hake (1.20 t/km2) - the demersal levels are the top of the
+  long-run NS-IBTS span (2001-25, user's choice; the old 0.69 t/km2
+  gadoid start had no source). Ceilings from measured Cmax per
+  species (energy convention of section 148). Seals (harbour seals
+  only, on since 166) spawn on the two demersal groups and take ~60 %
+  benthivores, 15 % predators, 25 % planktivores (Type III, a 2e-3 -
+  a Type III `a` is per (t/cell)^2; judge diets with the engine's
+  VISIBLE prey, section 199.9).
 - Non decision makers: `phytoplankton` (nutrient-limited since 172),
   `subsurface_phytoplankton` (section 180: the A17 subsurface
   chlorophyll maximum, the same algae in the layer [M(t), 30 m],
@@ -104,8 +110,9 @@ fabricates mass.
   (`lib/world/impact_maps.py`). The GPU engine mirrors all of it (impact
   mortality and cost, observable channels in train.py's slots; section
   161). Impacts are outside the growth budget. `mareld2.yaml` fishes
-  today's world: `bottom_trawling` (gadoids, F 0.12/yr) and
-  `pelagic_trawling` (pelagic fish, F 0.10/yr), the `maps/` effort maps
+  today's world: `bottom_trawling` (benthivores F 0.17, predators
+  0.162 /yr) and `pelagic_trawling` (planktivores 0.10, predators 0.020),
+  the `maps/` effort maps
   as baseline and inference maps, linear library tables calibrated to
   the maps' mean effort. Impact mortality acts on every group with a
   table, non decision makers too (biomass factor only): bottom trawling
@@ -119,15 +126,17 @@ fabricates mass.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
-  observes the light level (last input slot). Set on herring -> zoo
-  (0.1, -8 deg) and gadoids -> herring (0.6, -5 deg; section 144).
+  observes the light level (last input slot). Set on planktivores ->
+  zoo (0.25, -8 deg; herring alone 0.1) and benthivores / predators ->
+  planktivores (0.6, -5 deg; section 144).
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
-  (`interference: 0` = pure Holling; `gadoids: 1.0` in the library,
-  section 86, where it removed the 2-cell vertical bands; `pelagic_fish:
-  0.05` since section 162 - 0.7 had no herring data behind it and cut
-  winter intake by two thirds). Herring -> zooplankton is Type II
+  (`interference: 0` = pure Holling; the old gadoid 1.0 of section 86
+  removed 2-cell vertical bands; since 209 benthivores 0.45 (w x B kept),
+  predators 0.1 (no field evidence), planktivores 0.05 since section
+  162 - 0.7 had no herring data behind it and cut winter intake by two
+  thirds). Planktivores -> zooplankton is Type II
   (`functional_response: 2`) with `visibility_floor` 0.5 (section 162).
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.
   `min_split_biomass` is one indivisible unit (porpoises: one animal):
@@ -138,8 +147,9 @@ fabricates mass.
   With `simulation_settings.temperature` (section 143) the cost of a DM
   with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
   T from its layer's monthly table on the daylight calendar; herring
-  t_ref is 14 C (the library value is a summer cost), gadoids and
-  zooplankton `annual_mean`, porpoises none (endotherm). On in
+  t_ref is 14 C (the library value is a summer cost), the demersal
+  groups (at_50m layer) and zooplankton `annual_mean`, porpoises none
+  (endotherm). On in
   `mareld2.yaml`. Intake is temperature-scaled only for a DM with
   `ingestion_q10` (section 181: zooplankton 2.8, the whole response,
   annual mean 1; it moved the trained zooplankton's spring from February
@@ -158,16 +168,16 @@ fabricates mass.
   M1 (B_region = grid-mean density; both engines, with or without
   `--mortality`), kept OUT of the derived g, so it grows at
   `r_max (1 - B/K) - F` (the logistic its r_max prior comes from). The
-  loader derives `capacity_loss_rate`. Gadoids: r_max 0.37 (today's
-  productivity, 184.18) and K 1.02 (today's effective capacity, not the
-  historical ceiling); without it they grew at r_max - F, ate the
-  pelagic pool down and crashed (184.13). Pelagic fish: r_max 0.34
-  (site mix, today's recruitment) and K 5.0 since 185.20 - stock-scale
-  compensation plus net emigration; without it the pool grazed the
-  zooplankton down year after year (185.17-19). Seals: K 0.0075
+  loader derives `capacity_loss_rate`. K = B*/(1 - F/r) on every fish
+  group (section 209): benthivores 3.39 (r 0.31, F 0.17; fragile, cod
+  alone has F > r), predators 2.12 (r 0.42, F 0.18), planktivores 4.8
+  (r 0.37; stock-scale compensation plus net emigration, 185.20).
+  Without K the old gadoids grew at r_max - F, ate the pelagic pool down
+  and crashed (184.13), and the pelagic pool grazed the zooplankton
+  down year after year (185.17-19). Seals: K 0.0075
   (27 t, no hunt impact; sections 199, 206) - the grid holds the
   offshore tail of a metapopulation regulated off the grid; without it
-  they grew ~6 %/yr on gadoids, halved them and crashed; at K = the
+  they grew ~6 %/yr on the old gadoids, halved them and crashed; at K = the
   15 t start they settled at ~0.5 K, because the loss is charged at
   r_max while they realise ~0.06 /yr net. Porpoises have no K; their
   attack rates are x1.5 since section 206 (they fell to ~0.3 of the
@@ -226,13 +236,15 @@ fabricates mass.
   viability gate in section 139.3 did not justify it.
 - `prey_includes_reserve` (section 140): a prey DM's energy reserve is
   eaten with it; the static quality is taken at
-  `reserve_reference_fill`. Set for `pelagic_fish` (section 140.6):
-  lean 4000 MJ/t + reserve up to 7000, starvation from 0.2 of it.
+  `reserve_reference_fill`. Set for `planktivorous_fish` (section
+  140.6; 209): lean 4000 MJ/t + reserve up to 6250, starvation from 0.2
+  of it, and `predatory_fish` (lean 4100 + 2400 at fill 0.48 = 5252).
 - `functional_response: 2|3` on a predation pair forces the Holling type
   for that pair (section 141); without it a specialist gets III and a
-  generalist II, as before. Set on gadoids -> pelagic_fish (141.4),
-  where gadoids also eat zooplankton (krill proxy) and each other, and
-  on seals -> pelagic_fish (166).
+  generalist II, as before. Since section 209 every fish -> fish pair
+  is Type II (measured prey switching in North Sea gadoids is negative,
+  Rindorf et al. 2006; the old Type III on gadoids -> herring was a
+  stability fix, 141.4); seals -> planktivores stays Type III (166).
 - Pair shares (section 208, both engines, each in (0, 1], inert at 1):
   `predator_share` phi caps the predator's eat share on that prey,
   `eat = min(eat, phi)` with full a and 1/h (only phi of the pooled
@@ -241,19 +253,26 @@ fabricates mass.
   a benthivore and an energy maximiser dropped benthos - do not use
   it. `accessible_fraction` f scales the prey biomass in the pair's
   Holling term and harvest cap (infauna out of reach); observations
-  are untouched. Set on gadoids -> benthos (phi 0.53, f 0.2).
+  are untouched. Since section 209 every fish pair has a phi (stage
+  scores from morphology and habitat, research_notes/Torskfiskarnas
+  bytesandelar) and every benthos pair f 0.2. growth_budget's ideal
+  intake fills the caps in order of energy per unit of eat share (sum
+  <= 1); the best pair alone left s* just above u once every pair was
+  capped (section 209).
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
   NDM `r = (r_max + sum M2) / 1460`; an income-funded DM's g is x 12 /
   `feeding_season_months` (section 184); a `regional_carrying_capacity`
   loss is not in g (section 185). s* is the reserve a DM settles on
-  under ideal conditions (best checked prey at the Holling ceiling, eating
+  under ideal conditions (checked prey at the Holling ceilings, the eat
+  share filled up to each pair's predator_share in order of value, eating
   every tick; closed form from the library, no policy - section 160); it
   replaced the full reserve 1 - u, which the hunger gate never lets a DM
   reach. Checking/unchecking a predator in the FG editor moves the prey's
   growth; muted FGs are absent. A pair a group-biomass reward cannot
-  learn (cannibalism) does not belong in the budget: gadoid cannibalism
-  is unchecked (section 160). With `--mortality off` the loader leaves M1 out of g (pass
+  learn (cannibalism) does not belong in the budget: within-group
+  cannibalism is unchecked (section 160); cross-group fish predation
+  (predators on juvenile benthivores) is a learnable pair and is in it. With `--mortality off` the loader leaves M1 out of g (pass
   `apply_natural_mortality` to the loader wherever an env is built). Edit
   `r_max`, `natural_mortality` (M1, non-FG losses only) or the pair's
   `predation_mortality`, never `growth_rate` itself.
@@ -266,7 +285,7 @@ fabricates mass.
 ```bash
 # Train (mandatory --project). Non-interactive: the [Y/n] prompt blocks otherwise.
 python3 train.py --project mareld2.yaml --run-name <name> < /dev/null
-python3 train.py --project mareld2.yaml --species pelagic_fish \
+python3 train.py --project mareld2.yaml --species planktivorous_fish \
     --generations 1 --iter-per-gen 1 --workers 1     # smoke test
 
 # Tests and syntax check

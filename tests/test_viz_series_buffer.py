@@ -57,7 +57,7 @@ def _viewer(mode):
     import os
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     from lib.viz.pygame_viz import LiveVisualizer
-    return LiveVisualizer(fg_ids=["gadoids"], grid_shape=(4, 4), mode=mode)
+    return LiveVisualizer(fg_ids=["benthivorous_fish"], grid_shape=(4, 4), mode=mode)
 
 
 def test_inference_ticks_slider_reaches_100000():
@@ -83,7 +83,7 @@ def test_long_recording_is_evenly_strided_and_ends_on_last_tick():
     v.begin_rollout_recording()
     n = 1003
     for t in range(1, n + 1):
-        v.update_biomass({"gadoids": np.full((4, 4), float(t))}, tick=t)
+        v.update_biomass({"benthivorous_fish": np.full((4, 4), float(t))}, tick=t)
     v.end_rollout_recording()
     ticks = [f["tick"] for f in v._current_rollout]
     assert len(ticks) <= 101

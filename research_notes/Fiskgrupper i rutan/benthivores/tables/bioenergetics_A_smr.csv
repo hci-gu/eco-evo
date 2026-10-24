@@ -1,0 +1,15 @@
+species,source,mass_g,Tref_C,SMR_mgO2_kg_h_at_Tref,Q10,SMR_7C,SMR_8.4C,MJ_t_tick_8.4C,MJ_t_tick_annual_mean_50m,MJ_t_tick_bottom_6.5C,note
+cod,Schurmann & Steffensen 1997,as measured,10.0,57.0,2.2,45.0,50.2,4.1,4.12,3.53,
+haddock,"Norin 2019, scaled 63->300 g (b 0.8)",300,12.0,61.7,2.2,41.6,46.5,3.79,3.81,3.26,
+haddock,"Norin 2019, scaled 63->300 g (b 0.8)",300,12.0,61.7,2.5,39.0,44.4,3.62,3.65,3.04,
+haddock,"Norin 2019, scaled 63->300 g (b 0.8)",300,12.0,61.7,3.07,35.2,41.2,3.36,3.41,2.72,
+haddock,"Norin 2019, 1000 g (b 0.8)",1000,12.0,48.5,2.5,30.7,34.9,2.85,2.87,2.39,
+plaice,Fonds 1985 DOCmin fit,50.0,10.0,56.7,2.01,46.0,50.7,4.14,4.16,3.63,
+plaice,Fonds 1985 DOCmin fit,150.0,10.0,44.6,2.01,36.1,39.9,3.25,3.27,2.85,
+plaice,Fonds 1985 DOCmin fit,400.0,10.0,35.9,2.01,29.1,32.1,2.62,2.63,2.3,
+plaice,Lever 1974 (10 g juveniles),10,10.0,65.2,2.4,50.1,56.7,4.62,4.66,3.92,
+witch,"Moser 1996 (5 g, scaled b 0.7); Q10 assumed",150.0,6.0,14.9,2.2,16.1,18.0,1.47,1.48,1.26,
+witch,"Moser 1996 (5 g, scaled b 0.7); Q10 assumed",400.0,6.0,11.1,2.2,12.0,13.4,1.09,1.1,0.94,
+plaice,"DEB [pM] Freitas 2010 (TA 7000, Q10~2.32)",any,15.0,91.3,2.32,46.6,52.4,4.27,4.31,3.64,"DEB maintenance, not measured SMR"
+dab,"DEB [pM] Freitas 2010 (TA 4000, Q10~1.62)",any,15.0,91.3,1.62,62.1,66.4,5.42,5.43,4.94,"DEB maintenance, not measured SMR"
+cod,"DEB [pM] Freitas 2010 (TA 7400, Q10~2.44)",any,15.0,75.1,2.44,36.8,41.7,3.4,3.43,2.87,"DEB maintenance, not measured SMR"

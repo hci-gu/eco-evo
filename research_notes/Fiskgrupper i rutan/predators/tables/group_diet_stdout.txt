@@ -1,0 +1,10 @@
+group QB (biomass-weighted): 3.35
+group QB_low (biomass-weighted): 2.85
+group QB_high (biomass-weighted): 4.34
+consumption share by species: saithe 0.373 whiting 0.472 mackerel 0.053 spurdog 0.030 horse_mackerel 0.037 hake 0.027 anglerfish 0.008
+diet, consumption-weighted: P 0.410 Bf 0.069 W 0.094 Z 0.313 B 0.108 O 0.007
+diet, biomass-weighted:     P 0.426 Bf 0.070 W 0.087 Z 0.318 B 0.090 O 0.009
+diet without within-group (renormalised, consumption-weighted): P 0.452 Bf 0.076 Z 0.346 B 0.119 O 0.007
+dark_ratio for pair on P: 0.61  (weights: saithe 0.53 whiting 0.32 mackerel 0.04 spurdog 0.03 horse_mackerel 0.02 hake 0.05 anglerfish 0.01)
+dark_ratio for pair on Bf: 0.66  (weights: saithe 0.27 whiting 0.55 mackerel 0.01 spurdog 0.10 horse_mackerel 0.04 hake 0.00 anglerfish 0.03)
+dark_ratio for pair on Z: 0.92  (weights: saithe 0.39 whiting 0.42 mackerel 0.11 spurdog 0.00 horse_mackerel 0.07 hake 0.00 anglerfish 0.00)

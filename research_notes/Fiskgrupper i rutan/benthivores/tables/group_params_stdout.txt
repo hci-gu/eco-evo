@@ -1,0 +1,50 @@
+annual-mean Kitchell factor over the 50 m series: 0.798
+  Cmax cod               83.0 (71-95) kJ/kg/d
+  Cmax haddock          143.8 (111-177) kJ/kg/d
+  Cmax plaice           119.2 (84-142) kJ/kg/d
+  Cmax dab              100.0 (68-115) kJ/kg/d
+  Cmax long rough dab    86.2 (50-116) kJ/kg/d
+  Cmax witch             68.4 (40-92) kJ/kg/d
+  Cmax lemon sole       125.9 (89-150) kJ/kg/d
+  Cmax grey gurnard     134.7 (108-175) kJ/kg/d
+  Cmax starry ray        50.0 (30-80) kJ/kg/d
+  Cmax hagfish           20.0 (10-40) kJ/kg/d
+  Cmax greater weever    90.0 (60-120) kJ/kg/d
+  Cmax others            90.0 (60-120) kJ/kg/d
+Cmax group (kJ/kg/d, annual mean)               108.4      82.03        133  
+energy ceiling (MJ/t/tick)                       27.1      20.51      33.24  old gadoid 34.6
+h benthic_community (E 3000)                    110.7      90.26      146.3  h = E_prey / ceiling
+h zooplankton (E 4500)                            166      135.4      219.4  h = E_prey / ceiling
+h planktivorous_fish (E 7500)                   276.7      225.6      365.7  h = E_prey / ceiling
+h predatory_fish (E 4750)                       175.3      142.9      231.6  h = E_prey / ceiling
+SMR group (MJ/t/tick, annual mean)              2.998      2.378      3.601  
+resting_metabolism = 1.2 x SMR                  3.597      2.378      4.321  routine at rest
+metabolism_q10                                  2.251                        
+energy_content whole body (MJ/t)                 4486       3919       4812  
+energy_content lean (MJ/t)                       3628                        
+max_energy_reserve (MJ/t)                        1802                        
+reference fill (whole-lean)/ME                 0.4759                        
+r_max (r_now)                                  0.3114       0.22       0.41  
+M0                                             0.1978       0.15        0.3  
+non-model predation                           0.08791       0.04       0.16  
+M1 /yr                                         0.2858       0.19       0.46  
+M1 per tick                                 0.0001957  0.0001301   0.000315  
+F total /yr                                    0.1733       0.14       0.24  
+K = 1.53/(1-F/r)                                3.451      2.323        inf  
+K, 2021-25 weights (F 0.09, r 0.26)              2.34                        
+movement_speed                                 0.2054                        
+visibility_floor                               0.5444                        
+cod stages [0.092, 0.323, 0.585] haddock stages [0.784, 0.216]
+predator_share B                                0.901     0.6516          1  
+predator_share P                               0.3111     0.1725     0.4346  
+predator_share W                              0.09543      0.044     0.1575  
+predator_share Zc                             0.03435   0.001435      0.085  
+M2 on benthic_community (/yr)                 0.04036     0.0349    0.04097  cons 2.506 t/t/yr x 1.53 / 95.00
+M2 on zooplankton (/yr)                       0.01369   0.003147    0.02754  cons 0.087 t/t/yr x 1.53 / 9.72
+M2 on planktivorous_fish (/yr)                 0.1358     0.1048     0.2369  cons 0.293 t/t/yr x 1.53 / 3.30
+M2 on predatory_fish (/yr)                    0.08543     0.0765     0.1619  cons 0.067 t/t/yr x 1.53 / 1.20
+realised Q/B / ceiling Q/B (benthos)           0.2639                        
+starve_rate 0.008: T_total (95 % loss from s = u, rest only) = 218.25 d; 40 % loss = 63.25 d
+starve_rate 0.01: T_total (95 % loss from s = u, rest only) = 180.75 d; 40 % loss = 56.5 d
+starve_rate 0.012: T_total (95 % loss from s = u, rest only) = 155.75 d; 40 % loss = 51.5 d
+starve_rate 0.015: T_total (95 % loss from s = u, rest only) = 130.75 d; 40 % loss = 46.25 d

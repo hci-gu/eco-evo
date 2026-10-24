@@ -72,12 +72,12 @@ daylight block:
           mean_0_50m: [6.3, 5.4, ...]
           at_50m: [7.7, 7.2, ...]
         group_layers:               # which layer each group lives in
-          pelagic_fish: mean_0_50m
+          planktivorous_fish: mean_0_50m
 
 and the biology in fg_library.yaml (both dimensionless or deg C, i.e.
 tick-independent):
 
-    pelagic_fish:
+    planktivorous_fish:
       metabolism_q10: 2.2
       metabolism_t_ref: 14.0      # or annual_mean
 """

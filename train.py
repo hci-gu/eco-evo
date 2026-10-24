@@ -1563,7 +1563,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     # normal delivery of Ctrl+C. ARSTrainer ignores SIGINT in spawned workers.
     parser = argparse.ArgumentParser(description="Mareld Ecosystem Simulator - Training Module")
     parser.add_argument("--species", nargs="+", default=["all"],
-                        help="Which functional groups to train (e.g., pelagic_fish gadoids). Use 'all' for all decision makers (default: all).")
+                        help="Which functional groups to train (e.g., planktivorous_fish benthivorous_fish). Use 'all' for all decision makers (default: all).")
     parser.add_argument("--iter-per-gen", "--iter_per_gen", dest="iter_per_gen", type=int, default=20,
                         help="ARS iterations per species per generation (default: 20).")
     parser.add_argument("--generations", type=str, default="inf",

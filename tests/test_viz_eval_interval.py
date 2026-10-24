@@ -23,7 +23,7 @@ def make_viewer(monkeypatch, mode):
     monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
     monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
     from lib.viz.pygame_viz import LiveVisualizer
-    viewer = LiveVisualizer(fg_ids=["gadoids", "zooplankton"], grid_shape=GRID, mode=mode)
+    viewer = LiveVisualizer(fg_ids=["benthivorous_fish", "zooplankton"], grid_shape=GRID, mode=mode)
     if not viewer.enabled:
         pytest.skip("pygame display unavailable")
     return viewer

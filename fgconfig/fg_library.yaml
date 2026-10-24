@@ -24,7 +24,7 @@
     # explicit M1 below, so r_max = 97.8 - 22.63 - 7.32 = 67.882 and
     # growth_rate stays 0.0670 (was r_max 75.2 with no M1).
     r_max: 67.882
-    growth_rate: 0.167487
+    growth_rate: 0.16748651
     # Own loss M1 (section 173): the sinking loss, 0.005 /tick = 0.02 /d
     # = 7.32 /yr. The dilution rate behind growth_rate (Stelfox-
     # Widdicombe et al. 2004 [F]) is net of respiration and lysis and
@@ -110,7 +110,7 @@
     movement_speed: 0.0
     water_layer: subsurface
     r_max: 67.882
-    growth_rate: 0.167487
+    growth_rate: 0.16748651
     natural_mortality: 0.005
     max_carrying_capacity: 24.0
     energy_content: 4800.0
@@ -202,12 +202,14 @@
     # 11.5 C (Huntley & Lopez 1992) = 58.4 /yr, minus total mortality
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
     r_max: 33.4
-    growth_rate: 0.118608
+    growth_rate: 0.1185401
     # M1 = total copepod mortality (~25 /yr = realised P/B) minus the
-    # 21 % taken by pelagic fish, gadoids and seabirds in the North Sea
-    # Ecopath diet matrix: 19.7 /yr. The rest is carnivorous zooplankton,
-    # fish larvae, jellyfish and non-predation losses. Was 0.0025.
-    natural_mortality: 0.0134
+    # fish predation booked on pairs. Section 209: planktivorous_fish 1.6
+    # + predatory_fish 0.13 = 1.73 /yr (was 5.3, the Ecopath 21 % of pelagic
+    # fish, gadoids and seabirds), so M1 = 23.27 /yr and g is unchanged.
+    # The rest is carnivorous zooplankton, fish larvae, jellyfish and
+    # non-predation losses.
+    natural_mortality: 0.015812
     # Section 202: half of the M1 loss is remineralised in the water
     # column and returns to the nutrient pools (ERSEM pe_R1 0.5, resume
     # 179.2), split between the layers by where the zooplankton fed.
@@ -293,22 +295,24 @@
     # today's prey-sized stock at Josefson's (1990) in-grid stations,
     # 100 m ~105-200 g WW/m2 (Stn 8, Stn 12, without large species) and
     # 300 m ~50-85 (LYSE 8), taken in the lower half (110 and 55: the
-    # model's K is net of the unmodelled flatfish and invertebrate
-    # predators), divided by today's equilibrium share 1 - (F + M2)/r =
-    # 0.77 (box-mean trawl F 0.226 /yr, gadoid M2 0.0048, r 1.0). The SK3
-    # 1996-2011 values (387 g/m2 without urchins) rest on an unconfirmed
-    # SHARK unit fix and are not used. Box mean K 120, B* 95 (the
-    # review's box range: K 50-120, today's stock 40-100). Was a constant
-    # 10 (user's value, sections 136 and 161.13), 5-40x below every
-    # in-grid measurement; at 10 the gadoids plus trawling exceeded the
-    # benthos' maximum surplus production and it halved in 5-8 years.
+    # model's K is net of the unmodelled invertebrate predators),
+    # divided by today's equilibrium share 1 - (F + M2)/r. Section 209:
+    # the fish predation is benthivorous_fish 0.040 + predatory_fish
+    # 0.0046 = 0.0446 /yr (flatfish are modelled now; was gadoid M2
+    # 0.0048), so the share is 1 - (0.226 + 0.0446)/1.0 = 0.729 (box-mean
+    # trawl F 0.226 /yr, r 1.0) and K = 110/0.729, 55/0.729 (was 143,
+    # 71.5 at 0.77). The SK3 1996-2011 values (387 g/m2 without urchins)
+    # rest on an unconfirmed SHARK unit fix and are not used. Was a
+    # constant 10 (user's value, sections 136 and 161.13), 5-40x below
+    # every in-grid measurement; at 10 the gadoids plus trawling exceeded
+    # the benthos' maximum surplus production and it halved in 5-8 years.
     capacity_depth_table:
       - depth_m: 100.0
-        capacity: 143.0
+        capacity: 150.8
       - depth_m: 300.0
-        capacity: 71.5
+        capacity: 75.4
     # Fallback without a depth map: the box mean of the table.
-    max_carrying_capacity: 120.0
+    max_carrying_capacity: 126.6
     energy_content: 3000.0
     # Section 207: start at today's equilibrium per cell, K(c) (1 - (F(c)
     # + M2)/r) with F(c) from the bottom-trawl baseline map (lib/world/
@@ -316,9 +320,10 @@
     spawn:
       mode: equilibrium
     seed_rate: 1e-06
-  pelagic_fish:
-    display_name: "Pelagic Fish"
+  planktivorous_fish:
+    display_name: "Planktivorous Fish"
     is_decision_maker: true
+    maintenance_level: 0.2
     # Lean body + fat reserve (section 140). energy_content is the LEAN
     # tissue, ~4.1 kJ/g from 15-19 % protein (Warren et al. 2026); the
     # reserve is the fat, up to ~18 % (0.396 kJ/g per fat %), so a full
@@ -327,11 +332,13 @@
     # starts at 0.2 of the reserve (~2 % fat, the spring low of healthy
     # Baltic herring, Rojbek et al. 2014), not at half of it: herring
     # live through the winter on their fat. Predators eat the reserve
-    # with the fish (prey_includes_reserve); at the reference fill 0.5
-    # the static quality is 4000 + 0.5 x 7000 = 7500 MJ/t, the annual
-    # mean that section 98 settled on for the porpoise diet gate.
-    maintenance_level: 0.2
-    max_energy_reserve: 7000.0
+    # with the fish (prey_includes_reserve). Section 209: the group is
+    # herring 0.79, blue whiting 0.105, Norway pout 0.075, sprat 0.03 of
+    # the annual-mean biomass; the lean members lower the weighted maximum
+    # reserve 7000 -> 6250 (pout ~2000, blue whiting ~3600), so the static
+    # quality at the reference fill 0.5 is 4000 + 0.5 x 6250 = 7125 MJ/t.
+    # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md.
+    max_energy_reserve: 6250.0
     resting_metabolism: 8.0
     # Water temperature (section 143; only with the manifest's
     # simulation_settings.temperature): Q10 2.2 from sprat respirometry,
@@ -367,31 +374,30 @@
     # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
-    # r_max 0.34 /yr since section 185.20: today's productivity at the
-    # site. The FishBase CMSY priors weighted over the North Sea mix
-    # gave 0.648 (36 % sandeel, which has no grounds in the grid); site
-    # weights (herring 0.73, mackerel 0.19, sprat 0.06, horse mackerel
-    # 0.02) give 0.44. Recruits per spawner have fallen since (NSAS
-    # 1.7x, WBSS 2.25x, mackerel 3.6x, horse mackerel 1.6x, sprat none);
-    # by Euler-Lotka r_now = 0.34 (0.27-0.40). research_notes/Den
-    # pelagiska poolens reglering/productivity.md, resume 185.18.
-    r_max: 0.34
+    # r_max: today's productivity (Euler-Lotka r_now, section 185.18
+    # method). Section 209: herring 0.35, sprat 0.48, Norway pout 0.46,
+    # blue whiting 0.45 at the group weights = 0.37 (0.30-0.46); mackerel
+    # (0.25) is in predatory_fish now. Was 0.34 (herring, mackerel, sprat,
+    # horse mackerel). research_notes/Den pelagiska poolens reglering/
+    # productivity.md; research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md.
+    r_max: 0.37
     # Section 185.20: today's EFFECTIVE capacity (t/km2), standing in for
     # stock-scale compensation (density-dependent recruitment) plus net
     # emigration out of a grid that holds ~0.4 % of the autumn-spawning
-    # herring - not local crowding. K = B / (1 - P/r) = 3.33 / (1 -
-    # 0.115/0.34), P the stocks' surplus production at site weights.
-    # The r_max prior comes from a Schaefer fit that had a K; without it
-    # the pool grew at r_max - F and grazed the zooplankton 10-14x its
-    # standing stock per year (Ecopath 1.9x). The scratch test on fix69
-    # policies (185.19): stationary at ~2.75, zooplankton held ~5.5.
-    regional_carrying_capacity: 5.0
+    # herring - not local crowding. Section 209: K = B / (1 - P/r) =
+    # 3.33 / (1 - 0.115/0.37) = 4.8 (was 5.0 at r 0.34). Without K the
+    # pool grew at r_max - F and grazed the zooplankton 10-14x its
+    # standing stock per year (resume 185.17-19).
+    regional_carrying_capacity: 4.8
     # x 12 / feeding_season_months (5.5) since section 184.
-    growth_rate: 0.00275637
-    # M1 = M0 (0.391) + predation by groups that are not FGs (0.189:
-    # sharks, rays, other fish, larvae) = 0.580 /yr, North Sea Ecopath
-    # 1991. Predation by FGs lives in predation_mortality. Was 1.0e-04.
-    natural_mortality: 0.000397
+    growth_rate: 0.0032411316
+    # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
+    # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
+    # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
+    # held 0.189 of predation by rays, gurnards, mackerel, horse mackerel,
+    # hake and spurdog: those are in benthivorous_fish and predatory_fish
+    # now and act through their pairs (M2 ~0.66 /yr in all).
+    natural_mortality: 0.000178066
     max_intake_rate: 0.04
     spawn:
       mode: colony
@@ -413,62 +419,62 @@
     # research_notes/Sillens vinterfoda/herring_interference.md.
     interference: 0.05
     extinction_threshold_factor: 0.5
-  gadoids:
-    display_name: "Gadoids"
+  benthivorous_fish:
+    display_name: "Benthivorous Fish"
     is_decision_maker: true
+    # Section 209: the demersal fish that feed mainly on the bottom.
+    # Long-run (NS-IBTS 2001-25) biomass shares: haddock 0.39, cod 0.31,
+    # long rough dab 0.13, dab 0.045, plaice 0.038, witch 0.017, starry
+    # ray, hagfish, grey gurnard, lemon sole, weever. Every value below
+    # is the biomass-weighted species value;
+    # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_benthivorous_fish.md and benthivores/.
+    # u 0.5 is the engine convention (hunger knee and growth zero; 0.1
+    # starved the group, resume 187.4); the literature starvation
+    # threshold is 0.1-0.2 of the reserve.
     maintenance_level: 0.5
-    max_energy_reserve: 2500.0
-    resting_metabolism: 6.0
-    # Water temperature (section 143; only with the manifest's
-    # simulation_settings.temperature): Q10 2.2 from cod standard
-    # metabolic rate, 35.5 / 57.0 / 78.2 mg O2/kg/h at 5 / 10 / 15 C
-    # (Schurmann & Steffensen 1997). resting_metabolism is read as the
-    # annual mean (low confidence).
-    metabolism_q10: 2.2
+    # Liver / fat reserve: cod and haddock liver max ~2000 MJ/t, plaice
+    # 1700-2000, long rough dab 850-1100 -> 1800 (1500-2100).
+    max_energy_reserve: 1800.0
+    # Weighted SMR 3.0 MJ/t/tick at the 50 m layer (haddock 3.0, cod 3.7,
+    # plaice 3.1, long rough dab 1.6, witch 1.5) x 1.2 routine at rest =
+    # 3.6 (2.4-4.3). The old gadoid 6.0 was 1.5-2x the measured SMR.
+    resting_metabolism: 3.6
+    # Q10 haddock 2.5, cod 2.2 (Schurmann & Steffensen 1997), plaice 2.0
+    # (Fonds 1985). Read as the annual mean of the at_50m layer.
+    metabolism_q10: 2.25
     metabolism_t_ref: annual_mean
-    movement_speed: 0.25
-    feeding_cost: 1.75
-    movement_cost: 2.0
-    energy_content: 5500.0
+    # Haddock and cod 0.25 cells/tick, gurnard 0.2, flatfish and rays
+    # sedentary (0.1): 0.2 (judgement).
+    movement_speed: 0.2
+    # Fed / unfed respiration of plaice 2.4 incl. SDA; haddock SDA peak
+    # 1.3-1.5 x RMR: 2.0 (1.5-2.5). Cruising haddock 1.48 x SMR, cod
+    # 1.32, plaice active/rest 2.4-2.8: 1.6 x RM (judgement for the pool).
+    feeding_cost: 2.0
+    movement_cost: 1.6
+    # Whole body as eaten (roundfish 4.6-4.75 kJ/g, plaice 4.6, long rough
+    # dab 3.2, witch 5.6, lemon sole 5.8): 4500 (3900-4800). The reserve is
+    # not eaten on top (option a of resume 187.5).
+    energy_content: 4500.0
     min_split_biomass: 0.5
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
     # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
-    # r_max 0.37 /yr since section 185: today's productivity. The
-    # FishBase CMSY priors (cod 0.51, haddock 0.50, whiting 0.49, saithe
-    # 0.52, hake 0.48; pool 0.50-0.511, Norway pout and blue whiting
-    # excluded: they eat zooplankton) are 1960s-90s low-density rates.
-    # Recruits per spawner have fallen since (ICES SAG: cod 2.6x, haddock
-    # 4.7x, hake 3.9x, saithe 1.6x, whiting none); by Euler-Lotka r_now
-    # = r - ln(d)/T, T = 3/r: pool 0.34 (today's survey mix) - 0.40
-    # (Ecopath 1991 mix). research_notes/Torskfiskarnas reglering/
-    # r_pool_present.md, resume 184.18.
-    r_max: 0.37
-    # Section 185: today's EFFECTIVE capacity (t/km2), not the historical
-    # ceiling - the stock was much larger before decades of overfishing,
-    # trawled nurseries and warming. K = B / (1 - F/r) = 0.69 / (1 -
-    # 0.12/0.37): stationary at today's 0.69 t/km2 under F 0.12. The
-    # loss r_max/1460 x B_region/K is outside the derived growth_rate.
-    # Without it the pool grew at r_max - F, ate the pelagic fish down
-    # and crashed (resume 184.13); with it, 0.63-0.66 and a stable
-    # pelagic pool (184.19).
-    regional_carrying_capacity: 1.02
-    growth_rate: 0.00294180
-    # M1 = M0 (0.20; SMS residual M1 convention for cod, haddock,
-    # whiting and saithe; Ecopath NS 1991 adults 0.18) + predation by
-    # non-FG groups (0.214; squid, halibut, gurnards, long-rough dab,
-    # megrim, rays, monkfish) = 0.41 /yr. The Ecopath pool residual
-    # 0.392 is not used: 66 % of it is juvenile haddock and saithe with
-    # EE 0.45 / 0.31. No benthos part: the crab / Nephrops / shrimp
-    # entries on 'other gadoids' in Mackinson & Daskalov 2007 Table 3.4
-    # duplicate the megrim / halibut / large demersal columns (column
-    # sums). reports/Restdödlighet M0 hos torskfiskar.md, resume 157.
-    # Cannibalism is the gadoids_preys_on_gadoids pair (unchecked since
-    # section 160, so it is in neither M1 nor the budget). Was 0.000468
-    # (0.683 /yr), before that 7.0e-05.
-    natural_mortality: 0.000284
+    # r_max: today's productivity (Euler-Lotka r_now, resume 184.18):
+    # haddock 0.24, cod 0.35, plaice 0.40, dab 0.55, witch 0.28, lemon
+    # sole 0.50, gurnard 0.65, starry ray 0.15, long rough dab 0.30
+    # (judgement) -> 0.31 (0.22-0.41).
+    r_max: 0.31
+    # K = B* / (1 - F/r) = 1.53 / (1 - 0.17/0.31) = 3.39 t/km2 (section
+    # 185 convention; B* = the user's long-run level, the top of the
+    # 2001-25 span). Fragile: F/r = 0.55, and cod alone has F > r.
+    regional_carrying_capacity: 3.39
+    growth_rate: 0.0023533833
+    # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
+    # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
+    # Predation by predatory_fish, seals and porpoises is M2 on pairs.
+    natural_mortality: 0.00019861
     max_intake_rate: 0.04
     spawn:
       mode: colony
@@ -478,9 +484,95 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    starve_rate: 0.012
+    # ~181 days to death at an empty reserve at rest (section 46 convention;
+    # cod fast 84 d+ without deaths, plaice 180-200 d at 6-7 C).
+    starve_rate: 0.010
+    # Judgement: gadoids 0.6, flatfish and rays bury and are cryptic (0.4).
+    visibility_floor: 0.55
+    # Judgement: the gadoid w 1.0 was a spatial-crowding calibration at
+    # 0.69 t/km2 (section 86); w x B held constant at 1.53 gives 0.45. No
+    # fish measurement exists (reports/Täthetsberoende och interferens).
+    interference: 0.45
+    extinction_threshold_factor: 0.5
+  predatory_fish:
+    display_name: "Predatory Fish"
+    is_decision_maker: true
+    # Section 209: demersal and pelagic fish that feed mainly on fish and
+    # krill. Long-run (NS-IBTS 2001-25) biomass shares: saithe 0.41,
+    # whiting 0.37, mackerel 0.08, spurdog 0.05, horse mackerel 0.034,
+    # hake 0.025, anglerfish 0.014, ling, velvet belly, pollack. Saithe
+    # (Q3 on the trench slope) and mackerel (summer) are visitors; the
+    # closed pool charges them stock-level r and F, as herring. Every
+    # value is the biomass-weighted species value;
+    # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_predatory_fish.md and predators/.
+    # u 0.5: the engine convention (resume 187.4). The review's
+    # literature value 0.15 (liver minimum) would also move the hunger
+    # knee and the growth zero, which this engine ties to it.
+    maintenance_level: 0.5
+    # Liver / fat reserve: gadoid liver ~2000, mackerel ~6000, horse
+    # mackerel ~3800, spurdog ~2000, anglerfish 1500 -> 2400 (1800-3000).
+    max_energy_reserve: 2400.0
+    # Measured SMR at the at_50m annual mean 8.4 C: saithe 3.5, whiting
+    # 4.2, mackerel 3.4, spurdog 2.1, anglerfish 1.2 -> 3.64 (2.97-4.99).
+    resting_metabolism: 3.64
+    # Cod SMR 2.2-2.6, ICES gastric evacuation exponent 2.25, mackerel 2.0,
+    # spurdog 2.5-2.75 -> 2.3; annual mean of the at_50m layer.
+    metabolism_q10: 2.3
+    metabolism_t_ref: annual_mean
+    # Every member but anglerfish cruises 6-15 cells/tick (saithe Uopt
+    # 1.4 BL/s, mackerel schools 0.44-0.72 m/s net); residence is
+    # behaviour, not a speed limit.
+    movement_speed: 1.0
+    # Routine 1.5 x SMR + SDA 0.17 of a typical intake = 2.1 x RM;
+    # cruising at Uopt 2-2.5 x SMR = 2.0 x RM.
+    feeding_cost: 2.1
+    movement_cost: 2.0
+    # Lean tissue as eaten (saithe 4.0, whiting 3.9, hake 3.7, mackerel
+    # 4.7, spurdog 6.0 kJ/g) = 4100; the liver / fat is eaten with the
+    # fish: at the reference fill 0.48 (weighted mean reserve 1140 MJ/t)
+    # the static quality is 4100 + 0.48 x 2400 = 5252 MJ/t.
+    energy_content: 4100.0
+    prey_includes_reserve: true
+    reserve_reference_fill: 0.48
+    min_split_biomass: 0.5
+    # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
+    # by the loader for every run; the number stored here is what the
+    # loader computes for mareld2.yaml (seabirds muted) with
+    # --mortality on; with --mortality off the loader leaves M1 out. Edit
+    # r_max, natural_mortality or the predation matrix, not this value.
+    # r_max: today's productivity (Euler-Lotka r_now): saithe 0.44,
+    # whiting 0.49, hake 0.26, mackerel 0.25, horse mackerel 0.33, spurdog
+    # 0.07, anglerfish 0.47, ling 0.55 -> 0.42 (0.36-0.44).
+    r_max: 0.42
+    # K = B* / (1 - F/r) = 1.20 / (1 - 0.182/0.42) = 2.12 t/km2 (B* = the
+    # top of the 2001-25 span). Per species F/r: saithe 0.68, mackerel
+    # 0.86, hake 1.04.
+    regional_carrying_capacity: 2.12
+    growth_rate: 0.0022807808
+    # M1 = M0 + predation by groups NOT in the model: saithe 0.29, whiting
+    # 0.25, mackerel 0.15, spurdog 0.10, horse mackerel 0.30, hake 0.45,
+    # anglerfish 0.25 -> 0.26 /yr (0.19-0.31). Within-group predation
+    # (~0.07) is a transfer inside the pool and left out.
+    natural_mortality: 0.000176012
+    max_intake_rate: 0.04
+    spawn:
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
+    # ~0.009: the review's value (lean-tissue burn at an empty reserve,
+    # computed at its u 0.15); kept at u 0.5 as a starvation tolerance
+    # close to the benthivores' (judgement).
+    starve_rate: 0.0088
+    # Judgement: midwater schools of saithe and mackerel hide badly,
+    # whiting on the bed better.
     visibility_floor: 0.6
-    interference: 1.0
+    # No field evidence of interference for saithe, whiting or mackerel
+    # (Rindorf et al. 2006: predator density did not affect intake).
+    interference: 0.1
     extinction_threshold_factor: 0.5
   porpoises:
     display_name: "Porpoises"
@@ -528,7 +620,7 @@
     # r_max 0.10 /yr (Lockyer 2003; Caswell et al. 1998; Forney et al.
     # 2021: 9.6 %/yr after bycatch ended).
     r_max: 0.10
-    growth_rate: 0.000447389
+    growth_rate: 0.00046279049
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models from adult
     # survival 0.90-0.95 excluding bycatch, plus calf mortality). No FG
     # preys on porpoises. Was 6.0e-05.
@@ -548,7 +640,7 @@
       noise_scale: 4.0
       min_frac_of_max: 0.0
       refs:
-        - name: pelagic_fish
+        - name: planktivorous_fish
           weight: 1.0
           transform: linear
     starve_rate: 0.5
@@ -613,14 +705,15 @@
     # = 27 t puts the equilibrium at today's 15 t and sits between the
     # 199.3 routes to K_box (24 t; 36-38 t).
     regional_carrying_capacity: 0.0075
-    growth_rate: 0.000486383
+    growth_rate: 0.00048891653
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models); no FG preys on
     # seals. Was 6.0e-05.
     natural_mortality: 6.85e-05
-    # Fallback attack rate; both seal pairs set their own (section 166).
+    # Fallback attack rate; every seal pair sets its own (sections 166, 209).
     max_intake_rate: 0.05
     # Spawn on the main prey, as porpoises spawn on herring (user's call,
     # section 166). The 7 free colonies started with ~no gadoid overlap.
+    # Section 209: the demersal fish are two groups now.
     spawn:
       mode: env_driven
       floor: 0.0
@@ -628,7 +721,10 @@
       noise_scale: 4.0
       min_frac_of_max: 0.0
       refs:
-        - name: gadoids
+        - name: benthivorous_fish
+          weight: 1.0
+          transform: linear
+        - name: predatory_fish
           weight: 1.0
           transform: linear
     # 1.5 % of biomass per tick at an empty reserve: blubber lets a seal
@@ -658,7 +754,7 @@
     # r_max 0.10 /yr: Niel & Lebreton on JNCC 552 rates (guillemot 0.08,
     # razorbill/gannet 0.10, kittiwake/gulls 0.11-0.16).
     r_max: 0.10
-    growth_rate: 0.000466172
+    growth_rate: 0.00047521098
     # M = M1 = 0.15 /yr, biomass weighted with juveniles (Leslie Z:
     # guillemot 0.145, kittiwake 0.16, gannet 0.20); no FG preys on
     # seabirds. Was 8.0e-05 (adult-only 0.117 /yr).
@@ -780,151 +876,98 @@ interaction_definitions:
     mixed_layer_reference_m: 10.0
     food_threshold: 1.2
     predation_mortality: 146.7
-  pelagic_fish_preys_on_zooplankton:
+  # Section 209: M2 on zooplankton = Q/B 5.0 x 3.33 t/km2 x zooplankton
+  # share 0.91 / 9.72 t/km2 (the 35 000 t start) = 1.6 /yr (1.2-3.1).
+  # Was 5.24 (Ecopath herring + sprat + sandeel over the A17 stock).
+  # Ceiling from measured Cmax read as energy (section 148 convention):
+  # weighted 0.42 kJ/g/d (herring Rudstam 0.47-0.51, sprat 0.75-0.81,
+  # pout and blue whiting cod proxies 0.13-0.17) -> h 40 (32-47) on
+  # 4.5 kJ/g zooplankton; the old h 25 was 1.6-1.7x any measured Cmax.
+  # If the herring lab rations (De Silva & Balbontin 1974) hold, h ~115.
+  # Type II with visibility floor 0.5 (section 162). Daylight: herring
+  # hunt by sight (0.1); pout and blue whiting feed by night as well
+  # (Onsrud et al. 2004): weighted dark_ratio 0.25 (judgement).
+  # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md, planktivores/.
+  planktivorous_fish_preys_on_zooplankton:
     preys_on: true
-    predation_mortality: 5.24
+    predation_mortality: 1.6
     assimilation_factor: 0.8
-    handling_time: 25.0
-    # Daylight calendar (section 137; only active when the project
-    # enables simulation_settings.daylight). Herring bite zooplankton
-    # by sight down to 0.001 lx (Batty, Blaxter & Richard 1990); their
-    # stomach fullness peaks after dawn and before dusk, and at night
-    # they switch to filter feeding (Darbyson et al. 2003). dark_ratio
-    # 0.1 (night attack rate a tenth of the daylight one) is an estimate
-    # consistent with that, not a measured ratio. 0.001 lx at the
-    # 10-40 m the herring feed at is ~0.005-0.4 lx at the surface
-    # (Kd ~0.15/m), i.e. a sun 8-12 deg below the horizon; -8 deg is
-    # the half-detection point of the logistic.
-    dark_ratio: 0.1
+    handling_time: 40.0
+    dark_ratio: 0.25
     light_threshold_deg: -8.0
-    # Section 162. Hiding zooplankton still visible to herring: was 0.2,
-    # a deep-basin refuge. On a ~100 m bank the 0.001 lx biting
-    # threshold reaches the bottom at midday in December and June (Kd
-    # 0.15/m), shelf-sea copepods mostly do not migrate (Daro 1988,
-    # Irigoien et al. 2004) and a non-feeding copepod is still visible;
-    # the literature-implied daytime accessible share is 0.65-0.9 in
-    # summer and 0.5-0.8 in winter, against ~0.3 with 0.2 and the
-    # trained 80-95 % rest. 0.5 = mid of the 0.4-0.6 band in
-    # research_notes/Sillens vinterfoda/zooplankton_refuge.md.
     visibility_floor: 0.5
-    # Type II, not the specialist default Type III (section 162): every
-    # fit to herring is Type II or linear (Bernreuther 2007 lab,
-    # Arrhenius & Hansson 1999 field; NEMURO.FISH, mizer), no sigmoid
-    # response is reported for any clupeid, and with one prey there is
-    # nothing to switch to, so Type III only cut winter intake.
     functional_response: 2
-  gadoids_preys_on_pelagic_fish:
+  # Section 209: mostly cod on Norway pout and herring; predator_share
+  # 0.31 from gape (the cod stages that can swallow pool-sized prey).
+  # M2 0.14 /yr (0.07-0.32). Type II: measured prey switching in
+  # North Sea gadoids is negative (Rindorf et al. 2006); the old Type
+  # III on gadoids -> herring was a stability fix (section 141).
+  # Light dependence as the old gadoid pair (section 144).
+  benthivorous_fish_preys_on_planktivorous_fish:
     preys_on: true
-    predation_mortality: 0.2997
+    predation_mortality: 0.14
     assimilation_factor: 0.8
-    # Gadoid Holling ceilings are an ENERGY limit (sections 147, 148):
-    # h = 130 * E_prey / 4500, E_prey the energy as eaten (MJ/t), so
-    # every gadoid pair fills the stomach at the same ~35 MJ/t/tick
-    # (~3 % body mass/day of 4.5 kJ/g food; adult cod Cmax ~2-3.5 %/day
-    # at North Sea temperatures, Jobling 1988 read as kJ/day; lab
-    # rations 1.9-2.5 % at 4-6 C, ICES CM 1980/F20). Gastric evacuation
-    # slows in proportion to prey energy density (whiting, Andersen
-    # 1999; cod, Temming & Herrmann 2003). A mass limit made herring
-    # worth ~3x benthos per stomach-full: gadoids ate <3 % benthos
-    # (Ecopath ~28 % of the model's prey). Herring here: 7500 MJ/t at
-    # the reserve reference fill -> h 217. h was 25 (16 %/day) before
-    # section 147. a stays 0.04 on every pair.
-    handling_time: 217.0
+    handling_time: 262.9
+    predator_share: 0.31
     visibility_floor: 0.25
-    # Type III (section 141): gadoids are generalists that switch to
-    # other prey when herring get scarce, giving herring a refuge at low
-    # density. Without it herring went extinct within two years in every
-    # run; with it alone they were held at ~3 % of spawn.
-    functional_response: 3
-    # Daylight calendar (section 137; only with simulation_settings.
-    # daylight). Gadoids catch clupeids mostly at dusk and dawn but keep
-    # feeding at night by lateral line and smell: cod stomachs with
-    # herring peak morning and evening (Adlerstein & Welleman 2000),
-    # gadoids take sprat at night in a Norwegian fjord (Kaartvedt et al.
-    # 2009), whiting feed mainly at night (Mergardt & Temming 1997).
-    # dark_ratio 0.6 (range 0.4-1.0) is inferred from stomach data, not
-    # measured. Threshold -5 deg: half detection at ~0.01-0.03 lx at
-    # 30-40 m with an effective Kd 0.15-0.2 /m (cod reactive distance
-    # still long at ~0.35-1.5 lx, Meager et al. 2010). Monthly mean
-    # multiplier 0.88 in Dec, 1.13 in Jun (annual mean 1). Source:
-    # reports/Torskfiskars ljusberoende vid jakt.md.
+    functional_response: 2
     dark_ratio: 0.6
     light_threshold_deg: -5.0
-  porpoises_preys_on_pelagic_fish:
+  # Section 209: the group's main prey. Ceiling: no lab Cmax exists for
+  # any member; the ICES gastric-evacuation model calibrated on the cod
+  # Cmax gives saithe 97, whiting 104, hake 114, mackerel 150 (13 C)
+  # kJ/kg/d -> 102 weighted = 25.5 MJ/t/tick; h = E_prey / 25.5.
+  # predator_share 0.53 (stage scores). M2 = Q/B 3.34 x 1.20 x diet
+  # share / 3.33 = 0.50 /yr (0.31-0.86; Norwegian-coast saithe diets,
+  # Norway pout and blue whiting heavy). Type II (Rindorf et al. 2006).
+  # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_predatory_fish.md.
+  predatory_fish_preys_on_planktivorous_fish:
     preys_on: true
-    predation_mortality: 0.0117
-    # Porpoise attack rates are fitted to the Ecopath 1991 diet, not to a
-    # mechanism (section 151): ~49 % gadoids by mass on the model's prey
-    # (M2 0.0557 vs 0.0117 /yr, 4.8x more per tonne of gadoids). With the
-    # species a 0.035 on both pairs, herring gave 181 MJ/t/tick at full
-    # appetite where porpoises were (fix51), more than gadoids give at
-    # the mass ceiling (4620 / 28.6 = 162), so porpoises ate 0 %
-    # gadoids; no gadoid a alone reaches the target. a 0.015 here and
-    # 0.2 on gadoids give 26 % gadoids where porpoises were and 46 %
-    # over every cell (frozen fields, so the learned shift lies in
-    # between), with 137 MJ/t/tick against a cost of ~90 (1.5x, was 2x;
-    # wild porpoises forage almost continuously, Wisniewska et al. 2016).
-    # Section 206: both porpoise pairs x1.5 (0.015 -> 0.0225, gadoids 0.2
-    # -> 0.3), which keeps the fitted diet split (59-67 % herring, Q/B
-    # ~19 /yr as before). At 0.015 the trained porpoises stood on ~5 t/km2
-    # herring, ~145 MJ/t/tick vs a cost of 90: growth ~0.15 /yr against
-    # losses ~0.12 plus starvation in the poor cells, and they fell to
-    # ~0.3 of the start in 15-20 years (fix72, 50-year inference). At x1.5
-    # they held 0.87-1.02 over 15 years. The ceiling 1/h, and so the
-    # derived growth_rate, is unchanged.
+    predation_mortality: 0.50
+    assimilation_factor: 0.8
+    handling_time: 279.4
+    predator_share: 0.53
+    visibility_floor: 0.25
+    functional_response: 2
+    dark_ratio: 0.6
+    light_threshold_deg: -5.0
+  # Section 209: porpoise diet 0.65 planktivores, 0.15 benthivores, 0.20
+  # predators (Skagerrak/Kattegat stomachs 1985-96; Ransijn et al. 2021
+  # relative attack rates whiting 1.2x, cod 0.6x herring). Q/B 19.5 ->
+  # 234 t/yr at 12 t; M2 0.0127. Mass ceiling h 28.6 as before; a as
+  # section 206. research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_top_predators.md.
+  porpoises_preys_on_planktivorous_fish:
+    preys_on: true
+    predation_mortality: 0.0127
     max_intake_rate: 0.0225
     assimilation_factor: 0.9
-    # Mass ceiling 1/h kept (marine mammal intake is mass-limited, Rosen
-    # & Trites 2000; section 149). a*h is 0.64 since section 206 (0.43
-    # since 151), so the half-saturation is 1/(a h) = 1.6 t/km2 visible
-    # herring.
     handling_time: 28.6
-    # Porpoises hunt with biosonar, so the visual crypsis that makes
-    # hidden herring only 35 % detectable by default does not apply:
-    # schooling behaviour is no defence against echolocation
-    # (Au 1993; Verfuss et al. 2009). Floor 0.95 = hiding gives herring
-    # almost no protection against this predator; the break-even
-    # requirement is 5.25 t visible / ~5.6 t total per cell, down from
-    # 15.1 t/cell at the herring species default 0.35
-    # (Sections 71.12, 74.2).
     visibility_floor: 0.95
-  seals_preys_on_gadoids:
+  # Section 209: harbour seal diet by mass in the pools 0.60 benthivores
+  # (cod, flatfish, haddock), 0.15 predators, 0.25 planktivores
+  # (Koster 1977-89, Kappa 2026, Sorlie 2020). Ration 320 t/yr at 15 t:
+  # M2 = 0.60 x 320 / 5500 = 0.035 /yr. Energy ceiling as before, h =
+  # E_prey / 212.5. a 0.1: the old 0.2 partly made up for a gadoid
+  # pool ~4x too small; rescaled to the same demersal energy return
+  # (judgement). Pairs at 79-92 % of the ceiling, so a moves little.
+  # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_top_predators.md.
+  seals_preys_on_benthivorous_fish:
     preys_on: true
-    # Gadoids carry ~95 % of the seal diet by mass: Skagerrak seals eat
-    # mostly flatfish (46 % of energy, GU 2019 scats), haddock, pollack,
-    # saithe and Norway pout (Soerlie et al. 2020: gadoids + flatfish 87 %
-    # of biomass; Kappa et al. 2026), and the model has no flatfish group.
-    # 15 t of seals at ~5.9 % of body mass per day (own budget; Olesiuk
-    # 1993: 5.0 %) eat ~325 t/yr, ~309 t/yr of it gadoids = 0.12 /yr of
-    # the 2500 t start biomass (section 166; range 0.08-0.18). Was 0.0299.
-    predation_mortality: 0.12
-    # Attack rate as for porpoises -> gadoids (section 151): at the
-    # FG fallback 0.05 the break-even visible gadoid density (0.55 t/km2)
-    # sat at the grid mean (0.69). Starting value; tune toward a 95:5
-    # diet. Default response type (II, two prey): III on the prey that
-    # is nearly the whole diet mainly cuts intake (section 162).
-    max_intake_rate: 0.2
-    # Metabolisable energy (Lawson et al. 1997; Keiver et al. 1984); the
-    # heat increment is paid in feeding_cost. Was 0.86.
+    predation_mortality: 0.035
+    max_intake_rate: 0.1
     assimilation_factor: 0.85
-    # Ceiling 1/26 = 15 % of body mass per day = 0.85 MJ/kg/day, 1.5x the
-    # highest routine intake found (0.57 MJ/kg/day, spotted seal
-    # yearlings, Rosen et al. 2021), the porpoise rule. Was 20 (20 %/day).
-    handling_time: 26.0
-    # Harbour seals find resting bottom fish with their vibrissae:
-    # blindfolded seals locate flatfish breathing currents of ~4 cm/s
-    # (Niesterok et al. 2017, JEB 220:174 and 220:2364) and follow fish
-    # wakes up to ~35 s old (Wieskotten et al. 2010), and buried or
-    # cryptic prey dominate Skagerrak scats (sandeel 40 % of otoliths,
-    # Kappa et al. 2026; flatfish 46 % of energy, GU 2019). Floor 0.85
-    # (range 0.75-0.95): resting on the bottom gives gadoids little
-    # protection against seals; at or above porpoises -> gadoids (0.75).
-    # Inferred, not measured (section 167). Was the gadoid default 0.6.
-    # No dark_ratio on either seal pair: no light effect on capture is
-    # documented, and diel timing is left to Rest + the light input.
-    # Source: reports/Sälars jakt i ljus och mörker.md.
+    handling_time: 21.2
     visibility_floor: 0.85
-  seabirds_preys_on_pelagic_fish:
+  # Section 209: 0.15 of the seal diet; M2 0.011 /yr. a 0.05 and the
+  # visibility floor are judgements.
+  seals_preys_on_predatory_fish:
+    preys_on: true
+    predation_mortality: 0.011
+    max_intake_rate: 0.05
+    assimilation_factor: 0.85
+    handling_time: 24.7
+    visibility_floor: 0.75
+  seabirds_preys_on_planktivorous_fish:
     preys_on: true
     predation_mortality: 0.0236
     assimilation_factor: 1.0
@@ -933,11 +976,15 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_gadoids:
+  benthic_community_preys_on_benthivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_pelagic_fish:
+  benthic_community_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthic_community_preys_on_planktivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -961,106 +1008,146 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  gadoids_preys_on_benthic_community:
+  # Section 209: the group's main prey. Ceiling from measured Cmax,
+  # biomass-weighted (cod 83, haddock 144, plaice 119, dab 100, long
+  # rough dab 86 kJ/kg/d at the 50 m layer) = 108 kJ/kg/d = 27.1
+  # MJ/t/tick; h = E_prey / 27.1 (section 148 energy convention; the
+  # old gadoid ceiling 34.6 was 1.3x this group's Cmax). predator_share
+  # 0.9: haddock and flatfish 1, large cod lower (stage scores,
+  # research_notes/Torskfiskarnas bytesandelar). accessible_fraction 0.2
+  # (section 208). M2 = Q/B 3.5 x 1.53 x benthos share / ~95 t/km2.
+  # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_benthivorous_fish.md.
+  benthivorous_fish_preys_on_benthic_community:
     preys_on: true
-    predation_mortality: 0.0048
+    predation_mortality: 0.040
     assimilation_factor: 0.7
-    # Energy-limited ceiling, h = 130 * 3000 MJ/t / 4500 (section 148).
-    handling_time: 87.0
-    # Section 208: the share of the pooled gadoid biomass that forages on
-    # the bottom at all, from morphology and habitat (mouth position, jaw,
-    # barbel: haddock 1, cod 0.5-1, whiting 0-0.3, saithe and hake 0), NOT
-    # from a diet: weighted by the box's depth-stratified NS-IBTS mix,
-    # Q1+Q3 2021-25 (haddock 46.6 %, saithe 29.1, whiting 17.0, cod 5.7,
-    # hake 0.9, ling 0.3; Norway pout and blue whiting are zooplanktivores
-    # outside the group): 0.53, range 0.32-0.65 (Q1 0.64, Q3 0.48 with
-    # the saithe visit; the Fraser 2007 catchability correction is the
-    # low end). The capable part eats benthos at the full a and 1/h, the
-    # rest cannot: the tick caps the eat share on benthos at phi
-    # (min(eat, phi); a mean field a phi, h / phi made every fish a
-    # half-benthivore and an energy maximiser dropped benthos, 0-10 %).
-    # research_notes/"Torskfiskarnas artsammansattning" (Swedish letters).
-    predator_share: 0.53
-    # Section 208: the share of the prey-sized infauna within reach of a
-    # gadoid at any time: 27 % of the biomass lies in the top 0-2 cm and
-    # 51 % in 0-5 cm at 280 m Skagerrak mud (Dauwe et al. 1998); Amphiura
-    # at 100 m offers mainly arm tips (regenerating tissue ~22 % of its
-    # biomass, Skold et al. 1994). Central 0.2, range 0.08-0.45; the
-    # reach into the sediment is a judgement. Scales the pair's prey
-    # biomass (Holling term and harvest cap). It does not move today's
-    # diet (the pair stays saturated at ~90 t/km2) but it sets how far a
-    # cell can be grazed. research_notes/"Bentos atkomlighet for
-    # torskfiskar" (Swedish letters).
+    handling_time: 110.7
+    predator_share: 0.9
     accessible_fraction: 0.2
-  # Cannibalism (section 141): ~5 % of the gadoid diet in North Sea
-  # Ecopath 1991 (juvenile cod, whiting, haddock, saithe eaten by the
-  # adults); M2 0.2168 /yr is the report's gadoid-on-gadoid share.
-  # Unchecked (section 160): a group-biomass reward never learns to eat
-  # its own group (0.03 % of the gadoid eat probability), so the budget
-  # paid 0.2168 /yr for a loss the tick never took. In an age-pooled
-  # group it is mostly a transfer from small to large fish.
-  gadoids_preys_on_gadoids:
-    preys_on: false
-    predation_mortality: 0.2168
-    assimilation_factor: 0.8
-    # Energy-limited ceiling, h = 130 * 5500 MJ/t / 4500 (section 148).
-    handling_time: 159.0
-  gadoids_preys_on_phytoplankton:
-    preys_on: false
-    assimilation_factor: 1.0
-    handling_time: 0.0
-  gadoids_preys_on_porpoises:
-    preys_on: false
-    assimilation_factor: 1.0
-    handling_time: 0.0
-  gadoids_preys_on_seabirds:
-    preys_on: false
-    assimilation_factor: 1.0
-    handling_time: 0.0
-  gadoids_preys_on_seals:
-    preys_on: false
-    assimilation_factor: 1.0
-    handling_time: 0.0
-  # Zooplankton as the gadoids' crustacean plankton (section 141): ~20 %
-  # of the gadoid diet in North Sea Ecopath 1991, mostly euphausiids
-  # (12 %), which the model's zooplankton group stands in for. Without
-  # it the gadoids took that demand from herring. M2 0.089 /yr (Ecopath
-  # consumption over zooplankton biomass); assimilation as herring's.
-  gadoids_preys_on_zooplankton:
+  # Section 209: juvenile whiting and deep-feeding saithe on shrimps
+  # and mysids (predator_share 0.145).
+  predatory_fish_preys_on_benthic_community:
     preys_on: true
-    predation_mortality: 0.089
+    predation_mortality: 0.0046
+    assimilation_factor: 0.7
+    handling_time: 117.6
+    predator_share: 0.145
+    accessible_fraction: 0.2
+  # Cannibalism stays out of the budget (section 160).
+  benthivorous_fish_preys_on_benthivorous_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # Section 209: large cod and grey gurnard on whiting (predator_share
+  # 0.1). M2 0.085 /yr on predatory_fish.
+  benthivorous_fish_preys_on_predatory_fish:
+    preys_on: true
+    predation_mortality: 0.085
     assimilation_factor: 0.8
-    # Energy-limited ceiling, h = 130 * 4500 MJ/t / 4500 (section 148).
-    handling_time: 130.0
-  pelagic_fish_preys_on_benthic_community:
+    handling_time: 193.8
+    predator_share: 0.1
+    functional_response: 2
+  # Section 209: whiting, saithe, hake, spurdog and anglerfish on
+  # juvenile haddock, cod and small flatfish: a learnable cross-group
+  # pair (unlike cannibalism). accessible_fraction 0.15: the prey-sized
+  # part of the benthivores. M2 = 0.18 /yr (0.09-0.51) from this
+  # group's diet; the SMS saithe + whiting flow on haddock alone (0.10)
+  # is the floor.
+  predatory_fish_preys_on_benthivorous_fish:
+    preys_on: true
+    predation_mortality: 0.18
+    assimilation_factor: 0.8
+    handling_time: 176.5
+    predator_share: 0.29
+    accessible_fraction: 0.15
+    functional_response: 2
+  # Cannibalism stays out of the budget (section 160).
+  predatory_fish_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthivorous_fish_preys_on_phytoplankton:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  predatory_fish_preys_on_phytoplankton:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthivorous_fish_preys_on_porpoises:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  predatory_fish_preys_on_porpoises:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthivorous_fish_preys_on_seabirds:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  predatory_fish_preys_on_seabirds:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthivorous_fish_preys_on_seals:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  predatory_fish_preys_on_seals:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # Section 209: dropped. The pool is mostly copepods (copepod-sized
+  # prey: predator_share ~0.03), 485 winter 2025 stomachs hold 0.4 %
+  # zooplankton, and the hyperbenthic crustaceans these fish eat are
+  # benthic_community.
+  benthivorous_fish_preys_on_zooplankton:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # Section 209: krill for saithe, whiting and mackerel (predator_share
+  # 0.48). M2 0.13 /yr at the 9.72 t/km2 start (0.23 at ~5.5).
+  predatory_fish_preys_on_zooplankton:
+    preys_on: true
+    predation_mortality: 0.13
+    assimilation_factor: 0.8
+    handling_time: 176.5
+    predator_share: 0.48
+  planktivorous_fish_preys_on_benthic_community:
     preys_on: false
     predation_mortality: 0.015
     assimilation_factor: 1.0
     handling_time: 0.0
-  pelagic_fish_preys_on_gadoids:
+  planktivorous_fish_preys_on_benthivorous_fish:
     preys_on: false
     predation_mortality: 0.0799
     assimilation_factor: 1.0
     handling_time: 0.0
-  pelagic_fish_preys_on_pelagic_fish:
+  planktivorous_fish_preys_on_predatory_fish:
+    preys_on: false
+    predation_mortality: 0.0799
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  planktivorous_fish_preys_on_planktivorous_fish:
     preys_on: false
     predation_mortality: 0.1422
     assimilation_factor: 1.0
     handling_time: 0.0
-  pelagic_fish_preys_on_phytoplankton:
+  planktivorous_fish_preys_on_phytoplankton:
     preys_on: false
     predation_mortality: 0.0566
     assimilation_factor: 1.0
     handling_time: 0.0
-  pelagic_fish_preys_on_porpoises:
+  planktivorous_fish_preys_on_porpoises:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  pelagic_fish_preys_on_seabirds:
+  planktivorous_fish_preys_on_seabirds:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  pelagic_fish_preys_on_seals:
+  planktivorous_fish_preys_on_seals:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1068,11 +1155,15 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  phytoplankton_preys_on_gadoids:
+  phytoplankton_preys_on_benthivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  phytoplankton_preys_on_pelagic_fish:
+  phytoplankton_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  phytoplankton_preys_on_planktivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1100,23 +1191,24 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  porpoises_preys_on_gadoids:
+  # Section 209: 0.15 of the porpoise diet; M2 0.0064. a 0.12: the old
+  # 0.3 rescaled to the same demersal energy return (judgement).
+  porpoises_preys_on_benthivorous_fish:
     preys_on: true
-    predation_mortality: 0.0557
-    # Fitted to the Ecopath diet together with the herring pair (section
-    # 151); a*h = 8.6, half-saturation 0.12 t/km2 visible gadoids.
-    # Section 206: x1.5 with the herring pair (was 0.2, a*h 5.7).
-    max_intake_rate: 0.3
+    predation_mortality: 0.0064
+    max_intake_rate: 0.12
     assimilation_factor: 0.84
     handling_time: 28.6
-    # Rested (hidden) gadoids sit near the seabed, which is assumed to
-    # shield them partly from porpoise biosonar (herring: 0.95). This is
-    # inferred, not measured (section 149): cod rest near the bottom at
-    # night (Newfoundland telemetry) and fish close to the seabed fall in
-    # the acoustic dead zone of vertical fishery echosounders, but no
-    # study tests seabed masking of porpoise sonar, and porpoises do
-    # forage on the bottom with downward-aimed clicks.
     visibility_floor: 0.75
+  # Section 209: 0.20 of the porpoise diet (whiting); M2 0.011. a 0.2 and
+  # the visibility floor are judgements.
+  porpoises_preys_on_predatory_fish:
+    preys_on: true
+    predation_mortality: 0.011
+    max_intake_rate: 0.2
+    assimilation_factor: 0.84
+    handling_time: 28.6
+    visibility_floor: 0.9
   porpoises_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
@@ -1141,7 +1233,12 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  seabirds_preys_on_gadoids:
+  seabirds_preys_on_benthivorous_fish:
+    preys_on: false
+    predation_mortality: 0.0078
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  seabirds_preys_on_predatory_fish:
     preys_on: false
     predation_mortality: 0.0078
     assimilation_factor: 1.0
@@ -1171,61 +1268,14 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  seals_preys_on_pelagic_fish:
+  # Section 209: 0.25 of the seal diet (target 0.10-0.40; the fix72 seals
+  # took 14-24 % at a 0.002, Type III, sections 168, 199.9): M2 0.0067.
+  seals_preys_on_planktivorous_fish:
     preys_on: true
-    # Herring ~5 % of the diet by mass (2.8 % of energy in 2019 scats, GU;
-    # 10 % by Qi in Soerlie et al. 2020; down from ~24 % historically):
-    # ~16 t/yr of 12000 t (section 166). Was 0.0076.
-    predation_mortality: 0.0015
-    # Fitted to the diet target, not measured (as the porpoise rates,
-    # section 151). Mechanism: harbour seals forage on the bottom with
-    # their vibrissae, herring school in the water column; the model has
-    # one layer per cell, so a low a stands in for the missing vertical
-    # habitat separation. Type III attack rate, per (t/cell)^2: the
-    # effective Type II rate is a * B. The first value, 0.015, was the
-    # porpoise Type II rate in the wrong units; at the 6-7 t/cell of
-    # visible herring the seals stood on it gave a * B ~ 0.1, and fat
-    # herring (~8000 MJ/t) beat gadoids in ~80 % of the seals' cells:
-    # fix60 seals ate 84-88 % herring by mass (section 168). 1e-4 puts the
-    # half-saturation 1/sqrt(a h) at 17 t/cell; on the fix60 prey fields a
-    # seal eating the better prey in its cell takes ~4 % herring by mass
-    # (3e-4: ~19 %). Range 1e-4 - 2e-4 for 3-10 % herring; retune against
-    # the retrained diet (tools/probes/pair_intake.py). Weak points: the
-    # per-tonne selectivity (1/120 - 1/670 of the gadoid rate at 17-3
-    # t/cell) is stronger than the empirical ~1/90, and the fit used
-    # fix60's policy-shaped fields and a greedy seal.
-    # Section 185.10: 1e-4 -> 2e-4. The target is the whole pelagic_fish
-    # pool (herring, sprat, sandeel, ...), ~10 % of the diet by mass
-    # (5-20 %). fix68's trained seals took 0.001 %. On the current
-    # world (gadoids held near 0.65 t/km2 by K, pelagic pool ~6-7) a
-    # greedy seal takes 6 % at 1e-4, 18-20 % at 2e-4, 30-36 % at 3e-4;
-    # a trained policy picks less pelagic fish than greedy, so the top
-    # of the range. Retune against the retrained diet: > 20 % -> 1.5e-4,
-    # < 5 % -> 3e-4.
-    # Section 185.16: 2e-4 -> 3e-4. Eat intake is linear in the eat
-    # share, so a seal maximising energy puts the whole eat mass on
-    # the better prey of each cell; the water-filling greedy arm above
-    # mixes prey the way that optimiser never does. A seal with the
-    # trained positions eating the better prey per cell takes 9.3 %
-    # pelagic fish by mass at 3e-4 (12.6 % of energy; 2 seeds x 2
-    # years), 5.4 % at 2e-4, 14 % at 4e-4. The seals' biomass barely
-    # moves with the switch, so a trained policy may still eat less.
-    # Section 199.9: 3e-4 -> 2e-3. The 185.16 optimiser rated the pool on
-    # its TOTAL biomass; the engine feeds on the visible part (herring
-    # rest ~38 %, squared under Type III), and fix69's pool was 4-7
-    # t/km2 against ~3 since its K. With the engine's own effective rate
-    # (visible prey, interference) an optimising seal on fix70 positions
-    # takes 0.02-0.3 % pelagic fish at 3e-4 - nothing to learn - and
-    # 3.9-8.5 % by mass at 2e-3 (2 seeds, 1 training-length year).
+    predation_mortality: 0.0067
     max_intake_rate: 0.002
-    # Metabolisable energy 85.5-88.7 % on herring (Keiver et al. 1984);
-    # 0.92 was a digestibility. Was 0.92.
     assimilation_factor: 0.88
-    # Same energy ceiling as the gadoid pair: 0.88 * ~7500 / 35 = 189 vs
-    # 0.85 * 5500 / 26 = 180 MJ/t/tick, ~11 % of body mass per day. Was 20.
-    handling_time: 35.0
-    # Pinnipeds switch prey (Smout et al. 2014; Middlemas et al. 2006):
-    # Type III gives herring a refuge when the seals switch away.
+    handling_time: 33.5
     functional_response: 3
   seals_preys_on_phytoplankton:
     preys_on: false
@@ -1251,11 +1301,15 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  zooplankton_preys_on_gadoids:
+  zooplankton_preys_on_benthivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  zooplankton_preys_on_pelagic_fish:
+  zooplankton_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  zooplankton_preys_on_planktivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1305,40 +1359,61 @@ interaction_definitions:
   benthic_community_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
-  # Bottom otter trawling on gadoids (section 161), same construction
-  # as pelagic trawling on pelagic fish: effort in MW-h per km2 per year,
-  # F 0.12 /yr (ICES 2026 cod, haddock, whiting, saithe, hake pooled by
-  # Skagerrak IBTS biomass), split by gear like pelagic fish: 98 %
-  # bottom trawls (gadoids are caught in demersal, Nephrops and shrimp
-  # trawls; seines and gillnets have no map and stay here), 2 % pelagic
-  # and industrial trawls (whiting, haddock and saithe bycatch, range
-  # 0.1-4.5 %). Mean effort of today's map 3.0142 -> q = 0.98 x 0.12 /
-  # 1460 / 3.0142 = 2.6723e-5 per tick per unit; the last row is ~10 x
-  # today's maximum (9.6).
-  gadoids_impacted_by_bottom_trawling:
+  # Section 209: F 0.17 /yr at today's mean effort (cod 0.39, haddock
+  # 0.06, dab 0.18, witch 0.12, long rough dab 0.10, plaice 0.04;
+  # catch / total biomass).
+  benthivorous_fish_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
-      - value: 0.0
-        biomass_factor: 0.0
-        energy_factor: 0.0
-      - value: 100.0
-        biomass_factor: 0.00267232003
-        energy_factor: 0.0
-  # The 2 % of the gadoid F taken by pelagic trawls: q = 0.02 x 0.12 /
-  # 1460 / 0.02496 = 6.585e-5 per tick per unit of pelagic effort.
-  gadoids_impacted_by_pelagic_trawling:
+    - value: 0.0
+      biomass_factor: 0.0
+      energy_factor: 0.0
+    - value: 100.0
+      biomass_factor: 0.00386304767
+      energy_factor: 0.0
+  # Section 209: F 0.162 /yr (saithe 0.30, whiting 0.075, hake 0.27,
+  # ling 0.17, anglerfish ~0.08, spurdog 0.008; gillnet, longline and
+  # seine on this map).
+  predatory_fish_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
-      - value: 0.0
-        biomass_factor: 0.0
-        energy_factor: 0.0
-      - value: 10.0
-        biomass_factor: 0.000658532007
-        energy_factor: 0.0
-  gadoids_impacted_by_rotor:
+    - value: 0.0
+      biomass_factor: 0.0
+      energy_factor: 0.0
+    - value: 100.0
+      biomass_factor: 0.00368125719
+      energy_factor: 0.0
+  # Section 209: F 0.0004 /yr (industrial bycatch of haddock).
+  benthivorous_fish_impacted_by_pelagic_trawling:
+    impact_affects: true
+    impact_table:
+    - value: 0.0
+      biomass_factor: 0.0
+      energy_factor: 0.0
+    - value: 10.0
+      biomass_factor: 0.000109755334
+      energy_factor: 0.0
+  # Section 209: F 0.020 /yr (mackerel 0.21, horse mackerel 0.035 at
+  # their shares).
+  predatory_fish_impacted_by_pelagic_trawling:
+    impact_affects: true
+    impact_table:
+    - value: 0.0
+      biomass_factor: 0.0
+      energy_factor: 0.0
+    - value: 10.0
+      biomass_factor: 0.00548776672
+      energy_factor: 0.0
+  benthivorous_fish_impacted_by_rotor:
     impact_affects: false
     impact_table: []
-  gadoids_impacted_by_windfarm_noise:
+  predatory_fish_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  benthivorous_fish_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  predatory_fish_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
   # Fishing (section 161). The impact value is fishing effort density in
@@ -1357,7 +1432,7 @@ interaction_definitions:
   # per tick per unit. The last row lies far above today's maximum (0.43)
   # so scenario maps with more effort are not clamped. Was a placeholder
   # (1.0 per tick at 1000).
-  pelagic_fish_impacted_by_pelagic_trawling:
+  planktivorous_fish_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
       - value: 0.0
@@ -1368,7 +1443,7 @@ interaction_definitions:
         energy_factor: 0.0
   # The 2 % of the pelagic-fish F taken by bottom trawls: q = 0.02 x 0.10
   # / 1460 / 3.0142 = 4.545e-7 per tick per unit of bottom-trawl effort.
-  pelagic_fish_impacted_by_bottom_trawling:
+  planktivorous_fish_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
       - value: 0.0
@@ -1377,10 +1452,10 @@ interaction_definitions:
       - value: 100.0
         biomass_factor: 0.0000454476196
         energy_factor: 0.0
-  pelagic_fish_impacted_by_rotor:
+  planktivorous_fish_impacted_by_rotor:
     impact_affects: false
     impact_table: []
-  pelagic_fish_impacted_by_windfarm_noise:
+  planktivorous_fish_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
   phytoplankton_impacted_by_pelagic_trawling:
@@ -1471,43 +1546,68 @@ interaction_definitions:
   zooplankton_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
-  gadoids_observes_benthic_community:
+  benthivorous_fish_observes_benthic_community:
     observes: true
-  gadoids_observes_gadoids:
+  predatory_fish_observes_benthic_community:
     observes: true
-  gadoids_observes_pelagic_fish:
+  benthivorous_fish_observes_benthivorous_fish:
     observes: true
-  gadoids_observes_phytoplankton:
+  benthivorous_fish_observes_predatory_fish:
+    observes: true
+  predatory_fish_observes_benthivorous_fish:
+    observes: true
+  predatory_fish_observes_predatory_fish:
+    observes: true
+  benthivorous_fish_observes_planktivorous_fish:
+    observes: true
+  predatory_fish_observes_planktivorous_fish:
+    observes: true
+  benthivorous_fish_observes_phytoplankton:
     observes: false
-  gadoids_observes_porpoises:
-    observes: true
-  gadoids_observes_seabirds:
+  predatory_fish_observes_phytoplankton:
     observes: false
-  gadoids_observes_seals:
+  benthivorous_fish_observes_porpoises:
     observes: true
-  gadoids_observes_zooplankton:
+  predatory_fish_observes_porpoises:
     observes: true
-  pelagic_fish_observes_benthic_community:
+  benthivorous_fish_observes_seabirds:
     observes: false
-  pelagic_fish_observes_gadoids:
-    observes: true
-  pelagic_fish_observes_pelagic_fish:
-    observes: true
-  pelagic_fish_observes_phytoplankton:
+  predatory_fish_observes_seabirds:
     observes: false
-  pelagic_fish_observes_porpoises:
+  benthivorous_fish_observes_seals:
     observes: true
-  pelagic_fish_observes_seabirds:
+  predatory_fish_observes_seals:
     observes: true
-  pelagic_fish_observes_seals:
+  # Section 209: no zooplankton pair.
+  benthivorous_fish_observes_zooplankton:
+    observes: false
+  predatory_fish_observes_zooplankton:
     observes: true
-  pelagic_fish_observes_zooplankton:
+  planktivorous_fish_observes_benthic_community:
+    observes: false
+  planktivorous_fish_observes_benthivorous_fish:
+    observes: true
+  planktivorous_fish_observes_predatory_fish:
+    observes: true
+  planktivorous_fish_observes_planktivorous_fish:
+    observes: true
+  planktivorous_fish_observes_phytoplankton:
+    observes: false
+  planktivorous_fish_observes_porpoises:
+    observes: true
+  planktivorous_fish_observes_seabirds:
+    observes: true
+  planktivorous_fish_observes_seals:
+    observes: true
+  planktivorous_fish_observes_zooplankton:
     observes: true
   porpoises_observes_benthic_community:
     observes: false
-  porpoises_observes_gadoids:
+  porpoises_observes_benthivorous_fish:
     observes: true
-  porpoises_observes_pelagic_fish:
+  porpoises_observes_predatory_fish:
+    observes: true
+  porpoises_observes_planktivorous_fish:
     observes: true
   porpoises_observes_phytoplankton:
     observes: false
@@ -1521,9 +1621,11 @@ interaction_definitions:
     observes: false
   seabirds_observes_benthic_community:
     observes: false
-  seabirds_observes_gadoids:
+  seabirds_observes_benthivorous_fish:
     observes: false
-  seabirds_observes_pelagic_fish:
+  seabirds_observes_predatory_fish:
+    observes: false
+  seabirds_observes_planktivorous_fish:
     observes: true
   seabirds_observes_phytoplankton:
     observes: false
@@ -1537,9 +1639,11 @@ interaction_definitions:
     observes: false
   seals_observes_benthic_community:
     observes: false
-  seals_observes_gadoids:
+  seals_observes_benthivorous_fish:
     observes: true
-  seals_observes_pelagic_fish:
+  seals_observes_predatory_fish:
+    observes: true
+  seals_observes_planktivorous_fish:
     observes: true
   seals_observes_phytoplankton:
     observes: false
@@ -1553,9 +1657,11 @@ interaction_definitions:
     observes: false
   zooplankton_observes_benthic_community:
     observes: false
-  zooplankton_observes_gadoids:
+  zooplankton_observes_benthivorous_fish:
     observes: false
-  zooplankton_observes_pelagic_fish:
+  zooplankton_observes_predatory_fish:
+    observes: false
+  zooplankton_observes_planktivorous_fish:
     observes: false
   zooplankton_observes_phytoplankton:
     observes: true

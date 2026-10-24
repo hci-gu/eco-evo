@@ -95,8 +95,9 @@ class FGConfigApp:
             "phytoplankton": "Växtplankton",
             "zooplankton": "Djurplankton",
             "benthic_community": "Bottensamhälle",
-            "pelagic_fish": "Pelagiska fiskar",
-            "gadoids": "Torskfiskar",
+            "planktivorous_fish": "Planktonätande fisk",
+            "benthivorous_fish": "Bottendjursätande fisk",
+            "predatory_fish": "Rovfisk",
             "porpoises": "Tumlare",
             "seals": "Sälar",
             "seabirds": "Sjöfåglar"

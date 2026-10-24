@@ -152,19 +152,22 @@ def max_gate(species):
 
 
 def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
-    """(C, best prey) at the Holling ceiling of the best checked pair.
+    """(C, best prey) at the Holling ceilings of the checked pairs.
 
-    C in MJ per t predator per tick: max over checked pairs with an
-    active prey of intake_ceiling(a, h_t) * assimilation * prey energy,
-    the same numbers the runtime puts in ``max_intake_mat``,
-    ``handling_time_mat`` and ``energy_gain_mat``. (0.0, None) when no
-    pair has a usable prey energy.
+    C in MJ per t predator per tick: the eat share (sum <= 1) put on
+    the checked pairs with an active prey in order of
+    intake_ceiling(a, h_t) * assimilation * prey energy - the same
+    numbers the runtime puts in ``max_intake_mat``, ``handling_time_mat``
+    and ``energy_gain_mat`` - each pair taking at most its
+    ``predator_share``. Without caps this is the best pair's rate. The
+    best prey is the first in that order. (0.0, None) when no pair has
+    a usable prey energy.
     """
     active = None if active_predators is None else set(active_predators)
     species_defs = species_defs or {}
     pred_def = species_defs.get(pred_id) or {}
     prefix = pred_id + PREYS_ON
-    best, best_id = 0.0, None
+    pairs = []
     for key, entry in (interactions or {}).items():
         if not key.startswith(prefix) or not isinstance(entry, dict):
             continue
@@ -179,14 +182,24 @@ def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
         a = _as_float(entry.get("max_intake_rate"),
                       _as_float(pred_def.get("max_intake_rate")))
         assim = min(1.0, max(0.0, _as_float(entry.get("assimilation_factor"), 1.0)))
-        # Section 208: only phi of the group can eat a capped prey, so
-        # the most a tonne of predator gets from it alone is phi x the
-        # ceiling (the engine caps the eat share at phi).
         phi = _as_float(entry.get("predator_share"), 1.0) or 1.0
-        rate = phi * intake_ceiling(a, _as_float(entry.get("handling_time"))) * assim * energy
-        if rate > best:
-            best, best_id = rate, prey_id
-    return best, best_id
+        rate = intake_ceiling(a, _as_float(entry.get("handling_time"))) * assim * energy
+        if rate > 0.0:
+            pairs.append((rate, min(1.0, phi), prey_id))
+    # Section 208: the eat shares share one softmax (sum <= 1) and the
+    # engine caps each at its phi, so the ideal allocation fills the
+    # caps in order of energy per unit of eat share until the share is
+    # used up (section 209: with every pair capped, the best prey alone
+    # gave phi x its ceiling and s* sat just above u).
+    pairs.sort(key=lambda p: -p[0])
+    best, left = 0.0, 1.0
+    for rate, phi, _ in pairs:
+        take = min(phi, left)
+        best += take * rate
+        left -= take
+        if left <= 0.0:
+            break
+    return best, (pairs[0][2] if pairs else None)
 
 
 def ideal_reserve(maintenance, intake, cost, energy_content, max_reserve,

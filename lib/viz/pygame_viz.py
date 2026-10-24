@@ -5551,8 +5551,11 @@ class LiveVisualizer:
         by = my + 12
         if by + box_h > pry + prh - 2:
             by = my - 12 - box_h
-        bx = max(prx + 2, bx)
-        by = max(pry + 2, by)
+        # A box wider than the room on either side (long group names in a
+        # narrow plot) is held inside the plot area instead of spilling
+        # over its edge (and out of what the next repaint redraws).
+        bx = max(px0, min(bx, px0 + pw - box_w))
+        by = max(py0, min(by, py0 + ph - box_h))
 
         # Halvtransparent bakgrund via Surface med per-pixel alpha.
         try:

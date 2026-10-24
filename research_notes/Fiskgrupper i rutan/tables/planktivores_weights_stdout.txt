@@ -1,0 +1,44 @@
+== central: total 3.30 t/km2 = 11880 t; shares her 0.788, bw 0.106, pout 0.076, spr 0.030
+   r_max          central    0.373   low    0.300   high    0.458
+   M1             central    0.262   low    0.111   high    0.375
+   F              central    0.114   low    0.008   high    0.202
+   max_reserve    central 6251.515   low 5386.364   high 6633.333
+   dark_ratio     central    0.264   low    0.173   high    0.264
+   QB             central    5.021   low    4.488   high    5.937
+   zoo_share      central    0.907   low    0.858   high    0.942
+   benthos_share  central    0.059   low    0.042   high    0.105
+   cmax_kJ        central    0.421   low    0.386   high    0.582
+== low_her: total 3.15 t/km2 = 11340 t; shares her 0.667, bw 0.159, pout 0.111, spr 0.063
+   r_max          central    0.386   low    0.318   high    0.488
+   M1             central    0.265   low    0.117   high    0.389
+   F              central    0.127   low    0.011   high    0.216
+   max_reserve    central 5885.714   low 5041.270   high 6273.016
+   dark_ratio     central    0.343   low    0.208   high    0.343
+   QB             central    5.205   low    4.600   high    6.113
+   zoo_share      central    0.884   low    0.821   high    0.920
+   benthos_share  central    0.072   low    0.051   high    0.129
+   cmax_kJ        central    0.402   low    0.369   high    0.555
+== high_her: total 3.80 t/km2 = 13680 t; shares her 0.895, bw 0.053, pout 0.039, spr 0.013
+   r_max          central    0.361   low    0.284   high    0.429
+   M1             central    0.261   low    0.105   high    0.362
+   F              central    0.106   low    0.006   high    0.195
+   max_reserve    central 6619.737   low 5736.842   high 7009.211
+   dark_ratio     central    0.183   low    0.137   high    0.183
+   QB             central    4.857   low    4.391   high    5.766
+   zoo_share      central    0.929   low    0.893   high    0.961
+   benthos_share  central    0.045   low    0.031   high    0.078
+   cmax_kJ        central    0.444   low    0.407   high    0.615
+
+K = B*/(1 - F/r):
+   r 0.340 F/P 0.100 -> K 4.72
+   r 0.373 F/P 0.100 -> K 4.55
+   r 0.373 F/P 0.114 -> K 4.79
+   r 0.340 F/P 0.115 -> K 5.03
+   r 0.373 F/P 0.115 -> K 4.82
+
+Cmax weighted 0.421 kJ/g/d -> 9.3 %BW/d on 4.5 kJ/g -> h 42.8
+zoo M2: Q/B 5.02, zoo eaten per t group 4.51/yr x 3.33 = 15.0 t/km2/yr / 9.72 (manifest start 35000 t) = 1.55 /yr
+zoo M2: Q/B 5.02, zoo eaten per t group 4.51/yr x 3.33 = 15.0 t/km2/yr / 6.76 (A17 resident 12-month mean) = 2.22 /yr
+   low_her: consumption 11.9-17.5 t/km2/yr -> M2 1.22-2.59
+   high_her: consumption 14.9-21.0 t/km2/yr -> M2 1.53-3.10
+benthos consumption 1.02 t/km2/yr

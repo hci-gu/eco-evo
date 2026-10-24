@@ -139,7 +139,7 @@ def test_movement_speed_is_a_distance_not_a_survival_probability():
 
     Under the old "loss" rule the value compounded as a survival
     probability, and its ``x >= 1.0`` short-circuit returned 1.0
-    unchanged - so pelagic_fish, porpoises, seals and seabirds, all at
+    unchanged - so planktivorous_fish, porpoises, seals and seabirds, all at
     1.0 in fg_library.yaml, kept moving one whole cell per tick at every
     tick length. Going 6 h -> 1 h that is a six-fold speed-up, applied
     silently by the one operation whose entire purpose is to hold the

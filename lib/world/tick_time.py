@@ -320,7 +320,7 @@ def rescale_species(params, new_hours, old_hours=LIBRARY_TICK_HOURS):
 
     Returns ``(new_params, changes)`` with ``changes`` a list of
     ``(path, old, new, clamped)``; ``path`` is dotted, e.g.
-    ``"interaction.porpoises_preys_on_gadoids.handling_time"``.
+    ``"interaction.porpoises_preys_on_benthivorous_fish.handling_time"``.
 
     A no-op that returns the input unchanged when the lengths agree,
     so the common case (a 6 h run against a 6 h library) costs nothing

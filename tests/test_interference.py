@@ -1,7 +1,7 @@
 """Beddington-DeAngelis predator interference (Section 86).
 
 Holling II/III is purely prey dependent, so ``demand`` is exactly linear
-in the predator's own biomass: 100 t of gadoids in one cell get ten times
+in the predator's own biomass: 100 t of benthivorous_fish in one cell get ten times
 the food of 10 t in the same cell. Packing is therefore free, aggregation
 is always weakly optimal, and the fastest growing mode of that
 anti-diffusive feedback is the shortest wavelength the grid can carry -

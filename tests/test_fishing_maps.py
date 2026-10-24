@@ -48,10 +48,10 @@ def test_build_scales_the_mean_pattern_to_the_latest_window():
     assert today.mean() == pytest.approx(maps["2021-2024"].mean(), rel=1e-5)
 
 
-@pytest.mark.parametrize("key", ["gadoids_impacted_by_bottom_trawling",
-                                 "gadoids_impacted_by_pelagic_trawling",
-                                 "pelagic_fish_impacted_by_pelagic_trawling",
-                                 "pelagic_fish_impacted_by_bottom_trawling",
+@pytest.mark.parametrize("key", ["benthivorous_fish_impacted_by_bottom_trawling",
+                                 "benthivorous_fish_impacted_by_pelagic_trawling",
+                                 "planktivorous_fish_impacted_by_pelagic_trawling",
+                                 "planktivorous_fish_impacted_by_bottom_trawling",
                                  "benthic_community_impacted_by_bottom_trawling",
                                  "porpoises_impacted_by_bottom_trawling"])
 def test_fishing_tables_are_linear_from_zero(key):
@@ -65,12 +65,13 @@ def test_fishing_tables_are_linear_from_zero(key):
     assert 0 < rows[1]["biomass_factor"] < 0.03
 
 
-@pytest.mark.parametrize("fg,total", [("gadoids", 0.12), ("pelagic_fish", 0.10),
-                                      ("porpoises", 0.017)])
+@pytest.mark.parametrize("fg,total", [("benthivorous_fish", 0.1704), ("predatory_fish", 0.182),
+                                      ("planktivorous_fish", 0.10), ("porpoises", 0.017)])
 def test_gear_split_keeps_the_total_f(fg, total):
-    """98/2 split over the two maps; at today's mean effort the two
-    tables add up to the group's F (catch_by_gear.md). Porpoise bycatch
-    sits on the bottom-trawl map alone."""
+    """Split over the two maps; at today's mean effort the two tables add
+    up to the group's F (catch_by_gear.md; section 209: benthivores 0.17
+    + 0.0004, predators 0.162 + 0.020). Porpoise bycatch sits on the
+    bottom-trawl map alone."""
     lib = load_config(str(ROOT / "fgconfig" / "fg_library.yaml"))["interaction_definitions"]
     means = {"bottom_trawling": 3.0141578935527487, "pelagic_trawling": 0.02496212180679044}
     f = 0.0

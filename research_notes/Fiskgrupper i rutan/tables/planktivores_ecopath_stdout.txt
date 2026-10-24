@@ -1,0 +1,63 @@
+== Herring (adult) (seq 29) B 1.966 t/km2  P/B 0.8  Q/B 4.34  EE 0.7071023
+   prey Herbivorous & Omnivorous zooplankton (copepods) 0.670  -> zooplankton
+   prey Carnivorous zooplankton                       0.309  -> zooplankton
+   prey Small mobile epifauna (swarming crustaceans)  0.021  -> benthic_community
+   by pool: {'zooplankton': 0.979, 'benthic_community': 0.021} sum 1.0
+   M2 total 0.129; M0 = PB(1-EE) = 0.234
+     predatory_fish                     0.103  Saithe (adult) 0.082, Other gadoids (large) 0.013, Monkfish 0.005
+     benthivorous_fish                  0.019  Cod (adult) 0.018
+     seabirds                           0.005  Seabirds 0.005
+     seals                              0.001  
+     porpoises (toothed whales)         0.001  
+== Herring (juvenile 0, 1) (seq 28) B 0.0854141042 t/km2  P/B 1.31  Q/B 12.5078535  EE 0.979726851
+   prey Herbivorous & Omnivorous zooplankton (copepods) 0.675  -> zooplankton
+   prey Carnivorous zooplankton                       0.273  -> zooplankton
+   prey Small mobile epifauna (swarming crustaceans)  0.052  -> benthic_community
+   by pool: {'zooplankton': 0.948, 'benthic_community': 0.052} sum 1.0
+   M2 total 1.030; M0 = PB(1-EE) = 0.027
+     benthivorous_fish                  0.641  Juvenile Cod(0-2, 0-40cm) 0.590, Cod (adult) 0.015, Skate + cuckoo ray 0.014, Haddock (adult) 0.007, Thornback & Spotted ray 0.006, Plaice 0.006
+     predatory_fish                     0.348  Whiting (adult) 0.110, Horse mackerel 0.095, Other gadoids (large) 0.057, Saithe (adult) 0.039, Mackerel 0.035, Monkfish 0.009
+     not_in_model                       0.024  Squid & cuttlefish 0.017, Baleen whales 0.007
+     seabirds                           0.014  Seabirds 0.014
+     porpoises (toothed whales)         0.004  
+     seals                              0.000  
+== Sprat (seq 30) B 0.579 t/km2  P/B 2.28  Q/B 6.0  EE 0.8398183
+   prey Herbivorous & Omnivorous zooplankton (copepods) 0.800  -> zooplankton
+   prey Phytoplankton                                 0.100  -> other:Phytoplankton
+   prey Planktonic microflora (incl. Bacteria, protozoa) 0.100  -> other:Planktonic microflora (incl. Bacteria, protozoa)
+   by pool: {'zooplankton': 0.8, 'other:Phytoplankton': 0.1, 'other:Planktonic microflora (incl. Bacteria, protozoa)': 0.1} sum 1.0
+   M2 total 1.600; M0 = PB(1-EE) = 0.365
+     predatory_fish                     1.325  Whiting (adult) 0.582, Mackerel 0.310, Juvenile Saithe (0-3, 0-40cm) 0.230, Saithe (adult) 0.083, Megrim 0.061, Horse mackerel 0.021, Halibut 0.018, Juvenile Whiting (0-1, 0-20cm) 0.010, Hake 0.006
+     benthivorous_fish                  0.119  Juvenile Cod(0-2, 0-40cm) 0.053, Turbot and brill 0.037, Cod (adult) 0.014, Gurnards 0.007, Thornback & Spotted ray 0.005
+     porpoises (toothed whales)         0.054  Toothed whales 0.054
+     not_in_model                       0.050  Squid & cuttlefish 0.030, Baleen whales 0.012, Other gadoids (small) 0.008
+     seabirds                           0.039  Seabirds 0.039
+     planktivorous_fish (within group)  0.013  Blue whiting 0.013
+     seals                              0.001  
+== Norway pout (seq 23) B 1.394 t/km2  P/B 2.2  Q/B 5.05  EE 0.7504829
+   prey Herbivorous & Omnivorous zooplankton (copepods) 0.476  -> zooplankton
+   prey Carnivorous zooplankton                       0.286  -> zooplankton
+   prey Infaunal macrobenthos                         0.191  -> benthic_community
+   prey Small mobile epifauna (swarming crustaceans)  0.048  -> benthic_community
+   by pool: {'zooplankton': 0.762, 'benthic_community': 0.238} sum 1.0
+   M2 total 1.455; M0 = PB(1-EE) = 0.549
+     predatory_fish                     1.118  Horse mackerel 0.326, Whiting (adult) 0.282, Juvenile Saithe (0-3, 0-40cm) 0.198, Saithe (adult) 0.195, Juvenile Whiting (0-1, 0-20cm) 0.037, Mackerel 0.020, Megrim 0.018, Halibut 0.015, Other gadoids (large) 0.013, Monkfish 0.008
+     benthivorous_fish                  0.225  Juvenile Cod(0-2, 0-40cm) 0.090, Haddock (adult) 0.030, Cod (adult) 0.030, Flounder 0.025, Starry ray + others 0.015, Gurnards 0.013, Turbot and brill 0.010, Long-rough dab 0.005
+     planktivorous_fish (within group)  0.049  Blue whiting 0.049
+     porpoises (toothed whales)         0.048  Toothed whales 0.048
+     not_in_model                       0.015  Squid & cuttlefish 0.012
+== Blue whiting (seq 22) B 0.08 t/km2  P/B 2.5  Q/B 9.06  EE 0.8937607
+   prey Carnivorous zooplankton                       0.605  -> zooplankton
+   prey Herbivorous & Omnivorous zooplankton (copepods) 0.131  -> zooplankton
+   prey Shrimp                                        0.101  -> benthic_community
+   prey Norway pout                                   0.094  -> fish:planktivore
+   prey Epifaunal macrobenthos (mobile grazers)       0.048  -> benthic_community
+   prey Miscellaneous filterfeeding pelagic fish      0.010  -> fish:planktivore
+   prey Sprat                                         0.010  -> fish:planktivore
+   prey Small infauna (polychaetes)                   0.000  -> benthic_community
+   by pool: {'zooplankton': 0.736, 'benthic_community': 0.149, 'fish:planktivore': 0.114} sum 1.0
+   M2 total 1.472; M0 = PB(1-EE) = 0.266
+     predatory_fish                     1.100  Horse mackerel 0.427, Saithe (adult) 0.359, Hake 0.125, Other gadoids (large) 0.084, Megrim 0.071, Mackerel 0.019, Spurdog 0.009, Small sharks 0.005
+     not_in_model                       0.212  Squid & cuttlefish 0.212
+     benthivorous_fish                  0.151  Cod (adult) 0.144, Large demersal fish 0.004
+     porpoises (toothed whales)         0.009  Toothed whales 0.009

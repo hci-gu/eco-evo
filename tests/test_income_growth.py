@@ -68,19 +68,19 @@ def _library():
 def test_budget_is_paid_over_the_feeding_season():
     lib = _library()
     species, inter = lib["species_definitions"], lib["interaction_definitions"]
-    base = {k: v for k, v in species["pelagic_fish"].items()
+    base = {k: v for k, v in species["planktivorous_fish"].items()
             if k not in ("income_growth_kappa", "feeding_season_months")}
-    plain = gb.growth_budget("pelagic_fish", species, inter, species=base)
+    plain = gb.growth_budget("planktivorous_fish", species, inter, species=base)
     spec = dict(base, income_growth_kappa=0.75, feeding_season_months=5.5)
-    seasonal = gb.growth_budget("pelagic_fish", species, inter, species=spec)
+    seasonal = gb.growth_budget("planktivorous_fish", species, inter, species=spec)
     assert seasonal.growth_rate == pytest.approx(plain.growth_rate * 12 / 5.5)
     assert seasonal.reference_fill == pytest.approx(plain.reference_fill)
     assert seasonal.per_tick(1.0) == pytest.approx(plain.per_tick(1.0) * 12 / 5.5)
     assert "12/5.5" in seasonal.describe() and "12/" not in plain.describe()
-    typing = gb.growth_budget("pelagic_fish", species, inter, species=dict(
+    typing = gb.growth_budget("planktivorous_fish", species, inter, species=dict(
         base, income_growth_kappa="0.7x"))
     assert typing.error and "number" in typing.error
-    whole_year = gb.growth_budget("pelagic_fish", species, inter, species=dict(
+    whole_year = gb.growth_budget("planktivorous_fish", species, inter, species=dict(
         base, income_growth_kappa=0.75))
     assert whole_year.growth_rate == pytest.approx(plain.growth_rate)
 
@@ -173,8 +173,8 @@ def test_refusals():
     for sid, extra, match in (
             ("benthic_community", {}, "not a decision"),
             ("zooplankton", {}, "growth_q10"),
-            ("pelagic_fish", {"starve_rate": 0.0}, "starve_rate"),
-            ("pelagic_fish", {"r_max": 0, "feeding_season_months": 5.5}, "r_max")):
+            ("planktivorous_fish", {"starve_rate": 0.0}, "starve_rate"),
+            ("planktivorous_fish", {"r_max": 0, "feeding_season_months": 5.5}, "r_max")):
         lib = _library()
         lib["species_definitions"][sid].update(income_growth_kappa=0.7, **extra)
         with pytest.raises(ValueError, match=match):

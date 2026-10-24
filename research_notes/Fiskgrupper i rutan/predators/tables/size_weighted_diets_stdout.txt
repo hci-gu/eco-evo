@@ -1,0 +1,28 @@
+whiting Skagerrak pre2000  gadoid split P/Bf/W 0.79/0.21/0.00  fed 54
+   size-weighted: P 20.8 Bf 4.3 W 0.0 Z 40.1 Zpas 9.2 Zeuph 30.9 B 34.8 O 0.0
+   pooled       : P 16.4 Bf 5.5 W 0.0 Z 53.6 Zpas 6.5 Zeuph 47.1 B 24.5 O 0.0
+   classes: 10:10(w15.4) 20:20(w35.2) 30:30(w40.2) 40:30(w9.3)
+whiting Box pre2000  gadoid split P/Bf/W 1.00/0.00/0.00  fed 21
+   size-weighted: P 6.5 Bf 1.8 W 0.0 Z 31.6 Zpas 9.3 Zeuph 22.2 B 60.2 O 0.0
+   pooled       : P 13.1 Bf 3.7 W 0.0 Z 51.7 Zpas 11.6 Zeuph 40.1 B 31.5 O 0.0
+   classes: 10:10(w15.4) 20:20(w35.2) 30:30(w40.2) 40:30(w9.3)
+whiting Skagerrak 2022  gadoid split P/Bf/W 0.00/0.16/0.84  fed 38
+   size-weighted: P 16.7 Bf 20.8 W 45.9 Z 1.6 Zpas 0.0 Zeuph 1.6 B 15.0 O 0.0
+   pooled       : P 5.0 Bf 14.1 W 73.6 Z 0.3 Zpas 0.0 Zeuph 0.3 B 6.9 O 0.0
+   classes: 10:10(w15.4) 20:20(w35.2) 30:30(w40.2) 40:40(w9.3)
+whiting Kattegat pre2000  gadoid split P/Bf/W 1.00/0.00/0.00  fed 38
+   size-weighted: P 65.4 Bf 7.7 W 0.0 Z 5.0 Zpas 0.0 Zeuph 5.0 B 21.9 O 0.0
+   pooled       : P 58.7 Bf 10.8 W 0.0 Z 8.5 Zpas 0.0 Zeuph 8.5 B 22.1 O 0.0
+   classes: 10:10(w15.4) 20:20(w35.2) 30:30(w40.2) 40:30(w9.3)
+whiting CSNS 2022  gadoid split P/Bf/W 0.00/0.09/0.91  fed 518
+   size-weighted: P 33.4 Bf 5.4 W 39.2 Z 0.1 Zpas 0.0 Zeuph 0.0 B 21.4 O 0.4
+   pooled       : P 44.8 Bf 6.4 W 30.6 Z 0.0 Zpas 0.0 Zeuph 0.0 B 17.6 O 0.5
+   classes: 10:00+10(w15.4) 20:20(w35.2) 30:30(w40.2) 40:40(w9.3)
+hake Skagerrak 2024  gadoid split P/Bf/W 0.07/0.00/0.93  fed 50
+   size-weighted: P 77.3 Bf 0.5 W 21.1 Z 0.1 Zpas 0.0 Zeuph 0.1 B 0.4 O 0.5
+   pooled       : P 83.2 Bf 0.4 W 15.6 Z 0.1 Zpas 0.0 Zeuph 0.1 B 0.2 O 0.4
+   classes: 10:10(w1.7) 20:20(w8.0) 30:30(w13.9) 40:40(w18.6) 50:50(w10.9) 60:60(w15.1) 70:70+80+90(w31.7)
+hake Box 2024  gadoid split P/Bf/W 0.00/0.00/1.00  fed 33
+   size-weighted: P 74.3 Bf 0.0 W 24.5 Z 0.3 Zpas 0.0 Zeuph 0.3 B 0.4 O 0.6
+   pooled       : P 81.2 Bf 0.0 W 17.8 Z 0.2 Zpas 0.0 Zeuph 0.2 B 0.3 O 0.4
+   classes: 10:10(w1.7) 20:20(w8.0) 30:30(w13.9) 40:40(w18.6) 50:50(w10.9) 60:60(w15.1) 70:70+80(w31.7)

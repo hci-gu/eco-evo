@@ -84,3 +84,7 @@ dmypy.json
 .DS_Store
 Thumbs.db
 /fgconfig/recent_projects.txt
+
+# Raw downloads of the literature/data reviews (untrusted, large)
+research_notes/*/data/
+research_notes/*/*/data/

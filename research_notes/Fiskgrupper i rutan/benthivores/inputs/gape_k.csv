@@ -1,0 +1,6 @@
+predator,k_low,k_c,k_high,stages,basis
+cod,0.44,0.47,0.50,20 30 40 50 60 70 80,Torskfiskarnas bytesandelar/inputs/gape.csv (Scharf et al. 2000 gape line); ICES-DB cod prey/pred length p99 0.46 [D]
+haddock,0.32,0.33,0.36,20 30 40 50 60,Torskfiskarnas bytesandelar/inputs/gape.csv (cod line x jaw ratio; estimate)
+long_rough_dab,0.30,0.40,0.45,15 20 25 30 35,ICES-DB 1991 LRD fish prey: max prey 10 cm in 20-24.9 cm LRD (ratio 0.40-0.50 by class bounds; 0.44 at midpoint) [D]; observed maxima are a lower bound of gape
+grey_gurnard,0.30,0.33,0.42,15 20 25 30 35,cod k x 0.70 (0.64-0.89): ratio of grey gurnard to cod largest-prey length ratios for the same prey in the SMS 2023 min predator/prey weight ratios (1981-91 stomachs; tables/sms_minratio_length.csv) [D]; Floeter 2005: large gurnard prefer about half the prey size large whiting prefer
+starry_ray,0.25,0.33,0.46,30 40 50 60,ICES-DB 2024 Skagerrak: whiting 9.5 cm in 32 cm ray (0.30); hagfish 23 cm in 52 cm ray (0.44-0.46; elongate prey) [D]

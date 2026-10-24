@@ -20,7 +20,7 @@ def viz(monkeypatch):
     monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
     monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
     from lib.viz.pygame_viz import LiveVisualizer
-    viewer = LiveVisualizer(fg_ids=["gadoids", "benthic_community"], grid_shape=GRID,
+    viewer = LiveVisualizer(fg_ids=["benthivorous_fish", "benthic_community"], grid_shape=GRID,
                             mode="inference", ndm_ids=["benthic_community"])
     if not viewer.enabled:
         pytest.skip("pygame display unavailable")
@@ -56,7 +56,7 @@ def test_ndm_panel_shows_predation_and_impact_shares(viz, monkeypatch):
     viz.update_loss_breakdown({
         "benthic_community": {"predation": 0.27, "impact": 0.73,
                               "starvation": 0.0, "natural": 0.0},
-        "gadoids": {"predation": 0.1, "impact": 0.2, "starvation": 0.0,
+        "benthivorous_fish": {"predation": 0.1, "impact": 0.2, "starvation": 0.0,
                     "natural": 0.7}})
     lines = rendered_lines(viz, "benthic_community", monkeypatch)
     assert "pr/im = 27/73%" in lines

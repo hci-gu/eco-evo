@@ -1,0 +1,960 @@
+species,area,period,pool,sub,taxon,g
+cod,Baltic_or_Belts,2000+,B,amphipod,Amphipoda,14.712
+cod,Baltic_or_Belts,2000+,B,amphipod,Bathyporeia pilosa,0.04
+cod,Baltic_or_Belts,2000+,B,amphipod,Corophium volutator,0.03
+cod,Baltic_or_Belts,2000+,B,amphipod,Gammaridae,0.34
+cod,Baltic_or_Belts,2000+,B,amphipod,Gammarus,44.958
+cod,Baltic_or_Belts,2000+,B,amphipod,Gammarus salinus,0.04
+cod,Baltic_or_Belts,2000+,B,amphipod,Monoporeia affinis,43.055
+cod,Baltic_or_Belts,2000+,B,amphipod,Pontoporeia,9.224
+cod,Baltic_or_Belts,2000+,B,amphipod,Pontoporeia femorata,0.979
+cod,Baltic_or_Belts,2000+,B,amphipod,Pontoporeiidae,1.08
+cod,Baltic_or_Belts,2000+,B,bivalve,Bivalvia,12.22
+cod,Baltic_or_Belts,2000+,B,bivalve,Cerastoderma glaucum,0.09
+cod,Baltic_or_Belts,2000+,B,bivalve,Macoma balthica,2.581
+cod,Baltic_or_Belts,2000+,B,bivalve,Mya arenaria,0.05
+cod,Baltic_or_Belts,2000+,B,bivalve,Mytilus edulis,1.45
+cod,Baltic_or_Belts,2000+,B,crab_hermit,Brachyura,45.08
+cod,Baltic_or_Belts,2000+,B,crab_hermit,Pagurus bernhardus,14.92
+cod,Baltic_or_Belts,2000+,B,crangonid,Crangon crangon,642.375
+cod,Baltic_or_Belts,2000+,B,crangonid,Crangonidae,25.82
+cod,Baltic_or_Belts,2000+,B,mysid,Mysida,333.74
+cod,Baltic_or_Belts,2000+,B,mysid,Mysidae,116.065
+cod,Baltic_or_Belts,2000+,B,mysid,Mysis mixta,3090.033
+cod,Baltic_or_Belts,2000+,B,mysid,Mysis relicta,1.67
+cod,Baltic_or_Belts,2000+,B,mysid,Neomysis integer,53.974
+cod,Baltic_or_Belts,2000+,B,other_crust,Cumacea,117.5
+cod,Baltic_or_Belts,2000+,B,other_crust,Diastylis rathkei,10.869
+cod,Baltic_or_Belts,2000+,B,other_crust,Idotea balthica,0.22
+cod,Baltic_or_Belts,2000+,B,other_crust,Insecta,0.01
+cod,Baltic_or_Belts,2000+,B,other_crust,Isopoda,1.29
+cod,Baltic_or_Belts,2000+,B,other_crust,Ostracoda,0.002
+cod,Baltic_or_Belts,2000+,B,other_crust,Saduria entomon,3424.608
+cod,Baltic_or_Belts,2000+,B,other_crust,Saduria entomon entomon,462.787
+cod,Baltic_or_Belts,2000+,B,other_decapod,Caridea,91.263
+cod,Baltic_or_Belts,2000+,B,other_decapod,Decapoda,0.26
+cod,Baltic_or_Belts,2000+,B,other_decapod,Palaemon,2.19
+cod,Baltic_or_Belts,2000+,B,other_decapod,Palaemon adspersus,0.21
+cod,Baltic_or_Belts,2000+,B,other_decapod,Palaemon elegans,3.38
+cod,Baltic_or_Belts,2000+,B,other_inv,Halicryptus spinulosus,27.48
+cod,Baltic_or_Belts,2000+,B,other_inv,Priapulida,1.24
+cod,Baltic_or_Belts,2000+,B,other_inv,Priapulus caudatus,4.55
+cod,Baltic_or_Belts,2000+,B,other_mollusc,Gastropoda,0.08
+cod,Baltic_or_Belts,2000+,B,other_mollusc,Hydrobia,0.06
+cod,Baltic_or_Belts,2000+,B,other_mollusc,Mollusca,0.02
+cod,Baltic_or_Belts,2000+,B,polychaete,Annelida,0.22
+cod,Baltic_or_Belts,2000+,B,polychaete,Aphrodite aculeata,0.11
+cod,Baltic_or_Belts,2000+,B,polychaete,Bylgides sarsi,695.723
+cod,Baltic_or_Belts,2000+,B,polychaete,Gephyrea,14.464
+cod,Baltic_or_Belts,2000+,B,polychaete,Hediste diversicolor,0.09
+cod,Baltic_or_Belts,2000+,B,polychaete,Polychaeta,43.95
+cod,Baltic_or_Belts,2000+,Bf,cod,Gadus morhua,3103.016
+cod,Baltic_or_Belts,2000+,Bf,flatfish,Limanda limanda,7.68
+cod,Baltic_or_Belts,2000+,Bf,flatfish,Platichthys flesus,825.1
+cod,Baltic_or_Belts,2000+,Bf,flatfish,Pleuronectes platessa,77.66
+cod,Baltic_or_Belts,2000+,Bf,flatfish,Pleuronectiformes,40.36
+cod,Baltic_or_Belts,2000+,Fu,fish_unid,Osteichthyes,80.086
+cod,Baltic_or_Belts,2000+,Fu,fish_unid,Pisces,1647.315
+cod,Baltic_or_Belts,2000+,Ofi,goby,Gobiidae,794.55
+cod,Baltic_or_Belts,2000+,Ofi,goby,Neogobius melanostomus,11.3
+cod,Baltic_or_Belts,2000+,Ofi,goby,Pomatoschistus,13.488
+cod,Baltic_or_Belts,2000+,Ofi,goby,Pomatoschistus minutus,450.742
+cod,Baltic_or_Belts,2000+,Ofi,other_fish,Gasterosteus aculeatus,749.331
+cod,Baltic_or_Belts,2000+,Ofi,other_fish,Lumpenus lampetraeformis,35.79
+cod,Baltic_or_Belts,2000+,Ofi,other_fish,Myoxocephalus scorpius,173.9
+cod,Baltic_or_Belts,2000+,Ofi,other_fish,Osmerus eperlanus,448.37
+cod,Baltic_or_Belts,2000+,Ofi,other_fish,Pholis gunnellus,0.5
+cod,Baltic_or_Belts,2000+,Ofi,other_fish,Taurulus bubalis,3.82
+cod,Baltic_or_Belts,2000+,Ofi,other_fish,Zoarces viviparus,348.691
+cod,Baltic_or_Belts,2000+,Ofi,rockling_poorcod,Enchelyopus cimbrius,942.69
+cod,Baltic_or_Belts,2000+,P,clupeid_unid,Clupeidae,981.64
+cod,Baltic_or_Belts,2000+,P,herring,Clupea,5.06
+cod,Baltic_or_Belts,2000+,P,herring,Clupea harengus,23697.304
+cod,Baltic_or_Belts,2000+,P,sprat,Sprattus sprattus,29929.444
+cod,Baltic_or_Belts,2000+,Sand,sandeel,Ammodytes tobianus,0.11
+cod,Baltic_or_Belts,2000+,Sand,sandeel,Ammodytidae,18.06
+cod,Baltic_or_Belts,2000+,U,crust_unid,Crustacea,55.844
+cod,Baltic_or_Belts,2000+,U,no_id,no_id,1049.209
+cod,Baltic_or_Belts,2000+,W,other_W,Pollachius virens,0.49
+cod,Baltic_or_Belts,2000+,W,other_W,Scomber scombrus,38.62
+cod,Baltic_or_Belts,2000+,W,other_W,Trachurus trachurus,16.38
+cod,Baltic_or_Belts,2000+,W,whiting,Merlangius merlangus,23.02
+cod,Baltic_or_Belts,2000+,Z,cop,Copepoda,0.25
+cod,Baltic_or_Belts,2000+,Z,cop,Pseudocalanus minutus,0.001
+cod,Baltic_or_Belts,2000+,Z,cop,Temora longicornis,0.024
+cod,Baltic_or_Belts,2000+,Z,euph,Euphausiacea,1.63
+cod,Baltic_or_Belts,2000+,Z,hyp,Hyperia galba,2.291
+cod,Baltic_or_Belts,2000+,Z,other_Z,Ctenophora,1.46
+cod,Baltic_or_Belts,pre2000,B,amphipod,Corophium volutator,20.125
+cod,Baltic_or_Belts,pre2000,B,amphipod,Gammarus,52.508
+cod,Baltic_or_Belts,pre2000,B,amphipod,Monoporeia affinis,44.013
+cod,Baltic_or_Belts,pre2000,B,amphipod,Pontoporeia,1.005
+cod,Baltic_or_Belts,pre2000,B,amphipod,Pontoporeia femorata,68.824
+cod,Baltic_or_Belts,pre2000,B,bivalve,Macoma balthica,1.469
+cod,Baltic_or_Belts,pre2000,B,crangonid,Crangon crangon,405.768
+cod,Baltic_or_Belts,pre2000,B,mysid,Mysidae,112.485
+cod,Baltic_or_Belts,pre2000,B,mysid,Mysis mixta,1666.123
+cod,Baltic_or_Belts,pre2000,B,mysid,Neomysis integer,53.017
+cod,Baltic_or_Belts,pre2000,B,mysid,Praunus inermis,1.56
+cod,Baltic_or_Belts,pre2000,B,other_crust,Diastylis rathkei,0.07
+cod,Baltic_or_Belts,pre2000,B,other_crust,Saduria entomon,13321.629
+cod,Baltic_or_Belts,pre2000,B,other_inv,Halicryptus spinulosus,1.647
+cod,Baltic_or_Belts,pre2000,B,other_inv,Priapulus caudatus,2.802
+cod,Baltic_or_Belts,pre2000,B,polychaete,Bylgides sarsi,562.975
+cod,Baltic_or_Belts,pre2000,Bf,cod,Gadus morhua,336.84
+cod,Baltic_or_Belts,pre2000,Bf,flatfish,Platichthys flesus,481.96
+cod,Baltic_or_Belts,pre2000,Ofi,goby,Pomatoschistus minutus,669.798
+cod,Baltic_or_Belts,pre2000,Ofi,other_fish,Lampetra fluviatilis,1.6
+cod,Baltic_or_Belts,pre2000,Ofi,other_fish,Myoxocephalus scorpius,65.87
+cod,Baltic_or_Belts,pre2000,Ofi,other_fish,Osmerus eperlanus,158.63
+cod,Baltic_or_Belts,pre2000,Ofi,rockling_poorcod,Enchelyopus cimbrius,427.39
+cod,Baltic_or_Belts,pre2000,P,herring,Clupea,33.31
+cod,Baltic_or_Belts,pre2000,P,herring,Clupea harengus,12757.705
+cod,Baltic_or_Belts,pre2000,P,sprat,Sprattus sprattus,32869.362
+cod,Baltic_or_Belts,pre2000,Z,hyp,Hyperia galba,0.024
+cod,Box,2000+,B,amphipod,Amphipoda,0.42
+cod,Box,2000+,B,amphipod,Ischyroceridae,0.85
+cod,Box,2000+,B,crab_hermit,Brachyura,1.48
+cod,Box,2000+,B,crab_hermit,Polybiidae,9.34
+cod,Box,2000+,B,nephrops,Nephrops norvegicus,0.09
+cod,Box,2000+,B,ophiuroid,Ophiuroidea,0.01
+cod,Box,2000+,B,other_crust,Isopoda,0.76
+cod,Box,2000+,B,other_decapod,Caridea,0.39
+cod,Box,2000+,B,other_decapod,Decapoda,1.05
+cod,Box,2000+,B,other_echinoderm,Echinodermata,0.05
+cod,Box,2000+,B,other_mollusc,Gastropoda,0.12
+cod,Box,2000+,B,polychaete,Aphrodita aculeata,6.35
+cod,Box,2000+,B,polychaete,Aphrodite aculeata,0.45
+cod,Box,2000+,B,polychaete,Polychaeta,0.14
+cod,Box,2000+,Bf,other_Bf,Myxini,0.84
+cod,Box,2000+,Fu,fish_unid,Pisces,2.04
+cod,Box,2000+,Gu,gadoid_unid,Trisopterus,48.31
+cod,Box,2000+,Ofi,other_fish,Zoarcidae,3.51
+cod,Box,2000+,P,norway_pout,Trisopterus esmarkii,106.51
+cod,Box,2000+,U,crust_unid,Crustacea,1.28
+cod,Box,2000+,U,no_id,no_id,1.53
+cod,Box,2000+,W,whiting,Merlangius merlangus,18.5
+cod,Box,2000+,Z,euph,Euphausiidae,0.33
+cod,Box,2000+,Z,euph,Meganyctiphanes norvegica,0.29
+cod,CSNS,2000+,B,amphipod,Amphipoda,0.226
+cod,CSNS,2000+,B,bivalve,Bivalvia,4.651
+cod,CSNS,2000+,B,crab_hermit,Anomura,6.842
+cod,CSNS,2000+,B,crab_hermit,Brachyura,127.22
+cod,CSNS,2000+,B,crab_hermit,Cancer pagurus,7.985
+cod,CSNS,2000+,B,crab_hermit,Corystes cassivelaunus,6.06
+cod,CSNS,2000+,B,crab_hermit,Galathea intermedia,0.075
+cod,CSNS,2000+,B,crab_hermit,Goneplax rhomboides,2.713
+cod,CSNS,2000+,B,crab_hermit,Liocarcinus,14.786
+cod,CSNS,2000+,B,crab_hermit,Liocarcinus holsatus,40.897
+cod,CSNS,2000+,B,crab_hermit,Munida,0.82
+cod,CSNS,2000+,B,crab_hermit,Paguridae,0.899
+cod,CSNS,2000+,B,crab_hermit,Pagurus bernhardus,56.786
+cod,CSNS,2000+,B,crab_hermit,Pisidia longicornis,0.082
+cod,CSNS,2000+,B,crab_hermit,Portunidae,24.568
+cod,CSNS,2000+,B,crangonid,Crangon crangon,2.82
+cod,CSNS,2000+,B,crangonid,Crangonidae,2.411
+cod,CSNS,2000+,B,nephrops,Nephrops norvegicus,57.307
+cod,CSNS,2000+,B,other_decapod,Astacidea,11.315
+cod,CSNS,2000+,B,other_decapod,Caridea,15.772
+cod,CSNS,2000+,B,other_decapod,Decapoda,71.43
+cod,CSNS,2000+,B,other_decapod,Nephropidae,2.542
+cod,CSNS,2000+,B,other_decapod,Upogebia deltaura,2.966
+cod,CSNS,2000+,B,other_mollusc,Buccinum undatum,6.72
+cod,CSNS,2000+,B,other_mollusc,Gastropoda,6.62
+cod,CSNS,2000+,B,other_mollusc,Mollusca,6.069
+cod,CSNS,2000+,B,polychaete,Annelida,0.073
+cod,CSNS,2000+,B,polychaete,Aphrodita aculeata,72.181
+cod,CSNS,2000+,B,polychaete,Aphrodite aculeata,71.42
+cod,CSNS,2000+,B,polychaete,Gephyrea,0.65
+cod,CSNS,2000+,B,polychaete,Perinereis euiini,4.626
+cod,CSNS,2000+,B,polychaete,Polychaeta,0.459
+cod,CSNS,2000+,Bf,cod,Gadus morhua,6.54
+cod,CSNS,2000+,Bf,flatfish,Hippoglossoides platessoides,263.735
+cod,CSNS,2000+,Bf,flatfish,Limanda limanda,143.83
+cod,CSNS,2000+,Bf,flatfish,Microstomus kitt,49.84
+cod,CSNS,2000+,Bf,flatfish,Pleuronectes platessa,76.894
+cod,CSNS,2000+,Bf,flatfish,Pleuronectidae,74.099
+cod,CSNS,2000+,Bf,flatfish,Pleuronectiformes,142.898
+cod,CSNS,2000+,Bf,flatfish,Soleidae,10.252
+cod,CSNS,2000+,Bf,haddock,Melanogrammus aeglefinus,1466.98
+cod,CSNS,2000+,Ceph,cephalopod,Alloteuthis,3.731
+cod,CSNS,2000+,Ceph,cephalopod,Cephalopoda,5.552
+cod,CSNS,2000+,Fu,fish_unid,Actinopterygii,0.957
+cod,CSNS,2000+,Fu,fish_unid,Gnathostomata,6.626
+cod,CSNS,2000+,Fu,fish_unid,Osteichthyes,0.002
+cod,CSNS,2000+,Fu,fish_unid,Pisces,104.43
+cod,CSNS,2000+,Gu,gadoid_unid,Gadidae,96.11
+cod,CSNS,2000+,Ofi,dragonet,Callionymidae,37.434
+cod,CSNS,2000+,Ofi,goby,Aphia minuta,0.216
+cod,CSNS,2000+,Ofi,goby,Gobiidae,0.39
+cod,CSNS,2000+,Ofi,other_fish,Syngnathus,1.163
+cod,CSNS,2000+,Ofi,rockling_poorcod,Enchelyopus cimbrius,70.32
+cod,CSNS,2000+,P,herring,Clupea harengus,171.271
+cod,CSNS,2000+,P,norway_pout,Trisopterus esmarki,4.27
+cod,CSNS,2000+,P,norway_pout,Trisopterus esmarkii,27.321
+cod,CSNS,2000+,P,other_P,Engraulis encrasicolus,4.65
+cod,CSNS,2000+,P,sprat,Sprattus sprattus,119.956
+cod,CSNS,2000+,Sand,sandeel,Ammodytes,35.082
+cod,CSNS,2000+,Sand,sandeel,Ammodytes tobianus,3.685
+cod,CSNS,2000+,Sand,sandeel,Ammodytidae,69.566
+cod,CSNS,2000+,U,crust_unid,Arthropoda,42.404
+cod,CSNS,2000+,U,crust_unid,Crustacea,2.116
+cod,CSNS,2000+,U,no_id,no_id,37.31
+cod,CSNS,2000+,W,other_W,Merluccius merluccius,180.39
+cod,CSNS,2000+,W,other_W,Pollachius virens,123.0
+cod,CSNS,2000+,W,other_W,Trachurus trachurus,8.01
+cod,CSNS,2000+,W,whiting,Merlangius merlangus,314.705
+cod,CSNS,pre2000,B,amphipod,Amphipoda,0.08
+cod,CSNS,pre2000,B,amphipod,Gammaridae,9.23
+cod,CSNS,pre2000,B,bivalve,Bivalvia,19.18
+cod,CSNS,pre2000,B,bivalve,Ensis,86.1
+cod,CSNS,pre2000,B,bivalve,Veneroidea,47.1
+cod,CSNS,pre2000,B,crab_hermit,Atelecyclus rotundatus,2.3
+cod,CSNS,pre2000,B,crab_hermit,Cancer,4.4
+cod,CSNS,pre2000,B,crab_hermit,Carcinus maenas,6.42
+cod,CSNS,pre2000,B,crab_hermit,Corystes cassivelaunus,228.5
+cod,CSNS,pre2000,B,crab_hermit,Galathea,0.68
+cod,CSNS,pre2000,B,crab_hermit,Galatheidae,2.54
+cod,CSNS,pre2000,B,crab_hermit,Geryon,66.7
+cod,CSNS,pre2000,B,crab_hermit,Goneplacidae,29.3
+cod,CSNS,pre2000,B,crab_hermit,Hyas,12.14
+cod,CSNS,pre2000,B,crab_hermit,Hyas coarctatus,94.06
+cod,CSNS,pre2000,B,crab_hermit,Macropipus tuberculatus,599.97
+cod,CSNS,pre2000,B,crab_hermit,Pagurus bernhardus,316.04
+cod,CSNS,pre2000,B,crangonid,Crangon,58.68
+cod,CSNS,pre2000,B,crangonid,Crangon crangon,107.02
+cod,CSNS,pre2000,B,crangonid,Philocheras echinulatus,3.92
+cod,CSNS,pre2000,B,crangonid,Philocheras fasciatus,0.26
+cod,CSNS,pre2000,B,crangonid,Pontophilus,0.45
+cod,CSNS,pre2000,B,mysid,Mysidae,1.42
+cod,CSNS,pre2000,B,nephrops,Nephrops,57.0
+cod,CSNS,pre2000,B,ophiuroid,Ophiuridae,3.0
+cod,CSNS,pre2000,B,other_crust,Astacilla,0.09
+cod,CSNS,pre2000,B,other_crust,Cumacea,0.07
+cod,CSNS,pre2000,B,other_crust,Isopoda,0.35
+cod,CSNS,pre2000,B,other_decapod,Callianassa,7.22
+cod,CSNS,pre2000,B,other_decapod,Processa,0.3
+cod,CSNS,pre2000,B,other_echinoderm,Cucumaria,13.5
+cod,CSNS,pre2000,B,other_echinoderm,Echinocardium cordatum,0.4
+cod,CSNS,pre2000,B,other_inv,Branchiostoma,0.05
+cod,CSNS,pre2000,B,other_inv,Cnidaria,4.5
+cod,CSNS,pre2000,B,other_mollusc,Buccinum undatum,71.9
+cod,CSNS,pre2000,B,other_mollusc,Dendronotus,0.05
+cod,CSNS,pre2000,B,other_mollusc,Gastropoda,0.07
+cod,CSNS,pre2000,B,other_mollusc,Mollusca,103.15
+cod,CSNS,pre2000,B,other_mollusc,Neptunea antiqua,0.69
+cod,CSNS,pre2000,B,other_mollusc,Nudibranchia,4.73
+cod,CSNS,pre2000,B,pandalid,Pandalus,0.34
+cod,CSNS,pre2000,B,pandalid,Pandalus borealis,22.42
+cod,CSNS,pre2000,B,pandalid,Pandalus montagui,2.27
+cod,CSNS,pre2000,B,polychaete,Aphrodita,27.1
+cod,CSNS,pre2000,B,polychaete,Aphrodita aculeata,942.94
+cod,CSNS,pre2000,B,polychaete,Echiurus,7.71
+cod,CSNS,pre2000,B,polychaete,Lagis,0.81
+cod,CSNS,pre2000,B,polychaete,Nereididae,5.32
+cod,CSNS,pre2000,B,polychaete,Nereis,6.7
+cod,CSNS,pre2000,B,polychaete,Phyllodoce maculata,0.06
+cod,CSNS,pre2000,B,polychaete,Phyllodocidae,0.14
+cod,CSNS,pre2000,B,polychaete,Polychaeta,29.07
+cod,CSNS,pre2000,B,polychaete,Sipuncula,0.48
+cod,CSNS,pre2000,Bf,cod,Gadus morhua,1602.2
+cod,CSNS,pre2000,Bf,flatfish,Buglossidium luteum,0.31
+cod,CSNS,pre2000,Bf,flatfish,Glyptocephalus cynoglossus,45.88
+cod,CSNS,pre2000,Bf,flatfish,Hippoglossoides platessoides,858.87
+cod,CSNS,pre2000,Bf,flatfish,Limanda limanda,936.08
+cod,CSNS,pre2000,Bf,flatfish,Microstomus kitt,440.0
+cod,CSNS,pre2000,Bf,flatfish,Platichthys flesus,47.1
+cod,CSNS,pre2000,Bf,flatfish,Pleuronectes platessa,50.2
+cod,CSNS,pre2000,Bf,flatfish,Pleuronectiformes,34.29
+cod,CSNS,pre2000,Bf,flatfish,Solea solea,7.1
+cod,CSNS,pre2000,Bf,haddock,Melanogrammus aeglefinus,1404.8
+cod,CSNS,pre2000,Bf,other_Bf,Amblyraja radiata,79.1
+cod,CSNS,pre2000,Bf,other_Bf,Chelidonichthys lucerna,13.6
+cod,CSNS,pre2000,Bf,other_Bf,Eutrigla gurnardus,15.7
+cod,CSNS,pre2000,Ceph,cephalopod,Eledone,2.1
+cod,CSNS,pre2000,Ceph,cephalopod,Loliginidae,53.57
+cod,CSNS,pre2000,Fu,fish_unid,Gnathostomata,18.57
+cod,CSNS,pre2000,Gu,gadoid_unid,Gadidae,7.6
+cod,CSNS,pre2000,O,cnid_tunic,Tunicata,3.0
+cod,CSNS,pre2000,Ofi,dragonet,Callionymus lyra,109.66
+cod,CSNS,pre2000,Ofi,goby,Aphia minuta,0.13
+cod,CSNS,pre2000,Ofi,goby,Crystallogobius linearis,0.57
+cod,CSNS,pre2000,Ofi,goby,Gobius,55.79
+cod,CSNS,pre2000,Ofi,goby,Pomatoschistus,0.15
+cod,CSNS,pre2000,Ofi,other_fish,Anarhichas lupus,1.8
+cod,CSNS,pre2000,Ofi,other_fish,Lumpenus lampretaeformis,3.1
+cod,CSNS,pre2000,Ofi,rockling_poorcod,Enchelyopus cimbrius,12.7
+cod,CSNS,pre2000,Ofi,rockling_poorcod,Trisopterus luscus,237.0
+cod,CSNS,pre2000,Ofi,rockling_poorcod,Trisopterus minutus,73.0
+cod,CSNS,pre2000,P,clupeid_unid,Clupeidae,4.2
+cod,CSNS,pre2000,P,herring,Clupea harengus,126.1
+cod,CSNS,pre2000,P,norway_pout,Trisopterus esmarkii,247.37
+cod,CSNS,pre2000,P,other_P,Maurolicus muelleri,146.16
+cod,CSNS,pre2000,P,sprat,Sprattus sprattus,65.83
+cod,CSNS,pre2000,Pas,pelagic_shrimp,Lucifer,0.02
+cod,CSNS,pre2000,Sand,sandeel,Ammodytidae,1369.0
+cod,CSNS,pre2000,W,other_W,Scomber scombrus,57.0
+cod,CSNS,pre2000,W,whiting,Merlangius merlangus,2169.05
+cod,CSNS,pre2000,Z,euph,Euphausiidae,8.592
+cod,CSNS,pre2000,Z,hyp,Hyperiidae,2.32
+cod,CSNS,pre2000,Z,other_Z,Sagitta,3.6
+cod,Kattegat,2000+,B,amphipod,Amphipoda,2.06
+cod,Kattegat,2000+,B,amphipod,Caprellidae,0.07
+cod,Kattegat,2000+,B,amphipod,Gammaridae,1.2
+cod,Kattegat,2000+,B,amphipod,Gammarus,1.82
+cod,Kattegat,2000+,B,amphipod,Ischyroceridae,0.01
+cod,Kattegat,2000+,B,amphipod,Leucothoe spinicarpa,0.14
+cod,Kattegat,2000+,B,amphipod,Melitidae,0.35
+cod,Kattegat,2000+,B,bivalve,Aequipecten opercularis,0.07
+cod,Kattegat,2000+,B,bivalve,Bivalvia,3.39
+cod,Kattegat,2000+,B,bivalve,Cerastoderma,0.09
+cod,Kattegat,2000+,B,bivalve,Ensis,0.03
+cod,Kattegat,2000+,B,bivalve,Mytilus,0.22
+cod,Kattegat,2000+,B,bivalve,Mytilus edulis,0.01
+cod,Kattegat,2000+,B,bivalve,Nucula,0.05
+cod,Kattegat,2000+,B,bivalve,Pecten,0.03
+cod,Kattegat,2000+,B,crab_hermit,Anomura,0.5
+cod,Kattegat,2000+,B,crab_hermit,Brachyura,294.4
+cod,Kattegat,2000+,B,crab_hermit,Carcinidae,11.81
+cod,Kattegat,2000+,B,crab_hermit,Carcinus maenas,702.05
+cod,Kattegat,2000+,B,crab_hermit,Hyas,12.87
+cod,Kattegat,2000+,B,crab_hermit,Hyas coarctatus,4.18
+cod,Kattegat,2000+,B,crab_hermit,Liocarcinus,36.53
+cod,Kattegat,2000+,B,crab_hermit,Liocarcinus depurator,3.48
+cod,Kattegat,2000+,B,crab_hermit,Munida,0.34
+cod,Kattegat,2000+,B,crab_hermit,Paguridae,0.14
+cod,Kattegat,2000+,B,crab_hermit,Pagurus,65.52
+cod,Kattegat,2000+,B,crab_hermit,Pagurus bernhardus,115.03
+cod,Kattegat,2000+,B,crab_hermit,Polybiidae,58.4
+cod,Kattegat,2000+,B,crab_hermit,Polybius,5.3
+cod,Kattegat,2000+,B,crab_hermit,Polybius depurator,19.76
+cod,Kattegat,2000+,B,crab_hermit,Portunidae,2.37
+cod,Kattegat,2000+,B,crab_hermit,Rhithropanopeus harrisii,0.39
+cod,Kattegat,2000+,B,crangonid,Crangon crangon,88.42
+cod,Kattegat,2000+,B,crangonid,Crangonidae,5.09
+cod,Kattegat,2000+,B,mysid,Erythrops elegans,0.09
+cod,Kattegat,2000+,B,mysid,Mysida,0.51
+cod,Kattegat,2000+,B,mysid,Mysidae,0.43
+cod,Kattegat,2000+,B,mysid,Neomysis integer,0.04
+cod,Kattegat,2000+,B,nephrops,Nephrops norvegicus,13.66
+cod,Kattegat,2000+,B,ophiuroid,Ophiura,6.16
+cod,Kattegat,2000+,B,ophiuroid,Ophiuridae,11.79
+cod,Kattegat,2000+,B,ophiuroid,Ophiuroidea,9.54
+cod,Kattegat,2000+,B,other_crust,Cumacea,1.54
+cod,Kattegat,2000+,B,other_crust,Diastylis rathkei,2.64
+cod,Kattegat,2000+,B,other_crust,Idotea,0.14
+cod,Kattegat,2000+,B,other_crust,Idotea balthica,0.06
+cod,Kattegat,2000+,B,other_crust,Isopoda,0.11
+cod,Kattegat,2000+,B,other_decapod,Caridea,41.79
+cod,Kattegat,2000+,B,other_decapod,Decapoda,4.14
+cod,Kattegat,2000+,B,other_decapod,Hippolytidae,0.84
+cod,Kattegat,2000+,B,other_decapod,Palaemon,13.51
+cod,Kattegat,2000+,B,other_decapod,Palaemon adspersus,4.45
+cod,Kattegat,2000+,B,other_decapod,Pleocyemata,1.04
+cod,Kattegat,2000+,B,other_decapod,Processa,0.27
+cod,Kattegat,2000+,B,other_echinoderm,Ankyroderma hispanicum,4.44
+cod,Kattegat,2000+,B,other_echinoderm,Echinodermata,2.14
+cod,Kattegat,2000+,B,other_inv,Priapulus caudatus,2.55
+cod,Kattegat,2000+,B,other_mollusc,Gastropoda,4.4
+cod,Kattegat,2000+,B,other_mollusc,Mollusca,2.41
+cod,Kattegat,2000+,B,other_mollusc,Rissoa parva,0.06
+cod,Kattegat,2000+,B,pandalid,Pandalidae,0.28
+cod,Kattegat,2000+,B,pandalid,Pandalus,0.37
+cod,Kattegat,2000+,B,pandalid,Pandalus borealis,1.2
+cod,Kattegat,2000+,B,pandalid,Pandalus montagui,1.77
+cod,Kattegat,2000+,B,polychaete,Annelida,2.52
+cod,Kattegat,2000+,B,polychaete,Aphrodita aculeata,75.21
+cod,Kattegat,2000+,B,polychaete,Aphrodite aculeata,2.49
+cod,Kattegat,2000+,B,polychaete,Arenicola marina,0.26
+cod,Kattegat,2000+,B,polychaete,Bylgides sarsi,0.12
+cod,Kattegat,2000+,B,polychaete,Lumbrineridae,0.47
+cod,Kattegat,2000+,B,polychaete,Nephtys ciliata,1.56
+cod,Kattegat,2000+,B,polychaete,Nereididae,0.1
+cod,Kattegat,2000+,B,polychaete,Pectinaria,8.22
+cod,Kattegat,2000+,B,polychaete,Phyllodocida,1.32
+cod,Kattegat,2000+,B,polychaete,Polychaeta,7.08
+cod,Kattegat,2000+,Bf,cod,Gadus morhua,867.45
+cod,Kattegat,2000+,Bf,flatfish,Hippoglossoides platessoides,35.37
+cod,Kattegat,2000+,Bf,flatfish,Limanda limanda,24.5
+cod,Kattegat,2000+,Bf,flatfish,Pleuronectes platessa,3.21
+cod,Kattegat,2000+,Bf,flatfish,Pleuronectidae,24.05
+cod,Kattegat,2000+,Bf,flatfish,Pleuronectiformes,158.04
+cod,Kattegat,2000+,Ceph,cephalopod,Cephalopoda,2.64
+cod,Kattegat,2000+,Ceph,cephalopod,Decapodiformes,1.05
+cod,Kattegat,2000+,Ceph,cephalopod,Loligo,4.14
+cod,Kattegat,2000+,Fu,fish_unid,Osteichthyes,12.17
+cod,Kattegat,2000+,Fu,fish_unid,Pisces,204.25
+cod,Kattegat,2000+,Gu,gadoid_unid,Gadidae,13.8
+cod,Kattegat,2000+,Ofi,dragonet,Callionymidae,31.03
+cod,Kattegat,2000+,Ofi,dragonet,Callionymus,10.81
+cod,Kattegat,2000+,Ofi,dragonet,Callionymus lyra,0.74
+cod,Kattegat,2000+,Ofi,goby,Aphia minuta,34.62
+cod,Kattegat,2000+,Ofi,goby,Gobiidae,136.14
+cod,Kattegat,2000+,Ofi,goby,Gobius niger,6.68
+cod,Kattegat,2000+,Ofi,goby,Neogobius melanostomus,28.11
+cod,Kattegat,2000+,Ofi,goby,Pomatoschistus minutus,2.88
+cod,Kattegat,2000+,Ofi,other_fish,Agonus cataphractus,1.88
+cod,Kattegat,2000+,Ofi,other_fish,Cottidae,4.95
+cod,Kattegat,2000+,Ofi,other_fish,Gasterosteus aculeatus,15.59
+cod,Kattegat,2000+,Ofi,other_fish,Lumpenus lampetraeformis,29.99
+cod,Kattegat,2000+,Ofi,other_fish,Myoxocephalus scorpius,15.61
+cod,Kattegat,2000+,Ofi,other_fish,Syngnathus typhle,1.15
+cod,Kattegat,2000+,Ofi,other_fish,Zoarces viviparus,1.6
+cod,Kattegat,2000+,P,clupeid_unid,Clupeidae,20.31
+cod,Kattegat,2000+,P,herring,Clupea harengus,382.18
+cod,Kattegat,2000+,P,sprat,Sprattus sprattus,481.26
+cod,Kattegat,2000+,Pas,pelagic_shrimp,Pasiphaea,0.15
+cod,Kattegat,2000+,Sand,sandeel,Ammodytidae,4.13
+cod,Kattegat,2000+,U,crust_unid,Crustacea,22.18
+cod,Kattegat,2000+,U,no_id,no_id,95.39
+cod,Kattegat,2000+,W,other_W,Merluccius merluccius,16.82
+cod,Kattegat,2000+,W,other_W,Trachurus trachurus,18.23
+cod,Kattegat,2000+,W,whiting,Merlangius merlangus,290.28
+cod,Kattegat,2000+,Z,euph,Euphausiidae,0.12
+cod,Kattegat,2000+,Z,hyp,Hyperiidae,0.02
+cod,NNS,2000+,B,amphipod,Amphipoda,0.025
+cod,NNS,2000+,B,amphipod,Galathella,1.14
+cod,NNS,2000+,B,bivalve,Aequipecten opercularis,0.382
+cod,NNS,2000+,B,crab_hermit,Brachyura,48.34
+cod,NNS,2000+,B,crab_hermit,Callinectes sapidus,1.464
+cod,NNS,2000+,B,crab_hermit,Galathea dispersa,3.676
+cod,NNS,2000+,B,crab_hermit,Liocarcinus,1.997
+cod,NNS,2000+,B,crab_hermit,Liocarcinus depurator,6.452
+cod,NNS,2000+,B,crab_hermit,Liocarcinus holsatus,9.157
+cod,NNS,2000+,B,crab_hermit,Paguridae,10.046
+cod,NNS,2000+,B,crab_hermit,Pagurus bernhardus,41.481
+cod,NNS,2000+,B,crab_hermit,Portunidae,3.906
+cod,NNS,2000+,B,crab_hermit,Xantho pilipes,0.507
+cod,NNS,2000+,B,crangonid,Crangon allmanni,1.886
+cod,NNS,2000+,B,crangonid,Crangon crangon,4.23
+cod,NNS,2000+,B,crangonid,Crangonidae,2.576
+cod,NNS,2000+,B,nephrops,Nephrops norvegicus,164.191
+cod,NNS,2000+,B,other_decapod,Caridea,0.46
+cod,NNS,2000+,B,other_decapod,Decapoda,1.076
+cod,NNS,2000+,B,other_decapod,Palinuridae,0.105
+cod,NNS,2000+,B,other_decapod,Processidae,1.443
+cod,NNS,2000+,B,other_echinoderm,Echinodermata,2.72
+cod,NNS,2000+,B,pandalid,Pandalidae,15.792
+cod,NNS,2000+,B,pandalid,Pandalus,7.248
+cod,NNS,2000+,B,pandalid,Pandalus borealis,119.32
+cod,NNS,2000+,B,polychaete,Aphrodita aculeata,6.539
+cod,NNS,2000+,B,polychaete,Aphrodite aculeata,43.57
+cod,NNS,2000+,Bf,flatfish,Hippoglossoides platessoides,18.884
+cod,NNS,2000+,Bf,flatfish,Pleuronectidae,7.588
+cod,NNS,2000+,Bf,flatfish,Pleuronectiformes,3.26
+cod,NNS,2000+,Bf,flatfish,Soleidae,0.001
+cod,NNS,2000+,Bf,haddock,Melanogrammus aeglefinus,467.909
+cod,NNS,2000+,Ceph,cephalopod,Alloteuthis subulata,5.508
+cod,NNS,2000+,Fu,fish_unid,Osteichthyes,0.302
+cod,NNS,2000+,Fu,fish_unid,Pisces,16.88
+cod,NNS,2000+,Gu,gadoid_unid,Gadidae,35.126
+cod,NNS,2000+,Gu,gadoid_unid,Trisopterus,5.463
+cod,NNS,2000+,Ofi,dragonet,Callionymidae,11.654
+cod,NNS,2000+,Ofi,goby,Gobiidae,0.72
+cod,NNS,2000+,Ofi,rockling_poorcod,Enchelyopus cimbrius,28.611
+cod,NNS,2000+,Ofi,rockling_poorcod,Trisopterus minutus,4.152
+cod,NNS,2000+,P,blue_whiting,Micromesistius poutassou,124.0
+cod,NNS,2000+,P,clupeid_unid,Clupeidae,1.532
+cod,NNS,2000+,P,herring,Clupea harengus,23.36
+cod,NNS,2000+,P,norway_pout,Trisopterus esmarki,420.23
+cod,NNS,2000+,P,norway_pout,Trisopterus esmarkii,106.007
+cod,NNS,2000+,P,other_P,Argentina sphyraena,23.672
+cod,NNS,2000+,Sand,sandeel,Ammodytidae,8.049
+cod,NNS,2000+,U,crust_unid,Crustacea,4.605
+cod,NNS,2000+,U,no_id,no_id,24.28
+cod,NNS,2000+,W,other_W,Scomber scombrus,11.127
+cod,NNS,2000+,W,whiting,Merlangius merlangus,159.947
+cod,NNS,pre2000,B,amphipod,Amphipoda,0.1
+cod,NNS,pre2000,B,amphipod,Gammaridae,0.42
+cod,NNS,pre2000,B,bivalve,Bivalvia,4.67
+cod,NNS,pre2000,B,crab_hermit,Atelecyclus rotundatus,61.55
+cod,NNS,pre2000,B,crab_hermit,Galathea,3.0
+cod,NNS,pre2000,B,crab_hermit,Galatheidae,299.94
+cod,NNS,pre2000,B,crab_hermit,Hyas,1.2
+cod,NNS,pre2000,B,crab_hermit,Hyas araneus,4.9
+cod,NNS,pre2000,B,crab_hermit,Hyas coarctatus,9.62
+cod,NNS,pre2000,B,crab_hermit,Lithodes maja,124.8
+cod,NNS,pre2000,B,crab_hermit,Macropipus tuberculatus,56.96
+cod,NNS,pre2000,B,crab_hermit,Majidae,1.37
+cod,NNS,pre2000,B,crab_hermit,Pagurus bernhardus,156.92
+cod,NNS,pre2000,B,crangonid,Crangon,10.19
+cod,NNS,pre2000,B,crangonid,Philocheras echinulatus,16.86
+cod,NNS,pre2000,B,crangonid,Philocheras fasciatus,0.02
+cod,NNS,pre2000,B,nephrops,Nephrops,454.3
+cod,NNS,pre2000,B,ophiuroid,Ophiotrichidae,47.2
+cod,NNS,pre2000,B,ophiuroid,Ophiuridae,1.3
+cod,NNS,pre2000,B,other_crust,Isopoda,9.72
+cod,NNS,pre2000,B,other_decapod,Upogebia,0.25
+cod,NNS,pre2000,B,other_echinoderm,Cucumaria,5.4
+cod,NNS,pre2000,B,other_echinoderm,Echinocardium cordatum,0.3
+cod,NNS,pre2000,B,other_inv,Cnidaria,9.9
+cod,NNS,pre2000,B,other_inv,Octocorallia,0.49
+cod,NNS,pre2000,B,other_mollusc,Buccinum undatum,4.73
+cod,NNS,pre2000,B,other_mollusc,Mollusca,0.86
+cod,NNS,pre2000,B,other_mollusc,Neptunea antiqua,2.07
+cod,NNS,pre2000,B,pandalid,Pandalus borealis,14.0
+cod,NNS,pre2000,B,polychaete,Aphrodita,38.33
+cod,NNS,pre2000,B,polychaete,Aphrodita aculeata,100.47
+cod,NNS,pre2000,B,polychaete,Nephtyidae,0.22
+cod,NNS,pre2000,B,polychaete,Nereididae,0.53
+cod,NNS,pre2000,B,polychaete,Polychaeta,10.63
+cod,NNS,pre2000,Bf,cod,Gadus morhua,98.8
+cod,NNS,pre2000,Bf,flatfish,Buglossidium luteum,2.5
+cod,NNS,pre2000,Bf,flatfish,Glyptocephalus cynoglossus,144.7
+cod,NNS,pre2000,Bf,flatfish,Hippoglossoides platessoides,160.44
+cod,NNS,pre2000,Bf,flatfish,Limanda limanda,82.57
+cod,NNS,pre2000,Bf,flatfish,Pleuronectiformes,0.17
+cod,NNS,pre2000,Bf,haddock,Melanogrammus aeglefinus,2993.0
+cod,NNS,pre2000,Bf,other_Bf,Amblyraja radiata,32.0
+cod,NNS,pre2000,Ceph,cephalopod,Eledone,4.2
+cod,NNS,pre2000,Ceph,cephalopod,Loliginidae,104.1
+cod,NNS,pre2000,Fu,fish_unid,Gnathostomata,19.25
+cod,NNS,pre2000,Gu,gadoid_unid,Gadidae,9.0
+cod,NNS,pre2000,Ofi,dragonet,Callionymus lyra,18.2
+cod,NNS,pre2000,Ofi,goby,Aphia minuta,0.07
+cod,NNS,pre2000,Ofi,goby,Crystallogobius linearis,0.23
+cod,NNS,pre2000,Ofi,goby,Gobius,0.28
+cod,NNS,pre2000,Ofi,other_fish,Chirolophis ascanii,5.9
+cod,NNS,pre2000,Ofi,other_fish,Lycodes vahlii,7.0
+cod,NNS,pre2000,Ofi,rockling_poorcod,Enchelyopus cimbrius,94.0
+cod,NNS,pre2000,P,clupeid_unid,Clupeidae,3.6
+cod,NNS,pre2000,P,herring,Clupea,7.0
+cod,NNS,pre2000,P,herring,Clupea harengus,147.2
+cod,NNS,pre2000,P,norway_pout,Trisopterus esmarkii,1792.11
+cod,NNS,pre2000,P,other_P,Argentina silus,170.8
+cod,NNS,pre2000,P,sprat,Sprattus sprattus,4.19
+cod,NNS,pre2000,Sand,sandeel,Ammodytes,20.7
+cod,NNS,pre2000,Sand,sandeel,Ammodytidae,2250.66
+cod,NNS,pre2000,W,whiting,Merlangius merlangus,971.2
+cod,NNS,pre2000,Z,euph,Euphausiidae,99.82
+cod,NNS,pre2000,Z,hyp,Hyperiidae,0.06
+cod,NNS_trench,2000+,B,other_decapod,Caridea,0.46
+cod,NNS_trench,2000+,B,other_echinoderm,Echinodermata,2.72
+cod,NNS_trench,2000+,B,polychaete,Aphrodite aculeata,27.82
+cod,NNS_trench,2000+,Fu,fish_unid,Pisces,5.98
+cod,NNS_trench,2000+,Ofi,dragonet,Callionymidae,3.57
+cod,NNS_trench,2000+,P,blue_whiting,Micromesistius poutassou,124.0
+cod,NNS_trench,2000+,P,herring,Clupea harengus,23.36
+cod,NNS_trench,2000+,P,norway_pout,Trisopterus esmarki,44.97
+cod,NNS_trench,2000+,P,other_P,Argentina sphyraena,16.68
+cod,NNS_trench,2000+,U,crust_unid,Crustacea,2.91
+cod,NNS_trench,2000+,U,no_id,no_id,15.82
+cod,Skagerrak,2000+,B,amphipod,Amphipoda,0.42
+cod,Skagerrak,2000+,B,amphipod,Ischyroceridae,0.85
+cod,Skagerrak,2000+,B,crab_hermit,Brachyura,81.11
+cod,Skagerrak,2000+,B,crab_hermit,Pagurus bernhardus,57.99
+cod,Skagerrak,2000+,B,crab_hermit,Polybiidae,9.34
+cod,Skagerrak,2000+,B,crangonid,Crangon crangon,0.61
+cod,Skagerrak,2000+,B,nephrops,Nephrops norvegicus,0.09
+cod,Skagerrak,2000+,B,ophiuroid,Ophiuroidea,0.01
+cod,Skagerrak,2000+,B,other_crust,Isopoda,0.76
+cod,Skagerrak,2000+,B,other_decapod,Caridea,0.53
+cod,Skagerrak,2000+,B,other_decapod,Decapoda,1.05
+cod,Skagerrak,2000+,B,other_echinoderm,Echinodermata,0.05
+cod,Skagerrak,2000+,B,other_mollusc,Gastropoda,0.31
+cod,Skagerrak,2000+,B,polychaete,Aphrodita aculeata,6.35
+cod,Skagerrak,2000+,B,polychaete,Aphrodite aculeata,81.44
+cod,Skagerrak,2000+,B,polychaete,Gephyrea,2.98
+cod,Skagerrak,2000+,B,polychaete,Polychaeta,0.57
+cod,Skagerrak,2000+,Bf,cod,Gadus morhua,47.56
+cod,Skagerrak,2000+,Bf,flatfish,Hippoglossoides platessoides,10.36
+cod,Skagerrak,2000+,Bf,flatfish,Pleuronectiformes,35.63
+cod,Skagerrak,2000+,Bf,other_Bf,Myxini,0.84
+cod,Skagerrak,2000+,Fu,fish_unid,Pisces,61.02
+cod,Skagerrak,2000+,Gu,gadoid_unid,Trisopterus,48.31
+cod,Skagerrak,2000+,Ofi,dragonet,Callionymidae,6.71
+cod,Skagerrak,2000+,Ofi,other_fish,Myoxocephalus scorpius,48.77
+cod,Skagerrak,2000+,Ofi,other_fish,Zoarcidae,3.51
+cod,Skagerrak,2000+,P,herring,Clupea harengus,6.3
+cod,Skagerrak,2000+,P,norway_pout,Trisopterus esmarki,75.56
+cod,Skagerrak,2000+,P,norway_pout,Trisopterus esmarkii,106.51
+cod,Skagerrak,2000+,P,sprat,Sprattus sprattus,29.52
+cod,Skagerrak,2000+,U,crust_unid,Crustacea,2.36
+cod,Skagerrak,2000+,U,no_id,no_id,8.22
+cod,Skagerrak,2000+,W,whiting,Merlangius merlangus,18.5
+cod,Skagerrak,2000+,Z,euph,Euphausiidae,0.33
+cod,Skagerrak,2000+,Z,euph,Meganyctiphanes norvegica,0.29
+cod,Skagerrak,pre2000,B,amphipod,Gammaridae,0.61
+cod,Skagerrak,pre2000,B,bivalve,Bivalvia,2.55
+cod,Skagerrak,pre2000,B,crab_hermit,Hyas coarctatus,0.02
+cod,Skagerrak,pre2000,B,crab_hermit,Macropipus tuberculatus,6.3
+cod,Skagerrak,pre2000,B,crab_hermit,Pagurus bernhardus,35.348
+cod,Skagerrak,pre2000,B,crangonid,Crangon,2.03
+cod,Skagerrak,pre2000,B,mysid,Mysidae,0.055
+cod,Skagerrak,pre2000,B,ophiuroid,Ophiuridae,0.08
+cod,Skagerrak,pre2000,B,other_mollusc,Mollusca,0.23
+cod,Skagerrak,pre2000,B,pandalid,Pandalus borealis,3.06
+cod,Skagerrak,pre2000,B,polychaete,Aphrodita aculeata,1.1
+cod,Skagerrak,pre2000,B,polychaete,Nephtyidae,0.29
+cod,Skagerrak,pre2000,B,polychaete,Polychaeta,4.42
+cod,Skagerrak,pre2000,Bf,flatfish,Hippoglossoides platessoides,13.1
+cod,Skagerrak,pre2000,Bf,flatfish,Limanda limanda,2.0
+cod,Skagerrak,pre2000,Fu,fish_unid,Gnathostomata,0.06
+cod,Skagerrak,pre2000,Ofi,dragonet,Callionymus lyra,26.43
+cod,Skagerrak,pre2000,P,clupeid_unid,Clupeidae,0.77
+cod,Skagerrak,pre2000,P,herring,Clupea harengus,8.7
+cod,Skagerrak,pre2000,Sand,sandeel,Ammodytidae,4.79
+cod,Skagerrak,pre2000,Z,euph,Euphausiidae,0.85
+flounder,Baltic_or_Belts,2000+,B,amphipod,Gammarus,0.13
+flounder,Baltic_or_Belts,2000+,B,amphipod,Monoporeia affinis,2.72
+flounder,Baltic_or_Belts,2000+,B,amphipod,Pontoporeia femorata,0.8
+flounder,Baltic_or_Belts,2000+,B,amphipod,Pontoporeiidae,17.94
+flounder,Baltic_or_Belts,2000+,B,bivalve,Macoma balthica,782.52
+flounder,Baltic_or_Belts,2000+,B,bivalve,Mya arenaria,0.07
+flounder,Baltic_or_Belts,2000+,B,bivalve,Mytilus,69.07
+flounder,Baltic_or_Belts,2000+,B,bivalve,Mytilus edulis,38.33
+flounder,Baltic_or_Belts,2000+,B,mysid,Mysidae,1.43
+flounder,Baltic_or_Belts,2000+,B,mysid,Mysis mixta,10.26
+flounder,Baltic_or_Belts,2000+,B,other_crust,Diastylis rathkei,6.35
+flounder,Baltic_or_Belts,2000+,B,other_crust,Saduria entomon,142.01
+flounder,Baltic_or_Belts,2000+,B,other_inv,Halicryptus spinulosus,6.93
+flounder,Baltic_or_Belts,2000+,B,other_inv,Priapulida,4.75
+flounder,Baltic_or_Belts,2000+,B,other_inv,Priapulus caudatus,0.4
+flounder,Baltic_or_Belts,2000+,B,polychaete,Bylgides sarsi,4.01
+flounder,Baltic_or_Belts,2000+,B,polychaete,Scoloplos armiger,0.04
+flounder,Baltic_or_Belts,2000+,Ofi,goby,Gobiidae,0.72
+flounder,Baltic_or_Belts,2000+,U,crust_unid,Crustacea,1.65
+grey_gurnard,CSNS,2000+,B,crangonid,Crangon crangon,0.988
+grey_gurnard,CSNS,2000+,B,other_decapod,Caridea,8.82
+grey_gurnard,CSNS,2000+,B,other_decapod,Processa,2.08
+grey_gurnard,CSNS,2000+,Fu,fish_unid,Actinopteri,8.002
+haddock,CSNS,2000+,B,amphipod,Amphipoda,0.65
+haddock,CSNS,2000+,B,polychaete,Polychaeta,0.3
+haddock,NNS,2000+,B,amphipod,Gammaridea,2.5
+haddock,NNS,2000+,B,bivalve,Bivalvia,0.92
+haddock,NNS,2000+,B,crab_hermit,Brachyura,11.54
+haddock,NNS,2000+,B,crab_hermit,Munida,26.92
+haddock,NNS,2000+,B,crab_hermit,Paguridae,35.85
+haddock,NNS,2000+,B,ophiuroid,Ophiuroidea,182.06
+haddock,NNS,2000+,B,other_crust,Isopoda,18.61
+haddock,NNS,2000+,B,other_decapod,Caridea,18.1
+haddock,NNS,2000+,B,other_echinoderm,Echinidea,52.19
+haddock,NNS,2000+,B,other_inv,Guancha macleayi,2.77
+haddock,NNS,2000+,B,other_mollusc,Gastropoda,3.63
+haddock,NNS,2000+,B,pandalid,Pandalus borealis,2.22
+haddock,NNS,2000+,B,polychaete,Polychaeta,232.75
+haddock,NNS,2000+,Bf,flatfish,Pleuronectiformes,0.84
+haddock,NNS,2000+,Ceph,cephalopod,Coleoidea,36.94
+haddock,NNS,2000+,Ceph,cephalopod,Octopoda,31.66
+haddock,NNS,2000+,Fu,fish_unid,Teleostei,50.29
+haddock,NNS,2000+,Ofi,other_fish,Artediellus atlanticus,1.2
+haddock,NNS,2000+,U,crust_unid,Crustacea,32.34
+haddock,NNS,2000+,U,no_id,no_id,8.25
+haddock,NNS,2000+,Z,euph,Euphausiidae,3.05
+haddock,NNS_trench,2000+,B,amphipod,Gammaridea,1.81
+haddock,NNS_trench,2000+,B,bivalve,Bivalvia,0.16
+haddock,NNS_trench,2000+,B,crab_hermit,Brachyura,1.64
+haddock,NNS_trench,2000+,B,crab_hermit,Munida,2.79
+haddock,NNS_trench,2000+,B,crab_hermit,Paguridae,2.19
+haddock,NNS_trench,2000+,B,ophiuroid,Ophiuroidea,27.35
+haddock,NNS_trench,2000+,B,other_crust,Isopoda,3.5
+haddock,NNS_trench,2000+,B,other_decapod,Caridea,0.72
+haddock,NNS_trench,2000+,B,other_mollusc,Gastropoda,0.67
+haddock,NNS_trench,2000+,B,polychaete,Polychaeta,32.43
+haddock,NNS_trench,2000+,Bf,flatfish,Pleuronectiformes,0.84
+haddock,NNS_trench,2000+,Ceph,cephalopod,Coleoidea,36.94
+haddock,NNS_trench,2000+,Fu,fish_unid,Teleostei,0.21
+haddock,NNS_trench,2000+,U,crust_unid,Crustacea,4.11
+haddock,NNS_trench,2000+,U,no_id,no_id,1.14
+haddock,NNS_trench,2000+,Z,euph,Euphausiidae,0.12
+long_rough_dab,CSNS,pre2000,B,bivalve,Bivalvia,46.74
+long_rough_dab,CSNS,pre2000,B,crab_hermit,Brachyura,0.04
+long_rough_dab,CSNS,pre2000,B,crab_hermit,Corystes cassivelaunus,0.05
+long_rough_dab,CSNS,pre2000,B,crab_hermit,Pagurus bernhardus,23.22
+long_rough_dab,CSNS,pre2000,B,crangonid,Crangon allmanni,0.96
+long_rough_dab,CSNS,pre2000,B,mysid,Mysidae,0.04
+long_rough_dab,CSNS,pre2000,B,nephrops,Nephrops,0.93
+long_rough_dab,CSNS,pre2000,B,ophiuroid,Amphiura,0.14
+long_rough_dab,CSNS,pre2000,B,ophiuroid,Ophiothrix,4.44
+long_rough_dab,CSNS,pre2000,B,ophiuroid,Ophiothrix fragilis,8.15
+long_rough_dab,CSNS,pre2000,B,ophiuroid,Ophiuridae,5.29
+long_rough_dab,CSNS,pre2000,B,other_decapod,Caridea,5.14
+long_rough_dab,CSNS,pre2000,B,other_decapod,Spirontocaris,0.31
+long_rough_dab,CSNS,pre2000,B,other_echinoderm,Spatangus,1.1
+long_rough_dab,CSNS,pre2000,B,other_echinoderm,Spatangus purpureus,0.05
+long_rough_dab,CSNS,pre2000,B,other_mollusc,Gastropoda,15.71
+long_rough_dab,CSNS,pre2000,B,pandalid,Pandalus,0.73
+long_rough_dab,CSNS,pre2000,B,pandalid,Pandalus montagui,10.28
+long_rough_dab,CSNS,pre2000,B,polychaete,Lagis,0.53
+long_rough_dab,CSNS,pre2000,B,polychaete,Polychaeta,4.34
+long_rough_dab,CSNS,pre2000,Bf,cod,Gadus,0.56
+long_rough_dab,CSNS,pre2000,Bf,cod,Gadus morhua,5.51
+long_rough_dab,CSNS,pre2000,Bf,flatfish,Hippoglossoides platessoides,1.4
+long_rough_dab,CSNS,pre2000,Bf,flatfish,Pleuronectiformes,2.12
+long_rough_dab,CSNS,pre2000,Bf,other_Bf,Trigla,0.2
+long_rough_dab,CSNS,pre2000,Ceph,cephalopod,Cephalopoda,1.26
+long_rough_dab,CSNS,pre2000,Fu,fish_unid,Gnathostomata,0.1
+long_rough_dab,CSNS,pre2000,Ofi,dragonet,Callionymus lyra,1.87
+long_rough_dab,CSNS,pre2000,Ofi,goby,Pomatoschistus,2.92
+long_rough_dab,CSNS,pre2000,Ofi,other_fish,Anarhichas lupus,0.35
+long_rough_dab,CSNS,pre2000,Ofi,other_fish,Pholis gunnellus,0.28
+long_rough_dab,CSNS,pre2000,Ofi,rockling_poorcod,Enchelyopus cimbrius,0.26
+long_rough_dab,CSNS,pre2000,P,herring,Clupea,0.11
+long_rough_dab,CSNS,pre2000,P,norway_pout,Trisopterus esmarkii,15.29
+long_rough_dab,CSNS,pre2000,Sand,sandeel,Ammodytidae,22.37
+long_rough_dab,CSNS,pre2000,W,whiting,Merlangius merlangus,19.77
+long_rough_dab,CSNS,pre2000,Z,hyp,Hyperia,36.76
+long_rough_dab,NNS,pre2000,B,crab_hermit,Galathea,0.12
+long_rough_dab,NNS,pre2000,B,crab_hermit,Macropipus tuberculatus,1.27
+long_rough_dab,NNS,pre2000,B,crab_hermit,Pagurus bernhardus,14.78
+long_rough_dab,NNS,pre2000,B,crangonid,Crangon allmanni,0.54
+long_rough_dab,NNS,pre2000,B,ophiuroid,Ophiothrix,14.79
+long_rough_dab,NNS,pre2000,B,ophiuroid,Ophiuridae,3.6
+long_rough_dab,NNS,pre2000,B,other_crust,Isopoda,0.6
+long_rough_dab,NNS,pre2000,B,other_decapod,Caridea,0.26
+long_rough_dab,NNS,pre2000,B,other_decapod,Spirontocaris liljeborgii,0.66
+long_rough_dab,NNS,pre2000,B,pandalid,Pandalus,0.07
+long_rough_dab,NNS,pre2000,B,polychaete,Polychaeta,0.46
+long_rough_dab,NNS,pre2000,B,polychaete,Sabellaria,0.56
+long_rough_dab,NNS,pre2000,Bf,cod,Gadus,1.93
+long_rough_dab,NNS,pre2000,Bf,cod,Gadus morhua,23.54
+long_rough_dab,NNS,pre2000,Bf,flatfish,Hippoglossoides platessoides,0.59
+long_rough_dab,NNS,pre2000,Bf,haddock,Melanogrammus aeglefinus,19.95
+long_rough_dab,NNS,pre2000,Bf,other_Bf,Eutrigla gurnardus,0.43
+long_rough_dab,NNS,pre2000,Ofi,goby,Pomatoschistus,2.09
+long_rough_dab,NNS,pre2000,Ofi,other_fish,Agonus,0.72
+long_rough_dab,NNS,pre2000,P,norway_pout,Trisopterus esmarkii,41.39
+long_rough_dab,NNS,pre2000,P,sprat,Sprattus sprattus,0.81
+long_rough_dab,NNS,pre2000,Sand,sandeel,Ammodytidae,14.37
+long_rough_dab,NNS,pre2000,W,whiting,Merlangius merlangus,65.44
+plaice,Box,2000+,B,amphipod,Amphipoda,0.29
+plaice,Box,2000+,B,amphipod,Caprellidae,0.01
+plaice,Box,2000+,B,amphipod,Melitidae,0.1
+plaice,Box,2000+,B,bivalve,Bivalvia,97.95
+plaice,Box,2000+,B,crab_hermit,Anomura,0.07
+plaice,Box,2000+,B,crab_hermit,Brachyura,0.03
+plaice,Box,2000+,B,crab_hermit,Polybiidae,0.18
+plaice,Box,2000+,B,ophiuroid,Ophiuroidea,157.27
+plaice,Box,2000+,B,other_crust,Cumacea,0.05
+plaice,Box,2000+,B,other_decapod,Caridea,0.07
+plaice,Box,2000+,B,other_decapod,Processidae,0.01
+plaice,Box,2000+,B,other_echinoderm,Echinoidea,0.14
+plaice,Box,2000+,B,other_mollusc,Gastropoda,0.04
+plaice,Box,2000+,B,polychaete,Aphrodita aculeata,0.35
+plaice,Box,2000+,B,polychaete,Capitellidae,0.04
+plaice,Box,2000+,B,polychaete,Glyceridae,0.04
+plaice,Box,2000+,B,polychaete,Maldanidae,0.14
+plaice,Box,2000+,B,polychaete,Pectinaria,2.95
+plaice,Box,2000+,B,polychaete,Phyllodocidae,0.04
+plaice,Box,2000+,B,polychaete,Polychaeta,13.59
+plaice,Box,2000+,B,polychaete,Polynoidae,0.03
+plaice,Box,2000+,B,polychaete,Scalibregmatidae,1.91
+plaice,CSNS,2000+,B,amphipod,Amphipoda,1.101
+plaice,CSNS,2000+,B,amphipod,Lysianassidae,0.081
+plaice,CSNS,2000+,B,bivalve,Abra,0.011
+plaice,CSNS,2000+,B,bivalve,Bivalvia,40.222
+plaice,CSNS,2000+,B,bivalve,Mactridae,0.703
+plaice,CSNS,2000+,B,bivalve,Psammobiidae,0.001
+plaice,CSNS,2000+,B,bivalve,Semelidae,0.473
+plaice,CSNS,2000+,B,bivalve,Solecurtidae,0.165
+plaice,CSNS,2000+,B,crab_hermit,Anomura,0.13
+plaice,CSNS,2000+,B,crab_hermit,Brachyura,1.702
+plaice,CSNS,2000+,B,crab_hermit,Galatheidae,0.034
+plaice,CSNS,2000+,B,crab_hermit,Liocarcinus,0.023
+plaice,CSNS,2000+,B,crab_hermit,Polybius,0.15
+plaice,CSNS,2000+,B,crangonid,Crangon crangon,0.16
+plaice,CSNS,2000+,B,crangonid,Crangonidae,0.625
+plaice,CSNS,2000+,B,mysid,Mysida,0.444
+plaice,CSNS,2000+,B,mysid,Mysidae,0.02
+plaice,CSNS,2000+,B,ophiuroid,Acrocnida brachiata,0.028
+plaice,CSNS,2000+,B,ophiuroid,Amphipholis squamata,0.59
+plaice,CSNS,2000+,B,ophiuroid,Amphiura,5.225
+plaice,CSNS,2000+,B,ophiuroid,Amphiuridae,0.48
+plaice,CSNS,2000+,B,ophiuroid,Ophintegrida,1.579
+plaice,CSNS,2000+,B,ophiuroid,Ophiolepididae,0.004
+plaice,CSNS,2000+,B,ophiuroid,Ophiuroidea,1.24
+plaice,CSNS,2000+,B,other_crust,Cumacea,0.351
+plaice,CSNS,2000+,B,other_crust,Diastylidae,0.029
+plaice,CSNS,2000+,B,other_crust,Diastylis rugosa,0.007
+plaice,CSNS,2000+,B,other_decapod,Caridea,1.009
+plaice,CSNS,2000+,B,other_decapod,Decapoda,0.2
+plaice,CSNS,2000+,B,other_decapod,Processidae,0.02
+plaice,CSNS,2000+,B,other_echinoderm,Asteroidea,0.391
+plaice,CSNS,2000+,B,other_echinoderm,Diadematidae,0.08
+plaice,CSNS,2000+,B,other_echinoderm,Echinidae,0.121
+plaice,CSNS,2000+,B,other_echinoderm,Echinocardium,0.539
+plaice,CSNS,2000+,B,other_echinoderm,Echinocyamus pusillus,0.055
+plaice,CSNS,2000+,B,other_echinoderm,Echinodermata,20.733
+plaice,CSNS,2000+,B,other_echinoderm,Echinoidea,0.041
+plaice,CSNS,2000+,B,other_echinoderm,Spatangidae,1.506
+plaice,CSNS,2000+,B,other_inv,Actiniaria,1.532
+plaice,CSNS,2000+,B,other_inv,Branchiostoma lanceolatum,0.297
+plaice,CSNS,2000+,B,other_inv,Medusozoa,0.001
+plaice,CSNS,2000+,B,other_mollusc,Gastropoda,0.33
+plaice,CSNS,2000+,B,other_mollusc,Mollusca,0.083
+plaice,CSNS,2000+,B,polychaete,Annelida,0.275
+plaice,CSNS,2000+,B,polychaete,Aphroditidae,0.773
+plaice,CSNS,2000+,B,polychaete,Glyceridae,0.19
+plaice,CSNS,2000+,B,polychaete,Lagis koreni,0.207
+plaice,CSNS,2000+,B,polychaete,Lanice,0.88
+plaice,CSNS,2000+,B,polychaete,Nephtyidae,0.167
+plaice,CSNS,2000+,B,polychaete,Nereidinae,0.022
+plaice,CSNS,2000+,B,polychaete,Nereis,0.05
+plaice,CSNS,2000+,B,polychaete,Opheliidae,0.36
+plaice,CSNS,2000+,B,polychaete,Oweniidae,0.025
+plaice,CSNS,2000+,B,polychaete,Paraonidae,1.35
+plaice,CSNS,2000+,B,polychaete,Pectinaria,2.81
+plaice,CSNS,2000+,B,polychaete,Pectinariidae,0.078
+plaice,CSNS,2000+,B,polychaete,Phyllodocidae,0.17
+plaice,CSNS,2000+,B,polychaete,Polychaeta,35.459
+plaice,CSNS,2000+,Ceph,cephalopod,Cephalopoda,0.193
+plaice,CSNS,2000+,Fu,fish_unid,Actinopterygii,1.079
+plaice,CSNS,2000+,Fu,fish_unid,Osteichthyes,0.29
+plaice,CSNS,2000+,Fu,fish_unid,Pisces,0.122
+plaice,CSNS,2000+,Sand,sandeel,Ammodytidae,5.365
+plaice,CSNS,2000+,U,crust_unid,Arthropoda,0.007
+plaice,CSNS,2000+,U,crust_unid,Crustacea,2.116
+plaice,CSNS,2000+,U,no_id,no_id,17.945
+plaice,CSNS,2000+,Z,hyp,Hyperiidae,0.01
+plaice,CSNS,2000+,Z,other_Z,Chaetognatha,0.51
+plaice,Kattegat,2000+,B,amphipod,Amphipoda,0.12
+plaice,Kattegat,2000+,B,bivalve,Bivalvia,10.96
+plaice,Kattegat,2000+,B,crab_hermit,Brachyura,0.5
+plaice,Kattegat,2000+,B,crab_hermit,Paguridae,0.49
+plaice,Kattegat,2000+,B,crab_hermit,Polybius,0.02
+plaice,Kattegat,2000+,B,crangonid,Crangon crangon,0.44
+plaice,Kattegat,2000+,B,ophiuroid,Ophiuroidea,264.11
+plaice,Kattegat,2000+,B,other_crust,Balanus,0.34
+plaice,Kattegat,2000+,B,other_crust,Cumacea,0.04
+plaice,Kattegat,2000+,B,other_crust,Gnathiidae,0.01
+plaice,Kattegat,2000+,B,other_decapod,Caridea,0.53
+plaice,Kattegat,2000+,B,other_decapod,Processidae,0.92
+plaice,Kattegat,2000+,B,other_decapod,Upogebia,4.74
+plaice,Kattegat,2000+,B,other_echinoderm,Echinoidea,4.31
+plaice,Kattegat,2000+,B,other_inv,Priapulida,35.6
+plaice,Kattegat,2000+,B,other_mollusc,Gastropoda,0.21
+plaice,Kattegat,2000+,B,other_mollusc,Hydrobia,0.15
+plaice,Kattegat,2000+,B,other_mollusc,Mollusca,0.3
+plaice,Kattegat,2000+,B,polychaete,Glyceridae,1.13
+plaice,Kattegat,2000+,B,polychaete,Lumbrineridae,0.39
+plaice,Kattegat,2000+,B,polychaete,Nephtyidae,0.32
+plaice,Kattegat,2000+,B,polychaete,Pectinaria,7.6
+plaice,Kattegat,2000+,B,polychaete,Phyllodocida,0.18
+plaice,Kattegat,2000+,B,polychaete,Phyllodocidae,0.01
+plaice,Kattegat,2000+,B,polychaete,Polychaeta,18.17
+plaice,Kattegat,2000+,B,polychaete,Polynoidae,0.03
+plaice,Kattegat,2000+,U,crust_unid,Crustacea,0.02
+plaice,NNS,2000+,B,amphipod,Amphipoda,0.264
+plaice,NNS,2000+,B,amphipod,Lysianassidae,0.033
+plaice,NNS,2000+,B,amphipod,Psammonyx nobilis,1.91
+plaice,NNS,2000+,B,bivalve,Bivalvia,7.218
+plaice,NNS,2000+,B,bivalve,Gari,1.388
+plaice,NNS,2000+,B,bivalve,Venerida,0.926
+plaice,NNS,2000+,B,crab_hermit,Paguridae,1.52
+plaice,NNS,2000+,B,ophiuroid,Ophiuroidea,0.003
+plaice,NNS,2000+,B,other_crust,Cumacea,0.004
+plaice,NNS,2000+,B,other_crust,Isopoda,0.44
+plaice,NNS,2000+,B,other_echinoderm,Echinidae,0.182
+plaice,NNS,2000+,B,other_mollusc,Gastropoda,5.38
+plaice,NNS,2000+,B,other_mollusc,Turridae,0.001
+plaice,NNS,2000+,B,polychaete,Annelida,0.647
+plaice,NNS,2000+,B,polychaete,Polychaeta,19.677
+plaice,NNS,2000+,Fu,fish_unid,Pisces,0.164
+plaice,NNS,2000+,O,cnid_tunic,Grammaria gracilis,6.5
+plaice,NNS,2000+,U,crust_unid,Crustacea,1.269
+plaice,NNS,2000+,U,no_id,no_id,4.555
+plaice,NNS_trench,2000+,B,crab_hermit,Paguridae,0.85
+plaice,NNS_trench,2000+,B,other_mollusc,Gastropoda,1.05
+plaice,NNS_trench,2000+,O,cnid_tunic,Grammaria gracilis,6.5
+plaice,Skagerrak,2000+,B,amphipod,Amphipoda,0.73
+plaice,Skagerrak,2000+,B,amphipod,Caprellidae,0.01
+plaice,Skagerrak,2000+,B,amphipod,Melitidae,0.1
+plaice,Skagerrak,2000+,B,bivalve,Bivalvia,127.14
+plaice,Skagerrak,2000+,B,crab_hermit,Anomura,0.11
+plaice,Skagerrak,2000+,B,crab_hermit,Brachyura,1.517
+plaice,Skagerrak,2000+,B,crab_hermit,Majidae,0.13
+plaice,Skagerrak,2000+,B,crab_hermit,Polybiidae,0.18
+plaice,Skagerrak,2000+,B,crab_hermit,Polybius,3.52
+plaice,Skagerrak,2000+,B,mysid,Mysidae,0.05
+plaice,Skagerrak,2000+,B,ophiuroid,Ophiuroidea,229.2
+plaice,Skagerrak,2000+,B,other_crust,Cumacea,0.14
+plaice,Skagerrak,2000+,B,other_decapod,Caridea,0.2
+plaice,Skagerrak,2000+,B,other_decapod,Decapoda,0.36
+plaice,Skagerrak,2000+,B,other_decapod,Processidae,0.04
+plaice,Skagerrak,2000+,B,other_echinoderm,Asteroidea,0.65
+plaice,Skagerrak,2000+,B,other_echinoderm,Echinodermata,1.523
+plaice,Skagerrak,2000+,B,other_echinoderm,Echinoidea,45.52
+plaice,Skagerrak,2000+,B,other_inv,Priapulida,1.26
+plaice,Skagerrak,2000+,B,other_mollusc,Gastropoda,0.11
+plaice,Skagerrak,2000+,B,polychaete,Aphrodita aculeata,3.76
+plaice,Skagerrak,2000+,B,polychaete,Capitellidae,0.04
+plaice,Skagerrak,2000+,B,polychaete,Glyceridae,0.87
+plaice,Skagerrak,2000+,B,polychaete,Maldanidae,0.14
+plaice,Skagerrak,2000+,B,polychaete,Neoleanira tetragona,3.41
+plaice,Skagerrak,2000+,B,polychaete,Nephtyidae,0.35
+plaice,Skagerrak,2000+,B,polychaete,Opheliidae,0.11
+plaice,Skagerrak,2000+,B,polychaete,Ophelina,0.17
+plaice,Skagerrak,2000+,B,polychaete,Oweniidae,0.11
+plaice,Skagerrak,2000+,B,polychaete,Pectinaria,10.57
+plaice,Skagerrak,2000+,B,polychaete,Phyllodocidae,0.09
+plaice,Skagerrak,2000+,B,polychaete,Polychaeta,51.971
+plaice,Skagerrak,2000+,B,polychaete,Polynoidae,0.23
+plaice,Skagerrak,2000+,B,polychaete,Scalibregmatidae,1.91
+plaice,Skagerrak,2000+,B,polychaete,Sigalion mathildae,0.19
+plaice,Skagerrak,2000+,B,polychaete,Terebellidae,0.2
+plaice,Skagerrak,2000+,Ceph,cephalopod,Myopsida,0.09
+plaice,Skagerrak,2000+,Fu,fish_unid,Pisces,0.588
+plaice,Skagerrak,2000+,Sand,sandeel,Ammodytidae,1.81
+plaice,Skagerrak,2000+,U,crust_unid,Crustacea,0.276
+plaice,Skagerrak,2000+,U,no_id,no_id,0.513
+starry_ray,Box,2000+,B,amphipod,Amphipoda,1.11
+starry_ray,Box,2000+,B,amphipod,Gammarus,0.01
+starry_ray,Box,2000+,B,amphipod,Maera,3.13
+starry_ray,Box,2000+,B,amphipod,Melitidae,0.45
+starry_ray,Box,2000+,B,crab_hermit,Brachyura,12.36
+starry_ray,Box,2000+,B,crab_hermit,Polybiidae,10.29
+starry_ray,Box,2000+,B,crab_hermit,Polybius,2.66
+starry_ray,Box,2000+,B,crangonid,Crangon crangon,7.3
+starry_ray,Box,2000+,B,crangonid,Pontophilus norvegicus,3.18
+starry_ray,Box,2000+,B,other_crust,Cumacea,0.01
+starry_ray,Box,2000+,B,other_decapod,Caridea,2.58
+starry_ray,Box,2000+,B,other_decapod,Palaemon,0.22
+starry_ray,Box,2000+,B,other_decapod,Palaemonidae,0.47
+starry_ray,Box,2000+,B,pandalid,Pandalus,0.24
+starry_ray,Box,2000+,B,polychaete,Polychaeta,2.59
+starry_ray,Box,2000+,Bf,other_Bf,Myxini,17.92
+starry_ray,Box,2000+,Fu,fish_unid,Osteichthyes,1.89
+starry_ray,Box,2000+,Ofi,dragonet,Callionymus,3.77
+starry_ray,Box,2000+,Ofi,goby,Gobiidae,1.5
+starry_ray,Box,2000+,U,crust_unid,Crustacea,0.39
+starry_ray,Box,2000+,W,whiting,Merlangius merlangus,2.45
+starry_ray,Box,2000+,Z,euph,Euphausiidae,1.32
+starry_ray,CSNS,2000+,B,amphipod,Amphipoda,0.147
+starry_ray,CSNS,2000+,B,crab_hermit,Portunidae,0.127
+starry_ray,CSNS,2000+,B,crangonid,Crangon crangon,0.64
+starry_ray,CSNS,2000+,B,other_decapod,Caridea,0.543
+starry_ray,CSNS,2000+,B,other_decapod,Palinuridae,0.286
+starry_ray,CSNS,2000+,B,polychaete,Aphrodita aculeata,0.205
+starry_ray,CSNS,2000+,B,polychaete,Aphroditidae,0.321
+starry_ray,CSNS,2000+,B,polychaete,Polychaeta,0.908
+starry_ray,CSNS,2000+,Fu,fish_unid,Actinopterygii,2.563
+starry_ray,CSNS,2000+,U,crust_unid,Crustacea,0.444
+starry_ray,Kattegat,2000+,B,other_decapod,Caridea,0.67
+starry_ray,Kattegat,2000+,B,polychaete,Polychaeta,1.33
+starry_ray,Kattegat,2000+,Fu,fish_unid,Osteichthyes,0.6
+starry_ray,Kattegat,2000+,Ofi,dragonet,Callionymus lyra,10.7
+starry_ray,NNS,pre2000,B,pandalid,Atlantopandalus propinqvus,0.06
+starry_ray,NNS,pre2000,Ceph,cephalopod,Cephalopoda,0.34
+starry_ray,Skagerrak,2000+,B,amphipod,Amphipoda,1.11
+starry_ray,Skagerrak,2000+,B,amphipod,Gammarus,0.01
+starry_ray,Skagerrak,2000+,B,amphipod,Maera,3.13
+starry_ray,Skagerrak,2000+,B,amphipod,Melitidae,0.45
+starry_ray,Skagerrak,2000+,B,crab_hermit,Brachyura,15.83
+starry_ray,Skagerrak,2000+,B,crab_hermit,Polybiidae,10.29
+starry_ray,Skagerrak,2000+,B,crab_hermit,Polybius,5.12
+starry_ray,Skagerrak,2000+,B,crangonid,Crangon crangon,9.86
+starry_ray,Skagerrak,2000+,B,crangonid,Pontophilus norvegicus,3.18
+starry_ray,Skagerrak,2000+,B,other_crust,Cumacea,0.01
+starry_ray,Skagerrak,2000+,B,other_decapod,Caridea,2.58
+starry_ray,Skagerrak,2000+,B,other_decapod,Palaemon,0.22
+starry_ray,Skagerrak,2000+,B,other_decapod,Palaemonidae,0.47
+starry_ray,Skagerrak,2000+,B,pandalid,Pandalus,1.07
+starry_ray,Skagerrak,2000+,B,polychaete,Polychaeta,6.58
+starry_ray,Skagerrak,2000+,Bf,flatfish,Pleuronectiformes,2.93
+starry_ray,Skagerrak,2000+,Bf,other_Bf,Myxini,23.84
+starry_ray,Skagerrak,2000+,Fu,fish_unid,Osteichthyes,1.89
+starry_ray,Skagerrak,2000+,Ofi,dragonet,Callionymus,3.77
+starry_ray,Skagerrak,2000+,Ofi,goby,Gobiidae,1.5
+starry_ray,Skagerrak,2000+,U,crust_unid,Crustacea,0.39
+starry_ray,Skagerrak,2000+,W,whiting,Merlangius merlangus,2.45
+starry_ray,Skagerrak,2000+,Z,euph,Euphausiidae,1.32

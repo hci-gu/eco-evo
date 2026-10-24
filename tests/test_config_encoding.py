@@ -39,7 +39,7 @@ def test_config_preserves_keys_and_unicode(tmp_path, windows_text_encoding, enco
 def test_bundled_project_loads_with_windows_defaults(windows_text_encoding, gpu_schema):
     builder = EnvironmentBuilder(project_path=str(ROOT / "mareld2.yaml"), grid=(4, 5))
     env = ProjectSpec(builder).env if gpu_schema else builder(seed=0)
-    assert "gadoids" in env.fgs
+    assert "benthivorous_fish" in env.fgs
     assert (env.H, env.W) == (4, 5)
 
 
@@ -47,16 +47,16 @@ def test_inference_spawn_settings_decode_utf8(tmp_path, windows_text_encoding):
     project = tmp_path / "project.yaml"
     project.write_text(
         "spawn_templates:\n  colony:\n    Skärgård:\n      n_colonies: 2\n"
-        "decision_makers:\n  - group_id: gadoids\n",
+        "decision_makers:\n  - group_id: benthivorous_fish\n",
         encoding="utf-8-sig",
     )
     library_dir = tmp_path / "fgconfig"
     library_dir.mkdir()
     (library_dir / "fg_library.yaml").write_text(
-        "species_definitions:\n  gadoids:\n    spawn:\n      mode: colony\n",
+        "species_definitions:\n  benthivorous_fish:\n    spawn:\n      mode: colony\n",
         encoding="utf-8-sig",
     )
     assert inference._load_spawn_templates(project) == {
         "colony": {"Skärgård": {"n_colonies": 2}},
     }
-    assert inference._load_spawn_defaults(project) == {"gadoids": "colony"}
+    assert inference._load_spawn_defaults(project) == {"benthivorous_fish": "colony"}

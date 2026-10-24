@@ -1,0 +1,64 @@
+== Consumption and M2
+seals: B 15.0 t, Q 320 t/yr (Q/B 21.3), range 250-460
+   benth  share 0.60 (0.45-0.70)  C  192.0 t/yr  M2 0.0349 /yr (0.0205-0.0585)
+   pred   share 0.15 (0.08-0.25)  C   48.0 t/yr  M2 0.0112 /yr (0.0047-0.0267)
+   plank  share 0.25 (0.10-0.40)  C   80.0 t/yr  M2 0.0067 /yr (0.0021-0.0153)
+porpoises: B 12.0 t, Q 234 t/yr (Q/B 19.5), range 211-280
+   plank  share 0.65 (0.55-0.75)  C  152.1 t/yr  M2 0.0127 /yr (0.0097-0.0175)
+   benth  share 0.15 (0.10-0.25)  C   35.1 t/yr  M2 0.0064 /yr (0.0038-0.0127)
+   pred   share 0.20 (0.12-0.25)  C   46.8 t/yr  M2 0.0109 /yr (0.0059-0.0163)
+
+== Library as copied (old gadoid pair on both demersal pools)
+   seals     benth  M2 0.1200 ->    660 t/yr
+   seals     pred   M2 0.1200 ->    516 t/yr
+   seals     plank  M2 0.0015 ->     18 t/yr
+   seals     total 1194 t/yr
+   porpoises benth  M2 0.0557 ->    306 t/yr
+   porpoises pred   M2 0.0557 ->    240 t/yr
+   porpoises plank  M2 0.0117 ->    140 t/yr
+   porpoises total 686 t/yr
+
+== Seal ration from energy (283 MJ/t/day spend + production, report)
+   E benth 5500 pred 5500 plank 7500: ME 5156 MJ/t prey, ration 5.49 %BM/d, 300 t/yr
+   E benth 4500 pred 5500 plank 7500: ME 4646 MJ/t prey, ration 6.09 %BM/d, 333 t/yr
+   E benth 4500 pred 6000 plank 6500: ME 4490 MJ/t prey, ration 6.30 %BM/d, 345 t/yr
+
+== Handling times
+   seals energy ceiling: E 4000 -> h 18.8 (ceiling 21.2 %BM/d)
+   seals energy ceiling: E 4500 -> h 21.2 (ceiling 18.9 %BM/d)
+   seals energy ceiling: E 5000 -> h 23.5 (ceiling 17.0 %BM/d)
+   seals energy ceiling: E 5500 -> h 25.9 (ceiling 15.5 %BM/d)
+   seals energy ceiling: E 6000 -> h 28.2 (ceiling 14.2 %BM/d)
+   seals energy ceiling: E 6500 -> h 30.6 (ceiling 13.1 %BM/d)
+   seals energy ceiling: E 7500 -> h 35.3 (ceiling 11.3 %BM/d)
+   porpoises mass ceiling: h 28.6 on every pair (0.035 t/t/tick = 14 %BM/d)
+
+== Saturation and energy return at grid-mean density (rest share 0.4 at the pair floor)
+   seal->gadoids OLD              B 0.69 vis 0.65  I 0.0297 (  77 % of ceiling)  E   139 MJ/t/tick  break-even visible 0.14 t/km2
+   seal->benth a0.2 (carry)       B 1.53 vis 1.44  I 0.0339 (  88 % of ceiling)  E   159 MJ/t/tick  break-even visible 0.14 t/km2
+   seal->benth a0.1 (rec)         B 1.53 vis 1.44  I 0.0303 (  79 % of ceiling)  E   142 MJ/t/tick  break-even visible 0.28 t/km2
+   seal->pred a0.2 (carry)        B 1.19 vis 1.07  I 0.0326 (  85 % of ceiling)  E   153 MJ/t/tick  break-even visible 0.14 t/km2
+   seal->pred a0.05 (rec)         B 1.19 vis 1.07  I 0.0224 (  58 % of ceiling)  E   105 MJ/t/tick  break-even visible 0.55 t/km2
+   seal->plank III 2e-3           B 3.33 vis 2.47  I 0.0085 (  30 % of ceiling)  E    56 MJ/t/tick  break-even visible 3.07 t/km2
+   porp->gadoids OLD              B 0.69 vis 0.62  I 0.0295 (  84 % of ceiling)  E   136 MJ/t/tick  break-even visible 0.15 t/km2
+   porp->benth a0.3 (carry)       B 1.53 vis 1.38  I 0.0322 (  92 % of ceiling)  E   149 MJ/t/tick  break-even visible 0.15 t/km2
+   porp->benth a0.12 (rec)        B 1.53 vis 1.38  I 0.0289 (  83 % of ceiling)  E   133 MJ/t/tick  break-even visible 0.37 t/km2
+   porp->pred a0.3 (carry)        B 1.19 vis 1.15  I 0.0317 (  91 % of ceiling)  E   147 MJ/t/tick  break-even visible 0.15 t/km2
+   porp->pred a0.2 (rec)          B 1.19 vis 1.15  I 0.0303 (  87 % of ceiling)  E   140 MJ/t/tick  break-even visible 0.22 t/km2
+   porp->plank a0.0225            B 3.33 vis 3.27  I 0.0237 (  68 % of ceiling)  E   160 MJ/t/tick  break-even visible 0.96 t/km2
+   porp->plank a0.0225 @5t/km2    B 5.00 vis 4.90  I 0.0265 (  76 % of ceiling)  E   179 MJ/t/tick  break-even visible 0.96 t/km2
+
+== a that keeps the old calibrated return at the new grid mean (a*B invariance)
+   old seal I 0.0297: benth a 0.091, pred a 0.121
+   old porp I 0.0295: benth a 0.136, pred a 0.164
+
+== Per-tonne selectivity (diet share / prey biomass), relative to planktivores
+   seals: plank 1.00, benth 5.24, pred 1.67
+   porpoises: plank 1.00, benth 0.50, pred 0.86
+   old porpoise fit (151): gadoids 4.8x herring per tonne
+
+== Seal equilibrium under K: B* = K (g - M1 - starv) / r_max, K 27 t, r_max 0.11
+   g 0.18 starv 0.01: B* 17.2 t
+   g 0.18 starv 0.00: B* 19.6 t
+   g 0.20 starv 0.00: B* 24.5 t
+   g 0.17 starv 0.02: B* 12.3 t

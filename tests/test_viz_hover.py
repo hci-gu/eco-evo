@@ -18,7 +18,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 GRID = (4, 4)
-FGS = ["gadoids", "pelagic_fish"]
+FGS = ["benthivorous_fish", "planktivorous_fish"]
 
 
 @pytest.fixture

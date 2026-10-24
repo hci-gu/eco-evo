@@ -6,7 +6,7 @@ Contracts asserted:
    positive number; ``capacity_loss_rate`` = r_max / (1460 K) and needs
    r_max.
 2. The loss is outside the derived growth rate: K changes no budget term.
-3. The loader derives ``capacity_loss_rate`` (the library's gadoids,
+3. The loader derives ``capacity_loss_rate`` (the library's benthivorous_fish,
    pelagic fish and seals carry it) and rescales it as a flux for another tick length.
 4. In the population step a DM with it loses the fraction c * B_region
    (grid-mean density) of its biomass and reserve, booked as a natural
@@ -72,16 +72,16 @@ def _library():
 def test_capacity_is_outside_the_growth_budget():
     lib = _library()
     species, inter = lib["species_definitions"], lib["interaction_definitions"]
-    base = {k: v for k, v in species["gadoids"].items()
+    base = {k: v for k, v in species["benthivorous_fish"].items()
             if k != "regional_carrying_capacity"}
-    plain = gb.growth_budget("gadoids", species, inter, species=base)
-    capped = gb.growth_budget("gadoids", species, inter, species=dict(
+    plain = gb.growth_budget("benthivorous_fish", species, inter, species=base)
+    capped = gb.growth_budget("benthivorous_fish", species, inter, species=dict(
         base, regional_carrying_capacity=1.02))
     assert capped.growth_rate == plain.growth_rate
     assert capped.describe() == plain.describe()
 
 
-CAPPED = ("gadoids", "pelagic_fish", "seals")   # sections 185, 185.20, 199
+CAPPED = ("benthivorous_fish", "predatory_fish", "planktivorous_fish", "seals")   # sections 185, 185.20, 199, 209
 
 
 def test_loader_derives_the_rate_for_the_library_groups():
@@ -170,7 +170,7 @@ def test_refusals():
     project = yaml.safe_load(PROJECT.read_text(encoding="utf-8-sig"))
     for sid, extra, match in (
             ("benthic_community", {"r_max": 0.5}, "not a decision"),
-            ("pelagic_fish", {"r_max": 0}, "needs r_max")):
+            ("planktivorous_fish", {"r_max": 0}, "needs r_max")):
         lib = _library()
         lib["species_definitions"][sid].update(
             regional_carrying_capacity=1.0, **extra)

@@ -245,7 +245,7 @@ FIELD_HELP = {
     "temperature_group_layers": (
         "Which temperature layer each group lives in, as "
         "group=layer pairs separated by commas, e.g. "
-        "'pelagic_fish=surface, gadoids=bottom'. The layer names must "
+        "'planktivorous_fish=surface, benthivorous_fish=bottom'. The layer names must "
         "exist under Layers. Every decision maker with a Metabolism Q10 "
         "must be listed, otherwise loading the project fails."
     ),
@@ -285,7 +285,8 @@ FIELD_HELP = {
         "this tick's intake instead, never out of the reserve.\n"
         "0 = worthless as food and growth paid by nothing (avoid). "
         "Library: zooplankton 4500, herring 4000 (lean; reserve on "
-        "top), gadoids 5500, porpoises 8500."
+        "top), benthivorous fish 4500, predatory fish 4100 (lean; "
+        "reserve on top), porpoises 8500."
     ),
     "resting_metabolism": (
         "Resting Metabolism RM (MJ per tonne per tick).\n\n"
@@ -304,7 +305,8 @@ FIELD_HELP = {
         "Factor by which Resting Metabolism (and so every action cost) "
         "rises per 10 deg C warming:\n"
         "  RM(t) = RM * Q10 ^ ((T(t) - t_ref) / 10)\n"
-        "Library: zooplankton 2.0, herring and gadoids 2.2; leave 0 for "
+        "Library: zooplankton 2.0, planktivores 2.2, benthivores 2.25, "
+        "predators 2.3; leave 0 for "
         "endotherms (porpoises, seals, birds). The group must also be listed under Group "
         "layers. Decision makers only."
     ),
@@ -374,8 +376,9 @@ FIELD_HELP = {
         "compensation at the stock scale, so it is regional, not per "
         "cell. K is today's EFFECTIVE capacity (lowered by trawled "
         "nurseries and warming), not the historical ceiling. Library: "
-        "gadoids 1.02, where r_max 0.37 and F 0.12 are stationary at "
-        "today's 0.69 t/km2 (research_notes/Torskfiskarnas reglering)."
+        "benthivorous fish 3.39 (r_max 0.31, F 0.17, stationary at "
+        "1.53 t/km2), predatory fish 2.12, planktivorous fish 4.8 "
+        "(section 209)."
     ),
     "feeding_season_months": (
         "Feeding season (months per year; 0 or empty = 12). Only with "
@@ -646,7 +649,7 @@ FIELD_HELP = {
         "Predator share phi of a predation pair (0-1], edited in "
         "fg_library.yaml.\n\n"
         "The share of the predator group's biomass that can feed on this "
-        "prey at all, e.g. the benthivores of the pooled gadoids. That "
+        "prey at all, e.g. the benthos feeders of a pooled fish group. That "
         "part eats it at the full attack rate and ceiling; the rest "
         "cannot, so at most phi of the group's eat mass reaches the prey "
         "(the tick uses min(eat, phi)). Set from morphology and the "

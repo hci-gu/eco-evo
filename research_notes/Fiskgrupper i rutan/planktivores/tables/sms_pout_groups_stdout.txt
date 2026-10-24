@@ -1,0 +1,14 @@
+== 2011 2022
+predatory_fish       1.604
+benthivorous_fish    0.328
+seabirds             0.015
+seals                0.006
+porpoises            0.003
+total 1.956
+== 2016 2022
+predatory_fish       1.575
+benthivorous_fish    0.291
+seabirds             0.015
+seals                0.006
+porpoises            0.003
+total 1.89

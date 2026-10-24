@@ -1,0 +1,32 @@
+weights: {'saithe': 0.4094, 'whiting': 0.3715, 'mackerel': 0.0802, 'spurdog': 0.05, 'horse mackerel': 0.0345, 'hake': 0.0249, 'anglerfish': 0.0137, 'ling': 0.007, 'velvet belly': 0.0047, 'pollack': 0.0041}
+r_max (/yr)                                0.416917 (0.361894 - 0.443152) 
+F total (/yr)                               0.18177 (0.103981 - 0.214523) bottom 0.1616 pelagic 0.0201
+natural_mortality M1 (/yr)                 0.257213 (0.186581 - 0.308722) 
+natural_mortality M1 (/tick)            0.000176173 (0.000127795 - 0.000211454) 
+regional_carrying_capacity K (t/km2)         2.1276 (1.56789 - 2.94679) K = 1.20 / (1 - F/r)
+Cmax (kJ/kg/d)                              101.898 (78.1249 - 153.603) 
+energy ceiling (MJ/t/tick)                  25.4744 (19.5312 - 38.4009) 
+resting_metabolism (MJ/t/tick)              3.64037 (2.96555 - 4.98767) 
+metabolism_q10                              2.28345 (2 - 2.6) 
+energy_content lean (MJ/t)                  4116.26 (3816.26 - 4416.26) 
+max_energy_reserve (MJ/t)                   2375.93 (1781.95 - 2969.92) 
+reserve_reference_fill                     0.481547 (0.4 - 0.55) whole body as eaten 5260 MJ/t
+Q/B (/yr), biomass-weighted                 3.33654 (2.83608 - 4.31983) 
+starve_rate (/tick)                      0.00884387 (0.00589592 - 0.0147398) loss at s = 0 equals routine burn of lean tissue
+
+consumption Q = 3.337 x 1.2 = 4.004 t/km2/yr; ration 0.91 %BW/d
+field ration in energy 50.3 kJ/kg/d (diet energy 5501 MJ/t) = 0.49 of Cmax
+planktivorous_fish: handling_time h (ticks)      279.693 (185.543 - 364.8) E 7125 / ceiling
+planktivorous_fish: a for 1/(a h) = B_acc   0.00108344 (0.000361147 - 0.00325032) B_acc 3.3 t/km2
+planktivorous_fish: predation_mortality M2 (/yr)     0.497448 (0.30939 - 0.863966) renormalised without W: 0.5460
+zooplankton: handling_time h (ticks)        176.648 (117.185 - 230.4) E 4500 / ceiling
+zooplankton: a for 1/(a h) = B_acc      0.000582271 (0.00019409 - 0.00174681) B_acc 9.72 t/km2
+zooplankton: predation_mortality M2 (/yr)     0.127666 (0.0525079 - 0.239936) renormalised without W: 0.1441
+benthic_community: handling_time h (ticks)      117.765 (78.1232 - 153.6) E 3000 / ceiling
+benthic_community: a for 1/(a h) = B_acc  0.000446919 (0.000148973 - 0.00134076) B_acc 19 t/km2
+benthic_community: predation_mortality M2 (/yr)   0.00463604 (0.00179121 - 0.00818494) renormalised without W: 0.0051
+benthivorous_fish: handling_time h (ticks)      176.648 (117.185 - 230.4) E 4500 / ceiling
+benthivorous_fish: a for 1/(a h) = B_acc    0.0246665 (0.00822218 - 0.0739996) B_acc 0.229 t/km2
+benthivorous_fish: predation_mortality M2 (/yr)     0.183183 (0.088975 - 0.508215) renormalised without W: 0.2094
+bottom_trawling biomass_factor at 100    0.00367272 (0.00210098 - 0.00433451) q 3.6727e-05 per unit
+pelagic_trawling biomass_factor at 10    0.00552751 (0.00276376 - 0.00829127) q 5.5275e-04 per unit

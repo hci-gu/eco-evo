@@ -1,0 +1,19 @@
+species,variant,B,Z,P,W,Bf,Oth,basis
+haddock,central,80,5,3,0,1,11,judgement: NNS Jan-Feb 2025 ICES-DB B 83 Z 0.4 Fu 7 Ceph 10 [D]; annual Z from Albert 1994 summer 2-22 % (PRE-2000); P = part of unid. fish
+haddock,winter_only,82.6,0.4,0,0,0.1,16.9,ICES-DB NNS 2025 Q1 as measured
+haddock,high_Z,74,11,3,0,1,11,Z at the top of the Albert summer range averaged over the year
+cod,skag_gu,49.3,0.2,22.5,5.1,11.8,11.3,ICES-DB Skagerrak 2023-25 box-weighted; Gu allocated
+cod,skag_nogu,49.3,0.2,15.8,4.4,10.1,20.3,same; Gu left in Oth
+cod,nns_gu,28.6,0,43.1,8.6,13.7,6.0,ICES-DB NNS Q1 2023 box-weighted; Gu allocated
+long_rough_dab,central,85,2,3,2,3,5,judgement: M&D 1991 (Ntiba & Harding) B 87 + small fish for 0-group summer prey; box LRD median 17.5 cm
+long_rough_dab,high_fish,54,15,6,8,4,13,ICES-DB 1991 CSNS 20-30 cm (upper bound for the box)
+dab,central,95,2,0,0,0,3,M&D 1991 B 98.7 Z 1.3; small gobies/sandeels as judgement
+plaice,central,99.5,0,0,0,0,0.5,ICES-DB Skagerrak 2024 (185 fed)
+witch,central,99.6,0.2,0,0,0,0.2,Bergstad et al. 2003 Skagerrak (Hildre 2001)
+lemon_sole,central,100,0,0,0,0,0,Rae 1965 via FishBase; M&D 99.3
+starry_ray,central,44,0,10,12,7,27,Skjaeraasen & Bergstad 2000 adults (55 cm) via FishBase [S]; box ray median 51.5 cm
+starry_ray,ices2024,61.4,1.4,0,2.5,27.4,7.3,ICES-DB Skagerrak Aug 2024 (39 fed; median 41 cm)
+hagfish,central,20,0,0,0,0,80,judgement; Malangen Ecopath diet 80 % detritus/carrion
+grey_gurnard,central,30,2,10,15,12,31,judgement from de Gee & Kikkert 1993 (fish 61-82 % at 20-25 cm) and Floeter 2005 (gadoids 37 % of weight >20 cm)
+greater_weever,central,75,0,5,0,0,20,judgement (no source)
+others,central,75,0,5,0,0,20,judgement (no source)

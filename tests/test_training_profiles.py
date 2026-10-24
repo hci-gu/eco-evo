@@ -35,7 +35,7 @@ def test_gpu_profile_trains_and_records_effective_settings(tmp_path, profile, le
         "--grid", "5x6", "--output", str(tmp_path),
         f"{ticks}=2", worlds, "1", deltas, "2", "--generations", "1",
         "--iter_per_gen", "1", "--entropy_coef", "0.1",
-        "--no_coevolution", "--species", "gadoids", "--uniform_bias_init",
+        "--no_coevolution", "--species", "benthivorous_fish", "--uniform_bias_init",
         "--profile", profile,
     ], on_step=on_step) == 0
     assert seen == [0, 1]
@@ -206,4 +206,4 @@ def test_cpu_profile_still_applies_shared_presets_with_explicit_overrides(tmp_pa
         "--workers", "1", "--rollouts_per_delta", "1", "--run-name", str(tmp_path),
     ], on_step=on_step, confirm=False)
     assert observed == [0, 1]
-    assert (tmp_path / "policy_gadoids.pth").is_file()
+    assert (tmp_path / "policy_benthivorous_fish.pth").is_file()

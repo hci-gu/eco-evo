@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-FGS = ["zooplankton", "pelagic_fish", "gadoids", "porpoises", "seals",
+FGS = ["zooplankton", "planktivorous_fish", "benthivorous_fish", "porpoises", "seals",
        "phytoplankton", "subsurface_phytoplankton", "benthic_community",
        "microzooplankton"]
 GRID = (60, 60)
@@ -487,8 +487,8 @@ def test_heatmaps_are_grouped_under_dm_and_ndm_headers(monkeypatch):
     monkeypatch.delenv("MARELD_VIZ_MAX_HEIGHT", raising=False)
     from lib.viz.pygame_viz import LiveVisualizer
     # NDMs interleaved in the FG order: the grouping must sort them out.
-    order = ["phytoplankton", "zooplankton", "pelagic_fish",
-             "subsurface_phytoplankton", "gadoids", "porpoises",
+    order = ["phytoplankton", "zooplankton", "planktivorous_fish",
+             "subsurface_phytoplankton", "benthivorous_fish", "porpoises",
              "benthic_community", "seals", "microzooplankton"]
     viewer = LiveVisualizer(fg_ids=order, grid_shape=GRID, mode="training",
                             ndm_ids=NDMS)

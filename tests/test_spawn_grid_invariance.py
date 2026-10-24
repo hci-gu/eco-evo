@@ -91,11 +91,11 @@ def _pair_visibility_floor(predator, prey):
     return float(val or 0.0)
 
 
-HERRING_VISIBILITY_FLOOR = _pair_visibility_floor("porpoises", "pelagic_fish")
+HERRING_VISIBILITY_FLOOR = _pair_visibility_floor("porpoises", "planktivorous_fish")
 
 
 def _colony_params(n_colonies=25, sigma_cells=1.0):
-    """The pelagic_fish spawn block from fg_library.yaml."""
+    """The planktivorous_fish spawn block from fg_library.yaml."""
     return {
         "n_colonies": n_colonies,
         "sigma_cells": sigma_cells,
@@ -291,7 +291,7 @@ def _viable_fraction(grid, seed):
     result = config_loader.load_project_config(
         PROJECT, grid_size=grid, seed=seed, spawn_seed=seed)
     fgs = result[0] if isinstance(result, tuple) else result
-    herring = np.asarray(fgs["pelagic_fish"].biomass, dtype=np.float64)
+    herring = np.asarray(fgs["planktivorous_fish"].biomass, dtype=np.float64)
     visible = HERRING_VISIBILITY_FLOOR * herring
     a_eff_ratio = visible / (1.0 + visible)     # a*h = 1 for this pair
     return float((a_eff_ratio >= REQ_A_EFF_RATIO).mean())

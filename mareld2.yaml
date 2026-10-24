@@ -98,16 +98,26 @@ simulation_settings:
         - 10.6
         - 9.3
     group_layers:
-      pelagic_fish: mean_0_50m
+      planktivorous_fish: mean_0_50m
       zooplankton: mean_0_50m
       microzooplankton: mean_0_50m
-      gadoids: at_50m
+      benthivorous_fish: at_50m
+      predatory_fish: at_50m
 decision_makers:
-  - group_id: gadoids
-    initial_biomass_min: 1250
-    initial_biomass_max: 5000
-    inference_initial_biomass: 2500
-  - group_id: pelagic_fish
+  # Section 209: the fish are three feeding groups. Demersal levels are the
+  # top of the long-run NS-IBTS span (2001-25, wing spread, q = 1, x 1.18):
+  # benthivores 1.53, predators 1.20 t/km2; planktivores ~3.3 t/km2 from
+  # the HERAS acoustic level (research_notes/"Fiskgrupper i rutan",
+  # Swedish letters).
+  - group_id: benthivorous_fish
+    initial_biomass_min: 2750
+    initial_biomass_max: 11000
+    inference_initial_biomass: 5500
+  - group_id: predatory_fish
+    initial_biomass_min: 2150
+    initial_biomass_max: 8600
+    inference_initial_biomass: 4300
+  - group_id: planktivorous_fish
     initial_biomass_min: 6000
     initial_biomass_max: 24000
     inference_initial_biomass: 12000
@@ -206,16 +216,19 @@ spawn_templates:
       noise_scale: 4.0
       min_frac_of_max: 0.0
       refs:
-        - name: pelagic_fish
+        - name: planktivorous_fish
           weight: 1.0
           transform: linear
-    FollowGadoids:
+    FollowDemersalFish:
       floor: 0.0
       noise_amp: 0.0
       noise_scale: 4.0
       min_frac_of_max: 0.0
       refs:
-        - name: gadoids
+        - name: benthivorous_fish
+          weight: 1.0
+          transform: linear
+        - name: predatory_fish
           weight: 1.0
           transform: linear
 inference:

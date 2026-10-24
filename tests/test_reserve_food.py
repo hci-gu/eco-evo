@@ -99,6 +99,6 @@ def test_gate_and_runtime_use_the_same_prey_energy():
                 prey_energy(species[prey]) * assim, rel=1e-6), (pred, prey)
             checked += 1
     assert checked > 0
-    if species["pelagic_fish"].get("prey_includes_reserve"):
-        assert prey_energy(species["pelagic_fish"]) > float(
-            species["pelagic_fish"]["energy_content"])
+    if species["planktivorous_fish"].get("prey_includes_reserve"):
+        assert prey_energy(species["planktivorous_fish"]) > float(
+            species["planktivorous_fish"]["energy_content"])

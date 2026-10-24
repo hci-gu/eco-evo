@@ -1,0 +1,43 @@
+years used: [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+
+benthivorous_fish: 1.30 t/km2 (wing, q = 1, mean 2001-25)
+        common  t_km2  share_in_group_pct  share_2021_25_pct
+       haddock   0.50               38.62              73.77
+           cod   0.41               31.38               8.47
+long rough dab   0.16               12.63               5.33
+           dab   0.06                4.49               2.83
+        plaice   0.05                3.80               3.00
+         witch   0.02                1.67               1.37
+    starry ray   0.02                1.47               1.02
+       hagfish   0.02                1.27               0.90
+  grey gurnard   0.01                0.89               0.69
+    lemon sole   0.01                0.87               0.45
+greater weever   0.01                0.78               0.63
+   rabbit fish   0.01                0.49               0.19
+      flounder   0.00                0.37               0.10
+
+other: 0.00 t/km2 (wing, q = 1, mean 2001-25)
+       common  t_km2  share_in_group_pct  share_2021_25_pct
+  sea lamprey    0.0               73.15              27.88
+river lamprey    0.0               26.85              72.12
+
+planktivorous_fish: 1.41 t/km2 (wing, q = 1, mean 2001-25)
+      common  t_km2  share_in_group_pct  share_2021_25_pct
+     herring   0.70               49.86              51.63
+blue whiting   0.35               24.74              27.94
+ Norway pout   0.25               17.89              11.07
+       sprat   0.09                6.52               8.75
+  lumpsucker   0.01                0.43               0.18
+
+predatory_fish: 1.02 t/km2 (wing, q = 1, mean 2001-25)
+        common  t_km2  share_in_group_pct  share_2021_25_pct
+        saithe   0.42               40.83              50.15
+       whiting   0.38               37.04              32.00
+      mackerel   0.08                8.00               8.71
+       spurdog   0.05                4.99               2.23
+horse mackerel   0.04                3.44               1.69
+          hake   0.03                2.48               1.47
+    anglerfish   0.01                1.37               1.96
+          ling   0.01                0.70               0.51
+  velvet belly   0.00                0.47               0.99
+       pollack   0.00                0.41               0.21

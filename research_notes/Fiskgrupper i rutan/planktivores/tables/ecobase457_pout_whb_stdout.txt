@@ -1,0 +1,27 @@
+== Norway pout (seq 23) B 1.394 t/km2  P/B 2.2  Q/B 5.05  EE 0.7504829
+   prey Herbivorous & Omnivorous zooplankton (copepods) 0.476  -> zooplankton
+   prey Carnivorous zooplankton                       0.286  -> zooplankton
+   prey Infaunal macrobenthos                         0.191  -> benthic_community
+   prey Small mobile epifauna (swarming crustaceans)  0.048  -> benthic_community
+   by pool: {'zooplankton': 0.762, 'benthic_community': 0.238} sum 1.0
+   M2 total 1.455; M0 = PB(1-EE) = 0.549
+     predatory_fish                     1.118  Horse mackerel 0.326, Whiting (adult) 0.282, Juvenile Saithe (0-3, 0-40cm) 0.198, Saithe (adult) 0.195, Juvenile Whiting (0-1, 0-20cm) 0.037, Mackerel 0.020, Megrim 0.018, Halibut 0.015, Other gadoids (large) 0.013, Monkfish 0.008
+     benthivorous_fish                  0.225  Juvenile Cod(0-2, 0-40cm) 0.090, Haddock (adult) 0.030, Cod (adult) 0.030, Flounder 0.025, Starry ray + others 0.015, Gurnards 0.013, Turbot and brill 0.010, Long-rough dab 0.005
+     planktivorous_fish (within group)  0.049  Blue whiting 0.049
+     porpoises (toothed whales)         0.048  Toothed whales 0.048
+     not_in_model                       0.015  Squid & cuttlefish 0.012
+== Blue whiting (seq 22) B 0.08 t/km2  P/B 2.5  Q/B 9.06  EE 0.8937607
+   prey Carnivorous zooplankton                       0.605  -> zooplankton
+   prey Herbivorous & Omnivorous zooplankton (copepods) 0.131  -> zooplankton
+   prey Shrimp                                        0.101  -> benthic_community
+   prey Norway pout                                   0.094  -> fish:planktivore
+   prey Epifaunal macrobenthos (mobile grazers)       0.048  -> benthic_community
+   prey Miscellaneous filterfeeding pelagic fish      0.010  -> fish:planktivore
+   prey Sprat                                         0.010  -> fish:planktivore
+   prey Small infauna (polychaetes)                   0.000  -> benthic_community
+   by pool: {'zooplankton': 0.736, 'benthic_community': 0.149, 'fish:planktivore': 0.114} sum 1.0
+   M2 total 1.472; M0 = PB(1-EE) = 0.266
+     predatory_fish                     1.100  Horse mackerel 0.427, Saithe (adult) 0.359, Hake 0.125, Other gadoids (large) 0.084, Megrim 0.071, Mackerel 0.019, Spurdog 0.009, Small sharks 0.005
+     not_in_model                       0.212  Squid & cuttlefish 0.212
+     benthivorous_fish                  0.151  Cod (adult) 0.144, Large demersal fish 0.004
+     porpoises (toothed whales)         0.009  Toothed whales 0.009

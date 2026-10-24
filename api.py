@@ -59,8 +59,9 @@ RUNS: dict[str, dict[str, Any]] = {}
 LOGGER = logging.getLogger("mareld.api")
 
 INTERNAL_TO_API_SPECIES = {
-    "gadoids": "codfish",
-    "pelagic_fish": "pelagicFish",
+    "planktivorous_fish": "planktivorousFish",
+    "benthivorous_fish": "benthivorousFish",
+    "predatory_fish": "predatoryFish",
 }
 API_TO_INTERNAL_SPECIES = {
     **{v: k for k, v in INTERNAL_TO_API_SPECIES.items()},

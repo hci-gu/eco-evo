@@ -52,7 +52,7 @@ Settings live in the project manifest:
 and per pair in fg_library.yaml (both optional, both dimensionless and
 tick-independent):
 
-    pelagic_fish_preys_on_zooplankton:
+    planktivorous_fish_preys_on_zooplankton:
       dark_ratio: 0.1            # a_dark / a_light; absent or 1 = no effect
       light_threshold_deg: -8.0  # sun elevation of half detection
 

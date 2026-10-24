@@ -25,7 +25,7 @@ from lib.viz.pygame_viz import LiveVisualizer
 
 
 GRID_SIZE = (10, 10)
-CONTROLLED_FG = "gadoids"
+CONTROLLED_FG = "benthivorous_fish"
 SEED = 0
 LOGIT_STRENGTH = 80.0
 FPS_IDLE = 30

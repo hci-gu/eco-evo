@@ -1,0 +1,18 @@
+GUR 2015 371.5 kt (N thousands x kg)
+GUR 2016 392.8 kt (N thousands x kg)
+GUR 2017 372.9 kt (N thousands x kg)
+GUR 2018 234.3 kt (N thousands x kg)
+GUR 2019 236.4 kt (N thousands x kg)
+GUR 2020 240.8 kt (N thousands x kg)
+GUR 2021 191.5 kt (N thousands x kg)
+GUR 2022 162.0 kt (N thousands x kg)
+mean 275.3 kt
+RAJ 2015 42.9 kt (N thousands x kg)
+RAJ 2016 39.1 kt (N thousands x kg)
+RAJ 2017 36.2 kt (N thousands x kg)
+RAJ 2018 29.2 kt (N thousands x kg)
+RAJ 2019 21.0 kt (N thousands x kg)
+RAJ 2020 22.5 kt (N thousands x kg)
+RAJ 2021 11.8 kt (N thousands x kg)
+RAJ 2022 25.9 kt (N thousands x kg)
+mean 28.6 kt

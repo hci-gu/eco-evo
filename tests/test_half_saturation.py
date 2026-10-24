@@ -53,7 +53,7 @@ def test_pair_attack_rate_reaches_the_runtime_matrix():
 
 def test_pairs_without_override_keep_the_species_rate():
     env = _env()
-    i = env.dm_ids.index('pelagic_fish')
+    i = env.dm_ids.index('planktivorous_fish')
     j = env.global_fg_order.index('zooplankton')
     assert float(env.max_intake_mat[i, j]) == pytest.approx(
-        float(env.fgs['pelagic_fish'].params['max_intake_rate']))
+        float(env.fgs['planktivorous_fish'].params['max_intake_rate']))

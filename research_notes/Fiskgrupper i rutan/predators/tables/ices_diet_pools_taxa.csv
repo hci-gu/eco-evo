@@ -1,0 +1,472 @@
+species,area,period,pool,taxon,g
+anglerfish,Box,2022,Bf,Anguilla anguilla,13.13
+anglerfish,Box,2022,Bf,Gadus morhua,3.74
+anglerfish,Box,2022,Gu,Gadidae,1.13
+anglerfish,CSNS,2022,Bf,Pleuronectes platessa,99.243
+anglerfish,CSNS,2022,Bf,Pleuronectiformes,145.883
+anglerfish,CSNS,2022,Fu,Gnathostomata,6.74
+anglerfish,CSNS,2022,Fu,Pisces,72.56
+anglerfish,CSNS,2022,P,Clupea harengus,154.32
+anglerfish,CSNS,2022,U,no_id,29.6
+anglerfish,CSNS,2022,W,Merluccius merluccius,192.41
+anglerfish,CSNS,2024,Bf,Pleuronectidae,17.138
+anglerfish,CSNS,2024,Gu,Trisopterus,19.082
+anglerfish,NNS,2022,Fu,Chondrichthyes,7.35
+anglerfish,NNS,2022,Fu,Pisces,109.25
+anglerfish,NNS,2022,P,Norway pout,10.1
+anglerfish,NNS,2022,U,no_id,2.5
+anglerfish,NNS,2022,W,Merluccius merluccius,458.0
+anglerfish,NNS,2022,W,Trachurus trachurus,314.0
+anglerfish,NNS,2024,Bf,Melanogrammus aeglefinus,308.681
+anglerfish,NNS,2024,P,Norway pout,27.592
+anglerfish,NNS,pre2000,W,Merlangius merlangus,157.71
+anglerfish,Skagerrak,2022,Bf,Anguilla anguilla,13.13
+anglerfish,Skagerrak,2022,Bf,Gadus morhua,3.74
+anglerfish,Skagerrak,2022,Bf,Pleuronectiformes,57.07
+anglerfish,Skagerrak,2022,Fu,Pisces,22.0
+anglerfish,Skagerrak,2022,Gu,Gadidae,1.13
+hake,Box,2024,B,Amphipoda,0.02
+hake,Box,2024,B,Brachyura,0.1
+hake,Box,2024,B,Pagurus,1.58
+hake,Box,2024,Fu,Osteichthyes,4.83
+hake,Box,2024,Gu,Gadidae,13.97
+hake,Box,2024,O,Cephalopoda,2.91
+hake,Box,2024,P,Clupea harengus,471.67
+hake,Box,2024,P,Clupeidae,15.77
+hake,Box,2024,P,Sprattus sprattus,41.12
+hake,Box,2024,W,Merlangius merlangus,102.52
+hake,Box,2024,Z,Euphausiidae,1.2
+hake,CSNS,2024,Bf,Gadus morhua,14.7
+hake,CSNS,2024,Bf,Gobiidae,0.586
+hake,CSNS,2024,Bf,Melanogrammus aeglefinus,273.5
+hake,CSNS,2024,Fu,Pisces,21.03
+hake,CSNS,2024,P,Norway pout,23.27
+hake,CSNS,2024,U,no_id,0.08
+hake,CSNS,2024,Uc,Crustacea,0.41
+hake,CSNS,2024,W,Merlangius merlangus,10.59
+hake,Kattegat,2024,B,Amphipoda,0.05
+hake,Kattegat,2024,B,Caridea,0.29
+hake,Kattegat,2024,B,Cumopsis goodsir,0.39
+hake,Kattegat,2024,B,Polybius,0.76
+hake,Kattegat,2024,B,Processa,0.6
+hake,Kattegat,2024,Bf,Pleuronectes platessa,16.75
+hake,Kattegat,2024,Fu,Osteichthyes,7.66
+hake,Kattegat,2024,O,Cephalopoda,0.33
+hake,Kattegat,2024,P,Clupea harengus,137.01
+hake,Kattegat,2024,P,Clupeidae,13.94
+hake,Kattegat,2024,P,Sprattus sprattus,17.36
+hake,Kattegat,2024,W,Merlangius merlangus,139.62
+hake,Kattegat,2024,Z,Euphausiidae,4.1
+hake,NNS,2024,B,Amphipoda,0.014
+hake,NNS,2024,B,Echinidea,0.95
+hake,NNS,2024,Fu,Teleostei,196.62
+hake,NNS,2024,Gu,Gadidae,0.121
+hake,NNS,2024,Gu,Trisopterus,0.684
+hake,NNS,2024,P,Argentina sphyraena,6.823
+hake,NNS,2024,P,Clupea harengus,150.34
+hake,NNS,2024,P,Norway pout,60.379
+hake,NNS,2024,Uc,Crustacea,2.69
+hake,Skagerrak,2024,B,Amphipoda,0.02
+hake,Skagerrak,2024,B,Brachyura,0.1
+hake,Skagerrak,2024,B,Caridea,0.11
+hake,Skagerrak,2024,B,Pagurus,1.58
+hake,Skagerrak,2024,B,Processa,0.13
+hake,Skagerrak,2024,Bf,Pleuronectiformes,2.86
+hake,Skagerrak,2024,Fu,Osteichthyes,9.26
+hake,Skagerrak,2024,Gu,Gadidae,21.47
+hake,Skagerrak,2024,O,Cephalopoda,2.91
+hake,Skagerrak,2024,P,Clupea harengus,526.95
+hake,Skagerrak,2024,P,Clupeidae,80.43
+hake,Skagerrak,2024,P,Norway pout,7.69
+hake,Skagerrak,2024,P,Sprattus sprattus,50.59
+hake,Skagerrak,2024,U,no_id,0.07
+hake,Skagerrak,2024,W,Merlangius merlangus,105.26
+hake,Skagerrak,2024,Z,Euphausiidae,1.2
+horse_mackerel,Box,2023,B,Decapoda,0.42
+horse_mackerel,Box,2023,Z,Meganyctiphanes norvegica,2.92
+horse_mackerel,CSNS,2023,B,Amphipoda,0.002
+horse_mackerel,CSNS,2023,B,Brachyura,0.03
+horse_mackerel,CSNS,2023,B,Decapoda,8.9
+horse_mackerel,CSNS,2023,B,Gastropoda,0.035
+horse_mackerel,CSNS,2023,B,Isopoda,0.187
+horse_mackerel,CSNS,2023,B,Mysidae,4.68
+horse_mackerel,CSNS,2023,B,Prosobranchia,0.111
+horse_mackerel,CSNS,2023,B,Reptantia,0.001
+horse_mackerel,CSNS,2023,Bf,Aphia minuta,3.74
+horse_mackerel,CSNS,2023,Bf,Gobiidae,1.043
+horse_mackerel,CSNS,2023,Bf,Pleuronectidae,0.012
+horse_mackerel,CSNS,2023,Bf,Trachinidae,0.01
+horse_mackerel,CSNS,2023,Fu,Osteichthyes,0.837
+horse_mackerel,CSNS,2023,Fu,Pisces,2.4
+horse_mackerel,CSNS,2023,Gu,Gadidae,0.612
+horse_mackerel,CSNS,2023,O,Cephalopoda,30.393
+horse_mackerel,CSNS,2023,P,Ammodytidae,0.369
+horse_mackerel,CSNS,2023,P,Clupeidae,15.799
+horse_mackerel,CSNS,2023,P,Sprattus sprattus,0.156
+horse_mackerel,CSNS,2023,U,no_id,1.63
+horse_mackerel,CSNS,2023,Uc,Crustacea,14.553
+horse_mackerel,CSNS,2023,W,Merlangius merlangus,1.752
+horse_mackerel,CSNS,2023,W,Trachurus trachurus,13.071
+horse_mackerel,CSNS,2023,Z,Copepoda,0.25
+horse_mackerel,NNS,2023,B,Amphipoda,0.023
+horse_mackerel,NNS,2023,B,Decapoda,0.14
+horse_mackerel,NNS,2023,B,Mysidae,0.028
+horse_mackerel,NNS,2023,Uc,Crustacea,0.158
+horse_mackerel,Skagerrak,2023,B,Decapoda,0.42
+horse_mackerel,Skagerrak,2023,Uc,Crustacea,0.27
+horse_mackerel,Skagerrak,2023,Z,Meganyctiphanes norvegica,2.92
+mackerel,CSNS,2022,B,Amphipoda,0.41
+mackerel,CSNS,2022,B,Caridea,0.43
+mackerel,CSNS,2022,Fu,Pisces,92.79
+mackerel,CSNS,2022,P,Ammodytidae,709.24
+mackerel,CSNS,2022,P,Clupea harengus,41.92
+mackerel,CSNS,2022,P,Clupeidae,2.27
+mackerel,CSNS,2022,P,Norway pout,0.65
+mackerel,CSNS,2022,P,Sprattus sprattus,47.0
+mackerel,CSNS,2022,U,no_id,669.83
+mackerel,CSNS,2022,Uc,Arthropoda,1.08
+mackerel,CSNS,2022,Uc,Crustacea,230.58
+mackerel,CSNS,2022,W,Merlangius merlangus,26.66
+mackerel,NNS,2022,B,Caridea,0.18
+mackerel,NNS,2022,Fu,Pisces,0.28
+mackerel,NNS,2022,P,Ammodytidae,1.06
+mackerel,NNS,2022,U,no_id,167.39
+mackerel,NNS,2022,Uc,Crustacea,72.6
+mackerel,NNS,2025,B,Amphipoda,0.026
+mackerel,NNS,2025,Fu,Teleostei,1.18
+mackerel,NNS,2025,P,Norway pout,0.363
+mackerel,NNS,2025,U,no_id,0.072
+mackerel,NNS,2025,Uc,Crustacea,0.01
+mackerel,NNS,2025,Z,Calanoida,0.081
+mackerel,NNS,2025,Z,Euphausiidae,8.81
+mackerel,NNS,2025,Z,Meganyctiphanes norvegica,4.371
+mackerel,NNS,2025,Z,Themisto,0.027
+mackerel,NNS,2025,Z,Thysanoessa inermis,0.243
+saithe,NNS,2024,B,Crangonidae,14.857
+saithe,NNS,2024,P,Norway pout,6.097
+spurdog,Box,2024,B,Bivalvia,0.01
+spurdog,Box,2024,Uc,Crustacea,0.14
+spurdog,Box,2024,Z,Euphausiidae,0.15
+spurdog,Box,2024,Z,Hyperiidae,0.09
+spurdog,CSNS,2023,W,Scomber scombrus,83.409
+spurdog,CSNS,2024,O,Cephalopoda,16.57
+spurdog,CSNS,2024,Uc,Crustacea,0.001
+spurdog,CSNS,pre2000,Bf,Buglossidium luteum,2.06
+spurdog,CSNS,pre2000,Bf,Callionymus lyra,11.3
+spurdog,CSNS,pre2000,Bf,Echiichthys vipera,41.8
+spurdog,CSNS,pre2000,Bf,Limanda limanda,61.8
+spurdog,CSNS,pre2000,Bf,Pholis gunnellus,14.9
+spurdog,CSNS,pre2000,Fu,Gnathostomata,3.72
+spurdog,CSNS,pre2000,P,Ammodytidae,22.98
+spurdog,CSNS,pre2000,P,Clupea harengus,143.3
+spurdog,CSNS,pre2000,P,Hyperoplus lanceolatus,73.27
+spurdog,CSNS,pre2000,P,Norway pout,29.7
+spurdog,CSNS,pre2000,W,Merlangius merlangus,126.5
+spurdog,Skagerrak,2024,B,Bivalvia,0.01
+spurdog,Skagerrak,2024,Fu,Osteichthyes,1.35
+spurdog,Skagerrak,2024,Uc,Crustacea,0.14
+spurdog,Skagerrak,2024,Z,Euphausiidae,0.23
+spurdog,Skagerrak,2024,Z,Hyperiidae,0.09
+whiting,Box,2022,B,Amphipoda,0.01
+whiting,Box,2022,B,Aphrodita aculeata,0.22
+whiting,Box,2022,B,Crangon crangon,0.1
+whiting,Box,2022,B,Erythrops elegans,0.42
+whiting,Box,2022,B,Mysis mixta,0.02
+whiting,Box,2022,Bf,Gadus morhua,12.33
+whiting,Box,2022,Fu,Pisces,0.29
+whiting,Box,2022,P,Clupea harengus,4.5
+whiting,Box,2022,W,Merlangius merlangus,45.23
+whiting,Box,2022,Z,Euphausiidae,0.02
+whiting,Box,pre2000,B,Amphipoda,0.32
+whiting,Box,pre2000,B,Bivalvia,0.01
+whiting,Box,pre2000,B,Caridea,0.06
+whiting,Box,pre2000,B,Crangon allmanni,1.39
+whiting,Box,pre2000,B,Crangonidae,0.29
+whiting,Box,pre2000,B,Echinidea,0.21
+whiting,Box,pre2000,B,Gastropoda,0.06
+whiting,Box,pre2000,B,Nereididae,7.72
+whiting,Box,pre2000,B,Pagurus bernhardus,0.01
+whiting,Box,pre2000,B,Pandalus borealis,13.5
+whiting,Box,pre2000,B,Pandalus montagui,1.32
+whiting,Box,pre2000,B,Polychaeta,0.4
+whiting,Box,pre2000,B,Processa,0.15
+whiting,Box,pre2000,Bf,Lumpenus lampretaeformis,2.98
+whiting,Box,pre2000,Fu,Gnathostomata,0.11
+whiting,Box,pre2000,P,Maurolicus muelleri,2.1
+whiting,Box,pre2000,P,Norway pout,8.39
+whiting,Box,pre2000,Uc,Crustacea,0.06
+whiting,Box,pre2000,Z,Euphausiidae,0.45
+whiting,Box,pre2000,Z,Meganyctiphanes norvegica,31.95
+whiting,Box,pre2000,Z,PAS:Hymenodora glacialis,9.4
+whiting,Box,pre2000,Z,Tomopteridae,0.01
+whiting,CSNS,2022,B,Amphipoda,3.705
+whiting,CSNS,2022,B,Annelida,9.96
+whiting,CSNS,2022,B,Aphrodite aculeata,1.91
+whiting,CSNS,2022,B,Bivalvia,0.11
+whiting,CSNS,2022,B,Brachyura,21.897
+whiting,CSNS,2022,B,Callianassa subterranea,2.538
+whiting,CSNS,2022,B,Callianassidae,0.315
+whiting,CSNS,2022,B,Caprellidae,0.01
+whiting,CSNS,2022,B,Cardiidae,0.02
+whiting,CSNS,2022,B,Caridea,41.66
+whiting,CSNS,2022,B,Cirolana cranchii,0.514
+whiting,CSNS,2022,B,Corystes cassivelaunus,0.837
+whiting,CSNS,2022,B,Crangon,3.003
+whiting,CSNS,2022,B,Crangon allmanni,6.479
+whiting,CSNS,2022,B,Crangon crangon,5.6
+whiting,CSNS,2022,B,Crangonidae,1.843
+whiting,CSNS,2022,B,Cumacea,0.193
+whiting,CSNS,2022,B,Echinodermata,0.001
+whiting,CSNS,2022,B,Ensis ensis,1.279
+whiting,CSNS,2022,B,Gastropoda,1.287
+whiting,CSNS,2022,B,Harpinia antennaria,0.228
+whiting,CSNS,2022,B,Isopoda,0.43
+whiting,CSNS,2022,B,Lagis koreni,0.512
+whiting,CSNS,2022,B,Liocarcinus,3.986
+whiting,CSNS,2022,B,Liocarcinus depurator,0.146
+whiting,CSNS,2022,B,Liocarcinus holsatus,1.375
+whiting,CSNS,2022,B,Liocarcinus marmoreus,0.26
+whiting,CSNS,2022,B,Mollusca,3.917
+whiting,CSNS,2022,B,Mysida,21.912
+whiting,CSNS,2022,B,Mysidae,1.132
+whiting,CSNS,2022,B,Nebalia bipes,0.841
+whiting,CSNS,2022,B,Nephrops norvegicus,12.425
+whiting,CSNS,2022,B,Nereididae,0.001
+whiting,CSNS,2022,B,Paguridae,0.011
+whiting,CSNS,2022,B,Pagurus bernhardus,26.91
+whiting,CSNS,2022,B,Pandalus borealis,4.177
+whiting,CSNS,2022,B,Perinereis euiini,2.893
+whiting,CSNS,2022,B,Phoxocephalus holbolli,0.096
+whiting,CSNS,2022,B,Polychaeta,4.976
+whiting,CSNS,2022,B,Portunidae,4.263
+whiting,CSNS,2022,B,Processa,10.534
+whiting,CSNS,2022,B,Processa canaliculata,0.237
+whiting,CSNS,2022,B,Processa nouveli holthuisi,0.031
+whiting,CSNS,2022,B,Schistomysis kervillei,0.671
+whiting,CSNS,2022,B,Upogebia deltaura,1.262
+whiting,CSNS,2022,B,Urothoe elegans,0.007
+whiting,CSNS,2022,B,Venerida,0.058
+whiting,CSNS,2022,B,Veneridae,0.014
+whiting,CSNS,2022,Bf,Aphia minuta,0.071
+whiting,CSNS,2022,Bf,Callionymidae,3.35
+whiting,CSNS,2022,Bf,Callionymus reticulatus,0.001
+whiting,CSNS,2022,Bf,Gadus morhua,0.348
+whiting,CSNS,2022,Bf,Glyptocephalus cynoglossus,0.619
+whiting,CSNS,2022,Bf,Gobiidae,9.672
+whiting,CSNS,2022,Bf,Gobius niger,0.163
+whiting,CSNS,2022,Bf,Melanogrammus aeglefinus,22.829
+whiting,CSNS,2022,Bf,Pleuronectidae,0.08
+whiting,CSNS,2022,Bf,Pleuronectiformes,0.615
+whiting,CSNS,2022,Bf,Pomatoschistus,0.003
+whiting,CSNS,2022,Bf,Pomatoschistus minutus,5.43
+whiting,CSNS,2022,Bf,Pomatoschistus pictus,0.062
+whiting,CSNS,2022,Bf,Solea solea,5.444
+whiting,CSNS,2022,Bf,Zoarces viviparus,0.111
+whiting,CSNS,2022,Fu,Actinopteri,59.739
+whiting,CSNS,2022,Fu,Actinopterygii,10.504
+whiting,CSNS,2022,Fu,Gnathostomata,99.932
+whiting,CSNS,2022,Fu,Osteichthyes,5.787
+whiting,CSNS,2022,Fu,Pisces,124.038
+whiting,CSNS,2022,Gu,Gadidae,21.633
+whiting,CSNS,2022,O,Cephalopoda,5.786
+whiting,CSNS,2022,P,Ammodytes,6.628
+whiting,CSNS,2022,P,Ammodytes marinus,14.767
+whiting,CSNS,2022,P,Ammodytidae,30.997
+whiting,CSNS,2022,P,Clupea harengus,208.056
+whiting,CSNS,2022,P,Clupeidae,25.657
+whiting,CSNS,2022,P,Hyperoplus lanceolatus,8.05
+whiting,CSNS,2022,P,Sprattus sprattus,66.859
+whiting,CSNS,2022,U,no_id,41.18
+whiting,CSNS,2022,Uc,Arthropoda,11.55
+whiting,CSNS,2022,Uc,Crustacea,30.31
+whiting,CSNS,2022,Uc,Malacostraca,2.371
+whiting,CSNS,2022,W,Merlangius merlangus,165.049
+whiting,CSNS,2022,W,Merluccius merluccius,55.9
+whiting,CSNS,2022,W,Trachurus trachurus,5.7
+whiting,CSNS,2022,Z,Calanoida,0.003
+whiting,CSNS,2022,Z,Copepoda,0.008
+whiting,CSNS,2022,Z,Eurytemora,0.087
+whiting,CSNS,2022,Z,Hyperia galba,0.328
+whiting,CSNS,2022,Z,Hyperia medusarum,0.016
+whiting,CSNS,2023,B,Amphipoda,0.034
+whiting,CSNS,2023,B,Annelida,0.331
+whiting,CSNS,2023,B,Arenicola marina,3.898
+whiting,CSNS,2023,B,Caridea,12.183
+whiting,CSNS,2023,B,Crangon crangon,28.058
+whiting,CSNS,2023,B,Cumacea,0.15
+whiting,CSNS,2023,B,Decapoda,14.453
+whiting,CSNS,2023,B,Ensis ensis,31.261
+whiting,CSNS,2023,B,Gastropoda,3.006
+whiting,CSNS,2023,B,Leontocaris lar,1.105
+whiting,CSNS,2023,B,Mysida,0.037
+whiting,CSNS,2023,B,Pagurus bernhardus,1.233
+whiting,CSNS,2023,B,Phyllodocida,0.001
+whiting,CSNS,2023,B,Platyhelminthes,0.375
+whiting,CSNS,2023,B,Polychaeta,0.802
+whiting,CSNS,2023,Bf,Callionymidae,0.834
+whiting,CSNS,2023,Bf,Gobiidae,8.544
+whiting,CSNS,2023,Bf,Melanogrammus aeglefinus,34.357
+whiting,CSNS,2023,Bf,Pomatoschistus minutus,2.952
+whiting,CSNS,2023,Bf,Syngnathus,0.134
+whiting,CSNS,2023,Fu,Actinopteri,31.424
+whiting,CSNS,2023,Fu,Actinopterygii,35.08
+whiting,CSNS,2023,Fu,Gnathostomata,63.418
+whiting,CSNS,2023,O,Cephalopoda,2.313
+whiting,CSNS,2023,P,Ammodytes,4.205
+whiting,CSNS,2023,P,Clupeidae,66.117
+whiting,CSNS,2023,P,Norway pout,45.776
+whiting,CSNS,2023,Uc,Arthropoda,2.09
+whiting,CSNS,2023,Uc,Crustacea,17.408
+whiting,CSNS,2023,W,Merlangius merlangus,56.23
+whiting,CSNS,pre2000,B,Mollusca,1.47
+whiting,CSNS,pre2000,P,Clupea harengus,12.14
+whiting,CSNS,pre2000,P,Sprattus sprattus,2.47
+whiting,Kattegat,2020,U,no_id,9.9
+whiting,Kattegat,2022,B,Amphipoda,0.01
+whiting,Kattegat,2022,B,Brachyura,0.15
+whiting,Kattegat,2022,B,Caridea,0.5
+whiting,Kattegat,2022,B,Crangon crangon,0.07
+whiting,Kattegat,2022,B,Liocarcinus,0.25
+whiting,Kattegat,2022,B,Mysidae,0.01
+whiting,Kattegat,2022,B,Pagurus,0.09
+whiting,Kattegat,2022,B,Polychaeta,0.32
+whiting,Kattegat,2022,Fu,Pisces,0.25
+whiting,Kattegat,2022,W,Merlangius merlangus,20.91
+whiting,Kattegat,2022,Z,Euphausiidae,0.14
+whiting,Kattegat,pre2000,B,Ampharetidae,0.1
+whiting,Kattegat,pre2000,B,Amphipoda,2.915
+whiting,Kattegat,pre2000,B,Calocaris macandreae,0.87
+whiting,Kattegat,pre2000,B,Caridea,0.705
+whiting,Kattegat,pre2000,B,Crangon,0.25
+whiting,Kattegat,pre2000,B,Crangon allmanni,6.33
+whiting,Kattegat,pre2000,B,Crangon crangon,0.39
+whiting,Kattegat,pre2000,B,Crangonidae,0.88
+whiting,Kattegat,pre2000,B,Cumacea,0.155
+whiting,Kattegat,pre2000,B,Diastylidae,0.03
+whiting,Kattegat,pre2000,B,Gastrosaccus spinifer,0.11
+whiting,Kattegat,pre2000,B,Glyceridae,0.05
+whiting,Kattegat,pre2000,B,Mollusca,0.87
+whiting,Kattegat,pre2000,B,Mysidae,0.01
+whiting,Kattegat,pre2000,B,Nereididae,0.45
+whiting,Kattegat,pre2000,B,Ophiuridae,0.03
+whiting,Kattegat,pre2000,B,Paguridae,0.21
+whiting,Kattegat,pre2000,B,Pandalus,4.1
+whiting,Kattegat,pre2000,B,Pentidotea resecata,0.03
+whiting,Kattegat,pre2000,B,Phyllodocidae,0.08
+whiting,Kattegat,pre2000,B,Polychaeta,0.62
+whiting,Kattegat,pre2000,B,Portunidae,1.61
+whiting,Kattegat,pre2000,B,Processa,0.38
+whiting,Kattegat,pre2000,B,Processidae,1.35
+whiting,Kattegat,pre2000,Bf,Callionymus,6.87
+whiting,Kattegat,pre2000,Bf,Gobiidae,3.8
+whiting,Kattegat,pre2000,Bf,Lycodes vahlii,0.33
+whiting,Kattegat,pre2000,Fu,Gnathostomata,0.23
+whiting,Kattegat,pre2000,P,Clupea harengus,19.63
+whiting,Kattegat,pre2000,P,Clupeidae,1.14
+whiting,Kattegat,pre2000,P,Norway pout,8.3
+whiting,Kattegat,pre2000,P,Sprattus sprattus,30.57
+whiting,Kattegat,pre2000,Uc,Crustacea,0.125
+whiting,Kattegat,pre2000,Z,Meganyctiphanes norvegica,8.64
+whiting,NNS,2022,B,Isopoda,0.86
+whiting,NNS,2022,B,Mysida,0.41
+whiting,NNS,2022,Fu,Pisces,0.7
+whiting,NNS,2022,P,Norway pout,10.83
+whiting,NNS,2022,U,no_id,0.22
+whiting,Skagerrak,2022,B,Amphipoda,0.01
+whiting,Skagerrak,2022,B,Annelida,1.41
+whiting,Skagerrak,2022,B,Aphrodita aculeata,0.22
+whiting,Skagerrak,2022,B,Brachyura,0.76
+whiting,Skagerrak,2022,B,Caridea,2.69
+whiting,Skagerrak,2022,B,Crangon crangon,0.31
+whiting,Skagerrak,2022,B,Erythrops elegans,0.42
+whiting,Skagerrak,2022,B,Mysida,0.17
+whiting,Skagerrak,2022,B,Mysis mixta,0.02
+whiting,Skagerrak,2022,B,Pandalus borealis,0.1
+whiting,Skagerrak,2022,B,Processa,0.45
+whiting,Skagerrak,2022,Bf,Gadus morhua,12.33
+whiting,Skagerrak,2022,Bf,Gobiidae,0.1
+whiting,Skagerrak,2022,Fu,Pisces,5.99
+whiting,Skagerrak,2022,P,Clupea harengus,4.5
+whiting,Skagerrak,2022,U,no_id,1.2
+whiting,Skagerrak,2022,W,Merlangius merlangus,65.23
+whiting,Skagerrak,2022,Z,Euphausiidae,0.33
+whiting,Skagerrak,pre2000,B,Ampharetidae,0.33
+whiting,Skagerrak,pre2000,B,Amphipoda,0.44
+whiting,Skagerrak,pre2000,B,Bivalvia,10.16
+whiting,Skagerrak,pre2000,B,Brachyura,0.51
+whiting,Skagerrak,pre2000,B,Calocaris macandreae,1.8
+whiting,Skagerrak,pre2000,B,Caridea,3.37
+whiting,Skagerrak,pre2000,B,Crangon,0.13
+whiting,Skagerrak,pre2000,B,Crangon allmanni,1.71
+whiting,Skagerrak,pre2000,B,Crangonidae,0.43
+whiting,Skagerrak,pre2000,B,Cumacea,0.02
+whiting,Skagerrak,pre2000,B,Echinidea,0.21
+whiting,Skagerrak,pre2000,B,Gastropoda,0.06
+whiting,Skagerrak,pre2000,B,Glyceridae,0.14
+whiting,Skagerrak,pre2000,B,Mollusca,1.34
+whiting,Skagerrak,pre2000,B,Nereididae,7.72
+whiting,Skagerrak,pre2000,B,Ophiuridae,0.04
+whiting,Skagerrak,pre2000,B,Pagurus bernhardus,0.01
+whiting,Skagerrak,pre2000,B,Pandalidae,0.29
+whiting,Skagerrak,pre2000,B,Pandalus borealis,18.79
+whiting,Skagerrak,pre2000,B,Pandalus montagui,4.8
+whiting,Skagerrak,pre2000,B,Polychaeta,1.88
+whiting,Skagerrak,pre2000,B,Polynoidae,0.1
+whiting,Skagerrak,pre2000,B,Portunidae,0.33
+whiting,Skagerrak,pre2000,B,Processa,0.23
+whiting,Skagerrak,pre2000,B,Processidae,0.68
+whiting,Skagerrak,pre2000,Bf,Anarhichas,0.4
+whiting,Skagerrak,pre2000,Bf,Enchelyopus,3.0
+whiting,Skagerrak,pre2000,Bf,Lumpenus lampretaeformis,2.98
+whiting,Skagerrak,pre2000,Bf,Lycodes vahlii,5.03
+whiting,Skagerrak,pre2000,Bf,Pleuronectidae,0.26
+whiting,Skagerrak,pre2000,Fu,Gnathostomata,1.89
+whiting,Skagerrak,pre2000,Gu,Gadidae,1.34
+whiting,Skagerrak,pre2000,P,Clupea harengus,14.79
+whiting,Skagerrak,pre2000,P,Maurolicus muelleri,2.1
+whiting,Skagerrak,pre2000,P,Norway pout,11.16
+whiting,Skagerrak,pre2000,P,Sprattus sprattus,6.58
+whiting,Skagerrak,pre2000,Uc,Crustacea,0.09
+whiting,Skagerrak,pre2000,Uc,Eucarida,2.86
+whiting,Skagerrak,pre2000,Z,Euphausiidae,1.46
+whiting,Skagerrak,pre2000,Z,Hyperiidea,0.02
+whiting,Skagerrak,pre2000,Z,Meganyctiphanes norvegica,105.18
+whiting,Skagerrak,pre2000,Z,PAS:Hymenodora,1.66
+whiting,Skagerrak,pre2000,Z,PAS:Hymenodora glacialis,12.98
+whiting,Skagerrak,pre2000,Z,Tomopteridae,0.01
+whiting,other,2020,U,no_id,425.1
+whiting,other,2021,U,no_id,55.97
+whiting,other,2023,B,Caridea,1.26
+whiting,other,2023,B,Ensis ensis,8.735
+whiting,other,2023,B,Gastrosaccus spinifer,0.042
+whiting,other,2023,B,Lagis koreni,0.0
+whiting,other,2023,B,Leontocaris lar,0.682
+whiting,other,2023,B,Palaemonidae,0.966
+whiting,other,2023,Fu,Gnathostomata,79.756
+whiting,other,2023,P,Clupeidae,45.659
+whiting,other,2023,P,Sprattus sprattus,24.877
+whiting,other,2023,Uc,Crustacea,0.617
+whiting,other,2023,Z,Copepoda,0.1
+whiting,other,2024,B,Amphipoda,0.068
+whiting,other,2024,B,Annelida,5.824
+whiting,other,2024,B,Caridea,12.335
+whiting,other,2024,B,Cumacea,2.312
+whiting,other,2024,B,Decapoda,0.01
+whiting,other,2024,B,Gammaridea,0.573
+whiting,other,2024,B,Isopoda,0.118
+whiting,other,2024,B,Mollusca,0.695
+whiting,other,2024,B,Mysida,0.155
+whiting,other,2024,B,Mytilidae,0.102
+whiting,other,2024,B,Peracarida,4.297
+whiting,other,2024,Bf,Cottidae,0.135
+whiting,other,2024,Bf,Cyclopteridae,2.02
+whiting,other,2024,Bf,Gobiidae,6.097
+whiting,other,2024,Bf,Pholidae,1.197
+whiting,other,2024,Bf,Pleuronectidae,11.694
+whiting,other,2024,Bf,Pleuronectiformes,3.458
+whiting,other,2024,Gu,Gadidae,57.71
+whiting,other,2024,P,Clupeidae,235.186
+whiting,other,2024,P,Clupeiformes,8.272
+whiting,other,2024,P,Gasterosteidae,59.53
+whiting,other,2024,U,no_id,17.687
+whiting,other,2024,Uc,Crustacea,0.635

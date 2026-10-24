@@ -46,7 +46,7 @@ def _uniform_weights(H, W, seed=0):
 @pytest.mark.parametrize("total_b,min_per_cell", [
     (12.0, 0.5),     # porpoises-liknande
     (25.0, 0.8),     # seals-liknande
-    (2500.0, 0.005), # gadoids-liknande
+    (2500.0, 0.005), # benthivorous_fish-liknande
     (56000.0, 0.0),  # phytoplankton: inget golv
     (1.0, 0.5),      # gränsfall: total = 2 * golv
 ])

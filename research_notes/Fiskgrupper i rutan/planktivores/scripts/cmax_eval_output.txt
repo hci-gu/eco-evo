@@ -1,0 +1,98 @@
+Temperature factors f(T) (fraction of the optimum Cmax):
+  T  3.0: herring_juv 0.210  herring_adult 0.235  cod_hansson 0.506
+  T  5.0: herring_juv 0.388  herring_adult 0.458  cod_hansson 0.611
+  T  6.0: herring_juv 0.494  herring_adult 0.584  cod_hansson 0.667
+  T  7.0: herring_juv 0.602  herring_adult 0.700  cod_hansson 0.724
+  T  8.0: herring_juv 0.700  herring_adult 0.795  cod_hansson 0.781
+  T  9.0: herring_juv 0.783  herring_adult 0.866  cod_hansson 0.837
+  T 10.0: herring_juv 0.848  herring_adult 0.914  cod_hansson 0.889
+  T 12.0: herring_juv 0.930  herring_adult 0.966  cod_hansson 0.972
+  T 13.0: herring_juv 0.953  herring_adult 0.978  cod_hansson 0.995
+  T 14.0: herring_juv 0.969  herring_adult 0.981  cod_hansson 0.999
+  T 15.0: herring_juv 0.978  herring_adult 0.973  cod_hansson 0.978
+  T 17.0: herring_juv 0.972  herring_adult 0.852  cod_hansson 0.834
+
+herring: set herring_juv, W 60 g, Cmax at optimum 0.2251 g/g/d
+  T annual mean 9.31 C, feeding season mean 10.22 C
+  Cmax(g/g/d) at T_ann 0.1811, at T_fs 0.1935, mean of months: year 0.1653, season 0.1803
+  monthly: Jan 0.119 Feb 0.097 Mar 0.092 Apr 0.114 May 0.153 Jun 0.190 Jul 0.210 Aug 0.216 Sep 0.217 Oct 0.214 Nov 0.197 Dec 0.165
+blue_whiting: set cod_hansson, W 100 g, Cmax at optimum 0.0403 g/g/d
+  T annual mean 8.37 C, feeding season mean 7.67 C
+  Cmax(g/g/d) at T_ann 0.0324, at T_fs 0.0308, mean of months: year 0.0322, season 0.0307
+  monthly: Jan 0.031 Feb 0.030 Mar 0.028 Apr 0.028 May 0.029 Jun 0.030 Jul 0.032 Aug 0.033 Sep 0.036 Oct 0.039 Nov 0.037 Dec 0.034
+norway_pout: set cod_hansson, W 25 g, Cmax at optimum 0.0528 g/g/d
+  T annual mean 8.37 C, feeding season mean 7.67 C
+  Cmax(g/g/d) at T_ann 0.0424, at T_fs 0.0403, mean of months: year 0.0422, season 0.0403
+  monthly: Jan 0.040 Feb 0.039 Mar 0.037 Apr 0.037 May 0.038 Jun 0.039 Jul 0.041 Aug 0.043 Sep 0.048 Oct 0.051 Nov 0.049 Dec 0.045
+sprat: set herring_juv, W 10 g, Cmax at optimum 0.3561 g/g/d
+  T annual mean 9.31 C, feeding season mean 10.22 C
+  Cmax(g/g/d) at T_ann 0.2866, at T_fs 0.3061, mean of months: year 0.2614, season 0.2852
+  monthly: Jan 0.188 Feb 0.153 Mar 0.145 Apr 0.180 May 0.243 Jun 0.300 Jul 0.332 Aug 0.342 Sep 0.344 Oct 0.338 Nov 0.311 Dec 0.262
+norway_pout at flat 7 C (near-bottom): 0.0383 g/g/d; at 6 C 0.0352; at 8 C 0.0413
+blue_whiting at flat 7 C (near-bottom): 0.0292 g/g/d; at 6 C 0.0269; at 8 C 0.0315
+herring (adult set, 60 g): T_ann 0.1987, T_fs 0.2077, mean months year 0.1793, season 0.1933
+  monthly: Jan 0.140 Feb 0.115 Mar 0.109 Apr 0.134 May 0.175 Jun 0.205 Jul 0.218 Aug 0.221 Sep 0.221 Oct 0.220 Nov 0.210 Dec 0.186
+Lab ad-lib herring ration: k 0.1119/C (Q10 3.06), W0 10.7 g
+  herring 60 g: mean of months year 0.0397 g/g/d, season 0.0435; at T_ann 0.0374, T_fs 0.0414
+  monthly: Jan 0.027 Feb 0.024 Mar 0.024 Apr 0.026 May 0.032 Jun 0.040 Jul 0.051 Aug 0.059 Sep 0.062 Oct 0.055 Nov 0.043 Dec 0.034
+    lab food ED 3.4: year 0.135 kJ/g/d (3.0 %/d on 4.5, h 133), season 0.148 kJ/g/d (3.3 %/d, h 122)
+    lab food ED 3.7: year 0.147 kJ/g/d (3.3 %/d on 4.5, h 123), season 0.161 kJ/g/d (3.6 %/d, h 112)
+    lab food ED 4.0: year 0.159 kJ/g/d (3.5 %/d on 4.5, h 113), season 0.174 kJ/g/d (3.9 %/d, h 104)
+  sprat 10 g: mean of months year 0.0628 g/g/d, season 0.0687; at T_ann 0.0592, T_fs 0.0656
+  monthly: Jan 0.042 Feb 0.038 Mar 0.037 Apr 0.041 May 0.050 Jun 0.063 Jul 0.081 Aug 0.094 Sep 0.098 Oct 0.088 Nov 0.068 Dec 0.053
+    lab food ED 3.4: year 0.214 kJ/g/d (4.7 %/d on 4.5, h 84), season 0.234 kJ/g/d (5.2 %/d, h 77)
+    lab food ED 3.7: year 0.232 kJ/g/d (5.2 %/d on 4.5, h 77), season 0.254 kJ/g/d (5.7 %/d, h 71)
+    lab food ED 4.0: year 0.251 kJ/g/d (5.6 %/d on 4.5, h 72), season 0.275 kJ/g/d (6.1 %/d, h 65)
+  WEIGHTED lab-curve reading, mean of months, year: 0.150 kJ/g/d = 3.3 %bw/d on 4.5 kJ/g, h 120
+  WEIGHTED lab-curve reading, mean of months, Apr-mid-Sep: 0.161 kJ/g/d = 3.6 %bw/d on 4.5 kJ/g, h 112
+
+=== Prey ED reading 'low (NEMURO 2.58 / cod 4.18)': herring 2.58 kJ/g, sprat 2.58 kJ/g, norway_pout 4.18 kJ/g, blue_whiting 4.18 kJ/g
+  herring       kJ/g/d: T_ann 0.467 T_fs 0.499 | mean-of-months year 0.426 season 0.465 | on 4.5 kJ/g: year 9.5 %/d (h 42), season 10.3 %/d (h 39)
+  blue_whiting  kJ/g/d: T_ann 0.135 T_fs 0.129 | mean-of-months year 0.135 season 0.128 | on 4.5 kJ/g: year 3.0 %/d (h 134), season 2.9 %/d (h 140)
+  norway_pout   kJ/g/d: T_ann 0.177 T_fs 0.168 | mean-of-months year 0.176 season 0.168 | on 4.5 kJ/g: year 3.9 %/d (h 102), season 3.7 %/d (h 107)
+  sprat         kJ/g/d: T_ann 0.739 T_fs 0.790 | mean-of-months year 0.675 season 0.736 | on 4.5 kJ/g: year 15.0 %/d (h 27), season 16.3 %/d (h 24)
+  WEIGHTED at annual-mean T                    : 0.419 kJ/g/d = 9.3 %bw/d on 4.5 kJ/g, ceiling 0.0233 t/t/tick, h 43.0; h_now/h = 0.58, now/Cmax = 1.72
+  WEIGHTED at feeding-season-mean T            : 0.444 kJ/g/d = 9.9 %bw/d on 4.5 kJ/g, ceiling 0.0247 t/t/tick, h 40.5; h_now/h = 0.62, now/Cmax = 1.62
+  WEIGHTED mean of monthly Cmax, year          : 0.384 kJ/g/d = 8.5 %bw/d on 4.5 kJ/g, ceiling 0.0214 t/t/tick, h 46.8; h_now/h = 0.53, now/Cmax = 1.87
+  WEIGHTED mean of monthly Cmax, Apr-mid-Sep   : 0.416 kJ/g/d = 9.2 %bw/d on 4.5 kJ/g, ceiling 0.0231 t/t/tick, h 43.3; h_now/h = 0.58, now/Cmax = 1.73
+
+=== Prey ED reading 'central (Baltic zoo 2.85 / cod 4.18)': herring 2.85 kJ/g, sprat 2.85 kJ/g, norway_pout 4.18 kJ/g, blue_whiting 4.18 kJ/g
+  herring       kJ/g/d: T_ann 0.516 T_fs 0.551 | mean-of-months year 0.471 season 0.514 | on 4.5 kJ/g: year 10.5 %/d (h 38), season 11.4 %/d (h 35)
+  blue_whiting  kJ/g/d: T_ann 0.135 T_fs 0.129 | mean-of-months year 0.135 season 0.128 | on 4.5 kJ/g: year 3.0 %/d (h 134), season 2.9 %/d (h 140)
+  norway_pout   kJ/g/d: T_ann 0.177 T_fs 0.168 | mean-of-months year 0.176 season 0.168 | on 4.5 kJ/g: year 3.9 %/d (h 102), season 3.7 %/d (h 107)
+  sprat         kJ/g/d: T_ann 0.817 T_fs 0.872 | mean-of-months year 0.745 season 0.813 | on 4.5 kJ/g: year 16.6 %/d (h 24), season 18.1 %/d (h 22)
+  WEIGHTED at annual-mean T                    : 0.460 kJ/g/d = 10.2 %bw/d on 4.5 kJ/g, ceiling 0.0255 t/t/tick, h 39.1; h_now/h = 0.64, now/Cmax = 1.57
+  WEIGHTED at feeding-season-mean T            : 0.488 kJ/g/d = 10.8 %bw/d on 4.5 kJ/g, ceiling 0.0271 t/t/tick, h 36.9; h_now/h = 0.68, now/Cmax = 1.48
+  WEIGHTED mean of monthly Cmax, year          : 0.422 kJ/g/d = 9.4 %bw/d on 4.5 kJ/g, ceiling 0.0234 t/t/tick, h 42.7; h_now/h = 0.59, now/Cmax = 1.71
+  WEIGHTED mean of monthly Cmax, Apr-mid-Sep   : 0.456 kJ/g/d = 10.1 %bw/d on 4.5 kJ/g, ceiling 0.0254 t/t/tick, h 39.4; h_now/h = 0.63, now/Cmax = 1.58
+
+=== Prey ED reading 'copepod (3.6 / cod 4.18)': herring 3.6 kJ/g, sprat 3.6 kJ/g, norway_pout 4.18 kJ/g, blue_whiting 4.18 kJ/g
+  herring       kJ/g/d: T_ann 0.652 T_fs 0.697 | mean-of-months year 0.595 season 0.649 | on 4.5 kJ/g: year 13.2 %/d (h 30), season 14.4 %/d (h 28)
+  blue_whiting  kJ/g/d: T_ann 0.135 T_fs 0.129 | mean-of-months year 0.135 season 0.128 | on 4.5 kJ/g: year 3.0 %/d (h 134), season 2.9 %/d (h 140)
+  norway_pout   kJ/g/d: T_ann 0.177 T_fs 0.168 | mean-of-months year 0.176 season 0.168 | on 4.5 kJ/g: year 3.9 %/d (h 102), season 3.7 %/d (h 107)
+  sprat         kJ/g/d: T_ann 1.032 T_fs 1.102 | mean-of-months year 0.941 season 1.027 | on 4.5 kJ/g: year 20.9 %/d (h 19), season 22.8 %/d (h 18)
+  WEIGHTED at annual-mean T                    : 0.574 kJ/g/d = 12.7 %bw/d on 4.5 kJ/g, ceiling 0.0319 t/t/tick, h 31.4; h_now/h = 0.80, now/Cmax = 1.26
+  WEIGHTED at feeding-season-mean T            : 0.609 kJ/g/d = 13.5 %bw/d on 4.5 kJ/g, ceiling 0.0339 t/t/tick, h 29.5; h_now/h = 0.85, now/Cmax = 1.18
+  WEIGHTED mean of monthly Cmax, year          : 0.526 kJ/g/d = 11.7 %bw/d on 4.5 kJ/g, ceiling 0.0292 t/t/tick, h 34.2; h_now/h = 0.73, now/Cmax = 1.37
+  WEIGHTED mean of monthly Cmax, Apr-mid-Sep   : 0.570 kJ/g/d = 12.7 %bw/d on 4.5 kJ/g, ceiling 0.0316 t/t/tick, h 31.6; h_now/h = 0.79, now/Cmax = 1.26
+
+=== Prey ED reading 'copepod + cod on fat fish (3.6 / 5.86)': herring 3.6 kJ/g, sprat 3.6 kJ/g, norway_pout 5.86 kJ/g, blue_whiting 5.86 kJ/g
+  herring       kJ/g/d: T_ann 0.652 T_fs 0.697 | mean-of-months year 0.595 season 0.649 | on 4.5 kJ/g: year 13.2 %/d (h 30), season 14.4 %/d (h 28)
+  blue_whiting  kJ/g/d: T_ann 0.190 T_fs 0.180 | mean-of-months year 0.189 season 0.180 | on 4.5 kJ/g: year 4.2 %/d (h 95), season 4.0 %/d (h 100)
+  norway_pout   kJ/g/d: T_ann 0.248 T_fs 0.236 | mean-of-months year 0.247 season 0.236 | on 4.5 kJ/g: year 5.5 %/d (h 73), season 5.2 %/d (h 76)
+  sprat         kJ/g/d: T_ann 1.032 T_fs 1.102 | mean-of-months year 0.941 season 1.027 | on 4.5 kJ/g: year 20.9 %/d (h 19), season 22.8 %/d (h 18)
+  WEIGHTED at annual-mean T                    : 0.585 kJ/g/d = 13.0 %bw/d on 4.5 kJ/g, ceiling 0.0325 t/t/tick, h 30.8; h_now/h = 0.81, now/Cmax = 1.23
+  WEIGHTED at feeding-season-mean T            : 0.620 kJ/g/d = 13.8 %bw/d on 4.5 kJ/g, ceiling 0.0344 t/t/tick, h 29.0; h_now/h = 0.86, now/Cmax = 1.16
+  WEIGHTED mean of monthly Cmax, year          : 0.537 kJ/g/d = 11.9 %bw/d on 4.5 kJ/g, ceiling 0.0298 t/t/tick, h 33.5; h_now/h = 0.75, now/Cmax = 1.34
+  WEIGHTED mean of monthly Cmax, Apr-mid-Sep   : 0.580 kJ/g/d = 12.9 %bw/d on 4.5 kJ/g, ceiling 0.0322 t/t/tick, h 31.0; h_now/h = 0.81, now/Cmax = 1.24
+
+=== Prey ED reading 'mass limit on model prey (4.5 all)': herring 4.5 kJ/g, sprat 4.5 kJ/g, norway_pout 4.5 kJ/g, blue_whiting 4.5 kJ/g
+  herring       kJ/g/d: T_ann 0.815 T_fs 0.871 | mean-of-months year 0.744 season 0.811 | on 4.5 kJ/g: year 16.5 %/d (h 24), season 18.0 %/d (h 22)
+  blue_whiting  kJ/g/d: T_ann 0.146 T_fs 0.138 | mean-of-months year 0.145 season 0.138 | on 4.5 kJ/g: year 3.2 %/d (h 124), season 3.1 %/d (h 130)
+  norway_pout   kJ/g/d: T_ann 0.191 T_fs 0.181 | mean-of-months year 0.190 season 0.181 | on 4.5 kJ/g: year 4.2 %/d (h 95), season 4.0 %/d (h 99)
+  sprat         kJ/g/d: T_ann 1.289 T_fs 1.377 | mean-of-months year 1.176 season 1.283 | on 4.5 kJ/g: year 26.1 %/d (h 15), season 28.5 %/d (h 14)
+  WEIGHTED at annual-mean T                    : 0.712 kJ/g/d = 15.8 %bw/d on 4.5 kJ/g, ceiling 0.0396 t/t/tick, h 25.3; h_now/h = 0.99, now/Cmax = 1.01
+  WEIGHTED at feeding-season-mean T            : 0.757 kJ/g/d = 16.8 %bw/d on 4.5 kJ/g, ceiling 0.0421 t/t/tick, h 23.8; h_now/h = 1.05, now/Cmax = 0.95
+  WEIGHTED mean of monthly Cmax, year          : 0.652 kJ/g/d = 14.5 %bw/d on 4.5 kJ/g, ceiling 0.0362 t/t/tick, h 27.6; h_now/h = 0.91, now/Cmax = 1.10
+  WEIGHTED mean of monthly Cmax, Apr-mid-Sep   : 0.707 kJ/g/d = 15.7 %bw/d on 4.5 kJ/g, ceiling 0.0393 t/t/tick, h 25.4; h_now/h = 0.98, now/Cmax = 1.02
+

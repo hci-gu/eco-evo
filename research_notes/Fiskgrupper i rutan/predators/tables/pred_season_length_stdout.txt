@@ -1,0 +1,21 @@
+years used: 25
+ aphia         common     q1      q3  pooled  q3_share_of_q1_plus_q3  share_pooled_pct  share_q1_pct  share_q3_pct
+126441         saithe 12.181 108.275  60.228                   0.899            40.825        15.478        50.046
+126438        whiting 58.264  51.029  54.647                   0.467            37.042        74.033        23.586
+127023       mackerel  1.163  22.429  11.796                   0.951             7.996         1.478        10.367
+105923        spurdog  1.545  13.175   7.360                   0.895             4.989         1.963         6.090
+126822 horse mackerel  0.204   9.939   5.071                   0.980             3.438         0.259         4.594
+126484           hake  1.205   6.110   3.658                   0.835             2.479         1.531         2.824
+126555     anglerfish  1.794   2.239   2.017                   0.555             1.367         2.279         1.035
+126461           ling  0.816   1.236   1.026                   0.602             0.696         1.037         0.571
+105913   velvet belly  0.389   1.004   0.696                   0.721             0.472         0.494         0.464
+126440        pollack  0.708   0.512   0.610                   0.420             0.414         0.900         0.237
+
+length-class biomass shares (pooled; Q1 | Q3), lower edge of the 5-cm class
+whiting: 0-20: 0.25 (0.24 | 0.26); 20-999: 0.75 (0.76 | 0.74); biomass-median class 20 cm
+saithe: 0-30: 0.02 (0.01 | 0.02); 30-60: 0.62 (0.68 | 0.61); 60-999: 0.37 (0.31 | 0.37); biomass-median class 50 cm
+hake: 0-20: 0.02 (0.06 | 0.01); 20-999: 0.98 (0.94 | 0.99); biomass-median class 50 cm
+mackerel: 0-25: 0.13 (0.74 | 0.10); 25-30: 0.44 (0.06 | 0.46); 30-999: 0.42 (0.20 | 0.43); biomass-median class 25 cm
+spurdog: 0-60: 0.04 (0.01 | 0.05); 60-999: 0.96 (0.99 | 0.95); biomass-median class 75 cm
+horse mackerel: 0-20: 0.06 (0.38 | 0.05); 20-999: 0.94 (0.62 | 0.95); biomass-median class 30 cm
+anglerfish: 0-40: 0.02 (0.03 | 0.01); 40-999: 0.98 (0.97 | 0.99); biomass-median class 75 cm

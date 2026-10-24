@@ -237,13 +237,16 @@ def test_trainer_gives_every_world_the_baseline_map(baseline_project):
     m = trainer.model
     assert m.has_impacts and "pelagic_trawling" in m.impact_ids
     trainer.refresh_worlds(epoch=3)
-    herring, gadoids = m.ids.index("pelagic_fish"), m.ids.index("gadoids")
+    herring, benthivorous_fish = m.ids.index("planktivorous_fish"), m.ids.index("benthivorous_fish")
     loss = trainer.world_impact_loss.clone()
     assert (loss[:, herring] > 0).any()
-    # Pelagic trawls also take 2 % of the gadoid F (section 161.14).
-    assert (loss[:, gadoids] > 0).any()
-    assert loss[:, gadoids].sum() < loss[:, herring].sum()
-    others = [g for g, fid in enumerate(m.ids) if fid not in ("pelagic_fish", "gadoids")]
+    # Pelagic trawls also take a little of the demersal F (sections
+    # 161.14, 209: mackerel and horse mackerel in predatory_fish).
+    predators = m.ids.index("predatory_fish")
+    assert (loss[:, benthivorous_fish] > 0).any() and (loss[:, predators] > 0).any()
+    assert loss[:, benthivorous_fish].sum() < loss[:, herring].sum()
+    others = [g for g, fid in enumerate(m.ids)
+              if fid not in ("planktivorous_fish", "benthivorous_fish", "predatory_fish")]
     assert not loss[:, others].any()
     torch.testing.assert_close(loss[0], loss[1], rtol=0, atol=0), "one map for every world"
     expected = m.impact_fields([trainer.spec.baseline_maps])[0]

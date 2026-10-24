@@ -1,0 +1,36 @@
+1981 saithe NNS ge40 records 53 items 19554 rows_with_weight 0 months {'1': 73, '2': 28, '6': 116, '11': 147, '7': 18}
+   by number, all items: P 17.0 Bf 2.3 W 0.1 Gu 3.3 Fu 0.9 Z 76.3 B 0.1 O 0.1 U 0.0 Uc 0.0
+   fish items only (%): P 72.3 Bf 9.9 W 0.2 Gu 13.8 Fu 3.8
+   top fish taxa (n): Maurolicus muelleri 2664; Gadidae 618; Norway pout 419; Melanogrammus aeglefinus 412; Gadiculus argenteus 150; Ammodytes marinus 88; Gadus morhua 42; Gadiformes 18
+1981 saithe NNS lt40 records 3 items 168 rows_with_weight 0 months {'6': 5, '7': 15}
+   by number, all items: P 1.8 Bf 9.5 W 0.0 Gu 26.2 Fu 0.0 Z 62.5 B 0.0 O 0.0 U 0.0 Uc 0.0
+   fish items only (%): P 4.8 Bf 25.4 W 0.0 Gu 69.8 Fu 0.0
+   top fish taxa (n): Gadidae 44; Melanogrammus aeglefinus 15; Norway pout 3; Gadus morhua 1
+1981 whiting NNS ge40 records 19 items 463 rows_with_weight 0 months {'2': 60, '10': 34, '1': 33, '7': 30}
+   by number, all items: P 20.3 Bf 35.0 W 0.0 Gu 0.0 Fu 8.4 Z 29.8 B 5.8 O 0.0 U 0.0 Uc 0.6
+   fish items only (%): P 31.9 Bf 54.9 W 0.0 Gu 0.0 Fu 13.2
+   top fish taxa (n): Melanogrammus aeglefinus 156; Norway pout 55; Sprattus sprattus 24; Ammodytidae 12; Clupeidae 3; Pleuronectidae 3; Hippoglossoides platessoides 3
+1981 whiting NNS lt40 records 152 items 19014 rows_with_weight 0 months {'1': 588, '2': 387, '10': 102, '7': 318}
+   by number, all items: P 7.8 Bf 1.4 W 0.0 Gu 0.4 Fu 1.9 Z 76.5 B 10.2 O 0.5 U 0.0 Uc 1.3
+   fish items only (%): P 67.7 Bf 12.0 W 0.3 Gu 3.7 Fu 16.3
+   top fish taxa (n): Ammodytidae 1044; Norway pout 393; Melanogrammus aeglefinus 250; Gadidae 81; Sprattus sprattus 18; Clupeidae 15; Maurolicus muelleri 9; Merlangius merlangus 6
+1981 whiting Skagerrak lt40 records 6 items 144 rows_with_weight 0 months {'1': 42, '2': 33}
+   by number, all items: P 2.1 Bf 0.0 W 0.0 Gu 0.0 Fu 2.1 Z 10.4 B 70.8 O 0.0 U 0.0 Uc 14.6
+   fish items only (%): P 50.0 Bf 0.0 W 0.0 Gu 0.0 Fu 50.0
+   top fish taxa (n): Clupeidae 3
+1991 saithe NNS ge40 records 1 items 7 rows_with_weight 0 months {'7': 4}
+   by number, all items: P 85.7 Bf 0.0 W 0.0 Gu 0.0 Fu 0.0 Z 0.0 B 14.3 O 0.0 U 0.0 Uc 0.0
+   fish items only (%): P 100.0 Bf 0.0 W 0.0 Gu 0.0 Fu 0.0
+   top fish taxa (n): Norway pout 6
+1991 whiting NNS ge40 records 1 items 2 rows_with_weight 0 months {'1': 2}
+   by number, all items: P 100.0 Bf 0.0 W 0.0 Gu 0.0 Fu 0.0 Z 0.0 B 0.0 O 0.0 U 0.0 Uc 0.0
+   fish items only (%): P 100.0 Bf 0.0 W 0.0 Gu 0.0 Fu 0.0
+   top fish taxa (n): Norway pout 1; Gadiculus argenteus 1
+1991 whiting NNS lt40 records 3 items 25 rows_with_weight 0 months {'1': 12}
+   by number, all items: P 28.0 Bf 4.0 W 0.0 Gu 0.0 Fu 0.0 Z 0.0 B 68.0 O 0.0 U 0.0 Uc 0.0
+   fish items only (%): P 87.5 Bf 12.5 W 0.0 Gu 0.0 Fu 0.0
+   top fish taxa (n): Gadiculus argenteus 3; Norway pout 2; Argentina 2; Gobiiformes 1
+1991 whiting Skagerrak lt40 records 54 items 734 rows_with_weight 142 months {'4': 142}
+   by number, all items: P 1.5 Bf 1.0 W 0.0 Gu 0.1 Fu 0.4 Z 81.5 B 14.9 O 0.0 U 0.0 Uc 0.7
+   fish items only (%): P 50.0 Bf 31.8 W 0.0 Gu 4.5 Fu 13.6
+   top fish taxa (n): Norway pout 7; Clupea harengus 2; Lycodes vahlii 2; Lumpenus lampretaeformis 2; Sprattus sprattus 1; Maurolicus muelleri 1; Gadidae 1; Pleuronectidae 1

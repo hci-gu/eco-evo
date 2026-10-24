@@ -246,11 +246,11 @@ def test_mareld_porpoises_detect_hiding_herring():
         {'width': 60, 'height': 60, 'cell_size': 1000.0,
          'tick_duration': 6.0}, fgs, {})
     env._build_static_caches()
-    if 'porpoises' not in env.dm_ids or 'pelagic_fish' not in env.global_fg_order:
+    if 'porpoises' not in env.dm_ids or 'planktivorous_fish' not in env.global_fg_order:
         pytest.skip("mareld2 FG set does not contain the porpoise/herring pair")
     i = env.dm_ids.index('porpoises')
-    j = env.global_fg_order.index('pelagic_fish')
-    herring_default = float(fgs['pelagic_fish'].visibility_floor)
+    j = env.global_fg_order.index('planktivorous_fish')
+    herring_default = float(fgs['planktivorous_fish'].visibility_floor)
     pair_floor = float(env.vis_floor_mat[i, j])
     # Deliberately NOT pinned to one exact number: the magnitude is a
     # calibration knob (1.0 = perfect biosonar detection, ~0.95 leaves a

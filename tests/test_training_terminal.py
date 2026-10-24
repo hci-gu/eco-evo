@@ -81,4 +81,4 @@ def test_cpu_training_starts_from_terminal_launcher(confirm, tmp_path, monkeypat
         assert "Aborted by user." in output
     else:
         assert "Continue with these parameters?" not in output
-        assert (tmp_path / "run" / "policy_gadoids.pth").is_file()
+        assert (tmp_path / "run" / "policy_benthivorous_fish.pth").is_file()

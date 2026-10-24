@@ -340,7 +340,7 @@ def test_porpoises_break_even_with_a_usable_margin():
 # the hunger gate and the feeding cost ONCE, to the total. A per-pair
 # break-even is therefore the wrong question: a prey that cannot pay for
 # the predator on its own is low-quality food, not pure loss. Section
-# 74.2b concluded the opposite from ``porpoises -> gadoids``
+# 74.2b concluded the opposite from ``porpoises -> benthivorous_fish``
 # (sat_min = 1.227) and is superseded by these two checks.
 
 TICKS_PER_DAY = 4.0
@@ -419,7 +419,7 @@ def test_live_project_porpoises_need_clupeids_at_a_real_ration():
     cost, _a, quality = _porpoise_cost_and_quality(env)
     best_id = max(quality, key=quality.get)
     worst_id = min(quality, key=quality.get)
-    assert best_id == 'pelagic_fish', best_id
+    assert best_id == 'planktivorous_fish', best_id
     ration = 0.5 * (KASTELEIN_MIN + KASTELEIN_MAX) / TICKS_PER_DAY
     need_q = cost / ration
     assert quality[worst_id] < need_q <= quality[best_id], (

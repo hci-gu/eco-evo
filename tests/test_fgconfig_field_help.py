@@ -69,7 +69,7 @@ def bound_keys():
         # Widgets built on demand: matrices, the Inference tab and the
         # impact-table dialog need a group and an impact in the project.
         app.project_data["decision_makers"] = [
-            {"group_id": "zooplankton"}, {"group_id": "pelagic_fish"}]
+            {"group_id": "zooplankton"}, {"group_id": "planktivorous_fish"}]
         app.project_data["non_decision_makers"] = [
             {"group_id": "phytoplankton"}]
         app.project_data["impact_variables"] = [
@@ -152,13 +152,16 @@ def test_fg_editor_growth_line_has_term_help():
 
     try:
         app = fgconfig.FGConfigApp(root)
-        # porpoises give gadoids an M2 term now that cannibalism is
+        # porpoises give benthivorous_fish an M2 term now that cannibalism is
         # unchecked (section 160).
         app.project_data["decision_makers"] = [
-            {"group_id": "pelagic_fish"}, {"group_id": "gadoids"},
+            {"group_id": "planktivorous_fish"}, {"group_id": "benthivorous_fish"},
             {"group_id": "porpoises"}]
+        # Without its benthos the benthivores' budget cannot close.
+        app.project_data["non_decision_makers"] = [{"group_id": "benthic_community"}]
         species = app.global_library["species_definitions"]
-        for gid in ("pelagic_fish", "gadoids", "porpoises"):
+        for gid in ("planktivorous_fish", "benthivorous_fish", "porpoises",
+                    "benthic_community"):
             # What load_project_from_path does for every project FG.
             app.current_fg_configs[gid] = species[gid]
         app.update_fg_list()

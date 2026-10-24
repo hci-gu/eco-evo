@@ -143,7 +143,7 @@ def test_round_robin_callback_counts_each_optimizer_update(tmp_path):
     observed = []
     gpu_main(["--project", "mareld2.yaml", "--device", "cpu", "--execution", "eager",
               "--grid", "5x6", "--n-deltas", "2", "--ticks", "2", "--generations", "1",
-              "--iter-per-gen", "1", "--species", "gadoids", "pelagic_fish", "--no-coevolution",
+              "--iter-per-gen", "1", "--species", "benthivorous_fish", "planktivorous_fish", "--no-coevolution",
               "--output", str(tmp_path)], on_step=lambda trainer, step, *args: observed.append(step))
     assert observed == [0, 1, 2]
 

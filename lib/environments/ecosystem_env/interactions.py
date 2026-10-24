@@ -126,7 +126,7 @@ def build_interaction_matrices(env):
             handling_time[i, j] = float(inter_def.get("handling_time", 0.0))
             # Section 208: ``predator_share`` phi = the share of the
             # predator group's biomass that can feed on this prey at all
-            # (the benthivores of the pooled gadoids). That part eats it at
+            # (e.g. the benthos feeders of a pooled fish group). That part eats it at
             # the full a and 1/h; the rest cannot, so at most phi of the
             # group's eat mass reaches the prey: the tick uses
             # min(eat_j, phi_j). (A mean field a phi, h / phi made every

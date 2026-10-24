@@ -19035,3 +19035,127 @@ remain open exactly as described in 71.9 / 71.11.
     world). Open, separate: gadoid ceiling vs Cmax (208.2), gadoid total
     vs survey (208.3), the Mackinson & Daskalov Table 3.4 misprint
     behind the old "28 % benthos" (207.2), plankton gaps (A17).
+
+209 THREE FISH FEEDING GROUPS: PLANKTIVORES, BENTHIVORES, PREDATORS (2026-10-25)
+================================================================
+209.1 Why (user): the pooled gadoids needed predator_share caps on every
+    pair to behave (208.7), Norway pout and blue whiting were in no
+    pool (~0.2 of the gadoid diet had nowhere to go), flatfish were
+    outside the model, and the 0.69 t/km2 gadoid start came from the
+    design slides (Mareld simulator.pdf, "Codfish 2500 t") with no
+    source. Checkpoint commit 736f4c8 before the split.
+209.2 Survey work (research_notes/"Fiskgrupper i rutan", Swedish
+    letters; fish_guilds.md, gadoid_level.md, scripts, tables):
+    - Every fish taxon in NS-IBTS GOV Q1+Q3 assigned to a guild by adult
+      feeding mode (inputs/guilds.csv); depth-stratified to the grid
+      as in the species-mix note. 2021-25: P 24 / B 36 / R 40 %.
+    - Long series 2000-25 downloaded (data/ untracked, 68 MB). The
+      species-mix scripts keyed hauls on (year, quarter, ship, haul no)
+      and dropped Danish/Swedish collisions on ship 26D4: 2013-19 lost
+      most Swedish hauls, 2021-25 7 of 272 (no material change). Keyed
+      on position now.
+    - Gadoids only, wing spread, q = 1: 0.9-2.1 t/km2 per year in
+      2001-21, then 2.6-4.5 (haddock x40 from 2018-19, saithe). 2021-25
+      is a peak; the "x6" against the model was x1.35 group definition,
+      x1.8 peak, ~x2 left (inside the door/wing/Fraser-q uncertainty).
+      Anchors 1.5-3.5 (catch/F, local landings/F, Ecopath 1991 1.96).
+    - User: the long-run level, the TOP of the span (not a rounding;
+      the main agent misdescribed it once) -> x1.18 on the 2001-25 GOV
+      means: benthivores 1.53, predators 1.20 t/km2.
+    - Acoustics (subagent; research_notes/"Ekolodsdata planktivorer"):
+      HERAS RV Dana 2010-26 from the ICES acoustic database; no Swedish
+      HERAS since 1991. The brief's bbox (57.7-58.4 N, 9.9-11.3 E) was
+      the depth-map download box, ~6400 km2; re-run on the real grid
+      (estimate_box.py --grid): July planktivores mean 4.7, median 3.3
+      t/km2 (herring ~90 %), annual ~2.5-3 (summer factor 0.6, not
+      measured). The model's 3.3 is of the right order.
+    - Blue whiting decided planktivorous (gill rakers 26-34, box fish
+      20-30 cm too small for the herring pool).
+209.3 Parameters (four subagents, params_*.md + benthivores/,
+    predators/, planktivores/, top_predators/): biomass-weighted species
+    values with the 2001-25 weights. Ceilings from measured Cmax per
+    species at the 50 m layer (user's choice), h = E_prey / ceiling:
+    benthivores 108 kJ/kg/d = 27.1 MJ/t/tick (old gadoid 34.6 was 1.3x),
+    predators 102 = 25.5 (gastric evacuation calibrated on cod; no lab
+    Cmax for any member), planktivores 0.42 kJ/g/d -> h 40 on zooplankton
+    (was 25, 1.6x any Cmax; with the herring lab rations h ~115).
+    planktivorous_fish (was pelagic_fish): herring 0.79, blue whiting
+      0.105, Norway pout 0.075, sprat 0.03; r_max 0.37, K 4.8, M1 0.26
+      /yr (was 0.58: rays, gurnards, mackerel, hake, spurdog are model
+      groups now), max reserve 6250 (prey quality 7125), dark_ratio 0.25
+      on zooplankton; herring's other values stay. 12 000 t.
+    benthivorous_fish: haddock 0.39, cod 0.31, long rough dab 0.13, dab,
+      plaice, witch, rays, hagfish; r 0.31, M1 0.29, F bottom 0.17,
+      K 3.39 (fragile: cod alone F > r), RM 3.6 (old 6.0 was 1.5-2x
+      SMR), E 4500 whole body, reserve 1800, w 0.45, speed 0.2. Pairs:
+      benthos phi 0.9 h 111 M2 0.040; planktivores phi 0.31 h 263 M2
+      0.14; predators phi 0.1 h 194 M2 0.085; NO zooplankton pair (pool
+      mostly copepods; 485 winter stomachs 0.4 %). 5500 t.
+    predatory_fish: saithe 0.41, whiting 0.37, mackerel 0.08, spurdog,
+      horse mackerel, hake, anglerfish; r 0.42, M1 0.257, F 0.162 bottom
+      + 0.020 pelagic, K 2.12, RM 3.64, lean 4100 + reserve 2400 at
+      fill 0.48 (prey quality 5252, prey_includes_reserve), w 0.1,
+      speed 1.0. Pairs: planktivores phi 0.53 h 279 M2 0.50 (0.31-0.86,
+      the largest flow); zooplankton phi 0.48 h 177 M2 0.13; benthos phi
+      0.145 h 118 M2 0.0046; benthivores phi 0.29 f 0.15 h 177 M2 0.18
+      (learnable cross-group pair; SMS haddock-only 0.10 is the floor).
+      u 0.5 kept (engine convention, 187.4; the review's 0.15 would move
+      the hunger knee); starve_rate 0.0088 kept from the review at u 0.15
+      (judgement). 4300 t.
+    Every fish -> fish pair Type II (Rindorf et al. 2006: negative
+      switching); light dependence 0.6 / -5 deg on both pairs onto the
+      planktivores; a 0.04 inherited everywhere (cannot be derived).
+    Seals: 0.60 B / 0.15 R / 0.25 P, ration 320 t/yr -> M2 0.035 /
+      0.011 / 0.0067; a 0.1 / 0.05 / 0.002 (III); h = E/212.5. Porpoises:
+      0.65 P / 0.15 B / 0.20 R, 234 t/yr -> M2 0.0127 / 0.0064 / 0.011;
+      a 0.0225 / 0.12 / 0.2, h 28.6. The demersal a were rescaled to the
+      same energy return (the old 0.2 / 0.3 partly made up for a pool
+      ~4x too small; judgements). Seal K 0.0075 kept.
+    Zooplankton: fish M2 1.6 + 0.13 = 1.73 /yr (was 5.3), so M1 = 25 -
+      1.73 = 23.27 /yr (0.015812 /tick) keeps Z = 25 and g unchanged.
+    Benthos: fish M2 0.0446 (was 0.0048) -> equilibrium share 0.729;
+      capacity_depth_table 150.8 / 75.4 (was 143 / 71.5), fallback K
+      126.6; B* sum 341 220 t = the manifest's 341 000.
+209.4 Built:
+    - fg_library.yaml: structural split (generated: pelagic_fish keys
+      renamed with comments kept, gadoid keys copied to both demersal
+      groups, 182 pairs), then the values of 209.3 with sources in the
+      comments. Fishing tables at today's mean effort (bottom 3.0142,
+      pelagic 0.02496). Seals spawn on both demersal groups, porpoises
+      on the planktivores; benthivores no longer observe zooplankton.
+    - mareld2.yaml: decision_makers (ranges x0.5-2), group_layers
+      (planktivores mean_0_50m, both demersal at_50m), spawn templates
+      Followfish / FollowDemersalFish.
+    - growth_budget.ideal_intake: the eat share (sum <= 1) is filled up
+      to each pair's predator_share in order of energy per unit share.
+      With every pair capped, the best pair alone gave predators
+      s* ~ u and g x13 (0.038 /tick). Unchanged without caps.
+    - Code: fgconfig sv_mapping, api.py species names (codfish /
+      pelagicFish -> planktivorousFish / benthivorousFish /
+      predatoryFish: an external client must follow), compare_scenarios,
+      manual_play (benthivores), budget_gate, docstrings and field help.
+    - Viewer: the plot tooltip is clamped inside the plot area (the
+      longer names pushed it over the edge; test_viz_hover).
+    - Tests: ids renamed in 32 files; new test of the cap filling;
+      fishing split, GPU impacts, spawn shape (10 FGs), K list,
+      temperature fixtures, GUI growth tests updated.
+209.5 Checks: pytest 1413 passed / 12 skipped; train.py and train_gpu.py
+    1-generation smoke runs OK; budget_gate: every pair and predator
+    closes. Viability rig (no policies, 20x20): 300 ticks every fish
+    group, seals and porpoises PASS (the plankton FAILs are as before);
+    3 years eat arm: benthivores PASS, predators fall below the floor,
+    planktivores, seals and porpoises die out; greedy: benthivores and
+    seals PASS, predators and planktivores fail. The old library in the
+    same 3-year rig also lost pelagic fish, porpoises and seals: the rig
+    judges hand-coded behaviour, not the world (VIABILITY.md 6), but the
+    predators' crash is new and is the first thing to read after
+    training.
+209.6 State: uncommitted. Every checkpoint is invalid (FG set and
+    observation layout changed); fix73 is a from-scratch run the user
+    starts. Open: attack rates a (probe run); predators -> planktivores
+    M2 0.50 rests on Norwegian-coast saithe diets; zooplankton phi 0.48
+    for predators vs a copepod-dominated pool; mackerel undersampled by
+    GOV; the herring Cmax (Rudstam vs lab rations); cod share 31 % long-
+    run vs 8.5 % today; group parameters for long rough dab are
+    judgements; seal and porpoise diets are coastal (SLU's 1999-2024
+    seal series unpublished).

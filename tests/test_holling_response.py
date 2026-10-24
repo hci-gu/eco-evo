@@ -43,8 +43,8 @@ B_GRID = np.geomspace(1e-3, 1e4, 400)
 # (a, h) pairs from the mareld2 calibration (Section 36 / 64.3).
 AH_CASES = [
     (0.25, 4.0),    # zooplankton -> phytoplankton
-    (0.04, 25.0),   # pelagic_fish -> zooplankton
-    (0.02, 50.0),   # gadoids -> pelagic_fish (order of magnitude)
+    (0.04, 25.0),   # planktivorous_fish -> zooplankton
+    (0.02, 50.0),   # benthivorous_fish -> planktivorous_fish (order of magnitude)
     (0.1, 3.0),     # off-calibration control: a*h != 1
 ]
 

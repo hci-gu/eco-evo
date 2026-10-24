@@ -29,7 +29,7 @@ def app():
     root.withdraw()
     a = fgconfig.FGConfigApp(root)
     species = a.global_library["species_definitions"]
-    a.project_data["decision_makers"] = [{"group_id": "gadoids"}]
+    a.project_data["decision_makers"] = [{"group_id": "benthivorous_fish"}]
     a.project_data["non_decision_makers"] = [{"group_id": "benthic_community"}]
     a.project_data["impact_variables"] = [
         {"impact_id": "bottom_trawling", "value_min": 0.0, "value_max": 100.0}]
@@ -42,7 +42,7 @@ def app():
 
 def test_benthos_has_an_impact_row_read_from_the_library(app):
     app.refresh_matrix()
-    for fid in ("gadoids", "benthic_community"):
+    for fid in ("benthivorous_fish", "benthic_community"):
         cell = app.matrix_entries.get(f"{fid}_impacted_by_bottom_trawling", {})
         assert "impact_affects" in cell, fid
         assert cell["impact_affects"].get() is True, fid

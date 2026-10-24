@@ -194,8 +194,8 @@ def test_loader_derives_growth_from_the_active_predators():
     # of the muted seals / seabirds pays for them there and not in the
     # project.
     full = setup_full_mareld_mvp(grid_size=(6, 6), seed=0, spawn_seed=0)
-    if "seals" not in active and "pelagic_fish" in fgs:
-        assert full["pelagic_fish"].growth_rate > fgs["pelagic_fish"].growth_rate
+    if "seals" not in active and "planktivorous_fish" in fgs:
+        assert full["planktivorous_fish"].growth_rate > fgs["planktivorous_fish"].growth_rate
 
 
 def test_loader_leaves_m1_out_when_mortality_is_off():
@@ -212,7 +212,7 @@ def test_loader_leaves_m1_out_when_mortality_is_off():
                                      apply_natural_mortality=False)
     full_on = setup_full_mareld_mvp(grid_size=(6, 6), seed=0, spawn_seed=0)
     # Phytoplankton carries an M1 (its sinking loss) since section 173/174.
-    for fid in ("zooplankton", "pelagic_fish", "gadoids", "phytoplankton"):
+    for fid in ("zooplankton", "planktivorous_fish", "benthivorous_fish", "phytoplankton"):
         assert full_off[fid].growth_rate < full_on[fid].growth_rate
     assert full_off["benthic_community"].growth_rate == pytest.approx(
         full_on["benthic_community"].growth_rate)
