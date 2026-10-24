@@ -161,11 +161,14 @@ fabricates mass.
   pelagic pool down and crashed (184.13). Pelagic fish: r_max 0.34
   (site mix, today's recruitment) and K 5.0 since 185.20 - stock-scale
   compensation plus net emigration; without it the pool grazed the
-  zooplankton down year after year (185.17-19). Seals: K 0.0041667
-  (= the 15 t start, no hunt impact; section 199) - the grid holds the
+  zooplankton down year after year (185.17-19). Seals: K 0.0075
+  (27 t, no hunt impact; sections 199, 206) - the grid holds the
   offshore tail of a metapopulation regulated off the grid; without it
-  they grew ~6 %/yr on gadoids, halved them and crashed. Porpoises
-  have no K (section 199: the gap is their food calibration).
+  they grew ~6 %/yr on gadoids, halved them and crashed; at K = the
+  15 t start they settled at ~0.5 K, because the loss is charged at
+  r_max while they realise ~0.06 /yr net. Porpoises have no K; their
+  attack rates are x1.5 since section 206 (they fell to ~0.3 of the
+  start in 15-20 years at the old rates).
   With the daylight calendar a producer with `light_saturation` grows at
   `growth_rate * P(t)/P_ref` (section 138; 0 at night, needs the site's
   light climate in the manifest). The old `seasonal_amplitude` /

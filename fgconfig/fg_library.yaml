@@ -590,7 +590,13 @@
     # prey the model's seals do not eat - and haul-out competition).
     # Without it the seals grew ~6 %/yr on gadoids alone, halved them and
     # crashed (15-year run on fix70). Outside the derived growth_rate.
-    regional_carrying_capacity: 0.0041667
+    # Section 206: 0.0075 (27 t), was 0.0041667 (= the 15 t start). The
+    # loss is charged at r_max (0.11 B/K /yr) while the trained seals
+    # realise ~0.18 gross, i.e. ~0.06 /yr after M1 and starvation, so
+    # K = start settled at ~0.5 K in 30-50 years (fix72). 15 x 0.11 / 0.06
+    # = 27 t puts the equilibrium at today's 15 t and sits between the
+    # 199.3 routes to K_box (24 t; 36-38 t).
+    regional_carrying_capacity: 0.0075
     growth_rate: 0.000486383
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models); no FG preys on
     # seals. Was 6.0e-05.
@@ -842,11 +848,20 @@ interaction_definitions:
     # over every cell (frozen fields, so the learned shift lies in
     # between), with 137 MJ/t/tick against a cost of ~90 (1.5x, was 2x;
     # wild porpoises forage almost continuously, Wisniewska et al. 2016).
-    max_intake_rate: 0.015
+    # Section 206: both porpoise pairs x1.5 (0.015 -> 0.0225, gadoids 0.2
+    # -> 0.3), which keeps the fitted diet split (59-67 % herring, Q/B
+    # ~19 /yr as before). At 0.015 the trained porpoises stood on ~5 t/km2
+    # herring, ~145 MJ/t/tick vs a cost of 90: growth ~0.15 /yr against
+    # losses ~0.12 plus starvation in the poor cells, and they fell to
+    # ~0.3 of the start in 15-20 years (fix72, 50-year inference). At x1.5
+    # they held 0.87-1.02 over 15 years. The ceiling 1/h, and so the
+    # derived growth_rate, is unchanged.
+    max_intake_rate: 0.0225
     assimilation_factor: 0.9
     # Mass ceiling 1/h kept (marine mammal intake is mass-limited, Rosen
-    # & Trites 2000; section 149). a*h is 0.43 since section 151, so the
-    # half-saturation is 1/(a h) = 2.3 t/km2 visible herring.
+    # & Trites 2000; section 149). a*h is 0.64 since section 206 (0.43
+    # since 151), so the half-saturation is 1/(a h) = 1.6 t/km2 visible
+    # herring.
     handling_time: 28.6
     # Porpoises hunt with biosonar, so the visual crypsis that makes
     # hidden herring only 35 % detectable by default does not apply:
@@ -1048,8 +1063,9 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.0557
     # Fitted to the Ecopath diet together with the herring pair (section
-    # 151); a*h = 5.7, half-saturation 0.17 t/km2 visible gadoids.
-    max_intake_rate: 0.2
+    # 151); a*h = 8.6, half-saturation 0.12 t/km2 visible gadoids.
+    # Section 206: x1.5 with the herring pair (was 0.2, a*h 5.7).
+    max_intake_rate: 0.3
     assimilation_factor: 0.84
     handling_time: 28.6
     # Rested (hidden) gadoids sit near the seabed, which is assumed to
