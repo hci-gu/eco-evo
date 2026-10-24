@@ -18588,3 +18588,103 @@ remain open exactly as described in 71.9 / 71.11.
     60, stopped 00:45 after 34 updates) trained without this. Next: a
     run with the new plankton world; read the zooplankton spring and
     summer, the surface chl and the autumn against A17 with pl/sc.py.
+
+================================================================
+203 PLANKTON VS A17 AFTER 202: REMAINING LEVERS (SCRATCH, 2026-10-24)
+================================================================
+203.1 State after 202 (pl/probe.py, frozen fix70 21:58 policies, seeds
+    20260530 / 7): NO3 0.43, NO3d 0.90, r(P,chl) +0.91, col/obs 0.59,
+    PP 57.5. Column / A17 at a seasonal C:chl (30 winter, 100 summer):
+    0.58 0.71 0.83 0.79 0.57 0.28 0.35 0.36 0.38 0.28 0.32 0.58.
+    - Winter: mixed-layer nitrate Dec-Feb 2.2-3.0 umol/l vs A17
+      3.6-5.1 (A17's winter column is nearly uniform: 5.1 at the
+      surface, 5.5 at 15-30 m).
+    - Spring: the subsurface layer empties its nitrate early (Apr / May
+      2.65 / 0.64 vs 5.6 / 3.4); zooplankton peaks in April (24) not
+      May (26) and holds 8.7 in March (A17 resident 1.6).
+    - Summer: the mixed layer is now nutrient-limited as at A17 (nitrate
+      0.05-0.09 vs 0.10), but its stock is 0.09-0.13 ug chl/l (A17
+      0.46-0.94; 5-7 ug C/l, below the microzooplankton's 12 ug C/l
+      threshold): microzooplankton ~0 May-Dec, no surface microbial
+      loop.
+    - Autumn: Oct-Nov surface chl 0.27-0.31 ug/l vs 1.5-1.8; nitrate
+      matches (0.49 / 1.33 vs 0.32 / 1.30); light 0.37 / 0.15, growth
+      0.09 / 0.05 /d.
+203.2 Variants on the new engine (2 seeds agree):
+      variant                                    NO3   NO3d  col/obs PP    Z OND
+      202 base                                   0.43  0.90  0.59    57.5  1.48 0.84 0.39
+      winter ML-sub exchange 1.0 m/d (Nov-Feb)   0.29  0.90  0.60    60.8  1.44 0.89 0.45
+      same, 3.0 m/d                              0.31  0.89  0.61    62.2  1.43 0.96 0.48
+      subsurface I_k 60 (literature, 181.8)      0.44  0.60  0.53    51.7  0.80 0.47 0.18
+      winter 1.0 + I_k 60                        0.38  0.59  0.54    54.5  0.77 0.49 0.20
+      A17 mixed-layer depths (181.9)             0.42  0.88  0.55    50.0  1.17 0.73 0.34
+      mixed-layer producer k_N 0.5 -> 0.2        0.66  0.92  0.59    58.7  1.66 1.02 0.45
+      micro food_threshold 1.2 -> 0.6            0.89  0.66  0.51    54.5  1.26 0.31 0.05
+    - Winter mixing 1.0 m/d: Jan / Feb mixed-layer nitrate 4.08 / 4.05
+      (A17 5.09 / 4.84; base 2.96 / 2.45), nothing else worse except
+      March zooplankton 10.3 (8.7). 3.0 overshoots November (2.13 vs
+      1.30). Physically: winter convection and wind mixing over the
+      pycnocline; 1 m/d over ~10 m is K ~1e-4 m2/s.
+    - I_k 60 now keeps the summer zooplankton (Z Jul-Aug 6.5; without
+      recycling and Type III it collapsed to 0.9, 201.5) and fixes the
+      spring subsurface nitrate, but halves the autumn zooplankton and
+      lowers PP and the column.
+203.3 Nothing applied. Open: the target itself (open-Skagerrak PP;
+    A17's seasonal C:chl), the autumn (a dinoflagellate stock, 182.12,
+    invalidates checkpoints), the summer surface microbial loop.
+203.4 APPLIED (user: point 1): mareld2.yaml nutrients.exchange_m_per_day
+    [0.3, 0.3, ..., 0.3, 0.3] -> [1.0, 1.0, 0.2, 0.1, 0.05, 0.05, 0.05,
+    0.05, 0.1, 0.2, 1.0, 1.0] (comment in the manifest). Engine check
+    (pl/probe.py, frozen fix70 policies): NO3 0.29 / 0.30, NO3d 0.90,
+    col/obs 0.60, PP 61.0 / 60.7 - the 203.2 scratch row. No
+    observation change, checkpoints valid. pytest 1385 passed / 12
+    skipped; train.py 1-generation smoke OK. AGENTS.md map line updated.
+    Point 6 (the yardstick: open-Skagerrak PP, seasonal C:chl at A17)
+    went to a literature subagent.
+
+================================================================
+204 THE A17 YARDSTICK: OPEN-SKAGERRAK PP AND MEASURED C:CHL (2026-10-24)
+================================================================
+204.1 Literature + SHARK (subagent, research_notes/"Primarproduktion
+    och C:chl i Skagerrak"/pp_and_c_chl.md, Swedish letters in the
+    folder name).
+    - PP: no 14C annual series in the open Skagerrak; none in SHARK at
+      A17 / Slaggo. POLCOMS-ERSEM 131-138 g C m-2 yr-1 Skagerrak/
+      Kattegat, 96-102 Norwegian Trench (Holt et al. 2012 [F]);
+      Skagerrak ~130 (Beckmann & Liebezeit 1988 [S]); Heilmann et al.
+      1994's 190 is frontal, particulate only, 7 of 12 months
+      interpolated [F]. Monthly integral of measured central-Skagerrak
+      daily rates (Maar 2002, Bjornsen 1993, Richardson 2003, Bendtsen &
+      Richardson 2018): ~155 +- 40 % (own). Recommendation: 150 (120-200),
+      below the Kattegat / Gullmar values (no front, nutricline at 20-30
+      m, weak mixing over the trench). f-ratio annual 0.2-0.4 (Trench
+      July < 0.02, June surface 0.04-0.11, late summer 0.18-0.36).
+    - C:chl from SHARK A17 microscopy carbon (autotrophs + mixotrophs,
+      0-10 m hose) over hose chl, 222 visits 2001-2022 [D]: monthly
+      ratio of means 21 34 31 31 53 67 53 54 42 21 17 29 (median 14 15
+      28 28 34 52 51 42 35 21 17 24); summer a lower bound (picoplankton
+      missed); agrees with Jakobsen & Markager 2016 [A]. The subsurface
+      maximum is a real biomass maximum, but chl overstates it ~2x
+      (Pmax^B 1.72 vs 4.76 at the surface [F]); subsurface C:chl ~25-30.
+    - Recommended C:chl: surface 21 34 31 35 55 70 70 60 50 25 20 29;
+      0-30 m column (chl-weighted) 21 34 29 27 30 34 34 35 36 25 20 29.
+      A17 0-30 m biomass at C:WW 0.1 (t WW/km2): 4.8 22.4 21.0 13.8
+      10.1 13.4 8.8 8.8 9.1 10.0 6.8 4.9, mean 11.2 (range 7-16)
+      against 18.9 at C:chl 50.
+204.2 The model (203.4 world, frozen fix70 policies, 2 seeds agree)
+    against the new targets:
+      month           J    F    M    A    M    J    J    A    S    O    N    D   mean
+      column / A17   0.83 0.66 1.25 1.78 1.71 0.82 1.13 1.02 0.83 0.55 0.56 0.61 1.02
+      surface ug C/l model 25 130 195 41 13 6 4 6 7 14 16 16
+                     A17   25 132 102 52 52 56 32 39 40 45 31 22
+    - Annual column biomass is right (1.02); the old "0.6" was mostly
+      the C:chl 50 yardstick.
+    - Real gaps: (1) PP 61 vs 150 (2.5x) at the right biomass = the
+      turnover is too slow, f-ratio 0.7 vs 0.2-0.4 - too little
+      recycling inside the layers; (2) the spring is too strong and too
+      early (Mar-May 1.25-1.78; March surface 2x; the subsurface nitrate
+      empties early, 203.1); (3) the summer surface carbon is 6-8x low
+      (4-7 vs 32-56 ug C/l); (4) October-December 0.55-0.62, surface
+      autumn 3x low.
+    - Scoring with these targets: scratchpad pl/ (sc.py still uses
+      C:chl 50; the table above was computed separately).
