@@ -1,0 +1,114 @@
+Danish national HERAS cruise reports, RV Dana (DTU Aqua) - Skagerrak/Kattegat by subarea
+=========================================================================================
+Compiled 2026-10-24. [F] = read in full text. "derived" = summed/multiplied by this agent from the
+age-by-subarea tables (biomass rows summed over ages; for 2004 and 2005 numbers x mean weight).
+These are the DANISH NATIONAL estimates (Danish program, later StoX run by DTU), not the official
+international HERAS StoX estimates; the two differ (e.g. 2019 stratum 31 NSAS 45.8 kt national vs
+40.7 kt international; 2015 old C+D 115.7 kt national vs HERAS 2015 stratum 2 = 29 kt). Do not blend.
+All surveys: late June - early/mid July only.
+
+SOURCES (all [F]; Norwegian Directorate of Fisheries hosts the reports of foreign cruises):
+ D2013 Staehr K.J. Acoustic Herring Survey report for RV "DANA" 25 June-8 July 2013.
+   https://www.fiskeridir.no/English/Coastal-management/Marine-scientific-research/Cruises-2013/_/attachment/download/075dc8d0-1293-4d5f-a149-2d410bb97db8:7c7eda7456a84a67eb5b4aa57d4147838eafbdc8/130122.pdf
+ D2015 Staehr K.J. ... 25 June-8 July 2015.
+   https://www.fiskeridir.no/English/Coastal-management/Marine-scientific-research/Cruises-2015/_/attachment/download/51ca3b64-8630-49c5-a375-c192e588ed00:3dee175c13cf9d66c39ee8dd81caab4bf3605307/141128.pdf
+ D2016 Staehr K.J. ... 22 June-5 July 2016. (URL in heras_strata_areas.txt; file 160318a.pdf)
+ D2017 Staehr K.J. ... 21 June-5 July 2017 (final version 170306a.pdf; a "Preliminary" 170306.pdf also exists)
+   https://fiskeridir.no/english/Coastal-management/Marine-scientific-research/Cruises-2017/_/attachment/download/9b8e9de7-c2d8-45a3-a274-949863ea3237:0cfc862edc949a71230932355e63eb73a3e8fef6/170306a.pdf
+ D2018 Staehr K.J. ... 25 June-10 July 2018.
+   https://fiskeridir.no/english/Coastal-management/Marine-scientific-research/Cruises-2018/_/attachment/download/d9c8f23d-2b21-4ce2-9f61-406958cb349f:7a0484cf88f4ea8bda1cfd665b3fcdd6afb1773a/180307.pdf
+ D2019 Staehr K.J. ... 25 June-9 July 2019. (URL in heras_strata_areas.txt; 190306.pdf)
+ D2020 Lusseau S.M. Cruise report RV Dana 05/2020, HERAS 22 June-9 July 2020 (methods only, no estimates)
+   https://www.fiskeridir.no/English/files-english/coastal-management/utenlandske-forskningstokt/2020/0220/11.02.2020-dana.pdf
+ D2021 Lusseau S.M. Cruise report RV Dana 05/2021, HERAS 21 June-6 July 2021
+   https://fiskeridir.no/english/files-english/coastal-management/utenlandske-forskningstokt/2020/0120/02.03.2021-dana.pdf
+ D2024 Lusseau S.M. Cruise report RV Dana 04/2024 HERAS 24 June-8 July 2024 ("Biomass estimates ...
+   will be produced"; no numbers).
+ Older Dana annexes [F]: PGHERS 2005 (survey 2004; figshare 19256864), PGHERS 2006 (survey 2005;
+   19256909, Dana annex PDF p.~53-73, stratum overview p.61), WGIPS 2010 (survey 2009; 19657797,
+   Tables 5B.6-5B.7), WGIPS 2012 (survey 2011; 19657794, Tables 6, 7, 10).
+   PGHERS 2008 (survey 2007) has its subarea tables only as images (not extracted).
+
+QUOTES
+ D2013 Introduction: "Since 1991 the DTU National Institute of Aquatic Resources (DTU AQUA) has
+   participated in the ICES co-ordinated herring acoustic survey of the North Sea and adjacent waters
+   with the responsibility for the surveying the Skagerrak and Kattegat area."
+ D2013 sec 3.1 (PDF p.5): "Historically, herring and sprat have not been observed in midwater trawl
+   hauls at depths below 150 meters. Therefore, layers below 150 meter have been excluded from the
+   estimation." (Same rule in PGHERS 2002-2008 and WGIPS 2010/2012 Dana annexes; e.g. PGHERS 2006
+   Dana 2005: "In only one haul herring was present below 150 m depths.")
+ D2013 Table 1 (PDF p.13): "Bottom margin (backstep) 1.0 m"; "Integration start (absolute) depth 7 - 9 m".
+ D2019 sec 2.4: "The towed body runs at approx. 3 m depth in good weather and down to about 6-7 m ...
+   this year mostly at 4-5 m ... Integration is conducted from 3 m below the transducer to 1 m above the
+   bottom or to max 500 m depth." (PGHERS 2006, survey 2005: "... or to max 300 m depth".)
+ D2019 sec 2.8: "For each subarea (21, 31, 41, 42, 151 and 152 in Fig.1) the mean backscattering cross
+   section was estimated for herring, sprat, gadoids and mackerel based on the standardized
+   TS-relationships given in the ICES SIPS 9: Manual for International Pelagic Surveys (IPS):
+   Herring TS = 20 log L - 71.2 dB; Sprat TS = 20 log L - 71.2 dB; Gadoids TS = 20 log L - 67.5 dB;
+   Mackerel TS = 20 log L - 84.9 dB ... The number of fish per species is assumed to be in proportion
+   to the contribution of the given species in the trawl hauls. Therefore, the relative density of a
+   given species is estimated by subarea using the species composition in the trawl hauls. The nearest
+   trawl hauls are allocated to subareas with uniform depth strata."
+ D2019 sec 2.5: pelagic hauls FOTO trawl, demersal EXPO trawl (16 mm codend), "usually two day hauls
+   (pelagic on larger depth and demersal in shallow waters) and two night hauls (mostly surface or
+   midwater)".
+ D2020 sec 3.9: Echoview + DTU EV2AKUBIO scrutiny "for a fixed set of layers (3-6 m, 6-10, 10-20 and so
+   on)"; NASC "integrated ... from 3 m below the transducer to 1 m above the bottom or to max 500 m depth";
+   then StoX; same TS list as above.
+
+WHOLE DANISH SURVEY AREA (Kattegat + Skagerrak + eastern North Sea east of 6 E, north of 56 N), tonnes
+ (D2019 text table; D2013 text table):
+  year  NSAS mill  NSAS t     WBSS mill  WBSS t
+  2006  1530       98 786     6407       471 850
+  2007  4443      315 176     8847       614 048
+  2008  4473       80 469     7367       450 505
+  2009  9679      157 707     1326       146 590
+  2010  2723      148 946     1461        88 597
+  2011  5156      165 589     3699       179 898
+  2012  4805      259 947     1955       122 901
+  2013  1070       62 126     1013        83 601
+  2014  4576       58 974      798        32 875
+  2015  2950      103 423     4874       179 954
+  2016  1163       38 650     1085        59 660
+  2017   646       31 196      703        36 687
+  2018  1463       27 333      278        23 331
+  2019  3105      112 266     1027        49 976
+ Earlier totals (all herring): 2003 264 000 t (51 % NSAS); 2004 274 000 t (28 % NSAS);
+  2005 242 000 t (4.4 % NSAS) (PGHERS 2004-2006 Dana annexes).
+ Sprat, whole Danish area: 2011 27 464 t, all in Kattegat (E); 2013 11 074 t (98.1 % Kattegat E,
+  0.7 % Skagerrak 43F6/44F9); 2015 20 894 t; 2016 24 680 t; 2017 6 178 t; 2018 46 105 t;
+  2019 31 399 t (94.0 % Kattegat 21, 4.4 % stratum 42, 1.6 % stratum 151).
+
+OLD STRATA C (988 nmi2 = 3 389 km2) and D (1837 nmi2 = 6 301 km2), east of 10 E (derived sums):
+  year  str  NSAS t    WBSS t    herring t  herring t/km2  sprat t   Mean Sa (stratum overview)
+  2004  D    25 990    37 331    63 300     10.0           -         469 m2/nmi2, mean TS -42.66 dB
+  2004  C    10 813    16 223    27 000      8.0           -         198
+  2005  D       566     8 865     9 400      1.5           -         187, TS -41.36
+  2005  C       226     3 473     3 700      1.1           -         132
+  2009  D    46 173    14 312    60 500      9.6           -         (NSAS 0-group = 29.2 kt of the 46.2)
+  2009  C     1 534       529     2 100      0.6           -
+  2011  D    14 698    13 110    27 800      4.4           0
+  2011  C     4 415     8 037    12 500      3.7           0
+  2013  D    10 827     6 713    17 500      2.8           0
+  2013  C     2 356     1 140     3 500      1.0           0
+  2015  D    37 633    51 744    89 400     14.2           1 022
+  2015  C    13 041    13 221    26 300      7.8           0
+ Old D covers ~90 % of the model box. Mean of the six D values: 7.1 t/km2 (range 1.5-14.2), summer.
+
+NEW STRATA (national estimates, derived sums), herring t (NSAS + WBSS) and sprat t:
+  year str21          str31            str41           str42           str151          str152
+  2016 2 743+1 555    11 722+12 272    1 438+1 621     19 152+33 528   1 351+6 762     2 244+3 923
+       sprat 13 516   0                0               0               11 164          0
+  2017 3 998+3 648    6 295+6 348      9 130+9 438     2 600+2 421     4 054+6 431     82(!)+8 401
+       sprat 4 592    0                0               0               1 586           0
+  2018 2 240+150      5 193+5 208      6 738+8 246     1 379+826       6 945+1 754     4 839+7 147
+       sprat 44 989   0                0               0               1 116           0
+  2019 14 509+19 711  45 804+8 879     16 458+5 771    19 899+5 490    5 013+1 972     10 584+8 153
+       sprat 29 487   0                0               1 421           491             0
+ Stratum 31 herring density (national; area 1806.3 nmi2 from the 2025 manual): 2016 3.9, 2017 2.0,
+  2018 1.7, 2019 8.8 t/km2.
+ Checks: 2017 stratum 152 NSAS biomass row sums to 82 t for 82 million fish (D2017 Table) - impossible
+  mean weight, the international table (WGIPS 2018) gives 5 kt; treat the national row as an error.
+  2016: the national report already splits 41/42, while WGIPS 2018 says 42 only exists from 2017.
+ 2019 stratum 31 NSAS by age (D2019 Table 9): almost all 1-ringers (41.6 kt of 45.8 kt; 898 mill 1i,
+  mean weight 46 g). Typical: the eastern Skagerrak in July is a nursery for juvenile NSAS.

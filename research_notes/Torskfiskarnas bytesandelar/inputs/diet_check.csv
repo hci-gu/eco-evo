@@ -1,0 +1,16 @@
+species,bound,B,F,Z,Ofish,other,source
+haddock,low,0.63,0,0.004,0.07,0.09,B low = Albert 1994 summer (PRE-2000 dry weight); Z low = ICES-DB NNS Jan-Feb 2025
+haddock,c,0.81,0,0.004,0.07,0.09,ICES-DB NNS + Norwegian Trench Jan-Feb 2025 box-length weighted (evidence C)
+haddock,high,0.81,0,0.22,0.33,0.12,Z high = Albert 1994 summer euphausiids (PRE-2000); Ofish high = Albert fish 4-33 %
+cod,low,0.24,0.06,0,0.48,0,Kattegat 2024-25 B; Skagerrak F
+cod,c,0.29,0.06,0.001,0.65,0,ICES-DB Skagerrak 2023-25 (56 fed)
+cod,high,0.46,0.26,0.01,0.73,0.003,Skagerrak Feb 1991 B (PRE-2000); Kattegat F; NNS Ofish
+whiting,low,0.06,0.05,0.004,0.13,0,ICES-DB Skagerrak 2022 (thin)
+whiting,c,0.20,0.10,0.49,0.13,0.07,ICES-DB Skagerrak Apr 1991 (PRE-2000; Pasiphaea 0.07 in other)
+whiting,high,0.22,0.50,0.49,0.89,0.07,Kattegat 1991 F; Skagerrak 2022 Ofish (thin)
+saithe,low,0,0,0.21,0.24,0,Daan 1989 total North Sea 1981 at 40-50 cm (PRE-2000); fish not split by species
+saithe,c,0.003,0.15,0.45,0.40,0.01,same; F/Ofish split of the fish part is a guess (no data)
+saithe,high,0.01,0.55,0.76,0.78,0.10,same
+hake,low,0.002,0.58,0,0.06,0,ICES-DB Skagerrak 2024 20-29 cm F
+hake,c,0.002,0.82,0.001,0.18,0.004,ICES-DB Skagerrak Aug 2024 (48 fed; box subset 0.81)
+hake,high,0.006,0.98,0.012,0.50,0.005,ICES-DB size classes; Kattegat Ofish

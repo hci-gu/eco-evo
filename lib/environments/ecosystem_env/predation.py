@@ -29,6 +29,8 @@ def apply_predation(env, actions):
                                  * env.prey_reserve_max[j])
     visible_biomass, pair_visible_biomass = interactions.visible_prey_biomass(
         env, prey_biomass, actions)
+    visible_biomass, pair_visible_biomass = interactions.apply_pair_access(
+        env, visible_biomass, pair_visible_biomass)
 
     # Beddington-DeAngelis interference: I = w_X * B_X(c), the predator's
     # OWN biomass in the cell. Intraspecific only - it is the standard
@@ -73,9 +75,13 @@ def apply_predation(env, actions):
             * intake_temperature[:, None, None, None]).astype(
                 env.dtype, copy=False)
 
+    eat = actions.eat
+    if env._has_share_cap:
+        # Section 208: only phi of the group can feed on a capped prey.
+        eat = np.minimum(eat, env.share_cap_mat[:, :, None, None])
     demand = (
         predator_biomass[:, None, :, :]
-        * actions.eat
+        * eat
         * effective_intake_rate
         * hunger[:, None, :, :]
     )

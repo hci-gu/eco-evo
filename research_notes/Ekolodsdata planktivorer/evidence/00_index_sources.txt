@@ -1,0 +1,39 @@
+Index: sources -> evidence files (compiled 2026-10-24)
+=====================================================
+Files are organised by topic; each holds the quotes, page numbers and URLs of the sources listed here.
+Tags: [F] full text read, [A] abstract/snippet only, [S] secondary.
+
+HERAS / WGIPS (ICES)
+ [F] ICES 2025 Manual for International Pelagic Surveys, TIMES 71 (figshare 28269671)  -> heras_strata_areas.txt, heras_methods_allocation_ts.txt, acoustic_blind_zones_trawl_comparison.txt
+ [F] ICES 2015 SISP 9 IPS manual (figshare 19050794)                                  -> heras_methods_allocation_ts.txt, acoustic_blind_zones_trawl_comparison.txt
+ [F] HERAS 2025 report, WGIPS 2026 Suppl. Doc. 3 (figshare 33406126)                  -> heras_per_stratum_3a_2015_2025.txt
+ [F] HERAS 2024 report, WGIPS 2025 Suppl. Doc. 3 (figshare 28890038)                  -> heras_per_stratum_3a_2015_2025.txt
+ [F] HERAS 2023 report (Lusseau et al.), WGIPS 2024 Suppl. Doc. 3 (figshare 25965769) -> heras_per_stratum_3a_2015_2025.txt, heras_methods_allocation_ts.txt
+ [F] HERAS 2022 report, WGIPS 2023 Suppl. Doc. 3 (figshare 23607303)                  -> heras_per_stratum_3a_2015_2025.txt
+ [F] WGIPS 2020 report, ICES Sci. Rep. 2:56 (figshare 18618380)                        -> heras_per_stratum_3a_2015_2025.txt
+ [F] WGIPS 2018 report (figshare 18616298)                                             -> heras_per_stratum_3a_2015_2025.txt
+ [F] WGIPS 2017 interim report (figshare 18615977)                                     -> heras_per_stratum_3a_2015_2025.txt
+ [F] WGIPS 2016 Annex 4c, HERAS 2015 report (figshare 18615221)                        -> heras_strata_areas.txt, heras_per_stratum_3a_2015_2025.txt
+ [F] PGHERS 1996, 1997, 2002-2008; WGIPS 2010, 2012 (Dana and Solea annexes)           -> dana_cruise_reports_2004_2019.txt, seasonality_herring_sprat_3a.txt, heras_methods_allocation_ts.txt, acoustic_blind_zones_trawl_comparison.txt
+ [F] IESSNS 2022 cruise report, WGIPS 2023 Suppl. Doc. 4                               -> other_planktivores_skagerrak.txt
+ [F] GERAS 2023-2025 reports (WGIPS 2024-2026 Suppl. Doc. 5)                          -> seasonality_herring_sprat_3a.txt (only to note 44G0/44G1 no longer covered)
+
+Danish national cruise reports, RV Dana (hosted by fiskeridir.no)
+ [F] 2013, 2015, 2016, 2017, 2018, 2019 (Staehr); 2020, 2021, 2024 (Lusseau)          -> dana_cruise_reports_2004_2019.txt, heras_strata_areas.txt
+
+Older survey report
+ [F] Kirkegaard et al. 1990, ICES C.M. 1990/H:24 (summer 1989 surveys incl. Argos)    -> argos_1989_skagerrak_kattegat.txt, other_planktivores_skagerrak.txt
+
+Stock annexes / advice / assessment
+ [F] ICES 2026 stock annex her.27.20-24 (figshare 33296379)                           -> seasonality_herring_sprat_3a.txt
+ [F] ICES 2022 stock annex her.27.3a47d (figshare 18622589)                           -> seasonality_herring_sprat_3a.txt
+ [F] ICES 2019 stock annex spr.27.3a4 (figshare 18623360)                             -> seasonality_herring_sprat_3a.txt
+ [F] HAWG 2022 Section 3 (WBSS SSB) (figshare 19249010)                               -> seasonality_herring_sprat_3a.txt
+ [F] ICES 2023 advice nop.27.3a4 (figshare 21907857)                                  -> other_planktivores_skagerrak.txt
+
+Literature
+ [F] Scalabrin, Marfia & Boucher 2009 ICES JMS 66: 1355-1363                           -> acoustic_blind_zones_trawl_comparison.txt
+ [S] Ona & Mitson 1996 ICES JMS 53: 677-690                                           -> acoustic_blind_zones_trawl_comparison.txt
+ [A] Hjellvik, Godo & Tjostheim 2002, 2004/2005                                        -> acoustic_blind_zones_trawl_comparison.txt
+ [A] Ulrich et al. 2012; Staehr & Worsoe Clausen 2012 (DTU conference items)          -> seasonality_herring_sprat_3a.txt
+ [A] Gjosaeter 1986; [S] Gjosaeter & Kawaguchi 1980; [A] Kaartvedt et al. 1993 (mesopelagics) -> other_planktivores_skagerrak.txt

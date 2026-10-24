@@ -1,0 +1,53 @@
+Swedish RV Argos acoustic survey, Skagerrak and Kattegat, 1-4 August 1989 (Argos-era by-stratum table)
+=====================================================================================================
+Source [F]: Kirkegaard, E., Aglen, A., Degnbol, P., Hagstrom, O., Palmen, L-E. and Simmonds, E.J. 1990.
+"Report on the Herring Acoustic Surveys in the North Sea, Skagerrak and Kattegat during Summer 1989".
+ICES C.M. 1990/H:24 (Pelagic Fish Committee), 39 pp.
+https://www.ices.dk/sites/pub/CM%20Doccuments/1990/H/1990_H24.pdf
+(also catalogued at IMR Brage hdl 11250/104797; that server was unreachable)
+Scanned document; OCR is noisy - numbers below were checked against column sums where possible.
+
+Section "Report on the 1989 acoustic survey by R/V Argos in Skagerrak and Kattegat" (O. Hagstrom and
+L-E. Palmen, IMR Lysekil), PDF p. 7:
+ "As part of the ICES-coordinated acoustic survey of the North Sea and Division IIIa R/V 'Argos'
+ surveyed the western part of Skagerrak and Kattegat from 1-4 August 1989." [the strata used, C and D,
+ are the Danish strata EAST of 10 E, so "western" probably means the Swedish/eastern Skagerrak - the
+ agent's reading; the C/D definitions are in heras_strata_areas.txt]
+ "The methods of stratification used are the same as used in the Danish survey. A total of 12 pelagic
+ hauls were made". TS: herring, sprat and horse mackerel 20 log L - 71.2; mackerel and dogfish
+ 20 log L - 77.2; gadoids 20 log L - 67.5. EK400 38 kHz.
+ "Based on vertebral counts all herring of 2 group and older could be assigned to local spring spawner
+ stock. North Sea autumn spawners dominated the 0- and 1-group."
+Danish stratification (Dana section, PDF p. 6): "The surveyed area is stratified in subareas (1 deg
+ lat - 2 deg long). Subareas with large variation in depth is divided in up to six strata. 1. 0-20 m;
+ 2. 20-40 m; 3. 40-60 m; 4. 60-100 m; 5. 100-300 m; 6. > 300 m."
+ -> INFERRED by this agent (not stated in the Argos section): Argos strata C3 = subarea C, 40-60 m depth,
+    D4 = subarea D, 60-100 m, etc. Caveat: the Kattegat strata are E0-E3, and "0" is not in the 1-6 depth
+    scheme, so the suffix may not be a depth code everywhere. The depth labels in the table below are inferred.
+
+Table 21 (PDF p. 25) Survey statistics, Table 24 (PDF p. 26) herring biomass (t), Table 28 (PDF p. 27)
+other species biomass (t). Densities derived by this agent (1 sq. mile = 3.43 km2).
+ stratum depth     area nmi2  miles int. hauls  herring t  herring t/km2 (derived)
+ C3      40-60 m     200        32       1        9 515      13.9
+ C4      60-100 m    476        80       3        8 667       5.3
+ C5      100-300 m   127        12       3*       1 193       2.7
+ D2      20-40 m     169         8       2*      24 737      42.7
+ D3      40-60 m     433        46       2       50 711      34.1
+ D4      60-100 m    733        96       3       14 945       5.9
+ D5      100-300 m   295        22       3*         669       0.66
+ Skagerrak total    2433       296       9      110 436      13.2
+ Kattegat E0-E3     5228       230       3       64 811       3.6
+ (* = trawl data from other area). Stratum D (D2-D5) total: 1630 nmi2 (5 591 km2), 91 062 t = 16.3 t/km2.
+ Herring numbers Skagerrak: 2 178 million (0-group 868 mill, 1-group 858 mill); mean weights 46-80 g.
+ No stratum deeper than 300 m was surveyed by Argos; the deep Trench part of old Danish stratum D
+ (1837 nmi2 in the Dana design) seems not covered.
+Other species, Skagerrak strata total (Table 28), t: sprat 2; cod 360; haddock 15; whiting 491;
+ blue whiting 17 926 (C4 7 170, C5 925, D4 9 409, D5 421); mackerel 16 219; saithe 18 309; horse
+ mackerel 7 442; Norway pout 532; dogfish (field misaligned in OCR).
+ Kattegat (E0-E3): sprat 2 085; cod 17 749; whiting 17 888; Norway pout 252; dogfish 5 947.
+ Derived: blue whiting over the Skagerrak strata ~2.1 t/km2 (17 926 t / 8 345 km2); over C4+C5+D4+D5
+ (60-300 m, 1631 nmi2 = 5 594 km2) ~3.2 t/km2.
+
+Relevance (depends on the inferred depth labels above): early August 1989, herring biomass in the eastern Skagerrak was concentrated in the 20-60 m
+depth strata along the coast (34-43 t/km2), with low densities over 60-300 m (0.7-6 t/km2). A box with
+mean depth 168 m would, by these strata, be closer to the 100-300 m values. Single year, August.

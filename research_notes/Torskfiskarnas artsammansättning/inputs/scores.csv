@@ -1,0 +1,18 @@
+species,s_min,s_c,s_max
+haddock,1.0,1.0,1.0
+cod,0.5,1.0,1.0
+whiting,0.0,0.0,0.3
+saithe,0.0,0.0,0.0
+hake,0.0,0.0,0.0
+ling,0.2,0.4,0.6
+blue ling,0.0,0.1,0.2
+tusk,0.5,0.75,1.0
+pollack,0.0,0.0,0.1
+greater forkbeard,0.4,0.6,0.9
+poor cod,0.5,0.7,1.0
+bib,0.5,0.7,1.0
+silvery pout,0.0,0.0,0.1
+fourbeard rockling,0.7,0.9,1.0
+threebeard rockling,0.7,0.9,1.0
+Norway pout,0.0,0.1,0.2
+blue whiting,0.0,0.0,0.1

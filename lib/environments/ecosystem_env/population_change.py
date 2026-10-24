@@ -175,7 +175,7 @@ def _nutrient_limited_delta(env, fg_id, fg, population_rate,
                              + before - float(fg.biomass.sum()))
     wish = population_rate * fg.biomass * limitation
     delta = np.minimum(np.minimum(wish, pool),
-                       np.maximum(np.float32(carrying_capacity) - fg.biomass,
+                       np.maximum(np.asarray(carrying_capacity, dtype=np.float32) - fg.biomass,
                                   np.float32(0.0)))
     delta = np.maximum(delta, np.float32(0.0)).astype(env.dtype, copy=False)
     fg.energy_reserve = (pool - delta).astype(env.dtype, copy=False)
@@ -203,7 +203,10 @@ def _apply_non_decision_maker_mortality(env, fg_id, fg):
 
 
 def _apply_non_decision_maker_population_change(env, fg_id, fg):
-    carrying_capacity = fg.params.get("max_carrying_capacity", 100.0)
+    # Section 207: a depth-habitat group carries K per cell.
+    carrying_capacity = getattr(fg, "capacity_map", None)
+    if carrying_capacity is None:
+        carrying_capacity = fg.params.get("max_carrying_capacity", 100.0)
     _apply_non_decision_maker_mortality(env, fg_id, fg)
     # Light-limited producers grow at growth_rate * P(t)/P_ref under the
     # daylight calendar (section 138); 1.0 for everything else.
@@ -228,7 +231,7 @@ def _apply_non_decision_maker_population_change(env, fg_id, fg):
         ).astype(np.float32, copy=False)
         biomass_delta = (
             biomass_delta
-            + np.float32(seed_rate * carrying_capacity) * seed_mult
+            + np.asarray(seed_rate * carrying_capacity, dtype=np.float32) * seed_mult
         )
 
     fg.biomass = np.clip(

@@ -84,6 +84,16 @@ class TensorEcosystem:
         self.pair_visibility = (
             tensor(env.vis_floor_mat)[None, :, :, None]
             if getattr(env, "_has_pair_vis_floor", False) else None)
+        # Section 208: per-pair accessible fraction of the prey (None =
+        # every pair reaches all of it), mirror of
+        # ``interactions.apply_pair_access``.
+        self.pair_access = (
+            tensor(env.access_mat)[None, :, :, None]
+            if getattr(env, "_has_pair_access", False) else None)
+        # ``predator_share`` as a cap on the eat share (min(eat, phi)).
+        self.share_cap = (
+            tensor(env.share_cap_mat)[None, :, :, None]
+            if getattr(env, "_has_share_cap", False) else None)
         # Daylight calendar (section 137). ``light_obs`` is F per year
         # tick (the extra observation channel), ``light_mult`` the
         # (T, D, G) attack-rate multiplier, None when no pair is
@@ -268,6 +278,13 @@ class TensorEcosystem:
         self.seed_rate = parameter("seed_rate").clamp_min(0)
         self.has_seeding = any(fg.seed_rate > 0 and not fg.is_decision_maker for fg in groups)
         self.capacity = tensor([fg.params.get("max_carrying_capacity", 100.0) for fg in groups])[None, :, None]
+        if any(getattr(fg, "capacity_map", None) is not None for fg in groups):
+            # Section 207: a depth-habitat group carries K per cell.
+            self.capacity = tensor(np.stack([
+                np.full(self.C, fg.params.get("max_carrying_capacity", 100.0), dtype=np.float32)
+                if getattr(fg, "capacity_map", None) is None
+                else np.asarray(fg.capacity_map, dtype=np.float32).reshape(-1)
+                for fg in groups]))[None]
         self.energy_content = tensor([fg.params.get("energy_content", 0.0) or 0.0 for fg in groups])[None, :]
         self.threshold = tensor([max(0.0, fg.min_split_biomass * fg.extinction_threshold_factor) for fg in groups])[None, :, None]
         # Same product, per DM and broadcast over the direction axis of
@@ -624,6 +641,11 @@ class TensorEcosystem:
             # not prey on j are excluded so they cannot inflate the cap.
             visible = torch.where(self.eat_mask[None, :, :, None] > 0.0,
                                   pair_visible, 0.0).amax(1)
+        if self.pair_access is not None:
+            base = pair_visible if pair_visible is not None else visible[:, None]
+            pair_visible = base * self.pair_access
+            visible = torch.where(self.eat_mask[None, :, :, None] > 0.0,
+                                  pair_visible, 0.0).amax(1)
         # Interference term I = w_X * B_X(c): the predator's own biomass in
         # the cell, intraspecific only, shaped (B, D, 1, C) so it broadcasts
         # over the prey axis exactly as the reference does.
@@ -649,7 +671,10 @@ class TensorEcosystem:
             if light_index is None:
                 raise ValueError("light_index is required with ingestion_q10")
             rate = rate * self.ingestion_temp[light_index.reshape(-1)][:, :, None, None]
-        demand = b_dm[:, :, None] * actions[:, :, 5:] * rate * hunger[:, :, None]
+        eat = actions[:, :, 5:]
+        if self.share_cap is not None:
+            eat = torch.minimum(eat, self.share_cap)
+        demand = b_dm[:, :, None] * eat * rate * hunger[:, :, None]
         if pair_visible is not None:
             # Per-predator bound: no predator may demand more than the
             # fraction of the prey IT can detect, even when a better-

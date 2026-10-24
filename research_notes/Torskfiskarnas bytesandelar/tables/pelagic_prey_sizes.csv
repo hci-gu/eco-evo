@@ -1,0 +1,103 @@
+quarter,measure,species,cls,value
+1,biomass,herring,"[0, 8)",0.0007051271025213083
+1,biomass,herring,"[10, 12)",1.2613617802218802
+1,biomass,herring,"[12, 15)",12.670965659548763
+1,biomass,herring,"[15, 20)",44.209940451089
+1,biomass,herring,"[20, 25)",41.039969065787076
+1,biomass,herring,"[25, 30)",6.819565419774213
+1,biomass,herring,"[30, 60)",0.2507547919579709
+1,biomass,herring,"[8, 10)",0.11683442673950502
+1,biomass,horse mackerel,"[10, 12)",0.007432842199623574
+1,biomass,horse mackerel,"[12, 15)",0.07188279114639463
+1,biomass,horse mackerel,"[15, 20)",0.012996761579711484
+1,biomass,horse mackerel,"[20, 25)",0.012584542592840356
+1,biomass,horse mackerel,"[30, 60)",0.04687675688367884
+1,biomass,horse mackerel,"[8, 10)",0.00027305940876586456
+1,biomass,mackerel,"[15, 20)",0.9267858590908653
+1,biomass,mackerel,"[20, 25)",0.3528285795068472
+1,biomass,mackerel,"[25, 30)",0.04373363640112437
+1,biomass,mackerel,"[30, 60)",0.05631995447387736
+1,biomass,sprat,"[0, 8)",0.6801415929003247
+1,biomass,sprat,"[10, 12)",1.9223327365684635
+1,biomass,sprat,"[12, 15)",0.8269438198197773
+1,biomass,sprat,"[15, 20)",0.050165190322838775
+1,biomass,sprat,"[8, 10)",1.8717419376369964
+1,numbers,herring,"[0, 8)",0.2310374485596707
+1,numbers,herring,"[10, 12)",130.60555209876537
+1,numbers,herring,"[12, 15)",630.6794492739564
+1,numbers,herring,"[15, 20)",1186.6997671340384
+1,numbers,herring,"[20, 25)",466.9374653380364
+1,numbers,herring,"[25, 30)",45.104454106407985
+1,numbers,herring,"[30, 60)",1.009688286302175
+1,numbers,herring,"[8, 10)",19.75336139917695
+1,numbers,horse mackerel,"[10, 12)",0.6578543209876542
+1,numbers,horse mackerel,"[12, 15)",3.461185261610817
+1,numbers,horse mackerel,"[15, 20)",0.4102122281011169
+1,numbers,horse mackerel,"[20, 25)",0.13668312757201645
+1,numbers,horse mackerel,"[30, 60)",0.146159012345679
+1,numbers,horse mackerel,"[8, 10)",0.039603174603174585
+1,numbers,mackerel,"[15, 20)",18.96281469459141
+1,numbers,mackerel,"[20, 25)",4.702031364050557
+1,numbers,mackerel,"[25, 30)",0.2527311985596707
+1,numbers,mackerel,"[30, 60)",0.1254431052322163
+1,numbers,sprat,"[0, 8)",262.2033962962962
+1,numbers,sprat,"[10, 12)",211.3213053497942
+1,numbers,sprat,"[12, 15)",56.36110911228687
+1,numbers,sprat,"[15, 20)",1.8987870017636679
+1,numbers,sprat,"[8, 10)",394.8670196296295
+3,biomass,herring,"[0, 8)",0.03723369807292321
+3,biomass,herring,"[10, 12)",9.49791950159251
+3,biomass,herring,"[12, 15)",18.096009562632194
+3,biomass,herring,"[15, 20)",58.570286915931476
+3,biomass,herring,"[20, 25)",55.293644935283
+3,biomass,herring,"[25, 30)",64.40562460848044
+3,biomass,herring,"[30, 60)",3.047110595657327
+3,biomass,herring,"[8, 10)",1.7431136025488394
+3,biomass,horse mackerel,"[0, 8)",0.011857511308949117
+3,biomass,horse mackerel,"[10, 12)",0.04231801717257251
+3,biomass,horse mackerel,"[15, 20)",0.0015459782777199054
+3,biomass,horse mackerel,"[20, 25)",0.047685793613920335
+3,biomass,horse mackerel,"[25, 30)",0.17669144973737447
+3,biomass,horse mackerel,"[30, 60)",6.480427013706245
+3,biomass,horse mackerel,"[8, 10)",0.14356251043043144
+3,biomass,mackerel,"[0, 8)",5.500161547136073e-05
+3,biomass,mackerel,"[10, 12)",6.361505585556279e-05
+3,biomass,mackerel,"[12, 15)",9.410724143194994e-05
+3,biomass,mackerel,"[15, 20)",0.00017711580007164057
+3,biomass,mackerel,"[20, 25)",3.9078143034707504
+3,biomass,mackerel,"[25, 30)",17.182998749267988
+3,biomass,mackerel,"[30, 60)",20.88726185256514
+3,biomass,mackerel,"[8, 10)",0.0001484891321678958
+3,biomass,sprat,"[0, 8)",0.0003280287903489431
+3,biomass,sprat,"[10, 12)",30.002803474998846
+3,biomass,sprat,"[12, 15)",24.340127724492085
+3,biomass,sprat,"[15, 20)",0.01503900991044824
+3,biomass,sprat,"[8, 10)",1.121059799077787
+3,numbers,herring,"[0, 8)",12.624674999999998
+3,numbers,herring,"[10, 12)",979.9484801890428
+3,numbers,herring,"[12, 15)",1045.8900054205244
+3,numbers,herring,"[15, 20)",1442.2472497685178
+3,numbers,herring,"[20, 25)",620.6705652276235
+3,numbers,herring,"[25, 30)",408.25910088348763
+3,numbers,herring,"[30, 60)",12.785277449845678
+3,numbers,herring,"[8, 10)",303.0168613233024
+3,numbers,horse mackerel,"[0, 8)",4.029837962962962
+3,numbers,horse mackerel,"[10, 12)",4.44882048611111
+3,numbers,horse mackerel,"[15, 20)",0.028958333333333326
+3,numbers,horse mackerel,"[20, 25)",0.4727392322530863
+3,numbers,horse mackerel,"[25, 30)",1.0656017168209875
+3,numbers,horse mackerel,"[30, 60)",19.786625570987653
+3,numbers,horse mackerel,"[8, 10)",23.38378177083333
+3,numbers,mackerel,"[0, 8)",0.027262123456790122
+3,numbers,mackerel,"[10, 12)",0.007713293402777775
+3,numbers,mackerel,"[12, 15)",0.0048143229166666655
+3,numbers,mackerel,"[15, 20)",0.00483845486111111
+3,numbers,mackerel,"[20, 25)",34.06141124074073
+3,numbers,mackerel,"[25, 30)",105.65517655208332
+3,numbers,mackerel,"[30, 60)",56.59611906539351
+3,numbers,mackerel,"[8, 10)",0.024717735146604934
+3,numbers,sprat,"[0, 8)",0.13501822916666664
+3,numbers,sprat,"[10, 12)",2940.356968715277
+3,numbers,sprat,"[12, 15)",1707.9939201658947
+3,numbers,sprat,"[15, 20)",0.5550443749999999
+3,numbers,sprat,"[8, 10)",202.64363559027774

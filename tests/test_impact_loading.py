@@ -7,6 +7,8 @@ copy with ``windfarm_noise`` un-muted (metadata + a usable per-FG impact
 table that ``lib.environments.ecosystem_env.impacts`` can consume).
 """
 
+import os
+
 import numpy as np
 import pytest
 import yaml
@@ -27,6 +29,9 @@ def unmuted_project(tmp_path_factory):
     for iv in data.get('impact_variables', []) or []:
         if iv.get('impact_id') == 'windfarm_noise':
             iv['muted'] = False
+    # The copy lives elsewhere: keep the depth map (section 207) reachable.
+    data['simulation_settings']['depth_map'] = os.path.abspath(
+        data['simulation_settings']['depth_map'])
     path = tmp_path_factory.mktemp('impacts') / 'project_unmuted.yaml'
     with open(path, 'w') as f:
         yaml.safe_dump(data, f, sort_keys=False)

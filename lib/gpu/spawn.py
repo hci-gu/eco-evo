@@ -76,6 +76,17 @@ class WorldSpawner:
         self.frequency2 = fy * fy + fx * fx
         self.filters = {}
         self.floors = {f: 5.0 * spec.env.fgs[f].min_split_biomass for f in model.ids}
+        # Section 207: the depth map as a reference field and the
+        # equilibrium patterns, fixed per project (no randomness).
+        depth = getattr(spec, "depth", None)
+        self.static_fields = ({} if depth is None else
+                              {"depth": model.tensor(np.asarray(depth).reshape(1, -1), torch.float64)})
+        self.equilibrium = {}
+        for fid in model.ids:
+            pattern = getattr(spec.env.fgs[fid], "equilibrium_map", None)
+            if pattern is not None:
+                self.equilibrium[fid] = model.tensor(
+                    np.asarray(pattern, dtype=np.float64).reshape(1, self.H, self.W), torch.float64)
         # Constants and FFT filters are allocated during startup, never during
         # a captured tick. Reset itself can run eagerly on CUDA.
         for fid in spec.spawn_order:
@@ -120,10 +131,17 @@ class WorldSpawner:
         floor = field.amax((-1, -2), keepdim=True) * frac
         return torch.where(field > 0, torch.maximum(field, floor), field)
 
-    def weights(self, cfg, keys, fields):
+    def weights(self, cfg, keys, fields, fid=None):
         mode = str(cfg.get("mode", "uniform")).strip().lower()
         batch = keys.numel()
         shape = (self.H, self.W)
+        if mode == "equilibrium":
+            # Mirror of strategies.weights_equilibrium: the precomputed
+            # B*(c), uniform without one.
+            pattern = self.equilibrium.get(fid)
+            if pattern is None:
+                pattern = torch.ones((1, *shape), dtype=torch.float64, device=self.device)
+            return self.finalize(pattern.expand(batch, *shape))
         if mode == "perlin":
             field = torch.zeros((batch, *shape), dtype=torch.float64, device=self.device)
             scale = float(cfg.get("scale", 10))
@@ -161,9 +179,13 @@ class WorldSpawner:
             out = torch.zeros((batch, *shape), device=self.device, dtype=torch.float64)
             for ref in cfg.get("refs", []) or []:
                 name = ref.get("name")
-                if str(name).lower() == "depth" or name not in fields:
+                if name in fields:
+                    field = fields[name]
+                elif name in self.static_fields:
+                    field = self.static_fields[name].expand(batch, -1)
+                else:
                     continue
-                field = fields[name].reshape(batch, *shape)
+                field = field.reshape(batch, *shape)
                 transform = ref.get("transform", "linear")
                 maximum = field.amax((-1, -2), keepdim=True)
                 if transform == "exp":
@@ -199,7 +221,7 @@ class WorldSpawner:
             if cfg and str(cfg.get("mode", "uniform")).strip():
                 if cfg.get("seed") is not None:
                     keys = torch.full_like(keys, int(cfg["seed"]))
-                weights = self.weights(cfg, keys, fields)
+                weights = self.weights(cfg, keys, fields, fid)
                 fields[fid] = distribute_with_floor(weights * self.allowed, total, self.floors[fid])
             else:
                 allocated = legacy_clusters(keys, total, self.floors[fid], self.n_eligible)

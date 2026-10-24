@@ -1,0 +1,16 @@
+species,quarter,share_min,share_c,share_max,basis
+haddock,1,0,0,0,no 0-group exists in Q1 (spawning Feb-May)
+haddock,3,0,0.001,0.004,evidence B: pelagic 0-group 0.1-0.4 % of stock biomass in Jun-Jul; mostly settled by Aug-Sep
+haddock,pooled,0,0.0005,0.0015,annual mean: Jun-Jul value over ~3 of 12 months
+whiting,1,0,0,0,no 0-group in Q1
+whiting,3,0.005,0.015,0.03,evidence B: 1.2-3 % in Jun-Jul; jellyfish-associated until 5-10 cm (FAO)
+whiting,pooled,0.003,0.007,0.015,annual mean
+cod,1,0,0,0,no 0-group in Q1
+cod,3,0,0.003,0.015,evidence B: 0.2-1.5 % in Jun-Jul (age 0 back-calculated)
+cod,pooled,0,0.0015,0.005,annual mean
+saithe,1,0,0,0,ages 0-2 in coastal nurseries (WGNSSK 2026; FAO)
+saithe,3,0,0,0,ages 0-2 in coastal nurseries
+saithe,pooled,0,0,0,ages 0-2 in coastal nurseries
+hake,1,0,0,0,crude
+hake,3,0,0.002,0.01,evidence B: age 0 0.4-1.5 % in Q3 from summary data
+hake,pooled,0,0.001,0.004,annual mean

@@ -1,0 +1,65 @@
+species,stage,pool,A_min,A_c,A_max,C_min,C_c,C_max,gape,basis
+cod,juvenile,benthos,0.9,1,1,0.8,1,1,0,near bed; well-developed chin barbel; pelvic-ray taste buds of juveniles
+cod,juvenile,fish,0.4,0.6,0.8,0.1,0.27,0.45,0,43-57 % of time in midwater with night ascents; C: gape class 'sprat only' (sprat from 19-22 cm; most in-box juveniles are 20-30 cm): 0.3 (0.15-0.45) x mouth factor 0.9 (0.7-1)
+cod,juvenile,zoo,0.4,0.6,0.8,0.6,0.8,1,0,krill near bed by day (fjord evidence); krill well inside gape
+cod,juvenile,zoo_cop,0.4,0.6,0.8,0.05,0.2,0.4,0,21-28 rakers: copepods only by picking
+cod,medium,benthos,0.6,0.8,1,0.7,0.9,1,0,barbel kept at all sizes; 55-57 % of time within 5 m of bed
+cod,medium,fish,0.4,0.6,0.8,0.35,0.63,0.85,0,as juvenile; C: gape class 'sprat + juvenile herring' (15-20 cm herring from 30-45 cm): 0.7 (0.5-0.85) x 0.9 (0.7-1)
+cod,medium,zoo,0.4,0.6,0.8,0.3,0.5,0.7,0,krill 3 cm = ~7 % of body length: low return per strike
+cod,medium,zoo_cop,0.4,0.6,0.8,0,0.05,0.1,0,copepods ~0.5 % of body length
+cod,large,benthos,0.6,0.8,1,0.5,0.8,1,0,barbel kept; large benthic prey (crabs Nephrops) still within mode
+cod,large,fish,0.4,0.6,0.8,0.6,0.9,1.0,0,gape admits adult herring; C: gape class 'all clupeids' (25 cm herring from 51-57 cm): 1 (0.85-1) x 0.9 (0.7-1)
+cod,large,zoo,0.4,0.6,0.8,0.05,0.2,0.4,0,krill < 5 % of body length
+cod,large,zoo_cop,0.4,0.6,0.8,0,0.02,0.05,0,
+cod,pelagic0,benthos,0,0,0.2,0.3,0.5,0.7,0,pelagic until ~7 cm
+cod,pelagic0,fish,0,0,0,0,0,0,0,gape too small
+cod,pelagic0,zoo,1,1,1,0.1,0.2,0.4,0,krill too large for 1-7 cm fish
+cod,pelagic0,zoo_cop,1,1,1,0.8,1,1,0,pelagic larvae and 0-group on copepods (Bromley 1997 lengths)
+haddock,juv_adult,benthos,0.8,1,1,0.9,1,1,0,inferior mouth; lower jaw shorter; barbel; demersal 80-200 m (low A = diel rises off bottom)
+haddock,juv_adult,fish,0.4,0.6,0.8,0.05,0.15,0.3,0,"rises off bottom; C: gape class 'sprat only' (sprat from 26-31 cm, jaw-scaled estimate) 0.3 x mouth factor 0.5 (0.3-0.7): inferior mouth, shortest jaws, no fish-catching teeth"
+haddock,juv_adult,zoo,0.3,0.5,0.7,0.6,0.8,1,0,krill near bed by day; small mouth suits krill-size prey; 24-27 rakers
+haddock,juv_adult,zoo_cop,0.3,0.5,0.7,0,0.1,0.3,0,picking only
+haddock,large,benthos,0.8,1,1,0.9,1,1,0,as above
+haddock,large,fish,0.4,0.6,0.8,0.15,0.35,0.6,0,"as above; C: gape class 'sprat + juvenile herring' (from 42-63 cm, jaw-scaled) 0.7 x mouth factor 0.5 (0.3-0.7)"
+haddock,large,zoo,0.3,0.5,0.7,0.4,0.6,0.8,0,krill smaller relative to body
+haddock,large,zoo_cop,0.3,0.5,0.7,0,0.05,0.1,0,
+haddock,pelagic0,benthos,0,0,0.2,0.3,0.5,0.7,0,pelagic ~3 months to ~7 cm
+haddock,pelagic0,fish,0,0,0,0,0,0,0,
+haddock,pelagic0,zoo,1,1,1,0.1,0.2,0.4,0,
+haddock,pelagic0,zoo_cop,1,1,1,0.8,1,1,0,
+whiting,juvenile,benthos,0.6,0.8,1,0.3,0.5,0.7,0,near bottom; no barbel; terminal mouth: hyperbenthos (mysids Crangon) yes; infauna no
+whiting,juvenile,fish,0.6,0.8,1,0,0.05,0.1,0,sharp premaxillary teeth; C: gape class 'none' (below sprat size until 20-23 cm)
+whiting,juvenile,zoo,0.7,0.9,1,0.7,0.9,1,0,forages in the krill layer by day (Oslofjord)
+whiting,juvenile,zoo_cop,0.7,0.9,1,0.1,0.3,0.5,0,21-22 rakers; small fish can pick copepods
+whiting,adult,benthos,0.4,0.6,0.8,0.1,0.3,0.5,0,benthopelagic; no barbel; epibenthic nekton only
+whiting,adult,fish,0.6,0.8,1,0.3,0.5,0.75,0,"sharp teeth; C: between 'sprat only' (20-30 cm, ~half the adult biomass) and 'sprat + juvenile herring' (from 31-46 cm); sharp premaxillary teeth (factor 1)"
+whiting,adult,zoo,0.7,0.9,1,0.4,0.6,0.8,0,krill layer by day
+whiting,adult,zoo_cop,0.7,0.9,1,0,0.05,0.1,0,
+whiting,pelagic0,benthos,0,0,0.1,0.3,0.5,0.7,0,with jellyfish to 5-10 cm
+whiting,pelagic0,fish,0,0,0,0,0,0,0,
+whiting,pelagic0,zoo,1,1,1,0.1,0.2,0.4,0,
+whiting,pelagic0,zoo_cop,1,1,1,0.8,1,1,0,
+saithe,adult,benthos,0.2,0.3,0.5,0,0.2,0.4,0,near bottom >300 m by day only; lower jaw projecting; small barbel: hyperbenthic shrimps at most
+saithe,adult,fish,0.8,1,1,0.5,0.7,0.85,0,"pelagic schools; C: gape class 'sprat + juvenile herring' (from 34-60 cm, jaw-scaled); pursuit build (factor 1)"
+saithe,adult,zoo,0.8,1,1,0.7,0.9,1,0,35-40 rakers (planktivore-like arch); DVM through krill layer
+saithe,adult,zoo_cop,0.8,1,1,0.3,0.5,0.8,0,only gadoid here with a planktivore raker count
+saithe,large,benthos,0.2,0.3,0.5,0,0.1,0.2,0,as above
+saithe,large,fish,0.8,1,1,0.85,1.0,1.0,0,gape admits adult herring from ~60 cm; C: gape class 'all clupeids' (25 cm herring from 57-76 cm)
+saithe,large,zoo,0.8,1,1,0.3,0.5,0.7,0,krill < 5 % of body length; rakers retained
+saithe,large,zoo_cop,0.8,1,1,0.1,0.3,0.5,0,
+saithe,pelagic0,benthos,0,0,0,0,0,0,0,absent from box (coastal nurseries)
+saithe,pelagic0,fish,0,0,0,0,0,0,0,
+saithe,pelagic0,zoo,0,0,0,0,0,0,0,
+saithe,pelagic0,zoo_cop,0,0,0,0,0,0,0,
+hake,juvenile,benthos,0.6,0.8,1,0.2,0.4,0.6,0,on mud by day; no barbel; terminal oblique mouth: hyperbenthos only
+hake,juvenile,fish,0.6,0.8,1,0.15,0.3,0.45,0,large mouth sharp teeth; C: gape class 'sprat only' (from 16-18 cm)
+hake,juvenile,zoo,0.6,0.8,1,0.5,0.7,0.9,0,krill within gape; midwater at night
+hake,juvenile,zoo_cop,0.6,0.8,1,0,0.1,0.2,0,8-12 short thick rakers
+hake,adult,benthos,0.4,0.6,0.8,0,0.1,0.2,0,piscivore build
+hake,adult,fish,0.6,0.8,1,0.7,0.9,1.0,0,"largest gape of the five (UJ 12.8 % BL); C: 'sprat + juvenile herring' at 20-40 cm, 'all clupeids' from 42-48 cm (most adult biomass); large oblique mouth, sharp teeth"
+hake,adult,zoo,0.6,0.8,1,0.05,0.15,0.3,0,short thick rakers; krill small vs body
+hake,adult,zoo_cop,0.6,0.8,1,0,0,0.05,0,
+hake,pelagic0,benthos,0,0,0.2,0.3,0.5,0.7,0,
+hake,pelagic0,fish,0,0,0,0,0,0,0,
+hake,pelagic0,zoo,1,1,1,0.1,0.2,0.4,0,
+hake,pelagic0,zoo_cop,1,1,1,0.8,1,1,0,

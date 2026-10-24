@@ -1,0 +1,41 @@
+species,pool,s_min,s_c,s_max,basis
+ling,benthos,0.2,0.4,0.6,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+ling,fish,0.4,0.6,0.8,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+ling,zoo,0,0.05,0.2,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+ling,zoo_cop,0,0,0.05,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+blue ling,benthos,0,0.1,0.2,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+blue ling,fish,0.3,0.5,0.7,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+blue ling,zoo,0,0.1,0.3,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+blue ling,zoo_cop,0,0,0.05,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+tusk,benthos,0.5,0.75,1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+tusk,fish,0.1,0.2,0.4,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+tusk,zoo,0,0.05,0.2,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+tusk,zoo_cop,0,0,0.05,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+pollack,benthos,0,0,0.1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+pollack,fish,0.5,0.7,0.9,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+pollack,zoo,0.3,0.5,0.8,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+pollack,zoo_cop,0.05,0.2,0.4,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+greater forkbeard,benthos,0.4,0.6,0.9,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+greater forkbeard,fish,0.1,0.2,0.4,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+greater forkbeard,zoo,0.1,0.2,0.4,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+greater forkbeard,zoo_cop,0,0.05,0.1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+poor cod,benthos,0.5,0.7,1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+poor cod,fish,0,0.05,0.15,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+poor cod,zoo,0.3,0.5,0.7,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+poor cod,zoo_cop,0.1,0.3,0.5,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+bib,benthos,0.5,0.7,1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+bib,fish,0,0.1,0.2,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+bib,zoo,0.2,0.4,0.6,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+bib,zoo_cop,0.1,0.2,0.4,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+silvery pout,benthos,0,0,0.1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+silvery pout,fish,0,0,0.05,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+silvery pout,zoo,0.8,1,1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+silvery pout,zoo_cop,0.5,0.8,1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+fourbeard rockling,benthos,0.7,0.9,1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+fourbeard rockling,fish,0,0,0.1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+fourbeard rockling,zoo,0.1,0.2,0.4,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+fourbeard rockling,zoo_cop,0,0.05,0.1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+threebeard rockling,benthos,0.7,0.9,1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+threebeard rockling,fish,0,0,0.1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+threebeard rockling,zoo,0,0.1,0.3,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat
+threebeard rockling,zoo_cop,0,0.05,0.1,species-level; benthos from the species-mix note section 5; others judged from FAO/FishBase mouth and habitat

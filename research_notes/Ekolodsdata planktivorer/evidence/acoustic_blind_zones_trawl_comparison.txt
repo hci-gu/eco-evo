@@ -1,0 +1,75 @@
+Acoustic blind zones (surface and near-bottom) and acoustic vs bottom-trawl herring estimates
+============================================================================================
+Compiled 2026-10-24. Tags: [F] full text, [A] abstract/snippet, [S] secondary.
+
+1. Survey-specific settings in the eastern Skagerrak (HERAS, RV Dana) [F] - see heras_methods_allocation_ts.txt
+ - Towed body 3-7 m (mostly 4-5 m); integration from 3 m below transducer (absolute start 7-9 m in 2013;
+   manual 2025: upper integration limit 8-10 m). -> upper ~8-10 m not integrated.
+ - Bottom: "Bottom margin (backstep) 1.0 m" (Dana 2013 Table 1); integration "to 1 m above the bottom".
+ - Depth: max 500 m (2016+); max 300 m and layers below 150 m excluded (2002-2013 reports).
+ Derived illustration (this agent, not from a source): on a flat bottom at 168 m with the ES38-7 (7 deg
+ beam) and 1.024 ms pulse, the acoustic dead zone is ~ c*tau/2 + D(1 - cos 3.5 deg) = 0.77 + 0.31 = ~1.1 m,
+ plus the 1 m backstep = ~2 m above the seabed not integrated; more on slopes (Norwegian Trench flanks).
+
+2. Ona, E. and Mitson, R.B. 1996. Acoustic sampling and signal processing near the seabed: the deadzone
+ revisited. ICES Journal of Marine Science 53: 677-690. [S - full reference and the term "bottom dead
+ zone" via Scalabrin et al. 2009; the paper itself not read]
+
+3. Scalabrin, C., Marfia, C. and Boucher, J. 2009. How much fish is hidden in the surface and bottom
+ acoustic blind zones? ICES Journal of Marine Science 66: 1355-1363. Open access:
+ https://archimer.ifremer.fr/doc/00000/11093/7637.pdf [F]
+ Abstract: AUV vs RV Thalassa, Bay of Biscay, Sept 2007. "The AUV provided higher sA measurements than did
+ the vessel. For particular environmental and fish-distribution patterns, the biomass estimated by the AUV
+ was more than ten times that estimated by the vessel alone."
+ Introduction (p. 1355): the "surface blind zone ... can extend to 15 m below the surface, depending on the
+ acoustic frequency, the draft of the vessel, and the sea state"; "it has not been possible to take full
+ account of the upper 10 m in the abundance estimates" (anchovy); "useful detections of fish, such as hake
+ or cod, may not be possible, if they are located within 2 m of the bottom. This region is known as the
+ 'bottom dead zone' (Ona and Mitson, 1996) ... Its volume depends on the beam pattern, pulse duration, and
+ bottom slope, and it increases with depth."
+
+4. ICES IPS manuals [F]
+ SISP 9 (2015), p. 15-16: "The blind zone, which is the transducer draft + the nearfield zone may therefore
+ be larger on some vessels than others." IESSNS caveats (p. 22): "The acoustic dead zone at the surface
+ (0-15 m depth)".
+ IPS manual 2025 (TIMES 71) ch. 7.8 (German GERAS, PDF p. 128): night survey because "a certain fraction of
+ target species being distributed within the bottom dead zone during daytime (Bethke, 1993)"; near-surface
+ clupeids at night "are not quantified, since the integration start depth has been set to 10 m".
+ IPS manual 2025, HERAS (printed p. 64): in Kattegat/Skagerrak herring "is found in dispersed layers mixed
+ with other fish at all times" (so day/night surface-rise is a smaller issue there than elsewhere).
+
+5. Diurnal acoustic vs trawl differences (demersal, Barents Sea) [A]
+ Hjellvik, V., Godo, O.R. and Tjostheim, D. 2004/2005. "Diurnal variation in acoustic densities: why do we
+ see less in the dark?" (ICES conference contribution, figshare 25349773; journal version Can. J. Fish.
+ Aquat. Sci. ~2004-2005): echo abundance ~40-50 % higher by day in the winter Barents Sea demersal survey;
+ migration into/out of the bottom dead zone "did not appear to be the main cause"; behaviour/tilt-driven TS
+ changes more plausible. [A, via search summaries of IMR Brage records 11250/108193, 11250/106609]
+ Hjellvik, Godo & Tjostheim 2002, Can. J. Fish. Aquat. Sci. 59: 33-48: diurnal variation in Barents Sea
+ bottom-trawl catches of cod, stronger for small fish and at greater depth [A].
+
+6. North Sea herring: acoustic (HERAS) vs IBTS index comparison [F]
+ ICES 1997. Report of the Planning Group for Herring Surveys (PGHERS). ICES C.M. 1997/H:5. figshare
+ 19263092, https://ndownloader.figshare.com/files/41288400 . Section 2.1.3: "The ratio of the acoustic index
+ with the IBTS from 1987 to 1994 shows considerable fluctuation with a low point in 1988, resulting in a
+ factor of 1.7 or 1.2 between observations at the ends of this period ... The differences over the full
+ available time series from 1984 to 1994 indicates a factor between 1.4 to 0.7 from the mid 1980s to the
+ early 1990s ... the acoustic series provides a more precise estimate of year-class strength at 2 to 4
+ ring." Appendix C: "The IBTS exhibits much steeper selection (faster apparent reduction of numbers at age)
+ than the acoustic survey".
+ This is a relative (index) comparison; no absolute catchability of the GOV for herring was found.
+ WBSS stock annex 2026 (section 2.3.3): IBTS Q1/Q3 herring indices in 3.a were "deemed unfit" in 2002 and
+ included again from the 2013 benchmark; combined IBTS+BITS GAM indices since 2018.
+
+7. Simple absolute comparison for the model box (derived by this agent from the files in this folder):
+ GOV bottom-trawl estimate supplied by the caller: 1.3 t/km2 planktivores (herring ~0.9 t/km2).
+ HERAS July herring in stratum 31 (covers ~60-65 % of the box): 0.5-8.7 t/km2, mean 3.9 (2016-2025).
+ Danish national old stratum D (~90 % of box): 1.5-14.2 t/km2, mean 7.1 (2004-2015, six years).
+ Argos August 1989, eastern Skagerrak: 13.2 t/km2 over all strata, but only 0.7 t/km2 in stratum D5 and 2.7 in
+ C5, which (inferred, see argos_1989_skagerrak_kattegat.txt; E0 does not fit the depth scheme) are the
+ 100-300 m depth strata, i.e. herring were concentrated in the shallow coastal 20-60 m strata.
+ So the summer acoustic herring density is typically 3-5x the GOV figure for the whole stratum, but the
+ (inferred) depth-stratified 1989 data suggest the deep (>100 m) part of the box holds far less than the stratum mean.
+
+GAPS: Totland et al. (surface blind zone/dead zone with new technology) not found; Fassler et al. not
+searched in depth; Simmonds & MacLennan (2005) textbook not accessible (general dead-zone theory cited in
+item 1 is standard). No published HERAS-vs-IBTS absolute biomass comparison for 3.a found.

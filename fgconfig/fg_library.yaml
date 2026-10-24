@@ -281,24 +281,40 @@
     is_decision_maker: false
     movement_speed: 0.0
     # Hand-set growth_rate (section 136: no r_max, so it is NOT derived
-    # from the predation matrix), K = 10 t/km2 (user's value). r is the
-    # community-biomass recovery rate after trawling, 0.82 /yr (5-95 %
-    # 0.42-1.53; Hiddink et al. 2017 PNAS; Pitcher et al. 2022: 0.68 on
-    # mud): 0.82 / 1460 per tick (section 161.13). Was 0.001 (1.46 /yr),
-    # which halved the depletion bottom trawling causes at a given SAR.
-    # K ~100 from reports/Litteraturbaserad growth rate per FG.md is not
-    # adopted.
-    growth_rate: 0.000561644
-    max_carrying_capacity: 10.0
+    # from the predation matrix). Section 207: r 1.0 /yr = 1.0 / 1460 per
+    # tick (was 0.82, Hiddink et al. 2017 whole-community recovery): the
+    # gadoid-prey fraction is short-lived polychaetes and small bivalves
+    # at 300 m (Hiddink et al. 2019: r 2.41 / 1.24 / 0.34 for 1-3 / 3-10 /
+    # > 10 yr longevity) and Amphiura arms at 100 m (slow); central 1.0,
+    # range 0.8-1.5. research_notes/"Bentos och torskfiskar".
+    growth_rate: 0.000684932
+    # Section 207: K per cell from the manifest's depth map, t WW/km2,
+    # linear in depth between the rows and held outside them. Anchors:
+    # today's prey-sized stock at Josefson's (1990) in-grid stations,
+    # 100 m ~105-200 g WW/m2 (Stn 8, Stn 12, without large species) and
+    # 300 m ~50-85 (LYSE 8), taken in the lower half (110 and 55: the
+    # model's K is net of the unmodelled flatfish and invertebrate
+    # predators), divided by today's equilibrium share 1 - (F + M2)/r =
+    # 0.77 (box-mean trawl F 0.226 /yr, gadoid M2 0.0048, r 1.0). The SK3
+    # 1996-2011 values (387 g/m2 without urchins) rest on an unconfirmed
+    # SHARK unit fix and are not used. Box mean K 120, B* 95 (the
+    # review's box range: K 50-120, today's stock 40-100). Was a constant
+    # 10 (user's value, sections 136 and 161.13), 5-40x below every
+    # in-grid measurement; at 10 the gadoids plus trawling exceeded the
+    # benthos' maximum surplus production and it halved in 5-8 years.
+    capacity_depth_table:
+      - depth_m: 100.0
+        capacity: 143.0
+      - depth_m: 300.0
+        capacity: 71.5
+    # Fallback without a depth map: the box mean of the table.
+    max_carrying_capacity: 120.0
     energy_content: 3000.0
+    # Section 207: start at today's equilibrium per cell, K(c) (1 - (F(c)
+    # + M2)/r) with F(c) from the bottom-trawl baseline map (lib/world/
+    # habitat.py); the total comes from the manifest. Was Perlin noise.
     spawn:
-      mode: perlin
-      scale: 18.0
-      octaves: 3
-      persistence: 0.5
-      lacunarity: 2.0
-      threshold: 0.0
-      min_frac_of_max: 0.0
+      mode: equilibrium
     seed_rate: 1e-06
   pelagic_fish:
     display_name: "Pelagic Fish"
@@ -951,6 +967,31 @@ interaction_definitions:
     assimilation_factor: 0.7
     # Energy-limited ceiling, h = 130 * 3000 MJ/t / 4500 (section 148).
     handling_time: 87.0
+    # Section 208: the share of the pooled gadoid biomass that forages on
+    # the bottom at all, from morphology and habitat (mouth position, jaw,
+    # barbel: haddock 1, cod 0.5-1, whiting 0-0.3, saithe and hake 0), NOT
+    # from a diet: weighted by the box's depth-stratified NS-IBTS mix,
+    # Q1+Q3 2021-25 (haddock 46.6 %, saithe 29.1, whiting 17.0, cod 5.7,
+    # hake 0.9, ling 0.3; Norway pout and blue whiting are zooplanktivores
+    # outside the group): 0.53, range 0.32-0.65 (Q1 0.64, Q3 0.48 with
+    # the saithe visit; the Fraser 2007 catchability correction is the
+    # low end). The capable part eats benthos at the full a and 1/h, the
+    # rest cannot: the tick caps the eat share on benthos at phi
+    # (min(eat, phi); a mean field a phi, h / phi made every fish a
+    # half-benthivore and an energy maximiser dropped benthos, 0-10 %).
+    # research_notes/"Torskfiskarnas artsammansattning" (Swedish letters).
+    predator_share: 0.53
+    # Section 208: the share of the prey-sized infauna within reach of a
+    # gadoid at any time: 27 % of the biomass lies in the top 0-2 cm and
+    # 51 % in 0-5 cm at 280 m Skagerrak mud (Dauwe et al. 1998); Amphiura
+    # at 100 m offers mainly arm tips (regenerating tissue ~22 % of its
+    # biomass, Skold et al. 1994). Central 0.2, range 0.08-0.45; the
+    # reach into the sediment is a judgement. Scales the pair's prey
+    # biomass (Holling term and harvest cap). It does not move today's
+    # diet (the pair stays saturated at ~90 t/km2) but it sets how far a
+    # cell can be grazed. research_notes/"Bentos atkomlighet for
+    # torskfiskar" (Swedish letters).
+    accessible_fraction: 0.2
   # Cannibalism (section 141): ~5 % of the gadoid diet in North Sea
   # Ecopath 1991 (juvenile cod, whiting, haddock, saithe eaten by the
   # adults); M2 0.2168 /yr is the report's gadoid-on-gadoid share.

@@ -1,0 +1,1405 @@
+variant,quarter,species,stage,pool,biomass_share,contribution
+raw,1,haddock,juv_adult,benthos,0.47550142522360545,0.47550142522360545
+raw,1,haddock,juv_adult,fish,0.47550142522360545,0.04279512827012449
+raw,1,haddock,juv_adult,zoo,0.47550142522360545,0.1902005700894422
+raw,1,haddock,juv_adult,zoo_cop,0.47550142522360545,0.023775071261180274
+raw,1,haddock,juv_adult,fish_g_bio,0.47550142522360545,0.004433834594836194
+raw,1,haddock,juv_adult,fish_g_num,0.47550142522360545,0.027629680648245634
+raw,1,haddock,large,benthos,0.06720892988485447,0.06720892988485447
+raw,1,haddock,large,fish,0.06720892988485447,0.014113875275819438
+raw,1,haddock,large,zoo,0.06720892988485447,0.02016267896545634
+raw,1,haddock,large,zoo_cop,0.06720892988485447,0.0016802232471213618
+raw,1,haddock,large,fish_g_bio,0.06720892988485447,0.0025947507960921968
+raw,1,haddock,large,fish_g_num,0.06720892988485447,0.00854108037285391
+raw,1,haddock,pelagic0,benthos,0.0,0.0
+raw,1,haddock,pelagic0,fish,0.0,0.0
+raw,1,haddock,pelagic0,zoo,0.0,0.0
+raw,1,haddock,pelagic0,zoo_cop,0.0,0.0
+raw,1,haddock,pelagic0,fish_g_bio,0.0,0.0
+raw,1,haddock,pelagic0,fish_g_num,0.0,0.0
+raw,1,whiting,juvenile,benthos,0.052992437806471025,0.02119697512258841
+raw,1,whiting,juvenile,fish,0.052992437806471025,0.0021196975122588415
+raw,1,whiting,juvenile,zoo,0.052992437806471025,0.042923874623241536
+raw,1,whiting,juvenile,zoo_cop,0.052992437806471025,0.014307958207747178
+raw,1,whiting,juvenile,fish_g_bio,0.052992437806471025,0.00031715261011184637
+raw,1,whiting,juvenile,fish_g_num,0.052992437806471025,0.0034753964965013907
+raw,1,whiting,adult,benthos,0.27014105632228047,0.04862539013801048
+raw,1,whiting,adult,fish,0.27014105632228047,0.10805642252891219
+raw,1,whiting,adult,zoo,0.27014105632228047,0.14587617041403148
+raw,1,whiting,adult,zoo_cop,0.27014105632228047,0.012156347534502622
+raw,1,whiting,adult,fish_g_bio,0.27014105632228047,0.03454997249886032
+raw,1,whiting,adult,fish_g_num,0.27014105632228047,0.0937539810412181
+raw,1,whiting,pelagic0,benthos,0.0,0.0
+raw,1,whiting,pelagic0,fish,0.0,0.0
+raw,1,whiting,pelagic0,zoo,0.0,0.0
+raw,1,whiting,pelagic0,zoo_cop,0.0,0.0
+raw,1,whiting,pelagic0,fish_g_bio,0.0,0.0
+raw,1,whiting,pelagic0,fish_g_num,0.0,0.0
+raw,1,saithe,adult,benthos,0.015732271356958108,0.0009439362814174865
+raw,1,saithe,adult,fish,0.015732271356958108,0.011012589949870675
+raw,1,saithe,adult,zoo,0.015732271356958108,0.014159044221262298
+raw,1,saithe,adult,zoo_cop,0.015732271356958108,0.007866135678479054
+raw,1,saithe,adult,fish_g_bio,0.015732271356958108,0.00664055702186732
+raw,1,saithe,adult,fish_g_num,0.015732271356958108,0.011400002478256064
+raw,1,saithe,large,benthos,0.00850587140434066,0.0002551761421302198
+raw,1,saithe,large,fish,0.00850587140434066,0.00850587140434066
+raw,1,saithe,large,zoo,0.00850587140434066,0.00425293570217033
+raw,1,saithe,large,zoo_cop,0.00850587140434066,0.002551761421302198
+raw,1,saithe,large,fish_g_bio,0.00850587140434066,0.008190217890037686
+raw,1,saithe,large,fish_g_num,0.00850587140434066,0.008428781506266914
+raw,1,saithe,pelagic0,benthos,0.0,0.0
+raw,1,saithe,pelagic0,fish,0.0,0.0
+raw,1,saithe,pelagic0,zoo,0.0,0.0
+raw,1,saithe,pelagic0,zoo_cop,0.0,0.0
+raw,1,saithe,pelagic0,fish_g_bio,0.0,0.0
+raw,1,saithe,pelagic0,fish_g_num,0.0,0.0
+raw,1,cod,juvenile,benthos,0.0052239822831845065,0.0052239822831845065
+raw,1,cod,juvenile,fish,0.0052239822831845065,0.0008462851298758901
+raw,1,cod,juvenile,zoo,0.0052239822831845065,0.002507511495928563
+raw,1,cod,juvenile,zoo_cop,0.0052239822831845065,0.0006268778739821408
+raw,1,cod,juvenile,fish_g_bio,0.0052239822831845065,0.0001579196300172447
+raw,1,cod,juvenile,fish_g_num,0.0052239822831845065,0.0007995071091510412
+raw,1,cod,medium,benthos,0.049729602824776536,0.03580531403383911
+raw,1,cod,medium,fish,0.049729602824776536,0.018797789867765532
+raw,1,cod,medium,zoo,0.049729602824776536,0.01491888084743296
+raw,1,cod,medium,zoo_cop,0.049729602824776536,0.001491888084743296
+raw,1,cod,medium,fish_g_bio,0.049729602824776536,0.012354035706912046
+raw,1,cod,medium,fish_g_num,0.049729602824776536,0.02019970943852244
+raw,1,cod,large,benthos,0.04042462191197973,0.025871758023667032
+raw,1,cod,large,fish,0.04042462191197973,0.021829295832469054
+raw,1,cod,large,zoo,0.04042462191197973,0.004850954629437567
+raw,1,cod,large,zoo_cop,0.04042462191197973,0.00048509546294375674
+raw,1,cod,large,fish_g_bio,0.04042462191197973,0.021465498507825795
+raw,1,cod,large,fish_g_num,0.04042462191197973,0.021753892699365104
+raw,1,cod,pelagic0,benthos,0.0,0.0
+raw,1,cod,pelagic0,fish,0.0,0.0
+raw,1,cod,pelagic0,zoo,0.0,0.0
+raw,1,cod,pelagic0,zoo_cop,0.0,0.0
+raw,1,cod,pelagic0,fish_g_bio,0.0,0.0
+raw,1,cod,pelagic0,fish_g_num,0.0,0.0
+raw,1,hake,juvenile,benthos,0.00010889423152441955,3.484615408781426e-05
+raw,1,hake,juvenile,fish,0.00010889423152441955,2.6134615565860692e-05
+raw,1,hake,juvenile,zoo,0.00010889423152441955,6.098076965367494e-05
+raw,1,hake,juvenile,zoo_cop,0.00010889423152441955,8.711538521953566e-06
+raw,1,hake,juvenile,fish_g_bio,0.00010889423152441955,1.373455533441944e-06
+raw,1,hake,juvenile,fish_g_num,0.00010889423152441955,1.1573404580973106e-05
+raw,1,hake,adult,benthos,0.0030309067500245757,0.00018185440500147453
+raw,1,hake,adult,fish,0.0030309067500245757,0.0021822528600176946
+raw,1,hake,adult,zoo,0.0030309067500245757,0.00036370881000294907
+raw,1,hake,adult,zoo_cop,0.0030309067500245757,0.0
+raw,1,hake,adult,fish_g_bio,0.0030309067500245757,0.0011474022498660394
+raw,1,hake,adult,fish_g_num,0.0030309067500245757,0.0018274589419919923
+raw,1,hake,pelagic0,benthos,0.0,0.0
+raw,1,hake,pelagic0,fish,0.0,0.0
+raw,1,hake,pelagic0,zoo,0.0,0.0
+raw,1,hake,pelagic0,zoo_cop,0.0,0.0
+raw,1,hake,pelagic0,fish_g_bio,0.0,0.0
+raw,1,hake,pelagic0,fish_g_num,0.0,0.0
+raw,1,ling,all,benthos,0.0028000000000000004,0.0011200000000000001
+raw,1,ling,all,fish,0.0028000000000000004,0.0016800000000000003
+raw,1,ling,all,zoo,0.0028000000000000004,0.00014000000000000001
+raw,1,ling,all,zoo_cop,0.0028000000000000004,0.0
+raw,1,ling,all,fish_g_bio,0.0028000000000000004,0.0016800000000000003
+raw,1,ling,all,fish_g_num,0.0028000000000000004,0.0016800000000000003
+raw,1,blue ling,all,benthos,0.0001,1e-05
+raw,1,blue ling,all,fish,0.0001,5e-05
+raw,1,blue ling,all,zoo,0.0001,1e-05
+raw,1,blue ling,all,zoo_cop,0.0001,0.0
+raw,1,blue ling,all,fish_g_bio,0.0001,5e-05
+raw,1,blue ling,all,fish_g_num,0.0001,5e-05
+raw,1,tusk,all,benthos,0.0,0.0
+raw,1,tusk,all,fish,0.0,0.0
+raw,1,tusk,all,zoo,0.0,0.0
+raw,1,tusk,all,zoo_cop,0.0,0.0
+raw,1,tusk,all,fish_g_bio,0.0,0.0
+raw,1,tusk,all,fish_g_num,0.0,0.0
+raw,1,pollack,all,benthos,0.002,0.0
+raw,1,pollack,all,fish,0.002,0.0014
+raw,1,pollack,all,zoo,0.002,0.001
+raw,1,pollack,all,zoo_cop,0.002,0.0004
+raw,1,pollack,all,fish_g_bio,0.002,0.0014
+raw,1,pollack,all,fish_g_num,0.002,0.0014
+raw,1,greater forkbeard,all,benthos,0.0006,0.00035999999999999997
+raw,1,greater forkbeard,all,fish,0.0006,0.00011999999999999999
+raw,1,greater forkbeard,all,zoo,0.0006,0.00011999999999999999
+raw,1,greater forkbeard,all,zoo_cop,0.0006,2.9999999999999997e-05
+raw,1,greater forkbeard,all,fish_g_bio,0.0006,0.00011999999999999999
+raw,1,greater forkbeard,all,fish_g_num,0.0006,0.00011999999999999999
+raw,1,poor cod,all,benthos,0.0033,0.00231
+raw,1,poor cod,all,fish,0.0033,0.000165
+raw,1,poor cod,all,zoo,0.0033,0.00165
+raw,1,poor cod,all,zoo_cop,0.0033,0.00099
+raw,1,poor cod,all,fish_g_bio,0.0033,0.000165
+raw,1,poor cod,all,fish_g_num,0.0033,0.000165
+raw,1,bib,all,benthos,0.0,0.0
+raw,1,bib,all,fish,0.0,0.0
+raw,1,bib,all,zoo,0.0,0.0
+raw,1,bib,all,zoo_cop,0.0,0.0
+raw,1,bib,all,fish_g_bio,0.0,0.0
+raw,1,bib,all,fish_g_num,0.0,0.0
+raw,1,silvery pout,all,benthos,0.0001,0.0
+raw,1,silvery pout,all,fish,0.0001,0.0
+raw,1,silvery pout,all,zoo,0.0001,0.0001
+raw,1,silvery pout,all,zoo_cop,0.0001,8e-05
+raw,1,silvery pout,all,fish_g_bio,0.0001,0.0
+raw,1,silvery pout,all,fish_g_num,0.0001,0.0
+raw,1,fourbeard rockling,all,benthos,0.0025,0.0022500000000000003
+raw,1,fourbeard rockling,all,fish,0.0025,0.0
+raw,1,fourbeard rockling,all,zoo,0.0025,0.0005
+raw,1,fourbeard rockling,all,zoo_cop,0.0025,0.000125
+raw,1,fourbeard rockling,all,fish_g_bio,0.0025,0.0
+raw,1,fourbeard rockling,all,fish_g_num,0.0025,0.0
+raw,1,threebeard rockling,all,benthos,0.0,0.0
+raw,1,threebeard rockling,all,fish,0.0,0.0
+raw,1,threebeard rockling,all,zoo,0.0,0.0
+raw,1,threebeard rockling,all,zoo_cop,0.0,0.0
+raw,1,threebeard rockling,all,fish_g_bio,0.0,0.0
+raw,1,threebeard rockling,all,fish_g_num,0.0,0.0
+raw,3,haddock,juv_adult,benthos,0.3090585111431843,0.3090585111431843
+raw,3,haddock,juv_adult,fish,0.3090585111431843,0.027815266002886585
+raw,3,haddock,juv_adult,zoo,0.3090585111431843,0.12362340445727371
+raw,3,haddock,juv_adult,zoo_cop,0.3090585111431843,0.015452925557159214
+raw,3,haddock,juv_adult,fish_g_bio,0.3090585111431843,0.007174222832639069
+raw,3,haddock,juv_adult,fish_g_num,0.3090585111431843,0.023650251516149922
+raw,3,haddock,large,benthos,0.12656416279824026,0.12656416279824026
+raw,3,haddock,large,fish,0.12656416279824026,0.026578474187630454
+raw,3,haddock,large,zoo,0.12656416279824026,0.03796924883947208
+raw,3,haddock,large,zoo_cop,0.12656416279824026,0.0031641040699560067
+raw,3,haddock,large,fish_g_bio,0.12656416279824026,0.010445080145974997
+raw,3,haddock,large,fish_g_num,0.12656416279824026,0.027390927316546864
+raw,3,haddock,pelagic0,benthos,0.00043605873267409866,0.0
+raw,3,haddock,pelagic0,fish,0.00043605873267409866,0.0
+raw,3,haddock,pelagic0,zoo,0.00043605873267409866,8.721174653481974e-05
+raw,3,haddock,pelagic0,zoo_cop,0.00043605873267409866,0.00043605873267409866
+raw,3,haddock,pelagic0,fish_g_bio,0.00043605873267409866,0.0
+raw,3,haddock,pelagic0,fish_g_num,0.00043605873267409866,0.0
+raw,3,whiting,juvenile,benthos,0.031680009265410716,0.012672003706164288
+raw,3,whiting,juvenile,fish,0.031680009265410716,0.0012672003706164288
+raw,3,whiting,juvenile,zoo,0.031680009265410716,0.02566080750498268
+raw,3,whiting,juvenile,zoo_cop,0.031680009265410716,0.008553602501660894
+raw,3,whiting,juvenile,fish_g_bio,0.031680009265410716,1.1876406463097454e-05
+raw,3,whiting,juvenile,fish_g_num,0.031680009265410716,9.017469851917708e-05
+raw,3,whiting,adult,benthos,0.07836418169858704,0.014105552705745667
+raw,3,whiting,adult,fish,0.07836418169858704,0.03134567267943482
+raw,3,whiting,adult,zoo,0.07836418169858704,0.042316658117237005
+raw,3,whiting,adult,zoo_cop,0.07836418169858704,0.0035263881764364172
+raw,3,whiting,adult,fish_g_bio,0.07836418169858704,0.008949973153800675
+raw,3,whiting,adult,fish_g_num,0.07836418169858704,0.02477137623969897
+raw,3,whiting,pelagic0,benthos,0.0016757998623959046,0.0
+raw,3,whiting,pelagic0,fish,0.0016757998623959046,0.0
+raw,3,whiting,pelagic0,zoo,0.0016757998623959046,0.00033515997247918097
+raw,3,whiting,pelagic0,zoo_cop,0.0016757998623959046,0.0016757998623959046
+raw,3,whiting,pelagic0,fish_g_bio,0.0016757998623959046,0.0
+raw,3,whiting,pelagic0,fish_g_num,0.0016757998623959046,0.0
+raw,3,saithe,adult,benthos,0.2607409446791976,0.015644456680751855
+raw,3,saithe,adult,fish,0.2607409446791976,0.1825186612754383
+raw,3,saithe,adult,zoo,0.2607409446791976,0.23466685021127787
+raw,3,saithe,adult,zoo_cop,0.2607409446791976,0.1303704723395988
+raw,3,saithe,adult,fish_g_bio,0.2607409446791976,0.10351852707014242
+raw,3,saithe,adult,fish_g_num,0.2607409446791976,0.2164709628064247
+raw,3,saithe,large,benthos,0.1320585490414669,0.003961756471244007
+raw,3,saithe,large,fish,0.1320585490414669,0.1320585490414669
+raw,3,saithe,large,zoo,0.1320585490414669,0.06602927452073346
+raw,3,saithe,large,zoo_cop,0.1320585490414669,0.03961756471244007
+raw,3,saithe,large,fish_g_bio,0.1320585490414669,0.09623570408464581
+raw,3,saithe,large,fish_g_num,0.1320585490414669,0.12607314893854082
+raw,3,saithe,pelagic0,benthos,0.0,0.0
+raw,3,saithe,pelagic0,fish,0.0,0.0
+raw,3,saithe,pelagic0,zoo,0.0,0.0
+raw,3,saithe,pelagic0,zoo_cop,0.0,0.0
+raw,3,saithe,pelagic0,fish_g_bio,0.0,0.0
+raw,3,saithe,pelagic0,fish_g_num,0.0,0.0
+raw,3,cod,juvenile,benthos,0.00827916800446429,0.00827916800446429
+raw,3,cod,juvenile,fish,0.00827916800446429,0.001341225216723215
+raw,3,cod,juvenile,zoo,0.00827916800446429,0.003974000642142859
+raw,3,cod,juvenile,zoo_cop,0.00827916800446429,0.0009935001605357147
+raw,3,cod,juvenile,fish_g_bio,0.00827916800446429,0.0006156637731412794
+raw,3,cod,juvenile,fish_g_num,0.00827916800446429,0.0018955204402414487
+raw,3,cod,medium,benthos,0.012702641275699776,0.00914590171850384
+raw,3,cod,medium,fish,0.012702641275699776,0.004801598402214516
+raw,3,cod,medium,zoo,0.012702641275699776,0.0038107923827099327
+raw,3,cod,medium,zoo_cop,0.012702641275699776,0.00038107923827099326
+raw,3,cod,medium,fish_g_bio,0.012702641275699776,0.002925415365673695
+raw,3,cod,medium,fish_g_num,0.012702641275699776,0.005768752197438828
+raw,3,cod,large,benthos,0.02172352754713035,0.013903057630163427
+raw,3,cod,large,fish,0.02172352754713035,0.01173070487545039
+raw,3,cod,large,zoo,0.02172352754713035,0.002606823305655642
+raw,3,cod,large,zoo_cop,0.02172352754713035,0.0002606823305655642
+raw,3,cod,large,fish_g_bio,0.02172352754713035,0.010072548776922268
+raw,3,cod,large,fish_g_num,0.02172352754713035,0.011493494311055175
+raw,3,cod,pelagic0,benthos,0.0001285015150269641,0.0
+raw,3,cod,pelagic0,fish,0.0001285015150269641,0.0
+raw,3,cod,pelagic0,zoo,0.0001285015150269641,2.5700303005392822e-05
+raw,3,cod,pelagic0,zoo_cop,0.0001285015150269641,0.0001285015150269641
+raw,3,cod,pelagic0,fish_g_bio,0.0001285015150269641,0.0
+raw,3,cod,pelagic0,fish_g_num,0.0001285015150269641,0.0
+raw,3,hake,juvenile,benthos,0.00016160224619762322,5.171271878323944e-05
+raw,3,hake,juvenile,fish,0.00016160224619762322,3.878453908742957e-05
+raw,3,hake,juvenile,zoo,0.00016160224619762322,9.049725787066899e-05
+raw,3,hake,juvenile,zoo_cop,0.00016160224619762322,1.292817969580986e-05
+raw,3,hake,juvenile,fish_g_bio,0.00016160224619762322,2.38579194509015e-06
+raw,3,hake,juvenile,fish_g_num,0.00016160224619762322,1.1095458854440131e-05
+raw,3,hake,adult,benthos,0.010305366301450928,0.0006183219780870557
+raw,3,hake,adult,fish,0.010305366301450928,0.007419863737044669
+raw,3,hake,adult,zoo,0.010305366301450928,0.0012366439561741114
+raw,3,hake,adult,zoo_cop,0.010305366301450928,0.0
+raw,3,hake,adult,fish_g_bio,0.010305366301450928,0.006735949625577034
+raw,3,hake,adult,fish_g_num,0.010305366301450928,0.007847394492783936
+raw,3,hake,pelagic0,benthos,2.097588887304319e-05,0.0
+raw,3,hake,pelagic0,fish,2.097588887304319e-05,0.0
+raw,3,hake,pelagic0,zoo,2.097588887304319e-05,4.195177774608638e-06
+raw,3,hake,pelagic0,zoo_cop,2.097588887304319e-05,2.097588887304319e-05
+raw,3,hake,pelagic0,fish_g_bio,2.097588887304319e-05,0.0
+raw,3,hake,pelagic0,fish_g_num,2.097588887304319e-05,0.0
+raw,3,ling,all,benthos,0.0027,0.00108
+raw,3,ling,all,fish,0.0027,0.0016200000000000001
+raw,3,ling,all,zoo,0.0027,0.000135
+raw,3,ling,all,zoo_cop,0.0027,0.0
+raw,3,ling,all,fish_g_bio,0.0027,0.0016200000000000001
+raw,3,ling,all,fish_g_num,0.0027,0.0016200000000000001
+raw,3,blue ling,all,benthos,0.0,0.0
+raw,3,blue ling,all,fish,0.0,0.0
+raw,3,blue ling,all,zoo,0.0,0.0
+raw,3,blue ling,all,zoo_cop,0.0,0.0
+raw,3,blue ling,all,fish_g_bio,0.0,0.0
+raw,3,blue ling,all,fish_g_num,0.0,0.0
+raw,3,tusk,all,benthos,0.0,0.0
+raw,3,tusk,all,fish,0.0,0.0
+raw,3,tusk,all,zoo,0.0,0.0
+raw,3,tusk,all,zoo_cop,0.0,0.0
+raw,3,tusk,all,fish_g_bio,0.0,0.0
+raw,3,tusk,all,fish_g_num,0.0,0.0
+raw,3,pollack,all,benthos,0.0006,0.0
+raw,3,pollack,all,fish,0.0006,0.00041999999999999996
+raw,3,pollack,all,zoo,0.0006,0.0003
+raw,3,pollack,all,zoo_cop,0.0006,0.00011999999999999999
+raw,3,pollack,all,fish_g_bio,0.0006,0.00041999999999999996
+raw,3,pollack,all,fish_g_num,0.0006,0.00041999999999999996
+raw,3,greater forkbeard,all,benthos,0.0001,6e-05
+raw,3,greater forkbeard,all,fish,0.0001,2e-05
+raw,3,greater forkbeard,all,zoo,0.0001,2e-05
+raw,3,greater forkbeard,all,zoo_cop,0.0001,5e-06
+raw,3,greater forkbeard,all,fish_g_bio,0.0001,2e-05
+raw,3,greater forkbeard,all,fish_g_num,0.0001,2e-05
+raw,3,poor cod,all,benthos,0.0003,0.00020999999999999998
+raw,3,poor cod,all,fish,0.0003,1.4999999999999999e-05
+raw,3,poor cod,all,zoo,0.0003,0.00015
+raw,3,poor cod,all,zoo_cop,0.0003,8.999999999999999e-05
+raw,3,poor cod,all,fish_g_bio,0.0003,1.4999999999999999e-05
+raw,3,poor cod,all,fish_g_num,0.0003,1.4999999999999999e-05
+raw,3,bib,all,benthos,0.0,0.0
+raw,3,bib,all,fish,0.0,0.0
+raw,3,bib,all,zoo,0.0,0.0
+raw,3,bib,all,zoo_cop,0.0,0.0
+raw,3,bib,all,fish_g_bio,0.0,0.0
+raw,3,bib,all,fish_g_num,0.0,0.0
+raw,3,silvery pout,all,benthos,0.0006,0.0
+raw,3,silvery pout,all,fish,0.0006,0.0
+raw,3,silvery pout,all,zoo,0.0006,0.0006
+raw,3,silvery pout,all,zoo_cop,0.0006,0.00047999999999999996
+raw,3,silvery pout,all,fish_g_bio,0.0006,0.0
+raw,3,silvery pout,all,fish_g_num,0.0006,0.0
+raw,3,fourbeard rockling,all,benthos,0.0018,0.00162
+raw,3,fourbeard rockling,all,fish,0.0018,0.0
+raw,3,fourbeard rockling,all,zoo,0.0018,0.00036
+raw,3,fourbeard rockling,all,zoo_cop,0.0018,9e-05
+raw,3,fourbeard rockling,all,fish_g_bio,0.0018,0.0
+raw,3,fourbeard rockling,all,fish_g_num,0.0018,0.0
+raw,3,threebeard rockling,all,benthos,0.0,0.0
+raw,3,threebeard rockling,all,fish,0.0,0.0
+raw,3,threebeard rockling,all,zoo,0.0,0.0
+raw,3,threebeard rockling,all,zoo_cop,0.0,0.0
+raw,3,threebeard rockling,all,fish_g_bio,0.0,0.0
+raw,3,threebeard rockling,all,fish_g_num,0.0,0.0
+raw,pooled,haddock,juv_adult,benthos,0.35524647932325576,0.35524647932325576
+raw,pooled,haddock,juv_adult,fish,0.35524647932325576,0.031972183139093016
+raw,pooled,haddock,juv_adult,zoo,0.35524647932325576,0.1420985917293023
+raw,pooled,haddock,juv_adult,zoo_cop,0.35524647932325576,0.01776232396616279
+raw,pooled,haddock,juv_adult,fish_g_bio,0.35524647932325576,0.005750055646572529
+raw,pooled,haddock,juv_adult,fish_g_num,0.35524647932325576,0.024371150675600774
+raw,pooled,haddock,large,benthos,0.11018592637161953,0.11018592637161953
+raw,pooled,haddock,large,fish,0.11018592637161953,0.0231390445380401
+raw,pooled,haddock,large,zoo,0.11018592637161953,0.03305577791148586
+raw,pooled,haddock,large,zoo_cop,0.11018592637161953,0.0027546481592904885
+raw,pooled,haddock,large,fish_g_bio,0.11018592637161953,0.007385114750773847
+raw,pooled,haddock,large,fish_g_num,0.11018592637161953,0.019753270978778673
+raw,pooled,haddock,pelagic0,benthos,0.0002328326191570161,0.0
+raw,pooled,haddock,pelagic0,fish,0.0002328326191570161,0.0
+raw,pooled,haddock,pelagic0,zoo,0.0002328326191570161,4.656652383140322e-05
+raw,pooled,haddock,pelagic0,zoo_cop,0.0002328326191570161,0.0002328326191570161
+raw,pooled,haddock,pelagic0,fish_g_bio,0.0002328326191570161,0.0
+raw,pooled,haddock,pelagic0,fish_g_num,0.0002328326191570161,0.0
+raw,pooled,whiting,juvenile,benthos,0.03767036394551897,0.015068145578207588
+raw,pooled,whiting,juvenile,fish,0.03767036394551897,0.001506814557820759
+raw,pooled,whiting,juvenile,zoo,0.03767036394551897,0.030512994795870364
+raw,pooled,whiting,juvenile,zoo_cop,0.03767036394551897,0.010170998265290122
+raw,pooled,whiting,juvenile,fish_g_bio,0.03767036394551897,9.139664562159348e-05
+raw,pooled,whiting,juvenile,fish_g_num,0.03767036394551897,0.000952585209097199
+raw,pooled,whiting,adult,benthos,0.13141913373822542,0.023655444072880574
+raw,pooled,whiting,adult,fish,0.13141913373822542,0.05256765349529017
+raw,pooled,whiting,adult,zoo,0.13141913373822542,0.07096633221864174
+raw,pooled,whiting,adult,zoo_cop,0.13141913373822542,0.0059138610182201444
+raw,pooled,whiting,adult,fish_g_bio,0.13141913373822542,0.01697255933572325
+raw,pooled,whiting,adult,fish_g_num,0.13141913373822542,0.04709473132760543
+raw,pooled,whiting,pelagic0,benthos,0.0011919702757162243,0.0
+raw,pooled,whiting,pelagic0,fish,0.0011919702757162243,0.0
+raw,pooled,whiting,pelagic0,zoo,0.0011919702757162243,0.00023839405514324485
+raw,pooled,whiting,pelagic0,zoo_cop,0.0011919702757162243,0.0011919702757162243
+raw,pooled,whiting,pelagic0,fish_g_bio,0.0011919702757162243,0.0
+raw,pooled,whiting,pelagic0,fish_g_num,0.0011919702757162243,0.0
+raw,pooled,saithe,adult,benthos,0.1929394270011587,0.011576365620069522
+raw,pooled,saithe,adult,fish,0.1929394270011587,0.1350575989008111
+raw,pooled,saithe,adult,zoo,0.1929394270011587,0.17364548430104285
+raw,pooled,saithe,adult,zoo_cop,0.1929394270011587,0.09646971350057935
+raw,pooled,saithe,adult,fish_g_bio,0.1929394270011587,0.08359262943976538
+raw,pooled,saithe,adult,fish_g_num,0.1929394270011587,0.15431402387660045
+raw,pooled,saithe,large,benthos,0.09786777820105248,0.0029360333460315743
+raw,pooled,saithe,large,fish,0.09786777820105248,0.09786777820105248
+raw,pooled,saithe,large,zoo,0.09786777820105248,0.04893388910052624
+raw,pooled,saithe,large,zoo_cop,0.09786777820105248,0.029360333460315743
+raw,pooled,saithe,large,fish_g_bio,0.09786777820105248,0.0816527557106653
+raw,pooled,saithe,large,fish_g_num,0.09786777820105248,0.09493599486018585
+raw,pooled,saithe,pelagic0,benthos,0.0,0.0
+raw,pooled,saithe,pelagic0,fish,0.0,0.0
+raw,pooled,saithe,pelagic0,zoo,0.0,0.0
+raw,pooled,saithe,pelagic0,zoo_cop,0.0,0.0
+raw,pooled,saithe,pelagic0,fish_g_bio,0.0,0.0
+raw,pooled,saithe,pelagic0,fish_g_num,0.0,0.0
+raw,pooled,cod,juvenile,benthos,0.007441390213594006,0.007441390213594006
+raw,pooled,cod,juvenile,fish,0.007441390213594006,0.001205505214602229
+raw,pooled,cod,juvenile,zoo,0.007441390213594006,0.003571867302525123
+raw,pooled,cod,juvenile,zoo_cop,0.007441390213594006,0.0008929668256312807
+raw,pooled,cod,juvenile,fish_g_bio,0.007441390213594006,0.0003873961607071692
+raw,pooled,cod,juvenile,fish_g_num,0.007441390213594006,0.0014144693048907607
+raw,pooled,cod,medium,benthos,0.02295110731468259,0.016524797266571467
+raw,pooled,cod,medium,fish,0.02295110731468259,0.00867551856495002
+raw,pooled,cod,medium,zoo,0.02295110731468259,0.006885332194404777
+raw,pooled,cod,medium,zoo_cop,0.02295110731468259,0.0006885332194404777
+raw,pooled,cod,medium,fish_g_bio,0.02295110731468259,0.005521619996545145
+raw,pooled,cod,medium,fish_g_num,0.02295110731468259,0.009878660884730682
+raw,pooled,cod,large,benthos,0.026912569624077,0.017224044559409284
+raw,pooled,cod,large,fish,0.026912569624077,0.01453278759700158
+raw,pooled,cod,large,zoo,0.026912569624077,0.00322950835488924
+raw,pooled,cod,large,zoo_cop,0.026912569624077,0.000322950835488924
+raw,pooled,cod,large,fish_g_bio,0.026912569624077,0.013403253910022735
+raw,pooled,cod,large,fish_g_num,0.026912569624077,0.014364778233340345
+raw,pooled,cod,pelagic0,benthos,8.608673082476757e-05,0.0
+raw,pooled,cod,pelagic0,fish,8.608673082476757e-05,0.0
+raw,pooled,cod,pelagic0,zoo,8.608673082476757e-05,1.7217346164953515e-05
+raw,pooled,cod,pelagic0,zoo_cop,8.608673082476757e-05,8.608673082476757e-05
+raw,pooled,cod,pelagic0,fish_g_bio,8.608673082476757e-05,0.0
+raw,pooled,cod,pelagic0,fish_g_num,8.608673082476757e-05,0.0
+raw,pooled,hake,juvenile,benthos,0.0001471210548810975,4.707873756195121e-05
+raw,pooled,hake,juvenile,fish,0.0001471210548810975,3.53090531714634e-05
+raw,pooled,hake,juvenile,zoo,0.0001471210548810975,8.238779073341459e-05
+raw,pooled,hake,juvenile,zoo_cop,0.0001471210548810975,1.1769684390487803e-05
+raw,pooled,hake,juvenile,fish_g_bio,0.0001471210548810975,2.3759142394697794e-06
+raw,pooled,hake,juvenile,fish_g_num,0.0001471210548810975,1.556182589635473e-05
+raw,pooled,hake,adult,benthos,0.00829935865159535,0.000497961519095721
+raw,pooled,hake,adult,fish,0.00829935865159535,0.005975538229148653
+raw,pooled,hake,adult,zoo,0.00829935865159535,0.000995923038191442
+raw,pooled,hake,adult,zoo_cop,0.00829935865159535,0.0
+raw,pooled,hake,adult,fish_g_bio,0.00829935865159535,0.005397999843095182
+raw,pooled,hake,adult,fish_g_num,0.00829935865159535,0.006194650184102672
+raw,pooled,hake,pelagic0,benthos,8.454934641117566e-06,0.0
+raw,pooled,hake,pelagic0,fish,8.454934641117566e-06,0.0
+raw,pooled,hake,pelagic0,zoo,8.454934641117566e-06,1.6909869282235134e-06
+raw,pooled,hake,pelagic0,zoo_cop,8.454934641117566e-06,8.454934641117566e-06
+raw,pooled,hake,pelagic0,fish_g_bio,8.454934641117566e-06,0.0
+raw,pooled,hake,pelagic0,fish_g_num,8.454934641117566e-06,0.0
+raw,pooled,ling,all,benthos,0.0027,0.00108
+raw,pooled,ling,all,fish,0.0027,0.0016200000000000001
+raw,pooled,ling,all,zoo,0.0027,0.000135
+raw,pooled,ling,all,zoo_cop,0.0027,0.0
+raw,pooled,ling,all,fish_g_bio,0.0027,0.0016200000000000001
+raw,pooled,ling,all,fish_g_num,0.0027,0.0016200000000000001
+raw,pooled,blue ling,all,benthos,0.0,0.0
+raw,pooled,blue ling,all,fish,0.0,0.0
+raw,pooled,blue ling,all,zoo,0.0,0.0
+raw,pooled,blue ling,all,zoo_cop,0.0,0.0
+raw,pooled,blue ling,all,fish_g_bio,0.0,0.0
+raw,pooled,blue ling,all,fish_g_num,0.0,0.0
+raw,pooled,tusk,all,benthos,0.0,0.0
+raw,pooled,tusk,all,fish,0.0,0.0
+raw,pooled,tusk,all,zoo,0.0,0.0
+raw,pooled,tusk,all,zoo_cop,0.0,0.0
+raw,pooled,tusk,all,fish_g_bio,0.0,0.0
+raw,pooled,tusk,all,fish_g_num,0.0,0.0
+raw,pooled,pollack,all,benthos,0.0009,0.0
+raw,pooled,pollack,all,fish,0.0009,0.0006299999999999999
+raw,pooled,pollack,all,zoo,0.0009,0.00045
+raw,pooled,pollack,all,zoo_cop,0.0009,0.00018
+raw,pooled,pollack,all,fish_g_bio,0.0009,0.0006299999999999999
+raw,pooled,pollack,all,fish_g_num,0.0009,0.0006299999999999999
+raw,pooled,greater forkbeard,all,benthos,0.0002,0.00012
+raw,pooled,greater forkbeard,all,fish,0.0002,4e-05
+raw,pooled,greater forkbeard,all,zoo,0.0002,4e-05
+raw,pooled,greater forkbeard,all,zoo_cop,0.0002,1e-05
+raw,pooled,greater forkbeard,all,fish_g_bio,0.0002,4e-05
+raw,pooled,greater forkbeard,all,fish_g_num,0.0002,4e-05
+raw,pooled,poor cod,all,benthos,0.0011,0.00077
+raw,pooled,poor cod,all,fish,0.0011,5.500000000000001e-05
+raw,pooled,poor cod,all,zoo,0.0011,0.00055
+raw,pooled,poor cod,all,zoo_cop,0.0011,0.00033
+raw,pooled,poor cod,all,fish_g_bio,0.0011,5.500000000000001e-05
+raw,pooled,poor cod,all,fish_g_num,0.0011,5.500000000000001e-05
+raw,pooled,bib,all,benthos,0.0,0.0
+raw,pooled,bib,all,fish,0.0,0.0
+raw,pooled,bib,all,zoo,0.0,0.0
+raw,pooled,bib,all,zoo_cop,0.0,0.0
+raw,pooled,bib,all,fish_g_bio,0.0,0.0
+raw,pooled,bib,all,fish_g_num,0.0,0.0
+raw,pooled,silvery pout,all,benthos,0.0005,0.0
+raw,pooled,silvery pout,all,fish,0.0005,0.0
+raw,pooled,silvery pout,all,zoo,0.0005,0.0005
+raw,pooled,silvery pout,all,zoo_cop,0.0005,0.0004
+raw,pooled,silvery pout,all,fish_g_bio,0.0005,0.0
+raw,pooled,silvery pout,all,fish_g_num,0.0005,0.0
+raw,pooled,fourbeard rockling,all,benthos,0.002,0.0018000000000000002
+raw,pooled,fourbeard rockling,all,fish,0.002,0.0
+raw,pooled,fourbeard rockling,all,zoo,0.002,0.0004
+raw,pooled,fourbeard rockling,all,zoo_cop,0.002,0.0001
+raw,pooled,fourbeard rockling,all,fish_g_bio,0.002,0.0
+raw,pooled,fourbeard rockling,all,fish_g_num,0.002,0.0
+raw,pooled,threebeard rockling,all,benthos,0.0,0.0
+raw,pooled,threebeard rockling,all,fish,0.0,0.0
+raw,pooled,threebeard rockling,all,zoo,0.0,0.0
+raw,pooled,threebeard rockling,all,zoo_cop,0.0,0.0
+raw,pooled,threebeard rockling,all,fish_g_bio,0.0,0.0
+raw,pooled,threebeard rockling,all,fish_g_num,0.0,0.0
+A_floor,1,haddock,juv_adult,benthos,0.3050581615972081,0.3050581615972081
+A_floor,1,haddock,juv_adult,fish,0.3050581615972081,0.02745523454374873
+A_floor,1,haddock,juv_adult,zoo,0.3050581615972081,0.12202326463888324
+A_floor,1,haddock,juv_adult,zoo_cop,0.3050581615972081,0.015252908079860406
+A_floor,1,haddock,juv_adult,fish_g_bio,0.3050581615972081,0.002614170790919756
+A_floor,1,haddock,juv_adult,fish_g_num,0.3050581615972081,0.016152480616449746
+A_floor,1,haddock,large,benthos,0.05514307433433303,0.05514307433433303
+A_floor,1,haddock,large,fish,0.05514307433433303,0.011580045610209935
+A_floor,1,haddock,large,zoo,0.05514307433433303,0.016542922300299908
+A_floor,1,haddock,large,zoo_cop,0.05514307433433303,0.0013785768583583257
+A_floor,1,haddock,large,fish_g_bio,0.05514307433433303,0.0023912051888764284
+A_floor,1,haddock,large,fish_g_num,0.05514307433433303,0.007342534572405971
+A_floor,1,haddock,pelagic0,benthos,0.0,0.0
+A_floor,1,haddock,pelagic0,fish,0.0,0.0
+A_floor,1,haddock,pelagic0,zoo,0.0,0.0
+A_floor,1,haddock,pelagic0,zoo_cop,0.0,0.0
+A_floor,1,haddock,pelagic0,fish_g_bio,0.0,0.0
+A_floor,1,haddock,pelagic0,fish_g_num,0.0,0.0
+A_floor,1,whiting,juvenile,benthos,0.015456189845128752,0.006182475938051501
+A_floor,1,whiting,juvenile,fish,0.015456189845128752,0.0006182475938051502
+A_floor,1,whiting,juvenile,zoo,0.015456189845128752,0.01251951377455429
+A_floor,1,whiting,juvenile,zoo_cop,0.015456189845128752,0.004173171258184763
+A_floor,1,whiting,juvenile,fish_g_bio,0.015456189845128752,8.810664590116773e-05
+A_floor,1,whiting,juvenile,fish_g_num,0.015456189845128752,0.0009716504148604882
+A_floor,1,whiting,adult,benthos,0.13336496637029988,0.024005693946653976
+A_floor,1,whiting,adult,fish,0.13336496637029988,0.05334598654811995
+A_floor,1,whiting,adult,zoo,0.13336496637029988,0.07201708183996194
+A_floor,1,whiting,adult,zoo_cop,0.13336496637029988,0.006001423486663495
+A_floor,1,whiting,adult,fish_g_bio,0.13336496637029988,0.025292510533461387
+A_floor,1,whiting,adult,fish_g_num,0.13336496637029988,0.056091523675854495
+A_floor,1,whiting,pelagic0,benthos,0.0,0.0
+A_floor,1,whiting,pelagic0,fish,0.0,0.0
+A_floor,1,whiting,pelagic0,zoo,0.0,0.0
+A_floor,1,whiting,pelagic0,zoo_cop,0.0,0.0
+A_floor,1,whiting,pelagic0,fish_g_bio,0.0,0.0
+A_floor,1,whiting,pelagic0,fish_g_num,0.0,0.0
+A_floor,1,saithe,adult,benthos,0.06466766400273721,0.003880059840164233
+A_floor,1,saithe,adult,fish,0.06466766400273721,0.045267364801916045
+A_floor,1,saithe,adult,zoo,0.06466766400273721,0.05820089760246349
+A_floor,1,saithe,adult,zoo_cop,0.06466766400273721,0.032333832001368606
+A_floor,1,saithe,adult,fish_g_bio,0.06466766400273721,0.028017008853999808
+A_floor,1,saithe,adult,fish_g_num,0.06466766400273721,0.04772790397045779
+A_floor,1,saithe,large,benthos,0.02654240961896495,0.0007962722885689486
+A_floor,1,saithe,large,fish,0.02654240961896495,0.02654240961896495
+A_floor,1,saithe,large,zoo,0.02654240961896495,0.013271204809482476
+A_floor,1,saithe,large,zoo_cop,0.02654240961896495,0.007962722885689485
+A_floor,1,saithe,large,fish_g_bio,0.02654240961896495,0.025384978587637375
+A_floor,1,saithe,large,fish_g_num,0.02654240961896495,0.026257119787357938
+A_floor,1,saithe,pelagic0,benthos,0.0,0.0
+A_floor,1,saithe,pelagic0,fish,0.0,0.0
+A_floor,1,saithe,pelagic0,zoo,0.0,0.0
+A_floor,1,saithe,pelagic0,zoo_cop,0.0,0.0
+A_floor,1,saithe,pelagic0,fish_g_bio,0.0,0.0
+A_floor,1,saithe,pelagic0,fish_g_num,0.0,0.0
+A_floor,1,cod,juvenile,benthos,0.022518362961580482,0.022518362961580482
+A_floor,1,cod,juvenile,fish,0.022518362961580482,0.0036479747997760384
+A_floor,1,cod,juvenile,zoo,0.022518362961580482,0.01080881422155863
+A_floor,1,cod,juvenile,zoo_cop,0.022518362961580482,0.0027022035553896577
+A_floor,1,cod,juvenile,fish_g_bio,0.022518362961580482,0.0006809340422689894
+A_floor,1,cod,juvenile,fish_g_num,0.022518362961580482,0.0034480640790303654
+A_floor,1,cod,medium,benthos,0.19043911432290506,0.13711616231249166
+A_floor,1,cod,medium,fish,0.19043911432290506,0.0719859852140581
+A_floor,1,cod,medium,zoo,0.19043911432290506,0.05713173429687152
+A_floor,1,cod,medium,zoo_cop,0.19043911432290506,0.0057131734296871515
+A_floor,1,cod,medium,fish_g_bio,0.19043911432290506,0.045885314390743566
+A_floor,1,cod,medium,fish_g_num,0.19043911432290506,0.07632099804996906
+A_floor,1,cod,large,benthos,0.08714601254941554,0.055773448031625955
+A_floor,1,cod,large,fish,0.08714601254941554,0.04705884677668439
+A_floor,1,cod,large,zoo,0.08714601254941554,0.010457521505929863
+A_floor,1,cod,large,zoo_cop,0.08714601254941554,0.0010457521505929865
+A_floor,1,cod,large,fish_g_bio,0.08714601254941554,0.046014140421727
+A_floor,1,cod,large,fish_g_num,0.08714601254941554,0.04683895789520839
+A_floor,1,cod,pelagic0,benthos,0.0,0.0
+A_floor,1,cod,pelagic0,fish,0.0,0.0
+A_floor,1,cod,pelagic0,zoo,0.0,0.0
+A_floor,1,cod,pelagic0,zoo_cop,0.0,0.0
+A_floor,1,cod,pelagic0,fish_g_bio,0.0,0.0
+A_floor,1,cod,pelagic0,fish_g_num,0.0,0.0
+A_floor,1,hake,juvenile,benthos,0.000820713779172807,0.0002626284093352983
+A_floor,1,hake,juvenile,fish,0.000820713779172807,0.0001969713070014737
+A_floor,1,hake,juvenile,zoo,0.000820713779172807,0.0004595997163367719
+A_floor,1,hake,juvenile,zoo_cop,0.000820713779172807,6.565710233382457e-05
+A_floor,1,hake,juvenile,fish_g_bio,0.000820713779172807,1.0351456322313667e-05
+A_floor,1,hake,juvenile,fish_g_num,0.000820713779172807,8.722640748345135e-05
+A_floor,1,hake,adult,benthos,0.02284333061825422,0.0013705998370952533
+A_floor,1,hake,adult,fish,0.02284333061825422,0.016447198045143042
+A_floor,1,hake,adult,zoo,0.02284333061825422,0.0027411996741905065
+A_floor,1,hake,adult,zoo_cop,0.02284333061825422,0.0
+A_floor,1,hake,adult,fish_g_bio,0.02284333061825422,0.008647738484731061
+A_floor,1,hake,adult,fish_g_num,0.02284333061825422,0.013773188107113376
+A_floor,1,hake,pelagic0,benthos,0.0,0.0
+A_floor,1,hake,pelagic0,fish,0.0,0.0
+A_floor,1,hake,pelagic0,zoo,0.0,0.0
+A_floor,1,hake,pelagic0,zoo_cop,0.0,0.0
+A_floor,1,hake,pelagic0,fish_g_bio,0.0,0.0
+A_floor,1,hake,pelagic0,fish_g_num,0.0,0.0
+A_floor,1,ling,all,benthos,0.0181,0.007240000000000001
+A_floor,1,ling,all,fish,0.0181,0.01086
+A_floor,1,ling,all,zoo,0.0181,0.0009050000000000001
+A_floor,1,ling,all,zoo_cop,0.0181,0.0
+A_floor,1,ling,all,fish_g_bio,0.0181,0.01086
+A_floor,1,ling,all,fish_g_num,0.0181,0.01086
+A_floor,1,blue ling,all,benthos,0.0005,5e-05
+A_floor,1,blue ling,all,fish,0.0005,0.00025
+A_floor,1,blue ling,all,zoo,0.0005,5e-05
+A_floor,1,blue ling,all,zoo_cop,0.0005,0.0
+A_floor,1,blue ling,all,fish_g_bio,0.0005,0.00025
+A_floor,1,blue ling,all,fish_g_num,0.0005,0.00025
+A_floor,1,tusk,all,benthos,0.0,0.0
+A_floor,1,tusk,all,fish,0.0,0.0
+A_floor,1,tusk,all,zoo,0.0,0.0
+A_floor,1,tusk,all,zoo_cop,0.0,0.0
+A_floor,1,tusk,all,fish_g_bio,0.0,0.0
+A_floor,1,tusk,all,fish_g_num,0.0,0.0
+A_floor,1,pollack,all,benthos,0.0128,0.0
+A_floor,1,pollack,all,fish,0.0128,0.00896
+A_floor,1,pollack,all,zoo,0.0128,0.0064
+A_floor,1,pollack,all,zoo_cop,0.0128,0.00256
+A_floor,1,pollack,all,fish_g_bio,0.0128,0.00896
+A_floor,1,pollack,all,fish_g_num,0.0128,0.00896
+A_floor,1,greater forkbeard,all,benthos,0.0039000000000000003,0.00234
+A_floor,1,greater forkbeard,all,fish,0.0039000000000000003,0.0007800000000000001
+A_floor,1,greater forkbeard,all,zoo,0.0039000000000000003,0.0007800000000000001
+A_floor,1,greater forkbeard,all,zoo_cop,0.0039000000000000003,0.00019500000000000002
+A_floor,1,greater forkbeard,all,fish_g_bio,0.0039000000000000003,0.0007800000000000001
+A_floor,1,greater forkbeard,all,fish_g_num,0.0039000000000000003,0.0007800000000000001
+A_floor,1,poor cod,all,benthos,0.022799999999999997,0.01596
+A_floor,1,poor cod,all,fish,0.022799999999999997,0.00114
+A_floor,1,poor cod,all,zoo,0.022799999999999997,0.011399999999999999
+A_floor,1,poor cod,all,zoo_cop,0.022799999999999997,0.006839999999999999
+A_floor,1,poor cod,all,fish_g_bio,0.022799999999999997,0.00114
+A_floor,1,poor cod,all,fish_g_num,0.022799999999999997,0.00114
+A_floor,1,bib,all,benthos,0.0001,7e-05
+A_floor,1,bib,all,fish,0.0001,1e-05
+A_floor,1,bib,all,zoo,0.0001,4e-05
+A_floor,1,bib,all,zoo_cop,0.0001,2e-05
+A_floor,1,bib,all,fish_g_bio,0.0001,1e-05
+A_floor,1,bib,all,fish_g_num,0.0001,1e-05
+A_floor,1,silvery pout,all,benthos,0.0008,0.0
+A_floor,1,silvery pout,all,fish,0.0008,0.0
+A_floor,1,silvery pout,all,zoo,0.0008,0.0008
+A_floor,1,silvery pout,all,zoo_cop,0.0008,0.00064
+A_floor,1,silvery pout,all,fish_g_bio,0.0008,0.0
+A_floor,1,silvery pout,all,fish_g_num,0.0008,0.0
+A_floor,1,fourbeard rockling,all,benthos,0.017,0.015300000000000001
+A_floor,1,fourbeard rockling,all,fish,0.017,0.0
+A_floor,1,fourbeard rockling,all,zoo,0.017,0.0034000000000000002
+A_floor,1,fourbeard rockling,all,zoo_cop,0.017,0.0008500000000000001
+A_floor,1,fourbeard rockling,all,fish_g_bio,0.017,0.0
+A_floor,1,fourbeard rockling,all,fish_g_num,0.017,0.0
+A_floor,1,threebeard rockling,all,benthos,0.0,0.0
+A_floor,1,threebeard rockling,all,fish,0.0,0.0
+A_floor,1,threebeard rockling,all,zoo,0.0,0.0
+A_floor,1,threebeard rockling,all,zoo_cop,0.0,0.0
+A_floor,1,threebeard rockling,all,fish_g_bio,0.0,0.0
+A_floor,1,threebeard rockling,all,fish_g_num,0.0,0.0
+A_floor,3,haddock,juv_adult,benthos,0.11679176727883711,0.11679176727883711
+A_floor,3,haddock,juv_adult,fish,0.11679176727883711,0.01051125905509534
+A_floor,3,haddock,juv_adult,zoo,0.11679176727883711,0.046716706911534844
+A_floor,3,haddock,juv_adult,zoo_cop,0.11679176727883711,0.0058395883639418555
+A_floor,3,haddock,juv_adult,fish_g_bio,0.11679176727883711,0.002519659866480085
+A_floor,3,haddock,juv_adult,fish_g_num,0.11679176727883711,0.008233695942906615
+A_floor,3,haddock,large,benthos,0.06858374431986684,0.06858374431986684
+A_floor,3,haddock,large,fish,0.06858374431986684,0.014402586307172036
+A_floor,3,haddock,large,zoo,0.06858374431986684,0.020575123295960052
+A_floor,3,haddock,large,zoo_cop,0.06858374431986684,0.0017145936079966712
+A_floor,3,haddock,large,fish_g_bio,0.06858374431986684,0.0058441246482545985
+A_floor,3,haddock,large,fish_g_num,0.06858374431986684,0.015057388362102622
+A_floor,3,haddock,pelagic0,benthos,0.00018556107267137534,0.0
+A_floor,3,haddock,pelagic0,fish,0.00018556107267137534,0.0
+A_floor,3,haddock,pelagic0,zoo,0.00018556107267137534,3.711221453427507e-05
+A_floor,3,haddock,pelagic0,zoo_cop,0.00018556107267137534,0.00018556107267137534
+A_floor,3,haddock,pelagic0,fish_g_bio,0.00018556107267137534,0.0
+A_floor,3,haddock,pelagic0,fish_g_num,0.00018556107267137534,0.0
+A_floor,3,whiting,juvenile,benthos,0.004695694341908622,0.001878277736763449
+A_floor,3,whiting,juvenile,fish,0.004695694341908622,0.00018782777367634494
+A_floor,3,whiting,juvenile,zoo,0.004695694341908622,0.0038035124169459845
+A_floor,3,whiting,juvenile,zoo_cop,0.004695694341908622,0.001267837472315328
+A_floor,3,whiting,juvenile,fish_g_bio,0.004695694341908622,1.7119361970099632e-06
+A_floor,3,whiting,juvenile,fish_g_num,0.004695694341908622,1.3007856110063372e-05
+A_floor,3,whiting,adult,benthos,0.017779917550372473,0.0032003851590670447
+A_floor,3,whiting,adult,fish,0.017779917550372473,0.0071119670201489895
+A_floor,3,whiting,adult,zoo,0.017779917550372473,0.009601155477201136
+A_floor,3,whiting,adult,zoo_cop,0.017779917550372473,0.0008000962897667614
+A_floor,3,whiting,adult,fish_g_bio,0.017779917550372473,0.0029340669359871783
+A_floor,3,whiting,adult,fish_g_num,0.017779917550372473,0.007444324544750417
+A_floor,3,whiting,pelagic0,benthos,0.00034226820140529577,0.0
+A_floor,3,whiting,pelagic0,fish,0.00034226820140529577,0.0
+A_floor,3,whiting,pelagic0,zoo,0.00034226820140529577,6.845364028105916e-05
+A_floor,3,whiting,pelagic0,zoo_cop,0.00034226820140529577,0.00034226820140529577
+A_floor,3,whiting,pelagic0,fish_g_bio,0.00034226820140529577,0.0
+A_floor,3,whiting,pelagic0,fish_g_num,0.00034226820140529577,0.0
+A_floor,3,saithe,adult,benthos,0.48511026962264187,0.02910661617735851
+A_floor,3,saithe,adult,fish,0.48511026962264187,0.3395771887358493
+A_floor,3,saithe,adult,zoo,0.48511026962264187,0.4365992426603777
+A_floor,3,saithe,adult,zoo_cop,0.48511026962264187,0.24255513481132093
+A_floor,3,saithe,adult,fish_g_bio,0.48511026962264187,0.19271150620983887
+A_floor,3,saithe,adult,fish_g_num,0.48511026962264187,0.40318222565798423
+A_floor,3,saithe,large,benthos,0.19600050463072316,0.005880015138921694
+A_floor,3,saithe,large,fish,0.19600050463072316,0.19600050463072316
+A_floor,3,saithe,large,zoo,0.19600050463072316,0.09800025231536158
+A_floor,3,saithe,large,zoo_cop,0.19600050463072316,0.058800151389216945
+A_floor,3,saithe,large,fish_g_bio,0.19600050463072316,0.13939371310597057
+A_floor,3,saithe,large,fish_g_num,0.19600050463072316,0.18642842871977292
+A_floor,3,saithe,pelagic0,benthos,0.0,0.0
+A_floor,3,saithe,pelagic0,fish,0.0,0.0
+A_floor,3,saithe,pelagic0,zoo,0.0,0.0
+A_floor,3,saithe,pelagic0,zoo_cop,0.0,0.0
+A_floor,3,saithe,pelagic0,fish_g_bio,0.0,0.0
+A_floor,3,saithe,pelagic0,fish_g_num,0.0,0.0
+A_floor,3,cod,juvenile,benthos,0.01585396000008444,0.01585396000008444
+A_floor,3,cod,juvenile,fish,0.01585396000008444,0.0025683415200136793
+A_floor,3,cod,juvenile,zoo,0.01585396000008444,0.0076099008000405305
+A_floor,3,cod,juvenile,zoo_cop,0.01585396000008444,0.0019024752000101326
+A_floor,3,cod,juvenile,fish_g_bio,0.01585396000008444,0.0011803202950310735
+A_floor,3,cod,juvenile,fish_g_num,0.01585396000008444,0.0036343505517259546
+A_floor,3,cod,medium,benthos,0.020881729951911707,0.015034845565376431
+A_floor,3,cod,medium,fish,0.020881729951911707,0.007893293921822626
+A_floor,3,cod,medium,zoo,0.020881729951911707,0.006264518985573512
+A_floor,3,cod,medium,zoo_cop,0.020881729951911707,0.0006264518985573512
+A_floor,3,cod,medium,fish_g_bio,0.020881729951911707,0.00468929882978058
+A_floor,3,cod,medium,fish_g_num,0.020881729951911707,0.009405007208607862
+A_floor,3,cod,large,benthos,0.021115531624241013,0.01351394023951425
+A_floor,3,cod,large,fish,0.021115531624241013,0.011402387077090148
+A_floor,3,cod,large,zoo,0.021115531624241013,0.0025338637949089216
+A_floor,3,cod,large,zoo_cop,0.021115531624241013,0.00025338637949089214
+A_floor,3,cod,large,fish_g_bio,0.021115531624241013,0.009427365839296225
+A_floor,3,cod,large,fish_g_num,0.021115531624241013,0.011108577502047476
+A_floor,3,cod,pelagic0,benthos,0.00017407589240592925,0.0
+A_floor,3,cod,pelagic0,fish,0.00017407589240592925,0.0
+A_floor,3,cod,pelagic0,zoo,0.00017407589240592925,3.481517848118585e-05
+A_floor,3,cod,pelagic0,zoo_cop,0.00017407589240592925,0.00017407589240592925
+A_floor,3,cod,pelagic0,fish_g_bio,0.00017407589240592925,0.0
+A_floor,3,cod,pelagic0,fish_g_num,0.00017407589240592925,0.0
+A_floor,3,hake,juvenile,benthos,0.0005406026781505867,0.0001729928570081878
+A_floor,3,hake,juvenile,fish,0.0005406026781505867,0.00012974464275614082
+A_floor,3,hake,juvenile,zoo,0.0005406026781505867,0.0003027374997643285
+A_floor,3,hake,juvenile,zoo_cop,0.0005406026781505867,4.324821425204695e-05
+A_floor,3,hake,juvenile,fish_g_bio,0.0005406026781505867,7.981111311092666e-06
+A_floor,3,hake,juvenile,fish_g_num,0.0005406026781505867,3.7117273510448235e-05
+A_floor,3,hake,adult,benthos,0.0344742028837537,0.002068452173025222
+A_floor,3,hake,adult,fish,0.0344742028837537,0.024821426076302666
+A_floor,3,hake,adult,zoo,0.0344742028837537,0.004136904346050444
+A_floor,3,hake,adult,zoo_cop,0.0344742028837537,0.0
+A_floor,3,hake,adult,fish_g_bio,0.0344742028837537,0.02253355069719287
+A_floor,3,hake,adult,fish_g_num,0.0344742028837537,0.02625163064946033
+A_floor,3,hake,pelagic0,benthos,7.016995102586029e-05,0.0
+A_floor,3,hake,pelagic0,fish,7.016995102586029e-05,0.0
+A_floor,3,hake,pelagic0,zoo,7.016995102586029e-05,1.4033990205172058e-05
+A_floor,3,hake,pelagic0,zoo_cop,7.016995102586029e-05,7.016995102586029e-05
+A_floor,3,hake,pelagic0,fish_g_bio,7.016995102586029e-05,0.0
+A_floor,3,hake,pelagic0,fish_g_num,7.016995102586029e-05,0.0
+A_floor,3,ling,all,benthos,0.0079,0.0031600000000000005
+A_floor,3,ling,all,fish,0.0079,0.00474
+A_floor,3,ling,all,zoo,0.0079,0.00039500000000000006
+A_floor,3,ling,all,zoo_cop,0.0079,0.0
+A_floor,3,ling,all,fish_g_bio,0.0079,0.00474
+A_floor,3,ling,all,fish_g_num,0.0079,0.00474
+A_floor,3,blue ling,all,benthos,0.0,0.0
+A_floor,3,blue ling,all,fish,0.0,0.0
+A_floor,3,blue ling,all,zoo,0.0,0.0
+A_floor,3,blue ling,all,zoo_cop,0.0,0.0
+A_floor,3,blue ling,all,fish_g_bio,0.0,0.0
+A_floor,3,blue ling,all,fish_g_num,0.0,0.0
+A_floor,3,tusk,all,benthos,0.0,0.0
+A_floor,3,tusk,all,fish,0.0,0.0
+A_floor,3,tusk,all,zoo,0.0,0.0
+A_floor,3,tusk,all,zoo_cop,0.0,0.0
+A_floor,3,tusk,all,fish_g_bio,0.0,0.0
+A_floor,3,tusk,all,fish_g_num,0.0,0.0
+A_floor,3,pollack,all,benthos,0.0016,0.0
+A_floor,3,pollack,all,fish,0.0016,0.00112
+A_floor,3,pollack,all,zoo,0.0016,0.0008
+A_floor,3,pollack,all,zoo_cop,0.0016,0.00032
+A_floor,3,pollack,all,fish_g_bio,0.0016,0.00112
+A_floor,3,pollack,all,fish_g_num,0.0016,0.00112
+A_floor,3,greater forkbeard,all,benthos,0.0002,0.00012
+A_floor,3,greater forkbeard,all,fish,0.0002,4e-05
+A_floor,3,greater forkbeard,all,zoo,0.0002,4e-05
+A_floor,3,greater forkbeard,all,zoo_cop,0.0002,1e-05
+A_floor,3,greater forkbeard,all,fish_g_bio,0.0002,4e-05
+A_floor,3,greater forkbeard,all,fish_g_num,0.0002,4e-05
+A_floor,3,poor cod,all,benthos,0.0009,0.0006299999999999999
+A_floor,3,poor cod,all,fish,0.0009,4.5e-05
+A_floor,3,poor cod,all,zoo,0.0009,0.00045
+A_floor,3,poor cod,all,zoo_cop,0.0009,0.00027
+A_floor,3,poor cod,all,fish_g_bio,0.0009,4.5e-05
+A_floor,3,poor cod,all,fish_g_num,0.0009,4.5e-05
+A_floor,3,bib,all,benthos,0.0,0.0
+A_floor,3,bib,all,fish,0.0,0.0
+A_floor,3,bib,all,zoo,0.0,0.0
+A_floor,3,bib,all,zoo_cop,0.0,0.0
+A_floor,3,bib,all,fish_g_bio,0.0,0.0
+A_floor,3,bib,all,fish_g_num,0.0,0.0
+A_floor,3,silvery pout,all,benthos,0.0014000000000000002,0.0
+A_floor,3,silvery pout,all,fish,0.0014000000000000002,0.0
+A_floor,3,silvery pout,all,zoo,0.0014000000000000002,0.0014000000000000002
+A_floor,3,silvery pout,all,zoo_cop,0.0014000000000000002,0.0011200000000000001
+A_floor,3,silvery pout,all,fish_g_bio,0.0014000000000000002,0.0
+A_floor,3,silvery pout,all,fish_g_num,0.0014000000000000002,0.0
+A_floor,3,fourbeard rockling,all,benthos,0.0054,0.004860000000000001
+A_floor,3,fourbeard rockling,all,fish,0.0054,0.0
+A_floor,3,fourbeard rockling,all,zoo,0.0054,0.00108
+A_floor,3,fourbeard rockling,all,zoo_cop,0.0054,0.00027
+A_floor,3,fourbeard rockling,all,fish_g_bio,0.0054,0.0
+A_floor,3,fourbeard rockling,all,fish_g_num,0.0054,0.0
+A_floor,3,threebeard rockling,all,benthos,0.0,0.0
+A_floor,3,threebeard rockling,all,fish,0.0,0.0
+A_floor,3,threebeard rockling,all,zoo,0.0,0.0
+A_floor,3,threebeard rockling,all,zoo_cop,0.0,0.0
+A_floor,3,threebeard rockling,all,fish_g_bio,0.0,0.0
+A_floor,3,threebeard rockling,all,fish_g_num,0.0,0.0
+A_floor,pooled,haddock,juv_adult,benthos,0.1441677348078121,0.1441677348078121
+A_floor,pooled,haddock,juv_adult,fish,0.1441677348078121,0.012975096132703087
+A_floor,pooled,haddock,juv_adult,zoo,0.1441677348078121,0.057667093923124836
+A_floor,pooled,haddock,juv_adult,zoo_cop,0.1441677348078121,0.0072083867403906045
+A_floor,pooled,haddock,juv_adult,fish_g_bio,0.1441677348078121,0.0021764681198189364
+A_floor,pooled,haddock,juv_adult,fish_g_num,0.1441677348078121,0.009082846382616942
+A_floor,pooled,haddock,large,benthos,0.06665758403228125,0.06665758403228125
+A_floor,pooled,haddock,large,fish,0.06665758403228125,0.013998092646779063
+A_floor,pooled,haddock,large,zoo,0.06665758403228125,0.019997275209684376
+A_floor,pooled,haddock,large,zoo_cop,0.06665758403228125,0.0016664396008070313
+A_floor,pooled,haddock,large,fish_g_bio,0.06665758403228125,0.004822198514062562
+A_floor,pooled,haddock,large,fish_g_num,0.06665758403228125,0.012371784997061578
+A_floor,pooled,haddock,pelagic0,benthos,0.0001054653921161047,0.0
+A_floor,pooled,haddock,pelagic0,fish,0.0001054653921161047,0.0
+A_floor,pooled,haddock,pelagic0,zoo,0.0001054653921161047,2.1093078423220943e-05
+A_floor,pooled,haddock,pelagic0,zoo_cop,0.0001054653921161047,0.0001054653921161047
+A_floor,pooled,haddock,pelagic0,fish_g_bio,0.0001054653921161047,0.0
+A_floor,pooled,haddock,pelagic0,fish_g_num,0.0001054653921161047,0.0
+A_floor,pooled,whiting,juvenile,benthos,0.006275655794084526,0.002510262317633811
+A_floor,pooled,whiting,juvenile,fish,0.006275655794084526,0.0002510262317633811
+A_floor,pooled,whiting,juvenile,zoo,0.006275655794084526,0.005083281193208467
+A_floor,pooled,whiting,juvenile,zoo_cop,0.006275655794084526,0.0016944270644028221
+A_floor,pooled,whiting,juvenile,fish_g_bio,0.006275655794084526,1.4419568654525647e-05
+A_floor,pooled,whiting,juvenile,fish_g_num,0.006275655794084526,0.00015061320133229918
+A_floor,pooled,whiting,adult,benthos,0.03455732975951625,0.006220319356712925
+A_floor,pooled,whiting,adult,fish,0.03455732975951625,0.013822931903806502
+A_floor,pooled,whiting,adult,zoo,0.03455732975951625,0.01866095807013878
+A_floor,pooled,whiting,adult,zoo_cop,0.03455732975951625,0.0015550798391782315
+A_floor,pooled,whiting,adult,fish_g_bio,0.03455732975951625,0.006268706906743335
+A_floor,pooled,whiting,adult,fish_g_num,0.03455732975951625,0.015093650321194328
+A_floor,pooled,whiting,pelagic0,benthos,0.00028784581961249295,0.0
+A_floor,pooled,whiting,pelagic0,fish,0.00028784581961249295,0.0
+A_floor,pooled,whiting,pelagic0,zoo,0.00028784581961249295,5.756916392249859e-05
+A_floor,pooled,whiting,pelagic0,zoo_cop,0.00028784581961249295,0.00028784581961249295
+A_floor,pooled,whiting,pelagic0,fish_g_bio,0.00028784581961249295,0.0
+A_floor,pooled,whiting,pelagic0,fish_g_num,0.00028784581961249295,0.0
+A_floor,pooled,saithe,adult,benthos,0.4240445659758481,0.025442673958550887
+A_floor,pooled,saithe,adult,fish,0.4240445659758481,0.29683119618309367
+A_floor,pooled,saithe,adult,zoo,0.4240445659758481,0.3816401093782633
+A_floor,pooled,saithe,adult,zoo_cop,0.4240445659758481,0.21202228298792405
+A_floor,pooled,saithe,adult,fish_g_bio,0.4240445659758481,0.18400189184298743
+A_floor,pooled,saithe,adult,fish_g_num,0.4240445659758481,0.33980201305549135
+A_floor,pooled,saithe,large,benthos,0.17138816700952686,0.0051416450102858054
+A_floor,pooled,saithe,large,fish,0.17138816700952686,0.17138816700952686
+A_floor,pooled,saithe,large,zoo,0.17138816700952686,0.08569408350476343
+A_floor,pooled,saithe,large,zoo_cop,0.17138816700952686,0.05141645010285806
+A_floor,pooled,saithe,large,fish_g_bio,0.17138816700952686,0.14094563842437563
+A_floor,pooled,saithe,large,fish_g_num,0.17138816700952686,0.16581480262689413
+A_floor,pooled,saithe,pelagic0,benthos,0.0,0.0
+A_floor,pooled,saithe,pelagic0,fish,0.0,0.0
+A_floor,pooled,saithe,pelagic0,zoo,0.0,0.0
+A_floor,pooled,saithe,pelagic0,zoo_cop,0.0,0.0
+A_floor,pooled,saithe,pelagic0,fish_g_bio,0.0,0.0
+A_floor,pooled,saithe,pelagic0,fish_g_num,0.0,0.0
+A_floor,pooled,cod,juvenile,benthos,0.01683767632158664,0.01683767632158664
+A_floor,pooled,cod,juvenile,fish,0.01683767632158664,0.0027277035640970357
+A_floor,pooled,cod,juvenile,zoo,0.01683767632158664,0.008082084634361586
+A_floor,pooled,cod,juvenile,zoo_cop,0.01683767632158664,0.0020205211585903964
+A_floor,pooled,cod,juvenile,fish_g_bio,0.01683767632158664,0.000877380997893405
+A_floor,pooled,cod,juvenile,fish_g_num,0.01683767632158664,0.003203707566522086
+A_floor,pooled,cod,medium,benthos,0.04549649316170773,0.03275747507642957
+A_floor,pooled,cod,medium,fish,0.04549649316170773,0.01719767441512552
+A_floor,pooled,cod,medium,zoo,0.04549649316170773,0.013648947948512319
+A_floor,pooled,cod,medium,zoo_cop,0.04549649316170773,0.0013648947948512319
+A_floor,pooled,cod,medium,fish_g_bio,0.04549649316170773,0.010622513966102079
+A_floor,pooled,cod,medium,fish_g_num,0.04549649316170773,0.019358575931211243
+A_floor,pooled,cod,large,benthos,0.03071524850498279,0.019657759043188987
+A_floor,pooled,cod,large,fish,0.03071524850498279,0.016586234192690705
+A_floor,pooled,cod,large,zoo,0.03071524850498279,0.0036858298205979345
+A_floor,pooled,cod,large,zoo_cop,0.03071524850498279,0.00036858298205979346
+A_floor,pooled,cod,large,fish_g_bio,0.03071524850498279,0.014993190164396228
+A_floor,pooled,cod,large,fish_g_num,0.03071524850498279,0.016339814440473308
+A_floor,pooled,cod,pelagic0,benthos,0.00013978380268644537,0.0
+A_floor,pooled,cod,pelagic0,fish,0.00013978380268644537,0.0
+A_floor,pooled,cod,pelagic0,zoo,0.00013978380268644537,2.7956760537289075e-05
+A_floor,pooled,cod,pelagic0,zoo_cop,0.00013978380268644537,0.00013978380268644537
+A_floor,pooled,cod,pelagic0,fish_g_bio,0.00013978380268644537,0.0
+A_floor,pooled,cod,pelagic0,fish_g_num,0.00013978380268644537,0.0
+A_floor,pooled,hake,juvenile,benthos,0.0005816407503435284,0.00018612504010992914
+A_floor,pooled,hake,juvenile,fish,0.0005816407503435284,0.00013959378008244683
+A_floor,pooled,hake,juvenile,zoo,0.0005816407503435284,0.0003257188201923759
+A_floor,pooled,hake,juvenile,zoo_cop,0.0005816407503435284,4.6531260027482286e-05
+A_floor,pooled,hake,juvenile,fish_g_bio,0.0005816407503435284,9.393139154106416e-06
+A_floor,pooled,hake,juvenile,fish_g_num,0.0005816407503435284,6.152343115257298e-05
+A_floor,pooled,hake,adult,benthos,0.03281138241827676,0.0019686829450966054
+A_floor,pooled,hake,adult,fish,0.03281138241827676,0.02362419534115927
+A_floor,pooled,hake,adult,zoo,0.03281138241827676,0.003937365890193211
+A_floor,pooled,hake,adult,zoo_cop,0.03281138241827676,0.0
+A_floor,pooled,hake,adult,fish_g_bio,0.03281138241827676,0.02134090651830641
+A_floor,pooled,hake,adult,fish_g_num,0.03281138241827676,0.02449045096984336
+A_floor,pooled,hake,pelagic0,benthos,3.3426449618238536e-05,0.0
+A_floor,pooled,hake,pelagic0,fish,3.3426449618238536e-05,0.0
+A_floor,pooled,hake,pelagic0,zoo,3.3426449618238536e-05,6.685289923647708e-06
+A_floor,pooled,hake,pelagic0,zoo_cop,3.3426449618238536e-05,3.3426449618238536e-05
+A_floor,pooled,hake,pelagic0,fish_g_bio,3.3426449618238536e-05,0.0
+A_floor,pooled,hake,pelagic0,fish_g_num,3.3426449618238536e-05,0.0
+A_floor,pooled,ling,all,benthos,0.009399999999999999,0.0037599999999999995
+A_floor,pooled,ling,all,fish,0.009399999999999999,0.005639999999999999
+A_floor,pooled,ling,all,zoo,0.009399999999999999,0.00046999999999999993
+A_floor,pooled,ling,all,zoo_cop,0.009399999999999999,0.0
+A_floor,pooled,ling,all,fish_g_bio,0.009399999999999999,0.005639999999999999
+A_floor,pooled,ling,all,fish_g_num,0.009399999999999999,0.005639999999999999
+A_floor,pooled,blue ling,all,benthos,0.0001,1e-05
+A_floor,pooled,blue ling,all,fish,0.0001,5e-05
+A_floor,pooled,blue ling,all,zoo,0.0001,1e-05
+A_floor,pooled,blue ling,all,zoo_cop,0.0001,0.0
+A_floor,pooled,blue ling,all,fish_g_bio,0.0001,5e-05
+A_floor,pooled,blue ling,all,fish_g_num,0.0001,5e-05
+A_floor,pooled,tusk,all,benthos,0.0,0.0
+A_floor,pooled,tusk,all,fish,0.0,0.0
+A_floor,pooled,tusk,all,zoo,0.0,0.0
+A_floor,pooled,tusk,all,zoo_cop,0.0,0.0
+A_floor,pooled,tusk,all,fish_g_bio,0.0,0.0
+A_floor,pooled,tusk,all,fish_g_num,0.0,0.0
+A_floor,pooled,pollack,all,benthos,0.0032,0.0
+A_floor,pooled,pollack,all,fish,0.0032,0.00224
+A_floor,pooled,pollack,all,zoo,0.0032,0.0016
+A_floor,pooled,pollack,all,zoo_cop,0.0032,0.00064
+A_floor,pooled,pollack,all,fish_g_bio,0.0032,0.00224
+A_floor,pooled,pollack,all,fish_g_num,0.0032,0.00224
+A_floor,pooled,greater forkbeard,all,benthos,0.0007000000000000001,0.00042000000000000007
+A_floor,pooled,greater forkbeard,all,fish,0.0007000000000000001,0.00014000000000000001
+A_floor,pooled,greater forkbeard,all,zoo,0.0007000000000000001,0.00014000000000000001
+A_floor,pooled,greater forkbeard,all,zoo_cop,0.0007000000000000001,3.5000000000000004e-05
+A_floor,pooled,greater forkbeard,all,fish_g_bio,0.0007000000000000001,0.00014000000000000001
+A_floor,pooled,greater forkbeard,all,fish_g_num,0.0007000000000000001,0.00014000000000000001
+A_floor,pooled,poor cod,all,benthos,0.0040999999999999995,0.0028699999999999993
+A_floor,pooled,poor cod,all,fish,0.0040999999999999995,0.000205
+A_floor,pooled,poor cod,all,zoo,0.0040999999999999995,0.0020499999999999997
+A_floor,pooled,poor cod,all,zoo_cop,0.0040999999999999995,0.0012299999999999998
+A_floor,pooled,poor cod,all,fish_g_bio,0.0040999999999999995,0.000205
+A_floor,pooled,poor cod,all,fish_g_num,0.0040999999999999995,0.000205
+A_floor,pooled,bib,all,benthos,0.0,0.0
+A_floor,pooled,bib,all,fish,0.0,0.0
+A_floor,pooled,bib,all,zoo,0.0,0.0
+A_floor,pooled,bib,all,zoo_cop,0.0,0.0
+A_floor,pooled,bib,all,fish_g_bio,0.0,0.0
+A_floor,pooled,bib,all,fish_g_num,0.0,0.0
+A_floor,pooled,silvery pout,all,benthos,0.0013,0.0
+A_floor,pooled,silvery pout,all,fish,0.0013,0.0
+A_floor,pooled,silvery pout,all,zoo,0.0013,0.0013
+A_floor,pooled,silvery pout,all,zoo_cop,0.0013,0.00104
+A_floor,pooled,silvery pout,all,fish_g_bio,0.0013,0.0
+A_floor,pooled,silvery pout,all,fish_g_num,0.0013,0.0
+A_floor,pooled,fourbeard rockling,all,benthos,0.0070999999999999995,0.00639
+A_floor,pooled,fourbeard rockling,all,fish,0.0070999999999999995,0.0
+A_floor,pooled,fourbeard rockling,all,zoo,0.0070999999999999995,0.00142
+A_floor,pooled,fourbeard rockling,all,zoo_cop,0.0070999999999999995,0.000355
+A_floor,pooled,fourbeard rockling,all,fish_g_bio,0.0070999999999999995,0.0
+A_floor,pooled,fourbeard rockling,all,fish_g_num,0.0070999999999999995,0.0
+A_floor,pooled,threebeard rockling,all,benthos,0.0,0.0
+A_floor,pooled,threebeard rockling,all,fish,0.0,0.0
+A_floor,pooled,threebeard rockling,all,zoo,0.0,0.0
+A_floor,pooled,threebeard rockling,all,zoo_cop,0.0,0.0
+A_floor,pooled,threebeard rockling,all,fish_g_bio,0.0,0.0
+A_floor,pooled,threebeard rockling,all,fish_g_num,0.0,0.0
+A_sw_floor,1,haddock,juv_adult,benthos,0.3239024346686414,0.3239024346686414
+A_sw_floor,1,haddock,juv_adult,fish,0.3239024346686414,0.029151219120177724
+A_sw_floor,1,haddock,juv_adult,zoo,0.3239024346686414,0.12956097386745655
+A_sw_floor,1,haddock,juv_adult,zoo_cop,0.3239024346686414,0.01619512173343207
+A_sw_floor,1,haddock,juv_adult,fish_g_bio,0.3239024346686414,0.002775655236972707
+A_sw_floor,1,haddock,juv_adult,fish_g_num,0.3239024346686414,0.017150263314423618
+A_sw_floor,1,haddock,large,benthos,0.058549412146486235,0.058549412146486235
+A_sw_floor,1,haddock,large,fish,0.058549412146486235,0.012295376550762108
+A_sw_floor,1,haddock,large,zoo,0.058549412146486235,0.01756482364394587
+A_sw_floor,1,haddock,large,zoo_cop,0.058549412146486235,0.001463735303662156
+A_sw_floor,1,haddock,large,fish_g_bio,0.058549412146486235,0.0025389164427340205
+A_sw_floor,1,haddock,large,fish_g_num,0.058549412146486235,0.007796102920797026
+A_sw_floor,1,haddock,pelagic0,benthos,0.0,0.0
+A_sw_floor,1,haddock,pelagic0,fish,0.0,0.0
+A_sw_floor,1,haddock,pelagic0,zoo,0.0,0.0
+A_sw_floor,1,haddock,pelagic0,zoo_cop,0.0,0.0
+A_sw_floor,1,haddock,pelagic0,fish_g_bio,0.0,0.0
+A_sw_floor,1,haddock,pelagic0,fish_g_num,0.0,0.0
+A_sw_floor,1,whiting,juvenile,benthos,0.01641096076671483,0.006564384306685932
+A_sw_floor,1,whiting,juvenile,fish,0.01641096076671483,0.0006564384306685933
+A_sw_floor,1,whiting,juvenile,zoo,0.01641096076671483,0.013292878221039013
+A_sw_floor,1,whiting,juvenile,zoo_cop,0.01641096076671483,0.004430959407013004
+A_sw_floor,1,whiting,juvenile,fish_g_bio,0.01641096076671483,9.354923326246546e-05
+A_sw_floor,1,whiting,juvenile,fish_g_num,0.01641096076671483,0.0010316719060139644
+A_sw_floor,1,whiting,adult,benthos,0.1416032833892124,0.025488591010058233
+A_sw_floor,1,whiting,adult,fish,0.1416032833892124,0.056641313355684966
+A_sw_floor,1,whiting,adult,zoo,0.1416032833892124,0.07646577303017471
+A_sw_floor,1,whiting,adult,zoo_cop,0.1416032833892124,0.006372147752514559
+A_sw_floor,1,whiting,adult,fish_g_bio,0.1416032833892124,0.02685489776040589
+A_sw_floor,1,whiting,adult,fish_g_num,0.1416032833892124,0.05955644978570306
+A_sw_floor,1,whiting,pelagic0,benthos,0.0,0.0
+A_sw_floor,1,whiting,pelagic0,fish,0.0,0.0
+A_sw_floor,1,whiting,pelagic0,zoo,0.0,0.0
+A_sw_floor,1,whiting,pelagic0,zoo_cop,0.0,0.0
+A_sw_floor,1,whiting,pelagic0,fish_g_bio,0.0,0.0
+A_sw_floor,1,whiting,pelagic0,fish_g_num,0.0,0.0
+A_sw_floor,1,saithe,adult,benthos,0.023992477254931453,0.0014395486352958872
+A_sw_floor,1,saithe,adult,fish,0.023992477254931453,0.016794734078452014
+A_sw_floor,1,saithe,adult,zoo,0.023992477254931453,0.021593229529438308
+A_sw_floor,1,saithe,adult,zoo_cop,0.023992477254931453,0.011996238627465726
+A_sw_floor,1,saithe,adult,fish_g_bio,0.023992477254931453,0.010737669265711647
+A_sw_floor,1,saithe,adult,fish_g_num,0.023992477254931453,0.018031251232752062
+A_sw_floor,1,saithe,large,benthos,0.01087389559297349,0.0003262168677892047
+A_sw_floor,1,saithe,large,fish,0.01087389559297349,0.01087389559297349
+A_sw_floor,1,saithe,large,zoo,0.01087389559297349,0.005436947796486745
+A_sw_floor,1,saithe,large,zoo_cop,0.01087389559297349,0.003262168677892047
+A_sw_floor,1,saithe,large,fish_g_bio,0.01087389559297349,0.010443618854043402
+A_sw_floor,1,saithe,large,fish_g_num,0.01087389559297349,0.010769052065755885
+A_sw_floor,1,saithe,pelagic0,benthos,0.0,0.0
+A_sw_floor,1,saithe,pelagic0,fish,0.0,0.0
+A_sw_floor,1,saithe,pelagic0,zoo,0.0,0.0
+A_sw_floor,1,saithe,pelagic0,zoo_cop,0.0,0.0
+A_sw_floor,1,saithe,pelagic0,fish_g_bio,0.0,0.0
+A_sw_floor,1,saithe,pelagic0,fish_g_num,0.0,0.0
+A_sw_floor,1,cod,juvenile,benthos,0.023909383541223135,0.023909383541223135
+A_sw_floor,1,cod,juvenile,fish,0.023909383541223135,0.003873320133678148
+A_sw_floor,1,cod,juvenile,zoo,0.023909383541223135,0.011476504099787104
+A_sw_floor,1,cod,juvenile,zoo_cop,0.023909383541223135,0.002869126024946776
+A_sw_floor,1,cod,juvenile,fish_g_bio,0.023909383541223135,0.0007229971916991443
+A_sw_floor,1,cod,juvenile,fish_g_num,0.023909383541223135,0.00366106038351489
+A_sw_floor,1,cod,medium,benthos,0.2022030568281416,0.14558620091626198
+A_sw_floor,1,cod,medium,fish,0.2022030568281416,0.07643275548103752
+A_sw_floor,1,cod,medium,zoo,0.2022030568281416,0.06066091704844248
+A_sw_floor,1,cod,medium,zoo_cop,0.2022030568281416,0.006066091704844248
+A_sw_floor,1,cod,medium,fish_g_bio,0.2022030568281416,0.04871977516969967
+A_sw_floor,1,cod,medium,fish_g_num,0.2022030568281416,0.08103555386059813
+A_sw_floor,1,cod,large,benthos,0.09252925897353863,0.059218725743064735
+A_sw_floor,1,cod,large,fish,0.09252925897353863,0.04996579984571086
+A_sw_floor,1,cod,large,zoo,0.09252925897353863,0.011103511076824635
+A_sw_floor,1,cod,large,zoo_cop,0.09252925897353863,0.0011103511076824635
+A_sw_floor,1,cod,large,fish_g_bio,0.09252925897353863,0.04885655913530727
+A_sw_floor,1,cod,large,fish_g_num,0.09252925897353863,0.049732327829444395
+A_sw_floor,1,cod,pelagic0,benthos,0.0,0.0
+A_sw_floor,1,cod,pelagic0,fish,0.0,0.0
+A_sw_floor,1,cod,pelagic0,zoo,0.0,0.0
+A_sw_floor,1,cod,pelagic0,zoo_cop,0.0,0.0
+A_sw_floor,1,cod,pelagic0,fish_g_bio,0.0,0.0
+A_sw_floor,1,cod,pelagic0,fish_g_num,0.0,0.0
+A_sw_floor,1,hake,juvenile,benthos,0.0008714115034600233,0.0002788516811072075
+A_sw_floor,1,hake,juvenile,fish,0.0008714115034600233,0.00020913876083040558
+A_sw_floor,1,hake,juvenile,zoo,0.0008714115034600233,0.000487990441937613
+A_sw_floor,1,hake,juvenile,zoo_cop,0.0008714115034600233,6.971292027680188e-05
+A_sw_floor,1,hake,juvenile,fish_g_bio,0.0008714115034600233,1.0990893958085735e-05
+A_sw_floor,1,hake,juvenile,fish_g_num,0.0008714115034600233,9.261462012150097e-05
+A_sw_floor,1,hake,adult,benthos,0.02425442533467683,0.0014552655200806097
+A_sw_floor,1,hake,adult,fish,0.02425442533467683,0.01746318624096732
+A_sw_floor,1,hake,adult,zoo,0.02425442533467683,0.0029105310401612195
+A_sw_floor,1,hake,adult,zoo_cop,0.02425442533467683,0.0
+A_sw_floor,1,hake,adult,fish_g_bio,0.02425442533467683,0.009181932831813582
+A_sw_floor,1,hake,adult,fish_g_num,0.02425442533467683,0.014623995429873549
+A_sw_floor,1,hake,pelagic0,benthos,0.0,0.0
+A_sw_floor,1,hake,pelagic0,fish,0.0,0.0
+A_sw_floor,1,hake,pelagic0,zoo,0.0,0.0
+A_sw_floor,1,hake,pelagic0,zoo_cop,0.0,0.0
+A_sw_floor,1,hake,pelagic0,fish_g_bio,0.0,0.0
+A_sw_floor,1,hake,pelagic0,fish_g_num,0.0,0.0
+A_sw_floor,1,ling,all,benthos,0.0192,0.007679999999999999
+A_sw_floor,1,ling,all,fish,0.0192,0.011519999999999999
+A_sw_floor,1,ling,all,zoo,0.0192,0.0009599999999999999
+A_sw_floor,1,ling,all,zoo_cop,0.0192,0.0
+A_sw_floor,1,ling,all,fish_g_bio,0.0192,0.011519999999999999
+A_sw_floor,1,ling,all,fish_g_num,0.0192,0.011519999999999999
+A_sw_floor,1,blue ling,all,benthos,0.0006,5.9999999999999995e-05
+A_sw_floor,1,blue ling,all,fish,0.0006,0.0003
+A_sw_floor,1,blue ling,all,zoo,0.0006,5.9999999999999995e-05
+A_sw_floor,1,blue ling,all,zoo_cop,0.0006,0.0
+A_sw_floor,1,blue ling,all,fish_g_bio,0.0006,0.0003
+A_sw_floor,1,blue ling,all,fish_g_num,0.0006,0.0003
+A_sw_floor,1,tusk,all,benthos,0.0,0.0
+A_sw_floor,1,tusk,all,fish,0.0,0.0
+A_sw_floor,1,tusk,all,zoo,0.0,0.0
+A_sw_floor,1,tusk,all,zoo_cop,0.0,0.0
+A_sw_floor,1,tusk,all,fish_g_bio,0.0,0.0
+A_sw_floor,1,tusk,all,fish_g_num,0.0,0.0
+A_sw_floor,1,pollack,all,benthos,0.013600000000000001,0.0
+A_sw_floor,1,pollack,all,fish,0.013600000000000001,0.00952
+A_sw_floor,1,pollack,all,zoo,0.013600000000000001,0.0068000000000000005
+A_sw_floor,1,pollack,all,zoo_cop,0.013600000000000001,0.00272
+A_sw_floor,1,pollack,all,fish_g_bio,0.013600000000000001,0.00952
+A_sw_floor,1,pollack,all,fish_g_num,0.013600000000000001,0.00952
+A_sw_floor,1,greater forkbeard,all,benthos,0.0042,0.0025199999999999997
+A_sw_floor,1,greater forkbeard,all,fish,0.0042,0.00084
+A_sw_floor,1,greater forkbeard,all,zoo,0.0042,0.00084
+A_sw_floor,1,greater forkbeard,all,zoo_cop,0.0042,0.00021
+A_sw_floor,1,greater forkbeard,all,fish_g_bio,0.0042,0.00084
+A_sw_floor,1,greater forkbeard,all,fish_g_num,0.0042,0.00084
+A_sw_floor,1,poor cod,all,benthos,0.0242,0.016939999999999997
+A_sw_floor,1,poor cod,all,fish,0.0242,0.0012100000000000001
+A_sw_floor,1,poor cod,all,zoo,0.0242,0.0121
+A_sw_floor,1,poor cod,all,zoo_cop,0.0242,0.007259999999999999
+A_sw_floor,1,poor cod,all,fish_g_bio,0.0242,0.0012100000000000001
+A_sw_floor,1,poor cod,all,fish_g_num,0.0242,0.0012100000000000001
+A_sw_floor,1,bib,all,benthos,0.0001,7e-05
+A_sw_floor,1,bib,all,fish,0.0001,1e-05
+A_sw_floor,1,bib,all,zoo,0.0001,4e-05
+A_sw_floor,1,bib,all,zoo_cop,0.0001,2e-05
+A_sw_floor,1,bib,all,fish_g_bio,0.0001,1e-05
+A_sw_floor,1,bib,all,fish_g_num,0.0001,1e-05
+A_sw_floor,1,silvery pout,all,benthos,0.0009,0.0
+A_sw_floor,1,silvery pout,all,fish,0.0009,0.0
+A_sw_floor,1,silvery pout,all,zoo,0.0009,0.0009
+A_sw_floor,1,silvery pout,all,zoo_cop,0.0009,0.00072
+A_sw_floor,1,silvery pout,all,fish_g_bio,0.0009,0.0
+A_sw_floor,1,silvery pout,all,fish_g_num,0.0009,0.0
+A_sw_floor,1,fourbeard rockling,all,benthos,0.0181,0.016290000000000002
+A_sw_floor,1,fourbeard rockling,all,fish,0.0181,0.0
+A_sw_floor,1,fourbeard rockling,all,zoo,0.0181,0.0036200000000000004
+A_sw_floor,1,fourbeard rockling,all,zoo_cop,0.0181,0.0009050000000000001
+A_sw_floor,1,fourbeard rockling,all,fish_g_bio,0.0181,0.0
+A_sw_floor,1,fourbeard rockling,all,fish_g_num,0.0181,0.0
+A_sw_floor,1,threebeard rockling,all,benthos,0.0,0.0
+A_sw_floor,1,threebeard rockling,all,fish,0.0,0.0
+A_sw_floor,1,threebeard rockling,all,zoo,0.0,0.0
+A_sw_floor,1,threebeard rockling,all,zoo_cop,0.0,0.0
+A_sw_floor,1,threebeard rockling,all,fish_g_bio,0.0,0.0
+A_sw_floor,1,threebeard rockling,all,fish_g_num,0.0,0.0
+A_sw_floor,3,haddock,juv_adult,benthos,0.19350858148921293,0.19350858148921293
+A_sw_floor,3,haddock,juv_adult,fish,0.19350858148921293,0.017415772334029165
+A_sw_floor,3,haddock,juv_adult,zoo,0.19350858148921293,0.07740343259568518
+A_sw_floor,3,haddock,juv_adult,zoo_cop,0.19350858148921293,0.009675429074460647
+A_sw_floor,3,haddock,juv_adult,fish_g_bio,0.19350858148921293,0.004174744658446577
+A_sw_floor,3,haddock,juv_adult,fish_g_num,0.19350858148921293,0.013642150122802824
+A_sw_floor,3,haddock,large,benthos,0.11363423455071843,0.11363423455071843
+A_sw_floor,3,haddock,large,fish,0.11363423455071843,0.02386318925565087
+A_sw_floor,3,haddock,large,zoo,0.11363423455071843,0.03409027036521553
+A_sw_floor,3,haddock,large,zoo_cop,0.11363423455071843,0.002840855863767961
+A_sw_floor,3,haddock,large,fish_g_bio,0.11363423455071843,0.009682945100316262
+A_sw_floor,3,haddock,large,fish_g_num,0.11363423455071843,0.024948110048940375
+A_sw_floor,3,haddock,pelagic0,benthos,0.0003074502663062376,0.0
+A_sw_floor,3,haddock,pelagic0,fish,0.0003074502663062376,0.0
+A_sw_floor,3,haddock,pelagic0,zoo,0.0003074502663062376,6.149005326124753e-05
+A_sw_floor,3,haddock,pelagic0,zoo_cop,0.0003074502663062376,0.0003074502663062376
+A_sw_floor,3,haddock,pelagic0,fish_g_bio,0.0003074502663062376,0.0
+A_sw_floor,3,haddock,pelagic0,fish_g_num,0.0003074502663062376,0.0
+A_sw_floor,3,whiting,juvenile,benthos,0.007780147285897874,0.00311205891435915
+A_sw_floor,3,whiting,juvenile,fish,0.007780147285897874,0.00031120589143591505
+A_sw_floor,3,whiting,juvenile,zoo,0.007780147285897874,0.006301919301577278
+A_sw_floor,3,whiting,juvenile,zoo_cop,0.007780147285897874,0.002100639767192426
+A_sw_floor,3,whiting,juvenile,fish_g_bio,0.007780147285897874,2.836452883639713e-06
+A_sw_floor,3,whiting,juvenile,fish_g_num,0.007780147285897874,2.155230495026736e-05
+A_sw_floor,3,whiting,adult,benthos,0.02945898246366527,0.005302616843459749
+A_sw_floor,3,whiting,adult,fish,0.02945898246366527,0.011783592985466109
+A_sw_floor,3,whiting,adult,zoo,0.02945898246366527,0.01590785053037925
+A_sw_floor,3,whiting,adult,zoo_cop,0.02945898246366527,0.0013256542108649374
+A_sw_floor,3,whiting,adult,fish_g_bio,0.02945898246366527,0.004861362611473732
+A_sw_floor,3,whiting,adult,fish_g_num,0.02945898246366527,0.0123342656452893
+A_sw_floor,3,whiting,pelagic0,benthos,0.0005670933464400478,0.0
+A_sw_floor,3,whiting,pelagic0,fish,0.0005670933464400478,0.0
+A_sw_floor,3,whiting,pelagic0,zoo,0.0005670933464400478,0.00011341866928800957
+A_sw_floor,3,whiting,pelagic0,zoo_cop,0.0005670933464400478,0.0005670933464400478
+A_sw_floor,3,whiting,pelagic0,fish_g_bio,0.0005670933464400478,0.0
+A_sw_floor,3,whiting,pelagic0,fish_g_num,0.0005670933464400478,0.0
+A_sw_floor,3,saithe,adult,benthos,0.3170679390826689,0.019024076344960134
+A_sw_floor,3,saithe,adult,fish,0.3170679390826689,0.2219475573578682
+A_sw_floor,3,saithe,adult,zoo,0.3170679390826689,0.28536114517440203
+A_sw_floor,3,saithe,adult,zoo_cop,0.3170679390826689,0.15853396954133445
+A_sw_floor,3,saithe,adult,fish_g_bio,0.3170679390826689,0.127542364408041
+A_sw_floor,3,saithe,adult,fish_g_num,0.3170679390826689,0.26461427443263025
+A_sw_floor,3,saithe,large,benthos,0.1549041081531136,0.0046471232445934076
+A_sw_floor,3,saithe,large,fish,0.1549041081531136,0.1549041081531136
+A_sw_floor,3,saithe,large,zoo,0.1549041081531136,0.0774520540765568
+A_sw_floor,3,saithe,large,zoo_cop,0.1549041081531136,0.046471232445934076
+A_sw_floor,3,saithe,large,fish_g_bio,0.1549041081531136,0.11087598364027829
+A_sw_floor,3,saithe,large,fish_g_num,0.1549041081531136,0.14748396762207794
+A_sw_floor,3,saithe,pelagic0,benthos,0.0,0.0
+A_sw_floor,3,saithe,pelagic0,fish,0.0,0.0
+A_sw_floor,3,saithe,pelagic0,zoo,0.0,0.0
+A_sw_floor,3,saithe,pelagic0,zoo_cop,0.0,0.0
+A_sw_floor,3,saithe,pelagic0,fish_g_bio,0.0,0.0
+A_sw_floor,3,saithe,pelagic0,fish_g_num,0.0,0.0
+A_sw_floor,3,cod,juvenile,benthos,0.026267924375855956,0.026267924375855956
+A_sw_floor,3,cod,juvenile,fish,0.026267924375855956,0.004255403748888665
+A_sw_floor,3,cod,juvenile,zoo,0.026267924375855956,0.012608603700410859
+A_sw_floor,3,cod,juvenile,zoo_cop,0.026267924375855956,0.0031521509251027147
+A_sw_floor,3,cod,juvenile,fish_g_bio,0.026267924375855956,0.0019556353270097247
+A_sw_floor,3,cod,juvenile,fish_g_num,0.026267924375855956,0.006021640362885946
+A_sw_floor,3,cod,medium,benthos,0.034598277226064754,0.024910759602766626
+A_sw_floor,3,cod,medium,fish,0.034598277226064754,0.013078148791452478
+A_sw_floor,3,cod,medium,zoo,0.034598277226064754,0.010379483167819425
+A_sw_floor,3,cod,medium,zoo_cop,0.034598277226064754,0.0010379483167819426
+A_sw_floor,3,cod,medium,fish_g_bio,0.034598277226064754,0.007769550764339638
+A_sw_floor,3,cod,medium,fish_g_num,0.034598277226064754,0.015582858674348594
+A_sw_floor,3,cod,large,benthos,0.034985655814610585,0.022390819721350777
+A_sw_floor,3,cod,large,fish,0.034985655814610585,0.01889225413988972
+A_sw_floor,3,cod,large,zoo,0.034985655814610585,0.00419827869775327
+A_sw_floor,3,cod,large,zoo_cop,0.034985655814610585,0.000419827869775327
+A_sw_floor,3,cod,large,fish_g_bio,0.034985655814610585,0.015619903981645096
+A_sw_floor,3,cod,large,fish_g_num,0.034985655814610585,0.018405450357233386
+A_sw_floor,3,cod,pelagic0,benthos,0.00028842083475385546,0.0
+A_sw_floor,3,cod,pelagic0,fish,0.00028842083475385546,0.0
+A_sw_floor,3,cod,pelagic0,zoo,0.00028842083475385546,5.768416695077109e-05
+A_sw_floor,3,cod,pelagic0,zoo_cop,0.00028842083475385546,0.00028842083475385546
+A_sw_floor,3,cod,pelagic0,fish_g_bio,0.00028842083475385546,0.0
+A_sw_floor,3,cod,pelagic0,fish_g_num,0.00028842083475385546,0.0
+A_sw_floor,3,hake,juvenile,benthos,0.0008957074615407872,0.00028662638769305193
+A_sw_floor,3,hake,juvenile,fish,0.0008957074615407872,0.00021496979076978892
+A_sw_floor,3,hake,juvenile,zoo,0.0008957074615407872,0.0005015961784628407
+A_sw_floor,3,hake,juvenile,zoo_cop,0.0008957074615407872,7.165659692326298e-05
+A_sw_floor,3,hake,juvenile,fish_g_bio,0.0008957074615407872,1.322365064336949e-05
+A_sw_floor,3,hake,juvenile,fish_g_num,0.0008957074615407872,6.149843531869785e-05
+A_sw_floor,3,hake,adult,benthos,0.05711921527892933,0.00342715291673576
+A_sw_floor,3,hake,adult,fish,0.05711921527892933,0.04112583500082912
+A_sw_floor,3,hake,adult,zoo,0.05711921527892933,0.00685430583347152
+A_sw_floor,3,hake,adult,zoo_cop,0.05711921527892933,0.0
+A_sw_floor,3,hake,adult,fish_g_bio,0.05711921527892933,0.037335126721035373
+A_sw_floor,3,hake,adult,fish_g_num,0.05711921527892933,0.043495495676742824
+A_sw_floor,3,hake,pelagic0,benthos,0.000116262370221383,0.0
+A_sw_floor,3,hake,pelagic0,fish,0.000116262370221383,0.0
+A_sw_floor,3,hake,pelagic0,zoo,0.000116262370221383,2.32524740442766e-05
+A_sw_floor,3,hake,pelagic0,zoo_cop,0.000116262370221383,0.000116262370221383
+A_sw_floor,3,hake,pelagic0,fish_g_bio,0.000116262370221383,0.0
+A_sw_floor,3,hake,pelagic0,fish_g_num,0.000116262370221383,0.0
+A_sw_floor,3,ling,all,benthos,0.013000000000000001,0.005200000000000001
+A_sw_floor,3,ling,all,fish,0.013000000000000001,0.0078000000000000005
+A_sw_floor,3,ling,all,zoo,0.013000000000000001,0.0006500000000000001
+A_sw_floor,3,ling,all,zoo_cop,0.013000000000000001,0.0
+A_sw_floor,3,ling,all,fish_g_bio,0.013000000000000001,0.0078000000000000005
+A_sw_floor,3,ling,all,fish_g_num,0.013000000000000001,0.0078000000000000005
+A_sw_floor,3,blue ling,all,benthos,0.0,0.0
+A_sw_floor,3,blue ling,all,fish,0.0,0.0
+A_sw_floor,3,blue ling,all,zoo,0.0,0.0
+A_sw_floor,3,blue ling,all,zoo_cop,0.0,0.0
+A_sw_floor,3,blue ling,all,fish_g_bio,0.0,0.0
+A_sw_floor,3,blue ling,all,fish_g_num,0.0,0.0
+A_sw_floor,3,tusk,all,benthos,0.0,0.0
+A_sw_floor,3,tusk,all,fish,0.0,0.0
+A_sw_floor,3,tusk,all,zoo,0.0,0.0
+A_sw_floor,3,tusk,all,zoo_cop,0.0,0.0
+A_sw_floor,3,tusk,all,fish_g_bio,0.0,0.0
+A_sw_floor,3,tusk,all,fish_g_num,0.0,0.0
+A_sw_floor,3,pollack,all,benthos,0.0026,0.0
+A_sw_floor,3,pollack,all,fish,0.0026,0.0018199999999999998
+A_sw_floor,3,pollack,all,zoo,0.0026,0.0013
+A_sw_floor,3,pollack,all,zoo_cop,0.0026,0.00052
+A_sw_floor,3,pollack,all,fish_g_bio,0.0026,0.0018199999999999998
+A_sw_floor,3,pollack,all,fish_g_num,0.0026,0.0018199999999999998
+A_sw_floor,3,greater forkbeard,all,benthos,0.0003,0.00017999999999999998
+A_sw_floor,3,greater forkbeard,all,fish,0.0003,5.9999999999999995e-05
+A_sw_floor,3,greater forkbeard,all,zoo,0.0003,5.9999999999999995e-05
+A_sw_floor,3,greater forkbeard,all,zoo_cop,0.0003,1.4999999999999999e-05
+A_sw_floor,3,greater forkbeard,all,fish_g_bio,0.0003,5.9999999999999995e-05
+A_sw_floor,3,greater forkbeard,all,fish_g_num,0.0003,5.9999999999999995e-05
+A_sw_floor,3,poor cod,all,benthos,0.0015,0.00105
+A_sw_floor,3,poor cod,all,fish,0.0015,7.500000000000001e-05
+A_sw_floor,3,poor cod,all,zoo,0.0015,0.00075
+A_sw_floor,3,poor cod,all,zoo_cop,0.0015,0.00045
+A_sw_floor,3,poor cod,all,fish_g_bio,0.0015,7.500000000000001e-05
+A_sw_floor,3,poor cod,all,fish_g_num,0.0015,7.500000000000001e-05
+A_sw_floor,3,bib,all,benthos,0.0,0.0
+A_sw_floor,3,bib,all,fish,0.0,0.0
+A_sw_floor,3,bib,all,zoo,0.0,0.0
+A_sw_floor,3,bib,all,zoo_cop,0.0,0.0
+A_sw_floor,3,bib,all,fish_g_bio,0.0,0.0
+A_sw_floor,3,bib,all,fish_g_num,0.0,0.0
+A_sw_floor,3,silvery pout,all,benthos,0.0022,0.0
+A_sw_floor,3,silvery pout,all,fish,0.0022,0.0
+A_sw_floor,3,silvery pout,all,zoo,0.0022,0.0022
+A_sw_floor,3,silvery pout,all,zoo_cop,0.0022,0.0017600000000000003
+A_sw_floor,3,silvery pout,all,fish_g_bio,0.0022,0.0
+A_sw_floor,3,silvery pout,all,fish_g_num,0.0022,0.0
+A_sw_floor,3,fourbeard rockling,all,benthos,0.0089,0.00801
+A_sw_floor,3,fourbeard rockling,all,fish,0.0089,0.0
+A_sw_floor,3,fourbeard rockling,all,zoo,0.0089,0.0017800000000000001
+A_sw_floor,3,fourbeard rockling,all,zoo_cop,0.0089,0.00044500000000000003
+A_sw_floor,3,fourbeard rockling,all,fish_g_bio,0.0089,0.0
+A_sw_floor,3,fourbeard rockling,all,fish_g_num,0.0089,0.0
+A_sw_floor,3,threebeard rockling,all,benthos,0.0,0.0
+A_sw_floor,3,threebeard rockling,all,fish,0.0,0.0
+A_sw_floor,3,threebeard rockling,all,zoo,0.0,0.0
+A_sw_floor,3,threebeard rockling,all,zoo_cop,0.0,0.0
+A_sw_floor,3,threebeard rockling,all,fish_g_bio,0.0,0.0
+A_sw_floor,3,threebeard rockling,all,fish_g_num,0.0,0.0
+A_sw_floor,pooled,haddock,juv_adult,benthos,0.22092395552146013,0.22092395552146013
+A_sw_floor,pooled,haddock,juv_adult,fish,0.22092395552146013,0.019883155996931412
+A_sw_floor,pooled,haddock,juv_adult,zoo,0.22092395552146013,0.08836958220858405
+A_sw_floor,pooled,haddock,juv_adult,zoo_cop,0.22092395552146013,0.011046197776073007
+A_sw_floor,pooled,haddock,juv_adult,fish_g_bio,0.22092395552146013,0.00333523965495988
+A_sw_floor,pooled,haddock,juv_adult,fish_g_num,0.22092395552146013,0.013918636877499075
+A_sw_floor,pooled,haddock,large,benthos,0.10214669148784956,0.10214669148784956
+A_sw_floor,pooled,haddock,large,fish,0.10214669148784956,0.021450805212448406
+A_sw_floor,pooled,haddock,large,zoo,0.10214669148784956,0.030644007446354867
+A_sw_floor,pooled,haddock,large,zoo_cop,0.10214669148784956,0.0025536672871962394
+A_sw_floor,pooled,haddock,large,fish_g_bio,0.10214669148784956,0.007389581111589196
+A_sw_floor,pooled,haddock,large,fish_g_num,0.10214669148784956,0.01895863649418866
+A_sw_floor,pooled,haddock,pelagic0,benthos,0.00016161613157044004,0.0
+A_sw_floor,pooled,haddock,pelagic0,fish,0.00016161613157044004,0.0
+A_sw_floor,pooled,haddock,pelagic0,zoo,0.00016161613157044004,3.232322631408801e-05
+A_sw_floor,pooled,haddock,pelagic0,zoo_cop,0.00016161613157044004,0.00016161613157044004
+A_sw_floor,pooled,haddock,pelagic0,fish_g_bio,0.00016161613157044004,0.0
+A_sw_floor,pooled,haddock,pelagic0,fish_g_num,0.00016161613157044004,0.0
+A_sw_floor,pooled,whiting,juvenile,benthos,0.009616872342265556,0.003846748936906223
+A_sw_floor,pooled,whiting,juvenile,fish,0.009616872342265556,0.0003846748936906223
+A_sw_floor,pooled,whiting,juvenile,zoo,0.009616872342265556,0.007789666597235101
+A_sw_floor,pooled,whiting,juvenile,zoo_cop,0.009616872342265556,0.0025965555324117006
+A_sw_floor,pooled,whiting,juvenile,fish_g_bio,0.009616872342265556,2.209667890195944e-05
+A_sw_floor,pooled,whiting,juvenile,fish_g_num,0.009616872342265556,0.00023080104738025298
+A_sw_floor,pooled,whiting,adult,benthos,0.052955968219305774,0.009532074279475038
+A_sw_floor,pooled,whiting,adult,fish,0.052955968219305774,0.02118238728772231
+A_sw_floor,pooled,whiting,adult,zoo,0.052955968219305774,0.02859622283842512
+A_sw_floor,pooled,whiting,adult,zoo_cop,0.052955968219305774,0.00238301856986876
+A_sw_floor,pooled,whiting,adult,fish_g_bio,0.052955968219305774,0.009606223803742457
+A_sw_floor,pooled,whiting,adult,fish_g_num,0.052955968219305774,0.023129647813786125
+A_sw_floor,pooled,whiting,pelagic0,benthos,0.00044109756689929443,0.0
+A_sw_floor,pooled,whiting,pelagic0,fish,0.00044109756689929443,0.0
+A_sw_floor,pooled,whiting,pelagic0,zoo,0.00044109756689929443,8.821951337985889e-05
+A_sw_floor,pooled,whiting,pelagic0,zoo_cop,0.00044109756689929443,0.00044109756689929443
+A_sw_floor,pooled,whiting,pelagic0,fish_g_bio,0.00044109756689929443,0.0
+A_sw_floor,pooled,whiting,pelagic0,fish_g_num,0.00044109756689929443,0.0
+A_sw_floor,pooled,saithe,adult,benthos,0.2556877942823263,0.015341267656939578
+A_sw_floor,pooled,saithe,adult,fish,0.2556877942823263,0.1789814559976284
+A_sw_floor,pooled,saithe,adult,zoo,0.2556877942823263,0.23011901485409367
+A_sw_floor,pooled,saithe,adult,zoo_cop,0.2556877942823263,0.12784389714116315
+A_sw_floor,pooled,saithe,adult,fish_g_bio,0.2556877942823263,0.11282133493137801
+A_sw_floor,pooled,saithe,adult,fish_g_num,0.2556877942823263,0.2062289464215679
+A_sw_floor,pooled,saithe,large,benthos,0.12473902207576297,0.003742170662272889
+A_sw_floor,pooled,saithe,large,fish,0.12473902207576297,0.12473902207576297
+A_sw_floor,pooled,saithe,large,zoo,0.12473902207576297,0.062369511037881485
+A_sw_floor,pooled,saithe,large,zoo_cop,0.12473902207576297,0.03742170662272889
+A_sw_floor,pooled,saithe,large,fish_g_bio,0.12473902207576297,0.10295942943079056
+A_sw_floor,pooled,saithe,large,fish_g_num,0.12473902207576297,0.12076639698524108
+A_sw_floor,pooled,saithe,pelagic0,benthos,0.0,0.0
+A_sw_floor,pooled,saithe,pelagic0,fish,0.0,0.0
+A_sw_floor,pooled,saithe,pelagic0,zoo,0.0,0.0
+A_sw_floor,pooled,saithe,pelagic0,zoo_cop,0.0,0.0
+A_sw_floor,pooled,saithe,pelagic0,fish_g_bio,0.0,0.0
+A_sw_floor,pooled,saithe,pelagic0,fish_g_num,0.0,0.0
+A_sw_floor,pooled,cod,juvenile,benthos,0.02580220920938947,0.02580220920938947
+A_sw_floor,pooled,cod,juvenile,fish,0.02580220920938947,0.004179957891921094
+A_sw_floor,pooled,cod,juvenile,zoo,0.02580220920938947,0.012385060420506945
+A_sw_floor,pooled,cod,juvenile,zoo_cop,0.02580220920938947,0.0030962651051267363
+A_sw_floor,pooled,cod,juvenile,fish_g_bio,0.02580220920938947,0.001344506666574007
+A_sw_floor,pooled,cod,juvenile,fish_g_num,0.02580220920938947,0.004909390779244857
+A_sw_floor,pooled,cod,medium,benthos,0.06971924227732874,0.050197854439676705
+A_sw_floor,pooled,cod,medium,fish,0.06971924227732874,0.026353873580830266
+A_sw_floor,pooled,cod,medium,zoo,0.06971924227732874,0.020915772683198622
+A_sw_floor,pooled,cod,medium,zoo_cop,0.06971924227732874,0.0020915772683198623
+A_sw_floor,pooled,cod,medium,fish_g_bio,0.06971924227732874,0.016278037565767862
+A_sw_floor,pooled,cod,medium,fish_g_num,0.06971924227732874,0.02966525882984167
+A_sw_floor,pooled,cod,large,benthos,0.04706832776134948,0.03012372976726367
+A_sw_floor,pooled,cod,large,fish,0.04706832776134948,0.02541689699112872
+A_sw_floor,pooled,cod,large,zoo,0.04706832776134948,0.005648199331361937
+A_sw_floor,pooled,cod,large,zoo_cop,0.04706832776134948,0.0005648199331361937
+A_sw_floor,pooled,cod,large,fish_g_bio,0.04706832776134948,0.022975701750599865
+A_sw_floor,pooled,cod,large,fish_g_num,0.04706832776134948,0.02503928110882982
+A_sw_floor,pooled,cod,pelagic0,benthos,0.00021420597783885982,0.0
+A_sw_floor,pooled,cod,pelagic0,fish,0.00021420597783885982,0.0
+A_sw_floor,pooled,cod,pelagic0,zoo,0.00021420597783885982,4.284119556777197e-05
+A_sw_floor,pooled,cod,pelagic0,zoo_cop,0.00021420597783885982,0.00021420597783885982
+A_sw_floor,pooled,cod,pelagic0,fish_g_bio,0.00021420597783885982,0.0
+A_sw_floor,pooled,cod,pelagic0,fish_g_num,0.00021420597783885982,0.0
+A_sw_floor,pooled,hake,juvenile,benthos,0.0008913116060931504,0.0002852197139498082
+A_sw_floor,pooled,hake,juvenile,fish,0.0008913116060931504,0.00021391478546235607
+A_sw_floor,pooled,hake,juvenile,zoo,0.0008913116060931504,0.0004991344994121641
+A_sw_floor,pooled,hake,juvenile,zoo_cop,0.0008913116060931504,7.130492848745205e-05
+A_sw_floor,pooled,hake,juvenile,fish_g_bio,0.0008913116060931504,1.4394132358776879e-05
+A_sw_floor,pooled,hake,juvenile,fish_g_num,0.0008913116060931504,9.427906865289898e-05
+A_sw_floor,pooled,hake,adult,benthos,0.050280462543413694,0.0030168277526048215
+A_sw_floor,pooled,hake,adult,fish,0.050280462543413694,0.03620193303125786
+A_sw_floor,pooled,hake,adult,zoo,0.050280462543413694,0.006033655505209643
+A_sw_floor,pooled,hake,adult,zoo_cop,0.050280462543413694,0.0
+A_sw_floor,pooled,hake,adult,fish_g_bio,0.050280462543413694,0.03270300035388005
+A_sw_floor,pooled,hake,adult,fish_g_num,0.050280462543413694,0.03752939108029179
+A_sw_floor,pooled,hake,pelagic0,benthos,5.12229971466535e-05,0.0
+A_sw_floor,pooled,hake,pelagic0,fish,5.12229971466535e-05,0.0
+A_sw_floor,pooled,hake,pelagic0,zoo,5.12229971466535e-05,1.0244599429330702e-05
+A_sw_floor,pooled,hake,pelagic0,zoo_cop,5.12229971466535e-05,5.12229971466535e-05
+A_sw_floor,pooled,hake,pelagic0,fish_g_bio,5.12229971466535e-05,0.0
+A_sw_floor,pooled,hake,pelagic0,fish_g_num,5.12229971466535e-05,0.0
+A_sw_floor,pooled,ling,all,benthos,0.0143,0.00572
+A_sw_floor,pooled,ling,all,fish,0.0143,0.008579999999999999
+A_sw_floor,pooled,ling,all,zoo,0.0143,0.000715
+A_sw_floor,pooled,ling,all,zoo_cop,0.0143,0.0
+A_sw_floor,pooled,ling,all,fish_g_bio,0.0143,0.008579999999999999
+A_sw_floor,pooled,ling,all,fish_g_num,0.0143,0.008579999999999999
+A_sw_floor,pooled,blue ling,all,benthos,0.0001,1e-05
+A_sw_floor,pooled,blue ling,all,fish,0.0001,5e-05
+A_sw_floor,pooled,blue ling,all,zoo,0.0001,1e-05
+A_sw_floor,pooled,blue ling,all,zoo_cop,0.0001,0.0
+A_sw_floor,pooled,blue ling,all,fish_g_bio,0.0001,5e-05
+A_sw_floor,pooled,blue ling,all,fish_g_num,0.0001,5e-05
+A_sw_floor,pooled,tusk,all,benthos,0.0,0.0
+A_sw_floor,pooled,tusk,all,fish,0.0,0.0
+A_sw_floor,pooled,tusk,all,zoo,0.0,0.0
+A_sw_floor,pooled,tusk,all,zoo_cop,0.0,0.0
+A_sw_floor,pooled,tusk,all,fish_g_bio,0.0,0.0
+A_sw_floor,pooled,tusk,all,fish_g_num,0.0,0.0
+A_sw_floor,pooled,pollack,all,benthos,0.0049,0.0
+A_sw_floor,pooled,pollack,all,fish,0.0049,0.0034299999999999995
+A_sw_floor,pooled,pollack,all,zoo,0.0049,0.00245
+A_sw_floor,pooled,pollack,all,zoo_cop,0.0049,0.00098
+A_sw_floor,pooled,pollack,all,fish_g_bio,0.0049,0.0034299999999999995
+A_sw_floor,pooled,pollack,all,fish_g_num,0.0049,0.0034299999999999995
+A_sw_floor,pooled,greater forkbeard,all,benthos,0.0011,0.00066
+A_sw_floor,pooled,greater forkbeard,all,fish,0.0011,0.00022000000000000003
+A_sw_floor,pooled,greater forkbeard,all,zoo,0.0011,0.00022000000000000003
+A_sw_floor,pooled,greater forkbeard,all,zoo_cop,0.0011,5.500000000000001e-05
+A_sw_floor,pooled,greater forkbeard,all,fish_g_bio,0.0011,0.00022000000000000003
+A_sw_floor,pooled,greater forkbeard,all,fish_g_num,0.0011,0.00022000000000000003
+A_sw_floor,pooled,poor cod,all,benthos,0.0062,0.004339999999999999
+A_sw_floor,pooled,poor cod,all,fish,0.0062,0.00031
+A_sw_floor,pooled,poor cod,all,zoo,0.0062,0.0031
+A_sw_floor,pooled,poor cod,all,zoo_cop,0.0062,0.0018599999999999999
+A_sw_floor,pooled,poor cod,all,fish_g_bio,0.0062,0.00031
+A_sw_floor,pooled,poor cod,all,fish_g_num,0.0062,0.00031
+A_sw_floor,pooled,bib,all,benthos,0.0,0.0
+A_sw_floor,pooled,bib,all,fish,0.0,0.0
+A_sw_floor,pooled,bib,all,zoo,0.0,0.0
+A_sw_floor,pooled,bib,all,zoo_cop,0.0,0.0
+A_sw_floor,pooled,bib,all,fish_g_bio,0.0,0.0
+A_sw_floor,pooled,bib,all,fish_g_num,0.0,0.0
+A_sw_floor,pooled,silvery pout,all,benthos,0.0019,0.0
+A_sw_floor,pooled,silvery pout,all,fish,0.0019,0.0
+A_sw_floor,pooled,silvery pout,all,zoo,0.0019,0.0019
+A_sw_floor,pooled,silvery pout,all,zoo_cop,0.0019,0.00152
+A_sw_floor,pooled,silvery pout,all,fish_g_bio,0.0019,0.0
+A_sw_floor,pooled,silvery pout,all,fish_g_num,0.0019,0.0
+A_sw_floor,pooled,fourbeard rockling,all,benthos,0.0108,0.009720000000000001
+A_sw_floor,pooled,fourbeard rockling,all,fish,0.0108,0.0
+A_sw_floor,pooled,fourbeard rockling,all,zoo,0.0108,0.00216
+A_sw_floor,pooled,fourbeard rockling,all,zoo_cop,0.0108,0.00054
+A_sw_floor,pooled,fourbeard rockling,all,fish_g_bio,0.0108,0.0
+A_sw_floor,pooled,fourbeard rockling,all,fish_g_num,0.0108,0.0
+A_sw_floor,pooled,threebeard rockling,all,benthos,0.0,0.0
+A_sw_floor,pooled,threebeard rockling,all,fish,0.0,0.0
+A_sw_floor,pooled,threebeard rockling,all,zoo,0.0,0.0
+A_sw_floor,pooled,threebeard rockling,all,zoo_cop,0.0,0.0
+A_sw_floor,pooled,threebeard rockling,all,fish_g_bio,0.0,0.0
+A_sw_floor,pooled,threebeard rockling,all,fish_g_num,0.0,0.0

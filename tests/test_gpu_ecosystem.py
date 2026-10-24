@@ -35,7 +35,7 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              observable_impacts=None, nutrient_pool=None, grazer=None,
              mixed_layer_pairs=None, subsurface=None, inert_subsurface=False,
              ingestion=None, growth=None, income=None, capacity=None,
-             regen=None, extra_prey=None):
+             regen=None, extra_prey=None, pair_keys=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -72,6 +72,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     ``regen`` maps a group to extra species keys (section 202:
     ``mortality_regeneration``, ``egestion_regeneration``);
     ``extra_prey`` maps a DM to prey added to its menu.
+    ``pair_keys`` maps an interaction id to extra pair keys (section 208:
+    ``predator_share``, ``accessible_fraction``).
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -107,6 +109,9 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
         for inter_id, m_ref in (mixed_layer_pairs or {}).items():
             if inter_id in params["interaction"]:
                 params["interaction"][inter_id]["mixed_layer_reference_m"] = m_ref
+        for inter_id, keys in (pair_keys or {}).items():
+            if inter_id in params["interaction"]:
+                params["interaction"][inter_id].update(keys)
         if daylight:
             params["daylight"] = dict(daylight)
         if light_saturation and fid == "c":

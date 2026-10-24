@@ -1,0 +1,123 @@
+box area by depth bin
+ <100       0.232
+100-200    0.491
+200-300    0.191
+>=300      0.087
+Name: proportion, dtype: float64
+
+hauls 265 strict box 41
+
+invertebrates / unassigned taxa dropped (numbers/h summed):
+ Species
+Loligo                  19427.0
+Nephrops norvegicus     18917.0
+Loligo forbesii         11677.0
+Loliginidae              7332.0
+Alloteuthis subulata     6900.0
+Cancer pagurus            820.0
+Illex coindetii           489.0
+Loligo vulgaris           259.0
+Alloteuthis               100.0
+Lithodes maja              54.0
+Todaropsis eblanae         54.0
+Illex                      12.0
+Homarus gammarus            4.0
+Sepietta                    2.0
+Sepiola atlantica           2.0
+
+length-weight source counts
+ source
+form default    56
+CA fit          36
+Name: count, dtype: int64
+biomass share on form-default LW: 3.25 %
+                    common  share_all_fish_pct
+127137      long rough dab                1.96
+101170             hagfish                0.38
+127082      greater weever                0.23
+1019159            sailray                0.15
+126715   greater argentine                0.12
+105824         rabbit fish                0.08
+126440             pollack                0.06
+127214          lumpsucker                0.05
+
+guilds, depth-stratified box
+                     kgh_Q1  kgh_Q3  kgh_pooled  t_km2_Q1  t_km2_Q3  t_km2_pooled  pct_Q1  pct_Q3  pct_pooled
+guild                                                                                                       
+benthivorous_fish   193.23  391.39      292.31      1.31      2.65          1.98   49.03   32.12       36.26
+other                 0.00    0.00        0.00      0.00      0.00          0.00    0.00    0.00        0.00
+planktivorous_fish  101.29  420.78      261.03      0.71      2.91          1.81   25.70   34.54       32.38
+predatory_fish       99.57  406.19      252.88      0.69      2.81          1.75   25.27   33.34       31.37
+
+guild shares, bootstrap 5-50-95 %
+                      p05   p50   p95
+planktivorous_fish  26.4  32.3  39.1
+benthivorous_fish   29.9  36.1  43.3
+predatory_fish      22.3  31.0  40.4
+other                0.0   0.0   0.0
+
+guild shares by year
+       planktivorous_fish  benthivorous_fish  predatory_fish  other
+2021                46.8               27.7            25.4    0.0
+2022                37.0               20.6            42.4    0.0
+2023                32.0               48.7            19.3    0.0
+2024                19.3               52.9            27.8    0.0
+2025                33.8               32.1            34.1    0.0
+
+strict box raw mean kg/h by guild
+ guild
+benthivorous_fish     331.3
+other                   0.0
+planktivorous_fish    245.5
+predatory_fish        230.5
+dtype: float64 
+ guild
+benthivorous_fish     41.0
+other                  0.0
+planktivorous_fish    30.4
+predatory_fish        28.6
+dtype: float64
+
+without herring, sprat, mackerel (pooled kg/h, %)
+ guild
+benthivorous_fish     292.3
+other                   0.0
+planktivorous_fish    109.2
+predatory_fish        232.2
+Name: kgh_pooled, dtype: float64 
+ guild
+benthivorous_fish     46.1
+other                  0.0
+planktivorous_fish    17.2
+predatory_fish        36.6
+Name: kgh_pooled, dtype: float64
+
+species (pooled share >= 0.1 % of all fish)
+                     common               guild            lw   kgh_Q1   kgh_Q3  kgh_pooled  t_km2_pooled  share_all_fish_pct
+126437             haddock   benthivorous_fish        CA fit  136.393  286.234     211.313         1.421              26.210
+126441              saithe      predatory_fish        CA fit    6.091  257.838     131.965         0.889              16.368
+126417             herring  planktivorous_fish        CA fit   83.549  169.736     126.642         0.891              15.708
+126439        blue whiting  planktivorous_fish        CA fit    0.102  155.761      77.932         0.516               9.666
+126438             whiting      predatory_fish        CA fit   81.209   73.334      77.272         0.550               9.584
+126444         Norway pout  planktivorous_fish        CA fit   12.415   46.438      29.426         0.196               3.650
+126436                 cod   benthivorous_fish        CA fit   23.970   28.117      26.043         0.176               3.230
+126425               sprat  planktivorous_fish        CA fit    4.230   46.131      25.181         0.194               3.123
+127023            mackerel      predatory_fish        CA fit    1.183   40.141      20.662         0.150               2.563
+127137      long rough dab   benthivorous_fish  form default   10.248   21.386      15.817         0.109               1.962
+127143              plaice   benthivorous_fish        CA fit    4.678   14.263       9.471         0.070               1.175
+127139                 dab   benthivorous_fish        CA fit    2.227   15.613       8.920         0.066               1.106
+105923             spurdog      predatory_fish        CA fit    3.543    7.697       5.620         0.041               0.697
+126555          anglerfish      predatory_fish        CA fit    3.725    6.640       5.183         0.035               0.643
+127136               witch   benthivorous_fish        CA fit    4.930    3.531       4.230         0.028               0.525
+126484                hake      predatory_fish        CA fit    0.789    6.884       3.837         0.026               0.476
+126822      horse mackerel      predatory_fish        CA fit    0.164    7.280       3.722         0.026               0.462
+105865          starry ray   benthivorous_fish        CA fit    2.600    3.701       3.151         0.021               0.391
+101170             hagfish   benthivorous_fish  form default    1.695    4.384       3.040         0.020               0.377
+105913        velvet belly      predatory_fish        CA fit    1.292    4.095       2.694         0.018               0.334
+150637        grey gurnard   benthivorous_fish        CA fit    0.457    3.851       2.154         0.015               0.267
+127082      greater weever   benthivorous_fish  form default    0.034    3.662       1.848         0.014               0.229
+127140          lemon sole   benthivorous_fish        CA fit    0.508    2.085       1.296         0.009               0.161
+126461                ling      predatory_fish        CA fit    0.697    1.783       1.240         0.008               0.154
+1019159            sailray   benthivorous_fish  form default    1.139    1.289       1.214         0.007               0.151
+126715   greater argentine  planktivorous_fish  form default    0.012    1.886       0.949         0.006               0.118
+105883       thornback ray   benthivorous_fish        CA fit    1.385    0.346       0.865         0.006               0.107

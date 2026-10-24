@@ -1,0 +1,100 @@
+Seasonality of herring and sprat in the Skagerrak / Kattegat (Div. 3.a) - evidence
+==================================================================================
+Compiled 2026-10-24.
+
+1. WBSS migration cycle - ICES stock annex [F]
+ ICES 2026. Stock Annex: Herring (Clupea harengus) in Skagerrak, Kattegat, western Baltic (subdivision
+ 20-24), and the eastern part of divisions 4.a and 4.b (her.27.20-24). August 2026. figshare 33296379,
+ https://ndownloader.figshare.com/files/67698360 . Section 1.1, PDF p. 6:
+ "The majority of 2+ ringers migrate out of the area during the 2nd quarter of the year, through the
+ Sound and Belt Sea and propagate into the western part of the Skagerrak and the eastern North Sea to
+ feed (Payne et al., 2009). The extent of the migration is age dependent, where the younger individuals
+ migrate up into Kattegat and Skagerrak and the older fish migrate all the way out into the eastern North
+ Sea. Towards the end of summer, herring aggregates in the eastern Skagerrak and Kattegat before they
+ migrate to the main wintering areas in the southern part of the Kattegat, the Sound and the western
+ Baltic (ICES, 1991; Nielsen et al., 2001). The extent of migration is season-dependent and variable over
+ time (Clausen et al., 2006)."
+ "... for the largest herring stock (the Rugen herring) an outmigration from the spawning sites during
+ April-June through all Belts. This migration is not performed in large dense schools; these form during
+ the summer feeding in Skagerrak and Kattegat. The school formation is retained during the
+ overwintering, which mainly occurs in the Southern Kattegat and the Sound."
+ Section 1.1: "Most populations are migratory and frequently mix on shared feeding and wintering grounds";
+ populations include WBSS-Rugen, WBSS-W. Baltic, Inner Danish Waters, "from the Skagerrak (WBSS-SK)",
+ and NSAS and central Baltic herring "co-occur in the WBSS distribution area throughout the year".
+ Section 2.3.2 (PDF p. 16): HERAS "has very limited coverage of the youngest WBSS age groups (1-2
+ ringers)". Section 2.3.3 (PDF p. 17): IBTS in 3.a is run in Q1 (February) and Q3 (August-September);
+ "The IBTS quarter 1 and quarter 3 coverage is limited to SD 20-21 (the Skagerrak and the Kattegat)."
+ Also used: GERAS (October, western Baltic) ages 1-3; HERAS ages 2-6+.
+ Older version: ICES 2023 stock annex her.27.20-24 (figshare 23898678) - same narrative.
+
+2. NSAS juveniles in 3.a [F]
+ ICES 2022. Stock Annex her.27.3a47d (NSAS), figshare 18622589: "Juveniles are caught in Division 3.a
+ and as bycatch in the industrial fishery" (Fishery section, PDF p. 1; NSAS juveniles in 3.a are taken in the Danish/Swedish fleets C and D).
+ HERAS 2023 (p. 8): "Juvenile herring were primarily in the usual distribution in the shallower south and
+ eastern parts of the North Sea and in the Skagerrak and Kattegat".
+ Dana 2019 report Table 9: stratum 31 NSAS biomass 45.8 kt of which 41.6 kt 1-ringers (mean 46 g);
+ maturity of Skagerrak NSAS: 99.7 % of 1-ringers and 87.8 % of 2-ringers immature.
+ 1989 Argos survey (ICES CM 1990/H:24): "all herring of 2 group and older could be assigned to local
+ spring spawner stock. North Sea autumn spawners dominated the 0- and 1-group."
+ -> in summer the eastern Skagerrak holds mainly juvenile NSAS (0-2 ringers) plus WBSS of mixed ages.
+
+3. Summer share of WBSS in 3.a and in stratum 31 (derived from HERAS Tables 5.15, see
+   heras_per_stratum_3a_2015_2025.txt; biomass all ages, kt)
+  year  WBSS total in HERAS  in 3.a (21+31+41+42)  share  stratum 31  share
+  2016  125.7                49.0                  0.39   12.3        0.10
+  2017  119                  21                    0.18    6          0.05
+  2018   67.2                38.2                  0.57   18.0        0.27
+  2019  137.5                68.6                  0.50   13.0        0.09
+  2021  105.0                21.2                  0.20    1.3        0.01
+  2022  106.7                34.4                  0.32    7.0        0.07
+  2023   64.5                25.9                  0.40    4.5        0.07
+  2024   62.0                22.6                  0.36    0.8        0.01
+  2025  101.9                37.4                  0.37    6.7        0.07
+  The rest is in the eastern North Sea (strata 11, 141, 151, 152) in July. WBSS SSB from the assessment:
+  2019 54.4 kt, 2021 62.8 kt (HAWG 2022 Section 3, figshare 19249010, file "05 HAWG Report 2022 - Sec 03").
+
+4. Autumn (October) acoustic data in northern Kattegat rectangles 44G0 / 44G1 (SD 21 parts only) [F]
+ German RV Solea autumn acoustic survey (GERAS precursor, Sept/Oct), tables in the PGHERS reports
+ (figshare 19256744 PGHERS 2002; 19256864 PGHERS 2005; 19256909 PGHERS 2006; 19256963 PGHERS 2007;
+ 19257011 PGHERS 2008), "Survey statistics by Subdivision/rectangle" and biomass-by-age tables.
+ Areas: 44G0 (SD 21 part) 239.9 nmi2 = 823 km2; 44G1 (SD 21 part) 580.5 nmi2 = 1 991 km2. These are the
+ Kattegat parts SOUTH of the Skagen-Sweden line (SD 20/21 border), i.e. just south of / at the southern
+ edge of the model box, not the box itself.
+  survey         rect  herring t  sprat t   herring t/km2  sprat t/km2 (derived)
+  Sep/Oct 2001   44G0   3 072    11 269       3.7          13.7
+                 44G1  45 824     3 527      23.0           1.8   (herring mostly 0-group, 12.6 g)
+  Oct 2004       44G0      40       798       0.05          0.97
+                 44G1     887     6 545       0.45          3.29
+  Oct 2005       44G0     353     5 959       0.43          7.24
+                 44G1   3 743     2 116       1.88          1.06
+  Oct 2006       44G0   1 270       555       1.54          0.67
+                 44G1   3 813         0       1.91          0
+  Oct 2007       "44G1" (area 239.9, probably 44G0) 386 / 568   0.47 / 0.69
+ Recent GERAS reports (2023-2025, WGIPS 2024-2026 Suppl. Doc. 5) cover SD 21 only up to rectangles
+ 43G1/43G2; 44G0/44G1 no longer included.
+ Interpretation: in October the northern Kattegat holds mostly 0-group herring and sprat at
+ 0.05-23 t/km2 herring and 0-14 t/km2 sprat, very variable between years.
+
+5. Sprat
+ HERAS 2023 p. 10: "In some years (2013 and 2018), sprat has exclusively been found in the Kattegat."
+ HERAS 2016-2025 (July): sprat in stratum 31 = 0 t in 7 of 9 years (134 t 2021, 1 685 t 2023); in 41 = 0
+ every year; 42 = 0-1 791 t. 3.a sprat sits in the Kattegat (stratum 21) in summer.
+ 1989 Argos (early August): sprat in Skagerrak strata 2 t total vs 2 085 t in the Kattegat.
+ ICES 2019 Stock annex spr.27.3a4 (figshare 18623360): sprat in Kattegat and Skagerrak "appear to be a
+ mixture of genetically North Sea sprat and genetical hybrids near the Swedish coast"; "Sprat in the
+ North Sea has a prolonged spawning season ranging from early spring to late autumn".
+ Danish industrial sprat fishery in 3.a is mainly in autumn/winter (not quantified here - gap).
+
+6. Fraction of the year's herring in the eastern Skagerrak, summer vs winter: NOT FOUND as a number.
+ Qualitative consensus (stock annex): summer feeding aggregation in the Skagerrak/Kattegat and eastern
+ North Sea (Q2-Q3), a pre-wintering aggregation in the eastern Skagerrak/Kattegat at the end of summer,
+ and overwintering mainly in the southern Kattegat, the Sound and the western Baltic (Q4-Q1); juvenile
+ NSAS use 3.a as nursery year-round. Ulrich et al. 2012 (DTU conference paper, "Modelling the mixing of
+ herring stocks between the Baltic and the North Sea from otolith data", orbit.dtu.dk) model seasonal
+ NSAS/WBSS composition by GLMM and report "a clear seasonal and age-related pattern" [A] - full text
+ (J0212.pdf) not read. Staehr & Worsoe Clausen 2012 (DTU conference abstract, "High-resolution acoustic
+ indices of Atlantic herring ... ICES Divisions IIIa and SD 22-24") used Dana HERAS 2006-2011
+ abundance by ICES rectangle split by stock [A] - rectangle maps not retrieved.
+ Nielsen et al. (2001) and ICES (1991) are the stock annex's sources for the end-of-summer aggregation
+ in the eastern Skagerrak/Kattegat and the wintering areas [S; not read, and the annex's reference list
+ entry was not extracted].

@@ -372,6 +372,8 @@ def test_loader_carries_the_settings_and_the_env_fills_the_pool(tmp_path):
     for iv in project.get("impact_variables") or []:
         if isinstance(iv.get("baseline_map"), str):
             iv["baseline_map"] = os.path.join(_ROOT, iv["baseline_map"])
+    project["simulation_settings"]["depth_map"] = os.path.join(
+        _ROOT, project["simulation_settings"]["depth_map"])
     maps = (project.get("inference") or {}).get("impact_maps") or {}
     for key, value in maps.items():
         maps[key] = os.path.join(_ROOT, value)

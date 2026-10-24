@@ -53,6 +53,7 @@ fabricates mass.
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
+| `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
@@ -77,7 +78,9 @@ fabricates mass.
   chlorophyll maximum, the same algae in the layer [M(t), 30 m],
   shade-adapted I_k 30, eaten by zooplankton and microzooplankton
   diluted over the layer thickness; zooplankton observes it),
-  `benthic_community` (logistic), `microzooplankton` (section 177:
+  `benthic_community` (logistic, r 1.0, K per cell from depth 143 ->
+  71.5 t/km2 at 100 -> 300 m, box mean 120, start = today's equilibrium
+  ~95 t/km2 under trawling; section 207), `microzooplankton` (section 177:
   grows only by grazing the phytoplankton in the population step;
   eaten by zooplankton, which observes it).
 - English snake_case IDs are canonical.
@@ -230,6 +233,15 @@ fabricates mass.
   generalist II, as before. Set on gadoids -> pelagic_fish (141.4),
   where gadoids also eat zooplankton (krill proxy) and each other, and
   on seals -> pelagic_fish (166).
+- Pair shares (section 208, both engines, each in (0, 1], inert at 1):
+  `predator_share` phi caps the predator's eat share on that prey,
+  `eat = min(eat, phi)` with full a and 1/h (only phi of the pooled
+  group can exploit the prey; the excess is wasted; growth_budget pays
+  phi x the ceiling). A mean field a phi, h / phi made every fish half
+  a benthivore and an energy maximiser dropped benthos - do not use
+  it. `accessible_fraction` f scales the prey biomass in the pair's
+  Holling term and harvest cap (infauna out of reach); observations
+  are untouched. Set on gadoids -> benthos (phi 0.53, f 0.2).
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
   NDM `r = (r_max + sum M2) / 1460`; an income-funded DM's g is x 12 /
@@ -281,6 +293,8 @@ python3 tools/probes/daylight_table.py
 # Fishing-effort maps (MW-h/km2/year per cell) from EMODnet -> maps/*.npz;
 # the library's trawling tables are calibrated to their mean (section 161).
 python3 tools/make_fishing_maps.py
+# Mean depth per cell from EMODnet -> maps/depth.npz (section 207).
+python3 tools/make_depth_map.py
 
 # GUI, inference, plots
 python3 fgconfig/fgconfig.py

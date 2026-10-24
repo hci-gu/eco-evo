@@ -49,6 +49,9 @@ Strategier (skiss)
                    är 'linear' | 'exp' | 'invert' | 'gauss_smooth'.
                    Exempel: phytoplankton ~ -depth, zooplankton ~ phytoplankton
                    utjämnad gaussian.
+- ``equilibrium``  Today's equilibrium B*(c) of a hand-set logistic group
+                   from lib/world/habitat.py (depth capacity, baseline
+                   impacts, predation; section 207). No randomness.
 
 Allt utom ``uniform`` är NotImplementedError i denna skiss — implementeras
 i nästa steg när vi enats om API:t.
@@ -477,16 +480,12 @@ def weights_env_driven(grid_size: Tuple[int, int],
         floor: float, clamp under detta värde till 0 (default 0.0).
         noise_amp: float, lägg till en svag Perlin-overlay (default 0.0).
 
-    NOTE: 'depth' får anges som ref-name (för framtida bruk) men kommer
-    att ignoreras tills en officiell depth-karta exponeras via
-    context['env_fields']['depth']. Just nu filtreras 'depth'-refs bort
-    så djup inte påverkar vikten — i linje med policyn "depth som
-    parameter men ingen effekt".
+    'depth' is the manifest's depth map (simulation_settings.depth_map,
+    metres) when the project has one (section 207); without a map a
+    depth ref is skipped like any other missing field.
     """
     H, W = grid_size
     refs = params.get("refs", []) or []
-    # Filtrera bort depth-refs tills djup-kartan är officiellt inkopplad.
-    refs = [r for r in refs if str(r.get("name", "")).lower() != "depth"]
     fields = (context or {}).get("env_fields", {}) if context else {}
     out = np.zeros((H, W), dtype=np.float64)
     for ref in refs:
@@ -521,6 +520,26 @@ def weights_env_driven(grid_size: Tuple[int, int],
     out = np.clip(out - floor, 0.0, None)
     out = _apply_min_frac_of_max(out, params.get("min_frac_of_max", 0.0))
     return _finalize(out, context)
+
+
+@register_strategy("equilibrium")
+def weights_equilibrium(grid_size: Tuple[int, int],
+                        params: dict,
+                        rng: np.random.Generator,
+                        context: Optional[dict] = None) -> np.ndarray:
+    """Today's equilibrium of a hand-set logistic group (section 207).
+
+    The pattern is ``context['equilibrium']``, B*(c) = K(c) max(0, 1 -
+    (F(c) + M2)/r), built by ``lib.world.habitat.build`` from the depth
+    map, the capacity table and today's baseline impact maps. No
+    randomness. Without the map in the context (a bare make_weights
+    call) the weights are uniform over the allowed cells.
+    """
+    H, W = grid_size
+    field = (context or {}).get("equilibrium") if context else None
+    if field is None:
+        return _finalize(np.ones((H, W), dtype=np.float64), context)
+    return _finalize(np.asarray(field, dtype=np.float64).reshape(H, W), context)
 
 
 # ---------------------------------------------------------------------------

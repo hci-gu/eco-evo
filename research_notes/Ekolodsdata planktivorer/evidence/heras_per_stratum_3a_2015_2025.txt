@@ -1,0 +1,126 @@
+HERAS (ICES coordinated summer acoustic survey) - herring and sprat by stratum, Skagerrak/Kattegat
+=================================================================================================
+Compiled 2026-10-24. All numbers [F] (read in the full-text PDF tables) unless marked "derived".
+IMPORTANT: HERAS is a late-June / July snapshot (Dana in 3.a: ~22 June - 10 July). Every t/km2
+below is a summer value only.
+Official international StoX estimates (Tables 5.14 NSAS, 5.15 WBSS, 5.17 sprat of each HERAS report).
+Each report gives "last year and present survey", so most years appear in two reports (they agree
+checked for strata 21/31/41/42: 2022 in HERAS 2022 vs HERAS 2023; 2023 in HERAS 2023 vs HERAS 2024;
+2024 in HERAS 2024 vs HERAS 2025 - NSAS, WBSS and sprat rows identical).
+ H2024 = HERAS 2024 survey report, WGIPS 2025 Suppl. Doc. 3, figshare 28890038,
+         https://ndownloader.figshare.com/files/56257553 (gives 2023+2024).
+
+SOURCES
+ H2025 = ICES 2026, WGIPS report, Supplementary Doc 3 "HERAS" (survey 2025, gives 2024+2025).
+         figshare 33406126, https://ndownloader.figshare.com/files/68107852 ; Tables 5.14 p.30,
+         5.15 p.31, 5.17 p.32, 5.13 (3.a sprat time series) p.29 (PDF pages).
+ H2023 = Lusseau, O'Connell, Couperus, Berges, O'Malley, Rohlf, Schaber, Kvamme, Berg, Sakinan,
+         Vatnehol 2024. "The 2023 ICES Coordinated Acoustic Survey in the Skagerrak and Kattegat,
+         the North Sea, West of Scotland and the Malin Shelf area". Suppl. Doc. 3 to ICES 2024 WGIPS
+         (ICES Sci. Rep. 6:60, doi 10.17895/ices.pub.25965769). https://ndownloader.figshare.com/files/46865680
+         (gives 2022+2023; Table 5.14 PDF p.27, 5.17 p.29).
+ H2022 = same authors 2023, Suppl. Doc. 3 to ICES 2023 WGIPS (ICES Sci. Rep. 5:74,
+         doi 10.17895/ices.pub.23607303). https://ndownloader.figshare.com/files/41535318
+         (gives 2021+2022; Table 5.14 PDF p.26, 5.17 p.28).
+ W2020 = ICES 2020. WGIPS. ICES Sci. Rep. 2:56. figshare 18618380 (gives 2018+2019; Table 5.14
+         PDF p.121, 5.17 p.122).
+ W2018 = ICES 2018. WGIPS report 2018. figshare 18616298 (gives 2016+2017; Table 5.14 PDF p.138,
+         5.17 p.139).
+ W2017 = ICES 2017. WGIPS interim report 2017. figshare 18615977 (2016 only; Table 5.14-5.17 PDF p.106-107).
+ H2015 = WGIPS 2016 Annex 4c, HERAS 2015 report. figshare 18615221 (2015 only, old numbering;
+         Tables 5.14-5.17 PDF p.16-17).
+ GAP: survey year 2020 - only in WGIPS 2021 (54.6 MB) / WGIPS 2022 (61.6 MB) single PDFs, above the
+      50 MB download limit of this task; the Dana 2020 cruise report has no estimates.
+
+STRATUM AREAS used for densities (ICES 2025 IPS manual Table 5.2): 21 = 2963.9 nmi2 (10 166 km2),
+31 = 1806.3 (6 195 km2), 41 = 3362.4 (11 533 km2), 42 = 1783.9 (6 119 km2). See heras_strata_areas.txt.
+Stratum 31 (eastern Skagerrak) covers ~60-65 % of the model box; 41 and 42 the western third.
+
+TABLE A. Herring NSAS and WBSS biomass (kt) and sprat biomass (t) by stratum; densities derived.
+year str  NSAS_kt WBSS_kt herring_kt sprat_t | herring t/km2  sprat t/km2  (derived)  source
+2016 21     3      1.6      4.6     13 516   |  0.45   1.33   W2017/W2018
+2016 31    12     12.3     24.3          0   |  3.92   0      W2017/W2018
+2016 41*   21     35.1     56.1      0.017   |  3.18   0      (*41 incl. later 42; area 41+42)
+2017 21     4      4        8        4 223   |  0.79   0.42   W2018
+2017 31     6      6       12            0   |  1.94   0      W2018
+2017 41     9      9       18            0   |  1.56   0      W2018
+2017 42     3      2        5            0   |  0.82   0      W2018
+2018 21     6.9    4.4     11.3     33 409   |  1.11   3.29   W2020
+2018 31     8.7   18.0     26.7          0   |  4.31   0      W2020
+2018 41     5.6   10.6     16.2          0   |  1.40   0      W2020
+2018 42     6.2    5.2     11.4          0   |  1.86   0      W2020
+2019 21    15.9   23.6     39.5     36 630   |  3.89   3.60   W2020
+2019 31    40.7   13.0     53.7          0   |  8.67   0      W2020
+2019 41    28.7   21.0     49.7          0   |  4.31   0      W2020
+2019 42    31.1   11.0     42.1      1 791   |  6.88   0.29   W2020
+2021 21    67.2    0.5     67.7      5 381   |  6.66   0.53   H2022
+2021 31    16.3    1.3     17.6        134   |  2.84   0.02   H2022
+2021 41    12.9   18.8     31.7          0   |  2.75   0      H2022
+2021 42    37.0    0.6     37.6        672   |  6.15   0.11   H2022
+2022 21     6      1.2      7.2      5 069   |  0.71   0.50   H2022/H2023
+2022 31    23      7.0     30.0          0   |  4.84   0      H2022/H2023
+2022 41    73     25.1     98.1          0   |  8.51   0      H2022/H2023
+2022 42    36      1.1     37.1        146   |  6.06   0.02   H2022/H2023
+2023 21     5      1.7      6.7      1 523   |  0.66   0.15   H2023
+2023 31    15      4.5     19.5      1 685   |  3.15   0.27   H2023 (area cut 15 %: 3.70 if divided by 0.85 x area)
+2023 41    16     15.2     31.2          0   |  2.71   0      H2023
+2023 42    32      4.5     36.5        136   |  5.97   0.02   H2023
+2024 21    31.1   13.5     44.6     44 806   |  4.39   4.41   H2025
+2024 31     2.1    0.8      2.9          0   |  0.47   0      H2025
+2024 41    28.9    4.7     33.6          0   |  2.91   0      H2025
+2024 42    26.4    3.6     30.0          4   |  4.90   0.00   H2025
+2025 21    10.9    5.7     16.6     39 465   |  1.63   3.88   H2025
+2025 31    22.1    6.7     28.8          0   |  4.65   0      H2025
+2025 41    30.3   23.1     53.4          0   |  4.63   0      H2025
+2025 42    14.1    1.9     16.0          0   |  2.61   0      H2025
+Summary (derived), herring t/km2 in summer:
+  stratum 31 (9 years 2016-2025 excl. 2020): mean 3.9, median 3.9, range 0.47 (2024) - 8.7 (2019).
+  stratum 41 (2017-2025): mean 3.6, median 2.8.  stratum 42: mean 4.4, median 5.4.
+  Sprat in 31/41/42 is almost always zero in July; 3.a sprat sits in the Kattegat (21).
+Herring abundance (mill) for stratum 31, same tables: 2016 182 NSAS + 179 WBSS; 2017 110+100;
+  2018 193+211; 2019 785+202; 2021 439+25; 2022 436+84.2; 2023 351+84.1; 2024 29+10.1; 2025 540+102.
+  Mean weights in 31 are small (NSAS 37-72 g; WBSS 52-85 g): mostly juvenile NSAS 1-2 ringers;
+  proportion mature NSAS in 31: 0-16 %. Stratum 41 holds older fish (NSAS mean wt 62-128 g, up to
+  72 % mature in 2022).
+
+TABLE B. HERAS 2015 (old StoX numbering, H2015 Tables 5.14, 5.15, 5.17):
+  str  NSAS mill / kt   WBSS mill / kt   sprat t
+  1    244 /  6         708 / 20         7 277     (Kattegat)
+  2    271 / 11         503 / 18         6 637     (eastern Skagerrak; contains model box)
+  3    475 / 27         348 / 17         3E 4 538 (3.a part) ; 3W 4 160 (NS part)
+  4    524 / 20         648 / 36         4E 7 277 ; 4W 43 436
+  5    165 /  6         832 / 57         275 347   (North Sea sprat)
+  Note: sprat rows 1 and 4E are identical (7 277 t, 576 mill) and 3W equals stratum 13 - probable
+  copy errors in the published table. No stratum areas published for 2015.
+  Stratum 2 of 2015 = old Danish C + D (east of 10 E); HERAS StoX gives 29 kt herring there, while
+  the Danish national estimate for C + D in 2015 is 115.7 kt (see dana_cruise_reports_2004_2019.txt).
+  The two processing chains differ strongly in that year; do not mix them.
+
+KEY QUOTES
+H2023 p.4-5: "In strata 21, 31, 41, 42, 51, 61, 71, 131, 151, 152, covered by the German and Danish
+ cruises, clupeids usually do not occur in single species schools but in mixed aggregations and
+ schools that are comparatively clearly distinguishable from other schooling fishes. Post-processing
+ of hydroacoustic data is therefore based on an aggregated CLU category consisting of a mix (in
+ variable proportions) of clupeids herring (HER) and sprat (SPR) ... In cases of mixed targeted
+ catches of clupeids together with other species (horse mackerel, mackerel, various gadoids etc.) a
+ combined MIX category is allocated to the respective echoes."
+H2023 p.10 (section 4): "In Div. 3.a, sprat in stratum 21 (Kattegat) and 31 (Skagerrak) dominated the
+ estimate (97% of the abundance and 96% of the biomass), but sprat were also found in stratum 42 of the
+ Skagerrak area (comprising strata 31, 41, 42). In some years (2013 and 2018), sprat has exclusively
+ been found in the Kattegat."
+H2023 p.6: "East of 2E and north of 56N ... in strata 11, 21, 31, 41, 42, 141, 151_N, 151_S and 152,
+ herring is split into North Sea Autumn Spawning herring and Western Baltic Spring Spawning herring".
+H2023 p.8: "Adult herring were also distributed in the Norwegian Trench into the deeper parts of
+ Skagerrak. Juvenile herring were primarily in the usual distribution in the shallower south and
+ eastern parts of the North Sea and in the Skagerrak and Kattegat".
+H2023 p.11: coastal transects in strata 21 and 31 shortened, "accounted for by a corresponding
+ reduction of the stratum area in the analysis by 8% and 15% respectively."
+H2023 p.12: "herring acoustic echo-traces showed some unusual patterns with occasional near-surface
+ vertical distribution. This raised concerns about some potential underestimation due to limited
+ echosounder coverage issues (blind zones) near the surface and potential increased avoidance problems."
+
+3.a SPRAT TIME SERIES (H2025 Table 5.13, PDF p.29), biomass 1000 t, all ages, whole Div. 3.a in July:
+ 2006 33.6; 2007 58.2; 2008 12.3; 2009 36.6; 2010 18.6; 2011 27.5; 2012 37.6; 2013 10.9; 2014 10.1;
+ 2015 18.5; 2016 13.5; 2017 4.1; 2018 33.4; 2019 38.4; 2020 39.9; 2021 6.2; 2022 5.3; 2023 3.3;
+ 2024 44.8; 2025 39.5.
+WBSS 3+ (whole HERAS area): 2022 77 kt / 483 mill (H2022 summary); 2025 59.7 kt / 418 mill (H2025 summary).

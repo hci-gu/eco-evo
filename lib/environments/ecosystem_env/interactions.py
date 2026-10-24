@@ -19,6 +19,11 @@ class InteractionMatrices:
     # for a specialist, II otherwise), 2 or 3 = forced by the pair's
     # ``functional_response``.
     response_type: np.ndarray = None
+    # Section 208: the share of the prey a predator can reach
+    # (``accessible_fraction``, 1 = all of it), and the share of the
+    # predator's eat mass that can go to the prey (``predator_share``).
+    access: np.ndarray = None
+    share_cap: np.ndarray = None
 
 
 def reserve_food_settings(fg):
@@ -45,6 +50,21 @@ def _float_or_default(value, default):
         return default
 
 
+def pair_share(inter_def, key, inter_id=""):
+    """A pair's share in (0, 1] (``predator_share``,
+    ``accessible_fraction``; section 208), 1.0 when unset."""
+    raw = (inter_def or {}).get(key)
+    if raw in (None, ""):
+        return 1.0
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        value = float("nan")
+    if not np.isfinite(value) or not 0.0 < value <= 1.0:
+        raise ValueError(f"{inter_id}: {key} must be in (0, 1], got {raw!r}")
+    return value
+
+
 def build_interaction_matrices(env):
     eat_static = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     max_intake = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
@@ -61,6 +81,8 @@ def build_interaction_matrices(env):
     # that protects herring from seabirds (Section 71.12).
     vis_floor_over = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     vis_floor_has = np.zeros((env.N_dm, env.N_all), dtype=bool)
+    access = np.ones((env.N_dm, env.N_all), dtype=env.dtype)
+    share_cap = np.ones((env.N_dm, env.N_all), dtype=env.dtype)
 
     for i, pred_id in enumerate(env.dm_ids):
         pred_fg = env.fgs[pred_id]
@@ -102,6 +124,19 @@ def build_interaction_matrices(env):
             energy_gain[i, j] = prey_energy_content * assimilation
             assimilation_mat[i, j] = assimilation
             handling_time[i, j] = float(inter_def.get("handling_time", 0.0))
+            # Section 208: ``predator_share`` phi = the share of the
+            # predator group's biomass that can feed on this prey at all
+            # (the benthivores of the pooled gadoids). That part eats it at
+            # the full a and 1/h; the rest cannot, so at most phi of the
+            # group's eat mass reaches the prey: the tick uses
+            # min(eat_j, phi_j). (A mean field a phi, h / phi made every
+            # fish a half-benthivore, and an energy maximiser dropped the
+            # prey altogether.)
+            share_cap[i, j] = pair_share(inter_def, "predator_share", inter_id)
+            # ``accessible_fraction`` f: the share of the prey within the
+            # predator's reach this tick (infauna below the sediment
+            # surface is out of it); scales the prey biomass of the pair.
+            access[i, j] = pair_share(inter_def, "accessible_fraction", inter_id)
             forced = inter_def.get("functional_response", None)
             if forced not in (None, "", 0, 0.0):
                 try:
@@ -129,6 +164,8 @@ def build_interaction_matrices(env):
         vis_floor_has=vis_floor_has,
         assimilation=assimilation_mat,
         response_type=response_type,
+        access=access,
+        share_cap=share_cap,
     )
 
 
@@ -717,3 +754,16 @@ def visible_prey_biomass(env, prey_biomass, actions):
         np.float32(0.0),
     ).max(axis=0)
     return shared_visible, pair_visible
+
+
+def apply_pair_access(env, visible, pair_visible):
+    """Section 208: scale each pair's visible prey by its
+    ``accessible_fraction`` and rebuild the shared cap from the pairs.
+    Unchanged (and no copy) when every pair reaches all of its prey."""
+    if not getattr(env, "_has_pair_access", False):
+        return visible, pair_visible
+    base = pair_visible if pair_visible is not None else visible[None, :, :, :]
+    pair_visible = (base * env.access_mat[:, :, None, None]).astype(env.dtype, copy=False)
+    shared = np.where(env.eat_static_mask[:, :, None, None] > 0.0,
+                      pair_visible, np.float32(0.0)).max(axis=0)
+    return shared, pair_visible

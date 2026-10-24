@@ -326,6 +326,17 @@ def _trained_policies(env, checkpoint_dir):
     return None
 
 
+def _reachable_prey(env):
+    """Prey biomass ``(1 | N_dm, N_all, H, W)`` within each pair's reach:
+    the pair's ``accessible_fraction`` (section 208) times the biomass."""
+    prey = np.stack(
+        [env.fgs[fid].biomass for fid in env.global_fg_order],
+        axis=0)[None, :, :, :]
+    if getattr(env, "_has_pair_access", False):
+        prey = (prey * env.access_mat[:, :, None, None]).astype(env.dtype, copy=False)
+    return prey
+
+
 def _per_prey_intake(env):
     """``(N_dm, N_all, H, W)`` prey tonnes per tonne of predator per tick.
 
@@ -336,9 +347,7 @@ def _per_prey_intake(env):
     """
     from lib.environments.ecosystem_env import interactions
 
-    prey = np.stack(
-        [env.fgs[fid].biomass for fid in env.global_fg_order],
-        axis=0)[None, :, :, :]
+    prey = _reachable_prey(env)
     intake_rate = interactions.attack_rate(env)[:, :, None, None]
     if env._has_interference:
         predator = np.stack(
@@ -378,9 +387,7 @@ def _saturating_share(env, per_prey_intake):
     """
     from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 
-    prey = np.stack(
-        [env.fgs[fid].biomass for fid in env.global_fg_order],
-        axis=0)[None, :, :, :]
+    prey = _reachable_prey(env)
     predator = np.stack(
         [env.fgs[fid].biomass for fid in env.dm_ids], axis=0)[:, None, :, :]
     hunger = np.stack(
@@ -393,6 +400,9 @@ def _saturating_share(env, per_prey_intake):
         (MAX_HARVEST_FRAC * prey)
         / np.maximum(per_share, np.float32(1e-30)),
         np.float32(1.0))
+    if getattr(env, "_has_share_cap", False):
+        # Section 208: share above the pair's predator_share buys nothing.
+        cap = np.minimum(cap, env.share_cap_mat[:, :, None, None])
     return np.clip(cap, 0.0, 1.0).astype(env.dtype, copy=False)
 
 

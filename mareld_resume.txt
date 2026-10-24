@@ -18791,3 +18791,247 @@ remain open exactly as described in 71.9 / 71.11.
     /yr and K 10 t/cell, halves in 5-8 years; gadoids then starve and
     the seals follow); the plankton gaps of 201-205 (PP ~70 vs 150,
     f 0.54); the porpoise level vs the surveys (~84 t, 199.3).
+
+207 BENTHOS DEPTH HABITAT: DEPTH MAP, K PER CELL, EQUILIBRIUM START (2026-10-24)
+================================================================
+207.1 Why: the gadoid-benthos drift. With r 0.82, K 10 t/km2 and trawl
+    F ~0.2 /yr the benthos' maximum surplus production (r-F)^2 K/(4r) was
+    1.17 t/km2/yr against a gadoid demand of 1.56 at start (44 % of the
+    diet): benthos 4.4 -> ~2.4 t/km2 in 8-10 years, gadoid starvation
+    ~0.1 /yr, seals following (frozen fix72, 15-30 years). Scratch
+    variants (15 years, seed 20260530): no benthos trawling 5.6 t/km2 at
+    year 15; K 20 6.2 (rising); r 1.46 5.9; r 1.2 4.6 (= the start); all
+    removed the gadoid starvation.
+207.2 Literature (subagent; research_notes/"Bentos och torskfiskar"/,
+    Swedish letters in the folder name, benthos_for_gadoids.md +
+    evidence A-C; uncommitted): K 10 is 5-40x below every in-grid
+    measurement. Josefson (1990) stations inside the grid: 100 m ~105-200
+    g WW/m2 without large species (Stn 8, Stn 12, 1973-88), 300 m ~50-85
+    (LYSE 8, inside the wind-farm polygon); SK3 1996-2011 387 g/m2
+    without urchins rests on an unconfirmed SHARK kg->g fix (not used).
+    Box prey-sized stock ~50-150; recommended K 50-120 (central 80),
+    today's stock 40-100 (60), r 0.8-1.5 (1.0; Hiddink et al. 2019 r =
+    5.31/longevity: 2.41 / 1.24 / 0.34 for 1-3 / 3-10 / >10 yr), gadoid
+    benthos share 0.25-0.35 (ICES CRR 219 1991 stomachs weighted by
+    today's Skagerrak IBTS mix: 0.28-0.42 without Norway pout, 0.17-0.36
+    with it). Deep Skagerrak infauna is food limited (Josefson 1990), the
+    Norwegian Trench a depocentre: K is a high bottom-up ceiling. The
+    printed Mackinson & Daskalov 2007 Table 3.4 is misaligned for the
+    gadoid columns and the local ecopath_ns1991/diet.json parse repeats
+    it: recheck the "~28 % benthos" of 156.10 against EcoBase model 457.
+    A frozen fix72 test at K 80 / start 60 / r 1.0 with the gadoid ->
+    benthos a cut 8-11x (0.005, 0.0035): gadoids 80-85 % benthos, Q/B
+    7-8, herring 1.7x, zooplankton 0.78, porpoises 2.1x, seals 0.55-0.69
+    - the section-136 failure. The pair is still saturated (1/(a h) 2-3
+    t/km2 vs ~56); a ~1e-4 is the order for a half-saturation near the
+    stock. The frozen policies also see a benthos 13x outside their
+    observation statistics.
+207.3 Built (user: depth map + K per cell + equilibrium start + r, at
+    the literature level):
+    - tools/make_depth_map.py -> maps/depth.npz (key depth, 60x60, m):
+      EMODnet Bathymetry WCS emodnet__mean (the make_djup.py bbox), every
+      DTM pixel projected to SWEREF 99 TM and averaged into its 1 km
+      cell (131-148 pixels per cell); 44.0-528.6 m, mean 167.5; < 100 m
+      834 cells, 100-150 1077, 150-200 691, 200-300 686, > 300 312
+      (r 0.9997 against the 199.2 centre samples).
+    - mareld2.yaml simulation_settings.depth_map: maps/depth.npz
+      (relative to the project file; a configured map that cannot be
+      read is an error).
+    - lib/world/habitat.py: load_depth_map (nearest-neighbour resample
+      as the impact maps), capacity_depth_table (rows depth_m /
+      capacity, linear, held outside), annual_impact_loss F(c) = ticks/yr
+      x the group's impact tables at the BASELINE maps (today's fishing,
+      never the inference scenario maps, so a scenario starts from today
+      and recovers from there), predation_m2 (growth_budget.
+      active_predation), equilibrium_map B* = K max(0, 1 - (F + M2)/r),
+      build() for both loaders; all at LIBRARY_TICK_HOURS.
+    - FunctionalGroup.capacity_map / equilibrium_map. CPU
+      population_change uses capacity_map as K (logistic, ceiling,
+      seeding, nutrient path array-safe); GPU TensorEcosystem.capacity
+      becomes [1, G, C] when any group has a map (scalar path unchanged).
+    - Spawn mode `equilibrium` (lib/spawn/strategies.py and
+      lib/gpu/spawn.WorldSpawner): the B* pattern, no randomness, uniform
+      without one; totals still from the manifest. The depth filter on
+      env_driven refs is lifted on both engines: `depth` is the depth
+      map (ProjectSpec.depth on the GPU). setup_full_mareld_mvp (no
+      project) keeps the scalar K; its equilibrium pattern is uniform.
+    - FG editor: Equilibrium spawn mode (no parameters; the preview is
+      uniform), help for capacity_depth_table (edited in the YAML).
+207.4 Library / manifest values:
+    - benthic_community growth_rate 0.000561644 -> 0.000684932 (r 1.0).
+    - capacity_depth_table 100 m 143.0, 300 m 71.5 t/km2: the station
+      stocks taken in the lower half (B* 110 and 55; the model's K is net
+      of the unmodelled flatfish and invertebrate predators) / 0.77, the
+      equilibrium share 1 - (F + M2)/r at box-mean F 0.226, M2 0.0048,
+      r 1.0. Box mean K 120.0, B* 94.7 (25-141 per cell; the trawled
+      150-300 m cells lowest; no cell at zero, F max 0.72).
+    - max_carrying_capacity 10 -> 120 (the fallback without a depth map).
+    - spawn perlin -> equilibrium.
+    - mareld2 benthos inference_initial_biomass 16000 -> 341000 (= the
+      60x60 sum of B*, 340766), range 12000-20000 -> 256000-426000
+      (+/-25 % as before); tests/test_habitat.py holds them together.
+    - gadoids_preys_on_benthic_community unchanged (a 0.04 species value,
+      h 87, predation_mortality 0.0048) - step 5, see 207.6.
+207.5 Checks: tests/test_habitat.py (13: table parse/interpolation,
+    B* formula, yearly impact loss, the depth file, the mareld2 benthos
+    K map and spawn pattern, manifest = sum of B*, scalar K without a
+    depth map, the strategy fallback and depth refs, GPU parity with a
+    per-cell K on CPU and CUDA, the GPU spawner on the B* pattern and the
+    depth ref). Fixtures that copy mareld2.yaml to a temp dir now point
+    depth_map at the repo (test_impact_loading, test_gpu_impacts,
+    test_nutrients). pytest 1401 passed / 12 skipped; train.py and
+    train_gpu.py 1-generation smoke runs OK; budget_gate OK.
+    15 years, frozen fix72 (seeds 20260530 / 7): benthos 93 -> 88 t/km2
+    (no drift; trawl 0.17, gadoid M2 0.04-0.055 /yr); gadoids 0.94 ->
+    1.16 / 0.91 -> 1.13 with 80-91 % benthos in the diet and Q/B 7.2-8.9;
+    herring 1.68-1.79; zooplankton 0.78-0.80; porpoises 2.0x; seals
+    0.68-0.95 (starvation 0.16-0.20 in year 3), 0.82-0.88 at year 15.
+    As expected from 207.2: the drift is gone, the diet is not.
+207.6 Blocks training: do not start fix73 on this library before the
+    gadoid -> benthos pair is retuned (step 5): a pair max_intake_rate
+    of order 1e-4 (half-saturation 1/(a h) near the local stock, ~100
+    t/km2; maybe Type III), swept in scratch against a benthos share of
+    0.25-0.35 and herring M2 near its budget, then retraining (the
+    benthos observation channel is ~20x the trained range).
+
+208 GADOID PREY SHARES: ACCESSIBLE FRACTION AND THE BENTHIVORE SHARE AS AN EAT-SHARE CAP (2026-10-24)
+================================================================
+208.1 Why: after 207 the frozen fix72 gadoids ate 80-91 % benthos (Q/B
+    7.2-8.9). The first idea, tuning the gadoid -> benthos attack rate
+    against a stomach-content diet (207.6), was dropped on the user's
+    objection: the 1991 stomachs describe the ecosystem of 1991, so a
+    diet fitted to them is not biology. Parameters must come from
+    measurable mechanisms; diets are checks only. A correction on the
+    mechanics: the eat actions are ONE softmax with one slot per prey,
+    so the pairs do not add independently; total intake <= max_j 1/h_j
+    and the diet is the policy's allocation over the slots.
+208.2 Literature 1, accessibility (subagent; research_notes/"Bentos
+    atkomlighet for torskfiskar" (Swedish letters), benthos_
+    accessibility.md + evidence A-C; uncommitted):
+    - Accessible fraction f of the prey-sized infauna ~0.2 (0.08-0.45):
+      27 % of the biomass in the top 0-2 cm and 51 % in 0-5 cm at 280 m
+      Skagerrak mud (Dauwe et al. 1998, full text); Amphiura offers arm
+      tips (2-15 %; regenerating tissue ~22 %, Skold et al. 1994). The
+      reach into the sediment is a judgement. f and a act only as a
+      product and the pair stays saturated (>= 89 % of the ceiling even
+      in the worst corner): f does not move today's diet.
+    - The attack rate cannot be derived (search width and capture
+      probability never measured for gadoids on infauna: 0.007-5.8);
+      the 0.04 stays.
+    - The benthivore share phi (morphology only: mouth position, jaw,
+      barbel; haddock 1, cod 0.5/1/1, whiting 0/0/0.3, saithe 0, hake 0)
+      is the lever that moves the diet.
+    - Separate finding: the gadoid ceiling is 138 kJ/kg/day, ~1.6x cod
+      Cmax at 7 C (h 135-154 against the model's 87). Kept apart from
+      phi so the effect is not counted twice; not changed.
+208.3 Literature 2, species composition (subagent; research_notes/
+    "Torskfiskarnas artsammansattning" (Swedish letters), gadoid_
+    species_mix.md + evidence A-C, scripts, tables; data/ is 185 MB of
+    raw downloads - do not commit it). The earlier phi 0.60 reused
+    Skagerrak-wide weights for five species computed for the fishing-
+    mortality report. Redone from DATRAS NS-IBTS Q1+Q3 2021-25 for every
+    gadiform caught (WoRMS-selected, 16 species), depth-stratified by the
+    grid's area per depth bin (box hauls are shallow, median 68 m vs the
+    grid mean 168 m): haddock 46.6 %, saithe 29.1, whiting 17.0, cod 5.7,
+    hake 0.85, ling 0.27, all other minor ~0.5. Tusk not caught in 265
+    hauls; ling + tusk 1.5-2 % (0.3-5) after catchability (GOV, Fraser
+    et al. 2007 q, landings 2.1-2.8 %, Norwegian shrimp survey <= 5 %).
+    Norway pout (5 %) and blue whiting (14 %) left out as
+    zooplanktivores (superior mouths, ~0-1 % benthos in the area);
+    Norway pout is in neither model pool.
+    - phi = 0.53, range 0.32-0.65 (Q1 0.64, Q3 0.48: saithe is a Q3
+      visitor; the Fraser-q correction, acting almost only through an
+      unmeasured saithe q, is the low end; strict box 0.56, rectangle
+      mean 0.40). Added species move phi < 0.01. Saithe dominates the
+      sampling error (one haul = 54 % of the box saithe; 3-37 %).
+    - Diet check band recomputed with the box mix: central 0.40,
+      0.35-0.44 (0.36-0.55 over the saithe uncertainty). The 207.2 band
+      0.25-0.35 was North-Sea-wide.
+    - Separate finding: the model's gadoid total 0.69 t/km2 matches the
+      survey only at q = 1 with the door spread as swept width; at wing
+      spread the survey is 2-5x higher, Fraser-corrected 5-12x. Open.
+    - The Unpaywall exception (user, verbatim: "Det ar OK med mig att
+      anvanda Unpaywall", Swedish letters dropped) was not used by this
+      subagent because it arrived through the main agent; quote the
+      user in the brief. Only Unpaywall may get the address, never a
+      file.
+208.4 Built (user: "Bygg 1-4"): two optional pair keys, each in
+    (0, 1], validated (interactions.pair_share), inert at 1, on both
+    engines:
+    - `accessible_fraction` f: scales the pair's prey biomass in the
+      Holling term and the harvest cap (InteractionMatrices.access,
+      env.access_mat / _has_pair_access; apply_pair_access rebuilds the
+      shared visibility per pair; GPU TensorEcosystem.pair_access after
+      the visibility). Observations are untouched.
+    - `predator_share` phi, first as a MEAN FIELD: a phi and h / phi
+      (and growth_budget at phi / h).
+    - growth_budget, viability (_reachable_prey, _saturating_share),
+      FG editor help (field_help.py), tests/test_pair_shares.py,
+      tests/test_gpu_ecosystem.make_env(pair_keys=...).
+    - Library: gadoids_preys_on_benthic_community predator_share 0.53,
+      accessible_fraction 0.2 (comments with sources). Gadoid g
+      unchanged (its best prey is zooplankton).
+208.5 The mean field failed (15 y frozen policies / 10 y rules, seed
+    20260530; ben % = benthos share of the gadoid diet by mass,
+    gadoids as ratio to b0):
+    - Without phi (207 world): eat rule 70 -> 50 %, gadoids 0.86 ->
+      0.68; greedy 57-70 %, 0.78-0.94; frozen 80-91 %, 1.13-1.16.
+    - Mean field: eat rule 28 -> 8 %, gadoids 0.65 -> 0.25 -> 0.47;
+      greedy 0 %, 0.70-1.09; frozen 72-88 % and a crash to 0.25-0.31
+      (seeds 20260530 / 7; seals extinct).
+    - Reason: a phi, h / phi says "every fish is half a benthivore": the
+      benthos ceiling drops to 12.8 MJ/t/tick against 27.6-27.7 for
+      herring and zooplankton, so an energy maximiser drops benthos.
+      The mechanism is "53 % of the biomass can eat benthos at the full
+      rate, 47 % cannot at all".
+208.6 Changed to the CAP FORM (user: "Byt till takformen"): full a and
+    1/h, and the eat share on the prey capped at phi:
+    eat_j = min(eat_j, phi_j) (CPU predation.py, env.share_cap_mat /
+    _has_share_cap; GPU eat = torch.minimum(actions[:, :, 5:],
+    self.share_cap)). The excess above phi is wasted (not
+    re-allocated). growth_budget: rate = phi * intake_ceiling(a, h) *
+    assim * energy; viability caps the saturating share at phi. Tests
+    rewritten (test_predator_share_caps_the_eat_share; GPU parity with
+    and without visibility floors; the accessible-fraction test
+    restricts the eat action to one prey, rtol 2e-3 from the harvest
+    cap). pytest 1411 passed / 12 skipped.
+208.7 Checks with the cap form (seed 20260530, other DMs on frozen
+    fix72; scratchpad long/probe_mixed.py, MIXED=rule:fg):
+    - Frozen fix72 gadoids, 15 y: ben 82 -> 73 %, gadoids 0.76 -> 0.35,
+      seals extinct (0.01), herring 1.9, porpoises 1.9, zooplankton
+      0.70. Stale policy: it still puts > phi of its eat mass on
+      benthos and starves; says nothing about the web.
+    - Stationary eat rule (water-filling by marginal energy), 10 y:
+      ben 48 -> 39 -> 30 %, gadoids 0.78 -> 0.48 -> 0.60, Q/B 6.2 ->
+      5.3, herring 1.8, seals 0.27. Inside the 0.35-0.50 band early,
+      just below it later.
+    - Moving greedy rule, 10 y: ben 13 -> 2 %, herring 34 -> 53 %,
+      gadoids 0.90 -> 1.10, Q/B ~4.1, herring 1.14-1.30, seals 0.34.
+    - Reading: the cap does what it should, but only the benthos pair
+      has a share. Herring and zooplankton are uncapped, so the whole
+      group (haddock included) can eat them at the full rate, and their
+      energy-limited ceilings pay slightly more per eat share (27.6-27.7
+      vs 24.1 MJ/t/tick, section 148): a moving optimiser finds dense
+      herring/zooplankton cells and skips benthos. The error is
+      symmetric: the fish and zooplankton pairs need shares from the
+      same method.
+208.8 Running (user: score all three pairs; the user added that young
+    cod eat zooplankton): literature subagent, research_notes/
+    "Torskfiskarnas bytesandelar" (Swedish letters). Species x life
+    stage scores (0-1, morphology and habitat only: mouth, gape, gill
+    rakers, barbel, water-column position) for benthos, pelagic fish
+    and zooplankton; stage biomass shares from the NS-IBTS length
+    structure checked against ICES age-weight data (GOV undersamples
+    the 0-group); weighted by the box mix. Shares are per-pair caps and
+    need not sum to 1. Settled demersal juveniles' mysids, amphipods
+    and Crangon map to benthic_community; only copepods, euphausiids
+    and pelagic hyperiids to zooplankton. phi_benthos 0.53 is
+    recomputed with the same method. Diets as checks only.
+208.9 State: uncommitted (library, engines, tests, this section;
+    AGENTS.md does not yet describe the two keys). Blocks training: no
+    fix73 until all three gadoid shares are in and checked with the
+    same three runs; then retrain (the benthos observation channel is
+    ~20x the trained range, and the frozen policies cannot judge the
+    world). Open, separate: gadoid ceiling vs Cmax (208.2), gadoid total
+    vs survey (208.3), the Mackinson & Daskalov Table 3.4 misprint
+    behind the old "28 % benthos" (207.2), plankton gaps (A17).

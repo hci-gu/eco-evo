@@ -1,0 +1,90 @@
+HERAS methods relevant to converting acoustic estimates to t/km2 in the eastern Skagerrak
+========================================================================================
+Compiled 2026-10-24. All [F].
+
+1. WHO SURVEYS THE SKAGERRAK/KATTEGAT
+ - Denmark (DTU Aqua, RV Dana) since 1991: "Since 1991 the DTU National Institute of Aquatic
+   Resources (DTU AQUA) has participated in the ICES co-ordinated herring acoustic survey ... with
+   the responsibility for the surveying the Skagerrak and Kattegat area." (Dana 2013 report, Intro;
+   same sentence in all Dana reports 2005-2021.) Danish area = east of 6 E, north of 56 N (strata
+   21, 31, 41, 42, 151, 152).
+ - Sweden, RV Argos: the PGHERS 1996 report (ICES C.M. 1996/H:3, figshare 19262786, file 1996_H3.pdf;
+   scanned, OCR text partly garbled) has a national survey-history appendix listing Argos herring
+   acoustic surveys with a one-boat Foto pelagic trawl in 1984 (21 Aug-1 Sep), 1985 (20 Aug-1 Sep),
+   1986, 1988, 1989 (1-4 Aug) and 1990 (30 Jul-18 Aug), clupeid TS 20 log L - 71.2, gadoids -67.5, i.e.
+   the Swedish Skagerrak/Kattegat summer acoustic survey of the 1980s. The same appendix lists Dana
+   surveys of "Skagerrak and Kattegat" from 1984 onward. PGHERS 1996 main text: "The Skagerrak and
+   Kattegat regions are also important areas for younger age groups and it is recommended that either
+   Denmark or Sweden survey this area. Sweden is investigating the possibility of obtaining funds to
+   deploy the research vessel Argos for such an exercise." -> From 1991 Denmark alone covers 3.a in
+   HERAS. No Argos rectangle tables were found in PGHERS 1993-2008 or WGIPS 2010-2015 (Argos mentioned
+   0-2 times per report, never as the 3.a HERAS vessel). Argos-era by-rectangle numbers (1984-1990)
+   would be in the 1980s-1990 HAWG / "Report on the Herring Acoustic Surveys in the North Sea,
+   Skagerrak and Kattegat" (e.g. summer 1989, IMR Brage hdl 11250/104797) - not retrieved (gap).
+ - Survey window: Dana 22-28 June to 5-21 July (Dana reports 2013-2024; manual Table 5.1: 28 June-21 July 2022).
+
+2. SPECIES ALLOCATION (CLU / MIX / HER / SPR)
+ ICES 2025 IPS manual (TIMES 71), printed p. 81-82 (PDF p. 89-90), and HERAS 2023 report p. 4-5:
+ "In strata 21, 31, 41, 42, 51, 61, 71, 131, 151, 152, covered by the German and Danish cruises,
+ clupeids usually do not occur in single species schools but in mixed aggregations and schools that are
+ comparatively clearly distinguishable from other schooling fishes. Post-processing of hydroacoustic data
+ are therefore based on an aggregated CLU category consisting of a mix (in variable proportions) of
+ clupeids herring (HER) and sprat (SPR) as well as in some occasions also anchovy (ANE) and sardines (PIL).
+ Occasionally, spatially restricted occurrences of 'clean' schools of herring, sprat or sardine are
+ observed. Then, species-specific categories are allocated ... In cases of mixed targeted catches of
+ clupeids together with other species (horse mackerel, mackerel, various gadoids etc.) a combined MIX
+ category is allocated to the respective echoes. ... All disaggregation steps of mixed acoustic categories
+ to individual species in the German and Danish data are conducted using a Split-NASC process in the StoX
+ software".
+ Meaning: HER = pure herring; SPR = pure sprat; CLU = clupeid mix (HER, SPR, PIL, ANE) split by trawl
+ catch composition; MIX = clupeids + non-clupeids (WHB, GUG, HAD, COD, GSE, HKB, NOP, POL, POK, MSE, WHG
+ and others), split by trawl catch composition with each species' TS.
+ HERAS 2023 p.15: "In the Danish acoustic data, the MIX category ..." [allocated in 2023]; recommendation:
+ "mixed-species acoustic categories should only be used when there is no other [option]".
+ Older Danish practice (Dana reports 2005-2019): total fish NASC split in proportion to trawl catch
+ composition by subarea for herring, sprat, gadoids and mackerel ("The number of fish per species is
+ assumed to be in proportion to the contribution of the given species in the trawl hauls").
+
+3. TARGET STRENGTH (38 kHz, L = total length cm)
+ Manual 2025 Table 5.8 (PDF p. 89):  HER, SPR, PIL, ANE: TS = 20 log L - 71.2 (ICES 1982)
+   WHB 20 log L - 65.2; HOM, GUG, HAD, COD, HKB, NOP, POL, POK, WHG: 20 log L - 67.5;
+   sandeels (GSE, MSE): 21.7 log L - 81.5; boarfish 20 log L - 66.2.
+ Manual 2025 general TS list (printed ~p. 20): herring alternative 20 log L - 71.9 (Foote et al. 1987,
+   used in IESNS/NSSH); mackerel 20 log L - 84.9 (Edwards et al. 1984); physoclists 20 log L - 67.5.
+ Dana reports 2013-2020: herring and sprat -71.2; gadoids -67.5; mackerel -84.9.
+
+4. UPPER (SURFACE) BLIND ZONE AND NEAR-BOTTOM EXCLUSION
+ Dana: ES38-7 in towed body at 3-7 m (mostly 4-5 m); integration "from 3 m below the transducer to 1 m
+   above the bottom or to max 500 m depth" (Dana 2019, 2020). Dana 2013 Table 1: "Integration start
+   (absolute) depth 7-9 m"; "Bottom margin (backstep) 1.0 m". Manual 2025 Table 5.3 (PDF p. 79): Dana
+   transducer depth 4-6 m, upper integration limit 8-10 m, max range 500 m. Other HERAS vessels: upper
+   integration limits 10-12 m (Celtic Explorer 12, Johan Hjort 10, Scotia 12, Solea 10, Tridens 10).
+ Pre-2010 Dana: integration to max 300 m (PGHERS 2006, survey 2005).
+ 150 m RULE (Dana 2002-2013 at least): "Historically, herring and sprat have not been observed in
+   midwater trawl hauls at depths below 150 meters. Therefore, layers below 150 meter have been excluded
+   from the estimation." (Dana 2013 PDF p.5; PGHERS 2002, 2003, 2004, 2005, 2006, 2007, 2008; WGIPS 2010,
+   2012.) Not stated in the 2016-2020 reports, which say "to max 500 m". Relevance: the model box has mean
+   depth 168 m and reaches 529 m; any planktivore biomass below 150 m (Norway pout, Maurolicus, blue
+   whiting, deep herring in the Trench) was excluded from the Danish estimates in those years.
+ Day/night: Dana samples both day and night; the manual notes that Kattegat/Skagerrak herring "is found
+   in dispersed layers mixed with other fish at all times" (printed p. 64), so the night surface-rise
+   problem is considered minor there.
+ German (GERAS, western Baltic incl. SD21) manual ch. 7.8 (PDF p. 128): survey at night "due to a certain
+   fraction of target species being distributed within the bottom dead zone during daytime (Bethke,
+   1993)"; clupeids "anticipated to be present in the acoustic blind zone within the near-surface layers
+   ... not quantified, since the integration start depth has been set to 10 m ... in some parts of the
+   survey area, the blind zone/near field exclusion exceeds more than half of the total water column."
+ SISP 9 (2015) p. 15-16: "The blind zone, which is the transducer draft + the nearfield zone may
+   therefore be larger on some vessels than others." IESSNS caveat p. 22: "The acoustic dead zone at the
+   surface (0-15 m depth)".
+ HERAS 2023 p. 12: near-surface herring in the 2023 heatwave raised "concerns about some potential
+   underestimation due to limited echosounder coverage issues (blind zones) near the surface and
+   potential increased avoidance problems".
+
+SOURCES
+ ICES 2025. Manual for International Pelagic Surveys (IPS). ICES TIMES 71. figshare 28269671,
+   https://ndownloader.figshare.com/files/52805555
+ ICES 2015. SISP 9 - Manual for International Pelagic Surveys (IPS). figshare 19050794,
+   https://ndownloader.figshare.com/files/33873134
+ HERAS 2023 report (Lusseau et al. 2024), https://ndownloader.figshare.com/files/46865680
+ Dana cruise reports 2013-2020 (URLs in dana_cruise_reports_2004_2019.txt)

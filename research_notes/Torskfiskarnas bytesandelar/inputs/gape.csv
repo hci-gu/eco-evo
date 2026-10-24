@@ -1,0 +1,6 @@
+species,k_min,k_c,k_max,mode_min,mode_c,mode_max,basis
+cod,0.44,0.47,0.50,0.7,0.9,1,max swallowable prey length / predator length; Scharf et al. 2000 cod gape-height line with prey depth 0.18-0.20 TL (evidence A 2c); mode = mouth/dentition factor used only in the gape-share sensitivity
+haddock,0.32,0.33,0.36,0.3,0.5,0.7,cod value scaled by Svetovidov upper/lower jaw length ratio 0.71-0.73 (evidence A 2c; scaling is an estimate); mode = mouth/dentition factor used only in the gape-share sensitivity
+whiting,0.43,0.46,0.50,0.8,1,1,cod value x jaw ratio 0.97-0.98; mode = mouth/dentition factor used only in the gape-share sensitivity
+saithe,0.33,0.38,0.45,0.8,1,1,cod value x jaw ratio 0.75-0.89; mode = mouth/dentition factor used only in the gape-share sensitivity
+hake,0.52,0.56,0.62,0.9,1,1,cod value x jaw ratio 1.19-1.20; silver hake proxy higher; mode = mouth/dentition factor used only in the gape-share sensitivity

@@ -12,6 +12,7 @@ from lib.config.config_loader import (
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import CurrentConfig
 from lib.world.impact_maps import project_baseline_maps, sample_impact_maps
+from lib.world import habitat
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 
@@ -117,6 +118,10 @@ class ProjectSpec:
                               if project is not None else {})
         self.impact_spawn_specs = (load_impact_spawn_specs(builder.project_path)
                                    if project is not None else {})
+        # Section 207: the depth map (spawn reference field ``depth``); the
+        # equilibrium patterns ride on the CPU groups (``equilibrium_map``).
+        self.depth = habitat.load_depth_map(project, builder.project_path,
+                                            tuple(builder.grid))
         self.allowed_mask = allowed_mask
         self.randomize_energy = project is not None
         self.spawn_order = tuple(groups)

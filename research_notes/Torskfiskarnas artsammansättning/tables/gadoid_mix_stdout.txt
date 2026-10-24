@@ -1,0 +1,208 @@
+                         n  n_used        a        b     a_fb  b_fb         source
+species                                                                           
+haddock              65583   64816  0.00545  3.14816      NaN   NaN  DATRAS CA fit
+whiting              45287   44786  0.00651  3.05754      NaN   NaN  DATRAS CA fit
+saithe                6281    6219  0.00649  3.07881      NaN   NaN  DATRAS CA fit
+cod                  13699   13566  0.00579  3.13952      NaN   NaN  DATRAS CA fit
+hake                  2808    2764  0.00517  3.06455      NaN   NaN  DATRAS CA fit
+ling                   297     293  0.00371  3.08824  0.00380  3.08  DATRAS CA fit
+blue ling                0       0  0.00282  3.05000  0.00282  3.05       FishBase
+tusk                     7       0  0.00525  3.10000  0.00525  3.10       FishBase
+pollack                 47       0  0.00692  3.08000  0.00692  3.08       FishBase
+greater forkbeard        0       0  0.00457  3.14000  0.00457  3.14       FishBase
+poor cod               191     186  0.00384  3.30521  0.00741  3.11  DATRAS CA fit
+bib                    110     107  0.00606  3.21961  0.00741  3.10  DATRAS CA fit
+silvery pout             0       0  0.00661  3.08000  0.00661  3.08       FishBase
+fourbeard rockling       0       0  0.00407  3.07000  0.00407  3.07       FishBase
+threebeard rockling      0       0  0.00513  2.99000  0.00513  2.99       FishBase
+Norway pout          11769   11617  0.00553  3.09282  0.00603  3.06  DATRAS CA fit
+blue whiting          4108    4087  0.00310  3.18555      NaN   NaN  DATRAS CA fit
+
+hauls: Skagerrak 232 box rects 120 box strict 41
+CPUE hauls not in HH list: 185
+
+coverage box rects x depth
+ dbin     <100  100-200  200-300
+StatRec                        
+44G0       27        6        0
+44G1       34        2        0
+45G0        0       20        7
+45G1       15        9        0
+
+box area share by depth
+ dbin
+<100       0.232
+100-200    0.491
+200-300    0.191
+>=300      0.087
+Name: proportion, dtype: float64
+
+region hauls by depth bin
+ dbin
+<100       177
+100-200     66
+200-300     22
+>=300        0
+Name: n, dtype: int64
+
+year x quarter x rect
+ StatRec       44G0  44G1  45G0  45G1
+Year Quarter                        
+2021 1           5     4     4     3
+     3           3     5     2     2
+2022 1           2     2     3     1
+     3           4     3     4     2
+2023 1           3     3     2     3
+     3           3     4     2     2
+2024 1           3     3     2     3
+     3           3     5     3     3
+2025 1           3     3     3     3
+     3           4     4     2     2
+
+mean kg/h
+          area quarter   avg    n    total  haddock  whiting  saithe    cod   hake  ling  blue ling  tusk  pollack  greater forkbeard  poor cod   bib  silvery pout  fourbeard rockling  threebeard rockling  Norway pout  blue whiting
+0   box rects   Q1+Q3  haul  120   453.54   137.21   155.28   80.59  20.18   4.87  0.75       0.00   0.0     0.29               0.08      0.42  0.00          0.05                0.24                  0.0        27.45         26.12
+1   box rects   Q1+Q3  rect  120   458.34   140.94   146.92   89.00  20.22   4.64  0.78       0.00   0.0     0.27               0.09      0.42  0.00          0.05                0.25                  0.0        28.04         26.72
+2   box rects      Q1  haul   58   241.20   114.16    95.49    1.14  21.27   0.41  0.56       0.00   0.0     0.48               0.15      0.65  0.00          0.00                0.15                  0.0         6.74          0.00
+3   box rects      Q1  rect   58   237.39   112.81    93.83    1.14  20.40   0.42  0.55       0.00   0.0     0.44               0.15      0.61  0.00          0.00                0.15                  0.0         6.89          0.00
+4   box rects      Q3  haul   62   652.18   158.78   211.22  154.92  19.17   9.04  0.92       0.00   0.0     0.12               0.02      0.21  0.00          0.09                0.32                  0.0        46.82         50.55
+5   box rects      Q3  rect   62   690.97   177.88   194.83  183.26  20.93   8.67  1.00       0.00   0.0     0.12               0.02      0.26  0.00          0.11                0.35                  0.0        49.43         54.10
+0  box strict   Q1+Q3  haul   41   606.25   236.37   104.59   96.69  35.23   6.54  1.75       0.00   0.0     0.76               0.12      0.93  0.01          0.13                0.44                  0.0        48.24         74.44
+1  box strict   Q1+Q3  rect   41   609.23   276.09   133.35   67.33  34.16   5.02  1.29       0.00   0.0     0.60               0.08      0.74  0.00          0.09                0.36                  0.0        36.82         53.32
+2  box strict      Q1  haul   25   309.34   150.05   109.00    2.40  31.61   0.77  1.31       0.00   0.0     1.11               0.15      1.43  0.01          0.00                0.23                  0.0        11.26          0.00
+3  box strict      Q1  rect   25   335.33   166.17   123.08    2.00  29.30   0.71  1.07       0.00   0.0     0.78               0.14      1.05  0.01          0.00                0.24                  0.0        10.78          0.00
+4  box strict      Q3  haul   16  1070.18   371.25    97.69  244.04  40.89  15.54  2.45       0.00   0.0     0.20               0.07      0.16  0.00          0.34                0.76                  0.0       106.04        190.75
+5  box strict      Q3  rect   16  1126.74   507.71   113.79  173.41  46.29  16.29  2.10       0.00   0.0     0.36               0.05      0.19  0.00          0.23                0.58                  0.0        99.75        165.98
+0   Skagerrak   Q1+Q3  haul  232   504.16   227.89   118.62   59.04  25.09   4.75  0.70       0.01   0.0     0.49               0.04      0.32  0.00          0.07                0.45                  0.0        28.11         38.57
+1   Skagerrak   Q1+Q3  rect  232   499.77   226.32   120.26   53.02  24.36   4.67  0.71       0.01   0.0     0.41               0.04      0.32  0.00          0.07                0.45                  0.0        26.69         42.44
+2   Skagerrak      Q1  haul  113   247.49   123.30    90.04    3.23  21.00   0.44  0.37       0.01   0.0     0.48               0.07      0.53  0.00          0.01                0.35                  0.0         7.61          0.05
+3   Skagerrak      Q1  rect  113   244.86   123.72    87.77    3.14  20.72   0.42  0.34       0.01   0.0     0.44               0.06      0.52  0.00          0.01                0.33                  0.0         7.31          0.05
+4   Skagerrak      Q3  haul  119   747.89   327.21   145.76  112.04  28.98   8.85  1.02       0.00   0.0     0.51               0.01      0.12  0.00          0.13                0.54                  0.0        47.58         75.15
+5   Skagerrak      Q3  rect  119   757.92   321.79   155.18  108.00  27.48   8.86  1.11       0.00   0.0     0.37               0.01      0.14  0.00          0.14                0.62                  0.0        46.19         88.04
+
+positive hauls by country
+          hauls  ling  pollack  greater forkbeard  poor cod  bib  silvery pout  fourbeard rockling  threebeard rockling  blue ling  tusk
+Country                                                                                                                                
+DK          28     6        2                  0         6    1             0                   2                    0          0     0
+NO           3     0        0                  0         3    0             0                   2                    0          1     0
+SE         234    39       12                  4        90    1            32                  93                    0          0     0
+
+density t/km2 at q=1
+                         box  boxrect    skag
+haddock              0.9788   1.0003  1.5493
+whiting              1.1731   1.1053  0.8721
+saithe               0.5368   0.5928  0.3875
+cod                  0.1425   0.1421  0.1742
+hake                 0.0355   0.0337  0.0335
+ling                 0.0049   0.0051  0.0046
+blue ling            0.0000   0.0000  0.0000
+tusk                 0.0000   0.0000  0.0000
+pollack              0.0021   0.0020  0.0034
+greater forkbeard    0.0005   0.0006  0.0003
+poor cod             0.0030   0.0030  0.0022
+bib                  0.0000   0.0000  0.0000
+silvery pout         0.0003   0.0003  0.0005
+fourbeard rockling   0.0017   0.0017  0.0030
+threebeard rockling  0.0000   0.0000  0.0000
+Norway pout          0.1890   0.1924  0.1943
+blue whiting         0.1714   0.1754  0.2550
+totals 3.2396701483155743 3.254794074507485 3.479981688057314
+
+depth-stratified box kg/h (region hauls x box area; >=300 m bin missing, see phi_mix.py)
+ haddock                208.03
+whiting                 76.74
+saithe                 105.70
+cod                     24.69
+hake                     3.31
+ling                     1.09
+blue ling                0.01
+tusk                     0.00
+pollack                  0.42
+greater forkbeard        0.08
+poor cod                 0.48
+bib                      0.00
+silvery pout             0.14
+fourbeard rockling       0.74
+threebeard rockling      0.00
+Norway pout             28.76
+blue whiting            68.55
+dtype: float64 518.7317702341488
+
+kg/h by depth bin
+ dbin                   <100  100-200  200-300  >=300
+n                    177.00    66.00    22.00    0.0
+haddock              173.95   309.20    83.34    NaN
+whiting              146.46    83.03    10.66    NaN
+saithe                 0.95   145.39   178.83    NaN
+cod                   18.17    35.18    16.81    NaN
+hake                   4.89     2.49     4.97    NaN
+ling                   0.16     1.37     1.98    NaN
+blue ling              0.00     0.02     0.00    NaN
+tusk                   0.00     0.00     0.00    NaN
+pollack                0.40     0.67     0.00    NaN
+greater forkbeard      0.00     0.07     0.23    NaN
+poor cod               0.08     0.81     0.31    NaN
+bib                    0.00     0.00     0.00    NaN
+silvery pout           0.00     0.11     0.44    NaN
+fourbeard rockling     0.07     0.98     1.27    NaN
+threebeard rockling    0.00     0.00     0.00    NaN
+Norway pout           19.88    37.35    30.51    NaN
+blue whiting           0.00   111.16    73.25    NaN
+
+bootstrap share CI, box rects Q1+Q3, with Norway pout/blue whiting
+                        p05    p50    p95
+haddock              21.70  29.97  39.69
+whiting              25.01  33.99  45.34
+saithe                2.70  17.42  33.10
+cod                   3.39   4.42   5.68
+hake                  0.63   1.05   1.64
+ling                  0.10   0.17   0.24
+blue ling             0.00   0.00   0.00
+tusk                  0.00   0.00   0.00
+pollack               0.01   0.06   0.13
+greater forkbeard     0.00   0.02   0.04
+poor cod              0.04   0.09   0.17
+bib                   0.00   0.00   0.00
+silvery pout          0.00   0.01   0.03
+fourbeard rockling    0.03   0.05   0.08
+threebeard rockling   0.00   0.00   0.00
+Norway pout           4.23   6.02   8.31
+blue whiting          1.84   5.48  10.58
+
+bootstrap share CI, box rects Q1+Q3, without Norway pout/blue whiting
+                        p05    p50    p95
+haddock              24.56  34.16  45.03
+whiting              28.39  38.67  51.06
+saithe                3.15  19.68  37.32
+cod                   3.76   5.03   6.57
+hake                  0.72   1.19   1.87
+ling                  0.12   0.19   0.28
+blue ling             0.00   0.00   0.00
+tusk                  0.00   0.00   0.00
+pollack               0.02   0.07   0.15
+greater forkbeard     0.00   0.02   0.04
+poor cod              0.04   0.10   0.19
+bib                   0.00   0.00   0.00
+silvery pout          0.00   0.01   0.03
+fourbeard rockling    0.04   0.06   0.09
+threebeard rockling   0.00   0.00   0.00
+
+largest single-haul share of the box sum by species
+ haddock                0.14
+whiting                0.10
+saithe                 0.54
+cod                    0.09
+hake                   0.18
+ling                   0.09
+blue ling               NaN
+tusk                    NaN
+pollack                0.39
+greater forkbeard      0.48
+poor cod               0.37
+bib                    1.00
+silvery pout           0.86
+fourbeard rockling     0.14
+threebeard rockling     NaN
+Norway pout            0.16
+blue whiting           0.45
+dtype: float64

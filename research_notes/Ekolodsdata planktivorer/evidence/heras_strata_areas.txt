@@ -1,0 +1,114 @@
+HERAS stratum definitions and areas, Skagerrak / Kattegat (Div. 3.a) and eastern North Sea
+=========================================================================================
+Compiled 2026-10-24 by a literature agent. Tags: [F] full text read, [A] abstract only, [S] secondary.
+1 nmi2 = 1.852^2 km2 = 3.4299 km2.
+Model box for reference: 57.7-58.4 N, 9.9-11.3 E (ICES rect. 44G0, 44G1, 45G0, 45G1), ~3600 km2.
+
+----------------------------------------------------------------------------------------
+SOURCE 1 [F]
+ICES 2025. Manual for International Pelagic Surveys (IPS), coordinated by WGIPS.
+ICES Techniques in Marine Environmental Sciences Vol. 71 (TIMES).
+figshare record 28269671, file TIMES_WGIPS_Pelagic_correction_5march_withCover.pdf
+https://ices-library.figshare.com/articles/report/_/28269671  (download: https://ndownloader.figshare.com/files/52805555)
+
+Table 5.2 (printed p. 68-69, PDF p. 77-78), "Survey design during HERAS survey. Details on
+stratification of the survey area":
+  Stratum  Stratum area (nmi2)  Design  Transect spacing (nmi)  Orientation (deg)  Assigned to
+  21        2 963.9             RSP     13                      72/252             DK
+  31        1 806.3             RSP     10                      72/252             DK
+  41        3 362.4             RSP     17.5                    164/344            DK
+  42        1 783.9             RSP     17.5                    164/344            DK
+  151       6 139.5             RSP     151_N: 15; 151_S: 17.5  0/180; 90/270      DK
+  152       1 598.2             RSP     15                      0/180              DK
+  (11 = 14 243.6, NOR; 141 = 18 657.8, NOR; others not in 3.a)
+In km2: 21 = 10 166; 31 = 6 195; 41 = 11 533; 42 = 6 119; 151 = 21 058; 152 = 5 482 (derived).
+
+Text, printed p. 63-64: "Survey stratification is based on 23 strata with transects running
+perpendicular to lines of bathymetry where possible ... The relative effort (and therefore the
+transect spacing) in each stratum ... is based on the mean abundance and variance in each of the
+strata during surveys in the most recent 10 years prior to the new overall survey design being
+implemented (2005-2015)".
+Printed p. 64 (PDF p. 73): "When schools disperse during darkness, some of the herring may rise to
+the surface and get above the transducer. This consideration is valid in most of the survey area
+covered in this survey, with the exception of the Kattegat/Skagerrak covered by Denmark, where
+herring is found in dispersed layers mixed with other fish at all times."
+Table 5.1 (printed p. 66-67): RV Dana (DK), 2022: time period 28 June-21 July; sampling day and
+night ("Both"); minimum seabed depth 20 m; maximum seabed depth >500 m; inter-transect distance
+10, 13, 15, 17.5 nmi; EDSU 1 nmi; maximum sampling depth 500 m; average surface sampled 17 654 nmi2;
+mean number of fishing stations 35.
+Table 5.3 (printed p. 69-70, PDF p. 78-79): Dana: EK60 18/38/120 kHz, ES38-7 in towed body,
+transducer depth 4-6 m, upper integration limit 8-10 m, maximum range 500 m, Echoview.
+
+----------------------------------------------------------------------------------------
+SOURCE 2 [F]  Danish national stratum areas (2016 geometry)
+Staehr, K.J. 2016. Acoustic Herring Survey report for RV "DANA" 22nd June - 5th July 2016.
+DTU Aqua. Hosted by the Norwegian Directorate of Fisheries (foreign research cruises):
+https://fiskeridir.no/english/Coastal-management/Marine-scientific-research/Cruises-2016/_/attachment/download/ba9f31c2-c503-4da1-8f6a-8c7f58d357be:cc233752282777e4261264442882fc1c698ccb87/160318a.pdf
+Table 9 (PDF p. 31) "Survey statistics for the Danish acoustic survey with R/V Dana in June-July 2016":
+  strata  Area, NM*2   ESDU  Haul  Mean Sa    Mean TS
+  ST21    3292.839     192   10    2.57E-06   1.22E-05
+  ST31    1911.706      92    7    3.66E-06   3.25E-05
+  ST41    1823.107      71    5    2.71E-06   4.07E-05
+  ST42    3710.053     144    8    3.11E-06   4.95E-05
+  ST151   6261.572     324   12    2.84E-06   3.59E-05
+  ST152   1716.322      87    5    1.47E-06   7.41E-05
+DISCREPANCY: the 2016 Dana report gives ST41 = 1823 and ST42 = 3710 nmi2, the 2025 manual gives
+41 = 3362 and 42 = 1784 nmi2 (labels effectively swapped; 21 and 31 also differ by ~6-10 %).
+On the Dana 2019 strata map (Figure 1, see below) 41 is the large northern polygon along the
+Norwegian coast (Norwegian Trench) and 42 the smaller southern polygon off Jutland, which fits the
+manual (41 > 42). WGIPS 2018 (Table 5.14 footnote) also says 42 was "New strata in 2017, was part
+of strata 41 in 2016", so the 2016 national geometry may not equal the current one.
+Use the manual areas for 2017+ international estimates.
+
+----------------------------------------------------------------------------------------
+SOURCE 3 [F]  Stratum map (current geometry)
+Staehr, K.J. 2019. Acoustic Herring Survey report for RV "DANA" 25th June - 9th July 2019. DTU Aqua.
+https://www.fiskeridir.no/English/Coastal-management/Marine-scientific-research/Cruises-2019/_/attachment/download/b8d76861-8d58-4c0d-a18f-dcaee6ed3a7f:59732a4187f755145caaac5414467ac2c6f1b1b6/190306.pdf
+Figure 1 (PDF p. 14) "Map showing the survey area for the Danish acoustic survey with R/V Dana in
+June-July 2019. The map shows the subareas (strata) used in the abundance estimation."
+Section 2.2: "The survey was carried out in the Kattegat and Skagerrak area, east of 6 E and north of
+56 N (Fig. 1). The area is split into 6 sub-areas ... spacing of 15 nm in strata 151, 17.5 nm in
+strata 41 and 10 nm in strata 31 and 21."
+Approximate geometry read off the map by this agent (coordinates +-0.05 deg, derived, not stated):
+  - 41/31 boundary: straight line from ~10.0 E, 58.8 N (Norwegian coast) to ~10.6 E, 57.7 N (Skagen).
+  - 41/42 boundary: from ~8.0 E, 57.5 N to ~10.4 E, 58.05 N.
+  - 31/21 boundary: from Skagen (~10.6 E, 57.7 N) to ~11.4 E, 57.8 N (Swedish coast).
+  - 21 = Kattegat; 31 = eastern Skagerrak (Swedish side, east of the Skagen-Arendal line);
+    41 = northern Skagerrak / Norwegian Trench; 42 = southern Skagerrak off Jutland;
+    151/152 = eastern North Sea (6-8 E).
+Overlap with the model box (57.7-58.4 N, 9.9-11.3 E), derived estimate: ~60-65 % of the box is in
+stratum 31, ~20 % in the eastern tip of 41 (north of ~58.05 N, west of ~10.2-10.4 E), ~10-15 % in
+42 (south-west corner), and a sliver of 21 in the south-east corner (south of ~57.8 N, east of 10.6 E).
+
+----------------------------------------------------------------------------------------
+SOURCE 4 [F]  Old Danish strata (used until 2015; latitude-longitude boxes + C, D, E)
+Staehr, K.J. 2013. Acoustic Herring Survey report for RV "DANA" 25th June - 8th July 2013.
+https://www.fiskeridir.no/English/Coastal-management/Marine-scientific-research/Cruises-2013/_/attachment/download/075dc8d0-1293-4d5f-a149-2d410bb97db8:7c7eda7456a84a67eb5b4aa57d4147838eafbdc8/130122.pdf
+Figure 1 (PDF p. 10) map; Table 2 (PDF p. 13) "Survey statistics for the Danish acoustic survey with R/V Dana in July 2013":
+  Stratum  Area, NM*2  ESDU  Hauls  Mean Sa    Mean TS
+  560E06   3980        167   5      6.92E-07   3.85E-05
+  570E06   3600        397   8      2.12E-06   4.92E-05
+  570E08   3406        238   6      1.18E-06   3.72E-05
+  580E06    209         33   1      2.63E-06   3.10E-05
+  580E08   1822         98   4      1.56E-06   2.24E-05
+  C         988         66   3      6.95E-07   1.68E-05
+  D        1837        175   7      1.85E-06   2.04E-05
+  E        5228        431   9      3.20E-06   2.23E-05
+Same areas in the 2015 report (Table 2), and in the PGHERS 2004-2008 Dana annexes (2003-2007 surveys;
+560E06 listed as 1990 nmi2 "overlap area" in 2005, 3980 in 2004).
+Geometry from the map: 5x0E06 boxes = 6-8 E; 5x0E08 = 8-10 E; rows 56-57, 57-58, 58-59 N.
+  C = Skagerrak east of 10 E, ~58.5-59.1 N (Oslofjord mouth / Hvaler); 988 nmi2 = 3 389 km2.
+  D = Skagerrak east of 10 E, ~57.75-58.5 N, to the Swedish coast; 1837 nmi2 = 6 301 km2.
+  E = Kattegat; 5228 nmi2 = 17 932 km2.
+The model box (57.7-58.4 N, 9.9-11.3 E) lies almost entirely (~90 %) inside old stratum D.
+
+----------------------------------------------------------------------------------------
+SOURCE 5 [F]  HERAS 2015 international StoX stratification (one year only, different numbering)
+ICES 2016. WGIPS 2016 Annex 4c, HERAS 2015 report. figshare 18615221, file
+"WGIPS 2016_Annex 4c HERAS_2015_report_final.pdf" (https://ndownloader.figshare.com/files/33484190)
+Figure 5.2 (PDF p. 19) "Stratification used in the StoX analysis of the HERAS survey 2015":
+  1 = Kattegat; 2 = eastern Skagerrak east of 10 E (~57.75-59 N; covers the model box);
+  3 = Skagerrak / Norwegian Trench 6-10 E north of ~57.5 N; 4 = 57-57.5 N, 6-~9 E; 5 = 56-57 N, 6-8 E.
+Text p. 4: "Strata 3 and 4 straddles the border between sprat in the North Sea and IIIa sprat";
+"All sprat in strata 1 - 2 are include[d]".
+No stratum areas given in this report.

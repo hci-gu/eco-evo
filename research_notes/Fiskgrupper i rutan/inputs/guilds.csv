@@ -1,0 +1,93 @@
+aphia,species,common,guild,form,note
+126417,Clupea harengus,herring,P,fusiform,
+126425,Sprattus sprattus,sprat,P,fusiform,
+126444,Trisopterus esmarkii,Norway pout,P,fusiform,
+125516,Ammodytidae,sandeels (unspecified),P,eel,
+126751,Ammodytes marinus,lesser sandeel,P,eel,
+126756,Hyperoplus lanceolatus,greater sandeel,P,eel,adults also take fish larvae and small fish
+126754,Gymnammodytes semisquamatus,smooth sandeel,P,eel,
+125909,Ammodytes,sandeel (genus),P,eel,
+126426,Engraulis encrasicolus,anchovy,P,fusiform,
+126421,Sardina pilchardus,sardine,P,fusiform,
+126435,Gadiculus argenteus,silvery pout,P,fusiform,G. thori in the Skagerrak
+127312,Maurolicus muelleri,pearlside,P,fusiform,mesopelagic; GOV catchability very low
+272728,Notoscopelus kroyeri,lanternfish,P,fusiform,mesopelagic
+126716,Argentina sphyraena,lesser argentine,P,fusiform,
+126715,Argentina silus,greater argentine,P,fusiform,
+126868,Aphia minuta,transparent goby,P,fusiform,
+127255,Sebastes viviparus,Norway redfish,P,fusiform,krill and copepods
+127214,Cyclopterus lumpus,lumpsucker,P,round,adults pelagic on gelatinous zooplankton
+126415,Alosa fallax,twaite shad,P,fusiform,
+126505,Gasterosteus aculeatus,three-spined stickleback,P,fusiform,
+126437,Melanogrammus aeglefinus,haddock,B,fusiform,
+126436,Gadus morhua,cod,B,fusiform,large cod piscivorous
+127139,Limanda limanda,dab,B,flat,
+127137,Hippoglossoides platessoides,long rough dab,B,flat,also krill and small fish
+127143,Pleuronectes platessa,plaice,B,flat,
+127140,Microstomus kitt,lemon sole,B,flat,
+127136,Glyptocephalus cynoglossus,witch,B,flat,
+127141,Platichthys flesus,flounder,B,flat,
+127160,Solea solea,sole,B,flat,
+127153,Buglossidium luteum,solenette,B,flat,
+127126,Arnoglossus laterna,scaldfish,B,flat,
+127147,Phrynorhombus norvegicus,Norwegian topknot,B,flat,
+150637,Eutrigla gurnardus,grey gurnard,B,fusiform,crustaceans and fish
+127262,Chelidonichthys lucerna,tub gurnard,B,fusiform,
+126446,Trisopterus minutus,poor cod,B,fusiform,
+126445,Trisopterus luscus,bib,B,fusiform,
+126450,Enchelyopus cimbrius,fourbeard rockling,B,eel,
+126501,Phycis blennoides,greater forkbeard,B,fusiform,
+126792,Callionymus lyra,dragonet,B,fusiform,
+126793,Callionymus maculatus,spotted dragonet,B,fusiform,
+126795,Callionymus reticulatus,reticulated dragonet,B,fusiform,
+274100,Lycodes gracilis,Vahl's eelpout,B,eel,
+127101,Lycenchelys sarsii,Sars's wolf eel,B,eel,
+154675,Lumpenus lampretaeformis,snake blenny,B,eel,
+127072,Leptoclinus maculatus,daubed shanny,B,eel,
+127190,Agonus cataphractus,hooknose,B,fusiform,
+127203,Myoxocephalus scorpius,shorthorn sculpin,B,fusiform,
+127205,Triglops murrayi,moustache sculpin,B,fusiform,
+126986,Mullus surmuletus,red mullet,B,fusiform,
+125999,Pomatoschistus,sand gobies,B,fusiform,
+126929,Pomatoschistus norvegicus,Norway goby,B,fusiform,
+126904,Lesueurigobius friesii,Fries's goby,B,fusiform,
+126892,Gobius niger,black goby,B,fusiform,
+126758,Anarhichas lupus,Atlantic wolffish,B,eel,
+127082,Trachinus draco,greater weever,B,fusiform,crustaceans and small fish
+150630,Echiichthys vipera,lesser weever,B,fusiform,
+127251,Helicolenus dactylopterus,blackbelly rosefish,B,fusiform,
+105865,Amblyraja radiata,starry ray,B,ray,
+105883,Raja clavata,thornback ray,B,ray,
+367297,Raja brachyura,blonde ray,B,ray,
+105885,Raja microocellata,small-eyed ray,B,ray,
+1019159,Rajella lintea,sailray,B,ray,
+105814,Scyliorhinus canicula,lesser spotted dogfish,B,shark,
+105821,Mustelus asterias,starry smooth-hound,B,shark,crabs
+105824,Chimaera monstrosa,rabbit fish,B,fusiform,benthic invertebrates
+101170,Myxine glutinosa,hagfish,B,eel,scavenger
+126281,Anguilla anguilla,eel,B,eel,
+127393,Syngnathus typhle,broadnosed pipefish,B,eel,
+127389,Syngnathus rostellatus,Nilsson's pipefish,B,eel,
+127387,Syngnathus acus,greater pipefish,B,eel,
+127379,Entelurus aequoreus,snake pipefish,P,eel,pelagic
+125606,Syngnathidae,pipefishes,B,eel,
+126438,Merlangius merlangus,whiting,R,fusiform,
+126441,Pollachius virens,saithe,R,fusiform,
+126484,Merluccius merluccius,hake,R,fusiform,
+126461,Molva molva,ling,R,eel,
+126459,Molva dypterygia,blue ling,R,eel,
+126440,Pollachius pollachius,pollack,R,fusiform,
+126439,Micromesistius poutassou,blue whiting,P,fusiform,krill feeder; box fish 20-30 cm are too small for the herring pool (section "Blue whiting")
+127023,Scomber scombrus,mackerel,R,fusiform,plankton and fish; GOV catchability low
+126822,Trachurus trachurus,horse mackerel,R,fusiform,plankton fish and benthic crustaceans
+105923,Squalus acanthias,spurdog,R,shark,
+105913,Etmopterus spinax,velvet belly,R,shark,krill fish squid
+126555,Lophius piscatorius,anglerfish,R,round,
+127149,Scophthalmus maximus,turbot,R,flat,piscivorous flatfish
+127150,Scophthalmus rhombus,brill,R,flat,piscivorous flatfish
+127138,Hippoglossus hippoglossus,halibut,R,flat,
+127427,Zeus faber,John dory,R,fusiform,
+126975,Dicentrarchus labrax,sea bass,R,fusiform,
+126375,Belone belone,garfish,R,eel,
+101174,Petromyzon marinus,sea lamprey,X,eel,parasitic
+101172,Lampetra fluviatilis,river lamprey,X,eel,parasitic

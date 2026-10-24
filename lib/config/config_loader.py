@@ -7,6 +7,7 @@ from lib.world.growth_budget import (capacity_loss_rate, derived_growth_rate,
                                      income_growth)
 from lib.world import daylight, nutrients, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
+from lib.world import habitat
 
 def load_config(path):
     # The editor writes UTF-8 with a BOM. Using the host encoding on Windows
@@ -299,6 +300,9 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
             _ordered.extend(_remaining); break
 
     env_fields = {}
+    # Section 207: no project on this path, so no depth map and no
+    # baseline maps - an equilibrium spawn is the scalar-K pattern.
+    _, habitat_maps = habitat.build(None, None, lib, grid_size, _ordered)
     fgs = {}
     for sid in _ordered:
         specs = spec_defs[sid]
@@ -371,8 +375,10 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
             # has no project reference grid, so ``total_b`` is NOT scaled
             # by area either. Colony counts must track whatever the biomass
             # does, and here both stay at their library values.
-            env_context={'env_fields': env_fields, 'allowed_mask': spawn_allowed_mask})
+            env_context={'env_fields': env_fields, 'allowed_mask': spawn_allowed_mask,
+                         'equilibrium': habitat_maps.get(sid, {}).get('equilibrium')})
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
+        fg.equilibrium_map = habitat_maps.get(sid, {}).get('equilibrium')
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
@@ -687,6 +693,14 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     # Passed into _spawn_biomass_distribution via env_context so that
     # env_driven strategies can use it via context['env_fields'][name].
     env_fields = {}
+    # Section 207: the manifest's depth map (also the spawn reference
+    # field ``depth``) and the depth habitat of the groups with a
+    # capacity table or the equilibrium spawn.
+    depth_field, habitat_maps = habitat.build(
+        project, project_path, lib, grid_size, project_fg_ids,
+        overrides=project_fg_overrides)
+    if depth_field is not None:
+        env_fields['depth'] = depth_field
 
     fgs = {}
     for sid in _spawn_order:
@@ -912,10 +926,15 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                          # the biomass, which collapses peak density per
                          # cell. The key was missing since the mechanism was
                          # written, so ``_apply_grid_scaling`` was dead code.
-                         'biomass_scale': biomass_scale})
+                         'biomass_scale': biomass_scale,
+                         'equilibrium': habitat_maps.get(sid, {}).get('equilibrium')})
         # Expose this FG's freshly spawned biomass map to subsequent FGs
         # (env_driven refs use the already-spawned dependencies).
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
+        capacity = habitat_maps.get(sid, {}).get('capacity')
+        if capacity is not None:
+            fg.capacity_map = capacity.astype(np.float32)
+        fg.equilibrium_map = habitat_maps.get(sid, {}).get('equilibrium')
         # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
         # initial energy fill levels. Inference keeps the deterministic
         # 0.7 * ME_X default for reproducible scenario comparisons.

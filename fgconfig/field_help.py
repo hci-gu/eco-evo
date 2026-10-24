@@ -638,7 +638,35 @@ FIELD_HELP = {
         "a hard ceiling on biomass per cell. It sets how much food the "
         "base of the web can offer per km2 and so, indirectly, how much "
         "consumer biomass the system can hold. Not scaled with the "
-        "grid (it is already per cell)."
+        "grid (it is already per cell). A group with a "
+        "capacity_depth_table and a project depth map uses the table "
+        "instead; this value is then only the fallback (section 207)."
+    ),
+    "predator_share": (
+        "Predator share phi of a predation pair (0-1], edited in "
+        "fg_library.yaml.\n\n"
+        "The share of the predator group's biomass that can feed on this "
+        "prey at all, e.g. the benthivores of the pooled gadoids. That "
+        "part eats it at the full attack rate and ceiling; the rest "
+        "cannot, so at most phi of the group's eat mass reaches the prey "
+        "(the tick uses min(eat, phi)). Set from morphology and the "
+        "species mix, not from a diet (section 208)."
+    ),
+    "accessible_fraction": (
+        "Accessible fraction f of a predation pair (0-1], edited in "
+        "fg_library.yaml.\n\n"
+        "The share of the prey within the predator's reach at any time, "
+        "e.g. infauna in the top centimetres of the sediment. Scales the "
+        "prey biomass the pair sees, in the functional response and in "
+        "the harvest cap; not the observation (section 208)."
+    ),
+    "capacity_depth_table": (
+        "Capacity by depth (t/km2), edited in fg_library.yaml.\n\n"
+        "Rows {depth_m, capacity}: K per cell from the project's depth "
+        "map (simulation_settings.depth_map), linear between rows and "
+        "held at the end rows outside them. Without a depth map the "
+        "scalar Max Carrying Capacity applies. Benthos: anchored at the "
+        "in-grid stations at 100 and 300 m (section 207)."
     ),
     "ndm:energy_content": (
         "Energy Content (MJ per tonne). What a predator gains per tonne "

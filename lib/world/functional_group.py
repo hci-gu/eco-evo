@@ -72,6 +72,12 @@ class FunctionalGroup:
             params.get('extinction_threshold_factor', 0.5) or 0.0)
         if self.extinction_threshold_factor < 0.0:
             self.extinction_threshold_factor = 0.0
+        # Section 207: per-cell carrying capacity (t/km2, the shape of the
+        # biomass) and today's equilibrium start pattern, set by the loader
+        # from the depth habitat (lib/world/habitat.py). None = the scalar
+        # max_carrying_capacity everywhere / no equilibrium spawn.
+        self.capacity_map = None
+        self.equilibrium_map = None
 
     def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7,
                          randomize_energy=False, rng=None):

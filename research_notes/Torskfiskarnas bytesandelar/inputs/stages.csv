@@ -1,0 +1,12 @@
+species,stage,lo,hi
+cod,juvenile,0,cod_b1
+cod,medium,cod_b1,cod_b2
+cod,large,cod_b2,999
+haddock,juv_adult,0,haddock_b1
+haddock,large,haddock_b1,999
+whiting,juvenile,0,whiting_b1
+whiting,adult,whiting_b1,999
+saithe,adult,0,saithe_b1
+saithe,large,saithe_b1,999
+hake,juvenile,0,hake_b1
+hake,adult,hake_b1,999

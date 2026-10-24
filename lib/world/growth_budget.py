@@ -179,7 +179,11 @@ def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
         a = _as_float(entry.get("max_intake_rate"),
                       _as_float(pred_def.get("max_intake_rate")))
         assim = min(1.0, max(0.0, _as_float(entry.get("assimilation_factor"), 1.0)))
-        rate = intake_ceiling(a, _as_float(entry.get("handling_time"))) * assim * energy
+        # Section 208: only phi of the group can eat a capped prey, so
+        # the most a tonne of predator gets from it alone is phi x the
+        # ceiling (the engine caps the eat share at phi).
+        phi = _as_float(entry.get("predator_share"), 1.0) or 1.0
+        rate = phi * intake_ceiling(a, _as_float(entry.get("handling_time"))) * assim * energy
         if rate > best:
             best, best_id = rate, prey_id
     return best, best_id

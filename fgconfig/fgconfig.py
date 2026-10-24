@@ -953,19 +953,21 @@ class FGConfigApp:
     # ------------------------------------------------------------------
     # Spawn-strategy editor (per-FG)
     # ------------------------------------------------------------------
-    SPAWN_MODES = ("uniform", "perlin", "colony", "env_driven")
+    SPAWN_MODES = ("uniform", "perlin", "colony", "env_driven", "equilibrium")
     # Display labels shown in the dropdown; internal keys remain lowercase.
     SPAWN_MODE_LABELS = {
         "uniform": "Uniform",
         "perlin": "Perlin",
         "colony": "Colony",
         "env_driven": "Env-driven",
+        "equilibrium": "Equilibrium",
     }
     SPAWN_MODE_KEYS = {v: k for k, v in {
         "uniform": "Uniform",
         "perlin": "Perlin",
         "colony": "Colony",
         "env_driven": "Env-driven",
+        "equilibrium": "Equilibrium",
     }.items()}
     SPAWN_MODE_HELP = {
         "uniform": (
@@ -1062,8 +1064,25 @@ class FGConfigApp:
             "biomass field. Name = FG id (e.g. 'phytoplankton'), "
             "Weight = signed multiplier (negative inverts), Transform "
             "= linear/exp/invert/gauss_smooth. Use this to make "
-            "zooplankton follow phytoplankton. Refs to 'depth' are "
-            "filtered out until the depth map has been activated."
+            "zooplankton follow phytoplankton. 'depth' refers to the "
+            "project's depth map (simulation_settings.depth_map, metres) "
+            "when it has one."
+        ),
+        "equilibrium": (
+            "Equilibrium\n"
+            "\n"
+            "For a hand-set logistic non decision maker (the benthos). "
+            "The start pattern is today's equilibrium per cell, "
+            "B* = K(c) (1 - (F(c) + M2) / r): K(c) from the "
+            "capacity_depth_table on the project's depth map (or the "
+            "scalar K), F(c) the yearly loss of the group's impacts on "
+            "their baseline maps (today's fishing), M2 the checked "
+            "predation pairs on the group, r the growth rate per year. "
+            "The total still comes from the initial biomass. No "
+            "randomness. The preview shows a uniform field because it "
+            "has no project maps.\n"
+            "\n"
+            "Parameters: none."
         ),
     }
     SPAWN_PARAM_SCHEMA = {
@@ -1091,6 +1110,7 @@ class FGConfigApp:
             ("noise_scale", "Noise scale (cells)", "float", 4.0),
             ("min_frac_of_max", "Min frac of max", "float", 0.0),
         ],
+        "equilibrium": [],
     }
     # Transform options available for env_driven refs (mirrors
     # lib/spawn/strategies.py: weights_env_driven).

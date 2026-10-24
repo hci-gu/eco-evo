@@ -12,6 +12,7 @@ from .strategies import (
     weights_perlin,
     weights_colony,
     weights_env_driven,
+    weights_equilibrium,
     StrategySpec,
 )
 from .allocator import distribute_with_floor, summarize
@@ -24,6 +25,7 @@ __all__ = [
     "weights_perlin",
     "weights_colony",
     "weights_env_driven",
+    "weights_equilibrium",
     "StrategySpec",
     "distribute_with_floor",
     "summarize",

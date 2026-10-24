@@ -203,6 +203,7 @@ def baseline_project(tmp_path):
             iv["muted"] = False
             iv["baseline_map"] = "effort.npz"
     data.get("inference", {}).get("impact_maps", {}).pop("rotor", None)
+    data["simulation_settings"]["depth_map"] = str(ROOT / data["simulation_settings"]["depth_map"])
     path = tmp_path / "baseline.yaml"
     with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f, sort_keys=False)
