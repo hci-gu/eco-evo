@@ -46,6 +46,7 @@ them; the heatmaps grow with their share.
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import time
@@ -53,6 +54,7 @@ from typing import Dict, Mapping, Optional, Sequence
 
 import numpy as np
 
+from lib.viz import i18n
 from lib.world import daylight
 from lib.world.tick_time import (
     DAYS_PER_YEAR, HOURS_PER_DAY, resolve_tick_hours,
@@ -64,6 +66,42 @@ _VIRIDIS_256: Optional[np.ndarray] = None
 # Width of the daylight frame around each heatmap (section 142).
 _LIGHT_FRAME_PX = 2
 
+# Viewer preferences kept between runs (section 213): today only the
+# display language. A small JSON file next to this module, ignored by git
+# like fgconfig/recent_projects.txt; MARELD_VIEWER_SETTINGS points it
+# elsewhere (the test suite gives every test its own file).
+_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "viewer_settings.json")
+
+
+def _settings_path() -> str:
+    return os.environ.get("MARELD_VIEWER_SETTINGS") or _SETTINGS_FILE
+
+
+def _load_settings() -> dict:
+    """The saved preferences, or {} when there are none or they are unreadable."""
+    try:
+        with open(_settings_path(), "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_settings(**changes) -> None:
+    """Merge ``changes`` into the saved preferences (never fatal)."""
+    data = _load_settings()
+    data.update(changes)
+    path = _settings_path()
+    try:
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.write("\n")
+        os.replace(tmp, path)
+    except OSError as e:
+        print(f"[viz] Could not save viewer settings to {path}: {e}")
+
 # Calendar band under the inference plot (section 155): a month row and
 # a clock row, profiler-style blocks with the label inside when it fits.
 _CAL_ROW_H = 14
@@ -74,9 +112,6 @@ _CAL_CLOCK_STEPS_H = (1, 2, 3, 6, 12, 24)
 _CAL_MIN_BLOCK_PX = 18
 # Below this a day block is not outlined; the light shading remains.
 _CAL_MIN_DAY_PX = 8
-_CAL_MONTH_NAMES = ("January", "February", "March", "April", "May", "June",
-                    "July", "August", "September", "October", "November",
-                    "December")
 # Month blocks are tinted by season (Dec-Feb, Mar-May, Jun-Aug, Sep-Nov).
 _CAL_SEASON_RGB = ((62, 84, 128), (66, 112, 72), (132, 114, 52),
                    (134, 84, 48))
@@ -113,10 +148,10 @@ def _date_parts(hours: float) -> tuple:
     return month, dom, hour
 
 
-def _calendar_label(hours: float) -> str:
+def _calendar_label(hours: float, lang: str = i18n.DEFAULT) -> str:
     """``"Mar 14 06:00"`` for an instant in (unwrapped) year-hours."""
     month, dom, hour = _date_parts(hours)
-    return f"{daylight.MONTH_NAMES[month]} {dom} {hour:02d}:00"
+    return f"{i18n.month_name(lang, month)[:3]} {dom} {hour:02d}:00"
 
 
 def _month_blocks(h0: float, h1: float) -> list:
@@ -637,6 +672,11 @@ class LiveVisualizer:
         }
         self._progress_cap = 1000
         self._progress_message = "Waiting for the first survival evaluation"
+        # The English template and fields behind ``_progress_message`` and
+        # behind a formatted tab title, so both are drawn in the display
+        # language (section 212); the English strings stay as they were.
+        self._progress_fmt: tuple = (self._progress_message, {})
+        self._tab_label_fmt: Dict[str, tuple] = {}
         # Back-compat alias: legacy callers (and internal code) treat the
         # ``reward`` tab buffer as the historical _reward_buf. In inference
         # mode the first tab is biomass, so update_reward writes there.
@@ -674,10 +714,37 @@ class LiveVisualizer:
         # Hit-rect for the status-bar button that toggles it, registered
         # every frame by ``_draw_status_bar``.
         self._hm_norm_button_rect: Optional[tuple] = None
+        # Display language (section 212): the flag button at the right end
+        # of the status bar opens a menu of the three flags. The strings in
+        # this file are the English source; ``_t`` looks the translation up
+        # at draw time (lib/viz/i18n.py), so no state depends on it.
+        # The last language picked, remembered between runs.
+        saved_lang = _load_settings().get("language")
+        self._lang: str = (saved_lang if saved_lang in i18n.CODES
+                           else i18n.DEFAULT)
+        self._lang_button_rect: Optional[tuple] = None
+        self._lang_menu_open: bool = False
+        self._lang_item_rects: list = []
         # Was the pointer inside the plot area at the previous motion
         # event? Kept so the movement that LEAVES the area also forces a
         # repaint and the hover tooltip is erased instead of stranded.
         self._plot_hover: bool = False
+        # Data arrived that is not on screen yet: the update_* methods
+        # other than update_biomass only store, and between probes
+        # (--eval-every > 1) nothing else repaints, so the reward curve
+        # and the status row waited for a hover over the plot.
+        # ``pump_events`` repaints while it is set (frame-capped);
+        # ``_render_full`` clears it.
+        self._dirty: bool = False
+        # The species in each multi-species FG (the library's
+        # ``member_species``, read off the FG objects by
+        # ``update_biomass``), shown as a tooltip over the panel's info
+        # lines. ``_member_rects`` holds (rect, fid) per visible panel,
+        # rebuilt every frame by ``_draw_heatmaps``; ``_member_hover``
+        # plays the role of ``_plot_hover`` for them.
+        self._members: Dict[str, list] = {}
+        self._member_rects: list = []
+        self._member_hover: bool = False
         # One global visual biomass scale for inference. 1.0 means:
         # heatmap max = rollout-start per-cell max. After slider adjustment,
         # biomass plot max = 100% * scale. The slider zooms both together.
@@ -917,8 +984,11 @@ class LiveVisualizer:
         # and gutter. This avoids the legend overflowing the window with
         # long names like ``pelagic_fish_rnd``.
         all_legend_ids = list(self.plot_fg_ids) or list(self.fg_ids)
-        max_name_len = max((len(self._display_name(fid))
-                            for fid in all_legend_ids), default=8)
+        # Longest name in any display language, so the layout does not
+        # change with the language.
+        max_name_len = max((len(self._display_name(fid, code))
+                            for fid in all_legend_ids
+                            for code in i18n.CODES), default=8)
         self._legend_w = 38 + 7 * max_name_len + 8  # checkbox + swatch + text + pad
         # Bredd för tab-strippen: approximera font-bredden till ~7 px per
         # tecken och lägg på 10 px padding + 4 px gutter per flik, plus
@@ -926,7 +996,9 @@ class LiveVisualizer:
         # legend-fria område, annars wrappar/försvinner flikar. Vi
         # garanterar därför att plot_w är minst så stor att hela
         # tab-strippen (+ legend + några pixlar marginal) ryms på en rad.
-        tab_strip_w = 6 + sum(7 * len(t) + 10 + 4 for t in self._tabs) + 8
+        tab_strip_w = 6 + max(
+            sum(7 * len(i18n.translate(code, t)) + 10 + 4 for t in self._tabs)
+            for code in i18n.CODES) + 8
         plot_w = max(420, nat_block_w // 2 + self._legend_w,
                      tab_strip_w + self._legend_w + 4)
         # Status-baren rymmer textraden och två slider-rader. I training är
@@ -1171,6 +1243,12 @@ class LiveVisualizer:
                     arr = np.where(arr <= dead_eps,
                                    np.float32(0.0), arr).astype(np.float32,
                                                                 copy=False)
+                if hasattr(obj, "params"):
+                    members = (obj.params or {}).get("member_species")
+                    if self._member_lines(members):
+                        self._members[fid] = list(members)
+                    else:
+                        self._members.pop(fid, None)
                 total = float(arr.sum())
                 self._biomass[fid] = arr
                 self._totals[fid] = total
@@ -1254,11 +1332,13 @@ class LiveVisualizer:
             if buf is None or fg_id not in buf:
                 return
             buf[fg_id].append((int(step), float(value)))
+            self._dirty = True
         except Exception as e:
             self._log_once(f"update_series failed: {e!r}")
 
     def set_progress_message(self, message: str) -> None:
         self._progress_message = message
+        self._progress_fmt = (message, {})
         self._last_frame_ts = 0.0
         self._maybe_render()
 
@@ -1271,9 +1351,11 @@ class LiveVisualizer:
         if not self.enabled or "progress" not in self._series:
             return
         self._progress_cap = config["ticks"]
-        self._tab_labels["progress"] = (
-            f"Survival ticks within {config['lower']:g}-{config['upper']:g} x starting biomass"
-            f" (cap {self._progress_cap})")
+        _fmt = ("Survival ticks within {lower}-{upper} x starting biomass (cap {cap})",
+                {"lower": f"{config['lower']:g}", "upper": f"{config['upper']:g}",
+                 "cap": self._progress_cap})
+        self._tab_label_fmt["progress"] = _fmt
+        self._tab_labels["progress"] = _fmt[0].format(**_fmt[1])
         for fid in self._series["progress"]:
             self._series["progress"][fid] = [
                 (r["step"], r["survival_ticks"][fid]) for r in records
@@ -1282,8 +1364,14 @@ class LiveVisualizer:
         missing = [self._display_name(fid) for fid in self.fg_ids
                    if fid not in self._ndm_ids and records
                    and records[-1]["survival_ticks"].get(fid) is None]
-        self._progress_message = ("No starting biomass: " + ", ".join(missing) if missing else
-                                  f"{len(records)} evaluations | full training history")
+        if missing:
+            self._progress_fmt = ("No starting biomass: {names}",
+                                  {"names": ", ".join(missing)})
+        else:
+            self._progress_fmt = ("{n} evaluations | full training history",
+                                  {"n": len(records)})
+        self._progress_message = self._progress_fmt[0].format(
+            **self._progress_fmt[1])
         self._last_frame_ts = 0.0
         self._maybe_render()
 
@@ -1311,6 +1399,7 @@ class LiveVisualizer:
                     'impact':     float(lb.get('impact', 0.0)),
                     'natural':    float(lb.get('natural', 0.0)),
                 }
+            self._dirty = True
         except Exception as e:
             self._log_once(f"update_loss_breakdown failed: {e!r}")
 
@@ -1335,6 +1424,7 @@ class LiveVisualizer:
                 self._diet_breakdown[pred_id] = {
                     str(k): float(v) for k, v in prey_map.items()
                 }
+            self._dirty = True
         except Exception as e:
             self._log_once(f"update_diet_breakdown failed: {e!r}")
 
@@ -1359,6 +1449,7 @@ class LiveVisualizer:
                 'rest': float(rest),
                 'eat':  float(eat),
             }
+            self._dirty = True
         except Exception as e:
             self._log_once(f"update_action_fracs failed: {e!r}")
 
@@ -1366,6 +1457,7 @@ class LiveVisualizer:
         if not self.enabled:
             return
         self._status.update(kw)
+        self._dirty = True
 
     # ---- b0-slider API -----------------------------------------------
     def set_b0_defaults(self, defaults: Mapping[str, float]) -> None:
@@ -1957,6 +2049,13 @@ class LiveVisualizer:
                     if inside or self._plot_hover:
                         hover = True
                     self._plot_hover = bool(inside)
+                    # Same for the species tooltip over a panel's info
+                    # lines: repaint while inside and on the way out.
+                    on_members = any(self._hit_rect(rect, event.pos)
+                                     for rect, _fid in self._member_rects)
+                    if on_members or self._member_hover:
+                        hover = True
+                    self._member_hover = on_members
             # Only render on actual user interaction here — a full
             # heatmap+plot redraw can easily cost 50-150 ms and during
             # that time the main thread is blocked, which is the main
@@ -1970,9 +2069,11 @@ class LiveVisualizer:
                 # user issued while we were drawing are picked up on
                 # the very next pump tick instead of next iteration.
                 pg.event.pump()
-            elif hover:
+            elif hover or self._dirty:
                 # Frame-capped: a hover repaint is worth ~5 ms and the
                 # pointer can produce hundreds of motion events a second.
+                # New data (``_dirty``) that the cap holds back stays
+                # flagged and is drawn by the next pump.
                 self._maybe_render()
             # Auto-advance vid replay-play: stega frame när play-fps
             # tidsbudgeten passerats. Render-anrop sker via _render_full
@@ -2276,17 +2377,70 @@ class LiveVisualizer:
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------
-    @staticmethod
-    def _display_name(fid: str) -> str:
-        """Format an FG id as a human-readable label.
+    def _display_name(self, fid: str, lang: Optional[str] = None) -> str:
+        """An FG id as a label in the display language.
 
-        Replaces underscores with spaces and capitalises the first letter,
-        e.g. ``pelagic_fish`` -> ``Pelagic fish``.
+        English replaces underscores with spaces and capitalises the
+        first letter, e.g. ``pelagic_fish`` -> ``Pelagic fish``; the other
+        languages take the name from ``i18n.FG_NAMES``. A random-action
+        baseline series (``<fid>_rnd``) is its FG's name plus " rnd".
         """
         if not fid:
             return fid
-        s = str(fid).replace("_", " ").strip()
-        return s[:1].upper() + s[1:] if s else s
+        lang = self._lang if lang is None else lang
+        base, suffix = str(fid), ""
+        if base.endswith("_rnd"):
+            base, suffix = base[:-4], " rnd"
+        name = i18n.fg_name(lang, base)
+        if name is None:
+            s = base.replace("_", " ").strip()
+            name = s[:1].upper() + s[1:] if s else s
+        return name + suffix
+
+    def _t(self, text: str, **fields) -> str:
+        """``text`` (an English template) in the display language."""
+        return i18n.translate(self._lang, text, **fields)
+
+    def _t_width(self, font, text: str, **fields) -> int:
+        """Widest rendering of ``text`` over every language.
+
+        Layout that follows a label (slider tracks, buttons) is sized by
+        this, so switching language never moves a control.
+        """
+        return max(font.size(i18n.translate(code, text, **fields))[0]
+                   for code in i18n.CODES)
+
+    @staticmethod
+    def _member_lines(entries, lang: str = i18n.DEFAULT) -> list:
+        """Tooltip lines for a library ``member_species`` list.
+
+        Each entry is ``{name, share}`` (share optional, a fraction of the
+        group's biomass) or a bare name; ``{name: others, count: n}`` is
+        the remainder of n species. Names are shown in ``lang``. A
+        single-species group gets no lines, so its panel has no tooltip.
+        """
+        lines = []
+        for entry in entries or ():
+            if isinstance(entry, Mapping):
+                name, share = entry.get("name"), entry.get("share")
+                count = entry.get("count")
+            else:
+                name, share, count = entry, None, None
+            name = str(name or "").strip()
+            if not name:
+                continue
+            if name.lower() == "others" and count is not None:
+                name = i18n.translate(lang, "others ({count} species)",
+                                      count=count)
+            else:
+                name = i18n.species_name(lang, name)
+            name = name[:1].upper() + name[1:]
+            try:
+                lines.append(f"{name}  {float(share) * 100.0:.0f} %"
+                             if share is not None else name)
+            except (TypeError, ValueError):
+                lines.append(name)
+        return lines if len(lines) > 1 else []
 
     @staticmethod
     def _fmt_compact(v: float) -> str:
@@ -2517,7 +2671,8 @@ class LiveVisualizer:
         self._biomass_display_scale = 1.0
 
     def _biomass_scale_label(self) -> str:
-        return f"Biomass scale = {self._biomass_display_scale:.2f}x"
+        return self._t("Biomass scale = {value}x",
+                       value=f"{self._biomass_display_scale:.2f}")
 
     def _biomass_scale_value_from_x(self, mx: int) -> Optional[float]:
         rect = self._biomass_scale_track_rect
@@ -2533,6 +2688,23 @@ class LiveVisualizer:
         try:
             mx, my = pos
         except Exception:
+            return
+        # Open language menu: a flag picks that language, and any click
+        # closes the menu without reaching what lies under it.
+        if self._lang_menu_open:
+            for rect, code in self._lang_item_rects:
+                if self._hit_rect(rect, pos):
+                    if code != self._lang:
+                        self._lang = code
+                        _save_settings(language=code)
+                    break
+            self._lang_menu_open = False
+            self._lang_item_rects = []
+            return
+        if self._hit_rect(self._lang_button_rect, pos):
+            self._lang_menu_open = True
+            self._spawn_popup = None
+            self._spawn_popup_item_rects = []
             return
         # Aktiv spawn-popup: klick inuti = val, klick utanför = stäng.
         if self._spawn_popup is not None:
@@ -2786,6 +2958,61 @@ class LiveVisualizer:
         self._spawn_popup = None
         self._spawn_popup_item_rects = []
 
+    _FLAG_W, _FLAG_H = 18, 11
+
+    def _draw_lang_button(self) -> None:
+        """The status bar's language button: the current flag and a caret."""
+        pg = self._pg
+        x, y, w, h = self._lang_button_rect
+        active = self._lang_menu_open
+        pg.draw.rect(self._screen, (70, 70, 88) if active else (55, 55, 65),
+                     (x, y, w, h))
+        pg.draw.rect(self._screen,
+                     (160, 160, 180) if active else (120, 130, 145),
+                     (x, y, w, h), 1)
+        fw, fh = self._FLAG_W, self._FLAG_H
+        fy = y + (h - fh) // 2
+        i18n.draw_flag(pg, self._screen, (x + 4, fy, fw, fh), self._lang)
+        cx, cy = x + w - 7, y + h // 2
+        pg.draw.polygon(self._screen, (210, 210, 220),
+                        [(cx - 3, cy - 1), (cx + 3, cy - 1), (cx, cy + 2)])
+
+    def _draw_lang_menu(self) -> None:
+        """The open language menu: one row per flag, under the button.
+
+        Right-aligned with the button and held inside the window; the
+        current language is highlighted. Rows are click targets for
+        ``_handle_click``.
+        """
+        self._lang_item_rects = []
+        if not self._lang_menu_open or self._lang_button_rect is None:
+            return
+        pg = self._pg
+        font = self._font
+        bx, by, bw, bh = self._lang_button_rect
+        fw, fh = self._FLAG_W, self._FLAG_H
+        item_h, pad = 20, 6
+        text_w = max(font.size(name)[0] for _code, name in i18n.LANGUAGES)
+        menu_w = pad + fw + 8 + text_w + pad
+        menu_h = item_h * len(i18n.LANGUAGES) + 2
+        win_w, win_h = self._screen.get_size()
+        mx0 = max(0, min(bx + bw - menu_w, win_w - menu_w))
+        my0 = max(0, min(by + bh + 2, win_h - menu_h))
+        pg.draw.rect(self._screen, (40, 40, 50), (mx0, my0, menu_w, menu_h))
+        pg.draw.rect(self._screen, (160, 160, 180),
+                     (mx0, my0, menu_w, menu_h), 1)
+        for i, (code, name) in enumerate(i18n.LANGUAGES):
+            ry = my0 + 1 + i * item_h
+            item = (mx0 + 1, ry, menu_w - 2, item_h)
+            if code == self._lang:
+                pg.draw.rect(self._screen, (75, 85, 110), item)
+            i18n.draw_flag(pg, self._screen,
+                           (mx0 + pad, ry + (item_h - fh) // 2, fw, fh), code)
+            surf = font.render(name, True, (230, 230, 240))
+            self._screen.blit(surf, (mx0 + pad + fw + 8,
+                                     ry + (item_h - surf.get_height()) // 2))
+            self._lang_item_rects.append((item, code))
+
     def _draw_spawn_popup(self) -> None:
         """Render the active spawn-popup overlay (called after heatmaps)."""
         pop = self._spawn_popup
@@ -2800,7 +3027,7 @@ class LiveVisualizer:
         pad_x = 6
         # Width: max text width + padding, but at least the anchor width.
         font = self._font
-        label_widths = [font.size(lbl)[0] for lbl, _ in options]
+        label_widths = [font.size(self._t(lbl))[0] for lbl, _ in options]
         menu_w = max(aw, max(label_widths) + pad_x * 2 + 4)
         menu_h = item_h * len(options) + 2
         # Anchor below the dropdown rect; clamp inside window.
@@ -2824,7 +3051,7 @@ class LiveVisualizer:
                 is_current = cur.get("template") == value
             if is_current:
                 pg.draw.rect(self._screen, (75, 85, 110), item_rect)
-            txt = font.render(label, True, (230, 230, 240))
+            txt = font.render(self._t(label), True, (230, 230, 240))
             self._screen.blit(txt, (mx0 + pad_x, ry + 1))
             self._spawn_popup_item_rects.append((item_rect, value))
 
@@ -3115,6 +3342,7 @@ class LiveVisualizer:
 
     # ---- Rendering ---------------------------------------------------
     def _render_full(self) -> None:
+        self._dirty = False
         screen = self._screen
         screen.fill((18, 18, 22))
         replaying = (not self._recording
@@ -3157,8 +3385,10 @@ class LiveVisualizer:
             self._draw_plot()
         self._draw_splitter()
         self._draw_playback_bar()
+        self._draw_member_tooltip()
         # Spawn-popup ritas sist så den ligger ovanpå allt annat.
         self._draw_spawn_popup()
+        self._draw_lang_menu()
         self._pg.display.flip()
 
     def _swap_in_frame(self, frame: dict) -> dict:
@@ -3296,7 +3526,7 @@ class LiveVisualizer:
                     border = (200, 100, 100)
             pg.draw.rect(self._screen, bg, rect)
             pg.draw.rect(self._screen, border, rect, 1)
-            surf = self._font.render(label, True, fg)
+            surf = self._font.render(self._t(label), True, fg)
             self._screen.blit(surf,
                               (bx + (bw - surf.get_width()) // 2,
                                by + (22 - surf.get_height()) // 2))
@@ -3316,27 +3546,25 @@ class LiveVisualizer:
         n_pending = len(self._pending_rollout)
         _max_n = max(n, 1)
         track_x = bx + 8
+        # Templates (English source) and their fields; the reserved width
+        # is the widest variant in any language, so the scrub slider does
+        # not change size with the language either.
         for compact in (False, True):
             if compact:
-                live_txt = f"live ({n})"
-                frame_txt = f"{self._playback_idx + 1}/{n}"
-                rec_txt = f"rec ({n_pending})"
-                off_txt = "no capture"
-                _ind_variants = [f"live ({_max_n})", f"{_max_n}/{_max_n}",
-                                 f"rec ({n_pending})", off_txt]
+                live_t, frame_t = "live ({n})", "{i}/{n}"
+                rec_t, off_t = "rec ({n})", "no capture"
             else:
-                live_txt = f"live  (saved frames: {n})"
-                frame_txt = f"frame = {self._playback_idx + 1}/{n}"
-                rec_txt = f"recording... ({n_pending} frames)"
-                off_txt = "capture off"
-                _ind_variants = [
-                    f"live  (saved frames: {_max_n})",
-                    f"frame = {_max_n}/{_max_n}",
-                    f"recording... ({n_pending} frames)",
-                    off_txt,
-                ]
+                live_t, frame_t = "live  (saved frames: {n})", "frame = {i}/{n}"
+                rec_t, off_t = "recording... ({n} frames)", "capture off"
+            live_txt = self._t(live_t, n=n)
+            frame_txt = self._t(frame_t, i=self._playback_idx + 1, n=n)
+            rec_txt = self._t(rec_t, n=n_pending)
+            off_txt = self._t(off_t)
             _ind_reserve_w = max(
-                self._font.size(s)[0] for s in _ind_variants)
+                self._t_width(self._font, live_t, n=_max_n),
+                self._t_width(self._font, frame_t, i=_max_n, n=_max_n),
+                self._t_width(self._font, rec_t, n=n_pending),
+                self._t_width(self._font, off_t))
             ind_zone_left = x + w - _ind_reserve_w - 10
             if ind_zone_left - 10 - track_x >= self._MIN_SCRUB_W:
                 break
@@ -3410,13 +3638,14 @@ class LiveVisualizer:
         total_hours = int(self._tick) * int(self.tick_hours)
         days = total_hours // HOURS_PER_DAY
         years, rest_days = divmod(days, DAYS_PER_YEAR)
-        return f"{years} y {rest_days} d"
+        return self._t("{years} y {days} d", years=years, days=rest_days)
 
     def _draw_status_bar(self) -> None:
         pg = self._pg
         x, y, w, h = self._status_rect
-        parts = [f"mode = {self.mode}", f"tick = {self._tick}",
-                 f"time = {self._sim_time_label()}"]
+        parts = [self._t("mode = {mode}", mode=self._t(str(self.mode))),
+                 self._t("tick = {tick}", tick=self._tick),
+                 self._t("time = {time}", time=self._sim_time_label())]
         # Daylight calendar: the month is kept with mode/tick/time when
         # the line is too long. The day length (what the frame around
         # every heatmap shows, in hours) goes after gen/iter/T, so it is
@@ -3424,7 +3653,8 @@ class LiveVisualizer:
         calendar = self._shown_calendar
         n_fixed = 3
         if calendar:
-            parts.append(f"month = {calendar['month_name']}")
+            parts.append(self._t("month = {month}", month=i18n.month_name(
+                self._lang, calendar["month"])[:3]))
             n_fixed = 4
         for k in ("gen", "iter", "T"):
             if k in self._status:
@@ -3434,16 +3664,17 @@ class LiveVisualizer:
                 else:
                     parts.append(f"{k} = {v}")
         if calendar:
-            parts.append(f"daylight = {calendar['day_length_h']:.1f} h")
+            parts.append(self._t("daylight = {hours} h",
+                                 hours=f"{calendar['day_length_h']:.1f}"))
         if self._paused:
-            parts.append("[PAUSED]")
+            parts.append(self._t("[PAUSED]"))
         if self._log_heatmap:
             parts.append("hm:log")
         if self._log_plot:
-            parts.append("plot:log")
+            parts.append(self._t("plot:log"))
         if self._solo:
-            parts.append(f"solo = {self._solo}")
-        parts.append(f"grid = {self.grid_w}x{self.grid_h}")
+            parts.append(f"solo = {self._display_name(self._solo)}")
+        parts.append(self._t("grid = {w}x{h}", w=self.grid_w, h=self.grid_h))
         parts.append(f"fps = {self._fps_value:4.1f}")
         # ---- Heatmap normalisation button (row 1, right aligned) -----
         # The ONLY always-visible control for the reference: 'n' is not
@@ -3461,14 +3692,20 @@ class LiveVisualizer:
         # fits. The first three - mode, tick and simulated time - are
         # never dropped, nor is the month when there is a calendar.
         rolling = self._rolling_heatmap
-        norm_label = "norm: rolling [n]" if rolling else "norm: fixed [n]"
+        norm_key = "norm: rolling [n]" if rolling else "norm: fixed [n]"
         norm_surf = self._font.render(
-            norm_label, True,
+            self._t(norm_key), True,
             (220, 240, 220) if rolling else (210, 220, 230))
-        btn_w = norm_surf.get_width() + 12
         btn_h = self._font.get_height() + 4
-        btn_x = x + w - btn_w - 8
         btn_y = y + 2
+        # The language flag owns the right end; the norm button sits left
+        # of it, as wide as its label in the widest language.
+        lang_w, lang_h = 34, btn_h
+        lang_x = x + w - lang_w - 8
+        self._lang_button_rect = (lang_x, btn_y, lang_w, lang_h)
+        self._draw_lang_button()
+        btn_w = self._t_width(self._font, norm_key) + 12
+        btn_x = lang_x - btn_w - 6
 
         available = btn_x - (x + 6) - 12
         while len(parts) > n_fixed and self._font_big.size("  ".join(parts))[0] > available:
@@ -3483,7 +3720,8 @@ class LiveVisualizer:
         pg.draw.rect(self._screen,
                      (110, 180, 130) if rolling else (120, 130, 145),
                      (btn_x, btn_y, btn_w, btn_h), 1)
-        self._screen.blit(norm_surf, (btn_x + 6, btn_y + 2))
+        self._screen.blit(norm_surf, (btn_x + (btn_w - norm_surf.get_width()) // 2,
+                                      btn_y + 2))
         self._hm_norm_button_rect = (btn_x, btn_y, btn_w, btn_h)
 
         # ---- Rollout-längd-slider (rad 2 i status-baren) -------------
@@ -3492,7 +3730,7 @@ class LiveVisualizer:
         # det realtidsuppdaterade värdet inline.
         cur = self.get_ticks()
         marker = "*" if self._ticks_override is not None else ""
-        label = f"Probe ticks{marker} = {cur}"
+        label = self._t("Probe ticks{marker} = {value}", marker=marker, value=cur)
         lbl_surf = self._font.render(label, True, (210, 210, 220))
         row2_y = y + 22
         row2_h = 18
@@ -3514,13 +3752,22 @@ class LiveVisualizer:
         # visade att _draw_status_bar stod for 228 MB lackt SDL-minne
         # via TTF_Render_Internal -> AllocateAlignedPixels -> SDL_malloc
         # (samma antipattern som redan fixad _draw_playback_bar:1968).
-        _lbl2_preview_w = self._font.size(
-            f"Perturbation ticks{marker2_preview} = {cur2_preview}")[0]
-        _bio_label = self._biomass_scale_label()
-        _bio_label_w = self._font.size(_bio_label)[0] if _is_inference else 0
-        _lbl4_preview_w = (0 if _is_inference
-                           else self._font.size(self._evalint_label())[0])
-        _label_w = max(lbl_surf.get_width(), _lbl2_preview_w, _bio_label_w,
+        # Every label is measured in its widest language, so switching
+        # language never moves the tracks.
+        _lbl2_preview_w = self._t_width(
+            self._font, "Perturbation ticks{marker} = {value}",
+            marker=marker2_preview, value=cur2_preview)
+        _bio_label_w = (self._t_width(
+            self._font, "Biomass scale = {value}x",
+            value=f"{self._biomass_display_scale:.2f}")
+            if _is_inference else 0)
+        _lbl4_preview_w = (0 if _is_inference else self._t_width(
+            self._font, "Evaluation probe interval{marker} = {value}",
+            marker="*" if self._evalint_override is not None else "",
+            value=self.get_eval_interval()))
+        _lbl1_w = self._t_width(self._font, "Probe ticks{marker} = {value}",
+                                marker=marker, value=cur)
+        _label_w = max(_lbl1_w, _lbl2_preview_w, _bio_label_w,
                        _lbl4_preview_w)
         # Track-rect: börjar efter label (+ liten gutter), slutar före
         # hi-label (+ gutter). Mappar mot fönsterbredden.
@@ -3672,7 +3919,8 @@ class LiveVisualizer:
         # train.py mellan ARS-iterationer.
         cur2 = self.get_neval_ticks()
         marker2 = "*" if self._neval_override is not None else ""
-        label2 = f"Perturbation ticks{marker2} = {cur2}"
+        label2 = self._t("Perturbation ticks{marker} = {value}",
+                         marker=marker2, value=cur2)
         lbl2_surf = self._font.render(label2, True, (210, 210, 220))
         row3_y = y + 40
         row3_h = 18
@@ -3768,7 +4016,8 @@ class LiveVisualizer:
 
     def _evalint_label(self) -> str:
         marker = "*" if self._evalint_override is not None else ""
-        return f"Evaluation probe interval{marker} = {self.get_eval_interval()}"
+        return self._t("Evaluation probe interval{marker} = {value}",
+                       marker=marker, value=self.get_eval_interval())
 
     def _draw_heatmaps(self) -> None:
         ox, oy = self._heatmap_origin
@@ -3779,13 +4028,14 @@ class LiveVisualizer:
         self._slider_rects = []
         # Samma sak för spawn-dropdown-rektanglarna.
         self._spawn_dropdown_rects = []
+        self._member_rects = []
         # Everything a panel draws is clipped to the viewport, so a panel
         # scrolled half out of view cannot paint over the status bar or
         # the playback bar.
         self._screen.set_clip(self._pg.Rect(vx, vy, vw, vh))
         try:
             for title, y_off in self._hm_headers:
-                self._draw_group_header(title, ox, oy + y_off, vw)
+                self._draw_group_header(self._t(title), ox, oy + y_off, vw)
             for fid, x_off, y_off in self._hm_slots:
                 px = ox + x_off
                 py = oy + y_off
@@ -3801,6 +4051,7 @@ class LiveVisualizer:
         self._slider_rects = self._clip_hit_rects(self._slider_rects)
         self._spawn_dropdown_rects = self._clip_hit_rects(
             self._spawn_dropdown_rects)
+        self._member_rects = self._clip_hit_rects(self._member_rects)
         self._draw_hm_scrollbar()
 
     def _draw_group_header(self, title: str, x: int, y: int, w: int) -> None:
@@ -3999,7 +4250,7 @@ class LiveVisualizer:
         if self._plot_collapsed:
             # The folded panel's name, one letter per line.
             ly = y + bh + 8
-            for ch in "PLOT":
+            for ch in self._t("PLOT"):
                 surf = self._font.render(ch, True, col)
                 self._screen.blit(surf, (cx - surf.get_width() // 2, ly))
                 ly += 13
@@ -4367,11 +4618,22 @@ class LiveVisualizer:
         return codes
 
     def _fg_abbrev(self, fid: str) -> str:
-        """Unique short code of ``fid`` among the viewer's groups."""
-        cache = getattr(self, "_abbrev_cache", None)
+        """Unique short code of ``fid`` among the viewer's groups.
+
+        English codes come from the ids (as before section 212); the other
+        languages take them from the translated names, one cache each.
+        """
+        caches = self.__dict__.setdefault("_abbrev_caches", {})
+        cache = caches.get(self._lang)
         if cache is None or fid not in cache:
-            cache = self._unique_abbrevs(list(self.fg_ids) + [fid])
-            self._abbrev_cache = cache
+            fids = list(dict.fromkeys(list(self.fg_ids) + [fid]))
+            if self._lang == i18n.DEFAULT:
+                cache = self._unique_abbrevs(fids)
+            else:
+                names = {f: self._display_name(f) for f in fids}
+                codes = self._unique_abbrevs(names.values())
+                cache = {f: codes[n] for f, n in names.items()}
+            caches[self._lang] = cache
         return cache[fid]
 
     def _draw_one_heatmap(self, fid: str, px: int, py: int) -> None:
@@ -4432,7 +4694,9 @@ class LiveVisualizer:
             if lb is not None:
                 pr = float(lb.get('predation', 0.0)) * 100.0
                 im = float(lb.get('impact', 0.0)) * 100.0
-                ndm_surf = self._font.render(f"pr/im = {pr:.0f}/{im:.0f}%", True, info_col)
+                ndm_surf = self._font.render(self._t(
+                    "pr/im = {pr}/{im}%", pr=f"{pr:.0f}", im=f"{im:.0f}"),
+                    True, info_col)
                 self._screen.blit(ndm_surf, (px + pad, act_y))
         else:
             # Header läser senaste mv/rs/et från ``_action_fracs`` (uppdateras
@@ -4448,7 +4712,9 @@ class LiveVisualizer:
             else:
                 mv = rs = et = None
             if mv is not None and rs is not None and et is not None:
-                act_txt = (f"mv/rs/et = {mv:.1f}/{rs:.1f}/{et:.1f}%")
+                act_txt = self._t("mv/rs/et = {mv}/{rs}/{et}%",
+                                  mv=f"{mv:.1f}", rs=f"{rs:.1f}",
+                                  et=f"{et:.1f}")
                 act_surf = self._font.render(act_txt, True, info_col)
                 self._screen.blit(act_surf, (px + pad, act_y))
                 # Fourth info line: biomass-loss breakdown pr/st/im as
@@ -4461,7 +4727,10 @@ class LiveVisualizer:
                     st = float(lb.get('starvation', 0.0)) * 100.0
                     im = float(lb.get('impact', 0.0)) * 100.0
                     nm = float(lb.get('natural', 0.0)) * 100.0
-                    loss_txt = (f"pr/st/im/nm = {pr:.0f}/{st:.0f}/{im:.0f}/{nm:.0f}%")
+                    loss_txt = self._t(
+                        "pr/st/im/nm = {pr}/{st}/{im}/{nm}%",
+                        pr=f"{pr:.0f}", st=f"{st:.0f}", im=f"{im:.0f}",
+                        nm=f"{nm:.0f}")
                     loss_surf = self._font.render(loss_txt, True, info_col)
                     loss_y = act_y + act_surf.get_height()
                     self._screen.blit(loss_surf, (px + pad, loss_y))
@@ -4500,6 +4769,11 @@ class LiveVisualizer:
         # placeholder så heatmap-origin förblir aligned med andra paneler.
         slider_h = int(getattr(self, '_slider_h', 16))
         slider_y = py + title_h - slider_h - 4
+        # Hovering the info lines above the slider lists the group's
+        # species (multi-species groups only; ``_draw_member_tooltip``).
+        if fid in self._members:
+            self._member_rects.append(
+                ((px, py, self._panel_w, slider_y - 2 - py), fid))
         slider_x = px + pad
         slider_w = self.grid_w * self.cell_px
         track_y = slider_y + slider_h // 2 - 2
@@ -4653,30 +4927,31 @@ class LiveVisualizer:
         #   * Annars (ingen override) → visa FG:s default-mode från
         #     projektfilen om känt, annars "(default)".
         if fid in self._spawn_explicit_default:
-            mode_label = "(default)"
+            mode_label = self._t("(default)")
             tpl_label = "—"
         elif cur_mode_raw is None:
             default_mode = self._spawn_defaults.get(fid)
             if default_mode:
-                mode_label = self._spawn_mode_labels.get(
-                    default_mode, default_mode)
+                mode_label = self._t(self._spawn_mode_labels.get(
+                    default_mode, default_mode))
             else:
-                mode_label = "(default)"
+                mode_label = self._t("(default)")
             tpl_label = "—"
         else:
-            mode_label = self._spawn_mode_labels.get(cur_mode_raw, cur_mode_raw)
+            mode_label = self._t(
+                self._spawn_mode_labels.get(cur_mode_raw, cur_mode_raw))
             tpl_label = cur_tpl if cur_tpl else "—"
         dd_bg = (38, 38, 48) if not dim else (28, 28, 35)
         dd_border = (90, 90, 105) if not dim else (50, 50, 60)
         dd_text = (210, 210, 220) if not dim else (110, 110, 120)
-        for i, (label_prefix, value_text, which) in enumerate(
-                (("Mode: ", mode_label, "mode"),
-                 ("Tpl:  ", tpl_label, "template"))):
+        for i, (label_tpl, value_text, which) in enumerate(
+                (("Mode: {value}", mode_label, "mode"),
+                 ("Tpl:  {value}", tpl_label, "template"))):
             rx, ry = hm_x, dd_y0 + i * (dd_row_h + 2)
             rect = (rx, ry, dd_w, dd_row_h)
             pg.draw.rect(self._screen, dd_bg, rect)
             pg.draw.rect(self._screen, dd_border, rect, 1)
-            txt = f"{label_prefix}{value_text}"
+            txt = self._t(label_tpl, value=value_text)
             # Truncate to fit. Measured with font.size: a rendered
             # surface that is never blitted leaks (section 189).
             max_w = dd_w - 14
@@ -4695,6 +4970,24 @@ class LiveVisualizer:
                              (tri_x + 6, tri_y - 2),
                              (tri_x + 3, tri_y + 2)])
             self._spawn_dropdown_rects.append((rect, fid, which))
+
+    _REWARD_TITLE_PREFIX = "ARS reward per FG"
+
+    def _tab_title(self, tab: str) -> str:
+        """The plot title of ``tab`` in the display language.
+
+        A title set with fields (the progress tab) is formatted from its
+        template; the reward title from ``set_reward_label`` has only its
+        leading words translated (the formula after them is notation).
+        """
+        fmt = self._tab_label_fmt.get(tab)
+        if fmt is not None:
+            return self._t(fmt[0], **fmt[1])
+        label = self._tab_labels.get(tab, tab)
+        prefix = self._REWARD_TITLE_PREFIX
+        if label.startswith(prefix) and label != prefix:
+            return self._t(prefix) + label[len(prefix):]
+        return self._t(label)
 
     def _active_plot_ids(self) -> list:
         """Return ``plot_fg_ids`` filtered for the active tab.
@@ -4752,7 +5045,7 @@ class LiveVisualizer:
                 for step, _v in buf:
                     all_steps.add(int(step))
         if not all_steps:
-            self._save_plot_button_flash_msg = "No data to save"
+            self._save_plot_button_flash_msg = self._t("No data to save")
             import time as _t
             self._save_plot_button_flash_until = _t.time() + 2.5
             return
@@ -4864,7 +5157,8 @@ class LiveVisualizer:
         with open(out_path, "w") as f:
             f.write(html)
         import time as _t
-        self._save_plot_button_flash_msg = f"Saved: {os.path.basename(out_path)}"
+        self._save_plot_button_flash_msg = self._t(
+            "Saved: {name}", name=os.path.basename(out_path))
         self._save_plot_button_flash_until = _t.time() + 3.0
 
     def _ask_save_path(self, default_name: str) -> str:
@@ -4891,10 +5185,11 @@ class LiveVisualizer:
                     initial_dir = self._save_dir
             kwargs = dict(
                 parent=root,
-                title="Save inference plot as HTML",
+                title=self._t("Save inference plot as HTML"),
                 initialfile=default_name,
                 defaultextension=".html",
-                filetypes=[("HTML files", "*.html"), ("All files", "*.*")],
+                filetypes=[(self._t("HTML files"), "*.html"),
+                           (self._t("All files"), "*.*")],
             )
             if initial_dir:
                 kwargs["initialdir"] = initial_dir
@@ -4918,18 +5213,18 @@ class LiveVisualizer:
         active = self._tabs[self._active_tab]
         buffers = self._series[active]
         progress = active == "progress"
-        base_label = self._tab_labels.get(active, active)
+        base_label = self._tab_title(active)
         # The biomass tab only leaves auto-scaling when the user pins the
         # display scale; log scaling is never applied to it.
         biomass_fixed_axis = (active == "biomass"
                               and self._biomass_scale_manual)
         use_log_plot = bool(self._log_plot and active not in ("biomass", "progress"))
         if biomass_fixed_axis:
-            ylabel = (
-                f"{base_label}  display max = "
-                f"{100.0 * float(self._biomass_display_scale):.0f}%")
+            ylabel = self._t(
+                "{label}  display max = {pct}%", label=base_label,
+                pct=f"{100.0 * float(self._biomass_display_scale):.0f}")
         elif active == "reward" and use_log_plot:
-            ylabel = "reward (log10 ratio)"
+            ylabel = self._t("reward (log10 ratio)")
         else:
             ylabel = base_label
 
@@ -4950,7 +5245,7 @@ class LiveVisualizer:
         for i, tab in enumerate(self._tabs):
             is_active = (i == self._active_tab)
             col = (240, 240, 250) if is_active else (140, 140, 150)
-            surf = self._font.render(tab, True, col)
+            surf = self._font.render(self._t(tab), True, col)
             tw = surf.get_width() + 10
             rect = (tab_x, tab_y, tw, 14)
             if is_active:
@@ -4966,7 +5261,9 @@ class LiveVisualizer:
         tsurf = self._font.render(ylabel, True, (200, 200, 210))
         self._screen.blit(tsurf, (x + 6, title_y))
         if progress:
-            detail = self._font.render(self._progress_message, True, (160, 160, 170))
+            detail = self._font.render(
+                self._t(self._progress_fmt[0], **self._progress_fmt[1]),
+                True, (160, 160, 170))
             self._screen.blit(detail, (x + 6, title_y + 14))
 
         active_ids = self._active_plot_ids()
@@ -5185,7 +5482,8 @@ class LiveVisualizer:
                     label = self._font.render(str(value), True, (160, 160, 170))
                     self._screen.blit(label, (px0 + int(frac * pw) - label.get_width() // 2,
                                               py0 + ph + 5))
-                label = self._font.render("Completed training updates", True, (200, 200, 210))
+                label = self._font.render(self._t("Completed training updates"),
+                                          True, (200, 200, 210))
                 self._screen.blit(label, (px0 + (pw - label.get_width()) // 2, py0 + ph + 21))
 
         # ---- Horisontell scrollbar (inference) ---------------------------
@@ -5289,7 +5587,7 @@ class LiveVisualizer:
                 label = self._save_plot_button_flash_msg
                 col = (220, 230, 210)
             else:
-                label = "Save plot as HTML..."
+                label = self._t("Save plot as HTML...")
                 col = (220, 230, 220) if enabled else (120, 120, 130)
             surf = self._font.render(label, True, col)
             tx = btn_x + max(4, (btn_w - surf.get_width()) // 2)
@@ -5400,7 +5698,7 @@ class LiveVisualizer:
                 pg.draw.line(screen, guide, (a, py0), (a, py0 + ph), 1)
                 pg.draw.line(screen, (18, 18, 22),
                              (a, month_y), (a, clock_y + _CAL_ROW_H - 1), 1)
-            name = _CAL_MONTH_NAMES[m]
+            name = i18n.month_name(self._lang, m)
             self._blit_block_label((name, name[:3], name[0]), a, b, month_y)
 
         step = _clock_step_hours(tick_h, px_per_h)
@@ -5539,13 +5837,13 @@ class LiveVisualizer:
 
         # Bygg tooltip-text: rad 1 = tick, sedan en rad per serie.
         progress = self._tabs[self._active_tab] == "progress"
-        unit = "update" if progress else "tick"
-        head = f"{unit} {int(round(tick_at_mouse))}"
+        head = self._t("update {n}" if progress else "tick {n}",
+                       n=int(round(tick_at_mouse)))
         # Same instant as the calendar band under the plot (section 155).
         if (self._daylight_cfg and not progress
                 and str(self.mode).lower().startswith("infer")):
             head += "  " + _calendar_label(float(_plot_x_hours(
-                self._daylight_cfg, round(tick_at_mouse))))
+                self._daylight_cfg, round(tick_at_mouse))), self._lang)
         lines: list = [(head, (220, 220, 230))]
         # Sortera efter y-värde (fallande) för läsbarhet.
         entries_sorted = sorted(entries, key=lambda e: -e[2])
@@ -5564,7 +5862,45 @@ class LiveVisualizer:
         for (fid, col, _v), txt in zip(entries_sorted, texts):
             name = self._display_name(fid)
             lines.append((f"{name}: {txt}", col))
+        # A box wider than the room on either side (long group names in a
+        # narrow plot) is held inside the plot area instead of spilling
+        # over its edge (and out of what the next repaint redraws).
+        self._draw_tooltip_box(lines, mx, my, flip_rect=plot_rect,
+                               clamp_rect=(px0, py0, pw, ph))
 
+    def _draw_member_tooltip(self) -> None:
+        """The species of the FG whose info lines are under the pointer.
+
+        Drawn from ``_render_full`` after every panel, so it lies on top
+        of the neighbouring heatmaps and the plot, and is held inside the
+        window. Not while a spawn popup is open (that owns the pointer).
+        """
+        if not self._member_rects or self._spawn_popup or self._lang_menu_open:
+            return
+        try:
+            mx, my = self._pg.mouse.get_pos()
+        except Exception:
+            return
+        fid = next((f for rect, f in self._member_rects
+                    if self._hit_rect(rect, (mx, my))), None)
+        members = (self._member_lines(self._members.get(fid), self._lang)
+                   if fid is not None else None)
+        if not members:
+            return
+        lines = [(self._display_name(fid), self._fg_colour[fid])]
+        lines += [(txt, (210, 210, 220)) for txt in members]
+        win = (0, 0) + tuple(self._screen.get_size())
+        self._draw_tooltip_box(lines, mx, my, flip_rect=win, clamp_rect=win)
+
+    def _draw_tooltip_box(self, lines: list, mx: int, my: int, *,
+                          flip_rect: tuple, clamp_rect: tuple) -> None:
+        """Draw ``lines`` ((text, colour) pairs) in a box by the pointer.
+
+        The box goes right of and below the pointer, flips to the other
+        side where it would cross ``flip_rect``, and is finally held
+        inside ``clamp_rect``.
+        """
+        pg = self._pg
         # Mät textstorlek.
         pad = 4
         line_h = 12
@@ -5579,19 +5915,17 @@ class LiveVisualizer:
         box_h = line_h * len(lines) + 2 * pad
 
         # Placera boxen — helst till höger om muspekaren, men flippa till
-        # vänster om den skulle sticka utanför plot-panelen.
-        prx, pry, prw, prh = plot_rect
+        # vänster om den skulle sticka utanför ``flip_rect``.
+        prx, pry, prw, prh = flip_rect
         bx = mx + 12
         if bx + box_w > prx + prw - 2:
             bx = mx - 12 - box_w
         by = my + 12
         if by + box_h > pry + prh - 2:
             by = my - 12 - box_h
-        # A box wider than the room on either side (long group names in a
-        # narrow plot) is held inside the plot area instead of spilling
-        # over its edge (and out of what the next repaint redraws).
-        bx = max(px0, min(bx, px0 + pw - box_w))
-        by = max(py0, min(by, py0 + ph - box_h))
+        cx, cy, cw, ch = clamp_rect
+        bx = max(cx, min(bx, cx + cw - box_w))
+        by = max(cy, min(by, cy + ch - box_h))
 
         # Halvtransparent bakgrund via Surface med per-pixel alpha.
         try:

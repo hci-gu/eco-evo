@@ -25,6 +25,7 @@ from lib.world.energy_balance import (  # noqa: E402
     prey_energy,
 )
 from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label  # noqa: E402
+from lib.viz.i18n import FG_NAMES  # noqa: E402
 from lib.world.daylight import (  # noqa: E402
     DEFAULT_THRESHOLD_DEG as DAYLIGHT_DEFAULT_THRESHOLD_DEG)
 from lib.world.growth_budget import (  # noqa: E402
@@ -90,18 +91,9 @@ class FGConfigApp:
         # length changes. Populated by _make_prop_label during setup_ui.
         self._tick_label_widgets = []
 
-        # Swedish name mapping for display (as requested)
-        self.sv_mapping = {
-            "phytoplankton": "Växtplankton",
-            "zooplankton": "Djurplankton",
-            "benthic_community": "Bottensamhälle",
-            "planktivorous_fish": "Planktonätande fisk",
-            "benthivorous_fish": "Bottendjursätande fisk",
-            "predatory_fish": "Rovfisk",
-            "porpoises": "Tumlare",
-            "seals": "Sälar",
-            "seabirds": "Sjöfåglar"
-        }
+        # Swedish name mapping for display: the live viewer's table
+        # (lib/viz/i18n.py, section 212), so the two never disagree.
+        self.sv_mapping = dict(FG_NAMES["sv"])
 
         self.setup_ui()
 

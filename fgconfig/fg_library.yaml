@@ -144,6 +144,12 @@
           transform: linear
   zooplankton:
     display_name: "Zooplankton"
+    # Display only (live viewer hover): the taxa the comments below
+    # calibrate against (copepods, Calanus and Metridia from the
+    # Norwegian Trench, krill).
+    member_species:
+      - {name: "copepods (Calanus, Metridia, small species)"}
+      - {name: krill}
     is_decision_maker: true
     maintenance_level: 0.5
     max_energy_reserve: 675.0
@@ -240,6 +246,10 @@
     # Mikrozooplankton/microzooplankton.md (Swedish dir name).
     current_response: 1.0
     display_name: "Microzooplankton"
+    # Display only (live viewer hover): the taxa of section 177.
+    member_species:
+      - {name: ciliates}
+      - {name: heterotrophic dinoflagellates}
     is_decision_maker: false
     movement_speed: 0.0
     growth_rate: 0.0
@@ -280,6 +290,12 @@
   benthic_community:
     current_response: 0.0
     display_name: "Benthic Community"
+    # Display only (live viewer hover): the fish-prey fraction named in
+    # the growth comment below (Hiddink et al. 2019; Josefson 1990).
+    member_species:
+      - {name: polychaetes}
+      - {name: small bivalves}
+      - {name: brittle stars (Amphiura)}
     is_decision_maker: false
     movement_speed: 0.0
     # Hand-set growth_rate (section 136: no r_max, so it is NOT derived
@@ -322,6 +338,14 @@
     seed_rate: 1e-06
   planktivorous_fish:
     display_name: "Planktivorous Fish"
+    # Display only (live viewer hover): the members and their
+    # annual-mean biomass weights (section 209, acoustic level, not the
+    # GOV catch shares); params_planktivorous_fish.md.
+    member_species:
+      - {name: herring, share: 0.79}
+      - {name: blue whiting, share: 0.105}
+      - {name: Norway pout, share: 0.075}
+      - {name: sprat, share: 0.03}
     is_decision_maker: true
     maintenance_level: 0.2
     # Lean body + fat reserve (section 140). energy_content is the LEAN
@@ -421,6 +445,19 @@
     extinction_threshold_factor: 0.5
   benthivorous_fish:
     display_name: "Benthivorous Fish"
+    # Display only (live viewer hover): the members and their long-run
+    # (NS-IBTS 2001-25) biomass shares, as in the comment below;
+    # research_notes/"Fiskgrupper i rutan"/tables/long_run_species_by_group.csv.
+    member_species:
+      - {name: haddock, share: 0.386}
+      - {name: cod, share: 0.314}
+      - {name: long rough dab, share: 0.126}
+      - {name: dab, share: 0.045}
+      - {name: plaice, share: 0.038}
+      - {name: witch, share: 0.017}
+      - {name: starry ray, share: 0.015}
+      - {name: hagfish, share: 0.013}
+      - {name: others, count: 43, share: 0.047}
     is_decision_maker: true
     # Section 209: the demersal fish that feed mainly on the bottom.
     # Long-run (NS-IBTS 2001-25) biomass shares: haddock 0.39, cod 0.31,
@@ -496,6 +533,18 @@
     extinction_threshold_factor: 0.5
   predatory_fish:
     display_name: "Predatory Fish"
+    # Display only (live viewer hover): the members and their long-run
+    # (NS-IBTS 2001-25) biomass shares, as in the comment below;
+    # research_notes/"Fiskgrupper i rutan"/tables/long_run_species_by_group.csv.
+    member_species:
+      - {name: saithe, share: 0.408}
+      - {name: whiting, share: 0.370}
+      - {name: mackerel, share: 0.080}
+      - {name: spurdog, share: 0.050}
+      - {name: horse mackerel, share: 0.034}
+      - {name: hake, share: 0.025}
+      - {name: anglerfish, share: 0.014}
+      - {name: others, count: 10, share: 0.019}
     is_decision_maker: true
     # Section 209: demersal and pelagic fish that feed mainly on fish and
     # krill. Long-run (NS-IBTS 2001-25) biomass shares: saithe 0.41,
@@ -737,6 +786,14 @@
     interference: 0.0
   seabirds:
     display_name: "Seabirds"
+    # Display only (live viewer hover): the species in the group,
+    # research_notes/"Fiskgrupper i rutan"/params_top_predators.md.
+    member_species:
+      - {name: kittiwake}
+      - {name: guillemot}
+      - {name: razorbill}
+      - {name: gannet}
+      - {name: gulls}
     is_decision_maker: true
     max_energy_reserve: 3400.0
     resting_metabolism: 135.0

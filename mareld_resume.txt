@@ -19159,3 +19159,134 @@ remain open exactly as described in 71.9 / 71.11.
     run vs 8.5 % today; group parameters for long rough dab are
     judgements; seal and porpoise diets are coastal (SLU's 1999-2024
     seal series unpublished).
+
+210 VIEWER: SPECIES TOOLTIP ON MULTI-SPECIES PANELS (2026-10-25)
+================================================================
+210.1 Why (user): hovering a heatmap panel's info lines should show
+    which species the functional group holds; single-species groups
+    need no tooltip.
+210.2 Data: new display-only library key `member_species` on the
+    species definition, a list of {name, share} (share optional, a
+    fraction of the group's biomass). Set on planktivorous_fish (the
+    section 209 weights herring 0.79, blue whiting 0.105, Norway pout
+    0.075, sprat 0.03 - not the GOV catch shares), benthivorous_fish and
+    predatory_fish (long-run NS-IBTS 2001-25 shares from
+    research_notes/"Fiskgrupper i rutan"/tables/
+    long_run_species_by_group.csv, members >= 1 % plus an "others (n
+    species)" row), seabirds (names from params_top_predators.md), and
+    names only on zooplankton (copepods, krill), microzooplankton
+    (ciliates, heterotrophic dinoflagellates) and benthic_community
+    (polychaetes, small bivalves, Amphiura) - the taxa the library's
+    comments name. Phytoplankton, subsurface phytoplankton, porpoises
+    and seals have none. No engine code reads the key; the loader passes
+    it into FunctionalGroup.params like any other key, and the FG
+    editor keeps it (apply_fg_changes starts from the existing entry
+    and writes only changed keys in place).
+210.3 Viewer (lib/viz/pygame_viz.py): update_biomass reads the list off
+    the FG objects (as the daylight calendar), so train.py,
+    inference.py, api.py and the GPU viewer need no change.
+    _draw_one_heatmap registers the info lines above the b0 slider as a
+    hover rect (only when the list has >= 2 entries), clipped to the
+    heatmap viewport like the slider rects. _render_full draws the
+    tooltip after every panel (not while a spawn popup is open), held
+    inside the window. The plot tooltip's box drawing is shared
+    (_draw_tooltip_box). pump_events repaints on motion into a rect and
+    once on the way out (_member_hover, as _plot_hover); wait_for_close
+    repaints every 50 ms anyway.
+210.4 Checks: tests/test_viz_member_species.py (format, single-species
+    panel has no rect, rect stops above the slider, the lines drawn,
+    tooltip erased on leaving, library -> params). pytest 1434 passed /
+    12 skipped; train.py 1-generation smoke run OK. No checkpoint is
+    affected (display only).
+
+211 VIEWER: UPDATES BETWEEN PROBES WAITED FOR A HOVER (2026-10-25)
+================================================================
+211.1 Bug (user): with the probe interval > 1 (--eval-every or the
+    viewer's slider), the reward curve and the status row of an update
+    without a probe only appeared when the pointer moved over the plot.
+    Cause: such an update only calls update_reward / update_status and
+    then pump_events; those methods store data and pump_events repainted
+    only on a click, a key, a drag or a hover (plot area, section 210's
+    member rects). update_biomass, the only method that renders, runs in
+    probes alone. Same in train.py (both loops) and train_gpu.py.
+211.2 Fix (lib/viz/pygame_viz.py): a `_dirty` flag set by update_series
+    (so update_reward), update_status, update_loss_breakdown,
+    update_diet_breakdown and update_action_fracs; pump_events repaints
+    through the frame cap (_maybe_render) while it is set, and
+    _render_full clears it. An update the cap holds back stays flagged
+    and the next pump (the trainer's ~50 ms pump callback) draws it. One
+    extra repaint per training update; no repaint on an idle pump.
+211.3 Checks: tests/test_viz_dirty_repaint.py (each update drawn by the
+    next pump and only once, cap-held update kept, the new reward point
+    changes the pixels; 8 of 10 fail without the fix). pytest 1444
+    passed / 12 skipped; train.py 1-generation smoke run OK.
+
+212 VIEWER: DISPLAY LANGUAGE (ENGLISH / SWEDISH / ITALIAN) (2026-10-25)
+================================================================
+212.1 Why (user): a language choice in the live viewer: a flag icon
+    that opens a drop-down of three flags - UK (English), Swedish,
+    Italian. Scope chosen for the user: every text in the window; the
+    terminal output and the HTML export stay English.
+212.2 lib/viz/i18n.py (new): LANGUAGES, CATALOG[lang][english
+    template] (str.format templates, same fields as the key), FG_NAMES
+    (the FG editor's sv_mapping now imports the Swedish table; it gained
+    subsurface phytoplankton and microzooplankton), SPECIES (names of
+    the library's member_species), MONTHS, and draw_flag (Union Jack,
+    Sweden, Italy drawn with pygame primitives, no image files).
+    Swedish and Italian are a display overlay (AGENTS.md section 2): the
+    source strings in pygame_viz.py stay English, a missing translation
+    falls back to English, and no state is translated (tab ids, playback
+    modes, status keys, spawn modes). _progress_message and _tab_labels
+    keep their English text; the template and fields behind them are
+    kept beside them for drawing.
+212.3 Viewer: _t(template, **fields) at every render site (status bar,
+    sliders, playback bar, panel info lines incl. the move/rest/eat and
+    loss abbreviations, spawn drop-downs and popup, group headers, tabs,
+    plot titles, progress texts, axis label, buttons, tooltips, calendar
+    band and labels, the folded-plot letters). _display_name takes the
+    language (an _rnd series is its FG's name + " rnd"); diet codes are
+    the old id-based codes in English and come from the translated names
+    otherwise (one cache per language). The reward title translates its
+    leading "ARS reward per FG" only. member_species "others" rows are
+    now {name: others, count: n, share} so they translate.
+212.4 Layout does not move with the language: legend and tab-strip
+    minimum widths, slider-label widths, the norm button and the
+    playback indicator's reserved zone are all measured in the widest
+    language (_t_width). Layout-bound Swedish/Italian strings were
+    shortened to stay near the English width (save button, playback
+    indicator); free text (titles, messages) may be clipped as long
+    English titles already were.
+212.5 Controls: the flag button owns the right end of the status bar
+    (the norm button moved left of it); a click opens a menu of the
+    three flags with their native names under it, drawn last; a row
+    picks the language, any click closes the menu without reaching what
+    is under it. The species tooltip is not drawn while it is open.
+    Default English; remembered between runs since section 213.
+212.6 Checks: tests/test_viz_i18n.py (fields per template, every key
+    used by the source, same keys per language, names cover the
+    library, menu open/pick/close, no control moves on switching, the
+    playback labels fit their buttons, status bar redrawn, names and
+    codes, member lines, calendar label, progress text, reward title,
+    FG editor table). pytest 1463 passed / 12 skipped; train.py
+    1-generation smoke run OK; dummy-driver screenshots in all three
+    languages (train and inference).
+
+213 VIEWER: THE LANGUAGE CHOICE IS REMEMBERED (2026-10-25)
+================================================================
+213.1 Why (user): the viewer should remember the language picked.
+213.2 lib/viz/pygame_viz.py: preferences live in
+    lib/viz/viewer_settings.json (JSON object; today only "language"),
+    git-ignored like fgconfig/recent_projects.txt; the environment
+    variable MARELD_VIEWER_SETTINGS points it elsewhere. The viewer reads
+    it at start (an unknown or unreadable value gives English, never an
+    error) and writes it when a flag different from the current language
+    is picked (merged with other keys, written via a temp file and
+    os.replace; a failed write only prints a line). Applies to every
+    entry point that opens the viewer (train.py, train_gpu.py,
+    inference.py, api.py).
+213.3 tests/conftest.py gives every test its own settings file
+    (autouse), so a language the user picked never changes what the
+    viewer tests see and the suite never writes the real file. New tests
+    in test_viz_i18n.py: remembered by the next viewer, English without
+    a file, other keys kept, garbage and unknown values fall back.
+    pytest 1467 passed / 12 skipped; train.py 1-generation smoke run OK.

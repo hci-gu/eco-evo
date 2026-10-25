@@ -19,3 +19,16 @@ import torch
 def _fresh_dynamo_cache():
     yield
     torch._dynamo.reset()
+
+
+@pytest.fixture(autouse=True)
+def _private_viewer_settings(tmp_path, monkeypatch):
+    """Every test gets its own viewer settings file (section 213).
+
+    The live viewer remembers the display language in
+    lib/viz/viewer_settings.json; without this a language the user picked
+    would change what the viewer tests see, and the tests would overwrite
+    the user's choice.
+    """
+    monkeypatch.setenv("MARELD_VIEWER_SETTINGS",
+                       str(tmp_path / "viewer_settings.json"))
