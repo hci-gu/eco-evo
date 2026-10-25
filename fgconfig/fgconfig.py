@@ -638,6 +638,41 @@ class FGConfigApp:
         attach_help([layers_lbl, self.temperature_layers_text],
                     "temperature_layers")
 
+        # Depth map (simulation_settings.depth_map, section 207): metres per
+        # cell for the whole project - K per cell from a group's Capacity by
+        # Depth table, the equilibrium spawn and the env_driven 'depth' ref.
+        # Drop / browse zone, thumbnail and Clear, as the baseline maps.
+        depth_lbl = ttk.Label(info_frame, text="Depth map:")
+        depth_lbl.grid(row=8, column=0, sticky="nw", padx=5, pady=(4, 0))
+        depth_row = ttk.Frame(info_frame)
+        depth_row.grid(row=8, column=1, columnspan=4, sticky="w", pady=(4, 0))
+        depth_zone = tk.Frame(depth_row, relief="groove", borderwidth=2,
+                              width=260, height=60, bg="#f4f4f4")
+        depth_zone.pack(side="left", padx=(0, 6))
+        depth_zone.pack_propagate(False)
+        self.depth_map_status_var = tk.StringVar(value="(none)")
+        depth_status = tk.Label(depth_zone, textvariable=self.depth_map_status_var,
+                                bg="#f4f4f4", wraplength=240, justify="center")
+        depth_status.place(relx=0.5, rely=0.5, anchor="center")
+        self.depth_map_thumb = tk.Label(depth_row, bg="#ffffff", width=8, height=4,
+                                        relief="solid", borderwidth=1)
+        self.depth_map_thumb.pack(side="left", padx=(0, 6))
+        depth_clear = ttk.Button(depth_row, text="Clear",
+                                 command=self._clear_depth_map)
+        depth_clear.pack(side="left")
+        for widget in (depth_zone, depth_status):
+            widget.bind("<Button-1>", lambda _e: self._browse_depth_map())
+        if self._dnd_available():
+            for widget in (depth_zone, depth_status, self.depth_map_thumb, depth_row):
+                try:
+                    widget.drop_target_register("DND_Files")  # type: ignore[attr-defined]
+                    widget.dnd_bind("<<Drop>>",  # type: ignore[attr-defined]
+                                    lambda e: self._on_drop_depth_map(e.data))
+                except Exception:
+                    pass
+        attach_help([depth_lbl, depth_zone, depth_status, depth_clear], "depth_map")
+        self._update_depth_map_view()
+
         # tk.Entry supports a 'background' option that ttk.Entry does not.
         # We toggle a ttk style instead.
         try:
@@ -924,6 +959,38 @@ class FGConfigApp:
             ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
                 row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
             grow += 1
+
+        # Capacity by depth (capacity_depth_table, section 207): rows of
+        # depth (m) -> K (t/cell) read on the project's depth map; the
+        # preview shows K on that map.
+        cap_lbl = ttk.Label(self.ndm_editor_frame,
+                            text="Capacity by Depth (depth m -> K ton/cell; empty = Max Carrying Capacity)")
+        cap_lbl.grid(row=grow, column=0, columnspan=2, sticky="w", padx=5, pady=(4, 0))
+        attach_help(cap_lbl, "capacity_depth_table")
+        grow += 1
+        cap_box = ttk.Frame(self.ndm_editor_frame)
+        cap_box.grid(row=grow, column=0, columnspan=2, sticky="w", padx=5, pady=2)
+        self.capacity_rows_frame = ttk.Frame(cap_box)
+        self.capacity_rows_frame.pack(side="left", anchor="n")
+        ttk.Label(self.capacity_rows_frame, text="Depth (m)").grid(row=0, column=0, sticky="w")
+        ttk.Label(self.capacity_rows_frame, text="K (ton/cell)").grid(row=0, column=1, sticky="w")
+        self.capacity_rows = []
+        cap_side = ttk.Frame(cap_box)
+        cap_side.pack(side="left", anchor="n", padx=(12, 0))
+        self.capacity_preview_thumb = tk.Label(cap_side, bg="#ffffff", width=8, height=4,
+                                               relief="solid", borderwidth=1)
+        self.capacity_preview_thumb.pack(anchor="w")
+        self.capacity_preview_var = tk.StringVar(value="")
+        ttk.Label(cap_side, textvariable=self.capacity_preview_var,
+                  wraplength=260, justify="left").pack(anchor="w", pady=(2, 0))
+        add_row_btn = ttk.Button(cap_side, text="Add Row",
+                                 command=lambda: self._add_capacity_row())
+        add_row_btn.pack(anchor="w", pady=(4, 0))
+        attach_help(add_row_btn, "capacity_depth_table")
+        grow += 1
+        ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
+            row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+        grow += 1
 
         self.ndm_growth_info_frame = ttk.Frame(self.ndm_editor_frame)
         self.ndm_growth_info_frame.grid(row=grow, column=0, columnspan=2,
@@ -2634,6 +2701,212 @@ class FGConfigApp:
         self._sync_impact_spawn_visibility()
         self._refresh_impact_list_keep_selection()
 
+    # ------------------------------------------------------------------
+    # Depth map (simulation_settings.depth_map, section 207)
+    # ------------------------------------------------------------------
+    def _stored_depth_map(self):
+        sim = (getattr(self, "project_data", None) or {}).get("simulation_settings")
+        stored = sim.get("depth_map") if isinstance(sim, dict) else None
+        return stored if isinstance(stored, str) and stored else None
+
+    def _depth_map_array(self, path=None):
+        """The depth map as stored in the file (m), or None if unreadable."""
+        if path is None:
+            stored = self._stored_depth_map()
+            if stored is None:
+                return None
+            path = self._resolve_inference_map_path(stored)
+        import numpy as np
+        arr = self._peek_impact_npz("depth", path)
+        if arr is None or not np.all(np.isfinite(arr)) or (arr < 0).any():
+            return None
+        return arr
+
+    def _depth_map_status(self):
+        """One-line status of the project's depth map for the header."""
+        stored = self._stored_depth_map()
+        if stored is None:
+            return ("Drop .npz here or click to browse" if self._dnd_available()
+                    else "Click to browse (.npz)")
+        path = self._resolve_inference_map_path(stored)
+        if not os.path.isfile(path):
+            return f"{stored} (file not found: loading will fail)"
+        arr = self._depth_map_array(path)
+        if arr is None:
+            return f"{os.path.basename(path)} (unreadable: loading will fail)"
+        text = (f"{os.path.basename(path)}\nshape={arr.shape[0]}×{arr.shape[1]}  "
+                f"{float(arr.min()):.0f}-{float(arr.max()):.0f} m  "
+                f"mean {float(arr.mean()):.0f}")
+        rw, rh = self._get_reference_grid()
+        if (arr.shape[0], arr.shape[1]) != (rh, rw):
+            text += f"\n(resampled to the {rw}×{rh} grid)"
+        return text
+
+    def _update_depth_map_view(self):
+        """Status text and thumbnail of the project's depth map."""
+        if not hasattr(self, "depth_map_status_var"):
+            return
+        self.depth_map_status_var.set(self._depth_map_status())
+        arr = self._depth_map_array()
+        photo = self._thumbnail_photo(arr) if arr is not None else None
+        try:
+            if photo is None:
+                self.depth_map_thumb.configure(image='', width=8, height=4)
+            else:
+                self.depth_map_thumb.configure(image=photo, width=photo.width(),
+                                               height=photo.height())
+        except tk.TclError:
+            pass
+        self._depth_thumb_ref = photo  # prevent GC
+        self._refresh_capacity_preview()
+
+    def _browse_depth_map(self):
+        path = filedialog.askopenfilename(
+            title="Select the depth map (.npz, metres per cell)",
+            filetypes=[("NumPy archive", "*.npz"), ("All files", "*.*")],
+        )
+        if path:
+            self._set_depth_map(path)
+
+    def _on_drop_depth_map(self, data):
+        """tkinterdnd2 drop on the depth zone: the first dropped file."""
+        paths = self._parse_dnd_paths(data)
+        if paths:
+            self._set_depth_map(paths[0])
+
+    def _set_depth_map(self, path):
+        """Store ``path`` as the project's depth map; False if unreadable."""
+        if self._depth_map_array(path) is None:
+            messagebox.showerror(
+                "Invalid depth map",
+                f"{path}\n\nneeds a 2-D array (key 'depth') of finite depths "
+                "in metres >= 0.")
+            return False
+        sim = self.project_data.get("simulation_settings")
+        if not isinstance(sim, dict):
+            sim = {}
+            self.project_data["simulation_settings"] = sim
+        sim["depth_map"] = self._format_inference_map_path(path)
+        self._mark_dirty()
+        self._update_depth_map_view()
+        return True
+
+    def _clear_depth_map(self):
+        sim = self.project_data.get("simulation_settings")
+        if not isinstance(sim, dict) or "depth_map" not in sim:
+            return
+        sim.pop("depth_map", None)
+        self._mark_dirty()
+        self._update_depth_map_view()
+
+    # ------------------------------------------------------------------
+    # Capacity by depth (capacity_depth_table, section 207)
+    # ------------------------------------------------------------------
+    def _add_capacity_row(self, depth="", capacity=""):
+        """Append a depth -> K row to the table editor."""
+        frame = getattr(self, "capacity_rows_frame", None)
+        if frame is None or not frame.winfo_exists():
+            return
+        r = len(self.capacity_rows) + 1          # row 0 is the header
+        dvar, kvar = tk.StringVar(value=str(depth)), tk.StringVar(value=str(capacity))
+        dent = ttk.Entry(frame, textvariable=dvar, width=9)
+        kent = ttk.Entry(frame, textvariable=kvar, width=9)
+        dent.grid(row=r, column=0, sticky="w", padx=(0, 4), pady=1)
+        kent.grid(row=r, column=1, sticky="w", padx=(0, 4), pady=1)
+        attach_help([dent, kent], "capacity_depth_table")
+        row = {"depth": dvar, "capacity": kvar}
+
+        def _remove(rd=row):
+            for w in rd["widgets"]:
+                try:
+                    w.destroy()
+                except tk.TclError:
+                    pass
+            self.capacity_rows.remove(rd)
+            self._mark_dirty()
+            self._refresh_capacity_preview()
+
+        rm = ttk.Button(frame, text="X", width=2, command=_remove)
+        rm.grid(row=r, column=2, sticky="w", pady=1)
+        row["widgets"] = [dent, kent, rm]
+        for var in (dvar, kvar):
+            var.trace_add("write", lambda *_a: self._refresh_capacity_preview())
+        self.capacity_rows.append(row)
+        self._refresh_capacity_preview()
+
+    def _set_capacity_rows(self, table):
+        """Replace the editor's rows with ``table`` (list of {depth_m, capacity})."""
+        for row in list(getattr(self, "capacity_rows", [])):
+            for w in row["widgets"]:
+                try:
+                    w.destroy()
+                except tk.TclError:
+                    pass
+        self.capacity_rows = []
+        for entry in table or []:
+            if isinstance(entry, dict):
+                self._add_capacity_row(f"{float(entry.get('depth_m', 0.0)):g}",
+                                       f"{float(entry.get('capacity', 0.0)):g}")
+        self._refresh_capacity_preview()
+
+    def _collect_capacity_table(self):
+        """(table or None, error or None) from the editor rows.
+
+        Fully empty rows are skipped; no rows left = no table (the scalar
+        Max Carrying Capacity applies). Validated with the runtime's
+        parser (lib/world/habitat.parse_capacity_table)."""
+        from lib.world import habitat
+        rows = []
+        for row in getattr(self, "capacity_rows", []):
+            d, k = row["depth"].get().strip(), row["capacity"].get().strip()
+            if not d and not k:
+                continue
+            try:
+                rows.append({"depth_m": float(d), "capacity": float(k)})
+            except ValueError:
+                return None, f"row '{d}' / '{k}': depth and K must be numbers"
+        if not rows:
+            return None, None
+        rows.sort(key=lambda r: r["depth_m"])
+        try:
+            habitat.parse_capacity_table({habitat.CAPACITY_TABLE_KEY: rows})
+        except ValueError as exc:
+            return None, str(exc)
+        return rows, None
+
+    def _refresh_capacity_preview(self):
+        """K on the project's depth map for the rows as typed."""
+        if not hasattr(self, "capacity_preview_var"):
+            return
+        from lib.world import habitat
+        table, error = self._collect_capacity_table()
+        photo = None
+        if error:
+            text = error
+        elif table is None:
+            text = "No table: Max Carrying Capacity applies everywhere."
+        else:
+            depth = self._depth_map_array()
+            if depth is None:
+                text = ("No depth map in the project: the scalar Max Carrying "
+                        "Capacity applies until one is set.")
+            else:
+                K = habitat.capacity_map(
+                    habitat.parse_capacity_table({habitat.CAPACITY_TABLE_KEY: table}), depth)
+                text = (f"K on the depth map: mean {float(K.mean()):.1f}, "
+                        f"{float(K.min()):.1f}-{float(K.max()):.1f} ton/cell")
+                photo = self._thumbnail_photo(K)
+        self.capacity_preview_var.set(text)
+        try:
+            if photo is None:
+                self.capacity_preview_thumb.configure(image='', width=8, height=4)
+            else:
+                self.capacity_preview_thumb.configure(image=photo, width=photo.width(),
+                                                      height=photo.height())
+        except tk.TclError:
+            pass
+        self._capacity_thumb_ref = photo  # prevent GC
+
     def _refresh_impact_list_keep_selection(self):
         try:
             sel = self.impact_listbox.curselection()
@@ -4187,6 +4460,8 @@ class FGConfigApp:
                     var.set(", ".join(f"{float(v):g}" for v in val))
                     continue
                 var.set(str(val))
+            self._set_capacity_rows(config.get("capacity_depth_table")
+                                    if isinstance(config, dict) else None)
 
         # Populate the per-FG spawn editor from config['spawn'] (or library default).
         spawn_cfg = None
@@ -4449,6 +4724,20 @@ class FGConfigApp:
             config["growth_rate"] = float(f"{budget.growth_rate:.6g}")
             prop_vars["growth_rate"].set(f"{config['growth_rate']:.6g}")
 
+        # Capacity by depth (section 207): NDM editor only. No rows = no
+        # table, so the scalar Max Carrying Capacity applies.
+        if not is_dm:
+            table, table_error = self._collect_capacity_table()
+            if table_error:
+                messagebox.showerror(
+                    "Invalid Capacity by Depth",
+                    table_error + "\n\nNo changes were saved.")
+                return
+            if table is None:
+                config.pop("capacity_depth_table", None)
+            else:
+                config["capacity_depth_table"] = table
+
         # Capture the spawn block from the active editor. Use strict mode
         # so unparseable spawn params / ref weights surface as an error
         # dialog instead of being silently dropped or coerced to 1.0.
@@ -4637,6 +4926,10 @@ class FGConfigApp:
             species_defs[fg_id] = target
         original_keys = set(existing.keys()) if isinstance(existing, dict) else set()
         self._merge_species_entry(target, config, original_keys, is_dm)
+        # The merge only adds and updates; an emptied Capacity by Depth
+        # table has to leave the library entry too.
+        if not is_dm and "capacity_depth_table" not in config:
+            target.pop("capacity_depth_table", None)
         self.current_fg_configs[fg_id] = target
 
         # ``energy_gain`` är legacy och varken läses av runtime
@@ -5208,6 +5501,7 @@ class FGConfigApp:
         if hasattr(self, 'ref_grid_w_var'):
             self.ref_grid_w_var.set("60")
             self.ref_grid_h_var.set("60")
+        self._update_depth_map_view()
         self.update_fg_list()
         self.update_impact_list()
         self.refresh_matrix()
@@ -5276,6 +5570,7 @@ class FGConfigApp:
                              if isinstance(_vals, (list, tuple)) else "")
             if hasattr(self, 'temperature_enabled_var'):
                 self._load_temperature_settings()
+            self._update_depth_map_view()
             # Tick length. Out-of-range / missing falls back to the
             # historical 6 h, so projects predating the field load
             # Backward compatibility: legacy projects had a single `functional_groups` list.

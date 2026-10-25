@@ -664,12 +664,26 @@ FIELD_HELP = {
         "the harvest cap; not the observation (section 208)."
     ),
     "capacity_depth_table": (
-        "Capacity by depth (t/km2), edited in fg_library.yaml.\n\n"
-        "Rows {depth_m, capacity}: K per cell from the project's depth "
-        "map (simulation_settings.depth_map), linear between rows and "
-        "held at the end rows outside them. Without a depth map the "
-        "scalar Max Carrying Capacity applies. Benthos: anchored at the "
-        "in-grid stations at 100 and 300 m (section 207)."
+        "Capacity by Depth (ton per cell = t/km2): rows of depth (m) and "
+        "K. K per cell is read off the project's depth map (Depth map on "
+        "the Project tab), linear between rows and held at the end rows "
+        "outside them. No rows, or no depth map, = the scalar Max "
+        "Carrying Capacity everywhere. The preview shows K on the "
+        "project's depth map; the equilibrium spawn starts at K (1 - (F + "
+        "M2)/r) on it. Benthos: anchored at the in-grid stations at 100 "
+        "and 300 m (sections 207, 209). Saved to the library with Apply "
+        "Changes."
+    ),
+    "depth_map": (
+        "Depth map of the project (simulation_settings.depth_map): a .npz "
+        "with a 2-D array 'depth' in metres per cell, resampled to the "
+        "grid like the impact maps (tools/make_depth_map.py writes "
+        "maps/depth.npz from EMODnet). Used in training and inference: "
+        "K per cell from every group's Capacity by Depth table, the "
+        "equilibrium spawn, and the env_driven ref 'depth'. Stored "
+        "relative to the project file. Adds no observation channel, so "
+        "checkpoints stay valid, but K and the start pattern change with "
+        "it. A configured map that cannot be read stops the loading."
     ),
     "ndm:energy_content": (
         "Energy Content (MJ per tonne). What a predator gains per tonne "

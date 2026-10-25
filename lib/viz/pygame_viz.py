@@ -801,11 +801,15 @@ class LiveVisualizer:
         # ``mode``-fältet. ``_spawn_dirty`` sätts vid val och konsumeras
         # av inference.py mellan rollouts (samma mönster som b0/ticks).
         self._spawn_templates: Dict[str, Dict[str, dict]] = {}
+        # "equilibrium" (section 207, the benthos' depth-habitat start)
+        # has no parameters and no templates; it is listed so a group
+        # that spawns with it shows its mode instead of "(default)".
         self._spawn_modes: tuple = (
-            "uniform", "perlin", "colony", "env_driven")
+            "uniform", "perlin", "colony", "env_driven", "equilibrium")
         self._spawn_mode_labels: Dict[str, str] = {
             "uniform": "Uniform", "perlin": "Perlin",
             "colony": "Colony", "env_driven": "Env-driven",
+            "equilibrium": "Equilibrium",
         }
         self._spawn_overrides: Dict[str, Dict[str, Optional[str]]] = {}
         # Per-FG default-mode från projektfilens spawn-block. Visas i
@@ -4338,6 +4342,38 @@ class LiveVisualizer:
         # Singular → första + sista bokstaven.
         return word[0] + word[-1]
 
+    @classmethod
+    def _unique_abbrevs(cls, names) -> dict:
+        """``_abbrev_fg`` per name, lengthened where two names collide.
+
+        ``planktivorous_fish`` and ``predatory_fish`` both give ``pf``;
+        colliding names take one more letter of their first word at a
+        time (``plf`` / ``prf``) until every code is unique.
+        """
+        names = list(dict.fromkeys(str(n) for n in names if n))
+        codes = {n: cls._abbrev_fg(n) for n in names}
+        for k in range(2, 12):
+            seen: dict = {}
+            for n, c in codes.items():
+                seen.setdefault(c, []).append(n)
+            clashes = [ns for ns in seen.values() if len(ns) > 1]
+            if not clashes:
+                break
+            for ns in clashes:
+                for n in ns:
+                    parts = [q for q in n.lower().replace('-', '_')
+                             .replace(' ', '_').split('_') if q]
+                    codes[n] = parts[0][:k] + ''.join(q[0] for q in parts[1:])
+        return codes
+
+    def _fg_abbrev(self, fid: str) -> str:
+        """Unique short code of ``fid`` among the viewer's groups."""
+        cache = getattr(self, "_abbrev_cache", None)
+        if cache is None or fid not in cache:
+            cache = self._unique_abbrevs(list(self.fg_ids) + [fid])
+            self._abbrev_cache = cache
+        return cache[fid]
+
     def _draw_one_heatmap(self, fid: str, px: int, py: int) -> None:
         pg = self._pg
         pad = 4
@@ -4441,7 +4477,7 @@ class LiveVisualizer:
                             tot = sum(v for _, v in items)
                             if tot > 0.0:
                                 items.sort(key=lambda kv: kv[1], reverse=True)
-                                abbrs = [self._abbrev_fg(pid)
+                                abbrs = [self._fg_abbrev(pid)
                                          for pid, _ in items]
                                 pcts = [v / tot * 100.0 for _, v in items]
                                 diet_txt = (
