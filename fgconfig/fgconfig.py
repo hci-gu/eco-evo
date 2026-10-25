@@ -1113,8 +1113,8 @@ class FGConfigApp:
             "Env-driven\n"
             "\n"
             "The per-cell weight is a linear combination of "
-            "reference fields (e.g. another FG's biomass, future "
-            "depth/light/nutrients) plus an optional Perlin overlay. "
+            "reference fields (another FG's biomass or the project's "
+            "depth map) plus an optional Perlin overlay. "
             "Useful when a species' distribution should follow "
             "already computed layers — e.g. zooplankton following "
             "phytoplankton.\n"
@@ -1134,7 +1134,8 @@ class FGConfigApp:
             "= linear/exp/invert/gauss_smooth. Use this to make "
             "zooplankton follow phytoplankton. 'depth' refers to the "
             "project's depth map (simulation_settings.depth_map, metres) "
-            "when it has one."
+            "when it has one; the preview draws that map, every other ref "
+            "a stand-in pattern."
         ),
         "equilibrium": (
             "Equilibrium\n"
@@ -1147,8 +1148,9 @@ class FGConfigApp:
             "their baseline maps (today's fishing), M2 the checked "
             "predation pairs on the group, r the growth rate per year. "
             "The total still comes from the initial biomass. No "
-            "randomness. The preview shows a uniform field because it "
-            "has no project maps.\n"
+            "randomness. The preview is the group's B* on the project's "
+            "depth map and baseline impact maps, with the Capacity by "
+            "Depth rows as typed (uniform without a project).\n"
             "\n"
             "Parameters: none."
         ),
@@ -1425,8 +1427,11 @@ class FGConfigApp:
         name_var = tk.StringVar(value=str(name))
         weight_var = tk.StringVar(value=str(weight))
         transform_var = tk.StringVar(value=str(transform))
+        names = self._known_fg_ids()
+        if self._stored_depth_map() is not None:
+            names = ["depth"] + names      # the project's depth map (section 207)
         name_cb = ttk.Combobox(refs_frame, textvariable=name_var,
-                                values=self._known_fg_ids(), width=18)
+                                values=names, width=18)
         name_cb.grid(row=row_idx, column=0, sticky="w", padx=(0, 4), pady=1)
         weight_ent = ttk.Entry(refs_frame, textvariable=weight_var, width=8)
         weight_ent.grid(row=row_idx, column=1, sticky="w", padx=(0, 4), pady=1)
@@ -1606,6 +1611,58 @@ class FGConfigApp:
     def _library_species(self):
         return self.global_library.setdefault("species_definitions", {})
 
+    def _spawn_owner_fg(self, vars_store):
+        """The FG id whose spawn editor ``vars_store`` is, or None."""
+        kind = vars_store.get("_owner_kind")
+        if kind not in ("dm_fg", "ndm_fg"):
+            return None
+        category = "decision_makers" if kind == "dm_fg" else "non_decision_makers"
+        listbox = self._listbox_for(category)
+        sel = listbox.curselection() if listbox is not None else ()
+        fgs = self.project_data.get(category, []) or []
+        if not sel or sel[0] >= len(fgs):
+            return None
+        return fgs[sel[0]].get("group_id")
+
+    def _preview_depth_field(self, grid_size):
+        """The project's depth map on ``grid_size`` (m), or None."""
+        from lib.world import habitat
+        try:
+            return habitat.load_depth_map(self.project_data, self.project_path, grid_size)
+        except Exception:
+            return None
+
+    def _preview_equilibrium(self, vars_store, grid_size):
+        """B*(c) of the spawn editor's group for the preview, or None.
+
+        Uses the Capacity by Depth rows as typed (when they parse), the
+        project's depth map and baseline impact maps, and the checked
+        predation pairs of the active project groups."""
+        from lib.world import habitat
+        fid = self._spawn_owner_fg(vars_store)
+        species = (self.global_library or {}).get("species_definitions") or {}
+        if not fid or fid not in species:
+            return None
+        spec = dict(species[fid])
+        if vars_store is getattr(self, "ndm_spawn_vars", None):
+            table, error = self._collect_capacity_table()
+            if not error:
+                if table is None:
+                    spec.pop(habitat.CAPACITY_TABLE_KEY, None)
+                else:
+                    spec[habitat.CAPACITY_TABLE_KEY] = table
+        library = {"species_definitions": dict(species, **{fid: spec}),
+                   "interaction_definitions":
+                       (self.global_library or {}).get("interaction_definitions") or {}}
+        active = list(dict.fromkeys(list(self._active_project_fg_ids()) + [fid]))
+        try:
+            _depth, maps = habitat.build(
+                self.project_data, self.project_path, library, grid_size, active,
+                overrides={fid: {"spawn": {"mode": habitat.SPAWN_MODE}}})
+        except Exception:
+            return None
+        return (maps.get(fid) or {}).get("equilibrium")
+
     def _render_spawn_preview(self, vars_store):
         """Compute weights via lib.spawn.make_weights and draw on the preview canvas."""
         canvas = vars_store.get("preview_canvas")
@@ -1646,11 +1703,23 @@ class FGConfigApp:
                     nm = r.get("name") if isinstance(r, dict) else None
                     if not nm:
                         continue
+                    if nm == "depth":
+                        # The project's real depth map (section 207).
+                        depth = self._preview_depth_field((ref_h, ref_w))
+                        if depth is not None:
+                            env_fields_preview[nm] = depth
+                            continue
                     seed = (abs(hash(nm)) & 0x7FFFFFFF) or 1
                     env_fields_preview[nm] = _gaussian_random_field(
                         ref_h, ref_w, scale=12.0, octaves=4,
                         persistence=0.5, lacunarity=2.0, seed=seed)
                 ctx["env_fields"] = env_fields_preview
+            if spec_dict.get("mode") == "equilibrium":
+                # Today's B* of the group on the depth map and the baseline
+                # impact maps, as the loader computes it (section 207).
+                eq = self._preview_equilibrium(vars_store, (ref_h, ref_w))
+                if eq is not None:
+                    ctx["equilibrium"] = eq
             weights = make_weights(spec, (ref_h, ref_w), project_seed=0, context=ctx)
         except Exception as exc:
             canvas.delete("all")
@@ -2759,6 +2828,11 @@ class FGConfigApp:
             pass
         self._depth_thumb_ref = photo  # prevent GC
         self._refresh_capacity_preview()
+        # The 'depth' ref and the Equilibrium preview read the map.
+        for store in (getattr(self, "spawn_vars", None),
+                      getattr(self, "ndm_spawn_vars", None)):
+            if store and store.get("preview_canvas") is not None:
+                self._schedule_spawn_preview(store)
 
     def _browse_depth_map(self):
         path = filedialog.askopenfilename(
@@ -2906,6 +2980,10 @@ class FGConfigApp:
         except tk.TclError:
             pass
         self._capacity_thumb_ref = photo  # prevent GC
+        # The Equilibrium spawn preview reads the rows as typed.
+        store = getattr(self, "ndm_spawn_vars", None)
+        if store and store.get("preview_canvas") is not None:
+            self._schedule_spawn_preview(store)
 
     def _refresh_impact_list_keep_selection(self):
         try:

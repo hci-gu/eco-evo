@@ -118,3 +118,59 @@ def test_duplicate_depths_are_refused(app):
     before = copy.deepcopy(app.global_library["species_definitions"]["benthic_community"]["capacity_depth_table"])
     app.apply_fg_changes()
     assert app.global_library["species_definitions"]["benthic_community"]["capacity_depth_table"] == before
+
+
+def test_equilibrium_preview_is_the_loaders_b_star(app):
+    from lib.world import habitat
+    _select_benthos(app)
+    preview = app._preview_equilibrium(app.ndm_spawn_vars, (60, 60))
+    library = app.global_library
+    active = list(app._active_project_fg_ids())
+    _d, maps = habitat.build(app.project_data, app.project_path, library, (60, 60), active,
+                             overrides={"benthic_community": {"spawn": {"mode": "equilibrium"}}})
+    np.testing.assert_allclose(preview, maps["benthic_community"]["equilibrium"])
+    depth = np.load(ROOT / "maps" / "depth.npz")["depth"]
+    assert np.corrcoef(preview.ravel(), depth.ravel())[0, 1] < -0.9   # no trawl map here
+
+
+def test_equilibrium_preview_reads_the_rows_as_typed(app):
+    _select_benthos(app)
+    before = app._preview_equilibrium(app.ndm_spawn_vars, (60, 60))
+    app.capacity_rows[1]["capacity"].set("20")
+    after = app._preview_equilibrium(app.ndm_spawn_vars, (60, 60))
+    assert after.mean() < before.mean()
+
+
+def test_the_depth_ref_is_offered_and_previewed_with_the_real_map(app):
+    _select_benthos(app)
+    store = app.ndm_spawn_vars
+    app._populate_spawn_editor(store, {"mode": "env_driven", "refs": [
+        {"name": "depth", "weight": 1.0, "transform": "linear"}]})
+    name_cb = store["refs_rows"][0]["widgets"][0]
+    assert name_cb.cget("values")[0] == "depth"
+    depth = app._preview_depth_field((60, 60))
+    np.testing.assert_allclose(depth, np.load(ROOT / "maps" / "depth.npz")["depth"])
+
+
+def test_the_preview_hands_make_weights_the_real_maps(app, monkeypatch):
+    """The spawn preview passes the project's depth map as the 'depth'
+    env field and the group's B* as the equilibrium field."""
+    import lib.spawn as spawn
+    seen = []
+    real = spawn.make_weights
+
+    def spy(spec, grid, project_seed=None, context=None):
+        seen.append(dict(context or {}))
+        return real(spec, grid, project_seed=project_seed, context=context)
+
+    monkeypatch.setattr(spawn, "make_weights", spy)
+    _select_benthos(app)
+    store = app.ndm_spawn_vars
+    app._render_spawn_preview(store)
+    assert seen and seen[-1].get("equilibrium") is not None
+    app._populate_spawn_editor(store, {"mode": "env_driven", "refs": [
+        {"name": "depth", "weight": 1.0, "transform": "linear"}]})
+    app._render_spawn_preview(store)
+    depth = seen[-1]["env_fields"]["depth"]
+    w, h = app._get_reference_grid()
+    np.testing.assert_allclose(depth, app._preview_depth_field((h, w)))
