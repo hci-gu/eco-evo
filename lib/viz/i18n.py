@@ -77,8 +77,14 @@ SPECIES = {
         "kittiwake": "tretåig mås", "guillemot": "sillgrissla",
         "razorbill": "tordmule", "gannet": "havssula",
         "gulls": "måsar och trutar", "polychaetes": "havsborstmaskar",
-        "small bivalves": "små musslor",
-        "brittle stars (amphiura)": "ormstjärnor (Amphiura)",
+        "brittle stars and other echinoderms":
+            "ormstjärnor och andra tagghudingar",
+        "crabs and hermit crabs": "krabbor och eremitkräftor",
+        "bivalves and other molluscs": "musslor och andra blötdjur",
+        "northern shrimp": "nordhavsräka",
+        "norway lobster": "havskräfta",
+        "amphipods and other small crustaceans":
+            "märlkräftor och andra små kräftdjur",
         "ciliates": "ciliater",
         "heterotrophic dinoflagellates": "heterotrofa dinoflagellater",
         "copepods (calanus, metridia, small species)":
@@ -98,8 +104,13 @@ SPECIES = {
         "sprat": "spratto", "kittiwake": "gabbiano tridattilo",
         "guillemot": "uria", "razorbill": "gazza marina",
         "gannet": "sula", "gulls": "gabbiani", "polychaetes": "policheti",
-        "small bivalves": "piccoli bivalvi",
-        "brittle stars (amphiura)": "ofiure (Amphiura)",
+        "brittle stars and other echinoderms": "ofiure e altri echinodermi",
+        "crabs and hermit crabs": "granchi e paguri",
+        "bivalves and other molluscs": "bivalvi e altri molluschi",
+        "northern shrimp": "gamberetto boreale",
+        "norway lobster": "scampo",
+        "amphipods and other small crustaceans":
+            "anfipodi e altri piccoli crostacei",
         "ciliates": "ciliati",
         "heterotrophic dinoflagellates": "dinoflagellati eterotrofi",
         "copepods (calanus, metridia, small species)":

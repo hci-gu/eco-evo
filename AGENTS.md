@@ -84,9 +84,11 @@ fabricates mass.
   chlorophyll maximum, the same algae in the layer [M(t), 30 m],
   shade-adapted I_k 30, eaten by zooplankton and microzooplankton
   diluted over the layer thickness; zooplankton observes it),
-  `benthic_community` (logistic, r 1.0, K per cell from depth 143 ->
-  71.5 t/km2 at 100 -> 300 m, box mean 120, start = today's equilibrium
-  ~95 t/km2 under trawling; section 207), `microzooplankton` (section 177:
+  `benthic_community` (the bottom fauna the benthivores eat - infauna
+  plus mobile epifauna: Nephrops, northern shrimp, crabs; section 218;
+  logistic, r 0.971, K per cell from depth 164.5 -> 81.0 t/km2 at
+  100 -> 300 m, box mean 137.7, start = today's equilibrium ~102 t/km2
+  under trawling, sections 207 and 218), `microzooplankton` (section 177:
   grows only by grazing the phytoplankton in the population step;
   eaten by zooplankton, which observes it).
 - English snake_case IDs are canonical.
@@ -116,7 +118,8 @@ fabricates mass.
   as baseline and inference maps, linear library tables calibrated to
   the maps' mean effort. Impact mortality acts on every group with a
   table, non decision makers too (biomass factor only): bottom trawling
-  removes benthos at d x SAR (d 0.10, SAR 0.75 per MW-h/km2), ~0.2/yr.
+  removes benthos at d x SAR (d 0.10, SAR 0.75 per MW-h/km2) plus its
+  catch of shrimp, Nephrops and crabs (section 218), ~0.23/yr.
   Porpoise gillnet bycatch (~0.017/yr, met outside the grid) rides on
   the bottom-trawl map too (section 165).
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`

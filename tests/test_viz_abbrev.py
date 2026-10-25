@@ -50,3 +50,30 @@ def test_the_equilibrium_spawn_mode_is_shown_as_the_default(monkeypatch):
         assert v._spawn_mode_labels["equilibrium"] == "Equilibrium"
     finally:
         v.close()
+
+
+def test_clashing_names_with_different_second_words_extend_the_second():
+    """Italian 'Pesci planctivori' / 'Pesci predatori' share the first
+    word: extending it gave 'pescip' for both (section 216)."""
+    codes = LiveVisualizer._unique_abbrevs(
+        ["Pesci planctivori", "Pesci predatori", "Pesci bentivori"])
+    assert codes == {"Pesci planctivori": "ppl", "Pesci predatori": "ppr",
+                     "Pesci bentivori": "pb"}
+
+
+def test_the_second_word_takes_as_many_letters_as_needed():
+    codes = LiveVisualizer._unique_abbrevs(["Pesci predoni", "Pesci predatori"])
+    assert codes == {"Pesci predoni": "ppredo", "Pesci predatori": "ppreda"}
+
+
+def test_same_second_words_fall_back_to_the_first_word():
+    codes = LiveVisualizer._unique_abbrevs(["Planktivorous fish", "Predatory fish"])
+    assert codes == {"Planktivorous fish": "plf", "Predatory fish": "prf"}
+
+
+def test_every_language_gives_unique_codes():
+    from lib.viz import i18n
+    for lang in i18n.FG_NAMES:
+        names = [i18n.fg_name(lang, f) for f in FGS]
+        codes = LiveVisualizer._unique_abbrevs(names)
+        assert len(set(codes.values())) == len(FGS), (lang, codes)

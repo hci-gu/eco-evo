@@ -1037,6 +1037,30 @@ class LiveVisualizer:
         self._status_track_right_min = nat_hm_area_w + self._splitter_w
         self._hm_scroll_y = 0
         self._hm_scroll_step = 48  # px per wheel notch
+        # Folding the heatmap groups (section 214): how open each titled
+        # group is (1 open, 0 folded under its header; in between while it
+        # glides), the block-coordinate span its panels may paint in, and
+        # the header rows' click targets (rebuilt every frame).
+        self._group_open: Dict[str, float] = {
+            t: 1.0 for t, _g in self._hm_groups if t is not None}
+        # Where each group is heading: 1 open, 0 folded. Sets the sign in
+        # its box (minus = a click folds in, plus = a click folds out).
+        self._group_target: Dict[str, float] = dict(self._group_open)
+        # Groups folded in an earlier run start folded (section 215).
+        saved_folded = _load_settings().get("folded_groups")
+        if isinstance(saved_folded, list):
+            for title in saved_folded:
+                if title in self._group_open:
+                    self._group_open[title] = 0.0
+                    self._group_target[title] = 0.0
+        self._hm_group_spans: list = []
+        self._hm_slot_group: Dict[str, int] = {}
+        self._hm_header_rects: list = []
+        # Blank room below the block that lets the scroll position stay
+        # put when a fold shrinks the block, so the header just clicked
+        # does not slide away from the pointer. It only shrinks: scrolling
+        # up (or the block growing back) gives it up.
+        self._hm_scroll_slack = 0
         self._dragging_hm_scroll = False
         self._hm_scroll_drag_dy = 0
         self._hm_thumb_rect: Optional[tuple] = None
@@ -2717,6 +2741,11 @@ class LiveVisualizer:
             self._spawn_popup = None
             self._spawn_popup_item_rects = []
             return
+        # A heatmap group's header row folds the group in or out.
+        for rect, title in self._hm_header_rects:
+            if self._hit_rect(rect, pos):
+                self._toggle_group(title)
+                return
         # Spawn-dropdown-rektanglar (Mode / Tpl per FG).
         for rect, fid, which in self._spawn_dropdown_rects:
             rx, ry, rw, rh = rect
@@ -4029,19 +4058,35 @@ class LiveVisualizer:
         # Samma sak för spawn-dropdown-rektanglarna.
         self._spawn_dropdown_rects = []
         self._member_rects = []
+        self._hm_header_rects = []
+        view = self._pg.Rect(vx, vy, vw, vh)
         # Everything a panel draws is clipped to the viewport, so a panel
         # scrolled half out of view cannot paint over the status bar or
-        # the playback bar.
-        self._screen.set_clip(self._pg.Rect(vx, vy, vw, vh))
+        # the playback bar - and to its group's span, so a folding group
+        # slides in under its header (section 214).
         try:
+            self._screen.set_clip(view)
             for title, y_off in self._hm_headers:
-                self._draw_group_header(self._t(title), ox, oy + y_off, vw)
+                self._draw_group_header(title, ox, oy + y_off, vw)
             for fid, x_off, y_off in self._hm_slots:
+                g0, g1 = self._hm_group_spans[self._hm_slot_group[fid]]
+                span = view.clip(self._pg.Rect(vx, oy + g0, vw, g1 - g0))
                 px = ox + x_off
                 py = oy + y_off
-                if py >= vy + vh or py + self._panel_h <= vy:
+                if (span.height <= 0 or py >= span.bottom
+                        or py + self._panel_h <= span.top):
                     continue
+                self._screen.set_clip(span)
+                n0 = (len(self._slider_rects), len(self._spawn_dropdown_rects),
+                      len(self._member_rects))
                 self._draw_one_heatmap(fid, px, py)
+                # A control slid under the header takes no clicks.
+                for name, start in zip(("_slider_rects",
+                                        "_spawn_dropdown_rects",
+                                        "_member_rects"), n0):
+                    rects = getattr(self, name)
+                    rects[start:] = self._clip_hit_rects(
+                        rects[start:], (span.top, span.height))
         finally:
             self._screen.set_clip(None)
         # Hit rects are clipped to the viewport in y (x and width are kept:
@@ -4052,23 +4097,46 @@ class LiveVisualizer:
         self._spawn_dropdown_rects = self._clip_hit_rects(
             self._spawn_dropdown_rects)
         self._member_rects = self._clip_hit_rects(self._member_rects)
+        self._hm_header_rects = self._clip_hit_rects(self._hm_header_rects)
         self._draw_hm_scrollbar()
 
+    _FOLD_BOX = 11
+
     def _draw_group_header(self, title: str, x: int, y: int, w: int) -> None:
-        """A group's header row: its name over a rule (section 198)."""
+        """A group's header row: a fold box, its name, a rule (198, 214).
+
+        The box holds a minus while the group is open (a click folds it
+        in) and a plus while it is folded or folding (a click folds it
+        out). The whole row is the click target.
+        """
         pg = self._pg
         h = self._hm_header_h
         vy, vh = self._hm_view_rect[1], self._hm_view_rect[3]
         if y >= vy + vh or y + h <= vy:
             return
         pg.draw.rect(self._screen, (28, 28, 36), (x, y, w, h))
-        surf = self._font_big.render(title, True, (225, 225, 235))
-        self._screen.blit(surf, (x + 6, y + (h - surf.get_height()) // 2))
+        b = self._FOLD_BOX
+        bx, by = x + 6, y + (h - b) // 2
+        pg.draw.rect(self._screen, (36, 36, 46), (bx, by, b, b))
+        pg.draw.rect(self._screen, (150, 150, 170), (bx, by, b, b), 1)
+        mid_x, mid_y = bx + b // 2, by + b // 2
+        sign = (215, 215, 230)
+        pg.draw.line(self._screen, sign, (bx + 3, mid_y), (bx + b - 4, mid_y), 1)
+        if self._group_target.get(title, 1.0) < 0.5:
+            pg.draw.line(self._screen, sign, (mid_x, by + 3),
+                         (mid_x, by + b - 4), 1)
+        surf = self._font_big.render(self._t(title), True, (225, 225, 235))
+        self._screen.blit(surf, (bx + b + 7, y + (h - surf.get_height()) // 2))
         pg.draw.line(self._screen, (70, 70, 85),
                      (x, y + h - 1), (x + w - 1, y + h - 1), 1)
+        self._hm_header_rects.append(((x, y, w, h), title))
 
-    def _clip_hit_rects(self, entries: list) -> list:
-        _vx, vy, _vw, vh = self._hm_view_rect
+    def _clip_hit_rects(self, entries: list, span=None) -> list:
+        """Clip hit rects in y to the viewport, or to ``span`` (y, height)."""
+        if span is None:
+            _vx, vy, _vw, vh = self._hm_view_rect
+        else:
+            vy, vh = span
         out = []
         for entry in entries:
             rx, ry, rw, rh = entry[0]
@@ -4141,31 +4209,9 @@ class LiveVisualizer:
         self._cols = cols
         self._panel_w = self.grid_w * self.cell_px + 2 * pad
         self._panel_h = self.grid_h * self.cell_px + self._panel_extra_h
-        # Panel and group-header offsets inside the scrolled block.
-        self._hm_slots = []
-        self._hm_headers = []
-        y_off = 0
-        rows = 0
-        for title, fids in self._hm_groups:
-            if title is not None:
-                self._hm_headers.append((title, y_off))
-                y_off += self._hm_header_h
-            for i, fid in enumerate(fids):
-                self._hm_slots.append((fid, (i % cols) * self._panel_w,
-                                       y_off + (i // cols) * self._panel_h))
-            group_rows = (len(fids) + cols - 1) // cols
-            rows += group_rows
-            y_off += group_rows * self._panel_h
-        self._rows = rows
-        self._hm_block_h = y_off
         self._heatmap_origin = (0, status_h)
         self._hm_view_rect = (0, status_h, avail_w, view_h)
-        self._hm_scrollbar_rect = (
-            (avail_w, status_h, sb_w, view_h)
-            if self._hm_block_h > view_h else None)
-        if self._hm_scrollbar_rect is None:
-            self._dragging_hm_scroll = False
-        self._hm_scroll_y = max(0, min(self._hm_max_scroll(), self._hm_scroll_y))
+        self._layout_hm_block()
         self._splitter_rect = (hm_area_w, status_h, sp_w, view_h)
         plot_x = hm_area_w + sp_w
         if self._plot_collapsed:
@@ -4194,11 +4240,104 @@ class LiveVisualizer:
                 break
         return cols, max(1, cell_for(cols))
 
+    def _layout_hm_block(self) -> None:
+        """Panel and group-header offsets inside the scrolled block.
+
+        A group whose header is folded (``_group_open`` below 1) keeps
+        that share of its rows' height: its panels slide up under the
+        header and paint only inside its span (``_hm_group_spans``), and
+        the groups below follow. Fully open it is the layout of section
+        198. Also sets the scrollbar and clamps the scroll position.
+        """
+        cols = self._cols
+        self._hm_slots = []
+        self._hm_headers = []
+        self._hm_group_spans = []
+        self._hm_slot_group = {}
+        y_off = 0
+        rows = 0
+        for g, (title, fids) in enumerate(self._hm_groups):
+            if title is not None:
+                self._hm_headers.append((title, y_off))
+                y_off += self._hm_header_h
+            group_rows = (len(fids) + cols - 1) // cols
+            full_h = group_rows * self._panel_h
+            frac = (1.0 if title is None
+                    else max(0.0, min(1.0, self._group_open.get(title, 1.0))))
+            shown_h = int(round(full_h * frac))
+            shift = shown_h - full_h
+            for i, fid in enumerate(fids):
+                self._hm_slots.append((fid, (i % cols) * self._panel_w,
+                                       y_off + shift
+                                       + (i // cols) * self._panel_h))
+                self._hm_slot_group[fid] = g
+            self._hm_group_spans.append((y_off, y_off + shown_h))
+            rows += group_rows
+            y_off += shown_h
+        self._rows = rows
+        self._hm_block_h = y_off
+        _vx, vy, avail_w, view_h = self._hm_view_rect
+        # The slack never exceeds what keeps the current position valid.
+        self._hm_scroll_slack = max(0, min(
+            self._hm_scroll_slack,
+            self._hm_scroll_y + view_h - self._hm_block_h))
+        self._hm_scrollbar_rect = (
+            (avail_w, vy, self._hm_sb_w, view_h)
+            if self._hm_block_h + self._hm_scroll_slack > view_h else None)
+        if self._hm_scrollbar_rect is None:
+            self._dragging_hm_scroll = False
+        self._hm_scroll_y = max(0, min(self._hm_max_scroll(), self._hm_scroll_y))
+
+    def _toggle_group(self, title: str) -> None:
+        """Fold a heatmap group in under its header, or out again.
+
+        The group's panels glide (``_fold_anim_s``, ease-out, as the plot
+        fold of section 194) and the groups below follow; every step is
+        painted before the next. The scroll position is held through the
+        glide (``_hm_scroll_slack``), so the clicked header stays under
+        the pointer even when the fold shrinks the block below the view.
+        """
+        if title not in self._group_open:
+            return
+        target = 0.0 if self._group_target.get(title, 1.0) >= 0.5 else 1.0
+        self._group_target[title] = target
+        # Remember it; titles of groups this viewer does not show keep
+        # their saved state.
+        saved = _load_settings().get("folded_groups")
+        folded = [t for t in (saved if isinstance(saved, list) else [])
+                  if isinstance(t, str) and t != title]
+        if target == 0.0:
+            folded.append(title)
+        _save_settings(folded_groups=folded)
+        self._spawn_popup = None
+        self._spawn_popup_item_rects = []
+        start = float(self._group_open[title])
+        scroll0 = self._hm_scroll_y
+        dur = float(self._fold_anim_s)
+        t0 = time.monotonic()
+        while True:
+            f = 1.0 if dur <= 0 else min(1.0, (time.monotonic() - t0) / dur)
+            e = 1.0 - (1.0 - f) ** 3
+            self._group_open[title] = start + (target - start) * e
+            # Room for exactly the held position; _layout_hm_block trims it.
+            self._hm_scroll_slack = 1 << 30
+            self._hm_scroll_y = scroll0
+            self._layout_hm_block()
+            if f >= 1.0:
+                return
+            self._render_full()
+            self._pg.event.pump()
+
     def _hm_max_scroll(self) -> int:
-        return max(0, self._hm_block_h - self._hm_view_rect[3])
+        return max(0, self._hm_block_h + self._hm_scroll_slack
+                   - self._hm_view_rect[3])
 
     def _set_hm_scroll(self, y: float) -> None:
         self._hm_scroll_y = int(max(0, min(self._hm_max_scroll(), y)))
+        # Scrolling up gives up the blank room a fold left below.
+        self._hm_scroll_slack = max(0, min(
+            self._hm_scroll_slack,
+            self._hm_scroll_y + self._hm_view_rect[3] - self._hm_block_h))
         # The spawn popup is anchored to a dropdown that has just moved.
         self._spawn_popup = None
         self._spawn_popup_item_rects = []
@@ -4212,7 +4351,8 @@ class LiveVisualizer:
         pg.draw.rect(self._screen, (30, 30, 38), (sx, sy, sw, sh))
         pg.draw.rect(self._screen, (60, 60, 70), (sx, sy, sw, sh), 1)
         max_scroll = self._hm_max_scroll()
-        th = max(24, int(sh * sh / max(1, self._hm_block_h)))
+        th = max(24, int(sh * sh / max(
+            1, self._hm_block_h + self._hm_scroll_slack)))
         ty = sy + int((sh - th) * self._hm_scroll_y / max(1, max_scroll))
         thumb = (sx + 2, ty, sw - 4, th)
         col = (150, 150, 170) if self._dragging_hm_scroll else (110, 110, 130)
@@ -4597,10 +4737,20 @@ class LiveVisualizer:
     def _unique_abbrevs(cls, names) -> dict:
         """``_abbrev_fg`` per name, lengthened where two names collide.
 
-        ``planktivorous_fish`` and ``predatory_fish`` both give ``pf``;
-        colliding names take one more letter of their first word at a
-        time (``plf`` / ``prf``) until every code is unique.
+        Colliding multi-word names whose second words differ keep the
+        first letter of the first word and take as many letters of the
+        second word as it takes to tell them apart: Italian ``Pesci
+        planctivori`` / ``Pesci predatori`` give ``ppl`` / ``ppr``
+        (section 216; the first word alone gave ``pescip`` for both).
+        Otherwise - one-word names, or second words that are the same -
+        they take one more letter of their first word at a time:
+        ``planktivorous_fish`` / ``predatory_fish`` give ``plf`` /
+        ``prf``. Words are split on spaces, underscores and hyphens.
         """
+        def words(n):
+            return [q for q in n.lower().replace('-', '_')
+                    .replace(' ', '_').split('_') if q]
+
         names = list(dict.fromkeys(str(n) for n in names if n))
         codes = {n: cls._abbrev_fg(n) for n in names}
         for k in range(2, 12):
@@ -4611,10 +4761,15 @@ class LiveVisualizer:
             if not clashes:
                 break
             for ns in clashes:
-                for n in ns:
-                    parts = [q for q in n.lower().replace('-', '_')
-                             .replace(' ', '_').split('_') if q]
-                    codes[n] = parts[0][:k] + ''.join(q[0] for q in parts[1:])
+                split = [words(n) for n in ns]
+                by_second = (all(len(p) > 1 for p in split)
+                             and len({p[1] for p in split}) == len(split))
+                for n, p in zip(ns, split):
+                    if by_second:
+                        codes[n] = (p[0][0] + p[1][:k]
+                                    + ''.join(q[0] for q in p[2:]))
+                    else:
+                        codes[n] = p[0][:k] + ''.join(q[0] for q in p[1:])
         return codes
 
     def _fg_abbrev(self, fid: str) -> str:

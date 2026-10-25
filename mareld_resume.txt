@@ -19290,3 +19290,164 @@ remain open exactly as described in 71.9 / 71.11.
     in test_viz_i18n.py: remembered by the next viewer, English without
     a file, other keys kept, garbage and unknown values fall back.
     pytest 1467 passed / 12 skipped; train.py 1-generation smoke run OK.
+
+214 VIEWER: FOLDING THE HEATMAP GROUPS (2026-10-25)
+================================================================
+214.1 Why (user): a minus left of the "Decision makers" and
+    "Non-decision makers" headers folds in what is grouped under it, a
+    plus folds it out, both smoothly, the sign in a small box.
+214.2 lib/viz/pygame_viz.py: _group_open (1 open, 0 folded, in between
+    while gliding) and _group_target per titled group. The block layout
+    moved out of _compute_layout into _layout_hm_block: a group keeps
+    that share of its rows' height, its panels slide up under the header
+    and paint only inside its span (_hm_group_spans, block coordinates),
+    the groups below follow. Fully open it is the layout of section 198
+    unchanged (test_viz_heatmap_scroll untouched). Hit rects of panels
+    are clipped to their group's span, so a folded group takes no
+    clicks. The header draws an 11 px box with a minus (open or opening)
+    or a plus (folded or folding), drawn with lines; the whole header
+    row is the click target (_hm_header_rects).
+214.3 _toggle_group: a blocking glide like the plot fold (194):
+    _fold_anim_s 0.25 s, ease-out cubic, every step laid out and painted
+    before the next (instant when _fold_anim_s is 0). The scroll position
+    is held through the glide by _hm_scroll_slack, blank room below the
+    block that only shrinks (scrolling up or the block growing back),
+    so the clicked header stays under the pointer even when the fold
+    shrinks the block below the view. The spawn popup closes on a fold.
+    The fold state is remembered between runs since section 215.
+214.4 Checks: tests/test_viz_group_fold.py (open layout unchanged, fold
+    and unfold, folded panels take no clicks, minus/plus pixels, header
+    kept under the pointer when the fold needs the slack, the glide
+    paints monotone intermediate frames, a folding group paints only in
+    its span, no header with one group). On the real display (:1,
+    1698x1100 window): a fold is 23 painted frames in 257 ms (11 ms per
+    frame, max 13.5), the header did not move. pytest 1474 passed / 12
+    skipped; train.py 1-generation smoke run OK.
+
+215 VIEWER: FOLDED GROUPS ARE REMEMBERED (2026-10-25)
+================================================================
+215.1 Why (user): the viewer should remember which groups are folded.
+215.2 lib/viz/pygame_viz.py: "folded_groups" in the viewer settings file
+    of section 213 (a list of the groups' English titles). Read at start:
+    a listed group present in this viewer starts folded (open 0, plus in
+    its box, laid out folded from the first frame, no glide). Written on
+    every fold: only the toggled title is added or removed, so a viewer
+    that does not show a group (one kind of FG only, no headers) keeps
+    its saved state. A value that is not a list is ignored.
+215.3 Checks: three tests in test_viz_group_fold.py (remembered by the
+    next viewer and forgotten after unfolding, kept by a viewer without
+    the group, a broken value ignored while the language still loads);
+    click_header scrolls the header into view first. pytest 1477 passed
+    / 12 skipped; train.py 1-generation smoke run OK. A debugging run
+    outside the test suite briefly wrote the real settings file during
+    the work; it was removed (it held only that run's fold).
+
+216 VIEWER: DIET CODES OF NAMES THAT SHARE THEIR FIRST WORD (2026-10-25)
+================================================================
+216.1 Bug (user): in Italian "Pesci predatori" and "Pesci planctivori"
+    both got "pescip": a clash lengthened the first word only, and that
+    word is the same in both.
+216.2 Rule (LiveVisualizer._unique_abbrevs): clashing multi-word names
+    whose second words differ keep the first letter of the first word
+    and take as many letters of the second word as needed (ppl / ppr;
+    "Pesci predoni" / "Pesci predatori" -> ppredo / ppreda). One-word
+    names, or second words that are the same, keep the old rule (one
+    more letter of the first word): English codes are unchanged (plf /
+    prf from planktivorous_fish / predatory_fish), Swedish djur / djup.
+216.3 Checks: four tests in test_viz_abbrev.py (the Italian fish, as
+    many letters as needed, the fallback, unique codes in every
+    language). pytest 1481 passed / 12 skipped; train.py 1-generation
+    smoke run OK. A viewer already running keeps the old codes until it
+    is restarted.
+
+217 BENTHIC COMMUNITY: DEFINED AS THE BENTHIVORES' BOTTOM PREY (2026-10-25)
+================================================================
+217.1 User's definition: benthic_community is only the bottom fauna the
+    benthivorous fish eat (crustaceans, bivalves, brittle stars and the
+    like); the trawl's effect on it is set as an impact in fgconfig, not
+    by the group's definition. (Asked why Norway lobster was missing from
+    the hover list: section 210 had listed only the infauna of the
+    growth comment.)
+217.2 member_species (display only) now lists the benthivores' benthos
+    diet, ordered by the group's intake: species biomass share x Q/B x
+    benthos share, compositions from the ICES stomach database 2000+
+    (Skagerrak, northern North Sea, trench, box; long rough dab
+    pre-2000; witch Bergstad et al. 2003): brittle stars and other
+    echinoderms ~30 %, polychaetes ~28 %, crabs and hermit crabs ~18 %,
+    bivalves and other molluscs ~9 %, northern shrimp ~5 %, Norway
+    lobster ~5 %, amphipods and other small crustaceans ~4 %. Rough
+    (dab has no data, cod's crustaceans are mostly northern North Sea);
+    shown without shares because they are shares of what is eaten, not
+    of the standing stock. Swedish and Italian names in i18n.SPECIES.
+217.3 Open (not changed): K and the start biomass rest on grab infauna
+    (Josefson's biomass without large species), which holds the
+    echinoderms, polychaetes, bivalves and small crustaceans but not the
+    mobile epifauna (crabs, hermit crabs, northern shrimp, Norway
+    lobster), about a third of the diet. Whether K should include them
+    is the user's call.
+217.4 Checks: pytest 1481 passed / 12 skipped; train.py 1-generation
+    smoke run OK. No engine parameter changed (the running fix73 probe
+    only sees the new hover list).
+
+218 BENTHIC COMMUNITY: EPIFAUNA IN K, TRAWL CATCH IN THE LOSS (2026-10-25)
+================================================================
+218.1 User: K must also hold the mobile epifauna the benthivores eat
+    (section 217.3), the start and spawn range follow, and the bottom
+    trawl's effect on the group is the edible biomass it takes - catch
+    AND killed infauna ("Ta med bade fangst och dodad infauna", Swedish
+    letters dropped). Correction given to the user: in this grid the
+    bottom trawl fishes mainly northern shrimp (Swedish logbooks via the
+    EIA: 98.5 % of the shellfish catch in the wind-farm area, Nephrops
+    0.8 %; 45G0 87 / 13 %), not Nephrops.
+218.2 Research (two subagents; research_notes/"Bottensamhallets
+    epifauna" (Swedish letters); summaries written by the main agent;
+    data/ is 814 MB of raw downloads - do not commit it):
+    - Standing stock: epifauna add 6.4 t/km2 (3.3-13.8) to ~92 of
+      infauna (+7 %): Nephrops 4.57 (ICES UWTV strata overlay, 70 % of
+      the grid in surveyed grounds, none deeper than 300 m), northern
+      shrimp 0.56 (SS3 q 0.51-0.55; peaks 200-300 m), crabs, hermit
+      crabs, Munida, small shrimps, mysids 1.27 (North Sea proxies, ~3x).
+      Depth anchors 8.0 / 3.1 at 100 / 300 m (least squares over the
+      grid). r Nephrops 0.34, shrimp 0.85, others 1.2 -> community 0.971;
+      f Nephrops 0.1, shrimp 0.7, others 0.6 -> community 0.203.
+    - Trawl removal at mean effort 3.014: catch 0.68 t/km2/yr
+      (0.39-1.43): shrimp 0.336, Nephrops 0.296 (incl. 75 % dead
+      discards), crabs 0.006, other invertebrate discards 0.044 (STECF
+      FDI 2013-23, Norwegian ERS 2011-24, ICES advice 2025); ~1/33 of the
+      seabed kill d x SAR 0.226. Nephrops removal ~7 %/yr = the ICES
+      harvest rate. Infauna-only d may be ~0.06 (0.03-0.115); d 0.10
+      kept.
+    - Flags (not acted on): one pooled group cannot hold the selectivity
+      (diet ~28 % crabs/shrimp/Nephrops vs ~8 % of the reachable stock;
+      shrimp F ~0.5 vs Nephrops ~0.06); the EMODnet effort map may be
+      low (Danish VMS likely missing from recent windows; 44G0 effort
+      -86 % 2018-21 -> 2019-22 while landings held), which would make
+      every catchability calibrated to it low; today's shrimp catch is
+      35-60 % below the 2015-23 mean; Norway's in-grid shrimp catch is
+      ~5 t/yr, not the ~975 t the EIA implies.
+218.3 Library / manifest (fix73 was running; its CPU probe and viewer
+    switch to this world from the next probe, the GPU training world
+    does not until a --resume):
+    - benthic_community growth_rate 0.000684932 -> 0.000665068 (r 0.971).
+    - capacity_depth_table 150.8 / 75.4 -> 164.5 / 81.0 t/km2 at 100 /
+      300 m: (110 + 8.0) and (55 + 3.1) over the equilibrium share
+      1 - (0.233 + 0.0417)/0.971 = 0.717; max_carrying_capacity 126.6 ->
+      137.7 (box mean of the table).
+    - bottom_trawling on the benthos: biomass_factor at 100 0.005136986
+      -> 0.005292301 (0.233 /yr at mean effort: d x SAR 0.226 + catch
+      0.007).
+    - predation_mortality benthivorous_fish 0.040 -> 0.0374,
+      predatory_fish 0.0046 -> 0.0043 (same consumption over B* 101.6
+      instead of ~95). accessible_fraction 0.2 kept (weighted 0.203).
+    - mareld2 benthos inference_initial_biomass 341000 -> 366000 (sum of
+      B* 365 899; mean 101.6, cells 20.8-156.3), range 274500-457500
+      (+/-25 %).
+    - AGENTS.md section 4 and the trawl line updated;
+      tests/test_fgconfig_depth_map.py K rows 164.5 / 81 and preview mean
+      137.7.
+218.4 Checks: budget_gate every predator closes; viability 300 ticks
+    eat arm: benthivores, predators, planktivores, seals, porpoises and
+    the benthos PASS (benthos eq/spawn 0.993), the plankton FAIL as
+    before (209.5); pytest 1481 passed / 12 skipped; train.py
+    1-generation smoke run OK. Checkpoints stay loadable (no observation
+    change) but were trained with the old benthos.

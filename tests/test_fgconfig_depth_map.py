@@ -84,9 +84,9 @@ def test_a_map_with_negative_depths_is_refused(app, tmp_path):
 def test_the_table_editor_shows_the_library_rows_and_k_on_the_map(app):
     _select_benthos(app)
     rows = [(r["depth"].get(), r["capacity"].get()) for r in app.capacity_rows]
-    assert rows == [("100", "150.8"), ("300", "75.4")]
+    assert rows == [("100", "164.5"), ("300", "81")]
     preview = app.capacity_preview_var.get()
-    assert preview.startswith("K on the depth map: mean 126.6")
+    assert preview.startswith("K on the depth map: mean 137.7")
 
 
 def test_apply_writes_the_edited_table_to_the_library(app):
@@ -96,7 +96,7 @@ def test_apply_writes_the_edited_table_to_the_library(app):
     app.apply_fg_changes()
     table = app.global_library["species_definitions"]["benthic_community"]["capacity_depth_table"]
     assert [(float(r["depth_m"]), float(r["capacity"])) for r in table] == [
-        (100.0, 150.8), (300.0, 60.0), (500.0, 40.0)]
+        (100.0, 164.5), (300.0, 60.0), (500.0, 40.0)]
     assert Path(app.library_path).is_file()
 
 

@@ -140,9 +140,9 @@ decision_makers:
     inference_initial_biomass: 35000
 non_decision_makers:
   - group_id: benthic_community
-    initial_biomass_min: 256000
-    initial_biomass_max: 426000
-    inference_initial_biomass: 341000
+    initial_biomass_min: 274500
+    initial_biomass_max: 457500
+    inference_initial_biomass: 366000
   - group_id: phytoplankton
     initial_biomass_min: 40000
     initial_biomass_max: 100000

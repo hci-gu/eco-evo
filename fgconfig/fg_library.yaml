@@ -290,45 +290,64 @@
   benthic_community:
     current_response: 0.0
     display_name: "Benthic Community"
-    # Display only (live viewer hover): the fish-prey fraction named in
-    # the growth comment below (Hiddink et al. 2019; Josefson 1990).
+    # Display only (live viewer hover). The group is the bottom fauna the
+    # benthivorous fish eat (section 217; the trawl's effect is set as an
+    # impact in fgconfig). Ordered by the group's benthos diet, weighted
+    # by species biomass x Q/B x benthos share (ICES stomach database
+    # 2000+, Skagerrak / northern North Sea; long rough dab pre-2000;
+    # witch Bergstad et al. 2003): brittle stars and other echinoderms
+    # ~30 %, polychaetes ~28 %, crabs and hermit crabs ~18 %, bivalves
+    # and other molluscs ~9 %, northern shrimp ~5 %, Norway lobster ~5 %,
+    # amphipods and other small crustaceans ~4 % (rough: shares of what
+    # is eaten, not of the standing stock). research_notes/"Fiskgrupper
+    # i rutan"/benthivores/tables/ices_benth_diet_taxa.csv.
     member_species:
+      - {name: brittle stars and other echinoderms}
       - {name: polychaetes}
-      - {name: small bivalves}
-      - {name: brittle stars (Amphiura)}
+      - {name: crabs and hermit crabs}
+      - {name: bivalves and other molluscs}
+      - {name: northern shrimp}
+      - {name: Norway lobster}
+      - {name: amphipods and other small crustaceans}
     is_decision_maker: false
     movement_speed: 0.0
     # Hand-set growth_rate (section 136: no r_max, so it is NOT derived
-    # from the predation matrix). Section 207: r 1.0 /yr = 1.0 / 1460 per
-    # tick (was 0.82, Hiddink et al. 2017 whole-community recovery): the
-    # gadoid-prey fraction is short-lived polychaetes and small bivalves
-    # at 300 m (Hiddink et al. 2019: r 2.41 / 1.24 / 0.34 for 1-3 / 3-10 /
-    # > 10 yr longevity) and Amphiura arms at 100 m (slow); central 1.0,
-    # range 0.8-1.5. research_notes/"Bentos och torskfiskar".
-    growth_rate: 0.000684932
+    # from the predation matrix). Section 218: r 0.971 /yr = 0.971 / 1460
+    # per tick, the biomass-weighted mean of the infauna's 1.0 (section
+    # 207: short-lived polychaetes and small bivalves at 300 m, Hiddink et
+    # al. 2019 r 2.41 / 1.24 / 0.34 for 1-3 / 3-10 / > 10 yr longevity,
+    # and Amphiura arms at 100 m; range 0.8-1.5) and the mobile epifauna's
+    # 0.55 (Nephrops 0.34, northern shrimp 0.85, crabs, hermit crabs,
+    # Munida, small shrimps and mysids 1.2); range 0.955-0.983.
+    # research_notes/"Bentos och torskfiskar" and "Bottensamhallets
+    # epifauna" (Swedish letters)/summary_standing_stock.md.
+    growth_rate: 0.000665068
     # Section 207: K per cell from the manifest's depth map, t WW/km2,
     # linear in depth between the rows and held outside them. Anchors:
     # today's prey-sized stock at Josefson's (1990) in-grid stations,
     # 100 m ~105-200 g WW/m2 (Stn 8, Stn 12, without large species) and
     # 300 m ~50-85 (LYSE 8), taken in the lower half (110 and 55: the
-    # model's K is net of the unmodelled invertebrate predators),
-    # divided by today's equilibrium share 1 - (F + M2)/r. Section 209:
-    # the fish predation is benthivorous_fish 0.040 + predatory_fish
-    # 0.0046 = 0.0446 /yr (flatfish are modelled now; was gadoid M2
-    # 0.0048), so the share is 1 - (0.226 + 0.0446)/1.0 = 0.729 (box-mean
-    # trawl F 0.226 /yr, r 1.0) and K = 110/0.729, 55/0.729 (was 143,
-    # 71.5 at 0.77). The SK3 1996-2011 values (387 g/m2 without urchins)
+    # model's K is net of the unmodelled invertebrate predators).
+    # Section 218: plus the mobile epifauna the benthivores eat, which
+    # grabs miss: 8.0 at 100 m and 3.1 at 300 m (least-squares line over
+    # the grid; grid mean 6.4, range 3.3-13.8: Nephrops 4.6 from the ICES
+    # UWTV strata, northern shrimp 0.6 from the SS3 assessment, crabs,
+    # hermit crabs, Munida, small shrimps and mysids 1.3 from North Sea
+    # proxies), so 118.0 and 58.1, divided by today's equilibrium share
+    # 1 - (F + M2)/r = 1 - (0.233 + 0.0417)/0.971 = 0.717 (box-mean trawl
+    # loss 0.233 /yr, fish M2 0.0374 + 0.0043): K = 164.5 / 81.0 (range
+    # 157-177 / 78-88; was 150.8 / 75.4, section 209). The SK3 1996-2011 values (387 g/m2 without urchins)
     # rest on an unconfirmed SHARK unit fix and are not used. Was a
     # constant 10 (user's value, sections 136 and 161.13), 5-40x below
     # every in-grid measurement; at 10 the gadoids plus trawling exceeded
     # the benthos' maximum surplus production and it halved in 5-8 years.
     capacity_depth_table:
       - depth_m: 100.0
-        capacity: 150.8
+        capacity: 164.5
       - depth_m: 300.0
-        capacity: 75.4
+        capacity: 81.0
     # Fallback without a depth map: the box mean of the table.
-    max_carrying_capacity: 126.6
+    max_carrying_capacity: 137.7
     energy_content: 3000.0
     # Section 207: start at today's equilibrium per cell, K(c) (1 - (F(c)
     # + M2)/r) with F(c) from the bottom-trawl baseline map (lib/world/
@@ -1072,20 +1091,23 @@ interaction_definitions:
   # old gadoid ceiling 34.6 was 1.3x this group's Cmax). predator_share
   # 0.9: haddock and flatfish 1, large cod lower (stage scores,
   # research_notes/Torskfiskarnas bytesandelar). accessible_fraction 0.2
-  # (section 208). M2 = Q/B 3.5 x 1.53 x benthos share / ~95 t/km2.
+  # (section 208; the epifauna of section 218 weights it to 0.203).
+  # M2 = Q/B 3.5 x 1.53 x benthos share / B*: 0.040 at ~95 t/km2, 0.0374
+  # at section 218's 101.6.
   # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_benthivorous_fish.md.
   benthivorous_fish_preys_on_benthic_community:
     preys_on: true
-    predation_mortality: 0.040
+    predation_mortality: 0.0374
     assimilation_factor: 0.7
     handling_time: 110.7
     predator_share: 0.9
     accessible_fraction: 0.2
   # Section 209: juvenile whiting and deep-feeding saithe on shrimps
-  # and mysids (predator_share 0.145).
+  # and mysids (predator_share 0.145). M2 0.0046 at ~95 t/km2, 0.0043 at
+  # section 218's 101.6.
   predatory_fish_preys_on_benthic_community:
     preys_on: true
-    predation_mortality: 0.0046
+    predation_mortality: 0.0043
     assimilation_factor: 0.7
     handling_time: 117.6
     predator_share: 0.145
@@ -1396,8 +1418,15 @@ interaction_definitions:
   # Rijnsdorp et al. 2020 OT_CRU, from Hiddink et al. 2017's otter-trawl
   # 0.06 scaled by the digging share; Pitcher et al. 2022 mud 0.115).
   # Slope d k / 1460 = 5.137e-5 per tick per unit; the grid mean (3.0)
-  # is SAR 2.3, a loss of 0.23 /yr. Only the biomass factor acts on a
-  # non decision maker. research_notes/Bottentralning och bentos/.
+  # is SAR 2.3, a loss of 0.226 /yr. Section 218: plus the trawl's catch
+  # of community members (user: catch and killed infauna together):
+  # 0.68 t/km2/yr at mean effort (0.39-1.43; northern shrimp 0.34,
+  # Nephrops 0.30 incl. dead discards, crabs and other invertebrates
+  # 0.05; STECF FDI, Norwegian ERS, ICES advice 2025), 0.007 /yr of the
+  # ~99 t/km2 community, additive to d (grab-based d misses them): 0.233
+  # /yr in all, slope 5.292e-5 per tick per unit. Only the biomass factor
+  # acts on a non decision maker. research_notes/Bottentralning och
+  # bentos/ and "Bottensamhallets epifauna"/summary_trawl_removal.md.
   benthic_community_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
@@ -1405,7 +1434,7 @@ interaction_definitions:
         biomass_factor: 0.0
         energy_factor: 0.0
       - value: 100.0
-        biomass_factor: 0.005136986
+        biomass_factor: 0.005292301
         energy_factor: 0.0
   benthic_community_impacted_by_pelagic_trawling:
     impact_affects: false
