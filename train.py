@@ -2723,6 +2723,9 @@ def main(argv=None, *, on_step=None, confirm=True):
                     _regenerate_biomass_html(run_dir)
     except KeyboardInterrupt:
         print(f"\n\n[Interrupted by user] Stopping training after current step.")
+        if visual_progress is not None and hasattr(visual_progress, "wait"):
+            # Stop a running three-year probe; its worker ignores SIGINT.
+            visual_progress.wait(cancel=True)
         # Terminate workers immediately so they don't keep computing while we
         # save checkpoints; otherwise pool.map can still hold references.
         # Wrappa varje steg i sin egen ``try`` så att en andra Ctrl+C (eller

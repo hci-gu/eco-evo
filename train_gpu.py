@@ -168,7 +168,7 @@ def main(argv=None, *, on_step=None):
         nonlocal stop_requested
         stop_requested = True
     previous_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGINT, signal.SIGTERM)}
-    save_final = False
+    save_final = finished = False
     visual = None
     try:
         if args.visual:
@@ -225,13 +225,15 @@ def main(argv=None, *, on_step=None):
                     import numpy as np
                     np.savez_compressed(directory / f"snapshot_{gen + 1:06d}.npz",
                                         group_ids=np.asarray(trainer.model.ids), **trainer.runner.snapshot())
-            save_final = True
+            save_final = finished = True
     except KeyboardInterrupt:
         print("Interrupted; saving the last completed update.", flush=True)
         save_final = True
     finally:
         if visual is not None:
-            visual.close()
+            # The last probe is recorded after a finished run; an
+            # interrupt (now or while waiting for it) stops it instead.
+            visual.close(cancel=lambda: stop_requested or not finished)
         for sig, handler in previous_handlers.items():
             signal.signal(sig, handler)
         if save_final:

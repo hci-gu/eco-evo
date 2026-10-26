@@ -57,7 +57,7 @@ import numpy as np
 from lib.viz import i18n
 from lib.world import daylight
 from lib.world.tick_time import (
-    DAYS_PER_YEAR, HOURS_PER_DAY, resolve_tick_hours,
+    DAYS_PER_YEAR, HOURS_PER_DAY, LIBRARY_TICK_HOURS, resolve_tick_hours,
 )
 
 
@@ -104,6 +104,24 @@ def _save_settings(**changes) -> None:
 
 # Calendar band under the inference plot (section 155): a month row and
 # a clock row, profiler-style blocks with the label inside when it fits.
+# The bound that decides a group's viability margin on the progress
+# tab (training_progress.probe_viability, section 223.18).
+_VIABILITY_BINDING = {"floor": "floor", "ceiling": "ceiling",
+                      "drift": "drift", "extinct": "extinct"}
+# training_progress.FLOOR_NOTE_MAX_YEARS (that module pulls in torch).
+_FLOOR_NOTE_MAX_YEARS = 50.0
+# Tabs fed from the probe history instead of per-update buffers.
+_PROBE_TABS = ("progress", "viability")
+# Display names of tabs whose internal id says something else (section
+# 223.21): the "progress" tab shows one long run of the frozen policies,
+# not training progress. The id, <run>/progress and probe.jsonl stay.
+_TAB_NAMES = {"progress": "long run"}
+# The viability tab's fixed axis (section 223.20): margins are <= 1 by
+# construction; anything below -1 (and an extinct group) is drawn at -1.
+_VIABILITY_AXIS = (-1.0, 1.0)
+# Tabs the R key's log axis never applies to.
+_LINEAR_TABS = ("biomass", "viability")
+
 _CAL_ROW_H = 14
 _CAL_BAND_H = 2 * _CAL_ROW_H + 3
 # Clock block lengths tried, finest first; the finest one whose block is
@@ -607,7 +625,7 @@ class LiveVisualizer:
         if self.mode == "train":
             self._tabs = ["reward", "biomass", "energy", "move", "rest", "eat",
                           "predation", "starvation", "impacts", "natural",
-                          "progress"]
+                          "progress", "viability"]
         else:
             self._tabs = ["biomass", "energy", "move", "rest", "eat",
                           "predation", "starvation", "impacts", "natural"]
@@ -625,7 +643,8 @@ class LiveVisualizer:
                 "starvation": "starvation share of total loss (%)",
                 "impacts": "impact share of total loss (%)",
                 "natural": "natural mortality (M1) share of total loss (%)",
-                "progress": "Probe of the current policies (biomass, % of start)",
+                "progress": "Long run of the current policies (biomass, % of start)",
+                "viability": "Viability margin per probe (0 = bound, 1 = spawn level / no drift)",
             }
         else:
             self._tab_labels = {
@@ -666,7 +685,7 @@ class LiveVisualizer:
                           if str(self.mode).lower().startswith("infer")
                           else self.reward_window)
         self._series: Dict[str, Dict[str, "_SeriesBuffer | list"]] = {
-            tab: {fid: ([] if tab == "progress" else _SeriesBuffer(maxlen=_series_maxlen))
+            tab: {fid: ([] if tab in _PROBE_TABS else _SeriesBuffer(maxlen=_series_maxlen))
                   for fid in _all_series_ids}
             for tab in self._tabs
         }
@@ -675,6 +694,17 @@ class LiveVisualizer:
         # behind a formatted tab title, so both are drawn in the display
         # language (section 212); the English strings stay as they were.
         self._progress_fmt: tuple = (self._progress_message, {})
+        # The latest probe's viability block (section 223.18), shown as a
+        # second line on the progress tab; None hides it.
+        self._probe_viability = None
+        # The viability tab's V per probe and its extinct marks (section
+        # 223.20): [(step, V clipped to the axis)], [(step, fid)].
+        self._viability_v: list = []
+        self._viability_extinct: list = []
+        self._viability_scores: dict = {}  # step -> V unclipped, None = extinct
+        # The long run's length in library ticks (the probe world is built
+        # at LIBRARY_TICK_HOURS); None until the first probe (223.21).
+        self._long_run_ticks = None
         self._tab_label_fmt: Dict[str, tuple] = {}
         # Back-compat alias: legacy callers (and internal code) treat the
         # ``reward`` tab buffer as the historical _reward_buf. In inference
@@ -996,7 +1026,8 @@ class LiveVisualizer:
         # garanterar därför att plot_w är minst så stor att hela
         # tab-strippen (+ legend + några pixlar marginal) ryms på en rad.
         tab_strip_w = 6 + max(
-            sum(7 * len(i18n.translate(code, t)) + 10 + 4 for t in self._tabs)
+            sum(7 * len(i18n.translate(code, _TAB_NAMES.get(t, t))) + 10 + 4
+                for t in self._tabs)
             for code in i18n.CODES) + 8
         plot_w = max(420, nat_block_w // 2 + self._legend_w,
                      tab_strip_w + self._legend_w + 4)
@@ -1359,6 +1390,64 @@ class LiveVisualizer:
         except Exception as e:
             self._log_once(f"update_series failed: {e!r}")
 
+    def _viability_line(self):
+        """The progress tab's viability line and whether every group
+        passes (section 223.18); None without a scored probe. Built at
+        draw time so it follows the display language."""
+        v = self._probe_viability
+        if not v or v.get("worst") not in v.get("groups", {}):
+            return None
+        years = "-".join(str(y) for y in v.get("years", ()))
+        score = "-" if v.get("score") is None else f"{v['score']:+.2f}"
+        # Most telling first: the panel clips a long line at its edge.
+        text = self._t("Viable {viable}/{present}, V {score}",
+                       viable=v["viable"], present=v["present"], score=score)
+        worst = v["groups"][v["worst"]]
+        why = self._t(_VIABILITY_BINDING.get(worst.get("binding"), "extinct"))
+        name = self._display_name(v["worst"])
+        if worst.get("margin") is None:
+            text += " | " + self._t("worst {name}: {why}", name=name, why=why)
+        else:
+            text += " | " + self._t("worst {name}: {margin} to {why}", name=name, why=why,
+                                    margin=f"{worst['margin']:+.2f}")
+        if (worst.get("years_to_floor") is not None
+                and worst["years_to_floor"] <= _FLOOR_NOTE_MAX_YEARS):
+            text += ", " + self._t("floor in ~{years} yr",
+                                   years=f"{worst['years_to_floor']:.0f}")
+        text += " | " + self._t("long-run years {years}", years=years)
+        return text, v["viable"] == v["present"]
+
+    def _set_viability_history(self, records) -> None:
+        """Fill the viability tab from the probe history (section 223.20).
+
+        One point per probe with a viability block, at its training
+        update: each group's margin, V (the worst group) and an extinct
+        mark, clipped to the tab's fixed axis. Probes without a block
+        (before section 223.18, or without a complete year) are skipped.
+        """
+        if "viability" not in self._series:
+            return
+        lo, hi = _VIABILITY_AXIS
+        series = {fid: [] for fid in self._series["viability"]}
+        self._viability_v, self._viability_extinct, self._viability_scores = [], [], {}
+        for record in records or ():
+            v = record.get("viability")
+            if not v:
+                continue
+            step = int(record.get("step", 0))
+            for fid, g in v.get("groups", {}).items():
+                margin = g.get("margin")
+                if margin is None:
+                    self._viability_extinct.append((step, fid))
+                if fid in series:
+                    series[fid].append(
+                        (step, lo if margin is None else min(hi, max(lo, float(margin)))))
+            score = v.get("score")
+            self._viability_scores[step] = score
+            self._viability_v.append(
+                (step, lo if score is None else min(hi, max(lo, float(score)))))
+        self._series["viability"] = series
+
     def set_progress_message(self, message: str) -> None:
         self._progress_message = message
         self._progress_fmt = (message, {})
@@ -1375,6 +1464,11 @@ class LiveVisualizer:
         """
         if not self.enabled or "progress" not in self._series:
             return
+        self._set_viability_history(records)
+        try:
+            self._long_run_ticks = int((config or {}).get("ticks") or 0) or None
+        except (TypeError, ValueError):
+            self._long_run_ticks = None
         if not latest:
             self._last_frame_ts = 0.0
             self._maybe_render()
@@ -1388,6 +1482,8 @@ class LiveVisualizer:
             self._series["progress"][fid] = [] if values is None else [
                 (day, 100.0 * float(v)) for day, v in enumerate(values)
                 if v is not None]
+        self._probe_viability = (records[-1].get("viability")
+                                 if records else None)
         missing = [self._display_name(fid) for fid in self.fg_ids
                    if fid not in self._ndm_ids and records
                    and records[-1]["survival_ticks"].get(fid) is None]
@@ -5152,6 +5248,15 @@ class LiveVisualizer:
 
     _REWARD_TITLE_PREFIX = "ARS reward per FG"
 
+    def _duration(self, days: float) -> str:
+        """``3 years``, ``1 year``, ``3.8 days`` in the display language."""
+        if days >= 0.95 * DAYS_PER_YEAR:
+            n = days / DAYS_PER_YEAR
+            text = f"{n:.2g}" if abs(n - round(n)) > 0.05 else str(int(round(n)))
+            return self._t("{n} year" if text == "1" else "{n} years", n=text)
+        text = f"{days:.1f}".rstrip("0").rstrip(".") if days < 10 else str(int(round(days)))
+        return self._t("{n} day" if text == "1" else "{n} days", n=text)
+
     def _tab_title(self, tab: str) -> str:
         """The plot title of ``tab`` in the display language.
 
@@ -5162,6 +5267,14 @@ class LiveVisualizer:
         fmt = self._tab_label_fmt.get(tab)
         if fmt is not None:
             return self._t(fmt[0], **fmt[1])
+        if tab == "progress" and self._long_run_ticks:
+            # The horizon next to the one the policies were trained on
+            # (section 223.21); the rollout slider can change the latter.
+            template = "Long run of the current policies, {probe}; trained on {train} rollouts (biomass, % of start)"
+            return self._t(
+                template,
+                probe=self._duration(self._long_run_ticks * LIBRARY_TICK_HOURS / HOURS_PER_DAY),
+                train=self._duration(self.get_neval_ticks() * self.tick_hours / HOURS_PER_DAY))
         label = self._tab_labels.get(tab, tab)
         prefix = self._REWARD_TITLE_PREFIX
         if label.startswith(prefix) and label != prefix:
@@ -5178,8 +5291,9 @@ class LiveVisualizer:
         so NDMs are likewise filtered out there.
         """
         active = self._tabs[self._active_tab]
-        if active == "progress":
-            # The probe (section 223.12) shows every group.
+        if active in _PROBE_TABS:
+            # The probe (section 223.12) and its viability history
+            # (223.20) show every group.
             return [fid for fid in self.plot_fg_ids if not fid.endswith("_rnd")]
         # NDMs are included on the biomass tab and loss tabs because they
         # can lose biomass to predation and impacts without making
@@ -5380,6 +5494,50 @@ class LiveVisualizer:
                 pass
         return path or ""
 
+    def _draw_viability_overlay(self, xmin, xmax, ymin, ymax, px0, py0, pw, ph,
+                                under=False) -> None:
+        """The viability tab's bound, V and extinct marks (section 223.20).
+
+        ``under`` (before the groups' margins): the bound (margin 0) as a
+        brighter line and V - the worst group, i.e. the lower envelope -
+        as a thick band, so the worst group's own line stays visible on
+        it. Otherwise (after them): the bound's label and an extinct group
+        as a cross at the axis floor.
+        """
+        pg = self._pg
+        span_x, span_y = float(xmax - xmin), float(ymax - ymin)
+        if span_x <= 0 or span_y <= 0:
+            return
+
+        def to_px(step, value):
+            fx = (float(step) - xmin) / span_x
+            fy = (ymax - float(value)) / span_y
+            return (int(np.clip(px0 + fx * pw, px0, px0 + pw)),
+                    int(np.clip(py0 + fy * ph, py0, py0 + ph)))
+
+        zero_y = to_px(xmin, 0.0)[1]
+        if under:
+            pg.draw.line(self._screen, (150, 150, 170), (px0, zero_y), (px0 + pw, zero_y), 1)
+            pts = [to_px(step, value) for step, value in self._viability_v
+                   if xmin <= step <= xmax]
+            if len(pts) > 1:
+                pg.draw.lines(self._screen, (215, 215, 225), False, pts, 5)
+            for pt in pts:
+                pg.draw.circle(self._screen, (215, 215, 225), pt, 4)
+            return
+        label = self._font.render(self._t("bound"), True, (150, 150, 170))
+        self._screen.blit(label, (px0 + pw - label.get_width() - 2, zero_y - 14))
+        for step, fid in self._viability_extinct:
+            if not (xmin <= step <= xmax) or not self._plot_enabled.get(fid, True):
+                continue
+            if self._solo is not None and self._solo != fid:
+                continue
+            cx, cy = to_px(step, ymin)
+            col = self._fg_colour.get(fid, (220, 150, 130))
+            cy -= 4
+            pg.draw.line(self._screen, col, (cx - 4, cy - 4), (cx + 4, cy + 4), 2)
+            pg.draw.line(self._screen, col, (cx - 4, cy + 4), (cx + 4, cy - 4), 2)
+
     def _draw_plot(self) -> None:
         pg = self._pg
         x, y, w, h = self._plot_rect
@@ -5392,12 +5550,14 @@ class LiveVisualizer:
         active = self._tabs[self._active_tab]
         buffers = self._series[active]
         progress = active == "progress"
+        viability = active == "viability"
+        probe_tab = progress or viability
         base_label = self._tab_title(active)
         # The biomass tab only leaves auto-scaling when the user pins the
         # display scale; log scaling is never applied to it.
         biomass_fixed_axis = (active == "biomass"
                               and self._biomass_scale_manual)
-        use_log_plot = bool(self._log_plot and active not in ("biomass",))
+        use_log_plot = bool(self._log_plot and active not in _LINEAR_TABS)
         if biomass_fixed_axis:
             ylabel = self._t(
                 "{label}  display max = {pct}%", label=base_label,
@@ -5407,7 +5567,7 @@ class LiveVisualizer:
         elif progress and use_log_plot:
             # R toggles a log axis on the probe too (section 223.12): the
             # plankton's seasonal peaks span three decades.
-            ylabel = self._t("probe biomass (log10 of % of start)")
+            ylabel = self._t("long-run biomass (log10 of % of start)")
         else:
             ylabel = base_label
 
@@ -5428,7 +5588,7 @@ class LiveVisualizer:
         for i, tab in enumerate(self._tabs):
             is_active = (i == self._active_tab)
             col = (240, 240, 250) if is_active else (140, 140, 150)
-            surf = self._font.render(self._t(tab), True, col)
+            surf = self._font.render(self._t(_TAB_NAMES.get(tab, tab)), True, col)
             tw = surf.get_width() + 10
             rect = (tab_x, tab_y, tw, 14)
             if is_active:
@@ -5443,11 +5603,17 @@ class LiveVisualizer:
         title_y = y + strip_h + 2
         tsurf = self._font.render(ylabel, True, (200, 200, 210))
         self._screen.blit(tsurf, (x + 6, title_y))
-        if progress:
+        if probe_tab:
             detail = self._font.render(
                 self._t(self._progress_fmt[0], **self._progress_fmt[1]),
                 True, (160, 160, 170))
             self._screen.blit(detail, (x + 6, title_y + 14))
+            line = self._viability_line()
+            if line is not None:
+                text, ok = line
+                surf = self._font.render(
+                    text, True, (160, 160, 170) if ok else (220, 150, 130))
+                self._screen.blit(surf, (x + 6, title_y + 28))
 
         active_ids = self._active_plot_ids()
 
@@ -5459,13 +5625,15 @@ class LiveVisualizer:
         plot_pad_l = 36
         plot_pad_r = getattr(self, "_legend_w", 110)  # room for legend
         plot_pad_t = strip_h + 20  # tab strip (variable rows) + ylabel line
-        if progress:
+        if probe_tab:
             plot_pad_t += 16
+            if self._probe_viability:
+                plot_pad_t += 14
         # Reservera ~14 px längst ned för horisontell scrollbar. Används
         # i både inference- och train-läget så att användaren kan
         # scrolla tillbaka i graferna även under träning (och gå live
         # igen via Live-knappen eller genom att dra thumb till högerkant).
-        scroll_bar_h = 0 if progress else 12
+        scroll_bar_h = 0 if probe_tab else 12
         # Save-knappen (inference) ritas under scrollbaren; reservera 22 px.
         inference = str(self.mode).lower().startswith("infer")
         save_btn_h = 22 if inference else 0
@@ -5475,7 +5643,7 @@ class LiveVisualizer:
         band_h = _CAL_BAND_H if cal_cfg else 0
         plot_pad_b = 16 + band_h + (scroll_bar_h + 4 if scroll_bar_h else 0) \
             + (save_btn_h + 4 if save_btn_h else 0)
-        if progress:
+        if probe_tab:
             plot_pad_b = 40
         px0 = x + plot_pad_l
         py0 = y + plot_pad_t
@@ -5533,6 +5701,9 @@ class LiveVisualizer:
             if biomass_fixed_axis:
                 ymin = 0.0
                 ymax = max(1.0, 100.0 * float(self._biomass_display_scale))
+            elif viability:
+                # Fixed (section 223.20): the bound stays where it is.
+                ymin, ymax = _VIABILITY_AXIS
             else:
                 # Y-range: bara från punkter inom det synliga x-intervallet så
                 # skalan följer det som faktiskt syns i fönstret.
@@ -5594,6 +5765,10 @@ class LiveVisualizer:
                 self._draw_calendar_band(cal_cfg, xmin, xmax,
                                          px0, py0, pw, ph, py0 + ph + 3)
 
+            if viability:
+                self._draw_viability_overlay(xmin, xmax, ymin, ymax, px0, py0, pw, ph,
+                                             under=True)
+
             # Plot lines. Klipp till synligt x-fönster med en padding-punkt
             # på varje sida så linjesegment som skär fönstrets kanter
             # fortfarande når hela vägen ut.
@@ -5603,7 +5778,7 @@ class LiveVisualizer:
                 if not self._plot_enabled.get(fid, True):
                     continue
                 buf = buffers[fid]
-                if not buf or (len(buf) < 2 and not progress):
+                if not buf or (len(buf) < 2 and not probe_tab):
                     continue
                 steps, vals, _sorted = _series_arrays(buf)
                 n_buf = len(steps)
@@ -5646,12 +5821,26 @@ class LiveVisualizer:
                 if _sorted and len(xs) > 2 * pw:
                     xs, ys = _decimate_polyline(xs, ys)
                 pts = list(zip(xs.tolist(), ys.tolist()))
+                if viability:
+                    # Probes are sparse: a dot on each one.
+                    for pt in pts:
+                        pg.draw.circle(self._screen, self._fg_colour[fid], pt, 2)
                 if len(pts) < 2:
                     continue
                 try:
                     pg.draw.aalines(self._screen, self._fg_colour[fid], False, pts)
                 except Exception:
                     pg.draw.lines(self._screen, self._fg_colour[fid], False, pts, 1)
+
+            if viability:
+                self._draw_viability_overlay(xmin, xmax, ymin, ymax, px0, py0, pw, ph)
+                # The training updates at the ends of the axis.
+                for value, anchor in ((xmin, 0.0), (xmax, 1.0)):
+                    label = self._font.render(str(int(round(value))), True, (160, 160, 170))
+                    lx = px0 + int(anchor * pw) - int(anchor * label.get_width())
+                    self._screen.blit(label, (lx, py0 + ph + 5))
+                label = self._font.render(self._t("Training update"), True, (200, 200, 210))
+                self._screen.blit(label, (px0 + (pw - label.get_width()) // 2, py0 + ph + 21))
 
             if progress:
                 # Year marks under the probe (x is the probe day).
@@ -5666,7 +5855,7 @@ class LiveVisualizer:
                         label = self._font.render(str(year), True, (160, 160, 170))
                         self._screen.blit(label, (mx - label.get_width() // 2, py0 + ph + 5))
                     year += 1
-                label = self._font.render(self._t("Probe year (inference start = 0)"),
+                label = self._font.render(self._t("Long-run year (inference start = 0)"),
                                           True, (200, 200, 210))
                 self._screen.blit(label, (px0 + (pw - label.get_width()) // 2, py0 + ph + 21))
 
@@ -5954,6 +6143,12 @@ class LiveVisualizer:
         frac_x = (mx - px0) / float(pw)
         frac_x = max(0.0, min(1.0, frac_x))
         tick_at_mouse = xmin + frac_x * (xmax - xmin)
+        viability = self._tabs[self._active_tab] == "viability"
+        if viability and self._viability_v:
+            # Probes are discrete: read the nearest one, not a blend.
+            tick_at_mouse = min((step for step, _v in self._viability_v),
+                                key=lambda step: abs(step - tick_at_mouse))
+            mx = px0 + int((tick_at_mouse - xmin) / (xmax - xmin) * pw)
 
         # Samla (fid, colour, value) för alla aktiva serier med data.
         entries: list = []
@@ -6006,7 +6201,7 @@ class LiveVisualizer:
         # Rita en liten cirkelmarkör per serie vid dess (interpolerade) y.
         for fid, col, v in entries:
             v_plot = v
-            if self._log_plot and self._tabs[self._active_tab] not in ("biomass",):
+            if self._log_plot and self._tabs[self._active_tab] not in _LINEAR_TABS:
                 v_plot = float(np.sign(v_plot) * np.log10(abs(v_plot) + 1e-12))
             if ymax - ymin < 1e-12:
                 continue
@@ -6021,7 +6216,7 @@ class LiveVisualizer:
 
         # Bygg tooltip-text: rad 1 = tick, sedan en rad per serie.
         progress = self._tabs[self._active_tab] == "progress"
-        head = self._t("day {n}" if progress else "tick {n}",
+        head = self._t("day {n}" if progress else "update {n}" if viability else "tick {n}",
                        n=int(round(tick_at_mouse)))
         # Same instant as the calendar band under the plot (section 155).
         if (self._daylight_cfg and not progress
@@ -6037,14 +6232,26 @@ class LiveVisualizer:
         # labels are log10) the raw values get three significant digits
         # of the largest one instead.
         if (self._log_plot
-                and self._tabs[self._active_tab] not in ("biomass",)):
+                and self._tabs[self._active_tab] not in _LINEAR_TABS):
             big = max(abs(e[2]) for e in entries_sorted)
             step = 10.0 ** (np.floor(np.log10(big)) - 1) if big > 0 else 0.0
         else:
             step = (ymax - ymin) / 4.0
         texts = _axis_labels([e[2] for e in entries_sorted], step)
+        if viability:
+            # Margins read to two decimals; the axis clips below -1.
+            texts = ["<= -1" if e[2] <= _VIABILITY_AXIS[0] else f"{e[2]:+.2f}"
+                     for e in entries_sorted]
+        if viability and any(step == tick_at_mouse for step, _v in self._viability_v):
+            score = self._viability_scores.get(tick_at_mouse)
+            text = (self._t("extinct") if score is None
+                    else "<= -1" if score <= _VIABILITY_AXIS[0] else f"{score:+.2f}")
+            lines.append((f"V: {text}", (235, 235, 245)))
+            extinct = {fid for step, fid in self._viability_extinct if step == tick_at_mouse}
         for (fid, col, _v), txt in zip(entries_sorted, texts):
             name = self._display_name(fid)
+            if viability and fid in extinct:
+                txt = self._t("extinct")
             lines.append((f"{name}: {txt}", col))
         # A box wider than the room on either side (long group names in a
         # narrow plot) is held inside the plot area instead of spilling

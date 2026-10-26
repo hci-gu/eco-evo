@@ -215,11 +215,13 @@ class GPUTrainingVisualizer:
             print(f"[viz] Probe failed: {error}; viewer disabled, training continues.", flush=True)
             self._disable()
 
-    def close(self):
+    def close(self, cancel=False):
         if self.executor is not None:
             self.executor.shutdown(wait=True)
             self.executor = None
         if self.progress is not None and hasattr(self.progress, "wait"):
-            # A three-year probe still running in its own process (223.12).
-            self.progress.wait()
+            # A three-year probe still running in its own process (223.12):
+            # recorded at the end of training, stopped on ``cancel`` (a bool
+            # or a callable, see LiveTrainingProgress.wait).
+            self.progress.wait(cancel=cancel)
         self._disable()

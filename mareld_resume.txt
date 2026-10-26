@@ -20125,3 +20125,90 @@ remain open exactly as described in 71.9 / 71.11.
       pf21 rk8 ha2%"), else drops the smallest shares with a trailing
       "+"; measured with the panel font, so wider panels keep the old
       form. tests/test_viz_abbrev.py (+3).
+223.18 Viability score on the progress probe (user, 2026-10-26). Every
+      probe now scores VIABILITY.md section 1 on the trained policies
+      (training_progress.probe_viability, in run_probe before _record
+      drops the trajectory). Windows are whole probe years from the
+      daily series (sample i = tick i*every_ticks, index 0 = start): eq
+      = mean of the last complete year, prev = the year before, so the
+      season cancels and year 1 (transient from the inference start)
+      is out of a three-year probe. Survival = the whole series > 0
+      (not survival_ticks, which count the training --biomass-bounds).
+      Floor 0.10, ceiling 10, max_drift 2 from ViabilityCriterion.
+      Every group present at spawn is scored, non decision makers too.
+      Per group a log10 margin to the nearest bound, normalised per
+      condition (1 at spawn / no drift, 0 at the bound, < 0 fails;
+      extinct = no margin, binding "extinct"); V = the worst group,
+      since the criterion holds for each. A margin, not a distance to
+      the start: 0.23x spawn is a calibration fact. years_to_floor
+      extrapolates a declining group's year-on-year ratio (indicative).
+      probe.jsonl keeps the block with the annual means (re-scorable);
+      the terminal prints a table per probe; the tab a second line
+      "Viable n/m, V +x.xx | worst <fg>: +m to <bound>[, floor in ~N
+      yr] | probe years 2-3" (sv/it in i18n; the margin sits next to
+      the bound so "worst X: floor" is not read as "below the floor").
+      A floor horizon over 50 yr (10x the rig's 5) is not shown. On
+      fix77's update-190 probe: 12/12 viable, V +0.16 (phytoplankton
+      at 0.14x start nearest the floor), benthivores bound by drift
+      (1.38, 0.55 -> 0.40, floor in ~4 yr). One seed and three years: a
+      progress measure, not a verdict, and never a reward or tuning
+      target. Tests: tests/test_training_progress.py (+5),
+      tests/test_viz_i18n.py (+1).
+223.19 Ctrl+C without tracebacks from the probe worker (user, 2026-10-26:
+      "no traces on Ctrl+C"). The terminal sends SIGINT to the whole
+      process group, so the live probe's spawn worker died with a
+      KeyboardInterrupt traceback (idle in call_queue.get, or mid-probe).
+      Now the worker ignores SIGINT: the parent sets SIG_IGN around the
+      submit that spawns it (_sigint_ignored_by_children; an ignored
+      signal survives exec and Python keeps it - the initializer alone
+      left the first seconds of torch imports exposed, the test caught
+      it), plus an _ignore_sigint initializer. The trainer decides:
+      LiveTrainingProgress.wait(cancel) records a running probe at the
+      end of a finished run, and stops it (terminate, "[progress] probe
+      N (update S) cancelled") when cancel is true - a bool, or a
+      callable polled every 0.5 s, since train_gpu's handler only sets
+      stop_requested (visual.close(cancel=lambda: stop_requested or not
+      finished), handlers still restored after it so a Ctrl+C cannot
+      skip the checkpoint). A KeyboardInterrupt while waiting cancels
+      too. train.py's interrupt path calls wait(cancel=True); before, it
+      never stopped the worker. Verified end to end (train_gpu: worker
+      starting, mid-probe, idle; train.py mid-probe): exit 0, no
+      traceback, checkpoint saved. tests/test_training_progress.py (+2).
+223.20 Viability over time (user, 2026-10-26): a "viability" tab after
+      "progress" in the training viewer and a tab of that name in
+      plots.html. x = training update (the probe's step), y = each
+      group's viability margin on a FIXED axis [-1, 1] (0 = the bound,
+      drawn brighter with a label; 1 = spawn level / no drift) so the
+      bound never moves; below -1 is drawn at -1. V (the worst group)
+      is a thick light band drawn UNDER the group lines (the worst
+      group's own line stays visible on it); an extinct group is a
+      cross in its colour at the axis floor. Dots on every probe
+      (probes are sparse); the hover snaps to the nearest probe and
+      lists V and every margin (two decimals, "extinct", "<= -1").
+      Data: the probe history (records from probe.jsonl, reloaded on
+      --resume, so the tab is filled at once); probes before 223.18
+      have no block and are skipped (their year-end ratios are single
+      days, not annual means - not re-scorable). The header lines are
+      the progress tab's. R's log axis never applies to the tab.
+      plots.html reads <run>/progress/probe.jsonl (the default
+      --plot-dir), same colours as its other tabs, fixed y range, the
+      bound as a dotted line, hover with margin, binding bound and
+      eq/spawn. pygame_viz: _PROBE_TABS, _set_viability_history,
+      _draw_viability_overlay; tools/biomass_html.py:
+      _viability_metric. Tests: tests/test_viz_i18n.py (+2).
+223.21 "progress" tab renamed "long run" (user, 2026-10-27). The tab shows
+      ONE run of the frozen policies (days on x), not training progress -
+      the viability tab is that. Display only (pygame_viz _TAB_NAMES):
+      the tab id, <run>/progress, probe.jsonl, training_progress.py and
+      --plot-dir stay, so existing runs resume. The title names the two
+      horizons: "Long run of the current policies, 3 years; trained on
+      1 year rollouts (biomass, % of start)" - the probe length from its
+      config (library ticks, LIBRARY_TICK_HOURS) and the training
+      rollout from the viewer's live rollout slider (get_neval_ticks x
+      the run's tick_hours), so it follows a slider change; e.g. fix77
+      trains on 1-year rollouts and is judged over 3, i.e. beyond its
+      horizon. "Extrapolation" was rejected: it reads as a trend
+      calculation and collides with "floor in ~N yr". x label
+      "Long-run year", viability line "long-run years 2-3"; sv
+      "langkorning", it "lungo periodo". The terminal keeps "probe".
+      tests/test_viz_i18n.py (+1).

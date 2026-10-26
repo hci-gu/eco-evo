@@ -388,6 +388,13 @@ gadoids reaches 1.35-1.53 vs 3.2, on herring 0.06-0.26 vs 0.55-0.59, on
 zooplankton 0.16 vs 0.72 (the net rests ~78 % of the zooplankton mass,
 every rule eats with all of it). Resume section 169.7-169.9.
 
+Since section 223.18 the training probe (three years, `lib/runners/
+training_progress.py`, `probe_viability`) scores this criterion on
+trained policies every probe, with the stationarity test on whole-year
+means (year 3 vs year 2) - cycle-tolerant for the annual cycle, not for
+a multi-year predator-prey cycle. One seed and a three-year horizon, so
+it tracks training; it does not decide.
+
 Not built yet: the policy arm as a deciding arm, with several seeds and
 the cycle-tolerant stationarity test of section 1. Until then a verdict
 on trained policies is taken by hand from runs like the one above.

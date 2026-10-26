@@ -5,8 +5,10 @@ the current policies plays out over three years (``PROBE_YEARS``) of the
 inference world: every group's biomass as a share of its start, sampled
 once a day. The live viewer runs the probe in a separate process, so
 training goes on meanwhile. Each probe also keeps the decision makers'
-survival ticks (inside ``--biomass-bounds``) and every group's end ratio
-per year in ``<run>/progress/probe.jsonl``; the latest trajectory is in
+survival ticks (inside ``--biomass-bounds``), every group's end ratio
+per year and the viability criterion of VIABILITY.md section 1 on whole
+probe years (``probe_viability``, section 223.18) in
+``<run>/progress/probe.jsonl``; the latest trajectory is in
 ``probe_latest.json``.
 """
 
@@ -115,6 +117,125 @@ def measure_survival(env, ticks, lower, upper, pump_events=None):
     }
 
 
+def probe_viability(series, every_ticks, ticks_per_year_, criterion=None):
+    """The viability criterion of VIABILITY.md section 1 on a probe (223.18).
+
+    ``series`` is ``run_probe``'s daily trajectory (biomass / start, one
+    sample per ``every_ticks``, index 0 = the start). The windows are
+    whole probe years, so the season cancels: ``eq`` is the mean of the
+    last complete year, ``prev`` that of the year before (with three
+    years, year 1 - the transient from the inference start - is out).
+    Survival is the whole series staying above zero. Floor, ceiling and
+    max_drift are the rig's (``ViabilityCriterion``).
+
+    Each present group gets a margin to the nearest bound in log10,
+    normalised per condition to 1 at spawn level / no drift and 0 at the
+    bound (negative = fails); ``score`` is the smallest over the groups,
+    because the criterion holds for every group. A margin is not a
+    distance to the start: an equilibrium at 0.23x spawn is a calibration
+    fact (VIABILITY.md section 1). ``years_to_floor`` extrapolates a
+    declining group's year-on-year ratio to the floor - indicative only
+    (two annual means, one seed). A progress diagnostic, never a reward.
+
+    Returns None when the probe holds no complete year.
+    """
+    from lib.diagnostics.viability import ViabilityCriterion
+    c = criterion or ViabilityCriterion()
+    every, per_year = max(1, int(every_ticks)), max(1, int(ticks_per_year_))
+    some = next((v for v in series.values() if v is not None), None)
+    if some is None:
+        return None
+    samples = len(some)
+    years = []
+    k = 1
+    # Sample i lies at tick i * every; year k is (k-1)*per_year < tick <= k*per_year.
+    while (samples - 1) * every >= k * per_year:
+        start = (k - 1) * per_year // every + 1
+        end = k * per_year // every + 1
+        years.append((start, end))
+        k += 1
+    if not years:
+        return None
+    groups = {}
+    for f, values in series.items():
+        if values is None or not values or values[0] is None:
+            continue  # absent at spawn: outside the criterion
+        data = np.array([np.nan if v is None else v for v in values], dtype=np.float64)
+        means = [float(np.mean(data[a:b])) for a, b in years]
+        eq = means[-1]
+        prev = means[-2] if len(means) > 1 else None
+        low = float(np.min(data))
+        g = dict(annual_mean=[m if math.isfinite(m) else None for m in means],
+                 min=low if math.isfinite(low) else None,
+                 drift=None, margin=None, binding=None, viable=False,
+                 years_to_floor=None)
+        if not (np.isfinite(data).all() and low > 0 and eq > 0):
+            g["binding"] = "extinct"
+            groups[f] = g
+            continue
+        margins = {"floor": math.log10(eq / c.floor) / math.log10(1.0 / c.floor),
+                   "ceiling": math.log10(c.ceiling / eq) / math.log10(c.ceiling)}
+        if prev is not None and prev > 0:
+            change = abs(math.log10(eq / prev))
+            g["drift"] = 10.0 ** change
+            margins["drift"] = (math.log10(c.max_drift) - change) / math.log10(c.max_drift)
+            if c.floor < eq < prev:
+                g["years_to_floor"] = math.log(eq / c.floor) / math.log(prev / eq)
+        binding = min(margins, key=margins.get)
+        g.update(margin=margins[binding], binding=binding,
+                 viable=margins[binding] >= 0.0)
+        groups[f] = g
+    if not groups:
+        return None
+    worst = min(groups, key=lambda f: (-math.inf if groups[f]["margin"] is None
+                                       else groups[f]["margin"]))
+    return dict(years=[len(years) - 1, len(years)] if len(years) > 1 else [len(years)],
+                floor=c.floor, ceiling=c.ceiling, max_drift=c.max_drift,
+                present=len(groups), viable=sum(g["viable"] for g in groups.values()),
+                score=groups[worst]["margin"], worst=worst, groups=groups)
+
+
+# A floor horizon beyond this is not shown: two annual means a few per
+# cent apart extrapolate to anything (ten times the rig's five years).
+FLOOR_NOTE_MAX_YEARS = 50.0
+
+
+def worst_label(viability):
+    """``<fg> +0.16 to floor`` (``<fg> extinct``): the worst group's margin."""
+    g = viability["groups"][viability["worst"]]
+    if g["margin"] is None:
+        return f"{viability['worst']} {g['binding']}"
+    return f"{viability['worst']} {g['margin']:+.2f} to {g['binding']}"
+
+
+def format_viability(viability, step=None, number=None):
+    """The probe's viability block as terminal lines (English)."""
+    if not viability:
+        return ["[progress] viability: no complete probe year"]
+    v = viability
+    score = "extinct" if v["score"] is None else f"{v['score']:+.2f}"
+    yrs = "-".join(str(y) for y in v["years"])
+    where = "" if number is None else f" probe={number}, step={step}:"
+    lines = [f"[progress] viability{where} {v['viable']}/{v['present']} viable, "
+             f"V={score} (worst: {worst_label(v)}; probe years {yrs})"]
+    width = max(len(f) for f in v["groups"])
+    n = max(len(g["annual_mean"]) for g in v["groups"].values())
+    head = "".join(f"{'y' + str(i + 1):>7}" for i in range(n))
+    lines.append(f"  {'fg':<{width}}{head}  drift     min  margin  bound    note")
+
+    for f, g in v["groups"].items():
+        means = "".join(f"{'-' if m is None else format(m, '.3g'):>7}" for m in g["annual_mean"])
+        note = "FAIL" if not g["viable"] else ""
+        if g["years_to_floor"] is not None and g["years_to_floor"] <= FLOOR_NOTE_MAX_YEARS:
+            note = (note + ", " if note else "") + f"floor in ~{g['years_to_floor']:.0f} yr"
+        margin = "-" if g["margin"] is None else f"{g['margin']:+.2f}"
+        drift = "-" if g["drift"] is None else f"{g['drift']:.2f}"
+        low = "-" if g["min"] is None else f"{g['min']:.3g}"
+        lines.append(f"  {f:<{width}}{means}  {drift:>5}  {low:>6}  {margin:>6}  "
+                     f"{g['binding']:<7}  {note}".rstrip())
+    return lines
+
+
 def run_probe(env, ticks, lower, upper, pump_events=None):
     """Run ``ticks`` inference ticks and record the probe (section 223.12).
 
@@ -169,8 +290,40 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
         "initial_biomass": {f: initial[f] for f in dm_ids},
         "ticks_run": ticks_run,
         "year_end_ratio": years,
+        # Computed here, before _record drops the trajectory, so the
+        # history keeps the annual means it was scored on (section 223.18).
+        "viability": probe_viability(series, every, per_year),
         "trajectory": {"every_ticks": every, "ticks_per_year": per_year, "series": series},
     }
+
+
+def _ignore_sigint():
+    """Probe worker initializer: Ctrl+C reaches the whole process group,
+    and the worker would die with a traceback (blocked in its call queue
+    or mid-probe). The trainer decides instead: it records or cancels
+    the probe (``LiveTrainingProgress.wait``)."""
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
+@contextmanager
+def _sigint_ignored_by_children():
+    """Ignore SIGINT while a worker is spawned (main thread only).
+
+    The disposition survives exec and Python keeps an ignored SIGINT, so
+    the worker is covered from its first instruction - the initializer
+    only runs after several seconds of imports (torch).
+    """
+    import signal
+    import threading
+    if threading.current_thread() is not threading.main_thread():
+        yield
+        return
+    previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, previous)
 
 
 def _probe_in_process(config, seed, temperature, ticks, lower, upper,
@@ -370,6 +523,8 @@ class TrainingProgress:
         trajectory = result.pop("trajectory", None)
         self.records.append(dict(evaluation=number, step=step,
                                  evaluation_seconds=seconds, **result))
+        if "viability" in result:
+            print("\n".join(format_viability(result["viability"], step, number)), flush=True)
         # Replace complete files atomically, so readers never see a
         # partially written history.
         temporary = self.history.with_suffix(".jsonl.tmp")
@@ -434,9 +589,15 @@ class LiveTrainingProgress(TrainingProgress):
         future, number, step, started = self._pending
         if not block and not future.done():
             return
+        try:
+            # A Ctrl+C here leaves the probe pending, so wait() cancels it.
+            result = future.result()
+        except Exception as error:
+            self._pending = None
+            print(f"[progress] WARNING: probe failed at step {step}: {error}", flush=True)
+            return
         self._pending = None
         try:
-            result = future.result()
             ticks_run = result["ticks_run"]
             self._record(number, step, time.perf_counter() - started, result)
             print(f"[progress] probe {number} (update {step}) done: "
@@ -449,15 +610,17 @@ class LiveTrainingProgress(TrainingProgress):
         import multiprocessing
         if self._pool is None:
             self._pool = concurrent.futures.ProcessPoolExecutor(
-                max_workers=1, mp_context=multiprocessing.get_context("spawn"))
+                max_workers=1, mp_context=multiprocessing.get_context("spawn"),
+                initializer=_ignore_sigint)
         env = copy.deepcopy(self.template)
         install_current_policies(env, trainer, self.backend)
         obs_mean = getattr(env, "obs_mean", None)
         obs_var = getattr(env, "obs_var", None)
         number = len(self.records) + 1
-        future = self._pool.submit(_probe_in_process, self.config_ecology(), self.seed,
-                                   self.temperature, self.ticks, self.lower, self.upper,
-                                   env.policies, obs_mean, obs_var, self.worker_threads)
+        with _sigint_ignored_by_children():  # the first submit spawns the worker
+            future = self._pool.submit(_probe_in_process, self.config_ecology(), self.seed,
+                                       self.temperature, self.ticks, self.lower, self.upper,
+                                       env.policies, obs_mean, obs_var, self.worker_threads)
         self._pending = (future, number, step, time.perf_counter())
         print(f"[progress] probe={number}, step={step}: {self.ticks} ticks submitted "
               f"(separate process)", flush=True)
@@ -491,14 +654,45 @@ class LiveTrainingProgress(TrainingProgress):
             self.visualizer.set_progress_message("Progress unavailable; see terminal for details")
             print(f"[progress] Live progress disabled: {error}", flush=True)
 
-    def wait(self):
-        """Record a running probe and stop the worker (end of training)."""
+    def wait(self, cancel=False):
+        """Stop the worker at the end of training.
+
+        A running probe is waited for and recorded. ``cancel`` - a bool or
+        a callable polled while waiting (train_gpu's Ctrl+C only sets a
+        flag) - stops it instead, as does a KeyboardInterrupt; either way
+        without a traceback.
+        """
+        import concurrent.futures
+        stop = cancel if callable(cancel) else (lambda: cancel)
         try:
-            self._collect(block=True)
+            if self._pending is not None and not stop():
+                future = self._pending[0]
+                print(f"[progress] waiting for probe {self._pending[1]} "
+                      f"(Ctrl+C cancels it)...", flush=True)
+                while not future.done() and not stop():
+                    concurrent.futures.wait([future], timeout=0.5)
+                if future.done():
+                    self._collect(block=True)
+        except KeyboardInterrupt:
+            pass
         finally:
-            if self._pool is not None:
-                self._pool.shutdown(wait=False, cancel_futures=True)
-                self._pool = None
+            self._stop_worker()
+
+    def _stop_worker(self):
+        if self._pool is None:
+            return
+        pending, self._pending = self._pending, None
+        # The worker ignores SIGINT, so a running probe must be ended here,
+        # or the interpreter would wait for it at exit.
+        processes = list((getattr(self._pool, "_processes", None) or {}).values())
+        self._pool.shutdown(wait=False, cancel_futures=True)
+        self._pool = None
+        if pending is not None:
+            for process in processes:
+                process.terminate()
+            for process in processes:
+                process.join(timeout=5)
+            print(f"[progress] probe {pending[1]} (update {pending[2]}) cancelled", flush=True)
 
 
 def probe_due(viz, step, first=False):

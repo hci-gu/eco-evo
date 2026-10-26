@@ -22,6 +22,11 @@ plot panel:
     click-toggleable (same UX as the live plot's per-FG checkboxes).
   * X-axis = sample index across the file (each JSONL line is one
     probe rollout, so this corresponds 1:1 to live ``iter``).
+  * A ``viability`` tab (section 223.20) when ``<run_dir>/progress/
+    probe.jsonl`` holds scored probes: each group's viability margin per
+    probe (0 = the bound, 1 = spawn level / no drift), V (the worst group)
+    as a thick line and extinct groups as crosses, x = training update -
+    the live viewer's viability tab.
 
 The script has no third-party Python deps — Plotly is loaded purely
 client-side, so this runs on the same vanilla Python the project
@@ -319,6 +324,119 @@ def _reward_title_from_meta(meta: dict) -> str:
     return f"ARS reward per FG — total-energy ({kind})"
 
 
+# The viability tab's fixed axis (lib/viz/pygame_viz.py _VIABILITY_AXIS):
+# margins are <= 1; anything lower, and an extinct group, sits at -1.
+_VIABILITY_AXIS = (-1.0, 1.0)
+
+
+def _load_probe_viability(path: str) -> List[dict]:
+    """Probe records with a viability block (section 223.18), by step."""
+    if not os.path.isfile(path):
+        return []
+    out = []
+    with open(path) as stream:
+        for line in stream:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(record.get("viability"), dict):
+                out.append(record)
+    return sorted(out, key=lambda r: r.get("step", 0))
+
+
+def _viability_metric(probes: List[dict],
+                      colour_index: Dict[str, int]) -> dict | None:
+    """The viability tab (section 223.20) from scored probe records."""
+    if not probes:
+        return None
+    lo, hi = _VIABILITY_AXIS
+
+    def clip(value):
+        return None if value is None else min(hi, max(lo, float(value)))
+
+    steps = [int(r.get("step", 0)) for r in probes]
+    fg_ids: List[str] = []
+    for r in probes:
+        for fid in r["viability"].get("groups", {}):
+            if fid not in fg_ids:
+                fg_ids.append(fid)
+    for fid in fg_ids:
+        if fid not in colour_index:
+            colour_index[fid] = len(colour_index)
+    traces: List[dict] = []
+    for fid in fg_ids:
+        ys, info = [], []
+        for r in probes:
+            g = r["viability"].get("groups", {}).get(fid)
+            margin = None if g is None else g.get("margin")
+            ys.append(clip(margin))
+            if g is None:
+                info.append(["-", "-", "-"])
+            else:
+                means = g.get("annual_mean") or [None]
+                eq = means[-1]
+                info.append(["extinct" if margin is None else f"{margin:+.2f}",
+                             g.get("binding") or "-",
+                             "-" if eq is None else f"{eq:.3g}"])
+        traces.append({
+            "x": steps, "y": ys, "customdata": info, "name": fid,
+            "type": "scatter", "mode": "lines+markers",
+            "legendgroup": fid,
+            "line": {"width": 1.6, "color": _fg_colour_for(colour_index[fid])},
+            "marker": {"size": 4},
+            "hovertemplate": (f"<b>{fid}</b><br>update=%{{x}}<br>"
+                              "margin=%{customdata[0]} (to %{customdata[1]})<br>"
+                              "eq/spawn=%{customdata[2]}<extra></extra>"),
+        })
+    worst = [r["viability"].get("worst") or "-" for r in probes]
+    scores = [r["viability"].get("score") for r in probes]
+    passed = [f"{r['viability'].get('viable')}/{r['viability'].get('present')}"
+              for r in probes]
+    # Drawn first so the worst group's own line stays visible on it.
+    traces.insert(0, {
+        "x": steps, "y": [lo if v is None else clip(v) for v in scores],
+        "customdata": [["extinct" if v is None else f"{v:+.2f}", w, p]
+                       for v, w, p in zip(scores, worst, passed)],
+        "name": "V (worst group)", "type": "scatter", "mode": "lines+markers",
+        "line": {"width": 5, "color": "rgba(215,215,225,0.85)"},
+        "marker": {"size": 7},
+        "hovertemplate": ("<b>V</b> %{customdata[0]}<br>update=%{x}<br>"
+                          "worst: %{customdata[1]}<br>viable %{customdata[2]}"
+                          "<extra></extra>"),
+    })
+    xs, cols, names = [], [], []
+    for r in probes:
+        for fid, g in r["viability"].get("groups", {}).items():
+            if g.get("margin") is None:
+                xs.append(int(r.get("step", 0)))
+                cols.append(_fg_colour_for(colour_index[fid]))
+                names.append(fid)
+    if xs:
+        traces.append({
+            "x": xs, "y": [lo] * len(xs), "text": names, "name": "extinct",
+            "type": "scatter", "mode": "markers",
+            "marker": {"symbol": "x", "size": 10, "color": cols},
+            "hovertemplate": "<b>%{text}</b> extinct<br>update=%{x}<extra></extra>",
+        })
+    last = probes[-1]["viability"]
+    label = ("Viability margin per probe (0 = bound, 1 = spawn level / no drift); "
+             f"latest: {last.get('viable')}/{last.get('present')} viable, worst "
+             f"{last.get('worst')}")
+    return {
+        "key": "viability", "label": label, "fg_ids": fg_ids, "traces": traces,
+        "xaxis_title": "training update",
+        "yaxis_title": "margin",
+        "yaxis_range": [lo - 0.05, hi + 0.05],
+        "shapes": [{"type": "line", "xref": "paper", "x0": 0, "x1": 1,
+                    "y0": 0, "y1": 0,
+                    "line": {"color": "#9696aa", "width": 1, "dash": "dot"}}],
+    }
+
+
 def _build_html(run_dir: str, records: List[dict],
                 mode: str = "train",
                 meta: dict | None = None) -> str:
@@ -414,6 +532,10 @@ def _build_html(run_dir: str, records: List[dict],
                                if is_infer else label)
         metric_blocks.append((tab_key, effective_label, fg_ids, traces))
 
+    viability = (None if is_infer else _viability_metric(
+        _load_probe_viability(os.path.join(run_dir, "progress", "probe.jsonl")),
+        colour_index))
+
     if not metric_blocks:
         raise SystemExit("No known metric fields found in biomass.jsonl "
                          "(expected one of: ratio, log10_ratio, "
@@ -437,7 +559,7 @@ def _build_html(run_dir: str, records: List[dict],
         "metrics": [
             {"key": k, "label": l, "fg_ids": fg, "traces": tr}
             for (k, l, fg, tr) in metric_blocks
-        ],
+        ] + ([viability] if viability else []),
     }
     # ``ensure_ascii=False`` gör att unicode-tecken (α, β, γ, Δ, · osv.
     # i reward-flikens titel) hamnar som läsbara UTF-8-tecken i den
@@ -546,15 +668,16 @@ function layoutFor(metric) {{
     margin: {{ l: 60, r: 20, t: 40, b: 50 }},
     title: {{ text: metric.label, font: {{ size: 14 }} }},
     xaxis: {{
-      title: {json.dumps(xaxis_title)},
+      title: metric.xaxis_title || {json.dumps(xaxis_title)},
       gridcolor: "#3a3a48",
       zerolinecolor: "#3a3a48",
     }},
-    yaxis: {{
-      title: metric.key,
+    yaxis: Object.assign({{
+      title: metric.yaxis_title || metric.key,
       gridcolor: "#3a3a48",
       zerolinecolor: "#5a5a6a",
-    }},
+    }}, metric.yaxis_range ? {{ range: metric.yaxis_range, fixedrange: true }} : {{}}),
+    shapes: metric.shapes || [],
     showlegend: true,
     legend: {{
       bgcolor: "rgba(0,0,0,0)",

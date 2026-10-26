@@ -215,3 +215,151 @@ def test_resume_keeps_the_runs_eval_ticks_unless_one_is_given(tmp_path):
     explicit = TrainingProgress("gpu", 2, 9, 0.3, 3.0, 100, 1.0, tmp_path)
     with pytest.raises(ValueError, match="settings changed"):
         explicit._start(trainer, 0, tmp_path, True)
+
+
+# ---- viability score on the probe (section 223.18) -------------------------
+
+import json  # noqa: E402
+import math  # noqa: E402
+
+from lib.runners.training_progress import format_viability, probe_viability, run_probe  # noqa: E402
+
+YEAR = 10  # ticks per year in the synthetic series; one sample per tick
+
+
+def yearly(*factors, season=None):
+    """A daily ratio series: year k sits at factors[k], times a season."""
+    out = [1.0]
+    for f in factors:
+        out += [f * (1.0 if season is None else season(d)) for d in range(YEAR)]
+    return out
+
+
+def test_a_seasonal_cycle_passes_and_a_slide_fails_on_drift():
+    # A tenfold seasonal swing, the same every year: whole-year means
+    # cancel the season, so it is stationary (the two-window ratio of the
+    # rig would read the phase).
+    saw = lambda d: 0.1 + 1.8 * d / (YEAR - 1)  # mean 1, min 0.1
+    series = {"plankton": yearly(1, 1, 1, season=saw),
+              "slide": yearly(0.9, 0.6, 0.25),       # year 3 / year 2 = 0.42
+              "absent": None}
+    v = probe_viability(series, 1, YEAR)
+    assert v["years"] == [2, 3] and v["present"] == 2 and v["viable"] == 1
+    plankton, slide = v["groups"]["plankton"], v["groups"]["slide"]
+    assert plankton["viable"] and plankton["drift"] == pytest.approx(1.0)
+    assert plankton["margin"] == pytest.approx(1.0) and plankton["binding"] in ("floor", "ceiling")
+    assert not slide["viable"] and slide["binding"] == "drift"
+    assert slide["drift"] == pytest.approx(2.4)
+    assert v["worst"] == "slide" and v["score"] == slide["margin"] < 0
+    assert "absent" not in v["groups"]
+
+
+def test_margins_are_distances_to_the_bounds_not_to_the_start():
+    v = probe_viability({"low": yearly(0.3, 0.3, 0.3), "high": yearly(20, 20, 20),
+                         "settled": yearly(0.5, 0.25, 0.23)}, 1, YEAR)
+    low, high, settled = (v["groups"][f] for f in ("low", "high", "settled"))
+    # 0.3x spawn: log10(3) of the one decade to the floor.
+    assert low["viable"] and low["binding"] == "floor"
+    assert low["margin"] == pytest.approx(math.log10(3))
+    assert not high["viable"] and high["binding"] == "ceiling"
+    # A slow decline above the floor passes, with an indicative horizon.
+    assert settled["viable"]
+    assert settled["years_to_floor"] == pytest.approx(math.log(2.3) / math.log(0.25 / 0.23))
+
+
+def test_extinction_anywhere_fails_and_has_no_margin():
+    series = {"gone": yearly(1, 1, 1), "ok": yearly(1, 1, 1)}
+    series["gone"][5] = 0.0  # dips to zero in year 1, recovers
+    v = probe_viability(series, 1, YEAR)
+    g = v["groups"]["gone"]
+    assert g["binding"] == "extinct" and g["margin"] is None and not g["viable"]
+    assert v["worst"] == "gone" and v["score"] is None
+    json.dumps(v, allow_nan=False)  # the jsonl writer refuses NaN / inf
+    assert "worst: gone extinct" in format_viability(v)[0]
+    ok = probe_viability({"a": yearly(0.3, 0.3, 0.3)}, 1, YEAR)
+    assert "worst: a +0.48 to floor" in format_viability(ok)[0]
+
+
+def test_only_complete_years_are_scored():
+    assert probe_viability({"a": yearly(1)[:YEAR]}, 1, YEAR) is None
+    one = probe_viability({"a": yearly(1, 0.2)[:YEAR + 5]}, 1, YEAR)
+    assert one["years"] == [1] and one["groups"]["a"]["drift"] is None
+    # Daily samples of a 6 h tick: 365 per year, day 0 = the start.
+    days = [1.0] + [1.0] * 365 + [2.0] * 365
+    two = probe_viability({"a": days}, 4, 1460)
+    assert two["groups"]["a"]["annual_mean"] == [1.0, 2.0]
+
+
+class YearTrace:
+    """A two-group env whose biomass halves every probe year."""
+
+    def __init__(self):
+        self.fgs = {f: SimpleNamespace(biomass=np.array([10.0])) for f in ("fish", "algae")}
+        self.dm_ids, self.global_fg_order, self.tick_hours, self.t = ["fish"], ["fish", "algae"], 6, 0
+
+    def tick(self):
+        self.t += 1
+        self.fgs["fish"].biomass[:] = 10.0 * 0.5 ** (self.t / 1460)
+
+
+def test_the_probe_record_keeps_the_viability_block(tmp_path, capsys):
+    result = run_probe(YearTrace(), 2 * 1460, 0.3, 3.0)
+    v = result["viability"]
+    assert v["years"] == [1, 2] and v["present"] == 2
+    assert v["groups"]["fish"]["drift"] == pytest.approx(2.0, rel=1e-3)
+    progress = TrainingProgress("cpu", 1, 2 * 1460, 0.3, 3.0, 0, 1.0)
+    progress.history = tmp_path / "probe.jsonl"
+    progress.latest_path = tmp_path / "probe_latest.json"
+    progress._record(1, 5, 0.0, result)
+    stored = json.loads(progress.history.read_text())
+    assert stored["viability"]["groups"]["fish"]["annual_mean"] == v["groups"]["fish"]["annual_mean"]
+    assert "trajectory" not in stored
+    assert "[progress] viability probe=1, step=5:" in capsys.readouterr().out
+
+
+# ---- Ctrl+C and the live probe's worker process -----------------------------
+
+def _live_with_running_probe(seconds=60):
+    import concurrent.futures
+    import multiprocessing
+    import time as _time
+    from lib.runners.training_progress import (
+        LiveTrainingProgress, _ignore_sigint, _sigint_ignored_by_children)
+    progress = LiveTrainingProgress("cpu", 1, 10, 0.3, 3.0, 0, 1.0)
+    progress._pool = concurrent.futures.ProcessPoolExecutor(
+        max_workers=1, mp_context=multiprocessing.get_context("spawn"),
+        initializer=_ignore_sigint)
+    with _sigint_ignored_by_children():  # as _submit does
+        future = progress._pool.submit(_time.sleep, seconds)
+    progress._pending = (future, 7, 70, _time.perf_counter())
+    # No wait for the worker's imports: it must be covered from the start.
+    return progress, list(progress._pool._processes.values())
+
+
+@pytest.mark.parametrize("cancel", ["bool", "flag"])
+def test_ctrl_c_neither_kills_the_probe_worker_nor_prints_a_traceback(cancel, capfd):
+    import os
+    import signal
+    import threading
+    import time as _time
+    progress, workers = _live_with_running_probe()
+    assert signal.getsignal(signal.SIGINT) is signal.default_int_handler  # restored
+    for _ in range(3):  # what the terminal sends the group, while it starts up and after
+        for worker in workers:
+            os.kill(worker.pid, signal.SIGINT)
+        _time.sleep(1.0)
+    assert all(w.is_alive() for w in workers)
+    started = _time.perf_counter()
+    if cancel == "bool":
+        progress.wait(cancel=True)
+    else:
+        # train_gpu's handler only sets a flag; wait polls it.
+        stop = threading.Event()
+        threading.Timer(1.0, stop.set).start()
+        progress.wait(cancel=stop.is_set)
+    assert _time.perf_counter() - started < 10
+    assert not any(w.is_alive() for w in workers)
+    assert progress._pool is None and progress._pending is None
+    out, err = capfd.readouterr()
+    assert "probe 7 (update 70) cancelled" in out
+    assert "Traceback" not in err and "KeyboardInterrupt" not in err
