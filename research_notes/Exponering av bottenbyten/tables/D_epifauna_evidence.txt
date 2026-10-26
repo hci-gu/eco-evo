@@ -1,0 +1,476 @@
+PART D - EXPOSURE OF MOBILE EPIFAUNA TO DEMERSAL FISH: FROM "ON THE SURFACE" TO "EATEN"
+=====================================================================================================
+Research subagent, 2026-10-26. Research only; no library, manifest or code change.
+Site: offshore Skagerrak, 100-300 m mud, 6-8 C; bottom light by day ~1e-3 lx (median cell), night ~1e-10 lx.
+Model chain (context from the caller): encounter = v x w x p, w = 0.6 L (lateral line / smell / close
+sight of MOVING prey), p 0.3-0.4. Pools: exposed epifauna = crabs / hermit crabs / Munida 0.65 of the
+biomass, Pandalus borealis 0.18, small shrimps (Crangon allmanni, Philocheras, Pontophilus, Processa)
+0.10, mysids 0.07; Nephrops separately.
+
+Tags: [F] full text read by me; [A] abstract only; [S] secondary (a full text I read citing someone
+else, or a search snippet - stated which); J = my judgement or derivation; D = arithmetic on a source.
+Downloads: ../data/D_epifauna/<source>/ (untrusted; text extracts beside the PDFs). Already-held PDFs
+are cited by path and were not copied.
+
+NOT REPEATED (read first, cited by path):
+  - ../../Refugium och utbyte i bentos/tables/part_C_shrimp_crab_mysid.txt (time on the bottom: Pandalus
+    0.75 (0.65-0.85) of the day; Aguzzi folding factors; Atkinson Goneplax/L. depurator diving; Zainal
+    Munida; Kaartvedt mysids), part_A_nephrops_behaviour.txt, epifauna_exposure_rates.csv,
+    evidence_epifauna_exposure.txt.
+  - ../../Attackrater ur motesteori/benthivores_encounter.md (Holmes 1979: turbot/brill on Crangon
+    72-73 % per attack, on mysids 84-89 %; Persson 2012 a values as a validation) and
+    addendum_vision_light.md (Staniland 1995 whiting strike success; Ellis & Gibson 1997 cod on
+    0-group flatfish). The folder name is spelled with Swedish letters (mötesteori).
+
+THE DECOMPOSITION USED BELOW (J). Between "on the surface" (the time shares of part C) and "eaten" sit:
+  E = share of the time-on-surface during which the animal is actually detectable/approachable
+      (not buried, not tucked in a burrow mouth or shell, not in a crevice);
+  p_rel = capture success on such an exposed animal relative to a non-burying, non-armoured
+      reference prey of the same size (the model's p 0.3-0.4 is the reference);
+  S = share of the biomass inside the size window the fish can swallow.
+The model's p already contains the reference capture failure; a lab attack rate (Persson 2012) is the
+PRODUCT (encounter x E x p) and must not be multiplied on top of p again. Ratios between two prey
+measured in the same arena with the same fish are the usable quantity.
+
+=====================================================================================================
+1. FISH ATTACK RATES AND CAPTURE SUCCESS ON BURYING VS EXPOSED CRUSTACEANS (question 2)
+=====================================================================================================
+
+1.1 Persson, Ljungberg, Andersson, Gotzman & Nilsson 2012. Foraging performance of juvenile Atlantic cod
+    and profitability of coastal habitats. MEPS 456:245-253. doi:10.3354/meps09705   [F]
+    File: ../../Attackrater ur mötesteori/data/benth_validation/persson2012_meps456.pdf (not copied).
+  Setup: 8 one-year cod (TL 15-20 cm class; Ljungberg 2012 gives 177 +- 9 mm for the same fish), held
+  singly in 150 l tanks (0.95 x 0.405 m floor, 0.37 m water; Ljungberg 2012), 8-9 C, 10-15 psu,
+  12:12 L:D; "Cod foraging was visually observed, and the time between the first and the fifth prey
+  consumed was recorded" (so the trials ran in the light phase - J; the light level is the 0.73 uE m-2
+  s-1 at the surface reported by Ljungberg 2012 for the same tanks). Sand on the bottom in ALL habitats,
+  so Crangon could bury. Densities 12-430 prey m-2, Type II fitted (Type III did not improve the fit).
+  Prey: Neomysis integer TL 13.0 +- 2.0 mm; Crangon crangon TL 40 +- 5 mm; Palaemon elegans TL 35 +- 5 mm.
+  Table 1, attack rate a (cm2 s-1, +- 1 SE), handling time h (s J-1):
+                       a sand      a Zostera   a Fucus      h sand          h Zostera       h Fucus
+    Neomysis integer   57 +- 22    8.8 +- 4    13 +- 7      0.026 +- 0.005  0.022 +- 0.01   0.024 +- 0.01
+    Crangon crangon    1.8 +- 0.7  0.86 +- 0.3 1.2 +- 0.5   0.026 +- 0.01   0.038 +- 0.01   0.019 +- 0.01
+    Palaemon elegans   21 +- 32    2.4 +- 2    1.6 +- 1     0.033 +- 0.01   0.045 +- 0.02   0.041 +- 0.02
+  Authors' interpretation (one sentence, not a measurement): "The foraging efficiency of cod on Crangon
+  crangon was much lower, despite the fact that C. crangon were of similar size as P. elegans. One
+  explanation for this may be the different anti-predator strategies of P. elegans and C. crangon, the
+  former relying on camouflage in the vegetation and the latter burying and hiding within the sandy
+  sediment."
+  D: on open sand, a(Crangon)/a(Palaemon) = 1.8/21 = 0.086. Palaemon's SE (32) exceeds its mean, so the
+  ratio is poorly bounded: with Palaemon at mean - 0.5 SE (5) it is 0.36; with Crangon +1 SE (2.5) and
+  Palaemon at 21 it is 0.12. Range J: 0.05-0.35, central ~0.1. a(Crangon)/a(Neomysis) = 0.032 (sand).
+  In vegetation (where Palaemon hides by camouflage) the ratio is 0.36 (Zostera) and 0.75 (Fucus).
+  Handling time does NOT differ between the burier and the non-burier (0.026 vs 0.033 s/J on sand):
+  the burier's protection is all in a (encounter x exposure x capture), none in h.
+  h converted (D): 0.026 s/J x 1824 J per Crangon (Ljungberg 2012) = 47 s per shrimp.
+
+1.2 Ljungberg, Nilsson & Persson 2012. Prey selectivity by juvenile Atlantic cod in three coastal habitat
+    types. MEPS 466:215-223. doi:10.3354/meps09932   [F]
+    File: ../../Attackrater ur mötesteori/data/benth_validation/ljungberg2012_meps466.pdf (not copied).
+  Same tanks and fish (177 +- 9 mm TL), 7.4 +- 0.8 C, 15 mm sand layer; light "0.73 uE m-2 s-1 at the
+  water surface" vs darkness; 20 Crangon (38.5 +- 5.0 mm) + 20 Palaemon (36.2 +- 4.9 mm) per 2-h trial
+  (54 ind m-2 of each); recovery check 100 % / 99.4 %.
+  - "the effects of light regime and the interaction between habitat and light were not significant
+    (F1,35 = 0.643, p = 0.428 and F2,35 = 0.793, p = 0.460, respectively), indicating that functional
+    response parameters, estimated in light conditions, were valid also in dark conditions."
+  - Manly-Chesson alpha for Palaemon (Fig. 2 caption): predicted from a ratios 0.93 sand, 0.75 eelgrass,
+    0.60 bladderwrack; observed "bladderwrack light 0.45 and dark 0.33, artificial eelgrass light 0.63
+    and dark 0.54 and sand light 0.76 and dark 0.83."
+  D: Manly's alpha with depletion is ln(survival) based, so alpha_P/alpha_C = ratio of per-capita
+    mortality rates = effective a_P/a_C in the two-prey trial. Effective a(Crangon)/a(Palaemon):
+      sand light 0.24/0.76 = 0.32; sand dark 0.17/0.83 = 0.20;
+      eelgrass light 0.59; eelgrass dark 0.85; bladderwrack light 1.22; bladderwrack dark 2.0.
+    On sand the burier is taken at 0.2-0.3 of the non-burier's per-capita rate when both are present
+    (vs 0.086 from the single-prey fits). Range on sand for the burier/exposed ratio (1.1 + 1.2):
+    0.09-0.32.
+  - Darkness did not cut cod's catch of either shrimp in a 0.38 m2 tank (J: in a tank this small,
+    encounter is not search-limited; the test says capture-given-encounter does not need light, i.e.
+    lateral line/smell/touch suffice at < 0.5 m; it does not test detection distance). The authors
+    attribute the extra Crangon at night to its "nocturnal activity ... in a non-preferred habitat".
+  - h per prey from Table 1 x energy: Crangon 1824 J, Palaemon 1898 J per individual.
+
+1.3 Staniland 1995. PhD thesis, Univ. Leicester (whiting feeding behaviour; figshare 10142354)   [F]
+    File: ../../Attackrater ur mötesteori/data/gap_vision/staniland_whiting_thesis.pdf (not copied;
+    already summarised in addendum_vision_light.md "Gap 2"; only what is new is added here).
+  - Prey was Crangon crangon presented on a SOLID white plastic floor: "In the wild the shrimp would
+    probably tail flip away and then bury itself into the sandy substrate over which it normally lives.
+    As the tank that the experiments were held had a solid plastic bottom this was not possible." and
+    "The shrimp prey would also normally be able to hide themselves by burying in the substrate which
+    was not possible in these experiments."
+  - So the strike success (small whiting, empty stomach: 0.8 on 5.9-6.5 cm shrimp, 0.4 on 7.5-8.0 cm;
+    falling with stomach fullness; zero for small whiting with one large shrimp eaten; large whiting
+    higher) is capture success on an EXPOSED, non-burying Crangon (a reference value for p_rel = 1).
+  - "The whiting feeding on the shrimps tended to attack them on the bottom of the tank. The shrimps
+    rarely moved off the bottom". "The main methods used to detect the prey were probably sight and
+    vibration as the response usually occurred to a moving shrimp." Room light 0.6-1.55 uE m-2 s-1
+    (controlled-temperature room) / 14-20 (hut), 15-17 C (thesis ch. 3 holding conditions).
+  - J (decomposition): Persson's lumped burier/exposed ratio ~0.1 (0.05-0.35) on sand, with capture of an
+    exposed Crangon at 0.4-0.8 per strike (Staniland) and turbot/brill 0.72-0.73 per attack (Holmes,
+    cited in the encounter note), implies most of the burier's deficit is in DETECTION / EXPOSURE (the
+    shrimp is not seen or felt while buried and motionless), not in a lower strike success once found.
+
+1.4 Holmes 1979. PhD thesis, Univ. Stirling (flatfish feeding)   [F] (text extract held by an earlier
+    agent; the encounter note cites the PDF). New items only:
+  - Response to a stationary shrimp is weak: "There is no significant difference between a moving blank
+    glass tube and a stationary stimulus whether it bears a horizontal or a vertical shrimp. This
+    demonstrates the low level of responsiveness to a stationary shrimp."
+  - Burying is not a full refuge from a nearby predator: "pursued shrimps, if not caught, immediately
+    quickly bury themselves in the sand. The method of burying agitates the sand particles ... and
+    turbot stalking shrimps were often observed to lunge at this burying movement in the sand, even when
+    no part of the shrimp was visible, and successfully capture the prey."
+  J: detection keys on MOVEMENT (supports w = 0.6 L for moving prey); a motionless buried shrimp is
+  outside w; a shrimp burying in front of the predator is still caught.
+
+1.5 Arnott & Pihl 2000. Selection of prey size and prey species by 1-group cod: effects of satiation
+    level and prey handling times. MEPS 198:225-238. doi:10.3354/meps198225   [F]
+    data/D_epifauna/meps198_225/
+  Lab (Kristineberg, W Sweden) and field (Gullmarsvik Bay, shallow); cod 230-289 mm in the lab.
+  - "cod consumed more plaice than shrimps and more shrimps than crabs" (meal size, single-species).
+  - Crab handling time independent of the prey:cod length ratio: "With Carcinus maenas, a median
+    handling time of 9 s"; shrimp and plaice handling times rose with the ratio.
+  - Crab defence is at the mouth, not in the chase: "Crabs with a P:C length ratio of between 0.06 and
+    0.09 were frequently attacked but then often rejected (forcibly ejected from the mouth), even if the
+    cod had an empty stomach." (P:C ratio for crabs = carapace WIDTH / cod TL.)
+  - "crabs were sometimes retrieved from cod stomachs still alive and mobile" ; "no evidence was found of
+    prey being crushed by the cod during handling".
+  - Field: crabs eaten at CW/TL 0.04-0.10, selectivity peaks at 0.07-0.09; shrimps eaten at TL/TL 0.05-
+    0.17, peaks 0.09-0.15; plaice 0.18-0.29, peak 0.24. Lab acceptance: crabs 0.03-0.09, Crangon 0.08-0.22
+    (the full range offered). See section 3 for the size window.
+
+1.6 Rindorf 2003. Diel feeding pattern of whiting in the North Sea. MEPS 249:265-276.
+    doi:10.3354/meps249265   [F]   data/D_epifauna/rindorf2003/ (earlier notes had the abstract only)
+  - Bottom trawl, early September 1988/89, 5 locations at 44, 46, 53, 73 and 137 m (16.7, 13.7, 10.6,
+    8.2, 8.6 C), one haul every 4 h for 48-72 h; occurrence (presence/absence) GLMs, not rates.
+  - Prey groups: "The shrimps found were a mixture of Pandalus and Crangon spp."; "'other benthic
+    invertebrates' were mainly polychaetes, hermit crabs and brittle stars with some molluscs and Norway
+    lobsters".
+  - "The prey groups for which the majority of the diel variation could be explained by a common pattern
+    included crabs, 'other benthic invertebrates' and to some extent dab"; "The common diel pattern for
+    crabs explained 31% of the deviance".
+  - Shrimp: no common pattern; at Location 2 "shrimp appeared to be eaten in the daylight hours and into
+    the early evening", which "mirrors the demersal availability" of Pandalus montagui (ascends at night;
+    Bergstrom 2000 cited). "Crangon crangon is more active during the night and spends part of the
+    daylight hours buried in the sediment (Hagerman 1970, Ansell et al. 1999)" [S for Hagerman].
+  - Deep station (137 m, 8.6 C, Location 5): "significant diel variation was only found in the prey
+    group 'other crustaceans'"; "The lack of 'other benthic invertebrates' was mirrored by the virtual
+    absence of both crabs and flatfish, suggesting perhaps that whiting at this location did not forage
+    on the bottom or that the density of benthic prey was low. The lack of benthic foraging may have been
+    linked to the greater depth of this location."
+  - Conclusion: "whiting at 4 of the 5 locations were feeding on bottom dwelling prey at night, whereas
+    pelagic and free swimming prey were captured mainly during daylight. This pattern could be due either
+    to the ability of the bottom dwelling prey to avoid the predator during daylight, the increased
+    availability of other prey during the day, or the necessity of vision to capture-success of free
+    swimming prey."
+  - Pedersen (2000) cited: at 90 m and 6 C "around 85% of the stomach content (by weight) of whiting
+    between 20 and 35 cm was fish prey", demersal whiting fed by day.
+  J: the night peak for crabs and benthic invertebrates on shallow North Sea ground is consistent with
+  prey emergence at night (exposure rises) and with chemo-tactile capture working in the dark. The one
+  deep, cold station (closest to the Skagerrak, 137 m) shows no benthic signal at all. No ratio can be
+  read off (occurrence curves only; figures not digitised).
+
+1.7 Addison, Lawler & Nicholson 2001. Catchability of brown shrimps (Crangon crangon) in relation to
+    environmental variables. ICES CM 2001/Q:01   [F]   data/D_epifauna/addison2001/ (header: "not to be
+    cited without prior reference to the authors")
+  - The Wash, 24-h series of 30-min tows, August 1998: "catch rates of commercial sized brown shrimps
+    were generally higher at night than in the daylight hours"; "The lowest catch rate of commercial
+    shrimp occurred during the first 'full light' tow"; "proportionally more smaller shrimps were taken
+    during the night"; whiting and plaice "are also more abundant at night".
+  - Survey GLM: light (nominal surface scale) coefficient on log catch -0.069 to -0.184 per unit.
+  - No day/night ratio in the text (Figure 1 not legible). J: shallow, turbid; emergence is light-cued.
+
+1.8 Ansell, Comely & Robb 1999. MEPS 176:115-130. doi:10.3354/meps176115   [F]
+    data/D_epifauna/ansell1999/  (Scottish sandy beach, shallow)
+  - "many macrocrustacean individuals are buried and inactive during this period [day]. Underwater
+    television recordings made in the nearby Dunstaffnage Bay (A. D. Ansell unpubl. obs.) have shown
+    individual C. maenas burrowing into the substratum at dawn and remaining buried within the field of
+    view of the camera for periods of up to 14 h in summer. Buried C. crangon show a much reduced
+    tendency to respond to mechanical stimulation by tail flipping compared to individuals on the surface
+    (K. Smith unpubl. obs)."
+  - Beam-trawl catches: Crangon crangon, Liocarcinus depurator and Pagurus bernhardus "showed no
+    significant change in numbers with time [of day]"; Carcinus and L. holsatus more at night.
+  - Cites Gibson et al. 1998 (Swedish microtidal beach): "C. crangon were mostly active during the day".
+  J: in shallow water the burial rhythm of Crangon is variable (night-active in Scotland, day-active on
+  a Swedish beach); burial suppresses the escape response (buried shrimp is easier to take IF found).
+
+1.9 Meager, Solbakken, Utne-Palm, Shen & Ferno 2005. Effects of turbidity on the reactive distance,
+    search time, and foraging success of juvenile Atlantic cod. CJFAS 62. doi:10.1139/f05-104   [A]
+    (full text closed; abstract via Crossref)
+  - Prey: the mysid Praunus neglectus. "Juvenile cod using chemical cues were able to locate mysids from
+    significantly longer distances than when only visual cues were available." "Turbidity did not affect
+    predation rates on free-ranging mysids, but predation rates were significantly lower in dark
+    conditions than in well lit conditions." No ratio in the abstract.
+  J: for a free-swimming hyperbenthic prey (mysid) darkness lowers cod's catch (size unknown); for
+  bottom shrimps in a small tank it did not (Ljungberg 2012). At 1e-3 lx by day and 1e-10 lx by night
+  the Skagerrak floor is "dark" in both phases for capture purposes; the lab light/dark contrast is
+  between ~40 lx-equivalent and 0 and does not transfer as a diel ratio.
+
+=====================================================================================================
+2. EXPOSED SHARE OF THE TIME ON THE SURFACE, PER TAXON (question 1)
+=====================================================================================================
+Part C's time shares (Pandalus 0.75 of the day on the bottom; crabs/hermits 0.6; Munida 0.5; small
+shrimps and mysids 0.6) are built from trawl catch ratios, i.e. they ALREADY exclude buried and
+burrow-bound animals (a buried crab is not caught). So "E" here is what is left: of the animals that
+are out, how many are detectable by a passing fish.
+
+2.1 Swimming crabs, Liocarcinus depurator (the brachyuran of 100-300 m mud, J from part C)
+  Glass 1985, PhD thesis Univ. Glasgow, Loch Sween 3-30 m, 217 dives / 163 h, Feb 1981-Jun 1982   [F]
+  File: ../../Refugium och utbyte i bentos/data/glass1985_thesis/1985Glassphd.pdf (not copied; part B
+  of the Refugium note used it only for movement).
+  - Dives "generally carried out at approximately mid-day"; "a number of dives were made at different
+    times during one day to investigate the possibility that abundance and distribution of crabs varied
+    with time of day. No such variation was observed."
+  - "Of the crabs found on or in the mud/silt substrate, the majority of crabs were found standing on
+    top of the substrate (Eilean Mhartan 309; n = 422; 73%: Port Lunna, 92; n = 154; 60%) as opposed to
+    buried or semi-buried."
+  - "At Eilean Mhartan, 422 crabs were observed in exposed areas; 90% (382) of these were raised on the
+    sediment with only 10% (40) collapsed or semi-buried. At Port Lunna 89% (105) of crabs in exposed
+    areas were raised above the substrate."
+  - "Very few crabs were observed partially buried or sitting on the mud with most animals either
+    standing upright or totally buried. It is postulated that total burial in the mud is an effective
+    form of concealment for crabs which are not foraging".
+  - Foraging on open mud: "most of these animals did not appear to be moving directly to cover, but
+    appeared to be slowly probing the sediment with one or both chelipeds."
+  - Anti-predator responses (to divers): "Instant burial response. This type of response was shown only
+    by juvenile crabs (< 20 mm) ... Complete burial by this method could be achieved within approximately
+    three seconds." Large crabs: "rapid zig-zag swimming movements across the top of the sediment ...
+    sediment was disturbed into suspension thereby reducing visibility." "Small swimming crabs (< 30 mm)
+    rarely showed this protean behaviour and tended to adopt the instant burial response".
+  - Natural predators named: "cephalopods and ground feeding fish such as poor cod (Trisopterus
+    minutus), dogfish, plaice and skate"; seals.
+  - Goneplax depth switch (cited by Glass): Atkinson 1974 "suggested that Goneplax from different depths
+    may be active away from their burrows at different times, being day active in deep water where light
+    intensity is low and night active in shallow water"; "Farmer (1974) ... trawled more Goneplax during
+    the day than night from deep water." [S]
+  D/J: by day on mud 60-73 % of L. depurator stand fully exposed and 27-40 % are buried or semi-buried
+  (direct count; shallow, lit). This independently supports part C's 0.6 (0.5-0.8). Of those out, ~0.9
+  stand raised (E ~0.9; J reading: the 90 % "raised" and the 73 % "standing ... as opposed to buried"
+  share the denominator 422 but do not partition it the same way, so 0.9 is not a clean count). Inactive crabs on the surface (Atkinson's Lundy dives, part C) are stationary:
+  Holmes 1979 shows weak responses to stationary prey, so a stationary crab is detected less within w
+  (no ratio; J E 0.7-1.0 for crabs out of the sediment).
+
+2.2 Hermit crabs (Anapagurus laevis, Pagurus pubescens at 100-200 m; P. bernhardus)
+  - No burial or activity rhythm found (part C Q4.12; one more search here: nothing).
+  - Beam-trawl catches of P. bernhardus showed "no significant change in numbers with time" of day
+    (Ansell et al. 1999 [F], shallow beach).
+  - Shell is not a refuge from cod or haddock (diet evidence, section 3.3). J: E ~1 (they do not bury),
+    time out = part C's 0.6 (judgement there); the gastropod shell is an armour/size issue (section 3).
+
+2.3 Munida (M. rugosa, M. sarsi)
+  - Part C (Zainal 1990; Atkinson): occupies vacated burrows and burrow mouths; "remain at or near the
+    opening"; does not burrow itself. Rhythm site-dependent. Nothing new found.
+  J: E 0.6-0.9 of time "out": an animal at a burrow mouth retreats when touched (door-keeping, as in
+  Nephrops); no measurement.
+
+2.4 Northern shrimp Pandalus borealis
+  - Part C: 0.75 (0.65-0.85) of the day in the bottom layer; ovigerous females stay down; schooling.
+  - No record of burial was found (Shumway 1985 synopsis in part C describes it as a benthic/
+    hyperbenthic schooling shrimp; ASMFC habitat sheet: "organic-rich mud bottoms", nothing on burial;
+    Bergstrom 2000 not obtained). Rindorf 2003 [F] treats Pandalus as "at or near the bottom" by day,
+    ascending at night.
+  J: E ~1 when in the bottom layer (no burial; moving and schooling, i.e. inside w by the lateral line).
+
+2.5 Small shrimps (Crangon allmanni, Philocheras, Pontophilus, Processa)
+  - Processa: night/day trawl factor ~100 on the 100 m Mediterranean shelf, falling with depth (part C,
+    Aguzzi & Bahamon 2009): "Buriers presented a more elevated daytime error of sampling on shelf and
+    slope. Their occurrence increased at night up to 100 times on the shelf, with a smaller sampling error
+    on the slope (up to 4 times more elevated during day than night)." Bahamon 2009: "No clearly
+    discernible diel pattern was found with the dampening of light intensity with depth".
+  - Crangon crangon (shallow): buried by day in Scotland, day-active on a Swedish beach (Ansell 1999 [F],
+    citing Gibson et al. 1998); emergence light-cued (Addison 2001 [F]); buried shrimp have "a much
+    reduced tendency to respond to mechanical stimulation by tail flipping" (Ansell 1999, unpubl. obs.
+    cited). Al-Adhub & Naylor 1975 [A]: "evidence of nocturnal and tidal rhythms of emergence ... which
+    deserves further experimental investigation" (introduction; results not read).
+  - Pinn & Ansell 1993 [A]: "Particle size was found to be a major influencing factor on the degree of
+    burial achieved by C. crangon, but no significant effect of shrimp size" (direction for mud not
+    read).
+  - Crangon allmanni: no burial or diel data (one targeted search; part C also found none).
+  - Lab, light, sand (Persson 2012; Ljungberg 2012, section 1): the burier's PER-CAPITA predation rate is
+    0.09-0.32 of an equal-sized non-burier; in darkness 0.20 (sand, two-prey trial).
+  J: two non-identical readings exist and must not both be applied:
+    (i) part C's time-on-surface 0.6 x E ~1 x p_rel ~1 (if part C's 0.6 is believed for the deep
+        floor), or
+    (ii) the lab product (time out x E x p_rel) ~0.2 (0.09-0.35), measured in light on sand where a
+        light-cued burier is buried most of the time.
+  At 100-300 m the light cue is weak (1e-3 lx by day) and the Mediterranean slope buriers show night/
+  day contrasts of 1-4, not 100: the deep floor sits between (i) and (ii). Central J 0.35 (0.1-0.6)
+  for the product, i.e. E x p_rel ~0.6 (0.2-1) on top of part C's 0.6.
+
+2.6 Mysids (Erythrops, Mysis mixta, Boreomysis, Lophogaster)
+  - Part C (Kaartvedt 1989): Lophogaster "is known to burrow into the sediment during daylight";
+    Lophogaster and Leptomysis leave the bottom for the whole night; part of Boreomysis stays. Vertically
+    migrating mysids "not abundant at the shelf and trench locations" (Brattegard, cited).
+  - Suprabenthos 76-97 % in 0-50 cm by day (Cunha 1997, cited in part C).
+  - Persson 2012: a on Neomysis (sand) 57 cm2/s vs 21 on Palaemon and 1.8 on Crangon: the most exposed
+    of the three prey (and the smallest; per-capita rate 2.7x the exposed shrimp, 32x the burier).
+  - Meager 2005 [A]: fewer mysids taken in darkness; chemical detection range > visual.
+  J: E ~1 for the non-burying near-bottom mysids by day (they swim in the 0-0.5 m layer inside a
+  demersal fish's w); ~0 for Lophogaster by day. Off-bottom at night = out of the benthivore band.
+
+=====================================================================================================
+3. CRAB DEFENCE AND SIZE WINDOWS (question 3)
+=====================================================================================================
+
+3.1 Cod gape on crabs: Arnott & Pihl 2000 [F] (section 1.5)
+  - Lab acceptance (cod 230-289 mm, Carcinus maenas, CW 7.2-26.0 mm): "Cod consumed Carcinus maenas prey
+    within the P:C length ratio of 0.03 to 0.09 (up to 2.3 % cod's W). ... the upper limit represents the
+    upper limit that cod would accept. Crabs with a P:C length ratio of between 0.06 and 0.09 were
+    frequently attacked but then often rejected (forcibly ejected from the mouth), even if the cod had an
+    empty stomach." (P:C = carapace width / cod TL.)
+  - Field (Gullmarsvik Bay): range eaten 0.04-0.09, 0.04-0.10, 0.02-0.12 (June, July, September);
+    selectivity peaked at 0.07, 0.09, 0.08; small crabs avoided ("avoidance (or inaccessibility) of the
+    smaller crabs in the bay and preference for the intermediate-to-large sized crabs").
+  - Handling: crab median 9 s, independent of size, so "the profitability of crabs increased up until
+    the maximum edible size". Meal size on crabs smallest of the three prey (crabs < shrimps < plaice).
+  - Chabot, Sainte-Marie, Briand & Hanson 2008. Atlantic cod and snow crab predator-prey size
+    relationship in the Gulf of St. Lawrence. MEPS 363:227-240. doi:10.3354/meps07384   [F]
+    data/D_epifauna/chabot2008/ (30 973 cod stomachs, 3293 snow crabs measured):
+    "Ingested snow crabs ranged from 2.2 mm ... to 62.4 mm CW (n = 3293 crabs), but most ranged from 5 to
+    30 mm CW"; "Snow crab length at rest was closely related to cod gape width, suggesting that the
+    largest snow crab ingested by cod must be attacked from the side." "There appears to be a plateau at
+    65.1 mm in the relationship between maximum snow crab CW and cod length"; "The maximum CW of snow crab
+    ingested by cod was clearly smaller than cod gape width." Gape width vs length: "log(W) = -1.470 +
+    1.389 log(L)", r2 0.96, slope > 1 so "gape width was proportionally greater in large than in small
+    cod" (units of the fit not recovered from the text extract; not converted). Soft-shell (just-moulted)
+    large crabs are eaten whole but rarely (window 0.8 + 6.7 d post-moult). The quantile-regression lines
+    of max CW vs cod FL are garbled in the extract and not used.
+    J: long-legged crabs are limited by span/length at the gape, not CW; the median crab eaten is well
+    below the maximum (5-30 mm CW against a 65 mm ceiling) - consistent with Arnott & Pihl's rejection
+    zone. Both support a soft upper edge: k 0.06 (taken freely) to 0.09-0.12 (taken with rejection).
+  D (scripts/D_crab_window.py, run on the earlier agents' NS-IBTS 2001-25 length-biomass tables in
+    ../../Fiskgrupper i rutan/{benthivores,predators}/tables/): window CW <= k TL with k 0.06 (no
+    rejection) or 0.09 (upper acceptance); haddock k x 0.70 (haddock/cod gape 0.33/0.47 from the earlier
+    gape table, a judgement there); whiting given cod's k as an upper bound (J). Crab CW biomass profile
+    is NOT measured for the area: two J scenarios for a Liocarcinus-type population (adults 20-56 mm CW;
+    maturity ~28-32 mm per search snippets), A numbers uniform 10-55 mm, B triangular 15-35-55 mm,
+    biomass ~ CW^3:
+      predator (biomass p10/p50/p90 TL)   k       max CW at p50   crab biomass share in window (A / B)
+      cod      (30 / 54 / 79 cm)          0.06    32 mm           0.21 / 0.29
+                                          0.09    49 mm           0.58 / 0.67
+      haddock  (20 / 34 / 44 cm)          0.042   14 mm           0.01 / 0.00
+                                          0.063   21 mm           0.03 / 0.02
+      whiting  (17.5 / 22.5 / 32.5 cm)    0.06    13 mm           0.01 / 0.00
+                                          0.09    20 mm           0.04 / 0.04
+    Crab biomass share below CW 20/30/40/50 mm: A 0.02/0.09/0.28/0.68; B 0.00/0.10/0.49/0.92.
+  J: brachyuran size window S (biomass share swallowable): cod 0.45 (0.2-0.7); haddock and whiting
+  ~0.03 (0-0.1) for broad-bodied crabs. The k values come from 1-group cod on Carcinus (a wide, spiny
+  crab) and are assumed to scale isometrically to large cod (J). Narrow-bodied Munida (CL up to ~28-40
+  mm, long chelipeds) and hermits (soft abdomen, small shells at 100-200 m) are not covered by k.
+
+3.2 Armour and handling
+  - No crushing by cod; crabs sometimes alive in the stomach; rejection at the mouth at CW/TL 0.06-0.09
+    (Arnott & Pihl 2000 [F]).
+  - Whiting: the small-mouthed, mostly piscivorous predator; Staniland's whiting took shrimps, not crabs
+    (no crab trials).
+  J: crab armour acts as a size threshold at the mouth (rejection), not as a per-strike failure inside
+  the window: p_rel ~1 inside the window for cod (handling 9 s, size-independent), ~0 beyond it.
+
+3.3 Diet evidence: shares within the epifauna by weight vs the model's availability (D)
+  scripts/D_epi_shares.py on ../../Fiskgrupper i rutan/predators/tables/ices_diet_pools_taxa.csv and
+  ../../Fiskgrupper i rutan/benthivores/tables/ices_benth_diet_taxa.csv (ICES stomach database grams of
+  benthic prey, compiled by earlier agents; classification of taxa to sub-pools is mine). Shares of the
+  epifauna grams (Nephrops included where present):
+    predator, area, period (epifauna g)   crabs/hermits/Munida  Pandalus bor.  small shrimps  mysids  Nephrops
+    cod, Skagerrak, pre2000 (47 g)        0.89                  0.07           0.04           0.00    -
+    cod, Skagerrak, 2000+ (140 g)         0.99                  -              0.01           -       0.00
+    cod, NNS, 2000+ (436 g)               0.29                  0.27           0.06           -       0.38
+    cod, Kattegat, 2000+ (1410 g)         0.88                  0.00           0.11           0.00    0.01
+    haddock, NNS, 2000+ (95 g)            0.79                  0.02           0.19           -       -
+    whiting, Skagerrak, pre2000 (31 g)    0.03                  0.60           0.37           -       -
+    whiting, Skagerrak, 2022 (5 g)        0.15                  0.02           0.70           0.12    -
+    whiting, Box, pre2000 (17 g)          0.00                  0.81           0.19           -       -
+    model availability (exposed pool)     0.65                  0.18           0.10           0.07    (separate)
+  Taxa inside "crabs" for cod in the Skagerrak 2000+: Brachyura 81 g, Pagurus bernhardus 58 g,
+  Polybiidae 9 g (pre2000: P. bernhardus 35 g of 47). Haddock NNS 2000+: Paguridae 36 g, Munida 27 g,
+  Brachyura 12 g.
+  J readings (small samples; grams, not rates; no availability measured at the same sites):
+  - Cod takes crabs at or above their biomass share (0.9-0.99 vs 0.65): exposure, armour and gape do not
+    make crabs a low-vulnerability prey for COD; hermit crabs in shells are a main item.
+  - Haddock takes hermits and Munida, few brachyurans: consistent with the narrow gape window for broad
+    crabs (3.1).
+  - Whiting takes Pandalus and small shrimps, almost no crabs: diet/availability for crabs 0.03/0.65 =
+    0.046 vs shrimps (0.60+0.37)/(0.18+0.10) = 3.5, so whiting's relative vulnerability of crabs ~0.013
+    of that of shrimps (D; range 0.01-0.1 J, 31 g of prey). Note Pandalus itself is strongly selected
+    by Skagerrak whiting (0.60 vs 0.18).
+  - Cod under-takes Pandalus in the Skagerrak (0.07 vs 0.18) but not in the NNS (0.27).
+
+=====================================================================================================
+4. WHITING ON EPIBENTHOS (question 4)
+=====================================================================================================
+  - Rindorf 2003 [F] (section 1.6): at 44-73 m, crabs and benthic invertebrates eaten mainly at night;
+    shrimp (Pandalus + Crangon) by day at one site; at 137 m / 8.6 C no benthic feeding signal ("did not
+    forage on the bottom or ... the density of benthic prey was low").
+  - Pedersen 1999, J Fish Biol 55:1096, doi:10.1111/j.1095-8649.1999.tb00744.x [A]: "Pelagic North Sea
+    whiting ... preyed upon (pelagic) sprat and sandeel, while demersal whiting preyed upon (demersal)
+    Norway pout and herring." "The diet of whiting shifted from amphipods and mysids to fish with
+    increasing predator length, and the length of prey consumed increased significantly with length of
+    whiting."
+  - Pedersen 2000, J Fish Biol 57:402, doi:10.1111/j.1095-8649.2000.tb02180.x [A]: "Pelagic North Sea
+    whiting fed at night, while demersal whiting fed by day." Rindorf 2003 [F] citing it: 90 m, 6 C,
+    "around 85% of the stomach content (by weight) of whiting between 20 and 35 cm was fish prey".
+  - Staniland 1995 [F] ch. 2 (northern North Sea, small whiting): 10-14 cm whiting by weight: sandeel
+    25.3 %, unidentified crustaceans 20.5 %, hyperiid amphipods 16.2 %, Pandalus 11.2 %, polychaetes
+    18.0 %; larger whiting > 77 % sandeel; Crangon crangon "eaten by only the smaller fish and as they
+    are relatively large the fish may not have been able to consume more than one at a time".
+    "it would appear that whiting, also a shoaling species, exploit aggregations of prey animals". Fish
+    "feeding equally from the pelagic and the benthic zones"; Pawson 1974 cited: whiting "successful at
+    locating buried food and digging it up".
+  - Addison 2001 [F]: whiting catch rates "much higher at night" on a Crangon ground (shallow Wash).
+  - Diet vs availability: section 3.3 (whiting: Pandalus 0.60, small shrimps 0.37, crabs 0.03 of
+    epifauna grams in the Skagerrak pre-2000, against 0.18 / 0.10 / 0.65 available).
+  - Prey size: Staniland strike success 0.8 at shrimp/whiting length 0.23-0.28 and 0.4 at 0.27-0.34
+    (empty stomach, small whiting). D: an adult Pandalus (TL ~8-16 cm, J) against a 22.5 cm median
+    whiting is 0.35-0.7, above the measured range; whiting's Pandalus take is presumably of small
+    Pandalus (no prey lengths obtained).
+  J for the predators -> epifauna pair: the whiting part is a shrimp pair (Pandalus + small shrimps +
+  mysids), crabs effectively excluded (S ~0.03); time of feeding mixed (shrimp by day when Pandalus is
+  down, benthic crustaceans at night); the deep station in Rindorf shows how little benthic feeding
+  happens in deep cold water.
+
+=====================================================================================================
+5. PER-TAXON SUMMARY (J unless tagged; multiply onto part C's time-on-surface; the model's p is the
+   reference capture; see THE DECOMPOSITION at the top - the lab burier/exposed ratio is a product that
+   REPLACES time-on-surface x E x p_rel for small shrimps, it is not multiplied onto them)
+=====================================================================================================
+taxon (biomass share)       E (exposed share of       p_rel (capture vs exposed     S (size window, biomass)
+                            time out)                 reference)
+crabs/brachyurans (part of  0.9 (0.7-1.0) J from    cod ~1 inside window (diet    cod 0.45 (0.2-0.7);
+ 0.65)                      Glass's counts (see 2.1   over-represented); no per-    haddock 0.03 (0-0.1);
+                            caveat)                   strike measure                whiting 0.03 (0-0.1) [D/J]
+hermit crabs                ~1 (no burial known)      cod/haddock ~1 (hermits a     not quantified; small
+                                                      main diet item [D])           hermits at 100-200 m
+Munida                      0.75 (0.6-0.9)            haddock takes it [D]          not quantified
+Pandalus borealis (0.18)    ~1 (no burial known)      whiting 0.4-0.8 per strike    cod ~1; whiting partial
+                                                      on exposed shrimp [F]; cod    (adult shrimp 0.35-0.7 of
+                                                      under-takes in Skagerrak [D]  whiting TL)
+small shrimps (0.10)        product (time out x E x p_rel) 0.35 (0.1-0.6) instead of  cod ~1; whiting ~1
+                            part C's 0.6 x 1; lab burier/exposed 0.09-0.32 [F/D]
+mysids (0.07)               ~1 near bottom by day     >= 1 (a 2.7x exposed shrimp   ~1
+                            (Lophogaster 0)           in the same tanks [F])
+Ratios used: burier/exposed per-capita rate on sand 0.086 (single-prey fits; 0.05-0.35 from SEs),
+0.32 light / 0.20 dark (two-prey trial); vegetation 0.36-2.0. Darkness: no effect on cod's shrimp
+selectivity (p 0.43) in a 0.38 m2 tank [F]; lower cod predation on mysids in the dark [A].
+Detection keys on movement (Holmes [F]); a burying shrimp in front of a predator is still taken.
+
+=====================================================================================================
+6. NOT OBTAINED
+=====================================================================================================
+- Al-Adhub & Naylor 1975 (JMBA 55:801) results, Hagerman 1970 (Ophelia 7), Pinn & Ansell 1993 full text:
+  closed (Unpaywall is_oa false); hours buried per day for Crangon not obtained.
+- Any burial / diel data for Crangon allmanni, Philocheras, Pontophilus spinosus (one search each).
+- Gibson, Yin & Robb 1995 (JMBA) is Crangon as PREDATOR of plaice, not relevant; no "Gibson et al. 1995
+  predation on Crangon" paper was identified.
+- Ellis & Gibson 1995 MEPS 127:27 downloaded (data/D_epifauna/ellis_gibson1995/) but it concerns
+  predation on 0-group flatfish; not used for crustaceans. Ellis & Gibson 1997 already in the encounter
+  note (fish prey).
+- Hislop et al. 1991 (ICES JMS 48:139), Pedersen 1999/2000 full texts, Bergstrom 2000 (Adv Mar Biol 38):
+  closed.
+- Meager et al. 2005 / 2010 full texts (dark vs light ratios): closed.
+- Chabot et al. 2008: max-CW vs cod-length quantile lines and the units of the gape fit not recovered
+  from the text extract.
+- Liocarcinus depurator carapace-width biomass distribution for the North Sea / Skagerrak: not found
+  (scenarios used instead). Haddock mouth width: not found (cod x 0.70 from the earlier gape table).
+- Any per-strike capture success of cod or haddock on crabs, hermit crabs, Munida or Pandalus; any
+  shell-protection measurement for hermit crabs against fish.
+- Any measurement of how a stationary (not buried) crab's detection by a gadoid compares with a moving
+  one.
+- Rindorf 2003 occurrence curves were not digitised (no night/day ratio extracted).

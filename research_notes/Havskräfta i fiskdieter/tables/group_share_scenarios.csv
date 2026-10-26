@@ -1,0 +1,9 @@
+scenario,cod_pct_stomach_mass_sizeweighted_2021_25,digestion_factor,season_factor,cod_pct_intake,haddock_pct_intake,group_pct_of_consumption,share_of_measured_benthos_epifauna_0.2182,share_of_all_epifauna_0.3143,flow_t_km2_yr,M2_QB3.4,M2_QB4.46,M2_QB5.0,fish_flow_pct_of_production_PB0.34
+"A_221_note (Skagerrak 2023-25 ICES only, no levers)",0.02,1.0,1.0,0.02,0.0,0.03,0.0014,0.001,0.0021,0.0003,0.0005,0.0005,0.1
+"G_221 codnns recomputed (NNS 2023 own B share, no levers)",5.69,1.0,1.0,5.69,0.0,1.658,0.076,0.0528,0.1132,0.0189,0.0248,0.0277,7.3
+"LOW (Kattegat Feb 1991 profile, season 1.5, dig 0.6)",1.79,0.6,1.5,1.61,0.0,0.487,0.0223,0.0155,0.0332,0.0055,0.0073,0.0082,2.1
+CENTRAL (Skagerrak Feb 1991 profile),3.42,0.65,2.06,4.58,0.3,1.502,0.0688,0.0478,0.1025,0.0171,0.0224,0.0251,6.6
+alt NNS Q1 1981 profile,2.69,0.65,2.06,3.6,0.3,1.221,0.056,0.0389,0.0833,0.0139,0.0182,0.0204,5.4
+alt NNS Q1 2023 profile,5.69,0.65,2.06,7.62,0.3,2.375,0.1088,0.0756,0.1621,0.027,0.0354,0.0397,10.4
+"HIGH (NNS 2023 100-200 m profile, dig 0.7)",8.94,0.7,2.06,12.89,1.0,4.318,0.1979,0.1374,0.2947,0.0491,0.0644,0.0723,19.0
+EXTREME corner (HIGH with season 3.3 = 1981),8.94,0.7,3.28,20.53,1.0,6.511,0.2984,0.2071,0.4443,0.0741,0.0972,0.1089,28.6

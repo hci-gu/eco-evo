@@ -1,0 +1,211 @@
+taxon,quantity,low,central,high,unit,source,tag
+Nephrops norvegicus,emergence_bouts_per_day,1,,2,bouts/day,J from Farmer 1975 Table XXI (Hoglund & Dybern 1965 N Kattegat 120-135 m sunrise and sunset; 205-220 m middle of day); Sarda 1995; Aguzzi et al. 2021 doi:10.1038/s41598-021-85240-3,J
+Nephrops norvegicus,emergence_window_slope_h,,10,,h,"Aguzzi et al. 2021 Sci Rep 11:5797 doi:10.1038/s41598-021-85240-3, GAM 340-570 m hour interval 7 to 17",F
+Nephrops norvegicus,population_activity_window_30m_h,,6.3,,h,"Chapman & Rice 1971 Loch Torridon 30 m June 21.10 to 03.30, in Farmer 1975 FAO Fish Synop 112 Table XXI",J
+Nephrops norvegicus,visible_per_burrow_peak,0.06,0.086,0.12,ind/burrow,"Aguzzi et al. 2021 Sci Rep 11:5797 doi:10.1038/s41598-021-85240-3, Table 3 (fully emerged + door-keeping)",F
+Nephrops norvegicus,fraction_emerged_at_once_peak_101_160m,0.037,,0.066,ind/burrow,"J: Aguzzi et al. 2021 Table 3 visible per burrow x (1 - door-keeping share), 101-160 m windows",J
+Nephrops norvegicus,fraction_emerged_at_once_peak_all_depths,0.034,,0.092,ind/burrow,"J: Aguzzi et al. 2021 Table 3 visible per burrow x (1 - door-keeping share), all depth strata",J
+Nephrops norvegicus,doorkeeping_share_of_visible_shelf,0.18,,0.41,fraction,Aguzzi et al. 2021 Sci Rep 11:5797 doi:10.1038/s41598-021-85240-3,F
+Nephrops norvegicus,doorkeeping_share_of_visible_slope,0.32,,0.54,fraction,Aguzzi et al. 2021 Sci Rep 11:5797 doi:10.1038/s41598-021-85240-3,F
+Nephrops norvegicus,doorkeeping_share_of_visible_biscay,0.315,0.531,0.75,fraction,"Bahamon et al. 2025 ICES JMS 82:fsaf205 doi:10.1093/icesjms/fsaf205, Table 1 (2016-2020)",F
+Nephrops norvegicus,hours_out_per_day_uwtv_implied,0.4,,0.7,h/day,J: 0.04-0.07 fully emerged per burrow x ~10 h plateau (Aguzzi et al. 2021); +0.2-0.4 h door-keeping; higher if occupancy < 1,J
+Nephrops norvegicus,fraction_time_fully_out_telemetry_all,0.061,0.488,0.965,fraction,"Aguzzi et al. 2023 Rev Fish Biol Fish 33:1465 doi:10.1007/s11160-023-09787-2, Table 2 (25 released adults, 315-475 m; recomputed mean)",F
+Nephrops norvegicus,fraction_time_fully_out_telemetry_daynight,0.065,0.348,0.738,fraction,"J: Aguzzi et al. 2023 Table 2, mean of 12 day-night rhythmic (burrow-holding) animals; scripts/telemetry_subset_means.py",J
+Nephrops norvegicus,hours_out_per_day_telemetry_daynight,1.5,8.4,17.7,h/day,"J: Aguzzi et al. 2023 Table 2 day-night subset, fully emerged share x 24 h",J
+Nephrops norvegicus,fraction_time_doorkeeping_telemetry_daynight,0.075,0.162,0.374,fraction,"Aguzzi et al. 2023 doi:10.1007/s11160-023-09787-2, Table 2/Table 3 day-night animals",F
+Nephrops norvegicus,fraction_time_in_burrow_telemetry_daynight,0.16,0.49,0.81,fraction,J: Aguzzi et al. 2023 Table 2 day-night subset (0 acoustic detections); Table 3 value 10.25 % inconsistent,J
+Nephrops norvegicus,daily_displacement_m,90.7,216,424.7,m/day,Aguzzi et al. 2023 doi:10.1007/s11160-023-09787-2 (text m/day; Table 1 header says cm),F
+Nephrops norvegicus,home_range_settled_m2,17.75,,736.25,m2,"Vigo et al. 2021 MEPS 674:173 via Vigo 2023 PhD thesis ch. 2.3 (UD90, 4 animals tracked all period)",F
+Nephrops norvegicus,home_range_radius_m,2.4,,15,m,J: sqrt(A/pi) of Vigo et al. 2021 home ranges 17.75-736.25 m2,J
+Nephrops norvegicus,displaced_adult_settling_time_d,,30,,days,Vigo 2023 thesis ch. 2.3: home range significantly smaller within 1 mo after release,F
+Nephrops norvegicus,distance_from_release_1yr_m,21.3,215,536.2,m,"Power et al. 2020 Ambio 49:107 doi:10.1007/s13280-019-01158-1, Table 1 (median 213-223 m by sex/size)",F
+Nephrops norvegicus,exchange_time_scale_h,12,,24,h,"J: 1-2 emergence bouts/day, same individuals emerge daily (Aguzzi et al. 2023); Farmer 1975 Table XXI",J
+Nephrops norvegicus,trawl_catch_per_burrow_ratio,0.004,0.01,0.025,fraction,"J: Tuck et al. 1997 ICES JMS 54:125 doi:10.1006/jmsc.1996.0179, catch density Table 3 / burrow density Table 2, 6 stations",J
+Nephrops norvegicus,trawl_capture_of_animals_in_path,,0.005,,fraction,DAFS 1966a in Farmer 1975 FAO Fish Synop 112 section 4.23 (assuming one animal per burrow),S
+Nephrops norvegicus,months_in_burrow_berried,7,9,10,months,"J: egg-laying Aug-Sep to hatching Apr-Jun (IMR 2021 narrative citing Powell & Eriksson 2013); Farmer 1975 Table V Scottish 9 months, NE England 10, Irish Sea 8",J
+Nephrops norvegicus,incubation_period_scottish_d,,270,,days,Thomas & Figueiredo 1964/65 in Farmer 1975 Table V,S
+Nephrops norvegicus,incubation_period_ne_england_d,,300,,days,Symonds 1972a in Farmer 1975 Table V,S
+Nephrops norvegicus,hatching_duration_one_female_d,5,,20,days,IMR 2021 Norwegian Deep narrative (citing Farmer; Powell & Eriksson 2013),S
+Nephrops norvegicus,share_mature_females_spawning_per_year,0.84,0.90,0.915,fraction,"Karlovac 1955 (84 %), Thomas 1964 (90 %), Farmer (91.5 %) in Farmer 1975 section 3.16; Sarda 1995: Scandinavia probably almost entirely biennial",S
+Nephrops norvegicus,berried_share_of_females_in_trawl_catch_scotland,0.01,,0.187,fraction,Thomas & Figueiredo 1964/65 in Farmer 1975 Table IX (monthly),S
+Nephrops norvegicus,berried_share_of_catch_trawl_kattegat_skagerrak,,0.05,,fraction,"Hornborg et al. 2017 ICES JMS 74:134 doi:10.1093/icesjms/fsw153, Table 1 (2005-2013)",F
+Nephrops norvegicus,berried_share_of_catch_creel_kattegat_skagerrak,,0.23,,fraction,"Hornborg et al. 2017 ICES JMS 74:134 doi:10.1093/icesjms/fsw153, Table 1 (2005-2013)",F
+Nephrops norvegicus,female_share_trawl_catch_kattegat_skagerrak,,0.32,,fraction,Hornborg et al. 2017 ICES JMS 74:134 doi:10.1093/icesjms/fsw153,F
+Nephrops norvegicus,female_share_creel_catch_kattegat_skagerrak,,0.40,,fraction,Hornborg et al. 2017 ICES JMS 74:134 doi:10.1093/icesjms/fsw153,F
+Nephrops norvegicus,female_share_trawl_catch_monthly_scotland,0.122,,0.467,fraction,Thomas & Figueiredo 1964/65 in Farmer 1975 Table VIII,S
+Nephrops norvegicus,female_share_population,0.4,0.5,0.6,fraction,J: catches between hatching and egg-laying approach 40-60 % female (Farmer 1975 Table VIII and text); population sex ratio not measured,J
+Nephrops norvegicus,natural_mortality_mature_female,,0.2,,1/yr,ICES Stock Annex nep.fu.3-4 (reduced emergence while ovigerous); males and immature females 0.3,F
+Nephrops norvegicus,burrow_density_max_clyde,0.46,1.4,1.48,burrows/m2,"Tuck et al. 1997 ICES JMS 54:125 doi:10.1006/jmsc.1996.0179, Table 2",F
+Nephrops norvegicus,burrow_density_loch_torridon,0.48,,0.71,burrows/m2,Chapman & Rice 1971 in Farmer 1975 (1/2.1 and 1/1.4 m2; animals 1/7.8 and 1/5.5 m2),S
+Nephrops norvegicus,burrow_occupancy_large_burrows,,0.70,,fraction,Chapman & Rice 1971 (Loch Torridon) in Farmer 1975 section 3.55,S
+Nephrops norvegicus,burrow_density_vs_siltclay_intercept,,0.13,,burrows/m2 at 10 % silt-clay,"Campbell et al. 2008 ICES CM 2008/G:06 (Fladen GLM, Table 3)",F
+Nephrops norvegicus,burrow_density_vs_siltclay_slope,,0.0056,,burrows/m2 per % silt-clay,"Campbell et al. 2008 ICES CM 2008/G:06 (Fladen GLM, Table 3)",F
+Nephrops norvegicus,siltclay_min_for_burrows,,10,,%,ICES Stock Annex nep.fu.3-4; Campbell et al. 2008,F
+Nephrops norvegicus,linf_vs_burrow_density_slope,,-16.307,,mm CL per burrow/m2,"Tuck et al. 1997 Fig. 5: Y=73.042-16.307X (males, r2 0.715)",F
+Nephrops norvegicus,burrow_area_max,,1,,m2,"Stewart 1974 J Cons 35:249 (burrows can cover up to 1 m2, 30 cm deep)",F
+Nephrops norvegicus,burrow_depth_max,,0.30,,m,Stewart 1974 J Cons 35:249,F
+Nephrops norvegicus,burrow_spacing_line_m,2,,3,m,"Stewart 1974 J Cons 35:249 (a burrow every 2 to 3 m along a straight line, Little Loch Broom 20-25 m)",F
+Nephrops norvegicus,nearest_neighbour_m_random_expectation,0.41,1.1,,m,J: 0.5/sqrt(D) for D = 0.21 (FU 3-4 2024) and 1.48 burrows/m2 (Clyde max),J
+Nephrops norvegicus,burrow_group_size,5,,10,burrows,Dybern & Hoisaeter 1965 in Farmer 1975 section 3.55,S
+Nephrops norvegicus,burrow_reexcavation_h,24,,48,h,Marrs et al. 1996 in ICES CRR 340 (signs within one day; complete by two days),S
+Nephrops norvegicus,burrow_construction_postlarva_d,,5,,days,Crnkovic 1968 in Farmer 1975 (burrow with 5 openings in 5 days),S
+Nephrops norvegicus,dominance_hierarchy_formation_d,1,,3,days,"Sbragaglia et al. 2017 J Exp Biol 220:4624 doi:10.1242/jeb.165969 (lab, 4 males, 1 burrow each)",F
+Nephrops norvegicus,claw_damage_share_males,,0.62,,fraction,Chapman & Rice 1971 in Farmer 1975 (females 0.41),S
+Nephrops norvegicus,Linf_male,72.9,73,73,mm CL,ICES stock annex nep 3.a FU 3-4; WGNSSK 2024; Ulmestrand & Eggert 2001 doi:10.1006/jmsc.2001.1133,F
+Nephrops norvegicus,K_male,0.138,0.138,0.14,1/yr,ICES stock annex nep 3.a FU 3-4; WGNSSK 2024; Ulmestrand & Eggert 2001,F
+Nephrops norvegicus,Linf_mature_female,,65,,mm CL,ICES stock annex nep 3.a FU 3-4 (assumed as Scottish stocks),F
+Nephrops norvegicus,K_mature_female,,0.10,,1/yr,ICES stock annex nep 3.a FU 3-4,F
+Nephrops norvegicus,female_L50_maturity,28.5,29,29,mm CL,ICES stock annex; WGNSSK 2024,F
+Nephrops norvegicus,LW_a_male,,0.00045,,g/mm^b,ICES stock annex (b 3.113),F
+Nephrops norvegicus,LW_a_female,,0.00108,,g/mm^b,ICES stock annex (b 2.847),F
+Nephrops norvegicus,catch_numbers_2023_div3a,,162,,million,WGNSSK 2024 table (landings 117 + discards 45); digitised Fig 10.1.4 sums to 161.6,F
+Nephrops norvegicus,prey_CL_range_in_cod,7,,57,mm CL,De Clerck & Sterk 1980 ICES CM 1980/G:43 Table 5 (cod 26-105 cm),F
+Nephrops norvegicus,prey_CL_range_in_cod,8,20,30,mm CL,Kinnear & Livingstone 1979 ICES CM 1979/K:33 (cod <= 64 cm; central = mean),F
+Nephrops norvegicus,prey_CL_range_in_whiting,9,23,38,mm CL,De Clerck & Sterk 1980 (central = median of 9),F
+Nephrops norvegicus,median_prey_CL_cod_26_45cm,,20,,mm CL,De Clerck & Sterk 1980 Table 5 (Aug; n 52),J
+Nephrops norvegicus,median_prey_CL_cod_46_65cm,,23,,mm CL,De Clerck & Sterk 1980 Table 5 (Aug; n 90),J
+Nephrops norvegicus,median_prey_CL_cod_66_105cm,,32,,mm CL,De Clerck & Sterk 1980 Table 5 (Aug; n 101),J
+Nephrops norvegicus,p90_prey_CL_cod_26_65cm,32,35,35,mm CL,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,p90_prey_CL_cod_66_105cm,,41,,mm CL,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,max_prey_CL_mm_for_cod_26_65cm,,41,,mm CL,De Clerck & Sterk 1980 Table 5 (class 40-42),F
+Nephrops norvegicus,max_prey_CL_mm_for_cod_66_105cm,,56,,mm CL,De Clerck & Sterk 1980 Table 5 (class 55-57),F
+Nephrops norvegicus,share_prey_le_39mm_cod_lt_66cm,,0.96,,fraction of prey numbers,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,share_prey_le_39mm_cod_ge_66cm,,0.81,,fraction of prey numbers,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,modal_prey_CL_in_cod_all_ages,22,24,26,mm CL,Armstrong et al. 1991 ICES CM 1991/G:15 Fig 3 (Irish Sea),F
+Nephrops norvegicus,mean_prey_CL_in_cod_Skagerrak_lower_bound,24.6,24.8,26.3,mm CL,Dorman et al. 1992 stomach weights inverted with annex L-W (digested: lower bound),J
+Nephrops norvegicus,M2_by_cod_age3_prawns_24_30mm,,0.248,,1/yr,Armstrong et al. 1991 Table 11 (Irish Sea base case),F
+Nephrops norvegicus,M2_by_cod_age7plus_prawns_gt_41mm,,0.080,,1/yr,Armstrong et al. 1991 Table 11,F
+Nephrops norvegicus,cod_selectivity_prawns_gt_41mm_rel_peak,0.48,0.55,0.62,fraction,Armstrong et al. 1991 Table 11 (cod age 4 and 6+),F
+Nephrops norvegicus,vulnerable_size_share_biomass_17_30mm,0.15,0.16,0.16,fraction of >=17 mm biomass,steady-state model scripts/nephrops_size_window.py,J
+Nephrops norvegicus,vulnerable_size_share_biomass_17_35mm,0.28,0.29,0.30,fraction of >=17 mm biomass,steady-state model scripts/nephrops_size_window.py,J
+Nephrops norvegicus,vulnerable_size_share_biomass_17_40mm,0.43,0.45,0.47,fraction of >=17 mm biomass,steady-state model scripts/nephrops_size_window.py,J
+Nephrops norvegicus,vulnerable_size_share_selectivity_weighted_big_cod,0.59,0.60,0.73,fraction of >=17 mm biomass,Armstrong 1991 SEL (cod 6+ to 4 yr) on steady-state population,J
+Nephrops norvegicus,vulnerable_size_share_selectivity_weighted_2yr_cod,0.23,0.24,0.25,fraction of >=17 mm biomass,Armstrong 1991 SEL (cod age 2) on steady-state population,J
+Nephrops norvegicus,biomass_below_17mm_rel_to_ge17mm,0.018,0.02,0.023,ratio,steady-state model (M below 17 mm 0.3-0.6),J
+Nephrops norvegicus,mean_weight_ge17mm_model,27.8,28.5,29.3,g,steady-state model (harvest rate 0.042-0.051),J
+Nephrops norvegicus,catch_weight_share_le_40mm,,0.40,,fraction,digitised WGNSSK 2024 Fig 10.1.4 (gear-selected),J
+Nephrops norvegicus,years_in_vulnerable_window_17_30mm,1.9,1.9,2.0,yr,annex VBGF; Armstrong 1991 length-at-age gives 2,J
+Nephrops norvegicus,years_in_vulnerable_window_17_40mm,3.8,4.5,5.4,yr,annex VBGF males 3.8 females 5.4; Armstrong 1991 males ~4.5,J
+Nephrops norvegicus,years_settlement_to_17mm,1.6,2,2,yr,annex VBGF extrapolated 1.6; Armstrong 1991 length-at-age (age 2 = 17 mm),J
+Nephrops norvegicus,settlement_CL,3.08,3.08,4.00,mm CL,Smith 1987 thesis Table 4.1a (PL1 3.08; PL2 4.00),F
+Nephrops norvegicus,CL_at_first_emergence,10,,15,mm CL,Smith 1987 citing Chapman 1980,S
+Nephrops norvegicus,larval_duration_days,29,39,46,days,Smith 1987 (zoeal Z1-Z3 29 d at 14 C; 46 d to PL1 at 12 C); Hillis 1974 39 d at 12 C via Smith,F
+Nephrops norvegicus,larval_duration_stage1_2_days,13,,33,days,McGeady et al. 2019 doi:10.3354/meps13142 (15 C to 9 C),F
+Nephrops norvegicus,larval_advection_km_60d,100,125,200,km,McGeady et al. 2019 particle tracking (Irish Sea 100-125; Aran 181-200),F
+Nephrops norvegicus,larval_retention_on_ground,0.15,0.15,0.32,fraction,McGeady et al. 2019 western Irish Sea,F
+Nephrops norvegicus,adult_movement_km_per_yr,0.15,0.23,0.31,km/yr,Power et al. 2019 doi:10.1038/s41597-019-0013-x (232 +- 83 m after 1-2 yr),F
+Nephrops norvegicus,adult_daily_path_m,1.05,,267,m/day,Vigo Fernandez 2023 thesis ch 2.3 (acoustic),F
+Nephrops norvegicus,adult_home_range_m2,17.75,,736.25,m2,Vigo Fernandez 2023 thesis ch 2.3,F
+Nephrops norvegicus,abundance_increase_after_4yr_closure,,0.60,,fraction,Vigo et al. 2023 doi:10.1093/icesjms/fsad130 (thesis ch 2.4),F
+Nephrops norvegicus,survival_time_at_10pct_O2,2,,4,days,Baden et al. 1990 MEPS 67:141,F
+Nephrops norvegicus,survival_time_at_15pct_O2,,28,,days,Baden et al. 1990 MEPS 67:141 (4 wk),F
+Nephrops norvegicus,recolonisation_years_empty_cell,3,5,10,yr,J from settlement-driven refill plus growth to 30-40 mm (Q6.3),J
+Pandalus borealis,larval_duration_days,45,,90,days,DNV GL 2015 MSC report citing Aschan & Ingvaldsen 2009; Shumway et al. 1985,S
+Pandalus borealis,larval_transport_km,74,,330,km,Pedersen et al. 2003 via DNV GL 2015 (300 km) and Nofima record (annual mean 74-122; max 330),S
+Pandalus borealis,recolonisation_years,,1,,yr,J from pelagic larvae and juvenile drift Skagerrak -> Norwegian Deep (Sovik & Thangstad 2021),J
+Pagurus bernhardus,days_aggregated_in_trawled_area,2,3,4,days,Ramsay et al. 1996 MEPS 144:63 Table 2 (81.8 vs 7.1 per 1000 m2 at 2 d; ns at 4 d),F
+Pagurus bernhardus,megalopa_duration_days,,7.3,,days,Weiss et al. 2009 JMBA (temperature not seen),S
+megafauna (beam trawl),recovery_months_stable_sediment,,6,,months,Kaiser et al. 1998 doi:10.1006/jmsc.1997.0322,A
+Liocarcinus depurator,local_residence_weeks,1,,23,weeks,Glass 1985 thesis (45 % of resights one week after tagging; max 20-23 weeks),F
+Crangon allmanni,larval_duration_days,42,,49,days,Blahudka & Turkay 2002 citing Criales 1985 (6-7 weeks at 12 C),S
+Crangon allmanni,lifespan_yr,,1.5,,yr,Blahudka & Turkay 2002 doi:10.1007/s10152-002-0110-6,F
+Crangon allmanni,recolonisation_years,,1,,yr,J from annual summer recruitment (Blahudka & Turkay 2002),J
+Annelida+Crustacea+Mollusca (macrofauna),recovery_days_intertidal_dredging_muddy_sand,,870,,days,Kaiser et al. 2006 MEPS 311:1 (extrapolated; data only to 540 d),F
+Nephrops norvegicus,prey_CL_slope_per_cod_length,,0.25,,mm CL per cm cod,De Clerck & Sterk 1980 Table 5 pooled medians (20/23/32 mm at 26-45/46-65/66-105 cm),J
+Pandalus borealis,day_night_catch_ratio,,2.47,,ratio noon/midnight bottom-trawl catch,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 Table 1-2 (Davis Strait, August, ~368 m); https://www.nafo.int/icnaf/library/docs/1978/res-87.pdf",F
+Pandalus borealis,day_night_catch_ratio,1.80,,3.50,ratio max/min bottom-trawl catch,"Horsted 1976 (1.80 Jul), Berenboim et al. 1976 (2.80 Aug), Smidt 1976 (3.50 Aug) as tabulated in Jones & Parsons 1978 Table 3, Davis Strait",S
+Pandalus borealis,day_night_catch_ratio,1.9,,6.33,ratio day/night survey catch,Frechette et al. 1983 as cited by Baker et al. 2021 J. Crust. Biol. 41(2) ruab024 https://doi.org/10.1093/jcbiol/ruab024,S
+Pandalus borealis,day_night_catch_ratio,1.7,2.4,2.6,ratio mean 09-15 h / mean 21-03 h commercial catch,"J from Smidt 1976 ICNAF Res.Doc. 76/XII/149 Table 2 (W Greenland, Dec/Nov/Oct 1975); scripts/smidt_1976_ratios.py",J
+Pandalus borealis,fraction_exposed_24h_mean,0.51,0.54,0.75,24-h mean catch / daily max catch,"J from Smidt 1976 Table 2 (Oct 0.51, Nov 0.54, Dec 0.75); scripts/smidt_1976_ratios.py",J
+Pandalus borealis,hours_off_bottom_per_day,6,12,17.5,"h/day for the migrating fraction (= dark hours at 58 N, midsummer-midwinter)","J from Barr 1970 abstract (off bottom dusk to dawn, time off bottom ~ night length) https://doi.org/10.1139/f70-071 and day length at 58 N",J
+Pandalus montagui,day_night_catch_ratio,,1.52,,ratio day/night bottom-trawl catch (males),Baker et al. 2021 J. Crust. Biol. 41(2) ruab024 https://doi.org/10.1093/jcbiol/ruab024,F
+Pandalus montagui,share_males_among_pelagic_migrants,,0.75,,fraction,Hudon et al. 1992 CJFAS 49:565 abstract https://doi.org/10.1139/f92-066,A
+Pandalus montagui,night_ascent_m,,200,,m above bottom (> 200),Crawford et al. 1992 CJFAS 49:842 abstract https://doi.org/10.1139/f92-095,A
+Pandalus borealis,midnight_catch_fraction_of_noon,,0.404,,fraction,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 Table 2 (Davis Strait, August, ~368 m)",F
+Pandalus borealis,night_plateau_hours,,1.83,,h,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 (night plateau 1 h 50 min, August, ~64-67 N)",F
+Pandalus borealis,day_plateau_hours,,5.33,,h,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 (day plateau 5 h 20 min, August)",F
+Pandalus borealis,fraction_exposed_24h_mean,,0.68,,fraction of noon bottom level,"J from Jones & Parsons 1978 Table 2 hourly values; scripts/jones_parsons_1978_daily_mean.py (summer, high latitude)",J
+Liocarcinus depurator,night_day_catch_ratio,,5,,"folding factor (night/day), Mediterranean shelf 100-110 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Liocarcinus depurator,night_day_catch_ratio,,2.5,,"folding factor (night/day), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Liocarcinus depurator,night_day_catch_ratio,3.4,,3.5,"mean density night/day, Mediterranean shelf 100-110 m, Oct and Jun",J from Bahamon et al. 2009 ICES JMS 66:2211 Table 2 (preprint) https://doi.org/10.1093/icesjms/fsp190,J
+Liocarcinus depurator,night_day_catch_ratio,0.9,,1.3,"mean density night/day, Mediterranean slope 400-430 m, Oct and Jun",J from Bahamon et al. 2009 ICES JMS 66:2211 Table 2 (preprint) https://doi.org/10.1093/icesjms/fsp190,J
+Goneplax rhomboides,night_day_catch_ratio,,10,,"folding factor (night/day), Mediterranean shelf 100-110 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Goneplax rhomboides,night_day_catch_ratio,,2.0,,"folding factor, Mediterranean slope 400-430 m (arrhythmic)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Goneplax rhomboides,burrow_density,,0.93,,"burrows per m2 (17 m, Lundy, August)","Atkinson, Lundy Field Society Annual Report 26 https://lfs-resources.s3.amazonaws.com/ar26/LFS_Annual_Report_Vol_26_Part_26.pdf",F
+Pontophilus norvegicus,night_day_catch_ratio,,3.0,,"folding factor (night/day), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Munida tenuimana,night_day_catch_ratio,,2.0,,"folding factor (night/day), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Munida intermedia,night_day_catch_ratio,,0.5,,"folding factor (diurnal; night/day < 1), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Processa canaliculata,night_day_catch_ratio,,100,,"folding factor (night/day), Mediterranean shelf 100-110 m (order of magnitude)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Processa nouveli,night_day_catch_ratio,,100,,"folding factor (night/day), Mediterranean shelf 100-110 m (order of magnitude)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Alpheus glaber,night_day_catch_ratio,1.0,,10,"folding factor, slope (arrhythmic) to shelf 100-110 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+endobenthic burrowers (Mediterranean decapods),night_day_catch_ratio,,10,,"night/day trawl occurrence, shelf",Aguzzi & Bahamon 2009 Fish. Res. 100:274 text ('a 10-fold increase versus daytime'),F
+endobenthic buriers (Mediterranean decapods),night_day_catch_ratio,,,100,"night/day trawl occurrence, shelf (up to)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 text ('up to 100 times'),F
+Munida rugosa,fraction_stomachs_over_half_full,0.19,,0.41,fraction; afternoon vs morning catches (Firth of Clyde),"J from Zainal 1990 PhD thesis Univ. Glasgow (29/71 morning, 8/43 afternoon) https://theses.gla.ac.uk/78167/",J
+Lophogaster typicus,fraction_migrating,,1.0,,fraction of population leaving bottom at night (buries by day),Kaartvedt 1989 MEPS 57:119 https://www.int-res.com/articles/meps/57/m057p119.pdf,F
+Lophogaster typicus,hours_off_bottom_per_day,,10,,"h/day, annual mean ('conservatively', W Norway fjord)",Kaartvedt 1989 MEPS 57:119,F
+Leptomysis gracilis,fraction_migrating,,1.0,,fraction ('entire population seems to leave the bottom at night'),Kaartvedt 1989 MEPS 57:119 citing Kaartvedt 1985,F
+Boreomysis megalops,night_ascent_m,,100,,m above bottom (> 100; part of population stays near bottom),Kaartvedt 1989 MEPS 57:119,F
+hyperbenthos (Bay of Biscay shelf 91 m),night_day_density_ratio_0_100cm,,0.57,,"night/day density in bottom 1 m (3620 day, 2060 night ind./100 m3)",Mees & Jones 1997 Oceanogr. Mar. Biol. Annu. Rev. 35:221 citing Sorbe https://www.vliz.be/imisdocs/publications/281359.pdf,S
+mysids (Bay of Biscay shelf 91 m),night_day_density_ratio_0_100cm,,0.22,,night/day mysid density in bottom 1 m,"J from Mees & Jones 1997 (mysids 44 % day, 17 % night of 3620 / 2060 ind./100 m3)",J
+hyperbenthos (Bay of Biscay shelf),upper_to_lower_net_ratio,0.011,,0.138,"50-100 cm net / 0-50 cm net, day (low) to night (high)","Mees & Jones 1997 citing Sorbe (Gulf of Gascogne, 25-237 m)",S
+Pandalus borealis,fraction_off_bottom_at_night,,0.60,,fraction at midnight relative to noon (upper bound on migrating share; assumes all on bottom at noon),"J from Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 Table 2 (1 - 0.404; Davis Strait, August)",J
+Pandalus borealis,fraction_off_bottom_at_night,0.49,,0.72,"fraction, night (21-03 h) relative to daily max catch (upper bound; Dec to Oct)","J from Smidt 1976 ICNAF Res.Doc. 76/XII/149 Table 2 (night/max 0.28-0.51, W Greenland Oct-Dec 1975)",J
+Nephrops norvegicus (W Irish Sea 1981-84),consumption_by_cod,1720,3050,5380,t_per_yr,"Armstrong, Smyth & McCurdy 1991 ICES CM 1991/G:15 Table 10",F
+Nephrops norvegicus (W Irish Sea 1981-84),biomass_age2plus,17000,19000,24700,t,Armstrong et al. 1991 ICES CM 1991/G:15 Table 10 (cohort analysis),F
+Nephrops norvegicus (W Irish Sea 1981-84),consumption_to_biomass_per_yr,0.10,0.16,0.23,per_yr,"J from Armstrong et al. 1991 Table 10 (consumption / 2+ biomass, same run)",J
+Nephrops norvegicus (W Irish Sea 1981-84),predation_mortality_M2_by_cod_per_yr,0.038,0.18,0.248,per_yr,"Armstrong et al. 1991 Table 11 (pseudo ages 1-7+, base case; central = median of ages 2-6)",F
+Nephrops norvegicus (W Irish Sea 1981-84),fishing_mortality_F_per_yr,0.013,0.62,0.833,per_yr,Armstrong et al. 1991 Table 11 (pseudo ages 1-7+; central = 7+),F
+Nephrops norvegicus (W Irish Sea 1981-84),consumption_by_cod_to_landings,,0.33,,ratio,Armstrong et al. 1991: ~3000 t/yr 'about one third of the mass of Nephrops landed annually',F
+Nephrops norvegicus (W Irish Sea),share_of_stomach_contents_cod_on_grounds,20,,40,pct_weight,Armstrong et al. 1991 abstract,F
+Nephrops norvegicus (W Irish Sea),share_of_daily_food_intake_cod,12,,28,pct,Armstrong et al. 1991 abstract (digestion-corrected),F
+Nephrops norvegicus (Irish Sea),share_of_predation_by_cod,,88,,pct,Bjornsson & Dombaxe 2004 ICES JMS 61:983 doi:10.1016/j.icesjms.2004.06.017 citing Symonds & Elson 1983; Brander & Bennett 1986,S
+Nephrops norvegicus (S Iceland),share_of_diet_cod_50_90cm,10,30,65,pct_weight,"Bjornsson & Dombaxe 2004 citing Dombaxe 2002 (10 % March, 65 % July, ~30 % annual)",S
+Nephrops norvegicus (Outer Silver Pit),share_of_stomach_weight_cod_August,3.75,,51.7,pct_weight,De Clerck & Sterk 1980 ICES CM 1980/G:43 (small to large cod),F
+Nephrops norvegicus (Outer Silver Pit),share_of_stomach_weight_cod_autumn,2.79,,11,pct_weight,De Clerck & Sterk 1980 ICES CM 1980/G:43,F
+Nephrops norvegicus (North Sea 1991),implied_M2_ecopath_balance,,0.35,,per_yr,J from Mackinson & Daskalov 2007 Cefas Tech Rep 142 (P/B 0.37 x EE 0.994 - F 0.016; P/B assumed from M 0.25),J
+Nephrops norvegicus (North Sea),assessment_natural_mortality_M,0.2,,0.3,per_yr,"Mackinson & Daskalov 2007 citing ICES WGNSSK 2005 (0.3 males/immature females, 0.2 mature females)",F
+Nephrops norvegicus (Kattegat NTZ 2009-2021),prey_biomass_change_pct_after_trawl_closure,100,,,pct,Skold et al. 2022 ICES JMS 79:2231 doi:10.1093/icesjms/fsac152 ('more than doubled'; cod no significant change),F
+Pandalus borealis (Skagerrak/Norwegian Deep),assessment_natural_mortality_M,,0.75,,per_yr,Jorgensen et al. 2014 NAFO SCR 14/066; ICES CM 1995/K:5 ('not well founded'),F
+Pandalus borealis (Skagerrak/Norwegian Deep),natural_mortality_best_fit,0.9,,1.2,per_yr,Jorgensen et al. 2014 NAFO SCR 14/066 (0.9 predation-index weighted; 1.2 constant),F
+Pandalus borealis (Skagerrak/Norwegian Deep),predation_removal_to_catch,2,,,ratio,"Munch-Petersen et al. 2010 NAFO SCR 10/70 ('at least twice', assessments 1985-2002)",F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_cod,,22.44,,pct_weight,Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=779),F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_blue_whiting_gt35cm,,18.57,,pct_weight,Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=146),F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_saithe,,2.69,,pct_weight,Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=1342),F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_haddock,,2.15,,pct_weight,Jorgensen et al. 2014 Table 1 citing Albert 1994 (n=803),F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_whiting,,0.96,,pct_weight,Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=223),F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_skates,,3.80,,pct_weight,Jorgensen et al. 2014 Table 1 citing Skjaeraasen & Bergstad 2000 (n=175),F
+Pandalus borealis (Barents Sea),fraction_of_stock_eaten_by_cod_per_yr,0.15,,0.58,fraction_per_yr,Berenboim et al. 1999 NAFO SCR 99/87 (= JNAFS 27:69-75),F
+Pandalus borealis (Barents Sea),predation_mortality_M2_by_cod_per_yr,0.06,0.76,2.23,per_yr,Jorgensen et al. 2014 NAFO SCR 14/066 Table 3 citing Berenboim et al. 1991 (11 cohorts),S
+Pandalus borealis (Barents Sea),consumption_by_cod,160000,250000,450000,t_per_yr,Hvingel 2006 NAFO SCR 06/64 (1994-2004),F
+Pandalus borealis (Barents Sea),consumption_by_cod_mean_1984_2004,,280000,,t_per_yr,Aschan et al. 2006 NAFO SCR 06/71 citing Bogstad & Mehl 1997; ICES 2006,F
+Pandalus borealis (Barents Sea),consumption_by_cod_to_catch,3,5,5,ratio,Berenboim et al. 1999 ('3-4 times'); Hvingel 2006 ('on average 5 times'),F
+Pandalus borealis (Barents Sea),consumption_to_biomass_per_yr,0.15,,0.45,per_yr,J: Hvingel 2006 consumption 160-450 kt vs Berenboim 1999 SSVPA biomass 0.6-1.76 Mt (different years; order of magnitude only),J
+Pandalus borealis (NE Newfoundland SFA6),consumption_by_cod,10000,,25000,t_per_yr,"Lilly, Parsons & Kulka 2000 JNAFS 27:45-61 (most years before 1990; max 55000 in 1983)",F
+Pandalus borealis (NE Newfoundland),predator_biomass_change_pct,-98,,,pct,Lilly et al. 2000 (cod 3+ ~1000000 t in 1984-85 to <20000 t in 1993),F
+Pandalus borealis (Hawke Channel),prey_density_change_pct,160,,,pct,J from Lilly et al. 2000 (3000 t 1979-81 to 7800 t 1988-90; preceded cod collapse),J
+Pandalus borealis (West Greenland),cod_to_shrimp_response_lag,1,,2,yr,Wieland et al. 2007 JNAFS 39:21-33 (negative correlation until early 1990s only),F
+Pandalus borealis (North Atlantic 9 regions),regions_with_inverse_cod_shrimp_correlation,,8,,count_of_9,Worm & Myers 2003 Ecology 84:162 (abstract via search snippets),S
+Pandalus borealis (North Atlantic 9 regions),regions_significant_after_autocorrelation_correction,,3,,count_of_9,Baum & Worm 2009 J Anim Ecol 78:699 doi:10.1111/j.1365-2656.2009.01531.x citing Worm & Myers 2003,F
+Chionoecetes opilio (NW Atlantic 10 regions),cod_to_crab_response_lag,0,2,5,yr,"Boudreau, Anderson & Worm 2011 MEPS 429:169 doi:10.3354/meps09081",F
+Crangon crangon (North Sea),predation_mortality_M_per_yr,1.26,1.7,4.75,per_yr,Temming & Hufnagl 2015 ICES JMS 72:804 doi:10.1093/icesjms/fsu194 (4.75 in 1971; 1.26 in 2010; 1.7 = 2001-10 mean),F
+Crangon crangon (North Sea),consumption_by_cod_and_whiting_gt50mm_1971_1980,41772,,45666,t_per_yr,Temming & Hufnagl 2015 (RFA6 and North Sea approaches),F
+Crangon crangon (North Sea),consumption_by_cod_and_whiting_gt50mm_2001_2010,12967,,15148,t_per_yr,Temming & Hufnagl 2015 (North Sea and RFA6 approaches),F
+Crangon crangon (North Sea),predator_consumption_change_pct_1970s_to_2000s,-72,,-64,pct,J from Temming & Hufnagl 2015 averages,J
+Shrimp group (North Sea 1991),implied_M2_ecopath_balance,,1.26,,per_yr,J from Mackinson & Daskalov 2007 Cefas Tech Rep 142 (P/B 3 x EE 0.449 - F 0.087),J
+Nephrops norvegicus,fraction_exposed_emergence,0.03,0.07,0.35,fraction of burrow holders out at a random time,"J synthesis: UWTV fully emerged at peak 0.037-0.066 at 101-160 m plus part of the door-keepers (Aguzzi et al. 2021, doi:10.1038/s41598-021-85240-3) for low/central; telemetry day-night subset 0.35 (Aguzzi et al. 2023, doi:10.1007/s11160-023-09787-2; displaced animals) as high",J
+Nephrops norvegicus,fraction_exposed_emergence_x_size,0.02,0.04,0.21,fraction of biomass,J: fraction_exposed_emergence x selectivity-weighted vulnerable size share 0.6 (large cod; Armstrong et al. 1991 ICES CM 1991/G:15 Table 11 on the FU 3-4 steady-state population),J
+Nephrops norvegicus,exchange_time_scale_h,12,24,24,h,"J: 1-2 emergence bouts per day, same animals daily (Aguzzi et al. 2023; Hoglund & Dybern 1965 via Farmer 1975)",J
+Nephrops norvegicus,months_in_burrow_berried,7,9,10,months,"J from IMR 2021 narrative (egg laying Aug-Sep, hatching Apr-Jun) and Farmer 1975 Table V incubation 8-10 months",J
+Nephrops norvegicus,years_in_vulnerable_window,2,4,5.4,yr,"J: VBGF (FU 3-4 stock annex; Ulmestrand & Eggert 2001) 17->30 mm 1.9-2.0 yr, 17->40 mm 3.8-5.4 yr; no hard upper size refuge (cod 66-105 cm took up to 55-57 mm CL, De Clerck & Sterk 1980)",J
+Nephrops norvegicus,refuge_saturation_ratio,0.1,0.15,0.2,FU 3-4 burrow density / observed maximum,J: 0.21 burrows/m2 FU 3-4 2024 (WGNEPS 2025) vs 1.48 burrows/m2 Clyde (Tuck et al. 1997 doi:10.1006/jmsc.1996.0179); 2011-24 grid mean 0.15,J
+Nephrops norvegicus,recolonisation_years,3,5,10,yr,"J: larvae advected 100-200 km (McGeady et al. 2019 doi:10.3354/meps13142), adults ~0.2 km/yr (Power et al. 2019), settlers need 3.5-5.4 yr to 30-40 mm; +60 % after 4-yr closure (Vigo et al. 2023 doi:10.1093/icesjms/fsad130); Kattegat NTZ biomass >x2 in ~12 yr (Skold et al. 2022 doi:10.1093/icesjms/fsac152)",J
+Nephrops norvegicus,predation_mortality_M2_by_fish,0.1,0.2,0.35,1/yr,"J: Armstrong et al. 1991 cod M2 0.04-0.25 by age and consumption/biomass 0.10-0.23 (W Irish Sea, cod abundant); North Sea Ecopath implied 0.35 (assumed P/B)",J
+Pandalus borealis,fraction_exposed_annual_mean,0.65,0.75,0.85,fraction on bottom (24-h mean relative to day level),"J: 24-h availability 0.68 (Jones & Parsons 1978 ICNAF Res Doc 78/XI/87), 0.51-0.75 (Smidt 1976, Oct-Dec), ~1 in Skagerrak winter survey (no sun-height effect, WKPRAWN 2022), berried females do not migrate (Shumway et al. 1985 FAO Fish Synop 144)",J
+Pandalus borealis,exchange_time_scale_h,,24,,h,"J: dusk-to-dawn ascent, time off bottom scales with night length (Barr 1970 doi:10.1139/f70-071 [A])",J
+Pandalus borealis,natural_mortality_total_mostly_predation,0.75,0.9,1.2,1/yr,"Skagerrak/Norwegian Deep assessment M 0.75 assumed, best fits 0.9-1.2 (Jorgensen et al. 2014 NAFO SCR 14/066); predation >= 2 x catch (Munch-Petersen et al. 2010 NAFO SCR 10/70); 0.75 'not well founded' (ICES CM 1995/K:5)",F
+crabs (Liocarcinus depurator; Goneplax rhomboides),fraction_exposed_time_mean,0.5,0.6,0.8,fraction,"J: night/day trawl ratios 3.4-3.5 (L. depurator) and 10 (Goneplax) on the 100 m Mediterranean shelf, 0.9-2.5 and 2 on the 400 m slope (Aguzzi & Bahamon 2009 doi:10.1016/j.fishres.2009.08.010; Bahamon et al. 2009 doi:10.1093/icesjms/fsp190); L. depurator on the surface by day, inactive (Atkinson, Lundy); Skagerrak light at 100-300 m judged closer to the slope case",J
+Munida rugosa / M. sarsi,fraction_exposed_time_mean,0.3,0.5,0.7,fraction,"J: does not dig, uses vacated Nephrops/Goneplax/Cepola burrows and stones, stays at the opening (Zainal 1990 thesis Univ. Glasgow); congeners on the 400 m slope night/day 2.0 (M. tenuimana) and 0.5 (M. intermedia) (Aguzzi & Bahamon 2009)",J
+small shrimps (Processa; Pontophilus),fraction_exposed_time_mean,0.5,0.6,0.75,fraction,"J: buriers night/day up to 100 on the 100 m Mediterranean shelf, Pontophilus norvegicus 3 on the slope, buriers <= 4x on the slope (Aguzzi & Bahamon 2009); exposed mostly at night. Crangon allmanni, Eualus: not found",J
+mysids (Skagerrak/Norwegian Trench),fraction_exposed_time_mean,0.4,0.6,0.9,fraction near bottom,"J: migrating mysids scarce at shelf/trench stations (Kaartvedt 1989 MEPS 57:119); Lophogaster buries by day, off bottom ~10 h/night; Bay of Biscay 91 m near-bottom mysids night/day 0.22 (Mees & Jones 1997 review)",J
+mobile_epifauna (group),fraction_exposed_biomass_weighted,0.27,0.29,0.46,fraction,J: 0.60 x Nephrops 0.07 (0.03-0.35) + 0.26 x crabs/hermits/Munida ~0.6 + 0.07 x Pandalus 0.75 + 0.04 x small shrimps 0.6 + 0.03 x mysids 0.6; low/high vary Nephrops only,J
+mobile_epifauna (group),predation_mortality_M2_by_fish,0.2,0.3,0.4,1/yr,"J (part D): biomass-weighted Nephrops ~0.2, Pandalus ~0.8, small shrimps 1.3-4.8 (Crangon crangon analogue, Temming & Hufnagl 2015 doi:10.1093/icesjms/fsu194); crabs and mysids unmeasured, assumed near the Nephrops level",J

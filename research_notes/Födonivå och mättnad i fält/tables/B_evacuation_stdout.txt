@@ -1,0 +1,108 @@
+# T = 7.5 C (bottom water 100-300 m, 7-8 C)
+
+## evacuation of a single meal S0 (% BW); times in hours
+species L(cm) W(g) prey                                 S0%  R'(g/h) t_half t_empty ticks_half ticks_empty
+cod       40    640 fish/soft, E 4.2                      1.0  0.1491    9.9    33.9       1.7        5.7
+cod       40    640 fish/soft, E 4.2                      2.0  0.1491   14.1    48.0       2.3        8.0
+cod       40    640 fish/soft, E 4.2                      5.0  0.1491   22.2    75.9       3.7       12.6
+cod       40    640 benthos soft, E 3.5                   1.0  0.1741    8.5    29.1       1.4        4.8
+cod       40    640 benthos soft, E 3.5                   2.0  0.1741   12.0    41.1       2.0        6.8
+cod       40    640 benthos soft, E 3.5                   5.0  0.1741   19.0    65.0       3.2       10.8
+cod       40    640 benthos armoured, E 3.5, M 0.5 (J)    1.0  0.0871   17.0    58.1       2.8        9.7
+cod       40    640 benthos armoured, E 3.5, M 0.5 (J)    2.0  0.0871   24.1    82.2       4.0       13.7
+cod       40    640 benthos armoured, E 3.5, M 0.5 (J)    5.0  0.0871   38.1   130.0       6.3       21.7
+cod       60   2160 fish/soft, E 4.2                      1.0  0.2526   10.8    36.8       1.8        6.1
+cod       60   2160 fish/soft, E 4.2                      2.0  0.2526   15.2    52.0       2.5        8.7
+cod       60   2160 fish/soft, E 4.2                      5.0  0.2526   24.1    82.3       4.0       13.7
+cod       60   2160 benthos soft, E 3.5                   1.0  0.2949    9.2    31.5       1.5        5.3
+cod       60   2160 benthos soft, E 3.5                   2.0  0.2949   13.1    44.6       2.2        7.4
+cod       60   2160 benthos soft, E 3.5                   5.0  0.2949   20.6    70.5       3.4       11.7
+cod       60   2160 benthos armoured, E 3.5, M 0.5 (J)    1.0  0.1475   18.5    63.0       3.1       10.5
+cod       60   2160 benthos armoured, E 3.5, M 0.5 (J)    2.0  0.1475   26.1    89.1       4.4       14.9
+cod       60   2160 benthos armoured, E 3.5, M 0.5 (J)    5.0  0.1475   41.3   140.9       6.9       23.5
+haddock   40    640 fish/soft, E 4.2                      1.0  0.1271   11.7    39.8       1.9        6.6
+haddock   40    640 fish/soft, E 4.2                      2.0  0.1271   16.5    56.3       2.7        9.4
+haddock   40    640 fish/soft, E 4.2                      5.0  0.1271   26.1    89.0       4.3       14.8
+haddock   40    640 benthos soft, E 3.5                   1.0  0.1485   10.0    34.1       1.7        5.7
+haddock   40    640 benthos soft, E 3.5                   2.0  0.1485   14.1    48.2       2.4        8.0
+haddock   40    640 benthos soft, E 3.5                   5.0  0.1485   22.3    76.2       3.7       12.7
+haddock   40    640 benthos armoured, E 3.5, M 0.5 (J)    1.0  0.0742   20.0    68.2       3.3       11.4
+haddock   40    640 benthos armoured, E 3.5, M 0.5 (J)    2.0  0.0742   28.2    96.4       4.7       16.1
+haddock   40    640 benthos armoured, E 3.5, M 0.5 (J)    5.0  0.0742   44.6   152.4       7.4       25.4
+whiting   30    270 fish/soft, E 4.2                      1.0  0.0914   10.5    35.9       1.8        6.0
+whiting   30    270 fish/soft, E 4.2                      2.0  0.0914   14.9    50.8       2.5        8.5
+whiting   30    270 fish/soft, E 4.2                      5.0  0.0914   23.5    80.4       3.9       13.4
+whiting   30    270 benthos soft, E 3.5                   1.0  0.1068    9.0    30.8       1.5        5.1
+whiting   30    270 benthos soft, E 3.5                   2.0  0.1068   12.7    43.5       2.1        7.3
+whiting   30    270 benthos soft, E 3.5                   5.0  0.1068   20.2    68.8       3.4       11.5
+whiting   30    270 benthos armoured, E 3.5, M 0.5 (J)    1.0  0.0534   18.0    61.6       3.0       10.3
+whiting   30    270 benthos armoured, E 3.5, M 0.5 (J)    2.0  0.0534   25.5    87.1       4.2       14.5
+whiting   30    270 benthos armoured, E 3.5, M 0.5 (J)    5.0  0.0534   40.3   137.6       6.7       22.9
+
+## steady-state ration (Cmax-equivalent) at mean fill S, %BW/d
+species L  prey                      S=1%BW  S=2.5%BW  S=5%BW   FB4 cod Cmax (if cod)
+cod      40 fish/soft, E 4.2             1.41     2.24     3.16   2.11
+cod      40 benthos soft, E 3.5          1.65     2.61     3.69   2.11
+cod      40 benthos armoured, E 3.5,     0.83     1.31     1.85   2.11
+cod      60 fish/soft, E 4.2             1.30     2.06     2.92   1.67
+cod      60 benthos soft, E 3.5          1.52     2.41     3.41   1.67
+cod      60 benthos armoured, E 3.5,     0.76     1.20     1.70   1.67
+haddock  40 fish/soft, E 4.2             1.21     1.91     2.70   -
+haddock  40 benthos soft, E 3.5          1.41     2.23     3.15   -
+haddock  40 benthos armoured, E 3.5,     0.70     1.11     1.57   -
+whiting  30 fish/soft, E 4.2             1.34     2.11     2.99   -
+whiting  30 benthos soft, E 3.5          1.56     2.47     3.49   -
+whiting  30 benthos armoured, E 3.5,     0.78     1.23     1.74   -
+# FB4 Cmax is in g of 4.184 kJ/g prey; compare with the fish/soft E 4.2 rows
+
+## fill needed to sustain FB4 cod Cmax (fish prey E 4.2)
+cod 40 cm, W 640 g: Cmax 2.11 %BW/d -> mean fill 2.23 %BW
+cod 60 cm, W 2160 g: Cmax 1.67 %BW/d -> mean fill 1.63 %BW
+
+## bout schedule: fill to S_max in each of n windows/day, evacuate between
+species L prey               S_max%BW  n  intake/continuous  intake %BW/d  continuous %BW/d
+cod      40 fish/soft, E 4.2        2.5  1        0.776          1.74            2.24
+cod      40 fish/soft, E 4.2        2.5  2        0.888          1.99            2.24
+cod      40 fish/soft, E 4.2        2.5  4        0.944          2.11            2.24
+cod      40 fish/soft, E 4.2        5.0  1        0.842          2.66            3.16
+cod      40 fish/soft, E 4.2        5.0  2        0.921          2.91            3.16
+cod      40 fish/soft, E 4.2        5.0  4        0.960          3.04            3.16
+cod      40 benthos armoured,       2.5  1        0.869          1.14            1.31
+cod      40 benthos armoured,       2.5  2        0.935          1.22            1.31
+cod      40 benthos armoured,       2.5  4        0.967          1.26            1.31
+cod      40 benthos armoured,       5.0  1        0.908          1.68            1.85
+cod      40 benthos armoured,       5.0  2        0.954          1.76            1.85
+cod      40 benthos armoured,       5.0  4        0.977          1.80            1.85
+haddock  40 fish/soft, E 4.2        2.5  1        0.809          1.54            1.91
+haddock  40 fish/soft, E 4.2        2.5  2        0.905          1.73            1.91
+haddock  40 fish/soft, E 4.2        2.5  4        0.952          1.82            1.91
+haddock  40 fish/soft, E 4.2        5.0  1        0.865          2.33            2.70
+haddock  40 fish/soft, E 4.2        5.0  2        0.933          2.52            2.70
+haddock  40 fish/soft, E 4.2        5.0  4        0.966          2.61            2.70
+haddock  40 benthos armoured,       2.5  1        0.889          0.99            1.11
+haddock  40 benthos armoured,       2.5  2        0.944          1.05            1.11
+haddock  40 benthos armoured,       2.5  4        0.972          1.08            1.11
+haddock  40 benthos armoured,       5.0  1        0.921          1.45            1.57
+haddock  40 benthos armoured,       5.0  2        0.961          1.51            1.57
+haddock  40 benthos armoured,       5.0  4        0.980          1.54            1.57
+whiting  30 fish/soft, E 4.2        2.5  1        0.789          1.67            2.11
+whiting  30 fish/soft, E 4.2        2.5  2        0.894          1.89            2.11
+whiting  30 fish/soft, E 4.2        2.5  4        0.947          2.00            2.11
+whiting  30 fish/soft, E 4.2        5.0  1        0.851          2.54            2.99
+whiting  30 fish/soft, E 4.2        5.0  2        0.925          2.76            2.99
+whiting  30 fish/soft, E 4.2        5.0  4        0.963          2.88            2.99
+whiting  30 benthos armoured,       2.5  1        0.877          1.08            1.23
+whiting  30 benthos armoured,       2.5  2        0.938          1.16            1.23
+whiting  30 benthos armoured,       2.5  4        0.969          1.19            1.23
+whiting  30 benthos armoured,       5.0  1        0.913          1.59            1.74
+whiting  30 benthos armoured,       5.0  2        0.956          1.67            1.74
+whiting  30 benthos armoured,       5.0  4        0.978          1.71            1.74
+
+## daily intake if the fish eats ONLY what one window's encounter allows
+# feeding level = n_windows x meal / Cmax; e.g. whiting 250 g eating one 9-15 g clupeid
+whiting 250 g, prey 9 g, one capture per 1 d: feeding level 1.09 of Wmax 3.3 %BW/d
+whiting 250 g, prey 9 g, one capture per 2 d: feeding level 0.55 of Wmax 3.3 %BW/d
+whiting 250 g, prey 9 g, one capture per 4 d: feeding level 0.27 of Wmax 3.3 %BW/d
+whiting 250 g, prey 15 g, one capture per 1 d: feeding level 1.82 of Wmax 3.3 %BW/d
+whiting 250 g, prey 15 g, one capture per 2 d: feeding level 0.91 of Wmax 3.3 %BW/d
+whiting 250 g, prey 15 g, one capture per 4 d: feeding level 0.45 of Wmax 3.3 %BW/d

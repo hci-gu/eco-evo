@@ -13,8 +13,9 @@ Contracts asserted:
    it takes from f x B, and the prey loses no more than that.
 4. Inert at 1 (bit-identical), and GPU parity with f set, with and
    without per-pair visibility floors.
-5. mareld2: no predator_share anywhere; benthivorous_fish -> infauna
-   carries f 0.2, which does not move the derived growth rate.
+5. mareld2: no predator_share anywhere; benthivorous_fish -> epifauna
+   carries an f, which does not move the derived growth rate (the
+   infauna pair's 0.2 is the infauna's refuge since section 223.12).
 """
 import copy
 import sys
@@ -119,10 +120,12 @@ def test_mareld2_benthivore_benthos_pair():
     library = yaml.safe_load((root / "fgconfig" / "fg_library.yaml").read_text())
     inter = library["interaction_definitions"]
     assert not any("predator_share" in v for v in inter.values() if isinstance(v, dict))
-    pair = inter["benthivorous_fish_preys_on_benthic_infauna"]
-    assert pair["accessible_fraction"] == pytest.approx(0.2)
+    # Section 223.12: the infauna pair's 0.2 moved into the infauna's own
+    # refuge (tests/test_refuge.py); the epifauna pair keeps its share.
+    pair = inter["benthivorous_fish_preys_on_mobile_epifauna"]
+    assert 0.0 < pair["accessible_fraction"] < 1.0
     stripped = copy.deepcopy(library)
-    stripped["interaction_definitions"]["benthivorous_fish_preys_on_benthic_infauna"].pop(
+    stripped["interaction_definitions"]["benthivorous_fish_preys_on_mobile_epifauna"].pop(
         "accessible_fraction")
     g = [growth_budget.derived_growth_rate("benthivorous_fish", lib["species_definitions"],
                                            lib["interaction_definitions"])

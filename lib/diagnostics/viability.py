@@ -328,10 +328,13 @@ def _trained_policies(env, checkpoint_dir):
 
 def _reachable_prey(env):
     """Prey biomass ``(1 | N_dm, N_all, H, W)`` within each pair's reach:
-    the pair's ``accessible_fraction`` (section 208) times the biomass."""
-    prey = np.stack(
+    the pair's ``accessible_fraction`` (section 208) times the biomass,
+    a refuge group's accessible part (section 223.12) in place of its
+    biomass."""
+    from lib.environments.ecosystem_env import refuge
+    prey = refuge.accessible_rows(env, np.stack(
         [env.fgs[fid].biomass for fid in env.global_fg_order],
-        axis=0)[None, :, :, :]
+        axis=0))[None, :, :, :]
     if getattr(env, "_has_pair_access", False):
         prey = (prey * env.access_mat[:, :, None, None]).astype(env.dtype, copy=False)
     return prey

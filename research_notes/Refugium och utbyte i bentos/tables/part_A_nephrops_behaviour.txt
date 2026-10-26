@@ -1,0 +1,347 @@
+PART A - NEPHROPS NORVEGICUS: BURROW REFUGE, EMERGENCE AND EXCHANGE (Q1, Q5)
+=============================================================================
+Context: mobile_epifauna group, Nephrops ~60 % of biomass, ~30 g animals, Skagerrak 100-300 m mud.
+Current model accessible fraction for Nephrops 0.10 (0.05-0.20), from Aguzzi et al. 2021 (not redone here).
+
+Tags: [F] full text read; [A] abstract only; [S] secondary / search snippet; "J" = my judgement or
+derivation (arithmetic shown). "[F, secondary]" = a number read in full text of a review that cites
+an older primary source which I did not read.
+Downloaded files (untrusted data, read only with pdftotext / python3 -I) are in ../data/<source>/.
+Scripts: ../scripts/telemetry_subset_means.py (output: telemetry_subset_means_stdout.txt),
+../scripts/oa_lookup_parse.py.
+
+Sources read in full (folder in ../data/):
+  FARMER1975   Farmer A.S.D. 1975. Synopsis of biological data on the Norway lobster. FAO Fish. Synop. 112.
+               https://www.fao.org/docrep/017/h2350e/h2350e.pdf   (farmer1975_fao/; OCR text, some typos)
+  AGUZZI2003   Aguzzi J. et al. 2003. Diel and seasonal patterns of N. norvegicus catchability in the western
+               Mediterranean. MEPS 258:201-211. doi:10.3354/meps258201   (aguzzi2003_meps258/)
+  AGUZZI2021   Aguzzi J. et al. 2021. Burrow emergence rhythms of N. norvegicus by UWTV and surveying biases.
+               Sci Rep 11:5797. doi:10.1038/s41598-021-85240-3 (PMC7970996; read via WebFetch, Table 3 values)
+  AGUZZI2023   Aguzzi J., Vigo M. et al. 2023. Burrow emergence rhythms of deep-water Mediterranean Norway
+               lobsters revealed by acoustic telemetry. Rev Fish Biol Fish 33:1465-1482.
+               doi:10.1007/s11160-023-09787-2   (aguzzi2023_rfbf_telemetry/)
+  VIGO_THESIS  Vigo M. 2023 PhD thesis (ICM-CSIC), ch. 2.3 = Vigo et al. 2021 MEPS 674:173-188 (spatial ecology,
+               same tagged animals).  (vigo2023_thesis/, downloaded by a parallel agent; read here)
+  BAHAMON2025  Bahamon N. et al. 2025. Tidally modulated burrow emergence rhythms of N. norvegicus. ICES JMS
+               82(11):fsaf205. doi:10.1093/icesjms/fsaf205  (read via WebFetch, Table 1 only)
+  SARDA1995    Sarda F. 1995. A review (1967-1990) of some aspects of the life history of N. norvegicus. ICES
+               Mar Sci Symp 199:78-88. https://ndownloader.figshare.com/files/41894673  (sarda1995_icesmss199/)
+  CRR340       ICES 2018. Using UWTV surveys to assess and advise on Nephrops stocks. ICES Coop Res Rep 340.
+               doi:10.17895/ices.pub.4370  https://ndownloader.figshare.com/files/33870791  (ices_crr340/)
+  ANNEX34      ICES Stock Annex nep.fu.3-4 (Skagerrak and Kattegat). https://ndownloader.figshare.com/files/33401846
+               (ices_stockannex_nep34/)
+  IMR2021      Sovik G., Zimmermann F. 2019/2021. Norway lobster in the Norwegian Deep, stock sensitivity
+               narrative, IMR. https://www.hi.no/resources/klimastatus-pa-bestander/20211214_Norway-lobster_Norwegian-Deep_narrative.pdf
+               (imr2021_nephrops_norwegiandeep/)
+  TUCK1997     Tuck I.D. et al. 1997. Population biology of the Norway lobster in the Firth of Clyde - I: Growth and
+               density. ICES JMS 54:125-135. doi:10.1006/jmsc.1996.0179   (tuck1997_clyde/)
+  CAMPBELL2008 Campbell N., Allan L., Weetman A., Dobby H. 2008. Investigating the link between Nephrops burrow
+               density and sediment composition in Scottish waters. ICES CM 2008/G:06 (conference version of
+               ICES JMS 66:2052-2059, 2009, doi:10.1093/icesjms/fsp176). https://ndownloader.figshare.com/files/44598052
+               (campbell2008_icescm_g06/)
+  POWER2020    Power A.M. et al. 2020 (online 2019). Density-dependent growth in 'catch-and-wait' fisheries ...
+               Ambio 49:107-117. doi:10.1007/s13280-019-01158-1 (PMC6889112)  (power2020_ambio_pmc6889112/)
+  SBRAGAGLIA2017 Sbragaglia V. et al. 2017. Fighting over burrows: the emergence of dominance hierarchies in the
+               Norway lobster. J Exp Biol 220:4624-4633. doi:10.1242/jeb.165969 (read via WebFetch, publisher page)
+  STEWART1974  Stewart P.A.M. 1974. An investigation into the effects of electric fields on N. norvegicus.
+               J Cons int Explor Mer 35:249-257. https://www.vliz.be/imisdocs/publications/ocrd/324809.pdf
+               (stewart1974_jcons/)
+  HORNBORG2017 Hornborg S. et al. 2017. New policies may call for new approaches: the case of the Swedish Norway
+               lobster fisheries in the Kattegat and Skagerrak. ICES JMS 74:134-145. doi:10.1093/icesjms/fsw153
+               (read via WebFetch)
+  AGUZZI2011   Aguzzi J. et al. 2011. A new laboratory RFID system for behavioural tracking of marine organisms.
+               Sensors 11:9532. (PMC3231282; aguzzi2011_sensors_rfid/) - qualitative only.
+
+=============================================================================
+Q1. EMERGENCE AND BURROW RESIDENCE
+=============================================================================
+
+Q1a. Timing of emergence and depth dependence (relevant band 100-300 m)
+----------------------------------------------------------------------
+* Kattegat, Hoglund & Dybern 1965 (in FARMER1975 Table XXI) [F, secondary]:
+  "Hoglund and Dybern, 1965   Northern Kattegat  120-135  May   Sunrise and sunset"
+  "Hoglund and Dybern, 1965   Northern Kattegat  205-220  May   Middle of day"
+  "Jensen, 1962, 1963, 1965a  Skagerrak and Kattegat  >70  Summer  Night"
+  At 58 m in the northern Kattegat the times of increased catches shift with month (Jan "Sunrise and
+  sunset"; Mar "Night"; Aug "Night and sunset"). -> In the Mareld band the timing is crepuscular at
+  ~100-150 m and midday at ~200+ m (J: two old trawl series only).
+* Scottish/Irish series, same table [F, secondary]: Sound of Jura 103 m Apr-May "2h after sunrise and
+  5h before sunset"; Simpson 1962/65 North Minch 120-130 m Sep "12.00 to 16.00"; South Minch 145-160 m
+  Sep "08.00 to 18.00"; Hillis W Irish Sea 130 m Aug-Sep "Midday".
+* FARMER1975 p.51 [F]: "in shallow water (30 m) animals are active during the middle of the night,
+  Whereas in deeper water (40-90 m) there are two periods of activity which tend to move further apart
+  (from midnight) with increasing depth ... It has been suggested that in very deep water N. norvegicus
+  is active during the middle of the day." "animals only become active when the light intensity is
+  within the range 1 to 10-5 lx".
+* SARDA1995 p.83 [F]: "The highest catches are made at dawn or dusk in relatively shallow water. There
+  is variability with depth, with the above two periods of activity becoming a single peak at around noon
+  in the vicinity of 150 m."
+* AGUZZI2003 (W Mediterranean, 100 m and 400 m, 24-h trawl cycles) [F]: "nocturnal with crepuscular peaks
+  on the continental shelf, and diurnal on the continental slope." At 100 m "2 peaks of catch were observed
+  per day, approximately coinciding with the sunset and the sunrise timing ... Catches attained their
+  lowest values during daylight hours. Animals were continuously captured at night time"; at 400 m "a
+  single peak at around midday" and "Low but constant levels of sampled organisms were reported during
+  the night." Day/night ratio not readable from the text (figures only) - see Not found.
+* AGUZZI2021 (Irish UWTV, 3055 transects, May-Sep) [F]: GAM: 15-50 m "nocturnal bimodal ... (hour
+  intervals: 2 to 7 and 17 to 23)"; "On deeper shelf areas (from 51 to 160 m depth), the emergence pattern
+  becomes diurnal with a plateau shape"; slope 340-570 m "single peak (hour interval: 7 to 17)".
+  Table 3 peak windows used for 101-160 m: 05-07 h and 18-20 h.
+* BAHAMON2025 (Bay of Biscay UWTV 28-133 m) [F via WebFetch]: peaks "around dawn (04:00-07:00) and about
+  2 h before dusk (17:00-19:00)"; tidal modulation: "At low tide (below -1 m), total density declined
+  markedly".
+* Sex/size: AGUZZI2003 [F]: "Emergence patterns were almost identical for males, females and berried
+  females, and these were not size-dependent." SARDA1995 [F]: "Chapman and Howard (1979) noted that the
+  amount of time an individual spent outside its burrow was proportional to its size." FARMER1975 [F]:
+  "usually only large males were observed during the day in the burrow entrances, whereas the small
+  animals (including most of the females) remained completely hidden."
+  Lab: Sbragaglia et al. 2013 Sci Mar 77:641 (doi:10.3989/scimar.03902.28C) [A, abstract via search summary;
+  full text download blocked]: 52 animals, 12:12 LD; 87 % rhythmic, 13 % arrhythmic; of rhythmic: 54 %
+  dusk, 4 % dawn, 10 % diurnal, 19 % nocturnal.
+  J: for 100-300 m Skagerrak expect one (midday, >~150-200 m) or two (dawn+dusk, ~100-150 m) emergence
+  bouts per day, i.e. bouts_per_day 1-2.
+
+Q1b. Hours out per day / fraction emerged at once
+------------------------------------------------
+(i) Field individual tracking - AGUZZI2023 (acoustic telemetry, NW Mediterranean slope 315-475 m, 25
+    creel-caught adults tagged and released June 2019, up to 107 d) [F]:
+  "The individuals showed a relative time of 12.92% and 11.81%, respectively, presenting a door-keeping
+   behavior identified. The mean time spent inside the burrows, when detections and movement were 0,
+   represented 38.31% of their time series, while the mean relative time in activity was about 49.88%."
+  "the day-night periodicity was the rhythm in which individuals presented less activity outside the
+   burrows (35.94%)". 12 of 25 animals (48 %) were day-night rhythmic, "with a major activity phase at
+   daylight hours"; e.g. ID 14468 "significant increment in displacement ... from 6:00 to 19:00".
+  Caveat in the paper itself [F]: "In animals with no burrows (for unknown reasons impairing the digging
+   capability), behavioral activity can be measured under the form of a constant wandering on the seabed
+   at a periodicity that matches inertial currents." and "Inertial periodicity occurs in animals with no
+   clear burrowing-oriented activity (always present on the seabed)." Released animals at "a transitory
+   high density" around the release point.
+  My recomputation from Table 2 (scripts/telemetry_subset_means.py) [J from F]:
+     All 25:              door-keeping 12.9 %, in burrow 38.3 %, fully emerged (>0.5 m/h) 48.8 %
+                          (reproduces the authors' 12.92 / 38.31 means)
+     Day-night subset (n=12, the burrow-holding animals): door-keeping 16.2 % (3.9 h/d), in burrow 49.0 %
+                          (11.8 h/d), fully emerged 34.8 % (8.4 h/d; median 30.1 %, range 6.5-73.8 %)
+     Arrhythmic/inertial/other (n=13): fully emerged 61.7 % (14.8 h/d).
+  Table 3 inconsistency: its Day-Night row (16.18 / 15.06 / 10.25 / 35.94) does not sum to 100 %, and its
+  "0 (D)" (in-burrow) mean 10.25 % does not match Table 2 (mean 49.0 % for the same 12 animals). Table 2
+  rows sum to 99.8-100 %, so Table 2 is trusted here (J).
+  Detection caveat (J): "in burrow" = no acoustic detection; an animal outside the hydrophone range also
+  gives 0 detections, and position error inflates hourly displacement, so the emerged share is uncertain
+  in both directions.
+
+(ii) Population snapshot - UWTV visible animals per burrow at peak emergence (AGUZZI2021, Table 3) [F]:
+  visible (fully emerged + door-keeping) per burrow 0.06-0.12 at peak windows; depth means 0.08 (15-50 m),
+  0.11 (51-100 m), 0.08 (101-160 m), 0.09 (340-570 m). Door-keeping share of visible animals 18-41 %
+  (shelf), 32-54 % (slope). "a high proportion of the population remains cryptic even during periods of
+  peak emergence"; "the proportion of animals not emerging from their burrows on a daily basis is still
+  largely undetermined".
+  Fully emerged per burrow at peak = visible x (1 - door share) [J from F, per window]:
+     15-50 m 0.041-0.078; 51-100 m 0.075-0.092; 101-160 m 0.037-0.066; 340-570 m 0.034-0.068.
+  BAHAMON2025 Table 1 [F via WebFetch]: door-keeping fraction of visible animals 0.315-0.750 by year,
+  0.531 overall; mean densities 0.006 ind/m2 door-keeping, 0.009 ind/m2 outside (no burrow density given).
+  J, hours-out implied by UWTV: if ~0.04-0.07 of burrow holders are fully out through a ~10 h plateau
+  (AGUZZI2021 deep-shelf/slope window 7-17 h) and few are out otherwise, mean time fully out per animal
+  ~0.4-0.7 h/day (+0.2-0.4 h door-keeping). Higher if occupancy is < 1 animal per burrow.
+
+(iii) Trawl evidence of a small exposed share (catch per swept area vs burrow density):
+  TUCK1997 (Clyde, 47-60 m, annual-mean catches, 22 mm trawl) [F]: "The catch m-2 values for each station
+  (Table 3) are nearly two orders of magnitude lower than the burrow density estimates (Table 2)".
+  Catch density 0.0033-0.037 m-2 vs burrows 0.46-1.48 m-2. Ratio per station [J]: 0.005, 0.004, 0.014,
+  0.025, 0.008, 0.012 (median ~0.01). Includes trawl efficiency < 1 and mixed hours of day.
+  FARMER1975 [F, secondary]: "assuming each burrow represents one animal, only 0.5 percent of all
+  N. norvegicus occurring in the path of the trawl were captured (DAFS, 1966a)."
+
+(iv) DISCREPANCY (not averaged; for the modeller) [J]:
+  Telemetry (burrow-holding subset): ~0.35 of the day fully out (~8 h/d), ~0.5 including door-keeping.
+  UWTV: ~0.04-0.09 of burrow holders fully out at the daily peak (< 1 h/d implied).
+  Trawl: ~0.5-2.5 % of burrow density caught per pass.
+  Candidate reasons: telemetry animals were displaced and released at high density (burrow search and
+  evictions raise surface time); "no detection" is a proxy, not observed concealment; telemetry site is
+  400 m Mediterranean, UWTV Irish shelf; UWTV "visible" counts only animals inside the camera swath at
+  that minute and may miss animals lying flat or far from burrows; burrow:animal ratio may exceed 1
+  (AGUZZI2021 questions 1:1 occupancy). The UWTV value is the one measured on undisturbed populations.
+
+Q1c. Excursion distance, single-excursion duration, burrow switching, exchange time scale
+----------------------------------------------------------------------------------------
+* Home range of settled animals, VIGO_THESIS ch. 2.3 (= Vigo et al. 2021) [F]: "We obtained an average
+  home range size (UD90) ranging from 17.75 to 736.25 m2, which could correspond to the usual area where
+  the species carries out its behavioural, burrow-centred, activities." First month after release: June
+  UD90 11223 +- 16023 m2 (n=19), then July 170 +- 317 m2, Aug 1414 +- 2680, Sep 1341 +- 2910.
+  "The home range area became significantly smaller within 1 mo, as an indication of the establishment of
+  the individuals in their burrows". "the territorial behaviour ... centred in small exclusive individual
+  areas"; UDOI: "no overlap between the areas estimated with UD90, nor with UD50 or core areas."
+  Radius equivalent of 17.75-736 m2 [J]: sqrt(A/pi) = 2.4-15 m.
+* Daily displacement, AGUZZI2023 [F]: "The average displacement distance was 216.0 m/day (min: 90.7 m/day,
+  max: 424.7 m/day)." (Table 1 header says "Walked per Day (cm)"; J: metres is consistent with the 0.5 m/h
+  door-keeping threshold and ~13 % door-keeping, so the "cm" label is likely a typo; acoustic position
+  error inflates the sum.)
+* Burrow fidelity, Chapman & Rice 1971 in FARMER1975 [F, secondary]: "some N. norvegicus continue to return
+  to the same burrow for several days. However, it was also found that some individuals occupied different
+  burrows within a few days, indicating a somewhat loose attachment to a particular burrow".
+* Adult movement scale: ANNEX34 [F]: "Adult Nephrops only undertake very small-scale movements (a few
+  100 m)". POWER2020 (inshore W Ireland, released tagged animals) [F] Table 1: median distance from
+  release site after 1 yr 213-223 m (range 21-536 m, n=204), after 2 yr 182-308 m (n=36); "no differences
+  in distance travelled from the point of release between sexes, starting sizes, or amount of time spent
+  at liberty". DAFS tagging in FARMER1975 [F, secondary]: "less than 5 miles, with the single exception of
+  an individual which appeared to have moved 22 miles."
+* Same animals emerge daily, AGUZZI2023 conclusion [F]: "indicating that the same animals do emerge
+  constantly over consecutive days".
+* Single-excursion duration: not measured as such (see Not found). Population activity window, Chapman &
+  Rice 1971 Loch Torridon 30 m June, "21.10 to 03.30" (FARMER1975 Table XXI) [F, secondary] = 6.3 h [J].
+  Activity in the entrance before/after foraging [F, FARMER1975]: "animals are present in the burrow
+  entrance most frequently before and after foraging".
+* Exchange time scale [J]: one (midday) or two (crepuscular) emergence bouts per day, the same individuals
+  emerging every day -> a hidden<->exposed cycle of 12-24 h; per-animal exposed bout ~1-8 h depending on
+  which estimate in Q1b(iv) is believed (UWTV-implied <1 h vs telemetry 8.4 h/day in one bout). With a
+  6-h tick the exposed set turns over within 1-4 ticks.
+
+Q1d. Berried (ovigerous) females
+--------------------------------
+* Concealment: FARMER1975 [F]: "The general absence of berried females throughout most of the year is
+  explained by their tendency to remain within their burrows when incubating eggs." "Attempts to entrain
+  ovigerous females to a 12 h:12 h light/dark cycle were unsuccessful ... ovigerous females are usually
+  rare in trawl catches, since they probably remain in their burrows and do not emerge to feed".
+  Dunthorn 1967 in FARMER1975 [F, secondary]: "berried females eat less than non-berried females,
+  particularly during the latter stages of embryonic development, and that in the natural environment they
+  may not feed at all." SARDA1995 [F]: "Fasting was observed by Farmer (1975), who reported that berried
+  females can go without eating for nearly a year." AGUZZI2021 [F]: "berried females do not emerge".
+  Counter-evidence AGUZZI2003 [F]: "present results show that berried females may perform rhythmic
+  emergence phased to light intensity cycles like the all other individuals" (Mediterranean slope).
+  CRR340 [F]: "Mature female Nephrops have lower burrow emergence when carrying eggs (Thomas and de
+  Figueiredo, 1965; Redant, 1987) and, therefore, are typically subject to lower mortality rates";
+  ANNEX34 (FU 3-4) [F]: M "0.3 ... for males and immature females, with a value of 0.2 for mature females
+  ... based on the assumption of reduced burrow emergence while ovigerous".
+* Timing and duration:
+  IMR2021 (Norwegian Deep, citing Farmer 1974/75 and Powell & Eriksson 2013) [F, secondary]: "Egg-laying
+  takes place over a period of a couple of months (August-September). Females carry the roe until hatching
+  takes place in the following year. Hatching of the eggs of one female occurs at night-time over several
+  successive days (5-20 days), while egg hatching within a local population takes place over a couple of
+  months (April-June)." -> berried ~7-10 months (Aug/Sep to Apr/Jun) [J].
+  FARMER1975 Table V [F, secondary]: Scottish waters egg laying "Aug.-Nov.", hatching "May-Aug.", incubation
+  "9 months (270)"; NE England "Aug.-Sep.", "May-Aug.", "10 months (300)"; Irish Sea "Aug.-Sep.",
+  "Apr.-June", "8 months (240)"; Faroes "9 months (270)". No Skagerrak/Kattegat row.
+  SARDA1995 [F]: "The duration of egg incubation varies from 6 months in the Mediterranean to more than 10
+  months in Iceland, where spawning takes place biennially."
+* Annual vs biennial (CONFLICT, left open):
+  SARDA1995 [F]: "Spawning in more northerly latitudes (Faroe Islands, Scandinavia, and Iceland) is
+  probably almost entirely biennial."  IMR2021 [F, secondary]: "Nephrops spawns once a year ... In more
+  northern waters, egg production may be biannual."  FARMER1975 [F]: share of mature females laying eggs
+  each year: Karlovac "84 percent" (Adriatic), Thomas "90 percent" (Scotland), Farmer "91.5 percent"
+  (Irish Sea).
+* Catch evidence of concealment:
+  FARMER1975 Table IX, % ovigerous of all females in catches [F, secondary]: Scottish (Thomas & Figueiredo)
+  1.0-18.7 % by month (peak Sep), Irish Sea (Farmer MS) 0-12 %, NE England (Symonds) 0-4 % - far below the
+  84-91 % of mature females that spawn, i.e. berried females are mostly not caught.
+  FARMER1975 Table VIII, % females in monthly catches [F, secondary]: Scottish 12.2 (Mar) - 46.7 (Aug);
+  Irish Sea (O'Riordan) 8 (Mar) - 52 (Jul); Irish Sea (Hillis) 21-69; NE England 4-54 depending on series.
+  "throughout most of the year there is a strong preponderance of males in the catches, although during the
+  period from egg-hatching to egg-laying the [page break] proportion of females generally increasea [sic,
+  OCR] to approximately 50 percent."
+  HORNBORG2017 (Swedish Kattegat/Skagerrak observer data 2005-2013) [F via WebFetch]: ovigerous females
+  "~23% compared with 5% in trawls" (creels vs trawls, annual average); "40% are females in creels whereas
+  32% in trawls".
+  TUCK1997 [F]: "During this phase, females tend to remain in their burrows and are seldom caught
+  (Chapman, 1980)"; Q2 (Apr-Jun) catches "significantly lower than in the first and fourth quarters".
+* Female share of the population: FARMER1975 [F]: "Sex ratio of the population - No data are available."
+  J: catches in the hatching-to-spawning window approach 40-60 % female (Table VIII), suggesting a near-even
+  population sex ratio if non-berried females are as catchable as males; not a measured value.
+
+Q1e. Day/night catch rates
+--------------------------
+Qualitative only (AGUZZI2003, FARMER1975 Table XXI, BAHAMON2025 above). Skagerrak: trawling within 4 nm
+"is allowed ... but not during night" (ANNEX34) [F] - management only. Numeric day:night ratio not found.
+
+=============================================================================
+Q5. REFUGE SATURATION: IS THE BURROW REFUGE SPACE-LIMITED?
+=============================================================================
+* Sediment window. ANNEX34 [F]: Nephrops "requires sediment with a silt & clay content of between 10-100%
+  to excavate its burrows". CAMPBELL2008 [F]: "Nephrops burrows were not found in sediments composed almost
+  entirely of sand (i.e. <10% sediment below 63um)"; North Minch burrows in 10-100 % silt-clay, Fladen
+  10-90 %.
+* Density vs silt-clay. CAMPBELL2008 Fladen GLM (identity link) [F]: Burrow density ~ (Percentage Clay - 10)
+  + Year; intercept 0.1300, % clay slope 0.0056 per %. J: 0.13 burrows/m2 at 10 % -> 0.35 at 50 % -> 0.58 at
+  90 % silt-clay (2002 year level). North Minch closer to the "dome-shaped" form; Afonso-Dias 1998 mechanism
+  quoted in CAMPBELL2008 [F, secondary]: "in very fine grained, soft muds, Nephrops are able to excavate
+  extensive burrow complexes, and competition for space once more reduces population density".
+  TUCK1997 [F]: 6 Clyde stations 30-96.5 % silt-clay, burrow density 0.460-1.479 m-2 (Table 2); "Three
+  stations (numbers 3, 4 and 5) had similarly high burrow densities (about 1.4 burrows m-2)"; peak "on mixed
+  sediments of sand, silt and clay and the decline in density on the finest silt and clay sediments";
+  alternative: density "may simply reflect general hydrographic conditions rather than sediment type
+  directly" (larval supply).
+* Observed maxima (for scale). TUCK1997 1.48 burrows m-2 (Clyde). FARMER1975 [F, secondary]: Loch Torridon
+  burrows 1/2.1 m2 (1968) and 1/1.4 m2 (1969) with Nephrops 1/7.8 and 1/5.5 m2; Irish Sea burrows 1/2.1 to
+  1/9.3 m2, animals 1/2.5 to 1/8.9 m2; "Densities of burrows reported by DAFS (1966a, 1968b) ranged from
+  9/m2 to 12/m, although ... these figures refer to numbers of openings and not burrow systems."
+  J: FU 3-4 2024 mean 0.21 burrows/m2 (earlier note) is ~1/7 of the Clyde maximum.
+* Burrow size. STEWART1974 [F]: "The burrows are often extensive, with many side branches, and can cover an
+  area of up to 1 m2 and penetrate to 30 cm below the surface of the mud."
+* Spacing. STEWART1974 (Little Loch Broom, 20-25 m) [F]: "from 20 m downwards the burrow density was greater,
+  with a burrow every 2 to 3 m along a straight line" (a line-transect spacing, not a nearest-neighbour
+  distance). Dybern & Hoisaeter 1965 in FARMER1975 [F, secondary]: burrows "occurred in groups of 5-10, with
+  each group well separated from the next"; Chapman & Rice 1971: "not evenly spaced ... nor were they
+  distributed at random ... clumped to some extent"; Atkinson 1974: "the spatial distribution of
+  N. norvegicus burrows in Loch Aline is random."
+  J (random-pattern expectation, mean NN = 0.5/sqrt(D)): 1.1 m at 0.21 m-2; 0.41 m at 1.48 m-2.
+* Territoriality / burrow competition. Farmer 1974a in FARMER1975 [F, secondary]: "strongly territorial ...
+  there is a critical distance at which agonistic responses to other N. norvegicus occur"; Rice & Chapman
+  1971: "little indication that the burrows act as centres for territorial behaviour"; claw damage
+  "males 62 percent, females 41 percent" (Loch Torridon). SBRAGAGLIA2017 (lab, 4 males per tank, one
+  burrow per animal) [F via WebFetch]: fighting over burrows "occurred even if these were not a limited
+  resource"; hierarchies "within 1-3 days"; "Dominant lobsters are more likely to evict subordinate lobsters
+  from their burrows and more successful in defending their own burrows. They also spend more time in
+  burrows". VIGO_THESIS [F]: home ranges did not overlap (UDOI); "dominant Norway lobsters tend to show
+  burrow-oriented behaviour, remaining close to the entrance most of the time and evicting other animals
+  from their burrows". AGUZZI2023 [F]: "animal burrowing capability is influenced by a balance between
+  aggressive territorial interactions and overall local demography"; wandering animals possibly "those with
+  no burrowing capability due to their subordinate social ranking level".
+* Occupancy and sharing. FARMER1975 [F, secondary]: "About 70 percent of the large burrows were found to be
+  occupied by N. norvegicus; many of the smaller burrows contained L. friesii." AGUZZI2021 [F]: "two adult
+  lobsters are rarely found in the same shelter". CRR340 [F]: "Juvenile burrows tend to be found in close
+  proximity to adult systems (Marrs et al., 1996). Some burrow systems are conjunctions of the tunnels of
+  adults and one or more juveniles." IMR2021 [F, secondary]: "Juvenile specimens are rarely found outside
+  burrows of adults (Tuck et al., 1994)".
+* Density-dependent growth. TUCK1997 [F]: "L-inf was found to be inversely correlated with burrow density,
+  suggesting that growth may be density-dependent"; Fig. 5 "Y=73.042-16.307X (r2 =0.715, p<0.05)" (X =
+  burrows m-2, Y = male L-inf mm); "competition for food could limit growth"; L-inf "also positively
+  correlated with infaunal biomass". POWER2020 [F]: "a density-dependent suppression of growth (in body
+  size) was observed in male lobsters"; "Growth rates for females did not seem to be associated with the
+  local density"; "This suggests density-independent survival rates for Nephrops on the fished grounds."
+  IMR2021 [F, secondary]: "Intraspecific competition for food and space is demonstrated by negative
+  relationships between size and density (Johnson et al., 2013)."
+* Burrow (re)construction time. Marrs et al. 1996 in CRR340 [F, secondary]: "burrows that were destroyed
+  experimentally were rapidly re-excavated by the occupants; showing signs of re-excavation within one day,
+  and by two days, any amelioration appeared complete" (repair by the resident, not a new burrow).
+  Crnkovic 1968 in FARMER1975 [F, secondary]: post-larva "constructed a burrow with 5 openings in 5 days".
+  Settlement of displaced adults: VIGO_THESIS [F] home ranges shrank "within 1 mo" after release.
+  STEWART1974 [F]: aquarium burrows "were in a state of constant modification".
+  CAMPBELL2008 [F]: "the time that a burrow survives after its occupying Nephrops has died, been caught or
+  moved on is unknown, as is the speed with which burrow entrances are re-opened after being filled in by
+  trawl nets."
+* Verdict on saturation [J]: evidence for space limitation is indirect - dome-shaped density vs sediment
+  (hypothesised burrow interference in fine mud), exclusive home ranges, evictions, density-dependent male
+  growth. No study shows a hard burrow ceiling, and survival was density-independent (POWER2020). At the
+  FU 3-4 density (~0.2 m-2) the refuge is unlikely to be saturated relative to observed maxima of ~1.5 m-2.
+
+=============================================================================
+NOT FOUND (searched; no number given here)
+=============================================================================
+- Hours out of the burrow per day for an undisturbed animal at 100-300 m (Skagerrak or any North Sea
+  ground); only derived ranges above.
+- Duration of a single excursion (minutes/hours) and number of excursions per day from direct observation;
+  Chapman & Howard 1979 (Mar Biol 51:157, doi:10.1007/BF00555195) full text not accessible (only the
+  qualitative "proportional to its size" via Sarda 1995).
+- Chapman & Rice 1971 and Rice & Chapman 1971 (Mar Biol 10) full texts (paywalled; only via Farmer 1975).
+- Atkinson & Naylor 1976, Chapman 1980, Bell, Redant & Tuck 2006, Katoh et al. 2013 (Adv Mar Biol 64),
+  Aguzzi & Sarda 2008 (Rev Fish Biol Fish 18) full texts: not accessible.
+- Sbragaglia et al. 2013 Sci Mar full text (download refused / TLS); 2015 tidal-current paper not read.
+- Numeric day:night trawl catch ratio for Nephrops at 100-300 m.
+- Skagerrak/Kattegat-specific egg-laying, hatching and incubation months (Eggert & Ulmestrand, Ulmestrand
+  publications not obtained); Skagerrak annual vs biennial spawning not settled.
+- Quarterly female share of catches for FU 3-4 (not in the stock annex or the WGNSSK 2024 FU 3-4 section
+  read; only the 2005-2013 annual averages of HORNBORG2017).
+- Female share of the population (as opposed to catches) and the mature fraction of females.
+- Measured nearest-neighbour burrow distance (only a line spacing of 2-3 m, Stewart 1974).
+- De novo burrow construction time for an adult (only re-excavation in 1-2 days and post-larva 5 openings
+  in 5 days).
+- Maximum burrow density as a function of animal size (no explicit packing limit found).
+
+Tag note for part_A_rows.csv: S = number read in full text of a review (Farmer 1975, ICES CRR 340, IMR 2021) that cites an older primary source not read. F rows for Aguzzi 2021 Table 3, Bahamon 2025, Hornborg 2017 and Sbragaglia 2017 were read through WebFetch page extraction of the full text.

@@ -2768,6 +2768,9 @@ def main(argv=None, *, on_step=None, confirm=True):
     print(f"Training completed for all selected groups.")
     print(f"==========================================")
     trainer.close()
+    if visual_progress is not None and hasattr(visual_progress, "wait"):
+        # A three-year probe still running in its own process (223.12).
+        visual_progress.wait()
     if viz is not None:
         # Keep the final frame on screen until the user closes the
         # window (Q/ESC or window close). Ctrl+C aborts the wait.

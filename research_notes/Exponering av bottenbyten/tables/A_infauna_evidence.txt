@@ -1,0 +1,287 @@
+EVIDENCE A - DETECTABLE AND TAKEABLE INFAUNA PER FISH ENCOUNTER (Mareld, Skagerrak 100-300 m mud)
+Compiled 2026-10-26 by a literature agent. Research only. No model output involved.
+Tags: [F] full text read (PDF in data/A_infauna/<id>/ unless noted), [A] abstract read (OpenAlex or VLIZ
+record text), [S] secondary (citing source named; "[S, search summary]" = only a web-search result summary
+was seen, not an abstract), J = my judgement or arithmetic (shown).
+Already known and NOT redone (only extended): Loo et al. 1996, Skold et al. 1994 (22 % regenerated
+tissue), Skold & Gunnarsson 1996 (rates), Duineveld & Van Noort 1986 abstract, Gremare et al. 2004,
+Zwarts et al. 1994, Dauwe et al. 1998, Beukema & de Vlas 1979. Earlier notes consulted: research_notes/
+"Bentos atkomlighet for torskfiskar"/evidence_A_accessibility.md and "Refugium och utbyte i bentos"/
+tables/evidence_infauna_refuge.txt (Swedish letters dropped here).
+
+========================================================================================================
+0. CONVERSION FACTORS AND UNIT CHECKS (used below)
+========================================================================================================
+- Ricciardi & Bourget 1998, MEPS 163:245-251, Table 1 [F, data/A_infauna/ricciardi_bourget1998_meps163/]
+  (median %, mean %, 95 % CI, n):
+    Ophiuroidea  AFDW/WW 6.5, 7.4, 4.8-10.0, n 12;  DW/WW 49.0, 47.1, 37.3-56.9, n 11;
+                 AFDW/SFDW (printed so; shell-free DW) 20.4, 22.9, 14.3-31.5, n 5.
+    Polychaetes  AFDW/WW 15.6; DW/WW 18.7; AFDW/DW 79.4.
+    Bivalvia     AFDW/WW 5.5 (with shell); AFDW/DW 16.0.
+    Amphipoda    AFDW/WW 16.5; DW/WW 20.0.   Cumacea AFDW/WW 7.5; DW/WW 17.2.
+- Amphiura filiformis population-specific (Skold, Loo & Rosenberg 1994, MEPS 103:81 [F, data/A_infauna/
+  skold1994_meps103/]): annual production "9.46 g DW m-2"; "Converting this to ash-free dry weight (AFDW)
+  and wet weight (WW) according to biometrical relationships of individuals and arms (Josefson & Jensen
+  1992) gives 2.59 g AFDW m-2 yr-1 and 29.75 g WW m-2 yr-1".
+  J arithmetic: AFDW/DW 0.274, AFDW/WW 0.087, DW/WW 0.318 for A. filiformis (lower DW/WW than the
+  ophiuroid median 0.49; the WW basis there is probably ethanol-preserved wet weight).
+- UNIT FLAG. Skold & Gunnarsson 1996 (MEPS 142:203, Table 3 [F, earlier folder data/skold_gunnarsson1996_
+  meps142/, page image checked]) prints "Mean regenerated dry wt (g)" = 0.19, 0.25, 0.29, 0.18 and the
+  caption formula "Y = 0.010564 X^1.2878 (Skold et al. 1994)". Skold 1994 gives the same relation for
+  regenerated arms, "Y = 0.01056X^1.288 (r2 = 0.63 ...)" (log10 DW per arm on log10 arm length).
+  Y is in mg DW per arm, X in mm, NOT g. Check with Skold 1994's own numbers: Andreasson's regrowth
+  "9.68 mm 41 d-1" -> 0.01056 x 9.68^1.288 = 0.197 mg -> /41 d = 0.0048 mg d-1, exactly their stated
+  "G_arm of 0.0048 mg DW arm-1 d-1". So 0.19 "g" in S&G Table 3 is 0.19 mg.
+
+========================================================================================================
+1. AMPHIURA ARM TIPS (A. filiformis; A. chiajei; Amphilepis norvegica)
+========================================================================================================
+(a) Density, biomass, individual size
+- Skold & Gunnarsson 1996, Table 1 [F]: offshore site "on the western slope of a 90 m deep trench in the
+  Skagerrak": A. filiformis 3349 (SD 507) ind m-2, 264.7 (109.7) g wet wt m-2; A. chiajei 267 (196) ind
+  m-2, 34.9 (21.3) g WW m-2; total macrofauna 6576 ind m-2, 517.9 g WW m-2 (Polychaeta 37.3, Mollusca
+  18.8, Crustacea 10.9 g WW m-2). Coastal 21 m: A. filiformis 357 ind m-2, 18.9 g WW m-2.
+  "The dense population of Amphiura filiformis (3300 ind. m-2) at the offshore site is among the highest
+  abundance observed in the Kattegat-Skagerrak." Kattegat below the halocline "densities of around 100
+  to 400 ind. m-2 are common (Pearson et al. 1985)" [S]; "280 ind. m-2 as an approximate mean" [S].
+  J: mean individual mass 0.079 g WW (offshore), 0.053 (coastal); A. chiajei 0.131 g WW.
+  J: at 90 m A. filiformis = 51 % and A. chiajei 7 % of macrofaunal WW; polychaetes 7 %, molluscs 4 %,
+  crustaceans 2 %.
+- Rosenberg et al. 1997, MEPS 159:121 [F, earlier folder data/rosenberg1997_meps159/]: 86 m Skagerrak
+  Deep Trench, field density ~2250 ind m-2; "mean oral width ... of 2.5 (SD = 0.11) mm, equal to a disk
+  mean diameter of 8.0 mm"; individual wet weight "mean 0.202 g ind.-1" (moderate) and "0.201" (high
+  density) after 63 d (fed and starved pooled in that statement).
+- Skold et al. 1994 [F]: 40 m station (Gullmarsfjord area), density "stable around 280 ind. m-2";
+  "individual mean biomass was 0.020 g AFDW ind.-1"; adult size group 3 "0.021 g AFDW ind.-1"; oral-width
+  regression "Y = 0.00218 X^4.344" (DW per individual; fitted on the small size groups SG 1-2 and
+  extrapolated here; J: at OW 2.4 mm gives 0.098, i.e. g DW, which agrees with the two masses below).
+  J: 280 ind m-2 x 0.020 g = 5.6 g AFDW m-2.
+- Josefson 1998, Hydrobiologia 375:297 [A, VLIZ record 98495]: at 100 m "abundance of Amphiura ...
+  showed logistic population growth ... with carrying capacity reached in 1986 (ca. 3000 ind m-2)".
+- Josefson & Conley 1997, MEPS 147:49 [F, data/A_infauna/josefson_conley1997_meps/]: grid across the
+  Skagerrak-Kattegat front (25-150 m): A. filiformis "reached a maximum density of >3000 ind. m-2 in the
+  northern part of the area".
+- Josefson & Jensen 1992, Mar Biol 112:615 [A, VLIZ 26698]: 3 sites 55-100 m, biomass rose 1970-89;
+  "maximum disc diameter growth rate was ca. 0.4 mm mo-1".
+- Arm length: "very long arms (10x disc diameter)" (MarLIN review [S, data/A_infauna/marlin_afiliformis/]).
+  J: ~80 mm per arm at an 8 mm disc.
+- Reference adult mass, three sources agreeing (J): 0.020 g AFDW = 73 mg DW (Skold factor 0.274) to 98 mg
+  DW (oral-width regression; Ricciardi AFDW/DW 0.20); Rosenberg's 0.20 g WW x 0.32-0.49 = 64-98 mg DW.
+  Use 64-98 mg DW (0.20 g WW) for an 8 mm disc adult; the dense 90 m population is smaller (0.079 g WW
+  -> ~25-39 mg DW).
+- Amphilepis norvegica (300 m): nothing found in this round (no density, size, exposure).
+
+(b) Exposed mass at a moment, as a share of the animal
+- Mass per mm of regenerated (thin, distal) arm, from the Skold 1994 relation (J arithmetic):
+    5 mm 0.084 mg DW; 10 mm 0.205 mg (0.0205 mg/mm); 15 mm 0.35 mg; 20 mm 0.50 mg (0.025 mg/mm);
+    30 mm 0.84 mg.
+  Intact distal arm is thicker than a regenerate (Duineveld & Van Noort: recent regenerations
+  "distinguishable by their smaller diameter" [A]), so intact tips weigh more per mm by an unknown factor.
+- Raised length: "Arms engaged in passive suspension feeding extended 10 to 20 mm" and "ca 2 arms
+  were extended at a time" (Loo 1996, known); Solan & Kennedy 2002 (in situ, Galway Bay 22 m) [F, data/
+  A_infauna/solan_kennedy2002_meps228/]: in low current "feeding 'arms' were positioned vertically and
+  extended > 20 mm into the overlying water column"; MarLIN "3-4cm" [S]. Rosenberg 1997 [F]: "One or 2
+  arms are stretched up above the sediment for feeding" and "about 3 arms of each individual are also kept
+  in the sediment".
+- J: 2 arms x 10-20 mm x 0.020-0.025 mg/mm = 0.4-1.0 mg DW exposed = 0.4-1.6 % of a 64-98 mg DW adult
+  if the tips are regenerate-thin; perhaps 1-5 % if intact thickness is 2-3x. For the small dense 90 m
+  animals (25-39 mg DW) 1-4 % (thin). THIS REVISES DOWNWARD the earlier accessibility note's J of 2-8 %.
+  The 22 % (12-30 %) standing regenerated tissue (Skold 1994) is a months-long cumulative of past
+  cropping/breakage, not an instantaneous exposure.
+- Arm share of body mass: still not measured in print. Skold 1994 weighed "discs, whole arms, cut arms and
+  regenerated arms" separately [F] but did not report the shares. J bounds: the thin-regenerate relation
+  applied to a whole 80 mm arm gives 3.0 mg x 5 = 15 mg = 15-23 % of 64-98 mg DW, a lower bound (proximal
+  arm is thicker); the 22 % regenerated share is also a lower bound. Arms are probably >= 25-50 % of DW.
+- Burrow geometry (Solan & Kennedy [F]): "1 arm burrow (8.95 cm long and 0.23 cm wide) terminating in a
+  disc chamber (with a volume of 0.27 cm3)"; disc chamber "at approximately 6 to 10 cm depth" (Galway;
+  Rosenberg 1997: "disk at about 4 cm depth").
+
+(c) Time share exposed
+- Flow (Galway, tidal, 22 m; Solan & Kennedy [F]): "suspension feeding activity by A. filiformis commenced
+  at approximately 1 to 2 h following high or low tide, peaked during the mid-tide, and ended at
+  approximately 1 to 2 h before the next tide"; "During slack tidal periods, individuals remained below
+  the sediment surface and either rested (i.e. arms largely retracted in the disc chamber) or maintained
+  the integrity of the burrow structure (i.e. arms just short of the sediment-water interface)." At rising
+  flow the tips "first kinked ... and proceeded to adopt an inverted L shaped posture". Counts of visible
+  arms (25-35 maximum vs <5) are for a 15 x 22 cm vertical profile window, so NOT convertible to arms per
+  individual. J: in a semidiurnal tide this is roughly 2-4 h of each 6.2 h half-cycle, ~35-65 % of time.
+  Loo 1996 (known): "In still water many Amphiura filiformis did not extend their arms".
+  J caveat: the Mareld slope has near-bottom currents (Rosenberg 1995 via Skold & Gunnarsson: "important
+  near-bottom particle transport") but not a strong tidal cycle of the Galway kind; the share raised
+  depends on the local current record, not measured at 100-300 m.
+- Light: Rosenberg & Lundberg 2004, Mar Biol 145:651 [S, search summary + S2 TLDR; abstract elided by
+  publisher]: time-lapse at 30 m, Gullmarsfjord; activity of suspension-feeding arms "clearly related to
+  the photoperiod with high activity at night and low or no activity during daytime"; shifted lab
+  photoperiods shifted the rhythm (exogenous circadian). No percentages obtained. J: may not transfer to a
+  dark 100-300 m bottom; if it does, the raised share is lowest by day when visual fish feed.
+- Food: Rosenberg 1997 [F]: "When food was introduced, Amphiura filiformis immediately became active and
+  their arms dragged food into the sediment"; Skold & Gunnarsson [F]: raised arms "observed during the
+  whole experiment in all treatments".
+- Deposit-feeding posture: arms sweep across the surface in slack water (Buchanan 1964 via MarLIN [S];
+  earlier note: Duchene & Rosenberg 2001, arms 40-80 % of surface faunal activity [F, earlier]).
+
+(d) Mass yielded per strike
+- Duineveld & Van Noort 1986 [A, abstract only]: "Annual consumption of Amphiura arms by dab was
+  estimated to be 0.84 g wet weight m-2, which is equivalent to 420 arms or 6% of the arm population."
+  J: 840 mg / 420 = 2.0 mg WW (0.64-1.0 mg DW at DW/WW 0.32-0.49). UNRESOLVED - two readings:
+  (i) if 420 is a count of arm pieces in stomachs, ~2 mg WW per strike = ~24-34 mm of regenerate-thin
+      arm (inverting Skold's relation), more than the 10-20 mm raised part;
+  (ii) if 420 is whole-arm EQUIVALENTS (the wording "equivalent to 420 arms or 6% of the arm population"
+      favours this), 2 mg WW is the mean mass of a whole Oyster Ground arm and the mass per strike is
+      unknown. (ii) implies small animals there (5 x 0.6-1 mg DW = 3-5 mg DW of arms), which fits the
+      abstract's "disk size > 4 mm" adults.
+  The abstract cannot discriminate; full text not obtained. Do not use 2 mg as a per-strike value.
+  J: arm population = 420/0.06 = 7000 arms m-2 (~1400 ind m-2) at the Oyster Ground station.
+- Derived per-strike mass if a strike takes only the raised tip (J): 0.2-0.5 mg DW per 10-20 mm thin tip
+  (section 1b), more if intact thickness.
+- Skold 1994 [F] cross-check of the flux: regeneration production 0.34 g AFDW m-2 yr-1 at 280 ind m-2
+  = 1.2 mg AFDW = ~4.4 mg DW per individual per year (J), ~5-7 % of body DW per year, matching the dab
+  6 % of arms per year (all croppers together, not dab alone).
+
+(e) Capture and withdrawal evidence
+- Discs are out of reach unless the bottom is disturbed: Kaiser & Ramsay 1997, MEPS 152:307 [F, data/
+  A_infauna/kaiser_ramsay1997_meps152/], Irish Sea 40 m mud/sand, dab ~19 cm, n = 40 per sample: "In
+  undisturbed sediments Amphiura spp. are positioned with their oral discs buried within the sediment
+  while their arms protrude ... dab graze the exposed arms, while leaving the oral disc intact". Before
+  trawling "The arms of Amphiura spp. occurred in a smaller proportion of stomachs ... (<15%)"; on the
+  trawled line fish "ate large numbers of the oral discs of Amphiura spp., whereas they would normally
+  graze the arms". J reading of Fig. 2: ~620 discs in 40 dab on day 1 after trawling (~15 per fish) vs
+  ~0-30 discs per 40 dab on control lines; arms in ~7-24 of 40 control stomachs.
+- Withdrawal: Solan & Kennedy [F]: crab disturbance "appeared to elicit a predation avoidance response
+  throughout the local A. filiformis population. When subjected to a disturbance from above, individuals
+  immediately retracted to the safety of their burrows for extended periods of time, even in times of peak
+  feeding potential." MarLIN [S]: "can withdraw its arms into its burrow when disturbed by noise
+  vibrations". Rosenberg & Selander 2000, Mar Biol 136:43 [S, search summary]: in a flume, arms "dropped
+  toward the sediment, and some partly sank into it" when dab fed on conspecifics upstream; weaker
+  response to dab eating A. chiajei; response to arm pinching "less clear". Solan & Battle 2003 [S]
+  found no intraspecific alarm signal. Rosenberg 1997 [F]: animals placed on the surface "were able to
+  burrow into the sediment within a few seconds". NO measured arm-retraction speed was found.
+- Does a strike get the tip? Indirect yes: 96 % of individuals carry regenerations and 20 % of arms have
+  recent distal regenerations (Duineveld & Van Noort [A]); dab, haddock and Nephrops "do not generally
+  consume the entire brittle star but crop only the arms" (MarLIN [S], citing Duineveld 1986, Baden 1990).
+  Skold 1994 [F] caution: "Lost arms were collected during sorting and constituted 30% ... of the cut
+  arms" (handling breakage inflates 'regenerating' counts).
+- Haddock: Mattson 1992, Sarsia 77:33 [A, OpenAlex]: "The species-specific feeding method of the haddock
+  is aimed primarily at the entire fraction of small to medium-sized endobenthos, and secondarily at
+  ophiuroids." "The haddock feeds heavily on ophiuroids and echinoids largely because these form its most
+  effective grinding elements." "The prey size and the feeding depth in the sediment increased with fish
+  size." Stomach contents "highly particulate and rich in hard fragments". Whether haddock took Amphiura
+  discs or arms is NOT in the abstract. Schuckel et al. 2010, J Fish Biol [A, OpenAlex]: northern North
+  Sea haddock; "High abundances of echinoderm species with hard calcareous shells ... such as the ophiurid
+  Ophiocten affinis and the echinoid Echinocyamus pusillus, indicated their use as grinding elements."
+  J: these "grinding" ophiuroids are whole surface ophiurids (Ophiocten, Ophiura), not buried Amphiura
+  discs, so they do not settle arms vs discs.
+- Nephrops (not a fish, for context): Baden et al. 1990, MEPS 67:141, Table 2 [F, data/A_infauna/
+  baden1990_meps67/]: SE Kattegat, % occurrence Oct 1986-Apr 1988 average: Amphiura/Ophiura 31.4,
+  Amphiura spp. 10.2, Abra spp. 32.5, Diastylis rathkei 9.3.
+
+========================================================================================================
+2. SHALLOW BIVALVES VIA SIPHONS (Abra nitida, A. alba; Thyasira, Nucula)
+========================================================================================================
+(a) Density/biomass: Skold & Gunnarsson [F] 90 m Skagerrak: Mollusca 2048 ind m-2 but only 18.8 g WW m-2
+  (3.6 % of macrofauna WW). Dauwe 1998 (known): Abra nitida and Thyasira in 0-2 cm at 280 m.
+(b) Exposed mass share:
+- van der Veer et al. 2011, MEPS 434:143, Table 2 [F, data/A_infauna/vanderveer2011_meps434_oa/; the
+  values are S of de Vlas]: potential food of juvenile plaice/flounder at Balgzand: adult bivalves "Only
+  siphon tips" = "3% of total biomass ... (De Vlas 1985)"; Arenicola marina "Only tail tips" = "15% of
+  total biomass (De Vlas 1979b)"; juvenile spat and other polychaetes eaten whole. "Body parts were found
+  to consist mainly of siphon tips in bivalves, tail tips from the polychaetes Arenicola marina and
+  Heteromastus filiformis, and heads and tentacles of Pygospio elegans."
+- Zwarts et al. 1994 (known): extended inhalant siphon 0.6 % of body mass per cm. J: 3 % = ~5 cm of
+  siphon, so the two numbers are mutually consistent (Macoma, intertidal). Abra nitida siphon ">0.5 cm"
+  above the surface (Gremare 2004, known) -> ~0.3-1 % of body mass exposed while active (J, Macoma
+  scaling borrowed).
+(c) Time share: Gremare 2004 (known) 24.9 % at 10 C, 54.6 % at 15 C. J: the 10->15 C ratio (2.19 per 5 C,
+  Q10 ~4.8) extrapolated to 6 C gives ~13 % active; not measured at 5-8 C. Wikander (1980s) also found a
+  positive temperature effect on A. nitida siphonal activity [S, search summary]. Abra alba particle
+  mixing far higher at 18-22 C than 14-17 C (PLOS One 2016, PMC4846090 [S, WebFetch extract]); no data
+  below 13.7 C. Thyasirids expose no siphon (earlier note [F]); Nucula has no siphons (earlier note).
+(d) Mass per nip: no per-nip mass obtained. Regrowth: Trevallion 1971 Tellina tenuis siphons regrow
+  "0.3 mg wk-1" DW [S, search summary citing a 2006 Nuttallia paper]; Hodgson 1982 ~20 % of initial
+  siphon weight per week in Scrobicularia and Donax [S, same]; Trevallion estimated each Tellina "lost a
+  part of its siphons at least once" during the study [S, search summary].
+(e) Capture/retraction: Zwarts & Wanink 1993 (earlier [F]): attacked bivalves "withdrew their foot and
+  siphon(s) within the shell". de Goeij et al. 2001, Oecologia 126:500 [S, search summary of abstract]:
+  three experiments with juvenile plaice; Macoma "lost siphon mass and came closer to the surface".
+  Peterson & Quammen 1982 [S]: Protothaca growth rose ">100%" when siphon-nipping fish were excluded
+  (citing paper, search summary); per-individual cropping "30 to 92% lower in the muddy sand, in part
+  because of a switch to the more abundant deposit-feeding bivalve" (Semantic Scholar auto-TLDR [S]).
+
+========================================================================================================
+3. SURFACE POLYCHAETES (palps, tentacles, heads, tail tips)
+========================================================================================================
+(a) Skold & Gunnarsson [F] 90 m: Polychaeta 832 ind m-2, 37.3 g WW m-2 (7 % of WW). Dauwe (known): at
+  280 m polychaetes dominate 10-20 cm.
+(b) Exposed parts: heads/tentacles (Pygospio), tail tips (Arenicola, Heteromastus) are the cropped parts in
+  Wadden Sea flatfish (van der Veer 2011 [F] citing de Vlas 1979a). Arenicola tail tips 15 % of biomass
+  (de Vlas 1979b [S]). No palp/tentacle mass found for cirratulids, spionids or terebellids.
+(c) Time share: Lindsay & Woodin 1995, MEPS 125:159, Table 2 [F, data/A_infauna/lindsay_woodin1995_
+  meps125/]: intact intertidal spionids, still water, 13-14 C, 2 h video: "Total activity outside tube"
+  1748.8 s (Rhynchospio glutaeus) and 5699.3 s (Pseudopolydora kempi japonica) of 7200 s. J: 24 % and
+  79 % of time with palps/body exposed. "approximately 15 to 20% of collected individuals of both species
+  are missing 1 or both feeding palps" (field, False Bay). Lindsay & Woodin 1992, Biol Bull 183:440 [A]:
+  palp loss "significantly increased the amount of tissue exposed, and the frequency of exposure, but not
+  the duration of each exposure". Palp regrowth 3-6 d (earlier note).
+(d) Mass per crop: not found.
+(e) Schuckel et al. 2010 [A]: haddock did not take tube-dwelling spionids (Spiophanes kroyeri, S. bombyx)
+  or Phoronis, "potentially avoided due to their ability to withdraw below the feeding depths or due to
+  chemical deterrents". Prey density, not sediment position, best predicted haddock prey selection.
+
+========================================================================================================
+4. SMALL INFAUNAL CRUSTACEANS (amphipods, cumaceans)
+========================================================================================================
+(a) Skold & Gunnarsson [F] 90 m: Crustacea 37 (SD 51) ind m-2, 10.9 (18.8) g WW m-2 (~2 % of WW,
+  patchy); coastal 11 ind m-2, no biomass. Earlier note: "generally restricted to the surface layer"
+  (Dauwe, Frisian Front).
+(b)/(c) Emergence: Anger & Valentin 1976, Helgol Wiss Meeresunters 28:138 [S, search summary of the
+  abstract; PDF behind a bot challenge]: Diastylis rathkei "never leaves the sediment while light
+  remains"; pelagic migrations (Aug, Oct, Kiel Bay) start ~1 h after sunset, peak 22-23 h, end at
+  midnight; "Fishes and other predatory animals are almost inactive during this period. Population loss
+  by predation is thus negligible". Mattson 1990, Sarsia 75:247 (cod, 55-75 m) [A]: "The cod temporarily
+  specialized its feeding to a very high degree on such prey that were temporarily most abundant, such as
+  nocturnally swarming males of cumaceans and amphipods." J: emergence makes them takeable whole, but
+  mostly at night and mostly males.
+(d) Whole animals (cumacean AFDW/WW 7.5 %, amphipod 16.5 %, Ricciardi & Bourget [F]).
+
+========================================================================================================
+5. HADDOCK / COD REACH INTO MUD
+========================================================================================================
+- Brawn 1969, J Fish Res Board Can 26:583 [A, OpenAlex]: "Large pieces of food on the bottom were found by
+  sight but smaller pieces were taken after being detected by taste buds on the trailing barbel and pelvic
+  fin rays." "Food below gravel or stones was located by smell and uncovered by carrying away gravel in
+  the mouth or by rolling stones aside with the head. Food covered by sand was not found." "Cod groups fed
+  more effectively than single cod as food deeply buried was uncovered by several fish digging in the
+  same place". Distances/depths: not in the abstract (full text not obtained).
+- Mattson 1990 [A]: cod "adapted to feed mainly near the bottom, and for catching prey on and below the
+  bottom surface. It captures prey mainly by suction"; feeding habitat widened "vertically" with size.
+- Mattson 1992 [A]: haddock feeding depth in the sediment increased with fish size (quote in 1e).
+- Kaiser & Ramsay 1997 [F]: dab reach arms, not discs, in undisturbed sediment (1e).
+- No measured digging depth, pit size or sediment fraction in stomachs for haddock or cod on mud was
+  found (also not in the earlier notes).
+
+========================================================================================================
+NOT OBTAINED (do not infer values for these)
+========================================================================================================
+- Full texts: Duineveld & Van Noort 1986 (VLIZ copy internal only; piece size and per-fish rates not seen);
+  Mattson 1990/1992 (Taylor & Francis; arms vs discs and sediment content unknown); Brawn 1969;
+  Rosenberg & Lundberg 2004 and Rosenberg & Selander 2000 (Springer, abstract elided, cookie wall);
+  de Vlas 1979a/b, 1985; Kamermans & Huitema 1994; de Goeij 2001; Peterson & Quammen 1982; Coen & Heck
+  1991; Irlandi 1994; Burrows et al. 1994 (JEMBE 177:251, underwater TV of juvenile flatfish);
+  Skilleter & Peterson 1994; Skold & Rosenberg 1996 (arm regeneration in 8 ophiuroids); Josefson & Jensen
+  1992 (arm/disc biometrics); Rosenberg 1995 and Rosenberg et al. 1996 (Norwegian Trench); Ockelmann &
+  Muus 1978; Anger & Valentin 1976 (bot challenge); Vopel et al. 2003 (Wiley returned HTML).
+- Measured: arm retraction speed; share of strikes that get a tip; arm share of A. filiformis body mass
+  (weighed by Skold 1994 but not printed); intact arm mass per mm; nip rates per fish per hour; mass per
+  siphon nip; Abra activity at 5-8 C; palp/tentacle masses; any data on Amphilepis norvegica; haddock or
+  cod digging depth or sediment in stomachs on mud.
+
+========================================================================================================
+FILES (data/A_infauna/)
+========================================================================================================
+skold1994_meps103/, solan_kennedy2002_meps228/, ricciardi_bourget1998_meps163/, josefson_conley1997_meps/,
+kaiser_ramsay1997_meps152/, lindsay_woodin1995_meps125/, baden1990_meps67/, vanderveer2011_meps434_oa/,
+marlin_afiliformis/: PDF + pdftotext output, all used. vliz_json/: VLIZ record JSON (abstracts).
+Empty, not used: vopel2003_lo/, anger_valentin1976_helgol/, vanderveer2011_meps434/ (failed downloads
+removed). Scripts: scripts/A_vliz.py, A_openalex.py, A_s2.py (run with python3 -I).
+Skold & Gunnarsson 1996 and Rosenberg 1997 were read from the earlier folder "Refugium och utbyte i
+bentos"/data/ (not copied).

@@ -1,0 +1,116 @@
+check: cod Cmax 1000 g at 7 C = 78.0 kJ/kg/d (table: 78.0)
+quarterly at_50m temperatures: [7.17, 6.87, 8.9, 10.53]
+
+SMS ration / Cmax (wet/wet, prey at the FB4 4.184 kJ/g convention)
+species  W(g)  q  T    ration%BW/d  Cmax%BW/d  ratio   ratio(T+1.5)
+cod            300 Q1  7.17    1.276     2.389   0.534   0.479
+cod            300 Q2  6.87    1.718     2.332   0.736   0.658
+cod            300 Q3  8.90    1.766     2.708   0.652   0.597
+cod            300 Q4 10.53    1.969     2.978   0.661   0.622
+cod            300 annual mean ration 1.682 %BW/d, Cmax 2.602, ratio 0.647
+cod           1190 Q1  7.17    0.950     1.826   0.520   0.466
+cod           1190 Q2  6.87    1.279     1.783   0.717   0.641
+cod           1190 Q3  8.90    1.315     2.070   0.635   0.582
+cod           1190 Q4 10.53    1.466     2.277   0.644   0.606
+cod           1190 annual mean ration 1.253 %BW/d, Cmax 1.989, ratio 0.630
+cod           2400 Q1  7.17    0.818     1.592   0.513   0.460
+cod           2400 Q2  6.87    1.101     1.555   0.708   0.632
+cod           2400 Q3  8.90    1.132     1.805   0.627   0.574
+cod           2400 Q4 10.53    1.262     1.985   0.635   0.598
+cod           2400 annual mean ration 1.078 %BW/d, Cmax 1.734, ratio 0.621
+cod           5000 Q1  7.17    0.699     1.380   0.506   0.454
+cod           5000 Q2  6.87    0.941     1.348   0.698   0.623
+cod           5000 Q3  8.90    0.967     1.564   0.618   0.566
+cod           5000 Q4 10.53    1.078     1.721   0.627   0.589
+cod           5000 annual mean ration 0.921 %BW/d, Cmax 1.503, ratio 0.613
+haddock        150 Q1  7.17    0.608     2.734   0.222   0.199
+haddockx1.3    150 Q1  7.17    0.608     3.554   0.171   0.153
+haddock        150 Q2  6.87    0.839     2.670   0.314   0.281
+haddockx1.3    150 Q2  6.87    0.839     3.471   0.242   0.216
+haddock        150 Q3  8.90    1.119     3.099   0.361   0.330
+haddockx1.3    150 Q3  8.90    1.119     4.029   0.278   0.254
+haddock        150 Q4 10.53    1.107     3.409   0.325   0.305
+haddockx1.3    150 Q4 10.53    1.107     4.432   0.250   0.235
+haddock        150 annual mean ration 0.918 %BW/d, Cmax 2.978, ratio 0.308 (x1.3: 0.237)
+haddock        275 Q1  7.17    0.512     2.429   0.211   0.189
+haddockx1.3    275 Q1  7.17    0.512     3.158   0.162   0.145
+haddock        275 Q2  6.87    0.706     2.372   0.297   0.266
+haddockx1.3    275 Q2  6.87    0.706     3.084   0.229   0.204
+haddock        275 Q3  8.90    0.941     2.754   0.342   0.313
+haddockx1.3    275 Q3  8.90    0.941     3.580   0.263   0.241
+haddock        275 Q4 10.53    0.931     3.029   0.307   0.289
+haddockx1.3    275 Q4 10.53    0.931     3.938   0.236   0.222
+haddock        275 annual mean ration 0.772 %BW/d, Cmax 2.646, ratio 0.292 (x1.3: 0.224)
+haddock        600 Q1  7.17    0.409     2.087   0.196   0.176
+haddockx1.3    600 Q1  7.17    0.409     2.713   0.151   0.135
+haddock        600 Q2  6.87    0.565     2.038   0.277   0.248
+haddockx1.3    600 Q2  6.87    0.565     2.649   0.213   0.190
+haddock        600 Q3  8.90    0.753     2.365   0.318   0.291
+haddockx1.3    600 Q3  8.90    0.753     3.075   0.245   0.224
+haddock        600 Q4 10.53    0.745     2.602   0.286   0.269
+haddockx1.3    600 Q4 10.53    0.745     3.382   0.220   0.207
+haddock        600 annual mean ration 0.618 %BW/d, Cmax 2.273, ratio 0.272 (x1.3: 0.209)
+
+Whiting: SMS ration (energy at diet E 4.5 kJ/g, range 4.0-5.5) / Andersen & Riis-Vestergaard Wmax
+whiting   50 g L 18.9 Q1 T  7.17 ration 1.208%BW/d =  54.4 kJ/kg/d, Wmax  208.6 kJ/kg/d (3.43%BW/d sandeel), ratio 0.261 (E 4.0: 0.232; E 5.5: 0.319)
+whiting   50 g L 18.9 Q2 T  6.87 ration 1.289%BW/d =  58.0 kJ/kg/d, Wmax  203.9 kJ/kg/d (3.35%BW/d sandeel), ratio 0.284 (E 4.0: 0.253; E 5.5: 0.348)
+whiting   50 g L 18.9 Q3 T  8.90 ration 1.924%BW/d =  86.6 kJ/kg/d, Wmax  238.0 kJ/kg/d (3.91%BW/d sandeel), ratio 0.364 (E 4.0: 0.323; E 5.5: 0.445)
+whiting   50 g L 18.9 Q4 T 10.53 ration 1.628%BW/d =  73.2 kJ/kg/d, Wmax  269.4 kJ/kg/d (4.43%BW/d sandeel), ratio 0.272 (E 4.0: 0.242; E 5.5: 0.332)
+   annual mean ratio 0.296
+whiting  120 g L 25.1 Q1 T  7.17 ration 0.915%BW/d =  41.2 kJ/kg/d, Wmax  165.3 kJ/kg/d (2.72%BW/d sandeel), ratio 0.249 (E 4.0: 0.221; E 5.5: 0.304)
+whiting  120 g L 25.1 Q2 T  6.87 ration 0.976%BW/d =  43.9 kJ/kg/d, Wmax  161.6 kJ/kg/d (2.66%BW/d sandeel), ratio 0.272 (E 4.0: 0.242; E 5.5: 0.332)
+whiting  120 g L 25.1 Q3 T  8.90 ration 1.458%BW/d =  65.6 kJ/kg/d, Wmax  188.6 kJ/kg/d (3.10%BW/d sandeel), ratio 0.348 (E 4.0: 0.309; E 5.5: 0.425)
+whiting  120 g L 25.1 Q4 T 10.53 ration 1.233%BW/d =  55.5 kJ/kg/d, Wmax  213.5 kJ/kg/d (3.51%BW/d sandeel), ratio 0.260 (E 4.0: 0.231; E 5.5: 0.318)
+   annual mean ratio 0.283
+whiting  250 g L 31.8 Q1 T  7.17 ration 0.725%BW/d =  32.6 kJ/kg/d, Wmax  136.0 kJ/kg/d (2.24%BW/d sandeel), ratio 0.240 (E 4.0: 0.213; E 5.5: 0.293)
+whiting  250 g L 31.8 Q2 T  6.87 ration 0.773%BW/d =  34.8 kJ/kg/d, Wmax  133.0 kJ/kg/d (2.19%BW/d sandeel), ratio 0.262 (E 4.0: 0.233; E 5.5: 0.320)
+whiting  250 g L 31.8 Q3 T  8.90 ration 1.155%BW/d =  52.0 kJ/kg/d, Wmax  155.2 kJ/kg/d (2.55%BW/d sandeel), ratio 0.335 (E 4.0: 0.298; E 5.5: 0.409)
+whiting  250 g L 31.8 Q4 T 10.53 ration 0.977%BW/d =  43.9 kJ/kg/d, Wmax  175.7 kJ/kg/d (2.89%BW/d sandeel), ratio 0.250 (E 4.0: 0.222; E 5.5: 0.306)
+   annual mean ratio 0.272
+whiting  400 g L 37.0 Q1 T  7.17 ration 0.625%BW/d =  28.1 kJ/kg/d, Wmax  120.1 kJ/kg/d (1.97%BW/d sandeel), ratio 0.234 (E 4.0: 0.208; E 5.5: 0.286)
+whiting  400 g L 37.0 Q2 T  6.87 ration 0.666%BW/d =  30.0 kJ/kg/d, Wmax  117.3 kJ/kg/d (1.93%BW/d sandeel), ratio 0.256 (E 4.0: 0.227; E 5.5: 0.312)
+whiting  400 g L 37.0 Q3 T  8.90 ration 0.995%BW/d =  44.8 kJ/kg/d, Wmax  137.0 kJ/kg/d (2.25%BW/d sandeel), ratio 0.327 (E 4.0: 0.291; E 5.5: 0.399)
+whiting  400 g L 37.0 Q4 T 10.53 ration 0.841%BW/d =  37.9 kJ/kg/d, Wmax  155.1 kJ/kg/d (2.55%BW/d sandeel), ratio 0.244 (E 4.0: 0.217; E 5.5: 0.298)
+   annual mean ratio 0.266
+
+Saithe SMS rations, %BW/d (no lab Cmax exists):
+saithe 500 g: [0.418, 1.21, 0.641, 0.749]
+saithe 1500 g: [0.439, 1.27, 0.673, 0.787]
+saithe 3000 g: [0.453, 1.31, 0.694, 0.812]
+
+Daan (1973) cod daily ration / FB4 Cmax (wet/wet at 4.184 kJ/g). W = 0.00684 L^3.07 (length-weight used by Neuenfeldt et al. 2020) 
+L  10 cm W       8 g ration  0.53 g/d = 6.60 %BW/d; ratio T7.0: 1.38, T8.4: 1.24, T10.0: 1.12
+L  20 cm W      67 g ration  2.10 g/d = 3.11 %BW/d; ratio T7.0: 0.99, T8.4: 0.89, T10.0: 0.80
+L  30 cm W     234 g ration  4.80 g/d = 2.05 %BW/d; ratio T7.0: 0.83, T8.4: 0.75, T10.0: 0.67
+L  40 cm W     567 g ration  8.50 g/d = 1.50 %BW/d; ratio T7.0: 0.72, T8.4: 0.65, T10.0: 0.59
+L  50 cm W    1124 g ration 13.00 g/d = 1.16 %BW/d; ratio T7.0: 0.63, T8.4: 0.57, T10.0: 0.52
+L  60 cm W    1967 g ration 19.00 g/d = 0.97 %BW/d; ratio T7.0: 0.59, T8.4: 0.53, T10.0: 0.48
+L  70 cm W    3158 g ration 26.00 g/d = 0.82 %BW/d; ratio T7.0: 0.55, T8.4: 0.50, T10.0: 0.45
+L  80 cm W    4758 g ration 34.00 g/d = 0.71 %BW/d; ratio T7.0: 0.52, T8.4: 0.47, T10.0: 0.42
+L  90 cm W    6831 g ration 43.00 g/d = 0.63 %BW/d; ratio T7.0: 0.49, T8.4: 0.44, T10.0: 0.40
+L 100 cm W    9439 g ration 53.00 g/d = 0.56 %BW/d; ratio T7.0: 0.47, T8.4: 0.42, T10.0: 0.38
+
+Second cod Cmax basis: Jobling (1988) via Neuenfeldt et al. (2020)
+  W    67 g: T5.0: Jobling  160.9 vs FB4  111.5 kJ/kg/d (x1.44), T7.0: Jobling  193.3 vs FB4  132.1 kJ/kg/d (x1.46), T10.0: Jobling  245.3 vs FB4  162.3 kJ/kg/d (x1.51)
+  W   300 g: T5.0: Jobling  119.6 vs FB4   83.2 kJ/kg/d (x1.44), T7.0: Jobling  143.7 vs FB4   98.6 kJ/kg/d (x1.46), T10.0: Jobling  182.3 vs FB4  121.1 kJ/kg/d (x1.51)
+  W   567 g: T5.0: Jobling  105.4 vs FB4   73.5 kJ/kg/d (x1.43), T7.0: Jobling  126.6 vs FB4   87.1 kJ/kg/d (x1.45), T10.0: Jobling  160.7 vs FB4  107.0 kJ/kg/d (x1.50)
+  W  1190 g: T5.0: Jobling   91.0 vs FB4   63.6 kJ/kg/d (x1.43), T7.0: Jobling  109.4 vs FB4   75.4 kJ/kg/d (x1.45), T10.0: Jobling  138.8 vs FB4   92.6 kJ/kg/d (x1.50)
+  W  1967 g: T5.0: Jobling   82.4 vs FB4   57.7 kJ/kg/d (x1.43), T7.0: Jobling   99.0 vs FB4   68.4 kJ/kg/d (x1.45), T10.0: Jobling  125.6 vs FB4   84.0 kJ/kg/d (x1.50)
+  W  5000 g: T5.0: Jobling   68.5 vs FB4   48.1 kJ/kg/d (x1.42), T7.0: Jobling   82.3 vs FB4   57.0 kJ/kg/d (x1.44), T10.0: Jobling  104.5 vs FB4   70.0 kJ/kg/d (x1.49)
+SMS cod ration (energy at diet E 4.184 / 5.0 kJ/g) / Jobling Cmax, quarterly at_50m
+    300 g: Q1 0.37/0.44  Q2 0.51/0.60  Q3 0.44/0.53  Q4 0.44/0.52  annual 0.44/0.52
+   1190 g: Q1 0.36/0.43  Q2 0.50/0.59  Q3 0.43/0.51  Q4 0.43/0.51  annual 0.43/0.51
+   5000 g: Q1 0.35/0.42  Q2 0.48/0.58  Q3 0.42/0.50  Q4 0.42/0.50  annual 0.42/0.50
+Daan cod ration (E 4.184 / 5.0 kJ/g) / Jobling Cmax
+  L  10 cm: T7.0: 0.94/1.12, T10.0: 0.74/0.88
+  L  20 cm: T7.0: 0.67/0.81, T10.0: 0.53/0.64
+  L  30 cm: T7.0: 0.57/0.68, T10.0: 0.45/0.54
+  L  40 cm: T7.0: 0.50/0.59, T10.0: 0.39/0.47
+  L  50 cm: T7.0: 0.44/0.52, T10.0: 0.34/0.41
+  L  60 cm: T7.0: 0.41/0.49, T10.0: 0.32/0.38
+  L  70 cm: T7.0: 0.38/0.46, T10.0: 0.30/0.36
+  L  80 cm: T7.0: 0.36/0.43, T10.0: 0.28/0.34
+  L  90 cm: T7.0: 0.34/0.41, T10.0: 0.27/0.32
+  L 100 cm: T7.0: 0.32/0.39, T10.0: 0.26/0.30
+
+Daan stomach content 0.00016 L^3 g as % BW: {20: 1.9, 40: 1.81, 60: 1.76, 80: 1.72}

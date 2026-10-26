@@ -35,7 +35,7 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              observable_impacts=None, nutrient_pool=None, grazer=None,
              mixed_layer_pairs=None, subsurface=None, inert_subsurface=False,
              ingestion=None, growth=None, income=None, capacity=None,
-             regen=None, extra_prey=None, pair_keys=None):
+             regen=None, extra_prey=None, pair_keys=None, refuge=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -74,6 +74,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     ``extra_prey`` maps a DM to prey added to its menu.
     ``pair_keys`` maps an interaction id to extra pair keys (section 208:
     ``accessible_fraction``).
+    ``refuge`` is the NDM ``c``'s refuge keys (section 223.12:
+    ``exposed_share``, ``refuge_exchange_rate``).
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -156,6 +158,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
             params.update(regen[fid])
         if impacts and fid in impacts:
             params["impact"] = copy.deepcopy(impacts[fid])
+        if refuge and fid == "c":
+            params.update(refuge)
         if reserve_food is not None and fid == "b":
             params["prey_includes_reserve"] = True
             params["reserve_reference_fill"] = reserve_food

@@ -89,7 +89,19 @@ def test_visual_cli_renders_and_preserves_training(tmp_path, viewers, device, ex
     assert_same(visual["trainer"], plain["trainer"])
 
 
-def test_progress_tab_continues_across_resume(tmp_path, viewers):
+@pytest.fixture
+def inline_probe(monkeypatch):
+    """Run the live probe in-line, so which updates probe is deterministic
+    (the default runs it in a separate process, section 223.12)."""
+    from lib.runners.training_progress import LiveTrainingProgress
+    monkeypatch.setattr(LiveTrainingProgress, "asynchronous", False)
+
+
+def _history(directory):
+    return list(map(json.loads, (directory / "progress" / "probe.jsonl").read_text().splitlines()))
+
+
+def test_progress_tab_continues_across_resume(tmp_path, viewers, inline_probe):
     def render_progress(trainer, step, directory, args):
         if step == 2:
             import pygame
@@ -102,53 +114,62 @@ def test_progress_tab_continues_across_resume(tmp_path, viewers):
 
     flags = arguments(tmp_path) + ["--visual"]
     assert main(flags, on_step=render_progress) == 0
-    history = tmp_path / "progress" / "survival.jsonl"
-    assert not (tmp_path / "progress" / "latest.png").exists()
-    assert [r["step"] for r in map(json.loads, history.read_text().splitlines())] == [0, 1, 2]
+    history = tmp_path / "progress" / "probe.jsonl"
+    assert [r["step"] for r in _history(tmp_path)] == [0, 1, 2]
     # A crash may leave evaluations ahead of the saved checkpoint.
     with history.open("a") as stream:
         stream.write(json.dumps(dict(step=99, evaluation=99, survival_ticks={})) + "\n")
     assert main(flags + ["--resume"]) == 0
-    records = list(map(json.loads, history.read_text().splitlines()))
+    records = _history(tmp_path)
     assert [r["step"] for r in records] == [0, 1, 2, 3, 4]
     assert [r["evaluation"] for r in records] == [1, 2, 3, 4, 5]
-    assert [s for s, _ in viewers[-1]._series["progress"]["benthivorous_fish"]] == [0, 1, 2, 3, 4]
+    # The tab shows the latest probe: day 0 and day 1 of five 6 h ticks.
+    viz = viewers[-1]
+    assert [d for d, _ in viz._series["progress"]["benthivorous_fish"]] == [0, 1]
+    assert viz._series["progress"]["benthivorous_fish"][0] == (0, 100.0)
+    assert "Update 4" in viz._progress_message
+    latest = json.loads((tmp_path / "progress" / "probe_latest.json").read_text())
+    assert latest["step"] == 4 and "phytoplankton" in latest["series"]
 
 
-def test_progress_history_outlives_rolling_plots_and_playback(tmp_path, viewers):
+def test_progress_tab_shows_a_three_year_probe(tmp_path, viewers):
     def populate(trainer, step, directory, args):
         if step != 2:
             return
         viz = viewers[0]
-        records = [dict(step=i * 20, survival_ticks={"benthivorous_fish": i % 1000, "porpoises": None})
-                   for i in range(700)]
-        viz.set_training_progress(records, dict(ticks=1000, lower=0.3, upper=3))
+        days = 3 * 365 + 1
+        records = [dict(step=40, survival_ticks={"benthivorous_fish": 4380, "porpoises": None})]
+        latest = dict(step=40, seed=7, every_ticks=4, ticks_per_year=1460,
+                      series={"benthivorous_fish": [1.0 - 0.0001 * d for d in range(days)],
+                              "phytoplankton": [1.0 + 0.5 * (d % 365 < 90) for d in range(days)],
+                              "porpoises": None})
+        viz.set_training_progress(records, dict(ticks=4380), latest)
         viz.begin_rollout_recording()
         viz.end_rollout_recording()
         viz._active_tab = viz._tabs.index("progress")
         viz._render_full()
-        assert len(viz._series["progress"]["benthivorous_fish"]) == 700
-        assert viz._series["progress"]["benthivorous_fish"][0] == (0, 0)
+        assert len(viz._series["progress"]["benthivorous_fish"]) == days
+        assert viz._series["progress"]["benthivorous_fish"][0] == (0, 100.0)
         assert viz._series["progress"]["porpoises"] == []
         assert "No starting biomass" in viz._progress_message
         assert viz._plot_scroll_thumb_rect is None
-        assert viz._plot_scroll_span_cache == (0, 13980)
-        assert "phytoplankton" not in viz._active_plot_ids()
+        # Every group is on the probe, the non decision makers too.
+        assert "phytoplankton" in viz._active_plot_ids()
+        assert viz._probe_days_per_year == 365.0
 
     assert main(arguments(tmp_path) + ["--visual"], on_step=populate) == 0
 
 
-def test_progress_interval_and_resume_evaluation(tmp_path, viewers):
+def test_progress_interval_and_resume_evaluation(tmp_path, viewers, inline_probe):
     flags = arguments(tmp_path) + ["--visual", "--eval-every", "2", "--iter-per-gen", "3"]
-    history = tmp_path / "progress" / "survival.jsonl"
     assert main(flags) == 0
-    assert [r["step"] for r in map(json.loads, history.read_text().splitlines())] == [0, 2]
+    assert [r["step"] for r in _history(tmp_path)] == [0, 2]
     assert main(flags + ["--resume"]) == 0
-    assert [r["step"] for r in map(json.loads, history.read_text().splitlines())] == [0, 2, 3, 4, 6]
-    assert [step for step, _ in viewers[-1]._series["progress"]["benthivorous_fish"]] == [0, 2, 3, 4, 6]
+    assert [r["step"] for r in _history(tmp_path)] == [0, 2, 3, 4, 6]
+    assert "Update 6" in viewers[-1]._progress_message
 
 
-def test_cpu_visual_evaluates_progress(tmp_path, viewers, monkeypatch):
+def test_cpu_visual_evaluates_progress(tmp_path, viewers, monkeypatch, inline_probe):
     from train import main as cpu_main
     from lib.viz.pygame_viz import LiveVisualizer
     monkeypatch.setattr(LiveVisualizer, "wait_for_close", lambda *a, **kw: None)
@@ -156,9 +177,20 @@ def test_cpu_visual_evaluates_progress(tmp_path, viewers, monkeypatch):
               "--n_deltas", "2", "--n_eval_ticks", "2", "--generations", "1",
               "--iter-per-gen", "2", "--run-name", str(tmp_path), "--visual",
               "--eval-every", "1", "--eval-ticks", "5"], confirm=False)
-    records = list(map(json.loads, (tmp_path / "progress" / "survival.jsonl").read_text().splitlines()))
+    records = _history(tmp_path)
     assert [r["step"] for r in records] == [0, 1, 2]
-    assert len(viewers[0]._series["progress"]["benthivorous_fish"]) == 3
+    assert all(len(r["year_end_ratio"]["benthivorous_fish"]) == 0 for r in records)
+    assert len(viewers[0]._series["progress"]["benthivorous_fish"]) == 2
+
+
+def test_the_live_probe_runs_in_its_own_process(tmp_path, viewers):
+    # Default: the probe is submitted to a worker process; the one running
+    # when training ends is recorded by close() (section 223.12).
+    assert main(arguments(tmp_path) + ["--visual"]) == 0
+    records = _history(tmp_path)
+    assert records and records[0]["step"] == 0
+    assert all(r["ticks_run"] == 5 for r in records)
+    assert (tmp_path / "progress" / "probe_latest.json").exists()
 
 
 def test_events_pumped_while_training_and_close_keeps_training(tmp_path, viewers, monkeypatch):

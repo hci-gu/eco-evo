@@ -1,0 +1,46 @@
+library: /home/simon/eco-evo/fgconfig/fg_library.yaml
+today's grid-mean densities (t/km2): {'benthivorous_fish': 1.528, 'predatory_fish': 1.194, 'planktivorous_fish': 3.333, 'zooplankton': 9.722, 'benthic_infauna': 93.611, 'mobile_epifauna': 7.75}
+
+Per pair (visible = whole pool x accessible_fraction; hiding of DM prey ignored, i.e. upper bound):
+pair                                              a      h     f T  Cmax    half      N    x@100%     x@30%     x@10%      x@3%      x@1%   share of ceiling @100/10/1 %   min-to-fill
+benthivorous_fish -> planktivorous_fish       0.019  262.9  1.00 2   108   0.338   3.33      9.87      2.96      0.99      0.30      0.10        0.908/0.497/0.090       36.5
+benthivorous_fish -> benthic_infauna          0.250   95.9  0.20 2   108   0.352  93.61    265.99     79.80     26.60      7.98      2.66        0.996/0.964/0.727        1.4
+benthivorous_fish -> mobile_epifauna          0.440  138.4  0.31 2   108   0.089   7.75     86.70     26.01      8.67      2.60      0.87        0.989/0.897/0.464        4.2
+benthivorous_fish -> predatory_fish           0.026  193.8  1.00 2   108   0.335   1.19      3.57      1.07      0.36      0.11      0.04        0.781/0.263/0.034      100.9
+predatory_fish -> planktivorous_fish          0.012  279.4  1.00 2   102   0.334   3.33      9.98      3.00      1.00      0.30      0.10        0.909/0.500/0.091       36.1
+predatory_fish -> mobile_epifauna             0.330  147.1  0.13 2   102   0.177   7.75     43.69     13.11      4.37      1.31      0.44        0.978/0.814/0.304        8.2
+predatory_fish -> benthivorous_fish           0.180  176.5  0.15 2   102   0.235   1.53      6.50      1.95      0.65      0.20      0.07        0.867/0.394/0.061       55.4
+predatory_fish -> zooplankton                 0.002  176.5  1.00 2   102   3.171   9.72      3.07      0.92      0.31      0.09      0.03        0.754/0.235/0.030      117.4
+planktivorous_fish -> zooplankton             0.017   40.0  1.00 2   450   1.716   9.72      5.67      1.70      0.57      0.17      0.06        0.850/0.362/0.054       63.5
+
+Cmax column is kJ per kg predator per day on that prey (energy ceiling x 4).
+half = half-saturation in t/km2 of the WHOLE pool (accessible share and interference included).
+min-to-fill = minutes of foraging a fish needs at today's density to collect one 6-h tick's ceiling.
+
+Night ticks: share of the ceiling at today's density if a is multiplied by the dark ratio
+  benthivorous_fish -> planktivorous_fish: dark_ratio 0.06: x 9.87 -> 0.592, share 0.908 -> 0.372
+  benthivorous_fish -> predatory_fish: dark_ratio 0.1: x 3.57 -> 0.357, share 0.781 -> 0.263
+  predatory_fish -> planktivorous_fish: dark_ratio 0.35: x 9.98 -> 3.494, share 0.909 -> 0.777
+  predatory_fish -> benthivorous_fish: dark_ratio 0.6: x 6.50 -> 3.902, share 0.867 -> 0.796
+  predatory_fish -> zooplankton: dark_ratio 0.5: x 3.07 -> 1.533, share 0.754 -> 0.605
+  planktivorous_fish -> zooplankton: dark_ratio 0.02: x 5.67 -> 0.113, share 0.850 -> 0.102
+  (pairs without dark_ratio, e.g. the benthic pairs, have no night term at all)
+
+Feeding level = consumption / Cmax
+  engine benthivorous_fish: hunger at fill 0.72 (u 0.5) = 0.56; x eat 0.96 = 0.54 of the ceiling (fix76 gen 9/10 year 1: fill 0.72, eat 0.957 (223.8))
+  engine predatory_fish: 0.43-0.50 of the ceiling (share of the Holling ceiling eaten 0.43-0.50 (223.7 instrumented run))
+  field benthivorous_fish: published Q/B 3.48 (2.5-4.7) on the old mixed diet (3440 MJ/t): 33 kJ/kg/d = 0.30 of Cmax 108 (0.25-0.40 over the Cmax range)
+  field benthivorous_fish: SMS cod + haddock 3.6 (WGSAM 2024): 34 kJ/kg/d = 0.31 of Cmax 108 (0.26-0.41 over the Cmax range)
+  field benthivorous_fish: energy-budget Q/B 4.46 on the 223.10 diet (2472 MJ/t assimilated / mean AE 0.746 = 3314 MJ/t as eaten): 40 kJ/kg/d = 0.37 of Cmax 108 (0.30-0.49 over the Cmax range)
+  field predatory_fish: SMS 2023 / Ecopath rations 3.34 /yr at 4.18 kJ/g: 38 kJ/kg/d = 0.37 of Cmax 102 (0.25-0.49 over the Cmax range)
+
+Engine mass Q/B implied by level x ceiling on a single prey (per yr):
+  benthivorous_fish -> planktivorous_fish: ceiling   5.55 /yr; x0.54 =  3.00; x0.30 =  1.67
+  benthivorous_fish -> benthic_infauna: ceiling  15.22 /yr; x0.54 =  8.22; x0.30 =  4.57
+  benthivorous_fish -> mobile_epifauna: ceiling  10.55 /yr; x0.54 =  5.70; x0.30 =  3.16
+  benthivorous_fish -> predatory_fish: ceiling   7.53 /yr; x0.54 =  4.07; x0.30 =  2.26
+  predatory_fish -> planktivorous_fish: ceiling   5.23 /yr; x0.54 =  2.82; x0.30 =  1.57
+  predatory_fish -> mobile_epifauna: ceiling   9.93 /yr; x0.54 =  5.36; x0.30 =  2.98
+  predatory_fish -> benthivorous_fish: ceiling   8.27 /yr; x0.54 =  4.47; x0.30 =  2.48
+  predatory_fish -> zooplankton: ceiling   8.27 /yr; x0.54 =  4.47; x0.30 =  2.48
+  planktivorous_fish -> zooplankton: ceiling  36.50 /yr; x0.54 = 19.71; x0.30 = 10.95

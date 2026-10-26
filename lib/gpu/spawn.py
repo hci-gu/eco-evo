@@ -235,7 +235,38 @@ class WorldSpawner:
             ratios = lo + (hi - lo) * uniform(pair_keys, (self.model.G, self.C), 501)
         else:
             ratios = 0.7
-        return biomass * ratios * self.model.max_reserve
+        reserve = biomass * ratios * self.model.max_reserve
+        if self.model.refuge_on:
+            # Section 223.12: a refuge group's accessible part starts at
+            # its equilibrium share, as FunctionalGroup.initialize_state.
+            reserve = torch.where(self.model.refuge_mask,
+                                  biomass * self.model.refuge_phi, reserve)
+        return reserve
+
+    def depletion(self, world_keys, share):
+        """Depleted benthic patches per world (section 223.12): a factor
+        [world, 1, cell], 1 outside the patches.
+
+        A share ``share`` of the worlds gets patches: smooth noise
+        (sigma 3 cells) above its (1 - coverage) quantile, coverage
+        uniform in 0.05-0.30 of the cells, every patch cell at one level
+        per world, log-uniform 0.01-0.32 of what it held. Training-world
+        design (the fish meet emptied beds and can learn to leave them),
+        not biology; keyed by the world, so every candidate on a world
+        sees the same patches.
+        """
+        batch = world_keys.numel()
+        keys = fold_in(world_keys, 90001)
+        on = uniform(keys, (), 0, torch.float64) < float(share)
+        coverage = 0.05 + 0.25 * uniform(keys, (), 1, torch.float64)
+        level = torch.pow(10.0, -2.0 + 1.5 * uniform(keys, (), 2, torch.float64))
+        self._filter(3.0)
+        noise = self.smooth(normal(keys, (self.H, self.W), 3, torch.float64), 3.0).reshape(batch, -1)
+        index = ((1.0 - coverage) * (noise.shape[1] - 1)).long()
+        threshold = noise.sort(dim=1).values.gather(1, index[:, None])
+        patch = (noise > threshold) & on[:, None]
+        factor = torch.where(patch, level[:, None], torch.ones_like(noise))
+        return factor[:, None, :].float()
 
     def light_starts(self, world_keys):
         """Year tick each world starts at (daylight calendar, section 137).

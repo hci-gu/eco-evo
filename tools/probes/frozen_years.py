@@ -33,7 +33,7 @@ CELLS = 3600.0
 LOSS = ('loss_predation', 'loss_starvation', 'loss_natural', 'loss_impact')
 AB = {'benthivorous_fish': 'ben', 'predatory_fish': 'pred', 'planktivorous_fish': 'plk',
       'porpoises': 'porp', 'seals': 'seal', 'benthic_infauna': 'bent',
-      'mobile_epifauna': 'epi',
+      'mobile_epifauna': 'epi', 'norway_lobster': 'neph',
       'phytoplankton': 'phy', 'subsurface_phytoplankton': 'sub',
       'microzooplankton': 'mic', 'zooplankton': 'zoo'}
 
@@ -85,6 +85,11 @@ def run(ckpt, seed, years, out_path, library=None):
         print(f"year {y + 1} done", file=sys.stderr, flush=True)
 
 
+def _per(x, m):
+    """x per mean biomass m; nan once the group is extinct (m == 0)."""
+    return x / m if m > 0 else float('nan')
+
+
 def show(path):
     with open(path) as fh:
         d = json.load(fh)
@@ -101,7 +106,7 @@ def show(path):
         print(f"         {i + 1:2} " + ' '.join(f"{y['mean'][g] / CELLS:7.3f}" for g in gs))
     print('losses per mean biomass (/yr), pred/starv/nat/imp: year 1 | mid | last')
     for g in gs:
-        row = ['/'.join(f"{y['loss'][k][g] / y['mean'][g]:.3f}" for k in LOSS) for y in pick]
+        row = ['/'.join(f"{_per(y['loss'][k][g], y['mean'][g]):.3f}" for k in LOSS) for y in pick]
         print(f"  {AB[g]:5}", ' | '.join(row))
     print('diet shares (% of intake) and Q/B: year 1 | mid | last')
     for p in [g for g in gs if g in Y[0]['fill']]:
@@ -111,14 +116,14 @@ def show(path):
             T = sum(I.values()) or 1.0
             parts.append(' '.join(f"{AB.get(q, q)}{v / T * 100:.0f}"
                                   for q, v in sorted(I.items(), key=lambda kv: -kv[1]))
-                         + f" QB{T / y['mean'][p]:.1f}")
+                         + f" QB{_per(T, y['mean'][p]):.1f}")
         print(f"  {AB[p]:5}", ' | '.join(parts))
     print('fill per year:', {AB.get(f, f): [round(y['fill'][f], 2) for y in Y] for f in Y[0]['fill']})
     print('realised M2 (intake / prey mean biomass, /yr): year 1 | last')
     for q in gs:
         rows = []
         for y in (Y[0], Y[-1]):
-            m = {AB.get(p, p): round(I.get(q, 0.0) / y['mean'][q], 4)
+            m = {AB.get(p, p): round(_per(I.get(q, 0.0), y['mean'][q]), 4)
                  for p, I in y['intake'].items() if I.get(q, 0.0) > 0}
             rows.append(m)
         if rows[0] or rows[1]:

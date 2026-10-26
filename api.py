@@ -74,6 +74,7 @@ API_TO_INTERNAL_SPECIES = {
     # Section 221: the id before the split, kept for existing clients.
     "benthic_community": "benthic_infauna",
     "mobile_epifauna": "mobile_epifauna",
+    "norway_lobster": "norway_lobster",
 }
 
 # These scalar pressures can be represented by the current static impact-map

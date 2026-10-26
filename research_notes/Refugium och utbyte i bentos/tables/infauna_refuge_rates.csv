@@ -1,0 +1,49 @@
+taxon_or_scope,quantity,low,central,high,unit,source,tag
+Amphiura filiformis (lab Kattegat/Skagerrak cores),arm_regrowth_rate,0.12,0.14,0.17,mm per arm per day,Skold & Gunnarsson 1996 MEPS 142:203 Table 3 (9.2-13.1 mm in 77 d),F
+Amphiura filiformis (14 C whole animals),arm_regrowth_rate_vs_length_lost,0.09,0.12,0.47,mm per day (0.6 mm/wk at 5 mm lost to 3.3 mm/wk at 60 mm lost; central = J fit at 10-20 mm lost),Dupont & Thorndyke 2006 J Exp Biol 209:3873 (WebFetch extract),F
+Amphiura filiformis (lab),arm_regrowth_rate,,0.14,,mm per arm per day,Biressi et al. 2010 Zoomorphology (0.99 mm/week),S
+Amphiura filiformis (lab 10-11 C),arm_regrowth_rate,0.1,,0.2,mm per arm per day,Univ. Padova conference abstract c. 2000 (1-2 mm in 10 d),S
+Amphiura filiformis (lab),arm_regrowth_mass_rate,2.9,3.7,3.8,ug dry wt per arm per day,Skold & Gunnarsson 1996 (this study 2.9-3.8; Nilsson & Skold 1996 3.7),F
+Amphiura filiformis (14 C lab),days_to_95pct_differentiation_after_1cm_cut,28,,35,days,Czarkwiani et al. 2016 Front Zool 13:18 (WebFetch extract),F
+Amphiura filiformis,regrowth_days_arm_tip_10_20mm,60,110,200,days,J from 10-20 mm exposed tip (Loo et al. 1996) / 0.10-0.17 mm per d (Skold & Gunnarsson 1996; Dupont & Thorndyke 2006),J
+Amphiura chiajei vs filiformis,relative_arm_regrowth,,0.2,,ratio,Skold & Gunnarsson 1996,F
+Amphiura filiformis (Skagerrak 40 m),regenerating_tissue_share_of_biomass,0.12,0.22,0.30,fraction of adult biomass,Skold Loo & Rosenberg 1994 MEPS 103:81 (earlier note),F
+Amphiura filiformis (Skagerrak 40 m),regeneration_share_of_production,,0.133,,fraction of annual production,Skold Loo & Rosenberg 1994 (earlier note),F
+Amphiura filiformis,cropping_flux_per_biomass,,0.06,,per year (x B),J = 0.133 x P/B 0.46 (earlier note),J
+Amphiura filiformis (southern North Sea),arm_population_eaten_by_dab,,0.06,,fraction of arms per year,Duineveld & Van Noort 1986 (earlier note),A
+Amphiura filiformis,croppable_mass_share_exposed,0.02,0.05,0.08,fraction of body mass exposed at a time,J (earlier note: 2 arms x 1-2 cm of 5 x ~8 cm arms),J
+Bivalves (Macoma Scrobicularia),siphon_mass_per_cm_extended,,0.006,,fraction of total body weight per cm,Zwarts et al. 1994 JEMBE 183:193 abstract,A
+Bivalves,croppable_mass_share_exposed,0.005,0.01,0.02,fraction of body mass,J from 0.6 % per cm and 1-3 cm cropped,J
+Arenicola marina (Wadden Sea intertidal),tail_cropping_removal_rate,0.30,0.39,0.45,per year instantaneous (author central 0.39; 26-36 % of mean biomass per year converted by J),Beukema & de Vlas 1979 NJSR 13:331,F
+Arenicola marina,cropping_share_of_somatic_production,,0.6,,fraction,J = 0.39 / 0.65 (Beukema & de Vlas 1979),J
+Arenicola marina (lab),max_sustainable_amputation_interval,,7,,days (weekly amputation reduced total growth),Bergman et al. 1988 NJSR 22:83 abstract,A
+Polydora cornuta (estuary July),palp_regrowth_days_to_full,3,6,6,days,Matthews & Hentschel 2012 Mar Biol 159:1039; Hentschel & Harper 2006 Mar Biol 149:1175,A
+Flatfish diet (Wadden Sea plaice/flounder),cropped_parts_share_of_intake,,0.33,,fraction of intake,de Vlas 1979 NJSR 13:117 via de Vlas 1981 chapter snippet (earlier note),S
+Amphiura filiformis,years_to_grow_out_of_reach,1,2,3,years from settlement to ~2-4 mm disc,Skold Josefson & Loo 2001 Mar Biol 139:519 (2 yr to 4 mm); Muus 1981 slower (S),A
+Amphiura filiformis,settler_density_peak,0,7100,14500,ind per m2 (mean +- SD),Skold Josefson & Loo 2001,A
+Amphiura filiformis,recruit_share_reaching_adult,,0.05,,fraction per year (less than),Muus 1981 via MarLIN,S
+Amphiura filiformis (Kattegat),vb_growth_K,,0.54,,per year,Josefson 1995 Mar Biol 124:435,A
+Abra nitida + Thyasira (Skagerrak 280 m),years_to_grow_out_of_reach,,,,no depth refuge with size (Abra 0-2 cm at all sizes; thyasirid depth size-independent),Dauwe et al. 1998; Zanzerl & Dufour 2017 (earlier note),F
+Macoma balthica (intertidal 10-20 mm),winter_burial_depth,3,5,7,cm,Zwarts & Wanink 1993 NJSR 31:441,F
+Fish (haddock cod flatfish),reach_depth_in_mud,0,1,5,cm (not measured; 0-1 flatfish/cod; up to 5 haddock if digging),J (no measurement found),J
+Gullmarsfjord 85-118 m mud,recolonisation_years_community,2,,3,years (85-95 m back to climax in 2 yr; 105-118 m not yet at 2 yr),Rosenberg et al. 2002 MEPS 234:43,F
+Gullmarsfjord 80-120 m mud,recolonisation_years_biomass,2,3,5,years,J from Rosenberg 2002 (biomass minor in yr 1) and Saltkallefjord 5-8 yr; consistent with r 0.68-0.82,J
+Amphiura filiformis (Gullmarsfjord 85 m),recolonisation_years_numbers,2,,,years (sparse pre-event population of 7 per m2 not back after 2 yr; weak test - absent at 95-118 m before the event),Rosenberg et al. 2002 Table 2; Nilsson & Rosenberg 2000 Table 2,F
+Saltkallefjord (enriched),recolonisation_years_community,5,,8,years,Rosenberg 1976 via Rosenberg et al. 2002,S
+Oslofjord 23 m mud boxes 0.2 m2,recolonisation_years_community,,0.25,,years (less than 3 months; opportunists),Berge 1990 MEPS 66:103,F
+Raunefjord 20 m shell sand boxes 0.2 m2,recolonisation_years_species_90pct,,1.28,,years (466 d),Berge 1990 MEPS 66:103,F
+Scottish sea loch fine mud (trawled),recolonisation_years_community,1.5,,,years (differences remain after 18 mo; lower bound),Tuck et al. 1998 MEPS 162:227,F
+Amphiura filiformis (Skagerrak 86 m lab),adult_diffusion_coefficient,0.16,,0.54,m2 per year (1.8e-5 and 6.1e-5 m2 per h),Rosenberg et al. 1997 MEPS 159:121,F
+Amphiura filiformis,patch_scale_km_refilled_by_adults_per_year,0.0008,,0.0015,km (RMS displacement 0.8-1.5 m per yr),J from Rosenberg et al. 1997 D,J
+Small pits (predator feeding pits intertidal),recolonisation_days_small_pit,,,,days (control levels within several days),Gunther 1992 citing Bell & Devlin 1983 and Frid 1989,S
+Macoma balthica postlarvae (Wadden Sea),patch_scale_km_postlarval_drift,10,,15,km (numbers fall beyond 10-15 km from inlet),Beukema & de Vlas 1989 MEPS 52:193,F
+Arenicola marina postlarvae,patch_scale_km_postlarval_drift,,1,,km,Gunther 1992 NJSR 30:45,F
+North Sea infaunal macrobenthos,fish_share_of_production,,0.04,,fraction (5.62 of 136 g WW m-2 yr-1),Mackinson & Daskalov 2007 EwE via earlier note (NOT Heath 2005),F
+North Sea small infauna (polychaetes),fish_share_of_production,,0.08,,fraction,Mackinson & Daskalov 2007 via earlier note,F
+North Sea all benthos,fish_share_of_production,0.056,,0.077,fraction (incl./excl. sessile epifauna and meiofauna),Mackinson & Daskalov 2007 via earlier note,F
+North Sea large crabs / Nephrops,fish_share_of_production,0.71,,0.82,fraction,Mackinson & Daskalov 2007 via earlier note,F
+North Sea macrobenthos carnivores,fish_share_of_production,0.33,0.53,0.72,fraction (decadal means 1990s / 1980s / 1970s),Heath 2005 ICES JMS 62:847 Table 4 via earlier note,F
+Bay of Morlaix fine sand (W Channel),fish_share_of_production,0.013,,0.065,fraction of total macrobenthic production (1.1-5.5 of 85 g WW m-2 yr-1),Dauvin 1988 Cah Biol Mar 29:445,F
+Bay of Morlaix fine sand,fish_share_of_prey_species_production,0.024,,0.12,fraction (1.1-5.5 of 45 g WW m-2 yr-1),Dauvin 1988 (J arithmetic),J
+North Sea cod + haddock,fish_share_of_production,0.10,,0.25,fraction (against Steele 2-5 g C m-2 yr-1),Cramer & Daan 1986 via earlier note,F
+Skagerrak-Kattegat below halocline,biomass_change_1972_1988,,1.8,,factor (food-driven per author),Josefson 1990 MEPS 66:117,F

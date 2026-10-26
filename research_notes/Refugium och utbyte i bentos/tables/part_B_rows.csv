@@ -1,0 +1,62 @@
+taxon,quantity,low,central,high,unit,source,tag
+Nephrops norvegicus,Linf_male,72.9,73,73,mm CL,"ICES stock annex nep 3.a FU 3-4; WGNSSK 2024; Ulmestrand & Eggert 2001 doi:10.1006/jmsc.2001.1133",F
+Nephrops norvegicus,K_male,0.138,0.138,0.14,1/yr,"ICES stock annex nep 3.a FU 3-4; WGNSSK 2024; Ulmestrand & Eggert 2001",F
+Nephrops norvegicus,Linf_mature_female,,65,,mm CL,ICES stock annex nep 3.a FU 3-4 (assumed as Scottish stocks),F
+Nephrops norvegicus,K_mature_female,,0.10,,1/yr,ICES stock annex nep 3.a FU 3-4,F
+Nephrops norvegicus,female_L50_maturity,28.5,29,29,mm CL,ICES stock annex; WGNSSK 2024,F
+Nephrops norvegicus,LW_a_male,,0.00045,,g/mm^b,ICES stock annex (b 3.113),F
+Nephrops norvegicus,LW_a_female,,0.00108,,g/mm^b,ICES stock annex (b 2.847),F
+Nephrops norvegicus,catch_numbers_2023_div3a,,162,,million,WGNSSK 2024 table (landings 117 + discards 45); digitised Fig 10.1.4 sums to 161.6,F
+Nephrops norvegicus,prey_CL_range_in_cod,7,,57,mm CL,De Clerck & Sterk 1980 ICES CM 1980/G:43 Table 5 (cod 26-105 cm),F
+Nephrops norvegicus,prey_CL_range_in_cod,8,20,30,mm CL,Kinnear & Livingstone 1979 ICES CM 1979/K:33 (cod <= 64 cm; central = mean),F
+Nephrops norvegicus,prey_CL_range_in_whiting,9,23,38,mm CL,De Clerck & Sterk 1980 (central = median of 9),F
+Nephrops norvegicus,median_prey_CL_cod_26_45cm,,20,,mm CL,De Clerck & Sterk 1980 Table 5 (Aug; n 52),J
+Nephrops norvegicus,median_prey_CL_cod_46_65cm,,23,,mm CL,De Clerck & Sterk 1980 Table 5 (Aug; n 90),J
+Nephrops norvegicus,median_prey_CL_cod_66_105cm,,32,,mm CL,De Clerck & Sterk 1980 Table 5 (Aug; n 101),J
+Nephrops norvegicus,p90_prey_CL_cod_26_65cm,32,35,35,mm CL,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,p90_prey_CL_cod_66_105cm,,41,,mm CL,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,max_prey_CL_mm_for_cod_26_65cm,,41,,mm CL,De Clerck & Sterk 1980 Table 5 (class 40-42),F
+Nephrops norvegicus,max_prey_CL_mm_for_cod_66_105cm,,56,,mm CL,De Clerck & Sterk 1980 Table 5 (class 55-57),F
+Nephrops norvegicus,share_prey_le_39mm_cod_lt_66cm,,0.96,,fraction of prey numbers,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,share_prey_le_39mm_cod_ge_66cm,,0.81,,fraction of prey numbers,De Clerck & Sterk 1980 Table 5,J
+Nephrops norvegicus,modal_prey_CL_in_cod_all_ages,22,24,26,mm CL,Armstrong et al. 1991 ICES CM 1991/G:15 Fig 3 (Irish Sea),F
+Nephrops norvegicus,mean_prey_CL_in_cod_Skagerrak_lower_bound,24.6,24.8,26.3,mm CL,Dorman et al. 1992 stomach weights inverted with annex L-W (digested: lower bound),J
+Nephrops norvegicus,M2_by_cod_age3_prawns_24_30mm,,0.248,,1/yr,Armstrong et al. 1991 Table 11 (Irish Sea base case),F
+Nephrops norvegicus,M2_by_cod_age7plus_prawns_gt_41mm,,0.080,,1/yr,Armstrong et al. 1991 Table 11,F
+Nephrops norvegicus,cod_selectivity_prawns_gt_41mm_rel_peak,0.48,0.55,0.62,fraction,Armstrong et al. 1991 Table 11 (cod age 4 and 6+),F
+Nephrops norvegicus,vulnerable_size_share_biomass_17_30mm,0.15,0.16,0.16,fraction of >=17 mm biomass,steady-state model scripts/nephrops_size_window.py,J
+Nephrops norvegicus,vulnerable_size_share_biomass_17_35mm,0.28,0.29,0.30,fraction of >=17 mm biomass,steady-state model scripts/nephrops_size_window.py,J
+Nephrops norvegicus,vulnerable_size_share_biomass_17_40mm,0.43,0.45,0.47,fraction of >=17 mm biomass,steady-state model scripts/nephrops_size_window.py,J
+Nephrops norvegicus,vulnerable_size_share_selectivity_weighted_big_cod,0.59,0.60,0.73,fraction of >=17 mm biomass,Armstrong 1991 SEL (cod 6+ to 4 yr) on steady-state population,J
+Nephrops norvegicus,vulnerable_size_share_selectivity_weighted_2yr_cod,0.23,0.24,0.25,fraction of >=17 mm biomass,Armstrong 1991 SEL (cod age 2) on steady-state population,J
+Nephrops norvegicus,biomass_below_17mm_rel_to_ge17mm,0.018,0.02,0.023,ratio,steady-state model (M below 17 mm 0.3-0.6),J
+Nephrops norvegicus,mean_weight_ge17mm_model,27.8,28.5,29.3,g,steady-state model (harvest rate 0.042-0.051),J
+Nephrops norvegicus,catch_weight_share_le_40mm,,0.40,,fraction,digitised WGNSSK 2024 Fig 10.1.4 (gear-selected),J
+Nephrops norvegicus,years_in_vulnerable_window_17_30mm,1.9,1.9,2.0,yr,annex VBGF; Armstrong 1991 length-at-age gives 2,J
+Nephrops norvegicus,years_in_vulnerable_window_17_40mm,3.8,4.5,5.4,yr,annex VBGF males 3.8 females 5.4; Armstrong 1991 males ~4.5,J
+Nephrops norvegicus,years_settlement_to_17mm,1.6,2,2,yr,annex VBGF extrapolated 1.6; Armstrong 1991 length-at-age (age 2 = 17 mm),J
+Nephrops norvegicus,settlement_CL,3.08,3.08,4.00,mm CL,Smith 1987 thesis Table 4.1a (PL1 3.08; PL2 4.00),F
+Nephrops norvegicus,CL_at_first_emergence,10,,15,mm CL,Smith 1987 citing Chapman 1980,S
+Nephrops norvegicus,larval_duration_days,29,39,46,days,"Smith 1987 (zoeal Z1-Z3 29 d at 14 C; 46 d to PL1 at 12 C); Hillis 1974 39 d at 12 C via Smith",F
+Nephrops norvegicus,larval_duration_stage1_2_days,13,,33,days,McGeady et al. 2019 doi:10.3354/meps13142 (15 C to 9 C),F
+Nephrops norvegicus,larval_advection_km_60d,100,125,200,km,McGeady et al. 2019 particle tracking (Irish Sea 100-125; Aran 181-200),F
+Nephrops norvegicus,larval_retention_on_ground,0.15,0.15,0.32,fraction,McGeady et al. 2019 western Irish Sea,F
+Nephrops norvegicus,adult_movement_km_per_yr,0.15,0.23,0.31,km/yr,Power et al. 2019 doi:10.1038/s41597-019-0013-x (232 +- 83 m after 1-2 yr),F
+Nephrops norvegicus,adult_daily_path_m,1.05,,267,m/day,Vigo Fernandez 2023 thesis ch 2.3 (acoustic),F
+Nephrops norvegicus,adult_home_range_m2,17.75,,736.25,m2,Vigo Fernandez 2023 thesis ch 2.3,F
+Nephrops norvegicus,abundance_increase_after_4yr_closure,,0.60,,fraction,Vigo et al. 2023 doi:10.1093/icesjms/fsad130 (thesis ch 2.4),F
+Nephrops norvegicus,survival_time_at_10pct_O2,2,,4,days,Baden et al. 1990 MEPS 67:141,F
+Nephrops norvegicus,survival_time_at_15pct_O2,,28,,days,Baden et al. 1990 MEPS 67:141 (4 wk),F
+Nephrops norvegicus,recolonisation_years_empty_cell,3,5,10,yr,"J from settlement-driven refill plus growth to 30-40 mm (Q6.3)",J
+Pandalus borealis,larval_duration_days,45,,90,days,DNV GL 2015 MSC report citing Aschan & Ingvaldsen 2009; Shumway et al. 1985,S
+Pandalus borealis,larval_transport_km,74,,330,km,Pedersen et al. 2003 via DNV GL 2015 (300 km) and Nofima record (annual mean 74-122; max 330),S
+Pandalus borealis,recolonisation_years,,1,,yr,J from pelagic larvae and juvenile drift Skagerrak -> Norwegian Deep (Sovik & Thangstad 2021),J
+Pagurus bernhardus,days_aggregated_in_trawled_area,2,3,4,days,"Ramsay et al. 1996 MEPS 144:63 Table 2 (81.8 vs 7.1 per 1000 m2 at 2 d; ns at 4 d)",F
+Pagurus bernhardus,megalopa_duration_days,,7.3,,days,Weiss et al. 2009 JMBA (temperature not seen),S
+megafauna (beam trawl),recovery_months_stable_sediment,,6,,months,Kaiser et al. 1998 doi:10.1006/jmsc.1997.0322,A
+Liocarcinus depurator,local_residence_weeks,1,,23,weeks,Glass 1985 thesis (45 % of resights one week after tagging; max 20-23 weeks),F
+Crangon allmanni,larval_duration_days,42,,49,days,Blahudka & Turkay 2002 citing Criales 1985 (6-7 weeks at 12 C),S
+Crangon allmanni,lifespan_yr,,1.5,,yr,Blahudka & Turkay 2002 doi:10.1007/s10152-002-0110-6,F
+Crangon allmanni,recolonisation_years,,1,,yr,J from annual summer recruitment (Blahudka & Turkay 2002),J
+Annelida+Crustacea+Mollusca (macrofauna),recovery_days_intertidal_dredging_muddy_sand,,870,,days,Kaiser et al. 2006 MEPS 311:1 (extrapolated; data only to 540 d),F
+Nephrops norvegicus,prey_CL_slope_per_cod_length,,0.25,,mm CL per cm cod,De Clerck & Sterk 1980 Table 5 pooled medians (20/23/32 mm at 26-45/46-65/66-105 cm),J

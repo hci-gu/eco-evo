@@ -1,0 +1,9 @@
+data_set,pct_mix2001_25_biomass,pct_mix2001_25_consumption_W-0.2,pct_mix2021_25_biomass,pct_mix2021_25_consumption_W-0.2,pct_boxAfloor_biomass,pct_boxAfloor_consumption_W-0.2
+Dorman1992_Skagerrak_Feb1991,3.53,3.38,3.42,3.22,3.36,3.17
+Dorman1992_Kattegat_Feb1991,1.92,1.84,1.79,1.71,1.6,1.52
+ICES_NNS_Q1_1981,3.26,2.76,2.69,2.17,1.91,1.45
+ICES_NNS_Q1_2023,6.45,5.9,5.69,5.04,4.91,4.24
+ICES_NNS_100-200m_Q1_2023,9.93,9.38,8.94,8.34,7.99,7.35
+ICES_Skagerrak_2023-25,0.02,0.02,0.02,0.03,0.03,0.04
+ICES_Kattegat_2021-25,0.2,0.29,0.29,0.4,0.4,0.51
+ICES_CSNS_50-100m_2023,4.61,5.68,5.32,6.66,6.41,7.74

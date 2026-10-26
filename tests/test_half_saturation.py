@@ -68,13 +68,16 @@ def test_pairs_without_override_keep_the_species_rate():
 
 
 def test_fish_pairs_carry_the_encounter_theory_rates():
-    # Section 220: a from encounter theory per fish pair, read by the engine.
+    # Section 220: a from encounter theory per fish pair, read by the engine;
+    # since 223.15 the benthic pairs carry the exposure factor e (a_enc x e)
+    # and the benthivores eat Nephrops (norway_lobster) at the encounter a.
     env = _env()
     expected = {
         ('planktivorous_fish', 'zooplankton'): 0.017,
-        ('benthivorous_fish', 'benthic_infauna'): 0.25,
-        ('benthivorous_fish', 'mobile_epifauna'): 0.44,
-        ('predatory_fish', 'mobile_epifauna'): 0.33,
+        ('benthivorous_fish', 'benthic_infauna'): 0.036,
+        ('benthivorous_fish', 'mobile_epifauna'): 0.15,
+        ('predatory_fish', 'mobile_epifauna'): 0.13,
+        ('benthivorous_fish', 'norway_lobster'): 0.44,
         ('benthivorous_fish', 'planktivorous_fish'): 0.019,
         ('benthivorous_fish', 'predatory_fish'): 0.026,
         ('predatory_fish', 'planktivorous_fish'): 0.012,

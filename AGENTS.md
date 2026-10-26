@@ -56,6 +56,7 @@ fabricates mass.
 | `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
+| `lib/runners/training_progress.py` | The viewer's progress tab (section 223.12): a frozen copy of the current policies run three years (`PROBE_YEARS`, library ticks) in the inference world, in a separate process every `--eval-every` updates; the tab shows the latest probe (every group's biomass as % of start, daily); `<run>/progress/probe.jsonl` keeps survival ticks and year-end ratios per probe, `probe_latest.json` the trajectory. |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
 | `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. A diagnostic for the mechanics, not the judge of the world: its verdict (normative corner `--spawn colocated --behaviour greedy`) is about that behaviour, and trained policies can be viable where it fails (`VIABILITY.md` section 6, resume 123). Two factors (behaviour x spawn geometry). The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |
 | `tests/` | pytest suite - keep green. |
@@ -87,14 +88,26 @@ fabricates mass.
   `benthic_infauna` (since section 221 the INFAUNA only - polychaetes,
   brittle stars, bivalves, small burrowing crustaceans; was
   `benthic_community` before section 221; r_max
-  1.0, derived growth, K per cell from depth 131 -> 65.5 t/km2 at
-  100 -> 300 m, E 2600 MJ/t, start = today's equilibrium ~94 t/km2),
-  `mobile_epifauna` (section 221: Nephrops 0.60, crabs, hermit crabs and
-  Munida 0.26, northern shrimp, small shrimps, mysids; r_max 0.70, six-
-  row depth K 14.3 -> 3.75, E 3750, start ~7.7 t/km2; split out so the
-  prey the fish take can be depleted - a fixed accessible share of the
-  whole benthos never ran out; research_notes/"Infauna och rorlig
-  epifauna", Swedish letters), `microzooplankton` (section 177:
+  1.0, derived growth, K per cell from depth 132 -> 66 t/km2 at
+  100 -> 300 m, E 2600 MJ/t, start = today's equilibrium ~94 t/km2;
+  since section 223.12 a REFUGE with exchange: `exposed_share` 0.2 is
+  the accessible part A (in its reserve slot), the rest out of reach,
+  `refuge_exchange_rate` 2.5 /yr relaxes A towards 0.2 B, each part
+  logistic on its own K; predation, the Holling term and the
+  observations see A only - `lib/environments/ecosystem_env/refuge.py`,
+  both engines, tests/test_refuge.py),
+  `mobile_epifauna` (section 221 split it out of the benthos so the prey
+  the fish take can be depleted; since 223.15 (E1) the EXPOSED taxa only:
+  crabs, hermit crabs and Munida 2.45, northern shrimp 0.56, small shrimps
+  and mysids 0.545, cephalopods and small demersal fish 0.23 t/km2 on the
+  mass-balance stocks; r_max 1.14 stock-weighted, six-row depth K 6.8 ->
+  4.7, E 3750, start ~13 600 t; research_notes/"Havskrafta och exponerad
+  epifauna", Swedish letters), `norway_lobster` (section 223.15: Nephrops,
+  4.57 t/km2 from the UWTV strata on the mud share, r_max 0.34, depth K
+  ending at 300 m, E 3600, start ~16 500 t; in burrows ~93 % of the time;
+  eaten by the benthivores (cod) at M2 0.0225, 1.5 % of their
+  consumption, research_notes/"Havskrafta i fiskdieter"; predators ->
+  Nephrops unchecked), `microzooplankton` (section 177:
   grows only by grazing the phytoplankton in the population step;
   eaten by zooplankton, which observes it).
 - English snake_case IDs are canonical.
@@ -125,8 +138,9 @@ fabricates mass.
   the maps' mean effort. Impact mortality acts on every group with a
   table, non decision makers too (biomass factor only): bottom trawling
   kills infauna at d x SAR (d 0.06, SAR 0.75 per MW-h/km2), 0.136/yr,
-  and removes the mobile epifauna by catch (shrimp, Nephrops, crabs)
-  plus the kill of the uncaught part, 0.136/yr (sections 218, 221).
+  and removes the epifauna by catch plus the kill of the uncaught part:
+  exposed taxa 0.186/yr (northern shrimp, crabs, small shrimps), Nephrops
+  0.087/yr (sections 218, 221, 223.15).
   Porpoise gillnet bycatch (~0.017/yr, met outside the grid) rides on
   the bottom-trawl map too (section 165).
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
@@ -136,11 +150,18 @@ fabricates mass.
   own a from encounter theory since section 220 (research_notes/
   "Attackrater ur motesteori", Swedish letters; per FORAGING fish, prey
   refuges and schooling left to the prey's hide action): planktivores ->
-  zoo 0.017; benthivores -> infauna 0.25, -> epifauna 0.44, ->
-  planktivores 0.019, -> predators 0.026; predators -> epifauna 0.33,
-  -> planktivores 0.012, -> zoo 0.002, -> benthivores 0.18 (sections
-  220, 221; predators no longer eat infauna). Never set a from model
-  output.
+  zoo 0.017; benthivores -> infauna 0.036, -> epifauna 0.15, ->
+  Nephrops 0.44, -> planktivores 0.019, -> predators 0.026; predators ->
+  epifauna 0.13, -> planktivores 0.012, -> zoo 0.002, -> benthivores 0.18
+  (sections 220, 221, 223.15; predators no longer eat infauna). The
+  benthic pairs are a_enc x an exposure factor e derived per prey item
+  type (buried bodies found only by a cue, cropped arm tips and siphons,
+  crab size window, flatfish chemo-tactile width; infauna e 0.165,
+  epifauna 0.43 / 0.39; research_notes/"Exponering av bottenbyten",
+  Swedish letters). They stay saturated: the field feeding level (0.22-
+  0.53 of Cmax) is a time-budget matter, not a. The benthivores' ceiling
+  is 26.18 MJ/t/tick at the bottom temperature (223.15). Never set a
+  from model output.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
@@ -168,7 +189,9 @@ fabricates mass.
   with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
   T from its layer's monthly table on the daylight calendar; herring
   t_ref is 14 C (the library value is a summer cost), the demersal
-  groups (at_50m layer) and zooplankton `annual_mean`, porpoises none
+  groups (predators at_50m, benthivores the `bottom` layer since 223.15,
+  SHARK A16/A17 at each cell's depth, annual 7.4 C) and zooplankton
+  `annual_mean`, porpoises none
   (endotherm). On in
   `mareld2.yaml`. Intake is temperature-scaled only for a DM with
   `ingestion_q10` (section 181: zooplankton 2.8, the whole response,
@@ -258,7 +281,12 @@ fabricates mass.
   eaten with it; the static quality is taken at
   `reserve_reference_fill`. Set for `planktivorous_fish` (section
   140.6; 209): lean 4000 MJ/t + reserve up to 6250, starvation from 0.2
-  of it, and `predatory_fish` (lean 4100 + 2400 at fill 0.48 = 5252).
+  of it, `predatory_fish` (lean 4100 + 2400 at fill 0.48 = 5252) and,
+  since section 223.9, `benthivorous_fish` (lean 3600 + 1800 at fill
+  0.5 = 4500; was whole-body 4500 with each new tonne charged its
+  reserve on top). Benthivore pair M2 since 223.9: budget Q/B 4.46,
+  the no-pool 17.7 % of the diet redistributed (infauna 0.0396,
+  epifauna 0.276, planktivores 0.245, predators 0.128).
 - `functional_response: 2|3` on a predation pair forces the Holling type
   for that pair (section 141); without it a specialist gets III and a
   generalist II, as before. Since section 209 every fish -> fish pair
@@ -268,8 +296,9 @@ fabricates mass.
 - Pair shares (section 208, both engines, each in (0, 1], inert at 1):
   `accessible_fraction` f scales the prey biomass in the pair's Holling
   term and harvest cap (infauna out of reach, Nephrops in burrows);
-  observations are untouched. Benthivores -> infauna 0.2, -> epifauna
-  0.31, predators -> epifauna 0.13 (section 221). `predator_share` phi
+  observations are untouched. Benthivores -> epifauna 0.31, predators
+  -> epifauna 0.13 (section 221); the infauna pair's 0.2 became the
+  infauna's own refuge in 223.12. `predator_share` phi
   (`eat = min(eat, phi)`, a hard cap on a learned action) is REMOVED
   from the library since section 221; the mechanism stays in both
   engines, inert at 1 (tests/test_pair_shares.py). It stood in for
@@ -347,6 +376,11 @@ first runs D days with the unperturbed policies, shared by the +/-
 candidates, and the reward starts from that state - the plankton settle
 from the season-blind start totals; default 0, section 200; start totals
 are drawn log-uniformly from the manifest ranges),
+`--depleted-patches SHARE` (train_gpu.py, default 0.5: that share of the
+training worlds starts with depleted benthic patches, 5-30 % of the cells
+at 1-32 % of their biomass - a refuge group loses accessible tonnes - so
+the fish meet emptied beds and can learn to leave them; training-world
+design, not biology; 0 = off; section 223.12),
 `--mortality_multiplier FACTOR` (scales every FG's `natural_mortality`;
 `keep = 1 - FACTOR*rate`, needs `--mortality on`, section 88),
 `--no-mass-balance` (revert to the pre-116 growth term, which adds biomass

@@ -1,0 +1,1827 @@
+EVIDENCE: REFUGE, EXPOSURE AND EXCHANGE OF THE MOBILE EPIFAUNA (mobile_epifauna)
+==================================================================================
+Site: Skagerrak, 100-300 m mud, 60 x 60 km grid, 6 h tick. Written 2026-10-26.
+Group composition (by biomass): Nephrops norvegicus 60 % (~30 g animals); crabs, hermit crabs and
+Munida 26 %; Pandalus borealis 7 %; small shrimps 4 %; mysids 3 %.
+Predators considered: cod, haddock, whiting, saithe, flatfish (long rough dab), rays, gurnards.
+
+Tags: [F] full text read (including values read off a table or figure); [A] abstract only;
+[S] secondary source or search snippet (a number read in a review that cites an older primary source
+not read is [S]); "J" = our own judgement or derivation (arithmetic shown in the parts below).
+A few [F] sources were read through a web-page extraction of the publisher's full text instead of a
+downloaded PDF; they are named in each part (Aguzzi 2021 Table 3, Bahamon 2025, Hornborg 2017,
+Sbragaglia 2017, Skold 2022, Bjornsson & Dombaxe 2004, Temming & Hufnagl 2015, Baker 2021).
+
+Files:
+  tables/evidence_epifauna_exposure.txt   this file (synthesis + the four detailed parts, appended)
+  tables/epifauna_exposure_rates.csv      all values (part rows + synthesis rows), 8 columns
+  tables/part_[A-D]_*.txt, part_[A-D]_rows.csv, synthesis_rows.csv   the inputs to the two files above
+  tables/nep34_catch_lfd_2023_read.csv, declerck_sterk1980_table5_transcribed.csv,
+  nephrops_size_window_stdout.txt, telemetry_subset_means_stdout.txt   derived tables
+  scripts/merge_exposure_rows.py (builds the csv), nephrops_size_window.py, read_lfd_wgnssk2024.py,
+  probe_axes.py, telemetry_subset_means.py, jones_parsons_1978_daily_mean.py, smidt_1976_ratios.py,
+  oa_lookup_parse.py
+  data/<source>/                          downloaded sources (one folder per source)
+Note: the Ulmestrand & Eggert 2001 download was an HTML refusal page and was deleted; that paper was not
+read beyond its abstract. data/ices_stockannex_nep34/ duplicates data/ices_stock_annex_nep34/.
+Other files in tables/ (evidence_infauna_refuge.txt, evidence_model_form.txt, infauna_refuge_rates.csv,
+md2007_*, tech142_*, refuge_*_stdout.txt) belong to a parallel task on the infauna and are not part of
+this evidence.
+
+Prior values in the model (not redone): Nephrops accessible fraction 0.10 (0.05-0.20) from Aguzzi et al.
+2021 (0.086 visible per burrow at peak); northern shrimp 0.7; crabs 0.6, hermits 0.8, Munida 0.3, small
+shrimps 0.6, mysids 0.6 ("Bottensamhallets epifauna"/evidence_A1, A2, B). The library sets
+benthivores -> epifauna accessible_fraction 0.31 and predators -> epifauna 0.13 (AGENTS.md).
+
+
+==================================================================================
+SYNTHESIS (all values J unless tagged; sources and quotes in the parts below)
+==================================================================================
+
+S1. Nephrops emergence (Q1) -- the main number for the group
+------------------------------------------------------------
+- Timing at 100-300 m: two bouts (dawn, dusk) at ~100-150 m, one midday bout at ~200+ m.
+  N Kattegat 120-135 m "Sunrise and sunset", 205-220 m "Middle of day" (Hoglund & Dybern 1965 in
+  Farmer 1975 FAO Fish. Synop. 112, Table XXI) [S]; Sarda 1995: single peak "at around noon in the
+  vicinity of 150 m" [F]; Aguzzi et al. 2021 (UWTV, 51-160 m) "diurnal with a plateau shape" [F].
+- Fraction out at once (undisturbed population, UWTV): 0.06-0.12 visible per burrow at peak windows
+  (Aguzzi 2021 Table 3) [F]; fully emerged (visible minus door-keepers) 0.037-0.066 at 101-160 m (J).
+  Door-keepers are 18-41 % of visible animals on the shelf, 32-54 % on the slope [F], 53 % in Biscay
+  (Bahamon et al. 2025, doi:10.1093/icesjms/fsaf205) [F].
+- Trawl catch per swept area is 0.4-2.5 % of burrow density (Tuck et al. 1997, Clyde) [F, ratio J];
+  "only 0.5 percent of all N. norvegicus occurring in the path of the trawl were captured" (DAFS 1966a
+  in Farmer 1975) [S].
+- Hours out per animal: UWTV implies ~0.4-0.7 h/day fully out (+0.2-0.4 h at the burrow mouth) (J).
+  Acoustic telemetry (Aguzzi et al. 2023 Rev Fish Biol Fish 33:1465, doi:10.1007/s11160-023-09787-2,
+  NW Mediterranean 315-475 m, 25 creel-caught animals tagged and released): burrow-holding day-night
+  subset (n = 12) fully out 34.8 % of the time (8.4 h/d; range 6.5-73.8 %), door-keeping 16.2 %,
+  in burrow 49.0 % (J, recomputed from Table 2 [F]; the paper's Table 3 does not add up).
+  THE TWO METHODS DISAGREE BY ~5x. The telemetry animals were displaced and released at high density,
+  and "no detection" is only a proxy for "in burrow"; the UWTV value is from undisturbed populations.
+  J: central exposed fraction 0.07 (0.03-0.35). The current 0.10 lies inside the UWTV-based range
+  (near its top) and well below the telemetry value.
+- Exchange time scale: 1-2 bouts per day; "the same animals do emerge constantly over consecutive days"
+  (Aguzzi 2023) [F]. Hidden <-> exposed cycle 12-24 h (J), i.e. the hidden pool turns over within 2-4
+  ticks; it is a diel phase, not a permanent refuge. Home range of settled animals 17.75-736 m2
+  (radius 2-15 m; Vigo et al. 2021, thesis 2023) [F]; displaced adults settle within ~1 month [F].
+- Berried females: egg laying Aug-Sep, hatching Apr-Jun in the Norwegian Deep (IMR 2021 narrative,
+  citing Farmer and Powell & Eriksson) [S]; incubation 8-10 months in UK waters (Farmer 1975 Table V)
+  [S] -> 7-10 months in the burrow, mostly unfed ("berried females can go without eating for nearly a
+  year", Sarda 1995) [F]. Counter-evidence: in the Mediterranean berried females emerged rhythmically
+  like the rest (Aguzzi 2003) [F]. Annual vs biennial spawning in Scandinavia is UNRESOLVED (Sarda 1995
+  "probably almost entirely biennial" [F]; IMR 2021 "once a year" [S]).
+  Kattegat/Skagerrak catches 2005-13: ovigerous ~5 % in trawls vs ~23 % in creels; females 32 % of
+  trawl catches vs 40 % in creels (Hornborg et al. 2017, doi:10.1093/icesjms/fsw153) [F]. The assessment
+  uses M 0.2 for mature females vs 0.3 for others "based on the assumption of reduced burrow emergence
+  while ovigerous" (stock annex nep.fu.3-4) [F]. Female share of the population: not measured (J ~0.5).
+- Day/night trawl catch ratio as a number: NOT FOUND for Nephrops.
+
+S2. Size refuge from fish (Q2)
+------------------------------
+- No hard size refuge. Cod 26-105 cm ate Nephrops 7-57 mm CL; median prey CL 20 / 23 / 32 mm in cod
+  26-45 / 46-65 / 66-105 cm; 96 % of prey <= 39 mm in cod < 66 cm, 81 % in cod >= 66 cm (De Clerck &
+  Sterk 1980 ICES CM 1980/G:43, Table 5 [F]; medians J). Slope ~0.25 mm CL per cm cod (J). Whiting
+  21-60 cm took 9-38 mm [F]. Firth of Forth cod <= 64 cm took 8-30 mm, mean 20 mm vs 28 mm in the trawl
+  (Kinnear & Livingstone 1979) [F]. Irish Sea cod: mode 22-26 mm in every cod age; selectivity on the
+  >41 mm class still 0.48-0.62 of the peak in cod age 4-6+ (Armstrong et al. 1991, ICES CM 1991/G:15
+  Table 11) [F]. Haddock, rays, gurnards, long rough dab: no prey sizes found.
+- Share of the >= 17 mm FU 3-4 biomass (steady-state model from stock-annex growth/M and the digitised
+  2023 catch LFD, J): <= 30 mm 0.16, <= 35 mm 0.29, <= 40 mm 0.45; Armstrong-selectivity weighted ~0.6
+  (large cod), ~0.25 (2-yr cod). Animals < 17 mm hold ~2 % of the biomass.
+- Years in the window (VBGF, J): 17 -> 30 mm ~2 yr; 17 -> 40 mm 3.8 (males) - 5.4 yr (females).
+- Juveniles: settle at 3.1 mm CL [F], live in their own burrows or ones attached to adult burrows
+  (Smith 1987 thesis) [F]; first emerge at 10-15 mm (Chapman 1980 via Smith) [S]. Small for biomass.
+
+S3. Northern shrimp (Q3)
+------------------------
+- Males and small / non-ovigerous shrimp leave the bottom dusk to dawn; ovigerous females stay
+  (Shumway et al. 1985, FAO Fish. Synop. 144 -- not 142) [F]; time off bottom scales with night length
+  (Barr 1970) [A]. Day/night bottom-trawl ratios 1.8-3.5 (Davis Strait; Jones & Parsons 1978 2.47,
+  midnight catch 0.404 of noon) [F]; 1.9-6.33 (Frechette 1983 via Baker 2021) [S]; 1.7-2.6 W Greenland,
+  largest in autumn, smallest near the solstices (Smidt 1976, J from [F] table).
+- 24-h mean on-bottom availability relative to the day level: 0.68 (Aug, Davis Strait), 0.51-0.75
+  (Oct-Dec, W Greenland) (J from [F]); ~1 in the Skagerrak Jan-Feb survey (no sun-height effect).
+  J: annual mean 0.65-0.85, central 0.75 (current 0.7 at the low end). Exchange time scale 24 h.
+- Height of ascent: whole water column in a shallow bay (Barr) [A]; P. montagui > 200 m off bottom
+  (Crawford et al. 1992) [A]. No Skagerrak measurement. Off-bottom shrimp are exposed to pelagic fish
+  (saithe, blue whiting) instead; no study compares the risk on vs off the bottom.
+
+S4. Small shrimps, crabs, Munida, hermits, mysids (Q4)
+------------------------------------------------------
+- Mediterranean 24-h trawl series (Aguzzi & Bahamon 2009, doi:10.1016/j.fishres.2009.08.010 [F];
+  factors rounded to orders of magnitude): night/day 100 m shelf L. depurator 5, Goneplax 10, Processa
+  100; 400 m slope L. depurator 2.5, Goneplax 2, Pontophilus norvegicus 3, Munida tenuimana 2,
+  M. intermedia 0.5 (diurnal). Measured densities (Bahamon et al. 2009) give L. depurator 3.4-3.5 on the
+  shelf and 0.9-1.3 on the slope (J from [F]). J: Skagerrak 100-300 m light is closer to the slope case.
+- Goneplax "was not seen on the mud surface during the day but was common at night"; L. depurator "was
+  seen on the mud surface during the day but specimens were inactive" (Atkinson, Lundy, 17 m) [F].
+- L. holsatus is day-active in the sublittoral (Abello et al. 1991) [A], which contradicts the
+  "buries by day" note in evidence_B; L. depurator is the crab of the Skagerrak mud (J).
+- Munida rugosa does not dig; it uses vacated Nephrops/Goneplax/Cepola burrows, stones and crevices and
+  stays at the opening (Zainal 1990 thesis) [F]; more full stomachs in the morning (0.41 vs 0.19, J).
+- Mysids: migrating mysids "are not abundant at the shelf and trench locations" (Kaartvedt 1989 MEPS
+  57:119, Brattegard pers. comm.) [F] -> the Skagerrak stock is probably mostly bottom-bound (J).
+  Lophogaster buries by day and the whole population is off the bottom ~10 h/night [F]. Bay of Biscay
+  91 m: near-bottom mysids at night ~0.22 of the day number (J from Mees & Jones 1997 review [F/S]).
+- Hermit crabs, Crangon allmanni, Pontophilus spinosus, Eualus: no activity or burial data found.
+- J exposure (time mean): crabs 0.6 (0.5-0.8), Munida 0.5 (0.3-0.7), small shrimps 0.6 (0.5-0.75),
+  mysids 0.6 (0.4-0.9). Exposure of buriers is nocturnal, when visual fish feed less (J).
+
+S5. Refuge saturation (Q5)
+--------------------------
+- Burrows need 10-100 % silt-clay (stock annex; Campbell et al. 2008/2009) [F]; Fladen density
+  0.13 + 0.0056 x (silt-clay % - 10) burrows/m2 [F]; Clyde maximum 1.48 burrows/m2 (Tuck 1997) [F];
+  FU 3-4 0.21 (2024), i.e. ~1/7 of the observed maximum (J).
+- Territorial, exclusive home ranges, evictions by dominants, fights over burrows even when burrows are
+  not limiting (Sbragaglia 2017; Vigo thesis) [F]; male L-inf = 73.0 - 16.3 x burrow density (Tuck 1997)
+  [F]; density-independent survival (Power et al. 2020) [F]. Destroyed burrows re-excavated within 1-2
+  days (Marrs et al. 1996 via CRR 340) [S]. Burrows up to 1 m2 and 30 cm deep (Stewart 1974) [F].
+- J: no evidence of a hard burrow ceiling; at FU 3-4 density the Nephrops refuge is not saturated.
+  Munida depends on burrows dug by others and stones, a refuge that can saturate, but no numbers exist.
+  Burial in soft mud (Liocarcinus, Processa, Lophogaster) is not space-limited (J).
+
+S6. Recolonisation (Q6)
+-----------------------
+- Nephrops: larval phase ~1-1.5 months (46 d to first postlarva at 12 C, Smith 1987 [F]; stages I-II
+  13-33 d, McGeady et al. 2019 [F]); larvae advected ~100-200 km in 60 d [F], i.e. beyond the grid.
+  Adults move ~0.2 km/yr (Power et al. 2019 Sci Data, release-recapture) [F]; "Adult Nephrops only
+  undertake very small-scale movements (a few 100 m)" (stock annex) [F]. A 4-yr no-take closure gave
+  +60 % abundance (Vigo et al. 2023) [F]; Kattegat NTZ biomass "more than doubled" in ~12 yr (Skold
+  et al. 2022) [F]; SE Kattegat catches fell to zero after the 1988 hypoxia (Baden et al. 1990) [F],
+  recovery not documented. J: an emptied cell refills in 3-10 yr (settlement plus growth), not months.
+- Pandalus: pelagic larvae 45-90 d, transported up to ~300 km (MSC 2015 report citing Shumway,
+  Pedersen 2003) [S]; Skagerrak is a nursery with westward drift of 1-2-yr shrimp (Sovik & Thangstad
+  2021) [F]. J: ~1 yr.
+- Hermit crabs aggregated ~10-fold in trawled lanes within 2 d, gone by day 4 (Ramsay et al. 1996) [F].
+  L. depurator has no long-term site attachment; local residence weeks (Glass 1985 thesis) [F].
+  Crangon allmanni lives ~1.5 yr, recruits each summer (Blahudka & Turkay 2002) [F]. J: <= 1 yr.
+  Munida, mysids: not found.
+
+S7. Measured predation and depletion (Q7, plausibility check)
+-------------------------------------------------------------
+- Nephrops, W Irish Sea 1981-84 (cod abundant): cod ate 1.7-5.4 kt/yr (base 3.05 kt) of a 17-24.7 kt
+  2+ stock (Armstrong et al. 1991) [F] -> consumption/biomass 0.10-0.23 /yr (J); M2 by cod 0.04-0.25
+  /yr by age vs F up to 0.83 [F]; cod ate ~1/3 of the landings [F].
+- Pandalus, Skagerrak/Norwegian Deep: assessment M 0.75 assumed, best fits 0.9-1.2 (Jorgensen et al.
+  2014 NAFO SCR 14/066) [F]; predation >= 2 x catch (Munch-Petersen et al. 2010 SCR 10/70) [F]; cod
+  stomachs 22 %W Pandalus, blue whiting > 35 cm 19 %W, haddock 2.2, saithe 2.7, whiting 1.0 %W [F].
+  Barents Sea: cod eats 15-58 % of the stock per year (Berenboim et al. 1999) [F], 3-5 x the catch
+  [F], yet stock change barely tracks consumption (Hvingel 2006; Aschan et al. 2006) [F].
+- Crangon crangon (small-shrimp analogue): predation M 4.75 (1971) -> 1.26 /yr (2010) as cod and
+  whiting consumption fell 64-72 % (Temming & Hufnagl 2015) [F].
+- Worm & Myers 2003: inverse cod-shrimp correlations in 8 of 9 regions [S]; 3 significant after
+  autocorrelation correction (Baum & Worm 2009) [F]; Skagerrak is one of the nine, weakest relations at
+  the warm southern edge [F]; Skagerrak r not extracted. Lags 1-2 yr (W Greenland, Wieland et al. 2007)
+  [F]; 0-5 yr, peak 2 yr for snow crab (Boudreau et al. 2011) [F].
+- J: group-weighted M2 by fish ~0.2-0.4 /yr (crabs and mysids unmeasured).
+
+S8. Group-level exposure (J)
+----------------------------
+Biomass-weighted time-mean exposed fraction: 0.60 x 0.07 + 0.26 x 0.6 + 0.07 x 0.75 + 0.04 x 0.6 +
+0.03 x 0.6 = 0.29 (0.27 with Nephrops 0.03; 0.46 with the telemetry value 0.35). Nephrops dominates
+the biomass but contributes only ~0.04 of it; the crab component carries most of the exposed biomass
+and is the least measured. Exposure is diel for every taxon (12-24 h exchange); the slow refuges are
+berried Nephrops females (7-10 months) and the growth through the size window (years), and neither is
+absolute.
+
+
+==================================================================================
+NOT FOUND (consolidated; details in each part)
+==================================================================================
+- Hours out of the burrow for undisturbed Nephrops at 100-300 m; single-excursion duration; numeric
+  Nephrops day:night trawl ratio.
+- Full texts of Chapman & Rice 1971, Rice & Chapman 1971, Atkinson & Naylor 1976, Chapman 1980,
+  Chapman & Howard 1979, Bell, Redant & Tuck 2006, Katoh et al. 2013, Aguzzi & Sarda 2008,
+  Sbragaglia 2013/2015, Ulmestrand & Eggert 2001, Tuck et al. 1994, Brander & Bennett 1986/1989,
+  Bergstrom 2000, Barr 1970, Hudon et al. 1992, Worm & Myers 2003, Kaartvedt 1985, Mauchline 1980.
+- Skagerrak/Kattegat-specific Nephrops spawning, egg-bearing and hatching months; annual vs biennial
+  spawning there; quarterly female share of FU 3-4 catches; population sex ratio.
+- Measured nearest-neighbour burrow distance; de novo burrow construction time of an adult; any hard
+  burrow packing limit.
+- Nephrops prey sizes in haddock, rays, gurnards, long rough dab, monkfish; any predator-length to
+  prey-CL regression; Skagerrak cod prey CL (Dorman 1992 gives weights only).
+- Any Skagerrak/North Sea measurement of P. borealis night ascent (height, share, hours); predation risk
+  on vs off the bottom.
+- Hours buried for Liocarcinus, Atelecyclus, Goneplax; any diel data for hermit crabs, Crangon
+  allmanni, Pontophilus spinosus, Eualus; Munida day/night catches in northern Europe; burrow-sharing
+  frequency of Munida with Nephrops; vacant-burrow availability.
+- Recovery of Nephrops in the SE Kattegat after 1989; FU 3-4 response to the 2009 Kattegat closures in
+  burrow density; Pandalus, Munida, crab and mysid movement in km/yr; mysid recolonisation.
+- Measured M2 on crabs or mysids; Skagerrak Pandalus M2 by predator; Kattegat/Clyde/Gullmarsfjorden
+  predator-release evidence on Nephrops; cage-exclusion or tethering experiments.
+
+
+==================================================================================
+DETAILED PARTS (appended verbatim from tables/part_A..D; paths "../data" = data/)
+==================================================================================
+
+
+
+PART A - NEPHROPS NORVEGICUS: BURROW REFUGE, EMERGENCE AND EXCHANGE (Q1, Q5)
+=============================================================================
+Context: mobile_epifauna group, Nephrops ~60 % of biomass, ~30 g animals, Skagerrak 100-300 m mud.
+Current model accessible fraction for Nephrops 0.10 (0.05-0.20), from Aguzzi et al. 2021 (not redone here).
+
+Tags: [F] full text read; [A] abstract only; [S] secondary / search snippet; "J" = my judgement or
+derivation (arithmetic shown). "[F, secondary]" = a number read in full text of a review that cites
+an older primary source which I did not read.
+Downloaded files (untrusted data, read only with pdftotext / python3 -I) are in ../data/<source>/.
+Scripts: ../scripts/telemetry_subset_means.py (output: telemetry_subset_means_stdout.txt),
+../scripts/oa_lookup_parse.py.
+
+Sources read in full (folder in ../data/):
+  FARMER1975   Farmer A.S.D. 1975. Synopsis of biological data on the Norway lobster. FAO Fish. Synop. 112.
+               https://www.fao.org/docrep/017/h2350e/h2350e.pdf   (farmer1975_fao/; OCR text, some typos)
+  AGUZZI2003   Aguzzi J. et al. 2003. Diel and seasonal patterns of N. norvegicus catchability in the western
+               Mediterranean. MEPS 258:201-211. doi:10.3354/meps258201   (aguzzi2003_meps258/)
+  AGUZZI2021   Aguzzi J. et al. 2021. Burrow emergence rhythms of N. norvegicus by UWTV and surveying biases.
+               Sci Rep 11:5797. doi:10.1038/s41598-021-85240-3 (PMC7970996; read via WebFetch, Table 3 values)
+  AGUZZI2023   Aguzzi J., Vigo M. et al. 2023. Burrow emergence rhythms of deep-water Mediterranean Norway
+               lobsters revealed by acoustic telemetry. Rev Fish Biol Fish 33:1465-1482.
+               doi:10.1007/s11160-023-09787-2   (aguzzi2023_rfbf_telemetry/)
+  VIGO_THESIS  Vigo M. 2023 PhD thesis (ICM-CSIC), ch. 2.3 = Vigo et al. 2021 MEPS 674:173-188 (spatial ecology,
+               same tagged animals).  (vigo2023_thesis/, downloaded by a parallel agent; read here)
+  BAHAMON2025  Bahamon N. et al. 2025. Tidally modulated burrow emergence rhythms of N. norvegicus. ICES JMS
+               82(11):fsaf205. doi:10.1093/icesjms/fsaf205  (read via WebFetch, Table 1 only)
+  SARDA1995    Sarda F. 1995. A review (1967-1990) of some aspects of the life history of N. norvegicus. ICES
+               Mar Sci Symp 199:78-88. https://ndownloader.figshare.com/files/41894673  (sarda1995_icesmss199/)
+  CRR340       ICES 2018. Using UWTV surveys to assess and advise on Nephrops stocks. ICES Coop Res Rep 340.
+               doi:10.17895/ices.pub.4370  https://ndownloader.figshare.com/files/33870791  (ices_crr340/)
+  ANNEX34      ICES Stock Annex nep.fu.3-4 (Skagerrak and Kattegat). https://ndownloader.figshare.com/files/33401846
+               (ices_stockannex_nep34/)
+  IMR2021      Sovik G., Zimmermann F. 2019/2021. Norway lobster in the Norwegian Deep, stock sensitivity
+               narrative, IMR. https://www.hi.no/resources/klimastatus-pa-bestander/20211214_Norway-lobster_Norwegian-Deep_narrative.pdf
+               (imr2021_nephrops_norwegiandeep/)
+  TUCK1997     Tuck I.D. et al. 1997. Population biology of the Norway lobster in the Firth of Clyde - I: Growth and
+               density. ICES JMS 54:125-135. doi:10.1006/jmsc.1996.0179   (tuck1997_clyde/)
+  CAMPBELL2008 Campbell N., Allan L., Weetman A., Dobby H. 2008. Investigating the link between Nephrops burrow
+               density and sediment composition in Scottish waters. ICES CM 2008/G:06 (conference version of
+               ICES JMS 66:2052-2059, 2009, doi:10.1093/icesjms/fsp176). https://ndownloader.figshare.com/files/44598052
+               (campbell2008_icescm_g06/)
+  POWER2020    Power A.M. et al. 2020 (online 2019). Density-dependent growth in 'catch-and-wait' fisheries ...
+               Ambio 49:107-117. doi:10.1007/s13280-019-01158-1 (PMC6889112)  (power2020_ambio_pmc6889112/)
+  SBRAGAGLIA2017 Sbragaglia V. et al. 2017. Fighting over burrows: the emergence of dominance hierarchies in the
+               Norway lobster. J Exp Biol 220:4624-4633. doi:10.1242/jeb.165969 (read via WebFetch, publisher page)
+  STEWART1974  Stewart P.A.M. 1974. An investigation into the effects of electric fields on N. norvegicus.
+               J Cons int Explor Mer 35:249-257. https://www.vliz.be/imisdocs/publications/ocrd/324809.pdf
+               (stewart1974_jcons/)
+  HORNBORG2017 Hornborg S. et al. 2017. New policies may call for new approaches: the case of the Swedish Norway
+               lobster fisheries in the Kattegat and Skagerrak. ICES JMS 74:134-145. doi:10.1093/icesjms/fsw153
+               (read via WebFetch)
+  AGUZZI2011   Aguzzi J. et al. 2011. A new laboratory RFID system for behavioural tracking of marine organisms.
+               Sensors 11:9532. (PMC3231282; aguzzi2011_sensors_rfid/) - qualitative only.
+
+=============================================================================
+Q1. EMERGENCE AND BURROW RESIDENCE
+=============================================================================
+
+Q1a. Timing of emergence and depth dependence (relevant band 100-300 m)
+----------------------------------------------------------------------
+* Kattegat, Hoglund & Dybern 1965 (in FARMER1975 Table XXI) [F, secondary]:
+  "Hoglund and Dybern, 1965   Northern Kattegat  120-135  May   Sunrise and sunset"
+  "Hoglund and Dybern, 1965   Northern Kattegat  205-220  May   Middle of day"
+  "Jensen, 1962, 1963, 1965a  Skagerrak and Kattegat  >70  Summer  Night"
+  At 58 m in the northern Kattegat the times of increased catches shift with month (Jan "Sunrise and
+  sunset"; Mar "Night"; Aug "Night and sunset"). -> In the Mareld band the timing is crepuscular at
+  ~100-150 m and midday at ~200+ m (J: two old trawl series only).
+* Scottish/Irish series, same table [F, secondary]: Sound of Jura 103 m Apr-May "2h after sunrise and
+  5h before sunset"; Simpson 1962/65 North Minch 120-130 m Sep "12.00 to 16.00"; South Minch 145-160 m
+  Sep "08.00 to 18.00"; Hillis W Irish Sea 130 m Aug-Sep "Midday".
+* FARMER1975 p.51 [F]: "in shallow water (30 m) animals are active during the middle of the night,
+  Whereas in deeper water (40-90 m) there are two periods of activity which tend to move further apart
+  (from midnight) with increasing depth ... It has been suggested that in very deep water N. norvegicus
+  is active during the middle of the day." "animals only become active when the light intensity is
+  within the range 1 to 10-5 lx".
+* SARDA1995 p.83 [F]: "The highest catches are made at dawn or dusk in relatively shallow water. There
+  is variability with depth, with the above two periods of activity becoming a single peak at around noon
+  in the vicinity of 150 m."
+* AGUZZI2003 (W Mediterranean, 100 m and 400 m, 24-h trawl cycles) [F]: "nocturnal with crepuscular peaks
+  on the continental shelf, and diurnal on the continental slope." At 100 m "2 peaks of catch were observed
+  per day, approximately coinciding with the sunset and the sunrise timing ... Catches attained their
+  lowest values during daylight hours. Animals were continuously captured at night time"; at 400 m "a
+  single peak at around midday" and "Low but constant levels of sampled organisms were reported during
+  the night." Day/night ratio not readable from the text (figures only) - see Not found.
+* AGUZZI2021 (Irish UWTV, 3055 transects, May-Sep) [F]: GAM: 15-50 m "nocturnal bimodal ... (hour
+  intervals: 2 to 7 and 17 to 23)"; "On deeper shelf areas (from 51 to 160 m depth), the emergence pattern
+  becomes diurnal with a plateau shape"; slope 340-570 m "single peak (hour interval: 7 to 17)".
+  Table 3 peak windows used for 101-160 m: 05-07 h and 18-20 h.
+* BAHAMON2025 (Bay of Biscay UWTV 28-133 m) [F via WebFetch]: peaks "around dawn (04:00-07:00) and about
+  2 h before dusk (17:00-19:00)"; tidal modulation: "At low tide (below -1 m), total density declined
+  markedly".
+* Sex/size: AGUZZI2003 [F]: "Emergence patterns were almost identical for males, females and berried
+  females, and these were not size-dependent." SARDA1995 [F]: "Chapman and Howard (1979) noted that the
+  amount of time an individual spent outside its burrow was proportional to its size." FARMER1975 [F]:
+  "usually only large males were observed during the day in the burrow entrances, whereas the small
+  animals (including most of the females) remained completely hidden."
+  Lab: Sbragaglia et al. 2013 Sci Mar 77:641 (doi:10.3989/scimar.03902.28C) [A, abstract via search summary;
+  full text download blocked]: 52 animals, 12:12 LD; 87 % rhythmic, 13 % arrhythmic; of rhythmic: 54 %
+  dusk, 4 % dawn, 10 % diurnal, 19 % nocturnal.
+  J: for 100-300 m Skagerrak expect one (midday, >~150-200 m) or two (dawn+dusk, ~100-150 m) emergence
+  bouts per day, i.e. bouts_per_day 1-2.
+
+Q1b. Hours out per day / fraction emerged at once
+------------------------------------------------
+(i) Field individual tracking - AGUZZI2023 (acoustic telemetry, NW Mediterranean slope 315-475 m, 25
+    creel-caught adults tagged and released June 2019, up to 107 d) [F]:
+  "The individuals showed a relative time of 12.92% and 11.81%, respectively, presenting a door-keeping
+   behavior identified. The mean time spent inside the burrows, when detections and movement were 0,
+   represented 38.31% of their time series, while the mean relative time in activity was about 49.88%."
+  "the day-night periodicity was the rhythm in which individuals presented less activity outside the
+   burrows (35.94%)". 12 of 25 animals (48 %) were day-night rhythmic, "with a major activity phase at
+   daylight hours"; e.g. ID 14468 "significant increment in displacement ... from 6:00 to 19:00".
+  Caveat in the paper itself [F]: "In animals with no burrows (for unknown reasons impairing the digging
+   capability), behavioral activity can be measured under the form of a constant wandering on the seabed
+   at a periodicity that matches inertial currents." and "Inertial periodicity occurs in animals with no
+   clear burrowing-oriented activity (always present on the seabed)." Released animals at "a transitory
+   high density" around the release point.
+  My recomputation from Table 2 (scripts/telemetry_subset_means.py) [J from F]:
+     All 25:              door-keeping 12.9 %, in burrow 38.3 %, fully emerged (>0.5 m/h) 48.8 %
+                          (reproduces the authors' 12.92 / 38.31 means)
+     Day-night subset (n=12, the burrow-holding animals): door-keeping 16.2 % (3.9 h/d), in burrow 49.0 %
+                          (11.8 h/d), fully emerged 34.8 % (8.4 h/d; median 30.1 %, range 6.5-73.8 %)
+     Arrhythmic/inertial/other (n=13): fully emerged 61.7 % (14.8 h/d).
+  Table 3 inconsistency: its Day-Night row (16.18 / 15.06 / 10.25 / 35.94) does not sum to 100 %, and its
+  "0 (D)" (in-burrow) mean 10.25 % does not match Table 2 (mean 49.0 % for the same 12 animals). Table 2
+  rows sum to 99.8-100 %, so Table 2 is trusted here (J).
+  Detection caveat (J): "in burrow" = no acoustic detection; an animal outside the hydrophone range also
+  gives 0 detections, and position error inflates hourly displacement, so the emerged share is uncertain
+  in both directions.
+
+(ii) Population snapshot - UWTV visible animals per burrow at peak emergence (AGUZZI2021, Table 3) [F]:
+  visible (fully emerged + door-keeping) per burrow 0.06-0.12 at peak windows; depth means 0.08 (15-50 m),
+  0.11 (51-100 m), 0.08 (101-160 m), 0.09 (340-570 m). Door-keeping share of visible animals 18-41 %
+  (shelf), 32-54 % (slope). "a high proportion of the population remains cryptic even during periods of
+  peak emergence"; "the proportion of animals not emerging from their burrows on a daily basis is still
+  largely undetermined".
+  Fully emerged per burrow at peak = visible x (1 - door share) [J from F, per window]:
+     15-50 m 0.041-0.078; 51-100 m 0.075-0.092; 101-160 m 0.037-0.066; 340-570 m 0.034-0.068.
+  BAHAMON2025 Table 1 [F via WebFetch]: door-keeping fraction of visible animals 0.315-0.750 by year,
+  0.531 overall; mean densities 0.006 ind/m2 door-keeping, 0.009 ind/m2 outside (no burrow density given).
+  J, hours-out implied by UWTV: if ~0.04-0.07 of burrow holders are fully out through a ~10 h plateau
+  (AGUZZI2021 deep-shelf/slope window 7-17 h) and few are out otherwise, mean time fully out per animal
+  ~0.4-0.7 h/day (+0.2-0.4 h door-keeping). Higher if occupancy is < 1 animal per burrow.
+
+(iii) Trawl evidence of a small exposed share (catch per swept area vs burrow density):
+  TUCK1997 (Clyde, 47-60 m, annual-mean catches, 22 mm trawl) [F]: "The catch m-2 values for each station
+  (Table 3) are nearly two orders of magnitude lower than the burrow density estimates (Table 2)".
+  Catch density 0.0033-0.037 m-2 vs burrows 0.46-1.48 m-2. Ratio per station [J]: 0.005, 0.004, 0.014,
+  0.025, 0.008, 0.012 (median ~0.01). Includes trawl efficiency < 1 and mixed hours of day.
+  FARMER1975 [F, secondary]: "assuming each burrow represents one animal, only 0.5 percent of all
+  N. norvegicus occurring in the path of the trawl were captured (DAFS, 1966a)."
+
+(iv) DISCREPANCY (not averaged; for the modeller) [J]:
+  Telemetry (burrow-holding subset): ~0.35 of the day fully out (~8 h/d), ~0.5 including door-keeping.
+  UWTV: ~0.04-0.09 of burrow holders fully out at the daily peak (< 1 h/d implied).
+  Trawl: ~0.5-2.5 % of burrow density caught per pass.
+  Candidate reasons: telemetry animals were displaced and released at high density (burrow search and
+  evictions raise surface time); "no detection" is a proxy, not observed concealment; telemetry site is
+  400 m Mediterranean, UWTV Irish shelf; UWTV "visible" counts only animals inside the camera swath at
+  that minute and may miss animals lying flat or far from burrows; burrow:animal ratio may exceed 1
+  (AGUZZI2021 questions 1:1 occupancy). The UWTV value is the one measured on undisturbed populations.
+
+Q1c. Excursion distance, single-excursion duration, burrow switching, exchange time scale
+----------------------------------------------------------------------------------------
+* Home range of settled animals, VIGO_THESIS ch. 2.3 (= Vigo et al. 2021) [F]: "We obtained an average
+  home range size (UD90) ranging from 17.75 to 736.25 m2, which could correspond to the usual area where
+  the species carries out its behavioural, burrow-centred, activities." First month after release: June
+  UD90 11223 +- 16023 m2 (n=19), then July 170 +- 317 m2, Aug 1414 +- 2680, Sep 1341 +- 2910.
+  "The home range area became significantly smaller within 1 mo, as an indication of the establishment of
+  the individuals in their burrows". "the territorial behaviour ... centred in small exclusive individual
+  areas"; UDOI: "no overlap between the areas estimated with UD90, nor with UD50 or core areas."
+  Radius equivalent of 17.75-736 m2 [J]: sqrt(A/pi) = 2.4-15 m.
+* Daily displacement, AGUZZI2023 [F]: "The average displacement distance was 216.0 m/day (min: 90.7 m/day,
+  max: 424.7 m/day)." (Table 1 header says "Walked per Day (cm)"; J: metres is consistent with the 0.5 m/h
+  door-keeping threshold and ~13 % door-keeping, so the "cm" label is likely a typo; acoustic position
+  error inflates the sum.)
+* Burrow fidelity, Chapman & Rice 1971 in FARMER1975 [F, secondary]: "some N. norvegicus continue to return
+  to the same burrow for several days. However, it was also found that some individuals occupied different
+  burrows within a few days, indicating a somewhat loose attachment to a particular burrow".
+* Adult movement scale: ANNEX34 [F]: "Adult Nephrops only undertake very small-scale movements (a few
+  100 m)". POWER2020 (inshore W Ireland, released tagged animals) [F] Table 1: median distance from
+  release site after 1 yr 213-223 m (range 21-536 m, n=204), after 2 yr 182-308 m (n=36); "no differences
+  in distance travelled from the point of release between sexes, starting sizes, or amount of time spent
+  at liberty". DAFS tagging in FARMER1975 [F, secondary]: "less than 5 miles, with the single exception of
+  an individual which appeared to have moved 22 miles."
+* Same animals emerge daily, AGUZZI2023 conclusion [F]: "indicating that the same animals do emerge
+  constantly over consecutive days".
+* Single-excursion duration: not measured as such (see Not found). Population activity window, Chapman &
+  Rice 1971 Loch Torridon 30 m June, "21.10 to 03.30" (FARMER1975 Table XXI) [F, secondary] = 6.3 h [J].
+  Activity in the entrance before/after foraging [F, FARMER1975]: "animals are present in the burrow
+  entrance most frequently before and after foraging".
+* Exchange time scale [J]: one (midday) or two (crepuscular) emergence bouts per day, the same individuals
+  emerging every day -> a hidden<->exposed cycle of 12-24 h; per-animal exposed bout ~1-8 h depending on
+  which estimate in Q1b(iv) is believed (UWTV-implied <1 h vs telemetry 8.4 h/day in one bout). With a
+  6-h tick the exposed set turns over within 1-4 ticks.
+
+Q1d. Berried (ovigerous) females
+--------------------------------
+* Concealment: FARMER1975 [F]: "The general absence of berried females throughout most of the year is
+  explained by their tendency to remain within their burrows when incubating eggs." "Attempts to entrain
+  ovigerous females to a 12 h:12 h light/dark cycle were unsuccessful ... ovigerous females are usually
+  rare in trawl catches, since they probably remain in their burrows and do not emerge to feed".
+  Dunthorn 1967 in FARMER1975 [F, secondary]: "berried females eat less than non-berried females,
+  particularly during the latter stages of embryonic development, and that in the natural environment they
+  may not feed at all." SARDA1995 [F]: "Fasting was observed by Farmer (1975), who reported that berried
+  females can go without eating for nearly a year." AGUZZI2021 [F]: "berried females do not emerge".
+  Counter-evidence AGUZZI2003 [F]: "present results show that berried females may perform rhythmic
+  emergence phased to light intensity cycles like the all other individuals" (Mediterranean slope).
+  CRR340 [F]: "Mature female Nephrops have lower burrow emergence when carrying eggs (Thomas and de
+  Figueiredo, 1965; Redant, 1987) and, therefore, are typically subject to lower mortality rates";
+  ANNEX34 (FU 3-4) [F]: M "0.3 ... for males and immature females, with a value of 0.2 for mature females
+  ... based on the assumption of reduced burrow emergence while ovigerous".
+* Timing and duration:
+  IMR2021 (Norwegian Deep, citing Farmer 1974/75 and Powell & Eriksson 2013) [F, secondary]: "Egg-laying
+  takes place over a period of a couple of months (August-September). Females carry the roe until hatching
+  takes place in the following year. Hatching of the eggs of one female occurs at night-time over several
+  successive days (5-20 days), while egg hatching within a local population takes place over a couple of
+  months (April-June)." -> berried ~7-10 months (Aug/Sep to Apr/Jun) [J].
+  FARMER1975 Table V [F, secondary]: Scottish waters egg laying "Aug.-Nov.", hatching "May-Aug.", incubation
+  "9 months (270)"; NE England "Aug.-Sep.", "May-Aug.", "10 months (300)"; Irish Sea "Aug.-Sep.",
+  "Apr.-June", "8 months (240)"; Faroes "9 months (270)". No Skagerrak/Kattegat row.
+  SARDA1995 [F]: "The duration of egg incubation varies from 6 months in the Mediterranean to more than 10
+  months in Iceland, where spawning takes place biennially."
+* Annual vs biennial (CONFLICT, left open):
+  SARDA1995 [F]: "Spawning in more northerly latitudes (Faroe Islands, Scandinavia, and Iceland) is
+  probably almost entirely biennial."  IMR2021 [F, secondary]: "Nephrops spawns once a year ... In more
+  northern waters, egg production may be biannual."  FARMER1975 [F]: share of mature females laying eggs
+  each year: Karlovac "84 percent" (Adriatic), Thomas "90 percent" (Scotland), Farmer "91.5 percent"
+  (Irish Sea).
+* Catch evidence of concealment:
+  FARMER1975 Table IX, % ovigerous of all females in catches [F, secondary]: Scottish (Thomas & Figueiredo)
+  1.0-18.7 % by month (peak Sep), Irish Sea (Farmer MS) 0-12 %, NE England (Symonds) 0-4 % - far below the
+  84-91 % of mature females that spawn, i.e. berried females are mostly not caught.
+  FARMER1975 Table VIII, % females in monthly catches [F, secondary]: Scottish 12.2 (Mar) - 46.7 (Aug);
+  Irish Sea (O'Riordan) 8 (Mar) - 52 (Jul); Irish Sea (Hillis) 21-69; NE England 4-54 depending on series.
+  "throughout most of the year there is a strong preponderance of males in the catches, although during the
+  period from egg-hatching to egg-laying the [page break] proportion of females generally increasea [sic,
+  OCR] to approximately 50 percent."
+  HORNBORG2017 (Swedish Kattegat/Skagerrak observer data 2005-2013) [F via WebFetch]: ovigerous females
+  "~23% compared with 5% in trawls" (creels vs trawls, annual average); "40% are females in creels whereas
+  32% in trawls".
+  TUCK1997 [F]: "During this phase, females tend to remain in their burrows and are seldom caught
+  (Chapman, 1980)"; Q2 (Apr-Jun) catches "significantly lower than in the first and fourth quarters".
+* Female share of the population: FARMER1975 [F]: "Sex ratio of the population - No data are available."
+  J: catches in the hatching-to-spawning window approach 40-60 % female (Table VIII), suggesting a near-even
+  population sex ratio if non-berried females are as catchable as males; not a measured value.
+
+Q1e. Day/night catch rates
+--------------------------
+Qualitative only (AGUZZI2003, FARMER1975 Table XXI, BAHAMON2025 above). Skagerrak: trawling within 4 nm
+"is allowed ... but not during night" (ANNEX34) [F] - management only. Numeric day:night ratio not found.
+
+=============================================================================
+Q5. REFUGE SATURATION: IS THE BURROW REFUGE SPACE-LIMITED?
+=============================================================================
+* Sediment window. ANNEX34 [F]: Nephrops "requires sediment with a silt & clay content of between 10-100%
+  to excavate its burrows". CAMPBELL2008 [F]: "Nephrops burrows were not found in sediments composed almost
+  entirely of sand (i.e. <10% sediment below 63um)"; North Minch burrows in 10-100 % silt-clay, Fladen
+  10-90 %.
+* Density vs silt-clay. CAMPBELL2008 Fladen GLM (identity link) [F]: Burrow density ~ (Percentage Clay - 10)
+  + Year; intercept 0.1300, % clay slope 0.0056 per %. J: 0.13 burrows/m2 at 10 % -> 0.35 at 50 % -> 0.58 at
+  90 % silt-clay (2002 year level). North Minch closer to the "dome-shaped" form; Afonso-Dias 1998 mechanism
+  quoted in CAMPBELL2008 [F, secondary]: "in very fine grained, soft muds, Nephrops are able to excavate
+  extensive burrow complexes, and competition for space once more reduces population density".
+  TUCK1997 [F]: 6 Clyde stations 30-96.5 % silt-clay, burrow density 0.460-1.479 m-2 (Table 2); "Three
+  stations (numbers 3, 4 and 5) had similarly high burrow densities (about 1.4 burrows m-2)"; peak "on mixed
+  sediments of sand, silt and clay and the decline in density on the finest silt and clay sediments";
+  alternative: density "may simply reflect general hydrographic conditions rather than sediment type
+  directly" (larval supply).
+* Observed maxima (for scale). TUCK1997 1.48 burrows m-2 (Clyde). FARMER1975 [F, secondary]: Loch Torridon
+  burrows 1/2.1 m2 (1968) and 1/1.4 m2 (1969) with Nephrops 1/7.8 and 1/5.5 m2; Irish Sea burrows 1/2.1 to
+  1/9.3 m2, animals 1/2.5 to 1/8.9 m2; "Densities of burrows reported by DAFS (1966a, 1968b) ranged from
+  9/m2 to 12/m, although ... these figures refer to numbers of openings and not burrow systems."
+  J: FU 3-4 2024 mean 0.21 burrows/m2 (earlier note) is ~1/7 of the Clyde maximum.
+* Burrow size. STEWART1974 [F]: "The burrows are often extensive, with many side branches, and can cover an
+  area of up to 1 m2 and penetrate to 30 cm below the surface of the mud."
+* Spacing. STEWART1974 (Little Loch Broom, 20-25 m) [F]: "from 20 m downwards the burrow density was greater,
+  with a burrow every 2 to 3 m along a straight line" (a line-transect spacing, not a nearest-neighbour
+  distance). Dybern & Hoisaeter 1965 in FARMER1975 [F, secondary]: burrows "occurred in groups of 5-10, with
+  each group well separated from the next"; Chapman & Rice 1971: "not evenly spaced ... nor were they
+  distributed at random ... clumped to some extent"; Atkinson 1974: "the spatial distribution of
+  N. norvegicus burrows in Loch Aline is random."
+  J (random-pattern expectation, mean NN = 0.5/sqrt(D)): 1.1 m at 0.21 m-2; 0.41 m at 1.48 m-2.
+* Territoriality / burrow competition. Farmer 1974a in FARMER1975 [F, secondary]: "strongly territorial ...
+  there is a critical distance at which agonistic responses to other N. norvegicus occur"; Rice & Chapman
+  1971: "little indication that the burrows act as centres for territorial behaviour"; claw damage
+  "males 62 percent, females 41 percent" (Loch Torridon). SBRAGAGLIA2017 (lab, 4 males per tank, one
+  burrow per animal) [F via WebFetch]: fighting over burrows "occurred even if these were not a limited
+  resource"; hierarchies "within 1-3 days"; "Dominant lobsters are more likely to evict subordinate lobsters
+  from their burrows and more successful in defending their own burrows. They also spend more time in
+  burrows". VIGO_THESIS [F]: home ranges did not overlap (UDOI); "dominant Norway lobsters tend to show
+  burrow-oriented behaviour, remaining close to the entrance most of the time and evicting other animals
+  from their burrows". AGUZZI2023 [F]: "animal burrowing capability is influenced by a balance between
+  aggressive territorial interactions and overall local demography"; wandering animals possibly "those with
+  no burrowing capability due to their subordinate social ranking level".
+* Occupancy and sharing. FARMER1975 [F, secondary]: "About 70 percent of the large burrows were found to be
+  occupied by N. norvegicus; many of the smaller burrows contained L. friesii." AGUZZI2021 [F]: "two adult
+  lobsters are rarely found in the same shelter". CRR340 [F]: "Juvenile burrows tend to be found in close
+  proximity to adult systems (Marrs et al., 1996). Some burrow systems are conjunctions of the tunnels of
+  adults and one or more juveniles." IMR2021 [F, secondary]: "Juvenile specimens are rarely found outside
+  burrows of adults (Tuck et al., 1994)".
+* Density-dependent growth. TUCK1997 [F]: "L-inf was found to be inversely correlated with burrow density,
+  suggesting that growth may be density-dependent"; Fig. 5 "Y=73.042-16.307X (r2 =0.715, p<0.05)" (X =
+  burrows m-2, Y = male L-inf mm); "competition for food could limit growth"; L-inf "also positively
+  correlated with infaunal biomass". POWER2020 [F]: "a density-dependent suppression of growth (in body
+  size) was observed in male lobsters"; "Growth rates for females did not seem to be associated with the
+  local density"; "This suggests density-independent survival rates for Nephrops on the fished grounds."
+  IMR2021 [F, secondary]: "Intraspecific competition for food and space is demonstrated by negative
+  relationships between size and density (Johnson et al., 2013)."
+* Burrow (re)construction time. Marrs et al. 1996 in CRR340 [F, secondary]: "burrows that were destroyed
+  experimentally were rapidly re-excavated by the occupants; showing signs of re-excavation within one day,
+  and by two days, any amelioration appeared complete" (repair by the resident, not a new burrow).
+  Crnkovic 1968 in FARMER1975 [F, secondary]: post-larva "constructed a burrow with 5 openings in 5 days".
+  Settlement of displaced adults: VIGO_THESIS [F] home ranges shrank "within 1 mo" after release.
+  STEWART1974 [F]: aquarium burrows "were in a state of constant modification".
+  CAMPBELL2008 [F]: "the time that a burrow survives after its occupying Nephrops has died, been caught or
+  moved on is unknown, as is the speed with which burrow entrances are re-opened after being filled in by
+  trawl nets."
+* Verdict on saturation [J]: evidence for space limitation is indirect - dome-shaped density vs sediment
+  (hypothesised burrow interference in fine mud), exclusive home ranges, evictions, density-dependent male
+  growth. No study shows a hard burrow ceiling, and survival was density-independent (POWER2020). At the
+  FU 3-4 density (~0.2 m-2) the refuge is unlikely to be saturated relative to observed maxima of ~1.5 m-2.
+
+=============================================================================
+NOT FOUND (searched; no number given here)
+=============================================================================
+- Hours out of the burrow per day for an undisturbed animal at 100-300 m (Skagerrak or any North Sea
+  ground); only derived ranges above.
+- Duration of a single excursion (minutes/hours) and number of excursions per day from direct observation;
+  Chapman & Howard 1979 (Mar Biol 51:157, doi:10.1007/BF00555195) full text not accessible (only the
+  qualitative "proportional to its size" via Sarda 1995).
+- Chapman & Rice 1971 and Rice & Chapman 1971 (Mar Biol 10) full texts (paywalled; only via Farmer 1975).
+- Atkinson & Naylor 1976, Chapman 1980, Bell, Redant & Tuck 2006, Katoh et al. 2013 (Adv Mar Biol 64),
+  Aguzzi & Sarda 2008 (Rev Fish Biol Fish 18) full texts: not accessible.
+- Sbragaglia et al. 2013 Sci Mar full text (download refused / TLS); 2015 tidal-current paper not read.
+- Numeric day:night trawl catch ratio for Nephrops at 100-300 m.
+- Skagerrak/Kattegat-specific egg-laying, hatching and incubation months (Eggert & Ulmestrand, Ulmestrand
+  publications not obtained); Skagerrak annual vs biennial spawning not settled.
+- Quarterly female share of catches for FU 3-4 (not in the stock annex or the WGNSSK 2024 FU 3-4 section
+  read; only the 2005-2013 annual averages of HORNBORG2017).
+- Female share of the population (as opposed to catches) and the mature fraction of females.
+- Measured nearest-neighbour burrow distance (only a line spacing of 2-3 m, Stewart 1974).
+- De novo burrow construction time for an adult (only re-excavation in 1-2 days and post-larva 5 openings
+  in 5 days).
+- Maximum burrow density as a function of animal size (no explicit packing limit found).
+
+Tag note for part_A_rows.csv: S = number read in full text of a review (Farmer 1975, ICES CRR 340, IMR 2021) that cites an older primary source not read. F rows for Aguzzi 2021 Table 3, Bahamon 2025, Hornborg 2017 and Sbragaglia 2017 were read through WebFetch page extraction of the full text.
+
+
+PART B - SIZE REFUGE OF NEPHROPS FROM FISH (Q2) AND RECOLONISATION OF MOBILE EPIFAUNA (Q6)
+=========================================================================================
+Research notes for the Mareld simulator (Skagerrak, 100-300 m mud, 60 x 60 km, 6 h tick).
+Tags: [F] full text read (incl. values read off a table/figure), [A] abstract only,
+[S] secondary source / search snippet. "J" = my own judgement or derivation.
+Downloaded files: data/<source>/ ; scripts: scripts/ ; derived tables: tables/.
+
+#########################################################################################
+Q2. SIZE REFUGE OF NEPHROPS NORVEGICUS FROM FISH
+#########################################################################################
+
+-----------------------------------------------------------------------------------------
+Q2.1 Population parameters used (FU 3-4, Skagerrak/Kattegat)
+-----------------------------------------------------------------------------------------
+* ICES Stock Annex, Norway lobster in Division 3.a, FU 3 and 4 [F]
+  https://ices-library.figshare.com/articles/report/Stock_Annex_Norway_lobster_Nephrops_norvegicus_in_Division_3_a_Functional_Units_3_and_4_Skagerrak_and_Kattegat_/18622808
+  file data/ices_stock_annex_nep34/nep-3-4_SA.pdf
+  - "Growth: Males; L-inf = 73 mm, k = 0.14 / Mature Females; L-inf = 65 mm, k = 0.10"
+  - "Size-at-maturity L25=24.7 mm, L50=28.5 mm."
+  - "Weight-length parameters: Males a = 0.00045, b = 3.113 / Females: a= 0.00108, b = 2.847"
+    (units g and mm CL: 40 mm male -> 43.7 g, J check)
+  - "A natural mortality rate of 0.3 was assumed for all age classes and years for males and
+    immature females, with a value of 0.2 for mature females"
+  - "These calculations assume that the TV survey has a knife-edge selectivity at 17 mm."
+  - "The minimum landing size (MLS) is 40 mm CL" (reduced to 32 mm in 2016, WGNSSK 2024).
+* WGNSSK 2024, chapter 10.1 Nephrops in 3.a [F] (ICES Sci. Rep. 6:38)
+  https://ices-library.figshare.com/articles/report/Working_Group_on_the_Assessment_of_Demersal_Stocks_in_the_North_Sea_and_Skagerrak_WGNSSK_/25605639
+  file data/wgnssk2024_nep34/wgnssk2024_nep_skk.pdf
+  - "Males: L-inf = 73 mm CL, k = 0.138. Immature females: L-inf = 73 mm CL, k = 0.138.
+    Mature females: L-inf = 65 mm CL, k = 0.10, Size at 50% maturity = 29 mm CL."
+  - "Growth parameters for males were taken from Ulmestrand and Eggert (2001) and female growth
+    parameters have been assumed to be similar to those of Scottish Nephrops stocks."
+  - 2023 row of the summary table: UWTV abundance 3564 million, landings 117 million,
+    discards 45 million, harvest rate 4.2 % by number (2021: 5.1, 2022: 4.7).
+  - Figure 10.1.4: "Length frequency distributions of Nephrops catches in number of individuals,
+    split by catch fraction (landings and discards) and sex. Data for Denmark and Sweden combined
+    for 2023." Digitised by me (scripts/probe_axes.py, scripts/read_lfd_wgnssk2024.py) ->
+    tables/nep34_catch_lfd_2023_read.csv. Validation (J): bars sum to 161.6 million (report:
+    117 + 45 = 162 million) and the landings colours to 117.0 million (report 117) - the
+    calibration is good to ~1 %.
+* Ulmestrand & Eggert 2001, ICES J. Mar. Sci. 58:1326-1334, doi:10.1006/jmsc.2001.1133 [A]
+  "The estimates of L-inf (72.9) and K (0.138) for males differ from those currently used in the
+  ICES assessment". Full text (OUP PDF) could not be downloaded (refused); female values not read.
+
+-----------------------------------------------------------------------------------------
+Q2.2 Which Nephrops sizes fish eat
+-----------------------------------------------------------------------------------------
+(a) De Clerck & Sterk 1980, ICES CM 1980/G:43, Outer Silver Pit (North Sea), Aug and Oct-Nov 1979,
+    552 cod and 223 whiting from commercial Nephrops trawlers [F]
+    https://www.ices.dk/sites/pub/CM%20Doccuments/1980/G/1980_G43.pdf  (data/declerck_sterk1980/)
+    - "The carapax length of the Nephrops in the stomachs varied from 7 mm to 55 mm in August and
+      from 7 to 36 mm in the autumn (table 5)."
+    - whiting: "The carapax length of the Nephrops in the stomachs varied from 9 to 38 mm".
+    - "During August an individual maximum occurred in a 59 cm cod containing 12 Nephrops."
+    - "Significant correlations were found between the size of cod and whiting and the number and
+      weight of the Nephrops in their stomach." (correlations of NUMBER/WEIGHT with cod size,
+      not of prey CL with cod size; "From table 5 it seemed that there is a relationship between
+      the length of the prey and the length of the cod.")
+    - Table 5 transcribed by me: tables/declerck_sterk1980_table5_transcribed.csv; summarised by
+      scripts/nephrops_size_window.py (stdout in tables/nephrops_size_window_stdout.txt) (J):
+        cod 26-45 cm (Aug, n=52 prey):  median CL ~20 mm, 90th pct ~32, max class 40-42 mm;
+                                       96 % of prey <= 39 mm
+        cod 46-65 cm (Aug, n=90):       median ~23, 90th pct ~35, max 40-42; 96 % <= 39 mm
+        cod 66-105 cm (Aug, n=101):     median ~32, 90th pct ~41, max class 55-57 mm;
+                                       81 % <= 39 mm, 19 % >= 40 mm
+        cod Oct-Nov (all sizes, n=27):  all <= 36 mm
+        whiting 21-60 cm (Aug, n=9):    7-39 mm, median ~23
+      Predator-length to prey-size relation (J, from the pooled medians): median prey CL 20 -> 23
+      -> 32 mm and 90th percentile 32 -> 35 -> 41 mm for cod 26-45 / 46-65 / 66-105 cm, i.e. a
+      slope of roughly 0.25 mm prey CL per cm cod length (no regression published). Armstrong et
+      al. 1991 [F] on whiting in cod: "As with Nephrops, the average size of the prey increased
+      comparatively little with increasing size of cod".
+      J: even 31-35 cm cod took 40-42 mm Nephrops; prey > 40 mm appear only regularly in cod
+      >= 66 cm. The lower end (7-15 mm) is taken by all cod sizes. There is no hard upper
+      cut-off; the size distribution shifts ~10 mm upward from small to large cod.
+(b) Kinnear & Livingstone 1979, ICES CM 1979/K:33, Firth of Forth, Nov 1978, 241 cod stomachs,
+    cod up to 64 cm [F]  https://www.ices.dk/sites/pub/CM%20Doccuments/1979/K/1979_K33.pdf
+    - "The size of Nephrops found in the stomachs varied in carapace length from 8 to 30mm with a
+      mean of 20mm compared with a mean size of 28mm for the trawl-caught specimens."
+    - "Nephrops smaller than 12mm predominated in cod smaller than 40cm"
+    - "there is a little evidence for a slight increase in the size of Nephrops eaten as cod size
+      increases, but the general preference seems to be for the smaller Nephrops"
+(c) Armstrong, Smyth & McCurdy 1991, ICES CM 1991/G:15, western Irish Sea, cod from NI landings
+    1982-83 [F]  https://www.ices.dk/sites/pub/CM%20Doccuments/1991/G/1991_G15.pdf
+    - Fig. 3 (read off): CL in stomachs ~8-50 mm for all cod ages 1 to 6+, mode 22-26 mm in every
+      age class, similar to the commercial catch.
+    - "Although a general increase in the mean length of ingested prawns with increasing age of cod
+      is apparent, the ratio of mean whole-mass of prawn to mean mass of cod declined from 0.4% in
+      1-year-old cod to 0.13% in 4-year-olds; remaining at approximately 0.1% in older fish."
+    - "The sizes of Nephrops eaten by cod are similar to those taken by the commercial fleet in 1982,
+      but include smaller size-classes."
+    - Table 11 selectivity (stomach numbers at prawn pseudo-age / population numbers at age,
+      normalised to max 1 per cod age), prawn ages 1..7+ (male CL at age 1:10, 2:17, 3:24, 4:30,
+      5:35, 6:39, 7:41 mm, their length-at-age table):
+        SEL cod age 1:  0.23 1.00 0.92
+        SEL cod age 2:  0.28 1.00 1.00 0.80 0.04
+        SEL cod age 3:  0.13 0.64 1.00 0.91 0.63 0.78
+        SEL cod age 4:  0.06 0.58 0.94 1.00 0.83 0.68 0.62
+        SEL cod age 5:  0.03 0.38 0.71 1.00 0.79 0.49 0.0
+        SEL cod age 6+: 0.03 0.41 0.79 1.00 0.64 0.52 0.48
+      Predation mortality by cod M2 per prawn age 1..7+: 0.038 0.183 0.248 0.219 0.148 0.180 0.080 /yr
+      "The highest mortality rates from both sources were inflicted on prawns of three to four years
+      of age (carapace lengths 24-30 mm)."
+    - Caveat in the paper: "it is inevitable that a proportion of the discards will be eaten by cod
+      (and by other fish such as dogfish and rays)"; Kinnear & Livingstone make the same point.
+(d) Dorman et al. 1992, ICES CM 1992/G:70, IYFS Feb 1991 [F] (file already in
+    "../Bottensamhallets epifauna/data/epifauna/v274761.pdf"; not re-downloaded).
+    Skagerrak table, Nephrops row (weight g / number per cod size class, mm): 350: 11.1/1,
+    400: 6.4/3, 500: 11.2/1, 600: 70/6, 700: 59.4/5; total 158.1 g, 16 animals, 3.483 % of weight.
+    Kattegat: 150: 2.2/1, 200: 2.5/1, 350: 5.7/2, 400: 37/4, 500: 52.3/4, 600: 41.6/2, 700: 42.6/3.
+    J (inverting the annex L-W): mean stomach weight per Nephrops 9.9 g (Skagerrak) and 10.8 g
+    (Kattegat) -> ~25 mm CL; in 500-700 mm Skagerrak cod ~26 mm. These are LOWER bounds (partly
+    digested prey). No Nephrops in Skagerrak cod < 350 mm in that sample.
+(e) Haddock, rays, gurnards, long rough dab, monkfish: see "Not found" list. Armstrong 1991 names
+    dogfish and rays as discard eaters and "the other abundant predator [on large prawns] is the
+    lesser spotted dogfish" [F]. A Eurofleets cruise report lists "cod (Gadus morhua), pouting
+    (Trisopterus luscus), anglerfishes (Lophius spp), elasmobranchs, Hake (Merluccius merluccius),
+    gurnards (Trigla spp)" as reported Nephrops predators [S, search snippet]
+    https://www.eurofleets.eu/wp-content/uploads/2022/01/04-RV-Mario-Ruivo_NephropsInFunctionalUnits2829_CS.pdf
+    (no sizes).
+
+-----------------------------------------------------------------------------------------
+Q2.3 Share of Nephrops biomass inside the vulnerable window (J, scripts/nephrops_size_window.py)
+-----------------------------------------------------------------------------------------
+Method (J): steady-state population with constant recruitment at the first-postlarva size
+(3.08 mm CL, Smith 1987, see Q2.5), annex VBGF per sex (females switch to 65/0.10 at 29 mm), annex
+M (0.3; 0.2 mature females), gear selectivity derived iteratively from the 2023 catch LFD
+(s(L) proportional to C(L)/N(L)), F scaled so that catch/abundance(>=17 mm) = the 2021-23
+harvest rates (4.2-5.1 %). (The model-vs-observed catch shape printed in stdout D agrees by
+construction of the selectivity fit and is NOT a validation.)
+Independent checks (J): (i) digitised LFD x annex L-W = 6739 t of catch 2023 vs WGNSSK 2023
+landings 6175 t + discards 975 t = 7150 t (6 % low; checks digitisation + L-W); (ii) modelled mean
+weight of animals >= 17 mm is 28-29 g vs the 30 g (23-45) adopted earlier in
+"../Bottensamhallets epifauna/evidence_A2_nephrops.md" - a consistency check only, since that 30 g
+was itself a judgement. The population shape between 17 and ~28 mm is set almost entirely by the
+VBGF and M, because the catch LFD carries no information there (fitted gear selectivity ~0 below
+25 mm).
+Results, share of the BIOMASS of the >= 17 mm (UWTV-counted) stock:
+    CL <= 25 mm: 0.07     CL <= 30 mm: 0.15-0.16     CL <= 35 mm: 0.28-0.30
+    CL <= 40 mm: 0.43-0.47     CL <= 45 mm: 0.59-0.63
+  (share of NUMBERS: <= 30 mm 0.49-0.50; <= 40 mm 0.78-0.80)
+  Biomass below 17 mm (settlement to UWTV floor) = ~2 % of the >= 17 mm biomass (M 0.3 or 0.6).
+Selectivity-weighted (Armstrong 1991 Table 11 SEL applied to that population, J):
+  effective vulnerable biomass share 0.59-0.60 (cod age 6+), 0.72-0.73 (cod age 4),
+  0.23-0.25 (cod age 2). I.e. large cod "see" ~60 % of the Nephrops biomass at full rate.
+Catch-LFD version (gear-selected, under-represents < 30 mm; J): CL <= 30 mm 4.7 % of catch weight,
+  <= 40 mm 40 %, <= 45 mm 64 %.
+De Clerck & Sterk window (J): 96 % of prey of cod < 66 cm and 81 % of prey of cod >= 66 cm were
+  <= 39 mm CL -> a window "<= 40 mm" holds ~45 % of the >= 17 mm biomass; for small/medium cod a
+  window "<= 35 mm" (90th pct of their prey) holds ~29 %.
+J synthesis: there is no hard size refuge; the refuge is partial and predator-size dependent.
+  Biomass in the main window (17-35/40 mm) ~0.3-0.45 of the stock; selectivity-weighted ~0.6 for
+  big cod, ~0.25 for 2-yr cod. Caveats: Irish Sea / North Sea prey sizes (populations of smaller
+  Nephrops than FU 3-4); the steady state assumes constant recruitment and the annex growth.
+
+-----------------------------------------------------------------------------------------
+Q2.4 Years spent growing through the window (J; VBGF t = ln((Linf-L1)/(Linf-L2))/K)
+-----------------------------------------------------------------------------------------
+  settlement 3.1 -> 17 mm: 1.6 yr (VBGF extrapolated below its fitted range; Irish Sea
+                          length-at-age gives ~2 yr: age 1 = 10 mm, age 2 = 17 mm [F, Armstrong 1991])
+  17 -> 30 mm: males 1.9 yr, females 2.0 yr   (Armstrong Irish Sea: 2 yr, ages 2 -> 4)
+  17 -> 35 mm: males 2.8 yr, females 3.6 yr
+  17 -> 40 mm: males 3.8 yr, females 5.4 yr   (Armstrong: ~4.5 yr males)
+  17 -> 45 mm: males 5.0 yr, females 7.6 yr
+  30 -> 40 mm: males 1.9 yr, females 3.4 yr
+  Irish Sea length-at-age table [F, Armstrong 1991, "Carapace lengths at attainment of age"]:
+  "AGE 1: 10/10 mm, 0.57 g; 2: 17/17, 2.92 g; 3: 24/24, 8.45 g; 4: 30/27, 14.37 g;
+   5: 35/30, 21.56 g; 6: 39/32, 28.33 g; 7: 41/34, 40.0 g (plus group)" (male/female CL, mean mass).
+
+-----------------------------------------------------------------------------------------
+Q2.5 Juveniles: settlement size, burrows, emergence
+-----------------------------------------------------------------------------------------
+Smith 1987, PhD thesis, Univ. Glasgow, "The biology of larval and juvenile Nephrops norvegicus (L.)
+in the Firth of Clyde" [F]  https://theses.gla.ac.uk/3511/  (data/smith1987_thesis/)
+  - Table 4.1a carapace length (mm): Z1 1.74, Z2 2.18, Z3 2.56, PL1 3.08, PL2 4.00, PL3 4.74,
+    PL4 5.75, PL5 7.15, PL8 9.64, PL11 14.12, PL12 16.00 (reared).
+  - [F of Smith; the 10-15 mm emergence size is [S] via Smith, Chapman 1980 not read]
+    "Field evidence suggests that most Nephrops settle on the sea bed soon after metamorphosis and
+    remain within the confines of their burrows, which in the past have only been discovered in
+    association with adult burrows. It seems that they do not emerge from their burrows until the
+    end of their first year, when they have reached a carapace length of 10 - 15mm (Chapman, 1980)."
+  - Abstract: "the 1st postlarval stage is a transitional form between the planktonic and benthic
+    environments. Final recruitment to the benthos may be delayed until sometime after the 1st
+    postlarval stage." "Juveniles beyond the 1st postlarval stage are capable of constructing their
+    own burrows but will enter inhabited adult burrows through surface openings. If the inhabitant
+    does not evict the recruiting juvenile it excavates an adjoining burrow through one of the
+    walls of the adults burrow to form a juvenile / adult association. These associations are
+    known to occur in the field".
+Tuck et al. 1994 (Ophelia, doi:10.1080/00785326.1994.10429547): not open access, not read.
+J: juveniles < ~15 mm CL live in burrows (own or attached to adult burrows) and are not in the
+  emerged, visible fraction; their biomass is ~2 % of the >= 17 mm stock (Q2.3), so this refuge
+  matters little for biomass.
+
+
+#########################################################################################
+Q6. RECOLONISATION OF A DEPLETED AREA BY NEPHROPS AND OTHER MOBILE EPIFAUNA
+#########################################################################################
+
+-----------------------------------------------------------------------------------------
+Q6.1 Nephrops: larval duration, settlement, larval dispersal
+-----------------------------------------------------------------------------------------
+* Smith 1987 thesis (Firth of Clyde) [F]  https://theses.gla.ac.uk/3511/
+  - "Under the culture conditions applied in this study 12C was the lowest temperature for which
+    complete larval development (to 1st stage postlarvae) was accomplished, taking 46 days."
+  - "From laboratory observations involving a single individual Hillis (1974) reported that the
+    full larval phase was completed in 39 days at 12C" [S via Smith].
+  - Table 4.2 intermoult periods (zoeae from the 14 C trial, postlarvae at 13.5 +- 1.5 C):
+    Z1 6.96 d, Z2 9.33 d, Z3 12.75 d (zoeal phase ~29 d at 14 C, J sum), PL1 13.70 d, PL2 15.90 d.
+  - "During the 3rd zoeal stage the light response changed from photopositive to photonegative and
+    Nephrops may first come into contact with the sea bed towards the end of this stage."
+  - Settlement size: first postlarva CL 3.08 mm (Table 4.1a), see Q2.5.
+  - "The results from tagging experiments (Chapman and Bailey, 1987) suggest that these regions of
+    'unsuitable' sediment form boundaries to the dispersal of Nephrops. As a consequence the
+    Nephrops communities within each mud patch may be self-contained forming a separate
+    'stocklet'. This isolation, however, will probably not be maintained during the pelagic larval
+    phase" [S for Chapman & Bailey 1987, via Smith].
+* McGeady, Lordan & Power 2019, MEPS 631:141-155, doi:10.3354/meps13142 [F]
+  (data/twilight_migrators_ulster/)
+  - "Observed developmental rates of Stage I and II larvae (combined) range from 33 d at 9C to 13 d
+    at 15C (Thompson & Ayers 1989, Dickey-Collas et al. 2000). However, the larval period is further
+    prolonged when the duration of Stage III is accounted for."
+  - Particle tracking over 60 d (ROMS): western Irish Sea "the no DVM scenario resulted in the
+    highest retention (32.3%) and an advection distance of 99.8 +- 68.1 km. Retention was reduced
+    by more than half for the twilight (15.1%) and nocturnal (15.0%) DVM scenarios. Advection
+    distances were 125.0 +- 81.4 km for the twilight and 120.5 +- 80.3 km for the nocturnal DVM";
+    Aran grounds "181.2 +- 98.9 km for twilight DVM and 199.5 +- 106.4 km for nocturnal DVM. The
+    maximum distance advected ... was > 580 km."
+* ICES stock annex FU 3-4 [F]: "No information is available on the extent to which larval mixing
+  occurs between Nephrops stocks, but the similarity in stock indicator trends between FUs 3 and 4
+  for both Denmark and Sweden indicates that recruitment has been similar in both areas."
+J: pelagic phase ~1-2 months (13-33 d for stages I-II, ~30-46 d to postlarva at 12-14 C; longer at
+  Skagerrak spring temperatures); larvae are advected ~100-200 km, i.e. further than the 60 km grid.
+  Recolonisation of a depleted patch by settlement is therefore not limited by local spawners; it
+  is limited by growth: settlers need ~1.6-2 yr to 17 mm and ~3.5-4 yr to 30 mm (Q2.4).
+
+-----------------------------------------------------------------------------------------
+Q6.2 Nephrops: adult movement
+-----------------------------------------------------------------------------------------
+* Power et al. 2019, Sci. Data 6:7, doi:10.1038/s41597-019-0013-x [F, via PMC6437642]
+  Clew Bay (Ireland), 1177 PIT-tagged animals released 2013, 205 recaptured 2014 (~340 d at
+  liberty), 36 in 2015 (~725 d):
+  "Mean distance moved away from the release point of 231.47 +- 82.97 m by female tagged
+  individuals." "Mean distance moved away from the release point of 232.41 +- 83.15 m by male
+  tagged individuals." (pooled over recaptures after 1 and 2 years; ground left fallow)
+* Vigo Fernandez 2023, PhD thesis Univ. Barcelona, ch. 2.3 (MEPS 674:173-188 in published form),
+  315-475 m depth, NW Mediterranean 10 km2 no-take reserve [F]  https://hdl.handle.net/2445/204581
+  (data/vigo2023_thesis/)
+  - "The total distance travelled per day for these individuals ranged from 1.05 to 266.97 m d-1"
+  - "once settled in a place, their home ranges reached approximate sizes of 17.75 to 736.25 m2"
+  - "most individuals dispersed a few hundred metres"; "Tag-recapture data indicated minimal
+    spillover of biomass, implying that Norway lobsters are site settled and do not perform large
+    movements." Recapture 5 of 216 coded tags (2.32 %) by trawlers outside the reserve.
+  - acoustic tags on animals 31-50.5 mm CL.
+* MarLIN BIOTIC: adult dispersal potential "10-100m" [S, search snippet; page not read].
+J: adult net displacement ~0.2-0.3 km/yr (straight-line, release to recapture); daily paths of
+  1-270 m stay inside a home range of < 0.001 km2. Adult immigration into a depleted patch is
+  therefore an edge effect of a few hundred metres per year, negligible on a 1 km cell.
+
+-----------------------------------------------------------------------------------------
+Q6.3 Nephrops: recovery after closure / hypoxia
+-----------------------------------------------------------------------------------------
+* Vigo et al. 2023, ICES J. Mar. Sci., doi:10.1093/icesjms/fsad130 (thesis ch. 2.4) [F, thesis]
+  - "After 4 years of closure, the Norway lobster population increased in abundance, biomass, body
+    size, and trophic level in the no-take reserve. Our approach also revealed an increase in Norway
+    lobster biomass beyond its boundaries, suggesting a spillover effect."
+  - "Here, we report that the Norway lobster population increased by 60% compared to the baseline
+    state before the closure. Moreover, we observed a decrease in abundance and biomass in the CA
+    during the study period, amounting to about 80% relative to the baseline state"
+  - "These results corroborate a previous evaluation conducted 2.5 years after the closure using
+    ROV video surveys".
+  (Recovery from a fished, not an emptied, state; Mediterranean slope.)
+* Baden, Pihl & Rosenberg 1990, MEPS 67:141-155 (SE Kattegat hypoxia) [F]
+  https://int-res.com/articles/meps/67/m067p141.pdf (data/baden1990/)
+  - "During the study period (October 1984 to September 1989) lobster biomass decreased in the area
+    from 10.8 kg h-1 (catch per unit effort) to zero (estimated during the last 12 mo of the
+    investigation)."
+  - "In September 1988 the mean biomass at the 12 stations was 3.5 kg h-1, but in the following
+    3 mo and in April and September 1989 no lobsters were caught at these stations."
+  - "Survival of N. norvegicus exposed to 15 and 10 % O2-saturation was 4 wk and 2 to 4 d"
+  - In 1985-86 autumns "large quantities of dead lobster (up to 50 % of the total catch) were
+    caught"; "In the autumn of 1987 a higher biomass (3.3 to 5.0 kg h-1) was observed compared to
+    the 2 previous years" (partial recovery within 1 yr after 1986, J reading).
+  No data on recolonisation after 1989 in this paper.
+* Smith & Jensen 2008 (ICES, closed-area modelling): "Implementation of a closed area also led to
+  oscillations in stock biomass, recruitment, and yield over several years after the closure"
+  [S, search snippet].
+J: a 1-km cell emptied of Nephrops refills by settlement (annual, from outside) and growth; the
+  biomass needs at least the 3-5 yr it takes settlers to reach 30-40 mm (Q2.4); a 4-yr closure
+  gave +60 % (Vigo). Recolonisation of biomass: years (3-10), not months.
+
+-----------------------------------------------------------------------------------------
+Q6.4 Pandalus borealis (Skagerrak / Norwegian Deep)
+-----------------------------------------------------------------------------------------
+* DNV GL 2015, MSC assessment report, Swedish Pandalus fishery [F of the report, underlying studies
+  S] (file "../Bottensamhallets epifauna/data/lit/msc_se_pra.pdf"):
+  - "In Skagerrak and the North Sea, spawning and mating takes place in October/November and
+    females carry the fertilized eggs under the abdomen until hatching takes place in March the
+    following year (Bohle, 1977). The species has five pelagic larval stages which drift with ocean
+    currents for 45-90 days depending on the ambient sea temperature before settling on the bottom
+    (Aschan and Ingvalsen, 2009; Shumway et al., 1985). Particle tracking models reveal that the
+    larvae of P. borealis may be transported as far as 300km during the pelagic phase (Pedersen et
+    al. 2003)."
+  - "Migration of egg-carrying females into shallower waters in connection with egg-hatching has
+    been observed (Horsted, 1978), juveniles may migrate from shallower to deeper water (Smidt,
+    1981)"
+  - Knutsen et al. 2014: "spatial genetic structure among oceanic samples from the Skagerrak and
+    eastern North Sea was weak and non-significant".
+* Sovik & Thangstad 2021, NAFO SCR Doc. 21/001 [F] (file "../Bottensamhallets epifauna/data/
+  pandalus/scr21-001.pdf"): "The high abundance of 1-year old shrimp in Skagerrak indicates that
+  these waters constitute a nursery area for the stock. ... a good correlation between the number of
+  1-year old and 2-year old shrimp in respectively Skagerrak and the Norwegian Deep suggests that
+  there is a westward migration or drift of small shrimp from Skagerrak to the Norwegian Deep"
+  (i.e. redistribution on a ~1-yr, 100-km scale; J).
+* Pedersen et al. 2003 (Barents Sea particle tracking; Nofima record): "the distance travelled by a
+  shrimp larvae varied between 0 and 330 km and the annual mean distance varied between 74 and
+  122 km" [S, search snippet].
+J: Pandalus is pelagic for 1.5-3 months, adults are swimmers with diel vertical migration; a 60 km
+  grid is re-stocked each year by settlement and by juvenile/adult redistribution. Recolonisation
+  time ~1 yr (one settlement season; recruits reach the fishery at ~2 yr).
+
+-----------------------------------------------------------------------------------------
+Q6.5 Crabs, hermit crabs, Munida, Crangon allmanni, mysids
+-----------------------------------------------------------------------------------------
+* Hermit crabs: Ramsay, Kaiser & Hughes 1996, MEPS 144:63-72 [F]
+  https://www.int-res.com/articles/meps/144/m144p063.pdf (data/ramsay1996/)
+  Site ~40 m depth off Anglesey, Irish Sea, April 1995. Table 2, P. bernhardus caught per 1000 m2
+  (control / treatment): before 9.7 / 4.5; 1 d after 5.0 / 12.8; 2 d after 7.1 / 81.8 (p<0.001);
+  3 d after 7.6 / 60.5 (p<0.001); 4 d after 6.0 / 40.6 (ns). J: a ~10-fold local aggregation within
+  2 d, decaying over ~4+ d (control waylines 250 m away).
+  "Catch numbers of P. bernhardus were significantly higher on the treatment wayline 2 and 3 d
+  after fishing, whilst on the fourth day they were no longer significantly different." "These
+  results suggest that P. bernhardus migrate into recently trawled areas" (4 m beam trawl).
+  Ramsay et al. 1998, JEMBE 224:73-89: P. bernhardus "moved into the areas fished" at one site but
+  "no detectable increases" at two others [S, search snippet].
+* Megafauna generally: Kaiser et al. 1998, ICES J. Mar. Sci. 55:353-361, doi:10.1006/jmsc.1997.0322
+  [A]: "Six months later, seasonal changes had occurred in both communities" and the trawling
+  effects were no longer evident; "The effects of fishing were not detectable in the mobile
+  sediments."
+* Swimming crab Liocarcinus depurator: Glass 1985, PhD thesis Univ. Glasgow, Loch Sween (3-30 m) [F]
+  https://theses.gla.ac.uk/4939/ (data/glass1985_thesis/)
+  - "A total of 279 adult crabs were claw tagged ... Fifty six of these (20%) were resighted in the
+    study area"; "Of the 56 crabs resighted after tagging, 25 (45%) were observed on one occasion
+    only, one week after tagging. One male crab was observed 20 weeks after tagging and one female
+    was resighted after a period of 23 weeks."
+  - "Tagging and resight studies show that L. depurator does not show any long term site attachment
+    and that in the area sampled, local populations are not stable in the long term."
+  J: local residence of swimming crabs is weeks; a small depleted patch is refilled by crab
+  movement within weeks to months (no km/yr figure given).
+* Crangon allmanni: Blahudka & Turkay 2002, Helgol. Mar. Res. 56:190-197,
+  doi:10.1007/s10152-002-0110-6 [F] (data/crangon_allmanni_hmr2002/)
+  - "The life cycle of the HTR population lasts for about 1.5 years maximum. Recruitment takes place
+    in summer, and these recruits form the reproducing population of the next year."
+  - "This developmental time agrees with the laboratory results of Criales (1985) of 6-7 weeks at
+    12C" (larval development; [S] for Criales).
+  - Seasonal migration disputed: Allen (1960) "proposed a seasonal migration to shallow coastal
+    waters in October and back offshore in late spring (April/May). In contrast, Creutzberg and van
+    Leeuwen (1980) could not detect any migratory movement" [S via the paper].
+  J: annual turnover; recolonisation within one recruitment season (<= 1 yr).
+* Munida: no data for M. rugosa / M. sarsi. Congener M. subrugosa (Patagonia, reared at 8 C):
+  six zoeal stages ~83 d plus megalopa ~28 d, ~111 d in total [S, search snippet of Perez-Barros
+  et al. 2007, JEMBE 352:35; https://eprints.soton.ac.uk/49476]. Not used for the Skagerrak.
+* Pagurus bernhardus larval duration: megalopa "7.3 +- 0.1 days" (Weiss et al. 2009, JMBA,
+  https://eprints.soton.ac.uk/63617/) [S, temperature not seen]; zoeal duration not found.
+* Small macrofauna (context, plot-scale experiments): Kaiser et al. 2006, MEPS 311:1-14 [F, file on
+  disk in "../Bottensamhallets epifauna/data/lit/kaiser2006.pdf"]: "Although the extrapolated
+  recovery period for Annelida, Crustacea and Mollusca was 870 d, this result should be treated
+  with care given that the longest reported study was sampled for only 540 d" (intertidal
+  dredging, muddy sand).
+
+#########################################################################################
+NOT FOUND (searched, no usable source)
+#########################################################################################
+- Brander & Bennett 1986/1989 (Irish Sea cod-Nephrops): not online; only cited via Armstrong 1991.
+- Armstrong 1982 (J. Cons.) Irish Sea cod diet full text: not open; Armstrong et al. 1991 used instead.
+- Ulmestrand & Eggert 2001 full text (female VBGF, tag movements in the Skagerrak): not obtained.
+- Tuck et al. 1994 juvenile burrow paper: not open access.
+- Chapman 1980 / Chapman & Rice 1971 / Chapman & Bailey 1987 original tagging results (movement
+  per year): not read; only Smith's citation and Glass's recapture-rate remark ("maximum recapture
+  value was 14.7%" in nine Nephrops tagging studies, Chapman 1980 via Glass).
+- Sizes of Nephrops eaten by haddock, rays, gurnards, long rough dab, monkfish: no source with
+  carapace lengths found. A predator-length to prey-CL regression: none published in the sources
+  read (De Clerck & Sterk correlate numbers/weight, not CL).
+- Skagerrak (FU 3-4) Nephrops prey sizes in cod stomachs measured as CL: none (Dorman 1992 gives
+  weights only).
+- Recovery / recolonisation time series of Nephrops in the SE Kattegat after the 1988 hypoxia:
+  not found (Baden et al. 1990 ends in Sept 1989 at zero catch).
+- Response of FU 3-4 Nephrops burrow density to the 2009 Kattegat closed areas: not found.
+- Nephrops in offshore wind farms: not searched to a result (no source found).
+- Pandalus adult horizontal movement in km per year (tagging): not found.
+- Munida rugosa / M. sarsi larval duration; adult movement: not found.
+- Liocarcinus, Munida, hermit crab adult movement distances (km/yr): not found.
+- Mysid recolonisation of a disturbed/trawled area: not found.
+- Crangon allmanni recolonisation after defaunation: not found.
+
+
+PART C - Refuge and exposure of mobile epifauna: northern shrimp, small shrimps, crabs, squat lobsters,
+hermit crabs, mysids
+=====================================================================================================
+
+Scope: how much of the day each taxon is buried / hidden / off the bottom, the fraction exposed to
+benthivorous fish on the bottom, day/night catch ratios, and evidence on refuge saturation.
+Model context (from the task): current accessible fractions shrimp 0.7, crabs 0.6, hermits 0.8,
+Munida 0.3, small shrimps 0.6, mysids 0.6. Site: Skagerrak, 100-300 m mud.
+
+Tags: [F] full text read by me, [A] abstract only, [S] secondary / search snippet, J = my judgement or
+derivation. Where a full text I read reports someone else's result, the tag is [F] for the sentence I read
+and the original is named as "cited". Files: data/<source>/ ; scripts in scripts/.
+
+Not repeated (already in "Bottensamhallets epifauna"/evidence_A1, evidence_B): Frechette et al. 1983 ratio
+6.33 day/night; females migrate less; Skagerrak shrimp survey (Jan-Feb) no sun-height effect;
+L. holsatus buries by day (Reiss 2006); suprabenthos 76-97 % in 0-50 cm by day (Cunha 1997).
+
+Ratio naming in part_C_rows.csv: Q3 shrimp rows give day/night ratios (day_night_catch_ratio), Q4 rows
+night/day ratios (night_day_catch_ratio); the unit column states the direction.
+
+Exposure convention used below (J): a bottom-trawl catch ratio measures the share of the population inside
+the trawl opening (a few m to ~11 m above the bottom). That is the share a bottom-feeding fish can reach.
+Shrimp that have left the bottom are not "safe": they are exposed to pelagic and semi-pelagic feeders
+(saithe, blue whiting, herring, mackerel), i.e. to a different model group.
+
+
+=====================================================================================================
+Q3. NORTHERN SHRIMP Pandalus borealis - diel vertical migration
+=====================================================================================================
+
+Q3.1 Shumway, Perkins, Schick & Stickney 1985. Synopsis of biological data on the pink shrimp, Pandalus
+borealis Kroyer, 1838. NOAA Tech. Rep. NMFS 30 / FAO Fisheries Synopsis No. 144 (NOT 142 as in the task).
+https://www.fao.org/3/a-ap949e.pdf  file: data/shumway1985/shumway1985.pdf   [F]
+  Section 2.22 (all findings below are cited by Shumway, not original):
+  - "Diurnal vertical migration of P. borealis has been indicated through reduced trawl catches at night in
+    the Barents Sea (Bryazgin 1967), in the Gulf of Alaska (Gaffney 1977a), off Norway (Hjort and Ruud 1938;
+    Wollebaek 1903), off west Greenland (Horsted and Smidt 1956), and by others (Blacker 1957; Rathjen and
+    Fahlen 1962)."
+  - TIMING: "Barr and McBride (1967) found that shrimp moved off the bottom in the early evening and remained
+    in the entire water column until early morning (Fig. 8)." -> off bottom ~ dusk to dawn, i.e. roughly the
+    length of the night (J). Fig. 8 (Barr 1970a, Kachemak Bay, pots surface-to-bottom, ~91 m) shows the
+    sampling periods "arranged in order of increasing length of night"; the figure numbers are not readable in
+    the text extraction, so no heights are taken from it.
+  - THERMOCLINE LIMIT: "Apollonio and Dunton (1969) confirmed vertical migratory behavior in similar
+    experiments in the Gulf of Maine but found the extent of vertical movement limited by a thermocline."
+    "Apollonio and Dunton (1969) showed no vertical migration through the thermocline in the Gulf of Maine."
+  - SEX: "Ovigerous females do not migrate vertically apparently due to a decreased ability to swim
+    (Apollonio and Dunton 1969; Haynes and Wigley 1969; Jones and Parsons 1978)." "Vertical migration at night
+    has been shown by Barr (1970a) and Apollonio and Dunton (1969) to separate year classes during seasons
+    when females are ovigerous as the females do not rise in the water." Ovigerous season in the Skagerrak is
+    roughly autumn-spring (eggs carried ~Oct-Apr; general knowledge, not read here) -> J: in winter a large
+    share of the adult biomass (berried females) stays on the bottom, consistent with the Skagerrak Jan-Feb
+    survey showing no day/night effect.
+  - SIZE (conflicting): "Barr (1970a) found that smaller shrimp migrated further up in the water column off
+    Alaska while Carlsson (1979) reported that larger shrimp were participating in the migration to a greater
+    extent than smaller shrimp off west Greenland."
+  - LIGHT: "Barr (1970a) demonstrated that light affects shrimp in their diel vertical migration in Alaska";
+    "Apollonio and Dunton (1969) also demonstrated negative phototaxis of P. borealis adults."
+  - FEEDING: "While the species is predominantly a benthic feeder, it is known to feed in the water column
+    during diel vertical migrations (Wollebaek 1903; Barr 1970a)."
+  - ASSESSMENT BIAS: "Hoydal (1978b) indicated that vertical migration influenced distribution and affected
+    catch per unit effort measurements which caused assessments based on bottom trawls to underestimate stock
+    size."
+  - SCHOOLING: "Pandalus borealis is a schooling species that aggregates in relatively dense patches."
+  No number for hours off bottom or share migrating in Shumway.
+
+Q3.2 Jones, B.C. & Parsons, D.G. 1978. Assessment of pink shrimp (Pandalus borealis) fishery potential in
+Davis Strait and northeastern Canadian waters. ICNAF Res. Doc. 78/XI/87 (Serial No. 5303). Header: "Not to be
+cited without prior reference to the author(s)".
+https://www.nafo.int/icnaf/library/docs/1978/res-87.pdf  file: data/icnaf_res87_1978/res87.pdf   [F]
+  Davis Strait, August 1978, Sputnik 1600 bottom trawl (11 m vertical opening), test grid at ~368 m,
+  duplicate tows at different times at five sites.
+  - "Since it was noted that the proportions of ovigerous females in catches varied on a diel basis (Fig. 5),
+    that is, proportions were lower during the day when it is likely that smaller shrimp descend to increase
+    total biomass on the bottom, these data were used to determine the night and day plateau periods"
+  - PLATEAUS: "The night and day periods so determined were 1 hour 50 minutes and 5 hours 20 minutes
+    respectively." (i.e. ~17 h/day are transition; August at ~64-67 N, short night - J).
+  - "Plateau means (n = 10): noon, 34.4 kg; midnight, 13.9 kg." (Table 1)
+  - "They indicate a maximum reduction to 40.4% of available (noon) biomass, resulting in a maximum correction
+    multiplier of 2.47. This falls within the range of maximum correction factors derived from commercial
+    catch data noted in other studies (Table 3)"
+  - Table 3, maximum day/night correction factors, Davis Strait: 1.80 (July, Horsted 1976); 2.47 (August, this
+    study); 2.80 (August, Berenboim et al. 1976); 3.50 (August, Smidt 1976). [F for the table; originals cited]
+  - Not all shrimp are on the bottom even at noon: "some shrimp are likely to be found in the water column
+    above the 11 m high opening of the Sputnic 1600 bottom trawl at all times of the day, and thus would
+    neither be taken by the net nor be accounted for in the diel correction factor."
+  - J (scripts/jones_parsons_1978_daily_mean.py; Table 2 typed in by hand, the parenthesised 0400 and 1600
+    values read as point values and the others as hourly interval values): 24-h mean availability = 0.68 of
+    the noon level, i.e. a bottom feeder meets on average ~68 % of what it meets at noon (off bottom relative
+    to noon 0.32). By local 6-h block (local = GMT - 4 h): 00-06 h 0.48, 06-12 h 0.82, 12-18 h 0.94,
+    18-24 h 0.50. Fraction off bottom at midnight relative to noon: 1 - 0.404 = 0.60. Caveats: summer, high
+    latitude (short night), linear transitions assumed by the authors, noon treated as 100 % on bottom although
+    some shrimp are above 11 m at all hours (so these off-bottom fractions are relative to the day level, and
+    the true on-bottom fraction is lower still). Lands close to the model's f 0.7 for shrimp. In the Skagerrak
+    winter (Jan-Feb survey, no sun-height effect, evidence_A1) the same quantity is ~1.
+
+Q3.3 Smidt, E. 1976. Diurnal variations in shrimp catches on the offshore grounds of ICNAF Div. 1B. ICNAF Res.
+Doc. 76/XII/149 (Serial 4045). https://www.nafo.int/icnaf/library/docs/1976/res-149.pdf
+file: data/icnaf_res149_1976_smidt/res149.pdf   [F]
+  Commercial logbook catches of the trawler SISIMIUT, West Greenland (~66-69 N), 923 hauls, Dec 1975-Oct 1976.
+  - "they clearly show diurnal variations by months with the smallest catches taken by night. Further, the
+    biggest diurnal variation is seen in the autumn, when the variation in light intensity is maximal, while
+    the smallest diurnal catch variation is seen in December-January and in June, when the variation in light
+    intensity is minimal. It is, therefore, reasonable to believe that the diurnal variation in light intensity
+    causes vertical migrations by the shrimps some of which move up in the water by night."
+  - Table 2 (Oct-Dec 1975, kg/h in 3-h intervals; legible): October 76, 66, 275, 466, 500, 675, 420, 300;
+    November 244, 496, 370, 632, 1050, 761, 537, 460; December 187, 445, 383, 508, 562, 600, 473, 427
+    (intervals 0-3, 3-6, 6-9, 9-12, 12-15, 15-18, 18-21, 21-24 h).
+  - J (scripts/smidt_1976_ratios.py): max/min 10.2 (Oct), 4.3 (Nov), 3.2 (Dec); day (09-15 h) / night (21-03 h)
+    2.6 (Oct), 2.4 (Nov), 1.7 (Dec); 24-h mean / daily maximum 0.51 (Oct), 0.54 (Nov), 0.75 (Dec).
+    Commercial data, uncontrolled for position; Table 1 (other months) is not legible in the scan and is not
+    used. SEASON: day/night contrast is largest at equinox-autumn and smallest around the solstices at this
+    latitude (the Skagerrak, 58 N, has a real night in midsummer, so this solstice damping applies less there
+    in summer; in winter the Skagerrak survey shows no effect - evidence_A1).
+
+Q3.4 Horsted, Sv.Aa. 1976. A trawl survey of the offshore shrimp grounds in ICNAF Div. 1B and an estimate of
+the shrimp biomass. ICNAF Res. Doc. 76/XII/150. https://www.nafo.int/icnaf/library/docs/1976/res-150.pdf
+file: data/icnaf_res150_1976_horsted/res150.pdf   [F]
+  - "The highest density (or availability) of shrimps on the bottom occurs early afternoon, whereas catch rates
+    in the night are lower." Max correction factor 1.80 (July; reported in Jones & Parsons 1978 Table 3).
+
+Q3.5 Barr, L. 1970. Diel vertical migration of Pandalus borealis in Kachemak Bay, Alaska. J. Fish. Res. Board
+Can. 27: 669-676. https://doi.org/10.1139/f70-071   [A] (abstract via Crossref; full text closed)
+  - "Catches of Pandalus borealis by surface-to-bottom pot fishing in Kachemak Bay, Alaska, showed that this
+    species was distributed in large numbers throughout the water column at night and suggested a diel vertical
+    migration. The shrimp apparently left the vicinity of the bottom about dusk and returned about dawn; the
+    apparent length of time they were off bottom was directly related to the length of the night. Bottom
+    trawling clearly showed lower availability of P. borealis on bottom at night than during the day. Catches
+    of shrimp by pot fishing and trawling indicated that small P. borealis have a greater tendency to migrate
+    vertically than the larger individuals."
+  - HOURS OFF BOTTOM (J from Barr): ~ hours of darkness, i.e. at 58 N in the Skagerrak ~6-7 h (midsummer) to
+    ~17-18 h (midwinter) for the migrating part of the population. Barr gives no share of the population.
+  - Shallow site (Kachemak Bay is a fjord-like bay, tens of m to ~100 m); whole water column used at night.
+
+Q3.6 Baker, K.D., Mullowney, D.R.J., Fulton, S. et al. 2024. Spatiotemporal modelling of northern shrimp
+Pandalus borealis distribution patterns throughout Canada's subarctic and arctic regions. MEPS 740: 79-93.
+https://doi.org/10.3354/meps14651  file: data/baker2024_meps740/m740p079.pdf   [F]
+  - Fishable shrimp (> 17 mm CL), Canadian surveys 1995-2023: "Although the inclusion of the factor
+    representing light conditions (i.e. Period) improved model performance, the effect size was relatively
+    small. The small effect verified that catches were somewhat higher in light conditions compared to dark,
+    indicating the movement of shrimp off the seafloor bottom during dark hours." No numeric effect size given.
+  - "Our research focused on fishable (i.e. large) northern shrimp, and the model was strongly influenced by
+    the heaviest, largest shrimp (i.e. large females). Female northern shrimp are not thought to complete diel
+    migrations to the same extent as males (i.e. smaller shrimp) (Barr 1970, Hudon et al. 1992, Bergstrom
+    2000)."
+  - "Similar to our findings, Barr (1970) also found that movement patterns were related to the light
+    conditions, with the amount of time spent on bottom related to the length of night-like conditions."
+  - Frechette et al. 1983 range: Baker et al. 2021 (below) cite "P. borealis to be 1.9 to 6.33 times more
+    abundant in day catches than in night survey tows" [S] - the 1.9 lower end is new relative to evidence_A1.
+
+Q3.7 Baker, K.D. et al. 2021. Ecology and epidemiology of the striped shrimp, Pandalus montagui ..., in the
+northern Labrador Sea, Davis Strait, and Ungava Bay, Canada. J. Crustacean Biol. 41(2): ruab024.
+https://doi.org/10.1093/jcbiol/ruab024   [F] (HTML full text via WebFetch; quotes are the opening parts of
+sentences as returned)
+  - P. montagui MALES: "daylight catches were 1.52 times those made at night"; the factor was "used to convert
+    catches of males during night tows, thereby standardizing all catches to the daylight period".
+  - Lower than for P. borealis "where the effect of the midnight sun and minimal darkness may dampen the overall
+    diel migration pattern".
+  - Frechette et al. (1983) found "P. borealis to be 1.9 to 6.33 times more abundant in day catches than in
+    night survey tows" [S, cited].
+
+Q3.8 Hudon, C., Parsons, D.G. & Crawford, R. 1992. Diel pelagic foraging by a pandalid shrimp (Pandalus
+montagui) off Resolution Island (Eastern Hudson Strait). Can. J. Fish. Aquat. Sci. 49: 565-576.
+https://doi.org/10.1139/f92-066   [A] (abstract via Crossref)
+  - "Massive nocturnal vertical migrations of shrimp were observed in association with intense pelagic feeding
+    activity." "Pelagic migrants were mostly males (75%), extending their planktonic foray into morning hours,
+    whereas ovigerous (12%) and nonovigerous (13%) females returned to the bottom at dawn. In the trawl, the
+    representation of males (43%) and ovigerous females (45%) differed, but also fluctuated on a diel cycle."
+    "The occurrence of daily vertical feeding migrations results in the unavailability of a variable proportion
+    of the total shrimp biomass to bottom trawls."
+  Crawford, R., Hudon, C. & Parsons, D.G. 1992. An acoustic study of shrimp (Pandalus montagui) distribution
+  near Resolution Island (Eastern Hudson Strait). CJFAS 49: 842-856. https://doi.org/10.1139/f92-095   [A]
+  - "The shrimp underwent a nocturnal vertical migration with other zooplankton to > 200 m from the bottom and a
+    subsequent downward migration during early daylight hours. This diel migration resulted in reduced
+    availability of shrimp to the bottom trawl at night. Timing of the migrations varied".
+  (P. montagui is also a Q4 small-shrimp taxon; these values are listed there too.)
+
+Q3 SUMMARY (J)
+  - Who migrates: males and small / non-ovigerous shrimp; ovigerous females stay on the bottom (Shumway;
+    Hudon 1992: 75 % of pelagic P. montagui migrants were males). Size effect conflicting (Barr: small migrate
+    more; Carlsson 1979 W Greenland: large more).
+  - When: dusk to dawn; time off bottom scales with night length (Barr). Day/night contrast largest in autumn
+    (equinox), smallest at the solstices at high latitude (Smidt 1976).
+  - How much: bottom-trawl catch at night = 0.3-0.55 of the day/noon catch (ratios 1.8-3.5 Davis Strait, up to
+    6.33 Canada; P. montagui males 1.52). 24-h mean on-bottom availability relative to the day maximum: 0.51-0.75
+    (W Greenland Oct-Dec), 0.68 (Davis Strait August). Large (fishable, mostly female) shrimp: small effect
+    (Baker 2024). Skagerrak survey in Jan-Feb (berried females, long nights): no effect (evidence_A1).
+  - How high: P. borealis up to the whole water column in shallow bays (Barr; Kachemak Bay), limited by the
+    thermocline (Apollonio & Dunton); P. montagui > 200 m above bottom (Crawford 1992). Jones & Parsons: some
+    shrimp above the 11 m trawl opening at all hours.
+  - Exposure: on the bottom by day = reachable by benthivores; in the water column at night = exposed to
+    pelagic/semi-pelagic fish instead. No study found that measures predation risk on vs off the bottom.
+  - Implication for f 0.7 (J): a year-round mean of ~0.65-0.85 is consistent with the evidence (lower in
+    autumn, ~1 in winter when females are berried); 0.7 sits at the low end of that.
+
+
+=====================================================================================================
+Q4. SMALL SHRIMPS, CRABS, SQUAT LOBSTERS, HERMIT CRABS, MYSIDS
+=====================================================================================================
+
+Depth caveat for all Mediterranean numbers below (J): light at 100-110 m in the clear western Mediterranean is
+much higher than at 100 m in the Skagerrak (more turbid, coastal water). The Skagerrak 100-300 m floor is
+probably closer, in light, to the Mediterranean upper slope (400 m) than to its shelf (100 m) - so the "slope"
+folding factors are likely the more transferable ones. Not measured; a judgement.
+
+Q4.1 Aguzzi, J. & Bahamon, N. 2009. Modeled day-night biases in decapod assessment by bottom trawling survey.
+Fisheries Research 100: 274-280. https://doi.org/10.1016/j.fishres.2009.08.010
+Postprint: https://digital.csic.es/bitstream/10261/56831/3/Aguzzi_et_al%202009_FR_post.pdf
+file: data/aguzzi2009_fishres/aguzzi2009.pdf   [F]
+  Table 1 "folding factor" = "a factor indicating how many times the daytime catch occurrences should be folded
+  to approach to a maximum occurrence within a 24-h cycle", derived from 24-h trawl series on the W.
+  Mediterranean shelf (100-110 m) and slope (400-430 m). For nocturnal species this is a night/day catch
+  ratio; < 1 means diurnal. Maxima timing N nocturnal, D diurnal, Cr crepuscular, Ar arrhythmic.
+    species (habit)                      shelf timing / factor   slope timing / factor
+    Liocarcinus depurator (burier)       N / 5                   Cr / 2.5
+    Goneplax rhomboides (burrower)       N / 10                  Ar / 2.0
+    Alpheus glaber (burrower)            N / 10                  Ar / 1.0
+    Nephrops norvegicus (burrower)       Cr / 10                 D / 0.1
+    Pontophilus norvegicus (burrower)    -                       N / 3.0
+    Munida intermedia (burier)           -                       D / 0.5
+    Munida tenuimana (burier)            -                       N / 2.0
+    Processa canaliculata (burier)       N / 100                 D / -
+    Processa nouveli (burier)            N / 100                 D / -
+    Solenocera membranacea (burier)      N / 100                 D / 0.3
+  - "On the shelf, burrowing species show increased occurrence in trawl sampling at night, a 10-fold increase
+    versus daytime. Buriers present a similar time-related bias in trawl sampling but with a stronger
+    intensity. Their occurrence in night trawl catches increases to up to 100 times in comparison to the day."
+  - "Buriers presented a more elevated daytime error of sampling on shelf and slope. Their occurrence increased
+    at night up to 100 times on the shelf, with a smaller sampling error on the slope (up to 4 times more
+    elevated during day than night)."
+  - "Burier emergence occurs in a synchronous fashion, provoking the schooling of animals within the benthic
+    boundary layer ... The whole population is hence more exposed to bottom trawling at once. Conversely
+    burrowers can retract within their tunnels when nets approach, using the door-keeping behavior"
+  - "Species shift the timing of emergence from night to day as depth increases (Aguzzi et al., 2009a),
+    according to the known 'Nephrops model'".
+  Interpretation (J): if a trawl only catches emerged animals, fraction exposed by day ~ 1/factor of the night
+  level: Processa ~0.01, Goneplax and Alpheus ~0.1, L. depurator ~0.2 on the shelf; on the slope 0.3-0.5.
+  The factors are rounded to orders of magnitude (1, 2, 5, 10, 100) - read as orders of magnitude, not
+  measurements.
+
+Q4.2 Bahamon, N., Sarda, F. & Aguzzi, J. 2009. Fuzzy diel patterns in catchability of deep-water species on the
+continental margin. ICES J. Mar. Sci. 66: 2211-2218. https://doi.org/10.1093/icesjms/fsp190
+Preprint: https://digital.csic.es/bitstream/10261/56866/3/Bahamon_et_al_2009_preprint.pdf
+file: data/bahamon2009_icesjms/bahamon2009_preprint.pdf   [F] (preprint)
+  - Abstract: "On the shelf, the species assemblages shifted abruptly between a diurnal and a nocturnal
+    structure at sunset and sunrise ... Endobenthic decapods with marked crepuscular-nocturnal emergence from
+    the substratum were mostly responsible for this pattern. No clearly discernible diel pattern was found with
+    the dampening of light intensity with depth".
+  - Table 2 "Mean densities (ind. km-2) ... sampled at dawn (DW), by day (D), dusk (Du), and at night (N) on the
+    continental shelf (100-110 m) and upper slope (400-430 m) in October 1999 and June 2000". Liocarcinus
+    depurator row: shelf 4168 / 2658 / 9287 / 8978 and 1567 / 824 / 3781 / 2846; slope 85 / 54 / 90 / 70 and
+    39 / 100 / 207 / 89 (Dw / D / Du / N). The column-group order (Oct vs June) is not labelled in the text
+    extraction; the first two groups are the shelf (they hold the shelf-only fish).
+  - J: L. depurator night/day = 3.4 and 3.5 on the shelf (100-110 m); 1.3 and 0.9 on the slope (400-430 m);
+    dusk is as high as night. Day exposure relative to night ~0.3 on the shelf, ~1 on the slope.
+    Caution: in the preprint table some shelf cells of Solenocera duplicate the Trisopterus row (4112 / 2697 /
+    2930), so the preprint has typesetting errors; the L. depurator row looks internally consistent.
+
+Q4.3 Aguzzi, J., Bahamon, N. & Marotta, L. 2009c. The influence of light availability and predatory behavior of
+the decapod crustacean Nephrops norvegicus on the activity rhythms of continental margin prey decapods. Marine
+Ecology 30: 366-375. https://doi.org/10.1111/j.1439-0485.2008.00276.x
+Postprint: https://digital.csic.es/bitstream/10261/56832/3/Aguzzi_et_al%202009_ME_post.pdf
+file: data/aguzzi2009c_marecol/aguzzi2009c.pdf   [F]
+  - Hourly 24-h trawl series, 4 days, October 1999 (~10 h day / 14 h night) and June 2000.
+  - "Burying species distributed at both depths (e.g. the shrimp species, S. membranacea and P. canaliculata, or
+    the portunid crab, L. depurator) display clear behavioral patterns only on the shelf ... At 400-430 m, these
+    species do not center their activity rhythm during daytime as does Nephrops. Conversely, some species show
+    a few hours' delay in the onset of activity and then are also active for a short time at night".
+  - "Goneplax rhomboides instead showed contradictory patterns in emergence behaviors, being nocturnal or
+    arrhythmic in different Atlantic and Mediterranean areas (Atkinson & Naylor 1973; Atkinson 1974a, b; Naylor
+    & Atkinson 1976). This behavior may depend upon local conditions and local Nephrops norvegicus density."
+  - "Our data for the slope suggest that burying species may alter the timing of their emergence and reburying
+    activity in a manner that reduces the chances of being encountered by N. norvegicus".
+  - Table 1 medians (ind. km-2) are pooled over all hours; not a day/night ratio; not used.
+
+Q4.4 Aguzzi, J., Company, J.B. & Garcia, J.A. 2009a. Ontogenetic and gender-modulated behavioural rhythms in the
+deep-water decapods Liocarcinus depurator, Munida tenuimana and M. intermedia. Marine Ecology 30: 93-105.
+https://doi.org/10.1111/j.1439-0485.2008.00252.x   [A]
+  - "Liocarcinus depurator was captured at night on the shelf, whereas on the slope, animals displayed peaks
+    both in the middle of the day and night. Size-related differences (but no gender differences) were found
+    ... Munida intermedia were weakly diurnal in October and both diurnal and nocturnal in June. Munida
+    tenuimana presented no discernible rhythmicity in October, but was nocturnal in June. ... Data were
+    interpreted assuming that all tested species present an endobenthic behaviour (i.e. animals emerge from
+    the substrate during the active phase of their behavioural cycle)."
+  (These are the data behind the Q4.1 folding factors for these three species.)
+
+Q4.5 Abello, P., Reid, D.G. & Naylor, E. 1991. Comparative locomotor activity patterns in the portunid crabs
+Liocarcinus holsatus and L. depurator. J. Mar. Biol. Assoc. UK 71: 1-10.
+https://doi.org/10.1017/S0025315400037346   [A]
+  - "L. holsatus captured in the sublittoral zone had a clear tendency to show circadian activity rhythms with
+    highest activity during day-time hours. L. depurator occurred only sublittorally and showed circadian
+    activity patterns with highest activity during the night. ... In the sublittoral zone L. depurator is active
+    mainly during the night, whereas L. holsatus, is active mainly during the day."
+  - NOTE: this contradicts the "L. holsatus buries by day" reading already on file (Reiss 2006 via
+    evidence_B). L. depurator, not L. holsatus, is the crab of 100-300 m Skagerrak mud (J).
+
+Q4.6 Atkinson, R.J.A. (no year printed; Lundy Field Society Annual Report 26, mid-1970s). Studies of a Goneplax
+rhomboides population off Quarry Bay.
+https://lfs-resources.s3.amazonaws.com/ar26/LFS_Annual_Report_Vol_26_Part_26.pdf
+file: data/atkinson_lfs_ar26/lfs_ar26.pdf   [F]   Diving, 17 m below CD, mud, August.
+  - GONEPLAX: "Goneplax was not seen on the mud surface during the day but was common at night." "Since
+    Goneplax were not seen on the mud surface during the day, the transect was also swum at night."
+    "The nocturnal emergence of Goneplax observed at Lundy agrees with observations at Fishguard and
+    experimental studies, such emergence being controlled by an endogenous rhythm synchronised by the
+    light/dark cycle (Atkinson and Naylor, 1973; Atkinson, 1973a, 1974b)."
+  - Burrow density: "The mean density is 0.93 burrows per m2." (89 burrows on a 48 x 2 m transect).
+    "not all burrows were investigated for occupancy. Thus the distribution of burrows will be different from
+    the distribution of animals if some burrows are empty."
+  - L. DEPURATOR (as Macropipus depurator): "Macropipus was seen on the mud surface during the day but
+    specimens were inactive. At night, Macropipus was very active and swam into the torch beam." It "was often
+    seen in the depressions caused by collapsed burrows and also in the depressions at the entrances to
+    burrows." -> on this site L. depurator did NOT bury by day; it sat on the surface, inactive (J: still
+    visible to a visual predator).
+  - MUNIDA: "The squat lobster Munida bamffica (Pennant) was occasionally seen in the entrances of burrows but
+    these burrows appeared to be vacated Goneplax burrows." (M. bamffica = M. rugosa.)
+
+Q4.7 Atkinson, R.J.A. & Naylor, E. 1973. Activity rhythms in some burrowing decapods. Helgolander wiss.
+Meeresunters. 24: 192-201. https://doi.org/10.1007/BF01609511  file: data/atkinson_naylor1973/an1973.pdf [F]
+  - Goneplax in artificial-burrow actographs, constant dim light: "very consistently showed distinct circadian
+    rhythmicity in the pattern of exploration of the end chambers, activity within the 'burrow' often remaining
+    high and more or less arhythmic" ... "In Figure 2 the rhythm remains clear-cut for 35 days". No hours out of
+    burrow are stated in the text (figures not readable in extraction).
+  - Atkinson 1974 Mar. Biol. 25: 239-252 (https://doi.org/10.1007/BF00394970) and Rice & Chapman 1971 Mar. Biol.
+    10: 330-342 (https://doi.org/10.1007/BF00368093): closed, no abstract retrieved. [S, search summary only:
+    Atkinson 1974 burrows had 1-6 openings, tunnels ~10 cm deep; field burrow distribution random.]
+
+Q4.8 Zainal, K.A.Y. 1990. Aspects of the biology of the squat lobster, Munida rugosa (Fabricius, 1775). PhD
+thesis, University of Glasgow. https://theses.gla.ac.uk/78167/  file: data/zainal1990_thesis/zainal1990.pdf [F]
+  Firth of Clyde, 8-115 m; M. sarsi 95-115 m.
+  - "It has been noted that M. rugosa occupies the burrows of other species, for example, they have been
+    reported from burrows of the red band-fish Cepola rubescens (Atkinson et al., 1977) and those of the Norway
+    lobster, Nephrops norvegicus (R.J.A. Atkinson pers. comm.). In each case the burrows had been vacated by
+    the original occupants."
+  - Divers reported "M. rugosa on open bedrock, beneath stones and rock overhangs (particularly at the
+    bedrock/sediment interface), in rock crevices, amongst hydroid and bryozoan 'turf' and on the sediment
+    plain. Here they were often adjacent to stones and other cover, but also occurred in burrows."
+  - "more animals were caught in creels when they were deployed near to rocks than when they were further out on
+    the sediment plain."
+  - Lab: "Animals were observed to occupy hollows in the muddy substrata of tanks, but none were observed to
+    burrow independently." "Independent burrowing behaviour could not be substantiated".
+  - "Observations suggest that those specimens that do occur in crevices and burrows, remain at or near the
+    opening (R.J.A. Atkinson, pers. comm.)."
+  - Feeding time: "more full stomachs (category 1) were found in the morning catches than in afternoon catches,
+    suggesting a nocturnal feeding peak": >50 % full 29 of 71 (morning) vs 8 of 43 (afternoon).
+    J: 0.41 vs 0.19.
+  - REFUGE SATURATION (J): on featureless mud, Munida shelter depends on burrows dug by other species (Nephrops,
+    Goneplax, Cepola) and on stones. This is a refuge that can saturate, but no study quantifying vacant-burrow
+    availability vs Munida density was found.
+
+Q4.9 Nickell, L.A. & Sayer, M.D.J. 1998. Occurrence and activity of mobile macrofauna on a sublittoral reef:
+diel and seasonal variation. J. Mar. Biol. Assoc. UK 78: 1061-1082. https://doi.org/10.1017/S0025315400044325 [A]
+  - UWTV, 48 h in four seasons, west Scotland reef: "Munida rugosa [was] predominantly diurnal" (listed with
+    the fish that "were predominantly diurnal"). Rocky reef, shallow - J: conflicts with the nocturnal feeding
+    of Zainal; Munida timing seems site-dependent, as in the Mediterranean (M. intermedia diurnal, M. tenuimana
+    nocturnal, Q4.1/Q4.4).
+
+Q4.10 Aguzzi, J. et al. 2021. Burrow emergence rhythms of Nephrops norvegicus by UWTV and surveying biases.
+Sci. Rep. 11: 5797. https://doi.org/10.1038/s41598-021-85240-3 (PMC7970996)
+file: data/aguzzi2021_scirep/PMC7970996.xml   [F] (context for burrow availability only)
+  - "The results showed an average level of 1 visible Nephrops individual per 10 burrow systems, depending on
+    sampling time and depth." Example: "0.908 burrows/m2 ... This corresponds to a visible occupancy of 0.086
+    individuals per burrow" (FU 15, W Irish Sea). J: "visible" is not "present", so this does not give the
+    vacant-burrow fraction that Munida could use.
+
+Q4.11 SMALL SHRIMPS (Crangon allmanni, Pontophilus spinosus, Processa, Pandalus montagui, Eualus)
+  - P. montagui: males 1.52 x more in day catches (Baker et al. 2021, Q3.7) [F]; massive nocturnal migration,
+    75 % of pelagic migrants males, > 200 m above bottom (Hudon et al. 1992; Crawford et al. 1992, Q3.8) [A].
+  - Processa: nocturnal buriers, night/day folding factor 100 on the 100 m Mediterranean shelf (Q4.1) [F];
+    P. canaliculata activity "most prevalent at night" (Aguzzi 2009c) [F]. Aguzzi & Garcia 2008 Crustaceana
+    81: 1301 (https://doi.org/10.1163/156854008X369492): closed, no abstract.
+  - Pontophilus norvegicus (slope, burrower): nocturnal, factor 3.0 (Q4.1) [F]. P. spinosus: Not found.
+  - Crangon allmanni, Eualus: no diel or burial data found (searched; Blahudka & Turkay 2002 Helgol. Mar. Res.
+    56: 190, file data/callmanni_germanbight2002/, has none).
+
+Q4.12 HERMIT CRABS (Pagurus, Anapagurus)
+  - No sublittoral activity rhythm, burial or day/night catch ratio found for Pagurus bernhardus, P. prideaux,
+    P. pubescens or Anapagurus laevis. Shell limitation is described for P. bernhardus (search snippets only,
+    intertidal/shallow) but is not a refuge from fish and is not quantified here.
+
+Q4.13 MYSIDS / HYPERBENTHOS
+  Kaartvedt, S. 1989. Retention of vertically migrating suprabenthic mysids in fjords. MEPS 57: 119-128.
+  https://www.int-res.com/articles/meps/57/m057p119.pdf  file: data/meps57_119_1989/m057p119.pdf   [F]
+  Masfjorden, W Norway (basin ~400 m).
+  - "Little evidence of horizontal dispersal was found in spite of extensive upward migration at night (> 100 m
+    away from bottom)."
+  - Lophogaster typicus: "The species is known to burrow into the sediment during daylight (Macquart-Moulin
+    1973, Bjerkestrand 1979, Fossa 1986), thus vulnerability to advection is restricted to the pelagic phase at
+    night. The entire population takes part in vertical migration (Kaartvedt 1985, Fossa et al. unpubl.) giving
+    Nm/N = 1. ... The pelagic phase lasts all night (Kaartvedt 1985, present investigation), and is as an annual
+    mean conservatively set to 10 h (T = 10/24)."
+  - "In both Lophogaster typicus and Leptomysis gracilis, the entire population seems to leave the bottom at
+    night and remain in the pelagic phase through the dark period (Kaartvedt 1985). On the other hand, part of
+    the population of Boreomysis megalops may remain in the suprabenthic region at night".
+  - B. megalops: "Day and night sampling with the 2 mm net IKMT at Stn 2 in December 1986 gave no catch in the
+    day compared to 150 individuals at night." (pelagic, i.e. off-bottom, catch).
+  - SKAGERRAK RELEVANCE: "extensive sampling by sledge in fjords, in the Norwegian Trench and on the continental
+    shelf where currents are stronger than in the fjords ... has revealed that vertically migrating mysids are
+    not abundant at the shelf and trench locations. In contrast, fjord-living species which do not undertake
+    extensive vertical migrations also have abundant populations in these more advective environments
+    (T. Brattegard pers. comm.)." J: on the Skagerrak/Norwegian Trench slope the mysid stock is likely
+    dominated by non-migrating (bottom-bound) species, i.e. exposed to benthivores around the clock.
+
+  Mees, J. & Jones, M.B. 1997. The hyperbenthos. Oceanogr. Mar. Biol. Annu. Rev. 35: 221-255.
+  https://www.vliz.be/imisdocs/publications/281359.pdf  file: data/vliz_hyperbenthos_281359/281359.pdf   [F]
+  - Bay of Biscay shelf (Sorbe; sledge 0-50 and 50-100 cm): "The upper net (sampling the section between 50 m
+    [sic, cm] and 100 cm above the bottom) contained between 1.1% and 13.8% of the fauna present in the lower net
+    (which sampled between 0cm and 50cm above the bottom) during day and night, respectively." "Average annual
+    densities were 8730 ind. 100 m-3 at 31 m, and 3620 (day) and 2060 (night) at 91 m." At 91 m "mysids (44%)
+    and amphipods (27%) still predominated ... During the night, the dominance of mysids decreased (17%)" [S for
+    the original data; F for the review sentence].
+    J: in the bottom metre at 91 m, total hyperbenthos night/day = 2060/3620 = 0.57; mysids night/day =
+    (0.17 x 2060)/(0.44 x 3620) = 0.22, i.e. ~78 % of the day-time near-bottom mysids leave the bottom metre at
+    night.
+  - Bay of Seine, 10 m, June: mysids and cumaceans "average day density was 120 ind. 100 m-3 (56% of the animals
+    caught in the lower net), average night density was 480 ind. 100 m-3 (with a more even distribution of the
+    animals over the four nets)" (shallow; emergence from the sediment raises night density) [S/F as above].
+  - "Kaartvedt (1985), using sledges at 150 m in Fanafjorden (Norway), found that many of the mysid species
+    found near the bottom during the day undertook nocturnal vertical migrations; even so, a significant
+    proportion of the total population of each species remained in the hyperbenthic layer during darkness."
+  - "Generally, deep-living hyperbenthic cumaceans and amphipods are associated with the sediment during the
+    day, and swimming activity ... increases within the lower metres of the water column during darkness ...
+    the amplitude of the vertical migrations is usually small (Kaartvedt 1989)."
+
+  Cunha, M.R., Sorbe, J.C. & Bernardes, C. 1997. MEPS 157: 119-137 (full text now read; data/cunha1997_meps157/)
+  [F]: only one night haul, at the 21 m site; "The daytime structure (station TS320) is dominated by mysids
+  (70.9% of the total density in the 0 to 100 cm water layer)". No night data at 91-299 m. Adds nothing
+  quantitative for 100-300 m beyond evidence_B.
+
+
+=====================================================================================================
+REFUGE SATURATION - what was found (J summary)
+=====================================================================================================
+  - Burrowers that dig their own refuge (Goneplax, Alpheus, Nephrops): no limit on refuges implied; Goneplax
+    burrows 0.93 /m2 at 17 m (Atkinson, Lundy) - occupancy unknown.
+  - Munida: does not dig (Zainal 1990); depends on vacated burrows of Nephrops/Goneplax/Cepola, stones and
+    crevices; stays at the opening. Refuge availability could limit it on open mud. No numbers.
+  - L. depurator: buries or sits in depressions; at Lundy seen on the surface by day (inactive). Burial in soft
+    sediment is not limited by space (J).
+  - Processa, Solenocera, Pontophilus: bury in sediment; unlimited substrate (J).
+  - Mysids: Lophogaster burrows; others stay in the bottom 0.5 m by day (refuge = proximity to bottom /
+    darkness, not a countable shelter).
+  - Hermits: portable shell; shell supply is limiting in P. bernhardus (intertidal/shallow, search snippets),
+    unquantified, and not a refuge from fish that crush shells.
+
+
+=====================================================================================================
+NOT FOUND (searched, no number located)
+=====================================================================================================
+  - Bergstrom 2000 (Adv. Mar. Biol. 38: 55) full text - closed (Unpaywall: not OA); its numbers not seen.
+  - Barr 1970 full text (heights reached, share migrating) - closed; abstract only.
+  - Hudon et al. 1992 / Crawford et al. 1992 full texts (share of population pelagic) - closed; abstracts only.
+  - Any Skagerrak, Norwegian-fjord or North Sea measurement of P. borealis night ascent (height, share, hours).
+  - Gulf of St Lawrence, Barents Sea and Norwegian-fjord acoustic or net studies of adult P. borealis night
+    ascent: searched (also day-night correction factors for the GSL, Flemish Cap and Barents surveys); none
+    with numbers found. Only larval vertical distribution (GSL, CJFAS 51, doi 10.1139/f94-014) turned up.
+  - Measured hours per day off the bottom for P. borealis (only "dusk to dawn", "related to night length").
+  - Predation risk of P. borealis on vs off the bottom (no study comparing exposure to demersal vs pelagic fish).
+  - Hours per day buried for Liocarcinus depurator, Atelecyclus rotundatus, Goneplax (only "not seen by day",
+    "nocturnal"); Atkinson 1974 and Rice & Chapman 1971 full texts closed.
+  - Munida rugosa / M. sarsi: day/night catch ratio in northern Europe; burrow-sharing frequency with Nephrops;
+    vacant-burrow availability (refuge saturation).
+  - Crangon allmanni, Pontophilus spinosus, Eualus spp.: burial time, diel catch ratio.
+  - Pagurus bernhardus, P. prideaux, P. pubescens, Anapagurus laevis: sublittoral activity rhythm, day/night
+    catch ratio, time hidden.
+  - Kaartvedt 1985 (Sarsia 70: 287) and Fossa 1985 (Sarsia 70: 297) full texts - closed; the "significant
+    proportion remaining" at night in Fanafjorden is not quantified here.
+  - Mauchline 1980 (Adv. Mar. Biol. 18) - not retrieved.
+  - Aguzzi & Company 2010 review (Adv. Mar. Biol. 58: 155-225, https://doi.org/10.1016/B978-0-12-381015-1.00003-4)
+    - closed, not read.
+
+
+PART D - MEASURED FISH PREDATION ON MOBILE EPIFAUNA TAXA AND FIELD EVIDENCE OF DEPLETION
+(Q7: independent plausibility check for the model group mobile_epifauna:
+ Nephrops 60 %, crabs/hermit crabs/Munida 26 %, Pandalus borealis 7 %, small shrimps 4 %, mysids 3 %)
+
+Tags: [F] full text read, [A] abstract only, [S] secondary source / search snippet.
+"J" = own judgement or derivation (not a source value).
+Downloaded files: ../data/<source>/ ; text extracts beside each PDF.
+Written 2026-10-26.
+
+=====================================================================
+D1. PANDALUS BOREALIS - PREDATION MORTALITY AND CONSUMPTION
+=====================================================================
+
+D1.1 Skagerrak / Norwegian Deep stock (ICES IIIa + IVa east) - the model's own area
+---------------------------------------------------------------------
+(a) Munch-Petersen, Eigaard, Sovik & Ulmestrand 2010. NAFO SCR Doc. 10/70.
+    https://www.nafo.int/Portals/0/PDFs/sc/2010/scr10-070.pdf  [F]
+    "According to previous assessments (1985-2002), predation accounts for at least twice as
+    much removal from the Pandalus stock compared to fishery removals."
+    -> predation removal >= 2 x catch (Skagerrak/Norwegian Deep, 1985-2002 cohort assessments).
+
+(b) Jorgensen, Munch-Petersen, Nielsen, Sovik, Ulmestrand, Devine & Eigaard 2014.
+    NAFO SCR Doc. 14/066. https://www.nafo.int/Portals/0/PDFs/sc/2014/scr14-066.pdf  [F]
+    - Assessment natural mortality: "In this model the previously WG-group defined M of 0.75
+      across years and Pandalus age classes was kept."
+    - Best fit: "The lowest -log likelihood value (best model fit) was observed at M=1.2
+      (Table 2). This is considerably higher than the value of 0.75 that is used by the working
+      group." and "With a variable natural mortality the best model-fit was achieved with an
+      average M-level of 0.9".
+      -> total M (mostly predation per the WG) 0.75 (assumed) / 0.9 (predation-index weighted)
+         / 1.2 per yr (constant, best fit), Skagerrak/Norwegian Deep.
+    - Primary predators (stomach %W of P. borealis, Norwegian Deep samples 1984-87, Table 1):
+      cod 22.44 %W (n=779, Bergstad 1991), blue whiting >35 cm 18.57 %W (n=146),
+      roundnose grenadier 11.05 %W (n=400), velvet belly lanternshark 11.81 %W (n=147).
+      Incidental: haddock 2.15, saithe 2.69, whiting 0.96, hake 1.90, skates 3.80 %W.
+      Long rough dab: "P.Borealis predation unknown".
+      "These four species all have stomach contents of P.Borealis above 10 %W, whereas in alle
+      the other species stomach contents were below 5 %W."
+    - Abandonment of cohort assessment: "A main reason for abandoning the cohort based
+      analytical approach in 2003 was the WG-perception that unaccounted natural mortality
+      accounts for at least twice as much removal from the Pandalus stock as the fishery."
+    - Table 3 (literature field estimates): W. Gulf of Alaska total M 0.07-3.34 (mean 1.44)
+      (Andersson 1991); Barents Sea cod-predation M (Mcod) 0.06-2.23 (mean 0.76), 11 cohorts,
+      age 0-2 to 5+ (Berenboim et al. 1991) [F for the table; underlying sources not read].
+
+(c) ICES 1995. Report of the Study Group on Life Histories and Assessment of Pandalus Stocks in
+    the North Atlantic. ICES CM 1995/K:5. https://www.vliz.be/imisdocs/publications/ocrd/275381.pdf [F]
+    "The value used in earlier assessments i.e. 0,75 for Div.IIIa, IVaE is not well founded."
+    "The study group was not able to bring forward any information on predation mortality."
+    -> The 0.75 is a convention, not a measured M2.
+
+D1.2 Barents Sea stock (cod as the dominant predator)
+---------------------------------------------------------------------
+(a) Berenboim, Dolgov, Korzhev & Yaragina 1999. NAFO SCR Doc. 99/87 (= J. Northw. Atl. Fish.
+    Sci. 27: 69-75, 2000). https://www.nafo.int/Portals/0/PDFs/sc/1999/scr99-087.pdf  [F]
+    "Calculations have shown that from 15% to 58% of shrimp stock are eaten by cod both in terms
+    of the total biomass and each individual age group (Table 2)."
+    "Runs of the SSVPA model have shown that in 1984-1997 the biomass of shrimp varied from 0.6
+    in 1986, 1987 to 1.76 mill.t in 1992"
+    "our assessment has shown that shrimp catch is only 3-4 times less than the consumption of
+    shrimp by cod."
+    "a reverse correlation has been found between the abundance of commercial cod stock and
+    shrimp biomass in 1982-1998."  "cod at age 3-6 produce the strongest impact on shrimp stock,
+    the cod prefers to feed on shrimp with the total length of 5-10 cm."
+    -> fraction of stock eaten by cod per year 0.15-0.58 (as a rate: J, -ln(1-0.15..0.58)
+       ~ 0.16-0.87 /yr if the fraction is of start-of-year biomass).
+    (Tables 1-2 are images in the PDF; not readable as text.)
+
+(b) Hvingel 2006. NAFO SCR Doc. 06/64. https://www.nafo.int/Portals/0/PDFs/sc/2006/scr06-064.pdf [F]
+    "The estimates of annual consumption by cod have a mean of 250 Ktons while that of the
+    catches is 50 Ktons."  "Even though the estimates of consumption by cod is on average 5
+    times that of the catches and range from 160-450 ktons (in 1994-2004) the correlation with
+    changes in the size of the shrimp stock is weaker than that of the catches."
+    "A large part of the estimated consumption stems from large areas of low shrimp density
+    i.e. outside the areas where the fishery operates - and where the shrimp survey measures
+    stock size."
+    Survey biomass index (Table 1, "Survey 1") 1994-2004: 151-341 kt.
+    -> J: consumption/survey-index ratio ~0.5-3 /yr (160-450 kt / 151-341 kt), but the survey
+       index covers the dense areas only, so this ratio is an upper bound; against the SSVPA
+       biomass 0.6-1.76 Mt (D1.2a) the ratio is ~0.15-0.45 /yr.
+
+(c) Aschan, Johannesen, Bogstad & Hvingel 2006. NAFO SCR Doc. 06/71.
+    https://www.nafo.int/Portals/0/PDFs/sc/2006/scr06-071.pdf  [F]
+    "A mean annual consumption of shrimp by cod in the Barents Sea is estimated to 280 000 tons
+    (1984-2004, Bogstad and Mehl, 1997; ICES, 2006). The average annual shrimp catch since 1985
+    is close to 55 000 t."
+    "In 1994 the estimated consumption of shrimp by cod was 518 000 t and still the shrimp stock
+    started to increase and increased until 1998 although the annual cod consumption was
+    335 000 t in this period (1995-1998)."
+    "The mean consumption is reduced with almost 30% with the new approach. In some years the
+    reduction in estimated shrimp consumption is around 70%."
+    "the model is more robust when excluding the cod (Hvingel, 2006). This is because the shrimp
+    stock does not respond on still high cod consumption, not even if a time lag is introduced."
+    -> Caution for the model: a large measured M2 does not imply that predator changes
+       drive prey biomass; compensation and spatial mismatch (predation in low-density areas)
+       decouple consumption from stock change.
+
+=====================================================================
+D2. COD - SHRIMP INVERSE RELATIONS (WORM & MYERS 2003 AND FOLLOW-UPS)
+=====================================================================
+(a) Worm & Myers 2003. Meta-analysis of cod-shrimp interactions reveals top-down control in
+    oceanic food webs. Ecology 84: 162-173. doi:10.1890/0012-9658(2003)084[0162:MAOCSI]2.0.CO;2
+    Full text NOT obtained (publisher closed; Unpaywall: no OA copy; an archive manuscript copy
+    at findingaids.library.dal.ca sits behind a bot check and was not retrieved).
+    Abstract content via search snippets [S]:
+    "Eight out of nine regions showed inverse correlations of cod and shrimp biomass supporting
+    the 'top-down' view." Random-effects analysis: shrimp biomass "strongly negatively related to
+    cod biomass, but not to ocean temperature"; "the strength of the cod-shrimp relationship
+    declined with increasing mean temperature."
+    Regional effect sizes / slopes: NOT FOUND (see Not-found list).
+
+(b) Baum & Worm 2009. Cascading top-down effects of changing oceanic predator abundances.
+    J. Anim. Ecol. 78: 699-714. doi:10.1111/j.1365-2656.2009.01531.x
+    https://www.lenfestocean.org/-/media/legacy/lenfest/pdfs/cascadingpredator_baumworm.pdf [F]
+    "Worm & Myers (2003) showed that cod (Gadus morhua) declines in seven of nine Atlantic
+    regions were accompanied by increases in northern shrimp (Pandalus borealis) ... Once
+    corrected for temporal autocorrelation and measurement error, negative predator-prey
+    correlations (suggestive of top-down control) were statistically significant in only three
+    regions, although the overall meta-analytic mean was significantly negative"
+    "weakly negative or positive (suggestive of bottom-up control) correlations occurred only at
+    the southern range limit of these species, where temperatures were higher."
+    The nine regions (Fig. 2d legend): LAB, NNFLD, FC, NGULF, ESS, GOM, ICE, BAR, SKAG
+    (Skagerrak IS one of the nine). The per-region r values are only in the figure (not
+    extractable as text). (A "PD: Shrimp decline 95%" entry in their Table 1 belongs to the
+    climate-driven Gulf of Alaska groundfish/Pacific cod - shrimp case, refs 8-9 incl. Anderson &
+    Piatt 1999, not to the North Atlantic cod-shrimp meta-analysis; it is NOT used here.)
+    J: the Skagerrak is near the warm (southern) end of P. borealis' range; by the authors'
+    temperature gradient it is a region with weak cod control. Not verified with the
+    Skagerrak r value.
+
+(c) Boudreau, Anderson & Worm 2011. Top-down interactions and temperature control of snow crab
+    abundance in the northwest Atlantic Ocean. MEPS 429: 169-183. doi:10.3354/meps09081
+    https://www.int-res.com/articles/meps_oa/m429p169.pdf  [F]
+    "Controlling for the effect of temperature, our meta-analysis revealed significant negative
+    correlations of snow crab and cod abundance, with cod leading snow crab by up to a 5 yr lag."
+    "in both the full and partial correlation analyses the strongest effect was observed at a
+    lag of 2 yr, with cod leading snow crab"
+    "northern shrimp comprises from 5.0 to 9.3% of cod stomach contents (averaged across
+    studies), and cod appears to exert strong top-down control of shrimp stocks"
+    Cited single-region values: "a significant negative correlation (r = -0.66) between snow
+    crab landings and Atlantic cod abundance at a lag of 10 yr" (Caddy et al. 2005, SGSL; who
+    "concluded that density-dependent mechanisms were more likely responsible");
+    "a strong negative correlation (r = -0.70) between benthic fish biomass and snow crab
+    abundance, without assuming a time lag" (Frank et al. 2005, eastern Scotian Shelf).
+    J: time scale of cod -> crab response 0-5 yr (peak 2 yr); a cold-water crab, not a
+    Skagerrak taxon, so only an analogue for "crabs".
+
+=====================================================================
+D3. NEPHROPS NORVEGICUS - CONSUMPTION BY COD, PREDATION MORTALITY
+=====================================================================
+D3.1 Western Irish Sea (the Brander & Bennett system), measured consumption vs stock
+---------------------------------------------------------------------
+(a) Armstrong, Smyth & McCurdy 1991. How much Nephrops is eaten by cod in the western Irish
+    Sea? ICES CM 1991/G:15. (PDF in ../data/armstrong1991/, downloaded by a sibling agent;
+    read in full here) [F]
+    Abstract: "It is estimated that Nephrops comprised 20-40% of the stomach contents of cod
+    sampled on the Nephrops grounds in the north-western Irish Sea in 1982 and 1983,
+    representing 12-28% of the daily food intake when the slow rate of digestion of the prawns
+    is allowed for. Total daily food intake was 0.8-0.9% of body mass in spring and 1.6-1.8%
+    during the remainder of the year. Some 25-34% of the stock of cod with an annual average
+    biomass of 11.0 to 12.5 thousand tons of two-year-old and older fish in 1982 and 1983 was
+    assumed to occur on the Nephrops grounds, resulting in a total annual consumption of prawns
+    of 1.7 to 5.4 thousand tons."
+    "The parameter values Mcod=0.2, PNEP=0.19 and PG=0.25 were taken as the most likely
+    estimates, and will be referred to as the 'base case', for which the estimate of
+    consumption of prawns was 3050 tons."
+    "The estimates of biomass of two-year-old and older prawns during the years 1981-1984,
+    obtained from the cohort analysis, ranged from 17000 to 24700 tons."
+    "The most likely value of consumption is approximately 3000 tons per year, about one third
+    of the mass of Nephrops landed annually by the International fleet (Table 1). Previous
+    estimates of consumption of Nephrops by cod in the Irish Sea (Fannon and Hillis 1982,
+    Brander and Bennett 1986) fall within the range of values in Table 10 and are close to our
+    'base case' estimate"
+    Table 11 (base case, cohort analysis 1981-84), M2 exerted by cod per pseudo age class
+    0,1,2,3,4,5,6,7+: 0.0, 0.038, 0.183, 0.248, 0.219, 0.148, 0.180, 0.080 /yr;
+    fishing mortality at the same ages: 0.0, 0.013, 0.476, 0.833, 0.804, 0.650, 0.584, 0.616;
+    M1 (non-cod) "arbitrarily set at 0.1".
+    "The rates of fishing mortality were generally much larger than the mortality rates
+    inflicted by the cod ... The highest mortality rates from both sources were inflicted on
+    prawns of three to four years of age (carapace lengths 24-30 mm)."
+    Table 10 (19 runs): consumption 1.72-5.38 kt/yr against 2+ biomass (BNEP) 17.0-24.7 kt.
+    -> J: consumption/biomass (2+ prawns) = 3.05/19.0 = 0.16 /yr (base case);
+       range 1.72/17.0 = 0.10 to 5.38/23.0 = 0.23 /yr. Predation by cod ~1/3 of landings.
+    -> J: cod biomass on the grounds in the base case ~0.25 x 11-12.5 kt = 2.8-3.1 kt ate
+       ~3 kt Nephrops/yr, i.e. roughly its own weight per year.
+    Also: Nephrops "yield of Nephrops declined by 0.8 to 2.4 thousand tons when fishing
+    mortality on cod was reduced to 70% of the present value" (model projection, not observed).
+
+(b) Bjornsson & Dombaxe 2004. Quality of Nephrops as food for Atlantic cod with possible
+    implications for fisheries management. ICES J. Mar. Sci. 61: 983-991.
+    doi:10.1016/j.icesjms.2004.06.017  [paper read via WebFetch extraction; wording paraphrased
+    by the tool for long sentences, short fragments verbatim. The field numbers below are the
+    paper citing other studies, so they are SECONDARY: tag [S]; the experimental intake is [F].]
+    - Irish Sea: a diet study of potential predators attributed 88 % of Nephrops predation to
+      cod (Symonds & Elson 1983; Brander & Bennet 1986).
+    - Iceland: Nephrops ~30 % by weight of the stomach contents of 50-90 cm cod on southern
+      Icelandic Nephrops grounds on a yearly basis; seasonally "from 10% in March during the
+      spawning migration of capelin" to ~65 % in July; ~50 % of the Nephrops eaten were above
+      fishable size (>35 mm CL) (Dombaxe 2002).
+    - Experimental: Nephrops consumption ~0.85 % of cod body weight per day.
+
+(c) De Clerck & Sterk 1980. ICES CM 1980/G:43, Outer Silver Pit (southern North Sea).
+    (PDF in ../data/declerck_sterk1980/, sibling agent) [F]
+    Diet only (no stock-level consumption): "During the August survey the weight of Nephrops
+    per stomach expressed in % varied from 3.75 for small cod up to 51.7 for large cod. In the
+    autumn these values were between 2.79 and 11 %."  Whiting in August: "from 0.55 in small
+    whiting up to 84.1". "the mean number of Nephrops per stomach ... increased from 0.1 for
+    small cod to a maximum of 2.8 for large cod".
+    -> strong seasonality (summer >> autumn) and predator-size dependence.
+
+D3.2 North Sea Ecopath (Mackinson & Daskalov 2007) - stomach-based diet matrix, mass-balanced
+---------------------------------------------------------------------
+    Mackinson, S. & Daskalov, G. 2007. An ecosystem model of the North Sea to support an
+    ecosystem approach to fisheries management: description and parameterisation. Cefas Sci.
+    Ser. Tech. Rep. 142. https://www.cefas.co.uk/publications/techrep/tech142.pdf  [F]
+    Nephrops (group 55), 1991 balanced model: B 1.1 t/km2 (input 0.98), P/B 0.37 /yr, Q/B 1.85,
+    EE 0.9937. "In the model an initial estimate of P/B of 0.35 y-1 is used based on M=0.25 and
+    F=0.1." "ICES (WGNNSK, 2005) assume a natural mortality rate of 0.3 for males and immature
+    females, with a value of 0.2 for mature females." "Cod have been identified as a predator of
+    Nephrops in some areas, and the generally low level of the cod stock is likely to have
+    resulted in reduced predation." Nephrops landings+discards in 1991 model: 10,317 t.
+    Shrimp (group 58; Crangon allmanni 14 %, P. montagui 10 %, Processa 6 %, P. borealis 4 % of
+    the group's survey biomass, C. crangon 36 %): B 0.50 t/km2, P/B 3 /yr, Q/B 10, EE 0.4486;
+    catch 24,738 t.
+    -> J (Ecopath identity M2 = P/B x EE - F, model area ~570,000 km2):
+       Nephrops F = 10,317/(1.1 x 570,000) = 0.016; M2 ~ 0.37 x 0.994 - 0.016 = 0.35 /yr.
+       Shrimp F = 24,738/(0.50 x 570,000) = 0.087; M2 ~ 3 x 0.449 - 0.087 = 1.26 /yr.
+       These are balance outputs that inherit the ASSUMED P/B (M = 0.25 for Nephrops), so they
+       are not independent measurements; they show only that stomach-based consumption in the
+       North Sea model is compatible with M2 ~0.3 /yr on Nephrops and ~1.3 /yr on shrimps.
+
+D3.3 Kattegat no-take zone (cod closure area), Nephrops response
+---------------------------------------------------------------------
+    Skold, M. et al. 2022. A no-take zone and partially protected areas are not enough to save
+    the Kattegat cod, but enhance biomass and abundance of the local fish assemblage. ICES J.
+    Mar. Sci. 79: 2231-2246. doi:10.1093/icesjms/fsac152  [F, read via WebFetch extraction of the
+    OUP full-text page]
+    - 426 km2 year-round NTZ from 2009; survey 2008-2021.
+    - Nephrops: "significantly increased in biomass in the NTZ" relative to control areas;
+      "the biomass of N. norvegicus in the NTZ has more than doubled over time"; abundance
+      "more variable", main effect a larger mean size.
+    - Cod: "neither cod abundance nor biomass showed a significant increase".
+    - The paper does not discuss cod predation on Nephrops (per the extraction).
+    -> J: Nephrops > x2 in ~12 yr when trawling stopped and cod did NOT recover; this is a
+       release from fishing, not a predator test. It does show that Nephrops biomass on a
+       Kattegat mud bottom responds on a ~decade scale to removal of one mortality source of
+       order F, and that no compensating cod predation appeared.
+
+=====================================================================
+D4. FURTHER PREDATOR-CHANGE -> PREY-CHANGE EVIDENCE (shrimps)
+=====================================================================
+(a) NE Newfoundland Shelf (SFA6), Pandalus after the cod collapse.
+    Lilly, Parsons & Kulka 2000. Was the increase in shrimp biomass on the Northeast
+    Newfoundland Shelf a consequence of a release in predation pressure from cod?
+    J. Northw. Atl. Fish. Sci. 27: 45-61. https://journal.nafo.int/Portals/0/2000-2/lilly.pdf [F]
+    Cod: "the 3+ biomass declined from about 3 000 000 tons in the early-1960s to less than
+    500 000 tons in the mid-1970s, increased to about 1 000 000 tons in 1984-85 and then declined
+    to less than 20 000 tons by 1993".
+    Consumption: "The highest consumption calculated in this manner was 55 000 tons in 1983
+    (Table 4; Fig. 5). For most years prior to 1990, the consumption tended to lie in the range
+    10 000-25 000 tons." "The contribution of shrimp to the total food consumption of cod in SFA6
+    peaked at 7.4% in the 45-53 cm length-group and averaged 5.9% in the population."
+    Shrimp: Hawke Channel survey "biomass estimates increased from an average of about 3 000 tons
+    in 1979-81 to about 7 800 tons in 1988-90"; SFA6 survey index "about 400 000-500 000 tons in
+    1996-98" (catchability "expected to be less than 1").
+    Conclusion: "Results are equivocal ... it appears that an initial increase in shrimp biomass
+    must have occurred during the early to mid-1980s and was not related to changes in the cod,
+    whereas a larger increase in shrimp biomass in the 1990s was related at least in part to the
+    collapse of the cod."
+    -> J: cod -98 % (1984-85 to 1993); shrimp index rose by more than an order of magnitude over
+       ~1980-1998, but the cod consumption (10-25 kt/yr) is only ~2-6 % of the late-1990s shrimp
+       index, so the predation term alone is small relative to the later stock; the 1980s rise
+       preceded the cod decline.
+
+(b) West Greenland, Pandalus vs cod.
+    Wieland, Storr-Paulsen & Sunksen 2007. J. Northw. Atl. Fish. Sci. 39: 21-33.
+    doi:10.2960/J.v39.m579  https://journal.nafo.int/Portals/0/2007-2008/2-wieland.pdf [F]
+    "Survey estimates of total stock size of Northern shrimp were negatively correlated with
+    Atlantic cod biomass lagged by one and two years until the beginning of the 1990s.
+    Thereafter, the Atlantic cod stock in West Greenland offshore waters collapsed, but no
+    immediate response of Northern shrimp to the released predation pressure was observed.
+    Recruitment and subsequently stock biomass of Northern shrimp increased first about 10 years
+    later following a moderate increase in the temperature conditions".
+    "highly significant (P <0.01) negative correlations between the CPUE for Northern shrimp and
+    Atlantic cod biomass with time lags of one or two years were found when excluding the period
+    after 1991 or 1992"; over the whole series no significant correlation at any lag.
+    Secondary in the same paper: "Short-term responses, i.e. with time lags of less than 2 or 3
+    years, of stock size of Northern shrimp to changes in Atlantic cod biomass have been
+    documented in the Barents Sea and Icelandic waters (Stefansson et al., 1998; Berenboim et
+    al., 2000)."  Greenland halibut consumption of shrimp "about 10 fold lower than those
+    computed for Atlantic cod in West Greenland waters (Grunwald, 1998)". [S for the cited works]
+    -> time scale of shrimp response to cod: 1-2 yr lags where a link is seen; the link can
+       break down (spatial overlap index fell from 0.28-0.64 to 0.09).
+
+(c) North Sea brown shrimp (Crangon crangon) - analogue for the model's small shrimps
+    (C. allmanni, Pontophilus, Processa, P. montagui).
+    Temming & Hufnagl 2015. Decreasing predation levels and increasing landings challenge the
+    paradigm of non-management of North Sea brown shrimp (Crangon crangon). ICES J. Mar. Sci.
+    72: 804-823. doi:10.1093/icesjms/fsu194  [F, read via WebFetch extraction of the OUP
+    full-text page (first ~45 % of page text); numbers below as extracted]
+    - Consumption of shrimp >50 mm, 1971-1980 averages: cod 28,345 t/yr (RFA6 approach) /
+      30,131 (North Sea approach); whiting 13,427 / 15,535. 2001-2010: cod 759 / 6,229;
+      whiting 14,389 / 6,738.
+    - Juveniles (<50 mm) consumed in 1991: whiting 65,000 t, cod 18,000 t.
+    - Natural (predation-dominated) mortality, RFA6: M = 4.75 /yr (1971, F 0.68),
+      3.15 (1995, F 3.3), 1.26 (2010, F 4.4); 2001-2010 mean M = 1.7 /yr.
+    - Landings 13,689 t/yr (1971-80) -> 31,210 t/yr (2001-10); landings/consumption ratio
+      0.12-0.14 (1971) -> 3.4-5.6 (2005). Abstract: "the fishery has become the main mortality
+      source of adult brown shrimp (>50 mm)"; landings since 2000 ~40 % higher than in the
+      1980s-1990s.
+    -> J: cod+whiting consumption fell ~64-72 % between 1971-80 and 2001-10 while landings
+       (a stock proxy) rose ~2.3x; predation M on a small shrimp fell from ~4.8 to ~1.3 /yr.
+       Shallow coastal species; use only as an order of magnitude for small-shrimp M2.
+
+=====================================================================
+D5. EXPERIMENTS (cages, tethering) - result of search
+=====================================================================
+    No subtidal soft-bottom fish-exclusion cage experiment reporting density responses of
+    crabs, shrimps or Nephrops was found (see Not-found list). No tethering study of Nephrops
+    (or Pandalus) with in situ predation rates by cod was found. The nearest field evidence on
+    Nephrops exposure is burrow emergence behaviour (emergence is crepuscular/diurnal with
+    depth), which belongs to the refuge part of this project, not here.
+
+=====================================================================
+D6. SUMMARY TABLE OF ORDERS OF MAGNITUDE (J, from the sources above)
+=====================================================================
+  Taxon / area                     quantity                               value
+  Nephrops, W Irish Sea 1981-84    cod consumption / 2+ biomass           0.10-0.23 /yr (base 0.16)
+  Nephrops, W Irish Sea 1981-84    M2 by cod, by age (cohort analysis)    0.04-0.25 /yr
+  Nephrops, W Irish Sea            cod consumption / landings             ~1/3
+  Nephrops, North Sea Ecopath 1991 implied M2 (balance, assumed P/B)      ~0.35 /yr
+  Nephrops, Kattegat NTZ           biomass change after trawl closure     > +100 % in ~12 yr (cod flat)
+  Pandalus, Skagerrak/N. Deep      total M (mostly predation)             0.75 assumed; 0.9-1.2 best fit
+  Pandalus, Skagerrak/N. Deep      predation removal / catch              >= 2
+  Pandalus, Barents Sea            fraction of stock eaten by cod / yr    0.15-0.58
+  Pandalus, Barents Sea            Mcod (11 cohorts)                      0.06-2.23 /yr, mean 0.76
+  Pandalus, Barents Sea            cod consumption / catch                ~3-5
+  Pandalus, NE Newfoundland        cod 3+ biomass change                  -98 % (1985-1993)
+  Crangon, North Sea               predation M                            4.8 (1971) -> 1.3 /yr (2010)
+  Snow crab, NW Atlantic           cod -> crab lag                        0-5 yr, strongest at 2 yr
+  Shrimp, West Greenland           cod -> shrimp lag                      1-2 yr (until early 1990s)
+
+  J (interpretation for the plausibility check, not a source value): measured/assessed M2 on
+  Nephrops by fish is low, ~0.1-0.35 /yr, and cod removed roughly a third of the landings in the
+  Irish Sea when cod were abundant; on Pandalus it is high, ~0.5-1.2 /yr, and exceeds fishing;
+  on small shrimps (Crangon) it can be several per year. A biomass-weighted M2 for
+  mobile_epifauna (60 % Nephrops at ~0.2, 26 % crabs unknown, 7 % Pandalus at ~0.8, 4 % small
+  shrimps at ~1.5-4, 3 % mysids unknown) would be of order 0.2-0.4 /yr if crabs/mysids sit near
+  the Nephrops level; crabs and mysids have no measured M2 in what was found. Field evidence
+  that fish predation change alone shifts the prey biomass is strong in the meta-analysis
+  (Worm & Myers; 8 of 9 regions inverse, 3 significant after correction) but weak or
+  absent in several single-stock tests (Barents Sea, West Greenland after 1991, NE
+  Newfoundland 1980s), and is weakest at the warm southern range edge, where the Skagerrak
+  lies.
+
+=====================================================================
+NOT FOUND (searched, no usable source obtained)
+=====================================================================
+  - Worm & Myers 2003 full text: per-region correlation coefficients (incl. SKAG), pooled
+    slope/effect size, and % shrimp change per cod change. Only abstract content via snippets
+    and the review by Baum & Worm 2009 (Skagerrak confirmed as one of the nine regions).
+  - Brander & Bennett 1986 (Can. Spec. Publ. Fish. Aquat. Sci. 92) and 1989 (in Caddy, Marine
+    Invertebrate Fisheries, pp. 183-204) themselves: not online. Their consumption estimate is
+    reported by Armstrong et al. 1991 only as falling within 1.7-5.4 kt/yr, "close to" 3 kt/yr.
+  - North Sea SMS / MSVPA key run: no M2 for Nephrops, Pandalus, crabs or mysids. The 2023 key
+    run "provides natural mortality estimates for the assessments of haddock, herring, Norway
+    pout, southern North Sea sandeel, northern North Sea sandeel, sprat, and whiting"; later
+    additions are sprat and plaice as prey (ICES WGSAM, search snippet of
+    https://archimer.ifremer.fr/doc/00873/98452/107912.pdf) [S]. No invertebrate prey stock is
+    listed, so no SMS M2 exists for these taxa.
+  - Skagerrak/Norwegian Deep Pandalus: no species-resolved M2 (cod, saithe, blue whiting,
+    roundnose grenadier) in tonnes or per year; only the predation index (relative) and total-M
+    fits. The 1985-2002 cohort assessments with predation (">= 2 x catch") were not found as
+    separate documents.
+  - Skagerrak-specific cod-Pandalus correlation value (exists inside Worm & Myers 2003 Fig. /
+    Baum & Worm 2009 Fig. 2d, not extractable).
+  - Kattegat: any study linking the cod collapse to Nephrops density or size (the Kattegat NTZ
+    paper does not address predation).
+  - Firth of Clyde: quantified Nephrops density change attributed to gadoid predator release
+    (only landings rising since the mid-1960s and narrative claims).
+  - Gullmarsfjorden no-take zone / trawl closure: Nephrops size or density results (SLU Aqua
+    reports 2022:20 not retrieved; the shrimp-trawl ban there starts 1 July 2027). Checked:
+    Bergstrom, U. (ed.) 2007, Effekter av fredningsomraden pa fisk och kraftdjur i svenska
+    vatten, Fiskeriverket Informerar 2007:2 (../data/finfo2007_2/) [F]: inner Gullmarsfjorden
+    trawl ban since 1999, evaluated 2000-2005, reports only fish (cod and haddock "+", whiting
+    and plaice "0"/"+" in its Table 1); no Nephrops result.
+  - Tethering experiments with Nephrops or Pandalus and in situ predation rates by cod.
+  - Subtidal soft-bottom fish-exclusion cage experiments with density responses of crabs or
+    shrimps (Loch Ewe work by Hall/Raffaelli located only as a diet paper).
+  - Gulf of Maine shrimp release after cod collapse: no numbers beyond Worm & Myers
+    (GOM is one of the nine regions, weak/positive correlation at the warm edge per Baum & Worm).
+  - Measured M2 on crabs (Liocarcinus, Pagurus, Munida, Goneplax) or mysids by fish in the
+    North Sea/Skagerrak.

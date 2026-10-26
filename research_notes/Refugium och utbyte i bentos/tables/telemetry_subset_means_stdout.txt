@@ -1,0 +1,18 @@
+All 25 animals: n=25
+  door-keeping    mean  12.92 %  median  11.70 %  range 0.24-37.44 %  -> mean  3.10 h/day
+  in burrow       mean  38.31 %  median  33.00 %  range 1.58-84.67 %  -> mean  9.19 h/day
+  full emergence  mean  48.77 %  median  46.55 %  range 6.08-96.49 %  -> mean 11.70 h/day
+  row sums (door+in+full) range 99.80-100.00 %
+Day-night rhythmic (burrow-holding subset): n=12
+  door-keeping    mean  16.18 %  median  12.46 %  range 7.54-37.44 %  -> mean  3.88 h/day
+  in burrow       mean  49.00 %  median  48.88 %  range 15.99-81.22 %  -> mean 11.76 h/day
+  full emergence  mean  34.82 %  median  30.14 %  range 6.45-73.84 %  -> mean  8.36 h/day
+  row sums (door+in+full) range 100.00-100.00 %
+Arrhythmic + inertial + other: n=13
+  door-keeping    mean   9.90 %  median   9.25 %  range 0.24-27.02 %  -> mean  2.38 h/day
+  in burrow       mean  28.44 %  median  23.34 %  range 1.58-84.67 %  -> mean  6.83 h/day
+  full emergence  mean  61.65 %  median  68.50 %  range 6.08-96.49 %  -> mean 14.79 h/day
+  row sums (door+in+full) range 99.80-100.00 %
+
+Day-night subset: fully exposed share 0.348; with door-keepers 0.510
+Implied single daily bout length 8.4 h (door-keeping adds 3.9 h)

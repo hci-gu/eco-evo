@@ -1,0 +1,21 @@
+starving cells per year: {1: 0, 2: 2, 3: 9, 4: 25, 5: 57, 6: 144, 7: 284, 8: 422}
+  year 4 starving cells also starving in year 6: 10 of 25
+  year 4 starving cells also starving in year 8: 10 of 25
+  year 6 starving cells also starving in year 8: 104 of 144
+  year 4: share of starving cells that were spawn-colony cells (top quartile of the start biomass) 0.16 (grid share 0.08); in the year-1 top-10 % density cells 0.20 (grid share 0.10); start benthivore density there 3.31 vs grid 1.53 t/cell
+  year 6: share of starving cells that were spawn-colony cells (top quartile of the start biomass) 0.06 (grid share 0.08); in the year-1 top-10 % density cells 0.10 (grid share 0.10); start benthivore density there 1.30 vs grid 1.53 t/cell
+  year 8: share of starving cells that were spawn-colony cells (top quartile of the start biomass) 0.10 (grid share 0.08); in the year-1 top-10 % density cells 0.13 (grid share 0.10); start benthivore density there 1.93 vs grid 1.53 t/cell
+
+infauna (t/km2, yearly mean) and benthivore density (t/cell) in the year-8 starving cells:
+  year  infauna  inf/K   ben   rest-of-grid infauna  ben
+     1    104.3   0.86   1.90      88.7                1.52
+     2     97.3   0.80   2.20      84.0                1.60
+     3     90.9   0.75   2.68      81.0                1.56
+     4     83.4   0.69   3.14      79.6                1.48
+     5     73.0   0.60   3.61      79.1                1.40
+     6     60.3   0.50   3.80      78.9                1.33
+     7     48.7   0.40   2.81      78.7                1.35
+     8     44.1   0.37   1.20      77.8                1.40
+
+recovery to half the trawled equilibrium if the fish left: median 5.5 yr (10-90 % 0.0-9.6); end-of-year infauna median 0.55 t/km2
+infauna removal by benthivores there 5.2 t/km2/yr vs the logistic maximum surplus r K/4 = 26.5; benthivore density needed to exceed it at Q/B 7.7: 3.45 t/cell

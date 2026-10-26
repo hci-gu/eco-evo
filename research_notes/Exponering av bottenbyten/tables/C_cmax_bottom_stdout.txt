@@ -1,0 +1,116 @@
+Series annual mean T: bottom 7.40 C, at_50m 8.37 C, p100 7.63 C
+
+Effective sizes (W_eff = E[W^b]^(1/b), g):
+  cod             b -0.195:    1193   b -0.22:    1169   b -1/3:    1063
+  haddock         b -0.195:     274   b -0.22:     270   b -1/3:     253
+  plaice          b -0.195:     190   b -0.22:     189   b -1/3:     185
+  dab             b -0.195:      77   b -0.22:      76   b -1/3:      74
+  long rough dab  b -0.195:      75   b -0.22:      74   b -1/3:      72
+  witch           b -0.195:     236   b -0.22:     235   b -1/3:     229
+  lemon sole      b -0.195:     144   b -0.22:     144   b -1/3:     141
+  grey gurnard    b -0.195:     100   b -0.22:      99   b -1/3:      97
+  starry ray      b -0.195:     899   b -0.22:     896   b -1/3:     881
+
+1. Bjornsson et al. 2001 ad-lib intake = FC x G (polynomials of Tables 3-4)
+   gross energy of feed from Table 2 proximate composition: protein 23.6, fat 39.5, carbohydrate 17.2 kJ/g (assumed coefficients)
+  exp E: W 109 g, dry feed (Vextra trout), 3-5 meals/d; feed 22.68 kJ/g; check Gmax 0.780 (paper 0.77) at 10.1 C, FCmin 0.93 (paper 0.92) at 9.8 C
+     T  5.0: G 0.433 %/d  FC 1.61  FI  0.70 %BW/d =  157.7 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  127.6);  FB4  101.4 -> x1.55 (norm x1.26);  Jobling  146.2 -> x1.08
+     T  6.5: G 0.607 %/d  FC 1.25  FI  0.76 %BW/d =  171.7 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  139.0);  FB4  115.5 -> x1.49 (norm x1.20);  Jobling  168.0 -> x1.02
+     T  7.0: G 0.651 %/d  FC 1.16  FI  0.75 %BW/d =  171.1 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  138.5);  FB4  120.2 -> x1.42 (norm x1.15);  Jobling  175.6 -> x0.97
+     T  7.5: G 0.689 %/d  FC 1.08  FI  0.75 %BW/d =  169.3 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  137.1);  FB4  125.0 -> x1.35 (norm x1.10);  Jobling  183.4 -> x0.92
+     T  8.0: G 0.721 %/d  FC 1.02  FI  0.74 %BW/d =  167.2 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  135.3);  FB4  129.7 -> x1.29 (norm x1.04);  Jobling  191.2 -> x0.87
+     T  8.5: G 0.746 %/d  FC 0.98  FI  0.73 %BW/d =  165.2 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  133.8);  FB4  134.4 -> x1.23 (norm x1.00);  Jobling  199.1 -> x0.83
+     T 10.0: G 0.780 %/d  FC 0.93  FI  0.73 %BW/d =  164.5 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  133.2);  FB4  147.7 -> x1.11 (norm x0.90);  Jobling  222.9 -> x0.74
+  exp F: W 447 g, capelin 4 d + shrimp 2 d per week; feed 7.62 kJ/g; check Gmax 0.704 (paper 0.7) at 8.8 C, FCmin 2.46 (paper 2.46) at 7.6 C
+     T  5.0: G 0.627 %/d  FC 2.52  FI  1.58 %BW/d =  120.5 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  111.8);  FB4   77.0 -> x1.57 (norm x1.45);  Jobling  110.5 -> x1.09
+     T  6.5: G 0.676 %/d  FC 2.48  FI  1.67 %BW/d =  127.4 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  118.2);  FB4   87.6 -> x1.45 (norm x1.35);  Jobling  127.0 -> x1.00
+     T  7.0: G 0.687 %/d  FC 2.47  FI  1.69 %BW/d =  129.1 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  119.8);  FB4   91.3 -> x1.41 (norm x1.31);  Jobling  132.7 -> x0.97
+     T  7.5: G 0.695 %/d  FC 2.47  FI  1.71 %BW/d =  130.5 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  121.1);  FB4   94.9 -> x1.38 (norm x1.28);  Jobling  138.6 -> x0.94
+     T  8.0: G 0.701 %/d  FC 2.47  FI  1.73 %BW/d =  131.7 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  122.2);  FB4   98.5 -> x1.34 (norm x1.24);  Jobling  144.5 -> x0.91
+     T  8.5: G 0.704 %/d  FC 2.47  FI  1.74 %BW/d =  132.6 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  123.0);  FB4  102.0 -> x1.30 (norm x1.21);  Jobling  150.5 -> x0.88
+     T 10.0: G 0.697 %/d  FC 2.52  FI  1.76 %BW/d =  133.8 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  124.1);  FB4  112.1 -> x1.19 (norm x1.11);  Jobling  168.5 -> x0.79
+  exp G: W 874 g, capelin 4 d + shrimp 2 d per week; feed 7.51 kJ/g; check Gmax 0.630 (paper 0.63) at 8.1 C, FCmin 2.37 (paper 2.37) at 7.1 C
+     T  5.0: G 0.564 %/d  FC 2.45  FI  1.38 %BW/d =  103.7 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   96.4);  FB4   67.6 -> x1.54 (norm x1.43);  Jobling   96.7 -> x1.07
+     T  6.5: G 0.613 %/d  FC 2.38  FI  1.46 %BW/d =  109.5 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  101.7);  FB4   76.9 -> x1.42 (norm x1.32);  Jobling  111.2 -> x0.98
+     T  7.0: G 0.622 %/d  FC 2.37  FI  1.48 %BW/d =  110.8 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  103.0);  FB4   80.1 -> x1.38 (norm x1.29);  Jobling  116.2 -> x0.95
+     T  7.5: G 0.628 %/d  FC 2.38  FI  1.49 %BW/d =  112.0 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  104.1);  FB4   83.2 -> x1.35 (norm x1.25);  Jobling  121.4 -> x0.92
+     T  8.0: G 0.630 %/d  FC 2.39  FI  1.51 %BW/d =  113.0 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  105.0);  FB4   86.4 -> x1.31 (norm x1.22);  Jobling  126.6 -> x0.89
+     T  8.5: G 0.629 %/d  FC 2.41  FI  1.52 %BW/d =  113.8 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  105.8);  FB4   89.5 -> x1.27 (norm x1.18);  Jobling  131.8 -> x0.86
+     T 10.0: G 0.606 %/d  FC 2.52  FI  1.53 %BW/d =  114.6 kJ/kg/d  (prey-normalised to 4.184 kJ/g:  106.5);  FB4   98.3 -> x1.17 (norm x1.08);  Jobling  147.5 -> x0.78
+  exp H: W 2213 g, capelin 3 d per week only; feed 10.00 kJ/g; check Gmax 0.293 (paper 0.3) at 8.5 C, FCmin 2.18 (paper 2.18) at 8.0 C
+     T  5.0: G 0.257 %/d  FC 2.40  FI  0.61 %BW/d =   61.4 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   55.1);  FB4   56.4 -> x1.09 (norm x0.98);  Jobling   80.5 -> x0.76
+     T  6.5: G 0.281 %/d  FC 2.23  FI  0.63 %BW/d =   62.7 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   56.2);  FB4   64.2 -> x0.98 (norm x0.88);  Jobling   92.5 -> x0.68
+     T  7.0: G 0.286 %/d  FC 2.20  FI  0.63 %BW/d =   63.0 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   56.5);  FB4   66.8 -> x0.94 (norm x0.85);  Jobling   96.7 -> x0.65
+     T  7.5: G 0.290 %/d  FC 2.18  FI  0.63 %BW/d =   63.2 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   56.7);  FB4   69.5 -> x0.91 (norm x0.82);  Jobling  101.0 -> x0.63
+     T  8.0: G 0.292 %/d  FC 2.18  FI  0.64 %BW/d =   63.5 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   57.0);  FB4   72.1 -> x0.88 (norm x0.79);  Jobling  105.3 -> x0.60
+     T  8.5: G 0.293 %/d  FC 2.18  FI  0.64 %BW/d =   63.8 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   57.3);  FB4   74.7 -> x0.85 (norm x0.77);  Jobling  109.7 -> x0.58
+     T 10.0: G 0.286 %/d  FC 2.27  FI  0.65 %BW/d =   64.9 kJ/kg/d  (prey-normalised to 4.184 kJ/g:   58.2);  FB4   82.0 -> x0.79 (norm x0.71);  Jobling  122.8 -> x0.53
+  Q10 of FI over 6.5 -> 8.5 C: E 0.83, F 1.22, G 1.21, H 1.10
+
+2. Q10 over 6.5 -> 8.5 C implied by each temperature function
+  FB4 Kitchell (cod, haddock)         2.14
+  Jobling 1988 exponential-cubic       2.34
+  Bjornsson F/G (447/874 g cod)        1.22 / 1.21
+  Fonds 1985 table (plaice, 6-10 C)    4.56
+  Fonds 1985 fit e^0.133T              3.78
+  DEB TA 7000 K (plaice)               2.43
+  DEB TA 4000 K (dab)                  1.66
+  gadoid evacuation e^0.078T / 0.083T  2.18 / 2.29
+
+3. Per-species Cmax (kJ/kg/d) at the long-run size; low / central / high
+  species                       T6.5             T7.0             T7.5             T8.0       bottom ann       at_50m ann         p100 ann
+  haddock            82/  129/  182   85/  130/  190   89/  132/  199   92/  133/  207   88/  131/  197   94/  132/  213   90/  132/  201
+  cod                72/   97/  105   75/   98/  109   78/   99/  114   81/  100/  119   78/   99/  113   83/   99/  123   79/   99/  116
+  long rough dab     46/   69/   93   48/   72/   96   50/   74/   99   51/   77/  103   49/   74/   99   53/   80/  106   50/   75/  100
+  dab                62/   73/  100   64/   76/  107   65/   81/  115   67/   85/  124   65/   80/  114   68/   88/  132   66/   82/  118
+  plaice             63/   82/   96   66/   88/  104   69/   95/  112   72/  102/  121   68/   94/  111   75/  108/  127   70/   97/  115
+  witch              31/   54/   72   33/   56/   74   34/   58/   77   35/   60/   80   34/   57/   77   36/   62/   82   34/   58/   78
+  starry ray         26/   44/   70   27/   45/   73   28/   47/   75   29/   49/   78   28/   47/   75   30/   50/   80   28/   47/   76
+  hagfish             9/   18/   35    9/   18/   36    9/   19/   38   10/   19/   39    9/   19/   37   10/   20/   40    9/   19/   38
+  grey gurnard      117/  157/  171  122/  159/  179  127/  161/  187  132/  162/  195  126/  160/  185  135/  161/  200  128/  161/  189
+  lemon sole         69/   87/  102   72/   93/  110   75/  100/  119   79/  108/  128   75/   99/  118   82/  115/  135   76/  103/  122
+  greater weever     53/   79/  105   54/   82/  109   56/   85/  113   58/   88/  117   56/   84/  112   60/   90/  121   57/   85/  114
+  others             53/   79/  105   54/   82/  109   56/   85/  113   58/   88/  117   56/   84/  112   60/   90/  121   57/   85/  114
+  cod/gurnard low = FB4 x1.0, central = Bjornsson F/G prey-normalised, high = Jobling 1988;
+  haddock low = FB4 x0.85, central = Bjornsson x1.0, high = Jobling x1.3
+
+  other cod bases at the cod size (kJ/kg/d): T 6.5: FB4 72, Bjornsson raw 104, norm 97, Jobling 105; T 7.0: FB4 75, Bjornsson raw 105, norm 98, Jobling 109; T 7.5: FB4 78, Bjornsson raw 107, norm 99, Jobling 114; T 8.0: FB4 81, Bjornsson raw 108, norm 100, Jobling 119
+  dab checks: Hall 1987 dab = 0.6 x haddock -> T 7.0: 100 (hadd fn at dab size) vs central 76, T 9.5: 104 (hadd fn at dab size) vs central 100
+  Bagge 1995 dab 95-175 g, 9.2-9.8 C: 2.23 %BW/d boiled mussel = ~100 kJ/kg/d at 4.5 kJ/g (assumed); model dab central at 9.5 C, 130 g: 89
+
+4. Group Cmax (kJ/kg/d) and ceiling (MJ/t/tick = Cmax/4)
+                                                      T6.5        T7.0        T7.5        T8.0  bottom ann  at_50m ann    p100 ann
+  old method (FB4 cod, haddock x1.3)     all           92.0        95.9        99.8       103.8        99.1       106.4       100.9
+    ceiling MJ/t/tick                                 23.00       23.98       24.96       25.96       24.78       26.61       25.23
+  old method (FB4 cod, haddock x1.3)     named         93.4        97.3       101.3       105.4       100.6       108.0       102.4
+    ceiling MJ/t/tick                                 23.34       24.33       25.33       26.34       25.15       27.01       25.61
+  FB4 cod, haddock x1.0                  all           80.9        84.3        87.8        91.3        87.2        93.7        88.8
+    ceiling MJ/t/tick                                 20.23       21.09       21.96       22.83       21.79       23.42       22.20
+  FB4 cod, haddock x1.0                  named         81.8        85.3        88.8        92.4        88.2        94.8        89.8
+    ceiling MJ/t/tick                                 20.45       21.32       22.21       23.10       22.04       23.69       22.45
+  Bjornsson cod, haddock x1.0 (CENTRAL)  all          101.3       103.3       105.1       106.9       104.7       107.3       105.5
+    ceiling MJ/t/tick                                 25.33       25.82       26.29       26.73       26.18       26.83       26.37
+  Bjornsson cod, haddock x1.0 (CENTRAL)  named        103.0       105.0       106.8       108.6       106.4       108.9       107.2
+    ceiling MJ/t/tick                                 25.75       26.25       26.71       27.15       26.60       27.23       26.79
+  Bjornsson cod, haddock x1.3            all          116.1       118.3       120.3       122.2       119.9       122.5       120.7
+    ceiling MJ/t/tick                                 29.04       29.58       30.09       30.56       29.96       30.63       30.17
+  Bjornsson cod, haddock x1.3            named        118.4       120.6       122.6       124.5       122.1       124.7       123.0
+    ceiling MJ/t/tick                                 29.61       30.15       30.66       31.13       30.53       31.19       30.74
+  low: FB4 cod, haddock x0.85, flat low  all           69.5        72.3        75.1        77.9        74.5        79.7        75.8
+    ceiling MJ/t/tick                                 17.37       18.07       18.77       19.47       18.63       19.93       18.95
+  low: FB4 cod, haddock x0.85, flat low  named         70.7        73.6        76.4        79.3        75.9        81.1        77.2
+    ceiling MJ/t/tick                                 17.68       18.39       19.11       19.83       18.97       20.29       19.30
+  high: Jobling cod, haddock x1.3, flat  all          130.9       136.9       143.1       149.5       142.0       154.4       145.0
+    ceiling MJ/t/tick                                 32.73       34.23       35.78       37.37       35.51       38.60       36.24
+  high: Jobling cod, haddock x1.3, flat  named        132.9       139.0       145.3       151.8       144.2       156.8       147.2
+    ceiling MJ/t/tick                                 33.21       34.75       36.33       37.95       36.06       39.20       36.80
+
+  h = E_prey / ceiling (ticks per unit), bottom-series annual mean:
+  old method (FB4 cod, haddock x1.3)           ceiling 24.78: h infauna (2600)  104.9, epifauna (3750)  151.3, zooplankton (4500)  181.6
+  FB4 cod, haddock x1.0                        ceiling 21.79: h infauna (2600)  119.3, epifauna (3750)  172.1, zooplankton (4500)  206.5
+  Bjornsson cod, haddock x1.0 (CENTRAL)        ceiling 26.18: h infauna (2600)   99.3, epifauna (3750)  143.3, zooplankton (4500)  171.9
+  Bjornsson cod, haddock x1.3                  ceiling 29.96: h infauna (2600)   86.8, epifauna (3750)  125.2, zooplankton (4500)  150.2
+  low: FB4 cod, haddock x0.85, flat low        ceiling 18.63: h infauna (2600)  139.5, epifauna (3750)  201.3, zooplankton (4500)  241.5
+  high: Jobling cod, haddock x1.3, flat high   ceiling 35.51: h infauna (2600)   73.2, epifauna (3750)  105.6, zooplankton (4500)  126.7
+
+  old value: 108.4 kJ/kg/d, ceiling 27.1 MJ/t/tick (group_params.py, 50 m series)

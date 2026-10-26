@@ -1,0 +1,45 @@
+# Benthivorous fish: engine energy accounting per tonne of fish per year
+library fgconfig/fg_library.yaml; probe year 1 of /tmp/claude-1001/-home-simon-eco-evo/e2222262-6482-4b59-b1b5-c52c6f6c8f6b/scratchpad/spatial_g10
+
+## Loaded values
+resting_metabolism 3.5999999046325684 MJ/t/tick; feeding_cost 2.0, resting_cost 1.0, movement_cost 1.600000023841858
+Q10 multiplier at_50m: monthly-table mean 1.0000 (min 0.859, max 1.298)
+energy_content 4500.0, max_energy_reserve 1800.0, maintenance u 0.5, derived g 0.0021817/tick
+M1 0.2900/yr, K-loss coefficient 6.26339e-05/tick per t/cell (r_max/(1460 K) = 6.26339e-05), K 3.39
+budget: gross 0.8214/yr = r_max 0.31 + M1 0.2900 + M2 0.2214 (seals 0.0350, predatory_fish 0.1800, porpoises 0.0064); s* 0.7579; ideal intake 21.68 MJ/t/tick on planktivorous_fish; ideal cost 7.2 (no Q10)
+quality (assimilation x E, MJ per t eaten): infauna 1820, epifauna 3000, planktivores 5700, predators 4202
+
+## Realised action mix and probe meters, year 1
+eat 0.9569, rest 0.0023, move 0.0408; biomass-weighted fill 0.722
+gains 14623 MJ/t/yr assimilated; costs charged 10407 MJ/t/yr; Q/B on infauna 7.03
+year 1: losses/yr predation 0.081, starvation 0.000, natural 0.433, impact 0.131; net growth +0.067/yr; Q/B 7.57; diet benthic_infauna 0.93, mobile_epifauna 0.06, predatory_fish 0.01
+year 4: losses/yr predation 0.162, starvation 0.004, natural 0.443, impact 0.128; net growth -0.019/yr; Q/B 7.85; diet benthic_infauna 0.98, predatory_fish 0.01
+year 6: losses/yr predation 0.121, starvation 0.063, natural 0.438, impact 0.111; net growth -0.034/yr; Q/B 7.82; diet benthic_infauna 0.99, predatory_fish 0.01
+year 8: losses/yr predation 0.098, starvation 0.156, natural 0.416, impact 0.116; net growth -0.102/yr; Q/B 7.73; diet benthic_infauna 0.99
+
+## Required assimilated energy per t fish per yr (MJ) and its infauna equivalent (t infauna / t fish / yr)
+item                                                                       MJ/t/yr   t inf  note
+A. resting cost, 100 % rest (RM x Q10 mean)                                   5256    2.89  3.5999999046325684 x 1.000 x 1460
+B. action costs at the realised mix                                          10414    5.72  mix factor 1.981 x A
+   of which the feeding surcharge (eat x (feeding_cost-1) x RM)               5030    2.76  
+C. production at the realised fill, g (s-u)                                   4108    2.26  P 0.708/yr x 5800 MJ/t
+   C1. budget gross production                                                4764    2.62  P 0.821/yr
+   C2. realised year-1 losses + net growth                                    4132    2.27  P 0.712/yr
+   C3. reserve carried by each new tonne (s ME), part of C                     921    0.51  
+D = B + C: break-even + realised production                                  14522    7.98  
+E. B alone (costs, no production)                                            10414    5.72  
+
+## What the budget Q/B 3.48 delivers (assimilated MJ/t/yr)
+budget diet in the model pools (inf 0.511, epi 0.209, plk 0.084, pred 0.019; the other 0.177 (within-group, sandeel, gobies, cephalopods, zooplankton) taken at the pools' mean quality 2571)
+  3.48 x 2571 = 8946 MJ/t/yr
+engine diet (99 % infauna): 3.48 x 1820 = 6334 MJ/t/yr
+Q/B on infauna alone to cover B (costs only): 5.72; B + C: 7.98
+Q/B on the budget mix to cover B: 4.05; B + C1: 5.90
+Holling ceiling Q/B on infauna (1/h x 1460): 15.2
+infauna M2 implied by the engine at B_ben 1.53 and infauna B* 93.6: 0.130/yr (budget 0.029; realised 0.12-0.16)
+
+## The same budget with cost alternatives (MJ/t/yr; t infauna)
+feeding_cost 1.0 (no surcharge; RM 3.6 = 1.2 x SMR routine)                   9492    5.22
+feeding_cost 1.5                                                             12007    6.60
+SDA 0.15 of ingested energy instead of the surcharge                         12081    6.64  (assimilated; SDA paid out of it)
+production without the reserve carry (ec only)                               13601    7.47

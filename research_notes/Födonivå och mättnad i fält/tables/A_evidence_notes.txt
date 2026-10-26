@@ -1,0 +1,285 @@
+FIELD FEEDING LEVEL OF NORTH SEA / SKAGERRAK DEMERSAL FISH (agent A)
+=====================================================================
+
+Question: how far below Cmax (at ambient temperature and size) do wild cod, haddock, whiting,
+saithe and the main flatfish feed? Feeding level f = field consumption / Cmax.
+
+Files
+- tables/A_field_feeding_level.csv   one row per number (species, season, size, basis, source, tag)
+- tables/A_ration_over_cmax_stdout.txt  output of scripts/A_ration_over_cmax.py (SMS and Daan rations
+  against FB4, Jobling and the whiting lab ration)
+- tables/A_ices_stomach_summary.csv, A_ices_stomach_stdout.txt  scripts/A_ices_stomach_summary.py
+  (ICES online stomach database: empty share, content %BW, whiting content/Smax)
+- tables/A_crr219_empty_stdout.txt  scripts/A_crr219_empty.py (ICES CRR 219 Table 7, 1991)
+- data/A_*/README.txt  where each download came from
+
+Tags: [F] full text read, [A] abstract only, [S] secondary, [D] my arithmetic. J = judgement.
+
+Units discipline. The project's Cmax (params files) is energy, kJ/kg/d, with 1 g prey = 4.184 kJ in the
+FB4 convention. Field rations are wet weight of prey as eaten. A wet/wet ratio and an energy/energy
+ratio differ by (diet energy density / 4.184): fish-heavy diets (5-6 kJ/g) raise the energy ratio,
+benthos-heavy diets (3-3.5 kJ/g) lower it. The `method` column of the CSV says which basis each
+ratio uses and whether the maximum is a lab satiation ration at the same size and temperature.
+
+The project's own ratios (benthivores 0.30, predators 0.49) are against the engine's constructed Cmax
+and are NOT literature values; they are not in the CSV.
+
+
+1. SOURCES, ONE BY ONE
+----------------------
+
+1.1 Rindorf & Gislason 2005, J Exp Mar Biol Ecol 324:1-19, doi:10.1016/j.jembe.2005.04.013 [F]
+    (postprint already in "Attackrater ur motesteori"/data/gap_validation/rindorf2005; not re-fetched)
+- Measured: 48-72 h round-the-clock trawl series at 5 North Sea stations, early September (1988 and
+  later), whiting 20-24.9, 25-29.9, 30-34.9 cm; intake per prey by evacuation (Andersen 1998, total
+  stomach content evacuation rate), 'very fresh' prey excluded (possible trawl feeding).
+- Wmax definition (appendix): the lab ad-libitum sandeel ration of Andersen & Riis-Vestergaard 2003,
+  Wmax,sandeel = 0.00122 L^2.28 e^(0.076T) g/d, is converted to a maximum sustained stomach content
+  Smax = 0.0352 L^1.68 e^(0.004T) g; then Wmax = 24 rho_tot Smax with the evacuation rate of the
+  actual mixed field diet. So Wmax IS a lab satiation maximum at the same size and temperature,
+  re-expressed for the field diet (wet/wet). Text: maximum "4.3 to 6.2% body weight" at the warmest
+  station, "around 3.1%" at the coldest; overall 2.7-6.1 %BW/d, mean 3.3.
+- Total intake / Wmax (read from Fig. 3F; the plot is [F], my reading of points is approximate):
+  8.2 C 0.09-0.11; 8.6 C 0.16-0.19; 10.6 C 0.24-0.31; 13.7 C 0.19-0.22; 16.7 C 0.24-0.35.
+  The two cold deep stations (73 and 137 m, 8.2-8.6 C) are the Skagerrak-like case: 0.10-0.18.
+- Split: "other food" (crustaceans etc.) "between 8 to 22%, 10 to 20% and 8 to 17% of maximum daily
+  ration" for the three sizes, rising with temperature; fish prey 0-0.22, varying 17-36 fold between
+  stations, uncorrelated with other food. Single-prey saturation plateaus (Table 2): clupeids K =
+  0.10-0.17 of Wmax, gadoids 0.06-0.12. Abstract: "none of the levels corresponded to the maximum
+  digestive capacity of the predator".
+- Diel: fish prey eaten in two peaks, around dawn and dusk; low at midday and in darkness (except at
+  the 137 m station, where the afternoon peak extended). Rindorf 2003 (MEPS 249:265) adds that
+  bottom-dwelling prey are eaten mainly at night, free-swimming prey by day.
+- Caveats: one season (September), 3 size groups, 5 stations; prey patchiness may make apparent
+  saturation lower than the physiological maximum (authors' own discussion).
+
+1.2 ICES (1997) CRR 219, Database report of the stomach sampling project 1991,
+    doi:10.17895/ices.pub.4626 [F] (figshare PDF)
+- Table 7A-E: % empty stomachs per predator size class x roundfish area x quarter. The text layer
+  loses the column alignment, so per quarter I take the all-size total (last value of the Total row)
+  and the range over size classes (scripts/A_crr219_empty.py). The column position of that total
+  is inferred (it is the extra last value in each Total row and lies inside the size-class range),
+  not read from an aligned header; the script prints the header line of each table it parsed.
+- All-size empty share, Q1/Q2/Q3/Q4/year:
+    cod      0.161 / 0.095 / 0.094 / 0.082 / 0.105
+    haddock  0.184 / 0.058 / 0.084 / 0.097 / 0.100
+    whiting  0.453 / 0.120 / 0.125 / 0.079 / 0.163   (large whiting Q1 0.53-0.57)
+    saithe   0.268 / 0.024 / 0.147 / 0.105 / 0.120
+    mackerel 0.48 in Q1
+  Skagerrak (roundfish area 8), Q4 only: cod 0.084, haddock 0.195, whiting 0.183.
+- Report text: Q1 had the highest empty share for all five predators, and Q1 1991 was higher than
+  1981 ("small in the case of cod, but large for haddock, whiting, mackerel and saithe"). Caveat in
+  the report itself: ships applied different criteria for empty vs regurgitated ("This is indeed
+  disturbing").
+- No total-content table (Table 10 covers commercial prey only), so no fullness from this report.
+
+1.3 ICES online stomach database (stomachdata.ices.dk), full download 2026-10-26 [D]
+- Only a subset of the Year of the Stomach data is online. North Sea + Skagerrak-Kattegat records,
+  empty = StomachEmpty / Number; mean content = sum of prey weights / non-regurgitated stomachs
+  (empties included); body weight from length-weight fitted to the database's own single-fish
+  records (cod 0.00494 L^3.172, whiting 0.00542 L^3.105); groups with unweighed prey are blanked.
+- Cod 1981-2023: empty 0.15 (Q1, n 1212), 0.18 (Q3), 0.12 (Q4, 1981); Skagerrak-Kattegat 0.10
+  (n 258). Mean content 0.7-1.7 %BW (Q1 peak 1.5-1.7 at 40-69 cm). Daan's 1968-71 relation gives
+  1.7-1.9 %BW.
+- Whiting: empty 0.30 (Q1), 0.23 (Q2), 0.33 (Q3), 0.24 (Q4); Skagerrak Q1 0.46. Content/Smax (Smax
+  from 1.1, the lab satiation stomach content) 0.09-0.20 for < 30 cm, up to 0.39 for 30-39 cm in
+  Q3; content 0.9-1.9 %BW. With first-order evacuation (Rindorf's own assumption, Wmax = 24 rho Smax)
+  intake/Wmax = S/Smax, so these are feeding levels of 0.1-0.2 (0.4 for the largest in Q3).
+  Caveat: survey hauls are mostly daytime; whiting feed at dawn and dusk, so midday stomachs are
+  below the daily mean S (bias low), but S/Smax averaged over the day is what matters.
+- Plaice 2024 (one survey programme): Q1 0.987 empty (n 547; content 0.00-0.02 %BW); Q3 0.645 empty
+  (content 0.09-0.13 %BW). The winter fast is unambiguous. Skagerrak-Kattegat Q1 0.86 (n 14).
+- Haddock: Q1 2025 0.62 empty (n 265, prey unweighed), Q3 1982 0.17 (n 76; content 0.3 %BW).
+- Saithe 1980-91 (+2026): empty Q1 0.28, Q2-Q4 0.04-0.08, but 17-37 % recorded regurgitated.
+- Long rough dab 1991: empty 0.27 (Q1), 0.055 (Q2), 0.14 (Q3); 45-54 % regurgitated (pooled).
+- Bad length entries (mm in a cm field, 2021-23 uploads; 139 records) dropped.
+
+1.4 SMS key run 2023 rations (ICES WGSAM 2024, ICES Sci Rep 6:13, Tables 3-7 and 3-8) against lab Cmax [D]
+- Rations ration = a_q W^b (kg/quarter, W kg), from Year of the Stomach data by the Andersen & Beyer
+  cylinder evacuation model with prey energy density and armament. Wet weight as eaten.
+- Cod vs FB4 cod Cmax (Hansson et al. 1996; 0.099 W^-0.195 f(T), Kitchell CQ 2.41 CTO 13.7 CTM 21;
+  check 1000 g 7 C = 78.0 kJ/kg/d, as the project table). Wet/wet at 4.184 kJ/g, quarterly mean of
+  the manifest's at_50m series (7.2, 6.9, 8.9, 10.5 C):
+    1.19 kg: Q1 0.52, Q2 0.72, Q3 0.64, Q4 0.64; annual 0.63 (300 g 0.65; 5 kg 0.61).
+  A +1.5 C shift lowers each by ~0.03-0.08.
+- Cod vs Jobling (1988) Cmax (as eq. 2 of Neuenfeldt et al. 2020: 0.223 e^(0.104T - 0.000112T^3)
+  W^0.802, read as kJ/d): Jobling is 1.42-1.51 x FB4 at 5-10 C and all sizes. Energy/energy at
+  diet 4.184 or 5.0 kJ/g: annual 0.42-0.44 / 0.50-0.52; Q1 0.35-0.44, Q2 0.48-0.60, Q3-Q4 0.42-0.53.
+- Haddock vs the cod function (no adult haddock Cmax exists): annual 0.27-0.31 (x1.0), 0.21-0.24
+  (x1.3, the project's judgement); Q1 0.15-0.22, Q2 0.21-0.31, Q3 0.25-0.36, Q4 0.22-0.33. The SMS
+  haddock ration per kg is 0.6 x the cod ration at equal size.
+- Whiting vs the Andersen & Riis-Vestergaard sandeel satiation ration (lab, same size and T; energy/
+  energy with whiting diet 4.5 kJ/g, range 4.0-5.5): annual 0.27-0.30 (range 0.21-0.36); Q1 0.23-0.26,
+  Q2 0.26-0.28, Q3 0.33-0.36, Q4 0.24-0.27. Independent of 1.1 (different data, same ceiling) and in
+  the same band (Rindorf Q3 0.10-0.35).
+- Saithe: rations Q1 0.44, Q2 1.27, Q3 0.67, Q4 0.79 %BW/d at 1.5 kg; no saithe Cmax exists. Not
+  converted to a feeding level (the whiting lab formula would be extrapolated far outside its sizes).
+- Caveats. (a) The quarterly SHAPE depends on the temperature series used for Cmax: at_50m is coldest
+  in Q2, so cod Q2 comes out highest; in the North Sea proper Q2 is warmer than Q1 and SMS evaluated
+  each stratum at its own ambient temperature (not given in the report). A uniform +1.5 C does not fix
+  the phase. Robust: the annual level, and Q1 lowest. (b) Evacuation-model choice moves rations by up
+  to a factor 2 (Hansson et al. 1996; Bogstad & Mehl 1990), so every ration-based ratio carries that.
+  (c) SMS rations are per survivor and include the Q1 empties and spawning.
+
+1.5 Daan 1973, ICES CM 1973(?)/F:38 (preliminary version of Neth J Sea Res 6:479) [F]
+- 1968-71, 5705 southern + 1725 northern North Sea cod stomachs. Stomach content w = 0.00016 L^3 g
+  (no significant seasonal or regional difference in the feeding coefficient), daily ration R =
+  (b/2) L^2 with b 0.06: Table II 0.53 g at 10 cm, 8.5 g at 40, 19 at 60, 34 at 80, 53 g at 100 cm.
+- [D] With W = 0.006838 L^3.07: ration 3.1 %BW/d at 20 cm, 1.5 at 40, 0.97 at 60, 0.71 at 80 cm;
+  stomach content 1.7-1.9 %BW.
+- Against FB4 (wet/wet, 7-10 C): 20 cm 0.80-0.99, 40 cm 0.59-0.72, 60 cm 0.48-0.59, 80 cm 0.42-0.52,
+  10 cm 1.1-1.4. Against Jobling (energy 4.184-5.0 kJ/g, 7-10 C): 20 cm 0.53-0.81, 40 cm 0.39-0.59,
+  60 cm 0.32-0.49, 80 cm 0.28-0.43. The >1 at 10 cm against FB4 says the FB4 function is too low for
+  small cod, or Daan's evacuation model too fast for them; Jobling stays < 1 at all sizes but 10 cm.
+- Pattern robust to the basis: feeding level falls with size (ration ~ L^2, Cmax ~ W^0.8 ~ L^2.45).
+
+1.6 Hall 1987, J Fish Biol 31:479-491, doi:10.1111/j.1095-8649.1987.tb05253.x [A] (abstract via marineinfo)
+- Lab, food continuously available: haddock ate ~75 % of food by day, dusk peak and inferred dawn peak;
+  dab mainly at night, ~40 % less than haddock. "Comparison of haddock maximum daily ration with
+  published estimates of consumption in the wild indicate that wild haddock feed at between 15 and 22%
+  of their maximum capacity." Lab temperature, fish size and which field estimates were used cannot be
+  checked from the abstract; so it is unknown whether the maximum matches field T and size.
+
+1.7 Ajiad, Smedstad & Korsbrekke 1994, ICES CM 1994/O:7 (Barents Sea cod) [F] - out-of-area anchor
+- 33 000 stomachs 1984-91; "Cmax" = 68.84 W^0.934 cal/d is a line drawn as the upper envelope of
+  field consumption vs weight, NOT a lab satiation ration (Jobling's lab range 7-11 C, 100-700 g was
+  judged unsuitable for Barents cod). Actual/maximum by age and quarter, 1990: Q1 0.24-0.38, Q2
+  0.11-0.19, Q3 0.18-0.24, Q4 0.05-0.35 (small n). "Cod consumed from 16% to 37% of the maximum
+  rations"; maintenance needs 0.22-0.23 of this Cmax. Because the denominator is a field envelope,
+  these ratios understate nothing physiological; they say intake varies ~3-fold across quarters
+  with a spring (Q2, spawning/migration) low.
+
+1.8 Neuenfeldt et al. 2020, ICES J Mar Sci 77:624-632, doi:10.1093/icesjms/fsz224 [F, HTML text]
+- Eastern Baltic cod 1963-2014, ~109 000 stomachs 20-80 cm, cylinder evacuation model (rho0 2.43e-3,
+  T fixed at 5 C), Cmax = Jobling 1988 (above), f = C/Cmax in energy. Numeric f only in Fig. 4, which
+  I could not read (the OA PDF sits behind a Cloudflare check). Text: 20-30 cm cod in 2005-2014
+  "among the lowest on record", "at or even below minimum fish maintenance levels"; larger cod rising
+  with length. "Previous studies have shown that 15-40% of cod stomachs are empty." Use only as
+  qualitative support that small cod can sit near maintenance (f ~0.2) in a depleted system.
+
+1.9 Armstrong & Schindler 2011, Nature 476:84-87, doi:10.1038/nature10240 [A, PubMed abstract]
+- 639 estimates, 38 fish species: "piscine predators typically maintain the physiological capacity to
+  feed at daily rates 2-3 times higher than what they experience on average" -> mean load:capacity
+  0.33-0.5 [D]. Species list and the gadoid entries not seen.
+
+1.10 Hartvig, Andersen & Beyer 2011, J Theor Biol 272:113-122, doi:10.1016/j.jtbi.2010.12.006 [F, arXiv]
+- Not a measurement. From the von Bertalanffy growth constant (~10 g^0.25/yr, Andersen et al. 2008)
+  and lab scalings of Cmax and metabolism they infer "the expected average feeding level of
+  individuals in the field ... f ~ 0.4, i.e. around twice the critical feeding level" fc ~ 0.2 (where
+  all assimilated food goes to metabolism). f0 = 0.6 (at resource carrying capacity) gave realised
+  ~0.4 in their model; feeding level falls with body size.
+
+1.11 Hansson et al. 1996, ICES J Mar Sci 53:107-114, doi:10.1006/jmsc.1996.0010 [A]
+- Same North Sea cod stock, 1974-89: standard ICES evacuation model 840 kt/yr, two other evacuation
+  models 1020 and 1640 kt, Wisconsin bioenergetics 1420 kt. The ICES model is 0.59 of the
+  bioenergetics estimate; the differences come from young cod. Whether their P (proportion of Cmax)
+  was fitted to growth or fixed is not in the abstract; I do not infer it. The FB4 cod Cmax used in
+  1.4-1.5 comes from this paper.
+
+1.12 Basimi & Grove 1985, J Fish Biol 27:505-520, doi:10.1111/j.1095-8649.1985.tb03198.x [A]
+- Inshore plaice, eastern Anglesey (Irish Sea). Seasonal daily rations 5-10 %BW (15-20 cm), 3-12 %
+  (20-25 cm), 2.8-4.4 % (30-35 cm); "Plaice ate little food in winter"; bouts of heavy feeding in
+  which new prey are moved into the anterior intestine "without full gastric digestion".
+- [D] Against Fonds et al. 1985 lab maximum (excess mussel meat; Table 8 via the benthivore evidence
+  file) at 14 C and 350 g, 166 kJ/kg/d = 4.0 %BW/d at 4.184 kJ/g: 30-35 cm plaice 0.7-1.1 wet/wet.
+  J: the prey (Abra alba, Pectinaria koreni) is probably ~3 kJ/g wet, giving ~0.5-0.8 in energy;
+  the field temperature (~14 C) is my assumption for the feeding season.
+- Contrast: offshore North Sea Q3 2024 survey stomachs are 64 % empty with 0.1 %BW content (1.3).
+  The two methods disagree systematically for a bout feeder that clears its stomach fast: a daytime
+  snapshot of a bout feeder sees mostly empty stomachs, while the evacuation ration integrates the
+  bouts. Present both; do not average them.
+
+1.13 Others (small)
+- Hislop et al. 1991, ICES J Mar Sci 48:139 [A]: of the 1981 whiting stomachs "almost 50% were either
+  empty or were judged to have lost all or part of their contents through regurgitation".
+- Bogstad & Mehl 1990 (ICES CM, IMR Brage) [S, search summary]: six evacuation models on 1984 Barents
+  cod stomachs gave 0.5-1.2 %BW/d (factor 2.4 by model choice).
+- Knust 1996 (dab, German Bight / Dogger Bank) [S]: feeding peaks in summer, drops at spring spawning;
+  little seasonality on Dogger Bank. No ration found.
+- Searched without a usable number: Essington et al. 2001 (CJFAS 58:2129 is about von Bertalanffy-based
+  consumption, not P), Kiorboe & Hirst 2014 (maximum rates only), Bjornsson et al. 2001 (abstract has
+  growth, not intake), saithe rations or Cmax (none found beyond SMS), dab/witch/LRD field rations
+  (none found), Funk et al. 2023 and Maioli 2019 (no feeding level).
+
+
+2. SYNTHESIS PER SPECIES
+------------------------
+Every ratio below names its Cmax basis. Seasons: Q1 Jan-Mar, Q2 Apr-Jun, Q3 Jul-Sep, Q4 Oct-Dec.
+
+WHITING - best attested (lab ceiling matched in size and temperature, two independent routes)
+- Rindorf & Gislason 2005, field 48-h series, September: 0.10-0.35, ~0.14 at 8 C (Skagerrak-like).
+- SMS rations vs the same lab ceiling: annual 0.27-0.30 (0.21-0.36); Q3 highest (0.33-0.36).
+- Stomach content / lab satiation content (ICES database): 0.1-0.2 (up to 0.4, largest in Q3).
+- Empty: 0.45 in Q1 1991 (large whiting 0.53-0.57), 0.08-0.13 in Q2-Q4; Skagerrak Q4 0.18.
+- J: central 0.25 (range 0.10-0.35); Q1 lowest (high empty share; ~0.15-0.25), Q3 highest
+  (~0.3-0.35). At 8 C bottom water the field value sits at the low end (0.10-0.2). Quality: good.
+
+COD - basis-dependent by a factor ~1.45
+- SMS rations: 0.63 annual against FB4 (Q1 0.52, Q2-Q4 0.64-0.72 with the at_50m series);
+  0.42-0.52 against Jobling 1988. Daan 1973 at 40 cm: 0.59-0.72 (FB4) or 0.39-0.59 (Jobling).
+- Size: falls with size on both bases (Daan: 20 cm 0.5-1.0, 80 cm 0.3-0.5).
+- Empty: 0.16 in Q1, 0.08-0.10 in Q2-Q4 (1991); 0.10-0.15 in the online database; Skagerrak 0.08-0.10.
+  Mean stomach content 0.7-1.9 %BW.
+- Out-of-area: Barents 0.16-0.37 of a field envelope (Q2 lowest); Baltic small cod near maintenance
+  (f ~0.2) in 2005-14.
+- J: central 0.5-0.55. Annual SMS level on the two bases: 0.63 (FB4) / 0.43 (Jobling) wet/wet at
+  4.184 kJ/g; 0.75 (FB4) / 0.52 (Jobling) in energy at a 5.0 kJ/g diet. Range 0.43-0.75 over basis x
+  diet energy (the Q2 FB4 0.72 is a temperature-series artefact and is not used to set the range). Q1 lower (0.35-0.52
+  across the two bases), and small cod higher than large. Quality: moderate (rations solid, the ceiling is
+  the uncertainty; the FB4 cod function looks low for small cod).
+
+HADDOCK - no adult lab Cmax; all ratios lean on a cod analogue
+- SMS rations vs the cod function: annual 0.27-0.31 (x1.0) or 0.21-0.24 (x1.3); Q1 0.15-0.22,
+  Q3 0.25-0.36. Hall 1987: 0.15-0.22 of a lab maximum (T and size unchecked).
+- Empty: Q1 0.18, Q2-Q4 0.06-0.10 (1991); Skagerrak Q4 0.20.
+- J: central 0.22 (range 0.15-0.31); Q1 ~0.15-0.2, Q3 ~0.25-0.35. Quality: low-moderate. The SMS
+  haddock ration per kg is 0.6 of the cod ration at equal size, so with any Cmax at or above the
+  cod function haddock feed further below their ceiling than cod.
+
+SAITHE - rations, no ceiling
+- SMS rations 0.44 (Q1), 1.27 (Q2), 0.67 (Q3), 0.79 (Q4) %BW/d at 1.5 kg; Q2 is 2.9 x Q1.
+- Empty: Q1 0.27, Q2 0.02, Q3 0.15, Q4 0.11 (1991); 17-37 % of stomachs regurgitated in the online
+  data (midwater fish hauled from depth), so "empty" is uncertain.
+- J: no feeding level can be stated from the literature. If saithe Cmax per kg is like whiting's or
+  cod's at 1-2 kg (~1.5-2.2 %BW/d at 7-10 C on the FB4 basis), Q2 would be ~0.6-0.8 and Q1 ~0.2-0.3;
+  that is an analogy, not evidence. Quality: gap.
+
+PLAICE - strongly seasonal
+- Winter (Q1): 0.99 empty, content ~0 (ICES 2024, n 547); "ate little food in winter" (Basimi &
+  Grove). Feeding level ~0 in Dec-Mar.
+- Feeding season: inshore evacuation rations 2.8-4.4 %BW/d at 30-35 cm = 0.7-1.1 of the Fonds lab
+  maximum wet/wet (~0.5-0.8 in energy, J); offshore daytime survey stomachs 64 % empty.
+- J: summer 0.5-0.9 inshore (bout feeding), lower offshore (unknown); winter ~0. An annual mean
+  would be roughly 0.3-0.5 (J, not measured). Quality: low-moderate; no North Sea offshore ration.
+
+DAB, LONG ROUGH DAB, WITCH - gaps
+- Dab: lab intake ~0.6 x haddock (Hall 1987); seasonal feeding with a spring (spawning) drop in the
+  German Bight (Knust 1996). No field ration found.
+- Long rough dab: empty 0.27 (Q1), 0.06 (Q2), 0.14 (Q3) in 1991 (with ~50 % regurgitated). No ration.
+- Witch: nothing found.
+- J: treat as plaice-like seasonal feeders with unknown level.
+
+CROSS-SPECIES ANCHORS
+- Armstrong & Schindler 2011 (38 species): mean intake 0.33-0.5 of capacity.
+- Hartvig et al. 2011: expected field f ~0.4, maintenance fc ~0.2 (growth-based inference).
+- The North Sea gadoid numbers above sit inside this band: whiting and haddock at its low end
+  (0.2-0.3), cod in the middle to upper part (0.45-0.65 by basis).
+
+EVIDENCE QUALITY, SHORT
+- Strong: Rindorf & Gislason 2005 (whiting); CRR 219 empty shares; SMS rations themselves.
+- Moderate: the [D] SMS and Daan ratios (rations solid; ceilings and temperatures are mine to match).
+- Weak or missing: haddock Cmax, saithe Cmax, all flatfish field rations in the North Sea offshore,
+  Neuenfeldt's numeric f (figure not read).
+
+
+3. GAPS
+-------
+- No adult haddock or saithe lab Cmax; no flatfish field ration from the offshore North Sea/Skagerrak.
+- Cod Cmax basis: FB4 (Hansson et al. 1996) vs Jobling (1988) differ by 1.45x; Bjornsson et al. 2001
+  (wild cod 447-2213 g fed capelin and shrimp to satiation) would arbitrate but the intake data are
+  behind a paywall.
+- Neuenfeldt et al. 2020 Fig. 4 (Baltic cod f by size and decade) not read.
+- SMS rations were not available by stratum temperature, so the quarterly ratios use the Skagerrak
+  50 m series; the annual level is robust, the quarter shape less so.
+- Online ICES stomach data are a subset; fullness (content %BW) by quarter from the full 1981/1991
+  projects would need the original data, not the reports.

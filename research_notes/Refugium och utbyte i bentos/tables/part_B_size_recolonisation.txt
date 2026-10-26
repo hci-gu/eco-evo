@@ -1,0 +1,393 @@
+PART B - SIZE REFUGE OF NEPHROPS FROM FISH (Q2) AND RECOLONISATION OF MOBILE EPIFAUNA (Q6)
+=========================================================================================
+Research notes for the Mareld simulator (Skagerrak, 100-300 m mud, 60 x 60 km, 6 h tick).
+Tags: [F] full text read (incl. values read off a table/figure), [A] abstract only,
+[S] secondary source / search snippet. "J" = my own judgement or derivation.
+Downloaded files: data/<source>/ ; scripts: scripts/ ; derived tables: tables/.
+
+#########################################################################################
+Q2. SIZE REFUGE OF NEPHROPS NORVEGICUS FROM FISH
+#########################################################################################
+
+-----------------------------------------------------------------------------------------
+Q2.1 Population parameters used (FU 3-4, Skagerrak/Kattegat)
+-----------------------------------------------------------------------------------------
+* ICES Stock Annex, Norway lobster in Division 3.a, FU 3 and 4 [F]
+  https://ices-library.figshare.com/articles/report/Stock_Annex_Norway_lobster_Nephrops_norvegicus_in_Division_3_a_Functional_Units_3_and_4_Skagerrak_and_Kattegat_/18622808
+  file data/ices_stock_annex_nep34/nep-3-4_SA.pdf
+  - "Growth: Males; L-inf = 73 mm, k = 0.14 / Mature Females; L-inf = 65 mm, k = 0.10"
+  - "Size-at-maturity L25=24.7 mm, L50=28.5 mm."
+  - "Weight-length parameters: Males a = 0.00045, b = 3.113 / Females: a= 0.00108, b = 2.847"
+    (units g and mm CL: 40 mm male -> 43.7 g, J check)
+  - "A natural mortality rate of 0.3 was assumed for all age classes and years for males and
+    immature females, with a value of 0.2 for mature females"
+  - "These calculations assume that the TV survey has a knife-edge selectivity at 17 mm."
+  - "The minimum landing size (MLS) is 40 mm CL" (reduced to 32 mm in 2016, WGNSSK 2024).
+* WGNSSK 2024, chapter 10.1 Nephrops in 3.a [F] (ICES Sci. Rep. 6:38)
+  https://ices-library.figshare.com/articles/report/Working_Group_on_the_Assessment_of_Demersal_Stocks_in_the_North_Sea_and_Skagerrak_WGNSSK_/25605639
+  file data/wgnssk2024_nep34/wgnssk2024_nep_skk.pdf
+  - "Males: L-inf = 73 mm CL, k = 0.138. Immature females: L-inf = 73 mm CL, k = 0.138.
+    Mature females: L-inf = 65 mm CL, k = 0.10, Size at 50% maturity = 29 mm CL."
+  - "Growth parameters for males were taken from Ulmestrand and Eggert (2001) and female growth
+    parameters have been assumed to be similar to those of Scottish Nephrops stocks."
+  - 2023 row of the summary table: UWTV abundance 3564 million, landings 117 million,
+    discards 45 million, harvest rate 4.2 % by number (2021: 5.1, 2022: 4.7).
+  - Figure 10.1.4: "Length frequency distributions of Nephrops catches in number of individuals,
+    split by catch fraction (landings and discards) and sex. Data for Denmark and Sweden combined
+    for 2023." Digitised by me (scripts/probe_axes.py, scripts/read_lfd_wgnssk2024.py) ->
+    tables/nep34_catch_lfd_2023_read.csv. Validation (J): bars sum to 161.6 million (report:
+    117 + 45 = 162 million) and the landings colours to 117.0 million (report 117) - the
+    calibration is good to ~1 %.
+* Ulmestrand & Eggert 2001, ICES J. Mar. Sci. 58:1326-1334, doi:10.1006/jmsc.2001.1133 [A]
+  "The estimates of L-inf (72.9) and K (0.138) for males differ from those currently used in the
+  ICES assessment". Full text (OUP PDF) could not be downloaded (refused); female values not read.
+
+-----------------------------------------------------------------------------------------
+Q2.2 Which Nephrops sizes fish eat
+-----------------------------------------------------------------------------------------
+(a) De Clerck & Sterk 1980, ICES CM 1980/G:43, Outer Silver Pit (North Sea), Aug and Oct-Nov 1979,
+    552 cod and 223 whiting from commercial Nephrops trawlers [F]
+    https://www.ices.dk/sites/pub/CM%20Doccuments/1980/G/1980_G43.pdf  (data/declerck_sterk1980/)
+    - "The carapax length of the Nephrops in the stomachs varied from 7 mm to 55 mm in August and
+      from 7 to 36 mm in the autumn (table 5)."
+    - whiting: "The carapax length of the Nephrops in the stomachs varied from 9 to 38 mm".
+    - "During August an individual maximum occurred in a 59 cm cod containing 12 Nephrops."
+    - "Significant correlations were found between the size of cod and whiting and the number and
+      weight of the Nephrops in their stomach." (correlations of NUMBER/WEIGHT with cod size,
+      not of prey CL with cod size; "From table 5 it seemed that there is a relationship between
+      the length of the prey and the length of the cod.")
+    - Table 5 transcribed by me: tables/declerck_sterk1980_table5_transcribed.csv; summarised by
+      scripts/nephrops_size_window.py (stdout in tables/nephrops_size_window_stdout.txt) (J):
+        cod 26-45 cm (Aug, n=52 prey):  median CL ~20 mm, 90th pct ~32, max class 40-42 mm;
+                                       96 % of prey <= 39 mm
+        cod 46-65 cm (Aug, n=90):       median ~23, 90th pct ~35, max 40-42; 96 % <= 39 mm
+        cod 66-105 cm (Aug, n=101):     median ~32, 90th pct ~41, max class 55-57 mm;
+                                       81 % <= 39 mm, 19 % >= 40 mm
+        cod Oct-Nov (all sizes, n=27):  all <= 36 mm
+        whiting 21-60 cm (Aug, n=9):    7-39 mm, median ~23
+      Predator-length to prey-size relation (J, from the pooled medians): median prey CL 20 -> 23
+      -> 32 mm and 90th percentile 32 -> 35 -> 41 mm for cod 26-45 / 46-65 / 66-105 cm, i.e. a
+      slope of roughly 0.25 mm prey CL per cm cod length (no regression published). Armstrong et
+      al. 1991 [F] on whiting in cod: "As with Nephrops, the average size of the prey increased
+      comparatively little with increasing size of cod".
+      J: even 31-35 cm cod took 40-42 mm Nephrops; prey > 40 mm appear only regularly in cod
+      >= 66 cm. The lower end (7-15 mm) is taken by all cod sizes. There is no hard upper
+      cut-off; the size distribution shifts ~10 mm upward from small to large cod.
+(b) Kinnear & Livingstone 1979, ICES CM 1979/K:33, Firth of Forth, Nov 1978, 241 cod stomachs,
+    cod up to 64 cm [F]  https://www.ices.dk/sites/pub/CM%20Doccuments/1979/K/1979_K33.pdf
+    - "The size of Nephrops found in the stomachs varied in carapace length from 8 to 30mm with a
+      mean of 20mm compared with a mean size of 28mm for the trawl-caught specimens."
+    - "Nephrops smaller than 12mm predominated in cod smaller than 40cm"
+    - "there is a little evidence for a slight increase in the size of Nephrops eaten as cod size
+      increases, but the general preference seems to be for the smaller Nephrops"
+(c) Armstrong, Smyth & McCurdy 1991, ICES CM 1991/G:15, western Irish Sea, cod from NI landings
+    1982-83 [F]  https://www.ices.dk/sites/pub/CM%20Doccuments/1991/G/1991_G15.pdf
+    - Fig. 3 (read off): CL in stomachs ~8-50 mm for all cod ages 1 to 6+, mode 22-26 mm in every
+      age class, similar to the commercial catch.
+    - "Although a general increase in the mean length of ingested prawns with increasing age of cod
+      is apparent, the ratio of mean whole-mass of prawn to mean mass of cod declined from 0.4% in
+      1-year-old cod to 0.13% in 4-year-olds; remaining at approximately 0.1% in older fish."
+    - "The sizes of Nephrops eaten by cod are similar to those taken by the commercial fleet in 1982,
+      but include smaller size-classes."
+    - Table 11 selectivity (stomach numbers at prawn pseudo-age / population numbers at age,
+      normalised to max 1 per cod age), prawn ages 1..7+ (male CL at age 1:10, 2:17, 3:24, 4:30,
+      5:35, 6:39, 7:41 mm, their length-at-age table):
+        SEL cod age 1:  0.23 1.00 0.92
+        SEL cod age 2:  0.28 1.00 1.00 0.80 0.04
+        SEL cod age 3:  0.13 0.64 1.00 0.91 0.63 0.78
+        SEL cod age 4:  0.06 0.58 0.94 1.00 0.83 0.68 0.62
+        SEL cod age 5:  0.03 0.38 0.71 1.00 0.79 0.49 0.0
+        SEL cod age 6+: 0.03 0.41 0.79 1.00 0.64 0.52 0.48
+      Predation mortality by cod M2 per prawn age 1..7+: 0.038 0.183 0.248 0.219 0.148 0.180 0.080 /yr
+      "The highest mortality rates from both sources were inflicted on prawns of three to four years
+      of age (carapace lengths 24-30 mm)."
+    - Caveat in the paper: "it is inevitable that a proportion of the discards will be eaten by cod
+      (and by other fish such as dogfish and rays)"; Kinnear & Livingstone make the same point.
+(d) Dorman et al. 1992, ICES CM 1992/G:70, IYFS Feb 1991 [F] (file already in
+    "../Bottensamhallets epifauna/data/epifauna/v274761.pdf"; not re-downloaded).
+    Skagerrak table, Nephrops row (weight g / number per cod size class, mm): 350: 11.1/1,
+    400: 6.4/3, 500: 11.2/1, 600: 70/6, 700: 59.4/5; total 158.1 g, 16 animals, 3.483 % of weight.
+    Kattegat: 150: 2.2/1, 200: 2.5/1, 350: 5.7/2, 400: 37/4, 500: 52.3/4, 600: 41.6/2, 700: 42.6/3.
+    J (inverting the annex L-W): mean stomach weight per Nephrops 9.9 g (Skagerrak) and 10.8 g
+    (Kattegat) -> ~25 mm CL; in 500-700 mm Skagerrak cod ~26 mm. These are LOWER bounds (partly
+    digested prey). No Nephrops in Skagerrak cod < 350 mm in that sample.
+(e) Haddock, rays, gurnards, long rough dab, monkfish: see "Not found" list. Armstrong 1991 names
+    dogfish and rays as discard eaters and "the other abundant predator [on large prawns] is the
+    lesser spotted dogfish" [F]. A Eurofleets cruise report lists "cod (Gadus morhua), pouting
+    (Trisopterus luscus), anglerfishes (Lophius spp), elasmobranchs, Hake (Merluccius merluccius),
+    gurnards (Trigla spp)" as reported Nephrops predators [S, search snippet]
+    https://www.eurofleets.eu/wp-content/uploads/2022/01/04-RV-Mario-Ruivo_NephropsInFunctionalUnits2829_CS.pdf
+    (no sizes).
+
+-----------------------------------------------------------------------------------------
+Q2.3 Share of Nephrops biomass inside the vulnerable window (J, scripts/nephrops_size_window.py)
+-----------------------------------------------------------------------------------------
+Method (J): steady-state population with constant recruitment at the first-postlarva size
+(3.08 mm CL, Smith 1987, see Q2.5), annex VBGF per sex (females switch to 65/0.10 at 29 mm), annex
+M (0.3; 0.2 mature females), gear selectivity derived iteratively from the 2023 catch LFD
+(s(L) proportional to C(L)/N(L)), F scaled so that catch/abundance(>=17 mm) = the 2021-23
+harvest rates (4.2-5.1 %). (The model-vs-observed catch shape printed in stdout D agrees by
+construction of the selectivity fit and is NOT a validation.)
+Independent checks (J): (i) digitised LFD x annex L-W = 6739 t of catch 2023 vs WGNSSK 2023
+landings 6175 t + discards 975 t = 7150 t (6 % low; checks digitisation + L-W); (ii) modelled mean
+weight of animals >= 17 mm is 28-29 g vs the 30 g (23-45) adopted earlier in
+"../Bottensamhallets epifauna/evidence_A2_nephrops.md" - a consistency check only, since that 30 g
+was itself a judgement. The population shape between 17 and ~28 mm is set almost entirely by the
+VBGF and M, because the catch LFD carries no information there (fitted gear selectivity ~0 below
+25 mm).
+Results, share of the BIOMASS of the >= 17 mm (UWTV-counted) stock:
+    CL <= 25 mm: 0.07     CL <= 30 mm: 0.15-0.16     CL <= 35 mm: 0.28-0.30
+    CL <= 40 mm: 0.43-0.47     CL <= 45 mm: 0.59-0.63
+  (share of NUMBERS: <= 30 mm 0.49-0.50; <= 40 mm 0.78-0.80)
+  Biomass below 17 mm (settlement to UWTV floor) = ~2 % of the >= 17 mm biomass (M 0.3 or 0.6).
+Selectivity-weighted (Armstrong 1991 Table 11 SEL applied to that population, J):
+  effective vulnerable biomass share 0.59-0.60 (cod age 6+), 0.72-0.73 (cod age 4),
+  0.23-0.25 (cod age 2). I.e. large cod "see" ~60 % of the Nephrops biomass at full rate.
+Catch-LFD version (gear-selected, under-represents < 30 mm; J): CL <= 30 mm 4.7 % of catch weight,
+  <= 40 mm 40 %, <= 45 mm 64 %.
+De Clerck & Sterk window (J): 96 % of prey of cod < 66 cm and 81 % of prey of cod >= 66 cm were
+  <= 39 mm CL -> a window "<= 40 mm" holds ~45 % of the >= 17 mm biomass; for small/medium cod a
+  window "<= 35 mm" (90th pct of their prey) holds ~29 %.
+J synthesis: there is no hard size refuge; the refuge is partial and predator-size dependent.
+  Biomass in the main window (17-35/40 mm) ~0.3-0.45 of the stock; selectivity-weighted ~0.6 for
+  big cod, ~0.25 for 2-yr cod. Caveats: Irish Sea / North Sea prey sizes (populations of smaller
+  Nephrops than FU 3-4); the steady state assumes constant recruitment and the annex growth.
+
+-----------------------------------------------------------------------------------------
+Q2.4 Years spent growing through the window (J; VBGF t = ln((Linf-L1)/(Linf-L2))/K)
+-----------------------------------------------------------------------------------------
+  settlement 3.1 -> 17 mm: 1.6 yr (VBGF extrapolated below its fitted range; Irish Sea
+                          length-at-age gives ~2 yr: age 1 = 10 mm, age 2 = 17 mm [F, Armstrong 1991])
+  17 -> 30 mm: males 1.9 yr, females 2.0 yr   (Armstrong Irish Sea: 2 yr, ages 2 -> 4)
+  17 -> 35 mm: males 2.8 yr, females 3.6 yr
+  17 -> 40 mm: males 3.8 yr, females 5.4 yr   (Armstrong: ~4.5 yr males)
+  17 -> 45 mm: males 5.0 yr, females 7.6 yr
+  30 -> 40 mm: males 1.9 yr, females 3.4 yr
+  Irish Sea length-at-age table [F, Armstrong 1991, "Carapace lengths at attainment of age"]:
+  "AGE 1: 10/10 mm, 0.57 g; 2: 17/17, 2.92 g; 3: 24/24, 8.45 g; 4: 30/27, 14.37 g;
+   5: 35/30, 21.56 g; 6: 39/32, 28.33 g; 7: 41/34, 40.0 g (plus group)" (male/female CL, mean mass).
+
+-----------------------------------------------------------------------------------------
+Q2.5 Juveniles: settlement size, burrows, emergence
+-----------------------------------------------------------------------------------------
+Smith 1987, PhD thesis, Univ. Glasgow, "The biology of larval and juvenile Nephrops norvegicus (L.)
+in the Firth of Clyde" [F]  https://theses.gla.ac.uk/3511/  (data/smith1987_thesis/)
+  - Table 4.1a carapace length (mm): Z1 1.74, Z2 2.18, Z3 2.56, PL1 3.08, PL2 4.00, PL3 4.74,
+    PL4 5.75, PL5 7.15, PL8 9.64, PL11 14.12, PL12 16.00 (reared).
+  - [F of Smith; the 10-15 mm emergence size is [S] via Smith, Chapman 1980 not read]
+    "Field evidence suggests that most Nephrops settle on the sea bed soon after metamorphosis and
+    remain within the confines of their burrows, which in the past have only been discovered in
+    association with adult burrows. It seems that they do not emerge from their burrows until the
+    end of their first year, when they have reached a carapace length of 10 - 15mm (Chapman, 1980)."
+  - Abstract: "the 1st postlarval stage is a transitional form between the planktonic and benthic
+    environments. Final recruitment to the benthos may be delayed until sometime after the 1st
+    postlarval stage." "Juveniles beyond the 1st postlarval stage are capable of constructing their
+    own burrows but will enter inhabited adult burrows through surface openings. If the inhabitant
+    does not evict the recruiting juvenile it excavates an adjoining burrow through one of the
+    walls of the adults burrow to form a juvenile / adult association. These associations are
+    known to occur in the field".
+Tuck et al. 1994 (Ophelia, doi:10.1080/00785326.1994.10429547): not open access, not read.
+J: juveniles < ~15 mm CL live in burrows (own or attached to adult burrows) and are not in the
+  emerged, visible fraction; their biomass is ~2 % of the >= 17 mm stock (Q2.3), so this refuge
+  matters little for biomass.
+
+
+#########################################################################################
+Q6. RECOLONISATION OF A DEPLETED AREA BY NEPHROPS AND OTHER MOBILE EPIFAUNA
+#########################################################################################
+
+-----------------------------------------------------------------------------------------
+Q6.1 Nephrops: larval duration, settlement, larval dispersal
+-----------------------------------------------------------------------------------------
+* Smith 1987 thesis (Firth of Clyde) [F]  https://theses.gla.ac.uk/3511/
+  - "Under the culture conditions applied in this study 12C was the lowest temperature for which
+    complete larval development (to 1st stage postlarvae) was accomplished, taking 46 days."
+  - "From laboratory observations involving a single individual Hillis (1974) reported that the
+    full larval phase was completed in 39 days at 12C" [S via Smith].
+  - Table 4.2 intermoult periods (zoeae from the 14 C trial, postlarvae at 13.5 +- 1.5 C):
+    Z1 6.96 d, Z2 9.33 d, Z3 12.75 d (zoeal phase ~29 d at 14 C, J sum), PL1 13.70 d, PL2 15.90 d.
+  - "During the 3rd zoeal stage the light response changed from photopositive to photonegative and
+    Nephrops may first come into contact with the sea bed towards the end of this stage."
+  - Settlement size: first postlarva CL 3.08 mm (Table 4.1a), see Q2.5.
+  - "The results from tagging experiments (Chapman and Bailey, 1987) suggest that these regions of
+    'unsuitable' sediment form boundaries to the dispersal of Nephrops. As a consequence the
+    Nephrops communities within each mud patch may be self-contained forming a separate
+    'stocklet'. This isolation, however, will probably not be maintained during the pelagic larval
+    phase" [S for Chapman & Bailey 1987, via Smith].
+* McGeady, Lordan & Power 2019, MEPS 631:141-155, doi:10.3354/meps13142 [F]
+  (data/twilight_migrators_ulster/)
+  - "Observed developmental rates of Stage I and II larvae (combined) range from 33 d at 9C to 13 d
+    at 15C (Thompson & Ayers 1989, Dickey-Collas et al. 2000). However, the larval period is further
+    prolonged when the duration of Stage III is accounted for."
+  - Particle tracking over 60 d (ROMS): western Irish Sea "the no DVM scenario resulted in the
+    highest retention (32.3%) and an advection distance of 99.8 +- 68.1 km. Retention was reduced
+    by more than half for the twilight (15.1%) and nocturnal (15.0%) DVM scenarios. Advection
+    distances were 125.0 +- 81.4 km for the twilight and 120.5 +- 80.3 km for the nocturnal DVM";
+    Aran grounds "181.2 +- 98.9 km for twilight DVM and 199.5 +- 106.4 km for nocturnal DVM. The
+    maximum distance advected ... was > 580 km."
+* ICES stock annex FU 3-4 [F]: "No information is available on the extent to which larval mixing
+  occurs between Nephrops stocks, but the similarity in stock indicator trends between FUs 3 and 4
+  for both Denmark and Sweden indicates that recruitment has been similar in both areas."
+J: pelagic phase ~1-2 months (13-33 d for stages I-II, ~30-46 d to postlarva at 12-14 C; longer at
+  Skagerrak spring temperatures); larvae are advected ~100-200 km, i.e. further than the 60 km grid.
+  Recolonisation of a depleted patch by settlement is therefore not limited by local spawners; it
+  is limited by growth: settlers need ~1.6-2 yr to 17 mm and ~3.5-4 yr to 30 mm (Q2.4).
+
+-----------------------------------------------------------------------------------------
+Q6.2 Nephrops: adult movement
+-----------------------------------------------------------------------------------------
+* Power et al. 2019, Sci. Data 6:7, doi:10.1038/s41597-019-0013-x [F, via PMC6437642]
+  Clew Bay (Ireland), 1177 PIT-tagged animals released 2013, 205 recaptured 2014 (~340 d at
+  liberty), 36 in 2015 (~725 d):
+  "Mean distance moved away from the release point of 231.47 +- 82.97 m by female tagged
+  individuals." "Mean distance moved away from the release point of 232.41 +- 83.15 m by male
+  tagged individuals." (pooled over recaptures after 1 and 2 years; ground left fallow)
+* Vigo Fernandez 2023, PhD thesis Univ. Barcelona, ch. 2.3 (MEPS 674:173-188 in published form),
+  315-475 m depth, NW Mediterranean 10 km2 no-take reserve [F]  https://hdl.handle.net/2445/204581
+  (data/vigo2023_thesis/)
+  - "The total distance travelled per day for these individuals ranged from 1.05 to 266.97 m d-1"
+  - "once settled in a place, their home ranges reached approximate sizes of 17.75 to 736.25 m2"
+  - "most individuals dispersed a few hundred metres"; "Tag-recapture data indicated minimal
+    spillover of biomass, implying that Norway lobsters are site settled and do not perform large
+    movements." Recapture 5 of 216 coded tags (2.32 %) by trawlers outside the reserve.
+  - acoustic tags on animals 31-50.5 mm CL.
+* MarLIN BIOTIC: adult dispersal potential "10-100m" [S, search snippet; page not read].
+J: adult net displacement ~0.2-0.3 km/yr (straight-line, release to recapture); daily paths of
+  1-270 m stay inside a home range of < 0.001 km2. Adult immigration into a depleted patch is
+  therefore an edge effect of a few hundred metres per year, negligible on a 1 km cell.
+
+-----------------------------------------------------------------------------------------
+Q6.3 Nephrops: recovery after closure / hypoxia
+-----------------------------------------------------------------------------------------
+* Vigo et al. 2023, ICES J. Mar. Sci., doi:10.1093/icesjms/fsad130 (thesis ch. 2.4) [F, thesis]
+  - "After 4 years of closure, the Norway lobster population increased in abundance, biomass, body
+    size, and trophic level in the no-take reserve. Our approach also revealed an increase in Norway
+    lobster biomass beyond its boundaries, suggesting a spillover effect."
+  - "Here, we report that the Norway lobster population increased by 60% compared to the baseline
+    state before the closure. Moreover, we observed a decrease in abundance and biomass in the CA
+    during the study period, amounting to about 80% relative to the baseline state"
+  - "These results corroborate a previous evaluation conducted 2.5 years after the closure using
+    ROV video surveys".
+  (Recovery from a fished, not an emptied, state; Mediterranean slope.)
+* Baden, Pihl & Rosenberg 1990, MEPS 67:141-155 (SE Kattegat hypoxia) [F]
+  https://int-res.com/articles/meps/67/m067p141.pdf (data/baden1990/)
+  - "During the study period (October 1984 to September 1989) lobster biomass decreased in the area
+    from 10.8 kg h-1 (catch per unit effort) to zero (estimated during the last 12 mo of the
+    investigation)."
+  - "In September 1988 the mean biomass at the 12 stations was 3.5 kg h-1, but in the following
+    3 mo and in April and September 1989 no lobsters were caught at these stations."
+  - "Survival of N. norvegicus exposed to 15 and 10 % O2-saturation was 4 wk and 2 to 4 d"
+  - In 1985-86 autumns "large quantities of dead lobster (up to 50 % of the total catch) were
+    caught"; "In the autumn of 1987 a higher biomass (3.3 to 5.0 kg h-1) was observed compared to
+    the 2 previous years" (partial recovery within 1 yr after 1986, J reading).
+  No data on recolonisation after 1989 in this paper.
+* Smith & Jensen 2008 (ICES, closed-area modelling): "Implementation of a closed area also led to
+  oscillations in stock biomass, recruitment, and yield over several years after the closure"
+  [S, search snippet].
+J: a 1-km cell emptied of Nephrops refills by settlement (annual, from outside) and growth; the
+  biomass needs at least the 3-5 yr it takes settlers to reach 30-40 mm (Q2.4); a 4-yr closure
+  gave +60 % (Vigo). Recolonisation of biomass: years (3-10), not months.
+
+-----------------------------------------------------------------------------------------
+Q6.4 Pandalus borealis (Skagerrak / Norwegian Deep)
+-----------------------------------------------------------------------------------------
+* DNV GL 2015, MSC assessment report, Swedish Pandalus fishery [F of the report, underlying studies
+  S] (file "../Bottensamhallets epifauna/data/lit/msc_se_pra.pdf"):
+  - "In Skagerrak and the North Sea, spawning and mating takes place in October/November and
+    females carry the fertilized eggs under the abdomen until hatching takes place in March the
+    following year (Bohle, 1977). The species has five pelagic larval stages which drift with ocean
+    currents for 45-90 days depending on the ambient sea temperature before settling on the bottom
+    (Aschan and Ingvalsen, 2009; Shumway et al., 1985). Particle tracking models reveal that the
+    larvae of P. borealis may be transported as far as 300km during the pelagic phase (Pedersen et
+    al. 2003)."
+  - "Migration of egg-carrying females into shallower waters in connection with egg-hatching has
+    been observed (Horsted, 1978), juveniles may migrate from shallower to deeper water (Smidt,
+    1981)"
+  - Knutsen et al. 2014: "spatial genetic structure among oceanic samples from the Skagerrak and
+    eastern North Sea was weak and non-significant".
+* Sovik & Thangstad 2021, NAFO SCR Doc. 21/001 [F] (file "../Bottensamhallets epifauna/data/
+  pandalus/scr21-001.pdf"): "The high abundance of 1-year old shrimp in Skagerrak indicates that
+  these waters constitute a nursery area for the stock. ... a good correlation between the number of
+  1-year old and 2-year old shrimp in respectively Skagerrak and the Norwegian Deep suggests that
+  there is a westward migration or drift of small shrimp from Skagerrak to the Norwegian Deep"
+  (i.e. redistribution on a ~1-yr, 100-km scale; J).
+* Pedersen et al. 2003 (Barents Sea particle tracking; Nofima record): "the distance travelled by a
+  shrimp larvae varied between 0 and 330 km and the annual mean distance varied between 74 and
+  122 km" [S, search snippet].
+J: Pandalus is pelagic for 1.5-3 months, adults are swimmers with diel vertical migration; a 60 km
+  grid is re-stocked each year by settlement and by juvenile/adult redistribution. Recolonisation
+  time ~1 yr (one settlement season; recruits reach the fishery at ~2 yr).
+
+-----------------------------------------------------------------------------------------
+Q6.5 Crabs, hermit crabs, Munida, Crangon allmanni, mysids
+-----------------------------------------------------------------------------------------
+* Hermit crabs: Ramsay, Kaiser & Hughes 1996, MEPS 144:63-72 [F]
+  https://www.int-res.com/articles/meps/144/m144p063.pdf (data/ramsay1996/)
+  Site ~40 m depth off Anglesey, Irish Sea, April 1995. Table 2, P. bernhardus caught per 1000 m2
+  (control / treatment): before 9.7 / 4.5; 1 d after 5.0 / 12.8; 2 d after 7.1 / 81.8 (p<0.001);
+  3 d after 7.6 / 60.5 (p<0.001); 4 d after 6.0 / 40.6 (ns). J: a ~10-fold local aggregation within
+  2 d, decaying over ~4+ d (control waylines 250 m away).
+  "Catch numbers of P. bernhardus were significantly higher on the treatment wayline 2 and 3 d
+  after fishing, whilst on the fourth day they were no longer significantly different." "These
+  results suggest that P. bernhardus migrate into recently trawled areas" (4 m beam trawl).
+  Ramsay et al. 1998, JEMBE 224:73-89: P. bernhardus "moved into the areas fished" at one site but
+  "no detectable increases" at two others [S, search snippet].
+* Megafauna generally: Kaiser et al. 1998, ICES J. Mar. Sci. 55:353-361, doi:10.1006/jmsc.1997.0322
+  [A]: "Six months later, seasonal changes had occurred in both communities" and the trawling
+  effects were no longer evident; "The effects of fishing were not detectable in the mobile
+  sediments."
+* Swimming crab Liocarcinus depurator: Glass 1985, PhD thesis Univ. Glasgow, Loch Sween (3-30 m) [F]
+  https://theses.gla.ac.uk/4939/ (data/glass1985_thesis/)
+  - "A total of 279 adult crabs were claw tagged ... Fifty six of these (20%) were resighted in the
+    study area"; "Of the 56 crabs resighted after tagging, 25 (45%) were observed on one occasion
+    only, one week after tagging. One male crab was observed 20 weeks after tagging and one female
+    was resighted after a period of 23 weeks."
+  - "Tagging and resight studies show that L. depurator does not show any long term site attachment
+    and that in the area sampled, local populations are not stable in the long term."
+  J: local residence of swimming crabs is weeks; a small depleted patch is refilled by crab
+  movement within weeks to months (no km/yr figure given).
+* Crangon allmanni: Blahudka & Turkay 2002, Helgol. Mar. Res. 56:190-197,
+  doi:10.1007/s10152-002-0110-6 [F] (data/crangon_allmanni_hmr2002/)
+  - "The life cycle of the HTR population lasts for about 1.5 years maximum. Recruitment takes place
+    in summer, and these recruits form the reproducing population of the next year."
+  - "This developmental time agrees with the laboratory results of Criales (1985) of 6-7 weeks at
+    12C" (larval development; [S] for Criales).
+  - Seasonal migration disputed: Allen (1960) "proposed a seasonal migration to shallow coastal
+    waters in October and back offshore in late spring (April/May). In contrast, Creutzberg and van
+    Leeuwen (1980) could not detect any migratory movement" [S via the paper].
+  J: annual turnover; recolonisation within one recruitment season (<= 1 yr).
+* Munida: no data for M. rugosa / M. sarsi. Congener M. subrugosa (Patagonia, reared at 8 C):
+  six zoeal stages ~83 d plus megalopa ~28 d, ~111 d in total [S, search snippet of Perez-Barros
+  et al. 2007, JEMBE 352:35; https://eprints.soton.ac.uk/49476]. Not used for the Skagerrak.
+* Pagurus bernhardus larval duration: megalopa "7.3 +- 0.1 days" (Weiss et al. 2009, JMBA,
+  https://eprints.soton.ac.uk/63617/) [S, temperature not seen]; zoeal duration not found.
+* Small macrofauna (context, plot-scale experiments): Kaiser et al. 2006, MEPS 311:1-14 [F, file on
+  disk in "../Bottensamhallets epifauna/data/lit/kaiser2006.pdf"]: "Although the extrapolated
+  recovery period for Annelida, Crustacea and Mollusca was 870 d, this result should be treated
+  with care given that the longest reported study was sampled for only 540 d" (intertidal
+  dredging, muddy sand).
+
+#########################################################################################
+NOT FOUND (searched, no usable source)
+#########################################################################################
+- Brander & Bennett 1986/1989 (Irish Sea cod-Nephrops): not online; only cited via Armstrong 1991.
+- Armstrong 1982 (J. Cons.) Irish Sea cod diet full text: not open; Armstrong et al. 1991 used instead.
+- Ulmestrand & Eggert 2001 full text (female VBGF, tag movements in the Skagerrak): not obtained.
+- Tuck et al. 1994 juvenile burrow paper: not open access.
+- Chapman 1980 / Chapman & Rice 1971 / Chapman & Bailey 1987 original tagging results (movement
+  per year): not read; only Smith's citation and Glass's recapture-rate remark ("maximum recapture
+  value was 14.7%" in nine Nephrops tagging studies, Chapman 1980 via Glass).
+- Sizes of Nephrops eaten by haddock, rays, gurnards, long rough dab, monkfish: no source with
+  carapace lengths found. A predator-length to prey-CL regression: none published in the sources
+  read (De Clerck & Sterk correlate numbers/weight, not CL).
+- Skagerrak (FU 3-4) Nephrops prey sizes in cod stomachs measured as CL: none (Dorman 1992 gives
+  weights only).
+- Recovery / recolonisation time series of Nephrops in the SE Kattegat after the 1988 hypoxia:
+  not found (Baden et al. 1990 ends in Sept 1989 at zero catch).
+- Response of FU 3-4 Nephrops burrow density to the 2009 Kattegat closed areas: not found.
+- Nephrops in offshore wind farms: not searched to a result (no source found).
+- Pandalus adult horizontal movement in km per year (tagging): not found.
+- Munida rugosa / M. sarsi larval duration; adult movement: not found.
+- Liocarcinus, Munida, hermit crab adult movement distances (km/yr): not found.
+- Mysid recolonisation of a disturbed/trawled area: not found.
+- Crangon allmanni recolonisation after defaunation: not found.

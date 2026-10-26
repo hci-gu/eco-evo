@@ -1,0 +1,43 @@
+taxon,quantity,low,central,high,unit,source,tag
+Nephrops norvegicus (W Irish Sea 1981-84),consumption_by_cod,1720,3050,5380,t_per_yr,"Armstrong, Smyth & McCurdy 1991 ICES CM 1991/G:15 Table 10",F
+Nephrops norvegicus (W Irish Sea 1981-84),biomass_age2plus,17000,19000,24700,t,"Armstrong et al. 1991 ICES CM 1991/G:15 Table 10 (cohort analysis)",F
+Nephrops norvegicus (W Irish Sea 1981-84),consumption_to_biomass_per_yr,0.10,0.16,0.23,per_yr,"J from Armstrong et al. 1991 Table 10 (consumption / 2+ biomass, same run)",J
+Nephrops norvegicus (W Irish Sea 1981-84),predation_mortality_M2_by_cod_per_yr,0.038,0.18,0.248,per_yr,"Armstrong et al. 1991 Table 11 (pseudo ages 1-7+, base case; central = median of ages 2-6)",F
+Nephrops norvegicus (W Irish Sea 1981-84),fishing_mortality_F_per_yr,0.013,0.62,0.833,per_yr,"Armstrong et al. 1991 Table 11 (pseudo ages 1-7+; central = 7+)",F
+Nephrops norvegicus (W Irish Sea 1981-84),consumption_by_cod_to_landings,,0.33,,ratio,"Armstrong et al. 1991: ~3000 t/yr 'about one third of the mass of Nephrops landed annually'",F
+Nephrops norvegicus (W Irish Sea),share_of_stomach_contents_cod_on_grounds,20,,40,pct_weight,"Armstrong et al. 1991 abstract",F
+Nephrops norvegicus (W Irish Sea),share_of_daily_food_intake_cod,12,,28,pct,"Armstrong et al. 1991 abstract (digestion-corrected)",F
+Nephrops norvegicus (Irish Sea),share_of_predation_by_cod,,88,,pct,"Bjornsson & Dombaxe 2004 ICES JMS 61:983 doi:10.1016/j.icesjms.2004.06.017 citing Symonds & Elson 1983; Brander & Bennett 1986",S
+Nephrops norvegicus (S Iceland),share_of_diet_cod_50_90cm,10,30,65,pct_weight,"Bjornsson & Dombaxe 2004 citing Dombaxe 2002 (10 % March, 65 % July, ~30 % annual)",S
+Nephrops norvegicus (Outer Silver Pit),share_of_stomach_weight_cod_August,3.75,,51.7,pct_weight,"De Clerck & Sterk 1980 ICES CM 1980/G:43 (small to large cod)",F
+Nephrops norvegicus (Outer Silver Pit),share_of_stomach_weight_cod_autumn,2.79,,11,pct_weight,"De Clerck & Sterk 1980 ICES CM 1980/G:43",F
+Nephrops norvegicus (North Sea 1991),implied_M2_ecopath_balance,,0.35,,per_yr,"J from Mackinson & Daskalov 2007 Cefas Tech Rep 142 (P/B 0.37 x EE 0.994 - F 0.016; P/B assumed from M 0.25)",J
+Nephrops norvegicus (North Sea),assessment_natural_mortality_M,0.2,,0.3,per_yr,"Mackinson & Daskalov 2007 citing ICES WGNSSK 2005 (0.3 males/immature females, 0.2 mature females)",F
+Nephrops norvegicus (Kattegat NTZ 2009-2021),prey_biomass_change_pct_after_trawl_closure,100,,,pct,"Skold et al. 2022 ICES JMS 79:2231 doi:10.1093/icesjms/fsac152 ('more than doubled'; cod no significant change)",F
+Pandalus borealis (Skagerrak/Norwegian Deep),assessment_natural_mortality_M,,0.75,,per_yr,"Jorgensen et al. 2014 NAFO SCR 14/066; ICES CM 1995/K:5 ('not well founded')",F
+Pandalus borealis (Skagerrak/Norwegian Deep),natural_mortality_best_fit,0.9,,1.2,per_yr,"Jorgensen et al. 2014 NAFO SCR 14/066 (0.9 predation-index weighted; 1.2 constant)",F
+Pandalus borealis (Skagerrak/Norwegian Deep),predation_removal_to_catch,2,,,ratio,"Munch-Petersen et al. 2010 NAFO SCR 10/70 ('at least twice', assessments 1985-2002)",F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_cod,,22.44,,pct_weight,"Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=779)",F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_blue_whiting_gt35cm,,18.57,,pct_weight,"Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=146)",F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_saithe,,2.69,,pct_weight,"Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=1342)",F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_haddock,,2.15,,pct_weight,"Jorgensen et al. 2014 Table 1 citing Albert 1994 (n=803)",F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_whiting,,0.96,,pct_weight,"Jorgensen et al. 2014 Table 1 citing Bergstad 1991 (n=223)",F
+Pandalus borealis (Norwegian Deep),share_of_stomach_weight_skates,,3.80,,pct_weight,"Jorgensen et al. 2014 Table 1 citing Skjaeraasen & Bergstad 2000 (n=175)",F
+Pandalus borealis (Barents Sea),fraction_of_stock_eaten_by_cod_per_yr,0.15,,0.58,fraction_per_yr,"Berenboim et al. 1999 NAFO SCR 99/87 (= JNAFS 27:69-75)",F
+Pandalus borealis (Barents Sea),predation_mortality_M2_by_cod_per_yr,0.06,0.76,2.23,per_yr,"Jorgensen et al. 2014 NAFO SCR 14/066 Table 3 citing Berenboim et al. 1991 (11 cohorts)",S
+Pandalus borealis (Barents Sea),consumption_by_cod,160000,250000,450000,t_per_yr,"Hvingel 2006 NAFO SCR 06/64 (1994-2004)",F
+Pandalus borealis (Barents Sea),consumption_by_cod_mean_1984_2004,,280000,,t_per_yr,"Aschan et al. 2006 NAFO SCR 06/71 citing Bogstad & Mehl 1997; ICES 2006",F
+Pandalus borealis (Barents Sea),consumption_by_cod_to_catch,3,5,5,ratio,"Berenboim et al. 1999 ('3-4 times'); Hvingel 2006 ('on average 5 times')",F
+Pandalus borealis (Barents Sea),consumption_to_biomass_per_yr,0.15,,0.45,per_yr,"J: Hvingel 2006 consumption 160-450 kt vs Berenboim 1999 SSVPA biomass 0.6-1.76 Mt (different years; order of magnitude only)",J
+Pandalus borealis (NE Newfoundland SFA6),consumption_by_cod,10000,,25000,t_per_yr,"Lilly, Parsons & Kulka 2000 JNAFS 27:45-61 (most years before 1990; max 55000 in 1983)",F
+Pandalus borealis (NE Newfoundland),predator_biomass_change_pct,-98,,,pct,"Lilly et al. 2000 (cod 3+ ~1000000 t in 1984-85 to <20000 t in 1993)",F
+Pandalus borealis (Hawke Channel),prey_density_change_pct,160,,,pct,"J from Lilly et al. 2000 (3000 t 1979-81 to 7800 t 1988-90; preceded cod collapse)",J
+Pandalus borealis (West Greenland),cod_to_shrimp_response_lag,1,,2,yr,"Wieland et al. 2007 JNAFS 39:21-33 (negative correlation until early 1990s only)",F
+Pandalus borealis (North Atlantic 9 regions),regions_with_inverse_cod_shrimp_correlation,,8,,count_of_9,"Worm & Myers 2003 Ecology 84:162 (abstract via search snippets)",S
+Pandalus borealis (North Atlantic 9 regions),regions_significant_after_autocorrelation_correction,,3,,count_of_9,"Baum & Worm 2009 J Anim Ecol 78:699 doi:10.1111/j.1365-2656.2009.01531.x citing Worm & Myers 2003",F
+Chionoecetes opilio (NW Atlantic 10 regions),cod_to_crab_response_lag,0,2,5,yr,"Boudreau, Anderson & Worm 2011 MEPS 429:169 doi:10.3354/meps09081",F
+Crangon crangon (North Sea),predation_mortality_M_per_yr,1.26,1.7,4.75,per_yr,"Temming & Hufnagl 2015 ICES JMS 72:804 doi:10.1093/icesjms/fsu194 (4.75 in 1971; 1.26 in 2010; 1.7 = 2001-10 mean)",F
+Crangon crangon (North Sea),consumption_by_cod_and_whiting_gt50mm_1971_1980,41772,,45666,t_per_yr,"Temming & Hufnagl 2015 (RFA6 and North Sea approaches)",F
+Crangon crangon (North Sea),consumption_by_cod_and_whiting_gt50mm_2001_2010,12967,,15148,t_per_yr,"Temming & Hufnagl 2015 (North Sea and RFA6 approaches)",F
+Crangon crangon (North Sea),predator_consumption_change_pct_1970s_to_2000s,-72,,-64,pct,"J from Temming & Hufnagl 2015 averages",J
+Shrimp group (North Sea 1991),implied_M2_ecopath_balance,,1.26,,per_yr,"J from Mackinson & Daskalov 2007 Cefas Tech Rep 142 (P/B 3 x EE 0.449 - F 0.087)",J

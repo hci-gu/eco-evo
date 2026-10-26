@@ -1,0 +1,42 @@
+live library sha256 77bcbc947419; variant massbal_neph; Nephrops f 0.02
+active groups (copy): ['benthivorous_fish', 'predatory_fish', 'planktivorous_fish', 'porpoises', 'seals', 'zooplankton', 'benthic_infauna', 'mobile_epifauna', 'norway_lobster', 'phytoplankton', 'subsurface_phytoplankton', 'microzooplankton']
+
+group                               g old          g new   ratio  s* old  s* new gross new best prey
+benthivorous_fish            0.0020892507   0.0020892507  1.0000  0.7693  0.7693    0.8214 planktivorous_fish 
+predatory_fish               0.0024482169   0.0024482169  1.0000  0.7314  0.7314    0.8270 planktivorous_fish 
+planktivorous_fish           0.0035374528   0.0035374528  1.0000  0.7891  0.7891    1.3944 zooplankton 
+porpoises                    0.0004627905   0.0004627905  1.0000  0.7960  0.7960    0.2000 planktivorous_fish 
+seals                        0.0004889165   0.0004889165  1.0000  0.7942  0.7942    0.2100 planktivorous_fish 
+zooplankton                  0.1185400952   0.1185400952  1.0000  0.8374  0.8374   58.4000 microzooplankton 
+benthic_infauna              0.0007120548   0.0007120548  1.0000       -       -    1.0396  
+mobile_epifauna              0.0006931507   0.0012027397  1.7352       -       -    1.7560  
+norway_lobster                          -   0.0002482877       -       -       -    0.3625  
+phytoplankton                0.1674865144   0.1674865144  1.0000       -       -  244.5303  
+subsurface_phytoplankton     0.1674865144   0.1674865144  1.0000       -       -  244.5303  
+
+mobile_epifauna: r_gross 1.7560, M2 0.6160, box-mean F 0.1858 (max 0.593), share 0.5434, keep min 0.312
+   K rows {81.0: 6.79, 123.0: 6.33, 173.0: 6.42, 221.0: 10.71, 272.0: 8.58, 387.0: 4.71}; box-mean K 7.119
+   start total 13613 t (today 13613); B* mean 3.781; rms 7.8 %; zero cells 0
+       0-100 m: today   3.991  engine B*   3.999  K   6.729
+     100-150 m: today   3.824  engine B*   3.839  K   6.411
+     150-200 m: today   3.458  engine B*   3.515  K   6.974
+     200-250 m: today   4.232  engine B*   4.102  K   9.940
+     250-300 m: today   3.865  engine B*   3.782  K   8.644
+     300-600 m: today   3.048  engine B*   3.103  K   5.601
+norway_lobster: r_gross 0.3625, M2 0.0225, box-mean F 0.0874 (max 0.279), share 0.6970, keep min 0.169
+   K rows {81.0: 9.34, 123.0: 4.82, 173.0: 7.18, 221.0: 11.56, 272.0: 3.05, 300.0: 0.2}; box-mean K 6.734
+   start total 16460 t (today 16458); B* mean 4.572; rms 82.1 %; zero cells 0
+       0-100 m: today   7.085  engine B*   7.103  K   8.742
+     100-150 m: today   4.751  engine B*   4.770  K   5.794
+     150-200 m: today   4.507  engine B*   4.511  K   7.467
+     200-250 m: today   4.298  engine B*   4.030  K  10.021
+     250-300 m: today   1.304  engine B*   1.532  K   3.482
+     300-600 m: today   0.016  engine B*   0.149  K   0.200
+
+growth rates re-stored for other groups: none
+copy written: research_notes/Havskräfta och exponerad epifauna/data/fg_library_e1_massbal_neph.yaml; manifest copy research_notes/Havskräfta och exponerad epifauna/data/mareld2_e1_massbal_neph.yaml; snippet research_notes/Havskräfta och exponerad epifauna/data/mareld2_e1_massbal_neph_snippet.yaml
+stored != derived: none
+   benthic_infauna: habitat.build equilibrium total 336992 t vs manifest copy 337000 (-0.00 %; test tolerance 2 %); range 252750-421250
+   mobile_epifauna: habitat.build equilibrium total 13613 t vs manifest copy 13600 (+0.10 %; test tolerance 2 %); range 10200-17000
+   norway_lobster: habitat.build equilibrium total 16460 t vs manifest copy 16500 (-0.24 %; test tolerance 2 %); range 12400-20600
+load_project_config built 12 FGs: ['benthic_infauna', 'benthivorous_fish', 'microzooplankton', 'mobile_epifauna', 'norway_lobster', 'phytoplankton', 'planktivorous_fish', 'porpoises', 'predatory_fish', 'seals', 'subsurface_phytoplankton', 'zooplankton']

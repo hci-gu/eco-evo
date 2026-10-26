@@ -625,7 +625,7 @@ class LiveVisualizer:
                 "starvation": "starvation share of total loss (%)",
                 "impacts": "impact share of total loss (%)",
                 "natural": "natural mortality (M1) share of total loss (%)",
-                "progress": "Survival across training (ticks within biomass bounds)",
+                "progress": "Probe of the current policies (biomass, % of start)",
             }
         else:
             self._tab_labels = {
@@ -670,8 +670,7 @@ class LiveVisualizer:
                   for fid in _all_series_ids}
             for tab in self._tabs
         }
-        self._progress_cap = 1000
-        self._progress_message = "Waiting for the first survival evaluation"
+        self._progress_message = "Waiting for the first probe"
         # The English template and fields behind ``_progress_message`` and
         # behind a formatted tab title, so both are drawn in the display
         # language (section 212); the English strings stay as they were.
@@ -1366,25 +1365,29 @@ class LiveVisualizer:
         self._last_frame_ts = 0.0
         self._maybe_render()
 
-    def set_training_progress(self, records, config) -> None:
-        """Replace the full training history, including restored checkpoints.
+    def set_training_progress(self, records, config, latest=None) -> None:
+        """Show the latest probe (section 223.12): every group's biomass as
+        a % of its start, once a day over the probe's years, x in days.
 
-        Keep compact scalar samples independently of rollout frames and rolling
-        plot buffers. Missing starting biomass has no survival measurement.
+        ``latest`` is ``TrainingProgress.latest`` (step, seed, every_ticks,
+        ticks_per_year, series); None keeps the waiting message. A group
+        without starting biomass has no curve.
         """
         if not self.enabled or "progress" not in self._series:
             return
-        self._progress_cap = config["ticks"]
-        _fmt = ("Survival ticks within {lower}-{upper} x starting biomass (cap {cap})",
-                {"lower": f"{config['lower']:g}", "upper": f"{config['upper']:g}",
-                 "cap": self._progress_cap})
-        self._tab_label_fmt["progress"] = _fmt
-        self._tab_labels["progress"] = _fmt[0].format(**_fmt[1])
+        if not latest:
+            self._last_frame_ts = 0.0
+            self._maybe_render()
+            return
+        every = max(1, int(latest.get("every_ticks", 1)))
+        per_year = max(1, int(latest.get("ticks_per_year", 1460)))
+        self._probe_days_per_year = per_year / float(every)
+        series = latest.get("series", {})
         for fid in self._series["progress"]:
-            self._series["progress"][fid] = [
-                (r["step"], r["survival_ticks"][fid]) for r in records
-                if r["survival_ticks"].get(fid) is not None
-            ]
+            values = series.get(fid)
+            self._series["progress"][fid] = [] if values is None else [
+                (day, 100.0 * float(v)) for day, v in enumerate(values)
+                if v is not None]
         missing = [self._display_name(fid) for fid in self.fg_ids
                    if fid not in self._ndm_ids and records
                    and records[-1]["survival_ticks"].get(fid) is None]
@@ -1392,8 +1395,9 @@ class LiveVisualizer:
             self._progress_fmt = ("No starting biomass: {names}",
                                   {"names": ", ".join(missing)})
         else:
-            self._progress_fmt = ("{n} evaluations | full training history",
-                                  {"n": len(records)})
+            self._progress_fmt = ("Update {step}: frozen policies, seed {seed} | {n} probes",
+                                  {"step": int(latest.get("step", 0)),
+                                   "seed": latest.get("seed", ""), "n": len(records)})
         self._progress_message = self._progress_fmt[0].format(
             **self._progress_fmt[1])
         self._last_frame_ts = 0.0
@@ -5155,8 +5159,8 @@ class LiveVisualizer:
         """
         active = self._tabs[self._active_tab]
         if active == "progress":
-            return [fid for fid in self.plot_fg_ids
-                    if fid not in self._ndm_ids and not fid.endswith("_rnd")]
+            # The probe (section 223.12) shows every group.
+            return [fid for fid in self.plot_fg_ids if not fid.endswith("_rnd")]
         # NDMs are included on the biomass tab and loss tabs because they
         # can lose biomass to predation and impacts without making
         # decisions.
@@ -5373,13 +5377,17 @@ class LiveVisualizer:
         # display scale; log scaling is never applied to it.
         biomass_fixed_axis = (active == "biomass"
                               and self._biomass_scale_manual)
-        use_log_plot = bool(self._log_plot and active not in ("biomass", "progress"))
+        use_log_plot = bool(self._log_plot and active not in ("biomass",))
         if biomass_fixed_axis:
             ylabel = self._t(
                 "{label}  display max = {pct}%", label=base_label,
                 pct=f"{100.0 * float(self._biomass_display_scale):.0f}")
         elif active == "reward" and use_log_plot:
             ylabel = self._t("reward (log10 ratio)")
+        elif progress and use_log_plot:
+            # R toggles a log axis on the probe too (section 223.12): the
+            # plankton's seasonal peaks span three decades.
+            ylabel = self._t("probe biomass (log10 of % of start)")
         else:
             ylabel = base_label
 
@@ -5502,9 +5510,7 @@ class LiveVisualizer:
                 if xmax - xmin < 1:
                     xmax = xmin + 1
 
-            if progress:
-                ymin, ymax = 0.0, float(self._progress_cap)
-            elif biomass_fixed_axis:
+            if biomass_fixed_axis:
                 ymin = 0.0
                 ymax = max(1.0, 100.0 * float(self._biomass_display_scale))
             else:
@@ -5617,12 +5623,9 @@ class LiveVisualizer:
                 # pixel columns; collapse each column to first/min/max/
                 # last so the cost of a frame is bounded by the plot
                 # width, not the rollout length.
-                if not progress and _sorted and len(xs) > 2 * pw:
+                if _sorted and len(xs) > 2 * pw:
                     xs, ys = _decimate_polyline(xs, ys)
                 pts = list(zip(xs.tolist(), ys.tolist()))
-                if progress:
-                    for point in pts:
-                        pg.draw.circle(self._screen, self._fg_colour[fid], point, 3)
                 if len(pts) < 2:
                     continue
                 try:
@@ -5631,13 +5634,19 @@ class LiveVisualizer:
                     pg.draw.lines(self._screen, self._fg_colour[fid], False, pts, 1)
 
             if progress:
-                tick_values = sorted({round(xmin + f * (xmax - xmin)) for f in (0, .25, .5, .75, 1)})
-                for value in tick_values:
-                    frac = (value - xmin) / (xmax - xmin)
-                    label = self._font.render(str(value), True, (160, 160, 170))
-                    self._screen.blit(label, (px0 + int(frac * pw) - label.get_width() // 2,
-                                              py0 + ph + 5))
-                label = self._font.render(self._t("Completed training updates"),
+                # Year marks under the probe (x is the probe day).
+                per_year = float(getattr(self, "_probe_days_per_year", 365.0) or 365.0)
+                year = 0
+                while year * per_year <= xmax + 1e-9:
+                    value = year * per_year
+                    if value >= xmin - 1e-9:
+                        frac = (value - xmin) / (xmax - xmin)
+                        mx = px0 + int(frac * pw)
+                        pg.draw.line(self._screen, (60, 60, 70), (mx, py0), (mx, py0 + ph), 1)
+                        label = self._font.render(str(year), True, (160, 160, 170))
+                        self._screen.blit(label, (mx - label.get_width() // 2, py0 + ph + 5))
+                    year += 1
+                label = self._font.render(self._t("Probe year (inference start = 0)"),
                                           True, (200, 200, 210))
                 self._screen.blit(label, (px0 + (pw - label.get_width()) // 2, py0 + ph + 21))
 
@@ -5977,7 +5986,7 @@ class LiveVisualizer:
         # Rita en liten cirkelmarkör per serie vid dess (interpolerade) y.
         for fid, col, v in entries:
             v_plot = v
-            if self._log_plot and self._tabs[self._active_tab] not in ("biomass", "progress"):
+            if self._log_plot and self._tabs[self._active_tab] not in ("biomass",):
                 v_plot = float(np.sign(v_plot) * np.log10(abs(v_plot) + 1e-12))
             if ymax - ymin < 1e-12:
                 continue
@@ -5992,7 +6001,7 @@ class LiveVisualizer:
 
         # Bygg tooltip-text: rad 1 = tick, sedan en rad per serie.
         progress = self._tabs[self._active_tab] == "progress"
-        head = self._t("update {n}" if progress else "tick {n}",
+        head = self._t("day {n}" if progress else "tick {n}",
                        n=int(round(tick_at_mouse)))
         # Same instant as the calendar band under the plot (section 155).
         if (self._daylight_cfg and not progress
@@ -6008,7 +6017,7 @@ class LiveVisualizer:
         # labels are log10) the raw values get three significant digits
         # of the largest one instead.
         if (self._log_plot
-                and self._tabs[self._active_tab] not in ("biomass", "progress")):
+                and self._tabs[self._active_tab] not in ("biomass",)):
             big = max(abs(e[2]) for e in entries_sorted)
             step = 10.0 ** (np.floor(np.log10(big)) - 1) if big > 0 else 0.0
         else:

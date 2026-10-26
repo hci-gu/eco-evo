@@ -1,0 +1,50 @@
+## field ration / Cmax (%BW/d)
+species  W(g)  T   ration(lo-hi)   Cmax   level(lo-hi)   source
+cod 30cm    270  7.0   1.71-1.71     2.41   0.71-0.71   Daan 1973 via Durbin 1983
+cod 40cm    640  7.0   1.28-1.28     2.03   0.63-0.63   Daan 1973
+cod 50cm   1250  7.0   1.03-1.03     1.78   0.58-0.58   Daan 1973
+cod 60cm   2160  7.0   0.85-0.85     1.60   0.53-0.53   Daan 1973
+cod >30cm  1000  6.8   0.90-1.50     1.83   0.49-0.82   Durbin et al. 1983 bounds
+cod         500  7.0   1.44-1.44     2.13   0.67-0.67   Greenstreet et al. 1997 [S], W assumed (J)
+cod         500  7.5   1.14-1.77     2.22   0.51-0.80   SMS key run 2023 quarters
+haddock     500  7.0   1.30-1.30     2.77   0.47-0.47   Greenstreet et al. 1997 [S]; Cmax 1.3x cod (J)
+whiting     200  8.4   0.78-1.24     2.45   0.32-0.51   SMS 2023 quarters; Cmax GER construction
+whiting     200  8.4   0.41-1.75     2.45   0.17-0.71   North Sea 1992-93 [A]
+saithe     1070  8.4   0.43-1.25     2.30   0.19-0.54   SMS 2023 quarters; Cmax GER construction
+# haddock with Cmax 1.0x / 2.0x cod: 0.61 / 0.30
+
+## the same rations against the engine benthivore ceiling (~1.6 x cod Cmax at 7 C)
+cod 40cm Daan        0.39 of the engine ceiling
+cod Greenstreet      0.42 of the engine ceiling
+haddock Greenstreet  0.38 of the engine ceiling
+
+## stomach fill of wild North Sea cod (Ursin et al. 1985 Table 1) vs satiation fill
+set               W(g)  S(g)  S%BW  S_cmax%BW  level=sqrt(S/S_cmax)
+9 North Sea ICES    429    6.3  1.48      2.49      0.77
+9 North Sea ICES    852   14.7  1.73      2.09      0.91
+9 North Sea ICES   1951   36.4  1.87      1.69      1.05
+9 North Sea ICES   5718  111.0  1.94      1.28      1.23
+6 N. North Sea      386    5.2  1.35      2.56      0.73
+6 N. North Sea      829   10.1  1.22      2.10      0.76
+6 N. North Sea     1575   25.0  1.59      1.78      0.94
+6 N. North Sea     2797   35.5  1.27      1.54      0.91
+# mean fills include empty stomachs; pooled multi-season data; GER at 7 C fish prey
+
+## Beddington-DeAngelis interference vs saturation (benthivores, w = 0.45 km2/t)
+B_pred t/km2   wB     x=ahN    intake ratio (1+x)/(1+x+wB)
+      0.50   0.23        1       0.8989
+      0.50   0.23       10       0.9800
+      0.50   0.23      100       0.9978
+      0.50   0.23      500       0.9996
+      1.53   0.69        1       0.7439
+      1.53   0.69       10       0.9411
+      1.53   0.69      100       0.9932
+      1.53   0.69      500       0.9986
+      3.00   1.35        1       0.5970
+      3.00   1.35       10       0.8907
+      3.00   1.35      100       0.9868
+      3.00   1.35      500       0.9973
+      6.00   2.70        1       0.4255
+      6.00   2.70       10       0.8029
+      6.00   2.70      100       0.9740
+      6.00   2.70      500       0.9946

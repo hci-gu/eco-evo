@@ -1,0 +1,55 @@
+==============================================================================
+benthic_infauna: r_gross 1.029, F 0.136, f 0.2, K 110.0
+  refuge persists under unlimited predation on A iff k_in < r - F = 0.893 /yr, i.e. k < (r - F)/f = 4.47 /yr (exchange time 1/k > 82 d; refuge residence 1/k_in > 409 d)
+     k /yr  k_in /yr  1/k_in d   R_inf R_inf/K_R k_in R_inf  r_needed
+       0.1     0.020   18250.0   74.66     0.848      1.493     1.054
+       0.3     0.060    6083.3   71.24     0.810      4.274     1.045
+       1.0     0.200    1825.0   59.27     0.674     11.854     1.035
+       2.0     0.400     912.5   42.17     0.479     16.866     1.031
+       3.0     0.600     608.3   25.06     0.285     15.038     1.030
+       5.0     1.000     365.0    0.00     0.000      0.000     1.030
+      10.0     2.000     182.5    0.00     0.000      0.000     1.029
+      36.5     7.300      50.0    0.00     0.000      0.000     1.029
+     365.0    73.000       5.0    0.00     0.000      0.000     1.029
+    1460.0   292.000       1.2    0.00     0.000      0.000     1.029
+  (r_needed: r_gross that keeps B* at 92.35 when C0 is taken from A only; the loader's rule gives 1.029)
+  Time course, one cell: benthivores aggregated x2 at their ceiling, demand on A 46.6 t/km2/yr (x pair share 1.00 of A)
+    k  1460.0: 0.00y B  93.60  0.50y B  74.79  1.00y B  60.28  1.50y B  47.41  2.00y B  34.50  2.50y B  19.85  3.00y B   0.69
+    k    36.5: 0.00y B  93.60  0.50y B  74.77  1.00y B  60.24  1.50y B  47.34  2.00y B  34.39  2.50y B  19.67  3.00y B   2.62
+    k     2.0: 0.00y B  93.60  0.50y B  73.40  1.00y B  61.39  1.50y B  55.84  2.00y B  52.15  2.50y B  49.60  3.00y B  47.77
+    k     0.5: 0.00y B  93.60  0.50y B  73.66  1.00y B  71.64  1.50y B  70.35  2.00y B  69.50  2.50y B  68.94  3.00y B  68.57
+
+==============================================================================
+mobile_epifauna: r_gross 0.877, F 0.136, f 0.31, K 12.2
+  refuge persists under unlimited predation on A iff k_in < r - F = 0.741 /yr, i.e. k < (r - F)/f = 2.39 /yr (exchange time 1/k > 153 d; refuge residence 1/k_in > 493 d)
+     k /yr  k_in /yr  1/k_in d   R_inf R_inf/K_R k_in R_inf  r_needed
+       0.1     0.031   11774.2    6.82     0.810      0.211     1.603
+       0.3     0.093    3924.7    6.22     0.739      0.578     1.355
+       1.0     0.310    1177.4    4.14     0.491      1.282     0.947
+       2.0     0.620     588.7    1.16     0.138      0.720     0.898
+       3.0     0.930     392.5    0.00     0.000      0.000     0.887
+       5.0     1.550     235.5    0.00     0.000      0.000     0.881
+      10.0     3.100     117.7    0.00     0.000      0.000     0.878
+      36.5    11.315      32.3    0.00     0.000      0.000     0.877
+     365.0   113.150       3.2    0.00     0.000      0.000     0.877
+    1460.0   452.600       0.8    0.00     0.000      0.000     0.877
+  (r_needed: r_gross that keeps B* at 7.85 when C0 is taken from A only; the loader's rule gives 0.877)
+  Time course, one cell: benthivores aggregated x2 at their ceiling, demand on A 32.3 t/km2/yr (x pair share 1.00 of A)
+    k  1460.0: 0.00y B   7.88  0.50y B   0.00  1.00y B   0.00  1.50y B   0.00  2.00y B   0.00  2.50y B   0.00  3.00y B   0.00
+    k    36.5: 0.00y B   7.88  0.50y B   0.08  1.00y B   0.00  1.50y B   0.00  2.00y B   0.00  2.50y B   0.00  3.00y B   0.00
+    k     2.0: 0.00y B   7.88  0.50y B   4.56  1.00y B   3.89  1.50y B   3.42  2.00y B   3.07  2.50y B   2.80  3.00y B   2.59
+    k     0.5: 0.00y B   7.88  0.50y B   5.51  1.00y B   5.54  1.50y B   5.56  2.00y B   5.58  2.50y B   5.59  3.00y B   5.60
+  Time course, one cell: predators aggregated x2 at their ceiling, demand on A 10.0 t/km2/yr (x pair share 0.42 of A)
+    k  1460.0: 0.00y B   7.88  0.50y B   3.77  1.00y B   0.00  1.50y B   0.00  2.00y B   0.00  2.50y B   0.00  3.00y B   0.00
+    k    36.5: 0.00y B   7.88  0.50y B   3.77  1.00y B   0.14  1.50y B   0.00  2.00y B   0.00  2.50y B   0.00  3.00y B   0.00
+    k     2.0: 0.00y B   7.88  0.50y B   4.82  1.00y B   4.07  1.50y B   3.55  2.00y B   3.17  2.50y B   2.88  3.00y B   2.65
+    k     0.5: 0.00y B   7.88  0.50y B   5.57  1.00y B   5.59  1.50y B   5.60  2.00y B   5.60  2.50y B   5.61  3.00y B   5.61
+
+==============================================================================
+Taxon-resolved mobile_epifauna (stock t/km2, exposed share, r_max from research_notes/'Infauna och rorlig epifauna' 1.4):
+  Norway lobster           B  4.57  exposed  0.46 (19.5% of A)  refuge  4.11 (77.9% of R)  r_max 0.34
+  northern shrimp          B  0.56  exposed  0.39 (16.7% of A)  refuge  0.17 ( 3.2% of R)  r_max 1.2
+  crabs, hermits, Munida   B  2.00  exposed  1.20 (51.1% of A)  refuge  0.80 (15.1% of R)  r_max 0.9
+  small shrimps, mysids    B  0.50  exposed  0.30 (12.8% of A)  refuge  0.20 ( 3.8% of R)  r_max 1.86
+  B 7.63, A 2.35 (f = 0.308); stock-weighted r_max 0.65 (group 0.70 by K matching); exposed-weighted 0.96; refuge-weighted 0.51
+  predators' prey in A: 0.99 t/km2 = 0.42 of A = 0.130 of B (library accessible_fraction 0.13)

@@ -1,0 +1,26 @@
+active groups: ['benthivorous_fish', 'predatory_fish', 'planktivorous_fish', 'porpoises', 'seals', 'zooplankton', 'benthic_infauna', 'mobile_epifauna', 'phytoplankton', 'subsurface_phytoplankton', 'microzooplankton']
+
+group                         g old        g new  ratio  s* old  s* new gross old gross new  error
+benthivorous_fish      0.0021816966 0.0020892507  0.958  0.7579  0.7693    0.8214    0.8214  
+predatory_fish         0.0022805371 0.0024165833  1.060  0.7355  0.7321    0.7840    0.8190  
+planktivorous_fish     0.0032411316 0.0034948014  1.078  0.7945  0.7898    1.2894    1.3794  
+porpoises              0.0004627905 0.0004627905  1.000  0.7960  0.7960    0.2000    0.2000  
+seals                  0.0004889165 0.0004889165  1.000  0.7942  0.7942    0.2100    0.2100  
+zooplankton            0.1185400952 0.1185400952  1.000  0.8374  0.8374   58.4000   58.4000  
+benthic_infauna        0.0007047945 0.0007102740  1.008       -       -    1.0290    1.0370  
+mobile_epifauna        0.0006006849 0.0006821918  1.136       -       -    0.8770    0.9960  
+phytoplankton          0.1674865144 0.1674865144  1.000       -       -  244.5303  244.5303  
+subsurface_phytoplankton 0.1674865144 0.1674865144  1.000       -       -  244.5303  244.5303  
+
+benthivorous_fish ideal intake C 21.681 MJ/t/tick (best planktivorous_fish), cost 7.20; Pmax 3.915 -> 4.698 /yr; gross 0.8214 /yr
+
+benthic_infauna: M2 0.0290 -> 0.0370, r_gross 1.0290 -> 1.0370, box-mean F 0.1356, share 0.840 -> 0.834
+   K rows at [100.0, 300.0]: [131.0, 65.5] -> [132.02, 66.01]; box-mean K 109.95 -> 110.80
+   start total 336995 t -> refit 336995 t (K kept: 334395 t); rms deviation of B*(c) 0.00 %
+mobile_epifauna: M2 0.1770 -> 0.2960, r_gross 0.8770 -> 0.9960, box-mean F 0.1361, share 0.643 -> 0.566
+   K rows at [81.0, 123.0, 173.0, 221.0, 272.0, 387.0]: [14.31, 10.77, 12.27, 17.43, 9.38, 3.75] -> [16.25, 12.23, 13.93, 19.8, 10.65, 4.26]; box-mean K 12.21 -> 13.87
+   start total 27874 t -> refit 27874 t (K kept: 24543 t); rms deviation of B*(c) 0.00 %
+
+copy written: research_notes/Bentivorernas energi och diet/data/fg_library_proposed.yaml; stored != derived: none
+   benthic_infauna: equilibrium total in the copy 336999 t vs manifest 337000 (-0.00 %; test tolerance 2 %)
+   mobile_epifauna: equilibrium total in the copy 27871 t vs manifest 27900 (-0.10 %; test tolerance 2 %)

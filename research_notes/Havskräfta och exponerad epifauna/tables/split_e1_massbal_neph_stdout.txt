@@ -1,0 +1,68 @@
+variant massbal_neph; mean effort 3.0142 MW-h/km2/yr; SAR at mean effort 2.2606
+benthivore consumption 6.8238 t/km2/yr, epifauna share 0.3143 (measured 0.2182 + booked 0.0961); predators 4.0080, epifauna share 0.0715
+crabs raised (221, ration Q/B 3.48) to 2.002 t/km2
+massbal: booked cephalopods 0.227 t/km2/yr -> B 0.056 at P/B 4.5; small demersal fish 0.225 -> B 0.172 at P/B 1.45 (M&D 2007 North Sea stocks 0.08 / 0.34 + 0.045)
+massbal: crabs raised 2.002 -> 2.449 t/km2 (consumption 1.229 + catch 0.037, P/B 0.7)
+massbal: small raised 0.500 -> 0.545 t/km2 (consumption 0.927 + catch 0.005, P/B 1.95)
+----------------------------------------------------------------------------------------------------
+Per-taxon flows and mass balance B_min = (C + catch)/(EE P/B - d_u SAR) at P/B high-central-low
+  crabs     stock  2.449  consumption  1.229 (benth 1.2003, pred 0.0287)  catch 0.037  B_min 1.82 / 2.45 / 5.13
+  pandalus  stock  0.559  consumption  0.219 (benth 0.0760, pred 0.1433)  catch 0.336  B_min 0.37 / 0.43 / 0.53
+  small     stock  0.545  consumption  0.927 (benth 0.3122, pred 0.1146, unresolved 0.50)  catch 0.005  B_min 0.42 / 0.54 / 0.77
+  booked    stock  0.228  consumption  0.452 (benth 0.4522, pred 0.0000)  catch 0.000  B_min 0.11 / 0.23 / 0.37
+  nephrops  stock  4.572  consumption  0.103 (benth 0.1028, pred 0.0000)  catch 0.296  B_min 1.18 / 1.36 / 1.61
+====================================================================================================
+== mobile_epifauna  (members: crabs, pandalus, small, booked)
+   members (share of today's stock): crabs 0.648 (2.449), pandalus 0.148 (0.559), small 0.144 (0.545), booked 0.060 (0.228)
+   today's stock grid mean 3.7814 t/km2; total 13613 t
+   trawl F at mean effort 0.1858 /yr (catch 0.378 + kill 0.324 t/km2/yr); bf100 0.004221; F(c) max 0.593
+   flows: benthivorous_fish 2.0406, predatory_fish 0.2866 t/km2/yr
+   M2 on the engine B* mean 3.7814: benthivorous_fish 0.5396, predatory_fish 0.0758 (sum 0.6154)
+   r_max: stock-weighted 1.1367 (used); self-consistent with sum of taxon K 1.0510 (sum K 7.283)
+   r_gross 1.7521 -> growth_rate 0.0012000639108 per tick; equilibrium share 0.5427; keep(c) min 0.310
+   K rows (NNLS): 81: 6.79, 123: 6.34, 173: 6.43, 221: 10.73, 272: 8.60, 387: 4.71; box-mean K 7.129
+   engine B*(c): mean 3.7814, min 2.311, max 5.183; START TOTAL 13613 t (+/-25 %: 10210-17016); rms deviation 7.8 % of the mean; zero cells 0
+       0-100 m ( 834 cells): today   3.991  engine B*   3.997  K   6.732  effort  1.56
+     100-150 m (1077 cells): today   3.824  engine B*   3.841  K   6.419  effort  1.43
+     150-200 m ( 691 cells): today   3.458  engine B*   3.516  K   6.986  effort  4.03
+     200-250 m ( 474 cells): today   4.232  engine B*   4.100  K   9.961  effort  6.73
+     250-300 m ( 212 cells): today   3.865  engine B*   3.781  K   8.661  effort  6.01
+     300-600 m ( 312 cells): today   3.048  engine B*   3.102  K   5.608  effort  2.43
+====================================================================================================
+== norway_lobster  (members: nephrops)
+   members (share of today's stock): nephrops 1.000 (4.572)
+   today's stock grid mean 4.5717 t/km2; total 16458 t
+   trawl F at mean effort 0.0874 /yr (catch 0.296 + kill 0.103 t/km2/yr); bf100 0.001985; F(c) max 0.279
+   flows: benthivorous_fish 0.1028, predatory_fish 0.0000 t/km2/yr
+   M2 on the engine B* mean 4.5711: benthivorous_fish 0.0225, predatory_fish 0.0000 (sum 0.0225)
+   r_max: stock-weighted 0.3400 (used); self-consistent with sum of taxon K 0.3400 (sum K 6.559)
+   r_gross 0.3625 -> growth_rate 0.00024827361686 per tick; equilibrium share 0.6970; keep(c) min 0.169
+   K rows (NNLS): 81: 9.34, 123: 4.82, 173: 7.18, 221: 11.56, 272: 3.05, 300: 0.20; box-mean K 6.732
+   engine B*(c): mean 4.5711, min 0.052, max 8.694; START TOTAL 16456 t (+/-25 %: 12342-20570); rms deviation 82.0 % of the mean; zero cells 0
+       0-100 m ( 834 cells): today   7.085  engine B*   7.102  K   8.739  effort  1.56
+     100-150 m (1077 cells): today   4.751  engine B*   4.767  K   5.790  effort  1.43
+     150-200 m ( 691 cells): today   4.507  engine B*   4.510  K   7.466  effort  4.03
+     200-250 m ( 474 cells): today   4.298  engine B*   4.030  K  10.020  effort  6.73
+     250-300 m ( 212 cells): today   1.304  engine B*   1.532  K   3.483  effort  6.01
+     300-600 m ( 312 cells): today   0.016  engine B*   0.151  K   0.203  effort  2.43
+====================================================================================================
+Pairs (f from the taxon exposure shares weighted by stock; h = E / ceiling; x = a h f B*)
+  benthivorous_fish -> mobile_epifauna: f 0.6222, h 138.38, a 0.44, M2 0.53965; half-saturation 1/(a h f) 0.0264 t/km2 of the group; x at B* 143.2 -> 0.993 of the ceiling; at 10 % of B* 0.935
+      demand at the ceiling 16.1 t/km2/yr vs max surplus r_gross K/4 3.12, net of trawl (r-F)^2 K/(4 r) 2.50; budget flow 2.041
+  predatory_fish -> mobile_epifauna: f 0.2945, h 147.06, a 0.33, M2 0.07579; half-saturation 1/(a h f) 0.0700 t/km2 of the group; x at B* 54.0 -> 0.982 of the ceiling; at 10 % of B* 0.844
+      demand at the ceiling 11.9 t/km2/yr vs max surplus r_gross K/4 3.12, net of trawl (r-F)^2 K/(4 r) 2.50; budget flow 0.287
+  benthivorous_fish -> norway_lobster: f 0.0700, h 132.84, a 0.44, M2 0.02248; half-saturation 1/(a h f) 0.2444 t/km2 of the group; x at B* 18.7 -> 0.949 of the ceiling; at 10 % of B* 0.652
+      demand at the ceiling 16.8 t/km2/yr vs max surplus r_gross K/4 0.61, net of trawl (r-F)^2 K/(4 r) 0.35; budget flow 0.103
+  benthivorous_fish -> norway_lobster x size window 0.29: f 0.0203, h 132.84, a 0.44, M2 0.02248; half-saturation 1/(a h f) 0.8428 t/km2 of the group; x at B* 5.4 -> 0.844 of the ceiling; at 10 % of B* 0.352
+      demand at the ceiling 16.8 t/km2/yr vs max surplus r_gross K/4 0.61, net of trawl (r-F)^2 K/(4 r) 0.35; budget flow 0.103
+  predatory_fish -> norway_lobster: no access (unchecked)
+====================================================================================================
+Share of production eaten by the modelled fish = fish flow / (P/B_lit x B), P/B central (low-high):
+  bounds (refuge note, M&D 2007 recomputed): Nephrops 65-94 %, large crabs 60-92 %, shrimp 15-39 %
+  crabs      71.7 % (55.8-125.5); taxon M2 0.5019 /yr
+  pandalus   27.0 % (23.1-32.7); taxon M2 0.3921 /yr
+  small      40.2 % (31.3-55.9); taxon M2 0.7832 /yr
+  booked     90.0 % (44.0-141.3); taxon M2 1.9788 /yr
+  nephrops    6.4 % (5.6-7.5); taxon M2 0.0225 /yr
+  exposed group: fish 2.327 t/km2/yr incl. booked prey; P/B stock-weighted 1.082; fish/P 57 %; r_gross 1.752 vs P/B 1.082 (x 1.62); M2/(F+M2) 0.768
+  Nephrops M2 by benthivores 0.0225 /yr vs Irish Sea cod 0.04-0.25 (western Irish Sea; refuge note part D); M2/(F+M2) 0.205

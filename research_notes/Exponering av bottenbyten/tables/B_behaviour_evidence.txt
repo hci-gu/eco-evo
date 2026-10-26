@@ -1,0 +1,440 @@
+B_behaviour_evidence.txt
+Behavioural evidence for the benthic encounter rate a = v x w x p (per fish, per 6 h tick)
+of demersal fish (gadoids: haddock, cod; flatfish: plaice, dab, long rough dab, witch,
+lemon sole) on infauna and mobile epifauna. Offshore Skagerrak box: 100-300 m mud, bottom
+light by day ~1e-3 lux (median), ~1e-10 lux at night, 6-8 C.
+
+Compiled 2026-10-26. Research only; nothing here is applied to the library.
+
+Tags: [F] full text read; [A] abstract only; [S] secondary (citing source named);
+J = judgement / arithmetic by the compiler. "Holmes 1979" lines carry
+[F-internal]: the thesis states that "no quotation from it and no information derived from
+it may be published without the author's prior consent" - internal use only, do not
+publish derived values.
+
+Assumed model values under test:
+  gadoids   v 0.4 BL/s, w 0.15 L (barbel / pelvic-ray contact), p 0.5 infauna, 0.3 epifauna
+  flatfish  v 0.12 BL/s incl. pauses, w 0.6 L (visual), p 0.7
+  v x w for a 17.5 cm gadoid = 7.0 cm/s x 2.6 cm = 18.4 cm2/s; x p 0.3 = 5.5 cm2/s;
+  x p 0.5 = 9.2 cm2/s (J).
+  v x w for a 15 cm flatfish = 1.8 cm/s x 9 cm = 16 cm2/s; x 0.7 = 11 cm2/s;
+  for 25 cm: 45 cm2/s, x 0.7 = 32 cm2/s (J).
+
+General caveat: every lab rate below was measured at a stated prey density, in small
+lit tanks, mostly with juveniles. Encounter scales with density, so lab results test
+p, w and h (and the order of magnitude of a), not absolute strikes per 6 h in the box.
+
+=====================================================================================
+1. PRIMARY SOURCES, ONE BLOCK EACH
+=====================================================================================
+
+1.1 Persson et al. 2012, MEPS 456:245-253 (juvenile cod functional response) [F]
+    Local: ../Attackrater ur mötesteori/data/benth_validation/persson2012_meps456.pdf
+    Set-up [F]:
+      - Cod: "similar-sized cod representing 1 yr old fish"; caught at 2-5 m, the Sound.
+        Experimental cod TL is NOT stated; the 1-yr cod fed to the cannibal were
+        "total length 15 to 20 cm" (so ~15-20 cm is the likely size, J).
+      - Held individually in 150 l tanks, 8-9 C, 10-15 psu, "light:dark cycle 12:12 h".
+        Light intensity: NOT given (unknown). Arena floor area: NOT given.
+      - Habitats: sand, artificial eelgrass (514 shoots m-2), natural Fucus, all on sand.
+      - Prey: Neomysis integer TL 13.0 +- 2.0 mm, Crangon crangon TL 40 +- 5 mm,
+        Palaemon elegans TL 35 +- 5 mm.
+      - "5 initial prey densities (12 to 430 prey m-2)"; field: shrimps < 100 m-2,
+        small crustaceans < 500 m-2. Cod starved 48 h; "time between the first and the
+        fifth prey consumed was recorded"; Holling II fitted (Type III not better).
+    Table 1, attack rate a (cm2 s-1) and handling h (s J-1), +- 1 SE [F]:
+                         sand        Zostera     Fucus      | h sand   Zostera  Fucus
+      Neomysis integer   57 +- 22    8.8 +- 4    13 +- 7    | 0.026    0.022    0.024
+      Crangon crangon    1.8 +- 0.7  0.86 +- 0.3 1.2 +- 0.5 | 0.026    0.038    0.019
+      Palaemon elegans   21 +- 32    2.4 +- 2    1.6 +- 1   | 0.033    0.045    0.041
+      Quote: "Handling time (h) was prey- but not habitat-dependent, being highest for
+      P. elegans and lowest for N. integer (approximately 0.041 and 0.026 s J-1)".
+    Crangon buried [F]: the low a on Crangon despite "similar size as P. elegans" is
+      explained by "the different anti-predator strategies of P. elegans and C. crangon,
+      the former relying on camouflage in the vegetation and the latter burying and
+      hiding within the sandy sediment." (Crangon burial was not scored directly.)
+    Predator cue: consumption "reduced to 22%" in sand, "to 44%" in vegetation [F].
+    Per-item handling (J): the paper gives no J per prey. With literature-typical wet
+      weights and ~4 kJ/g ww: Neomysis ~10 mg -> ~40 J -> h ~1 s; Crangon 40 mm ~0.6 g ->
+      ~2.2 kJ -> h ~58 s; Palaemon 35 mm ~0.35 g -> ~1.4 kJ -> h ~46 s. These Holling h
+      values come from first-to-fifth prey of starved fish and probably include more
+      than strike + swallow (J).
+    Test of the model (J): sand a for a ~15-20 cm cod: exposed mysids 57, cryptic
+      Palaemon 21 (+-32), burying Crangon 1.8 cm2/s. Model gadoid v.w.p on epifauna
+      5.5 cm2/s: 4x (Palaemon 21) to 10x (mysids 57) BELOW the exposed visible prey, about
+      3x ABOVE the burying shrimp. Buried-vs-exposed penalty on epifauna in the same arena: 57/1.8 = 32x
+      (mysids, swimming) and 21/1.8 = 12x (shrimp of equal size). Lab cod hunted by sight
+      in light; the w for visible epifauna is a visual reaction distance, not 0.15 L.
+
+1.2 Holmes 1979, PhD thesis, Univ. Stirling, "Studies on the feeding behaviour of
+    flatfish" [F-internal]
+    Local: ../Attackrater ur mötesteori/data/benth_flatfish/holmes1979_thesis_stirling.pdf
+    Set-up [F-internal]: fish 8-23 cm (I-II group); observation tanks 175 x 30 cm,
+      24 cm deep, 15 +- 1 C, split into enclosures 86 cm long (0.26 m2), one fish each;
+      strip lights giving "50 lux on the bottom of the tank", 12:12 L:D. Mobile prey kept
+      at 50 per enclosure (~190 m-2, J); enchytraeid worms dropped 2-3 at a time on the
+      sand surface (density not constant, not stated). Fish were timid: fright-burying
+      "would often last for 10 - 20 minutes or even hours" (so lab activity shares are
+      biased low, J). The prey substitute matters: "Typical food of young pleuronectids
+      are polychaete tentacles and bivalve siphon tubes, but to set up tanks with
+      bivalves and sedentary tube-dwelling worms ... would have been totally
+      impractical" - enchytraeids were used instead (free, surface-lying worms).
+    Table 33, interval between attacks (s; measured from 1 s after an attack) [F-int.]:
+      species    prey          N    min   max   median  mean
+      plaice     worms        616    2    474      8     16
+      plaice     corophiids   176    2    515     21     56
+      flounder   worms         88    2    820      7     40
+      flounder   corophiids   107    2   1194     18     56
+      sole       worms        713    2   1117     12     30
+      turbot     mysids       452    2    969     18     38
+      turbot     shrimps       61    3    960     67    162
+      brill      mysids       184    2   1243     95    153
+      brill      shrimps       40    3   1212    208    306
+      Family medians: bothids 38 s, pleuronectids 10 s, soleids 12 s.
+      Strikes per hour while feeding (J, 3600/mean): plaice on worms ~225 h-1 (median
+      ~450 h-1); plaice on Corophium ~64 h-1 (median ~170 h-1).
+    Table 35, capture efficiency per attack (%) [F-int.]: plaice worms 100, plaice
+      corophiids 99, flounder worms 100, flounder corophiids 100, sole worms 100;
+      turbot mysids 89, shrimps 72; brill mysids 84, shrimps 73; topknots on mysids 86-89.
+      These are strikes at free, non-retracting prey: an UPPER BOUND for p on infauna
+      parts, not a measurement of a strike on a retracting siphon or arm (J).
+    Table 61, share of observed TIME (duration) [F-internal]:
+                       water column  bottom activity  inactivity
+      plaice/worms          -            59 %            41 %
+      plaice/corophiids     -            26 %            74 %
+      flounder/worms        -            20 %            80 %
+      flounder/corophiids   4 %          28 %            68 %
+      sole/worms            1 %          75 %            24 %
+      all pleuronectids     1 %          33 %            66 %
+      ("bottom activity" includes searching locomotion, approach, bite and chew.)
+    Locomotion [F-internal]: SHUFFLE, the searching gait, "has an upper limit of about
+      10 cm per second" with "eyes mov[ing] independently scanning"; SKIM lower limit
+      ~15 cm/s; CREEP (stalking) "would not exceed 1 cm per second but commonly ... 1 mm
+      per second". Pleuronectid strike = FORWARD (< half a body length); a raised-head
+      ARCH, "attack is made from this position after one or two seconds", "well-suited
+      to 'browsing' on sedentary worms that were partly emerged from the sand".
+    Handling (J): the median 8 s interval for plaice on worms is an upper bound on
+      strike + bite + chew per small worm (it includes search).
+    Implied realised search rate (J): plaice on Corophium at ~190 m-2 with 56 s mean
+      interval -> a ~ 1/(N t) = 0.9 cm2/s over all observed time (2.5 cm2/s on the
+      median), i.e. 3.5 cm2/s per active time. Model flatfish 11 cm2/s (15 cm). The
+      lab rate includes satiation pauses and timidity; read as "model not low" (J).
+
+1.3 Burrows 1994, MEPS 115:31-39 (0-group plaice, light vs dark, Artemia prey) [F]
+    Local: ../Attackrater ur mötesteori/data/benth_flatfish/burrows1994_meps115_31.pdf
+    Plaice 14-35 mm (mean 24 mm), Artemia nauplii in excess, 16:8 L:D, IR video, 10.4-12.6 C.
+    "The juvenile plaice were in motion for 2 to 5 % of the total time observed in each
+      hour in the light, with the remaining 95 to 98% spent motionless on the bottom. In
+      the dark, the plaice were typically active for 10 to 35% of the time" (activity in
+      the dark = pelagic swimming, not benthic foraging) [F].
+    "Stomachs of experimental plaice that had fed contained between 126 and 890 Artemia
+      nauplii" per 24 h trial [F]. Satiation is acknowledged ("may have produced
+      satiation, reducing activity in well-fed fish").
+    Light: "If feeding is visually mediated, benthic swimming should only be used in
+      sufficient light to allow prey capture"; field TV saw "many juvenile plaice ...
+      swimming in the light but none ... in the hours of darkness" [F].
+    Caveat: tiny fish on pelagic nauplii; not a benthic-item test (J).
+
+1.4 Burrows, Gibson & Maclean 1994, J Fish Biol 45 (Suppl A):171-180 [A]
+    DOI 10.1111/j.1095-8649.1994.tb01091.x (closed; abstract via OpenAlex,
+    data/B_behaviour/openalex/oa_15.json).
+    Plaice on buried Donax vittatus, "whose siphon tips could be eaten as food":
+      benthic swimming increased with Donax present, "correlated with the frequency of
+      attacks on siphons"; "The independence of foraging from light and endogenous
+      rhythms suggests that this trade-off may be similarly independent." [A]
+    -> Siphon cropping by plaice was NOT suppressed by darkness in this lab study [A];
+      the attack rates per hour are in the full text, not obtained.
+
+1.5 Gibson et al. 1998, MEPS 165:145-159 (0-group plaice, Swedish west coast) [F]
+    Local: ../Attackrater ur mötesteori/data/benth_flatfish/gibson1998_meps165_145.pdf
+    (Table 6 read from a page render.) Items per stomach (push net, July, 19-21 C):
+                      day inner/middle/outer    night inner/middle/outer
+      n stomachs        15 / 20 / 26              47 / 40 / 14
+      fullness index    1.7 / 2.1 / 1.4           2.3 / 2.6 / 2.3
+      total molluscs    5.0 / 5.9 / 15.6          2.3 / 2.9 / 9.8
+      total polychaetes 2.4 / 2.2 / 1.0           3.5 / 5.0 / 3.4
+      total crustaceans 15.6 / 25.2 / 1.5         8.0 / 6.5 / 3.2
+      total items       29.2 / 72.8 / 94.9        17.2 / 30.7 / 24.9
+    "When meiofauna were excluded ... the number of food items taken per fish was
+      similar during day and night, indicating both diurnal and nocturnal feeding
+      activity on larger prey. However, the stomach fullness index was significantly
+      higher (p = 0.001) in fish from the night catches" [F]. (Shallow water: night light
+      far above the Skagerrak bottom, J.)
+
+1.6 Ellis & Gibson 1997, MEPS 149:83-90 (0-group cod 65-147 mm on 0-group flatfish) [F]
+    Local: ../Attackrater ur mötesteori/data/benth_validation/ellis_gibson1997.pdf
+    Arenas 60 x 33 cm, 26 cm deep, 14.5 C, light 0.26-0.44 x 1e15 quanta cm-2 s-1
+    (= 4-7 umol m-2 s-1, J). Pursuit time least-square means "1.02, 1.40 and 1.99 s for
+    the first, second and third prey"; ingestion 11.2, 15.7, 26.2 s; handling (pursuit +
+    ingestion) "15.1, 20.3 and 30.3 s"; dab 13.2 vs plaice 21.0 s [F]. Capture efficiency
+    (= 1 / attacks before ingestion) falls with prey:predator length ratio (rs -0.67 dab,
+    -0.36 plaice) [F]; from Fig. 3A, ratio 0.20-0.33 mostly 1.0 (rest 0.33-0.5), ratio
+    0.35-0.45 0.05-0.3 [S via ../Attackrater ur mötesteori/addendum_vision_light.md; figure not
+    re-read here].
+    Fish prey: an UPPER bound on handling for mg-sized benthic items, not a measure (J).
+
+1.7 Brawn 1969, J Fish Res Board Can 26:583-596 (cod 5-90 cm in tanks) [A]
+    DOI 10.1139/f69-054 (closed; OpenAlex oa_7.json).
+    "Large pieces of food on the bottom were found by sight but smaller pieces were
+    taken after being detected by taste buds on the trailing barbel and pelvic fin
+    rays." "Food below gravel or stones was located by smell and uncovered by carrying
+    away gravel in the mouth or by rolling stones aside with the head. Food covered by
+    sand was not found. Some live food was captured in the dark. ... food deeply buried
+    was uncovered by several fish digging in the same place" [A].
+
+1.8 Harvey & Batty 2002, J Fish Biol 60:583-592 (five juvenile gadoids) [A]
+    DOI 10.1111/j.1095-8649.2002.tb01686.x (closed; OpenAlex oa_8.json).
+    "The highest taste bud densities were recorded on the edge of the anterior naris
+    flap, the barbel, pelvic fin rays, snout tip and upper lip. Cod ... and poor cod ...
+    had significantly higher taste bud densities on the first two pelvic fin rays ...
+    in which the pelvic fins are frequently trailed over the sea bed when searching for
+    prey." [A] No detection distance (contact sense).
+
+1.9 Meager et al. 2005, CJFAS 62:1978-1984 (juvenile cod, mysids) [A]
+    DOI 10.1139/f05-104 (closed; OpenAlex oa_14.json).
+    "Juvenile cod using chemical cues were able to locate mysids from significantly
+    longer distances than when only visual cues were available." "predation rates were
+    significantly lower in dark conditions than in well lit conditions" [A]. No numbers
+    in the abstract.
+
+1.10 Meager et al. 2010, Mar Freshw Behav Physiol 43:99-108 (age-1 cod, light) [A]
+    DOI 10.1080/10236241003798910 (closed; OpenAlex oa_3.json).
+    Reactive distance measured over "0.01 to 64 umol m-2 s-1"; "The reactive distance at
+    0.01 umol m-2 s-1 indicated high sensitivity to low light conditions" [A]. 0.01 umol
+    ~0.5 lux (J) - 2.7 decades above the box's daytime bottom light; no data below.
+
+1.11 Meager & Batty 2007, Phil Trans R Soc B 362:2123-2130 [F]
+    Local: ../Attackrater ur mötesteori/data/vision/meager_batty_2007_pmc.html
+    Citing Lokkeborg & Ferno 1999: "Cod reduce swimming speed and restrict their search
+    area after encountering bait odour plumes during the day but not at night" [S];
+    "greater reliance on chemical cues reduced prey-searching speed" (interpretation) [F].
+
+1.12 Lokkeborg 1998, Anim Behav 56:371-378 (8 tagged cod, N Norway fjord) [A]
+    PubMed 9787028 (data/B_behaviour/pubmed/lokkeborg1998.txt).
+    "The cod had a diurnal rhythm of swimming activity with a slightly lower swimming
+    speed during a 5-h period at night, indicating that they searched more actively for
+    food during the day." "The cod detected a food odour source from a distance of
+    several hundred metres, and responded immediately to the odour plume by carrying
+    out a rheotactic search at a moderately higher swimming speed." [A] No speeds or
+    time budgets in the abstract.
+    Lokkeborg & Ferno 1999, EBF 54:345 [A, Semantic Scholar tldr]: chemosensory
+    detection "should be relatively independent of light, and this could explain why
+    cod were active throughout the 24 h cycle."
+
+1.13 Winger 2004, PhD thesis MUN, ch. 4 (= Ferno et al. 2011 data; Ramfjord cod
+    ~30-60 cm, acoustic positioning, 29 040 speed estimates) [F]
+    Local: ../Attackrater ur mötesteori/data/benth_gadoid_search/winger2004_mun_phd.pdf
+    Modes "0.1 to 0.4 bl/s"; "mean hourly speeds ranged from 23.1 to 38.9 cm/s (0.7 to
+    0.9 bl/s)"; "Swimming speeds below 1.0 bl/s were most common (>70%)" [F]. All
+    behaviour (incl. transit), not search-only; positioning noise inflates small speeds
+    (J).
+
+1.14 Hurst, Ryer, Ramsey & Haines 2007, Mar Biol 151:1087-1098 [A]
+    DOI 10.1007/s00227-006-0541-8 (closed; abstract via marineinfo record,
+    data/B_behaviour/marineinfo_hurst2007/rec.json).
+    Northern rock sole, Pacific halibut, English sole (juveniles): "Visual foraging
+    abilities measured in the laboratory decreased rapidly below 10-4 umol photons m-2
+    s-1, and were similar among species." Rock sole and English sole "fed primarily on
+    bivalve siphons and polychaetes"; rock sole feeding "temporally restricted to the
+    dusk period"; English sole "fed throughout the daylight hours" [A].
+    Rohan 2021 (PhD, Univ. Washington), Table 3.1 [S, read F]: foraging E50 for northern
+    rock sole and Pacific halibut 1e-6 to 1e-4 umol photons m-2 s-1 (Rohan cites 'Hurst
+    2007', which in his list is the single-author pollock paper; attributed here to Hurst
+    et al. 2007, J);
+    flatfish herding E50 1e-6 to 1e-4 (Ryer et al. 2010).
+    Local: ../Attackrater ur mötesteori/data/vision/rohan_2021_dissertation.pdf
+    Conversion (J): 1 umol photons m-2 s-1 = 24 lux at 480 nm, 53 lux at 500 nm, 148 lux
+    at 550 nm (photopic V(lambda)). 1e-4 umol ~ 2e-3 to 1.5e-2 lux (~5e-3 lux at 500 nm);
+    1e-6 umol ~ 5e-5 lux. Box daytime bottom 1e-3 lux ~ 2e-5 umol (500 nm): 0.7 decade
+    below the Hurst knee, inside Rohan's E50 band. Night 1e-10 lux: no vision.
+
+1.15 de Groot 1969, J Cons 32:385-395 (sole, plaice, flounder, dab, turbot, brill) [F]
+    Local: ../Attackrater ur mötesteori/data/benth_flatfish/degroot1969_jcons.pdf
+    Stimuli at "a distance of some 20 cm". Plaice/flounder/dab ignored 1-4 cm balls
+    alone (plaice 0-1/30 positive) but bit them with shrimp juice (plaice 29-30/30;
+    dab 28-30/30); "chem. only" 30/30 positive for sole, plaice, flounder, dab; 0/30 for
+    turbot, brill [F]. Chemical jet from a tube 5 cm from the fish: "Plaice and flounder
+    localized the aperture from which the solution flowed and bit at it ... the dab swam
+    round and round the aperture making biting movements all the time, but did not
+    localize it" (dab bit a 2 cm ball placed 10 cm away at once) [F].
+    "Plaice, flounder and dab are day feeders"; Pleuronectidae "find their food mainly
+    visually, but also use olfaction"; brain type with "very large optic lobes (plaice,
+    dab, lemon sole, witch ...)" (Evans 1937) [F]. Long rough dab "link[s] up with the
+    Bothidae" (fish feeder) [F].
+
+1.16 Batty & Hoyt 1995, J Fish Biol 47:931-939 (juvenile sole and plaice, IR video) [A]
+    DOI 10.1111/j.1095-8649.1995.tb06019.x (closed; OpenAlex oa_2.json).
+    "Both species were able to feed on dead prey when only chemical stimuli were
+    available. Plaice showed a greater dependence on vision for feeding but sole relied
+    principally on chemoreception and mechanoreception. When any one sense was removed
+    plaice became less active whereas sole became more active." [A] No lux threshold or
+    rate in the abstract.
+
+1.17 Hill, Burrows & Hughes 2000, J Fish Biol 56:1497-1508 (juvenile plaice, buried
+    bivalves) [A] DOI 10.1111/j.1095-8649.2000.tb02160.x (OpenAlex oa_10.json).
+    "Intensive search behaviour was characterized by reduced distance of moves, a
+    greater rate of turning per unit distance and shorter pauses between moves ... a
+    decrease in distances moved suggests that plaice search more efficiently for prey
+    when stationary than while moving." [A]
+
+1.18 Kaiser & Ramsay 1997, MEPS 152:307-310 (dab, 40 m, Irish Sea) [F]
+    Local: data/B_behaviour/vliz_138506/138506.pdf
+    Site "at a depth of 40 m in turbid water with little if any light penetration at
+    the seabed". Undisturbed: "Amphiura spp. are positioned with their oral discs buried
+    within the sediment while their arms protrude from the sediment surface. Under these
+    circumstances, dab graze the exposed arms, while leaving the oral disc intact".
+    After beam trawling dabs "ate large numbers of the oral discs of Amphiura spp.,
+    whereas they would normally graze the arms" [F]. Fish 184-196 mm mean TL. (Exposure,
+    not detection, set what was taken; feeding where seabed light is minimal, J.)
+
+1.19 Duineveld & van Noort 1986, Neth J Sea Res 20:85-94 [A]
+    (marineinfo record, data/B_behaviour/marineinfo_duineveld1986/rec.json)
+    "Only 4% of the individuals in a sample had intact arms, whereas 55% of the animals
+    (or 20% of all arms) had one or more 'recent' distal regenerations". "Annual
+    consumption of Amphiura arms by dab was estimated to be 0.84 g wet weight m-2,
+    which is equivalent to 420 arms or 6% of the arm population." [A]
+    -> mean arm piece eaten ~2 mg ww (0.84 g / 420) (J).
+
+1.20 Ansell et al. 1999, J Molluscan Stud 65:223 (Donax vittatus) [A, OpenAlex]
+    "Between 2.5% and 18% of Donax vittatus ... showed damage to the siphons caused by
+    non-lethal predation by juvenile flatfishes." In aquaria, Donax "that suffered
+    non-lethal attack by juvenile plaice which resulted in their removal from the sand,
+    rapidly resumed normal activity as evidenced by reburrowing." [A]
+
+1.21 Rindorf 2003, MEPS 249:265 (whiting, North Sea) [F]
+    Local: ../Attackrater ur mötesteori/data/fish_layers/meps249_265.pdf
+    "the occurrence of bottom dwelling prey increased significantly during the night at
+    4 of 5 locations. In contrast, free swimming prey ... were eaten mainly in the
+    daylight hours." [F]
+    Albert 1995, ICES JMS 52 [S, ../Torskfiskars ljusberoende vid jakt/
+    gadoid_vision_thresholds.md]: haddock 15-26 cm ate polychaetes and isopods "mainly in
+    the early morning and from noon until a few hours after sunset".
+
+=====================================================================================
+2. SYNTHESIS PER FACTOR
+=====================================================================================
+
+2.1 v and search share
+  Gadoids:
+  - Cod in situ (all behaviour): modes 0.1-0.4 BL/s, hourly means 0.7-0.9 BL/s, > 70 %
+    of fixes < 1 BL/s [F, Winger 2004]; active through 24 h, slightly slower during a
+    5-h night period [A, Lokkeborg 1998]; odour plume -> "moderately higher" speed,
+    by day slower, restricted search after the plume [A/S].
+  - No in situ haddock speed and no measured share of time "searching" vs "travel/
+    resting" for cod or haddock on soft bottom was obtained.
+  - Verdict (J): 0.4 BL/s is the modal speed; as a search-only speed it is plausible.
+    The unknown is the share of the 6 h spent searching on the bottom, which is
+    outside v (eat share / hunger in the model).
+  Flatfish:
+  - Moving speed while searching <= 10 cm/s (Holmes [F-int.]); time active on the
+    bottom 59 % (plaice, surface worms) / 26 % (plaice, Corophium) / 33 % pleuronectid
+    mean [F-int.]; 0-group plaice in excess food moved only 2-5 % of the time in light
+    [F, Burrows 1994]. Plaice "search more efficiently ... when stationary" [A, Hill
+    2000].
+  - v_moving x active share: if the moving speed is 3-10 cm/s and the active share
+    (incl. bites) is 25-60 %, the time mean is 0.75-6 cm/s = 0.05-0.4 BL/s at 15 cm.
+    The assumed 0.12 BL/s (1.8 cm/s at 15 cm) sits inside that bracket (J).
+
+2.2 w by detection mode, incl. darkness
+  Gadoids, infauna: contact by barbel and trailed pelvic rays (taste buds) [A, Brawn
+    1969; A, Harvey & Batty 2002]; no distance exists (contact). "Food covered by sand
+    was not found" [A]: so buried infauna counts only where exposed (siphon, arm,
+    feeding tentacle). w 0.15 L is consistent with a contact sense; light-independent.
+  Gadoids, epifauna: visual and chemical detection at distance in light: Persson
+    sand a = 57 (mysids) and 21 (Palaemon) cm2/s vs model 5.5 [F] - w for VISIBLE
+    epifauna in light is 4-10x the contact width. Chemical cues give longer reaction
+    distance than vision for juvenile cod [A, Meager 2005]; dark predation lower than
+    lit (no number) [A]. At box light (1e-3 lux day) visual range is not measured;
+    Meager 2010 stops at 0.01 umol (~0.5 lux) [A].
+  Flatfish: plaice, dab, lemon sole, witch are visual (large optic lobes) with
+    chemical back-up [F, de Groot 1969]; plaice can feed on chemical cues alone in
+    darkness, but became less active when any sense was removed [A, Batty & Hoyt 1995].
+    Visual foraging of three Pacific flatfish "decreased rapidly below 1e-4 umol photons
+    m-2 s-1" (~5e-3 lux) [A, Hurst 2007]; box daytime bottom light (~2e-5 umol) is below
+    this knee (J). Siphon cropping by plaice in the lab was independent of light [A,
+    Burrows et al. 1994b], 0-group plaice stomach items similar day and night with
+    higher night fullness [F, Gibson 1998], dabs grazed Amphiura arms at 40 m with
+    "little if any light penetration at the seabed" [F, Kaiser & Ramsay 1997].
+  Verdict (J): a visual w 0.6 L for flatfish at 100-300 m in the Skagerrak is not
+    supported by the light evidence: the daytime bottom is at or below the visual
+    knee and the night is dark. The field evidence shows flatfish still crop siphons
+    and arms with little light, i.e. by a short-range chemo-tactile mode; a w nearer
+    the gadoid contact/short-range value (0.1-0.3 L) fits better. No measurement of
+    the flatfish chemical reaction distance exists beyond de Groot's 5-10 cm tube
+    tests (plaice localized, dab did not) [F].
+
+2.3 p (capture per encounter)
+  - Free surface worms / Corophium: 99-100 % per attack (plaice, flounder, sole)
+    [F-int., Holmes]; mobile mysids 84-89 %, Crangon 72-73 % (turbot, brill)
+    [F-int.]. Juvenile cod on fish prey 1.0 at small size ratios, 0.05-0.3 at ratios
+    0.35-0.45 [F, Ellis & Gibson 1997].
+  - Strike on a retracting part (siphon, arm, worm in burrow): NO per-strike success
+    was found. Indirect evidence: 55 % of Amphiura carry recent arm regenerations
+    [A]; 2.5-18 % of Donax have flatfish siphon damage [A]; plaice siphon attacks
+    sometimes pull the whole Donax out of the sand [A, Ansell 1999].
+  - Buried vs exposed epifauna (cod, same arena): Crangon (burying) a = 1.8 vs
+    Palaemon (exposed, same size) 21 cm2/s = 12x [F, Persson 2012]; the paper attributes
+    it to burying. This is a combined w x p effect, not p alone.
+  - Verdict (J): p 0.7 (flatfish) and 0.5 (gadoid) on infauna parts cannot be tested;
+    Holmes gives only the free-prey ceiling (~1.0). p 0.3 on epifauna: the buried
+    Crangon result says the effective a on burying shrimp is ~1/10 of exposed shrimp,
+    which is larger than p alone would carry.
+
+2.4 Handling / strike time per item
+  - Small free worms, plaice: median 8 s between attacks incl. search -> h <= ~8 s
+    [F-int.]; raised-head strike "after one or two seconds" [F-int.].
+  - Cod on crustaceans, Holling h 0.019-0.045 s/J [F]; per item (J) ~1 s (13 mm mysid),
+    ~45-60 s (35-40 mm shrimp).
+  - Cod on 2-5 cm fish: pursuit 1-2 s, handling 15-30 s [F].
+  - mg-sized items: arm piece ~2 mg ww [A/J]. No measured strike time per siphon or arm
+    tip was found; by the Holmes upper bound, h per mg item is seconds, so handling
+    does not limit intake on infauna parts; the encounter does (J).
+
+2.5 Strike rates observed
+  - Plaice (8-23 cm, 50 lux, 15 C) at ~190 prey m-2: ~64 h-1 (mean) on Corophium;
+    ~225 h-1 on surface worms (density not stated) [F-int.].
+  - Sole on worms ~120 h-1 (mean 30 s) [F-int.]; turbot on mysids ~95 h-1, brill on
+    shrimps ~12 h-1 [F-int.].
+  - 0-group plaice: 126-890 Artemia per stomach per 24 h trial [F].
+  - Field items per stomach, 0-group plaice: 17-95 total, molluscs (siphons, J) 2-16
+    [F, Gibson 1998].
+  - No field strike rate for adult flatfish or gadoids was found.
+
+=====================================================================================
+3. NOT OBTAINED (attempted)
+=====================================================================================
+  - Holmes & Gibson 1983, Anim Behav 31:1244: closed (Unpaywall false), no abstract
+    in OpenAlex; Semantic Scholar rate-limited.
+  - Burrows, Gibson & Maclean 1994b full text (siphon attack rates light vs dark):
+    closed; abstract only.
+  - Holmes 1979 prey sizes (enchytraeid, Corophium lengths): not stated in the methods.
+  - Batty & Hoyt 1995 full text (any lux / rate): closed; abstract only.
+  - Meager et al. 2005 / 2010 full texts (reactive distances in cm, dark/light
+    predation ratio): closed.
+  - Hurst et al. 2007 full text (foraging rate vs light curve): closed.
+  - Lokkeborg 1998 and Lokkeborg & Ferno 1999 full texts (search speeds, time budgets):
+    closed.
+  - de Vlas 1979 (NJSR 13:117, siphon cropping by plaice): closed, no abstract.
+  - de Groot 1971 (NJSR 5:121), Basimi & Grove, Gibson & Ezzi, Hill et al. 2002:
+    not obtained.
+  - Ryer & Barnett 2006 (Fish Res 81:242): closed; AFSC quarterly summary gives only
+    "40% of fish did not react to the approaching footrope" (no light breakdown).
+  - Ansell et al. 1999 PDF: publisher returned HTML (blocked); abstract only.
+  - No study found of: haddock search speed in situ; haddock "feeding pits" (a search
+    found only harbour-porpoise pits, Commun Earth Environ 2023); share of foraging
+    time searching for cod/haddock on soft bottom; per-strike capture success on a
+    retracting siphon, arm or worm; light threshold of visual feeding for plaice, dab,
+    long rough dab or witch specifically (only the Pacific flatfish 1e-4 umol knee).
+
+=====================================================================================
+4. DOWNLOADS (this folder, data/B_behaviour/)
+=====================================================================================
+  openalex/oa_1..15.json        OpenAlex records (abstracts), one per DOI
+  openalex_search/q_1..8.json   OpenAlex title searches
+  s2/s2_1..7.json               Semantic Scholar records (several rate-limited)
+  pubmed/s1.json, lokkeborg1998.txt   PubMed abstract of Lokkeborg 1998
+  marineinfo_hurst2007/rec.json       Hurst et al. 2007 abstract
+  marineinfo_duineveld1986/rec.json   Duineveld & van Noort 1986 abstract
+  vliz_138506/138506.pdf        Kaiser & Ramsay 1997 MEPS 152:307 (full text)
+  vliz_298917/298917.pdf        Derweduwen et al., dab feeding in C-Power wind farm
+                                (downloaded, not used)

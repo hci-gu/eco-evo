@@ -1,0 +1,40 @@
+
+app = <fgconfig.FGConfigApp object at 0x705b8fdb4210>
+
+    def test_the_table_editor_shows_the_library_rows_and_k_on_the_map(app):
+        _select_benthos(app)
+        rows = [(r["depth"].get(), r["capacity"].get()) for r in app.capacity_rows]
+>       assert rows == [("100", "131"), ("300", "65.5")]
+E       AssertionError: assert [('100', '132...00', '66.01')] == [('100', '131...300', '65.5')]
+E         
+E         At index 0 diff: ('100', '132.02') != ('100', '131')
+E         Use -v to get more diff
+
+tests/test_fgconfig_depth_map.py:87: AssertionError
+______________ test_apply_writes_the_edited_table_to_the_library _______________
+
+app = <fgconfig.FGConfigApp object at 0x705b8f617190>
+
+    def test_apply_writes_the_edited_table_to_the_library(app):
+        _select_benthos(app)
+        app.capacity_rows[1]["capacity"].set("60")
+        app._add_capacity_row("500", "40")
+        app.apply_fg_changes()
+        table = app.global_library["species_definitions"]["benthic_infauna"]["capacity_depth_table"]
+>       assert [(float(r["depth_m"]), float(r["capacity"])) for r in table] == [
+            (100.0, 131.0), (300.0, 60.0), (500.0, 40.0)]
+E       assert [(100.0, 132....(500.0, 40.0)] == [(100.0, 131....(500.0, 40.0)]
+E         
+E         At index 0 diff: (100.0, 132.02) != (100.0, 131.0)
+E         Use -v to get more diff
+
+tests/test_fgconfig_depth_map.py:98: AssertionError
+=============================== warnings summary ===============================
+tests/test_gpu_visual.py::test_visual_cli_renders_and_preserves_training[cpu-eager]
+  <frozen importlib._bootstrap>:241: RuntimeWarning: Your system is avx2 capable but pygame was not built with support for it. The performance of some of your blits could be adversely affected. Consider enabling compile time detection with environment variables like PYGAME_DETECT_AVX2=1 if you are compiling without cross compilation.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_fgconfig_depth_map.py::test_the_table_editor_shows_the_library_rows_and_k_on_the_map
+FAILED tests/test_fgconfig_depth_map.py::test_apply_writes_the_edited_table_to_the_library
+2 failed, 1330 passed, 163 skipped, 1 warning in 117.89s (0:01:57)

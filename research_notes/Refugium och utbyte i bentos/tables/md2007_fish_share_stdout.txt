@@ -1,0 +1,30 @@
+Mackinson & Daskalov 2007 North Sea Ecopath (1991, balanced): consumption
+of each benthic group by predator class, as a share of its production.
+predators parsed with B and Q/B: 64 of 68
+54 Large crabs: B 1.354, P/B 0.5541, P 0.750 t/km2/yr, EE 0.9322; catch 0.0125 (1.7% of P); all predation 0.687 (91.6%); non-fish predators 0.000 (0.0%); FISH (remainder) 0.687 = 91.5% of P (fish columns readable outside 13-24: 0.453)
+    BOUNDS fish share of P: 60.4% (readable columns only) - 91.5% (min of the EE remainder and readable + the whole consumption of columns 13-24, 16.54 t/km2/yr)
+    readable consumers: Dab 0.101; Small demersal fish 0.063; Thornback & Spotted ray 0.055; Long-rough dab 0.050; Juvenile rays 0.044; Flounder 0.039
+55 Nephrops: B 1.1, P/B 0.37, P 0.407 t/km2/yr, EE 0.9937; catch 0.0181 (4.5% of P); all predation 0.386 (94.9%); non-fish predators 0.002 (0.6%); FISH (remainder) 0.384 = 94.3% of P (fish columns readable outside 13-24: 0.263)
+    BOUNDS fish share of P: 64.5% (readable columns only) - 94.3% (min of the EE remainder and readable + the whole consumption of columns 13-24, 16.54 t/km2/yr)
+    readable consumers: Flounder 0.098; Other gadoids (small) 0.078; Horse mackerel 0.069; Long-rough dab 0.017; Large crabs 0.002; Monkfish 0.000
+56 Epifaunal macrobenthos (mobile grazers): B 78.0, P/B 0.3884, P 30.295 t/km2/yr, EE 0.4315; catch 0.0066 (0.0% of P); all predation 13.066 (43.1%); non-fish predators 7.608 (25.1%); FISH (remainder) 5.458 = 18.0% of P (fish columns readable outside 13-24: 3.866)
+    BOUNDS fish share of P: 12.8% (readable columns only) - 18.0% (min of the EE remainder and readable + the whole consumption of columns 13-24, 16.54 t/km2/yr)
+    readable consumers: Epifaunal macrobenthos (mobile grazers) 7.574; Dab 2.601; Long-rough dab 0.250; Plaice 0.248; Flounder 0.179; Small demersal fish 0.170
+57 Infaunal macrobenthos: B 136.0, P/B 1.0, P 136.000 t/km2/yr, EE 0.2791; catch 0.1407 (0.1% of P); all predation 37.817 (27.8%); non-fish predators 30.350 (22.3%); FISH (remainder) 7.467 = 5.5% of P (fish columns readable outside 13-24: 3.945)
+    BOUNDS fish share of P: 2.9% (readable columns only) - 5.5% (min of the EE remainder and readable + the whole consumption of columns 13-24, 16.54 t/km2/yr)
+    readable consumers: Epifaunal macrobenthos (mobile grazers) 30.295; Dab 2.419; Plaice 0.411; Long-rough dab 0.322; Other gadoids (small) 0.195; Sandeels 0.189
+58 Shrimp: B 0.5, P/B 3.0, P 1.500 t/km2/yr, EE 0.4486; catch 0.0434 (2.9% of P); all predation 0.630 (42.0%); non-fish predators 0.039 (2.6%); FISH (remainder) 0.591 = 39.4% of P (fish columns readable outside 13-24: 0.221)
+    BOUNDS fish share of P: 14.8% (readable columns only) - 39.4% (min of the EE remainder and readable + the whole consumption of columns 13-24, 16.54 t/km2/yr)
+    readable consumers: Long-rough dab 0.048; Plaice 0.036; Squid & cuttlefish 0.032; Small demersal fish 0.025; Juvenile rays 0.024; Dragonets 0.022
+59 Small mobile epifauna (swarming crustaceans): B 30.0, P/B 1.9, P 57.000 t/km2/yr, EE 0.9249; catch 0.0000 (0.0% of P); all predation 52.719 (92.5%); non-fish predators 28.476 (50.0%); FISH (remainder) 24.243 = 42.5% of P (fish columns readable outside 13-24: 5.253)
+    BOUNDS fish share of P: 9.2% (readable columns only) - 38.2% (min of the EE remainder and readable + the whole consumption of columns 13-24, 16.54 t/km2/yr)
+    readable consumers: Small mobile epifauna 16.286; Epifaunal macrobenthos (mobile grazers) 7.574; Carnivorous zooplankton 4.307; Dab 3.316; Sandeels 0.473; Plaice 0.464
+60 Small infauna (polychaetes): B 150.0, P/B 0.9, P 135.000 t/km2/yr, EE 0.9079; catch 0.0000 (0.0% of P); all predation 122.567 (90.8%); non-fish predators 60.517 (44.8%); FISH (remainder) 62.049 = 46.0% of P (fish columns readable outside 13-24: 10.772)
+    BOUNDS fish share of P: 8.0% (readable columns only) - 20.2% (min of the EE remainder and readable + the whole consumption of columns 13-24, 16.54 t/km2/yr)
+    readable consumers: Epifaunal macrobenthos (mobile grazers) 37.869; Small infauna (polychaetes) 22.500; Sandeels 5.897; Dab 1.391; Plaice 1.128; Lemon sole 0.867
+
+The EE remainder is NOT reliable where it exceeds what the lost gadoid
+columns can eat (polychaetes, swarming crustaceans): EE values of the
+balanced model are partly Ecopath closures. Use the bounds; the earlier
+note's diet-matrix values (Bentos och torskfiskar/evidence_C) were
+computed before the page-34 duplication was noticed.

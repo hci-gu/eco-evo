@@ -1,0 +1,512 @@
+EVIDENCE: MODEL FORMS FOR A PROTECTED REFUGE R AND AN ACCESSIBLE POOL A IN BENTHIC PREY
+=====================================================================================
+Folder: research_notes/Refugium och utbyte i bentos/   (this file: tables/evidence_model_form.txt)
+Compiled 2026-10-26 by a literature agent. Research only; no code or library changes.
+
+Tags: [F] full text read; [A] abstract only; [S] secondary source (named);
+      [X] licensed extract of the primary (e.g. a book chapter that its attribution
+          line says is "adapted from" the paper) - stronger than [S], weaker than [F];
+      "J" = judgement or derivation by this agent, not a statement of any source.
+Notation: equations are given in the source's own symbols, in plain ASCII.
+
+Local copies (each in its own data/<source>/ folder):
+  data/christensen_walters_2004/cw2004.pdf          Christensen & Walters 2004, Ecol Model 172:109-139
+  data/ewe_user_guide_2005/ewe_guide_2005.pdf       Christensen, Walters & Pauly 2005, EwE User's Guide (Nov 2005)
+  data/ewe_user_guide_2008/ewe_guide_6.pdf          Christensen, Walters, Pauly & Forrest 2008, EwE6 User Guide (draft)
+  data/ewe_book_bccampus_foraging_arena/ewe_book_vliz406789.pdf
+                                                    "Ecosystem Modelling with EwE" (Christensen et al., BCcampus
+                                                    open textbook; VLIZ copy 406789). Contains licensed adapted
+                                                    extracts of Ahrens et al. 2012 (ch. 15), Walters & Christensen
+                                                    2007 (ch. 27-28) and Bentley et al. 2024 (ch. 30-32).
+  data/heath2021_strathe2e2/StrathE2E2_Ecology_model_4.0.1.pdf   Heath & Speirs 2023, StrathE2E2 v4.0.1 ecology model
+  data/fulton2007_ams_atlantis/AMS_Final_Report_v6.pdf           Fulton et al. 2007, Atlantis SE (AFMA report)
+  data/krivan1998_tpb/Krivan-TPB-1998.pdf          Krivan 1998, Theor Pop Biol 53:131-142
+  data/krivan2013_jtb/Krivan-JTB-2013.pdf          Krivan 2013, J Theor Biol 339:112-121
+  data/berardo2020_arxiv1907.07249/1907.07249v2.pdf  Berardo, Geritz, Gyllenberg & Raoul (arXiv 1907.07249;
+                                                    J Math Biol 2020, doi 10.1007/s00285-020-01500-2)
+  data/noymeir1975_jecol/Noy-Meir1975.pdf          Noy-Meir 1975, J Ecol 63:459-481 (JSTOR copy)
+  data/arxiv1509.03192_spatial_eutrophication/     (downloaded, 2 pages, only cites Abrams & Walters 1996; not used)
+Cefas Tech Rep 142 was read from the existing local copy
+  research_notes/Bottensamhällets epifauna/data/epifauna/tech142.pdf (Mackinson & Daskalov 2007).
+Derived tables:  tables/tech142_vulnerability_all.csv, tables/tech142_vulnerability_benthic_prey.csv
+Script:          scripts/tech142_vulnerability_extract.py
+
+NOT OBTAINED (paywalled / blocked; only cited through others): Walters & Juanes 1993 (CJFAS 50:2058);
+Walters, Christensen & Pauly 1997 (RFBF 7:139); Walters, Kitchell, Christensen & Pauly 2000 (Ecosystems
+3:70 - note: this is "Ecosim II", the Ecospace paper is Walters, Pauly & Christensen 1999 Ecosystems
+2:539); Ahrens, Walters & Christensen 2012 full text (Fish Fish 13:41; only the licensed book extract);
+Walters & Christensen 2007 full text (only the book extract); Mackinson et al. 2009 / Mackinson 2014 key
+run vulnerability tables; McNair 1986; Sih 1987; Hassell 1978; Holt 1984/1985; Ives & Dobson 1987;
+Ruxton 1995; Abrams & Walters 1996; Gonzalez-Olivares & Ramos-Jiliberto 2003; Geritz & Gyllenberg 2012;
+Heath 2012 (StrathE2E1); Blanchard et al. 2009; Atlantis User Guide (CSIRO links 404); ERSEM benthos;
+OSMOSE documentation page (connection failed).
+
+
+#####################################################################################
+Q1. FORAGING ARENA THEORY AND ECOSIM
+#####################################################################################
+
+1(a) Vulnerable-pool dynamics, exchange rates, symmetry
+-------------------------------------------------------
+* Continuous-exchange model, Ahrens, Christensen & Walters, EwE book ch. 15 eq. 2 [X of Ahrens et al.
+  2012; attribution: "The chapter is adapted from Ahrens, R.N.M., Walters, C.J. and Christensen, V.
+  (2012), Foraging arena theory. Fish and Fisheries, 13: 41-59"; equation read from the rendered page,
+  PDF p. 114]:
+      "prey exchange between the vulnerable and invulnerable states at instantaneous rates v and v',
+       so that Vi gains individuals at rate v(Bi-Vi) and loses them at rates v'Vi and aViBj."
+      dVi/dt = v (Bi - Vi) - v' Vi - aij Vi Bj                                   (eq. 2)
+      Qj = aij Vi Bj                                                             (eq. 1, mass action in the arena)
+  "the predator rate of effective search aij has units of area or volume per time searched by the
+   predator divided by the area or volume (A) of the foraging arena."
+* Same flow diagram: Christensen & Walters 2004 Fig. 1 [F]; 2005 guide Exhibit 39 [F]; 2008 guide
+  Fig. 3.3 [F]: flows v(Bi - Vi) (unavailable -> available), v Vi (back), aij Vi Bj (to predator);
+  caption: "Fast equilibrium between the two prey states implies Vi = vBi/(2v + aBj). Based on
+  Walters et al. (1997)."
+* With handling time (2008 guide, section "Predator satiation and handling time" [F], p. 38-39):
+      "Vij is calculated by solving the 'fast dynamics' equation
+       dVij/dt = v(Bi-Vij) - v'Vij - aijPjVij / (1 + hj Si aij Vij) for Vij,
+       while assuming the vulnerability-exploitation dynamics are fast enough to keep dV/dt near zero
+       (vulnerability exchange rates v, v' large)."
+  and: "providing an exact value for the Vij ... at each simulation time step would require excessive
+  computer time" (an iterative update of the search-time ratio Psj = 1/(1 + hj Si aij Vij) is used).
+* SYMMETRY - yes by default:
+  - 2005 guide p. 86 [F]: "it is assumed that there is a flow (vij) of organisms from the invulnerable
+    to the vulnerable stage, and conversely (vji), with the assumption v = vij = vji."
+  - Shared-arena chapter (EwE book ch. 27, [X] of Walters & Christensen 2007): "The back-exchange
+    parameter v' is set equal to v since it cannot be estimated separately from the alpha_a parameter."
+  - Cefas TR 142 Appendix 1 [F]: "vij and v'ij are prey vulnerability parameters, with default setting
+    vij = v'ij."
+  - Consequence (J, follows directly from eq. 2 with Bj = 0): unexploited equilibrium V/B = v/(v+v') = 0.5.
+  - Foraging-time exception [F, 2008 guide s.3.6 and book ch. 18]: with prey relative feeding time T_i,
+    "time spent vulnerable to predation, as measured by v'ij ... is inversely related to Tit, i.e.,
+    v'ijt = v'ij / Tit" (Ti0 = 1, v'ij = vij at baseline). So v' departs from v during a run whenever the
+    feeding-time adjustment is on.
+* V IS NOT A STATE VARIABLE IN ECOSIM (J, from the quotes above): every EwE source solves V at
+  quasi-equilibrium (CW2004 "Fast equilibrium"; 2008 guide "assuming ... fast enough to keep dV/dt near
+  zero"). Ecosim is therefore the fast-exchange limit of the planned A/R scheme.
+
+1(b) Fast-equilibrium V and the consumption equation
+----------------------------------------------------
+* Ahrens et al. (book ch. 15, [X]):
+      Vi = v Bi / (v + v' + aij Bj)                                              (eq. 3)
+      Q/Bj = a v Bi / (v + v' + aBj)                                             (eq. 5)
+  "If v is small and aij is large, Qj approaches the 'donor controlled' limiting rate vBi as Bj
+   increases; but as v increases, Qj approaches the mass action rate aijBiBj."
+  "instantaneous prey mortality rate (Qj/Bi) should increase in a hyperbolic pattern toward a maximum
+   rate (v) as Bj increases".
+* Original Ecosim form (2005 guide Eq. 48 [F]; book ch. 18 eq. 1 [F]):
+      Cij = aij vij Bi Pj / (2 vij + aij Pj)
+  (2005 guide indexes predator i, prey j in this passage; book ch. 18: "aij is the effective search rate
+   for predator j feeding on a prey i ... Bi prey biomass, and Bj predator abundance").
+* Elaborated form, Christensen & Walters 2004 eq. 15-16 [F, read from rendered page 117]:
+      Qij = aij vij Bi Bj Ti Tj Sij Mij / Dj
+            / ( vij + vij Ti Mij + aij Mij Bj Sij Tj / Dj )                      (15)
+      Dj  = hj Tj / ( 1 + SUM_k akj Bk Tk Mkj )                                  (16, as printed in 2004)
+  Ti prey relative feeding time, Tj predator relative feeding time, Sij seasonal/long-term forcing,
+  Mij mediation, hj predator handling time. The 2005 guide (Eq. 49-50) prints the same.
+* Current form, EwE book ch. 18 eq. 2-3 [F, rendered PDF p. 130]:
+      Qij = vij aij Bi Bj Ti Tj Sij Mij / Dj
+            / ( vij + vij Ti Mij + aij Mij Bj Sij Tj / Dj / A ) * f(Envt)         (2)
+      Dj  = 1 + hj SUM_k akj Vk Tk Mkj                                           (3)
+  "A is foraging arena size, f(Envt) is an environmental response function ... Dj represents effects of
+   handling time as a limit to consumption rate (1/Dj is proportion of time spent feeding)";
+  "Vk is the vulnerable density of prey type k to predator j (Vk is estimated numerically in the Ecosim
+   code)." (J: the 2004/2005 Dj with hj in the numerator is evidently a typesetting variant; the 2008
+   guide text and the book give the multispecies disc equation Qbij = aij Vij / (1 + hj Si aij Vij),
+   i.e. handling acts on VULNERABLE densities.)
+* Walters & Christensen (book ch. 28 [X of WC 2007]): "it is sometimes appropriate to account for
+  handling time effects, but only if these are predicted using arena-scale vulnerable prey densities V,
+  i.e. Q = alpha V P / (1 + hV)". They also object to reading Q = (alpha v B P)/(v + v' + alpha P) as a
+  functional response on mean prey density B.
+* Predator-density term: the aij Pj (or aij Bj) in the denominator of V is the predator-dependence
+  ("ratio dependence") of the arena; Ahrens: "these models do not depend on specific assumptions about
+  predator behaviour, such as interference or contest competition". (J: algebraically Q/(Bi Bj) =
+  a v / (v + v' + a Bj) is Beddington-DeAngelis in predator density without a prey-density term;
+  the existing note "Tathetsberoende och interferens hos torskfiskar/predator_interference.md" already
+  records this equivalence.)
+
+1(c) How v is set from the vulnerability K and baseline M2 - VERIFIED
+----------------------------------------------------------------------
+* 2005 guide s.12.3 [F] (identical text in CW2004 s.6.3 [F] and 2008 guide):
+  "if M(o)ij = C(o)ij/B(o)i is the base instantaneous natural mortality rate for prey type i caused by
+   predator j base (Ecopath estimate) consumption rate C(o)ij on prey base biomass B(o)i, we assume that
+   the maximum possible rate for very high predator j abundance would be vij Bi where vij = K M(o)ij,
+   K>1, represents the rate at which prey become vulnerable to predator j."
+* EwE book ch. 30 [X of Bentley et al. 2024 ICES JMS 81:260, CC BY]: "one cannot adjust vulnerability
+  exchange rates (vij) directly. Instead, this is done via vulnerability multipliers (kij), which can be
+  more easily interpreted as the maximum increase in predation mortality rate that a predator can exert
+  on a prey if the predator were to grow to its carrying capacity. The increase is relative to baseline
+  Ecopath predation mortality rates (M2, where M2=Qij/Bi) The vulnerability exchange rates (vij) are then
+  set to the vulnerability multiplier (kij) multiplied by the baseline predation mortality (M2), i.e.
+  vij=kijM2. Multipliers can range from one to infinity with two as the default value."
+  So v_ij = K_ij x Q_ij/B_i: CONFIRMED.
+* Shared arenas (book ch. 27 [X of WC 2007]): Ma(0) = SUM_k Qak(0) / Bi(a) (eq. 3); "we simply set
+  va = Ka (and va' = va)" - the printed "va = Ka" has evidently lost the factor Ma(0) (the preceding
+  paragraph defines Ka as a multiple of Mij(0)); the bout chapter writes it in full: "va* = Ka Ma(0)".
+  Base vulnerable density (eq. 4): Va(0) = (va Bi(a) - SUM_k Qak(0)) / (va + va');
+  search rates: alpha_ak = Qak(0) / (Va(0) Pk(0)).
+* DERIVED (J): with v = v' = K M0 and SUM Q(0) = M0 B:
+      V(0)/B = (K - 1) / (2K)       -> 0.25 at the default K = 2; -> 0.5 as K -> infinity; 0 at K = 1
+      a P(0) = 2 K M0 / (K - 1)
+      M2 = a v P / (v + v' + a P) -> v = K M0 as P -> infinity (the cap that defines K).
+* Two conventions (do not mix): CW2004 s.3.1 [F]: "The input vulnerability rates (vij) in EwE are scaled
+  to range from 0 to 1, with 0.3 serving as default for mixed control ... The actual vulnerabilities
+  (vij) used in the computations are rescaled from the entered vij's as: vij = exp[2 x (exp(vij) - 1)]."
+  The 2005/2008 guides, the book and Cefas TR 142 use the ratio K >= 1, default 2 (Cefas TR 142:
+  "The default value of 2 indicates 'mixed control'", ">28 ... totally top-down").
+
+1(d) Interpretation and time scale of v
+---------------------------------------
+* Behavioural statements [X, Ahrens]: arenas are "spatially limited interactions between predator and
+  prey occurring on time scales of minutes/hours and at the spatial scale of meters"; "It is likely that
+  interactions between predators and prey are occurring at the scale of hours and meters."
+* But the operational v is an EFFECTIVE, fitted rate:
+  - Book ch. 28 [X WC 2007]: "the Ka are not purely 'behavioural' or ecological parameters; rather,
+    they depend as well on how large the Ecopath initial predator abundances Pk are compared to what the
+    ecosystem might naturally support"; Newfoundland cod "must have very high Ka values (1000+)".
+  - Book ch. 30 [X Bentley 2024]: "vulnerability multipliers do not only reflect the ecological limits
+    caused by prey and predator behaviour, but also how depleted the exploited species is".
+  - Cefas TR 142 App. 1 [F]: "'Vulnerability' in the model is largely a theoretical concept, and direct
+    estimates of this parameter are not available from the literature."
+  - Mechanisms listed for low v (2008 guide s.3.4 [F]): risk-sensitive prey behaviour; risk-sensitive
+    predator behaviour ("three to tango"); size-dependent graduation into/out of the vulnerable size
+    range; passive differential spatial depletion ("'Flow' between low and high risk areas (vij) is then
+    created by any processes that move organisms").
+  - Bout feeding (book ch. 28 [X WC 2007], eq. 9-10): va* = nb fa "represents a total prey 'fraction'
+    that would become vulnerable over a one-year time scale" (nb bouts per year, fa = vulnerable
+    fraction per bout). So v [1/yr] = (bouts per year) x (fraction exposed per bout).
+* Typical magnitudes (J, computed from Cefas TR 142 1991 Ecopath, Table 3.3 biomass and the flows table
+  "consumed as food"; total M2 over ALL predators, per pair it is smaller):
+      group                       B t/km2   M2_total /yr   2 x M2   6 x M2 (cod/haddock K 1991)
+      Large crabs                  1.354     0.51           1.02     3.05
+      Nephrops                     1.1       0.36           0.73     2.18
+      Epifaunal macrobenthos      78         0.17           0.33     1.00
+      Infaunal macrobenthos      136         0.28           0.56     1.67
+      Shrimp                       0.5       1.11           2.22     6.67
+      Small mobile epifauna       30         1.79           3.59    10.8
+      Small infauna (polychaetes) 150        0.82           1.63     4.90
+  -> Ecosim-implied exchange rates for North Sea benthos are of order 0.1-10 per YEAR (exchange time
+     scales of weeks to years), i.e. 1e-4 to 1e-2 per 6-h tick. With v = v', the relaxation rate of V at
+     baseline is v + v' + aP = 2 K^2 M0/(K - 1) (J): for Nephrops, K = 2, M0 = total M2 0.36: 2.9 /yr
+     (about 4 months) - an UPPER bound; per-pair M2_ij < M2_total, so a per-pair V relaxes even slower. So
+     with its own parameter values Ecosim's V would NOT be fast relative to its monthly step; the fast
+     equilibrium is an assumption about the functional form (v acts as the cap of per-pair M2), not a
+     consequence of fast behavioural exchange. (J)
+  -> Contrast with the engine (J): a fixed accessible fraction f recomputed every 6-h tick is exactly
+     the "bout feeding" model with no carryover (book ch. 28: "renewal mechanisms between bouts make
+     Va(0) = fa Bi(a) ... no carryover effects from previous bouts (extreme opposite of continuous
+     feeding assumption)"), with nb = 1460 bouts/yr. Its implied v* = nb f = 1460 x 0.2 = 292 /yr
+     (benthivores -> infauna, f = 0.2), i.e. ~100-500 times the Ecosim-implied K x M2 above. The refuge
+     as implemented therefore caps nothing on time scales longer than a tick; the Holling ceiling does
+     the limiting. Caveat from the source: the Ka are partly a measure of depletion, not behaviour.
+
+1(e) Arenas per pair; mass conservation with shared prey
+--------------------------------------------------------
+* Default = unique arena per linkage. 2005 guide s.12.4 [F]: "The default assumption in Ecosim is to
+  treat each predation rate linkage as occurring in a unique 'foraging arena' defined by the behaviors
+  of the specific prey and predator. In this formulation, elimination of one predator will result in a
+  decrease in total prey mortality rate equal (at least initially) to the Ecopath base estimate of that
+  predator's component of the prey total mortality rate." Book ch. 27 [X]: the rationale is that
+  "multiple predators can feed on the same prey type in different ways (at different depths, times of
+  day, spatial microhabitats) without competing directly for prey".
+* Mass: the prey state is B_i only; dB_i/dt loses SUM_j Q_ij (CW2004 eq. 14 [F]). Each V_ij is computed
+  from the full B_i independently of the other arenas (J: there is no constraint SUM_j V_ij <= B_i; the
+  V_ij are not disjoint sub-pools of B_i but "the instantaneous density of prey type i vulnerable to
+  predator j" (2008 guide). Mass is conserved because only the Q_ij are subtracted from B_i, not the V's.
+  At baseline each V_ij <= B_i/2, so with three or more predators the sum can exceed B_i.)
+* Shared-arena extension (book ch. 27 [X WC 2007], eq. 2):
+      Va = va Bi(a) / ( va + va' + SUM_k alpha_ak Pk )
+  with base diet proportions p_ak of predator k's consumption of prey i taken in arena a (columns sum to
+  1; default = identity = unique arenas). "This case implies maximum possible impact of predators k on
+  availability of prey i to one another, and will cause competitive exclusion of at least some predator
+  types in Ecosim unless the predators are well-differentiated in terms of overall diet composition";
+  with one shared arena and one prey "there is not even a unique equilibrium point for predator
+  abundances" (neutral stability). Handling: Qak = (alpha_ak / Hk) Va Pk.
+* Non-additivity caveat (2005 guide s.12.4 [F]): if mortality reflects prey entering states vulnerable
+  to predators in general, "removal of any one predator may simply result in the vulnerable prey
+  individuals being taken just as fast, but by other predators."
+  (J for the engine: a single explicit A per prey shared by all fish groups is the shared-arena
+  limit; per-pair A's are the Ecosim default but then the A's are virtual, not partitions of B.)
+
+1(f) Ahrens et al. 2012: measuring v; benthic invertebrates
+-----------------------------------------------------------
+* [X, book ch. 15] "A variety of approaches have been tried for estimating vulnerability exchange rates
+  from field data. None of these has been fully satisfactory ... arena structures are 'theoretical
+  entities' that are practically difficult or impossible to directly observe." Four methods: "1. Direct
+  assessment of exchange rates for spatially simple arena structures 2. Empirical relationships between
+  prey mortality rates and predator abundances 3. Fitting ecosystem models to time series data 4. Using
+  complex individual-based spatial models" (details only in the full paper - NOT read).
+* Mechanism 2.b [X]: "drift of benthic stream insects that spend most of their time in interstitial
+  microhabitats where they are safe from most fish predation ... the V of Eq. 1 is literally the
+  concentration of drifting (and emerging) insects, and the drift entry rate v can be limiting".
+* Mechanism 2.d [X], partial predation: "Some predators take only parts of their prey without normally
+  killing the prey ... In such cases, the v process represents prey body growth ... even with animal-
+  animal interactions like fishes that nip at the siphons of buried molluscs or 'graze' on parts of
+  corals." (This is the only benthic-invertebrate statement in the extract.)
+* Fitting vs biology: book ch. 28 [X WC 2007]: "such information can only come from either fine-scale
+  analysis of spatial arena structures, from data collected at different times and/or places about how
+  Q's have varied with predator and prey abundances, or from assumptions about or estimates of where
+  populations are relative to their carrying capacity. Indeed, this is why we emphasize the importance
+  of fitting Ecosim models to time series data by varying the Ka parameters." Meta-pattern: "fitted Ka
+  values tend to be small (<2.0) for most trophic linkages in temperate and tropical systems, and for
+  feeding by juvenile stanzas in all systems"; larger in high-latitude systems.
+  Book ch. 31 [X Bentley 2024]: Chagaris et al. 2020 cap K so a predator's maximal M2 is a share M2cap
+  of the prey's natural mortality ("M2cap values between 0.75 to 1.0 led to more reasonable estimates for
+  FMSY"); "It can indeed be difficult to specify reasonable vulnerability multipliers for non-exploited
+  species." (J: for the project rule "parameters from biology, not fit", the only non-fitted route the
+  sources offer is K from where the predator stands relative to its carrying capacity, or a cap from the
+  prey's M.)
+
+1(g) Fitted vulnerabilities for North Sea benthic prey (Mackinson & Daskalov 2007, Cefas TR 142) [F]
+-------------------------------------------------------------------------------------------------
+* Tables 4.5 (fitted 1991 model) and 4.6 (fitted 1973 model), PDF pages 77-84, extracted by coordinate
+  (scripts/tech142_vulnerability_extract.py) to tables/tech142_vulnerability_all.csv and
+  tables/tech142_vulnerability_benthic_prey.csv (prey rows 54-62 x all predators, both years). The
+  benthic rows were checked by eye on rotated renders of pages 78 and 82 (e.g. Nephrops 1991:
+  juv. sharks 2, spurdog 3, small sharks 2, skate 3, juv. cod 4, cod 6, whiting 3, juv. haddock 1,
+  haddock 6, small gadoids 2, monkfish 4, gurnards 1.5, horse mackerel 1.2; 1973: cod 6, whiting 5,
+  haddock 20, juv. haddock 1.01, monkfish 5, gurnards 1).
+  Extraction caveat: page 77/81 row matching is ambiguous for predators 1, 2, 4, 5, 6 (two values each);
+  these do not affect the benthic prey rows.
+* MAIN FINDING: in both fitted models v is constant PER PREDATOR across all its prey (fitting was done in
+  predator blocks). Selected predators on benthic prey, 1991 / 1973:
+      cod adult 6 / 6; haddock adult 6 / 20; whiting adult 3 / 5; saithe adult 6 / 2.7; juvenile cod
+      4 / 2.2; juvenile haddock 1 / 1.01; juvenile whiting 1.1 / 2.6; plaice 3 / 1; dab 2 / 2;
+      long-rough dab 2 / 2; gurnards 1.5 / 1; monkfish 4 / 5; skate 3 / 2; dragonets 2 / 2;
+      all invertebrate predators (large crabs, Nephrops, epifauna, infauna, shrimp ...) 1.5 / 1.2 (1 for some).
+  So the TR 142 vulnerabilities carry NO prey-specific refuge information for Nephrops, crabs, shrimp or
+  infauna; they encode, per predator, how far it was judged to be from carrying capacity. Method text
+  [F]: "species whose biomass was far from carry capacity would be able to exert higher mortality on
+  their prey (i.e. a higher v applied by predator), that juvenile fish, other zooplanktivores and
+  invertebrates feeding at low trophic levels, ought to be more resource controlled (low v's) ...
+  Vulnerabilities for other groups were left at the initial values." Fitted against MSVPA 2005 key run
+  ("the model is being calibrated against another model").
+* Mackinson et al. 2009 and the 2014 key run tables: NOT obtained.
+
+
+#####################################################################################
+Q2. CLASSICAL REFUGE MODELS
+#####################################################################################
+
+Krivan 1998, Theor Pop Biol 53:131 (doi 10.1006/tpbi.1997.1350) [F]
+* Two patches, open (1) and refuge (2); both have prey growth: a1 > a2, "a2 may also be negative"
+  (refuge lacks resources). Prey move "infinitely fast" (ideal free distribution, fitness = per-capita
+  growth). Model (1):
+      x' = (a1 - lam1 p1 y) v1 x + (a2 - lam2 p2 y) v2 x
+      y' = (e lam1 v1 x - m1) p1 y + (e lam2 v2 x - m2) p2 y,      v1 + v2 = 1
+  vi = proportion of time in patch i; lam_i attack rate; p_i predator preference for patch i;
+  complete refuge: p2 = 0 or lam2 = 0. Switching line y* = (a1 - a2)/(lam1 p1 - lam2 p2).
+* Complete refuge with a2 > 0: "the population of prey in the refuge will grow exponentially since they
+  are not being preyed upon ... trajectories are unbounded".
+* SATURATING REFUGE: constraint v2 <= K/x (refuge carrying capacity K). For x > K and y > y*:
+      x' = (a1 - lam1 p1 y)(x - K) + K (a2 - lam2 p2 y)
+      y' = (e lam1 (x - K) - m1) p1 y + (e lam2 K - m2) p2 y              (14)
+  (J: i.e. a full refuge becomes a CONSTANT-NUMBER refuge K.) Result: "Low refuge carrying capacity
+  leads to stability of predator-prey dynamics while stability is lost when the carrying capacity of
+  the refuge is high"; E14 locally asymptotically stable if K < (m1 p1 + m2 p2)/(e lam2 p2).
+* On the classics (Krivan's summary, i.e. [S] for them): "refugia which protect a constant number of
+  prey lead to a stable equilibrium and have a stronger stabilizing effect on population dynamics than
+  refugia which protect a constant proportion of prey. However, McNair (1986) and Collings (1995)
+  showed ... refugia may exert a locally destabilizing effect due to the emergence of a stable limit
+  cycle." "neither a constant number nor a constant proportion of prey refuges has been reported"
+  (quoting Sih 1987b). McNair 1986 "assumes that both open habitat and refuge are limited and he shows
+  that for low density dependence in the refuge a limit cycle appears." Sih 1987b: "if the proportion of
+  prey in refugia is decreasing with increasing prey abundance, or increasing with both increasing
+  predator density and increasing predation pressure then the corresponding ecological equilibrium is
+  locally stable." Ives & Dobson 1987: "Prey investment in antipredator behavior was modeled by a
+  parameter. They showed that adaptive change of the parameter speeds the convergence of trajectories
+  to an equilibrium." Ruxton 1995: "the rate prey move to a refuge is proportional to predator density.
+  It was shown that antipredator behavior has a stabilizing effect." Holt 1983/1985/1987 cited for
+  "passive diffusion of prey between patches that alone could lead to a stable equilibrium".
+
+Krivan 2013, J Theor Biol 339:112 (doi 10.1016/j.jtbi.2012.12.016) [F]
+* Constant-number refuge (Gause model dR/dt = rR - C f(R), dC/dt = (g(R) - m)C):
+      f(R) = 0                                   if R < Rc
+      f(R) = l (R - Rc) / (1 + h l (R - Rc))     if R >= Rc                  (2)
+  "Presence of a refuge changes the shape of the Holling type II functional response to an (extreme)
+   sigmoid type"; equilibrium R* = Rc + m/(l(e - hm)) stable if Rc > h m^2/(l (e - hm)^2); smaller Rc
+  gives a limit cycle; below a critical size coexistence fails. "a refuge alone can lead to coexistence
+  of predators and exponentially growing prey either at a population equilibrium, or along a limit
+  cycle." Some trajectories still escape regulation.
+* Adaptive refuge use, fast movement:
+      dR/dt = r1 u1 R - C f(u1 R) + r2 u2 R,   dC/dt = (e1 f(u1 R) - m) C      (3)
+  u1 share of time out of the refuge, r1 > 0 > or < r2; "Model (3) does not describe mechanistically
+  the transition process of moving in and out of the refuge. Instead, it assumes that this process
+  occurs very fast when compared to demographic processes". Result: hysteresis and coexistence.
+
+Berardo, Geritz, Gyllenberg & Raoul 2020 (arXiv 1907.07249) [F]; Geritz & Gyllenberg 2012 [S via it, A]
+* Prey states exposed/hiding with fast transitions; Beddington-DeAngelis derived "in terms of prey
+  refuges instead of the usual interference between predators" (G&G 2012 abstract via search [A]).
+  In Berardo et al. eq. 28-29: transition into the refuge proportional to predator density (A1 Y),
+  emergence at constant rate A12:
+      x1_hat = A12 X / (A12 + A1 Y)     (exposed),  x2_hat = A1 Y X / (A12 + A1 Y)   (protected)
+  with c2 = 0 (protected prey uncatchable) the response is BD, a X/(1 + bX + cY); the paper prints
+  "a = c1 A12, b = c1 d1 and c = A1/A12" (text extraction partly garbled). By direct algebra (J):
+  f = c1 x1_hat / (1 + d1 c1 x1_hat) = c1 X / (1 + c1 d1 X + (A1/A12) Y), i.e. a = c1, b = c1 d1,
+  c = A1/A12 (c1 = capture rate of exposed prey; d1 = the handling parameter as defined in the paper).
+  (J: the engine's BD interference w can thus be read as a predator-induced refuge with
+   w = (hiding rate per unit predator)/(emergence rate) - a fast-exchange refuge, already in the code.)
+* Opposite case (their section 6, eq. 49-50): exposed prey seek refuge at constant rate a, predators
+  flush protected prey at rate b S P: dE/dt = bSP - aE, dP/dt = -bSP + aE (+ capture). Leads to an Allee
+  effect in the predator. "If we assume that only the protected prey in class P give birth ... the prey
+  per capita birth rate is proportional to P_hat(X,Y)/X" (eq. 60) - an explicit option where only the
+  refuge class reproduces.
+
+Gonzalez-Olivares & Ramos-Jiliberto 2003, Ecol Model 166:135 [A] (abstract via investigadores.anid.cl)
+* Two "simplest forms" of refuge use (constant proportion and constant number) added to a continuous
+  biomass-conversion model; "there is a trend from limit cycles through non-zero stable points up to
+  predator extinction" as hidden prey increase or the predator mortality / conversion ratio rises;
+  stability domains differ between the two modes. Equations NOT verified.
+
+Abrams & Walters 1996, Ecology 77:1125 [A via search snippets]: prey transitions between vulnerable and
+  invulnerable states/locations; transitions make enrichment raise equilibrium prey density and reduce
+  destabilisation by enrichment, and can stabilise limit cycles. Equations, which class reproduces and
+  the transfer form NOT verified.
+
+Persistence condition asked for ("prey persists under any predation if exchange out of the refuge is
+slower than prey growth"): NOT found stated in any source read. Derivation (J): with growth in the
+refuge (or on total B) at per-capita rate r at low density, exchange R -> A at rate e, A -> R at e', and
+the worst case that predators remove everything entering A, dR/dt -> (r - e) R. The prey cannot be
+driven extinct by predation if r > e (for growth only in A, no such guarantee). In Ecosim terms the cap
+on per-pair M2 is v_ij, so prey with r > SUM_j v_ij cannot be eaten out (J). Krivan 1998 (a2 > 0,
+complete refuge -> unbounded prey) and Krivan 2013 (constant-number refuge -> coexistence) are the
+nearest verified statements.
+
+Which compartment grows - summary of what the sources state:
+  Krivan 1998/2013: both, with lower (possibly negative) growth in the refuge; refuge capacity K optional.
+  Berardo et al. 2020: option "only the protected prey in class P give birth"; deaths may differ by class.
+  Noy-Meir 1975 (Q3): growth depends on TOTAL biomass V including the ungrazable reserve.
+  Ecosim: growth on total B_i; V is only a sub-state for predation.
+  StrathE2E2, Atlantis (Q4): no refuge state at all.
+
+
+#####################################################################################
+Q3. PARTIAL PREDATION / GRAZING ON REGROWABLE PARTS
+#####################################################################################
+* Noy-Meir 1975, J Ecol 63:459 [F]:
+      dV/dt = G - C = G(V) - c(V) H                                              (1)
+      G = g V (1 - V/Vmax)                                                       (2, logistic example)
+      c = cmax V / (k + V)  (Michaelis, 3);  c = cmax (1 - exp(-kV))  (4)
+  Assumption (8): "It is assumed that there is a constant residual ('reserve') biomass Vr which produces
+  growth but cannot be consumed (c = 0 when V = Vr); or that there is a constant residual growth rate Gr
+  (G = Gr when V = 0). This may represent both in-accessible green material or non-green reserve organs
+  (wood, roots, bulbs)." "graphically equivalent". Result: "The presence of an ungrazeable reserve
+  biomass or a residual growth potential enables a vegetation to avoid extinction at high H and to
+  maintain a low steady-state instead"; with Vs < Vx "but plant extinction is prevented by a plant
+  reserve (or 'refuge'), the system will oscillate in a stable 'limit cycle'."
+  (J: the reserve is a constant-number refuge in the consumption term, c = c(V - Vr), while growth uses
+   total V; the Gr variant is a constant regrowth/immigration term from a protected stock.)
+* Ahrens et al. mechanism 2.d [X]: partial predation where "the v process represents prey body growth"
+  (siphon nipping, coral grazing) - i.e. in Ecosim terms the exchange rate v is the regrowth rate of the
+  croppable part.
+* An explicit two-compartment "croppable part regrowing from a protected stock" model (e.g. shoot/root,
+  siphon/body) with published equations was NOT found in an accessible primary source. A form
+  consistent with the above (J, not from a source): exposed part A, protected stock R,
+      dA/dt = rho(R) - Q(A, P) - m_A A,  with regrowth rho = rho_max R (1 - A/(phi R))
+  (A capped at a size share phi of the body); this is the same algebra as the Ecosim exchange with
+  v = regrowth rate.
+* Benthic regeneration data (siphon cropping of Macoma, Amphiura arm regeneration) are being collected
+  by the parallel agent in this folder (e.g. data/skold_gunnarsson1996_meps142, data/zwarts_wanink1993_njsr,
+  data/vliz_ocrd_55246); not evaluated here. de Vlas 1985 (Neth J Sea Res 19:147, siphon regeneration
+  production) not obtained.
+
+
+#####################################################################################
+Q4. BENTHIC AVAILABILITY IN ECOSYSTEM MODELS
+#####################################################################################
+StrathE2E2 v4.0.1 (Heath & Speirs 2023 ecology model document) [F]
+* Predation: "the general equation for the flux of ingestate to a predator (v1) from prey (v2) is":
+      U_v1(v2) = v1 v2 rho_v1(v2) Umax_v1 / (v2 + h_v1)                         (eqn 26)
+  rho = preference (sum over prey = 1); Holling II on total prey; quadratic density-dependent losses on
+  most guilds; Beddington-DeAngelis g = v2 Umax/(v2 + gamma v1 + h) only for birds, pinnipeds and
+  cetaceans (eqn 27). No predation refuge, threshold or accessible fraction for benthos as fish prey.
+  The text names "sheltering in refuges with increasing predator density (Hill & Weissburg, 2013)" as one
+  justification of consumer density dependence.
+* Accessibility to FISHING only (new in StrathE2E2): "we specify two additional terms ... a threshold of
+  biomass density (m-2) below which none is accessible to the fishery ... [and] a maximum proportion of
+  the guild biomass which is potentially accessible to fishing in an unfished system":
+      p(w) = max{0, pmax (1 - a_w Blim / B(w))}                                  (eqn 31)
+      B(w)_harvestable = p(w) B(w) = max{0, pmax (B(w) - a_w Blim)}               (eqn 32)
+  "For the benthos ... we expect the threshold values to represent a high proportion of typical guild
+  biomass, and the maximum accessible fraction to be relatively small"; Blim for benthos from the ICES
+  North Sea Benthos Survey excluding exploited species; pmax "treated as a fitting parameter".
+  (J: an instantaneous constant-number + proportion refuge, recomputed every step - no exchange dynamics.)
+* Heath 2012 (StrathE2E1, Prog Oceanogr 102:42): NOT read (publisher blocked); the 2023 document says
+  the prototype assumed "all of the biomass of each fishery resource guild was accessible to fishing".
+
+Atlantis (Fulton et al. 2007, Atlantis SE, AFMA AMS stage 2 report) [F]
+* "these trophic connection matrices are ... the set of maximum potential proportion of the prey
+  population that a predator can access at any one time ... defined as the maximum proportion of prey
+  that are accessible by predators"; realised availability further reduced by spatial overlap ("both
+  predator and prey must be present in the cell"), habitat usage (on/off per habitat; "only in effect in
+  the bottom water column layer (where it contacts the epibenthic and sediment layers)") and gape limits.
+  (J: a fixed accessible fraction, instantaneous - the same class as the engine's accessible_fraction.)
+* Habitat refuge: "A simple theoretical non-linear curve (Figure 2.16) relates the quality of the habitat
+  to the amount of structural refuge it could supply to a species dependent upon it. The trophic
+  interaction terms for prey dependent on that habitat are then scaled by the value from this curve".
+  Authors' own criticisms: no saturation of refuge, "deterministic and time invariant so there is no
+  explicit dynamic trade-off between predation risk and hunger-driven searching in open ground as there
+  is in Ecosim", ignores predator use of cover. Infauna-by-sediment-layer availability: not found
+  (Atlantis User Guide not obtainable).
+OSMOSE [S, documentation.osmose-model.org via search snippet]: resource (plankton/benthos) groups have an
+  accessibility coefficient 0-1, "Fraction of the plankton biomass that is accessible to the fish ...
+  accounts for many biological processes that are not explicitly represented in Osmose"; "generally
+  completely unknown and ... should be estimated in the calibration process." Fixed fraction.
+Blanchard et al. 2009 (coupled predator/detritivore spectra): abstract only [A]; refuge treatment NOT
+  verified. ERSEM benthos: not checked.
+Summary (J): no model checked carries an explicit refuge state with exchange dynamics for benthic prey.
+  All use an instantaneous fixed fraction (Atlantis, OSMOSE), a threshold+fraction (StrathE2E2, fishing
+  only), habitat-scaled fractions (Atlantis), or the fast-equilibrium arena (Ecosim/Ecospace).
+
+
+#####################################################################################
+Q5. NUMERICS (6-h STEP, POSSIBLY FAST EXCHANGE)
+#####################################################################################
+Precedents in the sources [F]:
+* Ecosim: RK4 (book ch. 17 "An introduction to Ecosim": "The set of differential equations is solved in Ecosim using a 4th order
+  Runge-Kutta routine ... For groups like phytoplankton and small zooplankton that turn over (have P/B)
+  greater than 10 ... the numerical integration prediction is replaced with a prediction based on the
+  equilibrium of the Ecosim rate equation of the likely average over the month."); CW2004: Adams-
+  Bashforth default or RK4. V solved at quasi-equilibrium with an iterated search-time ratio (2008 guide).
+* Ecospace (CW2004 s.4.3 [F]): "If the rate constants were constant over time ... the biomass would change
+  as a linear dynamical system, and would move exponentially towards an equilibrium ... the Ecospace
+  computations can be greatly increased by using a variable time splitting, where moving equilibria are
+  calculated for groups with high turnover rates (e.g. phytoplankton), while the integrations for groups
+  with slower turnover rates (e.g. fish and marine mammals) are based on a Runge-Kutta method.
+  Comparisons indicate that this does not change the resulting time patterns for solutions in any
+  noticeable way". Book: Ecospace now BDF2 on one-month steps.
+* Bout model (book ch. 28 [X]): within a bout, dVa/dt = -Va SUM_k alpha_ak Pk (eq. 3) integrates exactly
+  to Va(d) = Va(0) exp(-d SUM alpha P); consumption is apportioned among predators by
+  alpha_ak Pk / SUM alpha P (eq. 4).
+Recommended scheme (J - derivation, not from a source):
+* Exchange alone, with B (hence R = B - A) held fixed during the substep:
+      dA/dt = e (B - A) - e' A    ->    A(t+dt) = A* + (A(t) - A*) exp(-(e + e') dt),  A* = e B/(e + e')
+  Exact, positive, mass-conserving (R = B - A). Unconditionally stable for any e dt.
+  (Without predation A + R = B is conserved, so holding B fixed is exact here.)
+* Exchange + linear predation in one exact, mass-exact step (per-capita predation m = SUM_j a_j P_j / D_j
+  frozen at the start of the tick, i.e. handling-time denominators lagged one tick; growth excluded):
+      d/dt [A, R] = M [A, R],   M = [[ -(e' + m),  e ],
+                                     [   e',      -e ]]
+      tr M = -(e + e' + m),  det M = e m > 0,
+      discriminant = (e + e' + m)^2 - 4 e m = (e - m)^2 + e'^2 + 2 e'(e + m) > 0
+      -> two real negative eigenvalues l1 > l2, and (Sylvester)
+      exp(M dt) = [ exp(l1 dt) (M - l2 I) - exp(l2 dt) (M - l1 I) ] / (l1 - l2)
+      [A, R](t+dt) = exp(M dt) [A0, R0];   eaten = (A0 + R0) - (A + R)(t+dt)
+      (split among predators in proportion a_j P_j / D_j).
+  Checked numerically against RK4 (e 0.3, e' 0.5, m 2.0, dt 1.7, A0 0.4, R0 1.1: identical to 1e-14).
+  Cheaper first-order variant when e dt << 1 (the Ecosim-like regime below): hold R fixed during the
+  step, dA/dt = e R - (e' + m) A, k = e' + m, A_inf = e R / k,
+      A(t+dt) = A_inf + (A0 - A_inf) exp(-k dt),
+      eaten   = m [ A_inf dt + (A0 - A_inf)(1 - exp(-k dt))/k ],
+      R(t+dt) = R0 - e R0 dt + e' [ A_inf dt + (A0 - A_inf)(1 - exp(-k dt))/k ]
+  (mass-exact by construction: B loses exactly 'eaten'; the error is only in treating R as constant).
+  Fast limit: quasi-steady A given R is A = e R/(e' + m), i.e. A = e B/(e + e' + m) with B = A + R -
+  Ecosim's eq. 3 with v = e, v' = e', a B_j = m.
+* Regime test: with Ecosim-like e of order K M2 (0.1-10 /yr) e dt ~ 1e-4 to 1e-2 per tick, so A is a
+  slow state variable and even explicit Euler would be accurate; the exponential form is still preferable
+  because the predation term m can be large. If e + e' >> 4 /day, A relaxes within a tick and the state
+  variable is redundant (fast-equilibrium = Ecosim / current-engine limit).
+* Splitting order: exchange (and predation) first on A, then growth on the compartment(s) that grow,
+  then any loss terms; or symmetric Strang splitting (half exchange - predation - growth - half exchange)
+  for second-order accuracy (Strang 1968, SIAM J Numer Anal 5:506 - standard reference, not read here).
+  With lagged handling-time denominators the scheme is first order in the predation coupling regardless.

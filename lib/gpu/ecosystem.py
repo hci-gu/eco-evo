@@ -282,6 +282,23 @@ class TensorEcosystem:
                 else np.asarray(fg.capacity_map, dtype=np.float32).reshape(-1)
                 for fg in groups]))[None]
         self.energy_content = tensor([fg.params.get("energy_content", 0.0) or 0.0 for fg in groups])[None, :]
+        # Section 223.12: benthic refuge groups, mirror of
+        # ``ecosystem_env/refuge.py``: the accessible part A rides in the
+        # reserve slot; phi its equilibrium share, relax = exp(-k).
+        refuge_rows = set(int(j) for j in getattr(env, "refuge_index", ()))
+        # The benthic groups (a depth habitat, no policy) that the
+        # training worlds' depleted patches act on (section 223.12).
+        self.benthic_mask = tensor([
+            (not fg.is_decision_maker) and getattr(fg, "capacity_map", None) is not None
+            for fg in groups], torch.bool)[None, :, None]
+        self.refuge_on = bool(refuge_rows)
+        self.refuge_mask = tensor([j in refuge_rows for j in range(self.G)],
+                                  torch.bool)[None, :, None]
+        self.refuge_phi = tensor([float(fg.exposed_share) if j in refuge_rows else 0.5
+                                  for j, fg in enumerate(groups)])[None, :, None]
+        self.refuge_relax = tensor([float(np.exp(-fg.refuge_exchange_rate))
+                                    if j in refuge_rows else 1.0
+                                    for j, fg in enumerate(groups)])[None, :, None]
         self.threshold = tensor([max(0.0, fg.min_split_biomass * fg.extinction_threshold_factor) for fg in groups])[None, :, None]
         # Same product, per DM and broadcast over the direction axis of
         # ``b_out``, for the sub-threshold split suppression in
@@ -548,7 +565,17 @@ class TensorEcosystem:
             # ``_build_indices`` so every observer reads its own row.
             visible = (biomass[:, None] * (1.0 - hidden[:, None]
                                            * (1.0 - self.pair_visibility))).flatten(1, 2)
-        parts = [biomass, visible, self.energy_level(biomass, reserve)]
+        energy = self.energy_level(biomass, reserve)
+        if self.refuge_on:
+            # Observers see a refuge group's accessible part (223.12).
+            seen = self.accessible(biomass, reserve)
+            if self.pair_visibility is None:
+                visible = seen * (1.0 - hidden * (1.0 - self.visibility))
+            else:
+                visible = (seen[:, None] * (1.0 - hidden[:, None]
+                                            * (1.0 - self.pair_visibility))).flatten(1, 2)
+            biomass = seen
+        parts = [biomass, visible, energy]
         if self.daylight:
             if light_index is None:
                 raise ValueError("light_index is required with the daylight calendar")
@@ -615,8 +642,28 @@ class TensorEcosystem:
         stats = torch.stack([(v * active).sum(-1) / denom for v in (entropy, move, rest, eat)], dim=-1)
         return stats.to(torch.float64), (count > 0).to(torch.float64)
 
+    def deplete(self, biomass, reserve, factor):
+        """Apply a depleted-patch factor [E, 1, C] to the benthic groups
+        (section 223.12): a refuge group loses accessible tonnes (its
+        refuge stays), any other benthic group biomass and reserve."""
+        f = torch.where(self.benthic_mask, factor, torch.ones_like(factor))
+        b, r = biomass * f, reserve * f
+        if self.refuge_on:
+            a = torch.minimum(reserve.clamp_min(0), biomass)
+            kept = a * f
+            b = torch.where(self.refuge_mask, biomass - (a - kept), b)
+            r = torch.where(self.refuge_mask, kept, r)
+        return b, r
+
+    def accessible(self, biomass, reserve):
+        """Biomass with every refuge group's row replaced by its
+        accessible part A (section 223.12)."""
+        return torch.where(self.refuge_mask,
+                           torch.minimum(reserve.clamp_min(0), biomass), biomass)
+
     def predation(self, biomass, reserve, actions, light_index=None):
         b_dm = biomass[:, self.dm_index]
+        prey = self.accessible(biomass, reserve) if self.refuge_on else biomass
         # h = min(1, max(0, (1 - s) / (1 - u))), as FunctionalGroup.get_hunger
         # (section 133); u >= 1 closes the window.
         u_dm = self.maintenance[:, self.dm_index]
@@ -628,10 +675,10 @@ class TensorEcosystem:
         hidden = torch.zeros_like(biomass).index_copy(1, self.dm_index, actions[:, :, 4])
         pair_visible = None
         if self.pair_visibility is None:
-            visible = biomass * (1.0 - hidden * (1.0 - self.visibility))
+            visible = prey * (1.0 - hidden * (1.0 - self.visibility))
         else:
-            pair_visible = biomass[:, None] * (1.0 - hidden[:, None]
-                                              * (1.0 - self.pair_visibility))
+            pair_visible = prey[:, None] * (1.0 - hidden[:, None]
+                                            * (1.0 - self.pair_visibility))
             # Shared availability cap: total removal from prey j is bounded
             # by what the BEST-detecting predator of j can see. Rows that do
             # not prey on j are excluded so they cannot inflate the cap.
@@ -688,6 +735,10 @@ class TensorEcosystem:
         intake = actual.sum(1)
         reduction = torch.where(biomass > 1e-9, (biomass - intake) / (biomass + 1e-9), 0.0)
         reserve_after = reserve * reduction
+        if self.refuge_on:
+            # Predation removes from the accessible part (223.12).
+            reserve_after = torch.where(self.refuge_mask,
+                                        (reserve - intake).clamp_min(0), reserve_after)
         if self.nutrients_on:
             # Grazing leaves a producer's nutrient pool in place and
             # excretes a fraction of what it removed back into it (172).
@@ -1117,6 +1168,21 @@ class TensorEcosystem:
         nb = biomass * keep
         ndm_delta = rate * nb * (1.0 - nb / (self.capacity + 1e-9))
         ndm_r = reserve
+        if self.refuge_on:
+            # Section 223.12, mirror of ``refuge.grow``: M1 on both
+            # compartments, the exchange, then logistic per compartment.
+            phi = self.refuge_phi
+            seed = self.seed_rate * self.capacity * seed_multiplier
+            a0 = torch.minimum(reserve.clamp_min(0), biomass) * keep
+            a0 = phi * nb + (a0 - phi * nb) * self.refuge_relax
+            r0 = nb - a0
+            cap_a, cap_r = phi * self.capacity, (1.0 - phi) * self.capacity
+            a1 = torch.minimum((a0 + rate * a0 * (1.0 - a0 / (cap_a + 1e-9))
+                                + phi * seed).clamp_min(0), cap_a)
+            r1 = torch.minimum((r0 + rate * r0 * (1.0 - r0 / (cap_r + 1e-9))
+                                + (1.0 - phi) * seed).clamp_min(0), cap_r)
+            refuge_b = a1 + r1
+            refuge_a = torch.minimum(a1, refuge_b)
         if self.nutrients_on:
             if light_index is None:
                 raise ValueError("light_index is required with nutrient pools")
@@ -1140,6 +1206,9 @@ class TensorEcosystem:
             ndm_r = torch.where(self.nutrient, pool - limited, reserve)
         ndm_delta = ndm_delta + self.seed_rate * self.capacity * seed_multiplier
         ndm_b = torch.minimum((nb + ndm_delta).clamp_min(0), self.capacity)
+        if self.refuge_on:
+            ndm_b = torch.where(self.refuge_mask, refuge_b, ndm_b)
+            ndm_r = torch.where(self.refuge_mask, refuge_a, ndm_r)
         b = torch.where(self.is_dm, dm_b, ndm_b)
         r = torch.where(self.is_dm, dm_r, ndm_r)
         b = torch.where(b < self.threshold, 0.0, b)

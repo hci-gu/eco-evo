@@ -1,0 +1,341 @@
+table,item,W_g,T,value,note
+bjornsson2001,E,108.7,7.0,171.06792314039998,FI 0.75 %BW/d x 22.68 kJ/g; FB4 ratio 1.42
+bjornsson2001,F,447.0,7.0,129.09994778935808,FI 1.69 %BW/d x 7.62 kJ/g; FB4 ratio 1.41
+bjornsson2001,G,874.0,7.0,110.84305039228805,FI 1.48 %BW/d x 7.51 kJ/g; FB4 ratio 1.38
+bjornsson2001,H,2213.0,7.0,62.95175720244001,FI 0.63 %BW/d x 10.00 kJ/g; FB4 ratio 0.94
+species,haddock,,6.5,81.95,low
+species,haddock,,6.5,128.8,central
+species,haddock,,6.5,181.94,high
+species,haddock,,7.0,85.33,low
+species,haddock,,7.0,130.48,central
+species,haddock,,7.0,190.18,high
+species,haddock,,7.5,88.71,low
+species,haddock,,7.5,131.89,central
+species,haddock,,7.5,198.57,high
+species,haddock,,8.0,92.08,low
+species,haddock,,8.0,133.06,central
+species,haddock,,8.0,207.07,high
+species,haddock,,bottom,88.04,low
+species,haddock,,bottom,131.43,central
+species,haddock,,bottom,197.04,high
+species,haddock,,at_50m,94.01,low
+species,haddock,,at_50m,132.22,central
+species,haddock,,at_50m,213.39,high
+species,haddock,,p100,89.57,low
+species,haddock,,p100,131.91,central
+species,haddock,,p100,200.94,high
+species,cod,,6.5,72.37,low
+species,cod,,6.5,96.69,central
+species,cod,,6.5,104.61,high
+species,cod,,7.0,75.36,low
+species,cod,,7.0,97.95,central
+species,cod,,7.0,109.35,high
+species,cod,,7.5,78.35,low
+species,cod,,7.5,99.01,central
+species,cod,,7.5,114.18,high
+species,cod,,8.0,81.32,low
+species,cod,,8.0,99.88,central
+species,cod,,8.0,119.06,high
+species,cod,,bottom,77.75,low
+species,cod,,bottom,98.66,central
+species,cod,,bottom,113.29,high
+species,cod,,at_50m,83.03,low
+species,cod,,at_50m,99.25,central
+species,cod,,at_50m,122.7,high
+species,cod,,p100,79.1,low
+species,cod,,p100,99.02,central
+species,cod,,p100,115.54,high
+species,long rough dab,,6.5,46.33,low
+species,long rough dab,,6.5,69.49,central
+species,long rough dab,,6.5,92.66,high
+species,long rough dab,,7.0,47.96,low
+species,long rough dab,,7.0,71.95,central
+species,long rough dab,,7.0,95.93,high
+species,long rough dab,,7.5,49.65,low
+species,long rough dab,,7.5,74.48,central
+species,long rough dab,,7.5,99.31,high
+species,long rough dab,,8.0,51.41,low
+species,long rough dab,,8.0,77.11,central
+species,long rough dab,,8.0,102.81,high
+species,long rough dab,,bottom,49.37,low
+species,long rough dab,,bottom,74.06,central
+species,long rough dab,,bottom,98.75,high
+species,long rough dab,,at_50m,53.08,low
+species,long rough dab,,at_50m,79.62,central
+species,long rough dab,,at_50m,106.16,high
+species,long rough dab,,p100,50.19,low
+species,long rough dab,,p100,75.29,central
+species,long rough dab,,p100,100.38,high
+species,dab,,6.5,61.99,low
+species,dab,,6.5,72.56,central
+species,dab,,6.5,99.91,high
+species,dab,,7.0,63.6,low
+species,dab,,7.0,76.49,central
+species,dab,,7.0,107.37,high
+species,dab,,7.5,65.23,low
+species,dab,,7.5,80.65,central
+species,dab,,7.5,115.38,high
+species,dab,,8.0,66.91,low
+species,dab,,8.0,85.04,central
+species,dab,,8.0,124.0,high
+species,dab,,bottom,64.94,low
+species,dab,,bottom,80.02,central
+species,dab,,bottom,114.29,high
+species,dab,,at_50m,68.36,low
+species,dab,,at_50m,88.25,central
+species,dab,,at_50m,131.97,high
+species,dab,,p100,65.72,low
+species,dab,,p100,82.1,central
+species,dab,,p100,118.41,high
+species,plaice,,6.5,62.85,low
+species,plaice,,6.5,81.84,central
+species,plaice,,6.5,96.07,high
+species,plaice,,7.0,65.72,low
+species,plaice,,7.0,87.95,central
+species,plaice,,7.0,103.64,high
+species,plaice,,7.5,68.71,low
+species,plaice,,7.5,94.52,central
+species,plaice,,7.5,111.8,high
+species,plaice,,8.0,71.83,low
+species,plaice,,8.0,101.57,central
+species,plaice,,8.0,120.61,high
+species,plaice,,bottom,68.23,low
+species,plaice,,bottom,93.62,central
+species,plaice,,bottom,110.71,high
+species,plaice,,at_50m,74.93,low
+species,plaice,,at_50m,108.1,central
+species,plaice,,at_50m,127.35,high
+species,plaice,,p100,69.69,low
+species,plaice,,p100,97.0,central
+species,plaice,,p100,114.93,high
+species,witch,,6.5,31.46,low
+species,witch,,6.5,53.93,central
+species,witch,,6.5,71.91,high
+species,witch,,7.0,32.57,low
+species,witch,,7.0,55.84,central
+species,witch,,7.0,74.45,high
+species,witch,,7.5,33.72,low
+species,witch,,7.5,57.8,central
+species,witch,,7.5,77.07,high
+species,witch,,8.0,34.91,low
+species,witch,,8.0,59.84,central
+species,witch,,8.0,79.79,high
+species,witch,,bottom,33.53,low
+species,witch,,bottom,57.48,central
+species,witch,,bottom,76.63,high
+species,witch,,at_50m,36.05,low
+species,witch,,at_50m,61.79,central
+species,witch,,at_50m,82.39,high
+species,witch,,p100,34.08,low
+species,witch,,p100,58.43,central
+species,witch,,p100,77.91,high
+species,starry ray,,6.5,26.3,low
+species,starry ray,,6.5,43.83,central
+species,starry ray,,6.5,70.13,high
+species,starry ray,,7.0,27.23,low
+species,starry ray,,7.0,45.38,central
+species,starry ray,,7.0,72.6,high
+species,starry ray,,7.5,28.19,low
+species,starry ray,,7.5,46.98,central
+species,starry ray,,7.5,75.16,high
+species,starry ray,,8.0,29.18,low
+species,starry ray,,8.0,48.63,central
+species,starry ray,,8.0,77.81,high
+species,starry ray,,bottom,28.03,low
+species,starry ray,,bottom,46.71,central
+species,starry ray,,bottom,74.74,high
+species,starry ray,,at_50m,30.13,low
+species,starry ray,,at_50m,50.22,central
+species,starry ray,,at_50m,80.35,high
+species,starry ray,,p100,28.49,low
+species,starry ray,,p100,47.48,central
+species,starry ray,,p100,75.98,high
+species,hagfish,,6.5,8.77,low
+species,hagfish,,6.5,17.53,central
+species,hagfish,,6.5,35.06,high
+species,hagfish,,7.0,9.08,low
+species,hagfish,,7.0,18.15,central
+species,hagfish,,7.0,36.3,high
+species,hagfish,,7.5,9.4,low
+species,hagfish,,7.5,18.79,central
+species,hagfish,,7.5,37.58,high
+species,hagfish,,8.0,9.73,low
+species,hagfish,,8.0,19.45,central
+species,hagfish,,8.0,38.91,high
+species,hagfish,,bottom,9.34,low
+species,hagfish,,bottom,18.68,central
+species,hagfish,,bottom,37.37,high
+species,hagfish,,at_50m,10.04,low
+species,hagfish,,at_50m,20.09,central
+species,hagfish,,at_50m,40.17,high
+species,hagfish,,p100,9.5,low
+species,hagfish,,p100,18.99,central
+species,hagfish,,p100,37.99,high
+species,grey gurnard,,6.5,117.42,low
+species,grey gurnard,,6.5,156.88,central
+species,grey gurnard,,6.5,170.94,high
+species,grey gurnard,,7.0,122.27,low
+species,grey gurnard,,7.0,158.92,central
+species,grey gurnard,,7.0,178.69,high
+species,grey gurnard,,7.5,127.12,low
+species,grey gurnard,,7.5,160.64,central
+species,grey gurnard,,7.5,186.57,high
+species,grey gurnard,,8.0,131.94,low
+species,grey gurnard,,8.0,162.06,central
+species,grey gurnard,,8.0,194.56,high
+species,grey gurnard,,bottom,126.16,low
+species,grey gurnard,,bottom,160.08,central
+species,grey gurnard,,bottom,185.13,high
+species,grey gurnard,,at_50m,134.71,low
+species,grey gurnard,,at_50m,161.04,central
+species,grey gurnard,,at_50m,200.5,high
+species,grey gurnard,,p100,128.35,low
+species,grey gurnard,,p100,160.67,central
+species,grey gurnard,,p100,188.8,high
+species,lemon sole,,6.5,68.7,low
+species,lemon sole,,6.5,86.89,central
+species,lemon sole,,6.5,101.99,high
+species,lemon sole,,7.0,71.84,low
+species,lemon sole,,7.0,93.37,central
+species,lemon sole,,7.0,110.03,high
+species,lemon sole,,7.5,75.11,low
+species,lemon sole,,7.5,100.34,central
+species,lemon sole,,7.5,118.69,high
+species,lemon sole,,8.0,78.52,low
+species,lemon sole,,8.0,107.84,central
+species,lemon sole,,8.0,128.04,high
+species,lemon sole,,bottom,74.58,low
+species,lemon sole,,bottom,99.39,central
+species,lemon sole,,bottom,117.53,high
+species,lemon sole,,at_50m,81.92,low
+species,lemon sole,,at_50m,114.77,central
+species,lemon sole,,at_50m,135.19,high
+species,lemon sole,,p100,76.18,low
+species,lemon sole,,p100,102.97,central
+species,lemon sole,,p100,122.01,high
+species,greater weever,,6.5,52.6,low
+species,greater weever,,6.5,78.89,central
+species,greater weever,,6.5,105.19,high
+species,greater weever,,7.0,54.45,low
+species,greater weever,,7.0,81.68,central
+species,greater weever,,7.0,108.9,high
+species,greater weever,,7.5,56.37,low
+species,greater weever,,7.5,84.56,central
+species,greater weever,,7.5,112.74,high
+species,greater weever,,8.0,58.36,low
+species,greater weever,,8.0,87.54,central
+species,greater weever,,8.0,116.72,high
+species,greater weever,,bottom,56.05,low
+species,greater weever,,bottom,84.08,central
+species,greater weever,,bottom,112.1,high
+species,greater weever,,at_50m,60.26,low
+species,greater weever,,at_50m,90.39,central
+species,greater weever,,at_50m,120.52,high
+species,greater weever,,p100,56.98,low
+species,greater weever,,p100,85.47,central
+species,greater weever,,p100,113.96,high
+species,others,,6.5,52.6,low
+species,others,,6.5,78.89,central
+species,others,,6.5,105.19,high
+species,others,,7.0,54.45,low
+species,others,,7.0,81.68,central
+species,others,,7.0,108.9,high
+species,others,,7.5,56.37,low
+species,others,,7.5,84.56,central
+species,others,,7.5,112.74,high
+species,others,,8.0,58.36,low
+species,others,,8.0,87.54,central
+species,others,,8.0,116.72,high
+species,others,,bottom,56.05,low
+species,others,,bottom,84.08,central
+species,others,,bottom,112.1,high
+species,others,,at_50m,60.26,low
+species,others,,at_50m,90.39,central
+species,others,,at_50m,120.52,high
+species,others,,p100,56.98,low
+species,others,,p100,85.47,central
+species,others,,p100,113.96,high
+group_all,"old method (FB4 cod, haddock x1.3)",,6.5,92.02,ceiling 23.00 MJ/t/tick
+group_all,"old method (FB4 cod, haddock x1.3)",,7.0,95.91,ceiling 23.98 MJ/t/tick
+group_all,"old method (FB4 cod, haddock x1.3)",,7.5,99.85,ceiling 24.96 MJ/t/tick
+group_all,"old method (FB4 cod, haddock x1.3)",,8.0,103.82,ceiling 25.96 MJ/t/tick
+group_all,"old method (FB4 cod, haddock x1.3)",,bottom,99.11,ceiling 24.78 MJ/t/tick
+group_all,"old method (FB4 cod, haddock x1.3)",,at_50m,106.44,ceiling 26.61 MJ/t/tick
+group_all,"old method (FB4 cod, haddock x1.3)",,p100,100.93,ceiling 25.23 MJ/t/tick
+group_named,"old method (FB4 cod, haddock x1.3)",,6.5,93.36,ceiling 23.34 MJ/t/tick
+group_named,"old method (FB4 cod, haddock x1.3)",,7.0,97.32,ceiling 24.33 MJ/t/tick
+group_named,"old method (FB4 cod, haddock x1.3)",,7.5,101.33,ceiling 25.33 MJ/t/tick
+group_named,"old method (FB4 cod, haddock x1.3)",,8.0,105.38,ceiling 26.34 MJ/t/tick
+group_named,"old method (FB4 cod, haddock x1.3)",,bottom,100.58,ceiling 25.15 MJ/t/tick
+group_named,"old method (FB4 cod, haddock x1.3)",,at_50m,108.02,ceiling 27.01 MJ/t/tick
+group_named,"old method (FB4 cod, haddock x1.3)",,p100,102.43,ceiling 25.61 MJ/t/tick
+group_all,"FB4 cod, haddock x1.0",,6.5,80.91,ceiling 20.23 MJ/t/tick
+group_all,"FB4 cod, haddock x1.0",,7.0,84.34,ceiling 21.09 MJ/t/tick
+group_all,"FB4 cod, haddock x1.0",,7.5,87.82,ceiling 21.96 MJ/t/tick
+group_all,"FB4 cod, haddock x1.0",,8.0,91.34,ceiling 22.83 MJ/t/tick
+group_all,"FB4 cod, haddock x1.0",,bottom,87.18,ceiling 21.79 MJ/t/tick
+group_all,"FB4 cod, haddock x1.0",,at_50m,93.7,ceiling 23.42 MJ/t/tick
+group_all,"FB4 cod, haddock x1.0",,p100,88.79,ceiling 22.20 MJ/t/tick
+group_named,"FB4 cod, haddock x1.0",,6.5,81.81,ceiling 20.45 MJ/t/tick
+group_named,"FB4 cod, haddock x1.0",,7.0,85.3,ceiling 21.32 MJ/t/tick
+group_named,"FB4 cod, haddock x1.0",,7.5,88.83,ceiling 22.21 MJ/t/tick
+group_named,"FB4 cod, haddock x1.0",,8.0,92.4,ceiling 23.10 MJ/t/tick
+group_named,"FB4 cod, haddock x1.0",,bottom,88.18,ceiling 22.04 MJ/t/tick
+group_named,"FB4 cod, haddock x1.0",,at_50m,94.78,ceiling 23.69 MJ/t/tick
+group_named,"FB4 cod, haddock x1.0",,p100,89.81,ceiling 22.45 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.0 (CENTRAL)",,6.5,101.3,ceiling 25.33 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.0 (CENTRAL)",,7.0,103.28,ceiling 25.82 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.0 (CENTRAL)",,7.5,105.15,ceiling 26.29 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.0 (CENTRAL)",,8.0,106.91,ceiling 26.73 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.0 (CENTRAL)",,bottom,104.71,ceiling 26.18 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.0 (CENTRAL)",,at_50m,107.31,ceiling 26.83 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.0 (CENTRAL)",,p100,105.5,ceiling 26.37 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.0 (CENTRAL)",,6.5,103.01,ceiling 25.75 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.0 (CENTRAL)",,7.0,104.99,ceiling 26.25 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.0 (CENTRAL)",,7.5,106.84,ceiling 26.71 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.0 (CENTRAL)",,8.0,108.58,ceiling 27.15 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.0 (CENTRAL)",,bottom,106.4,ceiling 26.60 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.0 (CENTRAL)",,at_50m,108.92,ceiling 27.23 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.0 (CENTRAL)",,p100,107.18,ceiling 26.79 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.3",,6.5,116.14,ceiling 29.04 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.3",,7.0,118.32,ceiling 29.58 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.3",,7.5,120.35,ceiling 30.09 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.3",,8.0,122.24,ceiling 30.56 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.3",,bottom,119.85,ceiling 29.96 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.3",,at_50m,122.54,ceiling 30.63 MJ/t/tick
+group_all,"Bjornsson cod, haddock x1.3",,p100,120.7,ceiling 30.17 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.3",,6.5,118.43,ceiling 29.61 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.3",,7.0,120.61,ceiling 30.15 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.3",,7.5,122.64,ceiling 30.66 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.3",,8.0,124.52,ceiling 31.13 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.3",,bottom,122.14,ceiling 30.53 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.3",,at_50m,124.75,ceiling 31.19 MJ/t/tick
+group_named,"Bjornsson cod, haddock x1.3",,p100,122.97,ceiling 30.74 MJ/t/tick
+group_all,"low: FB4 cod, haddock x0.85, flat low",,6.5,69.48,ceiling 17.37 MJ/t/tick
+group_all,"low: FB4 cod, haddock x0.85, flat low",,7.0,72.26,ceiling 18.07 MJ/t/tick
+group_all,"low: FB4 cod, haddock x0.85, flat low",,7.5,75.07,ceiling 18.77 MJ/t/tick
+group_all,"low: FB4 cod, haddock x0.85, flat low",,8.0,77.88,ceiling 19.47 MJ/t/tick
+group_all,"low: FB4 cod, haddock x0.85, flat low",,bottom,74.53,ceiling 18.63 MJ/t/tick
+group_all,"low: FB4 cod, haddock x0.85, flat low",,at_50m,79.71,ceiling 19.93 MJ/t/tick
+group_all,"low: FB4 cod, haddock x0.85, flat low",,p100,75.81,ceiling 18.95 MJ/t/tick
+group_named,"low: FB4 cod, haddock x0.85, flat low",,6.5,70.73,ceiling 17.68 MJ/t/tick
+group_named,"low: FB4 cod, haddock x0.85, flat low",,7.0,73.57,ceiling 18.39 MJ/t/tick
+group_named,"low: FB4 cod, haddock x0.85, flat low",,7.5,76.44,ceiling 19.11 MJ/t/tick
+group_named,"low: FB4 cod, haddock x0.85, flat low",,8.0,79.3,ceiling 19.83 MJ/t/tick
+group_named,"low: FB4 cod, haddock x0.85, flat low",,bottom,75.89,ceiling 18.97 MJ/t/tick
+group_named,"low: FB4 cod, haddock x0.85, flat low",,at_50m,81.15,ceiling 20.29 MJ/t/tick
+group_named,"low: FB4 cod, haddock x0.85, flat low",,p100,77.19,ceiling 19.30 MJ/t/tick
+group_all,"high: Jobling cod, haddock x1.3, flat high",,6.5,130.9,ceiling 32.73 MJ/t/tick
+group_all,"high: Jobling cod, haddock x1.3, flat high",,7.0,136.94,ceiling 34.23 MJ/t/tick
+group_all,"high: Jobling cod, haddock x1.3, flat high",,7.5,143.13,ceiling 35.78 MJ/t/tick
+group_all,"high: Jobling cod, haddock x1.3, flat high",,8.0,149.47,ceiling 37.37 MJ/t/tick
+group_all,"high: Jobling cod, haddock x1.3, flat high",,bottom,142.04,ceiling 35.51 MJ/t/tick
+group_all,"high: Jobling cod, haddock x1.3, flat high",,at_50m,154.41,ceiling 38.60 MJ/t/tick
+group_all,"high: Jobling cod, haddock x1.3, flat high",,p100,144.98,ceiling 36.24 MJ/t/tick
+group_named,"high: Jobling cod, haddock x1.3, flat high",,6.5,132.85,ceiling 33.21 MJ/t/tick
+group_named,"high: Jobling cod, haddock x1.3, flat high",,7.0,139.02,ceiling 34.75 MJ/t/tick
+group_named,"high: Jobling cod, haddock x1.3, flat high",,7.5,145.34,ceiling 36.33 MJ/t/tick
+group_named,"high: Jobling cod, haddock x1.3, flat high",,8.0,151.8,ceiling 37.95 MJ/t/tick
+group_named,"high: Jobling cod, haddock x1.3, flat high",,bottom,144.23,ceiling 36.06 MJ/t/tick
+group_named,"high: Jobling cod, haddock x1.3, flat high",,at_50m,156.82,ceiling 39.20 MJ/t/tick
+group_named,"high: Jobling cod, haddock x1.3, flat high",,p100,147.22,ceiling 36.80 MJ/t/tick

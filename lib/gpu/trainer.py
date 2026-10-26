@@ -37,7 +37,8 @@ class TensorARSTrainer:
                  survival_bonus=0.0, survival_threshold=0.01,
                  entropy_coef=0.0, argmax_penalty=0.0,
                  execution="cuda-graph", graph_ticks=32, pairs_per_batch=None,
-                 population_stability=None, local_reward=None, warmup_ticks=0):
+                 population_stability=None, local_reward=None, warmup_ticks=0,
+                 depleted_patches=0.0):
         if n_deltas < 1 or worlds < 1:
             raise ValueError("n_deltas and worlds must be positive")
         if sigma <= 0 or not math.isfinite(sigma) or lr < 0 or not math.isfinite(lr):
@@ -67,6 +68,11 @@ class TensorARSTrainer:
         self.warmup_ticks = int(warmup_ticks)
         if self.warmup_ticks < 0:
             raise ValueError("warmup_ticks must be >= 0")
+        # Section 223.12: share of the training worlds that start with
+        # depleted benthic patches (0 = off).
+        self.depleted_patches = float(depleted_patches)
+        if not 0.0 <= self.depleted_patches <= 1.0:
+            raise ValueError("depleted_patches must be in [0, 1]")
         self.entropy_coef, self.argmax_penalty = float(entropy_coef), float(argmax_penalty)
         self.obs_normalize = bool(obs_normalize)
         self.seed = self.model.tensor(seed, torch.int64)
@@ -101,6 +107,7 @@ class TensorARSTrainer:
         self.world_index = torch.arange(self.worlds, device=m.device, dtype=torch.int64)
         self.world_biomass = torch.zeros((self.worlds, m.G, m.C), device=m.device)
         self.world_light_start = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
+        self.world_depletion = torch.ones((self.worlds, 1, m.C), device=m.device)
         if m.has_impacts:
             self.world_impact_loss = torch.zeros((self.worlds, m.G, m.C), device=m.device)
             self.world_impact_cost = torch.zeros((self.worlds, m.D, m.C), device=m.device)
@@ -155,6 +162,8 @@ class TensorARSTrainer:
         # of the between-pair variance), which randomised the top-b
         # selection and inflated sigma_f (section 150).
         self.world_light_start.copy_(self.spawner.light_starts(keys))
+        if self.depleted_patches > 0.0:
+            self.world_depletion.copy_(self.spawner.depletion(keys, self.depleted_patches))
         if self.model.n_obs_imp:
             self._refresh_impacts(self.iterations_completed if epoch is None else epoch)
         self.last_world_epoch = epoch
@@ -230,6 +239,8 @@ class TensorARSTrainer:
         keys = fold_in(fold_in(self.seed.expand(self.worlds), self.iteration), self.world_index + 70001)
         b = self.world_biomass
         r = m.initial_nutrients(self.spawner.reserves(b, keys), self.world_light_start)
+        if self.depleted_patches > 0.0:
+            b, r = m.deplete(b, r, self.world_depletion)
         runner.set_weights(self.bank.pack([w[None] for w in self.theta]))
         impacts = (self.world_impact_loss, self.world_impact_cost) if m.has_impacts else None
         impact_obs = self.world_impact_obs if m.n_obs_imp else None
@@ -298,6 +309,8 @@ class TensorARSTrainer:
                 r = self.spawner.reserves(b, keys)
                 light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
                 r = m.initial_nutrients(r, light)
+                if self.depleted_patches > 0.0:
+                    b, r = m.deplete(b, r, per_pair(self.world_depletion))
             impacts = impact_obs = None
             if m.has_impacts:
                 impacts = (per_pair(self.world_impact_loss), per_pair(self.world_impact_cost))

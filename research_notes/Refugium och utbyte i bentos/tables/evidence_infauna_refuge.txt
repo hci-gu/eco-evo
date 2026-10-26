@@ -1,0 +1,476 @@
+EVIDENCE - INFAUNA REFUGE, CROPPING AND EXCHANGE (benthic_infauna, Mareld 100-300 m mud)
+Compiled 2026-10-26 by a literature agent. Research only; no model files touched.
+Tags: [F] full text read (PDF downloaded to data/<source>/ unless noted), [A] abstract only,
+[S] secondary (cited in another source), J = my own judgement or arithmetic.
+Earlier notes reused (not redone): research_notes/"Bentos atkomlighet for torskfiskar"/evidence_A_accessibility.md
+(Dauwe 1998 vertical distribution, Skold et al. 1994, Duineveld & Van Noort 1986, Loo et al. 1996,
+Zwarts & Wanink 1993), research_notes/"Bentos och torskfiskar"/evidence_C_diets_and_consumption.md
+(Heath 2005, Mackinson & Daskalov 2007 EwE), research_notes/"Bottentralning och bentos"/depletion_and_recovery.md
+(Hiddink 2017, Pitcher 2022). Swedish letters dropped from folder names here (ASCII).
+
+Status: complete for this round (see NOT FOUND at the end).
+
+======================================================================================
+Q1. CROPPING AS AN EXCHANGE (sublethal loss of regrowable parts)
+======================================================================================
+
+1a. Amphiura arm regrowth RATE
+- Skold & Gunnarsson 1996, MEPS 142:203-214, doi 10.3354/meps142203 [F]
+  data/skold_gunnarsson1996_meps142/. Kattegat/Skagerrak box cores, lab 2.5 mo (Apr-Jun 1993).
+  Table 3: mean regenerated arm length of A. filiformis 9.2-13.1 mm over 77 d (n 9-16 per cell,
+  four site x food treatments). "Regeneration rates are calculated by dividing regenerated arm
+  lengths by 77 d for A. filiformis and 66 d for Amphiura chiajei."
+  -> 0.12-0.17 mm per arm per day (J arithmetic: 9.2/77 = 0.12, 13.1/77 = 0.17).
+  "Amphiura chiajei regenerated only ca 20% of the increase observed for Amphiura filiformis".
+  Mass rates: "The regeneration rates of Amphiura filiformis, ranging from 2.9 to 3.8 ug dry wt
+  arm-1 d-1 in this experiment (Table 3) are within the range reported by Salzwedel (7.1; 1974),
+  Andreasson (4.8; 1990), and Nilsson & Skold (3.7; 1996), but lower than 82 ug dry wt arm-1 d-1
+  reported by O'Connor et al. (1986)." [F; the cited values are S]
+- Biressi et al. 2010, Zoomorphology (two ophiuroids) [S, search snippet]: "0.99 mm/week for
+  A. filiformis" = 0.14 mm/d (J).
+- Univ. Padova record (conference abstract, c. 2000) [S, snippet]: "as much as 1-2mm of re-growth
+  recorded in Amphiura filiformis over 10 days at 10-11 C" = 0.1-0.2 mm/d (J).
+- Czarkwiani et al. 2016, Front Zool 13:18, doi 10.1186/s12983-016-0149-x [F via WebFetch extract
+  of PMC4841056, first 100k characters]: 14 C, arm cut 1 cm from disc. Wound healing 1-4 d post amputation; regenerative bud
+  5.3 +- 0.9 d; "50% differentiation index (2-3 weeks post-amputation)", "95% ... (4-5 weeks
+  post-amputation)". No mm/d given. (The 50/95 % index is the share of the regenerate that is
+  differentiated, not regrown length.)
+- Dupont & Thorndyke 2006, J Exp Biol 209:3873-3881, doi 10.1242/jeb.02445 [F via WebFetch
+  extract of the journal HTML, first 100k characters; PDF not saved]: 14 C, whole animals cut at
+  length lost (LL) 5-60 mm: regeneration rate rose "from about 0.6 to 3.3 mm/week" as LL rose
+  from 5 to 60 mm (extract's wording), "RR increased exponentially with LL (P<0.01)"; arms cut
+  near the disc regrow faster in length but recover function more slowly. Literature range cited
+  there: 0.08-0.45 mm/d.
+  J: fitting the two end points (RR = 0.6 exp(0.031 (LL-5)) mm/week) gives ~0.70 mm/week at LL 10
+  mm and ~0.96 mm/week at LL 20 mm, i.e. 0.10-0.14 mm/d for tip losses, and LL/RR = ~100-145 d
+  to regrow a lost 10-20 mm tip at 14 C.
+- Nilsson & Skold 1996 (JEMBE 199:193, hypoxia) and Bowmer & Keegan 1983 (Mar Biol 74:65-71,
+  Galway Bay) were NOT obtained; only their values as cited above.
+=> Regrowth time scale (J): an exposed tip of 10-20 mm (Loo et al. 1996; MarLIN 30-40 mm) at
+   0.10-0.17 mm/d is regrown in ~60-200 d; central ~100-120 d (Dupont & Thorndyke tip-loss rates
+   give 100-145 d at 14 C; Skold & Gunnarsson 0.12-0.17 mm/d give 60-170 d).
+   A. chiajei (deposit feeder, 100 m) ~5x slower (Skold & Gunnarsson: 20 % of the increase).
+   At Mareld bottom temperatures (~6 C at 280 m, Dauwe 1998) rates are probably at or below the
+   lab values (10-14 C) - J, no temperature series found.
+
+1b. How much Amphiura mass is in regrowth / cropped (already known, cited for completeness)
+- Skold, Loo & Rosenberg 1994 MEPS 103:81 [F in earlier note]: regenerated tissue 12-30 % (mean
+  22 %) of adult biomass; 13.3 % of total production to arm regeneration; P/B 0.46 /yr.
+  -> regeneration flux ~0.13 x 0.46 = 0.06 x B per yr (J, earlier note).
+- Duineveld & Van Noort 1986 [A]: dab eat 0.84 g WW/m2/yr = 420 arms = 6 % of the arm
+  population per yr; only 4 % of individuals intact; 20 % of arms with recent distal regeneration.
+- O'Connor et al. 1986 Ophelia 26 [A/S]: 16 % of energy to arm regeneration; "annual somatic
+  growth is almost entirely restricted to arm regeneration" (Galway Bay, low recruitment).
+- Skold & Gunnarsson 1996 [F] reconstructs Skold et al. 1994: total production 9.46 g dry wt
+  m-2 yr-1; "Thirteen percent of that was due to arm regeneration and 69 % due to disk growth".
+
+1c. Bivalve siphons
+- Zwarts, Blomert, Spaak & de Vries 1994, JEMBE 183:193-212 ("Feeding radius, burying depth
+  and siphon size of Macoma balthica and Scrobicularia plana") [A, marineinfo 21184]:
+  "A comparison between species reveals that the weight of the extended inhalant siphon per cm
+  amounts, on average, to 0.6% of the total body weight." "Siphon cropping therefore results in
+  an immediate reduction in siphon length, unless the siphon is heavy and a reserve is available."
+  -> a 1-2 cm cropped siphon tip = 0.6-1.2 % of body mass (J).
+- Zwarts & Wanink 1989 Mar Biol 100:227-240 (siphon size and burying depth) [A via search
+  summary only]: siphon weight relative to body weight falls in larger size classes; siphon size
+  "one of the main factors determining burying depth".
+- Field experiment on Scrobicularia (marineinfo 21346, Zwarts and co-workers) [A]: "Heavy
+  cropping of the siphon reduced the body weight"; "Siphon-cropping reduces the burying depth and
+  makes the bivalves more accessible for wading birds".
+- de Goeij, Luttikhuizen, van der Meer & Piersma 2001, Oecologia 126:500-506 [S via search
+  summary; abstract elided by publisher]: juvenile-plaice siphon nipping - clams lost siphon mass
+  and came closer to the surface; "the speed of siphon recovery after nipping varied greatly
+  between experiments". No rate obtained.
+- de Vlas 1985, NJSR 19:147-164 (siphon regeneration production, Macoma) - NOT obtained
+  (VLIZ: non-open access); no number. Peterson & Quammen 1982, Kamermans & Huitema 1994,
+  Coen & Heck 1991 - NOT obtained.
+- Abra nitida (the Mareld bivalve) siphon >0.5 cm above surface, active 25 % of time at 10 C
+  (Gremare et al. 2004, earlier note [F]).
+
+1d. Polychaete tails (intertidal analogue, the only quantified case found)
+- Beukema & de Vlas 1979, NJSR 13:331-353 [F, VLIZ OCR, data/beukema_devlas1979_njsr/]:
+  lugworm tail ends eaten by flatfish (mainly plaice), Balgzand 1976: 0.3-3.0, mean 1.32
+  g AFDW m-2 yr-1 vs mean biomass 5.1 g m-2: "elimination of lugworm biomass by predation on tail
+  ends amounted to 26% of the mean annual biomass (24% by plaice plus 2% by flounder)". In 1973
+  (Kuipers 1977) 36 %. "Therefore, 30%, or 0.39 as an instantaneous rate, will be a fair estimate
+  of lugworm biomass elimination in the form of regenerating tail ends." Adult mortality 0.26 +
+  tail cropping 0.39 = 0.65 total; somatic P/B ~0.6-0.7. Consumption was "roughly proportional to
+  lugworm biomass at the various sampling places".
+  -> cropping removed ~60 % of somatic production (0.39/0.65, J) without killing.
+- Bergman, van der Veer & Karczmarski 1988, NJSR 22:83-90 [A, marineinfo 15830]: lab
+  amputation of lugworm tail tips: "The loss of body weight by amputation was not compensated for
+  by an increased growth. Within a wide range of amputation frequencies, total growth (body growth
+  + amount of tail tip amputated) and reproduction of the lugworm were not affected." "Only at the
+  highest frequency of amputation (once a week) did total growth decrease ..., resulting even in a
+  loss of body weight"; mortality was higher in that group.
+- Cirratulid palps roam the surface (MarLIN, earlier note); no palp regrowth rate found.
+
+1e. Share of fish diet that is cropped parts
+- de Vlas 1979 NJSR 13:117-153 (plaice/flounder, Wadden Sea): ~1/3 of intake as siphons, tail
+  ends, palps, heads - this figure is still only [S] (earlier note, snippet of de Vlas 1981
+  chapter "On cropping and being cropped", in Jones & Wolff eds, Feeding and Survival Strategies
+  of Estuarine Organisms, Plenum, pp 173-177). The 1979 paper itself was NOT obtained.
+- Poiesz et al. 2019 J Sea Res 144:39 [F, NIOZ postprint data/vliz_321200/]: cites the "late
+  summer decrease in stomach content biomass in 0-group plaice ... especially of regenerating body
+  parts of macrobenthic prey (Kuipers, 1977; de Vlas, 1979 ...)". No share given.
+- Mattson 1992 (haddock on Amphiura arms) NOT obtained; the Skagerrak cod stomach report of 1991
+  (Dorman et al., ICES CM 1992/G:70, [F] data/vliz_ocrd_274761/) lists Amphiura and Ophiura in cod
+  stomachs at low weight but does not separate arms from whole animals.
+
+1f. Is cropping sublethal?
+- Lugworm: yes up to near-weekly amputation (Bergman 1988 [A]); Amphiura: 96 % of individuals
+  carry regenerating arms (Duineveld & Van Noort [A]) and "dab will have only little if any effect
+  on the population" [A]. Bivalves: sublethal, but cropping lowers body weight and burial depth,
+  raising later whole-animal predation risk (Zwarts 1994 [A]; de Goeij 2001 [S]); Meyer & Byers
+  (SICB abstract, Protothaca) [S]: cropping top 40 % of siphon -> 33-50 % shallower burial.
+
+1g. Synthesis for Q1 (J)
+- Exposed regrowable mass per unit biomass:
+  Amphiura: exposed tips 2 arms x 1-2 cm of ~5 x 8 cm arm length; distal parts thin -> ~2-8 %
+  of the animal's mass exposed at a time (earlier note J). Standing regenerating tissue 22 %
+  (12-30 %) is the upper bound of what has been croppable over the past months.
+  Bivalves: 0.6 % of body mass per cm of extended siphon -> ~0.5-2 %.
+  Polychaetes: lugworm tail ~ order 10-30 % of mass removable per year; per event unknown.
+  Community-weighted (100 m Amphiura 65 %, polychaetes 17 %, bivalves 12 %): ~2-6 % exposed and
+  regrowable at any time; 300 m (polychaetes 44 %, bivalves 44 %): ~1-5 % (J, wide).
+- Regrowth time scale: arm tip 60-200 d (central ~100-120 d); lugworm tails tolerate amputation up to
+  every ~2 weeks with full compensation of total growth (Bergman 1988) -> regrowth of order weeks.
+- Flux scale: cropping flux measured 0.06 B/yr (Amphiura, all predators) to 0.39 B/yr (lugworm,
+  intertidal flatfish). Neither is a 100-300 m fish-specific value.
+
+======================================================================================
+Q2. ONTOGENETIC DEPTH REFUGE (burial depth vs size; time to grow out of reach)
+======================================================================================
+
+2a. Amphiura filiformis (100 m dominant)
+- Skold, Josefson & Loo 2001, Mar Biol 139:519-526, doi 10.1007/s002270100600 [A, marineinfo
+  260762]: Gullmarsfjord sill 1991. "Maximum settling was recorded in October, with 7,100+-7,400
+  (mean+-SD) ind. m-2". "The initial size of the settlers was around 300 um in disk diameter".
+  "adult size and sexual maturity (ca. 4 mm disk diameter) are attained around 2 years after
+  settlement. The inflexion point in the sigmoidal growth curve occurs ca. 1 year after
+  settlement, at an approximate disk diameter of 2 mm." Faster growth after year 1 is attributed
+  to the onset of suspension feeding (arms raised = the croppable phase begins).
+- Muus 1981 (Oresund) [S via MarLIN]: settlers 0.3 mm take 2 years to reach 1.3 mm disc; "less
+  than 5% contributing to the adult population in any given year"; MarLIN adds "perhaps because
+  they are unable to bury themselves until they reach a certain size" (a suggestion, not a
+  measurement).
+- O'Connor et al. 1983 Mar Biol 75:279 [S via search summary]: adults ~95 % of population,
+  "annual recruitment was invariably found to be extremely low" (Galway Bay); ~10 % of the 1982
+  year class survived the first 8 months [S].
+- Josefson 1995, Mar Biol 124:435-442, doi 10.1007/BF00363917 [A, marineinfo 26694]: Kattegat,
+  VB K = 0.54 /yr; "the main part of disc growth occurs within the first 5 to 7 yr".
+- Adult disc depth 4-6 cm (Buchanan 1964 [S]); Rosenberg et al. 1997 [F]: "buried in the
+  sediment with its disk at about 4 cm depth". No measured depth of juvenile discs was found.
+=> J: an Amphiura recruit lives at or near the surface for months to ~1-2 yr (disc < 1-2 mm),
+   then joins the buried adult stock. Time to grow out of reach (to ~2-4 mm disc and burial at
+   several cm): ~1-2 yr (Skold 2001) to >2 yr (Muus 1981). Recruit biomass is tiny (0.3 mm discs),
+   so this juvenile window matters for numbers, not for biomass.
+
+2b. Small bivalves (300 m dominants: Abra nitida, Thyasira, Nucula)
+- Dauwe et al. 1998 (Skagerrak 280 m) [F, earlier note]: Abra nitida and Thyasira flexuosa
+  confined to 0-2 cm; Nucula peaks at 5-10 cm. Zanzerl & Dufour 2017 [F, earlier note]:
+  thyasirids burrow 12.2-64.2 mm with "no size or taxon effect".
+  => J: at 300 m the two main bivalve groups do NOT gain a depth refuge with size (Abra stays
+  shallow at all sizes; thyasirid depth is size-independent). Their refuge is behavioural
+  (siphon/foot retraction, short activity time) and small size, not depth.
+- Zwarts & Wanink 1993, NJSR 31:441-476 [F, data/zwarts_wanink1993_njsr/ VLIZ OCR]: intertidal
+  analogue (Macoma, Scrobicularia, Mya, Cerastoderma, Arenicola, Nereis): "In all six species,
+  burying depth increases with size." Seasonal: Mya and Cerastoderma no seasonal change; "The
+  other species lived close to the surface in June and burrowed deeply in winter"; Macoma (10-20
+  mm) at "only 3-4 cm in the winters of 1982/83 and 1984/85, but at depths of 6-7 cm in the
+  winters of 1979/80, 1980/81 and 1986/87"; depth "not regulated by changes in temperature" (day
+  length suggested). "the accessible fraction may even vary between 0 and 100%" [F].
+  Condition: "the condition of shallow bivalves is about half of those that live more deeply".
+- Zwarts & Wanink 1989 Mar Biol 100:227 [A via search summary]: siphon size sets burial depth;
+  suspension feeders show little seasonal change in depth, deposit feeders a large one.
+- Beukema & de Vlas 1989 MEPS 52:193-200 [F, data/beukema_devlas1989_meps52/]: Macoma spat
+  (up to 1 cm) drift by byssus threads in winter tidal currents; "nearly all M. balthica arrive in
+  this area in winter by secondary settlement after tidal current transport"; numerous only near
+  the tidal inlet; "Further away (more than 10 to 15 km), young M. balthica arrived in low numbers
+  only and were smaller." Primary settlement >half a year earlier on high flats.
+
+2c. Polychaetes
+- Dauwe 1998 [F, earlier note]: polychaetes 70-80 % of biomass at 10-20 cm at SK (280 m).
+  Josefson 1990 MEPS 66:117 [F]: Heteromastus filiformis, "a species which due to its deep
+  burrowing habits is likely to be less affected by predation (e.g. Shaffer 1983)".
+  No size-depth relation for subtidal polychaetes was found (Zwarts & Wanink 1993 give one only
+  for intertidal Nereis and Arenicola: burrow depth increases with worm length).
+
+2d. Seasonal burial changes at depth: NOT found for Skagerrak/Kattegat infauna. Gremare et al.
+  2004 [F, earlier note] show Abra nitida activity 25 % (10 C) to 55 % (15 C) of time, i.e.
+  exposure, not depth, varies with temperature.
+
+======================================================================================
+Q3. REACH OF THE FISH (sediment depth from which haddock, cod, flatfish take prey)
+======================================================================================
+- NO measurement found of haddock digging depth, nor of cod, dab, plaice, long rough dab or
+  witch feeding depth in mud. Searches (haddock pit digging, flatfish excavation depth, Hinz 2005
+  thesis - HTML block, Mattson 1992 - not found) gave nothing quantitative.
+- de Groot (c. 1970), "Digestive system and sensorial factors in relation to the feeding
+  behaviour of flatfish" [F, data/vliz_ocrd_268389/, VLIZ OCR; journal/year not printed in the
+  OCR]: "Plaice, flounder and dab are day feeders"; dab "more or less pure crustacea feeders",
+  "The dab is the most active feeder, a good shrimp hunter. The plaice, on the other hand, feeds
+  chiefly on animals that move slowly or hardly at all, as e.g. Pectinaria." (visual, surface
+  hunting; no digging depth). de Groot 1971 NJSR 5:121-196 not opened.
+- Indirect evidence (J): (i) fish in Wadden/Loch Ewe studies crop siphon and tail TIPS rather
+  than dig the animals out (de Vlas; Trevallion 1971 [S via Saward et al. 1975 Mar Biol 29:351
+  search summary: "T. tenuis siphons are an important food for juvenile plaice, which feed by
+  grazing the siphon tips; these subsequently regenerate"]); (ii) Amphiura is cropped arm by arm
+  (Duineveld & Van Noort: 96 % of animals regenerating, few whole-animal kills) - a fish that could
+  reach the 4-6 cm disc would take discs; (iii) cropping lowers prey burial depth and THEN makes
+  prey accessible to probing birds (Zwarts 1994; de Goeij 2001), implying fish reach only the
+  surface layer. Waders: sanderling 60 % of prey from the upper 1 cm, none below 2.7 cm;
+  oystercatcher at high prey density took prey in the upper 3 cm (Zwarts & Wanink 1993 [F]).
+- Suggested reach for the model (J, not measured): flatfish and cod 0-1 cm plus exposed parts;
+  haddock 0-2 cm (up to ~5 cm if it digs, unmeasured). Same as the earlier note's 0-1/0-2/0-5 cm.
+- Hypoxia breaks the refuge: Pihl 1994 CJFAS 51:321 [A, CrossRef]: "Several infaunal species
+  increased in dietary importance during recent hypoxia" (SE Kattegat, cod, whiting, plaice, dab,
+  long rough dab). Pihl et al. 1992 Mar Biol 112:349 [snippet only]: "increased availability of
+  benthos to resident predators" under hypoxia (York River). Not relevant to the normoxic
+  Mareld area except as evidence that depth/burial normally limits fish access.
+
+======================================================================================
+Q4. RECOLONISATION OF AN EMPTIED PATCH AT DEPTH
+======================================================================================
+
+4a. Gullmarsfjord 1997-2000 (75-118 m mud, the best depth match)
+- Rosenberg, Agrenius, Hellman, Nilsson & Norling 2002, MEPS 234:43-53, doi 10.3354/meps234043
+  [F, data/rosenberg2002_meps234/]. Fauna "eliminated at depths below about 100 m and severely
+  reduced between 80 and 100 m" in 1997; re-oxygenated spring 1998; sampled 9 times to Apr 2000.
+  - First colonist Capitella capitata: 960-1300 ind m-2 at 105-118 m in April 1998, 0 a year
+    later (Table 2). Then Echinocardium cordatum/flavescens, Thyasira sarsi/equalis, Nereimyra.
+  - Biomass: "At the other stations, the recovery in biomass was minor during 1998, but increased
+    after this, particularly at Stn 85." (numbers only in Fig. 4; not digitised).
+  - Community: Stns 85 and 95 "returned to SS III" (climax) after ~2 yr; at 105 and 118 m "the
+    community structure ... approached but did not reach the 'climax' stage" after 2 yr.
+  - Amphiura filiformis (Table 2, ind m-2, Apr 1998/1999/2000): 75 m reference 107/187/240;
+    85, 95, 105 m 0/0/0; 118 m 3/3/3. BUT the pre-hypoxia baseline (Nilsson & Rosenberg 2000
+    Table 2, June 1997 [F]) already had A. filiformis at only 7 ind m-2 at 85 m and none listed
+    at 95-118 m (75 m: 97; 60 m: 323). => J: Amphiura was essentially absent from the defaunated
+    depths before the event, so these data are NOT a recolonisation test for Amphiura; at 85 m
+    a sparse population (7 m-2) had not returned after 2 yr, which is weak evidence of slow return.
+    (Station spacing: "The distance between the most widely separated stations is about 11 km".)
+  - Abra nitida reappeared at 95-118 m within 1-2 yr (7-147 ind m-2 by 2000; reference 210-477).
+  - Mechanism quote: "Elasticity means rapid recovery, which is promoted by the presence of
+    undisturbed communities in the vicinity. Such communities can provide colonising larvae.
+    Immigration of adults may also be important for some species, e.g. Amphiura filiformis
+    (Rosenberg et al. 1997)."
+  - Older cases quoted there [S]: Saltkallefjord after pulp-mill closure 1966: first colonisers
+    1969, "it took about 3 yr for the top sediment to recover"; "After 5 to 8 yr ... the faunal
+    structure was considered as having returned to pre-pollution levels" (Rosenberg 1976).
+    Gullmarsfjord 118 m 1979/80 (Josefson & Widbom 1988): Capitella and Heteromastus colonised,
+    "the recovery was halted by a new decline in oxygen". "Recovery is generally more rapid in
+    shallow waters than in deeper waters (Diaz & Rosenberg 1995)."
+- Josefson & Widbom 1988, Mar Biol 100:31-40, doi 10.1007/BF00392952 [A via search summary]:
+  115 m; macrofauna disappeared at 0.21 ml O2/l; "The ensuing recolonization, with an initial
+  peak of opportunistic capitellid polychaetes, proceeded slowly"; pre-collapse community not
+  restored within ~1.5 yr.
+- Nilsson & Rosenberg 2000, MEPS 197:139-149 [F, data/nilsson_rosenberg2000_meps197/]: the
+  decline phase; critical O2 ~10 % saturation; no biomass numbers in text.
+
+4b. Adult migration rate (Amphiura) - the horizontal exchange speed
+- Rosenberg, Nilsson, Hollertz & Hellman 1997, MEPS 159:121-131, doi 10.3354/meps159121
+  [F, data/rosenberg1997_meps159/]. Skagerrak 86 m sediment, 0.22 m2 boxes, 10 C, 63 d.
+  "a mean number of 90 and 36 ind. box-1 had migrated into the low density side of the box from
+  the high density and moderate density side". Diffusion coefficients: high density "mean 6.136 x
+  10-5 m2 h-1", moderate "1.801 x 10-5 m2 h-1". "No significant differences in migration rates were
+  observed between fed and starved boxes, indicating that dispersal was primarily
+  density-dependent rather than food-dependent." "A. filiformis can move both on the sediment
+  surface and within the sediment."
+  J arithmetic: D = 6.1e-5 m2/h = 0.54 m2/yr (high) and 0.16 m2/yr (moderate); RMS displacement
+  sqrt(4Dt) = 1.5 m (high) / 0.8 m (moderate) per year. Diffusive refill time t ~ L^2/(4D):
+  a 10 cm fish pit ~2 d; a 1 m patch ~0.5-1.6 yr; a 10 m patch ~50-160 yr; a 1 km cell: never.
+  => adult migration refills only metre-scale holes; km-scale refilling needs larvae.
+
+4c. Defaunated boxes on subtidal sediment (Norway)
+- Berge 1990, MEPS 66:103-115 [F, data/berge1990_meps66/]: 0.2 m2 boxes of defaunated sediment.
+  Oslofjord, 23 m mud (eutrophic): "restoration of the community took less than 3 mo during a
+  spring/summer situation ... dominated by opportunistic species (Polydora spp.)". Raunefjord,
+  20 m shell sand: "The time needed to reach 90 % of this equilibrium [species number] was ...
+  466 d" in control boxes; immigration 0.27 species d-1 box-1 Jun-Nov, 0.24 Nov-Mar. Small (0.2
+  m2) patches: "Immigration rates are reduced when the distance to source communities from where
+  larvae and adults can immigrate is increased". (Species number, not biomass.)
+
+4d. Patch-size dependence and mechanisms (mostly intertidal)
+- Gunther 1992, NJSR 30:45-56 [F, data/gunther1992_njsr/ VLIZ OCR]: "Scales of dispersal vary
+  with size and age of the animals involved: (i) large-scale: planktonic larvae, (ii) mesoscale:
+  postlarvae and permanent meiofauna, and (iii) small-scale: adult macrofauna." "Settlement of
+  planktonic larvae predominates if the disturbed areas are large. In smaller affected plots,
+  postlarval transport as well as immigration of adults begin to play a more significant role."
+  Small pits (predator feeding pits): "Control levels are reached within several days (Bell &
+  Devlin 1983; Frid 1989)" [S]. Postlarval transport distance of Arenicola "ranges around 1 km";
+  meiofauna up to 10 km by tidal currents. Builds on Smith & Brumsickle 1989 (L&O; deep-basin
+  trays) [S].
+- Dernie, Kaiser & Warwick 2003, J Anim Ecol 72:1043-1056, doi 10.1046/j.1365-2656.2003.00775.x
+  [A via search summaries; publisher 403]: intertidal plots; "Clean sand communities had the most
+  rapid recovery rate following disturbance, whereas communities from muddy sand habitats had the
+  slowest physical and biological recovery rates"; infill rate predicts recovery of numbers. Dernie
+  PhD (Bangor 2003) [A]: sandflat, "recovery from the lower intensity treatment was complete after
+  63 days", higher intensity "at least twice as long". Day counts for mud NOT obtained.
+- Tuck et al. 1998, MEPS 162:227-242 [F abstract, data/tuck1998_meps162/]: unfished Scottish sea
+  loch, fine mud, 18 mo experimental trawling then 18 mo recovery: "some differences between
+  treatment and reference sites still apparent after 18 mo of recovery".
+- Trawl meta-analyses (earlier note, not redone): Hiddink et al. 2017 r = 0.82 /yr (3.6 yr from
+  0.5K to 0.95K); Pitcher et al. 2022 mud r 0.68 /yr.
+
+4e. Synthesis for Q4 (J)
+- Time to recover biomass after full defaunation of a large (km-scale) patch at 80-120 m mud:
+  opportunists within months; total biomass "minor" in year 1, rising in year 2; community not
+  fully back at 105-118 m after 2 yr; Amphiura absent after 2 yr. Central ~3 yr (2-5 yr), up to
+  5-8 yr after heavy enrichment (Saltkallefjord). Consistent with r 0.7-0.8 /yr meta-analyses.
+- Mechanism: larval settlement (km scale) for opportunists, polychaetes, Abra, Thyasira.
+  Amphiura: no direct recolonisation test at depth was found (Gullmarsfjord deep stations lacked
+  it before the event); its known routes are rare successful recruitment (<5 % of settlers per
+  yr) plus slow adult migration (~1 m/yr), so refilling of a large Amphiura patch is expected to
+  take several years (J, not measured).
+- Spatial scale: adults refill metre-scale holes in days (pits) to ~1 yr (1 m); postlarvae
+  ~1 km (intertidal); larvae >10 km. A 1 km model cell is refilled only via larvae/growth.
+
+======================================================================================
+Q5. REFUGE SATURATION - space or food limited? Does exchange depend on density?
+======================================================================================
+- Rosenberg et al. 1997 MEPS 159:121 [F]: migration of Amphiura is density-dependent and
+  food-independent (quotes in 4b). "it has been suggested that the benthic community examined in
+  the present study is limited by space rather than by food (Rosenberg 1995). This assumption was
+  made because several populations, among them Amphiura filiformis, had extremely large densities
+  and biomasses." "In our experiments, A. filiformis was fed daily with food in excess. Despite
+  this, they migrated from the crowded treatments to sediments where abundance was smaller;
+  numbers and biomasses became similar." At ~3000 ind m-2 "the area of sediment at about 3 to 4
+  cm depth covered by disks of A. filiformis can be estimated as 22 % (Rosenberg 1995)".
+  => the deep (disc) layer has a finite area; crowding drives lateral spreading (J).
+- Skold & Gunnarsson 1996 MEPS 142:203 [F]: "The difference between sites also suggests
+  negatively density dependent growth indicative of space or food competition in the densely
+  populated offshore sediment" (offshore = higher abundance and biomass; A. filiformis arm
+  regeneration rose with food only in the sparser coastal sediment).
+- Josefson 1995 Mar Biol 124:435 [A]: "Size specific growth in oral width was density
+  independent despite high densities of A. filiformis (> 3000 ind m-2) and high total benthic
+  biomass (up to 1000 g wet wt m-2)"; growth weakly correlated with sediment C and N.
+- Josefson 1990 MEPS 66:117-130 [F, data/josefson1990_meps66/]: 14 stations below the halocline,
+  1972-1988, >170 km: "Total biomasses showed linear increases by a median factor of 1.8"; the
+  increase "primarily due to echinoderms, notably the amphiuroid Amphiura filiformis, and
+  polychaetes"; "the present results are in accordance with hypotheses that soft-sediment infauna
+  in the area is food limited". He rejects predator release: "There are no data showing a general
+  decrease in stocks of demersal fish or other potential predators."
+- Skold et al. 1994 / O'Connor 1986 (above): arm regeneration draws on the same energy as
+  growth and gonads (O'Connor: 16 % of energy; Skold & Gunnarsson: regenerated arm length
+  correlates with oocyte size, r = 0.53) => cropping costs are food-limited (J).
+- Olafsson, Peterson & Ambrose 1994 (OMBAR 32:65-109, recruitment limitation and adult-larval
+  interactions) - only the abstract framing was seen [A]; no numbers.
+=> J: the evidence is split. Food limits growth and the large-scale biomass level (Josefson
+   1990); crowding (space at the disc layer) drives Amphiura dispersal at >2000 ind m-2 (Rosenberg
+   1997), with density-independent growth in the field (Josefson 1995). No study measured a
+   "capacity" of the deep layer itself. For a model this supports density dependence in the
+   whole-stock K (food), not a separate saturating refuge compartment.
+
+======================================================================================
+Q6. HOW SUBLETHAL CROPPING HAS BEEN REPRESENTED; IS CROPPED TISSUE COUNTED AS PRODUCTION?
+======================================================================================
+- Production budgets COUNT it. de Vlas 1979 NJSR 13:362-393 title: "Secondary production by tail
+  regeneration in a tidal flat population of lugworms (Arenicola marina), cropped by flatfish";
+  de Vlas 1985 NJSR 19:147-164: "Secondary production by siphon regeneration in a tidal flat
+  population of Macoma balthica" (titles [F via CrossRef/marineinfo]; contents not obtained).
+  Beukema & de Vlas 1979 [F] add tail-end removal (0.39 /yr) to adult mortality (0.26) to get a
+  total elimination 0.65 = somatic production at steady state (P/B ~0.6-0.7).
+  Skold et al. 1994 [F, earlier note] count regeneration as 13.3 % of Amphiura production.
+- Bergman et al. 1988 NJSR 22:83 [A]: no compensatory growth; "total growth (body growth + amount
+  of tail tip amputated)" is constant over a wide range of cropping frequencies, so cropping is a
+  production flux taken out of body growth, not an extra production (J: in a model, cropped mass
+  should be taken from the prey's growth/biomass budget at the normal production efficiency, not
+  regenerated for free); breaks down at weekly amputation.
+- Polychaete palps regrow faster than intact palps grow: Matthews & Hentschel 2012, Mar Biol
+  159:1039-1048, doi 10.1007/s00227-012-1884-y [A, marineinfo 255592]: Polydora cornuta,
+  Tijuana Estuary, July: "removed palps regenerated to half the initial length of unmanipulated
+  palps" in 3 d, complete in 6 d; "The regeneration rate of removed palps was significantly faster
+  than the growth rate of undamaged palps". Worms with both palps removed grew slower.
+  Hentschel & Harper 2006, Mar Biol 149:1175-1183, doi 10.1007/s00227-006-0274-8 [A, marineinfo
+  259998]: lab flumes; "During the 3-day experiments, damaged palps fully regenerated".
+- Behavioural/indirect: Peterson & Skilleter 1994, Oecologia 100:256-267 and 268-278 [A via
+  search summary]: juvenile demersal fish crop exposed Macoma siphons and "induce reduction in
+  deposit-feeding activity"; cropping interacts with intraspecific competition. Lin & Hines 1994
+  Oikos 69:28 [S]: cropping -> shorter siphon -> shallower burial -> more lethal predation.
+  Kamermans & Huitema 1994 (shrimp browsing on siphon tips inhibits Macoma feeding and growth)
+  NOT obtained.
+- Loch Ewe food chain (Edwards & Steele 1968; Steele 1974; Trevallion 1971): siphon grazing by
+  0-group plaice with regeneration is the classic case [S via Saward et al. 1975 search summary];
+  no model equations obtained.
+- No dynamic population model with an explicit "browsing/cropping" term for subtidal infauna was
+  found. Mouritsen & Poulin 2003 (JMBA, parasites; cites de Vlas 1981) [S]: partial predation
+  "often affects the majority of individuals in a prey population".
+=> J: literature treats cropping as (i) part of prey production (regeneration production) and
+   (ii) a predator food source at roughly the prey's production timescale. Representation options:
+   a regrowable "exposed" pool that is refilled from the prey's own growth (not free mass).
+
+======================================================================================
+Q7. INDEPENDENT CHECKS - fish share of infauna production; local depletion by fish
+======================================================================================
+CORRECTION TO THE BRIEF: the "~4 % of infauna production but 70-80 % of crab/Nephrops production"
+pair does NOT come from Heath 2005. It comes from the Mackinson & Daskalov 2007 North Sea EwE
+(1991 model, EcoBase 457) as computed in research_notes/"Bentos och torskfiskar"/
+evidence_C_diets_and_consumption.md [F, computed there]: infaunal macrobenthos 4 % (fish eat
+5.62 of P = 136 g WW m-2 yr-1), small infauna (polychaetes) 8 %, large crabs 82 %, Nephrops 71 %,
+shrimp 30 %; all benthos 5.6 %; gadoids alone 0.7 %. Heath 2005 (ICES JMS 62:847-868, Table 4,
+[F there]) gives fish consumption as 72 / 53 / 33 % (decadal means 1970s/80s/90s) of the
+production of MACROBENTHOS CARNIVORES only ("between 50% and 60% ... during the 1970s, but had
+declined to 15-20% by the late 1990s" in the text) and tabulates no production for deposit/filter
+feeders, so no infauna fraction exists in Heath 2005.
+
+Additional checks found in this round:
+- Dauvin 1988, Cah Biol Mar 29:445-467 [F, data/vliz_ocrd_286707/, French]: Bay of Morlaix fine
+  sand (western Channel). Fish consumption "entre 1,1 et 5,5 g de poids frais de macrofaune par an
+  et par m2" vs "La production macrobenthique 1980-1981 s'elevait a 85 g de poids frais par an et
+  par m2 ... dont 45 g produits par les especes utilisees comme proies". "La consommation par les
+  Poissons apparait par consequent tres faible par rapport a la production macrobenthique".
+  -> 1.3-6.5 % of total macrobenthic production, 2.4-12 % of prey-species production (J).
+- Cramer & Daan 1986 (earlier note [F]): cod + haddock 0.5-0.8 g C m-2 yr-1 = "10-25% of the total
+  benthos production" against Steele's 2-5 g C (old, coarse production estimate).
+- Pihl 1994 CJFAS 51:321-336 [A]: diet shifts with hypoxia; abstract gives no consumption vs
+  production share. Full text NOT obtained.
+- Greenstreet et al. 1997 ICES JMS 54:243 [A, earlier note]: production "is sufficient to supply
+  the food requirements of ... benthivorous demersal fish". Full text NOT obtained.
+- Josefson 1990 [F]: 1.8x biomass rise 1972-88 explained by food (organic enrichment), not by
+  predator release; deep-burrowing Heteromastus increased.
+- Exclusion experiments: Arntz 1977 (Kiel Bay 20 m, 9 cages of 1 m2, 1972-74) [A, marineinfo
+  25760]: "Towards the end of the experiment however the fauna was no richer inside than outside
+  the cages", explained by cage artefacts (starfish, crabs, gobies inside; H2S). Hall et al. 1993 J
+  Anim Ecol 62:59, doi 10.2307/5482 [S, search summary]: crab (Cancer pagurus) exclusion from 2 x 2
+  m subtidal plots, west Scotland, 12 mo: no community-level effect despite high power.
+  Frid & James 1988 NJSR 22:307 [A] (salt marsh, 2 yr): epibenthic predator exclusion had "no
+  significant effect on the infaunal deposit feeders", attributed "to their horizontal mobility
+  within the sediment". Reise 1985 (19th EMBS, tidal flats review) [A]: wide-mesh (>=1 cm)
+  exclosures that keep out fish: "only large individuals of the macrofauna gain in abundance
+  relative to unprotected controls"; narrow mesh (excluding juvenile fish, shrimp, small crabs):
+  "most macrofaunal species attain very high population densities (and biomass) because their
+  early juveniles survive".
+- No subtidal mud (>50 m) fish-exclusion experiment showing local infauna depletion by fish was
+  found.
+=> J: across the North Sea EwE (4-8 %), Morlaix (1-7 %) and the Kattegat-Skagerrak biomass trend,
+   fish take a small share of infauna production; large shares only for mobile epibenthic
+   crustaceans. Fish-driven local depletion of infauna is not demonstrated in subtidal mud; where
+   fish matter (intertidal) it is through juvenile survival, not adult stock.
+
+======================================================================================
+NOT FOUND / NOT OBTAINED (do not infer values for these)
+======================================================================================
+- Full texts of de Vlas 1979 (NJSR 13:117 food intake; the ~1/3 cropped-parts share stays [S]),
+  de Vlas 1979 (13:362), de Vlas 1985 (19:147), de Vlas 1981 chapter; Bowmer & Keegan 1983;
+  Munday 1993; Nilsson & Skold 1996; Peterson & Quammen 1982; Kamermans & Huitema 1994; Coen & Heck 1991;
+  Mattson 1992 (haddock and Amphiura arms); Dernie et al. 2003 day counts; Kaiser et al. 2006
+  (MEPS 311:1, login page); Rosenberg 1976/1977 Byfjord; Arntz 1980 Kiel Bay chapter; Pihl 1994
+  full text; Greenstreet 1997 full text; Olafsson et al. 1994 full text.
+- Any measurement of haddock/cod/flatfish feeding depth in mud (Q3).
+- Burial depth of juvenile vs adult Amphiura discs; seasonal burial change at 100-300 m.
+- Amphilepis norvegica: no data on depth, exposure, regeneration or recolonisation.
+- A measured "capacity" of the deep sediment layer, or a measured vertical exchange rate between
+  deep and surface layers (the exchange happens through exposure behaviour and growth, not by
+  animals moving between layers - J).
+- A subtidal mud fish-exclusion experiment showing fish depletion of infauna.
+
+======================================================================================
+FILES
+======================================================================================
+- data/<source>/ hold the downloaded PDFs and pdftotext output. data/frontiers2021_fmars783759/
+  (crinoid arm regrowth, Stevenson et al. 2022) and data/vliz_ocrd_55246/ (Tallqvist 2001 Macoma
+  burrowing) were downloaded by mistake and are not used. data/vliz_ocrd_236774/ (De Raedemaecker
+  et al. poster) not used. Other folders in data/ (aguzzi2003..., worm_myers2003, ewe_user_guide..., etc.) and
+  scripts/refuge_*.py, tables/refuge_*_stdout.txt were made by another agent, not by this one.
+- tables/infauna_refuge_rates.csv: the numbers above in table form.

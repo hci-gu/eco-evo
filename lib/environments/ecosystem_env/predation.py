@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import interactions
+from lib.environments.ecosystem_env import interactions, refuge
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 
 
@@ -27,8 +27,10 @@ def apply_predation(env, actions):
                 np.float32(0.0))
             reserve_offset[j] = (density - env.prey_reserve_fill[j]
                                  * env.prey_reserve_max[j])
+    # Section 223.12: a refuge group is seen and eaten through its
+    # accessible part only.
     visible_biomass, pair_visible_biomass = interactions.visible_prey_biomass(
-        env, prey_biomass, actions)
+        env, refuge.accessible_rows(env, prey_biomass), actions)
     visible_biomass, pair_visible_biomass = interactions.apply_pair_access(
         env, visible_biomass, pair_visible_biomass)
 
@@ -150,7 +152,12 @@ def apply_predation(env, actions):
             (biomass_old - intake) / (biomass_old + eps),
             np.float32(0.0),
         )
-        if interactions.is_nutrient_producer(env, prey_id):
+        if refuge.settings(prey_fg) is not None:
+            # Section 223.12: predation removes from the accessible part.
+            prey_fg.energy_reserve = np.clip(
+                prey_fg.energy_reserve - intake, 0.0, None).astype(
+                    env.dtype, copy=False)
+        elif interactions.is_nutrient_producer(env, prey_id):
             # Section 172: the reserve slot is the producer's nutrient
             # pool, which grazing does not eat; a fraction of what it
             # removes is excreted back into it.

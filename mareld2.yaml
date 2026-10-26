@@ -97,11 +97,27 @@ simulation_settings:
         - 11.7
         - 10.6
         - 9.3
+      # Section 223.15: bottom water at each cell's own depth (SHARK A16/A17
+      # 1991-2020; annual 7.40 C, cells p10-p90 7.0-7.8; research_notes/
+      # "Exponering av bottenbyten", tables/bottom_temperature_stdout.txt).
+      bottom:
+        - 7.80
+        - 6.99
+        - 6.59
+        - 6.58
+        - 6.69
+        - 6.96
+        - 7.22
+        - 7.41
+        - 7.70
+        - 8.04
+        - 8.36
+        - 8.50
     group_layers:
       planktivorous_fish: mean_0_50m
       zooplankton: mean_0_50m
       microzooplankton: mean_0_50m
-      benthivorous_fish: at_50m
+      benthivorous_fish: bottom
       predatory_fish: at_50m
 decision_makers:
   # Section 209: the fish are three feeding groups. Demersal levels are the
@@ -147,10 +163,17 @@ non_decision_makers:
     initial_biomass_min: 252750
     initial_biomass_max: 421250
     inference_initial_biomass: 337000
+  # E1 (section 223.12 decision): mobile_epifauna is the exposed taxa,
+  # norway_lobster the Nephrops; start = sum of today's equilibrium B*(c),
+  # +/-25 % (research_notes/"Havskrafta och exponerad epifauna" (Swedish letters)).
   - group_id: mobile_epifauna
-    initial_biomass_min: 20900
-    initial_biomass_max: 34850
-    inference_initial_biomass: 27900
+    initial_biomass_min: 10200
+    initial_biomass_max: 17000
+    inference_initial_biomass: 13600
+  - group_id: norway_lobster
+    initial_biomass_min: 12400
+    initial_biomass_max: 20600
+    inference_initial_biomass: 16500
   - group_id: phytoplankton
     initial_biomass_min: 40000
     initial_biomass_max: 100000

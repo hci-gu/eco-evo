@@ -1,0 +1,41 @@
+predator,length_cm,area,depth_m,season,year,n_fed,nephrops_pct_mass,nephrops_pct_occurrence,basis,source,tag
+cod,all (294 fed; >=35 cm carry all Nephrops),Skagerrak (IYFS; much on Nephrops grounds),not given,Feb,1991,294,3.48,<=5.4 (16 items),stomach mass,Dorman Johnsson & Larsson 1992 ICES CM 1992/G:70 Table 2,F
+cod,30-40 / 40-50 / 50-70 / 70+,Skagerrak,not given,Feb,1991,24 / 41 / 45 / 14,6.5 / 1.1 / 4.4 / 3.6,,stomach mass by class (classes merged from Table 2),Dorman et al. 1992 (cod_size_profiles.csv),F
+cod,all,Kattegat,mostly <40,Feb,1991,586,1.97,,stomach mass,Dorman et al. 1992 Table 3,F
+cod,all,NNS (ICES-DB public 1981 subset; positions only by rectangle),na,Jan-Feb (+Jul-Nov),1981,130 records / 518 fish,4.25 (50-70 cm 6.4; 70+ 4.0; <50 cm 0),7/130 records,stomach mass,ICES stomach DB (ices_nephrops_shares.csv),F
+cod,all,NNS 56-162 m (German/Danish IBTS Q1),median 123,Jan-Feb,2023,77,8.16 (30-40 cm 5.1; 50-70 cm 13.8; 70+ 2.5),6/77,stomach mass,ICES stomach DB,F
+cod,all,NNS 100-200 m subset,median 139,Jan-Feb,2023,53,10.1 (50-70 cm 21.3; 2 stomachs carry it),5/53,stomach mass,ICES stomach DB,F
+cod,all,Skagerrak (5 hauls with prey data: 1 Swedish in box 135 m + 4 Danish 20-104 m),median 94,Jan-Feb + Aug,2023-25,66,0.01,1/66 (0.09 g),stomach mass,ICES stomach DB; 541 Swedish IBTS records with no prey rows and StomachEmpty blank,F
+cod,all (20-30 cm 2.1; 24-29 cm on mud at 35-37 m 4.4 in 2024),Kattegat (BITS/IBTS),median 23,Feb-Mar + Oct-Nov,2021-25,1007,0.29,5/1007,stomach mass,ICES stomach DB,F
+cod,ages 1-6+ (18-97 cm),North Sea IV (no IIIa),all survey grounds,Q1 / Q2 / Q3 / Q4,1991,~2000 per quarter,Q1 0.03-3.2; Q2 3.2-8.8; Q3 0.02-7.5; Q4 0.2-8.6 (age 0 16 cm 8.6),,stomach mass,Hislop et al. 1997 ICES CRR 219 Table 8 (lit_rows_A.csv),F
+cod,ages 1-6+,North Sea IV,all survey grounds,Q1 / Q2 / Q3 / Q4,1981,25-2025 per age x quarter,Q1 0.7-3.8; Q2 0.1-18.8; Q3 1.0-12.5; Q4 0.4-3.4,,stomach mass,Daan 1989 ICES CRR 164 Table 8,F
+cod,all / 50-70 / 70+,North Sea IVa (Cefas DAPSTOM; no positions),na,all,1950-2008,1517 / 144 / 67,,1.6 / 5.6 / 13.4 (1990s mostly <20 cm: 0.3),occurrence,DAPSTOM portal (dapstom_nephrops_occurrence.csv),F
+cod,all,Fladen Ground (shrimp/Nephrops trawl),Nephrops ground,not stated,~1979,228 (26 % empty),,29,occurrence,Howard 1980 ICES CM 1980/G:37,F
+cod,all (<40 / 50-59 / >=70),Farn Deeps,Nephrops ground,not stated,~1979,422,,23 (9 / 44 / 65),occurrence,Howard 1980,F
+cod,all,Firth of Forth 36-38 m,Nephrops ground,Nov,1978,247,,32 (<30 cm 12; >=40 cm 44),occurrence,Kinnear & Livingstone 1979 ICES CM 1979/K:33,F
+cod,all (none <30 cm),W Irish Sea,grounds + non-grounds,all quarters,1980-82,504,58.0,,stomach mass (cod = 88 % of all Nephrops eaten by 11 predators),Symonds & Elson 1983 ICES CM 1983/K:8,F
+cod,30-99,NW Irish Sea (landings),grounds,Q1 13.8 / Q2 16.5 / Q3 31.0 / Q4 1.7,1981,529 examined,15.6 annual intake share,,intake (W% ~ R%),Fannon & Hillis 1982 ICES CM 1982/G:51,F
+cod,2+,NW Irish Sea grounds,grounds,spring vs rest,1982-83,,20-40 stomach = 12-28 intake,,stomach and intake,Armstrong Smyth & McCurdy 1991 ICES CM 1991/G:15,F
+cod,all,W Irish Sea VIIa (DAPSTOM),na,all,2000-11,545,,37.8 (50-70 cm 51; 70+ 51),occurrence,DAPSTOM portal,F
+cod,50-90,S Iceland Nephrops grounds,grounds,annual (10 Mar to ~65 Jul),~2000,,~30,,stomach mass,Dombaxe 2002 via Bjornsson & Dombaxe 2004,S
+haddock,all,NNS + Norwegian Trench (IBTS Q1),median 135,Jan-Feb,2025,306 records / 485 fish,0,0,stomach mass,ICES stomach DB,F
+haddock,ages 0-6+,North Sea IV,all survey grounds,all quarters,1981,~17500 stomachs,not listed (no Astacidea row),,stomach mass,Daan 1989 CRR 164 Table 8-B,F
+haddock,ages 1-6+ (18-51 cm),North Sea IV,all survey grounds,Q1 0.04-2.1; Q2 0-0.06; Q3 0-0.9; Q4 0.05-3.0,1991,~1000-5000 per quarter,annual by age 0.3-1.1 (season_factor.csv),,stomach mass,Hislop et al. 1997 CRR 219 Table 8,F
+haddock,all (40-50 cm 2/11),North Sea IVa (DAPSTOM),na,all,1950-2008,1834,,0.27 (2000+: 2.4),occurrence,DAPSTOM portal,F
+long_rough_dab,~20 cm (one 0.9 g Nephrops),CSNS,na,Aug,1991,61 records / 572 fish,0.39,1/61 records,stomach mass,ICES stomach DB,F
+long_rough_dab,all,NNS,na,Feb-Aug,1991,48 records / 297 fish,0,0,stomach mass,ICES stomach DB,F
+long_rough_dab,adult,North Sea IV a-c model,,annual,1991 model,,1.4 (diet matrix),,Ecopath diet,Mackinson & Daskalov 2007 Table 3.4,F
+long_rough_dab,all,North Sea IVa (DAPSTOM),na,all,1950-79,6,,0,occurrence,DAPSTOM portal,F
+plaice,all,Skagerrak + Kattegat + NNS (IBTS),median 39-104,Jan-Feb + Aug,2024,396,0,0,stomach mass,ICES stomach DB,F
+plaice,all (one 25-30 cm fish),North Sea IVa (DAPSTOM),na,all,1950-2008,81,,1.2,occurrence,DAPSTOM portal,F
+witch,all,Skagerrak east of 7 E,156-490,Mar-Oct,1991-96,132,decapods 10.3 (Nephrops not separated),,stomach mass,Bergstad et al. 2003 (Hildre 2001),F
+witch,all,North Sea IVa (DAPSTOM),na,all,1950-79,43,,0,occurrence,DAPSTOM portal,F
+dab,,no data in area; Mackinson & Daskalov diet 0,,,,,0 (J),,,J,J
+whiting,all,Skagerrak (1991 Argos; 2022 IBTS),82 (2022),Apr / Jan-Feb + Aug,1991 / 2022,54 records (159 fish) / 38,0,0,stomach mass,ICES stomach DB,F
+whiting,all,Kattegat / box / NNS,30-108,various,1991 / 2020-22,38 / 33 / 21 / 4,0,0,stomach mass,ICES stomach DB,F
+whiting,ages 1-6+ (21-33 cm),North Sea IV,all survey grounds,Q1-Q2 not listed; Q3 0.05-0.55; Q4 0-0.20,1991,~3000-11000 per quarter,<=0.55,,stomach mass,Hislop et al. 1997 CRR 219 Table 8,F
+whiting,ages 1-2,North Sea IV,all survey grounds,Q1,1981,5464,0.00,,stomach mass,Daan 1989 CRR 164 Table 8-C,F
+whiting,all,North Sea IVa (DAPSTOM),na,all,1950-2008,2059,,0.05 (1 stomach),occurrence,DAPSTOM portal,F
+whiting,26 cm (one stomach 12.4 g),CSNS 48 m,48,Aug,2022,518,0.99,1/518,stomach mass,ICES stomach DB,F
+whiting,all,W Irish Sea,grounds + non-grounds,all quarters,1980-82,614,0.2,,stomach mass,Symonds & Elson 1983,F
+whiting,small to large,Outer Silver Pit (S North Sea),Nephrops ground,Aug / autumn,1979,,0.55-84.1 (Aug),,stomach mass,De Clerck & Sterk 1980 ICES CM 1980/G:43,F

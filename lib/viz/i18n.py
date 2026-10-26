@@ -42,6 +42,7 @@ FG_NAMES = {
         "microzooplankton": "Mikrozooplankton",
         "benthic_infauna": "Infauna",
         "mobile_epifauna": "Rörlig epifauna",
+        "norway_lobster": "Havskräfta",
         "planktivorous_fish": "Planktonätande fisk",
         "benthivorous_fish": "Bottendjursätande fisk",
         "predatory_fish": "Rovfisk",
@@ -56,6 +57,7 @@ FG_NAMES = {
         "microzooplankton": "Microzooplancton",
         "benthic_infauna": "Infauna bentonica",
         "mobile_epifauna": "Epifauna mobile",
+        "norway_lobster": "Scampo",
         "planktivorous_fish": "Pesci planctivori",
         "benthivorous_fish": "Pesci bentivori",
         "predatory_fish": "Pesci predatori",
@@ -88,6 +90,7 @@ SPECIES = {
         "crabs, hermit crabs and squat lobsters":
             "krabbor, eremitkräftor och trollhumrar",
         "small shrimps": "små räkor", "mysids": "pungräkor",
+        "cephalopods and small demersal fish": "bläckfiskar och små bottenfiskar",
         "amphipods and other small crustaceans":
             "märlkräftor och andra små kräftdjur",
         "ciliates": "ciliater",
@@ -117,6 +120,7 @@ SPECIES = {
         "crabs, hermit crabs and squat lobsters":
             "granchi, paguri e galatee",
         "small shrimps": "gamberetti", "mysids": "misidacei",
+        "cephalopods and small demersal fish": "cefalopodi e piccoli pesci di fondo",
         "amphipods and other small crustaceans":
             "anfipodi e altri piccoli crostacei",
         "ciliates": "ciliati",
@@ -212,21 +216,19 @@ CATALOG = {
             "påverkans andel av tickets förlust (%)",
         "natural mortality (M1) share of tick loss (%)":
             "naturlig dödlighet (M1), andel av tickets förlust (%)",
-        "Survival across training (ticks within biomass bounds)":
-            "Överlevnad under träningen (ticks inom biomassagränserna)",
-        "Survival ticks within {lower}-{upper} x starting biomass (cap {cap})":
-            "Överlevnadsticks inom {lower}-{upper} x startbiomassan (tak {cap})",
-        "Waiting for the first survival evaluation":
-            "Väntar på den första överlevnadsutvärderingen",
+        "Probe of the current policies (biomass, % of start)":
+            "Prob med de aktuella policyerna (biomassa, % av start)",
+        "Waiting for the first probe": "Väntar på den första proben",
         "No starting biomass: {names}": "Ingen startbiomassa: {names}",
-        "{n} evaluations | full training history":
-            "{n} utvärderingar | hela träningshistoriken",
+        "Update {step}: frozen policies, seed {seed} | {n} probes":
+            "Uppdatering {step}: frysta policyer, frö {seed} | {n} prober",
         "Progress unavailable; see terminal for details":
             "Framsteg saknas; se terminalen för detaljer",
         "ARS reward per FG": "ARS-belöning per FG",
         "{label}  display max = {pct}%": "{label}  visningsmax = {pct}%",
         "reward (log10 ratio)": "belöning (log10-kvot)",
-        "Completed training updates": "Genomförda träningsuppdateringar",
+        "Probe year (inference start = 0)": "Probår (inferensstart = 0)",
+        "probe biomass (log10 of % of start)": "probens biomassa (log10 av % av start)",
         "Save plot as HTML...": "Spara graf som HTML...",
         "No data to save": "Ingen data att spara",
         "Saved: {name}": "Sparad: {name}",
@@ -234,7 +236,7 @@ CATALOG = {
         "HTML files": "HTML-filer",
         "All files": "Alla filer",
         "tick {n}": "tick {n}",
-        "update {n}": "uppdatering {n}",
+        "day {n}": "dag {n}",
         "PLOT": "GRAF",
     },
     "it": {
@@ -319,21 +321,19 @@ CATALOG = {
             "quota degli impatti sulla perdita del tick (%)",
         "natural mortality (M1) share of tick loss (%)":
             "quota della mortalità naturale (M1) sulla perdita del tick (%)",
-        "Survival across training (ticks within biomass bounds)":
-            "Sopravvivenza durante l'addestramento (tick entro i limiti di biomassa)",
-        "Survival ticks within {lower}-{upper} x starting biomass (cap {cap})":
-            "Tick di sopravvivenza entro {lower}-{upper} x biomassa iniziale (max {cap})",
-        "Waiting for the first survival evaluation":
-            "In attesa della prima valutazione di sopravvivenza",
+        "Probe of the current policies (biomass, % of start)":
+            "Sonda con le politiche attuali (biomassa, % dell'inizio)",
+        "Waiting for the first probe": "In attesa della prima sonda",
         "No starting biomass: {names}": "Nessuna biomassa iniziale: {names}",
-        "{n} evaluations | full training history":
-            "{n} valutazioni | intera storia dell'addestramento",
+        "Update {step}: frozen policies, seed {seed} | {n} probes":
+            "Aggiornamento {step}: politiche congelate, seme {seed} | {n} sonde",
         "Progress unavailable; see terminal for details":
             "Progressi non disponibili; vedi il terminale",
         "ARS reward per FG": "Premio ARS per FG",
         "{label}  display max = {pct}%": "{label}  massimo mostrato = {pct}%",
         "reward (log10 ratio)": "premio (rapporto log10)",
-        "Completed training updates": "Aggiornamenti completati",
+        "Probe year (inference start = 0)": "Anno della sonda (inizio dell'inferenza = 0)",
+        "probe biomass (log10 of % of start)": "biomassa della sonda (log10 della % dell'inizio)",
         "Save plot as HTML...": "Salva grafico HTML...",
         "No data to save": "Nessun dato da salvare",
         "Saved: {name}": "Salvato: {name}",
@@ -341,7 +341,7 @@ CATALOG = {
         "HTML files": "File HTML",
         "All files": "Tutti i file",
         "tick {n}": "tick {n}",
-        "update {n}": "aggiornamento {n}",
+        "day {n}": "giorno {n}",
         "PLOT": "GRAFICO",
     },
 }

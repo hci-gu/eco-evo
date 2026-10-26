@@ -1,0 +1,469 @@
+PART C - Refuge and exposure of mobile epifauna: northern shrimp, small shrimps, crabs, squat lobsters,
+hermit crabs, mysids
+=====================================================================================================
+
+Scope: how much of the day each taxon is buried / hidden / off the bottom, the fraction exposed to
+benthivorous fish on the bottom, day/night catch ratios, and evidence on refuge saturation.
+Model context (from the task): current accessible fractions shrimp 0.7, crabs 0.6, hermits 0.8,
+Munida 0.3, small shrimps 0.6, mysids 0.6. Site: Skagerrak, 100-300 m mud.
+
+Tags: [F] full text read by me, [A] abstract only, [S] secondary / search snippet, J = my judgement or
+derivation. Where a full text I read reports someone else's result, the tag is [F] for the sentence I read
+and the original is named as "cited". Files: data/<source>/ ; scripts in scripts/.
+
+Not repeated (already in "Bottensamhallets epifauna"/evidence_A1, evidence_B): Frechette et al. 1983 ratio
+6.33 day/night; females migrate less; Skagerrak shrimp survey (Jan-Feb) no sun-height effect;
+L. holsatus buries by day (Reiss 2006); suprabenthos 76-97 % in 0-50 cm by day (Cunha 1997).
+
+Ratio naming in part_C_rows.csv: Q3 shrimp rows give day/night ratios (day_night_catch_ratio), Q4 rows
+night/day ratios (night_day_catch_ratio); the unit column states the direction.
+
+Exposure convention used below (J): a bottom-trawl catch ratio measures the share of the population inside
+the trawl opening (a few m to ~11 m above the bottom). That is the share a bottom-feeding fish can reach.
+Shrimp that have left the bottom are not "safe": they are exposed to pelagic and semi-pelagic feeders
+(saithe, blue whiting, herring, mackerel), i.e. to a different model group.
+
+
+=====================================================================================================
+Q3. NORTHERN SHRIMP Pandalus borealis - diel vertical migration
+=====================================================================================================
+
+Q3.1 Shumway, Perkins, Schick & Stickney 1985. Synopsis of biological data on the pink shrimp, Pandalus
+borealis Kroyer, 1838. NOAA Tech. Rep. NMFS 30 / FAO Fisheries Synopsis No. 144 (NOT 142 as in the task).
+https://www.fao.org/3/a-ap949e.pdf  file: data/shumway1985/shumway1985.pdf   [F]
+  Section 2.22 (all findings below are cited by Shumway, not original):
+  - "Diurnal vertical migration of P. borealis has been indicated through reduced trawl catches at night in
+    the Barents Sea (Bryazgin 1967), in the Gulf of Alaska (Gaffney 1977a), off Norway (Hjort and Ruud 1938;
+    Wollebaek 1903), off west Greenland (Horsted and Smidt 1956), and by others (Blacker 1957; Rathjen and
+    Fahlen 1962)."
+  - TIMING: "Barr and McBride (1967) found that shrimp moved off the bottom in the early evening and remained
+    in the entire water column until early morning (Fig. 8)." -> off bottom ~ dusk to dawn, i.e. roughly the
+    length of the night (J). Fig. 8 (Barr 1970a, Kachemak Bay, pots surface-to-bottom, ~91 m) shows the
+    sampling periods "arranged in order of increasing length of night"; the figure numbers are not readable in
+    the text extraction, so no heights are taken from it.
+  - THERMOCLINE LIMIT: "Apollonio and Dunton (1969) confirmed vertical migratory behavior in similar
+    experiments in the Gulf of Maine but found the extent of vertical movement limited by a thermocline."
+    "Apollonio and Dunton (1969) showed no vertical migration through the thermocline in the Gulf of Maine."
+  - SEX: "Ovigerous females do not migrate vertically apparently due to a decreased ability to swim
+    (Apollonio and Dunton 1969; Haynes and Wigley 1969; Jones and Parsons 1978)." "Vertical migration at night
+    has been shown by Barr (1970a) and Apollonio and Dunton (1969) to separate year classes during seasons
+    when females are ovigerous as the females do not rise in the water." Ovigerous season in the Skagerrak is
+    roughly autumn-spring (eggs carried ~Oct-Apr; general knowledge, not read here) -> J: in winter a large
+    share of the adult biomass (berried females) stays on the bottom, consistent with the Skagerrak Jan-Feb
+    survey showing no day/night effect.
+  - SIZE (conflicting): "Barr (1970a) found that smaller shrimp migrated further up in the water column off
+    Alaska while Carlsson (1979) reported that larger shrimp were participating in the migration to a greater
+    extent than smaller shrimp off west Greenland."
+  - LIGHT: "Barr (1970a) demonstrated that light affects shrimp in their diel vertical migration in Alaska";
+    "Apollonio and Dunton (1969) also demonstrated negative phototaxis of P. borealis adults."
+  - FEEDING: "While the species is predominantly a benthic feeder, it is known to feed in the water column
+    during diel vertical migrations (Wollebaek 1903; Barr 1970a)."
+  - ASSESSMENT BIAS: "Hoydal (1978b) indicated that vertical migration influenced distribution and affected
+    catch per unit effort measurements which caused assessments based on bottom trawls to underestimate stock
+    size."
+  - SCHOOLING: "Pandalus borealis is a schooling species that aggregates in relatively dense patches."
+  No number for hours off bottom or share migrating in Shumway.
+
+Q3.2 Jones, B.C. & Parsons, D.G. 1978. Assessment of pink shrimp (Pandalus borealis) fishery potential in
+Davis Strait and northeastern Canadian waters. ICNAF Res. Doc. 78/XI/87 (Serial No. 5303). Header: "Not to be
+cited without prior reference to the author(s)".
+https://www.nafo.int/icnaf/library/docs/1978/res-87.pdf  file: data/icnaf_res87_1978/res87.pdf   [F]
+  Davis Strait, August 1978, Sputnik 1600 bottom trawl (11 m vertical opening), test grid at ~368 m,
+  duplicate tows at different times at five sites.
+  - "Since it was noted that the proportions of ovigerous females in catches varied on a diel basis (Fig. 5),
+    that is, proportions were lower during the day when it is likely that smaller shrimp descend to increase
+    total biomass on the bottom, these data were used to determine the night and day plateau periods"
+  - PLATEAUS: "The night and day periods so determined were 1 hour 50 minutes and 5 hours 20 minutes
+    respectively." (i.e. ~17 h/day are transition; August at ~64-67 N, short night - J).
+  - "Plateau means (n = 10): noon, 34.4 kg; midnight, 13.9 kg." (Table 1)
+  - "They indicate a maximum reduction to 40.4% of available (noon) biomass, resulting in a maximum correction
+    multiplier of 2.47. This falls within the range of maximum correction factors derived from commercial
+    catch data noted in other studies (Table 3)"
+  - Table 3, maximum day/night correction factors, Davis Strait: 1.80 (July, Horsted 1976); 2.47 (August, this
+    study); 2.80 (August, Berenboim et al. 1976); 3.50 (August, Smidt 1976). [F for the table; originals cited]
+  - Not all shrimp are on the bottom even at noon: "some shrimp are likely to be found in the water column
+    above the 11 m high opening of the Sputnic 1600 bottom trawl at all times of the day, and thus would
+    neither be taken by the net nor be accounted for in the diel correction factor."
+  - J (scripts/jones_parsons_1978_daily_mean.py; Table 2 typed in by hand, the parenthesised 0400 and 1600
+    values read as point values and the others as hourly interval values): 24-h mean availability = 0.68 of
+    the noon level, i.e. a bottom feeder meets on average ~68 % of what it meets at noon (off bottom relative
+    to noon 0.32). By local 6-h block (local = GMT - 4 h): 00-06 h 0.48, 06-12 h 0.82, 12-18 h 0.94,
+    18-24 h 0.50. Fraction off bottom at midnight relative to noon: 1 - 0.404 = 0.60. Caveats: summer, high
+    latitude (short night), linear transitions assumed by the authors, noon treated as 100 % on bottom although
+    some shrimp are above 11 m at all hours (so these off-bottom fractions are relative to the day level, and
+    the true on-bottom fraction is lower still). Lands close to the model's f 0.7 for shrimp. In the Skagerrak
+    winter (Jan-Feb survey, no sun-height effect, evidence_A1) the same quantity is ~1.
+
+Q3.3 Smidt, E. 1976. Diurnal variations in shrimp catches on the offshore grounds of ICNAF Div. 1B. ICNAF Res.
+Doc. 76/XII/149 (Serial 4045). https://www.nafo.int/icnaf/library/docs/1976/res-149.pdf
+file: data/icnaf_res149_1976_smidt/res149.pdf   [F]
+  Commercial logbook catches of the trawler SISIMIUT, West Greenland (~66-69 N), 923 hauls, Dec 1975-Oct 1976.
+  - "they clearly show diurnal variations by months with the smallest catches taken by night. Further, the
+    biggest diurnal variation is seen in the autumn, when the variation in light intensity is maximal, while
+    the smallest diurnal catch variation is seen in December-January and in June, when the variation in light
+    intensity is minimal. It is, therefore, reasonable to believe that the diurnal variation in light intensity
+    causes vertical migrations by the shrimps some of which move up in the water by night."
+  - Table 2 (Oct-Dec 1975, kg/h in 3-h intervals; legible): October 76, 66, 275, 466, 500, 675, 420, 300;
+    November 244, 496, 370, 632, 1050, 761, 537, 460; December 187, 445, 383, 508, 562, 600, 473, 427
+    (intervals 0-3, 3-6, 6-9, 9-12, 12-15, 15-18, 18-21, 21-24 h).
+  - J (scripts/smidt_1976_ratios.py): max/min 10.2 (Oct), 4.3 (Nov), 3.2 (Dec); day (09-15 h) / night (21-03 h)
+    2.6 (Oct), 2.4 (Nov), 1.7 (Dec); 24-h mean / daily maximum 0.51 (Oct), 0.54 (Nov), 0.75 (Dec).
+    Commercial data, uncontrolled for position; Table 1 (other months) is not legible in the scan and is not
+    used. SEASON: day/night contrast is largest at equinox-autumn and smallest around the solstices at this
+    latitude (the Skagerrak, 58 N, has a real night in midsummer, so this solstice damping applies less there
+    in summer; in winter the Skagerrak survey shows no effect - evidence_A1).
+
+Q3.4 Horsted, Sv.Aa. 1976. A trawl survey of the offshore shrimp grounds in ICNAF Div. 1B and an estimate of
+the shrimp biomass. ICNAF Res. Doc. 76/XII/150. https://www.nafo.int/icnaf/library/docs/1976/res-150.pdf
+file: data/icnaf_res150_1976_horsted/res150.pdf   [F]
+  - "The highest density (or availability) of shrimps on the bottom occurs early afternoon, whereas catch rates
+    in the night are lower." Max correction factor 1.80 (July; reported in Jones & Parsons 1978 Table 3).
+
+Q3.5 Barr, L. 1970. Diel vertical migration of Pandalus borealis in Kachemak Bay, Alaska. J. Fish. Res. Board
+Can. 27: 669-676. https://doi.org/10.1139/f70-071   [A] (abstract via Crossref; full text closed)
+  - "Catches of Pandalus borealis by surface-to-bottom pot fishing in Kachemak Bay, Alaska, showed that this
+    species was distributed in large numbers throughout the water column at night and suggested a diel vertical
+    migration. The shrimp apparently left the vicinity of the bottom about dusk and returned about dawn; the
+    apparent length of time they were off bottom was directly related to the length of the night. Bottom
+    trawling clearly showed lower availability of P. borealis on bottom at night than during the day. Catches
+    of shrimp by pot fishing and trawling indicated that small P. borealis have a greater tendency to migrate
+    vertically than the larger individuals."
+  - HOURS OFF BOTTOM (J from Barr): ~ hours of darkness, i.e. at 58 N in the Skagerrak ~6-7 h (midsummer) to
+    ~17-18 h (midwinter) for the migrating part of the population. Barr gives no share of the population.
+  - Shallow site (Kachemak Bay is a fjord-like bay, tens of m to ~100 m); whole water column used at night.
+
+Q3.6 Baker, K.D., Mullowney, D.R.J., Fulton, S. et al. 2024. Spatiotemporal modelling of northern shrimp
+Pandalus borealis distribution patterns throughout Canada's subarctic and arctic regions. MEPS 740: 79-93.
+https://doi.org/10.3354/meps14651  file: data/baker2024_meps740/m740p079.pdf   [F]
+  - Fishable shrimp (> 17 mm CL), Canadian surveys 1995-2023: "Although the inclusion of the factor
+    representing light conditions (i.e. Period) improved model performance, the effect size was relatively
+    small. The small effect verified that catches were somewhat higher in light conditions compared to dark,
+    indicating the movement of shrimp off the seafloor bottom during dark hours." No numeric effect size given.
+  - "Our research focused on fishable (i.e. large) northern shrimp, and the model was strongly influenced by
+    the heaviest, largest shrimp (i.e. large females). Female northern shrimp are not thought to complete diel
+    migrations to the same extent as males (i.e. smaller shrimp) (Barr 1970, Hudon et al. 1992, Bergstrom
+    2000)."
+  - "Similar to our findings, Barr (1970) also found that movement patterns were related to the light
+    conditions, with the amount of time spent on bottom related to the length of night-like conditions."
+  - Frechette et al. 1983 range: Baker et al. 2021 (below) cite "P. borealis to be 1.9 to 6.33 times more
+    abundant in day catches than in night survey tows" [S] - the 1.9 lower end is new relative to evidence_A1.
+
+Q3.7 Baker, K.D. et al. 2021. Ecology and epidemiology of the striped shrimp, Pandalus montagui ..., in the
+northern Labrador Sea, Davis Strait, and Ungava Bay, Canada. J. Crustacean Biol. 41(2): ruab024.
+https://doi.org/10.1093/jcbiol/ruab024   [F] (HTML full text via WebFetch; quotes are the opening parts of
+sentences as returned)
+  - P. montagui MALES: "daylight catches were 1.52 times those made at night"; the factor was "used to convert
+    catches of males during night tows, thereby standardizing all catches to the daylight period".
+  - Lower than for P. borealis "where the effect of the midnight sun and minimal darkness may dampen the overall
+    diel migration pattern".
+  - Frechette et al. (1983) found "P. borealis to be 1.9 to 6.33 times more abundant in day catches than in
+    night survey tows" [S, cited].
+
+Q3.8 Hudon, C., Parsons, D.G. & Crawford, R. 1992. Diel pelagic foraging by a pandalid shrimp (Pandalus
+montagui) off Resolution Island (Eastern Hudson Strait). Can. J. Fish. Aquat. Sci. 49: 565-576.
+https://doi.org/10.1139/f92-066   [A] (abstract via Crossref)
+  - "Massive nocturnal vertical migrations of shrimp were observed in association with intense pelagic feeding
+    activity." "Pelagic migrants were mostly males (75%), extending their planktonic foray into morning hours,
+    whereas ovigerous (12%) and nonovigerous (13%) females returned to the bottom at dawn. In the trawl, the
+    representation of males (43%) and ovigerous females (45%) differed, but also fluctuated on a diel cycle."
+    "The occurrence of daily vertical feeding migrations results in the unavailability of a variable proportion
+    of the total shrimp biomass to bottom trawls."
+  Crawford, R., Hudon, C. & Parsons, D.G. 1992. An acoustic study of shrimp (Pandalus montagui) distribution
+  near Resolution Island (Eastern Hudson Strait). CJFAS 49: 842-856. https://doi.org/10.1139/f92-095   [A]
+  - "The shrimp underwent a nocturnal vertical migration with other zooplankton to > 200 m from the bottom and a
+    subsequent downward migration during early daylight hours. This diel migration resulted in reduced
+    availability of shrimp to the bottom trawl at night. Timing of the migrations varied".
+  (P. montagui is also a Q4 small-shrimp taxon; these values are listed there too.)
+
+Q3 SUMMARY (J)
+  - Who migrates: males and small / non-ovigerous shrimp; ovigerous females stay on the bottom (Shumway;
+    Hudon 1992: 75 % of pelagic P. montagui migrants were males). Size effect conflicting (Barr: small migrate
+    more; Carlsson 1979 W Greenland: large more).
+  - When: dusk to dawn; time off bottom scales with night length (Barr). Day/night contrast largest in autumn
+    (equinox), smallest at the solstices at high latitude (Smidt 1976).
+  - How much: bottom-trawl catch at night = 0.3-0.55 of the day/noon catch (ratios 1.8-3.5 Davis Strait, up to
+    6.33 Canada; P. montagui males 1.52). 24-h mean on-bottom availability relative to the day maximum: 0.51-0.75
+    (W Greenland Oct-Dec), 0.68 (Davis Strait August). Large (fishable, mostly female) shrimp: small effect
+    (Baker 2024). Skagerrak survey in Jan-Feb (berried females, long nights): no effect (evidence_A1).
+  - How high: P. borealis up to the whole water column in shallow bays (Barr; Kachemak Bay), limited by the
+    thermocline (Apollonio & Dunton); P. montagui > 200 m above bottom (Crawford 1992). Jones & Parsons: some
+    shrimp above the 11 m trawl opening at all hours.
+  - Exposure: on the bottom by day = reachable by benthivores; in the water column at night = exposed to
+    pelagic/semi-pelagic fish instead. No study found that measures predation risk on vs off the bottom.
+  - Implication for f 0.7 (J): a year-round mean of ~0.65-0.85 is consistent with the evidence (lower in
+    autumn, ~1 in winter when females are berried); 0.7 sits at the low end of that.
+
+
+=====================================================================================================
+Q4. SMALL SHRIMPS, CRABS, SQUAT LOBSTERS, HERMIT CRABS, MYSIDS
+=====================================================================================================
+
+Depth caveat for all Mediterranean numbers below (J): light at 100-110 m in the clear western Mediterranean is
+much higher than at 100 m in the Skagerrak (more turbid, coastal water). The Skagerrak 100-300 m floor is
+probably closer, in light, to the Mediterranean upper slope (400 m) than to its shelf (100 m) - so the "slope"
+folding factors are likely the more transferable ones. Not measured; a judgement.
+
+Q4.1 Aguzzi, J. & Bahamon, N. 2009. Modeled day-night biases in decapod assessment by bottom trawling survey.
+Fisheries Research 100: 274-280. https://doi.org/10.1016/j.fishres.2009.08.010
+Postprint: https://digital.csic.es/bitstream/10261/56831/3/Aguzzi_et_al%202009_FR_post.pdf
+file: data/aguzzi2009_fishres/aguzzi2009.pdf   [F]
+  Table 1 "folding factor" = "a factor indicating how many times the daytime catch occurrences should be folded
+  to approach to a maximum occurrence within a 24-h cycle", derived from 24-h trawl series on the W.
+  Mediterranean shelf (100-110 m) and slope (400-430 m). For nocturnal species this is a night/day catch
+  ratio; < 1 means diurnal. Maxima timing N nocturnal, D diurnal, Cr crepuscular, Ar arrhythmic.
+    species (habit)                      shelf timing / factor   slope timing / factor
+    Liocarcinus depurator (burier)       N / 5                   Cr / 2.5
+    Goneplax rhomboides (burrower)       N / 10                  Ar / 2.0
+    Alpheus glaber (burrower)            N / 10                  Ar / 1.0
+    Nephrops norvegicus (burrower)       Cr / 10                 D / 0.1
+    Pontophilus norvegicus (burrower)    -                       N / 3.0
+    Munida intermedia (burier)           -                       D / 0.5
+    Munida tenuimana (burier)            -                       N / 2.0
+    Processa canaliculata (burier)       N / 100                 D / -
+    Processa nouveli (burier)            N / 100                 D / -
+    Solenocera membranacea (burier)      N / 100                 D / 0.3
+  - "On the shelf, burrowing species show increased occurrence in trawl sampling at night, a 10-fold increase
+    versus daytime. Buriers present a similar time-related bias in trawl sampling but with a stronger
+    intensity. Their occurrence in night trawl catches increases to up to 100 times in comparison to the day."
+  - "Buriers presented a more elevated daytime error of sampling on shelf and slope. Their occurrence increased
+    at night up to 100 times on the shelf, with a smaller sampling error on the slope (up to 4 times more
+    elevated during day than night)."
+  - "Burier emergence occurs in a synchronous fashion, provoking the schooling of animals within the benthic
+    boundary layer ... The whole population is hence more exposed to bottom trawling at once. Conversely
+    burrowers can retract within their tunnels when nets approach, using the door-keeping behavior"
+  - "Species shift the timing of emergence from night to day as depth increases (Aguzzi et al., 2009a),
+    according to the known 'Nephrops model'".
+  Interpretation (J): if a trawl only catches emerged animals, fraction exposed by day ~ 1/factor of the night
+  level: Processa ~0.01, Goneplax and Alpheus ~0.1, L. depurator ~0.2 on the shelf; on the slope 0.3-0.5.
+  The factors are rounded to orders of magnitude (1, 2, 5, 10, 100) - read as orders of magnitude, not
+  measurements.
+
+Q4.2 Bahamon, N., Sarda, F. & Aguzzi, J. 2009. Fuzzy diel patterns in catchability of deep-water species on the
+continental margin. ICES J. Mar. Sci. 66: 2211-2218. https://doi.org/10.1093/icesjms/fsp190
+Preprint: https://digital.csic.es/bitstream/10261/56866/3/Bahamon_et_al_2009_preprint.pdf
+file: data/bahamon2009_icesjms/bahamon2009_preprint.pdf   [F] (preprint)
+  - Abstract: "On the shelf, the species assemblages shifted abruptly between a diurnal and a nocturnal
+    structure at sunset and sunrise ... Endobenthic decapods with marked crepuscular-nocturnal emergence from
+    the substratum were mostly responsible for this pattern. No clearly discernible diel pattern was found with
+    the dampening of light intensity with depth".
+  - Table 2 "Mean densities (ind. km-2) ... sampled at dawn (DW), by day (D), dusk (Du), and at night (N) on the
+    continental shelf (100-110 m) and upper slope (400-430 m) in October 1999 and June 2000". Liocarcinus
+    depurator row: shelf 4168 / 2658 / 9287 / 8978 and 1567 / 824 / 3781 / 2846; slope 85 / 54 / 90 / 70 and
+    39 / 100 / 207 / 89 (Dw / D / Du / N). The column-group order (Oct vs June) is not labelled in the text
+    extraction; the first two groups are the shelf (they hold the shelf-only fish).
+  - J: L. depurator night/day = 3.4 and 3.5 on the shelf (100-110 m); 1.3 and 0.9 on the slope (400-430 m);
+    dusk is as high as night. Day exposure relative to night ~0.3 on the shelf, ~1 on the slope.
+    Caution: in the preprint table some shelf cells of Solenocera duplicate the Trisopterus row (4112 / 2697 /
+    2930), so the preprint has typesetting errors; the L. depurator row looks internally consistent.
+
+Q4.3 Aguzzi, J., Bahamon, N. & Marotta, L. 2009c. The influence of light availability and predatory behavior of
+the decapod crustacean Nephrops norvegicus on the activity rhythms of continental margin prey decapods. Marine
+Ecology 30: 366-375. https://doi.org/10.1111/j.1439-0485.2008.00276.x
+Postprint: https://digital.csic.es/bitstream/10261/56832/3/Aguzzi_et_al%202009_ME_post.pdf
+file: data/aguzzi2009c_marecol/aguzzi2009c.pdf   [F]
+  - Hourly 24-h trawl series, 4 days, October 1999 (~10 h day / 14 h night) and June 2000.
+  - "Burying species distributed at both depths (e.g. the shrimp species, S. membranacea and P. canaliculata, or
+    the portunid crab, L. depurator) display clear behavioral patterns only on the shelf ... At 400-430 m, these
+    species do not center their activity rhythm during daytime as does Nephrops. Conversely, some species show
+    a few hours' delay in the onset of activity and then are also active for a short time at night".
+  - "Goneplax rhomboides instead showed contradictory patterns in emergence behaviors, being nocturnal or
+    arrhythmic in different Atlantic and Mediterranean areas (Atkinson & Naylor 1973; Atkinson 1974a, b; Naylor
+    & Atkinson 1976). This behavior may depend upon local conditions and local Nephrops norvegicus density."
+  - "Our data for the slope suggest that burying species may alter the timing of their emergence and reburying
+    activity in a manner that reduces the chances of being encountered by N. norvegicus".
+  - Table 1 medians (ind. km-2) are pooled over all hours; not a day/night ratio; not used.
+
+Q4.4 Aguzzi, J., Company, J.B. & Garcia, J.A. 2009a. Ontogenetic and gender-modulated behavioural rhythms in the
+deep-water decapods Liocarcinus depurator, Munida tenuimana and M. intermedia. Marine Ecology 30: 93-105.
+https://doi.org/10.1111/j.1439-0485.2008.00252.x   [A]
+  - "Liocarcinus depurator was captured at night on the shelf, whereas on the slope, animals displayed peaks
+    both in the middle of the day and night. Size-related differences (but no gender differences) were found
+    ... Munida intermedia were weakly diurnal in October and both diurnal and nocturnal in June. Munida
+    tenuimana presented no discernible rhythmicity in October, but was nocturnal in June. ... Data were
+    interpreted assuming that all tested species present an endobenthic behaviour (i.e. animals emerge from
+    the substrate during the active phase of their behavioural cycle)."
+  (These are the data behind the Q4.1 folding factors for these three species.)
+
+Q4.5 Abello, P., Reid, D.G. & Naylor, E. 1991. Comparative locomotor activity patterns in the portunid crabs
+Liocarcinus holsatus and L. depurator. J. Mar. Biol. Assoc. UK 71: 1-10.
+https://doi.org/10.1017/S0025315400037346   [A]
+  - "L. holsatus captured in the sublittoral zone had a clear tendency to show circadian activity rhythms with
+    highest activity during day-time hours. L. depurator occurred only sublittorally and showed circadian
+    activity patterns with highest activity during the night. ... In the sublittoral zone L. depurator is active
+    mainly during the night, whereas L. holsatus, is active mainly during the day."
+  - NOTE: this contradicts the "L. holsatus buries by day" reading already on file (Reiss 2006 via
+    evidence_B). L. depurator, not L. holsatus, is the crab of 100-300 m Skagerrak mud (J).
+
+Q4.6 Atkinson, R.J.A. (no year printed; Lundy Field Society Annual Report 26, mid-1970s). Studies of a Goneplax
+rhomboides population off Quarry Bay.
+https://lfs-resources.s3.amazonaws.com/ar26/LFS_Annual_Report_Vol_26_Part_26.pdf
+file: data/atkinson_lfs_ar26/lfs_ar26.pdf   [F]   Diving, 17 m below CD, mud, August.
+  - GONEPLAX: "Goneplax was not seen on the mud surface during the day but was common at night." "Since
+    Goneplax were not seen on the mud surface during the day, the transect was also swum at night."
+    "The nocturnal emergence of Goneplax observed at Lundy agrees with observations at Fishguard and
+    experimental studies, such emergence being controlled by an endogenous rhythm synchronised by the
+    light/dark cycle (Atkinson and Naylor, 1973; Atkinson, 1973a, 1974b)."
+  - Burrow density: "The mean density is 0.93 burrows per m2." (89 burrows on a 48 x 2 m transect).
+    "not all burrows were investigated for occupancy. Thus the distribution of burrows will be different from
+    the distribution of animals if some burrows are empty."
+  - L. DEPURATOR (as Macropipus depurator): "Macropipus was seen on the mud surface during the day but
+    specimens were inactive. At night, Macropipus was very active and swam into the torch beam." It "was often
+    seen in the depressions caused by collapsed burrows and also in the depressions at the entrances to
+    burrows." -> on this site L. depurator did NOT bury by day; it sat on the surface, inactive (J: still
+    visible to a visual predator).
+  - MUNIDA: "The squat lobster Munida bamffica (Pennant) was occasionally seen in the entrances of burrows but
+    these burrows appeared to be vacated Goneplax burrows." (M. bamffica = M. rugosa.)
+
+Q4.7 Atkinson, R.J.A. & Naylor, E. 1973. Activity rhythms in some burrowing decapods. Helgolander wiss.
+Meeresunters. 24: 192-201. https://doi.org/10.1007/BF01609511  file: data/atkinson_naylor1973/an1973.pdf [F]
+  - Goneplax in artificial-burrow actographs, constant dim light: "very consistently showed distinct circadian
+    rhythmicity in the pattern of exploration of the end chambers, activity within the 'burrow' often remaining
+    high and more or less arhythmic" ... "In Figure 2 the rhythm remains clear-cut for 35 days". No hours out of
+    burrow are stated in the text (figures not readable in extraction).
+  - Atkinson 1974 Mar. Biol. 25: 239-252 (https://doi.org/10.1007/BF00394970) and Rice & Chapman 1971 Mar. Biol.
+    10: 330-342 (https://doi.org/10.1007/BF00368093): closed, no abstract retrieved. [S, search summary only:
+    Atkinson 1974 burrows had 1-6 openings, tunnels ~10 cm deep; field burrow distribution random.]
+
+Q4.8 Zainal, K.A.Y. 1990. Aspects of the biology of the squat lobster, Munida rugosa (Fabricius, 1775). PhD
+thesis, University of Glasgow. https://theses.gla.ac.uk/78167/  file: data/zainal1990_thesis/zainal1990.pdf [F]
+  Firth of Clyde, 8-115 m; M. sarsi 95-115 m.
+  - "It has been noted that M. rugosa occupies the burrows of other species, for example, they have been
+    reported from burrows of the red band-fish Cepola rubescens (Atkinson et al., 1977) and those of the Norway
+    lobster, Nephrops norvegicus (R.J.A. Atkinson pers. comm.). In each case the burrows had been vacated by
+    the original occupants."
+  - Divers reported "M. rugosa on open bedrock, beneath stones and rock overhangs (particularly at the
+    bedrock/sediment interface), in rock crevices, amongst hydroid and bryozoan 'turf' and on the sediment
+    plain. Here they were often adjacent to stones and other cover, but also occurred in burrows."
+  - "more animals were caught in creels when they were deployed near to rocks than when they were further out on
+    the sediment plain."
+  - Lab: "Animals were observed to occupy hollows in the muddy substrata of tanks, but none were observed to
+    burrow independently." "Independent burrowing behaviour could not be substantiated".
+  - "Observations suggest that those specimens that do occur in crevices and burrows, remain at or near the
+    opening (R.J.A. Atkinson, pers. comm.)."
+  - Feeding time: "more full stomachs (category 1) were found in the morning catches than in afternoon catches,
+    suggesting a nocturnal feeding peak": >50 % full 29 of 71 (morning) vs 8 of 43 (afternoon).
+    J: 0.41 vs 0.19.
+  - REFUGE SATURATION (J): on featureless mud, Munida shelter depends on burrows dug by other species (Nephrops,
+    Goneplax, Cepola) and on stones. This is a refuge that can saturate, but no study quantifying vacant-burrow
+    availability vs Munida density was found.
+
+Q4.9 Nickell, L.A. & Sayer, M.D.J. 1998. Occurrence and activity of mobile macrofauna on a sublittoral reef:
+diel and seasonal variation. J. Mar. Biol. Assoc. UK 78: 1061-1082. https://doi.org/10.1017/S0025315400044325 [A]
+  - UWTV, 48 h in four seasons, west Scotland reef: "Munida rugosa [was] predominantly diurnal" (listed with
+    the fish that "were predominantly diurnal"). Rocky reef, shallow - J: conflicts with the nocturnal feeding
+    of Zainal; Munida timing seems site-dependent, as in the Mediterranean (M. intermedia diurnal, M. tenuimana
+    nocturnal, Q4.1/Q4.4).
+
+Q4.10 Aguzzi, J. et al. 2021. Burrow emergence rhythms of Nephrops norvegicus by UWTV and surveying biases.
+Sci. Rep. 11: 5797. https://doi.org/10.1038/s41598-021-85240-3 (PMC7970996)
+file: data/aguzzi2021_scirep/PMC7970996.xml   [F] (context for burrow availability only)
+  - "The results showed an average level of 1 visible Nephrops individual per 10 burrow systems, depending on
+    sampling time and depth." Example: "0.908 burrows/m2 ... This corresponds to a visible occupancy of 0.086
+    individuals per burrow" (FU 15, W Irish Sea). J: "visible" is not "present", so this does not give the
+    vacant-burrow fraction that Munida could use.
+
+Q4.11 SMALL SHRIMPS (Crangon allmanni, Pontophilus spinosus, Processa, Pandalus montagui, Eualus)
+  - P. montagui: males 1.52 x more in day catches (Baker et al. 2021, Q3.7) [F]; massive nocturnal migration,
+    75 % of pelagic migrants males, > 200 m above bottom (Hudon et al. 1992; Crawford et al. 1992, Q3.8) [A].
+  - Processa: nocturnal buriers, night/day folding factor 100 on the 100 m Mediterranean shelf (Q4.1) [F];
+    P. canaliculata activity "most prevalent at night" (Aguzzi 2009c) [F]. Aguzzi & Garcia 2008 Crustaceana
+    81: 1301 (https://doi.org/10.1163/156854008X369492): closed, no abstract.
+  - Pontophilus norvegicus (slope, burrower): nocturnal, factor 3.0 (Q4.1) [F]. P. spinosus: Not found.
+  - Crangon allmanni, Eualus: no diel or burial data found (searched; Blahudka & Turkay 2002 Helgol. Mar. Res.
+    56: 190, file data/callmanni_germanbight2002/, has none).
+
+Q4.12 HERMIT CRABS (Pagurus, Anapagurus)
+  - No sublittoral activity rhythm, burial or day/night catch ratio found for Pagurus bernhardus, P. prideaux,
+    P. pubescens or Anapagurus laevis. Shell limitation is described for P. bernhardus (search snippets only,
+    intertidal/shallow) but is not a refuge from fish and is not quantified here.
+
+Q4.13 MYSIDS / HYPERBENTHOS
+  Kaartvedt, S. 1989. Retention of vertically migrating suprabenthic mysids in fjords. MEPS 57: 119-128.
+  https://www.int-res.com/articles/meps/57/m057p119.pdf  file: data/meps57_119_1989/m057p119.pdf   [F]
+  Masfjorden, W Norway (basin ~400 m).
+  - "Little evidence of horizontal dispersal was found in spite of extensive upward migration at night (> 100 m
+    away from bottom)."
+  - Lophogaster typicus: "The species is known to burrow into the sediment during daylight (Macquart-Moulin
+    1973, Bjerkestrand 1979, Fossa 1986), thus vulnerability to advection is restricted to the pelagic phase at
+    night. The entire population takes part in vertical migration (Kaartvedt 1985, Fossa et al. unpubl.) giving
+    Nm/N = 1. ... The pelagic phase lasts all night (Kaartvedt 1985, present investigation), and is as an annual
+    mean conservatively set to 10 h (T = 10/24)."
+  - "In both Lophogaster typicus and Leptomysis gracilis, the entire population seems to leave the bottom at
+    night and remain in the pelagic phase through the dark period (Kaartvedt 1985). On the other hand, part of
+    the population of Boreomysis megalops may remain in the suprabenthic region at night".
+  - B. megalops: "Day and night sampling with the 2 mm net IKMT at Stn 2 in December 1986 gave no catch in the
+    day compared to 150 individuals at night." (pelagic, i.e. off-bottom, catch).
+  - SKAGERRAK RELEVANCE: "extensive sampling by sledge in fjords, in the Norwegian Trench and on the continental
+    shelf where currents are stronger than in the fjords ... has revealed that vertically migrating mysids are
+    not abundant at the shelf and trench locations. In contrast, fjord-living species which do not undertake
+    extensive vertical migrations also have abundant populations in these more advective environments
+    (T. Brattegard pers. comm.)." J: on the Skagerrak/Norwegian Trench slope the mysid stock is likely
+    dominated by non-migrating (bottom-bound) species, i.e. exposed to benthivores around the clock.
+
+  Mees, J. & Jones, M.B. 1997. The hyperbenthos. Oceanogr. Mar. Biol. Annu. Rev. 35: 221-255.
+  https://www.vliz.be/imisdocs/publications/281359.pdf  file: data/vliz_hyperbenthos_281359/281359.pdf   [F]
+  - Bay of Biscay shelf (Sorbe; sledge 0-50 and 50-100 cm): "The upper net (sampling the section between 50 m
+    [sic, cm] and 100 cm above the bottom) contained between 1.1% and 13.8% of the fauna present in the lower net
+    (which sampled between 0cm and 50cm above the bottom) during day and night, respectively." "Average annual
+    densities were 8730 ind. 100 m-3 at 31 m, and 3620 (day) and 2060 (night) at 91 m." At 91 m "mysids (44%)
+    and amphipods (27%) still predominated ... During the night, the dominance of mysids decreased (17%)" [S for
+    the original data; F for the review sentence].
+    J: in the bottom metre at 91 m, total hyperbenthos night/day = 2060/3620 = 0.57; mysids night/day =
+    (0.17 x 2060)/(0.44 x 3620) = 0.22, i.e. ~78 % of the day-time near-bottom mysids leave the bottom metre at
+    night.
+  - Bay of Seine, 10 m, June: mysids and cumaceans "average day density was 120 ind. 100 m-3 (56% of the animals
+    caught in the lower net), average night density was 480 ind. 100 m-3 (with a more even distribution of the
+    animals over the four nets)" (shallow; emergence from the sediment raises night density) [S/F as above].
+  - "Kaartvedt (1985), using sledges at 150 m in Fanafjorden (Norway), found that many of the mysid species
+    found near the bottom during the day undertook nocturnal vertical migrations; even so, a significant
+    proportion of the total population of each species remained in the hyperbenthic layer during darkness."
+  - "Generally, deep-living hyperbenthic cumaceans and amphipods are associated with the sediment during the
+    day, and swimming activity ... increases within the lower metres of the water column during darkness ...
+    the amplitude of the vertical migrations is usually small (Kaartvedt 1989)."
+
+  Cunha, M.R., Sorbe, J.C. & Bernardes, C. 1997. MEPS 157: 119-137 (full text now read; data/cunha1997_meps157/)
+  [F]: only one night haul, at the 21 m site; "The daytime structure (station TS320) is dominated by mysids
+  (70.9% of the total density in the 0 to 100 cm water layer)". No night data at 91-299 m. Adds nothing
+  quantitative for 100-300 m beyond evidence_B.
+
+
+=====================================================================================================
+REFUGE SATURATION - what was found (J summary)
+=====================================================================================================
+  - Burrowers that dig their own refuge (Goneplax, Alpheus, Nephrops): no limit on refuges implied; Goneplax
+    burrows 0.93 /m2 at 17 m (Atkinson, Lundy) - occupancy unknown.
+  - Munida: does not dig (Zainal 1990); depends on vacated burrows of Nephrops/Goneplax/Cepola, stones and
+    crevices; stays at the opening. Refuge availability could limit it on open mud. No numbers.
+  - L. depurator: buries or sits in depressions; at Lundy seen on the surface by day (inactive). Burial in soft
+    sediment is not limited by space (J).
+  - Processa, Solenocera, Pontophilus: bury in sediment; unlimited substrate (J).
+  - Mysids: Lophogaster burrows; others stay in the bottom 0.5 m by day (refuge = proximity to bottom /
+    darkness, not a countable shelter).
+  - Hermits: portable shell; shell supply is limiting in P. bernhardus (intertidal/shallow, search snippets),
+    unquantified, and not a refuge from fish that crush shells.
+
+
+=====================================================================================================
+NOT FOUND (searched, no number located)
+=====================================================================================================
+  - Bergstrom 2000 (Adv. Mar. Biol. 38: 55) full text - closed (Unpaywall: not OA); its numbers not seen.
+  - Barr 1970 full text (heights reached, share migrating) - closed; abstract only.
+  - Hudon et al. 1992 / Crawford et al. 1992 full texts (share of population pelagic) - closed; abstracts only.
+  - Any Skagerrak, Norwegian-fjord or North Sea measurement of P. borealis night ascent (height, share, hours).
+  - Gulf of St Lawrence, Barents Sea and Norwegian-fjord acoustic or net studies of adult P. borealis night
+    ascent: searched (also day-night correction factors for the GSL, Flemish Cap and Barents surveys); none
+    with numbers found. Only larval vertical distribution (GSL, CJFAS 51, doi 10.1139/f94-014) turned up.
+  - Measured hours per day off the bottom for P. borealis (only "dusk to dawn", "related to night length").
+  - Predation risk of P. borealis on vs off the bottom (no study comparing exposure to demersal vs pelagic fish).
+  - Hours per day buried for Liocarcinus depurator, Atelecyclus rotundatus, Goneplax (only "not seen by day",
+    "nocturnal"); Atkinson 1974 and Rice & Chapman 1971 full texts closed.
+  - Munida rugosa / M. sarsi: day/night catch ratio in northern Europe; burrow-sharing frequency with Nephrops;
+    vacant-burrow availability (refuge saturation).
+  - Crangon allmanni, Pontophilus spinosus, Eualus spp.: burial time, diel catch ratio.
+  - Pagurus bernhardus, P. prideaux, P. pubescens, Anapagurus laevis: sublittoral activity rhythm, day/night
+    catch ratio, time hidden.
+  - Kaartvedt 1985 (Sarsia 70: 287) and Fossa 1985 (Sarsia 70: 297) full texts - closed; the "significant
+    proportion remaining" at night in Fanafjorden is not quantified here.
+  - Mauchline 1980 (Adv. Mar. Biol. 18) - not retrieved.
+  - Aguzzi & Company 2010 review (Adv. Mar. Biol. 58: 155-225, https://doi.org/10.1016/B978-0-12-381015-1.00003-4)
+    - closed, not read.

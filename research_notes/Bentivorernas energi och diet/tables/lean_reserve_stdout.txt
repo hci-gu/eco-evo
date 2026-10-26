@@ -1,0 +1,32 @@
+species               w  lean  whole     ME   fill
+haddock           0.384  3.80   4.60   2000  0.400 J
+cod               0.312  3.80   4.75   2000  0.475 F/S
+long rough dab    0.125  2.60   3.20   1000  0.600 A/J
+dab               0.045  3.60   4.50   1500  0.600 J
+plaice            0.038  3.60   4.60   1850  0.541 F/J
+witch             0.017  4.00   5.60   1500  1.067 F/J
+starry ray        0.015  3.60   4.00   1500  0.267 J
+hagfish           0.013  3.50   4.50   1500  0.667 J
+grey gurnard      0.009  3.80   4.40   1500  0.400 S/J
+lemon sole        0.009  4.00   5.80   1850  0.973 F/J
+greater weever    0.008  4.00   5.30   1500  0.867 F/J
+others            0.025  3.60   4.50   1500  0.600 J
+
+weighted lean energy_content         3628 MJ/t (range 3400-3850, J)
+weighted whole body (annual mean)    4486 MJ/t (3900-4800)
+weighted max_energy_reserve          1802 MJ/t (1500-2100)
+reference fill (whole - lean)/ME    0.476
+
+PROPOSED energy_content 3600, max_energy_reserve 1800, reserve_reference_fill 0.5
+  static prey quality = 3600 + 0.5 x 1800 = 4500 MJ/t (today: whole body 4500, no reserve eaten)
+  fill check: (weighted whole 4486 - 3600) / 1800 = 0.492
+  mass-balance ceiling ME/ec = 0.500 per tick (today 1800/4500 = 0.400)
+
+Per tonne at reserve fill s (engine): prey quality ec + s ME, production cost ec + s ME
+    s  today eaten  new eaten  today cost/t  new cost/t
+0.300         4500       4140          5040        4140
+0.500         4500       4500          5400        4500
+0.600         4500       4680          5580        4680
+0.720         4500       4896          5796        4896
+0.758         4500       4964          5864        4964
+0.800         4500       5040          5940        5040

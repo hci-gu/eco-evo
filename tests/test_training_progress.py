@@ -176,13 +176,17 @@ def _progress_args(**overrides):
     return args
 
 
-@pytest.mark.parametrize("rollout", [{"n_eval_ticks": 1460}, {"ticks": 1460}])
-def test_eval_ticks_follow_the_training_rollout_length(rollout):
-    """train.py stores --n_eval_ticks, train_gpu.py the dest "ticks"."""
+@pytest.mark.parametrize("rollout", [{"n_eval_ticks": 1460}, {"ticks": 400}])
+def test_the_default_probe_is_three_years(rollout):
+    """Section 223.12: the probe runs three years of the probe world's
+    (library) tick length, whatever the training rollout or tick length."""
     from lib.runners.training_progress import validate_progress_arguments
     args = _progress_args(**rollout)
     validate_progress_arguments(None, args)
-    assert args.eval_ticks == 1460 and args.eval_ticks_default
+    assert args.eval_ticks == 3 * 1460 and args.eval_ticks_default
+    hourly = _progress_args(tick_length=3, **rollout)
+    validate_progress_arguments(None, hourly)
+    assert hourly.eval_ticks == 3 * 1460
 
 
 def test_an_explicit_eval_ticks_wins():
@@ -192,14 +196,14 @@ def test_an_explicit_eval_ticks_wins():
     assert args.eval_ticks == 500 and not args.eval_ticks_default
 
 
-def test_gpu_parser_resolves_eval_ticks_from_n_eval_ticks():
+def test_gpu_parser_resolves_the_three_year_probe():
     from lib.gpu.cli import parse_training_args
     from lib.runners.training_progress import validate_progress_arguments
     from train_gpu import build_parser
     parser = build_parser()
     args = parse_training_args(parser, ["--project", "mareld2.yaml", "--n_eval_ticks", "1460"])
     validate_progress_arguments(parser, args)
-    assert (args.ticks, args.eval_ticks) == (1460, 1460)
+    assert (args.ticks, args.eval_ticks) == (1460, 4380)
 
 
 def test_resume_keeps_the_runs_eval_ticks_unless_one_is_given(tmp_path):

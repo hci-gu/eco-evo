@@ -1,0 +1,21 @@
+cod 1981 1 0.76 0.06 1.02 2.91 1.188 1.249 1.56 1.64
+cod 1981 2 0.66 1.74 5.22 3.38 2.75 3.049 4.17 4.62
+cod 1981 3 1.8 6.63 10.25 2.87 5.388 5.9 2.99 3.28
+cod 1981 4 3.49 10.09 12.5 2.32 7.1 7.616 2.03 2.18
+cod 1981 5 3.76 11.3 12.14 2.31 7.378 7.894 1.96 2.1
+cod 1981 6+ 2.16 18.78 7.14 0.44 7.13 7.84 3.3 3.63
+cod 1991 1 0.03 3.2 4.09 2.14 2.365 2.699 78.83 89.95
+cod 1991 2 2.59 5.56 4.49 2.18 3.705 3.864 1.43 1.49
+cod 1991 3 1.72 3.48 3.6 2.39 2.798 2.951 1.63 1.72
+cod 1991 4 2.01 5.45 6.31 1.54 3.827 4.087 1.9 2.03
+cod 1991 5 2.41 7.14 7.02 0.34 4.228 4.487 1.75 1.86
+cod 1991 6+ 3.2 8.82 7.46 0.17 4.913 5.157 1.54 1.61
+haddock 1991 3 2.06 0.0 0.36 2.03 1.112 0.977 0.54 0.47
+haddock 1991 4 1.73 0.04 0.44 1.56 0.943 0.83 0.54 0.48
+haddock 1991 5 1.52 0.05 0.47 0.74 0.695 0.577 0.46 0.38
+haddock 1991 6+ 0.79 0.06 0.2 0.14 0.297 0.227 0.38 0.29
+cod 1981 ages 2+ with Q1 >= 0.5 %: n 5  F unweighted median 2.99 (range 1.96-4.17);  ration-weighted median 3.28 (range 2.10-4.62)
+cod 1991 ages 2+ with Q1 >= 0.5 %: n 5  F unweighted median 1.63 (range 1.43-1.90);  ration-weighted median 1.72 (range 1.49-2.03)
+cod both ages 2+ with Q1 >= 0.5 %: n 10  F unweighted median 1.93 (range 1.43-4.17);  ration-weighted median 2.06 (range 1.49-4.62)
+haddock 1991 ages 2+ with Q1 >= 0.5 %: n 4  F unweighted median 0.50 (range 0.38-0.54);  ration-weighted median 0.42 (range 0.29-0.48)
+haddock both ages 2+ with Q1 >= 0.5 %: n 4  F unweighted median 0.50 (range 0.38-0.54);  ration-weighted median 0.42 (range 0.29-0.48)

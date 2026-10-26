@@ -78,6 +78,20 @@ class FunctionalGroup:
         # max_carrying_capacity everywhere / no equilibrium spawn.
         self.capacity_map = None
         self.equilibrium_map = None
+        # Section 223.12: benthic refuge with exchange (non decision makers
+        # only; lib/environments/ecosystem_env/refuge.py). exposed_share phi
+        # is the accessible part's equilibrium share of the biomass, held
+        # in the energy_reserve slot; refuge_exchange_rate k per tick.
+        share = params.get('exposed_share')
+        self.exposed_share = None
+        if share is not None and not self.is_decision_maker:
+            share = float(share)
+            if not 0.0 < share < 1.0:
+                raise ValueError(f"{group_id}: exposed_share must be in (0, 1)")
+            self.exposed_share = share
+        self.refuge_exchange_rate = float(params.get('refuge_exchange_rate', 0.0) or 0.0)
+        if self.refuge_exchange_rate < 0.0:
+            raise ValueError(f"{group_id}: refuge_exchange_rate must be >= 0")
 
     def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7,
                          randomize_energy=False, rng=None):
@@ -109,6 +123,9 @@ class FunctionalGroup:
             # E_X(c) = ratio * ME_X (uniform across the grid).
             energy_per_ton = np.full(shape, initial_energy_ratio * self.max_energy_reserve)
         self.energy_reserve = self.biomass * energy_per_ton
+        if self.exposed_share is not None:
+            # The accessible part starts at its equilibrium share.
+            self.energy_reserve = self.biomass * self.exposed_share
         self.temp_energy_gains = np.zeros(shape)
 
     @property

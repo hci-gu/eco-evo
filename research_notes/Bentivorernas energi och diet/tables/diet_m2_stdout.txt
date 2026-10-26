@@ -1,0 +1,31 @@
+Consumption-weighted diet (section 209 central): B 72.0, Z 2.5, P 8.4, W 1.9, Bf 4.3, Oth 10.9
+No model pair: Z 2.5 + Bf 4.3 + Oth 10.9 = 17.8 %
+Oth by category (% of consumption): unid_fish 3.91, cephalopod 3.18, small_demersal_fish 2.38, carrion 1.19, sandeel 0.17, other_inv 0.10
+Checked pools today: infauna 0.511, epifauna 0.209, planktivores 0.084, predators 0.019 (sum 0.823)
+
+Real assimilated quality of the published diet: 2623 MJ/t (energy budget 4.2 x 2623 = 11018 MJ/t/yr)
+
+Reproduction (Q/B 3.48, today's shares): benthic_infauna 0.0291, mobile_epifauna 0.1434, planktivorous_fish 0.1344, predatory_fish 0.0852
+  library today: infauna 0.029, epifauna 0.141 (at 7.88), planktivores 0.14, predators 0.085
+
+=== central: shares benthic_infauna 0.544, mobile_epifauna 0.314, planktivorous_fish 0.120, predatory_fish 0.023 (dropped within-group 0.043)
+    real quality 2472 MJ/t -> energy-equivalent Q/B 4.46 (3.4 -> 3.61, 5.0 -> 5.31); engine quality 2709 MJ/t
+       Q/B 3.4: benthic_infauna 0.0302, mobile_epifauna 0.2108, planktivorous_fish 0.1870, predatory_fish 0.0980   (consumption 5.20 t/km2/yr)
+       Q/B 4.2: benthic_infauna 0.0373, mobile_epifauna 0.2604, planktivorous_fish 0.2310, predatory_fish 0.1211   (consumption 6.43 t/km2/yr)
+       Q/B 5.0: benthic_infauna 0.0444, mobile_epifauna 0.3100, planktivorous_fish 0.2750, predatory_fish 0.1441   (consumption 7.65 t/km2/yr)
+     energy-eq: benthic_infauna 0.0396, mobile_epifauna 0.2763, planktivorous_fish 0.2451, predatory_fish 0.1285   (consumption 6.82 t/km2/yr)
+
+=== benthos_heavy: shares benthic_infauna 0.633, mobile_epifauna 0.259, planktivorous_fish 0.088, predatory_fish 0.020 (dropped within-group 0.043)
+    real quality 2339 MJ/t -> energy-equivalent Q/B 4.71 (3.4 -> 3.81, 5.0 -> 5.61); engine quality 2514 MJ/t
+       Q/B 3.4: benthic_infauna 0.0352, mobile_epifauna 0.1737, planktivorous_fish 0.1372, predatory_fish 0.0870   (consumption 5.20 t/km2/yr)
+       Q/B 4.2: benthic_infauna 0.0435, mobile_epifauna 0.2145, planktivorous_fish 0.1694, predatory_fish 0.1074   (consumption 6.43 t/km2/yr)
+       Q/B 5.0: benthic_infauna 0.0518, mobile_epifauna 0.2554, planktivorous_fish 0.2017, predatory_fish 0.1279   (consumption 7.65 t/km2/yr)
+     energy-eq: benthic_infauna 0.0488, mobile_epifauna 0.2406, planktivorous_fish 0.1901, predatory_fish 0.1205   (consumption 7.21 t/km2/yr)
+
+=== fish_heavy: shares benthic_infauna 0.520, mobile_epifauna 0.269, planktivorous_fish 0.183, predatory_fish 0.027 (dropped within-group 0.000)
+    real quality 2555 MJ/t -> energy-equivalent Q/B 4.31 (3.4 -> 3.49, 5.0 -> 5.13); engine quality 2915 MJ/t
+       Q/B 3.4: benthic_infauna 0.0289, mobile_epifauna 0.1805, planktivorous_fish 0.2866, predatory_fish 0.1191   (consumption 5.20 t/km2/yr)
+       Q/B 4.2: benthic_infauna 0.0357, mobile_epifauna 0.2230, planktivorous_fish 0.3540, predatory_fish 0.1471   (consumption 6.43 t/km2/yr)
+       Q/B 5.0: benthic_infauna 0.0425, mobile_epifauna 0.2655, planktivorous_fish 0.4214, predatory_fish 0.1751   (consumption 7.65 t/km2/yr)
+     energy-eq: benthic_infauna 0.0367, mobile_epifauna 0.2290, planktivorous_fish 0.3635, predatory_fish 0.1510   (consumption 6.60 t/km2/yr)
+

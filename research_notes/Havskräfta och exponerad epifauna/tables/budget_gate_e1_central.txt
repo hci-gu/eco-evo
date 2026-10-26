@@ -1,0 +1,44 @@
+[budget_gate on /home/simon/eco-evo/research_notes/Havskräfta och exponerad epifauna/data/fg_library_e1_central.yaml with research_notes/Havskräfta och exponerad epifauna/data/mareld2_e1_central.yaml]
+=== per (predator, prey): what ONE prey alone would have to do ===
+A row that does not clear the bar on its own is low-quality food,
+not pure loss - the verdict is the per-predator block below.
+
+      predator               prey   u_x   h(u)    cost   a*gain  sat_min  need_vis   B/cell      max        alone
+benthivorous_fish    benthic_infauna  0.50  1.000     7.2     19.0    0.379     0.025    93.61   129.74           ok
+benthivorous_fish    mobile_epifauna  0.50  1.000     7.2     21.7    0.332     0.008     3.06     4.21           ok
+benthivorous_fish     norway_lobster  0.50  1.000     7.2     21.7    0.332     0.009     4.56     9.15           ok
+benthivorous_fish planktivorous_fish  0.50  1.000     7.2     21.7    0.332     0.100     6.99    90.67           ok
+benthivorous_fish     predatory_fish  0.50  1.000     7.2     21.7    0.332     0.099     3.15    33.31           ok
+planktivorous_fish        zooplankton  0.20  1.000    15.2     90.0    0.169     0.299     9.76    23.49           ok
+     porpoises  benthivorous_fish  0.50  1.000    90.0    132.2    0.681     0.622     3.83    60.38           ok
+     porpoises planktivorous_fish  0.50  1.000    90.0    224.2    0.401     1.042     6.99    90.67           ok
+     porpoises     predatory_fish  0.50  1.000    90.0    154.3    0.583     0.245     3.15    33.31           ok
+predatory_fish  benthivorous_fish  0.50  1.000     7.6     20.4    0.375     0.019     3.83    60.38           ok
+predatory_fish    mobile_epifauna  0.50  1.000     7.6     20.4    0.375     0.012     3.06     4.21           ok
+predatory_fish planktivorous_fish  0.50  1.000     7.6     20.4    0.375     0.179     6.99    90.67           ok
+predatory_fish        zooplankton  0.50  1.000     7.6     20.4    0.375     1.698     9.76    23.49           ok
+         seals  benthivorous_fish  0.50  1.000    75.0    180.4    0.416     0.336     3.83    60.38           ok
+         seals planktivorous_fish  0.50  1.000    75.0    187.2    0.401     9.980     6.99    90.67           ok
+         seals     predatory_fish  0.50  1.000    75.0    180.7    0.415     0.574     3.15    33.31           ok
+   zooplankton   microzooplankton  0.50  1.000    90.0    900.0    0.100     0.278     0.40     0.97           ok
+   zooplankton      phytoplankton  0.50  1.000    90.0    780.0    0.115     1.087    22.31    53.68           ok
+   zooplankton subsurface_phytoplankton  0.50  1.000    90.0    780.0    0.115     0.652    11.15    26.84           ok
+
+=== per predator: the budget the engine actually closes ===
+      predator    ration  %bm/day    cost    need_q    best_q   worst_q  min share      verdict
+benthivorous_fish   0.01043     4.2%     7.2       690      5700      1820      0.000     any diet
+planktivorous_fish   0.02500    10.0%    15.2       608      3600      3600      0.000     any diet
+     porpoises   0.03497    14.0%    90.0      2574      6412      3780      0.000     any diet
+predatory_fish   0.00680     2.7%     7.6      1124      5700      3000      0.000     any diet
+         seals   0.04717    18.9%    75.0      1590      6270      3825      0.000     any diet
+   zooplankton   0.25000   100.0%    90.0       360      3600      3120      0.000     any diet
+
+Units: ration in t prey / t predator / 6 h; cost and quality in
+MJ / t. quality is assimilation_factor * energy_content, i.e. the
+energy the predator keeps per tonne eaten.
+
+Sensitivity for porpoises -> planktivorous_fish (the pair in question):
+   u_x    h(u)  sat_min  need_visible_t/cell
+  0.50   1.000    0.401                1.042
+  0.40   1.000    0.401                1.042
+  0.30   1.000    0.401                1.042

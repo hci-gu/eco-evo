@@ -100,13 +100,14 @@ def test_mareld2_benthos_carries_the_depth_habitat():
     assert (eq / fg.capacity_map).min() < 0.6 < (eq / fg.capacity_map).max()
     np.testing.assert_allclose(fg.biomass / fg.biomass.sum(), eq / eq.sum(), rtol=1e-5, atol=1e-12)
     # the other groups keep a scalar K, but for the mobile epifauna
-    # (section 221), which has its own depth table
-    assert groups["mobile_epifauna"].capacity_map is not None
-    assert all(g.capacity_map is None for f, g in groups.items()
-               if f not in (BENTHOS, "mobile_epifauna"))
+    # (section 221) and the Norway lobster (223.15), which have their own
+    # depth tables
+    benthic = (BENTHOS, "mobile_epifauna", "norway_lobster")
+    assert all(groups[f].capacity_map is not None for f in benthic)
+    assert all(g.capacity_map is None for f, g in groups.items() if f not in benthic)
 
 
-@pytest.mark.parametrize("fid", [BENTHOS, "mobile_epifauna"])
+@pytest.mark.parametrize("fid", [BENTHOS, "mobile_epifauna", "norway_lobster"])
 def test_manifest_total_is_the_equilibrium_sum(fid):
     groups = _mareld2()
     project = _load("mareld2.yaml")

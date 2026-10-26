@@ -1,0 +1,39 @@
+taxon,quantity,low,central,high,unit,source,tag
+Pandalus borealis,day_night_catch_ratio,,2.47,,ratio noon/midnight bottom-trawl catch,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 Table 1-2 (Davis Strait, August, ~368 m); https://www.nafo.int/icnaf/library/docs/1978/res-87.pdf",F
+Pandalus borealis,day_night_catch_ratio,1.80,,3.50,ratio max/min bottom-trawl catch,"Horsted 1976 (1.80 Jul), Berenboim et al. 1976 (2.80 Aug), Smidt 1976 (3.50 Aug) as tabulated in Jones & Parsons 1978 Table 3, Davis Strait",S
+Pandalus borealis,day_night_catch_ratio,1.9,,6.33,ratio day/night survey catch,Frechette et al. 1983 as cited by Baker et al. 2021 J. Crust. Biol. 41(2) ruab024 https://doi.org/10.1093/jcbiol/ruab024,S
+Pandalus borealis,day_night_catch_ratio,1.7,2.4,2.6,ratio mean 09-15 h / mean 21-03 h commercial catch,"J from Smidt 1976 ICNAF Res.Doc. 76/XII/149 Table 2 (W Greenland, Dec/Nov/Oct 1975); scripts/smidt_1976_ratios.py",J
+Pandalus borealis,fraction_exposed_24h_mean,0.51,0.54,0.75,24-h mean catch / daily max catch,"J from Smidt 1976 Table 2 (Oct 0.51, Nov 0.54, Dec 0.75); scripts/smidt_1976_ratios.py",J
+Pandalus borealis,hours_off_bottom_per_day,6,12,17.5,"h/day for the migrating fraction (= dark hours at 58 N, midsummer-midwinter)","J from Barr 1970 abstract (off bottom dusk to dawn, time off bottom ~ night length) https://doi.org/10.1139/f70-071 and day length at 58 N",J
+Pandalus montagui,day_night_catch_ratio,,1.52,,ratio day/night bottom-trawl catch (males),Baker et al. 2021 J. Crust. Biol. 41(2) ruab024 https://doi.org/10.1093/jcbiol/ruab024,F
+Pandalus montagui,share_males_among_pelagic_migrants,,0.75,,fraction,Hudon et al. 1992 CJFAS 49:565 abstract https://doi.org/10.1139/f92-066,A
+Pandalus montagui,night_ascent_m,,200,,m above bottom (> 200),Crawford et al. 1992 CJFAS 49:842 abstract https://doi.org/10.1139/f92-095,A
+Pandalus borealis,midnight_catch_fraction_of_noon,,0.404,,fraction,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 Table 2 (Davis Strait, August, ~368 m)",F
+Pandalus borealis,night_plateau_hours,,1.83,,h,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 (night plateau 1 h 50 min, August, ~64-67 N)",F
+Pandalus borealis,day_plateau_hours,,5.33,,h,"Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 (day plateau 5 h 20 min, August)",F
+Pandalus borealis,fraction_exposed_24h_mean,,0.68,,fraction of noon bottom level,"J from Jones & Parsons 1978 Table 2 hourly values; scripts/jones_parsons_1978_daily_mean.py (summer, high latitude)",J
+Liocarcinus depurator,night_day_catch_ratio,,5,,"folding factor (night/day), Mediterranean shelf 100-110 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Liocarcinus depurator,night_day_catch_ratio,,2.5,,"folding factor (night/day), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Liocarcinus depurator,night_day_catch_ratio,3.4,,3.5,"mean density night/day, Mediterranean shelf 100-110 m, Oct and Jun",J from Bahamon et al. 2009 ICES JMS 66:2211 Table 2 (preprint) https://doi.org/10.1093/icesjms/fsp190,J
+Liocarcinus depurator,night_day_catch_ratio,0.9,,1.3,"mean density night/day, Mediterranean slope 400-430 m, Oct and Jun",J from Bahamon et al. 2009 ICES JMS 66:2211 Table 2 (preprint) https://doi.org/10.1093/icesjms/fsp190,J
+Goneplax rhomboides,night_day_catch_ratio,,10,,"folding factor (night/day), Mediterranean shelf 100-110 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Goneplax rhomboides,night_day_catch_ratio,,2.0,,"folding factor, Mediterranean slope 400-430 m (arrhythmic)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Goneplax rhomboides,burrow_density,,0.93,,"burrows per m2 (17 m, Lundy, August)","Atkinson, Lundy Field Society Annual Report 26 https://lfs-resources.s3.amazonaws.com/ar26/LFS_Annual_Report_Vol_26_Part_26.pdf",F
+Pontophilus norvegicus,night_day_catch_ratio,,3.0,,"folding factor (night/day), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Munida tenuimana,night_day_catch_ratio,,2.0,,"folding factor (night/day), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Munida intermedia,night_day_catch_ratio,,0.5,,"folding factor (diurnal; night/day < 1), Mediterranean slope 400-430 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Processa canaliculata,night_day_catch_ratio,,100,,"folding factor (night/day), Mediterranean shelf 100-110 m (order of magnitude)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Processa nouveli,night_day_catch_ratio,,100,,"folding factor (night/day), Mediterranean shelf 100-110 m (order of magnitude)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+Alpheus glaber,night_day_catch_ratio,1.0,,10,"folding factor, slope (arrhythmic) to shelf 100-110 m",Aguzzi & Bahamon 2009 Fish. Res. 100:274 Table 1 https://doi.org/10.1016/j.fishres.2009.08.010,F
+endobenthic burrowers (Mediterranean decapods),night_day_catch_ratio,,10,,"night/day trawl occurrence, shelf",Aguzzi & Bahamon 2009 Fish. Res. 100:274 text ('a 10-fold increase versus daytime'),F
+endobenthic buriers (Mediterranean decapods),night_day_catch_ratio,,,100,"night/day trawl occurrence, shelf (up to)",Aguzzi & Bahamon 2009 Fish. Res. 100:274 text ('up to 100 times'),F
+Munida rugosa,fraction_stomachs_over_half_full,0.19,,0.41,fraction; afternoon vs morning catches (Firth of Clyde),"J from Zainal 1990 PhD thesis Univ. Glasgow (29/71 morning, 8/43 afternoon) https://theses.gla.ac.uk/78167/",J
+Lophogaster typicus,fraction_migrating,,1.0,,fraction of population leaving bottom at night (buries by day),Kaartvedt 1989 MEPS 57:119 https://www.int-res.com/articles/meps/57/m057p119.pdf,F
+Lophogaster typicus,hours_off_bottom_per_day,,10,,"h/day, annual mean ('conservatively', W Norway fjord)",Kaartvedt 1989 MEPS 57:119,F
+Leptomysis gracilis,fraction_migrating,,1.0,,fraction ('entire population seems to leave the bottom at night'),Kaartvedt 1989 MEPS 57:119 citing Kaartvedt 1985,F
+Boreomysis megalops,night_ascent_m,,100,,m above bottom (> 100; part of population stays near bottom),Kaartvedt 1989 MEPS 57:119,F
+hyperbenthos (Bay of Biscay shelf 91 m),night_day_density_ratio_0_100cm,,0.57,,"night/day density in bottom 1 m (3620 day, 2060 night ind./100 m3)",Mees & Jones 1997 Oceanogr. Mar. Biol. Annu. Rev. 35:221 citing Sorbe https://www.vliz.be/imisdocs/publications/281359.pdf,S
+mysids (Bay of Biscay shelf 91 m),night_day_density_ratio_0_100cm,,0.22,,night/day mysid density in bottom 1 m,"J from Mees & Jones 1997 (mysids 44 % day, 17 % night of 3620 / 2060 ind./100 m3)",J
+hyperbenthos (Bay of Biscay shelf),upper_to_lower_net_ratio,0.011,,0.138,"50-100 cm net / 0-50 cm net, day (low) to night (high)","Mees & Jones 1997 citing Sorbe (Gulf of Gascogne, 25-237 m)",S
+Pandalus borealis,fraction_off_bottom_at_night,,0.60,,fraction at midnight relative to noon (upper bound on migrating share; assumes all on bottom at noon),"J from Jones & Parsons 1978 ICNAF Res.Doc. 78/XI/87 Table 2 (1 - 0.404; Davis Strait, August)",J
+Pandalus borealis,fraction_off_bottom_at_night,0.49,,0.72,"fraction, night (21-03 h) relative to daily max catch (upper bound; Dec to Oct)","J from Smidt 1976 ICNAF Res.Doc. 76/XII/149 Table 2 (night/max 0.28-0.51, W Greenland Oct-Dec 1975)",J

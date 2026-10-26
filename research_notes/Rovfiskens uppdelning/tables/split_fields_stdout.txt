@@ -1,0 +1,97 @@
+====================================================================================================
+Grouping G1: bed = ['whiting']; water column = ['saithe', 'mackerel', 'spurdog', 'horse mackerel', 'hake', 'anglerfish', 'ling', 'velvet belly', 'pollack']
+
+--- G1 bed: ['whiting']
+  weights in group {'whiting': 1.0}
+  share of pooled biomass 0.3715; B* 0.4458 t/km2 = 1605 t
+  r_max 0.490 (0.440-0.490); F 0.0800 (bottom 0.0750, pelagic 0.0050; 0.035-0.150); F/r 0.163
+  K = B*/(1 - F/r) = 0.533 (0.480-0.676) t/km2
+  M1 0.250 /yr (0.200-0.320) = 1.7123e-04 /tick
+  Cmax 104.0 kJ/kg/d (80.0-150.0) -> ceiling 26.00 MJ/t/tick (20.00-37.50)
+  SMR 4.200 (3.30-5.00); Q10 2.30; feeding_cost 2.03 x RM
+  energy lean 3900; max reserve 2000; mean reserve 900; fill 0.450; whole body as eaten 4800 MJ/t
+  starve_rate (u 0.15 convention) 0.0108 (0.0072-0.0179)
+  Q/B (member values) 4.200 (3.30-5.60); Q 1.872 t/km2/yr
+  trawl tables: bottom biomass_factor at 100 0.001704 (0.000746-0.003195); pelagic at 10 0.001372
+  diet (consumption-weighted): planktivorous_fish 0.280, zooplankton 0.280, mobile_epifauna 0.137, benthic_infauna 0.073, benthivorous_fish 0.080, own_group 0.142, other_group 0.007, other 0.000
+  M2 on prey (/yr): planktivorous_fish 0.1589, zooplankton 0.0539, mobile_epifauna 0.0324, benthic_infauna 0.0015, benthivorous_fish 0.0979, other_group 0.0186, own_group (unbooked) 0.5985
+  dark_ratio (diel stomach, consumption-weighted): planktivorous_fish 0.70, benthivorous_fish 0.70, zooplankton 1.00, other_group 0.70
+  accessible_fraction by gape: benthivores 0.052; other group 0.003
+    whiting         Q 1.8722  plankt 0.280 zoopla 0.280 mobile 0.137 benthi 0.073 benthi 0.080 own_gr 0.142 other_ 0.007 other 0.000
+
+--- G1 wc: ['saithe', 'mackerel', 'spurdog', 'horse mackerel', 'hake', 'anglerfish', 'ling', 'velvet belly', 'pollack']
+  weights in group {'saithe': 0.6514, 'mackerel': 0.1276, 'spurdog': 0.0796, 'horse mackerel': 0.0548, 'hake': 0.0396, 'anglerfish': 0.0218, 'ling': 0.0111, 'velvet belly': 0.0075, 'pollack': 0.0066}
+  share of pooled biomass 0.6285; B* 0.7542 t/km2 = 2715 t
+  r_max 0.374 (0.316-0.415); F 0.2419 (bottom 0.2128, pelagic 0.0291; 0.118-0.294); F/r 0.647
+  K = B*/(1 - F/r) = 2.139 (1.054-10.972) t/km2
+  M1 0.261 /yr (0.179-0.302) = 1.7909e-04 /tick
+  Cmax 100.7 kJ/kg/d (77.0-155.7) -> ceiling 25.16 MJ/t/tick (19.25-38.93)
+  SMR 3.310 (2.77-4.98); Q10 2.27; feeding_cost 2.15 x RM
+  energy lean 4244; max reserve 2598; mean reserve 1288; fill 0.496; whole body as eaten 5532 MJ/t
+  starve_rate (u 0.15 convention) 0.0078 (0.0052-0.0130)
+  Q/B (member values) 2.826 (2.56-3.56); Q 2.132 t/km2/yr
+  trawl tables: bottom biomass_factor at 100 0.004836 (0.002362-0.005878); pelagic at 10 0.007983
+  diet (consumption-weighted): planktivorous_fish 0.523, zooplankton 0.342, mobile_epifauna 0.012, benthic_infauna 0.005, benthivorous_fish 0.061, own_group 0.012, other_group 0.033, other 0.013
+  M2 on prey (/yr): planktivorous_fish 0.3376, zooplankton 0.0749, mobile_epifauna 0.0033, benthic_infauna 0.0001, benthivorous_fish 0.0844, other_group 0.1571, own_group (unbooked) 0.0352
+  dark_ratio (diel stomach, consumption-weighted): planktivorous_fish 0.57, benthivorous_fish 0.61, zooplankton 0.86, other_group 0.60
+  accessible_fraction by gape: benthivores 0.242; other group 0.474
+    saithe          Q 1.4739  plankt 0.580 zoopla 0.330 mobile 0.010 benthi 0.000 benthi 0.050 own_gr 0.000 other_ 0.020 other 0.010
+    mackerel        Q 0.2117  plankt 0.300 zoopla 0.650 mobile 0.010 benthi 0.010 benthi 0.010 own_gr 0.000 other_ 0.010 other 0.010
+    spurdog         Q 0.1201  plankt 0.420 zoopla 0.030 mobile 0.000 benthi 0.060 benthi 0.220 own_gr 0.110 other_ 0.110 other 0.050
+    horse mackerel  Q 0.1489  plankt 0.250 zoopla 0.600 mobile 0.050 benthi 0.000 benthi 0.070 own_gr 0.026 other_ 0.004 other 0.000
+    hake            Q 0.1044  plankt 0.770 zoopla 0.000 mobile 0.005 benthi 0.000 benthi 0.010 own_gr 0.021 other_ 0.189 other 0.005
+    anglerfish      Q 0.0296  plankt 0.350 zoopla 0.000 mobile 0.010 benthi 0.010 benthi 0.300 own_gr 0.150 other_ 0.100 other 0.080
+    ling            Q 0.0167  plankt 0.350 zoopla 0.000 mobile 0.010 benthi 0.010 benthi 0.300 own_gr 0.150 other_ 0.100 other 0.080
+    velvet belly    Q 0.0114  plankt 0.250 zoopla 0.600 mobile 0.050 benthi 0.000 benthi 0.070 own_gr 0.026 other_ 0.004 other 0.000
+    pollack         Q 0.0149  plankt 0.580 zoopla 0.330 mobile 0.010 benthi 0.000 benthi 0.050 own_gr 0.000 other_ 0.020 other 0.010
+====================================================================================================
+Grouping G2: bed = ['whiting', 'hake', 'spurdog', 'anglerfish', 'ling', 'velvet belly']; water column = ['saithe', 'mackerel', 'horse mackerel', 'pollack']
+
+--- G2 bed: ['whiting', 'hake', 'spurdog', 'anglerfish', 'ling', 'velvet belly']
+  weights in group {'whiting': 0.7874, 'hake': 0.0527, 'spurdog': 0.106, 'anglerfish': 0.0291, 'ling': 0.0148, 'velvet belly': 0.01}
+  share of pooled biomass 0.4718; B* 0.5661 t/km2 = 2038 t
+  r_max 0.430 (0.380-0.438); F 0.0839 (bottom 0.0799, pelagic 0.0039; 0.048-0.139); F/r 0.195
+  K = B*/(1 - F/r) = 0.703 (0.637-0.893) t/km2
+  M1 0.244 /yr (0.189-0.311) = 1.6689e-04 /tick
+  Cmax 96.7 kJ/kg/d (74.6-139.4) -> ceiling 24.17 MJ/t/tick (18.64-34.86)
+  SMR 3.822 (3.01-4.65); Q10 2.32; feeding_cost 2.04 x RM
+  energy lean 4113; max reserve 1985; mean reserve 907; fill 0.457; whole body as eaten 5020 MJ/t
+  starve_rate (u 0.15 convention) 0.0093 (0.0062-0.0155)
+  Q/B (member values) 3.805 (2.95-5.11); Q 2.154 t/km2/yr
+  trawl tables: bottom biomass_factor at 100 0.001816 (0.001049-0.003010); pelagic at 10 0.001080
+  diet (consumption-weighted): planktivorous_fish 0.313, zooplankton 0.248, mobile_epifauna 0.119, benthic_infauna 0.067, benthivorous_fish 0.089, own_group 0.149, other_group 0.010, other 0.005
+  M2 on prey (/yr): planktivorous_fish 0.2043, zooplankton 0.0550, mobile_epifauna 0.0326, benthic_infauna 0.0016, benthivorous_fish 0.1255, other_group 0.0329, own_group (unbooked) 0.5657
+  dark_ratio (diel stomach, consumption-weighted): planktivorous_fish 0.68, benthivorous_fish 0.70, zooplankton 1.00, other_group 0.75
+  accessible_fraction by gape: benthivores 0.140; other group 0.084
+    whiting         Q 1.8722  plankt 0.280 zoopla 0.280 mobile 0.137 benthi 0.073 benthi 0.080 own_gr 0.148 other_ 0.002 other 0.000
+    hake            Q 0.1044  plankt 0.770 zoopla 0.000 mobile 0.005 benthi 0.000 benthi 0.010 own_gr 0.189 other_ 0.021 other 0.005
+    spurdog         Q 0.1201  plankt 0.420 zoopla 0.030 mobile 0.000 benthi 0.060 benthi 0.220 own_gr 0.110 other_ 0.110 other 0.050
+    anglerfish      Q 0.0296  plankt 0.350 zoopla 0.000 mobile 0.010 benthi 0.010 benthi 0.300 own_gr 0.200 other_ 0.050 other 0.080
+    ling            Q 0.0167  plankt 0.350 zoopla 0.000 mobile 0.010 benthi 0.010 benthi 0.300 own_gr 0.200 other_ 0.050 other 0.080
+    velvet belly    Q 0.0114  plankt 0.250 zoopla 0.600 mobile 0.050 benthi 0.000 benthi 0.070 own_gr 0.004 other_ 0.026 other 0.000
+
+--- G2 wc: ['saithe', 'mackerel', 'horse mackerel', 'pollack']
+  weights in group {'saithe': 0.7751, 'mackerel': 0.1518, 'horse mackerel': 0.0653, 'pollack': 0.0079}
+  share of pooled biomass 0.5282; B* 0.6339 t/km2 = 2282 t
+  r_max 0.405 (0.346-0.448); F 0.2692 (bottom 0.2346, pelagic 0.0346; 0.122-0.331); F/r 0.664
+  K = B*/(1 - F/r) = 1.886 (0.871-15.046) t/km2
+  M1 0.269 /yr (0.185-0.307) = 1.8447e-04 /tick
+  Cmax 106.5 kJ/kg/d (81.3-166.2) -> ceiling 26.64 MJ/t/tick (20.32-41.56)
+  SMR 3.478 (2.92-5.29); Q10 2.25; feeding_cost 2.15 x RM
+  energy lean 4119; max reserve 2725; mean reserve 1356; fill 0.498; whole body as eaten 5475 MJ/t
+  starve_rate (u 0.15 convention) 0.0084 (0.0056-0.0141)
+  Q/B (member values) 2.918 (2.73-3.62); Q 1.849 t/km2/yr
+  trawl tables: bottom biomass_factor at 100 0.005331 (0.002415-0.006559); pelagic at 10 0.009500
+  diet (consumption-weighted): planktivorous_fish 0.521, zooplankton 0.388, mobile_epifauna 0.013, benthic_infauna 0.001, benthivorous_fish 0.047, own_group 0.002, other_group 0.018, other 0.009
+  M2 on prey (/yr): planktivorous_fish 0.2922, zooplankton 0.0739, mobile_epifauna 0.0031, benthic_infauna 0.0000, benthivorous_fish 0.0569, other_group 0.0573, own_group (unbooked) 0.0062
+  dark_ratio (diel stomach, consumption-weighted): planktivorous_fish 0.56, benthivorous_fish 0.55, zooplankton 0.86, other_group 0.57
+  accessible_fraction by gape: benthivores 0.139; other group 0.158
+    saithe          Q 1.4739  plankt 0.580 zoopla 0.330 mobile 0.010 benthi 0.000 benthi 0.050 own_gr 0.000 other_ 0.020 other 0.010
+    mackerel        Q 0.2117  plankt 0.300 zoopla 0.650 mobile 0.010 benthi 0.010 benthi 0.010 own_gr 0.000 other_ 0.010 other 0.010
+    horse mackerel  Q 0.1489  plankt 0.250 zoopla 0.600 mobile 0.050 benthi 0.000 benthi 0.070 own_gr 0.026 other_ 0.004 other 0.000
+    pollack         Q 0.0149  plankt 0.580 zoopla 0.330 mobile 0.010 benthi 0.000 benthi 0.050 own_gr 0.000 other_ 0.020 other 0.010
+
+====================================================================================================
+pooled check: B 1.200, r 0.417, F 0.1818, K 2.128, ceiling 25.47, Q 4.004; diet planktivorous_fish 0.409, zooplankton 0.313, mobile_epifauna 0.070, benthic_infauna 0.037, benthivorous_fish 0.070, own_group 0.094, other_group 0.000, other 0.007
+G1: epifauna consumption bed 0.256 + wc 0.026 = 0.282 t/km2/yr (pooled 0.282); planktivores 1.638 (pooled 1.638)
+G2: epifauna consumption bed 0.257 + wc 0.024 = 0.282 t/km2/yr (pooled 0.282); planktivores 1.638 (pooled 1.638)

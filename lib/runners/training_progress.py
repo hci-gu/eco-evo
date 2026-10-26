@@ -1,4 +1,14 @@
-"""Periodic CPU inference and persistent survival history for the live viewer."""
+"""Periodic CPU inference for the live viewer: the three-year probe.
+
+Since section 223.12 the viewer's progress tab shows how a frozen copy of
+the current policies plays out over three years (``PROBE_YEARS``) of the
+inference world: every group's biomass as a share of its start, sampled
+once a day. The live viewer runs the probe in a separate process, so
+training goes on meanwhile. Each probe also keeps the decision makers'
+survival ticks (inside ``--biomass-bounds``) and every group's end ratio
+per year in ``<run>/progress/probe.jsonl``; the latest trajectory is in
+``probe_latest.json``.
+"""
 
 import copy
 import json
@@ -18,15 +28,19 @@ from lib.environments.ecosystem_env.currents import CurrentConfig
 from lib.environments.ecosystem_env.population_change import (
     DEFAULT_MASS_BALANCE, DEFAULT_MORTALITY_MULTIPLIER,
     LEGACY_MASS_BALANCE)
+from lib.world.tick_time import LIBRARY_TICK_HOURS, ticks_per_day, ticks_per_year
+
+# Length of the progress probe (section 223.12).
+PROBE_YEARS = 3
 
 
 def add_progress_arguments(parser):
     from lib.gpu.cli import positive_int
     parser.add_argument("--eval-every", type=positive_int, default=1,
-                        help="Survival progress: evaluate every N training updates (default: 1)")
+                        help="Progress probe: run every N training updates (default: 1)")
     parser.add_argument("--eval-ticks", type=positive_int, default=None,
-                        help="Survival progress: inference tick cap (default: the "
-                             "training rollout length, --n_eval_ticks)")
+                        help="Progress probe length in ticks (default: three years "
+                             "at the run's --tick-length)")
     parser.add_argument("--biomass-bounds", type=float, nargs=2, default=(0.3, 3.0),
                         metavar=("LOWER", "UPPER"), help="Survival bounds as multiples of initial biomass")
     parser.add_argument("--eval-seed", type=int, default=20260530)
@@ -35,15 +49,15 @@ def add_progress_arguments(parser):
 
 
 def validate_progress_arguments(parser, args):
-    # Without --eval-ticks the cap follows the training rollout length
-    # (train.py --n_eval_ticks, train_gpu.py's dest "ticks"), so the
-    # progress evaluation covers the same span - a whole year with
-    # 1460-tick rollouts - and not a fixed 1000 ticks. A resumed run keeps
-    # the cap its history was written with (TrainingProgress._start).
+    # Without --eval-ticks the probe runs three years (section 223.12; it
+    # followed the training rollout length before). The probe world is
+    # built at the library's tick length (build_inference_env passes no
+    # tick length), so the years are counted in library ticks. A resumed
+    # run keeps the length its history was written with
+    # (TrainingProgress._start).
     args.eval_ticks_default = args.eval_ticks is None
     if args.eval_ticks_default:
-        args.eval_ticks = int(getattr(args, "n_eval_ticks", None)
-                              or getattr(args, "ticks", None) or 1000)
+        args.eval_ticks = PROBE_YEARS * ticks_per_year(LIBRARY_TICK_HOURS)
     lower, upper = args.biomass_bounds
     if not (math.isfinite(lower) and math.isfinite(upper) and 0 < lower <= 1 <= upper and lower < upper):
         parser.error("--biomass-bounds must be finite and satisfy 0 < LOWER <= 1 <= UPPER, LOWER < UPPER")
@@ -99,6 +113,80 @@ def measure_survival(env, ticks, lower, upper, pump_events=None):
         "initial_biomass": dict(zip(ids, initial.tolist())),
         "ticks_run": ticks_run,
     }
+
+
+def run_probe(env, ticks, lower, upper, pump_events=None):
+    """Run ``ticks`` inference ticks and record the probe (section 223.12).
+
+    Returns the decision makers' survival ticks as ``measure_survival``
+    counts them (but never stops early), every group's biomass as a share
+    of its start once a day (``trajectory``; None for a group without
+    starting biomass) and its end ratio per year (``year_end_ratio``).
+    """
+    dm_ids = sorted(env.dm_ids)
+    ids = list(env.global_fg_order)
+    initial = {f: float(np.asarray(env.fgs[f].biomass, dtype=np.float64).sum()) for f in ids}
+    if any(not math.isfinite(v) or v < 0 for v in initial.values()):
+        raise ValueError("Inference initial biomass must be finite and nonnegative")
+    every = max(1, int(ticks_per_day(getattr(env, "tick_hours", None))))
+    per_year = max(1, int(ticks_per_year(getattr(env, "tick_hours", None))))
+
+    def ratios():
+        out = {}
+        for f in ids:
+            b0 = initial[f]
+            value = float(np.asarray(env.fgs[f].biomass, dtype=np.float64).sum())
+            out[f] = (value / b0 if b0 > 0 and math.isfinite(value) else None)
+        return out
+
+    series = {f: [] for f in ids}
+    for f, v in ratios().items():
+        series[f].append(v)
+    years = {f: [] for f in ids}
+    present = np.array([initial[f] > 0 for f in dm_ids])
+    alive = present.copy()
+    survived = np.zeros(len(dm_ids), dtype=np.int64)
+    b0_dm = np.array([initial[f] for f in dm_ids], dtype=np.float64)
+    ticks_run = 0
+    for t in range(1, ticks + 1):
+        if pump_events is not None and not pump_events():
+            raise InterruptedError("Probe cancelled because the viewer closed")
+        env.tick()
+        ticks_run += 1
+        current = np.array([env.fgs[f].biomass.sum() for f in dm_ids], dtype=np.float64)
+        alive &= np.isfinite(current) & (current >= lower * b0_dm) & (current <= upper * b0_dm)
+        survived += alive
+        if t % every == 0 or t % per_year == 0 or t == ticks:
+            now = ratios()
+            if t % every == 0:
+                for f, v in now.items():
+                    series[f].append(v)
+            if t % per_year == 0:
+                for f, v in now.items():
+                    years[f].append(v)
+    return {
+        "survival_ticks": {f: int(survived[i]) if present[i] else None for i, f in enumerate(dm_ids)},
+        "initial_biomass": {f: initial[f] for f in dm_ids},
+        "ticks_run": ticks_run,
+        "year_end_ratio": years,
+        "trajectory": {"every_ticks": every, "ticks_per_year": per_year, "series": series},
+    }
+
+
+def _probe_in_process(config, seed, temperature, ticks, lower, upper,
+                      policies, obs_mean, obs_var, threads):
+    """Worker: the same probe as ``TrainingProgress.evaluate``, in a
+    separate process (the live viewer, section 223.12)."""
+    torch.set_num_threads(max(1, int(threads)))
+    with evaluation_randomness(seed):
+        env = build_inference_env(config, seed)
+    with evaluation_randomness(seed):
+        env.policies = policies
+        env.rebuild_batched_weights()
+        if obs_mean is not None:
+            env.obs_mean, env.obs_var = obs_mean, obs_var
+        env.softmax_temperature = temperature
+        return run_probe(env, ticks, lower, upper)
 
 
 def inference_config(trainer, backend):
@@ -221,16 +309,18 @@ class TrainingProgress:
         self.directory = Path(directory) if directory is not None else None
         self.config = None
         self.records = []
+        self.latest = None
         self.visualizer = visualizer
 
     def _start(self, trainer, step, run_dir, resume):
         ecology = inference_config(trainer, self.backend)
-        self.config = dict(format_version=1, backend=self.backend, ticks=self.ticks,
+        self.config = dict(format_version=2, backend=self.backend, ticks=self.ticks,
                            lower=self.lower, upper=self.upper, seed=self.seed,
                            temperature=self.temperature, **ecology)
         self.directory = self.directory or Path(run_dir) / "progress"
         self.directory.mkdir(parents=True, exist_ok=True)
-        self.history = self.directory / "survival.jsonl"
+        self.history = self.directory / "probe.jsonl"
+        self.latest_path = self.directory / "probe_latest.json"
         config_path = self.directory / "config.json"
         if config_path.exists():
             if not resume:
@@ -250,6 +340,12 @@ class TrainingProgress:
                 self.records = [r for r in self.records if r["step"] < step]
                 for number, record in enumerate(self.records, 1):
                     record["evaluation"] = number
+            if self.latest_path.exists():
+                try:
+                    latest = json.loads(self.latest_path.read_text())
+                    self.latest = latest if latest.get("step", step) < step else None
+                except ValueError:
+                    self.latest = None
         with evaluation_randomness(self.seed):
             self.template = build_inference_env(ecology, self.seed)
         config_path.write_text(json.dumps(self.config, indent=2) + "\n")
@@ -267,7 +363,25 @@ class TrainingProgress:
             install_current_policies(env, trainer, self.backend)
             env.softmax_temperature = self.temperature
             pump = self.visualizer.pump_events if self.visualizer is not None else None
-            return measure_survival(env, self.ticks, self.lower, self.upper, pump_events=pump)
+            return run_probe(env, self.ticks, self.lower, self.upper, pump_events=pump)
+
+    def _record(self, number, step, seconds, result):
+        """Append one probe to the history and publish it."""
+        trajectory = result.pop("trajectory", None)
+        self.records.append(dict(evaluation=number, step=step,
+                                 evaluation_seconds=seconds, **result))
+        # Replace complete files atomically, so readers never see a
+        # partially written history.
+        temporary = self.history.with_suffix(".jsonl.tmp")
+        temporary.write_text("".join(json.dumps(r, allow_nan=False) + "\n" for r in self.records))
+        temporary.replace(self.history)
+        if trajectory is not None:
+            self.latest = dict(step=step, evaluation=number, seed=self.seed, **trajectory)
+            temporary = self.latest_path.with_suffix(".json.tmp")
+            temporary.write_text(json.dumps(self.latest))
+            temporary.replace(self.latest_path)
+        if self.visualizer is not None:
+            self.visualizer.set_training_progress(self.records, self.config, self.latest)
 
     def __call__(self, trainer, step, run_dir, args):
         if self.visualizer is not None and not self.visualizer.enabled:
@@ -281,43 +395,110 @@ class TrainingProgress:
         if not first and step % self.interval():
             return
         number = len(self.records) + 1
-        print(f"[progress] evaluation={number}, step={step}: evaluating up to {self.ticks} inference ticks on CPU...", flush=True)
+        print(f"[progress] probe={number}, step={step}: {self.ticks} inference ticks on CPU...", flush=True)
         started = time.perf_counter()
         try:
             result = self.evaluate(trainer)
-            self.records.append(dict(evaluation=number, step=step,
-                                     evaluation_seconds=time.perf_counter() - started, **result))
-            # Replace complete files atomically, so image viewers/readers never
-            # see a partially written plot or measurement history.
-            temporary = self.history.with_suffix(".jsonl.tmp")
-            temporary.write_text("".join(json.dumps(r, allow_nan=False) + "\n" for r in self.records))
-            temporary.replace(self.history)
-            if self.visualizer is not None:
-                self.visualizer.set_training_progress(self.records, self.config)
+            ticks_run = result["ticks_run"]
+            self._record(number, step, time.perf_counter() - started, result)
         except Exception as error:
             # Monitoring failures must not discard a completed training update.
-            print(f"[progress] WARNING: evaluation/plot failed at step {step}: {error}", flush=True)
+            print(f"[progress] WARNING: probe failed at step {step}: {error}", flush=True)
             return
-        destination = self.history
-        print(f"[progress] updated {destination} "
-              f"({result['ticks_run']}/{self.ticks} ticks, {time.perf_counter() - started:.1f}s)", flush=True)
+        print(f"[progress] updated {self.history} "
+              f"({ticks_run}/{self.ticks} ticks, {time.perf_counter() - started:.1f}s)", flush=True)
 
 
 class LiveTrainingProgress(TrainingProgress):
-    """Persist survival measurements and render them in the live viewer."""
+    """The live viewer's probe, run in a separate process (section 223.12).
+
+    A due probe is submitted with a frozen copy of the current policies
+    and normalisation; training goes on, and the result is recorded at
+    the first update after it finishes (or by ``wait``). A probe that is
+    due while one is still running is skipped. ``asynchronous=False``
+    runs it in-line, as the base class does.
+    """
 
     disabled = False
+    asynchronous = True
+    worker_threads = 4
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self._pool = None
+        self._pending = None
+
+    def _collect(self, block=False):
+        if self._pending is None:
+            return
+        future, number, step, started = self._pending
+        if not block and not future.done():
+            return
+        self._pending = None
+        try:
+            result = future.result()
+            ticks_run = result["ticks_run"]
+            self._record(number, step, time.perf_counter() - started, result)
+            print(f"[progress] probe {number} (update {step}) done: "
+                  f"{ticks_run}/{self.ticks} ticks, {time.perf_counter() - started:.0f}s", flush=True)
+        except Exception as error:
+            print(f"[progress] WARNING: probe failed at step {step}: {error}", flush=True)
+
+    def _submit(self, trainer, step):
+        import concurrent.futures
+        import multiprocessing
+        if self._pool is None:
+            self._pool = concurrent.futures.ProcessPoolExecutor(
+                max_workers=1, mp_context=multiprocessing.get_context("spawn"))
+        env = copy.deepcopy(self.template)
+        install_current_policies(env, trainer, self.backend)
+        obs_mean = getattr(env, "obs_mean", None)
+        obs_var = getattr(env, "obs_var", None)
+        number = len(self.records) + 1
+        future = self._pool.submit(_probe_in_process, self.config_ecology(), self.seed,
+                                   self.temperature, self.ticks, self.lower, self.upper,
+                                   env.policies, obs_mean, obs_var, self.worker_threads)
+        self._pending = (future, number, step, time.perf_counter())
+        print(f"[progress] probe={number}, step={step}: {self.ticks} ticks submitted "
+              f"(separate process)", flush=True)
+
+    def config_ecology(self):
+        keys = ("project", "library", "grid", "mortality", "migration",
+                "mortality_multiplier", "mass_balance", "currents")
+        return {k: self.config[k] for k in keys if k in self.config}
 
     def __call__(self, trainer, step, run_dir, args):
         if (self.disabled or self.visualizer is None or not self.visualizer.enabled
                 or getattr(self.visualizer, "_quit", False)):
             return
         try:
-            super().__call__(trainer, step, run_dir, args)
+            if not self.asynchronous:
+                super().__call__(trainer, step, run_dir, args)
+                return
+            first = self.config is None
+            if first:
+                self._start(trainer, step, run_dir, args.resume)
+                if self.latest is not None:
+                    self.visualizer.set_training_progress(self.records, self.config, self.latest)
+            self._collect()
+            if not first and step % self.interval():
+                return
+            if self._pending is not None:
+                return
+            self._submit(trainer, step)
         except Exception as error:
             self.disabled = True
             self.visualizer.set_progress_message("Progress unavailable; see terminal for details")
             print(f"[progress] Live progress disabled: {error}", flush=True)
+
+    def wait(self):
+        """Record a running probe and stop the worker (end of training)."""
+        try:
+            self._collect(block=True)
+        finally:
+            if self._pool is not None:
+                self._pool.shutdown(wait=False, cancel_futures=True)
+                self._pool = None
 
 
 def probe_due(viz, step, first=False):

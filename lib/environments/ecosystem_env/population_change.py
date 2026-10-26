@@ -6,6 +6,7 @@ from lib.environments.ecosystem_env import interactions
 from lib.world import nutrients
 from lib.environments.ecosystem_env import natural_mortality as natural_mortality_module
 from lib.environments.ecosystem_env import regeneration
+from lib.environments.ecosystem_env import refuge
 
 
 DEFAULT_MORTALITY_MULTIPLIER = 1.0
@@ -195,6 +196,10 @@ def _apply_non_decision_maker_mortality(env, fg_id, fg):
     before = float(fg.biomass.sum())
     start = fg.biomass
     fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+    if refuge.settings(fg) is not None:
+        # Section 223.12: M1 takes both compartments alike.
+        fg.energy_reserve = (fg.energy_reserve * keep).astype(
+            env.dtype, copy=False)
     regeneration.record_m1(env, fg_id, start, fg.biomass)
     losses = getattr(env, "loss_natural", None)
     if losses is not None:
@@ -234,6 +239,14 @@ def _apply_non_decision_maker_population_change(env, fg_id, fg):
             + np.asarray(seed_rate * carrying_capacity, dtype=np.float32) * seed_mult
         )
 
+    if refuge.settings(fg) is not None:
+        # Section 223.12: per-compartment logistic, then the exchange.
+        seed_delta = biomass_delta - (
+            population_rate * fg.biomass
+            * (1.0 - fg.biomass / (carrying_capacity + 1e-9)))
+        refuge.grow(fg, population_rate, carrying_capacity, seed_delta,
+                    env.dtype)
+        return
     fg.biomass = np.clip(
         fg.biomass + biomass_delta, 0.0, carrying_capacity
     ).astype(env.dtype, copy=False)

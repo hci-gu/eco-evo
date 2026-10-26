@@ -1,0 +1,13 @@
+species,weight,lean_kJ_g,whole_kJ_g,max_reserve_MJ_t,implied_fill,tag,source
+haddock,0.3841,3.8,4.6,2000,0.4,J,"cod proxy: no wild haddock HSI or whole-body ED obtained (Pedersen & Hislop 2001 closed, not OA). Fillet 3.29 kJ/g, protein 18.3-19.4 % (Matvaretabellen); muscle lipid ~1 % (gadoid reserve = liver; Nanton et al. 2003 cultured haddock muscle lipid 0.8-1.9 %, liver the store). Whole 4.2-4.75"
+cod,0.3124,3.8,4.75,2000,0.475,F/S,"lean: whole-minus-liver 3.67 kJ/g in E Baltic cod (Ryberg et al. 2020) to pre-spawning muscle 4.1 (Rojbek et al. 2012 water 81 %, Dutil et al. 1995 line); liver 920 MJ/t mean, 1665 wild autumn max, ~2070 well fed (Dutil 1995; Lambert & Dutil 1997); whole 4.62-5.0 (Holdway & Beamish 1984; FB4 Hansson et al. 1996)"
+long rough dab,0.1254,2.6,3.2,1000,0.6,A/J,MacKinnon 1972: a 35 cm female stores 92 of ~300 kcal in summer (31 %) -> reserve 850-1100 MJ/t at 350-450 g; whole 2.8-3.6
+dab,0.0448,3.6,4.5,1500,0.6,J,"no data; plaice analogue, leaner"
+plaice,0.0378,3.6,4.6,1850,0.541,F/J,"Fonds et al. 1985 Table 1 whole body 3.0 (K 0.75) - 6.1 (K 1.25) kJ/g; adult females 5.81 Dec -> 4.10 Mar (Rijnsdorp 1983); lipid 3-22 % of DW, stored in the whole body; lean 3.5-4.0 J, reserve 5.8 - 4.1 = 1.7 kJ/g"
+witch,0.0169,4.0,5.6,1500,1.067,F/J,"whole 5.6 kJ/g Oct (Spitz et al. 2010, an autumn value)"
+starry ray,0.0149,3.6,4.0,1500,0.267,J,no data; elasmobranch liver store
+hagfish,0.0129,3.5,4.5,1500,0.667,J,no data
+grey gurnard,0.009,3.8,4.4,1500,0.4,S/J,whole 4.4 (Plimmer 1921 via JNCC Report 633)
+lemon sole,0.009,4.0,5.8,1850,0.973,F/J,whole 5.8 kJ/g Oct (Spitz et al. 2010)
+greater weever,0.008,4.0,5.3,1500,0.867,F/J,whole 5.3 Oct (Spitz et al. 2010)
+others,0.0249,3.6,4.5,1500,0.6,J,group-like

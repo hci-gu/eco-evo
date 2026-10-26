@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.environments.ecosystem_env import impacts, interactions
+from lib.environments.ecosystem_env import impacts, interactions, refuge
 from lib.environments.ecosystem_env.constants import DIRECTIONS
 
 
@@ -23,6 +23,8 @@ def build_observation_batch(env):
         [env.fgs[fid].biomass for fid in env.global_fg_order],
         axis=0,
     ).astype(env.dtype, copy=False)
+    # Section 223.12: observers see a refuge group's accessible part.
+    biomass_all = refuge.accessible_rows(env, biomass_all)
 
     # The rest-action is a hide action, so the fraction of each FG that
     # rested last tick is invisible to observers. The floor acts on the

@@ -7,7 +7,7 @@ import torch
 from lib.world import nutrients, temperature
 from lib.world.growth_budget import income_growth
 from lib.environments.ecosystem_env import (
-    grid_masks, impacts, interactions, natural_mortality, regeneration)
+    grid_masks, impacts, interactions, natural_mortality, refuge, regeneration)
 
 
 @dataclass
@@ -145,6 +145,9 @@ def build_static_caches(env):
     env.access_mat = (matrices.access if matrices.access is not None
                       else np.ones_like(handling_time)).astype(env.dtype, copy=False)
     env._has_pair_access = bool(np.any((env.access_mat < 1.0) & (eat_static > 0.0)))
+    # Section 223.12: benthic refuge groups (accessible part in the
+    # reserve slot).
+    refuge.build_tables(env)
     # Specialists (exactly one active prey) use Type III; generalists
     # retain Type II because their policy already handles prey switching.
     # A pair's ``functional_response`` (2 or 3) overrides that per pair

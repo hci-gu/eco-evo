@@ -1,0 +1,14 @@
+Test 1: intake ratio R(q) when the prey falls to q of today
+  q = 0.7: encounter infauna (x 266) 0.998; encounter epifauna, benthivores (x 87) 0.995; field-implied tau 0.5 (x 4.1) 0.923; field-implied tau 0.75 (x 1.2) 0.834; field-implied tau 1.0 (x 0.67) 0.796
+  q = 0.5: encounter infauna (x 266) 0.996; encounter epifauna, benthivores (x 87) 0.989; field-implied tau 0.5 (x 4.1) 0.836; field-implied tau 0.75 (x 1.2) 0.684; field-implied tau 1.0 (x 0.67) 0.625
+  q = 0.3: encounter infauna (x 266) 0.991; encounter epifauna, benthivores (x 87) 0.974; field-implied tau 0.5 (x 4.1) 0.687; field-implied tau 0.75 (x 1.2) 0.481; field-implied tau 1.0 (x 0.67) 0.417
+  Field: a measurable fall in food per plaice and condition above ~5 passes/yr (q ~0.5-0.7, J).
+  Encounter theory predicts a 0.1-0.6 % fall; the field-implied rates a 7-35 % fall.
+
+Test 2: half-saturation of fish-prey pairs (t/km2 of the prey pool)
+  predators -> planktivores: encounter 0.33; field-implied tau 1.0: 5.7, tau 0.75: 2.9
+  benthivores -> planktivores: encounter 0.34; field-implied tau 1.0: 32.1, tau 0.75: 21.4, tau 0.5: 5.8
+  Field: Rindorf & Gislason 2005 whiting on clupeids 0.57 (0.035-7.1);
+         MULTSPEC cod on suitable fish food 1.57 (10^2 km areas, patchiness inflates it).
+  Reading: on fish prey the encounter a sits inside the field span (within 2-10x);
+  the field-implied a at tau 0.75-1 is too low there. The large gap is on the benthic pairs.

@@ -1,0 +1,6 @@
+exposed group, members as eaten (central)            3738 MJ/t (low 3064, high 4673); weights crabs 0.750, pandalus 0.124, small_shrimp 0.107, mysid 0.019
+exposed group, stock weighted (comparison)           3778 MJ/t (low 3158, high 4654); weights crabs 0.654, pandalus 0.183, small_shrimp 0.098, mysid 0.065
+exposed group incl. the booked prey (comparison)     3768 MJ/t (low 3154, high 4597); weights crabs 0.547, pandalus 0.090, small_shrimp 0.078, mysid 0.014, cephalopod 0.094, krill_hyperbenthos 0.074, small_demersal_fish 0.070, unid_fish_E 0.023, carrion_E 0.010
+norway_lobster                                       3600 MJ/t (low 2800, high 4800); weights nephrops 1.000
+h = E / ceiling, benthivorous_fish (ceiling 27.1 MJ/t/tick): exposed 3750 -> 138.4; Nephrops 3600 -> 132.8 (4000 -> 147.6)
+h = E / ceiling, predatory_fish (ceiling 25.5 MJ/t/tick): exposed 3750 -> 147.1; Nephrops 3600 -> 141.2 (4000 -> 156.9)

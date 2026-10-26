@@ -1,0 +1,22 @@
+section,key,old,new,range_qb_3.4_to_5.0,basis
+species_definitions.benthivorous_fish,energy_content,4500.0,3600.0,,lean body (weighted 3628; 3400-3850 J); lean_reserve.py
+species_definitions.benthivorous_fish,max_energy_reserve,1800.0,1800.0 (unchanged),,liver/lipid store (weighted 1802; 1500-2100)
+species_definitions.benthivorous_fish,prey_includes_reserve,(absent),true,,planktivore/predator convention (section 140)
+species_definitions.benthivorous_fish,reserve_reference_fill,(absent),0.5,,(whole 4486 - 3600)/1800 = 0.49; static prey quality 4500 = today's whole body
+species_definitions.benthivorous_fish,growth_rate (derived),0.0021816966,0.0020892507,unchanged by Q/B,s* 0.7579 -> 0.7693 (cheaper tonne); gross 0.8214 /yr unchanged
+interaction_definitions.benthivorous_fish_preys_on_benthic_infauna,predation_mortality,0.029,0.037,0.030-0.044,diet share 0.511 -> 0.544; prey mean 93.6 t/km2
+interaction_definitions.benthivorous_fish_preys_on_mobile_epifauna,predation_mortality,0.141,0.26,0.21-0.31,diet share 0.209 -> 0.314; prey mean 7.75 t/km2
+interaction_definitions.benthivorous_fish_preys_on_planktivorous_fish,predation_mortality,0.14,0.23,0.19-0.28,diet share 0.084 -> 0.120; prey mean 3.33 t/km2
+interaction_definitions.benthivorous_fish_preys_on_predatory_fish,predation_mortality,0.085,0.12,0.098-0.144,diet share 0.019 -> 0.023; prey mean 1.20 t/km2
+species_definitions.benthic_infauna,growth_rate (derived),0.00070479452,0.00071027397,0.00070548-0.00071507,r_gross 1.029 -> 1.037
+species_definitions.benthic_infauna,capacity_depth_table,100: 131.0 / 300: 65.5,100: 132.02 / 300: 66.01,131.13-132.91 / 65.56-66.45,least squares: keeps today's B*(c); share 0.840 -> 0.834
+species_definitions.benthic_infauna,max_carrying_capacity,109.9,110.8,110.1-111.6,box mean of the table
+species_definitions.mobile_epifauna,growth_rate (derived),0.00060068493,0.00068219178,0.00064829-0.00071610,r_gross 0.877 -> 0.996 (M2 0.177 -> 0.296)
+species_definitions.mobile_epifauna,capacity_depth_table,81: 14.31 / 123: 10.77 / 173: 12.27 / 221: 17.43 / 272: 9.38 / 387: 3.75,81: 16.25 / 123: 12.23 / 173: 13.93 / 221: 19.80 / 272: 10.65 / 387: 4.26,x1.079 (Q/B 3.4) to x1.192 (Q/B 5.0),least squares: keeps today's B*(c); share 0.643 -> 0.566
+species_definitions.mobile_epifauna,max_carrying_capacity,12.2,13.9,13.2-14.6,box mean of the table
+species_definitions.planktivorous_fish,growth_rate (derived),0.0032411316,0.0034948014,0.0033709-0.0036196,M2 sum 1.289 -> 1.379 (gross); s* 0.7945 -> 0.7898
+species_definitions.predatory_fish,growth_rate (derived),0.0022805371,0.0024165833,0.0023271-0.0025077,gross 0.784 -> 0.819; s* 0.7355 -> 0.7321
+interaction_definitions.predatory_fish_preys_on_benthivorous_fish,handling_time,176.5,176.5 (unchanged),,static prey quality stays 4500 (= 4500/25.5)
+interaction_definitions.seals_preys_on_benthivorous_fish,handling_time,21.2,21.2 (unchanged),,4500/212.5
+interaction_definitions.porpoises_preys_on_benthivorous_fish,handling_time,28.6,28.6 (unchanged),,mass ceiling
+mareld2.yaml,non_decision_makers start totals,337000 / 27900,unchanged,,equilibrium sums with the refitted K: 336999 / 27871 t (-0.0 / -0.1 %)

@@ -1,0 +1,393 @@
+PART D - MEASURED FISH PREDATION ON MOBILE EPIFAUNA TAXA AND FIELD EVIDENCE OF DEPLETION
+(Q7: independent plausibility check for the model group mobile_epifauna:
+ Nephrops 60 %, crabs/hermit crabs/Munida 26 %, Pandalus borealis 7 %, small shrimps 4 %, mysids 3 %)
+
+Tags: [F] full text read, [A] abstract only, [S] secondary source / search snippet.
+"J" = own judgement or derivation (not a source value).
+Downloaded files: ../data/<source>/ ; text extracts beside each PDF.
+Written 2026-10-26.
+
+=====================================================================
+D1. PANDALUS BOREALIS - PREDATION MORTALITY AND CONSUMPTION
+=====================================================================
+
+D1.1 Skagerrak / Norwegian Deep stock (ICES IIIa + IVa east) - the model's own area
+---------------------------------------------------------------------
+(a) Munch-Petersen, Eigaard, Sovik & Ulmestrand 2010. NAFO SCR Doc. 10/70.
+    https://www.nafo.int/Portals/0/PDFs/sc/2010/scr10-070.pdf  [F]
+    "According to previous assessments (1985-2002), predation accounts for at least twice as
+    much removal from the Pandalus stock compared to fishery removals."
+    -> predation removal >= 2 x catch (Skagerrak/Norwegian Deep, 1985-2002 cohort assessments).
+
+(b) Jorgensen, Munch-Petersen, Nielsen, Sovik, Ulmestrand, Devine & Eigaard 2014.
+    NAFO SCR Doc. 14/066. https://www.nafo.int/Portals/0/PDFs/sc/2014/scr14-066.pdf  [F]
+    - Assessment natural mortality: "In this model the previously WG-group defined M of 0.75
+      across years and Pandalus age classes was kept."
+    - Best fit: "The lowest -log likelihood value (best model fit) was observed at M=1.2
+      (Table 2). This is considerably higher than the value of 0.75 that is used by the working
+      group." and "With a variable natural mortality the best model-fit was achieved with an
+      average M-level of 0.9".
+      -> total M (mostly predation per the WG) 0.75 (assumed) / 0.9 (predation-index weighted)
+         / 1.2 per yr (constant, best fit), Skagerrak/Norwegian Deep.
+    - Primary predators (stomach %W of P. borealis, Norwegian Deep samples 1984-87, Table 1):
+      cod 22.44 %W (n=779, Bergstad 1991), blue whiting >35 cm 18.57 %W (n=146),
+      roundnose grenadier 11.05 %W (n=400), velvet belly lanternshark 11.81 %W (n=147).
+      Incidental: haddock 2.15, saithe 2.69, whiting 0.96, hake 1.90, skates 3.80 %W.
+      Long rough dab: "P.Borealis predation unknown".
+      "These four species all have stomach contents of P.Borealis above 10 %W, whereas in alle
+      the other species stomach contents were below 5 %W."
+    - Abandonment of cohort assessment: "A main reason for abandoning the cohort based
+      analytical approach in 2003 was the WG-perception that unaccounted natural mortality
+      accounts for at least twice as much removal from the Pandalus stock as the fishery."
+    - Table 3 (literature field estimates): W. Gulf of Alaska total M 0.07-3.34 (mean 1.44)
+      (Andersson 1991); Barents Sea cod-predation M (Mcod) 0.06-2.23 (mean 0.76), 11 cohorts,
+      age 0-2 to 5+ (Berenboim et al. 1991) [F for the table; underlying sources not read].
+
+(c) ICES 1995. Report of the Study Group on Life Histories and Assessment of Pandalus Stocks in
+    the North Atlantic. ICES CM 1995/K:5. https://www.vliz.be/imisdocs/publications/ocrd/275381.pdf [F]
+    "The value used in earlier assessments i.e. 0,75 for Div.IIIa, IVaE is not well founded."
+    "The study group was not able to bring forward any information on predation mortality."
+    -> The 0.75 is a convention, not a measured M2.
+
+D1.2 Barents Sea stock (cod as the dominant predator)
+---------------------------------------------------------------------
+(a) Berenboim, Dolgov, Korzhev & Yaragina 1999. NAFO SCR Doc. 99/87 (= J. Northw. Atl. Fish.
+    Sci. 27: 69-75, 2000). https://www.nafo.int/Portals/0/PDFs/sc/1999/scr99-087.pdf  [F]
+    "Calculations have shown that from 15% to 58% of shrimp stock are eaten by cod both in terms
+    of the total biomass and each individual age group (Table 2)."
+    "Runs of the SSVPA model have shown that in 1984-1997 the biomass of shrimp varied from 0.6
+    in 1986, 1987 to 1.76 mill.t in 1992"
+    "our assessment has shown that shrimp catch is only 3-4 times less than the consumption of
+    shrimp by cod."
+    "a reverse correlation has been found between the abundance of commercial cod stock and
+    shrimp biomass in 1982-1998."  "cod at age 3-6 produce the strongest impact on shrimp stock,
+    the cod prefers to feed on shrimp with the total length of 5-10 cm."
+    -> fraction of stock eaten by cod per year 0.15-0.58 (as a rate: J, -ln(1-0.15..0.58)
+       ~ 0.16-0.87 /yr if the fraction is of start-of-year biomass).
+    (Tables 1-2 are images in the PDF; not readable as text.)
+
+(b) Hvingel 2006. NAFO SCR Doc. 06/64. https://www.nafo.int/Portals/0/PDFs/sc/2006/scr06-064.pdf [F]
+    "The estimates of annual consumption by cod have a mean of 250 Ktons while that of the
+    catches is 50 Ktons."  "Even though the estimates of consumption by cod is on average 5
+    times that of the catches and range from 160-450 ktons (in 1994-2004) the correlation with
+    changes in the size of the shrimp stock is weaker than that of the catches."
+    "A large part of the estimated consumption stems from large areas of low shrimp density
+    i.e. outside the areas where the fishery operates - and where the shrimp survey measures
+    stock size."
+    Survey biomass index (Table 1, "Survey 1") 1994-2004: 151-341 kt.
+    -> J: consumption/survey-index ratio ~0.5-3 /yr (160-450 kt / 151-341 kt), but the survey
+       index covers the dense areas only, so this ratio is an upper bound; against the SSVPA
+       biomass 0.6-1.76 Mt (D1.2a) the ratio is ~0.15-0.45 /yr.
+
+(c) Aschan, Johannesen, Bogstad & Hvingel 2006. NAFO SCR Doc. 06/71.
+    https://www.nafo.int/Portals/0/PDFs/sc/2006/scr06-071.pdf  [F]
+    "A mean annual consumption of shrimp by cod in the Barents Sea is estimated to 280 000 tons
+    (1984-2004, Bogstad and Mehl, 1997; ICES, 2006). The average annual shrimp catch since 1985
+    is close to 55 000 t."
+    "In 1994 the estimated consumption of shrimp by cod was 518 000 t and still the shrimp stock
+    started to increase and increased until 1998 although the annual cod consumption was
+    335 000 t in this period (1995-1998)."
+    "The mean consumption is reduced with almost 30% with the new approach. In some years the
+    reduction in estimated shrimp consumption is around 70%."
+    "the model is more robust when excluding the cod (Hvingel, 2006). This is because the shrimp
+    stock does not respond on still high cod consumption, not even if a time lag is introduced."
+    -> Caution for the model: a large measured M2 does not imply that predator changes
+       drive prey biomass; compensation and spatial mismatch (predation in low-density areas)
+       decouple consumption from stock change.
+
+=====================================================================
+D2. COD - SHRIMP INVERSE RELATIONS (WORM & MYERS 2003 AND FOLLOW-UPS)
+=====================================================================
+(a) Worm & Myers 2003. Meta-analysis of cod-shrimp interactions reveals top-down control in
+    oceanic food webs. Ecology 84: 162-173. doi:10.1890/0012-9658(2003)084[0162:MAOCSI]2.0.CO;2
+    Full text NOT obtained (publisher closed; Unpaywall: no OA copy; an archive manuscript copy
+    at findingaids.library.dal.ca sits behind a bot check and was not retrieved).
+    Abstract content via search snippets [S]:
+    "Eight out of nine regions showed inverse correlations of cod and shrimp biomass supporting
+    the 'top-down' view." Random-effects analysis: shrimp biomass "strongly negatively related to
+    cod biomass, but not to ocean temperature"; "the strength of the cod-shrimp relationship
+    declined with increasing mean temperature."
+    Regional effect sizes / slopes: NOT FOUND (see Not-found list).
+
+(b) Baum & Worm 2009. Cascading top-down effects of changing oceanic predator abundances.
+    J. Anim. Ecol. 78: 699-714. doi:10.1111/j.1365-2656.2009.01531.x
+    https://www.lenfestocean.org/-/media/legacy/lenfest/pdfs/cascadingpredator_baumworm.pdf [F]
+    "Worm & Myers (2003) showed that cod (Gadus morhua) declines in seven of nine Atlantic
+    regions were accompanied by increases in northern shrimp (Pandalus borealis) ... Once
+    corrected for temporal autocorrelation and measurement error, negative predator-prey
+    correlations (suggestive of top-down control) were statistically significant in only three
+    regions, although the overall meta-analytic mean was significantly negative"
+    "weakly negative or positive (suggestive of bottom-up control) correlations occurred only at
+    the southern range limit of these species, where temperatures were higher."
+    The nine regions (Fig. 2d legend): LAB, NNFLD, FC, NGULF, ESS, GOM, ICE, BAR, SKAG
+    (Skagerrak IS one of the nine). The per-region r values are only in the figure (not
+    extractable as text). (A "PD: Shrimp decline 95%" entry in their Table 1 belongs to the
+    climate-driven Gulf of Alaska groundfish/Pacific cod - shrimp case, refs 8-9 incl. Anderson &
+    Piatt 1999, not to the North Atlantic cod-shrimp meta-analysis; it is NOT used here.)
+    J: the Skagerrak is near the warm (southern) end of P. borealis' range; by the authors'
+    temperature gradient it is a region with weak cod control. Not verified with the
+    Skagerrak r value.
+
+(c) Boudreau, Anderson & Worm 2011. Top-down interactions and temperature control of snow crab
+    abundance in the northwest Atlantic Ocean. MEPS 429: 169-183. doi:10.3354/meps09081
+    https://www.int-res.com/articles/meps_oa/m429p169.pdf  [F]
+    "Controlling for the effect of temperature, our meta-analysis revealed significant negative
+    correlations of snow crab and cod abundance, with cod leading snow crab by up to a 5 yr lag."
+    "in both the full and partial correlation analyses the strongest effect was observed at a
+    lag of 2 yr, with cod leading snow crab"
+    "northern shrimp comprises from 5.0 to 9.3% of cod stomach contents (averaged across
+    studies), and cod appears to exert strong top-down control of shrimp stocks"
+    Cited single-region values: "a significant negative correlation (r = -0.66) between snow
+    crab landings and Atlantic cod abundance at a lag of 10 yr" (Caddy et al. 2005, SGSL; who
+    "concluded that density-dependent mechanisms were more likely responsible");
+    "a strong negative correlation (r = -0.70) between benthic fish biomass and snow crab
+    abundance, without assuming a time lag" (Frank et al. 2005, eastern Scotian Shelf).
+    J: time scale of cod -> crab response 0-5 yr (peak 2 yr); a cold-water crab, not a
+    Skagerrak taxon, so only an analogue for "crabs".
+
+=====================================================================
+D3. NEPHROPS NORVEGICUS - CONSUMPTION BY COD, PREDATION MORTALITY
+=====================================================================
+D3.1 Western Irish Sea (the Brander & Bennett system), measured consumption vs stock
+---------------------------------------------------------------------
+(a) Armstrong, Smyth & McCurdy 1991. How much Nephrops is eaten by cod in the western Irish
+    Sea? ICES CM 1991/G:15. (PDF in ../data/armstrong1991/, downloaded by a sibling agent;
+    read in full here) [F]
+    Abstract: "It is estimated that Nephrops comprised 20-40% of the stomach contents of cod
+    sampled on the Nephrops grounds in the north-western Irish Sea in 1982 and 1983,
+    representing 12-28% of the daily food intake when the slow rate of digestion of the prawns
+    is allowed for. Total daily food intake was 0.8-0.9% of body mass in spring and 1.6-1.8%
+    during the remainder of the year. Some 25-34% of the stock of cod with an annual average
+    biomass of 11.0 to 12.5 thousand tons of two-year-old and older fish in 1982 and 1983 was
+    assumed to occur on the Nephrops grounds, resulting in a total annual consumption of prawns
+    of 1.7 to 5.4 thousand tons."
+    "The parameter values Mcod=0.2, PNEP=0.19 and PG=0.25 were taken as the most likely
+    estimates, and will be referred to as the 'base case', for which the estimate of
+    consumption of prawns was 3050 tons."
+    "The estimates of biomass of two-year-old and older prawns during the years 1981-1984,
+    obtained from the cohort analysis, ranged from 17000 to 24700 tons."
+    "The most likely value of consumption is approximately 3000 tons per year, about one third
+    of the mass of Nephrops landed annually by the International fleet (Table 1). Previous
+    estimates of consumption of Nephrops by cod in the Irish Sea (Fannon and Hillis 1982,
+    Brander and Bennett 1986) fall within the range of values in Table 10 and are close to our
+    'base case' estimate"
+    Table 11 (base case, cohort analysis 1981-84), M2 exerted by cod per pseudo age class
+    0,1,2,3,4,5,6,7+: 0.0, 0.038, 0.183, 0.248, 0.219, 0.148, 0.180, 0.080 /yr;
+    fishing mortality at the same ages: 0.0, 0.013, 0.476, 0.833, 0.804, 0.650, 0.584, 0.616;
+    M1 (non-cod) "arbitrarily set at 0.1".
+    "The rates of fishing mortality were generally much larger than the mortality rates
+    inflicted by the cod ... The highest mortality rates from both sources were inflicted on
+    prawns of three to four years of age (carapace lengths 24-30 mm)."
+    Table 10 (19 runs): consumption 1.72-5.38 kt/yr against 2+ biomass (BNEP) 17.0-24.7 kt.
+    -> J: consumption/biomass (2+ prawns) = 3.05/19.0 = 0.16 /yr (base case);
+       range 1.72/17.0 = 0.10 to 5.38/23.0 = 0.23 /yr. Predation by cod ~1/3 of landings.
+    -> J: cod biomass on the grounds in the base case ~0.25 x 11-12.5 kt = 2.8-3.1 kt ate
+       ~3 kt Nephrops/yr, i.e. roughly its own weight per year.
+    Also: Nephrops "yield of Nephrops declined by 0.8 to 2.4 thousand tons when fishing
+    mortality on cod was reduced to 70% of the present value" (model projection, not observed).
+
+(b) Bjornsson & Dombaxe 2004. Quality of Nephrops as food for Atlantic cod with possible
+    implications for fisheries management. ICES J. Mar. Sci. 61: 983-991.
+    doi:10.1016/j.icesjms.2004.06.017  [paper read via WebFetch extraction; wording paraphrased
+    by the tool for long sentences, short fragments verbatim. The field numbers below are the
+    paper citing other studies, so they are SECONDARY: tag [S]; the experimental intake is [F].]
+    - Irish Sea: a diet study of potential predators attributed 88 % of Nephrops predation to
+      cod (Symonds & Elson 1983; Brander & Bennet 1986).
+    - Iceland: Nephrops ~30 % by weight of the stomach contents of 50-90 cm cod on southern
+      Icelandic Nephrops grounds on a yearly basis; seasonally "from 10% in March during the
+      spawning migration of capelin" to ~65 % in July; ~50 % of the Nephrops eaten were above
+      fishable size (>35 mm CL) (Dombaxe 2002).
+    - Experimental: Nephrops consumption ~0.85 % of cod body weight per day.
+
+(c) De Clerck & Sterk 1980. ICES CM 1980/G:43, Outer Silver Pit (southern North Sea).
+    (PDF in ../data/declerck_sterk1980/, sibling agent) [F]
+    Diet only (no stock-level consumption): "During the August survey the weight of Nephrops
+    per stomach expressed in % varied from 3.75 for small cod up to 51.7 for large cod. In the
+    autumn these values were between 2.79 and 11 %."  Whiting in August: "from 0.55 in small
+    whiting up to 84.1". "the mean number of Nephrops per stomach ... increased from 0.1 for
+    small cod to a maximum of 2.8 for large cod".
+    -> strong seasonality (summer >> autumn) and predator-size dependence.
+
+D3.2 North Sea Ecopath (Mackinson & Daskalov 2007) - stomach-based diet matrix, mass-balanced
+---------------------------------------------------------------------
+    Mackinson, S. & Daskalov, G. 2007. An ecosystem model of the North Sea to support an
+    ecosystem approach to fisheries management: description and parameterisation. Cefas Sci.
+    Ser. Tech. Rep. 142. https://www.cefas.co.uk/publications/techrep/tech142.pdf  [F]
+    Nephrops (group 55), 1991 balanced model: B 1.1 t/km2 (input 0.98), P/B 0.37 /yr, Q/B 1.85,
+    EE 0.9937. "In the model an initial estimate of P/B of 0.35 y-1 is used based on M=0.25 and
+    F=0.1." "ICES (WGNNSK, 2005) assume a natural mortality rate of 0.3 for males and immature
+    females, with a value of 0.2 for mature females." "Cod have been identified as a predator of
+    Nephrops in some areas, and the generally low level of the cod stock is likely to have
+    resulted in reduced predation." Nephrops landings+discards in 1991 model: 10,317 t.
+    Shrimp (group 58; Crangon allmanni 14 %, P. montagui 10 %, Processa 6 %, P. borealis 4 % of
+    the group's survey biomass, C. crangon 36 %): B 0.50 t/km2, P/B 3 /yr, Q/B 10, EE 0.4486;
+    catch 24,738 t.
+    -> J (Ecopath identity M2 = P/B x EE - F, model area ~570,000 km2):
+       Nephrops F = 10,317/(1.1 x 570,000) = 0.016; M2 ~ 0.37 x 0.994 - 0.016 = 0.35 /yr.
+       Shrimp F = 24,738/(0.50 x 570,000) = 0.087; M2 ~ 3 x 0.449 - 0.087 = 1.26 /yr.
+       These are balance outputs that inherit the ASSUMED P/B (M = 0.25 for Nephrops), so they
+       are not independent measurements; they show only that stomach-based consumption in the
+       North Sea model is compatible with M2 ~0.3 /yr on Nephrops and ~1.3 /yr on shrimps.
+
+D3.3 Kattegat no-take zone (cod closure area), Nephrops response
+---------------------------------------------------------------------
+    Skold, M. et al. 2022. A no-take zone and partially protected areas are not enough to save
+    the Kattegat cod, but enhance biomass and abundance of the local fish assemblage. ICES J.
+    Mar. Sci. 79: 2231-2246. doi:10.1093/icesjms/fsac152  [F, read via WebFetch extraction of the
+    OUP full-text page]
+    - 426 km2 year-round NTZ from 2009; survey 2008-2021.
+    - Nephrops: "significantly increased in biomass in the NTZ" relative to control areas;
+      "the biomass of N. norvegicus in the NTZ has more than doubled over time"; abundance
+      "more variable", main effect a larger mean size.
+    - Cod: "neither cod abundance nor biomass showed a significant increase".
+    - The paper does not discuss cod predation on Nephrops (per the extraction).
+    -> J: Nephrops > x2 in ~12 yr when trawling stopped and cod did NOT recover; this is a
+       release from fishing, not a predator test. It does show that Nephrops biomass on a
+       Kattegat mud bottom responds on a ~decade scale to removal of one mortality source of
+       order F, and that no compensating cod predation appeared.
+
+=====================================================================
+D4. FURTHER PREDATOR-CHANGE -> PREY-CHANGE EVIDENCE (shrimps)
+=====================================================================
+(a) NE Newfoundland Shelf (SFA6), Pandalus after the cod collapse.
+    Lilly, Parsons & Kulka 2000. Was the increase in shrimp biomass on the Northeast
+    Newfoundland Shelf a consequence of a release in predation pressure from cod?
+    J. Northw. Atl. Fish. Sci. 27: 45-61. https://journal.nafo.int/Portals/0/2000-2/lilly.pdf [F]
+    Cod: "the 3+ biomass declined from about 3 000 000 tons in the early-1960s to less than
+    500 000 tons in the mid-1970s, increased to about 1 000 000 tons in 1984-85 and then declined
+    to less than 20 000 tons by 1993".
+    Consumption: "The highest consumption calculated in this manner was 55 000 tons in 1983
+    (Table 4; Fig. 5). For most years prior to 1990, the consumption tended to lie in the range
+    10 000-25 000 tons." "The contribution of shrimp to the total food consumption of cod in SFA6
+    peaked at 7.4% in the 45-53 cm length-group and averaged 5.9% in the population."
+    Shrimp: Hawke Channel survey "biomass estimates increased from an average of about 3 000 tons
+    in 1979-81 to about 7 800 tons in 1988-90"; SFA6 survey index "about 400 000-500 000 tons in
+    1996-98" (catchability "expected to be less than 1").
+    Conclusion: "Results are equivocal ... it appears that an initial increase in shrimp biomass
+    must have occurred during the early to mid-1980s and was not related to changes in the cod,
+    whereas a larger increase in shrimp biomass in the 1990s was related at least in part to the
+    collapse of the cod."
+    -> J: cod -98 % (1984-85 to 1993); shrimp index rose by more than an order of magnitude over
+       ~1980-1998, but the cod consumption (10-25 kt/yr) is only ~2-6 % of the late-1990s shrimp
+       index, so the predation term alone is small relative to the later stock; the 1980s rise
+       preceded the cod decline.
+
+(b) West Greenland, Pandalus vs cod.
+    Wieland, Storr-Paulsen & Sunksen 2007. J. Northw. Atl. Fish. Sci. 39: 21-33.
+    doi:10.2960/J.v39.m579  https://journal.nafo.int/Portals/0/2007-2008/2-wieland.pdf [F]
+    "Survey estimates of total stock size of Northern shrimp were negatively correlated with
+    Atlantic cod biomass lagged by one and two years until the beginning of the 1990s.
+    Thereafter, the Atlantic cod stock in West Greenland offshore waters collapsed, but no
+    immediate response of Northern shrimp to the released predation pressure was observed.
+    Recruitment and subsequently stock biomass of Northern shrimp increased first about 10 years
+    later following a moderate increase in the temperature conditions".
+    "highly significant (P <0.01) negative correlations between the CPUE for Northern shrimp and
+    Atlantic cod biomass with time lags of one or two years were found when excluding the period
+    after 1991 or 1992"; over the whole series no significant correlation at any lag.
+    Secondary in the same paper: "Short-term responses, i.e. with time lags of less than 2 or 3
+    years, of stock size of Northern shrimp to changes in Atlantic cod biomass have been
+    documented in the Barents Sea and Icelandic waters (Stefansson et al., 1998; Berenboim et
+    al., 2000)."  Greenland halibut consumption of shrimp "about 10 fold lower than those
+    computed for Atlantic cod in West Greenland waters (Grunwald, 1998)". [S for the cited works]
+    -> time scale of shrimp response to cod: 1-2 yr lags where a link is seen; the link can
+       break down (spatial overlap index fell from 0.28-0.64 to 0.09).
+
+(c) North Sea brown shrimp (Crangon crangon) - analogue for the model's small shrimps
+    (C. allmanni, Pontophilus, Processa, P. montagui).
+    Temming & Hufnagl 2015. Decreasing predation levels and increasing landings challenge the
+    paradigm of non-management of North Sea brown shrimp (Crangon crangon). ICES J. Mar. Sci.
+    72: 804-823. doi:10.1093/icesjms/fsu194  [F, read via WebFetch extraction of the OUP
+    full-text page (first ~45 % of page text); numbers below as extracted]
+    - Consumption of shrimp >50 mm, 1971-1980 averages: cod 28,345 t/yr (RFA6 approach) /
+      30,131 (North Sea approach); whiting 13,427 / 15,535. 2001-2010: cod 759 / 6,229;
+      whiting 14,389 / 6,738.
+    - Juveniles (<50 mm) consumed in 1991: whiting 65,000 t, cod 18,000 t.
+    - Natural (predation-dominated) mortality, RFA6: M = 4.75 /yr (1971, F 0.68),
+      3.15 (1995, F 3.3), 1.26 (2010, F 4.4); 2001-2010 mean M = 1.7 /yr.
+    - Landings 13,689 t/yr (1971-80) -> 31,210 t/yr (2001-10); landings/consumption ratio
+      0.12-0.14 (1971) -> 3.4-5.6 (2005). Abstract: "the fishery has become the main mortality
+      source of adult brown shrimp (>50 mm)"; landings since 2000 ~40 % higher than in the
+      1980s-1990s.
+    -> J: cod+whiting consumption fell ~64-72 % between 1971-80 and 2001-10 while landings
+       (a stock proxy) rose ~2.3x; predation M on a small shrimp fell from ~4.8 to ~1.3 /yr.
+       Shallow coastal species; use only as an order of magnitude for small-shrimp M2.
+
+=====================================================================
+D5. EXPERIMENTS (cages, tethering) - result of search
+=====================================================================
+    No subtidal soft-bottom fish-exclusion cage experiment reporting density responses of
+    crabs, shrimps or Nephrops was found (see Not-found list). No tethering study of Nephrops
+    (or Pandalus) with in situ predation rates by cod was found. The nearest field evidence on
+    Nephrops exposure is burrow emergence behaviour (emergence is crepuscular/diurnal with
+    depth), which belongs to the refuge part of this project, not here.
+
+=====================================================================
+D6. SUMMARY TABLE OF ORDERS OF MAGNITUDE (J, from the sources above)
+=====================================================================
+  Taxon / area                     quantity                               value
+  Nephrops, W Irish Sea 1981-84    cod consumption / 2+ biomass           0.10-0.23 /yr (base 0.16)
+  Nephrops, W Irish Sea 1981-84    M2 by cod, by age (cohort analysis)    0.04-0.25 /yr
+  Nephrops, W Irish Sea            cod consumption / landings             ~1/3
+  Nephrops, North Sea Ecopath 1991 implied M2 (balance, assumed P/B)      ~0.35 /yr
+  Nephrops, Kattegat NTZ           biomass change after trawl closure     > +100 % in ~12 yr (cod flat)
+  Pandalus, Skagerrak/N. Deep      total M (mostly predation)             0.75 assumed; 0.9-1.2 best fit
+  Pandalus, Skagerrak/N. Deep      predation removal / catch              >= 2
+  Pandalus, Barents Sea            fraction of stock eaten by cod / yr    0.15-0.58
+  Pandalus, Barents Sea            Mcod (11 cohorts)                      0.06-2.23 /yr, mean 0.76
+  Pandalus, Barents Sea            cod consumption / catch                ~3-5
+  Pandalus, NE Newfoundland        cod 3+ biomass change                  -98 % (1985-1993)
+  Crangon, North Sea               predation M                            4.8 (1971) -> 1.3 /yr (2010)
+  Snow crab, NW Atlantic           cod -> crab lag                        0-5 yr, strongest at 2 yr
+  Shrimp, West Greenland           cod -> shrimp lag                      1-2 yr (until early 1990s)
+
+  J (interpretation for the plausibility check, not a source value): measured/assessed M2 on
+  Nephrops by fish is low, ~0.1-0.35 /yr, and cod removed roughly a third of the landings in the
+  Irish Sea when cod were abundant; on Pandalus it is high, ~0.5-1.2 /yr, and exceeds fishing;
+  on small shrimps (Crangon) it can be several per year. A biomass-weighted M2 for
+  mobile_epifauna (60 % Nephrops at ~0.2, 26 % crabs unknown, 7 % Pandalus at ~0.8, 4 % small
+  shrimps at ~1.5-4, 3 % mysids unknown) would be of order 0.2-0.4 /yr if crabs/mysids sit near
+  the Nephrops level; crabs and mysids have no measured M2 in what was found. Field evidence
+  that fish predation change alone shifts the prey biomass is strong in the meta-analysis
+  (Worm & Myers; 8 of 9 regions inverse, 3 significant after correction) but weak or
+  absent in several single-stock tests (Barents Sea, West Greenland after 1991, NE
+  Newfoundland 1980s), and is weakest at the warm southern range edge, where the Skagerrak
+  lies.
+
+=====================================================================
+NOT FOUND (searched, no usable source obtained)
+=====================================================================
+  - Worm & Myers 2003 full text: per-region correlation coefficients (incl. SKAG), pooled
+    slope/effect size, and % shrimp change per cod change. Only abstract content via snippets
+    and the review by Baum & Worm 2009 (Skagerrak confirmed as one of the nine regions).
+  - Brander & Bennett 1986 (Can. Spec. Publ. Fish. Aquat. Sci. 92) and 1989 (in Caddy, Marine
+    Invertebrate Fisheries, pp. 183-204) themselves: not online. Their consumption estimate is
+    reported by Armstrong et al. 1991 only as falling within 1.7-5.4 kt/yr, "close to" 3 kt/yr.
+  - North Sea SMS / MSVPA key run: no M2 for Nephrops, Pandalus, crabs or mysids. The 2023 key
+    run "provides natural mortality estimates for the assessments of haddock, herring, Norway
+    pout, southern North Sea sandeel, northern North Sea sandeel, sprat, and whiting"; later
+    additions are sprat and plaice as prey (ICES WGSAM, search snippet of
+    https://archimer.ifremer.fr/doc/00873/98452/107912.pdf) [S]. No invertebrate prey stock is
+    listed, so no SMS M2 exists for these taxa.
+  - Skagerrak/Norwegian Deep Pandalus: no species-resolved M2 (cod, saithe, blue whiting,
+    roundnose grenadier) in tonnes or per year; only the predation index (relative) and total-M
+    fits. The 1985-2002 cohort assessments with predation (">= 2 x catch") were not found as
+    separate documents.
+  - Skagerrak-specific cod-Pandalus correlation value (exists inside Worm & Myers 2003 Fig. /
+    Baum & Worm 2009 Fig. 2d, not extractable).
+  - Kattegat: any study linking the cod collapse to Nephrops density or size (the Kattegat NTZ
+    paper does not address predation).
+  - Firth of Clyde: quantified Nephrops density change attributed to gadoid predator release
+    (only landings rising since the mid-1960s and narrative claims).
+  - Gullmarsfjorden no-take zone / trawl closure: Nephrops size or density results (SLU Aqua
+    reports 2022:20 not retrieved; the shrimp-trawl ban there starts 1 July 2027). Checked:
+    Bergstrom, U. (ed.) 2007, Effekter av fredningsomraden pa fisk och kraftdjur i svenska
+    vatten, Fiskeriverket Informerar 2007:2 (../data/finfo2007_2/) [F]: inner Gullmarsfjorden
+    trawl ban since 1999, evaluated 2000-2005, reports only fish (cod and haddock "+", whiting
+    and plaice "0"/"+" in its Table 1); no Nephrops result.
+  - Tethering experiments with Nephrops or Pandalus and in situ predation rates by cod.
+  - Subtidal soft-bottom fish-exclusion cage experiments with density responses of crabs or
+    shrimps (Loch Ewe work by Hall/Raffaelli located only as a diet paper).
+  - Gulf of Maine shrimp release after cod collapse: no numbers beyond Worm & Myers
+    (GOM is one of the nine regions, weak/positive correlation at the warm edge per Baum & Worm).
+  - Measured M2 on crabs (Liocarcinus, Pagurus, Munida, Goneplax) or mysids by fish in the
+    North Sea/Skagerrak.

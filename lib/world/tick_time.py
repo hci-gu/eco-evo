@@ -176,6 +176,9 @@ RESCALE_RULES = {
     # Section 185: the regional logistic loss c * B_region per tick, c
     # derived by the loader from r_max and regional_carrying_capacity.
     "capacity_loss_rate": "flux",
+    # Section 223.12: the refuge exchange relaxes A by exp(-k) per tick,
+    # so k is a rate per tick and n ticks of k equal one tick of n k.
+    "refuge_exchange_rate": "flux",
     # growth
     "growth_rate": "growth",
     # loss
@@ -203,6 +206,7 @@ RESCALE_CLAMP = {
     "starve_rate": (0.0, 1.0),
     "movement_speed": (0.0, 1.0),
     "capacity_loss_rate": (0.0, 1.0),
+    "refuge_exchange_rate": (0.0, 10.0),
 }
 
 

@@ -1,0 +1,373 @@
+B_mechanisms_notes.txt - Why wild demersal fish feed below Cmax when prey is plentiful
+==========================================================================================
+
+Research agent B, 2026-10-26. Research only: no code, library, manifest, AGENTS.md or resume
+was edited. Evidence rows with full citations: tables/B_mechanisms_evidence.csv. Arithmetic:
+scripts/B_jensen.py, B_evacuation.py, B_feeding_level.py (stdout in tables/B_*_stdout.txt).
+Tags: [F] full text read, [A] abstract, [S] secondary (named), [D] arithmetic here.
+J = judgement. Nothing here was chosen to suit a model outcome.
+
+Engine reminder (from the task): per tick, intake = B_pred x eat x hunger x a N/(1 + a h N + w B_pred),
+1/h = Cmax per tick. On benthic pools x = a h N ~ 100-500, so intake = Cmax x eat x hunger
+until the pool is nearly empty.
+
+0. Headline
+-----------
+1. Three mechanisms (b, c, f) and the stomach-scale half of (e) leave the saturated plateau
+   at Cmax when prey is plentiful. This is computed below, not assumed. They change the
+   response near the knee (b, f) or the timing of meals (c, stomach satiation; an ad-lib
+   digestion-limited fish still averages Cmax, Jeschke eq. 15). Reserve-scale regulation
+   (e, weeks) can lower the plateau; its strength in wild gadoids is unmeasured.
+2. Only a constraint on WHEN or HOW LONG fish can feed while prey is exposed (a, with d
+   setting the exposure windows) lowers the plateau, and only if the stomach cannot be
+   filled within the window. The field signature fits this: Rindorf & Gislason 2005 found
+   saturation for every fish prey of whiting, but at 6-17 % of Wmax per prey group, with
+   fish eaten "almost exclusively during dawn and dusk". Johnson et al. 2015 found plaice
+   and dab stomach fullness flat across a trawling gradient that cut prey biomass. Wild
+   fish are thus on a plateau, and that plateau sits below Cmax.
+3. Correction to the premise "wild cod/haddock feed at ~0.3 of Cmax" [D]. Against
+   literature Cmax, evacuation-based field rations give:
+   - cod 0.49-0.82 (central ~0.6);
+   - haddock 0.30-0.61 (no haddock Cmax function exists);
+   - whiting 0.17-0.71;
+   - saithe 0.19-0.54.
+   Against the ENGINE benthivore ceiling (~1.6 x cod Cmax at 7 C) cod and haddock sit at
+   0.38-0.42. The "0.3" is therefore close to the engine ceiling, not to the literature
+   Cmax. Both views say the plateau is well below the ceiling.
+4. A ceiling issue found on the way (c, J): an evacuation-limited ceiling scales with prey
+   armament. Shelled or ash-rich benthos (crustaceans, brittle stars, bivalves) is
+   evacuated more slowly than fish flesh, by about 2x for brown shrimp in whiting (Andersen
+   1999 [A]). Cod evacuation stage durations rise with ash and carbonate content
+   (Couturier et al. 2013 [A]). On armoured benthos the mass-based ceiling could be about
+   half the ceiling on soft prey of the same energy density (factor J).
+
+1. Mechanism (a): foraging time budget
+--------------------------------------
+Theory.
+- Holling with a foraging time share T_f: intake = T_f a N/(1 + a h N), plateau T_f/h.
+- The risk version is the activity-mediated growth-mortality trade-off (Werner & Anholt
+  1993 [S]; Lima & Dill 1990 [S]). Optimal foraging time falls as predation risk rises or
+  as food rises past the need. It gives time-limited plateaus below the digestive maximum.
+- The foraging arena version (Walters & Juanes 1993 [S]; Ahrens, Walters & Christensen
+  2012 [S]) restricts predator and prey to arenas in space and time:
+  V = v B/(v + v' + a P), Q = a V P.
+  The EwE chapter text adapted from Ahrens et al.: activity restrictions split each prey
+  population into "vulnerable and invulnerable population components", so predation is
+  "limited by exchange rates between those components". The refugium note
+  ("Refugium och utbyte i bentos"/summary.md) already worked out this algebra and its
+  relation to the engine's Beddington-DeAngelis term.
+
+Evidence. Share of 24 h with ingestion, per species and prey:
+- Whiting on fish (Rindorf & Gislason 2005 [F]).
+  - Ingested "almost exclusively during dawn and dusk".
+  - "The ingestion around midday was low" and "Ingestion during darkness was low for all
+    species but whiting at location 5".
+  - All prey but Norway pout showed two peaks at dawn and sunset.
+  - Window length: two twilight windows of about 1-2 h, a share of 0.08-0.17 of the day
+    [D, J]. The authors: "data did not allow the duration of the non-feeding periods to be
+    estimated".
+- Whiting on benthos (Rindorf 2003 [F]).
+  - "whiting at 4 of the 5 locations were feeding on bottom dwelling prey at night,
+    whereas pelagic and free swimming prey were captured mainly during daylight".
+  - She suggests the cause is "the ability of the bottom dwelling prey to avoid the
+    predator during daylight", other prey being available by day, or vision being needed
+    to capture free-swimming prey.
+  - Night in September at 56-58 N is about 11-12 h, so the benthic share is about 0.4-0.5
+    of the day (J).
+- Whiting, total intake. The feeding peak is at 22-24 h, minimum 08-10 h (Mergardt &
+  Temming 1997 [S]). Morning feeding is reported by others (Hall et al. 1995 and
+  Pedersen 2000, both cited by Rindorf 2003).
+- Cod.
+  - Searches actively by day and little at night; the odour response is the same day and
+    night (Lokkeborg & Ferno 1999 [A]).
+  - North Sea cod ate invertebrates at night and fish by day, with morning and evening
+    fullness peaks for herring (Adlerstein & Welleman 2000 [S]).
+  - Feeding therefore spreads over much of 24 h; J share 0.5-1.
+- Haddock. Bait response rises at dawn and falls at dusk, about 1 h earlier than cod
+  (Lokkeborg & Pina 1996, via the earlier note gadoid_diel_feeding.md). Albert 1995 (early
+  morning and late afternoon) and Hall et al. 1995 (22-24 h) disagree (both cited by
+  Rindorf 2003). J share 0.3-0.6 of the day.
+- Whiting and Norway pout on migrating krill. No day/night difference in fullness: the
+  predator follows the prey (Onsrud et al. 2004 [S]).
+- Plaice, dab, long rough dab. de Groot 1971 and the Gibson tidal-rhythm work were not
+  obtained. Daylight visual feeding of plaice is a common statement but unverified here
+  (gap).
+
+Magnitude and the key caveat [D] (B_evacuation.py, bout schedule).
+- If the fish can fill its stomach in each window, a time window costs little:
+  - with n = 1-4 windows a day, daily intake is 0.78-0.98 of continuous feeding (n = 2:
+    0.89-0.96);
+  - reason: evacuation takes 1-4 days (section c), so the stomach carries the meal
+    through the non-feeding hours.
+- A window plateau of 0.1-0.2 Wmax therefore needs a second condition: few captures within
+  the window.
+  - Whiting example: a 250 g whiting caught one 9 g clupeid every 2-4 days; that is 0.27-
+    0.55 of Wmax.
+  - Captures are discrete and rare. The encounter with VULNERABLE prey inside the window
+    is low even when the trawl catch (total prey density) is high.
+- This is the foraging arena reading: the plateau is set by exposure windows times the
+  vulnerable stock, not by Cmax. The addendum's 2-4 h x Wmax/24 per hour arithmetic
+  (0.08-0.17 Wmax) implicitly caps the ingestion rate at Cmax per hour. That cap is the
+  engine's logic, not fish physiology (J).
+
+What it changes.
+- Neither a nor 1/h. It sets the time share: the engine's eat share x hunger, or the
+  vulnerable stock.
+- In the engine the time share is a learned action with no cost or constraint other than
+  the metabolic action cost and the observation of risk. Nothing makes eat < 1 optimal on
+  a benthic pool where predation risk is low (J).
+- A 6-h tick cannot resolve a 1-2 h twilight window. dark_ratio is the only existing hook
+  and cannot represent twilight peaks (convention 6 in "Attackrater ur motesteori"/
+  summary.md).
+
+2. Mechanism (b): prey patchiness below the 1 km cell (scale transition)
+------------------------------------------------------------------------
+Theory: Chesson 1998, 2012 scale transition [S]; Englund & Leonardsson 2008 not obtained.
+- Second order:
+  E[f(N)] ~ f(Nbar) + 1/2 f''(Nbar) Var(N) + f'(Nbar) Cov(P, N)/Pbar.
+- For Holling II, f(N) = a N/(1 + a h N), with x = a h Nbar:
+  relative correction = -CV^2 x/(1 + x)^2,
+  which goes to -CV^2/x at saturation.
+- Occupancy (prey only in a share p of the cell, predator searching at random):
+  R = p (1 + x)/(p + x), which goes to p as x grows.
+- An aggregative response (Cov > 0) pushes R up.
+
+Magnitude [D] (B_jensen.py, exact integration):
+- Saturated benthos pairs, x = 100-500, lognormal CV 0.3-1.0: R = 0.991-0.9998, i.e. less
+  than 1 % loss.
+- Fish -> fish pairs near the knee, x ~ 1: R = 0.85-0.98.
+- Only near-empty sub-areas matter at saturation. Gamma with CV 2-3 at x = 100-500 gives
+  R = 0.50-0.82, the same effect as occupancy p.
+
+Sub-km variability data:
+- Downing 1979 [F], Taylor's power law over 1462 sets of replicate grabs/cores:
+  s^2 = 5.24 M^1.462 (M in ind/m2).
+  - Implied CV: 0.66 at 100/m2, 0.36 at 1000/m2.
+  - Polychaeta: a 3.24, b 1.561. Pelecypoda: a 7.87, b 1.496.
+  - Caveat: mostly freshwater sets, counts rather than biomass.
+  - Since b < 2, CV rises as the mean falls, so depletion makes the bed patchier.
+- Nephrops: the 2025 Swedish UWTV interim report gives 4 Norwegian Skagerrak stations at
+  0.13-0.32 burrows/m2, CV 0.39 [F, D]. These stations lie 5-15 km apart, so the sub-km CV
+  is a gap.
+- Fish patch use: whiting showed no aggregative response; predator and prey catches were
+  "slightly negatively correlated" (Rindorf & Gislason 2005 [F]).
+- A fish cruising at 0.4-0.6 BL/s covers 1 km in about 1-2 h, so uniform search over a
+  cell within a 6-h tick is plausible (J).
+
+What it changes:
+- The response SHAPE near the knee: effectively a lower a at x ~ 1. Nothing at saturation
+  unless large parts of the cell are empty of accessible prey.
+- Not a, and not the ceiling, for the benthos pairs.
+- Relevance to slow benthic pools: low. It grows as a pool is eaten down, because x falls
+  and CV rises.
+
+3. Mechanism (c): digestion-limited intake
+------------------------------------------
+Theory: Jeschke, Kopp & Tollrian 2002 [F], the SSS equation (eq. 13).
+- With success rate a, corrected handling time b and corrected digestion time c:
+  y(x) = [1 + a x (b + c) - sqrt(1 + a x (2(b + c) + a x (b - c)^2))] / (2 a b c).
+- Asymptote 1/max(b, c) (eq. 15). The hunger level is h = 1 - c y (eq. 11), and the search
+  probability equals h.
+- Check of the premise that SSS saturates more sharply than Holling: it does not. "For b = 0
+  (i.e., zero handling time), the SSS equation simplifies to the disc equation but with c
+  instead of b". "if one of these two factors is negligibly small, the curve becomes
+  virtually identical to that of the disc equation". The two differ only when b ~ c.
+- For fish, b/c ~ 1/400: behavioural capture and handling take 15-30 s (Ellis & Gibson
+  1997; Persson et al. 2012, via benthivores_encounter.md). The engine's Holling form with
+  h = 1/Cmax is therefore exactly the SSS digestion-limited limit. "The vast majority of
+  predators seems to be digestion limited".
+- Jeschke also notes that predators spend much time resting, "often ... motivated by
+  satiation".
+
+Evacuation vs the 6-h tick [D] (B_evacuation.py; WGSAM 2024 Table 3-7 square-root cylinder
+model, 7.5 C).
+- Model: dS/dt = -R' S^0.5, t_half = 2(sqrt(S0) - sqrt(S0/2))/R', t_empty = 2 sqrt(S0)/R'.
+- 2 %BW meal, fish or soft prey:
+  - cod 40 cm: t_half 14 h, t_empty 48 h;
+  - haddock 40 cm: 16.5 / 56 h;
+  - whiting 30 cm: 15 / 51 h;
+  - soft benthos (E 3.5): 12-14 / 41-48 h.
+- Armoured benthos (armament factor 0.5, J): t_half 24-28 h, t_empty 82-96 h.
+- 5 %BW meal: t_half 19-26 h soft, 38-45 h armoured.
+- Independent check: dab satiation meals have a gastric emptying time of 49 h at 7.5 C and
+  30 h at 10.5 C by a linear fit (Bagge et al. 1995 [F]). Other fits in the same paper give
+  25-36 h at 7.5 C.
+- So a full stomach is NOT cleared within 6 h. Half a meal takes 2-4 ticks and the whole
+  meal 7-16 ticks.
+
+Max meal vs daily Cmax:
+- Cod single-day satiation intake is 5.7-7.9 %BW against 2.2-3.1 sustained (lab, 6.3-6.8
+  C; earlier note).
+- Whiting on demand ate ~3.4 %BW/d in about one meal per 21 h (Seyhan et al. 1998 [A]).
+- A fish can therefore eat one to three days of Cmax within a 2-4 h window. Meals are
+  bouts, separated by 1-2 days of digestion.
+- To sustain FB4 Cmax, a 40 cm cod needs a mean fill of 2.2 %BW [D].
+
+What it changes:
+- The evacuation-limited 1/h is already the engine's ceiling, and the shape is unchanged.
+- Two refinements:
+  (i) the ceiling on armoured benthos should be lower in mass than on soft prey (armament;
+      [A] + J factor);
+  (ii) intake is bout-structured over days. The per-tick ceiling 1/h forbids eating 1-3
+      days of ration in one tick, but the daily mean is the same.
+- Neither refinement keeps fish below Cmax on a plentiful pool: an ad-lib fish under
+  digestion limitation feeds at Cmax by definition (Jeschke eq. 15).
+
+4. Mechanism (d): prey behaviour (vigilance, escape, refuge)
+-------------------------------------------------------------
+Already reviewed in "Refugium och utbyte i bentos" (reused, not redone):
+- Nephrops emerge 1-2 times a day, exposed share 0.07 (0.03-0.35), burrows re-dug in 1-2 d.
+- Northern shrimp spend 0.75 of the day on the bottom.
+- Infauna accessible share 0.2 (0.08-0.45); Amphiura arm tips regrow over ~146 d.
+- Fish eat 1.3-6.5 % of infauna production (Dauvin 1988, via that note).
+
+New here:
+- Juvenile plaice siphon nipping makes Macoma lose siphon mass and bury shallower; recovery
+  speed "varied greatly" (de Goeij et al. 2001 [A]).
+- In whiting on shrimp, a fuller gut lowers strike success and lengthens handling
+  (Staniland thesis [A]).
+- Rindorf 2003 [F]: Crangon "spends part of the daylight hours buried"; Pandalus spend the
+  day on or near the bottom and ascend at night.
+
+What it changes:
+- It sets the exposure windows and the vulnerable stock, i.e. the accessible fraction and
+  the window in (a).
+- With the accessible fractions already in the engine, x stays at 100-500, because the
+  accessible stock is still large relative to 1/(a h).
+- Prey behaviour lowers the plateau only through window-limited capture: per-window
+  exposure, not a standing accessible stock.
+
+5. Mechanism (e): satiation and state-dependent feeding
+-------------------------------------------------------
+Engine and SSS gates side by side:
+- engine: hunger = min(1, max(0, (1 - s)/(1 - u))), s = reserve fill, u = 0.5;
+- SSS: h = 1 - c y, the stomach (empty gut volume), time scale hours.
+
+Evidence favours stomach regulation on the hour-day scale:
+- Whiting resume feeding at about 40 % stomach fullness, with a ~21 h rhythm; appetite
+  return "follows the gastric emptying curve closely" (Seyhan et al. 1998 [A]).
+- Dab feeding intervals match gastric emptying time (except at 6.5 C); "stomach fullness is
+  a major factor controlling appetite" (Gwyther & Grove 1981 [A]).
+- Dab intake depends on the previous day's meal: "a high food intake is followed by a day
+  with a lower one" (Bagge et al. 1995 [F]).
+- North Sea whiting: partly digested food lowers the chance of fresh food, while meal size
+  is unchanged (Rindorf 2002 [S]).
+
+Reserve (lipostat) regulation acts over weeks:
+- hyperphagia and compensatory growth after restriction, refilling reserves (Jobling &
+  Johansen 1999 [A]; Ali et al. 2003 [S]);
+- cod: Jobling et al. 1994, title only.
+
+Wild feeding level:
+- Ursin et al. 1985 [F] give growth-derived satiation levels f = 0.44-0.97 by size class
+  (North Sea sets 0.44-0.89). Their Hm is a growth-model parameter, not FB4 Cmax, so this
+  is NOT the same quantity as ration/Cmax.
+- Wild North Sea cod stomach fill (Ursin Table 1) is 1.2-1.9 %BW. Against the fill that
+  sustains FB4 Cmax this implies 0.73-1.05 [D], biased upward (pooled mean fill; large cod
+  on large prey).
+- Evacuation-based rations give 0.49-0.82 for cod [D].
+- No source was found that relates wild gadoid intake to liver index or reserve.
+
+What it changes:
+- A stomach gate makes intake bout-like but, with food always available, still averages 1/c
+  = Cmax (Jeschke eq. 15). It cannot by itself give sub-Cmax plateaus.
+- A reserve gate (the engine's) lowers intake only when the reserve is above u. Evidence
+  for slow reserve control exists (compensatory hyperphagia), but its strength in wild
+  gadoids is unmeasured (gap).
+- Neither changes a. The stomach gate changes the time structure, the reserve gate the
+  plateau (hunger < 1).
+
+6. Mechanism (f): interference
+------------------------------
+Arithmetic [D] (B_feeding_level.py).
+- Benthivore w = 0.45 km2/t at B_pred 1.53 t/km2 gives wB = 0.69.
+- Against 1 + x = 101-501 the intake ratio is 0.993-0.9986; at B = 6 t/km2 it is still
+  0.974-0.995.
+- This is the "saturation dilutes interference" argument of the interference note with
+  current numbers.
+
+Field evidence:
+- Plaice and dab along an Irish Sea trawl gradient (Johnson et al. 2015 [F]).
+  - "As trawling frequency increased, both fish and prey biomass declined, such that the
+    ratio of fish to prey remained unchanged".
+  - "even at frequently trawled sites with low prey biomass, both plaice and dab
+    maintained constant levels of stomach fullness and gut energy contents".
+  - Plaice shifted toward energy-poor prey.
+- Kattegat: plaice and long rough dab condition followed the prey/consumer ratio, rising
+  then falling above about 5 passes/yr; dab showed no effect (Hiddink et al. 2016 [A],
+  via the earlier addendum).
+- Cod density had no effect on capelin consumption at 2 km (Fall et al. 2021 [A]).
+- No gadoid or flatfish BD parameter exists.
+
+What it changes:
+- Shape near the knee only. Invisible on saturated pairs, so it cannot keep fish below Cmax
+  on plentiful benthos.
+
+7. Food limitation at km to 100 km
+----------------------------------
+- Barents Sea cod (MULTSPEC, Bogstad et al. 1997): field half-saturation 1.57 t/km2 of
+  suitable food, fitted on ~10^2 km areas, 6-7x the encounter value at 1 km (earlier note).
+- Cod is "gut-limited, not encounter-limited" (Fall & Fiksen 2020 [S]).
+- Eastern Baltic cod (Neuenfeldt et al. 2020 [A]): feeding level fell to levels consistent
+  with severe growth limitation in small cod. Linked to fewer benthic prey (hypoxia) and few
+  pelagic prey, i.e. food limitation at stock scale when benthic prey is lost.
+- Johnson 2015: flatfish fullness was flat over a several-fold prey biomass range; prey/fish
+  ratio constant.
+- Reading (J): wild benthivores are saturated at site and km scale (the plateau does not
+  follow prey density) AND feed at 0.4-0.8 of Cmax. This is the signature of a time or
+  exposure limit (a + d), not of encounter (b), digestion (c) or interference (f).
+  Food limitation appears when benthic prey is lost at large scale (Baltic) or the
+  prey/consumer ratio falls (Kattegat).
+- Mehl 1989 and Engelhard 2008 were not re-read here; see the earlier notes.
+
+8. Ranking (J)
+--------------
+By strength of field evidence that the mechanism operates in North Sea demersal fish:
+  (a) time budget / exposure windows   - direct diel stomach series (Rindorf 2003, 2005)
+  (c) digestion limitation             - strong: evacuation experiments, SSS; sets the ceiling
+  (e) stomach-scale satiation          - strong in the lab, indirect in the field
+  (f) interference                     - weak and mostly null at fine scale
+  (b) sub-cell patchiness              - variance data exist; no fish-specific test
+  (d) prey behaviour                   - strong qualitatively; little quantified as fish intake
+
+By relevance to fish on slow benthic pools (what can hold a saturated pair below Cmax):
+  1. (a) + (d) together: exposure windows and window-limited capture. This is the only
+     combination that lowers the plateau while prey is plentiful.
+  2. (c) armament: a lower mass ceiling on shelled benthos (moves 1/h by a factor ~0.5, J).
+  3. (e) reserve gate: lowers the plateau only at a high reserve; field strength unknown.
+  4. (b), (f): no effect at x = 100-500; they matter only after the pool is eaten down.
+
+9. What the engine lacks (literature-grounded, no fix proposed)
+---------------------------------------------------------------
+(i) The time share (eat x hunger) is a free learned action. It has no time constraint and
+    no exposure window, so it can be 1 every tick. In wild fish the plateau below Cmax
+    lives in the time share and the vulnerable stock, not in a or 1/h.
+(ii) The per-tick ceiling 1/h acts as an hourly ingestion cap. In real fish, digestion caps
+    the daily mean, and meals are bouts of 1-3 days' ration followed by 1-4 days of
+    evacuation. A window restriction therefore costs real fish little unless captures in
+    the window are rare. A time-share cap in the engine bites one-for-one on intake, which
+    does not match the biology (J).
+(iii) The 6-h tick cannot represent 1-2 h twilight windows, and dark_ratio cannot
+    represent dawn and dusk peaks.
+(iv) The evacuation-limited ceiling has no prey armament term (shelled benthos vs fish
+    flesh).
+
+10. Gaps
+--------
+- Hall et al. 1995 (J Anim Ecol 64:39), Albert 1995 (ICES JMS 52:873), de Groot 1971 and
+  Gibson's tidal feeding work: not obtained, so there is no measured feeding-hour share
+  for haddock, plaice or dab.
+- Englund & Leonardsson 2008, Werner & Anholt 1993, Walters & Juanes 1993, Ahrens et al.
+  2012: not obtained (theory cited [S]).
+- Sub-km CV of Nephrops burrows and of North Sea macrobenthos biomass (only Downing's
+  mostly freshwater counts and between-station UWTV).
+- Armament factor for cod and haddock on brittle stars, bivalves and polychaetes
+  (Couturier et al. 2013 numbers not read).
+- Wild gadoid intake vs liver index or condition; Neuenfeldt 2020 and Hiddink 2016 full
+  texts (publisher and repository bot checks).
+- Window-limited capture rates of gadoids on emerged Nephrops or exposed infauna.
+
+Failed downloads kept as evidence of the attempt (not papers):
+data/B_neuenfeldt2020/failed_403_response.html, data/B_johnson2015/failed_recaptcha_response.html
+(the real text is johnson2015.xml/.txt from Europe PMC), data/B_hiddink2016/failed_*.html,
+data/B_ewe_arena/failed_403_response.html.

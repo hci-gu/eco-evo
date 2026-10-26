@@ -219,4 +219,7 @@ class GPUTrainingVisualizer:
         if self.executor is not None:
             self.executor.shutdown(wait=True)
             self.executor = None
+        if self.progress is not None and hasattr(self.progress, "wait"):
+            # A three-year probe still running in its own process (223.12).
+            self.progress.wait()
         self._disable()

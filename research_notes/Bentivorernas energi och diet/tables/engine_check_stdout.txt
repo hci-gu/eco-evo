@@ -1,0 +1,4 @@
+today    : P 0.707 /yr x 5800 MJ/t =   4101; need  14515 MJ/t/yr -> infauna-only Q/B 7.98, engine Q/B on the redistributed diet 5.36 (old checked-pool mix 5.65)
+proposed : P 0.677 /yr x 4900 MJ/t =   3318; need  13732 MJ/t/yr -> infauna-only Q/B 7.54, engine Q/B on the redistributed diet 5.07 (old checked-pool mix 5.34)
+Budget Q/B: 3.48 today, 4.2 proposed (energy-equivalent on the redistributed diet 4.46).
+Residual gap = the per-eat-tick feeding_cost (2.0 x RM), outside decision 223.9(2).

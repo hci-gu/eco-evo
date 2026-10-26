@@ -68,6 +68,13 @@ def add_common_arguments(parser):
     parser.add_argument("--graph-ticks", type=positive_int, default=32)
     parser.add_argument("--pairs-per-batch", type=positive_int, help="Limit simultaneous perturbation pairs to fit VRAM")
     add_warmup_argument(parser)
+    parser.add_argument(
+        "--depleted-patches", "--depleted_patches", dest="depleted_patches",
+        type=float, default=0.5,
+        help=("Share of the training worlds that start with depleted benthic "
+              "patches (infauna and epifauna emptied to 1-32 %% over 5-30 %% of "
+              "the cells), so the fish meet emptied beds and can learn to "
+              "leave them (default 0.5; 0 = off). Section 223.12."))
 
 
 def parse_training_args(parser, argv=None):
@@ -113,7 +120,8 @@ def trainer_options(args):
                 execution=args.execution, graph_ticks=args.graph_ticks,
                 pairs_per_batch=args.pairs_per_batch,
                 warmup_ticks=warmup_ticks(getattr(args, "warmup_days", 0.0),
-                                          int(getattr(args, "tick_length", 6))))
+                                          int(getattr(args, "tick_length", 6))),
+                depleted_patches=float(getattr(args, "depleted_patches", 0.0)))
 
 
 def targets_from_args(args, dm_ids):

@@ -19749,3 +19749,352 @@ remain open exactly as described in 71.9 / 71.11.
     ok; train.py and train_gpu.py 1-generation smoke runs OK (GPU
     rewards identical to the 221 smoke run); viability 300 ticks eat arm
     identical to 221.4. Checkpoints stay invalid (221.5).
+
+223 FIX76 VERDICT: EPIFAUNA OVEREATEN BY THE PREDATORS (2026-10-26)
+================================================================
+223.1 fix76 (train_gpu, pzbpgp248nsrpfix76, from scratch on the 222
+    world, --warmup-days 60, 1x16 tanh, lr 0.06, sigma 0.1, 16 deltas,
+    1 world, 1460-tick episodes, worlds refreshed every iteration;
+    started 02:30, still running). Analysed twice on frozen copies:
+    08:22 (gen 5, ~update 256) and 13:05 (update 450, 9 full
+    generations). Probes: tools/probes/frozen_years.py, 8 years, seeds
+    20260530 / 7; a17_score 3 yr after 1 burn-in. Year 1 of the probe
+    matches the GPU eval exactly (ben 1.043, pred 0.985, epi 0.501 at
+    gen 5). No library or engine change.
+    - In-training eval (one year): fish flat since gen 2-3 (ben ~1.05,
+      pred 0.93-0.99, plk 1.05-1.15); porpoises 0.45 -> ~1.0, seals
+      0.3 -> ~1.01; mobile epifauna ends every year at 0.48 (gen 5) ->
+      0.59 (gen 9) - the only trace of the problem below. Episodes are
+      one year from refreshed starts, so the policies never meet a
+      depleted bed and nothing after year 1 reaches the reward.
+223.2 Gen 5, 8 years (end/b0, seed 20260530; seed 7 within a few %):
+    epi 0.50/0.20/0.07/0.06 in years 1-4, 0.19 at year 8; pred 0.99,
+    0.97, 0.69, 0.17 (starvation 0.3-0.7 /yr in years 4-5); ben 1.04,
+    0.96, 0.50, 0.22; seals extinct by year 5 (0.005 / 0); plk 1.50
+    and porp 1.17 at year 8 (porpoise diet 100 % planktivores); slow
+    recovery of epi, ben and pred from year 5.
+    - Predators: diet 82 % epifauna in year 1 (budget 7 %), realised
+      M2 on epifauna 0.77 /yr vs predation_mortality 0.036 (~21x).
+      Removal ~6 t/km2/yr (pred 4.1, ben 1.3, trawl 0.7) vs the
+      epifauna's maximum surplus r_gross K/4 ~ 0.88 x 12.2 / 4 = 2.7.
+    - The pair is saturated down to the collapse: half-saturation in
+      whole-pool units 1/(a h f) = 1/(0.33 x 147.1 x 0.13) = 0.16
+      t/km2 against a 7.6 start (benthivores -> epifauna 0.05, ->
+      infauna 0.21). The capability-scored alternative a 0.086 gives
+      0.61, still below the year-3 mean (~1.0): a is not the lever, as
+      research_notes/"Infauna och rorlig epifauna" section 3.1 said.
+    - The benthivore crash is predation by the predators after the
+      epifauna ran out: their M2 on benthivores 0.07, 0.22, 0.76,
+      0.95-1.11 /yr in years 1-4 (seals 0.04-0.05); benthivore fill
+      stays 0.73 and starvation ~0.
+223.3 Gen 9 (update 450), 8 years (end/b0, seed 20260530; seed 7
+    within a few %): no fast cascade, a slow one.
+    year  epi   pred  ben   infauna seal  plk   porp
+     1    0.60  0.91  1.07  0.94    1.02  1.15  0.98
+     2    0.37  0.83  1.12  0.89    1.02  1.18  1.00
+     4    0.16  0.54  1.09  0.85    0.94  1.28  1.08
+     6    0.10  0.34  1.04  0.81    0.89  1.38  1.12
+     8    0.09  0.23  0.86  0.78    0.89  1.45  1.16
+    - Learned since gen 5: predators spare the benthivores (M2 0.03-
+      0.12 vs 0.76-1.1); benthivores stopped eating epifauna (diet
+      10 % -> 5 % in year 1, 0 % later); seals survive.
+    - Unchanged: predators still take 82 % epifauna in year 1, realised
+      M2 0.68 /yr (0.67-0.95 through year 8) vs 0.036; epifauna still
+      -5 %/yr at year 8. Predators decline by a production deficit:
+      Q/B 4.4 -> 3.2, fill 0.72 -> 0.66, starvation <= 0.06 /yr;
+      benthivores take 0.15-0.17 /yr of them (budget 0.085).
+    - Slow second problem: benthivores live on 99 % infauna, realised
+      M2 0.12-0.16 /yr vs 0.029 (~5x), Q/B ~7.8 - the 219.2 energetics
+      gap. Infauna 0.94 -> 0.78 by year 8, not levelled off.
+      Benthivore starvation rises 0 -> 0.16 /yr in years 4-8 and they
+      decline from year 6, while their Q/B and mean fill (0.70) hold:
+      likely local depletion in some cells (not investigated).
+    - Other realised vs budgeted M2 (year 1 -> 8): pred -> plk 0.19 ->
+      0.07 (0.5), pred -> zoo 0.02 (0.13), ben -> plk 0.003 (0.14),
+      seals -> ben 0.047 (0.035); plk -> zoo 2.5 -> 4.2 (1.6) as the
+      planktivores grow on predator release.
+223.4 a17_score (seed 20260530; window years 2-4, overlapping the gen-5
+    predator collapse; plankton barely moves year to year): fix73 /
+    gen 5 / gen 9: column 0.34 / 0.57 / 0.61, zooplankton 0.62 /
+    0.84 (r +0.82) / 0.78 (r +0.84), surface C 1.25 / 0.96 / 0.94, PP
+    78 / 73.5 / 72.6 g C, f-ratio 0.39 / 0.49 / 0.50 (above 0.2-0.4).
+    Summer surface C 8-15 ug C/l vs A17 32-56; column 1.6-2.5x A17 in
+    Apr-Oct.
+223.5 Tool: tools/probes/frozen_years.py `show` divided by zero once a
+    group went extinct (seals, seed 7); it now prints nan for an
+    extinct group (_per helper).
+223.6 Open (user's call): more generations make the policies more
+    careful inside the one-year horizon but neither benthic removal is
+    sustainable, and the episodes cannot see it - a mechanism change is
+    needed; every option retrains (checkpoints already invalid since
+    221). Do not set a new a from this outcome.
+    - Predator side: the 0.33 gave every predator tonne bed access by
+      construction ("no scores", chosen because phi was going); only
+      whiting, hake and spurdog feed on the bottom, saithe and mackerel
+      do not. Levers: a predator-side foraging-mode share (what phi
+      was; AGENTS.md says do not reintroduce it), splitting the
+      predators into pelagic and demersal feeders (FG set change),
+      unchecking predators -> epifauna (7 % of the diet, M2 0.036), or
+      an accessible epifauna pool that depletes on its own instead of
+      a fixed share of the group.
+    - Benthivore energetics vs infauna (Q/B 7.8 vs the budget's
+      ~2.5 on benthos, 219.2): retained energy of the infauna, eat cost
+      / RM 3.6.
+    Output JSONs were session scratch.
+223.7 Probe: predators -> mobile_epifauna unchecked (2026-10-26; frozen
+    gen-9 policies, update 450, library copy with preys_on false and
+    observes kept, so the checkpoints load; 8 years, seeds 20260530 /
+    7). Unchecking lowers the epifauna's derived growth 0.000601 ->
+    0.000576; the predators' g is unchanged.
+    year  pred   ben   epi   infauna plk   porp  seal
+     1    0.21  0.81  0.99  0.96    1.07  0.70  0.94
+     4    0.03  1.04  0.88  0.89    1.47  0.73  0.91
+     8    0.001 0.87  0.77  0.79    1.55  0.75  0.88
+    - Predators starve out (starvation 0.5-1.2 /yr from year 1, Q/B
+      2.1-2.2, fill 0.48-0.58). The epifauna holds (M2 0.20 /yr, nearly
+      all benthivores). The benthivore/infauna drift of 223.3 is
+      unchanged (benthivore starvation 0.18-0.23 /yr at year 8), so it is
+      independent of the predators.
+    - Biased against the predators: the masked epifauna eat probability
+      is renormalised over untrained actions (move share 0.03 ->
+      0.17-0.29). Instrumented run (scratch pred_limits.py, seed
+      20260530, years 1-3): share of the Holling ceiling eaten 0.50 ->
+      0.43 with the pair, 0.37 without; eat share on planktivores 0.25-
+      0.33 -> 0.47-0.59; the planktivore pair delivers 0.81-0.88 of the
+      ceiling per unit eat x hunger, so the response is not the limit,
+      the frozen policy is. Break-even is near half the ceiling (with the
+      pair they already declined at 0.43-0.50). A retrained predator
+      eating planktivores at ~0.9 share would reach ~0.55-0.6 of the
+      ceiling, but would need ~3 t/km2/yr of planktivores (M2 ~0.9-1.0 vs
+      budget 0.5) unless it also took zooplankton (0.6-0.78 of the
+      ceiling per unit eat, 4-9 % of its eat share today). Undecidable
+      with frozen policies.
+223.8 Two subagent analyses (research only; no library, manifest or code
+    change):
+    - research_notes/"Bentivorernas energibudget" (Swedish letters;
+      summary.md, scripts/, tables/, literature_evidence.md): engine
+      infauna intake 7.98 t/t/yr vs the budget's 1.78 (x4.5) = energetics
+      x1.6 (the fixed feeding_cost 2.0 x RM per eat tick, sized to
+      satiation; each new tonne charged ec 4500 whole body plus its
+      reserve, ~5800 MJ; budget Q/B 3.48 low against 3.5 (2.5-5.3)
+      published and 4.2 from an energy budget) x diet 2.8 (99 % infauna
+      instead of 51 %: epifauna overeaten by the predators, 17.7 % of the
+      budget diet has no pool; 85-88 % infauna even with the predator
+      pair unchecked). Infauna E 2600 and assimilation 0.7 are supported.
+      With every literature correction the engine-diet M2 is still
+      0.095-0.10 (budget 0.029): the rest is diet structure. Starvation
+      is local depletion: benthivores gather on rich, shallow (~126 m),
+      lightly trawled beds, double their density and empty them (207
+      cells at 0.00 K in year 8); the frozen policy stays (eat 0.97);
+      recovery takes a median 5.5 yr, so an emptied cell is nearly
+      absorbing within the horizon. Temperature, interference and trawl
+      ruled out.
+    - research_notes/"Rovfiskens uppdelning" (summary.md,
+      params_split.md, scripts/, tables/): split by diet, not habitat
+      (G1): bed feeders = whiting alone (0.446 t/km2; 92 % of the pooled
+      benthos consumption); water column = saithe, mackerel, spurdog,
+      horse mackerel, hake, anglerfish, ling, velvet belly, pollack
+      (0.754 t/km2). Full parameter and pair tables for both groups, and
+      a habitat variant G2. The split does NOT remove the saturation:
+      whiting -> epifauna a 0.69 per edible tonne, half-saturation
+      0.078 t/km2 (pooled 0.16); demand at the ceiling 4.5 t/km2/yr vs
+      ~0.3-0.5 of room in the epifauna surplus. The water-column group
+      pays its way on planktivores (0.79-0.92 of the ceiling, needs 0.35)
+      but at the ceiling would demand 3.9 t/km2/yr of them (budget 1.65).
+      Main uncertainty: saithe F (water-column K 1.05-11).
+    - Common pattern: saturated pairs plus policies that stay on emptied
+      patches eat out the slow benthic pools (predators on the epifauna,
+      benthivores locally on the infauna).
+223.9 Decisions (user, 2026-10-26): (1) the benthic pools get a refuge
+    with exchange - the accessible part is its own pool refilled from a
+    protected refuge (Nephrops in burrows, deep-burrowing infauna) at a
+    biological exchange rate, for both benthic groups; (2) benthivore
+    energetics: library + budget only - lean energy plus reserve
+    (the planktivore/predator convention), budget Q/B toward 4.2, the
+    17.7 % no-pool diet redistributed over existing pools; no engine
+    change to feeding_cost; (3) the predator split waits until the
+    refuge exists. fix76 was stopped by the user at update 461 (13:22);
+    not restarted.
+223.10 Applied (user, 2026-10-26: apply now, uncommitted; Q/B 4.46
+    energy-equivalent; central diet). research_notes/"Bentivorernas
+    energi och diet" (Swedish letters; summary.md, scripts/
+    build_library.py energy_eq, data/fg_library_energy_eq.yaml, which
+    the live library now parses identical to):
+    - benthivorous_fish: energy_content 4500 -> 3600 (lean, weighted
+      3628, 3400-3850; haddock a cod proxy), prey_includes_reserve true,
+      reserve_reference_fill 0.5 (static prey quality stays 4500, so h
+      on predators / seals -> benthivores unchanged), max_energy_reserve
+      1800 kept. A tonne produced at s 0.72 costs 4896 MJ (was 5796).
+    - Diet: the 17.7 % without a pool redistributed by what the prey are
+      (cephalopods, krill/hyperbenthos, small demersal fish -> epifauna;
+      unidentified fish mostly -> planktivores; carrion -> infauna 0.71 /
+      epifauna 0.29; within-group 4.3 % dropped as unbooked): shares
+      infauna 0.544, epifauna 0.314, planktivores 0.120, predators
+      0.023. Q/B 4.46 = the energy-budget 4.2 (~11,000 MJ/t/yr at 2623
+      MJ/t) on the redistributed diet's 2472 MJ/t (3.6-5.3).
+    - Pair M2: ben -> infauna 0.029 -> 0.0396, -> epifauna 0.141 ->
+      0.276, -> planktivores 0.14 -> 0.245, -> predators 0.085 -> 0.128.
+    - Derived growth re-stored: benthivorous_fish 0.0021816966 ->
+      0.0020892507356 (s* 0.758 -> 0.769, gross 0.8214 unchanged),
+      predatory_fish 0.0022805371 -> 0.0024482169414, planktivorous_fish
+      0.0032411316 -> 0.0035374528067, benthic_infauna 0.00070479452 ->
+      0.00071205479452, mobile_epifauna 0.00060068493 ->
+      0.00069315068493 (r_gross 0.877 -> 1.012: high for a pool that is
+      60 % Nephrops, P/B ~0.3-0.6 - open flag).
+    - K tables refitted by least squares so today's start map B*(c) is
+      kept (209/221 convention): infauna 131.0 / 65.5 -> 132.35 / 66.17
+      (box mean 111.1); epifauna 14.31/10.77/12.27/17.43/9.38/3.75 ->
+      16.51/12.43/14.16/20.11/10.82/4.33 (box mean 14.1). Start totals
+      unchanged (equilibrium sums 336 992 / 27 873 t).
+    - Tests: tests/test_fgconfig_depth_map.py rows and preview mean
+      updated. pytest 1483 passed / 12 skipped; budget_gate every pair
+      and predator ok (unchanged output: it reads only static quality,
+      h, cost and ration); train.py and train_gpu.py 1-generation smoke
+      runs OK. AGENTS.md sections 4-5.
+    - Not changed: feeding_cost (the engine still needs Q/B ~5.1 on the
+      redistributed diet vs the budget's 4.46; the per-eat-tick cost is
+      the rest). No observation change: checkpoints load, but the world
+      changed; the refuge mechanism (223.9) comes before the next run.
+223.11 Refuge research (research_notes/"Refugium och utbyte i bentos"
+    (Swedish letters), summary.md, tables/refuge_parameters.csv):
+    every measurable epifauna exchange is diel (k ~365-730 /yr), so a
+    single A/R pool at a biological rate reproduces today's fixed f;
+    the only slow structure is taxonomic: E1 = two compartments inside
+    mobile_epifauna with no exchange (exposed taxa: crabs, hermits,
+    Munida, northern shrimp, small shrimps, mysids, B 3.06, r_max 1.11;
+    Nephrops B 4.57, r_max 0.34, predators unchecked, benthivores 0.07
+    of it). Infauna: a real slow exchange by cropping and regrowth, k
+    ~2.5 /yr (1.5-3), k_in ~0.5, phi 0.20, both compartments logistic
+    on their own K (Krivan 1998); it slows local depletion (93.6 -> ~37
+    t/km2 in 5 yr in a doubled-benthivore cell) but does not stop it.
+    The engine's Beddington-DeAngelis term is already the fast-refuge
+    limit (Berardo et al. 2020). Neither form removes the saturation.
+    Mackinson & Daskalov 2007 diet page for predator columns 13-24 is a
+    duplicate of 1-12 (gadoid invertebrate diets lost); fish take 1.3-
+    6.5 % of infauna production (Dauvin 1988).
+223.12 Decisions (user, 2026-10-26): (1) build the infauna refuge (k 2.5)
+    and E1 for the epifauna; (2) a research agent studies the
+    saturation against field data (wild cod/haddock feed at ~0.3 of
+    Cmax vs the engine's 0.5-0.96): research_notes/"Fodoniva och
+    mattnad i falt" (Swedish letters); (3) training worlds that let the
+    fish meet depleted beds (or longer episodes), and a 3-year frozen
+    probe that REPLACES the viewer's progress tab: clicking the tab
+    shows how a three-year probe plays out.
+223.13 Built (2026-10-26, uncommitted): infauna refuge, three-year
+    probe tab, depleted training patches.
+    - Refuge (lib/environments/ecosystem_env/refuge.py; GPU mirror in
+      lib/gpu/ecosystem.py, spawner in lib/gpu/spawn.py): a NDM with
+      exposed_share phi in (0, 1) keeps its accessible part A in the
+      unused energy_reserve slot (tonnes), so B stays the group's
+      biomass everywhere. Predation (Holling term, harvest cap, removal)
+      and the observations see A; trawl, M1, the habitat mask and the
+      extinction sweep scale A with B. Each tick: the exchange A <- phi B
+      + (A - phi B) exp(-k) (k = refuge_exchange_rate per tick, rescaled
+      as a flux by tick_time), then logistic growth per compartment on
+      phi K and (1 - phi) K (variant S). Exchange BEFORE growth makes
+      k -> infinity exactly the old fixed accessible fraction with a
+      logistic on B (tested); the subagent's growth-then-exchange order
+      did not reach that limit. A starts at phi B (FunctionalGroup.
+      initialize_state, WorldSpawner.reserves). The viability rig's
+      reachable prey uses A. Library: benthic_infauna exposed_share 0.2,
+      refuge_exchange_rate 0.0017123288 (2.5 /yr); the benthivore ->
+      infauna pair lost its accessible_fraction 0.2 (now the refuge).
+      Derived growth unchanged (the loader's rule lands B* within 0.1 %
+      at k 2.5, refuge note). Probe world: A/B 0.200 at start, 0.1996
+      after 40 ticks, B stable.
+    - Progress tab -> three-year probe (lib/runners/training_progress.
+      py, lib/viz/pygame_viz.py, i18n sv/it): run_probe runs a frozen
+      copy of the current policies PROBE_YEARS = 3 years (library ticks;
+      the probe world is built at the library tick length, so the
+      default --eval-ticks is 4380 whatever --tick-length is) and
+      records every group's biomass / start once a day, the year-end
+      ratios and the DMs' survival ticks. The live viewer submits it to
+      a one-worker spawn process pool (4 torch threads) and records it at
+      the first update after it finishes; a probe due while one runs is
+      skipped; close() / the end of train.py wait for the running one.
+      History progress/probe.jsonl (format_version 2; old survival.jsonl
+      runs need a new --plot-dir to resume), latest trajectory
+      progress/probe_latest.json. The tab shows the latest probe for
+      every group (NDMs too), x = probe day with year marks, y = % of
+      start (auto-scaled), title "Update N: frozen policies, seed S | n
+      probes".
+    - --depleted-patches SHARE (train_gpu.py, default 0.5): that share of
+      the training worlds starts with benthic patches (smooth noise,
+      sigma 3 cells, coverage 5-30 % of the cells, one level per world
+      log-uniform 1-32 %) on the groups with a depth habitat; a refuge
+      group loses accessible tonnes, its refuge stays (TensorEcosystem.
+      deplete). Keyed by the world (CRN), applied before the warm-up.
+      Training-world design so the fish meet emptied beds and can learn
+      to leave them (223.8 found the frozen policy staying on emptied
+      beds), not biology. GPU trainer only; train.py has no such worlds.
+    - Tests: tests/test_refuge.py (10: share checks, A at phi B, plain
+      logistic at phi, exchange, predation and observations on A, the
+      fast limit, GPU parity, mareld2 keys, depleted patches with and
+      without warm-up); test_training_progress (three-year default),
+      test_gpu_visual (probe tab, resume, interval, CPU viewer, the
+      separate process), test_pair_shares (the infauna's 0.2 moved).
+      pytest 1499 passed / 12 skipped.
+223.14 Decisions and searches (user, 2026-10-26): E1 on the MASSBAL
+    stocks (crabs 2.64, small shrimps/mysids 0.545, a member
+    "cephalopods and small demersal fish" 0.23 t/km2; research_notes/
+    "Havskrafta och exponerad epifauna"), exposed r_max stock-weighted
+    (1.13). The benthivores -> Nephrops share is reopened: the 0.3 % of
+    the epifauna diet rests on 56 fed cod stomachs (Skagerrak IBTS
+    2023-25, none with Nephrops) while northern North Sea cod (Q1 2023)
+    ate 8 % Nephrops and the user sees it often in cod; a data search
+    runs (research_notes/"Havskrafta i fiskdieter"). Saturation
+    (research_notes/"Fodoniva och mattnad i falt", summary.md): the
+    benthic pairs' a is 1-2 orders of magnitude above field rations,
+    fish-prey pairs about right (a capture window on the whole
+    response), Type II supported; the user chose to derive an exposure
+    factor e mechanistically and revisit the benthivore Cmax
+    (research_notes/"Exponering av bottenbyten"). Swedish letters
+    dropped in these paths.
+223.15 Applied (user, 2026-10-26; uncommitted): E1, the Nephrops diet, the
+    exposure factor e, the benthivore ceiling and the bottom layer.
+    - E1 on the mass-balance stocks with the new Nephrops share
+      (research_notes/"Havskrafta och exponerad epifauna": split_e1.py
+      variant massbal_neph, build_e1.py; the live library parses as the
+      copy plus the edits below). mobile_epifauna = exposed taxa: crabs/
+      hermits/Munida 2.45, northern shrimp 0.56, small shrimps and mysids
+      0.545, cephalopods and small demersal fish 0.23 t/km2 (grid mean
+      3.78); r_max 1.14 stock-weighted; trawl F 0.186 (bf100 0.004221);
+      M2 benthivores 0.54 + predators 0.076; growth_rate 0.001202739726;
+      K 6.79/6.33/6.42/10.71/8.58/4.71 at 81-387 m; start 13 600 t
+      (10 200-17 000); fish take 72 % of the crabs' production (bound
+      60-92 %). norway_lobster (new NDM): 4.57 t/km2, r_max 0.34, E 3600,
+      trawl F 0.0874 (bf100 0.001985), M2 benthivores 0.0225 (1.5 % of
+      their consumption: research_notes/"Havskrafta i fiskdieter"; Dorman
+      et al. 1992 x season 2.06 x digestion 0.65; the old 0.003 rested on
+      five hauls), growth_rate 0.00024828767123, K ends at 300 m, start
+      16 500 t (12 400-20 600). Pairs: benthivores -> Nephrops checked
+      (f 0.02 = exposed 0.07 x size window 0.29), predators -> Nephrops
+      unchecked; benthivores observe both groups, predators the exposed.
+    - Exposure factor e on the benthic pairs (research_notes/"Exponering
+      av bottenbyten"): a = a_enc x e: benthivores -> infauna 0.25 ->
+      0.036, -> epifauna 0.44 -> 0.15, predators -> epifauna 0.33 ->
+      0.13; Nephrops 0.44 (e 1). It contradicts the back-calculated
+      0.002-0.01 of "Fodoniva och mattnad i falt": the mechanistic e
+      leaves every benthic pair saturated (x 19-66), so the field feeding
+      level is not in a. Passes the diet-vs-availability test.
+    - Benthivore ceiling 27.1 -> 26.18 MJ/t/tick (bottom 7.4 C, haddock
+      x1.0, cod Bjornsson ad-lib): h infauna 99.3, epifauna 143.2,
+      Nephrops 137.6, planktivores 272.1, predators 200.6; derived
+      growth_rate 0.0020892507 -> 0.002152116224 (s* 0.761, best pair now
+      mobile_epifauna at a tie). mareld2.yaml: temperature layer `bottom`
+      (SHARK A16/A17 1991-2020 at each cell's depth), benthivores on it.
+      resting_metabolism kept at 3.6 (3.32 only if its SMR basis is
+      re-read at 7.4 C; not decided).
+    - Code: i18n names (Havskrafta / Scampo; the new member), api.py,
+      frozen_years.py code 'neph'. Tests: GPU spawn 12 FGs, habitat (three
+      depth groups, Nephrops start total), the 220 rate lock (benthic e,
+      Nephrops). pytest 1500 passed / 12 skipped; budget_gate every pair
+      and predator ok; train.py and train_gpu.py 1-generation smoke runs
+      OK (GPU with --warmup-days 2 and the default --depleted-patches
+      0.5).
+    - Every checkpoint is invalid (FG set and observation layout); the
+      next run trains from scratch and is judged with the three-year
+      probe tab. Open: a seasonal feeding window (Q1 empties; plaice
+      fast) as the next mechanism for the field feeding level; the
+      armour factor on crustacean h; the infauna exposed_share component
+      (Amphiura tip 1-5 % of body mass, phi 0.185 -> ~0.168 at 100 m).

@@ -1,0 +1,73 @@
+variant central; n_mc 20000
+HEADLINE VALUES = MC medians (5-95 %). 'product of modes' = every factor at its central value; it is
+upper-biased where a mode sits at its range bound (several pr, E and S factors), so it is not the headline.
+====================================================================================================
+a_enc reproduced: infauna 0.2488 (MC 5-95 % 0.121-0.643), epifauna 0.4362 (MC 0.151-1.202); library 0.25 / 0.44
+
+1. INFAUNA: composition of A (share of the accessible tonnes by item class)
+  100 m: phi = 0.185; amphiura 0.16, polychaete 0.41, bivalve 0.24, crustacean 0.19
+  300 m: phi = 0.260; amphiura 0.05, polychaete 0.53, bivalve 0.29, crustacean 0.13
+  grid (0.6 x 100 m + 0.4 x 300 m, by accessible tonnes): amphiura 0.11, bivalve 0.27, polychaete 0.47, crustacean 0.16
+
+   takeable share t_k per class (central), gadoid / flatfish mode:
+     amphiura    0.2160 / 0.2160
+     bivalve     0.0364 / 0.0150
+     polychaete  0.0660 / 0.0444
+     crustacean  0.2700 / 0.2700
+
+   a_eff (benthivores -> infauna) product of modes 0.0378 km2/t/tick; MC 5/50/95 % 0.0156 0.0356 0.0919
+   e = a_eff(no width) / a_enc: product of modes 0.190; MC 5/50/95 % 0.107 0.165 0.270
+   flatfish width factor (step f) on the pair: x0.802; combined a_eff / a_enc 0.152
+   contribution to a_eff by class (central): amphiura 0.22, bivalve 0.08, polychaete 0.28, crustacean 0.42
+
+2. BEHAVIOURAL HANDLING per item (step e) vs digestion h (Jeschke SSS: binds only if b ~ h or above)
+   b = W / ((m_item / t_strike) x 21 600 s), ticks per t prey per t predator; h_infauna = 99.3 at the revised ceiling
+   W   100 g: arm_tip 9 (53); siphon_tip 185 (1852); bivalve_whole 2 (19); worm_whole 2 (37); worm_part 23 (370); crustacean 5 (37)   [central m, t 2 s (low m, t 8 s)]
+   W   300 g: arm_tip 28 (159); siphon_tip 556 (5556); bivalve_whole 6 (56); worm_whole 7 (111); worm_part 69 (1111); crustacean 14 (111)   [central m, t 2 s (low m, t 8 s)]
+   W  1000 g: arm_tip 93 (529); siphon_tip 1852 (18519); bivalve_whole 19 (185); worm_whole 23 (370); worm_part 231 (3704); crustacean 46 (370)   [central m, t 2 s (low m, t 8 s)]
+   infauna mix, 300 g gadoid: mean mass per strike 0.83 mg, b_mix 16.8 ticks = 0.17 x h
+   infauna mix, 300 g flat: mean mass per strike 0.71 mg, b_mix 19.5 ticks = 0.20 x h
+
+3. EXPOSED EPIFAUNA (E1 pool): takeable share relative to an exposed reference prey
+   benthivore A composition: brachyuran 0.31, hermit 0.17, munida 0.14, pandalus 0.22, small_shrimp 0.10, mysid 0.07; A today 1.92 t/km2
+   predator A composition:   brachyuran 0.15, hermit 0.08, munida 0.06, pandalus 0.40, small_shrimp 0.18, mysid 0.13; A today 1.02 t/km2
+   e per member (central): haddock 0.48, cod 0.72, long rough dab 0.35, dab 0.35, plaice 0.35, witch 0.35, starry ray 0.62, grey gurnard 0.56, lemon sole 0.35
+   benthivores -> exposed epifauna: a_enc 0.436; a_eff product of modes 0.2057, MC 5/50/95 % 0.0507 0.1527 0.5320
+   e (no width) product of modes 0.512, MC 5/50/95 % 0.369 0.430 0.484; flatfish width x0.921; combined 0.471
+   predators -> exposed epifauna (whiting-dominated; a_enc 0.33 per whole-group tonne): e product of modes 0.423, MC 5/50/95 % 0.310 0.390 0.491; a_eff (modes) 0.140, MC median 0.129 (0.102-0.162; a_enc's own spread 0.10-1.5 not included)
+     (the bed-access gap of non-bed members, ~2.7x in 'Fodoniva och mattnad i falt', is NOT in e)
+   benthivores -> norway_lobster: emergence and the 0.29 size window are in f 0.02; an emerged lobster's tail-flip retreat into the burrow is what a_enc's p_e 0.3 already stands for -> e 1.0 (0.4-1.0, J); no measurement of fish capture success on emerged Nephrops was found
+
+4. INDEPENDENT TESTS (none of these numbers entered e)
+   a_eff used below = MC medians: infauna 0.0356, exposed epi (benthivores) 0.1527, exposed epi (predators) 0.1287
+   x = a h A today and the intake share of the ceiling while foraging x/(1+x); half-saturation 1/(a h)
+   ben->infauna       library a a 0.2500  x   464.8  x/(1+x) 0.998  1/(a h) 0.0403 t/km2 A  (0.201 in pool units)
+   ben->infauna       a_eff     a 0.0356  x    66.2  x/(1+x) 0.985  1/(a h) 0.2827 t/km2 A  (1.413 in pool units)
+   ben->exposed epi   library a a 0.4400  x   120.9  x/(1+x) 0.992  1/(a h) 0.0159 t/km2 A  (0.025 in pool units)
+   ben->exposed epi   a_eff     a 0.1527  x    42.0  x/(1+x) 0.977  1/(a h) 0.0457 t/km2 A  (0.073 in pool units)
+   pred->exposed epi  library a a 0.3300  x    49.7  x/(1+x) 0.980  1/(a h) 0.0206 t/km2 A  (0.062 in pool units)
+   pred->exposed epi  a_eff     a 0.1287  x    19.4  x/(1+x) 0.951  1/(a h) 0.0528 t/km2 A  (0.158 in pool units)
+
+   T1 Hiddink et al. 2016 [A] (food in plaice/LRD stomachs and condition fall with prey per fish above ~5 passes/yr; q ~0.5-0.7 of the prey, J): intake ratio R(q) = q (1 + x)/(1 + q x)
+     ben->infauna       library : q 0.7 -> 0.999; q 0.5 -> 0.998; q 0.3 -> 0.995
+     ben->infauna       a_eff   : q 0.7 -> 0.994; q 0.5 -> 0.985; q 0.3 -> 0.966
+     ben->exposed epi   library : q 0.7 -> 0.996; q 0.5 -> 0.992; q 0.3 -> 0.981
+     ben->exposed epi   a_eff   : q 0.7 -> 0.990; q 0.5 -> 0.977; q 0.3 -> 0.949
+     pred->exposed epi  library : q 0.7 -> 0.992; q 0.5 -> 0.981; q 0.3 -> 0.956
+     pred->exposed epi  a_eff   : q 0.7 -> 0.979; q 0.5 -> 0.953; q 0.3 -> 0.897
+     Field: a measurable fall (Hiddink), but flat stomach fullness along an Irish Sea gradient where the prey/fish ratio did not change (Johnson et al. 2015 [F]).
+
+   T2 Diet composition vs availability, benthivores (a fish searching all pairs at once, unsaturated relative intake a_i h-free A_i; field central infauna 0.544, epifauna 0.314, planktivores 0.120, predators 0.023):
+     library : infauna 0.827, exposed epi 0.149, nephrops 0.007, planktivores 0.011, predators 0.006
+     a_eff   : infauna 0.625, exposed epi 0.274, nephrops 0.013, planktivores 0.059, predators 0.029
+   Predators (field: epifauna 0.072 of the diet; planktivores 0.48, zooplankton 0.36, benthivores 0.08 by mass in 'Fodoniva och mattnad i falt'/field_implied_a):
+     library : planktivores 0.059, zooplankton 0.021, exposed epi 0.507, benthivores 0.413   (zooplankton pool taken as 7 t/km2, J; relative intake ignores h, J)
+     a_eff   : planktivores 0.086, zooplankton 0.030, exposed epi 0.286, benthivores 0.598   (zooplankton pool taken as 7 t/km2, J; relative intake ignores h, J)
+
+   T3 Share of infauna production eaten by fish (field 1.3-6.5 %, Dauvin 1988 via the refuge note; 2.9-5.5 % macrobenthos, Mackinson & Daskalov 2007): flow = feeding level x ceiling x diet share / E
+     feeding level 0.36: 4.40 t/km2/yr = 4.7 % of P (P/B 1.0 x 93.6)
+     feeding level 0.54: 6.61 t/km2/yr = 7.1 % of P (P/B 1.0 x 93.6)
+     feeding level 1.00: 12.24 t/km2/yr = 13.1 % of P (P/B 1.0 x 93.6)
+   Contamination note: cod's p_rel ~1 on crabs and hermits rests partly on diet grams (within the epifauna),
+   not on the infauna/epifauna split that T2 scores.
+     This tests the FEEDING LEVEL (eat x hunger x x/(1+x)), not a: with x >> 1 the level is the policy's.

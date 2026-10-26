@@ -1,0 +1,42 @@
+group,compartment_or_pair,quantity,low,central,high,unit,basis,tag
+benthic_infauna,group,phi_equilibrium_exposed_share,0.08,0.20,0.45,share of B,"= today's accessible_fraction; Dauwe et al. 1998 SK 280 m 27 % in 0-2 cm; Amphiura arm tips; reach depth 0-1/0-2/0-5 cm unmeasured","F (profile), J (reach)"
+benthic_infauna,group,tau_refill_exposed_layer,120,146,250,days,"Amphiura arm-tip regrowth 9.2-13.1 mm in 77 d (Skold & Gunnarsson 1996), 0.6-3.3 mm/week at 14 C (Dupont & Thorndyke 2006); lost tip 10-20 mm -> 60-200 d, slower at 6 C",F + J
+benthic_infauna,group,k_total_exchange,1.5,2.5,3.0,per yr,1/tau; must stay below (r - F)/phi = 4.47 for the refuge to persist under unlimited cropping,J
+benthic_infauna,group,k_in_refuge_to_exposed,0.3,0.5,0.6,per yr,"phi x k; cross-check: lugworm tails cropped 0.39/yr = ~60 % of somatic production (Beukema & de Vlas 1979); Amphiura realised regeneration 0.06/yr under light cropping (Skold et al. 1994); production-limited (Bergman 1988: no compensatory growth)",F + J
+benthic_infauna,group,k_out_exposed_to_refuge,1.2,2.0,2.4,per yr,(1 - phi) x k,J
+benthic_infauna,300 m variant,k_total_exchange,0.2,0.3,0.5,per yr,"deposit feeders: no size-depth refuge (Abra 0-2 cm at all sizes, thyasirid depth size-independent); refill by settlement/recolonisation 2-5 yr (Rosenberg et al. 2002, Gullmarsfjord 85-118 m)",F + J
+benthic_infauna,group,growth,,both compartments logistic,,,"K_A = phi K(c), K_R = (1 - phi) K(c), same derived g",J
+benthic_infauna,group,trawl_split,,proportional (A and R),,,"otter-trawl d is a whole-community in-path value (Hiddink et al. 2017); doors/groundrope reach below 2 cm",J
+benthic_infauna,benthivores pair,pair_share_of_A,,1.0,,share of A,the reach is already phi; accessible_fraction moves into phi,J
+benthic_infauna,group,recolonisation_emptied_cell,2,3,5,years,"biomass, 80-120 m; adults diffuse 0.16-0.54 m2/yr (Rosenberg et al. 1997); postlarvae ~1 km; larvae further (Gunther 1992)",F + J
+mobile_epifauna,behavioural (all taxa),exchange_cycle,12,24,24,hours,"Nephrops 1-2 emergence bouts/day, same animals daily; shrimp DVM dusk-dawn; crabs/small shrimps diel",F
+mobile_epifauna,behavioural (all taxa),k_total_exchange,365,550,730,per yr,1/cycle; >> (r - F)/phi = 2.39: no year-scale protection; equivalent to today's per-tick f,J
+mobile_epifauna,Nephrops,exposed_share,0.03,0.07,0.35,share,"UWTV 0.06-0.12 visible/burrow at peak, fully emerged 0.037-0.066 at 101-160 m (Aguzzi et al. 2021); trawl 0.4-2.5 % of burrows (Tuck et al. 1997); telemetry 0.35 (displaced animals, Med)",F + J
+mobile_epifauna,Nephrops,berried_females_in_burrow,7,8.5,10,months/yr,"eggs Aug-Sep, hatch Apr-Jun; 5 % ovigerous in trawls vs 23 % in creels (Hornborg 2017)",S + F
+mobile_epifauna,Nephrops,size_window_share_of_biomass,0.16,0.29,0.45,share,"<=30/35/40 mm CL of the >=17 mm biomass; cod <66 cm take 96 % <=39 mm (De Clerck & Sterk 1980); no hard size refuge for large cod",F + J
+mobile_epifauna,Nephrops,years_in_vulnerable_window,2,3,5.4,years,17->30 mm ~2 yr; 17->40 mm 3.8-5.4 yr (one-way),J
+mobile_epifauna,Nephrops,recolonisation_emptied_cell,3,5,10,years,"larvae 1-1.5 months, 100-200 km; adults 0.2 km/yr; Kattegat no-take zone x2 in ~12 yr",F + J
+mobile_epifauna,northern shrimp,exposed_share_24h,0.65,0.75,0.85,share,day/night catch 1.8-3.5 [F]; 0.51-0.75 Oct-Dec; ~1 Skagerrak winter survey,F + J
+mobile_epifauna,crabs/hermits,exposed_share,0.4,0.6,0.9,share,"L. depurator on the surface by day; night/day trawl factors 2.5-10 (Med); hermits always exposed",F + J
+mobile_epifauna,Munida,exposed_share,0.3,0.5,0.6,share,uses vacated burrows and stones; night/day 0.5-2,F + J
+mobile_epifauna,small shrimps/mysids,exposed_share,0.3,0.6,0.9,share,Processa night/day ~100 (Med); Skagerrak mysids bottom-bound,F + J
+mobile_epifauna,taxa crabs+shrimps+mysids,recolonisation_emptied_cell,0.1,0.5,1,years,hermits into trawl lanes in 2 days; Pandalus/Crangon ~1 yr,F + J
+mobile_epifauna,group (literal A/R),phi_equilibrium_exposed_share,0.27,0.29,0.46,share of B,biomass-weighted exposure; library 0.31; Nephrops contributes ~0.04,J
+mobile_epifauna,group (literal A/R),k_slow_biological,,none found,,per yr,"no slow process converts Nephrops in burrows into crabs/shrimps; Nephrops size window is one-way (~0.2-0.5/yr); Ecosim v = K x M2 (K 2 -> 0.35/yr) is a fitted rate",J
+mobile_epifauna,E1 exposed-taxa compartment (crabs+hermits+Munida+shrimps+mysids),B_today,,3.06,,t/km2,params_split 1.1 stocks (2.0 + 0.56 + 0.5),D
+mobile_epifauna,E1 exposed-taxa compartment,r_max,0.9,1.11,1.3,per yr,stock-weighted taxon r_max (crabs 0.9; shrimp 1.2; small 1.86),D + J
+mobile_epifauna,E1 exposed-taxa compartment,sum_M2,,0.456,,per yr,"(crabs 0.998 + shrimp 0.200 + small 0.196 t/km2/yr) / 3.06",D
+mobile_epifauna,E1 exposed-taxa compartment,F_trawl,,0.21,,per yr,"shrimp F 0.62, crabs 0.13, small 0.055, stock-weighted",D
+mobile_epifauna,E1 exposed-taxa compartment,equilibrium_share_and_K,,"0.575; K 5.32",,share; t/km2,1 - (F + M2)/(r_max + M2),D
+mobile_epifauna,E1 Nephrops compartment,B_today; r_max; M2; F,,"4.57; 0.34; 0.0007; 0.087",,,params_split 1.4,D
+mobile_epifauna,E1 Nephrops compartment,equilibrium_share_and_K,,"0.743; K 6.15",,share; t/km2,1 - (F + M2)/(r_max + M2),D
+mobile_epifauna,E1,k_between_compartments,0,0,0.3,per yr,"different taxa: 0; upper bound if the vulnerable small Nephrops are counted in the exposed compartment (one-way growth out)",J
+mobile_epifauna,E1 benthivores -> exposed taxa,pair_share,0.45,0.63,0.8,share of compartment,"crabs 0.6, shrimp 0.75, small 0.6 by stock",J
+mobile_epifauna,E1 predators -> exposed taxa,pair_share,0.2,0.33,0.45,share of compartment,"shrimp 0.75 x 0.56, small 0.6 x 0.5, small crabs 0.6 x 0.5 (no Nephrops)",J
+mobile_epifauna,E1 benthivores -> Nephrops,pair_share,0.03,0.07,0.15,share of compartment,"emerged animals; x size window 0.29 if gape is applied (J): ~0.02",F + J
+mobile_epifauna,E1 predators -> Nephrops,pair_share,,unchecked,,,no Nephrops in whiting/saithe diets,F via params_split
+mobile_epifauna,group,trawl_split,,on exposed animals (A),,,"Nephrops trawls catch emerged animals (catch 0.4-2.5 % of burrows), d_u in burrows 0.01; shrimp on the bottom",F + J
+mobile_epifauna,E1 exposed-taxa compartment,bottom_trawling_biomass_factor_at_100,,0.00477,,per tick,F 0.21 x 100 / (1460 x 3.0142 mean effort); replaces 0.003093 for this compartment,D
+mobile_epifauna,E1 Nephrops compartment,bottom_trawling_biomass_factor_at_100,,0.00198,,per tick,F 0.087 x 100 / (1460 x 3.0142),D
+mobile_epifauna,E1 exposed-taxa compartment,K_depth_shape,,"crabs 2:1 from 100 to 300 m; shrimp peak 200-300 m; small flat",,,params_split 1.1 (evidence_B; A1 strata),F + J
+mobile_epifauna,E1 Nephrops compartment,K_depth_shape,,"flat to ~250 m, ~0 below 300 m",,,UWTV strata (evidence_A2),F + D

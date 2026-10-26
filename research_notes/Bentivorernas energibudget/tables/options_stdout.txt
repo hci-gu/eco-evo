@@ -1,0 +1,19 @@
+variant                                                                MJ/t/yr  QBinf  M2eng  QBmix  M2mix
+engine today (feeding 2.0, ec 4500 + carry, 1820 MJ/t infauna)           14521   7.98  0.130   5.65  0.047
+feeding_cost 1.0 (eat = routine RM, no SDA at all)                        9491   5.22  0.085   3.69  0.031
+feeding_cost 1.0 + SDA 0.15 of ingested (intake-proportional)            12080   6.64  0.108   4.70  0.039
+feeding_cost 1.0 + SDA 0.10                                              11073   6.08  0.099   4.31  0.036
+feeding_cost 1.0 + SDA 0.20                                              13288   7.30  0.119   5.17  0.043
+feeding_cost 1.5                                                         12006   6.60  0.108   4.67  0.039
+RM 3.0 (SMR, no routine factor), feeding 2.0                             12786   7.03  0.115   4.97  0.042
+production at lean ec 3600 + carry (whole body 4500 at fill 0.5)         13884   7.63  0.125   5.40  0.045
+production without the reserve carry (ec 4500 only)                      13601   7.47  0.122   5.29  0.044
+infauna quality 2600 x 0.80 = 2080                                       14521   6.98  0.114   5.32  0.044
+infauna quality 2600 x 0.85 = 2210                                       14521   6.57  0.107   5.16  0.043
+infauna quality 3000 x 0.80 = 2400 (cropped parts, less ash)             14521   6.05  0.099   4.95  0.041
+budget production 0.821 instead of realised 0.708                        15177   8.34  0.136   5.90  0.049
+combinations:
+feeding 1.0 + SDA 0.15 + lean ec                                         11269   6.19  0.101   4.38  0.037
+feeding 1.0 + SDA 0.15 + lean ec + infauna 2080                          10897   5.24  0.086   3.99  0.033
+feeding 1.0 + SDA 0.15 + lean ec + infauna 2400                          10897   4.54  0.074   3.72  0.031
+budget: Q/B 3.48, infauna share 0.511 -> M2 0.029
