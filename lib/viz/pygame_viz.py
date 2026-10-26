@@ -672,6 +672,7 @@ class LiveVisualizer:
         for eid in self._extra_plot_ids:
             self._plot_enabled[eid] = not str(eid).endswith("_rnd")
         self._legend_rects: list = []
+        self._legend_all_rect = None
         _all_series_ids = list(self.fg_ids) + [
             eid for eid in self._extra_plot_ids if eid not in self.fg_ids
         ]
@@ -2970,6 +2971,18 @@ class LiveVisualizer:
             if rx <= mx < rx + rw and ry <= my < ry + rh:
                 self._active_tab = int(i)
                 return
+        # Select all / deselect all over this tab's legend entries:
+        # all on -> all off, otherwise all on (and no solo series).
+        all_rect = getattr(self, "_legend_all_rect", None)
+        if all_rect is not None:
+            rx, ry, rw, rh = all_rect
+            if rx <= mx < rx + rw and ry <= my < ry + rh:
+                ids = self._active_plot_ids()
+                on = not all(self._plot_enabled.get(fid, True) for fid in ids)
+                for fid in ids:
+                    self._plot_enabled[fid] = on
+                self._solo = None
+                return
         # Legend checkbox toggles (global across tabs).
         for rect, fid in getattr(self, "_legend_rects", []):
             rx, ry, rw, rh = rect
@@ -4672,6 +4685,7 @@ class LiveVisualizer:
         and wheel zoom over the heatmaps."""
         self._tab_rects = []
         self._legend_rects = []
+        self._legend_all_rect = None
         self._plot_area_rect = None
         self._live_button_rect = None
         self._save_plot_button_rect = None
@@ -5976,6 +5990,27 @@ class LiveVisualizer:
         lx = px0 + pw + 8
         ly = py0
         self._legend_rects = []
+        # Select all / deselect all: a master checkbox over the entries of
+        # this tab (ticked = all on, dash = some, empty = none).
+        self._legend_all_rect = None
+        if active_ids:
+            states = [self._plot_enabled.get(fid, True) for fid in active_ids]
+            cb_rect = (lx, ly + 3, 12, 12)
+            pg.draw.rect(self._screen, (200, 200, 210), cb_rect, 1)
+            if all(states):
+                pg.draw.line(self._screen, (220, 220, 230),
+                             (lx + 2, ly + 9), (lx + 5, ly + 12), 2)
+                pg.draw.line(self._screen, (220, 220, 230),
+                             (lx + 5, ly + 12), (lx + 11, ly + 4), 2)
+            elif any(states):
+                pg.draw.line(self._screen, (220, 220, 230),
+                             (lx + 3, ly + 9), (lx + 9, ly + 9), 2)
+            lab = self._font.render(self._t("all"), True, (200, 200, 210))
+            self._screen.blit(lab, (lx + 16, ly))
+            self._legend_all_rect = (lx, ly + 3, 16 + lab.get_width(), 12)
+            ly += 16
+            pg.draw.line(self._screen, (60, 60, 70), (lx, ly - 1),
+                         (lx + self._legend_w - 12, ly - 1), 1)
         for fid in active_ids:
             col = self._fg_colour[fid]
             faded = (self._solo is not None and self._solo != fid)

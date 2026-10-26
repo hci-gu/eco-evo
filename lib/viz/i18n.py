@@ -222,6 +222,7 @@ CATALOG = {
         "natural mortality (M1) share of tick loss (%)":
             "naturlig dödlighet (M1), andel av tickets förlust (%)",
         "long run": "långkörning",
+        "all": "alla",
         "Long run of the current policies (biomass, % of start)":
             "Långkörning med de aktuella policyerna (biomassa, % av start)",
         "Long run of the current policies, {probe}; trained on {train} rollouts (biomass, % of start)":
@@ -348,6 +349,7 @@ CATALOG = {
         "natural mortality (M1) share of tick loss (%)":
             "quota della mortalità naturale (M1) sulla perdita del tick (%)",
         "long run": "lungo periodo",
+        "all": "tutti",
         "Long run of the current policies (biomass, % of start)":
             "Lungo periodo delle politiche attuali (biomassa, % dell'inizio)",
         "Long run of the current policies, {probe}; trained on {train} rollouts (biomass, % of start)":

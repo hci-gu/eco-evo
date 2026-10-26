@@ -682,17 +682,19 @@ class LiveTrainingProgress(TrainingProgress):
         if self._pool is None:
             return
         pending, self._pending = self._pending, None
+        pool, self._pool = self._pool, None
+        if pending is None:
+            pool.shutdown(wait=False, cancel_futures=True)
+            return
         # The worker ignores SIGINT, so a running probe must be ended here,
-        # or the interpreter would wait for it at exit.
-        processes = list((getattr(self._pool, "_processes", None) or {}).values())
-        self._pool.shutdown(wait=False, cancel_futures=True)
-        self._pool = None
-        if pending is not None:
-            for process in processes:
-                process.terminate()
-            for process in processes:
-                process.join(timeout=5)
-            print(f"[progress] probe {pending[1]} (update {pending[2]}) cancelled", flush=True)
+        # or the interpreter would wait for it at exit. The pool's manager
+        # thread then reaps it: joining it here as well races that thread
+        # for waitpid, and the loser's is_alive() reads True for a dead
+        # process.
+        for process in list((getattr(pool, "_processes", None) or {}).values()):
+            process.terminate()
+        pool.shutdown(wait=True, cancel_futures=True)
+        print(f"[progress] probe {pending[1]} (update {pending[2]}) cancelled", flush=True)
 
 
 def probe_due(viz, step, first=False):

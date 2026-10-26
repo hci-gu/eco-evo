@@ -20212,3 +20212,19 @@ remain open exactly as described in 71.9 / 71.11.
       "Long-run year", viability line "long-run years 2-3"; sv
       "langkorning", it "lungo periodo". The terminal keeps "probe".
       tests/test_viz_i18n.py (+1).
+223.22 Legend select all / deselect all (user, 2026-10-27; training and
+      inference viewers). A master checkbox "all" (sv "alla", it
+      "tutti") above the legend entries of the active tab, with a thin
+      separator: ticked = every entry on, dash = some, empty = none. A
+      click turns every entry of the tab on, or off when all already are,
+      and clears a solo series (keys 1-9). The entries' own toggles are
+      unchanged and stay global across tabs (_plot_enabled).
+      pygame_viz _legend_all_rect; tests/test_viz_legend_all.py (4, both
+      modes).
+223.23 Fix to 223.19: _stop_worker no longer joins the cancelled probe
+      worker itself. The pool's manager thread joins it too, and two
+      threads racing os.waitpid made the loser's Popen.poll() catch
+      ECHILD and return None, so is_alive() read True for a dead
+      process (test_ctrl_c... failed ~1 in 15 runs). Now: terminate,
+      then shutdown(wait=True) and let the manager thread reap; 0
+      failures in 40 runs, end-to-end Ctrl+C still clean (~3 s).
