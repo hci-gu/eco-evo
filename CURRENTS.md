@@ -47,7 +47,7 @@ currents act on fish as well as on plankton.
 The default reproduces the behaviour that predated the per-group flag, so a
 library written before it is unchanged: **non decision makers drift (1.0),
 decision makers do not (0.0)**. In `fg_library.yaml` today, phytoplankton is at
-1.0 and benthic_community at 0.0.
+1.0 and benthic_infauna at 0.0.
 
 With `--local_reward`, the per-cell reward follows a drifting decision maker
 correctly: the field's shares are composed into the movement shares, so the

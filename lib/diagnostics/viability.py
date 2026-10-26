@@ -400,9 +400,6 @@ def _saturating_share(env, per_prey_intake):
         (MAX_HARVEST_FRAC * prey)
         / np.maximum(per_share, np.float32(1e-30)),
         np.float32(1.0))
-    if getattr(env, "_has_share_cap", False):
-        # Section 208: share above the pair's predator_share buys nothing.
-        cap = np.minimum(cap, env.share_cap_mat[:, :, None, None])
     return np.clip(cap, 0.0, 1.0).astype(env.dtype, copy=False)
 
 

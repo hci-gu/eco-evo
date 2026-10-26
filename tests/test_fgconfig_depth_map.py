@@ -42,9 +42,9 @@ def app(tmp_path, monkeypatch):
     a.project_path = str(tmp_path / "project.yaml")
     a.project_data["simulation_settings"] = {"depth_map": "maps/depth.npz"}
     a.project_data["decision_makers"] = [{"group_id": "benthivorous_fish"}]
-    a.project_data["non_decision_makers"] = [{"group_id": "benthic_community"}]
+    a.project_data["non_decision_makers"] = [{"group_id": "benthic_infauna"}]
     species = a.global_library["species_definitions"]
-    for gid in ("benthivorous_fish", "benthic_community"):
+    for gid in ("benthivorous_fish", "benthic_infauna"):
         a.current_fg_configs[gid] = species[gid]
     a.update_fg_list()
     a._update_depth_map_view()
@@ -84,9 +84,9 @@ def test_a_map_with_negative_depths_is_refused(app, tmp_path):
 def test_the_table_editor_shows_the_library_rows_and_k_on_the_map(app):
     _select_benthos(app)
     rows = [(r["depth"].get(), r["capacity"].get()) for r in app.capacity_rows]
-    assert rows == [("100", "164.5"), ("300", "81")]
+    assert rows == [("100", "131"), ("300", "65.5")]
     preview = app.capacity_preview_var.get()
-    assert preview.startswith("K on the depth map: mean 137.7")
+    assert preview.startswith("K on the depth map: mean 109.9")
 
 
 def test_apply_writes_the_edited_table_to_the_library(app):
@@ -94,9 +94,9 @@ def test_apply_writes_the_edited_table_to_the_library(app):
     app.capacity_rows[1]["capacity"].set("60")
     app._add_capacity_row("500", "40")
     app.apply_fg_changes()
-    table = app.global_library["species_definitions"]["benthic_community"]["capacity_depth_table"]
+    table = app.global_library["species_definitions"]["benthic_infauna"]["capacity_depth_table"]
     assert [(float(r["depth_m"]), float(r["capacity"])) for r in table] == [
-        (100.0, 164.5), (300.0, 60.0), (500.0, 40.0)]
+        (100.0, 131.0), (300.0, 60.0), (500.0, 40.0)]
     assert Path(app.library_path).is_file()
 
 
@@ -107,7 +107,7 @@ def test_emptied_table_leaves_the_library(app):
         row["capacity"].set("")
     assert app._collect_capacity_table() == (None, None)
     app.apply_fg_changes()
-    assert "capacity_depth_table" not in app.global_library["species_definitions"]["benthic_community"]
+    assert "capacity_depth_table" not in app.global_library["species_definitions"]["benthic_infauna"]
 
 
 def test_duplicate_depths_are_refused(app):
@@ -115,9 +115,9 @@ def test_duplicate_depths_are_refused(app):
     app.capacity_rows[1]["depth"].set("100")
     table, error = app._collect_capacity_table()
     assert table is None and "distinct" in error
-    before = copy.deepcopy(app.global_library["species_definitions"]["benthic_community"]["capacity_depth_table"])
+    before = copy.deepcopy(app.global_library["species_definitions"]["benthic_infauna"]["capacity_depth_table"])
     app.apply_fg_changes()
-    assert app.global_library["species_definitions"]["benthic_community"]["capacity_depth_table"] == before
+    assert app.global_library["species_definitions"]["benthic_infauna"]["capacity_depth_table"] == before
 
 
 def test_equilibrium_preview_is_the_loaders_b_star(app):
@@ -127,8 +127,8 @@ def test_equilibrium_preview_is_the_loaders_b_star(app):
     library = app.global_library
     active = list(app._active_project_fg_ids())
     _d, maps = habitat.build(app.project_data, app.project_path, library, (60, 60), active,
-                             overrides={"benthic_community": {"spawn": {"mode": "equilibrium"}}})
-    np.testing.assert_allclose(preview, maps["benthic_community"]["equilibrium"])
+                             overrides={"benthic_infauna": {"spawn": {"mode": "equilibrium"}}})
+    np.testing.assert_allclose(preview, maps["benthic_infauna"]["equilibrium"])
     depth = np.load(ROOT / "maps" / "depth.npz")["depth"]
     assert np.corrcoef(preview.ravel(), depth.ravel())[0, 1] < -0.9   # no trawl map here
 

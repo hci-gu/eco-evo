@@ -1,0 +1,119 @@
+====================================================================================================
+1. benthivorous_fish -> benthic_community (2-D swept area)
+====================================================================================================
+species (weight in pair)               a [km2 t-1 tick-1] per tonne of that species' share
+  haddock              w 0.447  N/t     6296                                         central    0.2300  MC 5/50/95 %    0.0724    0.2399    0.8204  corners   0.01109 -    2.281
+  cod                  w 0.254  N/t     2028                                         central    0.1434  MC 5/50/95 %    0.0451    0.1495    0.5113  corners   0.00691 -    1.422
+  long rough dab       w 0.146  N/t    16931                                         central    0.3298  MC 5/50/95 %    0.0690    0.2634    1.0130  corners   0.01397 -    3.017
+  dab                  w 0.052  N/t    16896                                         central    0.5514  MC 5/50/95 %    0.1146    0.4132    1.5086  corners   0.01699 -    4.078
+  plaice               w 0.044  N/t     6274                                         central    0.4195  MC 5/50/95 %    0.0872    0.3143    1.1476  corners   0.01293 -    3.102
+  witch                w 0.019  N/t     5318                                         central    0.5123  MC 5/50/95 %    0.1065    0.3840    1.4017  corners   0.01579 -    3.789
+  starry ray           w 0.017  N/t     1316                                         central    0.1731  MC 5/50/95 %    0.0393    0.1362    0.4691  corners   0.00596 -    1.287
+  grey gurnard         w 0.010  N/t    11999                                         central    0.3386  MC 5/50/95 %    0.1059    0.3235    0.9786  corners   0.01749 -    2.519
+  lemon sole           w 0.010  N/t     7971                                         central    0.4392  MC 5/50/95 %    0.0913    0.3292    1.2017  corners   0.01354 -    3.249
+
+GROUP a (benthos)                      central    0.2554  MC 5/50/95 %    0.1243    0.2748    0.6348  corners   0.01093 -    2.324
+                                       1/(a h) [t/km2]: central    0.035  (5-95 %:   0.014 -    0.073)
+                                       at accessible f x B =  20.32 t/km2: x = a h B  574.42 -> 0.998 of ceiling (5-95 %: 0.996 - 0.999)
+                                       at accessible at 10 % of today's stock =   2.03 t/km2: x = a h B   57.44 -> 0.983 of ceiling (5-95 %: 0.965 - 0.993)
+                                       at accessible at 1 % of today's stock =   0.20 t/km2: x = a h B    5.74 -> 0.852 of ceiling (5-95 %: 0.737 - 0.935)
+  half-saturation in TOTAL benthos units = 1/(a h f): central 0.18 t/km2 (today's stock 101.6)
+  weights in the pair: gadoid chemo-tactile 0.701, visual flatfish (incl. LRD) 0.272, gurnard + ray 0.027
+  share of central a by mode: gadoid 0.55, lrd 0.19, flat 0.24, ray 0.01, gurnard 0.01
+  night/day ratio of the pair's a (low mode ratios): 0.71
+  night/day ratio of the pair's a (central mode ratios): 0.84
+  night/day ratio of the pair's a (high mode ratios): 1.28
+
+====================================================================================================
+2. Light at the bottom (lux), grid cells weighted equally, cloud factor 0.5
+====================================================================================================
+  lowK     noon June (elev > 50)      bottom lux p10/p50/p90  9.56e-03  2.08e+00  2.44e+01
+  lowK     noon Dec (8 < elev < 9)    bottom lux p10/p50/p90  1.74e-03  3.85e-01  4.61e+00
+  lowK     all daylight (elev > 0)    bottom lux p10/p50/p90  1.42e-03  5.36e-01  1.11e+01
+  lowK     night (elev < -12)         bottom lux p10/p50/p90  6.06e-11  1.56e-08  2.10e-07
+  central  noon June (elev > 50)      bottom lux p10/p50/p90  4.23e-06  1.32e-02  5.24e-01
+  central  noon Dec (8 < elev < 9)    bottom lux p10/p50/p90  7.69e-07  2.45e-03  9.89e-02
+  central  all daylight (elev > 0)    bottom lux p10/p50/p90  7.24e-07  3.43e-03  2.20e-01
+  central  night (elev < -12)         bottom lux p10/p50/p90  2.72e-14  1.01e-10  4.32e-09
+  highK    noon June (elev > 50)      bottom lux p10/p50/p90  9.32e-10  4.19e-05  5.59e-03
+  highK    noon Dec (8 < elev < 9)    bottom lux p10/p50/p90  1.69e-10  7.76e-06  1.05e-03
+  highK    all daylight (elev > 0)    bottom lux p10/p50/p90  1.47e-10  1.11e-05  2.27e-03
+  highK    night (elev < -12)         bottom lux p10/p50/p90  6.07e-18  2.90e-13  5.22e-11
+
+====================================================================================================
+3. benthivorous_fish -> planktivorous_fish (3-D encounter in a near-bottom band)
+====================================================================================================
+  phi-weighted members: cod st2 0.534, cod st1 0.229, haddock st0 0.098, haddock st1 0.067, cod st0 0.028, starry ray st1 0.019, long rough dab st0 0.013, long rough dab st1 0.008, grey gurnard st0 0.003, grey gurnard st1 0.002, starry ray st0 0.000
+  prey share inside the band, pool-weighted: day 0.206, night 0.062 (central)
+GROUP a (-> planktivorous_fish), annual mean central    0.0160  MC 5/50/95 %    0.0013    0.0109    0.0686  corners   0.00005 -    1.132
+                                       1/(a h) [t/km2]: central    0.237  (5-95 %:   0.055 -    2.898)
+                                       at pool, all visible =   3.33 t/km2: x = a h B   14.04 -> 0.934 of ceiling (5-95 %: 0.535 - 0.984)
+                                       at pool at visibility floor 0.25 =   0.83 t/km2: x = a h B    3.51 -> 0.778 of ceiling (5-95 %: 0.223 - 0.938)
+  night/day ratio of a (engine threshold -5.0 deg): central 0.08; MC 5/50/95 % 0.01 0.07 0.36
+    vision part (R^2 night/day) 0.25; overlap part (F night/day) 0.30; mean R^2/R_sat^2 by day 0.360, by night 0.090
+  same-layer a (prey all inside the band, F = 1): central 0.1194 km2/t/tick; with F the annual-mean pool share in the band ~0.134
+
+====================================================================================================
+3. benthivorous_fish -> predatory_fish (3-D encounter in a near-bottom band)
+====================================================================================================
+  phi-weighted members: cod st2 0.767, cod st1 0.159, starry ray st1 0.045, grey gurnard st0 0.017, grey gurnard st1 0.011, starry ray st0 0.001
+  prey share inside the band, pool-weighted: day 0.284, night 0.138 (central)
+GROUP a (-> predatory_fish), annual mean central    0.0219  MC 5/50/95 %    0.0018    0.0145    0.0888  corners   0.00007 -    1.426
+                                       1/(a h) [t/km2]: central    0.236  (5-95 %:   0.058 -    2.906)
+                                       at pool, all visible =   1.20 t/km2: x = a h B    5.09 -> 0.836 of ceiling (5-95 %: 0.292 - 0.954)
+                                       at pool at visibility floor 0.25 =   0.30 t/km2: x = a h B    1.27 -> 0.560 of ceiling (5-95 %: 0.094 - 0.838)
+  night/day ratio of a (engine threshold -5.0 deg): central 0.12; MC 5/50/95 % 0.02 0.12 0.62
+    vision part (R^2 night/day) 0.25; overlap part (F night/day) 0.49; mean R^2/R_sat^2 by day 0.360, by night 0.090
+  same-layer a (prey all inside the band, F = 1): central 0.1036 km2/t/tick; with F the annual-mean pool share in the band ~0.211
+
+====================================================================================================
+4. One-at-a-time sensitivity, fish pairs (annual-mean a relative to central; night/day ratio)
+====================================================================================================
+  pair -> P: central ratio 0.08
+    R_sat                              a x  0.65 .. x  1.99   (decades 0.48)   night/day 0.12 .. 0.04
+    R_nonvisual                        a x  0.85 .. x  1.37   (decades 0.21)   night/day 0.02 .. 0.17
+    Ke (low Ke = better dim vision)    a x  0.70 .. x  1.26   (decades 0.26)   night/day 0.11 .. 0.06
+    K profile                          a x  0.35 .. x  1.95   (decades 0.74)   night/day 0.24 .. 0.04
+    v_pred                             a x  0.50 .. x  2.00   (decades 0.60)   night/day 0.08 .. 0.08
+    p_capture                          a x  0.33 .. x  2.00   (decades 0.78)   night/day 0.08 .. 0.08
+    H_band                             a x  0.50 .. x  2.00   (decades 0.60)   night/day 0.08 .. 0.08
+    prey share in band (day)           a x  0.43 .. x  1.92   (decades 0.65)   night/day 0.19 .. 0.04
+    prey share in band (night)         a x  0.95 .. x  1.08   (decades 0.05)   night/day 0.02 .. 0.17
+  pair -> W: central ratio 0.12
+    R_sat                              a x  0.67 .. x  1.95   (decades 0.47)   night/day 0.19 .. 0.06
+    R_nonvisual                        a x  0.82 .. x  1.42   (decades 0.24)   night/day 0.04 .. 0.27
+    Ke (low Ke = better dim vision)    a x  0.71 .. x  1.25   (decades 0.25)   night/day 0.18 .. 0.10
+    K profile                          a x  0.38 .. x  1.92   (decades 0.71)   night/day 0.39 .. 0.06
+    v_pred                             a x  0.50 .. x  2.00   (decades 0.60)   night/day 0.12 .. 0.12
+    p_capture                          a x  0.33 .. x  2.00   (decades 0.78)   night/day 0.12 .. 0.12
+    H_band                             a x  0.50 .. x  2.00   (decades 0.60)   night/day 0.12 .. 0.12
+    prey share in band (day)           a x  0.44 .. x  1.68   (decades 0.58)   night/day 0.32 .. 0.07
+    prey share in band (night)         a x  0.93 .. x  1.13   (decades 0.09)   night/day 0.03 .. 0.28
+
+One-at-a-time sensitivity, benthic pair (all modes moved together; decades of a)
+    v    a x 0.45 .. x 2.14  (decades 0.67)
+    w    a x 0.45 .. x 2.47  (decades 0.74)
+    pi   a x 0.51 .. x 1.75  (decades 0.54)
+
+====================================================================================================
+5. Fish pairs per member stage (central factors; a per tonne of that stage, annual mean)
+====================================================================================================
+  pair -> P
+    cod              stage 2  weight 0.534  N/t      373  biomass-mean L  67.9 cm  R_sat  1.36 m  v 0.272 m/s  a  0.0143  1/(a h)  0.266 t/km2
+    cod              stage 1  weight 0.229  N/t     1774  biomass-mean L  40.5 cm  R_sat  0.81 m  v 0.162 m/s  a  0.0166  1/(a h)  0.229 t/km2
+    haddock          stage 0  weight 0.098  N/t     7710  biomass-mean L  30.2 cm  R_sat  0.60 m  v 0.121 m/s  a  0.0205  1/(a h)  0.186 t/km2
+    haddock          stage 1  weight 0.067  N/t     1168  biomass-mean L  46.0 cm  R_sat  0.92 m  v 0.184 m/s  a  0.0163  1/(a h)  0.234 t/km2
+    cod              stage 0  weight 0.028  N/t    13461  biomass-mean L  25.0 cm  R_sat  0.50 m  v 0.100 m/s  a  0.0221  1/(a h)  0.172 t/km2
+    starry ray       stage 1  weight 0.019  N/t     1167  biomass-mean L  51.2 cm  R_sat  1.02 m  v 0.205 m/s  a  0.0210  1/(a h)  0.181 t/km2
+    long rough dab   stage 0  weight 0.013  N/t    23385  biomass-mean L  15.8 cm  R_sat  0.32 m  v 0.063 m/s  a  0.0199  1/(a h)  0.191 t/km2
+    long rough dab   stage 1  weight 0.008  N/t     6295  biomass-mean L  23.3 cm  R_sat  0.47 m  v 0.093 m/s  a  0.0147  1/(a h)  0.259 t/km2
+    grey gurnard     stage 0  weight 0.003  N/t    16181  biomass-mean L  20.8 cm  R_sat  0.42 m  v 0.083 m/s  a  0.0263  1/(a h)  0.144 t/km2
+    grey gurnard     stage 1  weight 0.002  N/t     5535  biomass-mean L  28.8 cm  R_sat  0.58 m  v 0.115 m/s  a  0.0221  1/(a h)  0.172 t/km2
+    starry ray       stage 0  weight 0.000  N/t    10998  biomass-mean L  25.4 cm  R_sat  0.51 m  v 0.102 m/s  a  0.0247  1/(a h)  0.154 t/km2
+  pair -> W
+    cod              stage 2  weight 0.767  N/t      373  biomass-mean L  67.9 cm  R_sat  1.36 m  v 0.272 m/s  a  0.0205  1/(a h)  0.252 t/km2
+    cod              stage 1  weight 0.159  N/t     1774  biomass-mean L  40.5 cm  R_sat  0.81 m  v 0.162 m/s  a  0.0238  1/(a h)  0.217 t/km2
+    starry ray       stage 1  weight 0.045  N/t     1167  biomass-mean L  51.2 cm  R_sat  1.02 m  v 0.205 m/s  a  0.0301  1/(a h)  0.172 t/km2
+    grey gurnard     stage 0  weight 0.017  N/t    16181  biomass-mean L  20.8 cm  R_sat  0.42 m  v 0.083 m/s  a  0.0378  1/(a h)  0.137 t/km2
+    grey gurnard     stage 1  weight 0.011  N/t     5535  biomass-mean L  28.8 cm  R_sat  0.58 m  v 0.115 m/s  a  0.0317  1/(a h)  0.163 t/km2
+    starry ray       stage 0  weight 0.001  N/t    10998  biomass-mean L  25.4 cm  R_sat  0.51 m  v 0.102 m/s  a  0.0355  1/(a h)  0.145 t/km2

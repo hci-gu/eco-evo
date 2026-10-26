@@ -1,0 +1,7 @@
+O and H_eff = 25/O (m); fish bins 0-10 (from integration start ~7-10 m), 10-25, 25-50, 50-100, >100 m
+day (July, box)          spring mean: O 0.40 H   63 | spring min: O 0.12 H  200 | spring max: O 0.74 H   34 | autumn mean: O 0.26 H   96 | autumn min: O 0.17 H  144 | autumn max: O 0.40 H   62
+twilight (July, box)     spring mean: O 0.49 H   51 | spring min: O 0.16 H  158 | spring max: O 0.91 H   27 | autumn mean: O 0.30 H   84 | autumn min: O 0.21 H  118 | autumn max: O 0.43 H   58
+day (July, region)       spring mean: O 0.44 H   56 | spring min: O 0.15 H  172 | spring max: O 0.82 H   31 | autumn mean: O 0.30 H   84 | autumn min: O 0.21 H  120 | autumn max: O 0.45 H   56
+twilight (July, region)  spring mean: O 0.61 H   41 | spring min: O 0.21 H  119 | spring max: O 1.10 H   23 | autumn mean: O 0.42 H   59 | autumn min: O 0.32 H   78 | autumn max: O 0.57 H   44
+
+If the unsampled top 0-7 m held a share s of the fish at r(0-10): O rises by about s x (r0_10 - O). s = 0.1 -> +0.10 to +0.17.

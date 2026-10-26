@@ -1,0 +1,42 @@
+== k_v anchors (r = k_v sqrt(A))
+  Benthosema 6 cm on 2.7 mm copepod (Langbehn S1)         k_v =     57
+  piscivore 50 cm on 6 cm fish (Langbehn S1)              k_v =     65
+  Gobiusculus on C. finmarchicus 2.5 mm (Utne 1997)       k_v =    152
+  Gobiusculus on Acartia 1.0 mm (Utne 1997, 8 umol)       k_v =    259
+  Kulke lab clearance 6.3 cm sprat, Artemia (ms1)                          0.072 L/s = 0.26 m3/h
+  Kulke lab clearance 6.3 cm sprat, A. tonsa (ms1)                         0.042 L/s = 0.15 m3/h
+  Kulke lab clearance 8.7 cm sprat, Artemia, 16 C (ms2, k = -0.11 T + 12.45) 0.187 L/s = 0.67 m3/h
+  Kulke lab clearance 8 cm herring, Artemia (ms1)                          0.060 L/s = 0.21 m3/h
+  Kulke lab clearance 8 cm herring, A. tonsa (ms1)                         0.079 L/s = 0.28 m3/h
+  back-calc 8.7 cm sprat: v 0.3 BL/s, p 1.0: r = 4.8 cm, k_v = 125 (Artemia 0.7 mm, w/L 0.4)
+  back-calc 8.7 cm sprat: v 0.3 BL/s, p 0.7: r = 5.7 cm, k_v = 149 (Artemia 0.7 mm, w/L 0.4)
+  back-calc 8.7 cm sprat: v 0.5 BL/s, p 1.0: r = 3.7 cm, k_v = 96 (Artemia 0.7 mm, w/L 0.4)
+  back-calc 8.7 cm sprat: v 0.5 BL/s, p 0.7: r = 4.4 cm, k_v = 115 (Artemia 0.7 mm, w/L 0.4)
+
+== Members on copepod-sized pool prey, SATURATING light, before overlap thickness
+member        case     L_cm  W_g   N_per_t   prey_mm  r_cm   v_cm_s  p     beta_m3_h(f=1)  per_t_m3_tick(f=1)  per_t_m3_tick(f=0.5)
+sprat         low        10    6.4    155441     1.0    3.0     3.0  0.33          0.100           9.304e+04            4.652e+04
+sprat         central    12   11.8     84531     1.2    6.0     7.2  0.70          2.032           1.030e+06            5.152e+05
+sprat         high       14   19.8     50506     1.5   11.6    14.0  0.86         18.218           5.521e+06            2.760e+06
+norway_pout   low        11    9.2    108807     1.2    3.6     2.2  0.33          0.105           6.878e+04            3.439e+04
+norway_pout   central    15   24.0     41693     2.0    9.9     5.0  0.70          3.880           9.705e+05            4.853e+05
+norway_pout   high       20   58.4     17126     2.5   19.3    12.0  0.86         43.376           4.457e+06            2.229e+06
+blue_whiting  low        20   43.2     23142     1.2    3.6     4.0  0.33          0.192           2.660e+04            1.330e+04
+blue_whiting  central    25   88.0     11368     2.0    9.9     8.2  0.70          6.466           4.410e+05            2.205e+05
+blue_whiting  high       30  157.2      6360     2.5   19.3    18.0  0.86         65.064           2.483e+06            1.241e+06
+
+== Krill-sized prey (20 mm, w/L 0.2) for comparison (NOT in the 0-25 m WP2 pool)
+  norway_pout   k_v  60: r = 0.46 m, beta(p 0.5) = 60.5 m3/h, per t per tick = 1.512e+07 m3
+  norway_pout   k_v 100: r = 0.77 m, beta(p 0.5) = 167.9 m3/h, per t per tick = 4.201e+07 m3
+  norway_pout   k_v 155: r = 1.20 m, beta(p 0.5) = 403.5 m3/h, per t per tick = 1.009e+08 m3
+  blue_whiting  k_v  60: r = 0.46 m, beta(p 0.5) = 100.8 m3/h, per t per tick = 6.873e+06 m3
+  blue_whiting  k_v 100: r = 0.77 m, beta(p 0.5) = 279.9 m3/h, per t per tick = 1.909e+07 m3
+  blue_whiting  k_v 155: r = 1.20 m, beta(p 0.5) = 672.5 m3/h, per t per tick = 4.587e+07 m3
+
+== Validation: sprat field clearance (Kulke 2018 Fig 5.5, k = 291 L^-1.5) per tonne
+  L 10 cm (W 6.4 g): k 9.2 /L, BRmax 1.0: clearance 0.39 m3/h, per t per tick 3.649e+05 m3; a at H 25 m = 0.0146, H 50 m = 0.0073 km2/t/tick
+  L 10 cm (W 6.4 g): k 9.2 /L, BRmax 2.0: clearance 0.78 m3/h, per t per tick 7.297e+05 m3; a at H 25 m = 0.0292, H 50 m = 0.0146 km2/t/tick
+  L 12 cm (W 11.8 g): k 7.0 /L, BRmax 1.0: clearance 0.51 m3/h, per t per tick 2.608e+05 m3; a at H 25 m = 0.0104, H 50 m = 0.0052 km2/t/tick
+  L 12 cm (W 11.8 g): k 7.0 /L, BRmax 2.0: clearance 1.03 m3/h, per t per tick 5.216e+05 m3; a at H 25 m = 0.0209, H 50 m = 0.0104 km2/t/tick
+  L 14 cm (W 19.8 g): k 5.6 /L, BRmax 1.0: clearance 0.65 m3/h, per t per tick 1.964e+05 m3; a at H 25 m = 0.0079, H 50 m = 0.0039 km2/t/tick
+  L 14 cm (W 19.8 g): k 5.6 /L, BRmax 2.0: clearance 1.30 m3/h, per t per tick 3.928e+05 m3; a at H 25 m = 0.0157, H 50 m = 0.0079 km2/t/tick

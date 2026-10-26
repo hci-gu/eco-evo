@@ -20,8 +20,8 @@ def viz(monkeypatch):
     monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
     monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
     from lib.viz.pygame_viz import LiveVisualizer
-    viewer = LiveVisualizer(fg_ids=["benthivorous_fish", "benthic_community"], grid_shape=GRID,
-                            mode="inference", ndm_ids=["benthic_community"])
+    viewer = LiveVisualizer(fg_ids=["benthivorous_fish", "benthic_infauna"], grid_shape=GRID,
+                            mode="inference", ndm_ids=["benthic_infauna"])
     if not viewer.enabled:
         pytest.skip("pygame display unavailable")
     yield viewer
@@ -54,15 +54,15 @@ def rendered_lines(viz, fid, monkeypatch):
 
 def test_ndm_panel_shows_predation_and_impact_shares(viz, monkeypatch):
     viz.update_loss_breakdown({
-        "benthic_community": {"predation": 0.27, "impact": 0.73,
+        "benthic_infauna": {"predation": 0.27, "impact": 0.73,
                               "starvation": 0.0, "natural": 0.0},
         "benthivorous_fish": {"predation": 0.1, "impact": 0.2, "starvation": 0.0,
                     "natural": 0.7}})
-    lines = rendered_lines(viz, "benthic_community", monkeypatch)
+    lines = rendered_lines(viz, "benthic_infauna", monkeypatch)
     assert "pr/im = 27/73%" in lines
     assert not any(line.startswith(("mv/rs/et", "pr/st/im")) for line in lines)
 
 
 def test_ndm_panel_without_a_breakdown_draws_no_loss_line(viz, monkeypatch):
-    lines = rendered_lines(viz, "benthic_community", monkeypatch)
+    lines = rendered_lines(viz, "benthic_infauna", monkeypatch)
     assert not any(line.startswith("pr/im") for line in lines)

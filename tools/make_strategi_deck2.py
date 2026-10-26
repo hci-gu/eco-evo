@@ -513,7 +513,7 @@ LABELS = {
         "phytoplankton": "Växtplankton",
         "subsurface_phytoplankton": "Djupväxtplankton",
         "microzooplankton": "Mikrozooplankton",
-        "benthic_community": "Bottensamhälle",
+        "benthic_infauna": "Bottensamhälle",
         "zooplankton": "Djurplankton", "pelagic_fish": "Pelagisk fisk",
         "gadoids": "Torskfiskar", "porpoises": "Tumlare", "seals": "Sälar",
         "seabirds": "Sjöfåglar",
@@ -680,10 +680,10 @@ _YAML_CACHE = {}
 DM_ORDER = ["zooplankton", "pelagic_fish", "gadoids", "porpoises", "seals",
             "seabirds"]
 NDM_ORDER = ["phytoplankton", "subsurface_phytoplankton", "microzooplankton",
-             "benthic_community"]
+             "benthic_infauna"]
 OBS_ORDER = ["phytoplankton", "subsurface_phytoplankton", "microzooplankton",
              "zooplankton", "pelagic_fish", "gadoids", "porpoises", "seals",
-             "seabirds", "benthic_community"]
+             "seabirds", "benthic_infauna"]
 PAIR_ORDER = [
     ("microzooplankton", "phytoplankton"),
     ("microzooplankton", "subsurface_phytoplankton"),
@@ -692,7 +692,7 @@ PAIR_ORDER = [
     ("zooplankton", "microzooplankton"),
     ("pelagic_fish", "zooplankton"),
     ("gadoids", "pelagic_fish"), ("gadoids", "zooplankton"),
-    ("gadoids", "benthic_community"), ("gadoids", "gadoids"),
+    ("gadoids", "benthic_infauna"), ("gadoids", "gadoids"),
     ("porpoises", "pelagic_fish"), ("porpoises", "gadoids"),
     ("seals", "pelagic_fish"), ("seals", "gadoids"),
     ("seabirds", "pelagic_fish"),
@@ -983,7 +983,7 @@ def draw_food_web(fig, ax, y):
     nodes = {
         "phytoplankton": (150, 92),
         "subsurface_phytoplankton": (345, 92),
-        "benthic_community": (775, 92),
+        "benthic_infauna": (775, 92),
         "microzooplankton": (150, 182),
         "zooplankton": (345, 182),
         "pelagic_fish": (345, 272),
@@ -1034,11 +1034,11 @@ def draw_functional_response(fig, ax, y):
     # Left: the gadoid ceilings as an energy limit (section 148).
     a_g = pair_attack("gadoids", "pelagic_fish")
     h_herr = pair("gadoids", "pelagic_fish")["handling_time"]
-    h_ben = pair("gadoids", "benthic_community")["handling_time"]
+    h_ben = pair("gadoids", "benthic_infauna")["handling_time"]
     herr = species("pelagic_fish")
     e_herr = herr["energy_content"] + herr.get("reserve_reference_fill", 0.5) \
         * herr["max_energy_reserve"]
-    e_ben = species("benthic_community")["energy_content"]
+    e_ben = species("benthic_infauna")["energy_content"]
     w = species("gadoids").get("interference", 0.0)
     B = np.linspace(0, 3.0, 400)
     f_herr = e_herr * a_g * B ** 2 / (1 + a_g * h_herr * B ** 2)
@@ -1388,7 +1388,7 @@ def draw_spawn_examples(fig, ax, y):
 def build(d):
     f = fmt
     phy, sub = species("phytoplankton"), species("subsurface_phytoplankton")
-    ben, mic = species("benthic_community"), species("microzooplankton")
+    ben, mic = species("benthic_infauna"), species("microzooplankton")
     zoo, pel = species("zooplankton"), species("pelagic_fish")
     gad = species("gadoids")
     b_zoo, b_pel, b_gad = budget("zooplankton"), budget("pelagic_fish"), \
@@ -1592,7 +1592,7 @@ def build(d):
           "phyto, subsurface",
           "Ciliater och heterotrofa dinoflagellater; växer bara genom "
           "betning"],
-         ["benthic_community", "icke beslutande", "-",
+         ["benthic_infauna", "icke beslutande", "-",
           "Bottenföda för torskfisk; logistisk, utarmas av bottentrål"],
          ["zooplankton", "beslutande", "phyto, subsurface, micro",
           "Copepoder; betar i koncentration, Q10 på intag och tillväxt"],
@@ -2372,7 +2372,7 @@ def build(d):
          ["microzooplankton", f(mic["max_carrying_capacity"]),
           "Inaktivt: gruppen växer bara genom betning",
           "Fältbiomassa 0,3-5 t/km², toppar ~10"],
-         ["benthic_community", f(ben["max_carrying_capacity"]),
+         ["benthic_infauna", f(ben["max_carrying_capacity"]),
           "Logistiskt, r 0,82/år handsatt",
           "Användarens värde; litteraturen ~45-150 t/km². Modellens bestånd "
           "är 10-35× mindre, så torskfiskens M2 0,0048 är verkningslös."]],
@@ -2570,7 +2570,7 @@ def build(d):
                      f"pelagisk fisk {f(f_pel, sig=2)} (98 % pelagisk trål): "
                      "biomass_factor = q × ansträngning, q = F / 1460 / "
                      "kartans medel."),
-               ("-", f"Bottensamhälle d × SAR, ~{f(regional_f('benthic_community'), sig=2)}/år; "
+               ("-", f"Bottensamhälle d × SAR, ~{f(regional_f('benthic_infauna'), sig=2)}/år; "
                      f"tumlarbifångst {f(regional_f('porpoises'), sig=2)}/år "
                      "på bottentrålkartan (garnen syns inte i VMS)."),
                ("-", "Vindkraftens buller och rotor ligger muted tills ett "
@@ -3025,7 +3025,7 @@ def build(d):
         ["FG", "greedy", "greedy_stay", "eat", "tränat (fix58)"],
         [["phytoplankton", "0,12", "0,12", "0,14", "0,59-0,62"],
          ["zooplankton", "0,16", "0,16", "0,16", "0,72"],
-         ["benthic_community", "0,13-0,27", "0,45-0,62", "1,24-1,32",
+         ["benthic_infauna", "0,13-0,27", "0,45-0,62", "1,24-1,32",
           "0,55-0,62"],
          ["pelagic_fish", "0,001", "0,01", "0,25", "0,55-0,59"],
          ["gadoids", "0,92-1,03", "0,53-0,64", "0,20-0,24", "3,2"],

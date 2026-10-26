@@ -48,7 +48,7 @@ LABELS_EN = {
         "phytoplankton": "Phytoplankton",
         "subsurface_phytoplankton": "Subsurface phyto.",
         "microzooplankton": "Microzooplankton",
-        "benthic_community": "Benthic community",
+        "benthic_infauna": "Benthic community",
         "zooplankton": "Zooplankton", "pelagic_fish": "Pelagic fish",
         "gadoids": "Gadoids", "porpoises": "Porpoises", "seals": "Seals",
         "seabirds": "Seabirds",
@@ -157,7 +157,7 @@ def setup():
 def build(d):
     f = fmt
     phy, sub = species("phytoplankton"), species("subsurface_phytoplankton")
-    ben, mic = species("benthic_community"), species("microzooplankton")
+    ben, mic = species("benthic_infauna"), species("microzooplankton")
     zoo, pel = species("zooplankton"), species("pelagic_fish")
     gad = species("gadoids")
     b_zoo, b_gad = budget("zooplankton"), budget("gadoids")
@@ -358,7 +358,7 @@ def build(d):
           "phyto, subsurface",
           "Ciliates and heterotrophic dinoflagellates; grows only by "
           "grazing"],
-         ["benthic_community", "non-decision maker", "-",
+         ["benthic_infauna", "non-decision maker", "-",
           "Bottom food for gadoids; logistic, depleted by bottom trawling"],
          ["zooplankton", "decision maker", "phyto, subsurface, micro",
           "Copepods; graze on concentration, Q10 on intake and growth"],
@@ -1151,7 +1151,7 @@ def build(d):
          ["microzooplankton", f(mic["max_carrying_capacity"]),
           "Inert: the group grows only by grazing",
           "Field biomass 0.3-5 t/km², peaks ~10"],
-         ["benthic_community", f(ben["max_carrying_capacity"]),
+         ["benthic_infauna", f(ben["max_carrying_capacity"]),
           "Logistic, r 0.82/yr hand-set",
           "The user's value; literature ~45-150 t/km². The model's stock is "
           "10-35× smaller, so the gadoid M2 of 0.0048 is inert."]],
@@ -1349,7 +1349,7 @@ def build(d):
                      "biomass_factor = q × effort, q = F / 1460 / the map's "
                      "mean."),
                ("-", f"Benthos d × SAR, "
-                     f"~{f(regional_f('benthic_community'), sig=2)}/yr; "
+                     f"~{f(regional_f('benthic_infauna'), sig=2)}/yr; "
                      f"porpoise bycatch {f(regional_f('porpoises'), sig=2)}/yr "
                      "on the bottom-trawl map (gillnets do not show in VMS)."),
                ("-", "Wind-farm noise and rotor stay muted until a scenario "
@@ -1811,7 +1811,7 @@ def build(d):
         ["FG", "greedy", "greedy_stay", "eat", "trained (fix58)"],
         [["phytoplankton", "0.12", "0.12", "0.14", "0.59-0.62"],
          ["zooplankton", "0.16", "0.16", "0.16", "0.72"],
-         ["benthic_community", "0.13-0.27", "0.45-0.62", "1.24-1.32",
+         ["benthic_infauna", "0.13-0.27", "0.45-0.62", "1.24-1.32",
           "0.55-0.62"],
          ["pelagic_fish", "0.001", "0.01", "0.25", "0.55-0.59"],
          ["gadoids", "0.92-1.03", "0.53-0.64", "0.20-0.24", "3.2"],

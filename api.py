@@ -70,7 +70,10 @@ API_TO_INTERNAL_SPECIES = {
     "porpoises": "porpoises",
     "seabirds": "seabirds",
     "seals": "seals",
-    "benthic_community": "benthic_community",
+    "benthic_infauna": "benthic_infauna",
+    # Section 221: the id before the split, kept for existing clients.
+    "benthic_community": "benthic_infauna",
+    "mobile_epifauna": "mobile_epifauna",
 }
 
 # These scalar pressures can be represented by the current static impact-map

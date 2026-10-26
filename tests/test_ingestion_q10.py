@@ -79,9 +79,9 @@ def test_loader_refuses_inconsistent_settings():
         _load(_library(ingestion_q10=2.0, metabolism_q10=None),
               _project(no_layer))
     library = _library()
-    library["species_definitions"]["benthic_community"]["ingestion_q10"] = 2.0
-    with pytest.raises(ValueError, match="benthic_community"):
-        _load(library, _project(dict(layers, benthic_community="mean_0_50m")))
+    library["species_definitions"]["benthic_infauna"]["ingestion_q10"] = 2.0
+    with pytest.raises(ValueError, match="benthic_infauna"):
+        _load(library, _project(dict(layers, benthic_infauna="mean_0_50m")))
 
 
 def _env(start_tick, q10, prey):

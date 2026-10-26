@@ -65,9 +65,9 @@ def test_loader_refuses_inconsistent_settings():
     with pytest.raises(ValueError, match="growth_q10"):
         load(library, {k: v for k, v in layers.items() if k != "zooplankton"})
     zoo["growth_q10"] = None
-    library["species_definitions"]["benthic_community"]["growth_q10"] = 3.0
-    with pytest.raises(ValueError, match="benthic_community"):
-        load(library, dict(layers, benthic_community="mean_0_50m"))
+    library["species_definitions"]["benthic_infauna"]["growth_q10"] = 3.0
+    with pytest.raises(ValueError, match="benthic_infauna"):
+        load(library, dict(layers, benthic_infauna="mean_0_50m"))
 
 
 def _env(start_tick, q10, reserve):

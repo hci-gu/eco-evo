@@ -1,0 +1,6 @@
+parameters: {'# counted': 7330, 'Abundance': 7329, 'Length (mean)': 6234, 'Length (median)': 6197, 'Carbon content': 3023}
+           n_visits      years
+zmin zmax                     
+0    25         119  2007-2023
+     30           2  2013-2019
+no visit with several strata

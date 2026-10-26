@@ -41,7 +41,7 @@ LABELS_EN = {
     ],
     "web_nodes": {
         "phytoplankton": "Phytoplankton",
-        "benthic_community": "Benthic community",
+        "benthic_infauna": "Benthic community",
         "zooplankton": "Zooplankton", "pelagic_fish": "Pelagic fish",
         "gadoids": "Gadoids", "porpoises": "Porpoises", "seals": "Seals",
         "seabirds": "Seabirds",
@@ -123,7 +123,7 @@ def setup():
 # ----------------------------------------------------------------------
 def build(d):
     f = fmt
-    phy, ben = species("phytoplankton"), species("benthic_community")
+    phy, ben = species("phytoplankton"), species("benthic_infauna")
     zoo = species("zooplankton")
     # ---------------------------------------------------------------- 1
     d.title_slide(
@@ -336,14 +336,14 @@ def build(d):
         [["phytoplankton", "non decision maker", "-",
           "Primary producer, light-limited logistic growth towards "
           "carrying capacity, drifts with the current"],
-         ["benthic_community", "non decision maker", "-",
+         ["benthic_infauna", "non decision maker", "-",
           "Bottom food for gadoids, very slow growth, does not move"],
          ["zooplankton", "decision maker", "phytoplankton",
           "Grazer, specialist (type III), moves 0.02 cells/tick"],
          ["pelagic_fish", "decision maker", "zooplankton",
           "Herring/sprat, specialist (type III), lean body + fat reserve"],
          ["gadoids", "decision maker",
-          "pelagic_fish, benthic_community, zooplankton, gadoids",
+          "pelagic_fish, benthic_infauna, zooplankton, gadoids",
           "Generalist; type III on herring, energy ceiling, interference "
           "1.0"],
          ["porpoises", "decision maker", "pelagic_fish, gadoids",
@@ -628,7 +628,7 @@ def build(d):
              f"{f(phy['growth_rate'])} (the April rate, light-limited) "
              f"towards max_carrying_capacity "
              f"{f(phy['max_carrying_capacity'])} t/cell, "
-             f"{f(phy['energy_content'])} MJ/t; benthic_community at "
+             f"{f(phy['energy_content'])} MJ/t; benthic_infauna at "
              f"{f(ben['growth_rate'])} towards "
              f"{f(ben['max_carrying_capacity'])} t/cell, "
              f"{f(ben['energy_content'])} MJ/t, plus seed_rate "
@@ -994,7 +994,7 @@ def build(d):
          "responds is advected on top of the displacement its policy "
          "already chose.",
          ("-", "Today: phytoplankton 1.0 and zooplankton 1.0, "
-               "benthic_community 0.0, others 0.0 by default."),
+               "benthic_infauna 0.0, others 0.0 by default."),
          "The current shares movement's masks - blocked flow stays - and is "
          "conservative: no mass is created or lost."],
         kicker="current_response")
@@ -1362,7 +1362,7 @@ def build(d):
           "+3 to +9 %/yr, peak in year 8, then decline"],
          ["porpoises", "11.5", "3.99", "5.9",
           "−6 %/yr (was −12 %/yr)"],
-         ["benthic_community", "18,603", "-", "15,856",
+         ["benthic_infauna", "18,603", "-", "15,856",
           "Rises to year 3-4, then grazed down"],
          ["zooplankton", "~24,000", "~22,800", "-",
           "Stationary with an annual cycle of ~9×"],

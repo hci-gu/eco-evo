@@ -1,0 +1,105 @@
+variant: --foraging-overlap (herring and sprat O = 1.0, 0.7-1.2)
+light: annual mean engine F (-8 deg) = 0.6115; time shares day/twilight/night = 0.500 / 0.172 / 0.328
+lx at 8 m: median by day 769, twilight 0.0352, night 1.1e-05; share of twilight above 1e-3 lx 0.85
+lx at 15 m: median by day 94.2, twilight 0.00431, night 1.3e-06; share of twilight above 1e-3 lx 0.63
+lx at 25 m: median by day 11.5, twilight 0.000527, night 1.6e-07; share of twilight above 1e-3 lx 0.44
+central clupeid R^2 light factor (Ke 1 lx, 15 m): day 0.97, twilight 0.06, night 0.000
+herring filter clearance per t (dark speed): 6.102e+03 m3/tick
+
+=== CENTRAL
+member          w  clear/t day sat (m3/tick)   a annual     a day    a twil   a night night/day  1/(a h)
+herring     0.790                  1.854e+06     0.0205    0.0400    0.0024   0.00024    0.0061     1.22
+sprat       0.030                  2.640e+06     0.0290    0.0569    0.0032   0.00000    0.0000     0.86
+pout        0.075                  9.228e+05     0.0006    0.0006    0.0008   0.00058    0.9513    39.43
+bw_small    0.083                  3.452e+05     0.0008    0.0000    0.0017   0.00152       nan    31.25
+bw_large    0.022                  3.157e+05     0.0001    0.0000    0.0001   0.00014       nan   361.11
+GROUP       1.000                  1.649e+06     0.0172    0.0333    0.0022   0.00037    0.0110     1.46
+herring a by season x period: Apr-Sep day 0.0512; Apr-Sep twilight 0.0030; Apr-Sep night 0.0002; Oct-Mar day 0.0194; Oct-Mar twilight 0.0016; Oct-Mar night 0.0002
+GROUP a by season x period: Apr-Sep day 0.0427; Apr-Sep twilight 0.0027; Apr-Sep night 0.0005; Oct-Mar day 0.0161; Oct-Mar twilight 0.0014; Oct-Mar night 0.0003
+group: time-mean a 0.0172; prey-biomass-weighted a 0.0279; engine-form fit a_light 0.0293, implied dark_ratio -0.065 (R2 0.53); check a_light (rho + (1-rho) Fbar) = 0.0172
+(the engine-form fits are NOT a usable dark_ratio: the derived a drops at sun ~0 deg, the engine F at -8 deg; use the night/day ratio below)
+elevation (deg) where the group a falls to half of its month's daytime mean, by month: -0.2 -0.1 -0.1 -0.0 -0.1 -0.2 -0.0 -0.1 -0.1 -0.1 -0.1 -0.3
+night (< -12 deg) / day (> 0 deg) a by month: 0.024 0.023 0.023 0.011 0.011 nan 0.013 0.012 0.011 0.015 0.016 0.024 | time mean over months with night 0.017
+share of the group a by member: {'herring': 0.943, 'sprat': 0.051, 'pout': 0.003, 'bw_small': 0.004, 'bw_large': 0.0}
+group a by month: 0.0037 0.0049 0.0060 0.0336 0.0344 0.0221 0.0254 0.0275 0.0266 0.0108 0.0076 0.0033
+1/(a h) by month (t/km2): 6.74 5.15 4.15 0.74 0.73 1.13 0.98 0.91 0.94 2.31 3.29 7.49
+target B / (1/(a_annual h)) by month: 0.1 0.1 1.1 13.3 17.9 7.8 4.7 3.2 2.5 2.0 2.4 0.6
+
+=== LOW corner (every factor at its low end)
+member          w  clear/t day sat (m3/tick)   a annual     a day    a twil   a night night/day  1/(a h)
+herring     0.790                  4.014e+04     0.0003    0.0004    0.0002   0.00017    0.4862    95.73
+sprat       0.030                  1.065e+05     0.0004    0.0009    0.0000   0.00000    0.0000    58.23
+pout        0.075                  4.610e+04     0.0000    0.0000    0.0000   0.00000    0.7135  4799.15
+bw_small    0.083                  1.623e+04     0.0000    0.0000    0.0000   0.00001       nan  4915.09
+bw_large    0.022                  1.618e+04     0.0000    0.0000    0.0000   0.00000       nan 59059.32
+GROUP       1.000                  4.006e+04     0.0002    0.0003    0.0001   0.00014    0.4481   113.63
+herring a by season x period: Apr-Sep day 0.0004; Apr-Sep twilight 0.0002; Apr-Sep night 0.0002; Oct-Mar day 0.0002; Oct-Mar twilight 0.0002; Oct-Mar night 0.0002
+GROUP a by season x period: Apr-Sep day 0.0004; Apr-Sep twilight 0.0001; Apr-Sep night 0.0001; Oct-Mar day 0.0002; Oct-Mar twilight 0.0001; Oct-Mar night 0.0001
+group: time-mean a 0.0002; prey-biomass-weighted a 0.0003; engine-form fit a_light 0.0003, implied dark_ratio 0.443 (R2 0.26); check a_light (rho + (1-rho) Fbar) = 0.0002
+(the engine-form fits are NOT a usable dark_ratio: the derived a drops at sun ~0 deg, the engine F at -8 deg; use the night/day ratio below)
+elevation (deg) where the group a falls to half of its month's daytime mean, by month: nan nan nan 6.2 6.5 0.8 6.6 6.3 5.6 nan nan nan
+night (< -12 deg) / day (> 0 deg) a by month: 0.966 0.953 0.942 0.282 0.305 nan 0.419 0.348 0.330 0.699 0.902 0.971 | time mean over months with night 0.647
+share of the group a by member: {'herring': 0.938, 'sprat': 0.059, 'pout': 0.002, 'bw_small': 0.002, 'bw_large': 0.0}
+group a by month: 0.0001 0.0001 0.0001 0.0003 0.0004 0.0002 0.0003 0.0003 0.0003 0.0002 0.0001 0.0001
+1/(a h) by month (t/km2): 182.56 180.98 179.13 72.03 70.95 104.25 92.04 84.65 88.58 156.52 177.65 183.02
+target B / (1/(a_annual h)) by month: 0.0 0.0 0.0 0.2 0.2 0.1 0.1 0.0 0.0 0.0 0.0 0.0
+
+=== HIGH corner (every factor at its high end)
+member          w  clear/t day sat (m3/tick)   a annual     a day    a twil   a night night/day  1/(a h)
+herring     0.790                  2.977e+07     0.4435    0.7886    0.2859   0.00029    0.0004     0.06
+sprat       0.030                  3.987e+07     0.5938    1.0561    0.3829   0.00000    0.0000     0.04
+pout        0.075                  1.097e+07     0.0222    0.0169    0.0272   0.02764    1.6308     1.13
+bw_small    0.083                  6.208e+06     0.0447    0.0014    0.0770   0.09388   68.4921     0.56
+bw_large    0.022                  3.388e+06     0.0033    0.0007    0.0049   0.00640    8.5615     7.53
+GROUP       1.000                  2.613e+07     0.3736    0.6560    0.2459   0.01021    0.0156     0.07
+herring a by season x period: Apr-Sep day 1.0079; Apr-Sep twilight 0.3671; Apr-Sep night 0.0003; Oct-Mar day 0.3872; Oct-Mar twilight 0.1690; Oct-Mar night 0.0003
+GROUP a by season x period: Apr-Sep day 0.8385; Apr-Sep twilight 0.3161; Apr-Sep night 0.0208; Oct-Mar day 0.3221; Oct-Mar twilight 0.1447; Oct-Mar night 0.0070
+group: time-mean a 0.3736; prey-biomass-weighted a 0.6028; engine-form fit a_light 0.6281, implied dark_ratio -0.043 (R2 0.62); check a_light (rho + (1-rho) Fbar) = 0.3736
+(the engine-form fits are NOT a usable dark_ratio: the derived a drops at sun ~0 deg, the engine F at -8 deg; use the night/day ratio below)
+elevation (deg) where the group a falls to half of its month's daytime mean, by month: -5.3 -5.3 -5.4 -5.3 -5.3 -5.3 -5.3 -5.3 -5.3 -5.4 -5.3 -5.4
+night (< -12 deg) / day (> 0 deg) a by month: 0.022 0.022 0.022 0.022 0.022 nan 0.022 0.022 0.022 0.022 0.022 0.022 | time mean over months with night 0.022
+share of the group a by member: {'herring': 0.938, 'sprat': 0.048, 'pout': 0.004, 'bw_small': 0.01, 'bw_large': 0.0}
+group a by month: 0.0880 0.1078 0.1294 0.7173 0.7416 0.4852 0.5504 0.5894 0.5731 0.2404 0.1791 0.0819
+1/(a h) by month (t/km2): 0.28 0.23 0.19 0.03 0.03 0.05 0.05 0.04 0.04 0.10 0.14 0.31
+target B / (1/(a_annual h)) by month: 3.1 2.7 23.3 288.4 388.6 170.4 103.1 68.7 55.3 43.3 52.3 13.7
+
+=== one-at-a-time: group time-mean a with one factor at its low / high value
+f_field        0.0086 / 0.0343  (x0.50 / x2.00)
+ke_lx          0.0149 / 0.0183  (x0.87 / x1.07)
+z_forage       0.0152 / 0.0182  (x0.89 / x1.06)
+kv             0.0048 / 0.0603  (x0.28 / x3.51)
+v_bl           0.0102 / 0.0243  (x0.60 / x1.41)
+p              0.0086 / 0.0254  (x0.50 / x1.48)
+size (N/t)     low: 0.0096 (x0.56)
+size (N/t)     high: 0.0187 (x1.09)
+overlap O      low: 0.0120 (x0.70)
+overlap O      high: 0.0207 (x1.20)
+R proportional to L (20 cm anchor): group time-mean a 0.0135 (x0.79); herring x0.81, sprat x0.30, pout x0.45, bw_small x1.51, bw_large x1.64
+
+=== Monte Carlo (1500 draws, log-triangular per factor, independent)
+group time-mean a, P5 P25 P50 P75 P95: 0.0039 0.0071 0.0109 0.0173 0.0319
+1/(a h) at those: 6.38 3.52 2.30 1.44 0.78
+group night/day a ratio (monthly, time mean) P5 P50 P95: 0.008 0.025 0.077
+P(a >= 0.04) = 0.021
+member herring   time-mean a P5 P50 P95: 0.0040 0.0126 0.0389
+member sprat     time-mean a P5 P50 P95: 0.0095 0.0246 0.0613
+member pout      time-mean a P5 P50 P95: 0.0002 0.0005 0.0012
+member bw_small  time-mean a P5 P50 P95: 0.0002 0.0007 0.0020
+member bw_large  time-mean a P5 P50 P95: 0.0000 0.0001 0.0002
+
+=== validation (not used to set a)
+herring particulate clearance per t (box size structure), day, saturating light, 50/50 prey: 1.112e+06 m3/tick (NOT size-matched to the YOY datum; see next lines)
+  YOY 4 cm (0.24 g), R size-free: R 6.3 cm, 0.150 L/s = 2258 L/g/h vs Arrhenius & Hansson 46 L/g/h (theory/field 48.9)
+  YOY 4 cm (0.24 g), R prop. to L (20 cm anchor): R 1.3 cm, 0.006 L/s = 90 L/g/h vs Arrhenius & Hansson 46 L/g/h (theory/field 2.0)
+  YOY 6 cm (0.94 g), R size-free: R 6.3 cm, 0.224 L/s = 864 L/g/h vs Arrhenius & Hansson 46 L/g/h (theory/field 18.7)
+  YOY 6 cm (0.94 g), R prop. to L (20 cm anchor): R 1.9 cm, 0.020 L/s = 78 L/g/h vs Arrhenius & Hansson 46 L/g/h (theory/field 1.7)
+  YOY 8 cm (2.47 g), R size-free: R 6.3 cm, 0.299 L/s = 437 L/g/h vs Arrhenius & Hansson 46 L/g/h (theory/field 9.5)
+  YOY 8 cm (2.47 g), R prop. to L (20 cm anchor): R 2.5 cm, 0.048 L/s = 70 L/g/h vs Arrhenius & Hansson 46 L/g/h (theory/field 1.5)
+A&H as area at O 1 (25 m): 0.0111; at the summer-day central O 0.45: 0.0050 km2/t/tick
+Kulke sprat low: 2.60e+05 m3/t/tick -> a at O 1: 0.0104, at O 0.45: 0.0047
+Kulke sprat high: 5.20e+05 m3/t/tick -> a at O 1: 0.0208, at O 0.45: 0.0094
+sprat encounter clearance per t, day, saturating, 50/50 prey: 1.584e+06 m3/tick
+potential intake %BW/d by month (central a(month), visible 0.75 B, no interference): 0.2 0.3 2.2 9.5 9.6 8.8 8.4 7.9 7.5 4.9 4.4 0.8
+annual mean potential 5.38 %BW/d = 19.6 /yr; field: group zooplankton Q/B x share 4.5 /yr (params note), herring winter 0.4-1 %BW/d, adult summer ~6 %BW/d
+foraging-time fraction needed to eat Q/B 4.5 /yr: 0.23
+ceiling 1/h = 10.0 %BW/d

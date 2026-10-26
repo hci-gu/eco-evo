@@ -20,10 +20,8 @@ class InteractionMatrices:
     # ``functional_response``.
     response_type: np.ndarray = None
     # Section 208: the share of the prey a predator can reach
-    # (``accessible_fraction``, 1 = all of it), and the share of the
-    # predator's eat mass that can go to the prey (``predator_share``).
+    # (``accessible_fraction``, 1 = all of it).
     access: np.ndarray = None
-    share_cap: np.ndarray = None
 
 
 def reserve_food_settings(fg):
@@ -51,8 +49,8 @@ def _float_or_default(value, default):
 
 
 def pair_share(inter_def, key, inter_id=""):
-    """A pair's share in (0, 1] (``predator_share``,
-    ``accessible_fraction``; section 208), 1.0 when unset."""
+    """A pair's share in (0, 1] (``accessible_fraction``; section 208),
+    1.0 when unset."""
     raw = (inter_def or {}).get(key)
     if raw in (None, ""):
         return 1.0
@@ -82,7 +80,6 @@ def build_interaction_matrices(env):
     vis_floor_over = np.zeros((env.N_dm, env.N_all), dtype=env.dtype)
     vis_floor_has = np.zeros((env.N_dm, env.N_all), dtype=bool)
     access = np.ones((env.N_dm, env.N_all), dtype=env.dtype)
-    share_cap = np.ones((env.N_dm, env.N_all), dtype=env.dtype)
 
     for i, pred_id in enumerate(env.dm_ids):
         pred_fg = env.fgs[pred_id]
@@ -124,15 +121,13 @@ def build_interaction_matrices(env):
             energy_gain[i, j] = prey_energy_content * assimilation
             assimilation_mat[i, j] = assimilation
             handling_time[i, j] = float(inter_def.get("handling_time", 0.0))
-            # Section 208: ``predator_share`` phi = the share of the
-            # predator group's biomass that can feed on this prey at all
-            # (e.g. the benthos feeders of a pooled fish group). That part eats it at
-            # the full a and 1/h; the rest cannot, so at most phi of the
-            # group's eat mass reaches the prey: the tick uses
-            # min(eat_j, phi_j). (A mean field a phi, h / phi made every
-            # fish a half-benthivore, and an energy maximiser dropped the
-            # prey altogether.)
-            share_cap[i, j] = pair_share(inter_def, "predator_share", inter_id)
+            # Section 221: ``predator_share`` (a cap on the learned eat
+            # share, section 208) is removed; refuse it rather than
+            # ignore it silently.
+            if inter_def.get("predator_share") not in (None, ""):
+                raise ValueError(
+                    f"{inter_id}: predator_share was removed (section 221); "
+                    "delete the key")
             # ``accessible_fraction`` f: the share of the prey within the
             # predator's reach this tick (infauna below the sediment
             # surface is out of it); scales the prey biomass of the pair.
@@ -165,7 +160,6 @@ def build_interaction_matrices(env):
         assimilation=assimilation_mat,
         response_type=response_type,
         access=access,
-        share_cap=share_cap,
     )
 
 

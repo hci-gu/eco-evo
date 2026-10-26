@@ -150,10 +150,9 @@ def _active_in_project():
     return ids
 
 
-# benthic_community keeps its hand-set growth_rate (reverted, section 136).
-# benthic_community: hand-set growth (section 136); microzooplankton grows
-# only by grazing, growth_rate 0 (section 177).
-HAND_SET = {"benthic_community", "microzooplankton"}
+# microzooplankton grows only by grazing, growth_rate 0 (section 177). The
+# benthic groups derive theirs from r_max since the split (section 221).
+HAND_SET = {"microzooplankton"}
 
 
 def _expected(fid, spec, S, I, active, include_m1=True):
@@ -214,5 +213,5 @@ def test_loader_leaves_m1_out_when_mortality_is_off():
     # Phytoplankton carries an M1 (its sinking loss) since section 173/174.
     for fid in ("zooplankton", "planktivorous_fish", "benthivorous_fish", "phytoplankton"):
         assert full_off[fid].growth_rate < full_on[fid].growth_rate
-    assert full_off["benthic_community"].growth_rate == pytest.approx(
-        full_on["benthic_community"].growth_rate)
+    assert full_off["benthic_infauna"].growth_rate == pytest.approx(
+        full_on["benthic_infauna"].growth_rate)

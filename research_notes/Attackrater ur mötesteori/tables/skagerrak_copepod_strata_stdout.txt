@@ -1,0 +1,103 @@
+Per station (b = 3.0):
+  b     set season station  share_0_25  conc_ratio_25_100_vs_0_25  zc_m  H_eff_m
+3.0     all autumn       K        0.78                       0.10 20.58    32.22
+3.0     all autumn    T2:1        0.62                       0.21 31.83    40.39
+3.0     all autumn    T2:2        0.87                       0.05 15.11    28.84
+3.0     all autumn      T3        0.71                       0.13 19.81    35.02
+3.0     all autumn      T4        0.79                       0.09 15.93    31.65
+3.0     all spring     H:1        0.65                       0.18 25.87    38.17
+3.0     all spring     H:2        0.71                       0.14 20.65    35.40
+3.0     all spring     K:1        0.75                       0.11 22.65    33.51
+3.0     all spring     K:2        0.93                       0.02 17.15    26.84
+3.0     all spring      T1        0.96                       0.01 14.45    26.02
+3.0     all spring    T2:1        0.90                       0.04 17.68    27.89
+3.0     all spring      T3        0.84                       0.06 20.29    29.61
+3.0     all spring    T4:1        0.91                       0.03 17.02    27.48
+3.0 herring autumn       K        0.91                       0.03 12.55    27.49
+3.0 herring autumn    T2:1        0.60                       0.23 32.02    41.88
+3.0 herring autumn    T2:2        0.90                       0.04 11.07    27.86
+3.0 herring autumn      T3        0.72                       0.13 19.48    34.51
+3.0 herring autumn      T4        0.80                       0.08 15.82    31.36
+3.0 herring spring     H:1        0.55                       0.28 28.13    45.73
+3.0 herring spring     H:2        0.71                       0.13 19.28    35.03
+3.0 herring spring     K:1        0.76                       0.11 22.36    32.99
+3.0 herring spring     K:2        0.95                       0.02 16.67    26.43
+3.0 herring spring      T1        0.97                       0.01 13.91    25.72
+3.0 herring spring    T2:1        0.92                       0.03 16.60    27.23
+3.0 herring spring      T3        0.87                       0.05 18.80    28.60
+3.0 herring spring    T4:1        0.93                       0.02 15.87    26.81
+3.0 Calanus autumn       K        0.59                       0.23 32.52    42.08
+3.0 Calanus autumn    T2:1        0.38                       0.54 34.13    65.48
+3.0 Calanus autumn    T2:2        0.54                       0.29 32.00    46.39
+3.0 Calanus autumn      T3        0.35                       0.62 38.90    71.83
+3.0 Calanus autumn      T4        0.81                       0.08 14.80    30.69
+3.0 Calanus spring     H:1        0.14                       2.00 44.29   175.00
+3.0 Calanus spring     H:2        0.00                        NaN 50.00      NaN
+3.0 Calanus spring     K:1        0.78                       0.09 22.32    31.97
+3.0 Calanus spring     K:2        0.99                       0.00 15.42    25.31
+3.0 Calanus spring      T1        0.99                       0.00 12.98    25.24
+3.0 Calanus spring    T2:1        0.95                       0.02 14.78    26.20
+3.0 Calanus spring      T3        1.00                       0.00 12.50    25.00
+3.0 Calanus spring    T4:1        1.00                       0.00 12.50    25.00
+
+Means over stations by season and prey set (share of 0-100 m in 0-25 m; concentration in 25-100 m relative to 0-25 m;
+centre of mass; H_eff = 0-100 m column / mean 0-25 m concentration):
+                   share_0_25             conc_ratio_25_100_vs_0_25               zc_m               H_eff_m               
+                         mean   min   max                      mean   min   max   mean    min    max    mean    min     max
+b   set     season                                                                                                         
+2.7 Calanus autumn       0.54  0.35  0.81                      0.35  0.08  0.62  30.47  14.80  38.90   51.30  30.69   71.83
+            spring       0.73  0.00  1.00                      0.30  0.00  2.00  23.10  12.50  50.00   47.67  25.00  175.00
+    all     autumn       0.75  0.62  0.86                      0.12  0.05  0.20  21.17  15.57  31.94   33.96  29.02   40.36
+            spring       0.81  0.67  0.95                      0.08  0.02  0.17  20.31  15.09  25.67   31.19  26.36   37.56
+    herring autumn       0.78  0.59  0.91                      0.11  0.03  0.23  18.64  11.16  32.41   32.98  27.51   42.15
+            spring       0.82  0.55  0.96                      0.09  0.01  0.27  19.68  14.33  28.04   31.52  25.95   45.17
+3.0 Calanus autumn       0.54  0.35  0.81                      0.35  0.08  0.62  30.47  14.80  38.90   51.30  30.69   71.83
+            spring       0.73  0.00  1.00                      0.30  0.00  2.00  23.10  12.50  50.00   47.67  25.00  175.00
+    all     autumn       0.75  0.62  0.87                      0.11  0.05  0.21  20.65  15.11  31.83   33.62  28.84   40.39
+            spring       0.83  0.65  0.96                      0.07  0.01  0.18  19.47  14.45  25.87   30.62  26.02   38.17
+    herring autumn       0.79  0.60  0.91                      0.10  0.03  0.23  18.19  11.07  32.02   32.62  27.49   41.88
+            spring       0.83  0.55  0.97                      0.08  0.01  0.28  18.95  13.91  28.13   31.07  25.72   45.73
+3.3 Calanus autumn       0.54  0.35  0.81                      0.35  0.08  0.62  30.47  14.80  38.90   51.30  30.69   71.83
+            spring       0.73  0.00  1.00                      0.30  0.00  2.00  23.10  12.50  50.00   47.67  25.00  175.00
+    all     autumn       0.76  0.62  0.87                      0.11  0.05  0.21  20.17  14.66  31.72   33.33  28.68   40.45
+            spring       0.84  0.64  0.97                      0.07  0.01  0.19  18.85  13.99  26.27   30.29  25.77   39.17
+    herring autumn       0.79  0.60  0.91                      0.10  0.03  0.22  17.84  11.01  31.72   32.36  27.48   41.72
+            spring       0.84  0.53  0.98                      0.08  0.01  0.29  18.49  13.61  28.53   30.90  25.57   46.93
+
+Five-strata stations: concentration relative to the 0-25 m mean, b = 3.0
+    set season station  r_25_60  r_60_100  r_0_10  r_10_25
+    all autumn       K    0.092     0.100   1.995    0.337
+    all autumn    T2:1    0.158     0.246   1.094    0.937
+    all autumn    T2:2    0.090     0.017   1.371    0.753
+    all autumn      T3    0.241     0.039   1.371    0.753
+    all autumn      T4    0.173     0.015   1.838    0.441
+    all spring     H:1    0.272     0.091   1.062    0.959
+    all spring     H:2    0.256     0.036   1.722    0.519
+    all spring     K:1    0.128     0.101   1.274    0.817
+    all spring     K:2    0.039     0.012   0.596    1.270
+herring autumn       K    0.031     0.035   2.042    0.306
+herring autumn    T2:1    0.154     0.288   1.696    0.536
+herring autumn    T2:2    0.063     0.016   2.073    0.285
+herring autumn      T3    0.190     0.072   1.902    0.399
+herring autumn      T4    0.149     0.029   2.083    0.278
+herring spring     H:1    0.423     0.149   1.867    0.422
+herring spring     H:2    0.248     0.034   2.138    0.241
+herring spring     K:1    0.111     0.103   1.324    0.784
+herring spring     K:2    0.029     0.010   0.604    1.264
+Calanus autumn       K    0.167     0.281   1.930    0.380
+Calanus autumn    T2:1    0.792     0.319   1.525    0.650
+Calanus autumn    T2:2    0.317     0.258   2.113    0.258
+Calanus autumn      T3    0.855     0.423   1.127    0.915
+Calanus autumn      T4    0.163     0.000   1.485    0.677
+Calanus spring     H:1    3.333     0.833   2.500    0.000
+Calanus spring     K:1    0.089     0.097   1.148    0.901
+Calanus spring     K:2    0.004     0.004   0.544    1.304
+               r_0_10               r_10_25               r_25_60               r_60_100              
+                 mean    min    max    mean    min    max    mean    min    max     mean    min    max
+set     season                                                                                        
+Calanus autumn  1.636  1.127  2.113   0.576  0.258  0.915   0.459  0.163  0.855    0.256  0.000  0.423
+        spring  1.397  0.544  2.500   0.735  0.000  1.304   1.142  0.004  3.333    0.311  0.004  0.833
+all     autumn  1.534  1.094  1.995   0.644  0.337  0.937   0.151  0.090  0.241    0.084  0.015  0.246
+        spring  1.163  0.596  1.722   0.891  0.519  1.270   0.174  0.039  0.272    0.060  0.012  0.101
+herring autumn  1.959  1.696  2.083   0.361  0.278  0.536   0.117  0.031  0.190    0.088  0.016  0.288
+        spring  1.483  0.604  2.138   0.678  0.241  1.264   0.203  0.029  0.423    0.074  0.010  0.149

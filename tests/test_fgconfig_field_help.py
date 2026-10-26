@@ -158,10 +158,10 @@ def test_fg_editor_growth_line_has_term_help():
             {"group_id": "planktivorous_fish"}, {"group_id": "benthivorous_fish"},
             {"group_id": "porpoises"}]
         # Without its benthos the benthivores' budget cannot close.
-        app.project_data["non_decision_makers"] = [{"group_id": "benthic_community"}]
+        app.project_data["non_decision_makers"] = [{"group_id": "benthic_infauna"}]
         species = app.global_library["species_definitions"]
         for gid in ("planktivorous_fish", "benthivorous_fish", "porpoises",
-                    "benthic_community"):
+                    "benthic_infauna"):
             # What load_project_from_path does for every project FG.
             app.current_fg_configs[gid] = species[gid]
         app.update_fg_list()

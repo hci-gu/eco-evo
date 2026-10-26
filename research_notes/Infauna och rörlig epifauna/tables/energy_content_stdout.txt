@@ -1,0 +1,6 @@
+infauna, as eaten by benthivores                       2583 MJ/t (low 1679, high 3556);  weights polychaete 0.487, ophiuroid 0.303, other_echinoderm 0.044, bivalve 0.093, other_mollusc 0.028, amphipod 0.013, other_crust 0.030, other_inv 0.003
+mobile epifauna, as eaten (benthivores + predators)    3760 MJ/t (low 3104, high 4698);  weights crabs 0.714, pandalus 0.143, nephrops 0.002, small_shrimp 0.120, mysid 0.021
+mobile epifauna, stock weighted (comparison)           3911 MJ/t (low 3303, high 4742);  weights crabs 0.262, pandalus 0.073, nephrops 0.599, small_shrimp 0.039, mysid 0.026
+pooled check at the benthivore diet split 0.71 / 0.29: 2924 MJ/t (library 3000)
+h = E / ceiling, benthivorous_fish (ceiling 27.1 MJ/t/tick): infauna 95.3, epifauna 138.7
+h = E / ceiling, predatory_fish (ceiling 25.5 MJ/t/tick): infauna 101.3, epifauna 147.4

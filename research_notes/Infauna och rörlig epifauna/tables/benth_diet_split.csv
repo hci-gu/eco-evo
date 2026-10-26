@@ -1,0 +1,16 @@
+sub_pool,part,pct_of_benthos_data_species,pct_of_part_data_species
+mysid,epifauna,0.0,0.0
+crangonid,epifauna,0.32,1.09
+pandalid,epifauna,1.47,5.04
+nephrops,epifauna,0.13,0.43
+crab_hermit,epifauna,23.69,80.93
+other_decapod,epifauna,3.66,12.51
+polychaete,infauna,34.39,48.61
+ophiuroid,infauna,21.44,30.31
+other_echinoderm,infauna,3.13,4.42
+bivalve,infauna,6.58,9.3
+other_mollusc,infauna,1.96,2.78
+amphipod,infauna,0.87,1.23
+other_crust,infauna,2.12,3.0
+other_inv,infauna,0.24,0.34
+GROUP_epifauna_share_central,,29.02,

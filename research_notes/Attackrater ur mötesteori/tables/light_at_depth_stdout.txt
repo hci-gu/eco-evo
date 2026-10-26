@@ -1,0 +1,87 @@
+1. Noon sun elevation and depth (m) of each threshold at noon, overcast (x0.2) / clear sky
+
+  K profile lowK (0.2, 0.08, 0.04)
+  month noon_elev           1e-3 lx           7e-3 lx         3.6e-2 lx              1 lx
+  Jan        10.6       275/315           226/266           185/225           102/142    
+  Feb        18.6       288/329           240/280           199/239           116/156    
+  Mar        29.1       299/339           250/290           209/249           126/166    
+  Apr        41.3       306/347           258/298           217/257           134/174    
+  May        50.7       310/351           262/302           221/261           138/178    
+  Jun        55.2       312/352           263/304           222/263           139/179    
+  Jul        53.4       311/352           263/303           222/262           139/179    
+  Aug        45.7       308/349           260/300           219/259           136/176    
+  Sep        34.1       302/343           254/294           213/253           130/170    
+  Oct        22.3       293/333           244/284           203/243           120/160    
+  Nov        12.8       279/319           230/271           189/230           106/147    
+  Dec         8.6       269/309           221/261           180/220            97/137    
+
+  K profile central (0.3, 0.12, 0.06)
+  month noon_elev           1e-3 lx           7e-3 lx         3.6e-2 lx              1 lx
+  Jan        10.6       146/173           114/141            87/114            41/58     
+  Feb        18.6       156/182           123/150            96/123            45/67     
+  Mar        29.1       163/189           130/157           103/130            49/74     
+  Apr        41.3       168/194           135/162           108/135            53/79     
+  May        50.7       170/197           138/165           111/137            55/82     
+  Jun        55.2       171/198           139/166           112/138            56/83     
+  Jul        53.4       171/198           138/165           111/138            56/83     
+  Aug        45.7       169/196           137/163           109/136            54/81     
+  Sep        34.1       165/192           132/159           105/132            50/77     
+  Oct        22.3       158/185           126/153            99/126            47/70     
+  Nov        12.8       149/176           117/144            90/116            42/61     
+  Dec         8.6       143/170           110/137            83/110            39/55     
+
+  K profile highK (0.45, 0.15, 0.08)
+  month noon_elev           1e-3 lx           7e-3 lx         3.6e-2 lx              1 lx
+  Jan        10.6        74/94             50/69             39/49             19/27     
+  Feb        18.6        80/101            56/76             42/56             20/31     
+  Mar        29.1        86/106            61/81             45/61             23/34     
+  Apr        41.3        89/110            65/85             47/65             25/36     
+  May        50.7        91/112            67/87             48/67             26/37     
+  Jun        55.2        92/112            68/88             49/68             26/37     
+  Jul        53.4        92/112            68/88             48/67             26/37     
+  Aug        45.7        90/111            66/86             48/66             26/36     
+  Sep        34.1        87/108            63/83             46/63             24/35     
+  Oct        22.3        83/103            58/78             43/58             21/32     
+  Nov        12.8        76/96             51/72             40/51             19/28     
+  Dec         8.6        71/91             48/67             37/48             18/26     
+
+2. Depth (m) of each threshold at given sun elevations (twilight; cloud ignored below -6 deg)
+  K profile lowK
+    elev    0 deg  E0       500 lx  1e-3 lx:   218  7e-3 lx:   169  3.6e-2 lx:   128  1 lx:    48
+    elev   -4 deg  E0      16.5 lx  1e-3 lx:   133  7e-3 lx:    84  3.6e-2 lx:    47  1 lx:    14
+    elev   -6 deg  E0         3 lx  1e-3 lx:    90  7e-3 lx:    46  3.6e-2 lx:    25  1 lx:     5
+    elev   -8 deg  E0     0.416 lx  1e-3 lx:    45  7e-3 lx:    21  3.6e-2 lx:    12  1 lx:     0
+    elev  -10 deg  E0    0.0577 lx  1e-3 lx:    21  7e-3 lx:    11  3.6e-2 lx:     2  1 lx:     0
+    elev  -12 deg  E0     0.008 lx  1e-3 lx:    10  7e-3 lx:     1  3.6e-2 lx:     0  1 lx:     0
+    elev  -18 deg  E0    0.0006 lx  1e-3 lx:     0  7e-3 lx:     0  3.6e-2 lx:     0  1 lx:     0
+  K profile central
+    elev    0 deg  E0       500 lx  1e-3 lx:   109  7e-3 lx:    76  3.6e-2 lx:    49  1 lx:    22
+    elev   -4 deg  E0      16.5 lx  1e-3 lx:    52  7e-3 lx:    35  3.6e-2 lx:    21  1 lx:     9
+    elev   -6 deg  E0         3 lx  1e-3 lx:    37  7e-3 lx:    21  3.6e-2 lx:    15  1 lx:     4
+    elev   -8 deg  E0     0.416 lx  1e-3 lx:    20  7e-3 lx:    14  3.6e-2 lx:     8  1 lx:     0
+    elev  -10 deg  E0    0.0577 lx  1e-3 lx:    14  7e-3 lx:     7  3.6e-2 lx:     2  1 lx:     0
+    elev  -12 deg  E0     0.008 lx  1e-3 lx:     7  7e-3 lx:     0  3.6e-2 lx:     0  1 lx:     0
+    elev  -18 deg  E0    0.0006 lx  1e-3 lx:     0  7e-3 lx:     0  3.6e-2 lx:     0  1 lx:     0
+  K profile highK
+    elev    0 deg  E0       500 lx  1e-3 lx:    47  7e-3 lx:    35  3.6e-2 lx:    24  1 lx:    14
+    elev   -4 deg  E0      16.5 lx  1e-3 lx:    25  7e-3 lx:    17  3.6e-2 lx:    14  1 lx:     6
+    elev   -6 deg  E0         3 lx  1e-3 lx:    18  7e-3 lx:    13  3.6e-2 lx:    10  1 lx:     2
+    elev   -8 deg  E0     0.416 lx  1e-3 lx:    13  7e-3 lx:     9  3.6e-2 lx:     5  1 lx:     0
+    elev  -10 deg  E0    0.0577 lx  1e-3 lx:     9  7e-3 lx:     5  3.6e-2 lx:     1  1 lx:     0
+    elev  -12 deg  E0     0.008 lx  1e-3 lx:     5  7e-3 lx:     0  3.6e-2 lx:     0  1 lx:     0
+    elev  -18 deg  E0    0.0006 lx  1e-3 lx:     0  7e-3 lx:     0  3.6e-2 lx:     0  1 lx:     0
+
+3. Hours per day by regime (mid-month): day (h > 0), civil (0..-6), nautical (-6..-12), night (< -12), and hours with h > -8 deg (engine threshold)
+  Jan: day   6.8  civil  1.9  nautical  1.7  night  13.6  h>-8   9.3
+  Feb: day   9.0  civil  1.6  nautical  1.5  night  11.8  h>-8  11.2
+  Mar: day  11.4  civil  1.5  nautical  1.5  night   9.6  h>-8  13.4
+  Apr: day  14.1  civil  1.7  nautical  1.8  night   6.5  h>-8  16.3
+  May: day  16.4  civil  2.1  nautical  3.3  night   2.1  h>-8  19.4
+  Jun: day  17.9  civil  2.8  nautical  3.3  night   0.0  h>-8  22.4
+  Jul: day  17.2  civil  2.4  nautical  4.3  night   0.0  h>-8  20.9
+  Aug: day  15.1  civil  1.8  nautical  2.2  night   4.9  h>-8  17.6
+  Sep: day  12.5  civil  1.5  nautical  1.6  night   8.4  h>-8  14.6
+  Oct: day   9.9  civil  1.6  nautical  1.5  night  11.0  h>-8  11.9
+  Nov: day   7.5  civil  1.8  nautical  1.6  night  13.1  h>-8   9.8
+  Dec: day   6.2  civil  2.0  nautical  1.8  night  14.1  h>-8   8.8
+  annual mean: day 12.0 civil 1.9 nautical 2.2 night 7.9 h>-8 14.6 (fractions 0.50/0.08/0.09/0.33; h>-8 0.61)

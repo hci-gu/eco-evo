@@ -52,7 +52,7 @@ def test_build_scales_the_mean_pattern_to_the_latest_window():
                                  "benthivorous_fish_impacted_by_pelagic_trawling",
                                  "planktivorous_fish_impacted_by_pelagic_trawling",
                                  "planktivorous_fish_impacted_by_bottom_trawling",
-                                 "benthic_community_impacted_by_bottom_trawling",
+                                 "benthic_infauna_impacted_by_bottom_trawling",
                                  "porpoises_impacted_by_bottom_trawling"])
 def test_fishing_tables_are_linear_from_zero(key):
     table = load_config(str(ROOT / "fgconfig" / "fg_library.yaml"))["interaction_definitions"][key]

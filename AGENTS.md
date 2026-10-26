@@ -84,11 +84,17 @@ fabricates mass.
   chlorophyll maximum, the same algae in the layer [M(t), 30 m],
   shade-adapted I_k 30, eaten by zooplankton and microzooplankton
   diluted over the layer thickness; zooplankton observes it),
-  `benthic_community` (the bottom fauna the benthivores eat - infauna
-  plus mobile epifauna: Nephrops, northern shrimp, crabs; section 218;
-  logistic, r 0.971, K per cell from depth 164.5 -> 81.0 t/km2 at
-  100 -> 300 m, box mean 137.7, start = today's equilibrium ~102 t/km2
-  under trawling, sections 207 and 218), `microzooplankton` (section 177:
+  `benthic_infauna` (since section 221 the INFAUNA only - polychaetes,
+  brittle stars, bivalves, small burrowing crustaceans; was
+  `benthic_community` before section 221; r_max
+  1.0, derived growth, K per cell from depth 131 -> 65.5 t/km2 at
+  100 -> 300 m, E 2600 MJ/t, start = today's equilibrium ~94 t/km2),
+  `mobile_epifauna` (section 221: Nephrops 0.60, crabs, hermit crabs and
+  Munida 0.26, northern shrimp, small shrimps, mysids; r_max 0.70, six-
+  row depth K 14.3 -> 3.75, E 3750, start ~7.7 t/km2; split out so the
+  prey the fish take can be depleted - a fixed accessible share of the
+  whole benthos never ran out; research_notes/"Infauna och rorlig
+  epifauna", Swedish letters), `microzooplankton` (section 177:
   grows only by grazing the phytoplankton in the population step;
   eaten by zooplankton, which observes it).
 - English snake_case IDs are canonical.
@@ -118,20 +124,31 @@ fabricates mass.
   as baseline and inference maps, linear library tables calibrated to
   the maps' mean effort. Impact mortality acts on every group with a
   table, non decision makers too (biomass factor only): bottom trawling
-  removes benthos at d x SAR (d 0.10, SAR 0.75 per MW-h/km2) plus its
-  catch of shrimp, Nephrops and crabs (section 218), ~0.23/yr.
+  kills infauna at d x SAR (d 0.06, SAR 0.75 per MW-h/km2), 0.136/yr,
+  and removes the mobile epifauna by catch (shrimp, Nephrops, crabs)
+  plus the kill of the uncaught part, 0.136/yr (sections 218, 221).
   Porpoise gillnet bycatch (~0.017/yr, met outside the grid) rides on
   the bottom-trawl map too (section 165).
 - Holling ceiling is 1/h (`energy_balance.intake_ceiling`); `max_intake_rate`
   is the attack rate a. A pair may override it (`<pred>_preys_on_<prey>:
   max_intake_rate`) to set the half-saturation 1/(a h) (Type III:
-  1/sqrt(a h)) without moving the ceiling.
+  1/sqrt(a h)) without moving the ceiling. Every fish pair carries its
+  own a from encounter theory since section 220 (research_notes/
+  "Attackrater ur motesteori", Swedish letters; per FORAGING fish, prey
+  refuges and schooling left to the prey's hide action): planktivores ->
+  zoo 0.017; benthivores -> infauna 0.25, -> epifauna 0.44, ->
+  planktivores 0.019, -> predators 0.026; predators -> epifauna 0.33,
+  -> planktivores 0.012, -> zoo 0.002, -> benthivores 0.18 (sections
+  220, 221; predators no longer eat infauna). Never set a from model
+  output.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
-  observes the light level (last input slot). Set on planktivores ->
-  zoo (0.25, -8 deg; herring alone 0.1) and benthivores / predators ->
-  planktivores (0.6, -5 deg; section 144).
+  observes the light level (last input slot). Since section 220 (derived
+  night/day ratios): planktivores -> zoo 0.02 at 0 deg; benthivores ->
+  planktivores 0.06 and -> predators 0.10 at 0 deg (140 m is too dim
+  for -5); predators -> planktivores 0.35, -> zoo 0.5, -> benthivores
+  0.6 at -5 deg; benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
@@ -249,27 +266,25 @@ fabricates mass.
   Rindorf et al. 2006; the old Type III on gadoids -> herring was a
   stability fix, 141.4); seals -> planktivores stays Type III (166).
 - Pair shares (section 208, both engines, each in (0, 1], inert at 1):
-  `predator_share` phi caps the predator's eat share on that prey,
-  `eat = min(eat, phi)` with full a and 1/h (only phi of the pooled
-  group can exploit the prey; the excess is wasted; growth_budget pays
-  phi x the ceiling). A mean field a phi, h / phi made every fish half
-  a benthivore and an energy maximiser dropped benthos - do not use
-  it. `accessible_fraction` f scales the prey biomass in the pair's
-  Holling term and harvest cap (infauna out of reach); observations
-  are untouched. Since section 209 every fish pair has a phi (stage
-  scores from morphology and habitat, research_notes/Torskfiskarnas
-  bytesandelar) and every benthos pair f 0.2. growth_budget's ideal
-  intake fills the caps in order of energy per unit of eat share (sum
-  <= 1); the best pair alone left s* just above u once every pair was
-  capped (section 209).
+  `accessible_fraction` f scales the prey biomass in the pair's Holling
+  term and harvest cap (infauna out of reach, Nephrops in burrows);
+  observations are untouched. Benthivores -> infauna 0.2, -> epifauna
+  0.31, predators -> epifauna 0.13 (section 221). `predator_share` phi
+  (`eat = min(eat, phi)`, a hard cap on a learned action) is REMOVED
+  from the library since section 221; the mechanism stays in both
+  engines, inert at 1 (tests/test_pair_shares.py). It stood in for
+  saturated pairs and missing structure (cod piscivory in the
+  benthivores; a never-depleting benthos), which density-dependent a
+  (220) and the epifauna group (221) now carry. Do not reintroduce it;
+  a mean field a phi, h / phi failed too (208.5).
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
   NDM `r = (r_max + sum M2) / 1460`; an income-funded DM's g is x 12 /
   `feeding_season_months` (section 184); a `regional_carrying_capacity`
   loss is not in g (section 185). s* is the reserve a DM settles on
-  under ideal conditions (checked prey at the Holling ceilings, the eat
-  share filled up to each pair's predator_share in order of value, eating
-  every tick; closed form from the library, no policy - section 160); it
+  under ideal conditions (checked prey at the Holling ceilings, the best
+  pair at the whole eat share since phi is gone (221), eating every
+  tick; closed form from the library, no policy - section 160); it
   replaced the full reserve 1 - u, which the hunger gate never lets a DM
   reach. Checking/unchecking a predator in the FG editor moves the prey's
   growth; muted FGs are absent. A pair a group-biomass reward cannot

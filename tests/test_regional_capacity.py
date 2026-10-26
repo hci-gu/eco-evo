@@ -169,7 +169,7 @@ def test_refusals():
         EcosystemEnvironment(dict(height=1, width=1), groups)
     project = yaml.safe_load(PROJECT.read_text(encoding="utf-8-sig"))
     for sid, extra, match in (
-            ("benthic_community", {"r_max": 0.5}, "not a decision"),
+            ("benthic_infauna", {"r_max": 0.5}, "not a decision"),
             ("planktivorous_fish", {"r_max": 0}, "needs r_max")):
         lib = _library()
         lib["species_definitions"][sid].update(

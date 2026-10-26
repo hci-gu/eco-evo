@@ -16,7 +16,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 FGS = ["zooplankton", "planktivorous_fish", "benthivorous_fish", "porpoises", "seals",
-       "phytoplankton", "subsurface_phytoplankton", "benthic_community",
+       "phytoplankton", "subsurface_phytoplankton", "benthic_infauna",
        "microzooplankton"]
 GRID = (60, 60)
 
@@ -477,7 +477,7 @@ def test_folded_window_edges_size_the_heatmaps(monkeypatch):
 
 # ---- heatmaps grouped by decision makers / non-decision makers (198) -
 
-NDMS = ["phytoplankton", "subsurface_phytoplankton", "benthic_community",
+NDMS = ["phytoplankton", "subsurface_phytoplankton", "benthic_infauna",
         "microzooplankton"]
 
 
@@ -489,7 +489,7 @@ def test_heatmaps_are_grouped_under_dm_and_ndm_headers(monkeypatch):
     # NDMs interleaved in the FG order: the grouping must sort them out.
     order = ["phytoplankton", "zooplankton", "planktivorous_fish",
              "subsurface_phytoplankton", "benthivorous_fish", "porpoises",
-             "benthic_community", "seals", "microzooplankton"]
+             "benthic_infauna", "seals", "microzooplankton"]
     viewer = LiveVisualizer(fg_ids=order, grid_shape=GRID, mode="training",
                             ndm_ids=NDMS)
     if not viewer.enabled:

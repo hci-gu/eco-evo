@@ -399,7 +399,7 @@ def test_builders_and_progress_inference_keep_current_configuration():
     assert _ProbeEnvBuilder("mareld2.yaml", (5, 6), currents=config)().currents == config
     env = builder(seed=5)
     assert env.fgs["phytoplankton"].current_response == 1
-    assert env.fgs["benthic_community"].current_response == 0
+    assert env.fgs["benthic_infauna"].current_response == 0
 
 
 def test_current_cli_and_metadata_keep_cloud_settings():

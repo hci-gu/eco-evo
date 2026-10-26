@@ -1,21 +1,20 @@
-"""Predator share and accessible fraction of a predation pair (section 208).
+"""Accessible fraction of a predation pair (section 208); predator_share
+is gone (section 221).
 
 Contracts asserted:
 
-1. Both keys parse as shares in (0, 1], default 1; anything else is
-   refused.
-2. ``predator_share`` phi caps the eat share of the pair at phi (the
-   capable part eats at the full a and 1/h; share above phi buys
-   nothing); a and h are untouched, and the growth budget's ideal intake
-   from that prey alone is phi x its ceiling.
+1. ``accessible_fraction`` parses as a share in (0, 1], default 1;
+   anything else is refused. A pair that still carries
+   ``predator_share`` is refused (removed in section 221).
+2. The growth budget's ideal intake is the best pair at the whole eat
+   share (no caps).
 3. ``accessible_fraction`` f scales the pair's prey biomass in the
    Holling term and in the harvest cap: with f the predator takes what
    it takes from f x B, and the prey loses no more than that.
-4. Inert at 1 (bit-identical), and GPU parity with both keys set, with
-   and without per-pair visibility floors.
-5. mareld2: benthivorous_fish -> benthos carries phi 0.53 and f 0.2, and the
-   benthivorous_fish' derived growth rate is unchanged (their best prey at the
-   ceiling is zooplankton).
+4. Inert at 1 (bit-identical), and GPU parity with f set, with and
+   without per-pair visibility floors.
+5. mareld2: no predator_share anywhere; benthivorous_fish -> infauna
+   carries f 0.2, which does not move the derived growth rate.
 """
 import copy
 import sys
@@ -35,8 +34,8 @@ PAIR = "a_preys_on_c"
 
 
 def test_shares_parse_and_refuse():
-    assert interactions.pair_share({}, "predator_share") == 1.0
-    assert interactions.pair_share({"predator_share": "0.5"}, "predator_share") == 0.5
+    assert interactions.pair_share({}, "accessible_fraction") == 1.0
+    assert interactions.pair_share({"accessible_fraction": "0.5"}, "accessible_fraction") == 0.5
     for bad in (0, -0.1, 1.2, "x", float("nan")):
         with pytest.raises(ValueError):
             interactions.pair_share({"k": bad}, "k")
@@ -49,47 +48,19 @@ def _built(keys=None, **kw):
     return env
 
 
-def test_predator_share_caps_the_eat_share():
-    plain, shared = _built(), _built({"predator_share": 0.4})
-    i, j = plain.dm_ids.index("a"), plain.global_fg_order.index("c")
-    np.testing.assert_array_equal(shared.max_intake_mat, plain.max_intake_mat)
-    np.testing.assert_array_equal(shared.handling_time_mat, plain.handling_time_mat)
-    assert shared._has_share_cap and shared.share_cap_mat[i, j] == pytest.approx(0.4)
-    assert not shared._has_pair_access
-    # all of a's eat mass on c buys what an eat share of 0.4 buys
-    capped = _eat_only_c(shared)
-    partial = _eat_only_c(plain)
-    partial.eat[i, j] *= np.float32(0.4)
-    for env, actions in ((shared, capped), (plain, partial)):
-        predation.apply_predation(env, actions)
-    np.testing.assert_allclose(shared.fgs["a"].temp_energy_gains,
-                               plain.fgs["a"].temp_energy_gains, rtol=1e-6)
-    np.testing.assert_allclose(shared.fgs["c"].biomass, plain.fgs["c"].biomass, rtol=1e-6)
+def test_predator_share_is_refused():
+    with pytest.raises(ValueError, match="predator_share was removed"):
+        _built({"predator_share": 0.4})
 
 
-def test_growth_budget_sees_the_predator_share():
-    species = {"p": {"max_intake_rate": 0.5}, "q": {"energy_content": 100.0}}
-    pairs = {"p_preys_on_q": {"preys_on": True, "handling_time": 10.0}}
-    full, best = growth_budget.ideal_intake("p", species, pairs)
-    pairs["p_preys_on_q"]["predator_share"] = 0.5
-    half, _ = growth_budget.ideal_intake("p", species, pairs)
-    assert best == "q" and half == pytest.approx(0.5 * full)
-
-
-def test_ideal_intake_fills_the_caps_in_order():
-    """The eat shares sum to 1 and each is capped at its phi, so the ideal
-    allocation fills the best pair's cap first and the rest goes to the
-    next (section 209)."""
+def test_ideal_intake_is_the_best_pair_at_the_whole_share():
     species = {"p": {"max_intake_rate": 0.5}, "q": {"energy_content": 100.0},
-               "r": {"energy_content": 50.0}, "s": {"energy_content": 20.0}}
-    pairs = {"p_preys_on_q": {"preys_on": True, "handling_time": 10.0, "predator_share": 0.4},
-             "p_preys_on_r": {"preys_on": True, "handling_time": 10.0, "predator_share": 0.5},
-             "p_preys_on_s": {"preys_on": True, "handling_time": 10.0}}
-    rate = {k: growth_budget.intake_ceiling(0.5, 10.0) * species[k]["energy_content"]
-            for k in "qrs"}
+               "r": {"energy_content": 50.0}}
+    pairs = {"p_preys_on_q": {"preys_on": True, "handling_time": 10.0},
+             "p_preys_on_r": {"preys_on": True, "handling_time": 10.0}}
     intake, best = growth_budget.ideal_intake("p", species, pairs)
     assert best == "q"
-    assert intake == pytest.approx(0.4 * rate["q"] + 0.5 * rate["r"] + 0.1 * rate["s"])
+    assert intake == pytest.approx(growth_budget.intake_ceiling(0.5, 10.0) * 100.0)
 
 
 def _eat_only_c(env):
@@ -124,7 +95,7 @@ def test_accessible_fraction_is_prey_biomass_out_of_reach():
 
 
 def test_inert_at_one():
-    plain, unit = _built(), _built({"predator_share": 1.0, "accessible_fraction": 1.0})
+    plain, unit = _built(), _built({"accessible_fraction": 1.0})
     np.testing.assert_array_equal(plain.max_intake_mat, unit.max_intake_mat)
     np.testing.assert_array_equal(plain.handling_time_mat, unit.handling_time_mat)
     assert not unit._has_pair_access
@@ -134,22 +105,25 @@ def test_inert_at_one():
 def test_pair_shares_match_reference(device, floors):
     env = make_env(min_split=0.0, extinction_factor=0.0, mortality=True,
                    pair_floors=floors,
-                   pair_keys={PAIR: {"predator_share": 0.5, "accessible_fraction": 0.3},
+                   pair_keys={PAIR: {"accessible_fraction": 0.3},
                               "b_preys_on_c": {"accessible_fraction": 0.6}})
     model = _assert_parity(env, device, ticks=8)
     assert model.pair_access is not None
 
 
 def test_mareld2_benthivore_benthos_pair():
+    # Section 221: predator_share is gone (library and engine); the
+    # accessible fraction does not move the budget.
     import yaml
     root = Path(__file__).resolve().parents[1]
     library = yaml.safe_load((root / "fgconfig" / "fg_library.yaml").read_text())
-    pair = library["interaction_definitions"]["benthivorous_fish_preys_on_benthic_community"]
-    assert pair["predator_share"] == pytest.approx(0.9)
+    inter = library["interaction_definitions"]
+    assert not any("predator_share" in v for v in inter.values() if isinstance(v, dict))
+    pair = inter["benthivorous_fish_preys_on_benthic_infauna"]
     assert pair["accessible_fraction"] == pytest.approx(0.2)
     stripped = copy.deepcopy(library)
-    for key in ("predator_share", "accessible_fraction"):
-        stripped["interaction_definitions"]["benthivorous_fish_preys_on_benthic_community"].pop(key)
+    stripped["interaction_definitions"]["benthivorous_fish_preys_on_benthic_infauna"].pop(
+        "accessible_fraction")
     g = [growth_budget.derived_growth_rate("benthivorous_fish", lib["species_definitions"],
                                            lib["interaction_definitions"])
          for lib in (library, stripped)]

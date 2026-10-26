@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 GRID = (60, 60)
 DMS = ["zooplankton", "planktivorous_fish", "benthivorous_fish",
        "predatory_fish", "porpoises", "seals"]
-NDMS = ["phytoplankton", "subsurface_phytoplankton", "benthic_community",
+NDMS = ["phytoplankton", "subsurface_phytoplankton", "benthic_infauna",
         "microzooplankton"]
 DM, NDM = "Decision makers", "Non-decision makers"
 

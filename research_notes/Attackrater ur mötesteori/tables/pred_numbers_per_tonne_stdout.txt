@@ -1,0 +1,17 @@
+species, stage, biomass share of species, N per tonne, mean W (g), biomass-median L (cm), number-weighted mean L (cm)
+saithe, all, 1.000, 897, 1115, 52.5, 46.4
+saithe, adult, 0.632, 1241, 806, 47.5, 43.0
+saithe, large, 0.368, 304, 3288, 72.5, 70.0
+whiting, all, 1.000, 19984, 50, 22.5, 15.5
+whiting, juvenile, 0.247, 58545, 17, 17.5, 11.8
+whiting, adult, 0.753, 7330, 136, 27.5, 25.2
+mackerel, all, 1.000, 6035, 166, 27.5, 26.6
+spurdog, all, 1.000, 628, 1593, 77.5, 69.9
+horse mackerel, all, 1.000, 16596, 60, 32.5, 12.2
+hake, all, 1.000, 2934, 341, 52.5, 29.6
+hake, juvenile, 0.016, 52920, 19, 17.5, 13.6
+hake, adult, 0.984, 2100, 476, 52.5, 36.3
+anglerfish, all, 1.000, 247, 4044, 77.5, 58.4
+ling, all, 1.000, 550, 1817, 77.5, 62.9
+velvet belly, all, 1.000, 4825, 207, 42.5, 38.0
+pollack, all, 1.000, 471, 2122, 62.5, 55.7

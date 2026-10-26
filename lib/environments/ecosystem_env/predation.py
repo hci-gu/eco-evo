@@ -76,9 +76,6 @@ def apply_predation(env, actions):
                 env.dtype, copy=False)
 
     eat = actions.eat
-    if env._has_share_cap:
-        # Section 208: only phi of the group can feed on a capped prey.
-        eat = np.minimum(eat, env.share_cap_mat[:, :, None, None])
     demand = (
         predator_biomass[:, None, :, :]
         * eat

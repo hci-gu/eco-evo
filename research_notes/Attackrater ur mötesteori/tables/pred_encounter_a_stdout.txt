@@ -1,0 +1,103 @@
+Encounter-theory attack rates of predatory_fish pairs, km2 per tonne foraging predator per 6-h tick
+Annual mean a = 0.5 a_day + 0.5 a_night. Corners: all factors at one end. MC: 5000 log-triangular draws.
+
+-> planktivorous_fish: a central 0.00559 (day 0.00497, night 0.00621, night/day 1.25; MC 5-95 % 0.13-2.44)
+    corners 7.57e-05 - 0.289; MC 5/50/95 % 0.00194 / 0.00581 / 0.0177
+    h 279.4: 1/(a h) central 0.64 t/km2 (MC 5-95 % 0.203-1.84); engine B 3.33; x = a h B_vis at central 1.82-5.2, at MC 5 % 0.632
+    fraction of ceiling x/(1+x) at central, low B_vis: 0.645; at MC 5 %: 0.387
+
+-> zooplankton: a central 0.0015 (day 0.00199, night 0.00102, night/day 0.51; MC 5-95 % 0.21-0.67)
+    corners 6.04e-05 - 0.0971; MC 5/50/95 % 0.000874 / 0.00213 / 0.00535
+    h 176.5: 1/(a h) central 3.77 t/km2 (MC 5-95 % 1.06-6.49); engine B 9.72; x = a h B_vis at central 0.133-2.58, at MC 5 % 0.0771
+    fraction of ceiling x/(1+x) at central, low B_vis: 0.117; at MC 5 %: 0.072
+
+-> benthic_community: a central 0.0295 (day 0.0297, night 0.0293, night/day 0.99; MC 5-95 % 0.78-0.98)
+    corners 0.000412 - 2.4; MC 5/50/95 % 0.00953 / 0.0355 / 0.138
+    h 117.6: 1/(a h) central 0.288 t/km2 (MC 5-95 % 0.0618-0.892); engine B 20.3; x = a h B_vis at central 70.5-70.5, at MC 5 % 22.8
+    fraction of ceiling x/(1+x) at central, low B_vis: 0.986; at MC 5 %: 0.958
+
+-> benthivorous_fish: a central 0.178 (day 0.219, night 0.137, night/day 0.62; MC 5-95 % 0.09-0.94)
+    corners 0.00294 - 9.41; MC 5/50/95 % 0.0577 / 0.196 / 0.65
+    h 176.5: 1/(a h) central 0.0318 t/km2 (MC 5-95 % 0.00872-0.0983); engine B 0.229; x = a h B_vis at central 4.32-7.21, at MC 5 % 1.4
+    fraction of ceiling x/(1+x) at central, low B_vis: 0.812; at MC 5 %: 0.584
+
+Per member and stage, central (annual a, weight inside the pair, share of the pair's a):
+  -> planktivorous_fish
+    whiting         adult     weight 0.210  a 0.0123 (day 0.0106, night 0.014, n/d 1.32)  share 0.46
+    saithe          adult     weight 0.340  a 0.00284 (day 0.0029, night 0.00279, n/d 0.96)  share 0.17
+    whiting         juvenile  weight 0.007  a 0.0767 (day 0.0687, night 0.0847, n/d 1.23)  share 0.09
+    mackerel        all       weight 0.027  a 0.019 (day 0.0154, night 0.0227, n/d 1.47)  share 0.09
+    horse mackerel  all       weight 0.014  a 0.025 (day 0.022, night 0.0281, n/d 1.28)  share 0.06
+    saithe          large     weight 0.283  a 0.00105 (day 0.00109, night 0.00102, n/d 0.93)  share 0.05
+    spurdog         all       weight 0.060  a 0.00291 (day 0.00179, night 0.00402, n/d 2.25)  share 0.03
+    hake            adult     weight 0.033  a 0.00335 (day 0.00292, night 0.00379, n/d 1.30)  share 0.02
+    velvet belly    all       weight 0.003  a 0.0146 (day 0.00923, night 0.02, n/d 2.17)  share 0.01
+    hake            juvenile  weight 0.000  a 0.0664 (day 0.0599, night 0.0729, n/d 1.22)  share 0.00
+    ling            all       weight 0.008  a 0.00123 (day 0.00102, night 0.00144, n/d 1.41)  share 0.00
+    pollack         all       weight 0.005  a 0.00133 (day 0.00137, night 0.00129, n/d 0.94)  share 0.00
+    anglerfish      all       weight 0.010  a 0.000381 (day 0.000381, night 0.000381, n/d 1.00)  share 0.00
+  -> zooplankton
+    whiting         juvenile  weight 0.156  a 0.00441 (day 0.00491, night 0.00392, n/d 0.80)  share 0.39
+    mackerel        all       weight 0.151  a 0.00231 (day 0.00426, night 0.000361, n/d 0.08)  share 0.23
+    whiting         adult     weight 0.316  a 0.00113 (day 0.00126, night 0.00101, n/d 0.80)  share 0.19
+    saithe          adult     weight 0.488  a 0.000335 (day 0.000453, night 0.000218, n/d 0.48)  share 0.10
+    horse mackerel  all       weight 0.052  a 0.00204 (day 0.00227, night 0.00181, n/d 0.80)  share 0.07
+    saithe          large     weight 0.158  a 0.000133 (day 0.00018, night 8.66e-05, n/d 0.48)  share 0.01
+    velvet belly    all       weight 0.007  a 0.000705 (day 0.000784, night 0.000626, n/d 0.80)  share 0.00
+    spurdog         all       weight 0.025  a 0.000131 (day 0.000149, night 0.000112, n/d 0.75)  share 0.00
+    hake            adult     weight 0.006  a 0.00023 (day 0.000263, night 0.000197, n/d 0.75)  share 0.00
+    hake            juvenile  weight 0.000  a 0.00299 (day 0.00333, night 0.00265, n/d 0.80)  share 0.00
+    pollack         all       weight 0.004  a 0.000165 (day 0.000222, night 0.000107, n/d 0.48)  share 0.00
+    ling            all       weight 0.001  a 0.000103 (day 0.000118, night 8.85e-05, n/d 0.75)  share 0.00
+  -> benthic_community
+    whiting         juvenile  weight 0.253  a 0.0777 (day 0.0777, night 0.0777, n/d 1.00)  share 0.67
+    whiting         adult     weight 0.348  a 0.0202 (day 0.0202, night 0.0202, n/d 1.00)  share 0.24
+    horse mackerel  all       weight 0.036  a 0.0362 (day 0.0362, night 0.0362, n/d 1.00)  share 0.04
+    saithe          adult     weight 0.107  a 0.00581 (day 0.00726, night 0.00437, n/d 0.60)  share 0.02
+    spurdog         all       weight 0.166  a 0.00298 (day 0.00298, night 0.00298, n/d 1.00)  share 0.02
+    velvet belly    all       weight 0.010  a 0.0125 (day 0.0125, night 0.0125, n/d 1.00)  share 0.00
+    saithe          large     weight 0.031  a 0.00232 (day 0.00289, night 0.00174, n/d 0.60)  share 0.00
+    hake            adult     weight 0.010  a 0.00522 (day 0.00522, night 0.00522, n/d 1.00)  share 0.00
+    hake            juvenile  weight 0.001  a 0.052 (day 0.052, night 0.052, n/d 1.00)  share 0.00
+    ling            all       weight 0.019  a 0.00235 (day 0.00235, night 0.00235, n/d 1.00)  share 0.00
+    anglerfish      all       weight 0.019  a 0.00239 (day 0.00239, night 0.00239, n/d 1.00)  share 0.00
+  -> benthivorous_fish
+    whiting         adult     weight 0.434  a 0.278 (day 0.339, night 0.217, n/d 0.64)  share 0.68
+    whiting         juvenile  weight 0.016  a 1.32 (day 1.61, night 1.03, n/d 0.64)  share 0.12
+    saithe          adult     weight 0.179  a 0.0805 (day 0.115, night 0.0457, n/d 0.40)  share 0.08
+    spurdog         all       weight 0.097  a 0.0688 (day 0.0688, night 0.0688, n/d 1.00)  share 0.04
+    saithe          large     weight 0.156  a 0.0316 (day 0.0455, night 0.0177, n/d 0.39)  share 0.03
+    hake            adult     weight 0.046  a 0.073 (day 0.089, night 0.057, n/d 0.64)  share 0.02
+    horse mackerel  all       weight 0.006  a 0.519 (day 0.633, night 0.405, n/d 0.64)  share 0.02
+    mackerel        all       weight 0.003  a 0.51 (day 0.622, night 0.398, n/d 0.64)  share 0.01
+    anglerfish      all       weight 0.043  a 0.0268 (day 0.0268, night 0.0268, n/d 1.00)  share 0.01
+    velvet belly    all       weight 0.002  a 0.306 (day 0.306, night 0.306, n/d 1.00)  share 0.00
+    ling            all       weight 0.014  a 0.0311 (day 0.0379, night 0.0243, n/d 0.64)  share 0.00
+    hake            juvenile  weight 0.000  a 1.06 (day 1.3, night 0.829, n/d 0.64)  share 0.00
+    pollack         all       weight 0.004  a 0.0392 (day 0.0563, night 0.022, n/d 0.39)  share 0.00
+
+One-at-a-time sensitivity, log10(a_high/a_low) per factor (others central), top 6 per pair:
+  -> planktivorous_fish: R_fish_dark 1.07; p_fish 0.38; R_school 0.36; k_school 0.31; M_school 0.31; scan 0.23
+  -> zooplankton: R_krill 0.84; s_krill 0.45; p_krill 0.33; scan 0.30; R_krill_mack_day 0.27; v_whiting 0.22
+  -> benthic_community: R_bed_inv 1.20; s_bed_edible 0.78; H_bed_inv 0.70; p_bed_inv 0.54; v_whiting 0.35; scan 0.30
+  -> benthivorous_fish: R_fish_dark 0.85; H_juv 0.70; p_fish 0.56; R_bedfish_day 0.55; scan 0.30; v_whiting 0.26
+
+Planktivore pair, saithe adult, central, by prey type (km2/t/tick, already x prey share):
+  herring      day (schools) 0.00178; day if dispersed 0.011; night (dispersed, dark) 0.00206
+  blue whiting day 0.00031; night 0.000192
+  pout         day 0.000738; night 0.000457
+  sprat        day (schools) 6.77e-05; day if dispersed 0.000416; night (dispersed, dark) 7.83e-05
+
+Lake-trout reactive distance RD = 0.2549 I^0.4747 (I lx, cap 1.012 m) at depth, clear sky x 0.7 cloud, Kd 0.15 / 0.20:
+  summer noon (~100 000 lx): 30 m 1.01/1.01; 50 m 1.01/0.42; 70 m 0.33/0.06; 100 m 0.04/0.00
+  winter noon (~11 400 lx): 30 m 1.01/1.00; 50 m 0.49/0.15; 70 m 0.12/0.02; 100 m 0.01/0.00
+  sun at +5 deg (~5 200 lx): 30 m 1.01/0.69; 50 m 0.34/0.10; 70 m 0.08/0.02; 100 m 0.01/0.00
+
+Variant without schooling dilution (herring, sprat dispersed by day, visual R):
+  -> planktivorous_fish: a central 0.0119 (day 0.0176, night 0.00621, night/day 0.35); corners 0.000258-0.334; MC 5/50/95 % 0.00414/0.0128/0.0318; 1/(a h) central 0.301 t/km2
+
+Variant with R proportional to predator length (R x L/0.30 m), central factors:
+  -> planktivorous_fish: a 0.00683 (night/day 1.36); 1/(a h) 0.524 t/km2
+  -> zooplankton: a 0.00103 (night/day 0.41); 1/(a h) 5.5 t/km2
+  -> benthic_community: a 0.0131 (night/day 0.94); 1/(a h) 0.649 t/km2
+  -> benthivorous_fish: a 0.192 (night/day 0.61); 1/(a h) 0.0295 t/km2

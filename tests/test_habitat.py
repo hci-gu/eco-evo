@@ -34,7 +34,7 @@ from lib.world import habitat
 from test_gpu_ecosystem import DEVICES, _assert_parity, device, make_env  # noqa: F401
 
 ROOT = Path(__file__).resolve().parents[1]
-BENTHOS = "benthic_community"
+BENTHOS = "benthic_infauna"
 
 
 def _load(path):
@@ -95,18 +95,23 @@ def test_mareld2_benthos_carries_the_depth_habitat():
     np.testing.assert_allclose(fg.capacity_map, habitat.capacity_map(table, depth), rtol=1e-6)
     eq = fg.equilibrium_map
     assert eq is not None and (eq > 0).all() and (eq <= fg.capacity_map + 1e-6).all()
-    # the trawled cells start lower than their K
-    assert (eq / fg.capacity_map).min() < 0.5 < (eq / fg.capacity_map).max()
+    # the trawled cells start lower than their K (section 221: kill 0.136
+    # /yr at mean effort, up to ~0.43 /yr in the most fished cells)
+    assert (eq / fg.capacity_map).min() < 0.6 < (eq / fg.capacity_map).max()
     np.testing.assert_allclose(fg.biomass / fg.biomass.sum(), eq / eq.sum(), rtol=1e-5, atol=1e-12)
-    # the other groups keep a scalar K
-    assert all(g.capacity_map is None for f, g in groups.items() if f != BENTHOS)
+    # the other groups keep a scalar K, but for the mobile epifauna
+    # (section 221), which has its own depth table
+    assert groups["mobile_epifauna"].capacity_map is not None
+    assert all(g.capacity_map is None for f, g in groups.items()
+               if f not in (BENTHOS, "mobile_epifauna"))
 
 
-def test_manifest_total_is_the_equilibrium_sum():
+@pytest.mark.parametrize("fid", [BENTHOS, "mobile_epifauna"])
+def test_manifest_total_is_the_equilibrium_sum(fid):
     groups = _mareld2()
     project = _load("mareld2.yaml")
-    entry = next(g for g in project["non_decision_makers"] if g["group_id"] == BENTHOS)
-    total = float(groups[BENTHOS].equilibrium_map.sum())
+    entry = next(g for g in project["non_decision_makers"] if g["group_id"] == fid)
+    total = float(groups[fid].equilibrium_map.sum())
     assert entry["inference_initial_biomass"] == pytest.approx(total, rel=0.02)
     assert entry["initial_biomass_min"] < total < entry["initial_biomass_max"]
 

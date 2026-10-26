@@ -73,7 +73,7 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     ``mortality_regeneration``, ``egestion_regeneration``);
     ``extra_prey`` maps a DM to prey added to its menu.
     ``pair_keys`` maps an interaction id to extra pair keys (section 208:
-    ``predator_share``, ``accessible_fraction``).
+    ``accessible_fraction``).
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}

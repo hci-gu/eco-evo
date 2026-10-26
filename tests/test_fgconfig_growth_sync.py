@@ -36,7 +36,7 @@ def app():
         {"group_id": "benthivorous_fish"}, {"group_id": "planktivorous_fish"},
         {"group_id": "zooplankton"}, {"group_id": "porpoises"}]
     a.project_data["non_decision_makers"] = [
-        {"group_id": "benthic_community"}, {"group_id": "phytoplankton"}]
+        {"group_id": "benthic_infauna"}, {"group_id": "phytoplankton"}]
     species = a.global_library["species_definitions"]
     for fg in a.project_data["decision_makers"] + a.project_data["non_decision_makers"]:
         a.current_fg_configs[fg["group_id"]] = species[fg["group_id"]]
@@ -72,20 +72,18 @@ def test_editing_an_energy_field_moves_the_shown_growth_rate(app, key, value):
 
 def test_live_interactions_overlay_handling_time(app):
     app.refresh_matrix()
-    key = "benthivorous_fish_preys_on_benthic_community"
+    key = "benthivorous_fish_preys_on_benthic_infauna"
     var = app.matrix_entries.get(key, {}).get("handling_time")
     if var is None:
         pytest.skip("no handling_time cell")
     var.set("40.0")
     assert app._live_interactions()[key]["handling_time"] == pytest.approx(40.0)
-    # h 111 -> 40 makes benthos the best pair (60 vs 21.7 MJ/t): its cap
-    # 0.9 first, the rest of the eat share on the planktivores (section 209).
-    lib = app.global_library["interaction_definitions"]
-    pl = lib["benthivorous_fish_preys_on_planktivorous_fish"]
+    # h 96 -> 40 makes the infauna the best pair (45.5 vs 21.7 MJ/t);
+    # without predator_share (removed, section 221) it takes the whole
+    # eat share.
     budget = app._budget_for("benthivorous_fish")
-    assert budget.best_prey == "benthic_community"
-    assert budget.ideal_intake == pytest.approx(
-        0.9 * 0.7 * 3000.0 / 40.0 + 0.1 * 0.8 * 7125.0 / pl["handling_time"], rel=1e-6)
+    assert budget.best_prey == "benthic_infauna"
+    assert budget.ideal_intake == pytest.approx(0.7 * 2600.0 / 40.0, rel=1e-6)
     var.set("")
     lib_value = app.global_library["interaction_definitions"][key]["handling_time"]
     assert app._live_interactions()[key]["handling_time"] == lib_value

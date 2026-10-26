@@ -1,0 +1,104 @@
+variant central; mean effort 3.0142; SAR at mean effort 2.261
+----------------------------------------------------------------------------------------------------
+Per-taxon flows (t/km2/yr) and the mass-balance check B_min = (C + catch) / (EE P/B - d_u SAR)
+  nephrops  stock  4.57  consumption 0.003 (benth 0.003, pred 0.000)  catch 0.296  B_min at P/B 0.4-0.3: 0.89-1.21
+  pandalus  stock  0.56  consumption 0.200 (benth 0.057, pred 0.143)  catch 0.336  B_min at P/B 1.7-1.2: 0.36-0.51
+  crabs     stock  0.76  consumption 0.998 (benth 0.969, pred 0.029)  catch 0.037  B_min at P/B 0.9-0.4: 1.49-4.19
+  small     stock  0.50  consumption 0.696 (benth 0.081, pred 0.115, unresolved 0.50)  catch 0.005  B_min at P/B 2.5-1.4: 0.32-0.58
+  crabs raised to the mass-balance stock 2.00 t/km2 (x 2.65 the evidence-B central; evidence-B high ~2.3)
+----------------------------------------------------------------------------------------------------
+taxon         B*      F      M2  r_max r_gross share s       K
+infauna    92.32  0.226  0.0312   1.00   1.031   0.751  123.00
+nephrops    4.57  0.087  0.0007   0.34   0.341   0.741    6.17
+pandalus    0.56  0.624  0.3577   1.20   1.558   0.370    1.51
+crabs       2.00  0.132  0.4985   0.90   1.398   0.550    3.64
+small       0.50  0.055  0.3916   1.86   2.252   0.802    0.62
+----------------------------------------------------------------------------------------------------
+== INFAUNA with predators -> infauna checked (alternative)  (members: infauna)
+   today's stock: grid mean 92.32; LSQ depth anchors 100 m 110.00, 300 m 55.00
+   trawl loss at mean effort F 0.2261 /yr  -> slope 5.1370e-05 per tick per unit, biomass_factor at table value 100 = 0.005137
+   M2 by pair (final, on the engine B* mean): benthivorous_fish 0.0287, predatory_fish 0.0016  (sum 0.0304)
+   r_max: self-consistent with sum K_i 1.000; biomass-weighted 1.000; used 1.000 -> engine r_gross 1.030 (growth_rate 0.000705728 per tick)
+   equilibrium share s = 1 - (F + M2)/r_gross = 0.751
+   K table: 100 m 146.56, 300 m 73.28; box mean of table 123.00 (sum of taxon K 123.00)
+   engine B*(c): mean 94.73, min 25.51, max 141.31; START TOTAL sum B* = 341017 t  (range +/-25 %: 255762-426271); zero cells 0
+       0-100 m ( 834 cells): today  110.00  engine B*  125.56  K  146.56  mean effort  1.56
+     100-150 m (1077 cells): today  103.71  engine B*  119.78  K  138.18  mean effort  1.43
+     150-200 m ( 691 cells): today   89.88  engine B*   81.54  K  119.75  mean effort  4.03
+     200-250 m ( 474 cells): today   76.65  engine B*   49.29  K  102.12  mean effort  6.73
+     250-300 m ( 212 cells): today   62.84  engine B*   44.50  K   83.72  mean effort  6.01
+     300-600 m ( 312 cells): today   55.00  engine B*   58.16  K   73.28  mean effort  2.43
+   OPTIONAL multi-row table (depth_m: capacity): 81: 128.39, 123: 119.75, 173: 132.68, 221: 159.35, 272: 117.86, 387: 69.29; box mean K 125.94; engine B* mean 93.17; START 335417 t
+     multi-row   0-100 m: today  110.00  engine B*  109.03
+     multi-row 100-150 m: today  103.71  engine B*  106.20
+     multi-row 150-200 m: today   89.88  engine B*   90.66
+     multi-row 200-250 m: today   76.65  engine B*   72.76
+     multi-row 250-300 m: today   62.84  engine B*   63.78
+     multi-row 300-600 m: today   55.00  engine B*   62.33
+== INFAUNA without predators -> infauna (recommended)  (members: infauna)
+   today's stock: grid mean 92.32; LSQ depth anchors 100 m 110.00, 300 m 55.00
+   trawl loss at mean effort F 0.2261 /yr  -> slope 5.1370e-05 per tick per unit, biomass_factor at table value 100 = 0.005137
+   M2 by pair (final, on the engine B* mean): benthivorous_fish 0.0287  (sum 0.0287)
+   r_max: self-consistent with sum K_i 0.995; biomass-weighted 1.000; used 1.000 -> engine r_gross 1.029 (growth_rate 0.000704613 per tick)
+   equilibrium share s = 1 - (F + M2)/r_gross = 0.752
+   K table: 100 m 146.32, 300 m 73.16; box mean of table 122.80 (sum of taxon K 123.00)
+   engine B*(c): mean 94.72, min 25.51, max 141.31; START TOTAL sum B* = 341003 t  (range +/-25 %: 255752-426253); zero cells 0
+       0-100 m ( 834 cells): today  110.00  engine B*  125.56  K  146.32  mean effort  1.56
+     100-150 m (1077 cells): today  103.71  engine B*  119.78  K  137.96  mean effort  1.43
+     150-200 m ( 691 cells): today   89.88  engine B*   81.53  K  119.55  mean effort  4.03
+     200-250 m ( 474 cells): today   76.65  engine B*   49.29  K  101.95  mean effort  6.73
+     250-300 m ( 212 cells): today   62.84  engine B*   44.50  K   83.58  mean effort  6.01
+     300-600 m ( 312 cells): today   55.00  engine B*   58.16  K   73.16  mean effort  2.43
+   OPTIONAL multi-row table (depth_m: capacity): 81: 128.19, 123: 119.56, 173: 132.47, 221: 159.10, 272: 117.67, 387: 69.18; box mean K 125.75; engine B* mean 93.17; START 335417 t
+     multi-row   0-100 m: today  110.00  engine B*  109.03
+     multi-row 100-150 m: today  103.71  engine B*  106.20
+     multi-row 150-200 m: today   89.88  engine B*   90.66
+     multi-row 200-250 m: today   76.65  engine B*   72.76
+     multi-row 250-300 m: today   62.84  engine B*   63.78
+     multi-row 300-600 m: today   55.00  engine B*   62.33
+== mobile_epifauna (r_max self-consistent)  (members: nephrops, pandalus, crabs, small)
+   today's stock: grid mean 7.63; LSQ depth anchors 100 m 9.45, 300 m 3.80
+   trawl loss at mean effort F 0.1361 /yr  -> slope 3.0929e-05 per tick per unit, biomass_factor at table value 100 = 0.003093
+   M2 by pair (final, on the engine B* mean): benthivorous_fish 0.1409, predatory_fish 0.0364  (sum 0.1773)
+   r_max: self-consistent with sum K_i 0.701; biomass-weighted 0.649; used 0.701 -> engine r_gross 0.879 (growth_rate 0.000601734 per tick)
+   equilibrium share s = 1 - (F + M2)/r_gross = 0.643
+   K table: 100 m 14.78, 300 m 5.95; box mean of table 11.94 (sum of taxon K 11.94)
+   engine B*(c): mean 7.88, min 2.13, max 11.74; START TOTAL sum B* = 28374 t  (range +/-25 %: 21281-35468); zero cells 0
+       0-100 m ( 834 cells): today   10.27  engine B*   10.61  K   14.78  mean effort  1.56
+     100-150 m (1077 cells): today    7.80  engine B*    9.99  K   13.77  mean effort  1.43
+     150-200 m ( 691 cells): today    7.26  engine B*    6.86  K   11.55  mean effort  4.03
+     200-250 m ( 474 cells): today    7.89  engine B*    4.28  K    9.42  mean effort  6.73
+     250-300 m ( 212 cells): today    4.59  engine B*    3.51  K    7.21  mean effort  6.01
+     300-600 m ( 312 cells): today    2.53  engine B*    4.00  K    5.95  mean effort  2.43
+   OPTIONAL multi-row table (depth_m: capacity): 81: 14.31, 123: 10.77, 173: 12.27, 221: 17.43, 272: 9.38, 387: 3.75; box mean K 12.20; engine B* mean 7.74; START 27877 t
+     multi-row   0-100 m: today   10.27  engine B*    9.94
+     multi-row 100-150 m: today    7.80  engine B*    8.32
+     multi-row 150-200 m: today    7.26  engine B*    7.48
+     multi-row 200-250 m: today    7.89  engine B*    7.18
+     multi-row 250-300 m: today    4.59  engine B*    4.86
+     multi-row 300-600 m: today    2.53  engine B*    3.27
+== mobile_epifauna (r_max biomass-weighted, comparison)  (members: nephrops, pandalus, crabs, small)
+   today's stock: grid mean 7.63; LSQ depth anchors 100 m 9.45, 300 m 3.80
+   trawl loss at mean effort F 0.1361 /yr  -> slope 3.0929e-05 per tick per unit, biomass_factor at table value 100 = 0.003093
+   M2 by pair (final, on the engine B* mean): benthivorous_fish 0.1404, predatory_fish 0.0362  (sum 0.1767)
+   r_max: self-consistent with sum K_i 0.701; biomass-weighted 0.649; used 0.649 -> engine r_gross 0.826 (growth_rate 0.000565831 per tick)
+   equilibrium share s = 1 - (F + M2)/r_gross = 0.621
+   K table: 100 m 15.32, 300 m 6.16; box mean of table 12.38 (sum of taxon K 11.94)
+   engine B*(c): mean 7.91, min 1.96, max 11.97; START TOTAL sum B* = 28480 t  (range +/-25 %: 21360-35601); zero cells 0
+       0-100 m ( 834 cells): today   10.27  engine B*   10.74  K   15.32  mean effort  1.56
+     100-150 m (1077 cells): today    7.80  engine B*   10.11  K   14.28  mean effort  1.43
+     150-200 m ( 691 cells): today    7.26  engine B*    6.82  K   11.97  mean effort  4.03
+     200-250 m ( 474 cells): today    7.89  engine B*    4.10  K    9.77  mean effort  6.73
+     250-300 m ( 212 cells): today    4.59  engine B*    3.41  K    7.47  mean effort  6.01
+     300-600 m ( 312 cells): today    2.53  engine B*    4.03  K    6.16  mean effort  2.43
+   OPTIONAL multi-row table (depth_m: capacity): 81: 14.66, 123: 11.02, 173: 12.82, 221: 18.84, 272: 10.03, 387: 3.86; box mean K 12.72; engine B* mean 7.75; START 27910 t
+     multi-row   0-100 m: today   10.27  engine B*    9.94
+     multi-row 100-150 m: today    7.80  engine B*    8.35
+     multi-row 150-200 m: today    7.26  engine B*    7.50
+     multi-row 200-250 m: today    7.89  engine B*    7.15
+     multi-row 250-300 m: today    4.59  engine B*    4.86
+     multi-row 300-600 m: today    2.53  engine B*    3.30
+----------------------------------------------------------------------------------------------------
+accessible_fraction benthivores -> mobile_epifauna = 0.308 (accessible 2.35 t/km2)
+accessible_fraction predators   -> mobile_epifauna = 0.130 (accessible 0.99 t/km2)
+taxon shares of the epifauna stock: nephrops 0.599, pandalus 0.073, crabs 0.262, small 0.066

@@ -1,0 +1,86 @@
+== 0. Size, weight, gape (Hamann 2023 scaling, isometric)
+TL   10 cm  W    5.2 g  gape   35.9 mm2  ind/t    191156
+TL   15 cm  W   20.5 g  gape   80.7 mm2  ind/t     48745
+TL   20 cm  W   54.1 g  gape  143.5 mm2  ind/t     18487
+TL   25 cm  W  114.7 g  gape  224.2 mm2  ind/t      8715
+TL   30 cm  W  212.1 g  gape  322.9 mm2  ind/t      4714
+gape/SL^2 = 0.00474
+
+== 1. Particulate (day, saturating light) clearance per individual
+cases: (R in body lengths, v in BL/s, capture prob.)
+TL 15 low      R 0.3 BL v 0.6 BL/s p 0.3: Q    0.086 L/s =    0.31 m3/h =     1.9 m3/6h;  per g    15.1 L/g/h  per t 9.043e+04 m3/t/6h
+TL 15 central  R 0.7 BL v 1.0 BL/s p 0.6: Q    1.559 L/s =    5.61 m3/h =    33.7 m3/6h;  per g   273.5 L/g/h  per t 1.641e+06 m3/t/6h
+TL 15 high     R 1.3 BL v 1.4 BL/s p 0.9: Q   11.289 L/s =   40.64 m3/h =   243.8 m3/6h;  per g  1981.0 L/g/h  per t 1.189e+07 m3/t/6h
+TL 20 low      R 0.3 BL v 0.6 BL/s p 0.3: Q    0.204 L/s =    0.73 m3/h =     4.4 m3/6h;  per g    13.5 L/g/h  per t 8.129e+04 m3/t/6h
+TL 20 central  R 0.7 BL v 1.0 BL/s p 0.6: Q    3.695 L/s =   13.30 m3/h =    79.8 m3/6h;  per g   245.9 L/g/h  per t 1.475e+06 m3/t/6h
+TL 20 high     R 1.3 BL v 1.4 BL/s p 0.9: Q   26.759 L/s =   96.33 m3/h =   578.0 m3/6h;  per g  1780.9 L/g/h  per t 1.069e+07 m3/t/6h
+TL 25 low      R 0.3 BL v 0.6 BL/s p 0.3: Q    0.398 L/s =    1.43 m3/h =     8.6 m3/6h;  per g    12.5 L/g/h  per t 7.484e+04 m3/t/6h
+TL 25 central  R 0.7 BL v 1.0 BL/s p 0.6: Q    7.216 L/s =   25.98 m3/h =   155.9 m3/6h;  per g   226.4 L/g/h  per t 1.358e+06 m3/t/6h
+TL 25 high     R 1.3 BL v 1.4 BL/s p 0.9: Q   52.263 L/s =  188.15 m3/h =  1128.9 m3/6h;  per g  1639.7 L/g/h  per t 9.838e+06 m3/t/6h
+
+== 2. Prey-size scaling of R in the Aksnes-Utne small-range limit, R ~ sqrt(A), A = 0.75 L W
+Calanus CV/adult (2.5 x 0.8 mm)    A 1.50e-06 m2  R/BL if 1 BL at Langbehn ref: 0.71; if 1 BL at van Deurs ref: 1.33
+Calanus CIII (1.5 x 0.5)           A 5.63e-07 m2  R/BL if 1 BL at Langbehn ref: 0.43; if 1 BL at van Deurs ref: 0.82
+small copepod (1.0 x 0.4)          A 3.00e-07 m2  R/BL if 1 BL at Langbehn ref: 0.32; if 1 BL at van Deurs ref: 0.60
+Langbehn ref 4 mm (A 3e-6 m2)      A 3.00e-06 m2  R/BL if 1 BL at Langbehn ref: 1.00; if 1 BL at van Deurs ref: 1.89
+van Deurs ref 1.5 mm, W L/2        A 8.44e-07 m2  R/BL if 1 BL at Langbehn ref: 0.53; if 1 BL at van Deurs ref: 1.00
+
+== 3. Filter clearance per individual (gape x speed x retention 0.9)
+TL 15 dark filtering 0.11 m/s (Batty 1986)      :  0.008 L/s =      29 L/h
+TL 15 light 0.34 m/s (Batty 1986/Hamann 2023)   :  0.025 L/s =      89 L/h
+TL 20 dark filtering 0.11 m/s (Batty 1986)      :  0.014 L/s =      51 L/h
+TL 20 light 0.34 m/s (Batty 1986/Hamann 2023)   :  0.044 L/s =     158 L/h
+TL 25 dark filtering 0.11 m/s (Batty 1986)      :  0.022 L/s =      80 L/h
+TL 25 light 0.34 m/s (Batty 1986/Hamann 2023)   :  0.069 L/s =     247 L/h
+
+== 4. Night/day clearance ratio if night = dark filtering only, day = particulate central
+TL 15: night/day = 0.0051 (vs central day), 0.093 (vs low day)
+TL 20: night/day = 0.0038 (vs central day), 0.070 (vs low day)
+TL 25: night/day = 0.0031 (vs central day), 0.056 (vs low day)
+
+== 5. Biting vs filtering crossover density N* = max bite rate / filter clearance
+TL  11.5 v 0.11 SRmax 0.85/s: filter  0.005 L/s -> N*  181.0 prey/L
+TL  11.5 v 0.11 SRmax 1.00/s: filter  0.005 L/s -> N*  212.9 prey/L
+TL  11.5 v 0.34 SRmax 0.85/s: filter  0.015 L/s -> N*   58.5 prey/L
+TL  11.5 v 0.34 SRmax 1.00/s: filter  0.015 L/s -> N*   68.9 prey/L
+TL  15.0 v 0.11 SRmax 0.85/s: filter  0.008 L/s -> N*  106.4 prey/L
+TL  15.0 v 0.11 SRmax 1.00/s: filter  0.008 L/s -> N*  125.1 prey/L
+TL  15.0 v 0.34 SRmax 0.85/s: filter  0.025 L/s -> N*   34.4 prey/L
+TL  15.0 v 0.34 SRmax 1.00/s: filter  0.025 L/s -> N*   40.5 prey/L
+TL  20.0 v 0.11 SRmax 0.85/s: filter  0.014 L/s -> N*   59.8 prey/L
+TL  20.0 v 0.11 SRmax 1.00/s: filter  0.014 L/s -> N*   70.4 prey/L
+TL  20.0 v 0.34 SRmax 0.85/s: filter  0.044 L/s -> N*   19.4 prey/L
+TL  20.0 v 0.34 SRmax 1.00/s: filter  0.044 L/s -> N*   22.8 prey/L
+TL  25.0 v 0.11 SRmax 0.85/s: filter  0.022 L/s -> N*   38.3 prey/L
+TL  25.0 v 0.11 SRmax 1.00/s: filter  0.022 L/s -> N*   45.0 prey/L
+TL  25.0 v 0.34 SRmax 0.85/s: filter  0.069 L/s -> N*   12.4 prey/L
+TL  25.0 v 0.34 SRmax 1.00/s: filter  0.069 L/s -> N*   14.6 prey/L
+Compare: Gibson & Ezzi 1985 ~50 Artemia nauplii/L; 1990 50 % filtering at 18 C. finmarchicus/L and 114 medium Artemia/L; Bernreuther 2007 filtering from >= 900 small copepods/L (9.9-13 cm)
+
+== 6. Is the bite rate a ceiling? 0.85 bites/s x 12 h feeding
+small copepod 0.011 mg DW -> ~0.06 mg WW (DW/WW 0.18)   TL 15:   2.24 g/d =   10.9 %BW/d
+small copepod 0.011 mg DW -> ~0.06 mg WW (DW/WW 0.18)   TL 20:   2.24 g/d =    4.1 %BW/d
+Calanus CV ~0.15 mg DW -> ~0.8 mg WW                    TL 15:  30.60 g/d =  149.2 %BW/d
+Calanus CV ~0.15 mg DW -> ~0.8 mg WW                    TL 20:  30.60 g/d =   56.6 %BW/d
+Compare: weighted Cmax ceiling at h 40 = 10 %BW/d (params_planktivorous_fish.md section 2)
+
+== 7. Validation: measured clearance (initial slopes) vs theory
+Bernreuther lab: initial slope 0.0109 L/s = 39.4 L/h per fish; W(11.5 cm) 8.4 g -> 4.70 L/g/h
+   theory R0.3 v1 p1: 0.215 L/s -> measured/theory 0.051
+   theory R0.6 v1 p1: 0.860 L/s -> measured/theory 0.013
+Arrhenius & Hansson field YOY: initial slope 0.21 m3/gDW/h = 46.2 L/gWW/h = 2.772e+05 m3/t/6h (daylight)
+   TL 4.0 cm W 0.24 g: measured 0.0031 L/s; theory R 0.5 BL v 1 BL/s p 1: 0.0251 L/s -> ratio 0.12
+   TL 4.0 cm W 0.24 g: measured 0.0031 L/s; theory R 1.0 BL v 1 BL/s p 1: 0.1005 L/s -> ratio 0.03
+   TL 6.0 cm W 0.94 g: measured 0.0120 L/s; theory R 0.5 BL v 1 BL/s p 1: 0.0848 L/s -> ratio 0.14
+   TL 6.0 cm W 0.94 g: measured 0.0120 L/s; theory R 1.0 BL v 1 BL/s p 1: 0.3393 L/s -> ratio 0.04
+   TL 8.0 cm W 2.47 g: measured 0.0316 L/s; theory R 0.5 BL v 1 BL/s p 1: 0.2011 L/s -> ratio 0.16
+   TL 8.0 cm W 2.47 g: measured 0.0316 L/s; theory R 1.0 BL v 1 BL/s p 1: 0.8042 L/s -> ratio 0.04
+   half-saturation 1/26 g DW m-3 = 0.038 g DW m-3 = 0.30 g WW m-3 (DW/WW 0.13, their value)
+   area form at overlap thickness 25 m: a = 0.0111 km2/t/6h (daylight)
+   area form at overlap thickness 50 m: a = 0.0055 km2/t/6h (daylight)
+
+== 8. Light: biting thresholds (Batty et al. 1990) in umol photons (1 lx ~ 0.0185 umol m-2 s-1, J)
+   0.001 lx ~ 1.85e-05 umol m-2 s-1
+   0.010 lx ~ 1.85e-04 umol m-2 s-1
+   1.000 lx ~ 1.85e-02 umol m-2 s-1
+  10.000 lx ~ 1.85e-01 umol m-2 s-1

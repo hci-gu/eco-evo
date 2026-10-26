@@ -1,0 +1,7 @@
+region species class logs | NASC share by channel upper depth 0-10 10-25 25-50 50-100 >100 | mean depth | share in bottom 10 m | NASC-weighted bottom depth
+box    MIX day>6       1365 |  0.03  0.39  0.36  0.21  0.01 |   36.3 | 0.34 |   90.4
+box    MIX low0-6       181 |  0.04  0.39  0.20  0.36  0.00 |   40.3 | 0.13 |  122.1
+box    MIX twil-12-0    193 |  0.03  0.53  0.41  0.01  0.01 |   24.8 | 0.01 |   96.6
+region MIX day>6       3092 |  0.04  0.46  0.27  0.22  0.02 |   37.0 | 0.26 |  105.3
+region MIX low0-6       474 |  0.07  0.48  0.22  0.23  0.01 |   33.8 | 0.14 |  120.7
+region MIX twil-12-0    563 |  0.08  0.64  0.28  0.01  0.00 |   22.0 | 0.04 |  102.0

@@ -52,8 +52,61 @@ def test_pair_attack_rate_reaches_the_runtime_matrix():
 
 
 def test_pairs_without_override_keep_the_species_rate():
-    env = _env()
+    # Every checked DM pair carries its own a since section 220, so the
+    # fallback is checked on a copy with one override removed.
+    from lib.config.config_loader import load_config
+    lib = load_config(os.path.join(_ROOT, 'fgconfig', 'fg_library.yaml'))
+    pair = lib['interaction_definitions']['planktivorous_fish_preys_on_zooplankton']
+    pair.pop('max_intake_rate')
+    fgs = setup_full_mareld_mvp(grid_size=(4, 4), seed=0, spawn_seed=0,
+                                library_config=lib)
+    env = EcosystemEnvironment({'width': 4, 'height': 4}, fgs, {})
     i = env.dm_ids.index('planktivorous_fish')
     j = env.global_fg_order.index('zooplankton')
     assert float(env.max_intake_mat[i, j]) == pytest.approx(
         float(env.fgs['planktivorous_fish'].params['max_intake_rate']))
+
+
+def test_fish_pairs_carry_the_encounter_theory_rates():
+    # Section 220: a from encounter theory per fish pair, read by the engine.
+    env = _env()
+    expected = {
+        ('planktivorous_fish', 'zooplankton'): 0.017,
+        ('benthivorous_fish', 'benthic_infauna'): 0.25,
+        ('benthivorous_fish', 'mobile_epifauna'): 0.44,
+        ('predatory_fish', 'mobile_epifauna'): 0.33,
+        ('benthivorous_fish', 'planktivorous_fish'): 0.019,
+        ('benthivorous_fish', 'predatory_fish'): 0.026,
+        ('predatory_fish', 'planktivorous_fish'): 0.012,
+        ('predatory_fish', 'zooplankton'): 0.002,
+        ('predatory_fish', 'benthivorous_fish'): 0.18,
+    }
+    for (pred, prey), a in expected.items():
+        i = env.dm_ids.index(pred)
+        j = env.global_fg_order.index(prey)
+        assert float(env.max_intake_mat[i, j]) == pytest.approx(a, rel=1e-6)
+
+
+def test_fish_pair_light_settings_keep_a_zero_threshold():
+    # Section 220: 0 deg is a real threshold, not "unset" (falsy 0.0).
+    from lib.config.config_loader import load_config
+    from lib.world import daylight
+    inter = load_config(os.path.join(_ROOT, 'fgconfig', 'fg_library.yaml'))[
+        'interaction_definitions']
+    expected = {
+        'planktivorous_fish_preys_on_zooplankton': (0.02, 0.0),
+        'benthivorous_fish_preys_on_planktivorous_fish': (0.06, 0.0),
+        'benthivorous_fish_preys_on_predatory_fish': (0.10, 0.0),
+        'predatory_fish_preys_on_planktivorous_fish': (0.35, -5.0),
+        'predatory_fish_preys_on_zooplankton': (0.5, -5.0),
+        'predatory_fish_preys_on_benthivorous_fish': (0.6, -5.0),
+    }
+    for key, (rho, theta) in expected.items():
+        assert daylight.pair_settings(inter[key]) == pytest.approx((rho, theta))
+    for key in ('benthivorous_fish_preys_on_benthic_infauna',
+                'benthivorous_fish_preys_on_mobile_epifauna',
+                'predatory_fish_preys_on_mobile_epifauna'):
+        assert daylight.pair_settings(inter[key]) is None
+    at_zero = daylight.attack_multiplier(58.1, 6, 0.02, 0.0)
+    at_minus8 = daylight.attack_multiplier(58.1, 6, 0.02, -8.0)
+    assert not np.allclose(at_zero, at_minus8)

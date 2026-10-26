@@ -287,71 +287,108 @@
         - name: phytoplankton
           weight: 1.0
           transform: linear
-  benthic_community:
+  benthic_infauna:
     current_response: 0.0
-    display_name: "Benthic Community"
-    # Display only (live viewer hover). The group is the bottom fauna the
-    # benthivorous fish eat (section 217; the trawl's effect is set as an
-    # impact in fgconfig). Ordered by the group's benthos diet, weighted
-    # by species biomass x Q/B x benthos share (ICES stomach database
-    # 2000+, Skagerrak / northern North Sea; long rough dab pre-2000;
-    # witch Bergstad et al. 2003): brittle stars and other echinoderms
-    # ~30 %, polychaetes ~28 %, crabs and hermit crabs ~18 %, bivalves
-    # and other molluscs ~9 %, northern shrimp ~5 %, Norway lobster ~5 %,
-    # amphipods and other small crustaceans ~4 % (rough: shares of what
-    # is eaten, not of the standing stock). research_notes/"Fiskgrupper
-    # i rutan"/benthivores/tables/ices_benth_diet_taxa.csv.
+    display_name: "Benthic Infauna"
+    # Section 221: the INFAUNA only (id benthic_community before the
+    # split; the mobile epifauna is its own group, mobile_epifauna, below). Display
+    # only (live viewer hover): ordered by the benthivores' infauna diet
+    # (ICES stomach database, consumption-weighted): polychaetes 0.49,
+    # brittle stars 0.30, bivalves 0.09, other echinoderms 0.04, other
+    # small crustaceans 0.03, other molluscs 0.03, amphipods 0.01 (shares
+    # of what is eaten, not of the standing stock). research_notes/"Infauna och rorlig epifauna" (Swedish letters)/params_split.md.
     member_species:
-      - {name: brittle stars and other echinoderms}
       - {name: polychaetes}
-      - {name: crabs and hermit crabs}
+      - {name: brittle stars and other echinoderms}
       - {name: bivalves and other molluscs}
-      - {name: northern shrimp}
-      - {name: Norway lobster}
       - {name: amphipods and other small crustaceans}
     is_decision_maker: false
     movement_speed: 0.0
-    # Hand-set growth_rate (section 136: no r_max, so it is NOT derived
-    # from the predation matrix). Section 218: r 0.971 /yr = 0.971 / 1460
-    # per tick, the biomass-weighted mean of the infauna's 1.0 (section
-    # 207: short-lived polychaetes and small bivalves at 300 m, Hiddink et
-    # al. 2019 r 2.41 / 1.24 / 0.34 for 1-3 / 3-10 / > 10 yr longevity,
-    # and Amphiura arms at 100 m; range 0.8-1.5) and the mobile epifauna's
-    # 0.55 (Nephrops 0.34, northern shrimp 0.85, crabs, hermit crabs,
-    # Munida, small shrimps and mysids 1.2); range 0.955-0.983.
-    # research_notes/"Bentos och torskfiskar" and "Bottensamhallets
-    # epifauna" (Swedish letters)/summary_standing_stock.md.
-    growth_rate: 0.000665068
+    # Section 221: growth is DERIVED (as every NDM with r_max): g = (r_max +
+    # sum checked M2)/1460. r_max 1.0 /yr (0.8-1.5): short-lived
+    # polychaetes and small bivalves at 300 m (Hiddink et al. 2019 r 2.41 /
+    # 1.24 / 0.34 for 1-3 / 3-10 / > 10 yr longevity) and Amphiura arms at
+    # 100 m (section 207). Was a hand-set 0.971 for infauna + epifauna.
+    # The stored growth_rate is what the loader derives (habitat.build
+    # reads it before the derivation, so keep it in sync).
+    r_max: 1.0
+    growth_rate: 0.00070479452
     # Section 207: K per cell from the manifest's depth map, t WW/km2,
-    # linear in depth between the rows and held outside them. Anchors:
-    # today's prey-sized stock at Josefson's (1990) in-grid stations,
-    # 100 m ~105-200 g WW/m2 (Stn 8, Stn 12, without large species) and
-    # 300 m ~50-85 (LYSE 8), taken in the lower half (110 and 55: the
-    # model's K is net of the unmodelled invertebrate predators).
-    # Section 218: plus the mobile epifauna the benthivores eat, which
-    # grabs miss: 8.0 at 100 m and 3.1 at 300 m (least-squares line over
-    # the grid; grid mean 6.4, range 3.3-13.8: Nephrops 4.6 from the ICES
-    # UWTV strata, northern shrimp 0.6 from the SS3 assessment, crabs,
-    # hermit crabs, Munida, small shrimps and mysids 1.3 from North Sea
-    # proxies), so 118.0 and 58.1, divided by today's equilibrium share
-    # 1 - (F + M2)/r = 1 - (0.233 + 0.0417)/0.971 = 0.717 (box-mean trawl
-    # loss 0.233 /yr, fish M2 0.0374 + 0.0043): K = 164.5 / 81.0 (range
-    # 157-177 / 78-88; was 150.8 / 75.4, section 209). The SK3 1996-2011 values (387 g/m2 without urchins)
-    # rest on an unconfirmed SHARK unit fix and are not used. Was a
-    # constant 10 (user's value, sections 136 and 161.13), 5-40x below
-    # every in-grid measurement; at 10 the gadoids plus trawling exceeded
-    # the benthos' maximum surplus production and it halved in 5-8 years.
+    # linear in depth between the rows and held outside them. Today's
+    # prey-sized infauna at Josefson's (1990) in-grid stations, 100 m
+    # ~105-200 g WW/m2 (without large species) and 300 m ~50-85, taken in
+    # the lower half: B* 110 / 55. Section 221: over the infauna's own
+    # equilibrium share 1 - (F + M2)/(r_max + M2) = 0.840 (trawl kill
+    # 0.136 /yr, benthivore M2 0.029): K 131.0 / 65.5 (was 164.5 / 81.0
+    # for infauna + epifauna).
     capacity_depth_table:
       - depth_m: 100.0
-        capacity: 164.5
+        capacity: 131.0
       - depth_m: 300.0
-        capacity: 81.0
+        capacity: 65.5
     # Fallback without a depth map: the box mean of the table.
-    max_carrying_capacity: 137.7
-    energy_content: 3000.0
+    max_carrying_capacity: 109.9
+    # Section 221: energy as eaten 2.6 kJ/g WW (1.7-3.6): AFDW/WW
+    # (Ricciardi & Bourget 1998) x kJ/g AFDW (Steimle & Terranova 1985),
+    # shells included, weighted by the fish intake (brittle stars and
+    # bivalves are mostly ash). Was 3000 for the pooled community.
+    energy_content: 2600.0
     # Section 207: start at today's equilibrium per cell, K(c) (1 - (F(c)
     # + M2)/r) with F(c) from the bottom-trawl baseline map (lib/world/
-    # habitat.py); the total comes from the manifest. Was Perlin noise.
+    # habitat.py); the total comes from the manifest.
+    spawn:
+      mode: equilibrium
+    seed_rate: 1e-06
+  mobile_epifauna:
+    current_response: 0.0
+    display_name: "Mobile Epifauna"
+    # Section 221: the mobile epifauna and hyperbenthos the demersal fish
+    # take (split out of benthic_infauna so the prey the fish actually
+    # eat can be depleted: a fixed accessible share of the whole benthos
+    # never ran out). Members by share of today's stock: Norway lobster
+    # 0.60 (ICES UWTV strata), crabs, hermit crabs and squat lobsters 0.26
+    # (2.0 t/km2: the North Sea proxy 0.76 raised by mass balance, the
+    # fish's measured crab consumption ~1 t/km2/yr cannot come from 0.76;
+    # 23 900 t start without it), northern shrimp 0.07 (SS3), small
+    # shrimps 0.04 and mysids 0.03 (J). Grid mean 7.6 t/km2. In the fish
+    # diets: crabs etc. 0.71, northern shrimp 0.14, small shrimps 0.12.
+    # research_notes/"Infauna och rorlig epifauna" (Swedish letters)/params_split.md; research_notes/"Bottensamhallets epifauna" (Swedish letters).
+    member_species:
+      - {name: Norway lobster, share: 0.60}
+      - {name: "crabs, hermit crabs and squat lobsters", share: 0.26}
+      - {name: northern shrimp, share: 0.07}
+      - {name: small shrimps, share: 0.04}
+      - {name: mysids, share: 0.03}
+    is_decision_maker: false
+    movement_speed: 0.0
+    # Derived growth g = (r_max + sum M2)/1460. r_max 0.70 (0.60-0.75):
+    # the one logistic that reproduces the sum of the taxon K (Nephrops
+    # 0.34, northern shrimp 1.2, crabs etc. 0.9, small shrimps and mysids
+    # 1.86; biomass-weighted 0.65). One logistic cannot hold the taxon
+    # split of F (northern shrimp 0.62, Nephrops 0.087 /yr).
+    r_max: 0.70
+    growth_rate: 0.00060068493
+    # K = today's stock / equilibrium share 0.643 (trawl 0.136, M2 0.177),
+    # least squares per depth band so today's depth structure survives the
+    # effort map (Nephrops flat to ~250 m, northern shrimp peaks at 200-
+    # 300 m): six rows.
+    capacity_depth_table:
+      - depth_m: 81.0
+        capacity: 14.31
+      - depth_m: 123.0
+        capacity: 10.77
+      - depth_m: 173.0
+        capacity: 12.27
+      - depth_m: 221.0
+        capacity: 17.43
+      - depth_m: 272.0
+        capacity: 9.38
+      - depth_m: 387.0
+        capacity: 3.75
+    max_carrying_capacity: 12.2
+    # 3.75 kJ/g WW as eaten (3.1-4.7; crustaceans with their shell; Lawson
+    # et al. 1998 for northern shrimp).
+    energy_content: 3750.0
     spawn:
       mode: equilibrium
     seed_rate: 1e-06
@@ -526,7 +563,7 @@
     # 185 convention; B* = the user's long-run level, the top of the
     # 2001-25 span). Fragile: F/r = 0.55, and cod alone has F > r.
     regional_carrying_capacity: 3.39
-    growth_rate: 0.0023533833
+    growth_rate: 0.0021816966
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -616,7 +653,7 @@
     # top of the 2001-25 span). Per species F/r: saithe 0.68, mackerel
     # 0.86, hake 1.04.
     regional_carrying_capacity: 2.12
-    growth_rate: 0.0022807808
+    growth_rate: 0.0022805371
     # M1 = M0 + predation by groups NOT in the model: saithe 0.29, whiting
     # 0.25, mackerel 0.15, spurdog 0.10, horse mackerel 0.30, hake 0.45,
     # anglerfish 0.25 -> 0.26 /yr (0.19-0.31). Within-group predation
@@ -962,38 +999,56 @@ interaction_definitions:
   # If the herring lab rations (De Silva & Balbontin 1974) hold, h ~115.
   # Type II with visibility floor 0.5 (section 162). Daylight: herring
   # hunt by sight (0.1); pout and blue whiting feed by night as well
-  # (Onsrud et al. 2004): weighted dark_ratio 0.25 (judgement).
+  # (Onsrud et al. 2004): weighted dark_ratio 0.25 (judgement; section
+  # 209, replaced by the encounter-theory values of section 220 below).
   # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md, planktivores/.
   planktivorous_fish_preys_on_zooplankton:
     preys_on: true
     predation_mortality: 1.6
     assimilation_factor: 0.8
     handling_time: 40.0
-    dark_ratio: 0.25
-    light_threshold_deg: -8.0
+    # Section 220: attack rate from encounter theory (f pi R^2 v p per fish,
+    # summed over the size structure, over the 25 m pool layer), for fish
+    # that FORAGE inside the pool (the eat share is the policy's): 0.017
+    # (MC 5-95 % 0.0039-0.032), the annual time mean; herring 94 % of it.
+    # Was 0.04 inherited. Night/day 0.02 (0.008-0.08): herring bite by
+    # sight and only filter in the dark; half detection at sun ~0 deg.
+    # The copepods' own refuge is left to their hide action.
+    # research_notes/"Attackrater ur motesteori" (Swedish letters)/planktivores_encounter.md, summary.md.
+    max_intake_rate: 0.017
+    dark_ratio: 0.02
+    light_threshold_deg: 0.0
     visibility_floor: 0.5
     functional_response: 2
   # Section 209: mostly cod on Norway pout and herring; predator_share
-  # 0.31 from gape (the cod stages that can swallow pool-sized prey).
+  # 0.31 from gape (the cod stages that can swallow pool-sized prey;
+  # removed in section 221).
   # M2 0.14 /yr (0.07-0.32). Type II: measured prey switching in
   # North Sea gadoids is negative (Rindorf et al. 2006); the old Type
   # III on gadoids -> herring was a stability fix (section 141).
-  # Light dependence as the old gadoid pair (section 144).
+  # Light dependence: section 220 below (was the old gadoid pair's, 144).
   benthivorous_fish_preys_on_planktivorous_fish:
     preys_on: true
     predation_mortality: 0.14
     assimilation_factor: 0.8
     handling_time: 262.9
-    predator_share: 0.31
     visibility_floor: 0.25
     functional_response: 2
-    dark_ratio: 0.6
-    light_threshold_deg: -5.0
+    # Section 220: encounter theory, pi R^2 v_rel p with R by the light at
+    # the bottom (Kd 0.25 in the top 20 m), in a 10 m near-bottom search
+    # band, times the share of the prey inside it (the vertical overlap is
+    # in a; section 221 removed predator_share): 0.019 (MC 5-95 %
+    # 0.0013-0.071). Was 0.04 inherited. Night/day 0.06; at 140 m the
+    # light is too dim for the old -5 deg threshold.
+    # research_notes/"Attackrater ur motesteori" (Swedish letters)/benthivores_encounter.md, summary.md.
+    max_intake_rate: 0.019
+    dark_ratio: 0.06
+    light_threshold_deg: 0.0
   # Section 209: the group's main prey. Ceiling: no lab Cmax exists for
   # any member; the ICES gastric-evacuation model calibrated on the cod
   # Cmax gives saithe 97, whiting 104, hake 114, mackerel 150 (13 C)
   # kJ/kg/d -> 102 weighted = 25.5 MJ/t/tick; h = E_prey / 25.5.
-  # predator_share 0.53 (stage scores). M2 = Q/B 3.34 x 1.20 x diet
+  # predator_share 0.53 (stage scores; removed in 221). M2 = Q/B 3.34 x 1.20 x diet
   # share / 3.33 = 0.50 /yr (0.31-0.86; Norwegian-coast saithe diets,
   # Norway pout and blue whiting heavy). Type II (Rindorf et al. 2006).
   # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_predatory_fish.md.
@@ -1002,10 +1057,16 @@ interaction_definitions:
     predation_mortality: 0.50
     assimilation_factor: 0.8
     handling_time: 279.4
-    predator_share: 0.53
     visibility_floor: 0.25
     functional_response: 2
-    dark_ratio: 0.6
+    # Section 220: encounter theory on DISPERSED prey (schooling is the
+    # prey's hide action and visibility floor, not a): 0.012 (Engelhard
+    # 2008 0.012-0.035). Was 0.04 inherited. Night/day 0.35: fish are
+    # eaten mostly at dawn and dusk (Rindorf & Gislason 2005); the
+    # threshold was not re-derived.
+    # research_notes/"Attackrater ur motesteori" (Swedish letters)/predators_encounter.md, addendum_validation_behaviour.md.
+    max_intake_rate: 0.012
+    dark_ratio: 0.35
     light_threshold_deg: -5.0
   # Section 209: porpoise diet 0.65 planktivores, 0.15 benthivores, 0.20
   # predators (Skagerrak/Kattegat stomachs 1985-96; Ransijn et al. 2021
@@ -1048,84 +1109,114 @@ interaction_definitions:
     predation_mortality: 0.0236
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_benthic_community:
+  benthic_infauna_preys_on_benthic_infauna:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_benthivorous_fish:
+  benthic_infauna_preys_on_benthivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_predatory_fish:
+  benthic_infauna_preys_on_predatory_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_planktivorous_fish:
+  benthic_infauna_preys_on_planktivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_phytoplankton:
+  benthic_infauna_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_porpoises:
+  benthic_infauna_preys_on_porpoises:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_seabirds:
+  benthic_infauna_preys_on_seabirds:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_seals:
+  benthic_infauna_preys_on_seals:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  benthic_community_preys_on_zooplankton:
+  benthic_infauna_preys_on_zooplankton:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   # Section 209: the group's main prey. Ceiling from measured Cmax,
   # biomass-weighted (cod 83, haddock 144, plaice 119, dab 100, long
   # rough dab 86 kJ/kg/d at the 50 m layer) = 108 kJ/kg/d = 27.1
-  # MJ/t/tick; h = E_prey / 27.1 (section 148 energy convention; the
-  # old gadoid ceiling 34.6 was 1.3x this group's Cmax). predator_share
-  # 0.9: haddock and flatfish 1, large cod lower (stage scores,
-  # research_notes/Torskfiskarnas bytesandelar). accessible_fraction 0.2
-  # (section 208; the epifauna of section 218 weights it to 0.203).
-  # M2 = Q/B 3.5 x 1.53 x benthos share / B*: 0.040 at ~95 t/km2, 0.0374
-  # at section 218's 101.6.
-  # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_benthivorous_fish.md.
-  benthivorous_fish_preys_on_benthic_community:
+  # MJ/t/tick; h = E_prey / 27.1 (section 148 energy convention).
+  # Section 221 (infauna only): diet share 0.511 of the consumption
+  # (benthos 0.72 x infauna 0.71; ICES stomachs, consumption-weighted),
+  # M2 = Q/B 3.48 x 1.53 x 0.511 / B* 93.6 = 0.029; h = 2600 / 27.1 =
+  # 95.9; accessible_fraction 0.2 (Dauwe et al. 1998: the top 0-2 cm,
+  # section 208); a 0.25 (MC 5-95 % 0.12-0.64; the encounter split of
+  # section 220's 0.26). No light effect. research_notes/"Infauna och rorlig epifauna" (Swedish letters)/params_split.md.
+  benthivorous_fish_preys_on_benthic_infauna:
     preys_on: true
-    predation_mortality: 0.0374
+    predation_mortality: 0.029
     assimilation_factor: 0.7
-    handling_time: 110.7
-    predator_share: 0.9
+    handling_time: 95.9
     accessible_fraction: 0.2
-  # Section 209: juvenile whiting and deep-feeding saithe on shrimps
-  # and mysids (predator_share 0.145). M2 0.0046 at ~95 t/km2, 0.0043 at
-  # section 218's 101.6.
-  predatory_fish_preys_on_benthic_community:
+    max_intake_rate: 0.25
+  # Section 221: shrimps, mysids and crabs moved to mobile_epifauna; the
+  # predators' infauna is 3.9 % of their diet (M2 0.0016): unchecked.
+  predatory_fish_preys_on_benthic_infauna:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # Section 221: crabs, hermit crabs, Munida, shrimps, mysids and some
+  # Nephrops: diet share 0.209 (benthos 0.72 x epifauna 0.29), M2 = 3.48
+  # x 1.53 x 0.209 / 7.88 = 0.141; h = 3750 / 27.1 = 138.4; accessible
+  # 0.31 (Nephrops in burrows 0.1, shrimp 0.7, others 0.6, weighted by
+  # what this group takes); a 0.44 (0.15-1.2) per accessible tonne
+  # (2-D swept area). No dark_ratio: f is already a time mean over the
+  # dusk/dawn emergence. Residual: f is a fixed share of a pool that is
+  # 60 % Nephrops in burrows, so eaten shrimp and crabs are refilled
+  # from the Nephrops biomass each tick - bounded now by the 7.6 t/km2
+  # pool (surplus ~1.3 t/km2/yr vs a budgeted demand of ~1.4).
+  # research_notes/"Infauna och rorlig epifauna" (Swedish letters)/params_split.md.
+  benthivorous_fish_preys_on_mobile_epifauna:
     preys_on: true
-    predation_mortality: 0.0043
-    assimilation_factor: 0.7
-    handling_time: 117.6
-    predator_share: 0.145
-    accessible_fraction: 0.2
+    predation_mortality: 0.141
+    assimilation_factor: 0.8
+    handling_time: 138.4
+    accessible_fraction: 0.31
+    max_intake_rate: 0.44
+  # Section 221: whiting, hake and saithe on shrimps, mysids and small
+  # crabs: diet share 0.072 (benthos 0.11 x 0.65), M2 = 3.34 x 1.20 x
+  # 0.072 / 7.88 = 0.036; h = 3750 / 25.5 = 147.1; accessible 0.13 (no
+  # Nephrops, little crab); a 0.33 (0.10-1.5), every member at its own
+  # encounter rate (no capability scores: predator_share is gone). research_notes/"Infauna och rorlig epifauna" (Swedish letters)/params_split.md.
+  predatory_fish_preys_on_mobile_epifauna:
+    preys_on: true
+    predation_mortality: 0.036
+    assimilation_factor: 0.8
+    handling_time: 147.1
+    accessible_fraction: 0.13
+    max_intake_rate: 0.33
   # Cannibalism stays out of the budget (section 160).
   benthivorous_fish_preys_on_benthivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   # Section 209: large cod and grey gurnard on whiting (predator_share
-  # 0.1). M2 0.085 /yr on predatory_fish.
+  # 0.1, removed in 221). M2 0.085 /yr on predatory_fish.
   benthivorous_fish_preys_on_predatory_fish:
     preys_on: true
     predation_mortality: 0.085
     assimilation_factor: 0.8
     handling_time: 193.8
-    predator_share: 0.1
     functional_response: 2
+    # Section 220: as the planktivore pair (near-bottom band, Kd 0.25):
+    # 0.026 (MC 5-95 % 0.0018-0.092); was 0.04. Night/day 0.10.
+    # research_notes/"Attackrater ur motesteori" (Swedish letters)/benthivores_encounter.md, summary.md.
+    max_intake_rate: 0.026
+    dark_ratio: 0.10
+    light_threshold_deg: 0.0
   # Section 209: whiting, saithe, hake, spurdog and anglerfish on
   # juvenile haddock, cod and small flatfish: a learnable cross-group
   # pair (unlike cannibalism). accessible_fraction 0.15: the prey-sized
@@ -1137,9 +1228,16 @@ interaction_definitions:
     predation_mortality: 0.18
     assimilation_factor: 0.8
     handling_time: 176.5
-    predator_share: 0.29
     accessible_fraction: 0.15
     functional_response: 2
+    # Section 220: encounter theory on the prey-sized benthivores: 0.18
+    # (MC 5-95 % 0.058-0.65); was 0.04. Conflict kept open: Rindorf &
+    # Gislason 2005 (gadoid prey, mixed) imply ~0.03, which would make the
+    # pair unsaturated. Night/day 0.6. research_notes/"Attackrater ur motesteori" (Swedish letters)/predators_encounter.md,
+    # addendum_validation_behaviour.md.
+    max_intake_rate: 0.18
+    dark_ratio: 0.6
+    light_threshold_deg: -5.0
   # Cannibalism stays out of the budget (section 160).
   predatory_fish_preys_on_predatory_fish:
     preys_on: false
@@ -1180,20 +1278,28 @@ interaction_definitions:
   # Section 209: dropped. The pool is mostly copepods (copepod-sized
   # prey: predator_share ~0.03), 485 winter 2025 stomachs hold 0.4 %
   # zooplankton, and the hyperbenthic crustaceans these fish eat are
-  # benthic_community.
+  # benthic_infauna.
   benthivorous_fish_preys_on_zooplankton:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   # Section 209: krill for saithe, whiting and mackerel (predator_share
-  # 0.48). M2 0.13 /yr at the 9.72 t/km2 start (0.23 at ~5.5).
+  # 0.48, removed in 221). M2 0.13 /yr at the 9.72 t/km2 start (0.23 at ~5.5).
   predatory_fish_preys_on_zooplankton:
     preys_on: true
     predation_mortality: 0.13
     assimilation_factor: 0.8
     handling_time: 176.5
-    predator_share: 0.48
-  planktivorous_fish_preys_on_benthic_community:
+    # Section 220: encounter theory on the A17-calibrated pool (resident
+    # copepods, no krill; copepods are too small for particulate gadoids):
+    # 0.002 (0.0015 central, up to 0.0024 with whiting capture success on
+    # shrimp, Staniland 1995); was 0.04, which saturated the pair. Open:
+    # the M2 0.13 (and the removed predator_share 0.48) assume krill.
+    # Night/day 0.5. research_notes/"Attackrater ur motesteori" (Swedish letters)/predators_encounter.md, addendum_vision_light.md.
+    max_intake_rate: 0.002
+    dark_ratio: 0.5
+    light_threshold_deg: -5.0
+  planktivorous_fish_preys_on_benthic_infauna:
     preys_on: false
     predation_mortality: 0.015
     assimilation_factor: 1.0
@@ -1230,7 +1336,7 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  phytoplankton_preys_on_benthic_community:
+  phytoplankton_preys_on_benthic_infauna:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1266,7 +1372,7 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  porpoises_preys_on_benthic_community:
+  porpoises_preys_on_benthic_infauna:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1308,7 +1414,7 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  seabirds_preys_on_benthic_community:
+  seabirds_preys_on_benthic_infauna:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1343,7 +1449,7 @@ interaction_definitions:
     predation_mortality: 0.01
     assimilation_factor: 1.0
     handling_time: 0.0
-  seals_preys_on_benthic_community:
+  seals_preys_on_benthic_infauna:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1376,7 +1482,7 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  zooplankton_preys_on_benthic_community:
+  zooplankton_preys_on_benthic_infauna:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1427,22 +1533,51 @@ interaction_definitions:
   # /yr in all, slope 5.292e-5 per tick per unit. Only the biomass factor
   # acts on a non decision maker. research_notes/Bottentralning och
   # bentos/ and "Bottensamhallets epifauna"/summary_trawl_removal.md.
-  benthic_community_impacted_by_bottom_trawling:
+  # Section 221 (infauna only): the gear's kill, d 0.06 (0.03-0.115) x
+  # SAR 0.75 per MW-h/km2: 0.136 /yr at the map's mean effort 3.0142
+  # (Hiddink et al. 2017 d pooled 0.06; on Nephrops mud the infauna per
+  # pass is at or below it; the 0.10 was a gear-geometry scaling for the
+  # pooled community). No catch: the trawl lands no infauna. Was 0.233
+  # for infauna + epifauna. research_notes/"Infauna och rorlig epifauna" (Swedish letters)/params_split.md.
+  benthic_infauna_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
       - value: 0.0
         biomass_factor: 0.0
         energy_factor: 0.0
       - value: 100.0
-        biomass_factor: 0.005292301
+        biomass_factor: 0.003082
         energy_factor: 0.0
-  benthic_community_impacted_by_pelagic_trawling:
+  benthic_infauna_impacted_by_pelagic_trawling:
     impact_affects: false
     impact_table: []
-  benthic_community_impacted_by_rotor:
+  benthic_infauna_impacted_by_rotor:
     impact_affects: false
     impact_table: []
-  benthic_community_impacted_by_windfarm_noise:
+  benthic_infauna_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  # Section 221: catch incl. dead discards (northern shrimp, Nephrops,
+  # crabs; 0.67 t/km2/yr, resume 218) + kill of the uncaught part (0.37)
+  # over 7.63 t/km2 = 0.136 /yr at the map's mean effort 3.0142. One
+  # rate for the group: the taxa differ (northern shrimp F 0.62, Nephrops
+  # 0.087). research_notes/"Infauna och rorlig epifauna" (Swedish letters)/params_split.md.
+  mobile_epifauna_impacted_by_bottom_trawling:
+    impact_affects: true
+    impact_table:
+      - value: 0.0
+        biomass_factor: 0.0
+        energy_factor: 0.0
+      - value: 100.0
+        biomass_factor: 0.003093
+        energy_factor: 0.0
+  mobile_epifauna_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  mobile_epifauna_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
+  mobile_epifauna_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
   # Section 209: F 0.17 /yr at today's mean effort (cod 0.39, haddock
@@ -1632,9 +1767,13 @@ interaction_definitions:
   zooplankton_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
-  benthivorous_fish_observes_benthic_community:
+  benthivorous_fish_observes_benthic_infauna:
     observes: true
-  predatory_fish_observes_benthic_community:
+  predatory_fish_observes_benthic_infauna:
+    observes: false
+  benthivorous_fish_observes_mobile_epifauna:
+    observes: true
+  predatory_fish_observes_mobile_epifauna:
     observes: true
   benthivorous_fish_observes_benthivorous_fish:
     observes: true
@@ -1669,7 +1808,7 @@ interaction_definitions:
     observes: false
   predatory_fish_observes_zooplankton:
     observes: true
-  planktivorous_fish_observes_benthic_community:
+  planktivorous_fish_observes_benthic_infauna:
     observes: false
   planktivorous_fish_observes_benthivorous_fish:
     observes: true
@@ -1687,7 +1826,7 @@ interaction_definitions:
     observes: true
   planktivorous_fish_observes_zooplankton:
     observes: true
-  porpoises_observes_benthic_community:
+  porpoises_observes_benthic_infauna:
     observes: false
   porpoises_observes_benthivorous_fish:
     observes: true
@@ -1705,7 +1844,7 @@ interaction_definitions:
     observes: true
   porpoises_observes_zooplankton:
     observes: false
-  seabirds_observes_benthic_community:
+  seabirds_observes_benthic_infauna:
     observes: false
   seabirds_observes_benthivorous_fish:
     observes: false
@@ -1723,7 +1862,7 @@ interaction_definitions:
     observes: false
   seabirds_observes_zooplankton:
     observes: false
-  seals_observes_benthic_community:
+  seals_observes_benthic_infauna:
     observes: false
   seals_observes_benthivorous_fish:
     observes: true
@@ -1741,7 +1880,7 @@ interaction_definitions:
     observes: true
   seals_observes_zooplankton:
     observes: false
-  zooplankton_observes_benthic_community:
+  zooplankton_observes_benthic_infauna:
     observes: false
   zooplankton_observes_benthivorous_fish:
     observes: false

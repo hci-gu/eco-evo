@@ -645,16 +645,6 @@ FIELD_HELP = {
         "capacity_depth_table and a project depth map uses the table "
         "instead; this value is then only the fallback (section 207)."
     ),
-    "predator_share": (
-        "Predator share phi of a predation pair (0-1], edited in "
-        "fg_library.yaml.\n\n"
-        "The share of the predator group's biomass that can feed on this "
-        "prey at all, e.g. the benthos feeders of a pooled fish group. That "
-        "part eats it at the full attack rate and ceiling; the rest "
-        "cannot, so at most phi of the group's eat mass reaches the prey "
-        "(the tick uses min(eat, phi)). Set from morphology and the "
-        "species mix, not from a diet (section 208)."
-    ),
     "accessible_fraction": (
         "Accessible fraction f of a predation pair (0-1], edited in "
         "fg_library.yaml.\n\n"

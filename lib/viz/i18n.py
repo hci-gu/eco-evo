@@ -40,7 +40,8 @@ FG_NAMES = {
         "subsurface_phytoplankton": "Djupväxtplankton",
         "zooplankton": "Djurplankton",
         "microzooplankton": "Mikrozooplankton",
-        "benthic_community": "Bottensamhälle",
+        "benthic_infauna": "Infauna",
+        "mobile_epifauna": "Rörlig epifauna",
         "planktivorous_fish": "Planktonätande fisk",
         "benthivorous_fish": "Bottendjursätande fisk",
         "predatory_fish": "Rovfisk",
@@ -53,7 +54,8 @@ FG_NAMES = {
         "subsurface_phytoplankton": "Fitoplancton profondo",
         "zooplankton": "Zooplancton",
         "microzooplankton": "Microzooplancton",
-        "benthic_community": "Comunità bentonica",
+        "benthic_infauna": "Infauna bentonica",
+        "mobile_epifauna": "Epifauna mobile",
         "planktivorous_fish": "Pesci planctivori",
         "benthivorous_fish": "Pesci bentivori",
         "predatory_fish": "Pesci predatori",
@@ -83,6 +85,9 @@ SPECIES = {
         "bivalves and other molluscs": "musslor och andra blötdjur",
         "northern shrimp": "nordhavsräka",
         "norway lobster": "havskräfta",
+        "crabs, hermit crabs and squat lobsters":
+            "krabbor, eremitkräftor och trollhumrar",
+        "small shrimps": "små räkor", "mysids": "pungräkor",
         "amphipods and other small crustaceans":
             "märlkräftor och andra små kräftdjur",
         "ciliates": "ciliater",
@@ -109,6 +114,9 @@ SPECIES = {
         "bivalves and other molluscs": "bivalvi e altri molluschi",
         "northern shrimp": "gamberetto boreale",
         "norway lobster": "scampo",
+        "crabs, hermit crabs and squat lobsters":
+            "granchi, paguri e galatee",
+        "small shrimps": "gamberetti", "mysids": "misidacei",
         "amphipods and other small crustaceans":
             "anfipodi e altri piccoli crostacei",
         "ciliates": "ciliati",

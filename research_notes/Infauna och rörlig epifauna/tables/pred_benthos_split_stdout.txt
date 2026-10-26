@@ -1,0 +1,32 @@
+hake Box 2024                      B     1.7 g  epifauna share  0.99   crab_hermit 0.99, infauna 0.01
+hake Kattegat 2024                 B     2.1 g  epifauna share  0.79   small_shrimp 0.43, crab_hermit 0.36, infauna 0.21
+hake NNS 2024                      B     1.0 g  epifauna share  0.00   infauna 1.00
+hake Skagerrak 2024                B     1.9 g  epifauna share  0.99   crab_hermit 0.87, small_shrimp 0.12, infauna 0.01
+horse_mackerel Box 2023            B     0.4 g  epifauna share  1.00   small_shrimp 1.00
+horse_mackerel CSNS 2023           B    13.9 g  epifauna share  0.98   small_shrimp 0.64, mysid 0.34, infauna 0.02, crab_hermit 0.00
+horse_mackerel NNS 2023            B     0.2 g  epifauna share  0.88   small_shrimp 0.73, mysid 0.15, infauna 0.12
+horse_mackerel Skagerrak 2023      B     0.4 g  epifauna share  1.00   small_shrimp 1.00
+mackerel CSNS 2022                 B     0.8 g  epifauna share  0.51   small_shrimp 0.51, infauna 0.49
+mackerel NNS 2022                  B     0.2 g  epifauna share  1.00   small_shrimp 1.00
+mackerel NNS 2025                  B     0.0 g  epifauna share  0.00   infauna 1.00
+saithe NNS 2024                    B    14.9 g  epifauna share  1.00   small_shrimp 1.00
+spurdog Box 2024                   B     0.0 g  epifauna share  0.00   infauna 1.00
+spurdog Skagerrak 2024             B     0.0 g  epifauna share  0.00   infauna 1.00
+whiting Box 2022                   B     0.8 g  epifauna share  0.70   mysid 0.57, infauna 0.30, small_shrimp 0.13
+whiting Box pre2000                B    25.4 g  epifauna share  0.66   pandalid 0.58, infauna 0.34, small_shrimp 0.07, crab_hermit 0.00
+whiting CSNS 2022                  B   206.5 g  epifauna share  0.82   small_shrimp 0.34, crab_hermit 0.29, infauna 0.18, mysid 0.11, nephrops 0.06, pandalid 0.02
+whiting CSNS 2023                  B    96.9 g  epifauna share  0.59   small_shrimp 0.58, infauna 0.41, crab_hermit 0.01, mysid 0.00
+whiting CSNS pre2000               B     1.5 g  epifauna share  0.00   infauna 1.00
+whiting Kattegat 2022              B     1.4 g  epifauna share  0.76   small_shrimp 0.41, crab_hermit 0.35, infauna 0.24, mysid 0.01
+whiting Kattegat pre2000           B    22.5 g  epifauna share  0.72   small_shrimp 0.46, infauna 0.28, pandalid 0.18, crab_hermit 0.08, mysid 0.01
+whiting NNS 2022                   B     1.3 g  epifauna share  0.32   infauna 0.68, mysid 0.32
+whiting Skagerrak 2022             B     6.6 g  epifauna share  0.75   small_shrimp 0.53, infauna 0.25, crab_hermit 0.12, mysid 0.09, pandalid 0.02
+whiting Skagerrak pre2000          B    55.5 g  epifauna share  0.56   infauna 0.44, pandalid 0.43, small_shrimp 0.12, crab_hermit 0.02
+whiting other 2023                 B    11.7 g  epifauna share  0.25   infauna 0.75, small_shrimp 0.25, mysid 0.00
+whiting other 2024                 B    26.5 g  epifauna share  0.47   infauna 0.53, small_shrimp 0.47, mysid 0.01
+unclassified taxa counted as infauna: {'Callianassa subterranea': 2.538, 'Callianassidae': 0.315, 'Caprellidae': 0.01, 'Cardiidae': 0.02, 'Cirolana cranchii': 0.514, 'Corystes cassivelaunus': 0.837, 'Harpinia antennaria': 0.228, 'Nebalia bipes': 0.841, 'Perinereis euiini': 2.893, 'Phoxocephalus holbolli': 0.096, 'Upogebia deltaura': 1.262, 'Urothoe elegans': 0.007, 'Venerida': 0.058, 'Veneridae': 0.014, 'Phyllodocida': 0.001, 'Platyhelminthes': 0.375, 'Ampharetidae': 0.43000000000000005, 'Diastylidae': 0.03, 'Glyceridae': 0.19, 'Pentidotea resecata': 0.03, 'Phyllodocidae': 0.08, 'Polynoidae': 0.1, 'Mytilidae': 0.102}
+POOLED whiting box+Skagerrak, all periods       B   88.3 g  epifauna 0.61  pandalid 0.44, infauna 0.39, small_shrimp 0.14, crab_hermit 0.02, mysid 0.01
+POOLED whiting box+Skagerrak pre-2000           B   81.0 g  epifauna 0.59  pandalid 0.48, infauna 0.41, small_shrimp 0.10, crab_hermit 0.01
+POOLED whiting box+Skagerrak 2022               B    7.3 g  epifauna 0.74  small_shrimp 0.48, infauna 0.26, mysid 0.14, crab_hermit 0.10, pandalid 0.01
+POOLED whiting all areas 2022-24                B  351.6 g  epifauna 0.71  small_shrimp 0.41, infauna 0.29, crab_hermit 0.17, mysid 0.07, nephrops 0.04, pandalid 0.01
+POOLED hake box+Skagerrak 2024                  B    3.6 g  epifauna 0.99  crab_hermit 0.92, small_shrimp 0.07, infauna 0.01

@@ -1,0 +1,19 @@
+================================================================================================
+benthivorous_fish -> infauna: h 95.9, accessible prey today 18.40 t/km2 (total 92.0)
+  per member (central, km2 per t of that member per tick): haddock 0.238, cod 0.139, long rough dab 0.335, dab 0.571, plaice 0.434, witch 0.531, starry ray 0.179, grey gurnard 0.350, lemon sole 0.455
+  GROUP a central 0.2488  MC 5/50/95 % 0.1208 0.2703 0.6431
+  1/(a h) = 0.0419 t/km2 accessible (MC 5-95 %: 0.0162 - 0.0863); in total-stock units 1/(a h f) = 0.210 t/km2
+  at  100% of today's accessible stock: x = a h B =   438.99 -> 0.998 of ceiling
+  at   10% of today's accessible stock: x = a h B =    43.90 -> 0.978 of ceiling
+  at    1% of today's accessible stock: x = a h B =     4.39 -> 0.814 of ceiling
+================================================================================================
+benthivorous_fish -> mobile_epifauna: h 138.4, accessible prey today 2.37 t/km2 (total 7.63)
+  per member (central, km2 per t of that member per tick): haddock 0.570, cod 0.333, long rough dab 0.358, dab 0.435, plaice 0.331, witch 0.404, starry ray 0.161, grey gurnard 0.420, lemon sole 0.347
+  GROUP a central 0.4362  MC 5/50/95 % 0.1509 0.3946 1.2015
+  1/(a h) = 0.0166 t/km2 accessible (MC 5-95 %: 0.0060 - 0.0479); in total-stock units 1/(a h f) = 0.053 t/km2
+  at  100% of today's accessible stock: x = a h B =   142.79 -> 0.993 of ceiling
+  at   10% of today's accessible stock: x = a h B =    14.28 -> 0.935 of ceiling
+  at    1% of today's accessible stock: x = a h B =     1.43 -> 0.588 of ceiling
+================================================================================================
+ratio a_epi / a_inf (central) = 1.75
+unsaturated intake ratio epi/inf per unit eat share = 0.225 (mass); measured diet ratio 0.29/0.71 = 0.408

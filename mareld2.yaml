@@ -139,10 +139,18 @@ decision_makers:
     initial_biomass_max: 70000
     inference_initial_biomass: 35000
 non_decision_makers:
-  - group_id: benthic_community
-    initial_biomass_min: 274500
-    initial_biomass_max: 457500
-    inference_initial_biomass: 366000
+  # Section 221: benthic_infauna is the infauna only (sum of today's
+  # equilibrium B*(c), +/-25 %); mobile_epifauna is the split-out mobile
+  # epifauna (research_notes/"Infauna och rorlig epifauna", Swedish
+  # letters).
+  - group_id: benthic_infauna
+    initial_biomass_min: 252750
+    initial_biomass_max: 421250
+    inference_initial_biomass: 337000
+  - group_id: mobile_epifauna
+    initial_biomass_min: 20900
+    initial_biomass_max: 34850
+    inference_initial_biomass: 27900
   - group_id: phytoplankton
     initial_biomass_min: 40000
     initial_biomass_max: 100000

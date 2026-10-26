@@ -137,7 +137,7 @@ def test_loader_puts_the_layer_on_the_configured_groups_only():
         "layer": "upper", "monthly_c": LAYER}
     assert fgs["benthivorous_fish"].params["temperature"] == {
         "layer": "deep", "monthly_c": LAYER[::-1]}
-    for fid in ("porpoises", "phytoplankton", "benthic_community"):
+    for fid in ("porpoises", "phytoplankton", "benthic_infauna"):
         assert "temperature" not in fgs[fid].params
 
 
@@ -157,11 +157,11 @@ def test_a_q10_group_without_a_layer_raises():
 
 def test_a_q10_on_a_non_decision_maker_raises():
     library = yaml.safe_load(LIBRARY.read_text(encoding="utf-8-sig"))
-    library["species_definitions"]["benthic_community"].update(
+    library["species_definitions"]["benthic_infauna"].update(
         metabolism_q10=2.0, metabolism_t_ref="annual_mean")
     block = _block()
-    block["group_layers"]["benthic_community"] = "upper"
-    with pytest.raises(ValueError, match="benthic_community"):
+    block["group_layers"]["benthic_infauna"] = "upper"
+    with pytest.raises(ValueError, match="benthic_infauna"):
         load_project_config(str(PROJECT), library_config=library,
                             project_config=_project(block),
                             grid_size=(6, 6), seed=1)

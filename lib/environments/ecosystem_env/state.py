@@ -145,9 +145,6 @@ def build_static_caches(env):
     env.access_mat = (matrices.access if matrices.access is not None
                       else np.ones_like(handling_time)).astype(env.dtype, copy=False)
     env._has_pair_access = bool(np.any((env.access_mat < 1.0) & (eat_static > 0.0)))
-    env.share_cap_mat = (matrices.share_cap if matrices.share_cap is not None
-                         else np.ones_like(handling_time)).astype(env.dtype, copy=False)
-    env._has_share_cap = bool(np.any((env.share_cap_mat < 1.0) & (eat_static > 0.0)))
     # Specialists (exactly one active prey) use Type III; generalists
     # retain Type II because their policy already handles prey switching.
     # A pair's ``functional_response`` (2 or 3) overrides that per pair

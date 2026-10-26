@@ -503,7 +503,7 @@ LABELS = {
         ("8  Masker", "accessibility, utdöendetröskel"),
     ],
     "web_nodes": {
-        "phytoplankton": "Växtplankton", "benthic_community": "Bottensamhälle",
+        "phytoplankton": "Växtplankton", "benthic_infauna": "Bottensamhälle",
         "zooplankton": "Djurplankton", "pelagic_fish": "Pelagisk fisk",
         "gadoids": "Torskfiskar", "porpoises": "Tumlare", "seals": "Sälar",
         "seabirds": "Sjöfåglar",
@@ -645,11 +645,11 @@ _YAML_CACHE = {}
 DM_ORDER = ["zooplankton", "pelagic_fish", "gadoids", "porpoises", "seals",
             "seabirds"]
 OBS_ORDER = ["phytoplankton", "zooplankton", "pelagic_fish", "gadoids",
-             "porpoises", "seals", "seabirds", "benthic_community"]
+             "porpoises", "seals", "seabirds", "benthic_infauna"]
 PAIR_ORDER = [
     ("zooplankton", "phytoplankton"), ("pelagic_fish", "zooplankton"),
     ("gadoids", "pelagic_fish"), ("gadoids", "zooplankton"),
-    ("gadoids", "benthic_community"), ("gadoids", "gadoids"),
+    ("gadoids", "benthic_infauna"), ("gadoids", "gadoids"),
     ("porpoises", "pelagic_fish"), ("porpoises", "gadoids"),
     ("seals", "pelagic_fish"), ("seals", "gadoids"),
     ("seabirds", "pelagic_fish"),
@@ -830,7 +830,7 @@ def draw_food_web(fig, ax, y):
     names = LABELS["web_nodes"]
     nodes = {
         "phytoplankton": (210, 118, names["phytoplankton"]),
-        "benthic_community": (720, 118, names["benthic_community"]),
+        "benthic_infauna": (720, 118, names["benthic_infauna"]),
         "zooplankton": (210, 205, names["zooplankton"]),
         "pelagic_fish": (300, 292, names["pelagic_fish"]),
         "gadoids": (650, 205, names["gadoids"]),
@@ -860,7 +860,7 @@ def draw_food_web(fig, ax, y):
         ax.text(gx + bw / 2 + 34, gy, LABELS["web_self"], color=MUTED,
                 size=10.5, va="center", ha="left")
     for key, (x, yy, label) in nodes.items():
-        ndm = key in ("phytoplankton", "benthic_community")
+        ndm = key in ("phytoplankton", "benthic_infauna")
         box(ax, x - bw / 2, yy - bh / 2, bw, bh, label,
             face="#E4EEF3" if not ndm else "#E9F2E4",
             edge=ACCENT if not ndm else "#5C8A3C", size=12, weight="bold")
@@ -879,11 +879,11 @@ def draw_functional_response(fig, ax, y):
     # at the same MJ per tonne of gadoid and tick.
     a_g = pair_attack("gadoids", "pelagic_fish")
     h_herr = pair("gadoids", "pelagic_fish")["handling_time"]
-    h_ben = pair("gadoids", "benthic_community")["handling_time"]
+    h_ben = pair("gadoids", "benthic_infauna")["handling_time"]
     herr = species("pelagic_fish")
     e_herr = herr["energy_content"] + herr.get("reserve_reference_fill", 0.5) \
         * herr["max_energy_reserve"]
-    e_ben = species("benthic_community")["energy_content"]
+    e_ben = species("benthic_infauna")["energy_content"]
     w = species("gadoids").get("interference", 0.0)
     B = np.linspace(0, 3.0, 400)
     f_herr = e_herr * a_g * B ** 2 / (1 + a_g * h_herr * B ** 2)
@@ -1116,7 +1116,7 @@ def draw_spawn_examples(fig, ax, y):
 # ----------------------------------------------------------------------
 def build(d):
     f = fmt
-    phy, ben = species("phytoplankton"), species("benthic_community")
+    phy, ben = species("phytoplankton"), species("benthic_infauna")
     # ---------------------------------------------------------------- 1
     d.title_slide(
         "Strategi",
@@ -1321,7 +1321,7 @@ def build(d):
         [["phytoplankton", "icke beslutande", "-",
           "Primärproducent, ljusbegränsad logistisk tillväxt mot bärkraft, "
           "driver med strömmen"],
-         ["benthic_community", "icke beslutande", "-",
+         ["benthic_infauna", "icke beslutande", "-",
           "Bottenföda för torskfisk, mycket långsam tillväxt, "
           "förflyttas inte"],
          ["zooplankton", "beslutande", "phytoplankton",
@@ -1329,7 +1329,7 @@ def build(d):
          ["pelagic_fish", "beslutande", "zooplankton",
           "Sill/skarpsill, specialist (typ III), mager kropp + fettreserv"],
          ["gadoids", "beslutande",
-          "pelagic_fish, benthic_community, zooplankton, gadoids",
+          "pelagic_fish, benthic_infauna, zooplankton, gadoids",
           "Generalist; typ III på sill, energitak, interferens 1,0"],
          ["porpoises", "beslutande", "pelagic_fish, gadoids",
           "Toppredator, endoterm, känslig för undervattensbuller"],
@@ -1610,7 +1610,7 @@ def build(d):
              f"{f(phy['growth_rate'])} (aprilvärdet, ljusbegränsat) mot "
              f"max_carrying_capacity {f(phy['max_carrying_capacity'])} "
              f"ton/cell, {f(phy['energy_content'])} MJ/ton; "
-             f"benthic_community med {f(ben['growth_rate'])} mot "
+             f"benthic_infauna med {f(ben['growth_rate'])} mot "
              f"{f(ben['max_carrying_capacity'])} ton/cell, "
              f"{f(ben['energy_content'])} MJ/ton, plus seed_rate "
              f"{f(ben['seed_rate'])}.",
@@ -1969,7 +1969,7 @@ def build(d):
          "biblioteket, inte av om de är beslutande: en simmare som "
          "svarar advekteras ovanpå den förflyttning policyn redan valt.",
          ("-", "I dag: phytoplankton 1,0 och zooplankton 1,0, "
-               "benthic_community 0,0, övriga 0,0 som standard."),
+               "benthic_infauna 0,0, övriga 0,0 som standard."),
          "Strömmen delar rörelsens masker - blockerat flöde stannar kvar - "
          "och är konservativ: ingen massa skapas eller försvinner."],
         kicker="current_response")
@@ -2332,7 +2332,7 @@ def build(d):
           "+3 till +9 %/år, topp år 8, sedan nedgång"],
          ["porpoises", "11,5", "3,99", "5,9",
           "−6 %/år (förut −12 %/år)"],
-         ["benthic_community", "18 603", "-", "15 856",
+         ["benthic_infauna", "18 603", "-", "15 856",
           "Stiger till år 3-4, betas sedan ned"],
          ["zooplankton", "~24 000", "~22 800", "-",
           "Stationär med årscykel ~9×"],

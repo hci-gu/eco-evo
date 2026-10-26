@@ -1,0 +1,25 @@
+species          share%    QB    B%  e_epi  basis
+haddock            38.6  3.80  80.0  0.148  ICES-DB NNS + trench Jan-Feb 2025, box length mix; 00-20(47) 20-30(83) 30-40(151) 40-50(66) 50-70(7) 70-(7)
+    pandalid 0.7, crab_hermit 9.7, other_decapod 4.4, polychaete 47.6, ophiuroid 27.5, other_echinoderm 4.9, bivalve 0.2, other_mollusc 0.6, amphipod 0.7, other_crust 3.4, other_inv 0.4
+cod                31.4  3.20  49.3  0.884  VARIANT ICES-DB NNS 2023, box length mix; 00-20(12) 20-30(12) 30-40(18) 40-50(12) 50-70(24) 70-(9)
+    crangonid 2.0, pandalid 34.1, nephrops 17.7, crab_hermit 34.3, other_decapod 0.3, polychaete 9.0, other_echinoderm 0.2, bivalve 0.2, amphipod 2.3
+long_rough_dab     12.6  3.40  85.0  0.357  ICES-DB 1991 CSNS + NNS (PRE-2000); 109 fed, 448 g
+    crangonid 1.0, pandalid 6.6, nephrops 0.6, crab_hermit 23.7, other_decapod 3.8, polychaete 3.5, ophiuroid 21.9, other_echinoderm 0.7, bivalve 28.2, other_mollusc 9.5, other_crust 0.4
+dab                 4.5  3.50  95.0  0.350  J: M&D 1991 (De Clerck & Torreele 1988) B 98.7 of which 'small mobile epifauna' 33 (that M&D group includes amphipods, infauna here); Crangon and hermit crabs in dab diets
+plaice              3.8  3.42  99.5  0.008  ICES-DB Skagerrak + box 2024; 246 fed, 765 g
+    crab_hermit 0.7, other_decapod 0.1, polychaete 12.2, ophiuroid 50.7, other_echinoderm 6.3, bivalve 29.5, amphipod 0.2, other_inv 0.2
+witch               1.7  3.00  99.6  0.050  J: Bergstad et al. 2003 Skagerrak: polychaetes dominate
+starry_ray          1.5  1.70  44.0  0.825  ICES-DB Skagerrak + box 2022-24; 74 fed, 174 g
+    crangonid 22.1, pandalid 1.2, crab_hermit 53.1, other_decapod 6.2, polychaete 8.6, amphipod 8.8
+hagfish             1.3  4.00  20.0  0.300  J: carrion + polychaetes; shrimp in Myxine guts
+grey_gurnard        0.9  3.20  30.0  1.000  ICES-DB CSNS 2022 (24 fed); 12 fed, 20 g
+    crangonid 8.4, other_decapod 91.6
+lemon_sole          0.9  4.32 100.0  0.050  J: Rae 1965 via FishBase: polychaetes, few crustaceans
+greater_weever      0.8  3.50  75.0  0.600  J: weevers take Crangon, mysids and small fish
+others              2.5  3.50  75.0  0.300  J: group mean
+GROUP epifauna share of benthos consumption (low J): 0.322
+GROUP epifauna share of benthos consumption (central): 0.338
+GROUP epifauna share of benthos consumption (high J): 0.357
+composition of the data species' benthos (consumption weighted, 0.87 of the weight):
+  EPI mysid 0.0, crangonid 0.8, pandalid 9.2, nephrops 4.1, crab_hermit 17.3, other_decapod 3.5  = 34.8
+  INF polychaete 29.0, ophiuroid 21.4, other_echinoderm 3.1, bivalve 6.6, other_mollusc 1.9, amphipod 0.9, other_crust 1.9, other_inv 0.2  = 65.2

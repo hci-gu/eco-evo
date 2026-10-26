@@ -90,10 +90,6 @@ class TensorEcosystem:
         self.pair_access = (
             tensor(env.access_mat)[None, :, :, None]
             if getattr(env, "_has_pair_access", False) else None)
-        # ``predator_share`` as a cap on the eat share (min(eat, phi)).
-        self.share_cap = (
-            tensor(env.share_cap_mat)[None, :, :, None]
-            if getattr(env, "_has_share_cap", False) else None)
         # Daylight calendar (section 137). ``light_obs`` is F per year
         # tick (the extra observation channel), ``light_mult`` the
         # (T, D, G) attack-rate multiplier, None when no pair is
@@ -672,8 +668,6 @@ class TensorEcosystem:
                 raise ValueError("light_index is required with ingestion_q10")
             rate = rate * self.ingestion_temp[light_index.reshape(-1)][:, :, None, None]
         eat = actions[:, :, 5:]
-        if self.share_cap is not None:
-            eat = torch.minimum(eat, self.share_cap)
         demand = b_dm[:, :, None] * eat * rate * hunger[:, :, None]
         if pair_visible is not None:
             # Per-predator bound: no predator may demand more than the

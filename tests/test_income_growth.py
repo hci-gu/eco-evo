@@ -171,7 +171,7 @@ def test_refusals():
         EcosystemEnvironment(dict(height=1, width=1), groups)
     project = yaml.safe_load(PROJECT.read_text(encoding="utf-8-sig"))
     for sid, extra, match in (
-            ("benthic_community", {}, "not a decision"),
+            ("benthic_infauna", {}, "not a decision"),
             ("zooplankton", {}, "growth_q10"),
             ("planktivorous_fish", {"starve_rate": 0.0}, "starve_rate"),
             ("planktivorous_fish", {"r_max": 0, "feeding_season_months": 5.5}, "r_max")):

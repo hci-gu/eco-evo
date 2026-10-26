@@ -19451,3 +19451,301 @@ remain open exactly as described in 71.9 / 71.11.
     before (209.5); pytest 1481 passed / 12 skipped; train.py
     1-generation smoke run OK. Checkpoints stay loadable (no observation
     change) but were trained with the old benthos.
+
+219 FIX73 VERDICT (2026-10-25)
+================================================================
+219.1 fix73 (train_gpu, pzbpgp248nsrpfix73, from scratch on the 209
+    world, --warmup-days 60, 1x16 tanh, lr 0.06, sigma 0.1, 32 deltas,
+    1 world, 1460-tick episodes, --resume restarts at updates 446 and
+    475; the 20:46 restart moved the GPU training world to the 218
+    benthos). Analysed on a frozen copy of the 20:29 checkpoint (gen 9,
+    ~update 470), trained on the 209-217 world, run in the 218 world.
+    No code or library change.
+    - In-training eval (one year, seed 20260530): end ratios flat since
+      ~gen 4 (benthivores ~1.0, predators 0.94-0.97, planktivores
+      0.87-0.95, porpoises 0.91-1.05, seals ~1.02, benthos 0.954).
+      Plateaued, as fix72 (206.1). The gen 8-9 reward dip is noise
+      (within-generation std 0.3-0.6 on means of ~-0.2; zooplankton
+      +/-1.5, bimodal by the random start day). Zooplankton
+      survival_ticks ~510 is the 0.3 x b0 bound in winter, not death.
+    - Frozen CPU probe validated: year 1 matches the GPU eval within
+      noise (ben 1.029 / 1.027, pred 0.966 / 0.961, plk 0.917 / 0.910,
+      benthos 0.954 / 0.955).
+219.2 12-year frozen probe (CPU, seeds 20260530 / 7; ratio to b0):
+    year 1: ben 1.03/1.04, pred 0.97/0.96, plk 0.92/1.07, porp
+    0.94/1.00, seal 1.03/1.00, benthos 0.954/0.954. Year 12: ben
+    1.39/1.39, pred 0.78/0.83, plk 0.73/0.94 (seed 20260530 min 0.65 at
+    year 9, recovering), porp 0.79/0.92, seal 1.24/1.22, benthos
+    0.79/0.78. Slowing by years 10-12 (ben +1-2 %/yr, benthos -1 %/yr,
+    seed-7 predators flat at 0.83-0.84). Plankton stable year to year.
+    - Benthos: realised M2 from benthivores 0.10 -> 0.17 /yr vs the
+      budget 0.0374 (3-4x). Benthivore diet 97 % benthos, Q/B 6.6 by
+      mass. The budget M2 implies Q/B ~2.5 on benthos, below maintenance
+      for a 97 % benthos diet (2100 MJ/t retained vs eat cost 7.2 MJ/t/
+      tick): the M2 number, not the policy, is inconsistent with the
+      engine. Knobs: benthos retained energy, eat cost / RM 3.6
+      (user's call).
+    - Benthivores grow toward K: realised M2 0.10-0.12 vs budget 0.22
+      (predators take 0.05 vs 0.18), realised F 0.11-0.13 vs 0.17
+      (trawl avoidance learned). s* = u + P/g = 0.736 (loaded g
+      0.0023534); at fill 0.71 production ~0.72 vs losses ~0.68 ->
+      +4 %/yr.
+    - Predators are not eaten down: M2 0.05-0.08 vs 0.107, F 0.14-0.15
+      vs 0.18. Production shortfall: s* 0.735 (g 0.0022808), fill
+      0.69-0.70 -> ~0.65 /yr vs losses ~0.69. Diet zooplankton 50 %,
+      planktivores 28 %, benthos 20 %, benthivores 2-3 %, Q/B 3.6. The
+      K loss relieves it as B falls. Answers the 209.5 flag: trained
+      predators do not crash, they settle near 0.8.
+    - Planktivores: M2 0.47-0.59 (predators 0.39-0.45, benthivores
+      0.07 -> 0.14 as benthivores grow); seed-dependent outcome. Their
+      M2 on zooplankton 3.0-4.0 /yr vs budget 1.6.
+    - Seals: 0 % planktivores (target 25 %, fix72 14-24 %), benthivores
+      66-84 %, +2 %/yr toward K 27 t, no starvation.
+    - Porpoises: planktivore share 45-48 % -> ~25 % (target 65 %), rest
+      demersal fish; starvation 0.02-0.11 /yr; seed-dependent (0.79 vs
+      0.92 at year 12).
+219.3 a17_score (frozen fix73, seed 20260530, 3 yr after 1 burn-in;
+    library AND policies changed since 206.1, not a policies-only
+    comparison): column 0.34 (fix72 0.49), zooplankton 0.62 r +0.91
+    (1.03), PP 78.3 g C (70.8), f 0.39 (0.54, now in range), surface
+    nitrate 2.02 (0.32), deep nitrate 0.48 (1.01), surface C 1.25 r
+    +0.31 (1.24, r +0.68).
+    - Zooplankton is the hub: mean 5.1 t/km2 vs design B* 9.76, Apr-May
+      8-12 vs A17 19-26; fish M2 on it 3.7-4.8 /yr vs 1.73 budgeted
+      (planktivores Type II: per-capita M2 rises as it falls).
+      Microzooplankton is not grazed down in summer (3-6.5 t/km2 vs
+      0.02-0.2 in fix72), the mixed-layer producer stays at 6-11 ug C/l
+      and surface nitrate at 3-4.7 umol/l Apr-Aug (A17 0.1).
+    - Not separated: (a) the 209 zooplankton M1 rebalance (library),
+      (b) the from-scratch zooplankton policy. Cheap check: if fix72's
+      policy_zooplankton.pth has the same input width, it can init the
+      zooplankton alone.
+    - Microzooplankton's manifest start (1440 t) is 7-10x below the
+      model's own level (~2.9 t/km2); start and spawn range to revisit.
+219.4 Open (user's call): benthivore -> benthos M2 0.0374 vs the
+    engine's energetics; predator -> benthivore M2 0.18 realised at
+    ~1/4; fish M2 on zooplankton ~2x budget; seal and porpoise diets
+    off target; zooplankton library vs policy. More generations are
+    unlikely to move the fish; the zooplankton might.
+    Probe: tools/probes/frozen_years.py (`run CKPT SEED YEARS OUT.json`:
+    per-year start/end/mean biomass, booked losses, pair intake, reserve
+    fill; `show OUT.json ...`: the tables of 219.2 incl. realised M2).
+    Reruns of one seed differ slightly (porpoises ~3 % in year 1, the
+    rest < 0.5 %; thread count). Output JSONs were session scratch.
+
+220 FISH ATTACK RATES FROM ENCOUNTER THEORY (2026-10-25/26)
+================================================================
+220.1 Why (user): after 219 the question was whether the fish pairs'
+    attack rates, handling times, dark ratios and temperature terms had
+    been calibrated after the 209 split. Handling times, SMR, Q10, t_ref
+    and layers were re-derived per species in 209; every fish pair's a
+    was the inherited 0.04 ("cannot be derived", 209.3/209.6, "settle it
+    in a probe"). User correction: setting a from the model's outcome is
+    not biology-first - derive it from biology, test it on independent
+    field data, never fit it to the model.
+220.2 Research (three subagents + two capped gap searches; main-agent
+    summary research_notes/"Attackrater ur motesteori" (Swedish letters)/
+    summary.md; data/ ~420 MB of downloads, not for commit; Holmes 1979
+    restricts publication of derived values, Braaten & Gokstad 1980 is
+    cite-with-consent). Engine meaning: a = area cleared per tonne of
+    FORAGING predator (inside phi) per 6 h tick, km2/t/tick, annual mean
+    over the daylight multiplier.
+    - Encounter models: pi R^2 v p (3-D, R by light and prey size,
+      Gerritsen-Strickler relative speed) over the vertical overlap,
+      or speed x path width x p (2-D benthos); N/t from the NS-IBTS
+      length structure; herring filtering separately (dark only).
+    - Central (MC 5-95 %): planktivores -> zoo 0.007 (0.0018-0.016) with
+      all-fish echo overlaps; benthivores -> benthos 0.26 (0.12-0.63),
+      -> planktivores 0.016 (0.0013-0.069), -> predators 0.022 (0.0018-
+      0.089); predators -> planktivores 0.0056 schooling / 0.012
+      dispersed, -> zoo 0.0015 (0.0009-0.0054), -> benthos 0.030, ->
+      benthivores 0.18 (0.058-0.65). Pelagic-prey pairs 2-27x below
+      0.04 and no longer saturated; benthic pairs saturated either way.
+    - Dominant uncertainties: reactive distance in dim water (never
+      measured for adult herring or any predatory member), capture
+      success on fish prey, the light profile at depth, where foraging
+      fish sit relative to the prey.
+    - Validation (not used to set a): Rindorf & Gislason 2005 half-
+      saturation -> a 0.0063 (passes, but 0.0005-0.10 after three
+      judgement conversions), Type II, fish eaten at dawn and dusk;
+      gadoid prey imply predators -> benthivores ~0.03 (vs 0.18, weak);
+      Persson 2012 / Holmes 1979 support the benthos value; Engelhard
+      2008 0.012-0.035 matches the dispersed predator variant;
+      Arrhenius & Hansson YOY herring favour R proportional to length.
+    - Re-runs: benthivore fish pairs at Kd 0.25 (top 20 m; Arst 1993
+      0.20 vs Aas 2014 0.30): 0.019 / 0.026 (x1.19; scripts/
+      benth_encounter.py kd_top argument). Planktivores with the
+      foraging-fish overlap (herring and sprat O = 1.0, 0.7-1.2, J;
+      scripts/planktivores_a.py --foraging-overlap): 0.017 (0.0039-
+      0.032), night/day 0.02 (0.008-0.08), half detection at sun ~0 deg;
+      R proportional to length gives 0.0135.
+220.3 Decisions (user: "Folj rekommendationerna"):
+    1. a per foraging fish (foraging-fish overlap on the planktivore
+       pair). 2. Prey refuges and schooling are the prey's learned hide
+       action and visibility floor, not a (dispersed predator variant;
+       zooplankton floor 0.5 kept). 3. Vertical overlap inside a on the
+       benthivore fish pairs, predator_share = gape capability. 4. The
+       zooplankton pool stays the A17 resident copepods (no krill).
+    5. Derived night/day ratios; thresholds 0 deg on the planktivore and
+       bottom pairs, -5 kept on the predator pairs (not re-derived).
+    6. Annual time-mean a. 7. Kd 0.25. 8. Saturated pairs and the
+       predators -> benthivores conflict: derived values, conflict noted.
+220.4 Applied, fg_library.yaml (pair max_intake_rate; dark_ratio /
+    light_threshold_deg): planktivores -> zoo 0.017 (0.02 / 0; was 0.25
+    / -8); benthivores -> benthos 0.26, -> planktivores 0.019 (0.06 / 0;
+    was 0.6 / -5), -> predators 0.026 (0.10 / 0, new); predators ->
+    planktivores 0.012 (0.35 / -5; was 0.6), -> zoo 0.002 (0.5 / -5,
+    new), -> benthos 0.030, -> benthivores 0.18 (0.6 / -5, new). Species
+    max_intake_rate 0.04 kept (no checked fish pair uses it). Derived
+    growth rates unchanged (the budget is paid at the Holling ceilings).
+    AGENTS.md section 5; tests/test_half_saturation.py (the fallback test
+    now removes an override on a copy; new tests lock the eight rates and
+    the light settings, incl. 0.0 deg read as a threshold; the GPU engine
+    takes the CPU light table).
+    No observation change: checkpoints load, but the world changed.
+220.5 Checks: budget_gate every pair and predator ok; pytest 1483
+    passed / 12 skipped; train.py and train_gpu.py 1-generation smoke
+    runs OK.
+220.6 Diagnostic only (frozen fix73 policies, trained at a 0.04, 3
+    years, seed 20260530; tools/probes/frozen_years.py), end/b0 years
+    1/2/3 vs the 219 probe: predators 0.66/0.48/0.39 (was 0.97/0.95/
+    0.95), starvation 0.08-0.11 /yr, fill 0.59-0.61 (was 0.70), Q/B 3.6
+    -> 3.2, diet zoo 47 -> 28-30 %, planktivores 37 %, benthos 29-31 %;
+    porpoises 0.87/0.62/0.60 (starvation 0.05-0.33, predators in their
+    diet 29 -> 11 %); planktivores 0.85/0.84/0.89 (was 0.92/0.84/0.79;
+    M2 by predators 0.40 -> 0.22); benthivores, seals, benthos as before.
+    The policies were trained where the zooplankton pair saturated; the
+    verdict needs a retrain (--init-from fix73). Structural note: s* and
+    g are paid at the Holling ceilings (160), so lowering a moves the
+    realised fill, not g - a predator whose prey pairs are density-
+    dependent cannot reach the ideal fill the budget assumes. Also
+    open: predators' M2 0.13 and phi 0.48 on zooplankton assume krill.
+220.7 How binding is phi (tools/probes/frozen_years.py now meters the
+    eat share against every predator_share < 1; optional LIBRARY arg;
+    frozen fix73, seed 20260530, 2 years; the meter leaves the dynamics
+    bit-identical). Biomass-weighted eat share on the prey before the
+    cap / share of predator biomass at >= 0.9 phi / above phi, old
+    library (the one fix73 was trained in), year 2:
+    - benthivores -> benthos phi 0.9: 0.90 / 0.91 / 0.59 (total eat
+      0.98): binding, but lifting it moves the diet from 98 % benthos
+      to ~100 %. -> planktivores 0.31: 0.08 / 0.003; -> predators 0.1:
+      0.001 / 0: inert - the caps are not what keeps the benthivores
+      off fish.
+    - predators -> planktivores 0.53: 0.46 / 0.42 / 0.10; -> zooplankton
+      0.48: 0.41 / 0.37 / 0.14; -> benthos 0.145: 0.09 / 0.14 / 0.09:
+      binding for ~40 % (pelagic) and ~15 % (benthos) of the biomass;
+      -> benthivores 0.29: 0.02 / 0.01: inert. Wasted eat share 0.2-1.3 %
+      (the policies learned to sit at the caps).
+    - New library (220.4): predators -> zooplankton less pressed (0.36 /
+      0.26), predators -> benthos more (0.10 / 0.21-0.23 / 0.14-0.15):
+      as the zooplankton return fell the predators pushed into the
+      benthos and planktivore caps. The caps therefore likely add to the
+      predators' starvation in the new world (fill 0.60). Without phi
+      the saturated, never-depleting accessible benthos (f a fixed share
+      of B) is open to them: that, not the cap, is the missing
+      mechanism.
+
+221 BENTHOS SPLIT: INFAUNA AND MOBILE EPIFAUNA; PREDATOR_SHARE REMOVED (2026-10-26)
+================================================================
+221.1 Why: 220.7 showed phi binding only on the predators, and that
+    removing it would open the benthos to them: accessible_fraction is a
+    fixed share of the whole community's biomass, recomputed every tick,
+    so the part a predator can reach never depletes on its own (it is
+    refilled from the infauna, max surplus ~33 t/km2/yr, against shrimp
+    and mysid production of ~1-3). User: "Implementera losning 1. Ta
+    sedan bort phi helt." (Swedish letters dropped).
+221.2 Research (one subagent, biology only; research_notes/"Infauna och
+    rorlig epifauna" (Swedish letters)/params_split.md, scripts/, tables/;
+    reused 207/217/218 and the 220 encounter scripts):
+    - Infauna (benthic_community, id kept): B* 110 / 55 at 100 / 300 m
+      (Josefson 1990), r_max 1.0, E 2600 MJ/t (AFDW/WW x kJ/g AFDW,
+      Ricciardi & Bourget 1998, Steimle & Terranova 1985; shells
+      included), trawl kill d 0.06 x SAR 0.75 = 0.136 /yr (Hiddink et al.
+      2017 pooled d; the 0.10 was a gear-geometry scaling for the pooled
+      community), M2 benthivores 0.029, equilibrium share 0.840, K 131.0
+      / 65.5, start 337 000 t.
+    - mobile_epifauna (new NDM): Nephrops 0.60, crabs/hermits/Munida 0.26
+      (2.0 t/km2: the North Sea proxy 0.76 raised by mass balance of the
+      measured crab consumption; bottom-up variant start 23 900 t),
+      northern shrimp 0.07, small shrimps 0.04, mysids 0.03; grid mean
+      7.63 t/km2; r_max 0.70 (the single logistic matching the sum of the
+      taxon K); E 3750; trawl catch 0.67 + kill of the uncaught 0.37
+      t/km2/yr = 0.136 /yr; M2 0.177; share 0.643; six-row depth K
+      (81: 14.31, 123: 10.77, 173: 12.27, 221: 17.43, 272: 9.38, 387:
+      3.75; the two-row line put too little at 200-300 m); start 27 900 t.
+    - Pairs (diet share; M2; assimilation; h; a; f): benthivores ->
+      infauna 0.511; 0.029; 0.7; 95.9; 0.25; 0.2. benthivores ->
+      epifauna 0.209; 0.141; 0.8; 138.4; 0.44; 0.31. predators ->
+      epifauna 0.072; 0.036; 0.8; 147.1; 0.33 (no capability scores);
+      0.13. Predators -> infauna 3.9 % of the diet: unchecked.
+      Planktivores, seals, porpoises: no benthic pairs. No dark_ratio
+      (f is a time mean over Nephrops emergence). All Type II.
+221.3 Applied: fg_library.yaml (both species defs with sources, pairs,
+    observes: benthivores both groups, predators epifauna only;
+    bottom_trawling tables 0.003082 / 0.003093 at 100; every
+    predator_share key deleted; derived growth rates re-stored:
+    benthic_community 0.00070479452, mobile_epifauna 0.00060068493,
+    benthivorous_fish 0.0023533833 -> 0.0021816966 (the ideal intake is
+    now the best pair at the whole eat share), predatory_fish
+    0.0022807808 -> 0.0022805371). mareld2.yaml non_decision_makers
+    (337 000 / 27 900 t, +/-25 %). i18n FG and species names, api.py,
+    frozen_years.py codes. AGENTS.md sections 4 and 5. The predator_share
+    mechanism stays in both engines, inert at 1. Tests: GPU spawn 11 FGs,
+    habitat (both groups' start totals), depth-map editor rows, growth
+    sync (no cap), pair shares (no phi in the library), the 220 rate
+    lock, growth-budget hand-set list (microzooplankton only).
+    Convention change: both benthic groups now carry r_max and a derived
+    growth rate. Section 136 had removed r_max from the benthos at the
+    user's request (back to the pre-129 hand-set state, not a technical
+    reason); 207 and 218 have since put literature K and r on it.
+221.4 Checks: budget_gate every pair and predator ok (benthivores worst
+    quality 1820 MJ/t on the infauna); pytest 1484 passed / 12 skipped;
+    train.py and train_gpu.py 1-generation smoke runs OK. Viability eat
+    arm (20x20, colocated, seed 20260530): 300 ticks every fish group,
+    seals, porpoises, infauna and epifauna PASS (epifauna eq/spawn
+    0.87), plankton FAIL as before. 3 years: benthivores 0.195,
+    epifauna 0.81 (min 0.72), infauna 0.99; predators, planktivores,
+    seals and porpoises fail - the same pattern as the pre-221 library
+    in the same rig (benthivores 0.26, seals and porpoises extinct a
+    little later): the hand-coded arm, not the world (VIABILITY.md 6).
+221.5 State: uncommitted. Every checkpoint is invalid (FG set and
+    observation layout changed); the next run trains from scratch.
+    Open: Aphrodita (sea mouse, a surface polychaete, ~36 % of Skagerrak
+    cod's benthos) is infauna under the rule - moving it would raise the
+    epifauna diet share to ~0.36; the crab stock rests on mass balance;
+    one logistic for Nephrops and northern shrimp; the accessible share of
+    the epifauna is a fixed share of a pool that is 60 % Nephrops in
+    burrows, so eaten shrimp and crabs are refilled from it each tick
+    (bounded: surplus ~1.3 t/km2/yr vs a budgeted demand ~1.4) - the
+    epifauna is the first thing to read after training; the energetics gap of
+    219 (benthivore realised intake 2-4x the budget M2) now lands on the
+    epifauna pool; the id benthic_community could be renamed
+    benthic_infauna (mechanical, ~30 files); the inert phi code could be
+    stripped.
+
+222 PREDATOR_SHARE CODE STRIPPED; benthic_community RENAMED benthic_infauna (2026-10-26)
+================================================================
+222.1 User: "Ta bort den overksamma phi-koden ocksa och byt namn till
+    Benthic infauna" (Swedish letters dropped).
+222.2 predator_share removed from the code: InteractionMatrices.share_cap
+    and env.share_cap_mat / _has_share_cap (interactions.py, state.py),
+    the eat cap in predation.py and lib/gpu/ecosystem.py, the cap in the
+    viability rig's saturating share, the field help, and the 220.7 cap
+    meter in tools/probes/frozen_years.py. growth_budget.ideal_intake is
+    the best checked pair at the whole eat share. A library pair that
+    still carries predator_share is REFUSED with a ValueError (no silent
+    ignore). accessible_fraction keeps pair_share and its parity tests.
+    tests/test_pair_shares.py rewritten (refusal, best-pair ideal intake,
+    accessible fraction, inert at 1, GPU parity).
+222.3 Rename: the id benthic_community -> benthic_infauna (display name
+    "Benthic Infauna") in fg_library.yaml (species, pairs, observes,
+    impacts), mareld2.yaml, lib/viz/i18n.py, api.py (the old API name is
+    kept as an alias), tools/probes/frozen_years.py, the four tools/
+    make_*deck*.py, AGENTS.md, CURRENTS.md and the tests (viewer code
+    now "bi"). Not renamed: mareld_resume.txt history, VIABILITY.md
+    result tables, reports/ and research_notes/ (they describe the
+    pooled group of their time).
+222.4 Checks: pytest 1483 passed / 12 skipped; budget_gate every pair
+    ok; train.py and train_gpu.py 1-generation smoke runs OK (GPU
+    rewards identical to the 221 smoke run); viability 300 ticks eat arm
+    identical to 221.4. Checkpoints stay invalid (221.5).
