@@ -898,6 +898,9 @@ class FGConfigApp:
             ("Max Carrying Capacity (ton/cell)", "max_carrying_capacity", "entry", 0.0, 100000.0),
             ("Energy Content (MJ/ton)", "energy_content", "entry", 0.0, 10000.0),
             ("Seed Rate (fraction of cc/{tick})", "seed_rate", "entry", 0.0, 1.0),
+            # Benthic refuge with exchange (section 223.12).
+            ("Exposed Share phi (refuge: accessible part, 0-1; 0 = no refuge)", "exposed_share", "entry", 0.0, 1.0),
+            ("Refuge Exchange Rate k (1/{tick}; relaxes the accessible part to phi B)", "refuge_exchange_rate", "entry", 0.0, 10.0),
             # Light-limited growth on the daylight calendar (section 138).
             ("Light Saturation I_k (umol photons/m2/s; 1 or 12 monthly values; 0 = off)", "light_saturation", "entry", 0.0, 5000.0),
             ("Light Reference Day (day of year Max Growth applies; 0 = 105, mid April)", "light_reference_day", "entry", 0.0, 365.0),
@@ -4568,6 +4571,7 @@ class FGConfigApp:
         "income_growth_kappa", "feeding_season_months",
         "regional_carrying_capacity",
         "mortality_regeneration", "egestion_regeneration",
+        "natural_mortality", "exposed_share", "refuge_exchange_rate",
     })
 
     @staticmethod
@@ -4583,6 +4587,32 @@ class FGConfigApp:
             return float(old) == float(new)
         except (TypeError, ValueError):
             return old == new
+
+    @classmethod
+    def _update_mapping(cls, target, values):
+        """Make the mapping ``target`` equal ``values`` in place.
+
+        Unchanged values are left alone, so the comments a ruamel
+        round-trip document hangs on them survive (a rebuilt block lost
+        them) and ``7.80`` is not rewritten as ``7.8``. Nested mappings
+        are updated the same way; keys not in ``values`` are removed.
+        """
+        for key in [k for k in target if k not in values]:
+            del target[key]
+        for key, value in values.items():
+            old = target.get(key)
+            if isinstance(value, dict) and isinstance(old, dict):
+                cls._update_mapping(old, value)
+                continue
+            if (isinstance(value, (list, tuple)) and isinstance(old, (list, tuple))
+                    and len(old) == len(value)
+                    and all(cls._same_value(o, v) for o, v in zip(old, value))):
+                continue
+            if (key in target and not isinstance(value, (dict, list, tuple))
+                    and not isinstance(old, (dict, list, tuple))
+                    and cls._same_value(old, value)):
+                continue
+            target[key] = value
 
     def _merge_species_entry(self, target, config, original_keys, is_dm):
         """Write ``config`` into the library entry ``target`` in place.
@@ -4671,6 +4701,18 @@ class FGConfigApp:
                     q10 = 0.0
                 if q10 > 0.0 and q10 != 1.0:
                     config[key] = "annual_mean"
+            elif key in ("exposed_share", "refuge_exchange_rate"):
+                # Benthic refuge (section 223.12): an empty or 0 Exposed
+                # Share means no refuge, and neither key is written; the
+                # pair is checked once both fields are read, below.
+                try:
+                    config[key] = float(val) if val not in (None, "") else 0.0
+                except (TypeError, ValueError):
+                    messagebox.showerror(
+                        "Invalid value",
+                        f"Field '{key}' is not a valid number: {val!r}. "
+                        "No changes were saved.")
+                    return
             elif key == "water_layer":
                 # Section 180: 'mixed' is the default and is not written.
                 layer = str(val or "").strip().lower()
@@ -4987,6 +5029,25 @@ class FGConfigApp:
 
         # Sync remaining fields with global library - in place, so the
         # entry keeps its comments and untouched number formatting.
+        refuge_off = False
+        if not is_dm:
+            phi = float(config.get("exposed_share", 0.0) or 0.0)
+            refuge_off = phi == 0.0
+            if refuge_off:
+                config.pop("exposed_share", None)
+                config.pop("refuge_exchange_rate", None)
+            elif not 0.0 < phi < 1.0:
+                messagebox.showerror(
+                    "Invalid value",
+                    "Exposed Share: strictly between 0 and 1 (the "
+                    "accessible part of the biomass), or 0 / empty for no "
+                    "refuge. No changes were saved.")
+                return
+            elif float(config.get("refuge_exchange_rate", 0.0) or 0.0) < 0.0:
+                messagebox.showerror(
+                    "Invalid value",
+                    "Refuge Exchange Rate: 0 or more. No changes were saved.")
+                return
         if "species_definitions" not in self.global_library:
             self.global_library["species_definitions"] = {}
         species_defs = self.global_library["species_definitions"]
@@ -5000,6 +5061,9 @@ class FGConfigApp:
         # table has to leave the library entry too.
         if not is_dm and "capacity_depth_table" not in config:
             target.pop("capacity_depth_table", None)
+        if refuge_off:
+            target.pop("exposed_share", None)
+            target.pop("refuge_exchange_rate", None)
         self.current_fg_configs[fg_id] = target
 
         # ``energy_gain`` är legacy och varken läses av runtime
@@ -5774,7 +5838,11 @@ class FGConfigApp:
             except ValueError as exc:
                 messagebox.showerror("Water temperature", str(exc))
                 return False
-        sim["temperature"] = block
+        if isinstance(sim.get("temperature"), dict):
+            # In place, so the comments in the manifest's block survive.
+            self._update_mapping(sim["temperature"], block)
+        else:
+            sim["temperature"] = block
         self.project_data["simulation_settings"] = sim
         return True
 

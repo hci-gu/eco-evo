@@ -20098,3 +20098,22 @@ remain open exactly as described in 71.9 / 71.11.
       fast) as the next mechanism for the field feeding level; the
       armour factor on crustacean h; the infauna exposed_share component
       (Amphiura tip 1-5 % of body mass, phi 0.185 -> ~0.168 at 100 m).
+
+223.16 FG editor synced with 223 (user, 2026-10-26). A round trip of
+      every group through fgconfig.py on copies of the library and
+      mareld2.yaml showed the editor in step: the shown derived g equals
+      the library's for all 13 groups, the benthivores pass the energy
+      gate with prey_includes_reserve, depth K and equilibrium previews
+      come from habitat.py, the bottom layer parses, and no value moves on
+      save. Three fixes: (1) the NDM panel has Exposed Share and Refuge
+      Exchange Rate fields with hover help; 0 / empty removes both keys,
+      phi outside (0, 1) or k < 0 is refused; (2) natural_mortality,
+      exposed_share and refuge_exchange_rate are optional-zero keys, so
+      Apply no longer writes natural_mortality: 0.0 onto the benthic
+      groups; (3) the project save updates the temperature block in place
+      (_update_mapping), so its comments and number formatting survive (it
+      rebuilt the block and lost the bottom layer's source note). Left as
+      they were: derived g written at 6 significant figures, ruamel's
+      line wrapping of long flow lists, the group lists re-sorted on save.
+      Tests: test_fgconfig_preserves_library (+4), test_fgconfig_growth_sync
+      (refuge fields); pytest 1505 passed, 12 skipped.

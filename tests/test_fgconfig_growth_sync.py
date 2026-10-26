@@ -87,3 +87,39 @@ def test_live_interactions_overlay_handling_time(app):
     var.set("")
     lib_value = app.global_library["interaction_definitions"][key]["handling_time"]
     assert app._live_interactions()[key]["handling_time"] == lib_value
+
+
+def test_refuge_fields_round_trip(app, monkeypatch):
+    """Exposed Share and Refuge Exchange Rate (section 223.12): shown,
+    validated, written, and an emptied share removes the refuge."""
+    from tkinter import messagebox
+    shown = []
+    monkeypatch.setattr(type(app), "save_yaml", lambda self, data, path: None)
+    for name in ("showinfo", "showwarning", "showerror"):
+        monkeypatch.setattr(messagebox, name,
+                            lambda title, msg, *a, **k: shown.append(title))
+    monkeypatch.setattr(messagebox, "askokcancel", lambda *a, **k: True)
+    entry = app.global_library["species_definitions"]["benthic_infauna"]
+
+    def select():
+        ids = [fg["group_id"] for fg in app.project_data["non_decision_makers"]]
+        app.ndm_listbox.selection_clear(0, "end")
+        app.ndm_listbox.selection_set(ids.index("benthic_infauna"))
+        app.on_fg_select("non_decision_makers")
+
+    v = app.ndm_prop_vars
+    select()
+    assert float(v["exposed_share"].get()) == pytest.approx(entry["exposed_share"])
+    v["exposed_share"].set("1.0")
+    app.apply_fg_changes()
+    assert shown[-1] == "Invalid value"
+    assert entry["exposed_share"] == pytest.approx(0.2)
+    select()
+    v["exposed_share"].set("0.25")
+    app.apply_fg_changes()
+    assert entry["exposed_share"] == pytest.approx(0.25)
+    select()
+    v["exposed_share"].set("")
+    app.apply_fg_changes()
+    assert "exposed_share" not in entry
+    assert "refuge_exchange_rate" not in entry

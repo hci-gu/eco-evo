@@ -645,6 +645,28 @@ FIELD_HELP = {
         "capacity_depth_table and a project depth map uses the table "
         "instead; this value is then only the fallback (section 207)."
     ),
+    "exposed_share": (
+        "Exposed Share phi (0-1, non decision makers; 0 / empty = no "
+        "refuge).\n\n"
+        "Splits the biomass B per cell into an accessible part A and a "
+        "refuge B - A out of the predators' reach: infauna in the top "
+        "centimetres of the sediment versus deep burrowers and the arm "
+        "tips and siphons that regrow below. Predation, the functional "
+        "response and the predators' observations see A only; trawl and "
+        "M1 take A and the refuge alike. Each part grows logistically on "
+        "its own share of K (phi K and (1 - phi) K), so the group's "
+        "derived growth holds. Infauna 0.2 (Dauwe et al. 1998; section "
+        "223.12). Starting at A = phi B."
+    ),
+    "refuge_exchange_rate": (
+        "Refuge Exchange Rate k (per tick; needs an Exposed Share).\n\n"
+        "How fast the accessible part A relaxes back towards phi B: each "
+        "tick A <- phi B + (A - phi B) exp(-k), before growth. 1/k is the "
+        "refill time of a cropped layer (regrowing arm tips and siphons, "
+        "settlers growing out of reach). 0 = no exchange; very large = a "
+        "fixed accessible fraction phi. Annual rate = 1460 * k at 6 h "
+        "ticks; infauna 2.5 /yr (0.0017 per tick), section 223.12."
+    ),
     "accessible_fraction": (
         "Accessible fraction f of a predation pair (0-1], edited in "
         "fg_library.yaml.\n\n"

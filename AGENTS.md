@@ -95,7 +95,8 @@ fabricates mass.
   `refuge_exchange_rate` 2.5 /yr relaxes A towards 0.2 B, each part
   logistic on its own K; predation, the Holling term and the
   observations see A only - `lib/environments/ecosystem_env/refuge.py`,
-  both engines, tests/test_refuge.py),
+  both engines, tests/test_refuge.py; both keys are fields in the FG
+  editor's NDM panel, 0 / empty = no refuge),
   `mobile_epifauna` (section 221 split it out of the benthos so the prey
   the fish take can be depleted; since 223.15 (E1) the EXPOSED taxa only:
   crabs, hermit crabs and Munida 2.45, northern shrimp 0.56, small shrimps
