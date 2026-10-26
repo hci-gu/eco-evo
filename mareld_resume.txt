@@ -20117,3 +20117,11 @@ remain open exactly as described in 71.9 / 71.11.
       line wrapping of long flow lists, the group lists re-sorted on save.
       Tests: test_fgconfig_preserves_library (+4), test_fgconfig_growth_sync
       (refuge fields); pytest 1505 passed, 12 skipped.
+
+223.17 Viewer diet line fitted to the panel (user, 2026-10-26): the
+      benthivores' five prey ("re/ia/pf/rk/ha = 38/31/21/8/2%", 30
+      characters) ran past the 196 px panel edge. _fit_diet_text keeps
+      the old form when it fits, else pairs code and share ("re38 ia31
+      pf21 rk8 ha2%"), else drops the smallest shares with a trailing
+      "+"; measured with the panel font, so wider panels keep the old
+      form. tests/test_viz_abbrev.py (+3).

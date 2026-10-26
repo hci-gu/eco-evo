@@ -4737,6 +4737,28 @@ class LiveVisualizer:
         # Singular → första + sista bokstaven.
         return word[0] + word[-1]
 
+    @staticmethod
+    def _fit_diet_text(codes, pcts, fits) -> str:
+        """The diet line for prey ``codes`` with shares ``pcts`` (largest
+        first), in the first form ``fits(text)`` accepts.
+
+        ``re/ia/pf = 38/31/21%`` as before; when that is wider than the
+        panel (the benthivores have five prey since section 223.15), the
+        pairs ``re38 ia31 pf21%``; when even that is too wide, the
+        smallest shares are dropped and a trailing ``+`` says so.
+        """
+        nums = [f"{p:.0f}" for p in pcts]
+        text = "/".join(codes) + " = " + "/".join(nums) + "%"
+        if fits(text):
+            return text
+        pairs = [c + n for c, n in zip(codes, nums)]
+        text = " ".join(pairs) + "%"
+        for k in range(len(pairs) - 1, 0, -1):
+            if fits(text):
+                return text
+            text = " ".join(pairs[:k]) + "% +"
+        return text
+
     @classmethod
     def _unique_abbrevs(cls, names) -> dict:
         """``_abbrev_fg`` per name, lengthened where two names collide.
@@ -4908,12 +4930,10 @@ class LiveVisualizer:
                                 abbrs = [self._fg_abbrev(pid)
                                          for pid, _ in items]
                                 pcts = [v / tot * 100.0 for _, v in items]
-                                diet_txt = (
-                                    "/".join(abbrs)
-                                    + " = "
-                                    + "/".join(f"{p:.0f}" for p in pcts)
-                                    + "%"
-                                )
+                                avail = self._panel_w - 2 * pad
+                                diet_txt = self._fit_diet_text(
+                                    abbrs, pcts,
+                                    lambda t: self._font.size(t)[0] <= avail)
                                 diet_surf = self._font.render(
                                     diet_txt, True, info_col)
                                 diet_y = loss_y + loss_surf.get_height()

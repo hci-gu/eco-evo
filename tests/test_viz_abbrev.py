@@ -78,3 +78,27 @@ def test_every_language_gives_unique_codes():
         names = [i18n.fg_name(lang, f) for f in FGS]
         codes = LiveVisualizer._unique_abbrevs(names)
         assert len(set(codes.values())) == len(FGS), (lang, codes)
+
+
+def _width_fits(n):
+    return lambda text: len(text) <= n
+
+
+def test_a_diet_line_that_fits_keeps_the_old_form():
+    text = LiveVisualizer._fit_diet_text(["bf", "plf", "prf"], [60, 25, 15],
+                                         _width_fits(40))
+    assert text == "bf/plf/prf = 60/25/15%"
+
+
+def test_five_prey_switch_to_pairs_when_too_wide():
+    """The benthivores' five prey (223.15) ran past the panel edge."""
+    codes, pcts = ["re", "ia", "pf", "rk", "ha"], [38, 31, 21, 8, 2]
+    assert len("re/ia/pf/rk/ha = 38/31/21/8/2%") > 28
+    text = LiveVisualizer._fit_diet_text(codes, pcts, _width_fits(28))
+    assert text == "re38 ia31 pf21 rk8 ha2%"
+
+
+def test_the_smallest_shares_drop_out_last():
+    codes, pcts = ["re", "ia", "pf", "rk", "ha"], [38, 31, 21, 8, 2]
+    text = LiveVisualizer._fit_diet_text(codes, pcts, _width_fits(18))
+    assert text == "re38 ia31 pf21% +"
