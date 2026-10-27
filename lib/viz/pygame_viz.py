@@ -1167,7 +1167,7 @@ class LiveVisualizer:
         self._capture_calls = 0
         self._playback_mode = "live"  # "live" | "paused" | "playing"
         self._playback_idx = 0
-        self._playback_fps = 10.0  # justerbar via knappar (1..60)
+        self._playback_fps = 60.0  # justerbar via knappar (1..60)
         self._playback_last_advance = 0.0
         self._playback_blink_until = 0.0
         self._playback_rects: list = []  # [(rect, action_name)]
@@ -3466,8 +3466,6 @@ class LiveVisualizer:
             self._playback_fps = max(1.0, self._playback_fps - 1.0
                                      if self._playback_fps <= 10
                                      else self._playback_fps - 5.0)
-        elif action == "to_live":
-            self._playback_mode = "live"
 
     def _maybe_render(self) -> None:
         now = time.monotonic()
@@ -3579,7 +3577,7 @@ class LiveVisualizer:
     def _draw_playback_bar(self) -> None:
         """Rita uppspelningskontroller under heatmap-griden.
 
-        Layout: [<<] [play/pause] [>>] [-]  speed=X fps  [+]   live/replay
+        Layout: [<<] [play/pause] [>>] [-]  speed=X fps  [+]   pause train
                 frame = i/N  (blinkar när ny film finns)
 
         Knapparna är gråa (disabled) medan en probe pågår
@@ -3594,10 +3592,11 @@ class LiveVisualizer:
 
         disabled = self._recording or not self._current_rollout
         # Blink-effekt på hela rad när ny rollout precis blivit klar och
-        # användaren ännu inte interagerat. Toggle 2 Hz.
+        # användaren ännu inte interagerat. Toggle 2 Hz. In any playback
+        # mode: a viewer that has scrubbed is paused on the new film's
+        # last frame, which looks the same as the old one's.
         blinking = (not disabled
-                    and self._playback_blink_until > time.monotonic()
-                    and self._playback_mode == "live")
+                    and self._playback_blink_until > time.monotonic())
         blink_on = blinking and (int(time.monotonic() * 2) % 2 == 0)
 
         # Knapp-spec: (label, action_id, width).
@@ -3610,16 +3609,6 @@ class LiveVisualizer:
             (f"{self._playback_fps:.0f} fps", None, 60),
             ("+", "speed_up", 24),
         ]
-        # ``live``/``replay``-knappen är bara meningsfull i train-läge,
-        # där en pågående probe-rollout kan "ta över" bufferten och
-        # användaren vill kunna hoppa tillbaka till live-vyn. Vid
-        # inferens finns ingen live-vy att återgå till — filmen ÄR
-        # rolloutten — så vi döljer knappen där.
-        if self.mode == "train":
-            buttons.append(
-                ("live" if self._playback_mode == "live" else "replay",
-                 "to_live", 56)
-            )
         # Paus/resume av själva träningsloopen visas endast i train-läge.
         # Vid inferens finns ingen träning att pausa — inference-loopen
         # är redan klar när ``wait_for_close`` körs och uppspelnings-

@@ -155,7 +155,6 @@ CATALOG = {
             "Probe-intervall{marker} = {value}",
         "Biomass scale = {value}x": "Biomassaskala = {value}x",
         # Playback bar.
-        "replay": "repris",
         "resume train": "fortsätt",
         "pause train": "pausa",
         "rec ({n})": "insp ({n})",
@@ -282,7 +281,6 @@ CATALOG = {
             "Intervallo sonde{marker} = {value}",
         "Biomass scale = {value}x": "Scala biomassa = {value}x",
         # Playback bar.
-        "replay": "replay",
         "resume train": "riprendi",
         "pause train": "pausa",
         "rec ({n})": "reg ({n})",

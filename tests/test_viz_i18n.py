@@ -136,8 +136,7 @@ def test_switching_language_moves_no_control(viz, lang):
 @pytest.mark.parametrize("lang", i18n.CODES)
 def test_playback_labels_fit_their_buttons(viz, lang):
     viz._lang = lang
-    for label, width in (("live", 56), ("replay", 56),
-                         ("resume train", 100), ("pause train", 100)):
+    for label, width in (("resume train", 100), ("pause train", 100)):
         assert viz._font.size(viz._t(label))[0] <= width - 4, (lang, label)
 
 

@@ -20228,3 +20228,16 @@ remain open exactly as described in 71.9 / 71.11.
       process (test_ctrl_c... failed ~1 in 15 runs). Now: terminate,
       then shutdown(wait=True) and let the manager thread reap; 0
       failures in 40 runs, end-to-end Ctrl+C still clean (~3 s).
+223.24 Training viewer playback bar (user, 2026-10-27). The live/replay
+      button is gone: between two recorded rollouts nothing feeds the
+      heatmaps (train.py calls update_biomass only inside the
+      evaluation rollout), so "live" was the film's last frame, the
+      same picture a scrubbed viewer is paused on when a new film
+      arrives. The 3 s new-film blink no longer needs the live mode
+      (a scrubbed viewer never got it, and without the button could
+      never get back to live). Playback starts at 60 fps (was 10; the
+      +/- buttons still span 1-60). "pause train" stays.
+      tests/test_viz_playback.py (2). Also: the probe viability table
+      puts a space before every year column - '.3g' can be 8 wide
+      (7.27e-07) and ran into its neighbour in a smoke run;
+      tests/test_training_progress.py (+1).

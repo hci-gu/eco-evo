@@ -280,6 +280,13 @@ def test_extinction_anywhere_fails_and_has_no_margin():
     assert "worst: a +0.48 to floor" in format_viability(ok)[0]
 
 
+def test_table_columns_never_run_together():
+    # '.3g' of a collapsing group is 8 wide (7.27e-07): seen in a smoke run.
+    v = probe_viability({"a": yearly(0.396, 0.00125, 7.27e-7)}, 1, YEAR)
+    row = format_viability(v)[2]
+    assert "0.396 0.00125 7.27e-07" in " ".join(row.split())
+
+
 def test_only_complete_years_are_scored():
     assert probe_viability({"a": yearly(1)[:YEAR]}, 1, YEAR) is None
     one = probe_viability({"a": yearly(1, 0.2)[:YEAR + 5]}, 1, YEAR)

@@ -220,11 +220,12 @@ def format_viability(viability, step=None, number=None):
              f"V={score} (worst: {worst_label(v)}; probe years {yrs})"]
     width = max(len(f) for f in v["groups"])
     n = max(len(g["annual_mean"]) for g in v["groups"].values())
-    head = "".join(f"{'y' + str(i + 1):>7}" for i in range(n))
+    # A space before every column: '.3g' can be 8 wide (7.27e-07).
+    head = "".join(f" {'y' + str(i + 1):>7}" for i in range(n))
     lines.append(f"  {'fg':<{width}}{head}  drift     min  margin  bound    note")
 
     for f, g in v["groups"].items():
-        means = "".join(f"{'-' if m is None else format(m, '.3g'):>7}" for m in g["annual_mean"])
+        means = "".join(f" {'-' if m is None else format(m, '.3g'):>7}" for m in g["annual_mean"])
         note = "FAIL" if not g["viable"] else ""
         if g["years_to_floor"] is not None and g["years_to_floor"] <= FLOOR_NOTE_MAX_YEARS:
             note = (note + ", " if note else "") + f"floor in ~{g['years_to_floor']:.0f} yr"
