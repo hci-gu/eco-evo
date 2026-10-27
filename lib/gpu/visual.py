@@ -62,6 +62,10 @@ class GPUTrainingVisualizer:
         self.directory = directory
         self.probed = False
         self.rnd_mode = str(getattr(args, "rnd_baseline", "none") or "none").lower()
+        # The status row shows T only when a temperature schedule is set;
+        # at the default (1.0 throughout) it is noise.
+        self.show_temperature = (float(getattr(args, "temp_start", 1.0)) != 1.0
+                                 or float(getattr(args, "temp_end", 1.0)) != 1.0)
         try:
             # Reuse the CPU CLI's complete probe (maps, controls, playback and
             # plots). Guard its legacy module-level no-grad setting on import.
@@ -189,8 +193,9 @@ class GPUTrainingVisualizer:
             step = trainer.iterations_completed
             for fid, reward in rewards.items():
                 self.viz.update_reward(fid, reward, step=step)
-            extra = {"gen": generation + 1, "iter": iteration + 1,
-                     "T": snapshot.softmax_temperature}
+            extra = {"gen": generation + 1, "iter": iteration + 1}
+            if self.show_temperature:
+                extra["T"] = snapshot.softmax_temperature
             # The status row follows every update, probe or not.
             self.viz.update_status(**extra)
             # The "Evaluation probe interval" slider paces this probe too.

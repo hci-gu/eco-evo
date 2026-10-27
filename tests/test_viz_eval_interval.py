@@ -121,6 +121,7 @@ def test_gpu_viewer_skips_the_probe_between_intervals(monkeypatch, tmp_path):
                               update_status=lambda **extra: status.append(extra["iter"]),
                               get_eval_interval=lambda: 10)
     gpu.directory, gpu.rnd_mode, gpu.probed = tmp_path, "none", False
+    gpu.show_temperature = False
     gpu.builder = SimpleNamespace(PROBE_SEED=1)
     gpu.probe = lambda *a, **k: calls.append(k["viz_step"])
     gpu.pump = lambda: None

@@ -2578,8 +2578,14 @@ def main(argv=None, *, on_step=None, confirm=True):
             frac = min(1.0, gen / max(1, anneal_n - 1)) if anneal_n > 1 else 1.0
             T = float(args.temp_start + (args.temp_end - args.temp_start) * frac)
             trainer.softmax_temperature = T
+            # The viewer and the generation header show T only when a
+            # temperature schedule is set; at the default (1.0 throughout)
+            # it is noise.
+            viz_T = ({"T": T} if (args.temp_start != 1.0 or args.temp_end != 1.0)
+                     else {})
             _elapsed = _fmt_elapsed(_time.monotonic() - _training_start_ts)
-            print(f"\n========== Generation {gen+1}/{gen_label_total} (T={T:.3f}) ({_elapsed}) ==========")
+            _T_label = f" (T={T:.3f})" if viz_T else ""
+            print(f"\n========== Generation {gen+1}/{gen_label_total}{_T_label} ({_elapsed}) ==========")
             # Step 2: WorldList must be populated before world[0] can be
             # installed. ``_refresh_world_list_if_needed(gen)`` returns
             # True on the first iter of each generation (both policies),
@@ -2625,7 +2631,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                     # updated theta. log10(bh/b0) per FG; JSONL row + compact
                     # stdout line. Fixed seed -> only policy varies across iters.
                     if viz is not None:
-                        viz.update_status(gen=gen + 1, iter=i + 1, T=T)
+                        viz.update_status(gen=gen + 1, iter=i + 1, **viz_T)
                     if probe_due(viz, completed_steps, first=not probed):
                         probed = True
                         try:
@@ -2688,7 +2694,7 @@ def main(argv=None, *, on_step=None, confirm=True):
                         # updated theta. log10(bh/b0) per FG; JSONL row + compact
                         # stdout line. Fixed seed -> only policy varies across iters.
                         if viz is not None:
-                            viz.update_status(gen=gen + 1, iter=i + 1, T=T)
+                            viz.update_status(gen=gen + 1, iter=i + 1, **viz_T)
                         if probe_due(viz, completed_steps, first=not probed):
                             probed = True
                             try:
