@@ -20241,3 +20241,166 @@ remain open exactly as described in 71.9 / 71.11.
       puts a space before every year column - '.3g' can be 8 wide
       (7.27e-07) and ran into its neighbour in a smoke run;
       tests/test_training_progress.py (+1).
+223.25 fix77 analysis at update ~350 (2026-10-27; analysis only, no
+      library, manifest or code change). fix77 = train_gpu,
+      pzbpgp248nsrpfix77, on the 223.15 library (unchanged since
+      2026-10-26 17:24), --warmup-days 60, 1x16 tanh, lr 0.06, sigma
+      0.1, 16 deltas, 1 world, 1460-tick episodes, --eval-every 10;
+      resumed at updates 213 and 262. Frozen copy of the policies
+      03:24 (~update 356), tools/probes/frozen_years.py 3 years, seed
+      20260530; year 1 matches the GPU long-run probe exactly (ben
+      0.545, pred 0.744, plk 1.265).
+    - What 223 fixed (vs fix76, 223.2-223.3): mobile epifauna holds
+      at 0.74/0.68/0.68 (end/b0, years 1-3; fix76 0.09 by year 8),
+      infauna 0.98-1.01, Nephrops 1.01-1.04, predators level off at
+      0.66 instead of collapsing, porpoises ~1.0. The benthic refuge
+      and E1 work; the cascade moved up one trophic level.
+    - What fails: benthivores 0.545/0.353/0.247, seals 0.93/0.84/0.43
+      (starvation 0.07 -> 0.65 /yr in year 3; benthivores are 65-73 %
+      of their diet). The benthivore loss is INSIDE the one-year
+      training horizon (fix76 gen 9: ben 1.07 after year 1), so the
+      horizon argument of 223.6 does not explain it.
+    - It is predation, not food: benthivore fill 0.71-0.73,
+      starvation <= 0.009 /yr. Year 3 losses 0.58 predation + 0.33
+      natural (M1 0.29 + regional K loss) + 0.15 trawl = 1.06 /yr
+      against a gross production ceiling r_max + M1 + budget M2 =
+      0.31 + 0.29 + 0.22 = 0.82. The gap is the predators' realised
+      M2 on benthivores, 0.65 (year 1) / 0.48 (year 3) vs 0.18 in
+      the library, plus seals 0.06-0.09 vs 0.035.
+    - Both fish diets are off the budget's diet (budget shares =
+      library M2 x start density):
+      predators budget plk 47, zoo 36, ben 8, epi 8 %; realised
+      epi 60 -> 51, plk 15 -> 36, ben 17 -> 8, zoo 7 -> 6 % (Q/B
+      4.1 -> 3.6); realised M2 on epifauna 0.79 -> 0.57 vs 0.076,
+      on planktivores 0.17 -> 0.21 vs 0.5.
+      benthivores budget infauna 54, epi 30, plk 12 % (Q/B 4.46);
+      realised infauna 87 -> 78, epi 8 -> 18, plk 0 % (M2 0.003 vs
+      0.245), Q/B 6.5-6.6.
+      The predators feed on the bottom rather than in the pelagic:
+      a x visible B is ~0.13 x 0.29 x 3.8 = 0.14 on epifauna vs
+      0.012 x 3.3 = 0.04 on planktivores and 0.002 x 9.8 = 0.02 on
+      zooplankton. Per the rule (parameters from biology, not fit) no
+      a is to be moved to this outcome; the realised diets fail the
+      independent field-diet test (60 % crabs/shrimps is implausible
+      for saithe/whiting/mackerel/hake), so the open question is which
+      derivation makes the bottom pay better than the pelagic (pred
+      -> epi e 0.39 / f 0.29, or the low pelagic a 0.012 and the
+      mackerel zoo a 0.002). User's call.
+    - Viability score: 12/12 viable, V +0.04, bound by phytoplankton
+      at 0.11x start with drift 1.00 - the calibration-fact case of
+      223.18, says nothing about the fish. The operational worst is
+      benthivores (drift 1.49, floor in ~2.7 yr).
+    - Training: the benthivores' year-3 probe ratio wanders 0.3-0.6
+      with no trend since update ~60 and fell 0.61 -> 0.25 over
+      updates 270-350 (lowest since ~30); benthivore and predator
+      rewards flat at about -0.2 since update ~100. A plateau by
+      judgement, not proof (fix76 still learned between gen 5 and 9);
+      whether fix77 keeps running is the user's call.
+    - To check: zooplankton swings 0.04 -> 2.08 of start within every
+      probe year (annual mean ~0.66, hidden by the annual score);
+      worth an a17_score run on these policies.
+    - fix77 stopped by the user at update 402 (2026-10-27 ~04:50).
+      Last probes (year-end ratios, years 1-3): update 400 ben 0.69/
+      0.53/0.43, pred 0.66/0.52/0.48, seals 0.96/0.93/0.90 - the
+      benthivores back up from 0.25 at 350-370, the predators down
+      (0.66 -> 0.48), inside the 0.3-0.6 band the benthivores have
+      wandered in since update ~60; no trend. a17_score on the update
+      ~356 copy (seed 20260530, 3 yr after 1 burn-in): column 0.60
+      (r +0.66), zooplankton 0.90 (r +0.79), surface C 1.00, PP 79.1,
+      f-ratio 0.45 - plankton as fix76 gen 9 (223.4). The zooplankton
+      swing above is the seasonal cycle (0.23 -> 20 t/km2; A17 0.18 ->
+      26): spring early (Feb-Mar 1.4/4.1 vs 0.18/1.6), Apr-May low,
+      autumn ends early (Nov 0.59 vs 3.5). Mixed-layer nitrate stays
+      3.8/3.1/2.2 umol/l in Apr-Jun (A17 0.1-0.3) while surface C is
+      2-5x low: the producer is grazed down, not nutrient limited.
+    - Next (user, 2026-10-27): the predator split (research_notes/
+      "Rovfiskens uppdelning", 223.8) is re-derived on the 223.15
+      library by a research agent (params_split_223.md,
+      summary_223.md); retrain from scratch after the user's decision.
+223.26 Predator split G1 built (user, 2026-10-27; uncommitted).
+    Research: research_notes/"Rovfiskens uppdelning" (Swedish letters)
+    params_split_223.md, summary_223.md (section 6 = the decisions),
+    scripts/*_223.py, tables/*_223*: the 223.8 split re-derived on the
+    223.15 library by a research agent (no model output set a value).
+    - Decisions (user, interactive): G1 by diet; ids `whiting` (bed,
+      new) + `predatory_fish` kept for the water column (its meaning
+      changes: whiting is out of it); benthivores -> whiting M2 0.345
+      (223.10's whole 0.128 x 1.20 flow; cod's fish prey in the pool is
+      whiting; SMS has cod on whiting at 0.05); the whole-group attack-
+      rate convention library-wide; the Bjornsson anchor x1.30 on both
+      predator ceilings (as the benthivores in 223.15); whiting on the
+      `bottom` layer with its SMR re-read there, the benthivores' SMR
+      re-read in the same step; water-column K 2.14 (central saithe F);
+      seals spawn on benthivores + both predator groups;
+      FollowDemersalFish = benthivores + whiting.
+    - Attack-rate convention (params_split_223.md section 5): the engine
+      computes demand = B_pred x eat x hunger x a fB/(1 + a h fB + wB)
+      with no phi since 221, so a is per tonne of the WHOLE group; the
+      220 "per capable tonne" values over-credited by 1/phi. Applied:
+      benthivores -> planktivores 0.019 -> 0.0062 (x phi 0.32),
+      benthivores -> (whiting) 0.026 -> 0.0026 (x phi 0.10); the pooled
+      predator pairs are replaced by the split's layer values.
+    - Build: research_notes/"Rovfiskens uppdelning"/scripts/
+      build_split_223.py (text edits, comments kept; reproduces the live
+      library and manifest byte for byte from the 223.25 state).
+      Fields: whiting r 0.49, M1 0.25, K 0.533, RM 3.87 (4.2 at 8.37 C
+      re-read at 7.40 C), ceiling 31.34, feeding_cost 2.19 (1.5 + 0.17 x
+      half the ceiling / RM; recomputed for the Bjornsson ceiling), lean
+      3900 + reserve 2000 at fill 0.45 (prey 4800), starve 0.0099,
+      visibility_floor 0.5; water column r 0.374, M1 0.261, K 2.14, RM
+      3.31, ceiling 32.71, feeding_cost 2.34, lean 4240 + 2600 at 0.5
+      (prey 5540), starve 0.0078, floor 0.7. Benthivores RM 3.6 -> 3.33.
+      Pairs (M2 / h / a / f / night-day): whiting -> plk 0.160 / 227.3 /
+      0.021 / - / 0.33; -> zoo 0.0544 / 143.6 / 0.0023 (encounter 0.0018
+      x Staniland 1.33, as the pooled pair) / - / 0.78; -> epifauna 0.069
+      / 119.7 / 0.27 / 0.29 / -; -> benthivores 0.0967 / 143.6 / 0.21 /
+      0.05 / 0.64. Water column -> plk 0.340 / 217.8 / 0.0117 / - /
+      0.39; -> zoo 0.0756 / 137.6 / 0.0006 / - / 0.30; -> benthivores
+      0.0833 / 137.6 / 0.053 / 0.24 / 0.48; -> whiting (new, booked;
+      was a within-group transfer) 0.157 / 146.7 / 0.0106 / 0.47 /
+      0.48. Benthivores -> whiting 0.345 / 183.3 / 0.0026 / - / 0.10 at
+      0 deg; benthivores -> predatory_fish unchecked. Seals -> whiting
+      0.013 (h 22.6, floor 0.85) / -> wc 0.0098 (26.1, 0.75); porpoises
+      -> whiting 0.019 (floor 0.75) / -> wc 0.0063 (0.9). Unchecked: wc
+      -> epifauna (0.007; the point of the split), both -> infauna /
+      Nephrops, whiting -> wc, cannibalism. Every fish -> fish pair Type
+      II. M2 sums kept on planktivores 0.50, zooplankton 0.13,
+      benthivores 0.18, the predators as prey (seals, porpoises); the
+      epifauna lost 0.007 (g 0.0012027 -> 0.0011979, K table x0.9960 so
+      the equilibrium start stays 13 600 t).
+      Trawl tables at today's mean effort: bottom whiting F 0.075 / wc
+      0.213, pelagic 0.005 / 0.029 (sum = the pooled 0.162 / 0.020).
+    - Derived growth: whiting 0.0036742 (s* 0.737; gross 1.27 /yr),
+      predatory_fish 0.0024482 -> 0.0014966 (s* 0.798), benthivores
+      0.0021521 -> 0.0020533 (RM re-read), mobile_epifauna above; every
+      other group unchanged. budget_gate: every pair and predator ok
+      ("any diet"); cost/C whiting 0.338, water column 0.296.
+    - Manifest: decision_makers predatory_fish 2715 (1360-5430), whiting
+      1605 (800-3210); group_layers whiting bottom.
+    - Code / names: i18n FG_NAMES (Vitling / Merlano) and species (ling,
+      velvet belly, pollack); api.py alias `whiting`; frozen_years.py AB
+      'wht'; compare_scenarios.py list. No engine change: groups, the
+      observation layout and the DM count come from the yaml. Observes:
+      whiting sees epifauna, planktivores, zooplankton, benthivores, both
+      predator groups, seals, porpoises; the water column no longer sees
+      the epifauna; every DM that saw predatory_fish sees whiting too.
+      All checkpoints are invalid (one more DM and input slots); train
+      from scratch.
+    - Tests updated (the numbers, not the gates): test_fishing_maps (F
+      per group), test_gpu_impacts (whiting has a pelagic F),
+      test_gpu_spawn (13 FGs), test_half_saturation (rate lock and light
+      settings), test_regional_capacity (CAPPED), test_temperature
+      (fixture layers), test_viz_i18n (via the names).
+    - Diagnostic only (summary_223.md section 4): the split cuts the
+      linear access to the benthivores sum a f B_pred 0.0324 -> 0.0143,
+      but every predator -> benthivore pair stays saturated, so the take
+      per unit eat share falls only ~15 %; the policy's eat share remains
+      the limiter (223.25). What the split removes is the bed food of 63
+      % of the predator biomass.
+    - Validation: pytest 1527 passed / 12 skipped; py_compile OK;
+      train.py and train_gpu.py 1-generation smoke runs OK (both write
+      policy_whiting.pth). AGENTS.md sections 4-5 updated.
+    - Not done: an FG editor round trip (as 223.16) on the split
+      library. The data/ copies (fg_library_split.yaml,
+      mareld2_split.yaml) equal the live files at build time only; they
+      are build outputs, not a reference version.

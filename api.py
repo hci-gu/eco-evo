@@ -75,6 +75,8 @@ API_TO_INTERNAL_SPECIES = {
     "benthic_community": "benthic_infauna",
     "mobile_epifauna": "mobile_epifauna",
     "norway_lobster": "norway_lobster",
+    # Section 223.26: the bed-feeding predators split out of predatory_fish.
+    "whiting": "whiting",
 }
 
 # These scalar pressures can be represented by the current static impact-map

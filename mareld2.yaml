@@ -119,6 +119,8 @@ simulation_settings:
       microzooplankton: mean_0_50m
       benthivorous_fish: bottom
       predatory_fish: at_50m
+      # Section 223.26: whiting forages on the bed (J, as the benthivores).
+      whiting: bottom
 decision_makers:
   # Section 209: the fish are three feeding groups. Demersal levels are the
   # top of the long-run NS-IBTS span (2001-25, wing spread, q = 1, x 1.18):
@@ -129,10 +131,17 @@ decision_makers:
     initial_biomass_min: 2750
     initial_biomass_max: 11000
     inference_initial_biomass: 5500
+  # Section 223.26 (predator split G1): the 1.20 t/km2 predator level
+  # split by the long-run biomass shares: water column (predatory_fish)
+  # 0.754, whiting 0.446 t/km2; ranges x0.5-2.
   - group_id: predatory_fish
-    initial_biomass_min: 2150
-    initial_biomass_max: 8600
-    inference_initial_biomass: 4300
+    initial_biomass_min: 1360
+    initial_biomass_max: 5430
+    inference_initial_biomass: 2715
+  - group_id: whiting
+    initial_biomass_min: 800
+    initial_biomass_max: 3210
+    inference_initial_biomass: 1605
   - group_id: planktivorous_fish
     initial_biomass_min: 6000
     initial_biomass_max: 24000
@@ -259,7 +268,9 @@ spawn_templates:
         - name: benthivorous_fish
           weight: 1.0
           transform: linear
-        - name: predatory_fish
+        # Section 223.26: the bed-feeding fish; the water-column predators
+        # no longer follow the demersal pattern.
+        - name: whiting
           weight: 1.0
           transform: linear
 inference:

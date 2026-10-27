@@ -27,7 +27,7 @@ def main():
     hist_proj = run_sim(seed=2)
     
     # Compare specific species, e.g., porpoise (tumlare)
-    species = ['porpoises', 'benthivorous_fish', 'predatory_fish', 'planktivorous_fish']
+    species = ['porpoises', 'benthivorous_fish', 'predatory_fish', 'whiting', 'planktivorous_fish']
     
     plt.figure(figsize=(12, 8))
     for i, sp in enumerate(species):

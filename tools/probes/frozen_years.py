@@ -31,7 +31,7 @@ os.chdir(ROOT)
 TPY = 1460
 CELLS = 3600.0
 LOSS = ('loss_predation', 'loss_starvation', 'loss_natural', 'loss_impact')
-AB = {'benthivorous_fish': 'ben', 'predatory_fish': 'pred', 'planktivorous_fish': 'plk',
+AB = {'benthivorous_fish': 'ben', 'predatory_fish': 'pred', 'whiting': 'wht', 'planktivorous_fish': 'plk',
       'porpoises': 'porp', 'seals': 'seal', 'benthic_infauna': 'bent',
       'mobile_epifauna': 'epi', 'norway_lobster': 'neph',
       'phytoplankton': 'phy', 'subsurface_phytoplankton': 'sub',

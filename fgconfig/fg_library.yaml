@@ -388,25 +388,27 @@
     # 1.76 /yr against a stock-weighted literature P/B ~1.08: the M2 of the
     # booked prey (open flag).
     r_max: 1.14
-    growth_rate: 0.001202739726
+    growth_rate: 0.0011979452055
     # K = today's stock / equilibrium share 0.543 (trawl 0.186, M2 0.616),
     # rows fitted by non-negative least squares so the start map B*(c)
     # matches the members' depth structure (crabs 2:1 from 100 to 300 m,
     # northern shrimp peaking at 200-300 m, small shrimps and mysids flat)
     # under the effort map, total kept; rms 8 % of the mean.
+    # Section 223.26: rows x0.9960 so the equilibrium start total is kept
+    # (the water-column predators' M2 0.007 is unchecked since the split).
     capacity_depth_table:
       - depth_m: 81.0
-        capacity: 6.79
+        capacity: 6.76
       - depth_m: 123.0
-        capacity: 6.33
+        capacity: 6.30
       - depth_m: 173.0
-        capacity: 6.42
+        capacity: 6.39
       - depth_m: 221.0
-        capacity: 10.71
+        capacity: 10.67
       - depth_m: 272.0
-        capacity: 8.58
+        capacity: 8.55
       - depth_m: 387.0
-        capacity: 4.71
+        capacity: 4.69
     max_carrying_capacity: 7.1
     # 3.75 kJ/g WW as eaten (3.1-4.7; crustaceans with their shell; Lawson
     # et al. 1998 for northern shrimp); 3.74 recomputed on the E1 intake
@@ -604,9 +606,12 @@
     # Weighted SMR 3.0 MJ/t/tick at the 50 m layer (haddock 3.0, cod 3.7,
     # plaice 3.1, long rough dab 1.6, witch 1.5) x 1.2 routine at rest =
     # 3.6 (2.4-4.3). The old gadoid 6.0 was 1.5-2x the measured SMR.
-    resting_metabolism: 3.6
+    # Section 223.26: re-read at the bottom layer's annual mean (7.40 C
+    # vs at_50m 8.37 C; the group moved there in 223.15) with Q10 2.25:
+    # 3.6 x 2.25^((7.40 - 8.37)/10) = 3.33.
+    resting_metabolism: 3.33
     # Q10 haddock 2.5, cod 2.2 (Schurmann & Steffensen 1997), plaice 2.0
-    # (Fonds 1985). Read as the annual mean of the at_50m layer.
+    # (Fonds 1985). Read as the annual mean of the bottom layer (223.26).
     metabolism_q10: 2.25
     metabolism_t_ref: annual_mean
     # Haddock and cod 0.25 cells/tick, gurnard 0.2, flatfish and rays
@@ -643,7 +648,7 @@
     # 185 convention; B* = the user's long-run level, the top of the
     # 2001-25 span). Fragile: F/r = 0.55, and cod alone has F > r.
     regional_carrying_capacity: 3.39
-    growth_rate: 0.002152116224
+    growth_rate: 0.0020532778371
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -669,76 +674,75 @@
     extinction_threshold_factor: 0.5
   predatory_fish:
     display_name: "Predatory Fish"
-    # Display only (live viewer hover): the members and their long-run
-    # (NS-IBTS 2001-25) biomass shares, as in the comment below;
-    # research_notes/"Fiskgrupper i rutan"/tables/long_run_species_by_group.csv.
+    # Section 223.26 (predator split G1, user 2026-10-27): the WATER-COLUMN
+    # predators. Whiting, the bed feeder (91 % of the pooled group's
+    # epifauna flow), is its own group `whiting` below; this group keeps the
+    # id but no longer feeds on the bed (benthos 0.3-1 % of every member's
+    # diet). Display only (live viewer hover): the members and their
+    # long-run (NS-IBTS 2001-25) biomass shares.
+    # research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
     member_species:
-      - {name: saithe, share: 0.408}
-      - {name: whiting, share: 0.370}
-      - {name: mackerel, share: 0.080}
-      - {name: spurdog, share: 0.050}
-      - {name: horse mackerel, share: 0.034}
-      - {name: hake, share: 0.025}
-      - {name: anglerfish, share: 0.014}
-      - {name: others, count: 10, share: 0.019}
+      - {name: saithe, share: 0.651}
+      - {name: mackerel, share: 0.128}
+      - {name: spurdog, share: 0.08}
+      - {name: horse mackerel, share: 0.055}
+      - {name: hake, share: 0.04}
+      - {name: anglerfish, share: 0.022}
+      - {name: ling, share: 0.011}
+      - {name: velvet belly, share: 0.008}
+      - {name: pollack, share: 0.007}
     is_decision_maker: true
-    # Section 209: demersal and pelagic fish that feed mainly on fish and
-    # krill. Long-run (NS-IBTS 2001-25) biomass shares: saithe 0.41,
-    # whiting 0.37, mackerel 0.08, spurdog 0.05, horse mackerel 0.034,
-    # hake 0.025, anglerfish 0.014, ling, velvet belly, pollack. Saithe
-    # (Q3 on the trench slope) and mackerel (summer) are visitors; the
-    # closed pool charges them stock-level r and F, as herring. Every
-    # value is the biomass-weighted species value;
-    # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_predatory_fish.md and predators/.
-    # u 0.5: the engine convention (resume 187.4). The review's
-    # literature value 0.15 (liver minimum) would also move the hunger
-    # knee and the growth zero, which this engine ties to it.
+    # Section 209 / 223.26: demersal and pelagic fish that feed on fish and
+    # krill: saithe 0.65, mackerel 0.13, spurdog 0.08, horse mackerel
+    # 0.055, hake 0.04, anglerfish, ling, velvet belly, pollack. Saithe (Q3
+    # on the trench slope) and mackerel (summer) are visitors; the closed
+    # pool charges them stock-level r and F, as herring. Every value is
+    # the biomass-weighted species value (weighted_fields convention, 209).
+    # u 0.5: the engine convention (resume 187.4).
     maintenance_level: 0.5
-    # Liver / fat reserve: gadoid liver ~2000, mackerel ~6000, horse
-    # mackerel ~3800, spurdog ~2000, anglerfish 1500 -> 2400 (1800-3000).
-    max_energy_reserve: 2400.0
-    # Measured SMR at the at_50m annual mean 8.4 C: saithe 3.5, whiting
-    # 4.2, mackerel 3.4, spurdog 2.1, anglerfish 1.2 -> 3.64 (2.97-4.99).
-    resting_metabolism: 3.64
+    # Liver / fat reserve: saithe liver ~2000, mackerel ~6000, horse
+    # mackerel ~3800, spurdog ~2000 -> 2600 (1950-3250).
+    max_energy_reserve: 2600.0
+    # Measured SMR at the at_50m annual mean 8.37 C: saithe 3.5, mackerel
+    # 3.4, spurdog 2.1, anglerfish 1.2 -> 3.31 (2.8-5.0).
+    resting_metabolism: 3.31
     # Cod SMR 2.2-2.6, ICES gastric evacuation exponent 2.25, mackerel 2.0,
-    # spurdog 2.5-2.75 -> 2.3; annual mean of the at_50m layer.
+    # spurdog 2.5 -> 2.3; annual mean of the at_50m layer.
     metabolism_q10: 2.3
     metabolism_t_ref: annual_mean
     # Every member but anglerfish cruises 6-15 cells/tick (saithe Uopt
     # 1.4 BL/s, mackerel schools 0.44-0.72 m/s net); residence is
     # behaviour, not a speed limit.
     movement_speed: 1.0
-    # Routine 1.5 x SMR + SDA 0.17 of a typical intake = 2.1 x RM;
-    # cruising at Uopt 2-2.5 x SMR = 2.0 x RM.
-    feeding_cost: 2.1
+    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 32.71 (Bjornsson-
+    # anchored, 223.26) = 2.34 x RM; cruising at Uopt 2-2.5 x SMR = 2.0 x RM.
+    feeding_cost: 2.34
     movement_cost: 2.0
-    # Lean tissue as eaten (saithe 4.0, whiting 3.9, hake 3.7, mackerel
-    # 4.7, spurdog 6.0 kJ/g) = 4100; the liver / fat is eaten with the
-    # fish: at the reference fill 0.48 (weighted mean reserve 1140 MJ/t)
-    # the static quality is 4100 + 0.48 x 2400 = 5252 MJ/t.
-    energy_content: 4100.0
+    # Lean tissue as eaten (saithe 4.0, hake 3.7, mackerel 4.7, spurdog
+    # 6.0 kJ/g) = 4240; the liver / fat is eaten with the fish: at the
+    # reference fill 0.5 the static quality is 4240 + 0.5 x 2600 = 5540 MJ/t.
+    energy_content: 4240.0
     prey_includes_reserve: true
-    reserve_reference_fill: 0.48
+    reserve_reference_fill: 0.5
     min_split_biomass: 0.5
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
     # loader computes for mareld2.yaml (seabirds muted) with
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
-    # r_max: today's productivity (Euler-Lotka r_now): saithe 0.44,
-    # whiting 0.49, hake 0.26, mackerel 0.25, horse mackerel 0.33, spurdog
-    # 0.07, anglerfish 0.47, ling 0.55 -> 0.42 (0.36-0.44).
-    r_max: 0.42
-    # K = B* / (1 - F/r) = 1.20 / (1 - 0.182/0.42) = 2.12 t/km2 (B* = the
-    # top of the 2001-25 span). Per species F/r: saithe 0.68, mackerel
-    # 0.86, hake 1.04.
-    regional_carrying_capacity: 2.12
-    growth_rate: 0.0024482169414
-    # M1 = M0 + predation by groups NOT in the model: saithe 0.29, whiting
-    # 0.25, mackerel 0.15, spurdog 0.10, horse mackerel 0.30, hake 0.45,
-    # anglerfish 0.25 -> 0.26 /yr (0.19-0.31). Within-group predation
-    # (~0.07) is a transfer inside the pool and left out.
-    natural_mortality: 0.000176012
+    # r_max: today's productivity (Euler-Lotka r_now): saithe 0.44, hake
+    # 0.26, mackerel 0.25, horse mackerel 0.33, spurdog 0.07, anglerfish
+    # 0.47, ling 0.55 -> 0.374 (0.32-0.42).
+    r_max: 0.374
+    # K = B* / (1 - F/r) = 0.754 / (1 - 0.242/0.374) = 2.14 t/km2 (1.05-11;
+    # saithe F 0.11-0.38 drives it; the user chose the central value).
+    regional_carrying_capacity: 2.14
+    growth_rate: 0.0014965884949
+    # M1 = M0 + predation by groups NOT in the model: saithe 0.29,
+    # mackerel 0.15, spurdog 0.10, horse mackerel 0.30, hake 0.45,
+    # anglerfish 0.25 -> 0.261 /yr (0.18-0.30). Within-group predation
+    # (~0.035) is a transfer inside the pool and left out.
+    natural_mortality: 0.000179093
     max_intake_rate: 0.04
     spawn:
       mode: colony
@@ -748,15 +752,68 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    # ~0.009: the review's value (lean-tissue burn at an empty reserve,
-    # computed at its u 0.15); kept at u 0.5 as a starvation tolerance
-    # close to the benthivores' (judgement).
-    starve_rate: 0.0088
-    # Judgement: midwater schools of saithe and mackerel hide badly,
-    # whiting on the bed better.
-    visibility_floor: 0.6
-    # No field evidence of interference for saithe, whiting or mackerel
-    # (Rindorf et al. 2006: predator density did not affect intake).
+    # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
+    starve_rate: 0.0078
+    # Judgement: midwater schools of saithe and mackerel hide badly.
+    visibility_floor: 0.7
+    # No field evidence of interference for saithe or mackerel (Rindorf et
+    # al. 2006: predator density did not affect intake).
+    interference: 0.1
+    extinction_threshold_factor: 0.5
+  whiting:
+    display_name: "Whiting"
+    # Section 223.26 (predator split G1, user 2026-10-27): the BED-feeding
+    # predators = whiting alone (0.446 t/km2, 0.37 of the pooled group;
+    # 92 % of its benthos consumption). Resident all year, within ~5-30 m
+    # of the bed by day. research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
+    member_species:
+      - {name: whiting, share: 1.0}
+    is_decision_maker: true
+    maintenance_level: 0.5
+    # Gadoid liver ~2000 MJ/t (1500-2500).
+    max_energy_reserve: 2000.0
+    # SMR 4.2 (Steinhausen et al. 2005, attributed to 8.4 C) re-read at the
+    # bottom layer's annual mean 7.40 C with Q10 2.3: 3.87 (3.0-4.6).
+    resting_metabolism: 3.87
+    metabolism_q10: 2.3
+    metabolism_t_ref: annual_mean
+    # Uopt 1.0 BL/s = 5.8 cells/tick at 27 cm; not binding.
+    movement_speed: 1.0
+    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 31.34 (GER Cmax 96.4
+    # kJ/kg/d at 7.40 C x 1.30 Bjornsson re-anchoring, 223.26) = 2.19 x RM;
+    # cruising 2 x SMR.
+    feeding_cost: 2.19
+    movement_cost: 2.0
+    # Lean 3.9 kJ/g; the liver is eaten with the fish: at the reference
+    # fill 0.45 (mean reserve 900 / 2000) the static quality is 4800 MJ/t.
+    energy_content: 3900.0
+    prey_includes_reserve: true
+    reserve_reference_fill: 0.45
+    min_split_biomass: 0.5
+    # growth_rate is DERIVED by lib/world/growth_budget.py (see
+    # predatory_fish). r_max: whiting Euler-Lotka r_now 0.49 (0.44-0.49).
+    r_max: 0.49
+    # K = B* / (1 - F/r) = 0.446 / (1 - 0.08/0.49) = 0.533 t/km2 (0.48-0.68).
+    regional_carrying_capacity: 0.533
+    growth_rate: 0.0036742383864
+    # M1 = SMS residual M 0.20 + grey seal and birds 0.05 = 0.25 /yr
+    # (0.20-0.32). Booked on pairs: benthivores 0.345, predatory_fish
+    # 0.157, porpoises 0.019, seals 0.013; total M 0.78 vs SMS 0.685.
+    natural_mortality: 0.000171233
+    max_intake_rate: 0.04
+    spawn:
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
+    # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
+    starve_rate: 0.0099
+    # Judgement: whiting on the bed hide better than midwater schools.
+    visibility_floor: 0.5
+    # Rindorf et al. 2006: predator density not significant for whiting.
     interference: 0.1
     extinction_threshold_factor: 0.5
   porpoises:
@@ -910,6 +967,9 @@
           weight: 1.0
           transform: linear
         - name: predatory_fish
+          weight: 1.0
+          transform: linear
+        - name: whiting
           weight: 1.0
           transform: linear
     # 1.5 % of biomass per tick at an empty reserve: blubber lets a seal
@@ -1127,32 +1187,41 @@ interaction_definitions:
     # 0.0013-0.071). Was 0.04 inherited. Night/day 0.06; at 140 m the
     # light is too dim for the old -5 deg threshold.
     # research_notes/"Attackrater ur motesteori" (Swedish letters)/benthivores_encounter.md, summary.md.
-    max_intake_rate: 0.019
+    # Section 223.26: per WHOLE benthivore tonne (the engine has no phi
+    # since 221): 0.019 per capable tonne x the gape share 0.32 = 0.0062.
+    # research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md section 5.
+    max_intake_rate: 0.0062
     dark_ratio: 0.06
     light_threshold_deg: 0.0
-  # Section 209: the group's main prey. Ceiling: no lab Cmax exists for
-  # any member; the ICES gastric-evacuation model calibrated on the cod
-  # Cmax gives saithe 97, whiting 104, hake 114, mackerel 150 (13 C)
-  # kJ/kg/d -> 102 weighted = 25.5 MJ/t/tick; h = E_prey / 25.5.
-  # predator_share 0.53 (stage scores; removed in 221). M2 = Q/B 3.34 x 1.20 x diet
-  # share / 3.33 = 0.50 /yr (0.31-0.86; Norwegian-coast saithe diets,
-  # Norway pout and blue whiting heavy). Type II (Rindorf et al. 2006).
-  # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_predatory_fish.md.
+  # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
+  # no phi since 221; layer convention), h = E_prey / the group's ceiling
+  # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick).
+  # M2 = Q x diet share / prey B, scaled so the two groups add to the
+  # pooled pair. Type II (Rindorf et al. 2006). research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
+  # Water column on planktivores: diet share 0.52 (saithe on Norway pout
+  # and blue whiting, mackerel, hake on herring); a set by mackerel 0.49,
+  # saithe 0.33, horse mackerel 0.12. Night/day 0.39 derived.
   predatory_fish_preys_on_planktivorous_fish:
     preys_on: true
-    predation_mortality: 0.50
+    predation_mortality: 0.34
     assimilation_factor: 0.8
-    handling_time: 279.4
+    handling_time: 217.8
     visibility_floor: 0.25
     functional_response: 2
-    # Section 220: encounter theory on DISPERSED prey (schooling is the
-    # prey's hide action and visibility floor, not a): 0.012 (Engelhard
-    # 2008 0.012-0.035). Was 0.04 inherited. Night/day 0.35: fish are
-    # eaten mostly at dawn and dusk (Rindorf & Gislason 2005); the
-    # threshold was not re-derived.
-    # research_notes/"Attackrater ur motesteori" (Swedish letters)/predators_encounter.md, addendum_validation_behaviour.md.
-    max_intake_rate: 0.012
-    dark_ratio: 0.35
+    max_intake_rate: 0.0117
+    dark_ratio: 0.39
+    light_threshold_deg: -5.0
+  # Whiting on planktivores (adults on sprat, Norway pout, herring): diet
+  # share 0.28. Night/day 0.33 derived.
+  whiting_preys_on_planktivorous_fish:
+    preys_on: true
+    predation_mortality: 0.16
+    assimilation_factor: 0.8
+    handling_time: 227.3
+    visibility_floor: 0.25
+    functional_response: 2
+    max_intake_rate: 0.021
+    dark_ratio: 0.33
     light_threshold_deg: -5.0
   # Section 209: porpoise diet 0.65 planktivores, 0.15 benthivores, 0.20
   # predators (Skagerrak/Kattegat stomachs 1985-96; Ransijn et al. 2021
@@ -1181,15 +1250,23 @@ interaction_definitions:
     assimilation_factor: 0.85
     handling_time: 21.2
     visibility_floor: 0.85
-  # Section 209: 0.15 of the seal diet; M2 0.011 /yr. a 0.05 and the
-  # visibility floor are judgements.
+  # Section 209: 0.15 of the seal diet; split by member (223.26, J: whiting
+  # 0.44 of the seals' predator share). h = E_prey / 212.5; a 0.05 and
+  # the visibility floors are judgements (whiting on the bed 0.85).
   seals_preys_on_predatory_fish:
     preys_on: true
-    predation_mortality: 0.011
-    max_intake_rate: 0.05
+    predation_mortality: 0.0098
     assimilation_factor: 0.85
-    handling_time: 24.7
+    handling_time: 26.1
     visibility_floor: 0.75
+    max_intake_rate: 0.05
+  seals_preys_on_whiting:
+    preys_on: true
+    predation_mortality: 0.013
+    assimilation_factor: 0.85
+    handling_time: 22.6
+    visibility_floor: 0.85
+    max_intake_rate: 0.05
   seabirds_preys_on_planktivorous_fish:
     preys_on: true
     predation_mortality: 0.0236
@@ -1204,6 +1281,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   benthic_infauna_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthic_infauna_preys_on_whiting:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1275,6 +1356,11 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  # Whiting's infauna is 7.3 % of its diet (M2 0.0015): unchecked (221).
+  whiting_preys_on_benthic_infauna:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   # E1 (sections 223.12-223.15): the exposed taxa only, on the mass-balance
   # stocks (crabs 2.45, northern shrimp 0.56, small shrimps and mysids
   # 0.545, cephalopods and small demersal fish 0.23 t/km2). Diet share
@@ -1297,21 +1383,28 @@ interaction_definitions:
     handling_time: 143.2
     accessible_fraction: 0.62
     max_intake_rate: 0.15
-  # E1: whiting, hake and saithe on northern shrimp, small shrimps,
-  # mysids and small crabs: diet share 0.072 (benthos 0.11 x 0.65), 0.287
-  # t/km2/yr, M2 = flow / B* 3.78 = 0.076 (was 0.036 on the pooled 7.9);
-  # h = 3750 / 25.5 = 147.1; accessible 0.29 (northern shrimp 0.75, small
-  # shrimps and mysids 0.6, a quarter of the crabs at 0.6; 0.2-0.45, = the
-  # 0.13 of the pooled group); a = a_enc 0.33 per edible tonne (every
-  # member at its own encounter rate) x e 0.39 (0.31-0.49: whiting's crab
-  # window, Pandalus size) = 0.13 (section 223.15; research_notes/"Exponering av bottenbyten" (Swedish letters)). research_notes/"Havskrafta och exponerad epifauna" (Swedish letters).
+  # Section 223.26: the water-column group's epifauna (horse mackerel,
+  # mackerel, saithe traces; 1.2 % of its diet, M2 0.007) is UNCHECKED -
+  # the point of the split: 63 % of the predator biomass lost a bed food it
+  # does not use in the field. The flow becomes unresolved predation.
   predatory_fish_preys_on_mobile_epifauna:
+    preys_on: false
+    predation_mortality: 0.007
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # E1 exposed taxa: whiting on northern shrimp, small shrimps, mysids and
+  # small crabs: diet share 0.137, 0.256 t/km2/yr (91 % of the pooled
+  # flow), M2 0.069 on B* 3.78; accessible 0.29 (223.15); a = a_enc 0.69
+  # per edible tonne x e 0.39 (whiting's crab window and Pandalus size;
+  # research_notes/"Exponering av bottenbyten" (Swedish letters)) = 0.27,
+  # per whole whiting tonne. No dark_ratio. research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
+  whiting_preys_on_mobile_epifauna:
     preys_on: true
-    predation_mortality: 0.076
+    predation_mortality: 0.069
     assimilation_factor: 0.8
-    handling_time: 147.1
+    handling_time: 119.7
     accessible_fraction: 0.29
-    max_intake_rate: 0.13
+    max_intake_rate: 0.27
   # E1 (223.15): cod on emerged Nephrops (few haddock and long rough dab):
   # 1.5 % of the group's consumption (0.5-4.3 %) = 0.069 of the measured
   # epifauna diet, 0.103 t/km2/yr; cod 4.6 % of its intake (Dorman et al.
@@ -1341,54 +1434,95 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  # Section 223.26: whiting <= 0.55 % Nephrops (North Sea 1991, Q3-Q4),
+  # none in the Skagerrak: unchecked.
+  whiting_preys_on_norway_lobster:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   # Cannibalism stays out of the budget (section 160).
   benthivorous_fish_preys_on_benthivorous_fish:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  # Section 209: large cod and grey gurnard on whiting (predator_share
-  # 0.1, removed in 221). M2 0.085 /yr on predatory_fish.
-  # Section 223.9: M2 = Q/B 4.46 (the energy-budget 4.2 on the redistributed,
-  # lower-quality diet; 3.6-5.3) x 1.53 x share / prey mean; the 17.7 % of
-  # the diet without a pool redistributed (central): infauna 0.544,
-  # epifauna 0.314, planktivores 0.120, predators 0.023.
-  # research_notes/"Bentivorernas energi och diet" (Swedish letters).
-  # Section 223.15: h = 5252 / 26.18 (the benthivores' bottom-water ceiling).
+  # Section 223.26: cod's fish prey in the predator pool is whiting
+  # (Skagerrak 3.7 of 3.7 g per 100 g fish prey, box 10.3 of 10.3): the
+  # whole 223.10 pair moved to benthivorous_fish_preys_on_whiting.
   benthivorous_fish_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # Section 223.9 flow (Q/B 4.46 x 1.53 x share 0.023 = 0.154 t/km2/yr), all on
+  # whiting since 223.26: M2 = 0.154 / 0.446 = 0.345 /yr (user's choice over
+  # the SMS 0.05). h = 4800 / 26.18 (the benthivores' bottom-water ceiling).
+  # a per WHOLE benthivore tonne: 0.026 per capable tonne (220: large cod,
+  # starry ray, gurnard) x the gape share 0.10 = 0.0026 (no prey-side f
+  # carries the gape). Night/day 0.10 at 0 deg. research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
+  benthivorous_fish_preys_on_whiting:
     preys_on: true
-    predation_mortality: 0.128
+    predation_mortality: 0.345
     assimilation_factor: 0.8
-    handling_time: 200.6
+    handling_time: 183.3
     functional_response: 2
-    # Section 220: as the planktivore pair (near-bottom band, Kd 0.25):
-    # 0.026 (MC 5-95 % 0.0018-0.092); was 0.04. Night/day 0.10.
-    # research_notes/"Attackrater ur motesteori" (Swedish letters)/benthivores_encounter.md, summary.md.
-    max_intake_rate: 0.026
-    dark_ratio: 0.10
+    max_intake_rate: 0.0026
+    dark_ratio: 0.1
     light_threshold_deg: 0.0
-  # Section 209: whiting, saithe, hake, spurdog and anglerfish on
-  # juvenile haddock, cod and small flatfish: a learnable cross-group
-  # pair (unlike cannibalism). accessible_fraction 0.15: the prey-sized
-  # part of the benthivores. M2 = 0.18 /yr (0.09-0.51) from this
-  # group's diet; the SMS saithe + whiting flow on haddock alone (0.10)
-  # is the floor.
+  # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
+  # no phi since 221; layer convention), h = E_prey / the group's ceiling
+  # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick).
+  # M2 = Q x diet share / prey B, scaled so the two groups add to the
+  # pooled pair. Type II (Rindorf et al. 2006). research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
+  # Water column (saithe 0.77 of a, spurdog, anglerfish) on juvenile
+  # haddock, cod and small flatfish: accessible 0.24 (their gape, 19-45
+  # cm + 0-group). Night/day 0.48.
   predatory_fish_preys_on_benthivorous_fish:
     preys_on: true
-    predation_mortality: 0.18
+    predation_mortality: 0.0833
     assimilation_factor: 0.8
-    handling_time: 176.5
-    accessible_fraction: 0.15
+    handling_time: 137.6
+    accessible_fraction: 0.24
     functional_response: 2
-    # Section 220: encounter theory on the prey-sized benthivores: 0.18
-    # (MC 5-95 % 0.058-0.65); was 0.04. Conflict kept open: Rindorf &
-    # Gislason 2005 (gadoid prey, mixed) imply ~0.03, which would make the
-    # pair unsaturated. Night/day 0.6. research_notes/"Attackrater ur motesteori" (Swedish letters)/predators_encounter.md,
-    # addendum_validation_behaviour.md.
-    max_intake_rate: 0.18
-    dark_ratio: 0.6
+    max_intake_rate: 0.053
+    dark_ratio: 0.48
+    light_threshold_deg: -5.0
+  # Whiting on 0-group and small benthivores: accessible 0.05 (whiting
+  # gape ~12 cm + 0-group, J). Night/day 0.64.
+  whiting_preys_on_benthivorous_fish:
+    preys_on: true
+    predation_mortality: 0.0967
+    assimilation_factor: 0.8
+    handling_time: 143.6
+    accessible_fraction: 0.05
+    functional_response: 2
+    max_intake_rate: 0.21
+    dark_ratio: 0.64
     light_threshold_deg: -5.0
   # Cannibalism stays out of the budget (section 160).
   predatory_fish_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # Section 223.26: saithe 0.066, hake 0.044, spurdog 0.030, anglerfish and ling
+  # 0.017 /yr on whiting (SMS 2023 saithe on whiting 1+ 0.085 alone): a
+  # learnable cross-group pair, booked (it was a within-group transfer).
+  # accessible 0.47 (whiting below the members' gape). Night/day 0.48.
+  predatory_fish_preys_on_whiting:
+    preys_on: true
+    predation_mortality: 0.157
+    assimilation_factor: 0.8
+    handling_time: 146.7
+    accessible_fraction: 0.47
+    functional_response: 2
+    max_intake_rate: 0.0106
+    dark_ratio: 0.48
+    light_threshold_deg: -5.0
+  # Traces of hake / horse mackerel in whiting (M2 0.019): unchecked.
+  whiting_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  # Cannibalism stays out of the budget (section 160).
+  whiting_preys_on_whiting:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1400,11 +1534,19 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  whiting_preys_on_phytoplankton:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   benthivorous_fish_preys_on_porpoises:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   predatory_fish_preys_on_porpoises:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  whiting_preys_on_porpoises:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1416,11 +1558,19 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  whiting_preys_on_seabirds:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   benthivorous_fish_preys_on_seals:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   predatory_fish_preys_on_seals:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  whiting_preys_on_seals:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1432,21 +1582,27 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  # Section 209: krill for saithe, whiting and mackerel (predator_share
-  # 0.48, removed in 221). M2 0.13 /yr at the 9.72 t/km2 start (0.23 at ~5.5).
+  # Section 223.26: krill and copepods; a per whole tonne (layer) on the
+  # A17-calibrated pool. Water column: mackerel 0.49, saithe 0.28 of a;
+  # night/day 0.30. Open (209/220): the M2 assumes krill.
   predatory_fish_preys_on_zooplankton:
     preys_on: true
-    predation_mortality: 0.13
+    predation_mortality: 0.0756
     assimilation_factor: 0.8
-    handling_time: 176.5
-    # Section 220: encounter theory on the A17-calibrated pool (resident
-    # copepods, no krill; copepods are too small for particulate gadoids):
-    # 0.002 (0.0015 central, up to 0.0024 with whiting capture success on
-    # shrimp, Staniland 1995); was 0.04, which saturated the pair. Open:
-    # the M2 0.13 (and the removed predator_share 0.48) assume krill.
-    # Night/day 0.5. research_notes/"Attackrater ur motesteori" (Swedish letters)/predators_encounter.md, addendum_vision_light.md.
-    max_intake_rate: 0.002
-    dark_ratio: 0.5
+    handling_time: 137.6
+    max_intake_rate: 0.0006
+    dark_ratio: 0.3
+    light_threshold_deg: -5.0
+  # Whiting on krill and mysid-sized zooplankton: encounter 0.0018 x the
+  # Staniland 1995 capture factor on shrimp 1.33 (as the pooled pair, J)
+  # = 0.0023. Night/day 0.78.
+  whiting_preys_on_zooplankton:
+    preys_on: true
+    predation_mortality: 0.0544
+    assimilation_factor: 0.8
+    handling_time: 143.6
+    max_intake_rate: 0.0023
+    dark_ratio: 0.78
     light_threshold_deg: -5.0
   planktivorous_fish_preys_on_benthic_infauna:
     preys_on: false
@@ -1459,6 +1615,11 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   planktivorous_fish_preys_on_predatory_fish:
+    preys_on: false
+    predation_mortality: 0.0799
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  planktivorous_fish_preys_on_whiting:
     preys_on: false
     predation_mortality: 0.0799
     assimilation_factor: 1.0
@@ -1494,6 +1655,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   phytoplankton_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  phytoplankton_preys_on_whiting:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1534,15 +1699,22 @@ interaction_definitions:
     assimilation_factor: 0.84
     handling_time: 28.6
     visibility_floor: 0.75
-  # Section 209: 0.20 of the porpoise diet (whiting); M2 0.011. a 0.2 and
-  # the visibility floor are judgements.
+  # Section 209: 0.20 of the porpoise diet; split by member (223.26, J:
+  # whiting 0.64 of it). a 0.2 and the visibility floors are judgements.
   porpoises_preys_on_predatory_fish:
     preys_on: true
-    predation_mortality: 0.011
-    max_intake_rate: 0.2
+    predation_mortality: 0.0063
     assimilation_factor: 0.84
     handling_time: 28.6
     visibility_floor: 0.9
+    max_intake_rate: 0.2
+  porpoises_preys_on_whiting:
+    preys_on: true
+    predation_mortality: 0.019
+    assimilation_factor: 0.84
+    handling_time: 28.6
+    visibility_floor: 0.75
+    max_intake_rate: 0.2
   porpoises_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
@@ -1573,6 +1745,11 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   seabirds_preys_on_predatory_fish:
+    preys_on: false
+    predation_mortality: 0.0078
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  seabirds_preys_on_whiting:
     preys_on: false
     predation_mortality: 0.0078
     assimilation_factor: 1.0
@@ -1640,6 +1817,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   zooplankton_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  zooplankton_preys_on_whiting:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1763,9 +1944,8 @@ interaction_definitions:
     - value: 100.0
       biomass_factor: 0.00386304767
       energy_factor: 0.0
-  # Section 209: F 0.162 /yr (saithe 0.30, whiting 0.075, hake 0.27,
-  # ling 0.17, anglerfish ~0.08, spurdog 0.008; gillnet, longline and
-  # seine on this map).
+  # Section 223.26: water column F 0.213 /yr (saithe 0.30, hake 0.27, ling 0.17,
+  # anglerfish ~0.08, spurdog 0.008; gillnet, longline and seine on this map).
   predatory_fish_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
@@ -1773,7 +1953,17 @@ interaction_definitions:
       biomass_factor: 0.0
       energy_factor: 0.0
     - value: 100.0
-      biomass_factor: 0.00368125719
+      biomass_factor: 0.0048361803927
+      energy_factor: 0.0
+  # Section 223.26: whiting F 0.075 /yr.
+  whiting_impacted_by_bottom_trawling:
+    impact_affects: true
+    impact_table:
+    - value: 0.0
+      biomass_factor: 0.0
+      energy_factor: 0.0
+    - value: 100.0
+      biomass_factor: 0.0017042857351
       energy_factor: 0.0
   # Section 209: F 0.0004 /yr (industrial bycatch of haddock).
   benthivorous_fish_impacted_by_pelagic_trawling:
@@ -1785,8 +1975,8 @@ interaction_definitions:
     - value: 10.0
       biomass_factor: 0.000109755334
       energy_factor: 0.0
-  # Section 209: F 0.020 /yr (mackerel 0.21, horse mackerel 0.035 at
-  # their shares).
+  # Section 223.26: water column F 0.029 /yr (mackerel 0.21, horse mackerel
+  # 0.035 at their shares).
   predatory_fish_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
@@ -1794,7 +1984,17 @@ interaction_definitions:
       biomass_factor: 0.0
       energy_factor: 0.0
     - value: 10.0
-      biomass_factor: 0.00548776672
+      biomass_factor: 0.0079827776176
+      energy_factor: 0.0
+  # Section 223.26: whiting F 0.005 /yr (industrial bycatch).
+  whiting_impacted_by_pelagic_trawling:
+    impact_affects: true
+    impact_table:
+    - value: 0.0
+      biomass_factor: 0.0
+      energy_factor: 0.0
+    - value: 10.0
+      biomass_factor: 0.0013719416806
       energy_factor: 0.0
   benthivorous_fish_impacted_by_rotor:
     impact_affects: false
@@ -1802,10 +2002,16 @@ interaction_definitions:
   predatory_fish_impacted_by_rotor:
     impact_affects: false
     impact_table: []
+  whiting_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
   benthivorous_fish_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
   predatory_fish_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  whiting_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
   # Fishing (section 161). The impact value is fishing effort density in
@@ -1942,9 +2148,14 @@ interaction_definitions:
     observes: true
   predatory_fish_observes_benthic_infauna:
     observes: false
+  whiting_observes_benthic_infauna:
+    observes: false
   benthivorous_fish_observes_mobile_epifauna:
     observes: true
+  # Section 223.26: the water-column group has no epifauna pair any more.
   predatory_fish_observes_mobile_epifauna:
+    observes: false
+  whiting_observes_mobile_epifauna:
     observes: true
   # E1: the benthivores see both benthic crustacean groups; the predators
   # only the exposed one (no pair on Nephrops).
@@ -1952,44 +2163,70 @@ interaction_definitions:
     observes: true
   predatory_fish_observes_norway_lobster:
     observes: false
+  whiting_observes_norway_lobster:
+    observes: false
   benthivorous_fish_observes_benthivorous_fish:
     observes: true
   benthivorous_fish_observes_predatory_fish:
     observes: true
+  benthivorous_fish_observes_whiting:
+    observes: true
   predatory_fish_observes_benthivorous_fish:
     observes: true
+  whiting_observes_benthivorous_fish:
+    observes: true
   predatory_fish_observes_predatory_fish:
+    observes: true
+  predatory_fish_observes_whiting:
+    observes: true
+  whiting_observes_predatory_fish:
+    observes: true
+  whiting_observes_whiting:
     observes: true
   benthivorous_fish_observes_planktivorous_fish:
     observes: true
   predatory_fish_observes_planktivorous_fish:
     observes: true
+  whiting_observes_planktivorous_fish:
+    observes: true
   benthivorous_fish_observes_phytoplankton:
     observes: false
   predatory_fish_observes_phytoplankton:
+    observes: false
+  whiting_observes_phytoplankton:
     observes: false
   benthivorous_fish_observes_porpoises:
     observes: true
   predatory_fish_observes_porpoises:
     observes: true
+  whiting_observes_porpoises:
+    observes: true
   benthivorous_fish_observes_seabirds:
     observes: false
   predatory_fish_observes_seabirds:
     observes: false
+  whiting_observes_seabirds:
+    observes: false
   benthivorous_fish_observes_seals:
     observes: true
   predatory_fish_observes_seals:
+    observes: true
+  whiting_observes_seals:
     observes: true
   # Section 209: no zooplankton pair.
   benthivorous_fish_observes_zooplankton:
     observes: false
   predatory_fish_observes_zooplankton:
     observes: true
+  whiting_observes_zooplankton:
+    observes: true
   planktivorous_fish_observes_benthic_infauna:
     observes: false
   planktivorous_fish_observes_benthivorous_fish:
     observes: true
   planktivorous_fish_observes_predatory_fish:
+    observes: true
+  planktivorous_fish_observes_whiting:
     observes: true
   planktivorous_fish_observes_planktivorous_fish:
     observes: true
@@ -2009,6 +2246,8 @@ interaction_definitions:
     observes: true
   porpoises_observes_predatory_fish:
     observes: true
+  porpoises_observes_whiting:
+    observes: true
   porpoises_observes_planktivorous_fish:
     observes: true
   porpoises_observes_phytoplankton:
@@ -2026,6 +2265,8 @@ interaction_definitions:
   seabirds_observes_benthivorous_fish:
     observes: false
   seabirds_observes_predatory_fish:
+    observes: false
+  seabirds_observes_whiting:
     observes: false
   seabirds_observes_planktivorous_fish:
     observes: true
@@ -2045,6 +2286,8 @@ interaction_definitions:
     observes: true
   seals_observes_predatory_fish:
     observes: true
+  seals_observes_whiting:
+    observes: true
   seals_observes_planktivorous_fish:
     observes: true
   seals_observes_phytoplankton:
@@ -2062,6 +2305,8 @@ interaction_definitions:
   zooplankton_observes_benthivorous_fish:
     observes: false
   zooplankton_observes_predatory_fish:
+    observes: false
+  zooplankton_observes_whiting:
     observes: false
   zooplankton_observes_planktivorous_fish:
     observes: false

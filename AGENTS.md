@@ -65,7 +65,8 @@ fabricates mass.
 ## 4. Functional groups
 
 - Decision makers (have a policy net): `zooplankton`, `planktivorous_fish`,
-  `benthivorous_fish`, `predatory_fish`, `porpoises`, `seals`, `seabirds`.
+  `benthivorous_fish`, `predatory_fish`, `whiting`, `porpoises`, `seals`,
+  `seabirds`.
   `mareld2.yaml` mutes only `seabirds`. Since section 209 the fish are
   three feeding groups (were `pelagic_fish` + `gadoids`; every value a
   biomass-weighted species value, research_notes/"Fiskgrupper i rutan"):
@@ -74,10 +75,17 @@ fabricates mass.
   flatfish (1.53 t/km2); predators = saithe, whiting, mackerel,
   spurdog, hake (1.20 t/km2) - the demersal levels are the top of the
   long-run NS-IBTS span (2001-25, user's choice; the old 0.69 t/km2
-  gadoid start had no source). Ceilings from measured Cmax per
+  gadoid start had no source). Since section 223.26 the predators are
+  two groups by diet (G1, research_notes/"Rovfiskens uppdelning"
+  params_split_223.md): `whiting` = the bed feeder (0.446 t/km2, 1605 t;
+  the only predator with an epifauna pair, `bottom` layer) and
+  `predatory_fish` = the water column (saithe 0.65, mackerel, spurdog,
+  horse mackerel, hake, ...; 0.754 t/km2, 2715 t; no bed pairs) - the
+  id kept, its meaning changed; checkpoints before 223.26 are invalid. Ceilings from measured Cmax per
   species (energy convention of section 148). Seals (harbour seals
-  only, on since 166) spawn on the two demersal groups and take ~60 %
-  benthivores, 15 % predators, 25 % planktivores (Type III, a 2e-3 -
+  only, on since 166) spawn on the demersal groups (benthivores and both
+  predator groups) and take ~60 % benthivores, 15 % predators (whiting
+  0.44 of it), 25 % planktivores (Type III, a 2e-3 -
   a Type III `a` is per (t/cell)^2; judge diets with the engine's
   VISIBLE prey, section 199.9).
 - Non decision makers: `phytoplankton` (nutrient-limited since 172),
@@ -132,8 +140,9 @@ fabricates mass.
   (`lib/world/impact_maps.py`). The GPU engine mirrors all of it (impact
   mortality and cost, observable channels in train.py's slots; section
   161). Impacts are outside the growth budget. `mareld2.yaml` fishes
-  today's world: `bottom_trawling` (benthivores F 0.17, predators
-  0.162 /yr) and `pelagic_trawling` (planktivores 0.10, predators 0.020),
+  today's world: `bottom_trawling` (benthivores F 0.17, water-column
+  predators 0.213, whiting 0.075 /yr) and `pelagic_trawling`
+  (planktivores 0.10, water-column predators 0.029, whiting 0.005),
   the `maps/` effort maps
   as baseline and inference maps, linear library tables calibrated to
   the maps' mean effort. Impact mortality acts on every group with a
@@ -149,28 +158,35 @@ fabricates mass.
   max_intake_rate`) to set the half-saturation 1/(a h) (Type III:
   1/sqrt(a h)) without moving the ceiling. Every fish pair carries its
   own a from encounter theory since section 220 (research_notes/
-  "Attackrater ur motesteori", Swedish letters; per FORAGING fish, prey
-  refuges and schooling left to the prey's hide action): planktivores ->
-  zoo 0.017; benthivores -> infauna 0.036, -> epifauna 0.15, ->
-  Nephrops 0.44, -> planktivores 0.019, -> predators 0.026; predators ->
-  epifauna 0.13, -> planktivores 0.012, -> zoo 0.002, -> benthivores 0.18
-  (sections 220, 221, 223.15; predators no longer eat infauna). The
+  "Attackrater ur motesteori", Swedish letters; prey refuges and
+  schooling left to the prey's hide action). Since section 223.26 every
+  a is per tonne of the WHOLE predator group (the engine has no phi
+  since 221; the 220 "per capable tonne" values over-credited by 1/phi):
+  planktivores -> zoo 0.017; benthivores -> infauna 0.036, -> epifauna
+  0.15, -> Nephrops 0.44, -> planktivores 0.0062, -> whiting 0.0026;
+  whiting -> epifauna 0.27, -> planktivores 0.021, -> zoo 0.0023, ->
+  benthivores 0.21; water column -> planktivores 0.0117, -> zoo 0.0006,
+  -> benthivores 0.053, -> whiting 0.0106 (sections 220, 221, 223.15,
+  223.26; no predator eats infauna or Nephrops, the water column no
+  epifauna). The
   benthic pairs are a_enc x an exposure factor e derived per prey item
   type (buried bodies found only by a cue, cropped arm tips and siphons,
   crab size window, flatfish chemo-tactile width; infauna e 0.165,
   epifauna 0.43 / 0.39; research_notes/"Exponering av bottenbyten",
   Swedish letters). They stay saturated: the field feeding level (0.22-
   0.53 of Cmax) is a time-budget matter, not a. The benthivores' ceiling
-  is 26.18 MJ/t/tick at the bottom temperature (223.15). Never set a
-  from model output.
+  is 26.18 MJ/t/tick at the bottom temperature (223.15); the predator
+  ceilings are Bjornsson-anchored (x1.30, 223.26): whiting 31.34 (bottom
+  layer), water column 32.71. Never set a from model output.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
   observes the light level (last input slot). Since section 220 (derived
   night/day ratios): planktivores -> zoo 0.02 at 0 deg; benthivores ->
-  planktivores 0.06 and -> predators 0.10 at 0 deg (140 m is too dim
-  for -5); predators -> planktivores 0.35, -> zoo 0.5, -> benthivores
-  0.6 at -5 deg; benthic pairs none.
+  planktivores 0.06 and -> whiting 0.10 at 0 deg (140 m is too dim
+  for -5); at -5 deg (223.26): whiting -> planktivores 0.33, -> zoo
+  0.78, -> benthivores 0.64; water column -> planktivores 0.39, -> zoo
+  0.30, -> benthivores 0.48, -> whiting 0.48; benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
@@ -190,7 +206,8 @@ fabricates mass.
   with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
   T from its layer's monthly table on the daylight calendar; herring
   t_ref is 14 C (the library value is a summer cost), the demersal
-  groups (predators at_50m, benthivores the `bottom` layer since 223.15,
+  groups (water-column predators at_50m, benthivores the `bottom` layer
+  since 223.15 and whiting since 223.26,
   SHARK A16/A17 at each cell's depth, annual 7.4 C) and zooplankton
   `annual_mean`, porpoises none
   (endotherm). On in
@@ -214,7 +231,9 @@ fabricates mass.
   `r_max (1 - B/K) - F` (the logistic its r_max prior comes from). The
   loader derives `capacity_loss_rate`. K = B*/(1 - F/r) on every fish
   group (section 209): benthivores 3.39 (r 0.31, F 0.17; fragile, cod
-  alone has F > r), predators 2.12 (r 0.42, F 0.18), planktivores 4.8
+  alone has F > r), water-column predators 2.14 (r 0.374, F 0.24;
+  1.05-11 with saithe F), whiting 0.533 (r 0.49, F 0.08; 223.26),
+  planktivores 4.8
   (r 0.37; stock-scale compensation plus net emigration, 185.20).
   Without K the old gadoids grew at r_max - F, ate the pelagic pool down
   and crashed (184.13), and the pelagic pool grazed the zooplankton
@@ -282,12 +301,16 @@ fabricates mass.
   eaten with it; the static quality is taken at
   `reserve_reference_fill`. Set for `planktivorous_fish` (section
   140.6; 209): lean 4000 MJ/t + reserve up to 6250, starvation from 0.2
-  of it, `predatory_fish` (lean 4100 + 2400 at fill 0.48 = 5252) and,
+  of it, `predatory_fish` (water column, lean 4240 + 2600 at fill 0.5 =
+  5540), `whiting` (lean 3900 + 2000 at fill 0.45 = 4800; 223.26) and,
   since section 223.9, `benthivorous_fish` (lean 3600 + 1800 at fill
   0.5 = 4500; was whole-body 4500 with each new tonne charged its
   reserve on top). Benthivore pair M2 since 223.9: budget Q/B 4.46,
   the no-pool 17.7 % of the diet redistributed (infauna 0.0396,
-  epifauna 0.276, planktivores 0.245, predators 0.128).
+  epifauna 0.276, planktivores 0.245, predators 0.128 - all of it on
+  whiting since 223.26, M2 0.345 on 0.446 t/km2, cod's fish prey in the
+  pool being whiting). Benthivore resting metabolism re-read at the
+  bottom layer: 3.33 (223.26).
 - `functional_response: 2|3` on a predation pair forces the Holling type
   for that pair (section 141); without it a specialist gets III and a
   generalist II, as before. Since section 209 every fish -> fish pair
@@ -297,8 +320,10 @@ fabricates mass.
 - Pair shares (section 208, both engines, each in (0, 1], inert at 1):
   `accessible_fraction` f scales the prey biomass in the pair's Holling
   term and harvest cap (infauna out of reach, Nephrops in burrows);
-  observations are untouched. Benthivores -> epifauna 0.31, predators
-  -> epifauna 0.13 (section 221); the infauna pair's 0.2 became the
+  observations are untouched. Benthivores -> epifauna 0.62 (223.15), whiting
+  -> epifauna 0.29 (sections 221, 223.15, 223.26), water column ->
+  benthivores 0.24, whiting -> benthivores 0.05, water column -> whiting
+  0.47 (gape); the infauna pair's 0.2 became the
   infauna's own refuge in 223.12. `predator_share` phi
   (`eat = min(eat, phi)`, a hard cap on a learned action) is REMOVED
   from the library since section 221; the mechanism stays in both
