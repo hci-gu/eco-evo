@@ -1,0 +1,86 @@
+Q1_notes.txt - direct field/lab evidence on gadoid/flatfish functional responses on benthic invertebrates
+==========================================================================================================
+Research fork (Q1), 2026-10-27. Rows with sources: tables/Q1_evidence.csv. Conversion script:
+scripts/Q1_persson2012_conversion.py (stdout tables/Q1_persson2012_conversion_stdout.txt).
+Tags: [F] full text read, [A] measurement, abstract only marked, J judgement. Hiddink 2016, Hinz 2017,
+Johnson 2015 are handled by the parent and not repeated here. ~45 web requests used.
+
+Headline
+--------
+No study found fits a functional response of an ADULT gadoid or flatfish to benthic invertebrate
+density in the field with a reported half-saturation in density units. What exists splits by prey type:
+1. Mobile crustacean epifauna, lab (Persson et al. 2012 [F]): juvenile cod (15-20 cm) on sand have
+   a = 1.8 cm2/s on Crangon, 21 on Palaemon, 57 on Neomysis. In engine units (km2 per tonne cod per
+   6 h tick, 30-60 g fish): 0.065-0.13 (Crangon), 0.76-1.5 (Palaemon), 2-4 (Neomysis). The library's
+   benthivores -> epifauna a = 0.15 sits at the Crangon value, BELOW the other two. Against digestion
+   (Cmax 2-4 % BW/d, J) the encounter-limited intake at field densities covers Cmax x_dig = 4-750
+   times over for Crangon (1-100 ind/m2) and 24-1000 for Palaemon/Neomysis: saturated (x >> 1) for a
+   starved fish foraging continuously. The fitted behavioural half-saturations (Crangon ~53 g/m2,
+   Palaemon ~3.6, Neomysis ~1.7 g/m2) are short-term (time 1st-5th prey) and are NOT daily rations.
+   Caveats (J): tank confinement and starvation inflate a; juvenile not adult (weight-specific a of
+   adults lower, roughly ~1/L); habitat structure cuts a 5-9x (Zostera/Fucus); Crangon buries in
+   sand in the field by day. Even a 10-30x reduction leaves Crangon x_dig > 1 at >= 10 ind/m2.
+   => The lab gives NO support for a being 1-2 orders too high on exposed crustaceans.
+2. Risk: a cannibal cue cut consumption to 0.22 (sand) and 0.44 (vegetation) of control (Persson
+   2012 [F]). A behavioural (time/vigilance) mechanism that lowers intake below the prey-limited
+   level without changing a or h - a candidate for field feeding levels of 0.22-0.53 of Cmax.
+3. Pandalus, field, stock scale (Hvingel & Kingsley 2006, West Greenland; [F] via WebFetch extract):
+   cod predation fitted as Holling III; P50 posterior mode 3.63 (median 3.8) in units of B/B_MSY;
+   observed B/B_MSY 0.96-1.70 -> x = B/P50 ~0.25-0.47, "only the lower limb of the sigmoidal
+   functional response". Caveats: P50 rests on a reference prior and is weakly identified; Vmax
+   (3 kg/kg/yr) posterior = prior; this is cod-population consumption at stock (10^4-10^5 km2)
+   scale, where overlap and patchiness enter the fitted response (J). It is the one quantitative field
+   number found, and it says RISING.
+4. Barents Sea (Berenboim et al. 2000 [F]): 86 000 cod stomachs; shrimp occurrence rose to a max in
+   1981-84 then ~25 %, inversely related to cod biomass; "cod stomachs predominantly contain those
+   prey species which are most abundant". Prey-dependent diet, per-cod shrimp intake falls when cod
+   are many (ratio or depletion signal). No fitted FR, no x.
+5. Baltic cod: Neuenfeldt et al. 2020 ([F] via WebFetch extract; values only in Fig. 4, not read):
+   feeding level of 20-30 cm cod 2005-2014 among the lowest on record, attributed to benthic prey
+   decline with hypoxia; benthic prey biomass not measured. Lindmark et al. 2024 (bioRxiv [F]):
+   Saduria weight in cod stomachs rises with modelled Saduria density (CI overlaps 0 for large cod),
+   total/benthic prey weight unaffected by flounder density. Lindmark 2023 (abstract only): Saduria
+   positively but weakly associated with cod condition. Reading: intake responds to benthic prey
+   at the extremes of a collapse (hypoxic Baltic), weakly at normal variation. No x obtainable.
+6. Trawling-gradient / disturbance contrasts other than Hiddink/Johnson:
+   - Smith et al. 2013 (Georges Bank [F]): sensitive epifauna 5-250x more abundant in closed sites;
+     haddock total stomach-content index higher in the disturbed site in one region and in the
+     closed site in the other; diets tracked local prey. Intake ~flat over large prey contrasts via
+     switching (generalist plateau). Consistent with saturation on the PREY SET, not per pair.
+   - Hiddink et al. 2011 (abstract only): plaice condition fell along the Irish Sea trawling
+     gradient, explained by lower infaunal production; density-dependent competition could not
+     explain it; dab unaffected. Rising for plaice on infauna (condition, not intake).
+   - Pihl 1994 (abstract only): Kattegat hypoxia 1984-88 shifted cod/whiting/flatfish diets from
+     epibenthic crustaceans to infauna; switching, no intake data.
+   - Powers et al. 2005 [F] (croaker, off-target): Macoma -90 % after hypoxia, diet to detritus.
+   - Shephard et al. 2014 (abstract only): not informative on FR.
+7. Theory used elsewhere: van Denderen et al. 2013 [F] assume a LINEAR (Type I) fish-on-benthos
+   response (attack rate 0-1 /yr) with no empirical justification - a modelling choice, not evidence.
+8. Not obtained / not found: Rijnsdorp & Vingerhoed 2001 (repository landing only), Shephard 2010
+   (no OA), Haase 2020, Funk 2021, Bogstad & Mehl 1997, Lindstrom 2009 (cod FR not located), Koen-
+   Alonso NL cod-shrimp FR, Gibson/Evans/Hill & Wassenberg lab work, Flemish Cap FR parameters
+   (Perez-Rodriguez 2016 [F]: "estimated externally and fixed", not reported). Skagerrak Pandalus
+   predation by cod/whiting/saithe: only Bergstad 2003 (J Northw Atl Fish Sci 31) located, not read.
+
+Verdict per evidence type (J)
+-----------------------------
+- Per-encounter rates (lab, crustaceans): saturated against digestion at field densities (x_dig >> 1)
+  even after generous corrections -> supports reading (A) for exposed crustacean epifauna PER FORAGING
+  FISH; the low field feeding level then needs time/risk (cannibal cue x0.22-0.44) or exposure windows.
+- Stock-scale fitted responses (Pandalus, West Greenland): rising (x ~0.25-0.5), Type III.
+  This is a population-level response that includes overlap, patchiness and depletion - i.e. what an
+  engine cell-mean response must reproduce if its cells are larger than a fish's foraging patch (J).
+- Field diet/condition contrasts (Barents, Baltic, Georges Bank, Irish Sea plaice): intake or condition
+  follows prey only at large contrasts (collapse, depletion) or via prey per predator; generalists hold
+  total intake by switching. No study gives x on a per-pair basis for North Sea/Skagerrak benthos.
+- Infauna: no lab functional response for gadoids/flatfish on polychaetes, siphons or brittle-star
+  arms was obtained (gap); the only infauna field signal is plaice condition (Hiddink 2011, abstract).
+
+Independent tests these sources offer (not to set values)
+-----------------------------------------------------------
+- Persson 2012 a values: the engine's per-pair a on exposed crustaceans should not be > the lab
+  sand values scaled to adult size; checks the upper bound only.
+- Hvingel & Kingsley 2006: a stock-scale Pandalus response should be on the rising limb at today's
+  shrimp/B_MSY ~1 (x well below 1-5); the Skagerrak Pandalus stock index vs cod/whiting stomach
+  occurrence would be the local analogue (data gap).
+- Berenboim 2000: shrimp occurrence in cod stomachs should fall with cod abundance at fixed shrimp.

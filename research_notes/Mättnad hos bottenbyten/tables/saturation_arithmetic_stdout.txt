@@ -1,0 +1,35 @@
+1. Saturation and elasticity at today's prey
+  benthivores -> infauna (A = 0.2 x 94)      x   67.2  eps 0.015  intake at 10 % prey 0.88 of today  half-sat 0.280 t/km2 total
+  benthivores -> exposed epifauna            x   50.3  eps 0.019  intake at 10 % prey 0.85 of today  half-sat 0.075 t/km2 total
+  whiting -> exposed epifauna                x   35.4  eps 0.027  intake at 10 % prey 0.80 of today  half-sat 0.107 t/km2 total
+  benthivores -> Nephrops                    x    5.5  eps 0.153  intake at 10 % prey 0.42 of today  half-sat 0.826 t/km2 total
+
+2. Group sweep rate vs renewal of exposure
+  benthivores -> infauna (A = 0.2 x 94)      aP 0.055/tick =     80/yr; k 2-3/yr; aP/k 26.81-53.61; arena V/B_V = k/(k + aP) 0.02-0.04
+                                             group intake at the ceiling (this prey only) 22.5 t/km2/yr = 1.2 x the accessible stock per year
+  benthivores -> exposed epifauna            aP 0.229/tick =    335/yr; k 365-730/yr; aP/k 0.46-0.92; arena V/B_V = k/(k + aP) 0.52-0.69
+                                             group intake at the ceiling (this prey only) 15.6 t/km2/yr = 6.7 x the accessible stock per year
+  whiting -> exposed epifauna                aP 0.120/tick =    176/yr; k 365-730/yr; aP/k 0.24-0.48; arena V/B_V = k/(k + aP) 0.67-0.81
+                                             group intake at the ceiling (this prey only) 5.4 t/km2/yr = 5.0 x the accessible stock per year
+  benthivores -> Nephrops                    aP 0.673/tick =    983/yr; k 365-730/yr; aP/k 1.35-2.69; arena V/B_V = k/(k + aP) 0.27-0.43
+                                             group intake at the ceiling (this prey only) 16.2 t/km2/yr = 177.6 x the accessible stock per year
+
+3. Interference w needed for a 20 % intake rise when P falls 0.29 -> 0.18 t/km2 (x1/q)
+  q 1.0  x   0.5: w     4.05 km2/t  (w P_hi   1.18; library w 0.45)
+  q 1.0  x   1.0: w     5.41 km2/t  (w P_hi   1.57; library w 0.45)
+  q 1.0  x   2.0: w     8.11 km2/t  (w P_hi   2.35; library w 0.45)
+  q 1.0  x   4.0: w    13.51 km2/t  (w P_hi   3.92; library w 0.45)
+  q 1.0  x  35.0: w    97.30 km2/t  (w P_hi  28.22; library w 0.45)
+  q 1.0  x  67.0: w   183.78 km2/t  (w P_hi  53.30; library w 0.45)
+  q 0.5  x   0.5: w     2.03 km2/t  (w P_hi   1.18; library w 0.45)
+  q 0.5  x   1.0: w     2.70 km2/t  (w P_hi   1.57; library w 0.45)
+  q 0.5  x   2.0: w     4.05 km2/t  (w P_hi   2.35; library w 0.45)
+  q 0.5  x   4.0: w     6.76 km2/t  (w P_hi   3.92; library w 0.45)
+  q 0.5  x  35.0: w    48.65 km2/t  (w P_hi  28.22; library w 0.45)
+  q 0.5  x  67.0: w    91.89 km2/t  (w P_hi  53.30; library w 0.45)
+  q 0.3  x   0.5: w     1.22 km2/t  (w P_hi   1.18; library w 0.45)
+  q 0.3  x   1.0: w     1.62 km2/t  (w P_hi   1.57; library w 0.45)
+  q 0.3  x   2.0: w     2.43 km2/t  (w P_hi   2.35; library w 0.45)
+  q 0.3  x   4.0: w     4.05 km2/t  (w P_hi   3.92; library w 0.45)
+  q 0.3  x  35.0: w    29.19 km2/t  (w P_hi  28.22; library w 0.45)
+  q 0.3  x  67.0: w    55.14 km2/t  (w P_hi  53.30; library w 0.45)

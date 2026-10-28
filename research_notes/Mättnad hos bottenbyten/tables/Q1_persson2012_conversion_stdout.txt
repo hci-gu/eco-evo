@@ -1,0 +1,18 @@
+cod 30 g, Cmax 2 %BW/d = 0.028 J/s
+  Neomysis  sand: a  57.0 cm2/s =  4.104 km2/t/tick; behavioural half-sat   1.69 g/m2; 50 ind/m2: x_dig   316.6; 500 ind/m2: x_dig  1035.3
+  Crangon   sand: a   1.8 cm2/s =  0.130 km2/t/tick; behavioural half-sat  53.42 g/m2; 1 ind/m2: x_dig    16.4; 100 ind/m2: x_dig   754.7
+  Palaemon  sand: a  21.0 cm2/s =  1.512 km2/t/tick; behavioural half-sat   3.61 g/m2; 1 ind/m2: x_dig    96.5; 100 ind/m2: x_dig   989.0
+cod 30 g, Cmax 4 %BW/d = 0.056 J/s
+  Neomysis  sand: a  57.0 cm2/s =  4.104 km2/t/tick; behavioural half-sat   1.69 g/m2; 50 ind/m2: x_dig   158.3; 500 ind/m2: x_dig   517.7
+  Crangon   sand: a   1.8 cm2/s =  0.130 km2/t/tick; behavioural half-sat  53.42 g/m2; 1 ind/m2: x_dig     8.2; 100 ind/m2: x_dig   377.3
+  Palaemon  sand: a  21.0 cm2/s =  1.512 km2/t/tick; behavioural half-sat   3.61 g/m2; 1 ind/m2: x_dig    48.2; 100 ind/m2: x_dig   494.5
+cod 60 g, Cmax 2 %BW/d = 0.056 J/s
+  Neomysis  sand: a  57.0 cm2/s =  2.052 km2/t/tick; behavioural half-sat   1.69 g/m2; 50 ind/m2: x_dig   158.3; 500 ind/m2: x_dig   517.7
+  Crangon   sand: a   1.8 cm2/s =  0.065 km2/t/tick; behavioural half-sat  53.42 g/m2; 1 ind/m2: x_dig     8.2; 100 ind/m2: x_dig   377.3
+  Palaemon  sand: a  21.0 cm2/s =  0.756 km2/t/tick; behavioural half-sat   3.61 g/m2; 1 ind/m2: x_dig    48.2; 100 ind/m2: x_dig   494.5
+cod 60 g, Cmax 4 %BW/d = 0.111 J/s
+  Neomysis  sand: a  57.0 cm2/s =  2.052 km2/t/tick; behavioural half-sat   1.69 g/m2; 50 ind/m2: x_dig    79.1; 500 ind/m2: x_dig   258.8
+  Crangon   sand: a   1.8 cm2/s =  0.065 km2/t/tick; behavioural half-sat  53.42 g/m2; 1 ind/m2: x_dig     4.1; 100 ind/m2: x_dig   188.7
+  Palaemon  sand: a  21.0 cm2/s =  0.756 km2/t/tick; behavioural half-sat   3.61 g/m2; 1 ind/m2: x_dig    24.1; 100 ind/m2: x_dig   247.2
+Engine for comparison: benthivores -> epifauna a 0.15 (a_enc 0.44 x e 0.43), whiting -> epifauna 0.27 km2/t/tick (adult fish, whole-group tonne).
+Predator cue (cannibal) cut consumption to 22 % (sand) and 44 % (vegetation) (Persson 2012 [F]).

@@ -1,0 +1,149 @@
+Library today (b = 1, no armour): every prey ceiling 26.18 gross; assimilated 20.94 (0.8) / 18.33 (0.7)
+
+b = 1.0 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    26.18   272.1   20.94   1.00
+  whiting (lean fish)       4.800  1.00    26.18   183.3   20.94   1.00
+  mobile epifauna           3.750  1.75    14.96   250.7   11.97   1.75
+  Nephrops                  3.600  2.00    13.09   275.0   10.47   2.00
+  infauna                   2.600  1.00    26.18    99.3   18.33   1.00
+  herring/infauna gross 1.00, assimilated 1.14; herring/epifauna assim. 1.75; herring/whiting 1.00
+
+b = 0.85 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    28.36   251.2   22.68   0.92
+  whiting (lean fish)       4.800  1.00    26.72   179.6   21.38   0.98
+  mobile epifauna           3.750  1.75    14.72   254.8   11.77   1.78
+  Nephrops                  3.600  2.00    12.80   281.3   10.24   2.05
+  infauna                   2.600  1.00    24.38   106.7   17.06   1.07
+  herring/infauna gross 1.16, assimilated 1.33; herring/epifauna assim. 1.93; herring/whiting 1.06
+
+b = 0.75 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    29.91   238.2   23.92   0.88
+  whiting (lean fish)       4.800  1.00    27.09   177.2   21.68   0.97
+  mobile epifauna           3.750  1.75    14.56   257.6   11.64   1.80
+  Nephrops                  3.600  2.00    12.61   285.6   10.09   2.08
+  infauna                   2.600  1.00    23.24   111.9   16.27   1.13
+  herring/infauna gross 1.29, assimilated 1.47; herring/epifauna assim. 2.05; herring/whiting 1.10
+
+b = 0.7 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    30.71   232.0   24.57   0.85
+  whiting (lean fish)       4.800  1.00    27.28   175.9   21.83   0.96
+  mobile epifauna           3.750  1.75    14.48   259.0   11.58   1.81
+  Nephrops                  3.600  2.00    12.51   287.7   10.01   2.09
+  infauna                   2.600  1.00    22.70   114.5   15.89   1.15
+  herring/infauna gross 1.35, assimilated 1.55; herring/epifauna assim. 2.12; herring/whiting 1.13
+
+b = 0.6 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    32.39   219.9   25.91   0.81
+  whiting (lean fish)       4.800  1.00    27.66   173.5   22.13   0.95
+  mobile epifauna           3.750  1.75    14.32   261.9   11.46   1.83
+  Nephrops                  3.600  2.00    12.33   292.1    9.86   2.12
+  infauna                   2.600  1.00    21.64   120.1   15.15   1.21
+  herring/infauna gross 1.50, assimilated 1.71; herring/epifauna assim. 2.26; herring/whiting 1.17
+
+b = 0.45 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    35.08   203.1   28.07   0.75
+  whiting (lean fish)       4.800  1.00    28.23   170.0   22.59   0.93
+  mobile epifauna           3.750  1.75    14.09   266.2   11.27   1.86
+  Nephrops                  3.600  2.00    12.05   298.7    9.64   2.17
+  infauna                   2.600  1.00    20.15   129.0   14.11   1.30
+  herring/infauna gross 1.74, assimilated 1.99; herring/epifauna assim. 2.49; herring/whiting 1.24
+
+b = 0.37 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    36.61   194.6   29.29   0.72
+  whiting (lean fish)       4.800  1.00    28.55   168.1   22.84   0.92
+  mobile epifauna           3.750  1.75    13.96   268.6   11.17   1.87
+  Nephrops                  3.600  2.00    11.91   302.3    9.53   2.20
+  infauna                   2.600  1.00    19.40   134.0   13.58   1.35
+  herring/infauna gross 1.89, assimilated 2.16; herring/epifauna assim. 2.62; herring/whiting 1.28
+
+b = 0.16 (armour central, no floor)
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    40.94   174.0   32.75   0.64
+  whiting (lean fish)       4.800  1.00    29.38   163.4   23.51   0.89
+  mobile epifauna           3.750  1.75    13.65   274.8   10.92   1.92
+  Nephrops                  3.600  2.00    11.54   312.0    9.23   2.27
+  infauna                   2.600  1.00    17.56   148.1   12.29   1.49
+  herring/infauna gross 2.33, assimilated 2.67; herring/epifauna assim. 3.00; herring/whiting 1.39
+
+--- Andersen branch with the 3.5 kJ/g floor on infauna ---
+
+b = 0.85, floor 3.5
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    28.36   251.2   22.68   0.92
+  whiting (lean fish)       4.800  1.00    26.72   179.6   21.38   0.98
+  mobile epifauna           3.750  1.75    14.72   254.8   11.77   1.78
+  Nephrops                  3.600  2.00    12.80   281.3   10.24   2.05
+  infauna                   2.600  1.00    18.93   137.3   13.25   1.38
+  herring/infauna gross 1.50, assimilated 1.71; herring/epifauna assim. 1.93; herring/whiting 1.06
+
+b = 0.875, floor 3.5
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    27.98   254.6   22.38   0.94
+  whiting (lean fish)       4.800  1.00    26.63   180.2   21.31   0.98
+  mobile epifauna           3.750  1.75    14.76   254.1   11.81   1.77
+  Nephrops                  3.600  2.00    12.85   280.2   10.28   2.04
+  infauna                   2.600  1.00    19.02   136.7   13.31   1.38
+  herring/infauna gross 1.47, assimilated 1.68; herring/epifauna assim. 1.90; herring/whiting 1.05
+
+--- Armour sensitivity at b = 0.7 ---
+
+b = 0.7, armour none
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    30.71   232.0   24.57   0.85
+  whiting (lean fish)       4.800  1.00    27.28   175.9   21.83   0.96
+  mobile epifauna           3.750  1.00    25.33   148.0   20.27   1.03
+  Nephrops                  3.600  1.00    25.03   143.9   20.02   1.05
+  infauna                   2.600  1.00    22.70   114.5   15.89   1.15
+  herring/infauna gross 1.35, assimilated 1.55; herring/epifauna assim. 1.21; herring/whiting 1.13
+
+b = 0.7, armour low
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    30.71   232.0   24.57   0.85
+  whiting (lean fish)       4.800  1.00    27.28   175.9   21.83   0.96
+  mobile epifauna           3.750  1.40    18.10   207.2   14.48   1.45
+  Nephrops                  3.600  1.50    16.68   215.8   13.35   1.57
+  infauna                   2.600  0.60    37.83    68.7   26.48   0.69
+  herring/infauna gross 0.81, assimilated 0.93; herring/epifauna assim. 1.70; herring/whiting 1.13
+
+b = 0.7, armour high
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    30.71   232.0   24.57   0.85
+  whiting (lean fish)       4.800  1.00    27.28   175.9   21.83   0.96
+  mobile epifauna           3.750  2.30    11.01   340.5    8.81   2.38
+  Nephrops                  3.600  2.50    10.01   359.6    8.01   2.62
+  infauna                   2.600  1.50    15.13   171.8   10.59   1.73
+  herring/infauna gross 2.03, assimilated 2.32; herring/epifauna assim. 2.79; herring/whiting 1.13
+
+--- E_ref sensitivity (capelin 5.5 kJ/g as the Cmax reference) ---
+
+b = 0.7, E_ref 5.5
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    28.29   251.8   22.63   0.93
+  whiting (lean fish)       4.800  1.00    25.13   191.0   20.11   1.04
+  mobile epifauna           3.750  1.75    13.34   281.2   10.67   1.96
+  Nephrops                  3.600  2.00    11.53   312.3    9.22   2.27
+  infauna                   2.600  1.00    20.91   124.3   14.64   1.25
+  herring/infauna gross 1.35, assimilated 1.55; herring/epifauna assim. 2.12; herring/whiting 1.13
+
+b = 0.37, E_ref 5.5
+  prey                          E     A  ceiling       h  assim.  h/lib
+  planktivores (herring)    7.124  1.00    30.81   231.2   24.65   0.85
+  whiting (lean fish)       4.800  1.00    24.03   199.8   19.22   1.09
+  mobile epifauna           3.750  1.75    11.75   319.1    9.40   2.23
+  Nephrops                  3.600  2.00    10.02   359.2    8.02   2.61
+  infauna                   2.600  1.00    16.33   159.2   11.43   1.60
+  herring/infauna gross 1.89, assimilated 2.16; herring/epifauna assim. 2.62; herring/whiting 1.28
+
+--- Group-weighted b (J): haddock 0.39 and others 0.10 at Andersen 0.875, flatfish 0.20 at 1.0, cod 0.31 at x ---
+  cod b 0.16 -> group b 0.68
+  cod b 0.37 -> group b 0.74
+  cod b 0.45 -> group b 0.77
+  cod b 0.60 -> group b 0.81
+  cod b 0.85 -> group b 0.89

@@ -614,9 +614,14 @@
     # (Fonds 1985). Read as the annual mean of the bottom layer (223.26).
     metabolism_q10: 2.25
     metabolism_t_ref: annual_mean
-    # Haddock and cod 0.25 cells/tick, gurnard 0.2, flatfish and rays
-    # sedentary (0.1): 0.2 (judgement).
-    movement_speed: 0.2
+    # Section 223.27: 1.0, the engine cap (1 cell = 1 km per 6 h), as the
+    # predators: residence is behaviour, not a speed limit. Cod and
+    # haddock cruise ~0.5 BL/s (40-50 cm: ~4-5 km per 6 h) and plaice
+    # move km/day in tagging, so every member is physically above the
+    # cap. Was 0.2 (the old gadoid 0.25, gurnard 0.2, flatfish and rays
+    # 0.1 read as residence), which left the benthivores the only fish
+    # prey unable to leave a cell.
+    movement_speed: 1.0
     # Fed / unfed respiration of plaice 2.4 incl. SDA; haddock SDA peak
     # 1.3-1.5 x RMR: 2.0 (1.5-2.5). Cruising haddock 1.48 x SMR, cod
     # 1.32, plaice active/rest 2.4-2.8: 1.6 x RM (judgement for the pool).
@@ -648,7 +653,7 @@
     # 185 convention; B* = the user's long-run level, the top of the
     # 2001-25 span). Fragile: F/r = 0.55, and cod alone has F > r.
     regional_carrying_capacity: 3.39
-    growth_rate: 0.0020532778371
+    growth_rate: 0.0018656355976
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -667,10 +672,14 @@
     starve_rate: 0.010
     # Judgement: gadoids 0.6, flatfish and rays bury and are cryptic (0.4).
     visibility_floor: 0.55
-    # Judgement: the gadoid w 1.0 was a spatial-crowding calibration at
-    # 0.69 t/km2 (section 86); w x B held constant at 1.53 gives 0.45. No
-    # fish measurement exists (reports/Täthetsberoende och interferens).
-    interference: 0.45
+    # Section 223.28: 0. The old 0.45 was the section 86 band fix (w 1.0 at
+    # 0.69 t/km2) rescaled, with no fish measurement. Haul-scale tests find
+    # none (Barents cod on capelin, Baltic small cod on benthos) or m ~0.2
+    # with depletion included (Baltic large cod, flounder); depletion is
+    # explicit per cell here; field crowding is ~3x the mean vs the
+    # policies' 13x; the per-pair term taxed fish prey 4-8x more than the
+    # bed. research_notes/"Interferens hos bottenfisk" (Swedish letters).
+    interference: 0.0
     extinction_threshold_factor: 0.5
   predatory_fish:
     display_name: "Predatory Fish"
@@ -795,10 +804,10 @@
     r_max: 0.49
     # K = B* / (1 - F/r) = 0.446 / (1 - 0.08/0.49) = 0.533 t/km2 (0.48-0.68).
     regional_carrying_capacity: 0.533
-    growth_rate: 0.0036742383864
+    growth_rate: 0.0030475367763
     # M1 = SMS residual M 0.20 + grey seal and birds 0.05 = 0.25 /yr
-    # (0.20-0.32). Booked on pairs: benthivores 0.345, predatory_fish
-    # 0.157, porpoises 0.019, seals 0.013; total M 0.78 vs SMS 0.685.
+    # (0.20-0.32). Booked on pairs: benthivores 0.18 (223.28), predatory_fish
+    # 0.157, porpoises 0.019, seals 0.013; total M 0.62 vs SMS 0.685.
     natural_mortality: 0.000171233
     max_intake_rate: 0.04
     spawn:
@@ -1177,7 +1186,10 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.245
     assimilation_factor: 0.8
-    handling_time: 272.1
+    # Section 223.28: h = E / ceiling_j, ceiling_j = 26.18 (E/4.184)^(1-b) / A,
+    # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.0; was 272.1
+    # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
+    handling_time: 238.2
     visibility_floor: 0.25
     functional_response: 2
     # Section 220: encounter theory, pi R^2 v_rel p with R by the light at
@@ -1348,7 +1360,10 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.0396
     assimilation_factor: 0.7
-    handling_time: 99.3
+    # Section 223.28: h = E / ceiling_j, ceiling_j = 26.18 (E/4.184)^(1-b) / A,
+    # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.0; was 99.3
+    # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
+    handling_time: 111.9
     max_intake_rate: 0.036
   # Section 221: shrimps, mysids and crabs moved to mobile_epifauna; the
   # predators' infauna is 3.9 % of their diet (M2 0.0016): unchecked.
@@ -1380,7 +1395,10 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.54
     assimilation_factor: 0.8
-    handling_time: 143.2
+    # Section 223.28: h = E / ceiling_j, ceiling_j = 26.18 (E/4.184)^(1-b) / A,
+    # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.75 (crabs/hermits/Munida 2.0, northern shrimp 1.45, small shrimps 1.5, mysids 1.0); was 143.2
+    # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
+    handling_time: 257.6
     accessible_fraction: 0.62
     max_intake_rate: 0.15
   # Section 223.26: the water-column group's epifauna (horse mackerel,
@@ -1425,7 +1443,10 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.0225
     assimilation_factor: 0.8
-    handling_time: 137.6
+    # Section 223.28: h = E / ceiling_j, ceiling_j = 26.18 (E/4.184)^(1-b) / A,
+    # b 0.75 (gadoid gastric evacuation ~E^-b), armour 2.0 (claws and carapace as crabs, J); was 137.6
+    # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
+    handling_time: 285.6
     accessible_fraction: 0.02
     max_intake_rate: 0.44
   # E1: no Nephrops in whiting, saithe or hake stomachs in the box or the
@@ -1452,17 +1473,24 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
-  # Section 223.9 flow (Q/B 4.46 x 1.53 x share 0.023 = 0.154 t/km2/yr), all on
-  # whiting since 223.26: M2 = 0.154 / 0.446 = 0.345 /yr (user's choice over
-  # the SMS 0.05). h = 4800 / 26.18 (the benthivores' bottom-water ceiling).
+  # Section 223.28: M2 0.18 /yr = SMS scaled to the model's cod. SMS key run
+  # 2023 gives cod -> whiting 1+ M2 = 0.156 (0.11-0.27, 1974-2022) per unit
+  # cod:whiting 1+ biomass ratio, steady while the ratio fell 0.99 -> 0.26
+  # (M2 0.205 -> 0.051; the "SMS 0.05" is 2018-22). Model cod:whiting = 0.31
+  # x 1.53 / 0.446 = 1.06 -> 0.17 (0.11-0.29), + gurnard and starry ray ~0.01.
+  # Was 0.345 (223.9 flow Q/B 4.46 x 1.53 x 0.023 / 0.446: ~2x SMS per tonne
+  # of cod). h = 4800 / 26.18 (the benthivores' bottom-water ceiling).
   # a per WHOLE benthivore tonne: 0.026 per capable tonne (220: large cod,
   # starry ray, gurnard) x the gape share 0.10 = 0.0026 (no prey-side f
   # carries the gape). Night/day 0.10 at 0 deg. research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
   benthivorous_fish_preys_on_whiting:
     preys_on: true
-    predation_mortality: 0.345
+    predation_mortality: 0.18
     assimilation_factor: 0.8
-    handling_time: 183.3
+    # Section 223.28: h = E / ceiling_j, ceiling_j = 26.18 (E/4.184)^(1-b) / A,
+    # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.0; was 183.3
+    # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
+    handling_time: 177.2
     functional_response: 2
     max_intake_rate: 0.0026
     dark_ratio: 0.1

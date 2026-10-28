@@ -1,0 +1,5 @@
+pair,engine_x_per_pair,x_eff_shared_bed_no_armour,x_eff_shared_bed_h_x2,elasticity_shared,intake_at_10pct_prey_shared,intake_at_10pct_prey_per_pair,mechanism,independent_test,evidence
+benthivores->infauna(A),67.2,1.18,0.60,0.46-0.63,0.15-0.20,0.88,shared search and gut; refuge renewal caps supply (aP/k 27-54),Hiddink 2011 plaice condition vs infaunal production (abs); Kattegat condition flat over B 98-302 t/km2 [D],D/J
+benthivores->exposed_epifauna,50.3,0.68,1.27,0.44-0.59,0.16-0.20,0.85-0.92,shared search and gut; armour h x1.7-3,Smith 2013 diet tracks 5-250x contrasts with flat total [F]; Berenboim 2000 shrimp in cod vs cod biomass [F],D/J
+whiting->exposed_epifauna,35.4,35.4 (2.5 with diet-ratio infauna term J),70.9,0.03 (0.28),0.80-0.89 (0.28),0.80-0.89,not resolved; armour halves energy ceiling,whiting feeding level 0.25 Cmax and epifauna 13.7% of diet (Fodoniva note),D/J
+benthivores->Nephrops,5.5,0.05,0.07,0.94-0.96,0.10-0.11,0.42-0.57,shared denominator (minority prey); emergence in f,Irish Sea cod M2 on Nephrops 0.04-0.25/yr (Refugium note),D/J

@@ -1,0 +1,43 @@
+Individual stomachs in the box with >= 1 prey row, by predator:
+pred
+cod               1922
+haddock            119
+long_rough_dab      15
+plaice            1274
+whiting           1111
+
+Benthic invertebrate ITEMS per non-empty stomach (all benthic groups), median / mean / p90;
+and mean predator mass (g)
+  cod             n  1922  median    1.0  mean    1.5  p90    4.0  max     39   mean predator    321 g
+  haddock         n   119  median    0.0  mean    0.4  p90    0.0  max     37   mean predator    379 g
+  long_rough_dab  n    15  median    1.0  mean    6.9  p90   24.0  max     50   mean predator    nan g
+  plaice          n  1274  median    0.0  mean    1.1  p90    3.0  max     22   mean predator    128 g
+  whiting         n  1111  median    0.0  mean    1.3  p90    3.0  max    200   mean predator    108 g
+
+Wet mass per item (g), by prey group, fresh rows (DigestionStage 1) if staged; median [p25-p75] (n rows)
+  amphipod             all      0.010 [0.010-0.025] (n 255)
+  bivalve              all      0.066 [0.020-0.321] (n 164)
+  cephalopod           all      1.075 [0.110-2.800] (n 26)
+  copepod              all      0.002 [0.002-0.003] (n 7)
+  crab_other_decapod   all      0.560 [0.140-2.957] (n 598)
+  fish                 all      2.256 [0.320-8.060] (n 1340)
+  gastropod            all      0.010 [0.010-0.077] (n 46)
+  hermit               all      1.470 [0.545-3.038] (n 118)
+  krill                all      0.092 [0.030-0.149] (n 20)
+  mysid                all      0.030 [0.016-0.060] (n 88)
+  nephrops             all      7.697 [3.210-12.563] (n 21)
+  ophiuroid            all      0.033 [0.007-0.152] (n 159)
+  other                all      0.079 [0.010-0.412] (n 1003)
+  other_echinoderm     all      0.048 [0.010-0.152] (n 24)
+  pandalid             all      0.610 [0.205-1.800] (n 41)
+  polychaete           all      0.064 [0.020-0.410] (n 433)
+  small_shrimp         all      0.180 [0.055-0.380] (n 807)
+  squat_lobster        all      0.420 [0.095-0.900] (n 21)
+  unknown              all      0.151 [0.020-0.357] (n 29)
+
+Same, by predator, fresh+all pooled, benthic groups only: median g/item (n)
+  cod: amphipod 0.020 (98); bivalve 0.080 (34); crab_other_decapod 0.970 (475); gastropod 0.070 (21); hermit 1.490 (100); mysid 0.025 (30); nephrops 7.482 (20); ophiuroid 0.128 (45); pandalid 0.825 (21); polychaete 1.083 (128); small_shrimp 0.200 (541); squat_lobster 0.425 (20)
+  haddock: 
+  long_rough_dab: ophiuroid 0.058 (5)
+  plaice: amphipod 0.010 (100); bivalve 0.045 (111); crab_other_decapod 0.030 (51); gastropod 0.010 (20); mysid 0.020 (10); ophiuroid 0.016 (108); other_echinoderm 0.035 (22); polychaete 0.030 (265); small_shrimp 0.020 (34)
+  whiting: amphipod 0.021 (57); bivalve 0.379 (18); crab_other_decapod 0.130 (70); gastropod 0.007 (5); hermit 1.655 (14); mysid 0.038 (48); pandalid 0.205 (19); polychaete 0.176 (38); small_shrimp 0.160 (232)

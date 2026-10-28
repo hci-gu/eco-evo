@@ -1,0 +1,31 @@
+area      st swept/yr  B_prey t/km2  P_flatfish t/km2  P_Nephrops  P_cod   B/P_flat  engine x=a h 0.2B
+Kattegat  A     0.4        98.4           0.452       0.164   0.001       218      70.4
+Kattegat  B     1.5       192.2           0.200       0.046   0.002       960     137.4
+Kattegat  C     0.8       138.3           0.294       0.154   0.007       470      98.9
+Kattegat  D     1.5       129.2           0.340       0.180   0.002       381      92.4
+Kattegat  E     0.2       106.7           0.224       0.058   0.001       477      76.3
+Kattegat  F     2.6       123.4           0.204       0.032   0.003       605      88.2
+Kattegat  G     4.6       123.3           0.166       0.061   0.016       743      88.1
+Kattegat  H     4.6       117.4           0.180       0.001   0.093       651      83.9
+Kattegat  I     4.5       103.7           0.171       0.001   0.088       608      74.2
+Kattegat  J     7.9       159.3           0.275       0.021   0.002       580     113.9
+Kattegat  L     5.7       119.5           0.324       0.016   0.053       369      85.5
+Kattegat  M     0.4       301.6           0.438       0.281   0.001       688     215.6
+Kattegat  N     4.5       154.1           0.207       0.019   0.012       746     110.2
+Kattegat  P     5.4       247.9           0.109       0.001   0.056      2268     177.2
+Kattegat  R     7.4        97.6           0.120       0.036   0.001       814      69.8
+IrishSea  B     7.3         5.9           0.065       0.000   0.000        90       4.2
+IrishSea  C     5.8        12.2           0.132       0.000   0.000        92       8.7
+IrishSea  D     8.8         8.5           0.082       0.000   0.000       104       6.1
+IrishSea  E    10.5         2.4           0.050       0.000   0.000        48       1.7
+IrishSea  G     9.4        15.0           0.102       0.000   0.000       147      10.7
+IrishSea  I     7.8         7.8           0.223       0.000   0.044        35       5.6
+IrishSea  L     7.7         7.1           0.299       0.000   0.000        24       5.1
+IrishSea  O    11.9         6.2           0.185       0.000   0.050        33       4.4
+IrishSea  R     3.6        13.7           0.174       0.000   0.000        79       9.8
+IrishSea  S     6.0         6.2           0.392       0.000   0.014        16       4.4
+IrishSea  T     2.7        18.5           0.364       0.000   0.000        51      13.2
+Kattegat: B_prey gm 139.2 t/km2 (range 97.6-301.6); flatfish gm 0.227 t/km2 at q=1; low-trawl B 144.9 vs high 134.4; flatfish 0.292 vs 0.182
+   engine x on infauna at these B: 69.8-215.6; Holling-II intake ratio high/low trawl at x_low = engine: 0.999; at x_low = 2: 0.975
+IrishSea: B_prey gm 8.2 t/km2 (range 2.4-18.5); flatfish gm 0.154 t/km2 at q=1; low-trawl B 14.6 vs high 6.6; flatfish 0.203 vs 0.094
+   engine x on infauna at these B: 1.7-13.2; Holling-II intake ratio high/low trawl at x_low = engine: 0.905; at x_low = 2: 0.714

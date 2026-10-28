@@ -1,0 +1,18 @@
+benthivores  (armour h x1 on crustaceans)   X_bed = 123.1
+  infauna   x   67.2  x_eff  1.18  eps 0.46  diet share 0.63  half-sat on f*B  15.91 t/km2 (f*B today 18.80)  intake at 10 % prey: multi 0.20 / per-pair 0.88  M2 on total stock at F 0.36-0.54: 0.047-0.070/yr
+  epifauna  x   50.3  x_eff  0.68  eps 0.59  diet share 0.33  half-sat on f*B   5.54 t/km2 (f*B today  2.34)  intake at 10 % prey: multi 0.16 / per-pair 0.85  M2 on total stock at F 0.36-0.54: 0.603-0.904/yr
+  Nephrops  x    5.5  x_eff  0.05  eps 0.96  diet share 0.04  half-sat on f*B  97.90 t/km2 (f*B today  0.09)  intake at 10 % prey: multi 0.10 / per-pair 0.42  M2 on total stock at F 0.36-0.54: 0.057-0.086/yr
+
+benthivores  (armour h x2 on crustaceans)   X_bed = 179.0
+  infauna   x   67.2  x_eff  0.60  eps 0.63  diet share 0.63  half-sat on f*B  31.54 t/km2 (f*B today 18.80)  intake at 10 % prey: multi 0.15 / per-pair 0.88  M2 on total stock at F 0.36-0.54: 0.032-0.048/yr
+  epifauna  x  100.7  x_eff  1.27  eps 0.44  diet share 0.33  half-sat on f*B   2.98 t/km2 (f*B today  2.34)  intake at 10 % prey: multi 0.20 / per-pair 0.92  M2 on total stock at F 0.36-0.54: 0.416-0.623/yr
+  Nephrops  x   11.1  x_eff  0.07  eps 0.94  diet share 0.04  half-sat on f*B  69.74 t/km2 (f*B today  0.09)  intake at 10 % prey: multi 0.11 / per-pair 0.57  M2 on total stock at F 0.36-0.54: 0.039-0.059/yr
+
+whiting (bed prey checked today)  (armour h x1 on crustaceans)   X_bed = 35.4
+  epifauna  x   35.4  x_eff 35.43  eps 0.03  diet share 1.00  half-sat on f*B   0.11 t/km2 (f*B today  1.10)  intake at 10 % prey: multi 0.80 / per-pair 0.80  M2 on total stock at F 0.36-0.54: 0.504-0.756/yr
+
+whiting (bed prey checked today)  (armour h x2 on crustaceans)   X_bed = 70.9
+  epifauna  x   70.9  x_eff 70.86  eps 0.01  diet share 1.00  half-sat on f*B   0.05 t/km2 (f*B today  1.10)  intake at 10 % prey: multi 0.89 / per-pair 0.89  M2 on total stock at F 0.36-0.54: 0.255-0.383/yr
+
+whiting with a diet-ratio infauna term on the same bed (J):
+  x_epi 35.4, x_inf 13.1, X 48.5; epifauna x_eff 2.52, eps 0.28, intake at 10 % epifauna 0.28

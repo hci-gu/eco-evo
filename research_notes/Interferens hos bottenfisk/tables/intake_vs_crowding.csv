@@ -1,0 +1,13 @@
+form,kind,R_1x,R_3x,R_5x,R_13x,R_30x
+"HV m=0.7 (DeLong & Vasseur 2011 median; tanks, mostly invertebrates)",evidence/extrapolated,1.0,0.463,0.324,0.166,0.092
+"HV m=0.05-0.09 midpoint 0.07 (population-scale growth DD, earlier note)",evidence,1.0,0.926,0.893,0.836,0.788
+"HV m=0.185 (Baltic large cod, total prey, haul scale; incl. local depletion) [D]",evidence,1.0,0.816,0.742,0.622,0.533
+"HV m=0.21 (Baltic flounder, benthic prey, haul scale; incl. depletion) [D]",evidence,1.0,0.794,0.713,0.584,0.49
+"m=0 (Baltic small cod benthic; Barents cod on capelin, Fall et al. 2021)",evidence,1.0,1.0,1.0,1.0,1.0
+"model per-pair BD w=0.45, infauna (x=59.0)",model,1.0,0.985,0.971,0.918,0.822
+"model per-pair BD w=0.45, epifauna (x=38.0)",model,1.0,0.978,0.956,0.88,0.751
+"model per-pair BD w=0.45, herring (x=5.3)",model,1.0,0.882,0.789,0.556,0.341
+"model per-pair BD w=0.45, whiting (x=0.25)",model,1.0,0.654,0.486,0.239,0.115
+"model shared-denominator BD w=0.45 (S=102.55), all pairs",alternative,1.0,0.991,0.983,0.951,0.889
+"Crowley-Martin w'=0.02, all pairs",alternative,1.0,0.962,0.927,0.81,0.637
+"Crowley-Martin w'=0.05, all pairs",alternative,1.0,0.913,0.84,0.636,0.42

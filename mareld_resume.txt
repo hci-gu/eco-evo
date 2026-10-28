@@ -20404,3 +20404,535 @@ remain open exactly as described in 71.9 / 71.11.
       library. The data/ copies (fg_library_split.yaml,
       mareld2_split.yaml) equal the live files at build time only; they
       are build outputs, not a reference version.
+223.27 fix78 analysis at update 233 (2026-10-27; analysis only, no
+      library, manifest or code change). fix78 = train_gpu,
+      pzbpgp248nsrpfix78, from scratch on the 223.26 split library
+      (library and manifest 05:43, run start 05:50, unchanged since),
+      2 worlds, --warmup-days 60, 1x16 tanh, lr 0.06, sigma 0.1, 16
+      deltas, 1460-tick episodes, --eval-every 10; stopped at update
+      233 (gen 4, ~230 s/update, 20:56). Frozen copy of the final
+      policies, tools/probes/frozen_years.py 3 years, seed 20260530;
+      year 1 matches the GPU long-run probe within ~0.02.
+    - End/b0 years 1-3: benthivores 0.56/0.32/0.20, water column
+      0.87/0.76/0.62, whiting 1.41/1.67/0.63, planktivores 0.86/0.64/
+      0.40, epifauna 0.57/0.24/0.13, seals 0.96/0.70/0.09, porpoises
+      0.85/0.71/0.14; infauna and Nephrops ~1.0. Worse than fix77 at
+      the same update (230: ben year 3 0.37, plk 1.34, seals 0.92,
+      epi 0.52). Probe band flat since update ~50-60 (ben year 1
+      0.50-0.68); V negative since update 50, worst seals/porpoises/
+      epifauna. Not called a plateau at gen 4; the diagnosis below
+      does not depend on it.
+    - Budget diet (library M2 x start density) vs realised, years 1/3:
+      water column budget plk 55, zoo 36, ben 6, wht 3 % (Q/B 2.74);
+      realised plk 64/75, ben 33/18, zoo 2/2, wht 1/4 (Q/B 2.7/2.4).
+      Whiting budget plk 36, zoo 36, epi 18, ben 10 % (Q/B 3.3);
+      realised epi 81/54, plk 18/45, zoo 1/0, ben 0/1 (Q/B 5.2/3.5).
+      Benthivores budget infauna 54, epi 30, plk 12 %; realised
+      infauna 78 -> 98, epi 19 -> 1, plk 0 (Q/B 6.0 -> 7.1).
+    - Chain 1, benthivores (as 223.25, and as 223.26's own diagnostic
+      predicted): water column realised M2 on benthivores 0.53/yr in
+      every year vs 0.083 in the library; benthivore predation 0.64-
+      0.72 + natural 0.33-0.40 + trawl 0.12-0.14 against fill 0.71-
+      0.73 and starvation <= 0.008 - predation, not food. The split
+      did not touch it: the pair is saturated (a h f B 2.07 at the
+      grid mean) and the eat share is the limiter. At grid means the
+      return per unit eat share is plk 23.2 vs ben 17.2 MJ/t/tick, but
+      benthivores are patchy (benthivore-weighted density 5.9x the
+      grid mean) and in those cells the pair pays near its ceiling
+      (26.2); water column co-location is weak (ben 1.16x, plk 1.08x
+      the grid mean, scratchpad coloc.py) - a per-cell choice, not
+      aggregation by the predator.
+    - Chain 2, whiting -> epifauna -> planktivores (new with the split;
+      why epifauna is worse than fix77): the library books M2 0.534/yr
+      on whiting (benthivores 0.345, water column 0.157, porpoises
+      0.019, seals 0.013), realised 0.046 (year 1) -> 0.089 (year 3).
+      benthivores -> whiting pays 3.0 MJ/t/tick per unit eat share vs
+      17.9 on infauna (a 0.0026 after 223.26's x phi, a h B 0.26), so
+      no policy cashes it. Derived g pays ~0.45/yr of predation that
+      never happens; with the K loss whiting settles near B/K ~1.85
+      (observed up to 1.8x start). It feeds on epifauna at the ceiling
+      (a h f B 27 at the grid mean; half-saturation 1/(a h f) = 0.107
+      t/km2, ~3 % of the epifauna start): realised M2 on epifauna 0.79
+      -> 1.90 vs 0.069; epifauna predation 1.24 -> 1.96 /yr vs r_max
+      1.14. Epifauna 0.13 in year 3 -> whiting starvation 0.53 /yr,
+      whiting switches to planktivores (M2 0.15 -> 0.58 vs 0.16);
+      planktivore predation 0.54 -> 1.14 /yr.
+    - Downstream: seals 93 % benthivores (seals -> whiting realised
+      0.0005 vs 0.013), starvation 0.05 -> 1.39 /yr; porpoises
+      starvation 0.18 -> 1.11 /yr. Planktivores realise ~70 % of
+      their ideal production even in year 1 (gross ~1.0 vs r + M1 +
+      budget M2 ~1.4 /yr; fill 0.58-0.63). Plankton as fix77
+      (phytoplankton 0.04-0.06 of start at year end, zooplankton
+      seasonal 0.02 -> 2.5).
+    - Common mechanism: per-pair Holling with no shared handling and a
+      linear eat share (185.16, 199.8). A saturated pair delivers its
+      ceiling down to a few % of the prey's start density, so the
+      pressure is eat share x B_pred / h, set by the policy, not by
+      prey abundance; pairs that pay little per unit share
+      (benthivores -> whiting, benthivores -> plk 0.0035 vs 0.245,
+      water column -> zoo 0.006 vs 0.076) are never chosen, saturated
+      pairs realise 5-25x their budget M2. The growth budget and the
+      return structure are inconsistent.
+    - Options (user's call; no a moved per the rule): (a) the budget
+      books M2 on pairs the engine makes unchoosable - a budget/
+      engine consistency question; (b) the multi-prey response with
+      shared handling of 199.8, intake_j = a_j B_j / (1 + sum_k a_k
+      h_k B_k) (both engines, every pair rechecked, retrain), the
+      documented mechanism that makes dense prey self-limit and lets
+      the encounter-theory a set the diet.
+    - Follow-up (user question: why would herring not pay for whiting?
+      2026-10-27). Rig scratchpad wht_plk.py: frozen fix78 policies, 2
+      years, seed 20260530; per cell the engine's own return per unit
+      eat share (visible prey, pair access, light, interference,
+      reserve offset), weighted by whiting biomass x hunger, against
+      the policy's eat shares. Herring does pay: in summer-autumn
+      (visible fraction ~1.0) planktivores give 25-27 MJ/t/tick vs
+      epifauna 22, and the policy puts 0.55-0.89 of its eat share on
+      them. In winter the herring hide (visible fraction 0.34-0.50;
+      the light multiplier is low too) and the return falls to ~14,
+      while epifauna (an NDM, no hide, saturated down to ~3 % of its
+      start) pays 23-24 all year; the policy goes 0.87-0.94 to
+      epifauna. The policy's shares follow the per-cell best prey
+      closely (share of whiting where each prey is best: same
+      pattern), so this is not a learning failure. Diet by mass
+      exaggerates the epifauna: herring carries 5700 vs 3000 MJ/t
+      (as eaten by whiting), so year 1's 81/18 % by mass is ~70/30 %
+      by energy. The epifauna loss therefore comes from winter, when
+      the herring are out of reach and the bed is an always-saturated,
+      never-hiding food.
+    - Same rig on the water column -> benthivores (user, 2026-10-27;
+      wht_plk.py now prints the visible fraction of every prey). The
+      benthivores pay 10-12 MJ/t/tick per unit eat share all year
+      (water-column biomass weighted; near the ceiling 26 only in the
+      dense benthivore patches); herring 25-27 in summer-autumn, 12-14
+      in winter when they hide (visible 0.34-0.41). The policy puts
+      0.03-0.10 of its eat share on benthivores in summer and 0.36-0.42
+      in winter (months with herring hidden), again tracking the
+      per-cell best prey (0.33-0.49 of the water column where
+      benthivores are best in winter). The 0.53/yr M2 is mostly a
+      winter fallback, as whiting -> epifauna. The benthivores never
+      hide: their visible fraction is the pair access 0.24 in every
+      month (rest share ~0; floor 0.55). Likely reason (estimate, not
+      run): in their patches the pair is saturated (a h f B ~12 at
+      5.9x the grid mean), so hiding down to the floor cuts the take
+      only ~6 % (12/13 -> 6.6/7.6) while it costs feeding - with a
+      per-pair saturated response the loss is set by the predator's
+      eat share, not by the prey's visibility.
+    - Same rig on the benthivores (user, 2026-10-27; wht_plk.py now
+      also prints the achieved return sum_j eat_j r_j / sum_j eat_j
+      against the per-cell best max_j r_j, biomass x hunger weighted).
+      Infauna and epifauna pay nearly the same per unit eat share
+      (16.0-17.8 vs 17.3-17.8 MJ/t/tick; the epifauna pair stays
+      saturated, 15.5 at the end of year 2 with epifauna ~0.2 of its
+      start); visible fractions are the pair access 0.62 and the
+      infauna's exposed share 0.19-0.20. Epifauna is the best prey for
+      0.62-0.84 of the benthivore biomass in year 1, but the policy
+      puts only 0.13-0.27 of its eat share there (infauna 0.51-0.92);
+      herring is best for 0.20-0.52 in summer and gets ~0.01. Unlike
+      the two predator groups the benthivores do not track the per-
+      cell best: achieved/best 0.82-0.90 (whiting 0.94-0.99, water
+      column 0.88-0.97, year 1). Small in energy (a near tie), and not
+      what kills them (fill 0.71-0.73). The benthivores are not the
+      epifauna's problem: realised M2 0.45 (year 1) -> 0.06 (year 3)
+      vs 0.54 in the library, against whiting 0.79 -> 1.90 vs 0.069.
+    - Shared handling, worked through (user question, 2026-10-27;
+      scratchpad shared_handling.py: the probe world's start state,
+      library a/h/f/Type III/refuge/interference, no hiding, annual-
+      mean light; effort scaled so each predator eats its budget
+      ration). Two facts make it decisive: (1) the library sets every
+      pair's h = E/Cmax, so E/h is the same for all prey of a
+      predator (water column 26.2, whiting 25.1, benthivores 18.3-
+      20.9); by the optimal-diet rule there is then no profitability
+      reason to reject any prey, and the diet is set by encounter, a f
+      x visible B (x B for Type III). (2) The denominator is shared,
+      so within a predator M2_j / M2_k = a_j f_j / a_k f_k (Type II,
+      equal visibility) - a closed-form, density-free consistency
+      test of the a's against the budget M2. Diets at budget ration
+      (shared / budget %, M2 shared vs library):
+      water column ben 21.5/6.2 (0.29 vs 0.083), plk 27.2/54.9 (0.17
+      vs 0.34), wht 9.1/3.4 (0.42 vs 0.157), zoo 42.2/35.6;
+      whiting epi 85.6/17.7 (0.33 vs 0.069), plk 4.8/36.3, zoo 5.8/
+      36.0, ben 3.8/10.0; benthivores infauna 64.1/54.4, epi 31.3/29.9
+      (0.56 vs 0.54), Nephrops 3.7/1.5, plk 0.8/12.0, whiting 0.2/2.3
+      (0.024 vs 0.345); seals ben 96.7/60.1, plk 0.0/25.1; porpoises
+      plk 88.6/64.8, whiting 2.2/13.0. So shared handling alone would
+      not fix the two chains: with today's a it gives whiting an even
+      more epifauna-heavy diet and the water column ~3.5x the budget
+      M2 on benthivores (vs 6.4x realised now). What it changes: the
+      policy no longer chooses the prey (one forage action; diet from
+      encounter, where/when to forage and the prey's hiding); hiding
+      pays again (benthivores to the floor 0.55 cut the water-column
+      take ~40 % vs ~6 % now); alternative prey dilute the pressure on
+      a declining prey (whiting -> epifauna per-capita M2 rises ~2.4x
+      as epifauna vanishes, vs up to ~28x per unit share now); and the
+      a/budget inconsistency becomes explicit and must be resolved
+      from biology (which of a/e/f or the diet-based M2 is wrong per
+      pair), never from model output. A habitat-mode variant (effort
+      per layer, bed vs water column, shared handling within and
+      across) would keep a learned choice with a biological meaning.
+    - User question (2026-10-27): are infauna and epifauna unrealistically
+      easy to find and handle? The project's own field notes say yes
+      for the density response, with three mechanisms recommended and
+      never applied (research_notes/"Fodoniva och mattnad i falt",
+      Swedish letters, mechanisms table; "Exponering av bottenbyten"):
+      (a) armour on the ceiling of shelled prey, h x ~1.5-2 (Andersen
+      1999: brown shrimp evacuated ~2x slower in whiting; Couturier
+      2013), ~94 % of the exposed epifauna is crustacean; on the fix78
+      returns it takes whiting -> epifauna from 23-24 to 16 (x1.5) or
+      12 (x2) MJ/t/tick against herring's winter 14; (b) a seasonal
+      feeding window (ICES stomach data: whiting 45 % empty in Q1,
+      cod/haddock 16-18 % vs 6-10 %; gadoid Q1 ration ~0.6-0.8, J) -
+      the winter is exactly when all three rigs found the fallback onto
+      the bed and the benthivores; a physiological rate in the response
+      (as herring's feeding season), not a cap on the action; (c) the
+      benthic density response: Hiddink 2016 (Kattegat, intake and
+      condition fall with prey per fish) needs x = a h f B ~1-4 at
+      today's prey, the engine has 19-66 (whiting -> epifauna ~35 at
+      the start: at 10 % of the start it still pays 78 % of the
+      ceiling; at x 3 it would pay 23 %). Open conflict with the
+      mechanistic e (0.15-0.5), which found no step that lowers a by
+      1-2 orders; unresolved, user's call. Capture window tau 0.1-0.2
+      on fish prey (Rindorf & Gislason 2005) concerns the fish pairs,
+      not the bed.
+    - Correction (user, 2026-10-27): behaviour must not come from the
+      engine identifying a season; the physical changes of the season
+      must drive it (as herring's winter rest). The seasonal feeding
+      window (b) above is withdrawn as a month-keyed multiplier. The
+      physical candidates for the field's low Q1 rations: (i) water
+      temperature on Cmax, ingestion_q10 on the fish (section 181's
+      mechanism, a and 1/h together, annual mean 1): Q10 2-3 gives
+      Q1/other quarters 0.83-0.89 on at_50m (6.6-11.7 C) but only
+      0.96-0.97 on the bottom layer (6.6-8.5 C) - real but too small
+      for the field 0.6-0.8, and none for the bed feeders; (ii) light
+      does not help: bottom prey are eaten MORE at night by North Sea
+      whiting (Rindorf 2003; research_notes/"Torskfiskars ljusberoende
+      vid jakt"), so the winter shift to the bed is right in direction;
+      (iii) spawning (cod Q1, whiting Feb-Jun) is not represented. So
+      the field's Q1 empty stomachs say that when the herring are out
+      of reach the bed does NOT refill gadoid stomachs to the ceiling -
+      evidence for (a) armour and (c) the benthic density response,
+      not for a separate seasonal mechanism.
+    - Literature search on the saturation conflict (user, 2026-10-27;
+      research_notes/"Mattnad hos bottenbyten" (Swedish letters),
+      summary.md saved by the main agent). Both earlier notes right
+      about different quantities: a and e stand (lab cod on Crangon a
+      0.065-0.13 vs library 0.15, Persson 2012; no search-side step of
+      5-50x); the response to ONE prey rises at field densities (cod on
+      Pandalus x ~0.25-0.5, Hvingel & Kingsley 2006; diets track prey
+      over 5-250x with flat total intake, Smith 2013, Berenboim 2000).
+      They reconcile only if co-occurring bed prey share one search and
+      one gut (Murdoch 1973, Jeschke 2002): benthivores X_bed 123, x_eff
+      infauna 1.2, epifauna 0.7, Nephrops 0.05; intake at 10 % of a prey
+      0.10-0.20 vs 0.42-0.88 per pair. Structural, not a library value.
+      Whiting stays saturated with bed-only sharing (its one bed pair,
+      x 35). Main-agent addition: if whiting's bed and water-column
+      search share time (X 56.8 at the start: epi 35.4, plk 15.9, zoo
+      3.2, ben 2.3), epifauna x_eff 1.6 and intake at 10 % epifauna
+      0.22, but the diet by mass at the start is ~73 % epifauna (a f B)
+      vs 18 % in the budget - the a/budget inconsistency remains; open
+      whether whiting's modes share time (Rindorf 2003: bottom prey by
+      night, free-swimming by day). Armour (h x1.7-2 shrimps, x2-3
+      crabs, J) halves the crustacean ceiling; under sharing it adds to
+      X and does not change diet by mass. Field feeding level 0.22-0.53
+      of Cmax stays unexplained by any of this (time/risk; a predator
+      cue cut cod intake to 0.22-0.44, Persson 2012). Kattegat: flat
+      prey, flatfish x0.5, condition independent of B - consumer
+      density open.
+    - Armour, expected effect (user question, 2026-10-27; scratchpad
+      armour_rig.py = wht_plk.py with h x ARM on the returns only, the
+      fix78 trajectory itself unchanged). Group factor on exposed
+      epifauna by biomass (h per tonne adds over the components): crabs/
+      hermits/Munida x2-3, Pandalus x1.7-2, small shrimps+mysids x1.3-
+      1.7, cephalopods/small fish x1 -> 1.79 / 2.17 / 2.54; Nephrops x2.
+      At x2.17: whiting -> epifauna pays ~11 (was 23-24) against winter
+      herring 14 and benthivores 9-10; epifauna is the best prey for
+      0-20 % of the whiting (was 26-97 %); in winter herring is best for
+      56-67 % and benthivores for 15-28 % (new pressure on them); the
+      whiting's best attainable winter return falls 23 -> 16-18, so less
+      overshoot. Benthivores: epifauna 8.7, Nephrops 6-9 vs infauna 16-
+      18 -> infauna best for 52-100 %, herring for 24-66 % in summer;
+      best return -3 to -7 %. Caveat: with the linear eat split armour
+      gives corner solutions - the benthivores would drop epifauna to ~0
+      against the field 31 % of their diet; under a shared denominator
+      armour would not change the diet by mass. Unchanged by armour:
+      the knee (x rises, more saturated), water column -> benthivores
+      (0.53), the uncashed M2 on whiting (0.534), plankton. Library-only
+      (h on three pairs); s* and derived g expected unchanged (each
+      predator's best E/h is a non-crustacean pair at the same value;
+      check with budget_gate); no observation or action change, so
+      checkpoints stay valid (--init-from fix78 possible). Flag: if E
+      already counts the shell, assimilation 0.8 on crustaceans may
+      double-count with armour.
+    - Benthivore movement speed (user question, 2026-10-28: too slow to
+      escape?). movement_speed is the share of the moving biomass that
+      leaves the cell per tick (movement.apply_movement: b_out =
+      moving x dm_v; engine cap 1 cell = 1 km per 6 h). Benthivores 0.2
+      (research_notes/"Fiskgrupper i rutan" params_benthivorous_fish.md:
+      "haddock, cod 0.25 (as gadoids), gurnard 0.2, flatfish and rays
+      sedentary 0.1", J) - the old gadoid value and a residence reading,
+      while the same research set the predators to 1.0 because "residence
+      is behaviour, not a speed limit" (0.25 was "below the physiology of
+      every pelagic member"). By that rule cod/haddock at ~0.5 BL/s
+      (40-50 cm: ~4-5 km per 6 h) and plaice (km/day in tagging) are
+      physically above the cap: an inconsistency, not a measured limit.
+      Every other fish prey (planktivores, whiting) has 1.0. Effect now:
+      a move action costs the full movement_cost while only 20 % leaves,
+      so flight and food-tracking barely pay (fix78 benthivore actions:
+      move 0.13, rest 0.03, eat 0.84); hiding does not pay either under
+      saturation (~6 %) - the benthivores have no working defence, the
+      only fish prey without one, and the only one eaten at 6x its
+      budget M2. Water column co-location on benthivores is only 1.16x,
+      so avoidance has room (overlap < 1). Not quantified; needs
+      retraining (library value only, checkpoints valid, --init-from).
+      Independent of the shared-denominator question (bed prey).
+    - Applied (user, 2026-10-28; uncommitted): benthivorous_fish
+      movement_speed 0.2 -> 1.0 (fg_library.yaml, comment with the
+      reason above). No other value; growth budget unaffected (speed is
+      not in it); observation and action layout unchanged, so
+      checkpoints stay valid (fix78 can seed a run with --init-from).
+      Validation: pytest 1527 passed / 12 skipped; train.py 1-generation
+      smoke (results/smoke223) and train_gpu.py 1-generation smoke OK.
+    - Infauna exposed share (user question, 2026-10-28): phi 0.20
+      (0.08-0.45) rests on one measured profile (Dauwe 1998, Skagerrak
+      280 m: 27 % of biomass in 0-2 cm) and a judged reach depth (0-1,
+      0-2 or 0-5 cm, unmeasured; haddock digging depth a gap). At 100 m,
+      where Amphiura dominates, the exposed arm tips are 1-5 % of body
+      mass (Exposure note: phi ~0.17 there). Moderately supported.
+    - Benthivore diet in fix78 (frozen u233 probe, intake block): infauna
+      is 0.78 / 0.91 / 0.98 of the benthivores' intake by mass in years
+      1-3 (energy 0.71 / 0.87 / 0.97) vs the budget's ~0.54; per tonne of
+      benthivore 4.7 -> 6.9 t infauna/yr vs the budget's 2.4 (0.0396 x
+      94 / 1.53). The group-level take is 5.6 -> 2.8 t/km2/yr (M2 on
+      infauna 0.060 / 0.044 / 0.030 vs the budget's 0.040) because the
+      benthivores decline; bottom trawling takes 0.113 /yr, twice the
+      predation; infauna end/start 0.99-1.01. The drift towards infauna
+      follows the epifauna collapse (benthivore epifauna intake 4770 ->
+      133 t/yr) - the corner solution again, not an infauna shortage.
+    - Correction to the refuge cross-check: Skold et al. 1994 give a
+      REALISED Amphiura regeneration flux ~0.06 B /yr (13 % of production
+      x P/B 0.46) under the field's light cropping - a demand-limited
+      flux, a lower bound on what the exposed layer can supply, not a
+      ceiling; comparing it with k_in 0.5 (a rate constant) mixed
+      quantities. Flux against flux: fix78's year-1 take 5.6 t/km2/yr is
+      about that observed flux (0.06 x 94); the engine's supply capacity
+      with A emptied is k_in B ~47 t/km2/yr, near the production bound
+      (P/B 0.46 -> ~43; lugworm cropping 0.39 /yr ~60 % of production,
+      Beukema & de Vlas 1979). The take is ~12 % of capacity; the refuge
+      is not the binding limit. Untested: whether capacity at 6 C bottom
+      water sits nearer the production bound or the realised flux.
+
+223.28 fix79 analysis at update 301 (2026-10-28; analysis only, no
+      library, manifest or code change). fix79 = train_gpu,
+      pzbpgp248nsrpfix79, from scratch on the 223.27 library
+      (benthivore movement_speed 1.0; library 00:53, run start 01:00),
+      --grid 30*30, 4 worlds, --warmup-days 60, --depleted-patches 0.5,
+      1x16 tanh, lr 0.06, sigma 0.1, 16 deltas, 1460-tick episodes,
+      --eval-every 10; still running at gen 6 (~97 s/update vs fix78's
+      ~230 s on 60x60 with 2 worlds). The 30x30 world is the 60x60
+      area with every map nearest-neighbour resampled (impact_maps.
+      load_impact_map_npz; depth the same way), start totals scaled
+      to the same densities; the long-run probe ran on 30x30 too.
+      Frozen copy of the update-301 policies (scratchpad f79u301,
+      bda272c9 benthivores), tools/probes/frozen_years.py 3 years on
+      60x60, seed 20260530.
+    - Transfer 30x30 -> 60x60 holds: benthivores end/b0 0.69/0.51/0.37
+      on 60x60 vs 0.66/0.49/0.35 in the 30x30 probe at update 300.
+    - End/b0 years 1-3 (fix78 u233 in brackets): benthivores 0.69/
+      0.51/0.37 (0.56/0.32/0.20), water column 0.87/0.79/0.69 (0.87/
+      0.76/0.62), whiting 1.38/1.64/1.48 (1.41/1.67/0.63), planktivores
+      0.88/0.76/0.58 (0.86/0.64/0.40), epifauna 0.65/0.43/0.26 (0.57/
+      0.24/0.13), seals 0.99/1.00/0.89 (0.96/0.70/0.09), porpoises
+      0.88/0.87/0.75 (0.85/0.71/0.14); infauna, Nephrops ~1.0. Better
+      than fix78 at every matched probe update, but not closing: the
+      fish prey and epifauna fall every year (benthivores -27 %/yr,
+      planktivores -24 %, epifauna -40 %, water column -12 %). The
+      probe's 13/13 viable (V 0.178, years 2-3, floor 0.1, max drift
+      2) passes this steady decline; read the trend, not the flag.
+      Probe band for the fish flat or slightly down since update ~60
+      (benthivore year 3 0.53 -> 0.35); seals and porpoises still
+      rising late (seals year 3 0.46 -> 0.93, updates 230-300). No
+      convergence call either way.
+    - Benthivores: losses pred 0.42-0.54 + natural 0.35-0.41 + trawl
+      0.12-0.15 /yr, fill 0.71-0.74, starvation ~0 - predation as
+      before, less of it. Water column realised M2 on benthivores
+      0.35/0.40 (fix78 0.53; library 0.083), its diet ben 24 -> 19 %
+      (fix78 33 -> 18 %). Seals' M2 on benthivores 0.07 -> 0.13.
+    - Speed control (fix79 u301 policies with the HEAD library, i.e.
+      movement_speed 0.2, everything else equal): benthivores 0.51/
+      0.37/0.29, year-1 starvation 0.14 /yr (fill 0.67; a policy
+      trained at 1.0 cannot reach its food at 0.2), water column M2 on
+      them 0.45 in year 1, seals crash in year 3 (0.17). Rig scratchpad
+      ben_act.py (biomass-weighted action shares, predator-weighted
+      benthivore density / grid mean, 1 year): at speed 1.0 the
+      benthivores move 0.06, rest 0.00, eat 0.94 (fix78 0.09/0.01/
+      0.90; at 0.2 the same policies 0.11/0.00/0.89), but the mass
+      actually displaced per tick is move x speed: 0.06 vs 0.022 at
+      0.2 (fix78 0.018). Water column co-location on benthivores 1.10
+      at 1.0 vs 1.57 at 0.2 (fix78 1.17); benthivore self-clumping 13x
+      (16x at 0.2, fix78 5.8x). So the speed does work through
+      displacement and lower predator overlap, not a larger move
+      share. Attribution, year 3: fix78 0.20 -> fix79 policies at 0.2
+      0.29 -> at 1.0 0.37; the first step mixes training setup (30x30,
+      4 worlds) with 68 more updates, the second is inflated by the
+      mismatch (starvation at 0.2).
+    - Downstream: porpoises shifted to whiting (33 -> 70 % of intake;
+      whiting 1.4-1.6x start, never hides), seals ride the slower
+      benthivore decline. Chain 2 of 223.27 is unchanged: whiting ->
+      epifauna realised M2 0.77 -> 1.54 /yr vs library 0.069, whiting
+      -> planktivores 0.15 -> 0.45; benthivores -> whiting 0.002-0.010
+      vs 0.345 booked. The budget/engine inconsistency of 223.27 stands.
+    - Benthivore fish prey (user question: how can the benthivores eat
+      more planktivores and whiting? 2026-10-28). Rig wht_plk.py on
+      f79u301, 1 year, benthivores (biomass x hunger weighted return
+      per unit eat share, MJ/t/tick): infauna 13.9-16.6, epifauna
+      15.0-18.1, Nephrops 6.9-12.2, planktivores 3.3-10.1 (herring
+      visible 0.30-0.46 Nov-Feb, they rest/hide; ~1.0 May-Aug), whiting
+      1.0-2.3. The probe world starts on day ~147 (start_day_of_year
+      random; light_start 590 of 1460 at seed 20260530), so the rig's
+      month 1 is late May - June. Policy eat share: planktivores
+      0.002-0.005, whiting 0.003-0.005; herring is the best prey for
+      0.09-0.22 of the benthivores late Mar - Oct and ~0 Nov-Feb,
+      whiting never. Same rig with the gape
+      share undone in the return only (a / 0.32 on planktivores, a /
+      0.10 on whiting = the return to a capable tonne, scratchpad
+      capable_rig.py): planktivores 5.9-14.2, whiting 4.0-8.8 - still
+      below the bed in every month. So the low fish diet is not mainly
+      the dilution of a over the whole group: the bed pays near the
+      ceiling all year (saturated, never hides) and the fish prey,
+      thin and patchy at grid scale and caught by day only (night/day
+      0.06-0.10), cannot compete. Same direction as 223.27's density-
+      free test (shared denominator: planktivores 0.8 % vs budget 12 %,
+      whiting 0.2 vs 2.3 %) and the Hiddink gap (x 19-66 on the bed vs
+      ~1-4). No a moved.
+    - Why fat herring pays less than the bed (user question, 2026-10-28;
+      scratchpad decomp.py / decomp0.py, f79u301, 1 year, benthivore
+      biomass x hunger weighted, calendar months). Per tonne eaten
+      herring carries 7124 MJ/t (lean 4000 + reserve at the reference
+      fill) vs infauna 2600, epifauna 3750, but every benthivore pair
+      has h = E / 26.18, so at a full gut every prey gives the same
+      26.18 MJ/t/tick x assimilation (herring 20.9, infauna 18.3): the
+      ceiling is in energy, and richness only counts below it. Share
+      of the ceiling, f = x / (1 + x + I), x = a(t) h B_vis, I = w B_ben:
+      infauna x 59, f 0.86 (0.98 at I = 0); epifauna x 38, f 0.83
+      (0.97); planktivores x 5.3 (1.3-1.6 Dec-Jan, 10-13 Jun-Jul), f
+      0.27 (0.45); whiting x 0.25, f 0.06 (0.15). Interference I =
+      0.45 x B_ben averages 9.5 (22 in June at the clumped start, 3.6
+      in May) because the benthivores sit 13x clumped; it cuts herring
+      by ~40 % and the bed by ~12 % (per-pair denominators). Without it
+      herring would still pay ~9 vs ~18 on the bed: herring are thin in
+      most benthivore cells and caught by day only. w 0.45 has no fish
+      measurement (library comment: the section 86 crowding fix at 0.69
+      t/km2 rescaled). Open: whether the gadoid gut limit is in energy
+      (as the library) or nearer mass/volume, where fat prey would pay
+      up to E_prey / E_bed more at satiation - a gastric-evacuation
+      question (lipid slows evacuation per gram), not checked.
+    - Whiting budget check (user, 2026-10-28: "SMS 0.05"). The booked
+      benthivores -> whiting M2 0.345 = Q/B 4.46 x 1.53 x diet share
+      0.023 (cod + gurnard on predator-pool fish, 1.9 % raw, x1.2 for
+      the no-pool redistribution of 223.9) / 0.446, all on whiting since
+      223.26. SMS 0.05 is the 2018-22 North Sea mean at a cod:whiting
+      1+ biomass ratio of 0.26 (SMS key run 2023 summary.out and
+      partial_m2.out, research_notes/"Fiskgrupper i rutan"/benthivores/
+      data/sms2023; computed here, no file written): M2 cod -> whiting
+      1+ 0.205 in 1974-85 (ratio 0.99), 0.113 in 1986-2000 (0.66), 0.056
+      in 2001-22 (0.43). Per unit of the ratio the SMS M2 is steady:
+      median 0.156 (10-90 % 0.106-0.271, 1974-2022), i.e. ~0.16 t of 1+
+      whiting per t of cod per year. The model's cod:whiting is 1.06
+      (cod 0.31 x 1.53 = 0.474 on whiting 0.446, the user's long-run
+      levels), so SMS scaled to it gives 0.17 (0.11-0.29), + gurnard and
+      starry ray ~0.01 (SMS 1+): ~0.18. The library's 0.345 is ~2x;
+      the 0.05 belongs to today's depleted cod, not to the model's
+      long-run cod. The factor 2: per tonne of cod the library implies
+      0.33 t whiting/yr (all flow on cod) vs SMS 0.16 - Q/B 4.46 vs cod
+      ~3.2 (x1.4) and a whiting share of cod's diet ~7.4 % vs SMS-
+      implied ~4.9 % (Skagerrak stomachs ~2.5-5 %, other areas 6-9 %).
+      Whiting's booked M at 0.18: 0.25 + 0.18 + 0.157 + 0.013 + 0.019 =
+      0.62 /yr vs SMS total 0.685 (1+, cannibalism and saithe inside).
+      No library change; user's call.
+    - Applied (user, 2026-10-28 11:02; uncommitted):
+      benthivorous_fish_preys_on_whiting predation_mortality 0.345 ->
+      0.18 (comment with the SMS scaling above); whiting's stored derived
+      growth_rate 0.0036742383864 -> 0.0030475367763 (-17 %); whiting
+      comment total M 0.78 -> 0.62; AGENTS.md line updated. a, h and
+      everything else unchanged; no observation/action change, so
+      checkpoints stay valid. Validation: pytest 1527 passed / 12
+      skipped; train.py 1-generation smoke (results/smoke22328, whiting)
+      OK. fix79 was running (update ~324): its GPU training keeps the
+      library it started with, but the long-run probe reloads the
+      library, so fix79 probes from update 330 on run with M2 0.18
+      (whiting's g lower) while the policies trained on 0.345; probes
+      up to 320 are on the old library.
+    - Interference research (user, 2026-10-28; research_notes/
+      "Interferens hos bottenfisk" (Swedish letters), summary.md saved by
+      the main agent; scripts/tables there). Benthivore w 0.45 has no
+      biological basis (the section 86 band fix rescaled). Haul-scale
+      fish tests: Barents cod on capelin no effect (Fall et al. 2021);
+      Baltic small cod on benthos none, large cod and flounder m ~0.19-
+      0.21 with depletion included (Lindmark et al. data, sdmTMB);
+      haddock condition higher where haddock are dense (Hiddink 2005);
+      flatfish signals are prey per consumer = exploitation, which the
+      engine has per cell. Field crowding: Skagerrak NS-IBTS 2021-25
+      benthivore-weighted own density 3.1x the mean (2.1-3.8; haddock
+      4.4, cod 2.5) vs the trained policy's 13x (~30x at start): at w
+      0.45 a field-like I is 1.4-2.3, not 9.5. Structure: the per-pair
+      form is time-partitioned Beddington (no double count) but charges
+      w P instead of w eat_j P and taxes low-x pairs most (at I 9.5:
+      whiting 88 %, herring 60 %, epifauna 20 %, infauna 14 %; shared
+      denominator 8.4 % on all); no fish evidence for prey-specific
+      interference. Recommendation: w = 0 default (moderate confidence);
+      if kept, one prey-neutral factor (Crowley-Martin w' ~0.01 copies
+      today's seabed effect; field bound w' <= 0.05). Check the section
+      86 bands at w = 0. Correction: the predatory_fish comment "Rindorf
+      et al. 2006: predator density did not affect intake" should read
+      "did not affect prey switching; intake not tested". No library
+      change.
+    - Gastric evacuation research (user, 2026-10-28; research_notes/
+      "Magtomning och energitak" (Swedish letters), summary.md saved by
+      the main agent). Mass evacuation ~E^-b: Andersen (DTU) gadoid
+      models b 0.85-0.875 (whiting ~1.0, plaice 1.0); cod whole-prey data
+      b 0.16 (dos Santos & Jobling 1995) and 0.37-0.45 (Temming &
+      Herrmann 2003, not independent). A mass ceiling (b 0) is outside
+      every gadoid estimate. Armour at equal E: shrimps x1.3-1.45 in cod
+      (~2 in whiting), crabs x1.9-2.1 + a 0-33 h cracking lag; krill and
+      mysids like fish; Arenicola ~2x faster, Nereis ~fish, ophiuroids/
+      bivalves unmeasured. Library E is whole body incl. shell, so armour
+      + assimilation do not double count. Suggested (J): ceiling_j =
+      26.18 (E_j/4.184)^(1-b) / A_j, b 0.75 (0.4-1.0), armour epifauna
+      1.75 (1.4-2.3), Nephrops 2.0 (1.5-2.5), infauna 1.0 (0.6-1.5); h
+      herring 238 (272), whiting 177 (183), epifauna 258 (143), Nephrops
+      286 (138), infauna 112 (99). Herring : infauna energy at a full gut
+      1.29 gross / 1.47 assimilated (today 1.00 / 1.14). Correction: the
+      E^-0.875 law in params_benthivorous_fish.md l.73 is Andersen's
+      (via Velasco & Olaso 2000), not Temming & Herrmann.
+    - Combined effect on benthivore returns (scratchpad scen.py, f79u301
+      trajectory, returns only, biomass x hunger weighted, MJ/t/tick per
+      unit eat share, year means; infauna / epifauna / Nephrops /
+      herring / whiting; share of benthivores where herring is best):
+      today 15.9 / 17.4 / 11.0 / 6.3 / 1.4, 0.09; w = 0 18.0 / 20.3 /
+      16.8 / 10.2 / 3.4, 0.18; armour + b 0.75 14.2 / 10.3 / 6.5 / 6.8 /
+      1.4, 0.19; both 16.0 / 11.4 / 8.8 / 11.2 / 3.5, 0.35 (May 0.61,
+      Aug-Sep 0.47-0.49, Jan 0.11). Herring becomes competitive with the
+      infauna in Apr-Oct; whiting stays at ~3.5 and is never best (the
+      gape-diluted a 0.0026 on a thin prey). No library change.
+    - Applied (user, 2026-10-28 ~11:20-11:27; uncommitted): benthivore pair h
+      at b 0.75 + armour (infauna 99.3 -> 111.9, epifauna 143.2 ->
+      257.6, Nephrops 137.6 -> 285.6, planktivores 272.1 -> 238.2,
+      whiting 183.3 -> 177.2; a comment on each pair) and benthivore
+      interference 0.45 -> 0 (comment with the reasons). Derived growth:
+      only the benthivores move, g 0.0020532778371 -> 0.0018656355976
+      (-9 %): s* is paid at the best pair's ceiling, now herring
+      (assimilated 23.9 vs 20.9 MJ/t/tick), so the ideal-conditions
+      reserve rises. budget_gate: every benthivore pair ok. AGENTS.md
+      (ceiling and interference lines) updated. Validation: pytest 1527
+      passed / 12 skipped; train.py 1-generation smoke (results/
+      smoke22328b, benthivores) and a tiny train_gpu smoke (results/
+      smoke22328gpu, 10x10, 64 ticks) OK. Checkpoints stay valid (no
+      observation/action change). Not tested: the section 86 band risk
+      at w = 0 - the bands were a trained aggregation outcome (free
+      packing), so only a training run shows it (tools/probes/
+      axis_collapse.py, aniso and nyq_x); fix79's policies were already
+      13x clumped at w 0.45. fix79 (still running) probes reload the
+      library: probe 330 (11:22-11:24) may have read a half-edited
+      library (new h, old w and g); from probe 340 on they run on these
+      values (and M2 0.18 from 330) while its policies trained on the
+      old ones.

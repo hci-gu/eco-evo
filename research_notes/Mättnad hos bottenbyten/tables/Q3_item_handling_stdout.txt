@@ -1,0 +1,40 @@
+Per-item handling vs digestion at the benthivore ceiling (104.7 kJ/kg/d)
+items/d = Cmax x M / (E x m); hours/d = items x t / 3600; h_handle = t/21600 x M/m (model units)
+
+item                             M kg  items/d        h/d (t lo-hi)  h_handle h_digest  ratio
+Amphiura arm tip (cropped)        0.5    10067    8.4 ( 0.56- 55.9)      34.7     99.3   0.35
+Amphiura arm tip (cropped)        2.0    40269   33.6 ( 2.24-223.7)     138.9     99.3   1.40
+Bivalve siphon tip (cropped)      0.5     6712    5.6 ( 0.56- 55.9)      23.1     99.3   0.23
+Bivalve siphon tip (cropped)      2.0    26846   22.4 ( 2.24-223.7)      92.6     99.3   0.93
+Small polychaete / palp           0.5      671    0.7 ( 0.19-  5.6)       3.1     99.3   0.03
+Small polychaete / palp           2.0     2685    3.0 ( 0.75- 22.4)      12.3     99.3   0.12
+Small bivalve (whole)             0.5      403    0.6 ( 0.04-  4.2)       2.3     99.3   0.02
+Small bivalve (whole)             2.0     1611    2.2 ( 0.15- 16.8)       9.3     99.3   0.09
+Amphipod / cumacean               0.5     2013    1.1 ( 0.22-  5.6)       4.6     99.3   0.05
+Amphipod / cumacean               2.0     8054    4.5 ( 0.89- 22.4)      18.5     99.3   0.19
+Mysid                             0.5      465    0.1 ( 0.03-  0.7)       0.8    143.2   0.01
+Mysid                             2.0     1861    0.5 ( 0.13-  2.9)       3.1    143.2   0.02
+Small shrimp (Crangon etc.)       0.5       78    0.2 ( 0.03-  2.8)       0.9    143.2   0.01
+Small shrimp (Crangon etc.)       2.0      310    0.6 ( 0.12- 11.3)       3.6    143.2   0.03
+Pandalus                          0.5       23    0.1 ( 0.01-  0.8)       0.4    143.2   0.00
+Pandalus                          2.0       92    0.3 ( 0.03-  3.1)       1.5    143.2   0.01
+Small crab (Liocarcinus etc.)     0.5       25    0.1 ( 0.01-  0.4)       0.4    143.2   0.00
+Small crab (Liocarcinus etc.)     2.0      100    0.2 ( 0.03-  1.6)       1.5    143.2   0.01
+Hermit crab                       0.5        9    0.0 ( 0.01-  0.3)       0.2    143.2   0.00
+Hermit crab                       2.0       38    0.2 ( 0.05-  1.1)       0.9    143.2   0.01
+Munida                            0.5       33    0.1 ( 0.02-  1.2)       0.7    143.2   0.00
+Munida                            2.0      133    0.4 ( 0.09-  4.7)       2.6    143.2   0.02
+Nephrops                          0.5        2    0.0 ( 0.01-  0.2)       0.2    137.6   0.00
+Nephrops                          2.0        8    0.1 ( 0.03-  0.9)       0.7    137.6   0.01
+
+ratio = h_handle / h_digest. Jeschke 2002 SSS: the ceiling is 1/max(b, c); handling binds where
+ratio > 1 with 24 h foraging, or > 0.5 with 12 h foraging (handling only runs while foraging).
+
+Where handling would bind (central masses and times):
+  Amphiura arm tip (cropped) at 2.0 kg: 33.6 h/d of handling > 24 h foraging
+  Amphiura arm tip (cropped) at 2.0 kg: 33.6 h/d of handling > 12 h foraging
+  Bivalve siphon tip (cropped) at 2.0 kg: 22.4 h/d of handling > 12 h foraging
+
+Direction (J): a larger h (handling-limited) LOWERS the ceiling on that item class but RAISES
+x = a h f B; it does not unsaturate the pair. It matters for which items can supply a
+large fish at Cmax: cropped parts (arm tips, siphon tips) cannot.

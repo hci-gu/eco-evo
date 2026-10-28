@@ -175,7 +175,12 @@ fabricates mass.
   epifauna 0.43 / 0.39; research_notes/"Exponering av bottenbyten",
   Swedish letters). They stay saturated: the field feeding level (0.22-
   0.53 of Cmax) is a time-budget matter, not a. The benthivores' ceiling
-  is 26.18 MJ/t/tick at the bottom temperature (223.15); the predator
+  is 26.18 MJ/t/tick at the bottom temperature (223.15), per prey since
+  223.28: ceiling_j = 26.18 (E_j/4.184)^0.25 / armour_j (gastric
+  evacuation ~E^-0.75; armour epifauna 1.75, Nephrops 2.0), h = E /
+  ceiling_j (herring 238, whiting 177, epifauna 258, Nephrops 286,
+  infauna 112; research_notes/"Magtomning och energitak", Swedish
+  letters); every other predator keeps h = E / its ceiling. The predator
   ceilings are Bjornsson-anchored (x1.30, 223.26): whiting 31.34 (bottom
   layer), water column 32.71. Never set a from model output.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
@@ -191,7 +196,8 @@ fabricates mass.
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
   (`interference: 0` = pure Holling; the old gadoid 1.0 of section 86
-  removed 2-cell vertical bands; since 209 benthivores 0.45 (w x B kept),
+  removed 2-cell vertical bands; benthivores 0 since 223.28 (the 0.45
+  had no fish data; research_notes/"Interferens hos bottenfisk"),
   predators 0.1 (no field evidence), planktivores 0.05 since section
   162 - 0.7 had no herring data behind it and cut winter intake by two
   thirds). Planktivores -> zooplankton is Type II
@@ -308,8 +314,9 @@ fabricates mass.
   reserve on top). Benthivore pair M2 since 223.9: budget Q/B 4.46,
   the no-pool 17.7 % of the diet redistributed (infauna 0.0396,
   epifauna 0.276, planktivores 0.245, predators 0.128 - all of it on
-  whiting since 223.26, M2 0.345 on 0.446 t/km2, cod's fish prey in the
-  pool being whiting). Benthivore resting metabolism re-read at the
+  whiting since 223.26, cod's fish prey in the pool being whiting; M2
+  0.18 since 223.28 = SMS cod -> whiting scaled to the model's
+  cod:whiting ratio, was 0.345). Benthivore resting metabolism re-read at the
   bottom layer: 3.33 (223.26).
 - `functional_response: 2|3` on a predation pair forces the Holling type
   for that pair (section 141); without it a specialist gets III and a
