@@ -376,6 +376,15 @@ def apply_spawn_overrides(env, spawn_overrides, spawn_templates, seed=None):
                   f"template '{name}' ({mode}): {e!r}")
             continue
         fg.biomass[...] = np.asarray(new_arr, dtype=np.float32)
+    _restart_juveniles(env)
+
+
+def _restart_juveniles(env):
+    """A rewritten biomass field leaves the juvenile compartments
+    (stages.py) stale: restart them at their start share."""
+    if getattr(env, "_has_stages", False):
+        from lib.environments.ecosystem_env import stages
+        stages.initialise(env)
 
 
 def apply_b0_overrides(env, b0_overrides):
@@ -414,6 +423,7 @@ def apply_b0_overrides(env, b0_overrides):
         # ersätter innehållet in-place så övriga referenser i env
         # (caches osv) följer med.
         fg.biomass[...] = new_arr
+    _restart_juveniles(env)
 
 
 def build_env(project_path, grid_size, seed=None, verbose=True,
@@ -633,6 +643,10 @@ def load_policies_and_stats(env, checkpoint_dir, verbose=True):
                 f"Observability matrix or FG set. "
                 f"Adjust the Observability matrix in fgconfig so '{fid}' "
                 f"yields in_dim={ck_in}, or retrain."
+                + (f"\n  Juvenile compartments (juvenile_stage) add one input "
+                   f"channel per staged group '{fid}' observes or is "
+                   f"(currently {len(getattr(env, 'obs_juvenile_idx', [[]] * (i + 1))[i])}); "
+                   f"checkpoints from before them do not load.")
                 + (f"\n  The daylight calendar adds one input channel "
                    f"(currently {'on' if getattr(env, '_has_daylight', False) else 'off'}"
                    f"); a checkpoint trained with it "

@@ -109,7 +109,7 @@ class TensorARSTrainer:
         self.world_light_start = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
         self.world_depletion = torch.ones((self.worlds, 1, m.C), device=m.device)
         if m.has_impacts:
-            self.world_impact_loss = torch.zeros((self.worlds, m.G, m.C), device=m.device)
+            self.world_impact_loss = torch.zeros((self.worlds, m.impact_rows, m.C), device=m.device)
             self.world_impact_cost = torch.zeros((self.worlds, m.D, m.C), device=m.device)
         if m.n_obs_imp:
             self.world_impact_obs = torch.zeros((self.worlds, m.n_obs_imp, m.C), device=m.device)
@@ -130,6 +130,8 @@ class TensorARSTrainer:
             self.world_warm_biomass = torch.zeros((self.worlds, m.G, m.C), device=m.device)
             self.world_warm_reserve = torch.zeros_like(self.world_warm_biomass)
             self.world_warm_hidden = torch.zeros_like(self.world_warm_biomass)
+            if m.stages_on:
+                self.world_warm_juvenile = torch.zeros_like(self.world_warm_biomass)
             self.world_scored_light = torch.zeros(self.worlds, device=m.device, dtype=torch.int64)
         self.chunks = []
         for start in range(0, self.n_deltas, self.pairs_per_batch):
@@ -250,6 +252,8 @@ class TensorARSTrainer:
         self.world_warm_biomass.copy_(runner.biomass)
         self.world_warm_reserve.copy_(runner.reserve)
         self.world_warm_hidden.copy_(runner.hidden)
+        if m.stages_on:
+            self.world_warm_juvenile.copy_(runner.juvenile)
         if m.calendar:
             self.world_scored_light.copy_(torch.remainder(self.world_light_start + self.warmup_ticks,
                                                           m.light_period))
@@ -296,13 +300,15 @@ class TensorARSTrainer:
             keys = torch.cat((keys, keys), 0).flatten()
             per_pair = lambda field: field[None].expand(
                 2 * self.pairs_per_batch, *field.shape).reshape(runner.E, *field.shape[1:])
-            hidden = None
+            hidden = juvenile = None
             if self.warmup_ticks > 0:
                 # Section 200: every candidate starts from its world's
                 # warmed-up state.
                 b = per_pair(self.world_warm_biomass)
                 r = per_pair(self.world_warm_reserve)
                 hidden = per_pair(self.world_warm_hidden)
+                if m.stages_on:
+                    juvenile = per_pair(self.world_warm_juvenile)
                 light = per_pair(self.world_scored_light)
             else:
                 b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
@@ -317,7 +323,8 @@ class TensorARSTrainer:
             if m.n_obs_imp:
                 impact_obs = per_pair(self.world_impact_obs)
             runner.reset(b, r, keys, n_eval_ticks, self.obs_mean, self.obs_var, self.temperature,
-                         light_start=light, impacts=impacts, impact_obs=impact_obs, hidden=hidden)
+                         light_start=light, impacts=impacts, impact_obs=impact_obs, hidden=hidden,
+                         juvenile=juvenile)
             runner.run(n_eval_ticks)
             rewards, actions = runner.results(n_eval_ticks)
             self.rewards[:, start:start + count].copy_(rewards.reshape(2, self.pairs_per_batch, self.worlds, m.D)[:, :count].mean(2))

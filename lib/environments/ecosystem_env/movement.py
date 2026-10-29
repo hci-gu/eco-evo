@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from lib.environments.ecosystem_env import impacts, interactions, source_tracking
+from lib.environments.ecosystem_env import impacts, interactions, source_tracking, stages
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 from lib.environments.ecosystem_env.grid_masks import build_movement_mask
 from lib.environments.ecosystem_env.state import ActionSettlement
@@ -137,9 +137,25 @@ def apply_currents(env):
             env, b_emig, r_emig, env._edge_imm_weights, group_ids=ids)
         b += b_imm
         r += r_imm
+    staged = [i for i, fid in enumerate(ids)
+              if getattr(env.fgs[fid], "juvenile", None) is not None]
+    if staged:
+        # A drifting group's juveniles drift with it (stages.py).
+        juv = np.stack([env.fgs[fid].juvenile if i in staged else np.zeros_like(biomass[i])
+                        for i, fid in enumerate(ids)])
+        out_j = juv[:, None] * fractions
+        _b, j = _transfer_to_neighbours(biomass - out_b.sum(1), juv - out_j.sum(1),
+                                        out_b, out_j)
+        if env.migration:
+            b_emig, j_emig = _edge_emigration(out_b, out_j)
+            _bi, j_imm = _concentrate_immigration(
+                env, b_emig, j_emig, env._edge_imm_weights, group_ids=ids)
+            j += j_imm
     for i, fid in enumerate(ids):
         env.fgs[fid].biomass = b[i].astype(env.dtype, copy=False)
         env.fgs[fid].energy_reserve = r[i].astype(env.dtype, copy=False)
+        if staged and i in staged:
+            env.fgs[fid].juvenile = np.clip(j[i], 0.0, b[i]).astype(env.dtype, copy=False)
 
     # Local reward: a drifting decision maker is carried between cells
     # after the movement was recorded, so the tracker has to know where
@@ -294,18 +310,55 @@ def apply_energy_costs(env, actions):
 
     stationary_biomass = rest_biomass + eat_biomass
     stationary_reserve = rest_reserve + eat_reserve
+    juvenile = _dm_juvenile(env)
+    if juvenile is not None:
+        # Juvenile compartments (stages.py) settle with the biomass.
+        stationary_juvenile = juvenile * (actions.rest + eat_fraction)
+        moving_juvenile = actions.move * juvenile[:, None, :, :]
     if getattr(env, "_has_income_growth", False):
+        before = stationary_biomass
         stationary_biomass, stationary_reserve = income_growth(
             env, biomass, reserve, temp_gains,
             rest_cost + eat_cost + move_cost,
             stationary_biomass, stationary_reserve)
+        if juvenile is not None:
+            # New tonnes go to J in the share w_J of the cell's start state.
+            stationary_juvenile = stationary_juvenile + _juvenile_growth(
+                env, biomass, juvenile, stationary_biomass - before)
 
     return ActionSettlement(
         stationary_biomass=stationary_biomass,
         stationary_reserve=stationary_reserve,
         moving_biomass=move_biomass_choices,
         moving_reserve=move_reserve_choices,
+        stationary_juvenile=stationary_juvenile if juvenile is not None else None,
+        moving_juvenile=moving_juvenile if juvenile is not None else None,
     )
+
+
+def _dm_juvenile(env):
+    """(N_dm, H, W) juvenile biomass, zeros for an unstaged DM; None when
+    no group has a juvenile compartment."""
+    if not getattr(env, "_has_stages", False):
+        return None
+    out = np.zeros((env.N_dm, env.H, env.W), dtype=env.dtype)
+    for i, fid in enumerate(env.dm_ids):
+        juv = getattr(env.fgs[fid], "juvenile", None)
+        if juv is not None:
+            out[i] = juv
+    return out
+
+
+def _juvenile_growth(env, biomass, juvenile, new_tonnes):
+    """The juvenile share of each staged DM's new tonnes (stages.py)."""
+    out = np.zeros_like(new_tonnes)
+    for i, fid in enumerate(env.dm_ids):
+        if getattr(env.fgs[fid], "juvenile", None) is None:
+            continue
+        j = int(env.dm_index_in_all[i])
+        share = stages.growth_share(env, j, biomass[i], juvenile[i])
+        out[i] = np.maximum(new_tonnes[i], np.float32(0.0)) * share
+    return out
 
 
 def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
@@ -358,6 +411,46 @@ def apply_movement(env, settlement):
 
     b_stay = settlement.stationary_biomass + b_keep.sum(axis=1)
     r_stay = settlement.stationary_reserve + r_keep.sum(axis=1)
+
+    j_total = None
+    if settlement.stationary_juvenile is not None:
+        # Juvenile compartments (stages.py) move exactly as the biomass:
+        # the settle below is linear in its second quantity and decides
+        # every transfer on the biomass alone, so running it with J in
+        # that slot carries J along the same transfers.
+        j_out = settlement.moving_juvenile * flux
+        j_stay = (settlement.stationary_juvenile
+                  + (settlement.moving_juvenile - j_out).sum(axis=1))
+        _b, j_total, _bs, _bo = _settle(env, b_out, j_out, b_stay, j_stay)
+
+    b_total, r_total, b_stay_eff, b_out_eff = _settle(env, b_out, r_out, b_stay, r_stay)
+
+    # Local reward (``--local_reward``): hand the per-source-cell biomass
+    # flow to the tracker while it is still available. Cancelled splits
+    # are moved from the outflow back into the stay term, and followed
+    # residues from the stay term into the outflow, so the flow sums to
+    # ``b_total``, exactly as the biomass does.
+    if source_tracking.is_enabled(env):
+        source_tracking.record_movement(env, b_stay_eff, b_out_eff, b_total)
+
+    max_reserve = b_total * env.dm_max_energy_reserve[:, None, None]
+    new_reserve = np.clip(r_total, 0.0, max_reserve)
+
+    for i, fid in enumerate(env.dm_ids):
+        env.fgs[fid].biomass = b_total[i].astype(env.dtype, copy=False)
+        env.fgs[fid].energy_reserve = new_reserve[i].astype(
+            env.dtype, copy=False)
+        if j_total is not None and getattr(env.fgs[fid], "juvenile", None) is not None:
+            env.fgs[fid].juvenile = np.clip(j_total[i], 0.0, b_total[i]).astype(
+                env.dtype, copy=False)
+
+
+def _settle(env, b_out, r_out, b_stay, r_stay):
+    """Transfers, migration and the sub-threshold rules of one move.
+
+    Returns ``(b_total, r_total, b_stay_eff, b_out_eff)``. Every decision
+    reads the biomass; the second quantity follows linearly.
+    """
 
     # Emigration below the sweep threshold stays home (section 156): the
     # immigration path has no viable edge cell for it and would spread it
@@ -415,16 +508,7 @@ def apply_movement(env, settlement):
     # are moved from the outflow back into the stay term, and followed
     # residues from the stay term into the outflow, so the flow sums to
     # ``b_total``, exactly as the biomass does.
-    if source_tracking.is_enabled(env):
-        source_tracking.record_movement(env, b_stay_eff, b_out_eff, b_total)
-
-    max_reserve = b_total * env.dm_max_energy_reserve[:, None, None]
-    new_reserve = np.clip(r_total, 0.0, max_reserve)
-
-    for i, fid in enumerate(env.dm_ids):
-        env.fgs[fid].biomass = b_total[i].astype(env.dtype, copy=False)
-        env.fgs[fid].energy_reserve = new_reserve[i].astype(
-            env.dtype, copy=False)
+    return b_total, r_total, b_stay_eff, b_out_eff
 
 
 def suppress_subthreshold_splits(env, b_out, r_out, b_total, r_total,

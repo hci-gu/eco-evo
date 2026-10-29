@@ -17,7 +17,9 @@ predator_share here; the cap was removed in section 221.)
 per mean biomass (/yr) in years 1, mid and last, the diet shares and
 Q/B, the reserve fill per year, the realised M2 (intake by each
 predator over the prey's mean biomass) to set against the library's
-predation_mortality.
+predation_mortality. With juvenile compartments (stages.py) also the
+J/B of every staged group by calendar month and the juvenile part of each
+pair's intake.
 """
 import json
 import os
@@ -62,9 +64,19 @@ def run(ckpt, seed, years, out_path, library=None):
         start = {f: float(env.fgs[f].biomass.sum()) for f in env.fgs}
         l0 = {k: dict(getattr(env, k)) for k in LOSS}
         i0 = {p: dict(r) for p, r in env.intake_by_pred_prey.items()}
+        j0 = {p: dict(r) for p, r in getattr(env, 'intake_juvenile_by_pred_prey', {}).items()}
+        staged = [f for f, fg in env.fgs.items() if getattr(fg, 'juvenile', None) is not None]
+        jb = {f: [[0.0, 0.0] for _ in range(12)] for f in staged}
         for t in range(TPY):
             for f, fg in env.fgs.items():
                 mean[f] += float(fg.biomass.sum()) / TPY
+            if staged:
+                from lib.environments.ecosystem_env import interactions
+                from lib.world.daylight import month_of_day
+                month = month_of_day(interactions.light_index(env) * int(env.daylight['tick_hours']) // 24)
+                for f in staged:
+                    jb[f][month][0] += float(env.fgs[f].juvenile.sum())
+                    jb[f][month][1] += float(env.fgs[f].biomass.sum())
             if t % 4 == 0:
                 for f in dms:
                     fg = env.fgs[f]
@@ -77,9 +89,14 @@ def run(ckpt, seed, years, out_path, library=None):
                     for f in env.fgs} for k in LOSS}
         intake = {p: {q: float(v) - float(i0.get(p, {}).get(q, 0.0)) for q, v in r.items()}
                   for p, r in env.intake_by_pred_prey.items()}
+        juvenile_intake = {p: {q: float(v) - float(j0.get(p, {}).get(q, 0.0)) for q, v in r.items()}
+                           for p, r in getattr(env, 'intake_juvenile_by_pred_prey', {}).items()}
         out["years"].append({"start": start, "mean": mean,
                              "end": {f: float(env.fgs[f].biomass.sum()) for f in env.fgs},
-                             "loss": loss, "intake": intake, "fill": fill})
+                             "loss": loss, "intake": intake, "fill": fill,
+                             "juvenile_share_by_month": {
+                                 f: [j / b if b > 0 else None for j, b in jb[f]] for f in staged},
+                             "juvenile_intake": juvenile_intake})
         with open(out_path, 'w') as fh:
             json.dump(out, fh)
         print(f"year {y + 1} done", file=sys.stderr, flush=True)
@@ -128,6 +145,15 @@ def show(path):
             rows.append(m)
         if rows[0] or rows[1]:
             print(f"  {AB[q]:5}", rows[0], '|', rows[1])
+    if Y[-1].get('juvenile_share_by_month'):
+        print('juvenile compartments: J/B by calendar month, last year')
+        for f, row in Y[-1]['juvenile_share_by_month'].items():
+            print(f"  {AB.get(f, f):5}", ' '.join('  -  ' if v is None else f"{v:.3f}" for v in row))
+        print('juvenile share of each pair\'s take (last year)')
+        for p, I in Y[-1].get('juvenile_intake', {}).items():
+            T = Y[-1]['intake'].get(p, {})
+            print(f"  {AB.get(p, p):5}", {AB.get(q, q): round(v / T[q], 3) for q, v in I.items()
+                                         if T.get(q, 0.0) > 0})
 
 
 def main(argv):

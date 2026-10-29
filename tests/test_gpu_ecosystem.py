@@ -35,7 +35,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              observable_impacts=None, nutrient_pool=None, grazer=None,
              mixed_layer_pairs=None, subsurface=None, inert_subsurface=False,
              ingestion=None, growth=None, income=None, capacity=None,
-             regen=None, extra_prey=None, pair_keys=None, refuge=None):
+             regen=None, extra_prey=None, pair_keys=None, refuge=None,
+             stages=None):
     """Reference fixture.
 
     ``pair_floors`` maps ``"{pred}_preys_on_{prey}"`` to a per-pair
@@ -76,6 +77,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
     ``accessible_fraction``).
     ``refuge`` is the NDM ``c``'s refuge keys (section 223.12:
     ``exposed_share``, ``refuge_exchange_rate``).
+    ``stages`` maps a DM to its ``juvenile_stage`` block (stages.py; needs
+    ``daylight``).
     """
     rng = np.random.default_rng(42)
     pair_floors = pair_floors or {}
@@ -160,6 +163,8 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
             params["impact"] = copy.deepcopy(impacts[fid])
         if refuge and fid == "c":
             params.update(refuge)
+        if stages and fid in stages:
+            params["juvenile_stage"] = copy.deepcopy(stages[fid])
         if reserve_food is not None and fid == "b":
             params["prey_includes_reserve"] = True
             params["reserve_reference_fill"] = reserve_food
@@ -205,7 +210,7 @@ def _parity_tol(tick, base=1e-6):
     return min(PARITY_TOL_CAP, base * PARITY_GROWTH ** tick)
 
 
-def _assert_parity(env, device, ticks=12):
+def _assert_parity(env, device, ticks=12, base_tol=1e-6):
     model = TensorEcosystem(env, device)
     b, r, hidden = model.import_state([env])
     bank = PolicyBank(model, hidden_dim=9, hidden_layers=2, seed=13)
@@ -215,10 +220,12 @@ def _assert_parity(env, device, ticks=12):
     starts = model.light_starts([env])
     impacts = model.import_impacts([env]) if model.has_impacts else None
     impact_obs = model.import_impact_observations([env]) if model.n_obs_imp else None
+    # Juvenile compartments (stages.py): J is compared like b and r.
+    juv = model.import_juvenile([env]) if model.stages_on else None
     for tick in range(ticks):
-        tol = _parity_tol(tick)
+        tol = _parity_tol(tick, base_tol)
         light = model.light_index(starts, torch.tensor(tick, device=model.device))
-        obs = model.observations(b, r, hidden, light, impact_obs)
+        obs = model.observations(b, r, hidden, light, impact_obs, juv)
         observation = env.get_observation()
         np.testing.assert_allclose(numpy(obs[0]), observation.features, atol=tol, rtol=tol)
         logits = bank.forward(obs, *packed)
@@ -229,12 +236,17 @@ def _assert_parity(env, device, ticks=12):
         # difference does not accumulate; it stays at the ULP scale.
         for field in ("move", "rest", "eat"):
             np.testing.assert_allclose(getattr(ours, field), getattr(cpu_actions, field), atol=2e-6, rtol=2e-5)
-        b, r, hidden, _, _ = model.step(b, r, probs, model.tensor(tick), torch.zeros_like(b),
-                                        light_index=light, impacts=impacts)
+        out = model.step(b, r, probs, model.tensor(tick), torch.zeros_like(b),
+                         light_index=light, impacts=impacts, juvenile=juv)
+        b, r, hidden = out[:3]
         env.step(cpu_actions)
         expected = model.import_state([env])
         np.testing.assert_allclose(numpy(b), numpy(expected[0]), atol=tol, rtol=tol)
         np.testing.assert_allclose(numpy(r), numpy(expected[1]), atol=tol, rtol=tol)
+        if juv is not None:
+            juv = out[-1]
+            np.testing.assert_allclose(numpy(juv), numpy(model.import_juvenile([env])),
+                                       atol=tol, rtol=tol)
         assert torch.isfinite(b).all() and (b >= 0).all()
     return model
 

@@ -935,6 +935,10 @@ def colocate_spawn(env):
         fg.biomass[...] = (total * weights).astype(env.dtype, copy=False)
         fg.energy_reserve[...] = (reserve_total * weights).astype(
             env.dtype, copy=False)
+        if getattr(fg, "juvenile", None) is not None:
+            # The juvenile compartment (stages.py) moves with the biomass.
+            juvenile_total = float(np.asarray(fg.juvenile).sum())
+            fg.juvenile = (juvenile_total * weights).astype(env.dtype, copy=False)
         moved.append(fid)
     return moved
 

@@ -52,6 +52,7 @@ fabricates mass.
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). |
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
+| `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
 | `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
@@ -328,10 +329,17 @@ fabricates mass.
   `accessible_fraction` f scales the prey biomass in the pair's Holling
   term and harvest cap (infauna out of reach, Nephrops in burrows);
   observations are untouched. Benthivores -> epifauna 0.62 (223.15), whiting
-  -> epifauna 0.29 (sections 221, 223.15, 223.26), water column ->
-  benthivores 0.075 (223.31; was 0.24), whiting -> benthivores 0.05, water column -> whiting
+  -> epifauna 0.29 (sections 221, 223.15, 223.26), water column -> whiting
   0.47 (gape); the infauna pair's 0.2 became the
-  infauna's own refuge in 223.12. `predator_share` phi
+  infauna's own refuge in 223.12. On a prey with a juvenile compartment
+  (planktivores, benthivores; 223.32) a pair may carry `stage_access:
+  [f_J, f_A]` instead (members' prey-size windows on the stage lengths):
+  water column -> benthivores [0.43, 0.027] (was f 0.075), whiting ->
+  benthivores [0.049, 0] (was 0.05), water column -> planktivores [0.32,
+  0.11], whiting -> planktivores [0.12, 0.008], benthivores ->
+  planktivores [0.49, 0.14], seals -> benthivores [1, 0.34], porpoises ->
+  benthivores [1, 0.55]; research_notes/"Arsungarnas andel" (A-ring)
+  parameters_B.md. `predator_share` phi
   (`eat = min(eat, phi)`, a hard cap on a learned action) is REMOVED
   from the library since section 221; the mechanism stays in both
   engines, inert at 1 (tests/test_pair_shares.py). It stood in for

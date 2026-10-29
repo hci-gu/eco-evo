@@ -517,6 +517,25 @@
     # research_notes/Sillens vinterbudget/growth_allocation.md.
     income_growth_kappa: 0.75
     feeding_season_months: 5.5
+    # Juvenile compartment (lib/environments/ecosystem_env/stages.py): the
+    # fish below their length at age 1 in Q3 (herring 18.2, sprat 10.9,
+    # Norway pout 14.9 cm). growth_ratio = juvenile / adult per-tonne
+    # growth (SMS 2023, 2013-22: 1.07 / 0.20); graduation_rate = the
+    # stage-structured biomass model's maturation rate (de Roos et al.
+    # 2008) from the juvenile growth 1.07, mortality 0.84 and entry /
+    # graduation mass 0.13; recruitment = rho by month (arrival Jun-Sep,
+    # magnitude to the box J/B 0.38, NS-IBTS 2001-25); start_share = the
+    # field cycle by month. fishing_selectivity = F on a juvenile tonne
+    # over the group mean (SMS F at age; HAWG 2026).
+    # research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md.
+    juvenile_stage:
+      growth_ratio: 5.3
+      graduation_rate: 0.66
+      recruitment: [0, 0, 0, 0, 0, 1.7, 4.1, 4.2, 1.8, 0, 0, 0]
+      start_share: [0.379, 0.372, 0.366, 0.360, 0.354, 0.355, 0.369, 0.391, 0.403, 0.401, 0.393, 0.386]
+      fishing_selectivity:
+        pelagic_trawling: 0.7
+        bottom_trawling: 1.5
     movement_speed: 1.0
     feeding_cost: 1.9
     movement_cost: 1.5
@@ -639,6 +658,22 @@
     prey_includes_reserve: true
     reserve_reference_fill: 0.5
     min_split_biomass: 0.5
+    # Juvenile compartment (stages.py): the fish below their length at age
+    # 1 in Q3 (haddock 27.0, cod 27.1, plaice 16.0, witch 14.8 cm).
+    # growth_ratio from SMS (haddock, cod: 2.06 / 0.50); graduation_rate
+    # de Roos et al. 2008 (growth 2.06, mortality 1.55, mass ratio 0.06);
+    # recruitment by month to the box J/B 0.15; start_share by month;
+    # fishing_selectivity: bottom 0.15 (gadoid age 0 unfished, age 1 at
+    # 0.08-0.13 of the stock F), pelagic 4 (judgement, F 0.0004).
+    # research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md.
+    juvenile_stage:
+      growth_ratio: 4.1
+      graduation_rate: 1.02
+      recruitment: [0, 0, 0, 0, 0, 0.2, 0.5, 0.5, 0.2, 0, 0, 0]
+      start_share: [0.155, 0.150, 0.147, 0.143, 0.139, 0.139, 0.148, 0.161, 0.169, 0.168, 0.163, 0.159]
+      fishing_selectivity:
+        bottom_trawling: 0.15
+        pelagic_trawling: 4.0
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
     # loader computes for mareld2.yaml (seabirds muted) with
@@ -1205,6 +1240,10 @@ interaction_definitions:
     max_intake_rate: 0.0062
     dark_ratio: 0.06
     light_threshold_deg: 0.0
+    # Stage access [juvenile, adult] (stages.py): cod's window (prey <= 0.30
+    # x its length, box cod > 20 cm) on the planktivores' stage lengths.
+    # research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
+    stage_access: [0.49, 0.14]
   # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
   # no phi since 221; layer convention), h = E_prey / the group's ceiling
   # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick).
@@ -1223,6 +1262,10 @@ interaction_definitions:
     max_intake_rate: 0.0117
     dark_ratio: 0.39
     light_threshold_deg: -5.0
+    # Stage access: the members' windows (mackerel 0.33, saithe 0.30, horse
+    # mackerel 0.31, hake 0.50 x length; SMS stomachs) weighted by their
+    # share of a. Effective 0.19 at the box J/B (was 1). research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
+    stage_access: [0.32, 0.11]
   # Whiting on planktivores (adults on sprat, Norway pout, herring): diet
   # share 0.28. Night/day 0.33 derived.
   whiting_preys_on_planktivorous_fish:
@@ -1235,6 +1278,10 @@ interaction_definitions:
     max_intake_rate: 0.021
     dark_ratio: 0.33
     light_threshold_deg: -5.0
+    # Stage access: whiting's window (0.39 x length; box whiting 22-28 cm
+    # -> 9-11 cm prey) on the planktivores' stage lengths. Effective 0.05
+    # at the box J/B (was 1). research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
+    stage_access: [0.12, 0.008]
   # Section 209: porpoise diet 0.65 planktivores, 0.15 benthivores, 0.20
   # predators (Skagerrak/Kattegat stomachs 1985-96; Ransijn et al. 2021
   # relative attack rates whiting 1.2x, cod 0.6x herring). Q/B 19.5 ->
@@ -1262,6 +1309,11 @@ interaction_definitions:
     assimilation_factor: 0.85
     handling_time: 21.2
     visibility_floor: 0.85
+    # Stage access: harbour seals swallow fish of ~7-35 cm (Sorlie 2020,
+    # Kappa 2026): every juvenile, the adults below 35 cm. Kappa et al.'s
+    # juvenile share of the take (0.74-0.86) is a validation target, not
+    # an input (user, 2026-10-29). research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
+    stage_access: [1.0, 0.34]
   # Section 209: 0.15 of the seal diet; split by member (223.26, J: whiting
   # 0.44 of the seals' predator share). h = E_prey / 212.5; a 0.05 and
   # the visibility floors are judgements (whiting on the bed 0.85).
@@ -1509,24 +1561,32 @@ interaction_definitions:
   # 0.7; range 0.048-0.081. Was 0.24 (all benthivores inside the members'
   # gapes, year-round). research_notes/"Sejens diet pa unga torskfiskar"
   # (Swedish letters) sections 5-6. Night/day 0.48.
+  # Juvenile compartment: the 0.075 becomes stage access [juvenile, adult]
+  # from the members' windows (saithe 0.30 x length on haddock and cod,
+  # spurdog 0.34 on flatfish/rays and haddock, hake 0.50, anglerfish 0.57)
+  # on the benthivores' stage lengths: effective 0.088 at the box J/B.
+  # research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
   predatory_fish_preys_on_benthivorous_fish:
     preys_on: true
     predation_mortality: 0.0833
     assimilation_factor: 0.8
     handling_time: 137.6
-    accessible_fraction: 0.075
+    stage_access: [0.43, 0.027]
     functional_response: 2
     max_intake_rate: 0.053
     dark_ratio: 0.48
     light_threshold_deg: -5.0
-  # Whiting on 0-group and small benthivores: accessible 0.05 (whiting
-  # gape ~12 cm + 0-group, J). Night/day 0.64.
+  # Whiting on 0-group and small benthivores: was accessible 0.05 (gape ~12
+  # cm + 0-group, J). Night/day 0.64. Juvenile compartment: stage access
+  # from whiting's window (0.39 x length, box whiting 22-28 cm -> 9-11 cm
+  # prey): the small end of the juveniles only, effective 0.007 at the box
+  # J/B. research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
   whiting_preys_on_benthivorous_fish:
     preys_on: true
     predation_mortality: 0.0967
     assimilation_factor: 0.8
     handling_time: 143.6
-    accessible_fraction: 0.05
+    stage_access: [0.049, 0.0]
     functional_response: 2
     max_intake_rate: 0.21
     dark_ratio: 0.64
@@ -1733,6 +1793,10 @@ interaction_definitions:
     assimilation_factor: 0.84
     handling_time: 28.6
     visibility_floor: 0.75
+    # Stage access: porpoises take fish up to ~40 cm (Borjesson 2003,
+    # Andreasen 2017): every juvenile, the benthivore adults below 40 cm.
+    # research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
+    stage_access: [1.0, 0.55]
   # Section 209: 0.20 of the porpoise diet; split by member (223.26, J:
   # whiting 0.64 of it). a 0.2 and the visibility floors are judgements.
   porpoises_preys_on_predatory_fish:

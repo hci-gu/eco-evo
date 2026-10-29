@@ -255,7 +255,7 @@ def test_trainer_gives_every_world_the_baseline_map(baseline_project):
     torch.testing.assert_close(loss[0], expected[0], rtol=0, atol=0)
     trainer.train_step(n_eval_ticks=2, world_epoch=3)
     expanded = loss[None].expand(2 * trainer.pairs_per_batch, -1, -1, -1).reshape(
-        trainer.runner.E, m.G, m.C)
+        trainer.runner.E, m.impact_rows, m.C)
     torch.testing.assert_close(trainer.runner.impact_loss, expanded, rtol=0, atol=0)
     resumed = baseline_trainer(path)
     resumed.load_state_dict(trainer.state_dict())

@@ -7,7 +7,8 @@ import torch
 from lib.world import nutrients, temperature
 from lib.world.growth_budget import income_growth
 from lib.environments.ecosystem_env import (
-    grid_masks, impacts, interactions, natural_mortality, refuge, regeneration)
+    grid_masks, impacts, interactions, natural_mortality, refuge, regeneration,
+    stages)
 
 
 @dataclass
@@ -63,6 +64,9 @@ class ActionSettlement:
     stationary_reserve: np.ndarray
     moving_biomass: np.ndarray
     moving_reserve: np.ndarray
+    # Juvenile compartments (stages.py), DM order; None without one.
+    stationary_juvenile: Optional[np.ndarray] = None
+    moving_juvenile: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -172,6 +176,9 @@ def build_static_caches(env):
     # reads the same calendar: Q10 multipliers on resting_metabolism.
     interactions.build_daylight_tables(env)
     interactions.build_temperature_tables(env)
+    # Juvenile compartments (stages.py): per-pair stage access, the
+    # recruitment and graduation tables on the same calendar.
+    stages.build_tables(env)
     # Nutrient pools of light-limited producers (section 172), on the
     # same year tick.
     interactions.build_nutrient_tables(env)
@@ -306,19 +313,31 @@ def build_static_caches(env):
         for i in range(env.N_dm)
     ]
 
+    # Juvenile channels (stages.py): per DM, the staged groups it observes
+    # or is, in global order; each adds one channel after the observed
+    # biomasses, in the centre and in every neighbour.
+    env.obs_juvenile_idx = []
+    for i in range(env.N_dm):
+        own_idx = int(env.dm_index_in_all[i])
+        seen = set(int(j) for j in env.obs_others_idx[i]) | {own_idx}
+        env.obs_juvenile_idx.append(np.asarray(
+            [int(j) for j in getattr(env, "stage_rows", []) if int(j) in seen],
+            dtype=np.int64))
+
     # Number of impact observation channels. Stored here so observation
     # dim calculations stay consistent in one place.
     n_obs_imp = len(env.observable_impact_vars)
     # Per-DM input dimension. Each DM sees:
-    #   center : [B_own, E_own, B_obs_others (k_i), impacts (n_obs_imp)]
-    #   neighbour (N/E/S/W) : [B_own, B_obs_others (k_i), impacts (n_obs_imp)]
-    # so center_dim_i = 2 + k_i + n_obs_imp and nbr_dim_i = 1 + k_i + n_obs_imp.
+    #   center : [B_own, E_own, B_obs_others (k_i), J (m_i), impacts (n_obs_imp)]
+    #   neighbour (N/E/S/W) : [B_own, B_obs_others (k_i), J (m_i), impacts]
+    # so center_dim_i = 2 + k_i + m_i + n_obs_imp and nbr_dim_i =
+    # 1 + k_i + m_i + n_obs_imp; m_i = 0 without juvenile compartments.
     # With the daylight calendar one more channel, the light level F of
     # the tick, is appended LAST (after the neighbours), so the layout of
     # everything before it is unchanged.
     env.per_dm_in_dim = np.zeros(env.N_dm, dtype=np.int64)
     for i in range(env.N_dm):
-        k_i = int(env.obs_others_idx[i].shape[0])
+        k_i = int(env.obs_others_idx[i].shape[0]) + int(env.obs_juvenile_idx[i].shape[0])
         center_dim_i = 2 + k_i + n_obs_imp
         nbr_dim_i = 1 + k_i + n_obs_imp
         env.per_dm_in_dim[i] = (center_dim_i + 4 * nbr_dim_i

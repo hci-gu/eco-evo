@@ -299,6 +299,21 @@ class TensorEcosystem:
         self.refuge_relax = tensor([float(np.exp(-fg.refuge_exchange_rate))
                                     if j in refuge_rows else 1.0
                                     for j, fg in enumerate(groups)])[None, :, None]
+        # Juvenile compartments, mirror of ``ecosystem_env/stages.py``: J
+        # rides inside B as its own [E, G, C] state (zero for an unstaged
+        # group), moves with B and is eaten per pair [f_J, f_A].
+        self.stages_on = bool(getattr(env, "_has_stages", False))
+        self.stage_cols = tuple(int(j) for j in getattr(env, "stage_rows", ())) if self.stages_on else ()
+        if self.stages_on:
+            self.stage_index = tensor(self.stage_cols, torch.long)
+            self.stage_mask = tensor([j in self.stage_cols for j in range(self.G)],
+                                     torch.bool)[None, :, None]
+            self.stage_kappa = tensor(env.stage_kappa)[None, :, None]
+            self.stage_keep = tensor(env.stage_keep)[None, :, None]
+            self.stage_rho = tensor(env.stage_rho)[:, :, None]
+            self.stage_start = tensor(env.stage_start)[:, :, None]
+            self.stage_f_j = tensor(env.stage_f_j)[None, :, :, None]
+            self.stage_f_a = tensor(env.stage_f_a)[None, :, :, None]
         self.threshold = tensor([max(0.0, fg.min_split_biomass * fg.extinction_threshold_factor) for fg in groups])[None, :, None]
         # Same product, per DM and broadcast over the direction axis of
         # ``b_out``, for the sub-threshold split suppression in
@@ -369,6 +384,11 @@ class TensorEcosystem:
             {impact_id for entries in self.impact_loss_tables + self.impact_tables
              for impact_id, _ in entries}))
         self.has_impacts = bool(self.impact_ids)
+        # The loss field carries one more row per staged group: the
+        # juveniles' rate sum(bf s_J) (stages.py fishing selectivity).
+        self.juvenile_selectivity = [
+            getattr(env, "juvenile_selectivity", {}).get(self.ids[j], {}) for j in self.stage_cols]
+        self.impact_rows = self.G + len(self.stage_cols)
         # Observable impacts (section 161): raw field values read into the
         # compact layout after the observed groups, in the own cell and in
         # each neighbour, exactly as ``observations.build_observation_batch``.
@@ -403,15 +423,25 @@ class TensorEcosystem:
         # case and one block of G channels PER OBSERVER when a pair floor
         # exists, because then "what I can see" depends on who is looking.
         #   [biomass (G)] [visible] [energy_level (G)] [light] [impacts]
+        # With juvenile compartments two blocks follow the impacts:
+        #   [juvenile (G)] [juvenile visible (G, or D x G with pair floors)]
+        # an observer reads its own J raw and another group's J visible-
+        # scaled, after the observed biomasses (stages.py).
         pair = self.pair_visibility is not None
         visible_base = self.G
         energy_base = self.G + (self.D * self.G if pair else self.G)
         impact_base = energy_base + self.G + (1 if self.daylight else 0)
         impacts = [impact_base + k for k in range(self.n_obs_imp)]
+        juvenile_base = impact_base + self.n_obs_imp
+        juvenile_visible_base = juvenile_base + self.G
         for d, own in enumerate(self.dm_positions):
             others = list(env.obs_others_idx[d])
             visible = [visible_base + (d * self.G + j if pair else j)
                        for j in others]
+            for j in (getattr(env, "obs_juvenile_idx", None) or [[]] * self.D)[d]:
+                j = int(j)
+                visible.append(juvenile_base + j if j == own else
+                               juvenile_visible_base + (d * self.G + j if pair else j))
             channels = [own, energy_base + own] + visible + impacts
             for k, channel in enumerate(channels):
                 obs_indices[d, :, k] = channel * self.C + cells
@@ -460,7 +490,7 @@ class TensorEcosystem:
         ``impacts.impact_energy_cost_factor``). A missing field is skipped,
         as there. Host side, once per world, never inside a tick.
         """
-        loss = np.zeros((len(maps), self.G, self.C), dtype=np.float32)
+        loss = np.zeros((len(maps), self.impact_rows, self.C), dtype=np.float32)
         cost = np.zeros((len(maps), self.D, self.C), dtype=np.float32)
         for w, fields in enumerate(maps):
             for rows, out, column in ((self.impact_loss_tables, loss, 0),
@@ -473,6 +503,16 @@ class TensorEcosystem:
                         factors = interp_impact(
                             table, np.asarray(field, dtype=np.float32).reshape(-1))
                         out[w, i] += factors[column]
+            # Juvenile rows (stages.py): sum over impacts of bf x s_J.
+            for k, j in enumerate(self.stage_cols):
+                for impact_id, table in self.impact_loss_tables[j]:
+                    field = fields.get(impact_id)
+                    if field is None:
+                        continue
+                    factors = interp_impact(
+                        table, np.asarray(field, dtype=np.float32).reshape(-1))
+                    s = float(self.juvenile_selectivity[k].get(impact_id, 1.0))
+                    loss[w, self.G + k] += factors[0] * np.float32(s)
         return self.tensor(loss), self.tensor(cost)
 
     def impact_observations(self, maps):
@@ -508,19 +548,30 @@ class TensorEcosystem:
             maps.append(fields)
         return self.impact_fields(maps)
 
-    def impact_mortality(self, biomass, reserve, loss_rate):
+    def impact_mortality(self, biomass, reserve, loss_rate, juvenile=None):
         """Direct impact mortality, before predation (Method.pdf 1-6).
 
         Mirrors ``impacts.apply_impact_mortality``: the loss is
         ``B * loss_rate`` per cell of every group ([E, G, C]), the reserve
-        shrinks with the biomass, and the cell cannot go below zero.
+        shrinks with the biomass, and the cell cannot go below zero. With
+        juvenile compartments ``loss_rate`` carries one more row per staged
+        group (``impact_fields``) and the third value is J after its share
+        of the group's loss, clipped to [0, min(J, group loss)].
         """
-        loss = biomass * loss_rate
+        group_rate = loss_rate[:, :self.G] if self.stages_on else loss_rate
+        loss = biomass * group_rate
         reduction = torch.where(loss > 0, ((biomass - loss) / (biomass + 1e-9)).clamp(0.0, 1.0), 1.0)
         if self.nutrients_on:
             # A producer's nutrient pool is not removed with it (172).
             reduction = torch.where(self.nutrient, 1.0, reduction)
-        return (biomass - loss).clamp_min(0), reserve * reduction
+        after = (biomass - loss).clamp_min(0)
+        if juvenile is None:
+            return after, reserve * reduction
+        rate = torch.zeros_like(biomass).index_copy(1, self.stage_index, loss_rate[:, self.G:])
+        actual = torch.minimum(loss, biomass)
+        j_loss = torch.minimum((juvenile * rate).clamp_min(0), torch.minimum(juvenile, actual))
+        juvenile = torch.minimum(juvenile - j_loss, after)
+        return after, reserve * reduction, juvenile
 
     def energy_level(self, biomass, reserve):
         safe_b = torch.where(biomass > 1e-9, biomass, 1.0)
@@ -551,7 +602,7 @@ class TensorEcosystem:
         return torch.remainder(light_start + tick, self.light_period)
 
     def observations(self, biomass, reserve, hidden, light_index=None,
-                     impact_obs=None):
+                     impact_obs=None, juvenile=None):
         """Compact per-DM observations [E, D, C, F].
 
         ``impact_obs`` [E, n_obs_imp, C] holds the observable impact fields
@@ -586,6 +637,15 @@ class TensorEcosystem:
                 impact_obs = torch.zeros((biomass.shape[0], self.n_obs_imp, self.C),
                                          device=self.device)
             parts.append(impact_obs)
+        if self.stages_on:
+            if juvenile is None:
+                raise ValueError("juvenile is required with juvenile compartments")
+            parts.append(juvenile)
+            if self.pair_visibility is None:
+                parts.append(juvenile * (1.0 - hidden * (1.0 - self.visibility)))
+            else:
+                parts.append((juvenile[:, None] * (1.0 - hidden[:, None]
+                                                   * (1.0 - self.pair_visibility))).flatten(1, 2))
         bank = torch.cat(parts, dim=1)
         return bank.flatten(1)[:, self.obs_indices] * self.obs_valid
 
@@ -661,7 +721,38 @@ class TensorEcosystem:
         return torch.where(self.refuge_mask,
                            torch.minimum(reserve.clamp_min(0), biomass), biomass)
 
-    def predation(self, biomass, reserve, actions, light_index=None):
+    def growth_share(self, b, juvenile, light_index, rows=None):
+        """Share w_J of new tonnes that goes to J (``stages.growth_share``);
+        ``rows`` indexes the group axis of b/J (None = every group)."""
+        if light_index is None:   # no calendar: one annual-mean row
+            rho = self.stage_rho[:1].expand(b.shape[0], -1, -1)
+        else:
+            rho = self.stage_rho[light_index.reshape(-1)]
+        kappa = self.stage_kappa
+        if rows is not None:
+            kappa, rho = kappa[:, rows], rho[:, rows]
+        adult = (b - juvenile).clamp_min(0)
+        weight = kappa * juvenile + rho * adult
+        total = weight + adult
+        return torch.where(total > 0, weight / torch.where(total > 0, total, 1.0), 0.0)
+
+    def initial_juvenile(self, biomass, light_start=None):
+        """J at the start share of each world's start day (stages.initialise)."""
+        if light_start is None:
+            light_start = torch.full((biomass.shape[0],), self.light_fixed_start,
+                                     dtype=torch.long, device=self.device)
+        rows = self.stage_start.shape[0]
+        share = self.stage_start[torch.remainder(light_start.reshape(-1), rows)]
+        return torch.where(self.stage_mask, biomass * share, 0.0)
+
+    def import_juvenile(self, environments):
+        """Juvenile state of reference envs (fixture upload), [E, G, C]."""
+        j = np.stack([np.stack([
+            e.fgs[f].juvenile if getattr(e.fgs[f], "juvenile", None) is not None
+            else np.zeros_like(e.fgs[f].biomass) for f in self.ids]) for e in environments])
+        return self.tensor(j).flatten(2)
+
+    def predation(self, biomass, reserve, actions, light_index=None, juvenile=None):
         b_dm = biomass[:, self.dm_index]
         prey = self.accessible(biomass, reserve) if self.refuge_on else biomass
         # h = min(1, max(0, (1 - s) / (1 - u))), as FunctionalGroup.get_hunger
@@ -689,6 +780,24 @@ class TensorEcosystem:
             pair_visible = base * self.pair_access
             visible = torch.where(self.eat_mask[None, :, :, None] > 0.0,
                                   pair_visible, 0.0).amax(1)
+        # The per-predator bound below exists only with per-pair
+        # visibility; the stage split's own per-pair tensor does not set it.
+        per_pair_bound = pair_visible is not None
+        if juvenile is not None:
+            # Juvenile compartments (stages.py): a staged prey is seen per
+            # pair as f_J J + f_A (B - J) of its visible share.
+            if self.pair_visibility is None:
+                frac = (1.0 - hidden * (1.0 - self.visibility))[:, None]
+            else:
+                frac = 1.0 - hidden[:, None] * (1.0 - self.pair_visibility)
+            juv = torch.minimum(juvenile.clamp_min(0), biomass)
+            vis_j = frac * self.stage_f_j * juv[:, None]
+            vis_a = frac * self.stage_f_a * (biomass - juv).clamp_min(0)[:, None]
+            base = pair_visible if pair_visible is not None else visible[:, None].expand_as(vis_j)
+            pair_visible = torch.where(self.stage_mask[:, None], vis_j + vis_a, base)
+            visible = torch.where(self.stage_mask,
+                                  torch.where(self.eat_mask[None, :, :, None] > 0.0,
+                                              vis_j + vis_a, 0.0).amax(1), visible)
         # Interference term I = w_X * B_X(c): the predator's own biomass in
         # the cell, intraspecific only, shaped (B, D, 1, C) so it broadcasts
         # over the prey axis exactly as the reference does.
@@ -716,7 +825,7 @@ class TensorEcosystem:
             rate = rate * self.ingestion_temp[light_index.reshape(-1)][:, :, None, None]
         eat = actions[:, :, 5:]
         demand = b_dm[:, :, None] * eat * rate * hunger[:, :, None]
-        if pair_visible is not None:
+        if per_pair_bound:
             # Per-predator bound: no predator may demand more than the
             # fraction of the prey IT can detect, even when a better-
             # detecting predator raised the shared cap.
@@ -725,6 +834,22 @@ class TensorEcosystem:
         harvest = visible * HARVEST_FRACTION
         scale = torch.where(total > harvest, harvest / total.clamp_min(1e-30), 1.0)
         actual = demand * scale[:, None]
+        if juvenile is not None:
+            # The harvest cap per compartment of every staged column
+            # (``predation._stage_harvest``).
+            seen = vis_j + vis_a
+            share = torch.where(seen > 0, vis_j / torch.where(seen > 0, seen, 1.0), 0.0)
+            d_j = demand * share
+            d_a = demand - d_j
+            eats = self.eat_mask[None, :, :, None] > 0.0
+            parts = []
+            for part, vis in ((d_j, vis_j), (d_a, vis_a)):
+                cap = torch.where(eats, vis, 0.0).amax(1) * HARVEST_FRACTION
+                tot = part.sum(1)
+                s = torch.where(tot > cap, cap / tot.clamp_min(1e-30), 1.0)
+                parts.append(part * s[:, None])
+            actual = torch.where(self.stage_mask[:, None], parts[0] + parts[1], actual)
+            juvenile_intake = torch.where(self.stage_mask, parts[0].sum(1), 0.0)
         gains = (actual * self.energy_gain).sum(2)
         if self.reserve_food:
             density = torch.where(biomass > 1e-9,
@@ -745,6 +870,10 @@ class TensorEcosystem:
             reserve_after = torch.where(
                 self.nutrient, reserve + self.nutrient_regen * intake,
                 reserve_after)
+        if juvenile is not None:
+            after = biomass - intake
+            j_after = torch.minimum((juvenile - juvenile_intake).clamp_min(0), after.clamp_min(0))
+            return after, reserve_after, gains, hidden, actual, j_after
         return biomass - intake, reserve_after, gains, hidden, actual
 
     def immigration(self, b_emig, r_emig, group_index=None):
@@ -764,7 +893,7 @@ class TensorEcosystem:
         return b, r
 
     def movement(self, biomass, reserve, gains, actions, track=False,
-                 light_index=None, impact_cost=None):
+                 light_index=None, impact_cost=None, juvenile=None):
         """Move, split and settle; ``track`` also returns the source flow.
 
         With ``track`` the third return value is
@@ -799,17 +928,57 @@ class TensorEcosystem:
         moving_r = move / safe[:, :, None] * move_r[:, :, None]
         moving_b = move * b[:, :, None]
         b_out, r_out = moving_b * self.velocity, moving_r * self.velocity
+        if juvenile is not None:
+            # Juvenile compartments (stages.py) move as the biomass.
+            j = juvenile[:, self.dm_index]
+            moving_j = move * j[:, :, None]
+            j_out = moving_j * self.velocity
         if self.migration and self.split_thr_any:
             # What is taken out of the off-grid outflow lands in the stay
             # terms below by construction (moving minus outflow).
+            if juvenile is not None:
+                _b, j_out = self.cancel_emigration(b_out, j_out)
             b_out, r_out = self.cancel_emigration(b_out, r_out)
         stay_b, stay_r = b * rest + b * eat, rest_r + eat_r
+        if juvenile is not None:
+            stay_j = j * (rest + eat)
         if self.income_on:
+            before = stay_b
             stay_b, stay_r = self.income_growth(b, r, gains, metabolism, rest,
                                                 eat, move_fraction, stay_b, stay_r)
+            if juvenile is not None:
+                share = self.growth_share(b, j, light_index, self.dm_index)
+                stay_j = stay_j + (stay_b - before).clamp_min(0) * share
         b_stay = stay_b + (moving_b - b_out).sum(2)
-        b_total = b_stay
-        r_total = stay_r + (moving_r - r_out).sum(2)
+        b_total, r_total, b_cancel, residue, b_push = self._settle(
+            b_out, r_out, b_stay, stay_r + (moving_r - r_out).sum(2))
+        r_total = torch.minimum(r_total.clamp_min(0), b_total * self.max_reserve[:, self.dm_index])
+        settled = (biomass.index_copy(1, self.dm_index, b_total),
+                   reserve.index_copy(1, self.dm_index, r_total))
+        if juvenile is not None:
+            _b, j_total, _c, _r, _p = self._settle(
+                b_out, j_out, b_stay, stay_j + (moving_j - j_out).sum(2))
+            j_total = torch.minimum(j_total.clamp_min(0), b_total)
+            juvenile = juvenile.index_copy(1, self.dm_index, j_total)
+            settled = settled + (juvenile,)
+        if not track:
+            return settled[0], settled[1], None, *settled[2:]
+        if b_cancel is not None:
+            # Cancelled splits stayed home and followed residues left, so
+            # the tracked flow moves the former from the outflow back into
+            # the stay term and the latter the other way; only then does
+            # it still sum to ``b_total``.
+            b_stay = torch.where(residue, 0.0, b_stay + b_cancel.sum(2))
+            b_out = b_out - b_cancel + b_push
+        return settled[0], settled[1], (b_stay, b_out, b_total), *settled[2:]
+
+    def _settle(self, b_out, r_out, b_stay, r_stay):
+        """Transfers, migration and the sub-threshold rules of one move.
+        Every decision reads the biomass; the second quantity follows
+        linearly (``movement._settle``). Returns ``(b_total, r_total,
+        b_cancel, residue, b_push)``, the last three None without the
+        split threshold."""
+        b_total, r_total = b_stay, r_stay
         for direction in range(4):
             source = (direction + 2) % 4
             index, valid = self.neighbors[source], self.neighbor_valid[source]
@@ -820,24 +989,12 @@ class TensorEcosystem:
             r_emig = (r_out * self.outside).sum((2, 3))
             b_imm, r_imm = self.immigration(b_emig, r_emig)
             b_total, r_total = b_total + b_imm, r_total + r_imm
-        b_cancel = None
+        b_cancel = residue = b_push = None
         if self.split_thr_any:
             b_total, r_total, b_cancel = self.suppress_splits(b_out, r_out, b_total, r_total)
             b_total, r_total, residue, b_push = self.follow_residues(
                 b_out - b_cancel, b_total, r_total)
-        r_total = torch.minimum(r_total.clamp_min(0), b_total * self.max_reserve[:, self.dm_index])
-        settled = (biomass.index_copy(1, self.dm_index, b_total),
-                   reserve.index_copy(1, self.dm_index, r_total))
-        if not track:
-            return settled[0], settled[1], None
-        if b_cancel is not None:
-            # Cancelled splits stayed home and followed residues left, so
-            # the tracked flow moves the former from the outflow back into
-            # the stay term and the latter the other way; only then does
-            # it still sum to ``b_total``.
-            b_stay = torch.where(residue, 0.0, b_stay + b_cancel.sum(2))
-            b_out = b_out - b_cancel + b_push
-        return settled[0], settled[1], (b_stay, b_out, b_total)
+        return b_total, r_total, b_cancel, residue, b_push
 
     def income_growth(self, b, r, gains, metabolism, rest, eat, move_fraction,
                       stay_b, stay_r):
@@ -1106,7 +1263,7 @@ class TensorEcosystem:
         return biomass, reserve
 
     def population(self, biomass, reserve, seed_multiplier, light_index=None,
-                   hidden=None, dm_feed=None):
+                   hidden=None, dm_feed=None, juvenile=None):
         """``dm_feed`` [B, D, G]: this tick's intake per pair, for the layer
         split of the regenerated M1 (section 202; None = no DM fed)."""
         biomass, reserve = self.layer_exchange(biomass, reserve, light_index)
@@ -1119,6 +1276,8 @@ class TensorEcosystem:
             keep = self.mortality_keep
         b = biomass * keep
         r = reserve * keep
+        if juvenile is not None:
+            juvenile = juvenile * keep
         if self.regen_on:
             if light_index is None:
                 raise ValueError("light_index is required with regeneration")
@@ -1130,6 +1289,8 @@ class TensorEcosystem:
                              * b.mean(dim=-1, keepdim=True)).clamp_min(0)
             b = b * capacity_keep
             r = r * capacity_keep
+            if juvenile is not None:
+                juvenile = juvenile * capacity_keep
         surplus = self.energy_level(b, r) - self.maintenance
         growth = self.growth
         if self.growth_temp is not None:
@@ -1157,6 +1318,13 @@ class TensorEcosystem:
         starve_loss = torch.where(self.is_dm, torch.minimum(loss, b), 0.0)
         reduction = torch.where(loss > 0, (b - loss) / (b + 1e-9), 1.0).clamp(0, 1)
         dm_b, dm_r = (b + delta).clamp_min(0), r * reduction
+        if juvenile is not None:
+            # Juvenile compartments (stages.py): new tonnes in the share w_J
+            # of the state before the growth, losses pro rata, then the
+            # graduation into the adults.
+            share = self.growth_share(b, juvenile, light_index)
+            juvenile = (juvenile * reduction + delta.clamp_min(0) * share) * self.stage_keep
+            juvenile = torch.where(self.stage_mask, juvenile, 0.0)
 
         rate = self.growth
         if self.growth_light_on:
@@ -1216,6 +1384,8 @@ class TensorEcosystem:
         if self.nutrients_on:
             empty = empty & ~self.nutrient
         r = torch.where(empty, 0.0, r)
+        if juvenile is not None:
+            juvenile = torch.minimum(juvenile.clamp_min(0), b)
         if self.regen_on:
             # Section 202: after every group's growth, as the reference.
             to_mixed = (m1_back * share_m[:, :, None]).sum(1)
@@ -1223,9 +1393,11 @@ class TensorEcosystem:
             r[:, self.regen_m] = r[:, self.regen_m] + to_mixed
             if self.regen_d is not None:
                 r[:, self.regen_d] = r[:, self.regen_d] + (m1_back.sum(1) - to_mixed)
+        if juvenile is not None:
+            return b, r, starve_loss, juvenile
         return b, r, starve_loss
 
-    def advect(self, biomass, reserve, tick, keys=None, track=False):
+    def advect(self, biomass, reserve, tick, keys=None, track=False, juvenile=None):
         """Drift every responding group; ``track`` also returns the shares.
 
         With ``track`` the third return value is ``(phi, b_after)`` for
@@ -1235,7 +1407,8 @@ class TensorEcosystem:
         sits where the movement tracker recorded it.
         """
         if self.currents is None or self.currents.strength == 0 or not self.drift_positions:
-            return (biomass, reserve, None) if track else (biomass, reserve)
+            extra = () if juvenile is None else (juvenile,)
+            return ((biomass, reserve, None) if track else (biomass, reserve)) + extra
         # ``torch.full`` rather than ``as_tensor``: a host scalar copied to the
         # device is not permitted while a CUDA graph is capturing.
         tick = (tick.to(torch.int64) if isinstance(tick, torch.Tensor) else
@@ -1262,18 +1435,35 @@ class TensorEcosystem:
             b_total, r_total = b_total + b_imm, r_total + r_imm
         out_b = biomass.index_copy(1, self.drift_index, b_total)
         out_r = reserve.index_copy(1, self.drift_index, r_total)
+        extra = ()
+        if juvenile is not None:
+            # A drifting group's juveniles drift with it (stages.py).
+            j = juvenile[:, self.drift_index]
+            j_out = j[:, :, None] * fractions
+            j_total = j - j_out.sum(2)
+            for direction in range(4):
+                source = (direction + 2) % 4
+                index, valid = self.neighbors[source], self.neighbor_valid[source]
+                j_total = j_total + j_out[:, :, direction, index] * valid
+            if self.migration:
+                b_emig = (b_out * self.outside).sum((2, 3))
+                j_emig = (j_out * self.outside).sum((2, 3))
+                _b, j_imm = self.immigration(b_emig, j_emig, self.drift_index)
+                j_total = j_total + j_imm
+            j_total = torch.minimum(j_total.clamp_min(0), b_total)
+            extra = (juvenile.index_copy(1, self.drift_index, j_total),)
         if not track:
-            return out_b, out_r
+            return (out_b, out_r) + extra
         # Re-index the shares on the decision makers, zero for the ones
         # the field does not carry, so the tracker sees one fixed shape.
         phi = torch.zeros((biomass.shape[0], self.G) + fractions.shape[2:],
                           device=self.device, dtype=fractions.dtype)
         phi = phi.index_copy(1, self.drift_index, fractions)
-        return out_b, out_r, (phi[:, self.dm_index], out_b[:, self.dm_index])
+        return (out_b, out_r, (phi[:, self.dm_index], out_b[:, self.dm_index])) + extra
 
     def step(self, biomass, reserve, actions, tick, seed_multiplier,
              current_keys=None, track_source=False, light_index=None,
-             impacts=None):
+             impacts=None, juvenile=None):
         """One tick. ``track_source`` appends the local-reward tracking.
 
         ``impacts`` is ``(loss_rate, cost)`` from ``impact_fields``, or
@@ -1284,24 +1474,44 @@ class TensorEcosystem:
         observed (before the impact mortality and predation), and
         ``tracked``/``frac_in`` come from ``tracked_energy`` once the
         end-of-tick state is final.
+
+        With juvenile compartments ``juvenile`` [E, G, C] is required and
+        its updated value is appended as the last return value.
         """
+        if self.stages_on and juvenile is None:
+            raise ValueError("juvenile is required with juvenile compartments")
+        j = juvenile if self.stages_on else None
         start = self.local_energy(biomass, reserve) if track_source else None
         impact_cost = None
         if impacts is not None:
-            biomass, reserve = self.impact_mortality(biomass, reserve, impacts[0])
+            out = self.impact_mortality(biomass, reserve, impacts[0], j)
+            biomass, reserve = out[0], out[1]
+            if j is not None:
+                j = out[2]
             impact_cost = impacts[1]
-        b, r, gains, hidden, intake = self.predation(biomass, reserve, actions,
-                                                     light_index)
-        b, r, flow = self.movement(b, r, gains, actions, track=track_source,
-                                   light_index=light_index, impact_cost=impact_cost)
+        out = self.predation(biomass, reserve, actions, light_index, j)
+        b, r, gains, hidden, intake = out[:5]
+        if j is not None:
+            j = out[5]
+        out = self.movement(b, r, gains, actions, track=track_source,
+                            light_index=light_index, impact_cost=impact_cost, juvenile=j)
+        b, r, flow = out[:3]
+        if j is not None:
+            j = out[3]
         if track_source:
-            b, r, drift = self.advect(b, r, tick, current_keys, track=True)
+            out = self.advect(b, r, tick, current_keys, track=True, juvenile=j)
+            b, r, drift = out[:3]
         else:
-            b, r = self.advect(b, r, tick, current_keys)
-        b, r, starve_loss = self.population(
+            out = self.advect(b, r, tick, current_keys, juvenile=j)
+            b, r = out[:2]
+        if j is not None:
+            j = out[-1]
+        out = self.population(
             b, r, seed_multiplier, light_index, hidden,
-            dm_feed=intake.sum(-1) if self.regen_on else None)
+            dm_feed=intake.sum(-1) if self.regen_on else None, juvenile=j)
+        b, r, starve_loss = out[:3]
+        extra = () if j is None else (out[3],)
         if not track_source:
-            return b, r, hidden, intake, starve_loss
+            return (b, r, hidden, intake, starve_loss) + extra
         tracked, frac_in = self.tracked_energy(flow, b, r, drift)
-        return b, r, hidden, intake, starve_loss, (start, tracked, frac_in)
+        return (b, r, hidden, intake, starve_loss, (start, tracked, frac_in)) + extra

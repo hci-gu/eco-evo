@@ -46,6 +46,9 @@ class RolloutRunner:
             return value
         for name in ("biomass", "reserve", "hidden"):
             buffer(name, (self.E, model.G, model.C))
+        if model.stages_on:
+            # Juvenile compartments (stages.py): J inside B, per group.
+            buffer("juvenile", (self.E, model.G, model.C))
         buffer("keys", (self.E,), torch.int64)
         # Year tick each world starts at (daylight calendar, section 137).
         buffer("light_start", (self.E,), torch.int64)
@@ -72,7 +75,8 @@ class RolloutRunner:
         # only with impact tables so a project without them keeps the
         # exact same graph.
         if model.has_impacts:
-            buffer("impact_loss", (self.E, model.G, model.C))
+            # One extra row per staged group: the juveniles' loss rate.
+            buffer("impact_loss", (self.E, model.impact_rows, model.C))
             buffer("impact_cost", (self.E, model.D, model.C))
         if model.n_obs_imp:
             buffer("impact_obs", (self.E, model.n_obs_imp, model.C))
@@ -93,12 +97,15 @@ class RolloutRunner:
             destination.copy_(source)
 
     def reset(self, biomass, reserve, keys, ticks, mean, var, temperature,
-              light_start=None, impacts=None, impact_obs=None, hidden=None):
+              light_start=None, impacts=None, impact_obs=None, hidden=None,
+              juvenile=None):
         """Load a batch of worlds; ``impacts`` is ``(loss_rate, cost)``
         ([E, G, C], [E, D, C]) from ``TensorEcosystem.impact_fields`` and ``impact_obs``
         [E, n_obs_imp, C] from ``impact_observations`` (zero if None).
         ``hidden`` [E, G, C] carries the last tick's hide fractions over
-        from a warm-up (section 200); None starts with nothing hidden."""
+        from a warm-up (section 200); None starts with nothing hidden.
+        ``juvenile`` [E, G, C] is the juvenile state of a warmed-up world;
+        None starts every staged group at its start share (stages.py)."""
         if ticks < 1:
             raise ValueError("Rollouts must contain at least one tick")
         if self.model.has_impacts:
@@ -123,6 +130,11 @@ class RolloutRunner:
             self.light_start.copy_(light_start)
         self.biomass.copy_(biomass)
         self.reserve.copy_(reserve)
+        if self.model.stages_on:
+            self.juvenile.copy_(juvenile if juvenile is not None
+                                else self.model.initial_juvenile(biomass, self.light_start))
+        elif juvenile is not None:
+            raise ValueError("juvenile given but no group has a juvenile_stage")
         self.keys.copy_(keys)
         self.tick.zero_()
         self.horizon.fill_(ticks)
@@ -170,7 +182,8 @@ class RolloutRunner:
         # counter only advances at the end of ``_tick``.
         light = m.light_index(self.light_start, self.tick)
         obs = m.observations(self.biomass, self.reserve, self.hidden, light,
-                             self.impact_obs if m.n_obs_imp else None)
+                             self.impact_obs if m.n_obs_imp else None,
+                             self.juvenile if m.stages_on else None)
         if self.normalize:
             raw = obs.double()
             if self.population_stability is not None:
@@ -201,14 +214,18 @@ class RolloutRunner:
             current_args["light_index"] = light
         if m.has_impacts:
             current_args["impacts"] = (self.impact_loss, self.impact_cost)
+        if m.stages_on:
+            current_args["juvenile"] = self.juvenile
         if self.local_reward is not None:
-            b, r, hidden, _, _, local = m.step(self.biomass, self.reserve, actions,
-                                               self.tick, multiplier,
-                                               track_source=True, **current_args)
+            out = m.step(self.biomass, self.reserve, actions, self.tick, multiplier,
+                         track_source=True, **current_args)
+            b, r, hidden, local = out[0], out[1], out[2], out[5]
             self._accumulate_local_reward(*local)
         else:
-            b, r, hidden, _, _ = m.step(self.biomass, self.reserve, actions,
-                                      self.tick, multiplier, **current_args)
+            out = m.step(self.biomass, self.reserve, actions,
+                         self.tick, multiplier, **current_args)
+            b, r, hidden = out[0], out[1], out[2]
+        juvenile = out[-1] if m.stages_on else None
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd
@@ -231,6 +248,8 @@ class RolloutRunner:
             b = torch.where(alive[:, None, None], b, self.biomass)
             r = torch.where(alive[:, None, None], r, self.reserve)
             hidden = torch.where(alive[:, None, None], hidden, self.hidden)
+            if juvenile is not None:
+                juvenile = torch.where(alive[:, None, None], juvenile, self.juvenile)
             totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
             # Update the flag only after the last use of ``alive``: a compiled
             # graph may fuse ``~failed`` into a later kernel, which would then
@@ -245,6 +264,8 @@ class RolloutRunner:
         self.biomass.copy_(b)
         self.reserve.copy_(r)
         self.hidden.copy_(hidden)
+        if juvenile is not None:
+            self.juvenile.copy_(juvenile)
         self.tick.add_(1)
 
     def _accumulate_local_reward(self, start, tracked, frac_in):
@@ -355,8 +376,12 @@ class RolloutRunner:
 
     def snapshot(self, index=0):
         """Explicit, occasional host boundary; never called during training."""
-        return {"biomass": self.biomass[index].reshape(self.model.G, self.model.H, self.model.W).cpu().numpy().copy(),
-                "reserve": self.reserve[index].reshape(self.model.G, self.model.H, self.model.W).cpu().numpy().copy()}
+        shape = (self.model.G, self.model.H, self.model.W)
+        out = {"biomass": self.biomass[index].reshape(shape).cpu().numpy().copy(),
+               "reserve": self.reserve[index].reshape(shape).cpu().numpy().copy()}
+        if self.model.stages_on:
+            out["juvenile"] = self.juvenile[index].reshape(shape).cpu().numpy().copy()
+        return out
 
     def close(self):
         if self.model.device.type == "cuda":

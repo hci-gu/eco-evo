@@ -1,0 +1,29 @@
+pair stage_access [f_J, f_A] (annual mean) and f_J / f_A:
+  benthivores -> planktivores    [0.494, 0.136]  ratio 3.6
+  porpoises -> benthivores       [1.000, 0.554]  ratio 1.8
+  porpoises -> planktivores      [1.000, 1.000]  ratio 1.0
+  seals -> benthivores           [1.000, 0.342]  ratio 2.9
+  seals -> planktivores          [1.000, 1.000]  ratio 1.0
+  water column -> benthivores    [0.431, 0.027]  ratio 15.9
+  water column -> planktivores   [0.319, 0.109]  ratio 2.9
+  whiting -> benthivores         [0.049, 0.000]  ratio 2941.5
+  whiting -> planktivores        [0.119, 0.008]  ratio 15.4
+                        pair stage    Q1    Q2    Q3    Q4  mean
+ water column -> benthivores     J 0.344 0.301 0.520 0.558 0.431
+ water column -> benthivores     A 0.025 0.028 0.025 0.031 0.027
+      whiting -> benthivores     J 0.018 0.010 0.111 0.060 0.049
+      whiting -> benthivores     A 0.000 0.000 0.000 0.000 0.000
+water column -> planktivores     J 0.277 0.260 0.367 0.370 0.319
+water column -> planktivores     A 0.103 0.113 0.099 0.122 0.109
+ benthivores -> planktivores     J 0.447 0.424 0.542 0.563 0.494
+ benthivores -> planktivores     A 0.122 0.144 0.117 0.160 0.136
+   porpoises -> planktivores     J 1.000 1.000 1.000 1.000 1.000
+   porpoises -> planktivores     A 1.000 1.000 0.999 1.000 1.000
+        seals -> benthivores     J 0.999 1.000 1.000 1.000 1.000
+        seals -> benthivores     A 0.275 0.327 0.316 0.450 0.342
+       seals -> planktivores     J 1.000 1.000 1.000 1.000 1.000
+       seals -> planktivores     A 1.000 1.000 0.999 1.000 1.000
+     whiting -> planktivores     J 0.082 0.073 0.161 0.159 0.119
+     whiting -> planktivores     A 0.004 0.008 0.009 0.010 0.008
+    porpoises -> benthivores     J 1.000 1.000 1.000 1.000 1.000
+    porpoises -> benthivores     A 0.552 0.509 0.470 0.685 0.554

@@ -1,0 +1,9 @@
+haddock/pollack/saithe   mean weight   18.4 g -> length  13.2 cm (x1.25 erosion  16.5)
+cod                      mean weight   79.4 g -> length  20.8 cm (x1.25 erosion  26.0)
+whiting                  mean weight   16.8 g -> length  12.7 cm (x1.25 erosion  15.9)
+Norway pout              mean weight    6.5 g -> length   9.9 cm (x1.25 erosion  12.3)
+herring                  mean weight   35.3 g -> length  17.6 cm (x1.25 erosion  22.0)
+long rough dab           mean weight   25.2 g -> length  12.5 cm (x1.25 erosion  15.7)
+blue whiting             mean weight    5.6 g -> length  10.0 cm (x1.25 erosion  12.4)
+as measured: cod 20.8 cm, juvenile share of the benthivore take 0.86; f_A at box J/B 0.030
+erosion x1.25: cod 26.0 cm, juvenile share of the benthivore take 0.74; f_A at box J/B 0.064

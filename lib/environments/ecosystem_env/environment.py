@@ -14,6 +14,7 @@ from lib.environments.ecosystem_env import (
     population_change,
     predation,
     source_tracking,
+    stages,
     state,
 )
 from lib.environments.ecosystem_env.state import ActionProbabilities
@@ -120,6 +121,8 @@ class EcosystemEnvironment:
         # climatology of the start day. Once, here - build_static_caches
         # is re-run later and must not refill it.
         interaction_module.initialise_nutrient_pools(self)
+        # Juvenile compartments start at their share of the start day.
+        stages.initialise(self)
 
     # ---------- Static caches ----------
     def build_static_caches(self):

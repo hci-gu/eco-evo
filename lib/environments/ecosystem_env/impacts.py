@@ -129,6 +129,27 @@ def compute_impact_mortality(env, fg):
     return total_mortality_impact
 
 
+def juvenile_impact_loss(env, fg_id, fg):
+    """Fishing loss of a staged group's juvenile part (stages.py): sum over
+    the impacts of bf x s_J x J, s_J the impact's ``fishing_selectivity``
+    (1 when unset). None for a group without a juvenile compartment."""
+    if getattr(fg, "juvenile", None) is None or "impact" not in fg.params:
+        return None
+    selectivity = getattr(env, "juvenile_selectivity", {}).get(fg_id, {})
+    total = None
+    for impact_id, impact_def in fg.params["impact"].items():
+        map_data = env.grid.get_map(impact_id)
+        if map_data is None:
+            continue
+        table = extract_impact_table(impact_def)
+        if table is None:
+            continue
+        bf_map, _ = interp_impact(table, map_data)
+        part = fg.juvenile * bf_map * np.float32(selectivity.get(impact_id, 1.0))
+        total = part if total is None else total + part
+    return total
+
+
 def apply_impact_mortality(env):
     """Method.pdf steg 1-6: apply m_X^Impact before predation, to every FG
     with an impact table - decision makers and, since section 161, non
@@ -158,6 +179,14 @@ def apply_impact_mortality(env):
             + float(actual_impact_loss.sum())
         )
 
+        juvenile_loss = juvenile_impact_loss(env, fg_id, fg)
+        if juvenile_loss is not None:
+            # The group's loss is unchanged; J takes its selectivity share,
+            # clipped to [0, min(J, group loss)] (bites where s_J J/B > 1).
+            juvenile_loss = np.clip(juvenile_loss, 0.0,
+                                    np.minimum(fg.juvenile, actual_impact_loss))
+            fg.juvenile = (fg.juvenile - juvenile_loss).astype(env.dtype, copy=False)
+
         # A producer's reserve slot is its nutrient pool (section 172),
         # which an impact on the producer does not remove.
         if not interactions.is_nutrient_producer(env, fg_id):
@@ -166,3 +195,5 @@ def apply_impact_mortality(env):
         fg.biomass = np.maximum(
             0.0, fg.biomass - total_mortality_impact
         ).astype(env.dtype, copy=False)
+        if getattr(fg, "juvenile", None) is not None:
+            fg.juvenile = np.minimum(fg.juvenile, fg.biomass).astype(env.dtype, copy=False)

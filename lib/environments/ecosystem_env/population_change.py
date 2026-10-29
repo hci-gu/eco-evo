@@ -7,6 +7,7 @@ from lib.world import nutrients
 from lib.environments.ecosystem_env import natural_mortality as natural_mortality_module
 from lib.environments.ecosystem_env import regeneration
 from lib.environments.ecosystem_env import refuge
+from lib.environments.ecosystem_env import stages
 
 
 DEFAULT_MORTALITY_MULTIPLIER = 1.0
@@ -283,6 +284,7 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
         fg.energy_reserve = (fg.energy_reserve * keep).astype(
             env.dtype, copy=False)
         fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+        stages.scale(fg, keep, env.dtype)
         regeneration.record_m1(env, fg_id, start, fg.biomass)
         # Book M1 like the other causes, so the loss breakdown can show it
         # (section 132). ``getattr`` keeps hand-built test envs working.
@@ -303,6 +305,7 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
             fg.energy_reserve = (fg.energy_reserve * keep).astype(
                 env.dtype, copy=False)
             fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+            stages.scale(fg, keep, env.dtype)
             losses = getattr(env, "loss_natural", None)
             if losses is not None:
                 losses[fg_id] = (float(losses.get(fg_id, 0.0))
@@ -344,10 +347,22 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
     )
     reduction = np.clip(reduction, 0.0, 1.0)
 
+    juvenile = getattr(fg, "juvenile", None)
+    if juvenile is not None:
+        # Juvenile compartment (stages.py): new tonnes in the share w_J of
+        # the cell's state before the growth, losses pro rata, then the
+        # graduation into the adults (internal to B).
+        j = env.global_fg_order.index(fg_id)
+        share = stages.growth_share(env, j, fg.biomass, juvenile)
+        juvenile = (juvenile * reduction
+                    + np.maximum(biomass_delta, np.float32(0.0)) * share)
+        juvenile = juvenile * np.float32(env.stage_keep[j])
     fg.energy_reserve = (fg.energy_reserve * reduction).astype(
         env.dtype, copy=False)
     fg.biomass = np.maximum(0.0, fg.biomass + biomass_delta).astype(
         env.dtype, copy=False)
+    if juvenile is not None:
+        fg.juvenile = np.clip(juvenile, 0.0, fg.biomass).astype(env.dtype, copy=False)
 
 
 def _clip_biomass_based_on_min_thresholds(env):
@@ -368,6 +383,7 @@ def _clip_biomass_based_on_min_thresholds(env):
         biomass = np.where(biomass < threshold, 0.0, biomass).astype(
             env.dtype, copy=False)
         fg.biomass = biomass
+        stages.clamp(fg, env.dtype)
 
 
 def apply_extinction_threshold(env):
@@ -416,6 +432,7 @@ def apply_extinction_threshold(env):
             fg.energy_reserve = np.where(
                 dead_mask, np.float32(0.0), fg.energy_reserve
             ).astype(env.dtype, copy=False)
+        stages.clamp(fg, env.dtype)
 
 
 def _zero_energy_in_empty_cells(env):
@@ -428,6 +445,7 @@ def _zero_energy_in_empty_cells(env):
                 np.float32(0.0),
                 fg.energy_reserve,
             ).astype(env.dtype, copy=False)
+        stages.clamp(fg, env.dtype)
 
 
 def apply_ndm_grazing(env):

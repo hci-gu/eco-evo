@@ -1,0 +1,415 @@
+prey AphiaIDs without a cached lineage (skipped): 0 ids, 0 rows
+
+whiting: years [(1991, 32), (2022, 127), (2023, 20), (2024, 25)]
+  areas {'Kattegat': 26, 'Skagerrak': 23, 'CSNS': 120, 'NNS': 2, 'other': 33}
+  all areas
+    prey all                           rec  204 fish   210 | by number p50 0.26 p90 0.44 p95 0.47 p99 0.81 max 2.66 | by mass p50 0.35 p90 0.45 p95 0.48 p99 2.66 | prey cm p50 6.7 p95 14.2 max 84.0 | pred cm p50 26
+    prey P                             rec   65 fish    66 | by number p50 0.28 p90 0.42 p95 0.50 p99 2.66 max 2.66 | by mass p50 0.33 p90 0.45 p95 0.81 p99 2.66 | prey cm p50 7.5 p95 15.0 max 84.0 | pred cm p50 29
+    prey Bf                            rec    8 fish     8 | by number p50 0.21 p90 0.43 p95 0.43 p99 0.43 max 0.43 | by mass p50 0.39 p90 0.43 p95 0.43 p99 0.43 | prey cm p50 6.2 p95 15.0 max 15.0 | pred cm p50 32
+    prey W                             rec   28 fish    28 | by number p50 0.35 p90 0.45 p95 0.47 p99 0.47 max 0.47 | by mass p50 0.39 p90 0.45 p95 0.47 p99 0.47 | prey cm p50 8.5 p95 13.0 max 13.4 | pred cm p50 26
+    prey all, pred 10-20 cm            rec   27 fish    31 | by number p50 0.24 p90 0.44 p95 0.53 p99 0.59 max 0.59 | by mass p50 0.40 p90 0.53 p95 0.53 p99 0.59 | prey cm p50 4.0 p95 8.4 max 9.5 | pred cm p50 16
+    prey P, pred 10-20 cm              n 0
+    prey Bf, pred 10-20 cm             rec    1 fish     1 | by number p50 0.13 p90 0.13 p95 0.13 p99 0.13 max 0.13 | by mass p50 0.13 p90 0.13 p95 0.13 p99 0.13 | prey cm p50 2.0 p95 2.0 max 2.0 | pred cm p50 15
+    prey all, pred 20-30 cm            rec  120 fish   121 | by number p50 0.26 p90 0.44 p95 0.46 p99 0.55 max 0.65 | by mass p50 0.35 p90 0.45 p95 0.48 p99 0.65 | prey cm p50 6.7 p95 12.0 max 16.1 | pred cm p50 25
+    prey P, pred 20-30 cm              rec   42 fish    42 | by number p50 0.28 p90 0.40 p95 0.40 p99 0.50 max 0.50 | by mass p50 0.33 p90 0.40 p95 0.45 p99 0.50 | prey cm p50 7.0 p95 10.5 max 13.0 | pred cm p50 26
+    prey Bf, pred 20-30 cm             rec    3 fish     3 | by number p50 0.25 p90 0.43 p95 0.43 p99 0.43 max 0.43 | by mass p50 0.43 p90 0.43 p95 0.43 p99 0.43 | prey cm p50 6.2 p95 12.5 max 12.5 | pred cm p50 25
+    prey all, pred 30-60 cm            rec   57 fish    58 | by number p50 0.28 p90 0.44 p95 0.81 p99 2.66 max 2.66 | by mass p50 0.34 p90 0.43 p95 0.81 p99 2.66 | prey cm p50 9.3 p95 27.0 max 84.0 | pred cm p50 33
+    prey P, pred 30-60 cm              rec   23 fish    24 | by number p50 0.26 p90 0.81 p95 0.81 p99 2.66 max 2.66 | by mass p50 0.33 p90 0.81 p95 2.66 p99 2.66 | prey cm p50 9.0 p95 27.0 max 84.0 | pred cm p50 32
+    prey Bf, pred 30-60 cm             rec    4 fish     4 | by number p50 0.19 p90 0.39 p95 0.39 p99 0.39 max 0.39 | by mass p50 0.39 p90 0.39 p95 0.39 p99 0.39 | prey cm p50 6.6 p95 15.0 max 15.0 | pred cm p50 34
+  Skagerrak+NNS
+    prey all                           rec   25 fish    25 | by number p50 0.30 p90 0.45 p95 0.50 p99 0.53 max 0.53 | by mass p50 0.39 p90 0.43 p95 0.45 p99 0.53 | prey cm p50 8.0 p95 12.9 max 13.0 | pred cm p50 26
+    prey P                             rec    7 fish     7 | by number p50 0.31 p90 0.50 p95 0.50 p99 0.50 max 0.50 | by mass p50 0.31 p90 0.33 p95 0.50 p99 0.50 | prey cm p50 9.3 p95 10.0 max 10.0 | pred cm p50 30
+    prey Bf                            rec    2 fish     2 | by number p50 0.13 p90 0.43 p95 0.43 p99 0.43 max 0.43 | by mass p50 0.43 p90 0.43 p95 0.43 p99 0.43 | prey cm p50 2.0 p95 12.5 max 12.5 | pred cm p50 22
+    prey W                             rec    7 fish     7 | by number p50 0.30 p90 0.45 p95 0.45 p99 0.45 max 0.45 | by mass p50 0.39 p90 0.39 p95 0.45 p99 0.45 | prey cm p50 9.0 p95 13.0 max 13.0 | pred cm p50 33
+    prey all, pred 10-20 cm            rec    6 fish     6 | by number p50 0.27 p90 0.53 p95 0.53 p99 0.53 max 0.53 | by mass p50 0.40 p90 0.53 p95 0.53 p99 0.53 | prey cm p50 4.0 p95 8.0 max 8.0 | pred cm p50 15
+    prey P, pred 10-20 cm              n 0
+    prey Bf, pred 10-20 cm             rec    1 fish     1 | by number p50 0.13 p90 0.13 p95 0.13 p99 0.13 max 0.13 | by mass p50 0.13 p90 0.13 p95 0.13 p99 0.13 | prey cm p50 2.0 p95 2.0 max 2.0 | pred cm p50 15
+    prey all, pred 20-30 cm            rec    9 fish     9 | by number p50 0.32 p90 0.50 p95 0.50 p99 0.50 max 0.50 | by mass p50 0.43 p90 0.45 p95 0.50 p99 0.50 | prey cm p50 8.0 p95 12.5 max 12.5 | pred cm p50 25
+    prey P, pred 20-30 cm              rec    3 fish     3 | by number p50 0.32 p90 0.50 p95 0.50 p99 0.50 max 0.50 | by mass p50 0.32 p90 0.50 p95 0.50 p99 0.50 | prey cm p50 8.0 p95 10.0 max 10.0 | pred cm p50 25
+    prey Bf, pred 20-30 cm             rec    1 fish     1 | by number p50 0.43 p90 0.43 p95 0.43 p99 0.43 max 0.43 | by mass p50 0.43 p90 0.43 p95 0.43 p99 0.43 | prey cm p50 12.5 p95 12.5 max 12.5 | pred cm p50 29
+    prey all, pred 30-60 cm            rec   10 fish    10 | by number p50 0.30 p90 0.39 p95 0.39 p99 0.39 max 0.39 | by mass p50 0.33 p90 0.39 p95 0.39 p99 0.39 | prey cm p50 10.0 p95 13.0 max 13.0 | pred cm p50 33
+    prey P, pred 30-60 cm              rec    4 fish     4 | by number p50 0.30 p90 0.33 p95 0.33 p99 0.33 max 0.33 | by mass p50 0.31 p90 0.33 p95 0.33 p99 0.33 | prey cm p50 9.3 p95 10.0 max 10.0 | pred cm p50 31
+    prey Bf, pred 30-60 cm             n 0
+
+hake: years [(2024, 69)]
+  areas {'CSNS': 5, 'NNS': 3, 'Skagerrak': 48, 'Kattegat': 13}
+  all areas
+    prey all                           rec   69 fish    69 | by number p50 0.30 p90 0.44 p95 0.48 p99 0.52 max 0.52 | by mass p50 0.33 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 12.0 p95 24.0 max 25.2 | pred cm p50 48
+    prey P                             rec   46 fish    46 | by number p50 0.30 p90 0.46 p95 0.48 p99 0.52 max 0.52 | by mass p50 0.33 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 12.0 p95 23.0 max 25.0 | pred cm p50 46
+    prey Bf                            rec    4 fish     4 | by number p50 0.31 p90 0.35 p95 0.35 p99 0.35 max 0.35 | by mass p50 0.35 p90 0.35 p95 0.35 p99 0.35 | prey cm p50 13.0 p95 25.2 max 25.2 | pred cm p50 72
+    prey W                             rec   14 fish    14 | by number p50 0.32 p90 0.42 p95 0.52 p99 0.52 max 0.52 | by mass p50 0.39 p90 0.39 p95 0.42 p99 0.52 | prey cm p50 10.0 p95 24.0 max 24.0 | pred cm p50 28
+    prey all, pred 15-40 cm            rec   22 fish    22 | by number p50 0.38 p90 0.48 p95 0.50 p99 0.52 max 0.52 | by mass p50 0.42 p90 0.48 p95 0.50 p99 0.52 | prey cm p50 10.0 p95 14.0 max 15.5 | pred cm p50 26
+    prey P, pred 15-40 cm              rec   14 fish    14 | by number p50 0.41 p90 0.48 p95 0.50 p99 0.50 max 0.50 | by mass p50 0.42 p90 0.48 p95 0.50 p99 0.50 | prey cm p50 11.0 p95 15.5 max 15.5 | pred cm p50 28
+    prey Bf, pred 15-40 cm             n 0
+    prey all, pred 40-60 cm            rec   23 fish    23 | by number p50 0.27 p90 0.44 p95 0.44 p99 0.52 max 0.52 | by mass p50 0.33 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 13.0 p95 18.0 max 25.0 | pred cm p50 44
+    prey P, pred 40-60 cm              rec   19 fish    19 | by number p50 0.28 p90 0.44 p95 0.52 p99 0.52 max 0.52 | by mass p50 0.35 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 14.0 p95 25.0 max 25.0 | pred cm p50 48
+    prey Bf, pred 40-60 cm             rec    1 fish     1 | by number p50 0.31 p90 0.31 p95 0.31 p99 0.31 max 0.31 | by mass p50 0.31 p90 0.31 p95 0.31 p99 0.31 | prey cm p50 12.4 p95 12.4 max 12.4 | pred cm p50 40
+    prey all, pred 60-130 cm           rec   24 fish    24 | by number p50 0.14 p90 0.33 p95 0.35 p99 0.39 max 0.39 | by mass p50 0.33 p90 0.39 p95 0.39 p99 0.39 | prey cm p50 11.0 p95 25.0 max 25.2 | pred cm p50 74
+    prey P, pred 60-130 cm             rec   13 fish    13 | by number p50 0.12 p90 0.33 p95 0.33 p99 0.33 max 0.33 | by mass p50 0.33 p90 0.33 p95 0.33 p99 0.33 | prey cm p50 9.0 p95 25.0 max 25.0 | pred cm p50 74
+    prey Bf, pred 60-130 cm            rec    3 fish     3 | by number p50 0.33 p90 0.35 p95 0.35 p99 0.35 max 0.35 | by mass p50 0.35 p90 0.35 p95 0.35 p99 0.35 | prey cm p50 24.0 p95 25.2 max 25.2 | pred cm p50 72
+  Skagerrak+NNS
+    prey all                           rec   51 fish    51 | by number p50 0.29 p90 0.44 p95 0.47 p99 0.52 max 0.52 | by mass p50 0.33 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 12.0 p95 22.0 max 25.0 | pred cm p50 44
+    prey P                             rec   38 fish    38 | by number p50 0.30 p90 0.46 p95 0.50 p99 0.52 max 0.52 | by mass p50 0.33 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 12.0 p95 23.0 max 25.0 | pred cm p50 43
+    prey Bf                            n 0
+    prey W                             rec    9 fish     9 | by number p50 0.18 p90 0.42 p95 0.42 p99 0.42 max 0.42 | by mass p50 0.16 p90 0.42 p95 0.42 p99 0.42 | prey cm p50 12.0 p95 14.0 max 14.0 | pred cm p50 69
+    prey all, pred 15-40 cm            rec   16 fish    16 | by number p50 0.39 p90 0.47 p95 0.50 p99 0.50 max 0.50 | by mass p50 0.41 p90 0.46 p95 0.50 p99 0.50 | prey cm p50 10.4 p95 15.5 max 15.5 | pred cm p50 28
+    prey P, pred 15-40 cm              rec   12 fish    12 | by number p50 0.41 p90 0.47 p95 0.50 p99 0.50 max 0.50 | by mass p50 0.41 p90 0.46 p95 0.50 p99 0.50 | prey cm p50 11.0 p95 15.5 max 15.5 | pred cm p50 28
+    prey Bf, pred 15-40 cm             n 0
+    prey all, pred 40-60 cm            rec   21 fish    21 | by number p50 0.27 p90 0.44 p95 0.44 p99 0.52 max 0.52 | by mass p50 0.35 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 13.0 p95 18.0 max 25.0 | pred cm p50 44
+    prey P, pred 40-60 cm              rec   19 fish    19 | by number p50 0.28 p90 0.44 p95 0.52 p99 0.52 max 0.52 | by mass p50 0.35 p90 0.52 p95 0.52 p99 0.52 | prey cm p50 14.0 p95 25.0 max 25.0 | pred cm p50 48
+    prey Bf, pred 40-60 cm             n 0
+    prey all, pred 60-130 cm           rec   14 fish    14 | by number p50 0.14 p90 0.29 p95 0.33 p99 0.33 max 0.33 | by mass p50 0.29 p90 0.33 p95 0.33 p99 0.33 | prey cm p50 11.0 p95 23.0 max 23.0 | pred cm p50 76
+    prey P, pred 60-130 cm             rec    7 fish     7 | by number p50 0.15 p90 0.33 p95 0.33 p99 0.33 max 0.33 | by mass p50 0.33 p90 0.33 p95 0.33 p99 0.33 | prey cm p50 11.0 p95 23.0 max 23.0 | pred cm p50 75
+    prey Bf, pred 60-130 cm            n 0
+  items (area, pred cm, prey cm, n, taxon):
+    Skagerrak 2024  19.0   7.5   1 Clupea harengus
+    Skagerrak 2024  19.0   9.0   1 Clupea harengus
+    Skagerrak 2024  21.0  10.4   1 Trisopterus esmarki
+    Kattegat  2024  21.0   8.0   1 Sprattus sprattus
+    Skagerrak 2024  22.0   7.0   1 Merlangius merlangus
+    Kattegat  2024  23.0  12.0   1 Merlangius merlangus
+    Kattegat  2024  24.0   9.0   1 Merlangius merlangus
+    Skagerrak 2024  24.0   6.0   1 Merlangius merlangus
+    Kattegat  2024  26.0   9.0   1 Merlangius merlangus
+    Kattegat  2024  26.0   9.0   1 Merlangius merlangus
+    Skagerrak 2024  26.0  11.0   1 Sprattus sprattus
+    Skagerrak 2024  26.0  10.0   1 Merlangius merlangus
+    Skagerrak 2024  27.0   8.0   1 Sprattus sprattus
+    Skagerrak 2024  28.0  13.0   1 Clupea harengus
+    Skagerrak 2024  28.0   8.0   1 Sprattus sprattus
+    CSNS      2024  29.0  14.0   1 Trisopterus esmarkii
+    Skagerrak 2024  31.0  13.0   1 Merlangius merlangus
+    NNS       2024  33.0  13.5   1 Trisopterus esmarki
+    Skagerrak 2024  34.0  14.0   1 Clupea harengus
+    Skagerrak 2024  34.0  11.0   1 Clupea harengus
+    Skagerrak 2024  36.0  12.0   1 Clupea harengus
+    Skagerrak 2024  36.0  15.5   1 Clupea harengus
+    CSNS      2024  40.0  12.4   1 Gadus morhua
+    Skagerrak 2024  40.0  12.0   1 Clupea harengus
+    Skagerrak 2024  40.0  11.0   1 Clupea harengus
+    Skagerrak 2024  40.0  12.0   1 Clupea harengus
+    Skagerrak 2024  40.0  13.0   1 Clupea harengus
+    Skagerrak 2024  40.0   7.0   1 Gadidae
+    NNS       2024  40.0  17.6   1 Trisopterus esmarkii
+    Skagerrak 2024  41.0  18.0   1 Clupea harengus
+    Skagerrak 2024  41.0   8.0   1 Gadidae
+    Skagerrak 2024  42.0   9.0   1 Sprattus sprattus
+    Skagerrak 2024  44.0  13.0   1 Clupeidae
+    Skagerrak 2024  44.0  12.0   1 Clupeidae
+    NNS       2024  48.0  25.0   1 Clupea harengus
+    CSNS      2024  52.0   7.3   1 Pisces
+    Skagerrak 2024  52.0  18.0   1 Clupea harengus
+    Skagerrak 2024  56.0  14.0   1 Clupea harengus
+    Skagerrak 2024  56.0  11.0   1 Clupea harengus
+    Skagerrak 2024  56.0  14.0   1 Clupea harengus
+    Skagerrak 2024  56.0  12.0   1 Clupea harengus
+    Skagerrak 2024  56.0  14.0   1 Clupea harengus
+    Skagerrak 2024  56.0  17.0   1 Clupea harengus
+    Skagerrak 2024  56.0  14.0   1 Clupea harengus
+    Skagerrak 2024  56.0  14.0   1 Clupea harengus
+    Kattegat  2024  62.0  24.0   1 Merlangius merlangus
+    Skagerrak 2024  66.0  22.0   1 Clupea harengus
+    Kattegat  2024  67.0   8.0   1 Sprattus sprattus
+    Kattegat  2024  67.0   8.0   1 Sprattus sprattus
+    Kattegat  2024  67.0   7.0   1 Sprattus sprattus
+    Kattegat  2024  67.0   8.0   1 Clupea harengus
+    Kattegat  2024  67.0   7.0   1 Sprattus sprattus
+    Skagerrak 2024  69.0   7.5   1 Merlangius merlangus
+    CSNS      2024  72.0  25.2   1 Melanogrammus aeglefinus
+    CSNS      2024  72.0  24.0   1 Melanogrammus aeglefinus
+    Skagerrak 2024  74.0   7.5   1 Gadidae
+    Skagerrak 2024  74.0   7.0   1 Clupeidae
+    Skagerrak 2024  74.0   6.0   1 Gadidae
+    Kattegat  2024  75.0  25.0   1 Clupea harengus
+    Skagerrak 2024  75.0  11.0   1 Sprattus sprattus
+    Skagerrak 2024  75.0  11.0   1 Sprattus sprattus
+    Kattegat  2024  76.0  13.0   1 Pleuronectes platessa
+    Skagerrak 2024  77.0  14.0   1 Merlangius merlangus
+    Skagerrak 2024  78.0  23.0   1 Clupea harengus
+    Skagerrak 2024  85.0  14.0   1 Merlangius merlangus
+    Skagerrak 2024  85.0   9.0   1 Clupea harengus
+    Skagerrak 2024  85.0  14.0   1 Merlangius merlangus
+    Skagerrak 2024  85.0  12.0   1 Merlangius merlangus
+    Skagerrak 2024  85.0   9.0   1 Clupea harengus
+
+spurdog: years [(1991, 18)]
+  areas {'CSNS': 18}
+  all areas
+    prey all                           rec   18 fish    29 | by number p50 0.19 p90 0.38 p95 0.38 p99 0.38 max 0.38 | by mass p50 0.20 p90 0.38 p95 0.38 p99 0.38 | prey cm p50 15.0 p95 25.0 max 30.0 | pred cm p50 80
+    prey P                             rec    6 fish     9 | by number p50 0.20 p90 0.38 p95 0.38 p99 0.38 max 0.38 | by mass p50 0.20 p90 0.38 p95 0.38 p99 0.38 | prey cm p50 20.0 p95 30.0 max 30.0 | pred cm p50 80
+    prey Bf                            rec    3 fish     3 | by number p50 0.12 p90 0.19 p95 0.19 p99 0.19 max 0.19 | by mass p50 0.19 p90 0.19 p95 0.19 p99 0.19 | prey cm p50 10.0 p95 15.0 max 15.0 | pred cm p50 80
+    prey W                             rec    1 fish     4 | by number p50 0.20 p90 0.20 p95 0.20 p99 0.20 max 0.20 | by mass p50 0.20 p90 0.20 p95 0.20 p99 0.20 | prey cm p50 20.0 p95 20.0 max 20.0 | pred cm p50 100
+    prey all, pred 30-70 cm            rec    2 fish     4 | by number p50 0.38 p90 0.38 p95 0.38 p99 0.38 max 0.38 | by mass p50 0.38 p90 0.38 p95 0.38 p99 0.38 | prey cm p50 15.0 p95 15.0 max 15.0 | pred cm p50 50
+    prey P, pred 30-70 cm              rec    1 fish     1 | by number p50 0.20 p90 0.20 p95 0.20 p99 0.20 max 0.20 | by mass p50 0.20 p90 0.20 p95 0.20 p99 0.20 | prey cm p50 12.0 p95 12.0 max 12.0 | pred cm p50 60
+    prey Bf, pred 30-70 cm             n 0
+    prey all, pred 70-130 cm           rec   16 fish    25 | by number p50 0.19 p90 0.25 p95 0.31 p99 0.38 max 0.38 | by mass p50 0.20 p90 0.38 p95 0.38 p99 0.38 | prey cm p50 15.0 p95 25.0 max 30.0 | pred cm p50 80
+    prey P, pred 70-130 cm             rec    5 fish     8 | by number p50 0.20 p90 0.38 p95 0.38 p99 0.38 max 0.38 | by mass p50 0.25 p90 0.38 p95 0.38 p99 0.38 | prey cm p50 20.0 p95 30.0 max 30.0 | pred cm p50 80
+    prey Bf, pred 70-130 cm            rec    3 fish     3 | by number p50 0.12 p90 0.19 p95 0.19 p99 0.19 max 0.19 | by mass p50 0.19 p90 0.19 p95 0.19 p99 0.19 | prey cm p50 10.0 p95 15.0 max 15.0 | pred cm p50 80
+  Skagerrak+NNS
+    prey all                           n 0
+    prey P                             n 0
+    prey Bf                            n 0
+    prey W                             n 0
+    prey all, pred 30-70 cm            n 0
+    prey P, pred 30-70 cm              n 0
+    prey Bf, pred 30-70 cm             n 0
+    prey all, pred 70-130 cm           n 0
+    prey P, pred 70-130 cm             n 0
+    prey Bf, pred 70-130 cm            n 0
+  items (area, pred cm, prey cm, n, taxon):
+    CSNS      1991  40.0  15.0   3 Ammodytidae
+    CSNS      1991  60.0  12.0   1 Trisopterus esmarkii
+    CSNS      1991  80.0   7.0   1 Ammodytidae
+    CSNS      1991  80.0  12.0   1 Trisopterus esmarkii
+    CSNS      1991  80.0  30.0   1 Clupea harengus
+    CSNS      1991  80.0  20.0   2 Clupea harengus
+    CSNS      1991  80.0  15.0   4 Hyperoplus lanceolatus
+    CSNS      1991  80.0  25.0   1 Hyperoplus lanceolatus
+    CSNS      1991  80.0  15.0   1 Pholis gunnellus
+    CSNS      1991  80.0  10.0   1 Limanda limanda
+    CSNS      1991  80.0   6.0   1 Buglossidium luteum
+    CSNS      1991  80.0  10.0   1 Echiichthys vipera
+    CSNS      1991  80.0   8.0   1 Echiichthys vipera
+    CSNS      1991  80.0  15.0   1 Limanda limanda
+    CSNS      1991 100.0  10.0   2 Clupea harengus
+    CSNS      1991 100.0  20.0   4 Merlangius merlangus
+    CSNS      1991 100.0  10.0   1 Callionymus lyra
+    CSNS      1991 100.0  20.0   2 Clupea harengus
+
+anglerfish: years [(1991, 1), (2022, 14), (2024, 1)]
+  areas {'NNS': 7, 'CSNS': 6, 'Skagerrak': 3}
+  all areas
+    prey all                           rec   16 fish    16 | by number p50 0.35 p90 0.57 p95 0.71 p99 0.71 max 0.71 | by mass p50 0.52 p90 0.71 p95 0.71 p99 0.71 | prey cm p50 17.0 p95 33.3 max 33.3 | pred cm p50 54
+    prey P                             rec    5 fish     5 | by number p50 0.26 p90 0.35 p95 0.35 p99 0.35 max 0.35 | by mass p50 0.35 p90 0.35 p95 0.35 p99 0.35 | prey cm p50 16.4 p95 17.8 max 17.8 | pred cm p50 57
+    prey Bf                            rec    4 fish     4 | by number p50 0.30 p90 0.40 p95 0.40 p99 0.40 max 0.40 | by mass p50 0.30 p90 0.40 p95 0.40 p99 0.40 | prey cm p50 12.5 p95 17.0 max 17.0 | pred cm p50 42
+    prey W                             rec    1 fish     1 | by number p50 0.71 p90 0.71 p95 0.71 p99 0.71 max 0.71 | by mass p50 0.71 p90 0.71 p95 0.71 p99 0.71 | prey cm p50 25.0 p95 25.0 max 25.0 | pred cm p50 35
+    prey all, pred 20-50 cm            rec    5 fish     5 | by number p50 0.35 p90 0.71 p95 0.71 p99 0.71 max 0.71 | by mass p50 0.71 p90 0.71 p95 0.71 p99 0.71 | prey cm p50 17.0 p95 25.0 max 25.0 | pred cm p50 41
+    prey P, pred 20-50 cm              n 0
+    prey Bf, pred 20-50 cm             rec    3 fish     3 | by number p50 0.30 p90 0.40 p95 0.40 p99 0.40 max 0.40 | by mass p50 0.40 p90 0.40 p95 0.40 p99 0.40 | prey cm p50 12.5 p95 17.0 max 17.0 | pred cm p50 41
+    prey all, pred 50-150 cm           rec   11 fish    11 | by number p50 0.35 p90 0.52 p95 0.57 p99 0.57 max 0.57 | by mass p50 0.52 p90 0.57 p95 0.57 p99 0.57 | prey cm p50 17.8 p95 33.3 max 33.3 | pred cm p50 58
+    prey P, pred 50-150 cm             rec    5 fish     5 | by number p50 0.26 p90 0.35 p95 0.35 p99 0.35 max 0.35 | by mass p50 0.35 p90 0.35 p95 0.35 p99 0.35 | prey cm p50 16.4 p95 17.8 max 17.8 | pred cm p50 57
+    prey Bf, pred 50-150 cm            rec    1 fish     1 | by number p50 0.30 p90 0.30 p95 0.30 p99 0.30 max 0.30 | by mass p50 0.30 p90 0.30 p95 0.30 p99 0.30 | prey cm p50 14.8 p95 14.8 max 14.8 | pred cm p50 50
+  Skagerrak+NNS
+    prey all                           rec   10 fish    10 | by number p50 0.30 p90 0.57 p95 0.71 p99 0.71 max 0.71 | by mass p50 0.57 p90 0.71 p95 0.71 p99 0.71 | prey cm p50 16.4 p95 33.3 max 33.3 | pred cm p50 57
+    prey P                             rec    3 fish     3 | by number p50 0.17 p90 0.26 p95 0.26 p99 0.26 max 0.26 | by mass p50 0.26 p90 0.26 p95 0.26 p99 0.26 | prey cm p50 9.7 p95 16.4 max 16.4 | pred cm p50 57
+    prey Bf                            rec    2 fish     2 | by number p50 0.28 p90 0.30 p95 0.30 p99 0.30 max 0.30 | by mass p50 0.30 p90 0.30 p95 0.30 p99 0.30 | prey cm p50 8.0 p95 14.8 max 14.8 | pred cm p50 40
+    prey W                             rec    1 fish     1 | by number p50 0.71 p90 0.71 p95 0.71 p99 0.71 max 0.71 | by mass p50 0.71 p90 0.71 p95 0.71 p99 0.71 | prey cm p50 25.0 p95 25.0 max 25.0 | pred cm p50 35
+    prey all, pred 20-50 cm            rec    3 fish     3 | by number p50 0.35 p90 0.71 p95 0.71 p99 0.71 max 0.71 | by mass p50 0.71 p90 0.71 p95 0.71 p99 0.71 | prey cm p50 17.0 p95 25.0 max 25.0 | pred cm p50 35
+    prey P, pred 20-50 cm              n 0
+    prey Bf, pred 20-50 cm             rec    1 fish     1 | by number p50 0.28 p90 0.28 p95 0.28 p99 0.28 max 0.28 | by mass p50 0.28 p90 0.28 p95 0.28 p99 0.28 | prey cm p50 8.0 p95 8.0 max 8.0 | pred cm p50 29
+    prey all, pred 50-150 cm           rec    7 fish     7 | by number p50 0.30 p90 0.57 p95 0.57 p99 0.57 max 0.57 | by mass p50 0.57 p90 0.57 p95 0.57 p99 0.57 | prey cm p50 16.4 p95 33.3 max 33.3 | pred cm p50 58
+    prey P, pred 50-150 cm             rec    3 fish     3 | by number p50 0.17 p90 0.26 p95 0.26 p99 0.26 max 0.26 | by mass p50 0.26 p90 0.26 p95 0.26 p99 0.26 | prey cm p50 9.7 p95 16.4 max 16.4 | pred cm p50 57
+    prey Bf, pred 50-150 cm            rec    1 fish     1 | by number p50 0.30 p90 0.30 p95 0.30 p99 0.30 max 0.30 | by mass p50 0.30 p90 0.30 p95 0.30 p99 0.30 | prey cm p50 14.8 p95 14.8 max 14.8 | pred cm p50 50
+  items (area, pred cm, prey cm, n, taxon):
+    Skagerrak 2022  29.0   8.0   1 Gadus morhua
+    NNS       1991  35.0  25.0   1 Merlangius merlangus
+    CSNS      2022  41.0  12.5   1 Pleuronectiformes
+    CSNS      2022  43.0  17.0   1 Pleuronectiformes
+    Skagerrak 2022  48.0  17.0   1 Anguilla anguilla
+    Skagerrak 2022  50.0  14.8   1 Pleuronectiformes
+    CSNS      2022  51.0  17.8   1 Clupea harengus
+    CSNS      2022  51.0  17.8   1 Clupea harengus
+    NNS       2022  57.0   9.7   1 Trisopterus esmarki
+    NNS       2022  57.0   8.0   1 Trisopterus esmarki
+    NNS       2022  58.0  20.4   1 Chondrichthyes
+    NNS       2022  58.0  33.3   1 Merluccius merluccius
+    NNS       2022  62.0  32.5   1 Trachurus trachurus
+    NNS       2024  62.0  16.4   1 Trisopterus esmarkii
+    CSNS      2022  63.0  15.0   1 Merluccius merluccius
+    CSNS      2022  63.0  26.0   1 Merluccius merluccius
+
+ling: years [(1991, 1), (2024, 4)]
+  areas {'NNS': 2, 'CSNS': 1, 'Skagerrak': 2}
+  all areas
+    prey all                           rec    5 fish     9 | by number p50 0.20 p90 0.28 p95 0.28 p99 0.28 max 0.28 | by mass p50 0.26 p90 0.28 p95 0.28 p99 0.28 | prey cm p50 6.0 p95 24.0 max 24.0 | pred cm p50 64
+    prey P                             rec    3 fish     7 | by number p50 0.20 p90 0.28 p95 0.28 p99 0.28 max 0.28 | by mass p50 0.28 p90 0.28 p95 0.28 p99 0.28 | prey cm p50 6.0 p95 24.0 max 24.0 | pred cm p50 63
+    prey Bf                            rec    1 fish     1 | by number p50 0.26 p90 0.26 p95 0.26 p99 0.26 max 0.26 | by mass p50 0.26 p90 0.26 p95 0.26 p99 0.26 | prey cm p50 16.6 p95 16.6 max 16.6 | pred cm p50 64
+    prey W                             n 0
+  Skagerrak+NNS
+    prey all                           rec    4 fish     8 | by number p50 0.20 p90 0.28 p95 0.28 p99 0.28 max 0.28 | by mass p50 0.28 p90 0.28 p95 0.28 p99 0.28 | prey cm p50 6.0 p95 24.0 max 24.0 | pred cm p50 70
+    prey P                             rec    3 fish     7 | by number p50 0.20 p90 0.28 p95 0.28 p99 0.28 max 0.28 | by mass p50 0.28 p90 0.28 p95 0.28 p99 0.28 | prey cm p50 6.0 p95 24.0 max 24.0 | pred cm p50 63
+    prey Bf                            n 0
+    prey W                             n 0
+  items (area, pred cm, prey cm, n, taxon):
+    NNS       1991  30.0   6.0   5 Trisopterus esmarkii
+    NNS       2024  63.0  15.5   1 Trisopterus esmarki
+    CSNS      2024  64.0  16.6   1 Pleuronectiformes
+    Skagerrak 2024  77.0  17.0   1 Trisopterus
+    Skagerrak 2024  86.0  24.0   1 Clupea harengus
+
+horse mackerel: years [(2023, 40)]
+  areas {'CSNS': 40}
+  all areas
+    prey all                           rec   40 fish   643 | by number p50 0.11 p90 0.14 p95 0.16 p99 0.22 max 0.33 | by mass p50 0.13 p90 0.28 p95 0.33 p99 0.33 | prey cm p50 2.4 p95 2.8 max 7.3 | pred cm p50 18
+    prey P                             rec   14 fish   404 | by number p50 0.12 p90 0.16 p95 0.16 p99 0.17 max 0.17 | by mass p50 0.12 p90 0.13 p95 0.16 p99 0.17 | prey cm p50 2.5 p95 2.8 max 2.9 | pred cm p50 20
+    prey Bf                            rec    1 fish     2 | by number p50 0.10 p90 0.10 p95 0.10 p99 0.10 max 0.10 | by mass p50 0.10 p90 0.10 p95 0.10 p99 0.10 | prey cm p50 1.6 p95 1.6 max 1.6 | pred cm p50 16
+    prey W                             rec    1 fish     1 | by number p50 0.33 p90 0.33 p95 0.33 p99 0.33 max 0.33 | by mass p50 0.33 p90 0.33 p95 0.33 p99 0.33 | prey cm p50 6.0 p95 6.0 max 6.0 | pred cm p50 18
+    prey all, pred 10-30 cm            rec   35 fish   638 | by number p50 0.11 p90 0.13 p95 0.16 p99 0.22 max 0.33 | by mass p50 0.12 p90 0.30 p95 0.33 p99 0.33 | prey cm p50 2.4 p95 2.8 max 6.0 | pred cm p50 18
+    prey P, pred 10-30 cm              rec   14 fish   404 | by number p50 0.12 p90 0.16 p95 0.16 p99 0.17 max 0.17 | by mass p50 0.12 p90 0.13 p95 0.16 p99 0.17 | prey cm p50 2.5 p95 2.8 max 2.9 | pred cm p50 20
+    prey Bf, pred 10-30 cm             rec    1 fish     2 | by number p50 0.10 p90 0.10 p95 0.10 p99 0.10 max 0.10 | by mass p50 0.10 p90 0.10 p95 0.10 p99 0.10 | prey cm p50 1.6 p95 1.6 max 1.6 | pred cm p50 16
+    prey all, pred 30-50 cm            rec    5 fish     5 | by number p50 0.15 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.18 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 5.0 p95 7.3 max 7.3 | pred cm p50 34
+    prey P, pred 30-50 cm              n 0
+    prey Bf, pred 30-50 cm             n 0
+  Skagerrak+NNS
+    prey all                           n 0
+    prey P                             n 0
+    prey Bf                            n 0
+    prey W                             n 0
+    prey all, pred 10-30 cm            n 0
+    prey P, pred 10-30 cm              n 0
+    prey Bf, pred 10-30 cm             n 0
+    prey all, pred 30-50 cm            n 0
+    prey P, pred 30-50 cm              n 0
+    prey Bf, pred 30-50 cm             n 0
+  items (area, pred cm, prey cm, n, taxon):
+    CSNS      2023  16.0   2.5  38 Clupeidae
+    CSNS      2023  16.0   1.6   2 Pleuronectidae
+    CSNS      2023  16.0   1.4  14 Aphia minuta
+    CSNS      2023  16.0   2.1   5 Clupeidae
+    CSNS      2023  16.0   0.3  15 Gobiidae
+    CSNS      2023  17.0   4.5   1 Trachurus trachurus
+    CSNS      2023  17.0   1.3  25 Aphia minuta
+    CSNS      2023  17.0   2.8   5 Clupeidae
+    CSNS      2023  17.0   2.4   2 Aphia minuta
+    CSNS      2023  17.0   5.1   1 Trachurus trachurus
+    CSNS      2023  17.0   2.9   7 Clupeidae
+    CSNS      2023  17.0   1.1  57 Aphia minuta
+    CSNS      2023  17.0   1.8  20 Aphia minuta
+    CSNS      2023  18.0   6.0   1 Merlangius merlangus
+    CSNS      2023  18.0   4.0   3 Trachurus trachurus
+    CSNS      2023  18.0   1.7  29 Aphia minuta
+    CSNS      2023  18.0   2.3  10 Clupeidae
+    CSNS      2023  18.0   5.0   2 Trachurus trachurus
+    CSNS      2023  18.0   2.4   7 Clupeidae
+    CSNS      2023  18.0   2.2  10 Aphia minuta
+    CSNS      2023  18.0   0.3  10 Gobiidae
+    CSNS      2023  18.0   1.3  15 Aphia minuta
+    CSNS      2023  20.0   2.5  29 Clupeidae
+    CSNS      2023  20.0   1.2   8 Aphia minuta
+    CSNS      2023  20.0   2.8   1 Clupeidae
+    CSNS      2023  20.0   1.0   1 Trachinidae
+    CSNS      2023  20.0   1.4   4 Gobiidae
+    CSNS      2023  21.0   2.7  25 Clupeidae
+    CSNS      2023  21.0   2.0  61 Clupeidae
+    CSNS      2023  21.0   2.5 117 Clupeidae
+    CSNS      2023  22.0   2.8  23 Clupeidae
+    CSNS      2023  22.0   1.2   4 Aphia minuta
+    CSNS      2023  23.0   2.5  62 Clupeidae
+    CSNS      2023  23.0   1.4  10 Aphia minuta
+    CSNS      2023  28.0   2.3  14 Clupeidae
+    CSNS      2023  30.0   3.1   1 Pisces
+    CSNS      2023  34.0   4.9   1 Trachurus trachurus
+    CSNS      2023  34.0   7.3   1 Trachurus trachurus
+    CSNS      2023  34.0   6.2   1 Trachurus trachurus
+    CSNS      2023  34.0   5.0   1 Trachurus trachurus
+
+saithe: years [(2024, 1)]
+  areas {'NNS': 1}
+  all areas
+    prey all                           rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey P                             rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey Bf                            n 0
+    prey W                             n 0
+    prey all, pred 20-60 cm            rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey P, pred 20-60 cm              rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey Bf, pred 20-60 cm             n 0
+    prey all, pred 60-130 cm           n 0
+    prey P, pred 60-130 cm             n 0
+    prey Bf, pred 60-130 cm            n 0
+  Skagerrak+NNS
+    prey all                           rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey P                             rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey Bf                            n 0
+    prey W                             n 0
+    prey all, pred 20-60 cm            rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey P, pred 20-60 cm              rec    1 fish     1 | by number p50 0.21 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.21 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 9.3 p95 9.3 max 9.3 | pred cm p50 45
+    prey Bf, pred 20-60 cm             n 0
+    prey all, pred 60-130 cm           n 0
+    prey P, pred 60-130 cm             n 0
+    prey Bf, pred 60-130 cm            n 0
+  items (area, pred cm, prey cm, n, taxon):
+    NNS       2024  45.0   9.3   1 Trisopterus esmarkii
+
+mackerel: years [(2022, 329)]
+  areas {'NNS': 1, 'CSNS': 328}
+  all areas
+    prey all                           rec  329 fish   329 | by number p50 0.23 p90 0.26 p95 0.28 p99 0.31 max 0.39 | by mass p50 0.24 p90 0.27 p95 0.28 p99 0.32 | prey cm p50 8.5 p95 10.1 max 11.0 | pred cm p50 37
+    prey P                             rec   14 fish    14 | by number p50 0.24 p90 0.28 p95 0.32 p99 0.32 max 0.32 | by mass p50 0.25 p90 0.32 p95 0.32 p99 0.32 | prey cm p50 8.4 p95 10.6 max 10.6 | pred cm p50 36
+    prey Bf                            n 0
+    prey W                             rec   16 fish    16 | by number p50 0.17 p90 0.19 p95 0.23 p99 0.23 max 0.23 | by mass p50 0.17 p90 0.23 p95 0.23 p99 0.23 | prey cm p50 5.5 p95 6.5 max 6.5 | pred cm p50 30
+    prey all, pred 10-30 cm            rec   29 fish    29 | by number p50 0.19 p90 0.28 p95 0.31 p99 0.39 max 0.39 | by mass p50 0.23 p90 0.31 p95 0.39 p99 0.39 | prey cm p50 5.2 p95 8.2 max 8.7 | pred cm p50 28
+    prey P, pred 10-30 cm              rec    2 fish     2 | by number p50 0.00 p90 0.18 p95 0.18 p99 0.18 max 0.18 | by mass p50 0.00 p90 0.18 p95 0.18 p99 0.18 | prey cm p50 0.1 p95 3.9 max 3.9 | pred cm p50 23
+    prey Bf, pred 10-30 cm             n 0
+    prey all, pred 30-50 cm            rec  300 fish   300 | by number p50 0.23 p90 0.26 p95 0.27 p99 0.29 max 0.32 | by mass p50 0.24 p90 0.27 p95 0.28 p99 0.32 | prey cm p50 8.6 p95 10.1 max 11.0 | pred cm p50 38
+    prey P, pred 30-50 cm              rec   12 fish    12 | by number p50 0.25 p90 0.28 p95 0.32 p99 0.32 max 0.32 | by mass p50 0.25 p90 0.32 p95 0.32 p99 0.32 | prey cm p50 8.9 p95 10.6 max 10.6 | pred cm p50 36
+    prey Bf, pred 30-50 cm             n 0
+  Skagerrak+NNS
+    prey all                           rec    1 fish     1 | by number p50 0.22 p90 0.22 p95 0.22 p99 0.22 max 0.22 | by mass p50 0.22 p90 0.22 p95 0.22 p99 0.22 | prey cm p50 7.5 p95 7.5 max 7.5 | pred cm p50 34
+    prey P                             n 0
+    prey Bf                            n 0
+    prey W                             n 0
+    prey all, pred 10-30 cm            n 0
+    prey P, pred 10-30 cm              n 0
+    prey Bf, pred 10-30 cm             n 0
+    prey all, pred 30-50 cm            rec    1 fish     1 | by number p50 0.22 p90 0.22 p95 0.22 p99 0.22 max 0.22 | by mass p50 0.22 p90 0.22 p95 0.22 p99 0.22 | prey cm p50 7.5 p95 7.5 max 7.5 | pred cm p50 34
+    prey P, pred 30-50 cm              n 0
+    prey Bf, pred 30-50 cm             n 0
+
+cod: years [(1981, 839), (1991, 402), (2000, 93), (2001, 61), (2002, 17), (2003, 89), (2004, 133), (2006, 322), (2007, 230), (2008, 281), (2009, 121), (2012, 483), (2013, 459), (2014, 191), (2016, 961), (2017, 627), (2018, 738), (2021, 2639), (2022, 148), (2023, 295), (2024, 276), (2025, 235)]
+  areas {'CSNS': 387, 'NNS': 279, 'Skagerrak': 37, 'other': 8508, 'Kattegat': 429}
+  all areas
+    prey all                           rec 9640 fish 10928 | by number p50 0.20 p90 0.33 p95 0.37 p99 0.46 max 2.65 | by mass p50 0.25 p90 0.40 p95 0.44 p99 0.60 | prey cm p50 8.2 p95 17.0 max 135.0 | pred cm p50 40
+    prey P                             rec 5509 fish  5870 | by number p50 0.23 p90 0.34 p95 0.38 p99 0.47 max 2.65 | by mass p50 0.24 p90 0.37 p95 0.41 p99 0.52 | prey cm p50 10.0 p95 17.0 max 135.0 | pred cm p50 42
+    prey Bf                            rec  372 fish   542 | by number p50 0.20 p90 0.34 p95 0.38 p99 0.52 max 2.10 | by mass p50 0.30 p90 0.50 p95 0.56 p99 0.60 | prey cm p50 10.0 p95 25.0 max 38.0 | pred cm p50 50
+    prey W                             rec   67 fish    94 | by number p50 0.28 p90 0.37 p95 0.41 p99 0.50 max 0.50 | by mass p50 0.30 p90 0.43 p95 0.50 p99 0.50 | prey cm p50 15.0 p95 25.0 max 30.0 | pred cm p50 50
+    prey all, pred 15-30 cm            rec 1155 fish  1216 | by number p50 0.21 p90 0.36 p95 0.41 p99 0.50 max 0.82 | by mass p50 0.33 p90 0.48 p95 0.77 p99 0.82 | prey cm p50 5.0 p95 10.4 max 18.0 | pred cm p50 26
+    prey P, pred 15-30 cm              rec  365 fish   372 | by number p50 0.31 p90 0.42 p95 0.44 p99 0.62 max 0.82 | by mass p50 0.35 p90 0.54 p95 0.82 p99 0.82 | prey cm p50 8.0 p95 11.5 max 18.0 | pred cm p50 27
+    prey Bf, pred 15-30 cm             rec   39 fish    50 | by number p50 0.21 p90 0.35 p95 0.36 p99 0.42 max 0.42 | by mass p50 0.28 p90 0.42 p95 0.42 p99 0.42 | prey cm p50 5.0 p95 9.7 max 12.3 | pred cm p50 25
+    prey all, pred 30-45 cm            rec 5293 fish  5614 | by number p50 0.21 p90 0.33 p95 0.37 p99 0.46 max 0.67 | by mass p50 0.28 p90 0.42 p95 0.46 p99 0.54 | prey cm p50 7.7 p95 14.0 max 27.5 | pred cm p50 37
+    prey P, pred 30-45 cm              rec 2859 fish  2937 | by number p50 0.26 p90 0.35 p95 0.39 p99 0.47 max 0.56 | by mass p50 0.28 p90 0.42 p95 0.45 p99 0.52 | prey cm p50 9.5 p95 15.0 max 23.0 | pred cm p50 38
+    prey Bf, pred 30-45 cm             rec  106 fish   138 | by number p50 0.21 p90 0.33 p95 0.37 p99 0.38 max 0.40 | by mass p50 0.25 p90 0.37 p95 0.38 p99 0.38 | prey cm p50 7.0 p95 14.0 max 15.2 | pred cm p50 37
+    prey all, pred 45-65 cm            rec 2619 fish  3055 | by number p50 0.20 p90 0.32 p95 0.38 p99 0.43 max 2.65 | by mass p50 0.25 p90 0.40 p95 0.46 p99 0.61 | prey cm p50 10.0 p95 19.0 max 135.0 | pred cm p50 50
+    prey P, pred 45-65 cm              rec 1983 fish  2117 | by number p50 0.21 p90 0.32 p95 0.36 p99 0.43 max 2.65 | by mass p50 0.24 p90 0.37 p95 0.40 p99 0.49 | prey cm p50 10.8 p95 18.0 max 135.0 | pred cm p50 50
+    prey Bf, pred 45-65 cm             rec   85 fish   112 | by number p50 0.20 p90 0.40 p95 0.50 p99 0.56 max 0.60 | by mass p50 0.42 p90 0.60 p95 0.60 p99 0.60 | prey cm p50 10.0 p95 29.0 max 38.0 | pred cm p50 50
+    prey all, pred 65-130 cm           rec  533 fish  1003 | by number p50 0.14 p90 0.28 p95 0.29 p99 0.38 max 0.50 | by mass p50 0.19 p90 0.36 p95 0.40 p99 0.43 | prey cm p50 10.0 p95 22.1 max 34.3 | pred cm p50 70
+    prey P, pred 65-130 cm             rec  299 fish   441 | by number p50 0.14 p90 0.24 p95 0.27 p99 0.31 max 0.38 | by mass p50 0.13 p90 0.27 p95 0.30 p99 0.36 | prey cm p50 10.0 p95 19.0 max 26.0 | pred cm p50 70
+    prey Bf, pred 65-130 cm            rec  137 fish   237 | by number p50 0.14 p90 0.29 p95 0.36 p99 0.43 max 0.50 | by mass p50 0.29 p90 0.42 p95 0.43 p99 0.50 | prey cm p50 11.3 p95 28.0 max 34.3 | pred cm p50 70
+  Skagerrak+NNS
+    prey all                           rec  316 fish  1037 | by number p50 0.17 p90 0.33 p95 0.40 p99 0.40 max 0.70 | by mass p50 0.29 p90 0.38 p95 0.40 p99 0.50 | prey cm p50 10.0 p95 20.0 max 26.0 | pred cm p50 50
+    prey P                             rec  131 fish   355 | by number p50 0.14 p90 0.27 p95 0.30 p99 0.35 max 0.70 | by mass p50 0.20 p90 0.30 p95 0.36 p99 0.36 | prey cm p50 8.5 p95 15.0 max 26.0 | pred cm p50 67
+    prey Bf                            rec   98 fish   172 | by number p50 0.20 p90 0.29 p95 0.35 p99 0.38 max 0.38 | by mass p50 0.29 p90 0.36 p95 0.37 p99 0.38 | prey cm p50 10.0 p95 20.0 max 26.0 | pred cm p50 50
+    prey W                             rec   16 fish    27 | by number p50 0.29 p90 0.37 p95 0.40 p99 0.40 max 0.40 | by mass p50 0.29 p90 0.36 p95 0.37 p99 0.40 | prey cm p50 20.0 p95 25.0 max 25.0 | pred cm p50 60
+    prey all, pred 15-30 cm            rec   14 fish    20 | by number p50 0.28 p90 0.35 p95 0.35 p99 0.39 max 0.39 | by mass p50 0.28 p90 0.39 p95 0.39 p99 0.39 | prey cm p50 7.0 p95 9.7 max 9.9 | pred cm p50 25
+    prey P, pred 15-30 cm              rec    5 fish     6 | by number p50 0.28 p90 0.39 p95 0.39 p99 0.39 max 0.39 | by mass p50 0.35 p90 0.39 p95 0.39 p99 0.39 | prey cm p50 7.0 p95 9.9 max 9.9 | pred cm p50 25
+    prey Bf, pred 15-30 cm             rec    6 fish    10 | by number p50 0.28 p90 0.35 p95 0.35 p99 0.35 max 0.35 | by mass p50 0.28 p90 0.35 p95 0.35 p99 0.35 | prey cm p50 7.0 p95 7.0 max 7.0 | pred cm p50 22
+    prey all, pred 30-45 cm            rec   82 fish   217 | by number p50 0.23 p90 0.35 p95 0.38 p99 0.50 max 0.67 | by mass p50 0.25 p90 0.50 p95 0.50 p99 0.67 | prey cm p50 7.0 p95 15.0 max 20.0 | pred cm p50 38
+    prey P, pred 30-45 cm              rec   13 fish    28 | by number p50 0.17 p90 0.30 p95 0.33 p99 0.34 max 0.34 | by mass p50 0.25 p90 0.34 p95 0.34 p99 0.34 | prey cm p50 7.0 p95 11.4 max 13.2 | pred cm p50 39
+    prey Bf, pred 30-45 cm             rec   34 fish    56 | by number p50 0.17 p90 0.33 p95 0.33 p99 0.38 max 0.38 | by mass p50 0.25 p90 0.33 p95 0.33 p99 0.38 | prey cm p50 7.0 p95 10.0 max 15.0 | pred cm p50 33
+    prey all, pred 45-65 cm            rec   82 fish   438 | by number p50 0.20 p90 0.40 p95 0.40 p99 0.40 max 0.40 | by mass p50 0.30 p90 0.40 p95 0.40 p99 0.40 | prey cm p50 10.0 p95 20.0 max 20.0 | pred cm p50 50
+    prey P, pred 45-65 cm              rec   40 fish   121 | by number p50 0.20 p90 0.30 p95 0.30 p99 0.30 max 0.31 | by mass p50 0.21 p90 0.30 p95 0.30 p99 0.31 | prey cm p50 10.0 p95 15.0 max 16.1 | pred cm p50 50
+    prey Bf, pred 45-65 cm             rec   13 fish    22 | by number p50 0.20 p90 0.29 p95 0.30 p99 0.30 max 0.30 | by mass p50 0.20 p90 0.30 p95 0.30 p99 0.30 | prey cm p50 10.0 p95 15.0 max 15.0 | pred cm p50 50
+    prey all, pred 65-130 cm           rec  137 fish   361 | by number p50 0.14 p90 0.21 p95 0.29 p99 0.36 max 0.38 | by mass p50 0.29 p90 0.36 p95 0.37 p99 0.38 | prey cm p50 10.0 p95 20.0 max 26.0 | pred cm p50 70
+    prey P, pred 65-130 cm             rec   72 fish   199 | by number p50 0.10 p90 0.21 p95 0.21 p99 0.30 max 0.36 | by mass p50 0.16 p90 0.30 p95 0.36 p99 0.36 | prey cm p50 7.0 p95 15.0 max 26.0 | pred cm p50 70
+    prey Bf, pred 65-130 cm            rec   45 fish    84 | by number p50 0.15 p90 0.29 p95 0.36 p99 0.38 max 0.38 | by mass p50 0.29 p90 0.37 p95 0.37 p99 0.38 | prey cm p50 12.0 p95 25.0 max 26.0 | pred cm p50 70
+
+haddock: years [(2025, 6)]
+  areas {'NNS': 6}
+  all areas
+    prey all                           rec    6 fish     6 | by number p50 0.13 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.17 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 4.0 p95 7.0 max 7.0 | pred cm p50 36
+    prey P                             n 0
+    prey Bf                            rec    2 fish     2 | by number p50 0.11 p90 0.11 p95 0.11 p99 0.11 max 0.11 | by mass p50 0.11 p90 0.11 p95 0.11 p99 0.11 | prey cm p50 4.0 p95 4.0 max 4.0 | pred cm p50 36
+    prey W                             n 0
+  Skagerrak+NNS
+    prey all                           rec    6 fish     6 | by number p50 0.13 p90 0.21 p95 0.21 p99 0.21 max 0.21 | by mass p50 0.17 p90 0.21 p95 0.21 p99 0.21 | prey cm p50 4.0 p95 7.0 max 7.0 | pred cm p50 36
+    prey P                             n 0
+    prey Bf                            rec    2 fish     2 | by number p50 0.11 p90 0.11 p95 0.11 p99 0.11 max 0.11 | by mass p50 0.11 p90 0.11 p95 0.11 p99 0.11 | prey cm p50 4.0 p95 4.0 max 4.0 | pred cm p50 36
+    prey W                             n 0
+  items (area, pred cm, prey cm, n, taxon):
+    NNS       2025  19.5   4.0   1 Teleostei
+    NNS       2025  29.0   4.0   1 Teleostei
+    NNS       2025  35.5   4.0   1 Pleuronectiformes
+    NNS       2025  37.0   4.0   1 Pleuronectiformes
+    NNS       2025  37.5   5.0   1 Artediellus atlanticus
+    NNS       2025  40.5   7.0   1 Teleostei
+
+velvet belly: no fish prey with lengths

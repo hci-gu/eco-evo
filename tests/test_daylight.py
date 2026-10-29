@@ -171,8 +171,18 @@ def test_light_channel_is_appended_last_for_every_decision_maker():
     for i in range(on.N_dm):
         n = int(off.per_dm_in_dim[i])
         # Same world (same seeds), so everything before the light slot
-        # is the old layout, unchanged.
-        np.testing.assert_array_equal(on_obs[i, :, :n], off_obs[i, :, :n])
+        # is the old layout, unchanged - except the juvenile channels
+        # (stages.py), whose start share follows the calendar's month.
+        keep = np.ones(n, dtype=bool)
+        k = len(on.obs_others_idx[i])
+        m = len(on.obs_juvenile_idx[i])
+        n_imp = len(on.observable_impact_vars)
+        center = 2 + k + m + n_imp
+        for c in range(m):
+            keep[2 + k + c] = False
+            for d in range(4):
+                keep[center + d * (1 + k + m + n_imp) + 1 + k + c] = False
+        np.testing.assert_array_equal(on_obs[i, :, :n][:, keep], off_obs[i, :, :n][:, keep])
         np.testing.assert_array_equal(on_obs[i, :, n], level)
 
 

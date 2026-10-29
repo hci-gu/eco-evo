@@ -49,6 +49,8 @@ def apply_accessibility_biomass_mask(env):
         if fg.temp_energy_gains is not None:
             fg.temp_energy_gains = (fg.temp_energy_gains * habitat).astype(
                 env.dtype, copy=False)
+        if getattr(fg, "juvenile", None) is not None:
+            fg.juvenile = (fg.juvenile * habitat).astype(env.dtype, copy=False)
 
 
 def build_edge_immigration_weights(grid, dtype):

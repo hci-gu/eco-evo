@@ -79,6 +79,26 @@ def build_observation_batch(env):
         else:
             observed_biomass = np.zeros((0, H, W), dtype=env.dtype)
 
+        # Juvenile channels (stages.py): the staged groups this DM observes
+        # or is, after the observed biomasses; another group's J is
+        # visible-scaled as its biomass channel, the own J is not.
+        juvenile_idx = getattr(env, "obs_juvenile_idx", None)
+        if juvenile_idx is not None and juvenile_idx[i].shape[0] > 0:
+            own_idx = int(env.dm_index_in_all[i])
+            channels = []
+            for j in juvenile_idx[i]:
+                j = int(j)
+                juv = env.fgs[env.global_fg_order[j]].juvenile.astype(env.dtype, copy=False)
+                if j != own_idx:
+                    floor = (env.vis_floor_mat[i, j] if env._has_pair_vis_floor
+                             else env._all_visibility_floor[j])
+                    juv = juv * (np.float32(1.0) - env.prev_hidden_frac[j]
+                                 * (np.float32(1.0) - np.float32(floor)))
+                channels.append(juv)
+            observed_biomass = np.concatenate(
+                [observed_biomass, np.stack(channels).astype(env.dtype)], axis=0)
+            n_other = int(observed_biomass.shape[0])
+
         center_dim = 2 + n_other + n_obs_imp
         neighbor_dim = 1 + n_other + n_obs_imp
 

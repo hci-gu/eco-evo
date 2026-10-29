@@ -1,0 +1,95 @@
+Q1/Q3: GOV years with both quarters 25; CA 2021-25 Skagerrak rectangles: 33947 rows; keys ['Norway pout', 'cod', 'dab', 'haddock', 'herring', 'lemon sole', 'plaice', 'sprat', 'whiting', 'witch']
+1991-96 Q2: box GOV hauls 146 in years [1991, 1992, 1993, 1994, 1995, 1996]; CA Skagerrak rows 6267
+1991-96 Q4: box GOV hauls 57 in years [1991, 1992, 1993, 1994, 1995, 1996]; CA Skagerrak rows 489
+1991-96 Q1: box GOV hauls 152 in years [1991, 1992, 1993, 1994, 1995, 1996]; CA Skagerrak rows 11360
+1991-96 Q3: box GOV hauls 163 in years [1991, 1992, 1993, 1994, 1995, 1996]; CA Skagerrak rows 6429
+1991-96: Q4 keys from the shifted Q1 key: ['sprat', 'Norway pout', 'plaice']
+
+per species: age-0 and age-1 share of the species' biomass (q-corrected where Walker gives q; raw alongside); age0_mean_L = biomass-mean length of the age-0 fish (cm)
+ period  quarter     species group   kg_h_q  kg_h_raw  age0  age1  age0_raw  age1_raw  age0_mean_L
+2001-25        1     herring   plk   77.278    77.278 0.000 0.376     0.000     0.376          NaN
+2001-25        1       sprat   plk    2.206     2.206 0.000 0.523     0.000     0.523          NaN
+2001-25        1 Norway pout   plk   83.466    12.206 0.000 0.646     0.000     0.545          NaN
+2001-25        1     haddock   ben  244.741    54.814 0.000 0.265     0.000     0.233          NaN
+2001-25        1         cod   ben  201.473    45.887 0.000 0.035     0.000     0.024          NaN
+2001-25        1      plaice   ben    4.291     4.291 0.000 0.005     0.000     0.005          NaN
+2001-25        1         dab   ben    2.572     2.572 0.000 0.000     0.000     0.000          NaN
+2001-25        1  lemon sole   ben    0.552     0.552 0.000 0.000     0.000     0.000          NaN
+2001-25        1       witch   ben    3.807     3.807 0.000 0.004     0.000     0.004        9.822
+2001-25        1     whiting   wht  156.327    58.264 0.000 0.122     0.000     0.202          NaN
+2001-25        3     herring   plk  125.871   125.871 0.213 0.388     0.213     0.388       12.384
+2001-25        3       sprat   plk   24.356    24.356 0.012 0.804     0.012     0.804        9.279
+2001-25        3 Norway pout   plk  390.897    60.669 0.287 0.469     0.125     0.573        8.963
+2001-25        3     haddock   ben  514.431    93.771 0.229 0.170     0.071     0.246       12.626
+2001-25        3         cod   ben  306.141    74.839 0.016 0.286     0.010     0.188       11.662
+2001-25        3      plaice   ben   10.338    10.338 0.000 0.034     0.000     0.034       17.969
+2001-25        3       witch   ben    2.637     2.637 0.000 0.004     0.000     0.004          NaN
+2001-25        3     whiting   wht  113.727    51.029 0.119 0.385     0.163     0.488       11.885
+1991-96        1     herring   plk  173.359   173.359 0.000 0.819     0.000     0.819          NaN
+1991-96        1       sprat   plk   12.748    12.748 0.000 0.253     0.000     0.253          NaN
+1991-96        1 Norway pout   plk  237.603    28.655 0.000 0.402     0.000     0.326          NaN
+1991-96        1     haddock   ben  238.753    45.750 0.000 0.685     0.000     0.632          NaN
+1991-96        1         cod   ben  126.066    28.179 0.000 0.210     0.000     0.150          NaN
+1991-96        1      plaice   ben    7.240     7.240 0.000 0.001     0.000     0.001       19.567
+1991-96        1     whiting   wht  140.536    76.559 0.000 0.496     0.000     0.558          NaN
+1991-96        2     herring   plk  136.134   136.134 0.000 0.616     0.000     0.616          NaN
+1991-96        2       sprat   plk    7.531     7.531 0.000 0.512     0.000     0.512          NaN
+1991-96        2 Norway pout   plk  222.262    39.505 0.000 0.167     0.000     0.165          NaN
+1991-96        2     haddock   ben  202.588    45.204 0.000 0.632     0.000     0.613          NaN
+1991-96        2         cod   ben  169.268    46.165 0.000 0.248     0.000     0.145          NaN
+1991-96        2      plaice   ben    3.948     3.948 0.000 0.000     0.000     0.000          NaN
+1991-96        2     whiting   wht   84.208    48.317 0.000 0.649     0.000     0.691          NaN
+1991-96        3     herring   plk  238.959   238.959 0.637 0.249     0.637     0.249       12.241
+1991-96        3       sprat   plk   32.536    32.536 0.018 0.693     0.018     0.693       10.064
+1991-96        3 Norway pout   plk 2731.750   242.114 0.744 0.137     0.560     0.183        9.215
+1991-96        3     haddock   ben 2014.332   143.456 0.900 0.055     0.672     0.183       12.475
+1991-96        3         cod   ben  215.304    39.570 0.115 0.581     0.100     0.506       11.038
+1991-96        3     whiting   wht  190.697   104.661 0.478 0.339     0.538     0.326       13.271
+1991-96        4     herring   plk   98.644    98.644 0.905 0.079     0.905     0.079       13.890
+1991-96        4       sprat   plk   25.810    25.810 0.205 0.750     0.205     0.750       10.991
+1991-96        4 Norway pout   plk  386.913    39.841 0.516 0.373     0.392     0.400        9.928
+1991-96        4     haddock   ben  534.034    87.071 0.727 0.157     0.601     0.244       16.331
+1991-96        4         cod   ben  186.389    42.948 0.160 0.352     0.111     0.252       15.605
+1991-96        4      plaice   ben   12.296    12.296 0.000 0.143     0.000     0.143       16.500
+1991-96        4     whiting   wht  108.236    62.324 0.776 0.191     0.831     0.154       16.408
+
+group shares of biomass, age 0 | age 1 (within-species q-corrected; raw in brackets). Planktivores by pool weight, benthivores by member weight; species without an age key count as 0 (lower bound)
+  1991-96 Q1 plk: age 0 0.000 (0.000), age 1 0.767 (0.759); keyed weight 1.00
+  1991-96 Q1 ben: age 0 0.000 (0.000), age 1 0.345 (0.303); keyed weight 0.77
+  1991-96 Q1 wht: age 0 0.000 (0.000), age 1 0.496 (0.558); keyed weight 1.00
+  1991-96 Q2 plk: age 0 0.000 (0.000), age 1 0.513 (0.513); keyed weight 0.89
+  1991-96 Q2 ben: age 0 0.000 (0.000), age 1 0.336 (0.294); keyed weight 0.77
+  1991-96 Q2 wht: age 0 0.000 (0.000), age 1 0.649 (0.691); keyed weight 1.00
+  1991-96 Q3 plk: age 0 0.528 (0.520), age 1 0.220 (0.222); keyed weight 0.85
+  1991-96 Q3 ben: age 0 0.400 (0.303), age 1 0.213 (0.239); keyed weight 0.73
+  1991-96 Q3 wht: age 0 0.478 (0.538), age 1 0.339 (0.326); keyed weight 1.00
+  1991-96 Q4 plk: age 0 0.758 (0.749), age 1 0.113 (0.115); keyed weight 0.89
+  1991-96 Q4 ben: age 0 0.345 (0.278), age 1 0.184 (0.187); keyed weight 0.77
+  1991-96 Q4 wht: age 0 0.776 (0.831), age 1 0.191 (0.154); keyed weight 1.00
+  2001-25 Q1 plk: age 0 0.000 (0.000), age 1 0.407 (0.396); keyed weight 1.00
+  2001-25 Q1 ben: age 0 0.000 (0.000), age 1 0.118 (0.102); keyed weight 0.84
+  2001-25 Q1 wht: age 0 0.000 (0.000), age 1 0.122 (0.202); keyed weight 1.00
+  2001-25 Q3 plk: age 0 0.178 (0.171), age 1 0.346 (0.350); keyed weight 0.85
+  2001-25 Q3 ben: age 0 0.097 (0.032), age 1 0.163 (0.162); keyed weight 0.79
+  2001-25 Q3 wht: age 0 0.119 (0.163), age 1 0.385 (0.488); keyed weight 1.00
+
+graduation length L_g (mean length at age 1 in Q3, cm; 2021-25 CA, else 1991-96): Norway pout 14.9, cod 27.1, haddock 27.0, herring 18.2, plaice 16.0, sprat 10.9, whiting 20.5, witch 14.8
+size-defined stage: J/B by group (planktivores pool-weighted, benthivores member-weighted; species without L_g count as adult)
+  1991-96 Q1 plk: J/B 0.782
+  1991-96 Q1 ben: J/B 0.422
+  1991-96 Q1 wht: J/B 0.499
+  1991-96 Q2 plk: J/B 0.449
+  1991-96 Q2 ben: J/B 0.390
+  1991-96 Q2 wht: J/B 0.482
+  1991-96 Q3 plk: J/B 0.561
+  1991-96 Q3 ben: J/B 0.493
+  1991-96 Q3 wht: J/B 0.522
+  1991-96 Q4 plk: J/B 0.783
+  1991-96 Q4 ben: J/B 0.377
+  1991-96 Q4 wht: J/B 0.752
+  2001-25 Q1 plk: J/B 0.452
+  2001-25 Q1 ben: J/B 0.152
+  2001-25 Q1 wht: J/B 0.145
+  2001-25 Q3 plk: J/B 0.303
+  2001-25 Q3 ben: J/B 0.155
+  2001-25 Q3 wht: J/B 0.186

@@ -129,3 +129,16 @@ def test_a_temperature_edit_changes_only_its_layer():
     assert "7.3" in out
     block["layers"].pop("at_50m")
     assert "at_50m" not in _store_temperature(MANIFEST, block)
+
+
+def test_a_juvenile_stage_block_survives_a_save():
+    """The editor has no field for ``juvenile_stage`` (stages.py): saving
+    the group must leave the block as it is."""
+    text = LIBRARY + """\
+    juvenile_stage:
+      growth_ratio: 5.3
+      recruitment: [0, 0, 0, 0, 0, 1.7, 4.1, 4.2, 1.8, 0, 0, 0]
+"""
+    out = _merge(text, {"is_decision_maker": True, "r_max": 0.12})
+    assert "juvenile_stage:" in out and "growth_ratio: 5.3" in out
+    assert "r_max: 0.12" in out

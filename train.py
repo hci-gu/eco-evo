@@ -1516,6 +1516,9 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
 
         center_dim_i = 2 + k_i + n_obs_imp      # B_own, E_own, B_obs, impacts
         nbr_dim_i    = 1 + k_i + n_obs_imp      # B_own, B_obs, impacts
+
+    plus one juvenile channel (stages.py) per group with a
+    ``juvenile_stage`` that the DM observes or is, counted in ``k_i``.
         in_dim_i     = center_dim_i + 4 * nbr_dim_i (+ 1 light channel
                        when the project enables the daylight calendar)
 
@@ -1551,6 +1554,12 @@ def get_dynamic_policy_params(fgs, n_observable_impacts=0):
             # (and therefore removed from ``fgs``) don't inflate the input
             # dimension.
             k_i = sum(1 for oid in observes if oid != fg_id and oid in fgs)
+        # Juvenile channels (stages.py): every staged group this DM observes
+        # or is. Mirrors state.build_static_caches (obs_juvenile_idx).
+        seen = set(fgs) - {fg_id} if observes is None else {
+            oid for oid in observes if oid != fg_id and oid in fgs}
+        seen.add(fg_id)
+        k_i += sum(1 for oid in seen if fgs[oid].params.get('juvenile_stage'))
         center_dim_i = 2 + k_i + n_obs_imp
         nbr_dim_i = 1 + k_i + n_obs_imp
         in_dim_i = center_dim_i + 4 * nbr_dim_i + n_light

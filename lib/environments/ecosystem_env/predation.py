@@ -33,6 +33,16 @@ def apply_predation(env, actions):
         env, refuge.accessible_rows(env, prey_biomass), actions)
     visible_biomass, pair_visible_biomass = interactions.apply_pair_access(
         env, visible_biomass, pair_visible_biomass)
+    # Juvenile compartments (stages.py): a staged prey is seen per pair as
+    # f_J J + f_A (B - J) of its visible share; the parts are kept for the
+    # per-compartment cap below.
+    stage_parts = None
+    # The per-predator bound below exists only with per-pair visibility;
+    # the stage split's own per-pair tensor must not switch it on.
+    per_pair_bound = pair_visible_biomass is not None
+    if getattr(env, "_has_stages", False):
+        visible_biomass, pair_visible_biomass, stage_parts = _stage_visible(
+            env, actions, visible_biomass, pair_visible_biomass)
 
     # Beddington-DeAngelis interference: I = w_X * B_X(c), the predator's
     # OWN biomass in the cell. Intraspecific only - it is the standard
@@ -85,7 +95,7 @@ def apply_predation(env, actions):
         * hunger[:, None, :, :]
     )
 
-    if pair_visible_biomass is not None:
+    if per_pair_bound:
         # Per-predator bound: no predator may demand more than the
         # fraction of the prey IT can detect. Without this, a low-floor
         # predator could feed on the hidden fraction just because a
@@ -111,6 +121,10 @@ def apply_predation(env, actions):
         np.float32(1.0),
     ).astype(env.dtype, copy=False)
     actual_intake = demand * scale[None, :, :, :]
+    juvenile_intake = {}
+    if stage_parts is not None:
+        actual_intake, juvenile_intake = _stage_harvest(
+            env, demand, actual_intake, stage_parts)
 
     gains = (
         actual_intake * env.energy_gain_mat[:, :, None, None]
@@ -128,6 +142,16 @@ def apply_predation(env, actions):
 
     intake_by_prey = actual_intake.sum(axis=0)
     intake_by_pred_prey = actual_intake.sum(axis=(2, 3))
+    if juvenile_intake:
+        # Diagnostics: the juvenile part of each pair's take (stages.py).
+        book = env.__dict__.setdefault("intake_juvenile_by_pred_prey", {})
+        for j, per_pred in juvenile_intake.items():
+            prey_id = env.global_fg_order[j]
+            sums = per_pred.sum(axis=(1, 2))
+            for i, pred_id in enumerate(env.dm_ids):
+                if sums[i] != 0.0:
+                    row = book.setdefault(pred_id, {})
+                    row[prey_id] = float(row.get(prey_id, 0.0)) + float(sums[i])
     # Section 202: this tick's intake per pair, for the layer split of
     # the regenerated M1.
     env._tick_dm_intake = intake_by_pred_prey
@@ -170,3 +194,74 @@ def apply_predation(env, actions):
                 env.dtype, copy=False)
         prey_fg.biomass = (biomass_old - intake).astype(
             env.dtype, copy=False)
+        if j in juvenile_intake:
+            prey_fg.juvenile = np.clip(
+                prey_fg.juvenile - juvenile_intake[j].sum(axis=0), 0.0,
+                np.maximum(prey_fg.biomass, 0.0)).astype(env.dtype, copy=False)
+
+
+def _stage_visible(env, actions, visible, pair_visible):
+    """Per-pair visible prey with the staged columns split into parts.
+
+    Returns ``(visible, pair_visible, parts)``; ``pair_visible`` is always
+    the (N_dm, N_all, H, W) tensor, ``parts[j] = (vis_J, vis_A)`` each
+    (N_dm, H, W): the share of the juvenile and of the adult tonnes pair i
+    sees (visible fraction x f_J or f_A). With f_J = f_A = the pair's
+    ``accessible_fraction`` the sum is exactly the unstaged pair.
+    """
+    if pair_visible is None:
+        pair_visible = np.repeat(visible[None, :, :, :], env.N_dm, axis=0)
+    else:
+        pair_visible = pair_visible.copy()
+    visible = visible.copy()
+    parts = {}
+    for j in env.stage_rows:
+        j = int(j)
+        fg = env.fgs[env.global_fg_order[j]]
+        dm = env.dm_ids.index(env.global_fg_order[j])
+        hidden = actions.rest[dm].astype(env.dtype, copy=False)
+        if env._has_pair_vis_floor:
+            floor = env.vis_floor_mat[:, j][:, None, None]
+        else:
+            floor = np.full((env.N_dm, 1, 1), env._all_visibility_floor[j], dtype=env.dtype)
+        frac = np.float32(1.0) - hidden[None, :, :] * (np.float32(1.0) - floor)
+        juv = np.clip(fg.juvenile, 0.0, fg.biomass)
+        adult = np.maximum(fg.biomass - juv, np.float32(0.0))
+        vis_j = (frac * env.stage_f_j[:, j][:, None, None] * juv[None]).astype(env.dtype)
+        vis_a = (frac * env.stage_f_a[:, j][:, None, None] * adult[None]).astype(env.dtype)
+        pair_visible[:, j] = vis_j + vis_a
+        parts[j] = (vis_j, vis_a)
+        eats = env.eat_static_mask[:, j][:, None, None] > 0.0
+        visible[j] = np.where(eats, vis_j + vis_a, np.float32(0.0)).max(axis=0)
+    return visible, pair_visible, parts
+
+
+def _stage_harvest(env, demand, actual_intake, parts):
+    """The harvest cap per compartment of every staged prey column.
+
+    Each predator's demand on the column splits in the ratio of the parts
+    it sees; the juvenile and the adult part are each capped at
+    MAX_HARVEST_FRAC of the most that any of its predators sees of it.
+    Returns the corrected ``actual_intake`` and {column: (N_dm, H, W)
+    juvenile intake}.
+    """
+    actual_intake = actual_intake.copy()
+    juvenile = {}
+    for j, (vis_j, vis_a) in parts.items():
+        d = demand[:, j]
+        seen = vis_j + vis_a
+        share = np.where(seen > 0.0, vis_j / np.where(seen > 0.0, seen, np.float32(1.0)),
+                         np.float32(0.0))
+        d_j = d * share
+        d_a = d - d_j
+        eats = env.eat_static_mask[:, j][:, None, None] > 0.0
+        out = []
+        for part, vis in ((d_j, vis_j), (d_a, vis_a)):
+            cap = np.where(eats, vis, np.float32(0.0)).max(axis=0) * MAX_HARVEST_FRAC
+            total = part.sum(axis=0)
+            scale = np.where(total > cap, cap / np.maximum(total, np.float32(1e-30)),
+                             np.float32(1.0)).astype(env.dtype, copy=False)
+            out.append(part * scale[None])
+        actual_intake[:, j] = out[0] + out[1]
+        juvenile[j] = out[0]
+    return actual_intake, juvenile

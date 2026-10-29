@@ -1,0 +1,149 @@
+rows 8996, after dropping exact duplicates 8967
+
+A.radiata (SMS [9])
+  years [1991]
+  prey all, all sizes          n  55  ratio p50 0.20 p90 0.29 p95 0.33 p99 0.49 max 0.49 | prey cm p50  7.5 p95 17.5 max 17.5 | pred cm mean(w)  37.3
+  prey P, all sizes            n  17  ratio p50 0.20 p90 0.27 p95 0.33 p99 0.39 max 0.39 | prey cm p50  6.5 p95  9.0 max 17.5 | pred cm mean(w)  39.0
+  prey Bf, all sizes           n   8  ratio p50 0.32 p90 0.32 p95 0.32 p99 0.32 max 0.32 | prey cm p50 17.5 p95 17.5 max 17.5 | pred cm mean(w)  52.8
+  prey W, all sizes            n   4  ratio p50 0.32 p90 0.39 p95 0.39 p99 0.39 max 0.39 | prey cm p50 17.5 p95 17.5 max 17.5 | pred cm mean(w)  50.2
+  prey all, pred 20-40 cm      n  36  ratio p50 0.24 p90 0.28 p95 0.33 p99 0.49 max 0.49 | prey cm p50  7.5 p95  9.0 max 13.5 | pred cm mean(w)  32.9
+  prey P, pred 20-40 cm        n  11  ratio p50 0.24 p90 0.28 p95 0.33 p99 0.33 max 0.34 | prey cm p50  7.5 p95  9.0 max 11.0 | pred cm mean(w)  34.6
+  prey Bf, pred 20-40 cm       n   4  ratio p50 0.20 p90 0.20 p95 0.20 p99 0.20 max 0.29 | prey cm p50  7.5 p95  7.5 max 11.0 | pred cm mean(w)  35.4
+  prey all, pred 40-60 cm      n  19  ratio p50 0.17 p90 0.32 p95 0.32 p99 0.39 max 0.39 | prey cm p50  7.5 p95 17.5 max 17.5 | pred cm mean(w)  46.6
+  prey P, pred 40-60 cm        n   6  ratio p50 0.12 p90 0.20 p95 0.39 p99 0.39 max 0.39 | prey cm p50  5.5 p95 17.5 max 17.5 | pred cm mean(w)  45.2
+  prey Bf, pred 40-60 cm       n   4  ratio p50 0.32 p90 0.32 p95 0.32 p99 0.32 max 0.32 | prey cm p50 17.5 p95 17.5 max 17.5 | pred cm mean(w)  54.6
+
+gurnards (SMS [10])
+  years [1991, 2013]
+  prey all, all sizes          n 129  ratio p50 0.24 p90 0.34 p95 0.42 p99 0.49 max 0.49 | prey cm p50  6.5 p95 11.0 max 13.5 | pred cm mean(w)  28.9
+  prey P, all sizes            n  35  ratio p50 0.27 p90 0.36 p95 0.49 p99 0.49 max 0.49 | prey cm p50  9.0 p95 11.0 max 13.5 | pred cm mean(w)  32.0
+  prey Bf, all sizes           n  17  ratio p50 0.28 p90 0.49 p95 0.49 p99 0.49 max 0.49 | prey cm p50  6.5 p95 13.5 max 13.5 | pred cm mean(w)  29.9
+  prey W, all sizes            n  28  ratio p50 0.29 p90 0.34 p95 0.34 p99 0.36 max 0.49 | prey cm p50 11.0 p95 11.0 max 13.5 | pred cm mean(w)  33.4
+  prey all, pred 10-30 cm      n  56  ratio p50 0.24 p90 0.42 p95 0.49 p99 0.49 max 0.49 | prey cm p50  5.7 p95 11.0 max 13.5 | pred cm mean(w)  23.9
+  prey P, pred 10-30 cm        n  11  ratio p50 0.24 p90 0.49 p95 0.49 p99 0.49 max 0.49 | prey cm p50  5.5 p95 11.0 max 11.0 | pred cm mean(w)  24.9
+  prey Bf, pred 10-30 cm       n   8  ratio p50 0.29 p90 0.49 p95 0.49 p99 0.49 max 0.49 | prey cm p50  6.5 p95 13.5 max 13.5 | pred cm mean(w)  26.3
+  prey all, pred 30-50 cm      n  73  ratio p50 0.23 p90 0.31 p95 0.34 p99 0.34 max 0.42 | prey cm p50  9.0 p95 11.0 max 13.5 | pred cm mean(w)  34.7
+  prey P, pred 30-50 cm        n  24  ratio p50 0.27 p90 0.31 p95 0.31 p99 0.36 max 0.36 | prey cm p50  9.0 p95  9.8 max 13.5 | pred cm mean(w)  34.4
+  prey Bf, pred 30-50 cm       n   9  ratio p50 0.17 p90 0.28 p95 0.28 p99 0.42 max 0.42 | prey cm p50  5.5 p95  9.0 max 13.5 | pred cm mean(w)  34.7
+
+horse mackerel (W+N) (SMS [11, 12])
+  years [1987, 1991]
+  prey all, all sizes          n  27  ratio p50 0.24 p90 0.29 p95 0.31 p99 0.34 max 0.34 | prey cm p50  8.5 p95 11.0 max 11.0 | pred cm mean(w)  33.1
+  prey P, all sizes            n  16  ratio p50 0.26 p90 0.29 p95 0.31 p99 0.34 max 0.34 | prey cm p50  8.5 p95 11.0 max 11.0 | pred cm mean(w)  33.4
+  prey Bf, all sizes           n 0
+  prey W, all sizes            n   5  ratio p50 0.17 p90 0.27 p95 0.27 p99 0.27 max 0.27 | prey cm p50  5.5 p95  6.0 max  6.5 | pred cm mean(w)  31.3
+
+grey seal (SMS [13])
+  years [1985, 2002, 2010]
+  prey all, all sizes          n 232  prey cm p50  11.0 p90  17.5 p95  17.5 p99  22.5 max  75.0
+  prey P, all sizes            n  67  prey cm p50  11.0 p90  17.5 p95  17.5 p99  17.5 max  32.5
+  prey Bf, all sizes           n  81  prey cm p50  17.5 p90  22.5 p95  22.5 p99  22.5 max  75.0
+  prey W, all sizes            n  26  prey cm p50  12.5 p90  13.5 p95  13.5 p99  13.5 max  45.0
+  prey cod                     n  26  prey cm p50  17.5 p90  22.5 p95  22.5 p99  22.5 max  75.0
+  prey whiting                 n  26  prey cm p50  12.5 p90  13.5 p95  13.5 p99  13.5 max  45.0
+  prey haddock                 n  21  prey cm p50  17.5 p90  22.5 p95  22.5 p99  22.5 max  22.5
+  prey herring                 n  31  prey cm p50  17.5 p90  17.5 p95  17.5 p99  17.5 max  32.5
+  prey N.sandeel               n  27  prey cm p50   9.0 p90  12.5 p95  13.5 p99  13.5 max  13.5
+  prey S.sandeel               n  31  prey cm p50  11.0 p90  13.5 p95  13.5 p99  13.5 max  13.5
+  prey Norway pout             n  36  prey cm p50  11.0 p90  11.0 p95  11.0 p99  12.5 max  22.5
+  prey plaice                  n  34  prey cm p50  13.5 p90  13.5 p95  17.5 p99  17.5 max  45.0
+
+harbour porpoise (SMS [14])
+  years [1985, 1995, 2005]
+  prey all, all sizes          n  22  prey cm p50   7.5 p90   9.0 p95  11.0 p99  17.5 max  32.5
+  prey P, all sizes            n   8  prey cm p50  11.0 p90  17.5 p95  17.5 p99  17.5 max  32.5
+  prey Bf, all sizes           n   3  prey cm p50   7.5 p90   8.5 p95   8.5 p99   8.5 max   8.5
+  prey W, all sizes            n   4  prey cm p50   5.5 p90   6.0 p95   6.0 p99   6.0 max   6.5
+  prey cod                     n   3  prey cm p50   7.5 p90   8.5 p95   8.5 p99   8.5 max   8.5
+  prey whiting                 n   4  prey cm p50   5.5 p90   6.0 p95   6.0 p99   6.0 max   6.5
+  prey herring                 n   7  prey cm p50  11.0 p90  17.5 p95  17.5 p99  17.5 max  32.5
+  prey N.sandeel               n   3  prey cm p50   7.5 p90   8.5 p95   9.0 p99   9.0 max   9.0
+  prey S.sandeel               n   4  prey cm p50   9.0 p90   9.0 p95   9.0 p99   9.0 max   9.0
+  prey Norway pout             n   1  prey cm p50   5.5 p90   5.5 p95   5.5 p99   5.5 max   5.5
+
+hake (SMS [15])
+  years [2013]
+  prey all, all sizes          n  18  ratio p50 0.29 p90 0.45 p95 0.56 p99 0.56 max 0.56 | prey cm p50 10.6 p95 19.5 max 27.2 | pred cm mean(w)  47.0
+  prey P, all sizes            n  17  ratio p50 0.29 p90 0.45 p95 0.56 p99 0.56 max 0.56 | prey cm p50 10.6 p95 19.5 max 27.2 | pred cm mean(w)  47.0
+  prey Bf, all sizes           n 0
+  prey W, all sizes            n   1  ratio p50 0.13 p90 0.13 p95 0.13 p99 0.13 max 0.13 | prey cm p50  7.3 p95  7.3 max  7.3 | pred cm mean(w)  54.7
+  prey all, pred 20-40 cm      n   6  ratio p50 0.34 p90 0.56 p95 0.56 p99 0.56 max 0.56 | prey cm p50 12.4 p95 15.5 max 15.5 | pred cm mean(w)  31.9
+  prey P, pred 20-40 cm        n   6  ratio p50 0.34 p90 0.56 p95 0.56 p99 0.56 max 0.56 | prey cm p50 12.4 p95 15.5 max 15.5 | pred cm mean(w)  31.9
+  prey Bf, pred 20-40 cm       n 0
+  prey all, pred 40-110 cm     n  12  ratio p50 0.20 p90 0.31 p95 0.32 p99 0.34 max 0.34 | prey cm p50 10.6 p95 22.1 max 27.2 | pred cm mean(w)  65.0
+  prey P, pred 40-110 cm       n  11  ratio p50 0.20 p90 0.31 p95 0.32 p99 0.34 max 0.34 | prey cm p50 10.6 p95 22.1 max 27.2 | pred cm mean(w)  65.0
+  prey Bf, pred 40-110 cm      n 0
+
+cod (SMS [16])
+  years [1981, 1985, 1986, 1987, 1991]
+  prey all, all sizes          n 736  ratio p50 0.19 p90 0.31 p95 0.35 p99 0.45 max 1.00 | prey cm p50  8.5 p95 17.5 max 27.5 | pred cm mean(w)  52.1
+  prey P, all sizes            n 277  ratio p50 0.17 p90 0.30 p95 0.34 p99 0.40 max 0.60 | prey cm p50  8.5 p95 17.5 max 27.5 | pred cm mean(w)  53.1
+  prey Bf, all sizes           n 165  ratio p50 0.21 p90 0.33 p95 0.38 p99 0.45 max 0.64 | prey cm p50 12.5 p95 17.5 max 27.5 | pred cm mean(w)  55.9
+  prey W, all sizes            n  99  ratio p50 0.19 p90 0.30 p95 0.33 p99 0.45 max 0.56 | prey cm p50 12.5 p95 13.5 max 22.5 | pred cm mean(w)  62.1
+  prey all, pred 15-30 cm      n 127  ratio p50 0.31 p90 0.40 p95 0.45 p99 0.64 max 1.00 | prey cm p50  7.5 p95 11.0 max 17.5 | pred cm mean(w)  25.6
+  prey P, pred 15-30 cm        n  44  ratio p50 0.31 p90 0.38 p95 0.40 p99 0.56 max 0.56 | prey cm p50  7.5 p95  9.0 max 12.5 | pred cm mean(w)  25.3
+  prey Bf, pred 15-30 cm       n  21  ratio p50 0.31 p90 0.45 p95 0.45 p99 0.64 max 0.64 | prey cm p50  8.5 p95 12.5 max 17.5 | pred cm mean(w)  27.4
+  prey all, pred 30-45 cm      n 148  ratio p50 0.23 p90 0.33 p95 0.36 p99 0.42 max 0.60 | prey cm p50  8.5 p95 12.5 max 22.5 | pred cm mean(w)  34.8
+  prey P, pred 30-45 cm        n  53  ratio p50 0.23 p90 0.29 p95 0.34 p99 0.36 max 0.60 | prey cm p50  8.5 p95 11.0 max 22.5 | pred cm mean(w)  35.1
+  prey Bf, pred 30-45 cm       n  31  ratio p50 0.24 p90 0.38 p95 0.38 p99 0.47 max 0.47 | prey cm p50  9.0 p95 12.5 max 17.5 | pred cm mean(w)  34.9
+  prey all, pred 45-65 cm      n 204  ratio p50 0.19 p90 0.28 p95 0.30 p99 0.39 max 0.50 | prey cm p50  8.5 p95 13.5 max 22.5 | pred cm mean(w)  50.7
+  prey P, pred 45-65 cm        n  78  ratio p50 0.16 p90 0.25 p95 0.30 p99 0.39 max 0.50 | prey cm p50  8.5 p95 13.5 max 22.5 | pred cm mean(w)  50.8
+  prey Bf, pred 45-65 cm       n  47  ratio p50 0.20 p90 0.28 p95 0.28 p99 0.30 max 0.39 | prey cm p50  9.0 p95 12.5 max 17.5 | pred cm mean(w)  50.8
+  prey all, pred 65-120 cm     n 257  ratio p50 0.14 p90 0.21 p95 0.27 p99 0.35 max 0.37 | prey cm p50 11.0 p95 17.5 max 27.5 | pred cm mean(w)  78.6
+  prey P, pred 65-120 cm       n 102  ratio p50 0.13 p90 0.19 p95 0.27 p99 0.35 max 0.35 | prey cm p50  9.0 p95 17.5 max 27.5 | pred cm mean(w)  77.0
+  prey Bf, pred 65-120 cm      n  66  ratio p50 0.15 p90 0.27 p95 0.31 p99 0.37 max 0.37 | prey cm p50 12.5 p95 27.5 max 27.5 | pred cm mean(w)  80.3
+
+whiting (SMS [17])
+  years [1981, 1985, 1986, 1987, 1991]
+  prey all, all sizes          n 519  ratio p50 0.24 p90 0.41 p95 0.48 p99 0.68 max 0.82 | prey cm p50  6.5 p95 11.0 max 22.5 | pred cm mean(w)  28.3
+  prey P, all sizes            n 224  ratio p50 0.24 p90 0.38 p95 0.41 p99 0.49 max 0.82 | prey cm p50  6.0 p95  9.0 max 13.5 | pred cm mean(w)  29.7
+  prey Bf, all sizes           n  74  ratio p50 0.26 p90 0.38 p95 0.45 p99 0.51 max 0.68 | prey cm p50  8.5 p95 12.5 max 17.5 | pred cm mean(w)  33.2
+  prey W, all sizes            n  65  ratio p50 0.27 p90 0.49 p95 0.50 p99 0.71 max 0.71 | prey cm p50  6.0 p95 12.5 max 22.5 | pred cm mean(w)  29.7
+  prey all, pred 10-20 cm      n  95  ratio p50 0.43 p90 0.51 p95 0.68 p99 0.71 max 0.82 | prey cm p50  6.0 p95  8.5 max 12.5 | pred cm mean(w)  15.5
+  prey P, pred 10-20 cm        n  41  ratio p50 0.41 p90 0.49 p95 0.50 p99 0.82 max 0.82 | prey cm p50  6.0 p95  8.5 max  9.0 | pred cm mean(w)  15.5
+  prey Bf, pred 10-20 cm       n   6  ratio p50 0.51 p90 0.51 p95 0.68 p99 0.68 max 0.68 | prey cm p50  9.0 p95  9.0 max  9.0 | pred cm mean(w)  17.1
+  prey all, pred 20-30 cm      n 191  ratio p50 0.27 p90 0.38 p95 0.38 p99 0.49 max 0.56 | prey cm p50  6.5 p95  8.5 max 13.5 | pred cm mean(w)  25.5
+  prey P, pred 20-30 cm        n  80  ratio p50 0.27 p90 0.38 p95 0.38 p99 0.45 max 0.49 | prey cm p50  6.0 p95  8.5 max 13.5 | pred cm mean(w)  25.7
+  prey Bf, pred 20-30 cm       n  29  ratio p50 0.31 p90 0.45 p95 0.45 p99 0.49 max 0.56 | prey cm p50  8.5 p95 12.5 max 13.5 | pred cm mean(w)  27.2
+  prey all, pred 30-50 cm      n 233  ratio p50 0.20 p90 0.28 p95 0.33 p99 0.38 max 0.50 | prey cm p50  7.5 p95 12.5 max 22.5 | pred cm mean(w)  35.6
+  prey P, pred 30-50 cm        n 103  ratio p50 0.20 p90 0.26 p95 0.28 p99 0.33 max 0.42 | prey cm p50  7.5 p95 11.0 max 13.5 | pred cm mean(w)  35.7
+  prey Bf, pred 30-50 cm       n  39  ratio p50 0.24 p90 0.36 p95 0.36 p99 0.38 max 0.47 | prey cm p50  8.5 p95 12.5 max 17.5 | pred cm mean(w)  36.9
+
+haddock (SMS [18])
+  years [1981, 1991]
+  prey all, all sizes          n  80  ratio p50 0.20 p90 0.31 p95 0.33 p99 0.38 max 0.49 | prey cm p50  6.0 p95  9.0 max 17.5 | pred cm mean(w)  33.5
+  prey P, all sizes            n  34  ratio p50 0.20 p90 0.31 p95 0.36 p99 0.43 max 0.43 | prey cm p50  8.5 p95 12.5 max 13.5 | pred cm mean(w)  38.5
+  prey Bf, all sizes           n 0
+  prey W, all sizes            n 0
+  prey all, pred 15-30 cm      n  28  ratio p50 0.24 p90 0.33 p95 0.38 p99 0.43 max 0.49 | prey cm p50  5.5 p95  8.5 max  9.0 | pred cm mean(w)  24.8
+  prey P, pred 15-30 cm        n   9  ratio p50 0.29 p90 0.38 p95 0.38 p99 0.43 max 0.43 | prey cm p50  7.5 p95  8.5 max  8.5 | pred cm mean(w)  25.8
+  prey Bf, pred 15-30 cm       n 0
+  prey all, pred 30-45 cm      n  24  ratio p50 0.17 p90 0.24 p95 0.28 p99 0.36 max 0.36 | prey cm p50  6.0 p95  9.0 max 13.5 | pred cm mean(w)  34.8
+  prey P, pred 30-45 cm        n  10  ratio p50 0.24 p90 0.36 p95 0.36 p99 0.36 max 0.36 | prey cm p50  8.5 p95 13.5 max 13.5 | pred cm mean(w)  35.4
+  prey Bf, pred 30-45 cm       n 0
+  prey all, pred 45-65 cm      n  28  ratio p50 0.13 p90 0.20 p95 0.21 p99 0.28 max 0.30 | prey cm p50  6.0 p95 12.5 max 17.5 | pred cm mean(w)  48.8
+  prey P, pred 45-65 cm        n  15  ratio p50 0.14 p90 0.21 p95 0.28 p99 0.28 max 0.30 | prey cm p50  8.5 p95 12.5 max 13.5 | pred cm mean(w)  49.2
+  prey Bf, pred 45-65 cm       n 0
+
+saithe (SMS [19])
+  years [1981, 1986, 1987, 1991]
+  prey all, all sizes          n 165  ratio p50 0.14 p90 0.24 p95 0.30 p99 0.41 max 0.50 | prey cm p50  8.5 p95 22.5 max 27.5 | pred cm mean(w)  61.9
+  prey P, all sizes            n  77  ratio p50 0.14 p90 0.25 p95 0.30 p99 0.41 max 0.50 | prey cm p50  8.5 p95 22.5 max 27.5 | pred cm mean(w)  62.9
+  prey Bf, all sizes           n  35  ratio p50 0.20 p90 0.24 p95 0.24 p99 0.28 max 0.32 | prey cm p50  8.5 p95 12.5 max 22.5 | pred cm mean(w)  54.7
+  prey W, all sizes            n  27  ratio p50 0.13 p90 0.25 p95 0.25 p99 0.29 max 0.37 | prey cm p50  6.0 p95 22.5 max 27.5 | pred cm mean(w)  55.1
+  prey all, pred 30-45 cm      n  20  ratio p50 0.23 p90 0.24 p95 0.24 p99 0.29 max 0.42 | prey cm p50  7.5 p95  9.0 max 13.5 | pred cm mean(w)  35.7
+  prey P, pred 30-45 cm        n  10  ratio p50 0.23 p90 0.24 p95 0.24 p99 0.29 max 0.42 | prey cm p50  7.5 p95  9.0 max 13.5 | pred cm mean(w)  35.8
+  prey Bf, pred 30-45 cm       n   4  ratio p50 0.24 p90 0.24 p95 0.24 p99 0.24 max 0.24 | prey cm p50  8.5 p95  8.5 max  9.0 | pred cm mean(w)  35.0
+  prey all, pred 45-65 cm      n  71  ratio p50 0.14 p90 0.20 p95 0.30 p99 0.41 max 0.50 | prey cm p50  7.5 p95 17.5 max 27.5 | pred cm mean(w)  52.7
+  prey P, pred 45-65 cm        n  27  ratio p50 0.14 p90 0.20 p95 0.39 p99 0.41 max 0.50 | prey cm p50  7.5 p95 17.5 max 27.5 | pred cm mean(w)  53.0
+  prey Bf, pred 45-65 cm       n  16  ratio p50 0.19 p90 0.21 p95 0.28 p99 0.28 max 0.32 | prey cm p50  8.5 p95 12.5 max 17.5 | pred cm mean(w)  51.8
+  prey all, pred 65-130 cm     n  74  ratio p50 0.14 p90 0.26 p95 0.30 p99 0.31 max 0.37 | prey cm p50  9.0 p95 22.5 max 27.5 | pred cm mean(w)  84.3
+  prey P, pred 65-130 cm       n  40  ratio p50 0.14 p90 0.26 p95 0.30 p99 0.35 max 0.35 | prey cm p50  9.0 p95 22.5 max 27.5 | pred cm mean(w)  84.4
+  prey Bf, pred 65-130 cm      n  15  ratio p50 0.15 p90 0.17 p95 0.21 p99 0.25 max 0.25 | prey cm p50 12.5 p95 17.5 max 22.5 | pred cm mean(w)  83.9
+
+mackerel (SMS [20])
+  years [1981, 1991]
+  prey all, all sizes          n  94  ratio p50 0.20 p90 0.31 p95 0.33 p99 0.56 max 0.56 | prey cm p50  8.5 p95 12.5 max 22.5 | pred cm mean(w)  36.8
+  prey P, all sizes            n  57  ratio p50 0.20 p90 0.28 p95 0.31 p99 0.46 max 0.46 | prey cm p50  8.5 p95  9.0 max 17.5 | pred cm mean(w)  37.6
+  prey Bf, all sizes           n 0
+  prey W, all sizes            n 0

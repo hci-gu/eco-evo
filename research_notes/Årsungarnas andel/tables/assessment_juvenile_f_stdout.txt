@@ -1,0 +1,10 @@
+NSAS herring           2015-2025 | F at age 0.065 0.027 0.091 0.157 0.211 0.258 | F_J 0.033 F_A 0.212 F_all 0.188 | rJ 0.18 rA 1.13 | pJ 0.14
+WBSS herring           2015-2025 | F at age 0.001 0.016 0.077 0.079 0.117 0.162 | F_J 0.015 F_A 0.128 F_all 0.104 | rJ 0.14 rA 1.23 | pJ 0.21
+cod Viking (no age 0)  2015-2025 | F at age 0.048 0.232 0.497 0.574 0.723 0.731 | F_J 0.049 F_A 0.534 F_all 0.496 | rJ 0.10 rA 1.08 | pJ 0.08
+haddock had.27.46a20   2015-2025 | F at age 0.002 0.025 0.110 0.192 0.219 0.205 | F_J 0.015 F_A 0.103 F_all 0.086 | rJ 0.18 rA 1.19 | pJ 0.19
+NSAS herring           2021-2025 | F at age 0.066 0.028 0.117 0.178 0.221 0.254 | F_J 0.033 F_A 0.213 F_all 0.187 | rJ 0.18 rA 1.14 | pJ 0.14
+WBSS herring           2021-2025 | F at age 0.000 0.003 0.020 0.024 0.040 0.053 | F_J 0.002 F_A 0.037 F_all 0.029 | rJ 0.08 rA 1.28 | pJ 0.23
+cod Viking (no age 0)  2021-2025 | F at age 0.036 0.179 0.417 0.518 0.645 0.659 | F_J 0.036 F_A 0.470 F_all 0.442 | rJ 0.08 rA 1.06 | pJ 0.06
+haddock had.27.46a20   2021-2025 | F at age 0.001 0.012 0.049 0.087 0.112 0.119 | F_J 0.009 F_A 0.076 F_all 0.069 | rJ 0.13 rA 1.10 | pJ 0.11
+sprat spr.27.3a4 2015-2024 (model years) | F_J(A) 0.233 F_A(A) 1.057 F_all 0.317 | rJ(A) 0.74 rA(A) 3.34 | F_J(B) 0.039 rJ(B) 0.12 | pJ(A) 0.90
+sprat spr.27.3a4 2020-2024 (model years) | F_J(A) 0.213 F_A(A) 1.086 F_all 0.287 | rJ(A) 0.74 rA(A) 3.79 | F_J(B) 0.039 rJ(B) 0.14 | pJ(A) 0.92

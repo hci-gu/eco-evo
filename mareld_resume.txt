@@ -21347,3 +21347,126 @@ remain open exactly as described in 71.9 / 71.11.
       history, not behaviour, but a monthly table is a calendar input;
       user's call), age 0 vs a size limit, sandeel (adult small fish, no
       pool). Either form changes observations (retrain).
+    - Juvenile data and a plan for alternative B (user, 2026-10-29;
+      research_notes/"Arsungarnas andel" (Swedish letters: A-ring),
+      summary.md, plan_B.md, scripts/datras_q2q4_fetch.py and
+      juvenile_share_by_quarter.py). NS-IBTS 1991-96 has all four
+      quarters (box GOV hauls Q1 154, Q2 146, Q3 163, Q4 57; own CA keys,
+      Q4 from the shifted Q1 key), 2001-25 Q1/Q3 (stratified, CA 2021-25
+      keys); Walker q for cod, haddock, whiting, pout. Age 0 / age 1
+      share of group biomass, 1991-96 Q1-Q4: planktivores 0/0.77,
+      0/0.51, 0.53/0.22, 0.76/0.11; benthivores 0/0.35, 0/0.34,
+      0.40/0.21, 0.35/0.18; whiting 0/0.50, 0/0.65, 0.48/0.34,
+      0.78/0.19. 2001-25 Q1 / Q3: planktivores 0/0.41, 0.18/0.35;
+      benthivores 0/0.12, 0.10/0.16; whiting 0/0.12, 0.12/0.39. Age 0
+      absent in May, in by August at 9-13 cm, 12 -> 16 cm by November.
+      1991-96 gives the seasonal shape, 2001-25 the level (2-4x lower).
+      Plan B: J inside B (as the refuge's A), reserve pro rata (no fill
+      dilution), recruitment = a monthly share rho(t) of the group's new
+      tonnes, graduation exp(-gamma), losses scale J with B, J moves with
+      B, pair `stage_access` [f_J, f_A] generalising accessible_fraction
+      (inert at f_J = f_A), harvest cap per compartment, no new
+      observation channel at first (checkpoints load). Open for the user:
+      timing driver, age 0 vs 0+1, whiting, observation channel, fishing
+      on J. Nothing built.
+    - Plan B decisions (user, 2026-10-29, interactive): monthly
+      recruitment table from the survey data; stage = age 0 + 1 until the
+      second summer; whiting later; a J observation channel now (all
+      checkpoints invalid, train from scratch; fix80 stopped by the
+      user); fishing on J by its own derived selectivity per impact.
+      Recorded in plan_B.md section 6.
+    - Plan B work package 1 done (user, 2026-10-29; research_notes/
+      "Arsungarnas andel" parameters_B.md, evidence_selectivity.md and
+      evidence_prey_size.md by agents, scripts/tables). Stage = below the
+      length at age 1 in Q3 (herring 18.2, haddock 27.0, cod 27.1, pout
+      14.9, sprat 10.9 cm): a graduation rate fits a size limit, not an
+      age-quarter cut. Box J/B 2001-25 Q1/Q3: planktivores 0.45/0.30,
+      benthivores 0.15/0.16. SMS 2013-22: kappa = g_J/g_A 5.3 / 4.1,
+      gamma (de Roos et al. 2008 stage-structured biomass model, z = entry
+      / graduation mass) 0.66 / 1.02 /yr (a constant 1 /yr sits near the
+      self-sustaining edge nu - mu). Recruitment window Jun-Sep 0.15/0.35/
+      0.35/0.15, magnitude set to the box annual J/B (field). Fishing s_J
+      pelagic x planktivores 0.7 (0.35-0.85), bottom x benthivores 0.15
+      (0.08-0.35). stage_access [f_J, f_A]: wc -> benthivores [0.43,
+      0.027] (effective 0.088 vs 223.31's 0.075), whiting -> benthivores
+      [0.049, 0] (0.007 vs 0.05), wc -> planktivores [0.32, 0.11] (0.19
+      vs 1), cod -> planktivores [0.49, 0.14], porpoises [1, 1], seals ->
+      benthivores [1, 0.34]. SMS stomachs validate the juvenile share of
+      the take: saithe on haddock 0.77 vs implied 0.74, whiting 1.0 vs
+      1.0; the planktivore rows read through the nursery caveat (box J/B
+      2.7x the stock's). Agent note: the SMS stomach file has 29
+      duplicated saithe rows (1986-87 Q3); saithe p95 0.30 without them.
+      Nothing built.
+    - Kappa et al. 2026 (user supplied; harbour seals, Hvaler, Sep 2020,
+      73 scats): shares only, no length distributions; mean prey 13 g
+      (57 g in 1977/78). Mean lengths from the totals: h/p/s 13 cm, cod
+      21, whiting 13, pout 10, herring 18 (x1.25 for erosion). Juvenile
+      share of the seals' benthivore take 0.74-0.86 vs 0.34 implied by
+      the 7-35 cm window (f_A 0.03-0.06 if put into f). Kept as a
+      validation target (porpoise convention; user's choice, interactive);
+      evidence_prey_size.md 6.
+
+223.32 Juvenile compartments built (plan B; user, 2026-10-29; uncommitted).
+    Design and parameters: research_notes/"Arsungarnas andel" (Swedish
+    letters: A-ring) plan_B.md, parameters_B.md; engine map from an
+    Explore pass. lib/environments/ecosystem_env/stages.py (CPU) and
+    lib/gpu/ecosystem.py (GPU).
+    - Mechanics: J inside B (FunctionalGroup.juvenile; GPU a [E, G, C]
+      tensor through TensorEcosystem.step (appended return), RolloutRunner
+      (buffer, reset(juvenile=None -> start share), absorb, snapshot) and
+      the trainer warm-up). Reserve pro rata (fill, hunger, prey quality,
+      growth budget unchanged). New tonnes to J in the share (kappa J +
+      rho(t) A)/(kappa J + rho(t) A + A) of the cell's state when they are
+      made (income growth in apply_energy_costs; the growth delta in the
+      DM population step, after M1 and the capacity loss); then
+      graduation J exp(-gamma/T), T the calendar's ticks per year.
+      Losses with B (M1, capacity, starvation, sweep, mask, empty cells).
+      Fishing: impact `fishing_selectivity` s_J, group loss unchanged, J
+      loses sum(bf s_J) J clipped to [0, min(J, loss)] (GPU: one more row
+      per staged group in the impact loss field, `impact_rows`). Movement
+      and currents: J follows B (CPU `_settle` run twice; GPU `_settle`).
+      Predation: pair `stage_access [f_J, f_A]` (default both = the pair's
+      accessible_fraction; both keys on one pair refused); per-pair
+      visible parts, demand split in their ratio, harvest cap per
+      compartment; the per-predator bound only with pair visibility as
+      before; `intake_juvenile_by_pred_prey` diagnostics. Observations:
+      one channel per staged group a DM observes or is (own raw, others
+      visible-scaled), after the observed biomasses (state.py,
+      train.get_dynamic_policy_params, GPU _build_indices; the inference
+      mismatch hint names it). Without the daylight calendar (test / MVP
+      worlds) rho and the start share are their annual means, gamma per
+      library tick. inference b0/spawn overrides restart J; the viability
+      colocate moves it; frozen_years.py reports J/B by month and the
+      juvenile share of each pair's take.
+    - Library: planktivores kappa 5.3, gamma 0.66, rho Jun-Sep 1.7/4.1/
+      4.2/1.8, start share by month 0.354-0.403, s_J pelagic 0.7, bottom
+      1.5; benthivores kappa 4.1, gamma 1.02, rho 0.2/0.5/0.5/0.2, start
+      0.139-0.169, s_J bottom 0.15, pelagic 4. stage_access: wc -> ben
+      [0.43, 0.027] (was f 0.075), whiting -> ben [0.049, 0] (was 0.05),
+      wc -> plk [0.32, 0.11], whiting -> plk [0.12, 0.008] (derived with
+      the same method; not in the plan's six), ben -> plk [0.49, 0.14],
+      seals -> ben [1, 0.34], porpoises -> ben [1, 0.55]. In dims: every
+      DM except zooplankton +10 (two staged groups x 5 positions). All
+      checkpoints invalid; train from scratch.
+    - Validation: pytest 1568 passed / 12 skipped (new tests/
+      test_juvenile_stage.py 33: settings, inert B/R with f_J = f_A and
+      s_J 1, a neutral compartment (kappa 1, rho 0) keeps its share and
+      graduates exactly exp(-gamma t/T), recruitment, stage-access split
+      and cap, fishing selectivity, observation channels, GPU parity
+      (policy loop at base tolerance 1e-5: the policy forward pass rounds
+      differently and a small reserve cell sits above 1e-6 abs; fixed
+      actions agree to 1e-6), no-calendar means; parity harness compares
+      J; editor keeps the block). train.py and train_gpu.py 1-generation
+      smokes OK, train_gpu --visual probe OK (44 s).
+    - Stage check without trained policies (none fit the new layout):
+      probe world 60x60, 3 years, hand-coded greedy_hide, seed 20260530;
+      scratchpad stagecheck/ (pre = library before 223.32, a = stages with
+      today's f on every pair, b = the derived stage access). pre and a
+      agree to year 2 (benthivores 0.37/0.14, wc 0.18/0.11, seals 0.96/
+      0.73 in both): the compartment is neutral at f_J = f_A. The frozen
+      behaviour kills the planktivores in year 1 in all three (as it did
+      before the stages), so it validates no parameter. In a the
+      benthivore J/B settles at 0.19-0.20 (box 0.15); in b at 0.06-0.09:
+      the stage access (wc f_J 0.43 vs f_A 0.027, seals f_J 1) eats the
+      juveniles down under this behaviour; seals end year 3 at 0.85 (a
+      0.48). Needs a trained run.

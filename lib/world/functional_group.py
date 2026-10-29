@@ -9,6 +9,9 @@ class FunctionalGroup:
         self.biomass = None  # B_X(c)
         self.energy_reserve = None  # R_X(c) = B_X(c) * E_X(c)
         self.temp_energy_gains = None # Intermediate predation gains
+        # Juvenile biomass J inside ``biomass`` for a group with a
+        # ``juvenile_stage`` (ecosystem_env/stages.py); None otherwise.
+        self.juvenile = None
         
         # Metadata from params
         self.is_decision_maker = params.get('is_decision_maker', False)
