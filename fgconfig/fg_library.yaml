@@ -1500,15 +1500,21 @@ interaction_definitions:
   # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick).
   # M2 = Q x diet share / prey B, scaled so the two groups add to the
   # pooled pair. Type II (Rindorf et al. 2006). research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
-  # Water column (saithe 0.77 of a, spurdog, anglerfish) on juvenile
-  # haddock, cod and small flatfish: accessible 0.24 (their gape, 19-45
-  # cm + 0-group). Night/day 0.48.
+  # Water column (saithe 0.77 of a, spurdog 0.10, hake 0.07, velvet belly
+  # 0.04, anglerfish 0.01) on juvenile haddock and small flatfish. Section
+  # 223.31: accessible 0.075 = sum over members of (share of a) x (the
+  # member's prey-side share): saithe 0.043 (settled haddock inside a 19 cm
+  # gape, time mean Jul-Mar, NS-IBTS box q-corrected; cod a trace), spurdog
+  # 0.2 (flatfish/rays < 27 cm), hake 0.1-0.3, velvet belly 0.01, anglerfish
+  # 0.7; range 0.048-0.081. Was 0.24 (all benthivores inside the members'
+  # gapes, year-round). research_notes/"Sejens diet pa unga torskfiskar"
+  # (Swedish letters) sections 5-6. Night/day 0.48.
   predatory_fish_preys_on_benthivorous_fish:
     preys_on: true
     predation_mortality: 0.0833
     assimilation_factor: 0.8
     handling_time: 137.6
-    accessible_fraction: 0.24
+    accessible_fraction: 0.075
     functional_response: 2
     max_intake_rate: 0.053
     dark_ratio: 0.48

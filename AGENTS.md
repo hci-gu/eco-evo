@@ -329,7 +329,7 @@ fabricates mass.
   term and harvest cap (infauna out of reach, Nephrops in burrows);
   observations are untouched. Benthivores -> epifauna 0.62 (223.15), whiting
   -> epifauna 0.29 (sections 221, 223.15, 223.26), water column ->
-  benthivores 0.24, whiting -> benthivores 0.05, water column -> whiting
+  benthivores 0.075 (223.31; was 0.24), whiting -> benthivores 0.05, water column -> whiting
   0.47 (gape); the infauna pair's 0.2 became the
   infauna's own refuge in 223.12. `predator_share` phi
   (`eat = min(eat, phi)`, a hard cap on a learned action) is REMOVED

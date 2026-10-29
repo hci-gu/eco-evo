@@ -1,0 +1,35 @@
+mackerel: SMS fish prey records 94; prey/predator length p50 0.20, p90 0.31, p95 0.33, p99 0.56, max 0.56
+horse mackerel: SMS fish prey records 27; prey/predator length p50 0.24, p90 0.29, p95 0.31, p99 0.34, max 0.34
+mackerel: box biomass-mean length Q3 30.5 cm
+horse mackerel: box biomass-mean length Q3 32.5 cm
+GOV years with both quarters: 25
+HERAS hauls in the box (pelagic gears): 172
+  HERAS herring: 156 hauls with lengths, catch-weighted
+  HERAS sprat: 23 hauls with lengths, catch-weighted
+  HERAS Norway pout: 28 hauls with lengths, catch-weighted
+  HERAS blue whiting: 28 hauls with lengths, catch-weighted
+
+share of each species' biomass below L cm
+  L    GOVQ1:herrin  GOVQ1: sprat  GOVQ1:Norway  GOVQ1:blue w  GOVQ3:herrin  GOVQ3: sprat  GOVQ3:Norway  GOVQ3:blue w  HERASQ7:herrin  HERASQ7: sprat  HERASQ7:Norway  HERASQ7:blue w
+    6           0.000           0.001           0.000           0.000           0.000           0.000           0.000           0.000           0.000           0.000           0.004           0.000
+    8           0.000           0.205           0.000           0.000           0.000           0.001           0.025           0.000           0.000           0.000           0.015           0.000
+    9           0.000           0.382           0.005           0.000           0.001           0.005           0.061           0.000           0.002           0.024           0.016           0.000
+   10           0.001           0.510           0.040           0.000           0.011           0.020           0.105           0.000           0.003           0.197           0.016           0.000
+   11           0.002           0.628           0.164           0.000           0.043           0.233           0.124           0.000           0.004           0.620           0.016           0.000
+   12           0.007           0.765           0.386           0.000           0.088           0.747           0.127           0.000           0.005           0.900           0.025           0.000
+   14           0.052           0.975           0.650           0.000           0.186           0.967           0.169           0.000           0.012           0.997           0.530           0.000
+   16           0.218           1.000           0.779           0.013           0.247           0.999           0.525           0.000           0.037           1.000           0.937           0.000
+   20           0.519           1.000           0.984           0.247           0.474           1.000           0.964           0.005           0.437           1.000           0.997           0.008
+
+accessible share f of the pool (predator-biomass weighted gape = ratio x length)
+  mackerel        p90 ratio 0.31: GOV Q1 0.013, GOV Q3 (Aug) 0.024, HERAS Jun-Jul 0.010
+  mackerel        p95 ratio 0.33: GOV Q1 0.018, GOV Q3 (Aug) 0.035, HERAS Jun-Jul 0.014
+  mackerel        p99 ratio 0.56: GOV Q1 0.176, GOV Q3 (Aug) 0.306, HERAS Jun-Jul 0.207
+  horse mackerel  p90 ratio 0.29: GOV Q1 0.006, GOV Q3 (Aug) 0.023, HERAS Jun-Jul 0.012
+  horse mackerel  p95 ratio 0.31: GOV Q1 0.010, GOV Q3 (Aug) 0.037, HERAS Jun-Jul 0.015
+  horse mackerel  p99 ratio 0.34: GOV Q1 0.020, GOV Q3 (Aug) 0.068, HERAS Jun-Jul 0.025
+
+group f (a-weighted: mackerel 0.803, horse mackerel 0.197)
+  p90: Q1 0.012, Jun-Jul (HERAS) 0.010, Aug (GOV Q3) 0.024; summer mean 0.017; presence-weighted (Q3 0.95 / Q1 0.05) 0.017
+  p95: Q1 0.016, Jun-Jul (HERAS) 0.014, Aug (GOV Q3) 0.036; summer mean 0.025; presence-weighted (Q3 0.95 / Q1 0.05) 0.024
+  p99: Q1 0.145, Jun-Jul (HERAS) 0.172, Aug (GOV Q3) 0.259; summer mean 0.215; presence-weighted (Q3 0.95 / Q1 0.05) 0.212

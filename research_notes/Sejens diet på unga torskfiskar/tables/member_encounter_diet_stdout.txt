@@ -1,0 +1,14 @@
+check, library pair a and f: planktivorous_fish 22.4 %, zooplankton 49.7 %, benthivorous_fish 19.0 %, whiting 8.8 %
+
+benthivore share of each member's encounter diet (%) by f on the benthivores:
+member          f=0.24  f=0.043 f=0.2   f=0.7  
+saithe <60         25.1    16.1    24.2    30.3
+saithe >=60        29.1    17.5    27.9    35.5
+spurdog            30.4    20.1    29.3    36.0
+hake adult         25.9    16.6    25.0    31.3
+anglerfish         47.2    32.1    45.8    54.2
+velvet belly       24.2    16.8    23.4    28.3
+ling               41.3    27.7    40.0    48.0
+pollack            28.2    17.3    27.1    34.3
+mackerel            0.0     0.0     0.0     0.0
+horse mackerel      0.0     0.0     0.0     0.0

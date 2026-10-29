@@ -151,3 +151,38 @@ def test_tooltip_small_values_keep_their_digits(monkeypatch):
         assert [line.split(": ")[1] for line in lines] == ["-0.00042"]
     finally:
         v.close()
+
+
+@pytest.mark.parametrize("mode,lang,head", [
+    ("infer", "en", "tick 1500  year 2"),
+    ("infer", "sv", "tick 1500  år 2"),
+    ("train", "en", "tick 1500"),
+])
+def test_inference_tooltip_names_the_simulation_year(monkeypatch, mode,
+                                                      lang, head):
+    """Inference plot hover: the year since the start after the tick,
+    counted like the status bar (state after tick 1500 = 9006 h)."""
+    monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
+    monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
+    from lib.viz.pygame_viz import LiveVisualizer
+    v = LiveVisualizer(fg_ids=["mover"], grid_shape=(3, 3), mode=mode)
+    if not v.enabled:
+        pytest.skip("pygame display unavailable")
+    try:
+        v._lang = lang
+        v._active_tab = v._tabs.index("predation")
+        for t in (0, 3000):
+            v.update_series("predation", "mover", 1.0, step=t)
+        v._render_full()
+        drawn = []
+        monkeypatch.setattr(v, "_draw_tooltip_box",
+                            lambda lines, *a, **kw: drawn.append(lines))
+        px, py, pw, ph = v._plot_area_rect
+        v._draw_plot_tooltip(
+            px + pw // 2, py + ph // 2, active_ids=["mover"],
+            buffers=v._series["predation"], xmin=1500.0 - pw / 2.0,
+            xmax=1500.0 + pw / 2.0, ymin=0.0, ymax=2.0, px0=px, py0=py,
+            pw=pw, ph=ph, plot_rect=v._plot_rect)
+        assert drawn and drawn[-1][0][0] == head
+    finally:
+        v.close()

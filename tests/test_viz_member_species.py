@@ -2,8 +2,9 @@
 
 A multi-species FG carries ``member_species`` in the library; the viewer
 reads it off the FG objects in ``update_biomass`` and lists the species
-when the pointer is over the panel's info lines. A single-species FG has
-no tooltip.
+when the pointer is over the panel's info lines. Below a rule the same
+tooltip names the prey behind the codes on the group's diet line. A
+single-species FG with no diet line has no tooltip.
 """
 
 import sys
@@ -72,7 +73,7 @@ def test_member_lines_format():
     assert LiveVisualizer._member_lines(None) == []
 
 
-def test_only_the_multi_species_panel_has_a_hover_rect(viz):
+def test_without_a_diet_only_the_multi_species_panel_has_a_hover_rect(viz):
     assert rect_of(viz, MULTI) is not None
     assert rect_of(viz, SINGLE) is None
 
@@ -93,9 +94,64 @@ def test_hovering_lists_the_species(viz, monkeypatch):
     viz.pump_events()
     assert viz._member_hover is True
     assert drawn, "no tooltip was drawn"
-    texts = [t for t, _c in drawn[-1]]
+    texts = [e and e[0] for e in drawn[-1]]
     assert texts == ["Benthivorous fish", "Haddock  39 %", "Cod  31 %",
                      "Others (43 species)  30 %"]
+
+
+def feed_coded_lines(v):
+    """Actions, losses and a diet for both panels, then a repaint."""
+    for fid in (MULTI, SINGLE):
+        v.update_action_fracs(fid, 10.0, 30.0, 60.0)
+    v.update_loss_breakdown({fid: {"predation": 0.5, "starvation": 0.1,
+                                   "impact": 0.3, "natural": 0.1}
+                             for fid in (MULTI, SINGLE)})
+    v.update_diet_breakdown({MULTI: {SINGLE: 1.0}, SINGLE: {MULTI: 1.0}})
+    v._render_full()
+
+
+def hover_lines(v, fid, monkeypatch):
+    drawn = []
+    monkeypatch.setattr(v, "_draw_tooltip_box",
+                        lambda lines, *a, **kw: drawn.append(lines))
+    motion(v, centre(rect_of(v, fid)))
+    v._last_frame_ts = 0.0
+    v.pump_events()
+    assert drawn, "no tooltip was drawn"
+    return [e and e[0] for e in drawn[-1]]
+
+
+def test_species_then_a_rule_then_the_diet_codes(viz, monkeypatch):
+    feed_coded_lines(viz)
+    assert hover_lines(viz, MULTI, monkeypatch) == [
+        "Benthivorous fish", "Haddock  39 %", "Cod  31 %",
+        "Others (43 species)  30 %", None,
+        f"{viz._fg_abbrev(SINGLE)} = Porpoises"]
+
+
+def test_a_single_species_panel_names_its_prey(viz, monkeypatch):
+    feed_coded_lines(viz)
+    assert rect_of(viz, SINGLE) is not None
+    assert hover_lines(viz, SINGLE, monkeypatch) == [
+        "Porpoises", f"{viz._fg_abbrev(MULTI)} = Benthivorous fish"]
+
+
+def test_diet_codes_follow_the_language(viz, monkeypatch):
+    viz._lang = "sv"
+    feed_coded_lines(viz)
+    assert hover_lines(viz, MULTI, monkeypatch)[-1] == \
+        f"{viz._fg_abbrev(SINGLE)} = Tumlare"
+
+
+def test_the_rule_is_drawn_inside_the_box(viz):
+    pg = viz._pg
+    before = pg.surfarray.array3d(viz._screen).copy()
+    viz._draw_tooltip_box([("a", (255, 255, 255)), None,
+                           ("b", (255, 255, 255))], 40, 40,
+                          flip_rect=(0, 0, 400, 400),
+                          clamp_rect=(0, 0, 400, 400))
+    after = pg.surfarray.array3d(viz._screen)
+    assert not np.array_equal(before, after)
 
 
 def test_tooltip_is_erased_on_the_way_out(viz):

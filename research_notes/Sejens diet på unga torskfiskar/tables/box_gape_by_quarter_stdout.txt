@@ -1,0 +1,68 @@
+years with both quarters: 25
+haul months by quarter:
+          min  25%  50%  75%  max
+Quarter                         
+1        1.0  1.0  1.0  2.0  2.0
+3        7.0  8.0  8.0  9.0  9.0
+
+Q1: guild kg/h 132.13
+  < 15 cm: share of guild 0.037; by species long rough dab 0.032, dab 0.002
+  < 19 cm: share of guild 0.119; by species long rough dab 0.076, haddock 0.027, dab 0.007, cod 0.004, plaice 0.002, grey gurnard 0.002
+  < 25 cm: share of guild 0.274; by species haddock 0.117, long rough dab 0.116, dab 0.015, plaice 0.010, cod 0.009, grey gurnard 0.003, witch 0.002, lemon sole 0.002
+  haddock share of guild 0.415
+
+Q3: guild kg/h 236.54
+  < 15 cm: share of guild 0.064; by species long rough dab 0.032, haddock 0.019, dab 0.009, cod 0.003
+  < 19 cm: share of guild 0.129; by species long rough dab 0.070, haddock 0.029, dab 0.023, cod 0.003, plaice 0.002, grey gurnard 0.001
+  < 25 cm: share of guild 0.257; by species long rough dab 0.124, haddock 0.049, dab 0.047, plaice 0.012, cod 0.011, grey gurnard 0.007, lemon sole 0.006
+  haddock share of guild 0.396
+
+haddock numbers per hour by 1-cm class (< 30 cm), Q1 | Q3
+   3 cm      0.00 |     0.00
+   4 cm      0.00 |     0.00
+   5 cm      0.00 |     0.00
+   6 cm      0.00 |     0.01
+   7 cm      0.00 |     0.09
+   8 cm      0.00 |     1.98
+   9 cm      0.00 |    10.87
+  10 cm      0.00 |    27.71
+  11 cm      0.01 |    48.59
+  12 cm      0.18 |    71.09
+  13 cm      1.00 |    64.37
+  14 cm      3.98 |    53.39
+  15 cm      8.39 |    31.46
+  16 cm     16.90 |    19.34
+  17 cm     22.33 |    10.79
+  18 cm     30.04 |     4.06
+  19 cm     31.96 |     3.15
+  20 cm     33.36 |     5.21
+  21 cm     28.64 |     7.33
+  22 cm     20.91 |     9.40
+  23 cm     13.99 |    10.45
+  24 cm     10.08 |    10.17
+  25 cm      5.63 |    13.29
+  26 cm      5.20 |    13.84
+  27 cm      3.79 |    15.86
+  28 cm      4.37 |    18.83
+  29 cm      5.24 |    16.40
+
+haddock, catchability-corrected (Walker 2017 q-at-length, Q3 values used in both quarters)
+  Q1 < 15 cm: share of haddock biomass raw 0.002, q-corrected 0.005
+  Q1 < 19 cm: share of haddock biomass raw 0.066, q-corrected 0.095
+  Q1 < 25 cm: share of haddock biomass raw 0.282, q-corrected 0.314
+  Q3 < 15 cm: share of haddock biomass raw 0.049, q-corrected 0.201
+  Q3 < 19 cm: share of haddock biomass raw 0.074, q-corrected 0.234
+  Q3 < 25 cm: share of haddock biomass raw 0.124, q-corrected 0.272
+
+guild share below L (raw survey; haddock also q-corrected), mean of Q1 and Q3; split gadoids / flatfish+rays+gurnard
+  < 10 cm: all 0.002 (Q1 0.002, Q3 0.001); haddock+cod 0.001; flatfish/rays/gurnard 0.001
+  < 12 cm: all 0.008 (Q1 0.006, Q3 0.010); haddock+cod 0.003; flatfish/rays/gurnard 0.005
+  < 15 cm: all 0.050 (Q1 0.037, Q3 0.064); haddock+cod 0.012; flatfish/rays/gurnard 0.038
+  < 19 cm: all 0.124 (Q1 0.119, Q3 0.129); haddock+cod 0.032; flatfish/rays/gurnard 0.092
+  < 25 cm: all 0.265 (Q1 0.274, Q3 0.257); haddock+cod 0.093; flatfish/rays/gurnard 0.173
+  < 27 cm: all 0.304 (Q1 0.301, Q3 0.307); haddock+cod 0.114; flatfish/rays/gurnard 0.190
+  < 28 cm: all 0.324 (Q1 0.313, Q3 0.336); haddock+cod 0.126; flatfish/rays/gurnard 0.198
+  < 30 cm: all 0.369 (Q1 0.341, Q3 0.396); haddock+cod 0.158; flatfish/rays/gurnard 0.211
+  < 35 cm: all 0.506 (Q1 0.478, Q3 0.534); haddock+cod 0.275; flatfish/rays/gurnard 0.231
+  < 40 cm: all 0.647 (Q1 0.652, Q3 0.642); haddock+cod 0.404; flatfish/rays/gurnard 0.242
+  < 45 cm: all 0.735 (Q1 0.750, Q3 0.720); haddock+cod 0.487; flatfish/rays/gurnard 0.248

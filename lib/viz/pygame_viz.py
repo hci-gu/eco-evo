@@ -775,6 +775,10 @@ class LiveVisualizer:
         self._members: Dict[str, list] = {}
         self._member_rects: list = []
         self._member_hover: bool = False
+        # (code, prey name) for each prey code on the panel's diet line
+        # this frame, listed under the species in the same tooltip;
+        # filled by ``_draw_one_heatmap``.
+        self._panel_legend: Dict[str, list] = {}
         # One global visual biomass scale for inference. 1.0 means:
         # heatmap max = rollout-start per-cell max. After slider adjustment,
         # biomass plot max = 100% * scale. The slider zooms both together.
@@ -4927,6 +4931,7 @@ class LiveVisualizer:
         # (eaten / impacts such as bottom trawling) and the rest is blank.
         title_h = 104
         arr = self._biomass.get(fid)
+        legend: list = []
         # Panel background.
         pg.draw.rect(self._screen, (28, 28, 34),
                      (px, py, self._panel_w, self._panel_h))
@@ -5038,6 +5043,11 @@ class LiveVisualizer:
                                 diet_y = loss_y + loss_surf.get_height()
                                 self._screen.blit(
                                     diet_surf, (px + pad, diet_y))
+                                # Every prey, also those a narrow panel
+                                # dropped behind the trailing ``+``.
+                                legend += [(a, self._display_name(pid))
+                                           for a, (pid, _v)
+                                           in zip(abbrs, items)]
 
         # ---- b0-slider --------------------------------------------------
         # Horisontell slider placerad mellan info-blocket ovanför och själva
@@ -5048,8 +5058,10 @@ class LiveVisualizer:
         slider_h = int(getattr(self, '_slider_h', 16))
         slider_y = py + title_h - slider_h - 4
         # Hovering the info lines above the slider lists the group's
-        # species (multi-species groups only; ``_draw_member_tooltip``).
-        if fid in self._members:
+        # species (multi-species groups) and which prey the codes on its
+        # diet line stand for (``_draw_member_tooltip``).
+        self._panel_legend[fid] = legend
+        if fid in self._members or legend:
             self._member_rects.append(
                 ((px, py, self._panel_w, slider_y - 2 - py), fid))
         slider_x = px + pad
@@ -6242,9 +6254,17 @@ class LiveVisualizer:
         progress = self._tabs[self._active_tab] == "progress"
         head = self._t("day {n}" if progress else "update {n}" if viability else "tick {n}",
                        n=int(round(tick_at_mouse)))
+        inference = (str(self.mode).lower().startswith("infer")
+                     and not progress and not viability)
+        if inference:
+            # Simulation year from the start, counted like the status
+            # bar's time (the point at step s is the state at tick s + 1).
+            hours = (int(round(tick_at_mouse)) + 1) * int(self.tick_hours)
+            head += "  " + self._t(
+                "year {n}",
+                n=hours // (DAYS_PER_YEAR * HOURS_PER_DAY) + 1)
         # Same instant as the calendar band under the plot (section 155).
-        if (self._daylight_cfg and not progress
-                and str(self.mode).lower().startswith("infer")):
+        if self._daylight_cfg and inference:
             head += "  " + _calendar_label(float(_plot_x_hours(
                 self._daylight_cfg, round(tick_at_mouse))), self._lang)
         lines: list = [(head, (220, 220, 230))]
@@ -6284,7 +6304,8 @@ class LiveVisualizer:
                                clamp_rect=(px0, py0, pw, ph))
 
     def _draw_member_tooltip(self) -> None:
-        """The species of the FG whose info lines are under the pointer.
+        """The species of the FG whose info lines are under the pointer,
+        then - below a rule - the prey behind the codes on its diet line.
 
         Drawn from ``_render_full`` after every panel, so it lies on top
         of the neighbouring heatmaps and the plot, and is held inside the
@@ -6298,18 +6319,26 @@ class LiveVisualizer:
             return
         fid = next((f for rect, f in self._member_rects
                     if self._hit_rect(rect, (mx, my))), None)
-        members = (self._member_lines(self._members.get(fid), self._lang)
-                   if fid is not None else None)
-        if not members:
+        if fid is None:
+            return
+        members = self._member_lines(self._members.get(fid), self._lang)
+        legend = self._panel_legend.get(fid) or []
+        if not members and not legend:
             return
         lines = [(self._display_name(fid), self._fg_colour[fid])]
         lines += [(txt, (210, 210, 220)) for txt in members]
+        if members and legend:
+            lines.append(None)
+        lines += [(f"{code} = {meaning}", (170, 170, 185))
+                  for code, meaning in legend]
         win = (0, 0) + tuple(self._screen.get_size())
         self._draw_tooltip_box(lines, mx, my, flip_rect=win, clamp_rect=win)
 
     def _draw_tooltip_box(self, lines: list, mx: int, my: int, *,
                           flip_rect: tuple, clamp_rect: tuple) -> None:
         """Draw ``lines`` ((text, colour) pairs) in a box by the pointer.
+
+        A ``None`` entry is a horizontal rule between two blocks of lines.
 
         The box goes right of and below the pointer, flips to the other
         side where it would cross ``flip_rect``, and is finally held
@@ -6319,15 +6348,21 @@ class LiveVisualizer:
         # Mät textstorlek.
         pad = 4
         line_h = 12
+        rule_h = 7
         max_w = 0
         surfs = []
-        for txt, col in lines:
+        for entry in lines:
+            if entry is None:
+                surfs.append(None)
+                continue
+            txt, col = entry
             s = self._font.render(txt, True, col)
             surfs.append(s)
             if s.get_width() > max_w:
                 max_w = s.get_width()
         box_w = max_w + 2 * pad
-        box_h = line_h * len(lines) + 2 * pad
+        box_h = (sum(rule_h if s is None else line_h for s in surfs)
+                 + 2 * pad)
 
         # Placera boxen — helst till höger om muspekaren, men flippa till
         # vänster om den skulle sticka utanför ``flip_rect``.
@@ -6350,8 +6385,16 @@ class LiveVisualizer:
         except Exception:
             pg.draw.rect(self._screen, (20, 22, 30), (bx, by, box_w, box_h))
         pg.draw.rect(self._screen, (140, 140, 160), (bx, by, box_w, box_h), 1)
-        for i, s in enumerate(surfs):
-            self._screen.blit(s, (bx + pad, by + pad + i * line_h))
+        y = by + pad
+        for s in surfs:
+            if s is None:
+                ry = y + rule_h // 2 - 1
+                pg.draw.line(self._screen, (110, 110, 130),
+                             (bx + pad, ry), (bx + box_w - pad - 1, ry))
+                y += rule_h
+                continue
+            self._screen.blit(s, (bx + pad, y))
+            y += line_h
 
 
 def _fg_colour_for(idx: int, n: int) -> tuple:

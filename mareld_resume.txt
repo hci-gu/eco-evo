@@ -20936,3 +20936,414 @@ remain open exactly as described in 71.9 / 71.11.
       library (new h, old w and g); from probe 340 on they run on these
       values (and M2 0.18 from 330) while its policies trained on the
       old ones.
+
+223.29 Heatmap tooltip names the diet codes (user, 2026-10-28).
+      Hovering a heatmap panel's info lines (training and inference
+      viewer, same LiveVisualizer) now lists, under the species of a
+      multi-species group and a horizontal rule, the prey group behind
+      each code on THAT group's diet line ("rk = Rovfisk"), also the
+      codes a narrow panel dropped behind the trailing "+". Diet codes
+      only (user's choice; the action and loss codes are not listed).
+      Codes and names follow the display language. A single-species
+      group now gets the tooltip too once it has a diet line.
+      _draw_tooltip_box takes None as a rule; _draw_one_heatmap fills
+      _panel_legend per frame. Tests in tests/test_viz_member_species.py.
+
+223.30 Inference plot hover names the year (user, 2026-10-28). The
+      plot tooltip's head in the inference viewer reads "tick N  year Y
+      <date>" (Swedish "ar Y"): the simulation year since the start, the
+      point at step s counted as the state at tick s + 1 like the status
+      bar's time, so a whole 365 days starts year 2. Not a calendar year
+      (the start day is random in mareld2.yaml). Shown without the
+      daylight calendar too; not in training or on the long-run and
+      viability tabs. Catalog key "year {n}". Test in
+      tests/test_viz_axis_labels.py.
+
+223.31 fix80 analysis at update 300 (2026-10-28; analysis only, no
+      library, manifest or code change). fix80 = train_gpu,
+      pzbpgp248nsrpfix80, the fix79 command line unchanged (30x30, 4
+      worlds, warmup 60 d, depleted patches 0.5, 1x16 tanh, lr 0.06,
+      sigma 0.1, 16 deltas, 1460 ticks, eval every 10) from scratch on
+      the 223.28 library (benthivore per-prey gastric ceilings + armour,
+      interference 0, benthivores -> whiting M2 0.18; library 11:26, run
+      start 11:33, library untouched since, so training and every probe
+      are one library). Still running (update ~322, ~130 s/update).
+      Frozen copy of the gen-5 checkpoint = update 300 (scratchpad f80),
+      tools/probes/frozen_years.py 3 years on 60x60, seed 20260530;
+      reference fix79 u301 (223.28). One seed each, so a clean A/B of
+      the library change only.
+    - End/b0 years 1-3 (fix79 u301 in brackets): benthivores 0.68/0.42/
+      0.28 (0.69/0.51/0.37), water column 0.88/0.80/0.71 (0.87/0.79/
+      0.69), whiting 1.26/1.48/1.61 (1.38/1.64/1.48), planktivores 0.90/
+      0.82/0.73 (0.88/0.76/0.58), epifauna 1.03/0.94/0.82 (0.65/0.43/
+      0.26), seals 0.91/0.81/0.51 (0.99/1.00/0.89), porpoises 0.79/0.71/
+      0.64 (0.88/0.87/0.75), zooplankton 1.55-1.60 (1.96-1.99);
+      infauna, Nephrops ~1.0. The 30x30 probe band agrees (benthivore
+      year 3 0.24-0.40 flat since update ~100; epifauna year 3 still
+      rising, 0.46-0.56 at updates 100-130, 0.72-0.81 from ~240).
+      Transplant control (fix79 u301 policies on the fix80 library,
+      same rig): benthivores 0.62/0.42/0.30, epifauna 0.73/0.58/0.44,
+      seals 0.99/0.98/0.87, porpoises 0.83/0.82/0.80. So the benthivore
+      drop (year 3 0.37 -> 0.28-0.30) is the library change itself, not
+      fix80's training path; fix80's training added the rest of the
+      epifauna recovery (its benthivores dropped epifauna, 0 % vs 15 ->
+      3 %) and lost seals and porpoises. (The fix79 u330 probe, 0.70/
+      0.54/0.40, read a half-edited library on 30x30; not a control.)
+      Probe V 0.22-0.29 (-0.04 at update 270, seals year 3 0.20), 13/13
+      viable, a steady decline again (read the trend, not the flag).
+      Rewards: the fish flat since ~update 100 in both runs (benthivores
+      -0.25 vs fix79 -0.22, planktivores -0.15 vs -0.23), seals and
+      porpoises still rising.
+    - Epifauna fixed by the armour, not by whiting: benthivore realised
+      M2 on epifauna 0.42 -> 0.01 /yr (diet epifauna 16 % -> 0), whiting
+      -> epifauna 0.51 -> 0.75 (fix79 0.77 -> 1.54; library 0.069). Total
+      M2 on epifauna 0.52-0.76 vs the 0.61 booked (0.54 benthivores +
+      0.069 whiting): about the budget in sum, all of it on the wrong
+      predator, rising in year 3.
+    - Benthivores: diet infauna 99 % (fix79 82 -> 98 %), Q/B 6.7-6.8,
+      fill 0.71-0.72, starvation ~0; losses pred 0.39-0.53 (water column
+      0.33-0.39, seals 0.06-0.12, whiting 0.003-0.011) + natural 0.34-
+      0.41 + trawl 0.12-0.16 /yr. Booked M2 on them 0.22 (water column
+      0.083, whiting 0.097, seals 0.035, porpoises 0.006): chain 1
+      (water column x4-5 the library) unchanged. Worse than fix79
+      because the income fell and g fell: epifauna dropped out of the
+      diet, and the derived g fell 9 % because s* is now paid at the
+      herring pair's ceiling (assimilated 23.9 MJ/t/tick) while the
+      fish eat infauna (return 14.6-16.0 per unit eat share at the new
+      h 111.9, rig below).
+    - The diet switch the library change opened is not learned (rig
+      wht_plk.py on f80, benthivore biomass x hunger weighted, rig
+      months from late May): return per unit eat share infauna 14.6-
+      16.0, epifauna 11.5, Nephrops 8.7-9.2, planktivores 7.6-18.0
+      (mean above infauna in rig months 3 and 12, ~Aug and ~May; 15.1-
+      15.5 in months 2, 4, 11; lowest in months 7-9, ~Dec-Feb, herring
+      visible 0.28-0.40), whiting 1.8-5.0. Herring is the best prey for 0.14-0.69 of the
+      benthivores (year mean 0.42; scen.py in 223.28 predicted 0.35),
+      but the policy's eat share on planktivores stays 0.003-0.005 (as
+      fix79) and on whiting 0.006-0.024; realised M2 on planktivores
+      0.001-0.003 (booked 0.245), on whiting 0.004-0.023 (booked 0.18).
+      The policy takes 0.72-0.96 (mean 0.83) of the best attainable
+      return per tick. So the benthivore budget now assumes a herring
+      diet that 300 updates of ARS have not found. The benthivores do
+      observe planktivorous_fish (obs_others_idx), so it is not a blind
+      spot; whether more updates or the 1x16 net is the limit is open.
+    - Downstream: whiting nearly unpredated (realised M2 0.04-0.07 vs
+      0.37 booked), held at 1.5-1.6x start by its regional K (natural
+      0.71-0.89 /yr). Seals eat benthivores 74-88 % and starve with them
+      (starvation 0.10 -> 0.42 /yr in year 3); porpoises starve 0.11-
+      0.27 /yr on a mixed fish diet (plk 36-43, wc 32-33, wht 23-31 %).
+      Planktivores improved: whiting -> planktivores 0.15 -> 0.29
+      (fix79 0.15 -> 0.45).
+    - Section 86 band check at w = 0 (first run trained at interference
+      0; scratchpad bands.py, the axis_collapse.py aniso/nyq definitions
+      on the 60x60 probe field every 2 months for 1 year): benthivores
+      nyq_x 0.00, nyq_y <= 0.01 (fix79 <= 0.04), so no 1-cell stripes in
+      the section 86 group; elsewhere nyq <= 0.05 except one water-column
+      nyq_y 0.20 at tick 1215 (0.02 at 1458) and porpoises 0.08 at tick
+      972, single samples (fix79 max 0.07). Benthivore aniso 0.08-0.43
+      from month 4 on (fix79 0.54-0.79 over the same ticks), a coarse
+      along-y structure, not bands. Benthivore self-clumping
+      (rig ben_act.py) 11.3x year mean (fix79 13.4x, 16x at start vs
+      30x); water column co-location on benthivores 0.83 (fix79 1.10);
+      action shares move 0.05, rest 0.01, eat 0.94 (fix79 0.06/0.00/
+      0.94). w = 0 did not raise the clumping.
+    - Why the water column takes 4-5x its booked M2 on the benthivores
+      (user question, 2026-10-28; rig wht_plk.py on f80, predatory_fish,
+      1 year, rig months from late May). (1) The pair is saturated, so
+      the take is set by the policy's eat share, not by benthivore
+      density: share of the ceiling 0.78 at today's densities, ~4.8 /yr
+      of M2 per unit eat share, ceiling demand 6.2 t/km2/yr vs the
+      benthivores' whole gross production 1.25 (params_split_223.md
+      section 6). The booked 0.083 corresponds to an eat share of ~0.04;
+      the policy uses 0.04-0.27 (year mean 0.15), highest in rig months
+      5-9 (~Oct-Feb, 0.19-0.27) when herring hide (visible 0.28-0.40,
+      return 12.7-17 vs 22-26 in rig months 2-4 and 11-12) and zooplankton pays ~0. It
+      tracks the per-cell best prey (got/best 0.90-0.99; benthivores
+      best for 0.06-0.28 of the water column, in their dense patches),
+      so this is foraging on the engine's returns, not a learning
+      failure. (2) The benthivores have no defence that pays: rest 0.01,
+      visible = the pair access 0.24 all year (hiding under saturation
+      cuts the take ~6 %, 223.27). (3) Decomposition of realised M2 =
+      diet share x Q/B x B_wc/B_ben against the budget 0.062 x 2.74 x
+      0.49: year 1 0.23 x 2.6 x 0.56 (x3.7 diet, x0.95, x1.13), year 3
+      0.15 x 2.4 x 1.07 (x2.4, x0.88, x2.2). Year 1 is the diet; by year
+      3 half is the ratio: the water column holds on herring while the
+      benthivores fall, and per-capita take on them falls only x0.6 for
+      a x0.42 density drop. (4) The library itself disagrees with the
+      budget: by encounter alone (a f B at start, 0.053 x 0.24 x 1.53 vs
+      herring 0.0117 x 3.3) the benthivores are ~0.5 of the herring
+      encounter; the shared-handling test (223.27) gives 21.5 % of the
+      diet vs the booked 6.2 % (M2 0.29). Only a near the bottom of its
+      range (0.018 of 0.018-0.17) or a larger diet share (range M2
+      0.05-0.23) would reconcile them - a biology question per the rule,
+      not a fit. (5) The accessible 0.24 (gape slice: juveniles + 0-
+      group) is a fixed share of the current biomass that never runs
+      out, so 0.35 /yr on the group is ~1.5 /yr on the slice without
+      the juveniles being depleted (no size structure). No change.
+    - Saithe diet literature check (user, 2026-10-28; research_notes/
+      "Sejens diet pa unga torskfiskar" (Swedish letters), evidence by a
+      literature agent, summary.md and the SMS calculation by the main
+      agent). Benthivores in the diet by mass: saithe 5 % (2-9; CRR 164
+      1980-82 5.5, CRR 219 1991 5.0-5.2, SMS observed stomachs 4.1, Mehl
+      2005 Norway 5.8; Ecopath 0.4, Iceland < 1.5), almost all 0-1 group
+      haddock (cod a trace, cod:haddock ~1:10 by number; flatfish <= 2 %
+      in saithe > 70 cm only); spurdog ~6 % (Ecopath, mostly plaice);
+      anglerfish 15-20 %. Group ~4 % (biomass or consumption weighted,
+      rest of the group ~0; range ~2-9) vs the booked 6.1 %. SMS 2023
+      consumption side: saithe Q/B 2.6-2.8, haddock share 16.4 / 7.5 /
+      4.0 % in 1974-85 / 1986-2000 / 2001-22, r 0.90 with haddock
+      density, 6.3 % at the model's haddock 0.59 t/km2 (proportionality
+      is SMS's own form; the level is stomach-based and SMS overshoots
+      the observed stomachs ~2x). So the booked M2 0.083 stands and the
+      pair's encounter a (~21 % implied) is what disagrees, ~4x. Leads,
+      not applied: saithe's real prey is 0-1 group haddock = 0.30 x
+      0.386 = 0.12 of the benthivores (half the accessible 0.24, which
+      also counts juvenile cod and small flatfish); the haddock share is
+      ~0 in Q1 and peaks in Q3 (0-group settlement), a window the pair
+      lacks. Correction (2026-10-29): "~4x" is the diet share (21.5 vs
+      ~5 %); on a f, which enters as odds a f B / sum_k a_k f_k B_k, the
+      field needs x4.7-6.0 (field 5.5-4.4 %); f 0.24 -> 0.12 gives x2
+      (share 12 %), leaving x2.4-3.0 to be derived (overlap, season,
+      capture), not fitted. Weak: all North Sea diets pre-2000, no Skagerrak diet with
+      numbers; Bergstad 1991 and Du Buit 1991 not accessed. No change.
+    - Settlement window derived (user, 2026-10-29; research_notes/"Sejens
+      diet pa unga torskfiskar" summary.md section 5, evidence_settlement
+      and evidence_saithe_season by a literature agent, box survey table
+      by the main agent). Haddock settle size-triggered at ~3-7.8 cm, so
+      the date follows hatch + temperature-driven growth: mid-Jul to mid-
+      Aug offshore; 50-150 m mainly (200-300 m 1/40 of 50-100 m). In the
+      box (NS-IBTS GOV 2001-25) the cohort is 8-17 cm in August and 14-24
+      cm (mode 19-20) in Jan-Feb: a 19 cm saithe gape window from July to
+      Mar-Apr of age 1, closed Apr-Jun. Haddock < 19 cm, Walker 2017 q-
+      corrected: Aug 0.234, Jan-Feb 0.095 of haddock biomass (raw 0.074/
+      0.066). Time mean 0.111 = 0.043 of the benthivore group (raw 0.018)
+      vs the pair's f 0.24 (0.043 reads the q = 1 wing biomass as the true
+      stock, 0.018 as what the GOV retains). (A "saithe-only 4.7 %" check
+      written here first used the pair's a ratios, which carry mackerel's
+      planktivore a; withdrawn in the next bullet.) Q1 low = prey (1-group at/past the
+      gape) + predator (26-50 % empty, deeper, half the overlap). Phase:
+      the window covers the model's Oct-Feb fallback, so its effect is
+      the level. Options: a constant member-weighted f (recommended; no
+      calendar, library-only, checkpoints valid) once the other members
+      are derived, or a juvenile stage (no spawning cue known -> a
+      calendar anchor). Not applied.
+    - Member f on the benthivores (user, 2026-10-29; same notes, section
+      6). The pair's layer a is saithe 0.77, spurdog 0.10, hake 0.07,
+      velvet belly 0.04, anglerfish 0.01. Prey-side f [J, gape + field
+      diet identity + box survey]: saithe 0.043 (raw 0.018), spurdog ~0.2
+      (flatfish/rays < 27 cm 0.19 + a little haddock; field 6 %, mostly
+      plaice), hake 0.1-0.3 (unresolved), velvet belly ~0.01, anglerfish
+      ~0.7 (< 45 cm 0.735). Pair f 0.067-0.081 (raw 0.048-0.062) vs 0.24;
+      x 2.68 -> 0.75-0.90, half-saturated, density-dependent. Revision of
+      223.27 (a): the shared-handling encounter test sums per-layer a's
+      (bed strip vs pelagic disc / H) as if the predator searched every
+      layer at once, so for saithe, spurdog and hake its 21.5 % was never a
+      prediction about a f; their diet is the learned time at the bed (with
+      each member's own a the benthivore share barely moves with f: saithe
+      25 -> 16 % at f 0.24 -> 0.043). Fair only for the bed ambusher
+      anglerfish (54 % at f 0.7 vs field ~30 % on modelled prey; its
+      planktivore a is the outlier; 0.01 of the pair). The "saithe 4.7 %"
+      check above is withdrawn (it used the pair's a ratios). Chain 1
+      after the f fix: the remaining gap (realised 15-23 % vs field 4-6 %)
+      is the learned eat share, an outcome to compare, not an input; no a
+      moved. Not applied.
+    - fix81 launched (user, 2026-10-29 ~01:10): train_gpu, pzbpgp248nsrpfix81,
+      the fix80 command line with --library results/fix81_fg_library.yaml
+      (= fg_library.yaml with predatory_fish_preys_on_benthivorous_fish
+      accessible_fraction 0.24 -> 0.075 and its comment; fg_library.yaml
+      itself untouched so fix80's probes stay on 0.24), --init-from the
+      frozen fix80 u300 copy, --generations 1 (50 updates), --visual with
+      SDL_VIDEODRIVER=dummy (probes only). Smoke: 10x10, 64 ticks OK; the
+      loader reads 0.075 from the copy, benthivore g unchanged (f is not in
+      the growth budget). Probe at update 0 (fix80 u300 policies, f 0.075):
+      benthivores 0.66/0.47/0.37 (fix80 u300 0.60/0.40/0.28), water column
+      0.85/0.72/0.62 (0.88/0.77/0.67), epifauna 0.85 in year 3 (0.81),
+      seals 0.86 (0.45); ~310 s/update with fix80 sharing the GPU.
+    - fix81 result (50 updates, 2026-10-29 03:08). Probes at matched
+      updates (fix81 u0-u50 vs fix80 u300-u350, year 3): benthivores
+      0.37 -> 0.46 (fix80 0.28 -> 0.25; f alone at u0 +0.09, learning
+      under f 0.075 +0.09 more); water column 0.62-0.66 (0.65-0.69);
+      planktivores 0.62-0.76 (0.60-0.71); epifauna 0.73-0.85 (0.65-0.81);
+      seals 0.79-0.94 (0.37-0.75); porpoises 0.43 at u50 (fix80 has
+      0.54-0.89 swings; one seed). Frozen 3 years (60x60, seed 20260530;
+      scratchpad f81 vs f80, each on its own library): benthivores
+      0.74/0.59/0.48 (0.68/0.42/0.28), still -18 %/yr; water column
+      0.67 (0.71); planktivores 0.58 (0.73; wc M2 on them 0.52 vs 0.44,
+      the predator switched to herring); seals 0.69 (0.51), diet
+      benthivores 93-97 % (74-88 %; library ~60 %); porpoises 0.56
+      (0.64); epifauna 0.74 (0.82). Realised M2 on benthivores, last
+      year: water column 0.208 (0.394), seals 0.105 (0.121), whiting
+      0.007 (0.011); total 0.32 vs booked 0.221 (wc 0.083, whiting 0.097,
+      seals 0.035, porpoises 0.006); fix80 0.53. The wc pair still takes
+      2.5x booked (density-dependent: the return per unit eat share fell
+      only 8.3 -> 5.5 MJ/t/tick for f / 3.2, saturation relieved), its
+      monthly eat share 0.055 (rig month 12, ~May) - 0.213 (rig month 7,
+      ~Dec) vs 0.044-0.268, diet 13-20 %
+      benthivores (15-23 %). Benthivore decline last year -0.20/yr:
+      excess predation ~0.10 (wc +0.125, seals +0.07, whiting -0.09),
+      the rest a production shortfall (fill 0.72; they leave the spring-
+      summer herring, best for 40-70 % of their biomass in rig months
+      1-4 and 11-12, ~Apr-Sep, at eat share
+      < 0.015). f 0.075 is derived, not fitted; the run neither
+      overshoots nor closes the gap. fg_library.yaml still 0.24.
+    - Applied (user, 2026-10-29): fgconfig/fg_library.yaml
+      predatory_fish_preys_on_benthivorous_fish accessible_fraction 0.24 ->
+      0.075 with the derivation comment (= results/fix81_fg_library.yaml);
+      AGENTS.md pair-shares line updated. Library-only, checkpoints valid,
+      benthivore g unchanged. pytest 1534 passed, 12 skipped; train_gpu
+      1-generation smoke (10x10, 64 ticks) OK.
+    - fix80 resumed with f 0.075 (user, 2026-10-29; --resume from u390,
+      first probe u394, now u560 ~gen 11). Probes, year 3: benthivores
+      0.32 (u394) -> 0.42-0.50 from u410 on, a plateau (fix81's result
+      replicated); water column flat 0.63-0.69; seals 0.74-0.98 (were
+      0.20-0.75); porpoises 0.76-1.05; epifauna 0.56-0.75; planktivores
+      0.84 (u394) -> 0.46 (u560), a steady slide over 170 updates
+      (fix80 before the resume 0.56-0.76, no trend; fix81 0.76 -> 0.62).
+      Frozen 3 years on the u550 policies (scratchpad f80r): benthivores
+      0.74/0.57/0.47 (wc M2 on them 0.22, 2.7x booked); planktivores
+      0.80/0.65/0.50 (f80 at u300 0.73, fix81 0.58), losses last year
+      predation 0.90 vs booked 0.76: wc 0.58 (booked 0.34; f80 0.44),
+      whiting 0.31 (0.16; whiting at 1.58x its start), benthivores 0.004
+      (0.245). The wc eats its booked ration (Q/B 2.3-2.5 vs ~2.45 incl.
+      zooplankton 0.7) but takes ~none of its zooplankton (M2 0.0 vs
+      0.0756) or whiting (0.006 vs 0.157) shares, so the benthivore tonnes
+      f 0.075 removed went to herring (diet 81-87 % herring). Planktivore
+      Q/B 5.9-6.2, fill 0.6, no starvation, zooplankton 1.9-2.2x start:
+      top-down, not food. Seals frozen year 3 0.42 (starvation 0.65),
+      diet 93-97 % benthivores. No library change.
+    - Why the water column leaves its zooplankton (user, 2026-10-29;
+      scratchpad wc_zoo.py on the frozen u550 policies, calendar months
+      from light_index; the probe world starts 27 May, light_start 590).
+      The model's zooplankton is right in time: A17 score zoo log-RMSE
+      0.91 (r +0.80; f80 u300 1.03), 14-21 t/km2 Apr-Jul. At the
+      predator in Apr-Jul: zoo 15-20 t/km2, visible 0.36-0.77 (the zoo
+      hides), x = a h B_vis 0.68-1.08 -> 10-13 MJ/t/tick per unit eat
+      share, half the ceiling (~26); herring at the same time 3-8 t/km2
+      at the predator (it gathers on herring; grid 2.3-3.7), visible
+      0.98-0.99, x 8-25 -> 19-22. Every other month zoo pays 0.4-7.
+      Zoo never pays more than herring on the group mean in any month;
+      eat share on zoo < 0.005. Half-saturation: herring 1/(a h) = 0.39
+      t/km2, zoo 12 t/km2 visible (a 0.0006 vs 0.0117, 20x). The
+      derivation predicted it (params_split_223.md: wc share of the
+      ceiling at today's B, zoo 0.51 / 0.05 vs herring 0.92 / 0.79).
+      Three causes: (1) the eat share is linear and exclusive (no shared
+      handling), so a half-saturated prey adds nothing beside a
+      saturated one - the learned diet is all herring; (2) the wc ->
+      planktivores pair is the "layer" upper form at f 1 (partial gape
+      scores dropped; mackerel 0.49 of its a), so herring pays as if
+      every member could swallow adult herring - an f to derive as for
+      the benthivores, but minor here: herring is saturated (x 8-25), a
+      halved f leaves it at 0.8-0.9 of the ceiling, so it cannot flip
+      the zoo season; the zoo a is already the upper (layer) form; (3) the booked M2 0.0756 (34 % of the wc diet)
+      assumes krill, the pool is the A17 resident copepods (220.3
+      decision 4; library comment "Open (209/220)"). A small learned
+      part: 8-21 % of the wc biomass in ~Jun-Jul sits where zoo is the
+      best prey, eat share there < 0.02. The booking does not constrain
+      the diet: the wc eats to its hunger gate on the best payer, so the
+      ~0.7 t/t/yr zoo ration it does not take (x wc 0.57 t/km2 / herring
+      2.0 t/km2 = 0.20 /yr) shows up on herring, the wc's excess over
+      booked (0.58 vs 0.34). Changing the zoo M2 moves only the
+      zooplankton's derived growth, not the herring pressure. Earlier today's fix81 month labels corrected to rig
+      months (above). No library change.
+    - Mackerel's field switch, plankton in early summer -> herring in late
+      summer (user, 2026-10-29). SMS 2023 key run summary_stom.out
+      (North Sea stomachs 1981 + 1991, predator 20 = mackerel, weight
+      shares N.haul-weighted over length classes): other food (zooplankton)
+      Q1 1.00, Q2 0.585, Q3 0.808, Q4 0.80; herring Q2 0.006 (11-12.5 cm),
+      Q3 0.066 (8.5 cm, 98 %: 0-group), Q4 0.017 (8.5-11 cm); sandeel Q2
+      0.37, Norway pout Q4 0.13, sprat 0.04-0.05. No adult herring. The
+      late-summer herring is the 0-group grown into the gape (as haddock
+      settlement for saithe), with Calanus leaving the upper layer for
+      diapause. In the model: the zoo decline is there (Jul 19 -> Sep 4
+      t/km2 at the predator); missing are (1) the gape on wc ->
+      planktivores - the layer form counts mackerel fully (gape score
+      0.18 dropped), so mackerel (0.128 of the group's biomass) sets 0.49
+      of the herring a; (2) a herring juvenile stage (the group is the
+      HERAS adult biomass; no 0-group to grow into the gape); (3) the
+      pooling: one eat share per cell for mackerel and saithe together,
+      so the group cannot feed mackerel on zoo while saithe takes
+      herring (sum of member maxima > max of pooled returns); (4)
+      seasonal presence (migrant; the group is resident). Scored a on
+      herring (x 10.9 -> 4.3 at today's B) still leaves it at ~0.8 of the
+      ceiling, above zoo. No change.
+    - What a mackerel split would mean (user, 2026-10-29; sketch only,
+      nothing built). Fields from research_notes/"Rovfiskens uppdelning"
+      scripts/split_fields_223.py with a G3 grouping (scratchpad
+      mack/split_fields_mack.py, both groups at_50m; whiting outside):
+      mackerel + horse mackerel (0.70/0.30) B* 0.138 t/km2 = 495 t, r 0.274,
+      F 0.162 (pelagic; the wc's whole pelagic 0.029 is theirs), K 0.336,
+      M1 0.195, Cmax 141 kJ/kg/d (ceiling 35.3; Bjornsson x1.3 is a cod
+      anchor), SMR 3.40, lean 4550 + reserve 5339 max (prey 7549 MJ/t),
+      Q/B 2.62, diet plk 0.28 / zoo 0.63 / benthivores 0.035 / epifauna
+      0.027; M2 plk 0.031, zoo 0.0235, benthivores 0.008 (gape f 0.032).
+      Remaining wc (saithe 0.80): B* 0.617 = 2220 t, r 0.396, F 0.260
+      (bottom), K 1.79, M1 0.276, Cmax 91.7 (ceiling 22.9; x1.3 29.8 vs
+      32.71 today), diet plk 0.57 / zoo 0.28 (saithe's krill) / benth
+      0.066; M2 plk 0.309, zoo 0.052, benthivores 0.075, and a NEW pair
+      wc -> mackerel group 0.131 (spurdog's mackerel/horse mackerel prey,
+      hake/anglerfish traces); wc -> whiting 0.157 untouched.
+      Sums kept. Layer a per group tonne from the 223 member
+      contributions: mackerel group plk 0.0391, zoo 0.00226 (4x the
+      pooled); rest plk 0.0056, zoo 0.00024. At the frozen u550 state
+      (May / Aug at the predator) the mackerel group's share of the
+      ceiling: zoo 0.72 / 0.42; herring at f 1 0.96 / 0.97, f 0.18 (gape
+      score) 0.82, f 0.05 0.55 / 0.64 -> a learned zoo -> fish switch in
+      late summer appears only if its prey-side f on planktivores (pool
+      share below a ~10-12 cm gape; SMS herring eaten 8.5-12.5 cm) is
+      ~0.05-0.1 - to derive from length data, not to set (first, library-only: it
+      decides whether a split can deliver). It covers sprat and small pout
+      only (the 0-group herring is not in the HERAS pool), so the switch
+      would ride on the zoo decline; in Aug it is marginal (0.64 vs 0.42
+      on the herring cells, ~0.50 vs 0.43 at the grid means). Open: GOV
+      catchability of mackerel (pelagic; the 495 t may be low), seasonal
+      presence (IBTS Q3 share 0.95; no mechanism: --migration is edge
+      wraparound), the summer layer (warmer than at_50m), an income-
+      funded fat cycle as herring (184), the saithe krill booking. Cost:
+      one more DM (observations change, all checkpoints invalid, train
+      from scratch), library/manifest/i18n/tests as 223.26.
+    - Mackerel's f on the planktivores derived (user, 2026-10-29;
+      research_notes/"Makrillens bytesstorlek" (Swedish letters),
+      summary.md, scripts/mackerel_planktivore_gape.py). Gape from SMS
+      stomachs (prey/predator length p95: mackerel 0.33, 94 records;
+      horse mackerel 0.31, 27) on box predator sizes (Q3 mean 30.5 /
+      32.5 cm) -> ~10 cm. Pool below it (GOV box 2001-25 Q1/Aug; HERAS
+      Jun-Jul pelagic trawls, 156 herring hauls): herring < 12 cm 0.5 %
+      Jun-Jul, 9 % Aug (the 0-group), sprat 0.75, pout 0.13, blue whiting
+      0. Group f (a-weighted 0.80/0.20): Jun-Jul 0.014, Aug 0.036, summer
+      mean 0.025 (0.017-0.036; 0.21 only on one p99 record). On the
+      frozen u550 state: zoo wins Feb-Oct at the grid means, herring
+      Nov-Jan (real mackerel absent); on the herring cells Aug 0.43 /
+      0.47 - a weak switch; at f 0.036 Jul-Oct on the herring cells. The
+      field rise of f (x2.5 Jun -> Aug, 0-group growth) is the switch's
+      driver and a constant f cannot carry it; SMS Q3 diet other food
+      0.81, herring 0.066 agrees with a mostly zooplanktivore group.
+      Side result: a member-weighted f on today's pooled wc ->
+      planktivores pair (f 1) would be ~0.2 (saithe 19 cm gape; not
+      derived); it bites only in Dec-Jan (x ~2 -> 0.4, return 14.3 ->
+      ~6.4 MJ/t/tick, level with the benthivore pair's 4.7-6.0), so more
+      winter eating on the benthivores is the expected cost. Verdict: f
+      0.025 is below the 0.05-0.1 window - a split gives no robust
+      switch; the switch needs the herring juvenile stage. A mackerel
+      group would realise its zoo booking (0.0235), not its planktivore
+      one (0.031, sandeel-inflated). No library change.
+    - Juvenile umbrella groups, design question (user, 2026-10-29; no
+      code). Two by habitat (pelagic 0-group: herring, sprat, pout;
+      demersal 0-group: settled haddock, cod, whiting, flatfish) rather
+      than one: the pairs' a are per layer (bed strip vs pelagic disc),
+      the predators differ (mackerel/horse mackerel/whiting vs saithe/
+      whiting/cod/spurdog) and hiding differs (schools/DVM vs shelter).
+      Today's prey-side f's are mostly these juveniles (wc ->
+      benthivores 0.075 = settled haddock, whiting -> benthivores 0.05,
+      mackerel 0.025 = 0-group herring + sprat). Two forms: (A) separate
+      groups with a supply (survey-based seasonal table, as the nutrient
+      supply, or a spawning flux from the adults - new) and an exit
+      (graduation transfer to the adults - new flux; or a dead end, which
+      decouples juvenile predation from adult recruitment); (B) a juvenile
+      compartment inside the planktivore and benthivore groups, fed from
+      the group's own growth and graduating back (coupled; the infauna
+      refuge is a two-compartment precedent but uses the reserve slot,
+      which a DM needs - a new state array, per-pair compartment
+      visibility). Open: the timing driver (spawning/settlement is life
+      history, not behaviour, but a monthly table is a calendar input;
+      user's call), age 0 vs a size limit, sandeel (adult small fish, no
+      pool). Either form changes observations (retrain).
