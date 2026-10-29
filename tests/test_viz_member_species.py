@@ -191,3 +191,27 @@ def test_library_members_reach_the_fg_params():
     # Single-species groups carry no list.
     assert "member_species" not in fgs["porpoises"].params
     assert "member_species" not in fgs["seals"].params
+
+
+def test_the_tooltip_lists_who_eats_the_group(viz, monkeypatch):
+    """Below the diet codes: the share of the group's predation loss by
+    predator, largest first, in the predators' own colours."""
+    feed_coded_lines(viz)
+    viz.update_predation_breakdown({MULTI: {SINGLE: 0.25, MULTI: 0.75}})
+    viz._render_full()
+    assert hover_lines(viz, MULTI, monkeypatch) == [
+        "Benthivorous fish", "Haddock  39 %", "Cod  31 %",
+        "Others (43 species)  30 %", None,
+        f"{viz._fg_abbrev(SINGLE)} = Porpoises", None,
+        "Eaten by", "  Benthivorous fish 75%", "  Porpoises 25%"]
+
+
+def test_an_uneaten_single_species_group_gets_a_tooltip_once_eaten(viz, monkeypatch):
+    assert rect_of(viz, SINGLE) is None
+    viz.update_predation_breakdown({SINGLE: {MULTI: 1.0}})
+    viz._render_full()
+    assert hover_lines(viz, SINGLE, monkeypatch) == [
+        "Porpoises", "Eaten by", "  Benthivorous fish 100%"]
+    viz._lang = "sv"
+    viz._render_full()
+    assert "Äts av" in hover_lines(viz, SINGLE, monkeypatch)

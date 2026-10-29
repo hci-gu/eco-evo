@@ -21481,3 +21481,19 @@ remain open exactly as described in 71.9 / 71.11.
       refused and reported). Help texts in field_help.py;
       tests/test_fgconfig_juvenile.py (parsers, live-library round trip);
       checked visually on Xvfb. The library file was not written.
+
+223.33 Heatmap hover lists who eats the group (user, 2026-10-29). The
+    panel tooltip (info lines above the b0 slider; training and
+    inference viewer, same LiveVisualizer) now ends, below a rule, with
+    "Eaten by" and the share of the group's predation loss by predator,
+    largest first, in the predators' colours (NDM grazers included; any
+    group, decision maker or not, gets the tooltip once it is eaten).
+    LiveVisualizer.update_predation_breakdown (prey -> {predator:
+    share}), kept with the frames like the diet; train.py feeds the
+    probe rollout's cumulative intake_by_pred_prey (as the diet line),
+    inference.py this tick's deltas (as the diet line). i18n "Eaten by"
+    (sv "Ats av" with a-umlaut, it "Mangiato da"). Tests in
+    tests/test_viz_member_species.py; a 12-tick headless inference on a
+    copy of the fix82 policies fed 12 breakdowns. The GPU training
+    viewer gets it too: lib/gpu/visual.py runs train._probe_biomass with
+    the viewer for its probe heatmaps (corrected; first stated otherwise).

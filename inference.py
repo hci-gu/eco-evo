@@ -864,6 +864,7 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     # matchar de env-attribut vi läser nedan.
     _prev_loss = {fid: {} for fid in env.fgs}
     _prev_diet = {}  # pred_id -> {prey_id: cumulative intake}
+    _prev_eaten = {}  # pred_id -> {prey_id: cumulative intake}, predation side
     _prev_act = {}
     # One snapshot dict per rnd env: ``_push_action_fracs`` keys it by DM
     # index, which is only unique within one env.
@@ -1032,6 +1033,20 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     _diet[pred_id] = {pid: dv / _tot_d for pid, dv in deltas.items()}
                 if _diet:
                     viz.update_diet_breakdown(_diet)
+                # Each prey's predation loss this tick by predator (the same
+                # deltas, the other way round), for the heatmap tooltip.
+                _eaten_by = {}
+                for pred_id, prey_map in _ipp.items():
+                    prev_map = _prev_eaten.get(pred_id, {})
+                    for pid, v in prey_map.items():
+                        dv = float(v) - float(prev_map.get(pid, 0.0))
+                        if dv > 0.0:
+                            _eaten_by.setdefault(pid, {})[pred_id] = dv
+                    _prev_eaten[pred_id] = {pid: float(v) for pid, v in prey_map.items()}
+                if _eaten_by:
+                    viz.update_predation_breakdown({
+                        pid: {p: v / sum(m.values()) for p, v in m.items()}
+                        for pid, m in _eaten_by.items()})
                 for _re in unique_rnd_envs:
                     _push_action_fracs(viz, _re, step=t, suffix="_rnd",
                                        prev=_prev_act_rnd[id(_re)],

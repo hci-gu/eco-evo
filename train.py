@@ -1073,6 +1073,17 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     }
                 if _diet_tick:
                     viz.update_diet_breakdown(_diet_tick)
+                # The other way round: each prey's predation loss over the
+                # rollout by predator, for the heatmap hover tooltip.
+                _eaten_by = {}
+                for pred_id, prey_map in _ipp.items():
+                    for pid, v in prey_map.items():
+                        if float(v) > 0.0:
+                            _eaten_by.setdefault(pid, {})[pred_id] = float(v)
+                if _eaten_by:
+                    viz.update_predation_breakdown({
+                        pid: {p: v / sum(m.values()) for p, v in m.items()}
+                        for pid, m in _eaten_by.items()})
                 viz.update_biomass(env.fgs, tick=_t + 1, extra=viz_extra)
                 if not viz.pump_events():
                     # User closed the window; don't fail training, just stop

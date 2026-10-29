@@ -492,6 +492,7 @@ class _NullViz:
     def set_progress_message(self, *a, **kw): pass
     def update_loss_breakdown(self, *a, **kw): pass
     def update_diet_breakdown(self, *a, **kw): pass
+    def update_predation_breakdown(self, *a, **kw): pass
     def update_action_fracs(self, *a, **kw): pass
     def update_status(self, *a, **kw): pass
     def begin_rollout_recording(self, *a, **kw): pass
@@ -804,6 +805,13 @@ class LiveVisualizer:
         # från inference.py per tick. Värden är fraktioner i [0, 1] som
         # summerar till 1 när någon konsumtion skett (annars saknas FG).
         self._diet_breakdown: Dict[str, Dict[str, float]] = {}
+        # Per-FG predation by predator (prey -> {predator: share of the
+        # prey's predation loss}), listed in the panel's hover tooltip;
+        # :meth:`update_predation_breakdown`, fed like the diet.
+        self._predation_breakdown: Dict[str, Dict[str, float]] = {}
+        # (predator id, share) behind each panel's tooltip block, rebuilt
+        # by ``_draw_one_heatmap`` every frame.
+        self._panel_predators: Dict[str, list] = {}
         # Per-FG senaste move/rest/eat-fraktioner (procent 0..100) som
         # heatmap-headern visar på raden ``mv/rs/et = X/Y/Z%``. Detta är
         # separerat från ``_series['move'|'rest'|'eat']`` så att plot-
@@ -1557,6 +1565,30 @@ class LiveVisualizer:
         except Exception as e:
             self._log_once(f"update_diet_breakdown failed: {e!r}")
 
+    def update_predation_breakdown(
+        self,
+        breakdown: Mapping[str, Mapping[str, float]],
+    ) -> None:
+        """Record per-prey predation by predator.
+
+        ``breakdown`` maps prey_fg_id -> {predator_fg_id: fraction in [0, 1]}
+        of the prey's predation loss (normalised over its predators). The
+        hover tooltip of the prey's heatmap panel lists it. A prey that was
+        not eaten is simply absent.
+        """
+        if not self.enabled:
+            return
+        try:
+            for prey_id, pred_map in breakdown.items():
+                if not isinstance(pred_map, Mapping):
+                    continue
+                self._predation_breakdown[prey_id] = {
+                    str(k): float(v) for k, v in pred_map.items()
+                }
+            self._dirty = True
+        except Exception as e:
+            self._log_once(f"update_predation_breakdown failed: {e!r}")
+
     def update_action_fracs(
         self,
         fid: str,
@@ -1914,6 +1946,7 @@ class LiveVisualizer:
         try:
             self._loss_breakdown.clear()
             self._diet_breakdown.clear()
+            self._predation_breakdown.clear()
             self._action_fracs.clear()
         except Exception as e:
             self._log_once(
@@ -2016,6 +2049,7 @@ class LiveVisualizer:
         heatmap_vmax0 = dict(self._heatmap_vmax0)
         loss = {fid: dict(v) for fid, v in self._loss_breakdown.items()}
         diet = {fid: dict(v) for fid, v in self._diet_breakdown.items()}
+        predation = {fid: dict(v) for fid, v in self._predation_breakdown.items()}
         actf = {fid: dict(v) for fid, v in self._action_fracs.items()}
         return {
             "biomass": biomass,
@@ -2024,6 +2058,7 @@ class LiveVisualizer:
             "heatmap_vmax0": heatmap_vmax0,
             "loss_breakdown": loss,
             "diet_breakdown": diet,
+            "predation_breakdown": predation,
             "action_fracs": actf,
             "tick": int(self._tick),
             "calendar": self._calendar,
@@ -3546,6 +3581,7 @@ class LiveVisualizer:
             "heatmap_vmax0": self._heatmap_vmax0,
             "loss_breakdown": self._loss_breakdown,
             "diet_breakdown": self._diet_breakdown,
+            "predation_breakdown": self._predation_breakdown,
             "action_fracs": self._action_fracs,
             "tick": self._tick,
             "calendar": self._calendar,
@@ -3562,6 +3598,7 @@ class LiveVisualizer:
         self._heatmap_vmax0 = frame.get("heatmap_vmax0", self._heatmap_vmax0)
         self._loss_breakdown = frame.get("loss_breakdown", {})
         self._diet_breakdown = frame.get("diet_breakdown", {})
+        self._predation_breakdown = frame.get("predation_breakdown", {})
         self._action_fracs = frame.get("action_fracs", {})
         self._tick = int(frame.get("tick", 0))
         self._calendar = frame.get("calendar")
@@ -3574,6 +3611,7 @@ class LiveVisualizer:
         self._heatmap_vmax0 = saved["heatmap_vmax0"]
         self._loss_breakdown = saved["loss_breakdown"]
         self._diet_breakdown = saved["diet_breakdown"]
+        self._predation_breakdown = saved["predation_breakdown"]
         self._action_fracs = saved["action_fracs"]
         self._tick = saved["tick"]
         self._calendar = saved["calendar"]
@@ -5061,7 +5099,15 @@ class LiveVisualizer:
         # species (multi-species groups) and which prey the codes on its
         # diet line stand for (``_draw_member_tooltip``).
         self._panel_legend[fid] = legend
-        if fid in self._members or legend:
+        # Who eats this group: its predation loss by predator (largest
+        # first), for the same tooltip.
+        eaten = self._predation_breakdown.get(fid) or {}
+        tot = sum(float(v) for v in eaten.values() if float(v) > 0.0)
+        predators = (sorted(((pid, float(v) / tot) for pid, v in eaten.items()
+                             if float(v) > 0.0), key=lambda kv: -kv[1])
+                     if tot > 0.0 else [])
+        self._panel_predators[fid] = predators
+        if fid in self._members or legend or predators:
             self._member_rects.append(
                 ((px, py, self._panel_w, slider_y - 2 - py), fid))
         slider_x = px + pad
@@ -6323,7 +6369,8 @@ class LiveVisualizer:
             return
         members = self._member_lines(self._members.get(fid), self._lang)
         legend = self._panel_legend.get(fid) or []
-        if not members and not legend:
+        predators = self._panel_predators.get(fid) or []
+        if not members and not legend and not predators:
             return
         lines = [(self._display_name(fid), self._fg_colour[fid])]
         lines += [(txt, (210, 210, 220)) for txt in members]
@@ -6331,6 +6378,14 @@ class LiveVisualizer:
             lines.append(None)
         lines += [(f"{code} = {meaning}", (170, 170, 185))
                   for code, meaning in legend]
+        if predators:
+            # Share of this group's predation loss by predator.
+            if members or legend:
+                lines.append(None)
+            lines.append((self._t("Eaten by"), (210, 210, 220)))
+            lines += [(f"  {self._display_name(pid)} {share * 100.0:.0f}%",
+                       self._fg_colour.get(pid, (170, 170, 185)))
+                      for pid, share in predators]
         win = (0, 0) + tuple(self._screen.get_size())
         self._draw_tooltip_box(lines, mx, my, flip_rect=win, clamp_rect=win)
 

@@ -175,6 +175,7 @@ CATALOG = {
         "mv/rs/et = {mv}/{rs}/{et}%": "fl/vi/ät = {mv}/{rs}/{et}%",
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/sv/pv/nd = {pr}/{st}/{im}/{nm}%",
+        "Eaten by": "Äts av",
         "Mode: {value}": "Läge: {value}",
         "Tpl:  {value}": "Mall: {value}",
         "(default)": "(standard)",
@@ -302,6 +303,7 @@ CATALOG = {
         "mv/rs/et = {mv}/{rs}/{et}%": "mv/rp/al = {mv}/{rs}/{et}%",
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/fa/im/mn = {pr}/{st}/{im}/{nm}%",
+        "Eaten by": "Mangiato da",
         "Mode: {value}": "Modo: {value}",
         "Tpl:  {value}": "Schema: {value}",
         "(default)": "(predefinito)",
