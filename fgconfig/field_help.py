@@ -667,6 +667,56 @@ FIELD_HELP = {
         "fixed accessible fraction phi. Annual rate = 1460 * k at 6 h "
         "ticks; infauna 2.5 /yr (0.0017 per tick), section 223.12."
     ),
+    "juvenile_stage": (
+        "Juvenile Stage (decision makers): the fish below their length at "
+        "age 1 in the third quarter, carried as a compartment J inside the "
+        "group's biomass B (lib/environments/ecosystem_env/stages.py).\n\n"
+        "J shares the energy reserve pro rata, so the fill, the hunger and "
+        "the growth budget are unchanged; it takes a share of the group's "
+        "new tonnes, graduates into the adults, is eaten per pair (Stage "
+        "Access in the interaction matrices) and fished at its own "
+        "selectivity. Every decision maker that observes the group gets "
+        "one more input channel (its J): adding or removing a stage "
+        "invalidates the checkpoints. Section 223.32."
+    ),
+    "juvenile_growth_ratio": (
+        "Growth ratio kappa: per-tonne growth of a juvenile over an adult "
+        "(> 0; empty = no juvenile stage).\n\n"
+        "New tonnes of the group go to J in the share (kappa J + rho A) / "
+        "(kappa J + rho A + A), A = B - J, read at the cell's state when "
+        "they are made. Planktivores 5.3, benthivores 4.1 (SMS weights at "
+        "age, 2013-22)."
+    ),
+    "juvenile_graduation_rate": (
+        "Graduation rate gamma (1/yr, > 0): juveniles become adults at "
+        "J <- J exp(-gamma / ticks per year) each tick, inside B.\n\n"
+        "The maturation rate of a stage-structured biomass model (de Roos "
+        "et al. 2008): (nu - mu) / (1 - z^(1 - mu/nu)), nu the juvenile "
+        "growth, mu their mortality, z the mass at entry over the mass at "
+        "graduation. A value below nu - mu lets J sustain itself. "
+        "Planktivores 0.66, benthivores 1.02 /yr."
+    ),
+    "juvenile_recruitment": (
+        "Recruitment rho by month (12 values >= 0, Jan..Dec): the weight of "
+        "the arriving 0-group per adult tonne, in units of an adult tonne's "
+        "share of the new tonnes.\n\n"
+        "Zero outside the arrival window (Jun-Sep in the box: no age 0 in "
+        "the May survey, haddock settle mid-Jul to mid-Aug). Without the "
+        "daylight calendar the annual mean applies."
+    ),
+    "juvenile_start_share": (
+        "Start share J/B (one value or 12 monthly values in [0, 1)): the "
+        "juvenile share every world starts with, read on its start day "
+        "(the annual mean without the daylight calendar)."
+    ),
+    "juvenile_fishing_selectivity": (
+        "Fishing selectivity per impact, written impact = s_J, comma-"
+        "separated (e.g. bottom_trawling = 0.15, pelagic_trawling = 4). "
+        "s_J is the fishing rate on a juvenile tonne over the group's "
+        "mean; an impact not listed has 1.\n\n"
+        "The group's loss is unchanged; J loses sum(bf s_J) J of it, "
+        "clipped to [0, min(J, the loss)]. From ICES / SMS F at age."
+    ),
     "accessible_fraction": (
         "Accessible fraction f of a predation pair (0-1], edited in "
         "fg_library.yaml.\n\n"
@@ -921,6 +971,20 @@ FIELD_HELP = {
         "predator's detection is half way between dark and light. A "
         "lower value = a predator that still sees well in twilight. "
         "Used only with a Dark Ratio < 1 and the Daylight calendar on."
+    ),
+    "matrix:stage_access": (
+        "Stage Access f_J, f_A: the share of the column group's juvenile "
+        "and of its adult tonnes this predator can reach (two values in "
+        "[0, 1]; columns are the groups with a Juvenile Stage).\n\n"
+        "The pair sees f_J J + f_A (B - J) of the prey's visible biomass, "
+        "in the functional response and in the harvest cap, and takes "
+        "from each part in that ratio; the harvest cap acts per part. "
+        "Derived from the predator's prey-size window (largest prey "
+        "length / predator length, stomach data) on the prey's stage "
+        "lengths, member-weighted for a pooled group. Empty = both parts "
+        "at the pair's accessible_fraction (1 unless set in the library); "
+        "a pair cannot carry both. Section 223.32, research_notes/"
+        "\"Arsungarnas andel\" (A-ring) parameters_B.md."
     ),
     "matrix:impact_affects": (
         "Impact Affects: checked = the row group is affected by the "

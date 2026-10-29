@@ -21470,3 +21470,14 @@ remain open exactly as described in 71.9 / 71.11.
       the stage access (wc f_J 0.43 vs f_A 0.027, seals f_J 1) eats the
       juveniles down under this behaviour; seals end year 3 at 0.85 (a
       0.48). Needs a trained run.
+    - FG editor (user, 2026-10-29): DM editor rows "Juvenile Stage"
+      (growth ratio, graduation rate, recruitment 12 values, start share
+      1 or 12, fishing selectivity "impact = s_J, ..."); empty growth
+      ratio removes the block; the block is checked with
+      stages.settings and written in place (_update_mapping). Interaction
+      tab: a "Stage Access" matrix (columns = groups with a juvenile
+      stage, cells "f_J, f_A", cell type pair_optional, enabled with
+      preys_on; empty removes the key; a pair with accessible_fraction is
+      refused and reported). Help texts in field_help.py;
+      tests/test_fgconfig_juvenile.py (parsers, live-library round trip);
+      checked visually on Xvfb. The library file was not written.

@@ -866,6 +866,34 @@ class FGConfigApp:
         ttk.Separator(self.editor_frame, orient="horizontal").grid(
             row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
         grow += 1
+
+        # Juvenile compartment (stages.py, section 223.32): the library's
+        # nested ``juvenile_stage`` block, one row per key. Empty Growth
+        # Ratio = no juvenile stage (the block is removed on Apply).
+        juvenile_lbl = ttk.Label(self.editor_frame, text="Juvenile Stage")
+        juvenile_lbl.grid(row=grow, column=0, sticky="w", padx=5, pady=2)
+        attach_help(juvenile_lbl, "juvenile_stage")
+        grow += 1
+        juvenile_rows = [
+            ("  Growth ratio kappa (juvenile / adult growth per tonne; empty = no stage)", "juvenile_growth_ratio", "entry", 0.0, 100.0),
+            ("  Graduation rate gamma (1/yr)", "juvenile_graduation_rate", "entry", 0.0, 100.0),
+            ("  Recruitment rho (12 monthly values, Jan..Dec)", "juvenile_recruitment", "entry", 0.0, 1000.0),
+            ("  Start share J/B (1 or 12 monthly values, 0-1)", "juvenile_start_share", "entry", 0.0, 1.0),
+            ("  Fishing selectivity (impact = s_J, ...; unset = 1)", "juvenile_fishing_selectivity", "entry", 0.0, 100.0),
+        ]
+        self.juvenile_vars = {}
+        for (label, key, _type, _lo, _hi) in juvenile_rows:
+            self._make_prop_label(self.editor_frame, label, help_key=key).grid(
+                row=grow, column=0, sticky="w", padx=5, pady=2)
+            var = tk.StringVar(value="")
+            entry = ttk.Entry(self.editor_frame, textvariable=var, width=40)
+            entry.grid(row=grow, column=1, sticky="ew", padx=5, pady=2)
+            attach_help(entry, key)
+            self.juvenile_vars[key] = var
+            grow += 1
+        ttk.Separator(self.editor_frame, orient="horizontal").grid(
+            row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+        grow += 1
         # Derived growth-rate breakdown (lib/world/growth_budget.py), one
         # label per budget term; filled by _update_editor_growth_display.
         self.growth_info_frame = ttk.Frame(self.editor_frame)
@@ -3492,6 +3520,26 @@ class FGConfigApp:
             f"empty threshold = {DAYLIGHT_DEFAULT_THRESHOLD_DEG:g} deg "
             "(end of civil twilight).")
 
+        # Juvenile compartments (stages.py): per-pair stage access on the
+        # groups with a juvenile_stage, "f_J, f_A"; empty = the pair's
+        # accessible_fraction (1 by default) on both parts.
+        species_defs = self.global_library.get("species_definitions", {}) or {}
+        staged = [fid for fid in fgs
+                  if isinstance(species_defs.get(fid), dict)
+                  and species_defs[fid].get("juvenile_stage")]
+        if staged:
+            stage_frame = self.create_matrix_section(
+                "Stage Access (row's share of column's juveniles, adults: f_J, f_A)",
+                "stage_access", dm_fgs, staged,
+                cell_type="pair_optional", parent=self.matrix_container)
+            self._add_matrix_note(
+                stage_frame,
+                "Only groups with a Juvenile Stage (FG Editor) are columns. "
+                "Two values in [0, 1], e.g. 0.43, 0.027: the share of the "
+                "juvenile and of the adult tonnes the row can reach (its "
+                "prey-size window). Empty = both parts at the pair's "
+                "accessible_fraction (1 unless set in the library).")
+
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
@@ -3521,7 +3569,8 @@ class FGConfigApp:
                 continue
             for dep_key in ("assimilation_factor", "handling_time",
                             "visibility_floor", "predation_mortality",
-                            "dark_ratio", "light_threshold_deg"):
+                            "dark_ratio", "light_threshold_deg",
+                            "stage_access"):
                 dep_widget = self.matrix_widgets.get(key, {}).get(dep_key)
                 if dep_widget is None:
                     continue
@@ -4065,7 +4114,7 @@ class FGConfigApp:
                     _default = 1.0
                 elif cell_type == "nonneg_float":
                     _default = 0.0
-                elif cell_type in ("unit_optional", "signed_optional"):
+                elif cell_type in ("unit_optional", "signed_optional", "pair_optional"):
                     # Empty = inherit the column FG's own species-level
                     # value; do NOT materialise an explicit default here
                     # (that would silently override every prey default).
@@ -4179,6 +4228,22 @@ class FGConfigApp:
                     vcmd = (frame.register(_validate_signed_opt), "%P")
 
                     widget = ttk.Entry(frame, textvariable=var, width=6,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "pair_optional":
+                    # Two values in [0, 1] (stage_access: f_J, f_A); empty =
+                    # no stage access. Keystrokes are free; the values are
+                    # checked when the matrix is applied.
+                    cur_val = ""
+                    if isinstance(val, (list, tuple)) and len(val) == 2:
+                        cur_val = ", ".join(f"{float(v):g}" for v in val)
+                    var = tk.StringVar(value=cur_val)
+
+                    def _validate_pair(proposed):
+                        return all(ch in "0123456789., " for ch in proposed)
+                    vcmd = (frame.register(_validate_pair), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=13,
                                        validate="key", validatecommand=vcmd)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 elif cell_type == "nonneg_float":
@@ -4504,6 +4569,8 @@ class FGConfigApp:
                     var.set(bool(val))
                 else:
                     var.set(str(val))
+            self._set_juvenile_fields(config.get("juvenile_stage")
+                                      if isinstance(config, dict) else None)
         else:
             self.editor_frame.pack_forget()
             if not self.ndm_editor_frame.winfo_ismapped():
@@ -4557,6 +4624,63 @@ class FGConfigApp:
         self._update_editor_growth_display()
         # Keep mute-button labels in sync with the freshly selected row.
         self._refresh_mute_button_labels()
+
+    def _set_juvenile_fields(self, block):
+        """Fill the Juvenile Stage rows from a library block (or clear)."""
+        def fmt(values):
+            if isinstance(values, (list, tuple)):
+                return ", ".join(f"{float(v):g}" for v in values)
+            return "" if values in (None, "") else f"{float(values):g}"
+        block = block if isinstance(block, dict) else {}
+        self.juvenile_vars["juvenile_growth_ratio"].set(fmt(block.get("growth_ratio")))
+        self.juvenile_vars["juvenile_graduation_rate"].set(fmt(block.get("graduation_rate")))
+        self.juvenile_vars["juvenile_recruitment"].set(fmt(block.get("recruitment")))
+        self.juvenile_vars["juvenile_start_share"].set(fmt(block.get("start_share")))
+        sel = block.get("fishing_selectivity") or {}
+        self.juvenile_vars["juvenile_fishing_selectivity"].set(
+            ", ".join(f"{k} = {float(v):g}" for k, v in sel.items()))
+
+    @staticmethod
+    def _collect_juvenile_block(values, group_id="?"):
+        """``(block, error)`` from the Juvenile Stage rows (a dict of
+        strings): ``(None, None)`` = no stage. The block is checked with the
+        engine's own reader (stages.settings)."""
+        kappa = str(values.get("juvenile_growth_ratio", "") or "").strip()
+        if kappa in ("", "0", "0.0"):
+            return None, None
+
+        def numbers(text):
+            return [float(v) for v in str(text or "").split(",") if v.strip()]
+        try:
+            block = {"growth_ratio": float(kappa),
+                     "graduation_rate": float(str(values.get("juvenile_graduation_rate", "")).strip()),
+                     "recruitment": numbers(values.get("juvenile_recruitment")),
+                     }
+            start = numbers(values.get("juvenile_start_share"))
+            block["start_share"] = start[0] if len(start) == 1 else start
+            selectivity = {}
+            for part in str(values.get("juvenile_fishing_selectivity", "") or "").split(","):
+                if not part.strip():
+                    continue
+                name, _, number = part.partition("=")
+                if not name.strip() or not number.strip():
+                    raise ValueError(f"fishing selectivity '{part.strip()}': write impact = value")
+                selectivity[name.strip()] = float(number)
+        except ValueError as exc:
+            return None, f"Juvenile Stage: {exc}"
+        if selectivity:
+            block["fishing_selectivity"] = selectivity
+        from lib.environments.ecosystem_env import stages as _stages
+
+        class _Probe:
+            is_decision_maker = True
+            params = {"juvenile_stage": block}
+        _Probe.group_id = group_id
+        try:
+            _stages.settings(_Probe())
+        except ValueError as exc:
+            return None, str(exc)
+        return block, None
 
     # Optional species fields whose absence and 0 mean the same thing
     # (off / module default). An empty editor field is written as 0.0,
@@ -5027,6 +5151,18 @@ class FGConfigApp:
             fg_entry["initial_biomass_min"] = int(initial_biomass_min_val)
             fg_entry["initial_biomass_max"] = int(initial_biomass_max_val)
 
+        # Juvenile Stage (stages.py): checked here, written after the merge
+        # (in place, so the block keeps its comments).
+        juvenile_block = None
+        if is_dm:
+            juvenile_block, juvenile_error = self._collect_juvenile_block(
+                {k: v.get() for k, v in self.juvenile_vars.items()}, fg_id)
+            if juvenile_error:
+                messagebox.showerror("Invalid Juvenile Stage",
+                                     juvenile_error + "\n\nNo changes were saved.")
+                return
+            config.pop("juvenile_stage", None)
+
         # Sync remaining fields with global library - in place, so the
         # entry keeps its comments and untouched number formatting.
         refuge_off = False
@@ -5064,6 +5200,13 @@ class FGConfigApp:
         if refuge_off:
             target.pop("exposed_share", None)
             target.pop("refuge_exchange_rate", None)
+        if is_dm:
+            if juvenile_block is None:
+                target.pop("juvenile_stage", None)
+            elif isinstance(target.get("juvenile_stage"), dict):
+                self._update_mapping(target["juvenile_stage"], juvenile_block)
+            else:
+                target["juvenile_stage"] = juvenile_block
         self.current_fg_configs[fg_id] = target
 
         # ``energy_gain`` är legacy och varken läses av runtime
@@ -5110,9 +5253,29 @@ class FGConfigApp:
                 f"saved on project entry (remember to Save Project).",
             )
 
+    @staticmethod
+    def _parse_stage_access(text, entry):
+        """``(pair, error)`` of a Stage Access cell: ``([f_J, f_A], None)``,
+        ``(None, None)`` for an empty cell, or ``(None, message)``."""
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        try:
+            values = [float(v) for v in text.split(",") if v.strip()]
+        except ValueError:
+            values = []
+        if (len(values) != 2 or not all(0.0 <= v <= 1.0 for v in values)
+                or sum(values) <= 0.0):
+            return None, "two values in [0, 1] (f_J, f_A), not both 0"
+        if entry.get("accessible_fraction") not in (None, ""):
+            return None, ("the pair has an accessible_fraction; give either "
+                          "it or a stage access")
+        return values, None
+
     def apply_matrix_changes(self):
         if "interaction_definitions" not in self.global_library:
             self.global_library["interaction_definitions"] = {}
+        stage_errors = []
             
         for key, data in self.matrix_entries.items():
             if key not in self.global_library["interaction_definitions"]:
@@ -5120,6 +5283,18 @@ class FGConfigApp:
             
             for data_key, var in data.items():
                 entry = self.global_library["interaction_definitions"][key]
+                if data_key == "stage_access":
+                    pair, error = self._parse_stage_access(var.get(), entry)
+                    if error:
+                        stage_errors.append(f"{key}: {error}")
+                    elif pair is None:
+                        entry.pop("stage_access", None)
+                    elif not (isinstance(entry.get("stage_access"), (list, tuple))
+                              and len(entry["stage_access"]) == 2
+                              and all(self._same_value(o, v) for o, v in
+                                      zip(entry["stage_access"], pair))):
+                        entry["stage_access"] = pair
+                    continue
                 if isinstance(var, tk.BooleanVar):
                     if not (data_key in entry and entry[data_key] == bool(var.get())):
                         entry[data_key] = bool(var.get())
@@ -5163,6 +5338,9 @@ class FGConfigApp:
         changed = self._sync_derived_growth_rates()
         self.save_yaml(self.global_library, self.library_path)
         msg = "Updated interactions and saved to library."
+        if stage_errors:
+            msg += ("\n\nStage Access cells NOT saved (left as they were):\n  "
+                    + "\n  ".join(stage_errors))
         if changed:
             msg += ("\n\nDerived growth_rate updated:\n  "
                     + "\n  ".join(changed))
