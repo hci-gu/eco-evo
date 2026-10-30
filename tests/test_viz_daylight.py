@@ -76,7 +76,7 @@ def frame_pixel(v):
     """A pixel on the daylight frame, left of the heatmap's top row."""
     from lib.viz.pygame_viz import _LIGHT_FRAME_PX
     ox, oy = v._heatmap_origin
-    hm_x, hm_y = ox + 4, oy + 104
+    hm_x, hm_y = ox + 4, oy + v._TITLE_H
     return tuple(v._screen.get_at((hm_x - _LIGHT_FRAME_PX, hm_y + 5)))[:3]
 
 

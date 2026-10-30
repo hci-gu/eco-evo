@@ -22007,3 +22007,20 @@ remain open exactly as described in 71.9 / 71.11.
     223.26 encounter convention, which the other groups keep. No growth
     change (night/day is outside the budget). test_half_saturation light
     setting updated.
+
+229 VIEWER: JUVENILE SHARE ON THE HEATMAP INFO LINES (user, 2026-10-31)
+    Every group with a juvenile compartment (223.32; planktivores,
+    benthivores) shows "Juveniles: NN %" (sv "Juveniler", it "Giovanili")
+    on a sixth info line above its heatmap: J / B over the grid, read off
+    the FG objects (fg.juvenile) in LiveVisualizer.update_biomass, so the
+    training probe, the GPU viewer's probe and inference all get it with
+    no new feed; it rides in the recorded frames (capture / swap in / out).
+    The info block is one line taller for every panel (LiveVisualizer.
+    _TITLE_H 104 -> 118; the impact panels share it so the tabs line up);
+    groups without a stage leave the line blank. First placed in the
+    hover tooltip, moved to the info lines (user). Tests in
+    tests/test_viz_member_species.py; test_viz_daylight and
+    test_viz_normalisation read _TITLE_H instead of 104. pytest 1599
+    passed / 12 skipped. Checked on DISPLAY :1 with an inference run on
+    the 228.3 smoke policies: "Juveniler: 8 %" (benthivores) and 27 %
+    (planktivores) at tick 505.

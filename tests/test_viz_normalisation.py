@@ -50,9 +50,9 @@ def hot_pixel(viewer, cell=(1, 2)):
     """The rendered colour of ``cell`` in the first FG's heatmap."""
     viewer._render_full()
     ox, oy = viewer._heatmap_origin
-    # _draw_one_heatmap: hm_x = px + pad (4), hm_y = py + title_h (104).
+    # _draw_one_heatmap: hm_x = px + pad (4), hm_y = py + title_h.
     x = ox + 4 + int((cell[1] + 0.5) * viewer.cell_px)
-    y = oy + 104 + int((cell[0] + 0.5) * viewer.cell_px)
+    y = oy + viewer._TITLE_H + int((cell[0] + 0.5) * viewer.cell_px)
     return tuple(viewer._screen.get_at((x, y)))[:3]
 
 

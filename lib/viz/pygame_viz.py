@@ -561,6 +561,11 @@ class LiveVisualizer:
     # dropped and the capture stride doubles, so a 100000-tick inference
     # rollout is still a film with evenly spaced frames (stride 16).
     _MAX_ROLLOUT_FRAMES = 10000
+    # Height of the info block above every panel's heatmap: six 14-px info
+    # lines, the b0 slider and spacing (the sixth line, the juvenile share,
+    # added 14 px to the old 104; the impact panels share it so the tabs
+    # line up).
+    _TITLE_H = 118
 
     def __new__(cls, *args, **kwargs):
         # Linux headless fallback. macOS/Windows native displays do not use
@@ -830,6 +835,10 @@ class LiveVisualizer:
         # prey's predation loss}), listed in the panel's hover tooltip;
         # :meth:`update_predation_breakdown`, fed like the diet.
         self._predation_breakdown: Dict[str, Dict[str, float]] = {}
+        # Share of each staged group's biomass in its juvenile compartment
+        # (section 223.32), read off the FG objects in ``update_biomass``
+        # and written on the panel's sixth info line.
+        self._juvenile_share: Dict[str, float] = {}
         # (predator id, share) behind each panel's tooltip block, rebuilt
         # by ``_draw_one_heatmap`` every frame.
         self._panel_predators: Dict[str, list] = {}
@@ -1046,14 +1055,16 @@ class LiveVisualizer:
                          for _t, g in self._hm_groups)
         hm_w = self.grid_w * self.cell_px
         hm_h = self.grid_h * self.cell_px
-        # Five info lines above the heatmap: FG id, 'B0 = ... B = ...',
-        # 'mv/rs/et = ...' (DM only), 'pr/st = ...' (DM only), and the
-        # diet breakdown '<abbr>/<abbr>/... = X/Y/...%' (DM only), followed
-        # by a horizontal b0 slider between the info block and heatmap.
+        # Six info lines above the heatmap: FG id, 'B0 = ... B = ...',
+        # 'mv/rs/et = ...' (DM only), 'pr/st = ...' (DM only), the diet
+        # breakdown '<abbr>/<abbr>/... = X/Y/...%' (DM only) and the
+        # juvenile share 'Juveniles: NN %' (groups with a juvenile stage),
+        # followed by a horizontal b0 slider between the info block and
+        # heatmap.
         # NDM panels leave the three action/loss/diet lines blank to keep
         # heatmap origin aligned across panels.
-        # title_h = 5 textrader (~14 px var) + slider (~22 px) + luft.
-        title_h = 104
+        # title_h = 6 info lines (14 px each) + slider (~22 px) + spacing.
+        title_h = self._TITLE_H
         self._slider_h = 16
         cbar_h = 16  # colorbar strip (gradient + 0/max labels)
         # Två extra rader under colorbaren: "Mode: …" och "Tpl: …".
@@ -1367,6 +1378,14 @@ class LiveVisualizer:
                 total = float(arr.sum())
                 self._biomass[fid] = arr
                 self._totals[fid] = total
+                juv = getattr(obj, "juvenile", None)
+                b_all = float(np.asarray(obj.biomass, dtype=np.float64).sum()) \
+                    if juv is not None else 0.0
+                if juv is not None and b_all > 0.0:
+                    self._juvenile_share[fid] = min(1.0, max(
+                        0.0, float(np.asarray(juv, dtype=np.float64).sum()) / b_all))
+                else:
+                    self._juvenile_share.pop(fid, None)
                 if new_rollout or self._heatmap_vmax0.get(fid, 0.0) <= 0.0:
                     self._b0[fid] = total
                     try:
@@ -2162,6 +2181,7 @@ class LiveVisualizer:
         loss = {fid: dict(v) for fid, v in self._loss_breakdown.items()}
         diet = {fid: dict(v) for fid, v in self._diet_breakdown.items()}
         predation = {fid: dict(v) for fid, v in self._predation_breakdown.items()}
+        juvenile = dict(self._juvenile_share)
         actf = {fid: dict(v) for fid, v in self._action_fracs.items()}
         return {
             "biomass": biomass,
@@ -2171,6 +2191,7 @@ class LiveVisualizer:
             "loss_breakdown": loss,
             "diet_breakdown": diet,
             "predation_breakdown": predation,
+            "juvenile_share": juvenile,
             "action_fracs": actf,
             "tick": int(self._tick),
             "calendar": self._calendar,
@@ -3731,6 +3752,7 @@ class LiveVisualizer:
             "loss_breakdown": self._loss_breakdown,
             "diet_breakdown": self._diet_breakdown,
             "predation_breakdown": self._predation_breakdown,
+            "juvenile_share": self._juvenile_share,
             "action_fracs": self._action_fracs,
             "tick": self._tick,
             "calendar": self._calendar,
@@ -3748,6 +3770,7 @@ class LiveVisualizer:
         self._loss_breakdown = frame.get("loss_breakdown", {})
         self._diet_breakdown = frame.get("diet_breakdown", {})
         self._predation_breakdown = frame.get("predation_breakdown", {})
+        self._juvenile_share = frame.get("juvenile_share", {})
         self._action_fracs = frame.get("action_fracs", {})
         self._tick = int(frame.get("tick", 0))
         self._calendar = frame.get("calendar")
@@ -3761,6 +3784,7 @@ class LiveVisualizer:
         self._loss_breakdown = saved["loss_breakdown"]
         self._diet_breakdown = saved["diet_breakdown"]
         self._predation_breakdown = saved["predation_breakdown"]
+        self._juvenile_share = saved["juvenile_share"]
         self._action_fracs = saved["action_fracs"]
         self._tick = saved["tick"]
         self._calendar = saved["calendar"]
@@ -5198,7 +5222,7 @@ class LiveVisualizer:
         # followed by a b0 slider. An NDM has no actions, diet, M1 or
         # starvation: its third line is its loss breakdown 'pr/im = ...'
         # (eaten / impacts such as bottom trawling) and the rest is blank.
-        title_h = 104
+        title_h = self._TITLE_H
         arr = self._biomass.get(fid)
         legend: list = []
         # Panel background.
@@ -5317,6 +5341,17 @@ class LiveVisualizer:
                                 legend += [(a, self._display_name(pid))
                                            for a, (pid, _v)
                                            in zip(abbrs, items)]
+
+        # Sixth info line: the juvenile share of a group with a juvenile
+        # stage (section 223.32), at a fixed position so every panel's
+        # heatmap stays aligned whichever lines above are blank.
+        juv = self._juvenile_share.get(fid)
+        if juv is not None:
+            line_h = self._font.get_linesize()
+            juv_surf = self._font.render(
+                self._t("Juveniles: {pct} %", pct=f"{juv * 100.0:.0f}"),
+                True, info_col)
+            self._screen.blit(juv_surf, (px + pad, py + 1 + 5 * line_h))
 
         # ---- b0-slider --------------------------------------------------
         # Horisontell slider placerad mellan info-blocket ovanför och själva
@@ -5545,7 +5580,7 @@ class LiveVisualizer:
         laid out as an FG panel so the two tabs line up."""
         pg = self._pg
         pad = 4
-        title_h = 104
+        title_h = self._TITLE_H
         base = self._impact_maps.get(iid)
         if base is None:
             return

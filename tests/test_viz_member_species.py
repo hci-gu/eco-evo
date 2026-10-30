@@ -215,3 +215,71 @@ def test_an_uneaten_single_species_group_gets_a_tooltip_once_eaten(viz, monkeypa
     viz._lang = "sv"
     viz._render_full()
     assert "Äts av" in hover_lines(viz, SINGLE, monkeypatch)
+
+
+
+class _RecordingFont:
+    """Wraps the viewer's font and records every rendered text."""
+
+    def __init__(self, font):
+        self._font, self.texts = font, []
+
+    def render(self, text, *a, **kw):
+        self.texts.append(text)
+        return self._font.render(text, *a, **kw)
+
+    def __getattr__(self, name):
+        return getattr(self._font, name)
+
+
+def staged_group(members, share):
+    g = group(members)
+    g.juvenile = g.biomass * np.float32(share)
+    return g
+
+
+def test_a_staged_group_writes_its_juvenile_share_on_the_sixth_info_line(viz):
+    """A group with a juvenile compartment (section 223.32) gets a sixth
+    info line 'Juveniles: NN %', read off the FG object in
+    ``update_biomass``; a group without one leaves the line blank."""
+    viz.update_biomass({MULTI: staged_group(None, 0.3), SINGLE: group(None)}, tick=2)
+    assert viz._juvenile_share == pytest.approx({MULTI: 0.3})
+    rec = _RecordingFont(viz._font)
+    viz._font = rec
+    viz._render_full()
+    assert rec.texts.count("Juveniles: 30 %") == 1
+    viz._lang = "sv"
+    rec.texts.clear()
+    viz._render_full()
+    assert "Juveniler: 30 %" in rec.texts
+    assert not any(t.startswith("Juveniles") for t in rec.texts)
+
+
+def test_the_info_block_holds_six_lines_above_the_slider(viz):
+    line_h = viz._font.get_linesize()
+    for (x, y, w, h), _fid in viz._member_rects:
+        # The hover rect spans the info lines and stops above the slider.
+        assert h >= 6 * line_h
+
+
+def test_the_juvenile_share_is_not_in_the_hover_tooltip(viz, monkeypatch):
+    viz.update_biomass({MULTI: staged_group(
+        [{"name": "haddock", "share": 0.386}, {"name": "cod", "share": 0.314},
+         {"name": "others", "count": 43, "share": 0.3}], 0.3),
+        SINGLE: group(None)}, tick=2)
+    viz._render_full()
+    assert hover_lines(viz, MULTI, monkeypatch) == [
+        "Benthivorous fish", "Haddock  39 %", "Cod  31 %",
+        "Others (43 species)  30 %"]
+
+
+def test_the_juvenile_share_rides_in_the_recorded_frames(viz):
+    viz.update_biomass({MULTI: staged_group(None, 0.4), SINGLE: group(None)}, tick=2)
+    frame = viz._capture_frame()
+    assert frame["juvenile_share"] == pytest.approx({MULTI: 0.4})
+    viz.update_biomass({MULTI: group(None), SINGLE: group(None)}, tick=3)
+    assert MULTI not in viz._juvenile_share
+    saved = viz._swap_in_frame(frame)
+    assert viz._juvenile_share == pytest.approx({MULTI: 0.4})
+    viz._swap_out_frame(saved)
+    assert MULTI not in viz._juvenile_share

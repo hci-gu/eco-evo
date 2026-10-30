@@ -189,6 +189,7 @@ CATALOG = {
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/sv/pv/nd = {pr}/{st}/{im}/{nm}%",
         "Eaten by": "Äts av",
+        "Juveniles: {pct} %": "Juveniler: {pct} %",
         "Mode: {value}": "Läge: {value}",
         "Tpl:  {value}": "Mall: {value}",
         "(default)": "(standard)",
@@ -328,6 +329,7 @@ CATALOG = {
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/fa/im/mn = {pr}/{st}/{im}/{nm}%",
         "Eaten by": "Mangiato da",
+        "Juveniles: {pct} %": "Giovanili: {pct} %",
         "Mode: {value}": "Modo: {value}",
         "Tpl:  {value}": "Schema: {value}",
         "(default)": "(predefinito)",
