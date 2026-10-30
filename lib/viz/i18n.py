@@ -162,6 +162,8 @@ CATALOG = {
         # Playback bar.
         "resume train": "fortsätt",
         "pause train": "pausa",
+        "pause inference": "pausa inferens",
+        "resume inference": "fortsätt inferens",
         "rec ({n})": "insp ({n})",
         "no capture": "ingen insp",
         "live  (saved frames: {n})": "live  (bilder: {n})",
@@ -299,6 +301,8 @@ CATALOG = {
         # Playback bar.
         "resume train": "riprendi",
         "pause train": "pausa",
+        "pause inference": "pausa inferenza",
+        "resume inference": "riprendi inferenza",
         "rec ({n})": "reg ({n})",
         "no capture": "no reg",
         "live  (saved frames: {n})": "live  (fotogrammi: {n})",

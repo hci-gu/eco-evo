@@ -116,11 +116,18 @@ _PROBE_TABS = ("progress", "viability")
 # 223.21): the "progress" tab shows one long run of the frozen policies,
 # not training progress. The id, <run>/progress and probe.jsonl stay.
 _TAB_NAMES = {"progress": "long run"}
+# The run-pause button's labels per viewer mode (section 226): it pauses
+# the training loop or the inference rollout, not the recorded film.
+_RUN_PAUSE_LABELS = {"train": ("pause train", "resume train"),
+                     "inference": ("pause inference", "resume inference")}
 # Slider key prefix of an impact map's intensity slider (section 224):
 # those sliders share ``_slider_rects`` and the drag with the b0 sliders.
 _IMPACT_KEY = "impact:"
 # Intensity slider range of an impact map (multiplier of the loaded field).
-_IMPACT_SCALE_MAX = 4.0
+_IMPACT_SCALE_MAX = 10.0
+# A slider knob within this many pixels of the tick mark (the default b0,
+# or 1x on an intensity slider) snaps onto it (section 225.4).
+_SLIDER_SNAP_PX = 5
 # English labels of the project's impact ids, the keys of their
 # translations; any other id is shown as its words.
 _IMPACT_NAMES = {"bottom_trawling": "Bottom trawling",
@@ -1703,7 +1710,7 @@ class LiveVisualizer:
     def set_impact_maps(self, maps: Mapping[str, np.ndarray],
                         units: Optional[Mapping[str, str]] = None) -> None:
         """Show ``maps`` ({impact_id: (H, W) field at scale 1}) on the
-        Impacts heatmap tab, each with an intensity slider ``[0, 4]x``.
+        Impacts heatmap tab, each with an intensity slider ``[0, 10]x``.
         All-zero fields are left out; an empty dict hides the tab."""
         if not self.enabled:
             return
@@ -2773,11 +2780,13 @@ class LiveVisualizer:
         if fid.startswith(_IMPACT_KEY):
             # An intensity slider: the multiplier, linear over the track.
             v_max = _IMPACT_SCALE_MAX
+            v_tick = 1.0
         else:
             b0_default = self._b0_defaults.get(fid)
             if b0_default is None or b0_default <= 0.0:
                 return None
             v_max = 4.0 * float(b0_default)
+            v_tick = float(b0_default)
         # Slider-tracken börjar vid panel_x + 4 (pad) och har bredden
         # grid_w * cell_px. Vi söker upp track-rektangeln via senaste
         # registrerade hit_rect så vi inte måste duplicera layout-mat.
@@ -2788,6 +2797,9 @@ class LiveVisualizer:
             # Justera tillbaka för det 2-px padding vi la till runt hit_rect.
             track_x = rx + 2
             track_w = rw - 4
+            # Near the tick mark the knob snaps onto it.
+            if abs(mx - (track_x + track_w * v_tick / v_max)) <= _SLIDER_SNAP_PX:
+                return v_tick
             frac = (mx - track_x) / max(1.0, float(track_w))
             frac = max(0.0, min(1.0, frac))
             return frac * v_max
@@ -3756,11 +3768,14 @@ class LiveVisualizer:
     def _draw_playback_bar(self) -> None:
         """Rita uppspelningskontroller under heatmap-griden.
 
-        Layout: [<<] [play/pause] [>>] [-]  speed=X fps  [+]   pause train
-                frame = i/N  (blinkar när ny film finns)
+        Layout: [<<] [play/pause] [>>] [-]  speed=X fps  [+]  ===scrub===
+                frame = i/N  (blinkar när ny film finns)  |  [pause run]
 
         Knapparna är gråa (disabled) medan en probe pågår
-        (``_recording = True``) eller om ingen film finns ännu.
+        (``_recording = True``) eller om ingen film finns ännu. The film
+        controls are one unit; the run's own pause (training, or the
+        inference rollout, section 226) is a separate segment at the
+        right end, always active - also with capture off.
         """
         pg = self._pg
         x, y, w, h = self._playback_rect
@@ -3788,17 +3803,35 @@ class LiveVisualizer:
             (f"{self._playback_fps:.0f} fps", None, 60),
             ("+", "speed_up", 24),
         ]
-        # Paus/resume av själva träningsloopen visas endast i train-läge.
-        # Vid inferens finns ingen träning att pausa — inference-loopen
-        # är redan klar när ``wait_for_close`` körs och uppspelnings-
-        # kontrollerna (|>, <<, >>) räcker för att granska filmen.
-        if self.mode == "train":
-            buttons.append(
-                ("resume train" if self._paused else "pause train",
-                 "toggle_train_pause", 100)
-            )
-
         self._playback_rects = []
+        # The run's pause (section 226): pauses the training loop, or the
+        # inference rollout itself - not the film. Its own segment at the
+        # right end, set off from the film controls by a divider, sized
+        # by the widest label in any language so nothing moves.
+        unit_right = x + w
+        run_labels = _RUN_PAUSE_LABELS.get(self.mode)
+        if run_labels is not None:
+            pause_lbl, resume_lbl = run_labels
+            pw = max(self._t_width(self._font, pause_lbl),
+                     self._t_width(self._font, resume_lbl)) + 16
+            prect = (x + w - 8 - pw, y + (h - 22) // 2, pw, 22)
+            unit_right = prect[0] - 10
+            pg.draw.rect(self._screen, (30, 28, 36),
+                         (unit_right, y + 1, x + w - unit_right, h - 1))
+            pg.draw.line(self._screen, (90, 90, 105),
+                         (unit_right, y + 4), (unit_right, y + h - 4), 1)
+            if self._paused:
+                bg, border = (90, 50, 50), (200, 100, 100)
+            else:
+                bg, border = (50, 50, 60), (90, 90, 105)
+            pg.draw.rect(self._screen, bg, prect)
+            pg.draw.rect(self._screen, border, prect, 1)
+            surf = self._font.render(
+                self._t(resume_lbl if self._paused else pause_lbl), True,
+                (235, 235, 245))
+            self._screen.blit(surf, (prect[0] + (pw - surf.get_width()) // 2,
+                                     prect[1] + (22 - surf.get_height()) // 2))
+            self._playback_rects.append((prect, "toggle_train_pause"))
         bx = x + 8
         by = y + (h - 22) // 2
         for label, action, bw in buttons:
@@ -3812,15 +3845,12 @@ class LiveVisualizer:
                                    by + (22 - surf.get_height()) // 2))
                 bx += bw + 4
                 continue
-            # Knappfärg. ``toggle_train_pause`` är alltid aktiv (även
-            # under recording / utan film), så den hanteras separat.
-            always_active = (action == "toggle_train_pause")
-            if disabled and not always_active:
+            if disabled:
                 bg = (40, 40, 46)
                 fg = (110, 110, 120)
                 border = (60, 60, 70)
             else:
-                if blink_on and not always_active:
+                if blink_on:
                     bg = (90, 70, 30)
                     border = (220, 180, 60)
                 else:
@@ -3830,10 +3860,6 @@ class LiveVisualizer:
                 # Highlight aktiv play-toggle.
                 if action == "toggle_play" and is_playing:
                     bg = (60, 90, 60)
-                # Highlight när träningen är pausad.
-                if action == "toggle_train_pause" and self._paused:
-                    bg = (90, 50, 50)
-                    border = (200, 100, 100)
             pg.draw.rect(self._screen, bg, rect)
             pg.draw.rect(self._screen, border, rect, 1)
             surf = self._font.render(self._t(label), True, fg)
@@ -3875,7 +3901,7 @@ class LiveVisualizer:
                 self._t_width(self._font, frame_t, i=_max_n, n=_max_n),
                 self._t_width(self._font, rec_t, n=n_pending),
                 self._t_width(self._font, off_t))
-            ind_zone_left = x + w - _ind_reserve_w - 10
+            ind_zone_left = unit_right - _ind_reserve_w - 10
             if ind_zone_left - 10 - track_x >= self._MIN_SCRUB_W:
                 break
         self._playback_compact = compact
@@ -3890,7 +3916,7 @@ class LiveVisualizer:
         ind_surf = self._font.render(ind, True, (200, 200, 215))
         # Höger-justera den faktiska texten inom den reserverade zonen
         # så att den alltid hamnar vid samma högerkant.
-        ind_x = x + w - ind_surf.get_width() - 10
+        ind_x = unit_right - ind_surf.get_width() - 10
         self._screen.blit(ind_surf,
                           (ind_x,
                            y + (h - ind_surf.get_height()) // 2))
@@ -5514,7 +5540,7 @@ class LiveVisualizer:
 
     def _draw_one_impact_map(self, iid: str, px: int, py: int) -> None:
         """An impact map's panel on the Impacts tab (section 224): its
-        name, intensity and effort, the intensity slider (``[0, 4]x``,
+        name, intensity and effort, the intensity slider (``[0, 10]x``,
         the loaded map at the tick mark) and the field at that intensity,
         laid out as an FG panel so the two tabs line up."""
         pg = self._pg

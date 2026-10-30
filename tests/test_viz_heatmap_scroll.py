@@ -377,7 +377,7 @@ def test_status_sliders_stay_put_when_the_plot_folds(monkeypatch):
 @pytest.mark.parametrize("mode", ["train", "inference"])
 def test_scrub_slider_stays_draggable_with_the_plot_folded(monkeypatch, mode):
     """Folded, the window is too narrow for the full frame indicator
-    beside the train buttons; the indicator goes compact so the scrub
+    beside the run-pause button; the indicator goes compact so the scrub
     slider keeps its room (section 191)."""
     monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
     monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
@@ -397,8 +397,9 @@ def test_scrub_slider_stays_draggable_with_the_plot_folded(monkeypatch, mode):
         viewer._handle_key(viewer._pg.K_p)
         viewer._render_full()
         assert viewer._plot_collapsed
-        # The train buttons leave no room for the full texts.
-        assert viewer._playback_compact == (mode == "train")
+        # The run-pause segment (both modes since section 226) leaves no
+        # room for the full texts.
+        assert viewer._playback_compact
         track = viewer._playback_track_rect
         assert track is not None
         assert track[2] >= 60 and track[0] + track[2] <= viewer._win_w

@@ -21797,3 +21797,41 @@ remain open exactly as described in 71.9 / 71.11.
     the Swedish letter, it "Riavvia alla modifica"), translated like every
     viewer string (lib/viz/i18n.py); it fits the narrowest panel (196 px)
     in all three languages.
+225.3 The intensity sliders span [0, 10]x (was [0, 4]x; user,
+    `_IMPACT_SCALE_MAX`). Both trawling tables stay linear over it: 10x
+    puts the bottom-trawl map's maximum at 96 (table endpoint 100) and the
+    pelagic map's at 4.3 (endpoint 10), so nothing is clipped. The 1x tick
+    mark sits a tenth along the track.
+225.4 Slider snap (user): a b0 slider or an intensity slider whose knob
+    comes within `_SLIDER_SNAP_PX` (5 px) of its tick mark takes exactly
+    the tick value - the default start biomass, or 1x - so the loaded
+    state is easy to get back (`_slider_value_from_x`; one track pixel is
+    ~0.05x on the [0, 10]x track). Outside the window the track stays
+    linear. tests/test_viz_impact_tab.py.
+
+226 VIEWER: THE RUN'S PAUSE BUTTON (2026-10-30)
+    User: a pause button in the inference viewer that pauses / resumes the
+    inference rollout itself - distinct from the recorded film's
+    play/pause - always clickable, also with --no-capture; the playback
+    toolbar at the bottom is one unit and the run pause sits clearly set
+    off to the right of it.
+    - The mechanism was there: pump_events blocks in its pause loop while
+      `_paused` is set (Space toggles it), and run_inference calls
+      pump_events every tick, so a paused rollout holds its tick; the
+      window stays live (sliders, tabs, plot). Only the button was
+      missing in inference mode.
+    - `_draw_playback_bar`: the film controls (transport buttons, scrub
+      slider, frame indicator) end at a divider; right of it a segment of
+      its own holds the run pause, "pause inference" / "resume inference"
+      (sv "pausa inferens" / "fortsatt inferens", it "pausa inferenza" /
+      "riprendi inferenza"), red while paused. Labels per mode in
+      `_RUN_PAUSE_LABELS`; the training viewer's "pause train" moved into
+      the same segment (it sat among the film buttons). Width = the
+      widest label in any language, so neither the label switch nor the
+      language moves a control. Action id still `toggle_train_pause`,
+      exempt from the film controls' disabled state.
+    - A change that asks for a restart while paused takes effect on
+      resume; pausing during the end-of-run wait holds the next
+      (continued or restarted) rollout at its first tick.
+    - Verified on DISPLAY :1 with --no-capture: paused at tick 8, still 8
+      two seconds later, resumed to 68. tests/test_viz_run_pause.py.

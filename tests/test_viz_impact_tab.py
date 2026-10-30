@@ -2,7 +2,7 @@
 
 The inference viewer shows the functional groups on one heatmap tab and
 the impact maps (the world's trawling fields) on another. Each map has a
-slider scaling its intensity in [0, 4]x; releasing it flags a new rollout,
+slider scaling its intensity in [0, 10]x; releasing it flags a new rollout,
 and inference.apply_impact_scales sets the world's map to scale x the
 loaded field.
 """
@@ -80,11 +80,11 @@ def test_intensity_slider_sets_scale_and_flags_rerun(viz):
     rect = next(r for r, k in viz._slider_rects
                 if k == _IMPACT_KEY + "bottom_trawling")
     track_x, track_w = rect[0] + 2, rect[2] - 4
-    # Half the track is 2x.
+    # Half the track is 5x.
     viz._handle_click((track_x + track_w // 2, rect[1] + rect[3] // 2))
     assert viz._dragging_slider == _IMPACT_KEY + "bottom_trawling"
     viz._slider_release()
-    assert viz.get_impact_scales()["bottom_trawling"] == pytest.approx(2.0, abs=0.05)
+    assert viz.get_impact_scales()["bottom_trawling"] == pytest.approx(5.0, abs=0.1)
     # The impact slider never leaks into the b0 overrides.
     assert viz.get_b0_overrides() == {}
     assert viz.consume_b0_change() is False
@@ -156,3 +156,30 @@ def test_resumed_recording_keeps_the_film_and_series(viz):
     viz.end_rollout_recording()
     assert len(viz._current_rollout) == n + 1
     assert len(viz._series["biomass"]["zooplankton"]) == 4
+
+
+def test_sliders_snap_to_their_tick_mark(viz):
+    """Section 225.4: near the tick mark (1x on an intensity slider, the
+    default on a b0 slider) the slider takes exactly that value."""
+    from lib.viz.pygame_viz import _IMPACT_KEY, _SLIDER_SNAP_PX
+    viz.set_impact_maps(trawl_maps())
+    viz._render_full()
+    fid = DMS[0]
+    rect = next(r for r, k in viz._slider_rects if k == fid)
+    track_x, track_w = rect[0] + 2, rect[2] - 4
+    tick = track_x + track_w * 0.25
+    for dx in (1 - _SLIDER_SNAP_PX, 0, _SLIDER_SNAP_PX - 1):
+        assert viz._slider_value_from_x(fid, int(round(tick + dx))) == 10.0
+    assert viz._slider_value_from_x(fid, int(tick) + _SLIDER_SNAP_PX + 3) > 10.0
+    viz._set_hm_tab("impacts")
+    viz._render_full()
+    key = _IMPACT_KEY + "bottom_trawling"
+    rect = next(r for r, k in viz._slider_rects if k == key)
+    track_x, track_w = rect[0] + 2, rect[2] - 4
+    tick = track_x + track_w / 10.0
+    for dx in (1 - _SLIDER_SNAP_PX, 0, _SLIDER_SNAP_PX - 1):
+        assert viz._slider_value_from_x(key, int(round(tick + dx))) == 1.0
+    assert viz._slider_value_from_x(key, int(tick) - _SLIDER_SNAP_PX - 3) < 1.0
+    # Far from the mark the track stays linear.
+    assert viz._slider_value_from_x(key, track_x) == 0.0
+    assert viz._slider_value_from_x(key, track_x + track_w) == 10.0
