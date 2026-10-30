@@ -185,7 +185,7 @@ def test_library_members_reach_the_fg_params():
     assert names[0] == "herring"
     shares = [m["share"] for m in fgs["planktivorous_fish"].params["member_species"]]
     assert abs(sum(shares) - 1.0) < 1e-6
-    for fid in ("benthivorous_fish", "predatory_fish"):
+    for fid in ("benthivorous_fish", "predatory_fish", "mackerel"):
         shares = [m["share"] for m in fgs[fid].params["member_species"]]
         assert abs(sum(shares) - 1.0) < 0.01, fid
     # Single-species groups carry no list.

@@ -66,14 +66,18 @@ def test_fishing_tables_are_linear_from_zero(key):
 
 
 @pytest.mark.parametrize("fg,total", [("benthivorous_fish", 0.1704),
-                                      ("predatory_fish", 0.2128243650582523 + 0.029092991818223186),
+                                      ("predatory_fish", 0.2597973656196191),
+                                      ("mackerel", 0.012313058166029952 + 0.0023648464512033376),
                                       ("whiting", 0.075 + 0.005),
                                       ("planktivorous_fish", 0.10), ("porpoises", 0.017)])
 def test_gear_split_keeps_the_total_f(fg, total):
     """Split over the two maps; at today's mean effort the two tables add
     up to the group's F (catch_by_gear.md; section 209: benthivores 0.17
     + 0.0004, predators 0.162 + 0.020; section 223.26 split the predators:
-    water column 0.213 + 0.029, whiting 0.075 + 0.005). Porpoise bycatch
+    water column 0.213 + 0.029, whiting 0.075 + 0.005; section 228 split
+    the water column: predatory_fish 0.260 + 0, mackerel 0.012 + 0.002 at the field
+    member mix: mackerel at its LOCAL 3.a F 0.013, 228.1).
+    Porpoise bycatch
     sits on the bottom-trawl map alone."""
     lib = load_config(str(ROOT / "fgconfig" / "fg_library.yaml"))["interaction_definitions"]
     means = {"bottom_trawling": 3.0141578935527487, "pelagic_trawling": 0.02496212180679044}

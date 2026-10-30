@@ -1,0 +1,16 @@
+RV Dana, 31 Jul - 9 Sep 1987 (stratum X biomass not printed in Table 4 -> taken as 0)
+  Skagerrak (Dana A+B+C+D; A straddles the 3.a line)         area     27621 km2  biomass     44575 t  density   1.61 t/km2
+  Skagerrak without A (B+C+D)                                area     19674 km2  biomass     35115 t  density   1.78 t/km2
+  Kattegat north (Dana E)                                    area     17932 km2  biomass       188 t  density   0.01 t/km2
+  Belts/Sound (Dana F)                                       area     19633 km2  biomass         0 t  density   0.00 t/km2
+  Norwegian Trench south slope / NE North Sea (Dana O+I)     area     22596 km2  biomass     40953 t  density   1.81 t/km2
+  All Dana strata                                            area    263273 km2  biomass   1157155 t  density   4.40 t/km2
+  All Dana strata except M                                   area    246298 km2  biomass    373884 t  density   1.52 t/km2
+RV Eldjarn, 31 Jul - 11 Aug 1987 (sub-areas Fig. 4; 1000 t)
+  sub-area 1: area     2692 km2  biomass    19000 t  density   7.06 t/km2
+  sub-area 2: area     5145 km2  biomass    29000 t  density   5.64 t/km2
+  sub-area 3: area     6277 km2  biomass    39000 t  density   6.21 t/km2
+  sub-area 4: area     3841 km2  biomass    10000 t  density   2.60 t/km2
+  sub-area 5: area    22294 km2  biomass   239000 t  density  10.72 t/km2
+  sub-area 6: area    31727 km2  biomass   224000 t  density   7.06 t/km2
+  all sub-areas: area    71977 km2  biomass   560000 t  density   7.78 t/km2

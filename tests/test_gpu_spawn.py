@@ -56,7 +56,7 @@ def test_project_spawn_and_reserves():
     spawner = WorldSpawner(spec, model)
     keys = torch.arange(3)
     biomass = spawner.biomass(keys)
-    assert biomass.shape == (3, 13, 72)  # 13 active FGs (seals 166, microzooplankton 177, subsurface phytoplankton 180, three fish groups 209, mobile epifauna 221, norway lobster 223.15, whiting 223.26)
+    assert biomass.shape == (3, 14, 72)  # 14 active FGs (seals 166, microzooplankton 177, subsurface phytoplankton 180, three fish groups 209, mobile epifauna 221, norway lobster 223.15, whiting 223.26, mackerel 228)
     assert torch.isfinite(biomass).all() and (biomass >= 0).all()
     for j, fid in enumerate(model.ids):
         total = biomass[:, j].double().sum(-1)

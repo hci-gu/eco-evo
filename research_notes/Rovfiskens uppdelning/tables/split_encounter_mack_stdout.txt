@@ -1,0 +1,109 @@
+Encounter a per group, km2 per tonne of predator per 6-h tick (annual mean); planktivores on dispersed prey
+MC 1000 log-triangular draws of the section 220 factors (+ H_whiting 20-10-5 m)
+
+==============================================================================================================
+G1_wc: ['saithe', 'mackerel', 'spurdog', 'horse mackerel', 'hake', 'anglerfish', 'ling', 'velvet belly', 'pollack']
+  planktivorous_fish layer    a 0.01171  (corners 0.000251-0.359; MC 5/50/95 0.00444/0.013/0.0334)  night/day 0.39
+  planktivorous_fish noscore  a 0.01171  (corners 0.000251-0.359; MC 5/50/95 0.00442/0.013/0.0332)  night/day 0.39
+  planktivorous_fish scored   a 0.004634  (corners 8.77e-05-0.171; MC 5/50/95 0.00166/0.00522/0.0148)  night/day 0.33
+  planktivorous_fish capable  a 0.006982  (corners 0.000132-0.258; MC 5/50/95 0.0025/0.0078/0.0224)  night/day 0.33
+  planktivorous_fish layer, schooled day herring (220 central): a 0.005771  night/day 1.30
+  zooplankton        layer    a 0.0006042  (corners 2.13e-05-0.0471; MC 5/50/95 0.000403/0.000881/0.00211)  night/day 0.30
+  zooplankton        noscore  a 0.0006057  (corners 2.14e-05-0.0472; MC 5/50/95 0.000391/0.0009/0.00212)  night/day 0.30
+  zooplankton        scored   a 0.0004758  (corners 1.68e-05-0.0392; MC 5/50/95 0.000304/0.000707/0.00179)  night/day 0.26
+  zooplankton        capable  a 0.000865  (corners 3.06e-05-0.0713; MC 5/50/95 0.000567/0.00127/0.00317)  night/day 0.26
+  mobile_epifauna    layer    a 0.01896  (corners 0.000432-0.708; MC 5/50/95 0.00658/0.0203/0.0749)  night/day 1.00
+  mobile_epifauna    noscore  a 0.04354  (corners 0.000937-1.87; MC 5/50/95 0.0144/0.0486/0.191)  night/day 0.77
+  mobile_epifauna    scored   a 0.005026  (corners 0.000118-0.206; MC 5/50/95 0.00174/0.00566/0.0215)  night/day 0.88
+  mobile_epifauna    capable  a 0.05467  (corners 0.00128-2.24; MC 5/50/95 0.019/0.0614/0.222)  night/day 0.88
+  benthivorous_fish  layer    a 0.0532  (corners 0.000736-2.85; MC 5/50/95 0.0171/0.0559/0.164)  night/day 0.48
+  benthivorous_fish  noscore  a 0.1467  (corners 0.00229-7.93; MC 5/50/95 0.0519/0.169/0.497)  night/day 0.58
+  benthivorous_fish  scored   a 0.01675  (corners 0.00024-0.855; MC 5/50/95 0.00598/0.0186/0.0491)  night/day 0.56
+  benthivorous_fish  capable  a 0.0661  (corners 0.000945-3.37; MC 5/50/95 0.022/0.0703/0.199)  night/day 0.56
+  whiting_prey       layer    a 0.01064  (corners 0.000184-0.571; MC 5/50/95 0.00365/0.0118/0.0353)  night/day 0.48
+  whiting_prey       noscore  a 0.02935  (corners 0.000572-1.59; MC 5/50/95 0.0113/0.0365/0.107)  night/day 0.58
+  whiting_prey       scored   a 0.003349  (corners 5.99e-05-0.172; MC 5/50/95 0.00139/0.00391/0.0103)  night/day 0.56
+  whiting_prey       capable  a 0.01322  (corners 0.000236-0.678; MC 5/50/95 0.00485/0.0148/0.0422)  night/day 0.56
+  member contributions to the layer a (central, share of the group a):
+    planktivorous_fish mackerel 0.49, saithe 0.33, horse mackerel 0.12, hake 0.03, spurdog 0.02, velvet belly 0.01
+    zooplankton        mackerel 0.49, saithe 0.28, horse mackerel 0.19, hake 0.02, spurdog 0.02
+    mobile_epifauna    horse mackerel 0.82, spurdog 0.10, velvet belly 0.04, anglerfish 0.02, hake 0.01, ling 0.01
+    benthivorous_fish  saithe 0.77, spurdog 0.10, hake 0.07, velvet belly 0.04, anglerfish 0.01
+    whiting_prey       saithe 0.77, spurdog 0.10, hake 0.07, velvet belly 0.04, anglerfish 0.01
+==============================================================================================================
+G3_mackerel: ['mackerel', 'horse mackerel']
+  planktivorous_fish layer    a 0.03912  (corners 0.00095-0.975; MC 5/50/95 0.0149/0.04/0.1)  night/day 0.45
+  planktivorous_fish noscore  a 0.03912  (corners 0.00095-0.975; MC 5/50/95 0.0147/0.0401/0.101)  night/day 0.45
+  planktivorous_fish scored   a 0.00728  (corners 0.000182-0.182; MC 5/50/95 0.0028/0.00744/0.0187)  night/day 0.47
+  planktivorous_fish capable  a 0.03852  (corners 0.000964-0.963; MC 5/50/95 0.0149/0.0393/0.0986)  night/day 0.47
+  planktivorous_fish layer, schooled day herring (220 central): a 0.02084  night/day 1.40
+  zooplankton        layer    a 0.00223  (corners 8.02e-05-0.201; MC 5/50/95 0.00141/0.00329/0.00859)  night/day 0.22
+  zooplankton        noscore  a 0.00223  (corners 8.02e-05-0.201; MC 5/50/95 0.00145/0.00335/0.00902)  night/day 0.22
+  zooplankton        scored   a 0.001867  (corners 6.76e-05-0.175; MC 5/50/95 0.00117/0.00278/0.00793)  night/day 0.19
+  zooplankton        capable  a 0.002297  (corners 8.32e-05-0.215; MC 5/50/95 0.00143/0.00337/0.00919)  night/day 0.19
+  mobile_epifauna    layer    a 0.08494  (corners 0.00173-3.13; MC 5/50/95 0.0277/0.088/0.333)  night/day 1.00
+  mobile_epifauna    noscore  a 0.08494  (corners 0.00173-3.13; MC 5/50/95 0.0269/0.0887/0.35)  night/day 1.00
+  mobile_epifauna    scored   a 0.01274  (corners 0.00026-0.47; MC 5/50/95 0.00404/0.0133/0.0524)  night/day 1.00
+  mobile_epifauna    capable  a 0.2825  (corners 0.00576-10.4; MC 5/50/95 0.0921/0.293/1.11)  night/day 1.00
+  benthivorous_fish  layer    a 0  (corners 0-0; MC 5/50/95 0/0/0)  night/day nan
+  benthivorous_fish  noscore  a 0.5127  (corners 0.00851-27.9; MC 5/50/95 0.18/0.609/1.95)  night/day 0.64
+  benthivorous_fish  scored   a 0.01137  (corners 0.00018-0.565; MC 5/50/95 0.00378/0.0127/0.0409)  night/day 0.64
+  benthivorous_fish  capable  a 0.5162  (corners 0.00819-25.7; MC 5/50/95 0.146/0.547/1.85)  night/day 0.64
+  whiting_prey       layer    a 0  (corners 0-0; MC 5/50/95 0/0/0)  night/day nan
+  whiting_prey       noscore  a 0.1025  (corners 0.00213-5.57; MC 5/50/95 0.0364/0.129/0.399)  night/day 0.64
+  whiting_prey       scored   a 0.002274  (corners 4.51e-05-0.113; MC 5/50/95 0.000766/0.00267/0.00829)  night/day 0.64
+  whiting_prey       capable  a 0.1032  (corners 0.00205-5.13; MC 5/50/95 0.0315/0.117/0.386)  night/day 0.64
+  member contributions to the layer a (central, share of the group a):
+    planktivorous_fish mackerel 0.80, horse mackerel 0.20
+    zooplankton        mackerel 0.72, horse mackerel 0.28
+    mobile_epifauna    horse mackerel 1.00
+==============================================================================================================
+G3_rest_wc: ['saithe', 'spurdog', 'hake', 'anglerfish', 'ling', 'velvet belly', 'pollack']
+  planktivorous_fish layer    a 0.005589  (corners 9.44e-05-0.221; MC 5/50/95 0.002/0.00617/0.0197)  night/day 0.30
+  planktivorous_fish noscore  a 0.005589  (corners 9.44e-05-0.221; MC 5/50/95 0.00198/0.00621/0.0194)  night/day 0.30
+  planktivorous_fish scored   a 0.004043  (corners 6.66e-05-0.168; MC 5/50/95 0.00141/0.0045/0.0146)  night/day 0.28
+  planktivorous_fish capable  a 0.005254  (corners 8.65e-05-0.219; MC 5/50/95 0.00183/0.00583/0.0191)  night/day 0.28
+  planktivorous_fish layer, schooled day herring (220 central): a 0.002408  night/day 1.13
+  zooplankton        layer    a 0.0002414  (corners 8.2e-06-0.0129; MC 5/50/95 0.00011/0.000313/0.000848)  night/day 0.51
+  zooplankton        noscore  a 0.0002433  (corners 8.26e-06-0.013; MC 5/50/95 0.00011/0.000312/0.00089)  night/day 0.51
+  zooplankton        scored   a 0.0001653  (corners 5.48e-06-0.00895; MC 5/50/95 6.95e-05/0.000205/0.000611)  night/day 0.48
+  zooplankton        capable  a 0.0003364  (corners 1.11e-05-0.0182; MC 5/50/95 0.00014/0.000422/0.00122)  night/day 0.48
+  mobile_epifauna    layer    a 0.004234  (corners 0.000142-0.167; MC 5/50/95 0.00176/0.00512/0.0175)  night/day 1.00
+  mobile_epifauna    noscore  a 0.03431  (corners 0.000759-1.59; MC 5/50/95 0.0113/0.0383/0.152)  night/day 0.66
+  mobile_epifauna    scored   a 0.003305  (corners 8.59e-05-0.147; MC 5/50/95 0.00115/0.00392/0.0146)  night/day 0.79
+  mobile_epifauna    capable  a 0.03228  (corners 0.000839-1.43; MC 5/50/95 0.0115/0.0384/0.136)  night/day 0.79
+  benthivorous_fish  layer    a 0.06507  (corners 0.0009-3.48; MC 5/50/95 0.0209/0.0684/0.201)  night/day 0.48
+  benthivorous_fish  noscore  a 0.06507  (corners 0.0009-3.48; MC 5/50/95 0.0224/0.0719/0.199)  night/day 0.48
+  benthivorous_fish  scored   a 0.01794  (corners 0.000253-0.919; MC 5/50/95 0.00645/0.0197/0.0506)  night/day 0.55
+  benthivorous_fish  capable  a 0.05884  (corners 0.000829-3.01; MC 5/50/95 0.0198/0.0619/0.173)  night/day 0.55
+  whiting_prey       layer    a 0.01301  (corners 0.000225-0.698; MC 5/50/95 0.00446/0.0145/0.0432)  night/day 0.48
+  whiting_prey       noscore  a 0.01301  (corners 0.000225-0.698; MC 5/50/95 0.00517/0.0151/0.041)  night/day 0.48
+  whiting_prey       scored   a 0.003589  (corners 6.32e-05-0.185; MC 5/50/95 0.00148/0.00418/0.0108)  night/day 0.55
+  whiting_prey       capable  a 0.01177  (corners 0.000207-0.606; MC 5/50/95 0.00441/0.0131/0.0365)  night/day 0.55
+  member contributions to the layer a (central, share of the group a):
+    planktivorous_fish saithe 0.84, hake 0.06, spurdog 0.06, velvet belly 0.03
+    zooplankton        saithe 0.86, hake 0.05, spurdog 0.05, velvet belly 0.03
+    mobile_epifauna    spurdog 0.54, velvet belly 0.21, anglerfish 0.12, hake 0.08, ling 0.06
+    benthivorous_fish  saithe 0.77, spurdog 0.10, hake 0.07, velvet belly 0.04, anglerfish 0.01
+    whiting_prey       saithe 0.77, spurdog 0.10, hake 0.07, velvet belly 0.04, anglerfish 0.01
+
+Per-stage central a (annual; epifauna per edible tonne x e 0.39; whiting_prey new):
+  saithe          adult     W 0.2588: planktivor 0.007607 (s 0.70); zooplankto 0.0003354 (s 0.90); mobile_epi 0.04535 (s 0.06); benthivoro 0.08048 (s 0.20); whiting_pr 0.0161 (s 0.20)
+  saithe          large     W 0.1506: planktivor 0.002889 (s 1.00); zooplankto 0.0001335 (s 0.50); mobile_epi 0.01806 (s 0.03); benthivoro 0.03158 (s 0.30); whiting_pr 0.006316 (s 0.30)
+  whiting         juvenile  W 0.0918: planktivor 0.07768 (s 0.04); zooplankto 0.004415 (s 0.81); mobile_epi 0.6064 (s 0.40); benthivoro 1.322 (s 0.05); whiting_pr 0.2644 (s 0.05)
+  whiting         adult     W 0.2797: planktivor 0.02802 (s 0.40); zooplankto 0.001135 (s 0.54); mobile_epi 0.1574 (s 0.18); benthivoro 0.2777 (s 0.45); whiting_pr 0.05554 (s 0.45)
+  mackerel        all       W 0.0802: planktivor 0.04456 (s 0.18); zooplankto 0.002312 (s 0.90); mobile_epi 0.3064 (s 0.00); benthivoro 0.51 (s 0.01); whiting_pr 0.102 (s 0.01)
+  spurdog         all       W 0.0500: planktivor 0.003369 (s 0.64); zooplankto 0.0001674 (s 0.24); mobile_epi 0.02327 (s 0.48); benthivoro 0.06879 (s 0.56); whiting_pr 0.01376 (s 0.56)
+  horse mackerel  all       W 0.0345: planktivor 0.02648 (s 0.21); zooplankto 0.00204 (s 0.72); mobile_epi 0.2825 (s 0.15); benthivoro 0.5191 (s 0.05); whiting_pr 0.1038 (s 0.05)
+  hake            juvenile  W 0.0004: planktivor 0.1123 (s 0.24); zooplankto 0.002986 (s 0.56); mobile_epi 0.4057 (s 0.32); benthivoro 1.062 (s 0.15); whiting_pr 0.2124 (s 0.15)
+  hake            adult     W 0.0245: planktivor 0.005702 (s 0.72); zooplankto 0.0002937 (s 0.12); mobile_epi 0.04072 (s 0.06); benthivoro 0.07298 (s 0.55); whiting_pr 0.0146 (s 0.55)
+  anglerfish      all       W 0.0137: planktivor 0.0003812 (s 0.40); zooplankto 0 (s 0.00); mobile_epi 0.01861 (s 0.20); benthivoro 0.02685 (s 0.90); whiting_pr 0.00537 (s 0.90)
+  ling            all       W 0.0070: planktivor 0.002139 (s 0.60); zooplankto 0.0001322 (s 0.05); mobile_epi 0.01837 (s 0.40); benthivoro 0.0311 (s 0.60); whiting_pr 0.006219 (s 0.60)
+  velvet belly    all       W 0.0047: planktivor 0.01668 (s 0.30); zooplankto 0.000705 (s 0.70); mobile_epi 0.09776 (s 0.30); benthivoro 0.3055 (s 0.10); whiting_pr 0.06111 (s 0.10)
+  pollack         all       W 0.0041: planktivor 0.003625 (s 0.70); zooplankto 0.0001647 (s 0.50); mobile_epi 0.02228 (s 0.00); benthivoro 0.03916 (s 0.30); whiting_pr 0.007832 (s 0.30)
+==============================================================================================================
+rest water column -> mackerel group (eaters ['spurdog', 'hake', 'anglerfish', 'ling', 'velvet belly'], noscore: every eater counts; per whole rest tonne)
+  a 0.0008814 (corners 2.06e-05-0.0324)  night/day 0.92
+  member shares of the a: spurdog 0.372, hake 0.409, anglerfish 0.012, ling 0.033, velvet belly 0.174
+  prey-size window share of the mackerel group's biomass: spurdog 0.200, hake 0.391, anglerfish 0.849, ling 0.756, velvet belly 0.011
+  pair accessible_fraction (a-weighted) 0.271

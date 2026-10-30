@@ -1,0 +1,32 @@
+depth-weighted July box density 1.80 t/km2
+== Mackerel monthly profiles (density / July) ==
+narrow   presence 0.363  (4.36 July-months)  Jan:0.03 Feb:0.03 Mar:0.03 Apr:0.1 May:0.4 Jun:0.9 Jul:1 Aug:0.9 Sep:0.6 Oct:0.25 Nov:0.08 Dec:0.04
+central  presence 0.448  (5.38 July-months)  Jan:0.05 Feb:0.05 Mar:0.05 Apr:0.15 May:0.5 Jun:1 Jul:1 Aug:1 Sep:0.8 Oct:0.5 Nov:0.2 Dec:0.08
+wide     presence 0.562  (6.75 July-months)  Jan:0.1 Feb:0.1 Mar:0.1 Apr:0.25 May:0.7 Jun:1 Jul:1 Aug:1 Sep:1 Oct:0.8 Nov:0.5 Dec:0.2
+
+== Mackerel annual mean, t/km2 (central; envelope = low July x narrow .. high July x wide) ==
+box        0.81  envelope 0.33-1.69  (central July, profile spread 0.65-1.01)
+Skagerrak  0.76  envelope 0.29-1.52
+Kattegat   0.15  envelope 0.015-0.76  (J: x0.2 of Skagerrak)
+3.a        0.53  envelope 0.19-1.23  (area-weighted, 34041 + 20536 km2)
+summer (Jun-Aug) box 1.8, Skagerrak 1.7 t/km2; Sep 1.44, Oct 0.90
+box 3600 km2: annual mean 2905 t, July 6480 t
+
+GOV Q3 box: long-run 2001-25 0.158, 2021-25 0.29 t/km2 -> implied GOV q vs July 0.09-0.16
+model now: mackerel 0.138 x 0.70 = 0.097 t/km2; central box is x8.4
+
+== Catch route (lower bound with stock F; implied local F with the survey B) ==
+F_stock 0.215: 3.a.20 B >= 1597 t = 0.047 t/km2, 3.a.21 B >= 982 t = 0.048 t/km2, 3.a B >= 2579 t = 0.047 t/km2
+F_stock 0.285: 3.a.20 B >= 1205 t = 0.035 t/km2, 3.a.21 B >= 741 t = 0.036 t/km2, 3.a B >= 1946 t = 0.036 t/km2
+survey-based 3.a.20 annual mean 25945 t -> F_local = 0.013 /yr (stock F 0.215-0.285)
+
+== Horse mackerel ==
+Argos 1-4 Aug 1989 eastern Skagerrak 20-300 m: 0.89 t/km2 at TS -71.2 dB; at -67.5 dB 0.38
+GOV box 2001-25: Q3 0.070, Q1 0.0014, pooled 0.036 t/km2 (x1.18 = 0.042; model now 0.138 x 0.30 = 0.041)
+narrow   presence 0.243  Jan:0.05 Feb:0 Mar:0 Apr:0 May:0 Jun:0 Jul:0.02 Aug:0.3 Sep:0.8 Oct:1 Nov:0.6 Dec:0.15
+central  presence 0.312  Jan:0.1 Feb:0.03 Mar:0 Apr:0 May:0 Jun:0.02 Jul:0.1 Aug:0.5 Sep:0.9 Oct:1 Nov:0.8 Dec:0.3
+wide     presence 0.400  Jan:0.2 Feb:0.1 Mar:0.05 Apr:0 May:0 Jun:0.05 Jul:0.2 Aug:0.7 Sep:1 Oct:1 Nov:1 Dec:0.5
+horse mackerel annual mean box/Skagerrak 0.053 t/km2, envelope 0.017-0.160; autumn peak 0.17 (0.07-0.4)
+F_stock 0.038: 3.a.20 2016-24 5539 t = 0.163 t/km2, 3.a.20 2020-24 1455 t = 0.043 t/km2
+F_stock 0.065: 3.a.20 2016-24 3238 t = 0.095 t/km2, 3.a.20 2020-24 851 t = 0.025 t/km2
+Kattegat horse mackerel catch 3.4 t/yr (3.a.21) -> treat as ~0; 3.a mean = Skagerrak x 0.62 = 0.033 t/km2

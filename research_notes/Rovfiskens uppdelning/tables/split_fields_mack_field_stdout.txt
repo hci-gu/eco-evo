@@ -1,0 +1,46 @@
+REPRODUCTION GATE: today's water column (nine members, at_50m) vs the live library
+  r                  derived     0.3737  library     0.3740  ok
+  M1                 derived     0.2615  library     0.2610  ok
+  F_bot              derived     0.2128  library     0.2128  ok
+  F_pel              derived     0.0291  library     0.0291  ok
+  smr                derived     3.3096  library     3.3100  ok
+  ceiling_bjornsson  derived    32.7128  library    32.7100  ok
+  e_lean             derived  4244.0680  library  4240.0000  ok
+  res_max            derived  2598.1178  library  2600.0000  ok
+  fill               derived     0.4959  library     0.5000  ok
+  feeding_cost       derived     2.3402  library     2.3400  ok
+  starve_rate        derived     0.0078  library     0.0078  ok
+  gate PASS
+
+ZOOPLANKTON consumption shares (Q/B x B x Z): saithe 0.667, mackerel 0.189, spurdog 0.005, horse mackerel 0.123, hake 0.000, anglerfish 0.000, ling 0.000, velvet belly 0.009, pollack 0.007
+
+PAIR M2 (conservation gate: mackerel + rest = today's water-column pair)
+  planktivorous_fish   mackerel 0.01000 + rest 0.24700 = 0.25700 vs 0.25700  PASS
+  zooplankton          mackerel 0.02355 + rest 0.05205 = 0.07560 vs 0.07560  PASS
+  benthivorous_fish    mackerel 0.00000 + rest 0.08330 = 0.08330 vs 0.08330  PASS
+  whiting              mackerel 0.00000 + rest 0.15700 = 0.15700 vs 0.15700  PASS
+  conservation PASS
+
+FIELD DENSITIES {'mackerel': 0.8, 'horse mackerel': 0.05} (GOV mackerel 0.0962, horse mackerel 0.0414): calibration k_zoo 1.009; the mackerel group's M2 and the prey totals now:
+  planktivorous_fish   mackerel 0.02630 + rest 0.24700 = 0.27330 (today 0.25700, +0.01630)
+  zooplankton          mackerel 0.12989 + rest 0.05205 = 0.18195 (today 0.07560, +0.10635)
+
+REST -> MACKEREL GROUP: flow 0.01802 t/km2/yr, M2 0.0212 /yr (velvet belly's horse mackerel share is cannibal-like: small; kept as the diet says)
+
+--- mackerel: ['mackerel', 'horse mackerel']  weights {'mackerel': 0.9412, 'horse mackerel': 0.0588}
+  B* 0.8500 t/km2 = 3060 t (share of pooled 1.20: 0.1147)
+  r_max 0.255 (0.204-0.352); F bottom 0.0123, pelagic 0.0024; M1 0.159 (0.106-0.212) = 0.000108783 /tick
+  layer mean_0_50m (9.31 C): Cmax x1.0782, SMR x1.0680; Cmax 159.8 kJ/kg/d -> ceiling x1.3 51.94 MJ/t/tick
+  SMR 3.631 (3.20-6.91), Q10 2.01, feeding_cost 2.72, starve_rate 0.0078
+  lean 4671, max reserve 5871, mean reserve 3241, fill 0.552, prey quality 7912 MJ/t; Q/B 2.28
+  trawl tables: bottom bf at 100 0.00027979959184, pelagic bf at 10 0.00064888628291
+  M2 booked on prey: planktivorous_fish 0.02630, zooplankton 0.12989
+
+--- predatory_fish: ['saithe', 'spurdog', 'hake', 'anglerfish', 'ling', 'velvet belly', 'pollack']  weights {'saithe': 0.7967, 'spurdog': 0.0974, 'hake': 0.0484, 'anglerfish': 0.0267, 'ling': 0.0136, 'velvet belly': 0.0092, 'pollack': 0.0081}
+  B* 0.6166 t/km2 = 2220 t (share of pooled 1.20: 0.5139)
+  r_max 0.396 (0.338-0.427); F bottom 0.2598, pelagic 0.0000; M1 0.276 (0.189-0.311) = 0.000189238 /tick
+  layer at_50m (8.37 C): Cmax x1.0000, SMR x1.0000; Cmax 91.7 kJ/kg/d -> ceiling x1.3 29.79 MJ/t/tick
+  SMR 3.289 (2.72-4.67), Q10 2.32, feeding_cost 2.27, starve_rate 0.0079
+  lean 4176, max reserve 1987, mean reserve 907, fill 0.456, prey quality 5083 MJ/t; Q/B 2.87
+  trawl tables: bottom bf at 100 0.0059035859233, pelagic bf at 10 0
+  M2 booked on prey: planktivorous_fish 0.24700, zooplankton 0.05205, benthivorous_fish 0.08330, whiting 0.15700, mackerel 0.02120

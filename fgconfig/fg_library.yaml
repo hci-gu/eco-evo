@@ -208,7 +208,7 @@
     # 11.5 C (Huntley & Lopez 1992) = 58.4 /yr, minus total mortality
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
     r_max: 33.4
-    growth_rate: 0.1185401
+    growth_rate: 0.11882721356
     # M1 = total copepod mortality (~25 /yr = realised P/B) minus the
     # fish predation booked on pairs. Section 209: planktivorous_fish 1.6
     # + predatory_fish 0.13 = 1.73 /yr (was 5.3, the Ecopath 21 % of pelagic
@@ -564,7 +564,7 @@
     # standing stock per year (resume 185.17-19).
     regional_carrying_capacity: 4.8
     # x 12 / feeding_season_months (5.5) since section 184.
-    growth_rate: 0.0031435112937
+    growth_rate: 0.0031889031815
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
@@ -721,55 +721,52 @@
   predatory_fish:
     display_name: "Predatory Fish"
     # Section 223.26 (predator split G1, user 2026-10-27): the WATER-COLUMN
-    # predators. Whiting, the bed feeder (91 % of the pooled group's
-    # epifauna flow), is its own group `whiting` below; this group keeps the
-    # id but no longer feeds on the bed (benthos 0.3-1 % of every member's
-    # diet). Display only (live viewer hover): the members and their
-    # long-run (NS-IBTS 2001-25) biomass shares.
-    # research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
+    # predators; whiting, the bed feeder, is its own group `whiting`. Since
+    # section 228 (user 2026-10-30) mackerel and horse mackerel are their own
+    # group `mackerel` too: this group keeps the id and is the demersal and
+    # bathypelagic fish eaters (saithe 0.80 of it). Display only (live viewer
+    # hover): the members and their long-run (NS-IBTS 2001-25) biomass shares.
+    # research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_mack.md.
     member_species:
-      - {name: saithe, share: 0.651}
-      - {name: mackerel, share: 0.128}
-      - {name: spurdog, share: 0.08}
-      - {name: horse mackerel, share: 0.055}
-      - {name: hake, share: 0.04}
-      - {name: anglerfish, share: 0.022}
-      - {name: ling, share: 0.011}
-      - {name: velvet belly, share: 0.008}
-      - {name: pollack, share: 0.007}
+      - {name: saithe, share: 0.797}
+      - {name: spurdog, share: 0.097}
+      - {name: hake, share: 0.048}
+      - {name: anglerfish, share: 0.027}
+      - {name: ling, share: 0.014}
+      - {name: velvet belly, share: 0.009}
+      - {name: pollack, share: 0.008}
     is_decision_maker: true
-    # Section 209 / 223.26: demersal and pelagic fish that feed on fish and
-    # krill: saithe 0.65, mackerel 0.13, spurdog 0.08, horse mackerel
-    # 0.055, hake 0.04, anglerfish, ling, velvet belly, pollack. Saithe (Q3
-    # on the trench slope) and mackerel (summer) are visitors; the closed
-    # pool charges them stock-level r and F, as herring. Every value is
-    # the biomass-weighted species value (weighted_fields convention, 209).
+    # Section 209 / 223.26 / 228: fish that feed on fish and krill: saithe
+    # 0.80, spurdog 0.10, hake 0.05, anglerfish, ling, velvet belly, pollack.
+    # Saithe (Q3 on the trench slope) is a visitor; the closed pool charges
+    # it stock-level r and F, as herring. Every value is the biomass-weighted
+    # species value (weighted_fields convention, 209).
     # u 0.5: the engine convention (resume 187.4).
     maintenance_level: 0.5
-    # Liver / fat reserve: saithe liver ~2000, mackerel ~6000, horse
-    # mackerel ~3800, spurdog ~2000 -> 2600 (1950-3250).
-    max_energy_reserve: 2600.0
-    # Measured SMR at the at_50m annual mean 8.37 C: saithe 3.5, mackerel
-    # 3.4, spurdog 2.1, anglerfish 1.2 -> 3.31 (2.8-5.0).
-    resting_metabolism: 3.31
-    # Cod SMR 2.2-2.6, ICES gastric evacuation exponent 2.25, mackerel 2.0,
-    # spurdog 2.5 -> 2.3; annual mean of the at_50m layer.
+    # Liver reserve: saithe, hake, spurdog ~2000, anglerfish 1500 -> 2000
+    # (1500-2500).
+    max_energy_reserve: 2000.0
+    # Measured SMR at the at_50m annual mean 8.37 C: saithe 3.5, spurdog 2.1,
+    # hake 3.5, anglerfish 1.2 -> 3.29 (2.7-4.7).
+    resting_metabolism: 3.29
+    # Cod SMR 2.2-2.6, ICES gastric evacuation exponent 2.25, spurdog 2.5 ->
+    # 2.3; annual mean of the at_50m layer.
     metabolism_q10: 2.3
     metabolism_t_ref: annual_mean
-    # Every member but anglerfish cruises 6-15 cells/tick (saithe Uopt
-    # 1.4 BL/s, mackerel schools 0.44-0.72 m/s net); residence is
-    # behaviour, not a speed limit.
+    # Every member but anglerfish cruises 6-15 cells/tick (saithe Uopt 1.4
+    # BL/s); residence is behaviour, not a speed limit.
     movement_speed: 1.0
-    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 32.71 (Bjornsson-
-    # anchored, 223.26) = 2.34 x RM; cruising at Uopt 2-2.5 x SMR = 2.0 x RM.
-    feeding_cost: 2.34
+    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 29.79 (GER Cmax
+    # 91.7 kJ/kg/d at 8.37 C x 1.30 Bjornsson anchoring, 223.26) = 2.27 x RM;
+    # cruising at Uopt 2-2.5 x SMR = 2.0 x RM.
+    feeding_cost: 2.27
     movement_cost: 2.0
-    # Lean tissue as eaten (saithe 4.0, hake 3.7, mackerel 4.7, spurdog
-    # 6.0 kJ/g) = 4240; the liver / fat is eaten with the fish: at the
-    # reference fill 0.5 the static quality is 4240 + 0.5 x 2600 = 5540 MJ/t.
-    energy_content: 4240.0
+    # Lean tissue as eaten (saithe 4.0, hake 3.7, spurdog 6.0 kJ/g) = 4180;
+    # the liver is eaten with the fish: at the reference fill 0.45 (mean
+    # reserve 900 / 2000) the static quality is 4180 + 0.45 x 2000 = 5080 MJ/t.
+    energy_content: 4180.0
     prey_includes_reserve: true
-    reserve_reference_fill: 0.5
+    reserve_reference_fill: 0.45
     min_split_biomass: 0.5
     # growth_rate is DERIVED by lib/world/growth_budget.py and recomputed
     # by the loader for every run; the number stored here is what the
@@ -777,20 +774,19 @@
     # --mortality on; with --mortality off the loader leaves M1 out. Edit
     # r_max, natural_mortality or the predation matrix, not this value.
     # r_max: today's productivity (Euler-Lotka r_now): saithe 0.44, hake
-    # 0.26, mackerel 0.25, horse mackerel 0.33, spurdog 0.07, anglerfish
-    # 0.47, ling 0.55 -> 0.374 (0.32-0.42).
-    r_max: 0.374
+    # 0.26, spurdog 0.07, anglerfish 0.47, ling 0.55, pollack 0.63 -> 0.396
+    # (0.34-0.43).
+    r_max: 0.396
     # No regional K since section 223.37: a loss cannot stand for the
     # exchange of a window group that needs a net import (field closure
     # P 0.36 vs L 0.62 /yr), and it counted the box's density dependence
     # twice (research_notes/"Bestandsreglering" (Swedish letters: a-ring)
     # summary.md). Was K = B*/(1 - F/r) = 2.14 t/km2.
-    growth_rate: 0.0014965884949
-    # M1 = M0 + predation by groups NOT in the model: saithe 0.29,
-    # mackerel 0.15, spurdog 0.10, horse mackerel 0.30, hake 0.45,
-    # anglerfish 0.25 -> 0.261 /yr (0.18-0.30). Within-group predation
-    # (~0.035) is a transfer inside the pool and left out.
-    natural_mortality: 0.000179093
+    growth_rate: 0.0016461242487
+    # M1 = M0 + predation by groups NOT in the model: saithe 0.29, spurdog
+    # 0.10, hake 0.45, anglerfish 0.25 -> 0.276 /yr (0.19-0.31).
+    # Within-group predation is a transfer inside the pool and left out.
+    natural_mortality: 0.000189238
     max_intake_rate: 0.04
     spawn:
       mode: colony
@@ -801,11 +797,11 @@
       amplitude_min: 0.0
       amplitude_max: 1.0
     # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
-    starve_rate: 0.0078
-    # Judgement: midwater schools of saithe and mackerel hide badly.
+    starve_rate: 0.0079
+    # Judgement: midwater saithe schools hide badly.
     visibility_floor: 0.7
-    # No field evidence of interference for saithe or mackerel (Rindorf et
-    # al. 2006: predator density did not affect intake).
+    # No field evidence of interference for saithe (Rindorf et al. 2006:
+    # predator density did not affect intake).
     interference: 0.1
     extinction_threshold_factor: 0.5
   whiting:
@@ -864,6 +860,80 @@
     # Rindorf et al. 2006: predator density not significant for whiting.
     interference: 0.1
     extinction_threshold_factor: 0.5
+  mackerel:
+    display_name: "Mackerel"
+    # Section 228 (user 2026-10-30): mackerel and horse mackerel out of the
+    # water column (0.850 t/km2, 3060 t: the field density, research_notes/"Makrillens tathet" (Swedish letters: a-umlaut)). A
+    # zooplanktivore that takes the small end of the planktivores'
+    # juvenile compartment (0-group herring, pout, sprat; SMS Q3 diet other
+    # food 0.81, herring 0.066). Summer visitors (IBTS Q3 share 0.95); the
+    # closed pool charges stock-level r and F. Display only (live viewer
+    # hover): the members and their long-run biomass shares.
+    # research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_mack.md.
+    member_species:
+      - {name: mackerel, share: 0.941}
+      - {name: horse mackerel, share: 0.059}
+    is_decision_maker: true
+    # u 0.5: the engine convention (resume 187.4).
+    maintenance_level: 0.5
+    # Fat reserve: mackerel ~6000, horse mackerel ~3800 MJ/t -> 5870.
+    # Reserve-funded growth (user 228); mackerel's summer fattening has the
+    # shape that made herring grow on its fat in winter (184): the income-
+    # funded law is the open next step.
+    max_energy_reserve: 5870.0
+    # Measured SMR 3.4 (both members) at 8.37 C re-read at the mean_0_50m
+    # annual mean 9.31 C with Q10 2.01: 3.63 (3.2-6.9).
+    resting_metabolism: 3.63
+    # ICES GER temperature term (mackerel 0.080 /C = Q10 2.23), mackerel
+    # respirometry 2.0, horse mackerel 2.2 -> 2.0; annual mean of the
+    # mean_0_50m layer (user 228: its prey's layer).
+    metabolism_q10: 2.0
+    metabolism_t_ref: annual_mean
+    # Schools cruise 0.44-0.72 m/s net; not binding.
+    movement_speed: 1.0
+    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 51.94 (GER Cmax
+    # 160 kJ/kg/d at 9.31 C x 1.30 Bjornsson anchoring: the GER fill is
+    # the cod calibration, as for every predator ceiling since 223.26;
+    # summer fattening needs >= ~180) = 2.72 x RM; cruising 2 x SMR.
+    feeding_cost: 2.72
+    movement_cost: 2.0
+    # Lean tissue as eaten (mackerel 4.7, horse mackerel 4.2 kJ/g) = 4670; the
+    # fat is eaten with the fish: at the reference fill 0.55 (mean reserve
+    # 3241 / 5870) the static quality is 7898 MJ/t.
+    energy_content: 4670.0
+    prey_includes_reserve: true
+    reserve_reference_fill: 0.55
+    min_split_biomass: 0.5
+    # growth_rate is DERIVED by lib/world/growth_budget.py (see
+    # predatory_fish). r_max: Euler-Lotka r_now mackerel 0.25, horse
+    # mackerel 0.33 -> 0.255 (0.20-0.35).
+    r_max: 0.255
+    # No regional K (user 228, as the water column since 223.37): the most
+    # mobile window group in the box; its density is set outside it. F
+    # 0.0147 (the LOCAL 3.a.20 F, 228.1) against r 0.255 leaves
+    # 0.24 /yr; the other losses are the booked predation (water
+    # column 0.021, seals, porpoises) and M1.
+    growth_rate: 0.00089405247299
+    # M1 = M0 + predation by groups NOT in the model (tuna, sharks, birds,
+    # cetaceans other than porpoises): mackerel 0.15, horse mackerel 0.30
+    # -> 0.159 /yr (0.11-0.21).
+    natural_mortality: 0.000108783
+    max_intake_rate: 0.04
+    spawn:
+      mode: colony
+      n_colonies: 25
+      sigma_cells: 1.0
+      anchor: free
+      amplitude_mode: jitter
+      amplitude_min: 0.0
+      amplitude_max: 1.0
+    # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
+    starve_rate: 0.0078
+    # Judgement: midwater schools hide badly (as the water column).
+    visibility_floor: 0.7
+    # No field evidence of interference for mackerel (as the water column).
+    interference: 0.1
+    extinction_threshold_factor: 0.5
   porpoises:
     display_name: "Porpoises"
     is_decision_maker: true
@@ -910,7 +980,7 @@
     # r_max 0.10 /yr (Lockyer 2003; Caswell et al. 1998; Forney et al.
     # 2021: 9.6 %/yr after bycatch ended).
     r_max: 0.10
-    growth_rate: 0.00046279049
+    growth_rate: 0.00045235804369
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models from adult
     # survival 0.90-0.95 excluding bycatch, plus calf mortality). No FG
     # preys on porpoises. Was 6.0e-05.
@@ -1255,31 +1325,43 @@ interaction_definitions:
     stage_access: [0.49, 0.14]
   # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
   # no phi since 221; layer convention), h = E_prey / the group's ceiling
-  # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick).
+  # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick; since
+  # 228 the water column 29.79, mackerel 51.94).
   # M2 = Q x diet share / prey B, scaled so the two groups add to the
   # pooled pair. Type II (Rindorf et al. 2006). research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
-  # Water column on planktivores: diet share 0.52 (saithe on Norway pout
-  # and blue whiting, mackerel, hake on herring); a set by mackerel 0.49,
-  # saithe 0.33, horse mackerel 0.12. Night/day 0.39 derived.
+  # Section 228 (mackerel split): a per tonne of the WHOLE group from the
+  # section 220 encounter (layer form) over the group's members, h = prey
+  # quality / the group's ceiling, night/day from the same encounter. research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_mack.md.
+  # Rest water column: M2 = SMS partial M2 scaled to the box (223.37; saithe
+  # 0.209, hake 0.037); stage access from saithe's, hake's and spurdog's
+  # windows (Makrillens bytesstorlek (Swedish letters) summary.md section 6).
   predatory_fish_preys_on_planktivorous_fish:
     preys_on: true
-    # Section 223.37: M2 = SMS 2023 key run partial M2 2013-22 at the box
-    # stage mix (J/B 0.38), scaled to the box's predator / prey biomass at
-    # the SMS diet (saithe 0.209, hake 0.037, horse mackerel 0.008, mackerel
-    # 0.002; was 0.34). research_notes/"Bestandsreglering" (Swedish letters:
-    # a-ring) scripts/sms_m2_check.py.
-    predation_mortality: 0.257
+    predation_mortality: 0.247
     assimilation_factor: 0.8
-    handling_time: 217.8
+    handling_time: 239.2
     visibility_floor: 0.25
     functional_response: 2
-    max_intake_rate: 0.0117
-    dark_ratio: 0.39
+    max_intake_rate: 0.00559
+    dark_ratio: 0.3
     light_threshold_deg: -5.0
-    # Stage access: the members' windows (mackerel 0.33, saithe 0.30, horse
-    # mackerel 0.31, hake 0.50 x length; SMS stomachs) weighted by their
-    # share of a. Effective 0.19 at the box J/B (was 1). research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
-    stage_access: [0.32, 0.11]
+    stage_access: [0.69, 0.27]
+  # Mackerel group: SMS partial M2 horse mackerel 0.008 + mackerel 0.002 at
+  # the GOV biomass, scaled to the members' field biomass (223.37 box scaling;
+  # Makrillens tathet (Swedish letters: a-umlaut)). Stage access from the gape
+  # (p95 prey/predator 0.33 / 0.31, ~10 cm), annual mean over the quarters
+  # (user 228; Q3 alone ~0.12): the small end of the juveniles only.
+  mackerel_preys_on_planktivorous_fish:
+    preys_on: true
+    predation_mortality: 0.0263
+    assimilation_factor: 0.8
+    handling_time: 137.2
+    visibility_floor: 0.25
+    functional_response: 2
+    max_intake_rate: 0.0435
+    dark_ratio: 0.36
+    light_threshold_deg: -5.0
+    stage_access: [0.078, 0.0037]
   # Whiting on planktivores (adults on sprat, Norway pout, herring): diet
   # share 0.28. Night/day 0.33 derived.
   whiting_preys_on_planktivorous_fish:
@@ -1339,7 +1421,16 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.0098
     assimilation_factor: 0.85
-    handling_time: 26.1
+    handling_time: 23.9
+    visibility_floor: 0.75
+    max_intake_rate: 0.05
+  # Section 228: today's water-column M2 per tonne on the mackerel group (no
+  # diet evidence to split it; J); h = 7898 / 212.5.
+  seals_preys_on_mackerel:
+    preys_on: true
+    predation_mortality: 0.0098
+    assimilation_factor: 0.85
+    handling_time: 37.2
     visibility_floor: 0.75
     max_intake_rate: 0.05
   seals_preys_on_whiting:
@@ -1363,6 +1454,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   benthic_infauna_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthic_infauna_preys_on_mackerel:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1441,6 +1536,10 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  mackerel_preys_on_benthic_infauna:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   # Whiting's infauna is 7.3 % of its diet (M2 0.0015): unchecked (221).
   whiting_preys_on_benthic_infauna:
     preys_on: false
@@ -1478,6 +1577,10 @@ interaction_definitions:
   predatory_fish_preys_on_mobile_epifauna:
     preys_on: false
     predation_mortality: 0.007
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  mackerel_preys_on_mobile_epifauna:
+    preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   # E1 exposed taxa: whiting on northern shrimp, small shrimps, mysids and
@@ -1522,6 +1625,10 @@ interaction_definitions:
   # E1: no Nephrops in whiting, saithe or hake stomachs in the box or the
   # Skagerrak (whiting elsewhere 0.04 of its benthos): unchecked.
   predatory_fish_preys_on_norway_lobster:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  mackerel_preys_on_norway_lobster:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1584,16 +1691,18 @@ interaction_definitions:
   # spurdog 0.34 on flatfish/rays and haddock, hake 0.50, anglerfish 0.57)
   # on the benthivores' stage lengths: effective 0.088 at the box J/B.
   # research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
+  # Section 228: unchanged M2 and stage access (mackerel and horse mackerel are
+  # not members of this pair: capability 0.01 / 0.05); a per rest tonne.
   predatory_fish_preys_on_benthivorous_fish:
     preys_on: true
     predation_mortality: 0.0833
     assimilation_factor: 0.8
-    handling_time: 137.6
-    stage_access: [0.43, 0.027]
+    handling_time: 151.1
     functional_response: 2
-    max_intake_rate: 0.053
+    max_intake_rate: 0.0651
     dark_ratio: 0.48
     light_threshold_deg: -5.0
+    stage_access: [0.43, 0.027]
   # Whiting on 0-group and small benthivores: was accessible 0.05 (gape ~12
   # cm + 0-group, J). Night/day 0.64. Juvenile compartment: stage access
   # from whiting's window (0.39 x length, box whiting 22-28 cm -> 9-11 cm
@@ -1618,16 +1727,60 @@ interaction_definitions:
   # 0.017 /yr on whiting (SMS 2023 saithe on whiting 1+ 0.085 alone): a
   # learnable cross-group pair, booked (it was a within-group transfer).
   # accessible 0.47 (whiting below the members' gape). Night/day 0.48.
+  # Section 228: M2 unchanged (all of it saithe, hake, spurdog, anglerfish,
+  # ling); a per rest tonne.
   predatory_fish_preys_on_whiting:
     preys_on: true
     predation_mortality: 0.157
     assimilation_factor: 0.8
-    handling_time: 146.7
+    handling_time: 161.1
     accessible_fraction: 0.47
     functional_response: 2
-    max_intake_rate: 0.0106
+    max_intake_rate: 0.013
     dark_ratio: 0.48
     light_threshold_deg: -5.0
+  # Section 228: spurdog (0.37 of the a), hake (0.41), velvet belly, ling and
+  # anglerfish on mackerel and horse mackerel (split_fields_223 diets: spurdog
+  # W 0.22 x 0.50, hake W 0.21 x 0.10): a learnable cross-group pair, booked
+  # (it was a within-group transfer). Encounter on pelagic fish prey (the
+  # planktivore geometry, J) over those members per rest tonne;
+  # accessible_fraction = the mackerel group's biomass inside the members'
+  # prey-size windows (spurdog 0.34, hake 0.50, anglerfish 0.57 x length).
+  predatory_fish_preys_on_mackerel:
+    preys_on: true
+    predation_mortality: 0.021
+    assimilation_factor: 0.8
+    handling_time: 265.1
+    accessible_fraction: 0.29
+    functional_response: 2
+    max_intake_rate: 0.00088
+    dark_ratio: 0.92
+    light_threshold_deg: -5.0
+  # Cannibalism and mackerel on the other fish stay out of the budget.
+  mackerel_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  mackerel_preys_on_mackerel:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  mackerel_preys_on_whiting:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  mackerel_preys_on_benthivorous_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  whiting_preys_on_mackerel:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  benthivorous_fish_preys_on_mackerel:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   # Traces of hake / horse mackerel in whiting (M2 0.019): unchecked.
   whiting_preys_on_predatory_fish:
     preys_on: false
@@ -1646,6 +1799,10 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  mackerel_preys_on_phytoplankton:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   whiting_preys_on_phytoplankton:
     preys_on: false
     assimilation_factor: 1.0
@@ -1655,6 +1812,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   predatory_fish_preys_on_porpoises:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  mackerel_preys_on_porpoises:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1670,6 +1831,10 @@ interaction_definitions:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
+  mackerel_preys_on_seabirds:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   whiting_preys_on_seabirds:
     preys_on: false
     assimilation_factor: 1.0
@@ -1679,6 +1844,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   predatory_fish_preys_on_seals:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  mackerel_preys_on_seals:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1695,15 +1864,25 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   # Section 223.26: krill and copepods; a per whole tonne (layer) on the
-  # A17-calibrated pool. Water column: mackerel 0.49, saithe 0.28 of a;
-  # night/day 0.30. Open (209/220): the M2 assumes krill.
+  # A17-calibrated pool. Open (209/220): the rest's M2 assumes krill.
+  # Section 228: the rest keeps its share of today's 0.0756 by the members'
+  # zooplankton consumption (saithe's krill); the mackerel group's M2 is its
+  # members' consumption at their field biomass, same calibration.
   predatory_fish_preys_on_zooplankton:
     preys_on: true
-    predation_mortality: 0.0756
+    predation_mortality: 0.0521
     assimilation_factor: 0.8
-    handling_time: 137.6
-    max_intake_rate: 0.0006
-    dark_ratio: 0.3
+    handling_time: 151.1
+    max_intake_rate: 0.000241
+    dark_ratio: 0.51
+    light_threshold_deg: -5.0
+  mackerel_preys_on_zooplankton:
+    preys_on: true
+    predation_mortality: 0.1299
+    assimilation_factor: 0.8
+    handling_time: 86.6
+    max_intake_rate: 0.0023
+    dark_ratio: 0.11
     light_threshold_deg: -5.0
   # Whiting on krill and mysid-sized zooplankton: encounter 0.0018 x the
   # Staniland 1995 capture factor on shrimp 1.33 (as the pooled pair, J)
@@ -1729,6 +1908,10 @@ interaction_definitions:
   planktivorous_fish_preys_on_predatory_fish:
     preys_on: false
     predation_mortality: 0.0799
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  planktivorous_fish_preys_on_mackerel:
+    preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   planktivorous_fish_preys_on_whiting:
@@ -1767,6 +1950,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   phytoplankton_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  phytoplankton_preys_on_mackerel:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -1824,6 +2011,14 @@ interaction_definitions:
     handling_time: 28.6
     visibility_floor: 0.9
     max_intake_rate: 0.2
+  # Section 228: today's water-column M2 per tonne on the mackerel group (J).
+  porpoises_preys_on_mackerel:
+    preys_on: true
+    predation_mortality: 0.0063
+    assimilation_factor: 0.84
+    handling_time: 28.6
+    visibility_floor: 0.9
+    max_intake_rate: 0.2
   porpoises_preys_on_whiting:
     preys_on: true
     predation_mortality: 0.019
@@ -1863,6 +2058,10 @@ interaction_definitions:
   seabirds_preys_on_predatory_fish:
     preys_on: false
     predation_mortality: 0.0078
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  seabirds_preys_on_mackerel:
+    preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
   seabirds_preys_on_whiting:
@@ -1933,6 +2132,10 @@ interaction_definitions:
     assimilation_factor: 1.0
     handling_time: 0.0
   zooplankton_preys_on_predatory_fish:
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
+  zooplankton_preys_on_mackerel:
     preys_on: false
     assimilation_factor: 1.0
     handling_time: 0.0
@@ -2060,7 +2263,7 @@ interaction_definitions:
     - value: 100.0
       biomass_factor: 0.00386304767
       energy_factor: 0.0
-  # Section 223.26: water column F 0.213 /yr (saithe 0.30, hake 0.27, ling 0.17,
+  # Section 228: water column F 0.260 /yr (saithe 0.30, hake 0.27, ling 0.17,
   # anglerfish ~0.08, spurdog 0.008; gillnet, longline and seine on this map).
   predatory_fish_impacted_by_bottom_trawling:
     impact_affects: true
@@ -2069,7 +2272,19 @@ interaction_definitions:
       biomass_factor: 0.0
       energy_factor: 0.0
     - value: 100.0
-      biomass_factor: 0.0048361803927
+      biomass_factor: 0.0059035859233
+      energy_factor: 0.0
+  # Section 228.1: mackerel group F 0.0123 /yr: the LOCAL 3.a.20 F of mackerel
+  # (catch 343 t/yr / survey biomass 25 945 t = 0.0132) on its static gears (gillnet,
+  # hooks) and bottom trawls; horse mackerel 0.003. Not the stock F (0.2).
+  mackerel_impacted_by_bottom_trawling:
+    impact_affects: true
+    impact_table:
+    - value: 0.0
+      biomass_factor: 0.0
+      energy_factor: 0.0
+    - value: 100.0
+      biomass_factor: 0.00027979959184
       energy_factor: 0.0
   # Section 223.26: whiting F 0.075 /yr.
   whiting_impacted_by_bottom_trawling:
@@ -2091,16 +2306,21 @@ interaction_definitions:
     - value: 10.0
       biomass_factor: 0.000109755334
       energy_factor: 0.0
-  # Section 223.26: water column F 0.029 /yr (mackerel 0.21, horse mackerel
-  # 0.035 at their shares).
+  # Section 228: no pelagic F on the water column (all of today's 0.029 was
+  # mackerel's and horse mackerel's).
   predatory_fish_impacted_by_pelagic_trawling:
+    impact_affects: false
+    impact_table: []
+  # Section 228.1: mackerel group F 0.0024 /yr: mackerel's local midwater-trawl
+  # share (0.0132 x 0.025), horse mackerel 0.035 (stock = local).
+  mackerel_impacted_by_pelagic_trawling:
     impact_affects: true
     impact_table:
     - value: 0.0
       biomass_factor: 0.0
       energy_factor: 0.0
     - value: 10.0
-      biomass_factor: 0.0079827776176
+      biomass_factor: 0.00064888628291
       energy_factor: 0.0
   # Section 223.26: whiting F 0.005 /yr (industrial bycatch).
   whiting_impacted_by_pelagic_trawling:
@@ -2118,6 +2338,9 @@ interaction_definitions:
   predatory_fish_impacted_by_rotor:
     impact_affects: false
     impact_table: []
+  mackerel_impacted_by_rotor:
+    impact_affects: false
+    impact_table: []
   whiting_impacted_by_rotor:
     impact_affects: false
     impact_table: []
@@ -2125,6 +2348,9 @@ interaction_definitions:
     impact_affects: false
     impact_table: []
   predatory_fish_impacted_by_windfarm_noise:
+    impact_affects: false
+    impact_table: []
+  mackerel_impacted_by_windfarm_noise:
     impact_affects: false
     impact_table: []
   whiting_impacted_by_windfarm_noise:
@@ -2264,12 +2490,16 @@ interaction_definitions:
     observes: true
   predatory_fish_observes_benthic_infauna:
     observes: false
+  mackerel_observes_benthic_infauna:
+    observes: false
   whiting_observes_benthic_infauna:
     observes: false
   benthivorous_fish_observes_mobile_epifauna:
     observes: true
   # Section 223.26: the water-column group has no epifauna pair any more.
   predatory_fish_observes_mobile_epifauna:
+    observes: false
+  mackerel_observes_mobile_epifauna:
     observes: false
   whiting_observes_mobile_epifauna:
     observes: true
@@ -2279,23 +2509,39 @@ interaction_definitions:
     observes: true
   predatory_fish_observes_norway_lobster:
     observes: false
+  mackerel_observes_norway_lobster:
+    observes: false
   whiting_observes_norway_lobster:
     observes: false
   benthivorous_fish_observes_benthivorous_fish:
     observes: true
   benthivorous_fish_observes_predatory_fish:
     observes: true
+  benthivorous_fish_observes_mackerel:
+    observes: true
   benthivorous_fish_observes_whiting:
     observes: true
   predatory_fish_observes_benthivorous_fish:
+    observes: true
+  mackerel_observes_benthivorous_fish:
     observes: true
   whiting_observes_benthivorous_fish:
     observes: true
   predatory_fish_observes_predatory_fish:
     observes: true
+  predatory_fish_observes_mackerel:
+    observes: true
+  mackerel_observes_predatory_fish:
+    observes: true
+  mackerel_observes_mackerel:
+    observes: true
   predatory_fish_observes_whiting:
     observes: true
+  mackerel_observes_whiting:
+    observes: true
   whiting_observes_predatory_fish:
+    observes: true
+  whiting_observes_mackerel:
     observes: true
   whiting_observes_whiting:
     observes: true
@@ -2303,11 +2549,15 @@ interaction_definitions:
     observes: true
   predatory_fish_observes_planktivorous_fish:
     observes: true
+  mackerel_observes_planktivorous_fish:
+    observes: true
   whiting_observes_planktivorous_fish:
     observes: true
   benthivorous_fish_observes_phytoplankton:
     observes: false
   predatory_fish_observes_phytoplankton:
+    observes: false
+  mackerel_observes_phytoplankton:
     observes: false
   whiting_observes_phytoplankton:
     observes: false
@@ -2315,17 +2565,23 @@ interaction_definitions:
     observes: true
   predatory_fish_observes_porpoises:
     observes: true
+  mackerel_observes_porpoises:
+    observes: true
   whiting_observes_porpoises:
     observes: true
   benthivorous_fish_observes_seabirds:
     observes: false
   predatory_fish_observes_seabirds:
     observes: false
+  mackerel_observes_seabirds:
+    observes: false
   whiting_observes_seabirds:
     observes: false
   benthivorous_fish_observes_seals:
     observes: true
   predatory_fish_observes_seals:
+    observes: true
+  mackerel_observes_seals:
     observes: true
   whiting_observes_seals:
     observes: true
@@ -2334,6 +2590,8 @@ interaction_definitions:
     observes: false
   predatory_fish_observes_zooplankton:
     observes: true
+  mackerel_observes_zooplankton:
+    observes: true
   whiting_observes_zooplankton:
     observes: true
   planktivorous_fish_observes_benthic_infauna:
@@ -2341,6 +2599,8 @@ interaction_definitions:
   planktivorous_fish_observes_benthivorous_fish:
     observes: true
   planktivorous_fish_observes_predatory_fish:
+    observes: true
+  planktivorous_fish_observes_mackerel:
     observes: true
   planktivorous_fish_observes_whiting:
     observes: true
@@ -2362,6 +2622,8 @@ interaction_definitions:
     observes: true
   porpoises_observes_predatory_fish:
     observes: true
+  porpoises_observes_mackerel:
+    observes: true
   porpoises_observes_whiting:
     observes: true
   porpoises_observes_planktivorous_fish:
@@ -2381,6 +2643,8 @@ interaction_definitions:
   seabirds_observes_benthivorous_fish:
     observes: false
   seabirds_observes_predatory_fish:
+    observes: false
+  seabirds_observes_mackerel:
     observes: false
   seabirds_observes_whiting:
     observes: false
@@ -2402,6 +2666,8 @@ interaction_definitions:
     observes: true
   seals_observes_predatory_fish:
     observes: true
+  seals_observes_mackerel:
+    observes: true
   seals_observes_whiting:
     observes: true
   seals_observes_planktivorous_fish:
@@ -2421,6 +2687,8 @@ interaction_definitions:
   zooplankton_observes_benthivorous_fish:
     observes: false
   zooplankton_observes_predatory_fish:
+    observes: false
+  zooplankton_observes_mackerel:
     observes: false
   zooplankton_observes_whiting:
     observes: false

@@ -1,0 +1,14 @@
+{
+ "mackerel_planktivores": [
+  0.07938248638910231,
+  0.003994175644149646
+ ],
+ "rest_planktivores": [
+  0.6925508197973865,
+  0.27401530737631935
+ ],
+ "a_shares": {
+  "mackerel": 0.8,
+  "horse mackerel": 0.2
+ }
+}

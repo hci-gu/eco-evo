@@ -73,6 +73,8 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
     # and the benthivores eat Nephrops (norway_lobster) at the encounter a.
     # Section 223.26: the predators split into whiting (bed) and the water
     # column, and every a is per tonne of the WHOLE predator group.
+    # Section 228: mackerel and horse mackerel are their own group; the
+    # water column's a are per tonne of the rest.
     env = _env()
     expected = {
         ('planktivorous_fish', 'zooplankton'): 0.017,
@@ -82,13 +84,16 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('benthivorous_fish', 'norway_lobster'): 0.44,
         ('benthivorous_fish', 'planktivorous_fish'): 0.0062,
         ('benthivorous_fish', 'whiting'): 0.0026,
-        ('predatory_fish', 'planktivorous_fish'): 0.0117,
+        ('predatory_fish', 'planktivorous_fish'): 0.00559,
+        ('mackerel', 'planktivorous_fish'): 0.0435,
         ('whiting', 'planktivorous_fish'): 0.021,
-        ('predatory_fish', 'zooplankton'): 0.0006,
+        ('predatory_fish', 'zooplankton'): 0.000241,
+        ('mackerel', 'zooplankton'): 0.0023,
         ('whiting', 'zooplankton'): 0.0023,
-        ('predatory_fish', 'benthivorous_fish'): 0.053,
+        ('predatory_fish', 'benthivorous_fish'): 0.0651,
         ('whiting', 'benthivorous_fish'): 0.21,
-        ('predatory_fish', 'whiting'): 0.0106,
+        ('predatory_fish', 'whiting'): 0.013,
+        ('predatory_fish', 'mackerel'): 0.00088,
     }
     for (pred, prey), a in expected.items():
         i = env.dm_ids.index(pred)
@@ -106,13 +111,16 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
         'planktivorous_fish_preys_on_zooplankton': (0.02, 0.0),
         'benthivorous_fish_preys_on_planktivorous_fish': (0.06, 0.0),
         'benthivorous_fish_preys_on_whiting': (0.10, 0.0),
-        'predatory_fish_preys_on_planktivorous_fish': (0.39, -5.0),
+        'predatory_fish_preys_on_planktivorous_fish': (0.30, -5.0),
+        'mackerel_preys_on_planktivorous_fish': (0.36, -5.0),
         'whiting_preys_on_planktivorous_fish': (0.33, -5.0),
-        'predatory_fish_preys_on_zooplankton': (0.30, -5.0),
+        'predatory_fish_preys_on_zooplankton': (0.51, -5.0),
+        'mackerel_preys_on_zooplankton': (0.11, -5.0),
         'whiting_preys_on_zooplankton': (0.78, -5.0),
         'predatory_fish_preys_on_benthivorous_fish': (0.48, -5.0),
         'whiting_preys_on_benthivorous_fish': (0.64, -5.0),
         'predatory_fish_preys_on_whiting': (0.48, -5.0),
+        'predatory_fish_preys_on_mackerel': (0.92, -5.0),
     }
     for key, (rho, theta) in expected.items():
         assert daylight.pair_settings(inter[key]) == pytest.approx((rho, theta))

@@ -44,6 +44,7 @@ def _block(**overrides):
              "group_layers": {"planktivorous_fish": "upper", "zooplankton": "upper",
                               "benthivorous_fish": "deep", "predatory_fish": "deep",
                               "whiting": "deep",          # section 223.26
+                              "mackerel": "upper",        # section 228
                               # grazing Q10, section 177
                               "microzooplankton": "upper"}}
     block.update(overrides)
@@ -154,7 +155,8 @@ def test_a_q10_group_without_a_layer_raises():
         _load(_project(_block(group_layers={"planktivorous_fish": "upper",
                                             "zooplankton": "upper",
                                             "predatory_fish": "deep",
-                                            "whiting": "deep"})))
+                                            "whiting": "deep",
+                                            "mackerel": "upper"})))
 
 
 def test_a_q10_on_a_non_decision_maker_raises():

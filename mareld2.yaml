@@ -119,6 +119,8 @@ simulation_settings:
       microzooplankton: mean_0_50m
       benthivorous_fish: bottom
       predatory_fish: at_50m
+      # Section 228: mackerel feeds in its prey's layer (user).
+      mackerel: mean_0_50m
       # Section 223.26: whiting forages on the bed (J, as the benthivores).
       whiting: bottom
 decision_makers:
@@ -133,11 +135,16 @@ decision_makers:
     inference_initial_biomass: 5500
   # Section 223.26 (predator split G1): the 1.20 t/km2 predator level
   # split by the long-run biomass shares: water column (predatory_fish)
-  # 0.754, whiting 0.446 t/km2; ranges x0.5-2.
+  # 0.754, whiting 0.446 t/km2; since section 228 the water column is
+  # predatory_fish 0.617 + mackerel 0.850 t/km2 (field level); ranges x0.5-2.
   - group_id: predatory_fish
-    initial_biomass_min: 1360
-    initial_biomass_max: 5430
-    inference_initial_biomass: 2715
+    initial_biomass_min: 1110
+    initial_biomass_max: 4440
+    inference_initial_biomass: 2220
+  - group_id: mackerel
+    initial_biomass_min: 1530
+    initial_biomass_max: 6120
+    inference_initial_biomass: 3060
   - group_id: whiting
     initial_biomass_min: 800
     initial_biomass_max: 3210

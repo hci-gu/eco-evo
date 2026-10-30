@@ -21835,3 +21835,124 @@ remain open exactly as described in 71.9 / 71.11.
       (continued or restarted) rollout at its first tick.
     - Verified on DISPLAY :1 with --no-capture: paused at tick 8, still 8
       two seconds later, resumed to 68. tests/test_viz_run_pause.py.
+
+227 MACKEREL GROUP STAGE ACCESS DERIVED (user, 2026-10-30; analysis only)
+    research_notes/"Makrillens bytesstorlek" (Swedish letters) summary.md
+    section 6, scripts/mackerel_stage_access.py (imports the A-ring
+    stage_access.py: same stage length tables and predator length mixes;
+    the pooled wc -> planktivores pair reruns to [0.319, 0.109]). Member
+    weights = shares of today's pooled pair a (mackerel 0.80, horse
+    mackerel 0.20).
+    - Mackerel group -> planktivores [f_J, f_A] = [0.079, 0.004] (gape
+      p95 0.33/0.31; p90 [0.056, 0.003], ICES-DB 0.28 [0.035, 0.001],
+      p95 + 0.04 [0.154, 0.010]); f_J by quarter 0.046/0.042/0.126/0.104
+      (age-0 herring and pout in Q3-Q4, small sprat). Effective f on the
+      whole planktivore B at the model's J/B 0.34/0.38/0.45: 0.030/0.033/
+      0.038 - the same as the 2026-10-29 whole-pool f 0.025 (0.017-
+      0.036): the compartment moves the reachable herring into J, adds
+      none. Below the 0.05-0.1 window for a learned late-summer switch
+      with the four-quarter mean; presence-weighted (mackerel ~Q3 only)
+      f_J ~0.126 gives 0.052/0.060 at J/B 0.38/0.45, at the window's
+      floor (user's call which constant a resident group standing for a
+      migrant carries); p90 or ICES-DB 0.28 below either way. Verdict:
+      marginal. The window is from frozen fix80 at pooled f 1 (before
+      223.32/223.37); a decision needs the share-of-ceiling check rerun
+      on fix83 with the derived [f_J, f_A] and the monthly J/B.
+    - Validation: implied juvenile share of the take at box J/B 0.38 =
+      0.92 vs SMS mackerel / horse mackerel 1.00.
+    - For a split: rest water column -> planktivores [0.69, 0.27]
+      (effective 0.43; the pooled 0.19 is diluted by mackerel's 0.61 of
+      the a); mackerel group -> benthivores [0.030, 0] (age-0 gadoids in
+      Q3). No library change.
+
+228 MACKEREL GROUP SPLIT OUT OF THE WATER COLUMN (user, 2026-10-30)
+    research_notes/"Rovfiskens uppdelning" (Swedish letters)
+    params_split_mack.md (every number), scripts/split_fields_mack.py,
+    split_encounter_mack.py, rest_on_mackerel_vs_density.py,
+    build_split_mack.py (text edits -> data/fg_library_mack.yaml,
+    data/mareld2_mack.yaml, data/build_split_mack.json); the level from
+    research_notes/"Makrillens tathet" (a-umlaut) summary.md (a research
+    agent; IESSNS, acoustics, catch / F, EwE / SMS).
+    - Decisions (user, interactive): new DM `mackerel` (mackerel + horse
+      mackerel), `predatory_fish` keeps its id for the rest (saithe 0.80,
+      spurdog, hake, anglerfish, ling, velvet belly, pollack); stage access
+      on the planktivores at the annual mean over the quarters; no
+      regional K; layer mean_0_50m; reserve-funded (income-funded fat
+      cycle open); the level = the field density, not the GOV share; the
+      rest -> mackerel pair booked. As 223.26 (J): Bjornsson x1.30 on both
+      ceilings, seals / porpoises at today's per-tonne M2 on both groups,
+      observability copied from the water column, stock F (209
+      convention).
+    - Level: GOV under-samples mackerel (q ~0.1 against the July surface
+      trawl). Box annual means: mackerel 0.80 t/km2 (0.33-1.7; July 1.8,
+      presence fraction 0.45: Dec-Apr 0.05-0.15 of July), horse mackerel
+      0.05 (0.02-0.16; Aug-Nov, peak Oct 0.17); 3.a mackerel 0.5,
+      Skagerrak 0.75. Group 0.85 t/km2 = 3060 t (was 0.138 / 495 in the
+      GOV sketch), members 0.94 / 0.06; rest 0.617 t/km2 = 2220 t.
+    - Fields: mackerel r 0.255, M1 0.159, F 0.002 bottom + 0.203 pelagic,
+      ceiling 51.94 (GER 159.8 kJ/kg/d at 9.31 C x 1.30), RM 3.63, Q10
+      2.0, feeding cost 2.72, lean 4670 + 5870 at fill 0.55 (prey 7899),
+      starve 0.0078; rest r 0.396, M1 0.276, F 0.260 bottom + 0, ceiling
+      29.79, RM 3.29, feeding 2.27, lean 4180 + 2000 at 0.45 (prey 5080).
+      Reproduction gate (today's water column from its nine members) and
+      M2 conservation gate (GOV level) PASS.
+    - Pairs (M2 / a / h / stage or f / night-day): mackerel -> plk 0.0263
+      (SMS per member scaled to field biomass) / 0.0435 / 137.2 / [0.078,
+      0.0037] / 0.36; -> zoo 0.1299 (members' consumption at the pooled
+      calibration) / 0.0023 / 86.6 / - / 0.11. Rest -> plk 0.247 /
+      0.00559 / 239.2 / [0.69, 0.27] / 0.30; -> zoo 0.0521 / 0.000241 /
+      151.1 / - / 0.51; -> benthivores 0.0833 / 0.0651 / 151.1 / [0.43,
+      0.027] / 0.48; -> whiting 0.157 / 0.013 / 161.1 / f 0.47 / 0.48;
+      -> mackerel (new) 0.021 / 0.00088 / 265.1 / f 0.29 / 0.92. Seals ->
+      mackerel 0.0098 (h 37.2), porpoises 0.0063. Mackerel scores < 0.1
+      on benthivores and whiting: no pairs. The rest's effective herring
+      access is neutral (0.0024 vs 0.0022).
+    - The cross pair: at the GOV level its M2 0.131 was 21 % of the
+      group's gross and paid ~1 % of the rest's herring return; at the
+      field level M2 0.021 is 4.7 % of the gross; a cell needs ~5.2 t/km2
+      of mackerel to match the rest's zooplankton pair (return 1.6 vs 7.8
+      MJ/t/tick at the grid mean): booked, rarely paid.
+    - Derived growth: mackerel 0.000894 (s* 0.845), predatory_fish
+      0.0014966 -> 0.0016461, planktivores 0.0031435 -> 0.0031889 (M2
+      0.624 -> 0.641), zooplankton 0.11854 -> 0.11883, porpoises
+      0.00046279 -> 0.00045236 (best prey now mackerel); others unchanged.
+      budget_gate: every pair and predator ok.
+    - Code: i18n FG_NAMES (Makrill / Sgombro), api.py alias, frozen_years
+      AB 'mack', compare_scenarios list; tests updated (numbers, not
+      gates): test_gpu_spawn (14 FGs), test_gpu_impacts (pelagic loss on
+      mackerel, none on predatory_fish), test_fishing_maps (F per group),
+      test_half_saturation (a, light), test_temperature (layers),
+      test_viz_member_species, test_energy_balance_gate (the porpoises'
+      best prey may be mackerel: fat pelagic prey, 7899 vs clupeids 7125).
+      Validated first in a git worktree (GOV build: pytest 1595 passed /
+      12 skipped), then applied after fix85 was stopped (field build:
+      pytest 1595 passed / 12 skipped; train.py and train_gpu.py (GPU)
+      1-update smokes write policy_mackerel.pth). Manifest: decision_makers mackerel 3060 (1530-6120),
+      predatory_fish 2220 (1110-4440); group_layers mackerel mean_0_50m.
+      All checkpoints invalid (one more DM, observation slots); train
+      from scratch.
+    - Open: the stock F (0.203) vs the local 3.a F ~0.013 (C/B; the box
+      alone would land ~620 t/yr at stock F against 555 t/yr for all of
+      3.a); seasonal presence (no mechanism; resident at the annual mean,
+      inference start 3060 t); the income-funded fat cycle; the summer
+      layer; FG editor round trip not done.
+
+228.1 Mackerel at its LOCAL F (user, 2026-10-30). The catch route of
+    "Makrillens tathet" (a-umlaut): 3.a.20 catch 343 t/yr (ICES official
+    2016-24: Sweden 182, Denmark 55, Norway 105) / survey-based annual
+    mean 25 945 t = 0.0132 /yr, ~1/16 of the stock F (0.215-0.285); the
+    fish in 3.a are barely fished while there (coastal gillnets, hooks;
+    EU gear shares gillnet 0.45, hooks 0.32, bottom trawl 0.17, midwater
+    trawl 0.038). split_fields_mack.py (with densities): mackerel F
+    bottom 0.0132 x 0.975, pelagic 0.0132 x 0.025 (the midwater share of
+    the EU part, 222 of 343 t); the bottom-trawl map carries the static
+    gears (223.26; J for the hook catch). Horse mackerel keeps 0.003 +
+    0.035 (its stock F matches its local 2020-24 catch / field biomass,
+    ~0.03). Group F 0.0123 + 0.0024 = 0.0147 (was 0.0021 + 0.2025);
+    tables bottom bf 0.00027979959184 at 100, pelagic 0.00064888628291 at
+    10. An exception to the 209 closed-pool convention (visitors at stock
+    F); with no K the group nets r - F ~0.24 /yr before predation and M1.
+    Rebuilt from the HEAD library and manifest (build_split_mack.py ...
+    _field): the live library differs only in the two tables and three
+    comments; growth rates unchanged (F is outside the budget).
+    test_fishing_maps updated.

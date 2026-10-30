@@ -1,0 +1,28 @@
+== MAC: EU catch (landings + discards) in 27.3.a.20, t ==
+year  Q1  Q2  Q3  Q4  total | by country
+2016     1.8   173.4   168.1    19.7    363.1 | Sweden 330, Denmark 28, Netherlands 4, Germany 1
+2017     0.7   166.4   143.3    25.5    336.0 | Sweden 241, Denmark 90, Netherlands 5, Germany 0
+2018    15.1    90.0    98.6     9.6    213.3 | Sweden 187, Denmark 23, Germany 2, Netherlands 1
+2019     0.1   106.3    87.9    23.2    217.5 | Sweden 180, Denmark 37, Germany 0, Netherlands 0
+2020     2.9    97.3    63.7    25.4    189.2 | Sweden 145, Denmark 44, Germany 0, Netherlands 0
+2021     1.3    81.0    76.3    16.2    174.8 | Sweden 138, Denmark 37, Germany 0, Netherlands 0
+2022     0.7   104.0    77.4    10.6    192.8 | Sweden 146, Denmark 44, Germany 2, Netherlands 0
+2023     1.7    73.1    59.7     3.9    138.4 | Sweden 117, Denmark 21, Germany 0, Netherlands 0
+2024     0.4    73.6    88.6     9.2    171.8 | Sweden 145, Denmark 27, Germany 0, Netherlands 0
+pooled quarter shares: Q1 0.012 Q2 0.483 Q3 0.433 Q4 0.072 mean/yr 221.9 t over 9 yr
+gear shares: GND 0.432, LHP 0.163, LTL 0.156, OTB 0.148, OTT 0.026, OTM 0.024, GNS 0.018, PTM 0.014
+confidential/NA weight rows: {'2016': 372, '2017': 428, '2018': 360, '2019': 370, '2020': 458, '2021': 402, '2022': 280, '2023': 230, '2024': 234}
+== HOM: EU catch (landings + discards) in 27.3.a.20, t ==
+year  Q1  Q2  Q3  Q4  total | by country
+2016     3.2     0.0   110.6   167.3    281.2 | Denmark 164, Sweden 117, Germany 0, Netherlands 0
+2017     0.2     7.0    30.2     2.9     40.3 | Sweden 22, Denmark 19, Germany 0, Netherlands 0
+2018     0.2     0.1    18.1    36.0     54.3 | Denmark 31, Sweden 23, Netherlands 1
+2019     0.2     0.1   126.7   444.2    571.2 | Sweden 325, Denmark 246, Germany 0, Netherlands 0
+2020     0.3     0.0    58.9   895.1    954.3 | Denmark 871, Sweden 83
+2021     2.0     0.0     8.1    31.1     41.2 | Denmark 36, Sweden 5, Germany 0
+2022     0.0     0.0    23.1    11.5     34.6 | Denmark 30, Sweden 5, Germany 0, Netherlands 0
+2023     0.1     0.0     2.5    12.9     15.5 | Denmark 14, Sweden 1, Germany 0, Netherlands 0
+2024     0.4     0.0     7.7     9.2     17.4 | Denmark 17, Sweden 1
+pooled quarter shares: Q1 0.003 Q2 0.004 Q3 0.192 Q4 0.801 mean/yr 223.3 t over 9 yr
+gear shares: OTB 0.711, OTM 0.222, PTM 0.044, OTT 0.019, SSC 0.002, SDN 0.001, NK 0.000, GNS 0.000
+confidential/NA weight rows: {'2016': 200, '2017': 260, '2018': 268, '2019': 242, '2020': 226, '2021': 270, '2022': 132, '2023': 100, '2024': 124}

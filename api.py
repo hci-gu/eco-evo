@@ -77,6 +77,8 @@ API_TO_INTERNAL_SPECIES = {
     "norway_lobster": "norway_lobster",
     # Section 223.26: the bed-feeding predators split out of predatory_fish.
     "whiting": "whiting",
+    # Section 228: mackerel and horse mackerel split out of predatory_fish.
+    "mackerel": "mackerel",
 }
 
 # These scalar pressures can be represented by the current static impact-map

@@ -1,0 +1,40 @@
+== SMS key run 2014 (WGSAM 2014/2015), other predators  (tonnes in ICES IV; annual mean of quarters; t/km2 at 570000 km2)
+  W_mackerel   1991: Q1    310754 Q2    220301 Q3   1368207 Q4   1712719 | mean    902995 = 1.584 t/km2 | max 3.005
+  W_mackerel   2000: Q1    200466 Q2    157837 Q3    889232 Q4   1101012 | mean    587137 = 1.030 t/km2 | max 1.932
+  W_mackerel   2010: Q1    382618 Q2    286941 Q3   1752549 Q4   2226393 | mean   1162125 = 2.039 t/km2 | max 3.906
+  W_mackerel   2013: Q1    427277 Q2    334379 Q3   1974894 Q4   2508427 | mean   1311244 = 2.300 t/km2 | max 4.401
+  N_mackerel   1991: Q1    125081 Q2    139302 Q3     77683 Q4     86475 | mean    107135 = 0.188 t/km2 | max 0.244
+  N_mackerel   2000: Q1     43186 Q2     47589 Q3     27899 Q4     29821 | mean     37124 = 0.065 t/km2 | max 0.083
+  N_mackerel   2010: Q1    113503 Q2    128210 Q3     74055 Q4     82536 | mean     99576 = 0.175 t/km2 | max 0.225
+  N_mackerel   2013: Q1    128164 Q2    144748 Q3     85792 Q4     94114 | mean    113204 = 0.199 t/km2 | max 0.254
+  W_horse_mac  1991: Q1         0 Q2         0 Q3    149345 Q4   1132977 | mean    320580 = 0.562 t/km2 | max 1.988
+  W_horse_mac  2000: Q1      9337 Q2         0 Q3         0 Q4     37427 | mean     11691 = 0.021 t/km2 | max 0.066
+  W_horse_mac  2010: Q1     12895 Q2         0 Q3         0 Q4     53759 | mean     16664 = 0.029 t/km2 | max 0.094
+  W_horse_mac  2013: Q1      8247 Q2         0 Q3         0 Q4     33374 | mean     10405 = 0.018 t/km2 | max 0.059
+  N_horse_mac  1991: Q1     86234 Q2    192954 Q3    183964 Q4    120573 | mean    145931 = 0.256 t/km2 | max 0.339
+  N_horse_mac  2000: Q1     86234 Q2    192954 Q3    183964 Q4    120573 | mean    145931 = 0.256 t/km2 | max 0.339
+  N_horse_mac  2010: Q1     86234 Q2    192954 Q3    183964 Q4    120573 | mean    145931 = 0.256 t/km2 | max 0.339
+  N_horse_mac  2013: Q1     86234 Q2    192954 Q3    183964 Q4    120573 | mean    145931 = 0.256 t/km2 | max 0.339
+== SMS key run 2023, other predators  (tonnes in ICES IV; annual mean of quarters; t/km2 at 570000 km2)
+  W_horse_mac  1991: Q1         0 Q2         0 Q3    181324 Q4   1397199 | mean    394631 = 0.692 t/km2 | max 2.451
+  W_horse_mac  2000: Q1     12444 Q2         0 Q3         0 Q4     58096 | mean     17635 = 0.031 t/km2 | max 0.102
+  W_horse_mac  2010: Q1      9037 Q2         0 Q3         0 Q4     39779 | mean     12204 = 0.021 t/km2 | max 0.070
+  W_horse_mac  2013: Q1      6406 Q2         0 Q3         0 Q4     29342 | mean      8937 = 0.016 t/km2 | max 0.051
+  W_horse_mac  2015: Q1      4899 Q2         0 Q3         0 Q4     22166 | mean      6766 = 0.012 t/km2 | max 0.039
+  W_horse_mac  2020: Q1      4497 Q2         0 Q3         0 Q4     22773 | mean      6818 = 0.012 t/km2 | max 0.040
+  W_horse_mac  2022: Q1      5409 Q2         0 Q3         0 Q4     27003 | mean      8103 = 0.014 t/km2 | max 0.047
+  N_horse_mac  1991: Q1    165715 Q2    159616 Q3    163834 Q4    157804 | mean    161742 = 0.284 t/km2 | max 0.291
+  N_horse_mac  2000: Q1    165715 Q2    159616 Q3    163834 Q4    157804 | mean    161742 = 0.284 t/km2 | max 0.291
+  N_horse_mac  2010: Q1    165715 Q2    159616 Q3    163834 Q4    157804 | mean    161742 = 0.284 t/km2 | max 0.291
+  N_horse_mac  2013: Q1    165715 Q2    159616 Q3    163834 Q4    157804 | mean    161742 = 0.284 t/km2 | max 0.291
+  N_horse_mac  2015: Q1    165715 Q2    159616 Q3    163834 Q4    157804 | mean    161742 = 0.284 t/km2 | max 0.291
+  N_horse_mac  2020: Q1    165715 Q2    159616 Q3    163834 Q4    157804 | mean    161742 = 0.284 t/km2 | max 0.291
+  N_horse_mac  2022: Q1    165715 Q2    159616 Q3    163834 Q4    157804 | mean    161742 = 0.284 t/km2 | max 0.291
+== SMS key run 2023, Mackerel (species 20): whole-stock BIO and BIO*prop.in (in ICES IV)
+  1991: in-area Q1    362104 Q2    415562 Q3   1780351 Q4   2133665 | mean   1172920 = 2.058 t/km2 | share of stock by Q: 0.105 0.102 0.419 0.549
+  2000: in-area Q1    247153 Q2    300450 Q3   1223401 Q4   1447588 | mean    804648 = 1.412 t/km2 | share of stock by Q: 0.094 0.095 0.374 0.489
+  2010: in-area Q1    366100 Q2    555631 Q3   2090848 Q4   2560696 | mean   1393319 = 2.444 t/km2 | share of stock by Q: 0.066 0.080 0.276 0.357
+  2013: in-area Q1    399190 Q2    534552 Q3   2205155 Q4   2691127 | mean   1457506 = 2.557 t/km2 | share of stock by Q: 0.058 0.063 0.243 0.321
+  2015: in-area Q1    324646 Q2    481742 Q3   1879876 Q4   2221651 | mean   1226979 = 2.153 t/km2 | share of stock by Q: 0.049 0.060 0.225 0.291
+  2020: in-area Q1    228372 Q2    375450 Q3   1258096 Q4   1490816 | mean    838183 = 1.470 t/km2 | share of stock by Q: 0.049 0.068 0.218 0.277
+  2022: in-area Q1    215683 Q2    296637 Q3   1128406 Q4   1341361 | mean    745522 = 1.308 t/km2 | share of stock by Q: 0.049 0.058 0.212 0.277

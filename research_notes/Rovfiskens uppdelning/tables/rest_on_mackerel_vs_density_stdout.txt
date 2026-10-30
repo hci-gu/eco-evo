@@ -1,0 +1,15 @@
+rest water column, return per unit eat share at grid-mean prey (MJ/t/tick): planktivorous_fish 19.5, zooplankton 7.8, benthivorous_fish 16.9, whiting 9.1
+
+ B t/km2  tonnes M2 booked gross /yr unpaid %  return
+   0.138     497    0.1306     0.616     21.2    0.25
+   0.250     900    0.0721     0.557     12.9    0.44
+   0.500    1800    0.0360     0.521      6.9    0.87
+   1.000    3600    0.0180     0.503      3.6    1.69
+   2.000    7200    0.0090     0.494      1.8    3.20
+   4.000   14400    0.0045     0.490      0.9    5.78
+
+mackerel density in ONE cell at which the pair matches the rest's other pairs:
+  planktivorous_fish      31.51 t/km2
+  zooplankton              5.88 t/km2
+  benthivorous_fish       21.87 t/km2
+  whiting                  7.30 t/km2

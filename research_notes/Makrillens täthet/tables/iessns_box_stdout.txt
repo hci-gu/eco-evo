@@ -1,0 +1,54 @@
+Horizontal opening rescaled 65.0 -> 68.0 m (x0.956).
+
+== DK IESSNS early-July surface-trawl mackerel, t/km2 (0-~30 m, q = 1) ==
+  2019 h1 07-02T15:47 45G0   161 m   0.0 km in_box         day   mac  2.057 hom 0.0010
+  2019 h2 07-02T22:08 45F9   533 m  40.3 km trench_>=400m  night mac  0.225 hom 0.0000
+  2019 h3 07-03T04:16 43F8    64 m 108.1 km shelf_other    day   mac  4.715 hom 0.0010
+  2018 h1 07-02T20:20 44F9   102 m  29.9 km shelf_other    night mac  1.534 hom 0.0000
+  2018 h2 07-03T04:25 44F8   525 m 116.5 km trench_>=400m  day   mac  2.990 hom 0.0000
+  2020 h1 07-01T13:50 44G0    83 m   0.0 km in_box         day   mac  1.691 hom 0.0000
+  2020 h2 07-01T19:15 46F9   530 m  39.4 km trench_>=400m  day   mac  0.495 hom 0.0000
+  2020 h3 07-02T00:16 44F8   520 m  88.9 km trench_>=400m  night mac  0.084 hom 0.0000
+  2021 h1 06-30T17:44 44G0    94 m   0.0 km in_box         day   mac  4.148 hom 0.0000
+  2021 h2 06-30T23:02 46F9   508 m  38.4 km trench_>=400m  night mac  1.731 hom 0.0000
+  2021 h3 07-01T04:40 44F8   519 m  86.6 km trench_>=400m  day   mac  0.293 hom 0.0000
+  2022 h1 07-03T21:06 44G0    85 m   0.0 km in_box         night mac  1.968 hom 0.0010
+  2022 h2 07-04T01:28 44F8   532 m  82.6 km trench_>=400m  night mac  2.013 hom 0.0000
+  2023 h1 07-04T16:59 45G0   207 m   0.0 km in_box         day   mac  4.187 hom 0.0000
+  2023 h2 07-04T23:16 46G0   162 m  51.2 km shelf_other    night mac  1.060 hom 0.0000
+  2023 h3 07-05T06:40 45F9   545 m  41.5 km trench_>=400m  day   mac  0.011 hom 0.0000
+  2023 h4 07-05T14:14 44F8    99 m 101.3 km shelf_other    day   mac  6.908 hom 0.0000
+  2024 h1 07-04T22:59 45G0   313 m  16.1 km shelf_other    night mac  0.244 hom 0.0000
+  2024 h2 07-05T05:34 44F9    80 m  45.4 km shelf_other    day   mac  5.281 hom 0.0000
+  2025 h1 07-04T21:30 45G0   480 m   2.9 km edge_<=15km    night mac  0.178 hom 0.0000
+  2025 h2 07-05T04:41 44F9   102 m  55.6 km shelf_other    day   mac  4.151 hom 0.0000
+  2026 h1 07-04T19:46 45G0   142 m   0.0 km in_box         day   mac  1.834 hom 0.0000
+  2026 h2 07-05T02:19 45F9   436 m  44.0 km trench_>=400m  night mac  1.164 hom 0.0000
+  2026 h3 07-05T06:48 44F8    70 m  68.6 km shelf_other    day   mac  3.760 hom 0.0029
+in box                             n= 6 mean  2.65 median  2.01 geomean  2.45 min  1.69 max  4.19
+in box + edge <=15 km              n= 7 mean  2.29 median  1.97 geomean  1.69 min  0.18 max  4.19
+Trench >=400 m (west of box)       n= 9 mean  1.00 median  0.49 geomean  0.42 min  0.01 max  2.99
+shelf, other (Danish side)         n= 8 mean  3.46 median  3.96 geomean  2.39 min  0.24 max  6.91
+all Skagerrak hauls 57-59N 8-12E   n=24 mean  2.20 median  1.78 geomean  1.12 min  0.01 max  6.91
+bottom 100-320 m (box depths)      n= 7 mean  2.15 median  1.83 geomean  1.59 min  0.24 max  4.19
+horse mackerel, all hauls: max 0.0029 mean 0.0002
+
+== IESSNS North Sea stratum (July) ==
+year  Ceton mean t/km2  StoX t/km2
+2018   1.74       1.39
+2019   1.01       0.80
+2020   1.32       0.92
+2021   2.43       2.01
+2022   1.69       1.70
+2023   2.36       2.27
+2024   2.00       1.95
+2025   2.06       2.05
+North Sea stratum mean 2018-25     n= 8 mean  1.83 median  1.87 geomean  1.76 min  1.01 max  2.43
+North Sea stratum mean 2021-25     n= 5 mean  2.11 median  2.06 geomean  2.09 min  1.69 max  2.43
+2026 prelim. North Sea implied (3.3 - 1.8 Mt) / 285 781 km2 = 5.25 t/km2
+
+== IESSNS July swept-area total (Nordic + North Sea) / assessment TSB (1 Jan) ==
+2022 IESSNS 7.84 Mt / TSB 6.72 Mt = 1.17
+2024 IESSNS 3.06 Mt / TSB 4.07 Mt = 0.75
+2025 IESSNS 2.29 Mt / TSB 3.73 Mt = 0.61
+mean ratio 0.84 -> assessment-scaled factor on survey densities 0.86 / 1.33 / 1.63

@@ -66,8 +66,8 @@ fabricates mass.
 ## 4. Functional groups
 
 - Decision makers (have a policy net): `zooplankton`, `planktivorous_fish`,
-  `benthivorous_fish`, `predatory_fish`, `whiting`, `porpoises`, `seals`,
-  `seabirds`.
+  `benthivorous_fish`, `predatory_fish`, `whiting`, `mackerel`,
+  `porpoises`, `seals`, `seabirds`.
   `mareld2.yaml` mutes only `seabirds`. Since section 209 the fish are
   three feeding groups (were `pelagic_fish` + `gadoids`; every value a
   biomass-weighted species value, research_notes/"Fiskgrupper i rutan"):
@@ -82,7 +82,15 @@ fabricates mass.
   the only predator with an epifauna pair, `bottom` layer) and
   `predatory_fish` = the water column (saithe 0.65, mackerel, spurdog,
   horse mackerel, hake, ...; 0.754 t/km2, 2715 t; no bed pairs) - the
-  id kept, its meaning changed; checkpoints before 223.26 are invalid. Ceilings from measured Cmax per
+  id kept, its meaning changed; checkpoints before 223.26 are invalid.
+  Since section 228 `mackerel` (mackerel 0.94, horse mackerel 0.06) is a
+  group of its own at the FIELD density, 0.85 t/km2 (3060 t; IESSNS July
+  surface trawl x a 0.45 presence profile, research_notes/"Makrillens
+  tathet" (a-umlaut); GOV q for mackerel ~0.1), `mean_0_50m` layer, no K,
+  reserve-funded; `predatory_fish` is the rest (saithe 0.80, spurdog,
+  hake, anglerfish, ling, velvet belly, pollack; 0.617 t/km2, 2220 t);
+  research_notes/"Rovfiskens uppdelning" params_split_mack.md;
+  checkpoints before 228 are invalid. Ceilings from measured Cmax per
   species (energy convention of section 148). Seals (harbour seals
   only, on since 166) spawn on the demersal groups (benthivores and both
   predator groups) and take ~60 % benthivores, 15 % predators (whiting
@@ -142,8 +150,10 @@ fabricates mass.
   mortality and cost, observable channels in train.py's slots; section
   161). Impacts are outside the growth budget. `mareld2.yaml` fishes
   today's world: `bottom_trawling` (benthivores F 0.17, water-column
-  predators 0.213, whiting 0.075 /yr) and `pelagic_trawling`
-  (planktivores 0.10, water-column predators 0.029, whiting 0.005),
+  predators 0.260, whiting 0.075, mackerel 0.012 /yr) and
+  `pelagic_trawling` (planktivores 0.10, mackerel 0.002, whiting 0.005);
+  mackerel carries its LOCAL 3.a F (catch / survey biomass 0.013, user
+  228.1), not the stock F 0.2,
   the `maps/` effort maps
   as baseline and inference maps, linear library tables calibrated to
   the maps' mean effort. Impact mortality acts on every group with a
@@ -166,9 +176,11 @@ fabricates mass.
   planktivores -> zoo 0.017; benthivores -> infauna 0.036, -> epifauna
   0.15, -> Nephrops 0.44, -> planktivores 0.0062, -> whiting 0.0026;
   whiting -> epifauna 0.27, -> planktivores 0.021, -> zoo 0.0023, ->
-  benthivores 0.21; water column -> planktivores 0.0117, -> zoo 0.0006,
-  -> benthivores 0.053, -> whiting 0.0106 (sections 220, 221, 223.15,
-  223.26; no predator eats infauna or Nephrops, the water column no
+  benthivores 0.21; water column -> planktivores 0.00559, -> zoo
+  0.000241, -> benthivores 0.0651, -> whiting 0.013, -> mackerel 0.00088
+  (f 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
+  0.0435, -> zoo 0.0023 (sections 220, 221, 223.15, 223.26, 228; no
+  predator eats infauna or Nephrops, the water column no
   epifauna). The
   benthic pairs are a_enc x an exposure factor e derived per prey item
   type (buried bodies found only by a cue, cropped arm tips and siphons,
@@ -183,7 +195,8 @@ fabricates mass.
   infauna 112; research_notes/"Magtomning och energitak", Swedish
   letters); every other predator keeps h = E / its ceiling. The predator
   ceilings are Bjornsson-anchored (x1.30, 223.26): whiting 31.34 (bottom
-  layer), water column 32.71. Never set a from model output.
+  layer), water column 29.79, mackerel 51.94 (228). Never set a from
+  model output.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
   normalised so the library `a` is the annual mean; every DM then also
@@ -191,8 +204,9 @@ fabricates mass.
   night/day ratios): planktivores -> zoo 0.02 at 0 deg; benthivores ->
   planktivores 0.06 and -> whiting 0.10 at 0 deg (140 m is too dim
   for -5); at -5 deg (223.26): whiting -> planktivores 0.33, -> zoo
-  0.78, -> benthivores 0.64; water column -> planktivores 0.39, -> zoo
-  0.30, -> benthivores 0.48, -> whiting 0.48; benthic pairs none.
+  0.78, -> benthivores 0.64; water column (228) -> planktivores 0.30,
+  -> zoo 0.51, -> benthivores 0.48, -> whiting 0.48, -> mackerel 0.92;
+  mackerel -> planktivores 0.36, -> zoo 0.11; benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
@@ -213,7 +227,8 @@ fabricates mass.
   with `metabolism_q10` is `resting_metabolism * q10**((T - t_ref)/10)`,
   T from its layer's monthly table on the daylight calendar; herring
   t_ref is 14 C (the library value is a summer cost), the demersal
-  groups (water-column predators at_50m, benthivores the `bottom` layer
+  groups (water-column predators at_50m, mackerel `mean_0_50m` (228),
+  benthivores the `bottom` layer
   since 223.15 and whiting since 223.26,
   SHARK A16/A17 at each cell's depth, annual 7.4 C) and zooplankton
   `annual_mean`, porpoises none
@@ -256,7 +271,7 @@ fabricates mass.
   offshore tail of a metapopulation regulated off the grid; without it
   they grew ~6 %/yr on the old gadoids, halved them and crashed; at K = the
   15 t start they settled at ~0.5 K, because the loss is charged at
-  r_max while they realise ~0.06 /yr net. Porpoises have no K; their
+  r_max while they realise ~0.06 /yr net. Mackerel has no K (228, user: the most mobile window group). Porpoises have no K; their
   attack rates are x1.5 since section 206 (they fell to ~0.3 of the
   start in 15-20 years at the old rates).
   With the daylight calendar a producer with `light_saturation` grows at
@@ -315,14 +330,16 @@ fabricates mass.
   eaten with it; the static quality is taken at
   `reserve_reference_fill`. Set for `planktivorous_fish` (section
   140.6; 209): lean 4000 MJ/t + reserve up to 6250, starvation from 0.2
-  of it, `predatory_fish` (water column, lean 4240 + 2600 at fill 0.5 =
-  5540), `whiting` (lean 3900 + 2000 at fill 0.45 = 4800; 223.26) and,
+  of it, `predatory_fish` (water column, lean 4180 + 2000 at fill 0.45 =
+  5080; 228), `mackerel` (lean 4670 + 5870 at fill 0.55 = 7899; 228),
+  `whiting` (lean 3900 + 2000 at fill 0.45 = 4800; 223.26) and,
   since section 223.9, `benthivorous_fish` (lean 3600 + 1800 at fill
   0.5 = 4500; was whole-body 4500 with each new tonne charged its
   reserve on top). Benthivore pair M2 since 223.9: budget Q/B 4.46,
   the no-pool 17.7 % of the diet redistributed (infauna 0.0396,
   epifauna 0.276, planktivores 0.245 (0.145 since 223.37: SMS partial
-  M2 scaled to the box, as are water column -> planktivores 0.257 and
+  M2 scaled to the box, as are water column -> planktivores 0.257 (since
+  228 the rest 0.247 + mackerel 0.026 at its field biomass) and
   whiting -> planktivores 0.203), predators 0.128 - all of it on
   whiting since 223.26, cod's fish prey in the pool being whiting; M2
   0.18 since 223.28 = SMS cod -> whiting scaled to the model's
@@ -344,8 +361,9 @@ fabricates mass.
   (planktivores, benthivores; 223.32) a pair may carry `stage_access:
   [f_J, f_A]` instead (members' prey-size windows on the stage lengths):
   water column -> benthivores [0.43, 0.027] (was f 0.075), whiting ->
-  benthivores [0.049, 0] (was 0.05), water column -> planktivores [0.32,
-  0.11], whiting -> planktivores [0.12, 0.008], benthivores ->
+  benthivores [0.049, 0] (was 0.05), water column -> planktivores [0.69,
+  0.27] (228; was [0.32, 0.11] with mackerel in it), mackerel ->
+  planktivores [0.078, 0.0037] (annual mean, 228), whiting -> planktivores [0.12, 0.008], benthivores ->
   planktivores [0.49, 0.14], seals -> benthivores [1, 0.34], porpoises ->
   benthivores [1, 0.55]; research_notes/"Arsungarnas andel" (A-ring)
   parameters_B.md. `predator_share` phi

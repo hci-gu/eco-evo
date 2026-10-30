@@ -1,0 +1,239 @@
+species_fao,year,gear_group,gear,tonnes
+HOM,2010,Not,Snurpenot/ringnot,57.501
+HOM,2011,Garn,Drivgarn,0.22
+HOM,2013,Trål,Bunntrål,10.0
+HOM,2014,Not,Snurpenot/ringnot,4088.206
+HOM,2015,Trål,Flytetrål,53.949
+HOM,2016,Krokredskap,Dorg/harp/snik,0.294
+HOM,2016,Not,Snurpenot/ringnot,1.077
+HOM,2016,Trål,Flytetrål,626.747
+HOM,2017,Krokredskap,Dorg/harp/snik,0.04
+HOM,2017,Trål,Bunntrål,15.1
+HOM,2017,Trål,Bunntrål par,0.5
+HOM,2017,Trål,Flytetrål,269.939
+HOM,2018,Not,Snurpenot/ringnot,71.839
+HOM,2019,Not,Snurpenot/ringnot,0.5
+HOM,2019,Trål,Bunntrål,0.029
+HOM,2022,Garn,Drivgarn,0.002
+HOM,2022,Snurrevad,Snurrevad,0.048
+HOM,2022,Trål,Bunntrål,0.017
+HOM,2023,Trål,Flytetrål,19.255
+HOM,2023,Trål,Krepsetrål,0.002
+HOM,2023,Trål,Reketrål (herunder sputniktrål),0.007
+HOM,2024,Not,Snurpenot/ringnot,0.262
+HOM,2024,Trål,Bunntrål,0.002
+HOM,2024,Trål,Flytetrål,1.0
+HOM,2024,Trål,Reketrål (herunder sputniktrål),0.007
+HOM,2025,Not,Snurpenot/ringnot,0.144
+HOM,2025,Snurrevad,Snurrevad,0.036
+HOM,2025,Trål,Bunntrål,0.136
+HOM,2025,Trål,Krepsetrål,0.001
+HOM,2025,Trål,Reketrål (herunder sputniktrål),0.008
+HOM,2026,Garn,Settegarn,0.005
+HOM,2026,Not,Snurpenot/ringnot,9.565
+HOM,2026,Trål,Flytetrål,0.633
+MAC,2010,Garn,Drivgarn,45.68
+MAC,2010,Garn,Settegarn,2.515
+MAC,2010,Garn,Udefinert garn,0.084
+MAC,2010,Krokredskap,Dorg/harp/snik,1184.572
+MAC,2010,Krokredskap,Juksa/pilk,0.08
+MAC,2010,Not,Landnot,0.2
+MAC,2010,Not,Snurpenot/ringnot,3.029
+MAC,2010,Trål,Krepsetrål,0.035
+MAC,2010,Trål,Reketrål (herunder sputniktrål),0.052
+MAC,2011,Bur og ruser,Havteiner,0.128
+MAC,2011,Bur og ruser,Teiner,0.404
+MAC,2011,Garn,Drivgarn,41.296
+MAC,2011,Garn,Settegarn,1.971
+MAC,2011,Krokredskap,Dorg/harp/snik,626.289
+MAC,2011,Krokredskap,Flyteline,0.072
+MAC,2011,Krokredskap,Juksa/pilk,0.264
+MAC,2011,Not,Snurpenot/ringnot,3.408
+MAC,2011,Trål,Bunntrål,0.004
+MAC,2011,Trål,Krepsetrål,0.013
+MAC,2011,Trål,Reketrål (herunder sputniktrål),0.111
+MAC,2012,Bur og ruser,Havteiner,0.033
+MAC,2012,Bur og ruser,Teiner,0.684
+MAC,2012,Garn,Drivgarn,74.143
+MAC,2012,Garn,Settegarn,2.293
+MAC,2012,Krokredskap,Andre liner,3.922
+MAC,2012,Krokredskap,Dorg/harp/snik,78.755
+MAC,2012,Krokredskap,Juksa/pilk,0.078
+MAC,2012,Not,Landnot,0.623
+MAC,2012,Not,Snurpenot/ringnot,12.101
+MAC,2012,Snurrevad,Snurrevad,0.004
+MAC,2012,Trål,Krepsetrål,0.107
+MAC,2012,Trål,Reketrål (herunder sputniktrål),0.033
+MAC,2013,Bur og ruser,Ruser,0.014
+MAC,2013,Bur og ruser,Teiner,0.267
+MAC,2013,Garn,Drivgarn,56.253
+MAC,2013,Garn,Settegarn,8.461
+MAC,2013,Krokredskap,Andre liner,5.388
+MAC,2013,Krokredskap,Dorg/harp/snik,65.254
+MAC,2013,Krokredskap,Juksa/pilk,0.268
+MAC,2013,Not,Snurpenot/ringnot,2.333
+MAC,2013,Snurrevad,Snurrevad,0.001
+MAC,2013,Trål,Bunntrål,0.021
+MAC,2013,Trål,Krepsetrål,0.005
+MAC,2013,Trål,Reketrål (herunder sputniktrål),0.284
+MAC,2014,Bur og ruser,Ruser,0.001
+MAC,2014,Bur og ruser,Teiner,0.473
+MAC,2014,Garn,Drivgarn,47.011
+MAC,2014,Garn,Settegarn,7.445
+MAC,2014,Krokredskap,Andre liner,0.656
+MAC,2014,Krokredskap,Dorg/harp/snik,66.492
+MAC,2014,Krokredskap,Juksa/pilk,3.88
+MAC,2014,Not,Snurpenot/ringnot,8.565
+MAC,2014,Snurrevad,Snurrevad,0.051
+MAC,2014,Trål,Bunntrål,0.032
+MAC,2014,Trål,Krepsetrål,0.01
+MAC,2014,Trål,Reketrål (herunder sputniktrål),0.503
+MAC,2015,Bur og ruser,Ruser,0.02
+MAC,2015,Bur og ruser,Teiner,0.391
+MAC,2015,Garn,Drivgarn,52.894
+MAC,2015,Garn,Settegarn,15.207
+MAC,2015,Krokredskap,Andre liner,0.062
+MAC,2015,Krokredskap,Dorg/harp/snik,112.436
+MAC,2015,Krokredskap,Juksa/pilk,0.893
+MAC,2015,Not,Snurpenot/ringnot,2.185
+MAC,2015,Snurrevad,Snurrevad,0.003
+MAC,2015,Trål,Bomtrål,0.034
+MAC,2015,Trål,Bunntrål,1.275
+MAC,2015,Trål,Flytetrål,0.412
+MAC,2015,Trål,Krepsetrål,0.028
+MAC,2015,Trål,Reketrål (herunder sputniktrål),0.621
+MAC,2016,Bur og ruser,Ruser,0.01
+MAC,2016,Bur og ruser,Teiner,0.449
+MAC,2016,Garn,Drivgarn,37.347
+MAC,2016,Garn,Settegarn,10.043
+MAC,2016,Krokredskap,Andre liner,0.054
+MAC,2016,Krokredskap,Dorg/harp/snik,104.296
+MAC,2016,Krokredskap,Juksa/pilk,0.706
+MAC,2016,Not,Snurpenot/ringnot,4.204
+MAC,2016,Snurrevad,Snurrevad,0.025
+MAC,2016,Trål,Bunntrål,0.258
+MAC,2016,Trål,Flytetrål,0.511
+MAC,2016,Trål,Krepsetrål,0.034
+MAC,2016,Trål,Reketrål (herunder sputniktrål),0.688
+MAC,2017,Bur og ruser,Teiner,0.374
+MAC,2017,Garn,Drivgarn,22.128
+MAC,2017,Garn,Settegarn,19.769
+MAC,2017,Krokredskap,Andre liner,0.442
+MAC,2017,Krokredskap,Dorg/harp/snik,57.424
+MAC,2017,Krokredskap,Juksa/pilk,1.131
+MAC,2017,Not,Snurpenot/ringnot,1.633
+MAC,2017,Snurrevad,Snurrevad,0.282
+MAC,2017,Trål,Bunntrål,0.173
+MAC,2017,Trål,Bunntrål par,0.16
+MAC,2017,Trål,Flytetrål,20.199
+MAC,2017,Trål,Krepsetrål,0.006
+MAC,2017,Trål,Reketrål (herunder sputniktrål),0.512
+MAC,2018,Bur og ruser,Ruser,0.002
+MAC,2018,Bur og ruser,Teiner,0.407
+MAC,2018,Garn,Drivgarn,23.933
+MAC,2018,Garn,Settegarn,13.398
+MAC,2018,Garn,Udefinert garn,0.037
+MAC,2018,Krokredskap,Andre liner,0.039
+MAC,2018,Krokredskap,Dorg/harp/snik,58.476
+MAC,2018,Krokredskap,Juksa/pilk,1.114
+MAC,2018,Not,Snurpenot/ringnot,0.454
+MAC,2018,Snurrevad,Snurrevad,0.261
+MAC,2018,Trål,Flytetrål,0.884
+MAC,2018,Trål,Krepsetrål,0.141
+MAC,2018,Trål,Reketrål (herunder sputniktrål),0.042
+MAC,2019,Andre redskap,Annet,0.003
+MAC,2019,Bur og ruser,Ruser,0.243
+MAC,2019,Bur og ruser,Teiner,0.306
+MAC,2019,Garn,Drivgarn,29.61
+MAC,2019,Garn,Settegarn,14.698
+MAC,2019,Krokredskap,Andre liner,0.213
+MAC,2019,Krokredskap,Dorg/harp/snik,57.655
+MAC,2019,Krokredskap,Juksa/pilk,0.913
+MAC,2019,Not,Snurpenot/ringnot,1.614
+MAC,2019,Trål,Bunntrål,0.065
+MAC,2019,Trål,Flytetrål,1.958
+MAC,2019,Trål,Krepsetrål,0.027
+MAC,2019,Trål,Reketrål (herunder sputniktrål),0.411
+MAC,2020,Andre redskap,Annet,0.107
+MAC,2020,Andre redskap,Tangkutter,0.016
+MAC,2020,Bur og ruser,Ruser,0.366
+MAC,2020,Bur og ruser,Teiner,0.739
+MAC,2020,Garn,Drivgarn,20.686
+MAC,2020,Garn,Settegarn,11.115
+MAC,2020,Krokredskap,Andre liner,1.214
+MAC,2020,Krokredskap,Dorg/harp/snik,51.292
+MAC,2020,Krokredskap,Juksa/pilk,3.644
+MAC,2020,Not,Snurpenot/ringnot,0.068
+MAC,2020,Trål,Flytetrål,0.2
+MAC,2020,Trål,Krepsetrål,0.045
+MAC,2020,Trål,Reketrål (herunder sputniktrål),0.052
+MAC,2021,Bur og ruser,Teiner,2.182
+MAC,2021,Garn,Drivgarn,15.53
+MAC,2021,Garn,Settegarn,9.402
+MAC,2021,Garn,Udefinert garn,0.208
+MAC,2021,Krokredskap,Dorg/harp/snik,44.463
+MAC,2021,Krokredskap,Juksa/pilk,0.448
+MAC,2021,Not,Snurpenot/ringnot,1.332
+MAC,2021,Trål,Bunntrål,0.006
+MAC,2021,Trål,Flytetrål,0.31
+MAC,2021,Trål,Krepsetrål,0.141
+MAC,2021,Trål,Reketrål (herunder sputniktrål),0.181
+MAC,2022,Andre redskap,Taretrål,0.05
+MAC,2022,Bur og ruser,Teiner,0.778
+MAC,2022,Garn,Drivgarn,13.421
+MAC,2022,Garn,Settegarn,12.569
+MAC,2022,Krokredskap,Dorg/harp/snik,61.26
+MAC,2022,Krokredskap,Juksa/pilk,1.007
+MAC,2022,Not,Snurpenot/ringnot,1.303
+MAC,2022,Trål,Bunntrål,0.012
+MAC,2022,Trål,Flytetrål par,1.3
+MAC,2022,Trål,Krepsetrål,0.086
+MAC,2022,Trål,Reketrål (herunder sputniktrål),0.011
+MAC,2023,Andre redskap,Annet,0.334
+MAC,2023,Bur og ruser,Teiner,0.378
+MAC,2023,Garn,Drivgarn,9.808
+MAC,2023,Garn,Settegarn,14.091
+MAC,2023,Krokredskap,Andre liner,1.343
+MAC,2023,Krokredskap,Dorg/harp/snik,47.849
+MAC,2023,Krokredskap,Juksa/pilk,3.818
+MAC,2023,Not,Snurpenot/ringnot,0.743
+MAC,2023,Snurrevad,Snurrevad,0.019
+MAC,2023,Trål,Flytetrål,16.328
+MAC,2023,Trål,Krepsetrål,0.055
+MAC,2023,Trål,Reketrål (herunder sputniktrål),0.099
+MAC,2024,Andre redskap,Annet,0.027
+MAC,2024,Bur og ruser,Teiner,0.801
+MAC,2024,Garn,Drivgarn,11.095
+MAC,2024,Garn,Settegarn,4.233
+MAC,2024,Krokredskap,Dorg/harp/snik,87.198
+MAC,2024,Krokredskap,Juksa/pilk,0.847
+MAC,2024,Not,Snurpenot/ringnot,2.646
+MAC,2024,Snurrevad,Snurrevad,0.283
+MAC,2024,Trål,Bunntrål,0.093
+MAC,2024,Trål,Krepsetrål,0.006
+MAC,2024,Trål,Reketrål (herunder sputniktrål),0.03
+MAC,2025,Andre redskap,Annet,1.364
+MAC,2025,Bur og ruser,Ruser,0.016
+MAC,2025,Bur og ruser,Teiner,0.247
+MAC,2025,Garn,Drivgarn,6.351
+MAC,2025,Garn,Settegarn,5.796
+MAC,2025,Krokredskap,Andre liner,0.035
+MAC,2025,Krokredskap,Dorg/harp/snik,47.268
+MAC,2025,Krokredskap,Juksa/pilk,0.856
+MAC,2025,Not,Snurpenot/ringnot,4.433
+MAC,2025,Snurrevad,Snurrevad,0.249
+MAC,2025,Trål,Bunntrål,0.293
+MAC,2025,Trål,Krepsetrål,0.026
+MAC,2025,Trål,Reketrål (herunder sputniktrål),0.019
+MAC,2026,Andre redskap,Annet,1.393
+MAC,2026,Bur og ruser,Ruser,0.014
+MAC,2026,Bur og ruser,Teiner,0.535
+MAC,2026,Garn,Drivgarn,6.08
+MAC,2026,Garn,Settegarn,2.544
+MAC,2026,Krokredskap,Andre liner,0.05
+MAC,2026,Krokredskap,Dorg/harp/snik,56.36
+MAC,2026,Krokredskap,Juksa/pilk,0.193
+MAC,2026,Not,Snurpenot/ringnot,3.089
+MAC,2026,Trål,Bunntrål,0.052
+MAC,2026,Trål,Krepsetrål,0.099
+MAC,2026,Trål,Reketrål (herunder sputniktrål),0.741

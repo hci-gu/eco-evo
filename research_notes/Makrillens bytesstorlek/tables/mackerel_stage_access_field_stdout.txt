@@ -1,0 +1,76 @@
+
+== gape p95 (central) 
+                                       pair group stage     Q1     Q2     Q3     Q4   mean  summer
+             mackerel group -> planktivores   plk     J 0.0456 0.0418 0.1226 0.1019 0.0780  0.0822
+             mackerel group -> planktivores   plk     A 0.0011 0.0025 0.0057 0.0054 0.0037  0.0041
+          rest water column -> planktivores   plk     J 0.6369 0.6018 0.7455 0.7859 0.6926  0.6737
+          rest water column -> planktivores   plk     A 0.2612 0.2857 0.2450 0.3041 0.2740  0.2654
+    mackerel group -> benthivores (gadoids)   ben     J 0.0011 0.0003 0.0874 0.0293 0.0295  0.0438
+    mackerel group -> benthivores (gadoids)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+        mackerel group -> benthivores (all)   ben     J 0.0076 0.0020 0.0839 0.0297 0.0308  0.0430
+        mackerel group -> benthivores (all)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+pooled water column -> planktivores (check)   plk     J 0.2766 0.2602 0.3673 0.3700 0.3185  0.3137
+pooled water column -> planktivores (check)   plk     A 0.1026 0.1130 0.0993 0.1222 0.1093  0.1062
+  [f_J, f_A] annual mean (Q1-Q4) | Q2-Q3 (presence) | effective f = f_J J/B + f_A (1-J/B)
+  mackerel group -> planktivores                [0.0780, 0.0037] | [0.0822, 0.0041] | J/B 0.34: 0.0289, 0.38: 0.0319, 0.45: 0.0371
+  rest water column -> planktivores             [0.6926, 0.2740] | [0.6737, 0.2654] | J/B 0.34: 0.4163, 0.38: 0.4331, 0.45: 0.4624
+  mackerel group -> benthivores (gadoids)       [0.0295, 0.0000] | [0.0438, 0.0000] | J/B 0.06: 0.0018, 0.15: 0.0044, 0.17: 0.0050
+  mackerel group -> benthivores (all)           [0.0308, 0.0000] | [0.0430, 0.0000] | J/B 0.06: 0.0018, 0.15: 0.0046, 0.17: 0.0052
+  pooled water column -> planktivores (check)   [0.3185, 0.1093] | [0.3137, 0.1062] | J/B 0.34: 0.1804, 0.38: 0.1888, 0.45: 0.2034
+
+== gape p90 {'mackerel': 0.31, 'horse mackerel': 0.29}
+                                       pair group stage     Q1     Q2     Q3     Q4   mean  summer
+             mackerel group -> planktivores   plk     J 0.0323 0.0345 0.0900 0.0731 0.0575  0.0623
+             mackerel group -> planktivores   plk     A 0.0009 0.0021 0.0053 0.0051 0.0033  0.0037
+          rest water column -> planktivores   plk     J 0.6369 0.6018 0.7455 0.7859 0.6926  0.6737
+          rest water column -> planktivores   plk     A 0.2612 0.2857 0.2450 0.3041 0.2740  0.2654
+    mackerel group -> benthivores (gadoids)   ben     J 0.0006 0.0001 0.0643 0.0214 0.0216  0.0322
+    mackerel group -> benthivores (gadoids)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+        mackerel group -> benthivores (all)   ben     J 0.0057 0.0009 0.0617 0.0212 0.0224  0.0313
+        mackerel group -> benthivores (all)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+pooled water column -> planktivores (check)   plk     J 0.2678 0.2554 0.3444 0.3493 0.3042  0.2999
+pooled water column -> planktivores (check)   plk     A 0.1024 0.1125 0.0983 0.1213 0.1086  0.1054
+  [f_J, f_A] annual mean (Q1-Q4) | Q2-Q3 (presence) | effective f = f_J J/B + f_A (1-J/B)
+  mackerel group -> planktivores                [0.0575, 0.0033] | [0.0623, 0.0037] | J/B 0.34: 0.0218, 0.38: 0.0239, 0.45: 0.0277
+  rest water column -> planktivores             [0.6926, 0.2740] | [0.6737, 0.2654] | J/B 0.34: 0.4163, 0.38: 0.4331, 0.45: 0.4624
+  mackerel group -> benthivores (gadoids)       [0.0216, 0.0000] | [0.0322, 0.0000] | J/B 0.06: 0.0013, 0.15: 0.0032, 0.17: 0.0037
+  mackerel group -> benthivores (all)           [0.0224, 0.0000] | [0.0313, 0.0000] | J/B 0.06: 0.0013, 0.15: 0.0034, 0.17: 0.0038
+  pooled water column -> planktivores (check)   [0.3042, 0.1086] | [0.2999, 0.1054] | J/B 0.34: 0.1751, 0.38: 0.1830, 0.45: 0.1966
+
+== gape ICES-DB 0.28 {'mackerel': 0.28, 'horse mackerel': 0.28}
+                                       pair group stage     Q1     Q2     Q3     Q4   mean  summer
+             mackerel group -> planktivores   plk     J 0.0194 0.0238 0.0515 0.0360 0.0327  0.0376
+             mackerel group -> planktivores   plk     A 0.0002 0.0003 0.0010 0.0010 0.0006  0.0007
+          rest water column -> planktivores   plk     J 0.6369 0.6018 0.7455 0.7859 0.6926  0.6737
+          rest water column -> planktivores   plk     A 0.2612 0.2857 0.2450 0.3041 0.2740  0.2654
+    mackerel group -> benthivores (gadoids)   ben     J 0.0002 0.0000 0.0351 0.0100 0.0113  0.0176
+    mackerel group -> benthivores (gadoids)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+        mackerel group -> benthivores (all)   ben     J 0.0033 0.0002 0.0334 0.0103 0.0118  0.0168
+        mackerel group -> benthivores (all)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+pooled water column -> planktivores (check)   plk     J 0.2612 0.2499 0.3248 0.3304 0.2916  0.2874
+pooled water column -> planktivores (check)   plk     A 0.1020 0.1116 0.0961 0.1192 0.1072  0.1039
+  [f_J, f_A] annual mean (Q1-Q4) | Q2-Q3 (presence) | effective f = f_J J/B + f_A (1-J/B)
+  mackerel group -> planktivores                [0.0327, 0.0006] | [0.0376, 0.0007] | J/B 0.34: 0.0115, 0.38: 0.0128, 0.45: 0.0150
+  rest water column -> planktivores             [0.6926, 0.2740] | [0.6737, 0.2654] | J/B 0.34: 0.4163, 0.38: 0.4331, 0.45: 0.4624
+  mackerel group -> benthivores (gadoids)       [0.0113, 0.0000] | [0.0176, 0.0000] | J/B 0.06: 0.0007, 0.15: 0.0017, 0.17: 0.0019
+  mackerel group -> benthivores (all)           [0.0118, 0.0000] | [0.0168, 0.0000] | J/B 0.06: 0.0007, 0.15: 0.0018, 0.17: 0.0020
+  pooled water column -> planktivores (check)   [0.2916, 0.1072] | [0.2874, 0.1039] | J/B 0.34: 0.1699, 0.38: 0.1773, 0.45: 0.1902
+
+== gape p95 + 0.04 {'mackerel': 0.37, 'horse mackerel': 0.35}
+                                       pair group stage     Q1     Q2     Q3     Q4   mean  summer
+             mackerel group -> planktivores   plk     J 0.0968 0.0812 0.2186 0.2154 0.1530  0.1499
+             mackerel group -> planktivores   plk     A 0.0040 0.0088 0.0131 0.0131 0.0098  0.0110
+          rest water column -> planktivores   plk     J 0.6369 0.6018 0.7455 0.7859 0.6926  0.6737
+          rest water column -> planktivores   plk     A 0.2612 0.2857 0.2450 0.3041 0.2740  0.2654
+    mackerel group -> benthivores (gadoids)   ben     J 0.0062 0.0026 0.1532 0.0729 0.0587  0.0779
+    mackerel group -> benthivores (gadoids)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+        mackerel group -> benthivores (all)   ben     J 0.0186 0.0112 0.1514 0.0744 0.0639  0.0813
+        mackerel group -> benthivores (all)   ben     A 0.0000 0.0000 0.0000 0.0000 0.0000  0.0000
+pooled water column -> planktivores (check)   plk     J 0.3072 0.2830 0.4264 0.4387 0.3638  0.3547
+pooled water column -> planktivores (check)   plk     A 0.1042 0.1166 0.1034 0.1265 0.1127  0.1100
+  [f_J, f_A] annual mean (Q1-Q4) | Q2-Q3 (presence) | effective f = f_J J/B + f_A (1-J/B)
+  mackerel group -> planktivores                [0.1530, 0.0098] | [0.1499, 0.0110] | J/B 0.34: 0.0585, 0.38: 0.0642, 0.45: 0.0742
+  rest water column -> planktivores             [0.6926, 0.2740] | [0.6737, 0.2654] | J/B 0.34: 0.4163, 0.38: 0.4331, 0.45: 0.4624
+  mackerel group -> benthivores (gadoids)       [0.0587, 0.0000] | [0.0779, 0.0000] | J/B 0.06: 0.0035, 0.15: 0.0088, 0.17: 0.0100
+  mackerel group -> benthivores (all)           [0.0639, 0.0000] | [0.0813, 0.0000] | J/B 0.06: 0.0038, 0.15: 0.0096, 0.17: 0.0109
+  pooled water column -> planktivores (check)   [0.3638, 0.1127] | [0.3547, 0.1100] | J/B 0.34: 0.1981, 0.38: 0.2081, 0.45: 0.2257
