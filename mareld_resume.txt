@@ -21980,3 +21980,30 @@ remain open exactly as described in 71.9 / 71.11.
     - growth_rate mackerel 0.000894 -> 0.000825 (s* 0.874); h 107.6 / 68.0;
       budget_gate ration 5.9 %/day; pytest 1595 passed / 12 skipped;
       train_gpu smoke OK. Rebuilt from the pre-228 library (HEAD~1).
+
+228.3 The mackerel group's copied judgements reviewed (user, 2026-10-31;
+    params_split_mack.md 6c). Changed: seals and porpoises -> mackerel
+    unchecked (no mackerel in any Skagerrak / Kattegat harbour seal diet
+    or porpoise stomach set; the copied per-tonne M2 made it 8.7 % / 7.7 %
+    of their booked diets at the field density); their water-column flow
+    (saithe / pollack / gadoids) stays on the rest: seals M2 0.0098 ->
+    0.012, porpoises 0.0063 -> 0.0077 (porpoise g back to 0.00046279);
+    mackerel -> zooplankton visibility_floor 0.5 as the herring pair
+    (zooplankton refuge evidence of 162; was the default 0.2);
+    interference 0.1 -> 0.05 (herring analogy, J). Kept with reasons:
+    species floor 0.7, fish pair floor 0.25, assimilation 0.8, light
+    threshold, response types, unit / speed / spawn conventions. Open:
+    the fish pair's night/day 0.36 (encounter) vs ~0.15 (stomachs).
+    growth_rate mackerel 0.000825 -> 0.000793, predatory_fish 0.0016461 ->
+    0.0016564. budget_gate ok; pytest 1595 passed / 12 skipped;
+    train_gpu smoke OK.
+
+228.4 Mackerel -> planktivores night/day from the stomachs (user,
+    2026-10-31): 0.36 (encounter) -> 0.16 = mackerel 0.15 (Dahl &
+    Kirkegaard 1986: "feeding only during the day", empty stomachs 36.8 %
+    at 01-06 h vs 7.9 % by day) and horse mackerel 0.3, weighted by the
+    planktivore a shares (0.964 / 0.036). Both mackerel pairs now follow
+    the stomachs (zooplankton 0.42 since 228.2); an exception to the
+    223.26 encounter convention, which the other groups keep. No growth
+    change (night/day is outside the budget). test_half_saturation light
+    setting updated.

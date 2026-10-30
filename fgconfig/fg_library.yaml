@@ -782,7 +782,7 @@
     # P 0.36 vs L 0.62 /yr), and it counted the box's density dependence
     # twice (research_notes/"Bestandsreglering" (Swedish letters: a-ring)
     # summary.md). Was K = B*/(1 - F/r) = 2.14 t/km2.
-    growth_rate: 0.0016461242487
+    growth_rate: 0.0016564196673
     # M1 = M0 + predation by groups NOT in the model: saithe 0.29, spurdog
     # 0.10, hake 0.45, anglerfish 0.25 -> 0.276 /yr (0.19-0.31).
     # Within-group predation is a transfer inside the pool and left out.
@@ -923,7 +923,7 @@
     # 0.0147 (the LOCAL 3.a.20 F, 228.1) against r 0.255 leaves
     # 0.24 /yr; the other losses are the booked predation (water
     # column 0.021, seals, porpoises) and M1.
-    growth_rate: 0.00082498428172
+    growth_rate: 0.00079340203461
     # M1 = M0 + predation by groups NOT in the model (tuna, sharks, birds,
     # cetaceans other than porpoises): mackerel 0.15, horse mackerel 0.30
     # -> 0.159 /yr (0.11-0.21).
@@ -940,10 +940,15 @@
     # Routine / lean energy / 0.15 (the section 209 construction, with
     # the routine of 228.2 in place of 1.5 x SMR).
     starve_rate: 0.0067
-    # Judgement: midwater schools hide badly (as the water column).
+    # Judgement: midwater schools hide badly (as the water column); since
+    # 228.3 it acts only on the water column's pair (no mammal pairs).
     visibility_floor: 0.7
-    # No field evidence of interference for mackerel (as the water column).
-    interference: 0.1
+    # Section 228.3: no measurement for mackerel; the closest measured
+    # analogue is herring (a schooling pelagic copepod feeder): no
+    # behavioural interference, intake 0-5 % lower per doubling of fish
+    # density (section 162, herring_interference.md) -> 0.05 as the
+    # planktivores (J). Was 0.1, copied from the water column.
+    interference: 0.05
     extinction_threshold_factor: 0.5
   porpoises:
     display_name: "Porpoises"
@@ -991,7 +996,7 @@
     # r_max 0.10 /yr (Lockyer 2003; Caswell et al. 1998; Forney et al.
     # 2021: 9.6 %/yr after bycatch ended).
     r_max: 0.10
-    growth_rate: 0.00045235804369
+    growth_rate: 0.00046279049
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models from adult
     # survival 0.90-0.95 excluding bycatch, plus calf mortality). No FG
     # preys on porpoises. Was 6.0e-05.
@@ -1362,6 +1367,8 @@ interaction_definitions:
   # Makrillens tathet (Swedish letters: a-umlaut)). Stage access from the gape
   # (p95 prey/predator 0.33 / 0.31, ~10 cm), annual mean over the quarters
   # (user 228; Q3 alone ~0.12): the small end of the juveniles only.
+  # Section 228.4: night/day from the stomachs (mackerel feeds by day: Dahl &
+  # Kirkegaard 1986, 0.15; horse mackerel 0.3), not the encounter model's 0.36.
   mackerel_preys_on_planktivorous_fish:
     preys_on: true
     predation_mortality: 0.0263
@@ -1370,7 +1377,7 @@ interaction_definitions:
     visibility_floor: 0.25
     functional_response: 2
     max_intake_rate: 0.0435
-    dark_ratio: 0.36
+    dark_ratio: 0.16
     light_threshold_deg: -5.0
     stage_access: [0.078, 0.0037]
   # Whiting on planktivores (adults on sprat, Norway pout, herring): diet
@@ -1428,22 +1435,21 @@ interaction_definitions:
   # Section 209: 0.15 of the seal diet; split by member (223.26, J: whiting
   # 0.44 of the seals' predator share). h = E_prey / 212.5; a 0.05 and
   # the visibility floors are judgements (whiting on the bed 0.85).
+  # Section 228.3: today's flow on the water column (saithe / pollack in the
+  # haddock-pollack-saithe otolith group) over the rest's biomass.
   seals_preys_on_predatory_fish:
     preys_on: true
-    predation_mortality: 0.0098
+    predation_mortality: 0.012
     assimilation_factor: 0.85
     handling_time: 23.9
     visibility_floor: 0.75
     max_intake_rate: 0.05
-  # Section 228: today's water-column M2 per tonne on the mackerel group (no
-  # diet evidence to split it; J); h = 7898 / 212.5.
+  # Section 228.3: no mackerel in any Skagerrak harbour seal diet (Koster 1977-89,
+  # northern Skagerrak 2019-20, Norwegian Skagerrak; params_top_predators.md 1.1).
   seals_preys_on_mackerel:
-    preys_on: true
-    predation_mortality: 0.0098
-    assimilation_factor: 0.85
-    handling_time: 37.2
-    visibility_floor: 0.75
-    max_intake_rate: 0.05
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   seals_preys_on_whiting:
     preys_on: true
     predation_mortality: 0.013
@@ -1891,11 +1897,15 @@ interaction_definitions:
   # particulate feeding only, 0.11): mackerel ram-filters copepods in the dark
   # (Macy et al. 1998) and holds 0.4 of the day's stomach at night (Dahl &
   # Kirkegaard 1986); horse mackerel 0.8; weighted by the zooplankton a.
+  # Section 228.3: visibility floor 0.5 as the herring pair: the same prey in the
+  # same layer; shelf copepods mostly do not migrate and a resting copepod stays
+  # visible, daytime accessible share 0.5-0.9 (section 162, zooplankton_refuge.md).
   mackerel_preys_on_zooplankton:
     preys_on: true
     predation_mortality: 0.1299
     assimilation_factor: 0.8
     handling_time: 68.0
+    visibility_floor: 0.5
     max_intake_rate: 0.0023
     dark_ratio: 0.42
     light_threshold_deg: -5.0
@@ -2019,21 +2029,20 @@ interaction_definitions:
     stage_access: [1.0, 0.55]
   # Section 209: 0.20 of the porpoise diet; split by member (223.26, J:
   # whiting 0.64 of it). a 0.2 and the visibility floors are judgements.
+  # Section 228.3: today's flow on the water column over the rest's biomass.
   porpoises_preys_on_predatory_fish:
     preys_on: true
-    predation_mortality: 0.0063
+    predation_mortality: 0.0077
     assimilation_factor: 0.84
     handling_time: 28.6
     visibility_floor: 0.9
     max_intake_rate: 0.2
-  # Section 228: today's water-column M2 per tonne on the mackerel group (J).
+  # Section 228.3: no mackerel in the Kattegat-Skagerrak porpoise stomachs
+  # (Borjesson et al. 2003, Aarefjord et al. 1995; params_top_predators.md 1.2).
   porpoises_preys_on_mackerel:
-    preys_on: true
-    predation_mortality: 0.0063
-    assimilation_factor: 0.84
-    handling_time: 28.6
-    visibility_floor: 0.9
-    max_intake_rate: 0.2
+    preys_on: false
+    assimilation_factor: 1.0
+    handling_time: 0.0
   porpoises_preys_on_whiting:
     preys_on: true
     predation_mortality: 0.019

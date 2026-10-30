@@ -206,8 +206,9 @@ fabricates mass.
   for -5); at -5 deg (223.26): whiting -> planktivores 0.33, -> zoo
   0.78, -> benthivores 0.64; water column (228) -> planktivores 0.30,
   -> zoo 0.51, -> benthivores 0.48, -> whiting 0.48, -> mackerel 0.92;
-  mackerel -> planktivores 0.36, -> zoo 0.42 (stomachs: it filter-feeds
-  in the dark, 228.2); benthic pairs none.
+  mackerel -> planktivores 0.16, -> zoo 0.42 (both from the stomachs:
+  it hunts fish by day and filter-feeds in the dark; 228.2, 228.4);
+  benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
@@ -215,7 +216,7 @@ fabricates mass.
   removed 2-cell vertical bands; benthivores 0 since 223.28 (the 0.45
   had no fish data; research_notes/"Interferens hos bottenfisk"),
   predators 0.1 (no field evidence), planktivores 0.05 since section
-  162 - 0.7 had no herring data behind it and cut winter intake by two
+  162 and mackerel 0.05 by the herring analogy (228.3) - 0.7 had no herring data behind it and cut winter intake by two
   thirds). Planktivores -> zooplankton is Type II
   (`functional_response: 2`) with `visibility_floor` 0.5 (section 162).
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.

@@ -67,21 +67,22 @@ equal the live files at build time only.
 | lean + reserve at fill (prey quality) | 4670 + 5870 at 0.55 (7899) | 4180 + 2000 at 0.45 (5080) | 4240 + 2600 at 0.5 (5540) |
 | starve_rate | 0.0067 (routine; 228.2) | 0.0079 | 0.0078 |
 | regional K | none | none | none |
-| visibility floor, interference | 0.7, 0.1 (J, as the water column) | 0.7, 0.1 | same |
+| visibility floor, interference | 0.7 (J), 0.05 (herring analogy, 228.3) | 0.7, 0.1 | same |
 
 ## 4. Pairs (per tonne of the WHOLE group; h = prey quality / ceiling)
 
 | Pair | M2 /yr | a | h | f / stage access | night/day at -5 deg |
 |---|---|---|---|---|---|
-| mackerel -> planktivores | 0.0263 | 0.0435 | 107.6 | [0.078, 0.0037] | 0.36 |
+| mackerel -> planktivores | 0.0263 | 0.0435 | 107.6 | [0.078, 0.0037] | 0.16 (stomachs, 228.4; encounter 0.36) |
 | mackerel -> zooplankton | 0.1299 | 0.0023 | 68.0 | - | 0.42 (stomachs, 228.2) |
 | rest -> planktivores | 0.247 | 0.00559 | 239.2 | [0.69, 0.27] | 0.30 |
 | rest -> zooplankton | 0.0521 | 0.000241 | 151.1 | - | 0.51 |
 | rest -> benthivores | 0.0833 | 0.0651 | 151.1 | [0.43, 0.027] (unchanged) | 0.48 |
 | rest -> whiting | 0.157 | 0.013 | 161.1 | f 0.47 (unchanged) | 0.48 |
 | rest -> mackerel (new, booked) | 0.021 | 0.00088 | 265.1 | f 0.29 | 0.92 |
-| seals -> mackerel | 0.0098 | 0.05 | 37.2 | floor 0.75 | - |
-| porpoises -> mackerel | 0.0063 | 0.2 | 28.6 | floor 0.9 | - |
+| seals -> mackerel | unchecked (228.3; was 0.0098) | | | | |
+| porpoises -> mackerel | unchecked (228.3; was 0.0063) | | | | |
+| seals / porpoises -> rest | 0.012 / 0.0077 (today's flow / the rest's B, 228.3) | 0.05 / 0.2 | 23.9 / 28.6 | floor 0.75 / 0.9 | - |
 
 - M2 sources: planktivores by the SMS partial M2 per member (223.37: saithe 0.209, hake 0.037; horse mackerel
   0.008, mackerel 0.002 at the GOV biomass, scaled to the members' field biomass: x8.3 and x1.2);
@@ -136,6 +137,37 @@ Consequences: mackerel growth_rate 0.000894 -> 0.000825 (s* 0.874, best pair now
 ceiling); h on its pairs 107.6 / 68.0; budget_gate ration 5.9 %/day (Bachiller's mean 8 %). The
 upstream species_values.csv rows are left as they are (the 209 pooled-group history); this script
 carries the corrected values.
+
+## 6c. The copied judgements reviewed (228.3, user)
+
+Changed:
+- **Seals and porpoises -> mackerel unchecked.** No mackerel appears in any Skagerrak / Kattegat harbour
+  seal diet (Koster 1977-79 and 1989, northern Skagerrak 2019 and 2020, Norwegian Skagerrak 2020) or
+  porpoise stomach set (Borjesson et al. 2003, Aarefjord et al. 1995; params_top_predators.md 1.1-1.2);
+  the copied per-tonne M2 made it 8.7 % and 7.7 % of their booked diets at the field density. Their
+  water-column share was saithe / pollack / gadoids, so today's flow stays on the rest: seals M2 0.0098
+  -> 0.012, porpoises 0.0063 -> 0.0077 (x 0.754 / 0.617). Porpoise growth_rate back to 0.00046279.
+- **Mackerel -> zooplankton visibility_floor 0.5** (was the zooplankton default 0.2): the herring pair's
+  value, from the zooplankton refuge evidence (section 162: shelf copepods mostly do not migrate, a
+  resting copepod stays visible, daytime accessible share 0.5-0.9); same prey, same layer.
+- **interference 0.05** (was 0.1 from the water column): no mackerel measurement; herring, the closest
+  measured analogue (schooling pelagic copepod feeder), shows no behavioural interference, intake
+  0-5 % lower per doubling (section 162). J.
+
+Kept, with the reason:
+- Species visibility_floor 0.7 (J, midwater schools); with the mammal pairs gone it acts only on the
+  rest -> mackerel pair.
+- mackerel -> planktivores pair floor 0.25: the value every fish -> planktivore pair carries (the
+  planktivores' hide against fish predators).
+- assimilation_factor 0.8 on both pairs: evidence A gives AE 0.8 for mackerel (Bachiller egestion
+  0.16; the model factor also carries excretion), as the herring pair.
+- light_threshold_deg -5, functional response (generalist rule: Type II; the fish pair forced II as
+  every fish -> fish pair), min_split_biomass 0.5, movement_speed 1.0, colony spawn, maintenance 0.5,
+  extinction factor: engine and fish-group conventions, not species parameters.
+- The fish pair's night/day: 0.36 (encounter) against Dahl & Kirkegaard's "feeding only during the
+  day" (~0.15). Decided in 228.4 (user): it follows the stomachs, 0.16 (mackerel 0.15, horse mackerel
+  0.3, weighted by the planktivore a), an exception to the 223.26 encounter convention for this group;
+  both mackerel pairs now take night/day from the field.
 
 ## 7. Open
 

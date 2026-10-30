@@ -93,7 +93,12 @@ M2 = {("mackerel", "planktivorous_fish"): round(mk["M2"]["planktivorous_fish"], 
       ("predatory_fish", "benthivorous_fish"): 0.0833,
       ("predatory_fish", "whiting"): 0.157,
       ("predatory_fish", "mackerel"): round(wc["M2"]["mackerel"], 3),
-      ("seals", "mackerel"): 0.0098, ("porpoises", "mackerel"): 0.0063}
+      # 228.3: no mackerel in any Skagerrak / Kattegat harbour seal or porpoise diet (research_notes/
+      # "Fiskgrupper i rutan" params_top_predators.md 1.1-1.2): the mammals' water-column flow was
+      # saithe / pollack / gadoids, so it stays on the rest (M2 = today's flow / the rest's B) and
+      # the mammal -> mackerel pairs are unchecked.
+      ("seals", "predatory_fish"): round(0.0098 * F["wc_pooled"]["B"] / wc["B"], 4),
+      ("porpoises", "predatory_fish"): round(0.0063 * F["wc_pooled"]["B"] / wc["B"], 4)}
 A = {("mackerel", "planktivorous_fish"): round(enc("G3_mackerel", "planktivorous_fish")["central"], 4),
      ("mackerel", "zooplankton"): round(enc("G3_mackerel", "zooplankton")["central"], 5),
      ("predatory_fish", "planktivorous_fish"): round(enc("G3_rest_wc", "planktivorous_fish")["central"], 5),
@@ -115,6 +120,12 @@ if PHYS:
     # horse mackerel 0.8 (0.6-1.0). Weighted by the members' shares of the zooplankton a (0.95 / 0.05).
     zsh = ENC["G3_mackerel"]["zooplankton"].get("member_share", {"mackerel": 0.95, "horse mackerel": 0.05})
     ND[("mackerel", "zooplankton")] = zsh["mackerel"] * 0.4 + zsh["horse mackerel"] * 0.8
+    # 228.4 (user): the fish pair follows the stomachs too: mackerel "feeding only during the day"
+    # (Dahl & Kirkegaard 1986: empty stomachs 36.8 % at 01-06 h vs 7.9 % by day, night contents ~0.16
+    # of the day's) -> 0.15 (0.1-0.2); horse mackerel 0.3 (0.2-0.4); weighted by the members' shares of
+    # the planktivore a (stage-access field json: 0.964 / 0.036). Was the encounter model's 0.36.
+    ash = SA["a_shares"]
+    ND[("mackerel", "planktivorous_fish")] = ash["mackerel"] * 0.15 + ash["horse mackerel"] * 0.3
 ND = {k: round(v, 2) for k, v in ND.items()}
 STAGE = {("mackerel", "planktivorous_fish"): [round(x, 4) for x in SA["mackerel_planktivores"]],
          ("predatory_fish", "planktivorous_fish"): [0.69, 0.27],   # same, rest water column
@@ -131,9 +142,7 @@ for g in ("mackerel", "predatory_fish"):
 E = {fid: prey_energy(S[fid]) for fid in S}
 H_SEAL_CEIL = 212.5
 H = {k: round(E[k[1]] / CEIL[k[0]], 1) for k in M2 if k[0] in CEIL}
-H[("seals", "mackerel")] = round(E["mackerel"] / H_SEAL_CEIL, 1)
 H[("seals", "predatory_fish")] = round(E["predatory_fish"] / H_SEAL_CEIL, 1)
-H[("porpoises", "mackerel")] = 28.6
 
 # ---------------------------------------------------------------------------------------------------
 # text helpers (as build_split_223.py)
@@ -360,10 +369,15 @@ MK_BLOCK = f"""  mackerel:
 {SPAWN}    # Routine / lean energy / 0.15 (the section 209 construction, with
     # the routine of 228.2 in place of 1.5 x SMR).
     starve_rate: {STARVE['mackerel']}
-    # Judgement: midwater schools hide badly (as the water column).
+    # Judgement: midwater schools hide badly (as the water column); since
+    # 228.3 it acts only on the water column's pair (no mammal pairs).
     visibility_floor: 0.7
-    # No field evidence of interference for mackerel (as the water column).
-    interference: 0.1
+    # Section 228.3: no measurement for mackerel; the closest measured
+    # analogue is herring (a schooling pelagic copepod feeder): no
+    # behavioural interference, intake 0-5 % lower per doubling of fish
+    # density (section 162, herring_interference.md) -> 0.05 as the
+    # planktivores (J). Was 0.1, copied from the water column.
+    interference: 0.05
     extinction_threshold_factor: 0.5
 """
 text = replace(text, "predatory_fish", WC_BLOCK)
@@ -395,6 +409,9 @@ text = replace(text, "predatory_fish_preys_on_planktivorous_fish", keep_comments
                "  # Makrillens tathet (Swedish letters: a-umlaut)). Stage access from the gape\n"
                "  # (p95 prey/predator 0.33 / 0.31, ~10 cm), annual mean over the quarters\n"
                "  # (user 228; Q3 alone ~0.12): the small end of the juveniles only.\n"
+               + ("  # Section 228.4: night/day from the stomachs (mackerel feeds by day: Dahl &\n"
+                  "  # Kirkegaard 1986, 0.15; horse mackerel 0.3), not the encounter model's 0.36.\n"
+                  if PHYS else "")
                + pair("mackerel", "planktivorous_fish", floor=0.25, fr=2))
 # zooplankton
 text = replace(text, "predatory_fish_preys_on_zooplankton",
@@ -408,7 +425,10 @@ text = replace(text, "predatory_fish_preys_on_zooplankton",
                   "  # particulate feeding only, 0.11): mackerel ram-filters copepods in the dark\n"
                   "  # (Macy et al. 1998) and holds 0.4 of the day's stomach at night (Dahl &\n"
                   "  # Kirkegaard 1986); horse mackerel 0.8; weighted by the zooplankton a.\n" if PHYS else "")
-               + pair("mackerel", "zooplankton"))
+               + "  # Section 228.3: visibility floor 0.5 as the herring pair: the same prey in the\n"
+               "  # same layer; shelf copepods mostly do not migrate and a resting copepod stays\n"
+               "  # visible, daytime accessible share 0.5-0.9 (section 162, zooplankton_refuge.md).\n"
+               + pair("mackerel", "zooplankton", floor=0.5))
 # benthivores and whiting: rest only (mackerel's capability score < 0.1 -> layer a 0)
 text = replace(text, "predatory_fish_preys_on_benthivorous_fish",
                "  # Section 228: unchanged M2 and stage access (mackerel and horse mackerel are\n"
@@ -441,19 +461,25 @@ for k in list(old["interaction_definitions"]):
     m = re.fullmatch(r"(\w+)_preys_on_predatory_fish", k)
     if m and m.group(1) not in ("predatory_fish", "whiting", "benthivorous_fish", "seals", "porpoises", "mackerel"):
         text = after(text, k, off(m.group(1), "mackerel"))
-# seals and porpoises: today's per-tonne M2 on both groups
+# seals and porpoises (228.3): the water-column flow stays on the rest; no mackerel pairs
 text = set_field(text, "seals_preys_on_predatory_fish", "handling_time", H[("seals", "predatory_fish")])
+for mam in ("seals", "porpoises"):
+    text = set_field(text, f"{mam}_preys_on_predatory_fish", "predation_mortality", M2[(mam, "predatory_fish")])
+text = replace(text, "seals_preys_on_predatory_fish", keep_comments=True, new_text=
+               "  # Section 228.3: today's flow on the water column (saithe / pollack in the\n"
+               "  # haddock-pollack-saithe otolith group) over the rest's biomass.\n"
+               + entry(text, "seals_preys_on_predatory_fish"))
 text = after(text, "seals_preys_on_predatory_fish",
-             "  # Section 228: today's water-column M2 per tonne on the mackerel group (no\n"
-             f"  # diet evidence to split it; J); h = {E['mackerel']:.0f} / 212.5.\n"
-             f"  seals_preys_on_mackerel:\n    preys_on: true\n    predation_mortality: {M2[('seals', 'mackerel')]}\n"
-             f"    assimilation_factor: 0.85\n    handling_time: {H[('seals', 'mackerel')]}\n"
-             "    visibility_floor: 0.75\n    max_intake_rate: 0.05\n")
+             "  # Section 228.3: no mackerel in any Skagerrak harbour seal diet (Koster 1977-89,\n"
+             "  # northern Skagerrak 2019-20, Norwegian Skagerrak; params_top_predators.md 1.1).\n"
+             + off("seals", "mackerel"))
+text = replace(text, "porpoises_preys_on_predatory_fish", keep_comments=True, new_text=
+               "  # Section 228.3: today's flow on the water column over the rest's biomass.\n"
+               + entry(text, "porpoises_preys_on_predatory_fish"))
 text = after(text, "porpoises_preys_on_predatory_fish",
-             "  # Section 228: today's water-column M2 per tonne on the mackerel group (J).\n"
-             f"  porpoises_preys_on_mackerel:\n    preys_on: true\n    predation_mortality: {M2[('porpoises', 'mackerel')]}\n"
-             "    assimilation_factor: 0.84\n    handling_time: 28.6\n    visibility_floor: 0.9\n"
-             "    max_intake_rate: 0.2\n")
+             "  # Section 228.3: no mackerel in the Kattegat-Skagerrak porpoise stomachs\n"
+             "  # (Borjesson et al. 2003, Aarefjord et al. 1995; params_top_predators.md 1.2).\n"
+             + off("porpoises", "mackerel"))
 
 # ---- impacts ----
 BF_B = {"predatory_fish": wc["bf_bottom_100"], "mackerel": mk["bf_bottom_100"]}
