@@ -236,12 +236,19 @@ fabricates mass.
   M1 (B_region = grid-mean density; both engines, with or without
   `--mortality`), kept OUT of the derived g, so it grows at
   `r_max (1 - B/K) - F` (the logistic its r_max prior comes from). The
-  loader derives `capacity_loss_rate`. K = B*/(1 - F/r) on every fish
-  group (section 209): benthivores 3.39 (r 0.31, F 0.17; fragile, cod
-  alone has F > r), water-column predators 2.14 (r 0.374, F 0.24;
-  1.05-11 with saithe F), whiting 0.533 (r 0.49, F 0.08; 223.26),
-  planktivores 4.8
-  (r 0.37; stock-scale compensation plus net emigration, 185.20).
+  loader derives `capacity_loss_rate`. K = B*/(1 - F/r) on whiting
+  0.533 (r 0.49, F 0.08; 223.26) and planktivores 4.8 (r 0.37; 185.20).
+  Since section 223.37 the benthivores (was 3.39) and the water column
+  (was 2.14) have NO K: it counted the box's density dependence twice
+  (food competition and predation in the box already act), and the box
+  is an open nursery whose recruits are spawned outside it
+  (research_notes/"Bestandsreglering", Swedish letters: summary.md; a
+  loss cannot stand for a window group's net import). The remaining K
+  are temporary masks over named defects: planktivores (their g pays
+  booked M2 the trained benthivores and whiting do not realise),
+  whiting (import above need, epifauna overshoot); seals separate. The
+  open-population form (imported recruits into J, somatic growth
+  budget, emigration, exchange for window groups) is the replacement.
   Without K the old gadoids grew at r_max - F, ate the pelagic pool down
   and crashed (184.13), and the pelagic pool grazed the zooplankton
   down year after year (185.17-19). Seals: K 0.0075
@@ -314,7 +321,9 @@ fabricates mass.
   0.5 = 4500; was whole-body 4500 with each new tonne charged its
   reserve on top). Benthivore pair M2 since 223.9: budget Q/B 4.46,
   the no-pool 17.7 % of the diet redistributed (infauna 0.0396,
-  epifauna 0.276, planktivores 0.245, predators 0.128 - all of it on
+  epifauna 0.276, planktivores 0.245 (0.145 since 223.37: SMS partial
+  M2 scaled to the box, as are water column -> planktivores 0.257 and
+  whiting -> planktivores 0.203), predators 0.128 - all of it on
   whiting since 223.26, cod's fish prey in the pool being whiting; M2
   0.18 since 223.28 = SMS cod -> whiting scaled to the model's
   cod:whiting ratio, was 0.345). Benthivore resting metabolism re-read at the

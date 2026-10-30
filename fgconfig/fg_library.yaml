@@ -564,7 +564,7 @@
     # standing stock per year (resume 185.17-19).
     regional_carrying_capacity: 4.8
     # x 12 / feeding_season_months (5.5) since section 184.
-    growth_rate: 0.0035374528067
+    growth_rate: 0.0031435112937
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
@@ -684,10 +684,12 @@
     # sole 0.50, gurnard 0.65, starry ray 0.15, long rough dab 0.30
     # (judgement) -> 0.31 (0.22-0.41).
     r_max: 0.31
-    # K = B* / (1 - F/r) = 1.53 / (1 - 0.17/0.31) = 3.39 t/km2 (section
-    # 185 convention; B* = the user's long-run level, the top of the
-    # 2001-25 span). Fragile: F/r = 0.55, and cod alone has F > r.
-    regional_carrying_capacity: 3.39
+    # No regional K since section 223.37: it counted the box's density
+    # dependence twice (K set for the full budget growth at B* while food
+    # competition and predation in the box already deliver ~73 % of it),
+    # and the box's recruits are spawned outside it (research_notes/
+    # "Bestandsreglering" (Swedish letters: a-ring) summary.md). Was K =
+    # B*/(1 - F/r) = 3.39 t/km2.
     growth_rate: 0.0018656355976
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
@@ -778,9 +780,11 @@
     # 0.26, mackerel 0.25, horse mackerel 0.33, spurdog 0.07, anglerfish
     # 0.47, ling 0.55 -> 0.374 (0.32-0.42).
     r_max: 0.374
-    # K = B* / (1 - F/r) = 0.754 / (1 - 0.242/0.374) = 2.14 t/km2 (1.05-11;
-    # saithe F 0.11-0.38 drives it; the user chose the central value).
-    regional_carrying_capacity: 2.14
+    # No regional K since section 223.37: a loss cannot stand for the
+    # exchange of a window group that needs a net import (field closure
+    # P 0.36 vs L 0.62 /yr), and it counted the box's density dependence
+    # twice (research_notes/"Bestandsreglering" (Swedish letters: a-ring)
+    # summary.md). Was K = B*/(1 - F/r) = 2.14 t/km2.
     growth_rate: 0.0014965884949
     # M1 = M0 + predation by groups NOT in the model: saithe 0.29,
     # mackerel 0.15, spurdog 0.10, horse mackerel 0.30, hake 0.45,
@@ -1219,7 +1223,12 @@ interaction_definitions:
   # Section 223.15: h = 7125 / 26.18 (the benthivores' bottom-water ceiling).
   benthivorous_fish_preys_on_planktivorous_fish:
     preys_on: true
-    predation_mortality: 0.245
+    # Section 223.37: M2 = SMS 2023 key run partial M2 2013-22 at the box
+    # stage mix (J/B 0.38), scaled to the box's predator / prey biomass at
+    # the SMS diet (cod 0.132, haddock 0.012, gurnards 0.001; was 0.245 from
+    # the redistributed diet of 223.9). research_notes/"Bestandsreglering"
+    # (Swedish letters: a-ring) scripts/sms_m2_check.py.
+    predation_mortality: 0.145
     assimilation_factor: 0.8
     # Section 223.28: h = E / ceiling_j, ceiling_j = 26.18 (E/4.184)^(1-b) / A,
     # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.0; was 272.1
@@ -1254,7 +1263,12 @@ interaction_definitions:
   # saithe 0.33, horse mackerel 0.12. Night/day 0.39 derived.
   predatory_fish_preys_on_planktivorous_fish:
     preys_on: true
-    predation_mortality: 0.34
+    # Section 223.37: M2 = SMS 2023 key run partial M2 2013-22 at the box
+    # stage mix (J/B 0.38), scaled to the box's predator / prey biomass at
+    # the SMS diet (saithe 0.209, hake 0.037, horse mackerel 0.008, mackerel
+    # 0.002; was 0.34). research_notes/"Bestandsreglering" (Swedish letters:
+    # a-ring) scripts/sms_m2_check.py.
+    predation_mortality: 0.257
     assimilation_factor: 0.8
     handling_time: 217.8
     visibility_floor: 0.25
@@ -1270,7 +1284,11 @@ interaction_definitions:
   # share 0.28. Night/day 0.33 derived.
   whiting_preys_on_planktivorous_fish:
     preys_on: true
-    predation_mortality: 0.16
+    # Section 223.37: M2 = SMS 2023 key run partial M2 2013-22 at the box
+    # stage mix (J/B 0.38), scaled to the box's predator / prey biomass at
+    # the SMS diet (was 0.16). research_notes/"Bestandsreglering" (Swedish
+    # letters: a-ring) scripts/sms_m2_check.py.
+    predation_mortality: 0.203
     assimilation_factor: 0.8
     handling_time: 227.3
     visibility_floor: 0.25

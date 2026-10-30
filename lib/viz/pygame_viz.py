@@ -6383,7 +6383,7 @@ class LiveVisualizer:
             if members or legend:
                 lines.append(None)
             lines.append((self._t("Eaten by"), (210, 210, 220)))
-            lines += [(f"  {self._display_name(pid)} {share * 100.0:.0f}%",
+            lines += [(f"  {self._display_name(pid)} {share * 100.0:.1f}%",
                        self._fg_colour.get(pid, (170, 170, 185)))
                       for pid, share in predators]
         win = (0, 0) + tuple(self._screen.get_size())

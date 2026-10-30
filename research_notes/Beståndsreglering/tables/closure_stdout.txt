@@ -1,0 +1,22 @@
+
+planktivorous_fish: B* 11,880 t, J/B 0.38; SMS g_J 1.07 g_A 0.21 -> P 0.53 /yr (members in SMS: herring, Norway pout, sprat; share 0.90)
+  L = M1 0.26 + M2 0.764 + F 0.100 + emigration 0.41 = 1.53 /yr; L - P = 1.00
+   herring: stock age1 Q1 87,274 t x 0.49-0.89 % = 430-773 t/yr
+   Norway pout: stock age1 Q1 207,774 t x 0.13-0.27 % = 266-560 t/yr
+   sprat: stock age1 Q1 280,658 t x 0.08-0.54 % = 238-1,527 t/yr
+  I/B imported recruits 0.079-0.241 vs needed 1.00: covers 8-24 % (need 11,874 t/yr)
+
+benthivorous_fish: B* 5,508 t, J/B 0.15; SMS g_J 2.06 g_A 0.50 -> P 0.74 /yr (members in SMS: haddock, cod; share 0.70)
+  L = M1 0.29 + M2 0.221 + F 0.170 + emigration 0.31 = 0.99 /yr; L - P = 0.25
+   haddock: stock age0 Q3 25,410 t x 0.75-1.27 % = 190-323 t/yr
+   cod: stock age1 Q1 9,097 t x 3.70-5.16 % = 336-469 t/yr
+  I/B imported recruits 0.095-0.144 vs needed 0.25: covers 38-57 % (need 1,401 t/yr)
+
+whiting: B* 1,606 t, J/B 0.30; SMS g_J 1.73 g_A 0.39 -> P 0.79 /yr (members in SMS: whiting; share 1.00)
+  L = M1 0.25 + M2 0.369 + F 0.080 + emigration 0.27 = 0.97 /yr; L - P = 0.18
+   whiting: stock age1 Q1 71,573 t x 0.61-1.12 % = 435-801 t/yr
+  I/B imported recruits 0.271-0.499 vs needed 0.18: covers 153-282 % (need 284 t/yr)
+
+predatory_fish: B* 2,714 t, J/B 0.00; SMS g_J 1.39 g_A 0.36 -> P 0.36 /yr (members in SMS: saithe, mackerel; share 0.78)
+  L = M1 0.26 + M2 0.016 + F 0.242 + emigration 0.10 = 0.62 /yr; L - P = 0.26
+  I/B imported recruits 0.000-0.000 vs needed 0.26: covers 0-0 % (need 698 t/yr)

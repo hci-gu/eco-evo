@@ -81,7 +81,8 @@ def test_capacity_is_outside_the_growth_budget():
     assert capped.describe() == plain.describe()
 
 
-CAPPED = ("benthivorous_fish", "predatory_fish", "whiting", "planktivorous_fish", "seals")   # sections 185, 185.20, 199, 209, 223.26
+# Benthivores and the water column lost their K in section 223.37.
+CAPPED = ("whiting", "planktivorous_fish", "seals")   # sections 185, 185.20, 199, 209, 223.26, 223.37
 
 
 def test_loader_derives_the_rate_for_the_library_groups():

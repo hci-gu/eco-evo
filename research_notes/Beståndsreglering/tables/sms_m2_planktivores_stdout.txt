@@ -1,0 +1,53 @@
+SMS 2023 key run 2013-2022: M2 on planktivorous_fish members (Herring 0.88, Nor.pout 0.08, Sprat 0.03), box J/B 0.38
+predator numbers named by eaten-biomass match (mean |log ratio|): 1=Fulmar(0.00), 2=Guillemot(0.00), 3=Her.Gull(0.00), 4=Kittiwake(0.00), 5=GBB.Gull(0.00), 6=Gannet(0.00), 7=Puffin(0.00), 8=Razorbill(0.00), 9=A.radiata(0.00), 10=G.gurnards(0.00), 11=W.horse.mac(0.00), 12=N.horse.mac(0.00), 13=Grey.seal(0.00), 14=H.porpoise(0.00), 15=Hake(0.00), 16=Cod(0.00), 17=Whiting(0.00), 18=Haddock(0.00), 19=Saithe(0.00), 20=Mackerel(0.00)
+             all ages  age 1+  J (0-1)  A (2+)  box mix        model group
+Saithe          0.127   0.129    0.134   0.128    0.130     predatory_fish
+Whiting         0.071   0.064    0.130   0.055    0.083            whiting
+Hake            0.059   0.059    0.061   0.056    0.058     predatory_fish
+Mackerel        0.029   0.011    0.074   0.010    0.034     predatory_fish
+N.horse.mac     0.015   0.002    0.085   0.000    0.033     predatory_fish
+Cod             0.026   0.025    0.033   0.024    0.027  benthivorous_fish
+G.gurnards      0.023   0.010    0.058   0.003    0.024  benthivorous_fish
+Guillemot       0.010   0.008    0.052   0.004    0.022        birds/other
+H.porpoise      0.012   0.012    0.012   0.012    0.012          porpoises
+Gannet          0.007   0.008    0.004   0.008    0.007        birds/other
+Haddock         0.004   0.003    0.004   0.002    0.003  benthivorous_fish
+Fulmar          0.002   0.001    0.004   0.001    0.002        birds/other
+Kittiwake       0.001   0.001    0.001   0.000    0.001        birds/other
+Puffin          0.001   0.000    0.002   0.000    0.001        birds/other
+Razorbill       0.001   0.001    0.001   0.001    0.001        birds/other
+Grey.seal       0.001   0.001    0.001   0.001    0.001              seals
+GBB.Gull        0.001   0.001    0.001   0.001    0.001        birds/other
+Her.Gull        0.002   0.001    0.002   0.001    0.001        birds/other
+A.radiata       0.001   0.000    0.001   0.000    0.000  benthivorous_fish
+
+by model group:
+                   all ages  age 1+  box mix
+model group                                 
+benthivorous_fish     0.053   0.039    0.054
+birds/other           0.023   0.021    0.036
+porpoises             0.012   0.012    0.012
+predatory_fish        0.230   0.201    0.255
+seals                 0.001   0.001    0.001
+whiting               0.071   0.064    0.083
+total                 0.391   0.338    0.442
+
+scaled to the box's predator / prey biomass (box stage mix), by predator and model group:
+Saithe         0.209
+Whiting        0.203
+Cod            0.132
+Hake           0.037
+Haddock        0.012
+N.horse.mac    0.008
+Grey.seal      0.005
+H.porpoise     0.004
+Mackerel       0.002
+G.gurnards     0.001
+W.horse.mac    0.000
+A.radiata      0.000
+benthivorous_fish    0.145
+porpoises            0.004
+predatory_fish       0.257
+seals                0.005
+whiting              0.203
+total                0.614

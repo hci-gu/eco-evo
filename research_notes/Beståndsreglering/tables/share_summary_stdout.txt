@@ -1,0 +1,43 @@
+percent of the stock (survey columns: lo-hi of the R and S estimators)
+
+                  member  box_t  SSB_0125_t  share_SSB  share_SSB_2125  tsb_ssb_ratio  share_TSB survey_area  surv_kg_Q1_lo  surv_kg_Q1_hi  surv_kg_Q3_lo  surv_kg_Q3_hi
+            herring NSAS   6382  1942995.96      0.328           0.378       1.511084      0.217        4+3a          0.443          0.537          0.417          0.579
+            herring WBSS   3003   184896.40      1.624           3.109       1.500000      1.083  3a (20+21)          2.073          2.516          3.108          4.318
+            blue whiting   1247  4684453.60      0.027           0.025       1.300000      0.020        4+3a          0.006          0.153          2.066          3.308
+             Norway pout    891    51923.36      1.716           1.896       3.452805      0.497        4+3a          0.102          0.210          0.814          0.882
+                   sprat    356   159661.76      0.223           0.261       3.347083      0.067        4+3a          0.060          0.291          0.224          1.019
+                 haddock   2126   304207.00      0.699           0.331       1.585090      0.441      4+3a20          0.150          0.237          0.340          0.494
+   cod (Viking substock)   1730    18193.96      9.509          10.164       2.134723      4.454   Viking>2E          5.377          6.410          6.904          7.516
+    cod (whole NS stock)   1730    60591.56      2.855           3.022       2.134723      1.337      4+3a20          1.925          2.295          2.100          2.286
+          long rough dab    694         NaN        NaN             NaN            NaN        NaN        4+3a          1.640          1.720          1.871          1.923
+                     dab    248         NaN        NaN             NaN            NaN        NaN        4+3a          0.047          0.078          0.161          0.404
+     plaice (ple.27.420)    209   878860.68      0.024           0.022       1.323864      0.018      4+3a20          0.342          0.528          0.649          1.945
+                   witch     94     3095.84      3.036           2.583       1.300000      2.336        4+3a          8.723          8.846          5.730          7.682
+                  saithe   1767   193912.12      0.911           1.379       2.077142      0.439        4+3a          0.238          0.385          1.868          1.936
+                mackerel    347  7118439.80      0.005           0.008       1.200000      0.004        4+3a          0.015          0.028          0.233          0.286
+                 spurdog    217   338650.60      0.064           0.037       1.000000      0.064        4+3a          0.475          0.498          2.370         10.720
+horse mackerel (western)    149  1340489.12      0.011           0.018       1.300000      0.009        4+3a          0.061          0.076          0.157          0.216
+                    hake    109   155945.12      0.070           0.076       1.889728      0.037        4+3a          0.312          0.383          0.548          0.839
+     whiting (whg.27.3a)   1606         NaN        NaN             NaN            NaN        NaN  3a (20+21)          5.671          5.791          4.126          9.766
+    whiting (whg.27.47d)   1606   195826.16      0.820           0.452       1.420714      0.577        4+3a          0.405          0.413          0.265          0.628
+
+                  member survey_area  surv_mature_lo  surv_mature_hi  surv_age0_lo  surv_age0_hi  surv_age1_lo  surv_age1_hi recruit_stage  f_self_max_lo  f_self_max_hi
+            herring NSAS        4+3a           0.038           0.195         0.694         0.936         0.492         0.885          age1       0.042975       0.395934
+            herring WBSS  3a (20+21)           1.879           9.625         2.960         3.991         1.306         2.349           NaN            NaN            NaN
+            blue whiting        4+3a           2.987           5.053           NaN           NaN           NaN           NaN           NaN            NaN            NaN
+             Norway pout        4+3a           0.062           0.129         0.322         0.494         0.128         0.270          age1       0.230172       1.000000
+                   sprat        4+3a           0.049           0.153         0.029         0.107         0.085         0.544          age1       0.090061       1.000000
+                 haddock      4+3a20           0.157           0.221         0.746         1.271         0.233         0.414          age0       0.123200       0.296138
+   cod (Viking substock)   Viking>2E           5.500           6.602        10.758        18.949         5.997         8.365          age1       0.657579       1.000000
+    cod (whole NS stock)      4+3a20           1.675           2.011         0.300         0.528         3.698         5.158          age1       0.324827       0.543782
+          long rough dab        4+3a           1.441           1.596           NaN           NaN           NaN           NaN           NaN            NaN            NaN
+                     dab        4+3a           0.036           0.066           NaN           NaN           NaN           NaN           NaN            NaN            NaN
+     plaice (ple.27.420)      4+3a20           0.404           0.591           NaN           NaN         0.253         0.443          age1       0.913531       1.000000
+                   witch        4+3a           7.347           8.851           NaN           NaN           NaN           NaN           NaN            NaN            NaN
+                  saithe        4+3a           0.249           0.365         0.502         0.695         1.394         1.982           NaN            NaN            NaN
+                mackerel        4+3a             NaN             NaN           NaN           NaN           NaN           NaN           NaN            NaN            NaN
+                 spurdog        4+3a           0.903           0.920           NaN           NaN           NaN           NaN           NaN            NaN            NaN
+horse mackerel (western)        4+3a             NaN             NaN           NaN           NaN           NaN           NaN           NaN            NaN            NaN
+                    hake        4+3a           0.017           0.048         0.579         0.705           NaN           NaN          age0       0.024532       0.083206
+     whiting (whg.27.3a)  3a (20+21)           4.854           6.191         2.817         8.285         3.655         6.723          age1       0.721999       1.000000
+    whiting (whg.27.47d)        4+3a           0.254           0.324         0.267         0.784         0.608         1.119          age1       0.226698       0.531843

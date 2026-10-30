@@ -21497,3 +21497,217 @@ remain open exactly as described in 71.9 / 71.11.
     copy of the fix82 policies fed 12 breakdowns. The GPU training
     viewer gets it too: lib/gpu/visual.py runs train._probe_biomass with
     the viewer for its probe heatmaps (corrected; first stated otherwise).
+    Shares shown with one decimal (user, 2026-10-29).
+
+223.34 fix83 (2x16 tanh) at update 327: the benthivore diet is not a
+    network limit (2026-10-29; analysis only, no library change).
+    - Run: train_gpu.py from scratch, --policynetwork 2 16 tanh, else as
+      fix82 (1x16; started as a resume that found no checkpoint, fresh
+      rewards at update 1, 4 worlds for its first updates, stopped at
+      78). Updates 21-78: fix83 >= fix82 on every group. Benthivore
+      reward -0.01 at updates 40-80, then -0.14 and flat from ~100 while
+      the water column and the mammals kept improving (co-evolution).
+      Probe (u320, year 3 / start): ben 0.66, pred 0.53, wht 0.96, plk
+      1.52 (rising), seals 0.78, porpoises 0.87, epifauna 0.71.
+    - Frozen u327 (frozen_years.py, 60x60, seed 20260530, 3 yr; one
+      seed: seals 0.33 here vs 0.78 in the probe): benthivore diet
+      infauna 99-100 %, Q/B 6.8-7.0 (budget 4.46), realised M2 on
+      infauna 0.078-0.095 (booked 0.040), on planktivores 0.0003
+      (0.245), on whiting 0.001 (0.18), on epifauna 0.004 (0.276);
+      whiting -> epifauna 0.69 -> 1.21 (0.069), epifauna 0.40 by year 3.
+      Water column -> benthivores 0.31 in year 1 (0.083 booked, x3.8),
+      juvenile share of that take 0.51-0.55 (SMS saithe/haddock 0.77).
+      Benthivore fill 0.71-0.72 vs s* 0.80 (u 0.5): gate 0.22 of the
+      budget's 0.30, ~73 % of the paid growth, s* being priced at the
+      herring ceiling (23.9 assimilated) while the engine delivers
+      infauna (~16). Benthivore J/B by month 0.04-0.13 (field 0.15;
+      the stage check predicted 0.06-0.09); planktivores 0.34-0.45
+      (0.38).
+    - Return rig (wht_plk.py with the stage split, 1 yr): infauna 14.7-
+      16.0 MJ/t/tick per unit eat share in every month, visible share
+      0.18-0.20 = the refuge share, i.e. saturated in every cell;
+      planktivores 3.8-16.3, visible 0.08-0.29 (fix81 0.28-1.00 before
+      the stage access); herring best for 0.27-0.56 of the benthivores
+      in rig months 1-4 and 11-12; policy eat share on herring <= 0.002;
+      got / best 0.74-0.99 (as fix81 with 1x16).
+    - Counterfactual (scratchpad ben_greedy.py): same frozen policies,
+      the benthivores' total eat share put per cell and tick on the prey
+      with the best a_eff q (no harvest cap, so it flatters herring;
+      same positions - bounds diet-only learning, not move-and-hunt).
+      Diet herring 10-35 % in summer, ~0 in winter. Benthivores after 2
+      yr 0.668 vs 0.661 (policy), +4 % at most (half year 1). There is
+      no reward for ARS to follow on the diet choice; neither a larger
+      net nor more updates will move it.
+    - Open (mechanism, not values): the infauna pair is an undepleted,
+      saturated buffet in every cell (a h B ~ 70 at the accessible
+      share) while the field Q/B (4.46 vs 7.0) and feeding level (0.22-
+      0.53 of Cmax) say benthic feeding is limited; 223.28 called that
+      a time budget, not a. And the budget books a mixed diet the
+      engine's payoffs do not produce. The benthivore decline is the
+      water column x3.8 and the low gate, not the diet.
+
+223.35 What a world without the regional K does (user, 2026-10-29;
+    analysis only). Frozen fix83 u327, frozen_years.py, seed 20260530,
+    3 yr, a scratchpad library copy with every regional_carrying_capacity
+    removed (g unchanged: the K loss is outside the derived g). The K
+    loss the groups carry with K (r_max B_region/K, year 1-3): planktivores
+    0.26-0.36, benthivores 0.09-0.12, water column 0.06-0.11, whiting
+    0.39-0.43, seals 0.03-0.06 /yr. End/b0 with K -> without K, years
+    1/2/3: benthivores 0.71/0.66/0.65 -> 0.81/0.83/0.87; water column
+    0.63/0.49/0.42 -> 0.73/0.64/0.60; planktivores 1.04/1.21/1.28 ->
+    1.28/1.73/1.91 (zooplankton year 3 1.03 -> 0.50, planktivore fill
+    0.53, Q/B 5.6 -> 4.4: the grazing-down of 185.17-19 starting);
+    whiting 0.89/0.99/1.00 -> 1.29/1.56/0.03 (epifauna 0.89/0.69/0.40 ->
+    0.76/0.22/0.15, whiting starvation 1.5 /yr in year 3: boom and
+    crash on its bed prey); seals and porpoises about unchanged (food-
+    limited). The benthivore decline is about the size of their K loss.
+    For training: the boom fills year 1 (the reward horizon, 1460
+    ticks), the crashes come in years 2-3, outside it, so ARS would not
+    see them; one seed, policies trained with K.
+
+223.36 Stock-scale regulation instead of the regional K: research
+    (user, 2026-10-29/30; research_notes/"Bestandsreglering" (Swedish
+    letters: a-ring): plan.md, stock_recruitment.md (WP1),
+    migration.md (WP2), box_share.md (WP3), summary.md; three subagents;
+    no engine or library change).
+    - WP3: the box (off Bohuslan, Lysekil-Smogen, not Hvaler) holds
+      0.1-0.6 % of herring, haddock, whiting, saithe, pout, sprat (Q1),
+      cod ~2 % (Viking 5-7 %), witch 6-9 %, long rough dab ~1.7 %; its
+      share of recruits is 2-5x its share of spawners (nursery);
+      weight of the box's own adults in its recruitment w 0.003 / 0.03
+      / 0.004 / 0.02 (planktivores / benthivores / water column /
+      whiting). The earlier 0.3-0.6 % juvenile-habitat note is low.
+    - WP1 (24 SAG series): post-2000 recruitment flat in SSB, e =
+      dln(R/S)/dlnS at today's SSB -0.74 / -0.97 / -0.65 / -0.98;
+      origin slope not identified; R/S fell after ~2000 (haddock 0.24,
+      cod 0.27-0.46, herring 0.63-0.66); WBSS herring e 0 (below Blim).
+    - WP2 (DATRAS cohorts relative to the stock, upper bounds): net
+      emigration e_J / e_A per yr: planktivores 0.1 / 0.6, benthivores
+      1.1 / 0.17, whiting 0.2 / 0.3, water column - / 0.1 with Feb/Aug
+      presence 0.09; weak density dependence of the outflow (c ~0.3).
+    - Synthesis: the compensation is outside the box; from the box,
+      recruitment is a donor-controlled import and the box exports, so
+      B = I / (L - P) is regulated without K. Proposed form: imported
+      recruit flux into J (replaces the rho allocation, which creates
+      no mass), somatic-only growth budget (r_max would count
+      recruitment twice), per-stage emigration losses, optional
+      seasonal visitors; K kept for whiting (export 0.3 < r - F 0.41)
+      and seals. Rough benthivore closure with field rates only: supply
+      P 0.73 + I/B 0.11-0.22 vs losses 0.99 /yr.
+    - Closure, all four groups (scripts/closure.py, SMS 2023 per-tonne
+      growth at the box J/B, library M1 + booked M2 + F, WP2 emigration,
+      SMS stock biomass at the recruit stage x WP3 box share; user,
+      2026-10-30): L - P / imported recruits I/B / covered:
+      planktivores 1.00 / 0.08-0.24 / 8-24 %; benthivores 0.25 /
+      0.10-0.14 / 38-57 % (CORRECTS the hand estimate above, 0.11-0.22
+      "within 5-15 %"); whiting 0.18 / 0.27-0.50 / 153-282 % (regulated,
+      level 1.5-2.8x today); water column 0.26 / 0 / 0 % (the need is
+      ~10 % of the visitor turnover 2.4 /yr). Benthivores and whiting
+      are resident nursery groups (recruit import + emigration; whiting
+      not closed: missing loss 0.09-0.32 or an inflated 4+3a share);
+      planktivores and the water column are windows on mobile stocks
+      (relaxation to an external seasonal density, exchange 4-18 d),
+      which regulates them but sets their biomass mostly outside the
+      box (learning-signal cost). Planktivore booked M2 0.76 is 2.5x
+      SMS herring M2 0.26-0.32.
+    - K off for benthivores and the water column only (frozen fix83
+      u327, seed 20260530, 3 yr; whiting, planktivores, seals keep K):
+      benthivores 0.71/0.66/0.65 -> 0.78/0.78/0.79 (flat after the
+      year-1 drop, which is the water column's take, 0.33 /yr vs 0.083
+      booked); water column 0.63/0.49/0.42 -> 0.69/0.57/0.51 (still
+      falling: not K); seals 0.82/0.48/0.33 -> 0.90/0.68/0.60;
+      whiting, planktivores about unchanged. The double count (K set
+      for the full budget growth at B* while the mechanisms already
+      deliver ~73 % of it, gate 0.22 vs 0.30) explains the benthivores'
+      continued decline, not their diet (counterfactual above).
+    - K off for benthivores, water column AND planktivores (whiting and
+      seals keep K; same rig): planktivores 1.28/1.67/1.95, zooplankton
+      1.19/0.91/0.55, planktivore fill 0.59 -> 0.53: the grazing-down of
+      185.17-19 with whiting held. Cause in the budget: planktivore g
+      pays booked M2 0.764 (benthivores 0.245, water column 0.34,
+      whiting 0.16, mammals 0.02) but the realised M2 is 0.27 (water
+      column 0.25, benthivores 0.0004, whiting 0.006): ~0.5 /yr of paid
+      growth nobody eats, which their K (0.26-0.36 /yr) now absorbs.
+      Same root as 223.34 (benthivores do not eat herring).
+    - Whiting closure gap: SMS 2023 whiting M2 2013-22 biomass-weighted
+      0.82 all ages / 0.48 age 1+ / 0.34 age 2+ vs the library's booked
+      0.369; at the box J/B ~0.3 the field M2 ~0.5-0.6 would close the
+      missing 0.09-0.32 /yr. Closure caveat: recruits entered at age 1
+      Q1 while P counts their age-0 growth as J growth (overlap inflates
+      supply for whiting, cod, planktivores).
+    - Planktivore M2 vs SMS (scripts/sms_m2_check.py; SMS 2023 partial
+      M2 2013-22, predator numbers named by matching eaten biomass, box
+      stage mix J/B 0.38, scaled to the box's predator/prey biomass at
+      the SMS diet as 223.28 did for cod -> whiting): benthivores 0.145
+      (cod 0.132) vs booked 0.245 / realised 0.0004; water column 0.257
+      (saithe 0.21, hake 0.04) vs 0.34 / 0.25; whiting 0.203 vs 0.16 /
+      0.006; porpoises 0.004 vs 0.013; seals 0.005 vs 0.007 (grey seal
+      analogy); total 0.61 vs booked 0.76 vs realised 0.27 (unscaled
+      North Sea 0.44). Of the ~0.5 /yr the planktivore K hides, ~0.15 is
+      over-booking (mostly benthivores) and ~0.35 field predation the
+      trained benthivores and whiting do not do.
+
+223.37 APPLIED after fix83 was stopped (user, 2026-10-30; prepared while
+    fix83 trained, its probe reads the library; scratchpad lib_proposed.yaml,
+    lib_223_37.patch, test_regional_capacity_223_37.py.
+    - Library: no regional K for benthivores (was 3.39) and the water
+      column (was 2.14); planktivore pair M2 from SMS scaled to the box
+      (223.36): benthivores 0.245 -> 0.145, water column 0.34 -> 0.257,
+      whiting 0.16 -> 0.203; planktivore stored g 0.0035374528 ->
+      0.0031435113 (derived; sum M2 0.764 -> 0.624). K kept for
+      planktivores, whiting, seals.
+    - Test: tests/test_regional_capacity.py CAPPED = whiting,
+      planktivores, seals. Full suite with the proposed library (git
+      worktree of HEAD + the uncommitted viz decimal change): 1578
+      passed, 12 skipped.
+    - Frozen fix83 u327, 3 yr, seeds 20260530 / 7, year 3 / start,
+      today -> proposed: benthivores 0.65/0.65 -> 0.77/0.79 (flat from
+      year 1); water column 0.42/0.37 -> 0.47/0.43; planktivores
+      1.28/1.59 -> 1.18/1.45 (still rising: ~0.35 /yr unrealised M2);
+      whiting 1.00/0.97 -> 0.96/0.95; seals 0.33/0.33 -> 0.42/0.39;
+      porpoises 0.56/0.52 -> 0.39/0.48 (worse: 94-100 % planktivore
+      diet, already food-limited); zooplankton 1.03/0.82 -> 1.19/0.82.
+      Nothing runs away. Policies trained on the old library.
+    - Applied 2026-10-30 (library file identical to the snapshot the
+      patch was built on): fgconfig/fg_library.yaml, the test, AGENTS.md
+      (K paragraph, benthivore pair M2). pytest 1578 passed / 12 skipped;
+      train.py 1-generation smoke (planktivores) and a train_gpu.py
+      1-update smoke (30x30, 2x16) ran clean. No observation change:
+      fix83 checkpoints stay loadable (--init-from).
+
+223.38 Why the zooplankton never learned to rest in winter (user,
+    2026-10-30; analysis only). Frozen fix83 u327, probe world, seed
+    20260530, 2 yr (scratchpad zoo_rest.py): the policy eats 0.96-0.99
+    of its biomass Oct-Feb (rest 0.001-0.012); B/b0 0.04-0.10 in Jan-
+    Feb. Overlay moving the zooplankton's eat mass into Rest in Dec-Feb
+    or Nov-Mar (moves unchanged): extinct within that winter (B 0 by
+    January, reward proxy -15 / -18 vs -1.16). A full reserve lasts
+    max_energy_reserve / resting_metabolism = 675 / 22.5 = 30 ticks
+    (~7.5 days; Q10 2 in winter gives ~10 days); real C. finmarchicus
+    diapause runs 4-6 months on wax esters at 10-20 % of active
+    respiration (140.3). Eating all winter is the right answer in this
+    engine: no sigma or lr can teach a rest that kills. The missing
+    mechanism is diapause (a reduced rest metabolism and a lipid store
+    sized from the literature; a payoff change, the choice still
+    learned), open since 138.7. Hyperparameters: lr/sigma = 0.6 is at
+    the upper bound of 154.8 (|step|/probe radius ~ (lr/sigma) k /
+    sqrt(b)); for an --init-from run in the changed world lr 0.03 keeps
+    the noise-dominated random walk smaller; sigma 0.1 kept.
+    - Move vs rest (user: earlier runs settled at ~35 % rest; fix83 moves
+      ~30 %). GPU action logs [entropy, move, rest, eat], zooplankton,
+      end of run: fix70 0.01/0.22/0.77, fix72 0.02/0.31/0.66, fix73
+      0.04/0.27/0.69, fix76-78 0.03-0.08/0.18-0.29, fix80 0.02/0.31/0.67,
+      fix82 0.13/0.21/0.66 (u78) - but fix79 0.27/0.00/0.73 (1x16) and
+      fix83 0.28/0.03/0.69 (2x16): every run starts at move ~0.5 and
+      most trade it for rest within ~150 updates; two did not (path-
+      dependent, not the net). Frozen fix83 final (u492), 2 yr, overlay
+      moving the zooplankton's move mass into Rest all year: reward
+      proxy -1.068/-1.164 -> -1.023/-1.111 (seed 20260530), -1.105/
+      -1.129 -> -1.047/-1.075 (seed 7), +0.05 /yr ~ 1 sigma_f; the
+      policy moves 0.5-0.78 of its biomass May-Sep, ~0 in winter. So
+      rest beats move in summer: a stuck policy, unlike the winter
+      case. Next run: --init-from a copy of fix83 WITHOUT
+      policy_zooplankton.pth (import_policies skips a missing file, so
+      the zooplankton starts fresh; obs layout unchanged); keep lr 0.06
+      / sigma 0.1 (the setting under which most runs found rest),
+      replacing the lr 0.03 suggestion above.

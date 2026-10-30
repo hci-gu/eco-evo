@@ -1,0 +1,9 @@
+group,unit,rel_Q1_over_Q3,profile_emigration_Q1_age1to4,assumed_members
+planktivorous_fish,BOX,0.533,0.457,blue_whiting
+planktivorous_fish,SKA50,0.641,0.655,blue_whiting
+benthivorous_fish,BOX,0.863,0.266,flatfish_rays_hagfish
+benthivorous_fish,SKA50,0.602,0.363,flatfish_rays_hagfish
+whiting,BOX,1.43,0.702,
+whiting,SKA50,0.7,0.399,
+predatory_fish,BOX,0.121,0.315,spurdog_horse_mackerel_hake_other
+predatory_fish,SKA50,0.181,0.409,spurdog_horse_mackerel_hake_other

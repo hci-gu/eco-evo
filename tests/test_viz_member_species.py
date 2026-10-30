@@ -203,7 +203,7 @@ def test_the_tooltip_lists_who_eats_the_group(viz, monkeypatch):
         "Benthivorous fish", "Haddock  39 %", "Cod  31 %",
         "Others (43 species)  30 %", None,
         f"{viz._fg_abbrev(SINGLE)} = Porpoises", None,
-        "Eaten by", "  Benthivorous fish 75%", "  Porpoises 25%"]
+        "Eaten by", "  Benthivorous fish 75.0%", "  Porpoises 25.0%"]
 
 
 def test_an_uneaten_single_species_group_gets_a_tooltip_once_eaten(viz, monkeypatch):
@@ -211,7 +211,7 @@ def test_an_uneaten_single_species_group_gets_a_tooltip_once_eaten(viz, monkeypa
     viz.update_predation_breakdown({SINGLE: {MULTI: 1.0}})
     viz._render_full()
     assert hover_lines(viz, SINGLE, monkeypatch) == [
-        "Porpoises", "Eaten by", "  Benthivorous fish 100%"]
+        "Porpoises", "Eaten by", "  Benthivorous fish 100.0%"]
     viz._lang = "sv"
     viz._render_full()
     assert "Äts av" in hover_lines(viz, SINGLE, monkeypatch)
