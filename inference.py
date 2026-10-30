@@ -222,6 +222,47 @@ def load_inference_impact_maps(project_path, impact_vars, H, W, seed=None,
     return maps
 
 
+def inference_impact_units(project_path):
+    """``{impact_id: unit}`` from the ``unit`` entry of each
+    ``inference.impact_maps`` file (e.g. MW-h/km2/year); "" without one."""
+    units = {}
+    for iid, path in _load_inference_map_paths(project_path).items():
+        try:
+            with np.load(path) as data:
+                units[iid] = str(data['unit']) if 'unit' in data.files else ""
+        except Exception:
+            units[iid] = ""
+    return units
+
+
+def apply_impact_scales(env, base_maps, scales):
+    """Set each impact map of ``env`` to ``scale x`` its loaded field
+    (``base_maps``, never the env's own map, so a scale is never applied
+    twice). The visualiser's intensity sliders (section 224). The
+    library tables are linear up to their endpoint and clipped beyond it."""
+    for iid, scale in (scales or {}).items():
+        base = base_maps.get(iid)
+        if base is None or env.grid.get_map(iid) is None:
+            continue
+        env.grid.add_map(iid, np.asarray(base, dtype=np.float64) * float(scale))
+
+
+def apply_live_impact_change(viz, envs, base_impact_maps, verbose=True):
+    """Give the running worlds ``envs`` the impact intensities when a
+    slider whose "Restart on change" box is unticked was released (section 225):
+    each map k x its loaded field, from the next tick on. Returns True
+    when there was such a change."""
+    if not viz.consume_impact_live_change():
+        return False
+    scales = viz.get_impact_scales()
+    for e in envs:
+        apply_impact_scales(e, base_impact_maps or {}, scales)
+    if verbose:
+        print("    [live] impact intensity: "
+              + ", ".join(f"{k}={v:.2f}x" for k, v in scales.items()))
+    return True
+
+
 def _load_spawn_templates(project_path):
     """Read the global ``spawn_templates`` block from the project YAML.
 
@@ -807,9 +848,41 @@ def _install_rnd_policies(env, rnd_env, policies, random_fids):
     rnd_env._batched_ready = False
 
 
+def _restart_requested(viz):
+    """A released control that starts a new rollout: a b0 or length
+    slider, a spawn dropdown, or an impact slider with "Restart on change" ticked."""
+    return any(getattr(viz, flag, False) for flag in
+               ('_b0_dirty', '_ticks_dirty', '_spawn_dirty', '_impact_dirty'))
+
+
+def _wait_to_continue(viz, envs, base_impact_maps, t, verbose):
+    """At the end of a rollout: wait in the window. Returns the ticks to
+    go on for when an impact slider with its "Restart on change" box unticked was
+    released (the running worlds take the new intensity), None to return
+    to the caller (window closed, or a change that restarts). Section 225."""
+    if viz is None or not hasattr(viz, 'wait_for_close'):
+        return None
+    viz.end_rollout_recording()
+    try:
+        viz.wait_for_close(
+            banner=f"inference at tick {t} — drag a slider to re-run, "
+                   "an impact slider with 'Restart on change' unticked to go on, "
+                   "or close window to exit (Q/ESC)")
+    except KeyboardInterrupt:
+        return None
+    if (getattr(viz, '_quit', False) or not getattr(viz, 'enabled', False)
+            or _restart_requested(viz)):
+        return None
+    if apply_live_impact_change(viz, envs, base_impact_maps, verbose=verbose):
+        viz.resume_rollout_recording()
+        return max(1, int(viz.get_ticks()))
+    # Anything else: the caller waits and decides, as before section 225.
+    return None
+
+
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                   viz=None, rnd_env=None, rnd_solo_envs=None,
-                  diagnostics_interval=None):
+                  diagnostics_interval=None, base_impact_maps=None):
     """Install policies + frozen stats and step the environment ``n_ticks`` times.
 
     If ``viz`` is a :class:`lib.viz.LiveVisualizer`, biomass heatmaps and a
@@ -830,6 +903,14 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     :func:`diagnostics_interval_ticks`) sets how often the verbose
     progress line and the B/B0 ratios are printed. ``None`` (callers
     other than the CLI) keeps ten prints per rollout.
+
+    With ``viz`` the run waits in the window when it reaches ``n_ticks``.
+    A released slider then either returns (the "Restart on change" box ticked, or a
+    spawn change: the caller starts a new rollout) or, with the box
+    unticked, is applied to the running worlds, which go on for another
+    rollout length from the tick reached; mid-run the same choice is made
+    without stopping (section 225). ``base_impact_maps`` are the loaded
+    impact fields the intensity sliders scale.
     """
     env.policies = dict(policies)
     env.obs_mean = obs_mean
@@ -883,7 +964,19 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     # Biomass before the first step: the reference for the B/B0 ratios
     # printed with the tick progress lines.
     start_biomass = {fid: float(fg.biomass.sum()) for fid, fg in env.fgs.items()}
-    for t in range(n_ticks):
+    # The worlds a live impact change is applied to (section 225).
+    live_envs = [env] + unique_rnd_envs
+    t = -1
+    while True:
+        t += 1
+        if t >= n_ticks:
+            more = _wait_to_continue(viz, live_envs, base_impact_maps,
+                                     t, verbose)
+            if not more:
+                break
+            n_ticks = t + more
+            if verbose:
+                print(f"    [live] continuing from tick {t} to {n_ticks}")
         try:
             observation = env.get_observation()
             actions = env.policy_controller.forward(observation)
@@ -1078,9 +1171,14 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 # — main-loopen kallar ``consume_*_change`` precis efter
                 # ``run_inference`` returnerat och får då rätt orsak. Endast
                 # i inference.py (train.py har egen probe-pipeline).
-                if (getattr(viz, '_b0_dirty', False)
-                        or getattr(viz, '_ticks_dirty', False)
-                        or getattr(viz, '_spawn_dirty', False)):
+                if not _restart_requested(viz):
+                    # An impact slider with "Restart on change" unticked: the world
+                    # takes the new intensity and goes on (section 225).
+                    if getattr(viz, '_impact_live_dirty', False):
+                        apply_live_impact_change(viz, live_envs,
+                                                 base_impact_maps,
+                                                 verbose=verbose)
+                else:
                     if verbose:
                         reasons = []
                         if getattr(viz, '_b0_dirty', False):
@@ -1089,6 +1187,8 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                             reasons.append("ticks")
                         if getattr(viz, '_spawn_dirty', False):
                             reasons.append("spawn")
+                        if getattr(viz, '_impact_dirty', False):
+                            reasons.append("impact intensity")
                         print(f"    [change] {'/'.join(reasons)} changed "
                               f"mid-rollout at tick {t+1}/{n_ticks} — "
                               f"aborting probe to restart.")
@@ -1257,6 +1357,11 @@ def main():
         return 1
 
     viz = None
+    # The impact fields as loaded (scale 1): the intensity sliders scale
+    # these, never a world's own map.
+    base_impact_maps = {iid: np.array(env.grid.get_map(iid), copy=True)
+                        for iid in _load_inference_map_paths(args.project)
+                        if env.grid.get_map(iid) is not None}
     if args.visual:
         try:
             from lib.viz import LiveVisualizer
@@ -1313,6 +1418,14 @@ def main():
             except Exception as _e:
                 print(f"[viz] could not load spawn defaults: {_e!r}",
                       file=sys.stderr)
+            # Impact maps on the Impacts heatmap tab, with an intensity
+            # slider each (section 224).
+            try:
+                viz.set_impact_maps(base_impact_maps,
+                                    inference_impact_units(args.project))
+            except Exception as _e:
+                print(f"[viz] could not show impact maps: {_e!r}",
+                      file=sys.stderr)
         except Exception as e:
             print(f"[viz] failed to start visualiser: {e!r}", file=sys.stderr)
             viz = None
@@ -1367,6 +1480,15 @@ def main():
                               f"{k}={v.get('template')}({v.get('mode')})"
                               for k, v in spawn_overrides.items()))
 
+            impact_scales = (viz.get_impact_scales()
+                             if viz is not None else {})
+            if any(abs(v - 1.0) > 1e-9 for v in impact_scales.values()):
+                apply_impact_scales(env, base_impact_maps, impact_scales)
+                if verbose:
+                    print(f"    [impact intensity] Applied: "
+                          + ", ".join(f"{k}={v:.2f}x" for k, v in
+                                       impact_scales.items()))
+
             def _baseline_env():
                 """A fresh world with ``env``'s spawn, b0 and spawn overrides."""
                 e = build_env(args.project, args.grid, seed=args.seed,
@@ -1381,6 +1503,7 @@ def main():
                 if spawn_overrides:
                     apply_spawn_overrides(e, spawn_overrides,
                                           spawn_tpls_now, seed=args.seed)
+                apply_impact_scales(e, base_impact_maps, impact_scales)
                 return e
 
             rnd_env = None
@@ -1397,6 +1520,8 @@ def main():
                 viz.consume_b0_change()
                 viz.consume_ticks_change()
                 viz.consume_spawn_change()
+                viz.consume_impact_change()
+                viz.consume_impact_live_change()
 
             # Rollout-längd: använd slider-värdet om det är satt, annars
             # CLI-default. Slidern kan ändras efter rolloutens slut, vilket
@@ -1409,7 +1534,8 @@ def main():
                                     verbose=verbose, viz=viz,
                                     rnd_env=rnd_env,
                                     rnd_solo_envs=rnd_solo_envs,
-                                    diagnostics_interval=diagnostics_interval)
+                                    diagnostics_interval=diagnostics_interval,
+                                    base_impact_maps=base_impact_maps)
             first_iteration = False
 
             if viz is None:
@@ -1422,7 +1548,8 @@ def main():
             _mid_flight_change = (
                 getattr(viz, '_b0_dirty', False)
                 or getattr(viz, '_ticks_dirty', False)
-                or getattr(viz, '_spawn_dirty', False))
+                or getattr(viz, '_spawn_dirty', False)
+                or getattr(viz, '_impact_dirty', False))
             if not _mid_flight_change:
                 # wait_for_close returnerar tidigt om användaren dragit i en
                 # slider (musen släpps -> dirty=True). Vid stängning av
@@ -1430,8 +1557,9 @@ def main():
                 # och loopen avslutas.
                 try:
                     viz.wait_for_close(
-                        banner="inference finished — drag a slider (b0 or "
-                               f"rollout ticks) to {rerun_verb}, or close "
+                        banner="inference finished — drag a slider (b0, "
+                               "rollout ticks or impact intensity) to "
+                               f"{rerun_verb}, or close "
                                "window to exit (Q/ESC)")
                 except KeyboardInterrupt:
                     if verbose:
@@ -1440,7 +1568,9 @@ def main():
             b0_changed = viz.consume_b0_change()
             ticks_changed = viz.consume_ticks_change()
             spawn_changed = viz.consume_spawn_change()
-            if not (b0_changed or ticks_changed or spawn_changed):
+            impact_changed = viz.consume_impact_change()
+            if not (b0_changed or ticks_changed or spawn_changed
+                    or impact_changed):
                 # Inget ändrades — användaren stängde fönstret.
                 break
             if verbose:
@@ -1451,6 +1581,8 @@ def main():
                     reasons.append("ticks")
                 if spawn_changed:
                     reasons.append("spawn")
+                if impact_changed:
+                    reasons.append("impact intensity")
                 print(f"\n[change] {'/'.join(reasons)} changed — "
                       f"{rerun_ing} rollout…")
     except KeyboardInterrupt:

@@ -170,6 +170,15 @@ CATALOG = {
         "capture off": "inspelning av",
         "Decision makers": "Beslutsfattare",
         "Non-decision makers": "Icke-beslutsfattare",
+        # Heatmap tabs and impact panels (section 224).
+        "Functional groups": "Funktionsgrupper",
+        "Impacts": "Påverkan",
+        "Intensity = {value}x": "Intensitet = {value}x",
+        "Restart on change": "Omstart vid ändring",
+        "Bottom trawling": "Bottentrålning",
+        "Pelagic trawling": "Pelagisk trålning",
+        "Mean = {value}": "Medel = {value}",
+        "Max = {value}": "Max = {value}",
         # Heatmap panels.
         "pr/im = {pr}/{im}%": "pr/pv = {pr}/{im}%",
         "mv/rs/et = {mv}/{rs}/{et}%": "fl/vi/ät = {mv}/{rs}/{et}%",
@@ -298,6 +307,15 @@ CATALOG = {
         "capture off": "registrazione spenta",
         "Decision makers": "Decisori",
         "Non-decision makers": "Non decisori",
+        # Heatmap tabs and impact panels (section 224).
+        "Functional groups": "Gruppi funzionali",
+        "Impacts": "Impatti",
+        "Intensity = {value}x": "Intensità = {value}x",
+        "Restart on change": "Riavvia alla modifica",
+        "Bottom trawling": "Pesca a strascico di fondo",
+        "Pelagic trawling": "Pesca a strascico pelagica",
+        "Mean = {value}": "Media = {value}",
+        "Max = {value}": "Max = {value}",
         # Heatmap panels.
         "pr/im = {pr}/{im}%": "pr/im = {pr}/{im}%",
         "mv/rs/et = {mv}/{rs}/{et}%": "mv/rp/al = {mv}/{rs}/{et}%",

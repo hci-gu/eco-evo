@@ -21711,3 +21711,89 @@ remain open exactly as described in 71.9 / 71.11.
       the zooplankton starts fresh; obs layout unchanged); keep lr 0.06
       / sigma 0.1 (the setting under which most runs found rest),
       replacing the lr 0.03 suggestion above.
+
+224 INFERENCE VIEWER: HEATMAP TABS AND IMPACT INTENSITY SLIDERS (2026-10-30)
+    User: a slider for the trawl map's intensity in the inference
+    viewer; the functional groups' heatmaps on one tab, the impact
+    maps on another.
+    - lib/viz/pygame_viz.py: a tab strip above the heatmap viewport
+      ("Functional groups" / "Impacts"), drawn only once
+      set_impact_maps() has been given a non-zero field (inference
+      only; training never calls it). The impacts tab lays every
+      non-zero map out as one untitled group with the FG panels'
+      height; columns follow the active tab's panel count. Each tab
+      keeps its scroll position; the tab is remembered in
+      viewer_settings.json (heatmap_tab).
+    - Impact panel: name (translated), "Intensity = k x", mean and max
+      of the field at that intensity in the npz's unit, the slider
+      [0, 4]x where an FG panel has its b0 slider (tick mark at 1x),
+      the field (colour reference = loaded max x max(1, k), so a weaker
+      intensity reads darker and a stronger one never saturates).
+    - The intensity slider shares _slider_rects and the drag with the
+      b0 sliders under the key "impact:<id>"; _slider_set/_slider_release
+      route the value and the dirty flag (_impact_dirty), so the impact
+      key never reaches the b0 overrides. Releasing it starts a new
+      rollout as a b0 slider does (mid-rollout abort, wait_for_close).
+    - inference.py: base_impact_maps = the first world's grid maps (the
+      project's inference.impact_maps, scale 1); apply_impact_scales
+      sets every rebuilt world's map (and the _rnd baseline worlds) to
+      k x that field, never compounding. The engine reads the grid map
+      every tick (impacts.py: mortality, cost factor, observed layer), so
+      nothing else is cached. The trawl tables are linear to their
+      endpoints (bottom 100 vs map max 9.6, pelagic 10 vs 0.43), so 4x
+      is still linear: k = 0/1/2 gives benthivore impact loss
+      0/0.60/1.19 t per tick at the start. A world with k != 1 is a
+      scenario the policies were trained without; no impact is observed
+      in mareld2.yaml, so they meet it only through the biomass it removes.
+    - tests/test_viz_impact_tab.py.
+
+225 INFERENCE VIEWER: THE "RESTART" BOX (2026-10-30)
+    User: a check box labelled "restart" deciding what a new slider value
+    does to the inference run; unticked, the run goes on from the tick it
+    has reached.
+    - Status bar row 1, left of the norm button, inference only; the
+      label is the literal "restart" (no translation). Ticked by default
+      (the old behaviour); remembered as restart_on_change in
+      viewer_settings.json.
+    - Ticked: a released slider starts a new rollout, as before.
+      Unticked, mid-run (inference.run_inference): the change is applied
+      to the running world and its _rnd baseline worlds without stopping
+      (apply_live_changes): impact intensity = k x the loaded field;
+      a moved b0 slider rescales its group by new/old slider value
+      (rescale_group_live: biomass, juveniles and reserve, so the reserve
+      per tonne and a refuge group's accessible share are kept; a
+      nutrient producer's reserve slot is the N pool and is left alone;
+      only groups whose slider moved are touched, a group started at
+      0 t needs a restart); the rollout-length slider sets the new total
+      length (at or below the tick reached = end now).
+    - The end-of-run wait moved into run_inference (_wait_to_continue),
+      so the run's local state (history, loss/diet snapshots) survives:
+      unticked, a slider released after the end applies the change and
+      the same world runs another rollout length (the length slider's
+      value) from the last tick. The film and the plot series continue
+      (LiveVisualizer.resume_rollout_recording; begin_rollout_recording
+      would clear them). A spawn dropdown change always restarts. A dead
+      world or a closed window falls back to main's wait as before.
+    - With the fixed heatmap normalisation a live b0 jump can saturate
+      the colours (the reference is the start maximum); display only.
+    - Verified on DISPLAY :1 with synthetic pygame clicks: box unticked
+      at tick 7, bottom trawling 0x at tick 18 (applied, no restart),
+      2x after the end at tick 40 -> continued to 80, one film of 81
+      frames. tests/test_inference_live_change.py,
+      tests/test_viz_impact_tab.py.
+225.1 Revised the same day (user): "restart" applies only to the impacts,
+    per impact map. The status-bar box is gone; each impact panel has its
+    own "restart" box under its info lines (ticked by default, remembered
+    per impact id as impact_restart in viewer_settings.json). Releasing
+    an impact slider sets _impact_dirty (ticked: restart) or
+    _impact_live_dirty (unticked: apply_live_impact_change on the running
+    worlds, mid-run or, after the end, another rollout length from the
+    last tick). b0, rollout-length and spawn changes always restart, as
+    before section 225; the live b0 rescale (rescale_group_live) and the
+    live length change were removed. Verified again on DISPLAY :1 with
+    synthetic clicks (bottom box unticked, 0x at tick 21 applied live,
+    2x after the end -> 40 to 80, one film of 81 frames).
+225.2 The box label is "Restart on change" (sv "Omstart vid andring" with
+    the Swedish letter, it "Riavvia alla modifica"), translated like every
+    viewer string (lib/viz/i18n.py); it fits the narrowest panel (196 px)
+    in all three languages.

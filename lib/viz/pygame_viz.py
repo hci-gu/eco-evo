@@ -116,6 +116,15 @@ _PROBE_TABS = ("progress", "viability")
 # 223.21): the "progress" tab shows one long run of the frozen policies,
 # not training progress. The id, <run>/progress and probe.jsonl stay.
 _TAB_NAMES = {"progress": "long run"}
+# Slider key prefix of an impact map's intensity slider (section 224):
+# those sliders share ``_slider_rects`` and the drag with the b0 sliders.
+_IMPACT_KEY = "impact:"
+# Intensity slider range of an impact map (multiplier of the loaded field).
+_IMPACT_SCALE_MAX = 4.0
+# English labels of the project's impact ids, the keys of their
+# translations; any other id is shown as its words.
+_IMPACT_NAMES = {"bottom_trawling": "Bottom trawling",
+                 "pelagic_trawling": "Pelagic trawling"}
 # The viability tab's fixed axis (section 223.20): margins are <= 1 by
 # construction; anything below -1 (and an extinct group) is drawn at -1.
 _VIABILITY_AXIS = (-1.0, 1.0)
@@ -501,6 +510,11 @@ class _NullViz:
     def get_b0_override(self, *a, **kw): return None
     def get_b0_overrides(self, *a, **kw): return {}
     def consume_b0_change(self, *a, **kw): return False
+    def set_impact_maps(self, *a, **kw): pass
+    def get_impact_scales(self, *a, **kw): return {}
+    def consume_impact_change(self, *a, **kw): return False
+    def consume_impact_live_change(self, *a, **kw): return False
+    def resume_rollout_recording(self, *a, **kw): pass
     def set_ticks_default(self, *a, **kw): pass
     def get_ticks_override(self, *a, **kw): return None
     def consume_ticks_change(self, *a, **kw): return False
@@ -837,6 +851,33 @@ class LiveVisualizer:
         # Varje entry är (track_rect, fid).
         self._slider_rects: list = []
         self._dragging_slider: Optional[str] = None
+        # Impact maps of the inference world, each on the "Impacts"
+        # heatmap tab with an intensity slider (section 224):
+        # ``_impact_maps`` the project's fields as loaded (scale 1),
+        # ``_impact_scales`` the user's multipliers (absent = 1),
+        # ``_impact_dirty`` set when a slider is released. Their slider
+        # keys in ``_slider_rects`` carry ``_IMPACT_KEY`` in front.
+        self._impact_maps: Dict[str, np.ndarray] = {}
+        self._impact_units: Dict[str, str] = {}
+        self._impact_scales: Dict[str, float] = {}
+        self._impact_dirty: bool = False
+        # Heatmap tabs: "groups" (the FG panels) and, once impact maps
+        # are set, "impacts". The strip is only drawn with both.
+        self._hm_tab: str = "groups"
+        self._hm_tab_rects: list = []
+        self._hm_tab_scroll: Dict[str, int] = {}
+        # Each impact map's "Restart on change" box (section 225): ticked (the
+        # default), releasing its slider starts a new rollout
+        # (``_impact_dirty``); unticked, the running world takes the new
+        # intensity and goes on from the tick it has reached
+        # (``_impact_live_dirty``). Remembered per impact id.
+        saved_restart = _load_settings().get("impact_restart")
+        self._impact_restart: Dict[str, bool] = {
+            str(k): bool(v) for k, v in (saved_restart.items()
+                                         if isinstance(saved_restart, dict)
+                                         else ())}
+        self._impact_live_dirty: bool = False
+        self._impact_restart_rects: list = []
         # Rollout-längd-slider (ticks). ``_ticks_default`` är värdet från
         # CLI (--ticks i inference / --n_eval_ticks i train), satt av
         # ``set_ticks_default``. ``_ticks_override`` är användarens valda
@@ -1658,6 +1699,57 @@ class LiveVisualizer:
         self._b0_dirty = False
         return dirty
 
+    # ---- impact maps (section 224) -------------------------------------
+    def set_impact_maps(self, maps: Mapping[str, np.ndarray],
+                        units: Optional[Mapping[str, str]] = None) -> None:
+        """Show ``maps`` ({impact_id: (H, W) field at scale 1}) on the
+        Impacts heatmap tab, each with an intensity slider ``[0, 4]x``.
+        All-zero fields are left out; an empty dict hides the tab."""
+        if not self.enabled:
+            return
+        self._impact_maps = {
+            str(iid): np.asarray(m, dtype=np.float32).copy()
+            for iid, m in dict(maps).items()
+            if m is not None and np.asarray(m).shape == (self.grid_h, self.grid_w)
+            and float(np.max(m)) > 0.0}
+        self._impact_units = {str(k): str(v) for k, v in dict(units or {}).items()}
+        if not self._impact_maps:
+            self._hm_tab = "groups"
+        else:
+            saved = _load_settings().get("heatmap_tab")
+            if saved in ("groups", "impacts"):
+                self._hm_tab = saved
+        self._compute_layout()
+
+    def impact_restarts(self, iid: str) -> bool:
+        """Whether releasing ``iid``'s intensity slider restarts the
+        rollout (its "Restart on change" box ticked) or the running world goes on."""
+        return bool(self._impact_restart.get(str(iid), True))
+
+    def consume_impact_live_change(self) -> bool:
+        """True (and clears the flag) if an intensity slider whose
+        "Restart on change" box is unticked was released since the last call:
+        inference.py applies the intensities to the running world."""
+        if not self.enabled:
+            return False
+        dirty = bool(self._impact_live_dirty)
+        self._impact_live_dirty = False
+        return dirty
+
+    def get_impact_scales(self) -> Dict[str, float]:
+        """The intensity multiplier of every impact map shown (1 = as loaded)."""
+        return {iid: float(self._impact_scales.get(iid, 1.0))
+                for iid in self._impact_maps}
+
+    def consume_impact_change(self) -> bool:
+        """True (and clears the flag) if an intensity slider was released
+        since the last call; inference.py then starts a new rollout."""
+        if not self.enabled:
+            return False
+        dirty = bool(self._impact_dirty)
+        self._impact_dirty = False
+        return dirty
+
     # ---- ticks-slider API (rollout length) ----------------------------
     # ------------------------------------------------------------------
     # Spawn-strategy overrides (per-FG dropdowns under each heatmap)
@@ -1952,6 +2044,19 @@ class LiveVisualizer:
             self._log_once(
                 f"begin_rollout_recording breakdown-reset failed: {e!r}")
 
+    def resume_rollout_recording(self) -> None:
+        """Go on recording into the film just ended: a world that continues
+        after an impact slider change (its "Restart on change" box
+        unticked) keeps one film and its plot series, where
+        ``begin_rollout_recording`` would clear them."""
+        if not self.enabled:
+            return
+        self._recording = self._capture
+        if self._capture:
+            self._pending_rollout = self._current_rollout
+            self._current_rollout = []
+        self._playback_mode = "live"
+
     def end_rollout_recording(self) -> None:
         """Avsluta inspelning; den nya filmen tar över ``_current_rollout``."""
         if not self.enabled:
@@ -2137,7 +2242,7 @@ class LiveVisualizer:
                     fid = self._dragging_slider
                     v = self._slider_value_from_x(fid, event.pos[0])
                     if v is not None:
-                        self._b0_overrides[fid] = float(v)
+                        self._slider_set(fid, v)
                         interacted = True
                 elif event.type == pg.MOUSEMOTION and self._dragging_ticks:
                     v = self._ticks_value_from_x(event.pos[0])
@@ -2186,8 +2291,7 @@ class LiveVisualizer:
                     # Släppt: markera dirty så inference.py kan trigga ny
                     # inspelning. För train.py konsumeras värdet av nästa
                     # probe utan att läsa flaggan.
-                    self._dragging_slider = None
-                    self._b0_dirty = True
+                    self._slider_release()
                     interacted = True
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_ticks:
@@ -2298,7 +2402,7 @@ class LiveVisualizer:
                         fid = self._dragging_slider
                         v = self._slider_value_from_x(fid, event.pos[0])
                         if v is not None:
-                            self._b0_overrides[fid] = float(v)
+                            self._slider_set(fid, v)
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_ticks):
                         v = self._ticks_value_from_x(event.pos[0])
@@ -2339,8 +2443,7 @@ class LiveVisualizer:
                         self._plot_scroll_snap_to_live_if_at_end()
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_slider is not None):
-                        self._dragging_slider = None
-                        self._b0_dirty = True
+                        self._slider_release()
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_ticks):
                         self._dragging_ticks = False
@@ -2430,7 +2533,7 @@ class LiveVisualizer:
                         fid = self._dragging_slider
                         v = self._slider_value_from_x(fid, event.pos[0])
                         if v is not None:
-                            self._b0_overrides[fid] = float(v)
+                            self._slider_set(fid, v)
                     elif (event.type == pg.MOUSEMOTION
                           and self._dragging_ticks):
                         v = self._ticks_value_from_x(event.pos[0])
@@ -2474,8 +2577,7 @@ class LiveVisualizer:
                         # Ren visuell operation; avbryt inte wait-loopen.
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_slider is not None):
-                        self._dragging_slider = None
-                        self._b0_dirty = True
+                        self._slider_release()
                         # Avbryt wait_for_close-loopen så inference.py kan
                         # läsa dirty-flaggan och spela in en ny rollout.
                         return
@@ -2668,9 +2770,14 @@ class LiveVisualizer:
 
         Returnerar None om FG saknar default (slidern är disabled).
         """
-        b0_default = self._b0_defaults.get(fid)
-        if b0_default is None or b0_default <= 0.0:
-            return None
+        if fid.startswith(_IMPACT_KEY):
+            # An intensity slider: the multiplier, linear over the track.
+            v_max = _IMPACT_SCALE_MAX
+        else:
+            b0_default = self._b0_defaults.get(fid)
+            if b0_default is None or b0_default <= 0.0:
+                return None
+            v_max = 4.0 * float(b0_default)
         # Slider-tracken börjar vid panel_x + 4 (pad) och har bredden
         # grid_w * cell_px. Vi söker upp track-rektangeln via senaste
         # registrerade hit_rect så vi inte måste duplicera layout-mat.
@@ -2683,8 +2790,28 @@ class LiveVisualizer:
             track_w = rw - 4
             frac = (mx - track_x) / max(1.0, float(track_w))
             frac = max(0.0, min(1.0, frac))
-            return frac * 4.0 * float(b0_default)
+            return frac * v_max
         return None
+
+    def _slider_set(self, key: str, value: float) -> None:
+        """Set the value of the slider ``key`` while it is dragged: a b0
+        slider's start biomass, or an impact map's intensity."""
+        if key.startswith(_IMPACT_KEY):
+            self._impact_scales[key[len(_IMPACT_KEY):]] = float(value)
+        else:
+            self._b0_overrides[key] = float(value)
+
+    def _slider_release(self) -> None:
+        """End a slider drag; the slider's dirty flag starts a new rollout."""
+        key = self._dragging_slider
+        self._dragging_slider = None
+        if key is not None and key.startswith(_IMPACT_KEY):
+            if self.impact_restarts(key[len(_IMPACT_KEY):]):
+                self._impact_dirty = True
+            else:
+                self._impact_live_dirty = True
+        else:
+            self._b0_dirty = True
 
     def _draw_lock_icon(self, x: int, y: int, size: int,
                         locked: bool) -> tuple:
@@ -2881,6 +3008,11 @@ class LiveVisualizer:
             self._spawn_popup = None
             self._spawn_popup_item_rects = []
             return
+        # The heatmap tabs (section 224).
+        for rect, tab in self._hm_tab_rects:
+            if self._hit_rect(rect, pos):
+                self._set_hm_tab(tab)
+                return
         # A heatmap group's header row folds the group in or out.
         for rect, title in self._hm_header_rects:
             if self._hit_rect(rect, pos):
@@ -2903,6 +3035,11 @@ class LiveVisualizer:
         if self._hit_rect(self._evalint_lock_rect, pos):
             self._evalint_locked = not self._evalint_locked
             return
+        for rect, iid in self._impact_restart_rects:
+            if self._hit_rect(rect, pos):
+                self._impact_restart[iid] = not self.impact_restarts(iid)
+                _save_settings(impact_restart=dict(self._impact_restart))
+                return
         # Heatmap normalisation button: sits in the status bar, so it must
         # be claimed before anything routes the click on to a heatmap.
         if self._hit_rect(self._hm_norm_button_rect, pos):
@@ -2955,7 +3092,7 @@ class LiveVisualizer:
         if fid is not None:
             v = self._slider_value_from_x(fid, mx)
             if v is not None:
-                self._b0_overrides[fid] = float(v)
+                self._slider_set(fid, v)
                 self._dragging_slider = fid
                 # Markera inte ``_b0_dirty`` förrän musen släpps; annars
                 # skulle inference.py kunna trigga en ny inspelning för
@@ -4203,6 +4340,9 @@ class LiveVisualizer:
         self._spawn_dropdown_rects = []
         self._member_rects = []
         self._hm_header_rects = []
+        self._impact_restart_rects = []
+        self._draw_hm_tab_strip()
+        impacts = self._hm_tab == "impacts" and bool(self._impact_maps)
         view = self._pg.Rect(vx, vy, vw, vh)
         # Everything a panel draws is clipped to the viewport, so a panel
         # scrolled half out of view cannot paint over the status bar or
@@ -4222,12 +4362,16 @@ class LiveVisualizer:
                     continue
                 self._screen.set_clip(span)
                 n0 = (len(self._slider_rects), len(self._spawn_dropdown_rects),
-                      len(self._member_rects))
-                self._draw_one_heatmap(fid, px, py)
+                      len(self._member_rects), len(self._impact_restart_rects))
+                if impacts:
+                    self._draw_one_impact_map(fid, px, py)
+                else:
+                    self._draw_one_heatmap(fid, px, py)
                 # A control slid under the header takes no clicks.
                 for name, start in zip(("_slider_rects",
                                         "_spawn_dropdown_rects",
-                                        "_member_rects"), n0):
+                                        "_member_rects",
+                                        "_impact_restart_rects"), n0):
                     rects = getattr(self, name)
                     rects[start:] = self._clip_hit_rects(
                         rects[start:], (span.top, span.height))
@@ -4241,6 +4385,8 @@ class LiveVisualizer:
         self._spawn_dropdown_rects = self._clip_hit_rects(
             self._spawn_dropdown_rects)
         self._member_rects = self._clip_hit_rects(self._member_rects)
+        self._impact_restart_rects = self._clip_hit_rects(
+            self._impact_restart_rects)
         self._hm_header_rects = self._clip_hit_rects(self._hm_header_rects)
         self._draw_hm_scrollbar()
 
@@ -4348,13 +4494,16 @@ class LiveVisualizer:
         self._expanded_plot_x = hm_area_w + self._splitter_w
         view_h = max(60, H - status_h - playback_h - pad)
         avail_w = hm_area_w - sb_w
-        n = len(self.fg_ids)
+        # The heatmap tab strip (section 224) sits above the panels' viewport.
+        tab_h = self._hm_tab_strip_h()
+        self._hm_tab_strip_rect = (0, status_h, hm_area_w, tab_h)
         cols, self.cell_px = self._heatmap_columns(avail_w)
         self._cols = cols
         self._panel_w = self.grid_w * self.cell_px + 2 * pad
         self._panel_h = self.grid_h * self.cell_px + self._panel_extra_h
-        self._heatmap_origin = (0, status_h)
-        self._hm_view_rect = (0, status_h, avail_w, view_h)
+        self._heatmap_origin = (0, status_h + tab_h)
+        self._hm_view_rect = (0, status_h + tab_h, avail_w,
+                              max(1, view_h - tab_h))
         self._layout_hm_block()
         self._splitter_rect = (hm_area_w, status_h, sp_w, view_h)
         plot_x = hm_area_w + sp_w
@@ -4368,6 +4517,61 @@ class LiveVisualizer:
         self._status_rect = (0, 0, W, status_h)
         self._playback_rect = (0, status_h + view_h, W, playback_h)
 
+    _HM_TAB_H = 24
+
+    def _hm_tabs(self) -> list:
+        """The heatmap tabs: the groups, and the impact maps when set."""
+        return ["groups", "impacts"] if self._impact_maps else ["groups"]
+
+    def _hm_tab_strip_h(self) -> int:
+        return self._HM_TAB_H if len(self._hm_tabs()) > 1 else 0
+
+    def _active_hm_groups(self) -> list:
+        """``[(title, ids)]`` of the heatmap tab on screen: the FG groups,
+        or the impact maps as one untitled group."""
+        if self._hm_tab == "impacts" and self._impact_maps:
+            return [(None, list(self._impact_maps))]
+        return self._hm_groups
+
+    def _set_hm_tab(self, tab: str) -> None:
+        """Show heatmap tab ``tab``; each tab keeps its scroll position."""
+        if tab == self._hm_tab or tab not in self._hm_tabs():
+            return
+        self._hm_tab_scroll[self._hm_tab] = int(self._hm_scroll_y)
+        self._hm_tab = tab
+        _save_settings(heatmap_tab=tab)
+        self._spawn_popup = None
+        self._spawn_popup_item_rects = []
+        self._dragging_hm_scroll = False
+        self._hm_scroll_slack = 0
+        self._hm_scroll_y = self._hm_tab_scroll.get(tab, 0)
+        self._compute_layout()
+
+    def _draw_hm_tab_strip(self) -> None:
+        """The heatmap tabs above the panels, styled as the plot's tabs."""
+        self._hm_tab_rects = []
+        x0, y0, w, h = self._hm_tab_strip_rect
+        if h <= 0:
+            return
+        pg = self._pg
+        pg.draw.rect(self._screen, (22, 22, 28), (x0, y0, w, h))
+        x = x0 + 6
+        for tab in self._hm_tabs():
+            label = self._t("Functional groups" if tab == "groups"
+                            else "Impacts")
+            active = tab == self._hm_tab
+            col = (230, 230, 240) if active else (150, 150, 160)
+            surf = self._font.render(label, True, col)
+            rect = (x, y0 + 3, surf.get_width() + 10, h - 6)
+            pg.draw.rect(self._screen, (55, 55, 75) if active else (35, 35, 45),
+                         rect)
+            pg.draw.rect(self._screen, (90, 90, 110), rect, 1)
+            self._screen.blit(surf, (x + 5, y0 + (h - surf.get_height()) // 2))
+            self._hm_tab_rects.append((rect, tab))
+            x += rect[2] + 4
+        pg.draw.line(self._screen, (70, 70, 85),
+                     (x0, y0 + h - 1), (x0 + w - 1, y0 + h - 1), 1)
+
     def _heatmap_columns(self, avail_w: int) -> tuple:
         """``(columns, cell_px)`` for a heatmap viewport ``avail_w`` wide:
         the most columns (at most ``min(4, n)``) whose cells reach the
@@ -4378,7 +4582,8 @@ class LiveVisualizer:
             return (avail_w // cols - 2 * pad) // max(1, self.grid_w)
 
         cols = 1
-        for c in range(min(4, len(self.fg_ids)), 0, -1):
+        n = sum(len(fids) for _t, fids in self._active_hm_groups())
+        for c in range(min(4, max(1, n)), 0, -1):
             if cell_for(c) >= self._min_cell_px:
                 cols = c
                 break
@@ -4400,7 +4605,7 @@ class LiveVisualizer:
         self._hm_slot_group = {}
         y_off = 0
         rows = 0
-        for g, (title, fids) in enumerate(self._hm_groups):
+        for g, (title, fids) in enumerate(self._active_hm_groups()):
             if title is not None:
                 self._hm_headers.append((title, y_off))
                 y_off += self._hm_header_h
@@ -5306,6 +5511,110 @@ class LiveVisualizer:
                              (tri_x + 6, tri_y - 2),
                              (tri_x + 3, tri_y + 2)])
             self._spawn_dropdown_rects.append((rect, fid, which))
+
+    def _draw_one_impact_map(self, iid: str, px: int, py: int) -> None:
+        """An impact map's panel on the Impacts tab (section 224): its
+        name, intensity and effort, the intensity slider (``[0, 4]x``,
+        the loaded map at the tick mark) and the field at that intensity,
+        laid out as an FG panel so the two tabs line up."""
+        pg = self._pg
+        pad = 4
+        title_h = 104
+        base = self._impact_maps.get(iid)
+        if base is None:
+            return
+        scale = float(self._impact_scales.get(iid, 1.0))
+        field = base * np.float32(scale)
+        unit = self._impact_units.get(iid, "")
+        pg.draw.rect(self._screen, (28, 28, 34),
+                     (px, py, self._panel_w, self._panel_h))
+        txt_col = (210, 210, 220)
+        line_h = self._font.get_height() + 2
+        lines = [self._t("Intensity = {value}x", value=f"{scale:.2f}"),
+                 self._t("Mean = {value}", value=(
+                     f"{self._fmt_compact(float(field.mean()))} {unit}").strip()),
+                 self._t("Max = {value}", value=(
+                     f"{self._fmt_compact(float(field.max()))} {unit}").strip())]
+        # Impact ids are not FG ids: the English label, then translated.
+        name = self._t(_IMPACT_NAMES.get(iid)
+                       or self._display_name(iid, i18n.DEFAULT))
+        self._screen.blit(self._font.render(name, True, (235, 235, 245)),
+                          (px + pad, py + 1))
+        for i, text in enumerate(lines):
+            self._screen.blit(self._font.render(text, True, txt_col),
+                              (px + pad, py + 1 + (i + 1) * line_h))
+        # The map's "Restart on change" box (section 225), under the info.
+        b = self._FOLD_BOX
+        box_y = py + 1 + (len(lines) + 1) * line_h
+        lbl_surf = self._font.render(self._t("Restart on change"), True,
+                                     txt_col)
+        bx, by = px + pad, box_y + (line_h - b) // 2
+        pg.draw.rect(self._screen, (36, 36, 46), (bx, by, b, b))
+        pg.draw.rect(self._screen, (150, 150, 170), (bx, by, b, b), 1)
+        if self.impact_restarts(iid):
+            pg.draw.lines(self._screen, (215, 215, 230), False,
+                          [(bx + 2, by + b // 2), (bx + b // 2 - 1, by + b - 3),
+                           (bx + b - 3, by + 2)], 2)
+        self._screen.blit(lbl_surf, (bx + b + 5, box_y))
+        self._impact_restart_rects.append(
+            ((bx - 2, box_y - 1, b + 5 + lbl_surf.get_width() + 4, line_h),
+             iid))
+        # Intensity slider, where an FG panel has its b0 slider.
+        slider_h = int(getattr(self, '_slider_h', 16))
+        slider_y = py + title_h - slider_h - 4
+        slider_x = px + pad
+        slider_w = self.grid_w * self.cell_px
+        track_y = slider_y + slider_h // 2 - 2
+        track_h = 4
+        frac = max(0.0, min(1.0, scale / _IMPACT_SCALE_MAX))
+        colour = (220, 140, 70)
+        pg.draw.rect(self._screen, (60, 60, 80),
+                     (slider_x, track_y, slider_w, track_h))
+        pg.draw.rect(self._screen, tuple(int(c * 0.7) for c in colour),
+                     (slider_x, track_y, int(slider_w * frac), track_h))
+        pg.draw.circle(self._screen, colour,
+                       (int(slider_x + slider_w * frac), track_y + track_h // 2),
+                       max(4, slider_h // 2))
+        def_x = int(slider_x + slider_w / _IMPACT_SCALE_MAX)
+        pg.draw.line(self._screen, (220, 220, 230),
+                     (def_x, track_y - 3), (def_x, track_y + track_h + 3), 1)
+        self._slider_rects.append(((slider_x - 2, slider_y - 2,
+                                    slider_w + 4, slider_h + 4),
+                                   _IMPACT_KEY + iid))
+        # The field. The colour reference is the loaded map's maximum, or
+        # the scaled one above 1x, so a weaker intensity reads darker and
+        # a stronger one never saturates.
+        H, W = field.shape
+        hm_x, hm_y = px + pad, py + title_h
+        raw_vmax = max(float(base.max()) * max(1.0, scale), 1e-12)
+        idx = np.clip(field / raw_vmax * 255.0, 0, 255).astype(np.uint8)
+        try:
+            small = pg.surfarray.make_surface(
+                np.transpose(self._lut[idx], (1, 0, 2)))
+        except Exception:
+            return
+        self._screen.blit(pg.transform.scale(
+            small, (W * self.cell_px, H * self.cell_px)), (hm_x, hm_y))
+        pg.draw.rect(self._screen, (60, 60, 70),
+                     (hm_x, hm_y, W * self.cell_px, H * self.cell_px), 1)
+        cbar_y = hm_y + H * self.cell_px + 3
+        cbar_w = W * self.cell_px
+        cbar_strip_h = 6
+        grad = self._lut[np.arange(256, dtype=np.uint8)]
+        grad_img = np.broadcast_to(grad[np.newaxis, :, :],
+                                   (cbar_strip_h, 256, 3)).copy()
+        self._screen.blit(pg.transform.scale(
+            pg.surfarray.make_surface(np.transpose(grad_img, (1, 0, 2))),
+            (cbar_w, cbar_strip_h)), (hm_x, cbar_y))
+        pg.draw.rect(self._screen, (60, 60, 70),
+                     (hm_x, cbar_y, cbar_w, cbar_strip_h), 1)
+        lbl_col = (170, 170, 180)
+        self._screen.blit(self._font.render("0", True, lbl_col),
+                          (hm_x, cbar_y + cbar_strip_h + 1))
+        max_lbl = self._font.render(
+            f"{self._fmt_compact(raw_vmax)} {unit}".strip(), True, lbl_col)
+        self._screen.blit(max_lbl, (hm_x + cbar_w - max_lbl.get_width(),
+                                    cbar_y + cbar_strip_h + 1))
 
     _REWARD_TITLE_PREFIX = "ARS reward per FG"
 
