@@ -1,0 +1,41 @@
+pair stage_access [f_J, f_A] (annual mean) and f_J / f_A:
+  benthivores -> planktivores    [0.494, 0.136]  ratio 3.6
+  benthivores -> whiting         [0.376, 0.042]  ratio 8.9
+  porpoises -> benthivores       [1.000, 0.554]  ratio 1.8
+  porpoises -> planktivores      [1.000, 1.000]  ratio 1.0
+  porpoises -> whiting           [1.000, 0.954]  ratio 1.0
+  seals -> benthivores           [1.000, 0.342]  ratio 2.9
+  seals -> planktivores          [1.000, 1.000]  ratio 1.0
+  seals -> whiting               [0.999, 0.839]  ratio 1.2
+  water column -> benthivores    [0.431, 0.027]  ratio 15.9
+  water column -> planktivores   [0.319, 0.109]  ratio 2.9
+  water column -> whiting        [0.568, 0.147]  ratio 3.9
+  whiting -> benthivores         [0.049, 0.000]  ratio 2941.5
+  whiting -> planktivores        [0.119, 0.008]  ratio 15.4
+                        pair stage    Q1    Q2    Q3    Q4  mean
+ water column -> benthivores     J 0.344 0.301 0.520 0.558 0.431
+ water column -> benthivores     A 0.025 0.028 0.025 0.031 0.027
+      whiting -> benthivores     J 0.018 0.010 0.111 0.060 0.049
+      whiting -> benthivores     A 0.000 0.000 0.000 0.000 0.000
+water column -> planktivores     J 0.277 0.260 0.367 0.370 0.319
+water column -> planktivores     A 0.103 0.113 0.099 0.122 0.109
+ benthivores -> planktivores     J 0.447 0.424 0.542 0.563 0.494
+ benthivores -> planktivores     A 0.122 0.144 0.117 0.160 0.136
+   porpoises -> planktivores     J 1.000 1.000 1.000 1.000 1.000
+   porpoises -> planktivores     A 1.000 1.000 0.999 1.000 1.000
+        seals -> benthivores     J 0.999 1.000 1.000 1.000 1.000
+        seals -> benthivores     A 0.275 0.327 0.316 0.450 0.342
+       seals -> planktivores     J 1.000 1.000 1.000 1.000 1.000
+       seals -> planktivores     A 1.000 1.000 0.999 1.000 1.000
+     whiting -> planktivores     J 0.082 0.073 0.161 0.159 0.119
+     whiting -> planktivores     A 0.004 0.008 0.009 0.010 0.008
+    porpoises -> benthivores     J 1.000 1.000 1.000 1.000 1.000
+    porpoises -> benthivores     A 0.552 0.509 0.470 0.685 0.554
+     water column -> whiting     J 0.498 0.465 0.730 0.578 0.568
+     water column -> whiting     A 0.080 0.224 0.135 0.147 0.147
+      benthivores -> whiting     J 0.308 0.278 0.536 0.380 0.376
+      benthivores -> whiting     A 0.017 0.075 0.034 0.043 0.042
+            seals -> whiting     J 1.000 1.000 0.995 1.000 0.999
+            seals -> whiting     A 0.674 0.963 0.792 0.924 0.839
+        porpoises -> whiting     J 1.000 1.000 1.000 1.000 1.000
+        porpoises -> whiting     A 0.897 0.992 0.931 0.997 0.954

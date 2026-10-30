@@ -361,14 +361,16 @@ fabricates mass.
   -> epifauna 0.29 (sections 221, 223.15, 223.26), water column -> whiting
   0.47 (gape); the infauna pair's 0.2 became the
   infauna's own refuge in 223.12. On a prey with a juvenile compartment
-  (planktivores, benthivores; 223.32) a pair may carry `stage_access:
+  (planktivores, benthivores; 223.32; whiting since 230) a pair may carry `stage_access:
   [f_J, f_A]` instead (members' prey-size windows on the stage lengths):
   water column -> benthivores [0.43, 0.027] (was f 0.075), whiting ->
   benthivores [0.049, 0] (was 0.05), water column -> planktivores [0.69,
   0.27] (228; was [0.32, 0.11] with mackerel in it), mackerel ->
   planktivores [0.078, 0.0037] (annual mean, 228), whiting -> planktivores [0.12, 0.008], benthivores ->
   planktivores [0.49, 0.14], seals -> benthivores [1, 0.34], porpoises ->
-  benthivores [1, 0.55]; research_notes/"Arsungarnas andel" (A-ring)
+  benthivores [1, 0.55]; on whiting (230) water column [0.57, 0.15] (was
+  f 0.47), benthivores [0.38, 0.042], seals [1, 0.84], porpoises [1,
+  0.95]; research_notes/"Arsungarnas andel" (A-ring)
   parameters_B.md. `predator_share` phi
   (`eat = min(eat, phi)`, a hard cap on a learned action) is REMOVED
   from the library since section 221; the mechanism stays in both

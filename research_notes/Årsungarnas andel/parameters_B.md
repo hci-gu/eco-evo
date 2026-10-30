@@ -130,3 +130,38 @@ window (capability) with the Kappa share as the validation target, the porpoise 
 - Whiting juveniles: later (decision 3).
 - Kappa et al. 2026 (Mar. Mamm. Sci., doi 10.1111/mms.70069) probably holds the local harbour seal
   prey lengths (1977-78 vs 2020); not fetched (download blocked), worth a manual fetch.
+
+## 7. Whiting (resume 230, user 2026-10-31) [D, J]
+
+The third staged group, with the same methods; the scripts gained a whiting entry and the outputs for
+the two older groups are unchanged (`tables/*_230*`).
+
+- **Stage:** whiting below its length at age 1 in Q3, 20.5 cm (section 0). Box J/B 2001-25 Q1 0.14, Q3
+  0.19 (1991-96 Q1-Q4 0.50 / 0.48 / 0.52 / 0.75), target annual mean 0.165.
+- **kappa, gamma** (`scripts/stage_box_model.py`, SMS species 17, 2013-22;
+  `tables/stage_box_model_stdout_230.txt`): g_J 1.73, g_A 0.39 /yr -> **kappa 4.5**; Z_J 1.90, mass ratio
+  0.09 -> **gamma 0.65 /yr** (sensitivity 0.52-0.81 moves the cycle by <= 0.01).
+- **Recruitment** (window Jun-Sep 0.15/0.35/0.35/0.15, J): rho **0.6 / 1.3 / 1.4 / 0.6**; field cycle J/B
+  Feb / May / Aug / Nov 0.16 / 0.13 / 0.19 / 0.18; start share by month 0.138-0.195.
+- **Fishing** (`scripts/box_weighted_sj.py`, `tables/box_weighted_sj_stdout_230.txt`): bottom_trawling
+  **s_J 0.29** (variant A, 2001-25 shares; 0.19-0.29 over the variants; whiting age 0 F ~0, age 1 0.026
+  against the stock F 0.072); pelagic_trawling **4** (J, as the benthivores: industrial small-mesh
+  bycatch is small fish; F 0.005; cap 1/p_J ~6).
+- **Stage access** (`scripts/stage_access.py`, `tables/stage_access_stdout_230.txt`), effective at J/B
+  0.165:
+
+| pair | f_J | f_A | effective | was |
+|---|---|---|---|---|
+| water column -> whiting (saithe 0.77, spurdog 0.10, hake 0.07, velvet belly 0.04, anglerfish 0.01 of a) | 0.57 | 0.15 | 0.22 | f 0.47 |
+| benthivores (cod > 20 cm) -> whiting | 0.38 | 0.042 | 0.10 | 1 |
+| seals (7-35 cm) -> whiting | 1.0 | 0.84 | 0.87 | 1 |
+| porpoises (0-40 cm) -> whiting | 1.0 | 0.95 | 0.96 | 1 |
+
+The water column's access halves: the 223 value 0.47 used one gape length per member (saithe 19 cm),
+the windows use each member's length mix at p95 0.30. The cod pair gets a prey-side window for the first
+time; its a keeps the predator-side capable share 0.10, as benthivores -> planktivores (a x 0.32, stage
+access [0.49, 0.14]).
+
+Mechanical check (untrained 1-update policies, frozen_years 1 yr, seed 20260530): whiting J/B 0.07-0.14
+by month, filling at recruitment and graduating after; juvenile share of the water column's whiting take
+0.35, seals 0.15, porpoises 0.14. The policies validate nothing; a trained run does.

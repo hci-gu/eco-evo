@@ -15,7 +15,7 @@ import csv
 import sys
 from collections import defaultdict
 
-SPN = {16: "cod", 18: "haddock", 21: "herring", 24: "Norway pout", 25: "sprat", 26: "plaice"}
+SPN = {16: "cod", 17: "whiting", 18: "haddock", 21: "herring", 24: "Norway pout", 25: "sprat", 26: "plaice"}
 sms, shares = sys.argv[1], sys.argv[2]
 
 Fq = defaultdict(float)          # (species, q, age) -> mean quarterly F
@@ -82,6 +82,8 @@ GROUPS = {
     "benthivores": {"haddock": (38.6, 0.06), "cod": (31.4, 0.39), "long rough dab": (12.6, 0.10), "dab": (4.5, 0.18),
                     "plaice": (3.8, 0.04), "witch": (1.7, 0.12), "starry ray": (1.5, 0.03), "grey gurnard": (0.9, 0.03),
                     "lemon sole": (0.9, 0.09)},
+    # resume 230: whiting group (library F 0.075 bottom + 0.005 pelagic, 223.26)
+    "whiting": {"whiting": (1.0, 0.08)},
 }
 # Herring: box J is ~92 % NSAS by weight (HAWG 2026 Table 3.2.4: WBSS 5 % of 0-wr, 12 % of 1-wr in 3.a.20 Q3),
 # so F_J = r_J x (0.92 x 0.145 + 0.08 x 0.0087); adults ~0.63 NSAS / 0.37 WBSS (Q3 2-6 wr), F_A = r_A x that mix.

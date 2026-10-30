@@ -75,7 +75,8 @@ def stage_rates(sp):
     return out
 
 
-SPEC = {"planktivores": {21: 0.89, 24: 0.08, 25: 0.03}, "benthivores": {18: 0.55, 16: 0.45}}
+SPEC = {"planktivores": {21: 0.89, 24: 0.08, 25: 0.03}, "benthivores": {18: 0.55, 16: 0.45},
+        "whiting": {17: 1.0}}  # whiting added for resume 230 (SMS species 17)
 G = pd.read_csv(juv)
 months = np.arange(12)
 WIN = np.zeros(12)
@@ -86,7 +87,7 @@ for grp, sp in SPEC.items():
     print(f"\n{grp}: field rates /yr (SMS {y0}-{y1}), " + ", ".join(f"{k} {v:.2f}" for k, v in rate.items()))
     for s in sp:
         print(f"   species {s}: " + ", ".join(f"{k} {v:.2f}" for k, v in rr[s].items()))
-    g = G[G.group == ("plk" if grp == "planktivores" else "ben")]
+    g = G[G.group == {"planktivores": "plk", "benthivores": "ben", "whiting": "wht"}[grp]]
     sv = {(r.period, r.quarter): r.J_share for r in g.itertuples()}
     target = np.mean([sv[("2001-25", 1)], sv[("2001-25", 3)]])
     nu, mu, zz = rate["g_J"], rate["Z_J"], rate["z"]

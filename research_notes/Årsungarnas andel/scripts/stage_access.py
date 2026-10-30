@@ -82,12 +82,20 @@ PAIRS = {
     "seals -> planktivores": ("plk", [("porpoise", 1.0, None)]),
     "whiting -> planktivores": ("plk", [("whiting", 1.0, None)]),
     "porpoises -> benthivores": ("ben", [("porpoise", 1.0, None)]),
+    # resume 230: whiting as prey (its own juvenile compartment). Water column members by their share
+    # of the pair's a (research_notes/"Rovfiskens uppdelning" split_encounter_mack: saithe 0.77, spurdog
+    # 0.10, hake 0.07, velvet belly 0.04, anglerfish 0.01); cod as the benthivores' piscivores.
+    "water column -> whiting": ("wht", [("saithe", 0.77, None), ("spurdog", 0.10, None), ("hake", 0.07, None),
+                                        ("velvet belly", 0.04, None), ("anglerfish", 0.01, None)]),
+    "benthivores -> whiting": ("wht", [("cod", 1.0, None)]),
+    "seals -> whiting": ("wht", [("seal", 1.0, None)]),
+    "porpoises -> whiting": ("wht", [("porpoise", 1.0, None)]),
 }
 
 
 def share_inside(q, group, species_set, window, stage):
     d = SL[(SL.period == PERIOD[q]) & (SL.quarter == q)]
-    W = POOL_W[q] if group == "plk" else BEN_W
+    W = {"plk": POOL_W[q], "ben": BEN_W, "wht": {"whiting": 1.0}}[group]
     tot = inside = 0.0
     for sp, w in W.items():
         if w <= 0 or (species_set is not None and sp not in species_set):

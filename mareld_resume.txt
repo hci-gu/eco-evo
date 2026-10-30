@@ -22024,3 +22024,28 @@ remain open exactly as described in 71.9 / 71.11.
     passed / 12 skipped. Checked on DISPLAY :1 with an inference run on
     the 228.3 smoke policies: "Juveniler: 8 %" (benthivores) and 27 %
     (planktivores) at tick 505.
+
+230 WHITING JUVENILE COMPARTMENT (user, 2026-10-31; deferred in plan B,
+    223.32 "whiting later"). research_notes/"Arsungarnas andel" (A-ring)
+    parameters_B.md section 7; stage_box_model.py, box_weighted_sj.py and
+    stage_access.py gained a whiting entry (outputs *_230; the planktivore
+    and benthivore results unchanged).
+    - Library, whiting juvenile_stage: stage below 20.5 cm (length at age
+      1 in Q3); growth_ratio 4.5 (SMS g_J 1.73 / g_A 0.39); graduation 0.65
+      /yr (de Roos et al. 2008: growth 1.73, mortality 1.90, mass ratio
+      0.09); recruitment Jun-Sep 0.6/1.3/1.4/0.6 to the box J/B 0.165
+      (2001-25 Q1 0.14, Q3 0.19); start share 0.138-0.195 by month;
+      fishing selectivity bottom 0.29 (box-weighted SMS F at ages 0-1),
+      pelagic 4 (J, industrial bycatch).
+    - Stage access on whiting: water column [0.57, 0.15] (was f 0.47;
+      effective 0.22), benthivores (cod) [0.38, 0.042] (0.10; the a keeps
+      its predator-side 0.10), seals [1.0, 0.84], porpoises [1.0, 0.95].
+      Booked M2 unchanged (stage access is outside the budget).
+    - One more observation channel for every DM that observes whiting:
+      all checkpoints invalid, train from scratch. The 228 build script
+      (build_split_mack.py) predates this: a rebuild from it would restore
+      f 0.47 on the water-column pair.
+    - pytest 1599 passed / 12 skipped; train.py and train_gpu.py smokes
+      write policy_whiting.pth; frozen_years 1 yr on the untrained smoke
+      policies: whiting J/B 0.07-0.14 by month, juvenile share of the
+      water column's whiting take 0.35, seals 0.15, porpoises 0.14.
