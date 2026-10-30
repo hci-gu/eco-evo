@@ -30,8 +30,8 @@ REST -> MACKEREL GROUP: flow 0.01802 t/km2/yr, M2 0.0212 /yr (velvet belly's hor
 --- mackerel: ['mackerel', 'horse mackerel']  weights {'mackerel': 0.9412, 'horse mackerel': 0.0588}
   B* 0.8500 t/km2 = 3060 t (share of pooled 1.20: 0.1147)
   r_max 0.255 (0.204-0.352); F bottom 0.0123, pelagic 0.0024; M1 0.159 (0.106-0.212) = 0.000108783 /tick
-  layer mean_0_50m (9.31 C): Cmax x1.0782, SMR x1.0680; Cmax 159.8 kJ/kg/d -> ceiling x1.3 51.94 MJ/t/tick
-  SMR 3.631 (3.20-6.91), Q10 2.01, feeding_cost 2.72, starve_rate 0.0078
+  layer mean_0_50m (9.31 C): Cmax x1.0782, SMR x1.0680; Cmax 264.9 kJ/kg/d -> ceiling x1.3 51.94 MJ/t/tick
+  SMR 4.589 (3.20-6.91), Q10 2.01, feeding_cost 2.24, starve_rate 0.0067
   lean 4671, max reserve 5871, mean reserve 3241, fill 0.552, prey quality 7912 MJ/t; Q/B 2.28
   trawl tables: bottom bf at 100 0.00027979959184, pelagic bf at 10 0.00064888628291
   M2 booked on prey: planktivorous_fish 0.02630, zooplankton 0.12989

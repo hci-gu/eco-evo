@@ -73,6 +73,47 @@ MACK = ["mackerel", "horse mackerel"]
 REST = [s for s in WC if s not in MACK]
 
 
+# ---- mackerel group physiology with explicit reference temperatures (resume 228.2) ----
+# research_notes/"Fiskgrupper i rutan"/predators/evidence_A_physiology.md. The species_values.csv
+# rows for mackerel and horse mackerel carry values at 13 C (SMR, routine) or a judgement (Cmax 150)
+# that split_fields_223 read as at_50m (8.37 C) values; with densities the group is rebuilt here.
+#  * rest cost: mackerel has no swim bladder and cannot rest: its floor is the routine rate at 1 BL/s,
+#    Bachiller et al. 2018 R = 0.00264 W^-0.217 e^(0.06818 T) e^(0.0234 SW): 74 mg O2/kg/h = 6.07
+#    MJ/t/6h at 400 g, 13 C [F, D]; Q10 e^0.6818 = 1.98. Its true SMR (chub mackerel proxy, U = 0)
+#    3.37 at 13 C. Horse mackerel has a swim bladder: rest = SMR 3.4 at 13 C (mackerel proxy), Q10 2.2.
+#  * routine (feeding baseline): mackerel = its floor (already swimming); horse mackerel 1.5 x SMR.
+#  * moving one 1-km cell per 6 h needs ~0.05 m/s, far below the routine 1 BL/s (~7.6 km per tick):
+#    directed swimming costs mackerel nothing above its floor (J) -> 1.0 x floor; horse mackerel the
+#    group convention 2.0 x SMR (cruising at Uopt).
+#  * Cmax anchored on the field, not on the GER construction: the GER ceiling at S 2.5 % is 109-118
+#    kJ/kg/d at 12-13 C (x1.30 Bjornsson 142-153) and fails both field checks - the fattening budget
+#    (fat 5 -> 25 % in 100 d) needs >= 180 kJ/kg/d, and the Norwegian Sea feeding season ration is
+#    0.08 g prey/g/d = 8 % BW/d of ~3.6 kJ/g zooplankton ~ 290 kJ/kg/d (Bachiller et al. 2018 [F],
+#    a bioenergetics inversion of measured growth; feeding grounds ~8-12 C, J 10 C). A ceiling cannot
+#    sit below the mean ration: Cmax = 290 at 10 C (the lowest ceiling consistent with it), no
+#    Bjornsson factor (field-anchored). Horse mackerel: Cape horse mackerel ration 3.8 % BW/d of
+#    crustaceans (~4 kJ/g) = 152 kJ/kg/d [A], J 13 C. Temperature with the mackerel GER term 0.080/C.
+MACK_PHYS = {"mackerel": dict(rest=6.07, rest_T=13.0, q10=1.98, routine_x=1.0, move_x=1.0,
+                              cmax=290.0, cmax_T=10.0),
+             "horse mackerel": dict(rest=3.4, rest_T=13.0, q10=2.2, routine_x=1.5, move_x=2.0,
+                                    cmax=152.0, cmax_T=13.0)}
+GER_K_MACK = 0.080
+
+
+def mackerel_physiology(w, T):
+    """Group rest cost, routine, movement cost, Cmax and ceiling at layer temperature T (biomass weights w)."""
+    rest = {sp: p["rest"] * p["q10"] ** ((T - p["rest_T"]) / 10.0) for sp, p in MACK_PHYS.items()}
+    RM = float(sum(w[sp] * rest[sp] for sp in MACK_PHYS))
+    routine = float(sum(w[sp] * rest[sp] * MACK_PHYS[sp]["routine_x"] for sp in MACK_PHYS))
+    move = float(sum(w[sp] * rest[sp] * MACK_PHYS[sp]["move_x"] for sp in MACK_PHYS))
+    cm = {sp: p["cmax"] * np.exp(GER_K_MACK * (T - p["cmax_T"])) for sp, p in MACK_PHYS.items()}
+    cmax = float(sum(w[sp] * cm[sp] for sp in MACK_PHYS))
+    ceil = cmax / 4.0
+    return dict(rest_by_member=rest, cmax_by_member=cm, smr=RM, routine=routine, routine_x=routine / RM,
+                movement_cost=move / RM, cmax=cmax, ceiling_field=ceil,
+                feeding_cost=routine / RM + 0.17 * 0.5 * ceil / RM, starve_rate=routine / 0.15)
+
+
 LOCAL_F_MACKEREL = 343.0 / 25945.0
 PEL_SHARE_MACKEREL = 0.038 * 222.0 / 343.0
 
@@ -95,7 +136,11 @@ def fields(members, layer, dens=None):
         loc = {"mackerel": (LOCAL_F_MACKEREL * (1 - PEL_SHARE_MACKEREL), LOCAL_F_MACKEREL * PEL_SHARE_MACKEREL)}
         Fb = float(sum(w[sp] * (loc[sp][0] if sp in loc else v.loc[sp, "F_bot"]) for sp in members))
         Fp = float(sum(w[sp] * (loc[sp][1] if sp in loc else v.loc[sp, "F_pel"]) for sp in members))
-    return dict(
+    phys = {}
+    if dens and "mackerel" in members:
+        phys = mackerel_physiology(w, T_LAYER[layer])
+        phys["starve_rate"] = phys["starve_rate"] / wm("e_lean")
+    out = dict(
         members=members, weights={k: round(float(x), 4) for k, x in w.items()}, layer=layer,
         T_layer=T_LAYER[layer], t_cmax=t_cmax, t_smr=t_smr, share_of_pooled=float(W[members].sum()),
         B=B, tonnes=B * 3600, r=wm("r_now"), r_lo=wm("r_lo"), r_hi=wm("r_hi"), F_bot=Fb, F_pel=Fp,
@@ -104,6 +149,8 @@ def fields(members, layer, dens=None):
         e_lean=el, res_max=rmx, res_mean=rmean, fill=rmean / rmx, E_prey=el + rmean,
         qb=wm("qb"), feeding_cost=1.5 + 0.17 * 0.5 * ceil / smr, starve_rate=1.5 * smr / el / 0.15,
         bf_bottom_100=Fb * C_BOT, bf_pelagic_10=Fp * C_PEL)
+    out.update(phys)
+    return out
 
 
 def zoo_consumption(members):

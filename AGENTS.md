@@ -195,7 +195,7 @@ fabricates mass.
   infauna 112; research_notes/"Magtomning och energitak", Swedish
   letters); every other predator keeps h = E / its ceiling. The predator
   ceilings are Bjornsson-anchored (x1.30, 223.26): whiting 31.34 (bottom
-  layer), water column 29.79, mackerel 51.94 (228). Never set a from
+  layer), water column 29.79, mackerel 66.22 (field-anchored Cmax, 228.2). Never set a from
   model output.
 - Daylight (opt-in, section 137): a pair with `dark_ratio` < 1 has
   `a(t) = a * m(t)`, m from the sun's elevation vs `light_threshold_deg`,
@@ -206,7 +206,8 @@ fabricates mass.
   for -5); at -5 deg (223.26): whiting -> planktivores 0.33, -> zoo
   0.78, -> benthivores 0.64; water column (228) -> planktivores 0.30,
   -> zoo 0.51, -> benthivores 0.48, -> whiting 0.48, -> mackerel 0.92;
-  mackerel -> planktivores 0.36, -> zoo 0.11; benthic pairs none.
+  mackerel -> planktivores 0.36, -> zoo 0.42 (stomachs: it filter-feeds
+  in the dark, 228.2); benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
   (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
   protected, energy gain buffered. `w` is the per-FG `interference` parameter
@@ -331,7 +332,8 @@ fabricates mass.
   `reserve_reference_fill`. Set for `planktivorous_fish` (section
   140.6; 209): lean 4000 MJ/t + reserve up to 6250, starvation from 0.2
   of it, `predatory_fish` (water column, lean 4180 + 2000 at fill 0.45 =
-  5080; 228), `mackerel` (lean 4670 + 5870 at fill 0.55 = 7899; 228),
+  5080; 228), `mackerel` (lean 4670 + 5870 at fill 0.55 = 7899; 228; its rest cost
+  is the obligate swimming floor 4.59, no swim bladder, 228.2),
   `whiting` (lean 3900 + 2000 at fill 0.45 = 4800; 223.26) and,
   since section 223.9, `benthivorous_fish` (lean 3600 + 1800 at fill
   0.5 = 4500; was whole-body 4500 with each new tonne charged its

@@ -61,11 +61,11 @@ equal the live files at build time only.
 | M1 /yr | 0.159 (0.11-0.21) | 0.276 (0.19-0.31) | 0.261 |
 | F bottom / pelagic | 0.0123 / 0.0024 (mackerel's LOCAL F, 228.1) | 0.260 / 0 | 0.213 / 0.029 |
 | layer | mean_0_50m (9.31 C) | at_50m (8.37 C) | at_50m |
-| Cmax kJ/kg/d -> ceiling x1.30 | 159.8 -> 51.94 MJ/t/tick | 91.7 -> 29.79 | 32.71 |
-| SMR (Q10) | 3.63 (2.0) | 3.29 (2.3) | 3.31 (2.3) |
-| feeding cost x RM | 2.72 | 2.27 | 2.34 |
+| Cmax kJ/kg/d -> ceiling | 265 field-anchored -> 66.22 MJ/t/tick (228.2; was 159.8 x1.30 -> 51.94) | 91.7 x1.30 -> 29.79 | 32.71 |
+| rest cost = resting_metabolism (Q10) | 4.59, the swimming floor (2.0) (228.2; was SMR 3.63) | 3.29 (2.3) | 3.31 (2.3) |
+| feeding / movement cost x RM | 2.24 / 1.03 (228.2; was 2.72 / 2.0) | 2.27 / 2.0 | 2.34 / 2.0 |
 | lean + reserve at fill (prey quality) | 4670 + 5870 at 0.55 (7899) | 4180 + 2000 at 0.45 (5080) | 4240 + 2600 at 0.5 (5540) |
-| starve_rate | 0.0078 | 0.0079 | 0.0078 |
+| starve_rate | 0.0067 (routine; 228.2) | 0.0079 | 0.0078 |
 | regional K | none | none | none |
 | visibility floor, interference | 0.7, 0.1 (J, as the water column) | 0.7, 0.1 | same |
 
@@ -73,8 +73,8 @@ equal the live files at build time only.
 
 | Pair | M2 /yr | a | h | f / stage access | night/day at -5 deg |
 |---|---|---|---|---|---|
-| mackerel -> planktivores | 0.0263 | 0.0435 | 137.2 | [0.078, 0.0037] | 0.36 |
-| mackerel -> zooplankton | 0.1299 | 0.0023 | 86.6 | - | 0.11 |
+| mackerel -> planktivores | 0.0263 | 0.0435 | 107.6 | [0.078, 0.0037] | 0.36 |
+| mackerel -> zooplankton | 0.1299 | 0.0023 | 68.0 | - | 0.42 (stomachs, 228.2) |
 | rest -> planktivores | 0.247 | 0.00559 | 239.2 | [0.69, 0.27] | 0.30 |
 | rest -> zooplankton | 0.0521 | 0.000241 | 151.1 | - | 0.51 |
 | rest -> benthivores | 0.0833 | 0.0651 | 151.1 | [0.43, 0.027] (unchanged) | 0.48 |
@@ -108,6 +108,34 @@ At 0.85 t/km2 the booked M2 is 0.021 (4.7 % of the group's gross 0.451 /yr); the
 share on mackerel is 1.6 MJ/t/tick against herring 19.5, benthivores 16.9, whiting 9.1, zooplankton 7.8 at
 grid-mean prey. A cell needs ~5.2 t/km2 of mackerel to match the rest's zooplankton pair, ~28 to match
 herring: the pair is booked but will rarely be eaten; what is left unpaid is small at this density.
+
+## 6b. Physiology corrections (228.2, user)
+
+The first build read the species_values.csv rows for mackerel and horse mackerel as at_50m (8.37 C)
+values. Evidence A says otherwise, and two of them are not GER values at all:
+1. **Rest cost.** Mackerel has no swim bladder and cannot rest. The rest cost is its routine at 1 BL/s,
+   6.07 MJ/t/6h at 400 g and 13 C (Bachiller et al. 2018, Q10 1.98), i.e. 4.72 at 9.31 C. Its true SMR
+   (3.37 at 13 C, chub mackerel at U = 0) is never reached. Horse mackerel has a swim bladder: SMR 3.4 at
+   13 C -> 2.54. Group 4.59 (was 3.63 = the 13 C SMR read as at 8.37 C and scaled up). Routine for
+   feeding: mackerel = its floor (1.02 x RM for the group); moving one cell per tick (~0.05 m/s) costs
+   nothing above the floor (J): movement 1.03 x RM (horse mackerel keeps 2 x SMR). starve_rate uses the
+   routine: 0.0067.
+2. **Night/day on zooplankton.** The encounter model has visual particulate feeding only (0.11).
+   Mackerel ram-filters copepods down to ~1e-7 uE m-2 s-1 (Macy et al. 1998 [F]); its night stomachs hold
+   0.4 (0.3-0.5) of the day's (Dahl & Kirkegaard 1986 [F]); horse mackerel 0.8. Weighted 0.42. The fish
+   pair keeps the encounter value (0.36; visual hunting, the 223.26 convention; stomachs give 0.15).
+3. **Cmax.** The 150 kJ/kg/d in species_values.csv was a judgement within 120-300, below the
+   fattening budget (>= 180) it was meant to satisfy, and the build then applied the layer temperature
+   (x1.08) and the Bjornsson GER re-anchoring (x1.30) on top. Now field-anchored: the Norwegian Sea
+   feeding-season ration 0.08 g/g/d (~290 kJ/kg/d at ~10 C, J; Bachiller et al. 2018 [F]) is the
+   lowest ceiling consistent with it; horse mackerel 152 at 13 C (Cape horse mackerel ration [A]); to
+   9.31 C with the mackerel GER term 0.080/C; no Bjornsson factor. Cmax 265, ceiling 66.22 (was 51.94).
+   The GER construction (109-118 at 12-13 C, x1.30 = 142-153) fails both field checks for mackerel.
+
+Consequences: mackerel growth_rate 0.000894 -> 0.000825 (s* 0.874, best pair now herring at the
+ceiling); h on its pairs 107.6 / 68.0; budget_gate ration 5.9 %/day (Bachiller's mean 8 %). The
+upstream species_values.csv rows are left as they are (the 209 pooled-group history); this script
+carries the corrected values.
 
 ## 7. Open
 

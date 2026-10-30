@@ -21956,3 +21956,27 @@ remain open exactly as described in 71.9 / 71.11.
     _field): the live library differs only in the two tables and three
     comments; growth rates unchanged (F is outside the budget).
     test_fishing_maps updated.
+
+228.2 Mackerel physiology corrected (user, 2026-10-30): three errors in
+    the first build, all from reading the species_values.csv mackerel
+    and horse mackerel rows as at_50m (8.37 C) values
+    (params_split_mack.md 6b; split_fields_mack.py mackerel_physiology).
+    - Rest cost: mackerel has no swim bladder; its floor is the routine
+      at 1 BL/s, 6.07 MJ/t/6h at 400 g, 13 C (Bachiller et al. 2018,
+      Q10 1.98) = 4.72 at 9.31 C; horse mackerel SMR 3.4 at 13 C -> 2.54;
+      group resting_metabolism 4.59 (was 3.63). feeding_cost 2.24 (routine
+      1.02 x RM + SDA of half the ceiling; was 2.72), movement_cost 1.03
+      (a cell per tick is far below the 1 BL/s floor, J; was 2.0),
+      starve_rate 0.0067 (routine; was 0.0078).
+    - Zooplankton night/day 0.42 from the stomachs (Dahl & Kirkegaard
+      1986 0.4; Macy et al. 1998 filter feeding in the dark; horse
+      mackerel 0.8), not the encounter model's 0.11 (visual only). The
+      fish pair keeps the encounter 0.36.
+    - Cmax field-anchored: Bachiller's feeding-season ration 0.08 g/g/d
+      (~290 kJ/kg/d at ~10 C) as the lowest consistent ceiling, horse
+      mackerel 152 at 13 C; 265 kJ/kg/d at 9.31 C, ceiling 66.22 (was
+      51.94 = the judgement 150 x 1.08 x Bjornsson 1.30; the GER value
+      x1.30 is 142-153 at 12-13 C and fails the >= 180 fattening budget).
+    - growth_rate mackerel 0.000894 -> 0.000825 (s* 0.874); h 107.6 / 68.0;
+      budget_gate ration 5.9 %/day; pytest 1595 passed / 12 skipped;
+      train_gpu smoke OK. Rebuilt from the pre-228 library (HEAD~1).

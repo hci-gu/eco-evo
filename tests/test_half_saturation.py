@@ -115,7 +115,7 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
         'mackerel_preys_on_planktivorous_fish': (0.36, -5.0),
         'whiting_preys_on_planktivorous_fish': (0.33, -5.0),
         'predatory_fish_preys_on_zooplankton': (0.51, -5.0),
-        'mackerel_preys_on_zooplankton': (0.11, -5.0),
+        'mackerel_preys_on_zooplankton': (0.42, -5.0),  # stomachs (228.2)
         'whiting_preys_on_zooplankton': (0.78, -5.0),
         'predatory_fish_preys_on_benthivorous_fish': (0.48, -5.0),
         'whiting_preys_on_benthivorous_fish': (0.64, -5.0),

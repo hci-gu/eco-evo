@@ -64,13 +64,22 @@ old = load_config(lib_path)
 project = load_config(project_path)
 
 # ---- fields ----
-CEIL = {"mackerel": round(mk["ceiling_bjornsson"], 2), "predatory_fish": round(wc["ceiling_bjornsson"], 2)}
+# 228.2: with the field build the mackerel group carries its own physiology (split_fields_mack.py
+# mackerel_physiology: rest = the obligate swimming floor, field-anchored Cmax, routine and movement)
+PHYS = "ceiling_field" in mk
+CEIL = {"mackerel": round(mk["ceiling_field"] if PHYS else mk["ceiling_bjornsson"], 2),
+        "predatory_fish": round(wc["ceiling_bjornsson"], 2)}
 RM = {"mackerel": round(mk["smr"], 2), "predatory_fish": round(wc["smr"], 2)}
 FC = {k: round(1.5 + 0.17 * 0.5 * CEIL[k] / RM[k], 2) for k in CEIL}
+MOVE = {"mackerel": round(mk["movement_cost"], 2) if PHYS else 2.0, "predatory_fish": 2.0}
+if PHYS:
+    FC["mackerel"] = round(mk["routine_x"] + 0.17 * 0.5 * CEIL["mackerel"] / RM["mackerel"], 2)
 LEAN = {"mackerel": round(mk["e_lean"], -1), "predatory_fish": 4180.0}
 RES = {"mackerel": round(mk["res_max"], -1), "predatory_fish": 2000.0}
 FILL = {"mackerel": round(mk["fill"], 2), "predatory_fish": 0.45}
 STARVE = {k: round(1.5 * RM[k] / LEAN[k] / 0.15, 4) for k in CEIL}
+if PHYS:
+    STARVE["mackerel"] = round(mk["routine"] / LEAN["mackerel"] / 0.15, 4)
 M1 = {"mackerel": mk["M1"] / TPY, "predatory_fish": wc["M1"] / TPY}
 R = {"mackerel": round(mk["r"], 3), "predatory_fish": round(wc["r"], 3)}
 Q10 = {"mackerel": round(mk["q10"], 1), "predatory_fish": round(wc["q10"], 1)}
@@ -99,6 +108,13 @@ ND = {("mackerel", "planktivorous_fish"): enc("G3_mackerel", "planktivorous_fish
       ("predatory_fish", "benthivorous_fish"): enc("G3_rest_wc", "benthivorous_fish")["night_day"],
       ("predatory_fish", "whiting"): enc("G3_rest_wc", "whiting_prey")["night_day"],
       ("predatory_fish", "mackerel"): RON["night_day"]}
+if PHYS:
+    # 228.2: zooplankton night/day from the stomachs, not the encounter model, which has visual
+    # particulate feeding only: mackerel ram-filters copepods down to ~1e-7 uE m-2 s-1 (Macy et al.
+    # 1998 [F]) and its night stomachs hold 0.4 (0.3-0.5) of the day's (Dahl & Kirkegaard 1986 [F]);
+    # horse mackerel 0.8 (0.6-1.0). Weighted by the members' shares of the zooplankton a (0.95 / 0.05).
+    zsh = ENC["G3_mackerel"]["zooplankton"].get("member_share", {"mackerel": 0.95, "horse mackerel": 0.05})
+    ND[("mackerel", "zooplankton")] = zsh["mackerel"] * 0.4 + zsh["horse mackerel"] * 0.8
 ND = {k: round(v, 2) for k, v in ND.items()}
 STAGE = {("mackerel", "planktivorous_fish"): [round(x, 4) for x in SA["mackerel_planktivores"]],
          ("predatory_fish", "planktivorous_fish"): [0.69, 0.27],   # same, rest water column
@@ -293,8 +309,12 @@ MK_BLOCK = f"""  mackerel:
     # shape that made herring grow on its fat in winter (184): the income-
     # funded law is the open next step.
     max_energy_reserve: {RES['mackerel']}
-    # Measured SMR 3.4 (both members) at 8.37 C re-read at the mean_0_50m
-    # annual mean 9.31 C with Q10 {mk['q10']:.2f}: {RM['mackerel']} ({mk['smr_lo']:.1f}-{mk['smr_hi']:.1f}).
+    # Section 228.2: the REST cost is the obligate swimming floor. Mackerel
+    # has no swim bladder and cannot rest: routine at 1 BL/s (Bachiller et
+    # al. 2018: 6.07 MJ/t/6h at 400 g, 13 C, Q10 1.98) = 4.72 at the layer
+    # annual mean 9.31 C (its true SMR, 3.37 at 13 C, is never reached);
+    # horse mackerel (swim bladder) SMR 3.4 at 13 C -> 2.54. Weighted {RM['mackerel']}.
+    # Was 3.63: the 13 C values read as at 8.37 C and scaled up.
     resting_metabolism: {RM['mackerel']}
     # ICES GER temperature term (mackerel 0.080 /C = Q10 2.23), mackerel
     # respirometry 2.0, horse mackerel 2.2 -> {Q10['mackerel']}; annual mean of the
@@ -303,12 +323,18 @@ MK_BLOCK = f"""  mackerel:
     metabolism_t_ref: annual_mean
     # Schools cruise 0.44-0.72 m/s net; not binding.
     movement_speed: 1.0
-    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling {CEIL['mackerel']} (GER Cmax
-    # {mk['cmax']:.0f} kJ/kg/d at 9.31 C x 1.30 Bjornsson anchoring: the GER fill is
-    # the cod calibration, as for every predator ceiling since 223.26;
-    # summer fattening needs >= ~180) = {FC['mackerel']} x RM; cruising 2 x SMR.
+    # Section 228.2: ceiling {CEIL['mackerel']} MJ/t/tick = Cmax {mk['cmax']:.0f} kJ/kg/d at 9.31 C,
+    # FIELD-anchored: the Norwegian Sea feeding-season ration 0.08 g/g/d
+    # = ~290 kJ/kg/d at ~10 C (Bachiller et al. 2018) is the lowest
+    # ceiling consistent with it (the GER construction, 109-118 at 12-13 C,
+    # x1.30 = 142-153, fails it and the >= 180 fattening budget; no
+    # Bjornsson factor on a field anchor); horse mackerel 152 at 13 C
+    # (Cape horse mackerel ration); mackerel GER temperature term 0.080/C.
+    # Feeding = routine ({mk['routine_x']:.2f} x RM: mackerel already swims) + SDA 0.17 of half
+    # the ceiling = {FC['mackerel']} x RM. Moving one cell per tick needs ~0.05 m/s,
+    # far below the 1 BL/s floor: {MOVE['mackerel']} x RM (horse mackerel 2 x SMR).
     feeding_cost: {FC['mackerel']}
-    movement_cost: 2.0
+    movement_cost: {MOVE['mackerel']}
     # Lean tissue as eaten (mackerel 4.7, horse mackerel 4.2 kJ/g) = {LEAN['mackerel']:.0f}; the
     # fat is eaten with the fish: at the reference fill {FILL['mackerel']} (mean reserve
     # {mk['res_mean']:.0f} / {RES['mackerel']:.0f}) the static quality is {E['mackerel']:.0f} MJ/t.
@@ -331,7 +357,8 @@ MK_BLOCK = f"""  mackerel:
     # -> {mk['M1']:.3f} /yr ({mk['M1_lo']:.2f}-{mk['M1_hi']:.2f}).
     natural_mortality: {M1['mackerel']:.6g}
     max_intake_rate: 0.04
-{SPAWN}    # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
+{SPAWN}    # Routine / lean energy / 0.15 (the section 209 construction, with
+    # the routine of 228.2 in place of 1.5 x SMR).
     starve_rate: {STARVE['mackerel']}
     # Judgement: midwater schools hide badly (as the water column).
     visibility_floor: 0.7
@@ -377,6 +404,10 @@ text = replace(text, "predatory_fish_preys_on_zooplankton",
                "  # zooplankton consumption (saithe's krill); the mackerel group's M2 is its\n"
                "  # members' consumption at their field biomass, same calibration.\n"
                + pair("predatory_fish", "zooplankton")
+               + ("  # Section 228.2: night/day from the stomachs, not the encounter model (visual\n"
+                  "  # particulate feeding only, 0.11): mackerel ram-filters copepods in the dark\n"
+                  "  # (Macy et al. 1998) and holds 0.4 of the day's stomach at night (Dahl &\n"
+                  "  # Kirkegaard 1986); horse mackerel 0.8; weighted by the zooplankton a.\n" if PHYS else "")
                + pair("mackerel", "zooplankton"))
 # benthivores and whiting: rest only (mackerel's capability score < 0.1 -> layer a 0)
 text = replace(text, "predatory_fish_preys_on_benthivorous_fish",

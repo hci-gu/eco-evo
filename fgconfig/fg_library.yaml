@@ -881,9 +881,13 @@
     # shape that made herring grow on its fat in winter (184): the income-
     # funded law is the open next step.
     max_energy_reserve: 5870.0
-    # Measured SMR 3.4 (both members) at 8.37 C re-read at the mean_0_50m
-    # annual mean 9.31 C with Q10 2.01: 3.63 (3.2-6.9).
-    resting_metabolism: 3.63
+    # Section 228.2: the REST cost is the obligate swimming floor. Mackerel
+    # has no swim bladder and cannot rest: routine at 1 BL/s (Bachiller et
+    # al. 2018: 6.07 MJ/t/6h at 400 g, 13 C, Q10 1.98) = 4.72 at the layer
+    # annual mean 9.31 C (its true SMR, 3.37 at 13 C, is never reached);
+    # horse mackerel (swim bladder) SMR 3.4 at 13 C -> 2.54. Weighted 4.59.
+    # Was 3.63: the 13 C values read as at 8.37 C and scaled up.
+    resting_metabolism: 4.59
     # ICES GER temperature term (mackerel 0.080 /C = Q10 2.23), mackerel
     # respirometry 2.0, horse mackerel 2.2 -> 2.0; annual mean of the
     # mean_0_50m layer (user 228: its prey's layer).
@@ -891,12 +895,18 @@
     metabolism_t_ref: annual_mean
     # Schools cruise 0.44-0.72 m/s net; not binding.
     movement_speed: 1.0
-    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 51.94 (GER Cmax
-    # 160 kJ/kg/d at 9.31 C x 1.30 Bjornsson anchoring: the GER fill is
-    # the cod calibration, as for every predator ceiling since 223.26;
-    # summer fattening needs >= ~180) = 2.72 x RM; cruising 2 x SMR.
-    feeding_cost: 2.72
-    movement_cost: 2.0
+    # Section 228.2: ceiling 66.22 MJ/t/tick = Cmax 265 kJ/kg/d at 9.31 C,
+    # FIELD-anchored: the Norwegian Sea feeding-season ration 0.08 g/g/d
+    # = ~290 kJ/kg/d at ~10 C (Bachiller et al. 2018) is the lowest
+    # ceiling consistent with it (the GER construction, 109-118 at 12-13 C,
+    # x1.30 = 142-153, fails it and the >= 180 fattening budget; no
+    # Bjornsson factor on a field anchor); horse mackerel 152 at 13 C
+    # (Cape horse mackerel ration); mackerel GER temperature term 0.080/C.
+    # Feeding = routine (1.02 x RM: mackerel already swims) + SDA 0.17 of half
+    # the ceiling = 2.24 x RM. Moving one cell per tick needs ~0.05 m/s,
+    # far below the 1 BL/s floor: 1.03 x RM (horse mackerel 2 x SMR).
+    feeding_cost: 2.24
+    movement_cost: 1.03
     # Lean tissue as eaten (mackerel 4.7, horse mackerel 4.2 kJ/g) = 4670; the
     # fat is eaten with the fish: at the reference fill 0.55 (mean reserve
     # 3241 / 5870) the static quality is 7898 MJ/t.
@@ -913,7 +923,7 @@
     # 0.0147 (the LOCAL 3.a.20 F, 228.1) against r 0.255 leaves
     # 0.24 /yr; the other losses are the booked predation (water
     # column 0.021, seals, porpoises) and M1.
-    growth_rate: 0.00089405247299
+    growth_rate: 0.00082498428172
     # M1 = M0 + predation by groups NOT in the model (tuna, sharks, birds,
     # cetaceans other than porpoises): mackerel 0.15, horse mackerel 0.30
     # -> 0.159 /yr (0.11-0.21).
@@ -927,8 +937,9 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
-    starve_rate: 0.0078
+    # Routine / lean energy / 0.15 (the section 209 construction, with
+    # the routine of 228.2 in place of 1.5 x SMR).
+    starve_rate: 0.0067
     # Judgement: midwater schools hide badly (as the water column).
     visibility_floor: 0.7
     # No field evidence of interference for mackerel (as the water column).
@@ -1326,7 +1337,7 @@ interaction_definitions:
   # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
   # no phi since 221; layer convention), h = E_prey / the group's ceiling
   # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick; since
-  # 228 the water column 29.79, mackerel 51.94).
+  # 228 the water column 29.79, mackerel 66.22).
   # M2 = Q x diet share / prey B, scaled so the two groups add to the
   # pooled pair. Type II (Rindorf et al. 2006). research_notes/"Rovfiskens uppdelning" (Swedish letters)/params_split_223.md.
   # Section 228 (mackerel split): a per tonne of the WHOLE group from the
@@ -1355,7 +1366,7 @@ interaction_definitions:
     preys_on: true
     predation_mortality: 0.0263
     assimilation_factor: 0.8
-    handling_time: 137.2
+    handling_time: 107.6
     visibility_floor: 0.25
     functional_response: 2
     max_intake_rate: 0.0435
@@ -1876,13 +1887,17 @@ interaction_definitions:
     max_intake_rate: 0.000241
     dark_ratio: 0.51
     light_threshold_deg: -5.0
+  # Section 228.2: night/day from the stomachs, not the encounter model (visual
+  # particulate feeding only, 0.11): mackerel ram-filters copepods in the dark
+  # (Macy et al. 1998) and holds 0.4 of the day's stomach at night (Dahl &
+  # Kirkegaard 1986); horse mackerel 0.8; weighted by the zooplankton a.
   mackerel_preys_on_zooplankton:
     preys_on: true
     predation_mortality: 0.1299
     assimilation_factor: 0.8
-    handling_time: 86.6
+    handling_time: 68.0
     max_intake_rate: 0.0023
-    dark_ratio: 0.11
+    dark_ratio: 0.42
     light_threshold_deg: -5.0
   # Whiting on krill and mysid-sized zooplankton: encounter 0.0018 x the
   # Staniland 1995 capture factor on shrimp 1.33 (as the pooled pair, J)
