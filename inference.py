@@ -1246,20 +1246,20 @@ def main():
     parser.add_argument("--output", type=str, default=None,
                         help="Optional path to save per-FG biomass history as .npz.")
     parser.add_argument("--quiet", action="store_true", help="Suppress per-step output.")
-    parser.add_argument("--mortality", choices=["on", "off"], default="off",
+    parser.add_argument("--mortality", choices=["on", "off"], default="on",
                         help="Toggle the artificial (density-independent) natural "
                              "mortality term applied to decision-maker FGs each tick. "
-                             "Default: off.")
+                             "Default: on.")
     add_mortality_multiplier_argument(parser)
     add_mass_balance_argument(parser)
-    parser.add_argument("--migration", choices=["on", "off"], default="off",
+    parser.add_argument("--migration", choices=["on", "off"], default="on",
                         help="Migration mode. When 'on', movement out through grid "
                              "edges is no longer masked away — instead it is "
                              "interpreted as emigration, and an equal mass "
                              "immigrates somewhere on the grid's edge cells, "
                              "distributed proportionally to those cells' "
                              "accessibility (uniform over edge cells if no "
-                             "accessibility map is provided). Default: off.")
+                             "accessibility map is provided). Default: on.")
     add_rnd_baseline_argument(
         parser, extra_help=" Only shown with --visual (biomass%%, energy%% "
                            "and move/rest/eat; no heatmaps for the baseline "

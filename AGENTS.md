@@ -442,7 +442,9 @@ python3 tools/biomass_html.py results/<run-name>      # -> plots.html
 ```
 
 Useful flags: `--profile sanity|info|deep` (run-size presets; action hacks are off with or without one),
-`--visual`, `--rollouts_per_delta`, `--mortality on`,
+`--visual`, `--rollouts_per_delta`, `--mortality on|off` (default on since
+section 231 on train.py, train_gpu.py and inference.py; tools/viability.py
+keeps off),
 `--tick-length HOURS` (1-6, default 6; section 106),
 `--warmup-days D` (train.py with co-evolution and train_gpu.py: each world
 first runs D days with the unperturbed policies, shared by the +/-
@@ -460,8 +462,9 @@ design, not biology; 0 = off; section 223.12),
 without debiting the energy reserve; the mass-balanced term is ON by
 default since section 120 and the library is calibrated for it -
 `--mass-balance` is kept as a no-op, sections 114-116, 120),
-`--migration on`,
-`--policynetwork LAYERS NODES [ACTIVATION]`, `--resume`,
+`--migration on|off` (default on since section 231, same entry points),
+`--policynetwork LAYERS NODES [ACTIVATION]` (default 2 24 tanh since section
+231, was 2 30 sig; an omitted ACTIVATION is tanh), `--resume`,
 `--local_reward` (per-cell source-tracked reward, sections 79 and 80;
 available on `train_gpu.py` as well), `--rnd_baseline [all|solo]`
 (random-action `_rnd` curves in the live plot; `all` = every DM random,

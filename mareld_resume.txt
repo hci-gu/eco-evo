@@ -22049,3 +22049,24 @@ remain open exactly as described in 71.9 / 71.11.
       write policy_whiting.pth; frozen_years 1 yr on the untrained smoke
       policies: whiting J/B 0.07-0.14 by month, juvenile share of the
       water column's whiting take 0.35, seals 0.15, porpoises 0.14.
+
+231 MORTALITY AND MIGRATION ON BY DEFAULT (user, 2026-10-31).
+    - train.py, train_gpu.py (lib/gpu/cli.py) and inference.py: --mortality
+      and --migration default to "on" (were "off"); help texts and the
+      train.py "Mortality: on (default)" line follow. "--mortality off" /
+      "--migration off" still close the box or drop M1.
+    - Unchanged on purpose: tools/viability.py (its normative corner is
+      documented with both off, VIABILITY.md), the probes, the programmatic
+      defaults (inference.build_env, lib/gpu/config.EnvironmentBuilder),
+      and api.py, which builds its env with apply_natural_mortality=False.
+    - No run is affected that set both flags explicitly (fix86 did).
+      pytest 1599 passed / 12 skipped; train.py 1-generation smoke prints
+      "Mortality: on (default)".
+    - --policynetwork defaults to 2 24 tanh on train.py and train_gpu.py
+      (was 2 30 sig; the settings of fix83-86). Given as LAYERS NODES only,
+      the activation is tanh too (was sig; user). inference.py reads the
+      architecture from the checkpoint. --resume of a run started on the
+      old default without the flag now stops with "Checkpoint format or
+      architecture is incompatible" (GPU trainer): pass --policynetwork 2
+      30 sig. pytest 1599 passed / 12 skipped; train_gpu.py CPU smoke
+      writes architecture {hidden_dim 24, hidden_layers 2, tanh}.

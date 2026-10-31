@@ -1685,20 +1685,20 @@ def main(argv=None, *, on_step=None, confirm=True):
                         help="Name of the run. Checkpoints are saved to results/<run-name>/policy_<fg>.pth. "
                              "The same name can be used at inference via inference.py --run-name <name>. "
                              "Default: 'default'.")
-    parser.add_argument("--mortality", choices=["on", "off"], default="off",
+    parser.add_argument("--mortality", choices=["on", "off"], default="on",
                         help="Toggle the artificial (density-independent) natural "
                              "mortality term applied to decision-maker FGs each tick. "
-                             "Default: off.")
+                             "Default: on.")
     add_mortality_multiplier_argument(parser)
     add_mass_balance_argument(parser)
-    parser.add_argument("--migration", choices=["on", "off"], default="off",
+    parser.add_argument("--migration", choices=["on", "off"], default="on",
                         help="Migration mode. When 'on', movement out through grid "
                              "edges is no longer masked away — instead it is "
                              "interpreted as emigration, and an equal mass "
                              "immigrates somewhere on the grid's edge cells, "
                              "distributed proportionally to those cells' "
                              "accessibility (uniform over edge cells if no "
-                             "accessibility map is provided). Default: off.")
+                             "accessibility map is provided). Default: on.")
     parser.add_argument("--uniform_bias_init", action="store_true", default=False,
                         help="Enable uniform-bias init on the output layer: bias=0 + "
                              "weights*0.01 so that softmax starts ~uniform at gen 1. "
@@ -1733,14 +1733,14 @@ def main(argv=None, *, on_step=None, confirm=True):
                         help="Optional schedule, e.g. '1@0,3@10,5@50' meaning M=1 for "
                              "gen 0-9, M=3 for gen 10-49, M=5 from gen 50 onwards. "
                              "Overrides --rollouts_per_delta when given.")
-    parser.add_argument("--policynetwork", nargs="+", default=["2", "30", "sig"],
+    parser.add_argument("--policynetwork", nargs="+", default=["2", "24", "tanh"],
                         metavar="LAYERS NODES [ACTIVATION]",
                         help="Policy network architecture: number of hidden layers, "
                              "number of nodes per hidden layer, and hidden-layer "
                              "activation function (one of 'sig', 'relu', 'tanh'). "
-                             "Activation may be omitted and defaults to 'sig' "
-                             "(sigmoid). Default: 2 30 sig (two hidden layers of "
-                             "30 nodes each with sigmoid activations).")
+                             "Activation may be omitted and defaults to 'tanh'. "
+                             "Default: 2 24 tanh (two hidden layers of "
+                             "24 nodes each with tanh activations).")
     parser.add_argument("--rnd-baseline", "--rnd_baseline", dest="rnd_baseline",
                         nargs="?", const="all", default="none",
                         choices=["all", "solo", "none"],
@@ -2134,7 +2134,7 @@ def main(argv=None, *, on_step=None, confirm=True):
     obs_norm_enabled = not args.no_obs_normalize
     print(f"Obs Normalize:  {obs_norm_enabled} {'(default)' if not args.no_obs_normalize else '(user, disabled)'}")
     print(f"Co-evolution:   {args.coevolution} {'(default: on)' if args.coevolution else '(user, disabled -> round-robin)'}")
-    print(f"Mortality:      {args.mortality} {'(default)' if args.mortality == 'off' else '(user)'}"
+    print(f"Mortality:      {args.mortality} {'(default)' if args.mortality == 'on' else '(user)'}"
           f" x{args.mortality_multiplier:g}"
           f" {'(default)' if args.mortality_multiplier == DEFAULT_MORTALITY_MULTIPLIER else '(user)'}")
     print(f"Mass balance: {'on - growth pays for biomass (default)' if args.mass_balance else 'OFF - legacy growth term, library NOT calibrated for it'}")
@@ -2187,7 +2187,7 @@ def main(argv=None, *, on_step=None, confirm=True):
             pass
 
     # Parse --policynetwork: [LAYERS, NODES] or [LAYERS, NODES, ACTIVATION].
-    # ACTIVATION defaults to 'sig' (sigmoid, legacy behaviour) when omitted;
+    # ACTIVATION defaults to 'tanh' when omitted (section 231; was 'sig');
     # accepted values are 'sig', 'relu', 'tanh'.
     _pn = list(args.policynetwork)
     if len(_pn) < 2 or len(_pn) > 3:
@@ -2201,7 +2201,7 @@ def main(argv=None, *, on_step=None, confirm=True):
         print(f"Error: --policynetwork LAYERS and NODES must be integers; "
               f"got {_pn[0]!r}, {_pn[1]!r}")
         return
-    _pn_activation = (str(_pn[2]).lower() if len(_pn) == 3 else "sig")
+    _pn_activation = (str(_pn[2]).lower() if len(_pn) == 3 else "tanh")
     if _pn_activation not in ("sig", "relu", "tanh"):
         print(f"Error: --policynetwork ACTIVATION must be one of "
               f"'sig', 'relu', 'tanh'; got {_pn[2]!r}")

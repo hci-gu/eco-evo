@@ -49,7 +49,7 @@ def add_common_arguments(parser):
     parser.add_argument("--species", nargs="+", default=["all"])
     parser.add_argument("--no-coevolution", "--no_coevolution", dest="coevolution", action="store_false", default=True)
     parser.add_argument("--coevolution", dest="coevolution", action="store_true")
-    parser.add_argument("--policynetwork", nargs="+", default=["2", "30", "sig"], metavar="ARCH")
+    parser.add_argument("--policynetwork", nargs="+", default=["2", "24", "tanh"], metavar="ARCH")
     parser.add_argument("--uniform-bias-init", "--uniform_bias_init", dest="uniform_bias_init", action="store_true")
     parser.add_argument("--no-obs-normalize", "--no_obs_normalize", dest="obs_normalize", action="store_false", default=True)
     parser.add_argument("--no-integral-reward", "--no_integral_reward", dest="integral_reward", action="store_false", default=True)
@@ -60,10 +60,10 @@ def add_common_arguments(parser):
     parser.add_argument("--survival-threshold", "--survival_threshold", dest="survival_threshold", type=float, default=0.01)
     parser.add_argument("--entropy-coef", "--entropy_coef", dest="entropy_coef", type=float, default=0.0)
     parser.add_argument("--argmax-penalty", "--argmax_penalty", dest="argmax_penalty", type=float, default=0.0)
-    parser.add_argument("--mortality", choices=("on", "off"), default="off")
+    parser.add_argument("--mortality", choices=("on", "off"), default="on")
     add_mortality_multiplier_argument(parser)
     add_mass_balance_argument(parser)
-    parser.add_argument("--migration", choices=("on", "off"), default="off")
+    parser.add_argument("--migration", choices=("on", "off"), default="on")
     parser.add_argument("--execution", choices=("eager", "compile", "cuda-graph", "compile-graph"), default="cuda-graph")
     parser.add_argument("--graph-ticks", type=positive_int, default=32)
     parser.add_argument("--pairs-per-batch", type=positive_int, help="Limit simultaneous perturbation pairs to fit VRAM")
@@ -100,7 +100,7 @@ def trainer_options(args):
     if len(args.policynetwork) not in (2, 3):
         raise ValueError("--policynetwork expects LAYERS NODES [sig|relu|tanh]")
     hidden_layers, hidden_dim = map(int, args.policynetwork[:2])
-    activation = args.policynetwork[2] if len(args.policynetwork) == 3 else "sig"
+    activation = args.policynetwork[2] if len(args.policynetwork) == 3 else "tanh"
     if min(hidden_layers, hidden_dim) < 1 or activation not in ("sig", "sigmoid", "relu", "tanh"):
         raise ValueError("Policy dimensions must be positive and activation must be sig, relu, or tanh")
     if args.sigma <= 0 or args.lr < 0 or not math.isfinite(args.sigma) or not math.isfinite(args.lr):
