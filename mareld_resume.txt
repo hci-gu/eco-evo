@@ -22070,3 +22070,205 @@ remain open exactly as described in 71.9 / 71.11.
       architecture is incompatible" (GPU trainer): pass --policynetwork 2
       30 sig. pytest 1599 passed / 12 skipped; train_gpu.py CPU smoke
       writes architecture {hidden_dim 24, hidden_layers 2, tanh}.
+
+232 FIX86 EPIFAUNA COLLAPSE: WHITING'S BED PAIR, DIET GATE (user,
+    2026-10-31). research_notes/"Vitlingens fiskbyten" (Swedish letters)
+    summary.md, evidence.md, scripts/, tables/ (a research subagent).
+    - fix86 (228 + 230 library, n_deltas 32): from ~u440 13/14 viable, the
+      only failing group mobile_epifauna on drift (annual means 0.92 /
+      0.65 / 0.25 at u540; fix85 0.94 / 0.83 / 0.64 at u500, and still
+      falling 0.95 / 0.80 / 0.62 at u750 - fix85 passed the window, it
+      was not stable). Frozen 3 yr, seed 20260530 (fix86 ~u505, fix85
+      u750 in a worktree at 6b7f213): the epifauna's predator is whiting
+      alone, realised M2 0.80 -> 1.99 /yr (fix85 0.72 -> 1.15; booked
+      0.069); whiting's diet 99-100 % epifauna (booked ~17 %), Q/B 6;
+      the benthivores eat 97-100 % infauna, realised M2 on epifauna
+      0.001-0.003 vs booked 0.54. fix86 is faster because the water
+      column's realised M2 on whiting fell 0.18 -> 0.03 (fix85 0.34 ->
+      0.16): whiting peaked at 1.21 of start, the epifauna ended year 3
+      at 0.13, whiting then starved 0.44 /yr. Whiting J/B 0.42-0.45 all
+      year (230 designed 0.14-0.19).
+    - 228 vs 230: frozen fix86 with the water column -> whiting pair back
+      at f 0.47 (no stage access, juvenile_stage kept), seeds 20260530 /
+      7: year-1 M2 on whiting 0.18 -> 0.25 / 0.15 -> 0.23, epifauna end
+      of year 3 0.13 -> 0.17 / 0.14 -> 0.20 (fix85 0.55). The stage access
+      is a small part; after year 1 the M2 falls to ~0.03 either way (the
+      shrunken water column and its trained prey choice, whiting 2-3 %
+      of its diet vs 10 % in fix85) - not separable with this checkpoint.
+    - Diet gate, tools/probes/budget_gate.py (last block): per generalist
+      the encounter-implied diet (a * B_visible shares, Type III a B^2,
+      at the manifest's inference start over the reference grid; visible
+      = accessible_fraction, stage access at the annual-mean start J/B,
+      refuge exposed share; all prey visible, zooplankton skipped) vs
+      the booked diet (M2 * B shares); OFF = ratio outside 1/3-3 with a
+      share >= 0.05 (J). Before this section whiting failed on all four
+      pairs (epifauna 0.91 vs 0.16, planktivores 0.011 vs 0.42); the
+      benthivores' bed pairs pass (1.09 / 1.03). Also OFF, left open:
+      benthivores -> planktivores 0.005 vs 0.075, porpoises ->
+      planktivores 0.19 vs 0.65 and -> water column 0.31 vs 0.07, water
+      column -> benthivores 0.43 vs 0.08. Realised monophagy of the
+      benthivores (infauna) despite a passing gate is the exclusive
+      per-prey eat allocation with each pair saturating on its own; a
+      multi-prey (shared handling) response is the structural option,
+      not designed.
+    - Research verdict: whiting -> epifauna's clearance relative to
+      zooplankton is 27-50x the field in four diets (booked M2, 223.26
+      table, SMS + Hislop at the box length mix, Skagerrak April 1991
+      ICES stomachs). Cause: the 220/223.15 encounter keeps the whiting
+      inside the 0.5 m bed prey layer all its search time, while the
+      library's whiting layer is H 10 m (5-20; params_split.md) and the
+      field puts whiting above the bed (Pedersen 1999; Rindorf 2003;
+      pelagic small whiting). The planktivore a 0.021 has no prey-size
+      factor inside; the 223.32 window was averaged over every whiting
+      length although the a counts only whiting >= 20 cm.
+    - APPLIED (user): whiting -> mobile_epifauna max_intake_rate 0.27 ->
+      0.008 (0.005-0.023; per-stage a_enc e x H_bed/H_whiting, adults
+      0.5/10 m, juveniles 0.5/30 m, J weight 0.165; also 0.006-0.024 from
+      the eat-share convention's time-allocation check, so the value
+      does not depend on the layer convention); whiting -> planktivorous_
+      fish stage_access [0.12, 0.008] -> [0.16, 0.010] (band to [0.26,
+      0.025]). Derived growth rates unchanged (pairs at the Holling
+      ceiling in s*); no observation change, checkpoints load.
+      test_half_saturation updated. Diet gate for whiting: epifauna 0.23
+      vs 0.16, zooplankton 0.59 vs 0.33, benthivores 0.06 vs 0.09 ok;
+      planktivores 0.12 vs 0.42 still OFF.
+    - Frozen fix86 (~u505, trained on the old pair) in the new library,
+      seed 20260530: epifauna end 1.12 / 1.23 / 1.30 (was 0.84 / 0.47 /
+      0.13), whiting M2 on it 0.44 -> 0.29; whiting 0.71 / 0.63 / 0.60,
+      no starvation, still 100 % epifauna (frozen policy; the zooplankton
+      pair now pays more, 0.76 vs 0.51 of the ceiling); whiting J/B
+      0.24-0.27 (was 0.42-0.45: the high J/B was the over-production);
+      seals 0.70 at end of year 3 (was 0.40), porpoises 0.88 (0.75),
+      water column 0.29 (0.33). One seed; retraining needed.
+    - Open (user's call): (1) the layer convention for the planktivore
+      pair's herring/sprat term (overlap H_whiting/H_herring 0.1-0.25 by
+      day, ~0 at night would cut a_plk to ~0.005 and move the eaten
+      species mix to the stomachs' pout 0.61 / sprat 0.26 / herring
+      0.12); (2) booked whiting -> planktivores M2 0.203 (SMS North Sea;
+      the only in-area stomachs, Skagerrak April 1991, held krill and
+      pout, no herring) - tied to the planktivores' K mask; (3) the other
+      OFF pairs above; (4) seals / porpoises / mackerel softer in fix86.
+    - pytest 1599 passed / 12 skipped; train.py 1-generation smoke
+      (whiting) writes policy_whiting.pth. Frozen copy of fix86 before
+      the library change (u593) kept in the session scratchpad only.
+
+232.1 FOUR PAIR AUDITS; LAYER CONVENTION KEPT (user, 2026-10-31).
+    Research subagents, research_notes/ (Swedish folder names):
+    "Vitlingens fiskbyten" step2_summary.md (whiting's herring term,
+    box M2), "Bottenfiskens sillbyte" (benthivores -> planktivores),
+    "Vattenpelarens bottenfiskbyte" (water column -> benthivores),
+    "Tumlarens byten" (porpoise pairs). Library and code untouched by them.
+    - Step 2 corrects step 1: "small whiting are pelagic" means 0-group
+      fish of 1.5-5 cm (Bromley et al. 1997), not the 10-30 cm juveniles
+      step 1 put at 30 m. With both stages in the 10 m bed band step 1's
+      own table gives whiting -> epifauna a 0.0116 (232 applied 0.008 -
+      a derivation error, not a range choice). Box whiting forage at the
+      bed (Danish HERAS 2017-19: whiting only in day bottom hauls, none in
+      night surface hauls beside tonnes of herring; no diel catch signal
+      > 20 cm).
+    - Booked whiting -> planktivores M2 0.203 -> 0.07 (0.03-0.11): half of
+      0.203 was a sprat term of M2 3.03 /yr on the box's 0.099 t/km2 of
+      sprat (the 223.37 method gave box whiting the North Sea ration per
+      whiting tonne per species); availability-based transfers 0.064-
+      0.079; in-area stomachs agree; the GOV does not under-catch the
+      box's small herring (x0.54-1.13).
+    - Convention (user: B, keep the layer convention). The water-column
+      audit showed the two conventions diverge there: under the eat-share
+      reading rest -> benthivores a 0.0651 passes the time-allocation
+      check (0.57 of the ceiling vs herring 0.66); under the band
+      (overlap) reading with concurrent search it is 7-12x high (saithe
+      ~0.05 of its foraging time within 2 m of the bed; a ~0.0055), but
+      with the engine's one-prey-at-a-time eat allocation a band value
+      would leave the pair unpaid. Band values need a shared-handling
+      multi-prey response; not adopted. Step 2's band proposals for
+      whiting -> planktivores (a 0.0116, night/day 0.10 at 0 deg, [0.19,
+      0.010]) NOT applied.
+    - Porpoises: no a was ever derived (151 fit to an Ecopath diet on
+      frozen policies, 206 x1.5 for survival, 209 a x B rescale, copied
+      in 223.26 / 228); Ransijn 2021's a absorbs GOV q^1.5 (misread in
+      209). Equal-clearance a 0.0225 on all fish pairs was proposed, not
+      applied. The water-column rest (saithe 0.80, spurdog, hake) is
+      mostly >= 40 cm.
+    - APPLIED (user): whiting -> mobile_epifauna a 0.008 -> 0.0116;
+      whiting -> planktivorous_fish predation_mortality 0.203 -> 0.07;
+      porpoises -> predatory_fish accessible_fraction 0.054 (0.017-0.19,
+      < 40 cm on the box long-run GOV lengths, sharks and anglerfish 0);
+      seals -> predatory_fish accessible_fraction 0.029 (0.017-0.054,
+      7-35 cm, eaten taxa saithe / pollack / hake / ling J; scripts/
+      wc_window.py in "Tumlarens byten"). planktivorous_fish growth_rate
+      0.0031889 -> 0.0028221 (stored value updated; tests/test_growth_
+      budget.py). test_half_saturation epifauna a 0.0116.
+    - Diet gate after: whiting passes all four pairs (epifauna 0.30 vs
+      0.22, zooplankton 0.53 vs 0.45, planktivores 0.11 vs 0.20,
+      benthivores 0.06 vs 0.13). OFF: benthivores -> planktivores 0.005 vs
+      0.075; water column -> benthivores 0.43 vs 0.08 (layer convention
+      kept); porpoises -> water column 0.024 vs 0.073 and seals -> water
+      column 0.008 vs 0.083 - the booked M2 on the rest (stomach saithe /
+      pollack are coastal juveniles, ~18 cm in porpoises) is inconsistent
+      with the box's prey sizes; re-booking open.
+    - Running: a library-wide pass on the stage-access windows (weighted
+      by biomass per predator length while a ~ L^-2; research_notes/
+      "Fonsterviktning", o-umlaut) and a reconciliation of herring's
+      near-bed share (0.34 from GOV/acoustic vs 0.04-0.10 from HERAS by
+      bed depth), which decides benthivores -> planktivores a (0.013 vs
+      ~0.007 from the bookkeeping alone). Benthivore audit: booked M2
+      0.145 supported; the take is 83-99 % Norway pout; box pout 0.25
+      t/km2 at GOV q 1 vs 0.6-2.7 corrected (open).
+    - Open: krill (54-82 % of in-area whiting stomachs; 12 % of the
+      model's zooplankton pool) - user: wait; hake -> benthivores ~270x
+      its in-area diet; the porpoise a chain; seal / porpoise M2 on the
+      rest; the "{NOTE}" placeholder in the porpoises -> whiting comment.
+    - pytest 1599 passed / 12 skipped; train.py 1-generation smoke OK.
+
+232.2 WINDOWS, BENTHIVORE HERRING TERM, MAMMAL RE-BOOKING (user,
+    2026-10-31). Research subagents: research_notes/"Fonsterviktning"
+    (o-umlaut) summary.md; research_notes/"Bottenfiskens sillbyte"
+    reconcile_summary.md.
+    - Windows (all 12 stage_access pairs recomputed; the library method
+      reproduces every old value): weighted by each predator length's
+      share of a - a(L) from the encounter code, ~L^-2.1..-2.3 for the
+      fixed-R encounters (water column, mackerel, whiting), ~L^-0.36 for
+      cod (benth_encounter R = 2L; the earlier "library-wide L^-2" was
+      wrong there) - and normalised over all prey-group tonnes: ~21 % of
+      the benthivores (long rough dab, dab, starry ray, gurnard, lemon
+      sole) had no stage rows and lie inside the spurdog / hake windows
+      and the mammal ranges; blue whiting (21-32 cm) enters the
+      planktivore f_A. Mammals: normalisation only (no predator-length
+      axis). APPLIED: water column -> benthivores [0.43, 0.027] -> [0.30,
+      0.038], -> planktivores [0.69, 0.27] -> [0.53, 0.14], -> whiting
+      [0.57, 0.15] -> [0.41, 0.080]; mackerel -> planktivores [0.078,
+      0.0037] -> [0.052, 0.0035]; whiting -> planktivores [0.16, 0.010]
+      -> [0.10, 0.0073], -> benthivores [0.049, 0] -> [0.038, 0.0064];
+      benthivores -> planktivores [0.49, 0.14] -> [0.52, 0.10], ->
+      whiting [0.38, 0.042] -> [0.34, 0.036]; seals -> benthivores [1,
+      0.34] -> [1, 0.50]; porpoises -> benthivores [1, 0.55] -> [1, 0.63];
+      seals / porpoises -> whiting unchanged.
+    - Herring near-bed share reconciled on the grid footing: HERAS 1 m
+      logs (2015-20, grid, day) and GOV Q3 grid hauls agree (q_eff 1.00,
+      0.61-1.44); per bed class 0.40 / 0.16 / 0.05 / 0.13 / 0.04 / 0.02 /
+      0.02; herring-biomass-weighted 0.16 (0.08-0.26). The GOV/acoustic
+      0.34 (Skagerrak-wide hauls, Q1, ratio read as a floor) and the
+      download-area HERAS shares were both off footing. APPLIED:
+      benthivores -> planktivores a 0.0062 -> 0.0074 (0.0054-0.0100;
+      overlap x1.04, membership 0.377 instead of the gape share 0.32);
+      the proposed 0.013 is not supported. Booked M2 0.145 kept (in-area
+      stomachs 0.12-0.30); the take is 83-99 % Norway pout and box pout
+      0.25 t/km2 at GOV q 1 (0.6-2.7 corrected) is the open remainder.
+    - Mammal M2 on the water column re-booked (stomach saithe / pollack
+      are coastal juveniles the offshore box lacks): porpoises rest share
+      0.073 -> 0.020 [J], M2 0.0077 -> 0.0021, freed pro rata: planktivores
+      0.0127 -> 0.0134, benthivores 0.0064 -> 0.0068, whiting 0.019 ->
+      0.0201; seals rest share 0.083 -> 0.023 [J, the porpoise factor
+      x0.27], M2 0.012 -> 0.0033, planktivores 0.0067 -> 0.0071,
+      benthivores 0.035 -> 0.0373, whiting 0.013 -> 0.0139.
+    - Derived growth (stored values updated): planktivores 0.0028221 ->
+      0.0028251, benthivores 0.0018656 -> 0.0018730, predatory_fish
+      0.0016564 -> 0.0016156, whiting 0.0030475 -> 0.0030548.
+    - Diet gate: only benthivores -> planktivores (0.006 vs 0.075) and
+      water column -> benthivores (0.47 vs 0.08; layer convention kept)
+      are OFF. pytest 1599 passed / 12 skipped (test_half_saturation
+      benthivores -> planktivores 0.0074); train.py smoke OK.
+    - Open: cod a's gape phi on benthivores -> whiting (same double count
+      as the planktivore pair); hake's "all" diet identity reaching
+      flatfish; sprat / blue whiting near-bed shares to redo on the grid
+      footing; Norway pout biomass; krill; the porpoise a chain.

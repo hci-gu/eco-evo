@@ -1,0 +1,137 @@
+Rest water-column members: diet by mass (% of identified prey mass), ICES stomach DB; U = unclassified (g)
+cats: plk planktivores | ben benthivores | wht whiting | mack mackerel group | own rest members | sfish small demersal fish | sand sandeel | gadu gadoid unid | fishu fish unid | zoo | epi | neph | inf | crustu crust. unid
+pred       area       period   len     stom   fed       g    plk    ben    wht   mack    own  sfish   sand   gadu  fishu    zoo    epi   neph    inf crustu     gU
+anglerfish CSNS       2000+    40-59     10     9   436.7   35.3   56.1    0.0    0.0    0.0    0.0    0.0    0.0    8.5    0.0    0.0    0.0    0.0    0.0   29.6
+anglerfish CSNS       2000+    <40        8     5   270.7    0.0    6.3    0.0    0.0   71.1    0.0    0.0    7.0   15.5    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish CSNS       2000+    all       18    14   707.4   21.8   37.1    0.0    0.0   27.2    0.0    0.0    2.7   11.2    0.0    0.0    0.0    0.0    0.0   29.6
+anglerfish CSNS       all      40-59     11    10   436.7   35.3   56.1    0.0    0.0    0.0    0.0    0.0    0.0    8.5    0.0    0.0    0.0    0.0    0.0   29.6
+anglerfish CSNS       all      <40        8     5   270.7    0.0    6.3    0.0    0.0   71.1    0.0    0.0    7.0   15.5    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish CSNS       all      all       20    16   707.4   21.8   37.1    0.0    0.0   27.2    0.0    0.0    2.7   11.2    0.0    0.0    0.0    0.0    0.0   29.6
+anglerfish NNS        1991     <40        3     3   157.7    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish NNS        1991     all        4     4   157.7    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish NNS        2000+    40-59      6     3   584.1    0.0    0.0    0.0    0.0   78.4    3.0    0.0    0.0   18.5    0.0    0.0    0.0    0.1    0.0    1.9
+anglerfish NNS        2000+    <40        4     3   651.2    4.2   47.4    0.0   48.2    0.0    0.0    0.0    0.0    0.1    0.0    0.0    0.0    0.0    0.0    0.6
+anglerfish NNS        2000+    all       11     6  1235.4    2.2   25.0    0.0   25.4   37.1    1.4    0.0    0.0    8.8    0.0    0.0    0.0    0.0    0.0    2.5
+anglerfish NNS        all      40-59      7     4   584.1    0.0    0.0    0.0    0.0   78.4    3.0    0.0    0.0   18.5    0.0    0.0    0.0    0.1    0.0    1.9
+anglerfish NNS        all      <40        7     6   808.9    3.4   38.2   19.5   38.8    0.0    0.0    0.0    0.0    0.1    0.0    0.0    0.0    0.0    0.0    0.6
+anglerfish NNS        all      all       15    10  1393.1    2.0   22.2   11.3   22.5   32.9    1.3    0.0    0.0    7.8    0.0    0.0    0.0    0.0    0.0    2.5
+anglerfish Skagerrak  2000+    40-59      4     4    92.2    0.0   61.9    0.0    0.0    0.0   14.2    0.0    0.0   23.9    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish Skagerrak  2000+    <40        4     4     4.9    0.0   76.8    0.0    0.0    0.0    0.0    0.0   23.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish Skagerrak  2000+    all        8     8    97.1    0.0   62.6    0.0    0.0    0.0   13.5    0.0    1.2   22.7    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish Skagerrak  all      40-59      4     4    92.2    0.0   61.9    0.0    0.0    0.0   14.2    0.0    0.0   23.9    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish Skagerrak  all      <40        4     4     4.9    0.0   76.8    0.0    0.0    0.0    0.0    0.0   23.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+anglerfish Skagerrak  all      all        8     8    97.1    0.0   62.6    0.0    0.0    0.0   13.5    0.0    1.2   22.7    0.0    0.0    0.0    0.0    0.0    0.0
+hake       CSNS       2000+    40-59      5     3    25.6    0.0   57.5   27.8    0.0    0.0    0.0    0.0    0.0   14.7    0.0    0.0    0.0    0.0    0.0    0.0
+hake       CSNS       2000+    <40       23    13   318.5    7.3   85.9    1.1    0.0    0.0    0.2    0.0    0.0    5.4    0.0    0.0    0.0    0.0    0.1    0.1
+hake       CSNS       2000+    all       28    16   344.1    6.8   83.8    3.1    0.0    0.0    0.2    0.0    0.0    6.1    0.0    0.0    0.0    0.0    0.1    0.1
+hake       CSNS       all      40-59      8     4    25.6    0.0   57.5   27.8    0.0    0.0    0.0    0.0    0.0   14.7    0.0    0.0    0.0    0.0    0.0    0.0
+hake       CSNS       all      <40       27    17   318.5    7.3   85.9    1.1    0.0    0.0    0.2    0.0    0.0    5.4    0.0    0.0    0.0    0.0    0.1    0.1
+hake       CSNS       all      all       40    24   344.1    6.8   83.8    3.1    0.0    0.0    0.2    0.0    0.0    6.1    0.0    0.0    0.0    0.0    0.1    0.1
+hake       Kattegat   2000+    <40       83    83   338.9   49.7    4.9   41.2    0.0    0.0    0.0    0.0    0.0    2.3    1.2    0.6    0.0    0.1    0.0    0.0
+hake       Kattegat   2000+    all       83    83   338.9   49.7    4.9   41.2    0.0    0.0    0.0    0.0    0.0    2.3    1.2    0.6    0.0    0.1    0.0    0.0
+hake       Kattegat   all      <40       83    83   338.9   49.7    4.9   41.2    0.0    0.0    0.0    0.0    0.0    2.3    1.2    0.6    0.0    0.1    0.0    0.0
+hake       Kattegat   all      all       83    83   338.9   49.7    4.9   41.2    0.0    0.0    0.0    0.0    0.0    2.3    1.2    0.6    0.0    0.1    0.0    0.0
+hake       NNS        2000+    40-59     21    13   343.5   55.5    0.0    0.0    0.0    0.0    0.0    0.0    0.0   44.5    0.0    0.0    0.0    0.0    0.0    0.0
+hake       NNS        2000+    <40       82    49    75.1    0.0    0.0    0.0    0.0    0.0   35.8    0.0    0.9   58.4    0.0    0.0    0.0    1.3    3.6    0.0
+hake       NNS        2000+    all      106    62   418.6   45.5    0.0    0.0    0.0    0.0    6.4    0.0    0.2   47.0    0.0    0.0    0.0    0.2    0.6    0.0
+hake       NNS        all      40-59     23    13   343.5   55.5    0.0    0.0    0.0    0.0    0.0    0.0    0.0   44.5    0.0    0.0    0.0    0.0    0.0    0.0
+hake       NNS        all      <40       88    53    75.1    0.0    0.0    0.0    0.0    0.0   35.8    0.0    0.9   58.4    0.0    0.0    0.0    1.3    3.6    0.0
+hake       NNS        all      all      116    66   418.6   45.5    0.0    0.0    0.0    0.0    6.4    0.0    0.2   47.0    0.0    0.0    0.0    0.2    0.6    0.0
+hake       Skagerrak  2000+    40-59     20    19   367.4   96.3    0.0    0.0    0.0    0.0    0.0    0.0    2.7    0.6    0.3    0.0    0.0    0.0    0.0    0.0
+hake       Skagerrak  2000+    <40       95    92   443.2   68.6    0.6   23.8    0.0    0.0    1.7    0.0    2.6    1.6    0.0    1.1    0.0    0.0    0.0    0.1
+hake       Skagerrak  2000+    all      115   111   810.6   81.2    0.4   13.0    0.0    0.0    0.9    0.0    2.6    1.1    0.1    0.6    0.0    0.0    0.0    0.1
+hake       Skagerrak  all      40-59     20    19   367.4   96.3    0.0    0.0    0.0    0.0    0.0    0.0    2.7    0.6    0.3    0.0    0.0    0.0    0.0    0.0
+hake       Skagerrak  all      <40       95    92   443.2   68.6    0.6   23.8    0.0    0.0    1.7    0.0    2.6    1.6    0.0    1.1    0.0    0.0    0.0    0.1
+hake       Skagerrak  all      all      115   111   810.6   81.2    0.4   13.0    0.0    0.0    0.9    0.0    2.6    1.1    0.1    0.6    0.0    0.0    0.0    0.1
+ling       CSNS       2000+    <40        1     1    89.5    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       CSNS       2000+    all        5     3    89.5    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       CSNS       all      <40        1     1    89.5    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       CSNS       all      all        5     3    89.5    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       NNS        1991     <40        2     2     6.8   95.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    4.3    0.0    0.0    0.0    0.0
+ling       NNS        1991     all        3     3     6.8   95.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    4.3    0.0    0.0    0.0    0.0
+ling       NNS        2000+    40-59     15     7     0.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       NNS        2000+    <40       40    18    31.8    0.0    5.7    0.0    0.0    0.0   92.9    0.0    0.0    0.0    0.0    0.0    0.0    0.0    1.4    0.0
+ling       NNS        2000+    all       57    25    32.0    0.0    5.7    0.0    0.0    0.0   92.3    0.0    0.0    0.7    0.0    0.0    0.0    0.0    1.4    0.0
+ling       NNS        all      40-59     16     8     0.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       NNS        all      <40       42    20    38.6   16.8    4.7    0.0    0.0    0.0   76.6    0.0    0.0    0.0    0.0    0.8    0.0    0.0    1.1    0.0
+ling       NNS        all      all       60    28    38.8   16.7    4.7    0.0    0.0    0.0   76.2    0.0    0.0    0.6    0.0    0.7    0.0    0.0    1.1    0.0
+ling       Skagerrak  2000+    <40        8     8   106.5   80.8    0.0    0.0    0.0    0.0    0.0    0.0   19.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       Skagerrak  2000+    all       16    16   106.5   80.8    0.0    0.0    0.0    0.0    0.0    0.0   19.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       Skagerrak  all      <40        8     8   106.5   80.8    0.0    0.0    0.0    0.0    0.0    0.0   19.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+ling       Skagerrak  all      all       16    16   106.5   80.8    0.0    0.0    0.0    0.0    0.0    0.0   19.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+pollack    CSNS       2000+    40-59      1     1    43.9   99.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.9    0.0    0.0    0.0    0.0
+pollack    CSNS       2000+    all        1     1    43.9   99.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.9    0.0    0.0    0.0    0.0
+pollack    CSNS       all      40-59      1     1    43.9   99.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.9    0.0    0.0    0.0    0.0
+pollack    CSNS       all      all        1     1    43.9   99.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.9    0.0    0.0    0.0    0.0
+pollack    NNS        2000+    <40       12    11   249.6    0.0    0.0   58.6    0.0    0.0    9.6    0.0    0.0   31.7    0.0    0.1    0.0    0.0    0.0    0.0
+pollack    NNS        2000+    >=60       3     3    69.2   78.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0   20.6    0.0    0.0    0.0    0.7    0.0    8.1
+pollack    NNS        2000+    all       20    17   318.9   17.1    0.0   45.8    0.0    0.0    7.5    0.0    0.0   29.3    0.0    0.1    0.0    0.2    0.0   10.4
+pollack    NNS        all      <40       12    11   249.6    0.0    0.0   58.6    0.0    0.0    9.6    0.0    0.0   31.7    0.0    0.1    0.0    0.0    0.0    0.0
+pollack    NNS        all      >=60       3     3    69.2   78.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0   20.6    0.0    0.0    0.0    0.7    0.0    8.1
+pollack    NNS        all      all       20    17   318.9   17.1    0.0   45.8    0.0    0.0    7.5    0.0    0.0   29.3    0.0    0.1    0.0    0.2    0.0   10.4
+pollack    Skagerrak  2000+    40-59      5     5    12.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0   32.7    5.0    0.0   62.4    0.0    0.0    0.0    0.0
+pollack    Skagerrak  2000+    all       12    12    12.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0   32.7    5.0    0.0   62.4    0.0    0.0    0.0    0.0
+pollack    Skagerrak  all      40-59      5     5    12.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0   32.7    5.0    0.0   62.4    0.0    0.0    0.0    0.0
+pollack    Skagerrak  all      all       12    12    12.7    0.0    0.0    0.0    0.0    0.0    0.0    0.0   32.7    5.0    0.0   62.4    0.0    0.0    0.0    0.0
+saithe     NNS        2000+    40-59      1     1    21.0   29.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   70.9    0.0    0.0    0.0    0.0
+saithe     NNS        2000+    all        1     1    21.0   29.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   70.9    0.0    0.0    0.0    0.0
+saithe     NNS        all      40-59    204   194    21.0   29.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   70.9    0.0    0.0    0.0    0.0
+saithe     NNS        all      all      408   318    21.0   29.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   70.9    0.0    0.0    0.0    0.0
+spurdog    CSNS       1991     40-59      5     5    18.0    0.0    0.0    0.0    0.0    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    CSNS       1991     <40       40    33   493.7   31.9   12.9   25.6    0.0    0.0   13.8   15.0    0.0    0.8    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    CSNS       1991     >=60       2     2    19.6   79.8    0.0    0.0    0.0    0.0    0.0   20.2    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    CSNS       1991     all       47    40   531.3   32.6   12.0   23.8    0.0    0.0   12.8   18.1    0.0    0.7    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    CSNS       2000+    40-59      5     1    16.5    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0  100.0    0.0    0.0    0.0    0.0
+spurdog    CSNS       2000+    <40        9     2    83.4    0.0    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    CSNS       2000+    >=60       1     1     0.1    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   99.1    0.0    0.0    0.9    0.0
+spurdog    CSNS       2000+    all       15     4   100.0    0.0    0.0    0.0   83.4    0.0    0.0    0.0    0.0    0.0    0.0   16.6    0.0    0.0    0.0    0.0
+spurdog    CSNS       all      40-59     10     6    34.5    0.0    0.0    0.0    0.0    0.0    0.0   52.2    0.0    0.0    0.0   47.8    0.0    0.0    0.0    0.0
+spurdog    CSNS       all      <40       49    35   577.1   27.3   11.1   21.9   14.5    0.0   11.8   12.9    0.0    0.6    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    CSNS       all      >=60       3     3    19.7   79.3    0.0    0.0    0.0    0.0    0.0   20.1    0.0    0.0    0.0    0.5    0.0    0.0    0.0    0.0
+spurdog    CSNS       all      all       62    44   631.3   27.4   10.1   20.0   13.2    0.0   10.8   15.2    0.0    0.6    0.0    2.6    0.0    0.0    0.0    0.0
+spurdog    Skagerrak  2000+    <40       61    61     0.5    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   68.1    0.0    0.0    2.1   29.8    0.0
+spurdog    Skagerrak  2000+    >=60       1     1     1.4    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    Skagerrak  2000+    all       73    73     1.8    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   74.2   17.6    0.0    0.0    0.5    7.7    0.0
+spurdog    Skagerrak  all      <40       61    61     0.5    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   68.1    0.0    0.0    2.1   29.8    0.0
+spurdog    Skagerrak  all      >=60       1     1     1.4    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0  100.0    0.0    0.0    0.0    0.0    0.0    0.0
+spurdog    Skagerrak  all      all       73    73     1.8    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0   74.2   17.6    0.0    0.0    0.5    7.7    0.0
+
+Top items (% of all prey mass incl. U), area x period, length 'all':
+  anglerfish CSNS       2000+    n 18 flatfish/ray/gurnard 35.6, Merluccius merluccius 26.1, herring 20.9, Pisces 9.8, no_id 4.0, Trisopterus 2.6, Gnathostomata 0.9
+  anglerfish CSNS       all      n 20 flatfish/ray/gurnard 35.6, Merluccius merluccius 26.1, herring 20.9, Pisces 9.8, no_id 4.0, Trisopterus 2.6, Gnathostomata 0.9
+  anglerfish NNS        1991     n 4 whiting 100.0
+  anglerfish NNS        2000+    n 11 Merluccius merluccius 37.0, Trachurus trachurus 25.4, haddock 24.9, Pisces 8.8, Norway pout 2.2, Trisopterus esmarki 0.8, Chondrichthyes 0.6, no_id 0.2
+  anglerfish NNS        all      n 15 Merluccius merluccius 32.8, Trachurus trachurus 22.5, haddock 22.1, whiting 11.3, Pisces 7.8, Norway pout 2.0, Trisopterus esmarki 0.7, Chondrichthyes 0.5
+  anglerfish Skagerrak  2000+    n 8 flatfish/ray/gurnard 58.8, Pisces 22.7, Anguilla anguilla 13.5, cod 3.9, Gadidae 1.2
+  anglerfish Skagerrak  all      n 8 flatfish/ray/gurnard 58.8, Pisces 22.7, Anguilla anguilla 13.5, cod 3.9, Gadidae 1.2
+  hake       CSNS       2000+    n 28 haddock 79.5, Norway pout 6.8, Pisces 6.1, cod 4.3, whiting 3.1, Gobiidae 0.2, Crustacea 0.1, no_id 0.0
+  hake       CSNS       all      n 40 haddock 79.5, Norway pout 6.8, Pisces 6.1, cod 4.3, whiting 3.1, Gobiidae 0.2, Crustacea 0.1, no_id 0.0
+  hake       Kattegat   2000+    n 83 whiting 41.2, herring 40.4, sprat 5.1, flatfish/ray/gurnard 4.9, clupeid unid 4.1, Osteichthyes 2.3, euphausiid 1.2, other shrimp 0.3
+  hake       Kattegat   all      n 83 whiting 41.2, herring 40.4, sprat 5.1, flatfish/ray/gurnard 4.9, clupeid unid 4.1, Osteichthyes 2.3, euphausiid 1.2, other shrimp 0.3
+  hake       NNS        2000+    n 106 Teleostei 47.0, herring 35.9, Norway pout 9.6, Trisopterus esmarki 4.8, Argentina sphyraena 1.6, Crustacea 0.6, Echinidea 0.2, Trisopterus 0.2
+  hake       NNS        all      n 116 Teleostei 47.0, herring 35.9, Norway pout 9.6, Trisopterus esmarki 4.8, Argentina sphyraena 1.6, Crustacea 0.6, Echinidea 0.2, Trisopterus 0.2
+  hake       Skagerrak  2000+    n 115 herring 65.0, whiting 13.0, clupeid unid 9.9, sprat 6.2, Gadidae 2.6, Osteichthyes 1.1, Trisopterus esmarki 0.9, cephalopod 0.4
+  hake       Skagerrak  all      n 115 herring 65.0, whiting 13.0, clupeid unid 9.9, sprat 6.2, Gadidae 2.6, Osteichthyes 1.1, Trisopterus esmarki 0.9, cephalopod 0.4
+  ling       CSNS       2000+    n 5 flatfish/ray/gurnard 100.0
+  ling       CSNS       all      n 5 flatfish/ray/gurnard 100.0
+  ling       NNS        1991     n 3 Norway pout 95.7, Crangon 4.3
+  ling       NNS        2000+    n 57 Trisopterus esmarki 92.3, cod 5.7, Crustacea 1.4, Osteichthyes 0.7
+  ling       NNS        all      n 60 Trisopterus esmarki 76.2, Norway pout 16.7, cod 4.7, Crustacea 1.1, Crangon 0.7, Osteichthyes 0.6
+  ling       Skagerrak  2000+    n 16 herring 80.8, Trisopterus 19.2
+  ling       Skagerrak  all      n 16 herring 80.8, Trisopterus 19.2
+  pollack    CSNS       2000+    n 1 sprat 99.1, cephalopod 0.9
+  pollack    CSNS       all      n 1 sprat 99.1, cephalopod 0.9
+  pollack    NNS        2000+    n 20 whiting 44.4, Pisces 22.8, herring 16.5, Trisopterus esmarki 7.3, Teleostei 5.6, no_id 3.2, Nematoda 0.2, other shrimp 0.1
+  pollack    NNS        all      n 20 whiting 44.4, Pisces 22.8, herring 16.5, Trisopterus esmarki 7.3, Teleostei 5.6, no_id 3.2, Nematoda 0.2, other shrimp 0.1
+  pollack    Skagerrak  2000+    n 12 crab 62.4, Trisopterus 32.7, Osteichthyes 5.0
+  pollack    Skagerrak  all      n 12 crab 62.4, Trisopterus 32.7, Osteichthyes 5.0
+  saithe     NNS        2000+    n 1 Crangon 70.9, Norway pout 29.1
+  saithe     NNS        all      n 408 Crangon 70.9, Norway pout 29.1
+  spurdog    CSNS       1991     n 47 herring 27.0, whiting 23.8, sandeel 18.1, flatfish/ray/gurnard 12.0, Echiichthys vipera 7.9, Norway pout 5.6, Pholis gunnellus 2.8, Callionymus lyra 2.1
+  spurdog    CSNS       2000+    n 15 Scomber scombrus 83.4, cephalopod 16.6, Crustacea 0.0
+  spurdog    CSNS       all      n 62 herring 22.7, whiting 20.0, sandeel 15.2, Scomber scombrus 13.2, flatfish/ray/gurnard 10.1, Echiichthys vipera 6.6, Norway pout 4.7, cephalopod 2.6
+  spurdog    Skagerrak  2000+    n 73 Osteichthyes 74.2, euphausiid 12.6, Crustacea 7.7, hyperiid 4.9, Bivalvia 0.5
+  spurdog    Skagerrak  all      n 73 Osteichthyes 74.2, euphausiid 12.6, Crustacea 7.7, hyperiid 4.9, Bivalvia 0.5
+
+Prey AphiaIDs without a cached lineage (records): 0 ids, 0 records
+  

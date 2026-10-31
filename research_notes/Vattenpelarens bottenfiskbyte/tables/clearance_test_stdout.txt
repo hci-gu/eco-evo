@@ -1,0 +1,182 @@
+Field diets (shares of the five checked prey) and clearance c = D/B relative to planktivores | zooplankton:
+  V1 booked      plk 0.532 zoo 0.328 ben 0.082 wht 0.046 mack 0.012
+                 c/c_plk plk 1.000 zoo 0.211 ben 0.337 wht 0.636 mack 0.085  | c/c_zoo plk 4.741 zoo 1.000 ben 1.599 wht 3.013 mack 0.403
+  V2 grp CRR164  plk 0.507 zoo 0.389 ben 0.066 wht 0.026 mack 0.013
+                 c/c_plk plk 1.000 zoo 0.262 ben 0.282 wht 0.375 mack 0.097  | c/c_zoo plk 3.812 zoo 1.000 ben 1.075 wht 1.430 mack 0.368
+  V3 grp CRR219  plk 0.715 zoo 0.162 ben 0.067 wht 0.040 mack 0.015
+                 c/c_plk plk 1.000 zoo 0.077 ben 0.205 wht 0.418 mack 0.084  | c/c_zoo plk 12.928 zoo 1.000 ben 2.645 wht 5.409 mack 1.085
+  S219 saithe    plk 0.729 zoo 0.184 ben 0.064 wht 0.020 mack 0.003
+                 c/c_plk plk 1.000 zoo 0.086 ben 0.191 wht 0.202 mack 0.018  | c/c_zoo plk 11.585 zoo 1.000 ben 2.218 wht 2.344 mack 0.209
+  S164 saithe    plk 0.481 zoo 0.454 ben 0.062 wht 0.002 mack 0.000
+                 c/c_plk plk 1.000 zoo 0.324 ben 0.282 wht 0.036 mack 0.000  | c/c_zoo plk 3.089 zoo 1.000 ben 0.871 wht 0.112 mack 0.000
+  SMS observed saithe: c_ben / c_plk = 0.080 x B_plk / B_ben = 0.175 (pout + herring as the plk prey)
+
+Saithe layer overlaps used in M2/M3 (H_s 20 m, phi_bed 0.5): plk 0.490 zoo 0.750 ben 0.050 wht 0.375 mack 0.500
+  pair factors (saithe part only): plk 0.572 zoo 0.785 ben 0.268 wht 0.519 mack 1.000
+
+Model a x f_eff and clearance relative to planktivores | zooplankton:
+  M0 library (ben J/B 0.15)                    f_eff plk 0.4331 zoo 1.0000 ben 0.0877 wht 0.2160 mack 0.2900
+                                               rel plk plk 1.000 zoo 0.100 ben 2.358 wht 1.160 mack 0.105  | rel zoo plk 10.04 zoo 1.00 ben 23.69 wht 11.65 mack 1.06
+  M0t library, ben J/B 0.05                    f_eff plk 0.4331 zoo 1.0000 ben 0.0473 wht 0.2160 mack 0.2900
+                                               rel plk plk 1.000 zoo 0.100 ben 1.273 wht 1.160 mack 0.105  | rel zoo plk 10.04 zoo 1.00 ben 12.79 wht 11.65 mack 1.06
+  M0t library, ben J/B 0.08                    f_eff plk 0.4331 zoo 1.0000 ben 0.0594 wht 0.2160 mack 0.2900
+                                               rel plk plk 1.000 zoo 0.100 ben 1.598 wht 1.160 mack 0.105  | rel zoo plk 10.04 zoo 1.00 ben 16.06 wht 11.65 mack 1.06
+  M1 access bookkeeping (aw)                   f_eff plk 0.2934 zoo 1.0000 ben 0.0527 wht 0.1391 mack 0.2900
+                                               rel plk plk 1.000 zoo 0.147 ben 2.092 wht 1.102 mack 0.156  | rel zoo plk 6.81 zoo 1.00 ben 14.23 wht 7.50 mack 1.06
+  M2 M1 + bed overlap (H_s 20, phi 0.5)        f_eff plk 0.2934 zoo 1.0000 ben 0.0527 wht 0.1391 mack 0.2900
+                                               rel plk plk 1.000 zoo 0.147 ben 0.562 wht 1.102 mack 0.156  | rel zoo plk 6.81 zoo 1.00 ben 3.82 wht 7.50 mack 1.06
+  M3 M1 + all-pair overlap (H_s 20, phi 0.5)   f_eff plk 0.2934 zoo 1.0000 ben 0.0527 wht 0.1391 mack 0.2900
+                                               rel plk plk 1.000 zoo 0.202 ben 0.983 wht 1.000 mack 0.272  | rel zoo plk 4.96 zoo 1.00 ben 4.87 wht 4.96 mack 1.35
+
+Model / field of the clearance ratio (1 = consistent; > 1 model too high). Anchor planktivores:
+  M0 library (ben J/B 0.15)
+     vs V1 booked      zoo    0.47 ben    6.99 wht    1.83 mack    1.24
+     vs V2 grp CRR164  zoo    0.38 ben    8.36 wht    3.09 mack    1.09
+     vs V3 grp CRR219  zoo    1.29 ben   11.53 wht    2.77 mack    1.26
+     vs S219 saithe    zoo    1.15 ben   12.32 wht    5.74 mack    5.84
+     vs S164 saithe    zoo    0.31 ben    8.36 wht   31.91 mack     n/a
+     vs SMS ben/plk   ben   13.48
+  M0t library, ben J/B 0.05
+     vs V1 booked      zoo    0.47 ben    3.77 wht    1.83 mack    1.24
+     vs V2 grp CRR164  zoo    0.38 ben    4.51 wht    3.09 mack    1.09
+     vs V3 grp CRR219  zoo    1.29 ben    6.22 wht    2.77 mack    1.26
+     vs S219 saithe    zoo    1.15 ben    6.65 wht    5.74 mack    5.84
+     vs S164 saithe    zoo    0.31 ben    4.51 wht   31.91 mack     n/a
+     vs SMS ben/plk   ben    7.27
+  M0t library, ben J/B 0.08
+     vs V1 booked      zoo    0.47 ben    4.74 wht    1.83 mack    1.24
+     vs V2 grp CRR164  zoo    0.38 ben    5.67 wht    3.09 mack    1.09
+     vs V3 grp CRR219  zoo    1.29 ben    7.81 wht    2.77 mack    1.26
+     vs S219 saithe    zoo    1.15 ben    8.35 wht    5.74 mack    5.84
+     vs S164 saithe    zoo    0.31 ben    5.67 wht   31.91 mack     n/a
+     vs SMS ben/plk   ben    9.14
+  M1 access bookkeeping (aw)
+     vs V1 booked      zoo    0.70 ben    6.20 wht    1.73 mack    1.83
+     vs V2 grp CRR164  zoo    0.56 ben    7.42 wht    2.94 mack    1.61
+     vs V3 grp CRR219  zoo    1.90 ben   10.22 wht    2.63 mack    1.85
+     vs S219 saithe    zoo    1.70 ben   10.93 wht    5.45 mack    8.62
+     vs S164 saithe    zoo    0.45 ben    7.42 wht   30.31 mack     n/a
+     vs SMS ben/plk   ben   11.95
+  M2 M1 + bed overlap (H_s 20, phi 0.5)
+     vs V1 booked      zoo    0.70 ben    1.67 wht    1.73 mack    1.83
+     vs V2 grp CRR164  zoo    0.56 ben    1.99 wht    2.94 mack    1.61
+     vs V3 grp CRR219  zoo    1.90 ben    2.75 wht    2.63 mack    1.85
+     vs S219 saithe    zoo    1.70 ben    2.93 wht    5.45 mack    8.62
+     vs S164 saithe    zoo    0.45 ben    1.99 wht   30.31 mack     n/a
+     vs SMS ben/plk   ben    3.21
+  M3 M1 + all-pair overlap (H_s 20, phi 0.5)
+     vs V1 booked      zoo    0.96 ben    2.91 wht    1.57 mack    3.20
+     vs V2 grp CRR164  zoo    0.77 ben    3.49 wht    2.67 mack    2.82
+     vs V3 grp CRR219  zoo    2.61 ben    4.80 wht    2.39 mack    3.24
+     vs S219 saithe    zoo    2.34 ben    5.13 wht    4.94 mack   15.09
+     vs S164 saithe    zoo    0.62 ben    3.48 wht   27.51 mack     n/a
+     vs SMS ben/plk   ben    5.62
+Anchor zooplankton:
+  M0 library (ben J/B 0.15)
+     vs V1 booked      plk    2.12 ben   14.81 wht    3.87 mack    2.63
+     vs V2 grp CRR164  plk    2.63 ben   22.04 wht    8.15 mack    2.87
+     vs V3 grp CRR219  plk    0.78 ben    8.96 wht    2.15 mack    0.98
+     vs S219 saithe    plk    0.87 ben   10.68 wht    4.97 mack    5.07
+     vs S164 saithe    plk    3.25 ben   27.19 wht  103.77 mack     n/a
+  M0t library, ben J/B 0.05
+     vs V1 booked      plk    2.12 ben    8.00 wht    3.87 mack    2.63
+     vs V2 grp CRR164  plk    2.63 ben   11.90 wht    8.15 mack    2.87
+     vs V3 grp CRR219  plk    0.78 ben    4.83 wht    2.15 mack    0.98
+     vs S219 saithe    plk    0.87 ben    5.76 wht    4.97 mack    5.07
+     vs S164 saithe    plk    3.25 ben   14.68 wht  103.77 mack     n/a
+  M0t library, ben J/B 0.08
+     vs V1 booked      plk    2.12 ben   10.04 wht    3.87 mack    2.63
+     vs V2 grp CRR164  plk    2.63 ben   14.94 wht    8.15 mack    2.87
+     vs V3 grp CRR219  plk    0.78 ben    6.07 wht    2.15 mack    0.98
+     vs S219 saithe    plk    0.87 ben    7.24 wht    4.97 mack    5.07
+     vs S164 saithe    plk    3.25 ben   18.43 wht  103.77 mack     n/a
+  M1 access bookkeeping (aw)
+     vs V1 booked      plk    1.44 ben    8.90 wht    2.49 mack    2.63
+     vs V2 grp CRR164  plk    1.79 ben   13.24 wht    5.24 mack    2.87
+     vs V3 grp CRR219  plk    0.53 ben    5.38 wht    1.39 mack    0.98
+     vs S219 saithe    plk    0.59 ben    6.42 wht    3.20 mack    5.07
+     vs S164 saithe    plk    2.20 ben   16.34 wht   66.79 mack     n/a
+  M2 M1 + bed overlap (H_s 20, phi 0.5)
+     vs V1 booked      plk    1.44 ben    2.39 wht    2.49 mack    2.63
+     vs V2 grp CRR164  plk    1.79 ben    3.56 wht    5.24 mack    2.87
+     vs V3 grp CRR219  plk    0.53 ben    1.45 wht    1.39 mack    0.98
+     vs S219 saithe    plk    0.59 ben    1.72 wht    3.20 mack    5.07
+     vs S164 saithe    plk    2.20 ben    4.39 wht   66.79 mack     n/a
+  M3 M1 + all-pair overlap (H_s 20, phi 0.5)
+     vs V1 booked      plk    1.05 ben    3.05 wht    1.64 mack    3.35
+     vs V2 grp CRR164  plk    1.30 ben    4.53 wht    3.47 mack    3.66
+     vs V3 grp CRR219  plk    0.38 ben    1.84 wht    0.92 mack    1.24
+     vs S219 saithe    plk    0.43 ben    2.20 wht    2.11 mack    6.45
+     vs S164 saithe    plk    1.60 ben    5.59 wht   44.14 mack     n/a
+
+Concurrent-search diet shares (all prey visible) vs field:
+  M0 library (ben J/B 0.15)                    plk 0.391 zoo 0.114 ben 0.424 wht 0.061 mack 0.011
+  M0t library, ben J/B 0.05                    plk 0.486 zoo 0.141 ben 0.284 wht 0.076 mack 0.013
+  M0t library, ben J/B 0.08                    plk 0.453 zoo 0.132 ben 0.333 wht 0.071 mack 0.012
+  M1 access bookkeeping (aw)                   plk 0.388 zoo 0.166 ben 0.373 wht 0.058 mack 0.015
+  M2 M1 + bed overlap (H_s 20, phi 0.5)        plk 0.533 zoo 0.229 ben 0.138 wht 0.079 mack 0.021
+  M3 M1 + all-pair overlap (H_s 20, phi 0.5)   plk 0.445 zoo 0.262 ben 0.201 wht 0.060 mack 0.031
+  field V1 booked                              plk 0.532 zoo 0.328 ben 0.082 wht 0.046 mack 0.012
+  field V2 grp CRR164                          plk 0.507 zoo 0.389 ben 0.066 wht 0.026 mack 0.013
+  field V3 grp CRR219                          plk 0.715 zoo 0.162 ben 0.067 wht 0.040 mack 0.015
+  field S219 saithe                            plk 0.729 zoo 0.184 ben 0.064 wht 0.020 mack 0.003
+  field S164 saithe                            plk 0.481 zoo 0.454 ben 0.062 wht 0.002 mack 0.000
+
+Single-pair return at today's density, x = a f h B; share of the ceiling x/(1+x) (the time-allocation check: no pair should pay far more per unit eat share than the others where the field diet is mixed).
+  planktivores also at the fish-pair visibility floor 0.25 (hidden herring), zooplankton at its floor 0.5:
+  M0 library (ben J/B 0.15)                    plk 0.66 zoo 0.26 ben 0.57 wht 0.17 mack 0.05   | plk hidden 0.33, zoo floor 0.15
+  M0t library, ben J/B 0.05                    plk 0.66 zoo 0.26 ben 0.42 wht 0.17 mack 0.05   | plk hidden 0.33, zoo floor 0.15
+  M0t library, ben J/B 0.08                    plk 0.66 zoo 0.26 ben 0.47 wht 0.17 mack 0.05   | plk hidden 0.33, zoo floor 0.15
+  M1 access bookkeeping (aw)                   plk 0.57 zoo 0.26 ben 0.44 wht 0.12 mack 0.05   | plk hidden 0.25, zoo floor 0.15
+  M2 M1 + bed overlap (H_s 20, phi 0.5)        plk 0.57 zoo 0.26 ben 0.18 wht 0.12 mack 0.05   | plk hidden 0.25, zoo floor 0.15
+  M3 M1 + all-pair overlap (H_s 20, phi 0.5)   plk 0.43 zoo 0.22 ben 0.18 wht 0.06 mack 0.05   | plk hidden 0.16, zoo floor 0.12
+
+Factor on the benthivore a x f_eff that reproduces the field share at fixed other pairs (concurrent search):
+  M0 library (ben J/B 0.15)                    V1 0.122, V2 0.096, V3 0.098, S219 0.093, S164 0.090
+  M0t library, ben J/B 0.05                    V1 0.227, V2 0.177, V3 0.182, S219 0.173, S164 0.168
+  M0t library, ben J/B 0.08                    V1 0.181, V2 0.141, V3 0.145, S219 0.138, S164 0.133
+  M1 access bookkeeping (aw)                   V1 0.151, V2 0.118, V3 0.121, S219 0.115, S164 0.112
+  M2 M1 + bed overlap (H_s 20, phi 0.5)        V1 0.564, V2 0.441, V3 0.452, S219 0.429, S164 0.417
+  M3 M1 + all-pair overlap (H_s 20, phi 0.5)   V1 0.357, V2 0.280, V3 0.286, S219 0.272, S164 0.264
+
+Quarterly test, saithe alone: clearance ratio c_ben / c_plk, model vs CRR 219 (1991).
+Model: saithe per-stage a (benthivores 10.6 x planktivores per tonne, 'Per-stage central a', both stages),
+saithe's own access by quarter x the compartment's J/B cycle (benthivores 0.15/0.14/0.17/0.16, planktivores
+0.37/0.35/0.40/0.39 for Feb/May/Aug/Nov, parameters_B.md 2); field: mass ratio x B_plk / B_ben.
+  saithe a_ben / a_plk (stage-weighted) 10.64
+  model (lib) Q1-Q4: 1.160 0.970 2.126 1.928   Q1/Q3 0.55
+  model (aw ) Q1-Q4: 0.850 0.699 3.038 1.711   Q1/Q3 0.28
+  field CRR 219  Q1-Q4: 0.000 0.126 0.401 0.143   Q1/Q3 0.00
+
+Overlap grid (M1 access): model/field clearance ratio of the benthivore pair, anchor planktivores, against
+V1 / V3 / S219, and the concurrent-search benthivore share (field 0.064-0.082). M2 = bed overlap only,
+M3 = all saithe-dominated pairs overlapped. phi_bed = share of saithe foraging time in the benthopelagic
+layer of thickness H_s above the bed:
+  H_s    5 phi 0.3: M2 ratio 2.00/3.30/3.52 share 0.161 | M3 ratio 2.83/4.66/4.98 share 0.207
+  H_s    5 phi 0.5: M2 ratio 2.38/3.93/4.20 share 0.186 | M3 ratio 4.11/6.77/7.23 share 0.260
+  H_s    5 phi 0.7: M2 ratio 2.76/4.56/4.87 share 0.209 | M3 ratio 6.11/10.07/10.76 share 0.321
+  H_s    5 phi 1.0: M2 ratio 3.34/5.50/5.88 share 0.242 | M3 ratio 12.79/21.09/22.54 share 0.427
+  H_s   10 phi 0.3: M2 ratio 1.71/2.82/3.02 share 0.141 | M3 ratio 2.42/3.99/4.26 share 0.182
+  H_s   10 phi 0.5: M2 ratio 1.90/3.14/3.35 share 0.154 | M3 ratio 3.28/5.41/5.78 share 0.220
+  H_s   10 phi 0.7: M2 ratio 2.10/3.45/3.69 share 0.167 | M3 ratio 4.63/7.64/8.16 share 0.264
+  H_s   10 phi 1.0: M2 ratio 2.38/3.93/4.20 share 0.186 | M3 ratio 9.13/15.06/16.09 share 0.347
+  H_s   20 phi 0.3: M2 ratio 1.57/2.59/2.77 share 0.131 | M3 ratio 2.23/3.68/3.94 share 0.171
+  H_s   20 phi 0.5: M2 ratio 1.67/2.75/2.93 share 0.138 | M3 ratio 2.91/4.80/5.13 share 0.201
+  H_s   20 phi 0.7: M2 ratio 1.76/2.90/3.10 share 0.144 | M3 ratio 4.00/6.59/7.04 share 0.238
+  H_s   20 phi 1.0: M2 ratio 1.90/3.14/3.35 share 0.154 | M3 ratio 7.80/12.87/13.75 share 0.313
+  H_s   30 phi 0.3: M2 ratio 1.52/2.51/2.68 share 0.127 | M3 ratio 2.18/3.60/3.84 share 0.169
+  H_s   30 phi 0.5: M2 ratio 1.59/2.61/2.79 share 0.132 | M3 ratio 2.82/4.64/4.96 share 0.197
+  H_s   30 phi 0.7: M2 ratio 1.65/2.72/2.91 share 0.136 | M3 ratio 3.85/6.34/6.78 share 0.233
+  H_s   30 phi 1.0: M2 ratio 1.74/2.88/3.07 share 0.143 | M3 ratio 7.68/12.66/13.53 share 0.310
+  H_s   50 phi 0.3: M2 ratio 1.48/2.45/2.61 share 0.124 | M3 ratio 2.14/3.53/3.77 share 0.166
+  H_s   50 phi 0.5: M2 ratio 1.52/2.51/2.68 share 0.127 | M3 ratio 2.74/4.51/4.82 share 0.193
+  H_s   50 phi 0.7: M2 ratio 1.56/2.57/2.75 share 0.130 | M3 ratio 3.72/6.13/6.55 share 0.228
+  H_s   50 phi 1.0: M2 ratio 1.62/2.67/2.85 share 0.134 | M3 ratio 7.57/12.48/13.33 share 0.307
+
+Concurrent-search shares with every prey hidden at its visibility floor (the trained runs' herring hide):
+  M0 library (ben J/B 0.15)                    plk 0.250 zoo 0.058 ben 0.595 wht 0.078 mack 0.019   ben/plk clearance x2.2 vs all visible
+  M0t library, ben J/B 0.05                    plk 0.344 zoo 0.080 ben 0.442 wht 0.108 mack 0.026   ben/plk clearance x2.2 vs all visible
+  M0t library, ben J/B 0.08                    plk 0.309 zoo 0.072 ben 0.499 wht 0.097 mack 0.023   ben/plk clearance x2.2 vs all visible
+  M1 access bookkeeping (aw)                   plk 0.259 zoo 0.089 ben 0.547 wht 0.077 mack 0.029   ben/plk clearance x2.2 vs all visible
+  M2 M1 + bed overlap (H_s 20, phi 0.5)        plk 0.431 zoo 0.148 ben 0.245 wht 0.128 mack 0.048   ben/plk clearance x2.2 vs all visible
+  M3 M1 + all-pair overlap (H_s 20, phi 0.5)   plk 0.341 zoo 0.161 ben 0.339 wht 0.092 mack 0.066   ben/plk clearance x2.2 vs all visible

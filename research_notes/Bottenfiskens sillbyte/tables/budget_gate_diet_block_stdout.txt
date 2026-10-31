@@ -1,0 +1,37 @@
+=== diet gate: encounter-implied diet vs booked diet (section 232) ===
+enc = a*B_vis share (concurrent search), booked = M2*B share; ratio
+outside 1/3-3 on a pair with either share >= 0.05 is OFF. sat = a h B_vis / (1 + a h B_vis), the
+share of the ceiling the pair pays on its own. Densities t/km2.
+benthivorous_fish               prey       B   B_vis    enc booked   ratio   sat  verdict
+                  benthic_infauna   93.61  18.722  0.629  0.578    1.09  0.99  ok
+                  mobile_epifauna    3.78   2.342  0.328  0.318    1.03  0.99  ok
+                   norway_lobster    4.58   0.092  0.038  0.016    2.34  0.92  ok
+               planktivorous_fish    3.33   0.907  0.005  0.075    0.07  0.57  OFF
+                          whiting    0.45   0.044  0.000  0.013    0.01  0.02  ok
+      mackerel               prey       B   B_vis    enc booked   ratio   sat  verdict
+               planktivorous_fish    3.33   0.106  0.171  0.065    2.63  0.33  ok
+                      zooplankton    9.72   9.722  0.829  0.935    0.89  0.60  ok
+     porpoises               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   0.946  0.286  0.150    1.91  0.76  ok
+               planktivorous_fish    3.33   3.333  0.189  0.648    0.29  0.68  OFF
+                   predatory_fish    0.62   0.617  0.310  0.073    4.27  0.78  OFF
+                          whiting    0.45   0.427  0.215  0.130    1.66  0.71  ok
+predatory_fish               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   0.136  0.428  0.082    5.19  0.57  OFF
+                         mackerel    0.85   0.246  0.011  0.012    0.91  0.05  ok
+               planktivorous_fish    3.33   1.428  0.387  0.533    0.73  0.66  ok
+                          whiting    0.45   0.098  0.062  0.045    1.36  0.17  ok
+                      zooplankton    9.72   9.722  0.113  0.328    0.35  0.26  ok
+         seals               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   0.674  0.482  0.601    0.80  0.59  ok
+               planktivorous_fish    3.33   3.333  0.159  0.251    0.63  0.43  ok (Type III)
+                   predatory_fish    0.62   0.617  0.221  0.083    2.65  0.42  ok
+                          whiting    0.45   0.386  0.138  0.065    2.12  0.30  ok
+       whiting               prey       B   B_vis    enc booked   ratio   sat  verdict
+                benthivorous_fish    1.53   0.011  0.063  0.092    0.69  0.26  ok
+                  mobile_epifauna    3.78   1.096  0.229  0.162    1.42  0.51  ok
+               planktivorous_fish    3.33   0.222  0.122  0.419    0.29  0.51  OFF
+                      zooplankton    9.72   9.722  0.585  0.328    1.79  0.76  ok
+   zooplankton: skipped (plankton pairs scale with the mixed layer)
+
+Diet gate: OFF pairs - benthivorous_fish -> planktivorous_fish enc 0.005 vs booked 0.075; porpoises -> planktivorous_fish enc 0.189 vs booked 0.648; porpoises -> predatory_fish enc 0.310 vs booked 0.073; predatory_fish -> benthivorous_fish enc 0.428 vs booked 0.082; whiting -> planktivorous_fish enc 0.122 vs booked 0.419

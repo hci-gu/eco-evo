@@ -1,0 +1,20 @@
+Biomass share inside the window, per member (box GOV, long-run):
+  member         weight < 25 < 30 < 35 < 40 < 45 < 50
+  saithe          0.797 0.006 0.016 0.026 0.049 0.169 0.366
+  spurdog         0.097 0.000 0.001 0.003 0.006 0.012 0.022
+  hake            0.048 0.041 0.097 0.185 0.299 0.433 0.485
+  anglerfish      0.027 0.001 0.002 0.007 0.021 0.039 0.087
+  ling            0.014 0.000 0.001 0.002 0.005 0.010 0.051
+  velvet belly    0.009 0.001 0.031 0.151 0.463 0.877 1.000
+  pollack         0.008 0.000 0.000 0.004 0.016 0.043 0.127
+
+Group accessible fraction f = sum_m w_m * share_m(<limit) (eaten taxa only; sharks, anglerfish 0):
+  < 25 cm: f 0.0069 (all members incl. sharks 0.0069); composition of the accessible part: saithe 0.71, hake 0.29, ling 0.00, pollack 0.00
+  < 30 cm: f 0.0174 (all members incl. sharks 0.0178); composition of the accessible part: saithe 0.73, hake 0.27, ling 0.00, pollack 0.00
+  < 35 cm: f 0.0294 (all members incl. sharks 0.0312); composition of the accessible part: saithe 0.70, hake 0.30, ling 0.00, pollack 0.00
+  < 40 cm: f 0.0536 (all members incl. sharks 0.0589); composition of the accessible part: saithe 0.73, hake 0.27, ling 0.00, pollack 0.00
+  < 45 cm: f 0.1562 (all members incl. sharks 0.1663); composition of the accessible part: saithe 0.86, hake 0.13, ling 0.00, pollack 0.00
+  < 50 cm: f 0.3167 (all members incl. sharks 0.3302); composition of the accessible part: saithe 0.92, hake 0.07, ling 0.00, pollack 0.00
+  accessible biomass at < 30 cm: 0.0107 t/km2 of 0.617 (39 t on the grid)
+  accessible biomass at < 40 cm: 0.0331 t/km2 of 0.617 (119 t on the grid)
+  accessible biomass at < 45 cm: 0.0964 t/km2 of 0.617 (347 t on the grid)

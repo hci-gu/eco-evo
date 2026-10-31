@@ -174,8 +174,9 @@ fabricates mass.
   a is per tonne of the WHOLE predator group (the engine has no phi
   since 221; the 220 "per capable tonne" values over-credited by 1/phi):
   planktivores -> zoo 0.017; benthivores -> infauna 0.036, -> epifauna
-  0.15, -> Nephrops 0.44, -> planktivores 0.0062, -> whiting 0.0026;
-  whiting -> epifauna 0.27, -> planktivores 0.021, -> zoo 0.0023, ->
+  0.15, -> Nephrops 0.44, -> planktivores 0.0074 (232.2), -> whiting 0.0026;
+  whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
+  H_bed/H_whiting; was 0.27), -> planktivores 0.021, -> zoo 0.0023, ->
   benthivores 0.21; water column -> planktivores 0.00559, -> zoo
   0.000241, -> benthivores 0.0651, -> whiting 0.013, -> mackerel 0.00088
   (f 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
@@ -343,7 +344,8 @@ fabricates mass.
   epifauna 0.276, planktivores 0.245 (0.145 since 223.37: SMS partial
   M2 scaled to the box, as are water column -> planktivores 0.257 (since
   228 the rest 0.247 + mackerel 0.026 at its field biomass) and
-  whiting -> planktivores 0.203), predators 0.128 - all of it on
+  whiting -> planktivores 0.203, 0.07 since 232.1 at the box's prey),
+  predators 0.128 - all of it on
   whiting since 223.26, cod's fish prey in the pool being whiting; M2
   0.18 since 223.28 = SMS cod -> whiting scaled to the model's
   cod:whiting ratio, was 0.345). Benthivore resting metabolism re-read at the
@@ -359,18 +361,21 @@ fabricates mass.
   term and harvest cap (infauna out of reach, Nephrops in burrows);
   observations are untouched. Benthivores -> epifauna 0.62 (223.15), whiting
   -> epifauna 0.29 (sections 221, 223.15, 223.26), water column -> whiting
-  0.47 (gape); the infauna pair's 0.2 became the
+  0.47 (gape; stage access since 230), porpoises -> water column 0.054
+  and seals -> water column 0.029 (prey size, 232.1); the infauna pair's 0.2 became the
   infauna's own refuge in 223.12. On a prey with a juvenile compartment
   (planktivores, benthivores; 223.32; whiting since 230) a pair may carry `stage_access:
   [f_J, f_A]` instead (members' prey-size windows on the stage lengths):
-  water column -> benthivores [0.43, 0.027] (was f 0.075), whiting ->
-  benthivores [0.049, 0] (was 0.05), water column -> planktivores [0.69,
-  0.27] (228; was [0.32, 0.11] with mackerel in it), mackerel ->
-  planktivores [0.078, 0.0037] (annual mean, 228), whiting -> planktivores [0.12, 0.008], benthivores ->
-  planktivores [0.49, 0.14], seals -> benthivores [1, 0.34], porpoises ->
-  benthivores [1, 0.55]; on whiting (230) water column [0.57, 0.15] (was
-  f 0.47), benthivores [0.38, 0.042], seals [1, 0.84], porpoises [1,
-  0.95]; research_notes/"Arsungarnas andel" (A-ring)
+  since 232.2 each window weighted by the predator lengths' share of a
+  (a ~ L^-2 for fixed-R encounters; ~L^-0.36 for cod) and normalised
+  over all prey-group tonnes (research_notes/"Fonsterviktning", o-umlaut):
+  water column -> benthivores [0.30, 0.038], -> planktivores [0.53,
+  0.14], -> whiting [0.41, 0.080]; mackerel -> planktivores [0.052,
+  0.0035]; whiting -> planktivores [0.10, 0.0073], -> benthivores [0.038,
+  0.0064]; benthivores -> planktivores [0.52, 0.10], -> whiting [0.34,
+  0.036]; seals -> benthivores [1, 0.50], -> whiting [1, 0.84];
+  porpoises -> benthivores [1, 0.63], -> whiting [1, 0.95];
+  research_notes/"Arsungarnas andel" (A-ring)
   parameters_B.md. `predator_share` phi
   (`eat = min(eat, phi)`, a hard cap on a learned action) is REMOVED
   from the library since section 221; the mechanism stays in both
@@ -422,6 +427,10 @@ python3 tools/viability.py --ticks 300 --seeds 1 --behaviour eat   # smoke test
 # Can each DM close its energy budget over its RATION? Seconds, no rollout.
 # "min share" = minimum share of the best prey in the diet; a pair that
 # cannot pay on its own is low-quality food, not pure loss (section 92).
+# Last block, the diet gate (section 232): each generalist's encounter-
+# implied diet (a*B_visible shares at the start densities) vs its booked
+# diet (M2*B shares); OFF = off by more than 3x - a pair inconsistent
+# with the field diet it was booked from, found without any policy.
 python3 tools/probes/budget_gate.py
 # Plankton against SHARK A17 (section 205): column biomass at A17's
 # measured C:chl, surface carbon, nitrate, zooplankton, PP and f-ratio.

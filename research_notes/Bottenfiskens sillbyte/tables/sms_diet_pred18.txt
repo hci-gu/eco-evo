@@ -1,0 +1,56 @@
+SMS haddock stomach samples: 52 (year x quarter x length class), rows 254
+
+Quarter all: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30       2055  0.022  0.000  0.000  0.134  0.844   herring 0.000, sprat 0.000, Norway pout 0.022
+  30-39     1077  0.071  0.000  0.000  0.186  0.743   herring 0.000, sprat 0.000, Norway pout 0.071
+  40-49      442  0.118  0.000  0.000  0.144  0.738   herring 0.000, sprat 0.000, Norway pout 0.118
+  50-69      163  0.138  0.000  0.000  0.151  0.712   herring 0.000, sprat 0.000, Norway pout 0.138
+  all       3737  0.052  0.000  0.000  0.151  0.797   herring 0.000, sprat 0.000, Norway pout 0.052
+
+Quarter 1: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        405  0.037  0.000  0.000  0.020  0.943   herring 0.000, sprat 0.000, Norway pout 0.037
+  30-39      225  0.137  0.000  0.000  0.071  0.792   herring 0.000, sprat 0.000, Norway pout 0.137
+  40-49       89  0.253  0.000  0.000  0.058  0.688   herring 0.000, sprat 0.000, Norway pout 0.253
+  50-69       39  0.241  0.000  0.000  0.037  0.722   herring 0.000, sprat 0.000, Norway pout 0.241
+  all        758  0.103  0.000  0.000  0.041  0.857   herring 0.000, sprat 0.000, Norway pout 0.103
+
+Quarter 2: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        477  0.000  0.000  0.000  0.098  0.902   herring 0.000, sprat 0.000, Norway pout 0.000
+  30-39      272  0.000  0.000  0.000  0.120  0.880   herring 0.000, sprat 0.000, Norway pout 0.000
+  40-49      114  0.036  0.000  0.000  0.160  0.804   herring 0.000, sprat 0.000, Norway pout 0.036
+  50-69       38  0.091  0.000  0.000  0.074  0.835   herring 0.000, sprat 0.000, Norway pout 0.091
+  all        901  0.008  0.000  0.000  0.111  0.880   herring 0.000, sprat 0.000, Norway pout 0.008
+
+Quarter 3: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        645  0.014  0.000  0.000  0.323  0.663   herring 0.000, sprat 0.000, Norway pout 0.014
+  30-39      369  0.049  0.000  0.000  0.335  0.616   herring 0.000, sprat 0.000, Norway pout 0.049
+  40-49      133  0.116  0.000  0.000  0.173  0.711   herring 0.000, sprat 0.000, Norway pout 0.116
+  50-69       44  0.092  0.000  0.000  0.384  0.524   herring 0.000, sprat 0.000, Norway pout 0.092
+  all       1191  0.039  0.000  0.000  0.312  0.649   herring 0.000, sprat 0.000, Norway pout 0.039
+
+Quarter 4: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        528  0.039  0.000  0.000  0.023  0.938   herring 0.000, sprat 0.000, Norway pout 0.039
+  30-39      211  0.129  0.000  0.000  0.133  0.738   herring 0.000, sprat 0.000, Norway pout 0.129
+  40-49      106  0.093  0.000  0.000  0.164  0.742   herring 0.000, sprat 0.000, Norway pout 0.093
+  50-69       42  0.131  0.000  0.000  0.082  0.787   herring 0.000, sprat 0.000, Norway pout 0.131
+  all        887  0.071  0.000  0.000  0.069  0.860   herring 0.000, sprat 0.000, Norway pout 0.071
+
+Planktivore-pool prey eaten by haddock: prey length (cm) and prey/predator length ratio, mass-weighted
+(weight = stomcon x N.haul); percentiles p05 / p50 / p95 / p99
+  Norway pout  <30    n   18  prey L   5.5   7.5   8.5   8.5   ratio 0.20 0.29 0.38 0.43
+  Norway pout  30-39  n   23  prey L   5.5   8.5  13.5  13.5   ratio 0.17 0.24 0.36 0.36
+  Norway pout  40-49  n   21  prey L   5.5   8.5  12.5  12.5   ratio 0.12 0.19 0.28 0.28
+  Norway pout  50-69  n   14  prey L   6.0   8.5  12.5  12.5   ratio 0.10 0.14 0.21 0.21
+  Norway pout  all    n   76  prey L   5.5   8.5  12.5  13.5   ratio 0.13 0.20 0.36 0.43
+  all P        <30    n   18  prey L   5.5   7.5   8.5   8.5   ratio 0.20 0.29 0.38 0.43
+  all P        30-39  n   23  prey L   5.5   8.5  13.5  13.5   ratio 0.17 0.24 0.36 0.36
+  all P        40-49  n   21  prey L   5.5   8.5  12.5  12.5   ratio 0.12 0.19 0.28 0.28
+  all P        50-69  n   14  prey L   6.0   8.5  12.5  12.5   ratio 0.10 0.14 0.21 0.21
+  all P        all    n   76  prey L   5.5   8.5  12.5  13.5   ratio 0.13 0.20 0.36 0.43
+
+Prey length of herring eaten by quarter (mass-weighted p05/p50/p95), haddock >= 20 cm:

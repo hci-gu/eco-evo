@@ -1,0 +1,36 @@
+Adult whiting a per unit prey biomass (km2/t/tick, annual day/night mean):
+  herring      0.0304  x pool share 0.790 -> 0.02403
+  sprat        0.0304  x pool share 0.030 -> 0.00091
+  Norway pout  0.0289  x pool share 0.075 -> 0.00217
+  blue whiting 0.0087  x pool share 0.105 -> 0.00091
+  sum (adult a on the pool) 0.0280  (223.26 per-stage table: 0.02802)
+  per tonne of the whole group (adult biomass share 0.753): 0.0211 (library 0.021)
+
+Stage access whiting -> planktivores; f_J, f_A annual mean (Q1-Q4); effective f at J/B 0.38
+  library (pooled whiting, pool-weighted, 0.39) [0.119, 0.0077]  eff 0.0499   f_J by quarter 0.082 0.073 0.161 0.159
+  A: whiting >= 20 cm                        [0.157, 0.0102]  eff 0.0661   f_J by quarter 0.109 0.095 0.214 0.211
+  B: encounter-weighted species              [0.115, 0.0074]  eff 0.0485   f_J by quarter 0.081 0.072 0.155 0.154
+  A+B                                        [0.152, 0.0098]  eff 0.0641   f_J by quarter 0.107 0.093 0.205 0.204
+  A+B+C: ratio 0.45                          [0.255, 0.0245]  eff 0.1120   f_J by quarter 0.203 0.177 0.311 0.328
+  A+B, ratio 0.49 (SMS p99 / ICES-DB)        [0.343, 0.0393]  eff 0.1548   f_J by quarter 0.288 0.241 0.417 0.427
+  A, ratio 0.45 (pool-weighted)              [0.263, 0.0256]  eff 0.1156   f_J by quarter 0.205 0.182 0.325 0.339
+
+Implied species mix of whiting's planktivore take (encounter x window x pool share, A+B, 0.39 and 0.45),
+annual mean over quarters at each quarter's own stage biomass; SMS stomachs: pout 0.61, sprat 0.26, herring 0.12
+  ratio 0.39: herring 0.60, sprat 0.12, Norway pout 0.28, blue whiting 0.01
+  ratio 0.45: herring 0.68, sprat 0.10, Norway pout 0.22, blue whiting 0.00
+
+Box planktivore stage length check: share of each species' J biomass <= 10 cm and <= 13 cm
+  herring      Q1 (2001-25): J<=10 cm 0.002, J<=13 cm 0.050, J/B 0.41
+  herring      Q2 (1991-96): J<=10 cm 0.002, J<=13 cm 0.021, J/B 0.47
+  herring      Q3 (2001-25): J<=10 cm 0.032, J<=13 cm 0.372, J/B 0.36
+  herring      Q4 (1991-96): J<=10 cm 0.000, J<=13 cm 0.331, J/B 0.90
+  sprat        Q1 (2001-25): J<=10 cm 0.811, J<=13 cm 1.000, J/B 0.63
+  sprat        Q2 (1991-96): J<=10 cm 0.830, J<=13 cm 1.000, J/B 0.45
+  sprat        Q3 (2001-25): J<=10 cm 0.086, J<=13 cm 1.000, J/B 0.23
+  sprat        Q4 (1991-96): J<=10 cm 0.239, J<=13 cm 1.000, J/B 0.13
+  Norway pout  Q1 (2001-25): J<=10 cm 0.114, J<=13 cm 0.859, J/B 0.78
+  Norway pout  Q2 (1991-96): J<=10 cm 0.009, J<=13 cm 0.590, J/B 0.82
+  Norway pout  Q3 (2001-25): J<=10 cm 0.562, J<=13 cm 0.675, J/B 0.44
+  Norway pout  Q4 (1991-96): J<=10 cm 0.374, J<=13 cm 0.963, J/B 0.90
+SMS whiting stomachs (North Sea 1981-91): herring eaten p50 8.5 cm, p95 12.5-13.5; sprat 6.0 / 8.5; Norway pout 6.0-7.5 / 8.5-9.0 (sms_whiting_diet_stdout.txt)

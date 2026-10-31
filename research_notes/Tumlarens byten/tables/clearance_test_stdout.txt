@@ -1,0 +1,149 @@
+planktivore ratio 1990s/today: GOV herring x1.21, stock-mix herring x1.82
+wc window share 1990s / today x2.80 (more small saithe then)
+
+Field diet shares on the four pools:
+  V1 booked            plk 0.648 ben 0.150 wht 0.130 wc 0.073
+  V2 Borjesson g0.5    plk 0.753 ben 0.097 wht 0.096 wc 0.054
+  V2 Borjesson g0.25   plk 0.753 ben 0.078 wht 0.114 wc 0.054
+  V2 Borjesson g0.75   plk 0.753 ben 0.115 wht 0.077 wc 0.054
+  V3 Aarefjord g0.5    plk 0.591 ben 0.221 wht 0.188 wc 0.000
+
+Model a x f_eff relative to planktivores:
+  M0 library                           plk 0.02250 ( 1.00) ben 0.07410 ( 3.29) wht 0.19143 ( 8.51) wc 0.20000 ( 8.89)
+  M1 library a, wc window f 0.054      plk 0.02250 ( 1.00) ben 0.07410 ( 3.29) wht 0.19143 ( 8.51) wc 0.01072 ( 0.48)
+  M2 one clearance a 0.0225, windows   plk 0.02250 ( 1.00) ben 0.01389 ( 0.62) wht 0.02154 ( 0.96) wc 0.00121 ( 0.05)
+  M3 = M2 with whiting a 0.045 (field centre) plk 0.02250 ( 1.00) ben 0.01389 ( 0.62) wht 0.04307 ( 1.91) wc 0.00121 ( 0.05)
+
+Field clearance c_i / c_plk per tonne of the WHOLE prey group (D_i / B_i over D_plk / B_plk):
+  V1 booked            @ today (box)                plk  1.000 ben  0.504 wht  1.496 wc  0.606
+  V2 Borjesson g0.5    @ today (box)                plk  1.000 ben  0.280 wht  0.949 wc  0.390
+  V2 Borjesson g0.5    @ 1990s, GOV herring         plk  1.000 ben  0.340 wht  1.323 wc  1.576
+  V2 Borjesson g0.5    @ 1990s, stock-mix herring   plk  1.000 ben  0.510 wht  1.987 wc  2.366
+  V2 Borjesson g0.25   @ today (box)                plk  1.000 ben  0.227 wht  1.132 wc  0.390
+  V2 Borjesson g0.25   @ 1990s, GOV herring         plk  1.000 ben  0.275 wht  1.579 wc  1.576
+  V2 Borjesson g0.25   @ 1990s, stock-mix herring   plk  1.000 ben  0.413 wht  2.370 wc  2.366
+  V2 Borjesson g0.75   @ today (box)                plk  1.000 ben  0.334 wht  0.766 wc  0.390
+  V2 Borjesson g0.75   @ 1990s, GOV herring         plk  1.000 ben  0.405 wht  1.067 wc  1.576
+  V2 Borjesson g0.75   @ 1990s, stock-mix herring   plk  1.000 ben  0.608 wht  1.603 wc  2.366
+  V3 Aarefjord g0.5    @ today (box)                plk  1.000 ben  0.815 wht  2.379 wc  0.000
+  V3 Aarefjord g0.5    @ 1990s, GOV herring         plk  1.000 ben  0.989 wht  3.316 wc  0.000
+  V3 Aarefjord g0.5    @ 1990s, stock-mix herring   plk  1.000 ben  1.485 wht  4.979 wc  0.000
+
+Discrepancy model / field of the clearance ratio to planktivores (1 = consistent; > 1 model too high):
+  M0 library
+     vs V1 booked            @ today (box)                ben    6.54 wht    5.69 wc   14.66
+     vs V2 Borjesson g0.5    @ today (box)                ben   11.76 wht    8.97 wc   22.81
+     vs V2 Borjesson g0.5    @ 1990s, GOV herring         ben    9.69 wht    6.43 wc    5.64
+     vs V2 Borjesson g0.5    @ 1990s, stock-mix herring   ben    6.45 wht    4.28 wc    3.76
+     vs V2 Borjesson g0.25   @ today (box)                ben   14.53 wht    7.51 wc   22.81
+     vs V2 Borjesson g0.25   @ 1990s, GOV herring         ben   11.98 wht    5.39 wc    5.64
+     vs V2 Borjesson g0.25   @ 1990s, stock-mix herring   ben    7.98 wht    3.59 wc    3.76
+     vs V2 Borjesson g0.75   @ today (box)                ben    9.87 wht   11.11 wc   22.81
+     vs V2 Borjesson g0.75   @ 1990s, GOV herring         ben    8.14 wht    7.97 wc    5.64
+     vs V2 Borjesson g0.75   @ 1990s, stock-mix herring   ben    5.42 wht    5.31 wc    3.76
+     vs V3 Aarefjord g0.5    @ today (box)                ben    4.04 wht    3.58 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, GOV herring         ben    3.33 wht    2.57 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, stock-mix herring   ben    2.22 wht    1.71 wc     n/a
+  M1 library a, wc window f 0.054
+     vs V1 booked            @ today (box)                ben    6.54 wht    5.69 wc    0.79
+     vs V2 Borjesson g0.5    @ today (box)                ben   11.76 wht    8.97 wc    1.22
+     vs V2 Borjesson g0.5    @ 1990s, GOV herring         ben    9.69 wht    6.43 wc    0.85
+     vs V2 Borjesson g0.5    @ 1990s, stock-mix herring   ben    6.45 wht    4.28 wc    0.56
+     vs V2 Borjesson g0.25   @ today (box)                ben   14.53 wht    7.51 wc    1.22
+     vs V2 Borjesson g0.25   @ 1990s, GOV herring         ben   11.98 wht    5.39 wc    0.85
+     vs V2 Borjesson g0.25   @ 1990s, stock-mix herring   ben    7.98 wht    3.59 wc    0.56
+     vs V2 Borjesson g0.75   @ today (box)                ben    9.87 wht   11.11 wc    1.22
+     vs V2 Borjesson g0.75   @ 1990s, GOV herring         ben    8.14 wht    7.97 wc    0.85
+     vs V2 Borjesson g0.75   @ 1990s, stock-mix herring   ben    5.42 wht    5.31 wc    0.56
+     vs V3 Aarefjord g0.5    @ today (box)                ben    4.04 wht    3.58 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, GOV herring         ben    3.33 wht    2.57 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, stock-mix herring   ben    2.22 wht    1.71 wc     n/a
+  M2 one clearance a 0.0225, windows
+     vs V1 booked            @ today (box)                ben    1.23 wht    0.64 wc    0.09
+     vs V2 Borjesson g0.5    @ today (box)                ben    2.20 wht    1.01 wc    0.14
+     vs V2 Borjesson g0.5    @ 1990s, GOV herring         ben    1.82 wht    0.72 wc    0.10
+     vs V2 Borjesson g0.5    @ 1990s, stock-mix herring   ben    1.21 wht    0.48 wc    0.06
+     vs V2 Borjesson g0.25   @ today (box)                ben    2.72 wht    0.85 wc    0.14
+     vs V2 Borjesson g0.25   @ 1990s, GOV herring         ben    2.25 wht    0.61 wc    0.10
+     vs V2 Borjesson g0.25   @ 1990s, stock-mix herring   ben    1.50 wht    0.40 wc    0.06
+     vs V2 Borjesson g0.75   @ today (box)                ben    1.85 wht    1.25 wc    0.14
+     vs V2 Borjesson g0.75   @ 1990s, GOV herring         ben    1.53 wht    0.90 wc    0.10
+     vs V2 Borjesson g0.75   @ 1990s, stock-mix herring   ben    1.02 wht    0.60 wc    0.06
+     vs V3 Aarefjord g0.5    @ today (box)                ben    0.76 wht    0.40 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, GOV herring         ben    0.62 wht    0.29 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, stock-mix herring   ben    0.42 wht    0.19 wc     n/a
+  M3 = M2 with whiting a 0.045 (field centre)
+     vs V1 booked            @ today (box)                ben    1.23 wht    1.28 wc    0.09
+     vs V2 Borjesson g0.5    @ today (box)                ben    2.20 wht    2.02 wc    0.14
+     vs V2 Borjesson g0.5    @ 1990s, GOV herring         ben    1.82 wht    1.45 wc    0.10
+     vs V2 Borjesson g0.5    @ 1990s, stock-mix herring   ben    1.21 wht    0.96 wc    0.06
+     vs V2 Borjesson g0.25   @ today (box)                ben    2.72 wht    1.69 wc    0.14
+     vs V2 Borjesson g0.25   @ 1990s, GOV herring         ben    2.25 wht    1.21 wc    0.10
+     vs V2 Borjesson g0.25   @ 1990s, stock-mix herring   ben    1.50 wht    0.81 wc    0.06
+     vs V2 Borjesson g0.75   @ today (box)                ben    1.85 wht    2.50 wc    0.14
+     vs V2 Borjesson g0.75   @ 1990s, GOV herring         ben    1.53 wht    1.79 wc    0.10
+     vs V2 Borjesson g0.75   @ 1990s, stock-mix herring   ben    1.02 wht    1.19 wc    0.06
+     vs V3 Aarefjord g0.5    @ today (box)                ben    0.76 wht    0.80 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, GOV herring         ben    0.62 wht    0.58 wc     n/a
+     vs V3 Aarefjord g0.5    @ 1990s, stock-mix herring   ben    0.42 wht    0.38 wc     n/a
+
+Implied a_i = a_plk x (c_i / c_plk)_field / f_i, with a_plk 0.0225 kept (the a that makes the pair reproduce that field diet at that density under concurrent search):
+  V1 booked            @ today (box)                ben 0.0184 wht 0.0352 wc 0.2545
+  V2 Borjesson g0.5    @ today (box)                ben 0.0102 wht 0.0223 wc 0.1636
+  V2 Borjesson g0.5    @ 1990s, GOV herring         ben 0.0124 wht 0.0311 wc 0.2363
+  V2 Borjesson g0.5    @ 1990s, stock-mix herring   ben 0.0186 wht 0.0467 wc 0.3547
+  V2 Borjesson g0.25   @ today (box)                ben 0.0083 wht 0.0266 wc 0.1636
+  V2 Borjesson g0.25   @ 1990s, GOV herring         ben 0.0100 wht 0.0371 wc 0.2363
+  V2 Borjesson g0.25   @ 1990s, stock-mix herring   ben 0.0150 wht 0.0557 wc 0.3547
+  V2 Borjesson g0.75   @ today (box)                ben 0.0122 wht 0.0180 wc 0.1636
+  V2 Borjesson g0.75   @ 1990s, GOV herring         ben 0.0147 wht 0.0251 wc 0.2363
+  V2 Borjesson g0.75   @ 1990s, stock-mix herring   ben 0.0221 wht 0.0377 wc 0.3547
+  V3 Aarefjord g0.5    @ today (box)                ben 0.0297 wht 0.0559 wc 0.0000
+  V3 Aarefjord g0.5    @ 1990s, GOV herring         ben 0.0360 wht 0.0780 wc 0.0000
+  V3 Aarefjord g0.5    @ 1990s, stock-mix herring   ben 0.0541 wht 0.1171 wc 0.0000
+  (wc a at the other window limits scales as 0.0536 / f: < 30 cm x3.1, ramp x0.53, < 45 cm x0.34)
+
+Concurrent-search diet shares a f_eff B / sum at today's box densities (all prey visible):
+  M0 library                           plk 0.189 ben 0.285 wht 0.215 wc 0.311
+  M1 library a, wc window f 0.054      plk 0.268 ben 0.404 wht 0.305 wc 0.024
+  M2 one clearance a 0.0225, windows   plk 0.704 ben 0.199 wht 0.090 wc 0.007
+  M3 = M2 with whiting a 0.045 (field centre) plk 0.646 ben 0.183 wht 0.165 wc 0.006
+  field V1 booked                      plk 0.648 ben 0.150 wht 0.130 wc 0.073
+  field V2 Borjesson g0.5              plk 0.753 ben 0.097 wht 0.096 wc 0.054
+  field V3 Aarefjord g0.5              plk 0.591 ben 0.221 wht 0.188 wc 0.000
+
+Box diet predicted from each field clearance set (c_field x B_today, concurrent search):
+  V2 Borjesson g0.5    @ 1990s, GOV herring         plk 0.696 ben 0.108 wht 0.123 wc 0.073
+  V2 Borjesson g0.5    @ 1990s, stock-mix herring   plk 0.604 ben 0.141 wht 0.161 wc 0.094
+  V2 Borjesson g0.25   @ 1990s, GOV herring         plk 0.694 ben 0.087 wht 0.147 wc 0.072
+  V2 Borjesson g0.25   @ 1990s, stock-mix herring   plk 0.601 ben 0.114 wht 0.191 wc 0.094
+  V2 Borjesson g0.75   @ 1990s, GOV herring         plk 0.698 ben 0.130 wht 0.100 wc 0.073
+  V2 Borjesson g0.75   @ 1990s, stock-mix herring   plk 0.606 ben 0.169 wht 0.130 wc 0.095
+  V3 Aarefjord g0.5    @ 1990s, GOV herring         plk 0.527 ben 0.239 wht 0.234 wc 0.000
+  V3 Aarefjord g0.5    @ 1990s, stock-mix herring   plk 0.426 ben 0.290 wht 0.284 wc 0.000
+
+Single-pair return at today's grid-mean density, all visible (x = a f h B; intake share x/(1+x) of the ceiling 0.035 t/t/tick; MJ/t/tick = share x 0.035 x E x assim; eat cost 90):
+  M0 library                           plk x  2.14 -> 0.68,   153 MJ; ben x  3.24 -> 0.76,   101 MJ; wht x  2.44 -> 0.71,   100 MJ; wc x  3.53 -> 0.78,   116 MJ
+  M1 library a, wc window f 0.054      plk x  2.14 -> 0.68,   153 MJ; ben x  3.24 -> 0.76,   101 MJ; wht x  2.44 -> 0.71,   100 MJ; wc x  0.19 -> 0.16,    24 MJ
+  M2 one clearance a 0.0225, windows   plk x  2.14 -> 0.68,   153 MJ; ben x  0.61 -> 0.38,    50 MJ; wht x  0.27 -> 0.22,    30 MJ; wc x  0.02 -> 0.02,     3 MJ
+  M3 = M2 with whiting a 0.045 (field centre) plk x  2.14 -> 0.68,   153 MJ; ben x  0.61 -> 0.38,    50 MJ; wht x  0.55 -> 0.35,    50 MJ; wc x  0.02 -> 0.02,     3 MJ
+  break-even visible density per pair, B = I / (a f (1 - I h)), I = 90 / (E assim):
+  M0 library                           plk    1.04 ben    1.01 wht    0.32 wc    0.27
+  M1 library a, wc window f 0.054      plk    1.04 ben    1.01 wht    0.32 wc    4.96
+  M2 one clearance a 0.0225, windows   plk    1.04 ben    5.37 wht    2.87 wc   44.07
+  M3 = M2 with whiting a 0.045 (field centre) plk    1.04 ben    5.37 wht    1.43 wc   44.07
+
+Field ration check (scale, not ratio): ration 5.3 %BM/day (Rojano-Donate 2018 FMR on clupeids) = 0.0133 t/t/tick = 0.38 of the 0.035 ceiling.
+  Under continuous concurrent search (Wisniewska et al. 2016: porpoises forage day and night) the summed x = h sum a f B that gives 0.38 is 0.61; h sum a f B per model at today's box density:
+  M0 library                           sum x  11.35 -> feeding level 0.92 (18.5x the field-ration x)
+  M1 library a, wc window f 0.054      sum x   8.01 -> feeding level 0.89 (13.1x the field-ration x)
+  M2 one clearance a 0.0225, windows   sum x   3.05 -> feeding level 0.75 (5.0x the field-ration x)
+  M3 = M2 with whiting a 0.045 (field centre) sum x   3.32 -> feeding level 0.77 (5.4x the field-ration x)
+
+Diet gate against a re-booked diet (wc share 0.02 [J], the 0.053 freed pro rata to plk/ben/wht):
+  re-booked shares plk 0.685 ben 0.158 wht 0.137 wc 0.020; M2 /yr plk 0.0134 ben 0.0067 wht 0.0200 wc 0.0021 (Q/B 19.5, 12 t)
+  M0 library                                   plk 0.189 (0.29 | 0.28) ben 0.285 (1.91 | 1.80) wht 0.215 (1.66 | 1.57) wc 0.311 (4.27 | 15.54)
+  M1 library a, wc window f 0.054              plk 0.268 (0.41 | 0.39) ben 0.404 (2.70 | 2.55) wht 0.305 (2.35 | 2.22) wc 0.024 (0.32 | 1.18)
+  M2 one clearance a 0.0225, windows           plk 0.704 (1.09 | 1.03) ben 0.199 (1.33 | 1.26) wht 0.090 (0.69 | 0.66) wc 0.007 (0.10 | 0.35)
+  M3 = M2 with whiting a 0.045 (field centre)  plk 0.646 (1.00 | 0.94) ben 0.183 (1.22 | 1.16) wht 0.165 (1.27 | 1.21) wc 0.006 (0.09 | 0.32)
+  (enc share; ratio to booked | to re-booked; the gate calls OFF outside 1/3-3 when either share >= 0.05)

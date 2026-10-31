@@ -1,0 +1,26 @@
+Consumption shares of the rest group's members: saithe 0.830, spurdog 0.067, hake 0.058, anglerfish 0.017, ling 0.010, velvet belly 0.009, pollack 0.008
+
+Saithe, shares of the five checked prey (box length mix 40-59 0.71 / >=60 0.29):
+  CRR 219 (1991)                       plk 0.729 zoo 0.184 ben 0.064 wht 0.020 mack 0.003   (checked prey = 0.86 of the food)
+     40-59  (share of all food)        plk 0.561 zoo 0.199 ben 0.063 wht 0.013 mack 0.003
+     >=60   (share of all food)        plk 0.799 zoo 0.060 ben 0.036 wht 0.027 mack 0.002
+  CRR 219, non-comm. Gadidae not plk   plk 0.722 zoo 0.188 ben 0.066 wht 0.020 mack 0.003
+  CRR 219, unid. Gadidae dropped       plk 0.723 zoo 0.192 ben 0.062 wht 0.020 mack 0.004
+  CRR 164 (1980-82)                    plk 0.481 zoo 0.454 ben 0.062 wht 0.002 mack 0.000   (checked prey = 0.88 of the identified food)
+  SMS observed stomachs: ben / (pout + herring) = 4.1 / 51 = 0.080 (by mass)
+
+Saithe by quarter, CRR 219 (box-weighted, shares of the checked prey):
+  Q1: plk 0.925 zoo 0.073 ben 0.000 wht 0.000 mack 0.002   ben/plk 0.0000
+  Q2: plk 0.421 zoo 0.525 ben 0.024 wht 0.030 mack 0.000   ben/plk 0.0578
+  Q3: plk 0.776 zoo 0.049 ben 0.143 wht 0.031 mack 0.000   ben/plk 0.1842
+  Q4: plk 0.916 zoo 0.004 ben 0.060 wht 0.011 mack 0.009   ben/plk 0.0657
+
+Rest group (member-weighted by consumption):
+  V2 with CRR 164 saithe  plk 0.507 zoo 0.389 ben 0.066 wht 0.026 mack 0.013
+  V3 with CRR 219 saithe  plk 0.715 zoo 0.162 ben 0.067 wht 0.040 mack 0.015
+  V1 booked M2 x B        plk 0.532 zoo 0.328 ben 0.082 wht 0.046 mack 0.012
+  member spurdog          plk 0.549 zoo 0.000 ben 0.105 wht 0.187 mack 0.159
+  member hake             plk 0.857 zoo 0.001 ben 0.004 wht 0.137 mack 0.000
+  member anglerfish       plk 0.399 zoo 0.000 ben 0.307 wht 0.186 mack 0.108
+  member ling             plk 0.900 zoo 0.000 ben 0.100 wht 0.000 mack 0.000
+  member velvet belly     plk 0.200 zoo 0.800 ben 0.000 wht 0.000 mack 0.000

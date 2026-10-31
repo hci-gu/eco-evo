@@ -191,3 +191,114 @@ for u_x in (0.5, 0.4, 0.3):
             if sat_min < 1.0 else float('inf'))
     print(f"{u_x:>6.2f} {h_u:>7.3f} {sat_min:>8.3f} "
           f"{need:>20.3f}")
+
+# ---------------------------------------------------------------------------
+# Diet gate (section 232): does the encounter side of each generalist's
+# pairs reproduce its booked diet at today's densities?
+#
+# Under concurrent search (one predator meeting every prey on its menu in
+# the same time) the mass taken of prey i is proportional to its
+# encounter a_i * B_vis_i (Type III: a_i * B_vis_i**2), whatever the
+# saturation. The booked diet is predation_mortality_i * B_i, the flow
+# the growth budget (section 129) pays for. Both come from the library
+# and the manifest alone - no policy, no rollout - so a pair whose shares
+# disagree is inconsistent with the field diet it was booked from, not
+# with any model outcome. Densities are the manifest's inference start
+# over the reference grid; the visible part is the pair's
+# accessible_fraction, its stage access at the prey's annual-mean start
+# J/B (section 223.32) and a refuge prey's exposed share (223.12). All
+# prey are taken as visible: hiding, darkness and the mixed-layer
+# scaling of the plankton pairs are left out, so zooplankton (every pair
+# scaled by M_ref/M(t)) is skipped. The factor-3 band is a judgement:
+# wide enough for stomach-data spread, narrow enough to catch a pair
+# that is an order of magnitude off.
+# ---------------------------------------------------------------------------
+import yaml
+
+DIET_BAND = 3.0
+DIET_MIN_SHARE = 0.05
+
+
+def _start_densities():
+    with open(PROJECT, encoding='utf-8-sig') as fh:
+        manifest = yaml.safe_load(fh)
+    meta = manifest.get('project_metadata', {})
+    area = float(meta['reference_grid_width']) * float(meta['reference_grid_height'])
+    out = {}
+    for entries in manifest.values():
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if isinstance(entry, dict) and 'group_id' in entry \
+                    and entry.get('inference_initial_biomass') is not None:
+                out[entry['group_id']] = float(entry['inference_initial_biomass']) / area
+    return out
+
+
+def _visible_share(i, j, prey_id):
+    if getattr(env, '_has_stages', False) and j in set(env.stage_rows.tolist()):
+        js = float(env.stage_start[:, j].mean())
+        f = js * float(env.stage_f_j[i, j]) + (1.0 - js) * float(env.stage_f_a[i, j])
+    else:
+        f = float(env.access_mat[i, j])
+    phi = getattr(env.fgs[prey_id], 'exposed_share', None)
+    if phi is not None and not env.fgs[prey_id].is_decision_maker:
+        f *= float(phi)
+    return f
+
+
+print()
+print("=== diet gate: encounter-implied diet vs booked diet (section 232) ===")
+print("enc = a*B_vis share (concurrent search), booked = M2*B share; ratio")
+print(f"outside 1/{DIET_BAND:g}-{DIET_BAND:g} on a pair with either share >= "
+      f"{DIET_MIN_SHARE:g} is OFF. sat = a h B_vis / (1 + a h B_vis), the")
+print("share of the ceiling the pair pays on its own. Densities t/km2.")
+density = _start_densities()
+gate_failures = []
+for i, pid in enumerate(env.dm_ids):
+    menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
+    if len(menu) < 2:
+        continue
+    if pid == 'zooplankton':
+        print(f"{pid:>14}: skipped (plankton pairs scale with the mixed layer)")
+        continue
+    pairs = env.fgs[pid].params.get('interaction', {}) or {}
+    rows = []
+    for j in menu:
+        prey_id = env.global_fg_order[j]
+        b = density.get(prey_id)
+        if b is None:
+            continue
+        a = float(env.max_intake_mat[i, j])
+        ht = float(env.handling_time_mat[i, j])
+        bv = b * _visible_share(i, j, prey_id)
+        type3 = float(env._type3_pred_mask[i, j, 0, 0]) > 0.0
+        enc = a * bv * (bv if type3 else 1.0)
+        x = enc * ht
+        m2 = float((pairs.get(f"{pid}_preys_on_{prey_id}") or {})
+                   .get('predation_mortality', 0.0) or 0.0)
+        rows.append((prey_id, b, bv, enc, m2 * b, x / (1.0 + x), type3))
+    enc_sum = sum(r[3] for r in rows)
+    book_sum = sum(r[4] for r in rows)
+    if enc_sum <= 0.0 or book_sum <= 0.0:
+        continue
+    print(f"{pid:>14} {'prey':>18} {'B':>7} {'B_vis':>7} {'enc':>6} "
+          f"{'booked':>6} {'ratio':>7} {'sat':>5}  verdict")
+    for prey_id, b, bv, enc, book, sat, type3 in rows:
+        e, k = enc / enc_sum, book / book_sum
+        ratio = e / k if k > 0.0 else float('inf')
+        off = (max(e, k) >= DIET_MIN_SHARE
+               and not (1.0 / DIET_BAND <= ratio <= DIET_BAND))
+        verdict = "OFF" if off else "ok"
+        if off:
+            gate_failures.append((pid, prey_id, e, k))
+        print(f"{'':>14} {prey_id:>18} {b:>7.2f} {bv:>7.3f} {e:>6.3f} "
+              f"{k:>6.3f} {ratio:>7.2f} {sat:>5.2f}  {verdict}"
+              f"{' (Type III)' if type3 else ''}")
+print()
+if gate_failures:
+    print("Diet gate: OFF pairs - "
+          + "; ".join(f"{p} -> {q} enc {e:.3f} vs booked {k:.3f}"
+                      for p, q, e, k in gate_failures))
+else:
+    print("Diet gate: every generalist's encounters match its booked diet.")

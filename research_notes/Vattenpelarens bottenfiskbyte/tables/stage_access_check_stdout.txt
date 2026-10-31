@@ -1,0 +1,39 @@
+Rest water column -> benthivores stage access [f_J, f_A], annual mean of Q1-Q4
+members (share of the pair's a): saithe 0.77, spurdog 0.1, hake 0.07, velvet belly 0.04, anglerfish 0.01
+  lib     f_J 0.431 (Q 0.344, 0.301, 0.520, 0.558)   f_A 0.0272 (Q 0.0252, 0.0277, 0.0252, 0.0305)
+  bw      f_J 0.446 (Q 0.334, 0.292, 0.608, 0.551)   f_A 0.0289 (Q 0.0259, 0.0263, 0.0261, 0.0373)
+  bw+all  f_J 0.431 (Q 0.325, 0.276, 0.588, 0.535)   f_A 0.0163 (Q 0.0168, 0.0132, 0.0171, 0.0182)
+
+Per member (bw+all, annual mean): f_J / f_A
+  saithe        a-share 0.77: lib [0.358, 0.0020]  bw+all [0.379, 0.0010]
+  spurdog       a-share 0.10: lib [0.925, 0.0602]  bw+all [0.765, 0.0269]
+  hake          a-share 0.07: lib [0.730, 0.1979]  bw+all [0.731, 0.1301]
+  velvet belly  a-share 0.04: lib [0.042, 0.0000]  bw+all [0.044, 0.0000]
+  anglerfish    a-share 0.01: lib [0.987, 0.5729]  bw+all [0.988, 0.3764]
+
+Group J composition by mass (w x J share, annual mean):
+  haddock         21.37  cod             4.35  long rough dab  0.00  dab             0.00  plaice          0.02  witch           0.01  starry ray      0.00  grey gurnard    0.00  lemon sole      0.00
+
+Effective access f_eff = JB f_J + (1 - JB) f_A:
+  J/B 0.05: lib 0.0473; bw 0.0498; bw+all 0.0371
+  J/B 0.08: lib 0.0594; bw 0.0623; bw+all 0.0495
+  J/B 0.10: lib 0.0675; bw 0.0706; bw+all 0.0578
+  J/B 0.15: lib 0.0877; bw 0.0915; bw+all 0.0785
+
+Variant aw (bw+all with the window weighted by each length's share of the member's a):
+  aw      f_J 0.312 (Q 0.203, 0.166, 0.494, 0.385)   f_A 0.0070 (Q 0.0069, 0.0055, 0.0072, 0.0082)
+  saithe        aw [0.258, 0.0003]
+  spurdog       aw [0.721, 0.0211]
+  hake          aw [0.441, 0.0381]
+  velvet belly  aw [0.044, 0.0000]
+  anglerfish    aw [0.850, 0.1960]
+  J/B 0.05: aw f_eff 0.0222
+  J/B 0.08: aw f_eff 0.0314
+  J/B 0.10: aw f_eff 0.0374
+  J/B 0.15: aw f_eff 0.0527
+
+Saithe alone, f_J / f_A by quarter (bw+all; biomass-weighted window | a-weighted window):
+  Q1: [0.242, 0.0005] | [0.122, 0.0001]
+  Q2: [0.198, 0.0012] | [0.094, 0.0004]
+  Q3: [0.576, 0.0014] | [0.479, 0.0004]
+  Q4: [0.499, 0.0009] | [0.336, 0.0002]

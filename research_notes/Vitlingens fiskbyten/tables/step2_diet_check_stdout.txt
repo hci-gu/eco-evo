@@ -1,0 +1,15 @@
+Field diet shares of the four checked pairs (renormalised):
+  Skag91 Q2 (box rect.)    plk 0.079  zoo 0.725  epi 0.194  ben 0.002
+  Jut81 Q1 (counts)        plk 0.179  zoo 0.347  epi 0.474  ben 0.000
+  Katt91                   plk 0.617  zoo 0.225  epi 0.158  ben 0.000
+  NS SMS+H91 (V3)          plk 0.443  zoo 0.416  epi 0.113  ben 0.028
+  box transfer (c)         plk 0.128  zoo 0.651  epi 0.177  ben 0.044
+
+Model concurrent-search diet shares (all prey visible), window 0.39 [0.45]:
+  layer (library, [0.16, 0.010])   zoo a x1.00: plk 0.121 [0.189]  zoo 0.587 [0.542]  epi 0.230 [0.212]  ben 0.062 [0.057]
+  overlap, static band             zoo a x1.00: plk 0.082 [0.128]  zoo 0.613 [0.582]  epi 0.240 [0.228]  ben 0.065 [0.061]
+  overlap + follow 0.3             zoo a x1.00: plk 0.088 [0.137]  zoo 0.609 [0.576]  epi 0.239 [0.226]  ben 0.064 [0.061]
+  overlap, static band             zoo a x0.50: plk 0.119 [0.181]  zoo 0.442 [0.411]  epi 0.346 [0.322]  ben 0.093 [0.087]
+  overlap + follow 0.3             zoo a x0.50: plk 0.127 [0.192]  zoo 0.438 [0.405]  epi 0.343 [0.317]  ben 0.092 [0.085]
+  overlap, static band             zoo a x0.25: plk 0.152 [0.227]  zoo 0.283 [0.258]  epi 0.445 [0.405]  ben 0.120 [0.109]
+  overlap + follow 0.3             zoo a x0.25: plk 0.162 [0.241]  zoo 0.280 [0.254]  epi 0.439 [0.398]  ben 0.118 [0.107]

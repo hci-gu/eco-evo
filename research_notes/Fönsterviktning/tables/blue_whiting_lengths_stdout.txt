@@ -1,0 +1,4 @@
+years used: Q1 25, Q3 25; hauls with blue whiting 195 of 1371
+  q1     kg/h 0.18; biomass p5/p10/p50/p90 16.5 / 17.5 / 31.5 / 38.5 cm; share < 15 cm 0.000, < 20 cm 0.247
+  q3     kg/h 100.63; biomass p5/p10/p50/p90 21.5 / 22.5 / 26.5 / 31.5 cm; share < 15 cm 0.000, < 20 cm 0.005
+  pooled kg/h 50.41; biomass p5/p10/p50/p90 21.5 / 22.5 / 26.5 / 31.5 cm; share < 15 cm 0.000, < 20 cm 0.005

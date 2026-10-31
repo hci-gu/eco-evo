@@ -1,0 +1,83 @@
+Box whiting: biomass share by band <20 0.247, 20-24 0.307, 25-29 0.229, 30-34 0.127, >=35 0.090
+             consumption weight     <20 0.309, 20-24 0.313, 25-29 0.207, 30-34 0.104, >=35 0.067
+V3: SMS planktivores 0.255, benthivores 0.016, SMS-modelled fish total 0.443; Hislop all fish 0.658 -> invertebrates 0.342 -> zoo 0.239, epi 0.065
+
+Field diet shares (four checked pairs, renormalised) and clearance c = D/B relative to zooplankton:
+  V1 booked   shares plk 0.417 zoo 0.329 epi 0.162 ben 0.092   c/c_zoo plk 3.73 zoo 1.00 epi 1.27 ben 1.78
+  V2 223.26   shares plk 0.360 zoo 0.360 epi 0.176 ben 0.103   c/c_zoo plk 2.95 zoo 1.00 epi 1.26 ben 1.82
+  V3 SMS+H91  shares plk 0.443 zoo 0.416 epi 0.113 ben 0.028   c/c_zoo plk 3.13 zoo 1.00 epi 0.70 ben 0.43
+  V4 Skag91   shares plk 0.079 zoo 0.725 epi 0.194 ben 0.002   c/c_zoo plk 0.32 zoo 1.00 epi 0.69 ben 0.02
+
+Model a x f_eff (km2/t/tick) and relative to zooplankton:
+  M0 library                   plk 0.00106 zoo 0.00230 epi 0.07830 ben 0.00154   rel plk 0.46 zoo 1.00 epi 34.04 ben 0.67
+  M0' plk f=1 (pre-223.32)     plk 0.02100 zoo 0.00230 epi 0.07830 ben 0.00154   rel plk 9.13 zoo 1.00 epi 34.04 ben 0.67
+  M1 proposed (epi a 0.008)    plk 0.00141 zoo 0.00230 epi 0.00232 ben 0.00154   rel plk 0.61 zoo 1.00 epi 1.01 ben 0.67
+  M1 overlap 10 m both 0.0116  plk 0.00141 zoo 0.00230 epi 0.00336 ben 0.00154   rel plk 0.61 zoo 1.00 epi 1.46 ben 0.67
+  M1 low epi a 0.006           plk 0.00141 zoo 0.00230 epi 0.00174 ben 0.00154   rel plk 0.61 zoo 1.00 epi 0.76 ben 0.67
+  M1 high epi a 0.023          plk 0.00141 zoo 0.00230 epi 0.00667 ben 0.00154   rel plk 0.61 zoo 1.00 epi 2.90 ben 0.67
+
+Discrepancy model / field of the clearance ratio to zooplankton (1 = consistent; >1 model too high):
+  M0 library
+     vs V1 booked   plk    0.12 epi   26.84 ben    0.38
+     vs V2 223.26   plk    0.16 epi   27.06 ben    0.37
+     vs V3 SMS+H91  plk    0.15 epi   48.78 ben    1.55
+     vs V4 Skag91   plk    1.43 epi   49.57 ben   33.22
+  M0' plk f=1 (pre-223.32)
+     vs V1 booked   plk    2.45 epi   26.84 ben    0.38
+     vs V2 223.26   plk    3.10 epi   27.06 ben    0.37
+     vs V3 SMS+H91  plk    2.92 epi   48.78 ben    1.55
+     vs V4 Skag91   plk   28.26 epi   49.57 ben   33.22
+  M1 proposed (epi a 0.008)
+     vs V1 booked   plk    0.16 epi    0.80 ben    0.38
+     vs V2 223.26   plk    0.21 epi    0.80 ben    0.37
+     vs V3 SMS+H91  plk    0.20 epi    1.45 ben    1.55
+     vs V4 Skag91   plk    1.89 epi    1.47 ben   33.22
+  M1 overlap 10 m both 0.0116
+     vs V1 booked   plk    0.16 epi    1.15 ben    0.38
+     vs V2 223.26   plk    0.21 epi    1.16 ben    0.37
+     vs V3 SMS+H91  plk    0.20 epi    2.10 ben    1.55
+     vs V4 Skag91   plk    1.89 epi    2.13 ben   33.22
+  M1 low epi a 0.006
+     vs V1 booked   plk    0.16 epi    0.60 ben    0.38
+     vs V2 223.26   plk    0.21 epi    0.60 ben    0.37
+     vs V3 SMS+H91  plk    0.20 epi    1.08 ben    1.55
+     vs V4 Skag91   plk    1.89 epi    1.10 ben   33.22
+  M1 high epi a 0.023
+     vs V1 booked   plk    0.16 epi    2.29 ben    0.38
+     vs V2 223.26   plk    0.21 epi    2.30 ben    0.37
+     vs V3 SMS+H91  plk    0.20 epi    4.15 ben    1.55
+     vs V4 Skag91   plk    1.89 epi    4.22 ben   33.22
+
+Concurrent-search diet shares a f_eff B / sum (all prey visible), vs field:
+  M0 library                   zoo B  9.72: plk 0.011 zoo 0.069 epi 0.913 ben 0.007
+  M0 library                   zoo B  7.00: plk 0.011 zoo 0.051 epi 0.931 ben 0.007
+  M0' plk f=1 (pre-223.32)     zoo B  9.72: plk 0.178 zoo 0.057 epi 0.759 ben 0.006
+  M0' plk f=1 (pre-223.32)     zoo B  7.00: plk 0.181 zoo 0.042 epi 0.771 ben 0.006
+  M1 proposed (epi a 0.008)    zoo B  9.72: plk 0.122 zoo 0.586 epi 0.230 ben 0.062
+  M1 proposed (epi a 0.008)    zoo B  7.00: plk 0.146 zoo 0.505 epi 0.275 ben 0.074
+  M1 overlap 10 m both 0.0116  zoo B  9.72: plk 0.110 zoo 0.531 epi 0.302 ben 0.056
+  M1 overlap 10 m both 0.0116  zoo B  7.00: plk 0.130 zoo 0.449 epi 0.355 ben 0.066
+  M1 low epi a 0.006           zoo B  9.72: plk 0.129 zoo 0.622 epi 0.183 ben 0.066
+  M1 low epi a 0.006           zoo B  7.00: plk 0.156 zoo 0.542 epi 0.222 ben 0.080
+  M1 high epi a 0.023          zoo B  9.72: plk 0.085 zoo 0.410 epi 0.462 ben 0.043
+  M1 high epi a 0.023          zoo B  7.00: plk 0.096 zoo 0.333 epi 0.522 ben 0.049
+  planktivores 25 % visible (pair visibility_floor 0.25), zoo B 9.72:
+  M0 library                                 plk 0.003 zoo 0.070 epi 0.920 ben 0.007
+  M0' plk f=1 (pre-223.32)                   plk 0.051 zoo 0.066 epi 0.876 ben 0.007
+  M1 proposed (epi a 0.008)                  plk 0.034 zoo 0.645 epi 0.253 ben 0.068
+  M1 overlap 10 m both 0.0116                plk 0.030 zoo 0.579 epi 0.329 ben 0.061
+  M1 low epi a 0.006                         plk 0.036 zoo 0.689 epi 0.203 ben 0.073
+  M1 high epi a 0.023                        plk 0.023 zoo 0.438 epi 0.493 ben 0.046
+
+Single-pair Holling return at today's density (x = a f h B; share of the intake ceiling x/(1+x)); half-saturation 1/(a f h) in t/km2 of the prey group:
+  M0 library                   plk x   0.80 -> 0.44 (K 4.14); zoo x   3.21 -> 0.76 (K 3.03); epi x  35.43 -> 0.97 (K 0.11); ben x   0.34 -> 0.25 (K 4.51)
+  M0' plk f=1 (pre-223.32)     plk x  15.75 -> 0.94 (K 0.21); zoo x   3.21 -> 0.76 (K 3.03); epi x  35.43 -> 0.97 (K 0.11); ben x   0.34 -> 0.25 (K 4.51)
+  M1 proposed (epi a 0.008)    plk x   1.06 -> 0.51 (K 3.13); zoo x   3.21 -> 0.76 (K 3.03); epi x   1.05 -> 0.51 (K 3.60); ben x   0.34 -> 0.25 (K 4.51)
+  M1 overlap 10 m both 0.0116  plk x   1.06 -> 0.51 (K 3.13); zoo x   3.21 -> 0.76 (K 3.03); epi x   1.52 -> 0.60 (K 2.48); ben x   0.34 -> 0.25 (K 4.51)
+  M1 low epi a 0.006           plk x   1.06 -> 0.51 (K 3.13); zoo x   3.21 -> 0.76 (K 3.03); epi x   0.79 -> 0.44 (K 4.80); ben x   0.34 -> 0.25 (K 4.51)
+  M1 high epi a 0.023          plk x   1.06 -> 0.51 (K 3.13); zoo x   3.21 -> 0.76 (K 3.03); epi x   3.02 -> 0.75 (K 1.25); ben x   0.34 -> 0.25 (K 4.51)
+
+Time-allocation reading (check, not a derivation): if the field diet is the outcome of free allocation, no pair can pay far more per allocated tonne than the others at field density. The epifauna a that puts its return x/(1+x) equal to r_other:
+  r_other 0.44: x 0.79 -> a_epi = x / (h f B) = 0.0060
+  r_other 0.60: x 1.50 -> a_epi = x / (h f B) = 0.0114
+  r_other 0.76: x 3.17 -> a_epi = x / (h f B) = 0.0241

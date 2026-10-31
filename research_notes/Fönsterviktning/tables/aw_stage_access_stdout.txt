@@ -1,0 +1,160 @@
+a(L) shape check (encounter, per tonne, relative to the class nearest the number-mean length):
+  saithe       -> ben: fitted exponent of a(L) over the bulk of the mix -2.11 (L 37.5-97.5 cm)
+  saithe       -> plk: fitted exponent of a(L) over the bulk of the mix -2.16 (L 37.5-97.5 cm)
+  spurdog      -> ben: fitted exponent of a(L) over the bulk of the mix -2.13 (L 47.5-107.5 cm)
+  hake         -> ben: fitted exponent of a(L) over the bulk of the mix -2.23 (L 17.5-102.5 cm)
+  anglerfish   -> ben: fitted exponent of a(L) over the bulk of the mix -2.85 (L 37.5-117.5 cm)
+  whiting      -> plk: fitted exponent of a(L) over the bulk of the mix -2.20 (L 22.5-42.5 cm)
+  whiting      -> ben: fitted exponent of a(L) over the bulk of the mix -2.17 (L 22.5-42.5 cm)
+  mackerel     -> plk: fitted exponent of a(L) over the bulk of the mix -2.29 (L 22.5-42.5 cm)
+  cod          -> fish (benth_encounter form, R = 2 L): fitted exponent -0.36; LW b 3.14
+  haddock      -> fish (benth_encounter form, R = 2 L): fitted exponent -0.46; LW b 3.15
+  saithe benth_fish a(43 cm)/a(70 cm) = 2.80 (per-stage table 0.08048/0.03158 = 2.55)
+
+== water column -> benthivores  (box J/B 0.15)   library [0.43, 0.027], f_eff 0.0874
+  lib (reproduction)                             [0.431, 0.0272]  f_eff 0.0877   Q f_J 0.344 0.301 0.520 0.558 | f_A 0.0252 0.0277 0.0252 0.0305
+  + norm (stage biomass, whole group)            [0.431, 0.0566]  f_eff 0.1128   Q f_J 0.325 0.276 0.588 0.535 | f_A 0.0507 0.0603 0.0511 0.0644
+  + aw (biomass x m x a(L))  = central           [0.302, 0.0380]  f_eff 0.0777   Q f_J 0.194 0.159 0.484 0.373 | f_A 0.0330 0.0420 0.0333 0.0438
+    range: a(L) x L^-0.5                         [0.273, 0.0341]  f_eff 0.0700   Q f_J 0.169 0.137 0.453 0.334 | f_A 0.0294 0.0379 0.0297 0.0394
+    range: a(L) x L^+0.5                         [0.332, 0.0420]  f_eff 0.0855   Q f_J 0.222 0.183 0.511 0.411 | f_A 0.0366 0.0460 0.0370 0.0483
+    sens.: a(L) ~ L^-2, anglerfish L^-3 (audit)  [0.312, 0.0396]  f_eff 0.0804   Q f_J 0.203 0.166 0.494 0.385 | f_A 0.0344 0.0437 0.0347 0.0456
+  CENTRAL [0.302, 0.0380]  range f_J 0.273-0.332, f_A 0.0341-0.0420; f_eff 0.0874 -> 0.0777 (x0.89; range 0.0700-0.0855) 
+  per member (share of a): lib [f_J, f_A] | norm, biomass windows | central aw
+    saithe         0.770: [0.358, 0.0020] | [0.379, 0.0010] | [0.251, 0.0003]
+    spurdog        0.100: [0.925, 0.0602] | [0.765, 0.2622] | [0.715, 0.2392]
+    hake           0.070: [0.730, 0.1979] | [0.731, 0.3282] | [0.386, 0.1330]
+    velvet belly   0.040: [0.042, 0.0000] | [0.044, 0.0028] | [0.044, 0.0028]
+    anglerfish     0.010: [0.987, 0.5729] | [0.988, 0.6544] | [0.868, 0.4445]
+
+== water column -> planktivores  (box J/B 0.38)   library [0.69, 0.27], f_eff 0.4296
+  lib (reproduction)                             [0.693, 0.2740]  f_eff 0.4331   Q f_J 0.637 0.602 0.745 0.786 | f_A 0.2612 0.2857 0.2450 0.3041
+  lib, current-a member shares                   [0.689, 0.2717]  f_eff 0.4303   Q f_J 0.633 0.598 0.742 0.782 | f_A 0.2593 0.2832 0.2424 0.3017
+  + norm (stage biomass, whole group)            [0.698, 0.2402]  f_eff 0.4142   Q f_J 0.661 0.613 0.741 0.777 | f_A 0.2401 0.2373 0.2141 0.2695
+  + aw (biomass x m x a(L))  = central           [0.531, 0.1358]  f_eff 0.2861   Q f_J 0.486 0.430 0.589 0.621 | f_A 0.1234 0.1275 0.1164 0.1757
+    range: a(L) x L^-0.5                         [0.488, 0.1179]  f_eff 0.2585   Q f_J 0.443 0.387 0.546 0.576 | f_A 0.1045 0.1090 0.1003 0.1578
+    range: a(L) x L^+0.5                         [0.573, 0.1557]  f_eff 0.3142   Q f_J 0.529 0.473 0.628 0.662 | f_A 0.1451 0.1484 0.1346 0.1947
+    sens.: a(L) ~ L^-2, anglerfish L^-3 (audit)  [0.553, 0.1461]  f_eff 0.3009   Q f_J 0.508 0.452 0.610 0.643 | f_A 0.1344 0.1382 0.1259 0.1860
+  CENTRAL [0.531, 0.1358]  range f_J 0.488-0.573, f_A 0.1179-0.1557; f_eff 0.4296 -> 0.2861 (x0.67; range 0.2585-0.3142) 
+  per member (share of a): lib [f_J, f_A] | norm, biomass windows | central aw
+    saithe         0.848: [0.674, 0.2168] | [0.684, 0.1892] | [0.516, 0.0995]
+    hake           0.061: [0.898, 0.6376] | [0.901, 0.6002] | [0.542, 0.2083]
+    spurdog        0.061: [0.988, 0.8098] | [0.988, 0.7153] | [0.948, 0.6383]
+    velvet belly   0.030: [0.104, 0.0000] | [0.108, 0.0000] | [0.108, 0.0000]
+
+== water column -> whiting  (box J/B 0.165)   library [0.57, 0.15], f_eff 0.2193
+  lib (reproduction)                             [0.568, 0.1465]  f_eff 0.2160   Q f_J 0.498 0.465 0.730 0.578 | f_A 0.0798 0.2244 0.1352 0.1467
+  + norm (stage biomass, whole group)            [0.568, 0.1465]  f_eff 0.2160   Q f_J 0.498 0.465 0.730 0.578 | f_A 0.0798 0.2244 0.1352 0.1467
+  + aw (biomass x m x a(L))  = central           [0.410, 0.0795]  f_eff 0.1339   Q f_J 0.327 0.297 0.602 0.412 | f_A 0.0389 0.1270 0.0732 0.0787
+    range: a(L) x L^-0.5                         [0.372, 0.0681]  f_eff 0.1182   Q f_J 0.289 0.261 0.564 0.372 | f_A 0.0325 0.1100 0.0628 0.0672
+    range: a(L) x L^+0.5                         [0.447, 0.0923]  f_eff 0.1509   Q f_J 0.366 0.335 0.636 0.452 | f_A 0.0464 0.1461 0.0849 0.0918
+    sens.: a(L) ~ L^-2, anglerfish L^-3 (audit)  [0.422, 0.0832]  f_eff 0.1391   Q f_J 0.340 0.309 0.614 0.425 | f_A 0.0410 0.1326 0.0765 0.0825
+  CENTRAL [0.410, 0.0795]  range f_J 0.372-0.447, f_A 0.0681-0.0923; f_eff 0.2193 -> 0.1339 (x0.61; range 0.1182-0.1509) 
+  per member (share of a): lib [f_J, f_A] | norm, biomass windows | central aw
+    saithe         0.770: [0.517, 0.0760] | [0.517, 0.0760] | [0.350, 0.0277]
+    spurdog        0.100: [0.979, 0.4677] | [0.979, 0.4677] | [0.931, 0.4112]
+    hake           0.070: [0.838, 0.4613] | [0.838, 0.4613] | [0.500, 0.1480]
+    velvet belly   0.040: [0.068, 0.0000] | [0.068, 0.0000] | [0.068, 0.0000]
+    anglerfish     0.010: [0.997, 0.8948] | [0.997, 0.8948] | [0.916, 0.6609]
+
+== mackerel -> planktivores  (box J/B 0.38)   library [0.078, 0.0037], f_eff 0.0319
+  lib (reproduction)                             [0.078, 0.0037]  f_eff 0.0319   Q f_J 0.046 0.042 0.123 0.102 | f_A 0.0011 0.0025 0.0057 0.0054
+  + norm (stage biomass, whole group)            [0.082, 0.0069]  f_eff 0.0354   Q f_J 0.069 0.045 0.122 0.091 | f_A 0.0007 0.0022 0.0053 0.0192
+  + aw (biomass x m x a(L))  = central           [0.052, 0.0035]  f_eff 0.0220   Q f_J 0.044 0.033 0.078 0.053 | f_A 0.0004 0.0011 0.0027 0.0097
+    range: a(L) x L^-0.5                         [0.047, 0.0029]  f_eff 0.0196   Q f_J 0.040 0.031 0.070 0.047 | f_A 0.0003 0.0009 0.0023 0.0082
+    range: a(L) x L^+0.5                         [0.058, 0.0041]  f_eff 0.0245   Q f_J 0.049 0.035 0.087 0.060 | f_A 0.0004 0.0013 0.0031 0.0114
+    sens.: a(L) ~ L^-2, anglerfish L^-3 (audit)  [0.056, 0.0038]  f_eff 0.0235   Q f_J 0.047 0.034 0.083 0.058 | f_A 0.0004 0.0012 0.0030 0.0108
+  CENTRAL [0.052, 0.0035]  range f_J 0.047-0.058, f_A 0.0029-0.0041; f_eff 0.0319 -> 0.0220 (x0.69; range 0.0196-0.0245) 
+  per member (share of a): lib [f_J, f_A] | norm, biomass windows | central aw
+    mackerel       0.964: [0.078, 0.0036] | [0.082, 0.0067] | [0.052, 0.0034]
+    horse mackerel 0.036: [0.086, 0.0056] | [0.092, 0.0107] | [0.049, 0.0052]
+
+== whiting -> planktivores  (box J/B 0.38)   library [0.16, 0.01], f_eff 0.0670
+  lib (reproduction)                             [0.119, 0.0077]  f_eff 0.0499   Q f_J 0.082 0.073 0.161 0.159 | f_A 0.0043 0.0079 0.0086 0.0100
+  + thr (window over the a's lengths only)       [0.157, 0.0102]  f_eff 0.0661   Q f_J 0.109 0.095 0.214 0.211 | f_A 0.0057 0.0105 0.0114 0.0133
+  + norm (stage biomass, whole group)            [0.164, 0.0144]  f_eff 0.0712   Q f_J 0.140 0.104 0.213 0.199 | f_A 0.0036 0.0081 0.0103 0.0355
+  + aw (biomass x m x a(L))  = central           [0.101, 0.0073]  f_eff 0.0429   Q f_J 0.086 0.063 0.139 0.116 | f_A 0.0014 0.0036 0.0052 0.0188
+    range: a(L) x L^-0.5                         [0.091, 0.0062]  f_eff 0.0383   Q f_J 0.077 0.057 0.126 0.102 | f_A 0.0012 0.0030 0.0044 0.0161
+    range: a(L) x L^+0.5                         [0.113, 0.0085]  f_eff 0.0481   Q f_J 0.096 0.070 0.153 0.131 | f_A 0.0018 0.0044 0.0061 0.0219
+    sens.: a(L) ~ L^-2, anglerfish L^-3 (audit)  [0.104, 0.0077]  f_eff 0.0443   Q f_J 0.088 0.065 0.142 0.120 | f_A 0.0016 0.0039 0.0055 0.0199
+  CENTRAL [0.101, 0.0073]  range f_J 0.091-0.113, f_A 0.0062-0.0085; f_eff 0.0670 -> 0.0429 (x0.64; range 0.0383-0.0481) 
+  per member (share of a): lib [f_J, f_A] | norm, biomass windows | central aw
+    whiting        1.000: [0.119, 0.0077] | [0.164, 0.0144] | [0.101, 0.0073]
+
+== whiting -> benthivores  (box J/B 0.15)   library [0.049, 0.0], f_eff 0.0073
+  lib (reproduction)                             [0.049, 0.0000]  f_eff 0.0074   Q f_J 0.018 0.010 0.111 0.060 | f_A 0.0000 0.0000 0.0000 0.0000
+  + thr (window over the a's lengths only)       [0.066, 0.0000]  f_eff 0.0098   Q f_J 0.023 0.013 0.147 0.079 | f_A 0.0000 0.0000 0.0000 0.0000
+  + norm (stage biomass, whole group)            [0.065, 0.0123]  f_eff 0.0202   Q f_J 0.008 0.004 0.185 0.062 | f_A 0.0103 0.0144 0.0104 0.0141
+  + aw (biomass x m x a(L))  = central           [0.038, 0.0064]  f_eff 0.0111   Q f_J 0.003 0.002 0.117 0.031 | f_A 0.0054 0.0075 0.0054 0.0073
+    range: a(L) x L^-0.5                         [0.034, 0.0055]  f_eff 0.0097   Q f_J 0.002 0.001 0.105 0.027 | f_A 0.0046 0.0064 0.0047 0.0063
+    range: a(L) x L^+0.5                         [0.043, 0.0074]  f_eff 0.0128   Q f_J 0.004 0.002 0.130 0.037 | f_A 0.0063 0.0087 0.0063 0.0085
+    sens.: a(L) ~ L^-2, anglerfish L^-3 (audit)  [0.040, 0.0067]  f_eff 0.0117   Q f_J 0.003 0.002 0.121 0.033 | f_A 0.0057 0.0079 0.0057 0.0077
+  CENTRAL [0.038, 0.0064]  range f_J 0.034-0.043, f_A 0.0055-0.0074; f_eff 0.0073 -> 0.0111 (x1.52; range 0.0097-0.0128) 
+  per member (share of a): lib [f_J, f_A] | norm, biomass windows | central aw
+    whiting        1.000: [0.049, 0.0000] | [0.065, 0.0123] | [0.038, 0.0064]
+
+== benthivores -> planktivores  (box J/B 0.38)   library [0.49, 0.14], f_eff 0.2730
+  lib (reproduction)                             [0.494, 0.1358]  f_eff 0.2719   Q f_J 0.447 0.424 0.542 0.563 | f_A 0.1218 0.1439 0.1175 0.1599
+  + norm (stage biomass, whole group)            [0.501, 0.1173]  f_eff 0.2632   Q f_J 0.472 0.435 0.541 0.556 | f_A 0.1055 0.1127 0.1001 0.1509
+  + ENC (encounter species weights, current F)   [0.568, 0.1166]  f_eff 0.2883   Q f_J 0.576 0.501 0.581 0.616 | f_A 0.1375 0.1121 0.1039 0.1128
+  + aw (biomass x a(L), membership 1) = central  [0.525, 0.1018]  f_eff 0.2625   Q f_J 0.532 0.456 0.539 0.571 | f_A 0.1195 0.0975 0.0906 0.0998
+    range: a(L) x L^-0.5                         [0.461, 0.0799]  f_eff 0.2247   Q f_J 0.468 0.391 0.478 0.506 | f_A 0.0926 0.0758 0.0708 0.0804
+    range: a(L) x L^+0.5                         [0.588, 0.1271]  f_eff 0.3022   Q f_J 0.595 0.522 0.600 0.634 | f_A 0.1506 0.1227 0.1136 0.1217
+    sens.: a(L) ~ L^-2 (audit's assumption)      [0.327, 0.0421]  f_eff 0.1503   Q f_J 0.332 0.259 0.349 0.367 | f_A 0.0467 0.0387 0.0369 0.0461
+    sens.: window weighted by the library a's phi [0.614, 0.1262]  f_eff 0.3114   Q f_J 0.621 0.545 0.625 0.664 | f_A 0.1492 0.1214 0.1123 0.1218
+    sens.: + haddock member c_h 0.3 (a-share 0.25) [0.454, 0.0791]  f_eff 0.2216   Q f_J 0.462 0.381 0.472 0.501 | f_A 0.0915 0.0751 0.0703 0.0797
+    sens.: + haddock member c_h 0.5 (a-share 0.36) [0.424, 0.0694]  f_eff 0.2042   Q f_J 0.433 0.349 0.444 0.471 | f_A 0.0795 0.0655 0.0616 0.0712
+    sens.: + haddock member c_h 1.0 (a-share 0.53) [0.377, 0.0542]  f_eff 0.1767   Q f_J 0.386 0.298 0.399 0.424 | f_A 0.0607 0.0504 0.0480 0.0577
+  CENTRAL [0.525, 0.1018]  range f_J 0.461-0.588, f_A 0.0799-0.1271; f_eff 0.2730 -> 0.2625 (x0.96; range 0.2247-0.3022) 
+
+== benthivores -> whiting  (box J/B 0.165)   library [0.38, 0.042], f_eff 0.0978
+  lib (reproduction)                             [0.376, 0.0421]  f_eff 0.0971   Q f_J 0.308 0.278 0.536 0.380 | f_A 0.0167 0.0752 0.0335 0.0430
+  + norm (stage biomass, whole group)            [0.376, 0.0421]  f_eff 0.0971   Q f_J 0.308 0.278 0.536 0.380 | f_A 0.0167 0.0752 0.0335 0.0430
+  + aw (biomass x a(L), membership 1) = central  [0.339, 0.0356]  f_eff 0.0857   Q f_J 0.272 0.245 0.497 0.341 | f_A 0.0140 0.0639 0.0282 0.0364
+    range: a(L) x L^-0.5                         [0.285, 0.0259]  f_eff 0.0686   Q f_J 0.220 0.196 0.440 0.284 | f_A 0.0099 0.0469 0.0202 0.0265
+    range: a(L) x L^+0.5                         [0.396, 0.0478]  f_eff 0.1053   Q f_J 0.329 0.299 0.554 0.402 | f_A 0.0193 0.0847 0.0383 0.0488
+    sens.: a(L) ~ L^-2 (audit's assumption)      [0.181, 0.0109]  f_eff 0.0389   Q f_J 0.123 0.106 0.320 0.173 | f_A 0.0039 0.0203 0.0082 0.0112
+    sens.: window weighted by the library a's phi [0.537, 0.0625]  f_eff 0.1407   Q f_J 0.467 0.423 0.699 0.558 | f_A 0.0246 0.1120 0.0495 0.0639
+  CENTRAL [0.339, 0.0356]  range f_J 0.285-0.396, f_A 0.0259-0.0478; f_eff 0.0978 -> 0.0857 (x0.88; range 0.0686-0.1053) 
+
+== seals -> benthivores  (box J/B 0.15)   library [1.0, 0.34], f_eff 0.4390
+  lib (reproduction)                             [1.000, 0.3420]  f_eff 0.4406   Q f_J 0.999 1.000 1.000 1.000 | f_A 0.2753 0.3268 0.3163 0.4496
+  + norm (stage biomass, whole group) = central  [1.000, 0.5013]  f_eff 0.5761   Q f_J 1.000 1.000 1.000 1.000 | f_A 0.4304 0.4963 0.4712 0.6073
+  CENTRAL [1.000, 0.5013]  range f_J 1.000-1.000, f_A 0.5013-0.5013; f_eff 0.4390 -> 0.5761 (x1.31; range 0.5761-0.5761) (aw n/a: fixed prey-length range, a not from predator length)
+
+== seals -> whiting  (box J/B 0.165)   library [1.0, 0.84], f_eff 0.8664
+  lib (reproduction)                             [0.999, 0.8385]  f_eff 0.8649   Q f_J 1.000 1.000 0.995 1.000 | f_A 0.6742 0.9635 0.7920 0.9242
+  + norm (stage biomass, whole group) = central  [0.999, 0.8385]  f_eff 0.8649   Q f_J 1.000 1.000 0.995 1.000 | f_A 0.6742 0.9635 0.7920 0.9242
+  CENTRAL [0.999, 0.8385]  range f_J 0.999-0.999, f_A 0.8385-0.8385; f_eff 0.8664 -> 0.8649 (x1.00; range 0.8649-0.8649) (aw n/a: fixed prey-length range, a not from predator length)
+
+== porpoises -> benthivores  (box J/B 0.15)   library [1.0, 0.55], f_eff 0.6175
+  lib (reproduction)                             [1.000, 0.5540]  f_eff 0.6209   Q f_J 1.000 1.000 1.000 1.000 | f_A 0.5523 0.5088 0.4700 0.6849
+  + norm (stage biomass, whole group) = central  [1.000, 0.6314]  f_eff 0.6867   Q f_J 1.000 1.000 1.000 1.000 | f_A 0.6283 0.5893 0.5803 0.7277
+  CENTRAL [1.000, 0.6314]  range f_J 1.000-1.000, f_A 0.6314-0.6314; f_eff 0.6175 -> 0.6867 (x1.11; range 0.6867-0.6867) (aw n/a: fixed prey-length range, a not from predator length)
+
+== porpoises -> whiting  (box J/B 0.165)   library [1.0, 0.95], f_eff 0.9582
+  lib (reproduction)                             [1.000, 0.9542]  f_eff 0.9618   Q f_J 1.000 1.000 1.000 1.000 | f_A 0.8972 0.9920 0.9307 0.9970
+  + norm (stage biomass, whole group) = central  [1.000, 0.9542]  f_eff 0.9618   Q f_J 1.000 1.000 1.000 1.000 | f_A 0.8972 0.9920 0.9307 0.9970
+  CENTRAL [1.000, 0.9542]  range f_J 1.000-1.000, f_A 0.9542-0.9542; f_eff 0.9582 -> 0.9618 (x1.00; range 0.9618-0.9618) (aw n/a: fixed prey-length range, a not from predator length)
+
+Checks:
+  water column -> benthivores: unkeyed benthivores (long rough dab, dab, lemon sole, grey gurnard, starry ray) counted 0 inside (denominator only): [0.302, 0.0065], f_eff 0.0509
+  whiting -> benthivores: unkeyed benthivores (long rough dab, dab, lemon sole, grey gurnard, starry ray) counted 0 inside (denominator only): [0.038, 0.0000], f_eff 0.0057
+  seals -> benthivores: unkeyed benthivores (long rough dab, dab, lemon sole, grey gurnard, starry ray) counted 0 inside (denominator only): [1.000, 0.2250], f_eff 0.3412
+  porpoises -> benthivores: unkeyed benthivores (long rough dab, dab, lemon sole, grey gurnard, starry ray) counted 0 inside (denominator only): [1.000, 0.3531], f_eff 0.4502
+  seals -> planktivores (no stage_access in the library): window share incl. blue whiting [0.998, 0.994]
+  porpoises -> planktivores (no stage_access in the library): window share incl. blue whiting [1.000, 0.999]
+
+Summary:
+                        pair  lib_fJ  lib_fA     fJ     fA  fJ_lo  fJ_hi  fA_lo  fA_hi    JB  eff_lib  eff_new  ratio  juv_take_lib  juv_take_new
+ water column -> benthivores   0.430  0.0270 0.3024 0.0380 0.2733 0.3318 0.0341 0.0420 0.150   0.0874   0.0777 0.8881        0.7376        0.5841
+water column -> planktivores   0.690  0.2700 0.5314 0.1358 0.4879 0.5728 0.1179 0.1557 0.380   0.4296   0.2861 0.6660        0.6103        0.7058
+     water column -> whiting   0.570  0.1500 0.4097 0.0795 0.3716 0.4474 0.0681 0.0923 0.165   0.2193   0.1339 0.6108        0.4289        0.5047
+    mackerel -> planktivores   0.078  0.0037 0.0522 0.0035 0.0469 0.0578 0.0029 0.0041 0.380   0.0319   0.0220 0.6881        0.9282        0.9026
+     whiting -> planktivores   0.160  0.0100 0.1010 0.0073 0.0907 0.1127 0.0062 0.0085 0.380   0.0670   0.0429 0.6404        0.9075        0.8948
+      whiting -> benthivores   0.049  0.0000 0.0381 0.0064 0.0337 0.0431 0.0055 0.0074 0.150   0.0074   0.0111 1.5163        1.0000        0.5127
+ benthivores -> planktivores   0.490  0.1400 0.5247 0.1018 0.4609 0.5878 0.0799 0.1271 0.380   0.2730   0.2625 0.9616        0.6821        0.7595
+      benthivores -> whiting   0.380  0.0420 0.3389 0.0356 0.2848 0.3963 0.0259 0.0478 0.165   0.0978   0.0857 0.8761        0.6413        0.6528
+        seals -> benthivores   1.000  0.3400 1.0000 0.5013 1.0000 1.0000 0.5013 0.5013 0.150   0.4390   0.5761 1.3123        0.3417        0.2604
+            seals -> whiting   1.000  0.8400 0.9986 0.8385 0.9986 0.9986 0.8385 0.8385 0.165   0.8664   0.8649 0.9983        0.1904        0.1905
+    porpoises -> benthivores   1.000  0.5500 1.0000 0.6314 1.0000 1.0000 0.6314 0.6314 0.150   0.6175   0.6867 1.1120        0.2429        0.2184
+        porpoises -> whiting   1.000  0.9500 1.0000 0.9542 1.0000 1.0000 0.9542 0.9542 0.165   0.9582   0.9618 1.0037        0.1722        0.1716

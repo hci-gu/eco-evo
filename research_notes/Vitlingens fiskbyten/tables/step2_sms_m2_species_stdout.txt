@@ -1,0 +1,20 @@
+whiting = SMS predator number 17 (mean |log ratio| 0.000)
+SMS 2013-22 mean biomass (t): whiting 328,339
+prey          NS B (t)  NS whi/prey  box whi/prey      f   M2 NS  M2 box  pool w w x M2box  C box t/km2/yr
+Herring      2,176,339        0.151         0.171   1.13   0.048   0.054   0.883     0.048           0.141
+Nor.pout       331,462        0.991         1.802   1.82   0.353   0.642   0.084     0.054           0.159
+Sprat          647,173        0.507         4.505   8.88   0.341   3.031   0.034     0.102           0.300
+pool-weighted box M2 (the booked value): 0.203 /yr -> flow 0.670 t/km2/yr
+  NB the pool-weighted sum renormalises the three members to the pool (blue whiting has no SMS M2), so the
+  booked flow is not the sum of the per-species box flows; per-species flows (t/km2/yr) are the column above.
+  implied planktivore share of the whiting ration at Q/B 3.3: 0.46
+  implied planktivore share of the whiting ration at Q/B 4.2: 0.36
+  implied planktivore share of the whiting ration at Q/B 5.6: 0.27
+
+Alternative transfers of the North Sea whiting predation to the box [D]:
+  NS whiting diet (box length mix): herring 0.031, pout 0.156, sprat 0.067; other food 0.746
+  (b) linear clearance (per-capita M2 x box/NS whiting density; NS area 575,000 km2, whiting 0.571 t/km2): M2 0.065 /yr, flow 0.214 t/km2/yr
+  (b) linear clearance (per-capita M2 x box/NS whiting density; NS area 632,000 km2, whiting 0.520 t/km2): M2 0.071 /yr, flow 0.236 t/km2/yr
+  (c) fixed ration, diet re-weighted by prey availability per km2 (area 575 000 km2): box/NS prey ratio Herring 0.69, Nor.pout 0.43, Sprat 0.09 -> planktivore share 0.112, flow 0.210 t/km2/yr, M2 0.064 (0.050-0.085) /yr
+  (c) fixed ration, diet re-weighted by prey availability per km2 (area 632 000 km2): box/NS prey ratio Herring 0.76, Nor.pout 0.47, Sprat 0.10 -> planktivore share 0.122, flow 0.228 t/km2/yr, M2 0.069 (0.054-0.092) /yr
+  (c) fixed ration, diet re-weighted by prey availability per whiting tonne: box/NS prey ratio Herring 0.88, Nor.pout 0.55, Sprat 0.11 -> planktivore share 0.139, flow 0.260 t/km2/yr, M2 0.079 (0.062-0.105) /yr

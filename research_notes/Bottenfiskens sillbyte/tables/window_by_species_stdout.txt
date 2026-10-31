@@ -1,0 +1,35 @@
+cod >= 20 cm, biomass-weighted length: p10/p50/p90 28.5 / 47.5 / 71.5 cm
+haddock >= 20 cm: p10/p50/p90 24.5 / 36.5 / 48.5 cm
+
+Per-species window shares (annual mean of Q1-Q4): f_J, f_A, species J share of biomass
+  cod ratio 0.3: herring [0.463, 0.102] J 0.54; Norway pout [0.716, 0.329] J 0.73; blue whiting [nan, nan] J nan; sprat [0.845, 0.643] J 0.36
+  cod ratio 0.35: herring [0.608, 0.216] J 0.54; Norway pout [0.827, 0.485] J 0.73; blue whiting [nan, nan] J nan; sprat [0.925, 0.764] J 0.36
+  cod ratio 0.4: herring [0.722, 0.341] J 0.54; Norway pout [0.903, 0.613] J 0.73; blue whiting [nan, nan] J nan; sprat [0.974, 0.858] J 0.36
+  cod ratio Ldep_allP: herring [0.507, 0.057] J 0.54; Norway pout [0.831, 0.315] J 0.73; blue whiting [nan, nan] J nan; sprat [0.963, 0.744] J 0.36
+  cod ratio Ldep_herring: herring [0.699, 0.130] J 0.54; Norway pout [0.898, 0.534] J 0.73; blue whiting [nan, nan] J nan; sprat [0.953, 0.860] J 0.36
+  haddock ratio 0.3: herring [0.136, 0.003] J 0.54; Norway pout [0.468, 0.038] J 0.73; blue whiting [nan, nan] J nan; sprat [0.698, 0.319] J 0.36
+
+Fbar_j (current overlaps): herring 0.0279, Norway pout 0.1440, blue whiting 0.0607, sprat 0.0184; pool sum s_j Fbar_j 0.0399; encounter share of each species herring 0.551, Norway pout 0.274, blue whiting 0.161, sprat 0.014
+
+Fbar_j (revised overlaps): herring 0.0621, Norway pout 0.1440, blue whiting 0.1148, sprat 0.0905; pool sum s_j Fbar_j 0.0748; encounter share of each species herring 0.655, Norway pout 0.146, blue whiting 0.163, sprat 0.036
+  ratio of pool sums revised / current: 1.87
+
+Pool stage access [f_J, f_A] and effective f at J/B 0.38:
+  cod     ratio 0.3          POOL  [0.494, 0.136]  f_eff 0.272
+  cod     ratio 0.3          ENC   [0.548, 0.180]  f_eff 0.320
+  cod     ratio 0.3          ENC'  [0.519, 0.160]  f_eff 0.297
+  cod     ratio 0.35         POOL  [0.635, 0.253]  f_eff 0.398
+  cod     ratio 0.35         ENC   [0.682, 0.307]  f_eff 0.450
+  cod     ratio 0.35         ENC'  [0.657, 0.281]  f_eff 0.424
+  cod     ratio 0.4          POOL  [0.744, 0.377]  f_eff 0.517
+  cod     ratio 0.4          ENC   [0.784, 0.432]  f_eff 0.566
+  cod     ratio 0.4          ENC'  [0.762, 0.405]  f_eff 0.541
+  cod     ratio Ldep_allP    POOL  [0.546, 0.097]  f_eff 0.268
+  cod     ratio Ldep_allP    ENC   [0.617, 0.147]  f_eff 0.326
+  cod     ratio Ldep_allP    ENC'  [0.579, 0.126]  f_eff 0.298
+  cod     ratio Ldep_herring POOL  [0.723, 0.183]  f_eff 0.388
+  cod     ratio Ldep_herring ENC   [0.766, 0.266]  f_eff 0.456
+  cod     ratio Ldep_herring ENC'  [0.742, 0.224]  f_eff 0.421
+  haddock ratio 0.3          POOL  [0.179, 0.015]  f_eff 0.077
+  haddock ratio 0.3          ENC   [0.248, 0.019]  f_eff 0.106
+  haddock ratio 0.3          ENC'  [0.212, 0.021]  f_eff 0.094

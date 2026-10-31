@@ -1,0 +1,41 @@
+========================================================================================================
+1. Prey concentration per metre at the whiting's height: overlap c_j = F_j / H_W vs layer 1 / H_j
+========================================================================================================
+  herring      day 0.0150 vs 0.0143 (x 1.05; 0.28-2.38)   night 0.0020 vs 0.0250 (x 0.08; 0.02-0.20)
+  blue whiting day 0.0300 vs 0.0200 (x 1.50; 0.50-3.00)   night 0.0150 vs 0.0200 (x 0.75; 0.25-2.00)
+  Norway pout  day 0.0700 vs 0.0667 (x 1.05; 0.45-1.35)   night 0.0400 vs 0.0667 (x 0.60; 0.15-1.05)
+  sprat        day 0.0100 vs 0.0143 (x 0.70; 0.14-2.10)   night 0.0010 vs 0.0250 (x 0.04; 0.02-0.20)
+  bed light: mean R^2/R_sat^2 by day (sun > 0) 0.441, night 0.161 (q = 0.16); day fraction of the year 0.499
+    Kd lowK   : day 0.807, night 0.179
+    Kd central: day 0.441, night 0.161
+    Kd highK  : day 0.190, night 0.160
+
+========================================================================================================
+2. Member a per unit member biomass (km2/t/tick, annual mean), adult whiting
+========================================================================================================
+  member          layer  overlap     x             MC 5-50-95 %   follow     x   night/day (thr -5): layer / overlap / follow
+  herring        0.0304   0.0115  0.38   0.0017  0.0089  0.0417   0.0134  0.44   0.31 / 0.05 / 0.24
+  blue whiting   0.0087   0.0212  2.44   0.0042  0.0180  0.0684   0.0212  2.44   1.00 / 0.20 / 0.20
+  Norway pout    0.0289   0.0505  1.75   0.0082  0.0365  0.1175   0.0505  1.75   1.00 / 0.23 / 0.23
+  sprat          0.0304   0.0076  0.25   0.0010  0.0052  0.0310   0.0095  0.31   0.31 / 0.04 / 0.32
+  (layer herring/sprat check: 0.0304 = planktivore_access.py 0.0304)
+
+========================================================================================================
+3. Pool a (pool weights) per adult tonne and per whole whiting tonne (x adult share 0.753)
+========================================================================================================
+  layer (library)              adult 0.0280  whole group 0.0211  night/day 0.36 (thr -5) / 0.33 (thr 0)   share of a: herring 0.86, blue whiting 0.03, Norway pout 0.08, sprat 0.03
+  overlap, static band         adult 0.0153  whole group 0.0116  night/day 0.11 (thr -5) / 0.10 (thr 0)   share of a: herring 0.59, blue whiting 0.14, Norway pout 0.25, sprat 0.01
+  overlap + follow phi 0.3     adult 0.0169  whole group 0.0127  night/day 0.23 (thr -5) / 0.21 (thr 0)   share of a: herring 0.63, blue whiting 0.13, Norway pout 0.22, sprat 0.02
+  MC (independent draws per member) whole group, static band: 5/50/95 % 0.0044 0.0103 0.0304; follow: 0.0050 0.0112 0.0315
+
+========================================================================================================
+4. Stage access (window over whiting >= 20 cm, encounter-weighted members) and the implied take mix
+========================================================================================================
+   field, planktivore-pool prey in whiting stomachs: SMS North Sea pout 0.61 / sprat 0.26 / herring 0.12;
+   Skagerrak Apr 1991 (in the box's rectangles) pout only; Kattegat 1991 sprat 0.46 / herring 0.43 / pout 0.10
+  layer           ratio 0.39: a 0.0211  stage_access [0.152, 0.0098] eff 0.0641  a x eff 0.00135   take: herring 0.60, blue whiting 0.01, Norway pout 0.28, sprat 0.12
+  layer           ratio 0.45: a 0.0211  stage_access [0.255, 0.0245] eff 0.1120  a x eff 0.00236   take: herring 0.68, blue whiting 0.00, Norway pout 0.22, sprat 0.10
+  overlap         ratio 0.39: a 0.0116  stage_access [0.192, 0.0097] eff 0.0790  a x eff 0.00091   take: herring 0.30, blue whiting 0.02, Norway pout 0.64, sprat 0.04
+  overlap         ratio 0.45: a 0.0116  stage_access [0.291, 0.0302] eff 0.1292  a x eff 0.00149   take: herring 0.38, blue whiting 0.02, Norway pout 0.57, sprat 0.04
+  overlap+follow  ratio 0.39: a 0.0127  stage_access [0.187, 0.0097] eff 0.0769  a x eff 0.00098   take: herring 0.33, blue whiting 0.02, Norway pout 0.60, sprat 0.05
+  overlap+follow  ratio 0.45: a 0.0127  stage_access [0.286, 0.0294] eff 0.1267  a x eff 0.00161   take: herring 0.41, blue whiting 0.01, Norway pout 0.53, sprat 0.04

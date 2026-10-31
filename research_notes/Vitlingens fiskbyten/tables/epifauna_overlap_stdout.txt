@@ -1,0 +1,12 @@
+Group a (km2 per t whiting per 6-h tick) = w_J a_J ov_J + (1 - w_J) a_A ov_A
+  library: w_J 0.247 (section 220 stage table), no overlap: 0.2683 (library 0.27)
+  w_J 0.165 (box J/B target, section 230), no overlap:      0.2315
+  juvenile share of the epifauna a at w_J 0.247: 0.56; at 0.165: 0.43
+
+  central: H_b 0.5, H_w 10 (both stages)         a 0.0116  x = a f h B  1.52  share of ceiling 0.60  half-saturation 1/(a f h) 2.49 t/km2 (pool 3.78)
+  H_w 5 (whiting hug the bed)                    a 0.0231  x = a f h B  3.04  share of ceiling 0.75  half-saturation 1/(a f h) 1.24 t/km2 (pool 3.78)
+  H_w 20                                         a 0.0058  x = a f h B  0.76  share of ceiling 0.43  half-saturation 1/(a f h) 4.98 t/km2 (pool 3.78)
+  juveniles pelagic: H_w adult 10, juvenile 30   a 0.0082  x = a f h B  1.08  share of ceiling 0.52  half-saturation 1/(a f h) 3.50 t/km2 (pool 3.78)
+  H_w 5, juveniles 10                            a 0.0181  x = a f h B  2.38  share of ceiling 0.70  half-saturation 1/(a f h) 1.59 t/km2 (pool 3.78)
+
+The a_enc factors themselves (R_bed_inv, p_bed_inv, speed, scan) keep their own MC spread x0.35-4.5 (0.095-1.21 around 0.268, split_encounter_223_stdout.txt); the field clearance test (clearance_test.py) brackets the product at 0.006-0.023.

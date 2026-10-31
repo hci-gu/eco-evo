@@ -1,0 +1,27 @@
+Rest -> benthivores under the overlap convention (a x O per member)
+  central: overlap factor 0.0850 -> a 0.00553; member shares of the new a saithe 0.45, spurdog 0.18, hake 0.21, velvet belly 0.05, anglerfish 0.12; stage access (aw) [0.437, 0.0348]
+           J/B 0.05: f_eff 0.0549, a x f_eff 0.000304 (library 0.003073)
+           J/B 0.08: f_eff 0.0669, a x f_eff 0.000370 (library 0.003862)
+           J/B 0.15: f_eff 0.0951, a x f_eff 0.000526 (library 0.005703)
+  low    : overlap factor 0.0394 -> a 0.00256; member shares of the new a saithe 0.39, spurdog 0.13, hake 0.18, velvet belly 0.05, anglerfish 0.25; stage access (aw) [0.488, 0.0593]
+           J/B 0.05: f_eff 0.0808, a x f_eff 0.000207 (library 0.003073)
+           J/B 0.08: f_eff 0.0936, a x f_eff 0.000240 (library 0.003862)
+           J/B 0.15: f_eff 0.1237, a x f_eff 0.000317 (library 0.005703)
+  high   : overlap factor 0.2025 -> a 0.01318; member shares of the new a saithe 0.57, spurdog 0.15, hake 0.17, velvet belly 0.06, anglerfish 0.05; stage access (aw) [0.375, 0.0196]
+           J/B 0.05: f_eff 0.0373, a x f_eff 0.000492 (library 0.003073)
+           J/B 0.08: f_eff 0.0480, a x f_eff 0.000632 (library 0.003862)
+           J/B 0.15: f_eff 0.0728, a x f_eff 0.000960 (library 0.005703)
+
+Concurrent-search diet shares at J/B 0.15 (all prey visible) vs field; and single-pair saturation x/(1+x):
+  library                                  plk 0.391 zoo 0.114 ben 0.424 wht 0.061 mack 0.011  | sat plk 0.66 zoo 0.26 ben 0.57 wht 0.17 mack 0.05
+  (b) central, other pairs aw access       plk 0.567 zoo 0.243 ben 0.083 wht 0.084 mack 0.023  | sat plk 0.57 zoo 0.26 ben 0.11 wht 0.12 mack 0.05
+  (c) central, + saithe overlaps on the others plk 0.574 zoo 0.250 ben 0.104 wht 0.044 mack 0.028  | sat plk 0.52 zoo 0.23 ben 0.11 wht 0.05 mack 0.05
+  (b) low, other pairs aw access           plk 0.586 zoo 0.251 ben 0.052 wht 0.087 mack 0.023  | sat plk 0.57 zoo 0.26 ben 0.07 wht 0.12 mack 0.05
+  (c) low, + saithe overlaps on the others plk 0.599 zoo 0.261 ben 0.065 wht 0.046 mack 0.029  | sat plk 0.52 zoo 0.23 ben 0.07 wht 0.05 mack 0.05
+  (b) high, other pairs aw access          plk 0.530 zoo 0.227 ben 0.143 wht 0.079 mack 0.021  | sat plk 0.57 zoo 0.26 ben 0.18 wht 0.12 mack 0.05
+  (c) high, + saithe overlaps on the others plk 0.529 zoo 0.230 ben 0.174 wht 0.041 mack 0.026  | sat plk 0.52 zoo 0.23 ben 0.18 wht 0.05 mack 0.05
+  field V1 booked                          plk 0.532 zoo 0.328 ben 0.082 wht 0.046 mack 0.012
+  field V2 CRR164                          plk 0.507 zoo 0.389 ben 0.066 wht 0.026 mack 0.013
+  field V3 CRR219                          plk 0.715 zoo 0.162 ben 0.067 wht 0.040 mack 0.015
+
+Clearance ratio c_ben / c_plk, model / field (b, central): V1 booked 0.95, V2 CRR164 1.14, V3 CRR219 1.57

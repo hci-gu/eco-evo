@@ -1,0 +1,42 @@
+hauls in bbox or grid (Q1+Q3, 2001-25): 426; in grid 262; night hauls 1 (dropped)
+wing spread median 20.0 m, distance median 3426 m, swept 0.0663 km2, net opening median 4.2 m (p10 3.5, p90 5.0)
+
+--- grid, Q3 (months [8, 9]), day hauls 102 ---
+class    hauls  years | herring t/km2 raw (boot 10-90 %)  share of hauls with herring | <13 cm share | Lq factor | herring kg/h | mean L (cm) | benthivores t/km2 | net opening m
+<80         20    15 |  1.963 (1.156-2.904)  1.00 | 0.22 | x0.84 |   271.4 |  16.4 |  2.848 | 4.2
+80-110      22    16 |  1.895 (0.827-3.059)  0.95 | 0.00 | x0.88 |   277.7 |  19.0 |  2.372 | 4.1
+110-130      4     3 |  0.152 (0.060-0.243)  1.00 | 0.02 | x0.98 |    23.8 |  25.0 |  5.205 | 4.2
+130-150      9     7 |  0.354 (0.179-0.587)  1.00 | 0.00 | x1.00 |    49.8 |  26.5 |  1.402 | 4.1
+150-200     30    19 |  0.098 (0.044-0.163)  0.77 | 0.00 | x1.00 |    13.5 |  27.3 |  0.820 | 4.0
+200-300     17    16 |  0.023 (0.010-0.039)  0.82 | 0.00 | x1.00 |     2.9 |  27.3 |  0.383 | 4.2
+
+--- grid, Q1 (months [1, 2]), day hauls 159 ---
+class    hauls  years | herring t/km2 raw (boot 10-90 %)  share of hauls with herring | <13 cm share | Lq factor | herring kg/h | mean L (cm) | benthivores t/km2 | net opening m
+<80         46    24 |  0.458 (0.328-0.596)  1.00 | 0.04 | x0.82 |    59.8 |  17.8 |  1.373 | 4.4
+80-110      51    25 |  0.158 (0.117-0.205)  0.96 | 0.01 | x0.92 |    22.0 |  20.8 |  1.396 | 4.2
+110-130      6     5 |  0.276 (0.103-0.459)  0.67 | 0.00 | x0.96 |    40.7 |  21.6 |  0.522 | 4.3
+130-150     31    23 |  0.220 (0.127-0.329)  1.00 | 0.01 | x0.91 |    30.4 |  20.9 |  0.718 | 4.1
+150-200      1     1 |  0.058 (0.058-0.058)  1.00 | 0.00 | x1.00 |     8.2 |  22.9 |  0.052 | 4.1
+200-300     24    24 |  0.327 (0.140-0.532)  1.00 | 0.00 | x0.99 |    45.3 |  23.9 |  0.633 | 4.0
+
+--- bbox, Q3 (months [8, 9]), day hauls 180 ---
+class    hauls  years | herring t/km2 raw (boot 10-90 %)  share of hauls with herring | <13 cm share | Lq factor | herring kg/h | mean L (cm) | benthivores t/km2 | net opening m
+<80         58    23 |  4.290 (2.696-6.165)  1.00 | 0.12 | x0.91 |   579.5 |  18.2 |  2.299 | 4.4
+80-110      44    23 |  1.907 (0.816-3.110)  0.93 | 0.03 | x0.94 |   282.7 |  20.2 |  4.833 | 4.0
+110-130      4     3 |  0.152 (0.060-0.243)  1.00 | 0.02 | x0.98 |    23.8 |  25.0 |  5.205 | 4.2
+130-150     17    12 |  0.663 (0.177-1.209)  0.82 | 0.00 | x0.99 |    98.4 |  22.8 |  1.234 | 4.1
+150-200     39    20 |  0.409 (0.106-0.729)  0.79 | 0.00 | x1.00 |    59.7 |  26.8 |  0.973 | 4.0
+200-300     18    17 |  0.022 (0.009-0.036)  0.83 | 0.00 | x1.00 |     2.8 |  27.2 |  0.388 | 4.2
+
+--- bbox, Q1 (months [1, 2]), day hauls 245 ---
+class    hauls  years | herring t/km2 raw (boot 10-90 %)  share of hauls with herring | <13 cm share | Lq factor | herring kg/h | mean L (cm) | benthivores t/km2 | net opening m
+<80        100    24 |  0.669 (0.458-0.914)  1.00 | 0.02 | x0.83 |    89.3 |  17.9 |  1.113 | 4.4
+80-110      71    25 |  0.177 (0.135-0.221)  0.96 | 0.01 | x0.93 |    24.1 |  21.1 |  1.290 | 4.3
+110-130      7     6 |  0.236 (0.088-0.393)  0.57 | 0.00 | x0.96 |    34.9 |  21.6 |  0.653 | 4.3
+130-150     42    24 |  0.206 (0.123-0.295)  0.98 | 0.01 | x0.91 |    28.4 |  20.9 |  0.787 | 4.1
+150-200      1     1 |  0.058 (0.058-0.058)  1.00 | 0.00 | x1.00 |     8.2 |  22.9 |  0.052 | 4.1
+200-300     24    24 |  0.327 (0.138-0.539)  1.00 | 0.00 | x0.99 |    45.3 |  23.9 |  0.633 | 4.0
+wrote /home/simon/eco-evo/research_notes/Bottenfiskens sillbyte/tables/reconcile_gov_hauls.csv (425 day hauls)
+
+wrote /home/simon/eco-evo/research_notes/Bottenfiskens sillbyte/tables/reconcile_gov_by_class.csv
+t/km2 per kg/h (herring, grid Q3 hauls): 0.0070

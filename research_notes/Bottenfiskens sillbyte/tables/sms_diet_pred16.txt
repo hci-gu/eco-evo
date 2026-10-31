@@ -1,0 +1,79 @@
+SMS cod stomach samples: 128 (year x quarter x length class), rows 2328
+
+Quarter all: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30       2441  0.047  0.016  0.008  0.073  0.856   herring 0.007, sprat 0.012, Norway pout 0.028
+  30-39     1954  0.149  0.049  0.024  0.086  0.691   herring 0.015, sprat 0.011, Norway pout 0.122
+  40-49     1174  0.198  0.057  0.067  0.048  0.630   herring 0.051, sprat 0.009, Norway pout 0.137
+  50-69     1584  0.266  0.063  0.103  0.024  0.544   herring 0.111, sprat 0.008, Norway pout 0.147
+  >=70      1255  0.197  0.098  0.119  0.010  0.575   herring 0.121, sprat 0.005, Norway pout 0.072
+  all       8408  0.155  0.051  0.055  0.054  0.686   herring 0.052, sprat 0.010, Norway pout 0.094
+
+Quarter 1: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        839  0.077  0.006  0.003  0.048  0.867   herring 0.010, sprat 0.034, Norway pout 0.033
+  30-39      612  0.223  0.057  0.042  0.069  0.608   herring 0.025, sprat 0.021, Norway pout 0.177
+  40-49      389  0.214  0.058  0.112  0.035  0.581   herring 0.078, sprat 0.023, Norway pout 0.113
+  50-69      659  0.283  0.072  0.173  0.020  0.452   herring 0.114, sprat 0.013, Norway pout 0.156
+  >=70       669  0.192  0.105  0.166  0.003  0.533   herring 0.120, sprat 0.007, Norway pout 0.065
+  all       3168  0.189  0.057  0.094  0.035  0.625   herring 0.066, sprat 0.020, Norway pout 0.103
+
+Quarter 2: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        575  0.003  0.003  0.000  0.045  0.950   herring 0.000, sprat 0.001, Norway pout 0.002
+  30-39      325  0.114  0.007  0.002  0.069  0.807   herring 0.005, sprat 0.009, Norway pout 0.099
+  40-49      244  0.101  0.016  0.032  0.053  0.798   herring 0.003, sprat 0.002, Norway pout 0.096
+  50-69      309  0.218  0.039  0.058  0.043  0.642   herring 0.109, sprat 0.005, Norway pout 0.104
+  >=70       206  0.124  0.079  0.057  0.021  0.719   herring 0.089, sprat 0.001, Norway pout 0.033
+  all       1659  0.094  0.022  0.023  0.048  0.814   herring 0.033, sprat 0.004, Norway pout 0.058
+
+Quarter 3: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        738  0.055  0.016  0.019  0.147  0.763   herring 0.010, sprat 0.000, Norway pout 0.044
+  30-39      759  0.090  0.048  0.025  0.131  0.706   herring 0.016, sprat 0.003, Norway pout 0.071
+  40-49      397  0.270  0.050  0.047  0.068  0.565   herring 0.065, sprat 0.003, Norway pout 0.202
+  50-69      448  0.305  0.058  0.039  0.024  0.575   herring 0.141, sprat 0.004, Norway pout 0.160
+  >=70       254  0.267  0.084  0.057  0.019  0.573   herring 0.167, sprat 0.000, Norway pout 0.100
+  all       2596  0.162  0.044  0.032  0.097  0.665   herring 0.058, sprat 0.002, Norway pout 0.101
+
+Quarter 4: diet share by mass (N.haul-weighted mean of sample compositions)
+  band    N.haul    plk    ben    wht   sand  other   planktivores by species
+  <30        289  0.028  0.072  0.011  0.009  0.879   herring 0.000, sprat 0.001, Norway pout 0.027
+  30-39      258  0.188  0.089  0.008  0.016  0.699   herring 0.000, sprat 0.017, Norway pout 0.171
+  40-49      144  0.119  0.142  0.065  0.015  0.659   herring 0.021, sprat 0.003, Norway pout 0.095
+  50-69      168  0.182  0.087  0.081  0.005  0.645   herring 0.025, sprat 0.001, Norway pout 0.156
+  >=70       126  0.204  0.123  0.100  0.009  0.564   herring 0.083, sprat 0.004, Norway pout 0.117
+  all        985  0.132  0.096  0.041  0.011  0.720   herring 0.018, sprat 0.006, Norway pout 0.108
+
+Planktivore-pool prey eaten by cod: prey length (cm) and prey/predator length ratio, mass-weighted
+(weight = stomcon x N.haul); percentiles p05 / p50 / p95 / p99
+  herring      <30    n   22  prey L   8.5   8.5   8.5  12.5   ratio 0.31 0.31 0.38 0.45
+  herring      30-39  n   46  prey L   8.5   8.5  13.5  22.5   ratio 0.23 0.24 0.42 0.60
+  herring      40-49  n   43  prey L   8.5   8.5  17.5  22.5   ratio 0.19 0.19 0.39 0.50
+  herring      50-69  n   96  prey L   8.5  11.0  22.5  22.5   ratio 0.13 0.17 0.35 0.35
+  herring      >=70   n  109  prey L   7.5  11.0  17.5  22.5   ratio 0.08 0.12 0.21 0.30
+  herring      all    n  316  prey L   7.5  11.0  17.5  22.5   ratio 0.08 0.17 0.35 0.39
+  sprat        <30    n   24  prey L   5.5   6.0   9.0  12.5   ratio 0.22 0.31 0.45 0.49
+  sprat        30-39  n   27  prey L   6.0   6.0   9.0   9.0   ratio 0.17 0.17 0.26 0.28
+  sprat        40-49  n   28  prey L   6.0   8.5  12.5  12.5   ratio 0.13 0.19 0.28 0.28
+  sprat        50-69  n   35  prey L   6.0   8.5  13.5  13.5   ratio 0.10 0.15 0.21 0.21
+  sprat        >=70   n   37  prey L   6.0   6.0  12.5  12.5   ratio 0.07 0.07 0.15 0.15
+  sprat        all    n  151  prey L   5.5   6.0  12.5  13.5   ratio 0.08 0.22 0.40 0.49
+  Norway pout  <30    n   33  prey L   5.5   7.5   8.5  12.5   ratio 0.20 0.29 0.38 0.56
+  Norway pout  30-39  n   83  prey L   5.5   8.5  11.0  12.5   ratio 0.16 0.23 0.34 0.36
+  Norway pout  40-49  n   52  prey L   6.0   6.5   9.0  12.5   ratio 0.13 0.14 0.20 0.28
+  Norway pout  50-69  n   87  prey L   5.5   8.5  12.5  12.5   ratio 0.09 0.14 0.20 0.23
+  Norway pout  >=70   n   92  prey L   5.5   8.5  12.5  13.5   ratio 0.07 0.10 0.15 0.17
+  Norway pout  all    n  347  prey L   5.5   8.5  11.0  12.5   ratio 0.09 0.17 0.31 0.36
+  all P        <30    n   79  prey L   5.5   7.5   9.0  12.5   ratio 0.20 0.31 0.40 0.56
+  all P        30-39  n  156  prey L   5.5   8.5  11.0  12.5   ratio 0.16 0.23 0.34 0.36
+  all P        40-49  n  123  prey L   6.0   7.5  13.5  17.5   ratio 0.13 0.17 0.30 0.39
+  all P        50-69  n  218  prey L   5.5   9.0  17.5  22.5   ratio 0.10 0.15 0.32 0.35
+  all P        >=70   n  238  prey L   6.0   9.0  17.5  22.5   ratio 0.07 0.11 0.19 0.25
+  all P        all    n  814  prey L   5.5   8.5  17.5  22.5   ratio 0.09 0.17 0.34 0.40
+
+Prey length of herring eaten by quarter (mass-weighted p05/p50/p95), cod >= 20 cm:
+  Q1: n 145  7.5 / 8.5 / 12.5 cm
+  Q2: n 29  11.0 / 11.0 / 17.5 cm
+  Q3: n 121  8.5 / 12.5 / 22.5 cm
+  Q4: n 21  12.5 / 13.5 / 22.5 cm

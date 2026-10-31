@@ -1,0 +1,29 @@
+1981 whiting predator rows near the box: 28
+fish per quarter x rectangle: {(1, '42F6'): 2, (1, '43F6'): 15, (1, '43F7'): 27, (1, '43F8'): 51, (4, '42F7'): 66, (4, '43F7'): 30}
+
+Q1: 95 whiting, length classes 15-30 cm; prey counts:
+   other invertebrate       672
+   krill                    120
+   shrimp                    81
+   mysid                      6
+   crab                       3
+   other fish                 3
+   clupeid unid               3
+   'other invertebrate' leaves: Chaetognatha 411, Limacina retroversa 93, Amphipoda 51, Calanoida 45, Crustacea 30, Polychaeta 15
+  mass shares (central): planktivores 0.17, all fish 0.23; top: shrimp 0.44, other invertebrate 0.23, clupeid unid 0.17, krill 0.10, other fish 0.06, crab 0.01
+  mass shares (fish weights x0.5): planktivores 0.10, all fish 0.13; top: shrimp 0.49, other invertebrate 0.26, krill 0.11, clupeid unid 0.10, other fish 0.03, crab 0.01
+  mass shares (fish weights x2): planktivores 0.28, all fish 0.38; top: shrimp 0.35, clupeid unid 0.28, other invertebrate 0.18, other fish 0.10, krill 0.08, crab 0.00
+
+Q4: 96 whiting, length classes 10-40 cm; prey counts:
+   other invertebrate       240
+   crab                     127
+   shrimp                    22
+   other fish                 9
+   sandeel                    3
+   sprat                      2
+   Norway pout                2
+   clupeid unid               1
+   'other invertebrate' leaves: Hyperiidea 108, Limacina retroversa 60, Crustacea 23, Amphipoda 18, Cumacea 13, Polychaeta 5
+  mass shares (central): planktivores 0.27, all fish 0.52; top: crab 0.26, other fish 0.19, sprat 0.13, shrimp 0.13, other invertebrate 0.09, Norway pout 0.07
+  mass shares (fish weights x0.5): planktivores 0.18, all fish 0.35; top: crab 0.36, shrimp 0.17, other fish 0.13, other invertebrate 0.12, sprat 0.09, Norway pout 0.05
+  mass shares (fish weights x2): planktivores 0.35, all fish 0.69; top: other fish 0.25, sprat 0.17, crab 0.17, Norway pout 0.09, sandeel 0.08, shrimp 0.08

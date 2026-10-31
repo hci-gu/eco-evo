@@ -1,0 +1,29 @@
+Per member: model clearance ratio vs field (> 1 = model too high), benthivores and whiting relative to planktivores
+
+saithe: a per member tonne plk 0.00587 ben 0.06249 wht 0.01250 (ben/plk 10.6)
+  lib access: plk [0.674, 0.217] ben [0.358, 0.0020] wht [0.517, 0.076] -> model c_ben/c_plk 1.51, c_wht/c_plk 0.81
+       field CRR 219                c_ben/c_plk 0.191 -> model/field    7.9; c_wht/c_plk 0.202 ->    4.0
+       field CRR 164                c_ben/c_plk 0.282 -> model/field    5.4; c_wht/c_plk 0.036 ->   22.3
+       field SMS obs                c_ben/c_plk 0.174 -> model/field    8.7; c_wht/c_plk 0.102 ->    8.0
+  aw  access: plk [0.532, 0.101] ben [0.258, 0.0003] wht [0.360, 0.029] -> model c_ben/c_plk 1.57, c_wht/c_plk 0.68
+       field CRR 219                c_ben/c_plk 0.191 -> model/field    8.2; c_wht/c_plk 0.202 ->    3.3
+       field CRR 164                c_ben/c_plk 0.282 -> model/field    5.6; c_wht/c_plk 0.036 ->   18.6
+       field SMS obs                c_ben/c_plk 0.174 -> model/field    9.0; c_wht/c_plk 0.102 ->    6.7
+
+spurdog: a per member tonne plk 0.00337 ben 0.06879 wht 0.01376 (ben/plk 20.4)
+  lib access: plk [0.988, 0.810] ben [0.925, 0.0602] wht [0.979, 0.468] -> model c_ben/c_plk 4.42, c_wht/c_plk 2.57
+       field Ecopath 1991           c_ben/c_plk 0.418 -> model/field   10.6; c_wht/c_plk 2.523 ->    1.0
+  aw  access: plk [0.959, 0.577] ben [0.721, 0.0211] wht [0.937, 0.416] -> model c_ben/c_plk 3.56, c_wht/c_plk 2.84
+       field Ecopath 1991           c_ben/c_plk 0.418 -> model/field    8.5; c_wht/c_plk 2.523 ->    1.1
+
+hake: a per member tonne plk 0.00741 ben 0.08887 wht 0.01778 (ben/plk 12.0)
+  lib access: plk [0.898, 0.638] ben [0.730, 0.1979] wht [0.838, 0.461] -> model c_ben/c_plk 4.52, c_wht/c_plk 1.70
+       field ICES Skagerrak 2000+   c_ben/c_plk 0.011 -> model/field  421.7; c_wht/c_plk 1.185 ->    1.4
+  aw  access: plk [0.671, 0.249] ben [0.441, 0.0381] wht [0.565, 0.178] -> model c_ben/c_plk 2.88, c_wht/c_plk 1.41
+       field ICES Skagerrak 2000+   c_ben/c_plk 0.011 -> model/field  269.0; c_wht/c_plk 1.185 ->    1.2
+
+anglerfish: a per member tonne plk 0.00038 ben 0.02685 wht 0.00537 (ben/plk 70.4)
+  lib access: plk [0.998, 0.976] ben [0.987, 0.5729] wht [0.997, 0.895] -> model c_ben/c_plk 45.44, c_wht/c_plk 13.05
+       field Ecopath 1991           c_ben/c_plk 1.674 -> model/field   27.2; c_wht/c_plk 3.449 ->    3.8
+  aw  access: plk [0.912, 0.622] ben [0.850, 0.1960] wht [0.900, 0.638] -> model c_ben/c_plk 28.30, c_wht/c_plk 13.11
+       field Ecopath 1991           c_ben/c_plk 1.674 -> model/field   16.9; c_wht/c_plk 3.449 ->    3.8

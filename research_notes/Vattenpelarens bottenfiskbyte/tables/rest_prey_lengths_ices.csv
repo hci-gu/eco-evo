@@ -1,0 +1,108 @@
+pred,area,period,pred_L_cm,prey,prey_L_cm,mass_g,quarter
+spurdog,CSNS,1991,60.0,Norway pout,12.0,15.64,2
+anglerfish,NNS,1991,35.0,whiting,25.0,157.71,1
+spurdog,CSNS,1991,8.0,sandeel,7.0,1.01,2
+spurdog,CSNS,1991,8.0,Norway pout,12.0,14.06,2
+spurdog,CSNS,1991,8.0,herring,30.0,50.0,2
+spurdog,CSNS,1991,8.0,herring,20.0,31.6,2
+spurdog,CSNS,1991,8.0,sandeel,15.0,35.400002,2
+spurdog,CSNS,1991,8.0,sandeel,25.0,37.869999,2
+spurdog,CSNS,1991,8.0,Pholis gunnellus,15.0,14.9,2
+spurdog,CSNS,1991,8.0,flatfish/ray/gurnard,10.0,25.1,2
+spurdog,CSNS,1991,8.0,flatfish/ray/gurnard,6.0,2.06,2
+spurdog,CSNS,1991,8.0,Echiichthys vipera,10.0,28.5,2
+spurdog,CSNS,1991,8.0,Echiichthys vipera,8.0,13.3,2
+spurdog,CSNS,1991,8.0,flatfish/ray/gurnard,15.0,36.700001,2
+spurdog,CSNS,1991,10.0,herring,10.0,16.200001,2
+spurdog,CSNS,1991,10.0,whiting,20.0,126.5,2
+spurdog,CSNS,1991,10.0,Callionymus lyra,10.0,11.3,2
+spurdog,CSNS,1991,10.0,herring,20.0,45.5,2
+spurdog,CSNS,1991,40.0,sandeel,15.0,18.0,2
+ling,NNS,1991,30.0,Norway pout,6.0,6.49,3
+anglerfish,CSNS,2000+,51.0,herring,17.8,77.16,1
+anglerfish,Skagerrak,2000+,50.0,flatfish/ray/gurnard,14.8,57.07,3
+anglerfish,CSNS,2000+,41.0,flatfish/ray/gurnard,12.5,25.3,3
+anglerfish,CSNS,2000+,43.0,flatfish/ray/gurnard,17.0,48.28,3
+anglerfish,NNS,2000+,58.0,Chondrichthyes,20.4,7.35,3
+anglerfish,NNS,2000+,6.2,Trachurus trachurus,32.5,314.0,3
+anglerfish,NNS,2000+,57.0,Trisopterus esmarki,9.7,6.34,3
+anglerfish,NNS,2000+,57.0,Trisopterus esmarki,8.0,3.76,3
+anglerfish,CSNS,2000+,51.0,herring,17.8,77.16,1
+anglerfish,Skagerrak,2000+,29.0,cod,8.0,3.74,3
+anglerfish,Skagerrak,2000+,48.0,Anguilla anguilla,17.0,13.13,3
+pollack,NNS,2000+,6.9,Trisopterus esmarki,15.0,21.04,1
+pollack,NNS,2000+,6.6,whiting,17.4,36.07,1
+pollack,NNS,2000+,6.6,Trisopterus esmarki,7.0,3.0,1
+pollack,NNS,2000+,6.6,whiting,24.0,73.92,1
+pollack,NNS,2000+,6.6,whiting,17.0,36.2,1
+hake,CSNS,2000+,40.0,cod,12.4,14.7,3
+hake,NNS,2000+,33.0,Trisopterus esmarki,13.5,20.07,1
+ling,CSNS,2000+,6.4,flatfish/ray/gurnard,16.6,89.51,3
+ling,NNS,2000+,6.3,Trisopterus esmarki,15.5,29.56,1
+pollack,NNS,2000+,60.0,herring,20.3,54.44,1
+hake,Skagerrak,2000+,21.0,Trisopterus esmarki,10.4,7.69,1
+hake,CSNS,2000+,7.2,haddock,25.2,158.67,3
+hake,CSNS,2000+,7.2,haddock,24.0,114.83,3
+pollack,CSNS,2000+,55.0,sprat,9.0,43.495,3
+hake,Kattegat,2000+,26.0,whiting,9.0,3.97,3
+hake,Kattegat,2000+,26.0,whiting,9.0,4.6,3
+hake,Kattegat,2000+,24.0,whiting,9.0,4.97,3
+hake,Kattegat,2000+,23.0,whiting,12.0,7.97,3
+hake,Kattegat,2000+,7.6,flatfish/ray/gurnard,13.0,16.75,3
+hake,Kattegat,2000+,7.5,herring,25.0,133.86,3
+hake,Kattegat,2000+,21.0,sprat,8.0,3.16,3
+hake,Kattegat,2000+,6.2,whiting,24.0,106.76,3
+hake,Skagerrak,2000+,41.0,herring,18.0,41.95,3
+hake,Skagerrak,2000+,44.0,clupeid unid,13.0,20.66,3
+hake,Skagerrak,2000+,44.0,clupeid unid,12.0,17.1,3
+hake,Skagerrak,2000+,7.4,clupeid unid,7.0,1.58,3
+hake,Skagerrak,2000+,28.0,herring,13.0,13.33,3
+hake,Skagerrak,2000+,26.0,sprat,11.0,9.47,3
+hake,Skagerrak,2000+,7.8,herring,23.0,49.69,3
+hake,Skagerrak,2000+,8.5,whiting,14.0,18.73,3
+hake,Skagerrak,2000+,8.5,herring,9.0,4.63,3
+hake,Skagerrak,2000+,8.5,whiting,14.0,20.53,3
+hake,Skagerrak,2000+,8.5,whiting,12.0,12.87,3
+hake,Skagerrak,2000+,8.5,herring,9.0,3.95,3
+hake,Skagerrak,2000+,56.0,herring,14.0,17.99,3
+hake,Skagerrak,2000+,56.0,herring,11.0,15.36,3
+hake,Skagerrak,2000+,56.0,herring,14.0,21.5,3
+hake,Skagerrak,2000+,56.0,herring,12.0,16.19,3
+hake,Skagerrak,2000+,56.0,herring,14.0,12.03,3
+hake,Skagerrak,2000+,56.0,herring,17.0,38.9,3
+hake,Skagerrak,2000+,56.0,herring,14.0,19.67,3
+hake,Skagerrak,2000+,56.0,herring,14.0,20.85,3
+hake,Skagerrak,2000+,36.0,herring,12.0,13.25,3
+hake,Skagerrak,2000+,36.0,herring,15.5,20.86,3
+hake,Skagerrak,2000+,19.0,herring,7.5,1.28,3
+hake,Skagerrak,2000+,19.0,herring,9.0,3.98,3
+hake,Skagerrak,2000+,40.0,herring,12.0,12.05,3
+hake,Skagerrak,2000+,40.0,herring,11.0,11.46,3
+hake,Skagerrak,2000+,40.0,herring,12.0,11.6,3
+hake,Skagerrak,2000+,40.0,herring,13.0,13.92,3
+hake,Skagerrak,2000+,31.0,whiting,13.0,12.97,3
+hake,Skagerrak,2000+,34.0,herring,14.0,14.5,3
+hake,Skagerrak,2000+,34.0,herring,11.0,8.76,3
+hake,Skagerrak,2000+,42.0,sprat,9.0,6.51,3
+hake,Skagerrak,2000+,52.0,herring,18.0,43.55,3
+hake,Skagerrak,2000+,6.6,herring,22.0,95.7,3
+hake,Skagerrak,2000+,7.5,sprat,11.0,9.31,3
+hake,Skagerrak,2000+,7.5,sprat,11.0,12.75,3
+hake,Skagerrak,2000+,7.7,whiting,14.0,22.23,3
+ling,Skagerrak,2000+,8.6,herring,24.0,86.04,3
+hake,Skagerrak,2000+,24.0,whiting,6.0,2.74,3
+hake,Skagerrak,2000+,28.0,sprat,8.0,4.56,3
+hake,Skagerrak,2000+,6.9,whiting,7.5,4.69,3
+hake,Skagerrak,2000+,26.0,whiting,10.0,7.38,3
+hake,Skagerrak,2000+,27.0,sprat,8.0,4.04,3
+hake,Skagerrak,2000+,22.0,whiting,7.0,3.12,3
+hake,Kattegat,2000+,6.7,sprat,8.0,4.11,3
+hake,Kattegat,2000+,6.7,sprat,8.0,4.8,3
+hake,Kattegat,2000+,6.7,sprat,7.0,2.57,3
+hake,Kattegat,2000+,6.7,herring,8.0,3.15,3
+hake,Kattegat,2000+,6.7,sprat,7.0,2.72,3
+hake,CSNS,2000+,29.0,Norway pout,14.0,23.27,3
+hake,NNS,2000+,48.0,herring,25.0,150.34,3
+hake,NNS,2000+,40.0,Norway pout,17.6,40.309,1
+saithe,NNS,2000+,45.0,Norway pout,9.3,6.097,1
+anglerfish,NNS,2000+,6.2,Norway pout,16.4,27.592,1
