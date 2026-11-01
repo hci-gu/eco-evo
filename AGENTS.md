@@ -42,14 +42,14 @@ fabricates mass.
 | `train.py` | ARS training entry point. Requires `--project`. Co-evolution default-on. |
 | `inference.py` | Runs trained policies from `results/<run-name>/policy_<fg>.pth`. |
 | `run_mareld_mvp.py`, `compare_scenarios.py` | MVP scenario run / "noll" vs "projekt" comparison. |
-| `mareld2.yaml` | Project manifest (`--project` value). |
+| `mareld2.yaml` | Project manifest (`--project` value). An optional top-level `library:` key (relative to the manifest) replaces `fgconfig/fg_library.yaml` for every run built from it; an explicit library path (probes, `train_gpu.py --library`) still wins (section 232.5). |
 | `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. |
 | `fgconfig/fg_library.yaml` | Central biological library (species/interaction/impact definitions). |
 | `lib/environments/ecosystem.py` | `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
 | `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs, paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
-| `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). |
+| `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). An optional `inference_start_day_of_year` in the block fixes the start day of inference worlds and the long-run probe (mode `inference`) while training worlds keep `start_day_of_year` (section 232.6). |
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
 | `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
@@ -221,6 +221,9 @@ fabricates mass.
   thirds). Planktivores -> zooplankton is Type II
   (`functional_response: 2`) with `visibility_floor` 0.5 (section 162).
 - Movement: slice-assign, per-action metabolic cost; energy follows biomass.
+  A DM with `movement_speed` 0 has its four move actions masked in both
+  engines; zooplankton since section 232.4 (it drifts with the currents
+  and chooses only eat or rest/hide - the material of diel migration).
   `min_split_biomass` is one indivisible unit (porpoises: one animal):
   below it a cell moves whole (argmax), and from it no spatial fraction
   of a split holds less than one unit - sub-unit fractions go to the
@@ -264,17 +267,17 @@ fabricates mass.
   loss cannot stand for a window group's net import). The remaining K
   are temporary masks over named defects: planktivores (their g pays
   booked M2 the trained benthivores and whiting do not realise),
-  whiting (import above need, epifauna overshoot); seals separate. The
+  whiting (import above need, epifauna overshoot). The
   open-population form (imported recruits into J, somatic growth
   budget, emigration, exchange for window groups) is the replacement.
   Without K the old gadoids grew at r_max - F, ate the pelagic pool down
   and crashed (184.13), and the pelagic pool grazed the zooplankton
-  down year after year (185.17-19). Seals: K 0.0075
-  (27 t, no hunt impact; sections 199, 206) - the grid holds the
-  offshore tail of a metapopulation regulated off the grid; without it
-  they grew ~6 %/yr on the old gadoids, halved them and crashed; at K = the
-  15 t start they settled at ~0.5 K, because the loss is charged at
-  r_max while they realise ~0.06 /yr net. Mackerel has no K (228, user: the most mobile window group). Porpoises have no K; their
+  down year after year (185.17-19). Seals have no K since section
+  232.3 (was 0.0075, sections 199, 206, against growth on the old
+  gadoids): in a frozen fix87 run they declined by starvation with or
+  without it. Without K on whiting and planktivores the same run grew
+  planktivores to 1.9x start in 3 years and whiting halved the
+  epifauna. Mackerel has no K (228, user: the most mobile window group). Porpoises have no K; their
   attack rates are x1.5 since section 206 (they fell to ~0.3 of the
   start in 15-20 years at the old rates).
   With the daylight calendar a producer with `light_saturation` grows at

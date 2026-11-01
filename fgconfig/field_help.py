@@ -986,6 +986,47 @@ FIELD_HELP = {
         "a pair cannot carry both. Section 223.32, research_notes/"
         "\"Arsungarnas andel\" (A-ring) parameters_B.md."
     ),
+    "matrix:max_intake_rate": (
+        "Attack Rate a of this pair (the library key max_intake_rate on "
+        "the pair; empty = the row's own Max Intake Rate in the FG "
+        "Editor).\n\n"
+        "Type II: intake = a B_prey / (1 + a h B_prey + w B_pred) per "
+        "tonne of predator, a per tonne of prey per cell; the "
+        "half-saturation density is 1/(a h). Type III: a is per "
+        "(t/cell)^2 and the half-saturation 1/sqrt(a h). The ceiling 1/h "
+        "(Handling time) does not move with a. Derive a from encounter "
+        "theory or diet data, never from model output (section 220). "
+        "Library values are per 6 h tick; another tick length rescales "
+        "them at load."
+    ),
+    "matrix:functional_response": (
+        "Functional Response: the Holling type of this pair, 2 or 3 "
+        "(empty = by diet breadth: a specialist gets Type III, a "
+        "generalist Type II; section 141).\n\n"
+        "Type III (prey switching) gives the prey a refuge at low "
+        "density; its attack rate is per (t/cell)^2. Measured prey "
+        "switching in North Sea gadoids is negative, so every fish -> "
+        "fish pair is Type II (section 209)."
+    ),
+    "matrix:mixed_layer_reference_m": (
+        "Mixed-Layer Reference Depth M_ref in metres (empty = a constant "
+        "attack rate).\n\n"
+        "A grazer feeds on concentration, not on the column total: with "
+        "M_ref the pair's attack rate is a M_ref / M(t), M(t) the month's "
+        "mixed-layer depth from the Daylight light climate (a prey in the "
+        "subsurface layer: M_ref / H(t), H the layer's thickness; "
+        "sections 177, 180). The library a is then the value at a mixed "
+        "layer of M_ref. Needs the Daylight calendar."
+    ),
+    "matrix:accessible_fraction": (
+        "Accessible Fraction f in (0, 1] (empty = 1): the share of the "
+        "column group within the row's reach (infauna out of reach, "
+        "Nephrops in burrows, prey outside the size window).\n\n"
+        "Scales the prey biomass in the pair's functional response and "
+        "harvest cap; the observations are untouched. On a group with a "
+        "Juvenile Stage a pair takes either this or a Stage Access "
+        "(f_J, f_A), not both (section 208)."
+    ),
     "matrix:impact_affects": (
         "Impact Affects: checked = the row group is affected by the "
         "column impact (fishing, noise, ...). The effect itself is "

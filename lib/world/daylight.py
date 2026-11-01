@@ -420,7 +420,22 @@ def _parse_light_climate(block):
     return out
 
 
-def parse_settings(project):
+def _parse_start_day(value, key):
+    """A start-day manifest value -> 1..365, or None for random."""
+    if value in (None, "", "random"):
+        return None
+    try:
+        start_day = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"daylight {key} must be 1-365 "
+                         f"or 'random', got {value!r}")
+    if not 1 <= start_day <= DAYS_PER_YEAR:
+        raise ValueError(f"daylight {key} must be 1-365, "
+                         f"got {start_day}")
+    return start_day
+
+
+def parse_settings(project, mode="train"):
     """``simulation_settings.daylight`` -> dict, or None when disabled.
 
     Returns ``{"latitude_deg": float, "start_day_of_year": int | None,
@@ -428,7 +443,10 @@ def parse_settings(project):
     the light climate (Kd, monthly mixed-layer depth and cloud
     transmission) is only needed by light-limited growth. Raises ValueError on an enabled
     block that cannot be honoured, rather than silently running
-    without light.
+    without light. With ``mode="inference"`` an
+    ``inference_start_day_of_year`` in the block replaces
+    ``start_day_of_year`` (inference worlds and the long-run probe start
+    on that day while training worlds keep theirs, section 232.6).
     """
     settings = ((project or {}).get("simulation_settings") or {})
     block = settings.get("daylight") if isinstance(settings, dict) else None
@@ -442,18 +460,12 @@ def parse_settings(project):
     if not -90.0 <= latitude <= 90.0:
         raise ValueError(f"daylight latitude_deg {latitude} outside "
                          "[-90, 90]")
-    start = block.get("start_day_of_year", "random")
-    if start in (None, "", "random"):
-        start_day = None
-    else:
-        try:
-            start_day = int(start)
-        except (TypeError, ValueError):
-            raise ValueError("daylight start_day_of_year must be 1-365 "
-                             f"or 'random', got {start!r}")
-        if not 1 <= start_day <= DAYS_PER_YEAR:
-            raise ValueError("daylight start_day_of_year must be 1-365, "
-                             f"got {start_day}")
+    start_day = _parse_start_day(block.get("start_day_of_year", "random"),
+                                 "start_day_of_year")
+    inference_day = _parse_start_day(block.get("inference_start_day_of_year"),
+                                     "inference_start_day_of_year")
+    if mode == "inference" and inference_day is not None:
+        start_day = inference_day
     return {"latitude_deg": latitude, "start_day_of_year": start_day,
             "light_climate": _parse_light_climate(block)}
 

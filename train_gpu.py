@@ -108,7 +108,8 @@ def main(argv=None, *, on_step=None):
         # precision experiments only after reference comparisons on the target.
         if torch.cuda.is_available():
             torch.backends.cuda.matmul.allow_tf32 = False
-        spec = ProjectSpec(builder_from_args(args), seed=args.seed)
+        builder = builder_from_args(args)
+        spec = ProjectSpec(builder, seed=args.seed)
         targets = targets_from_args(args, spec.env.dm_ids)
         trainer = TensorARSTrainer(spec, device=args.device, **options)
         trainer.set_temperature(args.temp_start)
@@ -132,6 +133,8 @@ def main(argv=None, *, on_step=None):
     except (ValueError, RuntimeError, OSError, argparse.ArgumentTypeError) as error:
         parser.error(str(error))
     metadata = {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}
+    # The library actually read: a manifest's library key replaces the default.
+    metadata["library"] = builder.library_path
     metadata.update(groups=trainer.model.ids, decision_makers=trainer.model.dm_ids,
                     torch_version=torch.__version__, cuda_version=torch.version.cuda)
     (directory / "gpu_run.json").write_text(json.dumps(metadata, indent=2) + "\n")

@@ -1,0 +1,35 @@
+t_ref (annual mean of mean_0_50m) = 9.31 C
+Model rest cost at t_ref: 2.00 % body energy/d; eat x4 = 8.00 %/d; move x1.2 = 2.40 %/d
+Reserve buffer full -> maintenance line: 338 MJ/t = 7.5 % of body energy
+Below the line biomass is lost at starve_rate x (s - u) per tick; at an empty reserve 0.10/tick = 0.34/d
+M1 = 0.015812/tick = 0.0632/d = 23.1/yr (constant)
+
+month  T_mix  T_50  T_deep  q(mix)  q(50)  q(deep)  rest%/d  eat%/d  days_rest  dorm%/d(0.15-0.25)  days_dorm  rest@50/rest
+Jan      6.3   7.7    7.73    0.81   0.89     0.90     1.62    6.49        4.6     0.27-0.45          17- 28        1.10
+Feb      5.4   7.2    7.07    0.76   0.86     0.86     1.53    6.10        4.9     0.26-0.43          18- 29        1.13
+Mar      5.2   6.6    6.70    0.75   0.83     0.83     1.50    6.02        5.0     0.25-0.42          18- 30        1.10
+Apr      6.1   6.6    6.73    0.80   0.83     0.84     1.60    6.40        4.7     0.25-0.42          18- 30        1.04
+May      7.8   6.8    6.80    0.90   0.84     0.84     1.80    7.21        4.2     0.25-0.42          18- 30        0.93
+Jun      9.9   7.2    6.93    1.04   0.86     0.85     2.08    8.33        3.6     0.25-0.42          18- 29        0.83
+Jul     12.1   8.0    7.10    1.21   0.91     0.86     2.43    9.71        3.1     0.26-0.43          17- 29        0.75
+Aug     13.4   8.5    7.17    1.33   0.95     0.86     2.66   10.62        2.8     0.26-0.43          17- 29        0.71
+Sep     13.8  10.2    7.30    1.37   1.06     0.87     2.73   10.92        2.7     0.26-0.44          17- 29        0.78
+Oct     12.8  11.7    7.50    1.27   1.18     0.88     2.55   10.19        2.9     0.26-0.44          17- 28        0.93
+Nov     10.5  10.6    7.63    1.09   1.09     0.89     2.17    8.69        3.5     0.27-0.45          17- 28        1.01
+Dec      8.4   9.3    8.07    0.94   1.00     0.92     1.88    7.51        4.0     0.28-0.46          16- 27        1.06
+
+Saumweber & Durbin interpolation: potential C5 diapause at 6.0 C = 151 d
+Saumweber & Durbin interpolation: potential C5 diapause at 7.0 C = 136 d
+Saumweber & Durbin interpolation: potential C5 diapause at 7.4 C = 130 d
+Saumweber & Durbin interpolation: potential C5 diapause at 8.0 C = 123 d
+
+Mortality per day (field, see evidence.md) vs model M1 0.0632/d:
+  diapause, oceanic basins SW Iceland, Nov-Apr [S]                         0.0040/d  =  0.06 x model M1
+  diapause, deep fjord without mesopelagic fish (Bagoien 2001)             0.0085/d  =  0.13 x model M1
+  diapause, deep clear fjord with Maurolicus/Benthosema (Bagoien 2001)     0.0255/d  =  0.40 x model M1
+  active C5, Fladen Ground spring (Eiane & Ohman 2004)                     0.0500/d  =  0.79 x model M1
+  active C. helgolandicus C5-F, L4, 13.8 C (Hirst et al. 2007)             0.0990/d  =  1.57 x model M1
+  H&K 2002 broadcast spawners at 13.8 C                                    0.0890/d  =  1.41 x model M1
+  H&K 2002 broadcast spawners at 5.3 C                                     0.0480/d  =  0.76 x model M1
+  H&K 2002 predation-free (lab) at 5 C                                     0.0190/d  =  0.30 x model M1
+  S. elegans removal of deep Calanus, Gullmar fjord autumn: 0.05-0.18/d of standing stock = 0.051-0.198/d instantaneous

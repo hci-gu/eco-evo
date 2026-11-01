@@ -22272,3 +22272,132 @@ remain open exactly as described in 71.9 / 71.11.
       as the planktivore pair); hake's "all" diet identity reaching
       flatfish; sprat / blue whiting near-bed shares to redo on the grid
       footing; Norway pout biomass; krill; the porpoise a chain.
+
+232.3 SEALS LOSE THEIR REGIONAL K (user, 2026-11-01).
+    - Question (user): does fix87 show that no DM needs a K? Frozen
+      fix87 policies (~u180, copied before use), seed 1, 3 years, library
+      as is vs a copy without the three regional K
+      (tools/probes/frozen_years.py). The probe log's "below start"
+      levels do not answer it: the K loss r_max B/K is linear, so it acts
+      in full far below K (at the start density plk 0.26, whiting 0.41,
+      seals 0.06 /yr).
+    - end/b0 year 1/2/3, with K | without K:
+        plk     0.97/1.09/1.17 | 1.19/1.56/1.92 (5.0 t/km2, still +25 %/yr;
+                realised M2 0.04-0.05 against the booked ~0.4 in its g)
+        whiting 0.87/0.81/0.79 | 1.24/1.47/1.47, levelling off only by
+                eating the epifauna: whiting M2 on it 1.28 /yr
+        epifauna 1.02/1.06/1.11 | 0.93/0.74/0.52 (the fix86 failure back)
+        seals   0.73/0.68/0.62 | 0.71/0.67/0.58 (starvation either way)
+    - APPLIED: seals' regional_carrying_capacity removed (was 0.0075,
+      sections 199, 206); tests/test_regional_capacity.py CAPPED is now
+      whiting and planktivorous_fish. Whiting and planktivores keep K
+      until their predators realise the booked M2 or the open-population
+      form replaces it. The policies were trained with K and it is one
+      seed; the direction is the named defects'. No observation change;
+      growth_rate unaffected (K is outside g).
+
+232.4 ZOOPLANKTON: NO MOVE ACTIONS; DIAPAUSE LITERATURE (user, 2026-11-01).
+    - User: surprised the zooplankton has not learned to rest in summer.
+      Frozen fix87 (~u180), one year, seed 1, biomass-weighted action
+      shares: eat falls from ~1.0 in winter to 0.20-0.28 in Jun-Aug, rest
+      0.15-0.26, the rest MOVE (~0.55). Move was a dominated choice: cost
+      1.2 vs 1.0 x resting metabolism, fully visible, and at
+      movement_speed 0.02 only 2 % of the moving mass left its cell.
+      Diagnostic (move mass reassigned to rest): zoo annual mean +2.3 %,
+      predation -6.6 %, planktivores -1.9 %, mackerel -3.7 %. The summer
+      move/(move+rest) ~0.73-0.8 is near the 4/5 an indifferent softmax
+      gives four move actions against one rest: no preference learned.
+    - Day/night (light obs > 0.5 = day; no night in Jun-Jul at 58 N):
+      fix87 already rests more by day (May 0.17 vs 0.04, Oct 0.12 vs
+      0.04). Forced schedules (rest all day; night as the policy, or the
+      moving mass eating at night): zoo extinct through winter-spring,
+      annual mean 0.85 / 1.06 vs 3.65 - the per-tick intake ceiling
+      cannot catch up a lost day and the reserve buffer lasts 3-5 days.
+    - Literature (subagent, research_notes/"Djurplanktonets diapaus"
+      summary.md): the resident 0-25 m community (the model's group since
+      183.6) has no summer dormancy; its dormancies (resting eggs,
+      Pseudocalanus autumn rest) bridge winter. Summer dormancy belongs
+      to Calanus finmarchicus CV (A17 0-25 m loses ~16 t/km2 May->Jun;
+      Gullmar CV below 50 m Aug-Dec, Hirche 1983): the counterpart of the
+      Dec-Mar import 183.6 left out, yet still inside the Apr-Nov total
+      target. Dormant CV respire 0.15-0.25 of active; deep-habitat
+      mortality 0.004-0.027/d vs 0.05-0.10 active, but not in shallow
+      water (Gullmar CV survive ~120 d; chaetognaths take 5-18 %/d).
+      Proposed: no dormancy, resting_cost 1.0, exposure M1 off,
+      depth_risk_ratio 1. Open: target (resident all year / total +
+      June export / a dormant Calanus compartment); member_species still
+      lists Calanus and Metridia.
+    - User: wants diel migration for teaching. A higher move cost would
+      only shift move to rest evenly over the day. APPLIED instead:
+      zooplankton movement_speed 0.02 -> 0.0, which masks its move actions
+      in both engines (decisions.build_action_mask, TensorEcosystem.
+      action_mask; the mechanism existed). Biology: copepods and krill do
+      not swim km-scale; they drift (current_response 1.0). Output size
+      and observations unchanged, checkpoints load (the move logits are
+      masked). tests/test_immobile_dm.py (4); test_viability's greedy
+      expectation now leaves immobile DMs in place (the greedy arm already
+      used the engine mask). Frozen fix87 under the mask (untrained
+      response): day/night rest May 0.54/0.16, Aug 0.70/0.52, Sep
+      0.51/0.37, Oct 0.11/0.03, Jun-Jul day 0.74-0.80; zoo annual mean
+      3.65 -> 4.23 (Jun 10.6, Jul 9.6 vs A17 total 11.4 / 6.9), planktivores
+      -4 %, mackerel -6 %. Full suite 1603 passed / 12 skipped; train.py
+      smoke OK.
+
+232.5 Manifest library key (2026-11-01)
+    A project manifest may name its library with a top-level key
+    `library: <path>` (relative to the manifest's directory, or
+    absolute). config_loader.resolve_library_path decides which library
+    a run reads: an explicit path other than fgconfig/fg_library.yaml
+    wins (frozen_years.py LIBRARY, train_gpu.py --library), else the
+    manifest key, else fgconfig/fg_library.yaml. load_project_config
+    resolves it when it reads the library itself; the GPU
+    EnvironmentBuilder resolves it in __post_init__, so ProjectSpec
+    and the long-run probe see the library actually used (gpu_run.json
+    recorded the raw --library default until train_gpu.py wrote
+    builder.library_path into its `library` field);
+    inference.py's spawn-mode lookup reads the same file. Without the
+    key nothing changes. tests/test_project_library_key.py (resolver
+    precedence, loader, GPU builder). .gitignore lists /mareld3.yaml
+    and /fgconfig/fg_library2.yaml as local variant files.
+
+232.6 Inference start day (2026-11-01)
+    simulation_settings.daylight may carry inference_start_day_of_year
+    (1-365 or random). daylight.parse_settings(project, mode) uses it
+    in place of start_day_of_year when mode is "inference"
+    (load_project_config passes its mode): inference.py, the long-run
+    probe (training_progress.build_inference_env) and frozen_years.py
+    start on that day, training worlds keep start_day_of_year (random
+    in mareld2.yaml, needed for training). Without the key nothing
+    changes. Reason: with a random start day the manifest's
+    inference_initial_biomass cannot match the season the rollout
+    starts in. The four plankton starts in mareld2.yaml come from
+    different seasons: zooplankton 35000 t (summer), mixed-layer
+    phytoplankton 80000 t (bloom), subsurface 40000 t, microzooplankton
+    1440 t (winter). The probe's day 148 start (May 28) therefore had
+    the mixed-layer producer ~60x above and microzooplankton ~13x below
+    the model's own late-May state. A manifest with a fixed inference
+    day can set the plankton starts to that day's state. Model state
+    on 1 January (mean of the Dec and Jan monthly means, frozen fix87
+    policies, a17_score year 2, seed 20260530): zooplankton 0.56 t/km2
+    (2020 t; A17 resident Dec/Jan 0.92/0.21), mixed-layer phytoplankton
+    3.30 (11860 t), subsurface 0.72 (2580 t), microzooplankton 0.26
+    (940 t); column phytoplankton ~4.0 vs A17 4.8-4.9.
+    tests/test_inference_start_day.py.
+
+232.7 FG editor: pair attack rate, Holling type, mixed-layer reference and
+    accessible fraction matrices (user, 2026-11-01). Four optional pair
+    keys had no editor and lived only in the library file; FG
+    Interactions now has a matrix for each (fgconfig.PAIR_OPTIONAL_KEYS):
+    "Attack Rate a" (the pair's max_intake_rate, per 6 h tick; empty =
+    the predator's own Max Intake Rate), "Functional Response" (2 or 3;
+    empty = by diet breadth), "Mixed-Layer Reference Depth" (m; empty =
+    constant a) and "Accessible Fraction" ((0, 1]; empty = 1). Rows are
+    the decision makers, so the grazing pairs of non decision makers
+    (microzooplankton) stay library-only. An empty cell removes the key;
+    a value outside the engine's range, or an accessible fraction on a
+    pair with a Stage Access, is not written and is listed in the apply
+    message (App._parse_pair_value). Cells show the shortest round-trip
+    text of the stored float, so an untouched apply rewrites nothing.
+    Cells follow the pair's preys_on like the other pair matrices; hover
+    help in field_help.py. tests/test_fgconfig_pair_matrices.py; the
+    help coverage test lists the four keys.

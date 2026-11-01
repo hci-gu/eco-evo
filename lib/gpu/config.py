@@ -7,7 +7,7 @@ import numpy as np
 
 from lib.config.config_loader import (
     _resolve_initial_biomass_range, load_config, load_impact_spawn_specs,
-    load_project_config, setup_full_mareld_mvp,
+    load_project_config, resolve_library_path, setup_full_mareld_mvp,
 )
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.environments.ecosystem_env.currents import CurrentConfig
@@ -40,6 +40,13 @@ class EnvironmentBuilder:
     # and is never rewritten; anything else is converted in memory as the
     # groups are built. Section 106.
     tick_hours: int = LIBRARY_TICK_HOURS
+
+    def __post_init__(self):
+        # The manifest's ``library`` key replaces the default library; an
+        # explicit --library still wins (config_loader.resolve_library_path).
+        if self.project_path:
+            self.library_path = resolve_library_path(
+                load_config(self.project_path), self.project_path, self.library_path)
 
     def with_world(self, spawn_seed):
         return replace(self, spawn_seed=int(spawn_seed))

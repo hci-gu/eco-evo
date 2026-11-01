@@ -21,7 +21,8 @@ field_help = pytest.importorskip("field_help")
 MATRIX_KEYS = (
     "preys_on", "predation_mortality", "observes", "assimilation_factor",
     "handling_time", "visibility_floor", "dark_ratio", "light_threshold_deg",
-    "impact_affects", "impact_table", "stage_access",
+    "impact_affects", "impact_table", "stage_access", "max_intake_rate",
+    "functional_response", "mixed_layer_reference_m", "accessible_fraction",
 )
 
 FIXED_KEYS = (

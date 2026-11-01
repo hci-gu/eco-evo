@@ -315,7 +315,8 @@ def _load_spawn_defaults(project_path):
     lib_specs = {}
     try:
         import os as _os
-        candidates = []
+        from lib.config.config_loader import resolve_library_path
+        candidates = [resolve_library_path(data, project_path)]
         proj_dir = _os.path.dirname(_os.path.abspath(project_path))
         candidates.append(_os.path.join(proj_dir, 'fgconfig', 'fg_library.yaml'))
         candidates.append(_os.path.join(proj_dir, 'fg_library.yaml'))

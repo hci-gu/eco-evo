@@ -89,3 +89,8 @@ Thumbs.db
 # Raw downloads of the literature/data reviews (untrusted, large)
 research_notes/*/data/
 research_notes/*/*/data/
+
+# Local variant manifest and library (not part of the calibration)
+/mareld3.yaml
+/fgconfig/fg_library2.yaml
+/exploration.txt

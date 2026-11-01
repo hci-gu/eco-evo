@@ -463,6 +463,9 @@ def test_greedy_eats_at_a_local_optimum_and_walks_towards_a_better_cell():
     neighbours = np.where(env.move_mask > 0, neighbours, -np.inf)
     expected = (np.float32(viability.TRAVEL_DISCOUNT)
                 * neighbours.max(axis=1) > payoff)
+    # A DM with movement_speed 0 (zooplankton since 232.4) has its move
+    # actions masked and never moves.
+    expected[env.dm_v <= 0] = False
     assert np.array_equal(moving, expected)
 
 

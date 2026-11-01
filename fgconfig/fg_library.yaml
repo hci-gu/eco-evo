@@ -182,7 +182,15 @@
     # rate gave 13 %/d, and puts the spring at the resident stock
     # (Mar 1.7 vs 1.6 t/km2, peak in May).
     growth_q10: 3.0
-    movement_speed: 0.02
+    # Section 232.4: no directed horizontal swimming. Copepods and krill do
+    # not travel km-scale on their own; they drift with the currents
+    # (current_response below). Speed 0 masks the four move actions in
+    # both engines (decisions.build_action_mask, TensorEcosystem.action_mask),
+    # leaving eat and rest (hide) - the choice diel vertical migration is
+    # made of. With 0.02 the move actions were a visible, slightly dearer
+    # rest (2 % of the moving mass left the cell) that the policy still
+    # chose for ~0.55 of the biomass in June-August (frozen fix87).
+    movement_speed: 0.0
     # Respiration + excretion while feeding, in multiples of the resting
     # (fasting) rate (section 135): Kiorboe et al. 1985 measured both at
     # "more than 4 times" those of starved Acartia tonsa. The model has no
@@ -1084,21 +1092,11 @@
     # r_max 0.11 /yr: harbour seal 10.2-13.6 %/yr in Kattegat-Skagerrak
     # after 1988 (Carroll et al. 2025), grey seal <= 10 % (HELCOM).
     r_max: 0.11
-    # Regional carrying capacity (section 199, variant b): K = the 15 t
-    # start / 3600 km2, so the seals sit at today's level with no hunt
-    # impact. The grid holds the offshore tail of the Kattegat-Skagerrak
-    # metapopulation, which is regulated off the grid (Skagerrak at 0.82
-    # of its logistic K 4,517 counted seals, Carroll et al. 2025: food -
-    # prey the model's seals do not eat - and haul-out competition).
-    # Without it the seals grew ~6 %/yr on gadoids alone, halved them and
-    # crashed (15-year run on fix70). Outside the derived growth_rate.
-    # Section 206: 0.0075 (27 t), was 0.0041667 (= the 15 t start). The
-    # loss is charged at r_max (0.11 B/K /yr) while the trained seals
-    # realise ~0.18 gross, i.e. ~0.06 /yr after M1 and starvation, so
-    # K = start settled at ~0.5 K in 30-50 years (fix72). 15 x 0.11 / 0.06
-    # = 27 t puts the equilibrium at today's 15 t and sits between the
-    # 199.3 routes to K_box (24 t; 36-38 t).
-    regional_carrying_capacity: 0.0075
+    # No regional carrying capacity since section 232.3 (was K 0.0075 t/km2
+    # = 27 t, sections 199 and 206, for a seal stock that grew ~6 %/yr on the
+    # old gadoids). In a frozen fix87 run the seals declined by starvation
+    # with or without it (year-3 end/b0 0.62 with K, 0.58 without); the
+    # loss took ~0.05 /yr and decided nothing.
     growth_rate: 0.00048891653
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models); no FG preys on
     # seals. Was 6.0e-05.

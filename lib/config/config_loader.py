@@ -1,3 +1,4 @@
+import os
 import yaml
 import math
 import numpy as np
@@ -15,6 +16,30 @@ def load_config(path):
     # utf-8-sig accepts both editor output and ordinary UTF-8 YAML.
     with open(path, 'r', encoding='utf-8-sig') as f:
         return yaml.safe_load(f)
+
+
+DEFAULT_LIBRARY_PATH = 'fgconfig/fg_library.yaml'
+_REPO_LIBRARY = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), '..', '..', 'fgconfig', 'fg_library.yaml'))
+
+
+def resolve_library_path(project, project_path=None, library_path=None):
+    """The library a project run reads.
+
+    An explicit ``library_path`` other than the repository default wins
+    (a probe or ``--library`` trying a variant); otherwise the manifest's
+    top-level ``library`` key (relative to the manifest's directory);
+    otherwise ``fgconfig/fg_library.yaml``.
+    """
+    if library_path and os.path.normpath(os.path.abspath(library_path)) != _REPO_LIBRARY:
+        return library_path
+    stored = (project or {}).get('library') if isinstance(project, dict) else None
+    if isinstance(stored, str) and stored:
+        if os.path.isabs(stored):
+            return stored
+        base = os.path.dirname(os.path.abspath(project_path)) if project_path else os.getcwd()
+        return os.path.normpath(os.path.join(base, stored))
+    return library_path or DEFAULT_LIBRARY_PATH
 
 
 def _resolve_initial_biomass_range(*sources):
@@ -540,6 +565,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     spawn_allowed_mask = None
     if allowed_mask is not None:
         spawn_allowed_mask = np.asarray(allowed_mask).reshape(grid_size).astype(bool)
+    if library_config is None:
+        library_path = resolve_library_path(project, project_path, library_path)
     lib = library_config if library_config is not None else load_config(library_path)
     spec_defs = lib['species_definitions']
     inter_defs = lib['interaction_definitions']
@@ -550,7 +577,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
     # is drawn like the spawn map - from ``spawn_seed`` when given - so
     # every delta of an ARS generation sees the same season (CRN).
     daylight_cfg = None
-    daylight_settings = daylight.parse_settings(project)
+    daylight_settings = daylight.parse_settings(project, mode=mode)
     if daylight_settings is not None:
         if spawn_rng_base is not None:
             daylight_rng = np.random.default_rng(

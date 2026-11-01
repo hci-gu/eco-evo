@@ -35,6 +35,12 @@ from lib.world.growth_budget import (  # noqa: E402
     has_budget,
 )
 
+# Optional per-pair keys edited as matrices on the FG Interactions tab; an
+# empty cell removes the key so the engine default applies (the predator's
+# own attack rate, Holling type by diet breadth, a constant a, f = 1).
+PAIR_OPTIONAL_KEYS = ("max_intake_rate", "functional_response",
+                      "mixed_layer_reference_m", "accessible_fraction")
+
 # Hover help for every input field (sibling module in fgconfig/).
 _FGCONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 if _FGCONFIG_DIR not in sys.path:
@@ -3441,10 +3447,9 @@ class FGConfigApp:
         self.matrix_col_headers = {}
         self.matrix_row_headers = {}
         
-        # FG Interactions tab: Predation only. The previous per-(predator, prey)
-        # ``max_intake_rate`` matrix (I_XY) has been removed; the value is now a
-        # general per-predator property, edited in the FG Editor on the
-        # "Project & FGs" tab and stored in ``species_definitions``.
+        # FG Interactions tab. The predator's own ``max_intake_rate`` (FG
+        # Editor, "Project & FGs" tab) is the default attack rate; the
+        # "Attack Rate a" matrix below overrides it per pair (section 134).
         self.create_matrix_section("Predation (row eats column)", "preys_on", dm_fgs, fgs, cell_type="bool",
                                    parent=self.matrix_container)
 
@@ -3484,6 +3489,30 @@ class FGConfigApp:
             dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
         self._add_handling_time_auto_buttons(dm_fgs, fgs)
 
+        # Pair attack rate a (section 134; per-pair values from encounter
+        # theory since section 220). Empty = the row's own Max Intake Rate.
+        attack_frame = self.create_matrix_section(
+            self._format_tick_label(
+                "Attack Rate a (row's max_intake_rate on column, per {tick})"),
+            "max_intake_rate", dm_fgs, fgs,
+            cell_type="number_optional", parent=self.matrix_container)
+        self._add_matrix_note(
+            attack_frame,
+            "Empty cell = the row's own Max Intake Rate (FG Editor). Type II: "
+            "per tonne of prey per cell, half-saturation 1/(a h). Type III: "
+            "per (t/cell)^2, half-saturation 1/sqrt(a h). The library is "
+            "calibrated at a 6 h tick; other tick lengths rescale a at load.")
+
+        # Holling type per pair (section 141).
+        response_frame = self.create_matrix_section(
+            "Functional Response (Holling type of the pair: 2 or 3)",
+            "functional_response", dm_fgs, fgs,
+            cell_type="response_optional", parent=self.matrix_container)
+        self._add_matrix_note(
+            response_frame,
+            "Empty = by diet breadth: a specialist gets Type III, a "
+            "generalist Type II.")
+
         # Visibility floor matrix: minsta synliga fraktion av kolumn-FG:n
         # för rad-FG:n även när kolumnen gömmer sig (pi_rest -> 1).
         # Detektion är en egenskap hos PARET, inte hos bytet: tumlare
@@ -3519,6 +3548,32 @@ class FGConfigApp:
             "light. The library attack rate stays the annual mean; "
             f"empty threshold = {DAYLIGHT_DEFAULT_THRESHOLD_DEG:g} deg "
             "(end of civil twilight).")
+
+        # Grazers feed on concentration (section 177): a(t) = a M_ref/M(t).
+        mixed_frame = self.create_matrix_section(
+            "Mixed-Layer Reference Depth (m; grazer pairs)",
+            "mixed_layer_reference_m", dm_fgs, fgs,
+            cell_type="number_optional", parent=self.matrix_container)
+        self._add_matrix_note(
+            mixed_frame,
+            "Empty = a constant. A depth M_ref makes the pair's attack rate "
+            "a M_ref / M(t), M(t) the month's mixed-layer depth (a prey in "
+            "the subsurface layer: M_ref / H(t), H the layer thickness), so "
+            "a grazer feeds on concentration. Needs the Daylight calendar's "
+            "light climate. Grazing pairs of non decision makers "
+            "(microzooplankton) are edited in the library file.")
+
+        # Share of the prey within the predator's reach (section 208).
+        access_frame = self.create_matrix_section(
+            "Accessible Fraction (share of column within row's reach, (0, 1])",
+            "accessible_fraction", dm_fgs, fgs,
+            cell_type="number_optional", parent=self.matrix_container)
+        self._add_matrix_note(
+            access_frame,
+            "Empty = 1. Scales the prey biomass in the pair's functional "
+            "response and harvest cap; observations are untouched. A pair "
+            "on a group with a Juvenile Stage takes either this or a Stage "
+            "Access, not both.")
 
         # Juvenile compartments (stages.py): per-pair stage access on the
         # groups with a juvenile_stage, "f_J, f_A"; empty = the pair's
@@ -3570,7 +3625,7 @@ class FGConfigApp:
             for dep_key in ("assimilation_factor", "handling_time",
                             "visibility_floor", "predation_mortality",
                             "dark_ratio", "light_threshold_deg",
-                            "stage_access"):
+                            "stage_access") + PAIR_OPTIONAL_KEYS:
                 dep_widget = self.matrix_widgets.get(key, {}).get(dep_key)
                 if dep_widget is None:
                     continue
@@ -4114,7 +4169,8 @@ class FGConfigApp:
                     _default = 1.0
                 elif cell_type == "nonneg_float":
                     _default = 0.0
-                elif cell_type in ("unit_optional", "signed_optional", "pair_optional"):
+                elif cell_type in ("unit_optional", "signed_optional", "pair_optional",
+                                   "number_optional", "response_optional"):
                     # Empty = inherit the column FG's own species-level
                     # value; do NOT materialise an explicit default here
                     # (that would silently override every prey default).
@@ -4244,6 +4300,48 @@ class FGConfigApp:
                     vcmd = (frame.register(_validate_pair), "%P")
 
                     widget = ttk.Entry(frame, textvariable=var, width=13,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "number_optional":
+                    # Optional pair number (attack rate, accessible
+                    # fraction, mixed-layer reference depth); empty = the
+                    # key is absent. Keystrokes are free within the
+                    # characters of a float (1e-05 included); the range is
+                    # checked when the matrix is applied
+                    # (_parse_pair_value).
+                    cur_val = ""
+                    if val not in ("", None):
+                        try:
+                            # Shortest round-trip text: re-applying an
+                            # untouched cell must not round the value.
+                            cur_val = repr(float(val))
+                        except (TypeError, ValueError):
+                            cur_val = str(val)
+                    var = tk.StringVar(value=cur_val)
+
+                    def _validate_number(proposed):
+                        return all(ch in "0123456789.eE-+" for ch in proposed)
+                    vcmd = (frame.register(_validate_number), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=8,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "response_optional":
+                    # Holling type of the pair: "2", "3" or empty (the
+                    # engine's default by diet breadth).
+                    cur_val = ""
+                    if val not in ("", None, 0, 0.0):
+                        try:
+                            cur_val = str(int(val))
+                        except (TypeError, ValueError):
+                            cur_val = str(val)
+                    var = tk.StringVar(value=cur_val)
+
+                    def _validate_response(proposed):
+                        return proposed in ("", "2", "3")
+                    vcmd = (frame.register(_validate_response), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=3,
                                        validate="key", validatecommand=vcmd)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 elif cell_type == "nonneg_float":
@@ -5272,17 +5370,59 @@ class FGConfigApp:
                           "it or a stage access")
         return values, None
 
+    @staticmethod
+    def _parse_pair_value(data_key, text):
+        """``(value, error)`` of an optional pair cell (PAIR_OPTIONAL_KEYS):
+        ``(None, None)`` for an empty cell (the key is removed), the value
+        in the engine's range, or ``(None, message)``. The ranges are the
+        engine's (lib/environments/ecosystem_env/interactions.py)."""
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        if data_key == "functional_response":
+            if text in ("2", "3"):
+                return int(text), None
+            return None, "2 or 3 (empty = by diet breadth)"
+        try:
+            value = float(text)
+        except ValueError:
+            return None, f"not a number: {text!r}"
+        if not math.isfinite(value):
+            return None, f"not a number: {text!r}"
+        if data_key == "max_intake_rate" and value < 0.0:
+            return None, ">= 0 (empty = the predator's own Max Intake Rate)"
+        if data_key == "accessible_fraction" and not 0.0 < value <= 1.0:
+            return None, "in (0, 1] (empty = 1)"
+        if data_key == "mixed_layer_reference_m" and value <= 0.0:
+            return None, "> 0 m (empty = a constant attack rate)"
+        return value, None
+
     def apply_matrix_changes(self):
         if "interaction_definitions" not in self.global_library:
             self.global_library["interaction_definitions"] = {}
         stage_errors = []
-            
+        pair_errors = []
+
         for key, data in self.matrix_entries.items():
             if key not in self.global_library["interaction_definitions"]:
                 self.global_library["interaction_definitions"][key] = {}
-            
+
+            stage_var = data.get("stage_access")
+            stage_text = str(stage_var.get() if stage_var is not None else "").strip()
             for data_key, var in data.items():
                 entry = self.global_library["interaction_definitions"][key]
+                if data_key in PAIR_OPTIONAL_KEYS:
+                    value, error = self._parse_pair_value(data_key, var.get())
+                    if (error is None and data_key == "accessible_fraction"
+                            and value is not None and stage_text):
+                        error = "the pair has a Stage Access; give either it or an accessible fraction"
+                    if error:
+                        pair_errors.append(f"{key}: {data_key}: {error}")
+                    elif value is None:
+                        entry.pop(data_key, None)
+                    elif not (data_key in entry and self._same_value(entry[data_key], value)):
+                        entry[data_key] = value
+                    continue
                 if data_key == "stage_access":
                     pair, error = self._parse_stage_access(var.get(), entry)
                     if error:
@@ -5341,6 +5481,9 @@ class FGConfigApp:
         if stage_errors:
             msg += ("\n\nStage Access cells NOT saved (left as they were):\n  "
                     + "\n  ".join(stage_errors))
+        if pair_errors:
+            msg += ("\n\nPair cells NOT saved (left as they were):\n  "
+                    + "\n  ".join(pair_errors))
         if changed:
             msg += ("\n\nDerived growth_rate updated:\n  "
                     + "\n  ".join(changed))
