@@ -8,11 +8,14 @@ from lib.runners.population_stability import validate_reward
 
 
 class RolloutRunner:
+    # Row order of ``loss_book``; the names of loss_accounting.LOSS_CAUSES.
+    LOSS_ORDER = ("starvation", "predation", "impact", "natural")
+
     def __init__(self, model, bank, candidates, worlds, *, obs_normalize=True,
                  integral_reward=True, legacy_reward=False, alpha=1.0, beta=1.0,
                  survival_bonus=0.0, survival_threshold=0.01,
                  execution="cuda-graph", graph_ticks=32, population_stability=None,
-                 local_reward=None):
+                 local_reward=None, diagnostics=False):
         # ``--local_reward``: the per-cell source-tracked reward, mirrored
         # from the reference implementation in
         # lib/environments/ecosystem_env/source_tracking.py. Every setting
@@ -80,6 +83,16 @@ class RolloutRunner:
             buffer("impact_cost", (self.E, model.D, model.C))
         if model.n_obs_imp:
             buffer("impact_obs", (self.E, model.n_obs_imp, model.C))
+        # ``diagnostics`` (the inference viewer, section 234): cumulative
+        # tonnes per world, as the reference env's accumulators -
+        # ``loss_book`` [E, 4, G] by cause (LOSS_ORDER) and ``diet_book``
+        # [E, G, G] (predator, prey) over every group that eats, the NDM
+        # grazers included. Training never sets it, so its graph is the
+        # one it always was.
+        self.diagnostics = bool(diagnostics)
+        if self.diagnostics:
+            buffer("loss_book", (self.E, len(self.LOSS_ORDER), model.G), torch.float64)
+            buffer("diet_book", (self.E, model.G, model.G), torch.float64)
         self.local_min_energy = (
             model.local_min_energy(self.local_reward.min_energy_factor)
             if self.local_reward is not None else None)
@@ -144,6 +157,9 @@ class RolloutRunner:
         for value in (self.hidden, self.log_energy, self.biomass_sum, self.reserve_sum,
                       self.obs_sum, self.obs_sumsq, self.action_sum, self.active_ticks):
             value.zero_()
+        if self.diagnostics:
+            self.loss_book.zero_()
+            self.diet_book.zero_()
         if hidden is not None:
             self.hidden.copy_(hidden)
         self.b0.copy_(biomass[:, self.model.dm_index].sum(-1).double())
@@ -216,6 +232,9 @@ class RolloutRunner:
             current_args["impacts"] = (self.impact_loss, self.impact_cost)
         if m.stages_on:
             current_args["juvenile"] = self.juvenile
+        record = {} if self.diagnostics else None
+        if record is not None:
+            current_args["record"] = record
         if self.local_reward is not None:
             out = m.step(self.biomass, self.reserve, actions, self.tick, multiplier,
                          track_source=True, **current_args)
@@ -226,6 +245,8 @@ class RolloutRunner:
                          self.tick, multiplier, **current_args)
             b, r, hidden = out[0], out[1], out[2]
         juvenile = out[-1] if m.stages_on else None
+        if record is not None:
+            self._book_diagnostics(record)
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd
@@ -267,6 +288,23 @@ class RolloutRunner:
         if juvenile is not None:
             self.juvenile.copy_(juvenile)
         self.tick.add_(1)
+
+    def _book_diagnostics(self, record):
+        """Add one tick of ``TensorEcosystem.step``'s ``record`` to the books."""
+        m = self.model
+        intake = record["intake"].double()                      # [E, D, G]
+        diet = torch.zeros_like(self.diet_book)
+        diet[:, m.dm_index] = intake
+        for entry, total in zip(m.ndm_grazers, record.get("grazing") or ()):
+            diet[:, entry["g"], entry["p"]] += total.double()
+        self.diet_book.add_(diet)
+        rows = {"starvation": record["starvation"], "predation": diet.sum(1),
+                "natural": record["natural"]}
+        if "impact" in record:
+            rows["impact"] = record["impact"]
+        for k, name in enumerate(self.LOSS_ORDER):
+            if name in rows:
+                self.loss_book[:, k].add_(rows[name].double())
 
     def _accumulate_local_reward(self, start, tracked, frac_in):
         """Aggregate this tick's per-cell ratios into ``local_sum``.

@@ -1263,11 +1263,20 @@ class TensorEcosystem:
         return biomass, reserve
 
     def population(self, biomass, reserve, seed_multiplier, light_index=None,
-                   hidden=None, dm_feed=None, juvenile=None):
+                   hidden=None, dm_feed=None, juvenile=None, record=None):
         """``dm_feed`` [B, D, G]: this tick's intake per pair, for the layer
-        split of the regenerated M1 (section 202; None = no DM fed)."""
+        split of the regenerated M1 (section 202; None = no DM fed).
+
+        ``record``, a dict or None, receives this tick's losses per group
+        [B, G] as the reference books them (section 234): ``natural`` (M1,
+        the regional-capacity loss and the nutrient-stress loss),
+        ``starvation`` (catabolism and the extinction sweep) and
+        ``grazing`` (the NDM grazers' intake, one [B] per ``ndm_grazers``
+        entry). None adds nothing to the tick."""
         biomass, reserve = self.layer_exchange(biomass, reserve, light_index)
         biomass, reserve, ndm_totals = self.ndm_grazing(biomass, reserve, light_index)
+        if record is not None:
+            record["grazing"] = ndm_totals
         if self.m1_exposure_on:
             if hidden is None:
                 raise ValueError("hidden is required with exposure-weighted M1")
@@ -1278,6 +1287,10 @@ class TensorEcosystem:
         r = reserve * keep
         if juvenile is not None:
             juvenile = juvenile * keep
+        if record is not None:
+            # Direct products, not differences of nearly equal float32
+            # fields (a 1e-4 per-tick loss would keep ~3 digits).
+            natural = biomass * (1.0 - keep)
         if self.regen_on:
             if light_index is None:
                 raise ValueError("light_index is required with regeneration")
@@ -1287,6 +1300,8 @@ class TensorEcosystem:
         if self.capacity_on:
             capacity_keep = (1.0 - self.capacity_rate
                              * b.mean(dim=-1, keepdim=True)).clamp_min(0)
+            if record is not None:
+                natural = natural + torch.where(self.is_dm, b * (1.0 - capacity_keep), 0.0)
             b = b * capacity_keep
             r = r * capacity_keep
             if juvenile is not None:
@@ -1364,6 +1379,8 @@ class TensorEcosystem:
                       / (limitation + self.stress_shape))
             lost = torch.where(self.nutrient, nb * stress, 0.0)
             nb = nb - lost
+            if record is not None:
+                natural = natural + lost
             # Section 177: the lysed share returns to the pool.
             pool = pool + self.stress_regen * lost
             wish = rate * nb * limitation
@@ -1379,6 +1396,12 @@ class TensorEcosystem:
             ndm_r = torch.where(self.refuge_mask, refuge_a, ndm_r)
         b = torch.where(self.is_dm, dm_b, ndm_b)
         r = torch.where(self.is_dm, dm_r, ndm_r)
+        if record is not None:
+            # The extinction sweep is booked as starvation, as
+            # ``population_change.apply_extinction_threshold`` does.
+            swept = torch.where(b < self.threshold, b, 0.0)
+            record["natural"] = natural.sum(-1)
+            record["starvation"] = (starve_loss + swept).sum(-1)
         b = torch.where(b < self.threshold, 0.0, b)
         empty = b <= 0
         if self.nutrients_on:
@@ -1463,8 +1486,13 @@ class TensorEcosystem:
 
     def step(self, biomass, reserve, actions, tick, seed_multiplier,
              current_keys=None, track_source=False, light_index=None,
-             impacts=None, juvenile=None):
+             impacts=None, juvenile=None, record=None):
         """One tick. ``track_source`` appends the local-reward tracking.
+
+        ``record``, a dict or None, receives this tick's diagnostics for the
+        inference viewer (section 234): ``impact`` [E, G], ``intake``
+        [E, D, G] (prey tonnes per pair) and the entries of
+        :meth:`population`. None (training) leaves the tick as it was.
 
         ``impacts`` is ``(loss_rate, cost)`` from ``impact_fields``, or
         None for a world without impact tables (section 161).
@@ -1485,12 +1513,18 @@ class TensorEcosystem:
         impact_cost = None
         if impacts is not None:
             out = self.impact_mortality(biomass, reserve, impacts[0], j)
+            if record is not None:
+                rate = impacts[0][:, :self.G] if self.stages_on else impacts[0]
+                # ``impacts.apply_impact_mortality``'s min(demand, standing B).
+                record["impact"] = torch.minimum(biomass * rate, biomass).sum(-1)
             biomass, reserve = out[0], out[1]
             if j is not None:
                 j = out[2]
             impact_cost = impacts[1]
         out = self.predation(biomass, reserve, actions, light_index, j)
         b, r, gains, hidden, intake = out[:5]
+        if record is not None:
+            record["intake"] = intake.sum(-1)
         if j is not None:
             j = out[5]
         out = self.movement(b, r, gains, actions, track=track_source,
@@ -1508,7 +1542,8 @@ class TensorEcosystem:
             j = out[-1]
         out = self.population(
             b, r, seed_multiplier, light_index, hidden,
-            dm_feed=intake.sum(-1) if self.regen_on else None, juvenile=j)
+            dm_feed=intake.sum(-1) if self.regen_on else None, juvenile=j,
+            record=record)
         b, r, starve_loss = out[:3]
         extra = () if j is None else (out[3],)
         if not track_source:

@@ -61,6 +61,7 @@ class GPUTrainingVisualizer:
         self.executor = None
         self.directory = directory
         self.probed = False
+        self.probe_engine, self.probe_device = "cpu", "cpu"
         self.rnd_mode = str(getattr(args, "rnd_baseline", "none") or "none").lower()
         # The status row shows T only when a temperature schedule is set;
         # at the default (1.0 throughout) it is noise.
@@ -122,7 +123,14 @@ class GPUTrainingVisualizer:
                 return
             self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="gpu-training")
             self.progress = make_visual_progress("gpu", args, self.viz)
-            print("[viz] GPU training viewer enabled; CPU inference probes run between updates.", flush=True)
+            # The probe runs on the tensor engine when training does, on
+            # CUDA (section 237); on CPU the reference engine is faster.
+            device = trainer.model.device
+            self.probe_engine = "gpu" if device.type == "cuda" else "cpu"
+            self.probe_device = str(device)
+            print(f"[viz] GPU training viewer enabled; "
+                  f"{self.probe_engine.upper()} inference probes run between updates.",
+                  flush=True)
         except Exception as error:
             print(f"[viz] Could not start viewer: {error}; continuing training.", flush=True)
             self.close()
@@ -214,6 +222,8 @@ class GPUTrainingVisualizer:
                     # builder, exactly as train.py passes it.
                     rnd_builder=self.builder if self.rnd_mode != "none" else None,
                     rnd_mode=self.rnd_mode,
+                    engine=getattr(self, "probe_engine", "cpu"),
+                    device=getattr(self, "probe_device", "cpu"),
                 )
             self.pump()
         except Exception as error:

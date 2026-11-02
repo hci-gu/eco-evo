@@ -710,9 +710,18 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                    compact=True, viz=None, viz_extra=None, viz_step=None,
                    rnd_builder=None,
                    rnd_mode="all",
-                   reward_by_fid=None):
+                   reward_by_fid=None,
+                   engine="cpu", device="cuda"):
     """Run a probe rollout with the trainer's current policies and log
     per-FG biomass evolution.
+
+    ``engine="gpu"`` (train_gpu.py's viewer, section 237) steps the probe
+    world and its random baselines on the tensor engine on ``device``, as
+    zero-weight candidates of one batch, and mirrors the state and books
+    back into the CPU envs after each tick (``lib.gpu.inference.
+    GpuStepper``), so everything below reads them unchanged. With
+    ``--local_reward`` and baselines the CPU engine is kept: their reward
+    needs its per-cell source tracking.
 
     The rollout uses ``probe_builder`` (deterministic inference world)
     so that any variation in ``log10(bh/b0)`` reflects *policy* change,
@@ -947,10 +956,28 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
     rnd_n_ticks_done = 0
     stability_config = getattr(trainer, 'population_stability', None)
     rnd_stability = {id(e): StabilityScore(e, stability_config) for e in unique_rnd_envs} if stability_config else {}
+    stepper = None
+    if engine == "gpu" and not (unique_rnd_envs
+                                and getattr(trainer, 'local_reward', None) is not None):
+        from lib.gpu.inference import GpuStepper
+        if not getattr(env, '_static_built', False):
+            env.build_static_caches()
+        # The DMs acting at random in each of ``unique_rnd_envs``.
+        _random_dms = [{f for f, e in rnd_env_for_fid.items() if e is _re}
+                       if str(rnd_mode or 'all').lower() == 'solo'
+                       else set(env.dm_ids) for _re in unique_rnd_envs]
+        stepper = GpuStepper([env] + unique_rnd_envs, env.policies,
+                             getattr(env, 'obs_mean', None),
+                             getattr(env, 'obs_var', None),
+                             random_dms=_random_dms, device=device)
     for _t in range(int(n_ticks)):
-        observation = env.get_observation()
-        actions = env.policy_controller.forward(observation)
-        env.step(actions)
+        if stepper is not None:
+            # Every world at once; the envs below are its mirrors.
+            stepper.step()
+        else:
+            observation = env.get_observation()
+            actions = env.policy_controller.forward(observation)
+            env.step(actions)
         n_ticks_done += 1
         for fid in fg_ids:
             b_sum[fid] += float(env.fgs[fid].biomass.sum())
@@ -963,9 +990,10 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 # this is a single env; in 'solo' mode it's N envs (one
                 # per DM-FG). Ordering is stable across ticks.
                 for _re in unique_rnd_envs:
-                    observation = _re.get_observation()
-                    actions = _re.policy_controller.forward(observation)
-                    _re.step(actions)
+                    if stepper is None:
+                        observation = _re.get_observation()
+                        actions = _re.policy_controller.forward(observation)
+                        _re.step(actions)
                     if rnd_stability:
                         rnd_stability[id(_re)].step(_re)
                 rnd_n_ticks_done += 1
@@ -1091,6 +1119,8 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                     viz = None
             except Exception:
                 viz = None
+    if stepper is not None:
+        stepper.close()
     # Clamp tiny tails (subnormal float32 residue, ~1e-44, can occur when a
     # FG has effectively collapsed but lingering near-zero biomass survives
     # the multiplicative shrink loop). Without this, JSONL logs values like

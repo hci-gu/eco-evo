@@ -97,6 +97,14 @@ class EcosystemEnvironment:
         self.global_fg_order = sorted(self.fgs.keys())
         self._static_built = False
         self.cache = None
+        # Training-side bookkeeping, both on by default. The running
+        # observation sums (_obs_sum/_obs_sumsq/_obs_count) feed the
+        # trainer's obs normalisation; the action diagnostics
+        # (_action_*_frac, entropy) feed the trainer's logs and the live
+        # viewer's move/rest/eat curves. A frozen-policy rollout that reads
+        # neither can switch them off (inference.py, section 233).
+        self.collect_observation_stats = True
+        self.collect_action_diagnostics = True
 
         self.loss_predation = {fid: 0.0 for fid in self.fgs}
         self.loss_starvation = {fid: 0.0 for fid in self.fgs}

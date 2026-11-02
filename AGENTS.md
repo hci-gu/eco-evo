@@ -475,6 +475,11 @@ without debiting the energy reserve; the mass-balanced term is ON by
 default since section 120 and the library is calibrated for it -
 `--mass-balance` is kept as a no-op, sections 114-116, 120),
 `--migration on|off` (default on since section 231, same entry points),
+`--engine cpu|gpu` (inference.py, default cpu: gpu runs the rollout on
+the tensor engine as CUDA graphs, ~7x at 60x60 headless, float-noise
+equal to the CPU engine; with `--visual` the state and books are
+mirrored into the CPU envs each tick, and `--rnd_baseline` worlds ride
+in the same batch as zero-weight candidates; sections 234, 235),
 `--policynetwork LAYERS NODES [ACTIVATION]` (default 2 24 tanh since section
 231, was 2 30 sig; an omitted ACTIVATION is tanh), `--resume`,
 `--local_reward` (per-cell source-tracked reward, sections 79 and 80;

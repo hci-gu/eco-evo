@@ -538,6 +538,7 @@ class _NullViz:
     def get_spawn_overrides(self, *a, **kw): return {}
     def consume_spawn_change(self, *a, **kw): return False
     def pump_events(self): return True
+    def pace_rollout(self): return True
     def wait_for_close(self, *a, **kw): pass
     def close(self): pass
 
@@ -553,6 +554,12 @@ class LiveVisualizer:
     # Train calls update_biomass once per ARS iter which is already slow,
     # so this mostly protects inference (per-tick rendering).
     _MIN_FRAME_INTERVAL = 1.0 / 30.0
+    _SPEED_MIN_TPS = 1.0
+    _SPEED_MAX_TPS = 1000.0
+    # Controls that restart or change a running rollout: a held rollout
+    # gives the loop back to inference.py as soon as one is released.
+    _RESTART_FLAGS = ("_b0_dirty", "_ticks_dirty", "_spawn_dirty",
+                      "_impact_dirty", "_impact_live_dirty")
     # Below this scrub-slider width the playback bar switches its frame
     # indicator to the compact texts (section 191).
     _MIN_SCRUB_W = 120
@@ -820,6 +827,18 @@ class LiveVisualizer:
         self._biomass_scale_track_rect: Optional[tuple] = None
         self._biomass_scale_label_rect: Optional[tuple] = None
         self._dragging_biomass_scale: bool = False
+        # Inference speed (row 4 of the inference status bar, under the
+        # biomass scale; section 236). ``_speed_frac`` is the slider
+        # position: 0 holds the rollout, 1 (the default) runs it as fast
+        # as it goes, in between a log scale of _SPEED_MIN_TPS ..
+        # _SPEED_MAX_TPS ticks per second. ``pace_rollout`` (called by
+        # inference.py once per tick) holds the rollout to it; the
+        # recording's playback speed is separate (the playback bar).
+        self._speed_frac: float = 1.0
+        self._speed_track_rect: Optional[tuple] = None
+        self._speed_label_rect: Optional[tuple] = None
+        self._dragging_speed: bool = False
+        self._pace_last: float = 0.0
         # Per-FG biomass-loss fractions shown above the heatmap as
         # ``pr/st/im=X/Y/Z%``. Updated from train probe rollouts and
         # inference ticks. Values are fractions in [0, 1].
@@ -1103,13 +1122,11 @@ class LiveVisualizer:
             for code in i18n.CODES) + 8
         plot_w = max(420, nat_block_w // 2 + self._legend_w,
                      tab_strip_w + self._legend_w + 4)
-        # Status-baren rymmer textraden och två slider-rader. I training är
+        # Status-baren rymmer textraden och tre slider-rader. I training är
         # rad 3 n_eval_ticks; i inference är rad 3 biomass display scale.
-        # In training a fourth row holds the evaluation probe interval.
-        if str(mode).lower().startswith("infer"):
-            status_h = 62
-        else:
-            status_h = 80
+        # The fourth row holds the evaluation probe interval in training
+        # and the inference speed in inference (section 236).
+        status_h = 80
         # Playback bar (under heatmaps and plot) for replaying the most
         # recent probe/inference rollout. Holds the buttons << / >> / play
         # / pause / speed +/- and a frame indicator. Always allocated, even
@@ -2292,6 +2309,9 @@ class LiveVisualizer:
                     if v is not None:
                         self._set_biomass_display_scale(v)
                         interacted = True
+                elif event.type == pg.MOUSEMOTION and self._dragging_speed:
+                    if self._set_speed_from_x(event.pos[0]):
+                        interacted = True
                 elif event.type == pg.MOUSEMOTION and self._dragging_playback:
                     idx = self._playback_idx_from_x(event.pos[0])
                     if idx is not None:
@@ -2338,6 +2358,10 @@ class LiveVisualizer:
                 elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
                         and self._dragging_biomass_scale:
                     self._dragging_biomass_scale = False
+                    interacted = True
+                elif event.type == pg.MOUSEBUTTONUP and event.button == 1 \
+                        and self._dragging_speed:
+                    self._dragging_speed = False
                     interacted = True
                 elif event.type == pg.MOUSEMOTION:
                     # Reached only when no drag claimed the motion.
@@ -2452,6 +2476,9 @@ class LiveVisualizer:
                         if v is not None:
                             self._set_biomass_display_scale(v)
                     elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_speed):
+                        self._set_speed_from_x(event.pos[0])
+                    elif (event.type == pg.MOUSEMOTION
                           and self._dragging_playback):
                         idx = self._playback_idx_from_x(event.pos[0])
                         if idx is not None:
@@ -2486,6 +2513,9 @@ class LiveVisualizer:
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_biomass_scale):
                         self._dragging_biomass_scale = False
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_speed):
+                        self._dragging_speed = False
                 if (self._playback_mode == "playing"
                         and self._current_rollout
                         and not self._recording):
@@ -2583,6 +2613,9 @@ class LiveVisualizer:
                         if v is not None:
                             self._set_biomass_display_scale(v)
                     elif (event.type == pg.MOUSEMOTION
+                          and self._dragging_speed):
+                        self._set_speed_from_x(event.pos[0])
+                    elif (event.type == pg.MOUSEMOTION
                           and self._dragging_playback):
                         idx = self._playback_idx_from_x(event.pos[0])
                         if idx is not None:
@@ -2633,6 +2666,9 @@ class LiveVisualizer:
                     elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
                           and self._dragging_biomass_scale):
                         self._dragging_biomass_scale = False
+                    elif (event.type == pg.MOUSEBUTTONUP and event.button == 1
+                          and self._dragging_speed):
+                        self._dragging_speed = False
                 # Playback auto-advance (samma logik som i pump_events),
                 # annars händer ingenting när användaren trycker play efter
                 # att inference-rollouten är klar.
@@ -3008,6 +3044,86 @@ class LiveVisualizer:
         frac = (mx - track_x) / float(track_w)
         return self._biomass_scale_value_from_pos(frac)
 
+    # ---- Inference speed (section 236) -------------------------------
+    def get_speed(self) -> Optional[float]:
+        """Ticks per second the slider asks for: None = as fast as it goes,
+        0.0 = held."""
+        f = float(self._speed_frac)
+        if f >= 1.0:
+            return None
+        if f <= 0.0:
+            return 0.0
+        import math
+        lo, hi = math.log(self._SPEED_MIN_TPS), math.log(self._SPEED_MAX_TPS)
+        return math.exp(lo + f * (hi - lo))
+
+    def _speed_value_text(self, lang: Optional[str] = None,
+                          tps: Optional[float] = -1.0) -> str:
+        tps = self.get_speed() if tps == -1.0 else tps
+        lang = self._lang if lang is None else lang
+        if tps is None:
+            return i18n.translate(lang, "max")
+        if tps <= 0.0:
+            return i18n.translate(lang, "held")
+        n = f"{tps:.0f}" if tps >= 10.0 else f"{tps:.1f}"
+        return i18n.translate(lang, "{n} ticks/s", n=n)
+
+    def _speed_label(self) -> str:
+        return self._t("Inference speed = {value}", value=self._speed_value_text())
+
+    def _speed_label_width(self) -> int:
+        """Widest speed label over languages and values (stable tracks)."""
+        widest = 0
+        for code in i18n.CODES:
+            for tps in (None, 0.0, 999.0):
+                text = i18n.translate(code, "Inference speed = {value}",
+                                      value=self._speed_value_text(code, tps))
+                widest = max(widest, self._font.size(text)[0])
+        return widest
+
+    def _speed_frac_from_x(self, mx: int) -> Optional[float]:
+        rect = self._speed_track_rect
+        if rect is None:
+            return None
+        rx, _ry, rw, _rh = rect
+        track_x = rx + 2
+        track_w = max(1, rw - 4)
+        return max(0.0, min(1.0, (mx - track_x) / float(track_w - 1 or 1)))
+
+    def _set_speed_from_x(self, mx: int) -> bool:
+        f = self._speed_frac_from_x(mx)
+        if f is None:
+            return False
+        self._speed_frac = f
+        return True
+
+    def pace_rollout(self) -> bool:
+        """Hold the running inference rollout to the speed slider.
+
+        Called once per tick; returns when the next tick is due (ticks
+        start at most ``get_speed()`` per second), at once at max, and
+        while held only when the slider moves off 0, a restarting control
+        is released (``_RESTART_FLAGS``) or the window closes. Events are
+        pumped meanwhile, so every control keeps working. False = closed.
+        """
+        if not self.enabled:
+            return True
+        while not self._quit:
+            tps = self.get_speed()
+            if tps is None:
+                break
+            if any(getattr(self, flag, False) for flag in self._RESTART_FLAGS):
+                break
+            waited = time.monotonic() - self._pace_last
+            if tps > 0.0 and waited >= 1.0 / tps:
+                break
+            self.pump_events()
+            left = 0.02 if tps <= 0.0 else (1.0 / tps) - (time.monotonic() - self._pace_last)
+            if left > 0.0:
+                time.sleep(min(0.02, left))
+        self._pace_last = time.monotonic()
+        return not self._quit
+
     def _handle_click(self, pos) -> None:
         try:
             mx, my = pos
@@ -3118,6 +3234,14 @@ class LiveVisualizer:
             if v is not None:
                 self._set_biomass_display_scale(v)
                 self._dragging_biomass_scale = True
+            return
+        # Inference speed: the label returns to max, the track drags.
+        if self._hit_rect(self._speed_label_rect, pos):
+            self._speed_frac = 1.0
+            return
+        if self._hit_rect(self._speed_track_rect, pos):
+            if self._set_speed_from_x(mx):
+                self._dragging_speed = True
             return
         # b0-slidrar: kolla först om klicket landade i en slider — då
         # initieras dragning och vi hoppar över övrig klick-routing.
@@ -4000,6 +4124,43 @@ class LiveVisualizer:
         years, rest_days = divmod(days, DAYS_PER_YEAR)
         return self._t("{years} y {days} d", years=years, days=rest_days)
 
+    def _draw_speed_row(self, x: int, row_y: int, track_x: int,
+                        track_w: int) -> None:
+        """Inference speed slider, under the biomass scale (section 236).
+
+        Same track as the rows above. 0 at the left holds the rollout,
+        max at the right runs it unthrottled (the default, marked like
+        the other sliders' defaults); the knob is lit off the default.
+        """
+        pg = self._pg
+        row_h = 18
+        at_max = self._speed_frac >= 1.0
+        lbl = self._font.render(self._speed_label(), True,
+                                (150, 150, 160) if at_max else (210, 210, 220))
+        self._screen.blit(lbl, (x + 6, row_y + 2))
+        # Clicking the label returns to max.
+        self._speed_label_rect = (x + 4, row_y, lbl.get_width() + 4,
+                                  self._font.get_height() + 4)
+        lo = self._font.render("0", True, (150, 150, 160))
+        hi = self._font.render(self._t("max"), True, (150, 150, 160))
+        self._screen.blit(lo, (track_x - 6 - lo.get_width(), row_y + 2))
+        self._screen.blit(hi, (track_x + track_w + 6, row_y + 2))
+        ty, th = row_y + (row_h - 6) // 2, 6
+        pg.draw.rect(self._screen, (60, 60, 70), (track_x, ty, track_w, th))
+        pg.draw.rect(self._screen, (110, 110, 125), (track_x, ty, track_w, th), 1)
+        dx = track_x + track_w - 1
+        pg.draw.line(self._screen, (140, 140, 150), (dx, ty - 2), (dx, ty + th + 2), 1)
+        hx = int(track_x + max(0.0, min(1.0, self._speed_frac)) * (track_w - 1))
+        if at_max:
+            knob = (200, 200, 210)
+        elif self._speed_frac <= 0.0:
+            knob = (210, 120, 110)
+        else:
+            knob = (220, 220, 90)
+        pg.draw.circle(self._screen, knob, (hx, ty + th // 2), 6)
+        pg.draw.circle(self._screen, (40, 40, 50), (hx, ty + th // 2), 6, 1)
+        self._speed_track_rect = (track_x - 2, ty - 6, track_w + 4, th + 12)
+
     def _draw_status_bar(self) -> None:
         pg = self._pg
         x, y, w, h = self._status_rect
@@ -4127,8 +4288,9 @@ class LiveVisualizer:
             value=self.get_eval_interval()))
         _lbl1_w = self._t_width(self._font, "Probe ticks{marker} = {value}",
                                 marker=marker, value=cur)
+        _speed_label_w = self._speed_label_width() if _is_inference else 0
         _label_w = max(_lbl1_w, _lbl2_preview_w, _bio_label_w,
-                       _lbl4_preview_w)
+                       _lbl4_preview_w, _speed_label_w)
         # Track-rect: börjar efter label (+ liten gutter), slutar före
         # hi-label (+ gutter). Mappar mot fönsterbredden.
         try:
@@ -4167,7 +4329,9 @@ class LiveVisualizer:
         except Exception:
             _hi2_preview_w = hi_surf.get_width()
         _bio_hi_w = self._font.size(_bio_hi_txt)[0] if _is_inference else 0
-        _hi_w = max(hi_surf.get_width(), _hi2_preview_w, _bio_hi_w)
+        _speed_hi_w = (max(self._font.size(i18n.translate(c, "max"))[0]
+                           for c in i18n.CODES) if _is_inference else 0)
+        _hi_w = max(hi_surf.get_width(), _hi2_preview_w, _bio_hi_w, _speed_hi_w)
         right_limit = (plot_left - (_hi_w + 6) - 4
                        - (lock_size + lock_gutter))
         track_w_max = right_limit - track_x
@@ -4271,7 +4435,10 @@ class LiveVisualizer:
                            (hx3, track3_y + track3_h // 2), 6, 1)
             self._biomass_scale_track_rect = (
                 track_x - 2, track3_y - 6, track_w + 4, track3_h + 12)
+            self._draw_speed_row(x, y + 58, track_x, track_w)
             return
+        self._speed_track_rect = None
+        self._speed_label_rect = None
         self._biomass_scale_track_rect = None
         self._biomass_scale_label_rect = None
         # Identisk layout som ticks-slidern men med "n_eval_ticks" som

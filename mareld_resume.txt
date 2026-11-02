@@ -22401,3 +22401,153 @@ remain open exactly as described in 71.9 / 71.11.
     Cells follow the pair's preys_on like the other pair matrices; hover
     help in field_help.py. tests/test_fgconfig_pair_matrices.py; the
     help coverage test lists the four keys.
+
+233 INFERENCE ROLLOUT: TRAINING-ONLY BOOKKEEPING OFF (user, 2026-11-01)
+    A cProfile of a headless inference.py rollout (60x60, currents on,
+    400 ticks, ~50 ms/tick, one core) showed two per-tick costs that
+    only training reads: accumulate_observation_stats (the running obs
+    sums for the trainer's normalisation, plus the raw_obs copy kept
+    for it; ~10 %) and update_action_diagnostics (the _action_*_frac /
+    entropy sums; ~7 %). The env now carries two switches, both True by
+    default so train.py, the workers and the probes are untouched:
+    collect_observation_stats and collect_action_diagnostics
+    (ecosystem_env/environment.py; checked in decisions.build_observation
+    and decisions.actions_from_probabilities). run_inference turns the
+    first off for the main and baseline worlds, and the second off only
+    headless: with --visual _push_action_fracs reads those sums for the
+    move/rest/eat curves, which the saved inference plot HTML
+    (_save_inference_plot_html) is built from. The world is unchanged:
+    the --output npz of a seeded rollout is bit-identical before and
+    after; headless rollout 19.1 -> 14.9 s (three interleaved runs).
+    tests/test_inference_bookkeeping.py.
+233.1 Observation normalisation in torch (2026-11-01). The per-tick
+    cost of decisions.normalize_observations is the element-wise
+    (obs - mean) / std and clip on the whole (N_dm, H*W, dim) batch and
+    numpy's temporaries, not the sqrt on the stats (caching it would also
+    go stale: training_progress writes obs_mean rows in place). The same
+    float32 arithmetic in torch is bit-identical (the seeded --output npz
+    of the original code reproduced exactly) and multi-threaded: 5.8 ->
+    0.5 ms per call on the captured inference batch at 16 threads, 4.4 ms
+    at one thread (the training workers). Rollout gain ~5-10 % on top of
+    233 (noisy, train_gpu shared the CPU); 400 ticks at 60x60 went
+    ~19.1 s (before 233) -> ~14.7 s. Tried and NOT kept: masked_softmax
+    in torch (3.5 -> 0.75 ms per call, ~4 % of the rollout) changes every
+    probability by up to 4e-7 and the seeded 400-tick trajectory by up to
+    4.4 % (porpoises, the unit splits) and 13 % (phytoplankton,
+    transient); masked_softmax is shared with train.py, the workers, the
+    long-run probe and tools/viability.py, so it would change training
+    numerics against every earlier result. numpy in-place variants of
+    both functions gained nothing. Left open: batched neighbour shifts
+    (measure first, AGENTS.md section 7), render every N ticks in the
+    viewer, the GPU engine (lacks the viewer's accumulators).
+
+234 INFERENCE ON THE TENSOR ENGINE: --engine gpu (user, 2026-11-02)
+    inference.py --engine cpu|gpu (default cpu), --cuda-device (default
+    cuda). gpu is headless: --visual is refused at parse time (the viewer
+    reads the CPU env's accumulators: loss causes, diet, action fractions),
+    and so is a machine without CUDA. The world is built exactly as for
+    the CPU engine (build_env: spawn, b0/spawn overrides, inference impact
+    maps, start day) and uploaded once; lib/gpu/inference.py packs the
+    frozen policies (one architecture for every DM, as the CPU batched
+    path) and the frozen obs stats into a one-candidate, one-world
+    InferenceRunner, a RolloutRunner whose _tick also writes every
+    group's total biomass into a [tick, group] buffer, so the rollout
+    replays as CUDA graphs and the host reads it only at the progress
+    lines. Those follow the CPU schedule (inference.progress_due, shared
+    with the CPU loop); the run stops after the first tick at which every
+    group has collapsed, as the CPU loop does; --output and the final
+    totals are unchanged. Not bit-identical to the CPU engine: per tick
+    the engines agree to float32 rounding (tests/test_gpu_ecosystem.py);
+    a seeded 400-tick 60x60 rollout drifted up to 5 % (porpoises, unit
+    splits) and 12 % (phytoplankton, transient), the same size as the
+    float noise of section 233.1, the rest 1e-5..3e-3. Producer seeding
+    uses the tensor engine's own RNG. One year, mareld3 checkpoint,
+    currents on, with train_gpu holding the GPU at 100 %: 60x60 53.0 ->
+    8.0 s, 30x30 22.0 -> 5.7 s (rollout incl. upload and graph capture).
+    tests/test_inference_gpu_engine.py (CPU vs tensor engine on cpu and
+    cuda, graph vs eager, progress schedule, --visual refused). Open: the
+    viewer on the tensor engine (diagnostics out of the step, a CPU-env
+    mirror for the viewer, live impact upload) and the random baselines
+    as zero-weight candidates in the same batch.
+
+235 --engine gpu WITH THE VIEWER AND THE RANDOM BASELINES (user, 2026-11-02)
+    inference.py --engine gpu now takes --visual and --rnd_baseline.
+    The viewer path keeps the CPU envs as mirrors: run_inference(engine=
+    "gpu") builds a lib/gpu/inference.GpuStepper over [env] + the
+    baseline envs, steps one tick (a captured one-tick CUDA graph) and
+    copies back into every env what the CPU engine would have left for
+    the viewer - biomass, reserve, juveniles, prev_hidden_frac, the
+    cumulative loss_* books, intake_by_pred_prey and the _action_* books
+    - so the loop, the heatmaps, the recording, the saved inference plot
+    HTML and the tooltips read them unchanged. A live impact change
+    (section 225) re-uploads the maps (GpuStepper.refresh_impacts) from
+    both places it is applied. The headless path of 234 is unchanged.
+    The baselines (C) ride in the same batch: one world, one candidate
+    per CPU world, a random DM's weights all zero - zero logits, the
+    uniform softmax over the allowed actions that RandomPolicy gives.
+    'all' is one extra candidate, 'solo' one per DM.
+    Engine side, all default-off so the training graphs are the ones they
+    were: TensorEcosystem.step/population(record=dict) hand out the
+    tick's impact loss (min(B rate, B), as impacts.py), the pair intake,
+    the NDM grazing, M1 + regional-capacity + nutrient-stress loss
+    ("natural") and catabolism + the extinction sweep ("starvation");
+    RolloutRunner(diagnostics=True) adds them to loss_book [E, 4, G] and
+    diet_book [E, G, G] (predator x prey, NDM grazers included). The
+    losses are direct products, not differences of float32 fields: the
+    first version (before - after) kept ~3 digits of a 1e-4 per-tick
+    loss. Against the CPU engine over 5 ticks the books agree to 1e-6
+    (impact, predation, diet), the action fractions to 2e-7; the CPU
+    engine's own M1 book is a difference of float32 sums and off by
+    ~1e-7 of the group's biomass, which the tests allow.
+    200 ticks at 60x60 with the viewer (dummy display, rendering
+    included, train_gpu on the GPU): no baseline 9.0 -> 2.2 s, --rnd_baseline
+    solo (8 worlds) 78 -> 8.6 s. With solo the GPU time of the 8-world
+    batch dominates (the host waits in the first .cpu() of the mirror);
+    building the 8 baseline envs (~0.8 s each, the YAML loads) is outside
+    the rollout, as on the CPU path. A rerun (slider) rebuilds the
+    stepper and recaptures the graph (~1 s).
+    tests/test_inference_gpu_engine.py: mirrors of all three world kinds
+    vs the CPU engine, run_inference on both engines with a baseline, the
+    live impact upload.
+
+236 INFERENCE SPEED SLIDER IN THE VIEWER (user, 2026-11-02)
+    A fourth row in the inference status bar, under the biomass scale
+    (user's placement), on the same track: "Inference speed = ..." from 0
+    (held) to max (the default, unthrottled), in between a log scale of
+    1..1000 ticks/s (LiveVisualizer._SPEED_MIN_TPS/_MAX_TPS). The label
+    returns to max on a click; the knob is lit off max, red at 0. The
+    inference status bar is 80 px like training's (was 62). inference.py
+    calls viz.pace_rollout() once per tick after pump_events: it returns
+    when the next tick is due (tick starts at most get_speed() per
+    second), at once at max, and while held only when the slider moves
+    off 0, a restarting control is released (_RESTART_FLAGS: b0, ticks,
+    spawn, impact, live impact) or the window closes (False). Events are
+    pumped while it waits. Only an explicit False stops the run, so a
+    viewer stand-in without the method runs unthrottled. The recording's
+    playback speed (playback bar) is separate. Labels in sv/it in i18n.
+    Checked on DISPLAY :1 (the row renders under the biomass scale on the
+    same track) and in a run: 60 ticks at max 1.0 s, at 20 ticks/s 3.7 s
+    (3.0 s + start). tests/test_viz_speed.py.
+
+237 train_gpu.py's VIEWER PROBE ON THE TENSOR ENGINE (user, 2026-11-02)
+    The viewer probe of train_gpu.py --visual (train._probe_biomass,
+    called between updates and blocking training while it runs) now
+    steps on the tensor engine when training runs on CUDA:
+    _probe_biomass(engine="gpu", device=...) builds a GpuStepper (section
+    235) over the probe world and its random baselines (zero-weight
+    candidates; 'solo' one per DM) and mirrors back into the CPU envs
+    after each tick, so the rest of the probe (viewer feed, JSONL record,
+    rnd reward, population-stability score) reads them unchanged.
+    GPUTrainingVisualizer passes the engine (gpu on CUDA, cpu otherwise)
+    and prints which one probes. With --local_reward and baselines the
+    CPU engine is kept: the baselines' reward needs its per-cell source
+    tracking. train.py (CPU trainer) is unchanged (engine defaults to
+    cpu). The three-year long-run probe (training_progress) stays on the
+    CPU engine in its own process: it runs beside training already.
+    One-year probe, mareld3 checkpoint, 30x30, currents on, no viewer:
+    no baseline 25.9 -> 6.9 s, --rnd_baseline solo 246.7 -> 17.9 s (the
+    8 baseline envs are still built on the CPU, ~0.8 s each, part of
+    the 17.9 s). Not bit-identical to the CPU engine (234).
+    tests/test_gpu_probe_engine.py: the probe record on both engines
+    (solo and all, cpu and cuda), and that the GPU path stepped every
+    world each tick.

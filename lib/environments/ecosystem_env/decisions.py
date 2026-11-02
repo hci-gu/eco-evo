@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from lib.environments.ecosystem_env import observations
 from lib.environments.ecosystem_env.constants import EAT_START, MOVE_SLICE, REST_INDEX
 from lib.environments.ecosystem_env.state import ActionProbabilities, ObservationBatch
@@ -37,8 +38,14 @@ def normalize_observations(env, obs_np):
     mean = env.obs_mean.astype(env.dtype, copy=False)
     var = env.obs_var.astype(env.dtype, copy=False)
     std = np.sqrt(np.maximum(var, np.float32(1e-2)))
-    obs_np = (obs_np - mean[:, None, :]) / std[:, None, :]
-    return np.clip(obs_np, -10.0, 10.0).astype(env.dtype, copy=False)
+    # The same element-wise float32 arithmetic in torch, which runs it on
+    # several threads and without numpy's temporaries: bit-identical to
+    # ``clip((obs - mean) / std, -10, 10)`` (section 233). The result
+    # is a new array; obs_np is not touched.
+    out = torch.from_numpy(np.ascontiguousarray(obs_np, dtype=env.dtype))
+    out = out.sub(torch.from_numpy(mean)[:, None, :])
+    out.div_(torch.from_numpy(std)[:, None, :]).clamp_(-10.0, 10.0)
+    return out.numpy()
 
 
 def build_action_mask(env, num_actions):
@@ -206,8 +213,13 @@ def build_observation(env):
         env.build_static_caches()
 
     obs_np = observations.build_observation_batch(env)
-    raw_obs = obs_np.copy()
-    accumulate_observation_stats(env, raw_obs)
+    if getattr(env, "collect_observation_stats", True):
+        raw_obs = obs_np.copy()
+        accumulate_observation_stats(env, raw_obs)
+    else:
+        # Nothing accumulates, and normalize_observations returns a new
+        # array without touching obs_np, so the raw batch needs no copy.
+        raw_obs = obs_np
     features = normalize_observations(env, obs_np)
 
     if env._batched_ready and features.shape[-1] == env._in_dim:
@@ -228,7 +240,8 @@ def build_observation(env):
 def actions_from_probabilities(env, probs, subthreshold):
     probs = collapse_subthreshold_actions(probs, subthreshold)
     probs = merge_subunit_fractions(env, probs)
-    update_action_diagnostics(env, probs)
+    if getattr(env, "collect_action_diagnostics", True):
+        update_action_diagnostics(env, probs)
     return ActionProbabilities(
         move=probs[:, MOVE_SLICE],
         rest=probs[:, REST_INDEX],

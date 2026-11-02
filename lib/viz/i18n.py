@@ -161,6 +161,10 @@ CATALOG = {
         "Evaluation probe interval{marker} = {value}":
             "Probe-intervall{marker} = {value}",
         "Biomass scale = {value}x": "Biomassaskala = {value}x",
+        "Inference speed = {value}": "Inferenshastighet = {value}",
+        "{n} ticks/s": "{n} ticks/s",
+        "max": "max",
+        "held": "stoppad",
         # Playback bar.
         "resume train": "fortsätt",
         "pause train": "pausa",
@@ -301,6 +305,10 @@ CATALOG = {
         "Evaluation probe interval{marker} = {value}":
             "Intervallo sonde{marker} = {value}",
         "Biomass scale = {value}x": "Scala biomassa = {value}x",
+        "Inference speed = {value}": "Velocità inferenza = {value}",
+        "{n} ticks/s": "{n} tick/s",
+        "max": "max",
+        "held": "ferma",
         # Playback bar.
         "resume train": "riprendi",
         "pause train": "pausa",

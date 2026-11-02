@@ -156,6 +156,20 @@ def diagnostics_interval_ticks(values, tick_hours):
     return interval
 
 
+def progress_due(t, n_ticks, diagnostics_interval):
+    """Whether the progress line is printed after 0-based tick ``t``.
+
+    ``diagnostics_interval`` from :func:`diagnostics_interval_ticks`, or
+    None for ten prints per rollout. The last tick always prints. Shared
+    by the CPU loop and ``--engine gpu`` (section 234).
+    """
+    if diagnostics_interval is None:
+        due = t % max(1, n_ticks // 10) == 0
+    else:
+        due = (t + 1) // diagnostics_interval > t // diagnostics_interval
+    return due or t == n_ticks - 1
+
+
 def parse_grid_arg(value):
     m = re.fullmatch(r"\s*(\d+)\s*\*\s*(\d+)\s*", value)
     if not m:
@@ -856,7 +870,8 @@ def _restart_requested(viz):
                ('_b0_dirty', '_ticks_dirty', '_spawn_dirty', '_impact_dirty'))
 
 
-def _wait_to_continue(viz, envs, base_impact_maps, t, verbose):
+def _wait_to_continue(viz, envs, base_impact_maps, t, verbose,
+                      on_impact_change=None):
     """At the end of a rollout: wait in the window. Returns the ticks to
     go on for when an impact slider with its "Restart on change" box unticked was
     released (the running worlds take the new intensity), None to return
@@ -875,6 +890,8 @@ def _wait_to_continue(viz, envs, base_impact_maps, t, verbose):
             or _restart_requested(viz)):
         return None
     if apply_live_impact_change(viz, envs, base_impact_maps, verbose=verbose):
+        if on_impact_change is not None:
+            on_impact_change()
         viz.resume_rollout_recording()
         return max(1, int(viz.get_ticks()))
     # Anything else: the caller waits and decides, as before section 225.
@@ -883,7 +900,8 @@ def _wait_to_continue(viz, envs, base_impact_maps, t, verbose):
 
 def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                   viz=None, rnd_env=None, rnd_solo_envs=None,
-                  diagnostics_interval=None, base_impact_maps=None):
+                  diagnostics_interval=None, base_impact_maps=None,
+                  engine="cpu", device="cuda"):
     """Install policies + frozen stats and step the environment ``n_ticks`` times.
 
     If ``viz`` is a :class:`lib.viz.LiveVisualizer`, biomass heatmaps and a
@@ -912,6 +930,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     rollout length from the tick reached; mid-run the same choice is made
     without stopping (section 225). ``base_impact_maps`` are the loaded
     impact fields the intensity sliders scale.
+
+    ``engine="gpu"`` steps every world on the tensor engine on ``device``
+    (the baselines as zero-weight candidates of the same batch) and copies
+    the state and books back into ``env`` and the baseline envs after each
+    tick, so everything below reads them unchanged (section 235).
     """
     env.policies = dict(policies)
     env.obs_mean = obs_mean
@@ -929,10 +952,27 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
         unique_rnd_envs.append(rnd_env)
         for fid in rnd_env.fgs:
             rnd_env_for_fid[fid] = rnd_env
+    # The decision makers acting at random in each of ``unique_rnd_envs``.
+    random_dms = []
+    if rnd_env is not None:
+        random_dms.append(set(rnd_env.dm_ids))
     for fid, solo_env in (rnd_solo_envs or {}).items():
         _install_rnd_policies(env, solo_env, policies, [fid])
         unique_rnd_envs.append(solo_env)
         rnd_env_for_fid[fid] = solo_env
+        random_dms.append({fid})
+    stepper = None
+    if engine == "gpu":
+        from lib.gpu.inference import GpuStepper
+        stepper = GpuStepper([env] + unique_rnd_envs, policies, obs_mean,
+                             obs_var, random_dms=random_dms, device=device)
+    # Frozen policies and frozen obs stats: the running observation sums
+    # are never read here. The action diagnostics feed only the viewer's
+    # move/rest/eat curves (and through them the saved inference plot
+    # HTML), so they are kept with a viewer and skipped headless.
+    for _e in [env] + unique_rnd_envs:
+        _e.collect_observation_stats = False
+        _e.collect_action_diagnostics = viz is not None
     # FGs each env reports, for the action-fraction push.
     rnd_report = {id(e): {f for f, e2 in rnd_env_for_fid.items() if e2 is e}
                   for e in unique_rnd_envs}
@@ -971,21 +1011,26 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
     while True:
         t += 1
         if t >= n_ticks:
-            more = _wait_to_continue(viz, live_envs, base_impact_maps,
-                                     t, verbose)
+            more = _wait_to_continue(
+                viz, live_envs, base_impact_maps, t, verbose,
+                on_impact_change=(stepper.refresh_impacts
+                                  if stepper is not None else None))
             if not more:
                 break
             n_ticks = t + more
             if verbose:
                 print(f"    [live] continuing from tick {t} to {n_ticks}")
         try:
-            observation = env.get_observation()
-            actions = env.policy_controller.forward(observation)
-            env.step(actions)
-            for _re in unique_rnd_envs:
-                rnd_observation = _re.get_observation()
-                rnd_actions = _re.policy_controller.forward(rnd_observation)
-                _re.step(rnd_actions)
+            if stepper is not None:
+                stepper.step()
+            else:
+                observation = env.get_observation()
+                actions = env.policy_controller.forward(observation)
+                env.step(actions)
+                for _re in unique_rnd_envs:
+                    rnd_observation = _re.get_observation()
+                    rnd_actions = _re.policy_controller.forward(rnd_observation)
+                    _re.step(rnd_actions)
         except KeyboardInterrupt:
             if verbose:
                 print(f"\n    interrupted at tick {t+1}/{n_ticks}; "
@@ -1044,14 +1089,10 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 pct_eng[fid] = 100.0 * energy_history[fid][-1] / e0
             else:
                 pct_eng[fid] = 0.0
-        if diagnostics_interval is None:
-            print_now = t % max(1, n_ticks // 10) == 0
-        else:
-            print_now = ((t + 1) // diagnostics_interval
-                         > t // diagnostics_interval)
         # The last tick is always printed, also when the rollout stops
         # early because every world has collapsed.
-        print_now = print_now or t == n_ticks - 1 or ecosystem_dead
+        print_now = (progress_due(t, n_ticks, diagnostics_interval)
+                     or ecosystem_dead)
         if verbose and print_now:
             print(f"    tick {t+1}/{n_ticks}")
             ratios = []
@@ -1165,6 +1206,15 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     if verbose:
                         print("    [viz] window closed; stopping early.")
                     break
+                # The speed slider (section 236): wait until the next tick
+                # is due; held at 0 until it moves or a control restarts.
+                # Only an explicit False (window closed) stops the run; a
+                # viewer stand-in without the slider runs unthrottled.
+                pace = getattr(viz, "pace_rollout", None)
+                if pace is not None and pace() is False:
+                    if verbose:
+                        print("    [viz] window closed; stopping early.")
+                    break
                 # Live re-trigger: om användaren ändrat b0, rollout-ticks
                 # eller spawn-template medan inspelningen pågår, avbryt
                 # nuvarande probe direkt så main-loopens rerun startar en
@@ -1176,9 +1226,11 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                     # An impact slider with "Restart on change" unticked: the world
                     # takes the new intensity and goes on (section 225).
                     if getattr(viz, '_impact_live_dirty', False):
-                        apply_live_impact_change(viz, live_envs,
-                                                 base_impact_maps,
-                                                 verbose=verbose)
+                        if (apply_live_impact_change(viz, live_envs,
+                                                     base_impact_maps,
+                                                     verbose=verbose)
+                                and stepper is not None):
+                            stepper.refresh_impacts()
                 else:
                     if verbose:
                         reasons = []
@@ -1212,6 +1264,8 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
             viz.end_rollout_recording()
         except Exception:
             pass
+    if stepper is not None:
+        stepper.close()
     return history
 
 
@@ -1288,9 +1342,24 @@ def main():
                              "'month 0.5'. A month is 1/12 of a 365-day year. "
                              "Default: every 1000 ticks.")
 
+    parser.add_argument("--engine", choices=["cpu", "gpu"], default="cpu",
+                        help="Simulation engine. 'cpu' (default) is the "
+                             "reference EcosystemEnvironment; 'gpu' steps the "
+                             "same world on the tensor engine (lib/gpu) as "
+                             "CUDA graphs, with --visual and --rnd_baseline "
+                             "too (the baselines in the same batch). It "
+                             "matches the CPU engine per tick to float32 "
+                             "rounding, not bit for bit (sections 234, 235).")
+    parser.add_argument("--cuda-device", "--cuda_device", dest="cuda_device",
+                        default="cuda",
+                        help="CUDA device for --engine gpu (default: cuda).")
     add_current_arguments(parser)
     add_tick_length_argument(parser)
     args = parser.parse_args()
+    if args.engine == "gpu":
+        if not torch.cuda.is_available():
+            parser.error("--engine gpu needs CUDA, and torch sees no CUDA "
+                         "device")
     try:
         currents = current_options(args)
     except ValueError as error:
@@ -1336,6 +1405,8 @@ def main():
         print(f"Mass balance: {'on' if args.mass_balance else 'off'}")
         print(f"Migration:    {args.migration}")
         print(f"Rnd baseline: {args.rnd_baseline}")
+        print(f"Engine:       {args.engine}"
+              + (f" ({args.cuda_device})" if args.engine == "gpu" else ""))
         print("------------------------------------------")
 
     if not os.path.isdir(args.checkpoints):
@@ -1531,12 +1602,25 @@ def main():
                               else int(args.ticks))
             if verbose and ticks_this_run != int(args.ticks):
                 print(f"    [ticks override] rollout length = {ticks_this_run}")
+            if args.engine == "gpu" and viz is None:
+                # Headless: the world built above, stepped on the tensor
+                # engine in CUDA-graph blocks (section 234).
+                from lib.gpu.inference import run_gpu_inference
+                history = run_gpu_inference(
+                    env, policies, mean, var, ticks_this_run,
+                    verbose=verbose, device=args.cuda_device,
+                    progress_ticks=[t for t in range(ticks_this_run)
+                                    if progress_due(t, ticks_this_run,
+                                                    diagnostics_interval)])
+                break
             history = run_inference(env, policies, mean, var, ticks_this_run,
                                     verbose=verbose, viz=viz,
                                     rnd_env=rnd_env,
                                     rnd_solo_envs=rnd_solo_envs,
                                     diagnostics_interval=diagnostics_interval,
-                                    base_impact_maps=base_impact_maps)
+                                    base_impact_maps=base_impact_maps,
+                                    engine=args.engine,
+                                    device=args.cuda_device)
             first_iteration = False
 
             if viz is None:
