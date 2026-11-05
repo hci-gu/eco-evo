@@ -191,3 +191,23 @@ def test_live_impact_change_reaches_the_tensor_engine(device):
         assert not torch.equal(stepper.runner.impact_loss, before)
     finally:
         stepper.close()
+
+
+def test_engine_defaults_to_cpu_without_cuda():
+    """Default gpu where there is one (section 238); without CUDA the
+    run falls back to the CPU engine instead of failing."""
+    out = subprocess.run([sys.executable, str(ROOT / "inference.py"),
+                          "--checkpoints", str(ROOT / "no_such_dir")],
+                         cwd=ROOT, capture_output=True, text=True,
+                         env={**os.environ, "CUDA_VISIBLE_DEVICES": ""})
+    assert "running --engine cpu" in out.stderr
+    assert "Engine:       cpu" in out.stdout
+    assert "checkpoint directory does not exist" in out.stderr
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="NVIDIA GPU required")
+def test_engine_defaults_to_gpu_with_cuda():
+    out = subprocess.run([sys.executable, str(ROOT / "inference.py"),
+                          "--checkpoints", str(ROOT / "no_such_dir")],
+                         cwd=ROOT, capture_output=True, text=True)
+    assert "Engine:       gpu" in out.stdout

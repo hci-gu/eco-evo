@@ -22551,3 +22551,257 @@ remain open exactly as described in 71.9 / 71.11.
     tests/test_gpu_probe_engine.py: the probe record on both engines
     (solo and all, cpu and cuda), and that the GPU path stepped every
     world each tick.
+
+238 --engine DEFAULTS TO gpu (user, 2026-11-02)
+    inference.py --engine now defaults to gpu when torch sees a CUDA
+    device and falls back to cpu otherwise, with a note on stderr; an
+    explicit --engine gpu without CUDA is still a parse error, and
+    --engine cpu gives the reference engine (bit-identical to the runs
+    before 234). run_inference's own engine argument keeps cpu as its
+    default, so library callers (api.py, probes, tests) are unchanged.
+    tests/test_inference_gpu_engine.py covers both defaults.
+
+239 FIX86 VS THE VIABILITY-HACKED FIX87; HACK ATTRIBUTION (user,
+    2026-11-03; analysis only, library and code untouched).
+    - fix87 ran in two phases: u0-750 on mareld2.yaml + fg_library.yaml
+      (232-232.2; progress/), then resumed u840-1200 on mareld3.yaml +
+      fgconfig/fg_library2.yaml (progress_mareld3/). fg_library2 is
+      fg_library with eight edits ("the hack"): no regional K on
+      planktivores (4.8) or whiting (0.533); resting_metabolism x0.7 on
+      the water column (3.29 -> 2.303), mackerel (4.59 -> 3.213),
+      porpoises (60 -> 42), seals (50 -> 35); water column ->
+      planktivores a x2 (0.00559 -> 0.01118), -> benthivores a /3
+      (0.0651 -> 0.0217). mareld3 adds inference_start_day_of_year 1
+      with the 1 January plankton starts (232.6).
+    - Training probes (3 yr, seed 20260530, 30x30), annual means
+      year 3 / start, last 8 probes: benthivores 0.67 / 0.55 / 1.02
+      (fix86 / fix87a / fix87b), water column 0.45 / 0.35 / 0.95,
+      mackerel 0.62 / 0.36 / 1.13, whiting 1.04 / 0.90 / 1.96, epifauna
+      0.22 / 1.25 / 0.97, planktivores 1.00 / 0.91 / 1.22, seals 0.60 /
+      0.42 / 1.16, porpoises 0.94 / 0.83 / 1.17. fix86 -> fix87a (same
+      manifest) is the 232 fix: epifauna and whiting rescued, the water
+      column, mackerel and seals no better (below 0.3 of start in year
+      3 of most fix87a probes). fix87b's 12/14 fails only plankton on
+      the 10x ceiling: ratio to a winter start (zooplankton exits 3x at
+      tick ~220); the mareld2 plankton ratios are the same artefact
+      reversed. Not comparable across the manifests.
+    - Attribution: frozen fix87b u1200 (copied first), tools/probes/
+      frozen_years.py, mareld2 world 60x60, seed 20260530, 3 years; the
+      hack library with ONE edit reverted per arm, plus the full hack
+      and no hack. Year-end 3 / start:
+        arm            bnt  wcp  mck  whi  plk  seal porp epi
+        no hack        0.83 0.27 0.35 0.92 0.88 0.03 0.88 1.32
+        full hack      1.00 0.87 1.05 2.12 1.19 1.25 1.19 0.91
+        - K plk        0.94 0.76 1.04 2.13 0.71 1.24 1.14 0.96
+        - K whiting    1.01 0.88 1.07 0.92 1.20 1.25 1.21 1.30
+        - met wcp      0.99 0.45 1.05 2.13 1.27 1.24 1.21 0.90
+        - met mck      1.00 0.88 0.35 2.13 1.22 1.25 1.19 0.90
+        - met porp     1.00 0.87 1.05 2.11 1.19 1.25 0.99 0.92
+        - met seal     0.96 0.86 1.05 2.12 1.19 1.00 1.19 0.92
+        - a wcp->plk   1.01 0.64 1.06 2.12 1.32 1.25 1.18 0.90
+        - a wcp->bnt   0.85 0.95 1.05 2.14 1.19 1.20 1.17 0.92
+      Each revert moves its own target and little else. Whiting's
+      doubling and the epifauna's decline are the K removal alone;
+      with K whiting is flat but its realised M2 on the epifauna is
+      still 0.36 /yr (0.74 without K; booked 0.069) - 232.3 reproduced
+      on new policies, K hides the overshoot. Mackerel's rescue is its
+      metabolism alone: without the cut it starves 0.27-0.33 /yr at
+      Q/B 3.6 (zooplankton 90 %), fill 0.58-0.61 vs 0.68 - either
+      228.2's swimming floor 4.59 is wrong or the deficit is on the
+      intake side. The water column rests mostly on its metabolism
+      (0.87 -> 0.45), then a wcp->plk x2 (0.64). a wcp->plk x2 and the
+      planktivore K removal are coupled (restoring K alone gives plk
+      0.71, below no hack). a wcp->bnt /3 lifts the benthivores 0.85 ->
+      1.00. Porpoise and seal metabolism cuts are small in isolation
+      (0.99, 1.00); the no-hack seal crash (0.03, starvation 1.47 /yr
+      in year 2) needs full metabolism AND the thinner benthivores, and
+      is partly a frozen-policy artefact (fix87a's own policies in that
+      library: seals 0.43 at year 3; water column 0.28 and mackerel
+      0.28 there agree with this table).
+    - Diets in every arm: seals 100 % benthivores (booked 60/15/25);
+      water column 84 % planktivores under a x2; porpoises 85-96 %
+      planktivores - the exclusive per-prey allocation of 232.
+    - One seed; frozen policies trained in the hack world; the mareld2
+      start, not mareld3's. Outputs in the session scratchpad only.
+
+239.1 WHY THE PREDATORS EAT ONE PREY (user, 2026-11-04; analysis only).
+    - Mechanism: the policy's softmax splits eat over the prey (one
+      action per prey) and each pair's Holling term is computed as if
+      the predator searched for that prey alone, demand_j = B eat_j
+      f_j(B_j) hunger. The return sum_j eat_j f_j E_j is LINEAR in the
+      eat shares, so the per-cell optimum is a corner: all eat on the
+      prey with the highest f_j E_j. A shared-handling multi-prey
+      response, f_j = a_j B_j / (1 + sum_k a_k h_k B_k), would give diet
+      shares ~ a_j B_j without any choice; and with h_j = E_j / ceiling
+      (every predator but the benthivores) every prey has the same
+      profitability E/h, so Charnov's prey model would include them all.
+      232's diet gate computes exactly those encounter shares; the
+      engine cannot realise them.
+    - Measured (frozen fix87b u1200, mareld2 60x60, seed 20260530, one
+      year, every 10th tick; r_j = f_j(B visible) x energy gain, weighted
+      by tonnes eating; scratch script diet_choice.py), hack library |
+      fg_library.yaml: eat share on the cell's top prey 0.97-0.999 for
+      every fish and mammal; the top prey is the cell's best r_j in
+      0.83-0.95 of the tonnes (water column in fg_library 0.67) and the
+      energy taken is 0.95-0.99 of the best single prey's (water column
+      0.87 in fg_library: trained with a wcp->bnt /3, it still eats
+      planktivores where benthivores now pay more). The best prey is not
+      the same everywhere: whiting epifauna 0.66 / zooplankton 0.26 of
+      the tonnes, benthivores infauna 0.80 / planktivores 0.20, water
+      column planktivores 0.76 / benthivores 0.21 (hack), mackerel
+      zooplankton 0.82 / planktivores 0.18. Near-monophagy at group
+      level comes where one pair wins almost everywhere: seals
+      benthivores 0.93 (eat 0.998), porpoises planktivores 0.95-0.96.
+      Second-best / best r 0.34-0.77: the gaps are real, not ties.
+    - So the policies are near-optimal foragers inside a rule that makes
+      the corner optimal; the diet error is the response form, not the
+      learning. Open (user's call): a shared-handling multi-prey response
+      (232 named it as the structural option).
+
+239.2 BENTHIVORES: INFAUNA VS HERRING BY HERRING DENSITY (user,
+    2026-11-04; analysis only). Frozen fix87b u1200, fg_library.yaml,
+    mareld2 60x60, seed 20260530, one year, every 5th tick, cells with
+    benthivores > 0.05 t; scratch bnt_herring.py. Saturated return
+    (gain / h): infauna 16.3, planktivores 23.9 MJ/t/tick at the
+    reference fill; half-saturation 0.25 / 0.57 visible t per cell.
+    - Herring under the benthivores: median 2.5 t/cell, p90 5.8, p99
+      14.9, max 157. Visible to the pair ~0.23 of B by day (stage access
+      0.52 J + 0.10 A at J/B ~0.32; hiding adds little by day), 0.06 at
+      night in ordinary cells; a by day ~0.013, at night ~0.001
+      (dark_ratio 0.06). Infauna pays 16.0-16.1 everywhere (its exposed
+      part is far above half-saturation).
+    - Median r (infauna | herring), share of cells where herring pays
+      more, herring share of the eat: < 2.5 t day 16.0 | 6.1, 0.13, 0.02;
+      night 16.0 | 0.5, 0.00, 0.01. 2.5-5.8 t day 16.1 | 17.8, 0.60, 0.09;
+      night | 1.3, 0.07, 0.04. 5.8-14.9 t day | 24.1, 0.84, 0.33; night
+      | 6.9, 0.36, 0.23. 14.9-39 t day | 27.1, 1.00, 0.80; night | 25.3,
+      0.95, 0.78. > 39 t day | 27.8, 1.00, 0.89; night | 27.3, 1.00,
+      0.87.
+    - So in a dense school herring pays ~1.7x the infauna and the
+      benthivores switch to it; infauna wins the typical cell because
+      three quarters of the herring tonnes are too big for the pair
+      (f_A 0.10), the night a is 0.06 of the day's, and the infauna is
+      always saturated. The policy under-uses herring at 2.5-15 t by day
+      (best in 0.60-0.84 of the cells, eaten 0.09-0.33).
+
+239.3 BENTHIVORES UNDER-USE HERRING: LAG, POLICY, REWARD (user,
+    2026-11-04; analysis only). Frozen fix87b u1200, fg_library.yaml,
+    mareld2 60x60, seed 20260530, one year; scratch bnt_herring2.py,
+    bnt_override.py.
+    - Size: per tick and state, the best single prey would give 6.0 %
+      more energy than the policy's choice (energy-weighted by B eat
+      hunger; 239.1's 0.98 is the per-cell ratio averaged over tonnes
+      eating - same quantity, other weighting); 88 % of the gap on the two
+      bright ticks of the day, 84 % at 2.5-15 t herring per cell.
+    - Observation lag (observers see last tick's hide, floor 0.25): at
+      2.5-15 t, the first bright tick after a dim one shows the herring
+      at 0.50 of B (it hid 0.67 the tick before, 0.31 now), the second
+      at 0.76; herring pays more in 0.62 of the cells on both, eaten
+      0.09 vs 0.17. Real but not the main cause.
+    - Policy: on the bright ticks, by OBSERVED herring t/cell, expected
+      r_plk / r_inf and herring share of the eat: 2-3 t 1.07 / 0.07, 3-5
+      t 1.24 / 0.16, 5-8 t 1.41 / 0.29, 8-15 t 1.56 / 0.55; on dim ticks
+      it eats herring at 0.08-0.21 where it pays 0.37-0.54 of infauna.
+      The light input barely gates its herring response. A rule on its
+      own inputs (bright and observed >= 2 t -> herring) gives +4.0 %
+      energy per tick-state; the oracle +6.0 %.
+    - But not in the reward: overrides of the benthivore eat allocation
+      (DIAGNOSTIC, never a mechanism; total eat share, moves and rest
+      unchanged), one year, training reward mean_t log(E_t/E_0):
+      policy -0.1111, rule -0.1104 (+0.0007), oracle -0.1032 (+0.0079);
+      late fix87 benthivore reward_std across the deltas 0.0054 (30x30,
+      two worlds; these arms are 60x60, one world). Benthivore starvation
+      over the year 0 / 0.2 / 0 t. Energy gained over the year +0.6 %
+      (rule) / +1.7 % (oracle); month 1 +3.0 / +3.8 % (static 4 / 6 %),
+      from month 6 the rule ~0. Two regulators, both measured: the
+      hunger gate at once (fill month 2 0.741 -> 0.753 / 0.755, hunger
+      0.519 -> 0.495 / 0.489), and herring depletion from month ~4
+      (planktivores 0.6-1.0 kt below the policy arm). Benthivores end
+      0.79 in all three. The cost lands elsewhere: planktivores end
+      0.85 -> 0.75, seals 0.84 -> 0.75, water column 0.64 -> 0.61.
+    - So for a predator that does not starve, prey choice is nearly
+      reward-neutral by construction: better prey fills the reserve and
+      the hunger gate cuts the demand. ARS has no signal to sharpen it
+      (learnable +0.0007 vs spread 0.0054), and the realised herring M2
+      (booked 0.145) is not pinned by selection but by incidental policy
+      structure - an argument for the shared-handling response (239.1),
+      where the diet follows the encounters. One seed, one year, frozen
+      co-evolved policies; the oracle uses the same-tick hide and is not
+      an achievable bound.
+    - Where the rule's gain goes (user asked; policy | rule, one year,
+      benthivores start 5500 t): energy +0.8 %; gross growth (dB +
+      losses) 3016 -> 3094 t (+2.6 %); eaten by the water column 1695 ->
+      1800 t (it switched as the benthivores thinned its herring), by
+      seals 392 -> 376; dB -1180 | -1188. Better prey is not equivalent:
+      it gives more growth, but (1) the hunger gate h = (1 - s)/(1 - u),
+      slope -2 at u 0.5, cancels a 4 % better prey with a fill rise of
+      0.012 (h 0.56 -> 0.536), so most of the gain becomes fewer tonnes
+      eaten at the same energy and only the small rise in s (s - u 0.22)
+      reaches growth; (2) herring depletion shrinks it after month ~4;
+      (3) the extra benthivore growth is eaten by the predator that lost
+      the herring. Whether the gate damps the growth response to food
+      quality more than fish growth-ration data allow is not checked.
+
+239.4 GROWTH VS RATION: ENGINE AGAINST COD DATA (user, 2026-11-04;
+    analysis only). research_notes/"Tillvaxt mot ranson" (Swedish
+    letters, a-umlaut) summary.md, evidence.md, scripts/, tables/ (a
+    research subagent); scratch growth_ration_model.py, bnt_budget.py.
+    - Benthivore operating point (frozen fix87b u1200, fg_library, one
+      year): eat 0.98 of the tonnes, s 0.725, h 0.55, intake 8.75,
+      costs 6.63 MJ/t/tick (assimilated); starvation 0. Steady state of
+      the engine's per-tonne budget (I = Q h(s), G = g (s - u) paid at
+      ec + s Rmax): forced-ration growth linear from maintenance with
+      all assimilated energy above it turned into body, a hard ceiling
+      g(1 - u) 0.375 %/d at 1.76x maintenance (s = 1, appetite 0); to
+      the food potential Q, intake elasticity 0.24, growth 0.92. So the
+      gate damps intake, not growth: 239.3's "fills the reserve and
+      lowers the hunger" was wrong for growth; the reward gain was lost
+      to herring depletion and the water column's extra take.
+    - Cod data (7 C, 0.3-2.2 kg): growth linear in ration from
+      maintenance to satiation, no Brett bend >= 30 g (Braaten 1984,
+      Jones & Hislop 1978); maintenance 16-22 kJ/kg/d at 650 g, ~0.2 of
+      Cmax; slope 0.28-0.40 g/kcal; ad lib at 7 C 110-130 kJ/kg/d, 0.46-
+      0.69 %/d (Bjornsson et al. 2001). Diet dilution (Lekva 2009/10):
+      energy-intake elasticity +0.33 to +0.45, growth ~0; lipid
+      enrichment: growth flat, liver index 8 -> 17 % (Rosenlund 2004,
+      abstract). Appetite vs reserve: no curve; cod at HSI 10-17 % (s ~
+      1.2-2 on the library's 1800 MJ/t ~ HSI 8 %) still eat at Cmax for
+      months; wild cod stop seasonally whatever the reserve.
+    - Engine vs data: (1) appetite: h = (1 - s)/(1 - u) cuts intake
+      from s 0.5 (0.55 at the operating point, 0.44-0.49 of the ceiling
+      with unlimited food) where cod eat at satiation up to and beyond
+      the wild maximum reserve - the clearest discrepancy; (2) energy-
+      intake elasticity to prey energy density on a saturated pair
+      +0.05-0.09 vs +0.33-0.45; (3) maintenance when eating every tick
+      33-38 kJ/kg/d vs 16-22 (rest alone 16.7 is right; the excess is
+      feeding_cost 2.0 on every eat tick); (4) slope 0.64-0.72 g/kcal vs
+      0.28-0.40 (no intake-proportional cost, SDA 0.10-0.17 of intake).
+      (3) and (4) offset at realised rations 36-52 kJ/kg/d, so growth at
+      the operating point matches the cod line; growth elasticities do
+      not discriminate. CORRECTION (user, same day): the lab
+      maintenance ration is for confined fish; the eat action is search
+      and pursuit too, so (3) is judged against field metabolism, not
+      the tank: engine 2.4 x SMR while eating (RM = 1.2 SMR routine, x
+      feeding_cost 2.0), 10,200-10,400 MJ/t/yr, against field 1.5-2.5 x
+      SMR incl. SDA (8,200, 6,100-10,200; wild cod 1.9-3.5, Chung et al.
+      2019) - research_notes/"Bentivorernas energibudget" 1.3: the top
+      end, plausible for cod, high for haddock and flatfish. Then (3)
+      does not offset (4): the level is a field level, but it is fixed
+      per eat tick, so the extra cost of extra food (SDA) is missing and
+      the marginal slope stays ~2x the measured one.
+    - Biomass-weighted over the members (user: group values are
+      proportional species means; haddock 38.6, cod 31.4, long rough dab
+      12.6, dab 4.5, plaice 3.8, witch 1.7 %; research_notes/"Tillvaxt
+      mot ranson" section W, tables/weighted_*): field metabolism 1.85 x
+      SMR, 7 260 (6 310-10 090) MJ/t/yr - the engine's 9 630 at RM 3.33
+      is 1.33x (0.95-1.53x), the excess mostly cod's 2.2 x on haddock and
+      flatfish multipliers that are judgements (own field data 32 % of
+      the weight, cod only); SDA 0.10 of intake; net slope 0.30 g/kcal
+      (75 % own data) vs engine 0.64-0.72; at the engine's realised
+      rations it grows ~1.4x the field-cost line (no offset); Cmax 94
+      kJ/kg/d, satiation growth 0.54 %/d; energy-intake elasticity 0.35
+      (cod + plaice, 36 %) vs engine +0.05; appetite vs reserve cod only.
+      Standing defects: the appetite gate and the missing intake-
+      proportional cost. The library g is a derived field rate, not a lab
+      Gmax. Not changed; the gate (section 133), the eat surcharge and
+      the missing SDA are coupled to the derived g (s*, section 160).

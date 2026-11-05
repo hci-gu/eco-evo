@@ -475,7 +475,8 @@ without debiting the energy reserve; the mass-balanced term is ON by
 default since section 120 and the library is calibrated for it -
 `--mass-balance` is kept as a no-op, sections 114-116, 120),
 `--migration on|off` (default on since section 231, same entry points),
-`--engine cpu|gpu` (inference.py, default cpu: gpu runs the rollout on
+`--engine cpu|gpu` (inference.py, default gpu when CUDA is there, else
+cpu; section 238: gpu runs the rollout on
 the tensor engine as CUDA graphs, ~7x at 60x60 headless, float-noise
 equal to the CPU engine; with `--visual` the state and books are
 mirrored into the CPU envs each tick, and `--rnd_baseline` worlds ride

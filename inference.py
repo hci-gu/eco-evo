@@ -1342,24 +1342,30 @@ def main():
                              "'month 0.5'. A month is 1/12 of a 365-day year. "
                              "Default: every 1000 ticks.")
 
-    parser.add_argument("--engine", choices=["cpu", "gpu"], default="cpu",
-                        help="Simulation engine. 'cpu' (default) is the "
-                             "reference EcosystemEnvironment; 'gpu' steps the "
-                             "same world on the tensor engine (lib/gpu) as "
-                             "CUDA graphs, with --visual and --rnd_baseline "
-                             "too (the baselines in the same batch). It "
-                             "matches the CPU engine per tick to float32 "
-                             "rounding, not bit for bit (sections 234, 235).")
+    parser.add_argument("--engine", choices=["cpu", "gpu"], default=None,
+                        help="Simulation engine. 'gpu' (default when torch "
+                             "sees a CUDA device, else 'cpu') steps the world "
+                             "on the tensor engine (lib/gpu) as CUDA graphs, "
+                             "with --visual and --rnd_baseline too (the "
+                             "baselines in the same batch); 'cpu' is the "
+                             "reference EcosystemEnvironment. The two match "
+                             "per tick to float32 rounding, not bit for bit "
+                             "(sections 234, 235, 238).")
     parser.add_argument("--cuda-device", "--cuda_device", dest="cuda_device",
                         default="cuda",
                         help="CUDA device for --engine gpu (default: cuda).")
     add_current_arguments(parser)
     add_tick_length_argument(parser)
     args = parser.parse_args()
-    if args.engine == "gpu":
-        if not torch.cuda.is_available():
-            parser.error("--engine gpu needs CUDA, and torch sees no CUDA "
-                         "device")
+    if args.engine is None:
+        # Default gpu, on a machine that has one (section 238).
+        args.engine = "gpu" if torch.cuda.is_available() else "cpu"
+        if args.engine == "cpu":
+            print("[info] torch sees no CUDA device; running --engine cpu.",
+                  file=sys.stderr)
+    elif args.engine == "gpu" and not torch.cuda.is_available():
+        parser.error("--engine gpu needs CUDA, and torch sees no CUDA "
+                     "device")
     try:
         currents = current_options(args)
     except ValueError as error:
