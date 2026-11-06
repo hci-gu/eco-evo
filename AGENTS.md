@@ -178,7 +178,9 @@ fabricates mass.
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
   H_bed/H_whiting; was 0.27), -> planktivores 0.021, -> zoo 0.0023, ->
   benthivores 0.21; water column -> planktivores 0.00559, -> zoo
-  0.000241, -> benthivores 0.0651, -> whiting 0.013, -> mackerel 0.00088
+  0.000241, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
+  member's foraging time near the bed, for concurrent search), -> whiting
+  0.013, -> mackerel 0.00088
   (f 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
   0.0435, -> zoo 0.0023 (sections 220, 221, 223.15, 223.26, 228; no
   predator eats infauna or Nephrops, the water column no
@@ -221,8 +223,8 @@ fabricates mass.
   (`a B / (1 + a h B + w B_pred)`); `shared_handling=False` on the env
   reverts. With equal E/h (every predator but the benthivores) attacking
   every prey pays, so the diet becomes the encounter shares of the
-  budget_gate diet gate (OFF there: benthivores -> planktivores, water
-  column -> benthivores); the per-pair form made one prey per cell the
+  budget_gate diet gate (OFF there since 243: benthivores ->
+  planktivores only); the per-pair form made one prey per cell the
   optimum (239.1). Checkpoints keep their shapes but the eat action means
   something new: retrain. `w` is the per-FG `interference` parameter
   (`interference: 0` = pure Holling; the old gadoid 1.0 of section 86
@@ -384,7 +386,8 @@ fabricates mass.
   since 232.2 each window weighted by the predator lengths' share of a
   (a ~ L^-2 for fixed-R encounters; ~L^-0.36 for cod) and normalised
   over all prey-group tonnes (research_notes/"Fonsterviktning", o-umlaut):
-  water column -> benthivores [0.30, 0.038], -> planktivores [0.53,
+  water column -> benthivores [0.42, 0.12] (243: re-weighted by the
+  overlap a's member shares), -> planktivores [0.53,
   0.14], -> whiting [0.41, 0.080]; mackerel -> planktivores [0.052,
   0.0035]; whiting -> planktivores [0.10, 0.0073], -> benthivores [0.038,
   0.0064]; benthivores -> planktivores [0.52, 0.10], -> whiting [0.34,

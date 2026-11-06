@@ -1845,15 +1845,23 @@ interaction_definitions:
     assimilation_factor: 0.8
     handling_time: 151.1
     functional_response: 2
-    max_intake_rate: 0.0651
+    # Section 243: vertical-overlap a for concurrent search (shared handling,
+    # 242): the section 220 in-layer a 0.0651 x sum_m share_m O_m, O_m = each
+    # member's foraging time within ~2 m of the bed (saithe 0.05, spurdog
+    # 0.15, hake 0.25, velvet belly 0.10, anglerfish 1; J): x0.085, range
+    # 0.0026-0.013. The in-layer 0.0651 was right only for an eat share read
+    # as time in the prey's layer (232.1). research_notes/"Vattenpelarens
+    # bottenfiskbyte" (Swedish letters: a-umlaut) summary.md, proposal.py.
+    max_intake_rate: 0.0055
     dark_ratio: 0.48
     light_threshold_deg: -5.0
-    # Section 232.2: window weighted by each predator length's share of a
-    # (a ~ L^-2.1..-2.3 for fixed-R encounters, ~L^-0.36 for cod) and normalised
-    # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
-    # box lengths); was [0.43, 0.027]. research_notes/"Fonsterviktning" (Swedish
-    # letters: o-umlaut) summary.md.
-    stage_access: [0.30, 0.038]
+    # Section 243: the 232.2 windows (a-weighted over predator lengths,
+    # normalised over all prey-group tonnes; research_notes/"Fonsterviktning",
+    # Swedish letters: o-umlaut) re-weighted by the members' shares of the new
+    # a (saithe 0.45, spurdog 0.18, hake 0.21, velvet belly 0.05, anglerfish
+    # 0.12): the bed-reaching members carry adult-sized windows. Range [0.36,
+    # 0.081] - [0.48, 0.17]. Was [0.30, 0.038] (232.2), [0.43, 0.027] before.
+    stage_access: [0.42, 0.12]
   # Whiting on 0-group and small benthivores: was accessible 0.05 (gape ~12
   # cm + 0-group, J). Night/day 0.64. Juvenile compartment: stage access
   # from whiting's window (0.39 x length, box whiting 22-28 cm -> 9-11 cm

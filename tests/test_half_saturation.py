@@ -92,7 +92,7 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('predatory_fish', 'zooplankton'): 0.000241,
         ('mackerel', 'zooplankton'): 0.0023,
         ('whiting', 'zooplankton'): 0.0023,
-        ('predatory_fish', 'benthivorous_fish'): 0.0651,
+        ('predatory_fish', 'benthivorous_fish'): 0.0055,
         ('whiting', 'benthivorous_fish'): 0.21,
         ('predatory_fish', 'whiting'): 0.013,
         ('predatory_fish', 'mackerel'): 0.00088,
