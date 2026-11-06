@@ -60,6 +60,15 @@ calibration, ``LIBRARY_TICK_HOURS``):
             energy_content, max_energy_reserve or resting_metabolism)
             falls back to the full reserve, 1 - u.
 
+Appetite and SDA (section 240)
+------------------------------
+A DM with ``appetite: reserve_room`` has h = 1 and its intake capped at
+the room left in its reserve, so under ideal conditions the reserve
+settles at s* = min(1, (C - cost - P ec)/(P ME)) - full whenever the
+best pair can pay more than the budget (``ideal_reserve``). A DM's
+``sda_fraction`` is netted from every pair's assimilation in C, as the
+runtime nets it in ``energy_gain_mat``.
+
 Income-funded growth (section 184)
 ----------------------------------
 A decision maker with ``income_growth_kappa`` kappa grows out of this
@@ -119,7 +128,9 @@ import math
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, Optional
 
-from lib.world.energy_balance import intake_ceiling, prey_energy
+from lib.world.energy_balance import (appetite_form, intake_ceiling,
+                                     net_assimilation, prey_energy,
+                                     sda_fraction)
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 TICKS_PER_YEAR = 365.0 * 24.0 / LIBRARY_TICK_HOURS
@@ -164,6 +175,7 @@ def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
     active = None if active_predators is None else set(active_predators)
     species_defs = species_defs or {}
     pred_def = species_defs.get(pred_id) or {}
+    sda = sda_fraction(pred_def)
     prefix = pred_id + PREYS_ON
     pairs = []
     for key, entry in (interactions or {}).items():
@@ -180,6 +192,9 @@ def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
         a = _as_float(entry.get("max_intake_rate"),
                       _as_float(pred_def.get("max_intake_rate")))
         assim = min(1.0, max(0.0, _as_float(entry.get("assimilation_factor"), 1.0)))
+        # Section 240: the predator's SDA is netted, as in the runtime's
+        # energy_gain_mat.
+        assim = net_assimilation(assim, sda)
         rate = intake_ceiling(a, _as_float(entry.get("handling_time"))) * assim * energy
         if rate > 0.0:
             pairs.append((rate, prey_id))
@@ -190,13 +205,25 @@ def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
 
 
 def ideal_reserve(maintenance, intake, cost, energy_content, max_reserve,
-                  production):
+                  production, appetite="gate"):
     """s* where h(s) C = cost + P (energy_content + s ME), or None.
 
     ``production`` P is the wanted g (s* - u) per tick. None when the
     energy cannot pay for it, i.e. P >= Pmax = (C - cost) / (ec + u ME).
+
+    With the ``reserve_room`` appetite (section 240) h = 1 below a full
+    reserve, so the balance C = cost + P (ec + s ME) has the root
+    s = (C - cost - P ec) / (P ME); above 1 the reserve stays full (the
+    room cap takes only what it needs), so s* = min(1, s). Same Pmax.
     """
     u = maintenance
+    if appetite == "reserve_room":
+        if production <= 0.0:
+            return 1.0 if intake > cost else None
+        s = (intake - cost - production * energy_content) / (
+            production * max_reserve)
+        s = min(1.0, s)
+        return s if s > u else None
     k = intake / (1.0 - u)
     s = (k - cost - production * energy_content) / (k + production * max_reserve)
     return s if s > u else None
@@ -460,7 +487,8 @@ def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
     budget.ideal_intake, budget.ideal_cost, budget.best_prey = intake, cost, best
     budget.pmax_annual = (intake - cost) / (ec + u * me) * TICKS_PER_YEAR
     production = budget.gross_annual / TICKS_PER_YEAR
-    s_star = ideal_reserve(u, intake, cost, ec, me, production)
+    s_star = ideal_reserve(u, intake, cost, ec, me, production,
+                           appetite=appetite_form(spec))
     if s_star is None:
         budget.error = (f"budget {budget.gross_annual:.4g} /yr exceeds the most "
                         f"the energy allows, Pmax {budget.pmax_annual:.4g} /yr "

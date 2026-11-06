@@ -347,6 +347,29 @@ FIELD_HELP = {
         "be listed under Group layers. Decision makers only, and not "
         "with Income growth kappa."
     ),
+    "appetite": (
+        "Appetite form (decision makers; section 240). Empty or 'gate' = "
+        "the section-133 hunger gate h = min(1, (1 - s)/(1 - u)): full "
+        "appetite up to the maintenance level, falling linearly to zero at "
+        "a full reserve.\n\n"
+        "'reserve_room' = full appetite at every fill; what the group takes "
+        "in a tick is capped at the room left in its reserve, (1 - s) x "
+        "biomass x Max Energy Reserve, so nothing is eaten that the store "
+        "cannot hold. Under ideal conditions the reserve then sits full "
+        "(s* = 1) and the derived growth is paid over 1 - u. Library: "
+        "benthivores (cod with livers at the wild maximum still eat at "
+        "Cmax) and zooplankton (ingestion set by food and gut capacity)."
+    ),
+    "sda_fraction": (
+        "SDA fraction (0-1; section 240). Specific dynamic action, the "
+        "heat increment of digesting and depositing a meal, as a share of "
+        "the INGESTED energy. Netted from every pair's Assimilation Factor: "
+        "the reserve receives (assimilation - SDA) x prey energy. "
+        "Assimilation nets egestion (and excretion) but not SDA. 0 = none. "
+        "Library: benthivores 0.10, biomass-weighted (cod 0.12, haddock "
+        "0.05, plaice 0.15). With SDA set, Feeding Cost holds the foraging "
+        "activity only."
+    ),
     "income_growth_kappa": (
         "Income growth kappa (fraction, 0-1; 0 = the reserve-funded "
         "growth law). Decision makers only (section 184).\n\n"

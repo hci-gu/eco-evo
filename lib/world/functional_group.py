@@ -1,5 +1,7 @@
 import numpy as np
 
+from lib.world.energy_balance import appetite_form
+
 class FunctionalGroup:
     def __init__(self, group_id, params):
         self.group_id = group_id
@@ -61,6 +63,8 @@ class FunctionalGroup:
         # to break even (q_X = s_X - u_X = 0). Below u_X the population
         # shrinks; above it, it grows. Method.pdf §6.
         self.maintenance_level = float(params.get('maintenance_level', 0.0))
+        # Appetite form (section 240): ``gate`` or ``reserve_room``.
+        self.appetite = appetite_form(params)
         self.speed = params.get('movement_speed', 0.0)  # V_X
         # Minimum biomass (per cell) required to split via movement actions.
         # YAML/GUI value is in kg; internal biomass units are tonnes, so
@@ -141,7 +145,8 @@ class FunctionalGroup:
         return e_x / self.max_energy_reserve
 
     def get_hunger(self):
-        """h_X = min(1, max(0, (1 - s_X) / (1 - u_X))) (section 133).
+        """h_X = min(1, max(0, (1 - s_X) / (1 - u_X))) (section 133), or 1
+        with the ``reserve_room`` appetite (section 240).
 
         Full appetite up to the maintenance level, linear to zero at a
         full reserve. Same formula as ``lib.world.energy_balance.hunger_at``,
@@ -149,6 +154,10 @@ class FunctionalGroup:
         evaluate the realized intake exactly as the runtime does.
         """
         s_x = self.energy_level
+        if self.appetite == "reserve_room":
+            # Section 240: full appetite; predation caps the intake at the
+            # room left in the reserve.
+            return np.ones_like(s_x)
         u = float(self.maintenance_level or 0.0)
         if u >= 1.0:
             return np.zeros_like(s_x)

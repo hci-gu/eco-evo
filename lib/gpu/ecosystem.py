@@ -66,6 +66,12 @@ class TensorEcosystem:
             self.reserve_reference = tensor(
                 env.prey_reserve_fill * env.prey_reserve_max)[None, :, None]
         self.handling = tensor(env.handling_time_mat)[None, :, :, None]
+        # Section 240: DMs with the reserve-room appetite (h = 1, intake
+        # capped at B ME - R), mirroring ``predation._reserve_room_cap``.
+        self.reserve_room = bool(getattr(env, "_has_reserve_room", False))
+        if self.reserve_room:
+            self.reserve_room_mask = tensor(
+                env.dm_reserve_room, torch.bool)[None, :, None]
         # Per-pair Holling type mask (section 141): [1, D, G, 1].
         self.type3 = tensor(env._type3_pred_mask.reshape(self.D, self.G))[None, :, :, None]
         # Beddington-DeAngelis interference w_X [1/ton], per DM. Mirrors
@@ -763,6 +769,8 @@ class TensorEcosystem:
             ((1.0 - self.energy_level(biomass, reserve)[:, self.dm_index])
              / (1.0 - u_dm).clamp_min(1e-12)).clamp(0.0, 1.0),
             torch.zeros_like(u_dm))
+        if self.reserve_room:
+            hunger = torch.where(self.reserve_room_mask, 1.0, hunger)
         hidden = torch.zeros_like(biomass).index_copy(1, self.dm_index, actions[:, :, 4])
         pair_visible = None
         if self.pair_visibility is None:
@@ -830,6 +838,21 @@ class TensorEcosystem:
             # fraction of the prey IT can detect, even when a better-
             # detecting predator raised the shared cap.
             demand = torch.minimum(demand, pair_visible)
+        if self.reserve_room:
+            # Cap a reserve-room DM's demand at the room left in its store
+            # (``predation._reserve_room_cap``).
+            potential = (demand * self.energy_gain).sum(2)
+            if self.reserve_food:
+                density = torch.where(biomass > 1e-9,
+                                      reserve / biomass.clamp_min(1e-9), 0.0)
+                offset = (density - self.reserve_reference) * self.reserve_food_mask
+                potential = potential + (demand * self.assimilation
+                                         * offset[:, None]).sum(2)
+            room = (b_dm * self.max_reserve[:, self.dm_index]
+                    - reserve[:, self.dm_index]).clamp_min(0.0)
+            capped = self.reserve_room_mask & (potential > room)
+            demand = demand * torch.where(
+                capped, room / potential.clamp_min(1e-30), 1.0)[:, :, None]
         total = demand.sum(1)
         harvest = visible * HARVEST_FRACTION
         scale = torch.where(total > harvest, harvest / total.clamp_min(1e-30), 1.0)

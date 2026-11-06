@@ -404,9 +404,27 @@ fabricates mass.
   `apply_natural_mortality` to the loader wherever an env is built). Edit
   `r_max`, `natural_mortality` (M1, non-FG losses only) or the pair's
   `predation_mortality`, never `growth_rate` itself.
-- Hunger gate `h = min(1, max(0, (1 - s)/(1 - u)))` for every FG: full
+- Hunger gate `h = min(1, max(0, (1 - s)/(1 - u)))`: full
   appetite up to the maintenance level, zero at a full reserve (section 133);
-  `satiation_scale` no longer exists (section 130).
+  `satiation_scale` no longer exists (section 130). Since section 240 a DM
+  may carry `appetite: reserve_room` instead: h = 1 and each tick's
+  assimilated gain capped at the reserve room (1 - s) B ME
+  (`predation._reserve_room_cap`, both engines; the reserve is clipped at
+  B ME, so h = 1 alone would discard energy). Its ideal reserve s* is then
+  min(1, (C - cost - P ec)/(P ME)), in practice 1, so g = gross/((1 - u)
+  1460). Set on benthivores only (cod eat at Cmax at livers above the
+  wild maximum; research_notes/"Tillvaxt mot ranson", a-umlaut). Zooplankton
+  stays on the gate: with frozen fix86 policies its fill stayed ~0.6
+  while s* = 1 cut its g by a third and the plankton chain collapsed
+  (240); every other DM keeps the gate (no evidence gathered; mammals
+  have a lipostat). Before moving a group, a frozen-policy probe must
+  show its realised fill rising to ~1 (the s* = 1 g assumes ideal food). `sda_fraction` (section 240)
+  is the specific dynamic action as a share of the INGESTED energy, netted
+  from every pair's assimilation in `energy_gain_mat` (and in s*'s C);
+  benthivores 0.10 (biomass-weighted), whose `feeding_cost` is now the
+  foraging activity only (2.0 -> 1.18 = (weighted field metabolism - SDA
+  at the field ration)/RM). SDA closes only part of the growth-ration
+  slope gap (engine ~0.58 vs 0.30 g/kcal); the residual is open.
 
 ## 6. Commands
 

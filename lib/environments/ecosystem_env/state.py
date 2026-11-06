@@ -257,6 +257,12 @@ def build_static_caches(env):
         [env.fgs[fid].max_energy_reserve for fid in env.dm_ids],
         dtype=env.dtype,
     )
+    # Section 240: DMs whose intake is capped at the room left in the
+    # reserve (``appetite: reserve_room``) instead of the hunger gate.
+    env.dm_reserve_room = np.array(
+        [getattr(env.fgs[fid], "appetite", "gate") == "reserve_room"
+         for fid in env.dm_ids], dtype=bool)
+    env._has_reserve_room = bool(env.dm_reserve_room.any())
 
     # Section 184: income-funded growth, kappa per DM (0 = the
     # reserve-funded law). Read by ``movement.apply_energy_costs`` (the

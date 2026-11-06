@@ -22805,3 +22805,106 @@ remain open exactly as described in 71.9 / 71.11.
       proportional cost. The library g is a derived field rate, not a lab
       Gmax. Not changed; the gate (section 133), the eat surcharge and
       the missing SDA are coupled to the derived g (s*, section 160).
+
+240 RESERVE-ROOM APPETITE AND SDA ON THE BENTHIVORES (user, 2026-11-06)
+------------------------------------------------------------------------
+
+240.1 Mechanism (both engines)
+    * `appetite: gate | reserve_room` per DM (default gate, section 133).
+      reserve_room: h = 1 and each tick's assimilated gain capped at the
+      reserve room B ME - R (predation._reserve_room_cap; the GPU mirror
+      in TensorEcosystem.predation). The cap acts on the demand before
+      the harvest caps, which only lower it, so nothing is eaten that the
+      store cannot hold - both engines clip R at B ME, so h = 1 alone
+      would remove prey and discard its energy.
+    * `sda_fraction`: specific dynamic action as a share of the INGESTED
+      energy, netted from every pair's assimilation in
+      interactions.build_interaction_matrices (energy_gain_mat and the
+      reserve-food correction), so both engines, budget_gate and the GUI
+      energy gate see it. Assimilation nets egestion (+ excretion) but
+      not SDA (research_notes/"Bentivorernas energibudget" Q3).
+    * growth_budget: C nets the predator's SDA; ideal_reserve with
+      reserve_room solves C = cost + P (ec + s ME), s* = min(1, s) (same
+      Pmax). With ample ideal intake s* = 1 and g = gross/((1 - u) 1460).
+    * FG editor: Appetite and SDA fraction fields (help texts), the live
+      growth display reads both, the GUI energy gate nets SDA.
+    * tests/test_appetite_sda.py (10), a GPU parity test for a
+      reserve-room DM with SDA (with and without reserve food), the
+      editor growth-sync test moved to porpoises (a reserve-room DM's g
+      no longer moves with ME, ec, RM or feeding_cost while s* = 1).
+
+240.2 Library (fg_library.yaml only; fg_library2.yaml untouched)
+    * benthivorous_fish: appetite reserve_room (cod at livers above the
+      wild maximum eat at Cmax; restricted rations on one growth line to
+      satiation; evidence cod only, 31 % of the weight), sda_fraction
+      0.10 (biomass-weighted, 75 % own-species data), feeding_cost 2.0 ->
+      1.18 = (weighted field metabolism 4.97 - SDA at the field ration
+      0.10 x Q/B 4.46 x 3440 / 1460 = 1.05) / RM 3.33 (0.98-1.76 over the
+      field-metabolism range; 68 % of the weight on judged multipliers).
+      The old 2.0 was plaice fed/unfed respiration at satiation, SDA
+      included. Derived g 0.0018730 -> 0.0011289 (s* 0.80 -> 1.0).
+    * Field metabolism is now an input, not a test. Steady state of one
+      tonne under 240 (library values; scratch script, same algebra as
+      research_notes/"Tillvaxt mot ranson"/scripts/model_translation.py):
+      maintenance ration 22.5 kJ/kg/d on fish (26.2 on infauna; field
+      24.9); growth rises along 0.56-0.63 g/kcal (0.48-0.54 on infauna)
+      up to the FILL POINT, 39.9 kJ/kg/d on fish (46.5 on infauna, ~0.4
+      of the ceiling, inside the field feeding level 0.22-0.53), and is
+      flat above it at the budget g(1 - u) = 0.226 %/d. The literature
+      line is linear to Cmax (94 kJ/kg/d); the engine's flat top is the
+      derived field production rate, not a lab Gmax. The field-cost line
+      needs 56.4 kJ/kg/d for 0.226 %/d: the engine reaches its budget on
+      ~0.7 of that ration - the slope defect, unchanged in kind. The
+      probe's realised Q/B 6.5 on infauna (11.6 MJ/t/tick gross) is the
+      fill point.
+    * Elasticity: above the fill point intake is the store's drain,
+      whatever the food: energy-intake elasticity 0 (gate: +0.05), mass
+      -1, growth 0, against Lekva's +0.33-0.45 / -0.55-0.67 / ~0. The
+      elasticity test still fails in the same direction (too much
+      compensation); growth matches. Below the fill point (food-limited)
+      intake is everything available.
+    * SDA closes only part of the slope gap: marginal deposition ~0.66 ->
+      ~0.58 g/kcal against 0.30. Decomposition (research_notes/"Tillvaxt
+      mot ranson"/slope_decomposition, summary.md): (a) part of the gap is
+      units - lab cod are fat (6.5-7.2 kJ/g), so on their own energy basis
+      they deposit 0.47 (0.40-0.54) of each extra gross kJ, not 0.33;
+      weighted 0.41 (75 % own data). (b) F + U ~0.20-0.24 and SDA ~0.08-
+      0.12 (cod 0.12, linear in ration) confirm the engine's 0.8 and the
+      0.10. (c) A residual 0.31 (0.16-0.42) weighted remains, and in cod
+      (31 %, Braaten's own lab) it is ABSENT at maintenance: the
+      maintenance ration is 1.03-1.17x routine O2, against 1.85-3x if it
+      were charged on intake. So the missing term is a deposition-
+      proportional (growth) cost c, J per J deposited: cod 0.37-0.49
+      (0.30-0.75), biochemistry 0.2-0.6, weighted top-down 0.69 (0.46-
+      1.01; haddock and plaice likely an unmeasured feeding cost, also
+      zero at maintenance). Measured SDA already holds part of the
+      synthesis cost, so the bottom-up c must not be stacked on it. If
+      the engine deposited 0.41 of each extra kJ, its own 4.5-5.4 kJ/g
+      tissue gives 0.32-0.39 g/kcal - the lab slope. Not implemented;
+      a growth-cost parameter is the user's call.
+    * Zooplankton stays on the gate. Tried with reserve_room (section
+      133's copepod reasoning supports it): with frozen policies its fill
+      stayed 0.62 while s* = 1 cut g by a third (0.1188 -> 0.0801); it
+      ended year 1 at 0.04 of start, microzooplankton 23x, planktivores
+      0.34, mackerel 0.01, porpoises 0.12 by year 3. The derived g
+      assumes ideal food; a group whose realised fill sits far below s*
+      loses production with every rise of s*. Open: retrain and score
+      against A17 before moving it.
+    * Rule for moving any other group to reserve_room (planktivores,
+      whiting, water column, mackerel): besides the species evidence, a
+      frozen-policy probe must show its realised fill rising to ~1, as
+      the benthivores' did (0.72 -> 0.98 in year 1), before the s* = 1
+      g is accepted; a group held near fill 0.6 by its food loses a
+      third of its production. A diagnostic of the budget's ideal-food
+      assumption, not a fit.
+
+240.3 Effect (frozen fix86 policies, mareld2 60x60, seed 20260530, 3 yr;
+    year-end / start, y1/y2/y3)
+                 bnt             wcp             plk             seal
+    base         0.71/0.58/0.55  0.62/0.32/0.20  0.89/0.91/0.98  1.04/0.86/0.63
+    SDA + fc     0.75/0.63/0.59  0.64/0.40/0.27  0.89/0.90/0.96  1.04/0.95/0.83
+    + appetite   0.88/0.83/0.82  0.77/0.61/0.51  0.88/0.86/0.89  1.06/1.10/1.13
+    Benthivore fill 0.72 -> 1.0, Q/B 6.9 -> 6.5 t/t/yr, diet still all
+    infauna (monophagy, 239.1); whiting, epifauna, infauna, Nephrops
+    within 0.02. Policies were trained under the gate; retrain after
+    step 3 (shared-handling multi-prey response, 239.1).

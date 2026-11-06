@@ -22,7 +22,9 @@ from lib.world.energy_balance import (  # noqa: E402
     REFERENCE_RESTING_COST,
     evaluate_energy_balance,
     intake_ceiling,
+    net_assimilation,
     prey_energy,
+    sda_fraction,
 )
 from lib.world.tick_time import LIBRARY_TICK_HOURS, tick_label  # noqa: E402
 from lib.viz.i18n import FG_NAMES  # noqa: E402
@@ -788,6 +790,9 @@ class FGConfigApp:
             ("  Income growth kappa (share of intake for maintenance + growth; 0 = reserve-funded)", "income_growth_kappa", "entry", 0.0, 1.0),
             ("  Feeding season (months per year the budget is paid in; 0 = 12)", "feeding_season_months", "entry", 0.0, 12.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
+            # Section 240: appetite form and intake-proportional SDA.
+            ("Appetite (gate or reserve_room; empty = gate)", "appetite", "entry", 0.0, 0.0),
+            ("  SDA fraction (share of the ingested energy; 0 = none)", "sda_fraction", "entry", 0.0, 0.99),
             ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
             # Section 185: closes the logistic whose r the budget pays.
             ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
@@ -4037,7 +4042,8 @@ class FGConfigApp:
                           "max_energy_reserve", "energy_content",
                           "resting_metabolism", "feeding_cost",
                           "max_intake_rate", "income_growth_kappa",
-                          "feeding_season_months")
+                          "feeding_season_months", "appetite",
+                          "sda_fraction")
 
     def _update_editor_growth_display(self, interactions=None):
         """Show the derived growth_rate of the FG open in the editor."""
@@ -4064,6 +4070,11 @@ class FGConfigApp:
         for k in self.GROWTH_BUDGET_KEYS:
             if k in prop_vars:
                 raw = prop_vars[k].get()
+                if k == "appetite":
+                    # Section 240: a string field; empty = the gate.
+                    form = str(raw or "").strip().lower()
+                    spec[k] = form if form == "reserve_room" else "gate"
+                    continue
                 try:
                     spec[k] = float(raw) if raw not in ("", None) else 0.0
                 except (TypeError, ValueError):
@@ -4657,6 +4668,11 @@ class FGConfigApp:
                 if key == "current_response":
                     var.set(f"{self._effective_current_response(config, True):g}")
                     continue
+                if key == "appetite":
+                    # Section 240: "gate" (or absent) is shown empty.
+                    val = config.get(key, "")
+                    var.set("" if val in (None, "", "gate") else str(val))
+                    continue
                 if key == "metabolism_t_ref":
                     # "annual_mean" (or absent) is shown as an empty field.
                     val = config.get(key, "")
@@ -4794,6 +4810,7 @@ class FGConfigApp:
         "regional_carrying_capacity",
         "mortality_regeneration", "egestion_regeneration",
         "natural_mortality", "exposed_share", "refuge_exchange_rate",
+        "sda_fraction",
     })
 
     @staticmethod
@@ -4933,6 +4950,19 @@ class FGConfigApp:
                     messagebox.showerror(
                         "Invalid value",
                         f"Field '{key}' is not a valid number: {val!r}. "
+                        "No changes were saved.")
+                    return
+            elif key == "appetite":
+                # Section 240: 'gate' is the default and is not written.
+                form = str(val or "").strip().lower()
+                if form in ("", "gate", "0", "0.0"):
+                    config.pop(key, None)
+                elif form == "reserve_room":
+                    config[key] = form
+                else:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Appetite: 'gate' (or empty) or 'reserve_room'. "
                         "No changes were saved.")
                     return
             elif key == "water_layer":
@@ -5166,6 +5196,12 @@ class FGConfigApp:
                 except (TypeError, ValueError):
                     assim_f = 1.0
                 assim_f = min(max(assim_f, 0.0), 1.0)
+                # Section 240: the predator's SDA is netted, as in the
+                # runtime's energy_gain_mat.
+                try:
+                    assim_f = net_assimilation(assim_f, sda_fraction(config))
+                except ValueError:
+                    pass
                 # The pair's Holling ceiling, not the attack rate: with a
                 # pair-level max_intake_rate (half-saturation, section 134)
                 # a is far below the ceiling 1/h.

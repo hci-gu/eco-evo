@@ -56,18 +56,30 @@ def _select(app, fg_id):
     ("max_energy_reserve", 4000.0), ("energy_content", 4000.0),
     ("resting_metabolism", 4.5), ("feeding_cost", 2.5)])
 def test_editing_an_energy_field_moves_the_shown_growth_rate(app, key, value):
-    _select(app, "benthivorous_fish")
+    # Porpoises keep the section-133 gate: their s* is interior, so every
+    # energy field moves it (section 240: a reserve_room DM sits at s* = 1).
+    fg_id = "porpoises"
+    _select(app, fg_id)
     before = float(app.prop_vars["growth_rate"].get())
     app.prop_vars[key].set(str(value))
     shown = float(app.prop_vars["growth_rate"].get())
-    spec = dict(app.current_fg_configs["benthivorous_fish"], **{key: value})
+    spec = dict(app.current_fg_configs[fg_id], **{key: value})
     lib = app.global_library
-    expected = growth_budget("benthivorous_fish", lib["species_definitions"],
+    expected = growth_budget(fg_id, lib["species_definitions"],
                              app._live_interactions(),
                              active_predators=app._active_project_fg_ids(),
                              species=spec).growth_rate
     assert shown != pytest.approx(before, rel=1e-4)
     assert shown == pytest.approx(expected, rel=1e-5)
+
+
+def test_reserve_room_growth_rate_ignores_the_reserve_size(app):
+    """Section 240: with the reserve-room appetite the benthivores' s* is 1
+    (ample ideal intake), so g = gross / ((1 - u) 1460) whatever ME."""
+    _select(app, "benthivorous_fish")
+    before = float(app.prop_vars["growth_rate"].get())
+    app.prop_vars["max_energy_reserve"].set("4000.0")
+    assert float(app.prop_vars["growth_rate"].get()) == pytest.approx(before, rel=1e-6)
 
 
 def test_live_interactions_overlay_handling_time(app):
@@ -78,12 +90,12 @@ def test_live_interactions_overlay_handling_time(app):
         pytest.skip("no handling_time cell")
     var.set("40.0")
     assert app._live_interactions()[key]["handling_time"] == pytest.approx(40.0)
-    # h 96 -> 40 makes the infauna the best pair (45.5 vs 21.7 MJ/t);
+    # h 96 -> 40 makes the infauna the best pair (39.0 vs 20.9 MJ/t);
     # without predator_share (removed, section 221) it takes the whole
-    # eat share.
+    # eat share. The benthivores' SDA 0.10 is netted (section 240).
     budget = app._budget_for("benthivorous_fish")
     assert budget.best_prey == "benthic_infauna"
-    assert budget.ideal_intake == pytest.approx(0.7 * 2600.0 / 40.0, rel=1e-6)
+    assert budget.ideal_intake == pytest.approx((0.7 - 0.10) * 2600.0 / 40.0, rel=1e-6)
     var.set("")
     lib_value = app.global_library["interaction_definitions"][key]["handling_time"]
     assert app._live_interactions()[key]["handling_time"] == lib_value

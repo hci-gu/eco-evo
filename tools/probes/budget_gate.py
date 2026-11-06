@@ -171,7 +171,7 @@ for i, pid in enumerate(env.dm_ids):
 print()
 print(f"Units: ration in t prey / t predator / {tick_label(TICK_HOURS)}; "
       f"cost and quality in")
-print("MJ / t. quality is assimilation_factor * energy_content, i.e. the")
+print("MJ / t. quality is (assimilation_factor - sda_fraction) * energy_content, i.e. the")
 print("energy the predator keeps per tonne eaten.")
 
 print()

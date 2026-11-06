@@ -86,6 +86,10 @@ def build_interaction_matrices(env):
         menu = pred_fg.params.get("menu", [])
         interaction = pred_fg.params.get("interaction", {})
         pred_max_intake = float(pred_fg.params.get("max_intake_rate", 0.0))
+        # Section 240: the predator's SDA (share of the ingested energy)
+        # is netted from every pair's assimilation, so the gain and the
+        # reserve-food correction both carry it.
+        pred_sda = energy_balance.sda_fraction(pred_fg.params)
 
         for j, prey_id in enumerate(env.global_fg_order):
             if prey_id not in menu:
@@ -118,6 +122,7 @@ def build_interaction_matrices(env):
                 # difference to the cell's actual reserve (section 140).
                 max_reserve, fill = reserve_food
                 prey_energy_content += fill * max_reserve
+            assimilation = energy_balance.net_assimilation(assimilation, pred_sda)
             energy_gain[i, j] = prey_energy_content * assimilation
             assimilation_mat[i, j] = assimilation
             handling_time[i, j] = float(inter_def.get("handling_time", 0.0))

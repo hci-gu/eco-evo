@@ -102,6 +102,11 @@ def apply_predation(env, actions):
         # better-detecting predator raised the shared cap.
         demand = np.minimum(demand, pair_visible_biomass)
 
+    if getattr(env, "_has_reserve_room", False):
+        demand = _reserve_room_cap(env, demand, predator_biomass,
+                                   reserve_offset if env._has_reserve_food
+                                   else None)
+
     total_demand = demand.sum(axis=0)
     # Demand is capped at the *visible* prey biomass: the hidden
     # (rested) fraction is protected entirely this tick.
@@ -265,3 +270,30 @@ def _stage_harvest(env, demand, actual_intake, parts):
         actual_intake[:, j] = out[0] + out[1]
         juvenile[j] = out[0]
     return actual_intake, juvenile
+
+
+def _reserve_room_cap(env, demand, predator_biomass, reserve_offset):
+    """Cap each ``reserve_room`` predator's demand at its reserve room.
+
+    Section 240: with full appetite a predator takes no more energy in a
+    tick than its store can hold, (1 - s) B ME = B ME - R. The demand's
+    energy (static quality plus the reserve-food correction, as in the
+    gain below) is scaled down to that room per cell; the harvest caps
+    that follow only lower it further, so the gain never overflows the
+    reserve the engines clip at B ME.
+    """
+    potential = (demand * env.energy_gain_mat[:, :, None, None]).sum(axis=1)
+    if reserve_offset is not None:
+        potential = potential + (
+            demand * env.assimilation_mat[:, :, None, None]
+            * reserve_offset[None, :, :, :]).sum(axis=1)
+    reserve = np.stack([env.fgs[fid].energy_reserve for fid in env.dm_ids],
+                       axis=0)
+    room = np.maximum(
+        predator_biomass * env.dm_max_energy_reserve[:, None, None] - reserve,
+        np.float32(0.0))
+    capped = env.dm_reserve_room[:, None, None] & (potential > room)
+    scale = np.where(
+        capped, room / np.maximum(potential, np.float32(1e-30)),
+        np.float32(1.0)).astype(env.dtype, copy=False)
+    return (demand * scale[:, None, :, :]).astype(env.dtype, copy=False)

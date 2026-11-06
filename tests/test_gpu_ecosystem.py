@@ -871,3 +871,29 @@ def test_cpu_batched_activation_matches_individual_policies(activation):
     for d, fid in enumerate(model.dm_ids):
         expected = bank.policies[fid].net(obs[d, :, :model.in_dims[d]])
         torch.testing.assert_close(actual[d], expected)
+
+
+@pytest.mark.parametrize("reserve_food", [None, 0.5])
+@pytest.mark.parametrize("handling", [0.0, 0.2])
+def test_reserve_room_appetite_and_sda_match_reference(device, reserve_food,
+                                                       handling):
+    """Section 240: DM ``a`` has full appetite, its intake capped at the
+    reserve room, and nets an SDA from every pair; ``b`` keeps the gate."""
+    env = make_env(handling=handling, min_split=0.0, extinction_factor=0.0,
+                   reserve_food=reserve_food,
+                   regen={"a": {"appetite": "reserve_room",
+                                "sda_fraction": 0.1}})
+    # Start ``a`` near a full store so the room cap binds from tick 0.
+    a = env.fgs["a"]
+    a.energy_reserve[:] = (0.9 * a.biomass * a.max_energy_reserve).astype(
+        a.energy_reserve.dtype)
+    model = _assert_parity(env, device, ticks=6)
+    assert model.reserve_room
+    i_a, i_b = env.dm_ids.index("a"), env.dm_ids.index("b")
+    assert bool(env.dm_reserve_room[i_a]) and not bool(env.dm_reserve_room[i_b])
+    j = env.global_fg_order.index("c")
+    assert float(env.energy_gain_mat[i_a, j]) == pytest.approx(20 * 0.55)
+    assert float(env.energy_gain_mat[i_b, j]) == pytest.approx(20 * 0.65)
+    # The store never overflows: R <= B ME everywhere.
+    a = env.fgs["a"]
+    assert (a.energy_reserve <= a.biomass * a.max_energy_reserve * (1 + 1e-5) + 1e-9).all()

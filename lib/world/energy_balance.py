@@ -47,6 +47,55 @@ from typing import List, Optional
 # level and made the zooplankton budget impossible to close. The per-FG
 # ``satiation_scale`` (Sections 68-69, 92) was removed in section 130.
 
+# Appetite form (section 240), per FG via ``appetite``:
+#   gate          the section-133 gate above (default).
+#   reserve_room  full appetite (h = 1) at every fill; what a predator
+#                 takes in a tick is capped at the room left in its store,
+#                 (1 - s) B ME, so nothing is eaten that the reserve cannot
+#                 hold (both engines clip the reserve at B ME). Cod with
+#                 livers at or above the wild maximum still eat at Cmax
+#                 and restricted rations fall on the same growth line up to
+#                 satiation (research_notes/"Tillvaxt mot ranson", a-umlaut,
+#                 Q1 and Q3); copepod ingestion is set by food and gut
+#                 capacity (section 133).
+APPETITE_FORMS = ("gate", "reserve_room")
+
+
+def appetite_form(species_def):
+    """The FG's appetite form, ``gate`` (default) or ``reserve_room``."""
+    raw = (species_def or {}).get("appetite")
+    if raw in (None, ""):
+        return "gate"
+    form = str(raw).strip().lower()
+    if form not in APPETITE_FORMS:
+        raise ValueError(
+            f"appetite must be one of {APPETITE_FORMS}, got {raw!r}")
+    return form
+
+
+def sda_fraction(species_def):
+    """Specific dynamic action as a share of the INGESTED energy (section 240).
+
+    The heat increment of digestion and deposition scales with the meal
+    (Jobling & Davies 1980; Tirsgaard et al. 2015; Fonds et al. 1985).
+    ``assimilation_factor`` nets egestion (and excretion, Ecopath reading)
+    but not SDA, so the predator keeps ``assimilation - sda`` of the prey
+    energy. 0 (default) leaves the gain unchanged.
+    """
+    raw = (species_def or {}).get("sda_fraction")
+    if raw in (None, ""):
+        return 0.0
+    value = float(raw)
+    if not 0.0 <= value < 1.0:
+        raise ValueError(f"sda_fraction must be in [0, 1), got {raw!r}")
+    return value
+
+
+def net_assimilation(assimilation, sda):
+    """Share of the prey energy that reaches the reserve: assimilation - SDA."""
+    return max(0.0, float(assimilation) - float(sda))
+
+
 # Reference value of resting_cost. The runtime default in
 # FunctionalGroup / ecosystem caches is 1.0 and no FG in fg_library.yaml
 # overrides it; starve_calibration.py anchors resting_metabolism *
@@ -119,12 +168,16 @@ def intake_ceiling(attack_rate, handling_time):
     return float(attack_rate or 0.0)
 
 
-def hunger_at(s_x, maintenance_level=0.0):
+def hunger_at(s_x, maintenance_level=0.0, appetite="gate"):
     """h_X = min(1, max(0, (1 - s_X) / (1 - u_X))) at fill ratio s_X.
 
     Mirrors ``FunctionalGroup.get_hunger`` for a scalar s_X. With
-    ``u_X >= 1`` there is no feeding window and h is 0.
+    ``u_X >= 1`` there is no feeding window and h is 0. With the
+    ``reserve_room`` appetite h is 1 (the reserve room caps the intake
+    instead, section 240).
     """
+    if appetite == "reserve_room":
+        return 1.0
     u = float(maintenance_level or 0.0)
     if u >= 1.0:
         return 0.0
