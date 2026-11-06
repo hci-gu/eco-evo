@@ -89,6 +89,15 @@ def aeff_hook(a, h, Bp, m3, interference=0.0):
     return f
 
 
+def shared_hook(a, h, Bp, m3, attack, interference=0.0):
+    # Section 242: the shared-handling rate per foraging tonne; the
+    # saturation below still weights it by the raw eat shares.
+    f = _orig_shared(a, h, Bp, m3, attack, interference)
+    cap['f'] = f
+    cap['Bp'] = np.broadcast_to(Bp, f.shape)
+    return f
+
+
 def predation_hook(env_, actions):
     b = cap['b']
     B = np.stack([env_.fgs[f].biomass for f in DM]).astype(np.float64)
@@ -152,6 +161,8 @@ _orig_pred = predation.apply_predation
 _orig_costs = movement.apply_energy_costs
 _orig_growth = population_change._apply_decision_maker_population_change
 interactions.holling_a_eff = aeff_hook
+_orig_shared = interactions.multi_prey_rate
+interactions.multi_prey_rate = shared_hook
 predation.apply_predation = predation_hook
 movement.apply_energy_costs = costs_hook
 population_change._apply_decision_maker_population_change = growth_hook

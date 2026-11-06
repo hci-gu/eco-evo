@@ -59,6 +59,7 @@ class EcosystemEnvironment:
         current_world_seed=0,
         local_reward=None,
         unit_splits=True,
+        shared_handling=True,
     ):
         if policies is None and _looks_like_policies(interactions):
             policies, interactions = interactions, None
@@ -82,6 +83,11 @@ class EcosystemEnvironment:
         # (``decisions.merge_subunit_fractions``, section 159). False is
         # the pre-159 continuous split.
         self.unit_splits = bool(unit_splits)
+        # Shared handling (section 242): the eat shares are a foraging
+        # time and attack probabilities, every prey searched for at once
+        # with one handling budget. False is the pre-242 per-pair Holling
+        # response (each pair as if the predator sought that prey alone).
+        self.shared_handling = bool(shared_handling)
         self.migration = bool(migration)
         self.currents = currents
         self.current_world_seed = int(current_world_seed or 0)

@@ -367,7 +367,11 @@ def test_light_limited_growth_matches_reference(device, start_tick, with_pairs):
                              "light_climate": LIGHT_CLIMATE},
                    dark_ratios={"a_preys_on_b": 0.1} if with_pairs else None,
                    light_saturation=150.0)
-    model = _assert_parity(env, device, ticks=6)
+    # Section 242: with shared handling the random policies' foraging time
+    # takes producer ``c`` to the 0.999 harvest cap in one cell, where the
+    # reserve left is a 1e-3 difference: float32 noise in the two engines'
+    # action probabilities lands ~1.3e-6 absolute on a 0.006 reserve.
+    model = _assert_parity(env, device, ticks=6, base_tol=2e-6)
     assert model.growth_light_on
     j_c, j_d = model.ids.index("c"), model.ids.index("d")
     assert torch.all(model.growth_light[:, j_d] == 1.0)
@@ -913,3 +917,16 @@ def test_growth_cost_matches_reference(device, income, reserve_room):
     assert float(model.growth_cost[0, model.ids.index("a")]) == pytest.approx(0.5)
     assert float(model.growth_cost[0, model.ids.index("b")]) == pytest.approx(0.3)
     assert float(env.dm_growth_cost[env.dm_ids.index("a")]) == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize("shared", [False, True])
+@pytest.mark.parametrize("handling", [0.2, 0.6])
+def test_shared_handling_matches_reference(device, shared, handling):
+    """Section 242: both engines read the eat shares as foraging time and
+    attack probabilities with one handling budget (DM ``a`` eats ``b`` and
+    ``c``; random policies split their eat), and ``shared_handling=False``
+    is the per-pair response on both."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, handling=handling)
+    env.shared_handling = shared
+    model = _assert_parity(env, device, ticks=6)
+    assert model.shared_handling is shared

@@ -22984,3 +22984,90 @@ remain open exactly as described in 71.9 / 71.11.
     change. Q/B well above
     the booked 4.46 was already the case under 240 (6.5); open, with the
     monophagy (239.1), for step 3 and the retraining.
+
+242 SHARED HANDLING: THE MULTI-PREY FUNCTIONAL RESPONSE (user,
+    2026-11-06; step 3 of the 239 plan)
+------------------------------------------------------------------------
+
+242.1 Why this form
+    * 239.1: each pair's Holling term was computed as if the predator
+      sought that prey alone, demand_j = B eat_j f_j(B_j) h, so the return
+      sum_j eat_j f_j E_j is linear in the eat shares and its optimum a
+      corner (one prey per cell; measured 0.97-0.999 on the top prey).
+    * A shared denominator alone does not remove the corner: if eat_j
+      scaled the SEARCH time on prey j, the return would be a ratio of
+      linear functions in the shares (linear-fractional), whose optimum is
+      again a vertex. The form that removes it is Charnov's prey model:
+      during the foraging time every prey is searched for at once and the
+      choice is whether to attack an encountered item.
+
+242.2 Mechanism (both engines)
+    * interactions.attack_choice: T = sum_j eat_j (foraging time), p_j =
+      eat_j / max_k eat_k (attack probability; the most-wanted prey is
+      always attacked; 0 where the predator does not eat).
+    * interactions.multi_prey_rate: lambda_j = a_j B_vis,j (Type III
+      a_j B_vis,j^2, per pair as before), f_j = lambda_j / (1 + sum_k p_k
+      h_k lambda_k + w B_pred); demand_j = B_pred T p_j f_j hunger. B_vis
+      is each pair's own visible prey (floor, access, stage access,
+      refuge, light in a, ingestion_q10 on the whole response). Every cap
+      after it is unchanged (per-pair bound, reserve-room cap, harvest
+      cap, stage harvest, reserve food).
+    * A one-prey policy (p one-hot, T = eat_j) is the per-pair response of
+      before; tests/test_shared_handling.py checks it against
+      shared_handling=False. EcosystemEnvironment(shared_handling=False)
+      reverts on both engines (the GPU reads the env flag). The linear
+      response (no handling anywhere) is untouched.
+    * With h = E/ceiling on every pair (all predators but the
+      benthivores, whose ceiling is per prey, 223.28) E/h is equal, so
+      dR/dp_j > 0 for every prey: the optimum is to attack everything, and
+      the diet becomes the encounter shares a f B_vis that 232's diet gate
+      computes. The benthivores can learn to drop a prey of lower E/h
+      (armoured epifauna and Nephrops). The pure single forage action is
+      the special case p = 1; no switch for it.
+    * One form for every DM, zooplankton's grazing pairs included (Type
+      III stays Type III inside the sum).
+    * growth_budget unchanged (docstring): the ideal forager attacks only
+      its best pair at unlimited density, where that rate is its ceiling.
+    * Diagnostics: budget_gate's diet gate note (its encounter shares are
+      now the realisable diet; OFF today: benthivores -> planktivores enc
+      0.006 vs booked 0.075, water column -> benthivores 0.472 vs 0.082);
+      intake_ceiling.py hooks multi_prey_rate too; viability.py's
+      water-filling arms are pre-242 calculus (documented, not rewritten).
+    * Tests: tests/test_shared_handling.py (11: attack_choice, one
+      attacked prey == holling_a_eff for II/III with and without w, corner
+      policy == pre-242 engine, equal shares give a_j B_j shares with one
+      handling budget, inclusion beats both corners at equal E/h while the
+      per-pair engine preferred a corner, dense prey slows the other, p <
+      1); tests/test_gpu_ecosystem.py test_shared_handling_matches_
+      reference (both forms, two handling times). Three parity tests got
+      base_tol 2e-6 and test_trawling_a_logistic_group_lowers_it rests
+      every DM: random policies' foraging time now takes a prey to the
+      0.999 harvest cap, where its reserve is a 1e-3 difference and the
+      engines' float32 action probabilities differ by ~1e-7.
+    * Checkpoints keep their shapes; the eat action's meaning changed.
+      Retrain (step 4).
+
+242.3 Effect with frozen fix86 policies (corner policies; mareld2 60x60,
+    seed 20260530, 3 yr; year-end / start y1/y2/y3)
+                 bnt             wcp             mck             prp             zoo
+    241          0.87/0.82/0.81  0.76/0.61/0.51  0.65/0.45/0.32  0.92/0.90/0.89  1.67/1.70/1.69
+    242          0.86/0.79/0.76  0.80/0.66/0.53  0.70/0.51/0.39  0.97/0.97/0.98  1.94/1.98/1.96
+    Diets unchanged (benthivores 0.999 infauna, whiting 0.998 epifauna,
+    seals 0.998 benthivores, planktivores 1.0 zooplankton; water column
+    0.50/0.49 benthivores/planktivores as before): the trained policies
+    sit on one prey per cell, so the response is the old one there - the
+    expected result, not the structural effect. The one mixed forager is
+    zooplankton (micro 0.18-0.21, phytoplankton 0.08, subsurface 0.71-0.73
+    of its intake): intake +10 % in year 1, mean biomass +8-12 %, and
+    mackerel and porpoises above it gain. Every other group within 0.05.
+    The diet change needs the retraining.
+    The diet gate's OFF pairs at p = 1 (policy-free, the probe's realised
+    rations): water column -> benthivores 0.472 of the ration x Q/B 2.34
+    x B_wcp/B_bnt (2220/5500 at the start, 2021/5194 probe means) = M2
+    0.43-0.45 /yr, against booked 0.082 - and already realised now
+    (0.455 in year 1, the corner policies put half their eat there). So
+    the encounter diet does not raise that pressure; the pair is ~5.5x
+    its booking either way. Benthivores -> planktivores at p = 1: 0.006
+    of the ration against booked 0.075 (realised now 0.0001). Both are
+    per-pair biology questions (a, e, f, stage access, or the diet-based
+    M2), open before the retraining; no a or M2 moved here.

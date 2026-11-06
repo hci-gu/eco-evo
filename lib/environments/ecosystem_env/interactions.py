@@ -706,6 +706,44 @@ def holling_a_eff(a, h, Bp, m3, interference=0.0):
     return m3 * a_eff_iii + (1.0 - m3) * a_eff_ii
 
 
+def attack_choice(eat):
+    """Foraging time T and attack probabilities p from the eat shares
+    (section 242).
+
+    The policy's eat shares (one per prey, prey on axis 1) are read as a
+    forager's time budget and its attack decisions: T = sum_j eat_j is
+    the share of the tick spent foraging, during which every prey is
+    searched for at once, and p_j = eat_j / max_k eat_k is the
+    probability of attacking an encountered j (the most-wanted prey is
+    always attacked). A one-prey policy gives T = eat_j, p one-hot, i.e.
+    the per-pair Holling response of before. Returns ``(T, p)``; T keeps
+    the prey axis with length 1.
+    """
+    forage = eat.sum(axis=1, keepdims=True)
+    top = eat.max(axis=1, keepdims=True)
+    attack = np.where(top > 0.0, eat / np.where(top > 0.0, top, 1.0), 0.0)
+    return forage.astype(eat.dtype, copy=False), attack.astype(eat.dtype, copy=False)
+
+
+def multi_prey_rate(a, h, Bp, m3, attack, interference=0.0):
+    """Per-pair intake per tonne of FORAGING predator under shared
+    handling (section 242), prey on axis 1:
+
+        lambda_j = a_j B_j   (Type II)  or  a_j B_j^2   (Type III)
+        f_j      = lambda_j / (1 + sum_k p_k h_k lambda_k + I)
+
+    The demand on prey j is B_pred T p_j f_j (``attack_choice``). The
+    denominator is the time the predator spends handling everything it
+    attacks, so dense prey of one kind slow the take of every other
+    (Murdoch 1973; Charnov 1976). With p one-hot it is
+    ``holling_a_eff`` for that pair. ``m3`` and ``interference`` as in
+    ``holling_a_eff``; every argument broadcasts against ``Bp``.
+    """
+    lam = m3 * (a * Bp * Bp) + (1.0 - m3) * (a * Bp)
+    busy = (attack * h * lam).sum(axis=1, keepdims=True)
+    return lam / (1.0 + busy + interference)
+
+
 def visible_prey_biomass(env, prey_biomass, actions):
     """Visible prey biomass for the current tick's hide choices.
 

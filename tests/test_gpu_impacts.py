@@ -95,7 +95,10 @@ def test_observable_impacts_match_reference(device, observable, daylight):
     calendar = ({"latitude_deg": 58.15, "tick_hours": 6, "start_tick": 3,
                  "random_start": False} if daylight else None)
     env = impact_env(observable=observable, daylight=calendar)
-    model = _assert_parity(env, device, ticks=6)
+    # Section 242: shared handling lets the random policies graze a prey
+    # to the 0.999 harvest cap, where its reserve is a 1e-3 difference
+    # and the engines' float32 action probabilities differ by ~1e-7.
+    model = _assert_parity(env, device, ticks=6, base_tol=2e-6)
     assert model.observed_impacts == tuple(observable)
     assert model.in_dims == tuple(int(n) for n in env.per_dm_in_dim)
     assert model.daylight == daylight
@@ -140,7 +143,12 @@ def test_trawling_a_logistic_group_lowers_it(device):
     env = impact_env(ndm=True)
     model = TensorEcosystem(env, device)
     b, r, _ = model.import_state([env])
-    probs = torch.full((1, model.D, model.A, model.C), 1.0 / model.A, device=model.device)
+    # Every DM rests: the trawl on the predators "a" and "b" would
+    # otherwise lower the predation on "c" too, and with shared handling
+    # (section 242) a uniform eat split is a full-time forager attacking
+    # every prey, whose lost predation outweighs one tick of trawling.
+    probs = torch.zeros((1, model.D, model.A, model.C), device=model.device)
+    probs[:, :, 4] = 1.0
     loss, cost = model.import_impacts([env])
     on = model.step(b, r, probs, model.tensor(0), torch.zeros_like(b), impacts=(loss, cost))
     off = model.step(b, r, probs, model.tensor(0), torch.zeros_like(b))

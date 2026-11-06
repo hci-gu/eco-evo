@@ -347,6 +347,13 @@ def _per_prey_intake(env):
     from - the Holling II/III response with Beddington-DeAngelis
     interference - with the predator's own biomass, its hunger and the
     eat share divided out, and restricted to the static menu.
+
+    Pre-242 calculus: since section 242 the engine shares one handling
+    budget between the attacked prey (the eat shares are a foraging time
+    and attack probabilities), so this per-pair rate and the
+    water-filling built on it no longer give the engine's marginal
+    return; the hand-coded arms run on the new response but are not its
+    optimal foragers (that would attack every prey of equal E/h).
     """
     from lib.environments.ecosystem_env import interactions
 

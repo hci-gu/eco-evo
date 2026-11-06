@@ -69,6 +69,13 @@ best pair can pay more than the budget (``ideal_reserve``). A DM's
 ``sda_fraction`` is netted from every pair's assimilation in C, as the
 runtime nets it in ``energy_gain_mat``.
 
+Shared handling (section 242)
+-----------------------------
+The runtime's multi-prey response (one handling budget for every
+attacked prey) leaves s* unchanged: the ideal forager here attacks only
+its best pair at an unlimited density, where that pair's rate is its
+ceiling 1/h whatever else it might attack, so C is the same number.
+
 Growth cost (section 241)
 -------------------------
 A DM's ``growth_cost`` c is the synthesis cost, J dissipated per J

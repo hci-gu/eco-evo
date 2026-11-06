@@ -98,7 +98,10 @@ def test_unit_splits_match_reference(device, migration):
                    min_split=1000.0, extinction_factor=0.01)
     b = np.stack([env.fgs[f].biomass for f in env.dm_ids])
     assert np.any(b >= 1.0) and np.any((b > 0) & (b < 1.0))
-    model = _assert_parity(env, device, ticks=8)
+    # Section 242: shared handling lets the random policies graze a prey
+    # to the 0.999 harvest cap, where its reserve is a 1e-3 difference
+    # and the engines' float32 action probabilities differ by ~1e-7.
+    model = _assert_parity(env, device, ticks=8, base_tol=2e-6)
     assert model.unit_splits
 
 

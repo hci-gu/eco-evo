@@ -243,6 +243,8 @@ class TensorEcosystem:
         self.can_move = tensor(env.dm_v > 0, torch.bool)[None, :, None, None]
         self.min_split = tensor(env.dm_min_split)[None, :, None]
         # Section 159 mirror of ``decisions.merge_subunit_fractions``.
+        # Section 242: shared handling (``predation.apply_predation``).
+        self.shared_handling = bool(getattr(env, "shared_handling", True))
         self.unit_splits = (bool(getattr(env, "unit_splits", True))
                             and bool((env.dm_min_split > 0).any()))
         self.fraction_indices = torch.arange(5, device=self.device)[None, None, :, None]
@@ -821,7 +823,20 @@ class TensorEcosystem:
             if light_index is None:
                 raise ValueError("light_index is required with the daylight calendar")
             a = a * self.light_mult[light_index.reshape(-1)]
-        if self.holling:
+        eat = actions[:, :, 5:]
+        if self.holling and self.shared_handling:
+            # Section 242 (``interactions.attack_choice`` and
+            # ``multi_prey_rate``): foraging time T = sum eat, attack
+            # probabilities p = eat / max eat, one handling budget.
+            forage = eat.sum(2, keepdim=True)
+            top = eat.amax(2, keepdim=True)
+            attack = torch.where(top > 0.0, eat / torch.where(top > 0.0, top, 1.0), 0.0)
+            prey = pair_visible if pair_visible is not None else visible[:, None]
+            lam = self.type3 * (a * prey * prey) + (1.0 - self.type3) * (a * prey)
+            busy = (attack * self.handling * lam).sum(2, keepdim=True)
+            rate = lam / (1.0 + busy + inter)
+            eat = forage * attack
+        elif self.holling:
             prey = pair_visible if pair_visible is not None else visible[:, None]
             squared = prey * prey
             type2 = a * prey / (1.0 + a * self.handling * prey + inter)
@@ -835,7 +850,6 @@ class TensorEcosystem:
             if light_index is None:
                 raise ValueError("light_index is required with ingestion_q10")
             rate = rate * self.ingestion_temp[light_index.reshape(-1)][:, :, None, None]
-        eat = actions[:, :, 5:]
         demand = b_dm[:, :, None] * eat * rate * hunger[:, :, None]
         if per_pair_bound:
             # Per-predator bound: no predator may demand more than the

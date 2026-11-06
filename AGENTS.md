@@ -210,9 +210,21 @@ fabricates mass.
   mackerel -> planktivores 0.16, -> zoo 0.42 (both from the stomachs:
   it hunts fish by day and filter-feeds in the dark; 228.2, 228.4);
   benthic pairs none.
-- Predation: vectorised, Holling type II with Beddington-DeAngelis crowding
-  (`a_eff = a / (1 + a*h*B_prey_visible + w*B_pred)`), hidden (rested) fraction
-  protected, energy gain buffered. `w` is the per-FG `interference` parameter
+- Predation: vectorised, Holling type II with Beddington-DeAngelis crowding,
+  hidden (rested) fraction protected, energy gain buffered. Since section
+  242 it is a multi-prey response with SHARED handling: the eat shares are
+  a foraging time T = sum_j eat_j and attack probabilities p_j = eat_j /
+  max_k eat_k, every prey searched for at once, demand_j = B_pred T p_j
+  lambda_j / (1 + sum_k p_k h_k lambda_k + w B_pred), lambda = a B_vis
+  (Type III a B_vis^2) (`interactions.attack_choice`, `multi_prey_rate`;
+  both engines). A one-prey policy is the old per-pair response
+  (`a B / (1 + a h B + w B_pred)`); `shared_handling=False` on the env
+  reverts. With equal E/h (every predator but the benthivores) attacking
+  every prey pays, so the diet becomes the encounter shares of the
+  budget_gate diet gate (OFF there: benthivores -> planktivores, water
+  column -> benthivores); the per-pair form made one prey per cell the
+  optimum (239.1). Checkpoints keep their shapes but the eat action means
+  something new: retrain. `w` is the per-FG `interference` parameter
   (`interference: 0` = pure Holling; the old gadoid 1.0 of section 86
   removed 2-cell vertical bands; benthivores 0 since 223.28 (the 0.45
   had no fish data; research_notes/"Interferens hos bottenfisk"),

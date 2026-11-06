@@ -56,6 +56,15 @@ def apply_predation(env, actions):
     # Attack rate a of this tick: the library value, times the pair's
     # light multiplier under the daylight calendar (section 137).
     intake_rate = interactions.attack_rate(env)[:, :, None, None]
+    # Section 242: with a saturating response the eat shares are the
+    # foraging time T and the attack probabilities p (shared handling);
+    # ``shared_handling=False`` on the env is the per-pair response.
+    eat = actions.eat
+    shared = (bool(getattr(env, "shared_handling", True))
+              and (env._has_holling2 or env._has_holling3))
+    if shared:
+        forage, attack = interactions.attack_choice(eat)
+        eat = forage * attack
     if env._has_holling2 or env._has_holling3:
         handling_time = env.handling_time_mat[:, :, None, None]
         # Holling saturation uses the *visible* prey biomass: hidden prey
@@ -68,9 +77,16 @@ def apply_predation(env, actions):
             prey_visible = pair_visible_biomass
         else:
             prey_visible = visible_biomass[None, :, :, :]
-        effective_intake_rate = interactions.holling_a_eff(
-            intake_rate, handling_time, prey_visible, env._type3_pred_mask,
-            interference)
+        if shared:
+            # Section 242: every prey is searched for at once during the
+            # foraging time; one handling budget for all attacked prey.
+            effective_intake_rate = interactions.multi_prey_rate(
+                intake_rate, handling_time, prey_visible,
+                env._type3_pred_mask, attack, interference)
+        else:
+            effective_intake_rate = interactions.holling_a_eff(
+                intake_rate, handling_time, prey_visible,
+                env._type3_pred_mask, interference)
     elif env._has_interference:
         # Linear (unsaturated) response: interference still divides the
         # per-predator rate, so the limit h -> 0 stays continuous.
@@ -87,7 +103,6 @@ def apply_predation(env, actions):
             * intake_temperature[:, None, None, None]).astype(
                 env.dtype, copy=False)
 
-    eat = actions.eat
     demand = (
         predator_biomass[:, None, :, :]
         * eat

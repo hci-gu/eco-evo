@@ -211,7 +211,11 @@ for u_x in (0.5, 0.4, 0.3):
 # scaling of the plankton pairs are left out, so zooplankton (every pair
 # scaled by M_ref/M(t)) is skipped. The factor-3 band is a judgement:
 # wide enough for stomach-data spread, narrow enough to catch a pair
-# that is an order of magnitude off.
+# that is an order of magnitude off. Since section 242 the engine's
+# response is this concurrent search with one handling budget: a policy
+# that attacks every prey it meets (p = 1, the optimum when E/h is equal)
+# takes exactly these encounter shares, so an OFF pair is a diet the
+# trained engine will now realise.
 # ---------------------------------------------------------------------------
 import yaml
 
