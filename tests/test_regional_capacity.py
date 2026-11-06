@@ -6,8 +6,9 @@ Contracts asserted:
    positive number; ``capacity_loss_rate`` = r_max / (1460 K) and needs
    r_max.
 2. The loss is outside the derived growth rate: K changes no budget term.
-3. The loader derives ``capacity_loss_rate`` (the library's whiting and
-   planktivorous_fish carry it) and rescales it as a flux for another tick length.
+3. The loader derives ``capacity_loss_rate`` for a group that carries a K
+   (no library group does since section 243.4; the test sets one) and
+   rescales it as a flux for another tick length.
 4. In the population step a DM with it loses the fraction c * B_region
    (grid-mean density) of its biomass and reserve, booked as a natural
    loss, with or without --mortality; another DM is untouched.
@@ -81,12 +82,20 @@ def test_capacity_is_outside_the_growth_budget():
     assert capped.describe() == plain.describe()
 
 
-# Benthivores and the water column lost their K in section 223.37, seals in 232.3.
-CAPPED = ("whiting", "planktivorous_fish")   # sections 185, 185.20, 209, 223.26, 223.37, 232.3
+# Benthivores and the water column lost their K in section 223.37, seals in
+# 232.3, whiting and the planktivores in 243.4: no library group has one.
+CAPPED = ("whiting",)   # set here only to test the loader path
+
+
+def test_no_library_group_has_a_regional_capacity():
+    lib = _library()
+    for fid, spec in lib["species_definitions"].items():
+        assert not spec.get("regional_carrying_capacity"), fid
 
 
 def test_loader_derives_the_rate_for_the_library_groups():
     lib = _library()
+    lib["species_definitions"]["whiting"]["regional_carrying_capacity"] = 0.533
     project = yaml.safe_load(PROJECT.read_text(encoding="utf-8-sig"))
     fgs = load_project_config(str(PROJECT), library_config=lib,
                               project_config=project, grid_size=(6, 6),

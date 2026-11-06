@@ -596,15 +596,12 @@
     # productivity.md; research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md.
     # Section 243.3: 0.40 (0.32-0.62) at 35 % pout.
     r_max: 0.40
-    # Section 185.20: today's EFFECTIVE capacity (t/km2), standing in for
-    # stock-scale compensation (density-dependent recruitment) plus net
-    # emigration out of a grid that holds ~0.4 % of the autumn-spawning
-    # herring - not local crowding. Section 209: K = B / (1 - P/r) =
-    # 3.33 / (1 - 0.115/0.37) = 4.8 (was 5.0 at r 0.34). Without K the
-    # pool grew at r_max - F and grazed the zooplankton 10-14x its
-    # standing stock per year (resume 185.17-19). Section 243.3: K = 4.72 /
-    # (1 - F/r) = 4.72 / (1 - 0.089/0.40) = 6.1 (pool with pout 1.64).
-    regional_carrying_capacity: 6.1
+    # No regional_carrying_capacity since section 243.4 (was 4.8 / 6.1,
+    # sections 185.20, 209, 243.3): it masked booked M2 the per-pair engine
+    # never realised, and it counted the box's density dependence (food,
+    # predation) twice. With shared handling (242) and every diet-gate pair
+    # passing (243.3) the predators' encounter diets carry ~0.93 of the
+    # booked M2 on the pool.
     # x 12 / feeding_season_months (5.5) since section 184. Section 232.1:
     # 0.0031889 -> 0.0028221 (whiting M2 on the pool 0.203 -> 0.07); 232.2
     # mammal re-booking -> 0.0028251; 243.3 (pout 1.64: r, M1, M2 at the
@@ -927,8 +924,10 @@
     # growth_rate is DERIVED by lib/world/growth_budget.py (see
     # predatory_fish). r_max: whiting Euler-Lotka r_now 0.49 (0.44-0.49).
     r_max: 0.49
-    # K = B* / (1 - F/r) = 0.446 / (1 - 0.08/0.49) = 0.533 t/km2 (0.48-0.68).
-    regional_carrying_capacity: 0.533
+    # No regional_carrying_capacity since section 243.4 (was K = B* / (1 -
+    # F/r) = 0.533 t/km2): it masked the epifauna overshoot of the old bed
+    # pair (a 0.27, fixed in 232 / 232.1) and counted the box's density
+    # dependence twice; whiting passes the diet gate on all four pairs.
     growth_rate: 0.0030547865783
     # M1 = SMS residual M 0.20 + grey seal and birds 0.05 = 0.25 /yr
     # (0.20-0.32). Booked on pairs: benthivores 0.18 (223.28), predatory_fish

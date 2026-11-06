@@ -108,6 +108,7 @@ research_notes/Sillens vinterbudget/growth_allocation.md.
 
 Regional carrying capacity (section 185)
 ---------------------------------------
+No library group carries one since section 243.4; the mechanism stays.
 r_max is the r of a Schaefer (logistic) stock; a pool paid r_max at any
 density grows at r_max - F until its food runs out and then crashes
 (resume 184.13). ``regional_carrying_capacity`` K (t/km2, the stock's

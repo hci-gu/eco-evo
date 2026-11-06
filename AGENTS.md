@@ -268,24 +268,26 @@ fabricates mass.
   reserve into biomass: no food, no growth, the fat is kept for the
   winter (the reserve-funded law kept growing on it after the food had
   gone). Its derived g is paid over `feeding_season_months` (x 12/n).
-  Set on herring (kappa 0.75, season 5.5 months; resume 184.8).
+  Set on the planktivores (kappa 0.87, season 6.4 months since 243.3;
+  resume 184.8).
   A DM with `regional_carrying_capacity` K (t/km2, section 185) loses
   `r_max/1460 * B_region/K` of its biomass and reserve per tick after
   M1 (B_region = grid-mean density; both engines, with or without
   `--mortality`), kept OUT of the derived g, so it grows at
   `r_max (1 - B/K) - F` (the logistic its r_max prior comes from). The
-  loader derives `capacity_loss_rate`. K = B*/(1 - F/r) on whiting
-  0.533 (r 0.49, F 0.08; 223.26) and planktivores 6.1 (r 0.40, F 0.089;
-  185.20, 243.3).
+  loader derives `capacity_loss_rate`. NO library group has a K since
+  section 243.4 (the mechanism stays, tests/test_regional_capacity.py).
   Since section 223.37 the benthivores (was 3.39) and the water column
   (was 2.14) have NO K: it counted the box's density dependence twice
   (food competition and predation in the box already act), and the box
   is an open nursery whose recruits are spawned outside it
   (research_notes/"Bestandsreglering", Swedish letters: summary.md; a
-  loss cannot stand for a window group's net import). The remaining K
-  are temporary masks over named defects: planktivores (their g pays
-  booked M2 the trained benthivores and whiting do not realise),
-  whiting (import above need, epifauna overshoot). The
+  loss cannot stand for a window group's net import). Whiting (was
+  0.533) and the planktivores (was 4.8 / 6.1) lost theirs in section
+  243.4: they were masks over named defects - the planktivores' g paid
+  booked M2 the per-pair engine never realised (with shared handling and
+  every diet-gate pair passing, the encounter diets carry ~0.93 of it),
+  whiting's bed pair overshot the epifauna (a 0.27, fixed in 232). The
   open-population form (imported recruits into J, somatic growth
   budget, emigration, exchange for window groups) is the replacement.
   Without K the old gadoids grew at r_max - F, ate the pelagic pool down
@@ -295,7 +297,8 @@ fabricates mass.
   gadoids): in a frozen fix87 run they declined by starvation with or
   without it. Without K on whiting and planktivores the same run grew
   planktivores to 1.9x start in 3 years and whiting halved the
-  epifauna. Mackerel has no K (228, user: the most mobile window group). Porpoises have no K; their
+  epifauna (corner policies on the old pairs; the retrained long-run
+  probe is the check after 243.4). Mackerel has no K (228, user: the most mobile window group). Porpoises have no K; their
   attack rates are x1.5 since section 206 (they fell to ~0.3 of the
   start in 15-20 years at the old rates).
   With the daylight calendar a producer with `light_saturation` grows at

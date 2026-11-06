@@ -23201,3 +23201,28 @@ remain open exactly as described in 71.9 / 71.11.
       the planktivores to pay its feeding metabolism (was 0.59), above
       its booked 0.684 (flag: porpoise g rose 7 %).
       pytest 1700 passed / 12 skipped; train.py 1-generation smoke OK.
+243.4 No regional K on any group (user, 2026-11-06)
+    - regional_carrying_capacity removed from planktivorous_fish (6.1;
+      4.8 before 243.3) and whiting (0.533); fg_library.yaml only. No
+      library group has a K now (benthivores and the water column lost
+      theirs in 223.37, seals in 232.3; mackerel and porpoises never had
+      one). The mechanism stays in both engines.
+    - Why: both were masks over named defects (AGENTS.md section 5). The
+      planktivores' g pays booked M2 that the per-pair engine's corner
+      policies never realised; after 242 and 243.3 every diet-gate pair
+      passes, and the encounter diets (gate ratio x booked M2, rations as
+      booked, p = 1) carry 0.335 of the booked 0.359 /yr on the pool
+      (0.93). Whiting's K covered the epifauna overshoot of the old bed
+      pair (a 0.27), fixed in 232 / 232.1; whiting passes on all four
+      pairs. And K counts the box's density dependence twice (food
+      competition and predation already act; research_notes/
+      "Bestandsreglering", 223.37).
+    - Risk, to be read off the retrained long-run probe: in frozen fix87
+      (corner policies, old pairs) both groups grew without K (232.3).
+      The realised M2 depends on the learned foraging time; if a group
+      runs away, the defect is in the pair or the policy, not a reason to
+      restore K. The open-population form is still the replacement for
+      window-group import and emigration.
+    - Derived growth rates unchanged (K is outside g).
+      tests/test_regional_capacity.py: no library group has a K; the
+      loader path is tested with a K set on whiting in the test.
