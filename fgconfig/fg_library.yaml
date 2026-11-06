@@ -646,6 +646,18 @@
     # 0.12, haddock 0.05, plaice 0.15 incl. feeding activity, the rest as
     # plaice J; 75 % of the weight on own-species data; same note, W).
     sda_fraction: 0.10
+    # Section 241: growth cost, J dissipated per J deposited (a new tonne
+    # costs ec + c (ec + s ME)). Top-down on the engine's own losses
+    # (assimilation 0.8, SDA 0.10): c = 0.70 / deposited - 1, deposited =
+    # the extra energy a lab fish lays down per extra gross kJ on its own
+    # tissue energy. Biomass-weighted 0.69 (0.46-1.01): cod 0.49 (0.30-
+    # 0.75), haddock 0.84, plaice 0.75; 75 % of the weight on own-species
+    # deposition. Zero at maintenance: in cod the maintenance ration is
+    # 1.03-1.17x routine O2, against 1.85-3x for a cost on intake.
+    # Bottom-up biochemistry 0.2-0.6 overlaps SDA (synthesis is part of
+    # it). research_notes/"Tillvaxt mot ranson" (a-umlaut)/
+    # slope_decomposition/summary.md.
+    growth_cost: 0.69
     # Liver / fat reserve: cod and haddock liver max ~2000 MJ/t, plaice
     # 1700-2000, long rough dab 850-1100 -> 1800 (1500-2100).
     max_energy_reserve: 1800.0

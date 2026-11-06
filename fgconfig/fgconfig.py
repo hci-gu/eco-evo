@@ -790,9 +790,11 @@ class FGConfigApp:
             ("  Income growth kappa (share of intake for maintenance + growth; 0 = reserve-funded)", "income_growth_kappa", "entry", 0.0, 1.0),
             ("  Feeding season (months per year the budget is paid in; 0 = 12)", "feeding_season_months", "entry", 0.0, 12.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
-            # Section 240: appetite form and intake-proportional SDA.
+            # Sections 240, 241: appetite form, intake-proportional SDA and
+            # the deposition-proportional growth cost.
             ("Appetite (gate or reserve_room; empty = gate)", "appetite", "entry", 0.0, 0.0),
             ("  SDA fraction (share of the ingested energy; 0 = none)", "sda_fraction", "entry", 0.0, 0.99),
+            ("  Growth cost (J per J deposited; 0 = none)", "growth_cost", "entry", 0.0, 5.0),
             ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
             # Section 185: closes the logistic whose r the budget pays.
             ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
@@ -4043,7 +4045,7 @@ class FGConfigApp:
                           "resting_metabolism", "feeding_cost",
                           "max_intake_rate", "income_growth_kappa",
                           "feeding_season_months", "appetite",
-                          "sda_fraction")
+                          "sda_fraction", "growth_cost")
 
     def _update_editor_growth_display(self, interactions=None):
         """Show the derived growth_rate of the FG open in the editor."""
@@ -4810,7 +4812,7 @@ class FGConfigApp:
         "regional_carrying_capacity",
         "mortality_regeneration", "egestion_regeneration",
         "natural_mortality", "exposed_share", "refuge_exchange_rate",
-        "sda_fraction",
+        "sda_fraction", "growth_cost",
     })
 
     @staticmethod

@@ -11,6 +11,7 @@ from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
 from lib.environments.ecosystem_env.currents import direction_fractions
 from lib.environments.ecosystem_env.impacts import extract_impact_table, interp_impact
 from lib.world import nutrients
+from lib.world.energy_balance import tonne_price
 
 # Relative harvest cap, imported rather than repeated so the two engines
 # cannot drift apart again (Fix 2 / Section 73: an absolute epsilon in the
@@ -288,6 +289,9 @@ class TensorEcosystem:
                 else np.asarray(fg.capacity_map, dtype=np.float32).reshape(-1)
                 for fg in groups]))[None]
         self.energy_content = tensor([fg.params.get("energy_content", 0.0) or 0.0 for fg in groups])[None, :]
+        # Section 241: growth cost c (a new tonne costs ec + c (ec + s ME)).
+        self.growth_cost = tensor([float(getattr(fg, "growth_cost", 0.0) or 0.0)
+                                   for fg in groups])[None, :]
         # Section 223.12: benthic refuge groups, mirror of
         # ``ecosystem_env/refuge.py``: the accessible part A rides in the
         # reserve slot; phi its equilibrium share, relax = exp(-k).
@@ -1022,8 +1026,9 @@ class TensorEcosystem:
     def income_growth(self, b, r, gains, metabolism, rest, eat, move_fraction,
                       stay_b, stay_r):
         """Section 184 mirror of ``movement.income_growth``: per cell
-        G = min(kappa I - C, B g (s - u) ec), at most the settling reserve,
-        moved from the stationary reserve into G / ec new tonnes."""
+        G = min(kappa I - C, B g (s - u) p), at most the settling reserve,
+        moved from the stationary reserve into G / p new tonnes; p the price
+        of a tonne, ec + c (ec + s ME) (section 241)."""
         cost = (b * rest * metabolism * self.cost_rest
                 + b * eat * metabolism * self.cost_eat
                 + b * move_fraction * metabolism * self.cost_move)
@@ -1032,11 +1037,13 @@ class TensorEcosystem:
         ec = self.energy_content[:, self.dm_index][:, :, None]
         capacity = b * self.max_reserve[:, self.dm_index]
         fill = torch.where(capacity > 0, r / torch.where(capacity > 0, capacity, 1.0), 0.0)
-        ceiling = b * growth * (fill - maintenance).clamp_min(0) * ec
+        price = tonne_price(ec, self.growth_cost[:, self.dm_index][:, :, None], fill,
+                            self.max_reserve[:, self.dm_index])
+        ceiling = b * growth * (fill - maintenance).clamp_min(0) * price
         paid = torch.minimum((self.income_kappa * gains - cost).clamp_min(0), ceiling)
         paid = torch.minimum(paid, stay_r.clamp_min(0))
         paid = torch.where((self.income_kappa > 0) & (ec > 0), paid, 0.0)
-        return (stay_b + paid / torch.where(ec > 0, ec, 1.0), stay_r - paid)
+        return (stay_b + paid / torch.where(price > 0, price, 1.0), stay_r - paid)
 
     def cancel_emigration(self, b_out, r_out):
         """Keep a DM's off-grid outflow home when its pool is below thr.
@@ -1344,12 +1351,15 @@ class TensorEcosystem:
             # algebra as ``population_change._charge_growth_to_reserve``;
             # see that docstring and section 116.
             ec = self.energy_content[:, :, None]
+            # Section 241: a tonne costs ec + c (ec + s ME); ec when c = 0.
+            price = tonne_price(ec, self.growth_cost[:, :, None],
+                                self.energy_level(b, r), self.max_reserve)
             available = (r - self.maintenance * self.max_reserve * b).clamp_min(0)
             wish = delta.clamp_min(0)
             gain = torch.where(ec > 0,
-                               torch.minimum(wish, available / ec.clamp_min(1e-30)),
+                               torch.minimum(wish, available / price.clamp_min(1e-30)),
                                wish)
-            r = (r - torch.where(self.is_dm & (ec > 0), gain * ec,
+            r = (r - torch.where(self.is_dm & (ec > 0), gain * price,
                                  torch.zeros_like(gain))).clamp_min(0)
             delta = torch.where(delta > 0, gain, delta)
         loss = -torch.minimum(delta, torch.zeros_like(delta))

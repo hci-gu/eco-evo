@@ -897,3 +897,19 @@ def test_reserve_room_appetite_and_sda_match_reference(device, reserve_food,
     # The store never overflows: R <= B ME everywhere.
     a = env.fgs["a"]
     assert (a.energy_reserve <= a.biomass * a.max_energy_reserve * (1 + 1e-5) + 1e-9).all()
+
+
+@pytest.mark.parametrize("income", [None, (0.8, 6.0)])
+@pytest.mark.parametrize("reserve_room", [False, True])
+def test_growth_cost_matches_reference(device, income, reserve_room):
+    """Section 241: both engines buy a tonne for ec + c (ec + s ME), in
+    the reserve-funded branch and in the income-funded one."""
+    regen = {"a": {"growth_cost": 0.5}, "b": {"growth_cost": 0.3}}
+    if reserve_room:
+        regen["a"]["appetite"] = "reserve_room"
+    env = make_env(min_split=0.0, extinction_factor=0.0, income=income,
+                   regen=regen)
+    model = _assert_parity(env, device, ticks=6)
+    assert float(model.growth_cost[0, model.ids.index("a")]) == pytest.approx(0.5)
+    assert float(model.growth_cost[0, model.ids.index("b")]) == pytest.approx(0.3)
+    assert float(env.dm_growth_cost[env.dm_ids.index("a")]) == pytest.approx(0.5)

@@ -423,8 +423,17 @@ fabricates mass.
   from every pair's assimilation in `energy_gain_mat` (and in s*'s C);
   benthivores 0.10 (biomass-weighted), whose `feeding_cost` is now the
   foraging activity only (2.0 -> 1.18 = (weighted field metabolism - SDA
-  at the field ration)/RM). SDA closes only part of the growth-ration
-  slope gap (engine ~0.58 vs 0.30 g/kcal); the residual is open.
+  at the field ration)/RM). `growth_cost` c (section 241) is the
+  synthesis cost, J per J deposited: the mass-balanced growth buys a
+  tonne for `ec + c (ec + s ME)` (`energy_balance.tonne_price`, both
+  engines, income branch too; the reserve-funded branch ignores it
+  with `--no-mass-balance`), nothing
+  at maintenance; s* uses (1 + c) P. Benthivores 0.69 = biomass-weighted
+  0.70/deposited - 1 on the engine's own losses (cod 0.49; slope
+  decomposition in research_notes/"Tillvaxt mot ranson"), so the
+  growth-ration slope (0.28-0.37 vs lab 0.30 g/kcal) is now an input,
+  not a test. No other group has c: set it only from that group's own
+  slope evidence.
 
 ## 6. Commands
 

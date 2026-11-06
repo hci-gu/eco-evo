@@ -4,6 +4,7 @@ import numpy as np
 
 from lib.environments.ecosystem_env import interactions
 from lib.world import nutrients
+from lib.world import energy_balance
 from lib.environments.ecosystem_env import natural_mortality as natural_mortality_module
 from lib.environments.ecosystem_env import regeneration
 from lib.environments.ecosystem_env import refuge
@@ -116,7 +117,11 @@ def _charge_growth_to_reserve(env, fg, biomass_delta):
     Only the POSITIVE part of ``biomass_delta`` is touched. Starvation is
     a loss, not a purchase, and its branch is left exactly as it was.
 
-    Note that this makes ``max_energy_reserve / energy_content`` a hard
+    A ``growth_cost`` c (section 241) raises the price of a tonne from
+    ``energy_content`` to ``ec + c (ec + s ME)`` (``energy_balance.
+    tonne_price``): the synthesis cost, dissipated, nothing at maintenance.
+
+    Note that this makes ``max_energy_reserve / price`` a hard
     ceiling on the reachable ``growth_rate``, since cap and wish are both
     linear in ``q_X``. For zooplankton that ratio is 0.150 against a
     ``growth_rate`` of 0.128 since section 160 paid the budget at the
@@ -136,10 +141,20 @@ def _charge_growth_to_reserve(env, fg, biomass_delta):
         - np.float32(fg.maintenance_level * fg.max_energy_reserve)
         * fg.biomass,
     )
-    cap = available / np.float32(energy_content)
+    # Section 241: with a growth cost c a tonne costs ec + c (ec + s ME),
+    # its body energy (structure plus the reserve it dilutes) times 1 + c
+    # less the diluted reserve, which stays in the store.
+    cost = float(getattr(fg, "growth_cost", 0.0) or 0.0)
+    if cost > 0.0:
+        price = energy_balance.tonne_price(
+            np.float32(energy_content), np.float32(cost), fg.energy_level,
+            np.float32(fg.max_energy_reserve)).astype(env.dtype, copy=False)
+    else:
+        price = np.float32(energy_content)
+    cap = available / price
     gain = np.minimum(np.maximum(0.0, biomass_delta), cap)
     fg.energy_reserve = np.maximum(
-        0.0, fg.energy_reserve - gain * np.float32(energy_content)
+        0.0, fg.energy_reserve - gain * price
     ).astype(env.dtype, copy=False)
     return np.where(biomass_delta > 0.0, gain, biomass_delta).astype(
         env.dtype, copy=False)

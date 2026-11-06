@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.world.energy_balance import appetite_form
+from lib.world.energy_balance import appetite_form, growth_cost
 
 class FunctionalGroup:
     def __init__(self, group_id, params):
@@ -65,6 +65,8 @@ class FunctionalGroup:
         self.maintenance_level = float(params.get('maintenance_level', 0.0))
         # Appetite form (section 240): ``gate`` or ``reserve_room``.
         self.appetite = appetite_form(params)
+        # Section 241: J dissipated per J deposited by the growth branch.
+        self.growth_cost = growth_cost(params)
         self.speed = params.get('movement_speed', 0.0)  # V_X
         # Minimum biomass (per cell) required to split via movement actions.
         # YAML/GUI value is in kg; internal biomass units are tonnes, so

@@ -5,6 +5,7 @@ from lib.environments.ecosystem_env import impacts, interactions, source_trackin
 from lib.environments.ecosystem_env.constants import EAST, NORTH, SOUTH, WEST
 from lib.environments.ecosystem_env.grid_masks import build_movement_mask
 from lib.environments.ecosystem_env.state import ActionSettlement
+from lib.world import energy_balance
 
 
 def _current_xor(left, right):
@@ -366,13 +367,15 @@ def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
     """Section 184: an income-funded DM grows out of this tick's intake.
 
     Per cell, with I the assimilated intake (``gains``) and C the action
-    costs of the tick (MJ), G = min(kappa I - C, B g (s - u) ec), at
+    costs of the tick (MJ), G = min(kappa I - C, B g (s - u) p), at
     least 0 and at most the settling reserve; s is the reserve fill at
     the start of the tick. G leaves the stationary reserve (where the
-    intake landed) and becomes G / ec tonnes of new biomass there, before
+    intake landed) and becomes G / p tonnes of new biomass there, before
     the movement. Nothing to eat, no growth: the reserve only pays the
     costs. The DM's reserve-funded growth branch is off in the
-    population step; its starvation branch is untouched.
+    population step; its starvation branch is untouched. p is the price
+    of a tonne, ec + c (ec + s ME) with the growth cost c (section 241;
+    ec when c = 0).
     """
     kappa = env.dm_income_kappa[:, None, None]
     on = kappa > 0.0
@@ -388,14 +391,19 @@ def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
     fill = np.where(capacity > 0, reserve / np.where(capacity > 0, capacity,
                                                      np.float32(1.0)),
                     np.float32(0.0))
+    # Section 241: a tonne costs ec + c (ec + s ME) (``tonne_price``).
+    price = energy_balance.tonne_price(
+        ec, getattr(env, "dm_growth_cost",
+                    np.zeros(env.N_dm, dtype=env.dtype))[:, None, None],
+        fill, max_reserve).astype(env.dtype, copy=False)
     ceiling = biomass * growth * np.maximum(fill - maintenance,
-                                            np.float32(0.0)) * ec
+                                            np.float32(0.0)) * price
     paid = np.minimum(np.maximum(kappa * gains - cost, np.float32(0.0)),
                       ceiling)
     paid = np.minimum(paid, np.maximum(stationary_reserve, np.float32(0.0)))
     paid = np.where(on & (ec > 0), paid, np.float32(0.0)).astype(env.dtype)
-    safe_ec = np.where(ec > 0, ec, np.float32(1.0))
-    return ((stationary_biomass + paid / safe_ec).astype(env.dtype),
+    safe_price = np.where(price > 0, price, np.float32(1.0))
+    return ((stationary_biomass + paid / safe_price).astype(env.dtype),
             (stationary_reserve - paid).astype(env.dtype))
 
 

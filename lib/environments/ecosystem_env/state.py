@@ -263,6 +263,10 @@ def build_static_caches(env):
         [getattr(env.fgs[fid], "appetite", "gate") == "reserve_room"
          for fid in env.dm_ids], dtype=bool)
     env._has_reserve_room = bool(env.dm_reserve_room.any())
+    # Section 241: growth cost c per DM (a new tonne costs ec + c (ec + s ME)).
+    env.dm_growth_cost = np.array(
+        [float(getattr(env.fgs[fid], "growth_cost", 0.0)) for fid in env.dm_ids],
+        dtype=env.dtype)
 
     # Section 184: income-funded growth, kappa per DM (0 = the
     # reserve-funded law). Read by ``movement.apply_energy_costs`` (the

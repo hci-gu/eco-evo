@@ -32,6 +32,7 @@ convention) and ``feeding_cost`` is the activity multiplier of hunting
 relative to lying still - which is why ``feeding_cost < resting_cost`` is
 an invalid configuration, not merely a generous one.
 """
+import math
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -94,6 +95,35 @@ def sda_fraction(species_def):
 def net_assimilation(assimilation, sda):
     """Share of the prey energy that reaches the reserve: assimilation - SDA."""
     return max(0.0, float(assimilation) - float(sda))
+
+
+def growth_cost(species_def):
+    """Growth (synthesis) cost c, J dissipated per J deposited (section 241).
+
+    Paid where the mass-balanced growth buys a tonne: the tonne's body
+    energy is ``ec + s ME`` (its structure plus the reserve it takes with
+    it by dilution), and building it costs ``c`` times that on top, so
+    the reserve is debited ``tonne_price`` per tonne. Zero at maintenance
+    by construction (no growth, no cost). 0 (default) is the old price
+    ``ec``. Under ``--no-mass-balance`` the reserve-funded branch has no
+    debit, so c is inert there; the income branch (section 184) always
+    debits at the price.
+    """
+    raw = (species_def or {}).get("growth_cost")
+    if raw in (None, ""):
+        return 0.0
+    value = float(raw)
+    if not math.isfinite(value) or value < 0.0:
+        raise ValueError(f"growth_cost must be finite and >= 0, got {raw!r}")
+    return value
+
+
+def tonne_price(energy_content, cost, fill, max_reserve):
+    """Reserve energy one new tonne costs: ``ec + c (ec + s ME)``.
+
+    Plain arithmetic, so it works on floats, numpy arrays and torch
+    tensors alike; with ``c = 0`` it is ``ec`` (section 116)."""
+    return energy_content + cost * (energy_content + fill * max_reserve)
 
 
 # Reference value of resting_cost. The runtime default in

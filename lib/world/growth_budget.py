@@ -69,6 +69,16 @@ best pair can pay more than the budget (``ideal_reserve``). A DM's
 ``sda_fraction`` is netted from every pair's assimilation in C, as the
 runtime nets it in ``energy_gain_mat``.
 
+Growth cost (section 241)
+-------------------------
+A DM's ``growth_cost`` c is the synthesis cost, J dissipated per J
+deposited. The runtime buys a tonne for ec + c (ec + s ME) (its body
+energy, structure plus the reserve it dilutes, at 1 + c, less the
+diluted reserve that stays in the store), so the settling balance is
+h(s) C = cost + (1 + c) P (ec + s ME), Pmax = (C - cost)/((1 + c)(ec +
+u ME)) and the mass-balance ceiling ME / (ec + c (ec + s* ME)). It
+costs nothing at maintenance, where nothing is deposited.
+
 Income-funded growth (section 184)
 ----------------------------------
 A decision maker with ``income_growth_kappa`` kappa grows out of this
@@ -128,9 +138,9 @@ import math
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, Optional
 
-from lib.world.energy_balance import (appetite_form, intake_ceiling,
-                                     net_assimilation, prey_energy,
-                                     sda_fraction)
+from lib.world.energy_balance import (appetite_form, growth_cost,
+                                     intake_ceiling, net_assimilation,
+                                     prey_energy, sda_fraction, tonne_price)
 from lib.world.tick_time import LIBRARY_TICK_HOURS
 
 TICKS_PER_YEAR = 365.0 * 24.0 / LIBRARY_TICK_HOURS
@@ -205,18 +215,24 @@ def ideal_intake(pred_id, species_defs, interactions, active_predators=None):
 
 
 def ideal_reserve(maintenance, intake, cost, energy_content, max_reserve,
-                  production, appetite="gate"):
-    """s* where h(s) C = cost + P (energy_content + s ME), or None.
+                  production, appetite="gate", growth_cost=0.0):
+    """s* where h(s) C = cost + (1 + c) P (energy_content + s ME), or None.
 
     ``production`` P is the wanted g (s* - u) per tick. None when the
-    energy cannot pay for it, i.e. P >= Pmax = (C - cost) / (ec + u ME).
+    energy cannot pay for it, i.e. P >= Pmax = (C - cost) / ((1 + c)
+    (ec + u ME)).
 
     With the ``reserve_room`` appetite (section 240) h = 1 below a full
     reserve, so the balance C = cost + P (ec + s ME) has the root
     s = (C - cost - P ec) / (P ME); above 1 the reserve stays full (the
     room cap takes only what it needs), so s* = min(1, s). Same Pmax.
+
+    ``growth_cost`` c (section 241) prices every deposited joule at
+    1 + c: the new tonne's structure ec and its diluted reserve s ME are
+    both bought at (1 + c), so P enters every branch as (1 + c) P.
     """
     u = maintenance
+    production = production * (1.0 + growth_cost)
     if appetite == "reserve_room":
         if production <= 0.0:
             return 1.0 if intake > cost else None
@@ -455,20 +471,25 @@ def growth_budget(prey_id, species_defs, interactions,
     budget.growth_rate = (budget.gross_annual / (budget.gate * TICKS_PER_YEAR)
                           * budget.season_factor)
     if is_dm and budget.reference_fill is not None:
-        ceiling = budget_mass_balance_ceiling(spec)
+        ceiling = budget_mass_balance_ceiling(spec, budget.reference_fill)
         if ceiling is not None and budget.growth_rate > ceiling:
             budget.error = (f"g = {budget.growth_rate:.4g} exceeds the "
                             f"mass-balance ceiling max_energy_reserve / "
-                            f"energy_content = {ceiling:.4g}")
+                            f"tonne price = {ceiling:.4g}")
             budget.growth_rate = None
     return budget
 
 
-def budget_mass_balance_ceiling(spec):
-    """ME / energy_content: the growth a reserve above u can pay per tick."""
+def budget_mass_balance_ceiling(spec, fill=0.0):
+    """ME / price of a tonne: the growth a reserve above u can pay per tick.
+
+    The price is ec + c (ec + s ME) at the fill s (section 241); ec
+    without a growth cost."""
     ec = _as_float(spec.get("energy_content"))
     me = _as_float(spec.get("max_energy_reserve"))
-    return me / ec if ec > 0.0 and me > 0.0 else None
+    if not (ec > 0.0 and me > 0.0):
+        return None
+    return me / tonne_price(ec, growth_cost(spec), fill, me)
 
 
 def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
@@ -477,6 +498,11 @@ def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
     u = budget.maintenance
     ec = _as_float(spec.get("energy_content"))
     me = _as_float(spec.get("max_energy_reserve"))
+    try:
+        c_growth = growth_cost(spec)
+    except ValueError as error:      # the FG editor, mid-keystroke
+        budget.error = str(error)
+        return
     cost = (_as_float(spec.get("resting_metabolism"))
             * _as_float(spec.get("feeding_cost"), 3.0))
     defs = dict(species_defs or {})
@@ -485,10 +511,11 @@ def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
     if intake <= 0.0 or ec <= 0.0 or me <= 0.0 or cost <= 0.0:
         return
     budget.ideal_intake, budget.ideal_cost, budget.best_prey = intake, cost, best
-    budget.pmax_annual = (intake - cost) / (ec + u * me) * TICKS_PER_YEAR
+    budget.pmax_annual = ((intake - cost) / ((1.0 + c_growth) * (ec + u * me))
+                          * TICKS_PER_YEAR)
     production = budget.gross_annual / TICKS_PER_YEAR
     s_star = ideal_reserve(u, intake, cost, ec, me, production,
-                           appetite=appetite_form(spec))
+                           appetite=appetite_form(spec), growth_cost=c_growth)
     if s_star is None:
         budget.error = (f"budget {budget.gross_annual:.4g} /yr exceeds the most "
                         f"the energy allows, Pmax {budget.pmax_annual:.4g} /yr "

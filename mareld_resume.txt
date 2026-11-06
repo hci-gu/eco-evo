@@ -22908,3 +22908,79 @@ remain open exactly as described in 71.9 / 71.11.
     infauna (monophagy, 239.1); whiting, epifauna, infauna, Nephrops
     within 0.02. Policies were trained under the gate; retrain after
     step 3 (shared-handling multi-prey response, 239.1).
+
+241 GROWTH COST ON THE BENTHIVORES (user, 2026-11-06)
+------------------------------------------------------
+
+241.1 Mechanism (both engines)
+    * `growth_cost` c per DM (energy_balance.growth_cost; >= 0, default
+      0): the synthesis cost of new tissue, J dissipated per J
+      deposited. The mass-balanced growth (section 116) buys a tonne for
+      the price p = ec + c (ec + s ME) (energy_balance.tonne_price): the
+      new tonne's body energy, structure ec plus the reserve s ME it takes
+      by dilution, at 1 + c, less the diluted reserve that stays in the
+      store. The cap is E_avail / p and the debit dB p
+      (population_change._charge_growth_to_reserve; GPU mass_balance
+      block). The income branch (section 184) uses the same p in its
+      ceiling and in G / p tonnes, CPU and GPU. c = 0 is bit-identical
+      (p = ec). Under --no-mass-balance the reserve-funded branch has no
+      debit, so c is inert there; the income branch always debits at p.
+    * Zero at maintenance by construction: nothing deposited, nothing
+      paid. This is the form the slope decomposition (240.2) asks for:
+      in cod the maintenance ration is 1.03-1.17x routine O2, against
+      1.85-3x if the residual were charged on intake.
+    * growth_budget: the settling balance is h(s) C = cost + (1 + c) P
+      (ec + s ME), i.e. (1 + c) P replaces P in both appetite branches;
+      Pmax = (C - cost)/((1 + c)(ec + u ME)); the mass-balance ceiling is
+      ME / p at s*.
+    * FG editor field "Growth cost" (help text), in GROWTH_BUDGET_KEYS and
+      OPTIONAL_ZERO_KEYS. The appetite help text no longer lists
+      zooplankton (reverted in 240.2).
+    * Tests: tests/test_appetite_sda.py (parsing, price, reserve debit at
+      three c, the cap at the reserve above u, s* with c, library: only
+      benthivores carry c); tests/test_gpu_ecosystem.py
+      test_growth_cost_matches_reference (reserve- and income-funded,
+      gate and reserve_room).
+
+241.2 Library (fg_library.yaml only)
+    * benthivorous_fish growth_cost 0.69 (0.46-1.01): biomass-weighted
+      top-down on the engine's own losses, c = 0.70/deposited - 1, with
+      deposited the extra energy a lab fish lays down per extra gross kJ
+      on its own tissue energy (cod 0.47 -> c 0.49, haddock 0.84, plaice
+      0.75; weighted deposited 0.41; 75 % of the weight on own-species
+      deposition). Cod alone would give 0.49; the bottom-up biochemical
+      0.2-0.6 overlaps the measured SDA and is not stacked on it.
+    * s* stays 1 (unclipped root 7.9) and g stays 0.0011289; Pmax 5.52 ->
+      3.27 /yr against the gross 0.82 /yr.
+    * Steady state of one tonne (scratch steady241.py, same algebra as
+      240.2): marginal deposition below the fill point 0.33-0.37 g/kcal
+      on fish, 0.28-0.32 on infauna (was 0.56-0.63 / 0.48-0.54; lab
+      0.30, Braaten, Jones & Hislop). The energy slope equals the
+      weighted literature deposition 0.41 BY CONSTRUCTION, so the slope
+      is now an input, not a test; the mass slope landing at 0.30 is the
+      units check of 240.2 (deposited tissue 4.5-5.4 kJ/g), not a fit.
+      Maintenance ration unchanged (22.5 / 26.2 kJ/kg/d). The fill point
+      rises 39.9 -> 51.9 kJ/kg/d on fish and 46.5 -> 60.5 on infauna (the
+      literature field-cost line needs 56.4 for the budget growth
+      0.226 %/d); 60.5 is ~0.52 of the infauna ceiling, the top of the
+      field feeding level 0.22-0.53.
+    * Only the benthivores pay c. Do not move it to another group without
+      that group's own growth-ration evidence (the same per-group rule as
+      reserve_room).
+
+241.3 Effect (frozen fix86 policies, mareld2 60x60, seed 20260530, 3 yr;
+    year-end / start, y1/y2/y3; 240 = the 240.3 "+ appetite" row)
+                 bnt             wcp             infauna         seal
+    240          0.88/0.83/0.82  0.77/0.61/0.51  0.95/0.94/0.94  1.06/1.10/1.13
+    241          0.87/0.82/0.81  0.76/0.61/0.51  0.93/0.91/0.90  1.06/1.10/1.12
+    Benthivore fill 0.98-0.99 (unchanged, so the reserve_room s* = 1 still
+    holds); realised Q/B 6.5 -> 8.5 t/t/yr (budget Q/B 4.46), all of it
+    infauna (y1 35 900 -> 45 300 t); no starvation. The extra intake pays
+    the growth cost, the biomass barely moves, and the infauna carries it
+    (-0.04 by year 3). Every other group within 0.03. Q/B 8.5 x 2600
+    MJ/t / 365 = 60.5 kJ/kg/d, exactly the new infauna fill point (241.2;
+    240: 6.5 -> 46.3, its 46.5): the fish eat what keeps the store full,
+    so the extra intake is the cost of the deposited tissue, not a policy
+    change. Q/B well above
+    the booked 4.46 was already the case under 240 (6.5); open, with the
+    monophagy (239.1), for step 3 and the retraining.

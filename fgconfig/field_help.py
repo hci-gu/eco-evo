@@ -357,8 +357,10 @@ FIELD_HELP = {
         "biomass x Max Energy Reserve, so nothing is eaten that the store "
         "cannot hold. Under ideal conditions the reserve then sits full "
         "(s* = 1) and the derived growth is paid over 1 - u. Library: "
-        "benthivores (cod with livers at the wild maximum still eat at "
-        "Cmax) and zooplankton (ingestion set by food and gut capacity)."
+        "benthivores only (cod with livers at the wild maximum still eat "
+        "at Cmax). Zooplankton stays on the gate: its realised fill stayed "
+        "~0.6 while s* = 1 cut its growth by a third. Move a group only "
+        "after a frozen-policy probe shows its fill rising to ~1."
     ),
     "sda_fraction": (
         "SDA fraction (0-1; section 240). Specific dynamic action, the "
@@ -369,6 +371,19 @@ FIELD_HELP = {
         "Library: benthivores 0.10, biomass-weighted (cod 0.12, haddock "
         "0.05, plaice 0.15). With SDA set, Feeding Cost holds the foraging "
         "activity only."
+    ),
+    "growth_cost": (
+        "Growth cost c (J per J deposited, >= 0; section 241). The "
+        "synthesis cost of new tissue, dissipated. Growth buys a tonne out "
+        "of the reserve for Energy Content + c x (Energy Content + s x Max "
+        "Energy Reserve): the new tonne's body energy (structure plus the "
+        "reserve it takes with it) at 1 + c. Nothing is paid at "
+        "maintenance, where nothing is deposited; the cost grows with the "
+        "surplus. Enters the ideal reserve s* (the derived growth rate). "
+        "Inert in the reserve-funded growth with --no-mass-balance (the "
+        "income-funded growth always pays it). 0 = none. Library: benthivores "
+        "0.69, biomass-weighted top-down on the engine's assimilation and "
+        "SDA (cod 0.49, haddock 0.84, plaice 0.75)."
     ),
     "income_growth_kappa": (
         "Income growth kappa (fraction, 0-1; 0 = the reserve-funded "
