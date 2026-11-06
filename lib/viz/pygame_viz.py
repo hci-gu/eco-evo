@@ -1673,6 +1673,14 @@ class LiveVisualizer:
         except Exception as e:
             self._log_once(f"update_predation_breakdown failed: {e!r}")
 
+    def _loss_text(self, template, shares, avail):
+        """A loss-breakdown line with one decimal, or whole percents when
+        that does not fit in ``avail`` pixels (the panel width)."""
+        text = self._t(template, **{k: f"{v:.1f}" for k, v in shares.items()})
+        if self._font.size(text)[0] <= avail:
+            return text
+        return self._t(template, **{k: f"{v:.0f}" for k, v in shares.items()})
+
     def update_action_fracs(
         self,
         fid: str,
@@ -5439,9 +5447,9 @@ class LiveVisualizer:
             if lb is not None:
                 pr = float(lb.get('predation', 0.0)) * 100.0
                 im = float(lb.get('impact', 0.0)) * 100.0
-                ndm_surf = self._font.render(self._t(
-                    "pr/im = {pr}/{im}%", pr=f"{pr:.0f}", im=f"{im:.0f}"),
-                    True, info_col)
+                ndm_surf = self._font.render(self._loss_text(
+                    "pr/im = {pr}/{im}%", dict(pr=pr, im=im),
+                    self._panel_w - 2 * pad), True, info_col)
                 self._screen.blit(ndm_surf, (px + pad, act_y))
         else:
             # Header läser senaste mv/rs/et från ``_action_fracs`` (uppdateras
@@ -5472,10 +5480,10 @@ class LiveVisualizer:
                     st = float(lb.get('starvation', 0.0)) * 100.0
                     im = float(lb.get('impact', 0.0)) * 100.0
                     nm = float(lb.get('natural', 0.0)) * 100.0
-                    loss_txt = self._t(
+                    loss_txt = self._loss_text(
                         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%",
-                        pr=f"{pr:.0f}", st=f"{st:.0f}", im=f"{im:.0f}",
-                        nm=f"{nm:.0f}")
+                        dict(pr=pr, st=st, im=im, nm=nm),
+                        self._panel_w - 2 * pad)
                     loss_surf = self._font.render(loss_txt, True, info_col)
                     loss_y = act_y + act_surf.get_height()
                     self._screen.blit(loss_surf, (px + pad, loss_y))

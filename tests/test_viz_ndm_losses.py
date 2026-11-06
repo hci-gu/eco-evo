@@ -59,8 +59,38 @@ def test_ndm_panel_shows_predation_and_impact_shares(viz, monkeypatch):
         "benthivorous_fish": {"predation": 0.1, "impact": 0.2, "starvation": 0.0,
                     "natural": 0.7}})
     lines = rendered_lines(viz, "benthic_infauna", monkeypatch)
-    assert "pr/im = 27/73%" in lines
+    assert "pr/im = 27.0/73.0%" in lines
     assert not any(line.startswith(("mv/rs/et", "pr/st/im")) for line in lines)
+
+
+def test_dm_loss_line_has_one_decimal(viz, monkeypatch):
+    """The DM loss line 'pr/st/im/nm' shows one decimal, as the action
+    line 'mv/rs/et' does."""
+    viz.update_action_fracs("benthivorous_fish", 20.0, 30.0, 50.0)
+    viz.update_loss_breakdown({
+        "benthivorous_fish": {"predation": 0.123, "impact": 0.2,
+                              "starvation": 0.0, "natural": 0.677}})
+    wide = viz._font.size("pr/st/im/nm = 12.3/0.0/20.0/67.7%")[0]
+    monkeypatch.setattr(viz, "_panel_w", wide + 8)
+    lines = rendered_lines(viz, "benthivorous_fish", monkeypatch)
+    assert "pr/st/im/nm = 12.3/0.0/20.0/67.7%" in lines
+
+
+def test_loss_line_drops_the_decimal_when_it_does_not_fit(viz, monkeypatch):
+    """A panel too narrow for one decimal gets whole percents."""
+    viz.update_action_fracs("benthivorous_fish", 20.0, 30.0, 50.0)
+    viz.update_loss_breakdown({
+        "benthivorous_fish": {"predation": 0.123, "impact": 0.2,
+                              "starvation": 0.0, "natural": 0.677},
+        "benthic_infauna": {"predation": 0.27, "impact": 0.73,
+                            "starvation": 0.0, "natural": 0.0}})
+    wide = viz._font.size("pr/st/im/nm = 12.3/0.0/20.0/67.7%")[0]
+    narrow = viz._font.size("pr/st/im/nm = 12/0/20/68%")[0]
+    monkeypatch.setattr(viz, "_panel_w", (wide + narrow) // 2 + 8)
+    lines = rendered_lines(viz, "benthivorous_fish", monkeypatch)
+    assert "pr/st/im/nm = 12/0/20/68%" in lines
+    assert "pr/im = 27.0/73.0%" in rendered_lines(viz, "benthic_infauna",
+                                                  monkeypatch)
 
 
 def test_ndm_panel_without_a_breakdown_draws_no_loss_line(viz, monkeypatch):
