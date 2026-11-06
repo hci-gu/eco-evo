@@ -429,6 +429,17 @@ def test_live_project_porpoises_need_clupeids_at_a_real_ration():
         f"middle of the Kastelein rations")
     share = ((need_q - quality[worst_id])
              / (quality[best_id] - quality[worst_id]))
+    # Section 243.3: the planktivore pool is 35 % Norway pout (a lean
+    # gadoid), so the stomachs' 50-70 % is the clupeid share of the diet:
+    # the pool share times the pool's clupeid fraction (herring + sprat).
+    if best_id == 'planktivorous_fish':
+        import yaml
+        lib = yaml.safe_load(open(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'fgconfig', 'fg_library.yaml')))
+        members = lib['species_definitions']['planktivorous_fish']['member_species']
+        share *= sum(m['share'] for m in members
+                     if m['name'] in ('herring', 'sprat'))
     assert 0.0 < share <= 0.70, share
 
 

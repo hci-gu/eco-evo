@@ -150,9 +150,11 @@ decision_makers:
     initial_biomass_max: 3210
     inference_initial_biomass: 1605
   - group_id: planktivorous_fish
-    initial_biomass_min: 6000
-    initial_biomass_max: 24000
-    inference_initial_biomass: 12000
+    # Section 243.3: Norway pout re-booked 0.25 -> 1.64 t/km2 (GOV q), pool
+    # 4.72 t/km2 = 17 000 t (was 12 000).
+    initial_biomass_min: 8500
+    initial_biomass_max: 34000
+    inference_initial_biomass: 17000
   - group_id: porpoises
     initial_biomass_min: 6
     initial_biomass_max: 18

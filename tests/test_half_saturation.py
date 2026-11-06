@@ -79,16 +79,16 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
     # -> planktivores with the reconciled herring overlap and membership 0.377.
     env = _env()
     expected = {
-        ('planktivorous_fish', 'zooplankton'): 0.017,
+        ('planktivorous_fish', 'zooplankton'): 0.0122,
         ('benthivorous_fish', 'benthic_infauna'): 0.036,
         ('benthivorous_fish', 'mobile_epifauna'): 0.15,
         ('whiting', 'mobile_epifauna'): 0.0116,
         ('benthivorous_fish', 'norway_lobster'): 0.44,
-        ('benthivorous_fish', 'planktivorous_fish'): 0.0074,
+        ('benthivorous_fish', 'planktivorous_fish'): 0.0198,
         ('benthivorous_fish', 'whiting'): 0.0026,
-        ('predatory_fish', 'planktivorous_fish'): 0.00559,
-        ('mackerel', 'planktivorous_fish'): 0.0435,
-        ('whiting', 'planktivorous_fish'): 0.021,
+        ('predatory_fish', 'planktivorous_fish'): 0.0060,
+        ('mackerel', 'planktivorous_fish'): 0.0266,
+        ('whiting', 'planktivorous_fish'): 0.0212,
         ('predatory_fish', 'zooplankton'): 0.000241,
         ('mackerel', 'zooplankton'): 0.0023,
         ('whiting', 'zooplankton'): 0.0023,
@@ -110,12 +110,12 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
     inter = load_config(os.path.join(_ROOT, 'fgconfig', 'fg_library.yaml'))[
         'interaction_definitions']
     expected = {
-        'planktivorous_fish_preys_on_zooplankton': (0.02, 0.0),
+        'planktivorous_fish_preys_on_zooplankton': (0.03, 0.0),  # 243.3
         'benthivorous_fish_preys_on_planktivorous_fish': (0.06, 0.0),
         'benthivorous_fish_preys_on_whiting': (0.10, 0.0),
-        'predatory_fish_preys_on_planktivorous_fish': (0.30, -5.0),
+        'predatory_fish_preys_on_planktivorous_fish': (0.41, -5.0),  # 243.3
         'mackerel_preys_on_planktivorous_fish': (0.16, -5.0),  # stomachs (228.4)
-        'whiting_preys_on_planktivorous_fish': (0.33, -5.0),
+        'whiting_preys_on_planktivorous_fish': (0.48, -5.0),  # 243.3
         'predatory_fish_preys_on_zooplankton': (0.51, -5.0),
         'mackerel_preys_on_zooplankton': (0.42, -5.0),  # stomachs (228.2)
         'whiting_preys_on_zooplankton': (0.78, -5.0),

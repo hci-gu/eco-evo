@@ -69,7 +69,7 @@ def test_fishing_tables_are_linear_from_zero(key):
                                       ("predatory_fish", 0.2597973656196191),
                                       ("mackerel", 0.012313058166029952 + 0.0023648464512033376),
                                       ("whiting", 0.075 + 0.005),
-                                      ("planktivorous_fish", 0.10), ("porpoises", 0.017)])
+                                      ("planktivorous_fish", 0.089), ("porpoises", 0.017)])  # 243.3: 0.10 x 0.89
 def test_gear_split_keeps_the_total_f(fg, total):
     """Split over the two maps; at today's mean effort the two tables add
     up to the group's F (catch_by_gear.md; section 209: benthivores 0.17

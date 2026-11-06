@@ -23138,3 +23138,66 @@ remain open exactly as described in 71.9 / 71.11.
       8.8 MJ/t/tick, so a rate maximiser drops epifauna and Nephrops while
       the infauna is saturated - the booked epifauna share is not the
       expected learned diet (separate question).
+243.3 Norway pout re-booked 0.25 -> 1.64 t/km2 (user, 2026-11-06)
+    User's choice after 243.2: the Walker et al. 2017 GOV q (Q1/Q3 mean;
+    range 0.58-2.70). Pool 3.33 -> 4.72 t/km2 (17 000 t; mareld2.yaml
+    start 12 000 -> 17 000, range 8500-34 000; mareld3.yaml untouched),
+    shares herring 0.554, blue whiting 0.075, pout 0.350, sprat 0.021.
+    Every planktivore value re-weighted with the methods that made it
+    (research_notes/"Kolmulens biomassa", a-umlaut: tables/ weights rerun,
+    zoo/ encounter rerun, pairs/ and fields/ by research subagents).
+    - Group (fg_library.yaml): r_max 0.37 -> 0.40; M1 0.26 -> 0.273 /yr;
+      max_energy_reserve 6250 -> 4990 (prey quality 7125 -> 6495 MJ/t);
+      K 4.8 -> 6.1 (4.72 / (1 - 0.089/0.40)); trawling tables x0.89 (F
+      0.10 -> 0.089, stock F weighted, pout 0.03); effective
+      metabolism_q10 2.2 -> 1.5 (35 % of the group in ~7 C water all
+      year; RM 8.0 kept); feeding / movement cost 1.9 / 1.5 -> 2.0 /
+      1.75; feeding_season_months 5.5 -> 6.4 (rate mean of 12/n);
+      income_growth_kappa 0.75 -> 0.87 (the same closure on the new
+      inputs; the old inputs already gave 0.82); juvenile_stage
+      growth_ratio 5.3 -> 4.5, graduation 0.66 -> 0.48, rho [.., 1.5, 3.7,
+      3.8, 1.7, ..], start_share 0.389-0.447 (J/B 0.417), pelagic
+      selectivity 0.7 -> 0.6. Derived g 0.0028251 -> 0.0024013.
+    - Zooplankton pair: M2 1.6 -> 2.0 (Q/B 4.87 x 4.72 x 0.846 / 9.72),
+      zooplankton M1 0.4 /yr lower in the budget's -ln(1 - m) form (g
+      unchanged); h 40 -> 52 (weighted Cmax 0.348 kJ/g/d); a 0.017 ->
+      0.0122 (encounter at the new weights; pout forages outside the
+      0-25 m pool); dark_ratio 0.02 -> 0.03.
+    - Predator pairs on the pool: M2 x 12000/17000 (booked flow kept);
+      h = 6495 / each predator's energy ceiling (benthivores ~E^0.75:
+      238.2 -> 222.3; porpoises keep their mass ceiling 28.6). a and
+      windows from the encounter / window scripts at the new weights:
+      benthivores 0.0074 -> 0.0198 (per species and member; the pooled
+      a x f_eff under-counted x1.46; pout 0.87 of it), [0.52, 0.10] ->
+      [0.62, 0.18]; water column a x1.064 -> 0.0060, [0.65, 0.18],
+      dark_ratio 0.41; whiting 0.0212, [0.18, 0.0073], dark_ratio 0.48;
+      mackerel: concurrent search (242) needs the time in the prey's
+      layer and mackerel (0-50 m) does not reach the near-bed pout or
+      the deep blue whiting [J]: herring and sprat only, a 0.0435 ->
+      0.0266, [0.020, 0.0029] (with full overlap its gate was 5.0x OFF).
+    - Derived g moved: porpoises 0.00046279 -> 0.00049590 (s* lower on
+      the leaner prey; mass ceiling), seabirds 0.00047521 -> 0.00049378,
+      seals / mackerel at rounding.
+    - Diet gate: every pair of every generalist passes for the first
+      time; benthivores -> planktivores 0.031 vs 0.075 (0.41), water
+      column -> planktivores 0.692 vs 0.532 (1.30), mackerel 0.053 vs
+      0.065, whiting 0.170 vs 0.199. Saturation of the benthivore pair
+      0.60 -> 0.88.
+    - Open: the water column keeps the in-layer a on pout (its gate
+      passes; a 0.25 overlap [J] would give a 0.0040); blue whiting 0.35
+      is still GOV at q 1 (Walker excludes it; a floor); pout's shrimp
+      prey (~13 % benthos in the group diet) is now mobile_epifauna at
+      M2 ~0.6 /yr - unchecked pair (a new pair changes the action
+      layout); pout's spawning death has no solution in the closed-pool
+      stage model (open-population form); a rate-maximising benthivore
+      drops epifauna and Nephrops while the infauna is saturated
+      (243.2). Checkpoints: the planktivores' observations scale with
+      the new biomass; retrain (step 4).
+    - tests: test_half_saturation (five a's, three night/day ratios),
+      test_fishing_maps (0.089), test_energy_balance_gate's porpoise
+      junk-food test: the stomachs' 50-70 % is now read as the CLUPEID
+      share (pool share x herring + sprat 0.575). On the leaner pool a
+      porpoise at the middle Kastelein ration needs 0.75 of its diet from
+      the planktivores to pay its feeding metabolism (was 0.59), above
+      its booked 0.684 (flag: porpoise g rose 7 %).
+      pytest 1700 passed / 12 skipped; train.py 1-generation smoke OK.

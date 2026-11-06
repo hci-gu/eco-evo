@@ -228,8 +228,9 @@
     # + predatory_fish 0.13 = 1.73 /yr (was 5.3, the Ecopath 21 % of pelagic
     # fish, gadoids and seabirds), so M1 = 23.27 /yr and g is unchanged.
     # The rest is carnivorous zooplankton, fish larvae, jellyfish and
-    # non-predation losses.
-    natural_mortality: 0.015812
+    # non-predation losses. Section 243.3: planktivores 1.6 -> 2.0, so M1
+    # 0.4 /yr lower (in the budget's -ln(1 - m) form, so g is unchanged).
+    natural_mortality: 0.0155423
     # Section 202: half of the M1 loss is remineralised in the water
     # column and returns to the nutrient pools (ERSEM pe_R1 0.5, resume
     # 179.2), split between the layers by where the zooplankton fed.
@@ -485,12 +486,18 @@
     display_name: "Planktivorous Fish"
     # Display only (live viewer hover): the members and their
     # annual-mean biomass weights (section 209, acoustic level, not the
-    # GOV catch shares); params_planktivorous_fish.md.
+    # GOV catch shares); params_planktivorous_fish.md. Section 243.3:
+    # Norway pout 0.25 -> 1.64 t/km2 (GOV q of Walker et al. 2017, Q1/Q3
+    # mean; range 0.58-2.70; stock TSB per habitat area 1.4-2.8 and the
+    # benthivores' SMS M2 on pout agree), pool 3.33 -> 4.72 t/km2. Every
+    # group value below is re-weighted: research_notes/"Kolmulens
+    # biomassa" (Swedish letters: a-umlaut), research_notes/"Bottenfiskens
+    # bytesbalans". Blue whiting stays GOV at q 1 (no q available; a floor).
     member_species:
-      - {name: herring, share: 0.79}
-      - {name: blue whiting, share: 0.105}
-      - {name: Norway pout, share: 0.075}
-      - {name: sprat, share: 0.03}
+      - {name: herring, share: 0.554}
+      - {name: blue whiting, share: 0.075}
+      - {name: Norway pout, share: 0.350}
+      - {name: sprat, share: 0.021}
     is_decision_maker: true
     maintenance_level: 0.2
     # Lean body + fat reserve (section 140). energy_content is the LEAN
@@ -507,15 +514,22 @@
     # reserve 7000 -> 6250 (pout ~2000, blue whiting ~3600), so the static
     # quality at the reference fill 0.5 is 4000 + 0.5 x 6250 = 7125 MJ/t.
     # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md.
-    max_energy_reserve: 6250.0
+    # Section 243.3: at 35 % pout 6250 -> 4990 (4150-5380), quality 6495
+    # MJ/t (weighted member energy density 6.4-7.3 kJ/g agrees).
+    max_energy_reserve: 4990.0
     resting_metabolism: 8.0
     # Water temperature (section 143; only with the manifest's
     # simulation_settings.temperature): Q10 2.2 from sprat respirometry,
     # 9-21 C (Meskendahl 2013; clupeids 1.8-2.2). t_ref 14 C because 8
     # MJ/t/tick (32 kJ/kg/d at rest) is the Rudstam/Rose et al. 2008
     # herring resting term at ~14 C, i.e. already a summer value: the
-    # multiplier is ~0.5 in Jan-Apr and ~1 in Aug-Sep.
-    metabolism_q10: 2.2
+    # multiplier is ~0.5 in Jan-Apr and ~1 in Aug-Sep. Section 243.3: an
+    # EFFECTIVE Q10 1.5 (1.4-1.6) for the one-layer group: 35 % of it is
+    # pout and blue whiting in ~7 C water all year (25 g pout costs 6.5-8.9
+    # MJ/t/tick, gadoid SMR), so the weighted cost is flatter; RM 8.0 kept
+    # (the s* cost); each member's own Q10 is still ~2.2. research_notes/
+    # "Kolmulens biomassa" (Swedish letters: a-umlaut) fields/.
+    metabolism_q10: 1.5
     metabolism_t_ref: 14.0
     # Section 184: growth out of this tick's income, not out of the fat.
     # G = min(kappa I - C, B g (s - u) ec): structure is built from food
@@ -529,8 +543,13 @@
     # NSS herring), so g = 12/5.5 x the year-round value; the months size
     # the rate, the food decides when it grows.
     # research_notes/Sillens vinterbudget/growth_allocation.md.
-    income_growth_kappa: 0.75
-    feeding_season_months: 5.5
+    # Section 243.3: season 6.4 months (5.8-6.8) as the rate mean of 12/n
+    # (pout 8-10 months, spring-peaked SMS growth); kappa 0.87 (0.86-0.89),
+    # the same closure (cost + P ec)/(h(s*) C) on the re-weighted inputs
+    # (the current library already gave 0.82; 0.75 was not re-derived in
+    # 209). research_notes/"Kolmulens biomassa" (a-umlaut) fields/.
+    income_growth_kappa: 0.87
+    feeding_season_months: 6.4
     # Juvenile compartment (lib/environments/ecosystem_env/stages.py): the
     # fish below their length at age 1 in Q3 (herring 18.2, sprat 10.9,
     # Norway pout 14.9 cm). growth_ratio = juvenile / adult per-tonne
@@ -542,17 +561,24 @@
     # field cycle by month. fishing_selectivity = F on a juvenile tonne
     # over the group mean (SMS F at age; HAWG 2026).
     # research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md.
+    # Section 243.3, the same method on the new weights (J rates weighted by
+    # J tonnes, A by A tonnes; pout is 49 % of the J tonnes): SMS g_J 1.18 /
+    # g_A 0.26 -> growth_ratio 4.5 (3.9-5.3), graduation 0.48 (0.38-0.60),
+    # rho peak 3.8 (1.0-6.3), box J/B 0.417 (0.40-0.48); pelagic selectivity
+    # 0.6 (pout's F stays on the bottom map). Feeding / movement cost
+    # weighted with gadoid 2.2 / 2.0 for pout and blue whiting.
+    # research_notes/"Kolmulens biomassa" (a-umlaut) fields/.
     juvenile_stage:
-      growth_ratio: 5.3
-      graduation_rate: 0.66
-      recruitment: [0, 0, 0, 0, 0, 1.7, 4.1, 4.2, 1.8, 0, 0, 0]
-      start_share: [0.379, 0.372, 0.366, 0.360, 0.354, 0.355, 0.369, 0.391, 0.403, 0.401, 0.393, 0.386]
+      growth_ratio: 4.5
+      graduation_rate: 0.48
+      recruitment: [0, 0, 0, 0, 0, 1.5, 3.7, 3.8, 1.7, 0, 0, 0]
+      start_share: [0.419, 0.411, 0.404, 0.396, 0.389, 0.389, 0.407, 0.433, 0.447, 0.445, 0.436, 0.428]
       fishing_selectivity:
-        pelagic_trawling: 0.7
+        pelagic_trawling: 0.6
         bottom_trawling: 1.5
     movement_speed: 1.0
-    feeding_cost: 1.9
-    movement_cost: 1.5
+    feeding_cost: 2.0
+    movement_cost: 1.75
     energy_content: 4000.0
     prey_includes_reserve: true
     reserve_reference_fill: 0.5
@@ -568,26 +594,30 @@
     # (0.25) is in predatory_fish now. Was 0.34 (herring, mackerel, sprat,
     # horse mackerel). research_notes/Den pelagiska poolens reglering/
     # productivity.md; research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md.
-    r_max: 0.37
+    # Section 243.3: 0.40 (0.32-0.62) at 35 % pout.
+    r_max: 0.40
     # Section 185.20: today's EFFECTIVE capacity (t/km2), standing in for
     # stock-scale compensation (density-dependent recruitment) plus net
     # emigration out of a grid that holds ~0.4 % of the autumn-spawning
     # herring - not local crowding. Section 209: K = B / (1 - P/r) =
     # 3.33 / (1 - 0.115/0.37) = 4.8 (was 5.0 at r 0.34). Without K the
     # pool grew at r_max - F and grazed the zooplankton 10-14x its
-    # standing stock per year (resume 185.17-19).
-    regional_carrying_capacity: 4.8
+    # standing stock per year (resume 185.17-19). Section 243.3: K = 4.72 /
+    # (1 - F/r) = 4.72 / (1 - 0.089/0.40) = 6.1 (pool with pout 1.64).
+    regional_carrying_capacity: 6.1
     # x 12 / feeding_season_months (5.5) since section 184. Section 232.1:
     # 0.0031889 -> 0.0028221 (whiting M2 on the pool 0.203 -> 0.07); 232.2
-    # mammal re-booking -> 0.0028251.
-    growth_rate: 0.0028251299688
+    # mammal re-booking -> 0.0028251; 243.3 (pout 1.64: r, M1, M2 at the
+    # booked flow, s*, season 6.4) -> 0.0024013.
+    growth_rate: 0.0024013371891
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
     # held 0.189 of predation by rays, gurnards, mackerel, horse mackerel,
     # hake and spurdog: those are in benthivorous_fish and predatory_fish
-    # now and act through their pairs (M2 ~0.66 /yr in all).
-    natural_mortality: 0.000178066
+    # now and act through their pairs (M2 ~0.66 /yr in all). Section 243.3:
+    # 0.273 /yr (0.14-0.43) at 35 % pout.
+    natural_mortality: 0.000186986
     max_intake_rate: 0.04
     spawn:
       mode: colony
@@ -983,7 +1013,7 @@
     # 0.0147 (the LOCAL 3.a.20 F, 228.1) against r 0.255 leaves
     # 0.24 /yr; the other losses are the booked predation (water
     # column 0.021, seals, porpoises) and M1.
-    growth_rate: 0.00079340203461
+    growth_rate: 0.00079338646292
     # M1 = M0 + predation by groups NOT in the model (tuna, sharks, birds,
     # cetaceans other than porpoises): mackerel 0.15, horse mackerel 0.30
     # -> 0.159 /yr (0.11-0.21).
@@ -1056,7 +1086,9 @@
     # r_max 0.10 /yr (Lockyer 2003; Caswell et al. 1998; Forney et al.
     # 2021: 9.6 %/yr after bycatch ended).
     r_max: 0.10
-    growth_rate: 0.00046279049
+    # Section 243.3: 0.00046279 -> 0.00049590, s* lower on the leaner
+    # planktivores (6495 MJ/t; the porpoise h is a mass ceiling).
+    growth_rate: 0.00049590490151
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models from adult
     # survival 0.90-0.95 excluding bycatch, plus calf mortality). No FG
     # preys on porpoises. Was 6.0e-05.
@@ -1131,7 +1163,7 @@
     # old gadoids). In a frozen fix87 run the seals declined by starvation
     # with or without it (year-3 end/b0 0.62 with K, 0.58 without); the
     # loss took ~0.05 /yr and decided nothing.
-    growth_rate: 0.00048891653
+    growth_rate: 0.00048894006091
     # M = M1 = 0.10 /yr, biomass weighted (Leslie models); no FG preys on
     # seals. Was 6.0e-05.
     natural_mortality: 6.85e-05
@@ -1191,7 +1223,7 @@
     # r_max 0.10 /yr: Niel & Lebreton on JNCC 552 rates (guillemot 0.08,
     # razorbill/gannet 0.10, kittiwake/gulls 0.11-0.16).
     r_max: 0.10
-    growth_rate: 0.00047521098
+    growth_rate: 0.00049378403203
     # M = M1 = 0.15 /yr, biomass weighted with juveniles (Leslie Z:
     # guillemot 0.145, kittiwake 0.16, gannet 0.20); no FG preys on
     # seabirds. Was 8.0e-05 (adult-only 0.117 /yr).
@@ -1326,11 +1358,17 @@ interaction_definitions:
   # (Onsrud et al. 2004): weighted dark_ratio 0.25 (judgement; section
   # 209, replaced by the encounter-theory values of section 220 below).
   # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md, planktivores/.
+  # Section 243.3 (pout 1.64 t/km2): Q/B 4.87 x 4.72 x zooplankton share 0.846
+  # / 9.72 = M2 2.0 /yr (zooplankton M1 lowered by the same 0.4, g kept);
+  # weighted Cmax 0.348 kJ/g/d (0.32-0.48) -> h 52 (37-56); the encounter a
+  # at the new weights 0.0172 -> 0.0122 (pout forages mostly outside the
+  # 0-25 m pool), night/day 0.025 -> 0.038 (library 0.02 -> 0.03).
+  # research_notes/"Kolmulens biomassa" (Swedish letters: a-umlaut) zoo/, tables/.
   planktivorous_fish_preys_on_zooplankton:
     preys_on: true
-    predation_mortality: 1.6
+    predation_mortality: 2.0
     assimilation_factor: 0.8
-    handling_time: 40.0
+    handling_time: 52.0
     # Section 220: attack rate from encounter theory (f pi R^2 v p per fish,
     # summed over the size structure, over the 25 m pool layer), for fish
     # that FORAGE inside the pool (the eat share is the policy's): 0.017
@@ -1339,8 +1377,8 @@ interaction_definitions:
     # sight and only filter in the dark; half detection at sun ~0 deg.
     # The copepods' own refuge is left to their hide action.
     # research_notes/"Attackrater ur motesteori" (Swedish letters)/planktivores_encounter.md, summary.md.
-    max_intake_rate: 0.017
-    dark_ratio: 0.02
+    max_intake_rate: 0.0122
+    dark_ratio: 0.03
     light_threshold_deg: 0.0
     visibility_floor: 0.5
     functional_response: 2
@@ -1358,18 +1396,25 @@ interaction_definitions:
   # research_notes/"Bentivorernas energi och diet" (Swedish letters).
   # Section 223.15: h = 7125 / 26.18 (the benthivores' bottom-water ceiling).
   benthivorous_fish_preys_on_planktivorous_fish:
+    # Section 243.3 (Norway pout re-booked 0.25 -> 1.64 t/km2, Walker et al. 2017
+    # GOV q; pool 3.33 -> 4.72 t/km2): a 0.0074 -> 0.0198 (0.0138-0.0232), the per
+    # species and member encounter (pout 0.87 of it; the pooled a x f_eff had
+    # under-counted x1.46) at the new window [0.62, 0.18] (0.57-0.64, 0.13-0.21);
+    # M2 at the booked flow 0.483 t/km2/yr / 4.72; h for the leaner pool quality
+    # 6495 MJ/t (ceiling ~E^0.25). research_notes/"Bottenfiskens bytesbalans",
+    # "Kolmulens biomassa" pairs/summary.md (Swedish letters: a-umlaut).
     preys_on: true
     # Section 223.37: M2 = SMS 2023 key run partial M2 2013-22 at the box
     # stage mix (J/B 0.38), scaled to the box's predator / prey biomass at
     # the SMS diet (cod 0.132, haddock 0.012, gurnards 0.001; was 0.245 from
     # the redistributed diet of 223.9). research_notes/"Bestandsreglering"
     # (Swedish letters: a-ring) scripts/sms_m2_check.py.
-    predation_mortality: 0.145
+    predation_mortality: 0.1023
     assimilation_factor: 0.8
     # Section 223.28: h = E / ceiling_j, ceiling_j = 26.18 (E/4.184)^(1-b) / A,
     # b 0.75 (gadoid gastric evacuation ~E^-b), armour 1.0; was 272.1
     # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
-    handling_time: 238.2
+    handling_time: 222.3
     visibility_floor: 0.25
     functional_response: 2
     # Section 220: encounter theory, pi R^2 v_rel p with R by the light at
@@ -1387,7 +1432,7 @@ interaction_definitions:
     # 0.377 instead of the gape share 0.32 (the window is in stage_access) =
     # 0.0074 (0.0054-0.0100); was 0.0062. research_notes/"Bottenfiskens
     # sillbyte" (Swedish letters) reconcile_summary.md.
-    max_intake_rate: 0.0074
+    max_intake_rate: 0.0198
     dark_ratio: 0.06
     light_threshold_deg: 0.0
     # Stage access [juvenile, adult] (stages.py): cod's window (prey <= 0.30
@@ -1398,7 +1443,7 @@ interaction_definitions:
     # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
     # box lengths); was [0.49, 0.14]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
-    stage_access: [0.52, 0.10]
+    stage_access: [0.62, 0.18]
   # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
   # no phi since 221; layer convention), h = E_prey / the group's ceiling
   # (Bjornsson-anchored: whiting 31.34, water column 32.71 MJ/t/tick; since
@@ -1412,21 +1457,27 @@ interaction_definitions:
   # 0.209, hake 0.037); stage access from saithe's, hake's and spurdog's
   # windows (Makrillens bytesstorlek (Swedish letters) summary.md section 6).
   predatory_fish_preys_on_planktivorous_fish:
+    # Section 243.3 (pout 1.64 t/km2): a x1.064 and dark_ratio 0.30 -> 0.41 from
+    # the encounter at the new pool (pout and blue whiting are taken in the dark
+    # too), window [0.53, 0.14] -> [0.65, 0.18] (adult pout inside it), M2 x
+    # 12000/17000 (booked flow kept), h = 6495 / 29.79. In-layer a (no overlap
+    # on the near-bed pout; see 243.3). research_notes/"Kolmulens biomassa"
+    # (Swedish letters: a-umlaut) pairs/summary.md.
     preys_on: true
-    predation_mortality: 0.247
+    predation_mortality: 0.174
     assimilation_factor: 0.8
-    handling_time: 239.2
+    handling_time: 218.0
     visibility_floor: 0.25
     functional_response: 2
-    max_intake_rate: 0.00559
-    dark_ratio: 0.3
+    max_intake_rate: 0.0060
+    dark_ratio: 0.41
     light_threshold_deg: -5.0
     # Section 232.2: window weighted by each predator length's share of a
     # (a ~ L^-2.1..-2.3 for fixed-R encounters, ~L^-0.36 for cod) and normalised
     # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
     # box lengths); was [0.69, 0.27]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
-    stage_access: [0.53, 0.14]
+    stage_access: [0.65, 0.18]
   # Mackerel group: SMS partial M2 horse mackerel 0.008 + mackerel 0.002 at
   # the GOV biomass, scaled to the members' field biomass (223.37 box scaling;
   # Makrillens tathet (Swedish letters: a-umlaut)). Stage access from the gape
@@ -1435,13 +1486,19 @@ interaction_definitions:
   # Section 228.4: night/day from the stomachs (mackerel feeds by day: Dahl &
   # Kirkegaard 1986, 0.15; horse mackerel 0.3), not the encounter model's 0.36.
   mackerel_preys_on_planktivorous_fish:
+    # Section 243.3 (pout 1.64 t/km2): under concurrent search (242) a carries
+    # the time in the prey's layer; mackerel (0-50 m) has no overlap with the
+    # near-bed pout and the deep blue whiting [J], so only herring and sprat
+    # count: a 0.0435 -> 0.0266, window [0.052, 0.0035] -> [0.020, 0.0029];
+    # M2 x 12000/17000, h = 6495 / 66.22. research_notes/"Kolmulens biomassa"
+    # (Swedish letters: a-umlaut) pairs/summary.md.
     preys_on: true
-    predation_mortality: 0.0263
+    predation_mortality: 0.0186
     assimilation_factor: 0.8
-    handling_time: 107.6
+    handling_time: 98.08
     visibility_floor: 0.25
     functional_response: 2
-    max_intake_rate: 0.0435
+    max_intake_rate: 0.0266
     dark_ratio: 0.16
     light_threshold_deg: -5.0
     # Section 232.2: window weighted by each predator length's share of a
@@ -1449,10 +1506,14 @@ interaction_definitions:
     # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
     # box lengths); was [0.078, 0.0037]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
-    stage_access: [0.052, 0.0035]
+    stage_access: [0.020, 0.0029]
   # Whiting on planktivores (adults on sprat, Norway pout, herring): diet
   # share 0.28. Night/day 0.33 derived.
   whiting_preys_on_planktivorous_fish:
+    # Section 243.3 (pout 1.64 t/km2): a x1.009, dark_ratio 0.33 -> 0.48 from the
+    # encounter at the new pool, window [0.10, 0.0073] -> [0.18, 0.0073] (small pout
+    # fit the ~10 cm window), M2 x 12000/17000, h = 6495 / 31.35.
+    # research_notes/"Kolmulens biomassa" (Swedish letters: a-umlaut) pairs/summary.md.
     preys_on: true
     # Section 223.37: M2 = SMS 2023 key run partial M2 2013-22 at the box
     # stage mix (J/B 0.38), scaled to the box's predator / prey biomass at
@@ -1463,13 +1524,13 @@ interaction_definitions:
     # per whiting tonne per species); transfers by box availability 0.064-
     # 0.079, in-area stomachs (Skagerrak 1991, 2022, 1981) 0.04-0.12.
     # research_notes/"Vitlingens fiskbyten" (Swedish letters) step2_summary.md.
-    predation_mortality: 0.07
+    predation_mortality: 0.0494
     assimilation_factor: 0.8
-    handling_time: 227.3
+    handling_time: 207.2
     visibility_floor: 0.25
     functional_response: 2
-    max_intake_rate: 0.021
-    dark_ratio: 0.33
+    max_intake_rate: 0.0212
+    dark_ratio: 0.48
     light_threshold_deg: -5.0
     # Stage access: whiting's window (0.39 x length; box whiting 22-28 cm
     # -> 9-11 cm prey) on the planktivores' stage lengths. Effective 0.05
@@ -1483,19 +1544,21 @@ interaction_definitions:
     # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
     # box lengths); was [0.16, 0.010]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
-    stage_access: [0.10, 0.0073]
+    stage_access: [0.18, 0.0073]
   # Section 209: porpoise diet 0.65 planktivores, 0.15 benthivores, 0.20
   # predators (Skagerrak/Kattegat stomachs 1985-96; Ransijn et al. 2021
   # relative attack rates whiting 1.2x, cod 0.6x herring). Q/B 19.5 ->
   # 234 t/yr at 12 t; M2 0.0127. Mass ceiling h 28.6 as before; a as
   # section 206. research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_top_predators.md.
   porpoises_preys_on_planktivorous_fish:
+    # Section 243.3: M2 x 12000/17000 (pout 1.64 t/km2, booked flow kept); h
+    # is a mass ceiling and stays.
     preys_on: true
     # Section 232.2: booked diet re-booked - the rest's share 0.073 -> 0.020
     # [J] (stomach saithe are coastal ~18 cm juveniles the offshore box
     # lacks), the freed share pro rata to the other pairs; was 0.0127.
     # research_notes/"Tumlarens byten" (Swedish letters) summary.md.
-    predation_mortality: 0.0134
+    predation_mortality: 0.00946
     max_intake_rate: 0.0225
     assimilation_factor: 0.9
     handling_time: 28.6
@@ -1569,8 +1632,9 @@ interaction_definitions:
     # lengths: every juvenile, 0.84 of the adults. {NOTE}.
     stage_access: [1.0, 0.84]
   seabirds_preys_on_planktivorous_fish:
+    # Section 243.3: M2 x 12000/17000 (pout 1.64 t/km2, booked flow kept).
     preys_on: true
-    predation_mortality: 0.0236
+    predation_mortality: 0.0167
     assimilation_factor: 1.0
     handling_time: 0.0
   benthic_infauna_preys_on_benthic_infauna:
@@ -2302,14 +2366,16 @@ interaction_definitions:
   # Section 209: 0.25 of the seal diet (target 0.10-0.40; the fix72 seals
   # took 14-24 % at a 0.002, Type III, sections 168, 199.9): M2 0.0067.
   seals_preys_on_planktivorous_fish:
+    # Section 243.3: M2 x 12000/17000 (pout 1.64 t/km2, booked flow kept); h =
+    # 6495 / 212.7 (the leaner pool quality).
     preys_on: true
     # Section 232.2: booked diet re-booked - the rest's share 0.083 -> 0.023
     # [J] (x0.27, the porpoise factor: saithe / pollack in the otoliths are
     # coastal juveniles), the freed share pro rata; was 0.0067.
-    predation_mortality: 0.0071
+    predation_mortality: 0.00501
     max_intake_rate: 0.002
     assimilation_factor: 0.88
-    handling_time: 33.5
+    handling_time: 30.54
     functional_response: 3
   seals_preys_on_phytoplankton:
     preys_on: false
@@ -2587,10 +2653,12 @@ interaction_definitions:
         biomass_factor: 0.0
         energy_factor: 0.0
       - value: 10.0
-        biomass_factor: 0.0268900569
+        biomass_factor: 0.0239321506
         energy_factor: 0.0
   # The 2 % of the pelagic-fish F taken by bottom trawls: q = 0.02 x 0.10
   # / 1460 / 3.0142 = 4.545e-7 per tick per unit of bottom-trawl effort.
+  # Section 243.3: both tables x0.89, the group F 0.10 -> 0.089 (stock F
+  # weighted with pout 0.35, pout F 0.03).
   planktivorous_fish_impacted_by_bottom_trawling:
     impact_affects: true
     impact_table:
@@ -2598,7 +2666,7 @@ interaction_definitions:
         biomass_factor: 0.0
         energy_factor: 0.0
       - value: 100.0
-        biomass_factor: 0.0000454476196
+        biomass_factor: 0.0000404483814
         energy_factor: 0.0
   planktivorous_fish_impacted_by_rotor:
     impact_affects: false
