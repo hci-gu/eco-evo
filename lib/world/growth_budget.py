@@ -106,6 +106,26 @@ budget, not a switch: when the group grows is decided by its food.
 Herring: Apr - mid-Sep, 5.5 months (Bachiller et al. 2018),
 research_notes/Sillens vinterbudget/growth_allocation.md.
 
+Material-capped growth (section 244)
+------------------------------------
+A decision maker with ``material_growth_share`` kappa_m builds its new
+tonnes only out of this tick's food, while the energy may come from the
+store: per cell G = min(B g (s - u) p, kappa_m I p / ec, R_settled - u ME
+B_settled) (MJ; p the price of a tonne). The material of a lean tonne
+(protein, N) cannot come from the lipid reserve; the energy of activity
+and synthesis can. kappa_m is the share of the assimilated intake (net of
+SDA, as the engine's I) that can become lean tissue, from the protein
+route (research_notes/"Tillvaxt ur dagens foda", a-umlaut, o-umlaut).
+No intake, no growth, as for the income law; unlike it, the costs need
+not be paid out of the income first. Energy is pooled, so s* and the
+closure are those of the reserve law; the g is paid over
+``feeding_season_months`` exactly as for the income law. The budget is
+refused when the material cannot pay it under ideal conditions in the
+feeding season: kappa_m h(s_n) C < P ec 12/n, s_n the reserve that
+settles at the season's production P 12/n (h = 1 with ``appetite:
+reserve_room``).
+``income_growth_kappa`` and ``material_growth_share`` exclude each other.
+
 Regional carrying capacity (section 185)
 ---------------------------------------
 No library group carries one since section 243.4; the mechanism stays.
@@ -253,13 +273,19 @@ def ideal_reserve(maintenance, intake, cost, energy_content, max_reserve,
     return s if s > u else None
 
 
-def income_growth(spec):
-    """``(kappa, feeding_season_months)`` of an income-funded decision
-    maker (section 184), or None for the reserve-funded law.
+INCOME_LAW = "income"
+MATERIAL_LAW = "material"
 
-    ``income_growth_kappa`` empty or 0 is off; otherwise 0 < kappa <= 1.
-    ``feeding_season_months`` (empty or 0 = 12) needs a kappa and lies in
-    (0, 12].
+
+def growth_law(spec):
+    """``(law, share, feeding_season_months)`` of a decision maker that
+    grows only while it is fed, or None for the reserve-funded law.
+
+    ``law`` is ``"income"`` (``income_growth_kappa``, section 184) or
+    ``"material"`` (``material_growth_share``, section 244); the two keys
+    exclude each other. Each is off when empty or 0, otherwise in (0, 1].
+    ``feeding_season_months`` (empty or 0 = 12) needs one of them and lies
+    in (0, 12].
     """
     spec = spec or {}
 
@@ -276,20 +302,51 @@ def income_growth(spec):
         return value
 
     kappa = number("income_growth_kappa")
+    share = number("material_growth_share")
     months = number("feeding_season_months")
-    if kappa == 0.0:
+    if kappa != 0.0 and share != 0.0:
+        raise ValueError("income_growth_kappa and material_growth_share "
+                         "exclude each other (sections 184, 244)")
+    if kappa == 0.0 and share == 0.0:
         if months != 0.0:
             raise ValueError("feeding_season_months needs income_growth_kappa "
-                             "(section 184): a season-sized g on the "
-                             "reserve-funded law keeps growing on the fat")
+                             "or material_growth_share (sections 184, 244): a "
+                             "season-sized g on the reserve-funded law keeps "
+                             "growing on the fat")
         return None
-    if not 0.0 < kappa <= 1.0:
-        raise ValueError(f"income_growth_kappa must be in (0, 1], got {kappa}")
+    law, key, value = ((INCOME_LAW, "income_growth_kappa", kappa) if kappa
+                       else (MATERIAL_LAW, "material_growth_share", share))
+    if not 0.0 < value <= 1.0:
+        raise ValueError(f"{key} must be in (0, 1], got {value}")
     if months == 0.0:
         months = 12.0
     if not 0.0 < months <= 12.0:
         raise ValueError(f"feeding_season_months must be in (0, 12], got {months}")
-    return kappa, months
+    return law, value, months
+
+
+def income_growth(spec):
+    """``(kappa, feeding_season_months)`` of an income-funded decision
+    maker (section 184), or None for any other law (reserve-funded, or
+    material-capped: ``growth_law``).
+
+    ``income_growth_kappa`` empty or 0 is off; otherwise 0 < kappa <= 1.
+    ``feeding_season_months`` (empty or 0 = 12) needs a kappa or a
+    ``material_growth_share`` and lies in (0, 12].
+    """
+    law = growth_law(spec)
+    if law is None or law[0] != INCOME_LAW:
+        return None
+    return law[1], law[2]
+
+
+def material_growth(spec):
+    """``(kappa_m, feeding_season_months)`` of a material-capped decision
+    maker (section 244), or None for any other law."""
+    law = growth_law(spec)
+    if law is None or law[0] != MATERIAL_LAW:
+        return None
+    return law[1], law[2]
 
 
 def regional_capacity(spec):
@@ -382,6 +439,7 @@ class GrowthBudget:
     best_prey: Optional[str] = None
     pmax_annual: Optional[float] = None       # (C - cost)/(ec + u ME), /yr
     season_factor: float = 1.0                # 12 / feeding_season_months (184)
+    material_need: Optional[float] = None     # share of I the material needs (244)
 
     @property
     def predation_total(self):
@@ -465,12 +523,16 @@ def growth_budget(prey_id, species_defs, interactions,
         if budget.error:
             return budget
         try:
-            income = income_growth(spec)
+            law = growth_law(spec)
         except ValueError as error:      # the FG editor, mid-keystroke
             budget.error = str(error)
             return budget
-        if income is not None:
-            budget.season_factor = 12.0 / income[1]
+        if law is not None:
+            budget.season_factor = 12.0 / law[2]
+        if law is not None and law[0] == MATERIAL_LAW:
+            _material_closure(budget, spec, law[1])
+            if budget.error:
+                return budget
     else:
         budget.gate = 1.0
         if not math.isfinite(budget.m1_annual):
@@ -531,6 +593,47 @@ def _ideal_gate(budget, prey_id, spec, species_defs, interactions,
         return
     budget.reference_fill = s_star
     budget.gate = s_star - u
+
+
+def _material_closure(budget, spec, share):
+    """Refuse a material-capped budget (section 244) the food cannot build.
+
+    While it feeds the DM must lay down P_n = P 12/n a tick (P = gross /
+    TICKS_PER_YEAR), so under ideal conditions its reserve settles at the
+    in-season s_n where h(s_n) C = cost + (1 + c) P_n (ec + s_n ME)
+    (``ideal_reserve`` at P_n; h = 1 with ``appetite: reserve_room``) and
+    it eats I = h(s_n) C. Only ``material_growth_share`` kappa_m of I can
+    become lean material, so kappa_m h(s_n) C >= P_n ec, or the budget is
+    unpayable; so is a season whose production the energy cannot pay
+    (no s_n). g itself keeps the annual-mean s* (section 184). Without the
+    energy data there is nothing to check. With ``reserve_room`` the check
+    takes I = C, the ceiling; the realised intake at a full reserve is the
+    room (about cost + P_n p), so for such a group the guard is looser
+    than the material balance it stands for."""
+    intake, cost = budget.ideal_intake, budget.ideal_cost
+    ec = _as_float(spec.get("energy_content"))
+    me = _as_float(spec.get("max_energy_reserve"))
+    if budget.reference_fill is None or intake <= 0.0 or ec <= 0.0:
+        return
+    u = budget.maintenance
+    production = budget.gross_annual / TICKS_PER_YEAR * budget.season_factor
+    appetite = appetite_form(spec)
+    s_season = ideal_reserve(u, intake, cost, ec, me, production,
+                             appetite=appetite, growth_cost=growth_cost(spec))
+    if s_season is None:
+        budget.error = (f"the energy cannot pay the feeding season's production "
+                        f"{production * TICKS_PER_YEAR:.4g} /yr (section 244)")
+        return
+    if appetite == "reserve_room":
+        hunger = 1.0
+    else:
+        hunger = min(1.0, max(0.0, (1.0 - s_season) / (1.0 - u)))
+    need = production * ec
+    budget.material_need = need / (hunger * intake) if hunger * intake > 0 else math.inf
+    if share * hunger * intake < need:
+        budget.error = (f"material_growth_share {share:.4g} cannot build the "
+                        f"budget: it needs {budget.material_need:.4g} of the "
+                        f"ideal intake (section 244)")
 
 
 def derived_growth_rate(prey_id, species_defs, interactions,

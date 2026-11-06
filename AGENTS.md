@@ -50,7 +50,7 @@ fabricates mass.
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
 | `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs, paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). An optional `inference_start_day_of_year` in the block fixes the start day of inference worlds and the long-run probe (mode `inference`) while training worlds keep `start_day_of_year` (section 232.6). |
-| `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
+| `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8) and, since section 244, every fish group (planktivores 2.2, benthivores 1.6, whiting 2.25, water column 2.25, mackerel 2.2; research_notes/"Bioenergetik för alla fiskgrupper", o-umlaut). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
 | `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
@@ -184,7 +184,7 @@ fabricates mass.
   0.000241, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
   member's foraging time near the bed, for concurrent search), -> whiting
   0.013, -> mackerel 0.00088
-  (f 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
+  (f 0.14 since 244, was 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
   0.0266 (243.3: herring and sprat only, no overlap with the near-bed
   pout and deep blue whiting), -> zoo 0.0023 (sections 220, 221, 223.15, 223.26, 228; no
   predator eats infauna or Nephrops, the water column no
@@ -259,7 +259,9 @@ fabricates mass.
   `mareld2.yaml`. Intake is temperature-scaled only for a DM with
   `ingestion_q10` (section 181: zooplankton 2.8, the whole response,
   annual mean 1; it moved the trained zooplankton's spring from February
-  to March-April as at A17); `growth_q10` (section 183, zooplankton 3.0)
+  to March-April as at A17; every fish group since 244, values in the
+  repository map; each Cmax anchor is consistent with the annual-mean
+  normalisation within 3 %); `growth_q10` (section 183, zooplankton 3.0)
   scales its growth branch the same way.
 - Growth: NDM logistic; DM `s = R/(B*ME)`, `q = s - u` (`maintenance_level`, default 0.3).
   A DM with `income_growth_kappa` kappa (section 184) grows out of this
@@ -268,8 +270,24 @@ fabricates mass.
   reserve into biomass: no food, no growth, the fat is kept for the
   winter (the reserve-funded law kept growing on it after the food had
   gone). Its derived g is paid over `feeding_season_months` (x 12/n).
-  Set on the planktivores (kappa 0.87, season 6.4 months since 243.3;
-  resume 184.8).
+  No library group uses it since section 244 (the planktivores had
+  kappa 0.87, a budget closure; resume 184.8).
+  A DM with `material_growth_share` kappa_m (section 244; excludes
+  kappa) builds its new tonnes only out of this tick's food and pays
+  the energy from the pooled store: `G = min(B g (s - u) p, kappa_m I p
+  / ec, R - u ME B)` on the same path (`movement.income_growth`, GPU
+  `income_growth`; reserve branch off in the population step). Fat holds
+  no nitrogen, so lean tissue needs food eaten now; unlike kappa the
+  costs need not come out of the income first. Every fish group carries
+  it (protein route, x A/(A - sda E) to the engine's SDA-net I):
+  planktivores 0.43, benthivores 0.49, whiting 0.48, water column 0.48,
+  mackerel 0.49; with field feeding seasons 6.4 / 8.6 / 9.0 / 8.6 / 4.0
+  months (research_notes/"Tillväxt ur dagens föda", a-umlaut,
+  o-umlaut). The budget refuses a kappa_m below h(s_n) C's need, s_n
+  the reserve at the season's production. The cap acts on the bare
+  tick's I (a meal is absorbed over 1-4 days; a gut buffer is open).
+  Mackerel's g is x3 (4 months) while the closed pool keeps it in the
+  box all year: the retrained probe must check it.
   A DM with `regional_carrying_capacity` K (t/km2, section 185) loses
   `r_max/1460 * B_region/K` of its biomass and reserve per tick after
   M1 (B_region = grid-mean density; both engines, with or without
@@ -414,8 +432,8 @@ fabricates mass.
   a mean field a phi, h / phi failed too (208.5).
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
   `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
-  NDM `r = (r_max + sum M2) / 1460`; an income-funded DM's g is x 12 /
-  `feeding_season_months` (section 184); a `regional_carrying_capacity`
+  NDM `r = (r_max + sum M2) / 1460`; an income-funded or material-capped
+  DM's g is x 12 / `feeding_season_months` (sections 184, 244); a `regional_carrying_capacity`
   loss is not in g (section 185). s* is the reserve a DM settles on
   under ideal conditions (checked prey at the Holling ceilings, the best
   pair at the whole eat share since phi is gone (221), eating every
@@ -448,7 +466,12 @@ fabricates mass.
   from every pair's assimilation in `energy_gain_mat` (and in s*'s C);
   benthivores 0.10 (biomass-weighted), whose `feeding_cost` is now the
   foraging activity only (2.0 -> 1.18 = (weighted field metabolism - SDA
-  at the field ration)/RM). `growth_cost` c (section 241) is the
+  at the field ration)/RM). Since section 244 every fish group: the
+  others carried "SDA 0.17 of half the ceiling" inside feeding_cost
+  (0.17 is FB4's share of ASSIMILATED energy), now moved out:
+  planktivores 0.11 (feeding_cost 2.0 -> 1.65), whiting 0.12 (2.19 ->
+  1.50), water column 0.12 (2.27 -> 2.14, saithe field budget), mackerel
+  0.12 (2.24 -> 1.02). `growth_cost` c (section 241) is the
   synthesis cost, J per J deposited: the mass-balanced growth buys a
   tonne for `ec + c (ec + s ME)` (`energy_balance.tonne_price`, both
   engines, income branch too; the reserve-funded branch ignores it

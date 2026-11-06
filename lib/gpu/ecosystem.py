@@ -267,11 +267,19 @@ class TensorEcosystem:
         # Section 184: income-funded growth (``movement.income_growth``).
         # kappa per DM in dm order; such a DM's reserve-funded branch is
         # off in ``population``.
+        # Section 244: material-capped growth rides on the same path, with
+        # its own share per DM (0 for every other DM).
         self.income_on = bool(getattr(env, "_has_income_growth", False))
         if self.income_on:
+            share = getattr(env, "dm_material_share", None)
+            if share is None:
+                share = [0.0] * len(env.dm_ids)
             self.income_kappa = tensor(env.dm_income_kappa)[None, :, None]
+            self.material_share = tensor(share)[None, :, None]
             self.income_off_growth = tensor(
-                [fid in env.dm_ids and env.dm_income_kappa[env.dm_ids.index(fid)] > 0
+                [fid in env.dm_ids and (
+                    env.dm_income_kappa[env.dm_ids.index(fid)] > 0
+                    or share[env.dm_ids.index(fid)] > 0)
                  for fid in self.ids], torch.bool)[None, :, None]
         # Section 185: regional logistic loss c * grid-mean B per decision
         # maker (``population_change``; c = 0 for every other group).
@@ -1039,10 +1047,12 @@ class TensorEcosystem:
 
     def income_growth(self, b, r, gains, metabolism, rest, eat, move_fraction,
                       stay_b, stay_r):
-        """Section 184 mirror of ``movement.income_growth``: per cell
-        G = min(kappa I - C, B g (s - u) p), at most the settling reserve,
-        moved from the stationary reserve into G / p new tonnes; p the price
-        of a tonne, ec + c (ec + s ME) (section 241)."""
+        """Sections 184, 244 mirror of ``movement.income_growth``: per
+        cell G = min(kappa I - C, B g (s - u) p), at most the settling
+        reserve (income law), or G = min(B g (s - u) p, kappa_m I p / ec,
+        R' - u ME B') (material law), moved from the stationary reserve
+        into G / p new tonnes; p the price of a tonne, ec + c (ec + s ME)
+        (section 241)."""
         cost = (b * rest * metabolism * self.cost_rest
                 + b * eat * metabolism * self.cost_eat
                 + b * move_fraction * metabolism * self.cost_move)
@@ -1057,6 +1067,12 @@ class TensorEcosystem:
         paid = torch.minimum((self.income_kappa * gains - cost).clamp_min(0), ceiling)
         paid = torch.minimum(paid, stay_r.clamp_min(0))
         paid = torch.where((self.income_kappa > 0) & (ec > 0), paid, 0.0)
+        material = (self.material_share * gains.clamp_min(0) * price
+                    / torch.where(ec > 0, ec, 1.0))
+        above = (stay_r - maintenance * self.max_reserve[:, self.dm_index]
+                 * stay_b).clamp_min(0)
+        paid_m = torch.minimum(torch.minimum(ceiling, material), above)
+        paid = torch.where((self.material_share > 0) & (ec > 0), paid_m, paid)
         return (stay_b + paid / torch.where(price > 0, price, 1.0), stay_r - paid)
 
     def cancel_emigration(self, b_out, r_out):

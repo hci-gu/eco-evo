@@ -34,7 +34,7 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
              response_types=None, temperature=None, impacts=None,
              observable_impacts=None, nutrient_pool=None, grazer=None,
              mixed_layer_pairs=None, subsurface=None, inert_subsurface=False,
-             ingestion=None, growth=None, income=None, capacity=None,
+             ingestion=None, growth=None, income=None, material=None, capacity=None,
              regen=None, extra_prey=None, pair_keys=None, refuge=None,
              stages=None):
     """Reference fixture.
@@ -153,6 +153,9 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
         if income and fid == "a":
             params.update(income_growth_kappa=income[0],
                           feeding_season_months=income[1])
+        if material and fid == "a":
+            params.update(material_growth_share=material[0],
+                          feeding_season_months=material[1])
         if capacity and fid == "a":
             params["capacity_loss_rate"] = capacity
         if m1_exposure and fid == "a":
@@ -600,6 +603,23 @@ def test_income_growth_matches_reference(device, kappa, handling):
     assert model.income_on
     i_a = env.dm_ids.index("a")
     assert float(env.dm_income_kappa[i_a]) == pytest.approx(kappa)
+    assert not bool(model.income_off_growth[0, model.ids.index("b"), 0])
+    assert bool(model.income_off_growth[0, model.ids.index("a"), 0])
+
+
+@pytest.mark.parametrize("share", [0.05, 0.4])
+@pytest.mark.parametrize("handling", [0.0, 0.6])
+def test_material_growth_matches_reference(device, share, handling):
+    """Section 244: both engines build DM ``a``'s new tonnes only out of
+    this tick's intake (kappa_m I / ec), paid from the store above
+    maintenance and capped at g (s - u), never out of the reserve alone."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, handling=handling,
+                   material=(share, 6.0))
+    model = _assert_parity(env, device, ticks=6)
+    assert model.income_on
+    i_a = env.dm_ids.index("a")
+    assert float(env.dm_material_share[i_a]) == pytest.approx(share)
+    assert float(env.dm_income_kappa[i_a]) == 0.0
     assert not bool(model.income_off_growth[0, model.ids.index("b"), 0])
     assert bool(model.income_off_growth[0, model.ids.index("a"), 0])
 

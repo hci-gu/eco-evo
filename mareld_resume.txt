@@ -23226,3 +23226,127 @@ remain open exactly as described in 71.9 / 71.11.
     - Derived growth rates unchanged (K is outside g).
       tests/test_regional_capacity.py: no library group has a K; the
       loader path is tested with a K set on whiting in the test.
+
+244 UNIFORM FISH BIOENERGETICS: MATERIAL-CAPPED GROWTH, SDA, INTAKE Q10 (user, 2026-11-06)
+
+244.1 Why (user: "what can be done to make it more uniform?"). Several
+    mechanisms were set on one fish group only (income growth on the
+    planktivores, SDA on the benthivores, an intake Q10 on zooplankton
+    only), and the reserve-funded law turns the fat reserve into lean
+    biomass with no food. Three research notes (research_notes/, Swedish
+    letters, summary.md in each): "Tillvaxt ur dagens foda" (a-umlaut,
+    o-umlaut), "Bioenergetik for alla fiskgrupper" (o-umlaut),
+    "Storleksfonster som standard" (o-umlaut). User: "Infor allt".
+
+244.2 Material-capped growth (engine; library key material_growth_share
+    kappa_m, excludes income_growth_kappa):
+    - Biology: lean tissue is 15-19 % protein; lipid holds no N and
+      cannot give amino acids; fasting cod lose muscle protein (Hemre et
+      al. 1993). The library's reserve is a lipid store (lean body + fat
+      / liver), not DEB's mixed reserve, so the reserve law broke N mass
+      balance. Rule A (184) fixes that but also takes the costs out of
+      the income first, which biology does not require.
+    - Per cell (movement.income_growth, GPU TensorEcosystem.income_growth,
+      same path as 184): G = min(B g (s - u) p, kappa_m I p / ec,
+      R' - u ME B'), I this tick's assimilated intake (net of SDA), R', B'
+      the settling reserve and biomass, p the tonne price (241). Nothing
+      eaten, nothing grown; 0 < kappa I < C on a fat reserve grows here
+      and not under rule A. population_change zeroes the reserve branch
+      for either law (starvation untouched).
+    - Budget (growth_budget.growth_law / material_growth): g x 12 /
+      feeding_season_months as for 184, s* unchanged (energy pooled).
+      New guard: refused when kappa_m h(s_n) C < P ec 12/n, s_n the
+      ideal reserve at the season's production P 12/n (a first version
+      used the annual s* and refused mackerel at 0.54 needed; at the
+      in-season balance it needs 0.31 - the guard's logic, no parameter
+      moved). Loader/env refusals as 184 (DM only, no growth_q10,
+      starve_rate > 0, r_max with a season).
+    - kappa_m (protein route: ec eta ADC_p sum d prot / (f_pl sum d af E),
+      eta 0.55 marginal, floor 0.44 gross) x A/(A - sda E) to the
+      engine's SDA-net I: planktivores 0.374 -> 0.43, benthivores 0.426
+      -> 0.49, whiting 0.407 -> 0.48, water column 0.404 -> 0.48,
+      mackerel 0.419 -> 0.49 (scripts/kappa_engine.py). Needed in the
+      season: 0.23 / 0.14 / 0.35 / 0.25 / 0.31.
+    - Seasons n (field): planktivores 6.4 (kept), benthivores 8.6,
+      whiting 9.0, water column 8.6, mackerel 4.0 (NEA feeding 16 May -
+      31 Aug, no feeding overwintering).
+    - The planktivores leave rule A (kappa 0.87 was a budget closure); no
+      library group uses income_growth_kappa now (mechanism kept).
+
+244.3 SDA on every fish group. whiting 2.19, water column 2.27 and
+    mackerel 2.24 were routine + "SDA 0.17 of half the ceiling" / RM, and
+    planktivores 2.0 had SDA in it too; 0.17 is FB4's share of
+    ASSIMILATED energy. Adding sda_fraction alone would have paid it
+    twice. Now sda_fraction planktivores 0.11, whiting 0.12, water
+    column 0.12, mackerel 0.12 (cod 0.12 Tirsgaard 2015; herring and
+    sprat 0.10) and feeding_cost = the foraging activity: 1.65 / 1.50 /
+    2.14 (saithe field budget, Andersen & Riis-Vestergaard 2004,
+    abstract) / 1.02. Benthivores unchanged (0.10, 1.18).
+
+244.4 ingestion_q10 on every fish group (whole response, annual mean 1,
+    own layer): planktivores 2.2, benthivores 1.6, whiting 2.25, water
+    column 2.25, mackerel 2.2. Every Cmax anchor is consistent with the
+    normalisation within 3 % (mackerel 2.9 % low, water column 0.9 %;
+    the optional ceiling corrections were NOT applied). Form issues
+    left: large cod are on their intake plateau (local Q10 1.1-1.2),
+    the herring optimum is reached in Aug-Sep (12 % misfit), and the
+    engine scales a with 1/h though the evidence is on the ceiling.
+
+244.5 predatory_fish -> mackerel accessible_fraction 0.29 -> 0.14
+    (0.11-0.16): the 232.2 a-weighting of predator lengths, Q3 lengths
+    as the old value. The Fonsterviktning step that drops predator
+    lengths the a does not count was not rerun (the script is built for
+    staged prey). No other size share changes: the remaining
+    accessible_fraction values are on unstaged prey (predatory_fish J/B
+    0.005: saithe nurseries are coastal) or are habitat shares.
+
+244.6 Derived growth rates (loader, active groups): planktivores
+    0.0024013 -> 0.0024099, benthivores 0.0011289 -> 0.0015752 (x 12/8.6),
+    water column 0.0016156 -> 0.0024823, whiting 0.0030548 -> 0.0038024,
+    mackerel 0.00079339 -> 0.0021540 (x 12/4.0 and s* 0.875 -> 0.915).
+    Prey groups and mammals unchanged. budget_gate: every energy row and
+    every diet-gate pair ok (water column -> mackerel 0.59, both shares
+    < 0.05).
+
+244.7 Checks. tests/test_material_growth.py (parsing and exclusion,
+    season sizing, the closure guard at s_n, reserve_room at h = 1, the
+    per-cell table incl. the kappa I < C case, the store clamp,
+    population zeroing, refusals). tests/test_gpu_ecosystem.py::
+    test_material_growth_matches_reference (8; all 8 fail with the GPU
+    material branch removed). tests/test_income_growth.py made
+    independent of which law the library carries. FG editor field
+    material_growth_share + hover help. Full suite 1731 passed, 12 skipped (a first run
+    had 2 failures from files edited mid-run; both pass, and the clean
+    rerun is green);
+    1-gen train.py smoke (planktivores) passed.
+
+244.8 Open, for the retrained probe and later:
+    - Mackerel's g is x3 (4-month season) while the closed pool keeps it
+      in the box all year with zooplankton to eat; the intake Q10 brakes
+      March to 0.70, not to zero. Check it first in the long-run probe.
+    - The cap acts on the bare tick's I; a meal is absorbed over 1-4 days
+      (cod gastric half-lives 30-103 h). A policy alternating eat and
+      rest ticks is penalised; a gut buffer (new state, both engines) is
+      the fix if it shows.
+    - No retention data for herring, pout, saithe, whiting or mackerel;
+      SDA unmeasured for most members; no field metabolism outside the
+      benthivores (feeding_cost judged). Retention is the weakest link
+      of the material law: if these species retained like cod on natural
+      moist feeds (gross PPV 0.15-0.32, Lie 1989) kappa_m would roughly
+      halve (~0.22-0.25), below the in-season need of the planktivores
+      (0.23), whiting (0.35), water column (0.25) and mackerel (0.31);
+      only the benthivores (0.14) would pass. The library uses the
+      marginal eta 0.55 (a cap binds only when protein is scarce; the
+      gross figure includes surplus protein burnt for energy, which the
+      model already pays); the gross floor eta 0.44 passes every group.
+      Copepod and krill lipid moves the planktivores and mackerel by
+      about a third either way. The season n values do not depend on
+      any of this.
+    - The guard's reserve_room branch (benthivores) checks against the
+      ceiling C, not the room (~cost + P_n p, ~9.7 vs 20.45 MJ/t/tick):
+      the true margin is ~1.7, not 3.5; it passes either way.
+    - Zooplankton (growth_q10, refused with a fed-only law) and mammals
+      (lactation builds pup tissue from maternal blubber and protein) are
+      outside the material law.
+    - Every fish group's growth law and g changed: fix88's policies load
+      (no layout change) but were trained in another world; retrain.

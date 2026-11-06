@@ -5,7 +5,7 @@ import numpy as np
 from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
 from lib.world.growth_budget import (capacity_loss_rate, derived_growth_rate,
-                                     income_growth)
+                                     growth_law)
 from lib.world import daylight, nutrients, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 from lib.world import habitat
@@ -857,27 +857,30 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             raise ValueError(
                 f"'{sid}' has regional_carrying_capacity but is not a "
                 "decision maker (section 185)")
-        if income_growth(params) is not None:
-            # Section 184: growth out of this tick's income.
+        law = growth_law(params)
+        if law is not None:
+            # Sections 184, 244: growth only while fed (income or material).
+            key = ("income_growth_kappa" if law[0] == "income"
+                   else "material_growth_share")
             if not params.get('is_decision_maker', False):
                 raise ValueError(
-                    f"'{sid}' has income_growth_kappa but is not a "
-                    "decision maker (section 184)")
+                    f"'{sid}' has {key} but is not a "
+                    "decision maker (sections 184, 244)")
             if temperature.growth_q10(params) is not None:
                 raise ValueError(
-                    f"'{sid}' has both income_growth_kappa and growth_q10; "
-                    "the income-funded law does not carry a growth Q10 "
-                    "(section 184)")
-            if (income_growth(params)[1] != 12.0
+                    f"'{sid}' has both {key} and growth_q10; "
+                    "a fed-only growth law does not carry a growth Q10 "
+                    "(sections 184, 244)")
+            if (law[2] != 12.0
                     and not float(params.get('r_max', 0.0) or 0.0) > 0.0):
                 raise ValueError(
                     f"'{sid}' has feeding_season_months but no r_max; the "
                     "season sizes a DERIVED growth rate (section 184)")
             if not float(params.get('starve_rate', 0.0) or 0.0) > 0.0:
                 raise ValueError(
-                    f"'{sid}' has income_growth_kappa but no starve_rate; "
+                    f"'{sid}' has {key} but no starve_rate; "
                     "the fallback would starve at the season-sized growth "
-                    "rate (section 184)")
+                    "rate (sections 184, 244)")
         fg = FunctionalGroup(sid, params)
 
         # Initial total biomass: per-project override range > library range >

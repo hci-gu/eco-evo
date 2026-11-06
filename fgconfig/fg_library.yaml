@@ -531,25 +531,39 @@
     # "Kolmulens biomassa" (Swedish letters: a-umlaut) fields/.
     metabolism_q10: 1.5
     metabolism_t_ref: 14.0
-    # Section 184: growth out of this tick's income, not out of the fat.
-    # G = min(kappa I - C, B g (s - u) ec): structure is built from food
-    # (fat holds no nitrogen; fasting fish lose the GH -> IGF-1 signal),
-    # so with no food there is no growth and the summer fat is kept for
-    # the winter. The reserve-funded law kept turning it into biomass in
-    # Oct-Dec and the stock lost 25-30 %/yr (sections 183.8-184.6).
-    # kappa 0.75 [D]: where the ideal-conditions budget closes at today's
-    # s* (DEBlipid form, Martin et al. 2017). The budget is paid over a
-    # 5.5-month feeding season, Apr - mid-Sep (Bachiller et al. 2018,
-    # NSS herring), so g = 12/5.5 x the year-round value; the months size
-    # the rate, the food decides when it grows.
-    # research_notes/Sillens vinterbudget/growth_allocation.md.
-    # Section 243.3: season 6.4 months (5.8-6.8) as the rate mean of 12/n
-    # (pout 8-10 months, spring-peaked SMS growth); kappa 0.87 (0.86-0.89),
-    # the same closure (cost + P ec)/(h(s*) C) on the re-weighted inputs
-    # (the current library already gave 0.82; 0.75 was not re-derived in
-    # 209). research_notes/"Kolmulens biomassa" (a-umlaut) fields/.
-    income_growth_kappa: 0.87
+    # Section 184: growth out of this tick's income, not out of the fat
+    # (kappa 0.75, 0.87 since 243.3: a budget closure, not biology); the
+    # reserve-funded law kept turning the fat into biomass in Oct-Dec and
+    # the stock lost 25-30 %/yr (sections 183.8-184.6).
+    # Section 244: material-capped growth (lib/world/growth_budget.py
+    # growth_law; movement.income_growth). A new lean tonne's material
+    # (protein, N) comes only from this tick's food; the energy for costs
+    # and synthesis may come from the fat: G = min(B g (s - u) p,
+    # kappa_m I p / ec, R - u ME B). Fat holds no nitrogen and fasting fish
+    # lose body protein (Hemre et al. 1993), so nothing eaten, nothing
+    # grown; unlike the income law the costs need not be paid out of the
+    # income first. kappa_m = the protein route, ec eta ADC_p sum d prot /
+    # (f_pl sum d af E), eta 0.55 marginal (floor 0.44 gross), x A/(A - sda
+    # E) to the engine's SDA-net intake. research_notes/"Tillvaxt ur dagens
+    # foda" (Swedish letters: a-umlaut, o-umlaut) summary.md.
+    # Planktivores: kappa_m 0.374 (eta 0.41-0.73: 0.28-0.50; floor 0.30)
+    # x 1.159 = 0.43 (0.32-0.58; floor 0.35); copepod protein the main
+    # uncertainty. Season 6.4 months (5.8-6.8; section 243.3): herring Apr -
+    # mid-Sep 5.5 (Bachiller et al. 2018), pout 8-10, the rate mean of 12/n;
+    # the months size g, the food decides when it grows.
+    material_growth_share: 0.43
     feeding_season_months: 6.4
+    # Section 244: SDA 0.11 of the INGESTED energy (herring, sprat 0.10;
+    # pout, blue whiting 0.12 as cod, Tirsgaard 2015), netted from every
+    # pair's assimilation; feeding_cost is now the foraging activity only.
+    # research_notes/"Bioenergetik for alla fiskgrupper" (o-umlaut).
+    sda_fraction: 0.11
+    # Section 244: Q10 2.2 (1.8-2.5) on the whole response, annual mean 1
+    # on the mean_0_50m layer: herring FB4 2.64 (adult 2.17), pout 1.07 on
+    # bottom water, blue whiting 1.28, weighted by biomass x Cmax. The
+    # herring optimum (13.9 C) is reached in Aug-Sep, so one Q10 misfits
+    # the summer months by up to 12 % (a form, not a value, question).
+    ingestion_q10: 2.2
     # Juvenile compartment (lib/environments/ecosystem_env/stages.py): the
     # fish below their length at age 1 in Q3 (herring 18.2, sprat 10.9,
     # Norway pout 14.9 cm). growth_ratio = juvenile / adult per-tonne
@@ -577,7 +591,11 @@
         pelagic_trawling: 0.6
         bottom_trawling: 1.5
     movement_speed: 1.0
-    feeding_cost: 2.0
+    # Section 244: the foraging activity without SDA (now sda_fraction):
+    # herring 1.57-2.12 (Rudstam activity at 1 BL/s for 15-25 cm), gadoid
+    # members 1.5 [J], cost-weighted 1.65 (1.40-2.19); was 2.0 with the SDA
+    # in it ("SDA + hunt"). Same note as sda_fraction.
+    feeding_cost: 1.65
     movement_cost: 1.75
     energy_content: 4000.0
     prey_includes_reserve: true
@@ -605,8 +623,9 @@
     # x 12 / feeding_season_months (5.5) since section 184. Section 232.1:
     # 0.0031889 -> 0.0028221 (whiting M2 on the pool 0.203 -> 0.07); 232.2
     # mammal re-booking -> 0.0028251; 243.3 (pout 1.64: r, M1, M2 at the
-    # booked flow, s*, season 6.4) -> 0.0024013.
-    growth_rate: 0.0024013371891
+    # booked flow, s*, season 6.4) -> 0.0024013; 244 (material law, SDA
+    # 0.11, feeding_cost 1.65: s* 0.752 -> 0.750) -> 0.0024099.
+    growth_rate: 0.0024098987101
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
@@ -673,6 +692,29 @@
     # 0.12, haddock 0.05, plaice 0.15 incl. feeding activity, the rest as
     # plaice J; 75 % of the weight on own-species data; same note, W).
     sda_fraction: 0.10
+    # Section 244: material-capped growth (lib/world/growth_budget.py
+    # growth_law; movement.income_growth). A new lean tonne's material
+    # (protein, N) comes only from this tick's food; the energy for costs
+    # and synthesis may come from the fat: G = min(B g (s - u) p,
+    # kappa_m I p / ec, R - u ME B). Fat holds no nitrogen and fasting fish
+    # lose body protein (Hemre et al. 1993), so nothing eaten, nothing
+    # grown; unlike the income law the costs need not be paid out of the
+    # income first. kappa_m = the protein route, ec eta ADC_p sum d prot /
+    # (f_pl sum d af E), eta 0.55 marginal (floor 0.44 gross), x A/(A - sda
+    # E) to the engine's SDA-net intake. research_notes/"Tillvaxt ur dagens
+    # foda" (Swedish letters: a-umlaut, o-umlaut) summary.md.
+    # Benthivores: kappa_m 0.426 (0.32-0.57; floor 0.34) x 1.153 = 0.49
+    # (0.37-0.65; floor 0.39). Season 8.6 months (7.2-9.7): haddock 9, cod
+    # 9.5 (SMS quarterly weights, upper bounds; Pilling 2007), plaice 8 (no
+    # feeding Dec-Mar, Todd 1911 via Rijnsdorp 1983), long rough dab 6.5.
+    material_growth_share: 0.49
+    feeding_season_months: 8.6
+    # Section 244: Q10 1.6 (1.14-2.5) on the whole response at the bottom
+    # layer: cod satiation 1.17 (large cod are on their intake plateau,
+    # peak 9.8-11.6 C, Bjornsson 2001), haddock 1.25, flatfish 4.6 (Fonds,
+    # DEB 1.7-2.4); +/-4 % over the year. research_notes/"Bioenergetik for
+    # alla fiskgrupper" (o-umlaut).
+    ingestion_q10: 1.6
     # Section 241: growth cost, J dissipated per J deposited (a new tonne
     # costs ec + c (ec + s ME)). Top-down on the engine's own losses
     # (assimilation 0.8, SDA 0.10): c = 0.70 / deposited - 1, deposited =
@@ -761,7 +803,9 @@
     # and the box's recruits are spawned outside it (research_notes/
     # "Bestandsreglering" (Swedish letters: a-ring) summary.md). Was K =
     # B*/(1 - F/r) = 3.39 t/km2.
-    growth_rate: 0.00112890328677  # section 240: s* = 1 (reserve_room)
+    # Section 240: s* = 1 (reserve_room), 0.0011289; section 244: x 12 /
+    # feeding_season_months 8.6 (material law).
+    growth_rate: 0.0015752138885
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -824,13 +868,40 @@
     # 2.3; annual mean of the at_50m layer.
     metabolism_q10: 2.3
     metabolism_t_ref: annual_mean
+    # Section 244: SDA 0.12 of the ingested energy (saithe 0.12 as cod,
+    # Tirsgaard 2015 [J]; spurdog ~0.10, Wood et al. 2007, search extract).
+    sda_fraction: 0.12
+    # Section 244: Q10 2.25 (2.0-2.3) on the whole response at at_50m:
+    # saithe gastric-evacuation temperature term 2.25 (FB4 cod 1.90).
+    ingestion_q10: 2.25
+    # Section 244: material-capped growth (lib/world/growth_budget.py
+    # growth_law; movement.income_growth). A new lean tonne's material
+    # (protein, N) comes only from this tick's food; the energy for costs
+    # and synthesis may come from the fat: G = min(B g (s - u) p,
+    # kappa_m I p / ec, R - u ME B). Fat holds no nitrogen and fasting fish
+    # lose body protein (Hemre et al. 1993), so nothing eaten, nothing
+    # grown; unlike the income law the costs need not be paid out of the
+    # income first. kappa_m = the protein route, ec eta ADC_p sum d prot /
+    # (f_pl sum d af E), eta 0.55 marginal (floor 0.44 gross), x A/(A - sda
+    # E) to the engine's SDA-net intake. research_notes/"Tillvaxt ur dagens
+    # foda" (Swedish letters: a-umlaut, o-umlaut) summary.md.
+    # Water column: kappa_m 0.404 (0.30-0.54; floor 0.32) x 1.176 = 0.48
+    # (0.35-0.63; floor 0.38). Season 8.6 months (6.9-10.2): saithe 8.5
+    # (SMS ration only 0.14 of the year in Q1; 26-50 % empty stomachs in
+    # Q1 spawning), the other members ~9 [J].
+    material_growth_share: 0.48
+    feeding_season_months: 8.6
     # Every member but anglerfish cruises 6-15 cells/tick (saithe Uopt 1.4
     # BL/s); residence is behaviour, not a speed limit.
     movement_speed: 1.0
-    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 29.79 (GER Cmax
-    # 91.7 kJ/kg/d at 8.37 C x 1.30 Bjornsson anchoring, 223.26) = 2.27 x RM;
-    # cruising at Uopt 2-2.5 x SMR = 2.0 x RM.
-    feeding_cost: 2.27
+    # Was routine 1.5 x SMR + SDA 0.17 of half the ceiling 29.79 = 2.27 x RM
+    # (0.17 is the FB4 share of ASSIMILATED energy). Section 244: SDA is
+    # sda_fraction now, and feeding_cost the foraging activity: saithe field
+    # budget, activity 2.0-2.5 x SMR at the optimum cruising speed
+    # (Andersen & Riis-Vestergaard 2004, abstract), others [J]: 2.14
+    # (1.43-3.15). Cruising at Uopt 2-2.5 x SMR = 2.0 x RM.
+    # research_notes/"Bioenergetik for alla fiskgrupper" (o-umlaut).
+    feeding_cost: 2.14
     movement_cost: 2.0
     # Lean tissue as eaten (saithe 4.0, hake 3.7, spurdog 6.0 kJ/g) = 4180;
     # the liver is eaten with the fish: at the reference fill 0.45 (mean
@@ -853,7 +924,9 @@
     # P 0.36 vs L 0.62 /yr), and it counted the box's density dependence
     # twice (research_notes/"Bestandsreglering" (Swedish letters: a-ring)
     # summary.md). Was K = B*/(1 - F/r) = 2.14 t/km2.
-    growth_rate: 0.0016156454438
+    # Section 244: 0.0016156 -> 0.0024823 (SDA 0.12 and feeding_cost 2.14
+    # move s* 0.787 -> 0.761; x 12 / 8.6 for the material law).
+    growth_rate: 0.0024822596002
     # M1 = M0 + predation by groups NOT in the model: saithe 0.29, spurdog
     # 0.10, hake 0.45, anglerfish 0.25 -> 0.276 /yr (0.19-0.31).
     # Within-group predation is a transfer inside the pool and left out.
@@ -892,12 +965,36 @@
     resting_metabolism: 3.87
     metabolism_q10: 2.3
     metabolism_t_ref: annual_mean
+    # Section 244: SDA 0.12 of the ingested energy (cod analogue,
+    # Tirsgaard 2015 [J]; 0.05-0.14).
+    sda_fraction: 0.12
+    # Section 244: Q10 2.25 (2.1-2.25) on the whole response at the bottom
+    # layer, from the gastric-evacuation temperature term (0.081 /C; no
+    # whiting Cmax-temperature data).
+    ingestion_q10: 2.25
+    # Section 244: material-capped growth (lib/world/growth_budget.py
+    # growth_law; movement.income_growth). A new lean tonne's material
+    # (protein, N) comes only from this tick's food; the energy for costs
+    # and synthesis may come from the fat: G = min(B g (s - u) p,
+    # kappa_m I p / ec, R - u ME B). Fat holds no nitrogen and fasting fish
+    # lose body protein (Hemre et al. 1993), so nothing eaten, nothing
+    # grown; unlike the income law the costs need not be paid out of the
+    # income first. kappa_m = the protein route, ec eta ADC_p sum d prot /
+    # (f_pl sum d af E), eta 0.55 marginal (floor 0.44 gross), x A/(A - sda
+    # E) to the engine's SDA-net intake. research_notes/"Tillvaxt ur dagens
+    # foda" (Swedish letters: a-umlaut, o-umlaut) summary.md.
+    # Whiting: kappa_m 0.407 (0.30-0.54; floor 0.33) x 1.176 = 0.48
+    # (0.36-0.64; floor 0.38). Season 9.0 months (8-10): SMS 8.9, consumption
+    # in every quarter, resident all year.
+    material_growth_share: 0.48
+    feeding_season_months: 9.0
     # Uopt 1.0 BL/s = 5.8 cells/tick at 27 cm; not binding.
     movement_speed: 1.0
-    # Routine 1.5 x SMR + SDA 0.17 of half the ceiling 31.34 (GER Cmax 96.4
-    # kJ/kg/d at 7.40 C x 1.30 Bjornsson re-anchoring, 223.26) = 2.19 x RM;
-    # cruising 2 x SMR.
-    feeding_cost: 2.19
+    # Was routine 1.5 x SMR + SDA 0.17 of half the ceiling 31.34 = 2.19 x RM.
+    # Section 244: SDA is sda_fraction now; feeding_cost = the routine
+    # judgement 1.5 (1.25-2.25) [J], no whiting field metabolism. Cruising
+    # 2 x SMR. research_notes/"Bioenergetik for alla fiskgrupper" (o-umlaut).
+    feeding_cost: 1.50
     movement_cost: 2.0
     # Lean 3.9 kJ/g; the liver is eaten with the fish: at the reference
     # fill 0.45 (mean reserve 900 / 2000) the static quality is 4800 MJ/t.
@@ -928,7 +1025,9 @@
     # F/r) = 0.533 t/km2): it masked the epifauna overshoot of the old bed
     # pair (a 0.27, fixed in 232 / 232.1) and counted the box's density
     # dependence twice; whiting passes the diet gate on all four pairs.
-    growth_rate: 0.0030547865783
+    # Section 244: 0.0030548 -> 0.0038024 (SDA 0.12 and feeding_cost 1.50
+    # move s* 0.749 -> 0.767; x 12 / 9.0 for the material law).
+    growth_rate: 0.0038023903185
     # M1 = SMS residual M 0.20 + grey seal and birds 0.05 = 0.25 /yr
     # (0.20-0.32). Booked on pairs: benthivores 0.18 (223.28), predatory_fish
     # 0.157, porpoises 0.019, seals 0.013; total M 0.62 vs SMS 0.685.
@@ -982,6 +1081,32 @@
     # mean_0_50m layer (user 228: its prey's layer).
     metabolism_q10: 2.0
     metabolism_t_ref: annual_mean
+    # Section 244: SDA 0.12 of the ingested energy [J] (cod 0.12; the
+    # Wisconsin 0.144 as the top).
+    sda_fraction: 0.12
+    # Section 244: Q10 2.2 (2.0-2.5) on the whole response at mean_0_50m:
+    # GER temperature term 0.080 /C = 2.23; caged mackerel growth and
+    # intake follow temperature, growth ~0 at ~7 C (Juell 1998, abstract).
+    ingestion_q10: 2.2
+    # Section 244: material-capped growth (lib/world/growth_budget.py
+    # growth_law; movement.income_growth). A new lean tonne's material
+    # (protein, N) comes only from this tick's food; the energy for costs
+    # and synthesis may come from the fat: G = min(B g (s - u) p,
+    # kappa_m I p / ec, R - u ME B). Fat holds no nitrogen and fasting fish
+    # lose body protein (Hemre et al. 1993), so nothing eaten, nothing
+    # grown; unlike the income law the costs need not be paid out of the
+    # income first. kappa_m = the protein route, ec eta ADC_p sum d prot /
+    # (f_pl sum d af E), eta 0.55 marginal (floor 0.44 gross), x A/(A - sda
+    # E) to the engine's SDA-net intake. research_notes/"Tillvaxt ur dagens
+    # foda" (Swedish letters: a-umlaut, o-umlaut) summary.md.
+    # Mackerel: kappa_m 0.419 (0.31-0.56; floor 0.34) x 1.176 = 0.49
+    # (0.37-0.65; floor 0.39). Season 4.0 months (3.5-5.6): NEA feeding 16
+    # May - 31 Aug (Bachiller et al. 2018), no feeding while overwintering,
+    # SMS ration 0.03 / 0.41 / 0.50 / 0.07 by quarter; horse mackerel 5 [J].
+    # The closed pool keeps mackerel in the box all year (it is there May-
+    # Oct), so the season-sized g applies whenever it eats (section 244).
+    material_growth_share: 0.49
+    feeding_season_months: 4.0
     # Schools cruise 0.44-0.72 m/s net; not binding.
     movement_speed: 1.0
     # Section 228.2: ceiling 66.22 MJ/t/tick = Cmax 265 kJ/kg/d at 9.31 C,
@@ -991,10 +1116,13 @@
     # x1.30 = 142-153, fails it and the >= 180 fattening budget; no
     # Bjornsson factor on a field anchor); horse mackerel 152 at 13 C
     # (Cape horse mackerel ration); mackerel GER temperature term 0.080/C.
-    # Feeding = routine (1.02 x RM: mackerel already swims) + SDA 0.17 of half
-    # the ceiling = 2.24 x RM. Moving one cell per tick needs ~0.05 m/s,
-    # far below the 1 BL/s floor: 1.03 x RM (horse mackerel 2 x SMR).
-    feeding_cost: 2.24
+    # Was routine (1.02 x RM: mackerel already swims) + SDA 0.17 of half the
+    # ceiling = 2.24 x RM. Section 244: SDA is sda_fraction now; feeding =
+    # the routine 1.02 (1.00-1.60) [J], no mackerel field metabolism.
+    # Moving one cell per tick needs ~0.05 m/s, far below the 1 BL/s floor:
+    # 1.03 x RM (horse mackerel 2 x SMR). research_notes/"Bioenergetik for
+    # alla fiskgrupper" (o-umlaut).
+    feeding_cost: 1.02
     movement_cost: 1.03
     # Lean tissue as eaten (mackerel 4.7, horse mackerel 4.2 kJ/g) = 4670; the
     # fat is eaten with the fish: at the reference fill 0.55 (mean reserve
@@ -1012,7 +1140,9 @@
     # 0.0147 (the LOCAL 3.a.20 F, 228.1) against r 0.255 leaves
     # 0.24 /yr; the other losses are the booked predation (water
     # column 0.021, seals, porpoises) and M1.
-    growth_rate: 0.00079338646292
+    # Section 244: 0.00079339 -> 0.0021540 (SDA 0.12 and feeding_cost 1.02
+    # move s* 0.875 -> 0.915; x 12 / 4.0 for the material law).
+    growth_rate: 0.0021539562423
     # M1 = M0 + predation by groups NOT in the model (tuna, sharks, birds,
     # cetaceans other than porpoises): mackerel 0.15, horse mackerel 0.30
     # -> 0.159 /yr (0.11-0.21).
@@ -1982,12 +2112,17 @@ interaction_definitions:
   # planktivore geometry, J) over those members per rest tonne;
   # accessible_fraction = the mackerel group's biomass inside the members'
   # prey-size windows (spurdog 0.34, hake 0.50, anglerfish 0.57 x length).
+  # Section 244: 0.29 -> 0.14 (0.11-0.16): the same windows with the 232.2
+  # weighting of predator lengths by their share of a (a ~ L^-2.2;
+  # "Fonsterviktning", o-umlaut), Q3 lengths as the 0.29 (Q3 0.28). Open:
+  # the step dropping predator lengths the a does not count was not rerun.
+  # research_notes/"Storleksfonster som standard" (o-umlaut) summary.md.
   predatory_fish_preys_on_mackerel:
     preys_on: true
     predation_mortality: 0.021
     assimilation_factor: 0.8
     handling_time: 265.1
-    accessible_fraction: 0.29
+    accessible_fraction: 0.14
     functional_response: 2
     max_intake_rate: 0.00088
     dark_ratio: 0.92

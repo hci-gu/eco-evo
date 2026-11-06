@@ -364,21 +364,31 @@ def _juvenile_growth(env, biomass, juvenile, new_tonnes):
 
 def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
                   stationary_reserve):
-    """Section 184: an income-funded DM grows out of this tick's intake.
+    """Growth of a DM that grows only while it is fed (sections 184, 244).
 
-    Per cell, with I the assimilated intake (``gains``) and C the action
-    costs of the tick (MJ), G = min(kappa I - C, B g (s - u) p), at
-    least 0 and at most the settling reserve; s is the reserve fill at
-    the start of the tick. G leaves the stationary reserve (where the
-    intake landed) and becomes G / p tonnes of new biomass there, before
-    the movement. Nothing to eat, no growth: the reserve only pays the
-    costs. The DM's reserve-funded growth branch is off in the
-    population step; its starvation branch is untouched. p is the price
-    of a tonne, ec + c (ec + s ME) with the growth cost c (section 241;
-    ec when c = 0).
+    Per cell, with I the assimilated intake (``gains``, net of SDA), C the
+    action costs of the tick (MJ), s the reserve fill at the start of the
+    tick and p the price of a tonne, ec + c (ec + s ME) (section 241; ec
+    when c = 0), the paid energy G is
+
+    - income law (``income_growth_kappa`` kappa, section 184):
+      G = min(kappa I - C, B g (s - u) p), at least 0 and at most the
+      settling reserve - the costs come out of the income first;
+    - material law (``material_growth_share`` kappa_m, section 244):
+      G = min(B g (s - u) p, kappa_m I p / ec, R' - u ME B') with R', B'
+      the settling reserve and biomass - the new tonnes' material comes
+      only from this tick's food (kappa_m I / ec tonnes at most), the
+      energy from the pooled store above the maintenance line.
+
+    G leaves the stationary reserve (where the intake landed) and becomes
+    G / p tonnes of new biomass there, before the movement. Nothing to
+    eat, no growth: the reserve only pays the costs. The DM's
+    reserve-funded growth branch is off in the population step; its
+    starvation branch is untouched.
     """
     kappa = env.dm_income_kappa[:, None, None]
-    on = kappa > 0.0
+    share = getattr(env, "dm_material_share",
+                    np.zeros(env.N_dm, dtype=env.dtype))[:, None, None]
     groups = [env.fgs[fid] for fid in env.dm_ids]
     growth = np.array([fg.growth_rate for fg in groups],
                       dtype=env.dtype)[:, None, None]
@@ -401,7 +411,14 @@ def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
     paid = np.minimum(np.maximum(kappa * gains - cost, np.float32(0.0)),
                       ceiling)
     paid = np.minimum(paid, np.maximum(stationary_reserve, np.float32(0.0)))
-    paid = np.where(on & (ec > 0), paid, np.float32(0.0)).astype(env.dtype)
+    paid = np.where((kappa > 0.0) & (ec > 0), paid, np.float32(0.0))
+    # Section 244: the material cap and the store above maintenance.
+    safe_ec = np.where(ec > 0, ec, np.float32(1.0))
+    material = share * np.maximum(gains, np.float32(0.0)) * price / safe_ec
+    above = np.maximum(stationary_reserve - maintenance * max_reserve
+                       * stationary_biomass, np.float32(0.0))
+    paid_m = np.minimum(np.minimum(ceiling, material), above)
+    paid = np.where((share > 0.0) & (ec > 0), paid_m, paid).astype(env.dtype)
     safe_price = np.where(price > 0, price, np.float32(1.0))
     return ((stationary_biomass + paid / safe_price).astype(env.dtype),
             (stationary_reserve - paid).astype(env.dtype))

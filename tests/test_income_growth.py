@@ -54,6 +54,7 @@ def test_income_growth_parses(spec, expected):
     ({"income_growth_kappa": -0.1}, r"\(0, 1\]"),
     ({"income_growth_kappa": "x"}, "number"),
     ({"feeding_season_months": 5.5}, "needs income_growth_kappa"),
+    ({"income_growth_kappa": 0.7, "material_growth_share": 0.4}, "exclude"),
     ({"income_growth_kappa": 0.7, "feeding_season_months": 13}, r"\(0, 12\]"),
 ])
 def test_invalid_income_growth_raises(spec, match):
@@ -69,7 +70,8 @@ def test_budget_is_paid_over_the_feeding_season():
     lib = _library()
     species, inter = lib["species_definitions"], lib["interaction_definitions"]
     base = {k: v for k, v in species["planktivorous_fish"].items()
-            if k not in ("income_growth_kappa", "feeding_season_months")}
+            if k not in ("income_growth_kappa", "material_growth_share",
+                         "feeding_season_months")}
     plain = gb.growth_budget("planktivorous_fish", species, inter, species=base)
     spec = dict(base, income_growth_kappa=0.75, feeding_season_months=5.5)
     seasonal = gb.growth_budget("planktivorous_fish", species, inter, species=spec)
@@ -176,6 +178,7 @@ def test_refusals():
             ("planktivorous_fish", {"starve_rate": 0.0}, "starve_rate"),
             ("planktivorous_fish", {"r_max": 0, "feeding_season_months": 5.5}, "r_max")):
         lib = _library()
+        lib["species_definitions"][sid].pop("material_growth_share", None)
         lib["species_definitions"][sid].update(income_growth_kappa=0.7, **extra)
         with pytest.raises(ValueError, match=match):
             load_project_config(str(PROJECT), library_config=lib,

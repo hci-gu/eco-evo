@@ -788,6 +788,8 @@ class FGConfigApp:
             ("  Growth Q10 (water temperature, reserve -> biomass; 0 = off)", "growth_q10", "entry", 0.0, 5.0),
             # Section 184: growth out of this tick's income, not the reserve.
             ("  Income growth kappa (share of intake for maintenance + growth; 0 = reserve-funded)", "income_growth_kappa", "entry", 0.0, 1.0),
+            # Section 244: the new tonnes' material only from this tick's food.
+            ("  Material growth share (share of intake that can become lean tissue; 0 = off)", "material_growth_share", "entry", 0.0, 1.0),
             ("  Feeding season (months per year the budget is paid in; 0 = 12)", "feeding_season_months", "entry", 0.0, 12.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
             # Sections 240, 241: appetite form, intake-proportional SDA and
@@ -4044,6 +4046,7 @@ class FGConfigApp:
                           "max_energy_reserve", "energy_content",
                           "resting_metabolism", "feeding_cost",
                           "max_intake_rate", "income_growth_kappa",
+                          "material_growth_share",
                           "feeding_season_months", "appetite",
                           "sda_fraction", "growth_cost")
 
@@ -4808,7 +4811,7 @@ class FGConfigApp:
         "grazing_regeneration", "stress_loss_max", "stress_loss_shape",
         "stress_regeneration", "growth_efficiency", "excretion_regeneration",
         "grazing_q10", "grazing_t_ref", "ingestion_q10", "growth_q10",
-        "income_growth_kappa", "feeding_season_months",
+        "income_growth_kappa", "material_growth_share", "feeding_season_months",
         "regional_carrying_capacity",
         "mortality_regeneration", "egestion_regeneration",
         "natural_mortality", "exposed_share", "refuge_exchange_rate",

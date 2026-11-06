@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from lib.world import nutrients, temperature
-from lib.world.growth_budget import income_growth
+from lib.world.growth_budget import growth_law, income_growth
 from lib.environments.ecosystem_env import (
     grid_masks, impacts, interactions, natural_mortality, refuge, regeneration,
     stages)
@@ -403,27 +403,41 @@ def build_static_caches(env):
 
 
 def _build_income_growth(env):
-    """``env.dm_income_kappa`` (N_dm,) and ``env._has_income_growth``."""
+    """``env.dm_income_kappa`` and ``env.dm_material_share`` (N_dm,) and
+    ``env._has_income_growth`` (either law: the DM grows in the movement
+    step, its reserve-funded branch is off; sections 184, 244)."""
     for fid in env.global_fg_order:
         fg = env.fgs[fid]
-        if income_growth(fg.params) is not None and fid not in env.dm_ids:
-            raise ValueError(f"'{fid}' has income_growth_kappa but is not a "
-                             "decision maker (section 184)")
+        law = growth_law(fg.params)
+        if law is not None and fid not in env.dm_ids:
+            raise ValueError(f"'{fid}' has {_law_key(law)} but is not a "
+                             "decision maker (sections 184, 244)")
     kappa = np.zeros(env.N_dm, dtype=env.dtype)
+    share = np.zeros(env.N_dm, dtype=env.dtype)
     for i, fid in enumerate(env.dm_ids):
         fg = env.fgs[fid]
-        settings = income_growth(fg.params)
-        if settings is None:
+        law = growth_law(fg.params)
+        if law is None:
             continue
         if temperature.growth_q10(fg.params) is not None:
-            raise ValueError(f"'{fid}' has both income_growth_kappa and "
-                             "growth_q10 (section 184)")
+            raise ValueError(f"'{fid}' has both {_law_key(law)} and "
+                             "growth_q10 (sections 184, 244)")
         if not fg.starve_rate > 0.0:
-            raise ValueError(f"'{fid}' has income_growth_kappa but no "
-                             "starve_rate (section 184)")
-        kappa[i] = settings[0]
+            raise ValueError(f"'{fid}' has {_law_key(law)} but no "
+                             "starve_rate (sections 184, 244)")
+        if income_growth(fg.params) is not None:
+            kappa[i] = law[1]
+        else:
+            share[i] = law[1]
     env.dm_income_kappa = kappa
-    env._has_income_growth = bool((kappa > 0.0).any())
+    env.dm_material_share = share
+    env._has_income_growth = bool((kappa > 0.0).any() or (share > 0.0).any())
+
+
+def _law_key(law):
+    """The library key of a ``growth_law`` result."""
+    return ("income_growth_kappa" if law[0] == "income"
+            else "material_growth_share")
 
 
 def _build_regional_capacity(env):

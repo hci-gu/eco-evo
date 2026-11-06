@@ -332,10 +332,11 @@ def _apply_decision_maker_population_change(env, fg_id, fg):
     # Section 183: growth_q10 scales the growth branch only.
     growth_rate = np.float32(
         fg.growth_rate * interactions.growth_temperature(env, fg_id))
-    # Section 184: an income-funded DM grew in ``apply_energy_costs``;
-    # it never turns its reserve into biomass here.
+    # Sections 184, 244: an income-funded or material-capped DM grew in
+    # ``apply_energy_costs``; it never turns its reserve into biomass here.
     if getattr(env, "_has_income_growth", False) and (
-            env.dm_income_kappa[env.dm_ids.index(fg_id)] > 0.0):
+            env.dm_income_kappa[env.dm_ids.index(fg_id)] > 0.0
+            or env.dm_material_share[env.dm_ids.index(fg_id)] > 0.0):
         growth_rate = np.float32(0.0)
     rate = np.where(energy_surplus >= 0.0, growth_rate, starve_rate).astype(
         env.dtype, copy=False)
