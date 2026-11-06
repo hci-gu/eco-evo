@@ -127,9 +127,10 @@ def test_edit_clear_and_conflict(app):
     assert "accessible_fraction" not in _pairs(app)[key]
     assert _pairs(app)[key]["stage_access"]
 
-    # A bad value is not written.
-    seal = "seals_preys_on_predatory_fish"
-    old = _pairs(app)[seal]["accessible_fraction"]
-    app.matrix_entries[seal]["accessible_fraction"].set("1.5")
+    # A bad value is not written (a habitat share; the prey-size shares
+    # are stage_access since section 244.9).
+    bed = "benthivorous_fish_preys_on_mobile_epifauna"
+    old = _pairs(app)[bed]["accessible_fraction"]
+    app.matrix_entries[bed]["accessible_fraction"].set("1.5")
     app.apply_matrix_changes()
-    assert _pairs(app)[seal]["accessible_fraction"] == old
+    assert _pairs(app)[bed]["accessible_fraction"] == old

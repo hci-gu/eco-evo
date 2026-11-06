@@ -63,11 +63,42 @@ def test_settings_are_validated():
     bad["recruitment"] = [1.0] * 11
     with pytest.raises(ValueError, match="recruitment"):
         staged_env(stages={"b": bad})
-    with pytest.raises(ValueError, match="stage_access needs a prey"):
+    # Section 244.9: on a prey without a compartment one share, f_J = f_A.
+    with pytest.raises(ValueError, match="f_J = f_A"):
         staged_env(stages={"b": block()}, pair_keys={"a_preys_on_c": {"stage_access": [1, 0]}})
     with pytest.raises(ValueError, match="either accessible_fraction"):
         staged_env(stages={"b": block()},
                    pair_keys={"a_preys_on_b": {"stage_access": [1, 0], "accessible_fraction": 0.5}})
+
+
+@pytest.mark.parametrize("staged", [False, True])
+def test_stage_access_on_an_unstaged_prey_is_its_accessible_fraction(staged):
+    """Section 244.9: ``stage_access: [f, f]`` on a prey without a juvenile
+    compartment is the pair's ``accessible_fraction: f``, tick for tick,
+    with or without other staged groups in the world."""
+    kw = dict(migration=True, mortality=True)
+    if staged:
+        kw["stages"] = {"b": block(kappa=3.0, rho=1.0)}
+    plain = staged_env(pair_keys={"a_preys_on_c": {"accessible_fraction": 0.3}}, **kw)
+    pair = staged_env(pair_keys={"a_preys_on_c": {"stage_access": [0.3, 0.3]}}, **kw)
+    i, j = plain.dm_ids.index("a"), plain.global_fg_order.index("c")
+    assert pair.access_mat[i, j] == pytest.approx(0.3)
+    np.testing.assert_array_equal(pair.access_mat, plain.access_mat)
+    for t in range(8):
+        acts = actions_for(plain, t)
+        plain.step(copy.deepcopy(acts))
+        pair.step(copy.deepcopy(acts))
+    for fid in plain.fgs:
+        np.testing.assert_array_equal(pair.fgs[fid].biomass, plain.fgs[fid].biomass)
+        np.testing.assert_array_equal(pair.fgs[fid].energy_reserve,
+                                      plain.fgs[fid].energy_reserve)
+
+
+def test_stage_access_on_an_unstaged_prey_matches_the_gpu(device):
+    """Both engines read the one share from ``access_mat``."""
+    env = staged_env(stages={"b": block(kappa=3.0, rho=1.0)},
+                     pair_keys={"a_preys_on_c": {"stage_access": [0.3, 0.3]}})
+    _assert_parity(env, device, ticks=6)
 
 
 def test_without_the_block_nothing_changes():

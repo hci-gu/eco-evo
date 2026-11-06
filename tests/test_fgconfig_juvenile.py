@@ -53,6 +53,9 @@ def test_stage_access_cells():
     for bad in ("0.5", "1.2, 0", "0, 0", "a, b"):
         assert App._parse_stage_access(bad, {})[1]
     assert App._parse_stage_access("0.5, 0.5", {"accessible_fraction": 0.3})[1]
+    # Section 244.9: on a prey without a Juvenile Stage one share, f_J = f_A.
+    assert App._parse_stage_access("0.054, 0.054", {}, staged=False) == ([0.054, 0.054], None)
+    assert "f_J = f_A" in App._parse_stage_access("0.87, 0.058", {}, staged=False)[1]
 
 
 def test_editor_round_trip_on_the_live_library(tmp_path):

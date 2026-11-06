@@ -3591,6 +3591,12 @@ class FGConfigApp:
         staged = [fid for fid in fgs
                   if isinstance(species_defs.get(fid), dict)
                   and species_defs[fid].get("juvenile_stage")]
+        # Section 244.9: a prey without a compartment is a column too when
+        # a pair already carries a stage_access on it (one share, f_J = f_A).
+        inter_defs = self.global_library.get("interaction_definitions", {}) or {}
+        staged += [fid for fid in fgs if fid not in staged and any(
+            isinstance(d, dict) and d.get("stage_access") not in (None, "", [])
+            and k.endswith("_preys_on_" + fid) for k, d in inter_defs.items())]
         if staged:
             stage_frame = self.create_matrix_section(
                 "Stage Access (row's share of column's juveniles, adults: f_J, f_A)",
@@ -3602,7 +3608,9 @@ class FGConfigApp:
                 "Two values in [0, 1], e.g. 0.43, 0.027: the share of the "
                 "juvenile and of the adult tonnes the row can reach (its "
                 "prey-size window). Empty = both parts at the pair's "
-                "accessible_fraction (1 unless set in the library).")
+                "accessible_fraction (1 unless set in the library). A "
+                "column without a Juvenile Stage is one pool: give f_J = "
+                "f_A (section 244.9).")
 
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
@@ -5393,9 +5401,11 @@ class FGConfigApp:
             )
 
     @staticmethod
-    def _parse_stage_access(text, entry):
+    def _parse_stage_access(text, entry, staged=True):
         """``(pair, error)`` of a Stage Access cell: ``([f_J, f_A], None)``,
-        ``(None, None)`` for an empty cell, or ``(None, message)``."""
+        ``(None, None)`` for an empty cell, or ``(None, message)``. On a
+        prey without a Juvenile Stage (``staged`` False) the pair is one
+        share of the whole group, so f_J must equal f_A (section 244.9)."""
         text = str(text or "").strip()
         if not text:
             return None, None
@@ -5409,6 +5419,11 @@ class FGConfigApp:
         if entry.get("accessible_fraction") not in (None, ""):
             return None, ("the pair has an accessible_fraction; give either "
                           "it or a stage access")
+        if not staged and abs(values[0] - values[1]) > 1e-12:
+            return None, ("the prey has no Juvenile Stage, so the stage access "
+                          "is one share of the whole group: give f_J = f_A")
+        if not staged and values[1] <= 0.0:
+            return None, "the share must be above 0"
         return values, None
 
     @staticmethod
@@ -5465,7 +5480,13 @@ class FGConfigApp:
                         entry[data_key] = value
                     continue
                 if data_key == "stage_access":
-                    pair, error = self._parse_stage_access(var.get(), entry)
+                    prey_id = key.split("_preys_on_", 1)[-1]
+                    prey_def = (self.global_library.get("species_definitions", {})
+                                or {}).get(prey_id)
+                    pair, error = self._parse_stage_access(
+                        var.get(), entry, staged=bool(
+                            isinstance(prey_def, dict)
+                            and prey_def.get("juvenile_stage")))
                     if error:
                         stage_errors.append(f"{key}: {error}")
                     elif pair is None:

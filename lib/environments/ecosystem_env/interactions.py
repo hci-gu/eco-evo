@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from lib.world import daylight, energy_balance, nutrients, temperature
+from lib.environments.ecosystem_env import stages
 
 
 @dataclass
@@ -137,6 +138,11 @@ def build_interaction_matrices(env):
             # predator's reach this tick (infauna below the sediment
             # surface is out of it); scales the prey biomass of the pair.
             access[i, j] = pair_share(inter_def, "accessible_fraction", inter_id)
+            # Section 244.9: ``stage_access`` on a prey without a juvenile
+            # compartment is the pair's one share of the whole group.
+            stage_pair = stages.pair_stage_access(inter_def, inter_id)
+            if stage_pair is not None and stages.settings(env.fgs[prey_id]) is None:
+                access[i, j] = stages.unstaged_share(stage_pair, inter_id)
             forced = inter_def.get("functional_response", None)
             if forced not in (None, "", 0, 0.0):
                 try:

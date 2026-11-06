@@ -407,7 +407,12 @@ fabricates mass.
   observations are untouched. Benthivores -> epifauna 0.62 (223.15), whiting
   -> epifauna 0.29 (sections 221, 223.15, 223.26), water column -> whiting
   0.47 (gape; stage access since 230), porpoises -> water column 0.054
-  and seals -> water column 0.029 (prey size, 232.1); the infauna pair's 0.2 became the
+  and seals -> water column 0.029 (prey size, 232.1; written as
+  `stage_access: [f, f]` since 244.9, as water column -> mackerel 0.14:
+  on a prey without a juvenile compartment `stage_access` is one share of
+  the whole group and f_J = f_A is required - mackerel's f_A alone
+  (0.068) would have halved that pair; only the habitat shares stay
+  `accessible_fraction`); the infauna pair's 0.2 became the
   infauna's own refuge in 223.12. On a prey with a juvenile compartment
   (planktivores, benthivores; 223.32; whiting since 230) a pair may carry `stage_access:
   [f_J, f_A]` instead (members' prey-size windows on the stage lengths):

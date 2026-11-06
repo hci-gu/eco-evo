@@ -794,7 +794,10 @@ FIELD_HELP = {
         "The share of the prey within the predator's reach at any time, "
         "e.g. infauna in the top centimetres of the sediment. Scales the "
         "prey biomass the pair sees, in the functional response and in "
-        "the harvest cap; not the observation (section 208)."
+        "the harvest cap; not the observation (section 208). Since "
+        "section 244.9 the library keeps it for habitat and exposure "
+        "shares; prey-size shares are written as Stage Access (on a prey "
+        "without a Juvenile Stage as [f, f], the same thing)."
     ),
     "capacity_depth_table": (
         "Capacity by Depth (ton per cell = t/km2): rows of depth (m) and "
@@ -1055,7 +1058,12 @@ FIELD_HELP = {
         "lengths, member-weighted for a pooled group. Empty = both parts "
         "at the pair's accessible_fraction (1 unless set in the library); "
         "a pair cannot carry both. Section 223.32, research_notes/"
-        "\"Arsungarnas andel\" (A-ring) parameters_B.md."
+        "\"Arsungarnas andel\" (A-ring) parameters_B.md.\n\n"
+        "A column without a Juvenile Stage (shown when a pair already "
+        "carries a Stage Access on it) is one pool: the pair sees one "
+        "share of the whole group, so f_J must equal f_A - the same as an "
+        "accessible fraction (section 244.9; the library writes prey-size "
+        "shares this way, habitat shares as accessible_fraction)."
     ),
     "matrix:max_intake_rate": (
         "Attack Rate a of this pair (the library key max_intake_rate on "

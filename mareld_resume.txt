@@ -23350,3 +23350,37 @@ remain open exactly as described in 71.9 / 71.11.
       outside the material law.
     - Every fish group's growth law and g changed: fix88's policies load
       (no layout change) but were trained in another world; retrain.
+
+244.9 stage_access on a prey without a juvenile compartment (user,
+    2026-11-06: one syntax for prey-size shares, no new compartments).
+    - Rule: on an unstaged prey the pair's stage_access is ONE share of
+      the whole group, so f_J = f_A is required (stages.unstaged_share;
+      the loader refuses f_J != f_A with the reason). It is resolved into
+      access_mat at parse time (interactions.build_interaction_matrices),
+      so both engines read it unchanged; both keys on one pair stay
+      refused. Before, stage_access on an unstaged prey was refused.
+    - Why f_J = f_A and not "apply f_A": mackerel has real juveniles
+      (J/B 0.21 in Q3); its staged window would be [0.45, 0.068], and the
+      whole-pool share 0.14 = 0.205 x 0.45 + 0.795 x 0.068. Applying f_A
+      alone would have halved water column -> mackerel without anyone
+      deciding it.
+    - Library: the three prey-size accessible_fractions on unstaged prey
+      rewritten, values unchanged: porpoises -> predatory_fish [0.054,
+      0.054], seals -> predatory_fish [0.029, 0.029], predatory_fish ->
+      mackerel [0.14, 0.14]; each comment gives the staged window it
+      would have with a compartment ([0.87, 0.058], [0.87, 0.028],
+      [0.45, 0.068]). accessible_fraction now carries only habitat /
+      exposure shares (benthivores -> epifauna 0.62, whiting -> epifauna
+      0.29, benthivores -> Nephrops 0.02). budget_gate output identical
+      before and after; derived g untouched (f is not in the budget).
+    - FG editor: the Stage Access matrix also shows an unstaged prey
+      column when a pair carries a stage_access on it, and refuses
+      f_J != f_A there; help texts updated.
+    - Checks: tests/test_juvenile_stage.py (the [f, f] pair is
+      bit-identical to accessible_fraction f over 8 ticks with and
+      without staged groups; GPU parity; f_J != f_A refused),
+      tests/test_fgconfig_juvenile.py (editor parse);
+      test_fgconfig_pair_matrices' bad-value case moved to benthivores ->
+      epifauna (a habitat share). Full suite 1734 passed, 1 failed (that
+      case), 12 skipped; after the fix the editor tests pass; 1-gen
+      train.py smoke passed.

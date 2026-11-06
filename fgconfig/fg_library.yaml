@@ -1740,7 +1740,11 @@ interaction_definitions:
     handling_time: 23.9
     visibility_floor: 0.75
     max_intake_rate: 0.05
-    accessible_fraction: 0.029
+    # Section 244.9: stage_access on a prey without a juvenile compartment
+    # is one share of the whole group (f_J = f_A; the same as an
+    # accessible_fraction, value unchanged). With a compartment it would be
+    # [0.87, 0.028] (research_notes/"Storleksfonster som standard", o-umlaut).
+    stage_access: [0.029, 0.029]
   # Section 228.3: no mackerel in any Skagerrak harbour seal diet (Koster 1977-89,
   # northern Skagerrak 2019-20, Norwegian Skagerrak; params_top_predators.md 1.1).
   seals_preys_on_mackerel:
@@ -2122,7 +2126,13 @@ interaction_definitions:
     predation_mortality: 0.021
     assimilation_factor: 0.8
     handling_time: 265.1
-    accessible_fraction: 0.14
+    # Section 244.9: stage_access on a prey without a juvenile compartment
+    # is one share of the whole group (f_J = f_A; the same as an
+    # accessible_fraction, value unchanged). With a compartment it would be
+    # [0.45, 0.068]: mackerel has real juveniles (J/B 0.21 in Q3), so f_A
+    # alone would halve the pair; 0.14 is the whole-pool share
+    # (research_notes/"Storleksfonster som standard", o-umlaut).
+    stage_access: [0.14, 0.14]
     functional_response: 2
     max_intake_rate: 0.00088
     dark_ratio: 0.92
@@ -2408,7 +2418,11 @@ interaction_definitions:
     handling_time: 28.6
     visibility_floor: 0.9
     max_intake_rate: 0.2
-    accessible_fraction: 0.054
+    # Section 244.9: stage_access on a prey without a juvenile compartment
+    # is one share of the whole group (f_J = f_A; the same as an
+    # accessible_fraction, value unchanged). With a compartment it would be
+    # [0.87, 0.058] (research_notes/"Storleksfonster som standard", o-umlaut).
+    stage_access: [0.054, 0.054]
   # Section 228.3: no mackerel in the Kattegat-Skagerrak porpoise stomachs
   # (Borjesson et al. 2003, Aarefjord et al. 1995; params_top_predators.md 1.2).
   porpoises_preys_on_mackerel:

@@ -33,7 +33,10 @@ second summer). Per tick:
   of the (visible) prey and takes from each part in that ratio; every
   other pair on a staged prey has f_J = f_A = its ``accessible_fraction``
   (1 by default), so the split is the prey's own J/B. The harvest cap acts
-  per compartment (``predation.apply_predation``).
+  per compartment (``predation.apply_predation``). On a prey WITHOUT a
+  compartment a pair's ``stage_access`` is its one share of the whole
+  group (f_J = f_A required; section 244.9), the same as an
+  ``accessible_fraction``.
 - Observations: every decision maker that observes a staged group (and the
   staged group itself) sees its J as one more channel after the observed
   biomasses, visible-scaled as the biomass channel is.
@@ -141,6 +144,22 @@ def pair_stage_access(inter_def, inter_id=""):
     return f_j, f_a
 
 
+def unstaged_share(pair, inter_id=""):
+    """The one share a ``stage_access`` pair has on a prey WITHOUT a
+    juvenile compartment (section 244.9): the prey is one pool, so the
+    pair sees one share of it, and f_J must equal f_A (a juvenile window
+    with no juveniles to act on would be silently dropped)."""
+    f_j, f_a = pair
+    if not math.isclose(f_j, f_a, rel_tol=0.0, abs_tol=1e-12):
+        raise ValueError(
+            f"{inter_id}: the prey has no {KEY}, so {PAIR_KEY} is one share "
+            f"of the whole group: give f_J = f_A (got [{f_j:g}, {f_a:g}])")
+    if not f_a > 0.0:
+        raise ValueError(f"{inter_id}: {PAIR_KEY} on a prey without a {KEY} "
+                         "must be above 0")
+    return f_a
+
+
 def build_tables(env):
     """Stage tables on ``env``.
 
@@ -172,7 +191,9 @@ def build_tables(env):
             if pair is None or env.eat_static_mask[i, j] <= 0.0:
                 continue
             if j not in found:
-                raise ValueError(f"{inter_id}: {PAIR_KEY} needs a prey with a {KEY}")
+                # Section 244.9: one pool, one share; already in
+                # ``access_mat`` (interactions.build_interaction_matrices).
+                continue
             env.stage_f_j[i, j], env.stage_f_a[i, j] = pair
     if not found:
         env.stage_rho = None
