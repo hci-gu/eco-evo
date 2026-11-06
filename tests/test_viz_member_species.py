@@ -195,27 +195,37 @@ def test_library_members_reach_the_fg_params():
 
 def test_the_tooltip_lists_who_eats_the_group(viz, monkeypatch):
     """Below the diet codes: the share of the group's predation loss by
-    predator, largest first, in the predators' own colours."""
+    predator, largest first, with the tonnes eaten in parentheses, in the
+    predators' own colours."""
     feed_coded_lines(viz)
-    viz.update_predation_breakdown({MULTI: {SINGLE: 0.25, MULTI: 0.75}})
+    viz.update_predation_breakdown({MULTI: {SINGLE: 4.5, MULTI: 13.5}})
     viz._render_full()
     assert hover_lines(viz, MULTI, monkeypatch) == [
         "Benthivorous fish", "Haddock  39 %", "Cod  31 %",
         "Others (43 species)  30 %", None,
         f"{viz._fg_abbrev(SINGLE)} = Porpoises", None,
-        "Eaten by", "  Benthivorous fish 75.0%", "  Porpoises 25.0%"]
+        "Eaten by", "  Benthivorous fish 75.0% (13.5 t)",
+        "  Porpoises 25.0% (4.50 t)"]
 
 
 def test_an_uneaten_single_species_group_gets_a_tooltip_once_eaten(viz, monkeypatch):
     assert rect_of(viz, SINGLE) is None
-    viz.update_predation_breakdown({SINGLE: {MULTI: 1.0}})
+    viz.update_predation_breakdown({SINGLE: {MULTI: 0.0123}})
     viz._render_full()
     assert hover_lines(viz, SINGLE, monkeypatch) == [
-        "Porpoises", "Eaten by", "  Benthivorous fish 100.0%"]
+        "Porpoises", "Eaten by", "  Benthivorous fish 100.0% (0.012 t)"]
     viz._lang = "sv"
     viz._render_full()
     assert "Äts av" in hover_lines(viz, SINGLE, monkeypatch)
 
+
+
+@pytest.mark.parametrize("tonnes,text", [
+    (12345.6, "12 346"), (123.4, "123"), (45.67, "45.7"), (4.567, "4.57"),
+    (0.04567, "0.046"), (0.000123, "1.2e-04")])
+def test_tonnes_text(tonnes, text):
+    from lib.viz.pygame_viz import LiveVisualizer
+    assert LiveVisualizer._tonnes_text(tonnes) == text
 
 
 class _RecordingFont:

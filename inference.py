@@ -1169,7 +1169,8 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                 if _diet:
                     viz.update_diet_breakdown(_diet)
                 # Each prey's predation loss this tick by predator (the same
-                # deltas, the other way round), for the heatmap tooltip.
+                # deltas, the other way round, in tonnes; the viewer takes
+                # the shares), for the heatmap tooltip.
                 _eaten_by = {}
                 for pred_id, prey_map in _ipp.items():
                     prev_map = _prev_eaten.get(pred_id, {})
@@ -1179,9 +1180,7 @@ def run_inference(env, policies, obs_mean, obs_var, n_ticks, verbose=True,
                             _eaten_by.setdefault(pid, {})[pred_id] = dv
                     _prev_eaten[pred_id] = {pid: float(v) for pid, v in prey_map.items()}
                 if _eaten_by:
-                    viz.update_predation_breakdown({
-                        pid: {p: v / sum(m.values()) for p, v in m.items()}
-                        for pid, m in _eaten_by.items()})
+                    viz.update_predation_breakdown(_eaten_by)
                 for _re in unique_rnd_envs:
                     _push_action_fracs(viz, _re, step=t, suffix="_rnd",
                                        prev=_prev_act_rnd[id(_re)],

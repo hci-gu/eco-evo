@@ -850,15 +850,15 @@ class LiveVisualizer:
         # från inference.py per tick. Värden är fraktioner i [0, 1] som
         # summerar till 1 när någon konsumtion skett (annars saknas FG).
         self._diet_breakdown: Dict[str, Dict[str, float]] = {}
-        # Per-FG predation by predator (prey -> {predator: share of the
-        # prey's predation loss}), listed in the panel's hover tooltip;
-        # :meth:`update_predation_breakdown`, fed like the diet.
+        # Per-FG predation by predator (prey -> {predator: tonnes of the
+        # prey eaten}), listed in the panel's hover tooltip as share and
+        # tonnes; :meth:`update_predation_breakdown`, fed like the diet.
         self._predation_breakdown: Dict[str, Dict[str, float]] = {}
         # Share of each staged group's biomass in its juvenile compartment
         # (section 223.32), read off the FG objects in ``update_biomass``
         # and written on the panel's sixth info line.
         self._juvenile_share: Dict[str, float] = {}
-        # (predator id, share) behind each panel's tooltip block, rebuilt
+        # (predator id, share, tonnes) behind each panel's tooltip block, rebuilt
         # by ``_draw_one_heatmap`` every frame.
         self._panel_predators: Dict[str, list] = {}
         # Per-FG senaste move/rest/eat-fraktioner (procent 0..100) som
@@ -1655,10 +1655,12 @@ class LiveVisualizer:
     ) -> None:
         """Record per-prey predation by predator.
 
-        ``breakdown`` maps prey_fg_id -> {predator_fg_id: fraction in [0, 1]}
-        of the prey's predation loss (normalised over its predators). The
-        hover tooltip of the prey's heatmap panel lists it. A prey that was
-        not eaten is simply absent.
+        ``breakdown`` maps prey_fg_id -> {predator_fg_id: tonnes of the
+        prey that predator ate} over the caller's window (this tick in
+        inference, the probe rollout in training). The hover tooltip of the
+        prey's heatmap panel lists each predator's share of the total and,
+        in parentheses, its tonnes. A prey that was not eaten is simply
+        absent.
         """
         if not self.enabled:
             return
@@ -1672,6 +1674,21 @@ class LiveVisualizer:
             self._dirty = True
         except Exception as e:
             self._log_once(f"update_predation_breakdown failed: {e!r}")
+
+    @staticmethod
+    def _tonnes_text(tonnes: float) -> str:
+        """Tonnes with about three significant digits, whole tonnes from
+        100 t up (no exponent notation)."""
+        t = float(tonnes)
+        if t >= 100.0:
+            return f"{t:,.0f}".replace(",", " ")
+        if t >= 10.0:
+            return f"{t:.1f}"
+        if t >= 1.0:
+            return f"{t:.2f}"
+        if t >= 0.001:
+            return f"{t:.3f}"
+        return f"{t:.1e}"
 
     def _loss_text(self, template, shares, avail):
         """A loss-breakdown line with one decimal, or whole percents when
@@ -5313,15 +5330,20 @@ class LiveVisualizer:
         """The diet line for prey ``codes`` with shares ``pcts`` (largest
         first), in the first form ``fits(text)`` accepts.
 
-        ``re/ia/pf = 38/31/21%`` as before; when that is wider than the
-        panel (the benthivores have five prey since section 223.15), the
-        pairs ``re38 ia31 pf21%``; when even that is too wide, the
-        smallest shares are dropped and a trailing ``+`` says so.
+        ``re/ia/pf = 38.4/30.6/21.0%`` when it fits, else the same with
+        whole percents (the decimal goes first, as on the loss line); when
+        that is wider than the panel (the benthivores have five prey since
+        section 223.15), the pairs ``re38 ia31 pf21%`` (with a decimal
+        they are never narrower than the slashed whole percents); when
+        even that is too wide, the smallest shares are dropped and a
+        trailing ``+`` says so.
         """
+        nums1 = [f"{p:.1f}" for p in pcts]
         nums = [f"{p:.0f}" for p in pcts]
-        text = "/".join(codes) + " = " + "/".join(nums) + "%"
-        if fits(text):
-            return text
+        for n in (nums1, nums):
+            text = "/".join(codes) + " = " + "/".join(n) + "%"
+            if fits(text):
+                return text
         pairs = [c + n for c, n in zip(codes, nums)]
         text = " ".join(pairs) + "%"
         for k in range(len(pairs) - 1, 0, -1):
@@ -5544,8 +5566,9 @@ class LiveVisualizer:
         # first), for the same tooltip.
         eaten = self._predation_breakdown.get(fid) or {}
         tot = sum(float(v) for v in eaten.values() if float(v) > 0.0)
-        predators = (sorted(((pid, float(v) / tot) for pid, v in eaten.items()
-                             if float(v) > 0.0), key=lambda kv: -kv[1])
+        predators = (sorted(((pid, float(v) / tot, float(v))
+                             for pid, v in eaten.items() if float(v) > 0.0),
+                            key=lambda kv: -kv[1])
                      if tot > 0.0 else [])
         self._panel_predators[fid] = predators
         if fid in self._members or legend or predators:
@@ -6928,9 +6951,10 @@ class LiveVisualizer:
             if members or legend:
                 lines.append(None)
             lines.append((self._t("Eaten by"), (210, 210, 220)))
-            lines += [(f"  {self._display_name(pid)} {share * 100.0:.1f}%",
+            lines += [(f"  {self._display_name(pid)} {share * 100.0:.1f}%"
+                       f" ({self._tonnes_text(tonnes)} t)",
                        self._fg_colour.get(pid, (170, 170, 185)))
-                      for pid, share in predators]
+                      for pid, share, tonnes in predators]
         win = (0, 0) + tuple(self._screen.get_size())
         self._draw_tooltip_box(lines, mx, my, flip_rect=win, clamp_rect=win)
 

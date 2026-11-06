@@ -84,10 +84,18 @@ def _width_fits(n):
     return lambda text: len(text) <= n
 
 
-def test_a_diet_line_that_fits_keeps_the_old_form():
+def test_a_diet_line_that_fits_has_one_decimal():
     text = LiveVisualizer._fit_diet_text(["bf", "plf", "prf"], [60, 25, 15],
                                          _width_fits(40))
+    assert text == "bf/plf/prf = 60.0/25.0/15.0%"
+
+
+def test_the_decimal_goes_first_when_too_wide():
+    assert len("bf/plf/prf = 60.0/25.0/15.0%") > 24
+    text = LiveVisualizer._fit_diet_text(["bf", "plf", "prf"], [60, 25, 15],
+                                         _width_fits(24))
     assert text == "bf/plf/prf = 60/25/15%"
+
 
 
 def test_five_prey_switch_to_pairs_when_too_wide():
