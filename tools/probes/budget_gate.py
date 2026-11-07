@@ -239,6 +239,20 @@ def _start_densities():
     return out
 
 
+def _depth_factor(i, j, prey_id):
+    """Section 245: the pair's per-cell depth multiplier on a, averaged over
+    the cells with the prey's own outside-density shape (an open pool;
+    uniform otherwise) - the equal-cell a turned into the encounter the
+    prey's spatial pattern meets. 1 without a depth table."""
+    if not getattr(env, '_has_pair_depth', False):
+        return 1.0
+    shape = getattr(env.fgs[prey_id], 'outside_weight_map', None)
+    mult = env.pair_depth_mult[i, j]
+    if shape is None:
+        return float(mult.mean())
+    return float((mult * shape).mean())
+
+
 def _visible_share(i, j, prey_id):
     if getattr(env, '_has_stages', False) and j in set(env.stage_rows.tolist()):
         js = float(env.stage_start[:, j].mean())
@@ -273,7 +287,7 @@ for i, pid in enumerate(env.dm_ids):
         b = density.get(prey_id)
         if b is None:
             continue
-        a = float(env.max_intake_mat[i, j])
+        a = float(env.max_intake_mat[i, j]) * _depth_factor(i, j, prey_id)
         ht = float(env.handling_time_mat[i, j])
         bv = b * _visible_share(i, j, prey_id)
         type3 = float(env._type3_pred_mask[i, j, 0, 0]) > 0.0
@@ -306,3 +320,37 @@ if gate_failures:
                       for p, q, e, k in gate_failures))
 else:
     print("Diet gate: every generalist's encounters match its booked diet.")
+
+# ---------------------------------------------------------------------------
+# Total ration (section 245): the gate above compares SHARES and cannot see
+# a booked ration that is short of the predator's field consumption (232.1
+# cut whiting -> planktivores without booking the ration elsewhere; whiting
+# then ate the unbooked 1.6 t/t/yr from the saturated bed pair). Booked
+# ration = sum over the checked pairs of M2 x B_prey / B_pred at the start
+# densities, against the group's field Q/B (research_notes/"Vitlingens
+# ranson" summary.md, its sources). Diagnostic only; nothing is set from it.
+# ---------------------------------------------------------------------------
+FIELD_QB = {
+    'planktivorous_fish': (5.0, "members' Q/B, params_planktivorous_fish.md"),
+    'benthivorous_fish': (4.46, '223.9 budget'),
+    'whiting': (4.2, 'SMS 2023, Lauerburg 2018 (3.3-5.6)'),
+    'predatory_fish': (2.83, 'params_split_223 (2.6-3.6)'),
+    'mackerel': (2.2, 'member value, params_predatory_fish'),
+}
+print()
+print("=== total ration: booked flow vs field Q/B (section 245) ===")
+print(f"{'predator':>20} {'booked':>7} {'field':>6} {'ratio':>6}  source")
+for i, pid in enumerate(env.dm_ids):
+    if pid not in FIELD_QB or pid not in density:
+        continue
+    pairs = env.fgs[pid].params.get('interaction', {}) or {}
+    booked = 0.0
+    for j in range(env.N_all):
+        if not env.eat_static_mask[i, j]:
+            continue
+        prey_id = env.global_fg_order[j]
+        m2 = float((pairs.get(f"{pid}_preys_on_{prey_id}") or {})
+                   .get('predation_mortality', 0.0) or 0.0)
+        booked += m2 * density.get(prey_id, 0.0) / density[pid]
+    qb, source = FIELD_QB[pid]
+    print(f"{pid:>20} {booked:>7.2f} {qb:>6.2f} {booked / qb:>6.2f}  {source}")

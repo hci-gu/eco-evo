@@ -37,6 +37,7 @@ import os
 
 import numpy as np
 
+from lib.environments.ecosystem_env import open_pool
 from lib.world.tick_time import LIBRARY_TICK_HOURS, ticks_per_year
 
 CAPACITY_TABLE_KEY = "capacity_depth_table"
@@ -158,8 +159,22 @@ def build(project, project_path, library, grid_size, active_ids,
     overrides = overrides or {}
     depth = load_depth_map(project, project_path, grid_size, verbose=verbose)
     wanted = {}
+    out = {}
     for fid in active_ids:
         spec = specs.get(fid) or {}
+        if open_pool.is_open(spec):
+            # Section 245: an open pool's outside density over the cells,
+            # the depth shape at equal-cell mean 1; it is also the start
+            # pattern of the equilibrium spawn (the budget's reference).
+            if parse_capacity_table(spec) is not None:
+                raise ValueError(f"{fid}: an open pool has no {CAPACITY_TABLE_KEY}")
+            weight = open_pool.depth_weight_map(
+                open_pool.parse_depth_table(spec), depth, (H, W))
+            equilibrium = _spawn_mode(spec, overrides.get(fid)) == SPAWN_MODE
+            out[fid] = {"capacity": None, "outside_weight": weight,
+                        "equilibrium": (float(spec[open_pool.DENSITY_KEY]) * weight
+                                        if equilibrium else None)}
+            continue
         table = parse_capacity_table(spec)
         equilibrium = _spawn_mode(spec, overrides.get(fid)) == SPAWN_MODE
         if table is None and not equilibrium:
@@ -169,12 +184,11 @@ def build(project, project_path, library, grid_size, active_ids,
                              "spawn are for non decision makers")
         wanted[fid] = (spec, table, equilibrium)
     if not wanted:
-        return depth, {}
+        return depth, out
     if baseline_maps is None:
         from lib.world.impact_maps import project_baseline_maps
         baseline_maps = project_baseline_maps(project, project_path, grid_size,
                                               verbose=verbose)
-    out = {}
     for fid, (spec, table, equilibrium) in wanted.items():
         capacity = None
         if table is not None and depth is not None:
@@ -191,6 +205,17 @@ def build(project, project_path, library, grid_size, active_ids,
     return depth, out
 
 
+def pair_depth_map(inter_def, depth, inter_id=""):
+    """Section 245: a pair's ``depth_access_table`` (rows ``{depth_m,
+    factor}``) at each cell's depth, renormalised to an equal-cell mean of
+    1; None without a table or without a depth map."""
+    rows = (inter_def or {}).get("depth_access_table")
+    if rows in (None, "", []) or depth is None:
+        return None
+    table = open_pool._parse_rows(rows, "factor", f"{inter_id}: depth_access_table")
+    return open_pool.depth_weight_map(table, depth, np.shape(depth))
+
+
 def summary(entry):
     """Box means of K and B* (t/km2) for reports and tests."""
     cap, eq = entry.get("capacity"), entry.get("equilibrium")
@@ -201,5 +226,5 @@ def summary(entry):
 
 __all__ = ["CAPACITY_TABLE_KEY", "SPAWN_MODE", "annual_impact_loss", "build",
            "capacity_map", "depth_map_path", "equilibrium_map", "load_depth_map",
-           "parse_capacity_table", "predation_m2", "summary"]
+           "pair_depth_map", "parse_capacity_table", "predation_m2", "summary"]
 

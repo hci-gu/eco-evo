@@ -89,9 +89,17 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('predatory_fish', 'planktivorous_fish'): 0.0060,
         ('mackerel', 'planktivorous_fish'): 0.0266,
         ('whiting', 'planktivorous_fish'): 0.0212,
-        ('predatory_fish', 'zooplankton'): 0.000241,
-        ('mackerel', 'zooplankton'): 0.0023,
-        ('whiting', 'zooplankton'): 0.0023,
+        # Section 245: krill is its own group; the zooplankton pairs keep
+        # their copepod part (water column x 0.13, whiting x 0.06) and
+        # mackerel's is the measured clearance (biting + filtering).
+        ('predatory_fish', 'zooplankton'): 3.13e-05,
+        ('mackerel', 'zooplankton'): 0.00084,
+        ('whiting', 'zooplankton'): 0.000138,
+        ('planktivorous_fish', 'krill'): 0.018,
+        ('benthivorous_fish', 'krill'): 0.013,
+        ('predatory_fish', 'krill'): 0.0241,
+        ('mackerel', 'krill'): 0.0025,
+        ('whiting', 'krill'): 0.043,
         ('predatory_fish', 'benthivorous_fish'): 0.0055,
         ('whiting', 'benthivorous_fish'): 0.21,
         ('predatory_fish', 'whiting'): 0.013,
@@ -117,7 +125,11 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
         'mackerel_preys_on_planktivorous_fish': (0.16, -5.0),  # stomachs (228.4)
         'whiting_preys_on_planktivorous_fish': (0.48, -5.0),  # 243.3
         'predatory_fish_preys_on_zooplankton': (0.51, -5.0),
-        'mackerel_preys_on_zooplankton': (0.42, -5.0),  # stomachs (228.2)
+        'mackerel_preys_on_zooplankton': (0.24, -5.0),  # night filtering (245)
+        'planktivorous_fish_preys_on_krill': (0.57, 0.0),  # stomachs (245)
+        'benthivorous_fish_preys_on_krill': (0.02, 0.0),
+        'predatory_fish_preys_on_krill': (0.01, 0.0),
+        'mackerel_preys_on_krill': (0.42, -5.0),
         'whiting_preys_on_zooplankton': (0.78, -5.0),
         'predatory_fish_preys_on_benthivorous_fish': (0.48, -5.0),
         'whiting_preys_on_benthivorous_fish': (0.64, -5.0),
@@ -128,7 +140,8 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
         assert daylight.pair_settings(inter[key]) == pytest.approx((rho, theta))
     for key in ('benthivorous_fish_preys_on_benthic_infauna',
                 'benthivorous_fish_preys_on_mobile_epifauna',
-                'whiting_preys_on_mobile_epifauna'):
+                'whiting_preys_on_mobile_epifauna',
+                'whiting_preys_on_krill'):  # no light effect (245)
         assert daylight.pair_settings(inter[key]) is None
     at_zero = daylight.attack_multiplier(58.1, 6, 0.02, 0.0)
     at_minus8 = daylight.attack_multiplier(58.1, 6, 0.02, -8.0)

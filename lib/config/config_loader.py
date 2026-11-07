@@ -9,6 +9,7 @@ from lib.world.growth_budget import (capacity_loss_rate, derived_growth_rate,
 from lib.world import daylight, nutrients, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
 from lib.world import habitat
+from lib.environments.ecosystem_env import open_pool
 
 def load_config(path):
     # The editor writes UTF-8 with a BOM. Using the host encoding on Windows
@@ -358,6 +359,12 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
+        if open_pool.is_open(params):
+            # Section 245: the exchange must hold the open pool.
+            _err = open_pool.stability_error(
+                params.get('growth_rate'), params.get(open_pool.RATE_KEY), sid)
+            if _err:
+                raise ValueError(_err)
         # Section 185: the regional logistic loss, derived like growth_rate
         # and kept out of it.
         _c = capacity_loss_rate(params)
@@ -404,6 +411,7 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                          'equilibrium': habitat_maps.get(sid, {}).get('equilibrium')})
         env_fields[sid] = np.asarray(initial_b, dtype=np.float64)
         fg.equilibrium_map = habitat_maps.get(sid, {}).get('equilibrium')
+        fg.outside_weight_map = habitat_maps.get(sid, {}).get('outside_weight')
         fg.initialize_state(grid_size, initial_biomass=initial_b)
         fgs[sid] = fg
         
@@ -759,6 +767,11 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                     continue
                 if idef.get('preys_on', False):
                     params['menu'].append(prey_id)
+                    # Section 245: a pair's depth table becomes its per-cell
+                    # multiplier on a (equal-cell mean 1) on this depth map.
+                    depth_mult = habitat.pair_depth_map(idef, depth_field, iid)
+                    if depth_mult is not None:
+                        idef = dict(idef, _depth_access_map=depth_mult)
                     params['interaction'][iid] = idef
             elif iid.startswith(f"{sid}_observes_"):
                 obs_id = iid.replace(f"{sid}_observes_", "")
@@ -787,6 +800,12 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
+        if open_pool.is_open(params):
+            # Section 245: the exchange must hold the open pool.
+            _err = open_pool.stability_error(
+                params.get('growth_rate'), params.get(open_pool.RATE_KEY), sid)
+            if _err:
+                raise ValueError(_err)
         # Section 185: the regional logistic loss, derived like growth_rate
         # and kept out of it.
         _c = capacity_loss_rate(params)
@@ -965,6 +984,7 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
         if capacity is not None:
             fg.capacity_map = capacity.astype(np.float32)
         fg.equilibrium_map = habitat_maps.get(sid, {}).get('equilibrium')
+        fg.outside_weight_map = habitat_maps.get(sid, {}).get('outside_weight')
         # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
         # initial energy fill levels. Inference keeps the deterministic
         # 0.7 * ME_X default for reproducible scenario comparisons.

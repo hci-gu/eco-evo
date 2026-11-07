@@ -391,8 +391,17 @@ def capacity_loss_rate(spec):
 
 
 def has_budget(species):
-    """True when the FG's growth_rate is derived rather than hand-set."""
-    return isinstance(species, dict) and _as_float(species.get("r_max")) > 0.0
+    """True when the FG's growth_rate is derived rather than hand-set.
+
+    An open pool (section 245, ``outside_density``) is derived with r_max 0:
+    its local production replaces the booked losses at the outside density,
+    and the exchange with the outside sits outside the budget.
+    """
+    if not isinstance(species, dict):
+        return False
+    if species.get("outside_density") not in (None, ""):
+        return True
+    return _as_float(species.get("r_max")) > 0.0
 
 
 def active_predation(prey_id, species_defs, interactions,

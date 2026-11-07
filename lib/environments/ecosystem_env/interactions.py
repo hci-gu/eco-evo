@@ -799,6 +799,45 @@ def visible_prey_biomass(env, prey_biomass, actions):
     return shared_visible, pair_visible
 
 
+PAIR_DEPTH_KEY = "depth_access_table"
+PAIR_DEPTH_MAP = "_depth_access_map"
+
+
+def build_pair_depth_maps(env):
+    """Section 245: per-cell multiplier on a pair's attack rate a.
+
+    A pair with ``depth_access_table`` (rows ``{depth_m, factor}``: the
+    pair's encounter by the cell's bed depth, e.g. a bed feeder meets the
+    deep krill layer only over shallow beds) gets, from the loader, the
+    table at each cell's depth renormalised to an equal-cell mean of 1
+    (``_depth_access_map``), so the library a stays the equal-cell grid
+    mean. It multiplies a only - never the visible prey, the per-pair
+    bound or the harvest cap, since factors above 1 are legal here.
+
+    Sets ``env.pair_depth_mult`` (N_dm, N_all, H, W) and
+    ``env._has_pair_depth``; None / False when no pair carries a map.
+    """
+    env.pair_depth_mult = None
+    env._has_pair_depth = False
+    maps = {}
+    for i, pred_id in enumerate(env.dm_ids):
+        interaction = env.fgs[pred_id].params.get("interaction", {}) or {}
+        for j, prey_id in enumerate(env.global_fg_order):
+            if env.eat_static_mask[i, j] <= 0.0:
+                continue
+            field = (interaction.get(f"{pred_id}_preys_on_{prey_id}") or {}).get(PAIR_DEPTH_MAP)
+            if field is not None:
+                maps[(i, j)] = np.asarray(field, dtype=env.dtype)
+    if not maps:
+        return
+    shape = next(iter(maps.values())).shape
+    mult = np.ones((env.N_dm, env.N_all) + tuple(shape), dtype=env.dtype)
+    for (i, j), field in maps.items():
+        mult[i, j] = field
+    env.pair_depth_mult = mult
+    env._has_pair_depth = True
+
+
 def apply_pair_access(env, visible, pair_visible):
     """Section 208: scale each pair's visible prey by its
     ``accessible_fraction`` and rebuild the shared cap from the pairs.

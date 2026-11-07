@@ -165,6 +165,10 @@ def test_every_library_fg_has_a_literature_budget():
     for fid, spec in lib["species_definitions"].items():
         if fid in HAND_SET:
             assert "r_max" not in spec, fid
+        elif spec.get("outside_density") not in (None, ""):
+            # Section 245: an open pool is derived with r_max 0 (its density
+            # is set outside the box; local production = booked losses).
+            assert float(spec.get("r_max", 0.0)) == 0.0, fid
         else:
             assert float(spec.get("r_max", 0.0)) > 0.0, fid
         assert "satiation_scale" not in spec, fid  # removed, section 130

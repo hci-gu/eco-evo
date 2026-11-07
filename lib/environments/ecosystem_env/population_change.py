@@ -8,6 +8,7 @@ from lib.world import energy_balance
 from lib.environments.ecosystem_env import natural_mortality as natural_mortality_module
 from lib.environments.ecosystem_env import regeneration
 from lib.environments.ecosystem_env import refuge
+from lib.environments.ecosystem_env import open_pool
 from lib.environments.ecosystem_env import stages
 
 
@@ -234,6 +235,11 @@ def _apply_non_decision_maker_population_change(env, fg_id, fg):
     population_rate = fg.growth_rate * interactions.growth_light(env, fg_id)
     if fg_id in getattr(env, "inert_producers", ()):
         population_rate = 0.0     # section 180: no layer to live in
+    if getattr(fg, "open_pool", None) is not None:
+        # Section 245: growth and the exchange with the outside density;
+        # no logistic and no clip at K.
+        open_pool.grow(env, fg_id, fg, population_rate)
+        return
     if interactions.is_nutrient_producer(env, fg_id):
         biomass_delta = _nutrient_limited_delta(
             env, fg_id, fg, population_rate, carrying_capacity)

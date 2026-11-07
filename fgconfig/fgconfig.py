@@ -1,4 +1,4 @@
-﻿import tkinter as tk
+import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
 import codecs
@@ -934,7 +934,7 @@ class FGConfigApp:
         self.ndm_prop_vars = {}
         # (label, key, type, lo, hi)
         ndm_props = [
-            ("Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
+            ("Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand, or derived for an open pool)", "r_max", "entry", 0.0, 100.0),
             ("Max Growth (fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
             # Own losses of the producer (section 173).
             ("Natural Mortality M1 (fraction/{tick}; respiration, sinking, lysis)", "natural_mortality", "entry", 0.0, 1.0),
@@ -944,6 +944,9 @@ class FGConfigApp:
             # Benthic refuge with exchange (section 223.12).
             ("Exposed Share phi (refuge: accessible part, 0-1; 0 = no refuge)", "exposed_share", "entry", 0.0, 1.0),
             ("Refuge Exchange Rate k (1/{tick}; relaxes the accessible part to phi B)", "refuge_exchange_rate", "entry", 0.0, 10.0),
+            # Open pool (section 245): density set outside the box.
+            ("Outside Density (t/km2, box mean; open pool; 0 = closed)", "outside_density", "entry", 0.0, 100000.0),
+            ("Outside Exchange Rate k (1/{tick}; relaxes B to the outside density)", "outside_exchange_rate", "entry", 0.0, 10.0),
             # Light-limited growth on the daylight calendar (section 138).
             ("Light Saturation I_k (umol photons/m2/s; 1 or 12 monthly values; 0 = off)", "light_saturation", "entry", 0.0, 5000.0),
             ("Light Reference Day (day of year Max Growth applies; 0 = 105, mid April)", "light_reference_day", "entry", 0.0, 365.0),
@@ -4823,6 +4826,7 @@ class FGConfigApp:
         "regional_carrying_capacity",
         "mortality_regeneration", "egestion_regeneration",
         "natural_mortality", "exposed_share", "refuge_exchange_rate",
+        "outside_density", "outside_exchange_rate",
         "sda_fraction", "growth_cost",
     })
 

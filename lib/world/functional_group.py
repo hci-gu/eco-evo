@@ -101,6 +101,14 @@ class FunctionalGroup:
         self.refuge_exchange_rate = float(params.get('refuge_exchange_rate', 0.0) or 0.0)
         if self.refuge_exchange_rate < 0.0:
             raise ValueError(f"{group_id}: refuge_exchange_rate must be >= 0")
+        # Section 245: an open pool (outside density, exchange rate k per
+        # tick, monthly season; ecosystem_env/open_pool.py). The loader sets
+        # outside_weight_map (the depth shape, equal-cell mean 1).
+        from lib.environments.ecosystem_env import open_pool
+        self.open_pool = open_pool.parse(params, group_id)
+        if self.open_pool is not None and self.exposed_share is not None:
+            raise ValueError(f"{group_id}: an open pool cannot also be a refuge")
+        self.outside_weight_map = None
 
     def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7,
                          randomize_energy=False, rng=None):

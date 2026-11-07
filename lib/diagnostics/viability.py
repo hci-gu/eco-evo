@@ -359,6 +359,8 @@ def _per_prey_intake(env):
 
     prey = _reachable_prey(env)
     intake_rate = interactions.attack_rate(env)[:, :, None, None]
+    if getattr(env, "_has_pair_depth", False):
+        intake_rate = intake_rate * env.pair_depth_mult    # section 245
     if env._has_interference:
         predator = np.stack(
             [env.fgs[fid].biomass for fid in env.dm_ids], axis=0)

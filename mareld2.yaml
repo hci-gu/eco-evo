@@ -200,6 +200,13 @@ non_decision_makers:
     initial_biomass_min: 20000
     initial_biomass_max: 60000
     inference_initial_biomass: 40000
+  # Section 245: the open krill pool, 5 t/km2 annual mean (start = the
+  # outside density; any mismatch to the start day's season relaxes away
+  # in ~1/k = 18 days); training range x0.5-2.
+  - group_id: krill
+    initial_biomass_min: 9000
+    initial_biomass_max: 36000
+    inference_initial_biomass: 18000
   - group_id: microzooplankton
     initial_biomass_min: 700
     initial_biomass_max: 7200

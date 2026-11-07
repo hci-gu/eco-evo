@@ -43,6 +43,7 @@ FG_NAMES = {
         "benthic_infauna": "Infauna",
         "mobile_epifauna": "Rörlig epifauna",
         "norway_lobster": "Havskräfta",
+        "krill": "Krill",
         "planktivorous_fish": "Planktonätande fisk",
         "benthivorous_fish": "Bottendjursätande fisk",
         "predatory_fish": "Rovfisk",
@@ -60,6 +61,7 @@ FG_NAMES = {
         "benthic_infauna": "Infauna bentonica",
         "mobile_epifauna": "Epifauna mobile",
         "norway_lobster": "Scampo",
+        "krill": "Krill",
         "planktivorous_fish": "Pesci planctivori",
         "benthivorous_fish": "Pesci bentivori",
         "predatory_fish": "Pesci predatori",
@@ -103,6 +105,8 @@ SPECIES = {
         "copepods (calanus, metridia, small species)":
             "hoppkräftor (Calanus, Metridia, små arter)",
         "krill": "krill",
+        "northern krill": "nordlig krill",
+        "thysanoessa krill": "Thysanoessa-krill",
     },
     "it": {
         "haddock": "eglefino", "cod": "merluzzo bianco",
@@ -134,6 +138,8 @@ SPECIES = {
         "copepods (calanus, metridia, small species)":
             "copepodi (Calanus, Metridia, specie piccole)",
         "krill": "krill",
+        "northern krill": "krill nordico",
+        "thysanoessa krill": "krill Thysanoessa",
     },
 }
 

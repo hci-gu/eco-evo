@@ -334,6 +334,35 @@ class TensorEcosystem:
             self.stage_start = tensor(env.stage_start)[:, :, None]
             self.stage_f_j = tensor(env.stage_f_j)[None, :, :, None]
             self.stage_f_a = tensor(env.stage_f_a)[None, :, :, None]
+        # Section 245: open pools, mirror of ``ecosystem_env/open_pool.py``:
+        # B <- T + (B (1 + g) - T) exp(-k) after M1, no logistic, no K.
+        open_ids = tuple(getattr(env, "open_ids", ()))
+        self.open_on = bool(open_ids)
+        if self.open_on:
+            self.open_mask = tensor([fid in open_ids for fid in self.ids],
+                                    torch.bool)[None, :, None]
+            self.open_target = tensor(np.stack([
+                np.asarray(env.open_target[fid], dtype=np.float32).reshape(-1)
+                if fid in open_ids else np.zeros(self.C, dtype=np.float32)
+                for fid in self.ids]))[None]
+            self.open_keep = tensor([
+                float(np.exp(-env.fgs[fid].open_pool["rate"])) if fid in open_ids else 1.0
+                for fid in self.ids])[None, :, None]
+            seasons = [env.open_season.get(fid) for fid in open_ids]
+            self.open_season = None
+            if any(t is not None for t in seasons):
+                period = next(len(t) for t in seasons if t is not None)
+                self.open_season = tensor(np.stack([
+                    np.asarray(env.open_season[fid], dtype=np.float32)
+                    if fid in open_ids and env.open_season.get(fid) is not None
+                    else np.ones(period, dtype=np.float32)
+                    for fid in self.ids], axis=1))[:, :, None]
+        # Section 245: per-cell depth multiplier on a pair's attack rate,
+        # mirror of ``interactions.build_pair_depth_maps``: [1, D, G, C].
+        self.pair_depth = (
+            tensor(np.asarray(env.pair_depth_mult, dtype=np.float32).reshape(
+                self.D, self.G, self.C))[None]
+            if getattr(env, "_has_pair_depth", False) else None)
         self.threshold = tensor([max(0.0, fg.min_split_biomass * fg.extinction_threshold_factor) for fg in groups])[None, :, None]
         # Same product, per DM and broadcast over the direction axis of
         # ``b_out``, for the sub-threshold split suppression in
@@ -831,6 +860,8 @@ class TensorEcosystem:
             if light_index is None:
                 raise ValueError("light_index is required with the daylight calendar")
             a = a * self.light_mult[light_index.reshape(-1)]
+        if self.pair_depth is not None:
+            a = a * self.pair_depth
         eat = actions[:, :, 5:]
         if self.holling and self.shared_handling:
             # Section 242 (``interactions.attack_choice`` and
@@ -1456,6 +1487,15 @@ class TensorEcosystem:
             ndm_r = torch.where(self.nutrient, pool - limited, reserve)
         ndm_delta = ndm_delta + self.seed_rate * self.capacity * seed_multiplier
         ndm_b = torch.minimum((nb + ndm_delta).clamp_min(0), self.capacity)
+        if self.open_on:
+            # Section 245: growth and the exchange with the outside density.
+            target = self.open_target
+            if self.open_season is not None:
+                if light_index is None:
+                    raise ValueError("light_index is required with an open pool's season")
+                target = target * self.open_season[light_index.reshape(-1)]
+            open_b = (target + (nb * (1.0 + rate) - target) * self.open_keep).clamp_min(0)
+            ndm_b = torch.where(self.open_mask, open_b, ndm_b)
         if self.refuge_on:
             ndm_b = torch.where(self.refuge_mask, refuge_b, ndm_b)
             ndm_r = torch.where(self.refuge_mask, refuge_a, ndm_r)

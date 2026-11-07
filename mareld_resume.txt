@@ -23497,3 +23497,90 @@ remain open exactly as described in 71.9 / 71.11.
     - Open (for the user): mackerel's 4-month g (244.8); booking the
       whiting's full ration (or its unbooked prey) on the prey groups;
       the water column's zooplankton pair; the open-population form.
+
+245 THE OPEN KRILL POOL; WHITING'S RATION (user, 2026-11-07: "investigate
+    whiting's ration first", "investigate the krill biomass", "propose how
+    an open krill group is built", "run research points 1-3", "do 1 and 2":
+    build the krill group and lower whiting's cannibalism in one go).
+    - Why: the booked ration of whiting was 2.63 of its field Q/B 4.2
+      t/t/yr (232.1 cut whiting -> planktivores on box availability
+      without booking the ration elsewhere; cannibalism 0.142 and infauna
+      unbooked). In-area stomachs say the box whiting eat krill (Skagerrak
+      April 1991 ICES DB euphausiids 0.54, Oslofjord ~0.82), as do Norway
+      pout (0.66, winter 0.80; Albert 1994), blue whiting and saithe. The
+      model's zooplankton is the A17 0-25 m WP2 stock, whose nets exclude
+      krill. research_notes/"Vitlingens ranson", "Krill i Skagerrak"
+      (summary.md, exchange/, diets/, pairs/, wc_depth/, mackerel_filter/,
+      synthesis.md, proposal.md, applied.md).
+    - Engine (both engines; lib/environments/ecosystem_env/open_pool.py):
+      an OPEN pool is a non decision maker with outside_density (t/km2,
+      box mean), outside_exchange_rate k (per tick, a flux in tick_time),
+      outside_season (12 mid-month factors, daylight calendar) and
+      outside_depth_table (shape by cell depth, renormalised to an
+      equal-cell mean of 1). Per tick after M1:
+          B <- T + (B (1 + g) - T) exp(-k),  T = density x season x w(c)
+      No logistic, no clip at K. g is derived with r_max 0 (growth_budget
+      .has_budget accepts an open pool), so local production replaces the
+      booked losses at T; the exchange is outside g. The loader refuses
+      g >= exp(k) - 1. Start pattern: spawn mode equilibrium = density x
+      w(c) (habitat.build). The net exchange flow is NOT booked in the
+      loss accounts (loss_natural, the GPU record, the probes' loss
+      lines): a krill change of B does not add up to its listed losses.
+    - Engine: a pair's depth_access_table (rows {depth_m, factor}) becomes
+      a per-cell multiplier on a (equal-cell mean 1; habitat.pair_depth_map
+      -> pair param _depth_access_map -> interactions.build_pair_depth_maps
+      -> env.pair_depth_mult; GPU pair_depth [1, D, G, C]). It multiplies a
+      only, never visibility or the harvest cap (factors > 1 are legal).
+    - Library: krill (members northern krill, Thysanoessa krill): density
+      5 t/km2 (2-12; in-box IKMT 1987-91, Bohle & Moksness 1991), k 20 /yr
+      (5-50; Rodhe 1987 currents, ~18 d residence), season Q1-Q4 1.0 / 0.6
+      / 1.1 / 1.3, depth weights 0.3 -> 1.4 over 44 -> 530 m, E 5000 MJ/t,
+      M1 0, r_max 0, current_response 0 (the exchange carries the
+      advection). Pairs (Type II, assimilation 0.8; a = equal-cell mean,
+      depth table per bed class < 100 / 100-150 / 150-250 / > 250 m):
+          pred          a       h      dark/thr     M2 on krill
+          planktivores  0.018   57.8   0.57 / 0     1.67
+          benthivores   0.013   182.7  0.02 / 0     0.035
+          water column  0.0241  167.8  0.01 / 0     0.075
+          mackerel      0.0025  75.5   0.42 / -5    0.10
+          whiting       0.043   159.5  none         0.1873
+      Sum M2 2.07 /yr = the field P/B 2 (1.2-3.5) within 4 %, leaving M1 0
+      (non-model losses imported; flagged). Stability margin e / sum M2
+      ~10. The five predators observe krill (one channel each).
+    - Zooplankton pairs re-booked to non-krill only: planktivores M2 2.0 ->
+      1.30 (a unchanged: A17 pool holds no krill); whiting M2 0.0544 ->
+      0.0039, a x 0.06; water column 0.0521 -> 0.0017, a x 0.13; mackerel
+      0.1299 -> 0.072, a 0.0023 -> 0.00084 (Macy 1998 clearance: daytime
+      biting on Calanus 0.62 of it), dark 0.42 -> 0.24. "krill" removed
+      from the zooplankton members.
+    - Whiting's ration (option b): in-area diet krill 0.50, copepods 0.02,
+      cannibalism 0.022 (SMS whiting-on-whiting M 0.094 / 4.2; was 0.142
+      from two thin samples, implying M 0.60), infauna 0.073 and other
+      0.007 unbooked; the rest 0.378 on planktivores, epifauna and
+      benthivores at their booked proportions: their M2 x 1.103 (0.0545,
+      0.0761, 0.1067). Booked ration 2.63 -> 3.77 t/t/yr (0.90 of Q/B).
+    - Derived g moved: benthivores 0.0015752 -> 0.0015943, planktivores
+      0.0016563 -> 0.0016645, epifauna 0.0011979 -> 0.0012028,
+      zooplankton 0.11883 -> 0.11652, krill 0.0014160.
+    - budget_gate: encounter shares now take the pair's per-cell depth
+      factor times the prey's outside shape; new total-ration row (booked
+      flow / field Q/B: benthivores 0.97, mackerel 0.69, planktivores
+      0.89, water column 0.82, whiting 0.90). OFF after the build (not
+      tuned; the krill encounter dominates the two gadoid predators):
+      water column -> krill 3.3 (wc_depth/: 3.5 at the saithe bed-depth
+      weighting), -> planktivores 0.18, -> benthivores 0.15; whiting ->
+      benthivores 0.21, -> planktivores 0.29. The trained world will take
+      more krill and less fish than booked on those two; the retrained
+      probe checks the realised diets.
+    - Checks: tests/test_open_pool.py (keys, one tick, exact fixed point,
+      season, depth shape, refusal, r_max-0 budget, habitat, constant
+      pair map = scaled a, GPU parity with season and a non-uniform map -
+      both GPU branches mutation-checked, mareld2 pins);
+      test_half_saturation, test_growth_budget, test_gpu_spawn (15
+      groups) updated. Full suite green; 1-gen train.py and train_gpu.py
+      smokes passed.
+    - Checkpoints are invalid (new group, new eat actions, new observation
+      channels). Open: mackerel's 4-month g (244.8); the five OFF pairs;
+      the krill-weighted vs equal-cell a; dark ratios of the water column
+      and benthivores (encounter, no diel stomachs); dusk peak and the
+      ~3x seasonal swing of a not represented; Thysanoessa share.

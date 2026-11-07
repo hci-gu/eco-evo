@@ -7,8 +7,8 @@ import torch
 from lib.world import nutrients, temperature
 from lib.world.growth_budget import growth_law, income_growth
 from lib.environments.ecosystem_env import (
-    grid_masks, impacts, interactions, natural_mortality, refuge, regeneration,
-    stages)
+    grid_masks, impacts, interactions, natural_mortality, open_pool, refuge,
+    regeneration, stages)
 
 
 @dataclass
@@ -182,6 +182,10 @@ def build_static_caches(env):
     # Nutrient pools of light-limited producers (section 172), on the
     # same year tick.
     interactions.build_nutrient_tables(env)
+    # Section 245: open pools (outside density, exchange, season) and the
+    # per-cell depth multiplier of the pairs that carry a depth table.
+    open_pool.build_tables(env)
+    interactions.build_pair_depth_maps(env)
     # Section 180: a subsurface producer without the two-layer column
     # (no nutrients.subsurface_layer, or no calendar at all) is inert.
     env.inert_producers = frozenset(

@@ -149,7 +149,8 @@
     # Norwegian Trench, krill).
     member_species:
       - {name: "copepods (Calanus, Metridia, small species)"}
-      - {name: krill}
+    # Section 245: krill is the open `krill` group (the A17 WP2 nets that
+    # calibrate this pool do not catch it representatively).
     is_decision_maker: true
     maintenance_level: 0.5
     # Section 240: stays on the gate. The reserve-room appetite fits the
@@ -222,7 +223,8 @@
     # 11.5 C (Huntley & Lopez 1992) = 58.4 /yr, minus total mortality
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
     r_max: 33.4
-    growth_rate: 0.11882721356
+    # Section 245 (krill moved out of four fish pairs): 0.11882721356 -> 0.1165193.
+    growth_rate: 0.11651933299
     # M1 = total copepod mortality (~25 /yr = realised P/B) minus the
     # fish predation booked on pairs. Section 209: planktivorous_fish 1.6
     # + predatory_fish 0.13 = 1.73 /yr (was 5.3, the Ecopath 21 % of pelagic
@@ -403,7 +405,8 @@
     # 1.76 /yr against a stock-weighted literature P/B ~1.08: the M2 of the
     # booked prey (open flag).
     r_max: 1.14
-    growth_rate: 0.0011979452055
+    # Section 245 (whiting M2 x 1.103): 0.0011979452055 -> 0.0012028.
+    growth_rate: 0.0012028082192
     # K = today's stock / equilibrium share 0.543 (trawl 0.186, M2 0.616),
     # rows fitted by non-negative least squares so the start map B*(c)
     # matches the members' depth structure (crabs 2:1 from 100 to 300 m,
@@ -482,6 +485,68 @@
     spawn:
       mode: equilibrium
     seed_rate: 1e-06
+  krill:
+    current_response: 0.0
+    display_name: "Krill"
+    # Section 245: the deep krill layer (Meganyctiphanes norvegica dominant,
+    # Thysanoessa spp. present but unquantified), the missing food of the
+    # box fish: whiting 0.50 of its diet, Norway pout 0.66, blue whiting
+    # 0.60, saithe 0.25 (research_notes/"Krill i Skagerrak", diets/). Day
+    # layer 70-150 m (on the bed over beds shallower than ~143 m, mid-water
+    # above deeper ones), about half rises to 10-50 m at night. An OPEN
+    # pool (ecosystem_env/open_pool.py): its density in the box is set by
+    # the Skagerrak population around it, which the water renews every ~18
+    # days. research_notes/"Krill i Skagerrak" summary.md, exchange/,
+    # synthesis.md, proposal.md.
+    member_species:
+      - {name: northern krill}
+      - {name: Thysanoessa krill}
+    is_decision_maker: false
+    movement_speed: 0.0
+    # 5 t WW/km2 annual mean (2-12; floor ~1): in-box winter-night IKMT
+    # catches 1987-91 (Bohle & Moksness 1991, Table 1), 1.7-4.8 t/km2 in
+    # 5-65 m, / layer share 0.4 / net efficiency 0.6 = a winter column of
+    # 7-9 t/km2; the Norwegian Trench spring trawls (IMR NSEC 2023/25) a
+    # floor. The equal-cell box mean of the outside population.
+    outside_density: 5.0
+    # k = 20 /yr / 1460 (5-50 /yr): Rodhe 1987's section at the box's
+    # latitude, 5-15 cm/s along the slope at the krill depths -> ~18 d
+    # residence in the 60 km box; diel migration retains krill only in the
+    # offshore half (x 0.5-1 of the water). exchange/summary.md.
+    outside_exchange_rate: 0.01369863
+    # Quarterly factors Q1-Q4 1.0 / 0.6 / 1.1 / 1.3 of the annual mean
+    # (post-spawning low in Q2, lipid-rich adults and recruits in Q4;
+    # Buchholz & Prado-Fiedler 1987), interpolated between mid-months. A
+    # boundary forcing of the outside density, like the reservoir nitrate.
+    outside_season: [1.0, 1.0, 1.0, 0.6, 0.6, 0.6, 1.1, 1.1, 1.1, 1.3, 1.3, 1.3]
+    # Shape over bed depth (little krill over beds shallower than the day
+    # layer), renormalised by the loader to an equal-cell mean of 1.
+    outside_depth_table:
+      - {depth_m: 44.0, weight: 0.3}
+      - {depth_m: 70.0, weight: 0.5}
+      - {depth_m: 100.0, weight: 0.8}
+      - {depth_m: 150.0, weight: 1.0}
+      - {depth_m: 250.0, weight: 1.2}
+      - {depth_m: 530.0, weight: 1.4}
+    # Derived growth g = (r_max + M1 + sum M2) / 1460 with r_max 0: the
+    # local production replaces the booked fish predation at the outside
+    # density, 2.07 /yr, which equals the field P/B 2 (1.2-3.5; Lindley's
+    # CPR estimates, EwE 1.6-4) within 4 %. M1 0: no room is left for krill
+    # losses outside the model at the central stock (jellyfish, other
+    # fish); in an open pool the exchange imports such a deficit (flagged,
+    # synthesis.md check 2). The exchange is outside g.
+    r_max: 0.0
+    natural_mortality: 0.0
+    growth_rate: 0.0014159589041
+    # 5.0 kJ/g WW annual mean (4.3 in spring-summer, ~6 in winter):
+    # Kattegat 20.5-26 kJ/g DW (Buchholz & Prado-Fiedler 1987) x DW/WW
+    # 0.20-0.27; Barents Sea 4.5 / 6.6 kJ/g WW (Nowicki et al. 2023).
+    energy_content: 5000.0
+    min_split_biomass: 0.0
+    extinction_threshold_factor: 0.0
+    seed_rate: 0.0
+    spawn:
+      mode: equilibrium
   planktivorous_fish:
     display_name: "Planktivorous Fish"
     # Display only (live viewer hover): the members and their
@@ -636,7 +701,8 @@
     # booked flow, s*, season 6.4) -> 0.0024013; 244 (material law, SDA
     # 0.11, feeding_cost 1.65: s* 0.752 -> 0.750) -> 0.0024099; 244.10
     # (appetite reserve_room: s* 0.750 -> 1) -> 0.0016563.
-    growth_rate: 0.0016563491332
+    # Section 245 (whiting M2 x 1.103): 0.0016563491332 -> 0.0016645.
+    growth_rate: 0.0016645362052
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
@@ -816,7 +882,8 @@
     # B*/(1 - F/r) = 3.39 t/km2.
     # Section 240: s* = 1 (reserve_room), 0.0011289; section 244: x 12 /
     # feeding_season_months 8.6 (material law).
-    growth_rate: 0.0015752138885
+    # Section 245 (krill pair M2 0.035 booked): 0.0015752138885 -> 0.0015943.
+    growth_rate: 0.0015943282562
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -1528,8 +1595,14 @@ interaction_definitions:
   # 0-25 m pool), night/day 0.025 -> 0.038 (library 0.02 -> 0.03).
   # research_notes/"Kolmulens biomassa" (Swedish letters: a-umlaut) zoo/, tables/.
   planktivorous_fish_preys_on_zooplankton:
+    # Section 245: krill is its own group; this pair is the non-krill
+    # zooplankton only: non-krill share 0.55 (herring 0.80, pout 0.25, blue
+    # whiting 0.17, sprat 0.80; consumption-weighted, Albert 1994 for pout)
+    # x the members' Q/B = 12.6 t/km2/yr / 9.72 t/km2 = 1.30 (was 2.0; 0.80
+    # of it krill). a unchanged: the 243.3 encounter was on the A17 pool,
+    # which holds no krill (WP2 nets exclude it). research_notes/"Krill i Skagerrak" (synthesis.md, diets/, pairs/).
     preys_on: true
-    predation_mortality: 2.0
+    predation_mortality: 1.30
     assimilation_factor: 0.8
     handling_time: 52.0
     # Section 220: attack rate from encounter theory (f pi R^2 v p per fish,
@@ -1673,6 +1746,8 @@ interaction_definitions:
   # Whiting on planktivores (adults on sprat, Norway pout, herring): diet
   # share 0.28. Night/day 0.33 derived.
   whiting_preys_on_planktivorous_fish:
+    # Section 245 (whiting's ration): 0.0494 x 1.103, see whiting_preys_on_krill;
+    # inside 232.1's range (0.03-0.11 at the 12 000 t pool = 0.021-0.078 here).
     # Section 243.3 (pout 1.64 t/km2): a x1.009, dark_ratio 0.33 -> 0.48 from the
     # encounter at the new pool, window [0.10, 0.0073] -> [0.18, 0.0073] (small pout
     # fit the ~10 cm window), M2 x 12000/17000, h = 6495 / 31.35.
@@ -1687,7 +1762,7 @@ interaction_definitions:
     # per whiting tonne per species); transfers by box availability 0.064-
     # 0.079, in-area stomachs (Skagerrak 1991, 2022, 1981) 0.04-0.12.
     # research_notes/"Vitlingens fiskbyten" (Swedish letters) step2_summary.md.
-    predation_mortality: 0.0494
+    predation_mortality: 0.0545
     assimilation_factor: 0.8
     handling_time: 207.2
     visibility_floor: 0.25
@@ -1957,8 +2032,9 @@ interaction_definitions:
   # 0.024 too. research_notes/"Vitlingens fiskbyten" (Swedish letters)
   # summary.md, step2_summary.md.
   whiting_preys_on_mobile_epifauna:
+    # Section 245 (whiting's ration): x 1.103, see whiting_preys_on_krill.
     preys_on: true
-    predation_mortality: 0.069
+    predation_mortality: 0.0761
     assimilation_factor: 0.8
     handling_time: 119.7
     accessible_fraction: 0.29
@@ -2099,8 +2175,9 @@ interaction_definitions:
   # prey): the small end of the juveniles only, effective 0.007 at the box
   # J/B. research_notes/"Arsungarnas andel" (Swedish letters: A-ring) parameters_B.md section 4.
   whiting_preys_on_benthivorous_fish:
+    # Section 245 (whiting's ration): x 1.103, see whiting_preys_on_krill.
     preys_on: true
-    predation_mortality: 0.0967
+    predation_mortality: 0.1067
     assimilation_factor: 0.8
     handling_time: 143.6
     # Section 232.2: window weighted by each predator length's share of a
@@ -2284,11 +2361,15 @@ interaction_definitions:
   # zooplankton consumption (saithe's krill); the mackerel group's M2 is its
   # members' consumption at their field biomass, same calibration.
   predatory_fish_preys_on_zooplankton:
+    # Section 245: krill is its own group; this pair is the non-krill
+    # zooplankton only: saithe's 1991 stomachs hold no calanoids, share
+    # 0.009 -> M2 0.0017 (was 0.0521, 96 % krill), a x 0.13 (krill was
+    # 0.87 of the 220 encounter). research_notes/"Krill i Skagerrak" (synthesis.md, diets/, pairs/).
     preys_on: true
-    predation_mortality: 0.0521
+    predation_mortality: 0.0017
     assimilation_factor: 0.8
     handling_time: 151.1
-    max_intake_rate: 0.000241
+    max_intake_rate: 3.13e-05
     dark_ratio: 0.51
     light_threshold_deg: -5.0
   # Section 228.2: night/day from the stomachs, not the encounter model (visual
@@ -2299,25 +2380,190 @@ interaction_definitions:
   # same layer; shelf copepods mostly do not migrate and a resting copepod stays
   # visible, daytime accessible share 0.5-0.9 (section 162, zooplankton_refuge.md).
   mackerel_preys_on_zooplankton:
+    # Section 245: krill is its own group; this pair is the non-krill
+    # zooplankton only. M2 = non-krill share 0.37 x Q/B 2.2 x 3060 t / 35000 t
+    # = 0.072 (was 0.1299, 42 % krill). a 0.00084 (0.00046-0.00086) from
+    # measured clearance (Macy et al. 1998): daytime biting on Calanus 0.62
+    # of it, filtering 0.23, horse mackerel bites by day only; dark_ratio
+    # 0.24 (0.09-0.34) at -5 deg = night filtering of Calanus (~0 if the
+    # box's densities do not trigger it). Mean-field slope: the box mean is
+    # below the lab feeding threshold (patches). research_notes/"Krill i
+    # Skagerrak" mackerel_filter/summary.md.
     preys_on: true
-    predation_mortality: 0.1299
+    predation_mortality: 0.072
     assimilation_factor: 0.8
     handling_time: 68.0
     visibility_floor: 0.5
-    max_intake_rate: 0.0023
-    dark_ratio: 0.42
+    max_intake_rate: 0.00084
+    dark_ratio: 0.24
     light_threshold_deg: -5.0
   # Whiting on krill and mysid-sized zooplankton: encounter 0.0018 x the
   # Staniland 1995 capture factor on shrimp 1.33 (as the pooled pair, J)
   # = 0.0023. Night/day 0.78.
   whiting_preys_on_zooplankton:
+    # Section 245: krill is its own group; this pair is the non-krill
+    # zooplankton only (copepods, hyperiids): diet share 0.02 x Q/B 4.2 x
+    # 1605 t / 35000 t = 0.0039 (was 0.0544, 96 % krill), a x 0.06 (krill
+    # was 0.94 of the 220 encounter). research_notes/"Krill i Skagerrak" (synthesis.md, diets/, pairs/).
     preys_on: true
-    predation_mortality: 0.0544
+    predation_mortality: 0.0039
     assimilation_factor: 0.8
     handling_time: 143.6
-    max_intake_rate: 0.0023
+    max_intake_rate: 0.000138
     dark_ratio: 0.78
     light_threshold_deg: -5.0
+  planktivorous_fish_preys_on_krill:
+    # Section 245. a by section 220 encounter theory with the 232.1 band
+    # (overlap) convention per cell bed depth; the library a is the
+    # equal-cell grid mean and depth_access_table the a per bed class
+    # (< 100 / 100-150 / 150-250 / > 250 m; the loader renormalises it to
+    # mean 1), so the predator meets the deep krill layer where its own
+    # height above the bed reaches it. h = 5000 MJ/t / the ceiling. M2 =
+    # in-area krill share x field Q/B x B_pred / (5 t/km2 x 3600 km2).
+    # research_notes/"Krill i Skagerrak" pairs/, diets/, synthesis.md.
+    # Krill share 0.36 (0.22-0.52): pout 0.66 (Albert 1994, Norwegian Deep
+    # incl. the Skagerrak; winter 0.80), blue whiting 0.60, herring 0.15
+    # (judgement: no in-area diet by mass), sprat 0; 81 % of all the krill
+    # flow. a 0.018 (0.0042-0.056). dark_ratio 0.57 from the stomachs
+    # (Onsrud 2004: no diel difference in pout; herring's derived 0.11),
+    # weighted by the members' share of a (228.2 precedent).
+    preys_on: true
+    predation_mortality: 1.67
+    assimilation_factor: 0.8
+    handling_time: 57.8
+    max_intake_rate: 0.018
+    functional_response: 2
+    dark_ratio: 0.57
+    light_threshold_deg: 0.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.06}
+      - {depth_m: 100.0, factor: 0.013}
+      - {depth_m: 149.9, factor: 0.013}
+      - {depth_m: 150.0, factor: 0.0025}
+      - {depth_m: 249.9, factor: 0.0025}
+      - {depth_m: 250.0, factor: 0.0011}
+  benthivorous_fish_preys_on_krill:
+    # Section 245. a by section 220 encounter theory with the 232.1 band
+    # (overlap) convention per cell bed depth; the library a is the
+    # equal-cell grid mean and depth_access_table the a per bed class
+    # (< 100 / 100-150 / 150-250 / > 250 m; the loader renormalises it to
+    # mean 1), so the predator meets the deep krill layer where its own
+    # height above the bed reaches it. h = 5000 MJ/t / the ceiling. M2 =
+    # in-area krill share x field Q/B x B_pred / (5 t/km2 x 3600 km2).
+    # research_notes/"Krill i Skagerrak" pairs/, diets/, synthesis.md.
+    # Krill share 0.026 (haddock 0.06; cod ~0, flatfish none; Albert 1994).
+    # a 0.013 (0.0024-0.028), dark_ratio 0.02 from the encounter (no diel
+    # stomach data; flagged). Its first booked plankton pair: the 223.9
+    # redistribution of the no-pool diet is not re-done (flagged). h = 5000 /
+    # (26.18 (5.0/4.184)^0.25 / armour 1.0) (223.28).
+    preys_on: true
+    predation_mortality: 0.035
+    assimilation_factor: 0.8
+    handling_time: 182.7
+    max_intake_rate: 0.013
+    functional_response: 2
+    dark_ratio: 0.02
+    light_threshold_deg: 0.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.05}
+      - {depth_m: 100.0, factor: 0.0087}
+      - {depth_m: 149.9, factor: 0.0087}
+      - {depth_m: 150.0, factor: 0.0}
+      - {depth_m: 249.9, factor: 0.0}
+      - {depth_m: 250.0, factor: 0.0}
+  predatory_fish_preys_on_krill:
+    # Section 245. a by section 220 encounter theory with the 232.1 band
+    # (overlap) convention per cell bed depth; the library a is the
+    # equal-cell grid mean and depth_access_table the a per bed class
+    # (< 100 / 100-150 / 150-250 / > 250 m; the loader renormalises it to
+    # mean 1), so the predator meets the deep krill layer where its own
+    # height above the bed reaches it. h = 5000 MJ/t / the ceiling. M2 =
+    # in-area krill share x field Q/B x B_pred / (5 t/km2 x 3600 km2).
+    # research_notes/"Krill i Skagerrak" pairs/, diets/, synthesis.md.
+    # Krill share 0.21 (0.10-0.35): saithe 0.25 (CRR 219 1991 0.12-0.14,
+    # CRR 164 1981 0.39, Mehl 2005 0.34), a seasonal Q2 pulse. a 0.0241 from
+    # the field vertical positions (wc_depth/: saithe within ~15 m of the
+    # bed by day, HERAS in-box hauls). Its gate is OFF at an equal-cell
+    # grid mean (encounter share 0.90 vs 0.21); weighted by where the box's
+    # adult saithe sit (100-250 m beds) 3.5 (MC median 3.1). The depth
+    # table lets the model's own spread set it; residual (season,
+    # capture) unresolved - check after the retrain. dark_ratio 0.01
+    # (encounter; flagged).
+    preys_on: true
+    predation_mortality: 0.075
+    assimilation_factor: 0.8
+    handling_time: 167.8
+    max_intake_rate: 0.0241
+    functional_response: 2
+    dark_ratio: 0.01
+    light_threshold_deg: 0.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.075}
+      - {depth_m: 100.0, factor: 0.026}
+      - {depth_m: 149.9, factor: 0.026}
+      - {depth_m: 150.0, factor: 0.0009}
+      - {depth_m: 249.9, factor: 0.0009}
+      - {depth_m: 250.0, factor: 0.0001}
+  mackerel_preys_on_krill:
+    # Section 245. a by section 220 encounter theory with the 232.1 band
+    # (overlap) convention per cell bed depth; the library a is the
+    # equal-cell grid mean and depth_access_table the a per bed class
+    # (< 100 / 100-150 / 150-250 / > 250 m; the loader renormalises it to
+    # mean 1), so the predator meets the deep krill layer where its own
+    # height above the bed reaches it. h = 5000 MJ/t / the ceiling. M2 =
+    # in-area krill share x field Q/B x B_pred / (5 t/km2 x 3600 km2).
+    # research_notes/"Krill i Skagerrak" pairs/, diets/, synthesis.md.
+    # Krill share 0.27 (0.19-0.40) over its Q2-Q3 box season (CRR 1991 0.18,
+    # 1981 0.25; horse mackerel 0.50). a 0.0025 (0.0007-0.0072): a twilight
+    # pair (zero day overlap; krill enter 0-50 m at sunset), dark_ratio 0.42
+    # at -5 deg (1.57 at 0 deg would need dark_ratio > 1).
+    preys_on: true
+    predation_mortality: 0.1
+    assimilation_factor: 0.8
+    handling_time: 75.5
+    max_intake_rate: 0.0025
+    functional_response: 2
+    dark_ratio: 0.42
+    light_threshold_deg: -5.0
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.0043}
+      - {depth_m: 100.0, factor: 0.0027}
+      - {depth_m: 149.9, factor: 0.0027}
+      - {depth_m: 150.0, factor: 0.0015}
+      - {depth_m: 249.9, factor: 0.0015}
+      - {depth_m: 250.0, factor: 0.0015}
+  whiting_preys_on_krill:
+    # Section 245. a by section 220 encounter theory with the 232.1 band
+    # (overlap) convention per cell bed depth; the library a is the
+    # equal-cell grid mean and depth_access_table the a per bed class
+    # (< 100 / 100-150 / 150-250 / > 250 m; the loader renormalises it to
+    # mean 1), so the predator meets the deep krill layer where its own
+    # height above the bed reaches it. h = 5000 MJ/t / the ceiling. M2 =
+    # in-area krill share x field Q/B x B_pred / (5 t/km2 x 3600 km2).
+    # research_notes/"Krill i Skagerrak" pairs/, diets/, synthesis.md.
+    # Whiting's ration (research_notes/"Vitlingens ranson"): Q/B 4.2 at the
+    # in-area diet - krill 0.50 (0.28-0.65; Skagerrak April 1991 ICES DB
+    # 0.54, Oslofjord ~0.82), copepods 0.02, cannibalism 0.022 (SMS
+    # whiting-on-whiting M 0.094 / 4.2; unbooked, section 160; the old
+    # 0.142 rested on two thin samples and implied M 0.60), infauna 0.073
+    # and other 0.007 (unbooked: no pair). The rest, 0.378, stays on
+    # planktivores, epifauna and benthivores at their booked proportions:
+    # x 0.378 / 0.343 = 1.103 on each M2. Booked ration 2.63 -> 3.77
+    # t/t/yr. a 0.043 (0.0084-0.092); no light effect (Onsrud 2004
+    # stomachs: no diel difference; the encounter's 0.03 not used).
+    preys_on: true
+    predation_mortality: 0.1873
+    assimilation_factor: 0.8
+    handling_time: 159.5
+    max_intake_rate: 0.043
+    functional_response: 2
+    depth_access_table:
+      - {depth_m: 99.9, factor: 0.162}
+      - {depth_m: 100.0, factor: 0.029}
+      - {depth_m: 149.9, factor: 0.029}
+      - {depth_m: 150.0, factor: 0.0}
+      - {depth_m: 249.9, factor: 0.0}
+      - {depth_m: 250.0, factor: 0.0}
   planktivorous_fish_preys_on_benthic_infauna:
     preys_on: false
     predation_mortality: 0.015
@@ -2971,6 +3217,17 @@ interaction_definitions:
     observes: false
   whiting_observes_norway_lobster:
     observes: false
+  # Section 245: the five krill predators observe the krill pool.
+  planktivorous_fish_observes_krill:
+    observes: true
+  benthivorous_fish_observes_krill:
+    observes: true
+  predatory_fish_observes_krill:
+    observes: true
+  mackerel_observes_krill:
+    observes: true
+  whiting_observes_krill:
+    observes: true
   benthivorous_fish_observes_benthivorous_fish:
     observes: true
   benthivorous_fish_observes_predatory_fish:

@@ -56,6 +56,9 @@ def apply_predation(env, actions):
     # Attack rate a of this tick: the library value, times the pair's
     # light multiplier under the daylight calendar (section 137).
     intake_rate = interactions.attack_rate(env)[:, :, None, None]
+    if getattr(env, "_has_pair_depth", False):
+        # Section 245: the pair's encounter by the cell's bed depth.
+        intake_rate = (intake_rate * env.pair_depth_mult).astype(env.dtype, copy=False)
     # Section 242: with a saturating response the eat shares are the
     # foraging time T and the attack probabilities p (shared handling);
     # ``shared_handling=False`` on the env is the per-pair response.

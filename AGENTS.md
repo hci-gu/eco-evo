@@ -52,6 +52,7 @@ fabricates mass.
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). An optional `inference_start_day_of_year` in the block fixes the start day of inference worlds and the long-run probe (mode `inference`) while training worlds keep `start_day_of_year` (section 232.6). |
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8) and, since section 244, every fish group (planktivores 2.2, benthivores 1.6, whiting 2.25, water column 2.25, mackerel 2.2; research_notes/"Bioenergetik för alla fiskgrupper", o-umlaut). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
+| `lib/environments/ecosystem_env/open_pool.py` | Open pools (section 245): an NDM with `outside_density` (t/km2 box mean), `outside_exchange_rate` k per tick, `outside_season` (12 monthly factors) and `outside_depth_table` (shape by cell depth, equal-cell mean 1) does `B <- T + (B (1 + g) - T) exp(-k)` after M1, no logistic and no K; g derived with r_max 0, the exchange outside it; the loader refuses g >= exp(k) - 1; the net exchange is not in the loss books. Also the pairs' `depth_access_table` (per-cell multiplier on a, `interactions.build_pair_depth_maps`). Both engines; tests/test_open_pool.py. `budget_gate` prints a total-ration row (booked flow vs field Q/B). |
 | `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
 | `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
@@ -130,7 +131,15 @@ fabricates mass.
   consumption, research_notes/"Havskrafta i fiskdieter"; predators ->
   Nephrops unchecked), `microzooplankton` (section 177:
   grows only by grazing the phytoplankton in the population step;
-  eaten by zooplankton, which observes it).
+  eaten by zooplankton, which observes it), `krill` (section 245: the
+  deep krill layer, Meganyctiphanes dominant, which the A17 WP2 nets that
+  calibrate the zooplankton exclude; an OPEN pool, density set outside
+  the box: 5 t/km2 box mean, exchange k 20 /yr (~18 d residence),
+  quarterly season 1.0 / 0.6 / 1.1 / 1.3, depth shape 0.3 -> 1.4, E 5000,
+  g derived with r_max 0 = the booked fish M2 2.07 /yr (field P/B 2);
+  eaten by planktivores (M2 1.67), whiting 0.187, mackerel 0.10, water
+  column 0.075, benthivores 0.035, who observe it; research_notes/"Krill
+  i Skagerrak").
 - English snake_case IDs are canonical.
 
 ## 5. The Tick (per tick, random FG order)
@@ -179,14 +188,21 @@ fabricates mass.
   planktivores -> zoo 0.0122 (243.3); benthivores -> infauna 0.036, -> epifauna
   0.15, -> Nephrops 0.44, -> planktivores 0.0198 (243.3: per species, pout 0.87 of it), -> whiting 0.0026;
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
-  H_bed/H_whiting; was 0.27), -> planktivores 0.0212, -> zoo 0.0023, ->
+  H_bed/H_whiting; was 0.27), -> planktivores 0.0212, -> zoo 0.000138
+  (copepods only since 245; was 0.0023), -> krill 0.043, ->
   benthivores 0.21; water column -> planktivores 0.0060, -> zoo
-  0.000241, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
+  3.13e-05 (245; was 0.000241), -> krill 0.0241, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
   member's foraging time near the bed, for concurrent search), -> whiting
   0.013, -> mackerel 0.00088
   (f 0.14 since 244, was 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
   0.0266 (243.3: herring and sprat only, no overlap with the near-bed
-  pout and deep blue whiting), -> zoo 0.0023 (sections 220, 221, 223.15, 223.26, 228; no
+  pout and deep blue whiting), -> zoo 0.00084 (245: measured clearance,
+  daytime biting on Calanus; was 0.0023), -> krill 0.0025; planktivores
+  -> krill 0.018, benthivores -> krill 0.013. Every krill pair is a
+  section 220 encounter in the band convention with a
+  `depth_access_table` (section 245: a per-cell multiplier on a by bed
+  depth, equal-cell mean 1, never on visibility; bed feeders meet the
+  krill layer only over beds < 150 m) (sections 220, 221, 223.15, 223.26, 228; no
   predator eats infauna or Nephrops, the water column no
   epifauna). The
   benthic pairs are a_enc x an exposure factor e derived per prey item
@@ -213,8 +229,11 @@ fabricates mass.
   for -5); at -5 deg (223.26): whiting -> planktivores 0.33 (0.48 since 243.3), -> zoo
   0.78, -> benthivores 0.64; water column (228) -> planktivores 0.30 (0.41 since 243.3),
   -> zoo 0.51, -> benthivores 0.48, -> whiting 0.48, -> mackerel 0.92;
-  mackerel -> planktivores 0.16, -> zoo 0.42 (both from the stomachs:
-  it hunts fish by day and filter-feeds in the dark; 228.2, 228.4);
+  mackerel -> planktivores 0.16, -> zoo 0.24 (245: night filtering of
+  Calanus; was 0.42 from the crustacean stomachs, krill included), ->
+  krill 0.42 (a twilight pair) at -5 deg; krill pairs (245): planktivores
+  0.57 and whiting none (stomachs: no diel difference), water column
+  0.01 and benthivores 0.02 at 0 deg (encounter; flagged);
   benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding,
   hidden (rested) fraction protected, energy gain buffered. Since section

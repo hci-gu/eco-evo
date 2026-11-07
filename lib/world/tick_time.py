@@ -179,6 +179,8 @@ RESCALE_RULES = {
     # Section 223.12: the refuge exchange relaxes A by exp(-k) per tick,
     # so k is a rate per tick and n ticks of k equal one tick of n k.
     "refuge_exchange_rate": "flux",
+    # Section 245: an open pool's exchange rate k per tick.
+    "outside_exchange_rate": "flux",
     # growth
     "growth_rate": "growth",
     # loss
@@ -207,6 +209,7 @@ RESCALE_CLAMP = {
     "movement_speed": (0.0, 1.0),
     "capacity_loss_rate": (0.0, 1.0),
     "refuge_exchange_rate": (0.0, 10.0),
+    "outside_exchange_rate": (0.0, 10.0),
 }
 
 

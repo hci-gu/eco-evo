@@ -740,6 +740,28 @@ FIELD_HELP = {
         "fixed accessible fraction phi. Annual rate = 1460 * k at 6 h "
         "ticks; infauna 2.5 /yr (0.0017 per tick), section 223.12."
     ),
+    "outside_density": (
+        "Outside Density (t/km2, non decision makers; 0 / empty = a closed "
+        "group).\n\n"
+        "Makes the group an OPEN pool (section 245): its density in the box "
+        "is set by the population around it, which the water renews "
+        "(krill: a 60 km window on the Skagerrak population). The value is "
+        "the outside population's annual mean over the box (equal-cell "
+        "mean); the library's outside_season (12 monthly factors) and "
+        "outside_depth_table (shape by cell depth, renormalised to mean 1) "
+        "shape it in time and space. No carrying capacity applies: each "
+        "tick B <- T + (B (1 + g) - T) exp(-k) after M1, with g derived "
+        "from r_max 0, so the local production replaces the booked losses "
+        "at T and the exchange stays out of the growth budget."
+    ),
+    "outside_exchange_rate": (
+        "Outside Exchange Rate k (per tick; needs an Outside Density).\n\n"
+        "The inverse residence time of the group in the box: each tick B "
+        "relaxes towards the outside density by exp(-k). Krill 20 /yr "
+        "(0.0137 per tick at 6 h; residence ~18 days in the eastern "
+        "Skagerrak, Rodhe 1987). The loader refuses a k whose exchange "
+        "cannot hold the pool (derived g >= exp(k) - 1)."
+    ),
     "juvenile_stage": (
         "Juvenile Stage (decision makers): the fish below their length at "
         "age 1 in the third quarter, carried as a compartment J inside the "
