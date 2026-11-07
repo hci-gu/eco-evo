@@ -23445,3 +23445,55 @@ remain open exactly as described in 71.9 / 71.11.
       tests/test_appetite_sda.py now pins {benthivores, planktivores}
       and the planktivores' s* 1. Full suite 1754 passed, 12 skipped;
       1-gen train.py smoke passed.
+
+244.11 reserve_room on every fish group; why the web over-ate (user,
+    2026-11-07: "inconsistent that not every fish has reserve room";
+    "run steps 1 and 2").
+    - Why: no fish data support the hunger gate's linear decline from u
+      (cod eat at Cmax at high livers, herring fatten in ~6 weeks,
+      salmonid lipostasis is a set-point near the well-fed level), and
+      rule 240 asks only that the frozen probe's fill rise to ~1, which
+      all three remaining groups did (244.10). Keeping them on the gate
+      because the web over-ate would mask the defects below.
+    - Library: appetite: reserve_room on predatory_fish, whiting and
+      mackerel; derived g (s* -> 1) water column 0.0024823 -> 0.0012954,
+      whiting 0.0038024 -> 0.0020293, mackerel 0.0021540 -> 0.0017870.
+      Zooplankton and the mammals keep the gate.
+      tests/test_appetite_sda.py pins the five fish groups and s* 1;
+      tests/test_material_growth.py's gate-closure case pins whiting to
+      appetite: gate (it tested h(s_n) on the library whiting). Full
+      suite 1753 passed + that case fixed, 12 skipped; 1-gen train.py
+      smoke passed.
+    - Step 2, why the frozen probes over-ate (no policy-free cause found
+      in the pairs; budget_gate: every pair ok, encounter diets match
+      the booked diets at the start densities). Realised t prey per t
+      predator per year, frozen fix89, years 1 and 3 of each variant,
+      against the booked M2 flows (M2 x B_prey / B_pred):
+        whiting   epifauna 2.1-3.0 (booked 0.58), benthivores 0.6-1.1
+                  (0.33), planktivores 0.06-0.46 (0.52), zooplankton
+                  0.5-1.5 (1.19); total Q/B 4.2-5.4 (booked 2.63; field
+                  4.2, 3.3-5.6, SMS 2023 / Lauerburg 2018).
+        water col planktivores 0.45-2.1 (1.33), benthivores 0.23-1.35
+                  (0.21), whiting 0.2-1.1 (0.11), zooplankton 0.06-0.15
+                  (0.82); total Q/B 2.5-2.9 (booked 2.55; field 2.83).
+      Findings:
+      1. Water column -> planktivores is not a 2x pair error. Its M2 0.36
+         against the booked 0.174 is per-capita intake x1.27, predator
+         biomass x1.28 and a prey pool x0.8. Its total consumption is at
+         the field Q/B; what is off is the composition: it eats almost no
+         zooplankton (0.06-0.15 vs 0.82) and makes it up on fish
+         (benthivores x3-6, whiting x2-10).
+      2. Whiting eats its FIELD ration, but only 2.63 of the 4.2 t/t/yr
+         is booked as M2 on the model's prey (cannibalism 0.142 of the
+         diet unbooked, 223.26; whiting -> planktivores re-scaled to the
+         box's prey in 232.1 and 243.3). The unbooked ~1.6-2.8 t/t/yr
+         lands on the epifauna and the benthivores, whose g pays only the
+         booked flow. Its growth (x1.6-2.4 in 3 yr, every appetite) is
+         the open-population gap of 243.4: no K and ample food -> it
+         grows towards r_max - F (0.42 /yr).
+      3. Common to both: realised diets drift from the booked ones as the
+         zooplankton is 2-6x below A17 in Oct-Dec (244.10); the gate's
+         start-density check cannot see that.
+    - Open (for the user): mackerel's 4-month g (244.8); booking the
+      whiting's full ration (or its unbooked prey) on the prey groups;
+      the water column's zooplankton pair; the open-population form.

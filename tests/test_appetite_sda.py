@@ -122,11 +122,13 @@ def test_library_appetite_and_benthivore_budget():
     sd, inter = lib["species_definitions"], lib["interaction_definitions"]
     forms = {fid: energy_balance.appetite_form(spec)
              for fid, spec in sd.items() if spec.get("is_decision_maker")}
-    # Section 244.10: the planktivores joined the benthivores.
-    assert {f for f, a in forms.items() if a == "reserve_room"} == {
-        "benthivorous_fish", "planktivorous_fish"}
-    assert growth_budget.growth_budget(
-        "planktivorous_fish", sd, inter).reference_fill == pytest.approx(1.0)
+    # Section 244.10: every fish group; zooplankton and mammals keep the gate.
+    fish = {"benthivorous_fish", "planktivorous_fish", "predatory_fish",
+            "whiting", "mackerel"}
+    assert {f for f, a in forms.items() if a == "reserve_room"} == fish
+    for fid in fish:
+        assert growth_budget.growth_budget(
+            fid, sd, inter).reference_fill == pytest.approx(1.0)
     b = growth_budget.growth_budget("benthivorous_fish", sd, inter)
     assert b.reference_fill == pytest.approx(1.0)
     assert b.gate == pytest.approx(0.5)

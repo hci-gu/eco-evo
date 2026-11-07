@@ -84,7 +84,9 @@ def _plain(species, fid):
 def test_budget_is_paid_over_the_season_and_the_material_is_checked():
     lib = _library()
     species, inter = lib["species_definitions"], lib["interaction_definitions"]
-    base = _plain(species, "whiting")
+    # The hunger-gate case (whiting is on reserve_room since 244.11; the
+    # room case is test_reserve_room_appetite_takes_the_whole_ceiling).
+    base = dict(_plain(species, "whiting"), appetite="gate")
     plain = gb.growth_budget("whiting", species, inter, species=base)
     spec = dict(base, material_growth_share=1.0, feeding_season_months=6.0)
     seasonal = gb.growth_budget("whiting", species, inter, species=spec)

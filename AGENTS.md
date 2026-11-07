@@ -462,12 +462,12 @@ fabricates mass.
   (`predation._reserve_room_cap`, both engines; the reserve is clipped at
   B ME, so h = 1 alone would discard energy). Its ideal reserve s* is then
   min(1, (C - cost - P ec)/(P ME)), in practice 1, so g = gross/((1 - u)
-  1460). Set on benthivores (cod eat at Cmax at livers above the
-  wild maximum; research_notes/"Tillvaxt mot ranson", a-umlaut) and,
-  since 244.10, planktivores (herring fatten fast; on the gate they
-  starved in winter). Water column, whiting and mackerel stay on the
-  gate: their frozen fix89 probes reached fill ~1 but over-ate the web
-  (244.10). Zooplankton
+  1460). Set on every fish group since 244.10 (benthivores since 240:
+  cod eat at Cmax at livers above the wild maximum, research_notes/
+  "Tillvaxt mot ranson", a-umlaut; herring fatten fast; no fish data
+  support the gate). Each frozen fix89 probe reached fill ~1; the web
+  effects seen there are the named defects of 244.11, not the
+  appetite. Zooplankton
   stays on the gate: with frozen fix86 policies its fill stayed ~0.6
   while s* = 1 cut its g by a third and the plankton chain collapsed
   (240); mammals keep the gate (a lipostat). Before moving a group, a frozen-policy probe must
