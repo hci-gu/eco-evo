@@ -762,6 +762,38 @@ FIELD_HELP = {
         "Skagerrak, Rodhe 1987). The loader refuses a k whose exchange "
         "cannot hold the pool (derived g >= exp(k) - 1)."
     ),
+    "outside_season": (
+        "Outside Season (12 factors, Jan..Dec; empty = flat; open pool "
+        "only).\n\n"
+        "Mid-month factors on the Outside Density, interpolated to each "
+        "tick on the daylight calendar like the reservoir nitrate table: "
+        "a boundary forcing of the outside population, not a behaviour "
+        "switch. Keep their mean ~1 so the Outside Density stays the "
+        "annual mean the growth budget is paid at. Krill: Q1-Q4 1.0 / 0.6 "
+        "/ 1.1 / 1.3 (post-spawning low, lipid-rich autumn; section 245). "
+        "Without the daylight calendar the factor is 1."
+    ),
+    "outside_depth_table": (
+        "Outside Density by Depth (rows of depth m and weight; open pool "
+        "only).\n\n"
+        "The shape of the outside density over the cells' depth, linear "
+        "between rows and held outside them, renormalised to a mean of 1 "
+        "over the project's depth map, so the Outside Density stays the box "
+        "mean. It is also the start pattern of the equilibrium spawn. "
+        "Krill: 0.3 over 44 m beds rising to 1.4 at 530 m (little krill "
+        "where the bed is shallower than the 70-150 m day layer; section "
+        "245). No rows or no depth map = flat."
+    ),
+    "matrix:depth_access_table": (
+        "Depth Access: the row's attack rate on the column by the cell's "
+        "bed depth, rows 'depth:factor' (empty = a constant a).\n\n"
+        "The factors are the pair's encounter per bed depth (a bed feeder "
+        "meets the deep krill layer only where the bed is shallower than "
+        "~150 m). The loader renormalises them to a mean of 1 over the "
+        "depth map's cells, so the pair's attack rate stays the grid mean; "
+        "the multiplier acts on a only, never on the visible prey or the "
+        "harvest cap, so factors above 1 are fine. Section 245."
+    ),
     "juvenile_stage": (
         "Juvenile Stage (decision makers): the fish below their length at "
         "age 1 in the third quarter, carried as a compartment J inside the "

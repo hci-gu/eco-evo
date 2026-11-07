@@ -9,7 +9,7 @@ from lib.runners.population_stability import validate_reward
 
 class RolloutRunner:
     # Row order of ``loss_book``; the names of loss_accounting.LOSS_CAUSES.
-    LOSS_ORDER = ("starvation", "predation", "impact", "natural")
+    LOSS_ORDER = ("starvation", "predation", "impact", "natural", "exchange")
 
     def __init__(self, model, bank, candidates, worlds, *, obs_normalize=True,
                  integral_reward=True, legacy_reward=False, alpha=1.0, beta=1.0,
@@ -85,13 +85,15 @@ class RolloutRunner:
             buffer("impact_obs", (self.E, model.n_obs_imp, model.C))
         # ``diagnostics`` (the inference viewer, section 234): cumulative
         # tonnes per world, as the reference env's accumulators -
-        # ``loss_book`` [E, 4, G] by cause (LOSS_ORDER) and ``diet_book``
+        # ``loss_book`` [E, 5, G] by cause (LOSS_ORDER) and ``diet_book``
         # [E, G, G] (predator, prey) over every group that eats, the NDM
         # grazers included. Training never sets it, so its graph is the
         # one it always was.
         self.diagnostics = bool(diagnostics)
         if self.diagnostics:
             buffer("loss_book", (self.E, len(self.LOSS_ORDER), model.G), torch.float64)
+            # Section 245: an open pool's import (the export is a loss row).
+            buffer("import_book", (self.E, model.G), torch.float64)
             buffer("diet_book", (self.E, model.G, model.G), torch.float64)
         self.local_min_energy = (
             model.local_min_energy(self.local_reward.min_energy_factor)
@@ -159,6 +161,7 @@ class RolloutRunner:
             value.zero_()
         if self.diagnostics:
             self.loss_book.zero_()
+            self.import_book.zero_()
             self.diet_book.zero_()
         if hidden is not None:
             self.hidden.copy_(hidden)
@@ -302,6 +305,9 @@ class RolloutRunner:
                 "natural": record["natural"]}
         if "impact" in record:
             rows["impact"] = record["impact"]
+        if "exchange" in record:
+            rows["exchange"] = record["exchange"]
+            self.import_book.add_(record["import"].double())
         for k, name in enumerate(self.LOSS_ORDER):
             if name in rows:
                 self.loss_book[:, k].add_(rows[name].double())

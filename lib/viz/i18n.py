@@ -195,6 +195,7 @@ CATALOG = {
         "Max = {value}": "Max = {value}",
         # Heatmap panels.
         "pr/im = {pr}/{im}%": "pr/pv = {pr}/{im}%",
+        "pr/im/ex = {pr}/{im}/{ex}%": "pr/pv/ub = {pr}/{im}/{ex}%",
         "mv/rs/et = {mv}/{rs}/{et}%": "fl/vi/ät = {mv}/{rs}/{et}%",
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/sv/pv/nd = {pr}/{st}/{im}/{nm}%",
@@ -339,6 +340,7 @@ CATALOG = {
         "Max = {value}": "Max = {value}",
         # Heatmap panels.
         "pr/im = {pr}/{im}%": "pr/im = {pr}/{im}%",
+        "pr/im/ex = {pr}/{im}/{ex}%": "pr/im/sc = {pr}/{im}/{ex}%",
         "mv/rs/et = {mv}/{rs}/{et}%": "mv/rp/al = {mv}/{rs}/{et}%",
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/fa/im/mn = {pr}/{st}/{im}/{nm}%",

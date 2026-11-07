@@ -140,6 +140,8 @@ def test_stepper_mirrors_the_cpu_books_for_main_and_baseline_worlds(device):
             # the absolute term relative to the group's biomass.
             for name, attr in LOSS_CAUSES:
                 _close(getattr(got, attr)[fid], getattr(ref, attr)[fid], scale)
+            # Section 245: an open pool's import book (krill in mareld2).
+            _close(got.gain_exchange[fid], ref.gain_exchange[fid], scale)
         for pred, row in ref.intake_by_pred_prey.items():
             for prey, value in row.items():
                 _close(got.intake_by_pred_prey.get(pred, {}).get(prey, 0.0), value,

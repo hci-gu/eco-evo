@@ -209,3 +209,19 @@ def test_mareld2_krill():
     for p in preds:
         field = fgs[p].params["interaction"][f"{p}_preys_on_krill"]["_depth_access_map"]
         assert field.mean() == pytest.approx(1.0)
+
+
+def test_exchange_is_booked_per_direction():
+    """Section 245: B_new - B (1 + g) = import - export, the export a loss
+    cause and the import its own book."""
+    from lib.environments.ecosystem_env.loss_accounting import exchange_import, loss_shares
+    weight = np.linspace(0.2, 1.8, 20).reshape(4, 5)     # cells above and below T
+    env = _env(dict(OPEN, outside_density=1.5), weight=weight)
+    c = env.fgs["c"]
+    grown = c.biomass.astype(np.float64) * (1 + G_TICK)
+    population_change._apply_non_decision_maker_population_change(env, "c", c)
+    flow = c.biomass.astype(np.float64) - grown
+    assert env.loss_exchange["c"] == pytest.approx(-flow[flow < 0].sum(), rel=1e-5)
+    assert exchange_import(env, "c") == pytest.approx(flow[flow > 0].sum(), rel=1e-5)
+    assert env.loss_exchange["c"] > 0 and env.gain_exchange["c"] > 0
+    assert loss_shares(env, "c")["exchange"] == pytest.approx(1.0)  # its only loss here

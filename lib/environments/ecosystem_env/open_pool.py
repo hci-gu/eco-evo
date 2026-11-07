@@ -184,6 +184,13 @@ def grow(env, fg_id, fg, rate):
     grown = fg.biomass * (np.float32(1.0) + np.float32(rate))
     fg.biomass = np.maximum(t + (grown - t) * keep, np.float32(0.0)).astype(
         env.dtype, copy=False)
+    # The exchange per direction (the books of loss_accounting).
+    flow = fg.biomass.astype(np.float64) - grown.astype(np.float64)
+    for book, amount in (("loss_exchange", -np.minimum(flow, 0.0).sum()),
+                         ("gain_exchange", np.maximum(flow, 0.0).sum())):
+        books = getattr(env, book, None)
+        if books is not None:
+            books[fg_id] = float(books.get(fg_id, 0.0)) + float(amount)
 
 
 __all__ = ["DENSITY_KEY", "DEPTH_KEY", "RATE_KEY", "SEASON_KEY", "build_tables",

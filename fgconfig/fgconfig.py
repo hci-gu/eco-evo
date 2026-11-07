@@ -947,6 +947,7 @@ class FGConfigApp:
             # Open pool (section 245): density set outside the box.
             ("Outside Density (t/km2, box mean; open pool; 0 = closed)", "outside_density", "entry", 0.0, 100000.0),
             ("Outside Exchange Rate k (1/{tick}; relaxes B to the outside density)", "outside_exchange_rate", "entry", 0.0, 10.0),
+            ("Outside Season (12 monthly factors Jan..Dec, mean ~1; empty = flat)", "outside_season", "entry", 0.0, 10.0),
             # Light-limited growth on the daylight calendar (section 138).
             ("Light Saturation I_k (umol photons/m2/s; 1 or 12 monthly values; 0 = off)", "light_saturation", "entry", 0.0, 5000.0),
             ("Light Reference Day (day of year Max Growth applies; 0 = 105, mid April)", "light_reference_day", "entry", 0.0, 365.0),
@@ -1028,6 +1029,35 @@ class FGConfigApp:
                                  command=lambda: self._add_capacity_row())
         add_row_btn.pack(anchor="w", pady=(4, 0))
         attach_help(add_row_btn, "capacity_depth_table")
+        grow += 1
+        ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
+            row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
+        grow += 1
+
+        # Outside density by depth (outside_depth_table, section 245): the
+        # shape of an open pool's outside density over the cells' depth,
+        # renormalised to an equal-cell mean of 1 on the depth map.
+        out_lbl = ttk.Label(self.ndm_editor_frame,
+                            text="Outside Density by Depth (depth m -> weight; open pool; empty = flat)")
+        out_lbl.grid(row=grow, column=0, columnspan=2, sticky="w", padx=5, pady=(4, 0))
+        attach_help(out_lbl, "outside_depth_table")
+        grow += 1
+        out_box = ttk.Frame(self.ndm_editor_frame)
+        out_box.grid(row=grow, column=0, columnspan=2, sticky="w", padx=5, pady=2)
+        self.outside_rows_frame = ttk.Frame(out_box)
+        self.outside_rows_frame.pack(side="left", anchor="n")
+        ttk.Label(self.outside_rows_frame, text="Depth (m)").grid(row=0, column=0, sticky="w")
+        ttk.Label(self.outside_rows_frame, text="Weight").grid(row=0, column=1, sticky="w")
+        self.outside_rows = []
+        out_side = ttk.Frame(out_box)
+        out_side.pack(side="left", anchor="n", padx=(12, 0))
+        self.outside_preview_var = tk.StringVar(value="")
+        ttk.Label(out_side, textvariable=self.outside_preview_var,
+                  wraplength=260, justify="left").pack(anchor="w")
+        out_btn = ttk.Button(out_side, text="Add Row",
+                             command=lambda: self._add_outside_row())
+        out_btn.pack(anchor="w", pady=(4, 0))
+        attach_help(out_btn, "outside_depth_table")
         grow += 1
         ttk.Separator(self.ndm_editor_frame, orient="horizontal").grid(
             row=grow, column=0, columnspan=2, sticky="ew", padx=4, pady=(0, 2))
@@ -2989,6 +3019,100 @@ class FGConfigApp:
             return None, str(exc)
         return rows, None
 
+    # ------------------------------------------------------------------
+    # Outside density by depth (outside_depth_table, section 245)
+    # ------------------------------------------------------------------
+    def _add_outside_row(self, depth="", weight=""):
+        """Append a depth -> weight row to the open pool's depth shape."""
+        frame = getattr(self, "outside_rows_frame", None)
+        if frame is None or not frame.winfo_exists():
+            return
+        r = len(self.outside_rows) + 1          # row 0 is the header
+        dvar, wvar = tk.StringVar(value=str(depth)), tk.StringVar(value=str(weight))
+        dent = ttk.Entry(frame, textvariable=dvar, width=9)
+        went = ttk.Entry(frame, textvariable=wvar, width=9)
+        dent.grid(row=r, column=0, sticky="w", padx=(0, 4), pady=1)
+        went.grid(row=r, column=1, sticky="w", padx=(0, 4), pady=1)
+        attach_help([dent, went], "outside_depth_table")
+        row = {"depth": dvar, "weight": wvar}
+
+        def _remove(rd=row):
+            for w in rd["widgets"]:
+                try:
+                    w.destroy()
+                except tk.TclError:
+                    pass
+            self.outside_rows.remove(rd)
+            self._mark_dirty()
+            self._refresh_outside_preview()
+
+        rm = ttk.Button(frame, text="X", width=2, command=_remove)
+        rm.grid(row=r, column=2, sticky="w", pady=1)
+        row["widgets"] = [dent, went, rm]
+        for var in (dvar, wvar):
+            var.trace_add("write", lambda *_a: self._refresh_outside_preview())
+        self.outside_rows.append(row)
+        self._refresh_outside_preview()
+
+    def _set_outside_rows(self, table):
+        """Replace the rows with ``table`` (list of {depth_m, weight})."""
+        for row in list(getattr(self, "outside_rows", [])):
+            for w in row["widgets"]:
+                try:
+                    w.destroy()
+                except tk.TclError:
+                    pass
+        self.outside_rows = []
+        for entry in table or []:
+            if isinstance(entry, dict):
+                self._add_outside_row(f"{float(entry.get('depth_m', 0.0)):g}",
+                                      f"{float(entry.get('weight', 0.0)):g}")
+        self._refresh_outside_preview()
+
+    def _collect_outside_table(self):
+        """(table or None, error or None) from the rows, validated with the
+        runtime's parser (ecosystem_env/open_pool.parse_depth_table)."""
+        from lib.environments.ecosystem_env import open_pool
+        rows = []
+        for row in getattr(self, "outside_rows", []):
+            d, w = row["depth"].get().strip(), row["weight"].get().strip()
+            if not d and not w:
+                continue
+            try:
+                rows.append({"depth_m": float(d), "weight": float(w)})
+            except ValueError:
+                return None, f"row '{d}' / '{w}': depth and weight must be numbers"
+        if not rows:
+            return None, None
+        rows.sort(key=lambda r: r["depth_m"])
+        try:
+            open_pool.parse_depth_table({open_pool.DEPTH_KEY: rows})
+        except ValueError as exc:
+            return None, str(exc)
+        return rows, None
+
+    def _refresh_outside_preview(self):
+        """The shape on the project's depth map for the rows as typed."""
+        if not hasattr(self, "outside_preview_var"):
+            return
+        from lib.environments.ecosystem_env import open_pool
+        table, error = self._collect_outside_table()
+        if error:
+            text = error
+        elif table is None:
+            text = "No table: the outside density is flat over the cells."
+        else:
+            depth = self._depth_map_array()
+            if depth is None:
+                text = "No depth map in the project: the shape is flat until one is set."
+            else:
+                w = open_pool.depth_weight_map(
+                    open_pool.parse_depth_table({open_pool.DEPTH_KEY: table}),
+                    depth, depth.shape)
+                text = (f"On the depth map (mean 1): weight {w.min():.2f} - "
+                        f"{w.max():.2f} x the Outside Density.")
+        self.outside_preview_var.set(text)
+
     def _refresh_capacity_preview(self):
         """K on the project's depth map for the rows as typed."""
         if not hasattr(self, "capacity_preview_var"):
@@ -3615,6 +3739,29 @@ class FGConfigApp:
                 "column without a Juvenile Stage is one pool: give f_J = "
                 "f_A (section 244.9).")
 
+        # Section 245: a pair's attack rate by the cell's bed depth
+        # (depth_access_table). Columns: the open pools and any prey a pair
+        # already carries a table on.
+        depth_cols = [fid for fid in fgs
+                      if isinstance(species_defs.get(fid), dict)
+                      and species_defs[fid].get("outside_density") not in (None, "")]
+        depth_cols += [fid for fid in fgs if fid not in depth_cols and any(
+            isinstance(d, dict) and d.get("depth_access_table") not in (None, "", [])
+            and k.endswith("_preys_on_" + fid) for k, d in inter_defs.items())]
+        if depth_cols:
+            depth_frame = self.create_matrix_section(
+                "Depth Access (row's attack rate by bed depth: depth m:factor, ...)",
+                "depth_access_table", dm_fgs, depth_cols,
+                cell_type="depth_table", parent=self.matrix_container)
+            self._add_matrix_note(
+                depth_frame,
+                "Rows 'depth:factor' separated by commas, e.g. 99.9:0.162, "
+                "100:0.029, 149.9:0.029, 150:0: the pair's encounter per bed "
+                "depth (linear between rows, held outside). Renormalised to a "
+                "mean of 1 over the depth map's cells, so the attack rate "
+                "stays the grid mean; it multiplies a only. Empty = a "
+                "constant attack rate.")
+
         # Impact Interactions tab: Impact Affects (boolean) and Impact Tables (table editor per cell)
         impacts = [iv['impact_id'] for iv in self.project_data.get('impact_variables', [])]
         impacts.sort(key=lambda imp: self.global_library.get("impact_definitions", {}).get(imp, {}).get("display_name", imp).lower())
@@ -3645,7 +3792,7 @@ class FGConfigApp:
             for dep_key in ("assimilation_factor", "handling_time",
                             "visibility_floor", "predation_mortality",
                             "dark_ratio", "light_threshold_deg",
-                            "stage_access") + PAIR_OPTIONAL_KEYS:
+                            "stage_access", "depth_access_table") + PAIR_OPTIONAL_KEYS:
                 dep_widget = self.matrix_widgets.get(key, {}).get(dep_key)
                 if dep_widget is None:
                     continue
@@ -4197,7 +4344,7 @@ class FGConfigApp:
                 elif cell_type == "nonneg_float":
                     _default = 0.0
                 elif cell_type in ("unit_optional", "signed_optional", "pair_optional",
-                                   "number_optional", "response_optional"):
+                                   "number_optional", "response_optional", "depth_table"):
                     # Empty = inherit the column FG's own species-level
                     # value; do NOT materialise an explicit default here
                     # (that would silently override every prey default).
@@ -4311,6 +4458,23 @@ class FGConfigApp:
                     vcmd = (frame.register(_validate_signed_opt), "%P")
 
                     widget = ttk.Entry(frame, textvariable=var, width=6,
+                                       validate="key", validatecommand=vcmd)
+                    widget.grid(row=i+1, column=j+1, padx=2, pady=2)
+                elif cell_type == "depth_table":
+                    # Section 245: rows "depth:factor, ..."; checked when
+                    # the matrix is applied.
+                    cur_val = ""
+                    if isinstance(val, list):
+                        cur_val = ", ".join(
+                            f"{float(r.get('depth_m', 0.0)):g}:{float(r.get('factor', 0.0)):g}"
+                            for r in val if isinstance(r, dict))
+                    var = tk.StringVar(value=cur_val)
+
+                    def _validate_depth(proposed):
+                        return all(ch in "0123456789.,:e- " for ch in proposed)
+                    vcmd = (frame.register(_validate_depth), "%P")
+
+                    widget = ttk.Entry(frame, textvariable=var, width=30,
                                        validate="key", validatecommand=vcmd)
                     widget.grid(row=i+1, column=j+1, padx=2, pady=2)
                 elif cell_type == "pair_optional":
@@ -4732,6 +4896,8 @@ class FGConfigApp:
                 var.set(str(val))
             self._set_capacity_rows(config.get("capacity_depth_table")
                                     if isinstance(config, dict) else None)
+            self._set_outside_rows(config.get("outside_depth_table")
+                                   if isinstance(config, dict) else None)
 
         # Populate the per-FG spawn editor from config['spawn'] (or library default).
         spawn_cfg = None
@@ -4995,6 +5161,24 @@ class FGConfigApp:
                         "Water Layer: 'mixed' (or empty) or 'subsurface'. "
                         "No changes were saved.")
                     return
+            elif key == "outside_season":
+                # Section 245: 12 monthly factors of the outside density;
+                # empty = flat (the key is removed below).
+                text = str(val or "").strip()
+                if not text:
+                    config.pop(key, None)
+                    continue
+                try:
+                    values = [float(v) for v in text.split(",") if v.strip()]
+                except ValueError:
+                    values = []
+                if len(values) != 12 or min(values) < 0.0:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Outside Season: 12 factors >= 0 (Jan..Dec) separated "
+                        "by commas, or empty. No changes were saved.")
+                    return
+                config[key] = values
             elif key == "light_saturation" and "," in str(val):
                 # 12 monthly I_k values, Jan..Dec (section 138).
                 try:
@@ -5085,11 +5269,35 @@ class FGConfigApp:
         # h = 1 - s for every FG. Drop a stale key from older libraries.
         config.pop("satiation_scale", None)
 
+        # Section 245: an open pool (Outside Density > 0) needs an exchange
+        # rate; 0 / empty closes it and its keys leave the library below.
+        open_pool_on = False
+        if not is_dm:
+            try:
+                density = float(config.get("outside_density", 0.0) or 0.0)
+                rate = float(config.get("outside_exchange_rate", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                density, rate = 0.0, 0.0
+            open_pool_on = density > 0.0
+            if open_pool_on and not rate > 0.0:
+                messagebox.showerror(
+                    "Invalid value",
+                    "Outside Exchange Rate: above 0 for an open pool (Outside "
+                    "Density > 0). No changes were saved.")
+                return
+            if not open_pool_on:
+                for key in ("outside_density", "outside_exchange_rate",
+                            "outside_season"):
+                    config.pop(key, None)
+
         # r_max > 0 makes growth_rate derived (lib/world/growth_budget.py):
         # overwrite the field with the budget over the APPLIED predation
         # matrix and the active project FGs. r_max = 0 keeps the legacy
-        # hand-set growth_rate and is not stored.
-        if not float(config.get("r_max", 0.0) or 0.0):
+        # hand-set growth_rate and is not stored - except for an open pool
+        # (section 245), derived with r_max 0.
+        if open_pool_on:
+            config["r_max"] = 0.0
+        if not open_pool_on and not float(config.get("r_max", 0.0) or 0.0):
             config.pop("r_max", None)
         else:
             budget = growth_budget(
@@ -5104,6 +5312,14 @@ class FGConfigApp:
                 return
             config["growth_rate"] = float(f"{budget.growth_rate:.6g}")
             prop_vars["growth_rate"].set(f"{config['growth_rate']:.6g}")
+            if open_pool_on:
+                from lib.environments.ecosystem_env import open_pool
+                error = open_pool.stability_error(
+                    budget.growth_rate, config["outside_exchange_rate"], fg_id)
+                if error:
+                    messagebox.showerror("Invalid open pool",
+                                         error + "\n\nNo changes were saved.")
+                    return
 
         # Capacity by depth (section 207): NDM editor only. No rows = no
         # table, so the scalar Max Carrying Capacity applies.
@@ -5118,6 +5334,23 @@ class FGConfigApp:
                 config.pop("capacity_depth_table", None)
             else:
                 config["capacity_depth_table"] = table
+            # Section 245: the open pool's depth shape.
+            out_table, out_error = self._collect_outside_table()
+            if out_error:
+                messagebox.showerror(
+                    "Invalid Outside Density by Depth",
+                    out_error + "\n\nNo changes were saved.")
+                return
+            if out_table is None or not open_pool_on:
+                config.pop("outside_depth_table", None)
+            else:
+                config["outside_depth_table"] = out_table
+            if open_pool_on and table is not None:
+                messagebox.showerror(
+                    "Invalid open pool",
+                    "An open pool has no carrying capacity: clear Capacity by "
+                    "Depth or the Outside Density. No changes were saved.")
+                return
 
         # Capture the spawn block from the active editor. Use strict mode
         # so unparseable spawn params / ref weights surface as an error
@@ -5348,6 +5581,13 @@ class FGConfigApp:
         # table has to leave the library entry too.
         if not is_dm and "capacity_depth_table" not in config:
             target.pop("capacity_depth_table", None)
+        if not is_dm:
+            # Section 245: an emptied season or depth shape, or a closed
+            # pool, leaves the library entry too.
+            for key in ("outside_density", "outside_exchange_rate",
+                        "outside_season", "outside_depth_table"):
+                if key not in config:
+                    target.pop(key, None)
         if refuge_off:
             target.pop("exposed_share", None)
             target.pop("refuge_exchange_rate", None)
@@ -5431,6 +5671,32 @@ class FGConfigApp:
         return values, None
 
     @staticmethod
+    def _parse_depth_access(text):
+        """``(rows, error)`` of a Depth Access cell: a list of {depth_m,
+        factor}, ``(None, None)`` for an empty cell, or ``(None, message)``.
+        Checked with the runtime's parser (section 245)."""
+        from lib.environments.ecosystem_env import open_pool
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        rows = []
+        for item in text.split(","):
+            item = item.strip()
+            if not item:
+                continue
+            parts = item.split(":")
+            try:
+                rows.append({"depth_m": float(parts[0]), "factor": float(parts[1])})
+            except (IndexError, ValueError):
+                return None, f"'{item}' is not depth:factor"
+        try:
+            open_pool._parse_rows(rows, "factor", "depth_access_table")
+        except ValueError as exc:
+            return None, str(exc)
+        rows.sort(key=lambda r: r["depth_m"])
+        return rows, None
+
+    @staticmethod
     def _parse_pair_value(data_key, text):
         """``(value, error)`` of an optional pair cell (PAIR_OPTIONAL_KEYS):
         ``(None, None)`` for an empty cell (the key is removed), the value
@@ -5482,6 +5748,15 @@ class FGConfigApp:
                         entry.pop(data_key, None)
                     elif not (data_key in entry and self._same_value(entry[data_key], value)):
                         entry[data_key] = value
+                    continue
+                if data_key == "depth_access_table":
+                    rows, error = self._parse_depth_access(var.get())
+                    if error:
+                        pair_errors.append(f"{key}: depth_access_table: {error}")
+                    elif rows is None:
+                        entry.pop("depth_access_table", None)
+                    elif entry.get("depth_access_table") != rows:
+                        entry["depth_access_table"] = rows
                     continue
                 if data_key == "stage_access":
                     prey_id = key.split("_preys_on_", 1)[-1]

@@ -96,3 +96,24 @@ def test_loss_line_drops_the_decimal_when_it_does_not_fit(viz, monkeypatch):
 def test_ndm_panel_without_a_breakdown_draws_no_loss_line(viz, monkeypatch):
     lines = rendered_lines(viz, "benthic_infauna", monkeypatch)
     assert not any(line.startswith("pr/im") for line in lines)
+
+
+def test_open_pool_panel_adds_its_export(viz, monkeypatch):
+    """Section 245: an open pool (learned from update_biomass) shows its
+    export to the outside as a third share; a closed NDM keeps 'pr/im'."""
+    import numpy as np
+    from types import SimpleNamespace
+    viz.update_biomass({
+        "benthic_infauna": SimpleNamespace(
+            biomass=np.ones(GRID, dtype=np.float32), open_pool={"rate": 0.01}),
+        "benthivorous_fish": np.ones(GRID, dtype=np.float32)}, tick=1)
+    viz.update_loss_breakdown({
+        "benthic_infauna": {"predation": 0.26, "impact": 0.0, "starvation": 0.0,
+                            "natural": 0.0, "exchange": 0.74}})
+    lines = rendered_lines(viz, "benthic_infauna", monkeypatch)
+    assert "pr/im/ex = 26.0/0.0/74.0%" in lines
+    viz.update_biomass({
+        "benthic_infauna": SimpleNamespace(
+            biomass=np.ones(GRID, dtype=np.float32), open_pool=None)}, tick=2)
+    lines = rendered_lines(viz, "benthic_infauna", monkeypatch)
+    assert any(line.startswith("pr/im = ") for line in lines)

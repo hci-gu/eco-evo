@@ -14,13 +14,22 @@ LOSS_CAUSES = (
     ("predation", "loss_predation"),
     ("impact", "loss_impact"),
     ("natural", "loss_natural"),
+    # Section 245: an open pool's export to the outside (the import is the
+    # separate ``gain_exchange`` book; ``exchange_import``).
+    ("exchange", "loss_exchange"),
 )
 
 
-def loss_shares(env, fid):
-    """{'starvation', 'predation', 'impact', 'natural', 'total'} for ``fid``.
+def exchange_import(env, fid):
+    """Tonnes an open pool imported from the outside (section 245)."""
+    return float((getattr(env, "gain_exchange", None) or {}).get(fid, 0.0))
 
-    The four shares sum to 1.0 when anything was lost, otherwise all are
+
+def loss_shares(env, fid):
+    """{'starvation', 'predation', 'impact', 'natural', 'exchange', 'total'}
+    for ``fid``.
+
+    The shares sum to 1.0 when anything was lost, otherwise all are
     0.0; ``total`` is the biomass removed (tonnes).
     """
     amounts = {name: float((getattr(env, attr, None) or {}).get(fid, 0.0))

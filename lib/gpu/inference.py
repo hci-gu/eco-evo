@@ -253,6 +253,7 @@ class GpuStepper:
         juvenile = (r.juvenile.reshape(shape).cpu().numpy()
                     if m.stages_on else None)
         losses = r.loss_book.cpu().numpy()
+        imports = r.import_book.cpu().numpy()
         diet = r.diet_book.cpu().numpy()
         actions = r.action_sum.cpu().numpy()
         active = r.active_ticks.cpu().numpy()
@@ -269,6 +270,7 @@ class GpuStepper:
             for row, name in enumerate(r.LOSS_ORDER):
                 setattr(env, "loss_" + name,
                         {fid: float(losses[k, row, g]) for g, fid in enumerate(ids)})
+            env.gain_exchange = {fid: float(imports[k, g]) for g, fid in enumerate(ids)}
             env.intake_by_pred_prey = {
                 ids[p]: {ids[q]: float(diet[k, p, q]) for q in range(m.G) if diet[k, p, q] != 0.0}
                 for p in range(m.G) if diet[k, p].any()}

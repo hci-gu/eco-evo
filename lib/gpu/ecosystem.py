@@ -1494,8 +1494,15 @@ class TensorEcosystem:
                 if light_index is None:
                     raise ValueError("light_index is required with an open pool's season")
                 target = target * self.open_season[light_index.reshape(-1)]
-            open_b = (target + (nb * (1.0 + rate) - target) * self.open_keep).clamp_min(0)
+            grown = nb * (1.0 + rate)
+            open_b = (target + (grown - target) * self.open_keep).clamp_min(0)
             ndm_b = torch.where(self.open_mask, open_b, ndm_b)
+            if record is not None:
+                # The exchange per direction (loss_accounting's books):
+                # the export a loss cause, the import its own book.
+                flow = torch.where(self.open_mask, open_b - grown, 0.0)
+                record["exchange"] = (-flow.clamp_max(0)).sum(-1)
+                record["import"] = flow.clamp_min(0).sum(-1)
         if self.refuge_on:
             ndm_b = torch.where(self.refuge_mask, refuge_b, ndm_b)
             ndm_r = torch.where(self.refuge_mask, refuge_a, ndm_r)

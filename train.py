@@ -22,7 +22,7 @@ from lib.config.config_loader import (
 from lib.world.impact_maps import project_baseline_maps, sample_impact_maps
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.viz import add_heatmap_norm_argument
-from lib.environments.ecosystem_env.loss_accounting import loss_shares
+from lib.environments.ecosystem_env.loss_accounting import exchange_import, loss_shares
 from lib.environments.ecosystem_env.currents import add_current_arguments, current_options
 from lib.environments.ecosystem_env import source_tracking
 from lib.environments.ecosystem_env.population_change import (
@@ -1441,12 +1441,17 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
             lb = loss_breakdown[fid]
             if lb['total'] <= 0.0:
                 continue
-            loss_parts.append(
+            part = (
                 f"{fid}: starv {lb['starvation']*100:.0f}% / "
                 f"pred {lb['predation']*100:.0f}% / "
                 f"imp {lb.get('impact', 0.0)*100:.0f}% / "
                 f"nat {lb.get('natural', 0.0)*100:.0f}%"
             )
+            if fid in getattr(env, "open_ids", ()):
+                # Section 245: the export share and the import (t).
+                part += (f" / exch {lb.get('exchange', 0.0)*100:.0f}%"
+                         f" (in {exchange_import(env, fid):.0f} t)")
+            loss_parts.append(part)
         if loss_parts:
             print(f"    [probe gen={gen+1} loss] " + " | ".join(loss_parts))
 

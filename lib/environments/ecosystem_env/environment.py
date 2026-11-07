@@ -117,6 +117,11 @@ class EcosystemEnvironment:
         self.loss_impact = {fid: 0.0 for fid in self.fgs}
         # Residual natural mortality M1 (section 132; see loss_accounting).
         self.loss_natural = {fid: 0.0 for fid in self.fgs}
+        # Section 245: an open pool's exchange with the outside, booked per
+        # direction: the export is a loss cause (loss_accounting), the
+        # import its own book (tonnes, >= 0).
+        self.loss_exchange = {fid: 0.0 for fid in self.fgs}
+        self.gain_exchange = {fid: 0.0 for fid in self.fgs}
         # Exposure-weighted M1 split per FG: visual / tactile / other
         # (section 139); only FGs with exposure weighting get a row.
         self.loss_natural_parts = {}

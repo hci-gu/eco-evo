@@ -32,7 +32,8 @@ os.chdir(ROOT)
 
 TPY = 1460
 CELLS = 3600.0
-LOSS = ('loss_predation', 'loss_starvation', 'loss_natural', 'loss_impact')
+LOSS = ('loss_predation', 'loss_starvation', 'loss_natural', 'loss_impact',
+        'loss_exchange', 'gain_exchange')  # section 245: an open pool's exchange
 AB = {'benthivorous_fish': 'ben', 'predatory_fish': 'pred', 'whiting': 'wht', 'mackerel': 'mack', 'planktivorous_fish': 'plk',
       'porpoises': 'porp', 'seals': 'seal', 'benthic_infauna': 'bent',
       'mobile_epifauna': 'epi', 'norway_lobster': 'neph', 'krill': 'kri',
@@ -121,9 +122,11 @@ def show(path):
     print('mean t/km2 yr ' + ' '.join(f"{AB[g]:>7}" for g in gs))
     for i, y in enumerate(Y):
         print(f"         {i + 1:2} " + ' '.join(f"{y['mean'][g] / CELLS:7.3f}" for g in gs))
-    print('losses per mean biomass (/yr), pred/starv/nat/imp: year 1 | mid | last')
+    print('losses per mean biomass (/yr), pred/starv/nat/imp/exchange out/exchange in: '
+          'year 1 | mid | last')
     for g in gs:
-        row = ['/'.join(f"{_per(y['loss'][k][g], y['mean'][g]):.3f}" for k in LOSS) for y in pick]
+        row = ['/'.join(f"{_per(y['loss'].get(k, {}).get(g, 0.0), y['mean'][g]):.3f}" for k in LOSS)
+               for y in pick]
         print(f"  {AB[g]:5}", ' | '.join(row))
     print('diet shares (% of intake) and Q/B: year 1 | mid | last')
     for p in [g for g in gs if g in Y[0]['fill']]:

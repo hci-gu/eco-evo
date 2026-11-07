@@ -631,6 +631,10 @@ class LiveVisualizer:
         # ``_active_plot_ids``. ``_rnd``-baseline series follow the same
         # rule based on their stripped base id.
         self._ndm_ids: set = set(ndm_ids or [])
+        # Section 245: open pools (exchange with the outside), learned from
+        # the groups handed to update_biomass; their NDM loss line adds the
+        # export share.
+        self._open_ids: set = set()
         # How much real time one tick is (project_metadata.tick_hours,
         # section 97). The engine is tick-agnostic, so this is purely for
         # display: it turns the tick counter into simulated time. Callers
@@ -1386,6 +1390,11 @@ class LiveVisualizer:
                     arr = np.where(arr <= dead_eps,
                                    np.float32(0.0), arr).astype(np.float32,
                                                                 copy=False)
+                if hasattr(obj, "open_pool"):
+                    if obj.open_pool is not None:
+                        self._open_ids.add(fid)
+                    else:
+                        self._open_ids.discard(fid)
                 if hasattr(obj, "params"):
                     members = (obj.params or {}).get("member_species")
                     if self._member_lines(members):
@@ -1619,6 +1628,7 @@ class LiveVisualizer:
                     'starvation': float(lb.get('starvation', 0.0)),
                     'impact':     float(lb.get('impact', 0.0)),
                     'natural':    float(lb.get('natural', 0.0)),
+                    'exchange':   float(lb.get('exchange', 0.0)),
                 }
             self._dirty = True
         except Exception as e:
@@ -5418,7 +5428,8 @@ class LiveVisualizer:
         # 'pr/st/im/nm = ...', and diet breakdown '<abbr>/... = X/...%',
         # followed by a b0 slider. An NDM has no actions, diet, M1 or
         # starvation: its third line is its loss breakdown 'pr/im = ...'
-        # (eaten / impacts such as bottom trawling) and the rest is blank.
+        # (eaten / impacts such as bottom trawling; an open pool adds its
+        # export 'ex', section 245) and the rest is blank.
         title_h = self._TITLE_H
         arr = self._biomass.get(fid)
         legend: list = []
@@ -5469,9 +5480,15 @@ class LiveVisualizer:
             if lb is not None:
                 pr = float(lb.get('predation', 0.0)) * 100.0
                 im = float(lb.get('impact', 0.0)) * 100.0
+                if fid in self._open_ids:
+                    # Section 245: an open pool's export to the outside.
+                    ex = float(lb.get('exchange', 0.0)) * 100.0
+                    template, shares = ("pr/im/ex = {pr}/{im}/{ex}%",
+                                        dict(pr=pr, im=im, ex=ex))
+                else:
+                    template, shares = "pr/im = {pr}/{im}%", dict(pr=pr, im=im)
                 ndm_surf = self._font.render(self._loss_text(
-                    "pr/im = {pr}/{im}%", dict(pr=pr, im=im),
-                    self._panel_w - 2 * pad), True, info_col)
+                    template, shares, self._panel_w - 2 * pad), True, info_col)
                 self._screen.blit(ndm_surf, (px + pad, act_y))
         else:
             # Header läser senaste mv/rs/et från ``_action_fracs`` (uppdateras

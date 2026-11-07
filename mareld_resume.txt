@@ -23523,9 +23523,8 @@ remain open exactly as described in 71.9 / 71.11.
       .has_budget accepts an open pool), so local production replaces the
       booked losses at T; the exchange is outside g. The loader refuses
       g >= exp(k) - 1. Start pattern: spawn mode equilibrium = density x
-      w(c) (habitat.build). The net exchange flow is NOT booked in the
-      loss accounts (loss_natural, the GPU record, the probes' loss
-      lines): a krill change of B does not add up to its listed losses.
+      w(c) (habitat.build). The exchange is booked per direction since
+      245.1.
     - Engine: a pair's depth_access_table (rows {depth_m, factor}) becomes
       a per-cell multiplier on a (equal-cell mean 1; habitat.pair_depth_map
       -> pair param _depth_access_map -> interactions.build_pair_depth_maps
@@ -23584,3 +23583,51 @@ remain open exactly as described in 71.9 / 71.11.
       the krill-weighted vs equal-cell a; dark ratios of the water column
       and benthivores (encounter, no diel stomachs); dusk peak and the
       ~3x seasonal swing of a not represented; Thysanoessa share.
+
+245.1 The exchange in the loss books (user, 2026-11-07: "add the
+    exchange entry to the loss books").
+    - The open pool's exchange is booked per direction, per tick, as the
+      cell sums of B_new - B (1 + g): the export (outflow) in
+      env.loss_exchange, a fifth loss cause ("exchange") in
+      loss_accounting.LOSS_CAUSES, so loss_shares and the viewer/probe
+      breakdowns include it; the import in env.gain_exchange
+      (loss_accounting.exchange_import). With the growth g B this closes
+      the pool's change: B_new - B_M1 = g B + import - export - predation.
+    - GPU: TensorEcosystem.population writes record["exchange"] (export)
+      and record["import"]; RolloutRunner's loss_book gains the
+      "exchange" row (LOSS_ORDER) and an import_book [E, G]; the
+      inference mirror sets env.loss_exchange and env.gain_exchange.
+    - Printouts: train.py's probe loss line adds "exch X% (in Y t)" for
+      an open pool; tools/probes/frozen_years.py prints exchange out / in
+      per mean biomass (older JSON files without the keys read as 0).
+    - Checks: tests/test_open_pool.py (the books equal the flow's two
+      parts; export the only loss without predation);
+      tests/test_inference_gpu_engine.py compares gain_exchange as well
+      as every LOSS_CAUSES book between the engines (mutation-checked:
+      dropping the GPU export row fails it).
+
+245.2 FG editor and viewer synced to the open pool (user, 2026-11-07:
+    "is fgconfig.py synced? is the FG status box in viz synced?").
+    - Before: the editor showed only outside_density and the exchange
+      rate; saving krill dropped into the hand-set branch (r_max 0) and
+      never re-derived its g; the season, the depth shape and the pairs'
+      depth tables were not editable; an open pool could not be closed.
+      The viewer's update_loss_breakdown kept four causes, so the export
+      never reached the NDM line ('pr/im').
+    - Editor (fgconfig.py): Outside Season (12 factors, empty = flat),
+      an Outside Density by Depth rows table with a preview on the depth
+      map (validated with open_pool.parse_depth_table), and a Depth Access
+      pair matrix (cells 'depth:factor, ...'; columns = the open pools and
+      any prey a pair carries a table on; validated with the runtime
+      parser; empty = no table). An open pool is derived with r_max 0
+      (kept in the library), refused without an exchange rate, with a
+      capacity table, or when g >= exp(k) - 1; Outside Density 0 / empty
+      removes every outside_* key. Help texts in field_help.py.
+    - Viewer (pygame_viz.py): open pools are learned from the groups
+      handed to update_biomass; their NDM line reads 'pr/im/ex' (sv
+      'pr/pv/ub', it 'pr/im/sc') with the export share.
+    - Checks: tests/test_fgconfig_open_pool.py (matrix round trip, edit,
+      refusal, clear; krill fields round trip unchanged with g re-derived
+      by the budget; bad values refused; closing removes the pool),
+      tests/test_viz_ndm_losses.py (the 'pr/im/ex' line and back to
+      'pr/im' for a closed group). Full suite 1775 passed, 12 skipped.
