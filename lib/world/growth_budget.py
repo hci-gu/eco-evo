@@ -110,14 +110,19 @@ Material-capped growth (section 244)
 ------------------------------------
 A decision maker with ``material_growth_share`` kappa_m builds its new
 tonnes only out of this tick's food, while the energy may come from the
-store: per cell G = min(B g (s - u) p, kappa_m I p / ec, R_settled - u ME
-B_settled) (MJ; p the price of a tonne). The material of a lean tonne
-(protein, N) cannot come from the lipid reserve; the energy of activity
-and synthesis can. kappa_m is the share of the assimilated intake (net of
-SDA, as the engine's I) that can become lean tissue, from the protein
-route (research_notes/"Tillvaxt ur dagens foda", a-umlaut, o-umlaut).
-No intake, no growth, as for the income law; unlike it, the costs need
-not be paid out of the income first. Energy is pooled, so s* and the
+store: per cell G = min(B g (s - u) p, kappa_m I p / ec, max(I - C, 0),
+R_settled - u ME B_settled) (MJ; p the price of a tonne, C the tick's
+action costs). The material of a lean tonne (protein, N) cannot come
+from the lipid reserve; the energy of activity and synthesis can, but
+only while the tick's balance I - C is positive (section 244.10): fish
+below the maintenance ration lose protein, they do not deposit it, so a
+fish eating less than it spends never turns its fat into tissue
+(research_notes/"Hostens tillvaxt och sommarens aptit", o-umlaut,
+a-umlaut). kappa_m is the share of the assimilated intake (net of SDA,
+as the engine's I) that can become lean tissue, from the protein route
+(research_notes/"Tillvaxt ur dagens foda", a-umlaut, o-umlaut). No
+intake, no growth, as for the income law; unlike it, the costs are not
+taken off the top of a share of I. Energy is pooled, so s* and the
 closure are those of the reserve law; the g is paid over
 ``feeding_season_months`` exactly as for the income law. The budget is
 refused when the material cannot pay it under ideal conditions in the
@@ -605,7 +610,9 @@ def _material_closure(budget, spec, share):
     it eats I = h(s_n) C. Only ``material_growth_share`` kappa_m of I can
     become lean material, so kappa_m h(s_n) C >= P_n ec, or the budget is
     unpayable; so is a season whose production the energy cannot pay
-    (no s_n). g itself keeps the annual-mean s* (section 184). Without the
+    (no s_n). The balance term max(I - C, 0) of section 244.10 needs no
+    check of its own: at s_n, h(s_n) C - cost = (1 + c) P_n (ec + s_n ME)
+    >= P_n p. g itself keeps the annual-mean s* (section 184). Without the
     energy data there is nothing to check. With ``reserve_room`` the check
     takes I = C, the ceiling; the realised intake at a full reserve is the
     room (about cost + P_n p), so for such a group the guard is looser

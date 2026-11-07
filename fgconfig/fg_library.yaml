@@ -553,6 +553,16 @@
     # the months size g, the food decides when it grows.
     material_growth_share: 0.43
     feeding_season_months: 6.4
+    # Section 244.10: full appetite, intake capped at the reserve room
+    # (section 240). Herring fatten from ~0.25 to ~0.9 of the maximum in
+    # ~6 weeks (Kenyon 2022), which a gate that halves appetite at s 0.6
+    # does not allow; on the gate the summer fill stayed 0.65-0.69 and
+    # the group entered December at 0.15-0.3 and starved. Frozen fix89
+    # probe (rule 240): fill rose to 0.99, starvation 0.95 -> 0.01 /yr.
+    # The field Q3 group fill with the 0-group is ~0.75, so the summer
+    # store is ~0.2 high. research_notes/"Hostens tillvaxt och sommarens
+    # aptit" (Swedish letters).
+    appetite: reserve_room
     # Section 244: SDA 0.11 of the INGESTED energy (herring, sprat 0.10;
     # pout, blue whiting 0.12 as cod, Tirsgaard 2015), netted from every
     # pair's assimilation; feeding_cost is now the foraging activity only.
@@ -624,8 +634,9 @@
     # 0.0031889 -> 0.0028221 (whiting M2 on the pool 0.203 -> 0.07); 232.2
     # mammal re-booking -> 0.0028251; 243.3 (pout 1.64: r, M1, M2 at the
     # booked flow, s*, season 6.4) -> 0.0024013; 244 (material law, SDA
-    # 0.11, feeding_cost 1.65: s* 0.752 -> 0.750) -> 0.0024099.
-    growth_rate: 0.0024098987101
+    # 0.11, feeding_cost 1.65: s* 0.752 -> 0.750) -> 0.0024099; 244.10
+    # (appetite reserve_room: s* 0.750 -> 1) -> 0.0016563.
+    growth_rate: 0.0016563491332
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which

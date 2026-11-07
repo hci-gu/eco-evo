@@ -23384,3 +23384,64 @@ remain open exactly as described in 71.9 / 71.11.
       epifauna (a habitat share). Full suite 1734 passed, 1 failed (that
       case), 12 skipped; after the fix the editor tests pass; 1-gen
       train.py smoke passed.
+
+244.10 The material law: no net lean growth below maintenance (user,
+    2026-11-07: fix89 looked poor after four generations; "investigate
+    1 and 2", then "all").
+    - Diagnosis (frozen fix89 step-150 policies, probe seed 20260530,
+      start in May): the planktivores die of winter starvation (Dec-Feb,
+      99.9 % below the line in Jan; 0.085 of the start after 3 years),
+      not of predation. Causes, in order: little winter intake, a low
+      December store (fill 0.15-0.3: the summer hunger gate holds fill
+      at 0.65-0.69, and the material law kept building lean tissue on the
+      fat in Sep-Oct while intake was below cost), the winter cost last
+      (1.15-1.25x the members' field value; Q10 2.2 left the January
+      starvation in place). research_notes/"Hostens tillvaxt och
+      sommarens aptit" and "Planktivorernas vinterkostnad" (Swedish
+      letters).
+    - Engine: G = min(B g (s - u) p, kappa_m I p / ec, max(I - C, 0),
+      R' - u ME B'), C this tick's costs; movement.income_growth and GPU
+      income_growth. Lab fish deposit protein while losing lipid only
+      near energy maintenance (trout, seabream; no clupeid or gadoid
+      data), so the energy form is the conservative cap. The material
+      form kappa_m (I - theta C) p / ec (theta 0.6-1) was not used: with
+      a full reserve I ~ cost + last tick's growth and the growth decays
+      geometrically by kappa_m p / ec. The budget closure needs no new
+      check: h(s_n) C - cost = (1 + c) P_n (ec + s_n ME) >= P_n p.
+    - Effect alone (frozen fix89): planktivores 0.085 -> 0.17 after 3
+      years; mackerel starvation 0.10 -> ~0.01/yr (no Oct-Nov growth on
+      fat).
+    - Checks: tests/test_material_growth.py (contract 3, below-cost
+      cases), tests/test_gpu_ecosystem.py (material parity at a costly
+      DM, 8 of 16 cases fail without the GPU term). Full suite 1754
+      passed, 12 skipped; 1-gen train.py smoke passed.
+    - Appetite probes (frozen fix89, lib copies in the scratchpad, rule
+      240: fill must rise to ~1 and the web must hold). End of year 3 /
+      start, all with 244.10:
+        variant (reserve_room on)   plk  wcol  whit  mack  benth seals
+        planktivores                1.07 0.66  2.37  1.67  1.28  1.20
+        + water column              0.73 1.28  1.59  1.78  1.20  1.16
+        + water col, whiting, mack  0.66 1.30  2.43  4.44  0.48  0.14
+      Planktivores: fill 0.99 in summer, starvation 0.01/yr by year 3;
+      passes (field Q3 group fill ~0.75 with the 0-group, so ~0.2 high).
+      Water column: fill 0.92-0.98 and no winter starvation (on the gate
+      76 % starving in Feb-Mar), but its realised M2 on the planktivores
+      is 0.36/yr against the booked 0.174 (gate 0.12), and the
+      planktivores fall. Whiting: fill ~0.98, eats the benthivores down
+      (pred 0.70 -> 1.05/yr) and the epifauna (1.30/yr); seals starve.
+      Mackerel: 4.4x (244.8's season flag, worse). Not applied to the
+      library at first; see the last item.
+    - Zooplankton in autumn (frozen fix89): its own M1 is ~1.9 of the
+      stock per month all year; planktivore grazing adds ~0.9/month in
+      Oct-Nov. reserve_room on the planktivores doubles the autumn
+      grazing and halves the Feb-Mar stock. Pout's winter euphausiids
+      are partly near-bed krill outside A17's 0-25 m target; a new prey
+      pair would change the action layout (retrain). Diagnosis only.
+    - Applied (user, 2026-11-07: "set reserve_room on the planktivores
+      and commit"): planktivorous_fish appetite: reserve_room; derived g
+      0.0024099 -> 0.0016563 (s* 0.750 -> 1). Water column, whiting and
+      mackerel stay on the gate. fix89 checkpoints load but were trained
+      on the gate and without the balance term: retrain.
+      tests/test_appetite_sda.py now pins {benthivores, planktivores}
+      and the planktivores' s* 1. Full suite 1754 passed, 12 skipped;
+      1-gen train.py smoke passed.

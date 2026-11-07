@@ -1050,7 +1050,8 @@ class TensorEcosystem:
         """Sections 184, 244 mirror of ``movement.income_growth``: per
         cell G = min(kappa I - C, B g (s - u) p), at most the settling
         reserve (income law), or G = min(B g (s - u) p, kappa_m I p / ec,
-        R' - u ME B') (material law), moved from the stationary reserve
+        max(I - C, 0), R' - u ME B') (material law, 244.10), moved from
+        the stationary reserve
         into G / p new tonnes; p the price of a tonne, ec + c (ec + s ME)
         (section 241)."""
         cost = (b * rest * metabolism * self.cost_rest
@@ -1071,7 +1072,8 @@ class TensorEcosystem:
                     / torch.where(ec > 0, ec, 1.0))
         above = (stay_r - maintenance * self.max_reserve[:, self.dm_index]
                  * stay_b).clamp_min(0)
-        paid_m = torch.minimum(torch.minimum(ceiling, material), above)
+        paid_m = torch.minimum(torch.minimum(torch.minimum(ceiling, material), above),
+                               (gains - cost).clamp_min(0))
         paid = torch.where((self.material_share > 0) & (ec > 0), paid_m, paid)
         return (stay_b + paid / torch.where(price > 0, price, 1.0), stay_r - paid)
 

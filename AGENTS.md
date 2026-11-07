@@ -275,10 +275,12 @@ fabricates mass.
   A DM with `material_growth_share` kappa_m (section 244; excludes
   kappa) builds its new tonnes only out of this tick's food and pays
   the energy from the pooled store: `G = min(B g (s - u) p, kappa_m I p
-  / ec, R - u ME B)` on the same path (`movement.income_growth`, GPU
-  `income_growth`; reserve branch off in the population step). Fat holds
-  no nitrogen, so lean tissue needs food eaten now; unlike kappa the
-  costs need not come out of the income first. Every fish group carries
+  / ec, max(I - C, 0), R - u ME B)` on the same path
+  (`movement.income_growth`, GPU `income_growth`; reserve branch off in
+  the population step). Fat holds no nitrogen, so lean tissue needs food
+  eaten now; since 244.10 no net lean growth below maintenance (the
+  material law alone grew on the fat in autumn while intake was below
+  cost). Every fish group carries
   it (protein route, x A/(A - sda E) to the engine's SDA-net I):
   planktivores 0.43, benthivores 0.49, whiting 0.48, water column 0.48,
   mackerel 0.49; with field feeding seasons 6.4 / 8.6 / 9.0 / 8.6 / 4.0
@@ -460,12 +462,15 @@ fabricates mass.
   (`predation._reserve_room_cap`, both engines; the reserve is clipped at
   B ME, so h = 1 alone would discard energy). Its ideal reserve s* is then
   min(1, (C - cost - P ec)/(P ME)), in practice 1, so g = gross/((1 - u)
-  1460). Set on benthivores only (cod eat at Cmax at livers above the
-  wild maximum; research_notes/"Tillvaxt mot ranson", a-umlaut). Zooplankton
+  1460). Set on benthivores (cod eat at Cmax at livers above the
+  wild maximum; research_notes/"Tillvaxt mot ranson", a-umlaut) and,
+  since 244.10, planktivores (herring fatten fast; on the gate they
+  starved in winter). Water column, whiting and mackerel stay on the
+  gate: their frozen fix89 probes reached fill ~1 but over-ate the web
+  (244.10). Zooplankton
   stays on the gate: with frozen fix86 policies its fill stayed ~0.6
   while s* = 1 cut its g by a third and the plankton chain collapsed
-  (240); every other DM keeps the gate (no evidence gathered; mammals
-  have a lipostat). Before moving a group, a frozen-policy probe must
+  (240); mammals keep the gate (a lipostat). Before moving a group, a frozen-policy probe must
   show its realised fill rising to ~1 (the s* = 1 g assumes ideal food). `sda_fraction` (section 240)
   is the specific dynamic action as a share of the INGESTED energy, netted
   from every pair's assimilation in `energy_gain_mat` (and in s*'s C);

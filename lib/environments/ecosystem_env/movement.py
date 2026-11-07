@@ -375,10 +375,15 @@ def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
       G = min(kappa I - C, B g (s - u) p), at least 0 and at most the
       settling reserve - the costs come out of the income first;
     - material law (``material_growth_share`` kappa_m, section 244):
-      G = min(B g (s - u) p, kappa_m I p / ec, R' - u ME B') with R', B'
-      the settling reserve and biomass - the new tonnes' material comes
-      only from this tick's food (kappa_m I / ec tonnes at most), the
-      energy from the pooled store above the maintenance line.
+      G = min(B g (s - u) p, kappa_m I p / ec, max(I - C, 0),
+      R' - u ME B') with R', B' the settling reserve and biomass - the
+      new tonnes' material comes only from this tick's food (kappa_m I /
+      ec tonnes at most) and is laid down only while the tick's energy
+      balance is positive (section 244.10): no net lean growth below the
+      maintenance ration, so a fish eating less than it spends does not
+      turn its fat into tissue. Unlike kappa, the costs are not taken off
+      the top of a share of I: above the balance point the material cap
+      binds, not the energy.
 
     G leaves the stationary reserve (where the intake landed) and becomes
     G / p tonnes of new biomass there, before the movement. Nothing to
@@ -412,12 +417,15 @@ def income_growth(env, biomass, reserve, gains, cost, stationary_biomass,
                       ceiling)
     paid = np.minimum(paid, np.maximum(stationary_reserve, np.float32(0.0)))
     paid = np.where((kappa > 0.0) & (ec > 0), paid, np.float32(0.0))
-    # Section 244: the material cap and the store above maintenance.
+    # Section 244: the material cap and the store above maintenance;
+    # 244.10: and no more than the tick's net energy income.
     safe_ec = np.where(ec > 0, ec, np.float32(1.0))
     material = share * np.maximum(gains, np.float32(0.0)) * price / safe_ec
     above = np.maximum(stationary_reserve - maintenance * max_reserve
                        * stationary_biomass, np.float32(0.0))
-    paid_m = np.minimum(np.minimum(ceiling, material), above)
+    surplus = np.maximum(gains - cost, np.float32(0.0))
+    paid_m = np.minimum(np.minimum(np.minimum(ceiling, material), above),
+                        surplus)
     paid = np.where((share > 0.0) & (ec > 0), paid_m, paid).astype(env.dtype)
     safe_price = np.where(price > 0, price, np.float32(1.0))
     return ((stationary_biomass + paid / safe_price).astype(env.dtype),

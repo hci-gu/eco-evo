@@ -156,6 +156,10 @@ def make_env(migration=False, mortality=False, handling=0.2, shape=(4, 5),
         if material and fid == "a":
             params.update(material_growth_share=material[0],
                           feeding_season_months=material[1])
+            if len(material) > 2:
+                # A dear DM: cells whose intake is below the tick's cost
+                # (the balance term of section 244.10).
+                params.update(resting_metabolism=material[2])
         if capacity and fid == "a":
             params["capacity_loss_rate"] = capacity
         if m1_exposure and fid == "a":
@@ -607,14 +611,17 @@ def test_income_growth_matches_reference(device, kappa, handling):
     assert bool(model.income_off_growth[0, model.ids.index("a"), 0])
 
 
+@pytest.mark.parametrize("cost", [0.05, 1.5])
 @pytest.mark.parametrize("share", [0.05, 0.4])
 @pytest.mark.parametrize("handling", [0.0, 0.6])
-def test_material_growth_matches_reference(device, share, handling):
+def test_material_growth_matches_reference(device, share, handling, cost):
     """Section 244: both engines build DM ``a``'s new tonnes only out of
     this tick's intake (kappa_m I / ec), paid from the store above
-    maintenance and capped at g (s - u), never out of the reserve alone."""
+    maintenance and capped at g (s - u), never out of the reserve alone;
+    244.10: and never more than the tick's net income I - C (``cost`` is
+    a's resting metabolism, 1.5 puts cells below their cost)."""
     env = make_env(min_split=0.0, extinction_factor=0.0, handling=handling,
-                   material=(share, 6.0))
+                   material=(share, 6.0, cost))
     model = _assert_parity(env, device, ticks=6)
     assert model.income_on
     i_a = env.dm_ids.index("a")

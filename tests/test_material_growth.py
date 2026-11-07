@@ -9,11 +9,13 @@ Contracts asserted:
    law (s* unchanged), and refuses a share that cannot build the budget
    under ideal conditions in the season: kappa_m h(s_n) C < P ec 12/n,
    s_n the reserve that settles at the season's production.
-3. Per cell G = min(B g (s - u) p, kappa_m I p / ec, R' - u ME B'): the
-   new tonnes' material only from this tick's food, the energy from the
-   store above maintenance. The case that tells it from the income law:
-   0 < kappa I < C on a fat reserve grows here and not there. No intake,
-   no growth; no growth at or below maintenance.
+3. Per cell G = min(B g (s - u) p, kappa_m I p / ec, max(I - C, 0),
+   R' - u ME B'): the new tonnes' material only from this tick's food,
+   laid down only while the tick's energy balance is positive (244.10),
+   paid from the store above maintenance. The case that tells it from the
+   income law: I > C with kappa I < C grows here and not there; I < C
+   grows in neither (the 244 law without the balance term grew there, on
+   the fat). No intake, no growth; no growth at or below maintenance.
 4. In the tick the population step never turns its reserve into
    biomass, and its starvation keeps the library rate.
 5. Refusals: a non decision maker, growth_q10 on the same DM, no
@@ -153,10 +155,12 @@ def _arrays(env, gains, cost, fill):
 
 
 # B 2, g 0.2, u 0.3, ec = p 5, ME 100, kappa_m 0.4:
-# ceiling B g (s - u) p, material 0.4 I, store R' - 0.3 x 100 x 2.
+# ceiling B g (s - u) p, material 0.4 I, balance I - C, store R' - 0.3 x 100 x 2.
 @pytest.mark.parametrize("gains,cost,fill,want", [
     (40.0, 10.0, 0.8, 1.0),     # ceiling 2 x 0.2 x 0.5 x 5 = 1 MJ
-    (1.0, 10.0, 0.8, 0.4),      # 0 < kappa I < C: grows (the income law would not)
+    (12.0, 10.0, 0.8, 1.0),     # kappa I 4.8 < C 10 < I: grows (the income law would not)
+    (10.5, 10.0, 0.8, 0.5),     # balance-limited: I - C = 0.5
+    (1.0, 10.0, 0.8, 0.0),      # 0 < I < C: no growth on the fat (244.10)
     (0.5, 0.0, 0.9, 0.2),       # material-limited: 0.4 x 0.5
     (40.0, 10.0, 0.31, 0.02),   # ceiling 2 x 0.2 x 0.01 x 5
     (0.0, 10.0, 0.95, 0.0),     # nothing eaten: no growth, the fat is kept
