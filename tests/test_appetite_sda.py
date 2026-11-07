@@ -131,7 +131,8 @@ def test_library_appetite_and_benthivore_budget():
             fid, sd, inter).reference_fill == pytest.approx(1.0)
     b = growth_budget.growth_budget("benthivorous_fish", sd, inter)
     assert b.reference_fill == pytest.approx(1.0)
-    assert b.gate == pytest.approx(0.5)
+    # Section 247: u 0.078 (the gadoid danger level), gate 1 - u.
+    assert b.gate == pytest.approx(1.0 - 0.078)
     # C nets SDA: (0.8 - 0.10) x herring quality / h, below the 0.8 value.
     assert sd["benthivorous_fish"]["sda_fraction"] == pytest.approx(0.10)
     assert b.ideal_cost == pytest.approx(3.33 * 1.18)

@@ -165,6 +165,11 @@ def test_light_channel_is_appended_last_for_every_decision_maker():
             env.fgs, len(env.observable_impact_vars))
         assert [dims[f][0] for f in env.dm_ids] == list(env.per_dm_in_dim)
 
+    # Section 247: a group with start_fill starts at its fill on the
+    # calendar's start day (the annual mean without the calendar); give
+    # both worlds the same reserves so the layout alone is compared.
+    for fid, fg in on.fgs.items():
+        fg.energy_reserve = off.fgs[fid].energy_reserve.copy()
     off_obs = observations.build_observation_batch(off)
     on_obs = observations.build_observation_batch(on)
     level = interactions.light_level(on)

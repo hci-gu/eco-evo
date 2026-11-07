@@ -264,6 +264,21 @@ class TensorEcosystem:
                 [fid in inert for fid in self.ids], torch.bool)[None, :, None],
                 0.0, self.growth)
         self.maintenance = parameter("maintenance_level")
+        # Section 247: the start fill centre per year tick [T, G] (the
+        # group's ``start_fill`` on the day the tick starts, as the
+        # loader's start_day; the annual mean without the calendar), NaN
+        # for a group without a table (``WorldSpawner.reserves``).
+        fills = np.full((self.light_period, self.G), np.nan, dtype=np.float64)
+        for j, fg in enumerate(groups):
+            if getattr(fg, "start_fill", None) is None:
+                continue
+            if self.calendar:
+                days = np.arange(self.light_period) * float(env.daylight["tick_hours"]) / 24.0
+                fills[:, j] = [fg.start_fill_centre(d) for d in days]
+            else:
+                fills[:, j] = fg.start_fill_centre(None)
+        self.start_fill_on = bool(np.isfinite(fills).any())
+        self.start_fill = tensor(fills.astype(np.float32)) if self.start_fill_on else None
         # Section 184: income-funded growth (``movement.income_growth``).
         # kappa per DM in dm order; such a DM's reserve-funded branch is
         # off in ``population``.
@@ -357,6 +372,44 @@ class TensorEcosystem:
                     if fid in open_ids and env.open_season.get(fid) is not None
                     else np.ones(period, dtype=np.float32)
                     for fid in self.ids], axis=1))[:, :, None]
+        # Section 246: migrating decision makers, mirror of
+        # ``open_pool.migrate``: the group total relaxes towards
+        # density x N_cells x season(t); export pro rata with the reserve,
+        # import on the entry cells with fill(t) x max_energy_reserve.
+        dm_open = tuple(getattr(env, "open_dm_ids", ()))
+        self.open_dm_on = bool(dm_open)
+        if self.open_dm_on:
+            self.open_dm_mask = tensor([fid in dm_open for fid in self.ids],
+                                       torch.bool)[None, :, None]
+            # The reward ledger reads it per DM row: [1, D].
+            self.open_dm_rows = tensor([fid in dm_open for fid in self.dm_ids],
+                                       torch.bool)[None, :]
+            self.open_dm_total = tensor([env.open_dm_total.get(fid, 0.0)
+                                         for fid in self.ids])[None, :, None]
+            self.open_dm_keep = tensor([
+                float(np.exp(-env.fgs[fid].open_pool["rate"])) if fid in dm_open else 1.0
+                for fid in self.ids])[None, :, None]
+            self.open_dm_entry = tensor(np.stack([
+                np.asarray(env.open_dm_entry[fid], dtype=np.float32).reshape(-1)
+                if fid in dm_open else np.zeros(self.C, dtype=np.float32)
+                for fid in self.ids]))[None]
+            daylight_on = bool(getattr(env, "_has_daylight", False))
+            self.open_dm_tables = daylight_on
+            if daylight_on:
+                period = int(env.light_period)
+
+                def per_tick(table, fid):
+                    value = table.get(fid) if fid in dm_open else None
+                    return (np.asarray(value, dtype=np.float32) if value is not None
+                            else np.ones(period, dtype=np.float32))
+                self.open_dm_season = tensor(np.stack(
+                    [per_tick(env.open_dm_season, fid) for fid in self.ids], axis=1))[:, :, None]
+                self.open_dm_fill = tensor(np.stack(
+                    [per_tick(env.open_dm_fill, fid) for fid in self.ids], axis=1))[:, :, None]
+            else:
+                self.open_dm_season = None
+                self.open_dm_fill = tensor([float(env.open_dm_fill.get(fid, 0.0))
+                                            for fid in self.ids])[None, :, None]
         # Section 245: per-cell depth multiplier on a pair's attack rate,
         # mirror of ``interactions.build_pair_depth_maps``: [1, D, G, C].
         self.pair_depth = (
@@ -1508,6 +1561,8 @@ class TensorEcosystem:
             ndm_r = torch.where(self.refuge_mask, refuge_a, ndm_r)
         b = torch.where(self.is_dm, dm_b, ndm_b)
         r = torch.where(self.is_dm, dm_r, ndm_r)
+        if self.open_dm_on:
+            b, r = self._migrate(b, r, light_index, record)
         if record is not None:
             # The extinction sweep is booked as starvation, as
             # ``population_change.apply_extinction_threshold`` does.
@@ -1531,6 +1586,37 @@ class TensorEcosystem:
         if juvenile is not None:
             return b, r, starve_loss, juvenile
         return b, r, starve_loss
+
+    def _migrate(self, b, r, light_index, record):
+        """Section 246, mirror of ``open_pool.migrate`` on the group total."""
+        target = self.open_dm_total
+        fill = self.open_dm_fill
+        if self.open_dm_tables:
+            if light_index is None:
+                raise ValueError("light_index is required with a migrating decision maker")
+            t = light_index.reshape(-1)
+            target = target * self.open_dm_season[t]
+            fill = self.open_dm_fill[t]
+        total = b.sum(-1, keepdim=True)
+        net = torch.where(self.open_dm_mask, (target - total) * (1.0 - self.open_dm_keep), 0.0)
+        export = (-net).clamp_min(0)
+        imported = net.clamp_min(0)
+        share = torch.where(total > 0, export / total.clamp_min(1e-30), 0.0).clamp(max=1.0)
+        leaving = (r * share).sum(-1)
+        fill_energy = imported * fill * self.max_reserve
+        b = b * (1.0 - share) + imported * self.open_dm_entry
+        r = r * (1.0 - share) + fill_energy * self.open_dm_entry
+        if record is not None:
+            ec = self.energy_content
+            out = (share * total)[..., 0]
+            record["exchange"] = record.get("exchange", torch.zeros_like(out)) + out
+            record["import"] = record.get("import", torch.zeros_like(out)) + imported[..., 0]
+            # The tick's net exchange, for the reward ledger (energy_ledger).
+            record["exchange_biomass"] = imported[..., 0] - out
+            record["exchange_reserve"] = fill_energy[..., 0] - leaving
+            record["exchange_energy"] = (record["exchange_biomass"] * ec
+                                         + record["exchange_reserve"])
+        return b, r
 
     def advect(self, biomass, reserve, tick, keys=None, track=False, juvenile=None):
         """Drift every responding group; ``track`` also returns the shares.

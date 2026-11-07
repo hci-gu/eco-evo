@@ -359,8 +359,9 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
-        if open_pool.is_open(params):
-            # Section 245: the exchange must hold the open pool.
+        if open_pool.is_open(params) and not params.get('is_decision_maker', False):
+            # Section 245: the exchange must hold the open pool (an NDM;
+            # a migrating DM's growth is food-limited, section 246).
             _err = open_pool.stability_error(
                 params.get('growth_rate'), params.get(open_pool.RATE_KEY), sid)
             if _err:
@@ -800,8 +801,9 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
-        if open_pool.is_open(params):
-            # Section 245: the exchange must hold the open pool.
+        if open_pool.is_open(params) and not params.get('is_decision_maker', False):
+            # Section 245: the exchange must hold the open pool (an NDM;
+            # a migrating DM's growth is food-limited, section 246).
             _err = open_pool.stability_error(
                 params.get('growth_rate'), params.get(open_pool.RATE_KEY), sid)
             if _err:
@@ -891,7 +893,8 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                     "a fed-only growth law does not carry a growth Q10 "
                     "(sections 184, 244)")
             if (law[2] != 12.0
-                    and not float(params.get('r_max', 0.0) or 0.0) > 0.0):
+                    and not float(params.get('r_max', 0.0) or 0.0) > 0.0
+                    and not open_pool.is_open(params)):     # 246: derived with r_max 0
                 raise ValueError(
                     f"'{sid}' has feeding_season_months but no r_max; the "
                     "season sizes a DERIVED growth rate (section 184)")
@@ -985,12 +988,16 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
             fg.capacity_map = capacity.astype(np.float32)
         fg.equilibrium_map = habitat_maps.get(sid, {}).get('equilibrium')
         fg.outside_weight_map = habitat_maps.get(sid, {}).get('outside_weight')
-        # Training: E_X(c) ~ Uniform(0, ME_X) per cell so policies see varied
-        # initial energy fill levels. Inference keeps the deterministic
-        # 0.7 * ME_X default for reproducible scenario comparisons.
+        # Training draws the start fill per cell around a centre (section 43:
+        # u +- 0.3; section 247: the group's field ``start_fill`` on the
+        # start day, +- 0.3); inference starts at the centre (0.7 without a
+        # table) for reproducible scenario comparisons.
         randomize_energy = (mode == 'train')
+        start_day = (daylight_cfg["start_tick"] * daylight_cfg["tick_hours"] / 24.0
+                     if daylight_cfg is not None else None)
         fg.initialize_state(grid_size, initial_biomass=initial_b,
-                            randomize_energy=randomize_energy, rng=rng)
+                            randomize_energy=randomize_energy, rng=rng,
+                            start_day=start_day)
         fgs[sid] = fg
 
     return fgs, impact_vars, impact_ranges, observable_impact_vars

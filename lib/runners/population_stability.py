@@ -92,6 +92,10 @@ class StabilityScore:
             raise ValueError("Initial biomass must be finite and nonnegative")
         self.e0 = self.b0 * self.ec + r0
         self.epsilon = np.maximum(1e-6 * self.e0, 1e-9)
+        # Section 246: a migrating DM is judged on its local indices.
+        from lib.runners.energy_ledger import EnergyLedger
+        self.ledger = EnergyLedger(env, {f: (self.b0[i], r0[i], self.e0[i])
+                                         for i, f in enumerate(self.ids)})
         self.total = np.zeros(len(self.ids), dtype=np.float64)
         self.failed = False
         self.valid_ticks = 0
@@ -102,9 +106,12 @@ class StabilityScore:
         c = self.config
         b = np.array([env.fgs[f].biomass.sum() for f in self.ids], dtype=np.float64)
         r = np.array([env.fgs[f].energy_reserve.sum() for f in self.ids], dtype=np.float64)
+        energy = b * self.ec + r
+        for i, f in enumerate(self.ids):
+            if self.ledger.tracks(f):
+                b[i], r[i], energy[i] = self.ledger.update(f, b[i], r[i], energy[i])
         present = self.b0 > 0
         ratio = np.divide(b, self.b0, out=np.ones_like(b), where=present)
-        energy = b * self.ec + r
         self.failed = bool(np.any(present & ((ratio < c.lower) | (ratio >= c.upper)))
                            or not np.isfinite(energy).all() or not np.isfinite(b).all()
                            or (energy < 0).any())

@@ -564,7 +564,20 @@
       - {name: Norway pout, share: 0.350}
       - {name: sprat, share: 0.021}
     is_decision_maker: true
-    maintenance_level: 0.2
+    # Section 247: u = the storage lipid at 2 % whole-body fat (1 % structural
+    # lipid in the lean tonne) / ME; herring, blue whiting and mackerel live
+    # down to ~2 %, herring die at a mean 1.3 % (Sewall et al. 2019).
+    # With reserve_room u is only the starvation onset and the growth floor,
+    # not a hunger knee. 0.2 -> 0.079 (0.2 was 3.5 % STORAGE fat at the
+    # old ME 7000). research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    maintenance_level: 0.079
+    # Section 247: field reserve fill by month (Jan-Dec), the centre of the
+    # start reserve: members' whole-body fat (herring Wood 1958, Hislop et al.
+    # 1991, NIFES; blue whiting Jacobsen et al. 2002; sprat Wallace & Hulme
+    # 1977; Norway pout a judgement at 2-5.5 %, no series exists) as storage
+    # (fat - 1 %) x 39.5 MJ/kg over ME.
+    # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
+    start_fill: [0.50, 0.36, 0.26, 0.20, 0.32, 0.81, 0.94, 0.96, 0.88, 0.88, 0.76, 0.68]
     # Lean body + fat reserve (section 140). energy_content is the LEAN
     # tissue, ~4.1 kJ/g from 15-19 % protein (Warren et al. 2026); the
     # reserve is the fat, up to ~18 % (0.396 kJ/g per fat %), so a full
@@ -702,7 +715,8 @@
     # 0.11, feeding_cost 1.65: s* 0.752 -> 0.750) -> 0.0024099; 244.10
     # (appetite reserve_room: s* 0.750 -> 1) -> 0.0016563.
     # Section 245 (whiting M2 x 1.103): 0.0016563491332 -> 0.0016645.
-    growth_rate: 0.0016645362052
+    # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0016645 -> 0.0014459.
+    growth_rate: 0.0014458512097
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
@@ -720,7 +734,11 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    starve_rate: 0.025
+    # Section 247: starve_rate is a calibrated time to death (section 46),
+    # not an energy balance; at u 0.079 it keeps today's resting fast from
+    # fill 0.7 to 95 % loss (243 d; was 0.025 at u 0.2), drain at an
+    # empty reserve ~2.7 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    starve_rate: 0.0675
     visibility_floor: 0.35
     # Beddington-DeAngelis w (section 162; was 0.7, set in section 86
     # against the band artefact, not from herring data). No behavioural
@@ -754,10 +772,21 @@
     # ray, hagfish, grey gurnard, lemon sole, weever. Every value below
     # is the biomass-weighted species value;
     # research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_benthivorous_fish.md and benthivores/.
-    # u 0.5 is the engine convention (hunger knee and growth zero; 0.1
-    # starved the group, resume 187.4); the literature starvation
-    # threshold is 0.1-0.2 of the reserve.
-    maintenance_level: 0.5
+    # Section 247: u = the gadoid danger level, ~140 MJ/t liver lipid per
+    # tonne (cod danger 0.07 of a 2000 MJ/t liver; Hemre et al. 1993 onset
+    # ~100; NIFES live haddock minimum HSI 1 % x 42 % lipid ~166) / ME 1800.
+    # With reserve_room u is only the starvation onset and the growth floor;
+    # the old 0.5 was the hunger knee of 187.4. research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    # The flatfish (~0.2) store in the carcass; no separate value.
+    maintenance_level: 0.078
+    # Section 247: field reserve fill by month (Jan-Dec), the centre of the
+    # start reserve: haddock liver lipid by season (NIFES Skagerrak + North
+    # Sea: May-Jul 43 %, Sep-Nov 67 %, Jan-Feb 58 %) at an HSI of 3.5 / 5.5 / 6 %
+    # (judgement: the NE Arctic seasonal shape on the Skagerrak annual mean
+    # 5 %), months between interpolated; the flatfish carcass store has no
+    # value of its own.
+    # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
+    start_fill: [0.76, 0.76, 0.62, 0.47, 0.33, 0.33, 0.33, 0.57, 0.81, 0.81, 0.81, 0.79]
     # Section 240: full appetite, intake capped at the reserve room. Cod
     # with livers at or above the wild maximum (HSI 9-17 %) eat at Cmax
     # for months and restricted rations fall on the same growth line up
@@ -883,7 +912,8 @@
     # Section 240: s* = 1 (reserve_room), 0.0011289; section 244: x 12 /
     # feeding_season_months 8.6 (material law).
     # Section 245 (krill pair M2 0.035 booked): 0.0015752138885 -> 0.0015943.
-    growth_rate: 0.0015943282562
+    # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0015943 -> 0.00086460.
+    growth_rate: 0.00086460317579
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -897,9 +927,11 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    # ~181 days to death at an empty reserve at rest (section 46 convention;
-    # cod fast 84 d+ without deaths, plaice 180-200 d at 6-7 C).
-    starve_rate: 0.010
+    # Section 247: starve_rate is a calibrated time to death (section 46),
+    # not an energy balance; at u 0.078 it keeps today's resting fast from
+    # fill 0.7 to 95 % loss (210 d; was 0.01 at u 0.5), drain at an
+    # empty reserve ~6.7 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    starve_rate: 0.0791
     # Judgement: gadoids 0.6, flatfish and rays bury and are cryptic (0.4).
     visibility_floor: 0.55
     # Section 223.28: 0. The old 0.45 was the section 86 band fix (w 1.0 at
@@ -934,8 +966,17 @@
     # Saithe (Q3 on the trench slope) is a visitor; the closed pool charges
     # it stock-level r and F, as herring. Every value is the biomass-weighted
     # species value (weighted_fields convention, 209).
-    # u 0.5: the engine convention (resume 187.4).
-    maintenance_level: 0.5
+    # Section 247: u = the gadoid danger level, ~140 MJ/t liver lipid per
+    # tonne (cod danger 0.07 of a 2000 MJ/t liver; Hemre et al. 1993 onset
+    # ~100; NIFES live haddock minimum HSI 1 % x 42 % lipid ~166) / ME 2000.
+    # With reserve_room u is only the starvation onset and the growth floor;
+    # the old 0.5 was the hunger knee of 187.4. research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    maintenance_level: 0.070
+    # Section 247: field reserve fill, the centre of the start reserve:
+    # saithe liver ~6 % of the weight at ~60 % lipid with little season
+    # (NIFES 2013, Norwegian and Barents Seas) -> 0.71 all year.
+    # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
+    start_fill: [0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71]
     # Liver reserve: saithe, hake, spurdog ~2000, anglerfish 1500 -> 2000
     # (1500-2500).
     max_energy_reserve: 2000.0
@@ -1013,7 +1054,8 @@
     # Section 244: 0.0016156 -> 0.0024823 (SDA 0.12 and feeding_cost 2.14
     # move s* 0.787 -> 0.761; x 12 / 8.6 for the material law); 244.10
     # (appetite reserve_room: s* 0.761 -> 1) -> 0.0012954.
-    growth_rate: 0.0012954067385
+    # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0012954 -> 0.00069646.
+    growth_rate: 0.00069645523574
     # M1 = M0 + predation by groups NOT in the model: saithe 0.29, spurdog
     # 0.10, hake 0.45, anglerfish 0.25 -> 0.276 /yr (0.19-0.31).
     # Within-group predation is a transfer inside the pool and left out.
@@ -1027,8 +1069,11 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
-    starve_rate: 0.0079
+    # Section 247: starve_rate is a calibrated time to death (section 46),
+    # not an energy balance; at u 0.07 it keeps today's resting fast from
+    # fill 0.7 to 95 % loss (258 d; was 0.0079 at u 0.5), drain at an
+    # empty reserve ~6.1 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    starve_rate: 0.0681
     # Judgement: midwater saithe schools hide badly.
     visibility_floor: 0.7
     # No field evidence of interference for saithe (Rindorf et al. 2006:
@@ -1044,7 +1089,17 @@
     member_species:
       - {name: whiting, share: 1.0}
     is_decision_maker: true
-    maintenance_level: 0.5
+    # Section 247: u = the gadoid danger level, ~140 MJ/t liver lipid per
+    # tonne (cod danger 0.07 of a 2000 MJ/t liver; Hemre et al. 1993 onset
+    # ~100; NIFES live haddock minimum HSI 1 % x 42 % lipid ~166) / ME 2000.
+    # With reserve_room u is only the starvation onset and the growth floor;
+    # the old 0.5 was the hunger knee of 187.4. research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    maintenance_level: 0.070
+    # Section 247: field reserve fill by month (Jan-Dec), the centre of the
+    # start reserve; no whiting liver series exists: the haddock seasons of
+    # benthivorous_fish at this ME 2000 (judgement).
+    # research_notes/"Svaltgrans och startreserv" (Swedish letters) model/derive_u.py.
+    start_fill: [0.69, 0.69, 0.56, 0.43, 0.30, 0.30, 0.30, 0.52, 0.73, 0.73, 0.73, 0.71]
     # Gadoid liver ~2000 MJ/t (1500-2500).
     max_energy_reserve: 2000.0
     # SMR 4.2 (Steinhausen et al. 2005, attributed to 8.4 C) re-read at the
@@ -1120,7 +1175,8 @@
     # Section 244: 0.0030548 -> 0.0038024 (SDA 0.12 and feeding_cost 1.50
     # move s* 0.749 -> 0.767; x 12 / 9.0 for the material law); 244.10
     # (appetite reserve_room: s* 0.767 -> 1) -> 0.0020293.
-    growth_rate: 0.0020292631718
+    # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0020293 -> 0.0010910.
+    growth_rate: 0.0010910017053
     # M1 = SMS residual M 0.20 + grey seal and birds 0.05 = 0.25 /yr
     # (0.20-0.32). Booked on pairs: benthivores 0.18 (223.28), predatory_fish
     # 0.157, porpoises 0.019, seals 0.013; total M 0.62 vs SMS 0.685.
@@ -1134,8 +1190,11 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    # 1.5 x SMR / lean energy / 0.15 (the section 209 construction).
-    starve_rate: 0.0099
+    # Section 247: starve_rate is a calibrated time to death (section 46),
+    # not an energy balance; at u 0.07 it keeps today's resting fast from
+    # fill 0.7 to 95 % loss (209 d; was 0.0099 at u 0.5), drain at an
+    # empty reserve ~6.1 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    starve_rate: 0.0866
     # Judgement: whiting on the bed hide better than midwater schools.
     visibility_floor: 0.5
     # Rindorf et al. 2006: predator density not significant for whiting.
@@ -1155,13 +1214,19 @@
       - {name: mackerel, share: 0.941}
       - {name: horse mackerel, share: 0.059}
     is_decision_maker: true
-    # u 0.5: the engine convention (resume 187.4).
-    maintenance_level: 0.5
-    # Fat reserve: mackerel ~6000, horse mackerel ~3800 MJ/t -> 5870.
-    # Reserve-funded growth (user 228); mackerel's summer fattening has the
-    # shape that made herring grow on its fat in winter (184): the income-
-    # funded law is the open next step.
-    max_energy_reserve: 5870.0
+    # Section 247: u = the storage lipid at 2 % whole-body fat (1 % structural
+    # lipid in the lean tonne) / ME; herring, blue whiting and mackerel live
+    # down to ~2 %, herring die at a mean 1.3 % (Sewall et al. 2019).
+    # With reserve_room u is only the starvation onset and the growth floor,
+    # not a hunger knee. 0.5 -> 0.057: the May arrivals (fill 0.13)
+    # no longer starve. research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    maintenance_level: 0.057
+    # Section 246: the box composite's peak whole-body fat 19.2 % in October
+    # (juveniles 0.85: Wallace 1991 17-19 %; adults 0.15: Jansen et al. 2021
+    # 25-28 %), (0.192 - 0.01 lipid in the lean tonne) x 39.5 kJ/g = 7175
+    # MJ/t; horse mackerel ~3800 at 0.059 -> 6980 (was 5870 = only 15.9 %
+    # fat). research_notes/"Makrillens sasong" (a-umlaut) summary.md, model_diagnosis.md, model/derive_library.py.
+    max_energy_reserve: 6980.0
     # Section 228.2: the REST cost is the obligate swimming floor. Mackerel
     # has no swim bladder and cannot rest: routine at 1 BL/s (Bachiller et
     # al. 2018: 6.07 MJ/t/6h at 400 g, 13 C, Q10 1.98) = 4.72 at the layer
@@ -1196,10 +1261,15 @@
     # (0.37-0.65; floor 0.39). Season 4.0 months (3.5-5.6): NEA feeding 16
     # May - 31 Aug (Bachiller et al. 2018), no feeding while overwintering,
     # SMS ration 0.03 / 0.41 / 0.50 / 0.07 by quarter; horse mackerel 5 [J].
-    # The closed pool keeps mackerel in the box all year (it is there May-
-    # Oct), so the season-sized g applies whenever it eats (section 244).
+    # Section 246: 5.5 months, the INTAKE season of the box's fish (mid-May/
+    # June - November: Q4 stomachs of 20-29 cm fish as in Q3, Mehl &
+    # Westgard 1983; ration per fish present Q2-Q4 0.31-0.38 / 0.34-0.36 /
+    # 0.26-0.28), the definition the 4.0 was built on (an intake season). The
+    # engine builds lean tonnes from any intake above cost (244.10), so the
+    # intake season is the one it realises; the somatic window is ~4 months
+    # (weight growth stops late September, Jansen et al. 2021).
     material_growth_share: 0.49
-    feeding_season_months: 4.0
+    feeding_season_months: 5.5
     # Section 244.10: full appetite, intake capped at the reserve room, as
     # every fish group: mackerel fatten from spring lows to the autumn
     # peak on the feeding migration (no appetite study found). Frozen
@@ -1225,16 +1295,47 @@
     feeding_cost: 1.02
     movement_cost: 1.03
     # Lean tissue as eaten (mackerel 4.7, horse mackerel 4.2 kJ/g) = 4670; the
-    # fat is eaten with the fish: at the reference fill 0.55 (mean reserve
-    # 3241 / 5870) the static quality is 7898 MJ/t.
+    # fat is eaten with the fish. Section 246: reference fill 0.672 = the
+    # presence-weighted mean reserve of the box's fish / 6980 (was 0.55 of
+    # 5870), static quality 4670 + 0.672 x 6980 = 9361 MJ/t (was 7898).
     energy_content: 4670.0
     prey_includes_reserve: true
-    reserve_reference_fill: 0.55
+    reserve_reference_fill: 0.672
     min_split_biomass: 0.5
     # growth_rate is DERIVED by lib/world/growth_budget.py (see
-    # predatory_fish). r_max: Euler-Lotka r_now mackerel 0.25, horse
-    # mackerel 0.33 -> 0.255 (0.20-0.35).
-    r_max: 0.255
+    # predatory_fish). Section 246: r_max 0 (was the stock's Euler-Lotka
+    # r_now 0.255): the box is a window on a migrating stock. The lean weight
+    # gained during the stay is ~0 (SMS 2013-23 weights x the fat cycle: age
+    # 1 +0.10, age 2 -0.11 /yr per annual-mean tonne), so the local lean
+    # production pays the booked losses (M1 + M2) and the season's gain,
+    # fat, leaves with the departing fish.
+    r_max: 0.0
+    # Section 246: a MIGRATING decision maker (ecosystem_env/open_pool.py
+    # migrate, on the group total): the box total relaxes towards 0.85
+    # t/km2 x the season, emigrants leave pro rata with their reserve,
+    # immigrants enter on the west and north-west edges (the Trench slope;
+    # not from the Swedish coast) at the month's fill. The reward runs on a
+    # ledger that takes the migration out (lib/runners/energy_ledger.py).
+    # Annual mean 0.85 t/km2 (section 228; mackerel 0.80 + horse mackerel
+    # 0.05).
+    outside_density: 0.85
+    # 0.10 /d (0.05-0.3): the box lags the target by 8-9 days; a fish
+    # crosses the box in 2-5 days at 0.4-1.2 BL/s (Ono et al. 2022).
+    outside_exchange_rate: 0.025
+    # Mackerel 0.80 x the central presence profile ("Makrillens tathet" 2.5:
+    # Dec-Mar 0.05 of July, 10 / 90 % points days 143 / 284; Danish
+    # landings 1987-2008 give arrival 12 June, departure 14 October) + horse
+    # mackerel 0.05 x its profile (Aug-Nov, peak October), / 0.85, mean 1.
+    outside_season: [0.124, 0.111, 0.105, 0.315, 1.050, 2.103, 2.118, 2.193, 1.849, 1.238, 0.570, 0.224]
+    # Reserve fill of the arriving fish by month, (fat - 0.01) x 39 500 /
+    # 6980, clipped: lean after spawning in May (juveniles ~3 % fat), at the
+    # cap from September.
+    # Section 247: also the start reserve centre (no start_fill key): the
+    # box composite's fat by month is the resident fill as well.
+    outside_fill: [0.70, 0.58, 0.45, 0.37, 0.13, 0.51, 0.57, 0.91, 1.00, 1.00, 0.94, 0.85]
+    outside_entry:
+      - {edge: west}
+      - {edge: north, from: 0.0, to: 0.5}
     # No regional K (user 228, as the water column since 223.37): the most
     # mobile window group in the box; its density is set outside it. F
     # 0.0147 (the LOCAL 3.a.20 F, 228.1) against r 0.255 leaves
@@ -1242,8 +1343,10 @@
     # column 0.021, seals, porpoises) and M1.
     # Section 244: 0.00079339 -> 0.0021540 (SDA 0.12 and feeding_cost 1.02
     # move s* 0.875 -> 0.915; x 12 / 4.0 for the material law); 244.10
-    # (appetite reserve_room: s* 0.915 -> 1) -> 0.0017870.
-    growth_rate: 0.0017869800791
+    # (appetite reserve_room: s* 0.915 -> 1) -> 0.0017870; 246 (r_max 0,
+    # season 5.5: gross 0.180 /yr x 12/5.5) -> 0.00053748.
+    # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.00053748 -> 0.00028498.
+    growth_rate: 0.0002849840446
     # M1 = M0 + predation by groups NOT in the model (tuna, sharks, birds,
     # cetaceans other than porpoises): mackerel 0.15, horse mackerel 0.30
     # -> 0.159 /yr (0.11-0.21).
@@ -1257,9 +1360,11 @@
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
-    # Routine / lean energy / 0.15 (the section 209 construction, with
-    # the routine of 228.2 in place of 1.5 x SMR).
-    starve_rate: 0.0067
+    # Section 247: starve_rate is a calibrated time to death (section 46),
+    # not an energy balance; at u 0.057 it keeps today's resting fast from
+    # fill 0.7 to 95 % loss (394 d; was 0.0067 at u 0.5), drain at an
+    # empty reserve ~5.4 RM. model/fasting_time.py in research_notes/"Svaltgrans och startreserv" (Swedish letters).
+    starve_rate: 0.0942
     # Judgement: midwater schools hide badly (as the water column); since
     # 228.3 it acts only on the water column's pair (no mammal pairs).
     visibility_floor: 0.7
@@ -2233,10 +2338,11 @@ interaction_definitions:
   # the step dropping predator lengths the a does not count was not rerun.
   # research_notes/"Storleksfonster som standard" (o-umlaut) summary.md.
   predatory_fish_preys_on_mackerel:
+    # Section 246: h = 9361 (the new static quality) / 29.79 = 314.2 (was 265.1).
     preys_on: true
     predation_mortality: 0.021
     assimilation_factor: 0.8
-    handling_time: 265.1
+    handling_time: 314.2
     # Section 244.9: stage_access on a prey without a juvenile compartment
     # is one share of the whole group (f_J = f_A; the same as an
     # accessible_fraction, value unchanged). With a compartment it would be

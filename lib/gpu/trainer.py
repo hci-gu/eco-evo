@@ -240,7 +240,8 @@ class TensorARSTrainer:
         m, runner = self.model, self.warm_runner
         keys = fold_in(fold_in(self.seed.expand(self.worlds), self.iteration), self.world_index + 70001)
         b = self.world_biomass
-        r = m.initial_nutrients(self.spawner.reserves(b, keys), self.world_light_start)
+        r = m.initial_nutrients(self.spawner.reserves(b, keys, self.world_light_start),
+                                self.world_light_start)
         if self.depleted_patches > 0.0:
             b, r = m.deplete(b, r, self.world_depletion)
         runner.set_weights(self.bank.pack([w[None] for w in self.theta]))
@@ -312,8 +313,8 @@ class TensorARSTrainer:
                 light = per_pair(self.world_scored_light)
             else:
                 b = self.world_biomass[None].expand(2 * self.pairs_per_batch, -1, -1, -1).reshape(runner.E, m.G, m.C)
-                r = self.spawner.reserves(b, keys)
                 light = self.world_light_start[None].expand(2 * self.pairs_per_batch, -1).reshape(runner.E)
+                r = self.spawner.reserves(b, keys, light)
                 r = m.initial_nutrients(r, light)
                 if self.depleted_patches > 0.0:
                     b, r = m.deplete(b, r, per_pair(self.world_depletion))

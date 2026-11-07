@@ -228,13 +228,29 @@ class WorldSpawner:
                 fields[fid] = torch.zeros((world_keys.numel(), self.C), dtype=torch.float64, device=self.device).index_copy(1, self.eligible, allocated)
         return torch.stack([fields[f] for f in self.model.ids], dim=1).float()
 
-    def reserves(self, biomass, pair_keys):
+    def reserves(self, biomass, pair_keys, light_start=None):
+        """Start reserve per world: a fill drawn around u (section 43) or,
+        for a group with ``start_fill``, around its field fill on the
+        world's start tick ``light_start`` (section 247); 0.7 / the centre
+        without randomisation."""
+        m = self.model
+        centre = None
+        if m.start_fill_on:
+            if light_start is None or not m.calendar:
+                index = torch.zeros(biomass.shape[0], dtype=torch.long, device=biomass.device)
+            else:
+                index = torch.remainder(light_start.to(torch.long), m.light_period)
+            centre = m.start_fill[index][:, :, None]
+            known = torch.isfinite(centre)
         if self.spec.randomize_energy:
-            lo = (self.model.maintenance - 0.3).clamp_min(0)
-            hi = (self.model.maintenance + 0.3).clamp_max(1)
-            ratios = lo + (hi - lo) * uniform(pair_keys, (self.model.G, self.C), 501)
+            lo = (m.maintenance - 0.3).clamp_min(0)
+            hi = (m.maintenance + 0.3).clamp_max(1)
+            if centre is not None:
+                lo = torch.where(known, (centre - 0.3).clamp_min(0), lo)
+                hi = torch.where(known, (centre + 0.3).clamp_max(1), hi)
+            ratios = lo + (hi - lo) * uniform(pair_keys, (m.G, self.C), 501)
         else:
-            ratios = 0.7
+            ratios = 0.7 if centre is None else torch.where(known, centre, torch.full_like(centre, 0.7))
         reserve = biomass * ratios * self.model.max_reserve
         if self.model.refuge_on:
             # Section 223.12: a refuge group's accessible part starts at

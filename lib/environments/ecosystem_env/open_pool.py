@@ -33,6 +33,34 @@ Library keys (species):
 
 The loader refuses g >= exp(k) - 1 (the exchange could not hold the pool:
 with no predation it would grow without bound).
+
+Decision makers (section 246: mackerel's seasonal migration). A DM with
+``outside_density`` migrates on its GROUP TOTAL, never per cell, so the
+policy's spatial choices stand. Per tick, after the DM growth and before
+the extinction sweep:
+
+    net = (T - B_tot) (1 - exp(-k)),  T = density x N_cells x season(t)
+
+A negative net (export) scales every cell's B and reserve by
+1 - export / B_tot: the emigrants leave with their own fill. A positive net
+(import) enters on the entry cells (``outside_entry``) with the reserve
+``import x fill(t) x max_energy_reserve``. Keys, DM only:
+
+``outside_fill``
+    12 mid-month reserve fills s of the arriving fish (lean after spawning,
+    fat in autumn), interpolated like the season.
+``outside_entry``
+    Edge segments the immigrants enter on: rows ``{edge: west}`` or
+    ``{edge: north, from: 0.0, to: 0.5}`` (row 0 is north, column 0 west;
+    ``from`` / ``to`` the share along the edge, west -> east or north ->
+    south). Uniform over the selected edge cells.
+
+The export is ``loss_exchange``, the import ``gain_exchange``, and the net
+exchange energy of the tick ``env.tick_exchange_energy[fid]`` (MJ), which
+the trainers' reward ledger takes out of the group's energy: the policy is
+rewarded for its local production and losses, not for the migration.
+``outside_depth_table`` is for NDMs; a DM with a ``juvenile_stage`` is
+refused (the compartment would need its own migration).
 """
 import math
 
@@ -42,6 +70,10 @@ DENSITY_KEY = "outside_density"
 RATE_KEY = "outside_exchange_rate"
 SEASON_KEY = "outside_season"
 DEPTH_KEY = "outside_depth_table"
+FILL_KEY = "outside_fill"
+ENTRY_KEY = "outside_entry"
+EDGES = ("north", "south", "west", "east")
+SEASON_MEAN_TOL = 0.05
 
 
 def is_open(spec):
@@ -52,12 +84,11 @@ def is_open(spec):
 def parse(params, group_id=""):
     """Validated settings ``{"density", "rate", "season"}`` or None."""
     if not is_open(params):
-        for key in (RATE_KEY, SEASON_KEY, DEPTH_KEY):
+        for key in (RATE_KEY, SEASON_KEY, DEPTH_KEY, FILL_KEY, ENTRY_KEY):
             if (params or {}).get(key) not in (None, "", []):
                 raise ValueError(f"{group_id}: {key} needs {DENSITY_KEY} (section 245)")
         return None
-    if params.get("is_decision_maker", False):
-        raise ValueError(f"{group_id}: {DENSITY_KEY} is for non decision makers (section 245)")
+    is_dm = bool(params.get("is_decision_maker", False))
     try:
         density = float(params[DENSITY_KEY])
         rate = float(params.get(RATE_KEY))
@@ -77,7 +108,72 @@ def parse(params, group_id=""):
             raise ValueError(f"{group_id}: {SEASON_KEY} must be 12 numbers")
         if len(season) != 12 or not all(math.isfinite(v) and v >= 0.0 for v in season):
             raise ValueError(f"{group_id}: {SEASON_KEY} must be 12 finite factors >= 0")
-    return {"density": density, "rate": rate, "season": season}
+        if abs(sum(season) / 12.0 - 1.0) > SEASON_MEAN_TOL:
+            raise ValueError(f"{group_id}: {SEASON_KEY} must have a mean of ~1 (it scales "
+                             f"the annual-mean {DENSITY_KEY}), got {sum(season) / 12.0:.3f}")
+    out = {"density": density, "rate": rate, "season": season}
+    if not is_dm:
+        for key in (FILL_KEY, ENTRY_KEY):
+            if params.get(key) not in (None, "", []):
+                raise ValueError(f"{group_id}: {key} is for decision makers (section 246)")
+        return out
+    if params.get(DEPTH_KEY) not in (None, "", []):
+        raise ValueError(f"{group_id}: {DEPTH_KEY} is for non decision makers; a migrating "
+                         f"decision maker enters on {ENTRY_KEY} (section 246)")
+    if params.get("juvenile_stage"):
+        raise ValueError(f"{group_id}: a migrating decision maker cannot carry a "
+                         "juvenile_stage (section 246)")
+    try:
+        fill = [float(v) for v in params.get(FILL_KEY)]
+    except (TypeError, ValueError):
+        raise ValueError(f"{group_id}: {FILL_KEY} must be 12 reserve fills (section 246)")
+    if len(fill) != 12 or not all(math.isfinite(v) and 0.0 <= v <= 1.0 for v in fill):
+        raise ValueError(f"{group_id}: {FILL_KEY} must be 12 fills in [0, 1] (section 246)")
+    out["fill"] = fill
+    out["entry"] = parse_entry(params.get(ENTRY_KEY), group_id)
+    return out
+
+
+def parse_entry(rows, group_id=""):
+    """Validated edge segments [(edge, from, to)] of ``outside_entry``."""
+    if not isinstance(rows, (list, tuple)) or not rows:
+        raise ValueError(f"{group_id}: {ENTRY_KEY} needs at least one edge segment (section 246)")
+    out = []
+    for row in rows:
+        if isinstance(row, str):
+            row = {"edge": row}
+        if not isinstance(row, dict):
+            raise ValueError(f"{group_id}: {ENTRY_KEY} rows are {{edge, from, to}}")
+        edge = str(row.get("edge", "")).strip().lower()
+        if edge not in EDGES:
+            raise ValueError(f"{group_id}: {ENTRY_KEY} edge must be one of {EDGES}, got {edge!r}")
+        try:
+            lo, hi = float(row.get("from", 0.0)), float(row.get("to", 1.0))
+        except (TypeError, ValueError):
+            raise ValueError(f"{group_id}: {ENTRY_KEY} from / to must be numbers")
+        if not 0.0 <= lo < hi <= 1.0:
+            raise ValueError(f"{group_id}: {ENTRY_KEY} needs 0 <= from < to <= 1")
+        out.append((edge, lo, hi))
+    return out
+
+
+def entry_weights(entry, shape):
+    """Uniform weights over the entry cells (sum 1); row 0 north, col 0 west."""
+    H, W = int(shape[0]), int(shape[1])
+    mask = np.zeros((H, W), dtype=bool)
+    for edge, lo, hi in entry:
+        n = W if edge in ("north", "south") else H
+        a, b = int(np.floor(lo * n)), max(int(np.ceil(hi * n)), int(np.floor(lo * n)) + 1)
+        idx = slice(a, min(b, n))
+        if edge == "north":
+            mask[0, idx] = True
+        elif edge == "south":
+            mask[H - 1, idx] = True
+        elif edge == "west":
+            mask[idx, 0] = True
+        else:
+            mask[idx, W - 1] = True
+    return mask.astype(np.float64) / float(mask.sum())
 
 
 def parse_depth_table(spec):
@@ -148,10 +244,37 @@ def build_tables(env):
     env.open_ids = []
     env.open_target = {}
     env.open_season = {}
+    # Section 246: migrating decision makers.
+    env.open_dm_ids = []
+    env.open_dm_total = {}
+    env.open_dm_season = {}
+    env.open_dm_fill = {}
+    env.open_dm_entry = {}
+    env.tick_exchange_energy = {}
+    env.tick_exchange_biomass = {}
+    env.tick_exchange_reserve = {}
+    daylight_on = getattr(env, "_has_daylight", False)
     for fid in env.global_fg_order:
         fg = env.fgs[fid]
         settings = getattr(fg, "open_pool", None)
         if settings is None:
+            continue
+        if fg.is_decision_maker:
+            shape = fg.biomass.shape
+            env.open_dm_ids.append(fid)
+            env.open_dm_total[fid] = settings["density"] * float(np.prod(shape))
+            env.open_dm_entry[fid] = entry_weights(settings["entry"], shape).astype(env.dtype)
+            if daylight_on:
+                hours = int(env.daylight["tick_hours"])
+                env.open_dm_season[fid] = (season_table(settings["season"], env.light_period, hours)
+                                           if settings["season"] is not None else None)
+                env.open_dm_fill[fid] = season_table(settings["fill"], env.light_period, hours)
+            else:
+                env.open_dm_season[fid] = None
+                env.open_dm_fill[fid] = float(np.mean(settings["fill"]))
+            env.tick_exchange_energy[fid] = 0.0
+            env.tick_exchange_biomass[fid] = 0.0
+            env.tick_exchange_reserve[fid] = 0.0
             continue
         weight = getattr(fg, "outside_weight_map", None)
         if weight is None:
@@ -193,6 +316,50 @@ def grow(env, fg_id, fg, rate):
             books[fg_id] = float(books.get(fg_id, 0.0)) + float(amount)
 
 
-__all__ = ["DENSITY_KEY", "DEPTH_KEY", "RATE_KEY", "SEASON_KEY", "build_tables",
-           "depth_weight_map", "grow", "is_open", "parse", "parse_depth_table",
-           "season_table", "stability_error", "target"]
+def migrate(env):
+    """Section 246: every migrating DM's exchange with the outside, on its
+    group total (after the DM growth, before the extinction sweep)."""
+    if not getattr(env, "open_dm_ids", None):
+        return
+    from lib.environments.ecosystem_env import interactions
+    t = interactions.light_index(env) if getattr(env, "_has_daylight", False) else None
+    for fid in env.open_dm_ids:
+        fg = env.fgs[fid]
+        settings = fg.open_pool
+        season = env.open_dm_season.get(fid)
+        target = env.open_dm_total[fid] * (float(season[t]) if season is not None else 1.0)
+        fill = env.open_dm_fill[fid]
+        fill = float(fill[t]) if t is not None and not np.isscalar(fill) else float(fill)
+        total = float(fg.biomass.astype(np.float64).sum())
+        net = (target - total) * (1.0 - math.exp(-float(settings["rate"])))
+        ec = float(fg.params.get("energy_content", 0.0) or 0.0)
+        me = float(fg.max_energy_reserve)
+        if net < 0.0:
+            share = min(-net / total, 1.0) if total > 0.0 else 0.0
+            leaving_reserve = share * float(fg.energy_reserve.astype(np.float64).sum())
+            keep = np.float32(1.0 - share)
+            fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+            fg.energy_reserve = (fg.energy_reserve * keep).astype(env.dtype, copy=False)
+            export, imported = share * total, 0.0
+            reserve_flow = -leaving_reserve
+        else:
+            weights = env.open_dm_entry[fid]
+            fg.biomass = (fg.biomass + np.float32(net) * weights).astype(env.dtype, copy=False)
+            fg.energy_reserve = (fg.energy_reserve
+                                 + np.float32(net * fill * me) * weights).astype(env.dtype, copy=False)
+            export, imported = 0.0, net
+            reserve_flow = net * fill * me
+        for book, amount in (("loss_exchange", export), ("gain_exchange", imported)):
+            books = getattr(env, book, None)
+            if books is not None:
+                books[fid] = float(books.get(fid, 0.0)) + float(amount)
+        # The tick's net exchange, for the reward ledger (energy_ledger).
+        env.tick_exchange_biomass[fid] = float(imported - export)
+        env.tick_exchange_reserve[fid] = float(reserve_flow)
+        env.tick_exchange_energy[fid] = float((imported - export) * ec + reserve_flow)
+
+
+__all__ = ["DENSITY_KEY", "DEPTH_KEY", "ENTRY_KEY", "FILL_KEY", "RATE_KEY", "SEASON_KEY",
+           "build_tables", "depth_weight_map", "entry_weights", "grow", "is_open",
+           "migrate", "parse", "parse_depth_table", "parse_entry", "season_table",
+           "stability_error", "target"]

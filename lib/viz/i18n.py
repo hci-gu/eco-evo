@@ -199,6 +199,8 @@ CATALOG = {
         "mv/rs/et = {mv}/{rs}/{et}%": "fl/vi/ät = {mv}/{rs}/{et}%",
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/sv/pv/nd = {pr}/{st}/{im}/{nm}%",
+        "pr/st/im/nm/ex = {pr}/{st}/{im}/{nm}/{ex}%":
+            "pr/sv/pv/nd/ub = {pr}/{st}/{im}/{nm}/{ex}%",
         "Eaten by": "Äts av",
         "Juveniles: {pct} %": "Juveniler: {pct} %",
         "Mode: {value}": "Läge: {value}",
@@ -344,6 +346,8 @@ CATALOG = {
         "mv/rs/et = {mv}/{rs}/{et}%": "mv/rp/al = {mv}/{rs}/{et}%",
         "pr/st/im/nm = {pr}/{st}/{im}/{nm}%":
             "pr/fa/im/mn = {pr}/{st}/{im}/{nm}%",
+        "pr/st/im/nm/ex = {pr}/{st}/{im}/{nm}/{ex}%":
+            "pr/fa/im/mn/sc = {pr}/{st}/{im}/{nm}/{ex}%",
         "Eaten by": "Mangiato da",
         "Juveniles: {pct} %": "Giovanili: {pct} %",
         "Mode: {value}": "Modo: {value}",

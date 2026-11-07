@@ -5519,10 +5519,15 @@ class LiveVisualizer:
                     st = float(lb.get('starvation', 0.0)) * 100.0
                     im = float(lb.get('impact', 0.0)) * 100.0
                     nm = float(lb.get('natural', 0.0)) * 100.0
-                    loss_txt = self._loss_text(
-                        "pr/st/im/nm = {pr}/{st}/{im}/{nm}%",
-                        dict(pr=pr, st=st, im=im, nm=nm),
-                        self._panel_w - 2 * pad)
+                    if fid in self._open_ids:
+                        # Section 246: a migrating DM's export share.
+                        ex = float(lb.get('exchange', 0.0)) * 100.0
+                        template = "pr/st/im/nm/ex = {pr}/{st}/{im}/{nm}/{ex}%"
+                        shares = dict(pr=pr, st=st, im=im, nm=nm, ex=ex)
+                    else:
+                        template = "pr/st/im/nm = {pr}/{st}/{im}/{nm}%"
+                        shares = dict(pr=pr, st=st, im=im, nm=nm)
+                    loss_txt = self._loss_text(template, shares, self._panel_w - 2 * pad)
                     loss_surf = self._font.render(loss_txt, True, info_col)
                     loss_y = act_y + act_surf.get_height()
                     self._screen.blit(loss_surf, (px + pad, loss_y))

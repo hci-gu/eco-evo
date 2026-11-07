@@ -162,7 +162,7 @@ def build(project, project_path, library, grid_size, active_ids,
     out = {}
     for fid in active_ids:
         spec = specs.get(fid) or {}
-        if open_pool.is_open(spec):
+        if open_pool.is_open(spec) and not spec.get("is_decision_maker"):
             # Section 245: an open pool's outside density over the cells,
             # the depth shape at equal-cell mean 1; it is also the start
             # pattern of the equilibrium spawn (the budget's reference).

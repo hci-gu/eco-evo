@@ -25,6 +25,11 @@ class RolloutRunner:
         validate_reward(population_stability, integral_reward, legacy_reward,
                         self.local_reward)
         self.population_stability = population_stability
+        if getattr(model, "open_dm_on", False) and self.local_reward is not None:
+            # Section 246: the per-cell source tracking has no cell for the
+            # outside a migrating group exchanges with.
+            raise ValueError("a migrating decision maker (outside_density): --local_reward "
+                             "is not supported (section 246)")
         if execution not in ("eager", "compile", "cuda-graph", "compile-graph"):
             raise ValueError("Unknown execution mode: " + execution)
         if "graph" in execution and model.device.type != "cuda":
@@ -63,6 +68,12 @@ class RolloutRunner:
         self.obs_var.fill_(1)
         for name in ("b0", "r0", "e0", "epsilon", "log_energy", "survived"):
             buffer(name, (self.E, model.D), torch.float64)
+        # Section 246: the reward ledger of a migrating DM (energy_ledger.py),
+        # local indices Q*_{t+1} = Q*_t (Q_{t+1} - X_t) / Q_t of its biomass,
+        # reserve and energy, X_t the tick's net exchange; Q* = Q otherwise.
+        if getattr(model, "open_dm_on", False):
+            buffer("ledger_prev", (3, self.E, model.D), torch.float64)
+            buffer("ledger_index", (3, self.E, model.D), torch.float64)
         for name in ("biomass_sum", "reserve_sum"):
             buffer(name, (self.E, model.G), torch.float64)
         for name in ("obs_sum", "obs_sumsq"):
@@ -169,6 +180,10 @@ class RolloutRunner:
         self.r0.copy_(reserve[:, self.model.dm_index].sum(-1).double())
         self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)
         self.epsilon.copy_((1e-6 * self.e0).clamp_min(1e-9))
+        if getattr(self.model, "open_dm_on", False):
+            start = torch.stack((self.b0, self.r0, self.e0))
+            self.ledger_prev.copy_(start)
+            self.ledger_index.copy_(start)
         self.survived.fill_(ticks)
         for value in (self.failed, self.valid_ticks, self.stability_sum,
                       self.local_sum, self.local_occupied):
@@ -235,7 +250,7 @@ class RolloutRunner:
             current_args["impacts"] = (self.impact_loss, self.impact_cost)
         if m.stages_on:
             current_args["juvenile"] = self.juvenile
-        record = {} if self.diagnostics else None
+        record = {} if (self.diagnostics or m.open_dm_on) else None
         if record is not None:
             current_args["record"] = record
         if self.local_reward is not None:
@@ -248,11 +263,25 @@ class RolloutRunner:
                          self.tick, multiplier, **current_args)
             b, r, hidden = out[0], out[1], out[2]
         juvenile = out[-1] if m.stages_on else None
-        if record is not None:
+        if self.diagnostics:
             self._book_diagnostics(record)
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd
+        if m.open_dm_on:
+            # Section 246: take the migration out of what the reward sees
+            # (multiplicative indices, so they stay positive).
+            now = torch.stack((bd, rd, energy))
+            exchange = torch.stack([record[k][:, m.dm_index].double() for k in
+                                    ("exchange_biomass", "exchange_reserve", "exchange_energy")])
+            ratio = torch.where(self.ledger_prev > 0,
+                                (now - exchange) / self.ledger_prev.clamp_min(1e-30), 1.0)
+            index = torch.where(m.open_dm_rows[None], self.ledger_index * ratio, now)
+            self.ledger_prev.copy_(now)
+            self.ledger_index.copy_(index)
+            bd, rd, energy = index[0], index[1], index[2]
+            totals_b = totals_b.index_copy(1, m.dm_index, bd)
+            totals_r = totals_r.index_copy(1, m.dm_index, rd)
         if self.population_stability is not None:
             c = self.population_stability
             present = self.b0 > 0
@@ -407,6 +436,10 @@ class RolloutRunner:
             b = self.biomass[:, m.dm_index].sum(-1).double()
             r = self.reserve[:, m.dm_index].sum(-1).double()
             energy = b * m.energy_content[:, m.dm_index].double() + r
+            if m.open_dm_on:
+                b = torch.where(m.open_dm_rows, self.ledger_index[0], b)
+                r = torch.where(m.open_dm_rows, self.ledger_index[1], r)
+                energy = torch.where(m.open_dm_rows, self.ledger_index[2], energy)
             log_energy = torch.log((energy + self.epsilon) / (self.e0 + self.epsilon))
         if self.legacy_reward:
             eps_b, eps_r = (1e-6 * self.b0).clamp_min(1e-9), (1e-6 * self.r0).clamp_min(1e-9)

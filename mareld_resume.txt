@@ -23631,3 +23631,169 @@ remain open exactly as described in 71.9 / 71.11.
       by the budget; bad values refused; closing removes the pool),
       tests/test_viz_ndm_losses.py (the 'pr/im/ex' line and back to
       'pr/im' for a closed group). Full suite 1775 passed, 12 skipped.
+
+246 MACKEREL MIGRATES (user, 2026-11-07: "investigate mackerel's
+    season", then "build the migration and include n and the maximum
+    reserve").
+    - Diagnosis (research_notes/"Makrillens sasong" (a-umlaut)
+      model_diagnosis.md, summary.md by a literature agent): two faults.
+      (1) The resident pool (presence-weighted 0.85 t/km2) found food ~8
+      months a year while its g was x3 for a 4-month season: 0.87 /yr of
+      production against ~0.18 /yr of booked loss in the box. (2) A closed
+      window group with no K grows at ~r_max - F (0.24 /yr), the 243.4 gap.
+      Rejected: a fitted season (B), a regional K (C), a feeding switch by
+      month (D).
+    - Engine (both engines; open_pool.migrate, TensorEcosystem._migrate):
+      a DM with outside_density migrates on its GROUP TOTAL after the DM
+      growth and before the extinction sweep: net = (T - B_tot)(1 -
+      exp(-k)), T = density x N_cells x season(t); an export scales every
+      cell's B and reserve by 1 - export/B_tot (emigrants leave with their
+      own fill), an import enters on the outside_entry edge cells (row 0
+      north, col 0 west) with fill(t) x max_energy_reserve. Books:
+      loss_exchange / gain_exchange (245.1), and the tick's net exchange
+      of biomass, reserve and energy (env.tick_exchange_*; GPU record).
+      Refused: a DM with outside_depth_table or a juvenile_stage; an NDM
+      with outside_fill / outside_entry; a season whose mean is off 1 by
+      more than 0.05 (both kinds).
+    - Reward ledger (lib/runners/energy_ledger.py; RolloutRunner
+      ledger_prev / ledger_index): local indices Q*_{t+1} = Q*_t (Q_{t+1}
+      - X_t)/Q_t of the migrating group's biomass, reserve and energy,
+      read by every reward form (log energy integral and final, legacy
+      b/r, population stability's ratio and score, the survival tick);
+      untouched groups pass through. --local_reward is refused for a
+      migrating group (no source cell for the outside). Without it the
+      seasonal x20 swing and the pull of every candidate towards the same
+      target would swamp the policy's effect. The GPU rollout builds the
+      record every tick when a DM migrates (CUDA-graph safe: in-place
+      buffers).
+    - Design check (model/derive_library.py): the lean weight the box's
+      fish gain during the stay (12 June - 14 October; SMS 2013-23 weights
+      x the fat cycle) is ~0 (age 1 +0.10, age 2 -0.11 /yr per annual-
+      mean tonne) against booked M1 + M2 0.18: r_max 0 holds; the season's
+      gain is fat, which leaves with the departing fish.
+    - Library (mackerel): outside_density 0.85; outside_exchange_rate
+      0.025 per tick (0.10 /d, 0.05-0.3; box lag 8-9 d); outside_season
+      0.124 0.111 0.105 0.315 1.050 2.103 2.118 2.193 1.849 1.238 0.570
+      0.224 (mackerel 0.80 + horse mackerel 0.05 central profiles, mean
+      1); outside_fill 0.70 0.58 0.45 0.37 0.13 0.51 0.57 0.91 1.00 1.00
+      0.94 0.85 ((fat - 0.01) x 39 500 / 6980; Wallace 1991 juveniles,
+      Jansen et al. 2021 adults, 0.85 / 0.15); outside_entry west + north
+      0-0.5 (the Trench slope); r_max 0.255 -> 0; feeding_season_months
+      4.0 -> 5.5 (the intake season of the box's fish: Q4 stomachs as Q3,
+      Mehl & Westgard 1983; the engine builds lean from any intake above
+      cost, so the intake season is the one it realises; the somatic
+      window is ~4); max_energy_reserve 5870 -> 6980 (5870 was only 15.9 %
+      fat; peak composite 19.2 % in October -> 7175, horse mackerel 3800 at
+      0.059); reserve_reference_fill 0.55 -> 0.672 (presence-weighted),
+      static quality 7898 -> 9361 MJ/t, water column -> mackerel h 265.1
+      -> 314.2. Derived g 0.0017870 -> 0.00053748 (gross 0.180 x 12/5.5).
+      No other stored g moved (the pairs on mackerel by mammals are
+      unchecked).
+    - Probe (random policies, GPU, one year from late July): the box total
+      follows the season (~6400 t in July, ~350 t in Feb-Mar); the winter
+      remnant stays above the per-cell sweep (2600 cells above 0.00025
+      t). FLAG: the spring arrivals starve (200-560 t a month in May-
+      July): their field fill (May 0.13, June 0.51) is at or below u 0.5,
+      the engine's starvation line (u 0.5 x 6980 = 9.8 % fat; the field
+      fish are lean, not starving, at 3-6 % after spawning). Not changed:
+      u is the engine convention (187.4); a decision for the user.
+    - FG editor: Outside Density / Exchange Rate / Season / Arrival Fill /
+      Entry Edges ('west, north:0-0.5') on the DM panel, validated with
+      open_pool.parse; an open DM is derived with r_max 0; closing it
+      removes the keys. Viewer: a migrating DM's loss line is
+      'pr/st/im/nm/ex' (sv 'pr/sv/pv/nd/ub', it 'pr/fa/im/mn/sc').
+    - Checks: tests/test_open_dm.py (keys, edges, export / import / books,
+      GPU parity with season and fill, the ledger's pure-exchange case,
+      CPU-GPU reward agreement for log energy integral and final, legacy
+      integral and final, population stability; the local-reward refusal;
+      mareld2 pins), tests/test_fgconfig_open_pool.py (the DM round trip,
+      refusals, closing), tests/test_viz_ndm_losses.py. GPU migration, the
+      energy index and the legacy biomass index mutation-checked. Full
+      suite 1795 passed, 12 skipped; 1-gen train.py (mackerel) and
+      train_gpu.py smokes passed. Checkpoints are invalid (since 245).
+
+247 FISH STARVATION LINE AND FIELD START RESERVE (user, 2026-11-07:
+    "investigate u and the start interval for every decision maker";
+    "go with the recommendation for the fish and the start reserve")
+------------------------------------------------------------------------
+247.1 Investigation (research_notes/"Svaltgrans och startreserv",
+    Swedish letters: summary.md, engine_audit.md, fish.md,
+    mammals_copepods.md, model/derive_u.py, model/fasting_time.py):
+    - Since 244.11 every fish has appetite reserve_room, so u is no
+      longer a hunger knee for them: only the starvation onset, the
+      growth zero / floor and the training start centre. The 187.4
+      reason for u 0.5 is gone for the fish. On the gate (zooplankton,
+      mammals) u is still the knee and moves s*.
+    - u 0.5 contradicts the field for every group with data: living,
+      feeding animals sit below it part of the year (planktivores
+      Mar-Apr, mackerel arrivals in May at 0.13, haddock May-Jul ~0.3,
+      seals in September, porpoises in summer, the active copepod stock).
+    - starve_rate is a calibrated time to death (section 46: catabolism
+      plus deaths, accelerating as the reserve empties), NOT an energy
+      balance (user correction): the 2.5-5.4 RM drain at an empty
+      reserve is intended; the routine is only a floor. The section 209
+      construction (lean pays the routine at s = 0) was the deviation.
+      The largest drain is starve_rate x u, so a lower u needs a
+      proportionally larger rate to keep the fasting time.
+    - No lipostat in the mammal data (no reserve level at which porpoise
+      or seal intake falls; seals eat least in the moult, when thinnest);
+      active copepods show no graded feeding against lipid. Mammals and
+      zooplankton NOT changed (the 240 rule: a frozen-policy probe first).
+    - The training start U[u - 0.3, u + 0.3] (section 43) was centred for
+      a break-even of the reserve-funded growth the fish no longer use;
+      inference started every group at 0.7 whatever the season.
+247.2 Applied, library (five fish; growth_rate re-derived, g x (1 -
+    u_old)/(1 - u_new), production at a full reserve unchanged):
+      group               u            starve_rate       growth_rate
+      planktivorous_fish  0.2 -> 0.079  0.025 -> 0.0675  0.0016645 -> 0.0014459
+      benthivorous_fish   0.5 -> 0.078  0.010 -> 0.0791  0.0015943 -> 0.00086460
+      whiting             0.5 -> 0.070  0.0099 -> 0.0866 0.0020293 -> 0.0010910
+      predatory_fish      0.5 -> 0.070  0.0079 -> 0.0681 0.0012954 -> 0.00069646
+      mackerel            0.5 -> 0.057  0.0067 -> 0.0942 0.00053748 -> 0.00028498
+    u: fat fish = storage lipid at 2 % whole-body fat (1 % structural in
+    the lean tonne) / ME (herring, blue whiting, mackerel live down to
+    ~2 %, herring die at a mean 1.3 %); liver fish = the gadoid danger
+    level ~140 MJ/t liver lipid per tonne (cod 0.07 of a 2000 liver;
+    Hemre 1993 onset ~100; NIFES live haddock minimum ~166) / ME.
+    starve_rate keeps today's resting fast from fill 0.7 to 95 % loss
+    (243 / 210 / 209 / 258 / 394 d; drain at s = 0 2.7-6.7 RM, as before).
+    start_fill (12 monthly field fills, Jan-Dec):
+      planktivores 0.50 0.36 0.26 0.20 0.32 0.81 0.94 0.96 0.88 0.88 0.76
+        0.68 (herring, blue whiting, sprat fat cycles; Norway pout a
+        judgement, no series exists);
+      benthivores 0.76 0.76 0.62 0.47 0.33 0.33 0.33 0.57 0.81 0.81 0.81
+        0.79 (NIFES haddock liver lipid by season at an assumed HSI shape);
+      whiting 0.69 0.69 0.56 0.43 0.30 0.30 0.30 0.52 0.73 0.73 0.73 0.71
+        (the haddock seasons at ME 2000; no whiting series);
+      water column 0.71 all year (saithe liver, little season, NIFES);
+      mackerel: none, falls back to outside_fill (the box composite's fat).
+247.3 Applied, engine (both engines): FunctionalGroup.start_fill
+    (parse_start_fill: 12 fills in [0, 1], decision makers only; a
+    migrating DM falls back to its outside_fill) and start_fill_centre(day)
+    (daylight.monthly_value between mid-months; the annual mean without a
+    day). initialize_state(start_day=...): with a table inference starts at
+    the centre, training draws U[c - 0.3, c + 0.3] clipped (the same per-cell
+    draw); without a table the old u +- 0.3 / 0.7. The loader passes the
+    calendar's start day (start_tick x tick_hours / 24). GPU: TensorEcosystem.
+    start_fill [T, G] per year tick (NaN without a table) and
+    WorldSpawner.reserves(biomass, keys, light_start), both call sites in
+    lib/gpu/trainer.py pass the worlds' light starts. FG editor: DM field
+    "Start Fill" (round trip, refusal, emptying), help texts for u,
+    starve_rate and start_fill.
+247.4 Checks: random-policy GPU year (mortality off, seeds 3 and 11) vs
+    the 246 library: mackerel starvation 1200 / 985 t -> 0 / 0 t; start
+    fills now seasonal (planktivores 0.24-0.26 -> 0.75-0.84 in Aug-Oct
+    starts); the random policies still starve the planktivores (not a
+    judgement of the library). budget_gate passes. The 246 FLAG (spring
+    arrivals starving under u 0.5) is resolved.
+247.5 Tests: tests/test_start_fill.py (parser, inference centre on the
+    start day, training interval, groups without a table unchanged,
+    migrating fallback, loader start day, GPU centre = CPU value, mareld2
+    pins; GPU and loader paths mutation-checked), tests/test_fgconfig_
+    open_pool.py (start_fill round trip), test_appetite_sda (gate 1 - u),
+    test_daylight (both worlds given the same reserves). Full suite 1807
+    passed, 12 skipped; 1-gen train.py (planktivores) and train_gpu.py
+    smokes passed. Checkpoints are invalid (since 245).
+247.6 Open: zooplankton and the mammals keep u 0.5 (contradicted by the
+    field; the data-supported path is reserve_room and a field u after a
+    frozen-policy probe, section 240); their start keeps u +- 0.3 / 0.7.

@@ -8,6 +8,7 @@ from lib.environments.ecosystem_env import source_tracking
 from lib.environments.ecosystem_env.source_tracking import LocalRewardConfig
 from lib.runners.population_stability import evaluate_stability, validate_reward
 from lib.runners.warmup import run_warmup
+from lib.runners import energy_ledger
 
 class ARSTrainer:
     """ARS trainer with optional ARS-V2 extensions:
@@ -686,6 +687,7 @@ class ARSTrainer:
                 env.obs_mean = obs_mean[idx]
                 env.obs_var = obs_var[idx]
 
+        energy_ledger.check_modes(env, [fg_id], self.local_reward)
         if self.population_stability is not None:
             fitness, samples, diagnostics = evaluate_stability(
                 env, [fg_id], n_ticks, self.population_stability, obs_mean is not None)
@@ -707,6 +709,8 @@ class ARSTrainer:
         b_thr = float(self.survival_threshold) * b0
         eps_e = max(1e-6 * e0, 1e-9)
         log_e_sum = 0.0
+        # Section 246: a migrating DM is scored on its local indices.
+        ledger = energy_ledger.EnergyLedger(env, {fg_id: (b0, r0, e0)})
         if self.integral_reward and n_ticks > 0:
             b_sum = 0.0; r_sum = 0.0
             for t in range(n_ticks):
@@ -715,9 +719,9 @@ class ARSTrainer:
                 env.step(actions)
                 b_cur = float(env.fgs[fg_id].biomass.sum())
                 r_cur = float(env.fgs[fg_id].energy_reserve.sum())
+                b_cur, r_cur, e_cur = ledger.update(fg_id, b_cur, r_cur, b_cur * ec + r_cur)
                 b_sum += b_cur
                 r_sum += r_cur
-                e_cur = b_cur * ec + r_cur
                 log_e_sum += np.log((e_cur + eps_e) / (e0 + eps_e))
                 if t_survive == n_ticks and b_cur < b_thr:
                     t_survive = t
@@ -728,13 +732,16 @@ class ARSTrainer:
                 observation = env.get_observation()
                 actions = env.policy_controller.forward(observation)
                 env.step(actions)
+                b_cur = float(env.fgs[fg_id].biomass.sum())
+                if ledger.tracks(fg_id):
+                    r_cur = float(env.fgs[fg_id].energy_reserve.sum())
+                    b_cur = ledger.update(fg_id, b_cur, r_cur, b_cur * ec + r_cur)[0]
                 if t_survive == n_ticks:
-                    b_cur = float(env.fgs[fg_id].biomass.sum())
                     if b_cur < b_thr:
                         t_survive = t
             bh = float(env.fgs[fg_id].biomass.sum())
             rh = float(env.fgs[fg_id].energy_reserve.sum())
-            eh = bh * ec + rh
+            bh, rh, eh = ledger.final(fg_id, bh, rh, bh * ec + rh)
             log_e_sum = np.log((eh + eps_e) / (e0 + eps_e))
 
         if self.local_reward is not None:
@@ -829,6 +836,7 @@ class ARSTrainer:
         if self.local_reward is not None:
             source_tracking.attach(env, self.local_reward)
 
+        energy_ledger.check_modes(env, fg_list, self.local_reward)
         if self.population_stability is not None:
             return evaluate_stability(env, fg_list, n_ticks, self.population_stability,
                                       obs_mean is not None)
@@ -840,6 +848,7 @@ class ARSTrainer:
               for fid in fg_list}
         e0 = {fid: b0[fid] * ec[fid] + r0[fid] for fid in fg_list}
         eps_e = {fid: max(1e-6 * e0[fid], 1e-9) for fid in fg_list}
+        ledger = energy_ledger.EnergyLedger(env, {fid: (b0[fid], r0[fid], e0[fid]) for fid in fg_list})
 
         # Section 48: per-FG time-to-death tracking for Variant B bonus.
         t_survive = {fid: n_ticks for fid in fg_list}
@@ -855,9 +864,9 @@ class ARSTrainer:
                 for fid in fg_list:
                     b_cur = float(env.fgs[fid].biomass.sum())
                     r_cur = float(env.fgs[fid].energy_reserve.sum())
+                    b_cur, r_cur, e_cur = ledger.update(fid, b_cur, r_cur, b_cur * ec[fid] + r_cur)
                     b_sum[fid] += b_cur
                     r_sum[fid] += r_cur
-                    e_cur = b_cur * ec[fid] + r_cur
                     log_e_sum[fid] += np.log((e_cur + eps_e[fid]) / (e0[fid] + eps_e[fid]))
                     if t_survive[fid] == n_ticks and b_cur < b_thr[fid]:
                         t_survive[fid] = t
@@ -869,14 +878,17 @@ class ARSTrainer:
                 actions = env.policy_controller.forward(observation)
                 env.step(actions)
                 for fid in fg_list:
+                    b_cur = float(env.fgs[fid].biomass.sum())
+                    if ledger.tracks(fid):
+                        r_cur = float(env.fgs[fid].energy_reserve.sum())
+                        b_cur = ledger.update(fid, b_cur, r_cur, b_cur * ec[fid] + r_cur)[0]
                     if t_survive[fid] == n_ticks:
-                        b_cur = float(env.fgs[fid].biomass.sum())
                         if b_cur < b_thr[fid]:
                             t_survive[fid] = t
             bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
             rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
             for fid in fg_list:
-                eh = bh[fid] * ec[fid] + rh[fid]
+                bh[fid], rh[fid], eh = ledger.final(fid, bh[fid], rh[fid], bh[fid] * ec[fid] + rh[fid])
                 log_e_sum[fid] = np.log((eh + eps_e[fid]) / (e0[fid] + eps_e[fid]))
 
         fitness = {}

@@ -120,3 +120,64 @@ def test_bad_values_are_refused_and_closing_removes_the_pool(app):
     for key in ("outside_density", "outside_exchange_rate", "outside_season",
                 "outside_depth_table"):
         assert key not in entry, key
+
+
+def _select_dm(app, fg_id):
+    ids = [fg["group_id"] for fg in app.project_data["decision_makers"]]
+    app.fg_listbox.selection_clear(0, "end")
+    app.fg_listbox.selection_set(ids.index(fg_id))
+    app.on_fg_select("decision_makers")
+
+
+def test_migrating_mackerel_round_trips_and_closes(app):
+    """Section 246: the DM panel shows, keeps and re-derives the migration."""
+    entry = app.global_library["species_definitions"]["mackerel"]
+    before = copy.deepcopy(entry)
+    _select_dm(app, "mackerel")
+    v = app.prop_vars
+    assert v["outside_entry"].get() == "west, north:0-0.5"
+    assert len(v["outside_fill"].get().split(",")) == 12
+    app.apply_fg_changes()
+    assert not [t for t, _ in app.shown if t.startswith("Invalid")], app.shown
+    for key in ("outside_density", "outside_exchange_rate", "outside_season",
+                "outside_fill", "outside_entry", "r_max", "feeding_season_months"):
+        assert entry[key] == before[key], key
+    budget = growth_budget("mackerel", app.global_library["species_definitions"],
+                           app.global_library["interaction_definitions"],
+                           active_predators=DMS + NDMS)
+    assert float(entry["growth_rate"]) == pytest.approx(budget.growth_rate, rel=1e-5)
+    _select_dm(app, "mackerel")
+    v["outside_entry"].set("up")
+    app.apply_fg_changes()
+    assert app.shown[-1][0] == "Invalid value"
+    _select_dm(app, "mackerel")
+    v["outside_fill"].set("0.5, 0.5")
+    app.apply_fg_changes()
+    assert app.shown[-1][0] == "Invalid open pool"
+    _select_dm(app, "mackerel")
+    v["outside_density"].set("")
+    v["r_max"].set("0.255")
+    app.apply_fg_changes()
+    for key in ("outside_density", "outside_exchange_rate", "outside_season",
+                "outside_fill", "outside_entry"):
+        assert key not in entry, key
+
+
+def test_start_fill_round_trips_and_empties(app):
+    """Section 247: the DM panel shows, keeps, refuses and removes start_fill."""
+    entry = app.global_library["species_definitions"]["planktivorous_fish"]
+    before = list(entry["start_fill"])
+    _select_dm(app, "planktivorous_fish")
+    v = app.prop_vars
+    assert len(v["start_fill"].get().split(",")) == 12
+    app.apply_fg_changes()
+    assert not [t for t, _ in app.shown if t.startswith("Invalid")], app.shown
+    assert entry["start_fill"] == before
+    _select_dm(app, "planktivorous_fish")
+    v["start_fill"].set("0.5, 1.2")
+    app.apply_fg_changes()
+    assert app.shown[-1][0] == "Invalid value" and entry["start_fill"] == before
+    _select_dm(app, "planktivorous_fish")
+    v["start_fill"].set("")
+    app.apply_fg_changes()
+    assert "start_fill" not in entry

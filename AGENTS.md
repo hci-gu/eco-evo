@@ -52,7 +52,7 @@ fabricates mass.
 | `lib/world/daylight.py` | Daylight calendar (section 137): sun elevation from latitude and date, per-tick light level, and the per-pair attack-rate multiplier (annual mean exactly 1), and the light-limited producer growth factor (section 138: P-I curve over the mixed layer, 1 on the reference day in April). Off unless `simulation_settings.daylight.enabled` in the manifest; turning it on adds one observation channel (checkpoints invalid). The live viewer shows the month and a day-length frame around each heatmap (section 142), and the inference plot a month / clock-time band under its x axis (section 155). An optional `inference_start_day_of_year` in the block fixes the start day of inference worlds and the long-run probe (mode `inference`) while training worlds keep `start_day_of_year` (section 232.6). |
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8) and, since section 244, every fish group (planktivores 2.2, benthivores 1.6, whiting 2.25, water column 2.25, mackerel 2.2; research_notes/"Bioenergetik för alla fiskgrupper", o-umlaut). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
-| `lib/environments/ecosystem_env/open_pool.py` | Open pools (section 245): an NDM with `outside_density` (t/km2 box mean), `outside_exchange_rate` k per tick, `outside_season` (12 monthly factors) and `outside_depth_table` (shape by cell depth, equal-cell mean 1) does `B <- T + (B (1 + g) - T) exp(-k)` after M1, no logistic and no K; g derived with r_max 0, the exchange outside it; the loader refuses g >= exp(k) - 1; the exchange is booked per direction (245.1: `loss_exchange` export, a loss cause in `loss_accounting.LOSS_CAUSES`; `gain_exchange` import; GPU `record` and the rollout's `loss_book` / `import_book`). Also the pairs' `depth_access_table` (per-cell multiplier on a, `interactions.build_pair_depth_maps`). Both engines; tests/test_open_pool.py. `budget_gate` prints a total-ration row (booked flow vs field Q/B). The FG editor edits all four keys and the pairs' Depth Access matrix (245.2); the viewer's NDM line of an open pool is `pr/im/ex`. |
+| `lib/environments/ecosystem_env/open_pool.py` | Section 246: a DM with `outside_density` MIGRATES on its group total (keys `outside_exchange_rate`, `outside_season`, `outside_fill` 12 arrival fills, `outside_entry` edge segments; export pro rata with the reserve, import on the entry cells), and every reward form (log energy, legacy, population stability; not `--local_reward`) reads local indices without the exchange (`lib/runners/energy_ledger.py`, the rollout's `ledger_index`). Open pools (section 245): an NDM with `outside_density` (t/km2 box mean), `outside_exchange_rate` k per tick, `outside_season` (12 monthly factors) and `outside_depth_table` (shape by cell depth, equal-cell mean 1) does `B <- T + (B (1 + g) - T) exp(-k)` after M1, no logistic and no K; g derived with r_max 0, the exchange outside it; the loader refuses g >= exp(k) - 1; the exchange is booked per direction (245.1: `loss_exchange` export, a loss cause in `loss_accounting.LOSS_CAUSES`; `gain_exchange` import; GPU `record` and the rollout's `loss_book` / `import_book`). Also the pairs' `depth_access_table` (per-cell multiplier on a, `interactions.build_pair_depth_maps`). Both engines; tests/test_open_pool.py. `budget_gate` prints a total-ration row (booked flow vs field Q/B). The FG editor edits all four keys and the pairs' Depth Access matrix (245.2); the viewer's NDM line of an open pool is `pr/im/ex`. |
 | `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
 | `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
@@ -90,8 +90,14 @@ fabricates mass.
   Since section 228 `mackerel` (mackerel 0.94, horse mackerel 0.06) is a
   group of its own at the FIELD density, 0.85 t/km2 (3060 t; IESSNS July
   surface trawl x a 0.45 presence profile, research_notes/"Makrillens
-  tathet" (a-umlaut); GOV q for mackerel ~0.1), `mean_0_50m` layer, no K,
-  reserve-funded; `predatory_fish` is the rest (saithe 0.80, spurdog,
+  tathet" (a-umlaut); GOV q for mackerel ~0.1), `mean_0_50m` layer, no K;
+  since section 246 a MIGRATING group (open_pool.migrate: the box total
+  relaxes at 0.10 /d towards 0.85 t/km2 x the presence season, x0.1 in
+  winter to x2.2 in July; emigrants leave pro rata with their reserve,
+  immigrants enter on the west and NW edges at the month's fat; r_max 0,
+  season 5.5 months, max reserve 6980, reference fill 0.672; the reward
+  runs on a ledger without the migration, lib/runners/energy_ledger.py;
+  research_notes/"Makrillens sasong", a-umlaut); `predatory_fish` is the rest (saithe 0.80, spurdog,
   hake, anglerfish, ling, velvet belly, pollack; 0.617 t/km2, 2220 t);
   research_notes/"Rovfiskens uppdelning" params_split_mack.md;
   checkpoints before 228 are invalid. Ceilings from measured Cmax per
@@ -307,8 +313,8 @@ fabricates mass.
   o-umlaut). The budget refuses a kappa_m below h(s_n) C's need, s_n
   the reserve at the season's production. The cap acts on the bare
   tick's I (a meal is absorbed over 1-4 days; a gut buffer is open).
-  Mackerel's g is x3 (4 months) while the closed pool keeps it in the
-  box all year: the retrained probe must check it.
+  Mackerel migrates since section 246 (5.5-month intake season, r_max
+  0), which replaced the x3 g of a resident pool.
   A DM with `regional_carrying_capacity` K (t/km2, section 185) loses
   `r_max/1460 * B_region/K` of its biomass and reserve per tick after
   M1 (B_region = grid-mean density; both engines, with or without
@@ -395,7 +401,7 @@ fabricates mass.
 - `prey_includes_reserve` (section 140): a prey DM's energy reserve is
   eaten with it; the static quality is taken at
   `reserve_reference_fill`. Set for `planktivorous_fish` (section
-  140.6; 209): lean 4000 MJ/t + reserve up to 4990 (6250 before 243.3), starvation from 0.2
+  140.6; 209): lean 4000 MJ/t + reserve up to 4990 (6250 before 243.3), starvation from 0.079 (247; was 0.2)
   of it, `predatory_fish` (water column, lean 4180 + 2000 at fill 0.45 =
   5080; 228), `mackerel` (lean 4670 + 5870 at fill 0.55 = 7899; 228; its rest cost
   is the obligate swimming floor 4.59, no swim bladder, 228.2),
@@ -511,6 +517,22 @@ fabricates mass.
   growth-ration slope (0.28-0.37 vs lab 0.30 g/kcal) is now an input,
   not a test. No other group has c: set it only from that group's own
   slope evidence.
+- Starvation line and start reserve (section 247). For a `reserve_room`
+  fish u is only the starvation onset and the growth floor (no hunger
+  knee), so it is the field value: 2 % whole-body fat (planktivores 0.079,
+  mackerel 0.057) or the gadoid liver danger level ~140 MJ/t (benthivores
+  0.078, whiting and water column 0.070); zooplankton and the mammals keep
+  0.5 (on the gate u is also the knee and the set point s*). `starve_rate`
+  is a calibrated time to death (section 46: catabolism plus deaths, so
+  2.7-6.7 RM at an empty reserve), re-calibrated with u to keep each fish's
+  resting fast (planktivores 0.0675, benthivores 0.0791, whiting 0.0866,
+  water column 0.0681, mackerel 0.0942). A DM's `start_fill` (12 monthly
+  field fills; a migrating DM falls back to `outside_fill`) is the centre
+  of the start reserve: inference and the probe start at its value on the
+  start day, training draws +- 0.3 around it (`FunctionalGroup.
+  initialize_state`, GPU `WorldSpawner.reserves`); without it the old
+  u +- 0.3 / 0.7. Set on the four resident fish; research_notes/
+  "Svaltgrans och startreserv" (Swedish letters).
 
 ## 6. Commands
 

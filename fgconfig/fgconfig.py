@@ -792,11 +792,20 @@ class FGConfigApp:
             ("  Material growth share (share of intake that can become lean tissue; 0 = off)", "material_growth_share", "entry", 0.0, 1.0),
             ("  Feeding season (months per year the budget is paid in; 0 = 12)", "feeding_season_months", "entry", 0.0, 12.0),
             ("Maintenance Level (u_X, fraction)", "maintenance_level", "entry", 0.0, 1.0),
+            # Section 247: the centre of the start reserve by month.
+            ("  Start Fill (12 monthly field fills Jan..Dec, 0-1; empty = u +- 0.3 / 0.7)", "start_fill", "entry", 0.0, 1.0),
             # Sections 240, 241: appetite form, intake-proportional SDA and
             # the deposition-proportional growth cost.
             ("Appetite (gate or reserve_room; empty = gate)", "appetite", "entry", 0.0, 0.0),
             ("  SDA fraction (share of the ingested energy; 0 = none)", "sda_fraction", "entry", 0.0, 0.99),
             ("  Growth cost (J per J deposited; 0 = none)", "growth_cost", "entry", 0.0, 5.0),
+            # Section 246: a migrating decision maker (the box total
+            # relaxes towards an outside density; ecosystem_env/open_pool.py).
+            ("Outside Density (t/km2, box annual mean; migrating group; 0 = resident)", "outside_density", "entry", 0.0, 100000.0),
+            ("  Outside Exchange Rate k (1/{tick})", "outside_exchange_rate", "entry", 0.0, 10.0),
+            ("  Outside Season (12 monthly factors Jan..Dec, mean ~1; empty = flat)", "outside_season", "entry", 0.0, 10.0),
+            ("  Arrival Fill (12 monthly reserve fills of the arriving fish, 0-1)", "outside_fill", "entry", 0.0, 1.0),
+            ("  Entry Edges (e.g. west, north:0-0.5)", "outside_entry", "entry", 0.0, 0.0),
             ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
             # Section 185: closes the logistic whose r the budget pays.
             ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
@@ -4858,9 +4867,16 @@ class FGConfigApp:
                     val = config.get(key, "")
                     var.set("" if val in (None, "", "annual_mean") else str(val))
                     continue
+                if key == "outside_entry":
+                    # Section 246: edge segments as "west, north:0-0.5".
+                    var.set(self._entry_text(config.get(key)))
+                    continue
                 val = config.get(key, "")
                 if isinstance(var, tk.BooleanVar):
                     var.set(bool(val))
+                elif isinstance(val, (list, tuple)):
+                    # Section 246: 12 monthly values (season, arrival fill).
+                    var.set(", ".join(f"{float(v):g}" for v in val))
                 else:
                     var.set(str(val))
             self._set_juvenile_fields(config.get("juvenile_stage")
@@ -5161,6 +5177,48 @@ class FGConfigApp:
                         "Water Layer: 'mixed' (or empty) or 'subsurface'. "
                         "No changes were saved.")
                     return
+            elif key == "outside_fill":
+                # Section 246: 12 arrival fills in [0, 1]; checked with the
+                # rest of the pool below. Empty = none (the key is removed).
+                text = str(val or "").strip()
+                if not text:
+                    config.pop(key, None)
+                    continue
+                try:
+                    config[key] = [float(v) for v in text.split(",") if v.strip()]
+                except ValueError:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Arrival Fill: 12 numbers in [0, 1] (Jan..Dec) separated by "
+                        "commas. No changes were saved.")
+                    return
+            elif key == "start_fill":
+                # Section 247: 12 fills in [0, 1] (FunctionalGroup's parser).
+                text = str(val or "").strip()
+                if not text:
+                    config.pop(key, None)
+                    continue
+                from lib.world.functional_group import parse_start_fill
+                try:
+                    config[key] = parse_start_fill(
+                        {key: [float(v) for v in text.split(",") if v.strip()],
+                         "is_decision_maker": True}, fg_id)
+                except ValueError:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Start Fill: 12 numbers in [0, 1] (Jan..Dec) separated by "
+                        "commas. No changes were saved.")
+                    return
+            elif key == "outside_entry":
+                rows, error = self._parse_entry_text(val)
+                if error:
+                    messagebox.showerror("Invalid value",
+                                         f"Entry Edges: {error}. No changes were saved.")
+                    return
+                if rows is None:
+                    config.pop(key, None)
+                else:
+                    config[key] = rows
             elif key == "outside_season":
                 # Section 245: 12 monthly factors of the outside density;
                 # empty = flat (the key is removed below).
@@ -5272,23 +5330,34 @@ class FGConfigApp:
         # Section 245: an open pool (Outside Density > 0) needs an exchange
         # rate; 0 / empty closes it and its keys leave the library below.
         open_pool_on = False
-        if not is_dm:
+        outside_keys = (("outside_density", "outside_exchange_rate", "outside_season",
+                         "outside_fill", "outside_entry") if is_dm else
+                        ("outside_density", "outside_exchange_rate", "outside_season"))
+        try:
+            density = float(config.get("outside_density", 0.0) or 0.0)
+            rate = float(config.get("outside_exchange_rate", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            density, rate = 0.0, 0.0
+        open_pool_on = density > 0.0
+        if open_pool_on and not rate > 0.0:
+            messagebox.showerror(
+                "Invalid value",
+                "Outside Exchange Rate: above 0 for an open pool (Outside "
+                "Density > 0). No changes were saved.")
+            return
+        if open_pool_on:
+            # Sections 245, 246: the runtime's own checks (season mean,
+            # arrival fills, entry edges, a migrating DM's exclusions).
+            from lib.environments.ecosystem_env import open_pool
             try:
-                density = float(config.get("outside_density", 0.0) or 0.0)
-                rate = float(config.get("outside_exchange_rate", 0.0) or 0.0)
-            except (TypeError, ValueError):
-                density, rate = 0.0, 0.0
-            open_pool_on = density > 0.0
-            if open_pool_on and not rate > 0.0:
-                messagebox.showerror(
-                    "Invalid value",
-                    "Outside Exchange Rate: above 0 for an open pool (Outside "
-                    "Density > 0). No changes were saved.")
+                open_pool.parse(dict(config, is_decision_maker=is_dm), fg_id)
+            except ValueError as exc:
+                messagebox.showerror("Invalid open pool",
+                                     f"{exc}\n\nNo changes were saved.")
                 return
-            if not open_pool_on:
-                for key in ("outside_density", "outside_exchange_rate",
-                            "outside_season"):
-                    config.pop(key, None)
+        else:
+            for key in outside_keys:
+                config.pop(key, None)
 
         # r_max > 0 makes growth_rate derived (lib/world/growth_budget.py):
         # overwrite the field with the budget over the APPLIED predation
@@ -5312,7 +5381,7 @@ class FGConfigApp:
                 return
             config["growth_rate"] = float(f"{budget.growth_rate:.6g}")
             prop_vars["growth_rate"].set(f"{config['growth_rate']:.6g}")
-            if open_pool_on:
+            if open_pool_on and not is_dm:
                 from lib.environments.ecosystem_env import open_pool
                 error = open_pool.stability_error(
                     budget.growth_rate, config["outside_exchange_rate"], fg_id)
@@ -5581,13 +5650,16 @@ class FGConfigApp:
         # table has to leave the library entry too.
         if not is_dm and "capacity_depth_table" not in config:
             target.pop("capacity_depth_table", None)
-        if not is_dm:
-            # Section 245: an emptied season or depth shape, or a closed
-            # pool, leaves the library entry too.
-            for key in ("outside_density", "outside_exchange_rate",
-                        "outside_season", "outside_depth_table"):
-                if key not in config:
-                    target.pop(key, None)
+        # Sections 245, 246: an emptied season, depth shape, fill or entry,
+        # or a closed pool, leaves the library entry too.
+        for key in (("outside_density", "outside_exchange_rate", "outside_season",
+                     "outside_fill", "outside_entry") if is_dm else
+                    ("outside_density", "outside_exchange_rate", "outside_season",
+                     "outside_depth_table")):
+            if key not in config:
+                target.pop(key, None)
+        if is_dm and "start_fill" not in config:
+            target.pop("start_fill", None)              # section 247: emptied
         if refuge_off:
             target.pop("exposed_share", None)
             target.pop("refuge_exchange_rate", None)
@@ -5669,6 +5741,48 @@ class FGConfigApp:
         if not staged and values[1] <= 0.0:
             return None, "the share must be above 0"
         return values, None
+
+    @staticmethod
+    def _entry_text(rows):
+        """Section 246: ``outside_entry`` rows as 'west, north:0-0.5'."""
+        parts = []
+        for row in rows or []:
+            if isinstance(row, str):
+                row = {"edge": row}
+            if not isinstance(row, dict):
+                continue
+            lo, hi = float(row.get("from", 0.0)), float(row.get("to", 1.0))
+            edge = str(row.get("edge", ""))
+            parts.append(edge if (lo, hi) == (0.0, 1.0) else f"{edge}:{lo:g}-{hi:g}")
+        return ", ".join(parts)
+
+    @staticmethod
+    def _parse_entry_text(text):
+        """``(rows, error)`` of an Entry Edges field; ``(None, None)`` when
+        empty. Checked with the runtime parser (open_pool.parse_entry)."""
+        from lib.environments.ecosystem_env import open_pool
+        text = str(text or "").strip()
+        if not text:
+            return None, None
+        rows = []
+        for item in text.split(","):
+            item = item.strip()
+            if not item:
+                continue
+            edge, _, span = item.partition(":")
+            row = {"edge": edge.strip().lower()}
+            if span:
+                lo, _, hi = span.partition("-")
+                try:
+                    row["from"], row["to"] = float(lo), float(hi)
+                except ValueError:
+                    return None, f"'{item}' is not edge or edge:from-to"
+            rows.append(row)
+        try:
+            open_pool.parse_entry(rows)
+        except ValueError as exc:
+            return None, str(exc)
+        return rows, None
 
     @staticmethod
     def _parse_depth_access(text):

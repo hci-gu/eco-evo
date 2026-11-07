@@ -117,3 +117,18 @@ def test_open_pool_panel_adds_its_export(viz, monkeypatch):
             biomass=np.ones(GRID, dtype=np.float32), open_pool=None)}, tick=2)
     lines = rendered_lines(viz, "benthic_infauna", monkeypatch)
     assert any(line.startswith("pr/im = ") for line in lines)
+
+
+def test_migrating_dm_line_adds_its_export(viz, monkeypatch):
+    """Section 246: a migrating DM's loss line carries 'ex'."""
+    import numpy as np
+    from types import SimpleNamespace
+    viz.update_biomass({
+        "benthivorous_fish": SimpleNamespace(
+            biomass=np.ones(GRID, dtype=np.float32), open_pool={"rate": 0.025})}, tick=1)
+    viz.update_action_fracs("benthivorous_fish", 10.0, 20.0, 70.0)
+    viz.update_loss_breakdown({
+        "benthivorous_fish": {"predation": 0.1, "starvation": 0.1, "impact": 0.0,
+                              "natural": 0.2, "exchange": 0.6}})
+    lines = rendered_lines(viz, "benthivorous_fish", monkeypatch)
+    assert any(line.startswith("pr/st/im/nm/ex = ") for line in lines), lines

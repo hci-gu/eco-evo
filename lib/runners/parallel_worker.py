@@ -17,6 +17,7 @@ import torch
 from lib.environments.ecosystem_env import source_tracking
 from lib.runners.policy import PolicyNetwork
 from lib.runners.warmup import run_warmup
+from lib.runners import energy_ledger
 
 # Module-level globals, populated by _worker_init in each worker process.
 _ENV_BUILDER = None
@@ -182,6 +183,7 @@ def _evaluate_coevo_task(task):
         source_tracking.attach(env, local_reward)
 
     config = task.get('population_stability') if isinstance(task, dict) else None
+    energy_ledger.check_modes(env, fg_list, local_reward)
     if config is not None:
         from lib.runners.population_stability import evaluate_stability
         return evaluate_stability(env, fg_list, n_ticks, config, obs_pack is not None)
@@ -193,6 +195,7 @@ def _evaluate_coevo_task(task):
           for fid in fg_list}
     e0 = {fid: b0[fid] * ec[fid] + r0[fid] for fid in fg_list}
     eps_e = {fid: max(1e-6 * e0[fid], 1e-9) for fid in fg_list}
+    ledger = energy_ledger.EnergyLedger(env, {fid: (b0[fid], r0[fid], e0[fid]) for fid in fg_list})
 
     # Section 48 Variant B: per-FG time-to-death tracking.
     t_survive = {fid: n_ticks for fid in fg_list}
@@ -208,9 +211,9 @@ def _evaluate_coevo_task(task):
             for fid in fg_list:
                 b_cur = float(env.fgs[fid].biomass.sum())
                 r_cur = float(env.fgs[fid].energy_reserve.sum())
+                b_cur, r_cur, e_cur = ledger.update(fid, b_cur, r_cur, b_cur * ec[fid] + r_cur)
                 b_sum[fid] += b_cur
                 r_sum[fid] += r_cur
-                e_cur = b_cur * ec[fid] + r_cur
                 log_e_sum[fid] += np.log((e_cur + eps_e[fid]) / (e0[fid] + eps_e[fid]))
                 if t_survive[fid] == n_ticks and b_cur < b_thr[fid]:
                     t_survive[fid] = t
@@ -222,14 +225,17 @@ def _evaluate_coevo_task(task):
             actions = env.policy_controller.forward(observation)
             env.step(actions)
             for fid in fg_list:
+                b_cur = float(env.fgs[fid].biomass.sum())
+                if ledger.tracks(fid):
+                    r_cur = float(env.fgs[fid].energy_reserve.sum())
+                    b_cur = ledger.update(fid, b_cur, r_cur, b_cur * ec[fid] + r_cur)[0]
                 if t_survive[fid] == n_ticks:
-                    b_cur = float(env.fgs[fid].biomass.sum())
                     if b_cur < b_thr[fid]:
                         t_survive[fid] = t
         bh = {fid: float(env.fgs[fid].biomass.sum()) for fid in fg_list}
         rh = {fid: float(env.fgs[fid].energy_reserve.sum()) for fid in fg_list}
         for fid in fg_list:
-            eh = bh[fid] * ec[fid] + rh[fid]
+            bh[fid], rh[fid], eh = ledger.final(fid, bh[fid], rh[fid], bh[fid] * ec[fid] + rh[fid])
             log_e_sum[fid] = np.log((eh + eps_e[fid]) / (e0[fid] + eps_e[fid]))
 
     fitness = {}
@@ -376,6 +382,7 @@ def _evaluate_task(task):
             env.obs_var = var[idx]
 
     config = task.get('population_stability') if isinstance(task, dict) else None
+    energy_ledger.check_modes(env, [fg_to_train], local_reward)
     if config is not None:
         from lib.runners.population_stability import evaluate_stability
         fitness, samples, diagnostics = evaluate_stability(
@@ -393,6 +400,8 @@ def _evaluate_task(task):
     t_survive = n_ticks
     b_thr = survival_threshold * b0
     log_e_sum = 0.0
+    # Section 246: a migrating DM is scored on its local indices.
+    ledger = energy_ledger.EnergyLedger(env, {fg_to_train: (b0, r0, e0)})
     if integral_reward and n_ticks > 0:
         b_sum = 0.0; r_sum = 0.0
         for t in range(n_ticks):
@@ -401,9 +410,9 @@ def _evaluate_task(task):
             env.step(actions)
             b_cur = float(env.fgs[fg_to_train].biomass.sum())
             r_cur = float(env.fgs[fg_to_train].energy_reserve.sum())
+            b_cur, r_cur, e_cur = ledger.update(fg_to_train, b_cur, r_cur, b_cur * ec + r_cur)
             b_sum += b_cur
             r_sum += r_cur
-            e_cur = b_cur * ec + r_cur
             log_e_sum += np.log((e_cur + eps_e) / (e0 + eps_e))
             if t_survive == n_ticks and b_cur < b_thr:
                 t_survive = t
@@ -414,13 +423,16 @@ def _evaluate_task(task):
             observation = env.get_observation()
             actions = env.policy_controller.forward(observation)
             env.step(actions)
+            b_cur = float(env.fgs[fg_to_train].biomass.sum())
+            if ledger.tracks(fg_to_train):
+                r_cur = float(env.fgs[fg_to_train].energy_reserve.sum())
+                b_cur = ledger.update(fg_to_train, b_cur, r_cur, b_cur * ec + r_cur)[0]
             if t_survive == n_ticks:
-                b_cur = float(env.fgs[fg_to_train].biomass.sum())
                 if b_cur < b_thr:
                     t_survive = t
         bh = float(env.fgs[fg_to_train].biomass.sum())
         rh = float(env.fgs[fg_to_train].energy_reserve.sum())
-        eh = bh * ec + rh
+        bh, rh, eh = ledger.final(fg_to_train, bh, rh, bh * ec + rh)
         log_e_sum = np.log((eh + eps_e) / (e0 + eps_e))
 
     if local_reward is not None:

@@ -109,15 +109,46 @@ class FunctionalGroup:
         if self.open_pool is not None and self.exposed_share is not None:
             raise ValueError(f"{group_id}: an open pool cannot also be a refuge")
         self.outside_weight_map = None
+        # Section 247: the field reserve fill by month (12 values), the
+        # centre of the start reserve; a migrating DM falls back to its
+        # arrival fill (the box composite's fat by month).
+        self.start_fill = parse_start_fill(params, group_id)
+        if self.start_fill is None and self.open_pool is not None and self.open_pool.get("fill"):
+            self.start_fill = [float(v) for v in self.open_pool["fill"]]
+
+    def start_fill_centre(self, start_day=None):
+        """The start fill on a 0-based day of the year (``start_fill``,
+        interpolated between mid-months), its annual mean without a day,
+        or None without a table (section 247)."""
+        if self.start_fill is None:
+            return None
+        if start_day is None:
+            return float(np.mean(self.start_fill))
+        from lib.world import daylight
+        return float(daylight.monthly_value(self.start_fill, float(start_day)))
 
     def initialize_state(self, shape, initial_biomass=None, initial_energy_ratio=0.7,
-                         randomize_energy=False, rng=None):
+                         randomize_energy=False, rng=None, start_day=None):
         if initial_biomass is not None:
             self.biomass = initial_biomass.copy()
         else:
             self.biomass = np.zeros(shape)
 
-        if randomize_energy:
+        centre = self.start_fill_centre(start_day)
+        if centre is not None:
+            # Section 247: the field fill on the start day; training draws
+            # s(0) ~ U[c - 0.3, c + 0.3] clipped (observation support),
+            # inference starts at c. Same draw as the u-centred path.
+            if randomize_energy:
+                if rng is not None and hasattr(rng, "random"):
+                    u = rng.random(shape)
+                else:
+                    u = np.random.rand(*shape)
+                lo, hi = max(0.0, centre - 0.3), min(1.0, centre + 0.3)
+                energy_per_ton = (lo + (hi - lo) * u) * self.max_energy_reserve
+            else:
+                energy_per_ton = np.full(shape, centre * self.max_energy_reserve)
+        elif randomize_energy:
             # s_X(0) ~ Uniform[u_X - w, u_X + w] per cell, clippad till
             # [0, 1]. Centrerad på maintenance-nivån u_X så att
             # E[q_X(0)] = s_X(0) - u_X ≈ 0 (break-even) — det neutraliserar
@@ -172,3 +203,23 @@ class FunctionalGroup:
         if u >= 1.0:
             return np.zeros_like(s_x)
         return np.clip((1.0 - s_x) / (1.0 - u), 0.0, 1.0)
+
+
+START_FILL_KEY = "start_fill"
+
+
+def parse_start_fill(params, group_id=""):
+    """``start_fill``: 12 monthly reserve fills in [0, 1] of a decision
+    maker (section 247), or None."""
+    value = params.get(START_FILL_KEY)
+    if value is None:
+        return None
+    if not params.get("is_decision_maker", False):
+        raise ValueError(f"{group_id}: {START_FILL_KEY} is for decision makers only (section 247)")
+    try:
+        fills = [float(v) for v in value]
+    except (TypeError, ValueError):
+        raise ValueError(f"{group_id}: {START_FILL_KEY} must be 12 numbers") from None
+    if len(fills) != 12 or not all(0.0 <= v <= 1.0 for v in fills):
+        raise ValueError(f"{group_id}: {START_FILL_KEY} must be 12 fills in [0, 1] (section 247)")
+    return fills

@@ -1447,7 +1447,7 @@ def _probe_biomass(trainer, probe_builder, n_ticks, gen, it, jsonl_path,
                 f"imp {lb.get('impact', 0.0)*100:.0f}% / "
                 f"nat {lb.get('natural', 0.0)*100:.0f}%"
             )
-            if fid in getattr(env, "open_ids", ()):
+            if fid in getattr(env, "open_ids", ()) or fid in getattr(env, "open_dm_ids", ()):
                 # Section 245: the export share and the import (t).
                 part += (f" / exch {lb.get('exchange', 0.0)*100:.0f}%"
                          f" (in {exchange_import(env, fid):.0f} t)")
