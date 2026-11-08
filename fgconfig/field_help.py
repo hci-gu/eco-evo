@@ -941,7 +941,7 @@ FIELD_HELP = {
         "outside them. No rows, or no depth map, = the scalar Max "
         "Carrying Capacity everywhere. The preview shows K on the "
         "project's depth map; the equilibrium spawn starts at K (1 - (F + "
-        "M2)/r) on it. Benthos: anchored at the in-grid stations at 100 "
+        "M2)/r) on it, F from the active baseline maps. Benthos: anchored at the in-grid stations at 100 "
         "and 300 m (sections 207, 209). Saved to the library with Apply "
         "Changes."
     ),
@@ -1434,9 +1434,10 @@ FIELD_HELP = {
     "impact_baseline_map": (
         "Baseline map: today's field of this impact as a .npz, one value "
         "per cell (e.g. fishing effort in the cell).\n\n"
-        "Training: every training world gets this map, whether or not the "
-        "policies can observe the impact, so they train in today's world; "
-        "it replaces the spawned field of an observable impact.\n"
+        "Training: every training world and the training viewer's probes "
+        "get this map, whether or not the policies can observe the impact, "
+        "so they train in today's world; it replaces the spawned field of "
+        "an observable impact.\n"
         "Inference: not read. Add the same file under the Inference tab "
         "to keep today's field in an inference world, or another file "
         "for a scenario (closed wind farm, changed quotas) - one field "
@@ -1446,11 +1447,11 @@ FIELD_HELP = {
     ),
     "impact_baseline_map_mute": (
         "Mute the baseline map: training worlds run as if this impact had "
-        "no baseline map, and the file stays stored. Inference maps are "
-        "not touched, and neither is the equilibrium start pattern, which "
-        "is today's state and keeps reading this file. An observable "
-        "impact gets its spawned field back. No inputs change; checkpoints "
-        "stay valid."
+        "no baseline map, and the file stays stored. The training viewer's "
+        "probes run without it too, and the equilibrium start pattern "
+        "counts it as absent in training and inference alike. "
+        "Inference maps are not touched. An observable impact gets its "
+        "spawned field back. No inputs change; checkpoints stay valid."
     ),
     "impact_table_value": (
         "Impact value (in the impact's unit) at which this row's "
@@ -1610,17 +1611,17 @@ FIELD_HELP = {
         "training range. Empty = 0: the group starts absent."
     ),
     "inference_impact_map": (
-        "Impact map (.npz) for inference: a 2-D array (the array named "
+        "Impact map (.npz) for inference.py, not read by the training "
+        "tool or its probes: a 2-D array (the array named "
         "after the impact, else the first one) with the impact value "
         "per cell, resampled to the grid. Used as is - not clipped to "
         "the Value Range - for every active impact, observable or not. "
         "No map = a zero field. Drop a file here or click to browse."
     ),
     "inference_impact_map_mute": (
-        "Mute this inference map: inference worlds and the training "
-        "viewer's long-run probe get a zero field for this impact, and the "
-        "file stays stored. The training worlds' baseline map is not "
-        "touched."
+        "Mute this inference map: inference.py gets a zero field for this "
+        "impact, and the file stays stored. The training tool, its probes "
+        "included, reads only the baseline map."
     ),
 }
 

@@ -24204,3 +24204,25 @@ remain open exactly as described in 71.9 / 71.11.
     is today's state, and muting the training map must not move the inference
     start. A new or cleared file drops the mute. No inputs change; checkpoints
     stay valid. mareld2.yaml sets neither key. tests/test_muted_impact_maps.py.
+
+256 A muted baseline map is out of the equilibrium start pattern (2026-11-08;
+    user). Replaces the 255 rule that the pattern kept reading it. An active
+    baseline map still gives B*(c) = K(c)(1 - (F(c) + M2)/r); a muted one counts
+    as absent, B*(c) = K(c)(1 - M2/r), which keeps the depth link through
+    K(c) from capacity_depth_table on the depth map. Applies to training and
+    inference worlds alike, since both build the pattern from the project. A
+    muted inference map moves nothing (a scenario starts from today). The
+    totals still come from the manifest. mareld2.yaml sets no mute, so its
+    start pattern is unchanged.
+
+257 The training probes read the baseline maps (2026-11-08; user: the inference
+    maps are for the inference tool; an active baseline map shall be in the
+    training probes). The viewer's probe (train._ProbeEnvBuilder) and the long
+    run (training_progress.build_inference_env) keep the inference start
+    (fixed totals, inference start day) but take their impact fields from
+    impact_maps.training_probe_impact_maps: an active baseline map, else zero,
+    re-read per call. inference.impact_maps is read only by inference.py; this
+    replaces the probes' rule of 161.3, 161.8. With a muted baseline map the
+    probes run without that impact. mareld2.yaml has the same files in both
+    places, so its probes are unchanged. The diagnostics built on
+    _ProbeEnvBuilder (tools/probes, research_notes) follow the same rule.

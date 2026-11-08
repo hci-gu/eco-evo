@@ -22,9 +22,10 @@ the box spans 44-529 m. Three pieces put the depth into it:
         B*(c) = K(c) * max(0, 1 - (F(c) + M2) / r)
 
     r = the hand-set growth_rate per year, F(c) = the yearly loss of the
-    group's impacts read off their Impact Editor baseline maps (today's
-    fishing; never the inference scenario maps, so a scenario starts
-    from today and recovers from there), M2 = the checked predation
+    group's impacts read off their active Impact Editor baseline maps
+    (today's fishing; a muted map counts as absent, section 256; never the
+    inference scenario maps, so a scenario starts from today and recovers
+    from there), M2 = the checked predation
     pairs' ``predation_mortality`` on the group. The total still comes
     from the manifest (training range, inference value); B* only sets
     the pattern. Without the habitat (no depth map, no baseline map) the
@@ -187,9 +188,8 @@ def build(project, project_path, library, grid_size, active_ids,
         return depth, out
     if baseline_maps is None:
         from lib.world.impact_maps import project_baseline_maps
-        # The start pattern is today's state: a muted map still shapes it.
         baseline_maps = project_baseline_maps(project, project_path, grid_size,
-                                              verbose=verbose, include_muted=True)
+                                              verbose=verbose)
     for fid, (spec, table, equilibrium) in wanted.items():
         capacity = None
         if table is not None and depth is not None:

@@ -3,8 +3,8 @@
 A muted map keeps its path in the project and is read as if it were not
 there: the baseline map by the training worlds, the inference map by the
 inference worlds and the long-run probe. Each mute leaves the other kind of
-map alone, and the equilibrium start pattern (today's state) keeps reading
-the baseline map. The FG editor's Mute boxes write both keys.
+map alone. An active baseline map shapes the equilibrium start pattern, a
+muted one does not. The FG editor's Mute boxes write both keys.
 """
 import os
 import sys
@@ -20,7 +20,9 @@ sys.path.insert(0, os.path.join(_ROOT, "fgconfig"))
 
 from inference import inference_impact_units, load_inference_impact_maps  # noqa: E402
 from lib.world import habitat  # noqa: E402
+from lib.runners.training_progress import build_inference_env  # noqa: E402
 from lib.world.impact_maps import project_baseline_maps, sample_impact_maps  # noqa: E402
+from train import _ProbeEnvBuilder  # noqa: E402
 
 
 def _write_map(path, value=2.0, unit=None):
@@ -38,8 +40,6 @@ def test_a_muted_baseline_map_is_absent_from_training_and_keeps_its_path(tmp_pat
     maps = project_baseline_maps(project, str(tmp_path / "p.yaml"), (4, 4))
     assert set(maps) == {"other"}
     assert entry["baseline_map"] == "effort.npz"
-    assert set(project_baseline_maps(project, str(tmp_path / "p.yaml"), (4, 4),
-                                     include_muted=True)) == {"fishing", "other"}
     fields = sample_impact_maps(["fishing", "other"], {"fishing": (0, 10), "other": (0, 10)},
                                 (4, 4), seed=1, observable_impact_vars=[], baseline_maps=maps)
     assert not fields["fishing"].any()
@@ -84,7 +84,7 @@ def test_the_two_mutes_are_independent(tmp_path):
     assert not load_inference_impact_maps(str(path), ["x"], 4, 4, verbose=False)["x"].any()
 
 
-def test_the_equilibrium_start_pattern_keeps_reading_a_muted_baseline_map():
+def test_the_equilibrium_pattern_follows_active_baseline_maps_only():
     project_path = os.path.join(_ROOT, "mareld2.yaml")
     if not os.path.isfile(os.path.join(_ROOT, "maps", "fishing_bottom_otter_trawls.npz")):
         pytest.skip("maps/ is untracked")
@@ -94,14 +94,78 @@ def test_the_equilibrium_start_pattern_keeps_reading_a_muted_baseline_map():
     ids = [g["group_id"] for key in ("decision_makers", "non_decision_makers")
            for g in project[key] if not g.get("muted")]
     fid = "benthic_infauna"
-    _, before = habitat.build(project, project_path, library, (16, 16), ids)
+    _, active = habitat.build(project, project_path, library, (16, 16), ids)
+    # Muting the inference map moves nothing: scenarios start from today.
+    project["inference"]["impact_maps_muted"] = list(project["inference"]["impact_maps"])
+    _, same = habitat.build(project, project_path, library, (16, 16), ids)
+    np.testing.assert_array_equal(active[fid]["equilibrium"], same[fid]["equilibrium"])
+
+    active_share = active[fid]["equilibrium"] / active[fid]["capacity"]
+    assert active_share.max() - active_share.min() > 0.05  # the fishing shows
+
     for iv in project["impact_variables"]:
         if iv.get("baseline_map"):
             iv["baseline_map_muted"] = True
     assert not project_baseline_maps(project, project_path, (16, 16))
-    _, after = habitat.build(project, project_path, library, (16, 16), ids)
-    assert before[fid]["equilibrium"] is not None
-    np.testing.assert_array_equal(before[fid]["equilibrium"], after[fid]["equilibrium"])
+    _, muted = habitat.build(project, project_path, library, (16, 16), ids)
+    share = muted[fid]["equilibrium"] / muted[fid]["capacity"]
+    assert share.max() - share.min() < 1e-9  # K(c) (1 - M2/r): depth, no fishing
+    assert share.min() > active_share.min()
+    for iv in project["impact_variables"]:
+        iv.pop("baseline_map", None)
+    _, absent = habitat.build(project, project_path, library, (16, 16), ids)
+    np.testing.assert_array_equal(muted[fid]["equilibrium"], absent[fid]["equilibrium"])
+
+
+def _probe_worlds(project_path):
+    """Both training probes' worlds: the viewer's and the long run."""
+    library = os.path.join(_ROOT, "fgconfig", "fg_library.yaml")
+    config = dict(project=project_path, library=library, grid=[6, 7], mortality=True,
+                  migration=True, mass_balance=True)
+    return [_ProbeEnvBuilder(project_path, (6, 7), True, True, library_path=library)(),
+            build_inference_env(config, 1)]
+
+
+@pytest.mark.parametrize("baseline_muted, inference_muted, expected", [
+    (False, False, 2.0),  # active baseline map; the inference map is not read
+    (False, True, 2.0),   # the inference map's mute changes nothing here
+    (True, False, 0.0),   # muted baseline map: no impact, whatever inference says
+])
+def test_the_training_probes_follow_the_baseline_map_only(tmp_path, baseline_muted,
+                                                          inference_muted, expected):
+    if not os.path.isfile(os.path.join(_ROOT, "maps", "depth.npz")):
+        pytest.skip("maps/ is untracked")
+    project = yaml.safe_load(open(os.path.join(_ROOT, "mareld2.yaml"), encoding="utf-8-sig"))
+    os.symlink(os.path.join(_ROOT, "maps"), tmp_path / "maps")
+    _write_map(tmp_path / "base.npz", 2.0)
+    _write_map(tmp_path / "scenario.npz", 7.0)
+    for iv in project["impact_variables"]:
+        if iv["impact_id"] == "bottom_trawling":
+            iv["baseline_map"] = "base.npz"
+            iv["baseline_map_muted"] = baseline_muted
+    project["inference"]["impact_maps"]["bottom_trawling"] = "scenario.npz"
+    project["inference"]["impact_maps_muted"] = ["bottom_trawling"] if inference_muted else []
+    path = tmp_path / "project.yaml"
+    path.write_text(yaml.safe_dump(project))
+    for env in _probe_worlds(str(path)):
+        np.testing.assert_allclose(env.grid.get_map("bottom_trawling"), expected)
+    # The inference tool itself still reads its own map.
+    field = load_inference_impact_maps(str(path), ["bottom_trawling"], 6, 7,
+                                       verbose=False)["bottom_trawling"]
+    np.testing.assert_allclose(field, 0.0 if inference_muted else 7.0)
+
+
+def test_a_probe_without_a_baseline_map_has_no_impact_even_with_an_inference_map(tmp_path):
+    if not os.path.isfile(os.path.join(_ROOT, "maps", "depth.npz")):
+        pytest.skip("maps/ is untracked")
+    project = yaml.safe_load(open(os.path.join(_ROOT, "mareld2.yaml"), encoding="utf-8-sig"))
+    os.symlink(os.path.join(_ROOT, "maps"), tmp_path / "maps")
+    for iv in project["impact_variables"]:
+        iv.pop("baseline_map", None)
+    path = tmp_path / "project.yaml"
+    path.write_text(yaml.safe_dump(project))
+    for env in _probe_worlds(str(path)):
+        assert not np.asarray(env.grid.get_map("bottom_trawling")).any()
 
 
 pytest.importorskip("ruamel.yaml")

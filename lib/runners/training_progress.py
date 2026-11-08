@@ -1,9 +1,9 @@
 """Periodic CPU inference for the live viewer: the three-year probe.
 
 Since section 223.12 the viewer's progress tab shows how a frozen copy of
-the current policies plays out over three years (``PROBE_YEARS``) of the
-inference world: every group's biomass as a share of its start, sampled
-once a day. The live viewer runs the probe in a separate process, so
+the current policies plays out over three years (``PROBE_YEARS``) of a
+world with the inference start and the active baseline maps (section 257):
+every group's biomass as a share of its start, sampled once a day. The live viewer runs the probe in a separate process, so
 training goes on meanwhile. Each probe also keeps the decision makers'
 survival ticks (inside ``--biomass-bounds``), every group's end ratio
 per year and the viability criterion of VIABILITY.md section 1 on whole
@@ -31,6 +31,7 @@ from lib.environments.ecosystem_env.currents import CurrentConfig
 from lib.environments.ecosystem_env.population_change import (
     DEFAULT_MASS_BALANCE, DEFAULT_MORTALITY_MULTIPLIER,
     LEGACY_MASS_BALANCE)
+from lib.world.impact_maps import training_probe_impact_maps
 from lib.world.tick_time import LIBRARY_TICK_HOURS, ticks_per_day, ticks_per_year
 
 # Length of the progress probe (section 223.12).
@@ -497,12 +498,9 @@ def build_inference_env(config, seed):
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
                                 current_world_seed=seed)
     if impact_vars:
-        # The inference world's impact fields (section 161). Imported
-        # here: inference.py is a script module that itself imports from
-        # lib.runners.
-        from inference import load_inference_impact_maps
-        maps = load_inference_impact_maps(config["project"], impact_vars,
-                                          height, width, seed=seed, verbose=False)
+        # The training tool's fields: the active baseline maps, never the
+        # inference tool's maps (section 257).
+        maps = training_probe_impact_maps(config["project"], impact_vars, (height, width))
         for iv in impact_vars:
             env.grid.add_map(iv, maps[iv])
     return env

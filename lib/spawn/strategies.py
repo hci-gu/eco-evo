@@ -531,7 +531,7 @@ def weights_equilibrium(grid_size: Tuple[int, int],
 
     The pattern is ``context['equilibrium']``, B*(c) = K(c) max(0, 1 -
     (F(c) + M2)/r), built by ``lib.world.habitat.build`` from the depth
-    map, the capacity table and today's baseline impact maps. No
+    map, the capacity table and today's active baseline impact maps. No
     randomness. Without the map in the context (a bare make_weights
     call) the weights are uniform over the allowed cells.
     """

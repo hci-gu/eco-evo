@@ -87,16 +87,14 @@ def load_impact_map_npz(path, impact_id, H, W, verbose=True):
     return arr.astype(np.float32, copy=False)
 
 
-def project_baseline_maps(project, project_path, grid_size, verbose=False,
-                          include_muted=False):
+def project_baseline_maps(project, project_path, grid_size, verbose=False):
     """Load the Impact Editor's baseline maps, ``{impact_id: (H, W) field}``.
 
     ``baseline_map`` on an active ``impact_variables`` entry is a .npz
     path, relative to the project file or absolute, read like an
     inference map (nearest-neighbour resampled to ``grid_size``). An
-    impact whose file is missing or invalid has no baseline map. So has
-    one with ``baseline_map_muted: true``, unless ``include_muted``: the
-    equilibrium start pattern is today's state and keeps reading the map.
+    impact whose file is missing or invalid has no baseline map, and
+    neither has one with ``baseline_map_muted: true``.
     """
     base = os.path.dirname(os.path.abspath(project_path)) if project_path else os.getcwd()
     H, W = grid_size
@@ -107,13 +105,31 @@ def project_baseline_maps(project, project_path, grid_size, verbose=False,
         stored = iv.get('baseline_map')
         if not isinstance(stored, str) or not stored:
             continue
-        if iv.get('baseline_map_muted') and not include_muted:
+        if iv.get('baseline_map_muted'):
             continue
         path = stored if os.path.isabs(stored) else os.path.normpath(os.path.join(base, stored))
         field = load_impact_map_npz(path, iv['impact_id'], H, W, verbose=verbose)
         if field is not None:
             maps[iv['impact_id']] = field
     return maps
+
+
+def training_probe_impact_maps(project_path, impact_vars, grid_size, verbose=False):
+    """Impact fields of a training probe, ``{impact_id: (H, W) field}``.
+
+    The viewer's probe and the long-run probe show the training tool's
+    world: an active baseline map is present, anything else is an all-zero
+    field. ``inference.impact_maps`` belong to the inference tool and are
+    not read here (section 257).
+    """
+    baseline = {}
+    if project_path:
+        from lib.config.config_loader import load_config
+        baseline = project_baseline_maps(load_config(project_path), project_path,
+                                         grid_size, verbose=verbose)
+    H, W = grid_size
+    return {iv: baseline[iv] if iv in baseline else np.zeros((H, W), dtype=np.float32)
+            for iv in impact_vars}
 
 
 def sample_impact_maps(impact_vars, impact_ranges, grid_size, seed=None,

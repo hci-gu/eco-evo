@@ -19,7 +19,8 @@ from lib.world.tick_time import (
 from lib.config.config_loader import (
                                       setup_full_mareld_mvp, load_project_config,
                                       load_config, load_impact_spawn_specs)
-from lib.world.impact_maps import project_baseline_maps, sample_impact_maps
+from lib.world.impact_maps import (project_baseline_maps, sample_impact_maps,
+                                   training_probe_impact_maps)
 from lib.environments.ecosystem import EcosystemEnvironment
 from lib.viz import add_heatmap_norm_argument
 from lib.environments.ecosystem_env.loss_accounting import exchange_import, loss_shares
@@ -429,14 +430,15 @@ class _ProbeEnvBuilder:
          initial biomass per FG is taken from ``inference_initial_biomass``
          (a fixed value) rather than sampled from
          ``initial_biomass_min/max``.
-      2. Loads impact maps from the project's ``inference.impact_maps``
-         section (real .npz files configured via fgconfig's Inference tab)
-         instead of sampling fresh fields per call.
+      2. Takes the impact fields from the active baseline maps
+         (``training_probe_impact_maps``) instead of sampling fresh fields
+         per call. The Inference tab's maps belong to the inference tool
+         and are not read (section 257).
 
     The probe seed is fixed (``probe_seed``); every call returns an env
     whose spawn layout and impact field are identical, so the only
-    variable across iterations is the policy. Mirrors ``inference.py``'s
-    ``build_env`` semantics.
+    variable across iterations is the policy. Otherwise mirrors
+    ``inference.py``'s ``build_env`` semantics.
     """
 
     PROBE_SEED = 20260530
@@ -467,18 +469,9 @@ class _ProbeEnvBuilder:
             APPLY_MIGRATION if migration is None
             else bool(migration)
         )
-        # Resolve inference impact-map paths once at construction (read
-        # from project YAML's ``inference.impact_maps``); per-call we
-        # re-load the .npz so updates to the underlying file take effect
-        # without rebuilding the trainer.
-        from inference import (_load_inference_map_paths, _load_impact_map_npz,
-                                load_inference_impact_maps,
-                                apply_b0_overrides as _apply_b0,
+        from inference import (apply_b0_overrides as _apply_b0,
                                 apply_spawn_overrides as _apply_spawn,
                                 _load_spawn_templates as _load_spawn_tpls)
-        self._load_paths = _load_inference_map_paths
-        self._load_npz = _load_impact_map_npz
-        self._load_maps = load_inference_impact_maps
         self._apply_b0 = _apply_b0
         self._apply_spawn = _apply_spawn
         self._load_spawn_tpls = _load_spawn_tpls
@@ -524,12 +517,9 @@ class _ProbeEnvBuilder:
                                    mass_balance=self.mass_balance,
                                    migration=self.migration, currents=self.currents,
                                    current_world_seed=s)
-        # Inference-tab impact maps (silent: avoid spamming "[info] Using
-        # array ..." messages once per probe). The probe is an inference
-        # world: a baseline map counts only if it is also added there
-        # (section 161).
-        maps = self._load_maps(self.project_path, impact_vars, H, W,
-                               seed=s, verbose=False)
+        # The active baseline maps, re-read per call so a changed file or
+        # mute takes effect without rebuilding the trainer (section 257).
+        maps = training_probe_impact_maps(self.project_path, impact_vars, grid_size)
         for iv in impact_vars:
             env.grid.add_map(iv, maps[iv])
         # Apply visualizer b0 overrides before the first environment
