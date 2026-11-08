@@ -16,6 +16,9 @@ Contracts asserted:
    the prey's booked M2 outside the band.
 4. ``field_cell_weights`` spreads each bed class's share evenly over its
    cells and renormalises when a class has no cells.
+5. Section 252: ``field_prey_shape`` (the field-spread gate's prey) is an open
+   pool's depth shape, a GOV-shared group's field spread, else uniform; mean 1,
+   never the spawned map.
 """
 import json
 import sys
@@ -29,7 +32,8 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from lib.diagnostics.field_diet import FIELD_BED_SHARES, bed_class, field_cell_weights
+from lib.diagnostics.field_diet import (FIELD_BED_SHARES, bed_class, field_cell_weights,
+                                        field_prey_shape)
 from lib.runners.training_progress import run_probe
 
 YEAR = 1460
@@ -141,3 +145,19 @@ def test_probe_diets_prey_side_reads_realised_m2(tmp_path, capsys):
     assert "krill: booked 1; realised 1" in out
     assert "Prey side OFF: fish -> worms year 1" in out
     assert "fish -> krill" not in out.split("Prey side OFF:")[1]
+
+
+def test_field_prey_shape_ignores_the_spawned_map():
+    depth = np.array([[50.0, 120.0, 200.0, 300.0], [80.0, 140.0, 240.0, 400.0]])
+    spawned = SimpleNamespace(biomass=np.arange(8.0).reshape(2, 4), outside_weight_map=None)
+    np.testing.assert_allclose(field_prey_shape("zooplankton", spawned, depth), 1.0)
+    w = field_prey_shape("whiting", spawned, depth)
+    assert w.mean() == pytest.approx(1.0)
+    shares = FIELD_BED_SHARES["whiting"][0]
+    cls = bed_class(depth)
+    for k in range(4):
+        assert w[cls == k].sum() / w.sum() == pytest.approx(shares[k] / sum(shares))
+    pool = SimpleNamespace(outside_weight_map=np.array([[2.0, 1.0, 1.0, 0.0], [1.0, 1.0, 1.0, 1.0]]))
+    shape = field_prey_shape("krill", pool, depth)
+    assert shape.mean() == pytest.approx(1.0)
+    np.testing.assert_allclose(shape, pool.outside_weight_map / pool.outside_weight_map.mean())

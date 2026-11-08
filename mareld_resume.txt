@@ -24038,7 +24038,8 @@ remain open exactly as described in 71.9 / 71.11.
     -> whiting: field 0.13 (0.06-0.20); after the krill correction a
     whiting-specific x4 at the saithe field spread (encounter or the
     North Sea saithe booking; box saithe and whiting segregated by bed
-    depth). Not applied.
+    depth). Not applied. [Superseded by 252: the x4 was the gate's
+    16 x 16 spawned whiting map, not the pair.]
 
 251 Cod's window on whiting and whiting's near-bed share (2026-11-08;
     user: fix the cod window and whiting's bottom share; research_notes/
@@ -24080,3 +24081,53 @@ remain open exactly as described in 71.9 / 71.11.
     on whiting 0.026-0.038 /yr (was 0.004-0.007, as the gate predicts);
     the rest within 0.03 of 250.4 (porpoises 1.02 / 1.03 / 1.05, seals
     1.03 / 0.89 / 0.51). Old-world policies: a mechanics check.
+
+252 Water column -> whiting and the field-spread gate (2026-11-08; user:
+    investigate water column -> whiting, then fix the gate and the docs;
+    research_notes/"Vattenpelaren pa vitling", a-ring).
+252.1 The whiting-specific x4 of 250.6 was a diagnostic artefact. The
+    field-spread block of budget_gate (248) put the prey at their
+    SPAWNED start maps; every fish group spawns as 25 free colonies
+    (sigma 1 cell), independent of depth, and on the probe's 16 x 16 grid
+    one spawn put 99.8 % of the whiting in 36 cells over beds >= 250 m
+    (GOV in the box: 0.6 %), so the saithe spread met whiting at L 0.29.
+    On 60 x 60 the same block reproduced the a_revisit table (krill 2.73,
+    planktivores 0.38, benthivores 0.44) with whiting at 0.35, like the
+    other fish prey.
+252.2 Fix (tools/probes/budget_gate.py, lib/diagnostics/field_diet.py
+    field_prey_shape): each prey at its manifest density x a field shape,
+    mean 1 - an open pool's depth shape, a group with GOV bed shares
+    (whiting) spread as in the field, every other prey uniform. Water
+    column at the saithe spread: krill 2.68, planktivores 0.42,
+    benthivores 0.36, whiting 0.28, mackerel 0.19 (60 x 60: 2.61 / 0.44 /
+    0.38 / 0.30 / 0.20). The prey-side "field" column follows (water
+    column -> whiting 0.044 /yr). Equal-cell rows unchanged.
+    tests/test_probe_diets.py covers field_prey_shape.
+252.3 The pair itself: saithe's window on whiting has no case to rise
+    (SMS saithe -> whiting p95 0.20-0.25 by length vs 0.28 on haddock and
+    cod; no ICES-DB items; hake items 0.42 vs 0.50, 0.07 of the a);
+    whiting's height is no lever (the pair's a already puts the predator
+    in whiting's 10 m layer, prey share 1); the saithe booking needs no
+    correction (box L 0.6-0.8, and the encounter with krill at its booked
+    share lands on the field M2: 0.14 vs 0.13). What squeezes every fish
+    prey of the water column is the krill pair's share (0.70 of the
+    encounter vs booked 0.263, field ~0.21).
+252.4 The krill share of the water column (research_notes/"Vattenpelarens
+    krill mot fisk"; investigation, nothing applied). Shared handling
+    makes the needed factor symmetric: krill at its booked share needs
+    x0.14 on the krill a or x7.1 on all fish a's. (A) The krill a 0.0241
+    uses the central light profile, 0.24 lx at the 80 m layer top by day;
+    Onsrud & Kaartvedt 1998 measured ~3.5e-3 lx at the Oslofjord krill
+    layer top (20-70x darker), and the 220 fish pairs at the same depths
+    already use dark reactive distances. Pinned light: a 0.0061 (MC
+    0.0010-0.0117; classes 0.0239 / 0.0033 / 0.00012 / 0.00003); depth
+    from the central isolume instead: x1.0-1.5. Bracket x0.2-1.5, decided
+    by the box's light below 50 m (unmeasured). The pin cuts every krill
+    pair x0.31-0.42 (planktivores carry 81 % of the krill flow). (B) The
+    fish a's as a set: factors x0.5-1.7 both ways, no shared x7. (C)
+    Booked share: the group's 0.21 is right for its members by biomass;
+    saithe 0.25 mixes the NW North Sea 1991 (0.12-0.14) and the Trench
+    side 1981 (0.39); for the box [J] group 0.25-0.33 (x1.2-1.5). Only
+    one convention for all water-column pairs under the dark light passes
+    both the gate (krill 1.9x booked, fish 0.5-1.8) and the 1991 North
+    Sea clearance test.

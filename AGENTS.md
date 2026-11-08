@@ -589,6 +589,9 @@ python3 tools/viability.py --ticks 300 --seeds 1 --behaviour eat   # smoke test
 python3 tools/probes/budget_gate.py
 # Section 248: the same gate with the water column and whiting spread over
 # the bed-depth classes as in GOV hauls in the box (lib/diagnostics/field_diet.py),
+# each prey at its manifest density x a field shape (open pool depth shape, GOV bed
+# shares, else uniform; section 252 - never the spawned colony maps, which on the
+# 16 x 16 probe grid put whiting over the deepest beds),
 # and the realised diets of a run's latest long-run probe against the booked ones.
 # Section 249: both also judge from the PREY's side (budget_gate: encounter-implied
 # M2 per pair; probe_diets: realised M2) - a prey's derived g pays its booked M2,

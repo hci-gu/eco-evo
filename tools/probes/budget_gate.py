@@ -330,24 +330,28 @@ else:
 # meets the prey on beds where the field predator is not (the water column
 # on the < 150 m beds that carry its krill a). Here each group with GOV
 # bed-depth shares is spread over the cells as in the field and every pair's
-# encounter a(c) B_vis(c) is averaged with those weights, the prey at their
-# start maps. A like-for-like reading of the same booked diet; it sets
-# nothing. research_notes/"Krill i Skagerrak" a_revisit/.
+# encounter a(c) B_vis(c) is averaged with those weights. Each prey sits at
+# its manifest density times a FIELD shape: an open pool's own depth shape,
+# a group with GOV bed-depth shares spread as in the field, every other prey
+# uniform (section 252: the spawned start maps are random colonies, and on
+# this 16 x 16 grid one spawn put 99.8 % of the whiting over > 250 m beds;
+# research_notes/"Vattenpelaren pa vitling", a-ring). A like-for-like reading
+# of the same booked diet; it sets nothing. research_notes/"Krill i
+# Skagerrak" a_revisit/.
 # ---------------------------------------------------------------------------
-from lib.diagnostics.field_diet import FIELD_BED_SHARES, field_cell_weights  # noqa: E402
+from lib.diagnostics.field_diet import (  # noqa: E402
+    FIELD_BED_SHARES, field_cell_weights, field_prey_shape)
 from lib.world import habitat  # noqa: E402
 
 with open(PROJECT, encoding='utf-8-sig') as fh:
     _manifest = yaml.safe_load(fh)
 _depth = habitat.load_depth_map(_manifest, PROJECT, (H, W))
-_meta = _manifest.get('project_metadata', {})
-_cell_km2 = (float(_meta['reference_grid_width']) * float(_meta['reference_grid_height'])
-             / float(H * W))
 print()
 print("=== diet gate at the field spread (section 248) ===")
 print("The predator over the bed-depth classes < 100 / 100-150 / 150-250 / > 250 m as in")
 print("NS-IBTS GOV hauls inside the box; encounters averaged over its cells, prey at")
-print("their start maps.")
+print("their manifest density x a field shape (open pool depth shape, GOV bed shares,")
+print("else uniform; section 252).")
 if _depth is not None:
     from lib.diagnostics.field_diet import bed_class  # noqa: E402
     _cls = bed_class(_depth)
@@ -370,7 +374,7 @@ for i, pid in enumerate(env.dm_ids):
             continue
         mult = (np.asarray(env.pair_depth_mult[i, j], dtype=np.float64)
                 if getattr(env, '_has_pair_depth', False) else 1.0)
-        bv = (np.asarray(env.fgs[prey_id].biomass, dtype=np.float64) / _cell_km2
+        bv = (density[prey_id] * field_prey_shape(prey_id, env.fgs[prey_id], _depth)
               * _visible_share(i, j, prey_id))
         type3 = float(env._type3_pred_mask[i, j, 0, 0]) > 0.0
         enc = float((w * float(env.max_intake_mat[i, j]) * mult * bv

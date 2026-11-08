@@ -50,3 +50,18 @@ def field_cell_weights(depth, shares):
     if total <= 0.0:
         raise ValueError("no cell lies in a bed class with a positive share")
     return w / total
+
+
+def field_prey_shape(prey_id, fg, depth):
+    """Section 252: a prey's spatial shape for the field-spread diet gate, mean 1
+    over the cells: an open pool's own depth shape (``outside_weight_map``), a
+    group with GOV bed-depth shares spread as in the field, otherwise uniform.
+    Never the spawned start map (random colonies, independent of depth)."""
+    depth = np.asarray(depth, dtype=np.float64)
+    shape = getattr(fg, 'outside_weight_map', None)
+    if shape is not None:
+        shape = np.asarray(shape, dtype=np.float64)
+        return shape / shape.mean()
+    if prey_id in FIELD_BED_SHARES:
+        return field_cell_weights(depth, FIELD_BED_SHARES[prey_id][0]) * depth.size
+    return np.ones(depth.shape, dtype=np.float64)
