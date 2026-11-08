@@ -86,7 +86,7 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('whiting', 'mobile_epifauna'): 0.0116,
         ('benthivorous_fish', 'norway_lobster'): 0.44,
         ('benthivorous_fish', 'planktivorous_fish'): 0.0198,
-        ('benthivorous_fish', 'whiting'): 0.0083,  # 249: membership, not gape
+        ('benthivorous_fish', 'whiting'): 0.021,  # 251: whiting's own band share
         ('predatory_fish', 'planktivorous_fish'): 0.0060,
         ('mackerel', 'planktivorous_fish'): 0.0266,
         ('whiting', 'planktivorous_fish'): 0.0212,
@@ -121,7 +121,7 @@ def test_fish_pair_light_settings_keep_a_zero_threshold():
     expected = {
         'planktivorous_fish_preys_on_zooplankton': (0.03, 0.0),  # 243.3
         'benthivorous_fish_preys_on_planktivorous_fish': (0.06, 0.0),
-        'benthivorous_fish_preys_on_whiting': (0.10, 0.0),
+        'benthivorous_fish_preys_on_whiting': (0.15, 0.0),  # 251
         'predatory_fish_preys_on_planktivorous_fish': (0.41, -5.0),  # 243.3
         'mackerel_preys_on_planktivorous_fish': (0.16, -5.0),  # stomachs (228.4)
         'whiting_preys_on_planktivorous_fish': (0.48, -5.0),  # 243.3

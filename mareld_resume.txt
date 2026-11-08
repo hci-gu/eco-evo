@@ -24039,3 +24039,44 @@ remain open exactly as described in 71.9 / 71.11.
     whiting-specific x4 at the saithe field spread (encounter or the
     North Sea saithe booking; box saithe and whiting segregated by bed
     depth). Not applied.
+
+251 Cod's window on whiting and whiting's near-bed share (2026-11-08;
+    user: fix the cod window and whiting's bottom share; research_notes/
+    "Torskfonster och bottenandel", o-umlaut, a-ring). The two named
+    encounter levers of 250.6 on benthivores -> whiting, both re-runs of
+    the existing derivations with whiting-specific inputs (each run
+    reproduces the library value first).
+251.1 The a. benth_encounter.py (Kd 0.25) computed the 0.026 per capable
+    tonne on the 1990s predator POOL as prey (saithe 0.41, whiting 0.37,
+    mackerel, other; band shares 0.28 day / 0.14 night). On whiting alone:
+    at its old judged 0.5 / 0.2 0.045 (bookkeeping since 223.26), at its
+    field share 0.7 / 0.5 (0.4-0.9 / 0.25-0.8 [J]: no diel GOV change for
+    whiting > 20 cm at 58 N, Adlerstein & Ehrich 2000; none in the box
+    HERAS night surface hauls; Rindorf 2003; counter-case Oslofjord)
+    0.066 (MC 0.005-0.23), x2.56. Per whole tonne x membership 0.320 =
+    0.021 (was 0.0083). dark_ratio from the same run 0.15 (was 0.10).
+251.2 The window. Cod's 0.30 is the p95 of its PLANKTIVORE prey (SMS
+    45-65 cm cod; ICES-DB items agree), prey capped by their own size; on
+    whiting 0.30 is the median. Whiting items in cod stomachs (ICES-DB,
+    measured, mass-weighted): 2000+ p95 0.44 (31 items; by cod band 0.40 /
+    0.44 / 0.41, flat), all years 0.50. The aw form of Fonsterviktning at
+    0.44: [0.68, 0.24] (0.33-0.50: [0.43, 0.069] - [0.78, 0.34]), f_eff
+    0.31 at J/B 0.165 (was 0.086, x3.6). Contrary reading, discounted:
+    the SMS key-run rows by cod band (0.45 / 0.30 / 0.25 / 0.19) give
+    [0.25, 0.0002] (x0.49), but they are class means; their >= 70 cm
+    window (15 cm) excludes the 20-30 cm whiting the items show in those
+    cod. benthivores -> planktivores keeps its window (measured on
+    planktivore prey).
+251.3 Result (budget_gate): encounter x9.2; prey-side implied M2 0.038
+    /yr (was 0.0041) against booked 0.18 and field 0.13 (0.21 of booked,
+    0.29 of field). Every benthivore pair still passes the predator-side
+    diet gate (the whiting pair stays minor: enc 0.003 vs booked 0.012).
+    Left: the GOV co-occurrence x1.6 (spatial, not a parameter) and ~x2
+    inside the a's MC. The booked 0.18 and water column -> whiting
+    unchanged (open). Library comments, AGENTS.md (a list, dark ratios,
+    stage access), test_half_saturation (a 0.021, dark 0.15).
+251.4 Frozen fix90 policies (Oppen population engine_probe.py): whiting
+    1.24 / 1.49 / 1.73 (was 1.25 / 1.54 / 1.83), realised benthivore M2
+    on whiting 0.026-0.038 /yr (was 0.004-0.007, as the gate predicts);
+    the rest within 0.03 of 250.4 (porpoises 1.02 / 1.03 / 1.05, seals
+    1.03 / 0.89 / 0.51). Old-world policies: a mechanics check.

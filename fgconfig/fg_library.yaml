@@ -2340,8 +2340,21 @@ interaction_definitions:
     # still realises ~0.03 of its booked 0.18 at the start (budget_gate
     # prey side); the rest is open (research_notes/"Bytessidans predation",
     # a-umlaut).
-    max_intake_rate: 0.0083
-    dark_ratio: 0.1
+    # Section 251: the 0.026 carried the 1990s predator POOL's share inside
+    # the 10 m bottom band (saithe 0.41, whiting 0.37, mackerel, other;
+    # day 0.28 / night 0.14), but the prey has been whiting alone since
+    # 223.26. The same encounter (benth_encounter.py, Kd 0.25) on whiting
+    # alone: at its old judged 0.5 day / 0.2 night 0.045 per capable tonne
+    # (bookkeeping only), at its field share 0.7 / 0.5 (0.4-0.9 / 0.25-0.8:
+    # no diel change in GOV catches of whiting > 20 cm at 58 N, Adlerstein &
+    # Ehrich 2000; none in the box HERAS night surface hauls; Rindorf 2003 no
+    # vertical migration; counter-case the Oslofjord, Onsrud et al. 2004)
+    # 0.066 (MC 0.005-0.23). a = 0.066 x membership 0.320 = 0.021 per whole
+    # benthivore tonne (was 0.0083). Night/day from the same run 0.15 at 0
+    # deg (was 0.10, the herring-like pool leaving the band at dusk).
+    # research_notes/"Torskfonster och bottenandel" (o-umlaut, a-ring).
+    max_intake_rate: 0.021
+    dark_ratio: 0.15
     # Section 230: stage access from cod's window (prey <= 0.30 x its length,
     # box cod > 20 cm) on whiting's stage lengths, as benthivores ->
     # planktivores (the a's 0.10 is the predator side, the capable share):
@@ -2351,7 +2364,18 @@ interaction_definitions:
     # over all prey-group tonnes (unkeyed flatfish / blue whiting by their
     # box lengths); was [0.38, 0.042]. research_notes/"Fonsterviktning" (Swedish
     # letters: o-umlaut) summary.md.
-    stage_access: [0.34, 0.036]
+    # Section 251: cod's window on WHITING is 0.44, not 0.30. The 0.30 is the
+    # p95 of cod's planktivore prey (SMS, 45-65 cm cod; ICES-DB Skagerrak +
+    # NNS items agree at 0.30), prey whose own size caps the ratio; for
+    # whiting (to 40 cm) 0.30 is the median. Whiting items in cod stomachs
+    # (ICES-DB, measured, mass-weighted): 2000+ p95 0.44 (31 items; by cod
+    # band 0.40 / 0.44 / 0.41), all years 0.50, flat over cod length. The SMS
+    # key-run rows give 0.45 / 0.30 / 0.25 / 0.19 by cod band ([0.25, 0.0002]),
+    # but they are class means: their 70+ cm window (15 cm) excludes the
+    # 20-30 cm whiting the items show in those cod; discounted. Same aw form:
+    # [0.68, 0.24] (0.33-0.50: [0.43, 0.069]-[0.78, 0.34]), effective 0.31 at
+    # J/B 0.165 (was 0.086). research_notes/"Torskfonster och bottenandel".
+    stage_access: [0.68, 0.24]
     light_threshold_deg: 0.0
   # Section 223.26 (split G1): a per tonne of the WHOLE group (the engine has
   # no phi since 221; layer convention), h = E_prey / the group's ceiling

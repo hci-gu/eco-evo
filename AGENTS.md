@@ -192,7 +192,7 @@ fabricates mass.
   a is per tonne of the WHOLE predator group (the engine has no phi
   since 221; the 220 "per capable tonne" values over-credited by 1/phi):
   planktivores -> zoo 0.0122 (243.3); benthivores -> infauna 0.036, -> epifauna
-  0.15, -> Nephrops 0.44, -> planktivores 0.0198 (243.3: per species, pout 0.87 of it), -> whiting 0.0026;
+  0.15, -> Nephrops 0.44, -> planktivores 0.0198 (243.3: per species, pout 0.87 of it), -> whiting 0.021 (251: membership 0.320, whiting's own band share 0.7 day / 0.5 night);
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
   H_bed/H_whiting; was 0.27), -> planktivores 0.0212, -> zoo 0.000138
   (copepods only since 245; was 0.0023), -> krill 0.043, ->
@@ -231,7 +231,7 @@ fabricates mass.
   normalised so the library `a` is the annual mean; every DM then also
   observes the light level (last input slot). Since section 220 (derived
   night/day ratios): planktivores -> zoo 0.02 (0.03 since 243.3) at 0 deg; benthivores ->
-  planktivores 0.06 and -> whiting 0.10 at 0 deg (140 m is too dim
+  planktivores 0.06 and -> whiting 0.15 (251) at 0 deg (140 m is too dim
   for -5); at -5 deg (223.26): whiting -> planktivores 0.33 (0.48 since 243.3), -> zoo
   0.78, -> benthivores 0.64; water column (228) -> planktivores 0.30 (0.41 since 243.3),
   -> zoo 0.51, -> benthivores 0.48, -> whiting 0.48, -> mackerel 0.92;
@@ -337,7 +337,8 @@ fabricates mass.
   policies in the built form: planktivores 0.82, benthivores 0.98,
   water column 1.00 every year, whiting 1.25 / 1.55 / 1.84 (its
   predators realise ~0.24 of its booked M2: a level bias, the
-  research_notes/"Bytessidans predation" residual).
+  research_notes/"Bytessidans predation" residual; section 251 raised
+  benthivores -> whiting to ~0.21 of its booked 0.18 at the start).
   A DM with `regional_carrying_capacity` K (t/km2, section 185) loses
   `r_max/1460 * B_region/K` of its biomass and reserve per tick after
   M1 (B_region = grid-mean density; both engines, with or without
@@ -473,8 +474,8 @@ fabricates mass.
   overlap a's member shares), -> planktivores [0.65,
   0.18] (243.3), -> whiting [0.41, 0.080]; mackerel -> planktivores [0.020,
   0.0029]; whiting -> planktivores [0.18, 0.0073], -> benthivores [0.038,
-  0.0064]; benthivores -> planktivores [0.62, 0.18], -> whiting [0.34,
-  0.036]; seals -> benthivores [1, 0.50], -> whiting [1, 0.84];
+  0.0064]; benthivores -> planktivores [0.62, 0.18], -> whiting [0.68,
+  0.24] (251: cod's window on whiting 0.44, the item p95); seals -> benthivores [1, 0.50], -> whiting [1, 0.84];
   porpoises -> benthivores [1, 0.63], -> whiting [1, 0.95];
   research_notes/"Arsungarnas andel" (A-ring)
   parameters_B.md. `predator_share` phi
