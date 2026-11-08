@@ -216,10 +216,12 @@ impact_variables:
     value_min: 0.0
     value_max: 100.0
     baseline_map: maps/fishing_bottom_otter_trawls.npz
+    baseline_map_muted: true
   - impact_id: pelagic_trawling
     value_min: 0.0
     value_max: 10.0
     baseline_map: maps/fishing_pelagic.npz
+    baseline_map_muted: true
   - impact_id: rotor
     value_min: 0
     value_max: 1

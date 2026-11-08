@@ -89,6 +89,8 @@ def test_the_equilibrium_pattern_follows_active_baseline_maps_only():
     if not os.path.isfile(os.path.join(_ROOT, "maps", "fishing_bottom_otter_trawls.npz")):
         pytest.skip("maps/ is untracked")
     project = yaml.safe_load(open(project_path, encoding="utf-8-sig"))
+    for iv in project["impact_variables"]:
+        iv.pop("baseline_map_muted", None)
     library = yaml.safe_load(open(os.path.join(_ROOT, "fgconfig", "fg_library.yaml"),
                                   encoding="utf-8-sig"))
     ids = [g["group_id"] for key in ("decision_makers", "non_decision_makers")

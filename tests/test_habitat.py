@@ -41,6 +41,15 @@ def _load(path):
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8-sig"))
 
 
+def _active_mareld2():
+    """The manifest with its baseline maps active, whatever it ships muted:
+    these tests are about today's fished pattern and totals."""
+    project = _load("mareld2.yaml")
+    for iv in project["impact_variables"]:
+        iv.pop("baseline_map_muted", None)
+    return project
+
+
 def test_capacity_table_parses_and_interpolates():
     table = habitat.parse_capacity_table({"capacity_depth_table": [
         {"depth_m": 300, "capacity": 70}, {"depth_m": 100, "capacity": 140}]})
@@ -79,7 +88,7 @@ def test_depth_map_file():
 
 
 def _mareld2(grid=(60, 60), project=None, **kw):
-    project = project if project is not None else _load("mareld2.yaml")
+    project = project if project is not None else _active_mareld2()
     groups, *_ = load_project_config(str(ROOT / "mareld2.yaml"), grid_size=grid, seed=1,
                                      mode="inference", project_config=project,
                                      library_path=str(ROOT / "fgconfig" / "fg_library.yaml"), **kw)
@@ -110,7 +119,7 @@ def test_mareld2_benthos_carries_the_depth_habitat():
 @pytest.mark.parametrize("fid", [BENTHOS, "mobile_epifauna", "norway_lobster"])
 def test_manifest_total_is_the_equilibrium_sum(fid):
     groups = _mareld2()
-    project = _load("mareld2.yaml")
+    project = _active_mareld2()
     entry = next(g for g in project["non_decision_makers"] if g["group_id"] == fid)
     total = float(groups[fid].equilibrium_map.sum())
     assert entry["inference_initial_biomass"] == pytest.approx(total, rel=0.02)

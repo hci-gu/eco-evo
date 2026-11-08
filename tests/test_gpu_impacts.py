@@ -210,6 +210,7 @@ def baseline_project(tmp_path):
         if iv["impact_id"] == "pelagic_trawling":
             iv["muted"] = False
             iv["baseline_map"] = "effort.npz"
+            iv.pop("baseline_map_muted", None)
     data.get("inference", {}).get("impact_maps", {}).pop("rotor", None)
     data["simulation_settings"]["depth_map"] = str(ROOT / data["simulation_settings"]["depth_map"])
     path = tmp_path / "baseline.yaml"
