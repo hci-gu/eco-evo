@@ -1,5 +1,8 @@
 # Long-term viability: the criterion and the frozen-behaviour rig
 
+> Group names: `gadoids` and `pelagic_fish` below are the groups before
+> section 209; today they are the fish groups listed in `AGENTS.md`.
+
 Before a scenario comparison means anything, one question needs an
 answer: **is the world self-sustaining with the behaviour it will
 actually run with?** A group that dies out or slides towards zero inside
@@ -90,8 +93,9 @@ seed them, so they cannot fail it.
 * It says nothing about *spatial* behaviour. `occ` (occupied cells) is
   printed because a group surviving in a single cell is qualitatively
   different from one spread over the grid, but it is not a pass/fail
-  condition: with no environment maps in `mareld2.yaml` the grid is
-  isotropic and occupancy is not yet interpretable (section 87.5).
+  condition: this was written with no environment maps in `mareld2.yaml`,
+  when the grid was isotropic and occupancy not yet interpretable (section
+  87.5); the depth map (section 207) has changed that for the benthos.
 
 ## 2. What the rig's verdict means
 
@@ -328,7 +332,7 @@ trained policies is the stronger evidence. Two ways to measure it today:
         --ticks 10000 --seed 1 --mortality on --migration on \
         --currents on --quiet --output run.npz
 
-The rig has no `--currents` flag, so a run trained with currents is only
+The rig has a `--currents` flag, but a run trained with currents is only
 reproduced exactly by `inference.py`. `build_env(seed=...)` seeds the
 global RNG since section 124.4, so both are reproducible per seed. Use
 several seeds: a perturbation of 1e-5 t per cell and tick grows to a few

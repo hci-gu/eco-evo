@@ -742,8 +742,8 @@
     # sections 185.20, 209, 243.3): it masked booked M2 the per-pair engine
     # never realised, and it counted the box's density dependence (food,
     # predation) twice. With shared handling (242) and every diet-gate pair
-    # passing (243.3) the predators' encounter diets carry ~0.93 of the
-    # booked M2 on the pool.
+    # passing (243.3) the predators' encounter diets then carried ~0.93 of
+    # the booked M2 on the pool (budget_gate has today's figure).
     # x 12 / feeding_season_months (5.5) since section 184. Section 232.1:
     # 0.0031889 -> 0.0028221 (whiting M2 on the pool 0.203 -> 0.07); 232.2
     # mammal re-booking -> 0.0028251; 243.3 (pout 1.64: r, M1, M2 at the
@@ -768,7 +768,6 @@
       mode: colony
       n_colonies: 25
       sigma_cells: 1.0
-      anchor: free
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
@@ -984,7 +983,6 @@
       mode: colony
       n_colonies: 25
       sigma_cells: 1.0
-      anchor: free
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
@@ -1153,7 +1151,6 @@
       mode: colony
       n_colonies: 25
       sigma_cells: 1.0
-      anchor: free
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
@@ -1296,7 +1293,6 @@
       mode: colony
       n_colonies: 25
       sigma_cells: 1.0
-      anchor: free
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
@@ -1466,7 +1462,6 @@
       mode: colony
       n_colonies: 25
       sigma_cells: 1.0
-      anchor: free
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0
@@ -1678,7 +1673,6 @@
       mode: colony
       n_colonies: 4
       sigma_cells: 2.0
-      anchor: free
       amplitude_mode: uniform
       amplitude_min: 0.0
       amplitude_max: 1.0

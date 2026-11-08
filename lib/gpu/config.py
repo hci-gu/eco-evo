@@ -148,6 +148,9 @@ class ProjectSpec:
                 return 60
         scale = (builder.grid[0] * builder.grid[1] /
                  (reference_size("reference_grid_width") * reference_size("reference_grid_height")))
+        # Colony counts scale with the totals; a library-only world scales
+        # neither, as on the CPU engine (section 258).
+        self.biomass_scale = scale if project is not None else 1.0
         for fid, fg in groups.items():
             override = overrides.get(fid, {})
             specs = library["species_definitions"][fid]

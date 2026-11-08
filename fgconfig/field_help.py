@@ -238,8 +238,8 @@ FIELD_HELP = {
         "  RM(t) = RM * Q10 ^ ((T(t) - t_ref) / 10)\n"
         "with T taken from the group's layer (see Layers and Group "
         "layers). This scales all action costs (rest, eat, move), so "
-        "cold water makes ectotherms cheaper to run. Attack rates are "
-        "not temperature-scaled. Adds no policy input: checkpoints stay "
+        "cold water makes ectotherms cheaper to run. Intake is "
+        "temperature-scaled only with Ingestion Q10. Adds no policy input: checkpoints stay "
         "valid."
     ),
     "temperature_group_layers": (
@@ -308,8 +308,8 @@ FIELD_HELP = {
         "Factor by which Resting Metabolism (and so every action cost) "
         "rises per 10 deg C warming:\n"
         "  RM(t) = RM * Q10 ^ ((T(t) - t_ref) / 10)\n"
-        "Library: zooplankton 2.0, planktivores 2.2, benthivores 2.25, "
-        "predators 2.3; leave 0 for "
+        "Library: zooplankton 2.0, planktivores 1.5, benthivores 2.25, "
+        "whiting and water column 2.3, mackerel 2.0; leave 0 for "
         "endotherms (porpoises, seals, birds). The group must also be listed under Group "
         "layers. Decision makers only."
     ),
@@ -360,8 +360,8 @@ FIELD_HELP = {
         "biomass x Max Energy Reserve, so nothing is eaten that the store "
         "cannot hold. Under ideal conditions the reserve then sits full "
         "(s* = 1) and the derived growth is paid over 1 - u. Library: "
-        "benthivores only (cod with livers at the wild maximum still eat "
-        "at Cmax). Zooplankton stays on the gate: its realised fill stayed "
+        "every fish group since section 244.10 (cod with livers at the "
+        "wild maximum still eat at Cmax). Zooplankton stays on the gate: its realised fill stayed "
         "~0.6 while s* = 1 cut its growth by a third. Move a group only "
         "after a frozen-policy probe shows its fill rising to ~1."
     ),
@@ -448,10 +448,9 @@ FIELD_HELP = {
         "growing until its food is gone. It stands for recruitment "
         "compensation at the stock scale, so it is regional, not per "
         "cell. K is today's EFFECTIVE capacity (lowered by trawled "
-        "nurseries and warming), not the historical ceiling. Library: "
-        "benthivorous fish 3.39 (r_max 0.31, F 0.17, stationary at "
-        "1.53 t/km2), predatory fish 2.12, planktivorous fish 4.8 "
-        "(section 209)."
+        "nurseries and warming), not the historical ceiling. Needs r_max "
+        "> 0, so the loader refuses it on the open-population fish. No "
+        "library group has a K since section 243.4; the mechanism stays."
     ),
     "feeding_season_months": (
         "Feeding season (months per year; 0 or empty = 12). Only with "
@@ -460,9 +459,9 @@ FIELD_HELP = {
         "Such a group can only grow while food is there, so "
         "its derived growth rate is paid over these months: "
         "g = gross / ((s* - u) x 1460) x 12 / months. It sizes the rate, "
-        "it is not a switch. Needs r_max (a derived growth rate). "
-        "Library: planktivores 6.4, benthivores 8.6, whiting 9.0, water "
-        "column 8.6, mackerel 4.0 (field feeding seasons, section 244)."
+        "it is not a switch. Needs r_max (a derived growth rate), and the "
+        "loader refuses it with Somatic production. Library: mackerel 5.5 "
+        "only (section 246); the resident fish have none since section 250."
     ),
     "maintenance_level": (
         "Maintenance Level u (fraction 0-1 of a full reserve).\n\n"
@@ -551,7 +550,7 @@ FIELD_HELP = {
         "Losses that are NOT predation by another group in the model: "
         "disease, old age, unmodelled predators. Applied each tick as "
         "B * (1 - M1), the reserve in proportion. Only active with "
-        "train.py/inference.py --mortality on (default off) and scaled "
+        "train.py, train_gpu.py and inference.py with --mortality on (the default) and scaled "
         "by --mortality_multiplier; with it on, M1 is also added to the "
         "derived Max Growth so the population can pay for it.\n"
         "Annual rate = -1460 * ln(1 - M1) at 6 h ticks."
@@ -661,7 +660,7 @@ FIELD_HELP = {
         "Initial Total Biomass Range (tonnes over the WHOLE grid, not "
         "per cell). Training only.\n\n"
         "Each rollout (or each generation with a spawn seed) draws a "
-        "total uniformly in [Min, Max] and spreads it over the grid "
+        "total log-uniformly in [Min, Max] and spreads it over the grid "
         "with the Spawn Strategy below. A wide range trains the "
         "policies on many population sizes. Values are for the "
         "Reference Grid and scaled with the grid's area. Inference "
@@ -1151,7 +1150,7 @@ FIELD_HELP = {
         "functional response: at most 1/h tonnes of prey per tonne of "
         "predator per tick, however dense the prey. With the attack "
         "rate a the half-saturation density is 1/(a*h) t/cell. "
-        "The Auto button sets h = 1/a (ceiling = a). 0 = no ceiling: "
+        "0 = no ceiling: "
         "linear intake a*B when the project has any pair with h > 0 or "
         "a specialist, otherwise a flat a per tick."
     ),
@@ -1301,13 +1300,12 @@ FIELD_HELP = {
     ),
     "growth:ndm_formula": (
         "Non decision maker budget:\n"
-        "  r = (r_max + sum M2) / 1460\n\n"
+        "  r = (r_max + M1 + sum M2) / 1460\n\n"
         "r is the logistic growth rate per tick: at low density "
         "(B << K) and with full light the producer grows about r per "
-        "tick, r_max + sum M2 per year. There is no M1 term: non "
-        "decision makers have no natural mortality in the tick, so "
-        "their r_max is already net of unmodelled losses. No s* - u "
-        "factor either, as they have no energy reserve."
+        "tick, r_max + M1 + sum M2 per year. M1 is the group's own "
+        "loss (respiration, sinking, lysis; section 173). No s* - u "
+        "factor, as they have no energy reserve."
     ),
     "growth:growth_rate": (
         "g, the derived growth rate per tick at the library tick of "
@@ -1342,8 +1340,7 @@ FIELD_HELP = {
         "Losses not modelled as predation by another group (disease, "
         "age, unmodelled predators); set in the FG Editor. Adding it to "
         "the budget lets the population replace those losses.\n"
-        "Shown here always, but a run with --mortality off (the "
-        "default) applies no M1 in the tick and leaves it out of g too: "
+        "Shown here always, but a run with --mortality off applies no M1 in the tick and leaves it out of g too: "
         "growth is then lower by this term's share."
     ),
     "growth:m2": (
@@ -1399,8 +1396,9 @@ FIELD_HELP = {
         "The library (fg_library.yaml) still holds this older growth "
         "rate. The derived value in front of it is what the current "
         "matrix gives; it is written to the library with 'Apply All "
-        "Matrix Changes' (or Apply Changes in the FG Editor). Until "
-        "then, training uses the library value."
+        "Matrix Changes' (or Apply Changes in the FG Editor). Runs "
+        "derive it at load anyway; until then only the equilibrium spawn "
+        "pattern reads the stored value."
     ),
     "growth:error": (
         "The budget cannot be computed: the Maintenance Level must be "
@@ -1412,7 +1410,9 @@ FIELD_HELP = {
     # Impact editor and impact tables
     # ------------------------------------------------------------------
     "impact_value_range": (
-        "Value Range (Min, Max; in the impact's unit). Training only.\n\n"
+        "Value Range (Min, Max; in the impact's unit). Training only, "
+        "and only for an observable impact without an active baseline "
+        "map; otherwise it sets no field.\n\n"
         "The range of the random impact field each rollout. Without a "
         "spawn shape every cell is uniform in [Min, Max]; with one, the "
         "pattern is stretched to [Min, Max]. Min = Max gives a constant "
@@ -1426,9 +1426,9 @@ FIELD_HELP = {
         "On: adds 5 inputs per policy (the impact value in the own cell "
         "and 4 neighbours), so groups can learn to avoid it; the field "
         "is spawned with the Spawn Strategy below.\n"
-        "Off: the impact is zero during training, but in inference it "
-        "still acts on mortality and costs while the policies cannot "
-        "see it.\n"
+        "Off: the impact is zero during training unless it has an active "
+        "baseline map, and an inference map still acts on mortality and "
+        "costs while the policies cannot see it.\n"
         "Changing it alters the input size: retraining is required."
     ),
     "impact_baseline_map": (
@@ -1490,9 +1490,9 @@ FIELD_HELP = {
     "impact_spawn_mode": (
         "Spawn mode of this impact's random training field. The shape "
         "is stretched to the Value Range (Colony jitter keeps absolute "
-        "levels). Env-driven has no other fields to follow for "
-        "impacts: it gives a constant field at Min unless noise is "
-        "added. See the Info panel for the selected mode."
+        "levels). Env-driven and Equilibrium have no fields to follow "
+        "for impacts: they give a constant field at Min, Env-driven "
+        "unless noise is added. See the Info panel for the selected mode."
     ),
     "spawn_templates": (
         "Saved spawn settings for this group (or impact) and the "
@@ -1539,11 +1539,6 @@ FIELD_HELP = {
     "spawn_sigma_cells": (
         "Sigma (cells): radius (Gaussian sigma) of each colony. Small = "
         "tight clusters; large = diffuse aggregations."
-    ),
-    "spawn_anchor": (
-        "Anchor (free / coast / open_water): where colony centres may "
-        "be placed. Reserved for when a depth map is wired in - "
-        "currently every choice places centres uniformly."
     ),
     "spawn_amplitude_mode": (
         "Amplitude mode.\n"
@@ -1607,7 +1602,7 @@ FIELD_HELP = {
         "and the training probe rollout. Replaces the training range: "
         "no random draw, so scenarios ('noll' vs 'projekt') start from "
         "the same state. Spread with the group's Spawn Strategy, energy "
-        "reserve at 70 % of full. Scaled with the grid area like the "
+        "reserve at the Start Fill table's value, else 70 % of full. Scaled with the grid area like the "
         "training range. Empty = 0: the group starts absent."
     ),
     "inference_impact_map": (

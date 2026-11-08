@@ -41,11 +41,11 @@ fabricates mass.
 |---|---|
 | `train.py` | ARS training entry point. Requires `--project`. Co-evolution default-on. |
 | `inference.py` | Runs trained policies from `results/<run-name>/policy_<fg>.pth`. |
-| `run_mareld_mvp.py`, `compare_scenarios.py` | MVP scenario run / "noll" vs "projekt" comparison. |
+| `run_mareld_mvp.py`, `compare_scenarios.py` | Old smoke scripts on the library-only world (random actions, not `mareld2.yaml`); `compare_scenarios.py` compares two seeds. |
 | `mareld2.yaml` | Project manifest (`--project` value). An optional top-level `library:` key (relative to the manifest) replaces `fgconfig/fg_library.yaml` for every run built from it; an explicit library path (probes, `train_gpu.py --library`) still wins (section 232.5). |
 | `fgconfig/fgconfig.py` | Tkinter GUI for FGs, impacts, matrices, spawn strategies. |
 | `fgconfig/fg_library.yaml` | Central biological library (species/interaction/impact definitions). |
-| `lib/environments/ecosystem.py` | `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised. |
+| `lib/environments/ecosystem.py` | Re-exports `EcosystemEnvironment` - "The Tick" pipeline, heavily optimised, in `lib/environments/ecosystem_env/environment.py`. |
 | `lib/runners/trainer.py`, `parallel_worker.py` | ARS trainer (CRN, ARS-V2 obs-norm, top-b) + multiprocessing worker. |
 | `lib/world/`, `lib/config/config_loader.py` | Grid, `FunctionalGroup`, project/library loading. |
 | `lib/world/growth_budget.py` | Derives every FG's `growth_rate` from `r_max`, `natural_mortality` and the checked `predation_mortality` pairs, paid at the ideal-conditions reserve s* (section 160); shared by loader, FG editor and tests (section 129). |
@@ -58,7 +58,7 @@ fabricates mass.
 | `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's active baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
-| `lib/runners/training_progress.py` | The viewer's "long run" tab (id `progress`, renamed in 223.21; section 223.12): a frozen copy of the current policies run three years (`PROBE_YEARS`, library ticks) with the inference start and the active baseline maps (section 257), in a separate process every `--eval-every` updates; the tab shows the latest probe (every group's biomass as % of start, daily); `<run>/progress/probe.jsonl` keeps survival ticks, year-end ratios and a viability block per probe, `probe_latest.json` the trajectory. Each probe also scores VIABILITY.md section 1 on whole probe years (`probe_viability`; one seed - tracks training, never a reward; section 223.18); the `viability` tab and the `plots.html` tab of that name plot each group's margin and V per probe (223.20). Since section 248 each probe also stores every decision maker's realised diet and ration per whole probe year (`diets`: tonnes per prey from the env's `intake_by_pred_prey` book, ration t/t/yr); `tools/probes/probe_diets.py` compares them with the booked M2 x B shares and the field Q/B; since section 249 also every group's mean biomass per year (`year_biomass`), so probe_diets prints each prey's realised M2 against its booked M2 (prey side). |
+| `lib/runners/training_progress.py` | The viewer's "long run" tab (id `progress`, renamed in 223.21; section 223.12): a frozen copy of the current policies run three years (`PROBE_YEARS`, at the run's tick length, section 258) with the inference start and the active baseline maps (section 257), in a separate process every `--eval-every` updates; the tab shows the latest probe (every group's biomass as % of start, daily); `<run>/progress/probe.jsonl` keeps survival ticks, year-end ratios and a viability block per probe, `probe_latest.json` the trajectory. Each probe also scores VIABILITY.md section 1 on whole probe years (`probe_viability`; one seed - tracks training, never a reward; section 223.18); the `viability` tab and the `plots.html` tab of that name plot each group's margin and V per probe (223.20). Since section 248 each probe also stores every decision maker's realised diet and ration per whole probe year (`diets`: tonnes per prey from the env's `intake_by_pred_prey` book, ration t/t/yr); `tools/probes/probe_diets.py` compares them with the booked M2 x B shares and the field Q/B; since section 249 also every group's mean biomass per year (`year_biomass`), so probe_diets prints each prey's realised M2 against its booked M2 (prey side). |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
 | `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. A diagnostic for the mechanics, not the judge of the world: its verdict (normative corner `--spawn colocated --behaviour greedy`) is about that behaviour, and trained policies can be viable where it fails (`VIABILITY.md` section 6, resume 123). Two factors (behaviour x spawn geometry). The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |
 | `tests/` | pytest suite - keep green. |
@@ -93,7 +93,7 @@ fabricates mass.
   tathet" (a-umlaut); GOV q for mackerel ~0.1), `mean_0_50m` layer, no K;
   since section 246 a MIGRATING group (open_pool.migrate: the box total
   relaxes at 0.10 /d towards 0.85 t/km2 x the presence season, x0.1 in
-  winter to x2.2 in July; emigrants leave pro rata with their reserve,
+  winter to x2.2 in August; emigrants leave pro rata with their reserve,
   immigrants enter on the west and NW edges at the month's fat; r_max 0,
   season 5.5 months, max reserve 6980, reference fill 0.672; the reward
   runs on a ledger without the migration, lib/runners/energy_ledger.py;
@@ -103,8 +103,8 @@ fabricates mass.
   checkpoints before 228 are invalid. Ceilings from measured Cmax per
   species (energy convention of section 148). Seals (harbour seals
   only, on since 166) spawn on the demersal groups (benthivores and both
-  predator groups) and take ~60 % benthivores, 15 % predators (whiting
-  0.44 of it), 25 % planktivores (Type III, a 2e-3 -
+  predator groups) and take ~64 % benthivores, 9 % predators (whiting
+  0.75 of it), 27 % planktivores (Type III, a 2e-3 -
   a Type III `a` is per (t/cell)^2; judge diets with the engine's
   VISIBLE prey, section 199.9).
 - Non decision makers: `phytoplankton` (nutrient-limited since 172),
@@ -171,8 +171,9 @@ fabricates mass.
   255-257): each mute leaves the other map alone, and a muted baseline
   map is out of the training probes and the equilibrium start pattern too. The GPU engine mirrors all of it (impact
   mortality and cost, observable channels in train.py's slots; section
-  161). Impacts are outside the growth budget. `mareld2.yaml` fishes
-  today's world: `bottom_trawling` (benthivores F 0.17, water-column
+  161). Impacts are outside the growth budget. `mareld2.yaml` has
+  today's fishing, but both baseline maps are muted (15e2ad4), so only
+  `inference.py` fishes; training and its probes run unfished: `bottom_trawling` (benthivores F 0.17, water-column
   predators 0.260, whiting 0.075, mackerel 0.012 /yr) and
   `pelagic_trawling` (planktivores 0.089 (243.3), mackerel 0.002, whiting 0.005);
   mackerel carries its LOCAL 3.a F (catch / survey biomass 0.013, user
@@ -227,7 +228,7 @@ fabricates mass.
   is 26.18 MJ/t/tick at the bottom temperature (223.15), per prey since
   223.28: ceiling_j = 26.18 (E_j/4.184)^0.25 / armour_j (gastric
   evacuation ~E^-0.75; armour epifauna 1.75, Nephrops 2.0), h = E /
-  ceiling_j (herring 238, whiting 177, epifauna 258, Nephrops 286,
+  ceiling_j (planktivores 222, whiting 177, epifauna 258, Nephrops 286,
   infauna 112; research_notes/"Magtomning och energitak", Swedish
   letters); every other predator keeps h = E / its ceiling. The predator
   ceilings are Bjornsson-anchored (x1.30, 223.26): whiting 31.34 (bottom
@@ -259,7 +260,9 @@ fabricates mass.
   (`a B / (1 + a h B + w B_pred)`); `shared_handling=False` on the env
   reverts. With equal E/h (every predator but the benthivores) attacking
   every prey pays, so the diet becomes the encounter shares of the
-  budget_gate diet gate (every pair passes since 243.3); the per-pair form made one prey per cell the
+  budget_gate diet gate (every pair passed at 243.3; today 5 pairs are
+  OFF at equal cells and 4 at the field spread, the water column's krill
+  among them); the per-pair form made one prey per cell the
   optimum (239.1). Checkpoints keep their shapes but the eat action means
   something new: retrain. `w` is the per-FG `interference` parameter
   (`interference: 0` = pure Holling; the old gadoid 1.0 of section 86
@@ -295,7 +298,7 @@ fabricates mass.
   repository map; each Cmax anchor is consistent with the annual-mean
   normalisation within 3 %); `growth_q10` (section 183, zooplankton 3.0)
   scales its growth branch the same way.
-- Growth: NDM logistic; DM `s = R/(B*ME)`, `q = s - u` (`maintenance_level`, default 0.3).
+- Growth: NDM logistic; DM `s = R/(B*ME)`, `q = s - u` (`maintenance_level`; code default 0, every DM sets it).
   A DM with `income_growth_kappa` kappa (section 184) grows out of this
   tick's income instead, `G = min(kappa I - C, B g (s - u) ec)` in
   `movement.apply_energy_costs` (both engines), and never turns its
@@ -315,7 +318,7 @@ fabricates mass.
   cost). Every fish group carries
   it (protein route, x A/(A - sda E) to the engine's SDA-net I):
   planktivores 0.43, benthivores 0.49, whiting 0.48, water column 0.48,
-  mackerel 0.49; with field feeding seasons 6.4 / 8.6 / 9.0 / 8.6 / 4.0
+  mackerel 0.49; at section 244 with field feeding seasons 6.4 / 8.6 / 9.0 / 8.6 / 4.0
   months (research_notes/"Tillväxt ur dagens föda", a-umlaut,
   o-umlaut). The budget refuses a kappa_m below h(s_n) C's need, s_n
   the reserve at the season's production. The cap acts on the bare
@@ -362,7 +365,9 @@ fabricates mass.
   0.533) and the planktivores (was 4.8 / 6.1) lost theirs in section
   243.4: they were masks over named defects - the planktivores' g paid
   booked M2 the per-pair engine never realised (with shared handling and
-  every diet-gate pair passing, the encounter diets carry ~0.93 of it),
+  every diet-gate pair passing, the encounter diets then carried ~0.93 of
+  it; today budget_gate's implied M2 is 0.29 of it at equal cells, ~0.37 at
+  the field spread),
   whiting's bed pair overshot the epifauna (a 0.27, fixed in 232). The
   open-population form (imported recruits into J, somatic growth
   budget, emigration, exchange for window groups) is the replacement.
@@ -434,20 +439,20 @@ fabricates mass.
   `reserve_reference_fill`. Set for `planktivorous_fish` (section
   140.6; 209): lean 4000 MJ/t + reserve up to 4990 (6250 before 243.3), starvation from 0.079 (247; was 0.2)
   of it, `predatory_fish` (water column, lean 4180 + 2000 at fill 0.45 =
-  5080; 228), `mackerel` (lean 4670 + 5870 at fill 0.55 = 7899; 228; its rest cost
+  5080; 228), `mackerel` (lean 4670 + 6980 at fill 0.672 = 9361; 246; its rest cost
   is the obligate swimming floor 4.59, no swim bladder, 228.2),
   `whiting` (lean 3900 + 2000 at fill 0.45 = 4800; 223.26) and,
   since section 223.9, `benthivorous_fish` (lean 3600 + 1800 at fill
   0.5 = 4500; was whole-body 4500 with each new tonne charged its
   reserve on top). Benthivore pair M2 since 223.9: budget Q/B 4.46,
   the no-pool 17.7 % of the diet redistributed (infauna 0.0396,
-  epifauna 0.276, planktivores 0.245 (0.145 since 223.37: SMS partial
+  epifauna 0.276 (0.54 today), planktivores 0.245 (0.145 since 223.37: SMS partial
   M2 scaled to the box, as are water column -> planktivores 0.257 (since
   228 the rest 0.247 + mackerel 0.026 at its field biomass) and
   whiting -> planktivores 0.203, 0.07 since 232.1 at the box's prey;
   every M2 on the planktivores x 12000/17000 since 243.3, the booked flow
   kept on the larger pool: benthivores 0.1023, water column 0.174,
-  mackerel 0.0186, whiting 0.0494),
+  mackerel 0.0186, whiting 0.0545 since 245),
   predators 0.128 - all of it on
   whiting since 223.26, cod's fish prey in the pool being whiting; M2
   0.18 since 223.28 = SMS cod -> whiting scaled to the model's
@@ -577,7 +582,7 @@ python3 train.py --project mareld2.yaml --species planktivorous_fish \
 
 # Tests and syntax check
 python3 -m pytest tests/ -q
-python3 -m py_compile fgconfig/fgconfig.py lib/environments/ecosystem.py \
+python3 -m py_compile fgconfig/fgconfig.py lib/environments/ecosystem_env/environment.py \
     lib/runners/trainer.py lib/runners/parallel_worker.py train.py
 
 # Mechanics diagnostic: frozen behaviour, no training. Exit 1 = the frozen
@@ -680,13 +685,13 @@ spreading thin and `mean` rewards killing the worst cells (sections 82, 84).
 
 ## 8. Deep context - `mareld_resume.txt`
 
-`mareld_resume.txt` (~5700 lines) is the full project history: every design
+`mareld_resume.txt` (~24 000 lines) is the full project history: every design
 decision, calibration, A/B test and open problem, organised in numbered sections
 (0 language policy, 1 repo layout, 3 the tick, 5 CLI, 6 project format,
 7 GUI, 9-10 ARS/co-evolution, 11 known discrepancies vs the PDFs, 14 git log,
 26-28 spawn and multi-world, 35-36 ecological fixes, 41 observability/hide,
-46-49 starvation and reward shaping, 63-71 latest diagnostic arcs,
-79 local per-cell reward, 90-92 the viability rig).
+46-49 starvation and reward shaping, 63-71 diagnostic arcs,
+79 local per-cell reward, 90-92 the viability rig; the latest work is last).
 
 **Do not read it end-to-end** - it is large and will eat the context window.
 Search it for the topic at hand and read only the matching section, e.g.:

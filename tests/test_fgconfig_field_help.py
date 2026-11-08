@@ -184,3 +184,14 @@ def test_fg_editor_growth_line_has_term_help():
     assert "".join(somatic_texts).startswith("g = ") and "P 0.66" in "".join(somatic_texts)
     for key in ("growth:growth_rate", "growth:somatic", "growth:gate", "growth:ticks_per_year"):
         assert key in somatic_seen, key
+
+
+def test_the_removed_options_are_gone():
+    # Section 258: Auto wrote h = 1/a over the library's handling times, and
+    # the colony anchor never placed a colony anywhere else.
+    import field_help as help_texts
+    source = (Path(__file__).resolve().parents[1] / "fgconfig" / "fgconfig.py").read_text(
+        encoding="utf-8")
+    assert "Auto All Rows" not in source and "_autofill_handling_time_row" not in source
+    assert '("anchor", "Anchor"' not in source
+    assert "spawn_anchor" not in help_texts.FIELD_HELP

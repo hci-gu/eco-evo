@@ -86,6 +86,7 @@ class GPUTrainingVisualizer:
                 # so --mortality_multiplier would not reach the viewer.
                 mortality_multiplier=builder.mortality_multiplier,
                 mass_balance=builder.mass_balance,
+                tick_hours=getattr(builder, "tick_hours", LIBRARY_TICK_HOURS),
             )
             with evaluation_randomness(self.builder.PROBE_SEED):
                 env = self.builder()

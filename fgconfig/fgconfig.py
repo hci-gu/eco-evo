@@ -812,14 +812,14 @@ class FGConfigApp:
             ("  Outside Season (12 monthly factors Jan..Dec, mean ~1; empty = flat)", "outside_season", "entry", 0.0, 10.0),
             ("  Arrival Fill (12 monthly reserve fills of the arriving fish, 0-1)", "outside_fill", "entry", 0.0, 1.0),
             ("  Entry Edges (e.g. west, north:0-0.5)", "outside_entry", "entry", 0.0, 0.0),
-            ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
+            ("Max Net Growth r_max (1/yr, literature; 0 with no Somatic production = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
             # Section 250: an open population's g pays its somatic production.
             ("  Somatic production P (1/yr, field; replaces r_max; 0 = off)", "somatic_production", "entry", 0.0, 10.0),
             # Section 185: closes the logistic whose r the budget pays.
             ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
             # Section 202: share of the M1 loss returned to the nutrient pools.
             ("  Mortality regeneration (share of M1 back to the nutrient pools; 0 = off)", "mortality_regeneration", "entry", 0.0, 1.0),
-            ("Max Growth (MG_X, fraction/{tick}; derived when r_max > 0)", "growth_rate", "entry", 0.0, 1.0),
+            ("Max Growth (MG_X, fraction/{tick}; derived from r_max or Somatic production)", "growth_rate", "entry", 0.0, 1.0),
             ("Starve Rate (catabolism, fraction/{tick})", "starve_rate", "entry", 0.0, 1.0),
             ("Visibility Floor (default; overridable per predator)", "visibility_floor", "entry", 0.0, 1.0),
             ("Natural Mortality (fraction/{tick})", "natural_mortality", "entry", 0.0, 1.0),
@@ -830,7 +830,7 @@ class FGConfigApp:
             ("  M1 Tactile Share (0-1; stronger at depth when hiding)", "m1_tactile_share", "entry", 0.0, 1.0),
             ("  Depth Risk Ratio (tactile risk hidden / visible; 0 = 1)", "depth_risk_ratio", "entry", 0.0, 20.0),
             ("  Hide Reference (hidden share at which M1 is the value above; 0 = 0.5)", "hide_reference", "entry", 0.0, 1.0),
-            ("Max Intake Rate (ton prey / ton consumer / {tick})", "max_intake_rate", "entry", 0.0, 1.0),
+            ("Max Intake Rate (fallback attack rate a, per {tick}; a pair's own a wins)", "max_intake_rate", "entry", 0.0, 1.0),
             ("Interference (Beddington-DeAngelis w, 1/ton, 0=off)", "interference", "entry", 0.0, 10.0),
             ("Movement Speed (cells/{tick})", "movement_speed", "entry", 0.0, 1.0),
             ("Indivisible Weight (kg)", "min_split_biomass", "entry", 0.0, 1000.0),
@@ -1177,10 +1177,6 @@ class FGConfigApp:
             "\n"
             "N_colonies: number of colony centres.\n"
             "Sigma_cells: Gaussian width in cells around each centre.\n"
-            "Anchor: free / coast / open_water. Reserved parameter "
-            "— will be used once the official depth map is wired in; "
-            "for now centres are chosen uniformly regardless of "
-            "anchor.\n"
             "\n"
             "Amplitude_mode:\n"
             "  uniform (default, legacy): every centre contributes "
@@ -1260,7 +1256,6 @@ class FGConfigApp:
         "colony": [
             ("n_colonies", "N colonies", "int", 3),
             ("sigma_cells", "Sigma (cells)", "float", 2.5),
-            ("anchor", "Anchor", "choice:free,coast,open_water", "free"),
             ("amplitude_mode", "Amplitude mode",
              "choice:uniform,jitter", "uniform"),
             ("amplitude_min", "Amplitude min (rel.)", "float", 0.0),
@@ -3698,9 +3693,10 @@ class FGConfigApp:
         # by the row FG. While the pair is checked it is added to the
         # column FG's derived growth_rate (lib/world/growth_budget.py), so
         # checking / unchecking a predator raises / lowers the prey's
-        # growth at once. Cell active only if preys_on=True.
+        # growth at once; a column with somatic_production pays that instead
+        # (section 250). Cell active only if preys_on=True.
         self.create_matrix_section(
-            "Predation Mortality M2 (1/yr; row's predation on column, added to column's growth)",
+            "Predation Mortality M2 (1/yr; row's predation on column, added to column's growth unless it has Somatic production)",
             "predation_mortality", dm_fgs, fgs, cell_type="nonneg_float",
             parent=self.matrix_container)
         self._build_derived_growth_panel(fgs)
@@ -3728,7 +3724,6 @@ class FGConfigApp:
         self.create_matrix_section(
             "Handling time (row eats column)", "handling_time",
             dm_fgs, fgs, cell_type="nonneg_float", parent=self.matrix_container)
-        self._add_handling_time_auto_buttons(dm_fgs, fgs)
 
         # Pair attack rate a (section 134; per-pair values from encounter
         # theory since section 220). Empty = the row's own Max Intake Rate.
@@ -4042,88 +4037,6 @@ class FGConfigApp:
         ttk.Button(self.matrix_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
         if impacts:
             ttk.Button(self.impact_container, text="Apply All Matrix Changes", command=self.apply_matrix_changes).pack(pady=10)
-
-    def _autofill_handling_time_row(self, pred_id, col_ids):
-        """Fill handling_time cells for a single predator row.
-
-        For each column (prey) where preys_on is True and the cell widget is
-        currently editable, set the entry to ``1 / max_intake_rate`` of the
-        predator (rounded to a compact ``%g`` string). If ``max_intake_rate``
-        is missing/zero, the row is skipped with a message.
-        """
-        species_defs = self.global_library.get("species_definitions", {}) or {}
-        mir_raw = (species_defs.get(pred_id, {}) or {}).get("max_intake_rate")
-        try:
-            mir = float(mir_raw)
-        except (TypeError, ValueError):
-            mir = 0.0
-        if mir <= 0.0:
-            messagebox.showinfo(
-                "Auto-fill handling time",
-                (
-                    f"'{self.fg_display(pred_id)}' has no positive "
-                    f"max_intake_rate set — cannot auto-fill 1/I_max. "
-                    f"Set it in the FG Editor first."
-                ),
-            )
-            return 0
-        h_val = 1.0 / mir
-        h_str = f"{h_val:g}"
-        n_filled = 0
-        for col_id in col_ids:
-            key = f"{pred_id}_preys_on_{col_id}"
-            entry = self.matrix_entries.get(key, {})
-            preys_var = entry.get("preys_on")
-            if preys_var is None or not bool(preys_var.get()):
-                continue
-            h_var = entry.get("handling_time")
-            h_widget = self.matrix_widgets.get(key, {}).get("handling_time")
-            if h_var is None or h_widget is None:
-                continue
-            # Skip cells disabled by muting; a disabled widget indicates the
-            # cell cannot be edited (muted row/col, or preys_on=False).
-            try:
-                if str(h_widget.cget("state")) == "disabled":
-                    continue
-            except tk.TclError:
-                pass
-            h_var.set(h_str)
-            n_filled += 1
-        return n_filled
-
-    def _add_handling_time_auto_buttons(self, row_ids, col_ids):
-        """Render a small helper panel under the handling_time matrix with an
-        Auto button per predator row and one global Auto All button. Each
-        button fills h = 1 / max_intake_rate for every active (preys_on=True)
-        cell in the corresponding row(s).
-        """
-        panel = ttk.LabelFrame(
-            self.matrix_container,
-            text="Auto-fill handling time  (h = 1 / max_intake_rate)",
-        )
-        panel.pack(fill="x", padx=10, pady=(0, 10))
-
-        def make_row_cmd(pid):
-            return lambda: self._autofill_handling_time_row(pid, col_ids)
-
-        for i, row_id in enumerate(row_ids):
-            ttk.Label(panel, text=self.fg_display(row_id)).grid(
-                row=i, column=0, sticky="w", padx=5, pady=2)
-            ttk.Button(panel, text="Auto", width=8,
-                       command=make_row_cmd(row_id)).grid(
-                row=i, column=1, padx=5, pady=2)
-
-        def _auto_all():
-            total = 0
-            for rid in row_ids:
-                total += self._autofill_handling_time_row(rid, col_ids) or 0
-            messagebox.showinfo(
-                "Auto-fill handling time",
-                f"Filled {total} cell(s) with 1 / max_intake_rate.",
-            )
-
-        ttk.Button(panel, text="Auto All Rows", command=_auto_all).grid(
-            row=len(row_ids), column=0, columnspan=2, pady=(6, 4))
 
     # ------------------------------------------------------------------
     # Derived growth rate (lib/world/growth_budget.py)

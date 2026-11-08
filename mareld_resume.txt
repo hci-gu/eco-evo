@@ -24226,3 +24226,30 @@ remain open exactly as described in 71.9 / 71.11.
     probes run without that impact. mareld2.yaml has the same files in both
     places, so its probes are unchanged. The diagnostics built on
     _ProbeEnvBuilder (tools/probes, research_notes) follow the same rule.
+
+258 Audit fixes (2026-11-09; user: colony scaling, the two dead editor options,
+    the probes' tick length, the stale docs).
+258.1 GPU colonies. lib/gpu/spawn.py read n_colonies raw while the CPU spawn
+    scales it with the grid area (strategies._apply_grid_scaling, section 70),
+    so at 30 x 30 the training worlds spread 25 colonies where every probe and
+    inference world spawns ~6: fish 3.5-4.2 x more spread (effective cells),
+    equal at 60 x 60. WorldSpawner now uses the same function and factor
+    (ProjectSpec.biomass_scale; 1 for a library-only world, as on CPU). Changes
+    the training worlds of every grid but the reference: runs before it trained
+    on the diluted pattern at 30 x 30 (fix91, fix92 alike), not comparable with
+    later runs. tests/test_gpu_spawn.py.
+258.2 FG editor. Removed the handling-time Auto buttons (they wrote h = 1/a =
+    25 over the library's 52-314, raising ceilings up to 12 x) and the colony
+    Anchor (a no-op on CPU, absent on GPU; `anchor` gone from the library and
+    the manifest, an old key is ignored).
+258.3 Tick length. train_gpu's viewer probe and the long-run probe of both
+    trainers ran at 6 h whatever --tick-length said. Both are now built at the
+    run's length (visual.py, inference_config, build_inference_env), the
+    default probe is three years of those ticks, and a resumed history at
+    another length is refused. A history without the key counts as 6 h. Currents
+    are still per tick with no rescale rule (--current-strength, -period).
+258.4 Docs. AGENTS.md, README.md, GPU_TRAINING.md, VIABILITY.md and the editor's
+    help texts corrected against the library and code; AGENTS.md now says that
+    only inference.py fishes while the baseline maps are muted (257's "its
+    probes are unchanged" held only before the mute). Not done: the broken
+    tools/probes scripts with old group ids, api.py's old ecology.

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 
 from lib.gpu.random import fold_in, normal, uniform
+from lib.spawn.strategies import _apply_grid_scaling
 
 
 def distribute_with_floor(weights, total, floor):
@@ -75,6 +76,8 @@ class WorldSpawner:
         fx = torch.fft.fftfreq(self.W, device=self.device, dtype=torch.float64)[None, :]
         self.frequency2 = fy * fy + fx * fx
         self.filters = {}
+        # The grid factor the CPU spawn applies to n_colonies (section 258).
+        self.biomass_scale = float(getattr(spec, "biomass_scale", 1.0))
         self.floors = {f: 5.0 * spec.env.fgs[f].min_split_biomass for f in model.ids}
         # Section 207: the depth map as a reference field and the
         # equilibrium patterns, fixed per project (no randomness).
@@ -155,7 +158,8 @@ class WorldSpawner:
             field = (field - float(cfg.get("threshold", 0))).clamp_min(0)
             return self.finalize(self.relative_floor(field, cfg.get("min_frac_of_max", 0)))
         if mode == "colony":
-            n = max(0, min(int(cfg.get("n_colonies", 3)), self.n_eligible))
+            scaled = _apply_grid_scaling(cfg, {"biomass_scale": self.biomass_scale})
+            n = max(0, min(int(scaled.get("n_colonies", 3)), self.n_eligible))
             sigma = max(1e-6, float(cfg.get("sigma_cells", 2)))
             scores = uniform(keys, (self.n_eligible,), 201, torch.float64)
             centers = self.eligible[scores.argsort(dim=-1, stable=True)[:, :n]]

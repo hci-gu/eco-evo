@@ -234,7 +234,6 @@ impact_variables:
       mode: colony
       n_colonies: 5
       sigma_cells: 8.0
-      anchor: free
       amplitude_mode: jitter
       amplitude_min: 0.3
       amplitude_max: 1.0
@@ -244,7 +243,6 @@ spawn_templates:
     25Colonies:
       n_colonies: 25
       sigma_cells: 1.0
-      anchor: free
       amplitude_mode: jitter
       amplitude_min: 0.0
       amplitude_max: 1.0

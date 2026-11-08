@@ -178,15 +178,16 @@ def _progress_args(**overrides):
 
 @pytest.mark.parametrize("rollout", [{"n_eval_ticks": 1460}, {"ticks": 400}])
 def test_the_default_probe_is_three_years(rollout):
-    """Section 223.12: the probe runs three years of the probe world's
-    (library) tick length, whatever the training rollout or tick length."""
+    """Section 223.12: the probe runs three years, whatever the training
+    rollout; section 258: at the run's tick length, which the probe world
+    is built at."""
     from lib.runners.training_progress import validate_progress_arguments
     args = _progress_args(**rollout)
     validate_progress_arguments(None, args)
     assert args.eval_ticks == 3 * 1460 and args.eval_ticks_default
     hourly = _progress_args(tick_length=3, **rollout)
     validate_progress_arguments(None, hourly)
-    assert hourly.eval_ticks == 3 * 1460
+    assert hourly.eval_ticks == 3 * 2920
 
 
 def test_an_explicit_eval_ticks_wins():
@@ -439,3 +440,57 @@ def test_terminating_the_worker_as_it_receives_the_policies_prints_no_traceback(
     out, err = capfd.readouterr()
     assert progress._pool is None and progress._pending is None
     assert "Traceback" not in err and "ConnectionResetError" not in err
+
+
+# ---- The probes follow --tick-length (section 258) -------------------------
+
+def _eco(tick_hours=None):
+    config = dict(project="mareld2.yaml", library="fgconfig/fg_library.yaml", grid=[6, 7],
+                  mortality=True, migration=True, mass_balance=True)
+    if tick_hours is not None:
+        config["tick_hours"] = tick_hours
+    return config
+
+
+def test_the_long_run_probe_is_built_at_the_runs_tick_length():
+    from lib.world.tick_time import LIBRARY_TICK_HOURS
+    three, six = build_inference_env(_eco(3), 1), build_inference_env(_eco(), 1)
+    assert three.tick_hours == 3 and six.tick_hours == LIBRARY_TICK_HOURS
+    # A per-tick library rate is converted, as for the training world.
+    assert three.fgs["zooplankton"].growth_rate == pytest.approx(
+        six.fgs["zooplankton"].growth_rate / 2, rel=0.2)
+    series = run_probe(YearTraceAt(3), 2 * 2920, 0.3, 3.0)
+    assert series["trajectory"]["ticks_per_year"] == 2920
+
+
+class YearTraceAt(YearTrace):
+    def __init__(self, tick_hours):
+        super().__init__()
+        self.tick_hours = tick_hours
+
+
+def test_the_default_probe_counts_three_years_of_the_runs_ticks():
+    import argparse
+    from lib.runners.training_progress import add_progress_arguments, validate_progress_arguments
+    parser = argparse.ArgumentParser()
+    add_progress_arguments(parser)
+    for hours, ticks in ((6, 4380), (3, 8760)):
+        args = parser.parse_args([])
+        args.tick_length = hours
+        validate_progress_arguments(parser, args)
+        assert args.eval_ticks == ticks
+
+
+def test_a_history_at_another_tick_length_is_not_comparable():
+    from lib.runners.training_progress import comparable_config
+    old = comparable_config(dict(_eco()))  # written before the key existed: library ticks
+    assert old == comparable_config(_eco(6))
+    assert old != comparable_config(_eco(3))
+
+
+def test_the_viewer_probe_gets_the_runs_tick_length():
+    import inspect
+    from lib.gpu import visual
+    source = inspect.getsource(visual.GPUTrainingVisualizer.__init__)
+    start = source.index("_ProbeEnvBuilder(")
+    assert "tick_hours=" in source[start:source.index(")\n", source.index("mass_balance=", start))]

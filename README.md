@@ -54,25 +54,26 @@ Interactive scripts require a graphical desktop. The configuration editor also r
 
 ## Simple training progress graph
 
-Both trainers include a **progress** tab in `--visual`. Click it (or cycle tabs with Tab) to view consecutive inference survival ticks against completed training updates, using the same species colors and controls as the other live plots:
+Both trainers include a **long run** tab in `--visual`. Click it (or cycle tabs with Tab) to see how a frozen copy of the current policies plays out over three years: every group's biomass as a percentage of its start, daily, from the latest probe. A **viability** tab plots each group's margin per probe.
 
 ```bash
 uv run --locked train_gpu.py --project mareld2.yaml --profile info --visual --run-name mareld-gpu
 # For CPU training, use train.py with the same flags.
 ```
 
-The tab keeps the entire named run's history, including previous sessions loaded with `--resume`. New probe rollouts and playback do not reset it, and early evaluations are retained beyond the other plots' rolling window. History and evaluation settings are stored in `<run>/progress/`. The fixed evaluation scenario is independent of the viewer's probe sliders, so measurements remain comparable throughout training.
+The history covers the entire named run, including previous sessions loaded with `--resume`. New probe rollouts and playback do not reset it. History and evaluation settings are stored in `<run>/progress/`. The fixed evaluation scenario, with the inference start and the active baseline impact maps (never the Inference tab's maps), is independent of the viewer's probe sliders, so measurements remain comparable throughout training.
 
-The defaults are an initial evaluation, then one every 20 updates, with a 1,000-tick cap and bounds of 0.3–3 times each species' starting biomass. Pass `--eval-every`, `--eval-ticks`, `--biomass-bounds`, `--eval-seed`, `--eval-temperature`, or `--plot-dir` directly to either trainer to customize progress. Changing evaluation settings requires a new `--plot-dir`.
+The defaults are an initial evaluation, then one every update (`--eval-every 1`; a probe due while one is running is skipped), three years at the run's `--tick-length`, and bounds of 0.3–3 times each species' starting biomass. Pass `--eval-every`, `--eval-ticks`, `--biomass-bounds`, `--eval-seed`, `--eval-temperature`, or `--plot-dir` directly to either trainer to customize progress. Changing evaluation settings requires a new `--plot-dir`.
 
 The output defaults to `results/<run-name>/progress/` (or `<--output>/progress/` for the GPU trainer). Set `--plot-dir PATH` to choose another folder. It contains:
 
-- `survival.jsonl`: the persistent history, including evaluation number, training step, measurements and initial biomass for each decision maker, plus the actual inference length (`ticks_run`).
+- `probe.jsonl`: the persistent history, including evaluation number, training step, survival ticks, year-end ratios, a viability block, realised diets and yearly biomass, plus the actual inference length (`ticks_run`).
+- `probe_latest.json`: the latest probe's daily trajectory.
 - `config.json`: the evaluation settings used for this history.
 
-A baseline is saved as evaluation 1 before training starts, followed by evaluations at multiples of `--eval-every`. One training step means one completed optimizer update: a joint update in co-evolution mode, or a single-species update in round-robin mode. For example, with `--eval-every 20`, evaluations 1, 2 and 3 correspond to training steps 0, 20 and 40. The graph includes only decision-making species with policies. Non-acting groups such as phytoplankton remain in the ecosystem but are excluded from the graph, including when resuming older histories.
+A baseline is saved as evaluation 1 before training starts, followed by evaluations at multiples of `--eval-every`. One training step means one completed optimizer update: a joint update in co-evolution mode, or a single-species update in round-robin mode. For example, with `--eval-every 20`, evaluations 1, 2 and 3 correspond to training steps 0, 20 and 40. 
 
-For each species, `B0` is its total biomass at the start of the inference rollout. The bounds are inclusive: `0.3 × B0 <= B(t) <= 3.0 × B0` by default. A breach on tick 1 scores 0; a breach on tick 10 scores 9; staying inside the bounds for the full rollout scores `--eval-ticks`. Recovery after a breach does not restart the counter. Nonfinite biomass counts as a breach. Groups with zero starting biomass are excluded from the graph and recorded as `null`.
+For each decision maker's survival ticks in `probe.jsonl`, `B0` is its total biomass at the start of the inference rollout. The bounds are inclusive: `0.3 × B0 <= B(t) <= 3.0 × B0` by default. A breach on tick 1 scores 0; a breach on tick 10 scores 9; staying inside the bounds for the full rollout scores `--eval-ticks`. Recovery after a breach does not restart the counter. Nonfinite biomass counts as a breach. Groups with zero starting biomass are recorded as `null`.
 
 Inference stops as soon as every decision maker has left the biomass bounds, even if non-acting groups are still alive. For example, `--eval-ticks 5000` is a maximum: if the last decision maker breaches its bounds at tick 230, evaluation stops at tick 230 and training resumes. The console reports the actual number of ticks used.
 

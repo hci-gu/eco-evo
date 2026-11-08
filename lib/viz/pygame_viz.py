@@ -741,9 +741,10 @@ class LiveVisualizer:
         self._viability_v: list = []
         self._viability_extinct: list = []
         self._viability_scores: dict = {}  # step -> V unclipped, None = extinct
-        # The long run's length in library ticks (the probe world is built
-        # at LIBRARY_TICK_HOURS); None until the first probe (223.21).
+        # The long run's length in ticks of the probe world, built at the
+        # run's tick length; None until the first probe (223.21, 258).
         self._long_run_ticks = None
+        self._long_run_tick_hours = LIBRARY_TICK_HOURS
         self._tab_label_fmt: Dict[str, tuple] = {}
         # Back-compat alias: legacy callers (and internal code) treat the
         # ``reward`` tab buffer as the historical _reward_buf. In inference
@@ -1575,6 +1576,7 @@ class LiveVisualizer:
             self._long_run_ticks = int((config or {}).get("ticks") or 0) or None
         except (TypeError, ValueError):
             self._long_run_ticks = None
+        self._long_run_tick_hours = int((config or {}).get("tick_hours") or LIBRARY_TICK_HOURS)
         if not latest:
             self._last_frame_ts = 0.0
             self._maybe_render()
@@ -5924,7 +5926,7 @@ class LiveVisualizer:
             template = "Long run of the current policies, {probe}; trained on {train} rollouts (biomass, % of start)"
             return self._t(
                 template,
-                probe=self._duration(self._long_run_ticks * LIBRARY_TICK_HOURS / HOURS_PER_DAY),
+                probe=self._duration(self._long_run_ticks * self._long_run_tick_hours / HOURS_PER_DAY),
                 train=self._duration(self.get_neval_ticks() * self.tick_hours / HOURS_PER_DAY))
         label = self._tab_labels.get(tab, tab)
         prefix = self._REWARD_TITLE_PREFIX

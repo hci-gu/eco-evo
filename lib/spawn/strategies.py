@@ -42,8 +42,7 @@ Strategier (skiss)
 - ``colony``       N kolonier vid valda celler, gaussian-utsmetning kring
                    varje. Avsedd för seabirds/seals/porpoises där en
                    handfull tätt sammanhängande celler är realistiskt.
-                   Params: n_colonies, sigma_cells, anchor (free | coast
-                   | open_water; coast/open_water kräver depth_map i context).
+                   Params: n_colonies, sigma_cells.
 - ``env_driven``   Vikt = linjär/exp-kombination av referens-fält i context.
                    Params: refs=[(name, weight, transform)], där transform
                    är 'linear' | 'exp' | 'invert' | 'gauss_smooth'.
@@ -88,7 +87,6 @@ class StrategySpec:
           mode: colony
           n_colonies: 3
           sigma_cells: 2.0
-          anchor: coast          # free | coast | open_water
 
     För ``env_driven``::
 
@@ -377,10 +375,6 @@ def weights_colony(grid_size: Tuple[int, int],
     Params:
         n_colonies (int):       number of colony centers (default 3).
         sigma_cells (float):    Gaussian spread per colony in cells (default 2.0).
-        anchor (str):           'free' | 'coast' | 'open_water'. Default 'free'.
-                                Depth-based anchors are accepted but currently
-                                do not affect center selection because no
-                                depth map is consumed here.
         amplitude_mode (str):   'uniform' (default, legacy) | 'jitter'.
                                 In 'jitter' mode each colony receives an
                                 independent center amplitude drawn from
@@ -398,7 +392,6 @@ def weights_colony(grid_size: Tuple[int, int],
     H, W = grid_size
     n = int(p.get("n_colonies", 3))
     sigma = float(p.get("sigma_cells", 2.0))
-    anchor = str(p.get("anchor", "free"))
     amplitude_mode = str(p.get("amplitude_mode", "uniform")).lower()
     amp_min = float(p.get("amplitude_min", 0.0))
     amp_max = float(p.get("amplitude_max", 1.0))
@@ -409,7 +402,7 @@ def weights_colony(grid_size: Tuple[int, int],
         amp_min, amp_max = amp_max, amp_min
 
     # Välj kolonicentrum från eligible-pool (eller hela griden).
-    centers = _pick_colony_centers(grid_size, n, anchor, context, rng)
+    centers = _pick_colony_centers(grid_size, n, context, rng)
 
     yy, xx = np.indices((H, W))
     inv_two_sigma2 = 1.0 / (2.0 * max(1e-6, sigma) ** 2)
@@ -439,7 +432,7 @@ def weights_colony(grid_size: Tuple[int, int],
     return _finalize(field, context)
 
 
-def _pick_colony_centers(grid_size: Tuple[int, int], n: int, anchor: str,
+def _pick_colony_centers(grid_size: Tuple[int, int], n: int,
                           context: Optional[dict],
                           rng: np.random.Generator) -> list:
     H, W = grid_size
@@ -448,11 +441,6 @@ def _pick_colony_centers(grid_size: Tuple[int, int], n: int, anchor: str,
         base = np.asarray(context["allowed_mask"]).reshape(H, W).astype(bool)
     else:
         base = np.ones((H, W), dtype=bool)
-    # NOTE: anchor='coast'/'open_water' är reserverade nyckelord men har
-    # ingen effekt just nu. Djup-baserad filtrering är medvetet bortkopplad
-    # tills en officiell depth-karta finns att referera till. Parametern
-    # accepteras utan att påverka centrum-valet.
-    _ = anchor  # explicit no-op
     idx = np.flatnonzero(base)
     if idx.size == 0:
         idx = np.arange(H * W)

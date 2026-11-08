@@ -54,14 +54,14 @@ def add_progress_arguments(parser):
 
 def validate_progress_arguments(parser, args):
     # Without --eval-ticks the probe runs three years (section 223.12; it
-    # followed the training rollout length before). The probe world is
-    # built at the library's tick length (build_inference_env passes no
-    # tick length), so the years are counted in library ticks. A resumed
-    # run keeps the length its history was written with
+    # followed the training rollout length before), counted at the run's
+    # tick length, which the probe world is built at (section 258). A
+    # resumed run keeps the length its history was written with
     # (TrainingProgress._start).
     args.eval_ticks_default = args.eval_ticks is None
     if args.eval_ticks_default:
-        args.eval_ticks = PROBE_YEARS * ticks_per_year(LIBRARY_TICK_HOURS)
+        args.eval_ticks = PROBE_YEARS * ticks_per_year(
+            getattr(args, "tick_length", LIBRARY_TICK_HOURS))
     lower, upper = args.biomass_bounds
     if not (math.isfinite(lower) and math.isfinite(upper) and 0 < lower <= 1 <= upper and lower < upper):
         parser.error("--biomass-bounds must be finite and satisfy 0 < LOWER <= 1 <= UPPER, LOWER < UPPER")
@@ -454,6 +454,8 @@ def inference_config(trainer, backend):
                 # measures a different ecology (section 116.3).
                 mass_balance=bool(
                     getattr(builder, "mass_balance", DEFAULT_MASS_BALANCE)),
+                # The probe world's tick length is the run's (section 258).
+                tick_hours=int(getattr(builder, "tick_hours", LIBRARY_TICK_HOURS)),
                 currents=builder.currents.metadata() if getattr(builder, "currents", None) else None)
 
 
@@ -472,12 +474,17 @@ def comparable_config(config):
     # retroactively relabel what an old run was doing.
     normalised.setdefault("mass_balance", LEGACY_MASS_BALANCE)
     normalised["mass_balance"] = bool(normalised["mass_balance"])
+    # Histories written before the probes followed --tick-length ran at the
+    # library's tick length, whatever the run used.
+    normalised.setdefault("tick_hours", LIBRARY_TICK_HOURS)
+    normalised["tick_hours"] = int(normalised["tick_hours"])
     return normalised
 
 
 def build_inference_env(config, seed):
+    tick_hours = int(config.get("tick_hours", LIBRARY_TICK_HOURS))
     kwargs = dict(library_path=config["library"], grid_size=tuple(config["grid"]),
-                  seed=seed, spawn_seed=seed,
+                  seed=seed, spawn_seed=seed, tick_hours=tick_hours,
                   apply_natural_mortality=bool(config["mortality"]))
     impact_vars, observable = [], []
     if config["project"]:
@@ -497,6 +504,8 @@ def build_inference_env(config, seed):
                                 migration=config["migration"],
                                 currents=CurrentConfig(**config["currents"]) if config.get("currents") else None,
                                 current_world_seed=seed)
+    # run_probe counts days and years from it.
+    env.tick_hours = tick_hours
     if impact_vars:
         # The training tool's fields: the active baseline maps, never the
         # inference tool's maps (section 257).
@@ -711,7 +720,7 @@ class LiveTrainingProgress(TrainingProgress):
 
     def config_ecology(self):
         keys = ("project", "library", "grid", "mortality", "migration",
-                "mortality_multiplier", "mass_balance", "currents")
+                "mortality_multiplier", "mass_balance", "currents", "tick_hours")
         return {k: self.config[k] for k in keys if k in self.config}
 
     def __call__(self, trainer, step, run_dir, args):

@@ -66,3 +66,31 @@ def test_project_spawn_and_reserves():
     assert not torch.equal(biomass[0], biomass[1])
     reserves = spawner.reserves(biomass, keys)
     assert (reserves >= 0).all() and (reserves <= biomass * model.max_reserve + 1e-5).all()
+
+
+@pytest.mark.parametrize("grid", [(60, 60), (30, 30), (16, 16)])
+def test_colony_count_scales_with_the_grid_as_on_the_cpu_engine(grid):
+    # Section 258: the same colonies per area on both engines, so a smaller
+    # grid does not spread its fish thinner in training than in the probes.
+    from lib.config.config_loader import load_project_config
+    spec = ProjectSpec(EnvironmentBuilder(project_path="mareld2.yaml", grid=grid))
+    model = TensorEcosystem(spec.env, "cpu")
+    spawner = WorldSpawner(spec, model)
+    assert spawner.biomass_scale == pytest.approx(grid[0] * grid[1] / 3600)
+    keys = fold_in(torch.zeros(16, dtype=torch.int64), torch.arange(16))
+    biomass = spawner.biomass(keys).double().numpy()
+    cpu = [load_project_config("mareld2.yaml", mode="inference", grid_size=grid, seed=s,
+                               spawn_seed=s, apply_natural_mortality=True)[0]
+           for s in range(1, 7)]
+    for fid in ("planktivorous_fish", "benthivorous_fish", "predatory_fish", "whiting"):
+        share = biomass[:, model.ids.index(fid)]
+        share = share / share.sum(axis=1, keepdims=True)
+        tensor_cells = float((1 / (share ** 2).sum(axis=1)).mean())
+        scalar_cells = float(np.mean([1 / ((w[fid].biomass / w[fid].biomass.sum()) ** 2).sum()
+                                      for w in cpu]))
+        assert tensor_cells == pytest.approx(scalar_cells, rel=0.35), fid
+
+
+def test_a_library_only_world_keeps_its_colony_count():
+    spec = ProjectSpec(EnvironmentBuilder(project_path=None, grid=(8, 9)))
+    assert spec.biomass_scale == 1.0
