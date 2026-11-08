@@ -24180,3 +24180,27 @@ remain open exactly as described in 71.9 / 71.11.
     0.32 (OFF by a hair); krill implied M2 2.72 (1.32 of booked).
     Frozen fix90 policies: planktivores 0.84 / 0.84 / 0.85 (was 0.83 /
     0.82 / 0.82), the rest within 0.03. test_half_saturation pins.
+
+254 Ctrl+C traceback from the probe worker's policies (2026-11-08). Ctrl+C
+    right after a probe submit printed ConnectionResetError from
+    multiprocessing.resource_sharer: tensors pickled for another process
+    travel as file descriptors the worker fetches from the trainer, and
+    LiveTrainingProgress._stop_worker terminated it during the fetch.
+    Harmless to the saved state, but noise. The policies now go to the
+    worker as torch.save bytes (_pack_policies, _unpack_policies), so no
+    connection exists to reset. Isolated repro 3/12 with tensors, 0/12 with
+    bytes; 30 stops on the fixed path without a traceback; a 40-tick probe in
+    the worker equals the one in-line. tests/test_training_progress.py.
+
+255 Muted impact maps (2026-11-08; user request). The FG editor has a Mute box
+    on the Impact Editor's baseline map and on each Inference tab map; the
+    path stays stored. Keys: impact_variables[i].baseline_map_muted: true and
+    inference.impact_maps_muted: [impact ids]. A muted baseline map is absent
+    from training on both engines (project_baseline_maps; an observable impact
+    gets its spawned field back); a muted inference map is a zero field in
+    inference worlds and the long-run probe (_load_inference_map_paths). Each
+    mute leaves the other map alone. The equilibrium start pattern
+    (habitat.build, include_muted=True) keeps reading a muted baseline map: it
+    is today's state, and muting the training map must not move the inference
+    start. A new or cleared file drops the mute. No inputs change; checkpoints
+    stay valid. mareld2.yaml sets neither key. tests/test_muted_impact_maps.py.

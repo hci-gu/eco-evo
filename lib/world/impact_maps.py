@@ -87,13 +87,16 @@ def load_impact_map_npz(path, impact_id, H, W, verbose=True):
     return arr.astype(np.float32, copy=False)
 
 
-def project_baseline_maps(project, project_path, grid_size, verbose=False):
+def project_baseline_maps(project, project_path, grid_size, verbose=False,
+                          include_muted=False):
     """Load the Impact Editor's baseline maps, ``{impact_id: (H, W) field}``.
 
     ``baseline_map`` on an active ``impact_variables`` entry is a .npz
     path, relative to the project file or absolute, read like an
     inference map (nearest-neighbour resampled to ``grid_size``). An
-    impact whose file is missing or invalid has no baseline map.
+    impact whose file is missing or invalid has no baseline map. So has
+    one with ``baseline_map_muted: true``, unless ``include_muted``: the
+    equilibrium start pattern is today's state and keeps reading the map.
     """
     base = os.path.dirname(os.path.abspath(project_path)) if project_path else os.getcwd()
     H, W = grid_size
@@ -103,6 +106,8 @@ def project_baseline_maps(project, project_path, grid_size, verbose=False):
             continue
         stored = iv.get('baseline_map')
         if not isinstance(stored, str) or not stored:
+            continue
+        if iv.get('baseline_map_muted') and not include_muted:
             continue
         path = stored if os.path.isabs(stored) else os.path.normpath(os.path.join(base, stored))
         field = load_impact_map_npz(path, iv['impact_id'], H, W, verbose=verbose)

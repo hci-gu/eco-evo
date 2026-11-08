@@ -187,8 +187,9 @@ def build(project, project_path, library, grid_size, active_ids,
         return depth, out
     if baseline_maps is None:
         from lib.world.impact_maps import project_baseline_maps
+        # The start pattern is today's state: a muted map still shapes it.
         baseline_maps = project_baseline_maps(project, project_path, grid_size,
-                                              verbose=verbose)
+                                              verbose=verbose, include_muted=True)
     for fid, (spec, table, equilibrium) in wanted.items():
         capacity = None
         if table is not None and depth is not None:

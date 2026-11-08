@@ -13,6 +13,7 @@ probe years (``probe_viability``, section 223.18) in
 """
 
 import copy
+import io
 import json
 import math
 import random
@@ -390,11 +391,31 @@ def _sigint_ignored_by_children():
         signal.signal(signal.SIGINT, previous)
 
 
+def _pack_policies(policies):
+    """The policies as plain bytes for the probe worker.
+
+    A tensor pickled for another process travels as a file descriptor the
+    receiver fetches from this process's resource sharer. A worker
+    terminated during that fetch (Ctrl+C right after a submit,
+    ``LiveTrainingProgress._stop_worker``) makes the sharer's thread print
+    a ConnectionResetError traceback. Bytes need no such connection.
+    """
+    buffer = io.BytesIO()
+    torch.save(policies, buffer)
+    return buffer.getvalue()
+
+
+def _unpack_policies(packed):
+    return torch.load(io.BytesIO(packed), map_location="cpu", weights_only=False)
+
+
 def _probe_in_process(config, seed, temperature, ticks, lower, upper,
                       policies, obs_mean, obs_var, threads):
     """Worker: the same probe as ``TrainingProgress.evaluate``, in a
-    separate process (the live viewer, section 223.12)."""
+    separate process (the live viewer, section 223.12). ``policies`` is
+    the ``_pack_policies`` payload."""
     torch.set_num_threads(max(1, int(threads)))
+    policies = _unpack_policies(policies)
     with evaluation_randomness(seed):
         env = build_inference_env(config, seed)
     with evaluation_randomness(seed):
@@ -684,7 +705,8 @@ class LiveTrainingProgress(TrainingProgress):
         with _sigint_ignored_by_children():  # the first submit spawns the worker
             future = self._pool.submit(_probe_in_process, self.config_ecology(), self.seed,
                                        self.temperature, self.ticks, self.lower, self.upper,
-                                       env.policies, obs_mean, obs_var, self.worker_threads)
+                                       _pack_policies(env.policies), obs_mean, obs_var,
+                                       self.worker_threads)
         self._pending = (future, number, step, time.perf_counter())
         print(f"[progress] probe={number}, step={step}: {self.ticks} ticks submitted "
               f"(separate process)", flush=True)

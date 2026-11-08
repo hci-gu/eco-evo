@@ -370,3 +370,72 @@ def test_ctrl_c_neither_kills_the_probe_worker_nor_prints_a_traceback(cancel, ca
     out, err = capfd.readouterr()
     assert "probe 7 (update 70) cancelled" in out
     assert "Traceback" not in err and "KeyboardInterrupt" not in err
+
+
+def _policy_nets():
+    return {f: torch.nn.Sequential(torch.nn.Linear(4, 3), torch.nn.Tanh()).eval() for f in ("fish", "seal")}
+
+
+def _same_weights(a, b):
+    return all(torch.equal(x, y) for f in a
+               for x, y in zip(a[f].state_dict().values(), b[f].state_dict().values()))
+
+
+def test_the_policies_reach_the_probe_worker_as_bytes_and_unchanged(monkeypatch):
+    # A tensor on the worker's queue is a descriptor fetched from this
+    # process's resource sharer, whose thread prints a ConnectionResetError
+    # when the worker is terminated during the fetch.
+    import lib.runners.training_progress as tp
+    nets = _policy_nets()
+    sent = {}
+
+    class Pool:
+        def submit(self, fn, *args):
+            sent["fn"], sent["args"] = fn, args
+            return None
+
+    def install(env, trainer, backend):
+        env.policies = nets
+
+    monkeypatch.setattr(tp, "install_current_policies", install)
+    progress = tp.LiveTrainingProgress("cpu", 1, 10, 0.3, 3.0, 0, 1.0)
+    progress.template, progress._pool, progress.config = SimpleNamespace(), Pool(), {}
+    progress._submit(None, 0)
+    packed = sent["args"][6]
+    assert sent["fn"] is tp._probe_in_process and isinstance(packed, bytes)
+    assert _same_weights(nets, tp._unpack_policies(packed))
+
+    seen = {}
+
+    class Env:
+        def rebuild_batched_weights(self):
+            seen["policies"] = self.policies
+
+    monkeypatch.setattr(tp, "build_inference_env", lambda config, seed: Env())
+    monkeypatch.setattr(tp, "run_probe", lambda env, ticks, lower, upper: "probed")
+    threads = torch.get_num_threads()
+    try:
+        assert tp._probe_in_process({}, 0, 1.0, 10, 0.3, 3.0, packed, None, None, threads) == "probed"
+    finally:
+        torch.set_num_threads(threads)
+    assert _same_weights(nets, seen["policies"])
+
+
+def test_terminating_the_worker_as_it_receives_the_policies_prints_no_traceback(capfd):
+    import concurrent.futures
+    import multiprocessing
+    import time as _time
+    from lib.runners.training_progress import (
+        LiveTrainingProgress, _ignore_sigint, _pack_policies, _unpack_policies)
+    progress = LiveTrainingProgress("cpu", 1, 10, 0.3, 3.0, 0, 1.0)
+    progress._pool = concurrent.futures.ProcessPoolExecutor(
+        max_workers=1, mp_context=multiprocessing.get_context("spawn"),
+        initializer=_ignore_sigint)
+    progress._pool.submit(int).result()  # past its imports, as for any later probe
+    packed = _pack_policies(_policy_nets())
+    future = progress._pool.submit(_unpack_policies, packed)
+    progress._pending = (future, 32, 310, _time.perf_counter())
+    progress.wait(cancel=True)
+    out, err = capfd.readouterr()
+    assert progress._pool is None and progress._pending is None
+    assert "Traceback" not in err and "ConnectionResetError" not in err

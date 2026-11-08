@@ -1444,6 +1444,14 @@ FIELD_HELP = {
         "No baseline map: absent from training unless observable. Adds "
         "no inputs; checkpoints stay valid."
     ),
+    "impact_baseline_map_mute": (
+        "Mute the baseline map: training worlds run as if this impact had "
+        "no baseline map, and the file stays stored. Inference maps are "
+        "not touched, and neither is the equilibrium start pattern, which "
+        "is today's state and keeps reading this file. An observable "
+        "impact gets its spawned field back. No inputs change; checkpoints "
+        "stay valid."
+    ),
     "impact_table_value": (
         "Impact value (in the impact's unit) at which this row's "
         "factors apply. Rows are sorted by value and interpolated "
@@ -1607,6 +1615,12 @@ FIELD_HELP = {
         "per cell, resampled to the grid. Used as is - not clipped to "
         "the Value Range - for every active impact, observable or not. "
         "No map = a zero field. Drop a file here or click to browse."
+    ),
+    "inference_impact_map_mute": (
+        "Mute this inference map: inference worlds and the training "
+        "viewer's long-run probe get a zero field for this impact, and the "
+        "file stays stored. The training worlds' baseline map is not "
+        "touched."
     ),
 }
 

@@ -402,6 +402,11 @@ class FGConfigApp:
         base_clear = ttk.Button(base_row, text="Clear",
                                 command=self._impact_clear_baseline_map)
         base_clear.pack(side="left")
+        self.impact_baseline_mute_var = tk.BooleanVar(value=False)
+        self.impact_baseline_mute_cb = ttk.Checkbutton(
+            base_row, text="Mute", variable=self.impact_baseline_mute_var,
+            command=self._impact_toggle_baseline_mute)
+        self.impact_baseline_mute_cb.pack(side="left", padx=(6, 0))
         for widget in (base_zone, base_status):
             widget.bind("<Button-1>", lambda _e: self._impact_browse_baseline_map())
         if self._dnd_available():
@@ -413,6 +418,7 @@ class FGConfigApp:
                 except Exception:
                     pass
         attach_help([base_lbl, base_zone, base_status, base_clear], "impact_baseline_map")
+        attach_help([self.impact_baseline_mute_cb], "impact_baseline_map_mute")
 
         self.impact_apply_btn = ttk.Button(self.impact_editor_frame,
                                            text="Apply Changes",
@@ -2380,7 +2386,8 @@ class FGConfigApp:
         entry = self._selected_impact_entry() or {}
         try:
             if (bool(self.impact_observable_var.get())
-                    and not entry.get('baseline_map')):
+                    and (not entry.get('baseline_map')
+                         or entry.get('baseline_map_muted'))):
                 self.impact_spawn_frame.grid()
             else:
                 self.impact_spawn_frame.grid_remove()
@@ -2455,6 +2462,7 @@ class FGConfigApp:
         # Show/hide the Spawn Strategy frame based on the observable flag.
         self._sync_impact_spawn_visibility()
         self._set_impact_editor_enabled(not entry.get('muted'))
+        self._sync_baseline_mute_widget(entry)
 
     def apply_impact_changes(self):
         entry = self._selected_impact_entry()
@@ -2656,7 +2664,7 @@ class FGConfigApp:
                   "supply an .npz file containing a single 2-D float array (the key "
                   "name does not matter). Drop the file onto any zone (requires the "
                   "'tkinterdnd2' package) or click to browse. "
-                  "Missing maps are treated as an all-zero field at inference time. "
+                  "Missing or muted maps are treated as an all-zero field at inference time. "
                   "Biomass and energy maps are still randomly spawned from the configured "
                   "initial biomass values."),
             wraplength=700, justify="left",
@@ -2773,12 +2781,40 @@ class FGConfigApp:
         arr = self._peek_impact_npz((entry or {}).get('impact_id', ''), path)
         if arr is None:
             return f"{os.path.basename(path)} (unreadable: no baseline)"
-        return (f"{os.path.basename(path)}\nshape={arr.shape[0]}×{arr.shape[1]}  "
-                f"min={float(arr.min()):g}  max={float(arr.max()):g}")
+        status = (f"{os.path.basename(path)}\nshape={arr.shape[0]}×{arr.shape[1]}  "
+                  f"min={float(arr.min()):g}  max={float(arr.max()):g}")
+        return status + self.MUTED_MAP_NOTE if entry.get('baseline_map_muted') else status
+
+    def _sync_baseline_mute_widget(self, entry):
+        """The Mute box of the baseline map: its state, usable only on a map
+        of an impact that is not muted itself."""
+        entry = entry or {}
+        self.impact_baseline_mute_var.set(bool(entry.get('baseline_map_muted')))
+        usable = bool(entry.get('baseline_map')) and not entry.get('muted')
+        try:
+            self.impact_baseline_mute_cb.configure(state="normal" if usable else "disabled")
+        except tk.TclError:
+            pass
+
+    def _impact_toggle_baseline_mute(self):
+        """Mute or unmute the selected impact's baseline map; the path stays."""
+        entry = self._selected_impact_entry()
+        if entry is None or entry.get('muted') or not entry.get('baseline_map'):
+            self._sync_baseline_mute_widget(entry)
+            return
+        if self.impact_baseline_mute_var.get():
+            entry['baseline_map_muted'] = True
+        else:
+            entry.pop('baseline_map_muted', None)
+        self._mark_dirty()
+        self._update_baseline_map_view(entry)
+        self._sync_impact_spawn_visibility()
+        self._refresh_impact_list_keep_selection()
 
     def _update_baseline_map_view(self, entry):
         """Status text and thumbnail of the selected impact's baseline map."""
         self.impact_baseline_status_var.set(self._baseline_map_status(entry))
+        self._sync_baseline_mute_widget(entry)
         arr = None
         stored = (entry or {}).get('baseline_map')
         if stored:
@@ -2840,6 +2876,7 @@ class FGConfigApp:
         if self._read_impact_npz(entry.get('impact_id', ''), path) is None:
             return
         entry['baseline_map'] = self._format_inference_map_path(path)
+        entry.pop('baseline_map_muted', None)  # a new file is meant to be used
         self._mark_dirty()
         self._update_baseline_map_view(entry)
         self._sync_impact_spawn_visibility()
@@ -2850,6 +2887,7 @@ class FGConfigApp:
         if entry is None or entry.get('muted') or 'baseline_map' not in entry:
             return
         entry.pop('baseline_map', None)
+        entry.pop('baseline_map_muted', None)
         self._mark_dirty()
         self._update_baseline_map_view(entry)
         self._sync_impact_spawn_visibility()
@@ -3317,12 +3355,19 @@ class FGConfigApp:
             btns.grid(row=i, column=3, sticky="w", pady=4)
             ttk.Button(btns, text="Clear",
                        command=lambda k=iid: self._inference_clear_map(k)).pack(side="left")
+            mute_var = tk.BooleanVar(value=False)
+            mute_cb = ttk.Checkbutton(btns, text="Mute", variable=mute_var,
+                                      command=lambda k=iid: self._inference_toggle_map_mute(k))
+            mute_cb.pack(side="left", padx=(6, 0))
+            attach_help([mute_cb], "inference_impact_map_mute")
 
             self.inference_impact_widgets[iid] = {
                 'status_var': status_var,
                 'thumb_lbl': thumb_lbl,
                 'zone': zone,
                 'path': None,
+                'mute_var': mute_var,
+                'mute_cb': mute_cb,
             }
 
             # Register DnD on every widget in the row so the <<Drop>> event
@@ -3344,6 +3389,47 @@ class FGConfigApp:
             if stored_path:
                 resolved = self._resolve_inference_map_path(stored_path)
                 self._inference_set_map(iid, resolved, persist=False, store_path=stored_path)
+            self._inference_sync_mute_view(iid)
+
+    def _inference_muted_maps(self):
+        """Impact ids whose inference map is muted (the path stays stored)."""
+        section = (self.project_data.get('inference') or {}).get('impact_maps_muted')
+        return list(section) if isinstance(section, (list, tuple)) else []
+
+    def _inference_set_map_muted(self, impact_id, muted):
+        kept = [iid for iid in self._inference_muted_maps() if iid != impact_id]
+        if muted:
+            kept.append(impact_id)
+        if kept:
+            self.project_data.setdefault('inference', {})['impact_maps_muted'] = sorted(kept)
+            return
+        infer = self.project_data.get('inference')
+        if isinstance(infer, dict):
+            infer.pop('impact_maps_muted', None)
+            if not infer:
+                self.project_data.pop('inference', None)
+
+    def _inference_sync_mute_view(self, impact_id):
+        """The row's Mute box and status note; the box needs a stored map."""
+        w = self.inference_impact_widgets.get(impact_id)
+        if w is None:
+            return
+        muted = impact_id in self._inference_muted_maps()
+        stored = (self.project_data.get('inference') or {}).get('impact_maps') or {}
+        w['mute_var'].set(muted)
+        w['mute_cb'].configure(state="normal" if stored.get(impact_id) else "disabled")
+        text = w['status_var'].get().replace(self.MUTED_MAP_NOTE, "")
+        w['status_var'].set(text + self.MUTED_MAP_NOTE if muted else text)
+
+    def _inference_toggle_map_mute(self, impact_id):
+        w = self.inference_impact_widgets.get(impact_id)
+        if w is None:
+            return
+        stored = (self.project_data.get('inference') or {}).get('impact_maps') or {}
+        if stored.get(impact_id):
+            self._inference_set_map_muted(impact_id, bool(w['mute_var'].get()))
+            self._mark_dirty()
+        self._inference_sync_mute_view(impact_id)
 
     def _inference_browse_map(self, impact_id):
         path = filedialog.askopenfilename(
@@ -3369,6 +3455,8 @@ class FGConfigApp:
             infer.pop('impact_maps', None)
         if not infer:
             self.project_data.pop('inference', None)
+        self._inference_set_map_muted(impact_id, False)
+        self._inference_sync_mute_view(impact_id)
 
     def _inference_impact_under_pointer(self):
         """Return the impact_id whose row currently contains the mouse pointer.
@@ -3508,6 +3596,8 @@ class FGConfigApp:
             infer = self.project_data.setdefault('inference', {})
             maps = infer.setdefault('impact_maps', {})
             maps[impact_id] = stored
+            self._inference_set_map_muted(impact_id, False)  # a new file is meant to be used
+            self._inference_sync_mute_view(impact_id)
         elif store_path is not None:
             # Keep whatever path was loaded from disk (no rewrite).
             pass
@@ -4647,6 +4737,8 @@ class FGConfigApp:
     # the project FG/impact entry (per-project state), not in the library.
 
     MUTED_FG_COLOR = "gray60"
+    # Last line of a muted map's status text (baseline and inference maps).
+    MUTED_MAP_NOTE = "\nMuted: not used"
 
     # Display unit per impact_id (shown in parentheses after the impact's
     # display name in the project's Impact Variables list and after the
@@ -6326,7 +6418,8 @@ class FGConfigApp:
             if iv.get('observable'):
                 base = f"{base} [observable]"
             if iv.get('baseline_map'):
-                base = f"{base} [baseline map]"
+                base = (f"{base} [baseline map muted]" if iv.get('baseline_map_muted')
+                        else f"{base} [baseline map]")
             return base
         if self.project_data.get('impact_variables'):
             self.project_data['impact_variables'].sort(key=lambda iv: _impact_display(iv).lower())

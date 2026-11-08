@@ -164,7 +164,10 @@ fabricates mass.
   Inference reads only `inference.impact_maps` (no map = no impact): add
   the baseline file there to keep today's fishing, or another file for a
   scenario - one field per impact, never stacked
-  (`lib/world/impact_maps.py`). The GPU engine mirrors all of it (impact
+  (`lib/world/impact_maps.py`). Either map can be muted with its path kept
+  (FG editor; `baseline_map_muted`, `inference.impact_maps_muted`; section
+  255): each mute leaves the other map alone, and the equilibrium start
+  pattern keeps reading a muted baseline map. The GPU engine mirrors all of it (impact
   mortality and cost, observable channels in train.py's slots; section
   161). Impacts are outside the growth budget. `mareld2.yaml` fishes
   today's world: `bottom_trawling` (benthivores F 0.17, water-column

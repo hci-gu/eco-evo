@@ -188,7 +188,9 @@ def _load_inference_map_paths(project_path):
     """Return ``{impact_id: absolute_path}`` from the project's ``inference.impact_maps``.
 
     Returns an empty dict when the project has no such section. Relative paths
-    are resolved against the project YAML file's directory.
+    are resolved against the project YAML file's directory. An impact listed
+    in ``inference.impact_maps_muted`` has no map: its path stays in the
+    project, unread.
     """
     if not project_path:
         return {}
@@ -198,13 +200,16 @@ def _load_inference_map_paths(project_path):
             data = _yaml.safe_load(f) or {}
     except Exception:
         return {}
-    section = (data.get('inference') or {}).get('impact_maps') or {}
+    inference_section = data.get('inference') or {}
+    section = inference_section.get('impact_maps') or {}
     if not isinstance(section, dict):
         return {}
+    muted = inference_section.get('impact_maps_muted') or []
+    muted = set(muted) if isinstance(muted, (list, tuple)) else set()
     base = os.path.dirname(os.path.abspath(project_path))
     resolved = {}
     for iid, p in section.items():
-        if not isinstance(p, str) or not p:
+        if not isinstance(p, str) or not p or iid in muted:
             continue
         resolved[iid] = p if os.path.isabs(p) else os.path.normpath(os.path.join(base, p))
     return resolved
