@@ -2684,17 +2684,23 @@ interaction_definitions:
     predation_mortality: 1.67
     assimilation_factor: 0.8
     handling_time: 57.8
-    max_intake_rate: 0.018
+    # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at
+    # 2-20 m, 0.11 at 20-50 m, 0.091 at 50-65 m, K_deep 0.06 judged; ~x6 the
+    # central profile at 80-150 m) in the same encounter, conventions kept:
+    # a 0.018 -> 0.027, classes from the same run; the stomach-based
+    # night/day kept.
+    # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
+    max_intake_rate: 0.027
     functional_response: 2
     dark_ratio: 0.57
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.06}
-      - {depth_m: 100.0, factor: 0.013}
-      - {depth_m: 149.9, factor: 0.013}
-      - {depth_m: 150.0, factor: 0.0025}
-      - {depth_m: 249.9, factor: 0.0025}
-      - {depth_m: 250.0, factor: 0.0011}
+      - {depth_m: 99.9, factor: 0.086}
+      - {depth_m: 100.0, factor: 0.021}
+      - {depth_m: 149.9, factor: 0.021}
+      - {depth_m: 150.0, factor: 0.0055}
+      - {depth_m: 249.9, factor: 0.0055}
+      - {depth_m: 250.0, factor: 0.0017}
   benthivorous_fish_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
     # (overlap) convention per cell bed depth; the library a is the
@@ -2713,14 +2719,19 @@ interaction_definitions:
     predation_mortality: 0.035
     assimilation_factor: 0.8
     handling_time: 182.7
-    max_intake_rate: 0.013
+    # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at
+    # 2-20 m, 0.11 at 20-50 m, 0.091 at 50-65 m, K_deep 0.06 judged; ~x6 the
+    # central profile at 80-150 m) in the same encounter, conventions kept:
+    # a 0.013 -> 0.015, classes from the same run; night/day 0.03.
+    # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
+    max_intake_rate: 0.015
     functional_response: 2
-    dark_ratio: 0.02
+    dark_ratio: 0.03
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.05}
-      - {depth_m: 100.0, factor: 0.0087}
-      - {depth_m: 149.9, factor: 0.0087}
+      - {depth_m: 99.9, factor: 0.054}
+      - {depth_m: 100.0, factor: 0.011}
+      - {depth_m: 149.9, factor: 0.011}
       - {depth_m: 150.0, factor: 0.0}
       - {depth_m: 249.9, factor: 0.0}
       - {depth_m: 250.0, factor: 0.0}
@@ -2746,17 +2757,22 @@ interaction_definitions:
     predation_mortality: 0.075
     assimilation_factor: 0.8
     handling_time: 167.8
-    max_intake_rate: 0.0241
+    # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at
+    # 2-20 m, 0.11 at 20-50 m, 0.091 at 50-65 m, K_deep 0.06 judged; ~x6 the
+    # central profile at 80-150 m) in the same encounter, conventions kept:
+    # a 0.0241 -> 0.027, classes from the same run; night/day 0.02.
+    # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
+    max_intake_rate: 0.027
     functional_response: 2
-    dark_ratio: 0.01
+    dark_ratio: 0.02
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.075}
-      - {depth_m: 100.0, factor: 0.026}
-      - {depth_m: 149.9, factor: 0.026}
-      - {depth_m: 150.0, factor: 0.0009}
-      - {depth_m: 249.9, factor: 0.0009}
-      - {depth_m: 250.0, factor: 0.0001}
+      - {depth_m: 99.9, factor: 0.081}
+      - {depth_m: 100.0, factor: 0.031}
+      - {depth_m: 149.9, factor: 0.031}
+      - {depth_m: 150.0, factor: 0.0012}
+      - {depth_m: 249.9, factor: 0.0012}
+      - {depth_m: 250.0, factor: 0.00014}
   mackerel_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
     # (overlap) convention per cell bed depth; the library a is the
@@ -2774,17 +2790,23 @@ interaction_definitions:
     predation_mortality: 0.1
     assimilation_factor: 0.8
     handling_time: 75.5
-    max_intake_rate: 0.0025
+    # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at
+    # 2-20 m, 0.11 at 20-50 m, 0.091 at 50-65 m, K_deep 0.06 judged; ~x6 the
+    # central profile at 80-150 m) in the same encounter, conventions kept:
+    # a 0.0025 -> 0.0039, classes from the same run; the stomach-based
+    # night/day kept.
+    # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
+    max_intake_rate: 0.0039
     functional_response: 2
     dark_ratio: 0.42
     light_threshold_deg: -5.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.0043}
-      - {depth_m: 100.0, factor: 0.0027}
-      - {depth_m: 149.9, factor: 0.0027}
-      - {depth_m: 150.0, factor: 0.0015}
-      - {depth_m: 249.9, factor: 0.0015}
-      - {depth_m: 250.0, factor: 0.0015}
+      - {depth_m: 99.9, factor: 0.0059}
+      - {depth_m: 100.0, factor: 0.0043}
+      - {depth_m: 149.9, factor: 0.0043}
+      - {depth_m: 150.0, factor: 0.0028}
+      - {depth_m: 249.9, factor: 0.0028}
+      - {depth_m: 250.0, factor: 0.0028}
   whiting_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
     # (overlap) convention per cell bed depth; the library a is the
@@ -2808,12 +2830,18 @@ interaction_definitions:
     predation_mortality: 0.1873
     assimilation_factor: 0.8
     handling_time: 159.5
-    max_intake_rate: 0.043
+    # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at
+    # 2-20 m, 0.11 at 20-50 m, 0.091 at 50-65 m, K_deep 0.06 judged; ~x6 the
+    # central profile at 80-150 m) in the same encounter, conventions kept:
+    # a 0.043 -> 0.048, classes from the same run; the stomach-based
+    # night/day kept.
+    # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
+    max_intake_rate: 0.048
     functional_response: 2
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.162}
-      - {depth_m: 100.0, factor: 0.029}
-      - {depth_m: 149.9, factor: 0.029}
+      - {depth_m: 99.9, factor: 0.176}
+      - {depth_m: 100.0, factor: 0.035}
+      - {depth_m: 149.9, factor: 0.035}
       - {depth_m: 150.0, factor: 0.0}
       - {depth_m: 249.9, factor: 0.0}
       - {depth_m: 250.0, factor: 0.0}

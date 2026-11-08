@@ -195,16 +195,18 @@ fabricates mass.
   0.15, -> Nephrops 0.44, -> planktivores 0.0198 (243.3: per species, pout 0.87 of it), -> whiting 0.021 (251: membership 0.320, whiting's own band share 0.7 day / 0.5 night);
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
   H_bed/H_whiting; was 0.27), -> planktivores 0.0212, -> zoo 0.000138
-  (copepods only since 245; was 0.0023), -> krill 0.043, ->
+  (copepods only since 245; was 0.0023), -> krill 0.048, ->
   benthivores 0.21; water column -> planktivores 0.0060, -> zoo
-  3.13e-05 (245; was 0.000241), -> krill 0.0241, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
+  3.13e-05 (245; was 0.000241), -> krill 0.027, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
   member's foraging time near the bed, for concurrent search), -> whiting
   0.013, -> mackerel 0.00088
   (f 0.14 since 244, was 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
   0.0266 (243.3: herring and sprat only, no overlap with the near-bed
   pout and deep blue whiting), -> zoo 0.00084 (245: measured clearance,
-  daytime biting on Calanus; was 0.0023), -> krill 0.0025; planktivores
-  -> krill 0.018, benthivores -> krill 0.013. Every krill pair is a
+  daytime biting on Calanus; was 0.0023), -> krill 0.0039; planktivores
+  -> krill 0.027, benthivores -> krill 0.015 (section 253: the measured box
+  light, 44 SMHI CTD PAR casts, ~x6 the old central profile at 80-150 m;
+  research_notes/"Ljus under 50 m"). Every krill pair is a
   section 220 encounter in the band convention with a
   `depth_access_table` (section 245: a per-cell multiplier on a by bed
   depth, equal-cell mean 1, never on visibility; bed feeders meet the
@@ -239,7 +241,7 @@ fabricates mass.
   Calanus; was 0.42 from the crustacean stomachs, krill included), ->
   krill 0.42 (a twilight pair) at -5 deg; krill pairs (245): planktivores
   0.57 and whiting none (stomachs: no diel difference), water column
-  0.01 and benthivores 0.02 at 0 deg (encounter; flagged);
+  0.02 and benthivores 0.03 at 0 deg (encounter, measured light 253; flagged);
   benthic pairs none.
 - Predation: vectorised, Holling type II with Beddington-DeAngelis crowding,
   hidden (rested) fraction protected, energy gain buffered. Since section

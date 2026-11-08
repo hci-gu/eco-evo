@@ -24131,3 +24131,52 @@ remain open exactly as described in 71.9 / 71.11.
     one convention for all water-column pairs under the dark light passes
     both the gate (krill 1.9x booked, fish 0.5-1.8) and the 1991 North
     Sea clearance test.
+252.5 Light below 50 m (research_notes/"Ljus under 50 m"; field data
+    only). 44 daytime SMHI CTD casts with a PAR sensor in or near the box
+    (2018-25): K 0.175 at 2-20 m (central profile 0.30), 0.11 at 20-50 m
+    (0.12), 0.091 at 50-65 m (0.06); nothing measured below ~65 m (sensor
+    floor), K_deep judged 0.06 (0.05-0.09). Daytime median light x6
+    (x2-12) above the central profile at 80-150 m: ~1.4 lx at 80 m, 0.43
+    lx at 100 m. The Oslofjord krill light of 252.4 was a single-K
+    extrapolation from the top 30 m, probably 5-500x too low. The pinned
+    dark variant is therefore not supported; box krill sit ~1 order
+    brighter than the Oslofjord value. Krillparen under fjordljus (the
+    planktivores' gate under the pin: every pair passes, zooplankton M2
+    x1.39) stands as a sensitivity only.
+252.6 Water-column pairs under the measured light (research_notes/
+    "Vattenpelarens par i uppmatt ljus", a-umlaut; nothing applied).
+    Light is closed as a lever: krill vision was near saturation, so the
+    measured light moves every krill pair only x1.1-1.6 (water column
+    0.0241 -> 0.0273; planktivores 0.018 -> 0.027). One convention for
+    every water-column pair (band overlap, one vision function) brings
+    krill at the saithe spread 2.73 -> 2.28x booked; field capture p
+    (Juanes 2002 review: fish 0.45, krill 0.6) 1.69; a Trench-side
+    booking [J] on top 1.25. The rest is geometry: ~90 % of the saithe-
+    weighted krill a comes from the 17 % of saithe over < 150 m beds. The
+    shared vision function fails the juvenile-benthivore test (1.3-1.8x
+    booked vs a ~4-5 % field share). 1991 clearance test: V_meas inside,
+    V_meas_p at the edge.
+
+253 The measured box light in the krill pairs (2026-11-08; user: apply
+    the light, item 2 of the 252.6 options; research_notes/"Ljus under
+    50 m", "Vattenpelarens par i uppmatt ljus" A3). The section 245
+    encounter of every krill pair re-run under the measured light (44
+    SMHI CTD PAR casts in or near the box: K 0.175 at 2-20 m by month
+    from Secchi, 0.11 at 20-50 m, 0.091 at 50-65 m, K_deep 0.06 judged,
+    0.05-0.09), each pair's own convention kept. Equal-cell a (class a's
+    < 100 / 100-150 / 150-250 / >= 250 m as depth_access_table):
+    planktivores 0.018 -> 0.027 (0.086 / 0.021 / 0.0055 / 0.0017),
+    water column 0.0241 -> 0.027 (0.081 / 0.031 / 0.0012 / 0.00014;
+    night/day 0.01 -> 0.02), whiting 0.043 -> 0.048 (0.176 / 0.035 / 0 /
+    0), benthivores 0.013 -> 0.015 (0.054 / 0.011 / 0 / 0; night/day 0.02
+    -> 0.03), mackerel 0.0025 -> 0.0039 (0.0059 / 0.0043 / 0.0028 /
+    0.0028). Stomach-based night/day ratios (planktivores 0.57, mackerel
+    0.42, whiting none) kept. The fish pairs are unchanged (the one-
+    convention set fails the juvenile-benthivore field test, 252.6).
+253.1 budget_gate: planktivores krill 0.91 -> 1.16 and zooplankton 1.06 ->
+    0.89 of booked; zooplankton implied M2 1.44 -> 1.20 /yr (booked
+    1.378); water column krill 3.32 -> 3.37 at equal cells, 2.68 -> 2.80
+    at the saithe spread, water column -> benthivores at the field spread
+    0.32 (OFF by a hair); krill implied M2 2.72 (1.32 of booked).
+    Frozen fix90 policies: planktivores 0.84 / 0.84 / 0.85 (was 0.83 /
+    0.82 / 0.82), the rest within 0.03. test_half_saturation pins.
