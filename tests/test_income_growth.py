@@ -69,9 +69,12 @@ def _library():
 def test_budget_is_paid_over_the_feeding_season():
     lib = _library()
     species, inter = lib["species_definitions"], lib["interaction_definitions"]
+    # The r_max-based budget (section 250 moved the planktivores to
+    # somatic_production; r_max 0.40 is their pre-250 value).
     base = {k: v for k, v in species["planktivorous_fish"].items()
             if k not in ("income_growth_kappa", "material_growth_share",
-                         "feeding_season_months")}
+                         "feeding_season_months", "somatic_production")}
+    base["r_max"] = 0.40
     plain = gb.growth_budget("planktivorous_fish", species, inter, species=base)
     spec = dict(base, income_growth_kappa=0.75, feeding_season_months=5.5)
     seasonal = gb.growth_budget("planktivorous_fish", species, inter, species=spec)
@@ -176,9 +179,10 @@ def test_refusals():
             ("benthic_infauna", {}, "not a decision"),
             ("zooplankton", {}, "growth_q10"),
             ("planktivorous_fish", {"starve_rate": 0.0}, "starve_rate"),
-            ("planktivorous_fish", {"r_max": 0, "feeding_season_months": 5.5}, "r_max")):
+            ("whiting", {"r_max": 0, "feeding_season_months": 5.5}, "r_max")):  # 250: not open
         lib = _library()
         lib["species_definitions"][sid].pop("material_growth_share", None)
+        lib["species_definitions"][sid].pop("somatic_production", None)   # 250
         lib["species_definitions"][sid].update(income_growth_kappa=0.7, **extra)
         with pytest.raises(ValueError, match=match):
             load_project_config(str(PROJECT), library_config=lib,

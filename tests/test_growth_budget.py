@@ -165,6 +165,10 @@ def test_every_library_fg_has_a_literature_budget():
     for fid, spec in lib["species_definitions"].items():
         if fid in HAND_SET:
             assert "r_max" not in spec, fid
+        elif spec.get("somatic_production") not in (None, ""):
+            # Section 250: an open population pays its somatic production;
+            # r_max is out of its budget.
+            assert "r_max" not in spec and float(spec["somatic_production"]) > 0.0, fid
         elif spec.get("outside_density") not in (None, ""):
             # Section 245: an open pool is derived with r_max 0 (its density
             # is set outside the box; local production = booked losses).
@@ -215,7 +219,10 @@ def test_loader_leaves_m1_out_when_mortality_is_off():
                                      apply_natural_mortality=False)
     full_on = setup_full_mareld_mvp(grid_size=(6, 6), seed=0, spawn_seed=0)
     # Phytoplankton carries an M1 (its sinking loss) since section 173/174.
-    for fid in ("zooplankton", "planktivorous_fish", "benthivorous_fish", "phytoplankton"):
+    for fid in ("zooplankton", "phytoplankton"):
         assert full_off[fid].growth_rate < full_on[fid].growth_rate
+    # Section 250: an open population's g pays its somatic production, not M1.
+    for fid in ("planktivorous_fish", "benthivorous_fish"):
+        assert full_off[fid].growth_rate == pytest.approx(full_on[fid].growth_rate)
     assert full_off["benthic_infauna"].growth_rate == pytest.approx(
         full_on["benthic_infauna"].growth_rate)

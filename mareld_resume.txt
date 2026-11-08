@@ -23797,3 +23797,245 @@ remain open exactly as described in 71.9 / 71.11.
 247.6 Open: zooplankton and the mammals keep u 0.5 (contradicted by the
     field; the data-supported path is reserve_room and a field u after a
     frozen-policy probe, section 240); their start keeps u +- 0.3 / 0.7.
+
+248 KRILL PAIRS OF THE WATER COLUMN AND WHITING; DIETS IN THE PROBE
+    (user, 2026-11-07: "investigate the krill pairs' a for the water
+    column and whiting", then "run the recommendation: c and d").
+    research_notes/"Krill i Skagerrak" a_revisit/ (summary.md, scripts,
+    tables). No library value changed.
+248.1 Findings. Both pairs are saturated at the box krill (1/(a h) 0.14
+    and 0.28 t/km2 vs 5; sat > 0.8 even at a / 5): a sets the diet mix
+    (shared handling), not the ration. Water column: the gate's OFF
+    (krill 3.32) is its equal-cell spread, which gives the group the
+    < 150 m beds that carry the krill a; with the group spread as GOV
+    saithe in the box (0.043 / 0.127 / 0.782 / 0.048 over < 100 /
+    100-150 / 150-250 / > 250 m) the whole menu passes (60x60: krill 2.73,
+    planktivores 0.38, benthivores 0.44). Whiting: the krill pair passes
+    (1.54); its OFF fish pairs are the complement ((1 - 0.856)/(1 -
+    0.557) = 0.33 on every other prey). Field corrections raise its
+    krill share: whiting sit over shallow beds (GOV in the box 0.533 /
+    0.211 / 0.251 / 0.006; krill 1.64), the booked 0.50 is an April share
+    (April a 0.052 vs annual 0.043), Onsrud 2004 whiting stand off the
+    bed. The one shared factor that could lower both is the light at the
+    krill's depth (dark profile x0.32 whiting, x0.19 water column); an
+    isolume layer needs a re-derivation (over < 100 m beds it cannot sit
+    at its isolume). fix90 probe at update 30 (one seed): whiting 9.9x,
+    water column 3.4x start in year 3 (fix89 without krill 2.0x, 0.39x);
+    krill at 0.6-0.7 of its outside density; realised krill removal 8-9
+    stocks a year (M2 11-16 /yr, booked 2.07), ~2x the booked flow per
+    predator tonne - solved from the krill balance (scripts/
+    realised_krill.py). The growth is a mortality question (production at
+    fill ~1 is the booked gross), not an a question.
+248.2 Applied (c): budget_gate prints the diet gate a second time for the
+    groups with field bed-depth shares (lib/diagnostics/field_diet.py
+    FIELD_BED_SHARES: water column by saithe, whiting; GOV hauls in the
+    box 2000-19, Q1 + Q3): each class's share spread over its cells,
+    every pair's a(c) B_vis(c) averaged with those weights, the prey at
+    their start maps. At the gate's 16x16 grid: water column krill 2.46,
+    planktivores 0.53, all ok; whiting krill 1.68, benthivores 0.08,
+    epifauna 0.22, planktivores 0.12 OFF. FIELD_QB moved to the same
+    module.
+248.3 Applied (d): run_probe stores `diets` per whole probe year: each
+    decision maker's tonnes per prey (the env's intake_by_pred_prey book,
+    differenced at the year end) and ration (t per t of the year's mean
+    biomass); in probe.jsonl. tools/probes/probe_diets.py prints a run's
+    probe (latest or --evaluation N): realised shares vs booked M2 x B
+    shares over the booked pairs (the gate's band, * = OFF; unbooked prey
+    shown, not judged) and the ration vs FIELD_QB. A running train_gpu
+    keeps its old probe code until it is restarted (the worker is spawned
+    once); probes from before 248 have no diets.
+248.4 Tests: tests/test_probe_diets.py (yearly differencing and ration,
+    no book -> no diets, JSON, probe_diets shares / OFF / unbooked,
+    field_cell_weights and its renormalisation, the share table). Full
+    suite 1813 passed, 12 skipped; 1-gen train.py and train_gpu.py smokes
+    passed, and a one-year CPU probe of the smoke world read back through
+    probe_diets (mechanics only).
+248.5 Open: the isolume re-derivation of the five krill pairs (only if
+    the realised diets show whiting or the water column above their field
+    krill share at a field-like spread); whiting's and the water column's
+    realised mortality against the booked one; benthivores and
+    planktivores have no field bed-depth shares.
+
+249 WHY THE FISH GROW IN FIX90; THE PREY-SIDE CHECK (user, 2026-11-07:
+    "something is wrong: after 68 updates every fish group explodes",
+    then "start with step 1").
+249.1 Diagnosis (research_notes/"Krill i Skagerrak" a_revisit/
+    fix90_growth/; frozen fix90 policies at update 69, three probe years
+    in the probe's own world, library variants in a scratch copy). Year-3
+    mean biomass / start: whiting 9.6, water column 3.6, benthivores 3.1,
+    planktivores 2.0 in year 2 then 1.0. Three stacked causes:
+    (1) the material-law g carries 12/feeding_season_months on a
+    seasonal-intake premise, but the fish sit at reserve fill ~1 all year
+    (reserve_room, the open krill pool), so they produce 12/n x the booked
+    gross all year (predicted net 0.41 /yr water column, 1.09 whiting;
+    observed 0.43, 1.07); rations are ~12/n x the field Q/B (planktivores
+    9 vs 5, mackerel 6 vs 2.2, water column 3.7 vs 2.83); the feeding
+    level itself (~0.3-0.4 of Cmax) is inside the field 0.22-0.53, so
+    what is missing is the seasonal cycle of intake; (2) the derived g
+    pays booked M2 that is not realised (whiting 0.05-0.10 of 0.371 /yr);
+    (3) no K and no food limit. Ablations: A as is reproduces the probe;
+    B feeding_season_months 12 halves the exponents (whiting 5.7x, water
+    column 1.9x); C the pre-247 starvation line ~ A (247 is not the
+    cause); D krill x 0.01 stops whiting and the water column (overstated:
+    the zooplankton pairs were cut to copepods in 245).
+249.2 Applied: the prey-side check. budget_gate: per prey, each pair's
+    encounter-implied M2 = booked M2 x (encounter share / booked share) of
+    the predator's diet (the predator eats its booked ration split by
+    encounter), at equal cells and at the field spread; OFF = a pair
+    carrying >= 0.10 of its prey's booked M2 outside 1/3-3. run_probe also
+    stores `year_biomass` (every group's mean biomass per probe year);
+    probe_diets prints realised M2 per prey and pair against booked.
+    Implied / booked at the start: whiting 0.24 (benthivores 0.01, water
+    column 0.15), benthivores 0.36, planktivores 0.32, mackerel 0.08;
+    the NDM prey 0.92-2.25. research_notes/"Bytessidans predation"
+    (a-umlaut).
+249.3 Causes: benthivores -> whiting counts the gape twice (a = 0.026 x
+    gape phi 0.10 since 223.28, and the prey window since 230; the same
+    fault on the planktivore pair was replaced by membership in 243.3);
+    membership without gape gives a ~0.007 (x2.8), still ~0.03 of booked;
+    the residual (whiting's near-bed share inside a, the SMS-scaled 0.18
+    against in-box cod stomachs) is open. The fish pairs of the water
+    column and whiting are squeezed by their krill encounter (the
+    complement of 248) and belong with the seasonal intake (step 2).
+249.4 Tests: tests/test_probe_diets.py (year_biomass, prey-side realised
+    M2 and its OFF flag).
+249.5 Step 2 (user: "do a and c"). (a) applied: benthivores -> whiting a
+    0.0026 -> 0.0083 (membership 0.320 instead of the gape phi 0.10;
+    test_half_saturation pin). (c) Monthly intake with the frozen fix90
+    policies: the gadoids eat flat all year at fill 0.99 (benthivores
+    highest in Dec), planktivores 0.4-0.5 t/t/month in winter on krill
+    vs 0.8-0.9 in summer; the bottom temperature gives the gadoids no
+    season (ceiling x0.93-1.09). The field Q1 pause is spawning-linked
+    (whiting 45 % empty stomachs, cod/haddock 16-18 %), so 12/n
+    presupposes a spawning cycle the model lacks. Ablations: E (n 12 +
+    unrealisable pairs at their implied M2) leaves r_max - F (whiting
+    0.40 /yr observed, 0.41 predicted); G (E + r_max ~0; r_max 0 makes the
+    loader keep the hand-set g, has_budget) declines at about the fishing.
+    So the model treats today's state as ideal (food never limits) and
+    pays r_max through adult feeding; the premise of the 223.37 / 243.4 K
+    removal (food competition acts in the box) is falsified. Options in
+    research_notes/"Krill i Skagerrak" a_revisit/fix90_growth/summary.md
+    section 7 (n 12 on the gadoids; a fished-equilibrium K, the open-
+    population form, or food that limits). Nothing beyond (a) applied.
+249.6 Food limitation (user: "start points 1 and 2"; option iii of
+    249.5 after the user declined an interim K: "it shall never become
+    permanent"). research_notes/"Fodobegransning" (o-umlaut, a-umlaut):
+    benthic/, fish_krill/ (subagents), model/ (whole-menu saturation X =
+    sum h a B_vis at the start: benthivores 193, whiting 28, water column
+    18, planktivores 10, mackerel 1.5; the benthivores keep 0.995 of the
+    ceiling while foraging until every prey falls to 0.044 for -10 %).
+    Field: bed intake is saturated in the field too (Johnson 2015 Irish
+    Sea gradient: a >= 6.5-19x below 0.036; the field-implied a of
+    "Fodoniva" assumed tau 1, circular), so a stands; fish prey are
+    saturated locally and food-limited at stock scale through overlap
+    (Lauerburg 2018, Cormon 2016); whiting's plateau per prey group is
+    independent of the others (Rindorf & Gislason 2005: shared handling
+    poorly supported - bears on the krill squeeze); no functional
+    response of fish on krill; no density-dependent adult growth in
+    North Sea cod, haddock, pout (Lorenzen & Enberg 2002). Conclusion:
+    regulation sits in recruitment; option iii is not the route; the
+    evidence points to the open-population form (r_max out of the adult
+    g, recruit import into J from outside, today's state its equilibrium).
+    No value changed.
+249.7 The open-population form (user: "do it"). research_notes/"Oppen
+    population" (O-umlaut). Closure at today's library (field rates;
+    scripts/closure_249.py): P somatic 0.66 / 0.74 / 0.61 / 0.42 /yr
+    (planktivores / benthivores / whiting / water column) against
+    production at fill 1 today 1.94 / 1.16 / 1.48 / 0.95; L - P 0.46 /
+    0.27 / 0.37 / 0.22; imported recruits cover 12-37 / 36-54 / 73-133 / 0
+    % (planktivores and the water column are windows: the rest arrives as
+    visitors). Prototype (frozen fix90 policies; g = P via r_max 0 and a
+    hand-set growth_rate, recruits into J, emigration e_J / e_A and the
+    WP2 monthly presence in a wrapper around env.tick; repo untouched):
+    year means planktivores 0.82 / 0.71 / 0.66, benthivores 0.92 / 0.93 /
+    0.94, whiting 1.27 / 1.61 / 1.94, water column 0.81 every year (a
+    1.46 -> 0.14 seasonal visit), krill 0.92 (fix90: 0.66); with the
+    unrealised booked M2 as a loss whiting is stationary (~1.1-1.2). The
+    form regulates; whiting's level is set by the realised M2 (the
+    benthivores -> whiting residual). The absolute-arrival visitor form
+    is zero-net over a year, so the planktivores declined in it; with
+    the windows relaxing their adults to peak x presence (the 246
+    migrate form, m 36.5 / 12 /yr) the planktivores are stationary at
+    0.88 and the water column follows its visit every year (level set by
+    the peak anchor, J). Engine design
+    (not built): somatic_production, recruit_import and emigration for
+    the nursery groups, the 246 migrate (staged-DM support added) for
+    the windows, the reward
+    ledger excluding the flows, both engines, no observation change; two
+    conventions in growth_budget (NDMs keep r_max + M1 + sum M2).
+    Decisions for the user in its summary.md section 5.
+
+250 THE OPEN POPULATION BUILT (user, 2026-11-08: "yes" to build the open
+    form on the four fish, emigration and presence as boundary forcings,
+    and the whiting residual; research_notes/"Oppen population").
+250.1 Growth budget: `somatic_production` P (/yr) on a DM makes its g
+    P / ((s* - u) 1460): r_max and the booked M2 out of it (r_max is a
+    whole-life-cycle rate whose recruitment is imported; the level is
+    I / (L_realised - P)). Refused with r_max or a feeding season; the
+    loader raises on a broken open-population budget (no hand-set
+    fallback). FG editor field, hover term `somatic`, field help.
+250.2 Engine (both engines): `juvenile_stage.recruit_import` I (t/km2/yr)
+    and `emigration` [e_J, e_A] (stages.exchange after open_pool.migrate,
+    GPU _stage_exchange): J <- J exp(-e_J dt), A <- A exp(-e_A dt) with
+    each cell's reserve pro rata, then I dt shape(t) per cell into J at
+    the month's start_fill (else 0.7); the recruitment months shape the
+    import (normalised on the ticks: exactly I a year) and the group's
+    own new tonnes no longer recruit (rho 0). open_pool.migrate accepts a
+    staged DM and migrates its ADULTS (export scales A only, import into
+    A). All flows are booked as the exchange (loss_exchange /
+    gain_exchange) and in the tick's net exchange; the reward ledger
+    (energy_ledger.migrating, GPU `ledger_on` / `ledger_rows`) covers
+    every exchanging DM; --local_reward is refused for them.
+250.3 Library: planktivores P 0.66, import 0.527, emigration [0.1, 0],
+    adults migrate (outside_density 2.111 = 4.72 x (1 - 0.407) x mean
+    presence 0.754 [J: start read as the summer peak], WP2 presence
+    season, k 0.025 /tick = 36.5 /yr, start_fill as arrival fill, west +
+    north [J]); benthivores P 0.74, import 0.183, [1.1, 0.17]; whiting P
+    0.61, import 0.172, [0.2, 0.3]; water column P 0.42, migrates
+    (0.617 annual mean [J], presence season / 0.556, k 12 /yr [J], fill
+    0.71, west + north). r_max and feeding_season_months removed; g
+    0.00049 / 0.00055 / 0.00045 / 0.00031 (were 0.00145 / 0.00086 /
+    0.00109 / 0.00070). Imports = SMS stock recruits x the box's survey
+    share (midpoints), emigration = WP2 survey cohorts (upper bounds).
+250.4 Frozen fix90 policies (update 69), the probe's world, three years
+    (research_notes/"Oppen population" scripts/engine_probe.py): year
+    means planktivores 0.83 / 0.82 / 0.82, benthivores 0.98 / 0.98 /
+    0.99, whiting 1.25 / 1.54 / 1.83 (rerun on the final code), water column 1.02 / 1.00 / 1.00,
+    mackerel 1.01, krill 0.91 / 0.90 / 0.90, zooplankton 0.89 / 0.84 /
+    0.82, epifauna 1.07 / 1.17 / 1.15, seals 1.02 / 0.86 / 0.53,
+    porpoises 1.00 / 0.96 / 0.98 (fix90 as is: whiting 11x, water column
+    3.6x). Policies from the old world: retrain before judging (seals).
+    Two [J] start anchors to reconcile: the water column reads its start
+    0.617 (NS-IBTS Q1/Q3) as the annual mean (level 1.00; the relax
+    prototype's today's-adults anchor gave 0.56), the planktivores read
+    4.72 (HERAS Jun-Jul) as the summer peak. The ledger now excludes the
+    four fish groups' exchange from their rewards and --local_reward is
+    refused for them: retrain.
+250.5 Tests: tests/test_open_population.py (keys, tables, one exact
+    exchange step with the books and the ledger, staged migration on the
+    adults, GPU parity with import and export - both GPU branches
+    mutation-checked, the somatic budget, the loader refusal, mareld2
+    pins, the ledger ids); test_fgconfig_juvenile round trip;
+    test_half_saturation and test_open_dm updated.
+    The GPU migration now sums the group total, the net and the export
+    share in float64 and keeps 1 - exp(-k) and the target in float64
+    (open_dm_flux64, open_dm_total64, open_dm_season64): for the water
+    column's small k the float32 keep lost ~1e-5 of the net and broke the
+    mareld2 parity; an empty cell keeps its reserve slot (a producer's
+    pool). Updated for the r_max-free fish: test_growth_budget,
+    test_income_growth, test_material_growth (pre-250 r_max on the
+    r_max-form tests), test_regional_capacity, test_open_dm (three
+    migrating DMs), test_fgconfig_field_help (P form and r_max form).
+    Full suite 1827 passed, 12 skipped; 1-gen train.py and train_gpu.py
+    smokes passed.
+250.6 Whiting's predators (research_notes/"Vitlingens predatorer"; the
+    residual of 249): benthivores -> whiting: field M2 for the box 0.13
+    (0.06-0.26; booked 0.18, ~x1.4 high), the encounter ~x32 low - cod's
+    prey-size window uses the median whiting/cod ratio 0.30 instead of a
+    p95 0.44-0.50 (x2.8), the a embeds the old predator-pool near-bed
+    share 0.21 where whiting is ~0.6 (x2.9), cod and whiting co-occur in
+    the box (Lloyd 1.57, x1.6); residual x2.5 inside the MC. Water column
+    -> whiting: field 0.13 (0.06-0.20); after the krill correction a
+    whiting-specific x4 at the saithe field spread (encounter or the
+    North Sea saithe booking; box saithe and whiting segregated by bed
+    depth). Not applied.

@@ -53,12 +53,12 @@ fabricates mass.
 | `lib/world/temperature.py` | Water temperature on the daylight calendar (section 143): Q10 multiplier on each DM's `resting_metabolism` (`metabolism_q10`, `metabolism_t_ref` in the library; monthly layer temperatures and `group_layers` in `simulation_settings.temperature`). Needs daylight on; adds no observation channel. `ingestion_q10` (section 181) scales a DM's whole functional response (a and 1/h together, annual mean 1); set on zooplankton (2.8) and, since section 244, every fish group (planktivores 2.2, benthivores 1.6, whiting 2.25, water column 2.25, mackerel 2.2; research_notes/"Bioenergetik för alla fiskgrupper", o-umlaut). `growth_q10` (section 183) scales a DM's growth branch (reserve -> biomass, annual mean 1; starvation unscaled); set on zooplankton (3.0, Huntley & Lopez 1992). Zooplankton is calibrated against A17's resident stock in Dec-Mar (the totals are Calanus risen from the Norwegian Trench). |
 | `lib/world/nutrients.py` | Nutrient pool of light-limited producers (section 172): growth `r L(t) B N/(N + k_N Y M)` paid out of a per-cell pool, supplied from below the mixed layer (Evans & Parslow) and by a share of the grazing. Off unless `simulation_settings.nutrients.enabled` (on in `mareld2.yaml` since section 174, with seasonal pycnocline exchange; 1.0 m/d Nov-Feb since section 203); the pool rides in the producer's unused `energy_reserve` slot on both engines. No observation channel. With `nutrients.subsurface_layer` (section 180, on in `mareld2.yaml`) the column has two layers, each with a producer (`water_layer: mixed|subsurface`) and pool, chained reservoir (50 m) -> subsurface -> mixed layer, entrainment/detrainment moving water and algae (`layer_tables`, `population_change.apply_layer_exchange`, GPU `layer_exchange`). |
 | `lib/environments/ecosystem_env/open_pool.py` | Section 246: a DM with `outside_density` MIGRATES on its group total (keys `outside_exchange_rate`, `outside_season`, `outside_fill` 12 arrival fills, `outside_entry` edge segments; export pro rata with the reserve, import on the entry cells), and every reward form (log energy, legacy, population stability; not `--local_reward`) reads local indices without the exchange (`lib/runners/energy_ledger.py`, the rollout's `ledger_index`). Open pools (section 245): an NDM with `outside_density` (t/km2 box mean), `outside_exchange_rate` k per tick, `outside_season` (12 monthly factors) and `outside_depth_table` (shape by cell depth, equal-cell mean 1) does `B <- T + (B (1 + g) - T) exp(-k)` after M1, no logistic and no K; g derived with r_max 0, the exchange outside it; the loader refuses g >= exp(k) - 1; the exchange is booked per direction (245.1: `loss_exchange` export, a loss cause in `loss_accounting.LOSS_CAUSES`; `gain_exchange` import; GPU `record` and the rollout's `loss_book` / `import_book`). Also the pairs' `depth_access_table` (per-cell multiplier on a, `interactions.build_pair_depth_maps`). Both engines; tests/test_open_pool.py. `budget_gate` prints a total-ration row (booked flow vs field Q/B). The FG editor edits all four keys and the pairs' Depth Access matrix (245.2); the viewer's NDM line of an open pool is `pr/im/ex`. |
-| `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
+| `lib/environments/ecosystem_env/stages.py` | Juvenile compartments (section 223.32): a DM with `juvenile_stage` carries its juveniles J inside B (reserve pro rata), new tonnes to J in the share (kappa J + rho(t) A)/(kappa J + rho(t) A + A) (rho 0 with a `recruit_import`; section 250 adds the recruit import and per-stage `emigration`, `exchange`), graduation exp(-gamma) per tick, losses with B, fishing at `fishing_selectivity`, pair `stage_access: [f_J, f_A]`, one observation channel per staged group observed. Both engines (GPU: a `juvenile` [E, G, C] state through `step`, rollout and trainer); tests/test_juvenile_stage.py. |
 | `lib/world/impact_maps.py` | Impact fields: the training sampler (baseline maps, spawned observable impacts), the shared .npz reader (section 161). |
 | `lib/world/habitat.py` | Depth habitat (section 207): the manifest's `simulation_settings.depth_map` (maps/depth.npz, tools/make_depth_map.py; also the spawn ref field `depth`), K per cell from a species' `capacity_depth_table`, and the `spawn: {mode: equilibrium}` start pattern B*(c) = K(c)(1 - (F(c) + M2)/r) from today's baseline impact maps. Both engines (`FunctionalGroup.capacity_map` / `equilibrium_map`). |
 | `lib/world/tick_time.py` | Tick length: bounds (1-6 h), the `--tick-length` flag, tick<->real-time conversion, label rendering, and the per-parameter rescale rules the LOADER applies at runtime. `fg_library.yaml` is always calibrated at `LIBRARY_TICK_HOURS` (6) and is never rewritten for a run (sections 97, 103, 106). |
 | `lib/spawn/`, `lib/viz/`, `tools/` | Spawn strategies, live pygame visualiser, offline plot/calibration tools. |
-| `lib/runners/training_progress.py` | The viewer's "long run" tab (id `progress`, renamed in 223.21; section 223.12): a frozen copy of the current policies run three years (`PROBE_YEARS`, library ticks) in the inference world, in a separate process every `--eval-every` updates; the tab shows the latest probe (every group's biomass as % of start, daily); `<run>/progress/probe.jsonl` keeps survival ticks, year-end ratios and a viability block per probe, `probe_latest.json` the trajectory. Each probe also scores VIABILITY.md section 1 on whole probe years (`probe_viability`; one seed - tracks training, never a reward; section 223.18); the `viability` tab and the `plots.html` tab of that name plot each group's margin and V per probe (223.20). |
+| `lib/runners/training_progress.py` | The viewer's "long run" tab (id `progress`, renamed in 223.21; section 223.12): a frozen copy of the current policies run three years (`PROBE_YEARS`, library ticks) in the inference world, in a separate process every `--eval-every` updates; the tab shows the latest probe (every group's biomass as % of start, daily); `<run>/progress/probe.jsonl` keeps survival ticks, year-end ratios and a viability block per probe, `probe_latest.json` the trajectory. Each probe also scores VIABILITY.md section 1 on whole probe years (`probe_viability`; one seed - tracks training, never a reward; section 223.18); the `viability` tab and the `plots.html` tab of that name plot each group's margin and V per probe (223.20). Since section 248 each probe also stores every decision maker's realised diet and ration per whole probe year (`diets`: tonnes per prey from the env's `intake_by_pred_prey` book, ration t/t/yr); `tools/probes/probe_diets.py` compares them with the booked M2 x B shares and the field Q/B; since section 249 also every group's mean biomass per year (`year_biomass`), so probe_diets prints each prey's realised M2 against its booked M2 (prey side). |
 | `lib/environments/ecosystem_env/source_tracking.py` | `--local_reward`: per-cell source tracking, `reward(c)=B(c,t+1)/A(c,t)`. |
 | `lib/diagnostics/viability.py`, `tools/viability.py` | Long-term viability rig - frozen behaviour, no ARS. A diagnostic for the mechanics, not the judge of the world: its verdict (normative corner `--spawn colocated --behaviour greedy`) is about that behaviour, and trained policies can be viable where it fails (`VIABILITY.md` section 6, resume 123). Two factors (behaviour x spawn geometry). The hand-coded arms allocate the eat mass by marginal energy return (water-filling), never evenly - section 92. Criterion in `VIABILITY.md` (sections 90, 91, 92). |
 | `tests/` | pytest suite - keep green. |
@@ -315,6 +315,29 @@ fabricates mass.
   tick's I (a meal is absorbed over 1-4 days; a gut buffer is open).
   Mackerel migrates since section 246 (5.5-month intake season, r_max
   0), which replaced the x3 g of a resident pool.
+  Open population (section 250; research_notes/"Oppen population",
+  O-umlaut): planktivores, benthivores, whiting and the water column have
+  NO r_max and NO feeding season. Their derived g pays the field somatic
+  production `somatic_production` P (SMS weight-at-age growth at the box
+  J/B: 0.66 / 0.74 / 0.61 / 0.42 /yr): g = P/((s* - u) 1460), r_max and
+  the booked M2 out of it. The box is an open nursery / window (0.1-6 %
+  of the stocks, recruitment flat in SSB), so its level is I/(L - P) with
+  the REALISED losses L, and no K is needed. Recruits are imported
+  (`juvenile_stage.recruit_import` t/km2/yr into J, uniformly over the
+  cells at the month's start_fill, shaped by the `recruitment` months,
+  which then no longer allocate own growth to J: planktivores 0.527,
+  benthivores 0.183, whiting 0.172), emigration is a per-capita boundary
+  loss (`juvenile_stage.emigration` [e_J, e_A]: 0.1/0, 1.1/0.17,
+  0.2/0.3), and the windows migrate (open_pool.migrate, now on a staged
+  DM's ADULTS: planktivore adults 2.111 t/km2 x the WP2 presence at k
+  36.5 /yr; water column 0.617 x presence at 12 /yr). Every flow is
+  booked as the exchange and taken out of the reward (energy_ledger,
+  GPU `ledger_rows`). Both engines (`stages.exchange`, GPU
+  `_stage_exchange`); tests/test_open_population.py. Frozen fix90
+  policies in the built form: planktivores 0.82, benthivores 0.98,
+  water column 1.00 every year, whiting 1.25 / 1.55 / 1.84 (its
+  predators realise ~0.24 of its booked M2: a level bias, the
+  research_notes/"Bytessidans predation" residual).
   A DM with `regional_carrying_capacity` K (t/km2, section 185) loses
   `r_max/1460 * B_region/K` of its biomass and reserve per tick after
   M1 (B_region = grid-mean density; both engines, with or without
@@ -463,7 +486,9 @@ fabricates mass.
   (220) and the epifauna group (221) now carry. Do not reintroduce it;
   a mean field a phi, h / phi failed too (208.5).
 - `growth_rate` is DERIVED (`lib/world/growth_budget.py`, section 129): DM
-  `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`,
+  `g = (r_max + M1 + sum checked predation_mortality) / ((s*-u)*1460)`
+  (an open-population DM with `somatic_production` P: `P / ((s*-u)*1460)`,
+  section 250),
   NDM `r = (r_max + sum M2) / 1460`; an income-funded or material-capped
   DM's g is x 12 / `feeding_season_months` (sections 184, 244); a `regional_carrying_capacity`
   loss is not in g (section 185). s* is the reserve a DM settles on
@@ -561,6 +586,13 @@ python3 tools/viability.py --ticks 300 --seeds 1 --behaviour eat   # smoke test
 # diet (M2*B shares); OFF = off by more than 3x - a pair inconsistent
 # with the field diet it was booked from, found without any policy.
 python3 tools/probes/budget_gate.py
+# Section 248: the same gate with the water column and whiting spread over
+# the bed-depth classes as in GOV hauls in the box (lib/diagnostics/field_diet.py),
+# and the realised diets of a run's latest long-run probe against the booked ones.
+# Section 249: both also judge from the PREY's side (budget_gate: encounter-implied
+# M2 per pair; probe_diets: realised M2) - a prey's derived g pays its booked M2,
+# and a pair minor for the predator (benthivores -> whiting) passes the diet gate.
+python3 tools/probes/probe_diets.py results/<run-name> [--evaluation N]
 # Plankton against SHARK A17 (section 205): column biomass at A17's
 # measured C:chl, surface carbon, nitrate, zooplankton, PP and f-ratio.
 python3 tools/probes/a17_score.py run results/<run-name>      # ~2 min

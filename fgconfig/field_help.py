@@ -404,6 +404,18 @@ FIELD_HELP = {
         "combined with Growth Q10 or Material growth share; Starve Rate "
         "must be set."
     ),
+    "somatic_production": (
+        "Somatic production P (1/yr, > 0; 0 = off). Decision makers only "
+        "(section 250, the open population).\n\n"
+        "The derived Max Growth pays the field growth of the fish in the "
+        "box at the reference reserve, g = P / ((s* - u) x ticks per year), "
+        "and nothing else: r_max (a whole-life-cycle rate whose "
+        "recruitment is imported) and the booked M2 stay out, so the box's "
+        "level is I / (L - P) with the realised losses L. Excludes r_max "
+        "and Feeding season. Library: SMS weight-at-age growth at the box "
+        "J/B, planktivores 0.66, benthivores 0.74, whiting 0.61, water "
+        "column 0.42."
+    ),
     "material_growth_share": (
         "Material growth share kappa_m (fraction, 0-1; 0 = off). Decision "
         "makers only (section 244).\n\n"
@@ -874,6 +886,30 @@ FIELD_HELP = {
         "the May survey, haddock settle mid-Jul to mid-Aug). Without the "
         "daylight calendar the annual mean applies."
     ),
+    "juvenile_recruit_import": (
+        "Recruit import I (t/km2/yr, box mean; empty = the group's own "
+        "recruitment). Section 250, the open population.\n\n"
+        "The box is an open nursery: its recruits are spawned outside it "
+        "(0.1-6 % of the stocks; recruitment flat in SSB), so recruitment "
+        "is a donor-controlled supply. Each tick I / ticks per year x the "
+        "Recruitment month shape (normalised to an annual mean of 1) enters "
+        "J in every cell at the month's Start Fill (else 0.7), and the "
+        "group's own new tonnes no longer recruit (rho 0). Booked as the "
+        "exchange; the reward ledger takes it out. Library: SMS stock "
+        "recruits x the box's survey share (planktivores 0.527, "
+        "benthivores 0.183, whiting 0.172)."
+    ),
+    "juvenile_emigration": (
+        "Emigration e_J, e_A (1/yr, two values >= 0; empty = none). Section "
+        "250, the open population.\n\n"
+        "Per-capita boundary losses: J <- J exp(-e_J / ticks per year), "
+        "A <- A exp(-e_A / ticks per year), each cell's reserve pro rata "
+        "(the emigrants leave with their own fill). The stock's movement "
+        "beyond the grid, not a behaviour; booked as the exchange and taken "
+        "out of the reward. Library: survey cohorts (upper bounds), "
+        "benthivores 1.1 / 0.17, whiting 0.2 / 0.3, planktivores 0.1 / 0 "
+        "(their adults migrate)."
+    ),
     "juvenile_start_share": (
         "Start share J/B (one value or 12 monthly values in [0, 1)): the "
         "juvenile share every world starts with, read on its start day "
@@ -1292,6 +1328,13 @@ FIELD_HELP = {
         "the budget that is left as real increase once M1 and M2 are "
         "paid. Checking or unchecking predators never changes it; it "
         "is the invariant the budget is built around."
+    ),
+    "growth:somatic": (
+        "Somatic production P (per year) of an open population (section "
+        "250): the field growth of the fish in the box that g pays at the "
+        "reference reserve, g = P / ((s* - u) x ticks per year). r_max and "
+        "the booked M2 are not in it: the recruits are imported and the "
+        "box's level is set by the realised losses."
     ),
     "growth:m1": (
         "M1, Natural Mortality as an annual rate:\n"

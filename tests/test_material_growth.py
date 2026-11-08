@@ -77,8 +77,18 @@ def _library():
     return yaml.safe_load(LIBRARY.read_text(encoding="utf-8-sig"))
 
 
+# Section 250 moved these groups to somatic_production; the r_max-based
+# budget is tested on their pre-250 r_max.
+PRE250_R_MAX = {"planktivorous_fish": 0.40, "benthivorous_fish": 0.31, "whiting": 0.49,
+                "predatory_fish": 0.396}
+
+
 def _plain(species, fid):
-    return {k: v for k, v in species[fid].items() if k not in LAW_KEYS}
+    out = {k: v for k, v in species[fid].items()
+           if k not in LAW_KEYS and k != "somatic_production"}
+    if fid in PRE250_R_MAX and "r_max" not in out:
+        out["r_max"] = PRE250_R_MAX[fid]
+    return out
 
 
 def test_budget_is_paid_over_the_season_and_the_material_is_checked():

@@ -273,6 +273,8 @@ print(f"outside 1/{DIET_BAND:g}-{DIET_BAND:g} on a pair with either share >= "
 print("share of the ceiling the pair pays on its own. Densities t/km2.")
 density = _start_densities()
 gate_failures = []
+# Section 249: per predator (booked flow sum, rows) for the prey-side check.
+gate_rows = {}
 for i, pid in enumerate(env.dm_ids):
     menu = [j for j in range(env.N_all) if env.eat_static_mask[i, j]]
     if len(menu) < 2:
@@ -300,6 +302,7 @@ for i, pid in enumerate(env.dm_ids):
     book_sum = sum(r[4] for r in rows)
     if enc_sum <= 0.0 or book_sum <= 0.0:
         continue
+    gate_rows[pid] = (book_sum, {r[0]: r[3] / enc_sum for r in rows})
     print(f"{pid:>14} {'prey':>18} {'B':>7} {'B_vis':>7} {'enc':>6} "
           f"{'booked':>6} {'ratio':>7} {'sat':>5}  verdict")
     for prey_id, b, bv, enc, book, sat, type3 in rows:
@@ -322,6 +325,152 @@ else:
     print("Diet gate: every generalist's encounters match its booked diet.")
 
 # ---------------------------------------------------------------------------
+# Diet gate at the field spread (section 248). The gate above spreads every
+# predator evenly over the cells; a pair with a depth_access_table then
+# meets the prey on beds where the field predator is not (the water column
+# on the < 150 m beds that carry its krill a). Here each group with GOV
+# bed-depth shares is spread over the cells as in the field and every pair's
+# encounter a(c) B_vis(c) is averaged with those weights, the prey at their
+# start maps. A like-for-like reading of the same booked diet; it sets
+# nothing. research_notes/"Krill i Skagerrak" a_revisit/.
+# ---------------------------------------------------------------------------
+from lib.diagnostics.field_diet import FIELD_BED_SHARES, field_cell_weights  # noqa: E402
+from lib.world import habitat  # noqa: E402
+
+with open(PROJECT, encoding='utf-8-sig') as fh:
+    _manifest = yaml.safe_load(fh)
+_depth = habitat.load_depth_map(_manifest, PROJECT, (H, W))
+_meta = _manifest.get('project_metadata', {})
+_cell_km2 = (float(_meta['reference_grid_width']) * float(_meta['reference_grid_height'])
+             / float(H * W))
+print()
+print("=== diet gate at the field spread (section 248) ===")
+print("The predator over the bed-depth classes < 100 / 100-150 / 150-250 / > 250 m as in")
+print("NS-IBTS GOV hauls inside the box; encounters averaged over its cells, prey at")
+print("their start maps.")
+if _depth is not None:
+    from lib.diagnostics.field_diet import bed_class  # noqa: E402
+    _cls = bed_class(_depth)
+    print(f"cells per class at this {H}x{W} grid: "
+          + " / ".join(f"{(_cls == k).mean():.3f}" for k in range(4)))
+field_failures = []
+field_rows = {}
+for i, pid in enumerate(env.dm_ids):
+    if pid not in FIELD_BED_SHARES or _depth is None:
+        continue
+    shares, label = FIELD_BED_SHARES[pid]
+    w = field_cell_weights(_depth, shares)
+    pairs = env.fgs[pid].params.get('interaction', {}) or {}
+    rows = []
+    for j in range(env.N_all):
+        if not env.eat_static_mask[i, j]:
+            continue
+        prey_id = env.global_fg_order[j]
+        if prey_id not in density:
+            continue
+        mult = (np.asarray(env.pair_depth_mult[i, j], dtype=np.float64)
+                if getattr(env, '_has_pair_depth', False) else 1.0)
+        bv = (np.asarray(env.fgs[prey_id].biomass, dtype=np.float64) / _cell_km2
+              * _visible_share(i, j, prey_id))
+        type3 = float(env._type3_pred_mask[i, j, 0, 0]) > 0.0
+        enc = float((w * float(env.max_intake_mat[i, j]) * mult * bv
+                     * (bv if type3 else 1.0)).sum())
+        m2 = float((pairs.get(f"{pid}_preys_on_{prey_id}") or {})
+                   .get('predation_mortality', 0.0) or 0.0)
+        rows.append((prey_id, enc, m2 * density[prey_id]))
+    enc_sum = sum(r[1] for r in rows)
+    book_sum = sum(r[2] for r in rows)
+    if enc_sum <= 0.0 or book_sum <= 0.0:
+        continue
+    field_rows[pid] = (book_sum, {r[0]: r[1] / enc_sum for r in rows})
+    print(f"{pid:>14} ({label}: {' / '.join(f'{x:.3f}' for x in shares)})")
+    for prey_id, enc, book in rows:
+        e, k = enc / enc_sum, book / book_sum
+        ratio = e / k if k > 0.0 else float('inf')
+        off = (max(e, k) >= DIET_MIN_SHARE
+               and not (1.0 / DIET_BAND <= ratio <= DIET_BAND))
+        if off:
+            field_failures.append((pid, prey_id, e, k))
+        print(f"{'':>14} {prey_id:>18} enc {e:>6.3f} booked {k:>6.3f} "
+              f"ratio {ratio:>6.2f}  {'OFF' if off else 'ok'}")
+print()
+if field_failures:
+    print("Diet gate at the field spread: OFF pairs - "
+          + "; ".join(f"{p} -> {q} enc {e:.3f} vs booked {k:.3f}"
+                      for p, q, e, k in field_failures))
+else:
+    print("Diet gate at the field spread: every pair within the band.")
+
+# ---------------------------------------------------------------------------
+# Prey-side check (section 249). The diet gate judges a pair by its share of
+# the PREDATOR's diet, so a pair that is minor for the predator and major for
+# the prey (benthivores -> whiting: 0.012 of the benthivores' booked diet, 0.18
+# of whiting's 0.37 /yr booked M2) passes unseen - yet the prey's derived g
+# pays that M2 (growth_budget). Here each predator eats its booked ration
+# split by the gate's encounter shares (shared handling), so the implied M2
+# of pair (i, j) is booked_flow_i x enc_ij / B_j, i.e. booked M2 x the gate's
+# ratio. A pair carrying >= PREY_MIN_SHARE of its prey's booked M2 with a
+# ratio outside the band is OFF. Predators the gate skips (one prey,
+# zooplankton) count at their booked value. Diagnostic only.
+# ---------------------------------------------------------------------------
+PREY_MIN_SHARE = 0.10
+print()
+print("=== prey-side check: encounter-implied M2 vs booked M2 per prey (section 249) ===")
+print("implied = booked M2 x (encounter share / booked share) of the predator's diet;")
+print(f"a pair carrying >= {PREY_MIN_SHARE:g} of its prey's booked M2 with a ratio outside "
+      f"1/{DIET_BAND:g}-{DIET_BAND:g} is OFF.")
+print("field = the same with the predator at its field bed-depth spread (where it has one).")
+booked_m2 = {}
+for i, pid in enumerate(env.dm_ids):
+    pairs = env.fgs[pid].params.get('interaction', {}) or {}
+    for j in range(env.N_all):
+        if not env.eat_static_mask[i, j]:
+            continue
+        prey_id = env.global_fg_order[j]
+        m2 = float((pairs.get(f"{pid}_preys_on_{prey_id}") or {})
+                   .get('predation_mortality', 0.0) or 0.0)
+        if m2 > 0.0 and prey_id in density:
+            booked_m2.setdefault(prey_id, {})[pid] = m2
+
+
+def _implied(table, pid, prey_id, m2):
+    if pid not in table:
+        return None
+    book_sum, enc = table[pid]
+    return book_sum * enc.get(prey_id, 0.0) / density[prey_id]
+
+
+prey_failures = []
+for prey_id in sorted(booked_m2):
+    row = booked_m2[prey_id]
+    total = sum(row.values())
+    implied_total = sum((_implied(gate_rows, p, prey_id, m) if p in gate_rows else m)
+                        for p, m in row.items())
+    print(f"{prey_id:>20}: booked M2 {total:.4g} /yr, implied {implied_total:.4g} "
+          f"(ratio {implied_total / total:.2f})")
+    for p, m2 in sorted(row.items(), key=lambda kv: -kv[1]):
+        imp = _implied(gate_rows, p, prey_id, m2)
+        fld = _implied(field_rows, p, prey_id, m2)
+        share = m2 / total
+        if imp is None:
+            print(f"{'':>22}{p:>20} booked {m2:8.4g} ({share:4.2f})  not judged (gate skips it)")
+            continue
+        ratio = imp / m2
+        off = share >= PREY_MIN_SHARE and not (1.0 / DIET_BAND <= ratio <= DIET_BAND)
+        if off:
+            prey_failures.append((p, prey_id, m2, imp))
+        extra = f"  field {fld:8.4g} ({fld / m2:5.2f})" if fld is not None else ""
+        print(f"{'':>22}{p:>20} booked {m2:8.4g} ({share:4.2f})  implied {imp:8.4g} "
+              f"ratio {ratio:6.2f}  {'OFF' if off else 'ok'}{extra}")
+print()
+if prey_failures:
+    print("Prey-side check: OFF pairs - "
+          + "; ".join(f"{p} -> {q} booked M2 {m:.4g} vs implied {x:.4g}"
+                      for p, q, m, x in prey_failures))
+else:
+    print("Prey-side check: every pair that matters to its prey is within the band.")
+
+# ---------------------------------------------------------------------------
 # Total ration (section 245): the gate above compares SHARES and cannot see
 # a booked ration that is short of the predator's field consumption (232.1
 # cut whiting -> planktivores without booking the ration elsewhere; whiting
@@ -330,13 +479,7 @@ else:
 # densities, against the group's field Q/B (research_notes/"Vitlingens
 # ranson" summary.md, its sources). Diagnostic only; nothing is set from it.
 # ---------------------------------------------------------------------------
-FIELD_QB = {
-    'planktivorous_fish': (5.0, "members' Q/B, params_planktivorous_fish.md"),
-    'benthivorous_fish': (4.46, '223.9 budget'),
-    'whiting': (4.2, 'SMS 2023, Lauerburg 2018 (3.3-5.6)'),
-    'predatory_fish': (2.83, 'params_split_223 (2.6-3.6)'),
-    'mackerel': (2.2, 'member value, params_predatory_fish'),
-}
+from lib.diagnostics.field_diet import FIELD_QB  # noqa: E402
 print()
 print("=== total ration: booked flow vs field Q/B (section 245) ===")
 print(f"{'predator':>20} {'booked':>7} {'field':>6} {'ratio':>6}  source")

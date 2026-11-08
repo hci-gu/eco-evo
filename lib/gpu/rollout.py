@@ -25,10 +25,11 @@ class RolloutRunner:
         validate_reward(population_stability, integral_reward, legacy_reward,
                         self.local_reward)
         self.population_stability = population_stability
-        if getattr(model, "open_dm_on", False) and self.local_reward is not None:
+        if getattr(model, "ledger_on", False) and self.local_reward is not None:
             # Section 246: the per-cell source tracking has no cell for the
             # outside a migrating group exchanges with.
-            raise ValueError("a migrating decision maker (outside_density): --local_reward "
+            raise ValueError("a decision maker exchanging with the outside (outside_density or an "
+                             "open population): --local_reward "
                              "is not supported (section 246)")
         if execution not in ("eager", "compile", "cuda-graph", "compile-graph"):
             raise ValueError("Unknown execution mode: " + execution)
@@ -71,7 +72,7 @@ class RolloutRunner:
         # Section 246: the reward ledger of a migrating DM (energy_ledger.py),
         # local indices Q*_{t+1} = Q*_t (Q_{t+1} - X_t) / Q_t of its biomass,
         # reserve and energy, X_t the tick's net exchange; Q* = Q otherwise.
-        if getattr(model, "open_dm_on", False):
+        if getattr(model, "ledger_on", False):
             buffer("ledger_prev", (3, self.E, model.D), torch.float64)
             buffer("ledger_index", (3, self.E, model.D), torch.float64)
         for name in ("biomass_sum", "reserve_sum"):
@@ -180,7 +181,7 @@ class RolloutRunner:
         self.r0.copy_(reserve[:, self.model.dm_index].sum(-1).double())
         self.e0.copy_(self.b0 * self.model.energy_content[:, self.model.dm_index].double() + self.r0)
         self.epsilon.copy_((1e-6 * self.e0).clamp_min(1e-9))
-        if getattr(self.model, "open_dm_on", False):
+        if getattr(self.model, "ledger_on", False):
             start = torch.stack((self.b0, self.r0, self.e0))
             self.ledger_prev.copy_(start)
             self.ledger_index.copy_(start)
@@ -250,7 +251,7 @@ class RolloutRunner:
             current_args["impacts"] = (self.impact_loss, self.impact_cost)
         if m.stages_on:
             current_args["juvenile"] = self.juvenile
-        record = {} if (self.diagnostics or m.open_dm_on) else None
+        record = {} if (self.diagnostics or m.ledger_on) else None
         if record is not None:
             current_args["record"] = record
         if self.local_reward is not None:
@@ -268,7 +269,7 @@ class RolloutRunner:
         totals_b, totals_r = b.sum(-1).double(), r.sum(-1).double()
         bd, rd = totals_b[:, m.dm_index], totals_r[:, m.dm_index]
         energy = bd * m.energy_content[:, m.dm_index].double() + rd
-        if m.open_dm_on:
+        if m.ledger_on:
             # Section 246: take the migration out of what the reward sees
             # (multiplicative indices, so they stay positive).
             now = torch.stack((bd, rd, energy))
@@ -276,7 +277,7 @@ class RolloutRunner:
                                     ("exchange_biomass", "exchange_reserve", "exchange_energy")])
             ratio = torch.where(self.ledger_prev > 0,
                                 (now - exchange) / self.ledger_prev.clamp_min(1e-30), 1.0)
-            index = torch.where(m.open_dm_rows[None], self.ledger_index * ratio, now)
+            index = torch.where(m.ledger_rows[None], self.ledger_index * ratio, now)
             self.ledger_prev.copy_(now)
             self.ledger_index.copy_(index)
             bd, rd, energy = index[0], index[1], index[2]
@@ -436,10 +437,10 @@ class RolloutRunner:
             b = self.biomass[:, m.dm_index].sum(-1).double()
             r = self.reserve[:, m.dm_index].sum(-1).double()
             energy = b * m.energy_content[:, m.dm_index].double() + r
-            if m.open_dm_on:
-                b = torch.where(m.open_dm_rows, self.ledger_index[0], b)
-                r = torch.where(m.open_dm_rows, self.ledger_index[1], r)
-                energy = torch.where(m.open_dm_rows, self.ledger_index[2], energy)
+            if m.ledger_on:
+                b = torch.where(m.ledger_rows, self.ledger_index[0], b)
+                r = torch.where(m.ledger_rows, self.ledger_index[1], r)
+                energy = torch.where(m.ledger_rows, self.ledger_index[2], energy)
             log_energy = torch.log((energy + self.epsilon) / (self.e0 + self.epsilon))
         if self.legacy_reward:
             eps_b, eps_r = (1e-6 * self.b0).clamp_min(1e-9), (1e-6 * self.r0).clamp_min(1e-9)

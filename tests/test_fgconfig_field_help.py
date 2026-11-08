@@ -153,21 +153,25 @@ def test_fg_editor_growth_line_has_term_help():
 
     try:
         app = fgconfig.FGConfigApp(root)
-        # porpoises give benthivorous_fish an M2 term now that cannibalism is
-        # unchecked (section 160).
+        # Section 250: the planktivores pay their somatic production (P form);
+        # zooplankton keeps the r_max budget with M2 from the planktivores.
         app.project_data["decision_makers"] = [
-            {"group_id": "planktivorous_fish"}, {"group_id": "benthivorous_fish"},
-            {"group_id": "porpoises"}]
-        # Without its benthos the benthivores' budget cannot close.
-        app.project_data["non_decision_makers"] = [{"group_id": "benthic_infauna"}]
+            {"group_id": "zooplankton"}, {"group_id": "planktivorous_fish"}]
+        app.project_data["non_decision_makers"] = [
+            {"group_id": "phytoplankton"}, {"group_id": "microzooplankton"}]
         species = app.global_library["species_definitions"]
-        for gid in ("planktivorous_fish", "benthivorous_fish", "porpoises",
-                    "benthic_infauna"):
+        for gid in ("zooplankton", "planktivorous_fish", "phytoplankton", "microzooplankton"):
             # What load_project_from_path does for every project FG.
             app.current_fg_configs[gid] = species[gid]
         app.update_fg_list()
         fgconfig.attach_help = spy
-        app.fg_listbox.selection_set(0)
+        app.fg_listbox.selection_set(0)          # Planktivorous Fish
+        app.on_fg_select("decision_makers")
+        somatic_texts = [w.cget("text") for w in app.growth_info_frame.winfo_children()]
+        somatic_seen = list(seen)
+        seen.clear()
+        app.fg_listbox.selection_clear(0, "end")
+        app.fg_listbox.selection_set(1)          # Zooplankton
         app.on_fg_select("decision_makers")
         texts = [w.cget("text") for w in app.growth_info_frame.winfo_children()]
     finally:
@@ -177,3 +181,6 @@ def test_fg_editor_growth_line_has_term_help():
     for key in ("growth:growth_rate", "growth:r_max", "growth:m1",
                 "growth:m2", "growth:gate", "growth:ticks_per_year"):
         assert key in seen, key
+    assert "".join(somatic_texts).startswith("g = ") and "P 0.66" in "".join(somatic_texts)
+    for key in ("growth:growth_rate", "growth:somatic", "growth:gate", "growth:ticks_per_year"):
+        assert key in somatic_seen, key

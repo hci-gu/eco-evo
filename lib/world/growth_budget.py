@@ -157,6 +157,23 @@ When ``--mortality off`` the tick never applies M1, so the loader passes
 loss removes its growth compensation, exactly as unchecking a predator
 does.
 
+Open population (section 250; research_notes/"Oppen population",
+O-umlaut). A DM with ``somatic_production`` P (/yr) is a window or a
+nursery on a stock whose recruitment happens outside the box (recruits
+imported into its juveniles, emigration, the migration of 246; stages.py,
+open_pool.py). Its g pays the somatic production of the fish in the box
+and nothing else:
+
+      g = P / ((s* - u) * TICKS_PER_YEAR)
+
+r_max (a whole-life-cycle rate, recruitment included) and the booked
+M2 stay out of it: paying r_max and importing the recruits would count
+recruitment twice, and the box's level is then I / (L - P) with L the
+realised losses, so a booked M2 the predators do not take is a level
+bias, not a growth rate (section 249). P is an annual field rate, so it
+excludes ``r_max`` and ``feeding_season_months`` (the material law of 244
+still caps the new tonnes on today's food).
+
 An FG without ``r_max`` keeps its hand-set ``growth_rate`` (legacy
 entries). ``r_max`` and ``predation_mortality`` are per year and
 therefore tick-independent; the derived ``growth_rate`` is per tick at
@@ -401,7 +418,31 @@ def has_budget(species):
         return False
     if species.get("outside_density") not in (None, ""):
         return True
+    try:
+        if somatic_production(species) is not None:
+            return True
+    except ValueError:      # a bad P is the budget's error to report
+        return True
     return _as_float(species.get("r_max")) > 0.0
+
+
+SOMATIC_KEY = "somatic_production"
+
+
+def somatic_production(spec):
+    """P (/yr) of an open-population DM (section 250), or None."""
+    raw = (spec or {}).get(SOMATIC_KEY)
+    if raw in (None, ""):
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        value = float("nan")
+    if value == 0.0:        # the FG editor's "0 = off"
+        return None
+    if not (math.isfinite(value) and value > 0.0):
+        raise ValueError(f"{SOMATIC_KEY} must be > 0 per year, got {raw!r}")
+    return value
 
 
 def active_predation(prey_id, species_defs, interactions,
@@ -454,6 +495,7 @@ class GrowthBudget:
     pmax_annual: Optional[float] = None       # (C - cost)/(ec + u ME), /yr
     season_factor: float = 1.0                # 12 / feeding_season_months (184)
     material_need: Optional[float] = None     # share of I the material needs (244)
+    somatic: Optional[float] = None           # P /yr of an open population (250)
 
     @property
     def predation_total(self):
@@ -461,6 +503,8 @@ class GrowthBudget:
 
     @property
     def gross_annual(self):
+        if self.somatic is not None:
+            return self.somatic
         return self.r_max + self.m1_annual + self.predation_total
 
     def per_tick(self, annual):
@@ -479,6 +523,11 @@ class GrowthBudget:
         """
         if self.error:
             return [(f"{self.prey_id}: {self.error}", "error")]
+        if self.somatic is not None:
+            return [(f"g = {self.growth_rate:.4g}", "growth_rate"), (" = ", None),
+                    (f"P {self.somatic:g}", "somatic"), (" / (", None),
+                    (f"{self.gate:g}", "gate"), (" x ", None),
+                    (f"{TICKS_PER_YEAR:g}", "ticks_per_year"), (")", None)]
         terms = [(f"g = {self.growth_rate:.4g}", "growth_rate"),
                  (" = (", None), (f"r_max {self.r_max:g}", "r_max")]
         if self.is_decision_maker or self.m1_annual > 0.0:
@@ -524,6 +573,20 @@ def growth_budget(prey_id, species_defs, interactions,
                                    active_predators),
     )
     if is_dm:
+        try:
+            budget.somatic = somatic_production(spec)
+        except ValueError as error:      # the FG editor, mid-keystroke
+            budget.error = str(error)
+            return budget
+        if budget.somatic is not None:
+            if _as_float(spec.get("r_max")) > 0.0:
+                budget.error = (f"{SOMATIC_KEY} replaces r_max (section 250): r_max is "
+                                "a whole-life-cycle rate whose recruitment is imported")
+                return budget
+            if _as_float(spec.get("feeding_season_months")) not in (0.0, 12.0):
+                budget.error = (f"{SOMATIC_KEY} is an annual rate: feeding_season_months "
+                                "does not apply (section 250)")
+                return budget
         budget.maintenance = _as_float(spec.get("maintenance_level"))
         budget.gate = max_gate(spec)
         if budget.gate <= 0.0:

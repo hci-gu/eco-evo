@@ -4,7 +4,9 @@ _migrate and the reward ledger lib/runners/energy_ledger.py).
 Contracts asserted:
 
 1. The keys are checked: a migrating DM needs 12 fills in [0, 1] and an
-   entry; no depth table, no juvenile stage; an NDM takes neither; the
+   entry; no depth table (a juvenile stage is allowed since section 250:
+   the staged DM migrates on its adults, tests/test_open_population.py); an
+   NDM takes neither; the
    season has a mean of ~1.
 2. The entry weights select the edge segments (row 0 north, col 0 west).
 3. One step on the group total: the total relaxes as T + (B - T) exp(-k);
@@ -59,7 +61,6 @@ def test_keys_are_checked():
                 dict(dm, outside_entry=[{"edge": "up"}]),
                 dict(dm, outside_entry=[{"edge": "west", "from": 0.6, "to": 0.4}]),
                 dict(dm, outside_depth_table=[{"depth_m": 1, "weight": 1}]),
-                dict(dm, juvenile_stage={"kappa": 1}),
                 dict(dm, outside_season=[2.0] * 12)):
         with pytest.raises(ValueError):
             FunctionalGroup("m", bad)
@@ -202,7 +203,7 @@ def test_mareld2_mackerel_migrates():
     assert fgs["mackerel"].open_pool["entry"] == [("west", 0.0, 1.0), ("north", 0.0, 0.5)]
     from lib.environments.ecosystem_env.environment import EcosystemEnvironment
     env = EcosystemEnvironment({"height": 60, "width": 60}, fgs, {})
-    assert env.open_dm_ids == ["mackerel"]
+    assert env.open_dm_ids == ["mackerel", "planktivorous_fish", "predatory_fish"]  # 250
     assert env.open_dm_total["mackerel"] == pytest.approx(0.85 * 3600)
     w = env.open_dm_entry["mackerel"]
     assert (w > 0).sum() == 60 + 30 - 1                   # west column + half the top row

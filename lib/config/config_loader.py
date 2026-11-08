@@ -4,7 +4,7 @@ import math
 import numpy as np
 from lib.world.functional_group import FunctionalGroup
 from lib.world.tick_time import LIBRARY_TICK_HOURS, rescale_species
-from lib.world.growth_budget import (capacity_loss_rate, derived_growth_rate,
+from lib.world.growth_budget import (SOMATIC_KEY, capacity_loss_rate, derived_growth_rate, growth_budget,
                                      growth_law)
 from lib.world import daylight, nutrients, temperature
 from lib.spawn import StrategySpec, distribute_with_floor, make_weights
@@ -104,6 +104,17 @@ def _sample_total_biomass(min_b, max_b, rng):
          else float(np.random.random()))
     value = math.exp(math.log(lo) + u * (math.log(hi) - math.log(lo)))
     return float(min(hi, max(lo, int(round(value)))))
+
+def _refuse_unpaid_open_population(sid, spec_defs, inter_defs, active, include_m1):
+    """Section 250: an open-population DM (``somatic_production``) has no
+    hand-set fallback - a budget error is an error, not the stored g."""
+    spec = (spec_defs or {}).get(sid) or {}
+    if spec.get(SOMATIC_KEY) in (None, ""):
+        return
+    budget = growth_budget(sid, spec_defs, inter_defs, active_predators=active,
+                           include_m1=include_m1)
+    raise ValueError(f"'{sid}': {budget.error if budget is not None else 'no growth budget'}")
+
 
 def _derive_fg_spawn_seed(base_seed, fg_id):
     """Derive a deterministic, FG-specific spawn seed from a base seed.
@@ -359,6 +370,9 @@ def setup_full_mareld_mvp(library_path='fgconfig/fg_library.yaml', grid_size=(60
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
+        else:
+            _refuse_unpaid_open_population(sid, spec_defs, inter_defs, _ordered,
+                                           apply_natural_mortality)
         if open_pool.is_open(params) and not params.get('is_decision_maker', False):
             # Section 245: the exchange must hold the open pool (an NDM;
             # a migrating DM's growth is food-limited, section 246).
@@ -801,6 +815,9 @@ def load_project_config(project_path, library_path='fgconfig/fg_library.yaml', g
                                  include_m1=apply_natural_mortality)
         if _g is not None:
             params['growth_rate'] = _g
+        else:
+            _refuse_unpaid_open_population(sid, spec_defs, inter_defs, project_fg_ids,
+                                           apply_natural_mortality)
         if open_pool.is_open(params) and not params.get('is_decision_maker', False):
             # Section 245: the exchange must hold the open pool (an NDM;
             # a migrating DM's growth is food-limited, section 246).

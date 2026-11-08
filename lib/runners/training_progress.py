@@ -237,13 +237,47 @@ def format_viability(viability, step=None, number=None):
     return lines
 
 
+def _intake_snapshot(env, dm_ids):
+    """Copy of the env's cumulative per-pair intake book (tonnes of prey
+    eaten, ``intake_by_pred_prey``) for the decision makers, or None for an
+    env without one."""
+    book = getattr(env, "intake_by_pred_prey", None)
+    if book is None:
+        return None
+    return {f: {q: float(v) for q, v in (book.get(f) or {}).items()} for f in dm_ids}
+
+
+def _year_diet(dm_ids, start, end, mean_biomass):
+    """One probe year's diet per decision maker from two book snapshots.
+
+    ``tonnes`` holds every prey with a positive take; ``ration`` is the
+    year's total over the predator's mean biomass (t/t/yr; None when it
+    was absent all year). Finite values only (the jsonl writer refuses NaN).
+    """
+    out = {}
+    for i, f in enumerate(dm_ids):
+        before = (start or {}).get(f, {})
+        tonnes = {}
+        for q, v in end.get(f, {}).items():
+            d = v - before.get(q, 0.0)
+            if d > 0.0 and math.isfinite(d):
+                tonnes[q] = d
+        b = float(mean_biomass[i])
+        total = sum(tonnes.values())
+        out[f] = {"ration": total / b if b > 0.0 and math.isfinite(b) else None,
+                  "tonnes": tonnes}
+    return out
+
+
 def run_probe(env, ticks, lower, upper, pump_events=None):
     """Run ``ticks`` inference ticks and record the probe (section 223.12).
 
     Returns the decision makers' survival ticks as ``measure_survival``
     counts them (but never stops early), every group's biomass as a share
     of its start once a day (``trajectory``; None for a group without
-    starting biomass) and its end ratio per year (``year_end_ratio``).
+    starting biomass), its end ratio per year (``year_end_ratio``) and
+    each decision maker's realised diet and ration per probe year
+    (``diets``, section 248; empty for an env without an intake book).
     """
     dm_ids = sorted(env.dm_ids)
     ids = list(env.global_fg_order)
@@ -269,6 +303,17 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
     alive = present.copy()
     survived = np.zeros(len(dm_ids), dtype=np.int64)
     b0_dm = np.array([initial[f] for f in dm_ids], dtype=np.float64)
+    # Realised diets per probe year (section 248): the env's cumulative
+    # per-pair intake book, differenced at each year end, and the year's
+    # mean biomass of every decision maker for its ration.
+    diets = []
+    book_start = _intake_snapshot(env, dm_ids)
+    biomass_sum = np.zeros(len(dm_ids), dtype=np.float64)
+    # Section 249: every group's mean biomass per probe year, so a prey's
+    # realised M2 (tonnes eaten / its mean biomass) can be read back.
+    all_sum = np.zeros(len(ids), dtype=np.float64)
+    year_biomass = []
+    year_ticks = 0
     ticks_run = 0
     for t in range(1, ticks + 1):
         if pump_events is not None and not pump_events():
@@ -276,6 +321,9 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
         env.tick()
         ticks_run += 1
         current = np.array([env.fgs[f].biomass.sum() for f in dm_ids], dtype=np.float64)
+        biomass_sum += current
+        all_sum += [float(np.asarray(env.fgs[f].biomass, dtype=np.float64).sum()) for f in ids]
+        year_ticks += 1
         alive &= np.isfinite(current) & (current >= lower * b0_dm) & (current <= upper * b0_dm)
         survived += alive
         if t % every == 0 or t % per_year == 0 or t == ticks:
@@ -286,6 +334,16 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
             if t % per_year == 0:
                 for f, v in now.items():
                     years[f].append(v)
+                book_end = _intake_snapshot(env, dm_ids)
+                if book_end is not None:
+                    diets.append(_year_diet(dm_ids, book_start, book_end,
+                                            biomass_sum / max(year_ticks, 1)))
+                book_start = book_end
+                year_biomass.append({f: float(v) for f, v in zip(ids, all_sum / max(year_ticks, 1))
+                                     if math.isfinite(v)})
+                biomass_sum[:] = 0.0
+                all_sum[:] = 0.0
+                year_ticks = 0
     return {
         "survival_ticks": {f: int(survived[i]) if present[i] else None for i, f in enumerate(dm_ids)},
         "initial_biomass": {f: initial[f] for f in dm_ids},
@@ -294,6 +352,11 @@ def run_probe(env, ticks, lower, upper, pump_events=None):
         # Computed here, before _record drops the trajectory, so the
         # history keeps the annual means it was scored on (section 223.18).
         "viability": probe_viability(series, every, per_year),
+        # Section 248: {predator: {"ration": t eaten per t of mean biomass
+        # per probe year, "tonnes": {prey: t}}} per whole probe year.
+        "diets": diets,
+        # Section 249: {group: mean biomass (t)} per whole probe year.
+        "year_biomass": year_biomass,
         "trajectory": {"every_ticks": every, "ticks_per_year": per_year, "series": series},
     }
 

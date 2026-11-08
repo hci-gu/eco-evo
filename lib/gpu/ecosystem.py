@@ -5,6 +5,8 @@ State fields are [ecosystem, functional_group, cell]. Actions are
 touch NumPy; every numerical method supports CPU tensors and CUDA tensors.
 """
 
+import math
+
 import numpy as np
 import torch
 from lib.environments.ecosystem_env.constants import MAX_HARVEST_FRAC
@@ -349,6 +351,18 @@ class TensorEcosystem:
             self.stage_start = tensor(env.stage_start)[:, :, None]
             self.stage_f_j = tensor(env.stage_f_j)[None, :, :, None]
             self.stage_f_a = tensor(env.stage_f_a)[None, :, :, None]
+        # Section 250: open-population groups, mirror of ``stages.exchange``:
+        # emigration per stage and the recruit import into J (per cell and
+        # tick, uniform over the cells) at the month's fill.
+        exchange_ids = tuple(getattr(env, "stage_exchange_ids", ()) or ()) if self.stages_on else ()
+        self.stage_exchange_on = bool(exchange_ids)
+        if self.stage_exchange_on:
+            self.stage_exchange_mask = tensor([fid in exchange_ids for fid in self.ids],
+                                              torch.bool)[None, :, None]
+            self.stage_import = tensor(env.stage_import)[:, :, None]
+            self.stage_fill = tensor(env.stage_fill)[:, :, None]
+            self.stage_emig_keep_j = tensor(env.stage_emig_keep[0])[None, :, None]
+            self.stage_emig_keep_a = tensor(env.stage_emig_keep[1])[None, :, None]
         # Section 245: open pools, mirror of ``ecosystem_env/open_pool.py``:
         # B <- T + (B (1 + g) - T) exp(-k) after M1, no logistic, no K.
         open_ids = tuple(getattr(env, "open_ids", ()))
@@ -389,6 +403,13 @@ class TensorEcosystem:
             self.open_dm_keep = tensor([
                 float(np.exp(-env.fgs[fid].open_pool["rate"])) if fid in dm_open else 1.0
                 for fid in self.ids])[None, :, None]
+            # 1 - exp(-k) and the target in float64, as the reference: for a
+            # small k the float32 keep loses ~1e-5 of the net (section 250).
+            self.open_dm_flux64 = torch.tensor([
+                -math.expm1(-float(env.fgs[fid].open_pool["rate"])) if fid in dm_open else 0.0
+                for fid in self.ids], dtype=torch.float64, device=self.device)[None, :, None]
+            self.open_dm_total64 = torch.tensor([env.open_dm_total.get(fid, 0.0) for fid in self.ids],
+                                                dtype=torch.float64, device=self.device)[None, :, None]
             self.open_dm_entry = tensor(np.stack([
                 np.asarray(env.open_dm_entry[fid], dtype=np.float32).reshape(-1)
                 if fid in dm_open else np.zeros(self.C, dtype=np.float32)
@@ -404,12 +425,25 @@ class TensorEcosystem:
                             else np.ones(period, dtype=np.float32))
                 self.open_dm_season = tensor(np.stack(
                     [per_tick(env.open_dm_season, fid) for fid in self.ids], axis=1))[:, :, None]
+                self.open_dm_season64 = torch.tensor(np.stack(
+                    [np.asarray(env.open_dm_season[fid], dtype=np.float64)
+                     if fid in dm_open and env.open_dm_season.get(fid) is not None
+                     else np.ones(period) for fid in self.ids], axis=1),
+                    dtype=torch.float64, device=self.device)[:, :, None]
                 self.open_dm_fill = tensor(np.stack(
                     [per_tick(env.open_dm_fill, fid) for fid in self.ids], axis=1))[:, :, None]
             else:
                 self.open_dm_season = None
                 self.open_dm_fill = tensor([float(env.open_dm_fill.get(fid, 0.0))
                                             for fid in self.ids])[None, :, None]
+        # The reward ledger (energy_ledger.py) covers every DM that exchanges
+        # with the outside: the migrating ones and the open-population
+        # groups (section 250). [1, D].
+        ledger_ids = set(dm_open) | set(exchange_ids)
+        self.ledger_on = bool(ledger_ids)
+        if self.ledger_on:
+            self.ledger_rows = tensor([fid in ledger_ids for fid in self.dm_ids],
+                                      torch.bool)[None, :]
         # Section 245: per-cell depth multiplier on a pair's attack rate,
         # mirror of ``interactions.build_pair_depth_maps``: [1, D, G, C].
         self.pair_depth = (
@@ -1562,7 +1596,9 @@ class TensorEcosystem:
         b = torch.where(self.is_dm, dm_b, ndm_b)
         r = torch.where(self.is_dm, dm_r, ndm_r)
         if self.open_dm_on:
-            b, r = self._migrate(b, r, light_index, record)
+            b, r = self._migrate(b, r, light_index, record, juvenile)
+        if self.stage_exchange_on and juvenile is not None:
+            b, r, juvenile = self._stage_exchange(b, r, juvenile, light_index, record)
         if record is not None:
             # The extinction sweep is booked as starvation, as
             # ``population_change.apply_extinction_threshold`` does.
@@ -1587,28 +1623,50 @@ class TensorEcosystem:
             return b, r, starve_loss, juvenile
         return b, r, starve_loss
 
-    def _migrate(self, b, r, light_index, record):
-        """Section 246, mirror of ``open_pool.migrate`` on the group total."""
-        target = self.open_dm_total
+    def _migrate(self, b, r, light_index, record, juvenile=None):
+        """Section 246, mirror of ``open_pool.migrate`` on the group total;
+        a staged group migrates on its adults (section 250)."""
+        target = self.open_dm_total64
         fill = self.open_dm_fill
         if self.open_dm_tables:
             if light_index is None:
                 raise ValueError("light_index is required with a migrating decision maker")
             t = light_index.reshape(-1)
-            target = target * self.open_dm_season[t]
+            target = target * self.open_dm_season64[t]
             fill = self.open_dm_fill[t]
-        total = b.sum(-1, keepdim=True)
-        net = torch.where(self.open_dm_mask, (target - total) * (1.0 - self.open_dm_keep), 0.0)
-        export = (-net).clamp_min(0)
-        imported = net.clamp_min(0)
-        share = torch.where(total > 0, export / total.clamp_min(1e-30), 0.0).clamp(max=1.0)
-        leaving = (r * share).sum(-1)
-        fill_energy = imported * fill * self.max_reserve
-        b = b * (1.0 - share) + imported * self.open_dm_entry
-        r = r * (1.0 - share) + fill_energy * self.open_dm_entry
+        adult = b if juvenile is None else (b - torch.minimum(juvenile.clamp_min(0), b)).clamp_min(0)
+        # The group total, the net and the export share in float64, as the
+        # reference sums them (section 250: the water column's seasonal
+        # migration moves enough tonnes for the float32 sum to show).
+        total64 = adult.double().sum(-1, keepdim=True)
+        net64 = torch.where(self.open_dm_mask, (target - total64) * self.open_dm_flux64, 0.0)
+        share64 = torch.where(total64 > 0, (-net64).clamp_min(0) / total64.clamp_min(1e-30),
+                              0.0).clamp(max=1.0)
+        total = total64.to(b.dtype)
+        imported = net64.clamp_min(0).to(b.dtype)
+        share = share64.to(b.dtype)
+        fill_energy = (net64.clamp_min(0) * fill.double() * self.max_reserve.double()).to(b.dtype)
+        keep = (1.0 - share64).to(b.dtype)
+        if juvenile is None:
+            leaving = (r * share).sum(-1)
+            b = b * keep + imported * self.open_dm_entry
+            r = r * keep + fill_energy * self.open_dm_entry
+        else:
+            # Staged rows lose adults only (each cell's reserve pro rata with
+            # its biomass, as the reference); unstaged rows as above. An
+            # empty cell keeps its reserve slot (a producer's nutrient pool
+            # rides in it).
+            staged = self.stage_mask
+            new_b = torch.where(staged, b - adult * share, b * keep)
+            ratio = torch.where(staged, torch.where(b > 0, new_b / b.clamp_min(1e-30), 1.0),
+                                keep)
+            kept = r * ratio
+            leaving = (r - kept).sum(-1)
+            b = new_b + imported * self.open_dm_entry
+            r = kept + fill_energy * self.open_dm_entry
         if record is not None:
             ec = self.energy_content
-            out = (share * total)[..., 0]
+            out = (share64 * total64)[..., 0].to(b.dtype)
             record["exchange"] = record.get("exchange", torch.zeros_like(out)) + out
             record["import"] = record.get("import", torch.zeros_like(out)) + imported[..., 0]
             # The tick's net exchange, for the reward ledger (energy_ledger).
@@ -1617,6 +1675,38 @@ class TensorEcosystem:
             record["exchange_energy"] = (record["exchange_biomass"] * ec
                                          + record["exchange_reserve"])
         return b, r
+
+    def _stage_exchange(self, b, r, juvenile, light_index, record):
+        """Section 250, mirror of ``stages.exchange``: emigration per stage,
+        then the recruit import into J at the month's fill."""
+        if light_index is None or self.stage_import.shape[0] == 1:
+            per_cell = self.stage_import[:1].expand(b.shape[0], -1, -1)
+            fill = self.stage_fill[:1].expand(b.shape[0], -1, -1)
+        else:
+            t = light_index.reshape(-1)
+            per_cell, fill = self.stage_import[t], self.stage_fill[t]
+        mask = self.stage_exchange_mask
+        j = torch.minimum(juvenile.clamp_min(0), b)
+        a = (b - j).clamp_min(0)
+        new_j = torch.where(mask, j * self.stage_emig_keep_j, juvenile)
+        new_b = torch.where(mask, new_j + a * self.stage_emig_keep_a, b)
+        kept = torch.where(mask & (b > 0), r * (new_b / b.clamp_min(1e-30)), r)
+        imported = torch.where(mask, per_cell, 0.0)
+        arriving = imported * fill * self.max_reserve
+        if record is not None:
+            ec = self.energy_content
+            out = (b - new_b).sum(-1)
+            leaving = (r - kept).sum(-1)
+            inn = (imported * self.C)[..., 0]
+            energy_in = (arriving * self.C)[..., 0]
+            zero = torch.zeros_like(out)
+            record["exchange"] = record.get("exchange", zero) + out
+            record["import"] = record.get("import", zero) + inn
+            record["exchange_biomass"] = record.get("exchange_biomass", zero) + inn - out
+            record["exchange_reserve"] = record.get("exchange_reserve", zero) + energy_in - leaving
+            record["exchange_energy"] = (record.get("exchange_energy", zero)
+                                         + (inn - out) * ec + energy_in - leaving)
+        return new_b + imported, kept + arriving, new_j + imported
 
     def advect(self, biomass, reserve, tick, keys=None, track=False, juvenile=None):
         """Drift every responding group; ``track`` also returns the shares.

@@ -41,6 +41,24 @@ second summer). Per tick:
   staged group itself) sees its J as one more channel after the observed
   biomasses, visible-scaled as the biomass channel is.
 
+Open population (section 250; research_notes/"Oppen population", O-umlaut).
+A block may carry ``recruit_import`` I (t/km2/yr, box mean) and
+``emigration`` [e_J, e_A] (/yr). The box is an open nursery whose recruits
+are spawned outside it, so recruitment is a donor-controlled supply, not
+the group's own growth:
+
+- ``recruitment`` then only shapes the import over the year (normalised
+  to an annual mean of 1), and the group's own new tonnes go to J in the
+  share kappa J / (kappa J + A) (rho 0).
+- Per tick, after the migration (``open_pool.migrate``) and before the
+  extinction sweep (``exchange``): J <- J exp(-e_J dt), A <- A exp(-e_A dt)
+  (the emigrants leave with their own fill, as in M1), then I dt shape(t)
+  per cell into J, uniformly over the cells, at the month's fill
+  (``start_fill``, else 0.7).
+- The flows are booked as the exchange (``loss_exchange`` /
+  ``gain_exchange``) and in the tick's net exchange that the reward ledger
+  takes out (``lib/runners/energy_ledger.py``), as a migration.
+
 With the daylight calendar rho and the start share follow the month and
 gamma is converted with the run's ticks per year; without it (test and
 MVP worlds) both are their annual means and the year has the library's
@@ -102,7 +120,29 @@ def settings(fg):
         if not (math.isfinite(value) and value >= 0.0):
             raise ValueError(f"'{gid}': {KEY}.fishing_selectivity.{impact_id} must be >= 0")
         selectivity[str(impact_id)] = value
+    recruit_import = block.get("recruit_import")
+    if recruit_import in (None, ""):
+        recruit_import = None
+    else:
+        try:
+            recruit_import = float(recruit_import)
+        except (TypeError, ValueError):
+            recruit_import = float("nan")
+        if not (math.isfinite(recruit_import) and recruit_import >= 0.0):
+            raise ValueError(f"'{gid}': {KEY}.recruit_import must be >= 0 (t/km2/yr)")
+    emigration = block.get("emigration")
+    if emigration in (None, "", []):
+        emigration = None
+    else:
+        try:
+            emigration = [float(v) for v in emigration]
+        except (TypeError, ValueError):
+            emigration = []
+        if len(emigration) != 2 or not all(math.isfinite(v) and v >= 0.0 for v in emigration):
+            raise ValueError(f"'{gid}': {KEY}.emigration must be [e_J, e_A], each >= 0 (/yr)")
     return {
+        "import": recruit_import,
+        "emigration": emigration,
         "kappa": number("growth_ratio", 0.0, math.inf),
         "gamma": number("graduation_rate", 0.0, math.inf),
         "rho": monthly("recruitment", 0.0, math.inf),
@@ -172,6 +212,10 @@ def build_tables(env):
     (``env.access_mat``, ``env.eat_static_mask``) and the daylight tables.
     """
     env.stage_rows = []
+    env.stage_exchange_ids = []
+    env.stage_import = None
+    env.stage_fill = None
+    env.stage_emig_keep = np.ones((2, env.N_all), dtype=env.dtype)
     env.stage_kappa = np.zeros(env.N_all, dtype=env.dtype)
     env.stage_keep = np.ones(env.N_all, dtype=env.dtype)
     env.juvenile_selectivity = {}
@@ -211,6 +255,8 @@ def build_tables(env):
         rows = 1
     env.stage_rho = np.zeros((rows, env.N_all), dtype=env.dtype)
     env.stage_start = np.zeros((rows, env.N_all), dtype=env.dtype)
+    env.stage_import = np.zeros((rows, env.N_all), dtype=env.dtype)
+    env.stage_fill = np.zeros((rows, env.N_all), dtype=env.dtype)
     for j, spec in found.items():
         fid = env.global_fg_order[j]
         env.stage_rows.append(j)
@@ -223,7 +269,83 @@ def build_tables(env):
             env.stage_rho[0, j] = float(spec["rho"].mean())
             env.stage_start[0, j] = float(spec["start"].mean())
         env.juvenile_selectivity[fid] = dict(spec["selectivity"])
+        if spec["import"] is not None or spec["emigration"] is not None:
+            _open_population_tables(env, j, spec, per_year, months if calendar else None,
+                                    hours if calendar else None)
     env.stage_rows = np.asarray(env.stage_rows, dtype=np.int64)
+
+
+def _open_population_tables(env, j, spec, per_year, months, hours):
+    """Section 250: the import per cell and tick, the emigration survival
+    per tick and the arrivals' fill, for one staged column ``j``."""
+    fid = env.global_fg_order[j]
+    env.stage_exchange_ids.append(fid)
+    rho = np.asarray(spec["rho"], dtype=np.float64)
+    shape = rho / rho.mean() if rho.mean() > 0.0 else np.ones(12)
+    imported = float(spec["import"] or 0.0) / per_year
+    if spec["import"] is not None:
+        # The import replaces the group's own recruitment (rho 0).
+        env.stage_rho[:, j] = 0.0
+    if months is not None:
+        # Normalised on the ticks (months differ in length): the year's
+        # import is exactly I per cell.
+        per_tick = shape[months]
+        env.stage_import[:, j] = imported * per_tick / per_tick.mean()
+    else:
+        env.stage_import[0, j] = imported
+    e_j, e_a = spec["emigration"] or (0.0, 0.0)
+    env.stage_emig_keep[0, j] = math.exp(-e_j / per_year)
+    env.stage_emig_keep[1, j] = math.exp(-e_a / per_year)
+    fill = getattr(env.fgs[fid], "start_fill", None)
+    if fill is None:
+        env.stage_fill[:, j] = 0.7
+    elif hours is not None:
+        env.stage_fill[:, j] = monthly_on_ticks(fill, hours)
+    else:
+        env.stage_fill[0, j] = float(np.mean(fill))
+
+
+def exchange(env):
+    """Section 250: each open-population group's emigration and recruit
+    import (after ``open_pool.migrate``, before the extinction sweep)."""
+    ids = getattr(env, "stage_exchange_ids", None)
+    if not ids:
+        return
+    t = year_tick(env)
+    moving = set(getattr(env, "open_dm_ids", ()) or ())
+    for fid in ids:
+        fg = env.fgs[fid]
+        j = env.global_fg_order.index(fid)
+        juvenile = np.minimum(fg.juvenile, fg.biomass)
+        adult = np.maximum(fg.biomass - juvenile, np.float32(0.0))
+        new_j = juvenile * env.stage_emig_keep[0, j]
+        new_b = new_j + adult * env.stage_emig_keep[1, j]
+        ratio = np.where(fg.biomass > 0.0, new_b / np.where(fg.biomass > 0.0, fg.biomass,
+                                                           np.float32(1.0)), np.float32(0.0))
+        reserve_before = float(fg.energy_reserve.astype(np.float64).sum())
+        export = float((fg.biomass - new_b).astype(np.float64).sum())
+        fg.energy_reserve = (fg.energy_reserve * ratio).astype(env.dtype, copy=False)
+        leaving = reserve_before - float(fg.energy_reserve.astype(np.float64).sum())
+        per_cell = np.float32(env.stage_import[t, j])
+        fill = float(env.stage_fill[t, j])
+        me = float(fg.max_energy_reserve)
+        fg.biomass = (new_b + per_cell).astype(env.dtype, copy=False)
+        fg.juvenile = (new_j + per_cell).astype(env.dtype, copy=False)
+        fg.energy_reserve = (fg.energy_reserve + per_cell * np.float32(fill * me)).astype(
+            env.dtype, copy=False)
+        imported = float(per_cell) * fg.biomass.size
+        arriving = imported * fill * me
+        for book, amount in (("loss_exchange", export), ("gain_exchange", imported)):
+            books = getattr(env, book, None)
+            if books is not None:
+                books[fid] = float(books.get(fid, 0.0)) + amount
+        ec = float(fg.params.get("energy_content", 0.0) or 0.0)
+        base = (lambda name: float(getattr(env, name).get(fid, 0.0))) if fid in moving else (
+            lambda name: 0.0)
+        env.tick_exchange_biomass[fid] = base("tick_exchange_biomass") + imported - export
+        env.tick_exchange_reserve[fid] = base("tick_exchange_reserve") + arriving - leaving
+        env.tick_exchange_energy[fid] = (base("tick_exchange_energy")
+                                         + (imported - export) * ec + arriving - leaving)
 
 
 def is_staged(env, fg_id):

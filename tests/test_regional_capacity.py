@@ -95,6 +95,10 @@ def test_no_library_group_has_a_regional_capacity():
 
 def test_loader_derives_the_rate_for_the_library_groups():
     lib = _library()
+    # The mechanism needs an r_max budget: whiting in its pre-250 form (the
+    # open population of section 250 replaced r_max by somatic_production).
+    lib["species_definitions"]["whiting"].pop("somatic_production", None)
+    lib["species_definitions"]["whiting"]["r_max"] = 0.49
     lib["species_definitions"]["whiting"]["regional_carrying_capacity"] = 0.533
     project = yaml.safe_load(PROJECT.read_text(encoding="utf-8-sig"))
     fgs = load_project_config(str(PROJECT), library_config=lib,

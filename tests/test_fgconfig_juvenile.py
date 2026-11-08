@@ -32,6 +32,15 @@ def test_juvenile_rows_make_the_library_block():
                      "fishing_selectivity": {"pelagic_trawling": 0.7, "bottom_trawling": 1.5}}
 
 
+def test_open_population_rows_round_trip():
+    rows = dict(ROWS, juvenile_recruit_import="0.183", juvenile_emigration="1.1, 0.17")
+    block, error = App._collect_juvenile_block(rows, "benthivorous_fish")
+    assert error is None
+    assert block["recruit_import"] == 0.183 and block["emigration"] == [1.1, 0.17]
+    block, error = App._collect_juvenile_block(dict(rows, juvenile_emigration="1.1"), "x")
+    assert block is None and error
+
+
 def test_empty_growth_ratio_means_no_stage():
     assert App._collect_juvenile_block(dict(ROWS, juvenile_growth_ratio=""), "x") == (None, None)
 

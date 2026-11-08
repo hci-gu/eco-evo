@@ -630,7 +630,9 @@
     # mid-Sep 5.5 (Bachiller et al. 2018), pout 8-10, the rate mean of 12/n;
     # the months size g, the food decides when it grows.
     material_growth_share: 0.43
-    feeding_season_months: 6.4
+    # Section 250: no feeding_season_months - somatic_production is an annual
+    # rate (the season sized the r_max-based g; the material law still caps
+    # the new tonnes on today's food).
     # Section 244.10: full appetite, intake capped at the reserve room
     # (section 240). Herring fatten from ~0.25 to ~0.9 of the maximum in
     # ~6 weeks (Kenyon 2022), which a gate that halves appetite at s 0.6
@@ -673,7 +675,17 @@
     juvenile_stage:
       growth_ratio: 4.5
       graduation_rate: 0.48
+      # Section 250: recruitment is imported (the box's recruits are spawned
+      # outside it): recruit_import t/km2/yr into J, shaped over the year by
+      # the recruitment months below; the group's own new tonnes no longer
+      # recruit. SMS stock recruits x the box's survey share: herring 430-773, Norway pout
+      # 266-560, sprat 238-1527 t/yr at age 1 Q1: 934-2860 t/yr, midpoint / 3600 km2.
+      # Emigration [e_J, e_A] /yr (WP2 survey cohorts, upper bounds); e_A 0: the adults are the
+      # window of the migration below.
+      # research_notes/"Oppen population" (O-umlaut) summary.md.
       recruitment: [0, 0, 0, 0, 0, 1.5, 3.7, 3.8, 1.7, 0, 0, 0]
+      recruit_import: 0.527
+      emigration: [0.1, 0.0]
       start_share: [0.419, 0.411, 0.404, 0.396, 0.389, 0.389, 0.407, 0.433, 0.447, 0.445, 0.436, 0.428]
       fishing_selectivity:
         pelagic_trawling: 0.6
@@ -701,7 +713,31 @@
     # horse mackerel). research_notes/Den pelagiska poolens reglering/
     # productivity.md; research_notes/"Fiskgrupper i rutan" (Swedish letters)/params_planktivorous_fish.md.
     # Section 243.3: 0.40 (0.32-0.62) at 35 % pout.
-    r_max: 0.40
+    # Section 250 (open population): r_max is out of the budget. It is a
+    # whole-life-cycle rate whose recruitment happens outside the box (an open
+    # nursery / window: 0.1-6 % of the stocks, recruitment flat in SSB; research_notes/
+    # "Bestandsreglering", a-ring); with it the fish paid r_max through adult
+    # feeding at a full reserve all year and grew at r_max - F (fix90; section
+    # 249). The derived g pays the somatic production of the fish in the box,
+    # P 0.66 /yr: SMS 2023 key run 2013-22 per-tonne growth from weight at age,
+    # ages 0-1 / 2+ at the box J/B, herring, Norway pout, sprat (0.93 of the group; blue whiting takes their value). Was r_max 0.40.
+    # research_notes/"Oppen population" (O-umlaut) summary.md (scripts/closure_249.py).
+    somatic_production: 0.66
+    # Section 250: a window on mobile stocks. The ADULTS migrate (open_pool.migrate
+    # on a staged DM): their box biomass relaxes to the stock's presence,
+    # outside_density = the adults' annual mean = the summer HERAS-level adults
+    # 4.72 x (1 - J/B 0.407 in July) = 2.80 t/km2 x the mean presence 0.754 [J:
+    # the start density read as the summer peak]; season = the WP2 monthly
+    # presence (fraction of August) / its mean; exchange 36.5 /yr (the box's
+    # physical exchange 4-18 d, ~10 d); arrivals at the start_fill of the month,
+    # on the west and north edges [J]. Bestandsreglering migration.md section 4.
+    outside_density: 2.111
+    outside_exchange_rate: 0.025
+    outside_season: [0.7956, 0.7956, 0.8088, 0.8884, 1.074, 1.2597, 1.3259, 1.3259, 1.1403, 0.9547, 0.8221, 0.8088]
+    outside_fill: [0.50, 0.36, 0.26, 0.20, 0.32, 0.81, 0.94, 0.96, 0.88, 0.88, 0.76, 0.68]
+    outside_entry:
+      - {edge: west}
+      - {edge: north}
     # No regional_carrying_capacity since section 243.4 (was 4.8 / 6.1,
     # sections 185.20, 209, 243.3): it masked booked M2 the per-pair engine
     # never realised, and it counted the box's density dependence (food,
@@ -716,7 +752,9 @@
     # (appetite reserve_room: s* 0.750 -> 1) -> 0.0016563.
     # Section 245 (whiting M2 x 1.103): 0.0016563491332 -> 0.0016645.
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0016645 -> 0.0014459.
-    growth_rate: 0.0014458512097
+    # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
+    # 0.0014458512097 -> 0.0004908.
+    growth_rate: 0.00049083039579
     # Section 209: M1 = M0 + predation by groups that are not FGs = 0.26
     # /yr (0.11-0.38): herring M0 0.25, sprat 0.42, Norway pout 0.30,
     # blue whiting 0.20, + squid ~0.01. Was 0.580 (Ecopath 1991), which
@@ -814,7 +852,9 @@
     # 9.5 (SMS quarterly weights, upper bounds; Pilling 2007), plaice 8 (no
     # feeding Dec-Mar, Todd 1911 via Rijnsdorp 1983), long rough dab 6.5.
     material_growth_share: 0.49
-    feeding_season_months: 8.6
+    # Section 250: no feeding_season_months - somatic_production is an annual
+    # rate (the season sized the r_max-based g; the material law still caps
+    # the new tonnes on today's food).
     # Section 244: Q10 1.6 (1.14-2.5) on the whole response at the bottom
     # layer: cod satiation 1.17 (large cod are on their intake plateau,
     # peak 9.8-11.6 C, Bjornsson 2001), haddock 1.25, flatfish 4.6 (Fonds,
@@ -888,7 +928,17 @@
     juvenile_stage:
       growth_ratio: 4.1
       graduation_rate: 1.02
+      # Section 250: recruitment is imported (the box's recruits are spawned
+      # outside it): recruit_import t/km2/yr into J, shaped over the year by
+      # the recruitment months below; the group's own new tonnes no longer
+      # recruit. SMS stock recruits x the box's survey share: haddock age 0 Q3 190-323, cod age 1
+      # Q1 336-469 t/yr: 526-792 t/yr, midpoint / 3600 km2.
+      # Emigration [e_J, e_A] /yr (WP2 survey cohorts, upper bounds); juveniles ~90-95 % haddock;
+      # adults cod 0.3, haddock 0.1, flatfish 0.
+      # research_notes/"Oppen population" (O-umlaut) summary.md.
       recruitment: [0, 0, 0, 0, 0, 0.2, 0.5, 0.5, 0.2, 0, 0, 0]
+      recruit_import: 0.183
+      emigration: [1.1, 0.17]
       start_share: [0.155, 0.150, 0.147, 0.143, 0.139, 0.139, 0.148, 0.161, 0.169, 0.168, 0.163, 0.159]
       fishing_selectivity:
         bottom_trawling: 0.15
@@ -902,7 +952,16 @@
     # haddock 0.24, cod 0.35, plaice 0.40, dab 0.55, witch 0.28, lemon
     # sole 0.50, gurnard 0.65, starry ray 0.15, long rough dab 0.30
     # (judgement) -> 0.31 (0.22-0.41).
-    r_max: 0.31
+    # Section 250 (open population): r_max is out of the budget. It is a
+    # whole-life-cycle rate whose recruitment happens outside the box (an open
+    # nursery / window: 0.1-6 % of the stocks, recruitment flat in SSB; research_notes/
+    # "Bestandsreglering", a-ring); with it the fish paid r_max through adult
+    # feeding at a full reserve all year and grew at r_max - F (fix90; section
+    # 249). The derived g pays the somatic production of the fish in the box,
+    # P 0.74 /yr: SMS 2023 key run 2013-22 per-tonne growth from weight at age,
+    # ages 0-1 / 2+ at the box J/B, haddock and cod (0.70 of the group; flatfish, rays and hagfish take their value). Was r_max 0.31.
+    # research_notes/"Oppen population" (O-umlaut) summary.md (scripts/closure_249.py).
+    somatic_production: 0.74
     # No regional K since section 223.37: it counted the box's density
     # dependence twice (K set for the full budget growth at B* while food
     # competition and predation in the box already deliver ~73 % of it),
@@ -913,7 +972,9 @@
     # feeding_season_months 8.6 (material law).
     # Section 245 (krill pair M2 0.035 booked): 0.0015752138885 -> 0.0015943.
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0015943 -> 0.00086460.
-    growth_rate: 0.00086460317579
+    # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
+    # 0.00086460317579 -> 0.0005497.
+    growth_rate: 0.00054972810745
     # M1 = M0 0.20 (SMS convention) + predation by groups NOT in the model
     # 0.09 (squid, halibut, megrim, grey seal) = 0.29 /yr (0.19-0.46).
     # Predation by predatory_fish, seals and porpoises is M2 on pairs.
@@ -1009,7 +1070,9 @@
     # (SMS ration only 0.14 of the year in Q1; 26-50 % empty stomachs in
     # Q1 spawning), the other members ~9 [J].
     material_growth_share: 0.48
-    feeding_season_months: 8.6
+    # Section 250: no feeding_season_months - somatic_production is an annual
+    # rate (the season sized the r_max-based g; the material law still caps
+    # the new tonnes on today's food).
     # Section 244.10: full appetite, intake capped at the reserve room
     # (section 240), as every fish group. No fish data support the hunger
     # gate's linear decline from u; cod (the gadoid proxy for saithe,
@@ -1045,7 +1108,30 @@
     # r_max: today's productivity (Euler-Lotka r_now): saithe 0.44, hake
     # 0.26, spurdog 0.07, anglerfish 0.47, ling 0.55, pollack 0.63 -> 0.396
     # (0.34-0.43).
-    r_max: 0.396
+    # Section 250 (open population): r_max is out of the budget. It is a
+    # whole-life-cycle rate whose recruitment happens outside the box (an open
+    # nursery / window: 0.1-6 % of the stocks, recruitment flat in SSB; research_notes/
+    # "Bestandsreglering", a-ring); with it the fish paid r_max through adult
+    # feeding at a full reserve all year and grew at r_max - F (fix90; section
+    # 249). The derived g pays the somatic production of the fish in the box,
+    # P 0.42 /yr: SMS 2023 key run 2013-22 per-tonne growth from weight at age,
+    # ages 0-1 / 2+ at the box J/B, saithe (0.80 of the group; the minor members take its value). Was r_max 0.396.
+    # research_notes/"Oppen population" (O-umlaut) summary.md (scripts/closure_249.py).
+    somatic_production: 0.42
+    # Section 250: a window on mobile stocks (no juveniles in the box). The group
+    # migrates (open_pool.migrate): outside_density = the annual mean 0.617 t/km2
+    # [J: the NS-IBTS long-run start read as the annual mean], season = the WP2
+    # monthly presence (saithe 0.05-0.10 in winter; fraction of August) / its
+    # mean 0.556, exchange 12 /yr [J: ~1 month residence], arrivals at fill 0.71
+    # on the west and north edges (the Norwegian Trench) [J]. Bestandsreglering
+    # migration.md section 4.
+    outside_density: 0.617
+    outside_exchange_rate: 0.0082192
+    outside_season: [0.2159, 0.1619, 0.2339, 0.5217, 0.9715, 1.4933, 1.7991, 1.7991, 1.7811, 1.5292, 0.9715, 0.5217]
+    outside_fill: [0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71]
+    outside_entry:
+      - {edge: west}
+      - {edge: north}
     # No regional K since section 223.37: a loss cannot stand for the
     # exchange of a window group that needs a net import (field closure
     # P 0.36 vs L 0.62 /yr), and it counted the box's density dependence
@@ -1055,7 +1141,9 @@
     # move s* 0.787 -> 0.761; x 12 / 8.6 for the material law); 244.10
     # (appetite reserve_room: s* 0.761 -> 1) -> 0.0012954.
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0012954 -> 0.00069646.
-    growth_rate: 0.00069645523574
+    # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
+    # 0.00069645523574 -> 0.0003093.
+    growth_rate: 0.00030932390632
     # M1 = M0 + predation by groups NOT in the model: saithe 0.29, spurdog
     # 0.10, hake 0.45, anglerfish 0.25 -> 0.276 /yr (0.19-0.31).
     # Within-group predation is a transfer inside the pool and left out.
@@ -1129,7 +1217,9 @@
     # (0.36-0.64; floor 0.38). Season 9.0 months (8-10): SMS 8.9, consumption
     # in every quarter, resident all year.
     material_growth_share: 0.48
-    feeding_season_months: 9.0
+    # Section 250: no feeding_season_months - somatic_production is an annual
+    # rate (the season sized the r_max-based g; the material law still caps
+    # the new tonnes on today's food).
     # Section 244.10: full appetite, intake capped at the reserve room, as
     # every fish group (cod proxy, as predatory_fish). Frozen fix89 probe:
     # fill ~0.98 (rule 240). research_notes/"Hostens tillvaxt och
@@ -1160,14 +1250,32 @@
     juvenile_stage:
       growth_ratio: 4.5
       graduation_rate: 0.65
+      # Section 250: recruitment is imported (the box's recruits are spawned
+      # outside it): recruit_import t/km2/yr into J, shaped over the year by
+      # the recruitment months below; the group's own new tonnes no longer
+      # recruit. SMS stock recruits x the box's survey share: whiting age 1 Q1 435-801 t/yr,
+      # midpoint / 3600 km2.
+      # Emigration [e_J, e_A] /yr (WP2 survey cohorts, upper bounds).
+      # research_notes/"Oppen population" (O-umlaut) summary.md.
       recruitment: [0, 0, 0, 0, 0, 0.6, 1.3, 1.4, 0.6, 0, 0, 0]
+      recruit_import: 0.172
+      emigration: [0.2, 0.3]
       start_share: [0.167, 0.159, 0.152, 0.145, 0.138, 0.139, 0.156, 0.181, 0.195, 0.193, 0.184, 0.175]
       fishing_selectivity:
         bottom_trawling: 0.29
         pelagic_trawling: 4.0
     # growth_rate is DERIVED by lib/world/growth_budget.py (see
     # predatory_fish). r_max: whiting Euler-Lotka r_now 0.49 (0.44-0.49).
-    r_max: 0.49
+    # Section 250 (open population): r_max is out of the budget. It is a
+    # whole-life-cycle rate whose recruitment happens outside the box (an open
+    # nursery / window: 0.1-6 % of the stocks, recruitment flat in SSB; research_notes/
+    # "Bestandsreglering", a-ring); with it the fish paid r_max through adult
+    # feeding at a full reserve all year and grew at r_max - F (fix90; section
+    # 249). The derived g pays the somatic production of the fish in the box,
+    # P 0.61 /yr: SMS 2023 key run 2013-22 per-tonne growth from weight at age,
+    # ages 0-1 / 2+ at the box J/B, whiting. Was r_max 0.49.
+    # research_notes/"Oppen population" (O-umlaut) summary.md (scripts/closure_249.py).
+    somatic_production: 0.61
     # No regional_carrying_capacity since section 243.4 (was K = B* / (1 -
     # F/r) = 0.533 t/km2): it masked the epifauna overshoot of the old bed
     # pair (a 0.27, fixed in 232 / 232.1) and counted the box's density
@@ -1176,7 +1284,9 @@
     # move s* 0.749 -> 0.767; x 12 / 9.0 for the material law); 244.10
     # (appetite reserve_room: s* 0.767 -> 1) -> 0.0020293.
     # Section 247 (u to the field value, g x (1 - u_old)/(1 - u_new)): 0.0020293 -> 0.0010910.
-    growth_rate: 0.0010910017053
+    # Section 250 (somatic production instead of r_max + M1 + M2, no season factor):
+    # 0.0010910017053 -> 0.0004492.
+    growth_rate: 0.00044925614965
     # M1 = SMS residual M 0.20 + grey seal and birds 0.05 = 0.25 /yr
     # (0.20-0.32). Booked on pairs: benthivores 0.18 (223.28), predatory_fish
     # 0.157, porpoises 0.019, seals 0.013; total M 0.62 vs SMS 0.685.
@@ -2217,7 +2327,20 @@ interaction_definitions:
     # (pure energy ceiling). research_notes/"Magtomning och energitak" (Swedish letters).
     handling_time: 177.2
     functional_response: 2
-    max_intake_rate: 0.0026
+    # Section 249: membership instead of the gape phi. The 0.10 above is a
+    # gape share (the benthivores that can swallow whiting), and since 230
+    # the prey window (stage_access) carries the gape on the same axis: the
+    # gape was counted twice, as on benthivores -> planktivores (replaced by
+    # membership in 243.3; research_notes/"Bottenfiskens sillbyte" finding
+    # 1, "Fonsterviktning" (o-umlaut) open point 1). Membership without gape:
+    # cod >= 20 cm 0.314 x 0.982 = 0.308 at 1, rays and gurnard 0.024 x 0.5;
+    # no haddock (the booked M2 has none) = 0.320 (0.31-0.33). a = 0.026 per
+    # capable tonne x 0.320 = 0.0083 (was 0.0026; a per tonne is nearly
+    # independent of cod length, benthivores_encounter.md 2.1). The pair
+    # still realises ~0.03 of its booked 0.18 at the start (budget_gate
+    # prey side); the rest is open (research_notes/"Bytessidans predation",
+    # a-umlaut).
+    max_intake_rate: 0.0083
     dark_ratio: 0.1
     # Section 230: stage access from cod's window (prey <= 0.30 x its length,
     # box cod > 20 cm) on whiting's stage lengths, as benthivores ->

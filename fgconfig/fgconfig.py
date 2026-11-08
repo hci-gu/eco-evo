@@ -807,6 +807,8 @@ class FGConfigApp:
             ("  Arrival Fill (12 monthly reserve fills of the arriving fish, 0-1)", "outside_fill", "entry", 0.0, 1.0),
             ("  Entry Edges (e.g. west, north:0-0.5)", "outside_entry", "entry", 0.0, 0.0),
             ("Max Net Growth r_max (1/yr, literature; 0 = set Max Growth by hand)", "r_max", "entry", 0.0, 100.0),
+            # Section 250: an open population's g pays its somatic production.
+            ("  Somatic production P (1/yr, field; replaces r_max; 0 = off)", "somatic_production", "entry", 0.0, 10.0),
             # Section 185: closes the logistic whose r the budget pays.
             ("  Regional carrying capacity K (t/km2, effective today; 0 = off)", "regional_carrying_capacity", "entry", 0.0, 100.0),
             # Section 202: share of the M1 loss returned to the nutrient pools.
@@ -904,6 +906,9 @@ class FGConfigApp:
             ("  Recruitment rho (12 monthly values, Jan..Dec)", "juvenile_recruitment", "entry", 0.0, 1000.0),
             ("  Start share J/B (1 or 12 monthly values, 0-1)", "juvenile_start_share", "entry", 0.0, 1.0),
             ("  Fishing selectivity (impact = s_J, ...; unset = 1)", "juvenile_fishing_selectivity", "entry", 0.0, 100.0),
+            # Section 250: the open population (stages.exchange).
+            ("  Recruit import (t/km2/yr into J; empty = own recruitment)", "juvenile_recruit_import", "entry", 0.0, 1000.0),
+            ("  Emigration e_J, e_A (1/yr; empty = none)", "juvenile_emigration", "entry", 0.0, 100.0),
         ]
         self.juvenile_vars = {}
         for (label, key, _type, _lo, _hi) in juvenile_rows:
@@ -4180,6 +4185,9 @@ class FGConfigApp:
         if kind == "r_max":
             return (f"{name}: r_max = {budget.r_max:g} per year, adds "
                     f"{budget.per_tick(budget.r_max):.4g} per tick to g")
+        if kind == "somatic":
+            return (f"{name}: P = {budget.somatic:g} per year, the somatic production "
+                    f"the open population's g pays (section 250)")
         if kind == "m1":
             per_tick = -math.expm1(-budget.m1_annual / TICKS_PER_YEAR)
             return (f"{name}: M1 = {budget.m1_annual:.4g} per year "
@@ -4209,7 +4217,7 @@ class FGConfigApp:
 
     # FG Editor fields the derived growth_rate depends on (section 160:
     # the ideal reserve s* reads the energy ones).
-    GROWTH_BUDGET_KEYS = ("r_max", "natural_mortality", "maintenance_level",
+    GROWTH_BUDGET_KEYS = ("r_max", "somatic_production", "natural_mortality", "maintenance_level",
                           "max_energy_reserve", "energy_content",
                           "resting_metabolism", "feeding_cost",
                           "max_intake_rate", "income_growth_kappa",
@@ -4951,6 +4959,8 @@ class FGConfigApp:
         sel = block.get("fishing_selectivity") or {}
         self.juvenile_vars["juvenile_fishing_selectivity"].set(
             ", ".join(f"{k} = {float(v):g}" for k, v in sel.items()))
+        self.juvenile_vars["juvenile_recruit_import"].set(fmt(block.get("recruit_import")))
+        self.juvenile_vars["juvenile_emigration"].set(fmt(block.get("emigration")))
 
     @staticmethod
     def _collect_juvenile_block(values, group_id="?"):
@@ -4978,6 +4988,12 @@ class FGConfigApp:
                 if not name.strip() or not number.strip():
                     raise ValueError(f"fishing selectivity '{part.strip()}': write impact = value")
                 selectivity[name.strip()] = float(number)
+            recruit = str(values.get("juvenile_recruit_import", "") or "").strip()
+            if recruit:
+                block["recruit_import"] = float(recruit)
+            emigration = numbers(values.get("juvenile_emigration"))
+            if emigration:
+                block["emigration"] = emigration
         except ValueError as exc:
             return None, f"Juvenile Stage: {exc}"
         if selectivity:
@@ -5009,7 +5025,7 @@ class FGConfigApp:
         "mortality_regeneration", "egestion_regeneration",
         "natural_mortality", "exposed_share", "refuge_exchange_rate",
         "outside_density", "outside_exchange_rate",
-        "sda_fraction", "growth_cost",
+        "sda_fraction", "growth_cost", "somatic_production",
     })
 
     @staticmethod

@@ -59,8 +59,14 @@ The export is ``loss_exchange``, the import ``gain_exchange``, and the net
 exchange energy of the tick ``env.tick_exchange_energy[fid]`` (MJ), which
 the trainers' reward ledger takes out of the group's energy: the policy is
 rewarded for its local production and losses, not for the migration.
-``outside_depth_table`` is for NDMs; a DM with a ``juvenile_stage`` is
-refused (the compartment would need its own migration).
+``outside_depth_table`` is for NDMs.
+
+A DM with a ``juvenile_stage`` (section 250: the planktivores, a window on
+mobile stocks) migrates on its ADULTS: ``outside_density`` is the adults'
+box mean, the net is (T - A_tot)(1 - exp(-k)) with A = B - J, the export
+scales A only (each cell's reserve pro rata with its biomass, J and A
+sharing one fill) and the import enters A. The juveniles' own exchange is
+``stages.exchange`` (recruit import and emigration).
 """
 import math
 
@@ -120,9 +126,6 @@ def parse(params, group_id=""):
     if params.get(DEPTH_KEY) not in (None, "", []):
         raise ValueError(f"{group_id}: {DEPTH_KEY} is for non decision makers; a migrating "
                          f"decision maker enters on {ENTRY_KEY} (section 246)")
-    if params.get("juvenile_stage"):
-        raise ValueError(f"{group_id}: a migrating decision maker cannot carry a "
-                         "juvenile_stage (section 246)")
     try:
         fill = [float(v) for v in params.get(FILL_KEY)]
     except (TypeError, ValueError):
@@ -330,16 +333,27 @@ def migrate(env):
         target = env.open_dm_total[fid] * (float(season[t]) if season is not None else 1.0)
         fill = env.open_dm_fill[fid]
         fill = float(fill[t]) if t is not None and not np.isscalar(fill) else float(fill)
-        total = float(fg.biomass.astype(np.float64).sum())
+        juvenile = getattr(fg, "juvenile", None)
+        adult = fg.biomass if juvenile is None else np.maximum(
+            fg.biomass - np.minimum(juvenile, fg.biomass), np.float32(0.0))
+        total = float(adult.astype(np.float64).sum())
         net = (target - total) * (1.0 - math.exp(-float(settings["rate"])))
         ec = float(fg.params.get("energy_content", 0.0) or 0.0)
         me = float(fg.max_energy_reserve)
         if net < 0.0:
             share = min(-net / total, 1.0) if total > 0.0 else 0.0
-            leaving_reserve = share * float(fg.energy_reserve.astype(np.float64).sum())
-            keep = np.float32(1.0 - share)
-            fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
-            fg.energy_reserve = (fg.energy_reserve * keep).astype(env.dtype, copy=False)
+            reserve_before = float(fg.energy_reserve.astype(np.float64).sum())
+            if juvenile is None:
+                keep = np.float32(1.0 - share)
+                fg.biomass = (fg.biomass * keep).astype(env.dtype, copy=False)
+                fg.energy_reserve = (fg.energy_reserve * keep).astype(env.dtype, copy=False)
+            else:
+                new_b = fg.biomass - adult * np.float32(share)
+                ratio = np.where(fg.biomass > 0.0, new_b / np.where(
+                    fg.biomass > 0.0, fg.biomass, np.float32(1.0)), np.float32(0.0))
+                fg.biomass = new_b.astype(env.dtype, copy=False)
+                fg.energy_reserve = (fg.energy_reserve * ratio).astype(env.dtype, copy=False)
+            leaving_reserve = reserve_before - float(fg.energy_reserve.astype(np.float64).sum())
             export, imported = share * total, 0.0
             reserve_flow = -leaving_reserve
         else:

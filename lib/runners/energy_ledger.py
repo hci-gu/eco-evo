@@ -1,7 +1,9 @@
 """Reward ledger of a migrating decision maker (section 246).
 
 A DM with ``outside_density`` exchanges biomass and reserve with the
-outside every tick (``open_pool.migrate``). Its reward must not score that
+outside every tick (``open_pool.migrate``), and so does an open-population
+group through its recruit import and emigration (section 250,
+``stages.exchange``). Its reward must not score that
 migration, or the seasonal swing (x ~20) and the relaxation towards the
 same outside target would swamp what the policy does. The ledger keeps
 local indices of the group's biomass, reserve and energy,
@@ -22,8 +24,11 @@ tracking has no cell for the outside.
 
 
 def migrating(env, fids):
-    """The migrating DMs among ``fids``."""
+    """The DMs among ``fids`` that exchange with the outside: the migrating
+    ones (section 246) and the open-population groups with a recruit import
+    or emigration (section 250, ``stages.exchange``)."""
     open_ids = set(getattr(env, "open_dm_ids", ()) or ())
+    open_ids |= set(getattr(env, "stage_exchange_ids", ()) or ())
     return [fid for fid in fids if fid in open_ids]
 
 
@@ -31,8 +36,9 @@ def check_modes(env, fids, local_reward=None):
     """Refuse the reward mode that cannot carry the ledger."""
     moving = migrating(env, fids)
     if moving and local_reward is not None:
-        raise ValueError(f"{moving} migrate (outside_density): --local_reward has no "
-                         "source cell for the outside and is not supported (section 246)")
+        raise ValueError(f"{moving} exchange with the outside (outside_density or an open "
+                         "population): --local_reward has no source cell for the outside and "
+                         "is not supported (sections 246, 250)")
 
 
 _BOOKS = ("tick_exchange_biomass", "tick_exchange_reserve", "tick_exchange_energy")

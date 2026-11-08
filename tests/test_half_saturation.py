@@ -76,7 +76,8 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
     # Section 228: mackerel and horse mackerel are their own group; the
     # water column's a are per tonne of the rest. Section 232: whiting ->
     # epifauna x the vertical overlap H_bed / H_whiting; 232.2: benthivores
-    # -> planktivores with the reconciled herring overlap and membership 0.377.
+    # -> planktivores with the reconciled herring overlap and membership 0.377;
+    # 249: benthivores -> whiting by membership 0.320 instead of the gape phi.
     env = _env()
     expected = {
         ('planktivorous_fish', 'zooplankton'): 0.0122,
@@ -85,7 +86,7 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('whiting', 'mobile_epifauna'): 0.0116,
         ('benthivorous_fish', 'norway_lobster'): 0.44,
         ('benthivorous_fish', 'planktivorous_fish'): 0.0198,
-        ('benthivorous_fish', 'whiting'): 0.0026,
+        ('benthivorous_fish', 'whiting'): 0.0083,  # 249: membership, not gape
         ('predatory_fish', 'planktivorous_fish'): 0.0060,
         ('mackerel', 'planktivorous_fish'): 0.0266,
         ('whiting', 'planktivorous_fish'): 0.0212,

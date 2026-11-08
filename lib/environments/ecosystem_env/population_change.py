@@ -543,6 +543,9 @@ def apply_population_change(env, clip_nonviable=True):
     # Section 246: migrating decision makers exchange with the outside on
     # their group total, before the extinction sweep.
     open_pool.migrate(env)
+    # Section 250: the open-population groups' recruit import and
+    # emigration (stages.py), after the migration.
+    stages.exchange(env)
     if clip_nonviable:
         _clip_biomass_based_on_min_thresholds(env)
     _zero_energy_in_empty_cells(env)
