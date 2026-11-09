@@ -181,3 +181,21 @@ def test_start_fill_round_trips_and_empties(app):
     v["start_fill"].set("")
     app.apply_fg_changes()
     assert "start_fill" not in entry
+
+
+def test_an_emptied_external_forces_field_keeps_the_kinds_default(app):
+    # Section 259: 0 would anchor a drifter (a missing key is 1 for a non
+    # decision maker, 0 for a decision maker).
+    _select_krill(app)
+    app.ndm_prop_vars["current_response"].set("")
+    app.apply_fg_changes()
+    assert app.current_fg_configs["krill"]["current_response"] == 1.0
+    ids = [fg["group_id"] for fg in app.project_data["decision_makers"]]
+    listbox = app._listbox_for("decision_makers")
+    listbox.selection_clear(0, "end")
+    listbox.selection_set(0)
+    app.on_fg_select("decision_makers")
+    app.prop_vars["current_response"].set("")
+    app.apply_fg_changes()
+    # The default is not written where the key was absent, and absent is 0.
+    assert app.current_fg_configs[ids[0]].get("current_response", 0.0) == 0.0

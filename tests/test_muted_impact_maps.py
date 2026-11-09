@@ -299,3 +299,107 @@ def test_the_mutes_survive_save_and_load_and_reach_the_readers(app, tmp_path, mo
     app.load_project_from_path(app.project_path)
     assert app.project_data["impact_variables"][0]["baseline_map_muted"] is True
     assert list(app._inference_muted_maps()) == ["pelagic_trawling"]
+
+
+# ---- A map that should be there (section 259) ------------------------------
+
+def test_a_missing_or_invalid_map_warns_once_whatever_verbose_says(tmp_path, capsys):
+    from lib.world.impact_maps import load_impact_map_npz
+    missing = str(tmp_path / "typo.npz")
+    for _ in range(2):
+        assert load_impact_map_npz(missing, "fishing", 4, 4, verbose=False) is None
+    assert capsys.readouterr().out.count("not found") == 1
+    flat = tmp_path / "flat.npz"
+    np.savez(flat, vector=np.ones(5))
+    assert load_impact_map_npz(str(flat), "fishing", 4, 4, verbose=False) is None
+    assert "No 2-D array" in capsys.readouterr().out
+    broken = tmp_path / "broken.npz"
+    broken.write_bytes(b"not an archive")
+    assert load_impact_map_npz(str(broken), "fishing", 4, 4, verbose=False) is None
+    assert "Could not read" in capsys.readouterr().out
+
+
+def test_a_misnamed_baseline_map_warns_and_a_muted_one_does_not(tmp_path, capsys):
+    active = {"impact_variables": [{"impact_id": "x", "baseline_map": "typo_active.npz"}]}
+    assert not project_baseline_maps(active, str(tmp_path / "p.yaml"), (4, 4))
+    assert "typo_active.npz" in capsys.readouterr().out
+    muted = {"impact_variables": [{"impact_id": "x", "baseline_map": "typo_muted.npz",
+                                   "baseline_map_muted": True}]}
+    assert not project_baseline_maps(muted, str(tmp_path / "p.yaml"), (4, 4))
+    assert capsys.readouterr().out == ""
+
+
+def _signature_project(tmp_path, **entry):
+    _write_map(tmp_path / "effort.npz")
+    path = tmp_path / "p.yaml"
+    path.write_text(yaml.safe_dump({"impact_variables": [
+        dict(impact_id="x", baseline_map="effort.npz", **entry)]}))
+    return str(path)
+
+
+def test_the_signature_follows_the_mute_the_file_and_its_content(tmp_path):
+    from lib.world.impact_maps import active_baseline_signature
+    path = _signature_project(tmp_path)
+    first = active_baseline_signature(path)
+    assert set(first) == {"x"} and first["x"] != "missing"
+    assert active_baseline_signature(path) == first
+    _write_map(tmp_path / "effort.npz", 9.0)
+    assert active_baseline_signature(path) != first
+    assert active_baseline_signature(_signature_project(tmp_path, baseline_map_muted=True)) == {}
+    assert active_baseline_signature(None) == {}
+    (tmp_path / "effort.npz").unlink()
+    assert active_baseline_signature(_write_missing(tmp_path)) == {"x": "missing"}
+
+
+def _write_missing(tmp_path):
+    path = tmp_path / "gone.yaml"
+    path.write_text(yaml.safe_dump({"impact_variables": [
+        {"impact_id": "x", "baseline_map": "effort.npz"}]}))
+    return str(path)
+
+
+def _progress(monkeypatch, project_path):
+    import lib.runners.training_progress as tp
+    from lib.world.impact_maps import active_baseline_signature
+    monkeypatch.setattr(tp, "inference_config", lambda trainer, backend: dict(
+        project=project_path, baseline_maps=active_baseline_signature(project_path)))
+    monkeypatch.setattr(tp, "build_inference_env", lambda config, seed: None)
+    return tp
+
+
+def test_a_resume_is_refused_when_the_baseline_maps_differ(tmp_path, monkeypatch):
+    path = _signature_project(tmp_path)
+    tp = _progress(monkeypatch, path)
+    directory = tmp_path / "progress"
+    tp.TrainingProgress("gpu", 1, 9, 0.3, 3.0, 1, 1.0, directory)._start(None, 0, tmp_path, False)
+    tp.TrainingProgress("gpu", 1, 9, 0.3, 3.0, 1, 1.0, directory)._start(None, 0, tmp_path, True)
+    _signature_project(tmp_path, baseline_map_muted=True)
+    with pytest.raises(ValueError, match="baseline maps"):
+        tp.TrainingProgress("gpu", 1, 9, 0.3, 3.0, 1, 1.0, directory)._start(None, 0, tmp_path, True)
+
+
+def test_a_history_without_the_record_resumes_with_a_warning(tmp_path, monkeypatch, capsys):
+    import json
+    path = _signature_project(tmp_path)
+    tp = _progress(monkeypatch, path)
+    directory = tmp_path / "progress"
+    tp.TrainingProgress("gpu", 1, 9, 0.3, 3.0, 1, 1.0, directory)._start(None, 0, tmp_path, False)
+    stored = json.loads((directory / "config.json").read_text())
+    del stored["baseline_maps"]
+    (directory / "config.json").write_text(json.dumps(stored))
+    tp.TrainingProgress("gpu", 1, 9, 0.3, 3.0, 1, 1.0, directory)._start(None, 0, tmp_path, True)
+    assert "does not record its baseline maps" in capsys.readouterr().out
+
+
+def test_probes_after_a_change_during_the_run_are_marked(tmp_path, monkeypatch, capsys):
+    path = _signature_project(tmp_path)
+    tp = _progress(monkeypatch, path)
+    progress = tp.TrainingProgress("gpu", 1, 9, 0.3, 3.0, 1, 1.0, tmp_path / "progress")
+    progress._start(None, 0, tmp_path, False)
+    progress._record(1, 0, 0.0, {})
+    assert "baseline_maps_changed" not in progress.records[-1]
+    _signature_project(tmp_path, baseline_map_muted=True)
+    progress._record(2, 1, 0.0, {})
+    progress._record(3, 2, 0.0, {})
+    assert progress.records[-1]["baseline_maps_changed"] is True
+    assert capsys.readouterr().out.count("changed during the run") == 1

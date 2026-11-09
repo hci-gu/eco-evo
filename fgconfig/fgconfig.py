@@ -5277,8 +5277,11 @@ class FGConfigApp:
                 raw_val = val
                 if raw_val in (None, ""):
                     # Empty field → treat as 0.0 (legacy behaviour for
-                    # optional numeric fields).
-                    config[key] = 0.0
+                    # optional numeric fields), but External Forces has a
+                    # per-kind default: an emptied field must not anchor a
+                    # drifter (section 259).
+                    config[key] = (self._effective_current_response({}, is_dm)
+                                   if key == "current_response" else 0.0)
                 else:
                     try:
                         config[key] = float(raw_val)

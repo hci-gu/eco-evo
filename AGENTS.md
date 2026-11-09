@@ -166,7 +166,9 @@ fabricates mass.
   a scenario - one field per impact, never stacked
   (`lib/world/impact_maps.py`). The training tool's probes (the viewer's
   and the long run, and the diagnostics built on `_ProbeEnvBuilder`) read
-  the active baseline maps and never the inference maps (section 257). Either map can be muted with its path kept
+  the active baseline maps and never the inference maps (section 257). A
+  run's `config.json` records those maps, a resume with others is refused, and
+  a missing or invalid map warns whatever `verbose` says (section 259). Either map can be muted with its path kept
   (FG editor; `baseline_map_muted`, `inference.impact_maps_muted`; section
   255-257): each mute leaves the other map alone, and a muted baseline
   map is out of the training probes and the equilibrium start pattern too. The GPU engine mirrors all of it (impact

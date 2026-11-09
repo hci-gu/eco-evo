@@ -1099,7 +1099,7 @@ FIELD_HELP = {
         "Only active with --currents on. Each tick a fraction (drift "
         "strength x 0.5 x this value) of the cell's biomass is moved "
         "downstream. 1 = passive drifter (phytoplankton), 0 = attached "
-        "(benthic community). An empty field means 1 for non decision "
+        "(the benthic groups). An empty field means 1 for non decision "
         "makers."
     ),
 

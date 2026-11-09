@@ -24253,3 +24253,23 @@ remain open exactly as described in 71.9 / 71.11.
     only inference.py fishes while the baseline maps are muted (257's "its
     probes are unchanged" held only before the mute). Not done: the broken
     tools/probes scripts with old group ids, api.py's old ecology.
+
+259 Fishing that goes silently wrong; the drift field (2026-11-09; user: the
+    first three of the audit's remaining items).
+259.1 A missing, invalid or unreadable impact map was silent at verbose=False,
+    the probes' and trainers' path, so a misnamed baseline file meant no fishing
+    without a word. load_impact_map_npz now warns whatever verbose says, once
+    per message per process. It stays a warning, unlike a bad depth map, which
+    stops the load. A muted map is never read, so it does not warn.
+259.2 The map state in the history. progress/config.json records
+    baseline_maps, {impact: content hash} of the active maps
+    (impact_maps.active_baseline_signature; a mute, another file or new content
+    changes it). A resume with other maps is refused like any changed setting.
+    A history from before this has no record: it resumes with a warning, as its
+    fishing is unknown (fix91 included: it was fished, the manifest is muted).
+    The GPU training worlds keep their maps for the run while the probes re-read
+    them, so a change during a run prints one warning and marks those probes
+    baseline_maps_changed in probe.jsonl. The viewer's biomass probe is not marked.
+259.3 External Forces. Apply wrote an emptied field as 0, anchoring a non decision
+    maker although the help says empty = 1; it now writes the kind's default (1
+    for a non decision maker, 0 for a decision maker).

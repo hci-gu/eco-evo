@@ -9,12 +9,25 @@ always gets that map. An inference world reads only the project's
 ``inference.impact_maps``; to keep today's fishing there, the same file
 is added under the Inference tab. No map means no impact.
 """
+import hashlib
 import os
 import zlib
 
 import numpy as np
 
 from lib.spawn import make_weights
+
+
+_warned_maps = set()
+
+
+def _warn_once(message):
+    """A map that should exist and does not silently turns an impact off, so
+    this is printed whatever ``verbose`` says, once per process (the probes
+    re-read the maps at every call)."""
+    if message not in _warned_maps:
+        _warned_maps.add(message)
+        print(f"  [warn] {message}", flush=True)
 
 
 def trained_impact_vars(impact_vars, observable_impact_vars=None):
@@ -36,8 +49,7 @@ def load_impact_map_npz(path, impact_id, H, W, verbose=True):
     should fall back to a zero field).
     """
     if not os.path.isfile(path):
-        if verbose:
-            print(f"  [warn] Impact map for '{impact_id}' not found at {path}; using zero field.")
+        _warn_once(f"Impact map for '{impact_id}' not found at {path}; using zero field.")
         return None
     try:
         with np.load(path, allow_pickle=False) as data:
@@ -64,14 +76,11 @@ def load_impact_map_npz(path, impact_id, H, W, verbose=True):
                                   f"for '{impact_id}' (key-agnostic load).")
                         break
             if arr is None:
-                if verbose:
-                    print(f"  [warn] No 2-D array found in "
-                          f"{os.path.basename(path)} (keys: {keys}); "
-                          f"using zero field for '{impact_id}'.")
+                _warn_once(f"No 2-D array found in {path} (keys: {keys}); "
+                           f"using zero field for '{impact_id}'.")
                 return None
     except Exception as e:
-        if verbose:
-            print(f"  [warn] Could not read '{impact_id}' from {path}: {e}; using zero field.")
+        _warn_once(f"Could not read '{impact_id}' from {path}: {e}; using zero field.")
         return None
     arr = arr.astype(np.float32, copy=False)
     Hs, Ws = arr.shape
@@ -87,6 +96,40 @@ def load_impact_map_npz(path, impact_id, H, W, verbose=True):
     return arr.astype(np.float32, copy=False)
 
 
+def _active_baseline_paths(project, project_path):
+    """(impact_id, absolute path) of every active baseline map: the impact
+    and the map unmuted, a path stored."""
+    base = os.path.dirname(os.path.abspath(project_path)) if project_path else os.getcwd()
+    for iv in (project or {}).get('impact_variables', []) or []:
+        if not isinstance(iv, dict) or iv.get('muted') or not iv.get('impact_id'):
+            continue
+        stored = iv.get('baseline_map')
+        if not isinstance(stored, str) or not stored or iv.get('baseline_map_muted'):
+            continue
+        yield iv['impact_id'], (stored if os.path.isabs(stored)
+                                else os.path.normpath(os.path.join(base, stored)))
+
+
+def active_baseline_signature(project_path):
+    """``{impact_id: content hash, or "missing"}`` of the active baseline maps.
+
+    The record of which fishing a run's training worlds and probes have
+    (``config.json``, section 259): a mute, another file or a changed file
+    all change it.
+    """
+    if not project_path:
+        return {}
+    from lib.config.config_loader import load_config
+    signature = {}
+    for impact_id, path in _active_baseline_paths(load_config(project_path), project_path):
+        try:
+            with open(path, "rb") as f:
+                signature[impact_id] = hashlib.md5(f.read(), usedforsecurity=False).hexdigest()
+        except OSError:
+            signature[impact_id] = "missing"
+    return signature
+
+
 def project_baseline_maps(project, project_path, grid_size, verbose=False):
     """Load the Impact Editor's baseline maps, ``{impact_id: (H, W) field}``.
 
@@ -96,21 +139,12 @@ def project_baseline_maps(project, project_path, grid_size, verbose=False):
     impact whose file is missing or invalid has no baseline map, and
     neither has one with ``baseline_map_muted: true``.
     """
-    base = os.path.dirname(os.path.abspath(project_path)) if project_path else os.getcwd()
     H, W = grid_size
     maps = {}
-    for iv in (project or {}).get('impact_variables', []) or []:
-        if not isinstance(iv, dict) or iv.get('muted') or not iv.get('impact_id'):
-            continue
-        stored = iv.get('baseline_map')
-        if not isinstance(stored, str) or not stored:
-            continue
-        if iv.get('baseline_map_muted'):
-            continue
-        path = stored if os.path.isabs(stored) else os.path.normpath(os.path.join(base, stored))
-        field = load_impact_map_npz(path, iv['impact_id'], H, W, verbose=verbose)
+    for impact_id, path in _active_baseline_paths(project, project_path):
+        field = load_impact_map_npz(path, impact_id, H, W, verbose=verbose)
         if field is not None:
-            maps[iv['impact_id']] = field
+            maps[impact_id] = field
     return maps
 
 

@@ -31,7 +31,7 @@ from lib.environments.ecosystem_env.currents import CurrentConfig
 from lib.environments.ecosystem_env.population_change import (
     DEFAULT_MASS_BALANCE, DEFAULT_MORTALITY_MULTIPLIER,
     LEGACY_MASS_BALANCE)
-from lib.world.impact_maps import training_probe_impact_maps
+from lib.world.impact_maps import active_baseline_signature, training_probe_impact_maps
 from lib.world.tick_time import LIBRARY_TICK_HOURS, ticks_per_day, ticks_per_year
 
 # Length of the progress probe (section 223.12).
@@ -456,6 +456,9 @@ def inference_config(trainer, backend):
                     getattr(builder, "mass_balance", DEFAULT_MASS_BALANCE)),
                 # The probe world's tick length is the run's (section 258).
                 tick_hours=int(getattr(builder, "tick_hours", LIBRARY_TICK_HOURS)),
+                # Which fishing this run has; the training worlds keep it
+                # for the whole run (section 259).
+                baseline_maps=active_baseline_signature(builder.project_path),
                 currents=builder.currents.metadata() if getattr(builder, "currents", None) else None)
 
 
@@ -555,6 +558,7 @@ class TrainingProgress:
         self.config = None
         self.records = []
         self.latest = None
+        self._maps_warned = False
         self.visualizer = visualizer
 
     def _start(self, trainer, step, run_dir, resume):
@@ -576,7 +580,18 @@ class TrainingProgress:
                       f"(pass --eval-ticks to change it with a new --plot-dir)", flush=True)
                 self.ticks = int(stored["ticks"])
                 self.config["ticks"] = self.ticks
-            if comparable_config(json.loads(config_path.read_text())) != comparable_config(self.config):
+            current = comparable_config(self.config)
+            stored = comparable_config(stored)
+            if "baseline_maps" not in stored:
+                # Written before the record existed: its fishing is unknown.
+                current.pop("baseline_maps", None)
+                print("[progress] WARNING: this history does not record its baseline maps, so "
+                      "a change of fishing or mute since then cannot be detected", flush=True)
+            elif stored["baseline_maps"] != current.get("baseline_maps"):
+                raise ValueError("Evaluation settings changed: the active baseline maps differ from "
+                                 "this history's (a mute or another file); use a new --plot-dir "
+                                 "to keep the graph comparable")
+            if stored != current:
                 raise ValueError("Evaluation settings changed; use a new --plot-dir to keep the graph comparable")
             if self.history.exists():
                 self.records = [json.loads(line) for line in self.history.read_text().splitlines() if line.strip()]
@@ -610,11 +625,31 @@ class TrainingProgress:
             pump = self.visualizer.pump_events if self.visualizer is not None else None
             return run_probe(env, self.ticks, self.lower, self.upper, pump_events=pump)
 
+    def _baseline_maps_changed(self):
+        """True when the manifest's active baseline maps differ from the run's.
+
+        The probes re-read them at every call while the training worlds
+        keep the ones they started with, so such a probe shows another
+        fishing than the policies train in (section 259).
+        """
+        config = self.config or {}
+        if "baseline_maps" not in config:
+            return False
+        changed = active_baseline_signature(config.get("project")) != config["baseline_maps"]
+        if changed and not self._maps_warned:
+            self._maps_warned = True
+            print("[progress] WARNING: the baseline maps changed during the run; the probes now "
+                  "run with the new ones and the training worlds with the old. These probes are "
+                  "marked baseline_maps_changed in probe.jsonl; restart to compare.", flush=True)
+        return changed
+
     def _record(self, number, step, seconds, result):
         """Append one probe to the history and publish it."""
         trajectory = result.pop("trajectory", None)
         self.records.append(dict(evaluation=number, step=step,
                                  evaluation_seconds=seconds, **result))
+        if self._baseline_maps_changed():
+            self.records[-1]["baseline_maps_changed"] = True
         if "viability" in result:
             print("\n".join(format_viability(result["viability"], step, number)), flush=True)
         # Replace complete files atomically, so readers never see a
