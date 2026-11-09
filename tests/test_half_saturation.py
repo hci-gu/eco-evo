@@ -96,11 +96,11 @@ def test_fish_pairs_carry_the_encounter_theory_rates():
         ('predatory_fish', 'zooplankton'): 3.13e-05,
         ('mackerel', 'zooplankton'): 0.00084,
         ('whiting', 'zooplankton'): 0.000138,
-        ('planktivorous_fish', 'krill'): 0.027,  # 253: measured light
-        ('benthivorous_fish', 'krill'): 0.015,
-        ('predatory_fish', 'krill'): 0.027,
+        ('planktivorous_fish', 'krill'): 0.023,  # 262: field bed-depth evidence
+        ('benthivorous_fish', 'krill'): 0.013,
+        ('predatory_fish', 'krill'): 0.026,
         ('mackerel', 'krill'): 0.0039,
-        ('whiting', 'krill'): 0.048,
+        ('whiting', 'krill'): 0.043,
         ('predatory_fish', 'benthivorous_fish'): 0.0055,
         ('whiting', 'benthivorous_fish'): 0.21,
         ('predatory_fish', 'whiting'): 0.013,

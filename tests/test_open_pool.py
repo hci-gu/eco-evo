@@ -185,8 +185,10 @@ def test_mareld2_krill():
     assert float(spec["r_max"]) == 0.0 and float(spec["natural_mortality"]) == 0.0
     preds = ("planktivorous_fish", "benthivorous_fish", "predatory_fish", "mackerel", "whiting")
     m2 = {p: float(inter[f"{p}_preys_on_krill"]["predation_mortality"]) for p in preds}
-    # The booked fish predation equals the field P/B 2 (1.2-3.5) within 4 %.
-    assert sum(m2.values()) == pytest.approx(2.0, rel=0.04)
+    # The booked fish predation pays the field P/B 2 (1.2-3.5): 2.07 at section 245,
+    # 2.11 since the water column's booking of section 262.
+    assert sum(m2.values()) == pytest.approx(2.1113, rel=1e-3)
+    assert 1.2 <= sum(m2.values()) <= 3.5
     for p in preds:
         assert inter[f"{p}_preys_on_krill"]["depth_access_table"]
         assert inter[f"{p}_observes_krill"]["observes"] is True

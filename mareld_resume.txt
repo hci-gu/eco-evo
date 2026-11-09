@@ -24303,3 +24303,47 @@ remain open exactly as described in 71.9 / 71.11.
     the base weights. The audit's warm-up arm on the fixed code: cosine 0.977+
     (planktivores 0.977, seals 0.988, the rest 0.999+), signs 4 of 4 in every
     group; before, planktivore signs 0 of 4 and zooplankton 1 of 4.
+
+261 Frozen fix93 and the krill pairs' depth shape (2026-11-09; user: evaluate fix93,
+    then review the depth table against the literature; nothing applied).
+261.1 fix93, update 250, one world, 30x30, trained unfished. Rewards flat from about
+    update 50 for most fish. Ten frozen years, unfished: benthivores 2.96x start by
+    year 10 (first years +16-18 %/yr, about their F 0.17), epifauna 0.51, Nephrops
+    0.43, whiting 1.75 peak, then 1.18. With the baseline maps on, in memory only:
+    benthivores 1.14, epifauna 0.78, Nephrops 0.60, whiting 1.63; flat from about year 8.
+    The three-year probe scored all 15 groups viable. Water column krill 0.84 of the
+    diet (booked 0.26), planktivores 0.14 (0.58), fill 0.99, 0.94 of its biomass over
+    beds < 150 m (saithe GOV 0.17). Krill-encounter share in < 100 m cells (0.23 of the
+    cells): water column 0.74, whiting 0.75, planktivores 0.55.
+261.2 research_notes/"Krill over grunda bottnar" (o-umlaut; summary.md, distribution/,
+    stomachs/). The tables' steep fall with bed depth is not supported as an all-year,
+    all-predator shape: 0 of 14 day near-bed tows on beds < 100 m took krill in June-July
+    against 3 of 4 on 100-170 m, while winter-night density over 50-99 m is 0.34-0.54 of
+    deep beds and winter stomachs hold krill there; saithe and pout stomachs lack the fall
+    over deep beds, cod show it, and July catches over 157-166 m lie below krill_day_layer.
+    No new values derived. More a at 150-250 m may not lower the water column's krill share.
+
+262 Krill pairs and the water column's krill booking, re-derived (2026-11-09; user:
+    alternative 1 and the saithe booking; research_notes/"Krill over grunda bottnar",
+    o-umlaut, rederive/; scripts reproduce the old tables first).
+262.1 Geometry. krill_day_layer centre by bed <= 150 m 95, 160-170 m 140, 250 m 120, >= 350 m
+    145 m (one tow pair at 157-166 m, so the MC weights the change 0-1). Presence over
+    beds < 100 m against beds >= 250 m: Sep-Apr 0.43, May-Aug 0.05, annual 0.30 (0.18-0.55).
+    It goes in outside_depth_table (< 50 m 0.025, 50-99 m 0.38, 100 m on as before), and the
+    < 100 m class a is its monthly a weighted by presence. a and classes < 100 / 100-150 /
+    150-250 / > 250 m: water column 0.026, 0.068 / 0.031 / 0.0058 / 0.00014; whiting 0.043,
+    0.148 / 0.035 / 0.0020 / 0; planktivores 0.023, 0.069 / 0.021 / 0.0037 / 0.0017;
+    benthivores 0.013, 0.046 / 0.011 / 0.00059 / 0; mackerel 0.0039, 0.0053 / 0.0043 / 0.0031 /
+    0.0028. A constant table keeps the annual flux only, not the season.
+262.2 Booking. Saithe krill share 0.25 -> 0.40 (0.14-0.54): NE North Sea database at the box's
+    bed spread and presence 0.45, CRR 164 1981 0.39, Mehl 2005 0.34; CRR 219 1991 (NW North Sea)
+    is now the low end. Group 0.34, water column -> krill M2 0.075 -> 0.119, sum on krill 2.11.
+    Booked pairs now carry 0.95 of the water column's Q/B flow (was 0.82); the fish M2 stay.
+262.3 Checks, not sources. budget_gate water column krill encounter 0.87 at equal cells, 0.81
+    at the saithe spread against booked 0.361 (ratios 2.41, 2.24; were 3.37, 2.80): the share
+    rose, the ratio fell through the booking. Planktivores at the field spread 0.32, just
+    OFF (was 0.37). Frozen fix93: water column still 0.95 over beds < 150 m, krill 0.85; krill-
+    encounter share in < 100 m cells 0.74 -> 0.62, whiting 0.75 -> 0.54, planktivores 0.55 -> 0.31.
+    Ten years within the old values but for porpoises (fished 0.66 -> 0.47) and seals, which swing.
+    Whether the water column leaves the shallows needs a retrain; checkpoints load, but they
+    learned the old krill map.

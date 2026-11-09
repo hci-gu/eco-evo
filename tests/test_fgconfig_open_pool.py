@@ -85,7 +85,7 @@ def test_krill_fields_round_trip_and_rederive(app):
     v = app.ndm_prop_vars
     assert float(v["outside_density"].get()) == pytest.approx(5.0)
     assert len(v["outside_season"].get().split(",")) == 12
-    assert len(app.outside_rows) == 6
+    assert len(app.outside_rows) == 7
     app.apply_fg_changes()
     assert not [t for t, _ in app.shown if t.startswith("Invalid")], app.shown
     for key in ("outside_density", "outside_exchange_rate", "outside_season",

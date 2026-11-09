@@ -141,10 +141,12 @@ fabricates mass.
   deep krill layer, Meganyctiphanes dominant, which the A17 WP2 nets that
   calibrate the zooplankton exclude; an OPEN pool, density set outside
   the box: 5 t/km2 box mean, exchange k 20 /yr (~18 d residence),
-  quarterly season 1.0 / 0.6 / 1.1 / 1.3, depth shape 0.3 -> 1.4, E 5000,
-  g derived with r_max 0 = the booked fish M2 2.07 /yr (field P/B 2);
+  quarterly season 1.0 / 0.6 / 1.1 / 1.3, depth shape 0.025 under 50 m, 0.38 at
+  50-99 m (annual presence, section 262), 0.8 -> 1.4 from 100 m, E 5000,
+  g derived with r_max 0 = the booked fish M2 2.11 /yr (field P/B 2);
   eaten by planktivores (M2 1.67), whiting 0.187, mackerel 0.10, water
-  column 0.075, benthivores 0.035, who observe it; research_notes/"Krill
+  column 0.119 (262: saithe 0.40 on the box's side of the North Sea),
+  benthivores 0.035, who observe it; research_notes/"Krill
   i Skagerrak").
 - English snake_case IDs are canonical.
 
@@ -203,18 +205,21 @@ fabricates mass.
   0.15, -> Nephrops 0.44, -> planktivores 0.0198 (243.3: per species, pout 0.87 of it), -> whiting 0.021 (251: membership 0.320, whiting's own band share 0.7 day / 0.5 night);
   whiting -> epifauna 0.0116 (232: a_enc e x the vertical overlap
   H_bed/H_whiting; was 0.27), -> planktivores 0.0212, -> zoo 0.000138
-  (copepods only since 245; was 0.0023), -> krill 0.048, ->
+  (copepods only since 245; was 0.0023), -> krill 0.043, ->
   benthivores 0.21; water column -> planktivores 0.0060, -> zoo
-  3.13e-05 (245; was 0.000241), -> krill 0.027, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
+  3.13e-05 (245; was 0.000241), -> krill 0.026, -> benthivores 0.0055 (243: the in-layer 0.0651 x each
   member's foraging time near the bed, for concurrent search), -> whiting
   0.013, -> mackerel 0.00088
   (f 0.14 since 244, was 0.29; booked M2 0.021, rarely paid); mackerel -> planktivores
   0.0266 (243.3: herring and sprat only, no overlap with the near-bed
   pout and deep blue whiting), -> zoo 0.00084 (245: measured clearance,
   daytime biting on Calanus; was 0.0023), -> krill 0.0039; planktivores
-  -> krill 0.027, benthivores -> krill 0.015 (section 253: the measured box
+  -> krill 0.023, benthivores -> krill 0.013 (section 253: the measured box
   light, 44 SMHI CTD PAR casts, ~x6 the old central profile at 80-150 m;
-  research_notes/"Ljus under 50 m"). Every krill pair is a
+  research_notes/"Ljus under 50 m"; section 262: the day layer deeper over
+  150-250 m beds and the < 100 m class weighted by krill presence, Sep-Apr 0.43,
+  May-Aug 0.05 of beds >= 250 m; research_notes/"Krill over grunda bottnar",
+  o-umlaut). Every krill pair is a
   section 220 encounter in the band convention with a
   `depth_access_table` (section 245: a per-cell multiplier on a by bed
   depth, equal-cell mean 1, never on visibility; bed feeders meet the

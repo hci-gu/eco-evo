@@ -522,8 +522,12 @@
     # Shape over bed depth (little krill over beds shallower than the day
     # layer), renormalised by the loader to an equal-cell mean of 1.
     outside_depth_table:
-      - {depth_m: 44.0, weight: 0.3}
-      - {depth_m: 70.0, weight: 0.5}
+      # Section 262: annual presence by bed class (research_notes/"Krill over grunda
+      # bottnar", o-umlaut): < 50 m 0.02 and 50-99 m 0.30 of beds >= 250 m (Sep-Apr 0.43,
+      # May-Aug 0.05). A step at 100 m, the classes the evidence is read in.
+      - {depth_m: 49.9, weight: 0.025}
+      - {depth_m: 50.0, weight: 0.38}
+      - {depth_m: 99.9, weight: 0.38}
       - {depth_m: 100.0, weight: 0.8}
       - {depth_m: 150.0, weight: 1.0}
       - {depth_m: 250.0, weight: 1.2}
@@ -537,7 +541,7 @@
     # synthesis.md check 2). The exchange is outside g.
     r_max: 0.0
     natural_mortality: 0.0
-    growth_rate: 0.0014159589041
+    growth_rate: 0.0014460958904
     # 5.0 kJ/g WW annual mean (4.3 in spring-summer, ~6 in winter):
     # Kattegat 20.5-26 kJ/g DW (Buchholz & Prado-Fiedler 1987) x DW/WW
     # 0.20-0.27; Barents Sea 4.5 / 6.6 kJ/g WW (Nowicki et al. 2023).
@@ -2684,16 +2688,21 @@ interaction_definitions:
     # a 0.018 -> 0.027, classes from the same run; the stomach-based
     # night/day kept.
     # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
-    max_intake_rate: 0.027
+    # Section 262: krill pairs on the field's bed-depth evidence (research_notes/
+    # "Krill over grunda bottnar", o-umlaut, rederive/): the day layer over 150-250 m
+    # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
+    # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
+    # beds >= 250 m), which the pool's depth shape carries.
+    max_intake_rate: 0.023
     functional_response: 2
     dark_ratio: 0.57
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.086}
+      - {depth_m: 99.9, factor: 0.069}
       - {depth_m: 100.0, factor: 0.021}
       - {depth_m: 149.9, factor: 0.021}
-      - {depth_m: 150.0, factor: 0.0055}
-      - {depth_m: 249.9, factor: 0.0055}
+      - {depth_m: 150.0, factor: 0.0037}
+      - {depth_m: 249.9, factor: 0.0037}
       - {depth_m: 250.0, factor: 0.0017}
   benthivorous_fish_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
@@ -2718,16 +2727,21 @@ interaction_definitions:
     # central profile at 80-150 m) in the same encounter, conventions kept:
     # a 0.013 -> 0.015, classes from the same run; night/day 0.03.
     # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
-    max_intake_rate: 0.015
+    # Section 262: krill pairs on the field's bed-depth evidence (research_notes/
+    # "Krill over grunda bottnar", o-umlaut, rederive/): the day layer over 150-250 m
+    # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
+    # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
+    # beds >= 250 m), which the pool's depth shape carries.
+    max_intake_rate: 0.013
     functional_response: 2
     dark_ratio: 0.03
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.054}
+      - {depth_m: 99.9, factor: 0.046}
       - {depth_m: 100.0, factor: 0.011}
       - {depth_m: 149.9, factor: 0.011}
-      - {depth_m: 150.0, factor: 0.0}
-      - {depth_m: 249.9, factor: 0.0}
+      - {depth_m: 150.0, factor: 0.00059}
+      - {depth_m: 249.9, factor: 0.00059}
       - {depth_m: 250.0, factor: 0.0}
   predatory_fish_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
@@ -2748,7 +2762,10 @@ interaction_definitions:
     # capture) unresolved - check after the retrain. dark_ratio 0.01
     # (encounter; flagged).
     preys_on: true
-    predation_mortality: 0.075
+    # Section 262: saithe 0.40 (0.14-0.54) on the box's side of the North Sea (NE
+    # database 0.45 at the box's bed spread and presence, CRR 164 1981 0.39, Mehl 2005
+    # 0.34; the old 0.25 was a midpoint with CRR 219 1991, NW North Sea). Group 0.34.
+    predation_mortality: 0.119
     assimilation_factor: 0.8
     handling_time: 167.8
     # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at
@@ -2756,16 +2773,21 @@ interaction_definitions:
     # central profile at 80-150 m) in the same encounter, conventions kept:
     # a 0.0241 -> 0.027, classes from the same run; night/day 0.02.
     # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
-    max_intake_rate: 0.027
+    # Section 262: krill pairs on the field's bed-depth evidence (research_notes/
+    # "Krill over grunda bottnar", o-umlaut, rederive/): the day layer over 150-250 m
+    # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
+    # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
+    # beds >= 250 m), which the pool's depth shape carries.
+    max_intake_rate: 0.026
     functional_response: 2
     dark_ratio: 0.02
     light_threshold_deg: 0.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.081}
+      - {depth_m: 99.9, factor: 0.068}
       - {depth_m: 100.0, factor: 0.031}
       - {depth_m: 149.9, factor: 0.031}
-      - {depth_m: 150.0, factor: 0.0012}
-      - {depth_m: 249.9, factor: 0.0012}
+      - {depth_m: 150.0, factor: 0.0058}
+      - {depth_m: 249.9, factor: 0.0058}
       - {depth_m: 250.0, factor: 0.00014}
   mackerel_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
@@ -2790,16 +2812,21 @@ interaction_definitions:
     # a 0.0025 -> 0.0039, classes from the same run; the stomach-based
     # night/day kept.
     # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
+    # Section 262: krill pairs on the field's bed-depth evidence (research_notes/
+    # "Krill over grunda bottnar", o-umlaut, rederive/): the day layer over 150-250 m
+    # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
+    # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
+    # beds >= 250 m), which the pool's depth shape carries.
     max_intake_rate: 0.0039
     functional_response: 2
     dark_ratio: 0.42
     light_threshold_deg: -5.0
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.0059}
+      - {depth_m: 99.9, factor: 0.0053}
       - {depth_m: 100.0, factor: 0.0043}
       - {depth_m: 149.9, factor: 0.0043}
-      - {depth_m: 150.0, factor: 0.0028}
-      - {depth_m: 249.9, factor: 0.0028}
+      - {depth_m: 150.0, factor: 0.0031}
+      - {depth_m: 249.9, factor: 0.0031}
       - {depth_m: 250.0, factor: 0.0028}
   whiting_preys_on_krill:
     # Section 245. a by section 220 encounter theory with the 232.1 band
@@ -2830,14 +2857,19 @@ interaction_definitions:
     # a 0.043 -> 0.048, classes from the same run; the stomach-based
     # night/day kept.
     # research_notes/"Ljus under 50 m", "Vattenpelarens par i uppmatt ljus" (a-umlaut) A3.
-    max_intake_rate: 0.048
+    # Section 262: krill pairs on the field's bed-depth evidence (research_notes/
+    # "Krill over grunda bottnar", o-umlaut, rederive/): the day layer over 150-250 m
+    # beds lies deeper (centre 140 m over 160-170 m, 120 m over 250 m), and the
+    # < 100 m class a is weighted by krill presence (Sep-Apr 0.43, May-Aug 0.05 of
+    # beds >= 250 m), which the pool's depth shape carries.
+    max_intake_rate: 0.043
     functional_response: 2
     depth_access_table:
-      - {depth_m: 99.9, factor: 0.176}
+      - {depth_m: 99.9, factor: 0.148}
       - {depth_m: 100.0, factor: 0.035}
       - {depth_m: 149.9, factor: 0.035}
-      - {depth_m: 150.0, factor: 0.0}
-      - {depth_m: 249.9, factor: 0.0}
+      - {depth_m: 150.0, factor: 0.002}
+      - {depth_m: 249.9, factor: 0.002}
       - {depth_m: 250.0, factor: 0.0}
   planktivorous_fish_preys_on_benthic_infauna:
     preys_on: false
