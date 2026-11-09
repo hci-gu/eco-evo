@@ -170,14 +170,17 @@ def _evaluate_coevo_task(task):
     if warmup_ticks > 0 and warmup_weights is not None:
         # Section 200: settle the world under the unperturbed weights (the
         # +/- tasks of a pair share seed and weights, so they reach the
-        # same state), then this candidate's weights take over.
+        # same state), then this candidate's weights take over. The tick
+        # reads the batched copy of the weights, so each swap rebuilds it.
         for fg_id, w in warmup_weights.items():
             if fg_id in _POLICIES:
                 _set_weights_flat(_POLICIES[fg_id], w)
+        env.rebuild_batched_weights()
         run_warmup(env, warmup_ticks, seed=seed)
         for fg_id, w in weights_dict.items():
             if fg_id in _POLICIES:
                 _set_weights_flat(_POLICIES[fg_id], w)
+        env.rebuild_batched_weights()
 
     if local_reward is not None:
         source_tracking.attach(env, local_reward)

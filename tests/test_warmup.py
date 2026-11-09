@@ -12,7 +12,9 @@ Contracts asserted:
    stream seeded from the pair seed, so two candidates with different
    weights and different global RNG histories reach the same state
    before their reward starts (sequential path and worker task), and the
-   candidate's weights are back in place afterwards.
+   candidate's weights are back in place afterwards, in the policies and
+   in the batched-weights cache that observation normalisation builds
+   before the warm-up.
 4. GPU trainer: every candidate starts from its world's warmed-up state
    (identical b0 across candidates), the warm state does not depend on
    the perturbations, and the scored calendar start is the sampled start
@@ -129,6 +131,83 @@ def test_worker_task_warms_up_with_the_base_weights(monkeypatch):
         for f, w in wd.items():
             np.testing.assert_allclose(
                 trainer._get_weights(trainer.policies[f]).numpy(), w, rtol=0, atol=1e-6)
+    assert len(states) == 2
+    for f in states[0]:
+        np.testing.assert_array_equal(states[0][f], states[1][f])
+
+
+def _record_warm_envs(monkeypatch, module):
+    """Each warmed env, with its state right after the warm-up."""
+    envs, states = [], []
+    original = module.run_warmup
+
+    def recording(env, ticks, seed=None):
+        original(env, ticks, seed=seed)
+        envs.append(env)
+        states.append({f: env.fgs[f].biomass.copy() for f in env.fgs})
+    monkeypatch.setattr(module, "run_warmup", recording)
+    return envs, states
+
+
+def _normalisation(env, trainer):
+    """Identity obs stats: passing them builds the batched-weights cache."""
+    work = copy.deepcopy(env)
+    work.policies = trainer.policies
+    dim = work.get_observation().features.shape[-1]
+    return np.zeros((env.N_dm, dim), dtype=np.float64), np.ones((env.N_dm, dim), dtype=np.float64)
+
+
+def _assert_cache_holds_the_policies(env, policies):
+    assert env._batched_ready
+    for i, f in enumerate(env.dm_ids):
+        layer = next(m for m in policies[f].net if isinstance(m, torch.nn.Linear))
+        n = int(env.per_dm_in_dim[i])
+        torch.testing.assert_close(env._Ws[0][i, :n, :], layer.weight.detach().t())
+
+
+def test_cpu_warmup_with_obs_norm_ignores_the_cached_candidate(monkeypatch):
+    """With obs stats the env caches the batched weights before the warm-up;
+    the cache must follow the swap to the base weights and back."""
+    env = make_env(True, True)
+    trainer = _cpu_trainer(env)
+    trainer.warmup_ticks = 3
+    mean, var = _normalisation(env, trainer)
+    envs, states = _record_warm_envs(monkeypatch, cpu_trainer)
+    base = {f: trainer._get_weights(p) for f, p in trainer.policies.items()}
+    rng = torch.Generator().manual_seed(4)
+    for sign in (+1.0, -1.0):
+        candidate = {f: w + sign * 0.5 * torch.randn(w.shape, generator=rng)
+                     for f, w in base.items()}
+        for f, w in candidate.items():
+            trainer._set_weights(trainer.policies[f], w)
+        np.random.seed(11 if sign > 0 else 12)
+        trainer._evaluate_coevo(env.dm_ids, 2, seed=7, obs_mean=mean, obs_var=var,
+                                dm_ids_for_norm=env.dm_ids, warmup_weights=base)
+        # the scored rollout ran on this candidate, not on the base weights
+        _assert_cache_holds_the_policies(envs[-1], trainer.policies)
+    assert len(states) == 2
+    for f in states[0]:
+        np.testing.assert_array_equal(states[0][f], states[1][f])
+
+
+def test_worker_warmup_with_obs_norm_ignores_the_cached_candidate(monkeypatch):
+    env = make_env(True, True)
+    trainer = _cpu_trainer(env)
+    mean, var = _normalisation(env, trainer)
+    monkeypatch.setattr(parallel_worker, "_POLICIES", trainer.policies)
+    envs, states = _record_warm_envs(monkeypatch, parallel_worker)
+    base = {f: trainer._get_weights(p).numpy().copy() for f, p in trainer.policies.items()}
+    rng = np.random.default_rng(5)
+    for sign in (+1.0, -1.0):
+        wd = {f: w + sign * 0.5 * rng.standard_normal(w.shape) for f, w in base.items()}
+        np.random.seed(11 if sign > 0 else 12)
+        parallel_worker._evaluate_coevo_task(dict(
+            fg_list=env.dm_ids, weights_dict=wd, n_ticks=2, alpha=1, beta=1, seed=7,
+            integral_reward=True, legacy_reward=False,
+            obs_pack=dict(dm_ids=list(env.dm_ids), mean=mean, var=var),
+            env_builder=lambda seed=None: copy.deepcopy(env),
+            warmup_ticks=3, warmup_weights=base))
+        _assert_cache_holds_the_policies(envs[-1], trainer.policies)
     assert len(states) == 2
     for f in states[0]:
         np.testing.assert_array_equal(states[0][f], states[1][f])

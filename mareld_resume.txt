@@ -24273,3 +24273,33 @@ remain open exactly as described in 71.9 / 71.11.
 259.3 External Forces. Apply wrote an emptied field as 0, anchoring a non decision
     maker although the help says empty = 1; it now writes the kind's default (1
     for a non decision maker, 0 for a decision maker).
+
+260 Reward parity of the engines; train.py's warm-up on candidate weights
+    (2026-11-09; user: audit the reward's equivalence on CPU, then fix the bug).
+260.1 Audit. The same fix92 policies and +/- perturbations through both engines
+    on the CPU device (30x30, one year, 4 pairs, one world, one seed). What
+    drives the ARS step is r+ - r-: its cosine between the engines is 0.999+
+    with currents and no warm-up, 0.998+ without currents, 0.997+ with the
+    seed_rate kept. The reward formula and the fishing-keeping energy ledger read
+    the same. Porpoises and seals differ most in absolute terms (max |d diff| ~12 %
+    of mean |d|); where mean |d| is small the engines can disagree on a sign (3 of 4
+    for the water column without currents, for mackerel with the seed_rate kept;
+    those individual pairs were not traced). Not covered: CUDA execution, currents with a warm-up (the GPU restarts
+    the current field's tick and keys after the warm-up, the CPU runs on: another
+    realisation, no bias expected), --depleted-patches (GPU only, by design).
+260.2 The bug. Observation stats make _evaluate_coevo and _evaluate_coevo_task call
+    build_static_caches, which copies the policies' weights into the batched
+    arrays the tick reads (env._Ws). The warm-up's swap to the unperturbed weights
+    only reached the modules, so each candidate warmed up on its own weights:
+    the +/- candidates started the scored year from different states (zooplankton
+    1520 vs 1651 t where the GPU engine has 1641 t), and the r+ - r- cosine fell
+    to -0.74 for planktivores, -0.24 for zooplankton. train.py with --warmup-days
+    only; train_gpu.py does not take this path. tests/test_warmup.py ran without
+    observation stats, so it saw the uncached path.
+260.3 The fix. Both paths call env.rebuild_batched_weights() after each swap, to
+    the base weights and back. The test now also runs with observation stats and
+    checks that the warm states are equal and that the cache holds the candidate's
+    weights afterwards: without the second rebuild the scored rollout would run on
+    the base weights. The audit's warm-up arm on the fixed code: cosine 0.977+
+    (planktivores 0.977, seals 0.988, the rest 0.999+), signs 4 of 4 in every
+    group; before, planktivore signs 0 of 4 and zooplankton 1 of 4.

@@ -826,12 +826,16 @@ class ARSTrainer:
         if self.warmup_ticks > 0 and warmup_weights is not None:
             # Section 200: the world settles under the unperturbed weights,
             # then this candidate's weights take over and the reward starts.
+            # The tick reads the batched copy of the weights, so each swap
+            # rebuilds it.
             candidate = {fid: self._get_weights(self.policies[fid]) for fid in warmup_weights}
             for fid, w in warmup_weights.items():
                 self._set_weights(self.policies[fid], w)
+            env.rebuild_batched_weights()
             run_warmup(env, self.warmup_ticks, seed=seed)
             for fid, w in candidate.items():
                 self._set_weights(self.policies[fid], w)
+            env.rebuild_batched_weights()
 
         if self.local_reward is not None:
             source_tracking.attach(env, self.local_reward)

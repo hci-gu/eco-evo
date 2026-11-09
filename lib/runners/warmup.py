@@ -48,6 +48,11 @@ def add_warmup_argument(parser):
 def run_warmup(env, ticks, seed=None):
     """Advance a CPU env ``ticks`` ticks with its current policies.
 
+    The tick reads the env's batched copy of the weights when it has one, so
+    a caller that swaps the policies' weights calls
+    ``env.rebuild_batched_weights()`` before this and again after swapping
+    back.
+
     The CPU tick draws its FG order and the seeding noise from the global
     ``np.random``, which is not re-seeded per rollout task. With ``seed``
     (the delta pair's world seed) the warm-up runs on its own stream, so
