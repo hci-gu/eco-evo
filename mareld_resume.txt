@@ -24347,3 +24347,289 @@ remain open exactly as described in 71.9 / 71.11.
     Ten years within the old values but for porpoises (fished 0.66 -> 0.47) and seals, which swing.
     Whether the water column leaves the shallows needs a retrain; checkpoints load, but they
     learned the old krill map.
+
+263 Frozen fix94, the first training in the library of 262 (2026-11-09; user: evaluate
+    fix94 after 9 generations; nothing applied). fix93's settings, one world, 30x30, trained
+    unfished; policies frozen near update 400, probes read at update 440. "fix93" below is
+    its frozen update 250 in the same library, so the differences are what training in the
+    new world changed. Ten-year runs are one seed; both runs' fish rewards are flat.
+263.1 The water column stayed shallow, as 262.3 left open. Share over beds < 100 / 100-150 /
+    150-250 / > 250 m 0.60 / 0.34 / 0.05 / 0.01 (fix93 0.66 / 0.29 / 0.04 / 0.01; saithe GOV
+    0.04 / 0.13 / 0.78 / 0.05). Krill 0.78 of the diet (fix93 0.85, booked 0.36), planktivores
+    0.21 (0.14, booked 0.50), ration 3.57 (3.72, field 2.83), fill 0.99.
+263.2 Placement diagnostic, not a model proposal: the frozen policies with the water column
+    re-placed uniformly within bed classes every tick, two years (scratchpad only).
+    Learned / GOV spread / equal cells / all 150-250 m / all 100-150 m:
+    krill 0.78 / 0.60 / 0.63 / 0.63 / 0.83; planktivores 0.21 / 0.37 / 0.31 / 0.36 / 0.16;
+    ration 3.57 / 3.18 / 3.27 / 3.20 / 3.68; fill 0.992 / 0.995 / 0.995 / 0.995 / 0.995; mean
+    biomass 1.014-1.017 of start in all. At the GOV spread M2 on planktivores is 0.188 (booked
+    0.174), on krill 0.265 (booked 0.119, about 2.2x). So place moves the diet, more than
+    budget_gate's krill encounter 0.81 at that spread implied (difference unexplained), and
+    the krill pair stays high in the right place: to test against field data, not to tune.
+263.3 Energy hardly tells the placements apart, and the water column's fitness spread
+    (sigma_f about 0.001) is the smallest of the groups, so the reward probably gives no signal
+    to leave the shallows. The reward per placement was not measured. The policy still moves
+    actively: < 100 m share 0.02 at the start, 0.47 in the first quarter. Cause unknown.
+263.4 Other groups, probes' last half (median, fix94 against fix93). Whiting krill 0.56 (0.29,
+    booked 0.56), epifauna 0.31 (0.48, booked 0.17), bed classes 0.17 / 0.26 / 0.51 / 0.06 (0.31 /
+    0.31 / 0.31 / 0.07; GOV 0.53 / 0.21 / 0.25 / 0.01): diet nearer the booking, place further
+    from the field. Year 3 ratios whiting 2.11 (1.94), porpoises 0.47 (0.72; p10 0.24), seals 1.06
+    (0.90). Whiting's predators realise about 0.18 of its booked M2.
+263.5 Ten years, year 10 ratio, fix93 -> fix94. Fished (baseline maps on, in memory): whiting
+    1.59 -> 2.85 and rising, porpoises 0.47 -> 0.04, seals 0.88 -> 0.49, benthivores 1.10 -> 1.08,
+    epifauna 0.81 -> 0.95, Nephrops 0.64 -> 0.68, planktivores 0.73 -> 0.79. Unfished: whiting
+    1.13 -> 1.10 after a peak of 2.65 in year 6, porpoises 0.45 -> 0.26, seals 1.40 -> 1.37,
+    benthivores 2.98 -> 3.36, epifauna 0.49 -> 0.21, Nephrops 0.46 -> 0.37, planktivores 0.62 -> 0.55.
+263.6 A17 about unchanged: PP 73 g C/m2/yr, f 0.52, log-RMSE column 0.52, surface C 1.01, nitrate
+    0.29, deep nitrate 0.95, zooplankton 0.94. Open: why adult saithe stand over 150-250 m in the
+    box (literature review started, research_notes/"Sejens djuplage", a-umlaut); whiting's
+    unpaid predation.
+263.7 research_notes/"Sejens djuplage" (a-umlaut; summary.md, evidence.md; nothing applied). The
+    spread holds: adults >= 35 cm, 150-250 m beds 0.91 in Q1, 0.80 in Q3, 2000-25, stable by
+    period, and bed depth grows with length (25-35 cm 102 m, >= 55 cm about 210 m). No mechanism
+    identified. Offshore bed temperature, salinity and oxygen hardly differ across the step from
+    100-150 to 150-250 m; food quantity is larger on beds < 100 m in Q3 but for blue whiting; slope
+    has no support; trawl effort is highest where saithe are densest; no evidence on predation
+    risk. Ranked: size-structured bed-depth habitat (strong pattern, no cause), seasonal window on
+    a slope route (moderate, for the level), prey overlap per pool member (co-occurrence only; the
+    pool's members oppose each other), water mass (shallow edge at most), vertical room (hypothesis).
+    Beds > 250 m are almost unsampled, so the stored 0.048 is not a measurement. Group shares with
+    the other members 0.074 / 0.176 / 0.697 / 0.053; budget_gate's field spread uses saithe's. The
+    stored table is 2000-20, not 2000-19, and with the haul key fixed 354 hauls, practically the
+    same. Bergstad 1990 and 1991 (the only depth-by-season survey of the Trench) were not obtained.
+
+264 Whiting's missing predation (2026-11-09; user: go on to whiting; nothing applied, no
+    library, engine or diagnostic code changed). Frozen fix94 policies (scratchpad copy near
+    update 400), CPU env, 30x30, fished (baseline maps unmuted in memory), one seed, years of
+    1460 ticks. Scripts and outputs: research_notes/"Vitlingens uteblivna predation"
+    diagnostics/ (whit94*.py, pmat.py, place94.py, longrun94.py; tables/). Forced placements and
+    forced attack probabilities are diagnostics only, never model proposals (behaviour is learned).
+264.1 Flows, base: realised somatic growth 0.56-0.59 (P 0.61), emigration 0.25, M1 0.25, F 0.09,
+    M2 0.084-0.099 (booked 0.371: benthivores 0.18, water column 0.157, mammals ~0.034).
+    Benthivores 0.046-0.059, water column 0.016-0.021. Whiting 1.20 / 1.46 / 1.71 / 1.92 of start,
+    year 10 2.85. Closure B* = I/(L - P), I 0.172 t/km2/yr: at the realised L - P ~0.09, B* ~4x
+    start; at the booked M2 ~1.04x. J/B realised 0.34 -> 0.49 against the library's 0.165
+    (graduation 0.65 does not hold 0.165 in the open form; flag, does not explain low M2).
+264.2 Attack probabilities p (encounter-weighted, fix94): benthivores -> whiting 0.21-0.25,
+    water column -> whiting 0.10-0.16; T 0.93-0.97. p differs between runs with the same reward
+    (benthivores -> whiting 0.25 / 0.15 / 0.56 in fix94 / fix93 / fix91; whiting -> krill 0.70 /
+    0.15 / 0.36): looks like drift. Fill ~0.99 all year.
+264.3 Haul-key collision (found by the review, checked here in the raw HH file):
+    research_notes/"Vitlingens predatorer"/scripts/gov_overlap.py and "Krill i Skagerrak"/
+    a_revisit/scripts/gov_by_bed.py key GOV hauls on (year, quarter, ship, haul number), so a
+    same-numbered haul elsewhere adds its catch to the box haul. 2016 Q1, ship 26D4, haul 18: DK
+    at 54.4449 N 1.6753 E and SE at 57.8805 N 11.0015 E, both valid GOV. Fixed key (ShootLat
+    added), box 2000-20: L cod >= 20 cm x whiting 10-28 cm Q1 1.07 (0.81-1.39), Q3 1.84
+    (0.56-3.31) (stored 1.57); with 2021-25 1.03 / 1.59. Saithe x whiting Q1 0.26, Q3 0.17 (was
+    0.39 / 0.87). Whiting bed shares < 100 / 100-150 / 150-250 / > 250 m, 2000-19: 0.765 / 0.210
+    / 0.025 / 0.000 (stored 0.533 / 0.211 / 0.251 / 0.006 = FIELD_BED_SHARES['whiting'] in
+    lib/diagnostics/field_diet.py, used by budget_gate's field block and probe_diets; NOT
+    corrected yet). Saithe's shares hold. To recheck: "Vitlingens predatorer" 3.1 (the x1.6 of
+    250.6 / 251.3, never applied as a parameter), "Torskfonster och bottenandel" (o-umlaut)
+    section 3, "Vattenpelaren pa vitling" (a-ring; the water column -> whiting field M2 0.13 and
+    booking 0.157), the gate rows of 248 / 252 / 262 that quote whiting's GOV spread (263.4 too;
+    whiting is shallower than stated, which raises its krill share at the field spread, not
+    lowers it), the other "Krill i Skagerrak" scripts with the same key. Cod's group-free shares
+    from the same fixed-key table (mean kg/h per class x class cells on 30x30): 0.219 / 0.555 /
+    0.196 / 0.029; with whiting's they give a class-level L of 1.12, so the field cod-whiting
+    overlap is set by bed depth.
+264.4 Arms (whit94b.py, whit94c.py; B/start by year; M2 total; benthivores; water column):
+    base        1.20 1.46 1.71 1.92            0.084-0.099  0.05        0.016-0.019
+    p1 (whiting pairs p = 1)  1.06 1.12 1.17 1.22  0.28-0.33  0.14-0.17  0.09-0.14
+    mask (whiting blind to benthivores) 1.20-1.93  0.09-0.11  0.07  0.012; L 0.64-0.77
+    co16 (whiting re-placed to L 1.6) 1.12-1.56   0.11-0.13   0.08-0.10   0.006-0.008
+    pall (every fish prey p = 1) 1.16 ... 1.85 (6 yr)  0.14-0.18  0.03  0.11; L ~0.35
+    pallco16 (p = 1, L 1.6)  1.07 -> 1.05      0.28-0.29   0.11-0.13   0.12-0.16
+    pallco11 / pallco13 (L 1.1 / 1.3) 1.08 -> 0.99 / 1.01   0.27-0.33  0.09-0.11  0.14-0.21
+    pallco11wc (+ water column at saithe's GOV spread) 1.06 -> 0.90  0.31-0.37  0.08-0.10  0.20-0.26
+    field (whiting at 0.765/0.210/0.025/0, water column at saithe's, learned p)
+                1.22 1.45 1.65 1.82 1.93 2.02  0.13-0.18  0.06 -> 0.12  0.006-0.013; L 0.73-0.94
+    pallfield (same, p = 1) 1.20 ... 2.18      0.11-0.16   0.04-0.05   0.04-0.05; L 0.64-0.88
+    pallfield3 (+ benthivores at cod's shares, p = 1) 1.18 1.33 1.46 1.56 1.65 1.74
+                                               0.15-0.16   0.063-0.073 0.041-0.049; L 1.12
+    F 0.045 in the three field arms (0.07-0.09 elsewhere): the trawl map is light on < 100 m beds,
+    so whiting's booked F 0.075 assumed another spread.
+264.5 Reading. The pallco arms' match to the field (M2 ~0.29) is an artefact: L 1.6 was the
+    collided key, and whiting placed by mixing towards the benthivore map is near-uniform (conc
+    1.0), so the water column meets it over every bed (0.14-0.26). At field bed shares whiting is
+    over < 100 m and saithe over 150-250 m, and water column -> whiting falls to 0.04-0.05 (p = 1)
+    or 0.01 (learned), consistent with the fixed-key saithe x whiting L 0.17-0.26. p = 1 is not
+    the fix for benthivores -> whiting: at field placement learned p gives 0.06 at the start
+    density rising to 0.12 at ~2x whiting, forced p = 1 gives 0.04-0.07 (inference: forced attacks
+    on infauna and epifauna spend the shared handling time; whiting is a minor benthivore prey).
+    At field placement whiting still grows (1.74x by year 6, net +0.05/yr). The gap is in the
+    bookings and the open-population flows, not the a's: water column booking 0.157 rests on a
+    note built on the bugged key (box segregation suggests far less) [Superseded by 264.8: 0.157
+    is a member sum with no overlap step and stands; only the note's support at the box's
+    geography fell]; SMS 2023 puts ~0.20 of adult
+    whiting M2 on porpoise, the library books 0.020 (232.2, deliberate) and the porpoises are
+    collapsing in this frozen copy [not with the latest policies, 264.9]; realised emigration 0.25 against box net emigration 0.4-0.8 at ages 2-3
+    ("Bestandsreglering", a-ring); F as 264.4. Learned whiting placement is deep (263.4: 0.17 /
+    0.26 / 0.51 / 0.06) against the field 0.765 / 0.21 / 0.025 / 0, as the water column is
+    shallow against saithe's: neither fish has a depth habitat signal beyond food.
+264.6 research_notes/"Vitlingens uteblivna predation" (summary.md, evidence.md; nothing
+    applied). (1) Gadoid diets mostly track what is met; preference is modest (adult cod on
+    whiting Chesson alpha 0.18, Ludwig 2024); whiting's fish intake plateaus at 6-17 % of
+    maximum ration with no specialists (Rindorf & Gislason 2005); no source shows a well-fed
+    gadoid declining suitable prey it met; whether satiation narrows the diet is unmeasured.
+    (2) No fine-scale avoidance in the box or the Skagerrak down to the tow (within-cell L
+    1.1-1.5 but box Q3 on 20 hauls); field L < 1 comes from large-scale habitat. Below ~1 km
+    untested. (3) Survey cohort Z at ages 2->5, box Q1 1.53 / 1.15 / 1.03 (2000-25), 1.07 / 1.09
+    / 0.79 (2010-25); stock 0.71 / 0.62 / 0.41 (2010-25), consistent with SMS M + F; box excess
+    is net emigration. The model's realised L (~0.70 base) is below every box estimate. (4)
+    Field gadoids feed at 0.22-0.53 of Cmax (whiting 0.25) and their reserves cycle; fill ~1 all
+    year is a model state and leaves p without an energy gradient.
+264.7 Open, user's decisions: fix FIELD_BED_SHARES['whiting'] (one constant, provenance) and
+    rerun the fixed key through "Vattenpelaren pa vitling" and the other notes of 264.3; then the
+    whiting bookings against the box (water column, porpoise, emigration, F at the field spread);
+    the time-budget question (fish full all year, T ~0.95) upstream of both p and place. Nothing
+    here justifies changing an a or fixing p.
+264.8 Follow-up (user: do it). lib/diagnostics/field_diet.py FIELD_BED_SHARES['whiting']
+    0.533 / 0.211 / 0.251 / 0.006 -> 0.769 / 0.204 / 0.027 / 0.001 (fixed key, 2000-20, 354
+    hauls; the old label 2000-19 / 352 was wrong; provenance comment). tests/test_probe_diets.py
+    passes. budget_gate field spread: whiting -> krill enc 0.917 (was 0.892, booked 0.557), ->
+    epifauna 0.041 (0.053), -> planktivores 0.026 (0.033), -> benthivores 0.012 (0.015); prey
+    side, water column -> whiting at the field spread 0.013 (was 0.033; booked 0.157). Audit of
+    every research script with a haul key, research_notes/"Dragnyckelns kollision" (summary.md,
+    evidence.md; fixed copies *_fixedkey.py next to the originals): Sweden and Denmark share ship
+    26D4 since 2011, 131 of the box's 354 GOV hauls 2000-20 collide; raw-XML scripts added
+    far catch (gov_overlap.py, gov_by_bed.py), extract scripts lost hauls in the dedup
+    ("Tumlarens byten" then_now_densities.py: 218 of 980 Skagerrak hauls 2001-20; ratios move
+    1-6 %, verdicts unchanged; gadoid_mix.py 7 hauls of 2025, box rows identical). No library
+    value rests on a contaminated output. Water column -> whiting 0.157 is the member sum
+    diet share x Q/B x B_member / B_whiting (saithe 0.066, hake 0.044, spurdog 0.030,
+    anglerfish + ling 0.017), with no overlap step, so it stands as booked; what fell is the
+    note's support for it at the box's geography ("Vattenpelaren pa vitling" L 0.61 / 0.82 per
+    haul, 0.80 bed classes -> 0.37 / 0.20, 0.30), and the overlap variant there becomes ~0.08
+    (0.04-0.14). Notes needing a correction line: "Vattenpelaren pa vitling", "Vitlingens
+    predatorer" (x1.6 -> Q1 1.07, Q3 1.84; residual ~x2.7), "Torskfonster och bottenandel" 3,
+    "Krill i Skagerrak" a_revisit (whiting shares, weighted_gate.py hard-codes the old ones),
+    "Tumlarens byten" 4. Not edited (user's notes).
+264.9 Whiting's other bookings against the box. Emigration [0.2, 0.3] is the central value of
+    "Bestandsreglering" migration.md 2.5 (e_J ~0.2, e_A 0.3 (0.1-0.6)): consistent. F: the trawl
+    tables are calibrated on the map's mean effort (161.9); bottom effort at the field spread
+    is 0.54 x the mean for whiting, 0.75 for cod, 1.47 for saithe, so whiting at its field spread
+    realises ~0.04 + 0.005 against the booked 0.08 (a convention question, small). Porpoises:
+    the manifest's 12 t (3 t on 30x30; 0.07 /km2) has no source (199.3); SCANS-IV 2022 block
+    NS-L ~84 t (33-103 t). The booked porpoise -> whiting 0.0201 is scaled to the 12 t; at the
+    SCANS level it would be ~0.14 (0.055-0.17), near SMS 2023's ~0.20 on adult whiting.
+    Arithmetic only, not a proposal: with M1 0.25, benthivores 0.07-0.12 (field-placement arms),
+    water column ~0.08 (overlap variant), porpoises 0.14, seals 0.014, F 0.075, emigration 0.25,
+    L ~0.88-0.93 against P 0.61 and I/B 0.39 at the start: B* ~1.2-1.4x start (with F 0.045 at
+    the field spread: L ~0.85-0.90, B* ~1.3-1.6x); with today's porpoise 0.02 ~1.9-2.6x. The 0.14
+    is linear on a booked share, not a prediction of what the model would deliver at 84 t
+    (whether the box's food carries that level is the porpoise food calibration left open in
+    200.1). The porpoise level is the largest single item. Correction (user): the porpoises do
+    not starve with fix94's latest policies. The decline seen here was the frozen copy near
+    update 400 (fished; long-run probes then 0.42-0.67 by year 3). The latest probes (updates
+    920-1030, unfished) hold them at 0.70-1.03 of start with a ration of 17.6-20.1 /yr (field
+    Q/B 19.5); whiting there 1.38 / 1.85 / 2.29 (update 1030).
+264.10 fix94's latest policies (user: analyse them, does whiting change). Training had stopped;
+    policies saved 19:57, last probe update 1030, frozen copy in the scratchpad. CPU arms as
+    264.4 (fished, one seed, 4 years; scripts take POL), the 10-year run on the GPU engine
+    (inference.py --engine gpu, 30x30, the run's seed and currents, inference maps = today's
+    fishing). Against the update-400 copy (264.1-264.4):
+    - Whiting grows faster: 1.25 / 1.60 / 1.93 / 2.22 (was 1.20 / 1.46 / 1.71 / 1.92); 10 years
+      1.30 1.64 1.96 2.22 2.41 2.52 2.57 2.57 2.53 2.49, levelling near 2.5 (was 2.85 rising).
+    - Its predators nearly stopped attacking it: encounter-weighted p benthivores -> whiting
+      0.04-0.05 (0.21-0.25), water column -> whiting 0.01-0.02 (0.10-0.16). M2 0.040-0.058 (0.084-
+      0.099): benthivores 0.033-0.049, water column 0.004-0.005, seals and porpoises ~0.002.
+    - Avoidance gone: L(benthivores, whiting) 0.90-0.94 (0.33-0.42); masking whiting's sight of
+      the benthivores gives 1.0, so the low M2 is now the predators' p, not the place.
+    - Field placement (whiting and water column at their GOV bed shares): whiting 1.27 / 1.54 /
+      1.76 / 1.96, M2 0.07-0.11 (benthivores 0.06-0.10, water column 0.002).
+    - Diets moved further from the booking: water column krill 0.954-0.958, planktivores
+      0.04 (0.76-0.79 / 0.20-0.23; booked 0.36 / 0.50); benthivores infauna 0.92 (0.85; booked
+      0.56); whiting epifauna 0.58-0.66, krill 0.23-0.31 (0.34-0.36 / 0.52-0.56; booked 0.17 /
+      0.56), M2 on the epifauna from whiting 0.34-0.44. Rations: benthivores 7.4-7.8 (field Q/B
+      4.46), planktivores 6.8-7.6 (5.0), mackerel 6.4-7.1 (2.2), water column 4.05-4.14 (2.83),
+      whiting 3.95-4.21 (4.2). Fill 0.95-1.00, T 0.96-0.99 everywhere.
+    - 10-year GPU run, other groups: porpoises 0.86 0.89 0.91 0.95 0.80 0.76 0.73 0.59 0.58 0.56
+      on 30x30 (3 t start); on 60x60 with the same policies, seed and fishing 0.77-0.86 every
+      year, 9.3 t at year 10, seals 1.38 (20.7 t), whiting 2.34 (user's GPU probe: 10.3 t and
+      24 t). The 30x30 porpoise decline comes with the grid (a quarter of the animals; mechanism
+      not examined), not the policies; seals 0.95 -> 2.13 rising, benthivores 1.23,
+      epifauna 0.76, Nephrops 0.72, planktivores 0.90, water column 0.77 flat, mackerel 1.15.
+    Reading: training from update 400 to 1030 moved p on whiting towards 0 with no change in
+    reward structure, consistent with the drift of 264.2 (no energy gradient at fill ~1).
+    Whiting's level is set by the predators' learned p, which the field evidence (264.6) does
+    not support for predators that meet suitable prey.
+264.11 Porpoises at the SCANS level (user: go on to the porpoises; diagnostic, nothing
+    applied). Box evidence: research_notes/"Barformaga for sal och tumlare" (a-umlaut, o-umlaut,
+    a-ring) porpoises.md 1.5: SCANS-IV 2022 NS-L 0.519 /km2 x 45 kg = 84 t (95 % 33-191 t at
+    40-55 kg; 2016 155-213 t); the manifest's 12 t has no source; that note (old library) found
+    the model's food-limited level at 12-16 t and advised a food check before any start change.
+    Frozen latest fix94 policies, fished:
+    - GPU 60x60, 10 years, porpoises started at 84 t (manifest copy in the scratchpad): 0.64 0.63
+      0.60 0.55 0.50 0.48 0.43 0.37 0.35 0.35 (29.4 t at year 10; 53 t after the first year's
+      drop); at 12 t 0.77-0.86. Whiting 2.36 (2.34 at 12 t), planktivores 0.91 (0.92),
+      benthivores 1.26 (1.35), seals 1.15 (1.38); epifauna, krill, zooplankton unchanged.
+    - CPU 30x30 bookkeeping (porp_cpu.py), start x1 (3 t) and x7 (21 t = 84 t on 60x60):
+      x1: mean/start 0.80 0.85 0.91, ration 17.4-17.8 /yr (field 19.5), fill 0.79, starvation
+      0.32 /t in year 1 then 0.01-0.04; diet planktivores 0.84-0.91, benthivores 0.08-0.14,
+      whiting 0.01-0.02 (booked 0.646 / 0.183 / 0.165); M2 on whiting 0.001-0.002 (booked 0.020).
+      x7: year 1 starvation 1.21 /t, down to 9.7 t (0.46 of start), then 9.6-9.9 t with
+      starvation 0.07-0.12, ration 17.5, fill 0.79, the same diet; M2 on planktivores 0.036-0.041,
+      benthivores 0.012-0.016, whiting 0.004-0.005.
+    Reading: with these policies the box feeds ~40-50 t of porpoises on the 60x60 scale (CPU
+    30x30 0.46 of start in years 2-3, GPU 60x60 0.60-0.63, then slowly down; ~0.5 of the SCANS
+    point, inside its interval), ~3-4x today's 12 t; the excess dies in the first
+    year. More porpoises would hardly touch whiting: they take 1-2 % whiting against a booked
+    16.5 %, while budget_gate's encounter-implied M2 on whiting at 12 t is 0.039 (1.9x booked)
+    and the realised 0.0015 is ~0.04 of it - the same learned avoidance of whiting as the fish
+    predators (264.10). Policies trained at 12 t; one seed; the GPU run keeps declining slowly.
+264.12 B's analysis: satiation and the krill supply (user: start with B's analysis; a fixed
+    p = 1 is not out of the question to try). Frozen latest fix94 policies, fished, 30x30, CPU,
+    2 years (satiation_cpu.py; nothing applied).
+    - The reserve-room cap (predation._reserve_room_cap) binds on 0.84-0.98 of the biomass-
+      ticks of benthivores, planktivores, water column and whiting (mackerel 0.60-0.63); where
+      it binds the predators' uncapped demand is 1.45-2.15x the energy they take (benthivores
+      1.45-1.58, whiting 1.77-1.92, water column 1.70-1.78, planktivores 2.06-2.15, mackerel
+      1.75-1.81). The cap scales every prey alike, so while it binds the prey mix does not change
+      the energy taken: no gradient on p. This is the mechanism behind 264.2 / 264.10.
+    - Krill in the box: 3926-4083 t (4.4-4.5 t/km2). Per tonne of box krill per year: M2 4.57-
+      5.05 (planktivores 3.09-3.52, mackerel 0.73-0.77, water column 0.55, whiting 0.15-0.16,
+      benthivores 0.05-0.06; booked total 2.11), own growth 2.10-2.11 (the derived g), import
+      3.09-3.78, export 0.83-1.03, so net import 2.1-3.0 /yr. Consumption ~21-23 t/km2/yr against
+      the field fish demand of 6-7 t/km2/yr and a production of ~10 ("Krill i Skagerrak": P/B 2,
+      5 t/km2): ~3x the field demand, more than half of it carried in by the exchange (e 20 /yr,
+      5-50) from an outside density that is held fixed.
+    - Rations in tonnes above field Q/B (benthivores 7.4-7.8 vs 4.46, planktivores 6.8-7.6 vs
+      5.0, mackerel 6.4-7.1 vs 2.2, water column 4.05-4.14 vs 2.83; whiting at its 4.2) are
+      partly prey quality (benthivores 0.92 infauna at 2600 MJ/t); not compared in energy.
+    Reading: the fish are limited by their store, not by food, nearly all the time; field
+    gadoids feed at 0.22-0.53 of Cmax (264.6). The model has no term for what holds field fish
+    below Cmax (the time budget AGENTS notes for the benthic pairs), and the open krill pool
+    refills whatever the box eats at a fixed outside density. Open, user's decisions: a p = 1
+    trial (flag in both engines, retrain); the krill boundary (a fixed outside density lets box
+    demand set the import); the missing time budget.
+
+265 Fixed attack choice (2026-11-09; user: build the flag; nothing set in the library, no
+    training started). Per-DM species key `attack_choice`: `learned` (default, absent) keeps
+    section 242's p_j = eat_j / max eat; `fixed` sets p = 1 on every pair of the DM's menu
+    (eat_static_mask > 0), so the DM attacks every prey it meets, its diet is the encounter
+    shares, and its eat shares set only the foraging time T. Motivation: 264 (the learned p
+    drifts while the reserve-room cap binds; field gadoid diets track what the fish meet).
+    - lib/world/functional_group.py: ATTACK_CHOICE_FORMS, attack_choice_form (unknown value
+      raises), FunctionalGroup.attack_choice.
+    - lib/environments/ecosystem_env/state.py: env.dm_fixed_attack, env._has_fixed_attack.
+    - interactions.fixed_attack(env, attack), called in predation.apply_predation right after
+      attack_choice; inert without the key. GPU (lib/gpu/ecosystem.py): fixed_attack_mask
+      [1, D, G, 1] applied to the attack tensor in the shared-handling branch.
+    - Only with shared handling (the per-pair response has no p). Growth budget, s*, budget_gate
+      and observations unchanged; the action layout is unchanged, so checkpoints load, but the
+      eat action means something else for a fixed DM: retrain.
+    - FG editor: "Attack choice" entry (empty = learned; only 'fixed' is written), field help.
+    - Tests: tests/test_fixed_attack.py (parsing, inert default, p = 1 on the menu only, every
+      split of the same T gives the encounter diet, no foraging no intake);
+      test_gpu_ecosystem.py::test_fixed_attack_matches_reference (CPU-GPU parity). GPU
+      inference smoke (2 months, 30x30) on a scratch library copy with the five fish groups
+      fixed: ran.
+    Open (user): which groups get `fixed` (the literature supports gadoids; mammals not
+    reviewed) and the training run.
+265.1 Applied (user: set fixed on the fish): `attack_choice: fixed` on planktivorous_fish,
+    benthivorous_fish, predatory_fish, whiting and mackerel in fg_library.yaml, after each
+    `appetite: reserve_room` with a provenance comment. Zooplankton, porpoises and seals keep
+    `learned` (no selectivity review for the mammals). The load check gives fixed on exactly
+    the five. Checkpoints before 265.1 are invalid (the fish eat action now sets T only):
+    retrain. AGENTS.md and the field help updated.

@@ -1,0 +1,71 @@
+region box: (57.7, 58.4) N, (9.9, 11.3) E
+valid GOV hauls: 354; Q1 213, Q3 141; day 353, night 1
+
+Overlap of whiting (prey) with each predator, per quarter; L with 90 % haul-bootstrap interval
+quarter  predator prey         n Schoener  Lloyd L   L p5  L p95 pred kg/h prey kg/h
+Q1       cod20    whiting    213    0.361    1.186   0.90   1.54     64.84     50.20
+Q1       cod20    wh_small   213    0.284    0.985   0.65   1.43     64.84     23.78
+Q1       cod20    wh_large   213    0.395    1.367   1.08   1.69     64.84     26.42
+Q1       cod20    wh_10_28   213    0.332    1.074   0.81   1.39     64.84     42.19
+Q1       saithe   whiting    213    0.119    0.365   0.28   0.49      5.58     50.20
+Q1       saithe   wh_small   213    0.081    0.198   0.12   0.32      5.58     23.78
+Q1       saithe   wh_large   213    0.143    0.516   0.40   0.68      5.58     26.42
+Q1       saithe   wh_10_28   213    0.103    0.262   0.19   0.38      5.58     42.19
+Q1       hake     whiting    213    0.191    0.687   0.41   1.09      0.79     50.20
+Q1       hake     wh_small   213    0.132    0.365   0.17   0.65      0.79     23.78
+Q1       hake     wh_large   213    0.215    0.976   0.57   1.49      0.79     26.42
+Q1       hake     wh_10_28   213    0.180    0.535   0.26   0.97      0.79     42.19
+Q3       cod20    whiting    141    0.286    1.778   0.63   3.13    104.81    132.39
+Q3       cod20    wh_small   141    0.101    0.257   0.13   0.58    104.81     42.54
+Q3       cod20    wh_large   141    0.351    2.498   0.90   4.14    104.81     89.85
+Q3       cod20    wh_10_28   141    0.268    1.837   0.56   3.31    104.81    117.17
+Q3       saithe   whiting    141    0.051    0.203   0.05   0.43     78.07    132.39
+Q3       saithe   wh_small   141    0.028    0.027   0.01   0.06     78.07     42.54
+Q3       saithe   wh_large   141    0.059    0.286   0.07   0.59     78.07     89.85
+Q3       saithe   wh_10_28   141    0.041    0.167   0.04   0.37     78.07    117.17
+Q3       hake     whiting    141    0.239    0.964   0.71   1.45     17.51    132.39
+Q3       hake     wh_small   141    0.169    0.642   0.39   1.37     17.51     42.54
+Q3       hake     wh_large   141    0.249    1.117   0.82   1.61     17.51     89.85
+Q3       hake     wh_10_28   141    0.230    0.882   0.57   1.46     17.51    117.17
+Q1+Q3    cod20    whiting    354    0.316    1.814   0.84   3.06     80.76     82.94
+Q1+Q3    cod20    wh_small   354    0.187    0.543   0.33   0.85     80.76     31.25
+Q1+Q3    cod20    wh_large   354    0.366    2.582   1.12   4.43     80.76     51.69
+Q1+Q3    cod20    wh_10_28   354    0.293    1.848   0.74   3.28     80.76     72.06
+Q1+Q3    saithe   whiting    354    0.059    0.313   0.09   0.63     34.45     82.94
+Q1+Q3    saithe   wh_small   354    0.035    0.048   0.03   0.08     34.45     31.25
+Q1+Q3    saithe   wh_large   354    0.069    0.474   0.13   0.99     34.45     51.69
+Q1+Q3    saithe   wh_10_28   354    0.049    0.259   0.07   0.54     34.45     72.06
+Q1+Q3    hake     whiting    354    0.212    1.468   1.12   2.05      7.45     82.94
+Q1+Q3    hake     wh_small   354    0.140    0.836   0.50   1.46      7.45     31.25
+Q1+Q3    hake     wh_large   354    0.228    1.850   1.41   2.52      7.45     51.69
+Q1+Q3    hake     wh_10_28   354    0.202    1.363   0.93   2.12      7.45     72.06
+
+Mean kg/h by bed depth class (all valid hauls, Q1+Q3) and the share of each species' summed catch rate
+     bed m    n   whiting  wh_small  wh_large     cod20    saithe      hake
+   0-75     131    148.86     70.38     78.49     34.78      0.92      4.56
+  75-100     44    147.82     22.25    125.57    154.61     38.60     34.83
+ 100-150    115     27.42      7.33     20.09    126.82     22.26      2.02
+ 150-250     61      3.31      0.37      2.94     42.70    127.30      4.41
+ 250-1000     3      0.14      0.07      0.07     13.63     17.36      1.57
+
+Whiting day vs night (GOV kg/h), by quarter and bed depth class; ratio = night/day mean
+  Q1     bed 0-100 m: day 109 night 0 hauls (no pair)
+  Q1     bed 100-150  whiting   day n  83    29.09 night n   1     0.00  ratio  0.00
+  Q1     bed 100-150  wh_small  day n  83     9.13 night n   1     0.00  ratio  0.00
+  Q1     bed 100-150  wh_large  day n  83    19.96 night n   1     0.00  ratio  0.00
+  Q1     bed 150-1000 m: day 20 night 0 hauls (no pair)
+  Q1     bed   0-1000 whiting   day n 212    50.44 night n   1     0.00  ratio  0.00
+  Q1     bed   0-1000 wh_small  day n 212    23.90 night n   1     0.00  ratio  0.00
+  Q1     bed   0-1000 wh_large  day n 212    26.54 night n   1     0.00  ratio  0.00
+  Q3     bed 0-100 m: day 66 night 0 hauls (no pair)
+  Q3     bed 100-150 m: day 31 night 0 hauls (no pair)
+  Q3     bed 150-1000 m: day 44 night 0 hauls (no pair)
+  Q3     bed 0-1000 m: day 141 night 0 hauls (no pair)
+  Q1+Q3  bed 0-100 m: day 175 night 0 hauls (no pair)
+  Q1+Q3  bed 100-150  whiting   day n 114    27.66 night n   1     0.00  ratio  0.00
+  Q1+Q3  bed 100-150  wh_small  day n 114     7.39 night n   1     0.00  ratio  0.00
+  Q1+Q3  bed 100-150  wh_large  day n 114    20.27 night n   1     0.00  ratio  0.00
+  Q1+Q3  bed 150-1000 m: day 64 night 0 hauls (no pair)
+  Q1+Q3  bed   0-1000 whiting   day n 353    83.18 night n   1     0.00  ratio  0.00
+  Q1+Q3  bed   0-1000 wh_small  day n 353    31.34 night n   1     0.00  ratio  0.00
+  Q1+Q3  bed   0-1000 wh_large  day n 353    51.83 night n   1     0.00  ratio  0.00

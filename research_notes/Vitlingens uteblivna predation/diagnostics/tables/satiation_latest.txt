@@ -1,0 +1,13 @@
+reserve_room DMs ['benthivorous_fish', 'mackerel', 'planktivorous_fish', 'predatory_fish', 'whiting']
+year 1 benthivorous cap binds on 0.84 of biomass-ticks | uncapped/taken energy 1.45 | ration 7.80 fill 0.95 T 0.98
+year 1 mackerel     cap binds on 0.60 of biomass-ticks | uncapped/taken energy 1.75 | ration 7.06 fill 0.89 T 0.98
+year 1 planktivorou cap binds on 0.79 of biomass-ticks | uncapped/taken energy 2.06 | ration 7.55 fill 0.98 T 0.96
+year 1 predatory_fi cap binds on 0.86 of biomass-ticks | uncapped/taken energy 1.70 | ration 4.14 fill 0.98 T 0.97
+year 1 whiting      cap binds on 0.87 of biomass-ticks | uncapped/taken energy 1.77 | ration 4.21 fill 0.95 T 0.98
+year 1 krill mean 4083 t | per tonne of box krill /yr: import 3.09 export 1.03 M1 0.00 M2 4.57 own growth 2.11 | M2 by benthi 0.046 predat 0.548 macker 0.731 whitin 0.160 plankt 3.085
+year 2 benthivorous cap binds on 0.98 of biomass-ticks | uncapped/taken energy 1.58 | ration 7.41 fill 1.00 T 0.99
+year 2 mackerel     cap binds on 0.63 of biomass-ticks | uncapped/taken energy 1.81 | ration 6.40 fill 0.91 T 0.98
+year 2 planktivorou cap binds on 0.85 of biomass-ticks | uncapped/taken energy 2.15 | ration 6.78 fill 1.00 T 0.97
+year 2 predatory_fi cap binds on 0.92 of biomass-ticks | uncapped/taken energy 1.78 | ration 4.05 fill 0.99 T 0.98
+year 2 whiting      cap binds on 0.98 of biomass-ticks | uncapped/taken energy 1.92 | ration 3.95 fill 1.00 T 0.98
+year 2 krill mean 3926 t | per tonne of box krill /yr: import 3.78 export 0.83 M1 0.00 M2 5.05 own growth 2.10 | M2 by benthi 0.059 predat 0.551 macker 0.767 whitin 0.151 plankt 3.521

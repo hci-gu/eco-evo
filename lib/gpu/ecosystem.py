@@ -71,6 +71,13 @@ class TensorEcosystem:
         self.handling = tensor(env.handling_time_mat)[None, :, :, None]
         # Section 240: DMs with the reserve-room appetite (h = 1, intake
         # capped at B ME - R), mirroring ``predation._reserve_room_cap``.
+        # Section 265: DMs with ``attack_choice: fixed`` attack every prey
+        # of their menu (p = 1), mirroring ``interactions.fixed_attack``.
+        self.fixed_attack = bool(getattr(env, "_has_fixed_attack", False))
+        if self.fixed_attack:
+            self.fixed_attack_mask = (
+                tensor(env.dm_fixed_attack, torch.bool)[:, None]
+                & (tensor(env.eat_static_mask) > 0.0))[None, :, :, None]
         self.reserve_room = bool(getattr(env, "_has_reserve_room", False))
         if self.reserve_room:
             self.reserve_room_mask = tensor(
@@ -957,6 +964,8 @@ class TensorEcosystem:
             forage = eat.sum(2, keepdim=True)
             top = eat.amax(2, keepdim=True)
             attack = torch.where(top > 0.0, eat / torch.where(top > 0.0, top, 1.0), 0.0)
+            if self.fixed_attack:
+                attack = torch.where(self.fixed_attack_mask, 1.0, attack)
             prey = pair_visible if pair_visible is not None else visible[:, None]
             lam = self.type3 * (a * prey * prey) + (1.0 - self.type3) * (a * prey)
             busy = (attack * self.handling * lam).sum(2, keepdim=True)

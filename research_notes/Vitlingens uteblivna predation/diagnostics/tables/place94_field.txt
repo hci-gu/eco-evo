@@ -1,0 +1,8 @@
+field juvenile attr False
+start share [0.024 0.337 0.546 0.094]
+quarterly share y1 [[0.043, 0.127, 0.782, 0.048], [0.043, 0.127, 0.782, 0.048], [0.043, 0.127, 0.782, 0.048], [0.043, 0.127, 0.782, 0.048]]
+y2 share [0.043 0.127 0.782 0.048]
+field WC diet {'krill': 0.603, 'plankt': 0.367, 'benthi': 0.017, 'whitin': 0.012}
+field ration 3.18 fill 0.995 WC mean B ratio 1.015
+field WC M2 krill 0.265 on planktivores 0.188
+field end ratios {'benthi': 1.03, 'predat': 0.78, 'macker': 1.15, 'whitin': 1.63, 'plankt': 0.82, 'porpoi': 0.52, 'seals': 1.14, 'mobile': 1.41, 'norway': 1.07, 'phytop': 0.05, 'subsur': 1.86, 'krill': 0.63, 'microz': 1.43, 'zoopla': 2.05}

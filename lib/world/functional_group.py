@@ -2,6 +2,28 @@ import numpy as np
 
 from lib.world.energy_balance import appetite_form, growth_cost
 
+# Attack choice of a decision maker under shared handling, per FG via
+# ``attack_choice`` (section 265):
+#   learned  p_j = eat_j / max_k eat_k from the policy's eat shares
+#            (section 242; default).
+#   fixed    p_j = 1 on every prey of its menu: it attacks every prey it
+#            meets, and the eat shares set only the foraging time
+#            T = sum_j eat_j. Field gadoid diets track what the fish meet
+#            (research_notes/"Vitlingens uteblivna predation").
+ATTACK_CHOICE_FORMS = ("learned", "fixed")
+
+
+def attack_choice_form(species_def):
+    """The FG's attack choice, ``learned`` (default) or ``fixed``."""
+    raw = (species_def or {}).get("attack_choice")
+    if raw in (None, ""):
+        return "learned"
+    form = str(raw).strip().lower()
+    if form not in ATTACK_CHOICE_FORMS:
+        raise ValueError(
+            f"attack_choice must be one of {ATTACK_CHOICE_FORMS}, got {raw!r}")
+    return form
+
 class FunctionalGroup:
     def __init__(self, group_id, params):
         self.group_id = group_id
@@ -65,6 +87,8 @@ class FunctionalGroup:
         self.maintenance_level = float(params.get('maintenance_level', 0.0))
         # Appetite form (section 240): ``gate`` or ``reserve_room``.
         self.appetite = appetite_form(params)
+        # Section 265: attack probabilities learned or fixed at 1.
+        self.attack_choice = attack_choice_form(params)
         # Section 241: J dissipated per J deposited by the growth branch.
         self.growth_cost = growth_cost(params)
         self.speed = params.get('movement_speed', 0.0)  # V_X

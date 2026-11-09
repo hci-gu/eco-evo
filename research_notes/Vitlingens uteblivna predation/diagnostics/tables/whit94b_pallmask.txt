@@ -1,0 +1,11 @@
+whiting channels ['benthi', 'krill', 'macker', 'mobile', 'plankt', 'porpoi', 'predat', 'seals', 'zoopla', 'benthi', 'plankt', 'whitin'] benth pos [0, 9]
+masked [2, 11, 15, 24, 28, 37, 41, 50, 54, 63] dim 72
+pallmask 1 B/start 1.16 J/B 0.328 fill 0.96 L(b,w) 0.71 conc b 3.2 w 4.5 pb 0.206 pc 0.087 Tb 0.952 Tc 0.972 | M2 0.196 benth 0.052 WC 0.108 seal 0.0124 porp 0.0234 | exp 0.267 imp 0.333 F 0.067 net +0.115
+  L series first 100 d (every 10 d) [0.09, 0.98, 0.9, 0.68, 0.76, 0.85, 0.84, 0.82, 0.78, 0.71]
+pallmask 2 B/start 1.31 J/B 0.442 fill 1.00 L(b,w) 0.73 conc b 2.5 w 3.6 pb 0.249 pc 0.109 Tb 0.950 Tc 0.968 | M2 0.182 benth 0.055 WC 0.108 seal 0.0071 porp 0.0112 | exp 0.256 imp 0.295 F 0.080 net +0.099
+pallmask 3 B/start 1.43 J/B 0.471 fill 1.00 L(b,w) 0.66 conc b 2.5 w 3.9 pb 0.282 pc 0.141 Tb 0.948 Tc 0.967 | M2 0.178 benth 0.054 WC 0.111 seal 0.0050 porp 0.0083 | exp 0.253 imp 0.270 F 0.078 net +0.076
+pallmask 4 B/start 1.52 J/B 0.470 fill 0.99 L(b,w) 0.62 conc b 2.6 w 7.4 pb 0.283 pc 0.176 Tb 0.948 Tc 0.969 | M2 0.158 benth 0.050 WC 0.097 seal 0.0048 porp 0.0056 | exp 0.253 imp 0.254 F 0.080 net +0.048
+pallmask 5 B/start 1.57 J/B 0.463 fill 0.99 L(b,w) 0.57 conc b 2.8 w 6.6 pb 0.292 pc 0.164 Tb 0.948 Tc 0.968 | M2 0.165 benth 0.046 WC 0.111 seal 0.0041 porp 0.0036 | exp 0.254 imp 0.246 F 0.083 net +0.030
+pallmask 6 B/start 1.63 J/B 0.461 fill 0.99 L(b,w) 0.56 conc b 2.5 w 4.2 pb 0.281 pc 0.182 Tb 0.950 Tc 0.967 | M2 0.169 benth 0.044 WC 0.117 seal 0.0046 porp 0.0033 | exp 0.254 imp 0.236 F 0.074 net +0.046
+pallmask end {'whitin': 628.2, 'benthi': 1053.3, 'predat': 427.9, 'seals': 2.5, 'porpoi': 0.2, 'plankt': 3552.6, 'mobile': 1930.8}
+pallmask ep/neph {'mobile': 1931.0, 'norway': 3359.0, 'benthi': 80851.0}

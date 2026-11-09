@@ -267,6 +267,13 @@ def build_static_caches(env):
         [getattr(env.fgs[fid], "appetite", "gate") == "reserve_room"
          for fid in env.dm_ids], dtype=bool)
     env._has_reserve_room = bool(env.dm_reserve_room.any())
+    # Section 265: DMs that attack every prey they meet (p = 1 on each
+    # pair of the menu, ``attack_choice: fixed``); their eat shares set
+    # only the foraging time.
+    env.dm_fixed_attack = np.array(
+        [getattr(env.fgs[fid], "attack_choice", "learned") == "fixed"
+         for fid in env.dm_ids], dtype=bool)
+    env._has_fixed_attack = bool(env.dm_fixed_attack.any())
     # Section 241: growth cost c per DM (a new tonne costs ec + c (ec + s ME)).
     env.dm_growth_cost = np.array(
         [float(getattr(env.fgs[fid], "growth_cost", 0.0)) for fid in env.dm_ids],

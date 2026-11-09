@@ -1,0 +1,8 @@
+learned juvenile attr False
+start share [0.024 0.337 0.546 0.094]
+quarterly share y1 [[0.465, 0.417, 0.102, 0.016], [0.504, 0.378, 0.116, 0.002], [0.464, 0.384, 0.15, 0.003], [0.547, 0.3, 0.116, 0.037]]
+y2 share [0.682 0.24  0.039 0.04 ]
+learned WC diet {'krill': 0.78, 'plankt': 0.208, 'benthi': 0.007, 'whitin': 0.005}
+learned ration 3.57 fill 0.992 WC mean B ratio 1.017
+learned WC M2 krill 0.393 on planktivores 0.116
+learned end ratios {'benthi': 1.03, 'predat': 0.78, 'macker': 1.15, 'whitin': 1.71, 'plankt': 0.87, 'porpoi': 0.56, 'seals': 1.09, 'mobile': 1.36, 'norway': 1.02, 'phytop': 0.05, 'subsur': 1.87, 'krill': 0.62, 'microz': 1.43, 'zoopla': 2.05}

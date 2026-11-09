@@ -1,0 +1,10 @@
+bed cells per class [210, 272, 285, 133]
+pallfield 1 B/start 1.20 J/B 0.336 fill 0.97 L(b,w) 0.88 conc b 2.8 w 2.7 pb 0.175 pc 0.116 Tb 0.954 Tc 0.935 | M2 0.158 benth 0.053 WC 0.041 seal 0.0035 porp 0.0607 | exp 0.266 imp 0.322 F 0.045 net +0.147
+  L series first 100 d (every 10 d) [0.41, 0.31, 0.42, 0.62, 0.76, 0.91, 1.0, 1.02, 1.07, 1.14]
+pallfield 2 B/start 1.38 J/B 0.445 fill 1.00 L(b,w) 0.78 conc b 2.2 w 2.7 pb 0.215 pc 0.135 Tb 0.960 Tc 0.945 | M2 0.145 benth 0.054 WC 0.047 seal 0.0049 porp 0.0397 | exp 0.256 imp 0.279 F 0.045 net +0.141
+pallfield 3 B/start 1.59 J/B 0.471 fill 1.00 L(b,w) 0.73 conc b 2.2 w 2.7 pb 0.262 pc 0.150 Tb 0.950 Tc 0.944 | M2 0.125 benth 0.052 WC 0.048 seal 0.0091 porp 0.0163 | exp 0.253 imp 0.243 F 0.045 net +0.131
+pallfield 4 B/start 1.79 J/B 0.471 fill 1.00 L(b,w) 0.71 conc b 2.2 w 2.7 pb 0.289 pc 0.160 Tb 0.949 Tc 0.942 | M2 0.117 benth 0.047 WC 0.047 seal 0.0066 porp 0.0162 | exp 0.253 imp 0.215 F 0.045 net +0.113
+pallfield 5 B/start 1.99 J/B 0.465 fill 1.00 L(b,w) 0.68 conc b 2.2 w 2.7 pb 0.313 pc 0.180 Tb 0.945 Tc 0.943 | M2 0.112 benth 0.042 WC 0.047 seal 0.0083 porp 0.0149 | exp 0.253 imp 0.194 F 0.045 net +0.099
+pallfield 6 B/start 2.18 J/B 0.458 fill 1.00 L(b,w) 0.64 conc b 2.3 w 2.7 pb 0.331 pc 0.223 Tb 0.948 Tc 0.938 | M2 0.112 benth 0.037 WC 0.048 seal 0.0147 porp 0.0129 | exp 0.254 imp 0.177 F 0.045 net +0.083
+pallfield end {'whitin': 867.5, 'benthi': 842.7, 'predat': 422.8, 'seals': 4.0, 'porpoi': 1.5, 'plankt': 3470.9, 'mobile': 2685.3}
+pallfield ep/neph {'mobile': 2685.0, 'norway': 3547.0, 'benthi': 82216.0}

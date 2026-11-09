@@ -647,6 +647,11 @@
     # store is ~0.2 high. research_notes/"Hostens tillvaxt och sommarens
     # aptit" (Swedish letters).
     appetite: reserve_room
+    # Section 265: attacks every prey of its menu it meets (p = 1); the eat
+    # shares set only the foraging time. Field gadoid diets track what the
+    # fish meet; the learned p drifted while the reserve-room cap bound
+    # (resume 264). research_notes/"Vitlingens uteblivna predation".
+    attack_choice: fixed
     # Section 244: SDA 0.11 of the INGESTED energy (herring, sprat 0.10;
     # pout, blue whiting 0.12 as cod, Tirsgaard 2015), netted from every
     # pair's assimilation; feeding_cost is now the foraging activity only.
@@ -835,6 +840,11 @@
     # long rough dab show only a seasonal switch. Evidence cod only (31 %
     # of the group). research_notes/"Tillvaxt mot ranson" (a-umlaut) Q1, Q3.
     appetite: reserve_room
+    # Section 265: attacks every prey of its menu it meets (p = 1); the eat
+    # shares set only the foraging time. Field gadoid diets track what the
+    # fish meet; the learned p drifted while the reserve-room cap bound
+    # (resume 264). research_notes/"Vitlingens uteblivna predation".
+    attack_choice: fixed
     # Section 240: SDA 0.10 of the ingested energy, biomass-weighted (cod
     # 0.12, haddock 0.05, plaice 0.15 incl. feeding activity, the rest as
     # plaice J; 75 % of the weight on own-species data; same note, W).
@@ -1083,6 +1093,11 @@
     # probe reached fill 0.92-0.98 (rule 240). research_notes/"Hostens
     # tillvaxt och sommarens aptit" (Swedish letters).
     appetite: reserve_room
+    # Section 265: attacks every prey of its menu it meets (p = 1); the eat
+    # shares set only the foraging time. Field gadoid diets track what the
+    # fish meet; the learned p drifted while the reserve-room cap bound
+    # (resume 264). research_notes/"Vitlingens uteblivna predation".
+    attack_choice: fixed
     # Every member but anglerfish cruises 6-15 cells/tick (saithe Uopt 1.4
     # BL/s); residence is behaviour, not a speed limit.
     movement_speed: 1.0
@@ -1226,6 +1241,11 @@
     # fill ~0.98 (rule 240). research_notes/"Hostens tillvaxt och
     # sommarens aptit" (Swedish letters).
     appetite: reserve_room
+    # Section 265: attacks every prey of its menu it meets (p = 1); the eat
+    # shares set only the foraging time. Field gadoid diets track what the
+    # fish meet; the learned p drifted while the reserve-room cap bound
+    # (resume 264). research_notes/"Vitlingens uteblivna predation".
+    attack_choice: fixed
     # Uopt 1.0 BL/s = 5.8 cells/tick at 27 cm; not binding.
     movement_speed: 1.0
     # Was routine 1.5 x SMR + SDA 0.17 of half the ceiling 31.34 = 2.19 x RM.
@@ -1387,6 +1407,11 @@
     # question of 244.8. research_notes/"Hostens tillvaxt och sommarens
     # aptit" (Swedish letters).
     appetite: reserve_room
+    # Section 265: attacks every prey of its menu it meets (p = 1); the eat
+    # shares set only the foraging time. Field gadoid diets track what the
+    # fish meet; the learned p drifted while the reserve-room cap bound
+    # (resume 264). research_notes/"Vitlingens uteblivna predation".
+    attack_choice: fixed
     # Schools cruise 0.44-0.72 m/s net; not binding.
     movement_speed: 1.0
     # Section 228.2: ceiling 66.22 MJ/t/tick = Cmax 265 kJ/kg/d at 9.31 C,

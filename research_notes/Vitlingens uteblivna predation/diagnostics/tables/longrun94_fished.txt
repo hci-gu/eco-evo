@@ -1,0 +1,22 @@
+fished bottom trawl mean 3.0337485777127506
+year benthi predat macker whitin plankt porpoi  seals benthi mobile norway phytop subsur  krill microz zoopla
+1      0.98   1.02   1.01   1.20   0.84   0.59   0.98   0.97   1.05   0.98   0.14   1.06   0.92   1.96   0.99
+     WC {'ration': 3.64, 'benthi': 0.01, 'krill': 0.76, 'plankt': 0.23} whit {'ration': 3.94, 'benthi': 0.01, 'krill': 0.52, 'mobile': 0.36, 'plankt': 0.11} benth {'ration': 7.36, 'benthi': 0.86, 'mobile': 0.08, 'norway': 0.03, 'plankt': 0.03}
+2      0.98   1.00   1.01   1.46   0.84   0.45   0.96   0.94   1.17   0.93   0.13   1.03   0.89   1.51   0.91
+     WC {'ration': 3.61, 'benthi': 0.01, 'krill': 0.79, 'plankt': 0.2} whit {'ration': 3.63, 'krill': 0.52, 'mobile': 0.36, 'plankt': 0.11} benth {'ration': 6.98, 'benthi': 0.86, 'krill': 0.01, 'mobile': 0.07, 'norway': 0.03, 'plankt': 0.02}
+3      0.99   1.01   1.01   1.71   0.84   0.39   0.91   0.92   1.20   0.89   0.13   1.03   0.89   1.54   0.88
+     WC {'ration': 3.62, 'krill': 0.8, 'plankt': 0.19, 'whitin': 0.01} whit {'ration': 3.64, 'krill': 0.55, 'mobile': 0.34, 'plankt': 0.1} benth {'ration': 6.9, 'benthi': 0.85, 'krill': 0.01, 'mobile': 0.07, 'norway': 0.03, 'plankt': 0.03}
+4      1.00   1.00   1.01   1.92   0.84   0.28   0.86   0.91   1.17   0.85   0.13   1.04   0.89   1.48   0.90
+     WC {'ration': 3.61, 'benthi': 0.01, 'krill': 0.79, 'plankt': 0.2, 'whitin': 0.01} whit {'ration': 3.61, 'krill': 0.56, 'mobile': 0.34, 'plankt': 0.1} benth {'ration': 6.88, 'benthi': 0.85, 'krill': 0.01, 'mobile': 0.08, 'norway': 0.04, 'plankt': 0.03}
+5      1.00   1.00   1.01   2.12   0.82   0.21   0.82   0.90   1.14   0.81   0.13   1.03   0.89   1.75   0.86
+     WC {'ration': 3.61, 'benthi': 0.01, 'krill': 0.78, 'plankt': 0.2, 'whitin': 0.01} whit {'ration': 3.61, 'krill': 0.6, 'mobile': 0.3, 'plankt': 0.09} benth {'ration': 6.84, 'benthi': 0.84, 'krill': 0.01, 'mobile': 0.08, 'norway': 0.04, 'plankt': 0.03, 'whitin': 0.01}
+6      1.02   1.00   1.01   2.29   0.81   0.16   0.79   0.90   1.10   0.78   0.13   1.03   0.89   1.52   0.91
+     WC {'ration': 3.61, 'benthi': 0.01, 'krill': 0.78, 'plankt': 0.2, 'whitin': 0.01} whit {'ration': 3.63, 'krill': 0.62, 'mobile': 0.3, 'plankt': 0.08} benth {'ration': 6.78, 'benthi': 0.84, 'krill': 0.01, 'mobile': 0.08, 'norway': 0.03, 'plankt': 0.03, 'whitin': 0.01}
+7      1.03   1.00   1.01   2.45   0.81   0.13   0.75   0.89   1.06   0.75   0.13   1.03   0.89   1.62   0.87
+     WC {'ration': 3.62, 'benthi': 0.01, 'krill': 0.79, 'plankt': 0.19, 'whitin': 0.01} whit {'ration': 3.61, 'krill': 0.65, 'mobile': 0.28, 'plankt': 0.07} benth {'ration': 6.78, 'benthi': 0.84, 'krill': 0.01, 'mobile': 0.08, 'norway': 0.03, 'plankt': 0.03, 'whitin': 0.01}
+8      1.05   1.00   1.01   2.59   0.81   0.08   0.65   0.89   1.02   0.72   0.13   1.04   0.89   1.54   0.90
+     WC {'ration': 3.65, 'benthi': 0.01, 'krill': 0.8, 'plankt': 0.18, 'whitin': 0.01} whit {'ration': 3.61, 'krill': 0.67, 'mobile': 0.26, 'plankt': 0.07} benth {'ration': 6.79, 'benthi': 0.84, 'krill': 0.01, 'mobile': 0.08, 'norway': 0.03, 'plankt': 0.03, 'whitin': 0.01}
+9      1.06   1.00   1.01   2.73   0.81   0.04   0.58   0.89   0.98   0.70   0.13   1.01   0.88   1.64   0.86
+     WC {'ration': 3.65, 'benthi': 0.01, 'krill': 0.8, 'plankt': 0.18, 'whitin': 0.01} whit {'ration': 3.59, 'krill': 0.68, 'mobile': 0.24, 'plankt': 0.07} benth {'ration': 6.75, 'benthi': 0.84, 'krill': 0.01, 'mobile': 0.08, 'norway': 0.03, 'plankt': 0.03, 'whitin': 0.01}
+10     1.08   1.00   1.01   2.85   0.79   0.04   0.49   0.88   0.95   0.68   0.13   1.03   0.89   1.51   0.91
+     WC {'ration': 3.62, 'benthi': 0.01, 'krill': 0.78, 'plankt': 0.19, 'whitin': 0.02} whit {'ration': 3.59, 'krill': 0.67, 'mobile': 0.26, 'plankt': 0.07} benth {'ration': 6.72, 'benthi': 0.84, 'krill': 0.02, 'mobile': 0.08, 'norway': 0.03, 'plankt': 0.03, 'whitin': 0.01}

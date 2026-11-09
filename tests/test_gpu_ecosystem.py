@@ -957,3 +957,15 @@ def test_shared_handling_matches_reference(device, shared, handling):
     env.shared_handling = shared
     model = _assert_parity(env, device, ticks=6)
     assert model.shared_handling is shared
+
+
+@pytest.mark.parametrize("handling", [0.2, 0.6])
+def test_fixed_attack_matches_reference(device, handling):
+    """Section 265: ``attack_choice: fixed`` attacks every prey of the
+    menu (p = 1) on both engines; the eat shares set only the foraging
+    time."""
+    env = make_env(min_split=0.0, extinction_factor=0.0, handling=handling,
+                   regen={"a": {"attack_choice": "fixed"}})
+    assert env._has_fixed_attack
+    model = _assert_parity(env, device, ticks=6)
+    assert model.fixed_attack

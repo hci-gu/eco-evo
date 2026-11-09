@@ -263,7 +263,12 @@ fabricates mass.
   max_k eat_k, every prey searched for at once, demand_j = B_pred T p_j
   lambda_j / (1 + sum_k p_k h_k lambda_k + w B_pred), lambda = a B_vis
   (Type III a B_vis^2) (`interactions.attack_choice`, `multi_prey_rate`;
-  both engines). A one-prey policy is the old per-pair response
+  both engines). A DM with `attack_choice: fixed` (section 265; default
+  `learned`; FG editor field) has p = 1 on every pair of its menu
+  (`interactions.fixed_attack`, GPU `fixed_attack_mask`): it attacks every
+  prey it meets and its eat shares set only T; same action layout, new
+  meaning, so retrain. Set on the five fish groups (265.1); zooplankton
+  and the mammals keep `learned`; checkpoints before 265.1 are invalid. A one-prey policy is the old per-pair response
   (`a B / (1 + a h B + w B_pred)`); `shared_handling=False` on the env
   reverts. With equal E/h (every predator but the benthivores) attacking
   every prey pays, so the diet becomes the encounter shares of the

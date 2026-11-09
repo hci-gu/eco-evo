@@ -803,6 +803,8 @@ class FGConfigApp:
             # Sections 240, 241: appetite form, intake-proportional SDA and
             # the deposition-proportional growth cost.
             ("Appetite (gate or reserve_room; empty = gate)", "appetite", "entry", 0.0, 0.0),
+            # Section 265: attack probabilities learned or fixed at 1.
+            ("Attack choice (learned or fixed = attacks every prey met; empty = learned)", "attack_choice", "entry", 0.0, 0.0),
             ("  SDA fraction (share of the ingested energy; 0 = none)", "sda_fraction", "entry", 0.0, 0.99),
             ("  Growth cost (J per J deposited; 0 = none)", "growth_cost", "entry", 0.0, 5.0),
             # Section 246: a migrating decision maker (the box total
@@ -4876,6 +4878,11 @@ class FGConfigApp:
                     val = config.get(key, "")
                     var.set("" if val in (None, "", "gate") else str(val))
                     continue
+                if key == "attack_choice":
+                    # Section 265: "learned" (or absent) is shown empty.
+                    val = config.get(key, "")
+                    var.set("" if val in (None, "", "learned") else str(val))
+                    continue
                 if key == "metabolism_t_ref":
                     # "annual_mean" (or absent) is shown as an empty field.
                     val = config.get(key, "")
@@ -5184,6 +5191,19 @@ class FGConfigApp:
                     messagebox.showerror(
                         "Invalid value",
                         "Appetite: 'gate' (or empty) or 'reserve_room'. "
+                        "No changes were saved.")
+                    return
+            elif key == "attack_choice":
+                # Section 265: 'learned' is the default and is not written.
+                form = str(val or "").strip().lower()
+                if form in ("", "learned", "0", "0.0"):
+                    config.pop(key, None)
+                elif form == "fixed":
+                    config[key] = form
+                else:
+                    messagebox.showerror(
+                        "Invalid value",
+                        "Attack choice: 'learned' (or empty) or 'fixed'. "
                         "No changes were saved.")
                     return
             elif key == "water_layer":

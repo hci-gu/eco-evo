@@ -67,6 +67,8 @@ def apply_predation(env, actions):
               and (env._has_holling2 or env._has_holling3))
     if shared:
         forage, attack = interactions.attack_choice(eat)
+        # Section 265: ``attack_choice: fixed`` attacks every prey it meets.
+        attack = interactions.fixed_attack(env, attack)
         eat = forage * attack
     if env._has_holling2 or env._has_holling3:
         handling_time = env.handling_time_mat[:, :, None, None]

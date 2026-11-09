@@ -1,0 +1,8 @@
+equal juvenile attr False
+start share [0.024 0.337 0.546 0.094]
+quarterly share y1 [[0.233, 0.302, 0.317, 0.148], [0.233, 0.302, 0.317, 0.148], [0.233, 0.302, 0.317, 0.148], [0.233, 0.302, 0.317, 0.148]]
+y2 share [0.233 0.302 0.317 0.148]
+equal WC diet {'krill': 0.63, 'plankt': 0.312, 'benthi': 0.038, 'whitin': 0.019}
+equal ration 3.27 fill 0.995 WC mean B ratio 1.014
+equal WC M2 krill 0.286 on planktivores 0.163
+equal end ratios {'benthi': 1.04, 'predat': 0.78, 'macker': 1.15, 'whitin': 1.6, 'plankt': 0.84, 'porpoi': 0.6, 'seals': 1.13, 'mobile': 1.36, 'norway': 1.06, 'phytop': 0.05, 'subsur': 1.86, 'krill': 0.63, 'microz': 1.43, 'zoopla': 2.05}

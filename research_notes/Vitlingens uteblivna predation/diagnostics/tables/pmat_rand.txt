@@ -1,0 +1,12 @@
+year benthi benthi  krill macker microz mobile norway phytop plankt porpoi predat  seals subsur whitin zoopla
+1      1.00   0.81   0.93   1.00   1.86   0.98   0.99   0.15   0.75   0.96   1.01   1.02   0.45   1.04   0.45
+  benthi ration 4.69 fill 0.52 T 0.55 p {'benthi': 1.0, 'krill': 1.0, 'mobile': 1.0, 'norway': 1.0, 'plankt': 1.0, 'whitin': 1.0}
+        diet {'benthi': 0.597, 'mobile': 0.322, 'norway': 0.035, 'plankt': 0.024, 'krill': 0.018, 'whitin': 0.003} M2 {'benthi': 0.037, 'krill': 0.023, 'mobile': 0.502, 'norway': 0.045, 'plankt': 0.04, 'whitin': 0.041}
+  predat ration 3.49 fill 0.93 T 0.54 p {'benthi': 1.0, 'krill': 1.0, 'macker': 1.0, 'plankt': 1.0, 'whitin': 1.0, 'zoopla': 1.0}
+        diet {'krill': 0.67, 'plankt': 0.246, 'whitin': 0.038, 'benthi': 0.038, 'macker': 0.006} M2 {'benthi': 0.067, 'krill': 0.312, 'macker': 0.014, 'plankt': 0.15, 'whitin': 0.178}
+  whitin ration 4.04 fill 0.81 T 0.50 p {'benthi': 1.0, 'krill': 1.0, 'mobile': 1.0, 'plankt': 1.0, 'zoopla': 1.0}
+        diet {'krill': 0.602, 'mobile': 0.233, 'plankt': 0.103, 'benthi': 0.053, 'zoopla': 0.009} M2 {'benthi': 0.08, 'krill': 0.243, 'mobile': 0.118, 'plankt': 0.055, 'zoopla': 0.004}
+  plankt ration 5.64 fill 0.65 T 0.29 p {'krill': 1.0, 'zoopla': 1.0}
+        diet {'krill': 0.649, 'zoopla': 0.351} M2 {'krill': 2.793, 'zoopla': 1.61}
+  macker ration 4.58 fill 0.58 T 0.37 p {'krill': 1.0, 'plankt': 1.0, 'zoopla': 1.0}
+        diet {'krill': 0.782, 'zoopla': 0.158, 'plankt': 0.059} M2 {'krill': 0.655, 'plankt': 0.065, 'zoopla': 0.141}

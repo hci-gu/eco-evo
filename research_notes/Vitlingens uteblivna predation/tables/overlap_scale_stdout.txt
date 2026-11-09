@@ -1,0 +1,85 @@
+GOV hauls Q1/Q3 2000-2025 north of 56 N: 11425
+
+=== region box (57.7, 58.4) N (9.9, 11.3) E, Q1: 256 hauls, 26 years
+  cod20    x wh10_28 : haul 1.03 [0.77,1.30] n256 | 0.1d 0.89 [0.67,1.17] n222 | 0.25d 0.96 [0.74,1.25] n173 | 0.25d-clim 1.19 [1.00,1.31] n11
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.54 (67 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.02 (153 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.98 (242 hauls)
+  cod20    x whiting : haul 1.10 [0.81,1.37] n256 | 0.1d 0.94 [0.71,1.22] n222 | 0.25d 1.00 [0.79,1.25] n173 | 0.25d-clim 1.05 [0.90,1.21] n11
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.56 (67 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.07 (153 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.00 (242 hauls)
+  saithe35 x wh10_28 : haul 0.23 [0.15,0.34] n256 | 0.1d 0.20 [0.14,0.30] n222 | 0.25d 0.21 [0.14,0.31] n173 | 0.25d-clim 0.16 [0.09,0.37] n11
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.36 (67 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.71 (153 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.52 (242 hauls)
+
+=== region box (57.7, 58.4) N (9.9, 11.3) E, Q3: 180 hauls, 25 years
+  cod20    x wh10_28 : haul 1.59 [0.50,2.81] n180 | 0.1d 1.69 [0.55,2.93] n170 | 0.25d 2.02 [0.65,3.48] n142 | 0.25d-clim 2.05 [1.05,3.01] n12
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 0.55 (20 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.74 (71 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.13 (138 hauls)
+  cod20    x whiting : haul 1.52 [0.56,2.62] n180 | 0.1d 1.60 [0.61,2.69] n170 | 0.25d 1.90 [0.70,3.18] n142 | 0.25d-clim 1.95 [1.06,2.82] n12
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 0.62 (20 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.79 (71 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.10 (138 hauls)
+  saithe35 x wh10_28 : haul 0.03 [0.02,0.07] n180 | 0.1d 0.03 [0.02,0.06] n170 | 0.25d 0.07 [0.03,0.18] n142 | 0.25d-clim 0.21 [0.11,0.36] n12
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.21 (20 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.18 (71 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.10 (138 hauls)
+
+=== region skag (57.3, 59.2) N (7.5, 12.0) E, Q1: 779 hauls, 26 years
+  cod20    x wh10_28 : haul 1.04 [0.89,1.25] n779 | 0.1d 0.97 [0.80,1.18] n678 | 0.25d 0.95 [0.78,1.14] n505 | 0.5d 1.06 [0.94,1.20] n304 | 0.25d-clim 0.89 [0.80,1.01] n26 | 0.5d-clim 1.07 [1.00,1.15] n13
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.29 (198 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.08 (483 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.98 (728 hauls)
+  cod20    x whiting : haul 1.13 [0.96,1.34] n779 | 0.1d 1.05 [0.88,1.26] n678 | 0.25d 0.99 [0.84,1.16] n505 | 0.5d 1.09 [0.98,1.21] n304 | 0.25d-clim 0.90 [0.82,1.01] n26 | 0.5d-clim 1.07 [1.01,1.13] n13
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.32 (198 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.16 (483 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.07 (728 hauls)
+  saithe35 x wh10_28 : haul 0.19 [0.13,0.30] n779 | 0.1d 0.20 [0.14,0.30] n678 | 0.25d 0.18 [0.11,0.30] n505 | 0.5d 0.41 [0.30,0.54] n304 | 0.25d-clim 0.27 [0.11,0.69] n26 | 0.5d-clim 0.56 [0.43,0.74] n13
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 0.90 (198 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.83 (483 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.43 (728 hauls)
+
+=== region skag (57.3, 59.2) N (7.5, 12.0) E, Q3: 771 hauls, 26 years
+  cod20    x wh10_28 : haul 1.63 [0.89,2.44] n771 | 0.1d 1.59 [0.84,2.42] n701 | 0.25d 1.67 [0.71,2.75] n506 | 0.5d 1.07 [0.74,1.42] n301 | 0.25d-clim 1.73 [0.99,2.62] n31 | 0.5d-clim 1.07 [0.90,1.23] n13
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.08 (138 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.16 (461 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.43 (712 hauls)
+  cod20    x whiting : haul 1.60 [0.96,2.29] n771 | 0.1d 1.55 [0.90,2.28] n701 | 0.25d 1.61 [0.79,2.53] n506 | 0.5d 1.08 [0.78,1.39] n301 | 0.25d-clim 1.68 [1.03,2.44] n31 | 0.5d-clim 1.06 [0.91,1.21] n13
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.08 (138 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.17 (461 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.41 (712 hauls)
+  saithe35 x wh10_28 : haul 0.12 [0.05,0.25] n771 | 0.1d 0.12 [0.05,0.25] n701 | 0.25d 0.15 [0.07,0.30] n506 | 0.5d 0.21 [0.14,0.31] n301 | 0.25d-clim 0.31 [0.20,0.45] n31 | 0.5d-clim 0.36 [0.24,0.53] n13
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 0.84 (138 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.48 (461 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.62 (712 hauls)
+
+=== region nns (57.0, 61.5) N (-2.0, 8.0) E, Q1: 2821 hauls, 26 years
+  cod20    x wh10_28 : haul 0.77 [0.60,1.03] n2821 | 0.1d 0.76 [0.59,1.03] n2674 | 0.25d 0.74 [0.60,0.96] n2413 | 0.5d 0.75 [0.58,1.00] n1543 | 0.25d-clim 0.87 [0.75,0.93] n218 | 0.5d-clim 0.88 [0.78,0.99] n61
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.17 (294 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.17 (810 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.10 (2530 hauls)
+  cod20    x whiting : haul 1.30 [1.14,1.53] n2821 | 0.1d 1.29 [1.13,1.51] n2674 | 0.25d 1.30 [1.15,1.50] n2413 | 0.5d 1.27 [1.10,1.48] n1543 | 0.25d-clim 1.24 [1.06,1.40] n218 | 0.5d-clim 1.10 [1.01,1.20] n61
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.18 (294 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.12 (810 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.08 (2530 hauls)
+  saithe35 x wh10_28 : haul 0.23 [0.17,0.30] n2821 | 0.1d 0.23 [0.17,0.31] n2674 | 0.25d 0.24 [0.17,0.30] n2413 | 0.5d 0.24 [0.18,0.29] n1543 | 0.25d-clim 0.44 [0.19,0.88] n218 | 0.5d-clim 0.41 [0.23,0.68] n61
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 0.84 (294 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.98 (810 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.89 (2530 hauls)
+
+=== region nns (57.0, 61.5) N (-2.0, 8.0) E, Q3: 3064 hauls, 26 years
+  cod20    x wh10_28 : haul 0.38 [0.30,0.46] n3064 | 0.1d 0.39 [0.31,0.47] n2831 | 0.25d 0.41 [0.32,0.50] n2581 | 0.5d 0.36 [0.30,0.43] n1566 | 0.25d-clim 0.48 [0.35,0.58] n217 | 0.5d-clim 0.44 [0.38,0.50] n62
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 0.88 (461 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 0.95 (946 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.07 (2795 hauls)
+  cod20    x whiting : haul 0.90 [0.78,1.01] n3064 | 0.1d 0.90 [0.78,1.00] n2831 | 0.25d 0.89 [0.76,1.02] n2581 | 0.5d 0.84 [0.74,0.93] n1566 | 0.25d-clim 0.83 [0.71,0.96] n217 | 0.5d-clim 0.77 [0.73,0.83] n62
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 0.95 (461 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.10 (946 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 1.08 (2795 hauls)
+  saithe35 x wh10_28 : haul 0.06 [0.04,0.09] n3064 | 0.1d 0.06 [0.04,0.09] n2831 | 0.25d 0.06 [0.04,0.09] n2581 | 0.5d 0.07 [0.05,0.08] n1566 | 0.25d-clim 0.08 [0.06,0.10] n217 | 0.5d-clim 0.09 [0.07,0.12] n62
+      within 0.1 deg cell-surveys with >= 2 hauls: L_within 1.17 (461 hauls)
+      within 0.25 deg cell-surveys with >= 2 hauls: L_within 1.08 (946 hauls)
+      within 0.5 deg cell-surveys with >= 2 hauls: L_within 0.88 (2795 hauls)

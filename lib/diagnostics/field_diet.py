@@ -22,13 +22,19 @@ FIELD_QB = {
 BED_CLASS_EDGES_M = (100.0, 150.0, 250.0)
 
 # Section 248: each group's biomass share per bed class in NS-IBTS GOV
-# hauls inside the box (57.7-58.4 N, 9.9-11.3 E; 2000-19, Q1 + Q3 pooled,
-# 352 hauls; GOV has none deeper than 300 m). The water column carries its
-# dominant member, saithe (0.80 of the group, 0.94 of its krill a).
-# research_notes/"Krill i Skagerrak" a_revisit/ (scripts/gov_by_bed.py).
+# hauls inside the box (57.7-58.4 N, 9.9-11.3 E; 2000-20, Q1 + Q3 pooled,
+# 354 hauls; GOV has none deeper than 300 m): mean kg/h per class x the
+# box's cell share per class. The water column carries its dominant member,
+# saithe (0.80 of the group, 0.94 of its krill a); research_notes/"Krill i
+# Skagerrak" a_revisit/ (scripts/gov_by_bed.py), robust to the haul key
+# (263.7). Whiting since section 264: that script keyed hauls on (year,
+# quarter, ship, haul number), which added same-numbered hauls elsewhere in
+# the North Sea to box hauls (was 0.533 / 0.211 / 0.251 / 0.006); the key
+# with ShootLat gives the values below, research_notes/"Vitlingens uteblivna
+# predation" (scripts/whiting_bed_shares_fixedkey.py).
 FIELD_BED_SHARES = {
     'predatory_fish': ((0.043, 0.127, 0.782, 0.048), 'saithe, GOV in the box'),
-    'whiting': ((0.533, 0.211, 0.251, 0.006), 'whiting, GOV in the box'),
+    'whiting': ((0.769, 0.204, 0.027, 0.001), 'whiting, GOV in the box'),
 }
 
 

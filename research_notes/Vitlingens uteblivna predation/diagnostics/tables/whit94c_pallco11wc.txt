@@ -1,0 +1,9 @@
+pallco11wc 1 B/start 1.06 J/B 0.309 fill 0.95 L(b,w) 1.10 conc b 3.0 w 1.0 pb 0.135 pc 0.054 Tb 0.953 Tc 0.915 | M2 0.307 benth 0.083 WC 0.199 seal 0.0027 porp 0.0226 | exp 0.269 imp 0.365 F 0.079 net -0.042
+  L series first 100 d (every 10 d) [1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+pallco11wc 2 B/start 1.03 J/B 0.414 fill 1.00 L(b,w) 1.10 conc b 2.3 w 1.0 pb 0.125 pc 0.036 Tb 0.954 Tc 0.933 | M2 0.331 benth 0.095 WC 0.218 seal 0.0035 porp 0.0146 | exp 0.259 imp 0.373 F 0.079 net -0.031
+pallco11wc 3 B/start 1.00 J/B 0.450 fill 1.00 L(b,w) 1.10 conc b 2.3 w 1.0 pb 0.129 pc 0.038 Tb 0.955 Tc 0.928 | M2 0.352 benth 0.099 WC 0.236 seal 0.0033 porp 0.0135 | exp 0.255 imp 0.387 F 0.079 net -0.043
+pallco11wc 4 B/start 0.95 J/B 0.463 fill 1.00 L(b,w) 1.10 conc b 2.3 w 1.0 pb 0.131 pc 0.041 Tb 0.955 Tc 0.929 | M2 0.366 benth 0.100 WC 0.248 seal 0.0038 porp 0.0136 | exp 0.254 imp 0.404 F 0.079 net -0.041
+pallco11wc 5 B/start 0.92 J/B 0.471 fill 1.00 L(b,w) 1.10 conc b 2.2 w 1.0 pb 0.134 pc 0.043 Tb 0.954 Tc 0.927 | M2 0.375 benth 0.098 WC 0.256 seal 0.0040 porp 0.0166 | exp 0.253 imp 0.418 F 0.079 net -0.030
+pallco11wc 6 B/start 0.90 J/B 0.479 fill 1.00 L(b,w) 1.10 conc b 2.4 w 1.0 pb 0.137 pc 0.044 Tb 0.956 Tc 0.930 | M2 0.372 benth 0.099 WC 0.253 seal 0.0038 porp 0.0163 | exp 0.252 imp 0.427 F 0.079 net -0.012
+pallco11wc end {'whitin': 321.8, 'benthi': 967.8, 'predat': 422.9, 'seals': 5.8, 'porpoi': 1.3, 'plankt': 3409.2, 'mobile': 2531.0}
+pallco11wc ep/neph {'mobile': 2531.0, 'norway': 3445.0, 'benthi': 81624.0}

@@ -731,6 +731,17 @@ def attack_choice(eat):
     return forage.astype(eat.dtype, copy=False), attack.astype(eat.dtype, copy=False)
 
 
+def fixed_attack(env, attack):
+    """Section 265: p = 1 on every pair of the menu of a DM with
+    ``attack_choice: fixed``; other DMs keep their learned p. Where the
+    DM does not forage (T = 0) its demand is zero whatever p is."""
+    if not getattr(env, "_has_fixed_attack", False):
+        return attack
+    fixed = (env.dm_fixed_attack[:, None, None, None]
+             & (env.eat_static_mask[:, :, None, None] > 0.0))
+    return np.where(fixed, np.float32(1.0), attack).astype(attack.dtype, copy=False)
+
+
 def multi_prey_rate(a, h, Bp, m3, attack, interference=0.0):
     """Per-pair intake per tonne of FORAGING predator under shared
     handling (section 242), prey on axis 1:

@@ -1,0 +1,4 @@
+porpoise start t 3.0 max reserve 2800.0
+year 1 mean/start 0.80 end 2.4 t ration 17.4 fill 0.79 | losses/t starvation 0.324 predation 0.000 impact 0.017 natural 0.100 exchange 0.000 | diet benthi 0.08 plankt 0.91 predat 0.00 whitin 0.01 | M2 plankt 0.0100 benthi 0.0024 whitin 0.0009 predat 0.0000
+year 2 mean/start 0.85 end 2.6 t ration 17.8 fill 0.79 | losses/t starvation 0.013 predation 0.000 impact 0.022 natural 0.100 exchange 0.000 | diet benthi 0.14 plankt 0.84 predat 0.00 whitin 0.02 | M2 plankt 0.0095 benthi 0.0043 whitin 0.0017 predat 0.0000
+year 3 mean/start 0.91 end 2.8 t ration 17.6 fill 0.80 | losses/t starvation 0.035 predation 0.000 impact 0.022 natural 0.100 exchange 0.000 | diet benthi 0.11 plankt 0.86 predat 0.00 whitin 0.02 | M2 plankt 0.0101 benthi 0.0035 whitin 0.0015 predat 0.0000

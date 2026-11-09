@@ -365,6 +365,20 @@ FIELD_HELP = {
         "~0.6 while s* = 1 cut its growth by a third. Move a group only "
         "after a frozen-policy probe shows its fill rising to ~1."
     ),
+    "attack_choice": (
+        "Attack choice (decision makers; section 265). Empty or 'learned' = "
+        "the section-242 reading of the eat shares: foraging time T = sum of "
+        "the eat shares and attack probability p_j = eat_j / max eat, so the "
+        "policy chooses which prey it attacks when it meets them.\n\n"
+        "'fixed' = p = 1 on every prey of the group's menu: it attacks every "
+        "prey it meets, the diet is the encounter shares, and the eat shares "
+        "set only the foraging time. Field gadoid diets track what the fish "
+        "meet (research_notes/\"Vitlingens uteblivna predation\"); with a "
+        "full reserve the learned p gets no energy signal and drifts "
+        "(resume 264). The action layout is unchanged, but its meaning is "
+        "not: retrain after changing it. Library: the five fish groups "
+        "(section 265.1); zooplankton and the mammals stay learned."
+    ),
     "sda_fraction": (
         "SDA fraction (0-1; section 240). Specific dynamic action, the "
         "heat increment of digesting and depositing a meal, as a share of "
