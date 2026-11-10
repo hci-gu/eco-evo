@@ -1,0 +1,10 @@
+library /tmp/claude-1001/-home-simon-eco-evo/1833360e-90db-472a-b563-5d39eca68b7e/scratchpad/fg_library_262.yaml | start day 148 | cell shares per class [0.233, 0.302, 0.317, 0.148]
+year 1 year whiting shares 0.395 / 0.297 / 0.170 / 0.138 | benthivores 0.236 / 0.305 / 0.344 / 0.115 | L cells 0.94 classes only 0.98 within class 0.96
+year 1 Q1   whiting shares 0.350 / 0.347 / 0.189 / 0.115 | benthivores 0.310 / 0.335 / 0.290 / 0.065 | L cells 0.96 classes only 1.07 within class 0.89
+year 1 Q3   whiting shares 0.443 / 0.263 / 0.131 / 0.164 | benthivores 0.147 / 0.289 / 0.399 / 0.165 | L cells 0.91 classes only 0.87 within class 1.04
+year 2 year whiting shares 0.265 / 0.292 / 0.332 / 0.111 | benthivores 0.331 / 0.356 / 0.247 / 0.065 | L cells 0.91 classes only 1.03 within class 0.88
+year 2 Q1   whiting shares 0.266 / 0.278 / 0.355 / 0.101 | benthivores 0.316 / 0.378 / 0.244 / 0.062 | L cells 0.88 classes only 1.02 within class 0.86
+year 2 Q3   whiting shares 0.267 / 0.307 / 0.312 / 0.114 | benthivores 0.345 / 0.337 / 0.246 / 0.073 | L cells 0.94 classes only 1.03 within class 0.91
+year 3 year whiting shares 0.284 / 0.273 / 0.308 / 0.135 | benthivores 0.302 / 0.407 / 0.249 / 0.042 | L cells 0.90 classes only 1.02 within class 0.88
+year 3 Q1   whiting shares 0.291 / 0.283 / 0.298 / 0.129 | benthivores 0.307 / 0.421 / 0.235 / 0.037 | L cells 0.90 classes only 1.03 within class 0.87
+year 3 Q3   whiting shares 0.271 / 0.270 / 0.321 / 0.138 | benthivores 0.291 / 0.398 / 0.263 / 0.048 | L cells 0.89 classes only 1.01 within class 0.89

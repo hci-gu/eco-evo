@@ -185,6 +185,7 @@ def build_static_caches(env):
     # Section 245: open pools (outside density, exchange, season) and the
     # per-cell depth multiplier of the pairs that carry a depth table.
     open_pool.build_tables(env)
+    _build_edge_closure(env)
     interactions.build_pair_depth_maps(env)
     # Section 180: a subsurface producer without the two-layer column
     # (no nutrients.subsurface_layer, or no calendar at all) is inert.
@@ -411,6 +412,31 @@ def build_static_caches(env):
     policies.rebuild_batched_weights(env)
     grid_masks.apply_accessibility_biomass_mask(env)
     env._static_built = True
+
+
+def _build_edge_closure(env):
+    """Per-DM move masks ``env.dm_move_mask`` (N_dm, 4, H, W) and
+    ``env.dm_edge_closed`` (N_dm,) (section 266.16).
+
+    With migration on, biomass a DM moves over the grid edge re-enters evenly
+    on the edge cells (``movement._edge_emigration`` /
+    ``_concentrate_immigration``). A DM that already exchanges with the
+    outside on its own - an open pool (``outside_density``, section 246) or
+    an open population's recruit import or emigration (section 250) - gets
+    the closed-box mask instead: for it the edge was a second, unphysical
+    route (a fish leaving into the Trench came back on the coast; resume
+    266.14-266.15). Every other DM keeps ``env.move_mask``. Must run after
+    ``stages.build_tables`` and ``open_pool.build_tables``.
+    """
+    outside = (set(getattr(env, "open_dm_ids", ()) or ())
+               | set(getattr(env, "stage_exchange_ids", ()) or ()))
+    env.dm_edge_closed = np.array([fid in outside for fid in env.dm_ids],
+                                  dtype=bool)
+    masks = np.repeat(env.move_mask[None], env.N_dm, axis=0)
+    if env.dm_edge_closed.any():
+        masks[env.dm_edge_closed] = grid_masks.build_movement_mask(
+            env.grid, False, env.dtype)
+    env.dm_move_mask = masks.astype(env.dtype, copy=False)
 
 
 def _build_income_growth(env):

@@ -288,6 +288,14 @@ fabricates mass.
   A DM with `movement_speed` 0 has its four move actions masked in both
   engines; zooplankton since section 232.4 (it drifts with the currents
   and chooses only eat or rest/hide - the material of diel migration).
+  With `--migration on` a move over the grid edge re-enters evenly on the
+  edge cells, except for a DM with its own outside exchange (an open pool
+  or an open population's recruit import / emigration: the five fish
+  groups), whose edge moves are masked as with migration off (section
+  266.16; `env.dm_move_mask`, both engines; tests/test_edge_closure.py).
+  The edge had carried the water column from the deep import cells to the
+  shallow perimeter, and whiting with it (266.14-266.15). Mammals and the
+  zooplankton keep it; checkpoints before 266.16 are invalid for the fish.
   `min_split_biomass` is one indivisible unit (porpoises: one animal):
   below it a cell moves whole (argmax), and from it no spatial fraction
   of a split holds less than one unit - sub-unit fractions go to the

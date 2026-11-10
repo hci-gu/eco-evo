@@ -56,6 +56,12 @@ class TensorEcosystem:
         ])[None, :, None, None]
         self.is_dm = tensor([i in self.dm_positions for i in range(self.G)], torch.bool)[None, :, None]
         self.move_mask = tensor(env.move_mask.reshape(4, self.C))
+        # Section 266.16: the policies' per-DM move masks (closed edge for a
+        # DM with its own outside exchange); the currents keep move_mask.
+        dm_mask = getattr(env, "dm_move_mask", None)
+        if dm_mask is None:
+            dm_mask = np.repeat(env.move_mask[None], len(env.dm_ids), axis=0)
+        self.dm_move_mask = tensor(np.asarray(dm_mask).reshape(len(env.dm_ids), 4, self.C))
         self.eat_mask = tensor(env.eat_static_mask)
         self.intake_rate = tensor(env.max_intake_mat)[None, :, :, None]
         self.energy_gain = tensor(env.energy_gain_mat)[None, :, :, None]
@@ -794,7 +800,7 @@ class TensorEcosystem:
 
     def action_mask(self, biomass):
         batch = biomass.shape[0]
-        move = (self.move_mask[None, None] > 0) & self.can_move
+        move = (self.dm_move_mask[None] > 0) & self.can_move
         move = move.expand(batch, self.D, 4, self.C)
         rest = torch.ones((batch, self.D, 1, self.C), device=self.device, dtype=torch.bool)
         eat = (self.eat_mask[None, :, :, None] > 0) & (biomass[:, None] > 0)

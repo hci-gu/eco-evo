@@ -1,0 +1,19 @@
+library /home/simon/eco-evo/fgconfig/fg_library.yaml | predators of whiting ['benthivorous_fish', 'porpoises', 'predatory_fish', 'seals']
+year 1 whiting class shares J 0.107 / 0.414 / 0.288 / 0.191 | A 0.154 / 0.464 / 0.230 / 0.152
+  M2 /yr per predator and class (J | A) and the predator's biomass share per class
+    benthivorous_fish  J 0.009 / 0.018 / 0.034 / 0.007 | A 0.003 / 0.007 / 0.015 / 0.003 | biomass 0.07 / 0.29 / 0.62 / 0.02
+    porpoises          J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000 | biomass 0.09 / 0.59 / 0.16 / 0.16
+    predatory_fish     J 0.116 / 0.033 / 0.025 / 0.027 | A 0.020 / 0.006 / 0.006 / 0.006 | biomass 0.51 / 0.34 / 0.14 / 0.01
+    seals              J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000 | biomass 0.09 / 0.57 / 0.31 / 0.03
+    all                J 0.126 / 0.052 / 0.059 / 0.034 | A 0.023 / 0.013 / 0.021 / 0.008
+  growth law, MJ per tonne-year: ceiling 2063 / 2336 / 2322 / 2277 | material 7741 / 6235 / 6136 / 6045 | surplus 7843 / 4526 / 4254 / 4237 | store 2274810 / 2628441 / 2596452 / 2540799 | paid 2017 / 2305 / 2261 / 2164
+  binding (biomass share of fed cells): ceiling 0.97 / 0.98 / 0.96 / 0.92 | material 0.00 / 0.00 / 0.00 / 0.00 | surplus 0.01 / 0.01 / 0.02 / 0.05 | store 0.00 / 0.00 / 0.00 / 0.00
+year 2 whiting class shares J 0.093 / 0.494 / 0.229 / 0.184 | A 0.102 / 0.558 / 0.173 / 0.166
+  M2 /yr per predator and class (J | A) and the predator's biomass share per class
+    benthivorous_fish  J 0.008 / 0.017 / 0.036 / 0.010 | A 0.003 / 0.006 / 0.012 / 0.003 | biomass 0.09 / 0.41 / 0.43 / 0.07
+    porpoises          J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000 | biomass 0.05 / 0.25 / 0.69 / 0.01
+    predatory_fish     J 0.239 / 0.038 / 0.021 / 0.005 | A 0.045 / 0.006 / 0.004 / 0.001 | biomass 0.60 / 0.36 / 0.03 / 0.00
+    seals              J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000 | biomass 0.05 / 0.48 / 0.47 / 0.00
+    all                J 0.247 / 0.054 / 0.057 / 0.015 | A 0.048 / 0.012 / 0.016 / 0.004
+  growth law, MJ per tonne-year: ceiling 2358 / 2366 / 2360 / 2216 | material 6035 / 5864 / 5977 / 5267 | surplus 4338 / 3810 / 4032 / 3238 | store 2622566 / 2674150 / 2653148 / 2448258 | paid 2314 / 2318 / 2304 / 1714
+  binding (biomass share of fed cells): ceiling 0.98 / 0.97 / 0.97 / 0.69 | material 0.00 / 0.00 / 0.00 / 0.00 | surplus 0.01 / 0.01 / 0.01 / 0.09 | store 0.00 / 0.00 / 0.00 / 0.00

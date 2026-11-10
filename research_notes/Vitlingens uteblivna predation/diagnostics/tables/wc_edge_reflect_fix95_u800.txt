@@ -1,0 +1,8 @@
+arm reflect | migration True
+start class shares [0.024, 0.337, 0.546, 0.094]
+year 1 water column shares 0.241 / 0.328 / 0.313 / 0.118 | whiting 0.451 / 0.352 / 0.083 / 0.113
+  edge emigration /yr of the group 74.79; per tonne-year by origin class 47.785 / 14.779 / 34.374 / 403.718; re-entry class shares 0.154 / 0.065 / 0.144 / 0.637
+  open-pool exchange per tonne-year -0.311 / -0.871 / -0.927 / 3.845 | reward 0.0944 | ration 3.46 fill 0.888 | diet {'krill': 0.81, 'planktivorous_fish': 0.159, 'benthivorous_fish': 0.015, 'zooplankton': 0.007}
+year 2 water column shares 0.300 / 0.180 / 0.304 / 0.217 | whiting 0.391 / 0.483 / 0.088 / 0.038
+  edge emigration /yr of the group 93.30; per tonne-year by origin class 30.210 / 76.475 / 54.509 / 248.758; re-entry class shares 0.097 / 0.147 / 0.177 / 0.578
+  open-pool exchange per tonne-year -0.092 / -0.369 / -0.933 / 1.961 | reward 0.1765 | ration 3.23 fill 0.845 | diet {'krill': 0.749, 'planktivorous_fish': 0.214, 'benthivorous_fish': 0.015, 'mackerel': 0.009, 'whiting': 0.008, 'zooplankton': 0.006}

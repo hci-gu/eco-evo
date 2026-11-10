@@ -1,0 +1,30 @@
+only_energy quarter 1:
+  class 0 rest 0.000 eat 0.996 N 0.003 E 0.001 S 0.000 W 0.000 | drift S-N -0.003 E-W +0.001
+  class 1 rest 0.000 eat 0.990 N 0.009 E 0.001 S 0.000 W 0.000 | drift S-N -0.009 E-W +0.001
+  class 2 rest 0.000 eat 0.986 N 0.013 E 0.001 S 0.000 W 0.000 | drift S-N -0.013 E-W +0.001
+  class 3 rest 0.000 eat 0.936 N 0.062 E 0.000 S 0.000 W 0.001 | drift S-N -0.062 E-W -0.001
+  all     rest 0.000 eat 0.988 N 0.011 E 0.001 S 0.000 W 0.000 | drift S-N -0.011 E-W +0.001
+only_energy quarter 2:
+  class 0 rest 0.000 eat 0.999 N 0.000 E 0.000 S 0.000 W 0.000 | drift S-N -0.000 E-W +0.000
+  class 1 rest 0.000 eat 0.999 N 0.000 E 0.000 S 0.000 W 0.000 | drift S-N -0.000 E-W +0.000
+  class 2 rest 0.000 eat 0.999 N 0.000 E 0.001 S 0.000 W 0.000 | drift S-N -0.000 E-W +0.000
+  class 3 rest 0.000 eat 0.998 N 0.002 E 0.000 S 0.000 W 0.000 | drift S-N -0.002 E-W +0.000
+  all     rest 0.000 eat 0.999 N 0.000 E 0.000 S 0.000 W 0.000 | drift S-N -0.000 E-W +0.000
+only_energy quarter 3:
+  class 0 rest 0.000 eat 0.999 N 0.000 E 0.000 S 0.000 W 0.000 | drift S-N +0.000 E-W +0.000
+  class 1 rest 0.000 eat 1.000 N 0.000 E 0.000 S 0.000 W 0.000 | drift S-N +0.000 E-W +0.000
+  class 2 rest 0.000 eat 1.000 N 0.000 E 0.000 S 0.000 W 0.000 | drift S-N +0.000 E-W +0.000
+  class 3 rest 0.000 eat 0.999 N 0.000 E 0.000 S 0.000 W 0.001 | drift S-N +0.000 E-W -0.000
+  all     rest 0.000 eat 1.000 N 0.000 E 0.000 S 0.000 W 0.000 | drift S-N +0.000 E-W +0.000
+only_energy quarter 4:
+  class 0 rest 0.000 eat 0.998 N 0.002 E 0.000 S 0.000 W 0.000 | drift S-N -0.002 E-W +0.000
+  class 1 rest 0.000 eat 0.998 N 0.002 E 0.000 S 0.000 W 0.000 | drift S-N -0.002 E-W +0.000
+  class 2 rest 0.000 eat 0.996 N 0.004 E 0.000 S 0.000 W 0.000 | drift S-N -0.004 E-W +0.000
+  class 3 rest 0.000 eat 0.975 N 0.023 E 0.001 S 0.000 W 0.000 | drift S-N -0.023 E-W +0.001
+  all     rest 0.000 eat 0.995 N 0.005 E 0.000 S 0.000 W 0.000 | drift S-N -0.005 E-W +0.000
+only_energy year:
+  class 0 rest 0.000 eat 0.998 N 0.001 E 0.001 S 0.000 W 0.000 | drift S-N -0.001 E-W +0.000
+  class 1 rest 0.000 eat 0.996 N 0.003 E 0.001 S 0.000 W 0.000 | drift S-N -0.003 E-W +0.000
+  class 2 rest 0.000 eat 0.994 N 0.005 E 0.001 S 0.000 W 0.000 | drift S-N -0.005 E-W +0.000
+  class 3 rest 0.000 eat 0.970 N 0.029 E 0.001 S 0.000 W 0.001 | drift S-N -0.029 E-W -0.000
+  all     rest 0.000 eat 0.995 N 0.004 E 0.001 S 0.000 W 0.000 | drift S-N -0.004 E-W +0.000

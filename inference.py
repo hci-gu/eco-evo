@@ -1318,7 +1318,10 @@ def main():
                              "immigrates somewhere on the grid's edge cells, "
                              "distributed proportionally to those cells' "
                              "accessibility (uniform over edge cells if no "
-                             "accessibility map is provided). Default: on.")
+                             "accessibility map is provided). A decision maker "
+                             "with its own outside exchange (open pool, recruit "
+                             "import or emigration: the fish groups) keeps the "
+                             "edge closed either way (section 266.16). Default: on.")
     add_rnd_baseline_argument(
         parser, extra_help=" Only shown with --visual (biomass%%, energy%% "
                            "and move/rest/eat; no heatmaps for the baseline "

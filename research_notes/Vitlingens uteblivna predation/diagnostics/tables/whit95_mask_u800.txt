@@ -1,0 +1,9 @@
+whiting channels ['benthi', 'krill', 'macker', 'mobile', 'plankt', 'porpoi', 'predat', 'seals', 'zoopla', 'benthi', 'plankt', 'whitin'] benth pos [0, 9]
+masked [2, 11, 15, 24, 28, 37, 41, 50, 54, 63] dim 72
+mask 1 B/start 1.23 J/B 0.341 fill 0.96 L(b,w) 0.39 conc b 5.3 w 7.0 pb 0.093 pc 0.087 Tb 0.973 Tc 0.984 | M2 0.050 benth 0.036 WC 0.014 seal 0.0001 porp 0.0001 | exp 0.266 imp 0.313 F 0.081 net +0.216
+  L series first 100 d (every 10 d) [0.04, 0.38, 0.32, 0.37, 0.48, 0.49, 0.45, 0.49, 0.6, 0.6]
+mask 2 B/start 1.50 J/B 0.451 fill 0.99 L(b,w) 0.39 conc b 4.6 w 8.8 pb 0.081 pc 0.079 Tb 0.978 Tc 0.987 | M2 0.096 benth 0.075 WC 0.020 seal 0.0001 porp 0.0000 | exp 0.255 imp 0.258 F 0.066 net +0.162
+mask 3 B/start 1.76 J/B 0.479 fill 0.99 L(b,w) 0.33 conc b 4.2 w 7.2 pb 0.074 pc 0.093 Tb 0.977 Tc 0.987 | M2 0.083 benth 0.056 WC 0.026 seal 0.0001 porp 0.0000 | exp 0.252 imp 0.219 F 0.063 net +0.148
+mask 4 B/start 1.95 J/B 0.473 fill 0.99 L(b,w) 0.37 conc b 4.3 w 6.7 pb 0.108 pc 0.102 Tb 0.976 Tc 0.988 | M2 0.129 benth 0.093 WC 0.035 seal 0.0010 porp 0.0000 | exp 0.253 imp 0.198 F 0.066 net +0.072
+mask end {'whitin': 766.5, 'benthi': 1195.0, 'predat': 428.5, 'seals': 5.6, 'porpoi': 2.3, 'plankt': 3773.8, 'mobile': 1897.4}
+mask ep/neph {'mobile': 1897.0, 'norway': 2878.0, 'benthi': 78005.0}

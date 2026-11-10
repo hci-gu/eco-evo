@@ -1,0 +1,17 @@
+arm field | library /home/simon/eco-evo/fgconfig/fg_library.yaml | whiting observes ['benthivorous_fish', 'krill', 'mackerel', 'mobile_epifauna', 'planktivorous_fish', 'porpoises', 'predatory_fish', 'seals', 'zooplankton'] | water column staged False
+year 1 whiting J 0.576 / 0.277 / 0.018 / 0.129 | A 0.645 / 0.282 / 0.015 / 0.059 | water column 0.074 / 0.176 / 0.697 / 0.053
+  mean B / start: whiting 1.232 water column 1.000 benthivores 1.015 | J fraction 0.331
+  L whiting x benthivores 0.15 / 1.37 / 0.13 | x water column 0.43 / 0.43 / 1.00 (cells / classes only / within)
+  M2 benthivorous_fish  group 0.0131 | J 0.020 / 0.034 / 0.034 / 0.015 | A 0.006 / 0.011 / 0.018 / 0.006
+  M2 porpoises          group 0.0000 | J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000
+  M2 predatory_fish     group 0.0578 | J 0.088 / 0.125 / 0.800 / 0.218 | A 0.018 / 0.024 / 0.148 / 0.043
+  M2 seals              group 0.0000 | J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000
+  M2 total 0.0709
+year 2 whiting J 0.641 / 0.289 / 0.018 / 0.052 | A 0.668 / 0.294 / 0.014 / 0.024 | water column 0.074 / 0.176 / 0.697 / 0.053
+  mean B / start: whiting 1.553 water column 0.982 benthivores 1.100 | J fraction 0.439
+  L whiting x benthivores 0.09 / 1.73 / 0.05 | x water column 0.43 / 0.43 / 1.00 (cells / classes only / within)
+  M2 benthivorous_fish  group 0.0115 | J 0.018 / 0.022 / 0.016 / 0.032 | A 0.005 / 0.006 / 0.006 / 0.011
+  M2 porpoises          group 0.0000 | J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000
+  M2 predatory_fish     group 0.0588 | J 0.076 / 0.113 / 0.932 / 0.223 | A 0.015 / 0.021 / 0.154 / 0.042
+  M2 seals              group 0.0000 | J 0.000 / 0.000 / 0.000 / 0.000 | A 0.000 / 0.000 / 0.000 / 0.000
+  M2 total 0.0704

@@ -1,0 +1,7 @@
+arm equal | tracked by the ledger True | ec 4180.0 | start B 555
+year 1 reward mean log(E*/E0) 0.1722 | B 1.030 E* 1.190 | share 0.233 / 0.302 / 0.317 / 0.148 | ration 3.64
+  per tonne-year: intake MJ 15857 / 15999 / 14391 / 7035 | M2 0.000 / 0.000 / 0.000 / 0.000 | exchange -0.060 / -0.970 / -0.834 / 1.925 | population step -0.348 / -1.248 / -1.107 / 1.664 | fill 0.984 / 0.984 / 0.984 / 0.984
+  diet {'krill': 0.741, 'planktivorous_fish': 0.168, 'benthivorous_fish': 0.05, 'whiting': 0.031, 'zooplankton': 0.005}
+year 2 reward mean log(E*/E0) 0.4303 | B 1.011 E* 1.540 | share 0.233 / 0.302 / 0.317 / 0.148 | ration 3.45
+  per tonne-year: intake MJ 15243 / 15342 / 14220 / 7188 | M2 0.000 / 0.000 / 0.000 / 0.000 | exchange 0.217 / -0.883 / -0.729 / 2.523 | population step -0.069 / -1.163 / -1.002 / 2.261 | fill 0.995 / 0.995 / 0.995 / 0.995
+  diet {'krill': 0.701, 'planktivorous_fish': 0.194, 'benthivorous_fish': 0.054, 'whiting': 0.042, 'mackerel': 0.005}

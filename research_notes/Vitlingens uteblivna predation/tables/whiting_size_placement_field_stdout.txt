@@ -1,0 +1,36 @@
+Q1: hauls per class [109, 84, 20, 0] (< 100 / 100-150 / 150-250 / >= 250 m)
+  band share of whiting biomass  < 20 cm 0.419 | 20-30 cm 0.440 | >= 30 cm 0.141 | >= 20 cm 0.581
+  < 20 cm share within class     0.528 / 0.314 / 0.071 /   -  
+  < 20 cm   class shares 0.742 / 0.244 / 0.015 / 0.000
+  20-30 cm  class shares 0.519 / 0.407 / 0.074 / 0.000
+  >= 30 cm  class shares 0.350 / 0.313 / 0.337 / 0.000
+  >= 20 cm  class shares 0.478 / 0.385 / 0.137 / 0.000
+  all       class shares 0.589 / 0.326 / 0.086 / 0.000
+  L < 20 cm   x cod >= 20 cm per haul 1.21 | classes only 1.10 | within class 1.10
+  L 20-30 cm  x cod >= 20 cm per haul 1.63 | classes only 1.20 | within class 1.36
+  L >= 30 cm  x cod >= 20 cm per haul 1.99 | classes only 0.99 | within class 2.01
+  L >= 20 cm  x cod >= 20 cm per haul 1.72 | classes only 1.15 | within class 1.49
+  L all       x cod >= 20 cm per haul 1.51 | classes only 1.13 | within class 1.33
+  L < 20 cm   x guild B      per haul 1.62 | classes only 1.06 | within class 1.54
+  L 20-30 cm  x guild B      per haul 1.70 | classes only 1.13 | within class 1.51
+  L >= 30 cm  x guild B      per haul 1.73 | classes only 0.99 | within class 1.75
+  L >= 20 cm  x guild B      per haul 1.71 | classes only 1.10 | within class 1.56
+  L all       x guild B      per haul 1.67 | classes only 1.08 | within class 1.55
+Q3: hauls per class [66, 31, 41, 3] (< 100 / 100-150 / 150-250 / >= 250 m)
+  band share of whiting biomass  < 20 cm 0.305 | 20-30 cm 0.638 | >= 30 cm 0.057 | >= 20 cm 0.695
+  < 20 cm share within class     0.330 / 0.115 / 0.206 / 0.500
+  < 20 cm   class shares 0.952 / 0.042 / 0.005 / 0.001
+  20-30 cm  class shares 0.882 / 0.112 / 0.006 / 0.000
+  >= 30 cm  class shares 0.477 / 0.479 / 0.043 / 0.000
+  >= 20 cm  class shares 0.849 / 0.142 / 0.009 / 0.000
+  all       class shares 0.881 / 0.111 / 0.008 / 0.000
+  L < 20 cm   x cod >= 20 cm per haul 0.29 | classes only 0.89 | within class 0.32
+  L 20-30 cm  x cod >= 20 cm per haul 2.44 | classes only 0.97 | within class 2.51
+  L >= 30 cm  x cod >= 20 cm per haul 2.00 | classes only 1.41 | within class 1.41
+  L >= 20 cm  x cod >= 20 cm per haul 2.40 | classes only 1.01 | within class 2.38
+  L all       x cod >= 20 cm per haul 1.76 | classes only 0.97 | within class 1.81
+  L < 20 cm   x guild B      per haul 0.67 | classes only 1.39 | within class 0.48
+  L 20-30 cm  x guild B      per haul 3.45 | classes only 1.41 | within class 2.44
+  L >= 30 cm  x guild B      per haul 1.91 | classes only 1.53 | within class 1.25
+  L >= 20 cm  x guild B      per haul 3.33 | classes only 1.42 | within class 2.34
+  L all       x guild B      per haul 2.51 | classes only 1.41 | within class 1.78

@@ -1,0 +1,8 @@
+base 1 B/start 1.21 J/B 0.340 fill 0.95 L(b,w) 0.16 conc b 6.2 w 10.1 pb 0.174 pc 0.383 Tb 0.942 Tc 0.968 | M2 0.073 benth 0.016 WC 0.025 seal 0.0191 porp 0.0139 | exp 0.266 imp 0.320 F 0.105 net +0.181
+  L series first 100 d (every 10 d) [0.04, 0.24, 0.53, 0.28, 0.26, 0.29, 0.33, 0.27, 0.25, 0.23]
+base 2 B/start 1.47 J/B 0.474 fill 0.99 L(b,w) 0.11 conc b 5.8 w 5.4 pb 0.112 pc 0.436 Tb 0.937 Tc 0.977 | M2 0.043 benth 0.022 WC 0.008 seal 0.0135 porp 0.0003 | exp 0.253 imp 0.262 F 0.117 net +0.188
+base 3 B/start 1.75 J/B 0.501 fill 0.99 L(b,w) 0.12 conc b 6.7 w 8.4 pb 0.120 pc 0.449 Tb 0.935 Tc 0.979 | M2 0.075 benth 0.045 WC 0.008 seal 0.0217 porp 0.0002 | exp 0.250 imp 0.220 F 0.065 net +0.166
+base 4 B/start 2.04 J/B 0.485 fill 0.99 L(b,w) 0.14 conc b 6.9 w 12.6 pb 0.115 pc 0.504 Tb 0.930 Tc 0.975 | M2 0.080 benth 0.042 WC 0.018 seal 0.0200 porp 0.0002 | exp 0.251 imp 0.190 F 0.047 net +0.119
+base end {'whitin': 813.7, 'benthi': 1155.9, 'predat': 428.1, 'seals': 4.4, 'porpoi': 1.5, 'plankt': 3875.6, 'mobile': 2063.3}
+base ep/neph {'mobile': 2063.0, 'norway': 2941.0, 'benthi': 78584.0}
+whit95 exit 0

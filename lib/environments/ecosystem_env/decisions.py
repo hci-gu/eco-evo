@@ -51,7 +51,10 @@ def normalize_observations(env, obs_np):
 def build_action_mask(env, num_actions):
     H, W = env.H, env.W
     full_mask = np.ones((env.N_dm, num_actions, H, W), dtype=env.dtype)
-    full_mask[:, MOVE_SLICE] = env.move_mask
+    # Section 266.16: per-DM masks (a DM with its own outside exchange has
+    # the closed-box edge); env.move_mask for an env built without them.
+    dm_mask = getattr(env, "dm_move_mask", None)
+    full_mask[:, MOVE_SLICE] = env.move_mask if dm_mask is None else dm_mask
 
     biomass_all = np.stack(
         [env.fgs[fid].biomass for fid in env.global_fg_order],

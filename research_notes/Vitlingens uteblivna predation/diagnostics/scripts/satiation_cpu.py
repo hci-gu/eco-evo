@@ -2,7 +2,7 @@
 Per reserve_room DM and year: share of its biomass-ticks where the reserve-room cap binds, potential (uncapped)
 energy / taken energy, ration, fill, T. Krill: mean biomass, import / export (exchange books), M1, M2 by predator,
 own growth from the balance, per tonne of box krill.
-usage: POL=<dir> satiation_cpu.py <years>"""
+usage: RUN=<run> POL=<dir, absolute or relative to this folder> satiation_cpu.py <years>"""
 import os,sys,json,copy
 os.environ['CUDA_VISIBLE_DEVICES']=''
 sys.path.insert(0,'/home/simon/eco-evo'); os.chdir('/home/simon/eco-evo')
@@ -20,12 +20,12 @@ from lib.runners.training_progress import build_inference_env,evaluation_randomn
 from inference import load_policies_and_stats
 from lib.environments.ecosystem_env import predation,interactions
 torch.set_num_threads(4)
-cfg=json.load(open('results/pzbpgp248nsrpfix94/progress/config.json')); seed=cfg['seed']
+cfg=json.load(open('results/'+os.environ.get('RUN','pzbpgp248nsrpfix94')+'/progress/config.json')); seed=cfg['seed']
 keys=("project","library","grid","mortality","migration","mortality_multiplier","mass_balance","currents","tick_hours")
 eco={k:cfg[k] for k in keys if k in cfg}
 with evaluation_randomness(seed): env=build_inference_env(eco,seed)
 with evaluation_randomness(seed):
-    pol,om,ov=load_policies_and_stats(env,S+'/'+os.environ.get('POL','fix94_latest'),verbose=False)
+    pol,om,ov=load_policies_and_stats(env,os.path.join(S,os.environ.get('POL','fix94_latest')),verbose=False)
     env.policies=pol; env.rebuild_batched_weights(); env.obs_mean,env.obs_var=om,ov; env.softmax_temperature=cfg.get('temperature',1.0)
 dm=list(env.dm_ids); RR=[g for i,g in enumerate(dm) if bool(env.dm_reserve_room[i])]
 print('reserve_room DMs',RR,flush=True)
@@ -81,4 +81,4 @@ with evaluation_randomness(seed):
         rec['krill']=dict(mean_t=KB,start_t=kb0,**fl,m2=m2,own_growth=growth)
         print(f"year {y+1} krill mean {KB:.0f} t | per tonne of box krill /yr: import {fl['imp']:.2f} export {fl['exp']:.2f} M1 {fl['nat']:.2f} M2 {fl['pred']:.2f} own growth {growth:.2f} | M2 by "+' '.join(f"{g[:6]} {v:.3f}" for g,v in m2.items()),flush=True)
         out.append(rec)
-json.dump(out,open(f"{S}/satiation_{os.environ.get('POL','fix94_latest')}.json",'w'))
+json.dump(out,open(f"{S}/satiation_{os.path.basename(os.environ.get('POL','fix94_latest').rstrip('/'))}.json",'w'))

@@ -1,0 +1,7 @@
+library /home/simon/eco-evo/fgconfig/fg_library.yaml | whiting menu ['benthivorous_fish', 'krill', 'mobile_epifauna', 'planktivorous_fish', 'zooplankton']
+year 1 share 0.14 / 0.45 / 0.25 / 0.17 | F 0.042 / 0.044 / 0.160 / 0.105 | M2 0.051 / 0.025 / 0.036 / 0.018 | pop 0.00 / -0.31 / -0.12 / -0.24 | move -2.68 / 1.45 / 0.47 / 1.05
+        intake MJ/t/yr 16128 / 12990 / 12782 / 12593 | uncapped 27429 / 28949 / 23287 / 21561 | fill 0.88 / 0.98 / 0.98 / 0.96 | benthivores x mean 0.10 / 0.19 / 0.15 / 0.04
+        uncapped shares benthi 0.00 / 0.01 / 0.01 / 0.01 | krill 0.86 / 0.84 / 0.48 / 0.00 | mobile 0.08 / 0.08 / 0.29 / 0.50 | plankt 0.05 / 0.07 / 0.20 / 0.45 | zoopla 0.01 / 0.00 / 0.02 / 0.05
+year 2 share 0.10 / 0.53 / 0.20 / 0.17 | F 0.030 / 0.028 / 0.125 / 0.085 | M2 0.134 / 0.030 / 0.038 / 0.009 | pop 0.08 / -0.37 / -0.11 / -0.29 | move 0.66 / 0.85 / 0.64 / -0.43
+        intake MJ/t/yr 12572 / 12217 / 12452 / 10972 | uncapped 27676 / 27635 / 22639 / 14844 | fill 0.99 / 0.99 / 0.99 / 0.94 | benthivores x mean 0.10 / 0.13 / 0.10 / 0.03
+        uncapped shares benthi 0.00 / 0.00 / 0.01 / 0.02 | krill 0.88 / 0.87 / 0.50 / 0.00 | mobile 0.09 / 0.08 / 0.29 / 0.66 | plankt 0.02 / 0.04 / 0.17 / 0.27 | zoopla 0.01 / 0.01 / 0.02 / 0.05

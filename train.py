@@ -1722,7 +1722,10 @@ def main(argv=None, *, on_step=None, confirm=True):
                              "immigrates somewhere on the grid's edge cells, "
                              "distributed proportionally to those cells' "
                              "accessibility (uniform over edge cells if no "
-                             "accessibility map is provided). Default: on.")
+                             "accessibility map is provided). A decision maker "
+                             "with its own outside exchange (open pool, recruit "
+                             "import or emigration: the fish groups) keeps the "
+                             "edge closed either way (section 266.16). Default: on.")
     parser.add_argument("--uniform_bias_init", action="store_true", default=False,
                         help="Enable uniform-bias init on the output layer: bias=0 + "
                              "weights*0.01 so that softmax starts ~uniform at gen 1. "

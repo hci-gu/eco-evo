@@ -1,0 +1,27 @@
+library /tmp/claude-1001/-home-simon-eco-evo/1833360e-90db-472a-b563-5d39eca68b7e/scratchpad/fg_library_262.yaml grid [30, 30]
+reserve_room ['benthivorous_fish', 'mackerel', 'planktivorous_fish', 'predatory_fish', 'whiting']
+attack_choice {'benthivorous_fish': 'learned', 'mackerel': 'learned', 'planktivorous_fish': 'learned', 'porpoises': 'learned', 'predatory_fish': 'learned', 'seals': 'learned', 'whiting': 'learned', 'zooplankton': 'learned'}
+year 1 benthivorous_fish  clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 0.99
+year 1 mackerel           clip/gain 0.0000 (after-predation room part 0.0000) | clip 1.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.15
+year 1 planktivorous_fish clip/gain 0.0005 (after-predation room part 0.0001) | clip 11.2 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 0.92
+year 1 porpoises          clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 0.82
+year 1 predatory_fish     clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.1 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 0.77
+year 1 seals              clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.04
+year 1 whiting            clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.4 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.30
+year 1 zooplankton        clip/gain 0.0179 (after-predation room part 0.0622) | clip 3630.9 MJ/t/yr | cells clipped 0.05 of biomass-ticks | B end/start 2.31
+year 2 benthivorous_fish  clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.06
+year 2 mackerel           clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.3 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.00
+year 2 planktivorous_fish clip/gain 0.0003 (after-predation room part 0.0001) | clip 7.8 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.04
+year 2 porpoises          clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.08
+year 2 predatory_fish     clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.00
+year 2 seals              clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.12
+year 2 whiting            clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.4 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.27
+year 2 zooplankton        clip/gain 0.0028 (after-predation room part 0.0339) | clip 540.8 MJ/t/yr | cells clipped 0.03 of biomass-ticks | B end/start 0.93
+year 3 benthivorous_fish  clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.1 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.05
+year 3 mackerel           clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.8 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.00
+year 3 planktivorous_fish clip/gain 0.0005 (after-predation room part 0.0001) | clip 11.3 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.01
+year 3 porpoises          clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.06
+year 3 predatory_fish     clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.1 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.00
+year 3 seals              clip/gain 0.0000 (after-predation room part 0.0000) | clip 0.0 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.10
+year 3 whiting            clip/gain 0.0001 (after-predation room part 0.0000) | clip 0.7 MJ/t/yr | cells clipped 0.00 of biomass-ticks | B end/start 1.19
+year 3 zooplankton        clip/gain 0.0033 (after-predation room part 0.0357) | clip 638.1 MJ/t/yr | cells clipped 0.03 of biomass-ticks | B end/start 1.00

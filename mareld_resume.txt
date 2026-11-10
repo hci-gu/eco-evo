@@ -24633,3 +24633,405 @@ remain open exactly as described in 71.9 / 71.11.
     `learned` (no selectivity review for the mammals). The load check gives fixed on exactly
     the five. Checkpoints before 265.1 are invalid (the fish eat action now sets T only):
     retrain. AGENTS.md and the field help updated.
+265.2 Reserve clip at B ME (user: does reserve_room make biomass vanish; measure the clip
+    with fix94 on CPU; diagnostic, nothing changed). The reserve_room cap scales the DEMAND
+    before the harvest, so a full predator leaves the prey in the cell; every removed tonne is
+    booked as a predator's intake. Energy can still be lost where movement.apply_movement clips
+    the reserve at B_total ME: the cap reads the room of the whole cell before predation, while
+    the gain goes to the eating fraction only (movers leave with their own room) and the
+    predator's own losses to predators shrink its room in the same tick.
+    Measured (research_notes/"Vitlingens uteblivna predation" diagnostics/scripts/clip_cpu.py,
+    tables/clip_fix94_latest.txt): frozen fix94 latest, the 262 library (learned attack),
+    fished, 30x30, 3 years. Clipped energy / predation gain: planktivores 0.0003-0.0005,
+    whiting <= 0.0001, benthivores, water column, mackerel, porpoises and seals 0.0000.
+    Zooplankton (hunger gate, no reserve cap) 0.018 / 0.003 / 0.003 on 3-5 % of its
+    biomass-ticks; its gain above the room left after this tick's predation is 0.03-0.06 of the
+    gain, so its clip is mostly its own losses to predators, not reserve_room. Negligible for
+    the fish; nothing to fix.
+266 fix95, the first training with `attack_choice: fixed` on the fish (2026-11-10; user: evaluate
+    fix95; diagnostic, nothing changed). Run pzbpgp248nsrpfix95 started 22:33 on the 265.1
+    library (edited 22:18), 30x30, still training; policies frozen at update ~270 (fix94's
+    latest were ~1030, so fix95 is young). Scripts in research_notes/"Vitlingens uteblivna
+    predation" diagnostics/: whit95.py (whit94c with RUN= and POL=; its pb/pc are the learned
+    p BEFORE the fixed override, i.e. ignored by the engine), satiation_cpu.py (RUN= added).
+266.1 Training probes (unfished, 3 years, update 270): whiting 1.38 / 1.85 / 2.20 (fix94 at
+    update 270: 1.32 / 1.72 / 2.12; at 1030: 1.38 / 1.85 / 2.29); benthivores 1.13 / 1.35 / 1.60;
+    epifauna 0.83 / 0.72 / 0.56 (fix94 1.18 / 1.15 / 1.03); Nephrops 0.96 / 0.86 / 0.77;
+    porpoises 0.68 / 0.47 / 0.46; seals 1.03 / 1.16 / 1.30. probe_diets: whiting M2 0.02-0.05
+    (booked 0.371; benthivores 0.010-0.036 of 0.18, water column 0.008-0.023 of 0.157). With
+    p = 1 the fish diets follow encounter: benthivores -> Nephrops share 0.06-0.08 (booked
+    0.016), M2 on Nephrops 0.15-0.23 (booked 0.0225); whiting -> epifauna M2 0.25-0.31 (0.076);
+    water column krill 0.84-0.86, planktivores 0.12-0.13 (booked 0.36 / 0.50); krill M2 4.8-5.4
+    (2.11). Porpoises (learned) take whiting 0.005-0.01 of their diet from year 2 (0.137).
+266.2 Fished CPU, 4 years (whit95 base): whiting 1.21 / 1.47 / 1.75 / 2.04, M2 0.043-0.080
+    (benthivores 0.016-0.045, water column 0.008-0.025, seals 0.013-0.022, porpoises ~0 from
+    year 2). Overlap L(benthivores, whiting) 0.11-0.16 (fix94 latest 0.90-0.94); concentration
+    benthivores 5.8-6.9, whiting 5.4-12.6 (fix94 1.7 / 1.6-2.8). The predators cannot refuse
+    whiting any more; whiting stays away from them.
+    Mask arm (whiting blind to the benthivores' channels): L 0.57-0.66, M2 0.136 / 0.180 / 0.198
+    / 0.257 (benthivores 0.088 / 0.155 / 0.165 / 0.220, booked 0.18), whiting 1.17 / 1.35 / 1.50 /
+    1.58, net growth +0.12 -> +0.025. So the low M2 in fix95 is whiting's learned avoidance, and
+    with the overlap restored the benthivores' encounter M2 reaches its booking. Field overlap
+    cod-whiting (fixed key, "Vitlingens predatorer"): Q1 1.07, Q3 1.84.
+266.3 Satiation (fished, 3 years): the reserve cap binds on 0.77-0.96 of biomass-ticks
+    (mackerel 0.63-0.67), uncapped / taken energy 1.31-2.28, fill 0.89-1.00, T 0.84-0.98; as
+    fix94 (264.12). Whiting fill 0.94-0.99 at a ration 3.6-4.0: avoidance costs it no food.
+    Reading, not tested: a satiated prey pays nothing to avoid; the field fish feed at 0.22-0.53
+    of Cmax (section 220), where leaving the predators' cells would cost intake. The missing
+    time budget (264.12) is then also why avoidance is free.
+266.4 Ten years on the GPU engine (fished, 30x30, the run's seed and currents; yearly means /
+    start, fix95 vs fix94 latest): whiting 1.20 1.48 1.78 2.05 2.26 2.45 2.60 2.78 2.86 2.95
+    (2.65 levelling); benthivores 0.95 -> 0.64 falling (fix94 0.98 -> 1.26); epifauna 0.85 ->
+    0.59-0.62 (0.76); Nephrops 0.95 -> 0.68 (0.72); porpoises 0.75 0.47 ... 0.07 (0.55); seals
+    0.97 -> 1.63 (2.03); planktivores, water column, mackerel, zooplankton, krill as fix94. The
+    unfished probe has the benthivores rising (1.60 in year 3); the fished decline is not
+    explained here (young policies, F 0.17 on a group whose prey p = 1 now depletes).
+    tables/longrun_gpu_fix95.npz.
+266.5 Verdict: the flag did what it was built for (the predators attack every prey they meet)
+    but whiting's M2 did not rise: the escape moved from the predators' p to whiting's
+    placement. Open (user): whether to judge again at fix94's update count; what to do about
+    learned avoidance that the field does not show (the time budget of 264.12 is the candidate
+    mechanism; no fix proposed); the fished benthivore and porpoise declines.
+266.6 fix95 at update ~800 (user: new analysis; policies frozen 09:35, update 815 in training; same
+    scripts and settings, tables *_u800*). Probes (unfished) flat since update 270: whiting
+    2.0-2.3 in year 3, its M2 0.03-0.04 (benthivores 0.012-0.019, water column 0.015-0.022,
+    mammals ~0); porpoises recovered to 0.9-1.0; epifauna 0.52-0.57, Nephrops 0.75-0.79 in
+    year 3; Nephrops M2 from benthivores 0.18-0.22 (booked 0.0225), whiting on the epifauna
+    0.22-0.29 (0.076).
+    Fished CPU, 4 years: whiting 1.25 / 1.57 / 1.90 / 2.19, M2 0.030-0.055 (benthivores 0.012-
+    0.025, water column 0.018-0.032, seals and porpoises ~0); L(b, w) 0.11-0.14, concentration
+    benthivores 3.9-5.0, whiting 7.2-10.0. Mask arm: L 0.33-0.39 (was 0.57-0.66 at update 270),
+    M2 0.050 / 0.096 / 0.083 / 0.129 (benthivores 0.036-0.093), whiting 1.95 in year 4. Less of
+    the segregation now goes through whiting's sight of the benthivores; the rest is placement
+    on other channels (not decomposed). Satiation as 266.3: cap binds 0.79-0.98 (mackerel
+    0.63-0.66), whiting fill 0.96-0.99, T 0.95-0.99.
+    Ten years GPU (fished): whiting 1.25 1.57 1.92 2.23 2.50 2.64 2.77 2.94 3.11 3.27, still
+    rising (fix94 2.65 levelling; update 270 2.95); benthivores 0.94 -> 0.80 (update 270 0.64);
+    porpoises 0.97 for 3 years, then 0.77 0.51 ... 0.15 (fix94 0.55); seals 2.06; epifauna 0.46-
+    0.48 (fix94 0.76), Nephrops 0.58 (0.72); planktivores, krill, infauna as before.
+    Verdict unchanged: more training kept whiting's escape and moved it further from the
+    channel the mask arm removes; whiting's M2 stays at ~0.1-0.15 of the booking.
+266.7 Is the segregation bed depth? (user: do the check; diagnostic, nothing changed.) Context: the
+    earlier "time budget makes avoidance costly" reading was contradicted before any new analysis:
+    research_notes/"Fodobegransning" (o-umlaut, a-umlaut; 2026-11-07, Rindorf & Gislason 2005)
+    has field whiting locally saturated at ~0.25 of Cmax with density-independent plateaus per
+    prey group, so avoidance would be free in the field too; model whiting eats ~0.38 of Cmax.
+    Field (research_notes/"Vitlingens uteblivna predation" scripts/bed_overlap_fixedkey.py,
+    tables/bed_overlap_fixedkey_stdout.txt; GOV in the box, fixed key, 2000-20; whiting all
+    lengths, cod >= 20 cm, guild B = every benthivore member, kg/h by length-weight; classes
+    < 100 / 100-150 / 150-250 / >= 250 m at their cell shares): whiting 0.59 / 0.33 / 0.09 / 0
+    (Q1), 0.88 / 0.11 / 0.01 / 0 (Q3); cod 0.23 / 0.61 / 0.16 / 0 and 0.18 / 0.63 / 0.17 / 0.02;
+    guild B 0.23 / 0.53 / 0.24 / 0 and 0.29 / 0.55 / 0.15 / 0.01. Lloyd's L whiting x cod per
+    haul 1.50 (Q1) / 1.74 (Q3), classes only 1.13 / 0.97, within class 1.33 / 1.80; x guild B
+    1.67 / 2.50, classes 1.08 / 1.41, within 1.55 / 1.77 (2000-25 similar). Bed depth alone
+    gives L ~1; the field co-occurrence is WITHIN classes. (The 264 table's 1.07 / 1.84 is
+    whiting 10-28 cm with hauls equally weighted; this one weights classes by cell share.)
+    Model (diagnostics/scripts/bed_overlap_model.py, tables/bed_overlap_*.txt; fished, 30x30,
+    3 years from day 148, every 10 ticks): fix95 update 800: L cells 0.07-0.17, classes only
+    0.81-1.12, within class 0.06-0.22; fix94 latest (262 library): 0.88-0.96, 0.87-1.07,
+    0.86-1.04. Whiting's depth in both is off the field: on < 100 m beds fix95 0.05-0.18,
+    fix94 0.27-0.44 (field 0.56-0.88), on >= 250 m 0.03-0.25 / 0.10-0.16 (field ~0);
+    benthivores swing (fix95 150-250 m 0.32-0.74; field 0.15-0.24).
+    Reading: none of fix95's segregation is bed depth; it is within-class avoidance (L 0.1 where
+    the field has 1.3-1.9 and fix94 ~0.9). Separately, neither run puts whiting on the shallow
+    beds where the field has 59-88 % of it.
+266.8 Whiting's depth (user: meanwhile, look into whiting's depth; diagnostic, nothing changed).
+    Field (research_notes/"Vitlingens uteblivna predation" scripts/whiting_depth_field.py,
+    tables/whiting_depth_field_stdout.txt; GOV box, fixed key, 2000-20; shares < 100 / 100-150 /
+    150-250 / >= 250 m at cell shares): whiting < 20 cm 0.74 / 0.24 / 0.02 / 0 (Q1), 0.95 /
+    0.04 / 0.01 / 0 (Q3); 20-30 cm 0.52 / 0.41 / 0.07 / 0 and 0.88 / 0.11 / 0.01 / 0; >= 30 cm
+    0.35 / 0.31 / 0.34 / 0 and 0.48 / 0.48 / 0.04 / 0. The shallow mass is the small and
+    middle sizes; >= 30 cm spreads to 250 m. BotTemp is missing in all but one box haul; the
+    SHARK casts ("Sejens djuplage" tables/hydro_by_depth_stdout.txt, A17) give 10-16 C at
+    10-30 m in Aug-Oct against 7.2-7.7 C from 100 m down.
+    Model (diagnostics/scripts/whiting_depth_drivers.py, tables/whiting_depth_*.txt; fished,
+    30x30, 2 years; per tonne of whiting in each class): the temperature multipliers are per
+    group and tick (interactions.metabolism_temperature, ingestion_temperature), not per cell,
+    so the model has no thermal habitat. fix95 update 800: taken energy 11 000-16 000 MJ/t/yr in
+    every class, uncapped 15 000-29 000 (krill 0.84-0.88 of it on beds < 150 m, none on >= 250 m),
+    fill 0.88-0.99 everywhere; M2 highest on < 100 m beds (0.05 / 0.13 vs 0.009-0.04 deeper);
+    F 0.03-0.04 above 150 m, 0.09-0.16 below (training is unfished, so not learned). fix94
+    latest the same pattern (uncapped 22 000-24 000 everywhere, M2 0.064-0.075 on < 100 m).
+    Reading: every class offers a satiated whiting more food than it can store, so food does not
+    pull it shallow, and the shallow beds carry the most predation; nothing in the model pays
+    for the field's shallow distribution. Field candidates not in the model: (1) a per-cell
+    temperature (warm shallow beds in late summer and autumn) with a growth that rises with
+    temperature at ample food (whiting has ingestion_q10 and metabolism_q10 but no growth_q10;
+    with the cap binding, warmer water alone only raises cost and would push it deeper); (2)
+    size-specific placement (J moves with the adults under one policy; the field's shallow mass
+    is < 30 cm); (3) juvenile food on shallow beds (small crustaceans) not separated in the
+    epifauna. No proposal; each needs its own field evidence.
+266.9 Smell and predator avoidance (user: the literature review first; the km-scale observation
+    is meant as loosely modelled smell). research_notes/"Lukt och rovdjursundvikande"
+    (summary.md, evidence.md E1-E29, E14b; a research subagent, summary saved by the main agent;
+    nothing changed). The model's channel: exact tonnes of each observed group in the own cell
+    and N/E/S/W neighbours, times last tick's visible fraction (benthivores' floor 0.55), z-scored
+    with training statistics; linear, no noise, no lag beyond the tick, no memory, no current
+    direction (currents move only plankton and never enter the observation).
+    Evidence: predator odour detection in gadoids is cm-m in tanks (juvenile cod and trout odour;
+    gobies and cod odour, partly learned); no predator-odour study in whiting, haddock, herring or
+    sprat; measured cue ranges are metres (alarm cue 2-8 m), cue activity 30 min (reef, ocean) to
+    3-6 h (freshwater); the only km-order gadoid chemical sense is FOOD odour followed up-current
+    over several hundred m. Plumes travel downstream only, as intermittent filaments; received
+    concentration confounds density with distance and flow. Responses are local, graded,
+    habituate under constant cues (2-4 h), and risk allocation predicts less wariness under
+    chronic risk. Field: gadoid predators and prey co-occur at km scales (cod-capelin positive
+    > 4-10 km). Verdict: km-scale, density-resolving, direction-free predator smell has no
+    support; the model's channel is a better sense than any measured fish sense. Properties a
+    smell channel could carry if the evidence is followed: downstream only, lag 0.5-6 h, noisy,
+    saturating, habituating, not hidden when the emitter hides. Untested whether a weaker channel
+    ends the segregation. Open (user): what to do with the predator channels.
+266.10 Size-specific placement of whiting (user: meanwhile, look into size-specific placement;
+    diagnostic, nothing changed). Candidate 2 of 266.8.
+    Model: J moves with B (the same fractions, one policy; stages.py), so the stages can only
+    differ through the uniform recruit import, graduation, emigration and stage losses.
+    Field (research_notes/"Vitlingens uteblivna predation" scripts/whiting_size_placement_field.py,
+    tables/whiting_size_placement_field_stdout.txt; GOV box, fixed key, 2000-20; classes < 100 /
+    100-150 / 150-250 / >= 250 m at cell shares):
+    - < 20 cm (about the model's J) is 0.42 (Q1) / 0.31 (Q3) of whiting biomass;
+    - its share within class falls with depth, 0.53 / 0.31 / 0.07 (Q1);
+    - >= 20 cm (0.58 / 0.70 of biomass) is also shallow: 0.48 / 0.39 / 0.14 / 0 (Q1),
+      0.85 / 0.14 / 0.01 / 0 (Q3); only >= 30 cm (0.14 / 0.06) spreads to 250 m.
+    - Within-class overlap with cod >= 20 cm, haul bootstrap 2000x, median and 90 %: < 20 cm
+      1.07 (0.81-1.45) Q1 but 0.35 (0.18-0.64) Q3; >= 20 cm 1.49 (1.23-1.74) Q1, 2.33
+      (1.18-3.37) Q3. The same with guild B: < 20 cm 1.51 / 0.52, >= 20 cm 1.55 / 2.28.
+    - The Q3 segregation of the small fish is depth inside the < 100 m class (hauls 25-96 m):
+      biomass-weighted depth < 20 cm 54 m (0.73 in hauls < 60 m), >= 20 cm 71 m, cod 81 m; in Q1
+      65 / 67 / 68 m.
+    Model (diagnostics/scripts/whiting_stage_placement.py, tables/whiting_stage_fix95_u800.txt;
+    fix95 update 800, fished, 30x30, 2 years):
+    - J/B is about uniform over classes (0.31-0.38 year 1, 0.42-0.52 year 2);
+    - J and A have the same class shares (J 0.14 / 0.41 / 0.27 / 0.19, A 0.15 / 0.46 / 0.23 /
+      0.15, year 1) and the same within-class L with the benthivores (0.06-0.26);
+    - M2 per tonne-year J 0.13 / 0.05 / 0.06 / 0.03 and 0.25 / 0.05 / 0.06 / 0.02 (years 1, 2),
+      A 0.02-0.05 on < 100 m and 0.004-0.02 deeper: the shallow beds are where the model's J
+      die fastest, while the benthivores hold only 0.07-0.13 of their biomass there (predator
+      split not measured).
+    - The model's < 100 m class is deeper than the field's sample of it: cell median 85 m, 15 of
+      210 cells < 60 m, against haul median 63-64 m.
+    Reading:
+    - Size-specific placement alone cannot close the depth gap. The field's >= 20 cm whiting is
+      shallow too, while the model puts 0.05-0.15 of the whole group (J and A alike) on < 100 m
+      beds against the field's 0.59 / 0.88.
+    - Where it would matter: the field's < 20 cm fish segregate from cod in Q3 by depth at a
+      scale finer than the model's classes, and the field's adults overlap cod at L 1.5-2.3. The
+      model's one policy gives both stages the juveniles' avoidance and more (L ~0.1).
+    - A J with its own movement would need its own actions (a stage head or policy; checkpoints
+      invalid). Under today's losses it would learn to leave the shallow beds, where its M2 is
+      highest.
+    No proposal.
+266.11 Whiting growth and temperature, literature (user: search field data on whiting growth
+    vs temperature; research only, nothing changed). research_notes/"Vitlingens tillvaxt och
+    temperatur" (a-umlaut): summary.md, evidence.md E1-E23, scripts/gadoid_proxy_growth.py.
+    Data on whiting itself:
+    - no whiting growth-temperature series exists; lab growth only at 13-14 C;
+    - whiting conversion efficiency at a given ration shows no temperature effect
+      (Andersen & Riis-Vestergaard 2003, abstract).
+    Gadoid proxies (cod fed to satiation, Bjornsson 2001; whiting assumed = cod of the same
+    weight, untested):
+    - the growth optimum falls with size: 17 C at 1.5 g, 13-16 C at 12-29 g, 10 C at 109 g,
+      8-9 C above 447 g;
+    - relative to 7.4 C, growth at 12 C is x1.42-1.50 at 12-30 g, x1.07 at 109 g, x0.94 at
+      447 g;
+    - age-0 cod and haddock grow best at 12 C; haddock satiation growth is equal at 8 and 12 C.
+    The gain is through intake, not a separate growth term. ingestion_q10 2.25 already gives
+    x1.45 at 7.4 -> 12 C and overshoots above ~13 C (x2.01 at 16 C, cod x1.34-1.61).
+    Field growth of whiting does not follow temperature:
+    - North Sea length-at-age: temperature R2 0.02-0.08, forage fish 0.58 (Lauerburg 2018);
+    - west of Scotland: not significant (Hunter 2016);
+    - L-infinity fell 13-29 % with +1-2 C (Baudron 2014).
+    Habitat:
+    - age-0 densest at 12-13 C and shallow in Oct-Nov (Burns 2019);
+    - Skagerrak 0-group in eelgrass at ~19 C, 58 % died in 5 d at 23 C;
+    - no study separates temperature from food or predators.
+    Verdict:
+    - a growth Q10 on top of the intake and metabolism Q10s is not supported;
+    - the existing Q10s evaluated per cell, bounded by size, would be the form;
+    - the benefit is ~x1.1 on annual growth under 20 cm [J] and none for adults.
+    Code check:
+    - growth_q10 is refused with both fed-only laws (config_loader.py:900-911,
+      state.py:433-435);
+    - the ceiling B g (s - u) p in movement.income_growth has no temperature factor; the
+      material cap follows the intake;
+    - which cap binds for whiting is not measured.
+    With 266.10 (the field's adult whiting is shallow too) a juvenile-only temperature gain
+    cannot close the group's depth gap. No proposal.
+266.12 Who eats whiting where, and which growth cap binds (user: run step 1; diagnostic,
+    nothing changed). diagnostics/scripts/whiting_m2_caps.py, tables/whiting_m2_caps_fix95_u800.*
+    (fix95 update 800, fished, 30x30, 2 years; wraps predation._stage_harvest and
+    movement.income_growth). Classes < 100 / 100-150 / 150-250 / >= 250 m.
+    M2 per predator and class (J | A, /yr, year 1; year 2 alike):
+    - water column (predatory_fish): J 0.116 / 0.033 / 0.025 / 0.027, A 0.020 / 0.006 / 0.006 /
+      0.006; year 2 J 0.239 on < 100 m;
+    - benthivores: J 0.009-0.036, A 0.003-0.015, highest on 150-250 m;
+    - seals and porpoises: 0.000 everywhere (learned attack choice; booked 0.014 and 0.020).
+    Group M2 at the stage mix: water column 0.018 / 0.026 (booked 0.157), benthivores 0.012
+    (booked 0.18), mammals 0 (booked 0.034); total 0.030 / 0.038 of the booked 0.371.
+    The water column holds 0.51 / 0.34 / 0.14 / 0.01 (year 1) and 0.60 / 0.36 / 0.03 / 0 (year 2)
+    of its biomass per class, against the GOV group shares 0.074 / 0.176 / 0.697 / 0.053 (263.7).
+    The shallow beds are where whiting dies fastest because the model's water column stands there.
+    In the field the water column stands over 150-250 m and whiting over < 100 m: the model has
+    the two placements about swapped. Whiting's depth error may be downstream of the water
+    column's (open since 263.1). This is co-location in one frozen run, not a causal test.
+    Growth law (whiting, MJ per tonne-year, year 1):
+    - ceiling B g (s - u) p 2060-2340, material cap 6000-7700, surplus 4200-7800, store far
+      above;
+    - the ceiling binds on 0.92-0.98 of the fed biomass (0.69 on >= 250 m in year 2, where the
+      surplus binds 0.09); paid growth = the ceiling.
+    - Growth per tonne is then the same wherever whiting is full: neither food nor a per-cell
+      temperature on the intake can raise it, and a warm cell would only cost more. Only a
+      temperature factor on the ceiling itself would let warmth pay (266.11: ~x1.1 for
+      juveniles, none for adults).
+    Next cheap test (not run): re-place the water column at the GOV class shares each tick, as
+    in 263.2, and measure whiting's class shares, M2 and overlap with the frozen policies.
+266.13 Water column re-placed (user: run the re-placement test; diagnostic, nothing changed).
+    diagnostics/scripts/whiting_wc_replace.py, tables/whiting_wc_replace_{learned,within,field}_
+    fix95_u800.*. Frozen fix95 update 800, fished, 30x30, 2 years. After every tick the water
+    column (biomass, reserve; it has no J) is re-placed:
+    - learned: not touched (control);
+    - within: the learned class totals, spread evenly inside each class;
+    - field: the GOV group shares 0.074 / 0.176 / 0.697 / 0.053, even inside each class.
+    Whiting observes the water column. Classes < 100 / 100-150 / 150-250 / >= 250 m; years 1 and 2.
+    Water column class shares:
+    - learned 0.51 / 0.34 / 0.14 / 0.01 and 0.60 / 0.36 / 0.03 / 0;
+    - within 0.68 / 0.25 / 0.06 / 0.02 and 0.72 / 0.18 / 0.08 / 0.02 (the learned totals drifted
+      shallower).
+    Whiting class shares, A (J alike):
+    - learned 0.15 / 0.46 / 0.23 / 0.15 and 0.10 / 0.56 / 0.17 / 0.17;
+    - within 0.06 / 0.26 / 0.47 / 0.22 and 0.06 / 0.66 / 0.19 / 0.09;
+    - field 0.65 / 0.28 / 0.02 / 0.06 and 0.67 / 0.29 / 0.01 / 0.02 (J 0.58-0.64 on < 100 m);
+    - GOV whiting 0.59 / 0.33 / 0.09 / 0 (Q1), 0.88 / 0.11 / 0.01 / 0 (Q3).
+    Whiting M2 from the water column 0.018 / 0.026, 0.050 / 0.074 and 0.058 / 0.059; total
+    0.030 / 0.038, 0.063 / 0.084 and 0.071 / 0.070 (booked 0.371). Benthivores about 0.012 and
+    the mammals 0 in every arm.
+    Whiting x water column L within class: learned 0.20 / 0.25, 1.00 in both even arms.
+    Whiting x benthivores L within class: 0.18 / 0.10, 0.10 / 0.06 and 0.13 / 0.05.
+    Mean whiting biomass over start: 1.25 / 1.57, 1.19 / 1.46 and 1.23 / 1.55.
+    Reading:
+    - The frozen whiting policy follows the water column: with it at the field's bed classes,
+      whiting takes the field's classes without retraining. Whiting's depth error is downstream
+      of the water column's placement (open since 263.1, no field mechanism found in 263.7).
+    - Inside classes whiting dodges the water column (L 0.2-0.25). Removing that alone raises the
+      water column's M2 on whiting 2.7x. So the observation channel also costs the water
+      column's pair.
+    - Not closed by the re-placement: whiting still avoids the benthivores at cell scale (L
+      0.05-0.13 against the field's 1.3-1.9), total M2 stays at about 0.19 of the booked, and the
+      mammals take no whiting.
+266.14 The water column's placement (user: look into the water column's placement; diagnostic,
+    nothing changed). Frozen fix95 update 800, probe world (unfished as in training), 30x30, 2
+    years. Classes < 100 / 100-150 / 150-250 / >= 250 m. Scripts and tables in
+    research_notes/"Vitlingens uteblivna predation" diagnostics/: wc_payoff.py, wc_ablate.py,
+    wc_actions.py, wc_edge.py; tables wc_payoff_*, wc_ablate_fix95_u800.jsonl, wc_actions_*,
+    wc_edge_*.
+    Payoff (wc_payoff.py; re-placed every tick; training reward = mean log(E*/E0) on the ledger):
+    - learned 0.201 / 0.509, within 0.195 / 0.488, field (GOV 0.074 / 0.176 / 0.697 / 0.053)
+      0.176 / 0.440, equal cells 0.172 / 0.430;
+    - intake per tonne about equal over the three upper classes (14 100-16 100 MJ/t/yr) and
+      about half on >= 250 m; fill 0.95-0.99 above 250 m; M2 on the water column 0 in every
+      class and arm;
+    - the open pool's import lands on >= 250 m cells (exchange +58 / +270 per tonne-year there,
+      about -1 elsewhere).
+    Ablation (wc_ablate.py; the water column's channels set to their grid mean): no single
+    group's channels moves it much (< 100 m share in year 2 0.48-0.68 against base 0.60);
+    no_others 0.49, only_energy 0.52, no_direction 0.50. The shallow share does not come from
+    what it observes.
+    Actions (wc_actions.py; row 0 = north edge, the deep side): eat 0.97-1.0 on the three upper
+    classes. On >= 250 m beds the moves are N 0.14 / W 0.16 in Q1 and N 0.26 / W 0.15 in Q4,
+    over the north and west edges. The net drift inside the grid is northwards, towards the deep.
+    Mechanism: the edge rule. With --migration on, biomass moved over the grid edge re-enters
+    evenly on all 116 edge cells (movement._edge_emigration / _concentrate_immigration,
+    grid_masks.build_edge_immigration_weights; GPU ecosystem.immigration). Of those cells 59 /
+    23 / 10 / 24 lie over the four classes, against grid shares 0.23 / 0.30 / 0.32 / 0.15.
+    wc_edge.py base:
+    - edge emigration is 2.95 / 2.77 times the group's biomass per year, 150 / 545 per
+      tonne-year from >= 250 m cells;
+    - it re-enters 0.51 / 0.20 / 0.09 / 0.21 by class;
+    - the open pool imports on the deep cells, the policy pushes the newcomers over the north
+      and west edges, and they reappear around the perimeter, half over < 100 m beds, where
+      they stay. A learned relocation, not habitat choice.
+    reflect arm (the water column's edge emigrants return to the cell they left; nothing else
+    changed, the policy not retrained):
+    - class shares 0.24 / 0.33 / 0.31 / 0.12 and 0.30 / 0.18 / 0.30 / 0.22 (base 0.47 / 0.35 /
+      0.17 / 0.01 and 0.61 / 0.35 / 0.05 / 0);
+    - the policy keeps pushing at the edges (75-93 /yr), so ration 3.46 / 3.23 and fill 0.89 /
+      0.85 drop and the reward falls to 0.094 / 0.177;
+    - whiting moves shallower with it: 0.45 / 0.35 / 0.08 / 0.11 and 0.39 / 0.48 / 0.09 / 0.04
+      (base 0.12 / 0.40 / 0.28 / 0.20 and 0.06 / 0.46 / 0.31 / 0.18).
+    Reading:
+    - The water column's shallow placement, and through it whiting's deep one (266.13), is
+      mostly an artefact of the edge rule: crossing an edge is a free jump to a random edge
+      cell, and the open pool keeps supplying newcomers to the deep edge.
+    - The open pool already carries the exchange with the outside, so the edge is a second,
+      unphysical route for this group: a fish leaving into the Trench reappears on the Danish
+      or Swedish coast.
+    - Not measured: how much every other DM uses the edge, and where a retrained policy settles
+      without it.
+    Possible changes, each a code change plus retraining:
+    (a) closed edges for movement (--migration off; the open pools and stage exchange remain
+        the only exchange);
+    (b) re-entry at or next to the cell of exit;
+    (c) edge emigrants of an open-pool group leave the box as exchange.
+    No proposal chosen.
+266.15 Edge use of every decision maker (user: measure how much the other groups use the edge;
+    diagnostic, nothing changed). diagnostics/scripts/edge_use.py, tables/edge_use_fix95_u800.*
+    (frozen fix95 update 800, probe world unfished, 30x30, 2 years; the movement's edge path
+    booked per DM; the currents' edge path not booked). Classes < 100 / 100-150 / 150-250 /
+    >= 250 m. Columns: edge emigration per tonne-year | gross in-grid moves per tonne-year |
+    re-entry class shares | net relocation by the edge into < 100 m beds, as a share of B per
+    year. Years 1 and 2.
+    - mackerel 5.16 / 4.88 | 52 / 56 | 0.51 / 0.20 / 0.09 / 0.21 | -0.25 / +0.01 (the gain goes
+      to 100-150 m, +0.57 / +0.48);
+    - water column 2.95 / 2.77 | 18 / 13 | as mackerel | +0.92 / +0.82;
+    - planktivores 2.15 / 2.15 | 54 / 64 | as mackerel | +0.45 / +0.52;
+    - whiting 1.68 / 0.85 | 32 / 21 | as mackerel | +0.37 / +0.32 (exits 0.40 / 0.70 from
+      >= 250 m; its in-grid moves take it back off the shallow beds, class shares 0.06-0.11 there);
+    - seals 1.37 / 1.35 | 52 / 27 | 0.74-0.76 / 0.03-0.05 / 0 / 0.22 | +0.43 / +0.46;
+    - porpoises 1.16 / 1.19 | 25 / 18 | 0.76-0.77 / 0.03-0.07 / 0 / 0.17-0.20 | +0.42 / +0.40;
+    - benthivores 0.10 / 0.52 | 31 / 24 | as mackerel | 0 / -0.05;
+    - zooplankton 0 (no moves).
+    Reading:
+    - Every swimming group but the benthivores crosses the edge on the order of its own biomass
+      or more each year. The re-entry pattern is fixed by the edge cells (0.51 of them over
+      < 100 m beds against a 0.23 grid share; 0.09 over 150-250 m against 0.32), so the rule
+      moves every such group towards the shallow perimeter and away from 150-250 m.
+    - The mammals re-enter on a few edge cells (the top-k concentration of
+      _concentrate_immigration picks among equal weights by sort order), 0.74-0.77 over < 100 m
+      beds.
+    - Gross in-grid moves are larger, but they are mostly back and forth; for the water column
+      the edge is the net driver (266.14).
+    - All five fish groups already have their own exchange with the outside (open pools, recruit
+      import, emigration), so for them the edge is a second, unphysical route. The mammals have
+      no outside exchange, and the edge is their only one.
+266.16 Closed grid edge for the fish groups (user: close the edge for the fish groups).
+    Code:
+    - state._build_edge_closure (after stages.build_tables and open_pool.build_tables)
+      builds env.dm_move_mask (N_dm, 4, H, W) and env.dm_edge_closed;
+    - a DM that exchanges with the outside on its own (open_dm_ids: outside_density; or
+      stage_exchange_ids: recruit_import / emigration; the same set as
+      energy_ledger.migrating) gets the closed-box mask, build_movement_mask(grid,
+      migration=False); every other DM keeps env.move_mask;
+    - decisions.build_action_mask and the GPU action_mask (TensorEcosystem.dm_move_mask) use the
+      per-DM masks. The currents keep env.move_mask, and the edge immigration path is unchanged
+      for the DMs that keep the edge.
+    Groups: in mareld2 the five fish groups are closed (planktivores, benthivores, whiting,
+    water column, mackerel); porpoises, seals and zooplankton keep the edge. A closed DM's
+    probability mass for an edge move goes to its other actions, as with --migration off.
+    Tests: tests/test_edge_closure.py (9, GPU parity included); full suite 1884 passed, 12
+    skipped. AGENTS.md movement bullet updated.
+    The layout is unchanged, but the move actions mean something new at the edge for the fish:
+    retrain (checkpoints before 266.16 invalid for the fish groups). No training was started.
+    The running fix95 imported the old code. No 1-generation training run was made (the user
+    starts training).
+    Open: the mammals' edge (re-entry on a few edge cells by sort order, 266.15).
+266.17 Frozen check of the closed edge (edge_use.py on fix95 update 800 with the 266.16 code,
+    probe world unfished, 2 years; tables/edge_use_fix95_u800_closed.*). Fish edge emigration is
+    0 for all five groups. The mammals keep using the edge: porpoises 1.23 / 0.65 and seals 2.33
+    / 0.75 per tonne-year. The policies were trained with the edge open, and the masked edge
+    probability goes to the other actions, so the placements are not a prediction of a
+    retrained world:
+    - whiting's in-grid moves rose to 325-342 per tonne-year (21-32 with the open edge), and its
+      class shares were 0.13 / 0.08 / 0.09 / 0.71 and 0.21 / 0.27 / 0.16 / 0.37;
+    - the water column was 0.23 / 0.29 / 0.27 / 0.21 and 0.19 / 0.16 / 0.20 / 0.45;
+    - mackerel was 0.41-0.54 on < 100 m beds;
+    - planktivores and benthivores were about as before.
+    Retraining is the test.
