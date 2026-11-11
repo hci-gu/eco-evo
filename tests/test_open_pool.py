@@ -185,10 +185,15 @@ def test_mareld2_krill():
     assert float(spec["r_max"]) == 0.0 and float(spec["natural_mortality"]) == 0.0
     preds = ("planktivorous_fish", "benthivorous_fish", "predatory_fish", "mackerel", "whiting")
     m2 = {p: float(inter[f"{p}_preys_on_krill"]["predation_mortality"]) for p in preds}
-    # The booked fish predation pays the field P/B 2 (1.2-3.5): 2.07 at section 245,
-    # 2.11 since the water column's booking of section 262.
-    assert sum(m2.values()) == pytest.approx(2.1113, rel=1e-3)
-    assert 1.2 <= sum(m2.values()) <= 3.5
+    # The booked fish predation: 2.07 at section 245, 2.11 since the water column's
+    # booking of section 262, 2.54 since the planktivore and mackerel re-booking of 268.
+    # The local production stays at the field P/B (1.2-3.5) as P/B 2.1113; the
+    # exchange pays the rest.
+    assert sum(m2.values()) == pytest.approx(2.5373, rel=1e-3)
+    assert float(spec["somatic_production"]) == pytest.approx(2.1113)
+    assert 1.2 <= float(spec["somatic_production"]) <= 3.5
+    from lib.world.growth_budget import derived_growth_rate
+    assert derived_growth_rate("krill", lib["species_definitions"], inter) == pytest.approx(2.1113 / 1460)
     for p in preds:
         assert inter[f"{p}_preys_on_krill"]["depth_access_table"]
         assert inter[f"{p}_observes_krill"]["observes"] is True
@@ -227,3 +232,22 @@ def test_exchange_is_booked_per_direction():
     assert exchange_import(env, "c") == pytest.approx(flow[flow > 0].sum(), rel=1e-5)
     assert env.loss_exchange["c"] > 0 and env.gain_exchange["c"] > 0
     assert loss_shares(env, "c")["exchange"] == pytest.approx(1.0)  # its only loss here
+
+
+def test_open_pool_local_production_sets_g():
+    """Section 268: an open pool's somatic_production (local P/B) sets g; the booked
+    M2 stays out; refused with r_max > 0; inert without outside_density."""
+    from lib.world.growth_budget import growth_budget, TICKS_PER_YEAR
+    spec = {"outside_density": 5.0, "outside_exchange_rate": 0.01, "r_max": 0.0,
+            "somatic_production": 2.0}
+    species = {"k": spec, "f": {"is_decision_maker": True}}
+    inter = {"f_preys_on_k": {"preys_on": True, "predation_mortality": 3.0}}
+    b = growth_budget("k", species, inter)
+    assert b.error is None and b.growth_rate == pytest.approx(2.0 / TICKS_PER_YEAR)
+    assert growth_budget("k", dict(species, k=dict(spec, somatic_production=0.0)),
+                         inter).growth_rate == pytest.approx(3.0 / TICKS_PER_YEAR)
+    assert "replaces r_max" in growth_budget("k", dict(species, k=dict(spec, r_max=1.0)), inter).error
+    closed = {k: v for k, v in spec.items() if k != "outside_density"}
+    closed["r_max"] = 1.0
+    assert growth_budget("k", dict(species, k=closed), inter).growth_rate == pytest.approx(
+        4.0 / TICKS_PER_YEAR)

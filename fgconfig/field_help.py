@@ -419,8 +419,11 @@ FIELD_HELP = {
         "must be set."
     ),
     "somatic_production": (
-        "Somatic production P (1/yr, > 0; 0 = off). Decision makers only "
-        "(section 250, the open population).\n\n"
+        "Somatic production P (1/yr, > 0; 0 = off). Decision makers "
+        "(section 250, the open population) and open pools (section 268: "
+        "the pool's field local production P/B, g = P / ticks per year; "
+        "booked M2 above it is paid by the exchange with the outside "
+        "density; krill 2.1113).\n\n"
         "The derived Max Growth pays the field growth of the fish in the "
         "box at the reference reserve, g = P / ((s* - u) x ticks per year), "
         "and nothing else: r_max (a whole-life-cycle rate whose "

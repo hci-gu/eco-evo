@@ -224,7 +224,8 @@
     # 25 /yr. Replaces the unsourced 15-40 /yr band of section 111.
     r_max: 33.4
     # Section 245 (krill moved out of four fish pairs): 0.11882721356 -> 0.1165193.
-    growth_rate: 0.11651933299
+    # Section 268 (planktivore and mackerel pairs re-booked): -> 0.1174035.
+    growth_rate: 0.11740351388
     # M1 = total copepod mortality (~25 /yr = realised P/B) minus the
     # fish predation booked on pairs. Section 209: planktivorous_fish 1.6
     # + predatory_fish 0.13 = 1.73 /yr (was 5.3, the Ecopath 21 % of pelagic
@@ -539,7 +540,14 @@
     # losses outside the model at the central stock (jellyfish, other
     # fish); in an open pool the exchange imports such a deficit (flagged,
     # synthesis.md check 2). The exchange is outside g.
+    # Section 268: the planktivores' and mackerel's pairs were re-booked on
+    # field-consistent rations (booked fish M2 2.11 -> 2.54 /yr); the local
+    # production stays at the field P/B as P/B 2.1113 (the 2.11 of 262), and
+    # the booked M2 above it is paid by the exchange (pool 2 % below the
+    # outside density at the booked predation, research_notes/"Ombokning av
+    # planktonatarnas M2", a-umlaut).
     r_max: 0.0
+    somatic_production: 2.1113
     natural_mortality: 0.0
     growth_rate: 0.0014460958904
     # 5.0 kJ/g WW annual mean (4.3 in spring-summer, ~6 in winter):
@@ -1845,8 +1853,11 @@ interaction_definitions:
     # x the members' Q/B = 12.6 t/km2/yr / 9.72 t/km2 = 1.30 (was 2.0; 0.80
     # of it krill). a unchanged: the 243.3 encounter was on the A17 pool,
     # which holds no krill (WP2 nets exclude it). research_notes/"Krill i Skagerrak" (synthesis.md, diets/, pairs/).
+    # Section 268: x 6.2 / 5.0 = 1.24, the source-consistent Q/B at the field
+    # fill (5.8-6.6; the 5.0 pays only the lowest metabolism, research_notes/
+    # "Planktivorernas energibudget"): 1.30 -> 1.612.
     preys_on: true
-    predation_mortality: 1.30
+    predation_mortality: 1.612
     assimilation_factor: 0.8
     handling_time: 52.0
     # Section 220: attack rate from encounter theory (f pi R^2 v p per fish,
@@ -2671,8 +2682,12 @@ interaction_definitions:
     # box's densities do not trigger it). Mean-field slope: the box mean is
     # below the lab feeding threshold (patches). research_notes/"Krill i
     # Skagerrak" mackerel_filter/summary.md.
+    # Section 268: the annual stock Q/B 2.2 spread over the months mackerel
+    # is in the box (SMS quarterly ration shares per fish present) is 2.75,
+    # x 1.25: 0.072 -> 0.090 (research_notes/"Makrillens ranson"; the
+    # energetic need of the field fat cycle, 4.99, would be x 2.27).
     preys_on: true
-    predation_mortality: 0.072
+    predation_mortality: 0.090
     assimilation_factor: 0.8
     handling_time: 68.0
     visibility_floor: 0.5
@@ -2709,8 +2724,10 @@ interaction_definitions:
     # flow. a 0.018 (0.0042-0.056). dark_ratio 0.57 from the stomachs
     # (Onsrud 2004: no diel difference in pout; herring's derived 0.11),
     # weighted by the members' share of a (228.2 precedent).
+    # Section 268: x 6.2 / 5.0 = 1.24 (source-consistent Q/B, as the
+    # zooplankton pair): 1.67 -> 2.071.
     preys_on: true
-    predation_mortality: 1.67
+    predation_mortality: 2.071
     assimilation_factor: 0.8
     handling_time: 57.8
     # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at
@@ -2833,8 +2850,10 @@ interaction_definitions:
     # 1981 0.25; horse mackerel 0.50). a 0.0025 (0.0007-0.0072): a twilight
     # pair (zero day overlap; krill enter 0-50 m at sunset), dark_ratio 0.42
     # at -5 deg (1.57 at 0 deg would need dark_ratio > 1).
+    # Section 268: x 1.25, the presence-weighted Q/B 2.75 (as the
+    # zooplankton pair): 0.1 -> 0.125.
     preys_on: true
-    predation_mortality: 0.1
+    predation_mortality: 0.125
     assimilation_factor: 0.8
     handling_time: 75.5
     # Section 253: the measured box light (44 SMHI CTD PAR casts: K 0.175 at

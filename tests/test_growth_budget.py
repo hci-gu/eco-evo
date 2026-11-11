@@ -167,8 +167,12 @@ def test_every_library_fg_has_a_literature_budget():
             assert "r_max" not in spec, fid
         elif spec.get("somatic_production") not in (None, ""):
             # Section 250: an open population pays its somatic production;
-            # r_max is out of its budget.
-            assert "r_max" not in spec and float(spec["somatic_production"]) > 0.0, fid
+            # r_max is out of its budget. Section 268: an open pool may carry
+            # its local P/B the same way, with r_max 0.
+            assert float(spec.get("r_max", 0.0)) == 0.0, fid
+            assert float(spec["somatic_production"]) > 0.0, fid
+            if spec.get("is_decision_maker"):
+                assert "r_max" not in spec, fid
         elif spec.get("outside_density") not in (None, ""):
             # Section 245: an open pool is derived with r_max 0 (its density
             # is set outside the box; local production = booked losses).

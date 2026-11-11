@@ -970,6 +970,8 @@ class FGConfigApp:
             ("Outside Density (t/km2, box mean; open pool; 0 = closed)", "outside_density", "entry", 0.0, 100000.0),
             ("Outside Exchange Rate k (1/{tick}; relaxes B to the outside density)", "outside_exchange_rate", "entry", 0.0, 10.0),
             ("Outside Season (12 monthly factors Jan..Dec, mean ~1; empty = flat)", "outside_season", "entry", 0.0, 10.0),
+            # Section 268: the open pool's local production P/B (0 = g pays the booked M2).
+            ("  Local production P/B (1/yr, field; open pool; 0 = the booked M2)", "somatic_production", "entry", 0.0, 10.0),
             # Light-limited growth on the daylight calendar (section 138).
             ("Light Saturation I_k (umol photons/m2/s; 1 or 12 monthly values; 0 = off)", "light_saturation", "entry", 0.0, 5000.0),
             ("Light Reference Day (day of year Max Growth applies; 0 = 105, mid April)", "light_reference_day", "entry", 0.0, 365.0),

@@ -430,7 +430,8 @@ SOMATIC_KEY = "somatic_production"
 
 
 def somatic_production(spec):
-    """P (/yr) of an open-population DM (section 250), or None."""
+    """P (/yr) of an open-population DM (section 250) or an open pool's
+    local production P/B (section 268), or None."""
     raw = (spec or {}).get(SOMATIC_KEY)
     if raw in (None, ""):
         return None
@@ -612,6 +613,18 @@ def growth_budget(prey_id, species_defs, interactions,
                 return budget
     else:
         budget.gate = 1.0
+        if spec.get("outside_density") not in (None, ""):
+            # Section 268: an open pool may carry its field local production
+            # P/B; the booked M2 above it is then paid by the exchange.
+            try:
+                budget.somatic = somatic_production(spec)
+            except ValueError as error:      # the FG editor, mid-keystroke
+                budget.error = str(error)
+                return budget
+            if budget.somatic is not None and _as_float(spec.get("r_max")) > 0.0:
+                budget.error = (f"{SOMATIC_KEY} replaces r_max (section 268): an open "
+                                "pool's local production is its whole growth")
+                return budget
         if not math.isfinite(budget.m1_annual):
             budget.error = "natural_mortality must be below 1"
             return budget

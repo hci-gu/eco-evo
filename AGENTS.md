@@ -143,8 +143,11 @@ fabricates mass.
   the box: 5 t/km2 box mean, exchange k 20 /yr (~18 d residence),
   quarterly season 1.0 / 0.6 / 1.1 / 1.3, depth shape 0.025 under 50 m, 0.38 at
   50-99 m (annual presence, section 262), 0.8 -> 1.4 from 100 m, E 5000,
-  g derived with r_max 0 = the booked fish M2 2.11 /yr (field P/B 2);
-  eaten by planktivores (M2 1.67), whiting 0.187, mackerel 0.10, water
+  g = its local production `somatic_production` P/B 2.1113 /yr (field
+  P/B 2; section 268: an open pool's P sets g and the exchange pays the
+  booked M2 above it, 2.54 /yr since the planktivore and mackerel pairs
+  were re-booked on Q/B 6.2 and the presence-weighted 2.75);
+  eaten by planktivores (M2 2.071), whiting 0.187, mackerel 0.125, water
   column 0.119 (262: saithe 0.40 on the box's side of the North Sea),
   benthivores 0.035, who observe it; research_notes/"Krill
   i Skagerrak").

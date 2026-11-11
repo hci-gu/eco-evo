@@ -25081,3 +25081,33 @@ remain open exactly as described in 71.9 / 71.11.
     levers.py and "Faltmetabolism kolja och plattfisk"/scripts/budget_fmr.py. All three fixed and
     re-run; notes carry correction sections. Planktivore e* 0.43 / 0.32 -> 0.29 / 0.10. The library
     and engine were never affected (diagnostic scripts only).
+
+268 RE-BOOKED PLANKTIVORE AND MACKEREL M2; AN OPEN POOL'S LOCAL PRODUCTION (2026-11-11; user choice)
+------------------------------------------------------------------------------------------------------
+
+268.1 Why. The realised krill M2 in fix96's probe (4.7 /yr) was x2.23 the booking 2.11. Part of that
+    was the yardstick: the planktivores' booked rations rested on Q/B 5.0, which pays only the lowest
+    metabolism with the model's (source-consistent) costs; the source-consistent Q/B is 5.8-6.6 at the
+    field fill (research_notes/"Planktivorernas energibudget"). Mackerel's rested on the annual stock
+    Q/B 2.2, whose box value per tonne present is 2.75 (SMS quarterly ration shares; the energetic need
+    of the field fat cycle is 4.99; research_notes/"Makrillens ranson").
+268.2 Applied (fg_library.yaml). planktivores -> zooplankton 1.30 -> 1.612 and -> krill 1.67 -> 2.071
+    (x 6.2 / 5.0); mackerel -> zooplankton 0.072 -> 0.090 and -> krill 0.1 -> 0.125 (x 1.25, the
+    presence-weighted SMS value, user's choice over x 2.27). Booked krill M2 2.111 -> 2.537, zooplankton
+    1.378 -> 1.708 (zooplankton g 0.11651933 -> 0.11740351, +0.76 %). Other pairs of the two predators
+    (mackerel -> planktivores 0.0186) untouched: they enter no derived g.
+268.3 Krill g kept at the field P/B (user choice). growth_budget: an open pool (outside_density) may
+    carry somatic_production = its local production P/B; g = P / 1460, the booked M2 out of it, refused
+    with r_max > 0 (as the section 250 open population). krill somatic_production 2.1113 (the 262 value,
+    field P/B 2, 1.2-3.5), so g stays 0.0014460958904. The booked M2 above P is paid by the exchange:
+    steady B/T = (1 - e^-k)/(1 - (1 + g - m) e^-k) = 0.979 at k 20 /yr, m 2.54 (1.000 with g = M2).
+    FG editor NDM panel field "Local production P/B"; field_help updated. research_notes/"Ombokning av
+    planktonatarnas M2" (a-umlaut): scripts/rebook.py (the variants 5.8 / 6.6, x 2.27).
+268.4 Yardstick. lib/diagnostics/field_diet.FIELD_QB: planktivores 5.0 -> 6.2, mackerel 2.2 -> 2.75
+    (budget_gate total-ration row, probe_diets). budget_gate: krill booked 2.537, implied 2.787
+    (ratio 1.10); every pair ok. The realised krill M2 of fix96 (4.7) is x1.85 the new booking: the
+    rest is the diet shares (water column x2.2-2.4, mackerel x1.5-1.7, planktivores x1.2-1.3) and
+    the full-reserve / autumn appetite (to be judged after the next training).
+268.5 Tests: test_open_pool (booked 2.537, P 2.1113, g pinned; new test of the open-pool P rule),
+    test_growth_budget (open pool with somatic_production). Full suite 1885 passed, 12 skipped.
+    No training run (the user starts it).

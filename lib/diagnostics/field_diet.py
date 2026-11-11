@@ -10,11 +10,15 @@ import numpy as np
 # Field consumption per tonne, t/t/yr, and its source (section 245;
 # research_notes/"Vitlingens ranson" (a-ring) summary.md and its sources).
 FIELD_QB = {
-    'planktivorous_fish': (5.0, "members' Q/B, params_planktivorous_fish.md"),
+    # Section 268: the source-consistent Q/B at the field fill (5.8-6.6; the
+    # members' 5.0 pays only the lowest metabolism, "Planktivorernas energibudget").
+    'planktivorous_fish': (6.2, "source-consistent Q/B (5.8-6.6), section 268"),
     'benthivorous_fish': (4.46, '223.9 budget'),
     'whiting': (4.2, 'SMS 2023, Lauerburg 2018 (3.3-5.6)'),
     'predatory_fish': (2.83, 'params_split_223 (2.6-3.6)'),
-    'mackerel': (2.2, 'member value, params_predatory_fish'),
+    # Section 268: the annual stock 2.2 per tonne PRESENT in the box (SMS
+    # quarterly ration shares; "Makrillens ranson"); need 4.99.
+    'mackerel': (2.75, 'stock Q/B 2.2 presence-weighted, section 268'),
 }
 
 # Bed-depth classes of the krill pairs' depth tables (section 245): < 100,
