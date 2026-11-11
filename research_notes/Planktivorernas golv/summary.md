@@ -190,3 +190,5 @@ floor.
   och tumlare golv".
 - 2026-11-11: investigate a winter (seasonal) profile for herring and sprat in
   the box.
+- 2026-11-11 (with research_notes/"Sal och tumlare golv"): porpoises ->
+  planktivores 1.0; seals keep the species floor 0.35.

@@ -1,0 +1,134 @@
+==============================================================================
+1. Box bed depths (maps/depth.npz, 60 x 60 cells of 1 km2)
+  all cells                n=3600 min    44 m  p5/25/50/75/95   72 /  102 /  143 /  208 /  357
+      share of cells with bed <=  35 m: 0.000
+      share of cells with bed <=  50 m: 0.007
+      share of cells with bed <= 100 m: 0.232
+      share of cells with bed <= 150 m: 0.531
+      share of cells with bed <= 180 m: 0.656
+  east third (cols 40-59)  n=1200 min    44 m  p5/25/50/75/95   56 /  101 /  130 /  159 /  204
+      share of cells with bed <=  35 m: 0.000
+      share of cells with bed <=  50 m: 0.021
+      share of cells with bed <= 100 m: 0.245
+      share of cells with bed <= 150 m: 0.676
+      share of cells with bed <= 180 m: 0.866
+
+==============================================================================
+2. Seal rest on the bed: deepest bed reachable with >= t_bot of bottom time
+   D_max = v (T_dive - t_bot) / 2; T_dive = mean resting-dive submersion 4.0-5.3 min (E3),
+   v = vertical speed: resting dives have slow descents (E2); 0.6-1.4 m/s spans slow
+   drift to the 1.4 m/s typical forward speed used in E2. t_bot >= 1 min [J].
+   T 4.0 min v 0.6 m/s -> D_max    54 m; cells with bed <= D_max: all 0.013, east 0.039
+   T 4.0 min v 1.0 m/s -> D_max    90 m; cells with bed <= D_max: all 0.157, east 0.188
+   T 4.0 min v 1.4 m/s -> D_max   126 m; cells with bed <= D_max: all 0.398, east 0.453
+   T 5.3 min v 0.6 m/s -> D_max    77 m; cells with bed <= D_max: all 0.081, east 0.134
+   T 5.3 min v 1.0 m/s -> D_max   129 m; cells with bed <= D_max: all 0.417, east 0.482
+   T 5.3 min v 1.4 m/s -> D_max   181 m; cells with bed <= D_max: all 0.658, east 0.869
+   Observed deepest bottom rest: ~35 m (E3); no box cell is that shallow.
+
+==============================================================================
+3. Vertical reach of a surface cue in one 6 h tick: L = sqrt(2 Kz t)
+   Kz   1e-05 m2/s -> L    0.7 m
+   Kz   1e-04 m2/s -> L    2.1 m
+   Kz   1e-03 m2/s -> L    6.6 m
+   Kz   1e-02 m2/s -> L   20.8 m
+   Kz 1e-5 to 1e-4 below a pycnocline, up to 1e-2 in a wind-mixed layer [J, textbook range].
+   A seal or porpoise resting at the surface leaves no cue at a 100-300 m bed within a tick
+   except by advection along isopycnals, which does not carry it downward [D].
+
+==============================================================================
+4. Porpoise click received level vs cod's conditioned ultrasound threshold
+   SL 178-205 dB re 1 uPa pp @1 m, mean 191 (E11); cod threshold 194.4 dB re 1 uPa
+   (38 kHz, conditioned, E9; cited as 203-204 dB pp by later work, E8); unconditioned
+   cod show no response at 204-213 dB (E8). Spherical spreading + absorption ~0.04 dB/m
+   at 130 kHz [J, textbook].
+   SL 191, threshold 194.4: never reached (SL below threshold)
+   SL 191, threshold 203.0: never reached (SL below threshold)
+   SL 205, threshold 194.4: detectable within  3.34 m (on axis)
+   SL 205, threshold 203.0: detectable within  1.25 m (on axis)
+   Herring (Atlantic): 50 % startle threshold at 4 kHz, nothing above (E10); Pacific
+   herring no ultrasound response up to 185 dB (E12). At km scale the click is no cue.
+
+==============================================================================
+5. Porpoise biosonar bed dead zone: a target closer to the bed than c tau / 2 merges
+   with the bed echo (normal incidence). The beam footprint adds R (1 - cos(half-beam)):
+   porpoise -3 dB beam ~16 deg [S, Miller & Wahlberg 2013], half-beam 8 deg.
+   click duration  44 us ->  3.3 cm
+   click duration  77 us ->  5.8 cm
+   click duration 113 us ->  8.5 cm
+   click duration 175 us -> 13.1 cm
+   beam term at range 1 m: + 1.0 cm
+   beam term at range 2 m: + 1.9 cm
+   beam term at range 5 m: + 4.9 cm
+   Dead zone: a few cm close in, up to ~1-2 dm at 5 m.
+   A cod, haddock or whiting lying on the bed is 5-15 cm high and carries a swimbladder
+   (90-95 % of the backscatter, E13): above the dead zone in the final approach (< 2 m),
+   at its edge from ~5 m. A flatfish has no swimbladder and, buried, lies inside it.
+
+==============================================================================
+6. Species floors of the mammals (A): observers and weights
+   seals: species floor today 0.0; observed by ['benthivorous_fish', 'whiting', 'predatory_fish', 'planktivorous_fish', 'mackerel']
+   porpoises: species floor today 0.0; observed by ['benthivorous_fish', 'whiting', 'predatory_fish', 'planktivorous_fish', 'mackerel']
+   Mammals also observe each other (porpoises <-> seals) at the other's species floor;
+   nobody eats a mammal, so the species floor touches observation only.
+   P(bed rest feasible) in the east third: 0.039 (T 4.0, v 0.6) - 0.869 (T 5.3, v 1.4)
+
+   seals: factor per observer layer (central, low, high): bed (0.236, 0.022, 0.756), pelagic (0.75, 0.5, 1.0)
+     weights = booked flow M2 x B (t/km2/yr) of the mammal on o: benthivorous 0.64, whiting 0.07, predatory 0.02, planktivorous 0.27, mackerel 0.00
+       -> floor central 0.38 (range 0.16-0.83)
+     weights = observer biomass B (t/km2): benthivorous 0.19, whiting 0.05, predatory 0.08, planktivorous 0.58, mackerel 0.10
+       -> floor central 0.63 (range 0.38-0.94)
+
+   porpoises: factor per observer layer (central, low, high): bed (0.05, 0.0, 0.1), pelagic (0.75, 0.5, 1.0)
+     weights = booked flow M2 x B (t/km2/yr) of the mammal on o: benthivorous 0.16, whiting 0.14, predatory 0.02, planktivorous 0.68, mackerel 0.00
+       -> floor central 0.54 (range 0.35-0.73)
+     weights = observer biomass B (t/km2): benthivorous 0.19, whiting 0.05, predatory 0.08, planktivorous 0.58, mackerel 0.10
+       -> floor central 0.58 (range 0.38-0.78)
+
+==============================================================================
+7. Pair floors on fish prey (B): member weights inside the mammals' prey-size windows
+
+   seals -> benthivores, window 7-35 cm
+     haddock                        group share 38.62 %  in window 0.579  ->  22.35
+     cod                            group share 31.38 %  in window 0.258  ->   8.10
+     long rough dab                 group share 12.63 %  in window 1.000  ->  12.63
+     dab                            group share  4.49 %  in window 1.000  ->   4.49
+     plaice                         group share  3.80 %  in window 0.907  ->   3.45
+     witch                          group share  1.67 %  in window 0.573  ->   0.96
+     lemon sole                     group share  0.87 %  in window 0.907  ->   0.79
+     flounder+sole+small flatfish   group share  0.44 %  in window 0.907  ->   0.40
+     inside the window: gadoids 0.573, flatfish 0.427 (rays, gurnard, hagfish and the rest, ~6.5 % of the group, left out)
+     member floors gadoid (0.85, 0.75, 0.95), flatfish (0.95, 0.85, 1.0)
+     -> pair floor central 0.89 (range 0.79-0.97); library 0.85
+
+   porpoises -> benthivores, window 0-40 cm
+     haddock                        group share 38.62 %  in window 0.766  ->  29.57
+     cod                            group share 31.38 %  in window 0.368  ->  11.54
+     long rough dab                 group share 12.63 %  in window 1.000  ->  12.63
+     dab                            group share  4.49 %  in window 1.000  ->   4.49
+     plaice                         group share  3.80 %  in window 0.974  ->   3.70
+     witch                          group share  1.67 %  in window 0.886  ->   1.48
+     lemon sole                     group share  0.87 %  in window 0.974  ->   0.85
+     flounder+sole+small flatfish   group share  0.44 %  in window 0.974  ->   0.43
+     inside the window: gadoids 0.636, flatfish 0.364 (rays, gurnard, hagfish and the rest, ~6.5 % of the group, left out)
+     member floors gadoid (0.9, 0.75, 1.0), flatfish (0.5, 0.3, 0.8)
+     -> pair floor central 0.75 (range 0.59-0.93); library 0.75
+
+   seals -> water column: accessible part {'saithe': 0.7, 'hake': 0.3}; member floors {'saithe': (0.6, 0.35, 0.75), 'hake': (0.85, 0.75, 0.95)}
+     -> pair floor central 0.68 (range 0.47-0.81); library 0.75
+
+   porpoises -> water column: accessible part {'saithe': 0.73, 'hake': 0.27}; member floors {'saithe': (0.95, 0.85, 1.0), 'hake': (0.9, 0.75, 1.0)}
+     -> pair floor central 0.94 (range 0.82-1.00); library 0.9
+
+   seals -> whiting (one member): (0.85, 0.6, 0.95); library 0.85
+
+   porpoises -> whiting (one member): (0.9, 0.75, 1.0); library 0.75
+
+==============================================================================
+8. Effect at today's learned rest shares (fix97 annual means, Gom och sinnen section 4)
+   fish observe seals (species floor)       rest 0.020: visible share 0.9800 -> 0.9880 (x1.0082)
+   fish observe porpoises (species floor)   rest 0.016: visible share 0.9840 -> 0.9928 (x1.0089)
+   seals -> benthivores                     rest 0.026: visible share 0.9961 -> 0.9974 (x1.0013)
+   seals -> water column                    rest 0.032: visible share 0.9920 -> 0.9904 (x0.9984)
+   porpoises -> whiting                     rest 0.066: visible share 0.9835 -> 0.9934 (x1.0101)
+   Annual means; hiding is seasonal and diel, so single ticks differ more.

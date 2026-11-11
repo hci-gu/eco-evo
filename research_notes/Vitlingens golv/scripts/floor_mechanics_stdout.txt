@@ -1,0 +1,50 @@
+A. Library facts (fg_library.yaml)
+  whiting species visibility_floor = 0.5
+  benthivorous_fish_preys_on_whiting       M2 0.18  a 0.0226  stage_access [0.68, 0.24]  dark_ratio 0.168  pair visibility_floor - (species floor applies)
+  porpoises_preys_on_whiting               M2 0.0201  a 0.2  stage_access [1.0, 0.95]  dark_ratio None  pair visibility_floor 0.75
+  predatory_fish_preys_on_whiting          M2 0.157  a 0.0359  stage_access [0.41, 0.08]  dark_ratio 0.137  pair visibility_floor - (species floor applies)
+  seals_preys_on_whiting                   M2 0.0139  a 0.05  stage_access [1.0, 0.84]  dark_ratio None  pair visibility_floor 0.85
+
+B. Cut on predation (this tick) and on observation (next tick): rest x (1 - floor)
+   rest 0.066 = fix97 annual mean over training worlds; rest 1 = a fully hidden cell
+   floor  cut at 0.066  cut at 1.0
+    0.00        0.0660        1.00
+    0.25        0.0495        0.75
+    0.50        0.0330        0.50
+    0.70        0.0198        0.30
+    0.85        0.0099        0.15
+    0.95        0.0033        0.05
+    1.00        0.0000        0.00
+
+C. Jellyfish-shelter bound from the box GOV length table (whiting, q-corrected kg/h by cm)
+  1991-96 Q1: J/B 0.499; <= 6 cm: 0.0000 of B, 0.0000 of J; <= 9 cm: 0.0007 of B, 0.0014 of J
+  1991-96 Q2: J/B 0.482; <= 6 cm: 0.0000 of B, 0.0000 of J; <= 9 cm: 0.0003 of B, 0.0006 of J
+  1991-96 Q3: J/B 0.522; <= 6 cm: 0.0001 of B, 0.0002 of J; <= 9 cm: 0.0428 of B, 0.0821 of J
+  1991-96 Q4: J/B 0.752; <= 6 cm: 0.0001 of B, 0.0001 of J; <= 9 cm: 0.0078 of B, 0.0104 of J
+  2001-25 Q1: J/B 0.145; <= 6 cm: 0.0000 of B, 0.0000 of J; <= 9 cm: 0.0001 of B, 0.0010 of J
+  2001-25 Q3: J/B 0.186; <= 6 cm: 0.0010 of B, 0.0054 of J; <= 9 cm: 0.0273 of B, 0.1472 of J
+
+  Cell-level floor the shelter could at most justify, f_eff = 1 - s x assoc x (1 - f_res):
+  s = biomass share <= 9 cm in Q3 (the only quarter with such fish in the table);
+    2001-25 s 0.0273 assoc 0.1 f_res 0.0: f_eff Jun-Aug 0.9973; annual equivalent (3 of 12 months) 0.9993
+    2001-25 s 0.0273 assoc 0.1 f_res 0.5: f_eff Jun-Aug 0.9986; annual equivalent (3 of 12 months) 0.9997
+    2001-25 s 0.0273 assoc 0.5 f_res 0.0: f_eff Jun-Aug 0.9863; annual equivalent (3 of 12 months) 0.9966
+    2001-25 s 0.0273 assoc 0.5 f_res 0.5: f_eff Jun-Aug 0.9932; annual equivalent (3 of 12 months) 0.9983
+    2001-25 s 0.0273 assoc 1.0 f_res 0.0: f_eff Jun-Aug 0.9727; annual equivalent (3 of 12 months) 0.9932
+    2001-25 s 0.0273 assoc 1.0 f_res 0.5: f_eff Jun-Aug 0.9863; annual equivalent (3 of 12 months) 0.9966
+    1991-96 s 0.0428 assoc 0.1 f_res 0.0: f_eff Jun-Aug 0.9957; annual equivalent (3 of 12 months) 0.9989
+    1991-96 s 0.0428 assoc 0.1 f_res 0.5: f_eff Jun-Aug 0.9979; annual equivalent (3 of 12 months) 0.9995
+    1991-96 s 0.0428 assoc 0.5 f_res 0.0: f_eff Jun-Aug 0.9786; annual equivalent (3 of 12 months) 0.9946
+    1991-96 s 0.0428 assoc 0.5 f_res 0.5: f_eff Jun-Aug 0.9893; annual equivalent (3 of 12 months) 0.9973
+    1991-96 s 0.0428 assoc 1.0 f_res 0.0: f_eff Jun-Aug 0.9572; annual equivalent (3 of 12 months) 0.9893
+    1991-96 s 0.0428 assoc 1.0 f_res 0.5: f_eff Jun-Aug 0.9786; annual equivalent (3 of 12 months) 0.9946
+
+D. Stationary prey: v_rel(v, 0) / v_rel(v, 0.10)
+  saithe (WC 0.77 of a), 1.0 BL/s, L 0.45 m, day v 0.450 m/s: v_rel 0.457 -> 0.450, factor 0.984
+  saithe, 1.0 BL/s, L 0.70 m, day               v 0.700 m/s: v_rel 0.705 -> 0.700, factor 0.993
+  saithe, night 0.6 x day, L 0.45 m             v 0.270 m/s: v_rel 0.282 -> 0.270, factor 0.956
+  saithe, low 0.5 BL/s x night 0.3, L 0.45 m    v 0.068 m/s: v_rel 0.115 -> 0.068, factor 0.586
+  cod (benthivores), 0.4 BL/s, L 0.30 m         v 0.120 m/s: v_rel 0.148 -> 0.120, factor 0.812
+  cod, 0.4 BL/s, L 0.50 m                       v 0.200 m/s: v_rel 0.217 -> 0.200, factor 0.923
+  cod, low 0.2 BL/s, L 0.40 m                   v 0.080 m/s: v_rel 0.121 -> 0.080, factor 0.659
+  (detection of a motionless prey by vision or lateral line is not in this factor: unquantified)
