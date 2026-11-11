@@ -1,0 +1,111 @@
+Per pair: p library -> new, p factor, schooling F at the new p (day / night), total factor, night/day
+  predatory_fish->planktivorous_fish       a 0.0174  p 0.20 -> 0.592 (x2.96)  night/day 0.0594
+      central        F 0.543 (day 0.514, night 1.000)  factor x1.608  a 0.02797  night/day 0.1155
+      clupeids_only  F 0.750 (day 0.734, night 1.000)  factor x2.220  a 0.03863  night/day 0.0809
+      pout_high      F 0.354 (day 0.318, night 0.937)  factor x1.049  a 0.01825  night/day 0.1751
+  predatory_fish->benthivorous_fish        a 0.0418  p 0.20 -> 0.592 (x2.96)  night/day 0.165
+      central        F 1.000 (day 1.000, night 1.000)  factor x2.961  a 0.1238  night/day 0.165
+      clupeids_only  F 1.000 (day 1.000, night 1.000)  factor x2.961  a 0.1238  night/day 0.165
+      pout_high      F 1.000 (day 1.000, night 1.000)  factor x2.961  a 0.1238  night/day 0.165
+  predatory_fish->whiting                  a 0.0359  p 0.20 -> 0.592 (x2.96)  night/day 0.137
+      central        F 0.988 (day 0.986, night 1.000)  factor x2.924  a 0.105  night/day 0.1389
+      clupeids_only  F 0.988 (day 0.986, night 1.000)  factor x2.924  a 0.105  night/day 0.1389
+      pout_high      F 0.988 (day 0.986, night 1.000)  factor x2.924  a 0.105  night/day 0.1389
+  predatory_fish->mackerel                 a 0.000137  p 0.20 -> 0.549 (x2.74)  night/day 0.923
+      central        F 0.089 (day 0.089, night 0.089)  factor x0.244  a 3.347e-05  night/day 0.9159
+      clupeids_only  F 0.089 (day 0.089, night 0.089)  factor x0.244  a 3.347e-05  night/day 0.9159
+      pout_high      F 0.089 (day 0.089, night 0.089)  factor x0.244  a 3.347e-05  night/day 0.9159
+  whiting->planktivorous_fish              a 0.0329  p 0.20 -> 0.566 (x2.83)  night/day 0.212
+      central        F 0.682 (day 0.620, night 1.000)  factor x1.932  a 0.06357  night/day 0.3417
+      clupeids_only  F 0.818 (day 0.782, night 1.000)  factor x2.315  a 0.07615  night/day 0.2712
+      pout_high      F 0.448 (day 0.357, night 0.912)  factor x1.269  a 0.04174  night/day 0.541
+  whiting->benthivorous_fish               a 0.103  p 0.20 -> 0.522 (x2.61)  night/day 0.565
+      central        F 1.000 (day 1.000, night 1.000)  factor x2.609  a 0.2687  night/day 0.565
+      clupeids_only  F 1.000 (day 1.000, night 1.000)  factor x2.609  a 0.2687  night/day 0.565
+      pout_high      F 1.000 (day 1.000, night 1.000)  factor x2.609  a 0.2687  night/day 0.565
+  mackerel->planktivorous_fish             a 0.0248  p 0.20 -> 0.617 (x3.09)  night/day 0.16
+      central        F 0.598 (day 0.209, night 1.000)  factor x1.847  a 0.04579  night/day 0.16
+      clupeids_only  F 0.598 (day 0.209, night 1.000)  factor x1.847  a 0.04579  night/day 0.16
+      pout_high      F 0.598 (day 0.209, night 1.000)  factor x1.847  a 0.04579  night/day 0.16
+  benthivorous_fish->planktivorous_fish    a 0.0214  p 0.30 -> 0.634 (x2.11)  night/day 0.141
+      central        F 0.643 (day 0.592, night 1.000)  factor x1.357  a 0.02905  night/day 0.2381
+      clupeids_only  F 0.892 (day 0.877, night 1.000)  factor x1.884  a 0.04032  night/day 0.1608
+      pout_high      F 0.371 (day 0.293, night 0.922)  factor x0.783  a 0.01677  night/day 0.4432
+  benthivorous_fish->whiting               a 0.0226  p 0.30 -> 0.617 (x2.06)  night/day 0.168
+      central        F 0.985 (day 0.982, night 1.000)  factor x2.027  a 0.04581  night/day 0.171
+      clupeids_only  F 0.985 (day 0.982, night 1.000)  factor x2.027  a 0.04581  night/day 0.171
+      pout_high      F 0.985 (day 0.982, night 1.000)  factor x2.027  a 0.04581  night/day 0.171
+
+Prey side: implied / booked M2 per prey (total)
+  prey                        library         p_only        central  clupeids_only      pout_high
+  planktivorous_fish             0.69           1.24           0.89           1.07           0.65
+  benthivorous_fish              0.62           0.86           1.06           0.95           1.19
+  whiting                        0.60           0.88           1.03           0.94           1.13
+  mackerel                       0.02           0.03           0.00           0.00           0.00
+  krill                          1.04           0.99           1.01           1.00           1.02
+  zooplankton                    1.01           1.00           1.00           1.00           1.00
+  mobile_epifauna                0.95           0.89           0.92           0.90           0.95
+
+Prey side per pair (ratio; * = OFF)
+  benthivorous_fish->krill                          0.91           0.86           0.89           0.87           0.92 
+  benthivorous_fish->planktivorous_fish             0.61           1.22           0.81           1.10           0.48 
+  benthivorous_fish->whiting                        0.31*          0.61           0.62           0.61           0.64 
+  mackerel->krill                                   1.67           1.54           1.61           1.61           1.61 
+  mackerel->planktivorous_fish                      0.78           2.20           1.38           1.38           1.38 
+  planktivorous_fish->krill                         0.95           0.95           0.95           0.95           0.95 
+  porpoises->benthivorous_fish                      2.44           2.44           2.44           2.44           2.44 
+  porpoises->planktivorous_fish                     0.48           0.48           0.48           0.48           0.48 
+  porpoises->whiting                                1.92           1.92           1.92           1.92           1.92 
+  predatory_fish->benthivorous_fish                 0.97           1.46           2.00           1.72           2.36 
+  predatory_fish->krill                             1.39           0.71           0.97           0.83           1.14 
+  predatory_fish->mackerel                          0.02*          0.03*          0.00*          0.00*          0.00*
+  predatory_fish->planktivorous_fish                0.78           1.18           0.88           1.04           0.67 
+  predatory_fish->whiting                           0.64           0.97           1.31           1.12           1.54 
+  seals->benthivorous_fish                          0.90           0.90           0.90           0.90           0.90 
+  seals->planktivorous_fish                         1.10           1.10           1.10           1.10           1.10 
+  seals->whiting                                    1.81           1.81           1.81           1.81           1.81 
+  whiting->benthivorous_fish                        0.12*          0.27*          0.29*          0.28*          0.31*
+  whiting->krill                                    1.46           1.25           1.33           1.29           1.40 
+  whiting->planktivorous_fish                       0.54           1.30           0.95           1.10           0.65 
+
+Predator-side diet gate, equal cells (* = OFF)
+  benthivorous_fish->benthic_infauna                1.03           0.98           1.01           0.99           1.04 
+  benthivorous_fish->krill                          0.91           0.86           0.89           0.87           0.92 
+  benthivorous_fish->mobile_epifauna                1.01           0.96           0.99           0.97           1.01 
+  benthivorous_fish->norway_lobster                 2.19           2.08           2.14           2.10           2.20 
+  benthivorous_fish->planktivorous_fish             0.61           1.22           0.81           1.10           0.48 
+  benthivorous_fish->whiting                        0.31           0.61           0.62           0.61           0.64 
+  mackerel->krill                                   1.67           1.54           1.61           1.61           1.61 
+  mackerel->planktivorous_fish                      0.78           2.20           1.38           1.38           1.38 
+  mackerel->zooplankton                             0.54           0.50           0.52           0.52           0.52 
+  predatory_fish->benthivorous_fish                 0.97           1.46           2.00           1.72           2.36 
+  predatory_fish->krill                             1.39           0.71           0.97           0.83           1.14 
+  predatory_fish->mackerel                          0.02           0.03           0.00           0.00           0.00 
+  predatory_fish->planktivorous_fish                0.78           1.18           0.88           1.04           0.67 
+  predatory_fish->whiting                           0.64           0.97           1.31           1.12           1.54 
+  predatory_fish->zooplankton                       0.38           0.20           0.27           0.23           0.31 
+  whiting->benthivorous_fish                        0.12*          0.27*          0.29*          0.28*          0.31*
+  whiting->krill                                    1.46           1.25           1.33           1.29           1.40 
+  whiting->mobile_epifauna                          0.50           0.42           0.45           0.44           0.48 
+  whiting->planktivorous_fish                       0.54           1.30           0.95           1.10           0.65 
+  whiting->zooplankton                              0.40           0.34           0.36           0.35           0.38 
+
+Predator-side diet gate, field spread (* = OFF)
+  predatory_fish->benthivorous_fish                 1.13           1.71           2.33           2.00           2.73 
+  predatory_fish->krill                             1.40           0.72           0.97           0.84           1.14 
+  predatory_fish->mackerel                          0.03           0.04           0.00           0.00           0.01 
+  predatory_fish->planktivorous_fish                0.76           1.15           0.85           1.01           0.65 
+  predatory_fish->whiting                           0.46           0.70           0.94           0.81           1.10 
+  predatory_fish->zooplankton                       0.62           0.32           0.43           0.37           0.51 
+  whiting->benthivorous_fish                        0.07*          0.17*          0.17*          0.17*          0.18*
+  whiting->krill                                    1.59           1.40           1.48           1.44           1.54 
+  whiting->mobile_epifauna                          0.23*          0.20*          0.22*          0.21*          0.22*
+  whiting->planktivorous_fish                       0.43           1.08           0.78           0.91           0.53 
+  whiting->zooplankton                              0.19           0.16           0.17           0.17           0.18 
+
+OFF pairs per reading (prey side / equal cells / field spread):
+  library        benthivorous_fish->whiting, predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  p_only         predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  central        predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  clupeids_only  predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
+  pout_high      predatory_fish->mackerel, seals->predatory_fish, whiting->benthivorous_fish, whiting->mobile_epifauna
