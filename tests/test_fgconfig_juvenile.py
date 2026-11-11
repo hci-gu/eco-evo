@@ -124,3 +124,36 @@ def test_editor_round_trip_on_the_live_library(tmp_path):
         assert list(app.global_library["interaction_definitions"][key]["stage_access"]) == [0.5, 0.2]
     finally:
         root.destroy()
+
+
+def test_editor_keeps_the_recruit_depth_table(tmp_path):
+    # Section 270: the Juvenile Stage block is rebuilt on Apply, so the
+    # benthivores' recruit_depth_table must come back through its field.
+    tk = pytest.importorskip("tkinter")
+    try:
+        root = tk.Tk()
+    except tk.TclError:
+        pytest.skip("no display")
+    root.withdraw()
+    try:
+        app = App(root)
+        app.library_path = str(tmp_path / "lib.yaml")
+        app.save_yaml = lambda data, path: None
+        app.project_data["decision_makers"] = [{"group_id": "benthivorous_fish"}]
+        app.project_data["non_decision_makers"] = []
+        species = app.global_library["species_definitions"]
+        app.current_fg_configs["benthivorous_fish"] = species["benthivorous_fish"]
+        before = [dict(r) for r in species["benthivorous_fish"]["juvenile_stage"]["recruit_depth_table"]]
+        assert before
+        app.update_fg_list()
+        app.fg_listbox.selection_clear(0, "end")
+        app.fg_listbox.selection_set(0)
+        app.on_fg_select("decision_makers")
+        assert app.juvenile_vars["juvenile_recruit_depth_table"].get().startswith("99.9: 2.71")
+        fgconfig.messagebox.showinfo = lambda *a, **k: None
+        fgconfig.messagebox.showwarning = lambda *a, **k: None
+        app.apply_fg_changes()
+        after = [dict(r) for r in species["benthivorous_fish"]["juvenile_stage"]["recruit_depth_table"]]
+        assert after == before
+    finally:
+        root.destroy()

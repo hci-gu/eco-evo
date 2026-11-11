@@ -104,3 +104,7 @@ reading 4 (benthivores -> whiting leaves OFF).
 
 - 2026-11-11: investigate WC -> juvenile benthivores (overlap and window) first,
   then apply everything as one section. Nothing applied.
+- 2026-11-12: applied as section 270 (commit 109d25f) with the decided
+  corrections of the later notes: scripts/apply_270.py from
+  tables/yaml_edits_270.txt (the "Langans indata" central library copy, the
+  re-booking, the hide floors and the benthivores' recruit_depth_table).
