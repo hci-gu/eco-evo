@@ -1,0 +1,14 @@
+(1) Palomares & Pauly 1998, carnivore (h = d = 0)
+   Linf      K           LW  Winf kg | Q/B at T 7.4 C, A 0.8 / 1.2 / 1.6 | T 6 / 9 C at A 1.2
+    189  0.080        annex     39.5 | 1.23 / 1.32 / 1.43 | 1.22 / 1.45   (N North Sea)
+    189  0.080     FishBase     39.0 | 1.23 / 1.33 / 1.43 | 1.22 / 1.45   (N North Sea)
+    183  0.118        annex     35.9 | 1.25 / 1.35 / 1.46 | 1.25 / 1.48   (4.a+6.ab)
+    183  0.118     FishBase     35.3 | 1.25 / 1.35 / 1.46 | 1.25 / 1.48   (4.a+6.ab)
+    160  0.090        annex     23.9 | 1.36 / 1.47 / 1.58 | 1.35 / 1.61   (BHAC)
+    160  0.090     FishBase     23.4 | 1.36 / 1.47 / 1.59 | 1.36 / 1.61   (BHAC)
+
+(2) SMS 2023 cod ration a_q W^b (kg/quarter): [(0.9004, 0.78595), (1.21211, 0.78595), (1.24653, 0.78595), (1.38951, 0.78595)]
+  LW CA fit used for N/t: biomass-weighted Q/B over the box length mix 3.85 /yr; at 2 kg 4.09, at 5 kg 3.36, at 15 kg 2.66
+  LW annex: biomass-weighted Q/B over the box length mix 3.80 /yr; at 2 kg 4.09, at 5 kg 3.36, at 15 kg 2.66
+
+Reference Q/B of the other water-column members (research_notes/'Fiskgrupper i rutan' evidence_C): saithe 3.0, hake 3.5, anglerfish 1.8, spurdog 2.0

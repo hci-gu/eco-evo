@@ -1,0 +1,17 @@
+# Ling (lange) stomach-content category counts per station, IMR Toktrapport 2022-15 (de Jong et al., Hywind Tampen
+# before development, gillnets, late March - early April 2022), Figure 14 (papers/hywind2022_file_html_1007ac06b50e07ad.png),
+# READ FROM THE BARS by eye (integer counts, +-1 per segment). Stations 1-5 deep (252-286 m), 6-8 shallow (136-141 m).
+# Category key (report Table 5, all species pooled): pelagic teleost = mackerel 28, NSS herring 5, blue whiting 4,
+# herring 1, garfish 1; demersal teleost = long rough dab 5, haddock 3, Norway pout 3, whiting 2, redfish, rockfish,
+# sculpin 1 each; unidentified teleost 184 (all species). Per-species identities are not given in the report.
+station,empty,unidentified_teleost,pelagic_teleost,demersal_teleost,misc_invertebrate,elasmobranch,unidentified_item
+1,3,2,0,0,1,0,0
+2,10,7,0,0,1,0,0
+3,5,1,0,0,0,0,0
+4,5,2,2,0,0,0,0
+5,2,7,2,0,4,1,1
+6new,7,9,1,1,1,0,0
+6old,4,2,1,0,0,0,0
+7,13,9,1,0,0,0,0
+8,9,11,1,2,0,0,0
+total,58,50,8,3,7,1,1

@@ -1,0 +1,48 @@
+ling length-weight in length_weight_all.csv (g, cm): {'a': 0.0037104650318598, 'b': 3.088235061554971}
+
+== box: hauls 436 (Q1 256, Q3 180); hauls with ling 73; ling n/h summed over hauls 192.3 (~individuals at 1 h tows)
+   hauls with ling by year: 2000:2, 2001:2, 2002:3, 2003:6, 2004:3, 2005:2, 2006:4, 2007:4, 2008:1, 2009:4, 2010:1, 2012:4, 2014:1, 2016:1, 2018:3, 2019:4, 2020:4, 2021:9, 2022:1, 2023:6, 2024:3, 2025:5
+   length class (cm): numbers share / biomass share
+       0- 10: 0.021 / 0.000
+      20- 30: 0.010 / 0.001
+      30- 40: 0.062 / 0.012
+      40- 50: 0.207 / 0.096
+      50- 60: 0.299 / 0.234
+      60- 70: 0.221 / 0.264
+      70- 80: 0.138 / 0.256
+      80- 90: 0.021 / 0.063
+      90-100: 0.021 / 0.074
+   number-mean L 56.6 cm; biomass-median L 64.5 cm; L range 8-90 cm; share of numbers >= 60 cm 0.40
+   ling               kg/h per class [0.164, 0.449, 1.532, 0.0] (hauls [210, 143, 80, 3]); shape f (equal-cell mean 1) [0.25, 0.67, 2.29, 0.0]
+   adult cod+haddock  kg/h per class [86.19, 153.67, 75.047, 13.876] (hauls [210, 143, 80, 3]); shape f (equal-cell mean 1) [0.93, 1.67, 0.81, 0.15]
+
+== wide: hauls 1533 (Q1 773, Q3 760); hauls with ling 160; ling n/h summed over hauls 441.5 (~individuals at 1 h tows)
+   hauls with ling by year: 2000:3, 2001:4, 2002:4, 2003:9, 2004:5, 2005:12, 2006:8, 2007:11, 2008:3, 2009:7, 2010:4, 2011:2, 2012:6, 2014:3, 2015:2, 2016:2, 2017:4, 2018:7, 2019:9, 2020:8, 2021:13, 2022:8, 2023:10, 2024:5, 2025:11
+   length class (cm): numbers share / biomass share
+       0- 10: 0.009 / 0.000
+      10- 20: 0.005 / 0.000
+      20- 30: 0.027 / 0.002
+      30- 40: 0.070 / 0.011
+      40- 50: 0.194 / 0.072
+      50- 60: 0.286 / 0.180
+      60- 70: 0.232 / 0.238
+      70- 80: 0.092 / 0.143
+      80- 90: 0.041 / 0.096
+      90-100: 0.021 / 0.070
+     100-110: 0.005 / 0.019
+     110-120: 0.009 / 0.053
+     140-150: 0.005 / 0.051
+     150-160: 0.005 / 0.063
+   number-mean L 58.1 cm; biomass-median L 69.5 cm; L range 8-150 cm; share of numbers >= 60 cm 0.41
+   ling               kg/h per class [0.105, 0.553, 1.829, 1.553] (hauls [1103, 212, 181, 37]); shape f (equal-cell mean 1) [0.1, 0.55, 1.82, 1.54]
+   adult cod+haddock  kg/h per class [64.306, 181.785, 90.381, 42.823] (hauls [1103, 212, 181, 37]); shape f (equal-cell mean 1) [0.61, 1.74, 0.86, 0.41]
+
+model map cell shares per class [0.232, 0.299, 0.324, 0.146] (['<100', '100-150', '150-250', '>=250'])
+
+co-occurrence F = sum_k s_pred,k f_prey,k (class shares of the predator x prey shape, equal-cell mean 1):
+  ling box: class shares [0.057, 0.201, 0.742, 0.0] (WC group [0.043, 0.127, 0.782, 0.048])
+    J recruit_depth_table  F ling 0.511, F WC group 0.410, ratio 1.25
+    A GOV annual           F ling 0.811, F WC group 0.726, ratio 1.12
+  ling wide: class shares [0.024, 0.164, 0.587, 0.224] (WC group [0.043, 0.127, 0.782, 0.048])
+    J recruit_depth_table  F ling 0.364, F WC group 0.410, ratio 0.89
+    A GOV annual           F ling 0.714, F WC group 0.726, ratio 0.98

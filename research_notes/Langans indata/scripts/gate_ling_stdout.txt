@@ -1,0 +1,187 @@
+prev_central: done
+prev_central+eq: done
+win0.30: done
+win0.30+eq: done
+act0.35: done
+act0.35+eq: done
+act0.35s1: done
+act0.35s1+eq: done
+central: done
+central+eq: done
+central+night0: done
+central+night0+eq: done
+scan0.5+win0.30: done
+scan0.5+win0.30+eq: done
+idle0.35+win0.30: done
+idle0.35+win0.30+eq: done
+act0.50s1+win0.40: done
+act0.50s1+win0.40+eq: done
+act0.35s1+prof2+win0.30: done
+act0.35s1+prof2+win0.30+eq: done
+ling_out: done
+ling_out+eq: done
+
+Pair edits (a after the combined factor x2.96; stage_access):
+  prev_central                   a 0.117 (x0.945), stage_access [0.3818, 0.01653]
+  win0.30                        a 0.117 (x0.945), stage_access [0.3768, 0.0124]
+      predatory_fish->whiting              a 0.105 (x1.0000), stage_access [0.4078, 0.07274] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.02797 (x1.0000), stage_access [0.6489, 0.1739] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.347e-05 (x1.0000)
+  act0.35                        a 0.1156 (x0.934), stage_access [0.3754, 0.01238]
+      predatory_fish->whiting              a 0.1042 (x0.9920), stage_access [0.4069, 0.07517] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.0278 (x0.9939), stage_access [0.648, 0.1759] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.337e-05 (x0.9971)
+  act0.35s1                      a 0.1162 (x0.939), stage_access [0.3783, 0.01424]
+      predatory_fish->whiting              a 0.1045 (x0.9956), stage_access [0.4083, 0.07733] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.0279 (x0.9976), stage_access [0.6492, 0.1784] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.346e-05 (x0.9996)
+  central                        a 0.1162 (x0.939), stage_access [0.3745, 0.01112]
+      predatory_fish->whiting              a 0.1045 (x0.9956), stage_access [0.4067, 0.07186] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.0279 (x0.9976), stage_access [0.6483, 0.1732] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.346e-05 (x0.9996)
+  central+night0                 a 0.116 (x0.937), stage_access [0.3737, 0.01064]
+      predatory_fish->whiting              a 0.1044 (x0.9941), stage_access [0.4063, 0.07156] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.02789 (x0.9971), stage_access [0.6482, 0.1731] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.335e-05 (x0.9965)
+  scan0.5+win0.30                a 0.1156 (x0.934), stage_access [0.3726, 0.01008]
+      predatory_fish->whiting              a 0.1042 (x0.9920), stage_access [0.4057, 0.07114] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.0278 (x0.9939), stage_access [0.6474, 0.1722] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.337e-05 (x0.9971)
+  idle0.35+win0.30               a 0.115 (x0.929), stage_access [0.3708, 0.009033]
+      predatory_fish->whiting              a 0.1038 (x0.9885), stage_access [0.4048, 0.07043] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.02769 (x0.9901), stage_access [0.6464, 0.1712] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.329e-05 (x0.9946)
+  act0.50s1+win0.40              a 0.1164 (x0.940), stage_access [0.3791, 0.01362]
+      predatory_fish->whiting              a 0.1046 (x0.9966), stage_access [0.4086, 0.07545] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.02792 (x0.9982), stage_access [0.6494, 0.177] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.346e-05 (x0.9997)
+  act0.35s1+prof2+win0.30        a 0.1182 (x0.955), stage_access [0.3803, 0.01385]
+      predatory_fish->whiting              a 0.1047 (x0.9967), stage_access [0.407, 0.07209] (was [0.41, 0.08])
+      predatory_fish->planktivorous_fish   a 0.02793 (x0.9987), stage_access [0.6486, 0.1735] (was [0.65, 0.18])
+      predatory_fish->mackerel             a 3.328e-05 (x0.9944)
+  ling_out                       a 0.1139 (x0.920), stage_access [0.3674, 0.007172]
+
+J / A shapes used (f per class < 100 / 100-150 / 150-250 / >= 250 m, mean 1 on the 60x60 map; the gate renormalises on its 16x16 grid):
+  prev_central               J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  prev_central+eq            J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  win0.30                    J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  win0.30+eq                 J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.35                    J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.35+eq                 J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.35s1                  J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.35s1+eq               J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  central                    J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  central+eq                 J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  central+night0             J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  central+night0+eq          J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  scan0.5+win0.30            J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  scan0.5+win0.30+eq         J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  idle0.35+win0.30           J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  idle0.35+win0.30+eq        J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.50s1+win0.40          J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.50s1+win0.40+eq       J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.35s1+prof2+win0.30    J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  act0.35s1+prof2+win0.30+eq J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  ling_out                   J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+  ling_out+eq                J 2.71/1.00/0.21/0.05  A 1.33/1.48/0.59/0.41
+
+PREY SIDE on the benthivores: implied / booked M2, equal cells then field spread (* = OFF on the equal-cell prey check)
+  run                        predatory_fish        whiting          seals      porpoises   total eq / field
+  prev_central                 1.54   1.41    0.29   0.34*   0.90    nan    2.44    nan     0.89 /  0.87
+  prev_central+eq              2.13   1.41    0.34   0.34    0.90    nan    2.44    nan     1.13 /  0.87
+  win0.30                      1.47   1.33    0.29   0.34*   0.90    nan    2.44    nan     0.87 /  0.84
+  win0.30+eq                   2.05   1.33    0.34   0.34    0.90    nan    2.44    nan     1.10 /  0.84
+  act0.35                      1.45   1.32    0.29   0.34*   0.90    nan    2.44    nan     0.86 /  0.84
+  act0.35+eq                   2.03   1.32    0.34   0.34    0.90    nan    2.44    nan     1.09 /  0.84
+  act0.35s1                    1.49   1.36    0.29   0.34*   0.90    nan    2.44    nan     0.88 /  0.85
+  act0.35s1+eq                 2.07   1.36    0.34   0.34    0.90    nan    2.44    nan     1.10 /  0.85
+  central                      1.44   1.30    0.29   0.34*   0.90    nan    2.44    nan     0.86 /  0.83
+  central+eq                   2.01   1.30    0.34   0.34    0.90    nan    2.44    nan     1.08 /  0.83
+  central+night0               1.43   1.29    0.29   0.34*   0.90    nan    2.44    nan     0.85 /  0.83
+  central+night0+eq            2.00   1.29    0.34   0.34    0.90    nan    2.44    nan     1.08 /  0.83
+  scan0.5+win0.30              1.42   1.27    0.29   0.34*   0.90    nan    2.44    nan     0.85 /  0.82
+  scan0.5+win0.30+eq           1.98   1.27    0.34   0.34    0.90    nan    2.44    nan     1.07 /  0.82
+  idle0.35+win0.30             1.39   1.25    0.29   0.34*   0.90    nan    2.44    nan     0.84 /  0.81
+  idle0.35+win0.30+eq          1.96   1.25    0.34   0.34    0.90    nan    2.44    nan     1.06 /  0.81
+  act0.50s1+win0.40            1.49   1.35    0.29   0.34*   0.90    nan    2.44    nan     0.88 /  0.85
+  act0.50s1+win0.40+eq         2.07   1.35    0.34   0.34    0.90    nan    2.44    nan     1.10 /  0.85
+  act0.35s1+prof2+win0.30      1.52   1.38    0.29   0.34*   0.90    nan    2.44    nan     0.89 /  0.86
+  act0.35s1+prof2+win0.30+eq   2.11   1.38    0.34   0.34    0.90    nan    2.44    nan     1.12 /  0.86
+  ling_out                     1.32   1.17    0.29   0.34*   0.90    nan    2.44    nan     0.81 /  0.79
+  ling_out+eq                  1.86   1.17    0.34   0.34    0.90    nan    2.44    nan     1.03 /  0.79
+
+PREDATOR SIDE (encounter share / booked share of the predator's diet), equal cells | field spread:
+  run                          predatory_fish          whiting            seals        porpoises
+  prev_central                1.54  |  1.41   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  prev_central+eq             2.13  |  1.41   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  win0.30                     1.47  |  1.33   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  win0.30+eq                  2.05  |  1.33   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  act0.35                     1.45  |  1.32   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  act0.35+eq                  2.03  |  1.32   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  act0.35s1                   1.49  |  1.36   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  act0.35s1+eq                2.07  |  1.36   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  central                     1.44  |  1.30   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  central+eq                  2.01  |  1.30   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  central+night0              1.43  |  1.29   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  central+night0+eq           2.00  |  1.29   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  scan0.5+win0.30             1.42  |  1.27   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  scan0.5+win0.30+eq          1.98  |  1.27   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  idle0.35+win0.30            1.39  |  1.25   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  idle0.35+win0.30+eq         1.96  |  1.25   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  act0.50s1+win0.40           1.49  |  1.35   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  act0.50s1+win0.40+eq        2.07  |  1.35   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  act0.35s1+prof2+win0.30     1.52  |  1.38   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  act0.35s1+prof2+win0.30+eq  2.11  |  1.38   0.34  |  0.34   0.90  |     -   2.44  |     - 
+  ling_out                    1.32  |  1.17   0.29* |  0.34   0.90  |     -   2.44  |     - 
+  ling_out+eq                 1.86  |  1.17   0.34  |  0.34   0.90  |     -   2.44  |     - 
+
+Other prey totals (implied / booked M2, equal cells / field spread):
+  run                         planktivorous          krill        whiting  mobile_epifau  norway_lobste  benthic_infau
+  prev_central                 0.90/ 0.88     1.01/ 1.02     1.05/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  prev_central+eq              0.88/ 0.88     1.01/ 1.02     1.02/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  win0.30                      0.91/ 0.88     1.01/ 1.02     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  win0.30+eq                   0.88/ 0.88     1.01/ 1.02     1.00/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.35                      0.91/ 0.88     1.01/ 1.03     1.04/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.35+eq                   0.88/ 0.88     1.01/ 1.03     1.01/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.35s1                    0.91/ 0.88     1.01/ 1.02     1.04/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.35s1+eq                 0.88/ 0.88     1.01/ 1.02     1.01/ 0.90     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  central                      0.91/ 0.88     1.01/ 1.03     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  central+eq                   0.88/ 0.88     1.01/ 1.03     1.00/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  central+night0               0.91/ 0.89     1.01/ 1.03     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  central+night0+eq            0.88/ 0.89     1.01/ 1.03     1.00/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  scan0.5+win0.30              0.91/ 0.88     1.01/ 1.03     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  scan0.5+win0.30+eq           0.88/ 0.88     1.01/ 1.03     1.00/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  idle0.35+win0.30             0.91/ 0.88     1.01/ 1.03     1.02/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  idle0.35+win0.30+eq          0.88/ 0.88     1.01/ 1.03     1.00/ 0.88     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.50s1+win0.40            0.91/ 0.88     1.01/ 1.02     1.04/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.50s1+win0.40+eq         0.88/ 0.88     1.01/ 1.02     1.01/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.35s1+prof2+win0.30      0.90/ 0.88     1.01/ 1.02     1.03/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  act0.35s1+prof2+win0.30+eq   0.88/ 0.88     1.01/ 1.02     1.00/ 0.89     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  ling_out                     0.91/ 0.89     1.01/ 1.03     1.06/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+  ling_out+eq                  0.89/ 0.89     1.01/ 1.03     1.03/ 0.91     0.92/ 0.89     2.14/ 2.14     1.01/ 1.01  
+
+Benthivores as predator at the field spread (P3 runs only): encounter / booked share
+
+OFF pairs per run (equal-cell diet / field diet / prey side):
+  prev_central               predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  prev_central+eq            predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  win0.30                    predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  win0.30+eq                 predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  act0.35                    predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  act0.35+eq                 predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  act0.35s1                  predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  act0.35s1+eq               predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  central                    predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  central+eq                 predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  central+night0             predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  central+night0+eq          predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  scan0.5+win0.30            predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  scan0.5+win0.30+eq         predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  idle0.35+win0.30           predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  idle0.35+win0.30+eq        predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  act0.50s1+win0.40          predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  act0.50s1+win0.40+eq       predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  act0.35s1+prof2+win0.30    predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  act0.35s1+prof2+win0.30+eq predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)
+  ling_out                   predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->benthivorous_fish, whiting->benthivorous_fish (prey), whiting->mobile_epifauna (f)
+  ling_out+eq                predatory_fish->mackerel (prey), seals->predatory_fish (prey), whiting->mobile_epifauna (f)

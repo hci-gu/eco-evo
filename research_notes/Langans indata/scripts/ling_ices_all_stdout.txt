@@ -1,0 +1,25 @@
+ling stomachs in the database (all years): NS+Sk (51-62.5N, 4W-13E): 84 (50 non-empty)
+prey rows 13; predator length of fed ling (cm): min 30.0, max 88.0
+
+year mo    lat    lon  dep gear  predL prey (count, g, prey L cm, PPR)
+1991  8  59.75  -2.50      BOT      30 aphia:107011, n 2, 0.29 g, 2.0, PPR 0.07
+1991  8  59.75  -2.50      BOT      30 Norway pout, n 5, 6.49 g, 6.0, PPR 0.20
+2023  1  57.88   5.47  139 GOV      66 aphia:, n , - g, 
+2023  1  57.88   5.47  139 GOV      61 aphia:, n , - g, 
+2023  1  54.62  -0.59      GOV      46 unidentifiable organic matter and/or sand, n , - g, 
+2024  8  56.87   7.31   31 GOV      64 Pleuronectiformes, n 1, 89.51 g, 16.6, PPR 0.26
+2024  1  58.12   4.73  161 GOV      63 Norway pout, n 1, 29.56 g, 15.5, PPR 0.25
+2024  8  58.79  10.31  163 GOV      77 Trisopterus, n 1, 20.49 g, 17.0, PPR 0.22
+2024  8  57.93  11.24  104 GOV      86 herring, n 1, 86.04 g, 24.0, PPR 0.28
+2024  2  56.35   3.03   73 GOV      59 aphia:, n , - g, 
+2024  2  58.45   2.88  102 GOV      49 Osteichthyes, n 1, 0.22 g, 
+2024  2  58.41   1.61  114 GOV      88 cod, n 1, 1.82 g, 6.2w, PPR 0.07
+2025  2  58.69   3.62  168 GOV      82 Crustacea n.i., n , 0.44 g, 
+
+by class over all 12 ling stomachs with prey rows (mass share of 234.9 g; frequency of occurrence):
+  planktivore member      142.6 g 0.607   FO 0.33
+  benthivore member        91.3 g 0.389   FO 0.17
+  other                     0.7 g 0.003   FO 0.50
+  other/unid fish           0.2 g 0.001   FO 0.08
+
+fish-prey PPR (n 7, w-flag lower bounds included): median 0.22, max 0.28, values 0.07, 0.07, 0.20, 0.22, 0.25, 0.26, 0.28

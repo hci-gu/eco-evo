@@ -244,3 +244,8 @@ at equal cells / field spread / P2 (predator uniform, prey shaped); benthivore p
   twice the field flow: the pair's field-spread excess is ~2.0x, neither a booking artefact nor a within-class
   co-occurrence effect. What remains is the J encounter itself (the saithe a on J at the bed, 0.80 of the flow);
   the long-run probe's realised diet after retraining is the next check, as the user decided.
+
+## User decisions
+
+- 2026-11-11: re-book water column -> benthivores 0.0833 -> 0.058 in section 270;
+  within-class W is no parameter.
