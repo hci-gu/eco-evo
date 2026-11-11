@@ -1,0 +1,110 @@
+run fix97_269, probe 68 at update 670: 3 probe year(s)
+share = realised share of the year's tonnes eaten; booked = M2 x B share over the booked
+pairs; ratio outside 1/3-3 on a share >= 0.05 is OFF (the diet gate's band); unbooked prey are marked '-'.
+
+benthivorous_fish: ration 6.38 / 6.07 / 5.99 t/t/yr (field Q/B 4.46, 223.9 budget)
+                      prey  booked         year 1         year 2         year 3
+           benthic_infauna   0.563   0.698  1.24    0.758  1.35    0.792  1.41 
+                     krill   0.027   0.016  0.59    0.031  1.18    0.053  2.01 
+           mobile_epifauna   0.310   0.210  0.68    0.128  0.41    0.078  0.25*
+            norway_lobster   0.016   0.066  4.19*   0.064  4.10*   0.054  3.46*
+        planktivorous_fish   0.073   0.008  0.11*   0.016  0.22*   0.022  0.29*
+                   whiting   0.012   0.003  0.22    0.002  0.14    0.001  0.12 
+
+mackerel: ration 6.98 / 6.35 / 6.25 t/t/yr (field Q/B 2.75, stock Q/B 2.2 presence-weighted, section 268)
+                      prey  booked         year 1         year 2         year 3
+                     krill   0.394   0.582  1.48    0.648  1.65    0.671  1.71 
+        planktivorous_fish   0.055   0.010  0.18*   0.002  0.04*   0.003  0.05*
+               zooplankton   0.551   0.408  0.74    0.350  0.64    0.326  0.59 
+
+planktivorous_fish: ration 7.45 / 6.77 / 6.75 t/t/yr (field Q/B 6.2, source-consistent Q/B (5.8-6.6), section 268)
+                      prey  booked         year 1         year 2         year 3
+                     krill   0.398   0.492  1.24    0.519  1.31    0.521  1.31 
+               zooplankton   0.602   0.508  0.84    0.481  0.80    0.479  0.79 
+
+porpoises: ration 17.95 / 16.85 / 17.66 t/t/yr
+                      prey  booked         year 1         year 2         year 3
+         benthivorous_fish   0.159   0.052  0.33*   0.026  0.16*   0.129  0.81 
+        planktivorous_fish   0.684   0.838  1.23    0.963  1.41    0.848  1.24 
+            predatory_fish   0.020   0.000  0.00    0.000  0.00    0.000  0.00 
+                   whiting   0.137   0.110  0.80    0.011  0.08*   0.023  0.17*
+
+predatory_fish: ration 3.26 / 3.26 / 3.28 t/t/yr (field Q/B 2.83, params_split_223 (2.6-3.6))
+                      prey  booked         year 1         year 2         year 3
+         benthivorous_fish   0.077   0.055  0.71    0.090  1.16    0.093  1.21 
+                     krill   0.361   0.536  1.48    0.539  1.49    0.542  1.50 
+                  mackerel   0.011   0.001  0.10    0.001  0.06    0.001  0.06 
+        planktivorous_fish   0.498   0.367  0.74    0.313  0.63    0.304  0.61 
+                   whiting   0.042   0.038  0.88    0.054  1.26    0.056  1.33 
+               zooplankton   0.010   0.004  0.43    0.004  0.37    0.004  0.40 
+
+seals: ration 17.47 / 17.13 / 17.37 t/t/yr
+                      prey  booked         year 1         year 2         year 3
+         benthivorous_fish   0.641   0.385  0.60    0.375  0.58    0.413  0.64 
+        planktivorous_fish   0.266   0.585  2.20    0.590  2.22    0.563  2.11 
+            predatory_fish   0.023   0.000  0.00    0.000  0.00    0.000  0.00 
+                   whiting   0.070   0.030  0.43    0.035  0.51    0.024  0.35 
+
+whiting: ration 3.95 / 3.53 / 3.39 t/t/yr (field Q/B 4.2, SMS 2023, Lauerburg 2018 (3.3-5.6))
+                      prey  booked         year 1         year 2         year 3
+         benthivorous_fish   0.097   0.021  0.22*   0.014  0.15*   0.016  0.16*
+                     krill   0.557   0.696  1.25    0.841  1.51    0.864  1.55 
+           mobile_epifauna   0.171   0.228  1.33    0.086  0.50    0.051  0.30*
+        planktivorous_fish   0.153   0.026  0.17*   0.024  0.16*   0.034  0.22*
+               zooplankton   0.023   0.029  1.28    0.035  1.54    0.035  1.57 
+
+zooplankton: ration 63.20 / 59.80 / 60.59 t/t/yr
+                      prey  booked         year 1         year 2         year 3
+          microzooplankton       -   0.050      -   0.052      -   0.052      -
+             phytoplankton   0.667   0.175  0.26*   0.157  0.23*   0.163  0.24*
+  subsurface_phytoplankton   0.333   0.775  2.32    0.792  2.37    0.785  2.36 
+
+cells: share ratio (* = OFF)
+
+=== prey side: realised M2 (t eaten / mean prey biomass, /yr) vs booked M2 ===
+     benthic_infauna: booked 0.0396; realised 0.07224 / 0.07967 / 0.09041
+                         benthivorous_fish booked   0.0396 (1.00)   0.07224  1.82    0.07967  2.01    0.09041  2.28 
+   benthivorous_fish: booked 0.2341; realised 0.1164 / 0.1372 / 0.1344
+                                   whiting booked   0.1067 (0.46)    0.0261  0.24*   0.01511  0.14*    0.0151  0.14*
+                            predatory_fish booked   0.0833 (0.36)   0.07267  0.87     0.1063  1.28     0.1009  1.21 
+                                     seals booked   0.0373 (0.16)    0.0167  0.45     0.0155  0.42    0.01697  0.46 
+                                 porpoises booked   0.0068 (0.03)  0.0009421  0.14   0.0003181  0.05   0.001395  0.21 
+               krill: booked 2.537; realised 4.633 / 4.86 / 5.078
+                        planktivorous_fish booked    2.071 (0.82)      3.29  1.59      3.384  1.63        3.5  1.69 
+                                   whiting booked   0.1873 (0.07)    0.2976  1.59     0.3483  1.86     0.3573  1.91 
+                                  mackerel booked    0.125 (0.05)    0.7659  6.13     0.8032  6.43     0.8271  6.62 
+                            predatory_fish booked    0.119 (0.05)    0.2451  2.06     0.2496  2.10     0.2549  2.14 
+                         benthivorous_fish booked    0.035 (0.01)   0.03458  0.99    0.07461  2.13     0.1386  3.96 
+            mackerel: booked 0.021; realised 0.002568 / 0.001639 / 0.001663
+                            predatory_fish booked    0.021 (1.00)  0.002568  0.12*  0.001639  0.08*  0.001663  0.08*
+     mobile_epifauna: booked 0.6161; realised 0.7031 / 0.436 / 0.3282
+                         benthivorous_fish booked     0.54 (0.88)    0.5805  1.08     0.3905  0.72     0.2974  0.55 
+                                   whiting booked   0.0761 (0.12)    0.1226  1.61    0.04555  0.60    0.03084  0.41 
+      norway_lobster: booked 0.0225; realised 0.1441 / 0.1549 / 0.15
+                         benthivorous_fish booked   0.0225 (1.00)    0.1441  6.41*    0.1549  6.89*      0.15  6.67*
+       phytoplankton: booked 22.63; realised 31.54 / 25.63 / 25.98
+                               zooplankton booked    22.63 (1.00)     31.54  1.39      25.63  1.13      25.98  1.15 
+  planktivorous_fish: booked 0.3639; realised 0.25 / 0.2182 / 0.2313
+                            predatory_fish booked    0.174 (0.48)    0.1871  1.08     0.1508  0.87     0.1434  0.82 
+                         benthivorous_fish booked   0.1023 (0.28)    0.0201  0.20*   0.03984  0.39    0.05643  0.55 
+                                   whiting booked   0.0545 (0.15)   0.01244  0.23*   0.01036  0.19*   0.01408  0.26*
+                                  mackerel booked   0.0186 (0.05)   0.01476  0.79    0.00256  0.14   0.003237  0.17 
+                                 porpoises booked  0.00946 (0.03)  0.005854  0.62   0.004766  0.50   0.004003  0.42 
+                                     seals booked  0.00501 (0.01)  0.009761  1.95   0.009901  1.98    0.01009  2.01 
+      predatory_fish: booked 0.0054; realised 2.961e-06 / 3.924e-07 / 6.224e-07
+                                     seals booked   0.0033 (0.61)  9.474e-07  0.00*  1.204e-07  0.00*  1.024e-07  0.00*
+                                 porpoises booked   0.0021 (0.39)  2.014e-06  0.00*  2.72e-07  0.00*   5.2e-07  0.00*
+subsurface_phytoplankton: booked 22.63; realised 42.89 / 38.39 / 36.98
+                               zooplankton booked    22.63 (1.00)     42.89  1.90      38.39  1.70      36.98  1.63 
+             whiting: booked 0.371; realised 0.2226 / 0.2506 / 0.252
+                         benthivorous_fish booked     0.18 (0.49)   0.05338  0.30*   0.03427  0.19*   0.03068  0.17*
+                            predatory_fish booked    0.157 (0.42)    0.1588  1.01      0.211  1.34     0.2169  1.38 
+                                 porpoises booked   0.0201 (0.05)  0.006373  0.32   0.0004619  0.02   0.0008986  0.04 
+                                     seals booked   0.0139 (0.04)  0.004109  0.30   0.004853  0.35   0.003573  0.26 
+         zooplankton: booked 1.708; realised 1.798 / 1.756 / 1.857
+                        planktivorous_fish booked    1.612 (0.94)     1.546  0.96      1.535  0.95      1.643  1.02 
+                                  mackerel booked     0.09 (0.05)    0.2451  2.72     0.2132  2.37     0.2053  2.28 
+                                   whiting booked   0.0039 (0.00)  0.005626  1.44   0.007043  1.81   0.007503  1.92 
+                            predatory_fish booked   0.0017 (0.00)  0.000898  0.53   0.0008468  0.50   0.0009537  0.56 
+OFF: benthivorous_fish -> mobile_epifauna year 3 0.078 vs booked 0.310; benthivorous_fish -> norway_lobster year 1 0.066 vs booked 0.016; benthivorous_fish -> norway_lobster year 2 0.064 vs booked 0.016; benthivorous_fish -> norway_lobster year 3 0.054 vs booked 0.016; benthivorous_fish -> planktivorous_fish year 1 0.008 vs booked 0.073; benthivorous_fish -> planktivorous_fish year 2 0.016 vs booked 0.073; benthivorous_fish -> planktivorous_fish year 3 0.022 vs booked 0.073; mackerel -> planktivorous_fish year 1 0.010 vs booked 0.055; mackerel -> planktivorous_fish year 2 0.002 vs booked 0.055; mackerel -> planktivorous_fish year 3 0.003 vs booked 0.055; porpoises -> benthivorous_fish year 1 0.052 vs booked 0.159; porpoises -> benthivorous_fish year 2 0.026 vs booked 0.159; porpoises -> whiting year 2 0.011 vs booked 0.137; porpoises -> whiting year 3 0.023 vs booked 0.137; whiting -> benthivorous_fish year 1 0.021 vs booked 0.097; whiting -> benthivorous_fish year 2 0.014 vs booked 0.097; whiting -> benthivorous_fish year 3 0.016 vs booked 0.097; whiting -> mobile_epifauna year 3 0.051 vs booked 0.171; whiting -> planktivorous_fish year 1 0.026 vs booked 0.153; whiting -> planktivorous_fish year 2 0.024 vs booked 0.153; whiting -> planktivorous_fish year 3 0.034 vs booked 0.153; zooplankton -> phytoplankton year 1 0.175 vs booked 0.667; zooplankton -> phytoplankton year 2 0.157 vs booked 0.667; zooplankton -> phytoplankton year 3 0.163 vs booked 0.667
+Prey side OFF: whiting -> benthivorous_fish year 1 M2 0.0261 vs booked 0.107; whiting -> benthivorous_fish year 2 M2 0.0151 vs booked 0.107; whiting -> benthivorous_fish year 3 M2 0.0151 vs booked 0.107; predatory_fish -> mackerel year 1 M2 0.00257 vs booked 0.021; predatory_fish -> mackerel year 2 M2 0.00164 vs booked 0.021; predatory_fish -> mackerel year 3 M2 0.00166 vs booked 0.021; benthivorous_fish -> norway_lobster year 1 M2 0.144 vs booked 0.0225; benthivorous_fish -> norway_lobster year 2 M2 0.155 vs booked 0.0225; benthivorous_fish -> norway_lobster year 3 M2 0.15 vs booked 0.0225; benthivorous_fish -> planktivorous_fish year 1 M2 0.0201 vs booked 0.102; whiting -> planktivorous_fish year 1 M2 0.0124 vs booked 0.0545; whiting -> planktivorous_fish year 2 M2 0.0104 vs booked 0.0545; whiting -> planktivorous_fish year 3 M2 0.0141 vs booked 0.0545; seals -> predatory_fish year 1 M2 9.47e-07 vs booked 0.0033; seals -> predatory_fish year 2 M2 1.2e-07 vs booked 0.0033; seals -> predatory_fish year 3 M2 1.02e-07 vs booked 0.0033; porpoises -> predatory_fish year 1 M2 2.01e-06 vs booked 0.0021; porpoises -> predatory_fish year 2 M2 2.72e-07 vs booked 0.0021; porpoises -> predatory_fish year 3 M2 5.2e-07 vs booked 0.0021; benthivorous_fish -> whiting year 1 M2 0.0534 vs booked 0.18; benthivorous_fish -> whiting year 2 M2 0.0343 vs booked 0.18; benthivorous_fish -> whiting year 3 M2 0.0307 vs booked 0.18
