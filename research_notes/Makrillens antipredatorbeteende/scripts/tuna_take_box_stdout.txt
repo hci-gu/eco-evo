@@ -1,0 +1,7 @@
+tuna    500 ration 0.03: mackerel       78 t/season,    5.2 t in a 3600 km2 box, M2 ~ 0.0017 /yr
+tuna    500 ration 0.06: mackerel      155 t/season,   10.4 t in a 3600 km2 box, M2 ~ 0.0034 /yr
+tuna   1500 ration 0.03: mackerel      233 t/season,   15.5 t in a 3600 km2 box, M2 ~ 0.0051 /yr
+tuna   1500 ration 0.06: mackerel      466 t/season,   31.1 t in a 3600 km2 box, M2 ~ 0.0101 /yr
+tuna  15000 ration 0.03: mackerel     2329 t/season,  155.3 t in a 3600 km2 box, M2 ~ 0.0507 /yr
+tuna  15000 ration 0.06: mackerel     4658 t/season,  310.5 t in a 3600 km2 box, M2 ~ 0.1015 /yr
+mackerel share by weight 0.230

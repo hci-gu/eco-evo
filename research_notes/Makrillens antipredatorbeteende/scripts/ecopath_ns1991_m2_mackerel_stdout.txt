@@ -1,0 +1,24 @@
+predator                    flow mac t/km2/yr   M2 mac
+baleen whales                          0.0624   0.0363
+toothed whales                         0.0045   0.0026
+seals                                  0.0000   0.0000
+seabirds                               0.0097   0.0057
+juvenile sharks                        0.0000   0.0000
+spurdog                                0.0026   0.0015
+large piscivorous sharks               0.0005   0.0003
+small sharks                           0.0000   0.0000
+cod (adult)                            0.0068   0.0039
+saithe (adult)                         0.0032   0.0018
+hake                                   0.0051   0.0029
+monkfish                               0.0042   0.0025
+gurnards                               0.0002   0.0001
+juvenile cod                           0.0000   0.0000
+juvenile whiting                       0.0000   0.0000
+whiting (adult)                        0.0000   0.0000
+mackerel                               0.0000   0.0000
+squid & cuttlefish                     0.0176   0.0102
+total mackerel flow 0.1168 t/km2/yr, M2 = 0.0679 /yr
+total horse mackerel flow 0.0587, M2 = 0.1013 /yr 
+group (0.94/0.06) M2 = 0.0699 /yr
+fish-predator subtotal on mackerel: flow 0.0226 t/km2/yr, M2 = 0.0131 /yr
+marine mammals on mackerel: M2 = 0.0389 /yr; seabirds 0.0057
